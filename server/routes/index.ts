@@ -10,6 +10,8 @@ import { Hono } from 'hono';
 
 import { appExampleServiceToken } from '../providers/index.js';
 
+import { apiRoutes as equipmentApiRoutes } from './equipment.js';
+
 export const apiRoutes: AppApiRouteContribution<Application> = defineApiRoutes(
   (app) => {
     const router = new Hono();
@@ -55,6 +57,7 @@ export const rootRoutes: AppRootRouteContribution<Application> =
 
 const routes: readonly AppRouteContribution<Application>[] = [
   apiRoutes,
+  equipmentApiRoutes,
   rootRoutes,
 ];
 
