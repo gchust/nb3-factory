@@ -95,6 +95,35 @@ test('equivalent QA report schema is normalized and remains repairable', () => {
   }
 });
 
+test('passed edit report cannot hide empty required fields behind a workaround', () => {
+  const fixture = createFixture();
+  try {
+    fixture.report.checks[1] = {
+      criterion: 'Edit a record',
+      status: 'passed',
+      actions: [
+        'The edit form opened with empty required fields, so all values were entered again before saving.',
+      ],
+      evidence: [
+        'Save first showed Something went wrong; entering the asset number made it succeed.',
+      ],
+      screenshots: ['criterion-2.png'],
+    };
+    writeFileSync(fixture.reportFile, JSON.stringify(fixture.report));
+
+    const result = runValidator(fixture);
+    assert.equal(result.status, 10, result.stderr);
+    assert.match(result.stderr, /semantic guard failed/);
+    assert.match(result.stderr, /Something went wrong/);
+    assert.match(result.stderr, /existing values were prefilled/);
+    const guarded = JSON.parse(readFileSync(fixture.reportFile, 'utf8'));
+    assert.equal(guarded.passed, false);
+    assert.equal(guarded.checks[1].status, 'failed');
+  } finally {
+    fixture.cleanup();
+  }
+});
+
 test('browser report cannot pass without recorded browser interaction', () => {
   const fixture = createFixture();
   try {

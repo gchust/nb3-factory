@@ -27,7 +27,11 @@ try {
     );
   }
 
-  await page.locator('body').waitFor({ state: 'visible', timeout: 30_000 });
+  await page.waitForFunction(
+    () => Boolean(globalThis.document.body?.innerText.trim()),
+    undefined,
+    { timeout: 30_000 },
+  );
   const body = (await page.locator('body').innerText()).trim();
   if (!body) throw new Error('Application rendered an empty body.');
   if (/Internal Server Error|Application error/i.test(body)) {
@@ -54,7 +58,16 @@ try {
 
 async function ensureAuthenticated(page) {
   const loginHeading = page.getByRole('heading', { name: 'Welcome back' });
-  if (!(await loginHeading.isVisible().catch(() => false))) return;
+  const initialSurface = await Promise.race([
+    loginHeading
+      .waitFor({ state: 'visible', timeout: 30_000 })
+      .then(() => 'login'),
+    page
+      .locator('main')
+      .waitFor({ state: 'visible', timeout: 30_000 })
+      .then(() => 'application'),
+  ]);
+  if (initialSurface === 'application') return;
 
   await page
     .getByLabel('Username or email', { exact: true })

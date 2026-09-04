@@ -23,13 +23,6 @@ if (report.checks.length < minimumChecks) {
   );
 }
 
-if (report !== rawReport) {
-  writeFileSync(args.report, `${JSON.stringify(report, null, 2)}\n`);
-  console.log(
-    'Normalized an equivalent Agent Browser report to the factory report schema.',
-  );
-}
-
 let screenshotCount = 0;
 for (const [index, check] of report.checks.entries()) {
   if (!check || typeof check !== 'object') {
@@ -72,6 +65,19 @@ for (const [index, check] of report.checks.entries()) {
 
 if (screenshotCount === 0)
   invalid('At least one browser screenshot is required.');
+
+const semanticFailures = applySemanticGuards(report);
+if (report !== rawReport || semanticFailures.length > 0) {
+  writeFileSync(args.report, `${JSON.stringify(report, null, 2)}\n`);
+}
+if (report !== rawReport) {
+  console.log(
+    'Normalized an equivalent Agent Browser report to the factory report schema.',
+  );
+}
+for (const failure of semanticFailures) {
+  console.error(`Agent Browser semantic guard failed: ${failure}`);
+}
 
 const failedChecks = report.checks.filter((check) => check.status === 'failed');
 const claimsSuccess =
@@ -200,6 +206,43 @@ function formatDefect(defect) {
   return reproduction
     ? `${description} Reproduce: ${reproduction}`
     : description;
+}
+
+function applySemanticGuards(value) {
+  const failures = [];
+  for (const check of value.checks) {
+    if (check.status !== 'passed') continue;
+    const observation = [...check.actions, ...check.evidence].join(' ');
+    const reasons = [];
+
+    if (
+      /(?:提示|显示|出现|show(?:s|ed)?|display(?:s|ed)?)[^.!。]{0,80}something went wrong/i.test(
+        observation,
+      )
+    ) {
+      reasons.push('a required flow displayed “Something went wrong”');
+    }
+
+    if (
+      /(?:编辑|\bedit(?:ing|ed)?\b)/iu.test(check.criterion) &&
+      !/(?:预填|回填|原值|当前值|已有值|prefill|pre-fill|prepopulate|pre-populate|existing value|current value)/iu.test(
+        observation,
+      )
+    ) {
+      reasons.push(
+        'the edit scenario did not verify existing values were prefilled',
+      );
+    }
+
+    if (reasons.length === 0) continue;
+    check.status = 'failed';
+    const failure = `${check.criterion}: ${reasons.join('; ')}.`;
+    value.failures.push(failure);
+    failures.push(failure);
+  }
+
+  if (failures.length > 0) value.passed = false;
+  return failures;
 }
 
 function validateBrowserCommands(commands) {
