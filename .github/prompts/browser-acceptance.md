@@ -4,7 +4,7 @@
 
 ## 唯一允许的浏览器工具
 
-- 首先运行 `agent-browser skills get core`，阅读与当前安装版本匹配的操作说明。流水线已通过 `AGENT_BROWSER_SESSION` 为本轮设置隔离会话，不要改用默认会话或持久化 Profile。
+- 首先运行 `agent-browser skills get core`，阅读与当前安装版本匹配的操作说明。流水线已通过 `AGENT_BROWSER_SESSION` 为本轮设置隔离会话；严禁 `export`、`unset`、覆盖该变量或传入其他 session/Profile，每次命令直接继承现有会话。
 - 随后只使用 `agent-browser` 打开和操作应用。至少实际执行 `open`、`snapshot`、`fill`/`click` 与 `screenshot`；页面变化后重新 `snapshot`，不要凭 DOM 猜测结果。
 - 每次 Shell 工具调用保持简短，避免很长的复合命令或 heredoc。若工具调用因输出长度被拒绝，必须缩短命令，禁止原样重复提交。
 - 应用地址、测试账号和产物路径都通过下面列出的环境变量提供。不要访问其他域名。
