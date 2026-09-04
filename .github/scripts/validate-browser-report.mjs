@@ -125,6 +125,12 @@ function normalizeReport(value, taskMetadata) {
     Array.isArray(value.checks) &&
     Array.isArray(value.failures)
   ) {
+    const originalCriteria = parseAcceptanceCriteria(
+      taskMetadata.task?.acceptanceCriteria ?? '',
+    );
+    const checks = value.checks.map((check, index) =>
+      normalizeCheck(check, index, originalCriteria),
+    );
     const failures = value.failures.map((failure, index) => {
       const formatted = formatFailure(failure);
       if (!formatted) {
@@ -132,10 +138,10 @@ function normalizeReport(value, taskMetadata) {
       }
       return formatted;
     });
-    const changed = failures.some(
-      (failure, index) => failure !== value.failures[index],
-    );
-    return changed ? { ...value, failures } : value;
+    const changed =
+      checks.some((check, index) => check !== value.checks[index]) ||
+      failures.some((failure, index) => failure !== value.failures[index]);
+    return changed ? { ...value, checks, failures } : value;
   }
 
   if (
@@ -207,6 +213,74 @@ function normalizeReport(value, taskMetadata) {
   };
 }
 
+function normalizeCheck(check, index, originalCriteria) {
+  if (!check || typeof check !== 'object' || Array.isArray(check)) {
+    return check;
+  }
+
+  const hasCanonicalShape =
+    typeof check.criterion === 'string' &&
+    check.criterion.trim() &&
+    ['passed', 'failed'].includes(check.status) &&
+    Array.isArray(check.actions) &&
+    Array.isArray(check.evidence) &&
+    Array.isArray(check.screenshots);
+  if (hasCanonicalShape) return check;
+
+  const rawStatus = String(check.status ?? check.result ?? '')
+    .trim()
+    .toLowerCase();
+  const status = rawStatus.startsWith('pass')
+    ? 'passed'
+    : rawStatus.startsWith('fail')
+      ? 'failed'
+      : check.status;
+  const details = printableFailureValue(check.details);
+  const rawEvidence = Array.isArray(check.evidence) ? check.evidence : [];
+  const evidenceIsScreenshots =
+    rawEvidence.length > 0 &&
+    rawEvidence.every(
+      (item) =>
+        typeof item === 'string' &&
+        /^[A-Za-z0-9][A-Za-z0-9-]*\.png$/u.test(item),
+    );
+  const screenshots = Array.isArray(check.screenshots)
+    ? check.screenshots
+    : evidenceIsScreenshots
+      ? rawEvidence
+      : Array.isArray(check.images)
+        ? check.images
+        : undefined;
+  const actions = Array.isArray(check.actions)
+    ? check.actions
+    : Array.isArray(check.steps)
+      ? check.steps
+      : details
+        ? [details]
+        : undefined;
+  const evidence = evidenceIsScreenshots
+    ? details
+      ? [details]
+      : undefined
+    : rawEvidence.length > 0
+      ? rawEvidence
+      : details
+        ? [details]
+        : undefined;
+  const criterion =
+    String(check.criterion ?? check.name ?? '').trim() ||
+    originalCriteria[index] ||
+    `Acceptance criterion ${index + 1}`;
+
+  return {
+    criterion,
+    status,
+    actions,
+    evidence,
+    screenshots,
+  };
+}
+
 function formatDefect(defect) {
   return formatFailure(defect);
 }
@@ -226,6 +300,7 @@ function formatFailure(failure) {
     ['reproduction', 'Reproduce'],
     ['steps', 'Steps'],
     ['observed', 'Observed'],
+    ['actual', 'Observed'],
     ['expected', 'Expected'],
     ['impact', 'Impact'],
   ];

@@ -125,6 +125,55 @@ test('equivalent QA report schema is normalized and remains repairable', () => {
   }
 });
 
+test('QA checks using name, details, and evidence screenshots are normalized', () => {
+  const fixture = createFixture();
+  try {
+    writeFileSync(
+      fixture.reportFile,
+      JSON.stringify({
+        passed: false,
+        authenticated: true,
+        summary: 'Navigation is intermittently denied.',
+        checks: [
+          {
+            id: 'criterion-1',
+            name: 'Create a record',
+            status: 'passed',
+            details: 'Created a record and observed it in the table.',
+            evidence: ['criterion-1.png'],
+          },
+          {
+            id: 'criterion-2',
+            name: 'Return a record',
+            status: 'failed',
+            details: 'The route guard displayed Access denied.',
+            evidence: ['criterion-2.png'],
+          },
+        ],
+        failures: [
+          {
+            title: 'Intermittent route denial',
+            repro: 'Switch users, then open the equipment page.',
+            actual: 'Access denied appears while the API returns 200.',
+            impact: 'The main workflow is unreliable.',
+          },
+        ],
+      }),
+    );
+
+    const result = runValidator(fixture);
+    assert.equal(result.status, 10, result.stderr);
+    assert.match(result.stdout, /Normalized an equivalent/);
+    const normalized = JSON.parse(readFileSync(fixture.reportFile, 'utf8'));
+    assert.deepEqual(normalized.checks[0].screenshots, ['criterion-1.png']);
+    assert.equal(normalized.checks[1].criterion, 'Return a record');
+    assert.match(normalized.checks[1].actions[0], /Access denied/);
+    assert.match(normalized.failures[0], /API returns 200/);
+  } finally {
+    fixture.cleanup();
+  }
+});
+
 test('passed edit report cannot hide empty required fields behind a workaround', () => {
   const fixture = createFixture();
   try {
