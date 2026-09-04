@@ -135,6 +135,7 @@ jobs:
           PI_AUTH_HEADER: ${{ vars.PI_AUTH_HEADER || 'true' }}
           PI_SUPPORTS_DEVELOPER_ROLE: ${{ vars.PI_SUPPORTS_DEVELOPER_ROLE }}
           PI_SUPPORTS_REASONING_EFFORT: ${{ vars.PI_SUPPORTS_REASONING_EFFORT || 'true' }}
+          PI_INVOCATION_TIMEOUT_SECONDS: ${{ vars.PI_INVOCATION_TIMEOUT_SECONDS || '1800' }}
         run: |
           node control/.github/scripts/run-pi.mjs \
             --workspace workspace \
@@ -159,6 +160,7 @@ jobs:
           PI_AUTH_HEADER: ${{ vars.PI_AUTH_HEADER || 'true' }}
           PI_SUPPORTS_DEVELOPER_ROLE: ${{ vars.PI_SUPPORTS_DEVELOPER_ROLE }}
           PI_SUPPORTS_REASONING_EFFORT: ${{ vars.PI_SUPPORTS_REASONING_EFFORT || 'true' }}
+          PI_INVOCATION_TIMEOUT_SECONDS: ${{ vars.PI_INVOCATION_TIMEOUT_SECONDS || '1800' }}
         run: |
           control/.github/scripts/verify-and-repair.sh \
             control \

@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { execFileSync } from 'node:child_process';
+import { execFileSync, spawnSync } from 'node:child_process';
 import {
   mkdtempSync,
   mkdirSync,
@@ -147,6 +147,61 @@ test('Pi runner applies DeepSeek V4 compatibility behind a custom proxy', () => 
       high: 'high',
       max: 'max',
     });
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('Pi runner bounds one invocation without limiting repair attempts', () => {
+  const root = mkdtempSync(path.join(os.tmpdir(), 'nb3-factory-timeout-'));
+  const workspace = path.join(root, 'workspace');
+  const bin = path.join(root, 'bin');
+  const prompt = path.join(root, 'task.md');
+  const log = path.join(root, 'artifacts', 'pi.jsonl');
+  const agentDir = path.join(root, 'agent');
+
+  try {
+    mkdirSync(workspace);
+    mkdirSync(bin);
+    writeFileSync(prompt, 'test task\n');
+    writeFileSync(
+      path.join(bin, 'pi'),
+      '#!/usr/bin/env node\nsetInterval(() => {}, 1_000);\n',
+      { mode: 0o755 },
+    );
+
+    const startedAt = Date.now();
+    const result = spawnSync(
+      process.execPath,
+      [
+        script,
+        '--workspace',
+        workspace,
+        '--prompt',
+        prompt,
+        '--log',
+        log,
+        '--agentDir',
+        agentDir,
+      ],
+      {
+        encoding: 'utf8',
+        env: {
+          ...process.env,
+          PATH: `${bin}:${process.env.PATH}`,
+          PI_API_ENDPOINT: 'https://proxy.example/v1',
+          PI_API_KEY: 'test-key',
+          PI_API_TYPE: 'openai-completions',
+          PI_MODEL: 'test-model',
+          PI_INVOCATION_TIMEOUT_SECONDS: '1',
+        },
+        timeout: 5_000,
+      },
+    );
+
+    assert.notEqual(result.status, 0);
+    assert.ok(Date.now() - startedAt < 4_000);
+    assert.match(result.stderr, /timed out after 1 seconds/);
   } finally {
     rmSync(root, { recursive: true, force: true });
   }
