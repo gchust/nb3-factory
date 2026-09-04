@@ -125,7 +125,17 @@ function normalizeReport(value, taskMetadata) {
     Array.isArray(value.checks) &&
     Array.isArray(value.failures)
   ) {
-    return value;
+    const failures = value.failures.map((failure, index) => {
+      const formatted = formatFailure(failure);
+      if (!formatted) {
+        invalid(`failures[${index}] must describe the failure.`);
+      }
+      return formatted;
+    });
+    const changed = failures.some(
+      (failure, index) => failure !== value.failures[index],
+    );
+    return changed ? { ...value, failures } : value;
   }
 
   if (
@@ -198,14 +208,56 @@ function normalizeReport(value, taskMetadata) {
 }
 
 function formatDefect(defect) {
-  if (typeof defect === 'string') return defect.trim();
-  if (!defect || typeof defect !== 'object') return '';
-  const description = String(defect.description ?? '').trim();
-  const reproduction = String(defect.repro ?? '').trim();
-  if (!description) return '';
-  return reproduction
-    ? `${description} Reproduce: ${reproduction}`
-    : description;
+  return formatFailure(defect);
+}
+
+function formatFailure(failure) {
+  if (typeof failure === 'string') return failure.trim();
+  if (!failure || typeof failure !== 'object' || Array.isArray(failure)) {
+    return '';
+  }
+
+  const fields = [
+    ['criterion', 'Criterion'],
+    ['title', 'Failure'],
+    ['description', 'Description'],
+    ['message', 'Message'],
+    ['repro', 'Reproduce'],
+    ['reproduction', 'Reproduce'],
+    ['steps', 'Steps'],
+    ['observed', 'Observed'],
+    ['expected', 'Expected'],
+    ['impact', 'Impact'],
+  ];
+  const parts = [];
+  const seen = new Set();
+  for (const [key, label] of fields) {
+    const text = printableFailureValue(failure[key]);
+    if (!text || seen.has(text)) continue;
+    seen.add(text);
+    parts.push(`${label}: ${text}`);
+  }
+  return parts.join(' ');
+}
+
+function printableFailureValue(value) {
+  if (typeof value === 'string') return value.trim();
+  if (Array.isArray(value)) {
+    return value
+      .map((item) => printableFailureValue(item))
+      .filter(Boolean)
+      .join(' -> ');
+  }
+  if (value && typeof value === 'object') {
+    return Object.entries(value)
+      .map(([key, item]) => {
+        const text = printableFailureValue(item);
+        return text ? `${key}: ${text}` : '';
+      })
+      .filter(Boolean)
+      .join('; ');
+  }
+  return value == null ? '' : String(value).trim();
 }
 
 function applySemanticGuards(value) {

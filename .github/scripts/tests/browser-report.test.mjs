@@ -45,6 +45,36 @@ test('valid failed browser report uses the repairable exit code', () => {
   }
 });
 
+test('structured failure details are normalized and remain repairable', () => {
+  const fixture = createFixture();
+  try {
+    fixture.report.passed = false;
+    fixture.report.checks[1].status = 'failed';
+    fixture.report.failures = [
+      {
+        criterion: 'Edit a record',
+        reproduction: [
+          'Open the equipment list.',
+          'Click Edit on an existing row.',
+        ],
+        observed: 'Every required field is empty.',
+        impact: 'The employee must re-enter unchanged values.',
+      },
+    ];
+    writeFileSync(fixture.reportFile, JSON.stringify(fixture.report));
+
+    const result = runValidator(fixture);
+    assert.equal(result.status, 10, result.stderr);
+    assert.match(result.stdout, /Normalized an equivalent/);
+    const normalized = JSON.parse(readFileSync(fixture.reportFile, 'utf8'));
+    assert.equal(typeof normalized.failures[0], 'string');
+    assert.match(normalized.failures[0], /Every required field is empty/);
+    assert.match(normalized.failures[0], /Click Edit/);
+  } finally {
+    fixture.cleanup();
+  }
+});
+
 test('equivalent QA report schema is normalized and remains repairable', () => {
   const fixture = createFixture();
   try {
