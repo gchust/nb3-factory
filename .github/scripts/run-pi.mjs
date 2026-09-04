@@ -21,6 +21,7 @@ const invocationTimeoutSeconds = parsePositiveInteger(
   process.env.PI_INVOCATION_TIMEOUT_SECONDS,
   1_800,
 );
+const completionGraceMilliseconds = 3_000;
 const normalizedModel = model.toLowerCase();
 const deepseekV4Variant = normalizedModel.includes('deepseek-v4-flash')
   ? 'flash'
@@ -149,9 +150,14 @@ const child = spawn(
 );
 
 const stream = createWriteStream(log, { flags: 'w', mode: 0o600 });
+let stdoutBuffer = '';
 child.stdout.on('data', (chunk) => {
   process.stdout.write(chunk);
   stream.write(chunk);
+  stdoutBuffer += chunk.toString('utf8');
+  const lines = stdoutBuffer.split(/\r?\n/u);
+  stdoutBuffer = lines.pop() ?? '';
+  for (const line of lines) observeAgentEvent(line);
 });
 child.stderr.on('data', (chunk) => {
   process.stderr.write(chunk);
@@ -160,6 +166,8 @@ child.stderr.on('data', (chunk) => {
 
 let timedOut = false;
 let forceKillTimer;
+let completionTimer;
+let completionTermination = false;
 const invocationTimer = setTimeout(() => {
   timedOut = true;
   process.stderr.write(
@@ -175,6 +183,7 @@ const exitCode = await new Promise((resolve, reject) => {
 });
 clearTimeout(invocationTimer);
 clearTimeout(forceKillTimer);
+clearTimeout(completionTimer);
 stream.end();
 await finished(stream);
 redactLog(log, [
@@ -189,7 +198,28 @@ if (timedOut) {
     `Pi invocation timed out after ${invocationTimeoutSeconds} seconds.`,
   );
 }
-if (exitCode !== 0) throw new Error(`Pi exited with code ${exitCode}.`);
+if (!completionTermination && exitCode !== 0) {
+  throw new Error(`Pi exited with code ${exitCode}.`);
+}
+
+function observeAgentEvent(line) {
+  let event;
+  try {
+    event = JSON.parse(line);
+  } catch {
+    return;
+  }
+  if (!['agent_end', 'agent_settled'].includes(event.type)) return;
+  if (completionTimer) return;
+  completionTimer = setTimeout(() => {
+    completionTermination = true;
+    process.stderr.write(
+      `Pi emitted ${event.type} but did not exit; closing the completed invocation.\n`,
+    );
+    terminateChild('SIGTERM');
+    forceKillTimer = setTimeout(() => terminateChild('SIGKILL'), 5_000);
+  }, completionGraceMilliseconds);
+}
 
 function terminateChild(signal) {
   try {

@@ -206,3 +206,64 @@ test('Pi runner bounds one invocation without limiting repair attempts', () => {
     rmSync(root, { recursive: true, force: true });
   }
 });
+
+test('Pi runner closes a completed invocation whose stream stays open', () => {
+  const root = mkdtempSync(path.join(os.tmpdir(), 'nb3-factory-settled-'));
+  const workspace = path.join(root, 'workspace');
+  const bin = path.join(root, 'bin');
+  const prompt = path.join(root, 'task.md');
+  const log = path.join(root, 'artifacts', 'pi.jsonl');
+  const agentDir = path.join(root, 'agent');
+
+  try {
+    mkdirSync(workspace);
+    mkdirSync(bin);
+    writeFileSync(prompt, 'test task\n');
+    writeFileSync(
+      path.join(bin, 'pi'),
+      [
+        '#!/usr/bin/env node',
+        "console.log(JSON.stringify({ type: 'agent_end' }));",
+        'setInterval(() => {}, 1_000);',
+        '',
+      ].join('\n'),
+      { mode: 0o755 },
+    );
+
+    const startedAt = Date.now();
+    const result = spawnSync(
+      process.execPath,
+      [
+        script,
+        '--workspace',
+        workspace,
+        '--prompt',
+        prompt,
+        '--log',
+        log,
+        '--agentDir',
+        agentDir,
+      ],
+      {
+        encoding: 'utf8',
+        env: {
+          ...process.env,
+          PATH: `${bin}:${process.env.PATH}`,
+          PI_API_ENDPOINT: 'https://proxy.example/v1',
+          PI_API_KEY: 'test-key',
+          PI_API_TYPE: 'openai-completions',
+          PI_MODEL: 'test-model',
+          PI_INVOCATION_TIMEOUT_SECONDS: '30',
+        },
+        timeout: 8_000,
+      },
+    );
+
+    assert.equal(result.status, 0, result.stderr);
+    assert.ok(Date.now() - startedAt < 7_000);
+    assert.match(result.stderr, /closing the completed invocation/);
+    assert.match(readFileSync(log, 'utf8'), /agent_end/);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
