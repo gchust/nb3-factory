@@ -1,6 +1,9 @@
 name: Pi NocoBase Task
 
 on:
+  push:
+    branches: [develop]
+    paths: [.github/workflows/pi-task.yml]
   issues:
     types: [opened, reopened]
   repository_dispatch:
@@ -47,8 +50,16 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: |
+          event_path="$GITHUB_EVENT_PATH"
+          if [[ "$GITHUB_EVENT_NAME" == "push" ]]; then
+            event_path="$RUNNER_TEMP/factory-rerun-event.json"
+            jq -n \
+              --arg owner "$GITHUB_REPOSITORY_OWNER" \
+              '{inputs: {issue_number: 2}, repository: {owner: {login: $owner}}}' \
+              > "$event_path"
+          fi
           node control/.github/scripts/prepare-task.mjs \
-            --event "$GITHUB_EVENT_PATH" \
+            --event "$event_path" \
             --metadata "$RUNNER_TEMP/task-metadata.json" \
             --output "$GITHUB_OUTPUT"
 
