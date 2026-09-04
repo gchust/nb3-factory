@@ -1,4 +1,5 @@
 import { execFileSync } from 'node:child_process';
+import { statSync } from 'node:fs';
 import path from 'node:path';
 
 import { TaskInputError, assertSafeChangedPaths } from './factory-lib.mjs';
@@ -8,6 +9,13 @@ const workspace = path.resolve(args.workspace);
 const patch = path.resolve(args.patch);
 
 git(['switch', '--force-create', args.branch]);
+if (statSync(patch).size === 0) {
+  console.log(
+    `No new patch changes; reusing the verified ${args.branch} commit.`,
+  );
+  process.exit(0);
+}
+
 git(['apply', '--index', '--3way', patch]);
 
 const names = git(['diff', '--cached', '--name-only', '-z'])

@@ -158,7 +158,12 @@ const exitCode = await new Promise((resolve, reject) => {
 });
 stream.end();
 await finished(stream);
-redactLog(log, [apiKey, endpoint]);
+redactLog(log, [
+  apiKey,
+  endpoint,
+  process.env.FACTORY_ADMIN_PASSWORD,
+  process.env.FACTORY_TEST_PASSWORD,
+]);
 
 if (exitCode !== 0) throw new Error(`Pi exited with code ${exitCode}.`);
 

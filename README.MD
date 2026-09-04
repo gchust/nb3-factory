@@ -10,7 +10,7 @@ flowchart TD
     Branch -->|是| Reuse["复用最新应用代码"]
     Create --> Pi["只读凭据环境中的 Pi"]
     Reuse --> Pi
-    Pi --> Verify["检查 + SQLite 重建 + 浏览器冒烟"]
+    Pi --> Verify["检查 + SQLite 重建 + Agent Browser 验收"]
     Verify -->|失败| Repair["Pi 持续修复"]
     Repair --> Verify
     Verify -->|通过| Final["只读 Job 独立复验 Patch"]
@@ -31,6 +31,7 @@ flowchart TD
 | Variable | `PI_API_TYPE`                  | 否   | 默认 `openai-completions`；也支持 `openai-responses`、`anthropic-messages`、`google-generative-ai` |
 | Variable | `PI_THINKING`                  | 否   | 默认 `high`                                                                                        |
 | Variable | `PI_VERSION`                   | 否   | 默认固定为 `0.84.4`                                                                                |
+| Variable | `AGENT_BROWSER_VERSION`        | 否   | 默认固定为 `0.36.0`；用于登录后逐条执行 Issue 验收要求                                             |
 | Variable | `PI_AUTH_HEADER`               | 否   | 默认 `true`，为兼容 API 添加 Bearer Authorization                                                  |
 | Variable | `PI_SUPPORTS_DEVELOPER_ROLE`   | 否   | 普通模型默认 `true`；DeepSeek V4 自动使用 `false`，也可显式覆盖                                    |
 | Variable | `PI_SUPPORTS_REASONING_EFFORT` | 否   | 默认 `true`；不接受 `reasoning_effort` 的接口可设为 `false`                                        |
@@ -48,10 +49,19 @@ flowchart TD
 
 1. 使用 **Pi 搭建任务** Issue Form 创建任务，目标分支使用 `apps/<system-name>`。
 2. 目标分支不存在时，工厂从默认分支创建；存在时继续使用它。
-3. Pi 只修改本地工作区。流水线会运行类型检查、测试、Lint、格式检查、构建、全新 SQLite Migration/Seed 和真实 Chrome 冒烟验证。
-4. 验证失败时，工厂会把最新日志交给 Pi 并持续执行“修复 → 全量验证”，不设修复次数上限。唯一的总时间上限是 GitHub 托管 Runner 单个 Job 允许的 6 小时；模型/API 致命错误、人工取消或超时时才标记 `pi:failed`。
+3. Pi 只修改本地工作区。流水线会运行类型检查、测试、Lint、格式检查、构建和全新 SQLite Migration/Seed；随后独立 QA Agent 使用 `agent-browser` 登录一次性数据库中的维护者账号，并在需要时注册普通测试用户，逐条实际操作 Issue 的验收要求，保存结构化报告和截图。只打开首页或停留在登录页不会通过。
+4. 代码检查或 Agent Browser 业务验收失败时，工厂会把最新日志与浏览器复现报告交给 Pi，并持续执行“修复 → 全量验证 → 浏览器验收”，不设修复次数上限。唯一的总时间上限是 GitHub 托管 Runner 单个 Job 允许的 6 小时；模型/API/浏览器基础设施错误、人工取消或超时时才标记 `pi:failed`。
 5. 验证通过后，只读 Job 在全新工作区应用 Patch 并独立复验；Publisher 只应用已验证 Patch、提交和 Push，再创建或更新指向目标分支的 PR。
 6. 人工合并 PR 后，来源 Issue 自动关闭；同一目标分支上最早的等待任务会自动进入队列。
+
+目标分支在 PR 人工合并前不会包含 Pi 的改动。要在合并前本地预览某个任务，请检出对应工作分支，例如 Issue #2：
+
+```bash
+git fetch origin
+git switch --track origin/pi/issue-2
+pnpm install
+pnpm dev
+```
 
 同一目标分支只能同时有一个未合并的 Pi PR。整个仓库的 Pi 任务也使用一个 `queue: max` 并发组，因此一次只运行一个，最多排队 100 个任务。
 

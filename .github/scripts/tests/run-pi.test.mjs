@@ -22,6 +22,7 @@ test('Pi runner keeps the API key indirect and redacts diagnostic artifacts', ()
   const agentDir = path.join(root, 'agent');
   const endpoint = 'https://private-endpoint.example/v1';
   const apiKey = 'test-api-key-that-must-not-leak';
+  const browserPassword = 'browser-password-that-must-not-leak';
 
   try {
     mkdirSync(workspace);
@@ -31,7 +32,7 @@ test('Pi runner keeps the API key indirect and redacts diagnostic artifacts', ()
       path.join(bin, 'pi'),
       [
         '#!/usr/bin/env node',
-        'console.log(JSON.stringify({ key: process.env.PI_API_KEY, endpoint: process.env.PI_API_ENDPOINT }));',
+        'console.log(JSON.stringify({ key: process.env.PI_API_KEY, endpoint: process.env.PI_API_ENDPOINT, browserPassword: process.env.FACTORY_TEST_PASSWORD }));',
         '',
       ].join('\n'),
       { mode: 0o755 },
@@ -58,6 +59,7 @@ test('Pi runner keeps the API key indirect and redacts diagnostic artifacts', ()
           PI_API_KEY: apiKey,
           PI_API_TYPE: 'openai-completions',
           PI_MODEL: 'test-model',
+          FACTORY_TEST_PASSWORD: browserPassword,
         },
         stdio: 'pipe',
       },
@@ -66,6 +68,7 @@ test('Pi runner keeps the API key indirect and redacts diagnostic artifacts', ()
     const diagnostics = readFileSync(log, 'utf8');
     assert.doesNotMatch(diagnostics, new RegExp(apiKey));
     assert.doesNotMatch(diagnostics, new RegExp(endpoint));
+    assert.doesNotMatch(diagnostics, new RegExp(browserPassword));
     assert.match(diagnostics, /\[REDACTED\]/);
 
     const models = JSON.parse(

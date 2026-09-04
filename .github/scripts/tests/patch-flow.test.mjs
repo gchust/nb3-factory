@@ -80,6 +80,64 @@ test('patch flow preserves new and modified files', () => {
   }
 });
 
+test('patch flow can revalidate an unchanged existing work branch', () => {
+  const root = mkdtempSync(path.join(os.tmpdir(), 'nb3-factory-empty-patch-'));
+  const source = path.join(root, 'source');
+  const publisher = path.join(root, 'publisher');
+  const patch = path.join(root, 'bundle', 'pi.patch');
+  const summary = path.join(root, 'bundle', 'summary.json');
+
+  try {
+    mkdirSync(source);
+    git(source, ['init', '--initial-branch=main']);
+    git(source, ['config', 'user.name', 'Factory Test']);
+    git(source, ['config', 'user.email', 'factory@example.com']);
+    writeFileSync(path.join(source, 'existing.txt'), 'unchanged\n');
+    git(source, ['add', '.']);
+    git(source, ['commit', '-m', 'initial']);
+    execFileSync('git', ['clone', '--quiet', source, publisher]);
+
+    execFileSync(
+      process.execPath,
+      [
+        path.join(scripts, 'create-patch.mjs'),
+        '--workspace',
+        source,
+        '--patch',
+        patch,
+        '--summary',
+        summary,
+        '--allow-empty',
+        'true',
+      ],
+      { stdio: 'pipe' },
+    );
+    execFileSync(
+      process.execPath,
+      [
+        path.join(scripts, 'apply-patch.mjs'),
+        '--workspace',
+        publisher,
+        '--patch',
+        patch,
+        '--branch',
+        'pi/issue-1',
+      ],
+      { stdio: 'pipe' },
+    );
+
+    const parsed = JSON.parse(readFileSync(summary, 'utf8'));
+    assert.equal(parsed.reusedExistingWorkBranch, true);
+    assert.equal(parsed.counts.files, 0);
+    assert.equal(
+      readFileSync(path.join(publisher, 'existing.txt'), 'utf8'),
+      'unchanged\n',
+    );
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
 function git(cwd, args) {
   execFileSync('git', args, { cwd, stdio: 'pipe' });
 }

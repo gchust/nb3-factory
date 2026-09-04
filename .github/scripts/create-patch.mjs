@@ -1,3 +1,4 @@
+import { Buffer } from 'node:buffer';
 import { execFileSync } from 'node:child_process';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
@@ -12,7 +13,35 @@ const summaryPath = path.resolve(args.summary);
 git(['add', '--intent-to-add', '--all']);
 const names = splitNull(git(['diff', '--name-only', '-z', 'HEAD']));
 if (names.length === 0) {
-  throw new TaskInputError('Pi 没有产生可提交的文件修改。');
+  if (!parseBoolean(args['allow-empty'])) {
+    throw new TaskInputError('Pi 没有产生可提交的文件修改。');
+  }
+
+  mkdirSync(path.dirname(patchPath), { recursive: true });
+  writeFileSync(patchPath, Buffer.alloc(0), { mode: 0o600 });
+  writeFileSync(
+    summaryPath,
+    `${JSON.stringify(
+      {
+        counts: {
+          added: 0,
+          modified: 0,
+          deleted: 0,
+          renamed: 0,
+          files: 0,
+        },
+        files: [],
+        reusedExistingWorkBranch: true,
+      },
+      null,
+      2,
+    )}\n`,
+    { mode: 0o600 },
+  );
+  console.log(
+    'Created an empty patch after revalidating the existing work branch.',
+  );
+  process.exit(0);
 }
 assertSafeChangedPaths(names);
 
@@ -70,4 +99,8 @@ function parseArgs(argv) {
     if (!parsed[name]) throw new Error(`Missing --${name}`);
   }
   return parsed;
+}
+
+function parseBoolean(value) {
+  return ['1', 'true', 'yes', 'on'].includes(String(value ?? '').toLowerCase());
 }

@@ -34,10 +34,42 @@ try {
     throw new Error('Application rendered a server error page.');
   }
 
+  await ensureAuthenticated(page);
+
+  const authenticatedBody = (await page.locator('body').innerText()).trim();
+  if (!authenticatedBody) {
+    throw new Error('Authenticated application rendered an empty body.');
+  }
+  if (/Welcome back|Create an account/i.test(authenticatedBody)) {
+    throw new Error(
+      'Browser smoke never reached the authenticated application.',
+    );
+  }
+
   await page.screenshot({ path: args.screenshot, fullPage: true });
-  console.log(`Browser smoke passed: ${page.url()}`);
+  console.log(`Authenticated browser smoke passed: ${page.url()}`);
 } finally {
   await browser.close();
+}
+
+async function ensureAuthenticated(page) {
+  const loginHeading = page.getByRole('heading', { name: 'Welcome back' });
+  if (!(await loginHeading.isVisible().catch(() => false))) return;
+
+  await page
+    .getByLabel('Username or email', { exact: true })
+    .fill(process.env.FACTORY_SMOKE_USERNAME || 'nocobase');
+  await page
+    .getByLabel('Password', { exact: true })
+    .fill(process.env.FACTORY_SMOKE_PASSWORD || 'admin123');
+  await page.getByRole('button', { name: 'Sign in' }).click();
+
+  await page.waitForFunction(
+    () => !/\/(?:login|register)\/?$/u.test(globalThis.location.pathname),
+    undefined,
+    { timeout: 30_000 },
+  );
+  await page.locator('main').waitFor({ state: 'visible', timeout: 30_000 });
 }
 
 function parseArgs(argv) {

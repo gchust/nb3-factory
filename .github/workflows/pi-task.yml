@@ -142,6 +142,13 @@ jobs:
             --log "$RUNNER_TEMP/agent-artifacts/pi-implement.jsonl" \
             --agentDir "$RUNNER_TEMP/pi-agent"
 
+      - name: Install pinned Agent Browser
+        env:
+          AGENT_BROWSER_VERSION: ${{ vars.AGENT_BROWSER_VERSION || '0.36.0' }}
+        run: |
+          npm install --global "agent-browser@${AGENT_BROWSER_VERSION}"
+          agent-browser --version
+
       - name: Verify and repair until successful
         env:
           PI_API_ENDPOINT: ${{ secrets.PI_API_ENDPOINT }}
@@ -157,15 +164,19 @@ jobs:
             control \
             workspace \
             "$RUNNER_TEMP/implement.md" \
+            task/task-metadata.json \
             "$RUNNER_TEMP/agent-artifacts" \
             "$RUNNER_TEMP/repair-state"
 
       - name: Create deterministic patch
+        env:
+          ALLOW_EMPTY_PATCH: ${{ needs.prepare.outputs.base_ref == needs.prepare.outputs.work_branch }}
         run: |
           node control/.github/scripts/create-patch.mjs \
             --workspace workspace \
             --patch "$RUNNER_TEMP/agent-artifacts/pi.patch" \
-            --summary "$RUNNER_TEMP/agent-artifacts/change-summary.json"
+            --summary "$RUNNER_TEMP/agent-artifacts/change-summary.json" \
+            --allow-empty "$ALLOW_EMPTY_PATCH"
 
       - name: Upload Pi patch and diagnostics
         if: always()
@@ -301,13 +312,17 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git commit -m "feat: apply Pi task #${ISSUE_NUMBER}"
-          if [[ "$BASE_REF" == "$WORK_BRANCH" ]]; then
-            lease="refs/heads/${WORK_BRANCH}:${BASE_SHA}"
+          if git diff --cached --quiet; then
+            echo "No new application changes; reusing the verified work branch commit."
           else
-            lease="refs/heads/${WORK_BRANCH}:"
+            git commit -m "feat: apply Pi task #${ISSUE_NUMBER}"
+            if [[ "$BASE_REF" == "$WORK_BRANCH" ]]; then
+              lease="refs/heads/${WORK_BRANCH}:${BASE_SHA}"
+            else
+              lease="refs/heads/${WORK_BRANCH}:"
+            fi
+            git push --force-with-lease="$lease" origin "HEAD:refs/heads/${WORK_BRANCH}"
           fi
-          git push --force-with-lease="$lease" origin "HEAD:refs/heads/${WORK_BRANCH}"
 
       - name: Create or update Pull Request
         env:

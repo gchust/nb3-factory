@@ -15,6 +15,9 @@ const owner = metadata.repository.split('/')[0];
 const runUrl = `${process.env.GITHUB_SERVER_URL}/${metadata.repository}/actions/runs/${process.env.GITHUB_RUN_ID}`;
 const titleText = metadata.issue.title.replace(/^\[Pi\]\s*/i, '').trim();
 const title = `[Pi #${metadata.issue.number}] ${titleText}`.slice(0, 240);
+const changeSummary = summary.reusedExistingWorkBranch
+  ? '- 本次重新验收未产生额外代码修改；沿用当前工作分支和 PR 差异'
+  : `- 修改文件：${summary.counts.files}（新增 ${summary.counts.added}、修改 ${summary.counts.modified}、删除 ${summary.counts.deleted}、重命名 ${summary.counts.renamed}）`;
 const body = [
   '## 来源',
   '',
@@ -35,8 +38,9 @@ const body = [
   '',
   '- TypeScript、测试、Lint、格式与构建：通过',
   '- 全新 SQLite Migration 与 Seed：通过',
-  '- 真实浏览器启动冒烟：通过',
-  `- 修改文件：${summary.counts.files}（新增 ${summary.counts.added}、修改 ${summary.counts.modified}、删除 ${summary.counts.deleted}、重命名 ${summary.counts.renamed}）`,
+  '- Agent Browser 登录后逐条业务验收：通过',
+  '- 独立 Job 登录后生产启动检查：通过',
+  changeSummary,
   `- [GitHub Actions 运行记录](${runUrl})`,
   '',
   '> 此 PR 不会自动合并；请人工检查 Diff 和实际业务效果。',
@@ -80,6 +84,8 @@ await client.setIssueStatus(
   'pi:review',
   [
     `实现与独立验证已完成：${pull.html_url}`,
+    '',
+    `合并前本地预览请检出工作分支：\`git fetch origin && git switch --track origin/${metadata.workBranch}\`。`,
     '',
     `请检查后手动合并到 \`${metadata.task.targetBranch}\`。合并后 Issue 会自动关闭。`,
   ].join('\n'),

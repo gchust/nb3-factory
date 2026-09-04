@@ -14,13 +14,14 @@ import test from 'node:test';
 
 const script = path.resolve(import.meta.dirname, '..', 'verify-and-repair.sh');
 
-test('repair loop keeps retrying until verification succeeds', () => {
+test('repair loop keeps retrying until Agent Browser acceptance succeeds', () => {
   const root = mkdtempSync(path.join(os.tmpdir(), 'nb3-factory-repair-'));
   const control = path.join(root, 'control');
   const scripts = path.join(control, '.github', 'scripts');
   const prompts = path.join(control, '.github', 'prompts');
   const workspace = path.join(root, 'workspace');
   const task = path.join(root, 'implement.md');
+  const metadata = path.join(root, 'task-metadata.json');
   const artifacts = path.join(root, 'artifacts');
   const state = path.join(root, 'state');
 
@@ -29,6 +30,10 @@ test('repair loop keeps retrying until verification succeeds', () => {
     mkdirSync(prompts, { recursive: true });
     mkdirSync(workspace);
     writeFileSync(task, 'implement the task\n');
+    writeFileSync(
+      metadata,
+      JSON.stringify({ task: { acceptanceCriteria: '1. Works' } }),
+    );
     writeFileSync(path.join(prompts, 'repair.md'), 'repair template\n');
 
     writeExecutable(
@@ -42,7 +47,22 @@ test('repair loop keeps retrying until verification succeeds', () => {
         'attempt=$((attempt + 1))',
         'printf "%s" "$attempt" >"$counter"',
         'echo "verification $attempt"',
-        '[[ "$attempt" -ge 3 ]]',
+        '[[ "${FACTORY_SKIP_BROWSER:-}" == "1" ]]',
+        '',
+      ].join('\n'),
+    );
+    writeExecutable(
+      path.join(scripts, 'browser-acceptance.sh'),
+      [
+        '#!/usr/bin/env bash',
+        'set -euo pipefail',
+        'counter="$2/.browser-count"',
+        'attempt=0',
+        '[[ ! -f "$counter" ]] || attempt="$(cat "$counter")"',
+        'attempt=$((attempt + 1))',
+        'printf "%s" "$attempt" >"$counter"',
+        'echo "browser acceptance $attempt"',
+        '[[ "$attempt" -ge 3 ]] || exit 10',
         '',
       ].join('\n'),
     );
@@ -67,13 +87,21 @@ test('repair loop keeps retrying until verification succeeds', () => {
     );
 
     const repairCounter = path.join(root, 'repairs.log');
-    execFileSync(script, [control, workspace, task, artifacts, state], {
-      env: { ...process.env, REPAIR_COUNTER: repairCounter },
-      stdio: 'pipe',
-    });
+    execFileSync(
+      script,
+      [control, workspace, task, metadata, artifacts, state],
+      {
+        env: { ...process.env, REPAIR_COUNTER: repairCounter },
+        stdio: 'pipe',
+      },
+    );
 
     assert.equal(
       readFileSync(path.join(workspace, '.verification-count'), 'utf8'),
+      '3',
+    );
+    assert.equal(
+      readFileSync(path.join(workspace, '.browser-count'), 'utf8'),
       '3',
     );
     assert.equal(readFileSync(repairCounter, 'utf8'), 'repair\nrepair\n');
@@ -86,6 +114,10 @@ test('repair loop keeps retrying until verification succeeds', () => {
     assert.match(
       readFileSync(path.join(artifacts, 'verify-2.log'), 'utf8'),
       /verification 2/,
+    );
+    assert.match(
+      readFileSync(path.join(artifacts, 'verify-2.log'), 'utf8'),
+      /browser acceptance 2/,
     );
   } finally {
     rmSync(root, { recursive: true, force: true });
