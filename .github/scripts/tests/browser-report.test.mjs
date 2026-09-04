@@ -1,7 +1,13 @@
 import assert from 'node:assert/strict';
 import { Buffer } from 'node:buffer';
 import { spawnSync } from 'node:child_process';
-import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
+import {
+  mkdtempSync,
+  mkdirSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
@@ -34,6 +40,56 @@ test('valid failed browser report uses the repairable exit code', () => {
     const result = runValidator(fixture);
     assert.equal(result.status, 10, result.stderr);
     assert.match(result.stderr, /acceptance failed/);
+  } finally {
+    fixture.cleanup();
+  }
+});
+
+test('equivalent QA report schema is normalized and remains repairable', () => {
+  const fixture = createFixture();
+  try {
+    writeFileSync(
+      fixture.reportFile,
+      JSON.stringify({
+        roles_tested: ['admin', 'regular_user'],
+        criteria: [
+          {
+            id: 1,
+            name: 'Create a record',
+            result: 'PASS',
+            details: 'Created a record and observed it in the table.',
+            evidence: ['criterion-1.png'],
+          },
+          {
+            id: 2,
+            name: 'Return a record',
+            result: 'FAIL',
+            details: 'The return action left the record borrowed.',
+            evidence: ['criterion-2.png'],
+          },
+        ],
+        summary: {
+          passed: 1,
+          failed: 1,
+          defects: [
+            {
+              description: 'Return did not update the status.',
+              repro: 'Open the record and click Return.',
+            },
+          ],
+        },
+      }),
+    );
+
+    const result = runValidator(fixture);
+    assert.equal(result.status, 10, result.stderr);
+    assert.match(result.stdout, /Normalized an equivalent/);
+    const normalized = JSON.parse(readFileSync(fixture.reportFile, 'utf8'));
+    assert.equal(normalized.passed, false);
+    assert.equal(normalized.authenticated, true);
+    assert.equal(normalized.checks[1].status, 'failed');
+    assert.equal(normalized.checks[1].criterion, 'Return a record');
+    assert.match(normalized.failures[0], /Return did not update/);
   } finally {
     fixture.cleanup();
   }

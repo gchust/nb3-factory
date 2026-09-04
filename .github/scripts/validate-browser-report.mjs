@@ -1,10 +1,11 @@
 import { Buffer } from 'node:buffer';
-import { readFileSync, statSync } from 'node:fs';
+import { readFileSync, statSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 
 const args = parseArgs(process.argv.slice(2));
 const metadata = JSON.parse(readFileSync(args.metadata, 'utf8'));
-const report = readJson(args.report);
+const rawReport = readJson(args.report);
+const report = normalizeReport(rawReport, metadata);
 const commands = readFileSync(args.commands, 'utf8')
   .split(/\r?\n/u)
   .filter(Boolean);
@@ -19,6 +20,13 @@ const minimumChecks = countAcceptanceCriteria(
 if (report.checks.length < minimumChecks) {
   invalid(
     `Browser report has ${report.checks.length} check(s), but at least ${minimumChecks} acceptance check(s) are required.`,
+  );
+}
+
+if (report !== rawReport) {
+  writeFileSync(args.report, `${JSON.stringify(report, null, 2)}\n`);
+  console.log(
+    'Normalized an equivalent Agent Browser report to the factory report schema.',
   );
 }
 
@@ -101,13 +109,106 @@ function validateShape(value) {
   }
 }
 
+function normalizeReport(value, taskMetadata) {
+  if (
+    value &&
+    typeof value === 'object' &&
+    !Array.isArray(value) &&
+    typeof value.passed === 'boolean' &&
+    typeof value.authenticated === 'boolean' &&
+    Array.isArray(value.checks) &&
+    Array.isArray(value.failures)
+  ) {
+    return value;
+  }
+
+  if (
+    !value ||
+    typeof value !== 'object' ||
+    Array.isArray(value) ||
+    !Array.isArray(value.criteria)
+  ) {
+    return value;
+  }
+
+  const originalCriteria = parseAcceptanceCriteria(
+    taskMetadata.task?.acceptanceCriteria ?? '',
+  );
+  const checks = value.criteria.map((criterion, index) => {
+    if (!criterion || typeof criterion !== 'object') {
+      invalid(`criteria[${index}] must be an object.`);
+    }
+    const result = String(criterion.result ?? '')
+      .trim()
+      .toLowerCase();
+    if (!['pass', 'passed', 'fail', 'failed'].includes(result)) {
+      invalid(
+        `criteria[${index}].result must be PASS, PASSED, FAIL, or FAILED.`,
+      );
+    }
+    requireString(criterion.details, `criteria[${index}].details`);
+    requireNonEmptyStrings(criterion.evidence, `criteria[${index}].evidence`);
+
+    return {
+      criterion:
+        originalCriteria[index] ||
+        String(criterion.name ?? '').trim() ||
+        `Acceptance criterion ${index + 1}`,
+      status: result.startsWith('pass') ? 'passed' : 'failed',
+      actions: [criterion.details.trim()],
+      evidence: [criterion.details.trim()],
+      screenshots: criterion.evidence,
+    };
+  });
+
+  const failedChecks = checks.filter((check) => check.status === 'failed');
+  const defects = Array.isArray(value.summary?.defects)
+    ? value.summary.defects
+        .map((defect) => formatDefect(defect))
+        .filter(Boolean)
+    : [];
+  const failures =
+    defects.length > 0
+      ? defects
+      : failedChecks.map(
+          (check) => `${check.criterion}: ${check.evidence.join(' ')}`,
+        );
+  const passed = failedChecks.length === 0;
+  const authenticated =
+    value.authenticated === true ||
+    (Array.isArray(value.roles_tested) && value.roles_tested.length > 0);
+  const summary =
+    typeof value.summary === 'string' && value.summary.trim()
+      ? value.summary.trim()
+      : `Agent Browser reported ${checks.length - failedChecks.length} passed and ${failedChecks.length} failed acceptance check(s).`;
+
+  return {
+    passed,
+    authenticated,
+    summary,
+    checks,
+    failures,
+  };
+}
+
+function formatDefect(defect) {
+  if (typeof defect === 'string') return defect.trim();
+  if (!defect || typeof defect !== 'object') return '';
+  const description = String(defect.description ?? '').trim();
+  const reproduction = String(defect.repro ?? '').trim();
+  if (!description) return '';
+  return reproduction
+    ? `${description} Reproduce: ${reproduction}`
+    : description;
+}
+
 function validateBrowserCommands(commands) {
   const observed = new Set(commands);
   const requirements = [
     [['open', 'goto', 'navigate', 'batch'], 'navigation'],
     [['snapshot', 'batch'], 'snapshot'],
     [
-      ['fill', 'type', 'click', 'press', 'select', 'check', 'batch'],
+      ['fill', 'type', 'click', 'press', 'select', 'check', 'eval', 'batch'],
       'interaction',
     ],
     [['screenshot', 'batch'], 'screenshot'],
@@ -120,12 +221,18 @@ function validateBrowserCommands(commands) {
 }
 
 function countAcceptanceCriteria(text) {
+  return Math.max(1, parseAcceptanceCriteria(text).length);
+}
+
+function parseAcceptanceCriteria(text) {
   const lines = String(text)
     .split(/\r?\n/u)
     .map((line) => line.trim())
     .filter(Boolean);
-  const listItems = lines.filter((line) => /^(?:\d+[.)]|[-*])\s+/u.test(line));
-  return Math.max(1, listItems.length || (lines.length > 0 ? 1 : 0));
+  const listItems = lines
+    .filter((line) => /^(?:\d+[.)]|[-*])\s+/u.test(line))
+    .map((line) => line.replace(/^(?:\d+[.)]|[-*])\s+/u, '').trim());
+  return listItems.length > 0 ? listItems : lines.slice(0, 1);
 }
 
 function requireString(value, name) {

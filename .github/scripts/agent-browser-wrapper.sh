@@ -7,7 +7,7 @@ set -euo pipefail
 command_name=""
 for argument in "$@"; do
   case "$argument" in
-    open|goto|navigate|snapshot|click|dblclick|fill|type|press|select|check|uncheck|screenshot|console|errors|close|skills|batch)
+    open|goto|navigate|snapshot|click|dblclick|fill|type|press|select|check|uncheck|eval|screenshot|console|errors|close|skills|batch)
       command_name="$argument"
       break
       ;;
