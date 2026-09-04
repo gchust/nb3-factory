@@ -126,6 +126,7 @@ jobs:
         run: npm install --global --ignore-scripts "@earendil-works/pi-coding-agent@${PI_VERSION}"
 
       - name: Run Pi implementation
+        if: needs.prepare.outputs.base_ref != needs.prepare.outputs.work_branch
         env:
           PI_API_ENDPOINT: ${{ secrets.PI_API_ENDPOINT }}
           PI_API_KEY: ${{ secrets.PI_API_KEY }}
