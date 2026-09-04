@@ -85,6 +85,11 @@ export default function EquipmentPage(): ReactElement {
     [items],
   );
 
+  // The ledger carries a per-row `canMaintain` flag; maintain actions (create,
+  // edit, delete) are manager-only, so the create button follows the same
+  // signal instead of offering an action the server rejects for employees.
+  const canMaintain = items.some((item) => item.canMaintain);
+
   const filtered = useMemo(() => {
     const needle = search.trim().toLowerCase();
     if (!needle) {
@@ -188,10 +193,12 @@ export default function EquipmentPage(): ReactElement {
                   value={search}
                 />
               </div>
-              <Button onClick={() => setCreateOpen(true)} size='sm'>
-                <Plus />
-                {t('equipment.list.create')}
-              </Button>
+              {canMaintain ? (
+                <Button onClick={() => setCreateOpen(true)} size='sm'>
+                  <Plus />
+                  {t('equipment.list.create')}
+                </Button>
+              ) : null}
             </div>
           </CardTitle>
         </CardHeader>

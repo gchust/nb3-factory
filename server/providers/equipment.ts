@@ -652,7 +652,8 @@ function toBorrowRecordRow(row: Row): BorrowRecordRow {
  * safe to call on every boot.
  *
  * - `equipment-user`: every authenticated user can read the ledger, create
- *   borrow records, and return only borrow records they own.
+ *   borrow records, return only borrow records they own, and open the
+ *   equipment pages (`page: equipment`, `page: equipment-borrow-records`).
  * - `equipment-maintainer`: full equipment CRUD plus access to every borrow
  *   record; assigned to the seeded `nocobase` administrator user.
  */
@@ -723,6 +724,19 @@ export async function provisionEquipmentAuthorization(
           recordAccess: ['recordsIOwn'],
         },
       }),
+      // The application's client-side route guard resolves every authenticated
+      // route to a `page` resource (`can({ type: 'page', id: routeName }, 'access')`),
+      // so the employee role needs page grants to actually open the equipment
+      // pages. Without them the data APIs still answer 200, but the UI shows
+      // "Access denied".
+      {
+        resource: { type: 'page', id: 'equipment' },
+        actions: [{ action: 'access' }],
+      },
+      {
+        resource: { type: 'page', id: 'equipment-borrow-records' },
+        actions: [{ action: 'access' }],
+      },
     ],
   });
   await ensureAssignment(authorization, {
@@ -787,15 +801,76 @@ type PermissionSetInput = Parameters<
   AppAuthorization['permissionSets']['create']
 >[0];
 
+type ProvisionPermissionSet = NonNullable<
+  Awaited<ReturnType<AppAuthorization['permissionSets']['get']>>
+>;
+type ProvisionPermissionGrant = ProvisionPermissionSet['grants'][number];
+
+/**
+ * Merges the required grants into the existing ones. A grant that already
+ * exists (same resource type, id and actions) is left untouched so runtime
+ * provisioning never clobbers administrator tweaks to the same set.
+ *
+ * Returns the merged grants plus whether anything was added.
+ */
+function mergeRequiredGrants(
+  existing: readonly ProvisionPermissionGrant[],
+  required: readonly ProvisionPermissionGrant[],
+): { grants: readonly ProvisionPermissionGrant[]; changed: boolean } {
+  let changed = false;
+  const merged = existing.map((grant) => ({
+    resource: grant.resource,
+    actions: [...grant.actions],
+  }));
+  for (const requiredGrant of required) {
+    const match = merged.find(
+      (grant) =>
+        grant.resource.type === requiredGrant.resource.type &&
+        grant.resource.id === requiredGrant.resource.id,
+    );
+    if (match === undefined) {
+      merged.push({
+        resource: requiredGrant.resource,
+        actions: [...requiredGrant.actions],
+      });
+      changed = true;
+      continue;
+    }
+    const existingActions = new Set(
+      match.actions.map((action) => action.action),
+    );
+    const missing = requiredGrant.actions.filter(
+      (action) => !existingActions.has(action.action),
+    );
+    if (missing.length > 0) {
+      match.actions = [...match.actions, ...missing];
+      changed = true;
+    }
+  }
+  return { grants: merged, changed };
+}
+
 async function ensurePermissionSet(
   authorization: AppAuthorization,
   input: PermissionSetInput,
 ): Promise<{ key: string }> {
   const existing = await authorization.permissionSets.get(input.key);
-  if (existing !== undefined) {
-    return existing;
+  if (existing === undefined) {
+    return authorization.permissionSets.create(input);
   }
-  return authorization.permissionSets.create(input);
+  // The set already exists (for example from a previous boot). Reconcile it so
+  // grants added in a newer build are applied to databases provisioned earlier.
+  const { grants, changed } = mergeRequiredGrants(
+    existing.grants,
+    input.grants,
+  );
+  if (changed) {
+    await authorization.permissionSets.update(input.key, {
+      ...input,
+      grants,
+    });
+  }
+  return existing;
 }
 
 async function ensureAssignment(

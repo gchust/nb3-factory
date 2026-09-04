@@ -54,14 +54,26 @@ export function EquipmentFormDialog({
   const [description, setDescription] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Sentinel (undefined) so the first render also syncs an already-open dialog.
+  const [prevOpen, setPrevOpen] = useState<boolean | undefined>(undefined);
 
-  const reset = (): void => {
-    setName(equipment?.name ?? '');
-    setAssetNumber(equipment?.assetNumber ?? '');
-    setCategory(equipment?.category ?? '');
-    setDescription(equipment?.description ?? '');
-    setError(null);
-  };
+  /**
+   * Re-sync the fields whenever the dialog opens. The page opens the dialog
+   * programmatically, and Base UI's `onOpenChange` only fires for
+   * user-initiated open/close, so the fields are adjusted from the record
+   * during render (the documented alternative to an effect) instead of in an
+   * open handler.
+   */
+  if (prevOpen !== open) {
+    setPrevOpen(open);
+    if (open) {
+      setName(equipment?.name ?? '');
+      setAssetNumber(equipment?.assetNumber ?? '');
+      setCategory(equipment?.category ?? '');
+      setDescription(equipment?.description ?? '');
+      setError(null);
+    }
+  }
 
   const handleSubmit = async (event: FormEvent): Promise<void> => {
     event.preventDefault();
@@ -105,15 +117,7 @@ export function EquipmentFormDialog({
   };
 
   return (
-    <Dialog
-      onOpenChange={(next: boolean) => {
-        if (next) {
-          reset();
-        }
-        onOpenChange(next);
-      }}
-      open={open}
-    >
+    <Dialog onOpenChange={onOpenChange} open={open}>
       <DialogContent className='sm:max-w-md'>
         <DialogHeader>
           <DialogTitle>

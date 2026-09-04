@@ -35,6 +35,17 @@ export function BorrowDialog({
   const [note, setNote] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Sentinel (undefined) so the first render also resets an open dialog.
+  const [prevOpen, setPrevOpen] = useState<boolean | undefined>(undefined);
+
+  /** Reset the note whenever the dialog opens (programmatically driven). */
+  if (prevOpen !== open) {
+    setPrevOpen(open);
+    if (open) {
+      setNote('');
+      setError(null);
+    }
+  }
 
   const handleSubmit = async (event: FormEvent): Promise<void> => {
     event.preventDefault();
@@ -59,16 +70,7 @@ export function BorrowDialog({
   };
 
   return (
-    <Dialog
-      onOpenChange={(next: boolean) => {
-        if (next) {
-          setNote('');
-          setError(null);
-        }
-        onOpenChange(next);
-      }}
-      open={open}
-    >
+    <Dialog onOpenChange={onOpenChange} open={open}>
       <DialogContent className='sm:max-w-md'>
         <DialogHeader>
           <DialogTitle>{t('equipment.dialog.borrowTitle')}</DialogTitle>

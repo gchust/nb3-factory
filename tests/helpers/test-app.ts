@@ -7,6 +7,7 @@ import {
   createStandaloneServer,
   nodeServerConfig,
 } from '@nocobase/app-server/node';
+import type { ServiceToken } from '@nocobase/service-provider';
 
 import appRuntime from '../../server/runtime.js';
 import createServer from '../../server/embedded.js';
@@ -82,8 +83,15 @@ export interface ApiRequestOptions {
 
 export interface ApiTestContext {
   readonly dbPath: string;
+  readonly configPath: string;
   readonly baseUrl: string;
   readonly apiBase: string;
+  /** The underlying application instance (test-only introspection hook). */
+  readonly application: {
+    readonly container: {
+      resolve<T>(token: ServiceToken<T>): T;
+    };
+  };
   /** Perform a JSON API call under /api and return the parsed response. */
   api(
     pathname: string,
@@ -99,9 +107,22 @@ export interface ApiTestContext {
 /**
  * Boots the real application (migrations + seeds auto-run) against a fresh
  * temporary SQLite database, exactly like a development server would.
+ *
+ * Pass a `configPath` from a previous boot to start a second server against
+ * the same database (for restart scenarios).
  */
-export async function bootTestApp(): Promise<ApiTestContext> {
-  const temp = createTempConfig();
+export async function bootTestApp(
+  configPath?: string,
+): Promise<ApiTestContext> {
+  const temp =
+    configPath === undefined
+      ? createTempConfig()
+      : {
+          dir: path.dirname(configPath),
+          dbPath: path.join(path.dirname(configPath), 'database.sqlite'),
+          configPath,
+          dispose: () => undefined,
+        };
   const server = await createStandaloneServer({
     rootDir: WORKSPACE_ROOT,
     appRuntime,
@@ -180,6 +201,7 @@ export async function bootTestApp(): Promise<ApiTestContext> {
 
   return {
     dbPath: temp.dbPath,
+    configPath: temp.configPath,
     baseUrl,
     apiBase: `${baseUrl}/api`,
     application: app,

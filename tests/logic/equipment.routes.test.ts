@@ -109,6 +109,29 @@ describe('authentication and authorization boundary', () => {
     expect(open?.canReturn).toBe(false);
   });
 
+  it('grants employees page access so the client route guard does not deny the equipment pages', async () => {
+    // The browser checks page access through the /api/authz/permissions
+    // snapshot: `can({ type: 'page', id: routeName }, 'access')`. Without a
+    // `page` grant the UI shows "Access denied" even though the data APIs
+    // answer 200.
+    const response = await ctx.api('/authz/permissions', {
+      cookie: employeeCookie,
+    });
+    expect(response.status).toBe(200);
+    const snapshot = asRecord(asRecord(response.body).data);
+    const permissions = snapshot.permissions as Array<{
+      resource: { type: string; id: string };
+      actions: string[];
+    }>;
+    const pageActions = (id: string): string[] | undefined =>
+      permissions.find(
+        (permission) =>
+          permission.resource.type === 'page' && permission.resource.id === id,
+      )?.actions;
+    expect(pageActions('equipment')).toContain('access');
+    expect(pageActions('equipment-borrow-records')).toContain('access');
+  });
+
   it('lets the maintainer read the ledger and see maintainer capability', async () => {
     const rows = await listEquipment(adminCookie);
     expect(rows.length).toBeGreaterThanOrEqual(6);
