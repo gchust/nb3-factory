@@ -16,6 +16,13 @@ const apiKey = requiredEnv('PI_API_KEY');
 const api = process.env.PI_API_TYPE || 'openai-completions';
 const model = requiredEnv('PI_MODEL');
 const thinking = process.env.PI_THINKING || 'high';
+const normalizedModel = model.toLowerCase();
+const deepseekV4Variant = normalizedModel.includes('deepseek-v4-flash')
+  ? 'flash'
+  : normalizedModel.includes('deepseek-v4-pro')
+    ? 'pro'
+    : null;
+const isDeepseekV4 = api === 'openai-completions' && deepseekV4Variant != null;
 const supportedApis = new Set([
   'openai-completions',
   'openai-responses',
@@ -55,18 +62,37 @@ const provider = {
   compat: {
     supportsDeveloperRole: parseBoolean(
       process.env.PI_SUPPORTS_DEVELOPER_ROLE,
-      true,
+      !isDeepseekV4,
     ),
     supportsReasoningEffort: parseBoolean(
       process.env.PI_SUPPORTS_REASONING_EFFORT,
       true,
     ),
+    ...(isDeepseekV4
+      ? {
+          supportsStore: false,
+          maxTokensField: 'max_tokens',
+          thinkingFormat: 'deepseek',
+          requiresReasoningContentOnAssistantMessages: true,
+        }
+      : {}),
   },
   models: [
     {
       id: model,
       name: model,
       reasoning: parseBoolean(process.env.PI_MODEL_REASONING, true),
+      ...(isDeepseekV4
+        ? {
+            thinkingLevelMap: {
+              minimal: null,
+              low: deepseekV4Variant === 'flash' ? 'low' : null,
+              medium: null,
+              high: 'high',
+              max: 'max',
+            },
+          }
+        : {}),
     },
   ],
 };

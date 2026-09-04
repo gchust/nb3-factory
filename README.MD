@@ -32,8 +32,10 @@ flowchart TD
 | Variable | `PI_THINKING`                  | 否   | 默认 `high`                                                                                        |
 | Variable | `PI_VERSION`                   | 否   | 默认固定为 `0.84.4`                                                                                |
 | Variable | `PI_AUTH_HEADER`               | 否   | 默认 `true`，为兼容 API 添加 Bearer Authorization                                                  |
-| Variable | `PI_SUPPORTS_DEVELOPER_ROLE`   | 否   | 默认 `true`；旧式 OpenAI 兼容接口可设为 `false`                                                    |
+| Variable | `PI_SUPPORTS_DEVELOPER_ROLE`   | 否   | 普通模型默认 `true`；DeepSeek V4 自动使用 `false`，也可显式覆盖                                    |
 | Variable | `PI_SUPPORTS_REASONING_EFFORT` | 否   | 默认 `true`；不接受 `reasoning_effort` 的接口可设为 `false`                                        |
+
+通过自定义域名使用 `deepseek-v4-flash` 或 `deepseek-v4-pro` 时，运行器会自动启用 DeepSeek 思考格式、工具调用上下文回放兼容和对应的思考等级，无需让 API 域名包含 `deepseek.com`。
 
 然后在 `Settings → Actions → General → Workflow permissions` 中：
 
