@@ -9,6 +9,8 @@ body:
       value: |
         每个 `apps/<name>` 分支代表一个可持续完善的业务系统。Pi 会在独立工作分支修改并向目标分支发起 PR，不会直接提交目标分支。
 
+        自动验证失败时，Pi 会根据最新日志持续修复并重新验证，不限修复次数；GitHub 托管 Runner 的单个 Job 最长运行 6 小时。
+
   - type: input
     id: target_branch
     attributes:
@@ -57,17 +59,6 @@ body:
       options:
         - 是
         - 否
-    validations:
-      required: true
-
-  - type: dropdown
-    id: repair_attempts
-    attributes:
-      label: 自动修复次数
-      description: 首次验证失败后，将日志交给 Pi 再修复几次。MVP 最多支持一次。
-      options:
-        - 1 次
-        - 0 次
     validations:
       required: true
 

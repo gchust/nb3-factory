@@ -93,7 +93,6 @@ try {
   appendGithubOutput(outputPath, 'target_branch', task.targetBranch);
   appendGithubOutput(outputPath, 'work_branch', workBranch);
   appendGithubOutput(outputPath, 'default_branch', defaultBranch);
-  appendGithubOutput(outputPath, 'repair_attempts', task.repairAttempts);
 
   if (blockingPullRequest) {
     issue = await client.setIssueStatus(

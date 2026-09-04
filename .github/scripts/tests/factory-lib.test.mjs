@@ -33,10 +33,6 @@ apps/it-service-desk
 
 是
 
-### 自动修复次数
-
-1 次
-
 ### 确认
 
 - [x] 我确认
@@ -56,7 +52,6 @@ test('parseIssueTask normalizes the Issue Form body', () => {
     requirements: '员工可以提交工单。\n\n处理人员可以分派、解决工单。',
     acceptanceCriteria: '1. 员工可以查看进度\n2. 服务台可以查看逾期',
     sampleData: '是',
-    repairAttempts: 1,
   });
 });
 
@@ -73,10 +68,14 @@ test('parseIssueTask rejects missing required content', () => {
   );
 });
 
-test('parseIssueTask rejects unsupported repair counts', () => {
-  assert.throws(
-    () => parseIssueTask({ body: validBody.replace('1 次', '2 次') }),
-    TaskInputError,
+test('parseIssueTask ignores the legacy repair count field', () => {
+  const body = validBody.replace(
+    '### 确认',
+    '### 自动修复次数\n\n0 次\n\n### 确认',
+  );
+  assert.deepEqual(
+    parseIssueTask({ body }),
+    parseIssueTask({ body: validBody }),
   );
 });
 

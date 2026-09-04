@@ -11,7 +11,7 @@ flowchart TD
     Create --> Pi["只读凭据环境中的 Pi"]
     Reuse --> Pi
     Pi --> Verify["检查 + SQLite 重建 + 浏览器冒烟"]
-    Verify -->|失败| Repair["最多修复一次"]
+    Verify -->|失败| Repair["Pi 持续修复"]
     Repair --> Verify
     Verify -->|通过| Final["只读 Job 独立复验 Patch"]
     Final --> Publish["不执行生成代码的 Publisher"]
@@ -49,7 +49,7 @@ flowchart TD
 1. 使用 **Pi 搭建任务** Issue Form 创建任务，目标分支使用 `apps/<system-name>`。
 2. 目标分支不存在时，工厂从默认分支创建；存在时继续使用它。
 3. Pi 只修改本地工作区。流水线会运行类型检查、测试、Lint、格式检查、构建、全新 SQLite Migration/Seed 和真实 Chrome 冒烟验证。
-4. 验证失败时按 Issue 设置最多修复一次；仍失败则标记 `pi:failed` 并保留日志 Artifact。
+4. 验证失败时，工厂会把最新日志交给 Pi 并持续执行“修复 → 全量验证”，不设修复次数上限。唯一的总时间上限是 GitHub 托管 Runner 单个 Job 允许的 6 小时；模型/API 致命错误、人工取消或超时时才标记 `pi:failed`。
 5. 验证通过后，只读 Job 在全新工作区应用 Patch 并独立复验；Publisher 只应用已验证 Patch、提交和 Push，再创建或更新指向目标分支的 PR。
 6. 人工合并 PR 后，来源 Issue 自动关闭；同一目标分支上最早的等待任务会自动进入队列。
 

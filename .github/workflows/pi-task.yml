@@ -34,7 +34,6 @@ jobs:
       default_branch: ${{ steps.prepare.outputs.default_branch }}
       base_ref: ${{ steps.prepare.outputs.base_ref }}
       base_sha: ${{ steps.prepare.outputs.base_sha }}
-      repair_attempts: ${{ steps.prepare.outputs.repair_attempts }}
     steps:
       - name: Check out factory control plane
         uses: actions/checkout@v4
@@ -66,7 +65,9 @@ jobs:
     needs: prepare
     if: needs.prepare.outputs.status == 'ready'
     runs-on: ubuntu-latest
-    timeout-minutes: 120
+    # GitHub-hosted runners allow at most six hours per job. Repair attempts
+    # have no separate count limit and continue until verification passes.
+    timeout-minutes: 360
     permissions:
       contents: read
     steps:
@@ -141,34 +142,7 @@ jobs:
             --log "$RUNNER_TEMP/agent-artifacts/pi-implement.jsonl" \
             --agentDir "$RUNNER_TEMP/pi-agent"
 
-      - name: Create clean verification configuration
-        run: |
-          node control/.github/scripts/create-runtime-config.mjs \
-            --output "$RUNNER_TEMP/verify-1.yml" \
-            --database "$RUNNER_TEMP/verify-1/database.sqlite"
-
-      - name: Verify implementation
-        id: verify_1
-        continue-on-error: true
-        run: |
-          set -o pipefail
-          control/.github/scripts/verify.sh \
-            workspace \
-            "$RUNNER_TEMP/verify-1.yml" \
-            "$RUNNER_TEMP/agent-artifacts/verify-1" \
-            2>&1 | tee "$RUNNER_TEMP/agent-artifacts/verify-1.log"
-
-      - name: Build repair prompt
-        if: steps.verify_1.outcome == 'failure' && needs.prepare.outputs.repair_attempts == '1'
-        run: |
-          node control/.github/scripts/build-repair-prompt.mjs \
-            --template control/.github/prompts/repair.md \
-            --task "$RUNNER_TEMP/implement.md" \
-            --log "$RUNNER_TEMP/agent-artifacts/verify-1.log" \
-            --output "$RUNNER_TEMP/repair.md"
-
-      - name: Run one Pi repair
-        if: steps.verify_1.outcome == 'failure' && needs.prepare.outputs.repair_attempts == '1'
+      - name: Verify and repair until successful
         env:
           PI_API_ENDPOINT: ${{ secrets.PI_API_ENDPOINT }}
           PI_API_KEY: ${{ secrets.PI_API_KEY }}
@@ -179,34 +153,12 @@ jobs:
           PI_SUPPORTS_DEVELOPER_ROLE: ${{ vars.PI_SUPPORTS_DEVELOPER_ROLE }}
           PI_SUPPORTS_REASONING_EFFORT: ${{ vars.PI_SUPPORTS_REASONING_EFFORT || 'true' }}
         run: |
-          node control/.github/scripts/run-pi.mjs \
-            --workspace workspace \
-            --prompt "$RUNNER_TEMP/repair.md" \
-            --log "$RUNNER_TEMP/agent-artifacts/pi-repair.jsonl" \
-            --agentDir "$RUNNER_TEMP/pi-repair-agent"
-
-      - name: Create clean repair verification configuration
-        if: steps.verify_1.outcome == 'failure' && needs.prepare.outputs.repair_attempts == '1'
-        run: |
-          node control/.github/scripts/create-runtime-config.mjs \
-            --output "$RUNNER_TEMP/verify-2.yml" \
-            --database "$RUNNER_TEMP/verify-2/database.sqlite"
-
-      - name: Verify repaired implementation
-        if: steps.verify_1.outcome == 'failure' && needs.prepare.outputs.repair_attempts == '1'
-        run: |
-          set -o pipefail
-          control/.github/scripts/verify.sh \
+          control/.github/scripts/verify-and-repair.sh \
+            control \
             workspace \
-            "$RUNNER_TEMP/verify-2.yml" \
-            "$RUNNER_TEMP/agent-artifacts/verify-2" \
-            2>&1 | tee "$RUNNER_TEMP/agent-artifacts/verify-2.log"
-
-      - name: Reject an unverified implementation
-        if: steps.verify_1.outcome == 'failure' && needs.prepare.outputs.repair_attempts == '0'
-        run: |
-          echo "Initial verification failed and this task disabled automatic repair." >&2
-          exit 1
+            "$RUNNER_TEMP/implement.md" \
+            "$RUNNER_TEMP/agent-artifacts" \
+            "$RUNNER_TEMP/repair-state"
 
       - name: Create deterministic patch
         run: |

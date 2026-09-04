@@ -23,7 +23,6 @@ const FIELD_NAMES = {
   requirements: '业务需求',
   acceptanceCriteria: '验收要求',
   sampleData: '示例数据',
-  repairAttempts: '自动修复次数',
 };
 
 const TARGET_BRANCH_RE =
@@ -67,20 +66,12 @@ export function parseIssueTask(issue) {
     return value;
   };
 
-  const repairText = sections.get(FIELD_NAMES.repairAttempts) ?? '1 次';
-  const repairMatch = repairText.trim().match(/^(0|1)(?:\s*次)?$/);
-  if (!repairMatch) {
-    throw new TaskInputError('自动修复次数只能是 `0 次` 或 `1 次`。');
-  }
-  const repairAttempts = Number(repairMatch[1]);
-
   return {
     targetBranch: validateTargetBranch(required('targetBranch')),
     taskType: required('taskType'),
     requirements: required('requirements'),
     acceptanceCriteria: required('acceptanceCriteria'),
     sampleData: sections.get(FIELD_NAMES.sampleData)?.trim() || '是',
-    repairAttempts,
   };
 }
 
