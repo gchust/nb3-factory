@@ -1,0 +1,80 @@
+name: Pi 搭建任务
+description: 让 Pi 创建或继续完善一个 NocoBase 3 业务系统
+title: '[Pi] '
+labels:
+  - pi:pending
+body:
+  - type: markdown
+    attributes:
+      value: |
+        每个 `apps/<name>` 分支代表一个可持续完善的业务系统。Pi 会在独立工作分支修改并向目标分支发起 PR，不会直接提交目标分支。
+
+  - type: input
+    id: target_branch
+    attributes:
+      label: 目标分支
+      description: 不存在时会从默认分支创建；存在时会在其最新状态上继续。
+      placeholder: apps/it-service-desk
+    validations:
+      required: true
+
+  - type: dropdown
+    id: task_type
+    attributes:
+      label: 任务类型
+      options:
+        - 创建新系统
+        - 继续完善现有系统
+        - 修复已有系统
+    validations:
+      required: true
+
+  - type: textarea
+    id: requirements
+    attributes:
+      label: 业务需求
+      description: 用业务人员的语言描述角色、工作过程、规则和希望解决的问题。
+      placeholder: 我是公司的 IT 服务台负责人，希望员工可以提交工单……
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance_criteria
+    attributes:
+      label: 验收要求
+      description: 列出真实用户最终必须能够完成的操作。
+      placeholder: |
+        1. 员工可以提交并跟进自己的工单
+        2. 服务台可以分派并记录处理过程
+        3. 负责人可以查看逾期情况和人员工作量
+    validations:
+      required: true
+
+  - type: dropdown
+    id: sample_data
+    attributes:
+      label: 示例数据
+      options:
+        - 是
+        - 否
+    validations:
+      required: true
+
+  - type: dropdown
+    id: repair_attempts
+    attributes:
+      label: 自动修复次数
+      description: 首次验证失败后，将日志交给 Pi 再修复几次。MVP 最多支持一次。
+      options:
+        - 1 次
+        - 0 次
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: confirmation
+    attributes:
+      label: 确认
+      options:
+        - label: 我确认该任务可以由 Pi 修改目标应用代码，并由 GitHub Actions 创建 Pull Request。
+          required: true

@@ -1,0 +1,393 @@
+name: Pi NocoBase Task
+
+on:
+  issues:
+    types: [opened, reopened]
+  repository_dispatch:
+    types: [pi-task]
+  workflow_dispatch:
+    inputs:
+      issue_number:
+        description: Open owner-authored Issue number to run again
+        required: true
+        type: number
+
+permissions: {}
+
+concurrency:
+  group: pi-agent-global
+  queue: max
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: read
+    outputs:
+      status: ${{ steps.prepare.outputs.status }}
+      issue_number: ${{ steps.prepare.outputs.issue_number }}
+      target_branch: ${{ steps.prepare.outputs.target_branch }}
+      work_branch: ${{ steps.prepare.outputs.work_branch }}
+      default_branch: ${{ steps.prepare.outputs.default_branch }}
+      base_ref: ${{ steps.prepare.outputs.base_ref }}
+      base_sha: ${{ steps.prepare.outputs.base_sha }}
+      repair_attempts: ${{ steps.prepare.outputs.repair_attempts }}
+    steps:
+      - name: Check out factory control plane
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          path: control
+          persist-credentials: false
+
+      - name: Resolve Issue and target branch
+        id: prepare
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          node control/.github/scripts/prepare-task.mjs \
+            --event "$GITHUB_EVENT_PATH" \
+            --metadata "$RUNNER_TEMP/task-metadata.json" \
+            --output "$GITHUB_OUTPUT"
+
+      - name: Save normalized task metadata
+        if: steps.prepare.outputs.status == 'ready'
+        uses: actions/upload-artifact@v4
+        with:
+          name: factory-task-${{ steps.prepare.outputs.issue_number }}
+          path: ${{ runner.temp }}/task-metadata.json
+          if-no-files-found: error
+          retention-days: 14
+
+  agent:
+    needs: prepare
+    if: needs.prepare.outputs.status == 'ready'
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    permissions:
+      contents: read
+    steps:
+      - name: Check out factory control plane
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.prepare.outputs.default_branch }}
+          path: control
+          persist-credentials: false
+
+      - name: Check out application base
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.prepare.outputs.base_sha }}
+          path: workspace
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Download normalized task
+        uses: actions/download-artifact@v4
+        with:
+          name: factory-task-${{ needs.prepare.outputs.issue_number }}
+          path: task
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.7.0
+          run_install: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24.x
+          cache: pnpm
+          cache-dependency-path: workspace/pnpm-lock.yaml
+
+      - name: Install application dependencies
+        working-directory: workspace
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm plugin:skills:sync
+
+      - name: Build the implementation prompt
+        run: |
+          mkdir -p "$RUNNER_TEMP/agent-artifacts"
+          cp task/task-metadata.json "$RUNNER_TEMP/agent-artifacts/task-metadata.json"
+          node control/.github/scripts/build-prompt.mjs \
+            --metadata task/task-metadata.json \
+            --template control/.github/prompts/implement.md \
+            --output "$RUNNER_TEMP/implement.md"
+
+      - name: Install pinned Pi
+        env:
+          PI_VERSION: ${{ vars.PI_VERSION || '0.84.4' }}
+        run: npm install --global --ignore-scripts "@earendil-works/pi-coding-agent@${PI_VERSION}"
+
+      - name: Run Pi implementation
+        env:
+          PI_API_ENDPOINT: ${{ secrets.PI_API_ENDPOINT }}
+          PI_API_KEY: ${{ secrets.PI_API_KEY }}
+          PI_API_TYPE: ${{ vars.PI_API_TYPE || 'openai-completions' }}
+          PI_MODEL: ${{ vars.PI_MODEL }}
+          PI_THINKING: ${{ vars.PI_THINKING || 'high' }}
+          PI_AUTH_HEADER: ${{ vars.PI_AUTH_HEADER || 'true' }}
+          PI_SUPPORTS_DEVELOPER_ROLE: ${{ vars.PI_SUPPORTS_DEVELOPER_ROLE || 'true' }}
+          PI_SUPPORTS_REASONING_EFFORT: ${{ vars.PI_SUPPORTS_REASONING_EFFORT || 'true' }}
+        run: |
+          node control/.github/scripts/run-pi.mjs \
+            --workspace workspace \
+            --prompt "$RUNNER_TEMP/implement.md" \
+            --log "$RUNNER_TEMP/agent-artifacts/pi-implement.jsonl" \
+            --agentDir "$RUNNER_TEMP/pi-agent"
+
+      - name: Create clean verification configuration
+        run: |
+          node control/.github/scripts/create-runtime-config.mjs \
+            --output "$RUNNER_TEMP/verify-1.yml" \
+            --database "$RUNNER_TEMP/verify-1/database.sqlite"
+
+      - name: Verify implementation
+        id: verify_1
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          control/.github/scripts/verify.sh \
+            workspace \
+            "$RUNNER_TEMP/verify-1.yml" \
+            "$RUNNER_TEMP/agent-artifacts/verify-1" \
+            2>&1 | tee "$RUNNER_TEMP/agent-artifacts/verify-1.log"
+
+      - name: Build repair prompt
+        if: steps.verify_1.outcome == 'failure' && needs.prepare.outputs.repair_attempts == '1'
+        run: |
+          node control/.github/scripts/build-repair-prompt.mjs \
+            --template control/.github/prompts/repair.md \
+            --task "$RUNNER_TEMP/implement.md" \
+            --log "$RUNNER_TEMP/agent-artifacts/verify-1.log" \
+            --output "$RUNNER_TEMP/repair.md"
+
+      - name: Run one Pi repair
+        if: steps.verify_1.outcome == 'failure' && needs.prepare.outputs.repair_attempts == '1'
+        env:
+          PI_API_ENDPOINT: ${{ secrets.PI_API_ENDPOINT }}
+          PI_API_KEY: ${{ secrets.PI_API_KEY }}
+          PI_API_TYPE: ${{ vars.PI_API_TYPE || 'openai-completions' }}
+          PI_MODEL: ${{ vars.PI_MODEL }}
+          PI_THINKING: ${{ vars.PI_THINKING || 'high' }}
+          PI_AUTH_HEADER: ${{ vars.PI_AUTH_HEADER || 'true' }}
+          PI_SUPPORTS_DEVELOPER_ROLE: ${{ vars.PI_SUPPORTS_DEVELOPER_ROLE || 'true' }}
+          PI_SUPPORTS_REASONING_EFFORT: ${{ vars.PI_SUPPORTS_REASONING_EFFORT || 'true' }}
+        run: |
+          node control/.github/scripts/run-pi.mjs \
+            --workspace workspace \
+            --prompt "$RUNNER_TEMP/repair.md" \
+            --log "$RUNNER_TEMP/agent-artifacts/pi-repair.jsonl" \
+            --agentDir "$RUNNER_TEMP/pi-repair-agent"
+
+      - name: Create clean repair verification configuration
+        if: steps.verify_1.outcome == 'failure' && needs.prepare.outputs.repair_attempts == '1'
+        run: |
+          node control/.github/scripts/create-runtime-config.mjs \
+            --output "$RUNNER_TEMP/verify-2.yml" \
+            --database "$RUNNER_TEMP/verify-2/database.sqlite"
+
+      - name: Verify repaired implementation
+        if: steps.verify_1.outcome == 'failure' && needs.prepare.outputs.repair_attempts == '1'
+        run: |
+          set -o pipefail
+          control/.github/scripts/verify.sh \
+            workspace \
+            "$RUNNER_TEMP/verify-2.yml" \
+            "$RUNNER_TEMP/agent-artifacts/verify-2" \
+            2>&1 | tee "$RUNNER_TEMP/agent-artifacts/verify-2.log"
+
+      - name: Reject an unverified implementation
+        if: steps.verify_1.outcome == 'failure' && needs.prepare.outputs.repair_attempts == '0'
+        run: |
+          echo "Initial verification failed and this task disabled automatic repair." >&2
+          exit 1
+
+      - name: Create deterministic patch
+        run: |
+          node control/.github/scripts/create-patch.mjs \
+            --workspace workspace \
+            --patch "$RUNNER_TEMP/agent-artifacts/pi.patch" \
+            --summary "$RUNNER_TEMP/agent-artifacts/change-summary.json"
+
+      - name: Upload Pi patch and diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: factory-agent-${{ needs.prepare.outputs.issue_number }}
+          path: ${{ runner.temp }}/agent-artifacts
+          if-no-files-found: warn
+          retention-days: 14
+
+  verify-final:
+    needs: [prepare, agent]
+    if: needs.agent.result == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    permissions:
+      contents: read
+    steps:
+      - name: Check out factory control plane
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.prepare.outputs.default_branch }}
+          path: control
+          persist-credentials: false
+
+      - name: Check out fresh application base
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.prepare.outputs.base_sha }}
+          path: workspace
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Download Pi patch and diagnostics
+        uses: actions/download-artifact@v4
+        with:
+          name: factory-agent-${{ needs.prepare.outputs.issue_number }}
+          path: agent-artifacts
+
+      - name: Apply patch to the task branch
+        run: |
+          node control/.github/scripts/apply-patch.mjs \
+            --workspace workspace \
+            --patch agent-artifacts/pi.patch \
+            --branch "${{ needs.prepare.outputs.work_branch }}"
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.7.0
+          run_install: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24.x
+          cache: pnpm
+          cache-dependency-path: workspace/pnpm-lock.yaml
+
+      - name: Install application dependencies
+        working-directory: workspace
+        run: pnpm install --frozen-lockfile
+
+      - name: Create clean final verification configuration
+        run: |
+          mkdir -p "$RUNNER_TEMP/final-artifacts"
+          node control/.github/scripts/create-runtime-config.mjs \
+            --output "$RUNNER_TEMP/final.yml" \
+            --database "$RUNNER_TEMP/final/database.sqlite"
+
+      - name: Independently verify the applied patch
+        run: |
+          set -o pipefail
+          control/.github/scripts/verify.sh \
+            workspace \
+            "$RUNNER_TEMP/final.yml" \
+            "$RUNNER_TEMP/final-artifacts/verify-final" \
+            2>&1 | tee "$RUNNER_TEMP/final-artifacts/verify-final.log"
+
+      - name: Upload final verification diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: factory-final-${{ needs.prepare.outputs.issue_number }}
+          path: ${{ runner.temp }}/final-artifacts
+          if-no-files-found: warn
+          retention-days: 14
+
+  publish:
+    needs: [prepare, agent, verify-final]
+    if: needs.verify-final.result == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+    steps:
+      - name: Check out factory control plane
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.prepare.outputs.default_branch }}
+          path: control
+          persist-credentials: false
+
+      - name: Check out fresh application base
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.prepare.outputs.base_sha }}
+          path: workspace
+          fetch-depth: 0
+
+      - name: Download verified Pi patch and metadata
+        uses: actions/download-artifact@v4
+        with:
+          name: factory-agent-${{ needs.prepare.outputs.issue_number }}
+          path: agent-artifacts
+
+      - name: Apply verified patch to the task branch
+        run: |
+          node control/.github/scripts/apply-patch.mjs \
+            --workspace workspace \
+            --patch agent-artifacts/pi.patch \
+            --branch "${{ needs.prepare.outputs.work_branch }}"
+
+      - name: Commit and push task branch
+        working-directory: workspace
+        env:
+          BASE_REF: ${{ needs.prepare.outputs.base_ref }}
+          BASE_SHA: ${{ needs.prepare.outputs.base_sha }}
+          ISSUE_NUMBER: ${{ needs.prepare.outputs.issue_number }}
+          WORK_BRANCH: ${{ needs.prepare.outputs.work_branch }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "feat: apply Pi task #${ISSUE_NUMBER}"
+          if [[ "$BASE_REF" == "$WORK_BRANCH" ]]; then
+            lease="refs/heads/${WORK_BRANCH}:${BASE_SHA}"
+          else
+            lease="refs/heads/${WORK_BRANCH}:"
+          fi
+          git push --force-with-lease="$lease" origin "HEAD:refs/heads/${WORK_BRANCH}"
+
+      - name: Create or update Pull Request
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          node control/.github/scripts/publish-pr.mjs \
+            --metadata agent-artifacts/task-metadata.json \
+            --summary agent-artifacts/change-summary.json
+
+  report-failure:
+    needs: [prepare, agent, verify-final, publish]
+    if: >-
+      always() &&
+      needs.prepare.result == 'success' &&
+      needs.prepare.outputs.status == 'ready' &&
+      (needs.agent.result != 'success' ||
+       needs.verify-final.result != 'success' ||
+       needs.publish.result != 'success')
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - name: Check out factory control plane
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.prepare.outputs.default_branch }}
+          path: control
+          persist-credentials: false
+
+      - name: Mark Issue as failed
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: node control/.github/scripts/mark-failure.mjs "${{ needs.prepare.outputs.issue_number }}"
