@@ -134,11 +134,11 @@ jobs:
           CODE_AGENT_API_KEY: ${{ secrets.CODE_AGENT_API_KEY || secrets.PI_API_KEY }}
           CODE_AGENT_API_TYPE: ${{ vars.CODE_AGENT_API_TYPE || vars.PI_API_TYPE || 'openai-completions' }}
           CODE_AGENT_MODEL: ${{ vars.CODE_AGENT_MODEL || vars.PI_MODEL }}
-          CODE_AGENT_THINKING: ${{ vars.CODE_AGENT_THINKING || vars.PI_THINKING || 'high' }}
+          CODE_AGENT_THINKING: ${{ vars.CODE_AGENT_THINKING || vars.PI_THINKING || 'max' }}
           CODE_AGENT_AUTH_HEADER: ${{ vars.CODE_AGENT_AUTH_HEADER || vars.PI_AUTH_HEADER || 'true' }}
           CODE_AGENT_SUPPORTS_DEVELOPER_ROLE: ${{ vars.CODE_AGENT_SUPPORTS_DEVELOPER_ROLE || vars.PI_SUPPORTS_DEVELOPER_ROLE }}
           CODE_AGENT_SUPPORTS_REASONING_EFFORT: ${{ vars.CODE_AGENT_SUPPORTS_REASONING_EFFORT || vars.PI_SUPPORTS_REASONING_EFFORT || 'true' }}
-          CODE_AGENT_INVOCATION_TIMEOUT_SECONDS: ${{ vars.CODE_AGENT_INVOCATION_TIMEOUT_SECONDS || vars.PI_INVOCATION_TIMEOUT_SECONDS || '1800' }}
+          CODE_AGENT_INVOCATION_TIMEOUT_SECONDS: ${{ vars.CODE_AGENT_INVOCATION_TIMEOUT_SECONDS || vars.PI_INVOCATION_TIMEOUT_SECONDS || '0' }}
         run: |
           node control/.github/scripts/run-agent.mjs \
             --workspace workspace \
@@ -159,11 +159,11 @@ jobs:
           CODE_AGENT_API_KEY: ${{ secrets.CODE_AGENT_API_KEY || secrets.PI_API_KEY }}
           CODE_AGENT_API_TYPE: ${{ vars.CODE_AGENT_API_TYPE || vars.PI_API_TYPE || 'openai-completions' }}
           CODE_AGENT_MODEL: ${{ vars.CODE_AGENT_MODEL || vars.PI_MODEL }}
-          CODE_AGENT_THINKING: ${{ vars.CODE_AGENT_THINKING || vars.PI_THINKING || 'high' }}
+          CODE_AGENT_THINKING: ${{ vars.CODE_AGENT_THINKING || vars.PI_THINKING || 'max' }}
           CODE_AGENT_AUTH_HEADER: ${{ vars.CODE_AGENT_AUTH_HEADER || vars.PI_AUTH_HEADER || 'true' }}
           CODE_AGENT_SUPPORTS_DEVELOPER_ROLE: ${{ vars.CODE_AGENT_SUPPORTS_DEVELOPER_ROLE || vars.PI_SUPPORTS_DEVELOPER_ROLE }}
           CODE_AGENT_SUPPORTS_REASONING_EFFORT: ${{ vars.CODE_AGENT_SUPPORTS_REASONING_EFFORT || vars.PI_SUPPORTS_REASONING_EFFORT || 'true' }}
-          CODE_AGENT_INVOCATION_TIMEOUT_SECONDS: ${{ vars.CODE_AGENT_INVOCATION_TIMEOUT_SECONDS || vars.PI_INVOCATION_TIMEOUT_SECONDS || '1800' }}
+          CODE_AGENT_INVOCATION_TIMEOUT_SECONDS: ${{ vars.CODE_AGENT_INVOCATION_TIMEOUT_SECONDS || vars.PI_INVOCATION_TIMEOUT_SECONDS || '0' }}
         run: |
           control/.github/scripts/verify-and-repair.sh \
             control \

@@ -51,3 +51,19 @@ test('PR completion uses only trusted control-plane code for both branch generat
   assert.match(completion, /'pi\/issue-'/);
   assert.doesNotMatch(completion, /pnpm|npm|pull_request\.head\.sha|secrets\./);
 });
+
+test('implementation and repair default to unlimited invocations and max thinking', () => {
+  const timeoutLines = workflow
+    .split('\n')
+    .filter((line) => line.includes('CODE_AGENT_INVOCATION_TIMEOUT_SECONDS:'));
+  const thinkingLines = workflow
+    .split('\n')
+    .filter((line) => line.includes('CODE_AGENT_THINKING:'));
+  assert.equal(timeoutLines.length, 2);
+  assert.equal(thinkingLines.length, 2);
+  for (const line of timeoutLines)
+    assert.match(line, /vars\.PI_INVOCATION_TIMEOUT_SECONDS \|\| '0'/);
+  for (const line of thinkingLines)
+    assert.match(line, /vars\.PI_THINKING \|\| 'max'/);
+  assert.match(workflow, /timeout-minutes: 360/);
+});
