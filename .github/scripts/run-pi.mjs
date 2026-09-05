@@ -152,12 +152,20 @@ const child = spawn(
 const stream = createWriteStream(log, { flags: 'w', mode: 0o600 });
 let stdoutBuffer = '';
 child.stdout.on('data', (chunk) => {
-  process.stdout.write(chunk);
   stream.write(chunk);
   stdoutBuffer += chunk.toString('utf8');
   const lines = stdoutBuffer.split(/\r?\n/u);
   stdoutBuffer = lines.pop() ?? '';
-  for (const line of lines) observeAgentEvent(line);
+  for (const line of lines) {
+    observeAgentEvent(line);
+    writeConsoleAgentEvent(line);
+  }
+});
+child.stdout.on('end', () => {
+  if (!stdoutBuffer) return;
+  observeAgentEvent(stdoutBuffer);
+  writeConsoleAgentEvent(stdoutBuffer);
+  stdoutBuffer = '';
 });
 child.stderr.on('data', (chunk) => {
   process.stderr.write(chunk);
@@ -219,6 +227,34 @@ function observeAgentEvent(line) {
     terminateChild('SIGTERM');
     forceKillTimer = setTimeout(() => terminateChild('SIGKILL'), 5_000);
   }, completionGraceMilliseconds);
+}
+
+/**
+ * Keep the Actions log readable while preserving the complete JSONL artifact.
+ * Pi emits one `message_update` per streamed token, and image tool results may
+ * contain an entire base64 PNG. Neither belongs in the live console log.
+ */
+function writeConsoleAgentEvent(line) {
+  let event;
+  try {
+    event = JSON.parse(line);
+  } catch {
+    process.stdout.write(`${line}\n`);
+    return;
+  }
+  if (event.type === 'message_update') return;
+  if (event.type === 'tool_execution_end') {
+    process.stdout.write(
+      `${JSON.stringify({
+        type: event.type,
+        toolCallId: event.toolCallId,
+        toolName: event.toolName,
+        isError: event.isError,
+      })}\n`,
+    );
+    return;
+  }
+  process.stdout.write(`${line}\n`);
 }
 
 function terminateChild(signal) {

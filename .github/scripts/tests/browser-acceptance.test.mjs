@@ -124,6 +124,13 @@ test('browser acceptance starts the app and records real wrapped commands', () =
         .passed,
       true,
     );
+    const renderedPrompt = readFileSync(
+      path.join(state, 'browser-acceptance.md'),
+      'utf8',
+    );
+    assert.match(renderedPrompt, /完整重新加载应用/u);
+    assert.match(renderedPrompt, /管理员的前端权限缓存/u);
+    assert.match(renderedPrompt, /不要再用 Pi 的 `read` 工具读取 PNG/u);
   } finally {
     rmSync(root, { recursive: true, force: true });
   }

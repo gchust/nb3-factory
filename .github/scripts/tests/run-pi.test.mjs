@@ -152,6 +152,70 @@ test('Pi runner applies DeepSeek V4 compatibility behind a custom proxy', () => 
   }
 });
 
+test('Pi runner keeps streamed deltas and large tool results out of the Actions log', () => {
+  const root = mkdtempSync(path.join(os.tmpdir(), 'nb3-factory-console-'));
+  const workspace = path.join(root, 'workspace');
+  const bin = path.join(root, 'bin');
+  const prompt = path.join(root, 'task.md');
+  const log = path.join(root, 'artifacts', 'pi.jsonl');
+  const agentDir = path.join(root, 'agent');
+
+  try {
+    mkdirSync(workspace);
+    mkdirSync(bin);
+    writeFileSync(prompt, 'test task\n');
+    writeFileSync(
+      path.join(bin, 'pi'),
+      [
+        '#!/usr/bin/env node',
+        "console.log(JSON.stringify({ type: 'message_update', delta: 'hidden-stream-delta' }));",
+        "console.log(JSON.stringify({ type: 'tool_execution_start', toolCallId: '1', toolName: 'read' }));",
+        "console.log(JSON.stringify({ type: 'tool_execution_end', toolCallId: '1', toolName: 'read', result: 'hidden-large-result', isError: false }));",
+        "console.log(JSON.stringify({ type: 'agent_settled' }));",
+        '',
+      ].join('\n'),
+      { mode: 0o755 },
+    );
+
+    const result = spawnSync(
+      process.execPath,
+      [
+        script,
+        '--workspace',
+        workspace,
+        '--prompt',
+        prompt,
+        '--log',
+        log,
+        '--agentDir',
+        agentDir,
+      ],
+      {
+        encoding: 'utf8',
+        env: {
+          ...process.env,
+          PATH: `${bin}:${process.env.PATH}`,
+          PI_API_ENDPOINT: 'https://proxy.example/v1',
+          PI_API_KEY: 'test-key',
+          PI_API_TYPE: 'openai-completions',
+          PI_MODEL: 'test-model',
+        },
+      },
+    );
+
+    assert.equal(result.status, 0, result.stderr);
+    assert.doesNotMatch(result.stdout, /hidden-stream-delta/);
+    assert.doesNotMatch(result.stdout, /hidden-large-result/);
+    assert.match(result.stdout, /tool_execution_start/);
+    assert.match(result.stdout, /tool_execution_end/);
+    const diagnostics = readFileSync(log, 'utf8');
+    assert.match(diagnostics, /hidden-stream-delta/);
+    assert.match(diagnostics, /hidden-large-result/);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
 test('Pi runner bounds one invocation without limiting repair attempts', () => {
   const root = mkdtempSync(path.join(os.tmpdir(), 'nb3-factory-timeout-'));
   const workspace = path.join(root, 'workspace');
