@@ -317,7 +317,7 @@ test('Code Agent runner closes a completed invocation whose stream stays open', 
           CODE_AGENT_API_KEY: 'test-key',
           CODE_AGENT_API_TYPE: 'openai-completions',
           CODE_AGENT_MODEL: 'test-model',
-          CODE_AGENT_INVOCATION_TIMEOUT_SECONDS: '30',
+          CODE_AGENT_INVOCATION_TIMEOUT_SECONDS: '0',
         },
         timeout: 8_000,
       },
@@ -331,3 +331,67 @@ test('Code Agent runner closes a completed invocation whose stream stays open', 
     rmSync(root, { recursive: true, force: true });
   }
 });
+
+for (const timeout of [undefined, '', '0']) {
+  test(`Code Agent runs without an invocation timer when timeout is ${JSON.stringify(timeout)}`, () => {
+    const root = mkdtempSync(path.join(os.tmpdir(), 'nb3-factory-unlimited-'));
+    try {
+      const bin = path.join(root, 'bin');
+      mkdirSync(bin);
+      writeFileSync(path.join(root, 'task.md'), 'test task');
+      writeFileSync(
+        path.join(bin, 'pi'),
+        '#!/usr/bin/env node\nsetTimeout(() => console.log(JSON.stringify(process.argv.slice(2))), 100);\n',
+        { mode: 0o755 },
+      );
+      // Reject timer creation in the adapter, without waiting thirty minutes.
+      // The fake Pi is a separate process and keeps its real timers.
+      const preload = path.join(root, 'reject-timer.mjs');
+      writeFileSync(
+        preload,
+        `
+        import timers from 'node:timers';
+        import { syncBuiltinESMExports } from 'node:module';
+        timers.setTimeout = () => { throw new Error('Unexpected invocation timer'); };
+        syncBuiltinESMExports();
+      `,
+      );
+      const env = {
+        ...process.env,
+        PATH: `${bin}:${process.env.PATH}`,
+        CODE_AGENT_API_ENDPOINT: 'https://proxy.example/v1',
+        CODE_AGENT_API_KEY: 'test-key',
+        CODE_AGENT_MODEL: 'deepseek-v4-flash',
+        CODE_AGENT_THINKING: '',
+      };
+      delete env.CODE_AGENT_INVOCATION_TIMEOUT_SECONDS;
+      if (timeout !== undefined)
+        env.CODE_AGENT_INVOCATION_TIMEOUT_SECONDS = timeout;
+      for (const thinking of ['', 'high']) {
+        env.CODE_AGENT_THINKING = thinking;
+        const result = spawnSync(
+          process.execPath,
+          [
+            '--import',
+            preload,
+            script,
+            '--workspace',
+            root,
+            '--prompt',
+            path.join(root, 'task.md'),
+            '--log',
+            path.join(root, 'agent.jsonl'),
+            '--agentDir',
+            path.join(root, 'agent'),
+          ],
+          { env, encoding: 'utf8', timeout: 5_000 },
+        );
+        assert.equal(result.status, 0, result.stderr);
+        const args = JSON.parse(result.stdout.trim());
+        assert.equal(args[args.indexOf('--thinking') + 1], thinking || 'max');
+      }
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+}

@@ -16,10 +16,10 @@ const endpoint = requiredEnv('CODE_AGENT_API_ENDPOINT');
 const apiKey = requiredEnv('CODE_AGENT_API_KEY');
 const api = process.env.CODE_AGENT_API_TYPE || 'openai-completions';
 const model = requiredEnv('CODE_AGENT_MODEL');
-const thinking = process.env.CODE_AGENT_THINKING || 'high';
-const invocationTimeoutSeconds = parsePositiveInteger(
+const thinking = process.env.CODE_AGENT_THINKING || 'max';
+const invocationTimeoutSeconds = parseInvocationTimeout(
   process.env.CODE_AGENT_INVOCATION_TIMEOUT_SECONDS,
-  1_800,
+  0,
 );
 const completionGraceMilliseconds = 3_000;
 const normalizedModel = model.toLowerCase();
@@ -177,14 +177,17 @@ let timedOut = false;
 let forceKillTimer;
 let completionTimer;
 let completionTermination = false;
-const invocationTimer = setTimeout(() => {
-  timedOut = true;
-  process.stderr.write(
-    `Pi invocation timed out after ${invocationTimeoutSeconds} seconds.\n`,
-  );
-  terminateChild('SIGTERM');
-  forceKillTimer = setTimeout(() => terminateChild('SIGKILL'), 5_000);
-}, invocationTimeoutSeconds * 1_000);
+let invocationTimer;
+if (invocationTimeoutSeconds > 0) {
+  invocationTimer = setTimeout(() => {
+    timedOut = true;
+    process.stderr.write(
+      `Pi invocation timed out after ${invocationTimeoutSeconds} seconds.\n`,
+    );
+    terminateChild('SIGTERM');
+    forceKillTimer = setTimeout(() => terminateChild('SIGKILL'), 5_000);
+  }, invocationTimeoutSeconds * 1_000);
+}
 
 const exitCode = await new Promise((resolve, reject) => {
   child.once('error', reject);
@@ -284,12 +287,12 @@ function requiredEnv(name) {
   return value;
 }
 
-function parsePositiveInteger(value, fallback) {
+function parseInvocationTimeout(value, fallback) {
   if (value == null || value.trim() === '') return fallback;
   const parsed = Number(value);
-  if (!Number.isInteger(parsed) || parsed < 1 || parsed > 21_600) {
+  if (!Number.isInteger(parsed) || parsed < 0 || parsed > 21_600) {
     throw new Error(
-      'CODE_AGENT_INVOCATION_TIMEOUT_SECONDS must be an integer from 1 to 21600.',
+      'CODE_AGENT_INVOCATION_TIMEOUT_SECONDS must be an integer from 0 to 21600 (0 disables the timeout).',
     );
   }
   return parsed;
