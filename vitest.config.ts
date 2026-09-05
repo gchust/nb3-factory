@@ -32,6 +32,18 @@ export default createReactVitestConfig({
     // A generated application ships no `tests/` — the template's `files` field does not include it — so an empty run
     // is the expected outcome there rather than a failure on `pnpm test` before a line of code has been written.
     passWithNoTests: true,
+    // The application boots the real server stack in these tests, and the
+    // migration loader reaches each plugin's database/migrations/*.ts files by
+    // dynamic import at runtime. Node refuses to type-strip .ts files under
+    // node_modules, so vite-node must transform them instead. The dynamic
+    // import chain starts inside @nocobase/db itself, so every @nocobase
+    // package has to stay on the vite module graph for those imports to be
+    // intercepted at all.
+    server: {
+      deps: {
+        inline: [/@nocobase\//],
+      },
+    },
     coverage: {
       provider: 'v8',
       reportsDirectory: './coverage',

@@ -2,6 +2,8 @@ import { useSyncServerLocale } from '@nocobase/app-plugin-i18n/client';
 import { useState, type ReactElement } from 'react';
 import { Outlet } from 'react-router';
 
+import { Toaster } from '@/components/ui/sonner';
+
 import { AppHeader } from './app-header.js';
 import { AppSidebar } from './app-sidebar.js';
 
@@ -13,6 +15,7 @@ export function AppShell(): ReactElement {
 
   return (
     <div className='flex min-h-svh bg-background'>
+      <Toaster position='bottom-right' />
       <AppSidebar
         desktopCollapsed={desktopSidebarCollapsed}
         mobileOpen={mobileSidebarOpen}

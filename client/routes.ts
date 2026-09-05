@@ -11,6 +11,18 @@ const appRoutes: AppClientRouteContribution = defineAppRoutes([
     name: 'home',
     path: '/',
   },
+  {
+    auth: 'required',
+    componentLoader: () => import('./pages/equipment.js'),
+    name: 'equipment',
+    path: '/equipment',
+  },
+  {
+    auth: 'required',
+    componentLoader: () => import('./pages/equipment-borrow-records.js'),
+    name: 'equipment-borrow-records',
+    path: '/equipment/borrow-records',
+  },
 ]);
 
 const settingsRoutes: AppClientRouteContribution = defineSettingsRoutes([]);
