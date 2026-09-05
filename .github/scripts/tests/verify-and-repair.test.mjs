@@ -79,7 +79,7 @@ test('repair loop keeps retrying until Agent Browser acceptance succeeds', () =>
       ].join('\n'),
     );
     writeNodeStub(
-      path.join(scripts, 'run-pi.mjs'),
+      path.join(scripts, 'run-agent.mjs'),
       [
         "import { appendFileSync } from 'node:fs';",
         "appendFileSync(process.env.REPAIR_COUNTER, 'repair\\n');",

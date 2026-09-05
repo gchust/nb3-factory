@@ -11,14 +11,14 @@ import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
 
-const script = path.resolve(import.meta.dirname, '..', 'run-pi.mjs');
+const script = path.resolve(import.meta.dirname, '..', 'run-agent.mjs');
 
-test('Pi runner keeps the API key indirect and redacts diagnostic artifacts', () => {
-  const root = mkdtempSync(path.join(os.tmpdir(), 'nb3-factory-pi-'));
+test('Code Agent runner keeps the API key indirect and redacts diagnostic artifacts', () => {
+  const root = mkdtempSync(path.join(os.tmpdir(), 'nb3-factory-agent-'));
   const workspace = path.join(root, 'workspace');
   const bin = path.join(root, 'bin');
   const prompt = path.join(root, 'task.md');
-  const log = path.join(root, 'artifacts', 'pi.jsonl');
+  const log = path.join(root, 'artifacts', 'agent.jsonl');
   const agentDir = path.join(root, 'agent');
   const endpoint = 'https://private-endpoint.example/v1';
   const apiKey = 'test-api-key-that-must-not-leak';
@@ -32,7 +32,7 @@ test('Pi runner keeps the API key indirect and redacts diagnostic artifacts', ()
       path.join(bin, 'pi'),
       [
         '#!/usr/bin/env node',
-        'console.log(JSON.stringify({ key: process.env.PI_API_KEY, endpoint: process.env.PI_API_ENDPOINT, browserPassword: process.env.FACTORY_TEST_PASSWORD }));',
+        'console.log(JSON.stringify({ key: process.env.CODE_AGENT_API_KEY, endpoint: process.env.CODE_AGENT_API_ENDPOINT, browserPassword: process.env.FACTORY_TEST_PASSWORD }));',
         '',
       ].join('\n'),
       { mode: 0o755 },
@@ -55,10 +55,10 @@ test('Pi runner keeps the API key indirect and redacts diagnostic artifacts', ()
         env: {
           ...process.env,
           PATH: `${bin}:${process.env.PATH}`,
-          PI_API_ENDPOINT: endpoint,
-          PI_API_KEY: apiKey,
-          PI_API_TYPE: 'openai-completions',
-          PI_MODEL: 'test-model',
+          CODE_AGENT_API_ENDPOINT: endpoint,
+          CODE_AGENT_API_KEY: apiKey,
+          CODE_AGENT_API_TYPE: 'openai-completions',
+          CODE_AGENT_MODEL: 'test-model',
           FACTORY_TEST_PASSWORD: browserPassword,
         },
         stdio: 'pipe',
@@ -74,19 +74,19 @@ test('Pi runner keeps the API key indirect and redacts diagnostic artifacts', ()
     const models = JSON.parse(
       readFileSync(path.join(agentDir, 'models.json'), 'utf8'),
     );
-    assert.equal(models.providers['nb3-factory'].apiKey, '$PI_API_KEY');
+    assert.equal(models.providers['nb3-factory'].apiKey, '$CODE_AGENT_API_KEY');
     assert.equal(models.providers['nb3-factory'].baseUrl, endpoint);
   } finally {
     rmSync(root, { recursive: true, force: true });
   }
 });
 
-test('Pi runner applies DeepSeek V4 compatibility behind a custom proxy', () => {
+test('Code Agent runner applies DeepSeek V4 compatibility behind a custom proxy', () => {
   const root = mkdtempSync(path.join(os.tmpdir(), 'nb3-factory-deepseek-'));
   const workspace = path.join(root, 'workspace');
   const bin = path.join(root, 'bin');
   const prompt = path.join(root, 'task.md');
-  const log = path.join(root, 'artifacts', 'pi.jsonl');
+  const log = path.join(root, 'artifacts', 'agent.jsonl');
   const agentDir = path.join(root, 'agent');
 
   try {
@@ -116,10 +116,10 @@ test('Pi runner applies DeepSeek V4 compatibility behind a custom proxy', () => 
         env: {
           ...process.env,
           PATH: `${bin}:${process.env.PATH}`,
-          PI_API_ENDPOINT: 'https://proxy.example/v1',
-          PI_API_KEY: 'test-key',
-          PI_API_TYPE: 'openai-completions',
-          PI_MODEL: 'deepseek-v4-flash',
+          CODE_AGENT_API_ENDPOINT: 'https://proxy.example/v1',
+          CODE_AGENT_API_KEY: 'test-key',
+          CODE_AGENT_API_TYPE: 'openai-completions',
+          CODE_AGENT_MODEL: 'deepseek-v4-flash',
         },
         stdio: 'pipe',
       },
@@ -152,12 +152,12 @@ test('Pi runner applies DeepSeek V4 compatibility behind a custom proxy', () => 
   }
 });
 
-test('Pi runner keeps streamed deltas and large tool results out of the Actions log', () => {
+test('Code Agent runner keeps streamed deltas and large tool results out of the Actions log', () => {
   const root = mkdtempSync(path.join(os.tmpdir(), 'nb3-factory-console-'));
   const workspace = path.join(root, 'workspace');
   const bin = path.join(root, 'bin');
   const prompt = path.join(root, 'task.md');
-  const log = path.join(root, 'artifacts', 'pi.jsonl');
+  const log = path.join(root, 'artifacts', 'agent.jsonl');
   const agentDir = path.join(root, 'agent');
 
   try {
@@ -195,10 +195,10 @@ test('Pi runner keeps streamed deltas and large tool results out of the Actions 
         env: {
           ...process.env,
           PATH: `${bin}:${process.env.PATH}`,
-          PI_API_ENDPOINT: 'https://proxy.example/v1',
-          PI_API_KEY: 'test-key',
-          PI_API_TYPE: 'openai-completions',
-          PI_MODEL: 'test-model',
+          CODE_AGENT_API_ENDPOINT: 'https://proxy.example/v1',
+          CODE_AGENT_API_KEY: 'test-key',
+          CODE_AGENT_API_TYPE: 'openai-completions',
+          CODE_AGENT_MODEL: 'test-model',
         },
       },
     );
@@ -216,12 +216,12 @@ test('Pi runner keeps streamed deltas and large tool results out of the Actions 
   }
 });
 
-test('Pi runner bounds one invocation without limiting repair attempts', () => {
+test('Code Agent runner bounds one invocation without limiting repair attempts', () => {
   const root = mkdtempSync(path.join(os.tmpdir(), 'nb3-factory-timeout-'));
   const workspace = path.join(root, 'workspace');
   const bin = path.join(root, 'bin');
   const prompt = path.join(root, 'task.md');
-  const log = path.join(root, 'artifacts', 'pi.jsonl');
+  const log = path.join(root, 'artifacts', 'agent.jsonl');
   const agentDir = path.join(root, 'agent');
 
   try {
@@ -253,11 +253,11 @@ test('Pi runner bounds one invocation without limiting repair attempts', () => {
         env: {
           ...process.env,
           PATH: `${bin}:${process.env.PATH}`,
-          PI_API_ENDPOINT: 'https://proxy.example/v1',
-          PI_API_KEY: 'test-key',
-          PI_API_TYPE: 'openai-completions',
-          PI_MODEL: 'test-model',
-          PI_INVOCATION_TIMEOUT_SECONDS: '1',
+          CODE_AGENT_API_ENDPOINT: 'https://proxy.example/v1',
+          CODE_AGENT_API_KEY: 'test-key',
+          CODE_AGENT_API_TYPE: 'openai-completions',
+          CODE_AGENT_MODEL: 'test-model',
+          CODE_AGENT_INVOCATION_TIMEOUT_SECONDS: '1',
         },
         timeout: 5_000,
       },
@@ -271,12 +271,12 @@ test('Pi runner bounds one invocation without limiting repair attempts', () => {
   }
 });
 
-test('Pi runner closes a completed invocation whose stream stays open', () => {
+test('Code Agent runner closes a completed invocation whose stream stays open', () => {
   const root = mkdtempSync(path.join(os.tmpdir(), 'nb3-factory-settled-'));
   const workspace = path.join(root, 'workspace');
   const bin = path.join(root, 'bin');
   const prompt = path.join(root, 'task.md');
-  const log = path.join(root, 'artifacts', 'pi.jsonl');
+  const log = path.join(root, 'artifacts', 'agent.jsonl');
   const agentDir = path.join(root, 'agent');
 
   try {
@@ -313,11 +313,11 @@ test('Pi runner closes a completed invocation whose stream stays open', () => {
         env: {
           ...process.env,
           PATH: `${bin}:${process.env.PATH}`,
-          PI_API_ENDPOINT: 'https://proxy.example/v1',
-          PI_API_KEY: 'test-key',
-          PI_API_TYPE: 'openai-completions',
-          PI_MODEL: 'test-model',
-          PI_INVOCATION_TIMEOUT_SECONDS: '30',
+          CODE_AGENT_API_ENDPOINT: 'https://proxy.example/v1',
+          CODE_AGENT_API_KEY: 'test-key',
+          CODE_AGENT_API_TYPE: 'openai-completions',
+          CODE_AGENT_MODEL: 'test-model',
+          CODE_AGENT_INVOCATION_TIMEOUT_SECONDS: '30',
         },
         timeout: 8_000,
       },

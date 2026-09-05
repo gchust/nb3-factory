@@ -1,20 +1,22 @@
 import { appendFileSync } from 'node:fs';
 
+import { isTaskStatus } from './task-compat.mjs';
+
 export const FACTORY_PROVIDER = 'nb3-factory';
 
 export const STATUS_LABELS = {
-  'pi:pending': ['d4c5f9', 'Waiting for the factory to accept the task'],
-  'pi:queued': ['bfdadc', 'Queued for the serialized Pi worker'],
-  'pi:running': ['1d76db', 'Pi is implementing the task'],
-  'pi:verifying': ['fbca04', 'The generated application is being verified'],
-  'pi:review': ['0e8a16', 'A generated pull request is ready for review'],
-  'pi:waiting': [
+  'agent:pending': ['d4c5f9', 'Waiting for the factory to accept the task'],
+  'agent:queued': ['bfdadc', 'Queued for the serialized Code Agent worker'],
+  'agent:running': ['1d76db', 'Code Agent is implementing the task'],
+  'agent:verifying': ['fbca04', 'The generated application is being verified'],
+  'agent:review': ['0e8a16', 'A generated pull request is ready for review'],
+  'agent:waiting': [
     'c5def5',
-    'Waiting for another Pi pull request on the target branch',
+    'Waiting for another Code Agent pull request on the target branch',
   ],
-  'pi:succeeded': ['0e8a16', 'The generated pull request was merged'],
-  'pi:failed': ['d93f0b', 'The factory run failed'],
-  'pi:needs-input': ['b60205', 'The task needs owner input'],
+  'agent:succeeded': ['0e8a16', 'The generated pull request was merged'],
+  'agent:failed': ['d93f0b', 'The factory run failed'],
+  'agent:needs-input': ['b60205', 'The task needs owner input'],
 };
 
 const FIELD_NAMES = {
@@ -125,7 +127,7 @@ export function assertSafeChangedPaths(paths) {
 
   if (forbidden.length > 0) {
     throw new TaskInputError(
-      `Pi 修改了工厂控制文件，已拒绝发布：${forbidden.join(', ')}`,
+      `Code Agent 修改了工厂控制文件，已拒绝发布：${forbidden.join(', ')}`,
     );
   }
 }
@@ -219,7 +221,7 @@ export class GitHubClient {
     const current = (issue.labels ?? []).map((label) =>
       typeof label === 'string' ? label : label.name,
     );
-    const labels = current.filter((name) => !name?.startsWith('pi:'));
+    const labels = current.filter((name) => !isTaskStatus(name));
     labels.push(status);
 
     const updated = await this.request('PATCH', `/issues/${issue.number}`, {

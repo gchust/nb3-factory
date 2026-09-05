@@ -69,19 +69,19 @@ while true; do
   echo "::endgroup::"
 
   repair_prompt="$state_dir/repair-${verification_attempt}.md"
-  echo "Verification attempt ${verification_attempt} failed; starting Pi repair ${verification_attempt}."
+  echo "Verification attempt ${verification_attempt} failed; starting Code Agent repair ${verification_attempt}."
   node "$control_dir/.github/scripts/build-repair-prompt.mjs" \
     --template "$control_dir/.github/prompts/repair.md" \
     --task "$task_prompt" \
     --log "$verification_log" \
     --output "$repair_prompt"
 
-  echo "::group::Pi repair ${verification_attempt}"
-  node "$control_dir/.github/scripts/run-pi.mjs" \
+  echo "::group::Code Agent repair ${verification_attempt}"
+  node "$control_dir/.github/scripts/run-agent.mjs" \
     --workspace "$workspace" \
     --prompt "$repair_prompt" \
-    --log "$artifact_dir/pi-repair-${verification_attempt}.jsonl" \
-    --agentDir "$state_dir/pi-repair-${verification_attempt}"
+    --log "$artifact_dir/agent-repair-${verification_attempt}.jsonl" \
+    --agentDir "$state_dir/agent-repair-${verification_attempt}"
   echo "::endgroup::"
 
   verification_attempt=$((verification_attempt + 1))

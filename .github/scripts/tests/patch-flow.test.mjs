@@ -17,7 +17,7 @@ test('patch flow preserves new and modified files', () => {
   const root = mkdtempSync(path.join(os.tmpdir(), 'nb3-factory-patch-'));
   const source = path.join(root, 'source');
   const publisher = path.join(root, 'publisher');
-  const patch = path.join(root, 'bundle', 'pi.patch');
+  const patch = path.join(root, 'bundle', 'agent.patch');
   const summary = path.join(root, 'bundle', 'summary.json');
 
   try {
@@ -55,7 +55,7 @@ test('patch flow preserves new and modified files', () => {
         '--patch',
         patch,
         '--branch',
-        'pi/issue-1',
+        'agent/issue-1',
       ],
       { stdio: 'pipe' },
     );
@@ -84,7 +84,7 @@ test('patch flow can revalidate an unchanged existing work branch', () => {
   const root = mkdtempSync(path.join(os.tmpdir(), 'nb3-factory-empty-patch-'));
   const source = path.join(root, 'source');
   const publisher = path.join(root, 'publisher');
-  const patch = path.join(root, 'bundle', 'pi.patch');
+  const patch = path.join(root, 'bundle', 'agent.patch');
   const summary = path.join(root, 'bundle', 'summary.json');
 
   try {
@@ -121,7 +121,7 @@ test('patch flow can revalidate an unchanged existing work branch', () => {
         '--patch',
         patch,
         '--branch',
-        'pi/issue-1',
+        'agent/issue-1',
       ],
       { stdio: 'pipe' },
     );

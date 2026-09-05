@@ -1,6 +1,6 @@
 # nb3-factory
 
-一个独立的 NocoBase 3 软件工厂实验仓库：你在 GitHub Issue Form 中写业务需求，GitHub Actions 串行调用 Pi 修改应用、自动验证，并向 Issue 指定的长期应用分支发起 Pull Request。
+一个独立的 NocoBase 3 软件工厂实验仓库：你在 GitHub Issue Form 中写业务需求，GitHub Actions 串行调用 Code Agent 修改应用、自动验证，并向 Issue 指定的长期应用分支发起 Pull Request。
 
 ```mermaid
 flowchart TD
@@ -8,14 +8,14 @@ flowchart TD
     Queue --> Branch{"目标分支存在？"}
     Branch -->|否| Create["从默认分支创建"]
     Branch -->|是| Reuse["复用最新应用代码"]
-    Create --> Pi["只读凭据环境中的 Pi"]
-    Reuse --> Pi
-    Pi --> Verify["检查 + SQLite 重建 + Agent Browser 验收"]
-    Verify -->|失败| Repair["Pi 持续修复"]
+    Create --> Agent["只读凭据环境中的 Code Agent"]
+    Reuse --> Agent
+    Agent --> Verify["检查 + SQLite 重建 + Agent Browser 验收"]
+    Verify -->|失败| Repair["Code Agent 持续修复"]
     Repair --> Verify
     Verify -->|通过| Final["只读 Job 独立复验 Patch"]
     Final --> Publish["不执行生成代码的 Publisher"]
-    Publish --> PR["pi/issue-N → apps/name"]
+    Publish --> PR["agent/issue-N → apps/name"]
     PR -->|人工合并| Done["关闭 Issue 并唤醒下一任务"]
 ```
 
@@ -23,19 +23,20 @@ flowchart TD
 
 在仓库 `Settings → Secrets and variables → Actions` 中配置：
 
-| 类型     | 名称                            | 必填 | 说明                                                                                               |
-| -------- | ------------------------------- | ---- | -------------------------------------------------------------------------------------------------- |
-| Secret   | `PI_API_ENDPOINT`               | 是   | Pi 使用的模型 API Base URL                                                                         |
-| Secret   | `PI_API_KEY`                    | 是   | 模型 API Key                                                                                       |
-| Variable | `PI_MODEL`                      | 是   | 自定义 Provider 中的模型 ID                                                                        |
-| Variable | `PI_API_TYPE`                   | 否   | 默认 `openai-completions`；也支持 `openai-responses`、`anthropic-messages`、`google-generative-ai` |
-| Variable | `PI_THINKING`                   | 否   | 默认 `high`                                                                                        |
-| Variable | `PI_VERSION`                    | 否   | 默认固定为 `0.84.4`                                                                                |
-| Variable | `AGENT_BROWSER_VERSION`         | 否   | 默认固定为 `0.36.0`；用于登录后逐条执行 Issue 验收要求                                             |
-| Variable | `PI_AUTH_HEADER`                | 否   | 默认 `true`，为兼容 API 添加 Bearer Authorization                                                  |
-| Variable | `PI_SUPPORTS_DEVELOPER_ROLE`    | 否   | 普通模型默认 `true`；DeepSeek V4 自动使用 `false`，也可显式覆盖                                    |
-| Variable | `PI_SUPPORTS_REASONING_EFFORT`  | 否   | 默认 `true`；不接受 `reasoning_effort` 的接口可设为 `false`                                        |
-| Variable | `PI_INVOCATION_TIMEOUT_SECONDS` | 否   | 单次 Pi 调用超时，默认 `1800` 秒；不限制后续修复轮数                                               |
+| 类型     | 名称                                    | 必填 | 说明                                                                                               |
+| -------- | --------------------------------------- | ---- | -------------------------------------------------------------------------------------------------- |
+| Secret   | `CODE_AGENT_API_ENDPOINT`               | 是   | Code Agent 使用的模型 API Base URL                                                                 |
+| Secret   | `CODE_AGENT_API_KEY`                    | 是   | 模型 API Key                                                                                       |
+| Variable | `CODE_AGENT_MODEL`                      | 是   | 自定义 Provider 中的模型 ID                                                                        |
+| Variable | `CODE_AGENT_API_TYPE`                   | 否   | 默认 `openai-completions`；也支持 `openai-responses`、`anthropic-messages`、`google-generative-ai` |
+| Variable | `CODE_AGENT_THINKING`                   | 否   | 默认 `high`                                                                                        |
+| Variable | `CODE_AGENT_VERSION`                    | 否   | 默认固定为 `0.84.4`                                                                                |
+| Variable | `CODE_AGENT_ENGINE`                     | 否   | 选择已注册的执行器；当前内置 `pi`，留空使用内置默认值                                              |
+| Variable | `AGENT_BROWSER_VERSION`                 | 否   | 默认固定为 `0.36.0`；用于登录后逐条执行 Issue 验收要求                                             |
+| Variable | `CODE_AGENT_AUTH_HEADER`                | 否   | 默认 `true`，为兼容 API 添加 Bearer Authorization                                                  |
+| Variable | `CODE_AGENT_SUPPORTS_DEVELOPER_ROLE`    | 否   | 普通模型默认 `true`；DeepSeek V4 自动使用 `false`，也可显式覆盖                                    |
+| Variable | `CODE_AGENT_SUPPORTS_REASONING_EFFORT`  | 否   | 默认 `true`；不接受 `reasoning_effort` 的接口可设为 `false`                                        |
+| Variable | `CODE_AGENT_INVOCATION_TIMEOUT_SECONDS` | 否   | 单次 Code Agent 调用超时，默认 `1800` 秒；不限制后续修复轮数                                       |
 
 通过自定义域名使用 `deepseek-v4-flash` 或 `deepseek-v4-pro` 时，运行器会自动启用 DeepSeek 思考格式、工具调用上下文回放兼容和对应的思考等级，无需让 API 域名包含 `deepseek.com`。
 
@@ -44,27 +45,41 @@ flowchart TD
 1. 允许工作流读写仓库；
 2. 打开 **Allow GitHub Actions to create and approve pull requests**。
 
-不要把 API Key 写入 Issue、仓库文件或 Variable。模型 Secret 只会进入 Pi 执行步骤；Pi 所在 Job 没有仓库写权限。最终复验 Job 同样只有读取权限，拥有仓库写权限的 Publisher 既拿不到模型 Secret，也不执行 Pi 生成的依赖、构建或测试脚本。
+不要把 API Key 写入 Issue、仓库文件或 Variable。模型 Secret 只会进入 Code Agent 执行步骤；Code Agent 所在 Job 没有仓库写权限。最终复验 Job 同样只有读取权限，拥有仓库写权限的 Publisher 既拿不到模型 Secret，也不执行 Code Agent 生成的依赖、构建或测试脚本。
 
 ## 工作方式
 
-1. 使用 **Pi 搭建任务** Issue Form 创建任务，目标分支使用 `apps/<system-name>`。
+1. 使用 **Code Agent 搭建任务** Issue Form 创建任务，目标分支使用 `apps/<system-name>`。
 2. 目标分支不存在时，工厂从默认分支创建；存在时继续使用它。
-3. Pi 只修改本地工作区。流水线会运行类型检查、测试、Lint、格式检查、构建和全新 SQLite Migration/Seed；随后独立 QA Agent 使用 `agent-browser` 登录一次性数据库中的维护者账号，并在需要时注册普通测试用户，逐条实际操作 Issue 的验收要求，保存结构化报告和截图。只打开首页或停留在登录页不会通过。
-4. 代码检查或 Agent Browser 业务验收失败时，工厂会把最新日志与浏览器复现报告交给 Pi，并持续执行“修复 → 全量验证 → 浏览器验收”，不设修复次数上限。单次 Pi 调用默认最多 30 分钟，以免一次请求卡死；这不会限制下一轮修复。唯一的总时间上限是 GitHub 托管 Runner 单个 Job 允许的 6 小时；模型/API/浏览器基础设施错误、人工取消或超时时才标记 `pi:failed`。
+3. Code Agent 只修改本地工作区。流水线会运行类型检查、测试、Lint、格式检查、构建和全新 SQLite Migration/Seed；随后独立 QA Agent 使用 `agent-browser` 登录一次性数据库中的维护者账号，并在需要时注册普通测试用户，逐条实际操作 Issue 的验收要求，保存结构化报告和截图。只打开首页或停留在登录页不会通过。
+4. 代码检查或 Agent Browser 业务验收失败时，工厂会把最新日志与浏览器复现报告交给 Code Agent，并持续执行“修复 → 全量验证 → 浏览器验收”，不设修复次数上限。单次 Code Agent 调用默认最多 30 分钟，以免一次请求卡死；这不会限制下一轮修复。唯一的总时间上限是 GitHub 托管 Runner 单个 Job 允许的 6 小时；模型/API/浏览器基础设施错误、人工取消或超时时才标记 `agent:failed`。
 5. 验证通过后，只读 Job 在全新工作区应用 Patch 并独立复验；Publisher 只应用已验证 Patch、提交和 Push，再创建或更新指向目标分支的 PR。
 6. 人工合并 PR 后，来源 Issue 自动关闭；同一目标分支上最早的等待任务会自动进入队列。
 
-目标分支在 PR 人工合并前不会包含 Pi 的改动。要在合并前本地预览某个任务，请检出对应工作分支，例如 Issue #2：
+目标分支在 PR 人工合并前不会包含 Code Agent 的改动。要在合并前本地预览某个任务，请检出 PR 显示的工作分支，例如新建的 Issue #42：
 
 ```bash
 git fetch origin
-git switch --track origin/pi/issue-2
+git switch --track origin/agent/issue-42
 pnpm install
 pnpm dev
 ```
 
-同一目标分支只能同时有一个未合并的 Pi PR。整个仓库的 Pi 任务也使用一个 `queue: max` 并发组，因此一次只运行一个，最多排队 100 个任务。
+同一目标分支只能同时有一个未合并的 Code Agent PR。整个仓库的 Code Agent 任务也使用一个 `queue: max` 并发组，因此一次只运行一个，最多排队 100 个任务。
+
+## 执行器与兼容迁移
+
+仓库名仍为 `gchust/nb3-factory`。Code Agent 是工厂的执行角色，不是某一个产品名称。Issue 模板、Workflow、PR 标题、状态标签和日志都使用中立命名；新任务分支为 `agent/issue-N`，状态为 `agent:*`。
+
+调度、浏览器验收和持续修复只调用 `run-agent.mjs`。安装由 `install-agent.mjs` 完成，固定版本与执行模块在 `agent-registry.mjs` 注册。目前真正可用的内置执行器是 Pi，其专属配置、CLI 参数、流式事件与超时收尾都隔离在 `agents/pi.mjs`；不会把未实现的执行器宣称为已支持。
+
+接入其他执行器（包括 Python 实现）时，在受信任的控制代码中新增适配器并注册，不接受 Issue 指定任意脚本路径或安装包。适配器读取 `CODE_AGENT_*` 环境变量，接受 `--workspace`、`--prompt`、`--log`、`--agentDir`；负责非交互执行、超时终止及日志脱敏，成功退出 `0`，错误非零退出。其日志格式可由执行器决定，工厂以退出码和独立验证结果判定成功。
+
+已有配置不会因改名失效：Workflow 优先读取 `CODE_AGENT_*`，尚未设置时兼容对应的旧 `PI_*` Secrets/Variables。GitHub 不能读回 Secret 的明文，因此本次不会假装已重命名远端 Secret；可以在设置中重新录入新名称，再移除旧配置。
+
+已有 `pi/issue-N` 分支和 PR 保持不动，避免破坏未合并交付；重跑继续使用原工作分支。旧 `pi:*` 标签、PR 来源标记及 `pi-task` 唤醒事件仍可识别，状态更新后换成 `agent:*`。历史任务请在 **Code Agent NocoBase Task** 中通过 Issue 编号重跑，不要重跑旧 Workflow 的历史运行。
+
+PR 关闭后仅运行默认分支的控制脚本来关闭 Issue 和唤醒队列，不检出或执行 PR 代码。这使用 GitHub 的 [`pull_request_target` 受信任控制流程](https://docs.github.com/en/actions/reference/security/securely-using-pull_request_target)，保证较旧应用分支也能处理新命名的任务。
 
 ## 本地检查工厂脚本
 

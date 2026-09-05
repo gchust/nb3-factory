@@ -14,7 +14,7 @@ git(['add', '--intent-to-add', '--all']);
 const names = splitNull(git(['diff', '--name-only', '-z', 'HEAD']));
 if (names.length === 0) {
   if (!parseBoolean(args['allow-empty'])) {
-    throw new TaskInputError('Pi 没有产生可提交的文件修改。');
+    throw new TaskInputError('Code Agent 没有产生可提交的文件修改。');
   }
 
   mkdirSync(path.dirname(patchPath), { recursive: true });

@@ -1,10 +1,10 @@
-name: Pi NocoBase Task
+name: Code Agent NocoBase Task
 
 on:
   issues:
     types: [opened, reopened]
   repository_dispatch:
-    types: [pi-task]
+    types: [code-agent-task, pi-task] # Legacy dispatches remain readable.
   workflow_dispatch:
     inputs:
       issue_number:
@@ -15,7 +15,7 @@ on:
 permissions: {}
 
 concurrency:
-  group: pi-agent-global
+  group: code-agent-global
   queue: max
 
 jobs:
@@ -63,6 +63,8 @@ jobs:
 
   agent:
     needs: prepare
+    env:
+      CODE_AGENT_ENGINE: ${{ vars.CODE_AGENT_ENGINE }}
     if: needs.prepare.outputs.status == 'ready'
     runs-on: ubuntu-latest
     # GitHub-hosted runners allow at most six hours per job. Repair attempts
@@ -120,29 +122,29 @@ jobs:
             --template control/.github/prompts/implement.md \
             --output "$RUNNER_TEMP/implement.md"
 
-      - name: Install pinned Pi
+      - name: Install pinned Code Agent
         env:
-          PI_VERSION: ${{ vars.PI_VERSION || '0.84.4' }}
-        run: npm install --global --ignore-scripts "@earendil-works/pi-coding-agent@${PI_VERSION}"
+          CODE_AGENT_VERSION: ${{ vars.CODE_AGENT_VERSION || vars.PI_VERSION }}
+        run: node control/.github/scripts/install-agent.mjs
 
-      - name: Run Pi implementation
+      - name: Run Code Agent implementation
         if: needs.prepare.outputs.base_ref != needs.prepare.outputs.work_branch
         env:
-          PI_API_ENDPOINT: ${{ secrets.PI_API_ENDPOINT }}
-          PI_API_KEY: ${{ secrets.PI_API_KEY }}
-          PI_API_TYPE: ${{ vars.PI_API_TYPE || 'openai-completions' }}
-          PI_MODEL: ${{ vars.PI_MODEL }}
-          PI_THINKING: ${{ vars.PI_THINKING || 'high' }}
-          PI_AUTH_HEADER: ${{ vars.PI_AUTH_HEADER || 'true' }}
-          PI_SUPPORTS_DEVELOPER_ROLE: ${{ vars.PI_SUPPORTS_DEVELOPER_ROLE }}
-          PI_SUPPORTS_REASONING_EFFORT: ${{ vars.PI_SUPPORTS_REASONING_EFFORT || 'true' }}
-          PI_INVOCATION_TIMEOUT_SECONDS: ${{ vars.PI_INVOCATION_TIMEOUT_SECONDS || '1800' }}
+          CODE_AGENT_API_ENDPOINT: ${{ secrets.CODE_AGENT_API_ENDPOINT || secrets.PI_API_ENDPOINT }}
+          CODE_AGENT_API_KEY: ${{ secrets.CODE_AGENT_API_KEY || secrets.PI_API_KEY }}
+          CODE_AGENT_API_TYPE: ${{ vars.CODE_AGENT_API_TYPE || vars.PI_API_TYPE || 'openai-completions' }}
+          CODE_AGENT_MODEL: ${{ vars.CODE_AGENT_MODEL || vars.PI_MODEL }}
+          CODE_AGENT_THINKING: ${{ vars.CODE_AGENT_THINKING || vars.PI_THINKING || 'high' }}
+          CODE_AGENT_AUTH_HEADER: ${{ vars.CODE_AGENT_AUTH_HEADER || vars.PI_AUTH_HEADER || 'true' }}
+          CODE_AGENT_SUPPORTS_DEVELOPER_ROLE: ${{ vars.CODE_AGENT_SUPPORTS_DEVELOPER_ROLE || vars.PI_SUPPORTS_DEVELOPER_ROLE }}
+          CODE_AGENT_SUPPORTS_REASONING_EFFORT: ${{ vars.CODE_AGENT_SUPPORTS_REASONING_EFFORT || vars.PI_SUPPORTS_REASONING_EFFORT || 'true' }}
+          CODE_AGENT_INVOCATION_TIMEOUT_SECONDS: ${{ vars.CODE_AGENT_INVOCATION_TIMEOUT_SECONDS || vars.PI_INVOCATION_TIMEOUT_SECONDS || '1800' }}
         run: |
-          node control/.github/scripts/run-pi.mjs \
+          node control/.github/scripts/run-agent.mjs \
             --workspace workspace \
             --prompt "$RUNNER_TEMP/implement.md" \
-            --log "$RUNNER_TEMP/agent-artifacts/pi-implement.jsonl" \
-            --agentDir "$RUNNER_TEMP/pi-agent"
+            --log "$RUNNER_TEMP/agent-artifacts/agent-implement.jsonl" \
+            --agentDir "$RUNNER_TEMP/code-agent"
 
       - name: Install pinned Agent Browser
         env:
@@ -153,15 +155,15 @@ jobs:
 
       - name: Verify and repair until successful
         env:
-          PI_API_ENDPOINT: ${{ secrets.PI_API_ENDPOINT }}
-          PI_API_KEY: ${{ secrets.PI_API_KEY }}
-          PI_API_TYPE: ${{ vars.PI_API_TYPE || 'openai-completions' }}
-          PI_MODEL: ${{ vars.PI_MODEL }}
-          PI_THINKING: ${{ vars.PI_THINKING || 'high' }}
-          PI_AUTH_HEADER: ${{ vars.PI_AUTH_HEADER || 'true' }}
-          PI_SUPPORTS_DEVELOPER_ROLE: ${{ vars.PI_SUPPORTS_DEVELOPER_ROLE }}
-          PI_SUPPORTS_REASONING_EFFORT: ${{ vars.PI_SUPPORTS_REASONING_EFFORT || 'true' }}
-          PI_INVOCATION_TIMEOUT_SECONDS: ${{ vars.PI_INVOCATION_TIMEOUT_SECONDS || '1800' }}
+          CODE_AGENT_API_ENDPOINT: ${{ secrets.CODE_AGENT_API_ENDPOINT || secrets.PI_API_ENDPOINT }}
+          CODE_AGENT_API_KEY: ${{ secrets.CODE_AGENT_API_KEY || secrets.PI_API_KEY }}
+          CODE_AGENT_API_TYPE: ${{ vars.CODE_AGENT_API_TYPE || vars.PI_API_TYPE || 'openai-completions' }}
+          CODE_AGENT_MODEL: ${{ vars.CODE_AGENT_MODEL || vars.PI_MODEL }}
+          CODE_AGENT_THINKING: ${{ vars.CODE_AGENT_THINKING || vars.PI_THINKING || 'high' }}
+          CODE_AGENT_AUTH_HEADER: ${{ vars.CODE_AGENT_AUTH_HEADER || vars.PI_AUTH_HEADER || 'true' }}
+          CODE_AGENT_SUPPORTS_DEVELOPER_ROLE: ${{ vars.CODE_AGENT_SUPPORTS_DEVELOPER_ROLE || vars.PI_SUPPORTS_DEVELOPER_ROLE }}
+          CODE_AGENT_SUPPORTS_REASONING_EFFORT: ${{ vars.CODE_AGENT_SUPPORTS_REASONING_EFFORT || vars.PI_SUPPORTS_REASONING_EFFORT || 'true' }}
+          CODE_AGENT_INVOCATION_TIMEOUT_SECONDS: ${{ vars.CODE_AGENT_INVOCATION_TIMEOUT_SECONDS || vars.PI_INVOCATION_TIMEOUT_SECONDS || '1800' }}
         run: |
           control/.github/scripts/verify-and-repair.sh \
             control \
@@ -177,11 +179,11 @@ jobs:
         run: |
           node control/.github/scripts/create-patch.mjs \
             --workspace workspace \
-            --patch "$RUNNER_TEMP/agent-artifacts/pi.patch" \
+            --patch "$RUNNER_TEMP/agent-artifacts/agent.patch" \
             --summary "$RUNNER_TEMP/agent-artifacts/change-summary.json" \
             --allow-empty "$ALLOW_EMPTY_PATCH"
 
-      - name: Upload Pi patch and diagnostics
+      - name: Upload Code Agent patch and diagnostics
         if: always()
         uses: actions/upload-artifact@v4
         with:
@@ -213,7 +215,7 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
 
-      - name: Download Pi patch and diagnostics
+      - name: Download Code Agent patch and diagnostics
         uses: actions/download-artifact@v4
         with:
           name: factory-agent-${{ needs.prepare.outputs.issue_number }}
@@ -223,7 +225,7 @@ jobs:
         run: |
           node control/.github/scripts/apply-patch.mjs \
             --workspace workspace \
-            --patch agent-artifacts/pi.patch \
+            --patch agent-artifacts/agent.patch \
             --branch "${{ needs.prepare.outputs.work_branch }}"
 
       - name: Set up pnpm
@@ -292,7 +294,7 @@ jobs:
           path: workspace
           fetch-depth: 0
 
-      - name: Download verified Pi patch and metadata
+      - name: Download verified Code Agent patch and metadata
         uses: actions/download-artifact@v4
         with:
           name: factory-agent-${{ needs.prepare.outputs.issue_number }}
@@ -302,7 +304,7 @@ jobs:
         run: |
           node control/.github/scripts/apply-patch.mjs \
             --workspace workspace \
-            --patch agent-artifacts/pi.patch \
+            --patch agent-artifacts/agent.patch \
             --branch "${{ needs.prepare.outputs.work_branch }}"
 
       - name: Commit and push task branch
@@ -318,7 +320,7 @@ jobs:
           if git diff --cached --quiet; then
             echo "No new application changes; reusing the verified work branch commit."
           else
-            git commit -m "feat: apply Pi task #${ISSUE_NUMBER}"
+            git commit -m "feat: apply Code Agent task #${ISSUE_NUMBER}"
             if [[ "$BASE_REF" == "$WORK_BRANCH" ]]; then
               lease="refs/heads/${WORK_BRANCH}:${BASE_SHA}"
             else

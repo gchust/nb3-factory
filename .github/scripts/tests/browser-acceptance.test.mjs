@@ -37,6 +37,7 @@ test('browser acceptance starts the app and records real wrapped commands', () =
       'agent-browser-wrapper.sh',
       'build-browser-prompt.mjs',
       'factory-lib.mjs',
+      'task-compat.mjs',
       'validate-browser-report.mjs',
     ]) {
       copyFileSync(path.join(scripts, file), path.join(controlScripts, file));
@@ -66,7 +67,7 @@ test('browser acceptance starts the app and records real wrapped commands', () =
       '#!/usr/bin/env bash\nexit 0\n',
     );
     writeFileSync(
-      path.join(controlScripts, 'run-pi.mjs'),
+      path.join(controlScripts, 'run-agent.mjs'),
       [
         "import { Buffer } from 'node:buffer';",
         "import { execFileSync } from 'node:child_process';",
@@ -130,7 +131,7 @@ test('browser acceptance starts the app and records real wrapped commands', () =
     );
     assert.match(renderedPrompt, /完整重新加载应用/u);
     assert.match(renderedPrompt, /管理员的前端权限缓存/u);
-    assert.match(renderedPrompt, /不要再用 Pi 的 `read` 工具读取 PNG/u);
+    assert.match(renderedPrompt, /不要再用 Code Agent 的 `read` 工具读取 PNG/u);
   } finally {
     rmSync(root, { recursive: true, force: true });
   }

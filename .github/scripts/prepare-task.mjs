@@ -8,6 +8,7 @@ import {
   issueNumberFromEvent,
   parseIssueTask,
 } from './factory-lib.mjs';
+import { resolveTaskBranch, taskIssueNumber } from './task-compat.mjs';
 
 const args = parseArgs(process.argv.slice(2));
 const event = JSON.parse(readFileSync(args.event, 'utf8'));
@@ -43,7 +44,6 @@ try {
   const task = parseIssueTask(issue);
   const repositoryInfo = await client.getRepository();
   const defaultBranch = repositoryInfo.default_branch;
-  const workBranch = `pi/issue-${issueNumber}`;
 
   let targetRef = await client.getRef(task.targetBranch, true);
   let targetCreated = false;
@@ -57,6 +57,12 @@ try {
   }
 
   const openPullRequests = await client.listOpenPullRequests(task.targetBranch);
+  const workBranch = await resolveTaskBranch(
+    client,
+    issueNumber,
+    openPullRequests,
+    repository,
+  );
   const ownPullRequest = openPullRequests.find(
     (pull) =>
       pull.head?.repo?.full_name === repository &&
@@ -65,7 +71,7 @@ try {
   const blockingPullRequest = openPullRequests.find(
     (pull) =>
       pull.head?.repo?.full_name === repository &&
-      pull.head?.ref?.startsWith('pi/issue-') &&
+      taskIssueNumber(pull.head?.ref) != null &&
       pull.head.ref !== workBranch,
   );
 
@@ -97,9 +103,9 @@ try {
   if (blockingPullRequest) {
     issue = await client.setIssueStatus(
       issue,
-      'pi:waiting',
+      'agent:waiting',
       [
-        `目标分支 \`${task.targetBranch}\` 当前已有未合并的 Pi PR：${blockingPullRequest.html_url}。`,
+        `目标分支 \`${task.targetBranch}\` 当前已有未合并的 Code Agent PR：${blockingPullRequest.html_url}。`,
         '',
         '这个任务会在该 PR 关闭后自动重新进入全局队列。',
       ].join('\n'),
@@ -118,9 +124,9 @@ try {
 
   await client.setIssueStatus(
     issue,
-    'pi:running',
+    'agent:running',
     [
-      `Pi 工厂已开始处理。`,
+      `Code Agent 工厂已开始处理。`,
       '',
       `- 目标分支：\`${task.targetBranch}\`${targetCreated ? '（刚从默认分支创建）' : ''}`,
       `- 工作分支：\`${workBranch}\``,
@@ -134,7 +140,7 @@ try {
   await client.ensureStatusLabels();
   await client.setIssueStatus(
     issue,
-    'pi:needs-input',
+    'agent:needs-input',
     `任务未进入队列：${error.message}`,
   );
   appendGithubOutput(outputPath, 'status', 'rejected');

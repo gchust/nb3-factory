@@ -17,6 +17,6 @@ const runUrl = `${process.env.GITHUB_SERVER_URL}/${repository}/actions/runs/${pr
 await client.ensureStatusLabels();
 await client.setIssueStatus(
   issue,
-  'pi:failed',
+  'agent:failed',
   `本次实现或最终验证失败。请查看 [运行日志](${runUrl})；修正配置后可重新运行 Workflow。`,
 );

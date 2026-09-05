@@ -39,7 +39,7 @@ evidence_dir="$artifact_dir/evidence"
 commands_log="$artifact_dir/agent-browser-commands.log"
 browser_prompt="$state_dir/browser-acceptance.md"
 browser_agent_workspace="$state_dir/browser-agent-workspace"
-browser_agent_dir="$state_dir/pi-browser-agent"
+browser_agent_dir="$state_dir/agent-browser-agent"
 wrapper_dir="$state_dir/browser-bin"
 mkdir -p "$evidence_dir" "$browser_agent_workspace" "$wrapper_dir"
 : >"$commands_log"
@@ -111,10 +111,10 @@ export AGENT_BROWSER_SESSION="qa-${attempt}"
 export AGENT_BROWSER_NO_WEBMCP=1
 export PATH="$wrapper_dir:$PATH"
 
-node "$control_dir/.github/scripts/run-pi.mjs" \
+node "$control_dir/.github/scripts/run-agent.mjs" \
   --workspace "$browser_agent_workspace" \
   --prompt "$browser_prompt" \
-  --log "$artifact_dir/pi-browser-acceptance.jsonl" \
+  --log "$artifact_dir/agent-browser-acceptance.jsonl" \
   --agentDir "$browser_agent_dir"
 
 set +e

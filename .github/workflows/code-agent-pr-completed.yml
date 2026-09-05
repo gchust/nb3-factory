@@ -1,7 +1,9 @@
-name: Pi PR Completed
+name: Code Agent PR Completed
 
 on:
-  pull_request:
+  # Metadata only: always use default-branch control code, including for older
+  # application branches. Never check out or execute the PR's application code.
+  pull_request_target:
     types: [closed]
 
 permissions: {}
@@ -10,7 +12,8 @@ jobs:
   complete:
     if: >-
       github.event.pull_request.head.repo.full_name == github.repository &&
-      startsWith(github.event.pull_request.head.ref, 'pi/issue-')
+      (startsWith(github.event.pull_request.head.ref, 'agent/issue-') ||
+       startsWith(github.event.pull_request.head.ref, 'pi/issue-'))
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:

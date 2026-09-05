@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs';
 
 import { GitHubClient } from './factory-lib.mjs';
+import { stripTaskTitle } from './task-compat.mjs';
 
 const args = parseArgs(process.argv.slice(2));
 const metadata = JSON.parse(readFileSync(args.metadata, 'utf8'));
@@ -13,8 +14,11 @@ const client = new GitHubClient({
 const issue = await client.getIssue(metadata.issue.number);
 const owner = metadata.repository.split('/')[0];
 const runUrl = `${process.env.GITHUB_SERVER_URL}/${metadata.repository}/actions/runs/${process.env.GITHUB_RUN_ID}`;
-const titleText = metadata.issue.title.replace(/^\[Pi\]\s*/i, '').trim();
-const title = `[Pi #${metadata.issue.number}] ${titleText}`.slice(0, 240);
+const titleText = stripTaskTitle(metadata.issue.title);
+const title = `[Code Agent #${metadata.issue.number}] ${titleText}`.slice(
+  0,
+  240,
+);
 const changeSummary = summary.reusedExistingWorkBranch
   ? '- 本次重新验收未产生额外代码修改；沿用当前工作分支和 PR 差异'
   : `- 修改文件：${summary.counts.files}（新增 ${summary.counts.added}、修改 ${summary.counts.modified}、删除 ${summary.counts.deleted}、重命名 ${summary.counts.renamed}）`;
@@ -23,8 +27,8 @@ const body = [
   '',
   `Related to #${metadata.issue.number}`,
   '',
-  `<!-- pi-issue: ${metadata.issue.number} -->`,
-  `<!-- pi-target-branch: ${metadata.task.targetBranch} -->`,
+  `<!-- agent-issue: ${metadata.issue.number} -->`,
+  `<!-- agent-target-branch: ${metadata.task.targetBranch} -->`,
   '',
   '## 任务',
   '',
@@ -81,7 +85,7 @@ if (pull) {
 await client.ensureStatusLabels();
 await client.setIssueStatus(
   issue,
-  'pi:review',
+  'agent:review',
   [
     `实现与独立验证已完成：${pull.html_url}`,
     '',

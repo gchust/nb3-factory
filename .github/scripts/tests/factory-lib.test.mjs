@@ -84,7 +84,7 @@ test('target branch validation accepts only apps namespace', () => {
   assert.equal(validateTargetBranch('apps/team/crm_2'), 'apps/team/crm_2');
   for (const invalid of [
     'main',
-    'pi/issue-1',
+    'agent/issue-1',
     'apps/CRM',
     'apps/../main',
     'apps/a lock',
@@ -106,12 +106,12 @@ test('issue number resolves from every supported trigger', () => {
   );
 });
 
-test('factory control files cannot be published from a Pi patch', () => {
+test('factory control files cannot be published from a Code Agent patch', () => {
   assert.doesNotThrow(() =>
     assertSafeChangedPaths(['client/pages/orders.tsx', 'pnpm-lock.yaml']),
   );
   for (const file of [
-    '.github/workflows/pi-task.yml',
+    '.github/workflows/code-agent-task.yml',
     '.npmrc',
     '.gitmodules',
     'config.yml',

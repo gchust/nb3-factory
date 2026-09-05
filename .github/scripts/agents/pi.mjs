@@ -9,16 +9,16 @@ import path from 'node:path';
 import { finished } from 'node:stream/promises';
 import { clearTimeout, setTimeout } from 'node:timers';
 
-import { FACTORY_PROVIDER, parseBoolean } from './factory-lib.mjs';
+import { FACTORY_PROVIDER, parseBoolean } from '../factory-lib.mjs';
 
 const args = parseArgs(process.argv.slice(2));
-const endpoint = requiredEnv('PI_API_ENDPOINT');
-const apiKey = requiredEnv('PI_API_KEY');
-const api = process.env.PI_API_TYPE || 'openai-completions';
-const model = requiredEnv('PI_MODEL');
-const thinking = process.env.PI_THINKING || 'high';
+const endpoint = requiredEnv('CODE_AGENT_API_ENDPOINT');
+const apiKey = requiredEnv('CODE_AGENT_API_KEY');
+const api = process.env.CODE_AGENT_API_TYPE || 'openai-completions';
+const model = requiredEnv('CODE_AGENT_MODEL');
+const thinking = process.env.CODE_AGENT_THINKING || 'high';
 const invocationTimeoutSeconds = parsePositiveInteger(
-  process.env.PI_INVOCATION_TIMEOUT_SECONDS,
+  process.env.CODE_AGENT_INVOCATION_TIMEOUT_SECONDS,
   1_800,
 );
 const completionGraceMilliseconds = 3_000;
@@ -45,12 +45,13 @@ const supportedThinking = new Set([
   'max',
 ]);
 
-if (!supportedApis.has(api)) throw new Error(`Unsupported PI_API_TYPE: ${api}`);
+if (!supportedApis.has(api))
+  throw new Error(`Unsupported CODE_AGENT_API_TYPE: ${api}`);
 if (!supportedThinking.has(thinking))
-  throw new Error(`Unsupported PI_THINKING: ${thinking}`);
+  throw new Error(`Unsupported CODE_AGENT_THINKING: ${thinking}`);
 const parsedEndpoint = new URL(endpoint);
 if (!['http:', 'https:'].includes(parsedEndpoint.protocol)) {
-  throw new Error('PI_API_ENDPOINT must use http or https.');
+  throw new Error('CODE_AGENT_API_ENDPOINT must use http or https.');
 }
 
 const agentDir = path.resolve(args.agentDir);
@@ -63,15 +64,15 @@ mkdirSync(path.dirname(log), { recursive: true });
 const provider = {
   baseUrl: endpoint,
   api,
-  apiKey: '$PI_API_KEY',
-  authHeader: parseBoolean(process.env.PI_AUTH_HEADER, true),
+  apiKey: '$CODE_AGENT_API_KEY',
+  authHeader: parseBoolean(process.env.CODE_AGENT_AUTH_HEADER, true),
   compat: {
     supportsDeveloperRole: parseBoolean(
-      process.env.PI_SUPPORTS_DEVELOPER_ROLE,
+      process.env.CODE_AGENT_SUPPORTS_DEVELOPER_ROLE,
       !isDeepseekV4,
     ),
     supportsReasoningEffort: parseBoolean(
-      process.env.PI_SUPPORTS_REASONING_EFFORT,
+      process.env.CODE_AGENT_SUPPORTS_REASONING_EFFORT,
       true,
     ),
     ...(isDeepseekV4
@@ -87,7 +88,7 @@ const provider = {
     {
       id: model,
       name: model,
-      reasoning: parseBoolean(process.env.PI_MODEL_REASONING, true),
+      reasoning: parseBoolean(process.env.CODE_AGENT_MODEL_REASONING, true),
       ...(isDeepseekV4
         ? {
             thinkingLevelMap: {
@@ -140,7 +141,7 @@ const child = spawn(
     detached: process.platform !== 'win32',
     env: {
       ...process.env,
-      PI_API_KEY: apiKey,
+      CODE_AGENT_API_KEY: apiKey,
       PI_CODING_AGENT_DIR: agentDir,
       PI_SKIP_VERSION_CHECK: '1',
       PI_TELEMETRY: '0',
@@ -288,7 +289,7 @@ function parsePositiveInteger(value, fallback) {
   const parsed = Number(value);
   if (!Number.isInteger(parsed) || parsed < 1 || parsed > 21_600) {
     throw new Error(
-      'PI_INVOCATION_TIMEOUT_SECONDS must be an integer from 1 to 21600.',
+      'CODE_AGENT_INVOCATION_TIMEOUT_SECONDS must be an integer from 1 to 21600.',
     );
   }
   return parsed;

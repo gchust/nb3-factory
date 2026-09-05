@@ -1,15 +1,15 @@
-name: Pi 搭建任务
-description: 让 Pi 创建或继续完善一个 NocoBase 3 业务系统
-title: '[Pi] '
+name: Code Agent 搭建任务
+description: 让 Code Agent 创建或继续完善一个 NocoBase 3 业务系统
+title: '[Code Agent] '
 labels:
-  - pi:pending
+  - agent:pending
 body:
   - type: markdown
     attributes:
       value: |
-        每个 `apps/<name>` 分支代表一个可持续完善的业务系统。Pi 会在独立工作分支修改并向目标分支发起 PR，不会直接提交目标分支。
+        每个 `apps/<name>` 分支代表一个可持续完善的业务系统。Code Agent 会在独立工作分支修改并向目标分支发起 PR，不会直接提交目标分支。
 
-        自动验证失败时，Pi 会根据最新日志持续修复并重新验证，不限修复次数；GitHub 托管 Runner 的单个 Job 最长运行 6 小时。
+        自动验证失败时，Code Agent 会根据最新日志持续修复并重新验证，不限修复次数；GitHub 托管 Runner 的单个 Job 最长运行 6 小时。
 
   - type: input
     id: target_branch
@@ -67,5 +67,5 @@ body:
     attributes:
       label: 确认
       options:
-        - label: 我确认该任务可以由 Pi 修改目标应用代码，并由 GitHub Actions 创建 Pull Request。
+        - label: 我确认该任务可以由 Code Agent 修改目标应用代码，并由 GitHub Actions 创建 Pull Request。
           required: true
