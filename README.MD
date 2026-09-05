@@ -1,3 +1,5 @@
+<!-- factory:readme:start -->
+
 # nb3-factory
 
 一个独立的 NocoBase 3 软件工厂实验仓库：你在 GitHub Issue Form 中写业务需求，GitHub Actions 串行调用 Code Agent 修改应用、自动验证，并向 Issue 指定的长期应用分支发起 Pull Request。
@@ -81,6 +83,24 @@ pnpm dev
 
 PR 关闭后仅运行默认分支的控制脚本来关闭 Issue 和唤醒队列，不检出或执行 PR 代码。这使用 GitHub 的 [`pull_request_target` 受信任控制流程](https://docs.github.com/en/actions/reference/security/securely-using-pull_request_target)，保证较旧应用分支也能处理新命名的任务。
 
+## 刷新到最新 NocoBase 3 基线
+
+在 **Actions → Refresh NocoBase Template → Run workflow** 中选择 `develop` 运行。每次都会执行官方创建命令，使用创建器和默认模板的 `latest` 发布版本：
+
+```bash
+pnpm create @nocobase/app@latest nb3-factory --db-dialect=sqlite --no-install --template=default --template-tag=latest
+```
+
+Action 在全新目录生成应用、安装并锁定依赖，运行工厂测试、应用检查与构建、全新 SQLite Migration/Seed 和登录后的浏览器冒烟。全部通过后，创建一个新的根提交，并以 `--force-with-lease` 强制替换 `develop`；失败时不会更新分支。
+
+刷新保留 `.github/`、`.npmrc`、工厂使用说明、AGENTS 中的工厂边界，以及 `factory:test` 和浏览器测试依赖。工厂脚本的 Node.js ESLint 配置追加到新模板配置中。应用源码、NocoBase 依赖、开发指引和 Skills 都来自新模板，不从旧基线复制。生成的 `config.yml`、认证密钥、数据库、依赖目录和构建产物不会进入提交。`factory-template.json` 记录实际模板版本、刷新时间和来源控制提交。
+
+已知的 `1.0.0-beta.15` 模板漏声明通知 Provider 使用的 `sonner` 和 Workflow 插件使用的 `@xyflow/react`，生产构建也漏复制 NocoBase 包源配置。只对这一模板版本补入缺失依赖、将 `.npmrc` 复制到构建目录，并在元数据的 `compatibilityFixes` 中记录；上游已有声明时保留其版本。其他版本或构建错误会明确失败，不会自动引入旧应用依赖。
+
+刷新与搭建任务共用串行队列；推送时会原子地创建 `factory-backup/develop-<run-id>-<attempt>` 备份并更新 `develop`。如果有人在生成期间更新了 `develop`，Action 会拒绝覆盖。已有 `apps/*` 分支保持原样：要测试新基线，请在新的 Issue 中指定一个尚不存在的 `apps/<name>`。仓库 Secrets、Variables 也不会被 Git 推送改动。
+
+这个 Action 使用内置 `GITHUB_TOKEN`，无需模型 Key 或额外 Token。`develop` 的仓库规则需要允许此工作流强制推送；被规则拒绝时会报错，不会自动修改保护规则。可勾选 `dry_run` 只生成和验证，不更新远端分支。
+
 ## 本地检查工厂脚本
 
 ```bash
@@ -94,6 +114,8 @@ pnpm check
 ```
 
 ---
+
+<!-- factory:readme:end -->
 
 # NocoBase 3 Application
 

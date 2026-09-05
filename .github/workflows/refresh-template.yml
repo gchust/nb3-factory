@@ -1,0 +1,159 @@
+name: Refresh NocoBase Template
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: Generate and verify only; do not replace develop
+        type: boolean
+        default: false
+
+permissions: {}
+
+# Share the whole-workflow queue with business tasks, including their publisher.
+concurrency:
+  group: code-agent-global
+  queue: max
+
+jobs:
+  generate:
+    if: github.actor == github.repository_owner
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    permissions:
+      contents: read
+    outputs:
+      base_sha: ${{ steps.base.outputs.sha }}
+    steps:
+      - name: Require develop as the selected workflow branch
+        env:
+          SELECTED_REF: ${{ github.ref }}
+        run: |
+          if [[ "$SELECTED_REF" != "refs/heads/develop" ]]; then
+            echo "Run this workflow from develop." >&2
+            exit 1
+          fi
+
+      - name: Check out current factory control plane
+        uses: actions/checkout@v4
+        with:
+          ref: develop
+          path: control
+          persist-credentials: false
+
+      - name: Record the exact develop commit
+        id: base
+        working-directory: control
+        run: echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.7.0
+          run_install: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24.x
+
+      - name: Create a fresh application from the latest published template
+        env:
+          CI: true
+        run: |
+          mkdir -p "$RUNNER_TEMP/template-generation" "$RUNNER_TEMP/template-diagnostics"
+          cp control/.npmrc "$RUNNER_TEMP/template-generation/.npmrc"
+          cd "$RUNNER_TEMP/template-generation"
+          pnpm create @nocobase/app@latest nb3-factory \
+            --db-dialect=sqlite --no-install --template=default --template-tag=latest
+
+      - name: Restore factory controls and fresh-template development guidance
+        env:
+          BASE_SHA: ${{ steps.base.outputs.sha }}
+        run: |
+          node control/.github/scripts/overlay-factory.mjs \
+            control "$RUNNER_TEMP/template-generation/nb3-factory" "$BASE_SHA"
+
+      - name: Install and lock the new application dependencies
+        run: |
+          cd "$RUNNER_TEMP/template-generation/nb3-factory"
+          pnpm install --no-frozen-lockfile
+          pnpm plugin:skills:sync
+          pnpm exec prettier --write package.json README.MD AGENTS.md eslint.config.js scripts/build.mjs factory-template.json
+
+      - name: Verify factory, application, clean database, and browser login
+        run: |
+          set -o pipefail
+          node --test control/.github/scripts/tests/*.test.mjs
+          node control/.github/scripts/create-runtime-config.mjs \
+            --output "$RUNNER_TEMP/template-verification.yml" \
+            --database "$RUNNER_TEMP/template-verification/database.sqlite"
+          control/.github/scripts/verify.sh \
+            "$RUNNER_TEMP/template-generation/nb3-factory" \
+            "$RUNNER_TEMP/template-verification.yml" \
+            "$RUNNER_TEMP/template-diagnostics" \
+            2>&1 | tee "$RUNNER_TEMP/template-diagnostics/verify.log"
+
+      - name: Package only the verified baseline as one new root commit
+        run: |
+          cd "$RUNNER_TEMP/template-generation/nb3-factory"
+          rm -f config.yml
+          git init --initial-branch=template
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .
+          node --input-type=module <<'NODE'
+          import { execFileSync } from 'node:child_process';
+          const files = execFileSync('git', ['diff', '--cached', '--name-only', '-z'], { encoding: 'utf8' }).split('\0');
+          if (files.some(file => /(^|\/)(config\.yml|\.env($|\.)|node_modules\/|dist\/|storage\/|\.agents\/)/.test(file))) {
+            throw new Error('Runtime files were staged; refusing to package them.');
+          }
+          NODE
+          git commit -m "chore: regenerate baseline from latest NocoBase template"
+          mkdir -p "$RUNNER_TEMP/template-artifact"
+          git bundle create "$RUNNER_TEMP/template-artifact/template.bundle" refs/heads/template
+          cp factory-template.json "$RUNNER_TEMP/template-diagnostics/factory-template.json"
+          echo "Fresh template verified. Dry run: ${{ inputs.dry_run }}" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Save the verified baseline
+        uses: actions/upload-artifact@v4
+        with:
+          name: verified-template
+          path: ${{ runner.temp }}/template-artifact/template.bundle
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Save verification logs and browser screenshot
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: template-diagnostics
+          path: ${{ runner.temp }}/template-diagnostics
+          if-no-files-found: warn
+          retention-days: 14
+
+  publish:
+    needs: generate
+    if: ${{ !inputs.dry_run }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - name: Check out the recorded control commit
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.generate.outputs.base_sha }}
+          path: control
+          fetch-depth: 0
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: verified-template
+          path: template-artifact
+
+      - name: Back up and replace develop without executing generated code
+        env:
+          BASE_SHA: ${{ needs.generate.outputs.base_sha }}
+          BACKUP_BRANCH: factory-backup/develop-${{ github.run_id }}-${{ github.run_attempt }}
+        run: |
+          bash control/.github/scripts/publish-template.sh \
+            control template-artifact/template.bundle "$BASE_SHA" "$BACKUP_BRANCH"

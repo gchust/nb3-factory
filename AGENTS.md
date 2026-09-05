@@ -1,5 +1,7 @@
 # Application Development Guidelines
 
+<!-- factory:boundary:start -->
+
 ## Factory execution boundary
 
 This repository is also driven by the `gchust/nb3-factory` Issue workflow. During a factory task, application code is yours to change, but the control plane is not:
@@ -10,6 +12,8 @@ This repository is also driven by the `gchust/nb3-factory` Issue workflow. Durin
 - Do not weaken or delete verification merely to make a task pass.
 
 The publisher rejects changes to protected control files even if these instructions are ignored.
+
+<!-- factory:boundary:end -->
 
 This is a NocoBase 3 application. You are building the application itself — its pages, its API, its database tables. Everything under this directory is application-owned source code that you may edit directly.
 

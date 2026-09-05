@@ -1,4 +1,5 @@
 import { createPortalConfig } from '@nocobase/dev-config/eslint';
+import factoryConfig from './.github/scripts/factory-eslint.mjs';
 
 const portalConfig = createPortalConfig({
   tsconfigRootDir: import.meta.dirname,
@@ -11,20 +12,4 @@ const portalConfig = createPortalConfig({
   ],
 });
 
-export default [
-  ...portalConfig,
-  {
-    files: ['.github/scripts/**/*.mjs'],
-    languageOptions: {
-      globals: {
-        console: 'readonly',
-        fetch: 'readonly',
-        process: 'readonly',
-        URL: 'readonly',
-      },
-    },
-    rules: {
-      'vitest/no-import-node-test': 'off',
-    },
-  },
-];
+export default [...portalConfig, factoryConfig];
