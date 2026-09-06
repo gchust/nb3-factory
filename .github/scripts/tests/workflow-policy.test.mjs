@@ -34,6 +34,15 @@ test('workflow uses the generic runner and new settings with legacy fallback', (
   assert.doesNotMatch(workflow, /pi-coding-agent|run-pi\.mjs|pi\.patch/);
 });
 
+test('different Issues run concurrently while one Issue stays serialized', () => {
+  assert.doesNotMatch(workflow, /group: code-agent-global/);
+  assert.match(
+    workflow,
+    /group: code-agent-task-\$\{\{ github\.event\.issue\.number \|\| github\.event\.client_payload\.issue_number \|\| inputs\.issue_number \|\| github\.run_id \}\}/,
+  );
+  assert.match(workflow, /queue: max/);
+});
+
 test('PR completion uses only trusted control-plane code for both branch generations', () => {
   const completion = readFileSync(
     path.resolve(
