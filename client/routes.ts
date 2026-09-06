@@ -11,6 +11,18 @@ const appRoutes: AppClientRouteContribution = defineAppRoutes([
     name: 'home',
     path: '/',
   },
+  {
+    auth: 'required',
+    componentLoader: () => import('./pages/it-service-desk.js'),
+    name: 'it-service-desk',
+    path: '/it-service-desk',
+  },
+  {
+    auth: 'required',
+    componentLoader: () => import('./pages/it-service-desk-detail.js'),
+    name: 'it-service-desk-detail',
+    path: '/it-service-desk/:id',
+  },
 ]);
 
 const settingsRoutes: AppClientRouteContribution = defineSettingsRoutes([]);

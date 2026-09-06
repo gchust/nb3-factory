@@ -9,6 +9,7 @@ import {
 import { Hono } from 'hono';
 
 import { appExampleServiceToken } from '../providers/index.js';
+import { apiRoutes as itServiceDeskApiRoutes } from './it-service-desk.js';
 
 export const apiRoutes: AppApiRouteContribution<Application> = defineApiRoutes(
   (app) => {
@@ -55,6 +56,7 @@ export const rootRoutes: AppRootRouteContribution<Application> =
 
 const routes: readonly AppRouteContribution<Application>[] = [
   apiRoutes,
+  itServiceDeskApiRoutes,
   rootRoutes,
 ];
 

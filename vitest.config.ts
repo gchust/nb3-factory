@@ -10,7 +10,10 @@ export default createReactVitestConfig({
       {
         find: /^@nocobase\/app-client$/,
         replacement: fileURLToPath(
-          new URL('../../app/app-client/src/index.ts', import.meta.url),
+          new URL(
+            './node_modules/@nocobase/app-client/dist/index.js',
+            import.meta.url,
+          ),
         ),
       },
       {
