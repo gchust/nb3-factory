@@ -363,6 +363,7 @@ for (const timeout of [undefined, '', '0']) {
         CODE_AGENT_API_KEY: 'test-key',
         CODE_AGENT_MODEL: 'deepseek-v4-flash',
         CODE_AGENT_THINKING: '',
+        CODE_AGENT_IDLE_TIMEOUT_SECONDS: '0',
       };
       delete env.CODE_AGENT_INVOCATION_TIMEOUT_SECONDS;
       if (timeout !== undefined)

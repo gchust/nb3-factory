@@ -21,6 +21,10 @@ const invocationTimeoutSeconds = parseInvocationTimeout(
   process.env.CODE_AGENT_INVOCATION_TIMEOUT_SECONDS,
   0,
 );
+const idleTimeoutSeconds = parseIdleTimeout(
+  process.env.CODE_AGENT_IDLE_TIMEOUT_SECONDS,
+  600,
+);
 const runDeadlineEpochSeconds = parseRunDeadline(
   process.env.FACTORY_RUN_DEADLINE_EPOCH_SECONDS,
 );
@@ -155,7 +159,18 @@ const child = spawn(
 
 const stream = createWriteStream(log, { flags: 'w', mode: 0o600 });
 let stdoutBuffer = '';
+let timedOut = false;
+let stalled = false;
+let handoffRequested = false;
+let forceKillTimer;
+let completionTimer;
+let completionTermination = false;
+let invocationTimer;
+let idleTimer;
+let handoffTimer;
+
 child.stdout.on('data', (chunk) => {
+  recordActivity();
   stream.write(chunk);
   stdoutBuffer += chunk.toString('utf8');
   const lines = stdoutBuffer.split(/\r?\n/u);
@@ -172,17 +187,12 @@ child.stdout.on('end', () => {
   stdoutBuffer = '';
 });
 child.stderr.on('data', (chunk) => {
+  recordActivity();
   process.stderr.write(chunk);
   stream.write(chunk);
 });
 
-let timedOut = false;
-let handoffRequested = false;
-let forceKillTimer;
-let completionTimer;
-let completionTermination = false;
-let invocationTimer;
-let handoffTimer;
+recordActivity();
 if (invocationTimeoutSeconds > 0) {
   invocationTimer = setTimeout(() => {
     timedOut = true;
@@ -213,6 +223,7 @@ const exitCode = await new Promise((resolve, reject) => {
   child.once('close', resolve);
 });
 clearTimeout(invocationTimer);
+clearTimeout(idleTimer);
 clearTimeout(handoffTimer);
 clearTimeout(forceKillTimer);
 clearTimeout(completionTimer);
@@ -231,8 +242,22 @@ if (handoffRequested) {
   throw new Error(
     `Pi invocation timed out after ${invocationTimeoutSeconds} seconds.`,
   );
-} else if (!completionTermination && exitCode !== 0) {
+} else if (!completionTermination && !stalled && exitCode !== 0) {
   throw new Error(`Pi exited with code ${exitCode}.`);
+}
+
+function recordActivity() {
+  if (idleTimeoutSeconds <= 0 || stalled) return;
+  clearTimeout(idleTimer);
+  idleTimer = setTimeout(() => {
+    if (handoffRequested || timedOut || completionTermination) return;
+    stalled = true;
+    process.stderr.write(
+      `Code Agent produced no stdout/stderr activity for ${idleTimeoutSeconds} seconds; stopping the invocation so factory verification can inspect the partial workspace.\n`,
+    );
+    terminateChild('SIGTERM');
+    forceKillTimer = setTimeout(() => terminateChild('SIGKILL'), 5_000);
+  }, idleTimeoutSeconds * 1_000);
 }
 
 function observeAgentEvent(line) {
@@ -314,6 +339,17 @@ function parseInvocationTimeout(value, fallback) {
   if (!Number.isInteger(parsed) || parsed < 0 || parsed > 21_600) {
     throw new Error(
       'CODE_AGENT_INVOCATION_TIMEOUT_SECONDS must be an integer from 0 to 21600 (0 disables the timeout).',
+    );
+  }
+  return parsed;
+}
+
+function parseIdleTimeout(value, fallback) {
+  if (value == null || value.trim() === '') return fallback;
+  const parsed = Number(value);
+  if (!Number.isInteger(parsed) || parsed < 0 || parsed > 21_600) {
+    throw new Error(
+      'CODE_AGENT_IDLE_TIMEOUT_SECONDS must be an integer from 0 to 21600 (0 disables the idle watchdog).',
     );
   }
   return parsed;
