@@ -31,10 +31,11 @@ jobs:
             group: code-agent-global
             queue: max
           '''
-          new = '''# Retries and cross-run handoffs for one Issue must stay serialized, but
+          expression = '$' + '{{ github.event.issue.number || github.event.client_payload.issue_number || inputs.issue_number || github.run_id }}'
+          new = f'''# Retries and cross-run handoffs for one Issue must stay serialized, but
           # independent application tasks should not block each other.
           concurrency:
-            group: code-agent-task-${{ github.event.issue.number || github.event.client_payload.issue_number || inputs.issue_number || github.run_id }}
+            group: code-agent-task-{expression}
             queue: max
           '''
           if old not in text:
