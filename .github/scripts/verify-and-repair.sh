@@ -77,12 +77,27 @@ while true; do
     --output "$repair_prompt"
 
   echo "::group::Code Agent repair ${verification_attempt}"
+  set +e
   node "$control_dir/.github/scripts/run-agent.mjs" \
     --workspace "$workspace" \
     --prompt "$repair_prompt" \
     --log "$artifact_dir/agent-repair-${verification_attempt}.jsonl" \
     --agentDir "$state_dir/agent-repair-${verification_attempt}"
+  agent_status=$?
+  set -e
   echo "::endgroup::"
+
+  if [[ "$agent_status" -eq 75 ]]; then
+    printf '{"verificationAttempts":%d,"repairAttempts":%d,"handoff":true}\n' \
+      "$verification_attempt" \
+      "$verification_attempt" \
+      >"$artifact_dir/repair-summary.json"
+    echo "Runner budget reached during repair ${verification_attempt}; requesting handoff."
+    exit 75
+  fi
+  if [[ "$agent_status" -ne 0 ]]; then
+    exit "$agent_status"
+  fi
 
   verification_attempt=$((verification_attempt + 1))
 done
