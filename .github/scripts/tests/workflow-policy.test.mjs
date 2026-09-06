@@ -17,7 +17,7 @@ const workflow = readFileSync(
 test('an existing Code Agent work branch goes straight to verification and repair', () => {
   assert.match(
     workflow,
-    /- name: Run Code Agent implementation\n\s+if: needs\.prepare\.outputs\.base_ref != needs\.prepare\.outputs\.work_branch/,
+    /needs\.prepare\.outputs\.base_ref != needs\.prepare\.outputs\.work_branch/,
   );
 });
 
@@ -66,4 +66,27 @@ test('implementation and repair default to unlimited invocations and max thinkin
   for (const line of thinkingLines)
     assert.match(line, /vars\.PI_THINKING \|\| 'max'/);
   assert.match(workflow, /timeout-minutes: 360/);
+});
+
+test('runner budget checkpoints and continues instead of failing at six hours', () => {
+  assert.match(workflow, /code-agent-continue/);
+  assert.match(workflow, /FACTORY_RUN_DEADLINE_EPOCH_SECONDS=.*18000/);
+  assert.match(workflow, /factory-handoff-\$\{\{ needs\.prepare\.outputs\.issue_number \}\}/);
+  assert.match(workflow, /run-id: \$\{\{ github\.event\.client_payload\.previous_run_id \}\}/);
+  assert.match(workflow, /steps\.implementation\.outputs\.handoff == 'true'/);
+  assert.match(workflow, /steps\.verify\.outputs\.handoff == 'true'/);
+  assert.match(workflow, /needs\.agent\.outputs\.handoff != 'true'/);
+  assert.match(workflow, /handoff\.mjs dispatch/);
+});
+
+test('continuation skips initial implementation and restores the previous patch', () => {
+  assert.match(
+    workflow,
+    /github\.event\.action == 'code-agent-continue'/,
+  );
+  assert.match(workflow, /--patch handoff\/agent\.patch/);
+  assert.match(
+    workflow,
+    /!\(github\.event_name == 'repository_dispatch' && github\.event\.action == 'code-agent-continue'\)/,
+  );
 });
