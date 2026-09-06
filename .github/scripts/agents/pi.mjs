@@ -21,6 +21,9 @@ const invocationTimeoutSeconds = parseInvocationTimeout(
   process.env.CODE_AGENT_INVOCATION_TIMEOUT_SECONDS,
   0,
 );
+const runDeadlineEpochSeconds = parseRunDeadline(
+  process.env.FACTORY_RUN_DEADLINE_EPOCH_SECONDS,
+);
 const completionGraceMilliseconds = 3_000;
 const normalizedModel = model.toLowerCase();
 const deepseekV4Variant = normalizedModel.includes('deepseek-v4-flash')
@@ -174,10 +177,12 @@ child.stderr.on('data', (chunk) => {
 });
 
 let timedOut = false;
+let handoffRequested = false;
 let forceKillTimer;
 let completionTimer;
 let completionTermination = false;
 let invocationTimer;
+let handoffTimer;
 if (invocationTimeoutSeconds > 0) {
   invocationTimer = setTimeout(() => {
     timedOut = true;
@@ -188,12 +193,27 @@ if (invocationTimeoutSeconds > 0) {
     forceKillTimer = setTimeout(() => terminateChild('SIGKILL'), 5_000);
   }, invocationTimeoutSeconds * 1_000);
 }
+if (runDeadlineEpochSeconds != null) {
+  const remainingMilliseconds = Math.max(
+    0,
+    runDeadlineEpochSeconds * 1_000 - Date.now(),
+  );
+  handoffTimer = setTimeout(() => {
+    handoffRequested = true;
+    process.stderr.write(
+      'Factory runner budget reached; stopping Pi so the workspace can be handed off to another Actions run.\n',
+    );
+    terminateChild('SIGTERM');
+    forceKillTimer = setTimeout(() => terminateChild('SIGKILL'), 5_000);
+  }, remainingMilliseconds);
+}
 
 const exitCode = await new Promise((resolve, reject) => {
   child.once('error', reject);
   child.once('close', resolve);
 });
 clearTimeout(invocationTimer);
+clearTimeout(handoffTimer);
 clearTimeout(forceKillTimer);
 clearTimeout(completionTimer);
 stream.end();
@@ -205,12 +225,13 @@ redactLog(log, [
   process.env.FACTORY_TEST_PASSWORD,
 ]);
 
-if (timedOut) {
+if (handoffRequested) {
+  process.exitCode = 75;
+} else if (timedOut) {
   throw new Error(
     `Pi invocation timed out after ${invocationTimeoutSeconds} seconds.`,
   );
-}
-if (!completionTermination && exitCode !== 0) {
+} else if (!completionTermination && exitCode !== 0) {
   throw new Error(`Pi exited with code ${exitCode}.`);
 }
 
@@ -294,6 +315,15 @@ function parseInvocationTimeout(value, fallback) {
     throw new Error(
       'CODE_AGENT_INVOCATION_TIMEOUT_SECONDS must be an integer from 0 to 21600 (0 disables the timeout).',
     );
+  }
+  return parsed;
+}
+
+function parseRunDeadline(value) {
+  if (value == null || value.trim() === '') return null;
+  const parsed = Number(value);
+  if (!Number.isInteger(parsed) || parsed <= 0) {
+    throw new Error('FACTORY_RUN_DEADLINE_EPOCH_SECONDS must be a positive integer.');
   }
   return parsed;
 }
