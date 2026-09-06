@@ -10,9 +10,9 @@ on:
 
 permissions: {}
 
-# Share the whole-workflow queue with business tasks, including their publisher.
+# Serialize template refresh runs independently from application tasks.
 concurrency:
-  group: code-agent-global
+  group: template-refresh-global
   queue: max
 
 jobs:
