@@ -79,6 +79,9 @@ jobs:
           pnpm plugin:skills:sync
           pnpm exec prettier --write package.json README.MD AGENTS.md eslint.config.js scripts/build.mjs factory-template.json
 
+      - name: Install Chinese browser fonts
+        run: bash control/.github/scripts/install-browser-fonts.sh
+
       - name: Verify factory, application, clean database, and browser login
         run: |
           set -o pipefail

@@ -133,6 +133,9 @@ jobs:
           cache: pnpm
           cache-dependency-path: workspace/pnpm-lock.yaml
 
+      - name: Install Chinese browser fonts
+        run: bash control/.github/scripts/install-browser-fonts.sh
+
       - name: Install application dependencies
         working-directory: workspace
         run: |
@@ -346,6 +349,9 @@ jobs:
           node-version: 24.x
           cache: pnpm
           cache-dependency-path: workspace/pnpm-lock.yaml
+
+      - name: Install Chinese browser fonts
+        run: bash control/.github/scripts/install-browser-fonts.sh
 
       - name: Install application dependencies
         working-directory: workspace
