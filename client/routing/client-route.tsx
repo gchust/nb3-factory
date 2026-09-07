@@ -76,7 +76,12 @@ export function ClientPage({ page }: ClientPageProps): ReactElement {
   const Component = componentModule.default;
 
   return (
-    <ErrorBoundary fallback={<ClientPageError page={page} />}>
+    <ErrorBoundary
+      fallback={<ClientPageError page={page} />}
+      onError={(error, info) => {
+        console.error(`[page:${page.label}] render error`, error, info);
+      }}
+    >
       {/* The owning package is the page's namespace, so a plugin page translates with a bare useTranslation(). */}
       <NamespaceScope ns={page.packageName}>
         <Component />

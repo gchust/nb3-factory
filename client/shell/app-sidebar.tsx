@@ -1,4 +1,4 @@
-import { useTranslation } from '@nocobase/i18n/client';
+import { useOptionalI18nRuntime, useTranslation } from '@nocobase/i18n/client';
 import { useCan, useMenu, type TreeMenuItem } from '@refinedev/core';
 import { ChevronRight, Home, List, ShieldCheck, X } from 'lucide-react';
 import type { ReactElement, ReactNode } from 'react';
@@ -112,10 +112,15 @@ interface NavigationTreeProps {
  */
 function useMenuLabel(item: TreeMenuItem): string {
   const { t } = useTranslation();
+  const runtime = useOptionalI18nRuntime();
   const meta = item.meta as { label?: string; i18nNs?: string } | undefined;
   const label = item.label ?? meta?.label ?? item.name;
-
-  return meta?.i18nNs ? t(label, { ns: meta.i18nNs }) : label;
+  if (!meta?.i18nNs) return label;
+  // `APP_NS` is a sentinel that stands for the application's package name and
+  // only resolves through the i18n runtime; react-i18next would look up the
+  // sentinel string itself and render the raw key. Resolve it first.
+  const ns = runtime?.registry.resolveNamespace(meta.i18nNs) ?? meta.i18nNs;
+  return t(label, { ns });
 }
 
 function NavigationTree({

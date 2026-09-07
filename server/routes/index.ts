@@ -9,9 +9,11 @@ import {
 import { Hono } from 'hono';
 
 import { appExampleServiceToken } from '../providers/index.js';
+import { apiRoutes as salesApiRoutes } from './sales.js';
+import { apiRoutes as salesFilesApiRoutes } from './sales-files.js';
 
 export const apiRoutes: AppApiRouteContribution<Application> = defineApiRoutes(
-  (app) => {
+  async (app) => {
     const router = new Hono();
 
     router.get('/example', (context) => {
@@ -22,6 +24,9 @@ export const apiRoutes: AppApiRouteContribution<Application> = defineApiRoutes(
         message: exampleService.getMessage(),
       });
     });
+
+    router.route('/', await salesApiRoutes.createRouter(app));
+    router.route('/', await salesFilesApiRoutes.createRouter(app));
 
     return router;
   },
