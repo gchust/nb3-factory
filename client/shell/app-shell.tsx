@@ -2,6 +2,8 @@ import { useSyncServerLocale } from '@nocobase/app-plugin-i18n/client';
 import { useState, type ReactElement } from 'react';
 import { Outlet } from 'react-router';
 
+import { Toaster } from '@/components/ui/sonner';
+
 import { AppHeader } from './app-header.js';
 import { AppSidebar } from './app-sidebar.js';
 
@@ -29,6 +31,8 @@ export function AppShell(): ReactElement {
         <main className='min-w-0 flex-1'>
           <Outlet />
         </main>
+        {/* Global toast host for the application's pages. */}
+        <Toaster />
       </div>
     </div>
   );
