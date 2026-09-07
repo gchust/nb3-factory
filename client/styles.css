@@ -90,3 +90,32 @@
       sans-serif;
   }
 }
+
+/*
+ * Base UI Select safety net.
+ *
+ * Base UI keeps the Select popup mounted after the first open and positions it
+ * with Floating UI. In a rare first-open race a stale `computePosition` result
+ * (resolved while the popup was still closed) can overwrite the good result with
+ * `isPositioned: false`, leaving the positioner at `opacity: 0; top: 0; left: 0`
+ * while the popup is open — the dropdown then renders invisible (0×0).
+ *
+ * This rule forces the positioner visible once the popup has been open for a
+ * moment. The delay avoids flashing the popup at the viewport origin during the
+ * normal (fast) positioning path; the `forwards` fill overrides the inline
+ * `opacity: 0` (CSS animations beat inline styles unless the inline style is
+ * `!important`). When the popup closes the positioner carries `data-closed`
+ * (not `data-open`), so the rule stops applying and the inline opacity hides it
+ * again. `:has()` scopes the rule to Select positioners only — other Base UI
+ * popups (Dialog, DropdownMenu, Popover) also use `role="presentation"` but do
+ * not have this issue.
+ */
+[role='presentation'][data-open]:has([data-slot='select-content']) {
+  animation: base-ui-force-visible 0s 0.4s forwards;
+}
+
+@keyframes base-ui-force-visible {
+  to {
+    opacity: 1;
+  }
+}
