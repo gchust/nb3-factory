@@ -363,7 +363,7 @@ test('publish rejects a candidate that replaces trusted workflows', () => {
   }
 });
 
-test('refresh workflow serializes with business tasks and isolates generated code from write permissions', () => {
+test('refresh workflow has its own queue and isolates generated code from write permissions', () => {
   const workflow = readFileSync(
     path.resolve(scripts, '..', 'workflows/refresh-template.yml'),
     'utf8',
@@ -373,7 +373,8 @@ test('refresh workflow serializes with business tasks and isolates generated cod
     'utf8',
   );
   const group = /group: ([^\n]+)/.exec(workflow)[1];
-  assert.ok(task.includes(`group: ${group}`));
+  assert.equal(group, 'template-refresh-global');
+  assert.ok(!task.includes(`group: ${group}`));
   const publisher = workflow.split('\n  publish:')[1];
   assert.match(workflow.split('\n  publish:')[0], /contents: read/);
   assert.match(workflow, /pnpm create @nocobase\/app@latest nb3-factory/);

@@ -60,7 +60,16 @@ NODE_ENV=production \
 pnpm start >"$server_log" 2>&1 &
 server_pid=$!
 
+stop_recording() {
+  [[ -f "$state_dir/recording-active" ]] || return 0
+  # Optional media must not change the QA exit code or leave an unflushed video.
+  timeout --kill-after=5s 30s "$real_agent_browser" record stop \
+    >>"$artifact_dir/recording.log" 2>&1 || true
+  rm -f "$state_dir/recording-active"
+}
+
 cleanup() {
+  stop_recording
   AGENT_BROWSER_NAMESPACE="nb3-factory-${GITHUB_RUN_ID:-local}-${attempt}" \
     "$real_agent_browser" close --all >/dev/null 2>&1 || true
   if kill -0 "$server_pid" 2>/dev/null; then
@@ -99,6 +108,8 @@ export FACTORY_TEST_USERNAME="factoryqa${credential_suffix//-/}"
 export FACTORY_TEST_EMAIL="factory-${credential_suffix}@example.invalid"
 export FACTORY_TEST_PASSWORD="Factory-QA-${credential_suffix}-A9!"
 export FACTORY_BROWSER_REPORT="$report"
+export FACTORY_BROWSER_SHOWCASE="$artifact_dir/showcase.json"
+export FACTORY_BROWSER_RECORDING_STATE="$state_dir/recording-active"
 export FACTORY_BROWSER_EVIDENCE_DIR="$evidence_dir"
 export FACTORY_REAL_AGENT_BROWSER="$real_agent_browser"
 export FACTORY_AGENT_BROWSER_COMMAND_LOG="$commands_log"
@@ -122,6 +133,7 @@ while true; do
     --log "$agent_log" \
     --agentDir "$browser_agent_dir"
 
+  stop_recording
   validation_log="$artifact_dir/report-validation-${report_attempt}.log"
   set +e
   node "$control_dir/.github/scripts/validate-browser-report.mjs" \
