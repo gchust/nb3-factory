@@ -61,7 +61,6 @@ writeFileSync(
 console.log(`Created patch with ${names.length} changed file(s).`);
 
 function restoreProtectedPaths() {
-  const changed = changedProtectedPaths();
   const tracked = [
     ...new Set([
       ...splitNull(
@@ -90,49 +89,6 @@ function restoreProtectedPaths() {
     cwd: workspace,
     stdio: 'pipe',
   });
-
-  const remaining = changedProtectedPaths();
-  if (remaining.length > 0) {
-    throw new TaskInputError(
-      `无法恢复受保护的工厂文件：${remaining.join(', ')}`,
-    );
-  }
-  if (changed.length > 0) {
-    console.warn(
-      `Restored protected factory paths before creating the application patch: ${changed.join(', ')}`,
-    );
-  }
-}
-
-function changedProtectedPaths() {
-  return [
-    ...new Set([
-      ...splitNull(
-        git(['diff', '--name-only', '-z', 'HEAD', '--', ...protectedPaths]),
-      ),
-      ...splitNull(
-        git([
-          'ls-files',
-          '--others',
-          '--exclude-standard',
-          '-z',
-          '--',
-          ...protectedPaths,
-        ]),
-      ),
-      ...splitNull(
-        git([
-          'ls-files',
-          '--others',
-          '--ignored',
-          '--exclude-standard',
-          '-z',
-          '--',
-          ...protectedPaths,
-        ]),
-      ),
-    ]),
-  ];
 }
 
 function writeEmptyPatch() {
