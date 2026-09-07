@@ -95,6 +95,7 @@ test('patch flow restores protected paths and keeps application changes', () => 
     git(source, ['config', 'user.email', 'factory@example.com']);
     mkdirSync(path.join(source, '.github'), { recursive: true });
     writeFileSync(path.join(source, '.github', 'control.yml'), 'original\n');
+    writeFileSync(path.join(source, '.github', 'deleted.yml'), 'restore me\n');
     writeFileSync(path.join(source, '.npmrc'), 'registry=original\n');
     writeFileSync(path.join(source, '.gitignore'), 'config.yml\n');
     writeFileSync(path.join(source, 'app.txt'), 'before\n');
@@ -104,6 +105,7 @@ test('patch flow restores protected paths and keeps application changes', () => 
     execFileSync('git', ['clone', '--quiet', source, publisher]);
     writeFileSync(path.join(source, 'app.txt'), 'after\n');
     writeFileSync(path.join(source, '.github', 'control.yml'), 'formatted\n');
+    rmSync(path.join(source, '.github', 'deleted.yml'));
     writeFileSync(path.join(source, '.github', 'generated.yml'), 'untracked\n');
     writeFileSync(path.join(source, '.npmrc'), 'registry=changed\n');
     writeFileSync(path.join(source, '.gitmodules'), 'untracked\n');
@@ -128,6 +130,10 @@ test('patch flow restores protected paths and keeps application changes', () => 
     assert.equal(
       readFileSync(path.join(source, '.github', 'control.yml'), 'utf8'),
       'original\n',
+    );
+    assert.equal(
+      readFileSync(path.join(source, '.github', 'deleted.yml'), 'utf8'),
+      'restore me\n',
     );
     assert.equal(
       readFileSync(path.join(source, '.npmrc'), 'utf8'),
