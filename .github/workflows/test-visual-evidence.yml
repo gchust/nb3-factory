@@ -1,0 +1,26 @@
+name: Test visual evidence
+on:
+  push:
+    branches: [feat/pr-visual-evidence]
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24.x
+      - name: Export source for local verification
+        run: git archive --format=tar HEAD > "$RUNNER_TEMP/factory-source.tar"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: factory-source
+          path: ${{ runner.temp }}/factory-source.tar
+          retention-days: 1
+      - name: Test factory controls
+        run: node --test .github/scripts/tests/*.test.mjs
