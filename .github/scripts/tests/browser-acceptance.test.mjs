@@ -16,7 +16,7 @@ import test from 'node:test';
 const scripts = path.resolve(import.meta.dirname, '..');
 const browserAcceptance = path.join(scripts, 'browser-acceptance.sh');
 
-for (const scenario of ['valid', 'repair', 'defect', 'agent-error']) {
+for (const scenario of ['valid', 'repair', 'defect', 'agent-error', 'recording-unavailable']) {
   test(`browser acceptance handles ${scenario} with strict verification`, () => {
     const root = mkdtempSync(path.join(os.tmpdir(), 'nb3-browser-acceptance-'));
     const control = path.join(root, 'control');
@@ -61,7 +61,7 @@ for (const scenario of ['valid', 'repair', 'defect', 'agent-error']) {
       );
       writeExecutable(
         path.join(bin, 'agent-browser'),
-        '#!/usr/bin/env bash\nset -euo pipefail\nexit 0\n',
+        "#!/usr/bin/env bash\nset -euo pipefail\nprintf '%s\\n' \"$*\" >> \"$TEST_BROWSER_COMMANDS\"\nif [[ \"$TEST_REPORT_SCENARIO\" == recording-unavailable && \"$1\" == record ]]; then exit 1; fi\nexit 0\n",
       );
       writeExecutable(
         path.join(bin, 'google-chrome'),
@@ -85,6 +85,7 @@ for (const scenario of ['valid', 'repair', 'defect', 'agent-error']) {
           '}',
           "execFileSync('agent-browser', ['skills', 'get', 'core']);",
           "execFileSync('agent-browser', ['open', process.env.FACTORY_BROWSER_URL]);",
+          "execFileSync('agent-browser', ['record', 'start', process.env.FACTORY_BROWSER_EVIDENCE_DIR + '/flow-example.webm']);",
           "execFileSync('agent-browser', ['snapshot', '-i']);",
           "execFileSync('agent-browser', ['fill', '@e1', 'value']);",
           "const screenshot = path.join(process.env.FACTORY_BROWSER_EVIDENCE_DIR, 'criterion-1.png');",
@@ -92,7 +93,7 @@ for (const scenario of ['valid', 'repair', 'defect', 'agent-error']) {
           'mkdirSync(process.env.FACTORY_BROWSER_EVIDENCE_DIR, { recursive: true });',
           "writeFileSync(screenshot, Buffer.concat([Buffer.from('89504e470d0a1a0a', 'hex'), Buffer.alloc(1100)]));",
           "writeFileSync(process.env.FACTORY_BROWSER_REPORT, JSON.stringify({ passed: true, authenticated: true, summary: 'passed', checks: [{ criterion: 'Page loads', status: 'passed', actions: ['opened and interacted'], evidence: ['page responded'], screenshots: ['criterion-1.png'] }], failures: [] }));",
-          "if (scenario !== 'valid' && count <= 2) {",
+          "if (!['valid', 'recording-unavailable'].includes(scenario) && count <= 2) {",
           "  writeFileSync(process.env.FACTORY_BROWSER_REPORT, JSON.stringify({ passed: true, authenticated: true, summary: 'claims success', checks: [{ name: 'Page loads', status: 'pass', detail: 'page responded' }], failures: [] }));",
           "} else if (scenario === 'defect') {",
           "  const report = JSON.parse(readFileSync(process.env.FACTORY_BROWSER_REPORT, 'utf8'));",
@@ -125,6 +126,7 @@ for (const scenario of ['valid', 'repair', 'defect', 'agent-error']) {
             PATH: `${bin}:${process.env.PATH}`,
             GITHUB_RUN_ID: '123',
             TEST_REPORT_SCENARIO: scenario,
+            TEST_BROWSER_COMMANDS: path.join(root, 'browser-commands'),
           },
           encoding: 'utf8',
           timeout: 20_000,
@@ -141,9 +143,9 @@ for (const scenario of ['valid', 'repair', 'defect', 'agent-error']) {
           path.join(state, 'browser-agent-workspace', 'calls'),
           'utf8',
         ),
-        scenario === 'valid' ? '1' : scenario === 'agent-error' ? '2' : '3',
+        ['valid', 'recording-unavailable'].includes(scenario) ? '1' : scenario === 'agent-error' ? '2' : '3',
       );
-      if (scenario !== 'valid') {
+      if (!['valid', 'recording-unavailable'].includes(scenario)) {
         assert.match(
           readFileSync(path.join(artifacts, 'report-validation-0.log'), 'utf8'),
           /actions must be a non-empty array/,
@@ -161,6 +163,10 @@ for (const scenario of ['valid', 'repair', 'defect', 'agent-error']) {
       assert.match(commands, /snapshot/);
       assert.match(commands, /fill/);
       assert.match(commands, /screenshot/);
+      const lifecycle = readFileSync(path.join(root, 'browser-commands'), 'utf8');
+      assert.ok(lifecycle.indexOf('record stop') < lifecycle.lastIndexOf('close --all'));
+      assert.match(lifecycle, /record start/);
+      assert.match(lifecycle, /record stop/);
       assert.equal(
         JSON.parse(readFileSync(path.join(artifacts, 'report.json'), 'utf8'))
           .passed,

@@ -1,0 +1,108 @@
+name: Publish Task Visual Report
+
+on:
+  workflow_run:
+    workflows: [Code Agent NocoBase Task]
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      run_id:
+        description: Successful Code Agent task run ID (not Issue or PR number)
+        required: true
+        type: string
+
+permissions: {}
+
+concurrency:
+  group: factory-visual-${{ inputs.run_id || github.event.workflow_run.id }}
+  queue: max
+
+jobs:
+  publish-media:
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      actions: read
+      contents: read
+      pull-requests: write
+    env:
+      SOURCE_RUN_ID: ${{ inputs.run_id || github.event.workflow_run.id }}
+    steps:
+      # Never check out the application PR or execute anything from its artifact.
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          path: control
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24.x
+
+      - name: Select a successfully published task
+        id: source
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          node control/.github/scripts/publish-visual-report.mjs select \
+            --run-id "$SOURCE_RUN_ID" --source "$RUNNER_TEMP/visual-source.json"
+
+      - name: Download task evidence
+        if: steps.source.outputs.ready == 'true'
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ steps.source.outputs.artifact }}
+          run-id: ${{ env.SOURCE_RUN_ID }}
+          github-token: ${{ github.token }}
+          path: ${{ runner.temp }}/task-evidence
+
+      - name: Collect only the final passing round
+        id: media
+        if: steps.source.outputs.ready == 'true'
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          node control/.github/scripts/publish-visual-report.mjs prepare \
+            --run-id "$SOURCE_RUN_ID" --source "$RUNNER_TEMP/visual-source.json" \
+            --artifacts "$RUNNER_TEMP/task-evidence" --output "$RUNNER_TEMP/visual-report"
+
+      - name: Preserve the standalone media package
+        id: archive
+        if: steps.media.outputs.ready == 'true'
+        continue-on-error: true
+        uses: actions/upload-artifact@v4
+        with:
+          name: factory-visual-${{ env.SOURCE_RUN_ID }}
+          path: ${{ runner.temp }}/visual-report
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Install pinned GitHub CLI with attachment support
+        if: steps.media.outputs.ready == 'true'
+        continue-on-error: true
+        env:
+          MEDIA_ENABLED: ${{ secrets.FACTORY_MEDIA_TOKEN != '' }}
+        run: |
+          if [[ "$MEDIA_ENABLED" != 'true' ]]; then exit 0; fi
+          version=2.100.0
+          archive="gh_${version}_linux_amd64.tar.gz"
+          mkdir -p "$RUNNER_TEMP/media-gh"
+          cd "$RUNNER_TEMP/media-gh"
+          curl --fail --silent --show-error --location --retry 2 --connect-timeout 10 --max-time 120 \
+            "https://github.com/cli/cli/releases/download/v${version}/${archive}" -o "$archive"
+          curl --fail --silent --show-error --location --retry 2 --connect-timeout 10 --max-time 120 \
+            "https://github.com/cli/cli/releases/download/v${version}/gh_${version}_checksums.txt" -o checksums.txt
+          grep " ${archive}\$" checksums.txt | sha256sum --check --strict
+          tar -xzf "$archive"
+          echo "FACTORY_GH_PATH=$RUNNER_TEMP/media-gh/gh_${version}_linux_amd64/bin/gh" >> "$GITHUB_ENV"
+
+      - name: Publish PR screenshots and recordings (artifact fallback)
+        if: steps.media.outputs.ready == 'true'
+        continue-on-error: true
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          FACTORY_MEDIA_TOKEN: ${{ secrets.FACTORY_MEDIA_TOKEN }}
+          FACTORY_MEDIA_ARTIFACT_URL: ${{ steps.archive.outputs.artifact-url }}
+        run: |
+          node control/.github/scripts/publish-visual-report.mjs publish \
+            --run-id "$SOURCE_RUN_ID" --output "$RUNNER_TEMP/visual-report"

@@ -14,6 +14,7 @@ const client = new GitHubClient({
 const issue = await client.getIssue(metadata.issue.number);
 const owner = metadata.repository.split('/')[0];
 const runUrl = `${process.env.GITHUB_SERVER_URL}/${metadata.repository}/actions/runs/${process.env.GITHUB_RUN_ID}`;
+const workRef = await client.getRef(metadata.workBranch);
 const titleText = stripTaskTitle(metadata.issue.title);
 const title = `[Code Agent #${metadata.issue.number}] ${titleText}`.slice(
   0,
@@ -29,6 +30,7 @@ const body = [
   '',
   `<!-- agent-issue: ${metadata.issue.number} -->`,
   `<!-- agent-target-branch: ${metadata.task.targetBranch} -->`,
+  `<!-- agent-head-sha: ${workRef.object.sha} -->`,
   '',
   '## 任务',
   '',
