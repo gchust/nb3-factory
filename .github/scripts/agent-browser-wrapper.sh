@@ -20,6 +20,7 @@ fi
 
 if [[ "$command_name" == 'close' && -f "${FACTORY_BROWSER_RECORDING_STATE:-/nonexistent}" ]]; then
   timeout --kill-after=5s 30s "$FACTORY_REAL_AGENT_BROWSER" record stop || true
+  rm -f "$FACTORY_BROWSER_RECORDING_STATE"
 fi
 
 if [[ "$command_name" == 'record' ]]; then

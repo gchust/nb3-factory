@@ -191,6 +191,16 @@ jobs:
           npm install --global "agent-browser@${AGENT_BROWSER_VERSION}"
           agent-browser --version
 
+      - name: Install optional video encoder
+        if: steps.implementation.outputs.handoff != 'true'
+        continue-on-error: true
+        timeout-minutes: 5
+        run: |
+          if ! command -v ffmpeg >/dev/null 2>&1; then
+            sudo apt-get update -o Acquire::Retries=2 -o Acquire::http::Timeout=30
+            sudo apt-get install --yes --no-install-recommends ffmpeg
+          fi
+
       - name: Verify and repair until successful
         id: verify
         if: steps.implementation.outputs.handoff != 'true'
