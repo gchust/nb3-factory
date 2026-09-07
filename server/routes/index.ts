@@ -9,6 +9,7 @@ import {
 import { Hono } from 'hono';
 
 import { appExampleServiceToken } from '../providers/index.js';
+import { createAssetApiRouter } from './assets.js';
 
 export const apiRoutes: AppApiRouteContribution<Application> = defineApiRoutes(
   (app) => {
@@ -22,6 +23,8 @@ export const apiRoutes: AppApiRouteContribution<Application> = defineApiRoutes(
         message: exampleService.getMessage(),
       });
     });
+
+    router.route('/', createAssetApiRouter(app));
 
     return router;
   },
