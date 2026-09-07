@@ -9,65 +9,158 @@ const args = parseArgs(process.argv.slice(2));
 const workspace = path.resolve(args.workspace);
 const patchPath = path.resolve(args.patch);
 const summaryPath = path.resolve(args.summary);
+const protectedPaths = ['.github', '.npmrc', '.gitmodules', 'config.yml'];
 
-// Business agents are never allowed to publish factory control-plane changes.
-// Formatting commands may touch these files accidentally, so restore them before
-// calculating the application patch instead of failing after verification passed.
 restoreProtectedPaths();
-
 git(['add', '--intent-to-add', '--all']);
 const names = splitNull(git(['diff', '--name-only', '-z', 'HEAD']));
-
 if (names.length === 0) {
   if (!parseBoolean(args['allow-empty'])) {
     throw new TaskInputError('Code Agent 没有产生可提交的文件修改。');
   }
+
   writeEmptyPatch();
+  console.log(
+    'Created an empty patch after revalidating the existing work branch.',
+  );
   process.exit(0);
 }
-
 assertSafeChangedPaths(names);
+
 const patch = execFileSync(
   'git',
   ['diff', '--binary', '--full-index', '--no-ext-diff', 'HEAD', '--'],
   { cwd: workspace, maxBuffer: 100 * 1024 * 1024 },
 );
+const nameStatus = git(['diff', '--name-status', 'HEAD'])
+  .trim()
+  .split('\n')
+  .filter(Boolean);
+const counts = {
+  added: 0,
+  modified: 0,
+  deleted: 0,
+  renamed: 0,
+  files: names.length,
+};
+for (const line of nameStatus) {
+  const status = line.split('\t')[0];
+  if (status.startsWith('A')) counts.added += 1;
+  else if (status.startsWith('D')) counts.deleted += 1;
+  else if (status.startsWith('R')) counts.renamed += 1;
+  else counts.modified += 1;
+}
 
 mkdirSync(path.dirname(patchPath), { recursive: true });
 writeFileSync(patchPath, patch, { mode: 0o600 });
 writeFileSync(
   summaryPath,
-  `${JSON.stringify({ files: names, counts: countFiles(names) }, null, 2)}\n`,
+  `${JSON.stringify({ counts, files: names }, null, 2)}\n`,
   { mode: 0o600 },
 );
+console.log(`Created patch with ${names.length} changed file(s).`);
 
 function restoreProtectedPaths() {
-  const paths = ['.github', '.npmrc', '.gitmodules', 'config.yml'];
-  for (const file of paths) {
-    execFileSync('git', ['restore', '--source=HEAD', '--', file], {
-      cwd: workspace,
-      stdio: 'ignore',
-    });
+  const changed = changedProtectedPaths();
+  const tracked = [
+    ...new Set([
+      ...splitNull(
+        git([
+          'ls-tree',
+          '-r',
+          '--name-only',
+          '-z',
+          'HEAD',
+          '--',
+          ...protectedPaths,
+        ]),
+      ),
+      ...splitNull(git(['ls-files', '-z', '--', ...protectedPaths])),
+    ]),
+  ];
+
+  if (tracked.length > 0) {
+    execFileSync(
+      'git',
+      ['restore', '--source=HEAD', '--staged', '--worktree', '--', ...tracked],
+      { cwd: workspace, stdio: 'pipe' },
+    );
   }
+  execFileSync('git', ['clean', '-fdx', '--', ...protectedPaths], {
+    cwd: workspace,
+    stdio: 'pipe',
+  });
+
+  const remaining = changedProtectedPaths();
+  if (remaining.length > 0) {
+    throw new TaskInputError(
+      `无法恢复受保护的工厂文件：${remaining.join(', ')}`,
+    );
+  }
+  if (changed.length > 0) {
+    console.warn(
+      `Restored protected factory paths before creating the application patch: ${changed.join(', ')}`,
+    );
+  }
+}
+
+function changedProtectedPaths() {
+  return [
+    ...new Set([
+      ...splitNull(
+        git(['diff', '--name-only', '-z', 'HEAD', '--', ...protectedPaths]),
+      ),
+      ...splitNull(
+        git([
+          'ls-files',
+          '--others',
+          '--exclude-standard',
+          '-z',
+          '--',
+          ...protectedPaths,
+        ]),
+      ),
+      ...splitNull(
+        git([
+          'ls-files',
+          '--others',
+          '--ignored',
+          '--exclude-standard',
+          '-z',
+          '--',
+          ...protectedPaths,
+        ]),
+      ),
+    ]),
+  ];
 }
 
 function writeEmptyPatch() {
   mkdirSync(path.dirname(patchPath), { recursive: true });
   writeFileSync(patchPath, Buffer.alloc(0), { mode: 0o600 });
-  writeFileSync(summaryPath, `${JSON.stringify({ files: [] }, null, 2)}\n`, {
-    mode: 0o600,
-  });
+  writeFileSync(
+    summaryPath,
+    `${JSON.stringify(
+      {
+        counts: {
+          added: 0,
+          modified: 0,
+          deleted: 0,
+          renamed: 0,
+          files: 0,
+        },
+        files: [],
+        reusedExistingWorkBranch: true,
+      },
+      null,
+      2,
+    )}\n`,
+    { mode: 0o600 },
+  );
 }
 
-function countFiles(files) {
-  return {
-    files: files.length,
-    protected: files.filter((file) => file.startsWith('.github/')).length,
-  };
-}
-
-function git(args_) {
-  return execFileSync('git', args_, {
+function git(arguments_) {
+  return execFileSync('git', arguments_, {
     cwd: workspace,
     encoding: 'utf8',
     maxBuffer: 20 * 1024 * 1024,
@@ -80,8 +173,8 @@ function splitNull(value) {
 
 function parseArgs(argv) {
   const parsed = {};
-  for (let i = 0; i < argv.length; i += 2) {
-    parsed[argv[i]?.replace(/^--/, '')] = argv[i + 1];
+  for (let index = 0; index < argv.length; index += 2) {
+    parsed[argv[index]?.replace(/^--/, '')] = argv[index + 1];
   }
   for (const name of ['workspace', 'patch', 'summary']) {
     if (!parsed[name]) throw new Error(`Missing --${name}`);
