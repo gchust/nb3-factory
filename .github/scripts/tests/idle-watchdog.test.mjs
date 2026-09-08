@@ -19,7 +19,7 @@ for (const activity of ['stdout', 'stderr']) {
       const output =
         activity === 'stdout'
           ? "console.log(JSON.stringify({ type: 'message_update', delta: String(count) }));"
-          : "process.stderr.write(`heartbeat-${count}\\n`);";
+          : 'process.stderr.write(`heartbeat-${count}\\n`);';
       writeFileSync(
         path.join(fixture.bin, 'pi'),
         [
