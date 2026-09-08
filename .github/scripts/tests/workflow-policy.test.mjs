@@ -80,8 +80,14 @@ test('implementation and repair default to unlimited invocations and max thinkin
 test('runner budget checkpoints and continues instead of failing at six hours', () => {
   assert.match(workflow, /code-agent-continue/);
   assert.match(workflow, /FACTORY_RUN_DEADLINE_EPOCH_SECONDS=.*18000/);
-  assert.match(workflow, /factory-handoff-\$\{\{ needs\.prepare\.outputs\.issue_number \}\}/);
-  assert.match(workflow, /run-id: \$\{\{ github\.event\.client_payload\.previous_run_id \}\}/);
+  assert.match(
+    workflow,
+    /factory-handoff-\$\{\{ needs\.prepare\.outputs\.issue_number \}\}/,
+  );
+  assert.match(
+    workflow,
+    /run-id: \$\{\{ github\.event\.client_payload\.previous_run_id \}\}/,
+  );
   assert.match(workflow, /steps\.implementation\.outputs\.handoff == 'true'/);
   assert.match(workflow, /steps\.verify\.outputs\.handoff == 'true'/);
   assert.match(workflow, /needs\.agent\.outputs\.handoff != 'true'/);
@@ -89,10 +95,7 @@ test('runner budget checkpoints and continues instead of failing at six hours', 
 });
 
 test('continuation skips initial implementation and restores the previous patch', () => {
-  assert.match(
-    workflow,
-    /github\.event\.action == 'code-agent-continue'/,
-  );
+  assert.match(workflow, /github\.event\.action == 'code-agent-continue'/);
   assert.match(workflow, /--patch handoff\/agent\.patch/);
   assert.match(
     workflow,

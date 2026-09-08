@@ -7,7 +7,10 @@ const args = parseArgs(rest);
 if (command === 'prepare') {
   const issueNumber = positiveInteger(args.issue, '--issue');
   const runId = positiveInteger(args['run-id'], '--run-id');
-  const continuation = positiveInteger(args.continuation ?? '1', '--continuation');
+  const continuation = positiveInteger(
+    args.continuation ?? '1',
+    '--continuation',
+  );
   const output = required(args.output, '--output');
   const payload = {
     schemaVersion: 1,
@@ -18,14 +21,25 @@ if (command === 'prepare') {
     reason: 'runner-budget',
   };
   mkdirSync(path.dirname(path.resolve(output)), { recursive: true });
-  writeFileSync(output, `${JSON.stringify(payload, null, 2)}\n`, { mode: 0o600 });
+  writeFileSync(output, `${JSON.stringify(payload, null, 2)}\n`, {
+    mode: 0o600,
+  });
   console.log(`Prepared handoff ${continuation} for issue #${issueNumber}.`);
 } else if (command === 'dispatch') {
   const issueNumber = positiveInteger(args.issue, '--issue');
-  const previousRunId = positiveInteger(args['previous-run-id'], '--previous-run-id');
-  const continuation = positiveInteger(args.continuation ?? '1', '--continuation');
+  const previousRunId = positiveInteger(
+    args['previous-run-id'],
+    '--previous-run-id',
+  );
+  const continuation = positiveInteger(
+    args.continuation ?? '1',
+    '--continuation',
+  );
   const token = required(process.env.GITHUB_TOKEN, 'GITHUB_TOKEN');
-  const repository = required(process.env.GITHUB_REPOSITORY, 'GITHUB_REPOSITORY');
+  const repository = required(
+    process.env.GITHUB_REPOSITORY,
+    'GITHUB_REPOSITORY',
+  );
   const apiUrl = process.env.GITHUB_API_URL || 'https://api.github.com';
   const response = await fetch(`${apiUrl}/repos/${repository}/dispatches`, {
     method: 'POST',
@@ -48,7 +62,9 @@ if (command === 'prepare') {
       `Failed to dispatch continuation: ${response.status} ${await response.text()}`,
     );
   }
-  console.log(`Dispatched continuation ${continuation} for issue #${issueNumber}.`);
+  console.log(
+    `Dispatched continuation ${continuation} for issue #${issueNumber}.`,
+  );
 } else {
   throw new Error('Usage: handoff.mjs <prepare|dispatch> [options]');
 }
@@ -58,7 +74,8 @@ function parseArgs(argv) {
   for (let index = 0; index < argv.length; index += 2) {
     const key = argv[index]?.replace(/^--/, '');
     const value = argv[index + 1];
-    if (!key || value == null) throw new Error(`Invalid argument near ${argv[index]}`);
+    if (!key || value == null)
+      throw new Error(`Invalid argument near ${argv[index]}`);
     parsed[key] = value;
   }
   return parsed;
