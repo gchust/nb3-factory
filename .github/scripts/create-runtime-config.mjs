@@ -5,6 +5,27 @@ import path from 'node:path';
 const args = parseArgs(process.argv.slice(2));
 const database = path.resolve(args.database);
 const secret = randomBytes(32).toString('hex');
+// Keep verification storage outside the generated application and its bundle.
+const storage = path.join(path.dirname(database), 'storage');
+const drive = {
+  default: 'local',
+  disks: {
+    local: {
+      driver: 'fs',
+      location: path.join(storage, 'private'),
+      visibility: 'private',
+    },
+    public: {
+      driver: 'fs',
+      location: path.join(storage, 'public'),
+      visibility: 'public',
+      url: '/storage',
+    },
+  },
+  links: {
+    [path.join(storage, 'links', 'public')]: path.join(storage, 'public'),
+  },
+};
 
 mkdirSync(path.dirname(args.output), { recursive: true });
 mkdirSync(path.dirname(database), { recursive: true });
@@ -34,6 +55,7 @@ writeFileSync(
     'snowflake:',
     '  workerId: 0',
     '  epoch: 1605024000',
+    `drive: ${JSON.stringify(drive)}`,
     '',
   ].join('\n'),
 );

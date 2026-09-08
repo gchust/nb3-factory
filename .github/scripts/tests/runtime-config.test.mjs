@@ -26,6 +26,26 @@ test('verification config disables duplicate startup migration and seed runs', (
     ]);
 
     const body = readFileSync(config, 'utf8');
+    const drive = JSON.parse(
+      body
+        .split('\n')
+        .find((line) => line.startsWith('drive: '))
+        .slice('drive: '.length),
+    );
+    assert.equal(drive.default, 'local');
+    assert.equal(drive.disks.local.driver, 'fs');
+    assert.equal(drive.disks.local.visibility, 'private');
+    assert.equal(
+      drive.disks.local.location,
+      path.join(root, 'storage/private'),
+    );
+    assert.equal(
+      drive.disks.public.location,
+      path.join(root, 'storage/public'),
+    );
+    assert.deepEqual(drive.links, {
+      [path.join(root, 'storage/links/public')]: drive.disks.public.location,
+    });
     assert.match(body, /migrations:\n\s+autoRun: false/);
     assert.match(body, /seeds:\n\s+autoRun: false/);
     assert.match(
