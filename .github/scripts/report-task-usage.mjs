@@ -1,3 +1,4 @@
+import { waitForTaskRun } from './wait-for-task-run.mjs';
 import { appendFileSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { aggregate, collectUsage, emptyUsage, marker, positive, recordsFromComments, renderUsage, selectSource, validateRecord } from './task-usage.mjs';
@@ -40,9 +41,8 @@ if (mode === 'select') {
   output('ready', 'false');
   const attempt = args.attempt ? Number(args.attempt) : null;
   if (attempt !== null && !positive(attempt)) throw new Error('Invalid run attempt');
-  const run = await api('GET', `/actions/runs/${runId}${attempt === null ? '' : `/attempts/${attempt}`}`);
   const repo = await api('GET', '');
-  if (run.id !== runId || (attempt !== null && run.run_attempt !== attempt) || run.head_branch !== repo.default_branch) throw new Error('Not the requested default-branch run');
+  const run = await waitForTaskRun(api, { runId, attempt, repository, defaultBranch: repo.default_branch });
   const jobs = await list(`/actions/runs/${runId}/attempts/${run.run_attempt}/jobs`, 'jobs');
   const artifacts = await list(`/actions/runs/${runId}/artifacts`, 'artifacts');
   const source = selectSource(run, jobs, artifacts, repository);

@@ -10,6 +10,10 @@ on:
         description: Successful Code Agent task run ID (not Issue or PR number)
         required: true
         type: string
+      attempt:
+        description: Run attempt (leave empty for latest)
+        required: false
+        type: string
 
 permissions: {}
 
@@ -28,6 +32,7 @@ jobs:
       pull-requests: write
     env:
       SOURCE_RUN_ID: ${{ inputs.run_id || github.event.workflow_run.id }}
+      SOURCE_ATTEMPT: ${{ inputs.attempt || github.event.workflow_run.run_attempt }}
     steps:
       # Never check out the application PR or execute anything from its artifact.
       - uses: actions/checkout@v4
@@ -45,7 +50,7 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
         run: |
           node control/.github/scripts/publish-visual-report.mjs select \
-            --run-id "$SOURCE_RUN_ID" --source "$RUNNER_TEMP/visual-source.json"
+            --run-id "$SOURCE_RUN_ID" --attempt "$SOURCE_ATTEMPT" --source "$RUNNER_TEMP/visual-source.json"
 
       - name: Download task evidence
         if: steps.source.outputs.ready == 'true'

@@ -1,3 +1,4 @@
+import { waitForTaskRun } from './wait-for-task-run.mjs';
 import { spawnSync } from 'node:child_process';
 import { appendFileSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
@@ -38,9 +39,13 @@ async function list(route, key) {
 
 if (mode === 'select') {
   output('ready', 'false');
-  const run = await api('GET', `/actions/runs/${runId}`);
   const repo = await api('GET', '');
-  if (run.head_branch !== repo.default_branch) throw new Error('Media publishing only accepts default-branch task runs');
+  const run = await waitForTaskRun(api, { runId, attempt: args.attempt, repository, defaultBranch: repo.default_branch });
+  const latest = await api('GET', `/actions/runs/${runId}`);
+  if (latest.run_attempt !== run.run_attempt) {
+    console.log('Source attempt was superseded; skipping stale media.');
+    process.exit(0);
+  }
   const jobs = await list(`/actions/runs/${runId}/attempts/${run.run_attempt}/jobs`, 'jobs');
   const artifacts = await list(`/actions/runs/${runId}/artifacts`, 'artifacts');
   const artifact = selectArtifact(run, jobs, artifacts, repository);

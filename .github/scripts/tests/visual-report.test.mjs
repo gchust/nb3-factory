@@ -15,7 +15,7 @@ const runId = 123;
 const runUrl = `https://github.com/${repository}/actions/runs/${runId}`;
 const headSha = 'a'.repeat(40);
 const artifact = { name: 'factory-agent-18', id: 55, expired: false };
-const run = { path: '.github/workflows/code-agent-task.yml', head_repository: { full_name: repository }, head_branch: 'develop', event: 'issues', status: 'completed', conclusion: 'success', run_attempt: 1 };
+const run = { id: runId, path: '.github/workflows/code-agent-task.yml', head_repository: { full_name: repository }, head_branch: 'develop', event: 'issues', status: 'completed', conclusion: 'success', run_attempt: 1 };
 const jobs = ['verify-final', 'publish'].map(name => ({ name, conclusion: 'success' }));
 const metadata = { repository, issue: { number: 18 }, workBranch: 'agent/issue-18', task: { targetBranch: 'apps/demo' } };
 const pr = { number: 19, head: { sha: headSha, ref: metadata.workBranch, repo: { full_name: repository } }, base: { ref: 'apps/demo' }, body: `<!-- agent-issue: 18 -->\n<!-- agent-head-sha: ${headSha} -->\n- [GitHub Actions 运行记录](${runUrl})` };
@@ -117,7 +117,7 @@ test('report markdown uses local attachments and escapes titles and mentions', t
   assert.match(fallback, /配置 Token/);
 });
 
-async function publisherFixture(t, ghMode) {
+async function publisherFixture(t, ghMode, pendingPolls = 0) {
   const f = fixture(t);
   const calls = [];
   const comments = [{ id: 9, body: 'Human note that must never be edited', user: { login: 'gchust' } }];
@@ -131,7 +131,7 @@ async function publisherFixture(t, ghMode) {
     calls.push({ route, method: request.method, body });
     let result;
     if (route === '') result = { default_branch: 'develop' };
-    else if (route === `/actions/runs/${runId}`) result = run;
+    else if ([`/actions/runs/${runId}`, `/actions/runs/${runId}/attempts/1`].includes(route)) result = { ...run, event: 'repository_dispatch', status: pendingPolls-- > 0 ? 'in_progress' : 'completed' };
     else if (route.endsWith('/jobs')) result = { jobs };
     else if (route.endsWith('/artifacts')) result = { artifacts: [artifact] };
     else if (route === '/pulls') result = [currentPR];
@@ -221,4 +221,14 @@ test('media workflow isolates the token from QA/application execution and permit
   assert.match(workflow, /continue-on-error: true/);
   const publisher = readFileSync(path.resolve(import.meta.dirname, '../publish-pr.mjs'), 'utf8');
   assert.match(publisher, /agent-head-sha/);
+});
+
+
+test('dispatch before continuation completion waits and then publishes exactly once', async t => {
+  const f = await publisherFixture(t, 'success', 1);
+  assert.ok(f.calls.some(call => call.route === '/actions/runs/123/attempts/1'));
+  await f.invoke('publish', { FACTORY_MEDIA_TOKEN: 'native-fixture' });
+  await f.invoke('publish', { FACTORY_MEDIA_TOKEN: 'native-fixture' });
+  assert.equal(f.comments.length, 2);
+  assert.match(f.comments[1].body, /factory-visual-report:123:1/);
 });
