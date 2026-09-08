@@ -21,6 +21,15 @@ jobs:
           node-version: 24.x
       - name: Factory regression tests
         run: node --test .github/scripts/tests/*.test.mjs
+      - name: Bash syntax
+        run: bash -n .github/scripts/dispatch-task-reports.sh
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.7.0
+          run_install: false
+      - run: pnpm install --frozen-lockfile
+      - name: Lint changed scripts
+        run: pnpm exec eslint .github/scripts/wait-for-task-run.mjs .github/scripts/tests/task-report-dispatch.test.mjs .github/scripts/publish-visual-report.mjs .github/scripts/report-task-usage.mjs .github/scripts/tests/visual-report.test.mjs
       - name: Export exact source for local verification
         run: git archive --format=tar HEAD > "$RUNNER_TEMP/factory-source.tar"
       - uses: actions/upload-artifact@v4
@@ -34,16 +43,29 @@ jobs:
     timeout-minutes: 5
     permissions:
       actions: write
+      contents: read
     steps:
-      - name: Dispatch only the missing reports for existing Issue 24 runs
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          path: control
+          persist-credentials: false
+      - name: Replay Issue 24 reports without rebuilding
         env:
           GH_TOKEN: ${{ github.token }}
-          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+          FACTORY_REPORT_REF: ${{ github.event.repository.default_branch }}
+          SOURCE_ATTEMPT: '1'
         run: |
           set -euo pipefail
-          for run in 34142344386 34162456590; do
-            gh api --method POST "repos/$GITHUB_REPOSITORY/actions/workflows/report-task-usage.yml/dispatches" \
-              -f "ref=$DEFAULT_BRANCH" -f "inputs[run_id]=$run" -f 'inputs[attempt]=1'
-          done
-          gh api --method POST "repos/$GITHUB_REPOSITORY/actions/workflows/publish-visual-report.yml/dispatches" \
-            -f "ref=$DEFAULT_BRANCH" -f 'inputs[run_id]=34162456590'
+          if [[ -f control/.github/scripts/dispatch-task-reports.sh ]]; then
+            SOURCE_RUN_ID=34142344386 FACTORY_TASK_DELIVERED=false bash control/.github/scripts/dispatch-task-reports.sh
+            SOURCE_RUN_ID=34162456590 FACTORY_TASK_DELIVERED=true bash control/.github/scripts/dispatch-task-reports.sh
+          else
+            # Before the PR is merged, use the existing manual report inputs.
+            for run in 34142344386 34162456590; do
+              gh api --method POST "repos/$GITHUB_REPOSITORY/actions/workflows/report-task-usage.yml/dispatches" \
+                -f "ref=$FACTORY_REPORT_REF" -f "inputs[run_id]=$run" -f 'inputs[attempt]=1'
+            done
+            gh api --method POST "repos/$GITHUB_REPOSITORY/actions/workflows/publish-visual-report.yml/dispatches" \
+              -f "ref=$FACTORY_REPORT_REF" -f 'inputs[run_id]=34162456590'
+          fi
