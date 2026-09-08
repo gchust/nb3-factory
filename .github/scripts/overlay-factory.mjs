@@ -104,20 +104,22 @@ if (app.nocobase.defaultTemplateVersion === '1.0.0-beta.15') {
       );
     }
   }
-  const build = read(workspace, 'scripts/build.mjs');
-  if (!build.includes("path.join(rootDir, '.npmrc')")) {
-    const install = "run(\n  'Install server production dependencies',";
-    if (!build.includes(install))
-      throw new Error('Cannot apply beta.15 production registry fix.');
-    writeFileSync(
-      path.join(workspace, 'scripts/build.mjs'),
-      build.replace(
-        install,
-        `fs.copyFileSync(path.join(rootDir, '.npmrc'), path.join(distDir, '.npmrc'));\n${install}`,
-      ),
-    );
-    compatibilityFixes.push('beta.15 build: copy scoped registry into dist');
-  }
+}
+// Production installation runs in dist and needs the factory scoped registry.
+// Preserve upstream support when present, regardless of the template version.
+const build = read(workspace, 'scripts/build.mjs');
+if (!build.includes("path.join(rootDir, '.npmrc')")) {
+  const install = "run(\n  'Install server production dependencies',";
+  if (!build.includes(install))
+    throw new Error('Cannot apply production registry fix to this template.');
+  writeFileSync(
+    path.join(workspace, 'scripts/build.mjs'),
+    build.replace(
+      install,
+      `fs.copyFileSync(path.join(rootDir, '.npmrc'), path.join(distDir, '.npmrc'));\n${install}`,
+    ),
+  );
+  compatibilityFixes.push('build: copy scoped registry into dist');
 }
 writeFileSync(
   path.join(workspace, 'package.json'),

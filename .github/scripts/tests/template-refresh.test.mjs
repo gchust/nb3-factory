@@ -202,6 +202,7 @@ test('beta.15 compatibility fixes preserve upstream dependencies and configure p
       [0, '1.0.0-beta.15', null],
       [1, '1.0.0-beta.15', '3.0.0'],
       [2, '1.0.0-beta.16', null],
+      [3, '1.0.0-beta.17', null],
     ]) {
       const { control, fresh } = overlayFixture(path.join(root, String(index)));
       const manifestPath = path.join(fresh, 'package.json');
@@ -231,13 +232,22 @@ test('beta.15 compatibility fixes preserve upstream dependencies and configure p
         updated.devDependencies['@xyflow/react'],
         index === 0 ? '12.11.3' : index === 1 ? '13.0.0' : undefined,
       );
-      assert.equal(
-        metadata.compatibilityFixes.length,
-        index === 0 ? 3 : index === 1 ? 1 : 0,
+      assert.equal(metadata.compatibilityFixes.length, index === 0 ? 3 : 1);
+      execFileSync(process.execPath, ['scripts/build.mjs'], { cwd: fresh });
+      const buildBefore = readFileSync(
+        path.join(fresh, 'scripts/build.mjs'),
+        'utf8',
       );
-      if (version === '1.0.0-beta.15') {
-        execFileSync(process.execPath, ['scripts/build.mjs'], { cwd: fresh });
-      }
+      execFileSync(process.execPath, [
+        path.join(scripts, 'overlay-factory.mjs'),
+        control,
+        fresh,
+        sha,
+      ]);
+      assert.equal(
+        readFileSync(path.join(fresh, 'scripts/build.mjs'), 'utf8'),
+        buildBefore,
+      );
     }
   } finally {
     rmSync(root, { recursive: true, force: true });
