@@ -15,7 +15,9 @@ import test from 'node:test';
 const scripts = path.resolve(import.meta.dirname, '..');
 
 test('Code Agent exits with the handoff status when the runner deadline is reached', () => {
-  const root = mkdtempSync(path.join(os.tmpdir(), 'nb3-factory-handoff-agent-'));
+  const root = mkdtempSync(
+    path.join(os.tmpdir(), 'nb3-factory-handoff-agent-'),
+  );
   try {
     const workspace = path.join(root, 'workspace');
     const bin = path.join(root, 'bin');
@@ -66,7 +68,9 @@ test('Code Agent exits with the handoff status when the runner deadline is reach
 });
 
 test('repair loop forwards the handoff status instead of treating it as a failed repair', () => {
-  const root = mkdtempSync(path.join(os.tmpdir(), 'nb3-factory-handoff-repair-'));
+  const root = mkdtempSync(
+    path.join(os.tmpdir(), 'nb3-factory-handoff-repair-'),
+  );
   try {
     const control = path.join(root, 'control');
     const controlScripts = path.join(control, '.github', 'scripts');

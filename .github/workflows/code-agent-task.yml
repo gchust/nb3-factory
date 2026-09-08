@@ -477,7 +477,6 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
         run: node control/.github/scripts/mark-failure.mjs "${{ needs.prepare.outputs.issue_number }}"
 
-
   dispatch-reports:
     needs: [prepare, agent, verify-final, publish, report-failure]
     if: always() && needs.prepare.outputs.status == 'ready'

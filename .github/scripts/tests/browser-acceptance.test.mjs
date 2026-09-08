@@ -16,7 +16,13 @@ import test from 'node:test';
 const scripts = path.resolve(import.meta.dirname, '..');
 const browserAcceptance = path.join(scripts, 'browser-acceptance.sh');
 
-for (const scenario of ['valid', 'repair', 'defect', 'agent-error', 'recording-unavailable']) {
+for (const scenario of [
+  'valid',
+  'repair',
+  'defect',
+  'agent-error',
+  'recording-unavailable',
+]) {
   test(`browser acceptance handles ${scenario} with strict verification`, () => {
     const root = mkdtempSync(path.join(os.tmpdir(), 'nb3-browser-acceptance-'));
     const control = path.join(root, 'control');
@@ -61,7 +67,7 @@ for (const scenario of ['valid', 'repair', 'defect', 'agent-error', 'recording-u
       );
       writeExecutable(
         path.join(bin, 'agent-browser'),
-        "#!/usr/bin/env bash\nset -euo pipefail\nprintf '%s\\n' \"$*\" >> \"$TEST_BROWSER_COMMANDS\"\nif [[ \"$TEST_REPORT_SCENARIO\" == recording-unavailable && \"$1\" == record ]]; then exit 1; fi\nexit 0\n",
+        '#!/usr/bin/env bash\nset -euo pipefail\nprintf \'%s\\n\' "$*" >> "$TEST_BROWSER_COMMANDS"\nif [[ "$TEST_REPORT_SCENARIO" == recording-unavailable && "$1" == record ]]; then exit 1; fi\nexit 0\n',
       );
       writeExecutable(
         path.join(bin, 'google-chrome'),
@@ -143,7 +149,11 @@ for (const scenario of ['valid', 'repair', 'defect', 'agent-error', 'recording-u
           path.join(state, 'browser-agent-workspace', 'calls'),
           'utf8',
         ),
-        ['valid', 'recording-unavailable'].includes(scenario) ? '1' : scenario === 'agent-error' ? '2' : '3',
+        ['valid', 'recording-unavailable'].includes(scenario)
+          ? '1'
+          : scenario === 'agent-error'
+            ? '2'
+            : '3',
       );
       if (!['valid', 'recording-unavailable'].includes(scenario)) {
         assert.match(
@@ -163,8 +173,13 @@ for (const scenario of ['valid', 'repair', 'defect', 'agent-error', 'recording-u
       assert.match(commands, /snapshot/);
       assert.match(commands, /fill/);
       assert.match(commands, /screenshot/);
-      const lifecycle = readFileSync(path.join(root, 'browser-commands'), 'utf8');
-      assert.ok(lifecycle.indexOf('record stop') < lifecycle.lastIndexOf('close --all'));
+      const lifecycle = readFileSync(
+        path.join(root, 'browser-commands'),
+        'utf8',
+      );
+      assert.ok(
+        lifecycle.indexOf('record stop') < lifecycle.lastIndexOf('close --all'),
+      );
       assert.match(lifecycle, /record start/);
       assert.match(lifecycle, /record stop/);
       assert.equal(

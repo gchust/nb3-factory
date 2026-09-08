@@ -82,7 +82,9 @@ test('patch flow preserves new and modified files', () => {
 });
 
 test('patch flow restores protected paths and keeps application changes', () => {
-  const root = mkdtempSync(path.join(os.tmpdir(), 'nb3-factory-protected-patch-'));
+  const root = mkdtempSync(
+    path.join(os.tmpdir(), 'nb3-factory-protected-patch-'),
+  );
   const source = path.join(root, 'source');
   const publisher = path.join(root, 'publisher');
   const patch = path.join(root, 'bundle', 'agent.patch');
