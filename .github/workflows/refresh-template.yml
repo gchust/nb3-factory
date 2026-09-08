@@ -106,8 +106,10 @@ jobs:
           node --input-type=module <<'NODE'
           import { execFileSync } from 'node:child_process';
           const files = execFileSync('git', ['diff', '--cached', '--name-only', '-z'], { encoding: 'utf8' }).split('\0');
-          if (files.some(file => /(^|\/)(config\.yml|\.env($|\.)|node_modules\/|dist\/|storage\/|\.agents\/)/.test(file))) {
-            throw new Error('Runtime files were staged; refusing to package them.');
+          // GitHub's issue-template settings are trusted controls, not runtime secrets.
+          const runtimeFiles = files.filter(file => file !== '.github/ISSUE_TEMPLATE/config.yml' && /(^|\/)(config\.yml|\.env($|\.)|node_modules\/|dist\/|storage\/|\.agents\/)/.test(file));
+          if (runtimeFiles.length) {
+            throw new Error(`Runtime files were staged; refusing to package them: ${runtimeFiles.join(', ')}`);
           }
           NODE
           git commit -m "chore: regenerate baseline from latest NocoBase template"

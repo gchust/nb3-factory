@@ -373,6 +373,51 @@ test('publish rejects a candidate that replaces trusted workflows', () => {
   }
 });
 
+test('packaging allows GitHub issue settings but rejects staged runtime files', () => {
+  const workflow = readFileSync(
+    path.resolve(scripts, '..', 'workflows/refresh-template.yml'),
+    'utf8',
+  );
+  const guard = workflow
+    .match(/node --input-type=module <<'NODE'\n([\s\S]*?)\n {10}NODE/)[1]
+    .replace(/^ {10}/gm, '');
+  const root = mkdtempSync(path.join(os.tmpdir(), 'nb3-package-guard-'));
+  try {
+    write(
+      root,
+      '.github/ISSUE_TEMPLATE/config.yml',
+      'blank_issues_enabled: false',
+    );
+    init(root, 'template');
+    git(root, 'add', '.');
+    const run = () =>
+      spawnSync(process.execPath, ['--input-type=module', '-e', guard], {
+        cwd: root,
+        encoding: 'utf8',
+      });
+    assert.equal(run().status, 0);
+    for (const file of [
+      'config.yml',
+      'nested/config.yml',
+      '.env',
+      'nested/.env.local',
+      'node_modules/a/index.js',
+      'dist/server.js',
+      'storage/private.txt',
+      '.agents/skills/test.md',
+    ]) {
+      write(root, file, 'runtime fixture');
+      git(root, 'add', '-f', file);
+      const result = run();
+      assert.notEqual(result.status, 0, file);
+      assert.ok(result.stderr.includes(file), result.stderr);
+      git(root, 'rm', '--cached', file);
+    }
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
 test('refresh workflow has its own queue and isolates generated code from write permissions', () => {
   const workflow = readFileSync(
     path.resolve(scripts, '..', 'workflows/refresh-template.yml'),
