@@ -11,6 +11,12 @@ const appRoutes: AppClientRouteContribution = defineAppRoutes([
     name: 'home',
     path: '/',
   },
+  {
+    auth: 'required',
+    componentLoader: () => import('./pages/team-todos.js'),
+    name: 'team-todos',
+    path: '/team-todos',
+  },
 ]);
 
 const settingsRoutes: AppClientRouteContribution = defineSettingsRoutes([]);

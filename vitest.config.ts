@@ -1,17 +1,31 @@
+import { existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
 import { createReactVitestConfig } from '@nocobase/dev-config/vitest/react';
 
 const root = fileURLToPath(new URL('.', import.meta.url));
 
+// In the NocoBase monorepo the alias below points at the app-client source tree. A generated application is a
+// standalone workspace, where that path does not exist and the installed package must be used instead; without the
+// fallback every test importing `@nocobase/app-client` fails to resolve.
+const monorepoAppClient = fileURLToPath(
+  new URL('../../app/app-client/src/index.ts', import.meta.url),
+);
+const appClientEntry = existsSync(monorepoAppClient)
+  ? monorepoAppClient
+  : fileURLToPath(
+      new URL(
+        './node_modules/@nocobase/app-client/dist/index.js',
+        import.meta.url,
+      ),
+    );
+
 export default createReactVitestConfig({
   resolve: {
     alias: [
       {
         find: /^@nocobase\/app-client$/,
-        replacement: fileURLToPath(
-          new URL('../../app/app-client/src/index.ts', import.meta.url),
-        ),
+        replacement: appClientEntry,
       },
       {
         find: '@/jobs',
