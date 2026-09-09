@@ -22,6 +22,7 @@ for (const scenario of [
   'defect',
   'agent-error',
   'recording-unavailable',
+  'evidence-gap',
 ]) {
   test(`browser acceptance handles ${scenario} with strict verification`, () => {
     const root = mkdtempSync(path.join(os.tmpdir(), 'nb3-browser-acceptance-'));
@@ -84,6 +85,7 @@ for (const scenario of [
           'const count = existsSync(countFile) ? Number(readFileSync(countFile)) + 1 : 1;',
           'writeFileSync(countFile, String(count));',
           'const scenario = process.env.TEST_REPORT_SCENARIO;',
+          "if (process.env.FACTORY_AGENT_ROLE !== 'qa') throw new Error('Missing QA process guard role');",
           'if (count > 1) {',
           "  const prompt = readFileSync(process.argv[process.argv.indexOf('--prompt') + 1], 'utf8');",
           "  if (!prompt.includes('Invalid Agent Browser report:')) throw new Error('Missing validator feedback');",
@@ -99,7 +101,12 @@ for (const scenario of [
           'mkdirSync(process.env.FACTORY_BROWSER_EVIDENCE_DIR, { recursive: true });',
           "writeFileSync(screenshot, Buffer.concat([Buffer.from('89504e470d0a1a0a', 'hex'), Buffer.alloc(1100)]));",
           "writeFileSync(process.env.FACTORY_BROWSER_REPORT, JSON.stringify({ passed: true, authenticated: true, summary: 'passed', checks: [{ criterion: 'Page loads', status: 'passed', actions: ['opened and interacted'], evidence: ['page responded'], screenshots: ['criterion-1.png'] }], failures: [] }));",
-          "if (!['valid', 'recording-unavailable'].includes(scenario) && count <= 2) {",
+          "if (scenario === 'evidence-gap') {",
+          "  const report = JSON.parse(readFileSync(process.env.FACTORY_BROWSER_REPORT, 'utf8'));",
+          "  report.checks[0].criterion = 'Capture editing for the PR';",
+          "  if (count > 1) report.checks[0].evidence.push('Verified existing values were prefilled in the edit form.');",
+          '  writeFileSync(process.env.FACTORY_BROWSER_REPORT, JSON.stringify(report));',
+          "} else if (!['valid', 'recording-unavailable'].includes(scenario) && count <= 2) {",
           "  writeFileSync(process.env.FACTORY_BROWSER_REPORT, JSON.stringify({ passed: true, authenticated: true, summary: 'claims success', checks: [{ name: 'Page loads', status: 'pass', detail: 'page responded' }], failures: [] }));",
           "} else if (scenario === 'defect') {",
           "  const report = JSON.parse(readFileSync(process.env.FACTORY_BROWSER_REPORT, 'utf8'));",
@@ -151,18 +158,20 @@ for (const scenario of [
         ),
         ['valid', 'recording-unavailable'].includes(scenario)
           ? '1'
-          : scenario === 'agent-error'
+          : ['agent-error', 'evidence-gap'].includes(scenario)
             ? '2'
             : '3',
       );
       if (!['valid', 'recording-unavailable'].includes(scenario)) {
         assert.match(
           readFileSync(path.join(artifacts, 'report-validation-0.log'), 'utf8'),
-          /actions must be a non-empty array/,
+          scenario === 'evidence-gap'
+            ? /existing values were prefilled/
+            : /actions must be a non-empty array/,
         );
         assert.match(
           readFileSync(path.join(artifacts, 'report-invalid-0.json'), 'utf8'),
-          /detail/,
+          scenario === 'evidence-gap' ? /Capture editing/ : /detail/,
         );
       }
       const commands = readFileSync(

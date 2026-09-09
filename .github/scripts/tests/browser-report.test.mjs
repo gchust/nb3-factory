@@ -215,6 +215,110 @@ test('browser report cannot pass without recorded browser interaction', () => {
   }
 });
 
+test('missing edit evidence in a delivery summary returns to QA without inventing a business defect', () => {
+  const fixture = createFixture();
+  try {
+    fixture.report.checks[0] = {
+      criterion: 'Edit a record',
+      status: 'passed',
+      actions: ['Opened Edit and verified the existing values were prefilled.'],
+      evidence: [
+        'Changed the description, saved, and verified it after reload.',
+      ],
+      screenshots: ['criterion-1.png'],
+    };
+    fixture.report.checks[1] = {
+      criterion:
+        'Capture screenshots and recordings of create, edit and delete for the PR',
+      status: 'passed',
+      actions: ['Recorded the required scenarios.'],
+      evidence: ['Saved screenshots and WebM recordings.'],
+      screenshots: ['criterion-2.png'],
+    };
+    writeFileSync(fixture.reportFile, JSON.stringify(fixture.report));
+
+    const result = runValidator(fixture);
+    assert.equal(result.status, 2, result.stderr);
+    assert.match(result.stderr, /Invalid Agent Browser report/);
+    assert.match(result.stderr, /already verified edit scenario/);
+    const report = JSON.parse(readFileSync(fixture.reportFile, 'utf8'));
+    assert.deepEqual(report.failures, []);
+    assert.equal(report.checks[1].status, 'passed');
+
+    // QA can associate the real edit evidence with the delivery check,
+    // without touching the application or rerunning its migrations/build.
+    fixture.report.checks[1].evidence.push(
+      'The edit scenario above verified existing values were prefilled, as shown in criterion-1.png.',
+    );
+    fixture.report.checks[1].screenshots.push('criterion-1.png');
+    writeFileSync(fixture.reportFile, JSON.stringify(fixture.report));
+    assert.equal(runValidator(fixture).status, 0);
+  } finally {
+    fixture.cleanup();
+  }
+});
+
+test('an unverified edit remains incomplete even without an observed defect', () => {
+  const fixture = createFixture();
+  try {
+    fixture.report.checks[1].criterion = '编辑记录';
+    writeFileSync(fixture.reportFile, JSON.stringify(fixture.report));
+    const result = runValidator(fixture);
+    assert.equal(result.status, 2);
+    assert.match(result.stderr, /existing values were prefilled/);
+  } finally {
+    fixture.cleanup();
+  }
+});
+
+test('observed empty edit fields remain an application defect without a generic error', () => {
+  const fixture = createFixture();
+  try {
+    fixture.report.checks[1].criterion = '编辑记录';
+    fixture.report.checks[1].evidence = [
+      '打开编辑弹窗后，必填字段为空，需要重新填写。',
+    ];
+    writeFileSync(fixture.reportFile, JSON.stringify(fixture.report));
+    const result = runValidator(fixture);
+    assert.equal(result.status, 10);
+    assert.match(result.stderr, /did not preserve existing required values/);
+  } finally {
+    fixture.cleanup();
+  }
+});
+
+test('observed business failures take priority over gaps in another check', () => {
+  const fixture = createFixture();
+  try {
+    fixture.report.passed = false;
+    fixture.report.checks[0].status = 'failed';
+    fixture.report.failures = ['Create returned HTTP 500.'];
+    fixture.report.checks[1].criterion = 'Record editing for the PR';
+    writeFileSync(fixture.reportFile, JSON.stringify(fixture.report));
+    const result = runValidator(fixture);
+    assert.equal(result.status, 10);
+    assert.match(result.stderr, /Create returned HTTP 500/);
+  } finally {
+    fixture.cleanup();
+  }
+});
+
+test('a successful edit observation may mention the absence of blank fields', () => {
+  const fixture = createFixture();
+  try {
+    fixture.report.checks[1].criterion = '编辑记录';
+    fixture.report.checks[1].evidence = [
+      '已有值正确回填，无空白字段。',
+      'Existing values were prefilled; no empty required fields were shown.',
+    ];
+    writeFileSync(fixture.reportFile, JSON.stringify(fixture.report));
+    const result = runValidator(fixture);
+    assert.equal(result.status, 0, result.stderr);
+  } finally {
+    fixture.cleanup();
+  }
+});
+
 function createFixture() {
   const root = mkdtempSync(path.join(os.tmpdir(), 'nb3-browser-report-'));
   const evidence = path.join(root, 'evidence');

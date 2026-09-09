@@ -66,7 +66,8 @@ for (const [index, check] of report.checks.entries()) {
 if (screenshotCount === 0)
   invalid('At least one browser screenshot is required.');
 
-const semanticFailures = applySemanticGuards(report);
+const { failures: semanticFailures, evidenceGaps } =
+  applySemanticGuards(report);
 if (report !== rawReport || semanticFailures.length > 0) {
   writeFileSync(args.report, `${JSON.stringify(report, null, 2)}\n`);
 }
@@ -87,6 +88,10 @@ const claimsSuccess =
   report.failures.length === 0;
 
 if (claimsSuccess) {
+  // Missing evidence is a QA report problem, not an observed application bug.
+  // Keep the live browser session so QA can substantiate umbrella criteria
+  // (for example, an edit recording) without restarting application repair.
+  if (evidenceGaps.length > 0) invalid(evidenceGaps.join('\n'));
   console.log(
     `Agent Browser acceptance passed with ${report.checks.length} check(s) and ${screenshotCount} screenshot(s).`,
   );
@@ -94,6 +99,7 @@ if (claimsSuccess) {
 }
 
 console.error('Agent Browser acceptance failed:');
+for (const gap of evidenceGaps) console.error(`Incomplete QA evidence: ${gap}`);
 console.error(JSON.stringify(report, null, 2));
 process.exit(10);
 
@@ -337,6 +343,7 @@ function printableFailureValue(value) {
 
 function applySemanticGuards(value) {
   const failures = [];
+  const evidenceGaps = [];
   for (const check of value.checks) {
     if (check.status !== 'passed') continue;
     const observation = [...check.actions, ...check.evidence].join(' ');
@@ -352,12 +359,21 @@ function applySemanticGuards(value) {
 
     if (
       /(?:编辑|\bedit(?:ing|ed)?\b)/iu.test(check.criterion) &&
+      /(?:(?:opened|opens) with (?:empty|blank) required fields|required fields (?:were|are) (?:empty|blank)|(?:必填字段|已有值|原值)(?:均|都|全部|仍)?(?:为空|未回填|没有回填))/iu.test(
+        observation,
+      )
+    ) {
+      reasons.push('the edit form did not preserve existing required values');
+    }
+
+    if (
+      /(?:编辑|\bedit(?:ing|ed)?\b)/iu.test(check.criterion) &&
       !/(?:预填|回填|原值|当前值|已有值|prefill|pre-fill|prepopulate|pre-populate|existing value|current value)/iu.test(
         observation,
       )
     ) {
-      reasons.push(
-        'the edit scenario did not verify existing values were prefilled',
+      evidenceGaps.push(
+        `${check.criterion}: the edit scenario did not verify existing values were prefilled. Verify the existing fields in the browser and document the observation and screenshot in this check; a delivery summary may cite the already verified edit scenario.`,
       );
     }
 
@@ -369,7 +385,7 @@ function applySemanticGuards(value) {
   }
 
   if (failures.length > 0) value.passed = false;
-  return failures;
+  return { failures, evidenceGaps };
 }
 
 function validateBrowserCommands(commands) {

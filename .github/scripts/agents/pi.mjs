@@ -8,6 +8,7 @@ import {
 import path from 'node:path';
 import { finished } from 'node:stream/promises';
 import { clearTimeout, setTimeout } from 'node:timers';
+import { fileURLToPath } from 'node:url';
 
 import { FACTORY_PROVIDER, parseBoolean } from '../factory-lib.mjs';
 
@@ -141,6 +142,12 @@ const child = spawn(
     model,
     '--thinking',
     thinking,
+    ...(process.env.FACTORY_AGENT_ROLE === 'qa'
+      ? [
+          '--extension',
+          fileURLToPath(new URL('./qa-process-guard.mjs', import.meta.url)),
+        ]
+      : []),
     `@${prompt}`,
   ],
   {

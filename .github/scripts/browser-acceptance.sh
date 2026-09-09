@@ -127,7 +127,7 @@ agent_prompt="$browser_prompt"
 agent_log="$artifact_dir/agent-browser-acceptance.jsonl"
 # Preserve the running app, browser session and evidence while QA repairs reports.
 while true; do
-  node "$control_dir/.github/scripts/run-agent.mjs" \
+  FACTORY_AGENT_ROLE=qa node "$control_dir/.github/scripts/run-agent.mjs" \
     --workspace "$browser_agent_workspace" \
     --prompt "$agent_prompt" \
     --log "$agent_log" \
