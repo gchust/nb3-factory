@@ -102,3 +102,32 @@ test('continuation skips initial implementation and restores the previous patch'
     /!\(github\.event_name == 'repository_dispatch' && github\.event\.action == 'code-agent-continue'\)/,
   );
 });
+
+test('a failed agent preserves a checkpoint but cannot publish or automatically continue', () => {
+  const patch = workflow
+    .split('- name: Create deterministic patch')[1]
+    .split('- name: Prepare runner handoff metadata')[0];
+  assert.match(
+    patch,
+    /failure\(\) && \(steps\.implementation\.outcome == 'failure' \|\| steps\.verify\.outcome == 'failure'\)/,
+  );
+  assert.match(patch, /id: patch/);
+  assert.match(patch, /ALLOW_EMPTY_PATCH: \$\{\{ failure\(\)/);
+  const checkpoint = workflow
+    .split('- name: Upload handoff checkpoint')[1]
+    .split('- name: Dispatch continuation run')[0];
+  assert.match(checkpoint, /always\(\) && steps\.patch\.outcome == 'success'/);
+  assert.match(
+    checkpoint,
+    /steps\.handoff\.outcome == 'success' \|\| failure\(\)/,
+  );
+  const dispatch = workflow
+    .split('- name: Dispatch continuation run')[1]
+    .split('- name: Record agent outcome')[0];
+  assert.match(dispatch, /if: steps\.handoff\.outcome == 'success'/);
+  assert.match(
+    workflow,
+    /if: needs\.agent\.result == 'success' && needs\.agent\.outputs\.handoff != 'true'/,
+  );
+  assert.match(workflow, /if: needs\.verify-final\.result == 'success'/);
+});

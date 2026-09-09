@@ -235,12 +235,14 @@ jobs:
           exit "$status"
 
       - name: Create deterministic patch
+        id: patch
         if: >-
           success() ||
+          failure() && (steps.implementation.outcome == 'failure' || steps.verify.outcome == 'failure') ||
           steps.implementation.outputs.handoff == 'true' ||
           steps.verify.outputs.handoff == 'true'
         env:
-          ALLOW_EMPTY_PATCH: ${{ needs.prepare.outputs.base_ref == needs.prepare.outputs.work_branch || steps.implementation.outputs.handoff == 'true' || steps.verify.outputs.handoff == 'true' }}
+          ALLOW_EMPTY_PATCH: ${{ failure() || needs.prepare.outputs.base_ref == needs.prepare.outputs.work_branch || steps.implementation.outputs.handoff == 'true' || steps.verify.outputs.handoff == 'true' }}
         run: |
           node control/.github/scripts/create-patch.mjs \
             --workspace workspace \
@@ -273,7 +275,9 @@ jobs:
           retention-days: 14
 
       - name: Upload handoff checkpoint
-        if: steps.handoff.outcome == 'success'
+        # Preserve a recovery checkpoint on failure, without treating it as
+        # successful verification or automatically retrying a broken runner.
+        if: always() && steps.patch.outcome == 'success' && (steps.handoff.outcome == 'success' || failure())
         uses: actions/upload-artifact@v4
         with:
           name: factory-handoff-${{ needs.prepare.outputs.issue_number }}

@@ -332,6 +332,63 @@ test('Code Agent runner closes a completed invocation whose stream stays open', 
   }
 });
 
+test('QA runner loads the trusted process guard without affecting implementation', () => {
+  const root = mkdtempSync(path.join(os.tmpdir(), 'nb3-qa-runner-'));
+  try {
+    const bin = path.join(root, 'bin');
+    mkdirSync(bin);
+    writeFileSync(path.join(root, 'task.md'), 'test task');
+    writeFileSync(
+      path.join(bin, 'pi'),
+      '#!/usr/bin/env node\nconsole.log(JSON.stringify(process.argv.slice(2)));\n',
+      { mode: 0o755 },
+    );
+    for (const role of ['', 'qa']) {
+      const result = spawnSync(
+        process.execPath,
+        [
+          script,
+          '--workspace',
+          root,
+          '--prompt',
+          path.join(root, 'task.md'),
+          '--log',
+          path.join(root, 'agent.jsonl'),
+          '--agentDir',
+          path.join(root, 'agent'),
+        ],
+        {
+          encoding: 'utf8',
+          env: {
+            ...process.env,
+            PATH: `${bin}:${process.env.PATH}`,
+            CODE_AGENT_API_ENDPOINT: 'https://proxy.example/v1',
+            CODE_AGENT_API_KEY: 'test-key',
+            CODE_AGENT_MODEL: 'test-model',
+            FACTORY_AGENT_ROLE: role,
+          },
+        },
+      );
+      assert.equal(result.status, 0, result.stderr);
+      const args = JSON.parse(result.stdout.trim());
+      assert.equal(args.includes('--extension'), role === 'qa');
+      if (role === 'qa') {
+        const extension = args[args.indexOf('--extension') + 1];
+        assert.equal(
+          extension,
+          path.resolve(
+            import.meta.dirname,
+            '..',
+            'agents/qa-process-guard.mjs',
+          ),
+        );
+      }
+    }
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
 for (const timeout of [undefined, '', '0']) {
   test(`Code Agent runs without an invocation timer when timeout is ${JSON.stringify(timeout)}`, () => {
     const root = mkdtempSync(path.join(os.tmpdir(), 'nb3-factory-unlimited-'));
