@@ -112,7 +112,11 @@ test('a failed agent preserves a checkpoint but cannot publish or automatically 
     /failure\(\) && \(steps\.implementation\.outcome == 'failure' \|\| steps\.verify\.outcome == 'failure'\)/,
   );
   assert.match(patch, /id: patch/);
-  assert.match(patch, /ALLOW_EMPTY_PATCH: \$\{\{ failure\(\)/);
+  const allowEmpty = patch.split('ALLOW_EMPTY_PATCH:')[1].split('\n')[0];
+  assert.match(allowEmpty, /steps\.implementation\.outcome == 'failure'/);
+  assert.match(allowEmpty, /steps\.verify\.outcome == 'failure'/);
+  // Status check functions only work in if, not step env expressions.
+  assert.doesNotMatch(allowEmpty, /(?:always|cancelled|failure|success)\(\)/);
   const checkpoint = workflow
     .split('- name: Upload handoff checkpoint')[1]
     .split('- name: Dispatch continuation run')[0];

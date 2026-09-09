@@ -242,7 +242,7 @@ jobs:
           steps.implementation.outputs.handoff == 'true' ||
           steps.verify.outputs.handoff == 'true'
         env:
-          ALLOW_EMPTY_PATCH: ${{ failure() || needs.prepare.outputs.base_ref == needs.prepare.outputs.work_branch || steps.implementation.outputs.handoff == 'true' || steps.verify.outputs.handoff == 'true' }}
+          ALLOW_EMPTY_PATCH: ${{ steps.implementation.outcome == 'failure' || steps.verify.outcome == 'failure' || needs.prepare.outputs.base_ref == needs.prepare.outputs.work_branch || steps.implementation.outputs.handoff == 'true' || steps.verify.outputs.handoff == 'true' }}
         run: |
           node control/.github/scripts/create-patch.mjs \
             --workspace workspace \
