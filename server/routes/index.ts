@@ -9,6 +9,7 @@ import {
 import { Hono } from 'hono';
 
 import { appExampleServiceToken } from '../providers/index.js';
+import { teamTodoApiRoutes } from './team-todos.js';
 
 export const apiRoutes: AppApiRouteContribution<Application> = defineApiRoutes(
   (app) => {
@@ -55,6 +56,7 @@ export const rootRoutes: AppRootRouteContribution<Application> =
 
 const routes: readonly AppRouteContribution<Application>[] = [
   apiRoutes,
+  teamTodoApiRoutes,
   rootRoutes,
 ];
 
