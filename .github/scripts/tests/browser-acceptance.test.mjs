@@ -20,6 +20,7 @@ for (const scenario of [
   'valid',
   'repair',
   'defect',
+  'app-not-ready',
   'agent-error',
   'recording-unavailable',
   'evidence-gap',
@@ -64,6 +65,7 @@ for (const scenario of [
           '#!/usr/bin/env node',
           "import http from 'node:http';",
           "if (process.argv[2] !== 'start') process.exit(2);",
+          "if (process.env.TEST_REPORT_SCENARIO === 'app-not-ready') process.exit(1);",
           "http.createServer((_request, response) => response.end('ok')).listen(Number(process.env.APP_SERVER_PORT), '127.0.0.1');",
           '',
         ].join('\n'),
@@ -153,9 +155,22 @@ for (const scenario of [
 
       assert.equal(
         result.status,
-        scenario === 'defect' ? 10 : scenario === 'agent-error' ? 7 : 0,
+        ['defect', 'app-not-ready'].includes(scenario)
+          ? 10
+          : scenario === 'agent-error'
+            ? 7
+            : 0,
         result.stderr,
       );
+      if (scenario === 'app-not-ready') {
+        // A broken application must reach the repair loop instead of being written off as a
+        // failed harness.
+        assert.match(
+          result.stderr,
+          /Application exited before Agent Browser acceptance/,
+        );
+        return;
+      }
       assert.equal(
         readFileSync(
           path.join(state, 'browser-agent-workspace', 'calls'),
