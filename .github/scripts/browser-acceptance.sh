@@ -81,24 +81,28 @@ cleanup() {
 }
 trap cleanup EXIT
 
+# An application that does not come up is a defect to repair, not a broken harness: exit 10
+# sends it to the repair loop. Only a missing browser or Agent Browser exits 2.
 ready=0
+status=''
 for _ in $(seq 1 90); do
-  if curl --silent --show-error --fail "$url" >/dev/null 2>&1; then
+  status="$(curl --silent --output /dev/null --write-out '%{http_code}' "$url" 2>/dev/null || true)"
+  if [[ "$status" =~ ^[23] ]]; then
     ready=1
     break
   fi
   if ! kill -0 "$server_pid" 2>/dev/null; then
     echo "Application exited before Agent Browser acceptance." >&2
     tail -n 200 "$server_log" >&2 || true
-    exit 2
+    exit 10
   fi
   sleep 1
 done
 
 if [[ "$ready" != "1" ]]; then
-  echo "Application did not become ready at $url." >&2
+  echo "Application did not become ready at $url (last HTTP status: ${status:-none})." >&2
   tail -n 200 "$server_log" >&2 || true
-  exit 2
+  exit 10
 fi
 
 credential_suffix="${GITHUB_RUN_ID:-local}-${attempt}-${RANDOM}"
