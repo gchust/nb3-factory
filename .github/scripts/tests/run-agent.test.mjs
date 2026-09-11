@@ -1,0 +1,455 @@
+import assert from 'node:assert/strict';
+import { execFileSync, spawnSync } from 'node:child_process';
+import {
+  mkdtempSync,
+  mkdirSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import test from 'node:test';
+
+const script = path.resolve(import.meta.dirname, '..', 'run-agent.mjs');
+
+test('Code Agent runner keeps the API key indirect and redacts diagnostic artifacts', () => {
+  const root = mkdtempSync(path.join(os.tmpdir(), 'nb3-factory-agent-'));
+  const workspace = path.join(root, 'workspace');
+  const bin = path.join(root, 'bin');
+  const prompt = path.join(root, 'task.md');
+  const log = path.join(root, 'artifacts', 'agent.jsonl');
+  const agentDir = path.join(root, 'agent');
+  const endpoint = 'https://private-endpoint.example/v1';
+  const apiKey = 'test-api-key-that-must-not-leak';
+  const browserPassword = 'browser-password-that-must-not-leak';
+
+  try {
+    mkdirSync(workspace);
+    mkdirSync(bin);
+    writeFileSync(prompt, 'test task\n');
+    writeFileSync(
+      path.join(bin, 'pi'),
+      [
+        '#!/usr/bin/env node',
+        'console.log(JSON.stringify({ key: process.env.CODE_AGENT_API_KEY, endpoint: process.env.CODE_AGENT_API_ENDPOINT, browserPassword: process.env.FACTORY_TEST_PASSWORD }));',
+        '',
+      ].join('\n'),
+      { mode: 0o755 },
+    );
+
+    execFileSync(
+      process.execPath,
+      [
+        script,
+        '--workspace',
+        workspace,
+        '--prompt',
+        prompt,
+        '--log',
+        log,
+        '--agentDir',
+        agentDir,
+      ],
+      {
+        env: {
+          ...process.env,
+          PATH: `${bin}:${process.env.PATH}`,
+          CODE_AGENT_API_ENDPOINT: endpoint,
+          CODE_AGENT_API_KEY: apiKey,
+          CODE_AGENT_API_TYPE: 'openai-completions',
+          CODE_AGENT_MODEL: 'test-model',
+          FACTORY_TEST_PASSWORD: browserPassword,
+        },
+        stdio: 'pipe',
+      },
+    );
+
+    const diagnostics = readFileSync(log, 'utf8');
+    assert.doesNotMatch(diagnostics, new RegExp(apiKey));
+    assert.doesNotMatch(diagnostics, new RegExp(endpoint));
+    assert.doesNotMatch(diagnostics, new RegExp(browserPassword));
+    assert.match(diagnostics, /\[REDACTED\]/);
+
+    const models = JSON.parse(
+      readFileSync(path.join(agentDir, 'models.json'), 'utf8'),
+    );
+    assert.equal(models.providers['nb3-factory'].apiKey, '$CODE_AGENT_API_KEY');
+    assert.equal(models.providers['nb3-factory'].baseUrl, endpoint);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('Code Agent runner applies DeepSeek V4 compatibility behind a custom proxy', () => {
+  const root = mkdtempSync(path.join(os.tmpdir(), 'nb3-factory-deepseek-'));
+  const workspace = path.join(root, 'workspace');
+  const bin = path.join(root, 'bin');
+  const prompt = path.join(root, 'task.md');
+  const log = path.join(root, 'artifacts', 'agent.jsonl');
+  const agentDir = path.join(root, 'agent');
+
+  try {
+    mkdirSync(workspace);
+    mkdirSync(bin);
+    writeFileSync(prompt, 'test task\n');
+    writeFileSync(
+      path.join(bin, 'pi'),
+      '#!/usr/bin/env node\nconsole.log(JSON.stringify({ ok: true }));\n',
+      { mode: 0o755 },
+    );
+
+    execFileSync(
+      process.execPath,
+      [
+        script,
+        '--workspace',
+        workspace,
+        '--prompt',
+        prompt,
+        '--log',
+        log,
+        '--agentDir',
+        agentDir,
+      ],
+      {
+        env: {
+          ...process.env,
+          PATH: `${bin}:${process.env.PATH}`,
+          CODE_AGENT_API_ENDPOINT: 'https://proxy.example/v1',
+          CODE_AGENT_API_KEY: 'test-key',
+          CODE_AGENT_API_TYPE: 'openai-completions',
+          CODE_AGENT_MODEL: 'deepseek-v4-flash',
+        },
+        stdio: 'pipe',
+      },
+    );
+
+    const models = JSON.parse(
+      readFileSync(path.join(agentDir, 'models.json'), 'utf8'),
+    );
+    const provider = models.providers['nb3-factory'];
+    const configuredModel = provider.models[0];
+
+    assert.equal(provider.compat.supportsDeveloperRole, false);
+    assert.equal(provider.compat.supportsReasoningEffort, true);
+    assert.equal(provider.compat.supportsStore, false);
+    assert.equal(provider.compat.maxTokensField, 'max_tokens');
+    assert.equal(provider.compat.thinkingFormat, 'deepseek');
+    assert.equal(
+      provider.compat.requiresReasoningContentOnAssistantMessages,
+      true,
+    );
+    assert.deepEqual(configuredModel.thinkingLevelMap, {
+      minimal: null,
+      low: 'low',
+      medium: null,
+      high: 'high',
+      max: 'max',
+    });
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('Code Agent runner keeps streamed deltas and large tool results out of the Actions log', () => {
+  const root = mkdtempSync(path.join(os.tmpdir(), 'nb3-factory-console-'));
+  const workspace = path.join(root, 'workspace');
+  const bin = path.join(root, 'bin');
+  const prompt = path.join(root, 'task.md');
+  const log = path.join(root, 'artifacts', 'agent.jsonl');
+  const agentDir = path.join(root, 'agent');
+
+  try {
+    mkdirSync(workspace);
+    mkdirSync(bin);
+    writeFileSync(prompt, 'test task\n');
+    writeFileSync(
+      path.join(bin, 'pi'),
+      [
+        '#!/usr/bin/env node',
+        "console.log(JSON.stringify({ type: 'message_update', delta: 'hidden-stream-delta' }));",
+        "console.log(JSON.stringify({ type: 'tool_execution_start', toolCallId: '1', toolName: 'read' }));",
+        "console.log(JSON.stringify({ type: 'tool_execution_end', toolCallId: '1', toolName: 'read', result: 'hidden-large-result', isError: false }));",
+        "console.log(JSON.stringify({ type: 'agent_settled' }));",
+        '',
+      ].join('\n'),
+      { mode: 0o755 },
+    );
+
+    const result = spawnSync(
+      process.execPath,
+      [
+        script,
+        '--workspace',
+        workspace,
+        '--prompt',
+        prompt,
+        '--log',
+        log,
+        '--agentDir',
+        agentDir,
+      ],
+      {
+        encoding: 'utf8',
+        env: {
+          ...process.env,
+          PATH: `${bin}:${process.env.PATH}`,
+          CODE_AGENT_API_ENDPOINT: 'https://proxy.example/v1',
+          CODE_AGENT_API_KEY: 'test-key',
+          CODE_AGENT_API_TYPE: 'openai-completions',
+          CODE_AGENT_MODEL: 'test-model',
+        },
+      },
+    );
+
+    assert.equal(result.status, 0, result.stderr);
+    assert.doesNotMatch(result.stdout, /hidden-stream-delta/);
+    assert.doesNotMatch(result.stdout, /hidden-large-result/);
+    assert.match(result.stdout, /tool_execution_start/);
+    assert.match(result.stdout, /tool_execution_end/);
+    const diagnostics = readFileSync(log, 'utf8');
+    assert.match(diagnostics, /hidden-stream-delta/);
+    assert.match(diagnostics, /hidden-large-result/);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('Code Agent runner bounds one invocation without limiting repair attempts', () => {
+  const root = mkdtempSync(path.join(os.tmpdir(), 'nb3-factory-timeout-'));
+  const workspace = path.join(root, 'workspace');
+  const bin = path.join(root, 'bin');
+  const prompt = path.join(root, 'task.md');
+  const log = path.join(root, 'artifacts', 'agent.jsonl');
+  const agentDir = path.join(root, 'agent');
+
+  try {
+    mkdirSync(workspace);
+    mkdirSync(bin);
+    writeFileSync(prompt, 'test task\n');
+    writeFileSync(
+      path.join(bin, 'pi'),
+      '#!/usr/bin/env node\nsetInterval(() => {}, 1_000);\n',
+      { mode: 0o755 },
+    );
+
+    const startedAt = Date.now();
+    const result = spawnSync(
+      process.execPath,
+      [
+        script,
+        '--workspace',
+        workspace,
+        '--prompt',
+        prompt,
+        '--log',
+        log,
+        '--agentDir',
+        agentDir,
+      ],
+      {
+        encoding: 'utf8',
+        env: {
+          ...process.env,
+          PATH: `${bin}:${process.env.PATH}`,
+          CODE_AGENT_API_ENDPOINT: 'https://proxy.example/v1',
+          CODE_AGENT_API_KEY: 'test-key',
+          CODE_AGENT_API_TYPE: 'openai-completions',
+          CODE_AGENT_MODEL: 'test-model',
+          CODE_AGENT_INVOCATION_TIMEOUT_SECONDS: '1',
+        },
+        timeout: 5_000,
+      },
+    );
+
+    assert.notEqual(result.status, 0);
+    assert.ok(Date.now() - startedAt < 4_000);
+    assert.match(result.stderr, /timed out after 1 seconds/);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('Code Agent runner closes a completed invocation whose stream stays open', () => {
+  const root = mkdtempSync(path.join(os.tmpdir(), 'nb3-factory-settled-'));
+  const workspace = path.join(root, 'workspace');
+  const bin = path.join(root, 'bin');
+  const prompt = path.join(root, 'task.md');
+  const log = path.join(root, 'artifacts', 'agent.jsonl');
+  const agentDir = path.join(root, 'agent');
+
+  try {
+    mkdirSync(workspace);
+    mkdirSync(bin);
+    writeFileSync(prompt, 'test task\n');
+    writeFileSync(
+      path.join(bin, 'pi'),
+      [
+        '#!/usr/bin/env node',
+        "console.log(JSON.stringify({ type: 'agent_end' }));",
+        'setInterval(() => {}, 1_000);',
+        '',
+      ].join('\n'),
+      { mode: 0o755 },
+    );
+
+    const startedAt = Date.now();
+    const result = spawnSync(
+      process.execPath,
+      [
+        script,
+        '--workspace',
+        workspace,
+        '--prompt',
+        prompt,
+        '--log',
+        log,
+        '--agentDir',
+        agentDir,
+      ],
+      {
+        encoding: 'utf8',
+        env: {
+          ...process.env,
+          PATH: `${bin}:${process.env.PATH}`,
+          CODE_AGENT_API_ENDPOINT: 'https://proxy.example/v1',
+          CODE_AGENT_API_KEY: 'test-key',
+          CODE_AGENT_API_TYPE: 'openai-completions',
+          CODE_AGENT_MODEL: 'test-model',
+          CODE_AGENT_INVOCATION_TIMEOUT_SECONDS: '0',
+        },
+        timeout: 8_000,
+      },
+    );
+
+    assert.equal(result.status, 0, result.stderr);
+    assert.ok(Date.now() - startedAt < 7_000);
+    assert.match(result.stderr, /closing the completed invocation/);
+    assert.match(readFileSync(log, 'utf8'), /agent_end/);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('QA runner loads the trusted process guard without affecting implementation', () => {
+  const root = mkdtempSync(path.join(os.tmpdir(), 'nb3-qa-runner-'));
+  try {
+    const bin = path.join(root, 'bin');
+    mkdirSync(bin);
+    writeFileSync(path.join(root, 'task.md'), 'test task');
+    writeFileSync(
+      path.join(bin, 'pi'),
+      '#!/usr/bin/env node\nconsole.log(JSON.stringify(process.argv.slice(2)));\n',
+      { mode: 0o755 },
+    );
+    for (const role of ['', 'qa']) {
+      const result = spawnSync(
+        process.execPath,
+        [
+          script,
+          '--workspace',
+          root,
+          '--prompt',
+          path.join(root, 'task.md'),
+          '--log',
+          path.join(root, 'agent.jsonl'),
+          '--agentDir',
+          path.join(root, 'agent'),
+        ],
+        {
+          encoding: 'utf8',
+          env: {
+            ...process.env,
+            PATH: `${bin}:${process.env.PATH}`,
+            CODE_AGENT_API_ENDPOINT: 'https://proxy.example/v1',
+            CODE_AGENT_API_KEY: 'test-key',
+            CODE_AGENT_MODEL: 'test-model',
+            FACTORY_AGENT_ROLE: role,
+          },
+        },
+      );
+      assert.equal(result.status, 0, result.stderr);
+      const args = JSON.parse(result.stdout.trim());
+      assert.equal(args.includes('--extension'), role === 'qa');
+      if (role === 'qa') {
+        const extension = args[args.indexOf('--extension') + 1];
+        assert.equal(
+          extension,
+          path.resolve(
+            import.meta.dirname,
+            '..',
+            'agents/qa-process-guard.mjs',
+          ),
+        );
+      }
+    }
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+for (const timeout of [undefined, '', '0']) {
+  test(`Code Agent runs without an invocation timer when timeout is ${JSON.stringify(timeout)}`, () => {
+    const root = mkdtempSync(path.join(os.tmpdir(), 'nb3-factory-unlimited-'));
+    try {
+      const bin = path.join(root, 'bin');
+      mkdirSync(bin);
+      writeFileSync(path.join(root, 'task.md'), 'test task');
+      writeFileSync(
+        path.join(bin, 'pi'),
+        '#!/usr/bin/env node\nsetTimeout(() => console.log(JSON.stringify(process.argv.slice(2))), 100);\n',
+        { mode: 0o755 },
+      );
+      // Reject timer creation in the adapter, without waiting thirty minutes.
+      // The fake Pi is a separate process and keeps its real timers.
+      const preload = path.join(root, 'reject-timer.mjs');
+      writeFileSync(
+        preload,
+        `
+        import timers from 'node:timers';
+        import { syncBuiltinESMExports } from 'node:module';
+        timers.setTimeout = () => { throw new Error('Unexpected invocation timer'); };
+        syncBuiltinESMExports();
+      `,
+      );
+      const env = {
+        ...process.env,
+        PATH: `${bin}:${process.env.PATH}`,
+        CODE_AGENT_API_ENDPOINT: 'https://proxy.example/v1',
+        CODE_AGENT_API_KEY: 'test-key',
+        CODE_AGENT_MODEL: 'deepseek-v4-flash',
+        CODE_AGENT_THINKING: '',
+        CODE_AGENT_IDLE_TIMEOUT_SECONDS: '0',
+      };
+      delete env.CODE_AGENT_INVOCATION_TIMEOUT_SECONDS;
+      if (timeout !== undefined)
+        env.CODE_AGENT_INVOCATION_TIMEOUT_SECONDS = timeout;
+      for (const thinking of ['', 'high']) {
+        env.CODE_AGENT_THINKING = thinking;
+        const result = spawnSync(
+          process.execPath,
+          [
+            '--import',
+            preload,
+            script,
+            '--workspace',
+            root,
+            '--prompt',
+            path.join(root, 'task.md'),
+            '--log',
+            path.join(root, 'agent.jsonl'),
+            '--agentDir',
+            path.join(root, 'agent'),
+          ],
+          { env, encoding: 'utf8', timeout: 5_000 },
+        );
+        assert.equal(result.status, 0, result.stderr);
+        const args = JSON.parse(result.stdout.trim());
+        assert.equal(args[args.indexOf('--thinking') + 1], thinking || 'max');
+      }
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+}

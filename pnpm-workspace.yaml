@@ -1,0 +1,31 @@
+# Which dependencies may run install scripts: true compiles a native addon, false skips a script
+# the project does not need. A package left out here stops the install with ERR_PNPM_IGNORED_BUILDS.
+# pnpm 11 reads this from pnpm-workspace.yaml only; see https://pnpm.io/settings/build.
+allowBuilds:
+  better-sqlite3: true
+  esbuild: true
+  oracledb: true
+  tesseract.js: false
+
+# Skips re-auditing lockfile entries against the supply-chain policy on every install.
+# The check costs tens of seconds here and re-verifies versions the lockfile already pins;
+# newly resolved packages are still checked. Set to false if outside contributors edit the
+# lockfile. See https://pnpm.io/settings/dependency-resolution#trustlockfile.
+trustLockfile: true
+
+# Reports a dependency whose install script was skipped as a warning instead of failing the
+# install. allowBuilds above decides the packages known today; this keeps a new transitive
+# dependency from stopping the install with a red error before anything is even running.
+# See https://pnpm.io/settings/build#strictdepbuilds.
+strictDepBuilds: false
+
+minimumReleaseAgeExclude:
+  - '@nocobase/app-client@1.0.0-beta.13'
+  - '@nocobase/app-plugin-i18n@0.1.0-beta.5'
+  - '@nocobase/app-plugin-notification-in-app@0.2.0-beta.8'
+  - '@nocobase/app-plugin-notification-providers@0.2.0-beta.5'
+  - '@nocobase/app-plugin-notification@0.1.0-beta.7'
+  - '@nocobase/app-plugin-workflow@0.1.0-beta.13'
+  - '@nocobase/app-server@1.0.0-beta.10'
+  - '@nocobase/i18n@1.0.0-beta.3'
+  - '@nocobase/nb3-cli@1.0.0-beta.6'
