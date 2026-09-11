@@ -33,7 +33,7 @@ async function start(): Promise<void> {
 
     const runtime = await resolveAppRuntime(appRuntime);
 
-    app = createApp(runtime);
+    app = await createApp(runtime);
     await app.start();
     applicationStarted = true;
 
