@@ -39,6 +39,8 @@ base_path="${base_path%/}"
 origin="http://127.0.0.1:${port}"
 server_log="$artifact_dir/application.log"
 
+"$script_dir/stop-stale-app.sh" "$port"
+
 APP_SERVER_HOST=127.0.0.1 \
 APP_SERVER_PORT="$port" \
 APP_PUBLIC_ORIGIN="$origin" \
@@ -56,8 +58,10 @@ trap cleanup EXIT
 
 url="${origin}${base_path}/"
 ready=0
+status=''
 for _ in $(seq 1 90); do
-  if curl --silent --show-error --fail "$url" >/dev/null 2>&1; then
+  status="$(curl --silent --output /dev/null --write-out '%{http_code}' "$url" 2>/dev/null || true)"
+  if [[ "$status" =~ ^[23] ]]; then
     ready=1
     break
   fi
@@ -70,7 +74,7 @@ for _ in $(seq 1 90); do
 done
 
 if [[ "$ready" != "1" ]]; then
-  echo "Application did not become ready at $url." >&2
+  echo "Application did not become ready at $url (last HTTP status: ${status:-none})." >&2
   tail -n 200 "$server_log" >&2 || true
   exit 1
 fi

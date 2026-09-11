@@ -52,6 +52,8 @@ node "$control_dir/.github/scripts/build-browser-prompt.mjs" \
 
 export APP_CONFIG_FILE="$config_file"
 
+"$control_dir/.github/scripts/stop-stale-app.sh" "$port"
+
 cd "$workspace"
 APP_SERVER_HOST=127.0.0.1 \
 APP_SERVER_PORT="$port" \

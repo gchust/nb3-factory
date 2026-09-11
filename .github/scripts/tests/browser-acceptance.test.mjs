@@ -45,12 +45,14 @@ for (const scenario of [
         'agent-browser-wrapper.sh',
         'build-browser-prompt.mjs',
         'factory-lib.mjs',
+        'stop-stale-app.sh',
         'task-compat.mjs',
         'validate-browser-report.mjs',
       ]) {
         copyFileSync(path.join(scripts, file), path.join(controlScripts, file));
       }
       chmodSync(path.join(controlScripts, 'agent-browser-wrapper.sh'), 0o755);
+      chmodSync(path.join(controlScripts, 'stop-stale-app.sh'), 0o755);
       copyFileSync(
         path.resolve(scripts, '..', 'prompts', 'browser-acceptance.md'),
         path.join(controlPrompts, 'browser-acceptance.md'),
@@ -138,6 +140,9 @@ for (const scenario of [
             ...process.env,
             PATH: `${bin}:${process.env.PATH}`,
             GITHUB_RUN_ID: '123',
+            // The fixture starts a real listener on the application port. Keep it away from
+            // the default so the test does not depend on what runs on this machine.
+            FACTORY_APP_PORT: '13440',
             TEST_REPORT_SCENARIO: scenario,
             TEST_BROWSER_COMMANDS: path.join(root, 'browser-commands'),
           },
