@@ -1,4 +1,4 @@
-import { Home } from 'lucide-react';
+import { Home, Wrench } from 'lucide-react';
 import {
   defineAppRoutes,
   defineSettingsRoutes,
@@ -12,6 +12,19 @@ const appRoutes: AppClientRouteContribution = defineAppRoutes([
     name: 'home',
     navigation: { title: 'navigation.home', icon: Home },
     path: '/',
+  },
+  {
+    auth: 'required',
+    componentLoader: () => import('./pages/equipment-list.js'),
+    name: 'equipment',
+    navigation: { title: 'navigation.equipment', icon: Wrench },
+    path: '/equipment',
+  },
+  {
+    auth: 'required',
+    componentLoader: () => import('./pages/equipment-detail.js'),
+    name: 'equipment-detail',
+    path: '/equipment/:id',
   },
 ]);
 
