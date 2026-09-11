@@ -22,8 +22,10 @@ pnpm test
 pnpm lint
 pnpm format:check
 pnpm build
-node --import tsx ./scripts/migrate.ts
-node --import tsx ./scripts/seed.ts
+# Run the application's own commands. Reaching into scripts/ assumes one template's file
+# layout; a template is free to move migrations behind a CLI, and beta.22 did.
+pnpm migrate
+pnpm seed
 
 if [[ "${FACTORY_SKIP_BROWSER:-0}" == "1" ]]; then
   echo "Browser smoke skipped by FACTORY_SKIP_BROWSER=1."
