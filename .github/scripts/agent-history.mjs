@@ -56,6 +56,15 @@ const PHASE_LABELS = {
   summary: '变更摘要',
 };
 
+const STATUS_LABELS = {
+  delivered: '已生成/更新业务 PR',
+  handoff: '已保存 Handoff，等待下一轮续跑',
+  failure: '失败',
+  cancelled: '已取消',
+  timed_out: '超时',
+  success: '运行完成（未确认业务交付）',
+};
+
 // The runner redacts the secrets it knows; a log that reached the artifact before that, or a
 // pattern it could not know, is caught here.
 export function scrubSecrets(text) {
@@ -173,22 +182,23 @@ export function renderHistory({
   runId,
   attempt,
   status,
+  bytes,
   manifest,
   assetUrl,
   fallbackUrl,
 }) {
   const link = assetUrl
-    ? `[agent-history-issue-${issue}-run-${runId}-attempt-${attempt}.tar.gz](${assetUrl})（${formatBytes(manifest.bytes)}，${manifest.files.length} 个文件）`
+    ? `[agent-history-issue-${issue}-run-${runId}-attempt-${attempt}.tar.gz](${assetUrl})（${formatBytes(bytes)}，${manifest.files.length} 个文件）`
     : `记录未能上传（见 [本次运行](${fallbackUrl})），请在 Artifact 中查看`;
   const lines = [
     MARKER(runId, attempt),
     '## Agent 交互历史',
     '',
-    `本轮运行：\`run ${runId}\` · attempt ${attempt}${status ? ` · ${status}` : ''}`,
+    `本轮运行：\`run ${runId}\` · attempt ${attempt}${status ? ` · ${STATUS_LABELS[status] ?? status}` : ''}`,
     '',
     `完整记录（凭据已替换为 \`[REDACTED]\`）：${link}`,
     '',
-    '| 阶段 | 文件 | 大小 |',
+    '| 阶段 | 文件 | 大小（未压缩） |',
     '| --- | --- | ---: |',
   ];
   for (const file of manifest.files)
@@ -259,6 +269,7 @@ async function publish(args) {
     runId,
     attempt,
     status: args.status ?? '',
+    bytes: packed.bytes,
     manifest: packed.manifest,
     assetUrl: args['asset-url'] ?? '',
     fallbackUrl: args['fallback-url'] ?? '',
