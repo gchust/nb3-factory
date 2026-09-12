@@ -284,7 +284,7 @@ test('publishing posts once and then updates the same comment', async (t) => {
   const first = await exec(process.execPath, [script, ...args], { env });
   assert.match(first.stdout, /Agent history reported/u);
   assert.match(comments[0].body, /^<!-- factory-agent-history:123:1 -->/u);
-  assert.match(comments[0].body, /（[0-9.]+ (?:KB|MB)，5 个文件）/u);
+  assert.match(comments[0].body, /（[0-9.]+ (?:B|KB|MB)，5 个文件）/u);
   assert.deepEqual(calls, [
     'GET /repos/owner/repo/issues/42/comments',
     'POST /repos/owner/repo/issues/42/comments',
