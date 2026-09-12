@@ -158,6 +158,11 @@ while true; do
       node "$control_dir/.github/scripts/check-recording-health.mjs" \
         --evidence "$evidence_dir" \
         --output "$artifact_dir/media-health.json" || true
+      # A whole-run recording can exceed the per-file attachment budget; split it here so the
+      # pull request still shows the video instead of only linking the artifact.
+      node "$control_dir/.github/scripts/prepare-recordings.mjs" \
+        --evidence "$evidence_dir" \
+        --output "$artifact_dir/media-parts.json" || true
       exit 0
       ;;
     10) exit 10 ;; # Business defects go to the application repair loop.

@@ -13,7 +13,9 @@ import {
 import path from 'node:path';
 
 const MAX_ATTACHMENT_BYTES = 9_500_000;
-const LIMITS = { png: 40, webm: 6 };
+// A recording longer than the attachment budget is published as several parts, so the video
+// budget is per part rather than per recording.
+const LIMITS = { png: 40, webm: 8 };
 
 // Artifact contents are data, never instructions or executable paths.
 export function safeFile(root, relative, maxBytes = Infinity) {
@@ -46,6 +48,17 @@ export function loadMediaHealth(root, prefix) {
   try {
     const health = readJson(root, `${prefix}/media-health.json`);
     return health && typeof health === 'object' ? health : null;
+  } catch {
+    return null;
+  }
+}
+
+// Whole-run recordings that exceeded the attachment budget were split into parts before the
+// artifact was uploaded; this maps the recorded file to the parts that replace it.
+export function loadMediaParts(root, prefix) {
+  try {
+    const parts = readJson(root, `${prefix}/media-parts.json`);
+    return parts && typeof parts === 'object' ? parts : null;
   } catch {
     return null;
   }
@@ -145,6 +158,24 @@ export function collectMedia(root, output) {
   const videos = Array.isArray(showcase.videos)
     ? showcase.videos.slice(0, 20)
     : [];
+  const parts = loadMediaParts(root, prefix);
+  const partsByFile = new Map(
+    (Array.isArray(parts?.splits) ? parts.splits : [])
+      .filter(
+        (split) =>
+          typeof split?.file === 'string' &&
+          Array.isArray(split.parts) &&
+          split.parts.length >= 2,
+      )
+      .map((split) => [split.file, split]),
+  );
+  for (const video of videos) {
+    const split = partsByFile.get(video?.file);
+    if (split)
+      warnings.push(
+        `${video.file} 超过评论附件上限，已拆分为 ${split.parts.length} 段发布；完整原始录像见媒体包。`,
+      );
+  }
   const candidates = [
     ...pages.map((p) => ({
       title: p?.title,
@@ -158,7 +189,16 @@ export function collectMedia(root, output) {
           .slice(0, 100)
           .map((name) => ({ title: c.criterion, name, kind: 'png' })),
       ),
-    ...videos.map((v) => ({ title: v?.title, name: v?.file, kind: 'webm' })),
+    ...videos.flatMap((v) => {
+      const split = partsByFile.get(v?.file);
+      if (!split) return [{ title: v?.title, name: v?.file, kind: 'webm' }];
+      const label = v?.title || v?.file;
+      return split.parts.map((name, index) => ({
+        title: `${label}（第 ${index + 1}/${split.parts.length} 段）`,
+        name,
+        kind: 'webm',
+      }));
+    }),
   ];
   const media = [];
   const seen = new Set();

@@ -216,6 +216,73 @@ test('Code Agent runner keeps streamed deltas and large tool results out of the 
   }
 });
 
+test('Code Agent runner redacts secrets from the live console stream', () => {
+  const root = mkdtempSync(path.join(os.tmpdir(), 'nb3-factory-redact-'));
+  const workspace = path.join(root, 'workspace');
+  const bin = path.join(root, 'bin');
+  const prompt = path.join(root, 'task.md');
+  const log = path.join(root, 'artifacts', 'agent.jsonl');
+  const agentDir = path.join(root, 'agent');
+  const apiKey = 'api-key-that-must-not-leak';
+  const browserPassword = 'Factory-QA-123-1-1-9999-A9!';
+
+  try {
+    mkdirSync(workspace);
+    mkdirSync(bin);
+    writeFileSync(prompt, 'test task\n');
+    writeFileSync(
+      path.join(bin, 'pi'),
+      [
+        '#!/usr/bin/env node',
+        "console.log(JSON.stringify({ type: 'message_end', content: `token ${process.env.CODE_AGENT_API_KEY} password ${process.env.FACTORY_TEST_PASSWORD}` }));",
+        'console.error(`stderr echo ${process.env.CODE_AGENT_API_KEY}`);',
+        "console.log(JSON.stringify({ type: 'agent_settled' }));",
+        '',
+      ].join('\n'),
+      { mode: 0o755 },
+    );
+
+    const result = spawnSync(
+      process.execPath,
+      [
+        script,
+        '--workspace',
+        workspace,
+        '--prompt',
+        prompt,
+        '--log',
+        log,
+        '--agentDir',
+        agentDir,
+      ],
+      {
+        encoding: 'utf8',
+        env: {
+          ...process.env,
+          PATH: `${bin}:${process.env.PATH}`,
+          CODE_AGENT_API_ENDPOINT: 'https://proxy.example/v1',
+          CODE_AGENT_API_KEY: apiKey,
+          CODE_AGENT_API_TYPE: 'openai-completions',
+          CODE_AGENT_MODEL: 'test-model',
+          FACTORY_TEST_PASSWORD: browserPassword,
+        },
+      },
+    );
+
+    assert.equal(result.status, 0, result.stderr);
+    // The Actions log and verify-*.log are published artifacts; neither may hold a secret.
+    assert.doesNotMatch(result.stdout, new RegExp(apiKey, 'u'));
+    assert.doesNotMatch(result.stdout, new RegExp(browserPassword, 'u'));
+    assert.doesNotMatch(result.stderr, new RegExp(apiKey, 'u'));
+    assert.match(result.stdout, /\[REDACTED\]/u);
+    const diagnostics = readFileSync(log, 'utf8');
+    assert.doesNotMatch(diagnostics, new RegExp(apiKey, 'u'));
+    assert.doesNotMatch(diagnostics, new RegExp(browserPassword, 'u'));
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
 test('Code Agent runner bounds one invocation without limiting repair attempts', () => {
   const root = mkdtempSync(path.join(os.tmpdir(), 'nb3-factory-timeout-'));
   const workspace = path.join(root, 'workspace');

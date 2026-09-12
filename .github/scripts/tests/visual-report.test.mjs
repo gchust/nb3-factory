@@ -241,6 +241,48 @@ test('oversized recordings are not attached; they remain in the original artifac
   );
 });
 
+test('publishes the parts of an oversized recording in order', (t) => {
+  const f = fixture(t);
+  write(f.artifacts, `${prefix}/media-parts.json`, {
+    maxBytes: 9_500_000,
+    splits: [
+      {
+        file: 'flow-checkout.webm',
+        bytes: 12_000_000,
+        seconds: 1200,
+        segmentSeconds: 600,
+        parts: ['flow-checkout-part-01.webm', 'flow-checkout-part-02.webm'],
+        partBytes: [6_000_000, 6_000_000],
+      },
+    ],
+    skipped: [],
+  });
+  write(f.artifacts, `${prefix}/evidence/flow-checkout-part-01.webm`, webm);
+  write(f.artifacts, `${prefix}/evidence/flow-checkout-part-02.webm`, webm);
+  const plan = collectMedia(f.artifacts, f.output);
+  const videos = plan.media.filter((m) => m.kind === 'webm');
+  assert.deepEqual(
+    videos.map((m) => m.name),
+    ['flow-checkout-part-01.webm', 'flow-checkout-part-02.webm'],
+  );
+  assert.match(videos[0].title, /第 1\/2 段/u);
+  assert.match(videos[1].title, /第 2\/2 段/u);
+  assert.match(plan.warnings.join(' '), /已拆分为 2 段发布/);
+  assert.equal(existsSync(path.join(f.output, 'flow-checkout.webm')), false);
+  const body = renderReport(
+    {
+      ...plan,
+      runId,
+      runUrl,
+      runAttempt: 1,
+      headSha,
+      sourceArtifactUrl: `${runUrl}/artifacts/55`,
+    },
+    true,
+  );
+  assert.match(body, /第 2\/2 段/u);
+});
+
 test('annotates a recording with no visible operation instead of dropping it', (t) => {
   const f = fixture(t);
   write(f.artifacts, `${prefix}/media-health.json`, {

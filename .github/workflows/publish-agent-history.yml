@@ -1,0 +1,117 @@
+name: Publish Agent History
+
+on:
+  workflow_run:
+    workflows: [Code Agent NocoBase Task]
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      run_id:
+        description: Completed task run ID to publish history for (not Issue number)
+        required: true
+        type: string
+      attempt:
+        description: Run attempt (leave empty for latest)
+        required: false
+        type: string
+
+permissions: {}
+
+# One archive per run attempt on a rolling release, so handoff continuations serialize.
+concurrency:
+  group: factory-agent-history
+  queue: max
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      actions: read
+      contents: write
+      issues: write
+    env:
+      SOURCE_RUN_ID: ${{ inputs.run_id || github.event.workflow_run.id }}
+      SOURCE_ATTEMPT: ${{ inputs.attempt || github.event.workflow_run.run_attempt }}
+    steps:
+      # Run only trusted control code; the downloaded artifact is data, never code.
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          path: control
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24.x
+
+      - name: Resolve completed task and Issue
+        id: source
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          node control/.github/scripts/report-task-usage.mjs select \
+            --run-id "$SOURCE_RUN_ID" --attempt "$SOURCE_ATTEMPT" \
+            --source "$RUNNER_TEMP/history-source.json"
+
+      - name: Read the task Issue
+        id: task
+        if: steps.source.outputs.ready == 'true'
+        run: |
+          node -e '
+            const source = require(process.argv[1]);
+            require("node:fs").appendFileSync(
+              process.env.GITHUB_OUTPUT,
+              `issue=${source.issue}\nstatus=${source.status ?? ""}\n`,
+            );
+          ' "$RUNNER_TEMP/history-source.json"
+
+      - name: Download task evidence
+        if: steps.source.outputs.ready == 'true' && steps.source.outputs.artifact != ''
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ steps.source.outputs.artifact }}
+          run-id: ${{ env.SOURCE_RUN_ID }}
+          github-token: ${{ github.token }}
+          path: ${{ runner.temp }}/history-evidence
+
+      - name: Pack the agent interaction history
+        id: pack
+        if: steps.source.outputs.ready == 'true'
+        run: |
+          node control/.github/scripts/agent-history.mjs pack \
+            --artifacts "$RUNNER_TEMP/history-evidence" \
+            --output "$RUNNER_TEMP/history" \
+            --manifest "$RUNNER_TEMP/history/manifest.json" \
+            --issue "${{ steps.task.outputs.issue }}" \
+            --run "$SOURCE_RUN_ID" --attempt "$SOURCE_ATTEMPT"
+
+      - name: Upload the archive to the history release
+        id: release
+        if: steps.pack.outputs.asset != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          if ! gh release view factory-history --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release create factory-history --repo "$GITHUB_REPOSITORY" --prerelease \
+              --title "工厂运行历史" \
+              --notes "每个完成的任务运行在这里保存一份 agent 交互记录（tar.gz，凭据已脱敏）。历史记录只用于回看，不参与验收。"
+          fi
+          gh release upload factory-history \
+            "$RUNNER_TEMP/history/${{ steps.pack.outputs.asset }}" \
+            --repo "$GITHUB_REPOSITORY" --clobber
+          echo "asset_url=https://github.com/$GITHUB_REPOSITORY/releases/download/factory-history/${{ steps.pack.outputs.asset }}" >> "$GITHUB_OUTPUT"
+
+      - name: Report the history on the task Issue
+        if: steps.source.outputs.ready == 'true'
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          node control/.github/scripts/agent-history.mjs publish \
+            --manifest "$RUNNER_TEMP/history/manifest.json" \
+            --issue "${{ steps.task.outputs.issue }}" \
+            --run "$SOURCE_RUN_ID" --attempt "$SOURCE_ATTEMPT" \
+            --status "${{ steps.task.outputs.status }}" \
+            --asset-url "${{ steps.release.outputs.asset_url }}" \
+            --fallback-url "https://github.com/$GITHUB_REPOSITORY/actions/runs/$SOURCE_RUN_ID"
