@@ -284,6 +284,7 @@ test('publishing posts once and then updates the same comment', async (t) => {
   const first = await exec(process.execPath, [script, ...args], { env });
   assert.match(first.stdout, /Agent history reported/u);
   assert.match(comments[0].body, /^<!-- factory-agent-history:123:1 -->/u);
+  assert.match(comments[0].body, /（[0-9.]+ (?:B|KB|MB)，5 个文件）/u);
   assert.deepEqual(calls, [
     'GET /repos/owner/repo/issues/42/comments',
     'POST /repos/owner/repo/issues/42/comments',
@@ -313,9 +314,9 @@ test('renders a summary with the download link under its marker', () => {
     issue: 42,
     runId: 123,
     attempt: 2,
-    status: '失败',
+    status: 'failure',
+    bytes: 3_500_000,
     manifest: {
-      bytes: 3_500_000,
       files: [
         {
           name: 'agent-implement.jsonl',
@@ -331,8 +332,11 @@ test('renders a summary with the download link under its marker', () => {
   });
   assert.ok(body.startsWith(MARKER(123, 2)));
   assert.match(body, /releases\/download\/factory-history\/a\.tar\.gz/u);
+  // The archive size comes from the packed archive, not from a file inside it.
+  assert.match(body, /（3\.3 MB，2 个文件）/u);
   assert.match(body, /初始实现 \| `agent-implement\.jsonl` \| 1\.1 MB/u);
-  assert.match(body, /失败/u);
+  assert.match(body, /大小（未压缩）/u);
+  assert.match(body, /· 失败/u);
   const fallback = renderHistory({
     issue: 42,
     runId: 123,
