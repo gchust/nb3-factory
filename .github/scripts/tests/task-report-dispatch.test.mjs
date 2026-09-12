@@ -199,12 +199,16 @@ process.exit((args[2] === process.env.TEST_FAIL_WORKFLOW || process.env.TEST_FAI
   };
 }
 
-test('successful delivery dispatches both reporters on the default branch with run and attempt', (t) => {
+test('successful delivery dispatches every reporter on the default branch with run and attempt', (t) => {
   const f = dispatch(t);
   assert.equal(f.result.status, 0, f.result.stderr);
   assert.deepEqual(
     f.calls,
-    ['report-task-usage.yml', 'publish-visual-report.yml'].map((workflow) => [
+    [
+      'report-task-usage.yml',
+      'publish-agent-history.yml',
+      'publish-visual-report.yml',
+    ].map((workflow) => [
       'workflow',
       'run',
       workflow,
@@ -221,12 +225,12 @@ test('successful delivery dispatches both reporters on the default branch with r
   assert.doesNotMatch(f.result.stdout + f.result.stderr, /fixture-token/);
 });
 
-test('handoffs and failed deliveries request only usage, never premature media', (t) => {
+test('handoffs and failed deliveries keep their history, never premature media', (t) => {
   const f = dispatch(t, { delivered: 'false' });
   assert.equal(f.result.status, 0);
   assert.deepEqual(
     f.calls.map((args) => args[2]),
-    ['report-task-usage.yml'],
+    ['report-task-usage.yml', 'publish-agent-history.yml'],
   );
 });
 
@@ -241,6 +245,7 @@ test('dispatch retries transient errors without retrying a successful request', 
     [
       'report-task-usage.yml',
       'report-task-usage.yml',
+      'publish-agent-history.yml',
       'publish-visual-report.yml',
     ],
   );
@@ -249,17 +254,18 @@ test('dispatch retries transient errors without retrying a successful request', 
 test('a failed usage dispatch still attempts media and leaves explicit replay instructions', (t) => {
   const f = dispatch(t, { failWorkflow: 'report-task-usage.yml' });
   assert.equal(f.result.status, 1);
-  assert.equal(f.calls.length, 4);
+  assert.equal(f.calls.length, 5);
   assert.equal(f.calls.at(-1)[2], 'publish-visual-report.yml');
   assert.match(f.result.stdout, /::warning::.*report-task-usage/);
   assert.match(f.summary, /run_id=123.*attempt=2/);
 });
 
-test('permanent failures are bounded independently for both reporters', (t) => {
+test('permanent failures are bounded independently for every reporter', (t) => {
   const f = dispatch(t, { failWorkflow: '*' });
   assert.equal(f.result.status, 1);
-  assert.equal(f.calls.length, 6);
+  assert.equal(f.calls.length, 9);
   assert.match(f.summary, /publish-visual-report/);
+  assert.match(f.summary, /publish-agent-history/);
 });
 
 test('dispatcher rejects malformed IDs rather than passing them to GitHub', (t) => {

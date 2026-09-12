@@ -47,6 +47,7 @@ for (const scenario of [
         'build-browser-prompt.mjs',
         'check-recording-health.mjs',
         'factory-lib.mjs',
+        'prepare-recordings.mjs',
         'stop-stale-app.sh',
         'task-compat.mjs',
         'validate-browser-report.mjs',
@@ -238,6 +239,12 @@ for (const scenario of [
         );
         assert.equal(typeof health.checked, 'boolean');
         assert.ok(Array.isArray(health.videos));
+        // Recordings above the attachment budget are split before the publisher sees them.
+        const parts = JSON.parse(
+          readFileSync(path.join(artifacts, 'media-parts.json'), 'utf8'),
+        );
+        assert.ok(Array.isArray(parts.splits));
+        assert.ok(Number.isSafeInteger(parts.maxBytes));
       }
     } finally {
       rmSync(root, { recursive: true, force: true });

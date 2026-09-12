@@ -15,6 +15,16 @@ import { FACTORY_PROVIDER, parseBoolean } from '../factory-lib.mjs';
 const args = parseArgs(process.argv.slice(2));
 const endpoint = requiredEnv('CODE_AGENT_API_ENDPOINT');
 const apiKey = requiredEnv('CODE_AGENT_API_KEY');
+// Both the JSONL transcript and the live console stream are published artifacts: the console
+// output lands in the Actions log and in verify-*.log, so a secret must never reach either.
+const secrets = [
+  apiKey,
+  endpoint,
+  process.env.FACTORY_ADMIN_PASSWORD,
+  process.env.FACTORY_TEST_PASSWORD,
+].filter(Boolean);
+const redactSecrets = (text) =>
+  secrets.reduce((out, secret) => out.replaceAll(secret, '[REDACTED]'), text);
 const api = process.env.CODE_AGENT_API_TYPE || 'openai-completions';
 const model = requiredEnv('CODE_AGENT_MODEL');
 const thinking = process.env.CODE_AGENT_THINKING || 'max';
@@ -195,7 +205,7 @@ child.stdout.on('end', () => {
 });
 child.stderr.on('data', (chunk) => {
   recordActivity();
-  process.stderr.write(chunk);
+  process.stderr.write(redactSecrets(chunk.toString('utf8')));
   stream.write(chunk);
 });
 
@@ -236,12 +246,7 @@ clearTimeout(forceKillTimer);
 clearTimeout(completionTimer);
 stream.end();
 await finished(stream);
-redactLog(log, [
-  apiKey,
-  endpoint,
-  process.env.FACTORY_ADMIN_PASSWORD,
-  process.env.FACTORY_TEST_PASSWORD,
-]);
+redactLog(log, secrets);
 
 if (handoffRequested) {
   process.exitCode = 75;
@@ -296,22 +301,24 @@ function writeConsoleAgentEvent(line) {
   try {
     event = JSON.parse(line);
   } catch {
-    process.stdout.write(`${line}\n`);
+    process.stdout.write(`${redactSecrets(line)}\n`);
     return;
   }
   if (event.type === 'message_update') return;
   if (event.type === 'tool_execution_end') {
     process.stdout.write(
-      `${JSON.stringify({
-        type: event.type,
-        toolCallId: event.toolCallId,
-        toolName: event.toolName,
-        isError: event.isError,
-      })}\n`,
+      `${redactSecrets(
+        JSON.stringify({
+          type: event.type,
+          toolCallId: event.toolCallId,
+          toolName: event.toolName,
+          isError: event.isError,
+        }),
+      )}\n`,
     );
     return;
   }
-  process.stdout.write(`${line}\n`);
+  process.stdout.write(`${redactSecrets(line)}\n`);
 }
 
 function terminateChild(signal) {
