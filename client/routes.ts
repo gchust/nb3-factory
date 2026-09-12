@@ -1,4 +1,4 @@
-import { Home } from 'lucide-react';
+import { Home, ReceiptText } from 'lucide-react';
 import {
   defineAppRoutes,
   defineSettingsRoutes,
@@ -12,6 +12,25 @@ const appRoutes: AppClientRouteContribution = defineAppRoutes([
     name: 'home',
     navigation: { title: 'navigation.home', icon: Home },
     path: '/',
+  },
+  {
+    auth: 'required',
+    componentLoader: () => import('./pages/expense-claims/list.js'),
+    name: 'expense-claims',
+    navigation: { title: 'navigation.expenseClaims', icon: ReceiptText },
+    path: '/expense-claims',
+  },
+  {
+    auth: 'required',
+    componentLoader: () => import('./pages/expense-claims/new.js'),
+    name: 'expense-claims.new',
+    path: '/expense-claims/new',
+  },
+  {
+    auth: 'required',
+    componentLoader: () => import('./pages/expense-claims/detail.js'),
+    name: 'expense-claims.detail',
+    path: '/expense-claims/:id',
   },
 ]);
 
