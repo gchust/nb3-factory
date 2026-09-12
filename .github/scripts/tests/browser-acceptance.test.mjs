@@ -45,6 +45,7 @@ for (const scenario of [
       for (const file of [
         'agent-browser-wrapper.sh',
         'build-browser-prompt.mjs',
+        'check-recording-health.mjs',
         'factory-lib.mjs',
         'stop-stale-app.sh',
         'task-compat.mjs',
@@ -226,6 +227,18 @@ for (const scenario of [
         renderedPrompt,
         /不要再用 Code Agent 的 `read` 工具读取 PNG/u,
       );
+      // The recording must cover the whole authenticated session, not a handful of scenes.
+      assert.match(renderedPrompt, /acceptance-admin\.webm/u);
+      assert.match(renderedPrompt, /acceptance-normal-user\.webm/u);
+      if (
+        ['valid', 'recording-unavailable', 'evidence-gap'].includes(scenario)
+      ) {
+        const health = JSON.parse(
+          readFileSync(path.join(artifacts, 'media-health.json'), 'utf8'),
+        );
+        assert.equal(typeof health.checked, 'boolean');
+        assert.ok(Array.isArray(health.videos));
+      }
     } finally {
       rmSync(root, { recursive: true, force: true });
     }

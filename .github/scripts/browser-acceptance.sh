@@ -152,7 +152,14 @@ while true; do
   cat "$validation_log"
 
   case "$validation_status" in
-    0) exit 0 ;;
+    0)
+      # The recordings are diagnostic evidence for the PR, so measure them once the round has
+      # passed. A health failure is reported with the media; it never changes the QA exit code.
+      node "$control_dir/.github/scripts/check-recording-health.mjs" \
+        --evidence "$evidence_dir" \
+        --output "$artifact_dir/media-health.json" || true
+      exit 0
+      ;;
     10) exit 10 ;; # Business defects go to the application repair loop.
     2) ;; # Invalid report/evidence goes back to QA.
     *) exit "$validation_status" ;;

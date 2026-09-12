@@ -39,9 +39,13 @@
 
 - 遍历本次新增/修改的主要业务菜单和页面，包括列表、详情、新增与编辑表单、关键弹窗，以及需要区分的管理员/员工视图。不需要遍历框架自带的所有设置页。
 - 在正常、有测试数据的状态下保存截图；表单截图在填写测试数据后、提交前保存。每张截图使用独立的 `page-*.png` 文件名，仍保存到 `$FACTORY_BROWSER_EVIDENCE_DIR`。现有每条验收要求的截图不能因此省略。
-- 成功登录并离开认证页面后，为 1–3 个核心操作场景分段录制真实 WebM 视频，例如新增/编辑、领用/归还；不要录制登录、注册、密码填写、密钥或真实业务数据。
-- 开始一个场景：`agent-browser record start "$FACTORY_BROWSER_EVIDENCE_DIR/flow-example.webm"`，随后重新 `snapshot` 确认录制后的页面和身份，再操作。现有版本不使用 `--fps`。尽量让每段不超过 2 分钟，关键状态之间可短暂停顿方便观看。
-- 场景完成后运行 `agent-browser record stop`，退出账号、切换角色、离开业务页面前也必须停止录像。不要录下整个修复循环。工厂会在 QA 返回和关闭浏览器前兜底停止录像。
+- **录像要覆盖整轮验收，不要只挑几个片段**：同一个已登录会话只录一段，从进入业务页开始一直录到该会话全部验收项做完为止，中途不要 stop/start。
+  - 管理员会话：`agent-browser record start "$FACTORY_BROWSER_EVIDENCE_DIR/acceptance-admin.webm"`，本会话每条验收项都在这段录像里实际操作完成，最后 `agent-browser record stop`。
+  - 普通用户会话：登录成功后 `agent-browser record start "$FACTORY_BROWSER_EVIDENCE_DIR/acceptance-normal-user.webm"`，覆盖权限验收项，结束时 `record stop`。
+  - 登录、注册、密码填写、密钥、退出账号和切换角色一律不录像；切换账号前必须先停止录像，避免把登录页录进去。
+- 开始一段录像后重新 `snapshot` 确认录制后的页面和身份，再继续操作。现有版本不使用 `--fps`；单段时长不设上限，录满整轮即可，关键状态之间可短暂停顿方便观看。
+- 某一步卡住或等待超过 1 分钟时，先 `agent-browser record stop` 保存已录内容；恢复后用 `acceptance-admin-2.webm` 这样的新文件名继续录，不要把大段无操作的等待录进主段。
+- 不要录下整个修复循环；工厂也会在 QA 返回和关闭浏览器前兜底停止录像。
 - 录制不可用时继续截图和验收，不要重试录制到任务卡住，也不要生成替代动画、幻灯片或伪造视频。
 - 不要用 Code Agent 的 read 工具读取 PNG/WebM 内容；只确认文件存在，截图和视频不需要回传到模型上下文。
 
@@ -50,7 +54,13 @@
 ```json
 {
   "pages": [{ "title": "资产列表（管理员）", "screenshot": "page-assets.png" }],
-  "videos": [{ "title": "领用与归还", "file": "flow-circulation.webm" }],
+  "videos": [
+    {
+      "title": "管理员验收全过程（验收项 1-7）",
+      "file": "acceptance-admin.webm"
+    },
+    { "title": "普通用户权限验收", "file": "acceptance-normal-user.webm" }
+  ],
   "uncovered": []
 }
 ```

@@ -241,6 +241,58 @@ test('oversized recordings are not attached; they remain in the original artifac
   );
 });
 
+test('annotates a recording with no visible operation instead of dropping it', (t) => {
+  const f = fixture(t);
+  write(f.artifacts, `${prefix}/media-health.json`, {
+    checked: true,
+    videos: [
+      {
+        file: 'flow-checkout.webm',
+        seconds: 181,
+        operatedSeconds: 2,
+        longestIdleSeconds: 161,
+        ok: false,
+        reason: '连续 161 秒没有可辨识的操作（占整段的 89%）',
+      },
+    ],
+  });
+  const plan = collectMedia(f.artifacts, f.output);
+  const video = plan.media.find((m) => m.kind === 'webm');
+  assert.match(video.note, /连续 161 秒/);
+  assert.match(
+    plan.warnings.join(' '),
+    /flow-checkout\.webm 可能没有可辨识的操作/,
+  );
+  assert.ok(
+    existsSync(path.join(f.output, 'flow-checkout.webm')),
+    'the recording must still be published for review',
+  );
+  const body = renderReport(
+    {
+      ...plan,
+      runId,
+      runUrl,
+      runAttempt: 1,
+      headSha,
+      sourceArtifactUrl: `${runUrl}/artifacts/55`,
+    },
+    true,
+  );
+  assert.match(body, /> 录像体检：连续 161 秒/);
+});
+
+test('notes when the recording check itself could not run', (t) => {
+  const f = fixture(t);
+  write(f.artifacts, `${prefix}/media-health.json`, {
+    checked: false,
+    reason: 'ffmpeg-unavailable',
+    videos: [],
+  });
+  const plan = collectMedia(f.artifacts, f.output);
+  assert.match(plan.warnings.join(' '), /缺少 ffmpeg/);
+  assert.equal(plan.media.find((m) => m.kind === 'webm').note, '');
+});
+
 test('report markdown uses local attachments and escapes titles and mentions', (t) => {
   const f = fixture(t);
   const plan = {

@@ -40,6 +40,17 @@ export function readJson(root, relative) {
   );
 }
 
+// The recording health file is written next to showcase.json after a passing round. It is
+// advisory: an older artifact has none, and its absence must not change anything.
+export function loadMediaHealth(root, prefix) {
+  try {
+    const health = readJson(root, `${prefix}/media-health.json`);
+    return health && typeof health === 'object' ? health : null;
+  } catch {
+    return null;
+  }
+}
+
 export function text(value) {
   return String(value ?? '')
     .slice(0, 240)
@@ -118,6 +129,16 @@ export function collectMedia(root, output) {
     );
   }
   showcase = showcase && typeof showcase === 'object' ? showcase : {};
+  const health = loadMediaHealth(root, prefix);
+  const healthByFile = new Map(
+    (Array.isArray(health?.videos) ? health.videos : [])
+      .filter((video) => typeof video?.file === 'string')
+      .map((video) => [video.file, video]),
+  );
+  if (health?.checked === false)
+    warnings.push(
+      '本轮录像未做内容体检（运行环境缺少 ffmpeg），只校验了文件本身。',
+    );
   const pages = Array.isArray(showcase.pages)
     ? showcase.pages.slice(0, 200)
     : [];
@@ -182,7 +203,18 @@ export function collectMedia(root, output) {
         continue;
       }
       copyFileSync(file, path.join(output, name));
-      media.push({ name, title: text(candidate.title || name), kind });
+      const verdict = kind === 'webm' ? healthByFile.get(name) : null;
+      const unhealthy = verdict && verdict.ok === false;
+      if (unhealthy)
+        warnings.push(
+          `${name} 可能没有可辨识的操作：${text(verdict.reason)}。原始录像已保留。`,
+        );
+      media.push({
+        name,
+        title: text(candidate.title || name),
+        kind,
+        note: unhealthy ? `录像体检：${text(verdict.reason)}` : '',
+      });
       counts[kind]++;
       total += size;
     } catch {
@@ -225,13 +257,15 @@ export function renderReport(plan, inline = false, reason = '') {
       '',
     );
   lines.push(`### 操作录像（${videos.length}）`, '');
-  for (const video of videos)
+  for (const video of videos) {
     lines.push(
       `**${video.title}**`,
       '',
       inline ? `./${video.name}` : `\`${video.name}\`（见媒体包）`,
       '',
     );
+    if (video.note) lines.push(`> ${video.note}`, '');
+  }
   if (plan.mediaArtifactUrl)
     lines.push(`[下载截图与录像媒体包](${plan.mediaArtifactUrl})`, '');
   if (reason || plan.warnings.length)
