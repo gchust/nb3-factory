@@ -1,12 +1,22 @@
-import { usePasswordRegistration } from '@nocobase/app-plugin-authentication/client/actions';
+import { usePasswordLogin } from '@nocobase/app-plugin-authentication/client/actions';
 import { useState, type FormEvent, type ReactElement } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { messageOf, useProcurementApi } from '@/lib/procurement-api';
 
 import { FormStatus } from '../components/form-status';
 
+/**
+ * Registration is served by the application's own endpoint
+ * (`POST /api/procurement/register`) rather than the Authentication plugin's
+ * sign-up action. The plugin's action inserts a credential account without the
+ * `issuer` its own schema requires, so self-registration fails; the
+ * application endpoint creates the account through the plugin's public
+ * user-administration contract, which sets it. The endpoint accepts no role, so
+ * a new account only inherits the authenticated baseline.
+ */
 export function PasswordRegistrationForm(): ReactElement {
   const [confirmation, setConfirmation] = useState('');
   const [email, setEmail] = useState('');
@@ -14,21 +24,37 @@ export function PasswordRegistrationForm(): ReactElement {
   const [password, setPassword] = useState('');
   const [username, setUsername] = useState('');
   const [validationError, setValidationError] = useState<string>();
-  const action = usePasswordRegistration();
-  const errorMessage = validationError ?? action.error?.message;
+  const [submitError, setSubmitError] = useState<string>();
+  const [isPending, setIsPending] = useState(false);
+  const api = useProcurementApi();
+  const login = usePasswordLogin();
+  const errorMessage = validationError ?? submitError ?? login.error?.message;
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>): void => {
+  const handleSubmit = async (
+    event: FormEvent<HTMLFormElement>,
+  ): Promise<void> => {
     event.preventDefault();
     if (password !== confirmation) {
       setValidationError("Passwords don't match.");
       return;
     }
     setValidationError(undefined);
-    void action.submit({ email, name, password, username });
+    setSubmitError(undefined);
+    setIsPending(true);
+    try {
+      await api.register({ name, username, email, password });
+      // Sign in with the new credentials so registration lands the user in the
+      // application rather than bouncing back to the sign-in form.
+      await login.submit({ identifier: username, password });
+    } catch (cause) {
+      setSubmitError(messageOf(cause));
+    } finally {
+      setIsPending(false);
+    }
   };
 
   return (
-    <form className='space-y-5' onSubmit={handleSubmit}>
+    <form className='space-y-5' onSubmit={(event) => void handleSubmit(event)}>
       <div className='space-y-2'>
         <Label htmlFor='name'>Name</Label>
         <Input
@@ -84,8 +110,8 @@ export function PasswordRegistrationForm(): ReactElement {
       {errorMessage ? (
         <FormStatus type='error'>{errorMessage}</FormStatus>
       ) : null}
-      <Button className='w-full' disabled={action.isPending} type='submit'>
-        {action.isPending ? 'Creating account…' : 'Create account'}
+      <Button className='w-full' disabled={isPending} type='submit'>
+        {isPending ? 'Creating account…' : 'Create account'}
       </Button>
     </form>
   );
