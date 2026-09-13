@@ -1,4 +1,9 @@
-import { usePasswordRegistration } from '@nocobase/app-plugin-authentication/client/actions';
+import {
+  apiClientToken,
+  ApiClientError,
+  useService,
+} from '@nocobase/app-client';
+import { useLogin } from '@refinedev/core';
 import { useState, type FormEvent, type ReactElement } from 'react';
 
 import { Button } from '@/components/ui/button';
@@ -7,15 +12,23 @@ import { Label } from '@/components/ui/label';
 
 import { FormStatus } from '../components/form-status';
 
+/**
+ * Account creation for the expense application.
+ *
+ * The application's own `register` endpoint creates the credential account through the Authentication-owned
+ * user administration service, which sets the account issuer the schema requires. On success the visitor is signed in
+ * with the credentials they just chose, so the Sign up flow ends authenticated rather than back on the sign-in page.
+ */
 export function PasswordRegistrationForm(): ReactElement {
+  const api = useService(apiClientToken);
+  const login = useLogin();
   const [confirmation, setConfirmation] = useState('');
   const [email, setEmail] = useState('');
   const [name, setName] = useState('');
   const [password, setPassword] = useState('');
   const [username, setUsername] = useState('');
   const [validationError, setValidationError] = useState<string>();
-  const action = usePasswordRegistration();
-  const errorMessage = validationError ?? action.error?.message;
+  const [pending, setPending] = useState(false);
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>): void => {
     event.preventDefault();
@@ -24,7 +37,21 @@ export function PasswordRegistrationForm(): ReactElement {
       return;
     }
     setValidationError(undefined);
-    void action.submit({ email, name, password, username });
+    setPending(true);
+    void (async () => {
+      try {
+        await api.request({
+          path: 'register',
+          method: 'POST',
+          json: { name, username, email, password },
+        });
+        await login.mutateAsync({ identifier: username || email, password });
+      } catch (cause) {
+        setValidationError(registrationError(cause));
+      } finally {
+        setPending(false);
+      }
+    })();
   };
 
   return (
@@ -81,12 +108,26 @@ export function PasswordRegistrationForm(): ReactElement {
           value={confirmation}
         />
       </div>
-      {errorMessage ? (
-        <FormStatus type='error'>{errorMessage}</FormStatus>
+      {validationError ? (
+        <FormStatus type='error'>{validationError}</FormStatus>
       ) : null}
-      <Button className='w-full' disabled={action.isPending} type='submit'>
-        {action.isPending ? 'Creating account…' : 'Create account'}
+      <Button className='w-full' disabled={pending} type='submit'>
+        {pending ? 'Creating account…' : 'Create account'}
       </Button>
     </form>
   );
+}
+
+function registrationError(error: unknown): string {
+  if (error instanceof ApiClientError) {
+    const payload = error.payload;
+    if (payload && typeof payload === 'object' && 'message' in payload) {
+      const message = (payload as { message?: unknown }).message;
+      if (typeof message === 'string' && message) return message;
+    }
+    return error.message;
+  }
+  return error instanceof Error
+    ? error.message
+    : 'Unable to create the account.';
 }

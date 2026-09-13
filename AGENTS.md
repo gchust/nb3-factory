@@ -76,6 +76,20 @@ When the built-in mechanism genuinely cannot express what is being asked, changi
 - Comment what you changed and why the built-in path did not fit. On upgrade, an agent reconciling the template's version needs to know whether your change is still needed.
 - Update this file and `skills/nocobase-app-development/` in the same change, so the guidance describes the application as it actually is. Documentation describing a layout the application no longer has is worse than none.
 
+### Application changes to the provided structure
+
+Two framework-level changes exist in this application. Reconcile them on upgrade instead of dropping them:
+
+- `server/config/index.ts` mutates the authentication plugin's config defaults to declare the credential account's
+  `issuer` column to better-auth (`auth.account.additionalFields.issuer`). The plugin's schema stores a non-null
+  `issuer`, but better-auth strips any account field it does not know about, so account creation fails the NOT NULL
+  constraint. The declaration is a default and a deployment can still override it from `config.yml`; remove it once the
+  plugin declares the field itself.
+- `client/extensions/nocobase-auth-ui/forms/password-registration-form.tsx` posts to the application's own
+  `POST /api/register` route (server/routes/registration.ts) instead of the plugin's public sign-up, because the
+  plugin's sign-up path omits the same `issuer` column. The route creates the account through the
+  Authentication-owned user administration service and assigns no role, so a self-registered account is a regular user.
+
 ## Building a feature
 
 ### Pages and routes
