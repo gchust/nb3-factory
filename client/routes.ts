@@ -1,4 +1,4 @@
-import { Home } from 'lucide-react';
+import { Home, Images } from 'lucide-react';
 import {
   defineAppRoutes,
   defineSettingsRoutes,
@@ -12,6 +12,31 @@ const appRoutes: AppClientRouteContribution = defineAppRoutes([
     name: 'home',
     navigation: { title: 'navigation.home', icon: Home },
     path: '/',
+  },
+  {
+    name: 'products',
+    path: '/products',
+    auth: 'required',
+    navigation: { title: 'navigation.products', icon: Images },
+    componentLoader: () => import('./pages/products/index.js'),
+  },
+  {
+    name: 'products.new',
+    path: '/products/new',
+    auth: 'required',
+    componentLoader: () => import('./pages/products/new.js'),
+  },
+  {
+    name: 'products.detail',
+    path: '/products/:id',
+    auth: 'required',
+    componentLoader: () => import('./pages/products/detail.js'),
+  },
+  {
+    name: 'products.edit',
+    path: '/products/:id/edit',
+    auth: 'required',
+    componentLoader: () => import('./pages/products/edit.js'),
   },
 ]);
 
