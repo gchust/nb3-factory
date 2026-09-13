@@ -4,7 +4,7 @@
 // The workspace holding the generated application is untrusted input. The CLI is
 // therefore pointed at a factory-owned config directory and told to load only
 // user-scope settings, so a `.codebuddy/settings.json` shipped by the application
-// (which may contain hooks) can never execute with the subscription token in env.
+// (which may contain hooks) can never execute with the credential in env.
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -21,7 +21,15 @@ import {
 const { workspace, prompt, log, agentDir } = parseAgentArgs(
   process.argv.slice(2),
 );
-const authToken = requiredEnv('CODEBUDDY_AUTH_TOKEN');
+// The CLI prefers an OAuth bearer token over an API key; accept either so an
+// individual subscription key and an enterprise OAuth token both work.
+const authToken = process.env.CODEBUDDY_AUTH_TOKEN?.trim();
+const apiKey = process.env.CODEBUDDY_API_KEY?.trim();
+if (!authToken && !apiKey) {
+  throw new Error(
+    'CODEBUDDY_AUTH_TOKEN or CODEBUDDY_API_KEY is required. The China service also needs CODEBUDDY_INTERNET_ENVIRONMENT=internal with an API key.',
+  );
+}
 const model = requiredEnv('CODEBUDDY_MODEL');
 if (!/^[A-Za-z0-9][A-Za-z0-9._:/-]*$/.test(model)) {
   throw new Error(
@@ -93,7 +101,8 @@ writeFileSync(
 
 const env = {
   ...process.env,
-  CODEBUDDY_AUTH_TOKEN: authToken,
+  ...(authToken ? { CODEBUDDY_AUTH_TOKEN: authToken } : {}),
+  ...(apiKey ? { CODEBUDDY_API_KEY: apiKey } : {}),
   CODEBUDDY_CONFIG_DIR: agentDir,
   DISABLE_TELEMETRY: '1',
   DISABLE_AUTOUPDATER: '1',
@@ -101,8 +110,15 @@ const env = {
   CODEBUDDY_DISABLE_CRON: '1',
   CODEBUDDY_CODE_DISABLE_BACKGROUND_TASKS: '1',
 };
-// An unset Variable arrives as an empty string; the CLI must see it as unset.
-for (const name of ['CODEBUDDY_BASE_URL', 'CODEBUDDY_INTERNET_ENVIRONMENT']) {
+// An unset Secret or Variable arrives as an empty string. The CLI must see it as
+// unset: an empty higher-priority credential would otherwise shadow the one that
+// is configured.
+for (const name of [
+  'CODEBUDDY_AUTH_TOKEN',
+  'CODEBUDDY_API_KEY',
+  'CODEBUDDY_BASE_URL',
+  'CODEBUDDY_INTERNET_ENVIRONMENT',
+]) {
   if (!env[name]?.trim()) delete env[name];
 }
 // Keep the engines' credentials apart even when both are present locally.
@@ -149,6 +165,7 @@ await runAgentInvocation({
   log,
   secrets: [
     authToken,
+    apiKey,
     process.env.FACTORY_ADMIN_PASSWORD,
     process.env.FACTORY_TEST_PASSWORD,
   ],

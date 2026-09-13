@@ -35,8 +35,10 @@ test('each engine receives only its own secrets and configuration', () => {
     workflow.split('\n').filter((line) => line.includes(`${name}:`));
   const apiKeys = linesOf('CODE_AGENT_API_KEY');
   const tokens = linesOf('CODEBUDDY_AUTH_TOKEN');
+  const codebuddyKeys = linesOf('CODEBUDDY_API_KEY');
   assert.equal(apiKeys.length, 2); // implementation and verify/repair
   assert.equal(tokens.length, 2);
+  assert.equal(codebuddyKeys.length, 2);
   for (const line of apiKeys) {
     assert.ok(
       line.includes(
@@ -49,6 +51,14 @@ test('each engine receives only its own secrets and configuration', () => {
     assert.ok(
       line.includes(
         "vars.CODE_AGENT_ENGINE == 'codebuddy' && secrets.CODEBUDDY_AUTH_TOKEN || ''",
+      ),
+      line,
+    );
+  }
+  for (const line of codebuddyKeys) {
+    assert.ok(
+      line.includes(
+        "vars.CODE_AGENT_ENGINE == 'codebuddy' && secrets.CODEBUDDY_API_KEY || ''",
       ),
       line,
     );

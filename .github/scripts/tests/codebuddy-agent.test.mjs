@@ -33,9 +33,13 @@ test('the CodeBuddy engine fails closed without its own configuration', (t) => {
   const missingToken = runAdapter(fixture, {
     CODEBUDDY_MODEL: 'test-model',
     CODEBUDDY_AUTH_TOKEN: '',
+    CODEBUDDY_API_KEY: '',
   });
   assert.notEqual(missingToken.status, 0);
-  assert.match(missingToken.stderr, /CODEBUDDY_AUTH_TOKEN is required/);
+  assert.match(
+    missingToken.stderr,
+    /CODEBUDDY_AUTH_TOKEN or CODEBUDDY_API_KEY is required/,
+  );
 
   const missingAll = runAdapter(fixture, {
     CODEBUDDY_MODEL: 'test-model',
@@ -44,6 +48,28 @@ test('the CodeBuddy engine fails closed without its own configuration', (t) => {
   });
   assert.notEqual(missingAll.status, 0);
   assert.match(missingAll.stderr, /Unsupported CODEBUDDY_THINKING: extreme/);
+});
+
+test('an individual API key authenticates without an OAuth token', (t) => {
+  const fixture = createFixture(t);
+  const apiKey = 'individual-api-key-that-must-not-leak';
+  writeShim(
+    fixture,
+    'console.log(JSON.stringify({ apiKey: process.env.CODEBUDDY_API_KEY, token: process.env.CODEBUDDY_AUTH_TOKEN ?? null }));\n',
+  );
+  const result = runAdapter(fixture, {
+    CODEBUDDY_AUTH_TOKEN: '',
+    CODEBUDDY_API_KEY: apiKey,
+  });
+  assert.equal(result.status, 0, result.stderr);
+  const payload = JSON.parse(result.stdout.trim().split('\n')[0]);
+  // Redacted in the console, which proves the key reached the CLI and never leaked.
+  assert.equal(payload.apiKey, '[REDACTED]');
+  assert.equal(payload.token, null);
+  assert.doesNotMatch(
+    readFileSync(fixture.log, 'utf8'),
+    new RegExp(apiKey, 'u'),
+  );
 });
 
 test('the CodeBuddy engine ignores the Pi configuration namespace', (t) => {

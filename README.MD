@@ -49,14 +49,15 @@ flowchart TD
 
 ### CodeBuddy（`CODE_AGENT_ENGINE=codebuddy`）
 
-| 类型     | 名称                             | 必填 | 说明                                                                                        |
-| -------- | -------------------------------- | ---- | ------------------------------------------------------------------------------------------- |
-| Secret   | `CODEBUDDY_AUTH_TOKEN`           | 是   | CodeBuddy 订阅的 OAuth Token，作为 `CODEBUDDY_AUTH_TOKEN` 注入，官方定位即 CI/CD 场景。     |
-| Variable | `CODEBUDDY_MODEL`                | 是   | 模型 ID，例如 `deepseek-v4-pro`；缺失时任务直接失败，不会回退到订阅默认模型。               |
-| Variable | `CODEBUDDY_THINKING`             | 否   | 默认 `max`；可设 `minimal`/`low`/`medium`/`high`/`xhigh`/`max`，`off` 表示不传 `--effort`。 |
-| Variable | `CODEBUDDY_VERSION`              | 否   | 默认固定为 `2.150.0`；与 Pi 的版本变量相互独立。                                            |
-| Variable | `CODEBUDDY_BASE_URL`             | 否   | 私有部署的模型服务地址；留空使用订阅默认服务。                                              |
-| Variable | `CODEBUDDY_INTERNET_ENVIRONMENT` | 否   | 网络环境标识（如 `internal`）；使用订阅 Token 时通常无需设置。                              |
+| 类型     | 名称                             | 必填   | 说明                                                                                                                         |
+| -------- | -------------------------------- | ------ | ---------------------------------------------------------------------------------------------------------------------------- |
+| Secret   | `CODEBUDDY_API_KEY`              | 二选一 | 个人订阅在 CodeBuddy 平台密钥页获取的 API Key（`X-Api-Key`）；国内版必须同时设置 `CODEBUDDY_INTERNET_ENVIRONMENT=internal`。 |
+| Secret   | `CODEBUDDY_AUTH_TOKEN`           | 二选一 | 企业旗舰版 OAuth 流程签发的 Bearer Token；与 API Key 同时配置时按 CLI 优先级使用 Token。                                     |
+| Variable | `CODEBUDDY_MODEL`                | 是     | 模型 ID，例如 `deepseek-v4-pro`；缺失时任务直接失败，不会回退到订阅默认模型。                                                |
+| Variable | `CODEBUDDY_THINKING`             | 否     | 默认 `max`；可设 `minimal`/`low`/`medium`/`high`/`xhigh`/`max`，`off` 表示不传 `--effort`。                                  |
+| Variable | `CODEBUDDY_VERSION`              | 否     | 默认固定为 `2.150.0`；与 Pi 的版本变量相互独立。                                                                             |
+| Variable | `CODEBUDDY_BASE_URL`             | 否     | 私有部署的模型服务地址；留空使用订阅默认服务。                                                                               |
+| Variable | `CODEBUDDY_INTERNET_ENVIRONMENT` | 否     | 网络环境标识；用 API Key 访问国内服务时必须设为 `internal`，用 OAuth Token 时通常无需设置。                                  |
 
 通过自定义域名使用 `deepseek-v4-flash` 或 `deepseek-v4-pro` 时，Pi 运行器会自动启用 DeepSeek 思考格式、工具调用上下文回放兼容和对应的思考等级，无需让 API 域名包含 `deepseek.com`。
 
