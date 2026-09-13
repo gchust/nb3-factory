@@ -181,6 +181,7 @@ const run = (label, command, args, options = {}) => {
   const result = spawn.sync(command, args, {
     cwd: options.cwd ?? rootDir,
     stdio: 'inherit',
+    env: options.env ? { ...process.env, ...options.env } : process.env,
   });
 
   if (result.error) {
@@ -203,7 +204,15 @@ runHookStage(buildHooks, 'beforeBuild', run);
 
 run('Typecheck client', 'pnpm', ['exec', 'tsc']);
 run('Typecheck tooling', 'pnpm', ['exec', 'tsc', '-p', 'tsconfig.node.json']);
-run('Build client', 'pnpm', ['exec', 'refine', 'build']);
+// The client bundle is a production artifact, but Vite inlines `process.env.NODE_ENV` from the
+// invoking environment and React picks its build from that value. A caller that exports a
+// non-production value (the factory verification runs the whole pipeline with NODE_ENV=test)
+// would otherwise ship React's development build, whose warnings appear as console errors in
+// the deployed application. Pin the value for the client build so the bundle is genuinely
+// production regardless of the caller's environment.
+run('Build client', 'pnpm', ['exec', 'refine', 'build'], {
+  env: { NODE_ENV: 'production' },
+});
 runHookStage(buildHooks, 'afterClientBuild', run);
 // `^...` selects every workspace package this one depends on, transitively, which is exactly the set whose `dist`
 // the steps below read. Spelling the set out by hand drifted instead: `@nocobase/config` was missing from the list

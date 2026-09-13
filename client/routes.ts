@@ -1,4 +1,4 @@
-import { Home } from 'lucide-react';
+import { FileText, Home } from 'lucide-react';
 import {
   defineAppRoutes,
   defineSettingsRoutes,
@@ -12,6 +12,13 @@ const appRoutes: AppClientRouteContribution = defineAppRoutes([
     name: 'home',
     navigation: { title: 'navigation.home', icon: Home },
     path: '/',
+  },
+  {
+    auth: 'required',
+    componentLoader: () => import('./pages/contracts.js'),
+    name: 'contracts',
+    navigation: { title: 'navigation.contracts', icon: FileText },
+    path: '/contracts',
   },
 ]);
 
