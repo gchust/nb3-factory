@@ -20,8 +20,10 @@ the actual observation and screenshot with that delivery check before passing.
 Explicit empty required fields or a required flow showing “Something went wrong”
 remain business failures.
 
-QA invocations load the trusted `qa-process-guard.mjs` Pi extension. It blocks
-process termination commands before the bash tool runs, avoiding accidental
+QA invocations load the same trusted guard on both engines: `qa-process-guard.mjs`
+as a Pi extension, or `codebuddy-qa-guard.mjs` as a CodeBuddy `PreToolUse` hook
+that exits `2` to block the call. Both decide through `qa-guard-rules.mjs` and
+block process termination commands before the bash tool runs, avoiding accidental
 matches against the supervisor's prompt and log paths. Use `agent-browser close`
 and `open` in the existing isolated session, then authenticate and snapshot
 again. This guard prevents accidental commands; it is not an OS sandbox for

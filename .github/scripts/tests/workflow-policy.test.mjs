@@ -25,13 +25,44 @@ test('workflow uses the generic runner and new settings with legacy fallback', (
   assert.match(workflow, /node control\/\.github\/scripts\/install-agent\.mjs/);
   assert.match(
     workflow,
-    /CODE_AGENT_API_KEY: \$\{\{ secrets\.CODE_AGENT_API_KEY \|\| secrets\.PI_API_KEY \}\}/,
-  );
-  assert.match(
-    workflow,
     /CODE_AGENT_ENGINE: \$\{\{ vars\.CODE_AGENT_ENGINE \}\}/,
   );
   assert.doesNotMatch(workflow, /pi-coding-agent|run-pi\.mjs|pi\.patch/);
+});
+
+test('each engine receives only its own secrets and configuration', () => {
+  const linesOf = (name) =>
+    workflow.split('\n').filter((line) => line.includes(`${name}:`));
+  const apiKeys = linesOf('CODE_AGENT_API_KEY');
+  const tokens = linesOf('CODEBUDDY_AUTH_TOKEN');
+  assert.equal(apiKeys.length, 2); // implementation and verify/repair
+  assert.equal(tokens.length, 2);
+  for (const line of apiKeys) {
+    assert.ok(
+      line.includes(
+        "vars.CODE_AGENT_ENGINE != 'codebuddy' && (secrets.CODE_AGENT_API_KEY || secrets.PI_API_KEY) || ''",
+      ),
+      line,
+    );
+  }
+  for (const line of tokens) {
+    assert.ok(
+      line.includes(
+        "vars.CODE_AGENT_ENGINE == 'codebuddy' && secrets.CODEBUDDY_AUTH_TOKEN || ''",
+      ),
+      line,
+    );
+  }
+  for (const expected of [
+    "CODEBUDDY_MODEL: ${{ vars.CODE_AGENT_ENGINE == 'codebuddy' && vars.CODEBUDDY_MODEL || '' }}",
+    "CODEBUDDY_THINKING: ${{ vars.CODEBUDDY_THINKING || 'max' }}",
+    "CODEBUDDY_BASE_URL: ${{ vars.CODE_AGENT_ENGINE == 'codebuddy' && vars.CODEBUDDY_BASE_URL || '' }}",
+    "CODE_AGENT_API_ENDPOINT: ${{ vars.CODE_AGENT_ENGINE != 'codebuddy' && (secrets.CODE_AGENT_API_ENDPOINT || secrets.PI_API_ENDPOINT) || '' }}",
+    'CODEBUDDY_VERSION: ${{ vars.CODEBUDDY_VERSION }}',
+    'PI_VERSION: ${{ vars.PI_VERSION }}',
+  ]) {
+    assert.ok(workflow.includes(expected), expected);
+  }
 });
 
 test('different Issues run concurrently while one Issue stays serialized', () => {

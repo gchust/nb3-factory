@@ -23,24 +23,44 @@ flowchart TD
 
 ## 使用前配置
 
-在仓库 `Settings → Secrets and variables → Actions` 中配置：
+在仓库 `Settings → Secrets and variables → Actions` 中配置。仓库内置两个执行器：`pi`（默认）与 `codebuddy`；每个执行器只读取自己的配置命名空间，Workflow 按 `CODE_AGENT_ENGINE` **互斥注入**两套 Secret —— Pi 运行时拿不到订阅 Token，CodeBuddy 运行时拿不到 Pi 的 API Key 与 Endpoint。
+
+### 引擎选择与通用配置
 
 | 类型     | 名称                                    | 必填 | 说明                                                                                                      |
 | -------- | --------------------------------------- | ---- | --------------------------------------------------------------------------------------------------------- |
-| Secret   | `CODE_AGENT_API_ENDPOINT`               | 是   | Code Agent 使用的模型 API Base URL                                                                        |
-| Secret   | `CODE_AGENT_API_KEY`                    | 是   | 模型 API Key                                                                                              |
-| Variable | `CODE_AGENT_MODEL`                      | 是   | 自定义 Provider 中的模型 ID                                                                               |
-| Variable | `CODE_AGENT_API_TYPE`                   | 否   | 默认 `openai-completions`；也支持 `openai-responses`、`anthropic-messages`、`google-generative-ai`        |
-| Variable | `CODE_AGENT_THINKING`                   | 否   | 默认 `max`                                                                                                |
-| Variable | `CODE_AGENT_VERSION`                    | 否   | 默认固定为 `0.84.4`                                                                                       |
-| Variable | `CODE_AGENT_ENGINE`                     | 否   | 选择已注册的执行器；当前内置 `pi`，留空使用内置默认值                                                     |
+| Variable | `CODE_AGENT_ENGINE`                     | 否   | 选择已注册的执行器：`pi`（留空默认）或 `codebuddy`。                                                      |
 | Variable | `AGENT_BROWSER_VERSION`                 | 否   | 默认固定为 `0.36.0`；用于登录后逐条执行 Issue 验收要求                                                    |
-| Variable | `CODE_AGENT_AUTH_HEADER`                | 否   | 默认 `true`，为兼容 API 添加 Bearer Authorization                                                         |
-| Variable | `CODE_AGENT_SUPPORTS_DEVELOPER_ROLE`    | 否   | 普通模型默认 `true`；DeepSeek V4 自动使用 `false`，也可显式覆盖                                           |
-| Variable | `CODE_AGENT_SUPPORTS_REASONING_EFFORT`  | 否   | 默认 `true`；不接受 `reasoning_effort` 的接口可设为 `false`                                               |
 | Variable | `CODE_AGENT_INVOCATION_TIMEOUT_SECONDS` | 否   | 单次调用超时秒数，默认 `0`（不限时）；可设为 `1`–`21600`；GitHub 托管 runner 的整个 agent job 仍限 6 小时 |
 
-通过自定义域名使用 `deepseek-v4-flash` 或 `deepseek-v4-pro` 时，运行器会自动启用 DeepSeek 思考格式、工具调用上下文回放兼容和对应的思考等级，无需让 API 域名包含 `deepseek.com`。
+### Pi（`CODE_AGENT_ENGINE` 留空或 `pi`）
+
+| 类型     | 名称                                   | 必填 | 说明                                                                                               |
+| -------- | -------------------------------------- | ---- | -------------------------------------------------------------------------------------------------- |
+| Secret   | `CODE_AGENT_API_ENDPOINT`              | 是   | Code Agent 使用的模型 API Base URL                                                                 |
+| Secret   | `CODE_AGENT_API_KEY`                   | 是   | 模型 API Key                                                                                       |
+| Variable | `CODE_AGENT_MODEL`                     | 是   | 自定义 Provider 中的模型 ID                                                                        |
+| Variable | `CODE_AGENT_API_TYPE`                  | 否   | 默认 `openai-completions`；也支持 `openai-responses`、`anthropic-messages`、`google-generative-ai` |
+| Variable | `CODE_AGENT_THINKING`                  | 否   | 默认 `max`                                                                                         |
+| Variable | `CODE_AGENT_VERSION`                   | 否   | 默认固定为 `0.84.4`                                                                                |
+| Variable | `CODE_AGENT_AUTH_HEADER`               | 否   | 默认 `true`，为兼容 API 添加 Bearer Authorization                                                  |
+| Variable | `CODE_AGENT_SUPPORTS_DEVELOPER_ROLE`   | 否   | 普通模型默认 `true`；DeepSeek V4 自动使用 `false`，也可显式覆盖                                    |
+| Variable | `CODE_AGENT_SUPPORTS_REASONING_EFFORT` | 否   | 默认 `true`；不接受 `reasoning_effort` 的接口可设为 `false`                                        |
+
+### CodeBuddy（`CODE_AGENT_ENGINE=codebuddy`）
+
+| 类型     | 名称                             | 必填 | 说明                                                                                        |
+| -------- | -------------------------------- | ---- | ------------------------------------------------------------------------------------------- |
+| Secret   | `CODEBUDDY_AUTH_TOKEN`           | 是   | CodeBuddy 订阅的 OAuth Token，作为 `CODEBUDDY_AUTH_TOKEN` 注入，官方定位即 CI/CD 场景。     |
+| Variable | `CODEBUDDY_MODEL`                | 是   | 模型 ID，例如 `deepseek-v4-pro`；缺失时任务直接失败，不会回退到订阅默认模型。               |
+| Variable | `CODEBUDDY_THINKING`             | 否   | 默认 `max`；可设 `minimal`/`low`/`medium`/`high`/`xhigh`/`max`，`off` 表示不传 `--effort`。 |
+| Variable | `CODEBUDDY_VERSION`              | 否   | 默认固定为 `2.150.0`；与 Pi 的版本变量相互独立。                                            |
+| Variable | `CODEBUDDY_BASE_URL`             | 否   | 私有部署的模型服务地址；留空使用订阅默认服务。                                              |
+| Variable | `CODEBUDDY_INTERNET_ENVIRONMENT` | 否   | 网络环境标识（如 `internal`）；使用订阅 Token 时通常无需设置。                              |
+
+通过自定义域名使用 `deepseek-v4-flash` 或 `deepseek-v4-pro` 时，Pi 运行器会自动启用 DeepSeek 思考格式、工具调用上下文回放兼容和对应的思考等级，无需让 API 域名包含 `deepseek.com`。
+
+CodeBuddy 执行器把配置目录指向工厂自己的 agent 目录，并以 `--setting-sources user` 只加载工厂写入的设置；生成出来的应用仓库里若存在 `.codebuddy/settings.json`（可能包含 hooks），不会被加载，订阅 Token 也不会写入任何 settings 文件。
 
 然后在 `Settings → Actions → General → Workflow permissions` 中：
 
@@ -73,9 +93,11 @@ pnpm dev
 
 仓库名仍为 `gchust/nb3-factory`。Code Agent 是工厂的执行角色，不是某一个产品名称。Issue 模板、Workflow、PR 标题、状态标签和日志都使用中立命名；新任务分支为 `agent/issue-N`，状态为 `agent:*`。
 
-调度、浏览器验收和持续修复只调用 `run-agent.mjs`。安装由 `install-agent.mjs` 完成，固定版本与执行模块在 `agent-registry.mjs` 注册。目前真正可用的内置执行器是 Pi，其专属配置、CLI 参数、流式事件与超时收尾都隔离在 `agents/pi.mjs`；不会把未实现的执行器宣称为已支持。
+调度、浏览器验收和持续修复只调用 `run-agent.mjs`。安装由 `install-agent.mjs` 完成，固定版本与执行模块在 `agent-registry.mjs` 注册。当前内置两个执行器：`pi`（默认）与 `codebuddy`。各自的 CLI 参数、配置目录、事件协议与超时收尾隔离在 `agents/pi.mjs` 与 `agents/codebuddy.mjs`，生命周期（日志脱敏、空闲看门狗、单次调用超时、Runner 预算 Handoff 退出码 `75`）由两个适配器共用 `agent-harness.mjs`。
 
-接入其他执行器（包括 Python 实现）时，在受信任的控制代码中新增适配器并注册，不接受 Issue 指定任意脚本路径或安装包。适配器读取 `CODE_AGENT_*` 环境变量，接受 `--workspace`、`--prompt`、`--log`、`--agentDir`；负责非交互执行、超时终止及日志脱敏，成功退出 `0`，错误非零退出。其日志格式可由执行器决定，工厂以退出码和独立验证结果判定成功。
+配置按引擎隔离：Pi 只读取 `CODE_AGENT_*`（兼容旧 `PI_*`），CodeBuddy 只读取 `CODEBUDDY_*`；Workflow 依据 `CODE_AGENT_ENGINE` 只注入当前引擎的 Secret，安装步骤也使用各自的版本变量，因此给 Pi 固定的版本号不会被装到 CodeBuddy 上，反之亦然。QA 角色在两个引擎上执行同一条进程终止命令守卫：Pi 通过 `qa-process-guard.mjs` 扩展，CodeBuddy 通过 `codebuddy-qa-guard.mjs` 的 `PreToolUse` hook，两者共享 `qa-guard-rules.mjs` 的判定规则。
+
+接入其他执行器（包括 Python 实现）时，在受信任的控制代码中新增适配器并注册，不接受 Issue 指定任意脚本路径或安装包。适配器读取属于自己的配置环境变量，接受 `--workspace`、`--prompt`、`--log`、`--agentDir`；负责非交互执行、超时终止及日志脱敏，成功退出 `0`，错误非零退出。其日志格式可由执行器决定，工厂以退出码和独立验证结果判定成功；Token 用量统计同时识别 Pi 的逐条响应事件与 CodeBuddy 的累计 `result` 事件。
 
 已有配置不会因改名失效：Workflow 优先读取 `CODE_AGENT_*`，尚未设置时兼容对应的旧 `PI_*` Secrets/Variables。GitHub 不能读回 Secret 的明文，因此本次不会假装已重命名远端 Secret；可以在设置中重新录入新名称，再移除旧配置。
 
