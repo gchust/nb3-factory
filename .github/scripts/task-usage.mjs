@@ -23,8 +23,21 @@ export const emptyUsage = () => ({
   incomplete: 0,
 });
 
-// Pi's normalized input excludes cache reads/writes. Reasoning is a subset of
-// output, never an additional term. A zero-filled error is not proof of zero cost.
+// Pi's normalized input excludes cache reads/writes, and so does CodeBuddy's:
+// both report cache reads and writes as separate categories. Reasoning is a
+// subset of output, never an additional term. A zero-filled error is not proof
+// of zero cost.
+const TERMINAL_EVENTS = new Set(['agent_end', 'agent_settled', 'result']);
+// CodeBuddy reports one cumulative usage per invocation with Anthropic-style
+// field names and no total, so the four categories below are the only ones that
+// may be summed.
+const codebuddyUsage = (usage) =>
+  usage && {
+    input: usage.input_tokens,
+    output: usage.output_tokens,
+    cacheRead: usage.cache_read_input_tokens,
+    cacheWrite: usage.cache_creation_input_tokens,
+  };
 function addUsage(target, phase, usage) {
   const tokens = target.phases[phase];
   if (
@@ -108,13 +121,15 @@ export async function collectUsage(root) {
           ].includes(event.type)
         )
           settled = false;
-        if (['agent_end', 'agent_settled'].includes(event.type))
-          settled = event.willRetry !== true;
-        // Do not count message_start/update, turn_end, or agent_end snapshots.
+        if (TERMINAL_EVENTS.has(event.type)) settled = event.willRetry !== true;
+        // Do not count message_start/update, turn_end, agent_end or result
+        // snapshots. CodeBuddy emits its usage once, on the cumulative result
+        // event; its assistant messages must not be counted a second time.
         const assistant =
           event.type === 'message_end' && event.message?.role === 'assistant';
         const compaction = event.type === 'compaction_end';
-        if (!assistant && !compaction) continue;
+        const result = event.type === 'result';
+        if (!assistant && !compaction && !result) continue;
         measurements++;
         const fingerprint = createHash('sha256').update(line).digest('hex');
         if (seen.has(fingerprint)) continue;
@@ -122,7 +137,11 @@ export async function collectUsage(root) {
         addUsage(
           usage,
           compaction ? 'compaction' : phase,
-          compaction ? event.result?.usage : event.message.usage,
+          compaction
+            ? event.result?.usage
+            : result
+              ? codebuddyUsage(event.usage)
+              : event.message.usage,
         );
       }
       if (!settled || !events || !measurements) usage.incomplete++;

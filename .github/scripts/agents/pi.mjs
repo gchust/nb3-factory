@@ -1,18 +1,20 @@
-import { spawn } from 'node:child_process';
-import {
-  createWriteStream,
-  mkdirSync,
-  readFileSync,
-  writeFileSync,
-} from 'node:fs';
+import { mkdirSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
-import { finished } from 'node:stream/promises';
-import { clearTimeout, setTimeout } from 'node:timers';
 import { fileURLToPath } from 'node:url';
 
+import {
+  parseAgentArgs,
+  parseIdleTimeout,
+  parseInvocationTimeout,
+  parseRunDeadline,
+  requiredEnv,
+  runAgentInvocation,
+} from '../agent-harness.mjs';
 import { FACTORY_PROVIDER, parseBoolean } from '../factory-lib.mjs';
 
-const args = parseArgs(process.argv.slice(2));
+const { workspace, prompt, log, agentDir } = parseAgentArgs(
+  process.argv.slice(2),
+);
 const endpoint = requiredEnv('CODE_AGENT_API_ENDPOINT');
 const apiKey = requiredEnv('CODE_AGENT_API_KEY');
 // Both the JSONL transcript and the live console stream are published artifacts: the console
@@ -22,9 +24,7 @@ const secrets = [
   endpoint,
   process.env.FACTORY_ADMIN_PASSWORD,
   process.env.FACTORY_TEST_PASSWORD,
-].filter(Boolean);
-const redactSecrets = (text) =>
-  secrets.reduce((out, secret) => out.replaceAll(secret, '[REDACTED]'), text);
+];
 const api = process.env.CODE_AGENT_API_TYPE || 'openai-completions';
 const model = requiredEnv('CODE_AGENT_MODEL');
 const thinking = process.env.CODE_AGENT_THINKING || 'max';
@@ -39,7 +39,6 @@ const idleTimeoutSeconds = parseIdleTimeout(
 const runDeadlineEpochSeconds = parseRunDeadline(
   process.env.FACTORY_RUN_DEADLINE_EPOCH_SECONDS,
 );
-const completionGraceMilliseconds = 3_000;
 const normalizedModel = model.toLowerCase();
 const deepseekV4Variant = normalizedModel.includes('deepseek-v4-flash')
   ? 'flash'
@@ -72,12 +71,7 @@ if (!['http:', 'https:'].includes(parsedEndpoint.protocol)) {
   throw new Error('CODE_AGENT_API_ENDPOINT must use http or https.');
 }
 
-const agentDir = path.resolve(args.agentDir);
-const workspace = path.resolve(args.workspace);
-const prompt = path.resolve(args.prompt);
-const log = path.resolve(args.log);
 mkdirSync(agentDir, { recursive: true });
-mkdirSync(path.dirname(log), { recursive: true });
 
 const provider = {
   baseUrl: endpoint,
@@ -139,9 +133,10 @@ writeFileSync(
   )}\n`,
 );
 
-const child = spawn(
-  'pi',
-  [
+await runAgentInvocation({
+  label: 'Pi',
+  command: 'pi',
+  args: [
     '--mode',
     'json',
     '--no-session',
@@ -160,233 +155,31 @@ const child = spawn(
       : []),
     `@${prompt}`,
   ],
-  {
-    cwd: workspace,
-    detached: process.platform !== 'win32',
-    env: {
-      ...process.env,
-      CODE_AGENT_API_KEY: apiKey,
-      PI_CODING_AGENT_DIR: agentDir,
-      PI_SKIP_VERSION_CHECK: '1',
-      PI_TELEMETRY: '0',
-    },
-    stdio: ['ignore', 'pipe', 'pipe'],
+  cwd: workspace,
+  env: {
+    ...process.env,
+    CODE_AGENT_API_KEY: apiKey,
+    PI_CODING_AGENT_DIR: agentDir,
+    PI_SKIP_VERSION_CHECK: '1',
+    PI_TELEMETRY: '0',
   },
-);
-
-const stream = createWriteStream(log, { flags: 'w', mode: 0o600 });
-let stdoutBuffer = '';
-let timedOut = false;
-let stalled = false;
-let handoffRequested = false;
-let forceKillTimer;
-let completionTimer;
-let completionTermination = false;
-let invocationTimer;
-let idleTimer;
-let handoffTimer;
-
-child.stdout.on('data', (chunk) => {
-  recordActivity();
-  stream.write(chunk);
-  stdoutBuffer += chunk.toString('utf8');
-  const lines = stdoutBuffer.split(/\r?\n/u);
-  stdoutBuffer = lines.pop() ?? '';
-  for (const line of lines) {
-    observeAgentEvent(line);
-    writeConsoleAgentEvent(line);
-  }
-});
-child.stdout.on('end', () => {
-  if (!stdoutBuffer) return;
-  observeAgentEvent(stdoutBuffer);
-  writeConsoleAgentEvent(stdoutBuffer);
-  stdoutBuffer = '';
-});
-child.stderr.on('data', (chunk) => {
-  recordActivity();
-  process.stderr.write(redactSecrets(chunk.toString('utf8')));
-  stream.write(chunk);
-});
-
-recordActivity();
-if (invocationTimeoutSeconds > 0) {
-  invocationTimer = setTimeout(() => {
-    timedOut = true;
-    process.stderr.write(
-      `Pi invocation timed out after ${invocationTimeoutSeconds} seconds.\n`,
-    );
-    terminateChild('SIGTERM');
-    forceKillTimer = setTimeout(() => terminateChild('SIGKILL'), 5_000);
-  }, invocationTimeoutSeconds * 1_000);
-}
-if (runDeadlineEpochSeconds != null) {
-  const remainingMilliseconds = Math.max(
-    0,
-    runDeadlineEpochSeconds * 1_000 - Date.now(),
-  );
-  handoffTimer = setTimeout(() => {
-    handoffRequested = true;
-    process.stderr.write(
-      'Factory runner budget reached; stopping Pi so the workspace can be handed off to another Actions run.\n',
-    );
-    terminateChild('SIGTERM');
-    forceKillTimer = setTimeout(() => terminateChild('SIGKILL'), 5_000);
-  }, remainingMilliseconds);
-}
-
-const exitCode = await new Promise((resolve, reject) => {
-  child.once('error', reject);
-  child.once('close', resolve);
-});
-clearTimeout(invocationTimer);
-clearTimeout(idleTimer);
-clearTimeout(handoffTimer);
-clearTimeout(forceKillTimer);
-clearTimeout(completionTimer);
-stream.end();
-await finished(stream);
-redactLog(log, secrets);
-
-if (handoffRequested) {
-  process.exitCode = 75;
-} else if (timedOut) {
-  throw new Error(
-    `Pi invocation timed out after ${invocationTimeoutSeconds} seconds.`,
-  );
-} else if (!completionTermination && !stalled && exitCode !== 0) {
-  throw new Error(`Pi exited with code ${exitCode}.`);
-}
-
-function recordActivity() {
-  if (idleTimeoutSeconds <= 0 || stalled) return;
-  clearTimeout(idleTimer);
-  idleTimer = setTimeout(() => {
-    if (handoffRequested || timedOut || completionTermination) return;
-    stalled = true;
-    process.stderr.write(
-      `Code Agent produced no stdout/stderr activity for ${idleTimeoutSeconds} seconds; stopping the invocation so factory verification can inspect the partial workspace.\n`,
-    );
-    terminateChild('SIGTERM');
-    forceKillTimer = setTimeout(() => terminateChild('SIGKILL'), 5_000);
-  }, idleTimeoutSeconds * 1_000);
-}
-
-function observeAgentEvent(line) {
-  let event;
-  try {
-    event = JSON.parse(line);
-  } catch {
-    return;
-  }
-  if (!['agent_end', 'agent_settled'].includes(event.type)) return;
-  if (completionTimer) return;
-  completionTimer = setTimeout(() => {
-    completionTermination = true;
-    process.stderr.write(
-      `Pi emitted ${event.type} but did not exit; closing the completed invocation.\n`,
-    );
-    terminateChild('SIGTERM');
-    forceKillTimer = setTimeout(() => terminateChild('SIGKILL'), 5_000);
-  }, completionGraceMilliseconds);
-}
-
-/**
- * Keep the Actions log readable while preserving the complete JSONL artifact.
- * Pi emits one `message_update` per streamed token, and image tool results may
- * contain an entire base64 PNG. Neither belongs in the live console log.
- */
-function writeConsoleAgentEvent(line) {
-  let event;
-  try {
-    event = JSON.parse(line);
-  } catch {
-    process.stdout.write(`${redactSecrets(line)}\n`);
-    return;
-  }
-  if (event.type === 'message_update') return;
-  if (event.type === 'tool_execution_end') {
-    process.stdout.write(
-      `${redactSecrets(
-        JSON.stringify({
-          type: event.type,
-          toolCallId: event.toolCallId,
-          toolName: event.toolName,
-          isError: event.isError,
-        }),
-      )}\n`,
-    );
-    return;
-  }
-  process.stdout.write(`${redactSecrets(line)}\n`);
-}
-
-function terminateChild(signal) {
-  try {
-    if (child.pid && process.platform !== 'win32') {
-      process.kill(-child.pid, signal);
-    } else {
-      child.kill(signal);
+  log,
+  secrets,
+  invocationTimeoutSeconds,
+  idleTimeoutSeconds,
+  runDeadlineEpochSeconds,
+  isCompletionEvent: (event) =>
+    ['agent_end', 'agent_settled'].includes(event.type),
+  formatConsoleLine: (line, event) => {
+    if (event.type === 'message_update') return null;
+    if (event.type === 'tool_execution_end') {
+      return JSON.stringify({
+        type: event.type,
+        toolCallId: event.toolCallId,
+        toolName: event.toolName,
+        isError: event.isError,
+      });
     }
-  } catch (error) {
-    if (error?.code !== 'ESRCH') throw error;
-  }
-}
-
-function redactLog(file, secrets) {
-  let contents = readFileSync(file, 'utf8');
-  for (const secret of secrets.filter(Boolean)) {
-    contents = contents.replaceAll(secret, '[REDACTED]');
-  }
-  writeFileSync(file, contents, { mode: 0o600 });
-}
-
-function requiredEnv(name) {
-  const value = process.env[name]?.trim();
-  if (!value) throw new Error(`${name} is required.`);
-  return value;
-}
-
-function parseInvocationTimeout(value, fallback) {
-  if (value == null || value.trim() === '') return fallback;
-  const parsed = Number(value);
-  if (!Number.isInteger(parsed) || parsed < 0 || parsed > 21_600) {
-    throw new Error(
-      'CODE_AGENT_INVOCATION_TIMEOUT_SECONDS must be an integer from 0 to 21600 (0 disables the timeout).',
-    );
-  }
-  return parsed;
-}
-
-function parseIdleTimeout(value, fallback) {
-  if (value == null || value.trim() === '') return fallback;
-  const parsed = Number(value);
-  if (!Number.isInteger(parsed) || parsed < 0 || parsed > 21_600) {
-    throw new Error(
-      'CODE_AGENT_IDLE_TIMEOUT_SECONDS must be an integer from 0 to 21600 (0 disables the idle watchdog).',
-    );
-  }
-  return parsed;
-}
-
-function parseRunDeadline(value) {
-  if (value == null || value.trim() === '') return null;
-  const parsed = Number(value);
-  if (!Number.isInteger(parsed) || parsed <= 0) {
-    throw new Error(
-      'FACTORY_RUN_DEADLINE_EPOCH_SECONDS must be a positive integer.',
-    );
-  }
-  return parsed;
-}
-
-function parseArgs(argv) {
-  const parsed = {};
-  for (let index = 0; index < argv.length; index += 2) {
-    parsed[argv[index]?.replace(/^--/, '')] = argv[index + 1];
-  }
-  for (const name of ['workspace', 'prompt', 'log', 'agentDir']) {
-    if (!parsed[name]) throw new Error(`Missing --${name}`);
-  }
-  return parsed;
-}
+    return line;
+  },
+});

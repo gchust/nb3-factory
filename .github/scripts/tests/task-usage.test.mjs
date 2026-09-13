@@ -156,6 +156,66 @@ test('counts only completed responses plus compaction, across every repair and Q
   assert.equal(aggregate([record({ usage })]).total, 6790); // reasoning is not added a second time
 });
 
+test('counts a CodeBuddy invocation once from its cumulative result event', async (t) => {
+  const root = directory(t);
+  const usage = {
+    input_tokens: 100,
+    output_tokens: 20,
+    cache_read_input_tokens: 800,
+    cache_creation_input_tokens: 50,
+  };
+  log(root, 'agent-implement.jsonl', [
+    { type: 'system', subtype: 'init', model: 'deepseek-v4.1-flash' },
+    {
+      type: 'assistant',
+      message: { role: 'assistant', model: 'deepseek-v4.1-flash', usage },
+    },
+    {
+      type: 'assistant',
+      message: { role: 'assistant', model: 'deepseek-v4.1-flash', usage },
+    },
+    {
+      type: 'result',
+      subtype: 'success',
+      is_error: false,
+      total_cost_usd: 0.12,
+      usage,
+    },
+  ]);
+  const collected = await collectUsage(root);
+  // The result event is cumulative for the whole invocation, and the assistant
+  // events must not be counted a second time.
+  assert.equal(collected.records, 1);
+  assert.equal(collected.missing + collected.incomplete, 0);
+  assert.deepEqual(collected.phases.implementation, {
+    input: 100,
+    output: 20,
+    cacheRead: 800,
+    cacheWrite: 50,
+    reasoning: 0,
+    totalTokens: 970,
+  });
+});
+
+test('an interrupted CodeBuddy log stays incomplete rather than free', async (t) => {
+  const root = directory(t);
+  log(root, 'agent-implement.jsonl', [
+    { type: 'system', subtype: 'init', model: 'deepseek-v4.1-flash' },
+    {
+      type: 'assistant',
+      message: {
+        role: 'assistant',
+        model: 'deepseek-v4.1-flash',
+        usage: { input_tokens: 100, output_tokens: 20 },
+      },
+    },
+  ]);
+  const collected = await collectUsage(root);
+  assert.equal(collected.records, 0);
+  assert.ok(collected.incomplete > 0);
+  assert.equal(collected.phases.implementation.totalTokens, 0);
+});
+
 test('missing, interrupted, malformed and zero-filled error usage is not reported as free', async (t) => {
   const root = directory(t);
   log(root, 'agent-implement.jsonl', [
