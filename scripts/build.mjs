@@ -180,6 +180,7 @@ const run = (label, command, args, options = {}) => {
 
   const result = spawn.sync(command, args, {
     cwd: options.cwd ?? rootDir,
+    env: options.env ?? process.env,
     stdio: 'inherit',
   });
 
@@ -203,7 +204,15 @@ runHookStage(buildHooks, 'beforeBuild', run);
 
 run('Typecheck client', 'pnpm', ['exec', 'tsc']);
 run('Typecheck tooling', 'pnpm', ['exec', 'tsc', '-p', 'tsconfig.node.json']);
-run('Build client', 'pnpm', ['exec', 'refine', 'build']);
+// Vite decides whether to bundle React's development runtime from `NODE_ENV` alone, not from the build mode: with
+// anything other than `production` (`NODE_ENV=test`, which verification exports while it runs this build) the client
+// ships React's development code, its dev-only console warnings, and the development-only route chunk. Those
+// warnings are then read as application errors during acceptance, so the client build sets its own NODE_ENV instead
+// of trusting the caller's. This only scopes the child process; the server build and dist/.env still see the
+// ambient value.
+run('Build client', 'pnpm', ['exec', 'refine', 'build'], {
+  env: { ...process.env, NODE_ENV: 'production' },
+});
 runHookStage(buildHooks, 'afterClientBuild', run);
 // `^...` selects every workspace package this one depends on, transitively, which is exactly the set whose `dist`
 // the steps below read. Spelling the set out by hand drifted instead: `@nocobase/config` was missing from the list

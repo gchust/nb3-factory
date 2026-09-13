@@ -1,4 +1,4 @@
-import { Home } from 'lucide-react';
+import { Home, Megaphone } from 'lucide-react';
 import {
   defineAppRoutes,
   defineSettingsRoutes,
@@ -12,6 +12,13 @@ const appRoutes: AppClientRouteContribution = defineAppRoutes([
     name: 'home',
     navigation: { title: 'navigation.home', icon: Home },
     path: '/',
+  },
+  {
+    auth: 'required',
+    componentLoader: () => import('./pages/announcements.js'),
+    name: 'announcements',
+    navigation: { title: 'navigation.announcements', icon: Megaphone },
+    path: '/announcements',
   },
 ]);
 

@@ -6,6 +6,33 @@ const zhCN: AppResource = {
     description: '向 AI 助手描述你的需求，逐步构建页面、数据模型和业务流程。',
   },
 
+  announcements: {
+    title: '公告',
+    description: '在这里向团队发布动态，最新创建的公告显示在最前面。',
+    form: {
+      heading: '新建公告',
+      titleLabel: '标题',
+      titlePlaceholder: '一句话概括',
+      bodyLabel: '正文',
+      bodyPlaceholder: '输入公告正文…',
+      submit: '发布',
+      submitting: '发布中…',
+    },
+    list: {
+      heading: '已发布的公告',
+      empty: '暂无公告，发布第一条吧。',
+      loading: '正在加载公告',
+      created: '创建于 {{date}}',
+    },
+    error: {
+      load: '无法加载公告。',
+      create: '无法发布公告。',
+      titleRequired: '请输入标题。',
+      titleTooLong: '标题请控制在 200 个字符以内。',
+      bodyRequired: '请输入正文。',
+    },
+  },
+
   appearance: {
     title: '外观',
     mode: '颜色模式',
@@ -33,6 +60,7 @@ const zhCN: AppResource = {
   },
   navigation: {
     home: '首页',
+    announcements: '公告',
     open: '打开导航',
     close: '关闭导航',
     expand: '展开导航',

@@ -7,6 +7,34 @@ const enUS = {
       'Describe what you need to your AI Agent, then build pages, data models, and business workflows.',
   },
 
+  announcements: {
+    title: 'Announcements',
+    description:
+      'Share updates with the team. New announcements appear at the top.',
+    form: {
+      heading: 'New announcement',
+      titleLabel: 'Title',
+      titlePlaceholder: 'A short summary',
+      bodyLabel: 'Body',
+      bodyPlaceholder: 'Write the announcement…',
+      submit: 'Publish',
+      submitting: 'Publishing…',
+    },
+    list: {
+      heading: 'Published announcements',
+      empty: 'No announcements yet. Publish the first one.',
+      loading: 'Loading announcements',
+      created: 'Created {{date}}',
+    },
+    error: {
+      load: 'Unable to load announcements.',
+      create: 'Unable to publish the announcement.',
+      titleRequired: 'Enter a title.',
+      titleTooLong: 'Keep the title under 200 characters.',
+      bodyRequired: 'Enter a body.',
+    },
+  },
+
   appearance: {
     title: 'Appearance',
     mode: 'Color mode',
@@ -34,6 +62,7 @@ const enUS = {
   },
   navigation: {
     home: 'Home',
+    announcements: 'Announcements',
     open: 'Open navigation',
     close: 'Close navigation',
     expand: 'Expand navigation',
