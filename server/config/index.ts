@@ -18,5 +18,32 @@ export function createAppConfig(
 
   config.loadFile(configPath, { optional: configuredPath === undefined });
 
+  // The authentication schema stores every credential account under an `issuer`, which is what its
+  // unique constraint is built on, but better-auth only writes fields it knows about. Supplying the
+  // default here — rather than in config.yml, which a deployment writes for itself — keeps
+  // self-service registration working out of the box. `input: false` keeps it out of request bodies.
+  config.load({
+    name: 'app/auth-account-issuer-default',
+    async read() {
+      return {
+        kind: 'map' as const,
+        value: {
+          auth: {
+            account: {
+              additionalFields: {
+                issuer: {
+                  type: 'string',
+                  required: true,
+                  defaultValue: 'local:credential',
+                  input: false,
+                },
+              },
+            },
+          },
+        },
+      };
+    },
+  });
+
   return config;
 }

@@ -20,6 +20,15 @@ client:
 auth:
   # Generate a unique secret, for example with: openssl rand -hex 32
   # secret: replace-with-a-unique-secret
+  # Credential accounts are keyed by an issuer such as `local:credential`. The application supplies
+  # this default itself (see server/config/index.ts); uncomment only to override it.
+  # account:
+  #   additionalFields:
+  #     issuer:
+  #       type: string
+  #       required: true
+  #       defaultValue: local:credential
+  #       input: false
   emailAndPassword:
     enabled: true
     autoSignIn: false
