@@ -13,8 +13,15 @@ writeFileSync(
   replaceTemplate(template, {
     ORIGINAL_TASK: originalPrompt,
     VERIFY_LOG: logTail,
+    // Same file the implementation round wrote: the repair round appends to it
+    // instead of starting a second, partial retrospective.
+    RETRO_PATH: retroPath(),
   }),
 );
+
+function retroPath(value) {
+  return value?.trim() || '（本次未提供路径，跳过复盘）';
+}
 
 function parseArgs(argv) {
   const parsed = {};

@@ -149,6 +149,7 @@ jobs:
           node control/.github/scripts/build-prompt.mjs \
             --metadata task/task-metadata.json \
             --template control/.github/prompts/implement.md \
+            --retro-path "$RUNNER_TEMP/agent-artifacts/retro.json" \
             --output "$RUNNER_TEMP/implement.md"
 
       - name: Install pinned Code Agent
