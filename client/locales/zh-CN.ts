@@ -2,8 +2,24 @@ import type { AppResource } from './en-US.js';
 
 const zhCN: AppResource = {
   home: {
-    title: '开始构建你的应用',
-    description: '向 AI 助手描述你的需求，逐步构建页面、数据模型和业务流程。',
+    title: '预览冒烟',
+    description:
+      '用于确认预览环境可以登录并读写数据。卡片显示服务端提供的构建信息，访问计数保存在数据库中持续累加。',
+    retry: '重试',
+    buildInfo: {
+      title: '构建信息',
+      name: '应用名称',
+      startedAt: '服务启动时间',
+      nodeVersion: 'Node 版本',
+      loading: '正在加载构建信息…',
+      error: '无法加载构建信息。',
+    },
+    visits: {
+      title: '访问计数',
+      label: '累计访问次数',
+      loading: '正在加载访问计数…',
+      error: '无法加载访问计数。',
+    },
   },
 
   appearance: {
