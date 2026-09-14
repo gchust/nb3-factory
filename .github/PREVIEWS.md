@@ -19,6 +19,8 @@ https://pr-<PR 号>.preview.nfvd.net/main/
 Code Agent NocoBase Task
   verify-final ──► pnpm build --tar --target linux-x64
                    artifact: factory-dist-<Issue 号>
+                             ├─ dist.tar.gz         要部署的构建
+                             └─ task-metadata.json  属于哪个 PR 和目标分支
 
 Deploy Task Preview（由 workflow_run 触发）
   select  ──► 只挑同时通过 verify-final 和 publish 的运行
@@ -34,6 +36,10 @@ Deploy Task Preview（由 workflow_run 触发）
 
 **为什么在 `verify-final` 里构建。** 预览跑的必须是独立验收通过的那棵树，而不是 Agent
 自己声称的版本，所以打包步骤放在 `verify-final` 的验收之后，产物随 artifact 传递。
+
+`verify-final` 先把 `dist.tar.gz` 和 `task-metadata.json` 拷进同一个目录再上传，因为
+`upload-artifact` 会保留路径的公共祖先之下的结构：直接把两个各在一处的文件列成 `path`
+会让它们各自多套一层目录，而预览端是平着读这两个名字的。
 
 **为什么保持 `/main`。** `APP_BASE_PATH` 与 `verify.sh` 验收时用的完全一致。换一个 base
 path 会让预览和验收看到的不是同一个东西，那就又回到了"预览不能代表真实部署"的老问题。
