@@ -2,9 +2,24 @@ import type { LocaleResource } from '@nocobase/i18n';
 
 const enUS = {
   home: {
-    title: 'Start building your application',
+    title: 'Preview smoke',
     description:
-      'Describe what you need to your AI Agent, then build pages, data models, and business workflows.',
+      'Confirms this preview environment can sign in and read and write data. The card shows build information provided by the server; the counter grows in the database.',
+    retry: 'Retry',
+    buildInfo: {
+      title: 'Build information',
+      name: 'Application name',
+      startedAt: 'Server started at',
+      nodeVersion: 'Node version',
+      loading: 'Loading build information…',
+      error: 'Could not load build information.',
+    },
+    visits: {
+      title: 'Visit count',
+      label: 'Total visits',
+      loading: 'Loading the visit count…',
+      error: 'Could not load the visit count.',
+    },
   },
 
   appearance: {

@@ -7,12 +7,9 @@ const root = fileURLToPath(new URL('.', import.meta.url));
 export default createReactVitestConfig({
   resolve: {
     alias: [
-      {
-        find: /^@nocobase\/app-client$/,
-        replacement: fileURLToPath(
-          new URL('../../app/app-client/src/index.ts', import.meta.url),
-        ),
-      },
+      // `@nocobase/app-client` is a workspace package in the template's monorepo, where tests import its source.
+      // In this generated application there is no workspace copy, so the alias is omitted and the installed package
+      // is resolved normally; keeping the monorepo path made every client test fail to resolve the import.
       {
         find: '@/jobs',
         replacement: fileURLToPath(new URL('./server/jobs', import.meta.url)),
