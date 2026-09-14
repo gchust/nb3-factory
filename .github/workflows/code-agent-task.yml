@@ -397,6 +397,22 @@ jobs:
             "$RUNNER_TEMP/final-artifacts/verify-final" \
             2>&1 | tee "$RUNNER_TEMP/final-artifacts/verify-final.log"
 
+      # Built here rather than in the deploy job so a preview can only ever run
+      # the exact tree that independent verification just accepted. The target
+      # is stated explicitly: without it the build records the runner as the
+      # target and ships native modules for whatever the runner happens to be.
+      - name: Pack the deployable build for the preview host
+        working-directory: workspace
+        run: pnpm build --tar --target linux-x64
+
+      - name: Upload the deployable build
+        uses: actions/upload-artifact@v4
+        with:
+          name: factory-dist-${{ needs.prepare.outputs.issue_number }}
+          path: workspace/storage/dist.tar.gz
+          if-no-files-found: error
+          retention-days: 14
+
       - name: Upload final verification diagnostics
         if: always()
         uses: actions/upload-artifact@v4

@@ -208,6 +208,7 @@ test('successful delivery dispatches every reporter on the default branch with r
       'report-task-usage.yml',
       'publish-agent-history.yml',
       'publish-visual-report.yml',
+      'deploy-preview.yml',
     ].map((workflow) => [
       'workflow',
       'run',
@@ -247,6 +248,7 @@ test('dispatch retries transient errors without retrying a successful request', 
       'report-task-usage.yml',
       'publish-agent-history.yml',
       'publish-visual-report.yml',
+      'deploy-preview.yml',
     ],
   );
 });
@@ -254,8 +256,11 @@ test('dispatch retries transient errors without retrying a successful request', 
 test('a failed usage dispatch still attempts media and leaves explicit replay instructions', (t) => {
   const f = dispatch(t, { failWorkflow: 'report-task-usage.yml' });
   assert.equal(f.result.status, 1);
-  assert.equal(f.calls.length, 5);
-  assert.equal(f.calls.at(-1)[2], 'publish-visual-report.yml');
+  assert.equal(f.calls.length, 6);
+  assert.deepEqual(
+    f.calls.slice(-2).map((args) => args[2]),
+    ['publish-visual-report.yml', 'deploy-preview.yml'],
+  );
   assert.match(f.result.stdout, /::warning::.*report-task-usage/);
   assert.match(f.summary, /run_id=123.*attempt=2/);
 });
@@ -263,7 +268,7 @@ test('a failed usage dispatch still attempts media and leaves explicit replay in
 test('permanent failures are bounded independently for every reporter', (t) => {
   const f = dispatch(t, { failWorkflow: '*' });
   assert.equal(f.result.status, 1);
-  assert.equal(f.calls.length, 9);
+  assert.equal(f.calls.length, 12);
   assert.match(f.summary, /publish-visual-report/);
   assert.match(f.summary, /publish-agent-history/);
 });
@@ -299,7 +304,11 @@ test('report dispatch is an isolated terminal job, not another Agent invocation'
     dispatcher,
     /\$\{\{\s*secrets\.|contents: write|pnpm|run-agent|uses: \.\//,
   );
-  for (const name of ['publish-visual-report', 'report-task-usage']) {
+  for (const name of [
+    'publish-visual-report',
+    'deploy-preview',
+    'report-task-usage',
+  ]) {
     const script = readFileSync(
       path.resolve(import.meta.dirname, `../${name}.mjs`),
       'utf8',

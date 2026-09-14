@@ -1,0 +1,183 @@
+name: Deploy Task Preview
+
+on:
+  workflow_run:
+    workflows: [Code Agent NocoBase Task]
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      run_id:
+        description: Successful Code Agent task run ID (not Issue or PR number)
+        required: true
+        type: string
+      attempt:
+        description: Run attempt (leave empty for latest)
+        required: false
+        type: string
+
+permissions: {}
+
+concurrency:
+  group: factory-preview-${{ inputs.run_id || github.event.workflow_run.id }}
+  queue: max
+
+jobs:
+  deploy-preview:
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      actions: read
+      contents: read
+      pull-requests: write
+    env:
+      SOURCE_RUN_ID: ${{ inputs.run_id || github.event.workflow_run.id }}
+      SOURCE_ATTEMPT: ${{ inputs.attempt || github.event.workflow_run.run_attempt }}
+      PREVIEW_HOST: ${{ vars.FACTORY_PREVIEW_HOST || '100.120.77.102' }}
+      PREVIEW_USER: ${{ vars.FACTORY_PREVIEW_USER || 'root' }}
+      PREVIEW_DOMAIN: ${{ vars.FACTORY_PREVIEW_DOMAIN || 'preview.nfvd.net' }}
+      # A preview is optional infrastructure. When its credentials are absent
+      # this workflow stays a no-op rather than failing the task's run record.
+      PREVIEW_ENABLED: ${{ secrets.FACTORY_PREVIEW_SSH_KEY != '' && secrets.FACTORY_TAILSCALE_OAUTH_CLIENT_ID != '' }}
+    steps:
+      # Trusted control code only. The build artifact is data here: it is
+      # copied to the preview host and never executed on the runner.
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          path: control
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24.x
+
+      - name: Select a successfully delivered task
+        id: source
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          node control/.github/scripts/deploy-preview.mjs select \
+            --run-id "$SOURCE_RUN_ID" --attempt "$SOURCE_ATTEMPT" \
+            --source "$RUNNER_TEMP/preview-source.json"
+
+      - name: Download the deployable build
+        if: steps.source.outputs.ready == 'true'
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ steps.source.outputs.artifact }}
+          run-id: ${{ env.SOURCE_RUN_ID }}
+          github-token: ${{ github.token }}
+          path: ${{ runner.temp }}/dist-artifact
+
+      - name: Unpack the deployable build
+        if: steps.source.outputs.ready == 'true'
+        run: |
+          mkdir -p "$RUNNER_TEMP/build"
+          tar -xzf "$RUNNER_TEMP/dist-artifact/dist.tar.gz" -C "$RUNNER_TEMP/build"
+          test -f "$RUNNER_TEMP/build/dist/package.json"
+
+      - name: Resolve the pull request and the dependency identity
+        id: prepare
+        if: steps.source.outputs.ready == 'true'
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/preview"
+          node control/.github/scripts/deploy-preview.mjs prepare \
+            --run-id "$SOURCE_RUN_ID" \
+            --source "$RUNNER_TEMP/preview-source.json" \
+            --artifacts "$RUNNER_TEMP/dist-artifact" \
+            --build "$RUNNER_TEMP/build" \
+            --domain "$PREVIEW_DOMAIN" \
+            --output "$RUNNER_TEMP/preview"
+
+      - name: Skip without preview credentials
+        if: steps.prepare.outputs.ready == 'true' && env.PREVIEW_ENABLED != 'true'
+        run: |
+          echo "::warning::PREVIEW SKIPPED: set FACTORY_PREVIEW_SSH_KEY and FACTORY_TAILSCALE_OAUTH_CLIENT_ID to deploy previews."
+
+      - name: Join the tailnet
+        if: steps.prepare.outputs.ready == 'true' && env.PREVIEW_ENABLED == 'true'
+        uses: tailscale/github-action@v3
+        with:
+          oauth-client-id: ${{ secrets.FACTORY_TAILSCALE_OAUTH_CLIENT_ID }}
+          oauth-secret: ${{ secrets.FACTORY_TAILSCALE_OAUTH_CLIENT_SECRET }}
+          tags: tag:ci
+          ping: ${{ env.PREVIEW_HOST }}
+
+      - name: Install the deploy key
+        if: steps.prepare.outputs.ready == 'true' && env.PREVIEW_ENABLED == 'true'
+        env:
+          PREVIEW_SSH_KEY: ${{ secrets.FACTORY_PREVIEW_SSH_KEY }}
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "$PREVIEW_SSH_KEY" > ~/.ssh/preview_key
+          chmod 600 ~/.ssh/preview_key
+          # The hop is already authenticated end to end by the tailnet, so
+          # recording the host key on first use is enough here.
+          ssh-keyscan -H "$PREVIEW_HOST" >> ~/.ssh/known_hosts 2>/dev/null
+
+      - name: Copy the scripts and the payload
+        id: push
+        if: steps.prepare.outputs.ready == 'true' && env.PREVIEW_ENABLED == 'true'
+        env:
+          PR: ${{ steps.prepare.outputs.pr }}
+          DEPS_KEY: ${{ steps.prepare.outputs.deps_key }}
+        run: |
+          set -euo pipefail
+          ssh_opts=(-i ~/.ssh/preview_key -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o ConnectTimeout=20)
+          remote="$PREVIEW_USER@$PREVIEW_HOST"
+
+          # The host always runs the scripts from this repository, so a fix is
+          # deployed by pushing, never by editing files on the machine.
+          tar -czf "$RUNNER_TEMP/preview-scripts.tar.gz" -C control/.github/scripts/preview .
+          ssh "${ssh_opts[@]}" "$remote" 'mkdir -p /srv/nb3-preview/scripts /srv/nb3-preview/tmp'
+          scp -q -i ~/.ssh/preview_key -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes \
+            "$RUNNER_TEMP/preview-scripts.tar.gz" "$remote:/srv/nb3-preview/tmp/scripts.tar.gz"
+          ssh "${ssh_opts[@]}" "$remote" \
+            'tar -xzf /srv/nb3-preview/tmp/scripts.tar.gz -C /srv/nb3-preview/scripts && chmod +x /srv/nb3-preview/scripts/*.sh'
+
+          # The dependency tree is ~740 MB of a ~744 MB build and changes only
+          # with the dependency set, so ask the host before shipping it.
+          present="$(ssh "${ssh_opts[@]}" "$remote" "${{ steps.prepare.outputs.probe }}")"
+          if [[ "$present" == present ]]; then
+            echo "Dependency cache hit; sending the application tree only."
+            tar -czf "$RUNNER_TEMP/payload.tar.gz" \
+              -C "$RUNNER_TEMP/build" -T "$RUNNER_TEMP/preview/slim-entries.txt"
+          else
+            echo "Dependency cache miss; sending the full build."
+            cp "$RUNNER_TEMP/dist-artifact/dist.tar.gz" "$RUNNER_TEMP/payload.tar.gz"
+          fi
+          ls -lh "$RUNNER_TEMP/payload.tar.gz"
+
+          scp -q -i ~/.ssh/preview_key -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes \
+            "$RUNNER_TEMP/payload.tar.gz" "$remote:/srv/nb3-preview/tmp/payload-pr-$PR.tar.gz"
+
+      - name: Deploy the preview
+        id: deploy
+        if: steps.push.outcome == 'success'
+        env:
+          PR: ${{ steps.prepare.outputs.pr }}
+          SHA: ${{ steps.prepare.outputs.sha }}
+          DEPS_KEY: ${{ steps.prepare.outputs.deps_key }}
+        run: |
+          set -euo pipefail
+          ssh -i ~/.ssh/preview_key -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o ConnectTimeout=20 \
+            "$PREVIEW_USER@$PREVIEW_HOST" \
+            "bash /srv/nb3-preview/scripts/preview-deploy.sh \
+               --pr '$PR' \
+               --sha '$SHA' \
+               --deps-key '$DEPS_KEY' \
+               --domain '$PREVIEW_DOMAIN' \
+               --payload '/srv/nb3-preview/tmp/payload-pr-$PR.tar.gz'"
+
+      - name: Report the preview on the pull request
+        if: always() && steps.prepare.outputs.ready == 'true' && env.PREVIEW_ENABLED == 'true'
+        continue-on-error: true
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          node control/.github/scripts/deploy-preview.mjs publish \
+            --run-id "$SOURCE_RUN_ID" \
+            --output "$RUNNER_TEMP/preview" \
+            --status "${{ steps.deploy.outcome == 'success' && 'success' || 'failed' }}"
