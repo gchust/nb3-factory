@@ -3,7 +3,13 @@
 #
 # Invoked over SSH by the deploy-preview workflow with an already-built
 # `dist.tar.gz` produced by `pnpm build --tar`. Nothing is compiled here: this
-# script only extracts, wires up dependencies, migrates, and starts.
+# script only fetches, extracts, wires up dependencies, migrates, and starts.
+#
+# The payload is fetched by this host, not pushed to it. Pushing it over
+# Tailscale measured 17 KB/s from a GitHub runner; the same file fetched from
+# the temporary release asset over this host's own egress measured 815 KB/s. The
+# SSH channel therefore carries a URL and a digest, and the bytes come in over
+# the network the host already has. `--fetch-proxy` is that egress.
 #
 # The dependency tree is the expensive part of the artifact (roughly 740 MB of
 # a 744 MB `dist/`), so it is cached per dependency set and reused by hard link.
@@ -19,11 +25,20 @@ pr=""
 sha=""
 deps_key=""
 payload=""
+payload_url=""
+payload_sha256=""
+fetch_proxy="${PREVIEW_FETCH_PROXY:-}"
 
 usage() {
   cat >&2 <<'USAGE'
 Usage: preview-deploy.sh --pr <number> --sha <commit> --deps-key <key> \
-         --payload <dist.tar.gz> [--domain <preview domain>]
+         --payload <dist.tar.gz> [--payload-url <url> --payload-sha256 <digest>] \
+         [--fetch-proxy <url>] [--domain <preview domain>]
+
+With --payload-url the payload is fetched from that URL when it is missing or
+fails its digest, so a failed transfer is retried by running this again rather
+than re-sending the bytes from CI. --payload-sha256 is required with
+--payload-url: a fetched payload is never deployed unverified.
 USAGE
   exit 2
 }
@@ -34,6 +49,9 @@ while [[ $# -gt 0 ]]; do
     --sha) sha="${2:-}"; shift 2 ;;
     --deps-key) deps_key="${2:-}"; shift 2 ;;
     --payload) payload="${2:-}"; shift 2 ;;
+    --payload-url) payload_url="${2:-}"; shift 2 ;;
+    --payload-sha256) payload_sha256="${2:-}"; shift 2 ;;
+    --fetch-proxy) fetch_proxy="${2:-}"; shift 2 ;;
     --domain) PREVIEW_DOMAIN="${2:-}"; shift 2 ;;
     -h|--help) usage ;;
     *) die "unknown argument: $1" ;;
@@ -42,15 +60,21 @@ done
 
 [[ -n "$pr" && -n "$sha" && -n "$deps_key" && -n "$payload" ]] || usage
 require_positive_integer "$pr"
-[[ -f "$payload" ]] || die "payload not found: $payload"
+[[ -z "$payload_url" || -n "$payload_sha256" ]] ||
+  die "--payload-url requires --payload-sha256; a fetched payload is never deployed unverified"
+[[ -n "$payload_url" || -f "$payload" ]] || die "payload not found: $payload"
 
 require_command docker
 require_command tar
 require_command curl
 require_command openssl
 require_command flock
+[[ -z "$payload_sha256" ]] || require_command sha256sum
 
 ensure_layout
+
+fetch_payload "$payload" "$payload_url" "$payload_sha256" "$fetch_proxy"
+
 require_network
 
 name="$(container_name "$pr")"
