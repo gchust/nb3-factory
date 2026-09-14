@@ -18,5 +18,32 @@ export function createAppConfig(
 
   config.loadFile(configPath, { optional: configuredPath === undefined });
 
+  // NocoBase's Authentication tables declare a required `issuer` column on `account`, but the
+  // installed better-auth release only writes it when it is declared as an account field. Without
+  // this, self sign-up and administrator user creation fail with
+  // `NOT NULL constraint failed: account.issuer`. It is applied in code rather than in config.yml
+  // because a deployment generates that file and would not carry the setting.
+  config.load({
+    name: 'app/auth-account-issuer',
+    async read() {
+      return {
+        kind: 'map' as const,
+        value: {
+          auth: {
+            account: {
+              additionalFields: {
+                issuer: {
+                  type: 'string',
+                  defaultValue: 'local:credential',
+                  input: false,
+                },
+              },
+            },
+          },
+        },
+      };
+    },
+  });
+
   return config;
 }
