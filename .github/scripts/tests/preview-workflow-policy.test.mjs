@@ -104,3 +104,38 @@ test('the deployable build is produced by independent verification', () => {
   // ships native modules for whatever architecture the runner happens to be.
   assert.match(task, /pnpm build --tar --target linux-x64/);
 });
+
+test('the deployable artifact carries the task metadata the preview reads from it', () => {
+  const staged = task.indexOf('Stage the deployable build and its metadata');
+  const uploaded = task.indexOf(
+    'factory-dist-${{ needs.prepare.outputs.issue_number }}',
+  );
+  assert.ok(staged > 0, 'the preview payload is not staged');
+  assert.ok(
+    uploaded > staged,
+    'the payload must be staged before it is uploaded',
+  );
+  const stage = task.slice(staged, uploaded);
+  assert.match(
+    stage,
+    /cp workspace\/storage\/dist\.tar\.gz "\$RUNNER_TEMP\/deployable\/dist\.tar\.gz"/,
+  );
+  assert.match(
+    stage,
+    /cp agent-artifacts\/task-metadata\.json "\$RUNNER_TEMP\/deployable\/task-metadata\.json"/,
+  );
+  // Uploaded as one directory rather than as two paths where they lie:
+  // `upload-artifact` keeps the structure below the paths' common ancestor, so
+  // listing `workspace/storage/dist.tar.gz` and `agent-artifacts/task-metadata.json`
+  // together would nest each under its own directory and the download would stop
+  // being flat.
+  assert.match(task, /path: \$\{\{ runner\.temp \}\}\/deployable/);
+  // Flat at the artifact root is what the preview reads.
+  assert.match(
+    readFileSync(
+      path.resolve(import.meta.dirname, '..', 'deploy-preview.mjs'),
+      'utf8',
+    ),
+    /readJson\(args\.artifacts, 'task-metadata\.json'\)/,
+  );
+});
