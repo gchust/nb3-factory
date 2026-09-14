@@ -36,6 +36,8 @@ failed=0
 dispatch report-task-usage.yml || failed=1
 # The interaction history is worth keeping for failures and handoffs too, not only deliveries.
 dispatch publish-agent-history.yml || failed=1
+# Same reason: a failed run explains the next baseline fix better than a clean one.
+dispatch publish-retro.yml || failed=1
 # A handoff/failure is reportable usage, but never a completed business delivery.
 if [[ "${FACTORY_TASK_DELIVERED:-false}" == 'true' ]]; then
   dispatch publish-visual-report.yml || failed=1

@@ -74,6 +74,7 @@ while true; do
     --template "$control_dir/.github/prompts/repair.md" \
     --task "$task_prompt" \
     --log "$verification_log" \
+    --retro-path "$artifact_dir/retro.json" \
     --output "$repair_prompt"
 
   echo "::group::Code Agent repair ${verification_attempt}"

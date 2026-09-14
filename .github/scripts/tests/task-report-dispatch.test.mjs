@@ -207,6 +207,7 @@ test('successful delivery dispatches every reporter on the default branch with r
     [
       'report-task-usage.yml',
       'publish-agent-history.yml',
+      'publish-retro.yml',
       'publish-visual-report.yml',
       'deploy-preview.yml',
     ].map((workflow) => [
@@ -231,7 +232,7 @@ test('handoffs and failed deliveries keep their history, never premature media',
   assert.equal(f.result.status, 0);
   assert.deepEqual(
     f.calls.map((args) => args[2]),
-    ['report-task-usage.yml', 'publish-agent-history.yml'],
+    ['report-task-usage.yml', 'publish-agent-history.yml', 'publish-retro.yml'],
   );
 });
 
@@ -247,6 +248,7 @@ test('dispatch retries transient errors without retrying a successful request', 
       'report-task-usage.yml',
       'report-task-usage.yml',
       'publish-agent-history.yml',
+      'publish-retro.yml',
       'publish-visual-report.yml',
       'deploy-preview.yml',
     ],
@@ -256,7 +258,7 @@ test('dispatch retries transient errors without retrying a successful request', 
 test('a failed usage dispatch still attempts media and leaves explicit replay instructions', (t) => {
   const f = dispatch(t, { failWorkflow: 'report-task-usage.yml' });
   assert.equal(f.result.status, 1);
-  assert.equal(f.calls.length, 6);
+  assert.equal(f.calls.length, 7);
   assert.deepEqual(
     f.calls.slice(-2).map((args) => args[2]),
     ['publish-visual-report.yml', 'deploy-preview.yml'],
@@ -268,8 +270,9 @@ test('a failed usage dispatch still attempts media and leaves explicit replay in
 test('permanent failures are bounded independently for every reporter', (t) => {
   const f = dispatch(t, { failWorkflow: '*' });
   assert.equal(f.result.status, 1);
-  assert.equal(f.calls.length, 12);
+  assert.equal(f.calls.length, 15);
   assert.match(f.summary, /publish-visual-report/);
+  assert.match(f.summary, /publish-retro/);
   assert.match(f.summary, /publish-agent-history/);
 });
 
@@ -308,6 +311,7 @@ test('report dispatch is an isolated terminal job, not another Agent invocation'
     'publish-visual-report',
     'deploy-preview',
     'report-task-usage',
+    'publish-retro',
   ]) {
     const script = readFileSync(
       path.resolve(import.meta.dirname, `../${name}.mjs`),

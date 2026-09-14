@@ -15,6 +15,9 @@ const prompt = replaceTemplate(template, {
   REQUIREMENTS: metadata.task.requirements,
   ACCEPTANCE_CRITERIA: metadata.task.acceptanceCriteria,
   SAMPLE_DATA: metadata.task.sampleData,
+  // The agent writes its retrospective outside the application tree so it can
+  // never end up in the business patch.
+  RETRO_PATH: retroPath(),
 });
 
 writeFileSync(args.output, prompt);
@@ -28,4 +31,8 @@ function parseArgs(argv) {
     if (!parsed[name]) throw new Error(`Missing --${name}`);
   }
   return parsed;
+}
+
+function retroPath(value) {
+  return value?.trim() || '（本次未提供路径，跳过复盘）';
 }
