@@ -1,4 +1,5 @@
-// Removes files a deployment never reads: type declarations, third-party source maps, and third-party documentation.
+// Removes files a deployment never reads: type declarations, third-party source maps, third-party documentation, and
+// package `database` directories that a complete compiled mirror has already superseded.
 //
 // The deployment tree is installed by `pnpm install --prod`, which fetches whole published packages. A package ships
 // what its author chose to publish, and for most of them that includes the `.d.ts` files a consumer compiles against,
@@ -96,6 +97,96 @@ const shouldRemove = (relativePath, fileName) => {
   return fileName.endsWith('.map') || isDocumentation(fileName);
 };
 
+/** How a package's source file is named once it has been compiled. */
+const compiledName = (fileName) => {
+  if (fileName.endsWith('.mts')) return fileName.replace(/\.mts$/, '.mjs');
+  if (fileName.endsWith('.cts')) return fileName.replace(/\.cts$/, '.cjs');
+  if (fileName.endsWith('.ts')) return fileName.replace(/\.ts$/, '.js');
+  if (fileName.endsWith('.tsx')) return fileName.replace(/\.tsx$/, '.js');
+  return fileName;
+};
+
+/**
+ * Whether a package's `database` directory is fully superseded by its compiled mirror.
+ *
+ * Empty would be a wrong answer here, so a source file without a compiled counterpart means the directory is not
+ * superseded and is left untouched.
+ */
+const isCompletelyCompiled = (sourceDir, compiledDir) => {
+  let entries;
+  try {
+    entries = fs.readdirSync(sourceDir, { withFileTypes: true });
+  } catch {
+    return false;
+  }
+  for (const entry of entries) {
+    const source = path.join(sourceDir, entry.name);
+    if (entry.isDirectory()) {
+      if (!isCompletelyCompiled(source, path.join(compiledDir, entry.name)))
+        return false;
+      continue;
+    }
+    if (!entry.isFile()) return false;
+    if (!fs.existsSync(path.join(compiledDir, compiledName(entry.name))))
+      return false;
+  }
+  return true;
+};
+
+/**
+ * Whether a plugin's `database` directory is shadowing its own compiled output.
+ *
+ * A plugin declares its migrations, seeds and collections as paths under `./database`, and the resolver tries
+ * `<package>/database/...` first and only then `<package>/dist/database/...`. A package that publishes its TypeScript
+ * sources alongside the compiled copy therefore wins with the sources. That works under the repository's `tsx`-driven
+ * CLI and fails on a deployment, where plain `node` refuses to strip types for a file inside `node_modules`:
+ *
+ *   Stripping types is currently unsupported for files under node_modules,
+ *   for ".../app-plugin-ai-employee/database/migrations/202608260002_create_ai_employee.ts"
+ *
+ * The whole directory has to go, not just the files in it. Emptying it instead would be worse than leaving it: the
+ * resolver returns the first candidate that *exists*, so a `database/migrations` directory left behind with no files
+ * in it reports zero migrations and the compiled ones are never reached — a deployment that boots with its tables
+ * missing. Removing the directory is what makes the fallback happen for migrations, seeds and collections alike.
+ *
+ * The compiled mirror is checked first, so a package that ships sources and nothing else is left intact rather than
+ * broken.
+ */
+const isSupersededDatabaseDirectory = (directoryPath) => {
+  if (path.basename(directoryPath) !== 'database') return false;
+  const compiled = path.join(path.dirname(directoryPath), 'dist', 'database');
+  if (!fs.existsSync(compiled)) return false;
+  return isCompletelyCompiled(directoryPath, compiled);
+};
+
+/** Removes a directory, counting what it held, since the walk above will not reach inside it. */
+const removeTree = (directoryPath, removed) => {
+  let entries;
+  try {
+    entries = fs.readdirSync(directoryPath, { withFileTypes: true });
+  } catch {
+    return;
+  }
+  for (const entry of entries) {
+    const entryPath = path.join(directoryPath, entry.name);
+    if (entry.isDirectory()) {
+      removeTree(entryPath, removed);
+      continue;
+    }
+    if (!entry.isFile()) continue;
+    let size;
+    try {
+      size = fs.lstatSync(entryPath).size;
+    } catch {
+      continue;
+    }
+    fs.rmSync(entryPath, { force: true });
+    removed.count += 1;
+    removed.bytes += size;
+  }
+  fs.rmSync(directoryPath, { recursive: true, force: true });
+};
+
 const prune = (directory, treeRoot, removed) => {
   let entries;
   try {
@@ -107,6 +198,12 @@ const prune = (directory, treeRoot, removed) => {
   for (const entry of entries) {
     const entryPath = path.join(directory, entry.name);
     if (entry.isDirectory()) {
+      // Checked before descending: the directory itself is what has to go, so
+      // walking into it first would be wasted work and a second pass.
+      if (isSupersededDatabaseDirectory(entryPath)) {
+        removeTree(entryPath, removed);
+        continue;
+      }
       prune(entryPath, treeRoot, removed);
       continue;
     }
@@ -142,5 +239,5 @@ for (const tree of PRUNED_TREES) {
 // Stated rather than silent. A build that quietly deletes files reads as "this is what the build produced", and the
 // one thing worse than shipping something unnecessary is not knowing what was dropped when a deployment misbehaves.
 console.log(
-  `Removed ${removed.count} declaration, source map, and documentation files from the deployment tree (${formatMegabytes(removed.bytes)}).`,
+  `Removed ${removed.count} declaration, source map, documentation, and superseded source files from the deployment tree (${formatMegabytes(removed.bytes)}).`,
 );
