@@ -39,5 +39,9 @@ dispatch publish-agent-history.yml || failed=1
 # A handoff/failure is reportable usage, but never a completed business delivery.
 if [[ "${FACTORY_TASK_DELIVERED:-false}" == 'true' ]]; then
   dispatch publish-visual-report.yml || failed=1
+  # Requested explicitly for the same reason as the media report: a preview is
+  # expected to appear after a delivery, and the workflow_run event is not
+  # guaranteed for a bot-triggered continuation.
+  dispatch deploy-preview.yml || failed=1
 fi
 exit "$failed"
