@@ -71,10 +71,11 @@ cpSync(path.join(control, '.npmrc'), path.join(workspace, '.npmrc'));
 writeFileSync(path.join(workspace, 'README.MD'), readme);
 writeFileSync(path.join(workspace, 'AGENTS.md'), agents);
 writeFileSync(path.join(workspace, 'eslint.config.js'), factoryEslint);
-writeFileSync(
-  path.join(workspace, '.gitignore'),
-  `${read(workspace, '.gitignore').trimEnd()}\n\n# Factory runtime files must never enter the refreshed baseline.\n/config.yml\n/.env\n/.env.*\n/node_modules/\n/dist/\n/storage/\n/.agents/\n/.nocobase/\n/.nb3/\n*.log\n`,
-);
+// `.gitignore` is left exactly as the template generator wrote it. The factory used to append a runtime-files block
+// here that listed `/config.yml`, `/node_modules/`, `/dist/`, `/storage/`, `/.agents/` and `*.log` a second time —
+// the generated file already ignores all of them — and the entries it added on its own, `/.env`, `/.env.*` and
+// `/.nb3/`, are covered elsewhere: `/.nb3/` is created by nothing in this repository, and a staged `.env` is refused
+// by the "Runtime files were staged" guard in refresh-template.yml. One list of ignore rules, not two.
 app.scripts = {
   ...app.scripts,
   'factory:test': factory.scripts['factory:test'],
@@ -120,6 +121,49 @@ if (!build.includes("path.join(rootDir, '.npmrc')")) {
     ),
   );
   compatibilityFixes.push('build: copy scoped registry into dist');
+}
+// A plugin declares its migrations, seeds and collections as paths under `./database` and publishes those TypeScript
+// sources next to the compiled `dist/database` mirror, and the resolver prefers the sources — which plain `node`
+// cannot load from inside `node_modules` on a deployment. The template prunes files by extension, which cannot see a
+// directory, so it calls the factory's own rule at the one place that happens to be walking the tree. The anchors
+// below are the template's own lines: a template that rearranges them fails this refresh instead of quietly
+// generating a deployment that boots without its tables.
+const prune = read(workspace, 'scripts/utils/prune-dist-artifacts.mjs');
+if (!prune.includes('prune-superseded-sources.mjs')) {
+  const prunePatches = [
+    [
+      'import',
+      "import { formatMegabytes } from './server-deps.mjs';",
+      "import { formatMegabytes } from './server-deps.mjs';\nimport { removeSupersededDatabaseDirectory } from '../../.github/scripts/prune-superseded-sources.mjs';",
+    ],
+    [
+      'walk',
+      `    if (entry.isDirectory()) {\n      prune(entryPath, treeRoot, removed);`,
+      `    if (entry.isDirectory()) {\n      // Checked before descending: the directory itself is what has to go, so walking into it first would be\n      // wasted work and a second pass.\n      if (removeSupersededDatabaseDirectory(entryPath, removed)) continue;\n      prune(entryPath, treeRoot, removed);`,
+    ],
+    [
+      'report',
+      '`Removed ${removed.count} declaration, source map, and documentation files from the deployment tree (${formatMegabytes(removed.bytes)}).`',
+      '`Removed ${removed.count} declaration, source map, documentation, and superseded source files from the deployment tree (${formatMegabytes(removed.bytes)}).`',
+    ],
+  ];
+  const unpatched = prunePatches
+    .filter(([, anchor]) => !prune.includes(anchor))
+    .map(([what]) => what);
+  if (unpatched.length > 0)
+    throw new Error(
+      `Cannot apply superseded-database pruning to this template; unrecognised: ${unpatched.join(', ')}`,
+    );
+  writeFileSync(
+    path.join(workspace, 'scripts/utils/prune-dist-artifacts.mjs'),
+    prunePatches.reduce(
+      (source, [, anchor, replacement]) => source.replace(anchor, replacement),
+      prune,
+    ),
+  );
+  compatibilityFixes.push(
+    'build: prune plugin database sources superseded by their compiled mirror',
+  );
 }
 writeFileSync(
   path.join(workspace, 'package.json'),
