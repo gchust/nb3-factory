@@ -15,6 +15,41 @@ import test from 'node:test';
 
 const scripts = path.resolve(import.meta.dirname, '..');
 const sha = 'a'.repeat(40);
+// What `pnpm create @nocobase/app` writes when the published template ships neither `gitignore` nor `.npmignore`.
+const generatedGitignore = [
+  'node_modules/',
+  'dist/',
+  'coverage/',
+  '',
+  '# Local configuration, including the generated AUTH_SECRET.',
+  '/config.yml',
+  '',
+  '# Local application state.',
+  '/storage/',
+  '/.agents/',
+  '/.agent-annotations/',
+  '/.nocobase/',
+  '*.log',
+  '',
+].join('\n');
+// The lines the overlay patches the prune script through, as a template ships them.
+const pruneScript = [
+  "import { formatMegabytes } from './server-deps.mjs';",
+  '',
+  'const prune = (directory, treeRoot, removed) => {',
+  '  for (const entry of entries) {',
+  '    if (entry.isDirectory()) {',
+  '      prune(entryPath, treeRoot, removed);',
+  '      continue;',
+  '    }',
+  '  }',
+  '};',
+  '',
+  'console.log(',
+  '  `Removed ${removed.count} declaration, source map, and documentation files from the deployment tree (${formatMegabytes(removed.bytes)}).`,',
+  ');',
+  '',
+].join('\n');
 const git = (cwd, ...args) =>
   execFileSync('git', args, {
     cwd,
@@ -106,13 +141,14 @@ run(
     '.github/workflows/upstream.yml',
     'must not enter factory control plane\n',
   );
-  write(fresh, '.gitignore', 'node_modules/\n');
+  write(fresh, '.gitignore', generatedGitignore);
+  write(fresh, 'scripts/utils/prune-dist-artifacts.mjs', pruneScript);
   write(fresh, 'config.yml', 'auth: fixture-secret\n');
   write(fresh, '.env', 'SECRET=fixture\n');
   return { control, fresh };
 }
 
-test('refresh keeps current controls and latest application guidance, excluding runtime secrets', () => {
+test('refresh keeps current controls and latest application guidance, and leaves the generated ignore rules alone', () => {
   const root = mkdtempSync(path.join(os.tmpdir(), 'nb3-template-overlay-'));
   try {
     const { control, fresh } = overlayFixture(root);
@@ -155,11 +191,56 @@ test('refresh keeps current controls and latest application guidance, excluding 
     );
     assert.equal(metadata.templateVersion, '2.0.0');
     assert.equal(metadata.controlSha, sha);
+    // The overlay adds no ignore rules of its own: what the generator wrote is the whole file.
+    assert.equal(
+      readFileSync(path.join(fresh, '.gitignore'), 'utf8'),
+      generatedGitignore,
+    );
+    // Pruning a superseded `database` directory is the one rule the template's script cannot express, so the
+    // overlay injects the call into the walk and reports it as a compatibility fix.
+    const prune = readFileSync(
+      path.join(fresh, 'scripts/utils/prune-dist-artifacts.mjs'),
+      'utf8',
+    );
+    assert.match(
+      prune,
+      /from '\.\.\/\.\.\/\.github\/scripts\/prune-superseded-sources\.mjs'/,
+    );
+    assert.match(
+      prune,
+      /if \(removeSupersededDatabaseDirectory\(entryPath, removed\)\) continue;/,
+    );
+    assert.match(prune, /superseded source files/);
     init(fresh, 'template');
     commit(fresh);
     const files = git(fresh, 'ls-files');
-    assert.doesNotMatch(files, /config\.yml|\.env/);
+    // A runtime secret the generated rules do not cover is refused by the packaging guard rather than ignored
+    // here; that guard has its own test below.
+    assert.doesNotMatch(files, /config\.yml/);
     assert.match(files, /client\/fresh\.ts/);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('overlay refuses an unrecognised prune script instead of generating a deployment without its tables', () => {
+  const root = mkdtempSync(path.join(os.tmpdir(), 'nb3-template-prune-'));
+  try {
+    const { control, fresh } = overlayFixture(root);
+    write(
+      fresh,
+      'scripts/utils/prune-dist-artifacts.mjs',
+      'const prune = () => {};\n',
+    );
+    assert.throws(
+      () =>
+        execFileSync(
+          process.execPath,
+          [path.join(scripts, 'overlay-factory.mjs'), control, fresh, sha],
+          { stdio: 'pipe' },
+        ),
+      /Cannot apply superseded-database pruning/,
+    );
   } finally {
     rmSync(root, { recursive: true, force: true });
   }
@@ -232,10 +313,14 @@ test('beta.15 compatibility fixes preserve upstream dependencies and configure p
         updated.devDependencies['@xyflow/react'],
         index === 0 ? '12.11.3' : index === 1 ? '13.0.0' : undefined,
       );
-      assert.equal(metadata.compatibilityFixes.length, index === 0 ? 3 : 1);
+      assert.equal(metadata.compatibilityFixes.length, index === 0 ? 4 : 2);
       execFileSync(process.execPath, ['scripts/build.mjs'], { cwd: fresh });
       const buildBefore = readFileSync(
         path.join(fresh, 'scripts/build.mjs'),
+        'utf8',
+      );
+      const pruneBefore = readFileSync(
+        path.join(fresh, 'scripts/utils/prune-dist-artifacts.mjs'),
         'utf8',
       );
       execFileSync(process.execPath, [
@@ -247,6 +332,13 @@ test('beta.15 compatibility fixes preserve upstream dependencies and configure p
       assert.equal(
         readFileSync(path.join(fresh, 'scripts/build.mjs'), 'utf8'),
         buildBefore,
+      );
+      assert.equal(
+        readFileSync(
+          path.join(fresh, 'scripts/utils/prune-dist-artifacts.mjs'),
+          'utf8',
+        ),
+        pruneBefore,
       );
     }
   } finally {
