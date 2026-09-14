@@ -307,3 +307,7 @@ For creating or editing theme presets, read `skills/nocobase-app-development/ref
 For UI styling, use the shared color, font, size, spacing, radius and shadow contract in `skills/nocobase-app-development/references/theme-tokens.md` (from the application root). Prefer its Tailwind utilities so components respond to theme changes; keep deliberate fixed-size exceptions explicit.
 
 Application startup defaults belong in `config.yml`: `i18n.defaultLocale` for the language, and `client.app.defaultColorScheme` and `client.app.defaultTheme` for appearance. Valid browser-local choices take precedence. Which languages the application offers is not configured — its own `client/locales/` and `server/locales/` are that list. See the i18n and themes references.
+
+### Application config source: `server/config/index.ts`
+
+This application adds one config source, `app/auth-defaults`, before `config.yml` is loaded. It exists because the authentication tables require a non-null `account.issuer`, while the Better Auth version in use does not populate it when someone registers through the Sign up page. Declaring `issuer` as an account additional field makes Better Auth supply it on insert; administrator-created accounts and the `config.yml` file are unaffected. A future template upgrade may fix this upstream — if Sign up works without the source, the source can be removed.

@@ -91,6 +91,8 @@ Everything else — `client/routing/`, `client/shell/`, `client/layouts/`, `clie
 
 When the built-in mechanism genuinely cannot express the requirement, changing that structure is a legitimate answer. Comment what you changed and why the built-in path did not fit, and update `AGENTS.md` and this Skill in the same change so they still describe the real application.
 
+This application already makes one such change: `server/config/index.ts` adds an `app/auth-defaults` config source so Better Auth populates the non-null `account.issuer` column on self-registration. Prefer `config.yml` for ordinary startup defaults; this source exists because a fresh installation has no `config.yml` yet and the column is required by the schema. See `AGENTS.md`.
+
 The account menu language control in `client/shell/language-switcher.tsx` uses a shadcn submenu with radio items. Render it inside `DropdownMenuContent` to preserve menu keyboard navigation and selection semantics.
 
 ## Ownership
