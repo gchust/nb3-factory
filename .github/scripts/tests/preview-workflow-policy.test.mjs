@@ -105,6 +105,63 @@ test('the deployable build is produced by independent verification', () => {
   assert.match(task, /pnpm build --tar --target linux-x64/);
 });
 
+test('the payload is published for the host to fetch, not pushed to it', () => {
+  // Pushing these bytes over Tailscale measured 17 KB/s; the same file fetched
+  // by the host over its own egress measured 815 KB/s. So the SSH channel must
+  // carry a URL and a digest, and never the payload itself.
+  assert.doesNotMatch(deploy, /scp[^\n]*payload/);
+  assert.match(deploy, /asset="preview-pr-\$PR\.tar\.gz"/);
+  assert.match(deploy, /gh release upload "\$PREVIEW_RELEASE"/);
+  assert.match(deploy, /--clobber/);
+  assert.match(deploy, /--payload-url '\$asset_url'/);
+  assert.match(
+    deploy,
+    /--payload-sha256 '\$\{\{ steps\.publish\.outputs\.payload_sha256 \}\}'/,
+  );
+  assert.match(deploy, /--fetch-proxy '\$PREVIEW_FETCH_PROXY'/);
+  // The digest describes the file that was uploaded, computed in that same step.
+  assert.match(deploy, /payload_sha256=\$\(sha256sum/);
+  // And the URL the host is told to fetch is the asset that was just uploaded.
+  assert.match(
+    deploy,
+    /asset_url="https:\/\/github\.com\/\$GITHUB_REPOSITORY\/releases\/download\/\$PREVIEW_RELEASE\/preview-pr-\$PR\.tar\.gz"/,
+  );
+});
+
+test('publishing the payload is the only write the preview deploy needs', () => {
+  // Scoped to release assets: the workflow never writes to a branch.
+  assert.match(deploy, /contents: write/);
+  assert.doesNotMatch(deploy, /git push|gh pr merge|gh api .*PUT/);
+});
+
+test('the steps that call gh are given a token', () => {
+  // `gh` does not pick the workflow token up on its own, and the failure is at
+  // run time: the upload fails with "authentication required" after the build
+  // has already been downloaded and unpacked.
+  const publishStep = deploy.slice(
+    deploy.indexOf('Publish the payload for the host to fetch'),
+    deploy.indexOf('Deploy the preview'),
+  );
+  assert.match(publishStep, /gh release upload/);
+  assert.match(publishStep, /GH_TOKEN: \$\{\{ github\.token \}\}/);
+
+  const deleteStep = teardown.slice(
+    teardown.indexOf('Delete the temporary payload'),
+  );
+  assert.match(deleteStep, /gh release delete-asset/);
+  assert.match(deleteStep, /GH_TOKEN: \$\{\{ github\.token \}\}/);
+});
+
+test('the temporary payload is deleted when the pull request closes', () => {
+  // It is public while it exists, so it must not outlive the preview.
+  assert.match(
+    teardown,
+    /gh release delete-asset "\$PREVIEW_RELEASE" "preview-pr-\$PR\.tar\.gz"/,
+  );
+  assert.match(teardown, /PREVIEW_RELEASE: factory-previews/);
+  assert.match(teardown, /contents: write/);
+});
+
 test('the deployable artifact carries the task metadata the preview reads from it', () => {
   const staged = task.indexOf('Stage the deployable build and its metadata');
   const uploaded = task.indexOf(

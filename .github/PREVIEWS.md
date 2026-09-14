@@ -25,14 +25,23 @@ Code Agent NocoBase Task
 Deploy Task Preview（由 workflow_run 触发）
   select  ──► 只挑同时通过 verify-final 和 publish 的运行
   prepare ──► 认领 PR、算出依赖集标识、生成地址
-  推送    ──► Tailscale 入网 → scp 到 252 → preview-deploy.sh
-  评论    ──► 按 marker 幂等写入 PR
+  发布    ──► 把 payload 上传成临时 release 资产（factory-previews）
+  取件    ──► ssh 只递过去 URL 与 sha256 → 252 自己走出口拉取、校验
+  部署    ──► 252 上 preview-deploy.sh（迁移、起容器）
+  评论    ──► 按 marker 幂等写入 PR；PR 关闭时删掉那个资产
 ```
 
 **依赖集缓存。** 一次构建里 `dist/node_modules` 约占 740MB（`dist/server` 只有 144KB）。
-所以推送前先问预览机有没有同一个依赖集：有就只传应用代码（几 MB），没有才传整包。
+所以发布前先问预览机有没有同一个依赖集：有就只发应用代码（几 MB），没有才发整包。
 依赖集标识是 `dist/package.json` 里已解析的依赖版本加构建目标（平台、架构、libc、Node ABI）
 的哈希——构建目标是关键，同一批版本但换一个架构或 Node ABI，原生模块就不是同一棵依赖树。
+
+**为什么让预览机自己拉。** 由 runner 推的话，字节要走 Tailscale：实测 GitHub runner →
+252 只有 **17 KB/s**，78MB 的整包要两个多小时，超过 job 的 45 分钟超时，而且 `scp` 不能续传，
+重试永远从 0 开始。改成"runner 传到 GitHub、252 走自己的出口来拉"之后，实测 **815 KB/s**，
+同一个包约 96 秒。所以 SSH 这条控制通道只承担几十字节（URL + sha256），字节走预览机本来就
+有的网络；下载落在 `payload-pr-<号>.tar.gz.part`，只有摘要校验通过才会改名成正式文件名，
+所以半截的下载永远不会被当成完整包部署。
 
 **为什么在 `verify-final` 里构建。** 预览跑的必须是独立验收通过的那棵树，而不是 Agent
 自己声称的版本，所以打包步骤放在 `verify-final` 的验收之后，产物随 artifact 传递。
@@ -95,13 +104,15 @@ rm -f ./preview_key ./preview_key.pub
 
 ### 5. 可选的仓库变量
 
-| 变量                     | 默认值             | 说明                  |
-| ------------------------ | ------------------ | --------------------- |
-| `FACTORY_PREVIEW_HOST`   | `100.120.77.102`   | 预览机的 tailnet 地址 |
-| `FACTORY_PREVIEW_USER`   | `root`             | SSH 用户              |
-| `FACTORY_PREVIEW_DOMAIN` | `preview.nfvd.net` | 预览域名              |
+| 变量                          | 默认值                      | 说明                                                    |
+| ----------------------------- | --------------------------- | ------------------------------------------------------- |
+| `FACTORY_PREVIEW_HOST`        | `100.120.77.102`            | 预览机的 tailnet 地址                                   |
+| `FACTORY_PREVIEW_USER`        | `root`                      | SSH 用户                                                |
+| `FACTORY_PREVIEW_DOMAIN`      | `preview.nfvd.net`          | 预览域名                                                |
+| `FACTORY_PREVIEW_FETCH_PROXY` | `http://192.168.2.250:7890` | 预览机拉取 payload 时的出口代理；能直连时可设为空字符串 |
 
 四个凭据缺任意一个，工作流会直接跳过并留一条 `::warning::`，不会失败。
+`FACTORY_PREVIEW_FETCH_PROXY` 不是凭据：它只决定预览机从哪个出口去取 payload。
 
 ## 手动补发
 
@@ -129,15 +140,17 @@ ssh 252 'bash /srv/nb3-preview/scripts/preview-gc.sh'
 
 ## 排查
 
-| 现象                        | 可能原因                                                                                                                    |
-| --------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
-| PR 上只有"部署失败"的评论   | 看该工作流的日志；`preview-deploy.sh` 的输出里有迁移和启动的完整记录                                                        |
-| 地址打不开                  | 通配路由是否配好；`ssh 252 'docker logs nb3-preview-traefik'`                                                               |
-| 应用启动报 `.node` 相关错误 | `dist/package.json` 的 `nocobase.buildTarget` 与运行时镜像不匹配，用 `PREVIEW_NODE_IMAGE` 指定合适的镜像重跑 `provision.sh` |
-| 一直卡在 apt-get            | 预览机没有直接出网，构建时要传 `PREVIEW_BUILD_PROXY`                                                                        |
-| 磁盘告警                    | `ssh 252 'bash /srv/nb3-preview/scripts/preview-gc.sh'`                                                                     |
+| 现象                        | 可能原因                                                                                                                                                                                                                   |
+| --------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| PR 上只有"部署失败"的评论   | 看该工作流的日志；`preview-deploy.sh` 的输出里有迁移和启动的完整记录                                                                                                                                                       |
+| 地址打不开                  | 通配路由是否配好；`ssh 252 'docker logs nb3-preview-traefik'`                                                                                                                                                              |
+| 应用启动报 `.node` 相关错误 | `dist/package.json` 的 `nocobase.buildTarget` 与运行时镜像不匹配，用 `PREVIEW_NODE_IMAGE` 指定合适的镜像重跑 `provision.sh`                                                                                                |
+| 一直卡在 apt-get            | 预览机没有直接出网，构建时要传 `PREVIEW_BUILD_PROXY`                                                                                                                                                                       |
+| 取件失败或摘要不匹配        | `preview-deploy.sh` 会打印 `could not fetch the payload` 或 `payload digest mismatch`；先确认预览机能不能解析并连上 github.com（`ssh 252 'curl -sI https://github.com'`），需要代理时由 `FACTORY_PREVIEW_FETCH_PROXY` 指定 |
+| 磁盘告警                    | `ssh 252 'bash /srv/nb3-preview/scripts/preview-gc.sh'`                                                                                                                                                                    |
 
-预览机上的构建日志在 `/srv/nb3-preview/logs/pr-<号>-{migrate,seed}.log`。
+预览机上的构建日志在 `/srv/nb3-preview/logs/pr-<号>-{migrate,seed}.log`。取件的半截文件是
+`/srv/nb3-preview/tmp/payload-pr-<号>.tar.gz.part`，它永远不会被部署，可以随时删。
 
 ## 安全
 
@@ -146,6 +159,11 @@ ssh 252 'bash /srv/nb3-preview/scripts/preview-gc.sh'
   所以预览里只能用一次性测试数据，不能放真实业务数据、密码或密钥。
   想收紧时，在 Cloudflare 控制台给 `*.preview.nfvd.net` 挂一个 Access 应用（邮箱 OTP）
   即可，不需要改任何代码。
+- **临时 payload 资产也是公开的。** 仓库是 public，`factory-previews` 下的
+  `preview-pr-<号>.tar.gz` 无需凭据即可下载（这正是预览机不必持有 GitHub 凭据的原因）。
+  它装的是这次验收过的构建，内容与公开分支里的源码同源；每个 PR 只保留一个，
+  PR 关闭时由 **Reclaim Task Preview** 删除。想让它更严，就得换成 252 上的上传端点
+  并自建鉴权，那时取件方向也会变成推。
 - **CI 的 SSH 用户等价于 root**（它必须能调 Docker，而 Docker 组就是 root）。这个凭据泄露
   等于预览机失守，而预览机上还有 Gitea、四个 PostgreSQL、NocoBase alpha 和 MinIO。
   首次写入 `mode 600`，只传给推送和部署步骤。

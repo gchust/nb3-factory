@@ -30,6 +30,11 @@ PREVIEW_NODE_IMAGE="${PREVIEW_NODE_IMAGE:-node:24-trixie-slim}"
 # set explicitly on a network that has no direct egress.
 PREVIEW_BUILD_PROXY="${PREVIEW_BUILD_PROXY:-}"
 
+# Optional HTTP proxy for fetching a payload. The same network that has no direct
+# egress for a build also has none for `curl`, so a host that needs the one needs
+# the other. Used by preview-deploy.sh.
+PREVIEW_FETCH_PROXY="${PREVIEW_FETCH_PROXY:-}"
+
 # The application listens inside its container; the port is never published on
 # the host, so previews cannot collide with the services already running here.
 PREVIEW_APP_PORT="${PREVIEW_APP_PORT:-13000}"
@@ -64,6 +69,51 @@ require_positive_integer() {
   [[ "$1" =~ ^[1-9][0-9]*$ ]] || die "expected a positive integer, got: $1"
 }
 
+# Puts a payload in place, fetching it when needed and checking its digest either
+# way. Usage: fetch_payload <path> <url> <sha256> <proxy>
+#
+# The bytes land in `<path>.part` and are moved into place only after the digest
+# matches, so a truncated or tampered download can never be deployed as if it
+# were complete. A failed attempt leaves that partial file behind, which is why
+# nothing else reads that name.
+fetch_payload() {
+  local payload="$1" url="$2" expected="$3" proxy="$4"
+  local actual partial
+  if [[ -f "$payload" ]]; then
+    if [[ -z "$expected" ]]; then
+      log "using the payload already on this host: $payload"
+      return 0
+    fi
+    actual="$(sha256sum "$payload" | cut -d' ' -f1)"
+    if [[ "$actual" == "$expected" ]]; then
+      log "payload already present and verified: $payload"
+      return 0
+    fi
+    [[ -n "$url" ]] ||
+      die "payload digest mismatch and no URL to refetch it: $payload"
+    log "payload on this host does not match the digest; refetching"
+    rm -f "$payload"
+  fi
+
+  [[ -n "$url" ]] || die "payload not found: $payload"
+  [[ -n "$expected" ]] ||
+    die "fetching a payload requires its digest; refusing to deploy unverified bytes"
+  partial="$payload.part"
+  rm -f "$partial"
+  local -a curl_opts=(-fL --retry 3 --retry-delay 5 --connect-timeout 20)
+  [[ -z "$proxy" ]] || curl_opts+=(-x "$proxy")
+  log "fetching the payload from $url"
+  curl "${curl_opts[@]}" -o "$partial" "$url" ||
+    die "could not fetch the payload; set PREVIEW_FETCH_PROXY if this host needs a proxy for egress"
+  actual="$(sha256sum "$partial" | cut -d' ' -f1)"
+  if [[ "$actual" != "$expected" ]]; then
+    rm -f "$partial"
+    die "payload digest mismatch: expected $expected, got $actual"
+  fi
+  mv -f "$partial" "$payload"
+  log "payload fetched and verified: $payload"
+}
+
 container_name() {
   printf 'preview-pr-%s' "$1"
 }
@@ -74,6 +124,11 @@ router_name() {
 
 instance_dir() {
   printf '%s/pr-%s' "$PREVIEW_INSTANCES_DIR" "$1"
+}
+
+# Where one pull request's payload is staged while it is fetched and deployed.
+payload_path() {
+  printf '%s/payload-pr-%s.tar.gz' "$PREVIEW_TMP_DIR" "$1"
 }
 
 preview_host() {
