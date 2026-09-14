@@ -234,15 +234,31 @@ test('a run from another repository or workflow is refused', () => {
   );
 });
 
-test('an expired or ambiguous build is refused rather than guessed', () => {
-  assert.throws(() =>
+test('a delivered task with no deployable build is skipped, not failed', () => {
+  // Every task delivered before previews existed looks like this, and those are
+  // exactly the runs someone replays by ID to try the feature out.
+  assert.equal(
+    selectDistArtifact(
+      run(),
+      deliveredJobs(),
+      [{ name: 'factory-agent-7', expired: false, id: 1 }],
+      'gchust/nb3-factory',
+    ),
+    null,
+  );
+  // An expired build is the same situation: nothing can be deployed from it.
+  assert.equal(
     selectDistArtifact(
       run(),
       deliveredJobs(),
       [{ name: 'factory-dist-7', expired: true, id: 2 }],
       'gchust/nb3-factory',
     ),
+    null,
   );
+});
+
+test('an ambiguous build is refused rather than guessed', () => {
   assert.throws(() =>
     selectDistArtifact(
       run(),

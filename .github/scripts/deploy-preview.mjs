@@ -107,7 +107,10 @@ if (mode === 'select') {
       }),
     );
     output('ready', 'true');
-  } else console.log('No successful business delivery; skipping the preview.');
+  } else
+    console.log(
+      'Nothing to deploy: this run is not a delivered task, or it has no unexpired deployable build (a task delivered before previews existed cannot be replayed).',
+    );
 } else if (mode === 'prepare') {
   output('ready', 'false');
   const source = JSON.parse(readFileSync(args.source, 'utf8'));

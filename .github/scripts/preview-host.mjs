@@ -162,8 +162,14 @@ export function slimEntries(rootEntries, distEntries) {
  *
  * Same run gate as the visual report: both `verify-final` and `publish` must
  * have succeeded, so a five-hour handoff — which has neither — is not a
- * delivery. The artifact differs: the deployable build is produced by
- * `verify-final`, not by the agent.
+ * delivery.
+ *
+ * Returns `null` when there is nothing to deploy rather than failing. A task
+ * delivered before this workflow existed has no deployable build at all, and
+ * that is exactly the run someone reaches for when asked to replay a preview
+ * by run ID. Failing there would turn "this run predates the feature" into a red
+ * job, so it is reported as a skip. More than one candidate stays an error: only
+ * that is ambiguous.
  */
 export function selectDistArtifact(run, jobs, artifacts, repository) {
   if (
@@ -185,9 +191,9 @@ export function selectDistArtifact(run, jobs, artifacts, repository) {
   const candidates = artifacts.filter(
     (a) => /^factory-dist-[1-9]\d*$/.test(a.name) && !a.expired,
   );
-  if (candidates.length !== 1)
-    throw new Error('Expected one unexpired deployable build artifact');
-  return candidates[0];
+  if (candidates.length > 1)
+    throw new Error('Expected at most one unexpired deployable build artifact');
+  return candidates[0] ?? null;
 }
 
 /**
