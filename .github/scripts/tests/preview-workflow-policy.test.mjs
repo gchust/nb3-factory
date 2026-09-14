@@ -111,8 +111,19 @@ test('the payload is published for the host to fetch, not pushed to it', () => {
   // carry a URL and a digest, and never the payload itself.
   assert.doesNotMatch(deploy, /scp[^\n]*payload/);
   assert.match(deploy, /asset="preview-pr-\$PR\.tar\.gz"/);
-  assert.match(deploy, /gh release upload "\$PREVIEW_RELEASE"/);
-  assert.match(deploy, /--clobber/);
+  // The file is named before the upload: an asset takes its name from the file
+  // it was uploaded from, and `gh release upload <file>#<name>` does not rename
+  // it — a run that relied on that published `payload.tar.gz` and the host then
+  // fetched a URL that 404'd.
+  assert.match(
+    deploy,
+    /cp "\$RUNNER_TEMP\/payload\.tar\.gz" "\$RUNNER_TEMP\/\$asset"/,
+  );
+  assert.match(
+    deploy,
+    /gh release upload "\$PREVIEW_RELEASE" --repo "\$GITHUB_REPOSITORY" --clobber \\\n\s+"\$RUNNER_TEMP\/\$asset"/,
+  );
+  assert.doesNotMatch(deploy, /#\$asset/);
   assert.match(deploy, /--payload-url '\$asset_url'/);
   assert.match(
     deploy,
