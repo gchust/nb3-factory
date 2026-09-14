@@ -169,9 +169,12 @@ jobs:
               --title "Factory preview payloads" \
               --notes "Temporary build payloads the preview host fetches. One asset per pull request, deleted when it closes."
           fi
+          # Named before it is uploaded: an asset takes its name from the file, and
+          # the URL the host is given is built from that name.
+          cp "$RUNNER_TEMP/payload.tar.gz" "$RUNNER_TEMP/$asset"
           gh release upload "$PREVIEW_RELEASE" --repo "$GITHUB_REPOSITORY" --clobber \
-            "$RUNNER_TEMP/payload.tar.gz#$asset"
-          echo "payload_sha256=$(sha256sum "$RUNNER_TEMP/payload.tar.gz" | cut -d' ' -f1)" >> "$GITHUB_OUTPUT"
+            "$RUNNER_TEMP/$asset"
+          echo "payload_sha256=$(sha256sum "$RUNNER_TEMP/$asset" | cut -d' ' -f1)" >> "$GITHUB_OUTPUT"
 
       - name: Deploy the preview
         id: deploy
