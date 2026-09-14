@@ -76,6 +76,16 @@ When the built-in mechanism genuinely cannot express what is being asked, changi
 - Comment what you changed and why the built-in path did not fit. On upgrade, an agent reconciling the template's version needs to know whether your change is still needed.
 - Update this file and `skills/nocobase-app-development/` in the same change, so the guidance describes the application as it actually is. Documentation describing a layout the application no longer has is worse than none.
 
+### One code-level auth default
+
+`server/config/index.ts` adds an `auth.account.additionalFields.issuer` default on top of the loaded
+configuration. Authentication's `account` table requires a non-null `issuer`, but the installed
+better-auth release does not write that column unless it is declared as an account field, so sign-up
+and administrator user creation fail with `NOT NULL constraint failed: account.issuer`. A deployment
+generates its own `config.yml`, so the setting lives in code and cannot be lost when that file is
+regenerated. Re-check this when better-auth changes; if a release creates `issuer` on its own, the
+default can be removed.
+
 ## Building a feature
 
 ### Pages and routes
