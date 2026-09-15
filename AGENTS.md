@@ -307,3 +307,14 @@ For creating or editing theme presets, read `skills/nocobase-app-development/ref
 For UI styling, use the shared color, font, size, spacing, radius and shadow contract in `skills/nocobase-app-development/references/theme-tokens.md` (from the application root). Prefer its Tailwind utilities so components respond to theme changes; keep deliberate fixed-size exceptions explicit.
 
 Application startup defaults belong in `config.yml`: `i18n.defaultLocale` for the language, and `client.app.defaultColorScheme` and `client.app.defaultTheme` for appearance. Valid browser-local choices take precedence. Which languages the application offers is not configured — its own `client/locales/` and `server/locales/` are that list. See the i18n and themes references.
+
+## Application-specific notes
+
+This application adds an equipment inspection feature. Its business code lives in the usual places: `database/main/migrations/2026091500*`, `database/main/seeds/202609150010_seed_inspection_baseline.ts`, `server/providers/inspection*.ts`, `server/routes/inspection*.ts`, `client/pages/inspection/`, `client/components/inspection/`, and the `inspection` namespace in `client/locales/`. Roles are authorization Permission Sets (`inspection-inspector`, `inspection-team-lead`, `inspection-viewer`) created on demand by `server/providers/inspection-roles.ts`; registration assigns one and administrators can change it from the Users page. Do not re-derive a second role store.
+
+`server/config/index.ts` carries one deliberate compatibility layer, `authenticationCompatProvider()`, and it is load-bearing:
+
+- It declares `account.issuer` as a better-auth account additional field. The authentication plugin's `account` table declares `issuer NOT NULL` and writes `local:credential`, but the installed better-auth drops unknown account fields before the database adapter, so every credential account insert fails without this. Remove it only after verifying sign-up again returns a session.
+- It raises the sign-in/sign-up rate-limit burst for the same paths. With no resolvable client address better-auth falls back to one shared per-path bucket of three requests per ten seconds for the whole instance, which blocks ordinary multi-account use.
+
+Both are application-owned configuration, not plugin changes. If a later template release fixes them at the source, delete the provider rather than keeping a duplicate.
