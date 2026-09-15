@@ -1,4 +1,4 @@
-import { Home } from 'lucide-react';
+import { BarChart3, FileText, Home } from 'lucide-react';
 import {
   defineAppRoutes,
   defineSettingsRoutes,
@@ -12,6 +12,20 @@ const appRoutes: AppClientRouteContribution = defineAppRoutes([
     name: 'home',
     navigation: { title: 'navigation.home', icon: Home },
     path: '/',
+  },
+  {
+    auth: 'required',
+    componentLoader: () => import('./pages/documents.js'),
+    name: 'documents',
+    navigation: { title: 'navigation.documents', icon: FileText },
+    path: '/documents',
+  },
+  {
+    auth: 'required',
+    componentLoader: () => import('./pages/document-stats.js'),
+    name: 'document-stats',
+    navigation: { title: 'navigation.documentStats', icon: BarChart3 },
+    path: '/document-stats',
   },
 ]);
 
