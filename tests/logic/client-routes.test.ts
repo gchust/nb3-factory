@@ -20,6 +20,27 @@ describe('app client routes', () => {
           name: 'home',
           path: '/',
         },
+        { auth: 'required', name: 'dashboard', path: '/dashboard' },
+        { auth: 'required', name: 'projects', path: '/projects' },
+        {
+          auth: 'required',
+          name: 'project-detail',
+          path: '/projects/:projectId',
+        },
+        { auth: 'required', name: 'my-tasks', path: '/my-tasks' },
+        { auth: 'required', name: 'milestones', path: '/milestones' },
+        {
+          auth: 'required',
+          name: 'milestone-detail',
+          path: '/milestones/:milestoneId',
+        },
+        { auth: 'required', name: 'task-detail', path: '/tasks/:taskId' },
+        { auth: 'required', name: 'review', path: '/review' },
+        {
+          auth: 'required',
+          name: 'submission-detail',
+          path: '/submissions/:submissionId',
+        },
         { auth: 'guest', name: 'login', path: '/login' },
         { auth: 'guest', name: 'register', path: '/register' },
         {

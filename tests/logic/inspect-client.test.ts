@@ -111,6 +111,51 @@ describe('client inspection', () => {
         path: '/',
       },
       {
+        auth: 'required',
+        id: 'nb3-factory:dashboard',
+        path: '/dashboard',
+      },
+      {
+        auth: 'required',
+        id: 'nb3-factory:projects',
+        path: '/projects',
+      },
+      {
+        auth: 'required',
+        id: 'nb3-factory:project-detail',
+        path: '/projects/:projectId',
+      },
+      {
+        auth: 'required',
+        id: 'nb3-factory:my-tasks',
+        path: '/my-tasks',
+      },
+      {
+        auth: 'required',
+        id: 'nb3-factory:milestones',
+        path: '/milestones',
+      },
+      {
+        auth: 'required',
+        id: 'nb3-factory:milestone-detail',
+        path: '/milestones/:milestoneId',
+      },
+      {
+        auth: 'required',
+        id: 'nb3-factory:task-detail',
+        path: '/tasks/:taskId',
+      },
+      {
+        auth: 'required',
+        id: 'nb3-factory:review',
+        path: '/review',
+      },
+      {
+        auth: 'required',
+        id: 'nb3-factory:submission-detail',
+        path: '/submissions/:submissionId',
+      },
+      {
         auth: 'guest',
         id: 'nb3-factory:login',
         path: '/login',
