@@ -111,6 +111,41 @@ describe('client inspection', () => {
         path: '/',
       },
       {
+        auth: 'required',
+        id: 'nb3-factory:procurement',
+        path: '/',
+      },
+      {
+        auth: 'required',
+        id: 'nb3-factory:procurement-dashboard',
+        path: '/procurement',
+      },
+      {
+        auth: 'required',
+        id: 'nb3-factory:procurement-suppliers',
+        path: '/procurement/suppliers',
+      },
+      {
+        auth: 'required',
+        id: 'nb3-factory:procurement-materials',
+        path: '/procurement/materials',
+      },
+      {
+        auth: 'required',
+        id: 'nb3-factory:procurement-orders',
+        path: '/procurement/orders',
+      },
+      {
+        auth: 'required',
+        id: 'nb3-factory:procurement-todos',
+        path: '/procurement/todos',
+      },
+      {
+        auth: 'required',
+        id: 'nb3-factory:procurement-receipts',
+        path: '/procurement/receipts',
+      },
+      {
         auth: 'guest',
         id: 'nb3-factory:login',
         path: '/login',

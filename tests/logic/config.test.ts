@@ -73,6 +73,16 @@ describe('application config', () => {
     expect(runtime.config.get<AppSessionConfigInput>('session')!.default).toBe(
       'memory',
     );
+    // The application ships to Chinese-speaking staff, so Chinese is the
+    // starting language unless configuration or a browser-local choice overrides
+    // it.
+    expect(runtime.config.get('i18n.defaultLocale')).toBe('zh-CN');
+    // Sign-up creates the credential account through Better Auth, which knows
+    // nothing about the required `account.issuer` column unless it is declared
+    // here; without the default, every sign-up fails on a NOT NULL constraint.
+    expect(
+      runtime.config.get('auth.account.additionalFields.issuer.defaultValue'),
+    ).toBe('local:credential');
   });
 
   it('reloads a file-backed configuration explicitly', async () => {

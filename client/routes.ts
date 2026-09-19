@@ -1,4 +1,13 @@
-import { Home } from 'lucide-react';
+import {
+  ClipboardCheck,
+  ClipboardList,
+  Factory,
+  FileCheck2,
+  Home,
+  LayoutDashboard,
+  Package,
+  Truck,
+} from 'lucide-react';
 import {
   defineAppRoutes,
   defineSettingsRoutes,
@@ -12,6 +21,58 @@ const appRoutes: AppClientRouteContribution = defineAppRoutes([
     name: 'home',
     navigation: { title: 'navigation.home', icon: Home },
     path: '/',
+  },
+  {
+    auth: 'required',
+    name: 'procurement',
+    navigation: { title: 'navigation.procurement', icon: ClipboardList },
+    children: [
+      {
+        componentLoader: () => import('./pages/procurement/dashboard.js'),
+        name: 'procurement-dashboard',
+        navigation: {
+          icon: LayoutDashboard,
+          title: 'navigation.procurementDashboard',
+        },
+        path: '/procurement',
+      },
+      {
+        componentLoader: () => import('./pages/procurement/suppliers.js'),
+        name: 'procurement-suppliers',
+        navigation: {
+          icon: Factory,
+          title: 'navigation.procurementSuppliers',
+        },
+        path: '/procurement/suppliers',
+      },
+      {
+        componentLoader: () => import('./pages/procurement/materials.js'),
+        name: 'procurement-materials',
+        navigation: { icon: Package, title: 'navigation.procurementMaterials' },
+        path: '/procurement/materials',
+      },
+      {
+        componentLoader: () => import('./pages/procurement/orders.js'),
+        name: 'procurement-orders',
+        navigation: { icon: Truck, title: 'navigation.procurementOrders' },
+        path: '/procurement/orders',
+      },
+      {
+        componentLoader: () => import('./pages/procurement/todos.js'),
+        name: 'procurement-todos',
+        navigation: { icon: FileCheck2, title: 'navigation.procurementTodos' },
+        path: '/procurement/todos',
+      },
+      {
+        componentLoader: () => import('./pages/procurement/receipts.js'),
+        name: 'procurement-receipts',
+        navigation: {
+          icon: ClipboardCheck,
+          title: 'navigation.procurementReceipts',
+        },
+        path: '/procurement/receipts',
+      },
+    ],
   },
   {
     auth: 'guest',
