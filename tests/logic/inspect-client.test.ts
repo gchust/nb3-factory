@@ -111,6 +111,36 @@ describe('client inspection', () => {
         path: '/',
       },
       {
+        auth: 'required',
+        id: 'nb3-factory:recruitment',
+        path: '/',
+      },
+      {
+        auth: 'required',
+        id: 'nb3-factory:recruitment-positions',
+        path: '/recruitment/positions',
+      },
+      {
+        auth: 'required',
+        id: 'nb3-factory:recruitment-candidates',
+        path: '/recruitment/candidates',
+      },
+      {
+        auth: 'required',
+        id: 'nb3-factory:recruitment-interviews',
+        path: '/recruitment/interviews',
+      },
+      {
+        auth: 'required',
+        id: 'nb3-factory:recruitment-onboarding',
+        path: '/recruitment/onboarding',
+      },
+      {
+        auth: 'required',
+        id: 'nb3-factory:recruitment-stats',
+        path: '/recruitment/stats',
+      },
+      {
         auth: 'guest',
         id: 'nb3-factory:login',
         path: '/login',
