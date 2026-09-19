@@ -22,6 +22,8 @@ jobs:
         with:
           node-version: 24.x
       - name: Run control-plane regression tests
-        run: node --test .github/scripts/tests/*.test.mjs
+        # Browser acceptance invokes process cleanup that can kill the listener
+        # fixture in stale-app-port tests. These suites share the process table.
+        run: node --test --test-concurrency=1 .github/scripts/tests/*.test.mjs
       - name: Run preview DNS regression tests
         run: python3 .github/scripts/tests/preview-dns-sync.test.py
