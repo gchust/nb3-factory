@@ -6,6 +6,7 @@ import { useState } from 'react';
 import { Link, useParams } from 'react-router';
 
 import { BookingStatusBadge } from '@/components/booking-status-badge';
+import { BookingAttachments } from '@/components/attachments/booking-attachments';
 import { PageContainer } from '@/components/page-container';
 import { PageHeader } from '@/components/page-header';
 import { QueryState } from '@/components/query-state';
@@ -255,6 +256,12 @@ export default function RentalDetailPage(): ReactElement {
                 </dl>
               </Section>
             ) : null}
+
+            <BookingAttachments
+              bookingId={value.id}
+              canModify={value.status !== 'settled' && (canManage || isOwner)}
+              readOnly={value.status === 'settled'}
+            />
 
             {dialog === 'deliver' ? (
               <DeliverDialog

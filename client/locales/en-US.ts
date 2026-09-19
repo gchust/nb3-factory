@@ -102,6 +102,30 @@ const enUS = {
       staff:
         'Staff: register a new account with Sign up. Staff create bookings and can only open and act on bookings assigned to them.',
     },
+    samples: {
+      title: 'Sample files',
+      description:
+        'Fictional files for trying upload, preview and download. Download one, then upload it from a venue or a rental page.',
+      cover: 'Venue cover image (PNG)',
+      gallery: 'Venue gallery image (PNG)',
+      agreement: 'Rental agreement (multi-page PDF)',
+      supplement: 'Rental supplement (text)',
+      deliveryPhoto: 'Delivery site photo (PNG)',
+      deliveryPdf: 'Delivery acceptance (PDF)',
+      returnPhoto: 'Return site photo (PNG)',
+      returnPdf: 'Return acceptance (PDF)',
+    },
+  },
+  files: {
+    pdfLoading: 'Loading PDF…',
+    pdfPageOf: 'Page {{page}} of {{total}}',
+    pdfPreviousPage: 'Previous page',
+    pdfNextPage: 'Next page',
+    pdfZoomIn: 'Zoom in',
+    pdfZoomOut: 'Zoom out',
+    pdfDownload: 'Download the PDF',
+    pdfLoadFailed:
+      'The PDF could not be displayed in the app. You can download it instead.',
   },
   rentals: {
     loadFailed: 'Could not load data',
@@ -257,6 +281,37 @@ const enUS = {
       noUtilization: 'No bookings fall inside this window.',
       empty: 'Nothing to summarise yet',
     },
+    attachments: {
+      title: 'Documents and handover records',
+      description:
+        'Agreements and supplements, plus the site photos and acceptance PDFs of delivery and of return.',
+      readOnly:
+        'This rental is settled. Its handover records are kept read-only.',
+      empty: 'No documents yet',
+      groupEmpty: 'No files in this group yet.',
+      processing: 'Saving…',
+      uploadFailed: 'The file could not be saved.',
+      choose: 'Choose files',
+      preview: 'Preview',
+      download: 'Download',
+      remove: 'Remove',
+      retry: 'Retry',
+      agreement: 'Rental agreement',
+      supplement: 'Supplements',
+      deliveryGroup: 'Delivery records',
+      returnGroup: 'Return records',
+      deliveryPhoto: 'Delivery site photos',
+      deliveryPdf: 'Delivery acceptance (PDF)',
+      returnPhoto: 'Return site photos',
+      returnPdf: 'Return acceptance (PDF)',
+      cover: 'Cover',
+      gallery: 'Gallery',
+      venueTitle: 'Media · {{name}}',
+      venueDescription:
+        'A cover image and any number of introduction photos. Each can be previewed full size and downloaded.',
+      noCover: 'No cover',
+      manage: 'Media ({{count}})',
+    },
     errors: {
       generic: 'The operation could not be completed. Please try again.',
       TIME_CONFLICT: 'The venue already has a booking in this time range.',
@@ -265,6 +320,8 @@ const enUS = {
       VALIDATION_FAILED: 'Please check the required fields and try again.',
       FORBIDDEN: 'You do not have permission to perform this action.',
       NOT_FOUND: 'The record no longer exists.',
+      READ_ONLY: 'This rental is settled; its records are read-only.',
+      EMPTY_FILE: 'This file is empty. Choose a file with content.',
     },
   },
 

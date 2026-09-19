@@ -20,19 +20,13 @@ import {
   rentalServiceToken,
   type Actor,
   type BookingFilters,
-  type RentalRole,
   type RentalService,
 } from '../providers/rental-service.js';
-
-/**
- * A signed-in user is a manager when they hold the protected
- * `system-administrator` role or the application's `rental-manager` role.
- * Every other signed-in account is staff and only manages its own bookings.
- */
-const MANAGER_PERMISSION_SETS = new Set([
-  'system-administrator',
-  'rental-manager',
-]);
+import { resolveRentalRole } from '../providers/rental-access.js';
+import {
+  rentalFileContentUrl,
+  type AttachmentRecord,
+} from '../providers/rental-files.js';
 
 export const rentalsRoutes: AppApiRouteContribution<Application> =
   defineApiRoutes((app) => {
@@ -62,9 +56,20 @@ export const rentalsRoutes: AppApiRouteContribution<Application> =
       }
       return {
         userId: session.user.id,
-        role: await resolveRole(authorization, session.user.id),
+        role: await resolveRentalRole(authorization, session.user.id),
       };
     };
+
+    const withContentUrl = (
+      records: readonly AttachmentRecord[],
+    ): readonly (AttachmentRecord & { readonly contentUrl: string })[] =>
+      records.map((record) => ({
+        ...record,
+        contentUrl: rentalFileContentUrl(app.publicBasePath ?? '', {
+          id: record.fileId,
+          ext: record.ext,
+        }),
+      }));
 
     rentals.get('/venues', async (context) =>
       context.json({
@@ -190,6 +195,101 @@ export const rentalsRoutes: AppApiRouteContribution<Application> =
       });
     });
 
+    // Attachments are linked after the file bytes are uploaded, so these
+    // routes only carry metadata and enforce the rental's own access rules.
+    rentals.get('/bookings/:id/attachments', async (context) =>
+      context.json({
+        data: withContentUrl(
+          await service.listBookingAttachments(
+            await actor(context),
+            parseId(context.req.param('id')),
+          ),
+        ),
+      }),
+    );
+
+    rentals.post('/bookings/:id/attachments', async (context) => {
+      const body = await readJson(context);
+      return context.json(
+        {
+          data: withContentUrl(
+            await service.addBookingAttachments(
+              await actor(context),
+              parseId(context.req.param('id')),
+              body.kind,
+              body.fileIds,
+            ),
+          ),
+        },
+        201,
+      );
+    });
+
+    rentals.delete('/bookings/:id/attachments/:attachmentId', async (context) =>
+      context.json({
+        data: withContentUrl(
+          await service.removeBookingAttachment(
+            await actor(context),
+            parseId(context.req.param('id')),
+            parseId(context.req.param('attachmentId')),
+          ),
+        ),
+      }),
+    );
+
+    // Covers and gallery sizes for every venue, so the venue list needs one
+    // request rather than one per row.
+    rentals.get('/venue-media', async (context) => {
+      const summaries = await service.listVenueMedia();
+      return context.json({
+        data: summaries.map((summary) => ({
+          venueId: summary.venueId,
+          gallery: summary.gallery,
+          cover: summary.cover ? withContentUrl([summary.cover])[0] : null,
+        })),
+      });
+    });
+
+    rentals.get('/venues/:id/attachments', async (context) =>
+      context.json({
+        data: withContentUrl(
+          await service.listVenueAttachments(
+            await actor(context),
+            parseId(context.req.param('id')),
+          ),
+        ),
+      }),
+    );
+
+    rentals.post('/venues/:id/attachments', async (context) => {
+      const body = await readJson(context);
+      return context.json(
+        {
+          data: withContentUrl(
+            await service.addVenueAttachments(
+              await actor(context),
+              parseId(context.req.param('id')),
+              body.kind,
+              body.fileIds,
+            ),
+          ),
+        },
+        201,
+      );
+    });
+
+    rentals.delete('/venues/:id/attachments/:attachmentId', async (context) =>
+      context.json({
+        data: withContentUrl(
+          await service.removeVenueAttachment(
+            await actor(context),
+            parseId(context.req.param('id')),
+            parseId(context.req.param('attachmentId')),
+          ),
+        ),
+      }),
+    );
+
     rentals.get('/owners', async (context) => {
       const current = await actor(context);
       if (current.role !== 'manager') {
@@ -216,20 +316,6 @@ export const rentalsRoutes: AppApiRouteContribution<Application> =
     router.route('/rentals', rentals);
     return router;
   });
-
-async function resolveRole(
-  authorization: AppAuthorization | undefined,
-  userId: string,
-): Promise<RentalRole> {
-  if (!authorization) return 'staff';
-  const sets = await authorization.permissionSets.getEffective({
-    principal: { type: 'user', id: userId },
-    subjects: [{ type: 'authenticated', id: '*' }],
-  });
-  return sets.some((set) => MANAGER_PERMISSION_SETS.has(set.key))
-    ? 'manager'
-    : 'staff';
-}
 
 function bookingFilters(context: Context<AuthEnv>): BookingFilters {
   const venueId = Number(context.req.query('venueId'));

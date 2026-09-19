@@ -1,11 +1,15 @@
 import { useTranslation } from '@nocobase/i18n/client';
-import { Search } from 'lucide-react';
+import { Images, Search } from 'lucide-react';
 import type { ReactElement } from 'react';
 import { useMemo, useState } from 'react';
 
+import { VenueMediaDialog } from '@/components/attachments/venue-media-dialog';
+import { toFileRecords } from '@/components/attachments/files';
 import { PageContainer } from '@/components/page-container';
 import { PageHeader } from '@/components/page-header';
 import { QueryState } from '@/components/query-state';
+import { FileThumbnail } from '@/extensions/nocobase-file-component-ui';
+import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
   Select,
@@ -14,13 +18,21 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { formatMoney, listVenues, type Venue } from '@/lib/rentals';
+import {
+  fetchIdentity,
+  formatMoney,
+  listVenues,
+  listVenueMedia,
+  type Venue,
+  type VenueMediaSummary,
+} from '@/lib/rentals';
 import { useApiData } from '@/lib/use-api-data';
 
 export default function VenuesPage(): ReactElement {
   const { t } = useTranslation();
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState('all');
+  const [mediaVenue, setMediaVenue] = useState<Venue | null>(null);
 
   const venues = useApiData<readonly Venue[]>(
     `venues:${search}:${status}`,
@@ -30,6 +42,12 @@ export default function VenuesPage(): ReactElement {
         status: status === 'all' ? undefined : status,
       }),
   );
+  const media = useApiData<readonly VenueMediaSummary[]>(
+    'venues:media',
+    (api) => listVenueMedia(api),
+  );
+  const identity = useApiData('rentals:identity', (api) => fetchIdentity(api));
+  const canManage = identity.data?.role === 'manager';
 
   const statusItems = useMemo(
     () => ({
@@ -40,6 +58,14 @@ export default function VenuesPage(): ReactElement {
     }),
     [t],
   );
+
+  const mediaByVenue = useMemo(() => {
+    const map = new Map<number, VenueMediaSummary>();
+    for (const summary of media.data ?? []) {
+      map.set(summary.venueId, summary);
+    }
+    return map;
+  }, [media.data]);
 
   return (
     <PageContainer className='mx-auto max-w-6xl'>
@@ -112,32 +138,75 @@ export default function VenuesPage(): ReactElement {
                   {t('rentals.fields.venueStatus')}
                 </th>
                 <th className='px-4 py-3 font-medium'>
-                  {t('rentals.fields.description')}
+                  {t('rentals.attachments.cover')}
+                </th>
+                <th className='px-4 py-3 font-medium'>
+                  {t('rentals.list.actions')}
                 </th>
               </tr>
             </thead>
             <tbody>
-              {venues.data?.map((venue) => (
-                <tr
-                  className='border-b border-border last:border-0'
-                  key={venue.id}
-                >
-                  <td className='px-4 py-3 font-medium'>{venue.name}</td>
-                  <td className='px-4 py-3'>{venue.location}</td>
-                  <td className='px-4 py-3'>{venue.capacity}</td>
-                  <td className='px-4 py-3'>{formatMoney(venue.unitPrice)}</td>
-                  <td className='px-4 py-3'>
-                    {t(`rentals.venueStatus.${venue.status}`)}
-                  </td>
-                  <td className='max-w-72 px-4 py-3 text-muted-foreground'>
-                    {venue.description ?? '—'}
-                  </td>
-                </tr>
-              ))}
+              {venues.data?.map((venue) => {
+                const summary = mediaByVenue.get(venue.id);
+                const cover = summary?.cover
+                  ? toFileRecords([summary.cover])[0]
+                  : undefined;
+                return (
+                  <tr
+                    className='border-b border-border last:border-0'
+                    key={venue.id}
+                  >
+                    <td className='px-4 py-3 font-medium'>{venue.name}</td>
+                    <td className='px-4 py-3'>{venue.location}</td>
+                    <td className='px-4 py-3'>{venue.capacity}</td>
+                    <td className='px-4 py-3'>
+                      {formatMoney(venue.unitPrice)}
+                    </td>
+                    <td className='px-4 py-3'>
+                      {t(`rentals.venueStatus.${venue.status}`)}
+                    </td>
+                    <td className='px-4 py-3'>
+                      {cover ? (
+                        <span className='block h-10 w-16 overflow-hidden rounded-md border border-border'>
+                          <FileThumbnail file={cover} />
+                        </span>
+                      ) : (
+                        <span className='text-xs text-muted-foreground'>
+                          {t('rentals.attachments.noCover')}
+                        </span>
+                      )}
+                    </td>
+                    <td className='px-4 py-3'>
+                      <Button
+                        onClick={() => setMediaVenue(venue)}
+                        size='sm'
+                        type='button'
+                        variant='outline'
+                      >
+                        <Images />
+                        {t('rentals.attachments.manage', {
+                          count: summary?.gallery ?? 0,
+                        })}
+                      </Button>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
       </QueryState>
+
+      {mediaVenue ? (
+        <VenueMediaDialog
+          canManage={canManage}
+          onOpenChange={(open) => {
+            if (!open) setMediaVenue(null);
+          }}
+          open
+          venue={mediaVenue}
+        />
+      ) : null}
     </PageContainer>
   );
 }

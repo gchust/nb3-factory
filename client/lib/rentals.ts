@@ -100,6 +100,47 @@ export interface CreateBookingInput {
 
 export type RentalRole = 'manager' | 'staff';
 
+export type BookingAttachmentKind =
+  | 'agreement'
+  | 'supplement'
+  | 'deliveryPhoto'
+  | 'deliveryPdf'
+  | 'returnPhoto'
+  | 'returnPdf';
+
+export type VenueAttachmentKind = 'cover' | 'gallery';
+
+export interface Attachment {
+  /** Link-table id used to remove this attachment. */
+  readonly id: number;
+  readonly kind: string;
+  readonly fileId: string;
+  readonly filename: string;
+  readonly ext: string;
+  readonly mimeType: string;
+  readonly size: number;
+  readonly sort: number;
+  readonly createdAt: string;
+  readonly contentUrl: string;
+}
+
+/** A single selection may carry at most this many files. */
+export const MAX_ATTACH_FILES = 5;
+
+/** One file may not exceed 5 MB. */
+export const MAX_ATTACH_BYTES = 5 * 1024 * 1024;
+
+/** MIME/extension filters for the grouped upload controls. */
+export const IMAGE_ACCEPT = [
+  '.png',
+  '.jpg',
+  '.jpeg',
+  '.gif',
+  '.webp',
+  '.bmp',
+] as const;
+export const PDF_ACCEPT = ['application/pdf', '.pdf'] as const;
+
 export interface RentalIdentity {
   readonly userId: string;
   readonly role: RentalRole;
@@ -237,6 +278,96 @@ export const cancelBooking = (
 ) => act(api, id, 'cancel', json);
 export const reassignOwner = (api: ApiClient, id: number, ownerId: string) =>
   act(api, id, 'owner', { ownerId });
+
+// --- Attachments -----------------------------------------------------------
+
+export async function listBookingAttachments(
+  api: ApiClient,
+  bookingId: number,
+): Promise<readonly Attachment[]> {
+  const response = await api.request<{ data: Attachment[] }>({
+    path: `rentals/bookings/${bookingId}/attachments`,
+  });
+  return response.data;
+}
+
+export async function addBookingAttachments(
+  api: ApiClient,
+  bookingId: number,
+  kind: BookingAttachmentKind,
+  fileIds: readonly string[],
+): Promise<readonly Attachment[]> {
+  const response = await api.request<{ data: Attachment[] }>({
+    path: `rentals/bookings/${bookingId}/attachments`,
+    method: 'POST',
+    json: { kind, fileIds },
+  });
+  return response.data;
+}
+
+export async function removeBookingAttachment(
+  api: ApiClient,
+  bookingId: number,
+  attachmentId: number,
+): Promise<readonly Attachment[]> {
+  const response = await api.request<{ data: Attachment[] }>({
+    path: `rentals/bookings/${bookingId}/attachments/${attachmentId}`,
+    method: 'DELETE',
+  });
+  return response.data;
+}
+
+export async function listVenueAttachments(
+  api: ApiClient,
+  venueId: number,
+): Promise<readonly Attachment[]> {
+  const response = await api.request<{ data: Attachment[] }>({
+    path: `rentals/venues/${venueId}/attachments`,
+  });
+  return response.data;
+}
+
+export interface VenueMediaSummary {
+  readonly venueId: number;
+  readonly cover: Attachment | null;
+  readonly gallery: number;
+}
+
+/** Cover and gallery size for every venue, for the venue list. */
+export async function listVenueMedia(
+  api: ApiClient,
+): Promise<readonly VenueMediaSummary[]> {
+  const response = await api.request<{ data: VenueMediaSummary[] }>({
+    path: 'rentals/venue-media',
+  });
+  return response.data;
+}
+
+export async function addVenueAttachments(
+  api: ApiClient,
+  venueId: number,
+  kind: VenueAttachmentKind,
+  fileIds: readonly string[],
+): Promise<readonly Attachment[]> {
+  const response = await api.request<{ data: Attachment[] }>({
+    path: `rentals/venues/${venueId}/attachments`,
+    method: 'POST',
+    json: { kind, fileIds },
+  });
+  return response.data;
+}
+
+export async function removeVenueAttachment(
+  api: ApiClient,
+  venueId: number,
+  attachmentId: number,
+): Promise<readonly Attachment[]> {
+  const response = await api.request<{ data: Attachment[] }>({
+    path: `rentals/venues/${venueId}/attachments/${attachmentId}`,
+    method: 'DELETE',
+  });
+  return response.data;
+}
 
 export function formatDateTime(value: string | null | undefined): string {
   if (!value) return '—';

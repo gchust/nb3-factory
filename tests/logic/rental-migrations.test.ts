@@ -22,15 +22,41 @@ describe('rental migrations', () => {
     await database.destroy();
   });
 
-  it('creates the venue, tenant and booking tables with the expected columns', async () => {
+  it('creates the venue, tenant, booking and attachment tables with the expected columns', async () => {
     const client = await database.connection().client<SchemaClient>();
 
     for (const table of [
       'rental_venues',
       'rental_tenants',
       'rental_bookings',
+      'rental_files',
+      'rental_attachments',
     ]) {
       expect(await client.schema.hasTable(table)).toBe(true);
+    }
+
+    for (const column of [
+      'disk',
+      'key',
+      'filename',
+      'ext',
+      'mime_type',
+      'size',
+      'created_at',
+      'updated_at',
+    ]) {
+      expect(await client.schema.hasColumn('rental_files', column)).toBe(true);
+    }
+    for (const column of [
+      'booking_id',
+      'venue_id',
+      'kind',
+      'file_id',
+      'sort',
+    ]) {
+      expect(await client.schema.hasColumn('rental_attachments', column)).toBe(
+        true,
+      );
     }
 
     for (const column of [
@@ -65,7 +91,7 @@ describe('rental migrations', () => {
     }
   });
 
-  it('reverses all three migrations on rollback', async () => {
+  it('reverses all migrations on rollback', async () => {
     const client = await database.connection().client<SchemaClient>();
     const migration = database.createMigrator({
       packageName: 'app',
@@ -78,6 +104,8 @@ describe('rental migrations', () => {
       'rental_venues',
       'rental_tenants',
       'rental_bookings',
+      'rental_attachments',
+      'rental_files',
     ]) {
       expect(await client.schema.hasTable(table)).toBe(false);
     }
@@ -94,6 +122,8 @@ describe('rental migrations', () => {
       'rental_venues',
       'rental_tenants',
       'rental_bookings',
+      'rental_attachments',
+      'rental_files',
     ]) {
       expect(await client.schema.hasTable(table)).toBe(false);
     }
@@ -103,6 +133,8 @@ describe('rental migrations', () => {
       'rental_venues',
       'rental_tenants',
       'rental_bookings',
+      'rental_attachments',
+      'rental_files',
     ]) {
       expect(await client.schema.hasTable(table)).toBe(true);
     }
