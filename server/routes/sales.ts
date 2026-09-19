@@ -37,6 +37,10 @@ const MAX_FILE_BYTES = 5 * 1024 * 1024;
 const MAX_FILES_PER_UPLOAD = 5;
 const UPLOAD_BODY_BYTES =
   MAX_FILES_PER_UPLOAD * MAX_FILE_BYTES + 2 * 1024 * 1024;
+// A customer logo is one image of at most 5 MB; the extra megabyte covers the
+// multipart envelope so an oversized body is refused while it is still being
+// read instead of after it has been buffered.
+const AVATAR_BODY_BYTES = MAX_FILE_BYTES + 1024 * 1024;
 
 const DENIED_EXTENSIONS = new Set([
   'html',
@@ -229,41 +233,55 @@ export const salesApiRoutes: AppApiRouteContribution<Application> =
       });
     });
 
-    routes.post('/customers/:id/avatar', async (context) => {
-      const viewer = await viewerOf(context);
-      const customerId = context.req.param('id');
-      await service.resolveFileAssociation(viewer, {
-        category: 'avatar',
-        customerId,
-      });
-      const file = await singleFile(context);
-      assertAcceptable(file);
-      if (!file.type.toLowerCase().startsWith('image/')) {
-        throw new SalesError(
-          'UNSUPPORTED_FILE_TYPE',
-          'A customer logo must be an image file.',
-          400,
-        );
-      }
-      const stored = await files.uploadOne({ file });
-      try {
-        const replaced = await service.setCustomerAvatar(
-          viewer,
+    routes.post(
+      '/customers/:id/avatar',
+      bodyLimit({
+        maxSize: AVATAR_BODY_BYTES,
+        onError: (context) =>
+          context.json(
+            {
+              code: 'BODY_TOO_LARGE',
+              message: 'The image is too large. At most 5 MB is accepted.',
+            },
+            413,
+          ),
+      }),
+      async (context) => {
+        const viewer = await viewerOf(context);
+        const customerId = context.req.param('id');
+        await service.resolveFileAssociation(viewer, {
+          category: 'avatar',
           customerId,
+        });
+        const file = await singleFile(context);
+        assertAcceptable(file);
+        if (!file.type.toLowerCase().startsWith('image/')) {
+          throw new SalesError(
+            'UNSUPPORTED_FILE_TYPE',
+            'A customer logo must be an image file.',
+            400,
+          );
+        }
+        const stored = await files.uploadOne({ file });
+        try {
+          const replaced = await service.setCustomerAvatar(
+            viewer,
+            customerId,
+            String(stored.record.id),
+          );
+          if (replaced) await removeObject(replaced);
+        } catch (error) {
+          await service.removeFileRow(String(stored.record.id));
+          await removeObject(stored.record as unknown as Row);
+          throw error;
+        }
+        const row = await service.fileForContent(
+          viewer,
           String(stored.record.id),
         );
-        if (replaced) await removeObject(replaced);
-      } catch (error) {
-        await service.removeFileRow(String(stored.record.id));
-        await removeObject(stored.record as unknown as Row);
-        throw error;
-      }
-      const row = await service.fileForContent(
-        viewer,
-        String(stored.record.id),
-      );
-      return context.json({ data: serializeFile(row) }, 201);
-    });
+        return context.json({ data: serializeFile(row) }, 201);
+      },
+    );
 
     routes.delete('/customers/:id/avatar', async (context) => {
       const viewer = await viewerOf(context);

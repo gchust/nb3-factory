@@ -434,6 +434,12 @@ function EditCustomerDialog({
     value: CustomerPayload[K],
   ): void => setForm((current) => ({ ...current, [key]: value }));
 
+  // Reassigning the customer moves its contacts, opportunities, follow-ups and
+  // files to the new owner and revokes the previous owner's access, so the
+  // dialog explains that before the change is saved.
+  const ownerChanged =
+    canAssignOwner && (form.ownerId ?? '') !== (customer.ownerId ?? '');
+
   const submit = async (): Promise<void> => {
     setBusy(true);
     setError(undefined);
@@ -550,6 +556,14 @@ function EditCustomerDialog({
                     </option>
                   ))}
                 </SelectInput>
+                {ownerChanged ? (
+                  <p
+                    role='status'
+                    className='rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs text-amber-700 dark:text-amber-300'
+                  >
+                    {t('sales.customer.transferNotice')}
+                  </p>
+                ) : null}
               </div>
             ) : null}
             <div className='space-y-1'>

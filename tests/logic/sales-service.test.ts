@@ -295,6 +295,53 @@ describe('SalesService', () => {
     expect(forManager.followUp.upcoming).toBe(1);
   });
 
+  it('counts a customer as overdue by their earliest pending follow-up', async () => {
+    // A newer visit with a future next date must not hide an older follow-up
+    // that is still pending and already overdue; the workbench has to agree
+    // with the customer list, which reports the earliest pending date.
+    const now = new Date();
+    await database
+      .query()
+      .insertInto('salesFollowUps')
+      .values([
+        {
+          id: 'fa-old',
+          customerId: 'cust-a',
+          channel: 'phone',
+          content: 'Older visit, still pending',
+          occurredAt: new Date(now.getTime() - 8 * 24 * 60 * 60 * 1000),
+          nextFollowUpAt: isoDay(-3),
+          createdAt: now,
+          updatedAt: now,
+        },
+        {
+          id: 'fa-new',
+          customerId: 'cust-a',
+          channel: 'email',
+          content: 'Most recent visit',
+          occurredAt: now,
+          nextFollowUpAt: isoDay(5),
+          createdAt: now,
+          updatedAt: now,
+        },
+      ])
+      .execute();
+
+    const [customer] = await service.listCustomers(repA, {});
+    expect(customer.nextFollowUpAt).toBe(isoDay(-3));
+
+    const forRep = await service.dashboard(repA);
+    expect(forRep.followUp).toEqual({ overdue: 1, today: 0, upcoming: 0 });
+    expect(forRep.customersNeedingFollowUp).toEqual([
+      {
+        customerId: 'cust-a',
+        customerName: 'Customer A',
+        nextFollowUpAt: isoDay(-3),
+        dueState: 'overdue',
+      },
+    ]);
+  });
+
   it('scopes file access through the owning customer', async () => {
     const now = new Date();
     await database

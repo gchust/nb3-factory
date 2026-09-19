@@ -10,6 +10,12 @@ import createFollowUps from '../../database/main/migrations/202609190004_create_
 import createFiles from '../../database/main/migrations/202609190005_create_sales_files.js';
 import permissionSeed from '../../database/main/seeds/202609190101_seed_sales_permission_sets.js';
 import demoSeed from '../../database/main/seeds/202609190102_seed_sales_demo_data.js';
+import {
+  SalesService,
+  dueState,
+  todayDate,
+  type SalesViewer,
+} from '../../server/providers/sales.js';
 
 const migrations = [
   createCustomers,
@@ -182,5 +188,56 @@ describe('sales seeds', () => {
       sets: await count('authorizationPermissionSets'),
       assignments: await count('authorizationPermissionSetAssignments'),
     }).toEqual(before);
+  });
+
+  it('keeps the workbench follow-up counts consistent with the customer list', async () => {
+    await runSeeds();
+    const service = new SalesService(database, {
+      permissionSets: { getEffective: async () => [] },
+    } as never);
+    const manager: SalesViewer = {
+      userId: 'manager',
+      name: 'Manager',
+      isManager: true,
+    };
+
+    const customers = await service.listCustomers(manager, {});
+    const dashboard = await service.dashboard(manager);
+    const today = todayDate();
+
+    // The workbench reports one follow-up state per customer; it must derive it
+    // from the same earliest pending date the customer list shows, or the two
+    // screens disagree about who is overdue on the same day.
+    const pending = new Map<string, string>();
+    for (const customer of customers) {
+      const next = customer.nextFollowUpAt;
+      if (next) pending.set(String(customer.id), String(next));
+    }
+    expect(dashboard.customerCount).toBe(customers.length);
+
+    const expected = { overdue: 0, today: 0, upcoming: 0 };
+    for (const next of pending.values()) {
+      const state = dueState(next, today);
+      if (state === 'overdue') expected.overdue += 1;
+      if (state === 'today') expected.today += 1;
+      if (state === 'upcoming') expected.upcoming += 1;
+    }
+    expect(dashboard.followUp).toEqual(expected);
+
+    const expectedList = [...pending.entries()]
+      .filter(([, next]) => {
+        const state = dueState(next, today);
+        return state === 'overdue' || state === 'today';
+      })
+      .map(([customerId, nextFollowUpAt]) => ({ customerId, nextFollowUpAt }))
+      .sort((left, right) =>
+        left.nextFollowUpAt.localeCompare(right.nextFollowUpAt),
+      );
+    expect(
+      dashboard.customersNeedingFollowUp.map((row) => ({
+        customerId: row.customerId,
+        nextFollowUpAt: row.nextFollowUpAt,
+      })),
+    ).toEqual(expectedList);
   });
 });

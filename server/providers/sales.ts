@@ -1119,27 +1119,23 @@ export class SalesService {
 
     const followUpsQuery = this.query()
       .selectFrom('salesFollowUps')
-      .select(['customerId', 'nextFollowUpAt', 'occurredAt']);
+      .select(['customerId', 'nextFollowUpAt']);
     const followUps = scope.all
       ? await followUpsQuery.execute()
       : await followUpsQuery.where('customerId', 'in', customerIds).execute();
 
     const today = todayDate();
-    const latestByCustomer = new Map<string, Row>();
+    // A customer's next follow-up is the earliest pending date across all of
+    // their follow-ups, exactly as the customer list reports it. Picking the
+    // date attached to the most recent visit instead made the workbench count a
+    // different "today" than the follow-up and customer lists.
+    const nextByCustomer = new Map<string, string>();
     for (const row of followUps) {
       const customerId = String(row.customerId);
       const next = nullableString(row.nextFollowUpAt);
       if (!next) continue;
-      const occurred = toIso(row.occurredAt) ?? '';
-      const current = latestByCustomer.get(customerId);
-      if (!current || occurred > rowString(current.__occurred)) {
-        latestByCustomer.set(customerId, {
-          ...row,
-          __occurred: occurred,
-          __next: next,
-          __customerId: customerId,
-        });
-      }
+      const current = nextByCustomer.get(customerId);
+      if (!current || next < current) nextByCustomer.set(customerId, next);
     }
 
     const customerNames =
@@ -1159,8 +1155,7 @@ export class SalesService {
     let dueToday = 0;
     let upcoming = 0;
     const needsFollowUp: Row[] = [];
-    for (const [customerId, row] of latestByCustomer) {
-      const next = String(row.__next);
+    for (const [customerId, next] of nextByCustomer) {
       const state = dueState(next, today);
       if (state === 'overdue') {
         overdue += 1;

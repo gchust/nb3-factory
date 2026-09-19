@@ -422,6 +422,21 @@ export function errorMessage(cause: unknown): string {
   return '';
 }
 
+/**
+ * The stable error code the sales API returns, so a caller can show localized
+ * text instead of the server's fallback message.
+ */
+export function errorCode(cause: unknown): string | undefined {
+  if (!cause || typeof cause !== 'object') return undefined;
+  const record = cause as { code?: unknown; payload?: unknown };
+  if (typeof record.code === 'string' && record.code) return record.code;
+  const payload = record.payload as { code?: unknown } | undefined;
+  if (payload && typeof payload.code === 'string' && payload.code) {
+    return payload.code;
+  }
+  return undefined;
+}
+
 export function formatAmount(value: number): string {
   return new Intl.NumberFormat('zh-CN', {
     style: 'currency',

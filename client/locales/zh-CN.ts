@@ -204,9 +204,9 @@ const zhCN: AppResource = {
       customerCount: '客户数量',
       openAmount: '进行中商机金额',
       openCount: '进行中商机 {{count}} 个',
-      overdue: '逾期跟进',
-      dueToday: '今日需跟进',
-      upcoming: '{{count}} 条未到期',
+      overdue: '逾期未跟进客户',
+      dueToday: '今日需跟进客户',
+      upcoming: '另有 {{count}} 个客户未到期',
       stageTitle: '各阶段商机',
       stageCount: '数量',
       stageAmount: '金额',
@@ -232,6 +232,8 @@ const zhCN: AppResource = {
     customer: {
       profile: '客户资料',
       edit: '编辑客户',
+      transferNotice:
+        '转交后，该客户的联系人、商机、跟进记录和资料将一并移交新负责人，原负责人将不再能查看。',
     },
     contacts: {
       title: '联系人',
@@ -278,11 +280,22 @@ const zhCN: AppResource = {
     files: {
       upload: '上传文件',
       uploading: '上传中…',
+      cancelUpload: '取消上传',
+      cancelling: '取消中…',
+      cancelled: '已取消上传，未保存任何文件。',
+      cancelCleanupFailed:
+        '已取消上传，但有 {{count}} 个文件已保存且未能移除，请在上方列表中核对。',
       uploadFailed: '上传失败，未保存任何文件。',
+      uploadFailedRecheck:
+        '上传失败。列表已刷新，下面显示的即为已保存的文件，请勿重复上传。',
       deleteFailed: '删除文件失败。',
       tooMany: '一次最多选择 {{count}} 个文件。',
       tooLarge: '{{name}} 超过 {{size}} MB。',
+      tooLargeServer: '有文件超过 {{size}} MB，未上传任何文件。',
       unsupported: '{{name}} 的文件类型不被接受。',
+      unsupportedServer: '有文件的类型不被接受，未上传任何文件。',
+      bodyTooLarge:
+        '上传内容过大：最多 {{count}} 个文件，每个不超过 {{size}} MB。',
       empty: '暂无文件。',
       rules: '最多 {{count}} 个文件，每个不超过 {{size}} MB',
       preview: '查看',

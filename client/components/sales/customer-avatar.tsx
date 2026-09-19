@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import {
   MAX_FILE_BYTES,
   contentUrl,
+  errorCode,
   errorMessage,
   formatSize,
   isImage,
@@ -52,11 +53,20 @@ export function CustomerAvatar({
       return;
     }
     setBusy(true);
+    // A logo upload replaces the current image on the server, which cannot be
+    // undone by a later cancel, so it is not cancellable. On failure the view
+    // is re-read so the image shown is what the server actually saved.
     try {
       await api.uploadAvatar(customer.id, file);
       onChanged();
     } catch (cause: unknown) {
-      setError(errorMessage(cause) || t('sales.avatar.uploadFailed'));
+      const code = errorCode(cause);
+      if (code === 'FILE_TOO_LARGE' || code === 'BODY_TOO_LARGE') {
+        setError(t('sales.files.tooLargeServer', { size: 5 }));
+      } else {
+        setError(errorMessage(cause) || t('sales.avatar.uploadFailed'));
+      }
+      onChanged();
     } finally {
       setBusy(false);
     }

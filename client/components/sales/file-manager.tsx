@@ -7,6 +7,7 @@ import {
   Loader2,
   Trash2,
   Upload,
+  X,
 } from 'lucide-react';
 import { useEffect, useRef, useState, type ReactElement } from 'react';
 
@@ -22,6 +23,7 @@ import {
   MAX_FILE_BYTES,
   canPreview,
   contentUrl,
+  errorCode,
   errorMessage,
   fileProblem,
   formatDateTime,
@@ -60,7 +62,9 @@ export function FileManager({
   const { t } = useTranslation();
   const api = useSalesApi();
   const inputRef = useRef<HTMLInputElement>(null);
+  const cancelRequestedRef = useRef(false);
   const [busy, setBusy] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
   const [error, setError] = useState<string>();
   const [pendingDelete, setPendingDelete] = useState<string>();
   const [preview, setPreview] = useState<SalesFile>();
@@ -100,9 +104,11 @@ export function FileManager({
       }
     }
 
+    cancelRequestedRef.current = false;
+    setCancelling(false);
     setBusy(true);
     try {
-      await api.uploadFiles(
+      const response = await api.uploadFiles(
         {
           category,
           ...(customerId ? { customerId } : {}),
@@ -111,12 +117,47 @@ export function FileManager({
         },
         picked,
       );
+      // Cancelling must not claim the file is gone when the server kept it. An
+      // aborted request can still commit, so instead of aborting, the upload is
+      // allowed to finish and everything it created is deleted. Cancel then
+      // leaves nothing behind and the message matches the stored state.
+      if (cancelRequestedRef.current) {
+        let leftover = 0;
+        for (const file of response.data) {
+          try {
+            await api.deleteFile(file.id);
+          } catch {
+            leftover += 1;
+          }
+        }
+        state.reload();
+        setError(
+          leftover === 0
+            ? t('sales.files.cancelled')
+            : t('sales.files.cancelCleanupFailed', { count: leftover }),
+        );
+        return;
+      }
       state.reload();
     } catch (cause: unknown) {
-      setError(errorMessage(cause) || t('sales.files.uploadFailed'));
+      setError(uploadFailureText(cause, t, MAX_FILE_BYTES / (1024 * 1024)));
+      // A failed request may still have committed on the server, so re-read the
+      // list. Showing exactly what was saved is what keeps a user from
+      // re-uploading files that are already there.
+      state.reload();
     } finally {
+      cancelRequestedRef.current = false;
+      setCancelling(false);
       setBusy(false);
     }
+  };
+
+  const cancelUpload = (): void => {
+    if (cancelRequestedRef.current) return;
+    // Set first, then let the in-flight request settle: the response is what
+    // decides whether anything has to be removed.
+    cancelRequestedRef.current = true;
+    setCancelling(true);
   };
 
   const onDelete = async (file: SalesFile): Promise<void> => {
@@ -143,6 +184,20 @@ export function FileManager({
           {busy ? <Loader2 className='animate-spin' /> : <Upload />}
           {busy ? t('sales.files.uploading') : t('sales.files.upload')}
         </Button>
+        {busy ? (
+          <Button
+            type='button'
+            variant='ghost'
+            size='sm'
+            disabled={cancelling}
+            onClick={cancelUpload}
+          >
+            <X />
+            {cancelling
+              ? t('sales.files.cancelling')
+              : t('sales.files.cancelUpload')}
+          </Button>
+        ) : null}
         <span className='text-xs text-muted-foreground'>
           {t('sales.files.rules', {
             count: MAX_FILES,
@@ -334,6 +389,37 @@ function FilePreview({
       </DialogContent>
     </Dialog>
   );
+}
+
+/**
+ * Turns an upload failure into a message that says what is true about the
+ * server state: a rejection that stored nothing, or a failure whose effect the
+ * refreshed list now shows.
+ */
+function uploadFailureText(
+  cause: unknown,
+  t: ReturnType<typeof useTranslation>['t'],
+  sizeMb: number,
+): string {
+  switch (errorCode(cause)) {
+    case 'TOO_MANY_FILES':
+      return t('sales.files.tooMany', { count: MAX_FILES });
+    case 'FILE_TOO_LARGE':
+      return t('sales.files.tooLargeServer', { size: sizeMb });
+    case 'UNSUPPORTED_FILE_TYPE':
+      return t('sales.files.unsupportedServer');
+    case 'BODY_TOO_LARGE':
+      return t('sales.files.bodyTooLarge', { count: MAX_FILES, size: sizeMb });
+    default: {
+      // A response from the server explains itself; a network failure does not,
+      // so point at the refreshed list rather than inventing a reason.
+      if (typeof (cause as { status?: unknown })?.status === 'number') {
+        const message = errorMessage(cause);
+        if (message) return message;
+      }
+      return t('sales.files.uploadFailedRecheck');
+    }
+  }
 }
 
 export default FileManager;

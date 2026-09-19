@@ -220,7 +220,16 @@ export function OpportunityFormDialog({
   };
 
   return (
-    <Dialog open onOpenChange={(value) => (value ? undefined : onClose())}>
+    <Dialog
+      open
+      // The expected close date uses a native date input. Its calendar is
+      // browser chrome outside the dialog's DOM, so selecting a day dispatches
+      // an outside press that would otherwise dismiss the form and discard the
+      // edit. Keep outside presses from closing this dialog; Cancel, the close
+      // button and Escape still dismiss it.
+      disablePointerDismissal
+      onOpenChange={(value) => (value ? undefined : onClose())}
+    >
       <DialogContent className='sm:max-w-lg'>
         <DialogHeader>
           <DialogTitle>
@@ -416,7 +425,14 @@ export function FollowUpFormDialog({
   const chooseCustomer = !customerId && !followUp && customers !== undefined;
 
   return (
-    <Dialog open onOpenChange={(value) => (value ? undefined : onClose())}>
+    <Dialog
+      open
+      // The follow-up date inputs are native. Their calendars live outside the
+      // dialog's DOM, so picking a day registers as an outside press; without
+      // this the record-follow-up form would close and lose the entry.
+      disablePointerDismissal
+      onOpenChange={(value) => (value ? undefined : onClose())}
+    >
       <DialogContent className='sm:max-w-lg'>
         <DialogHeader>
           <DialogTitle>{t('sales.followups.create')}</DialogTitle>

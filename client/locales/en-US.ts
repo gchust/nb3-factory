@@ -213,9 +213,9 @@ const enUS = {
       customerCount: 'Customers',
       openAmount: 'Open opportunity amount',
       openCount: '{{count}} opportunities in progress',
-      overdue: 'Overdue follow-ups',
-      dueToday: 'Follow-ups due today',
-      upcoming: '{{count}} upcoming',
+      overdue: 'Customers overdue',
+      dueToday: 'Customers due today',
+      upcoming: '{{count}} more upcoming',
       stageTitle: 'Opportunities by stage',
       stageCount: 'Count',
       stageAmount: 'Amount',
@@ -241,6 +241,8 @@ const enUS = {
     customer: {
       profile: 'Customer profile',
       edit: 'Edit customer',
+      transferNotice:
+        'Saving a new owner moves this customer’s contacts, opportunities, follow-ups and files to that owner, and the previous owner loses access.',
     },
     contacts: {
       title: 'Contacts',
@@ -288,11 +290,24 @@ const enUS = {
     files: {
       upload: 'Upload files',
       uploading: 'Uploading…',
+      cancelUpload: 'Cancel upload',
+      cancelling: 'Cancelling…',
+      cancelled: 'Upload cancelled. Nothing was saved.',
+      cancelCleanupFailed:
+        'Upload cancelled, but {{count}} file(s) were saved and could not be removed. Check the list above.',
       uploadFailed: 'The upload failed. Nothing was saved.',
+      uploadFailedRecheck:
+        'The upload failed. The list below has been refreshed and shows what was saved — do not upload the same files again.',
       deleteFailed: 'Could not delete the file.',
       tooMany: 'At most {{count}} files can be selected at once.',
       tooLarge: '{{name}} is larger than {{size}} MB.',
+      tooLargeServer:
+        'A file is larger than {{size}} MB, so nothing was uploaded.',
       unsupported: '{{name}} has a file type that is not accepted.',
+      unsupportedServer:
+        'A file type is not accepted, so nothing was uploaded.',
+      bodyTooLarge:
+        'The upload is too large. Upload at most {{count}} files of {{size}} MB each.',
       empty: 'No file yet.',
       rules: 'Up to {{count}} files, {{size}} MB each',
       preview: 'Preview',
