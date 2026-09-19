@@ -202,12 +202,7 @@ jobs:
         env:
           PREVIEW_URL: ${{ steps.prepare.outputs.url }}
         run: |
-          preview_hostname="${PREVIEW_URL#https://}"
-          getent ahosts "${preview_hostname%%/*}"
-          curl --fail --show-error --verbose --location \
-            --connect-timeout 15 --max-time 30 \
-            --retry 6 --retry-delay 10 --retry-all-errors \
-            --output "$RUNNER_TEMP/preview-public.html" "$PREVIEW_URL"
+          node control/.github/scripts/preview-public-check.mjs
           test -s "$RUNNER_TEMP/preview-public.html"
 
       - name: Report the preview on the pull request

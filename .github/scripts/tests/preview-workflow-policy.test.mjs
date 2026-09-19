@@ -288,6 +288,9 @@ test('preview connection is checked and public HTTPS gates the success report', 
       /bash control\/\.github\/scripts\/preview-connect.sh/,
     );
   }
-  assert.match(deploy, /--retry-all-errors/);
+  assert.match(
+    deploy,
+    /node control\/\.github\/scripts\/preview-public-check.mjs/,
+  );
   assert.match(deploy, /--status "\$\{\{ steps.public.outcome == 'success'/);
 });
