@@ -245,6 +245,42 @@ const zhCN: AppResource = {
       noOnboarding: '暂无入职待办。',
       selectPosition: '请选择岗位',
     },
+    files: {
+      title: '候选人资料',
+      description:
+        '个人简历、作品集与录用材料分类保存。每份资料都遵循所属候选人的查看权限，必须通过授权链接访问。',
+      resume: '个人简历',
+      resumeHint:
+        'PDF 和图片可在线预览；上传新简历会保留旧版本，并记录面试当时参考的版本。',
+      portfolio: '作品集',
+      portfolioHint: '图片可逐张切换，文字作品可直接阅读，其他格式可下载。',
+      offer: '录用材料',
+      offerHint: '仅人事负责人与该候选人的招聘专员可见。',
+      offerRestricted: '录用材料仅人事负责人与负责该候选人的招聘专员可见。',
+      emptyResume: '尚未上传简历。',
+      emptyPortfolio: '尚未上传作品。',
+      emptyOffer: '尚未上传录用材料。',
+      resumeHistory: '历史简历版本',
+      version: '第{{version}}版',
+      add: '上传资料',
+      limits: '一次最多选择 {{total}} 个文件，每个不超过 {{size}} MB。',
+      uploadResume: '上传 / 替换简历',
+      uploadPortfolio: '上传作品',
+      uploadOffer: '上传录用材料',
+      choose: '选择文件',
+      remove: '移除',
+      retry: '重试',
+      preview: '预览',
+      download: '下载',
+      linking: '正在保存…',
+      processing: '正在上传文件…',
+      errors: {
+        empty: '所选文件为空文件，无法上传。',
+        tooLarge: '文件超过 5 MB 上限。',
+        tooMany: '一次最多选择 5 个文件。',
+        type: '不支持该文件类型。',
+      },
+    },
     interviews: {
       title: '面试日历',
       description:
@@ -290,6 +326,9 @@ const zhCN: AppResource = {
       hour: '小时',
       minute: '分钟',
       timeUnset: '未选择时间',
+      resumeVersion: '参考简历：第{{version}}版',
+      candidateFiles: '简历与作品',
+      candidateFilesHint: '本场面试的准备资料，不包含录用材料。',
     },
     onboarding: {
       title: '入职待办',
@@ -353,6 +392,17 @@ const zhCN: AppResource = {
       interviewCreated: '面试已安排。',
       interviewCompleted: '评价已记录。',
       onboardingUpdated: '入职待办已更新。',
+      resumeSaved: '简历已保存。',
+      portfolioAdded: '作品已添加。',
+      offerAdded: '录用材料已添加。',
+      fileRemoved: '资料已移除。',
+    },
+  },
+  // Reword a plugin-owned string without editing the plugin. The materialized
+  // upload control reports an empty file with this key.
+  overrides: {
+    '@nocobase/app-plugin-file': {
+      fileEmpty: '空文件无法上传。',
     },
   },
 };

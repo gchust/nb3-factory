@@ -26,6 +26,7 @@ import {
   type StaffOption,
 } from './api.js';
 import { DateTimeField } from './date-time-field.js';
+import { CandidateFilesSection } from './candidate-files.js';
 import { formatDateTime } from './format.js';
 import {
   ErrorBanner,
@@ -227,7 +228,7 @@ export function CandidateDetailDialog({
       onOpenChange={(open) => (open ? undefined : onClose())}
       open={Boolean(candidateId)}
     >
-      <DialogContent className='sm:max-w-2xl'>
+      <DialogContent className='sm:max-w-3xl'>
         <DialogHeader>
           <DialogTitle>
             {t('recruitment.candidates.detailTitle')}
@@ -376,6 +377,31 @@ export function CandidateDetailDialog({
               </section>
             ) : null}
 
+            <section className='space-y-3 rounded-lg border border-border p-3'>
+              <div>
+                <h3 className='text-sm font-medium'>
+                  {t('recruitment.files.title')}
+                </h3>
+                <p className='text-xs text-muted-foreground'>
+                  {t('recruitment.files.description')}
+                </p>
+              </div>
+              <CandidateFilesSection
+                candidateId={candidate.id}
+                files={detail?.files ?? []}
+                onChanged={reload}
+                onError={(key) => {
+                  setNotice(undefined);
+                  setError(key);
+                }}
+                onNotice={(key) => {
+                  setError(undefined);
+                  setNotice(t(key));
+                }}
+                role={role}
+              />
+            </section>
+
             <section className='space-y-2 rounded-lg border border-border p-3'>
               <div className='flex items-center justify-between'>
                 <h3 className='text-sm font-medium'>
@@ -473,6 +499,13 @@ export function CandidateDetailDialog({
                         <p className='mt-1 text-muted-foreground'>
                           {`${interview.interviewerName ?? interview.interviewerUsername} · ${t(`recruitment.interviews.methods.${interview.method}`, { defaultValue: interview.method })}`}
                         </p>
+                        {interview.resumeVersion !== null ? (
+                          <p className='mt-1 text-xs text-muted-foreground'>
+                            {t('recruitment.interviews.resumeVersion', {
+                              version: interview.resumeVersion,
+                            })}
+                          </p>
+                        ) : null}
                         {interview.status === 'completed' ? (
                           <p className='mt-1'>
                             {`${t('recruitment.interviews.score')}: ${interview.score ?? '—'} · ${t('recruitment.interviews.result')}: ${interview.result === 'pass' ? t('recruitment.interviews.results.pass') : t('recruitment.interviews.results.fail')}`}

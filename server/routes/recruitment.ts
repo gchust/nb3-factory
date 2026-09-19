@@ -8,16 +8,14 @@ import {
   type Auth,
   type AuthEnv,
 } from '@nocobase/app-plugin-authentication';
-import { authorizationToken } from '@nocobase/app-plugin-authorization';
-import { databaseManagerToken } from '@nocobase/db';
 import { Hono, type Context } from 'hono';
 
 import {
-  createRecruitmentService,
   RecruitmentError,
   type Actor,
   type RecruitmentService,
 } from '../providers/recruitment.js';
+import { createRecruitmentServiceForApp } from './recruitment-context.js';
 
 /**
  * Recruitment HTTP API.
@@ -106,6 +104,25 @@ export function createRecruitmentRoutes(
         await readJson(context),
       ),
     ),
+  );
+  routes.post('/candidates/:id/files', (context) =>
+    run(context, async (actor) =>
+      service.attachCandidateFiles(
+        actor,
+        context.req.param('id'),
+        await readJson(context),
+      ),
+    ),
+  );
+  routes.delete('/candidates/:id/files/:fileId', (context) =>
+    run(context, async (actor) => {
+      await service.removeCandidateFile(
+        actor,
+        context.req.param('id'),
+        context.req.param('fileId'),
+      );
+      return { id: context.req.param('fileId') };
+    }),
   );
 
   routes.get('/interviews', (context) =>
@@ -212,10 +229,8 @@ async function readJson(
 export const recruitmentApiRoutes: AppApiRouteContribution<Application> =
   defineApiRoutes((app) => {
     const router = new Hono();
-    const database = app.container.resolve(databaseManagerToken);
-    const authorization = app.container.resolve(authorizationToken);
     const auth = app.container.resolve(authenticationToken);
-    const service = createRecruitmentService({ database, authorization });
+    const service = createRecruitmentServiceForApp(app);
     router.route('/recruitment', createRecruitmentRoutes({ service, auth }));
     return router;
   });

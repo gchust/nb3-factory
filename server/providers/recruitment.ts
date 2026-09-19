@@ -35,6 +35,29 @@ export const RECRUITMENT_ROLE_PERMISSION_SETS = {
   interviewer: 'recruitment-interviewer',
 } as const;
 
+/**
+ * Candidate attachment categories. Offer materials are restricted to the HR
+ * manager and the owning recruiter; an interviewer only ever sees the resume
+ * and portfolio needed to prepare for an interview.
+ */
+export const CANDIDATE_FILE_CATEGORIES = [
+  'resume',
+  'portfolio',
+  'offer',
+] as const;
+
+export type CandidateFileCategory = (typeof CANDIDATE_FILE_CATEGORIES)[number];
+
+/** The File Repository collection and content path this application owns. */
+export const CANDIDATE_FILE_COLLECTION = 'recruitmentCandidateFiles';
+export const CANDIDATE_FILE_ACCESS_PATH = '/uploads/recruitment-files';
+
+/** One selection may attach at most five files. */
+export const MAX_CANDIDATE_FILES_PER_ATTACH = 5;
+
+/** Each attached file may be at most 5 MB; the upload control checks first. */
+export const MAX_CANDIDATE_FILE_SIZE = 5 * 1024 * 1024;
+
 export interface Actor {
   readonly userId: string;
   readonly username: string;
@@ -113,6 +136,29 @@ export interface InterviewDto {
   readonly score: number | null;
   readonly evaluation: string | null;
   readonly completedAt: string | null;
+  /** Resume version that was current when the interview was scheduled. */
+  readonly resumeFileId: string | null;
+  readonly resumeVersion: number | null;
+}
+
+export interface CandidateFileDto {
+  readonly id: string;
+  readonly candidateId: string | null;
+  readonly category: CandidateFileCategory | null;
+  readonly filename: string;
+  readonly ext: string;
+  readonly mimeType: string;
+  readonly size: number;
+  readonly version: number | null;
+  readonly superseded: boolean;
+  readonly uploadedByUsername: string | null;
+  readonly uploadedByName: string | null;
+  readonly disk: string;
+  readonly key: string;
+  readonly createdAt: string;
+  readonly updatedAt: string;
+  /** Same-origin path the browser fetches; access is checked by the server. */
+  readonly contentUrl: string;
 }
 
 export interface OnboardingTodoDto {
@@ -199,6 +245,13 @@ const TRANSITIONS: Readonly<Record<string, readonly string[]>> = {
 export interface RecruitmentServiceOptions {
   readonly database: DatabaseManager;
   readonly authorization: Pick<AppAuthorization, 'permissionSets'>;
+  /** Public mount path prepended to file content URLs; empty in tests. */
+  readonly publicBasePath?: string;
+  /** Best-effort physical object cleanup when an attachment row is removed. */
+  readonly removeStoredObject?: (file: {
+    readonly disk: string;
+    readonly key: string;
+  }) => Promise<void>;
 }
 
 type FilterInput =
@@ -207,10 +260,17 @@ type FilterInput =
 export class RecruitmentService {
   private readonly database: DatabaseManager;
   private readonly authorization: Pick<AppAuthorization, 'permissionSets'>;
+  private readonly publicBasePath: string;
+  private readonly removeStoredObject?: (file: {
+    readonly disk: string;
+    readonly key: string;
+  }) => Promise<void>;
 
   constructor(options: RecruitmentServiceOptions) {
     this.database = options.database;
     this.authorization = options.authorization;
+    this.publicBasePath = (options.publicBasePath ?? '').replace(/\/$/, '');
+    this.removeStoredObject = options.removeStoredObject;
   }
 
   private get query() {
@@ -389,6 +449,7 @@ export class RecruitmentService {
     candidate: CandidateDto;
     interviews: InterviewDto[];
     onboarding: OnboardingTodoDto[];
+    files: CandidateFileDto[];
   }> {
     this.assertKnown(actor);
     const row = await this.query
@@ -422,7 +483,16 @@ export class RecruitmentService {
         : mapCandidate(row, positions);
     const onboarding =
       actor.role === 'interviewer' ? [] : await this.todosForCandidate(id);
-    return { candidate, interviews, onboarding };
+    const allFiles = await this.filesForCandidate(id);
+    // An interviewer never receives offer materials, even when assigned.
+    const files =
+      actor.role === 'interviewer'
+        ? allFiles.filter(
+            (file) =>
+              file.category === 'resume' || file.category === 'portfolio',
+          )
+        : allFiles;
+    return { candidate, interviews, onboarding, files };
   }
 
   async createCandidate(
@@ -720,6 +790,8 @@ export class RecruitmentService {
       // Scheduling the same interview twice returns the original record.
       return mapInterview(duplicate, candidates, positions);
     }
+    // Remember which resume version the interviewer was given.
+    const activeResume = await this.activeResumeRow(candidateId);
     const now = new Date();
     const id = crypto.randomUUID();
     await this.query
@@ -737,6 +809,8 @@ export class RecruitmentService {
         score: null,
         evaluation: null,
         completedAt: null,
+        resumeFileId: activeResume ? str(activeResume.id) : null,
+        resumeVersion: activeResume ? Number(activeResume.version ?? 1) : null,
         createdAt: now,
         updatedAt: now,
       })
@@ -919,6 +993,233 @@ export class RecruitmentService {
       .where('id', '=', id)
       .executeTakeFirstOrThrow();
     return mapTodo(row, await this.candidateRowMap());
+  }
+
+  // ------------------------------------------------------------------- files
+
+  async listCandidateFiles(
+    actor: Actor,
+    candidateId: string,
+  ): Promise<CandidateFileDto[]> {
+    this.assertKnown(actor);
+    const candidate = await this.requireCandidate(candidateId);
+    if (actor.role === 'interviewer') {
+      const assigned = await this.query
+        .selectFrom('recruitmentInterviews')
+        .select('id')
+        .where('candidateId', '=', candidateId)
+        .where('interviewerUsername', '=', actor.username)
+        .executeTakeFirst();
+      if (!assigned) {
+        throw new RecruitmentError('FORBIDDEN', 'Not allowed.', 403);
+      }
+      const files = await this.filesForCandidate(candidateId);
+      return files.filter(
+        (file) => file.category === 'resume' || file.category === 'portfolio',
+      );
+    }
+    this.assertCandidateAccess(actor, candidate);
+    return this.filesForCandidate(candidateId);
+  }
+
+  /**
+   * Link already-uploaded file records to a candidate under one category.
+   *
+   * The upload endpoint only writes file metadata, so a file is invisible until
+   * this call stamps the association. Replacing a resume supersedes the previous
+   * version instead of deleting it, and the new version number continues the
+   * sequence.
+   */
+  async attachCandidateFiles(
+    actor: Actor,
+    candidateId: string,
+    input: Record<string, unknown>,
+  ): Promise<CandidateFileDto[]> {
+    this.assertRole(actor, ['hr', 'recruiter']);
+    const candidate = await this.requireCandidate(candidateId);
+    this.assertCandidateAccess(actor, candidate);
+    const category = requiredString(input.category, 'category', 16);
+    if (!(CANDIDATE_FILE_CATEGORIES as readonly string[]).includes(category)) {
+      throw new RecruitmentError('VALIDATION', 'Unknown file category.', 400);
+    }
+    const fileIds = Array.isArray(input.fileIds) ? input.fileIds : [];
+    const unique = [...new Set(fileIds.map((id) => String(id)))].filter(
+      (id) => id.length > 0,
+    );
+    if (unique.length === 0) {
+      throw new RecruitmentError(
+        'VALIDATION',
+        'At least one file is required.',
+        400,
+      );
+    }
+    if (unique.length > MAX_CANDIDATE_FILES_PER_ATTACH) {
+      throw new RecruitmentError(
+        'VALIDATION',
+        `At most ${MAX_CANDIDATE_FILES_PER_ATTACH} files may be attached at once.`,
+        400,
+      );
+    }
+
+    const rows: Row[] = [];
+    for (const fileId of unique) {
+      const file = await this.query
+        .selectFrom('recruitmentCandidateFiles')
+        .selectAll()
+        .where('id', '=', fileId)
+        .executeTakeFirst();
+      if (!file) {
+        throw new RecruitmentError('VALIDATION', 'File does not exist.', 400);
+      }
+      const size = Number(file.size ?? 0);
+      if (size <= 0) {
+        throw new RecruitmentError('VALIDATION', 'File is empty.', 400);
+      }
+      if (size > MAX_CANDIDATE_FILE_SIZE) {
+        throw new RecruitmentError(
+          'VALIDATION',
+          'File exceeds the maximum size.',
+          400,
+        );
+      }
+      if (str(file.candidateId) || str(file.category)) {
+        throw new RecruitmentError(
+          'CONFLICT',
+          'File is already attached to a record.',
+          409,
+        );
+      }
+      rows.push(file);
+    }
+
+    const now = new Date();
+    const resumeVersions = await this.query
+      .selectFrom('recruitmentCandidateFiles')
+      .select('version')
+      .where('candidateId', '=', candidateId)
+      .where('category', '=', 'resume')
+      .execute();
+    let nextVersion =
+      resumeVersions.reduce(
+        (max, row) => Math.max(max, Number(row.version ?? 0)),
+        0,
+      ) + 1;
+
+    const replace = input.replace === false ? false : true;
+    if (category === 'resume' && replace) {
+      await this.query
+        .updateTable('recruitmentCandidateFiles')
+        .set({ superseded: 1, supersededAt: now, updatedAt: now })
+        .where('candidateId', '=', candidateId)
+        .where('category', '=', 'resume')
+        .where('superseded', '=', 0)
+        .execute();
+    }
+
+    const attached: string[] = [];
+    for (const file of rows) {
+      const id = str(file.id);
+      const patch: Record<string, unknown> = {
+        candidateId,
+        category,
+        uploadedByUsername: actor.username,
+        uploadedByName: actor.name || null,
+        updatedAt: now,
+      };
+      if (category === 'resume') {
+        patch.version = nextVersion;
+        patch.superseded = 0;
+        patch.supersededAt = null;
+        nextVersion += 1;
+      } else {
+        patch.version = null;
+        patch.superseded = 0;
+        patch.supersededAt = null;
+      }
+      await this.query
+        .updateTable('recruitmentCandidateFiles')
+        .set(patch)
+        .where('id', '=', id)
+        .execute();
+      attached.push(id);
+    }
+
+    const files = await this.filesForCandidate(candidateId);
+    return files.filter((file) => attached.includes(file.id));
+  }
+
+  async removeCandidateFile(
+    actor: Actor,
+    candidateId: string,
+    fileId: string,
+  ): Promise<void> {
+    this.assertRole(actor, ['hr', 'recruiter']);
+    const candidate = await this.requireCandidate(candidateId);
+    this.assertCandidateAccess(actor, candidate);
+    const file = await this.query
+      .selectFrom('recruitmentCandidateFiles')
+      .selectAll()
+      .where('id', '=', fileId)
+      .executeTakeFirst();
+    if (!file || str(file.candidateId) !== candidateId) {
+      throw new RecruitmentError('NOT_FOUND', 'File not found.', 404);
+    }
+    await this.query
+      .deleteFrom('recruitmentCandidateFiles')
+      .where('id', '=', fileId)
+      .execute();
+    if (this.removeStoredObject) {
+      try {
+        await this.removeStoredObject({
+          disk: str(file.disk),
+          key: str(file.key),
+        });
+      } catch {
+        // The metadata row is gone, so the file is no longer reachable; a
+        // leftover storage object must not turn removal into a failure.
+      }
+    }
+  }
+
+  /**
+   * Authorize a content request by the record the file is attached to. A file
+   * that is not linked to a candidate is unreachable. Interviewers are denied
+   * offer materials even when assigned to the candidate.
+   */
+  async assertFileContentAccess(actor: Actor, fileId: string): Promise<void> {
+    this.assertKnown(actor);
+    const file = await this.query
+      .selectFrom('recruitmentCandidateFiles')
+      .selectAll()
+      .where('id', '=', fileId)
+      .executeTakeFirst();
+    if (!file) {
+      throw new RecruitmentError('NOT_FOUND', 'File not found.', 404);
+    }
+    const candidateId = str(file.candidateId);
+    const category = str(file.category);
+    if (!candidateId || !category) {
+      throw new RecruitmentError('NOT_FOUND', 'File not found.', 404);
+    }
+    const candidate = await this.requireCandidate(candidateId);
+    if (actor.role === 'hr') return;
+    if (actor.role === 'recruiter') {
+      if (str(candidate.recruiterUsername) === actor.username) return;
+      throw new RecruitmentError('FORBIDDEN', 'Not allowed.', 403);
+    }
+    if (actor.role === 'interviewer') {
+      if (category === 'offer') {
+        throw new RecruitmentError('FORBIDDEN', 'Not allowed.', 403);
+      }
+      const assigned = await this.query
+        .selectFrom('recruitmentInterviews')
+        .select('id')
+        .where('candidateId', '=', candidateId)
+        .where('interviewerUsername', '=', actor.username)
+        .executeTakeFirst();
+      if (assigned) return;
+    }
+    throw new RecruitmentError('FORBIDDEN', 'Not allowed.', 403);
   }
 
   // -------------------------------------------------------------------- staff
@@ -1197,6 +1498,45 @@ export class RecruitmentService {
       throw new RecruitmentError('NOT_FOUND', 'Interview not found.', 404);
     }
     return interview;
+  }
+
+  private async requireCandidate(id: string): Promise<Row> {
+    const candidate = await this.query
+      .selectFrom('recruitmentCandidates')
+      .selectAll()
+      .where('id', '=', id)
+      .executeTakeFirst();
+    if (!candidate) {
+      throw new RecruitmentError('NOT_FOUND', 'Candidate not found.', 404);
+    }
+    return candidate;
+  }
+
+  private async filesForCandidate(
+    candidateId: string,
+  ): Promise<CandidateFileDto[]> {
+    const rows = await this.query
+      .selectFrom('recruitmentCandidateFiles')
+      .selectAll()
+      .where('candidateId', '=', candidateId)
+      .orderBy('category', 'asc')
+      .orderBy('version', 'desc')
+      .orderBy('createdAt', 'desc')
+      .orderBy('id', 'desc')
+      .execute();
+    return rows.map((row) => mapCandidateFile(row, this.publicBasePath));
+  }
+
+  private async activeResumeRow(candidateId: string): Promise<Row | null> {
+    const row = await this.query
+      .selectFrom('recruitmentCandidateFiles')
+      .selectAll()
+      .where('candidateId', '=', candidateId)
+      .where('category', '=', 'resume')
+      .where('superseded', '=', 0)
+      .orderBy('version', 'desc')
+      .executeTakeFirst();
+    return row ?? null;
   }
 
   private async interviewsForCandidate(
@@ -1496,7 +1836,47 @@ function mapInterview(
         ? null
         : str(row.evaluation),
     completedAt: toIso(row.completedAt),
+    resumeFileId: toNullableString(row.resumeFileId),
+    resumeVersion:
+      row.resumeVersion === null || row.resumeVersion === undefined
+        ? null
+        : Number(row.resumeVersion),
   };
+}
+
+function mapCandidateFile(row: Row, publicBasePath: string): CandidateFileDto {
+  const id = str(row.id);
+  const ext = str(row.ext);
+  const encoded = encodeURIComponent(id);
+  return {
+    id,
+    candidateId: toNullableString(row.candidateId),
+    category: toNullableString(row.category) as CandidateFileCategory | null,
+    filename: str(row.filename),
+    ext,
+    mimeType: str(row.mimeType),
+    size: Number(row.size ?? 0),
+    version:
+      row.version === null || row.version === undefined
+        ? null
+        : Number(row.version),
+    superseded: Number(row.superseded ?? 0) === 1,
+    uploadedByUsername: toNullableString(row.uploadedByUsername),
+    uploadedByName: toNullableString(row.uploadedByName),
+    disk: str(row.disk),
+    key: str(row.key),
+    createdAt: str(toIso(row.createdAt)),
+    updatedAt: str(toIso(row.updatedAt)),
+    contentUrl: `${publicBasePath}${CANDIDATE_FILE_ACCESS_PATH}/${encoded}${
+      ext ? `.${encodeURIComponent(ext)}` : ''
+    }`,
+  };
+}
+
+function toNullableString(value: unknown): string | null {
+  if (value === null || value === undefined) return null;
+  const text = str(value);
+  return text.length ? text : null;
 }
 
 function mapTodo(row: Row, candidates: Map<string, Row>): OnboardingTodoDto {

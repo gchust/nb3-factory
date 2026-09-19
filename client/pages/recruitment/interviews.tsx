@@ -20,12 +20,14 @@ import {
   completeInterview,
   createInterview,
   errorMessageKey,
+  fetchCandidate,
   fetchCandidates,
   fetchInterviews,
   fetchStaff,
   updateInterview,
   type Interview,
 } from './api.js';
+import { CandidateAttachmentList } from './candidate-files.js';
 import { DateTimeField } from './date-time-field.js';
 import {
   addMonths,
@@ -90,6 +92,13 @@ export default function RecruitmentInterviewsPage(): ReactElement {
   const [scheduleMethod, setScheduleMethod] = useState('onsite');
 
   const [active, setActive] = useState<Interview>();
+  const candidateDetail = useAsyncData(
+    () =>
+      active
+        ? fetchCandidate(api, active.candidateId)
+        : Promise.resolve(undefined),
+    active ? `interview-candidate:${active.candidateId}` : 'none',
+  );
   const [rescheduleAt, setRescheduleAt] = useState('');
   const [rescheduleMethod, setRescheduleMethod] = useState('onsite');
   const [evalScore, setEvalScore] = useState('80');
@@ -513,6 +522,38 @@ export default function RecruitmentInterviewsPage(): ReactElement {
                   {active.evaluation ?? '—'}
                 </Info>
               </dl>
+
+              <section className='space-y-3 rounded-lg border border-border p-3'>
+                <div>
+                  <h3 className='text-sm font-medium'>
+                    {t('recruitment.interviews.candidateFiles')}
+                  </h3>
+                  <p className='text-xs text-muted-foreground'>
+                    {t('recruitment.interviews.candidateFilesHint')}
+                  </p>
+                </div>
+                {candidateDetail.loading ? (
+                  <p className='text-sm text-muted-foreground' role='status'>
+                    {t('recruitment.common.loading')}
+                  </p>
+                ) : candidateDetail.error ? (
+                  <p className='text-sm text-destructive' role='alert'>
+                    {t(errorMessageKey(candidateDetail.error))}
+                  </p>
+                ) : (
+                  <CandidateAttachmentList
+                    files={candidateDetail.data?.files ?? []}
+                    onError={(key) => setError(key)}
+                    resumeNote={
+                      active.resumeVersion !== null
+                        ? t('recruitment.interviews.resumeVersion', {
+                            version: active.resumeVersion,
+                          })
+                        : undefined
+                    }
+                  />
+                )}
+              </section>
 
               {canEvaluateActive ? (
                 <section className='space-y-2 rounded-lg border border-border p-3'>

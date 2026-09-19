@@ -258,6 +258,45 @@ const enUS = {
       noOnboarding: 'No onboarding tasks yet.',
       selectPosition: 'Select a position',
     },
+    files: {
+      title: 'Candidate files',
+      description:
+        'Resume, portfolio and offer materials are kept separate. Every file obeys the candidate permissions and is served through an authorized link.',
+      resume: 'Resume',
+      resumeHint:
+        'PDF and images preview online. Uploading a new resume keeps the previous versions.',
+      portfolio: 'Portfolio',
+      portfolioHint:
+        'Images switch one by one, text works can be read directly, and other formats can be downloaded.',
+      offer: 'Offer materials',
+      offerHint:
+        'Visible only to the HR manager and the recruiter responsible for the candidate.',
+      offerRestricted:
+        'Offer materials are only available to the HR manager and the responsible recruiter.',
+      emptyResume: 'No resume uploaded yet.',
+      emptyPortfolio: 'No portfolio work uploaded yet.',
+      emptyOffer: 'No offer material uploaded yet.',
+      resumeHistory: 'Previous resume versions',
+      version: 'v{{version}}',
+      add: 'Add files',
+      limits: 'Up to {{total}} files at a time, each at most {{size}} MB.',
+      uploadResume: 'Upload / replace resume',
+      uploadPortfolio: 'Upload portfolio work',
+      uploadOffer: 'Upload offer material',
+      choose: 'Choose files',
+      remove: 'Remove',
+      retry: 'Retry',
+      preview: 'Preview',
+      download: 'Download',
+      linking: 'Saving…',
+      processing: 'Uploading files…',
+      errors: {
+        empty: 'The selected file is empty.',
+        tooLarge: 'A file exceeds the 5 MB limit.',
+        tooMany: 'You can select at most 5 files at a time.',
+        type: 'This file type is not allowed.',
+      },
+    },
     interviews: {
       title: 'Interviews',
       description:
@@ -303,6 +342,10 @@ const enUS = {
       hour: 'Hour',
       minute: 'Minute',
       timeUnset: 'Not set',
+      resumeVersion: 'Resume referenced: v{{version}}',
+      candidateFiles: 'Resume and portfolio',
+      candidateFilesHint:
+        'Preparation material for this interview. Offer materials are not shown here.',
     },
     onboarding: {
       title: 'Onboarding',
@@ -368,6 +411,10 @@ const enUS = {
       interviewCreated: 'Interview scheduled.',
       interviewCompleted: 'Evaluation recorded.',
       onboardingUpdated: 'Onboarding task updated.',
+      resumeSaved: 'Resume saved.',
+      portfolioAdded: 'Portfolio work added.',
+      offerAdded: 'Offer material added.',
+      fileRemoved: 'File removed.',
     },
   },
 };

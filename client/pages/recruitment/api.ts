@@ -78,6 +78,29 @@ export interface Interview {
   readonly score: number | null;
   readonly evaluation: string | null;
   readonly completedAt: string | null;
+  readonly resumeFileId: string | null;
+  readonly resumeVersion: number | null;
+}
+
+export type CandidateFileCategory = 'resume' | 'portfolio' | 'offer';
+
+export interface CandidateFile {
+  readonly id: string;
+  readonly candidateId: string | null;
+  readonly category: CandidateFileCategory | null;
+  readonly filename: string;
+  readonly ext: string;
+  readonly mimeType: string;
+  readonly size: number;
+  readonly version: number | null;
+  readonly superseded: boolean;
+  readonly uploadedByUsername: string | null;
+  readonly uploadedByName: string | null;
+  readonly disk: string;
+  readonly key: string;
+  readonly createdAt: string;
+  readonly updatedAt: string;
+  readonly contentUrl: string;
 }
 
 export interface OnboardingTodo {
@@ -101,6 +124,7 @@ export interface CandidateDetail {
   readonly candidate: Candidate;
   readonly interviews: Interview[];
   readonly onboarding: OnboardingTodo[];
+  readonly files: CandidateFile[];
 }
 
 export interface Stats {
@@ -257,6 +281,35 @@ export async function changeStage(
       json: reason ? { stage, reason } : { stage },
     }),
   );
+}
+
+export async function attachCandidateFiles(
+  api: ApiClient,
+  candidateId: string,
+  input: {
+    readonly category: CandidateFileCategory;
+    readonly fileIds: readonly string[];
+    readonly replace?: boolean;
+  },
+): Promise<CandidateFile[]> {
+  return unwrap(
+    await api.request<{ data: CandidateFile[] }>({
+      path: `recruitment/candidates/${encodeURIComponent(candidateId)}/files`,
+      method: 'POST',
+      json: input,
+    }),
+  );
+}
+
+export async function removeCandidateFile(
+  api: ApiClient,
+  candidateId: string,
+  fileId: string,
+): Promise<void> {
+  await api.request({
+    path: `recruitment/candidates/${encodeURIComponent(candidateId)}/files/${encodeURIComponent(fileId)}`,
+    method: 'DELETE',
+  });
 }
 
 export async function fetchInterviews(
