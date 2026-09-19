@@ -135,19 +135,19 @@ test('the tree walk records paths, sizes and links', () => {
 });
 
 test('preview identity is derived consistently', () => {
-  assert.equal(previewHost(12, 'preview.nfvd.net'), 'pr-12.preview.nfvd.net');
+  assert.equal(previewHost(12, 'nfvd.net'), 'nb3-12.nfvd.net');
   assert.equal(
-    previewUrl(12, 'preview.nfvd.net'),
-    'https://pr-12.preview.nfvd.net/main/',
+    previewUrl(12, 'nfvd.net'),
+    'https://nb3-12.nfvd.net/main/',
   );
   assert.equal(containerName(12), 'preview-pr-12');
   assert.equal(routerName(12), 'pr12');
 });
 
 test('domain and pull request numbers are validated', () => {
-  assert.throws(() => requireDomain('preview.nfvd.net; rm -rf /'));
+  assert.throws(() => requireDomain('nfvd.net; rm -rf /'));
   assert.throws(() => requireDomain(''));
-  assert.equal(requireDomain('preview.nfvd.net'), 'preview.nfvd.net');
+  assert.equal(requireDomain('nfvd.net'), 'nfvd.net');
 });
 
 test('the cache probe names the dependency directory and answers unambiguously', () => {
@@ -268,12 +268,12 @@ test('the plan records the pull request head as the deployed commit', () => {
   const plan = planFrom({
     metadata,
     source,
-    domain: 'preview.nfvd.net',
+    domain: 'nfvd.net',
     pr: { number: 12, head: { sha: 'a'.repeat(40) } },
   });
   assert.equal(plan.headSha, 'a'.repeat(40));
   assert.equal(plan.prNumber, 12);
-  assert.equal(plan.url, 'https://pr-12.preview.nfvd.net/main/');
+  assert.equal(plan.url, 'https://nb3-12.nfvd.net/main/');
   assert.equal(plan.container, 'preview-pr-12');
 });
 
@@ -288,7 +288,7 @@ test('a build belonging to another task is refused', () => {
         runAttempt: 1,
         artifact: { name: 'factory-dist-8', id: 2, expired: false },
       },
-      domain: 'preview.nfvd.net',
+      domain: 'nfvd.net',
       pr: { number: 12, head: { sha: 'a'.repeat(40) } },
     }),
   );
@@ -324,12 +324,12 @@ test('the published comment carries the marker, the URL and the public warning',
   const body = renderPreviewComment({
     runId: 99,
     runAttempt: 3,
-    url: 'https://pr-12.preview.nfvd.net/main/',
+    url: 'https://nb3-12.nfvd.net/main/',
     headSha: 'a'.repeat(40),
     runUrl: 'https://github.com/gchust/nb3-factory/actions/runs/99',
   });
   assert.match(body, /^<!-- factory-preview:99:3 -->/);
-  assert.ok(body.includes('https://pr-12.preview.nfvd.net/main/'));
+  assert.ok(body.includes('https://nb3-12.nfvd.net/main/'));
   assert.ok(body.includes('a'.repeat(40)));
   assert.ok(body.includes('公开地址'));
 });
@@ -339,7 +339,7 @@ test('a failed deployment is reported without a working link', () => {
     {
       runId: 99,
       runAttempt: 1,
-      url: 'https://pr-12.preview.nfvd.net/main/',
+      url: 'https://nb3-12.nfvd.net/main/',
       headSha: 'a'.repeat(40),
       runUrl: 'https://github.com/gchust/nb3-factory/actions/runs/99',
     },

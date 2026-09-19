@@ -37,7 +37,7 @@ jobs:
       SOURCE_ATTEMPT: ${{ inputs.attempt || github.event.workflow_run.run_attempt }}
       PREVIEW_HOST: ${{ vars.FACTORY_PREVIEW_HOST || '100.120.77.102' }}
       PREVIEW_USER: ${{ vars.FACTORY_PREVIEW_USER || 'root' }}
-      PREVIEW_DOMAIN: ${{ vars.FACTORY_PREVIEW_DOMAIN || 'preview.nfvd.net' }}
+      PREVIEW_DOMAIN: ${{ vars.FACTORY_PREVIEW_DOMAIN || 'nfvd.net' }}
       # The preview host reaches GitHub through its own egress; this is that proxy.
       # Unused when the host can reach it directly.
       PREVIEW_FETCH_PROXY: ${{ vars.FACTORY_PREVIEW_FETCH_PROXY || 'http://192.168.2.250:7890' }}

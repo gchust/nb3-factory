@@ -5,7 +5,7 @@ import path from 'node:path';
 // Kept identical to the base path `verify.sh` uses. A preview serving a
 // different base path would not be the thing that was verified.
 export const PREVIEW_BASE_PATH = '/main';
-export const PREVIEW_THEME = 'preview.nfvd.net';
+export const PREVIEW_THEME = 'nfvd.net';
 
 export const PREVIEW_COMMENT_PREFIX = '<!-- factory-preview:';
 
@@ -111,7 +111,7 @@ export function routerName(pr) {
 }
 
 export function previewHost(pr, domain) {
-  return `pr-${pr}.${requireDomain(domain)}`;
+  return `nb3-${pr}.${requireDomain(domain)}`;
 }
 
 export function previewUrl(pr, domain) {

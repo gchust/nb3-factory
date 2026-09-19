@@ -4,8 +4,10 @@
 验收过的构建产物部署到预览机（`ct252-nocobase`），并给业务 PR 回一条带地址的评论：
 
 ```
-https://pr-<PR 号>.preview.nfvd.net/main/
+https://nb3-<PR 号>.nfvd.net/main/
 ```
+
+也可以直接打开 `https://nb3-<PR 号>.nfvd.net`，根路径会跳转到 `/main/`。
 
 和截图、录像的区别在于它是**真的在跑**：可以登录、可以新增和修改数据、可以把链接发给别人。
 代价是它需要一台常驻机器。
@@ -74,14 +76,38 @@ ssh 252 'PREVIEW_BUILD_PROXY=http://192.168.2.250:7890 bash /srv/nb3-preview/scr
 
 ### 2. Cloudflare
 
-给 tunnel `5ead5b3b-5134-4237-9268-f40b05fa744b` 加一条通配 public hostname：
+给 tunnel `5ead5b3b-5134-4237-9268-f40b05fa744b` 在现有精确路由之后加一条通配 public hostname：
 
 ```
-*.preview.nfvd.net  →  http://localhost:8081
+*.nfvd.net  →  http://127.0.0.1:8081
 ```
 
-控制台会自带一条 `*.preview` 的 CNAME。**只配这一次**，之后增删预览不需要再动 Cloudflare：
-Traefik 从容器 label 里自动发现路由。
+使用 Zero Trust → Networks → Tunnels & Mesh → nocobase-252 → Published application routes。
+这个入口支持通配符，并明确提示不会自动创建通配 DNS；新版 Networking → Tunnels
+的表单可能拒绝 `*`。已有 `npm`、`nb`、`qoder` 精确路由必须排在通配路由之前。
+
+**不要修改已有 `*.nfvd.net` DNS 记录。** 它仍服务其他站点。每个预览创建独立的
+`nb3-<PR>` CNAME，目标为 `5ead5b3b-5134-4237-9268-f40b05fa744b.cfargotunnel.com`，
+开启 Proxied。免费 Universal SSL 的 `*.nfvd.net` 可覆盖这些单级域名；旧的
+`pr-<PR>.preview.nfvd.net` 是多级域名，免费证书不覆盖。
+
+252 上的 `nb3-preview-dns-sync.timer` 每分钟调用 `cloudflare-sync.py`，自动发现
+`preview-pr-<PR>` 容器和实例目录、创建 DNS，并生成 Traefik 的新域名路由。
+已部署容器不必重建，别名直接使用其 `pr<PR>@docker` 服务。
+实例目录和容器都删除后，等待 10 分钟才清理 DNS；仅清理带
+`nb3-factory preview DNS` 注释且指向本 tunnel 的 `nb3-数字` CNAME。
+DNS 冲突会报错，不覆盖已有的其他记录。Docker/API 查询失败不会被当成空列表清理。
+
+同步器运行文件在 `/srv/nb3-preview/cloudflare/`，不会被每次 CI 上传脚本覆盖。
+`config.json` 指定 `domain`、`zone_id`、`target`、`token_file`；Token 为
+`nb3-factory-preview-dns`，仅授权 `nfvd.net / DNS:Edit`，在预览机上以 root-only
+权限保存为 `api-token`，不写入仓库或业务构建产物。
+Cloudflare 权限粒度是整个 Zone；脚本通过前缀、目标和归属注释收紧实际管理范围。
+
+首次安装需复制本目录提供的 `cloudflare-sync.py`、systemd service/timer，配置 Token，
+执行 `cloudflare-sync.py --dry-run` 核对变更后，再启动 service 和启用 timer。
+Traefik 配置需包含 file provider，读取 `/srv/nb3-preview/routing/aliases.yml`。
+`--routes-only` 可在不访问 Cloudflare 的情况下刷新域名别名。
 
 Traefik 只监听回环地址，预览端口不发布到宿主机和局域网，公网入口只有这条 tunnel。
 
@@ -108,7 +134,7 @@ rm -f ./preview_key ./preview_key.pub
 | ----------------------------- | --------------------------- | ------------------------------------------------------- |
 | `FACTORY_PREVIEW_HOST`        | `100.120.77.102`            | 预览机的 tailnet 地址                                   |
 | `FACTORY_PREVIEW_USER`        | `root`                      | SSH 用户                                                |
-| `FACTORY_PREVIEW_DOMAIN`      | `preview.nfvd.net`          | 预览域名                                                |
+| `FACTORY_PREVIEW_DOMAIN`      | `nfvd.net`                  | 根域名，生成 `nb3-<PR>.nfvd.net`，不要填 `preview.nfvd.net` |
 | `FACTORY_PREVIEW_FETCH_PROXY` | `http://192.168.2.250:7890` | 预览机拉取 payload 时的出口代理；能直连时可设为空字符串 |
 
 四个凭据缺任意一个，工作流会直接跳过并留一条 `::warning::`，不会失败。
@@ -157,7 +183,7 @@ ssh 252 'bash /srv/nb3-preview/scripts/preview-gc.sh'
 - **预览是公开地址。** 拿到链接的人都能打开登录页，而种子管理员凭据
   （`nocobase` / `admin123`）写在 `browser-acceptance.sh` 里，等于公开可知。
   所以预览里只能用一次性测试数据，不能放真实业务数据、密码或密钥。
-  想收紧时，在 Cloudflare 控制台给 `*.preview.nfvd.net` 挂一个 Access 应用（邮箱 OTP）
+  想收紧时，在 Cloudflare 控制台给各个 `nb3-<PR>.nfvd.net` 挂 Access 应用（邮箱 OTP）
   即可，不需要改任何代码。
 - **临时 payload 资产也是公开的。** 仓库是 public，`factory-previews` 下的
   `preview-pr-<号>.tar.gz` 无需凭据即可下载（这正是预览机不必持有 GitHub 凭据的原因）。
@@ -182,3 +208,5 @@ ssh 252 'bash /srv/nb3-preview/scripts/preview-gc.sh'
 | `.github/scripts/preview/preview-destroy.sh` | 回收单个预览                                 |
 | `.github/scripts/preview/preview-gc.sh`      | 回收无引用的缓存与孤儿容器                   |
 | `.github/scripts/preview/provision.sh`       | 预览机一次性配置                             |
+| `.github/scripts/preview/cloudflare-sync.py` | 自动 DNS 创建/延迟清理及新域名别名路由        |
+| `.github/scripts/preview/nb3-preview-dns-sync.timer` | 每分钟自动同步                       |

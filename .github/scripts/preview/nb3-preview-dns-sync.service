@@ -1,0 +1,15 @@
+[Unit]
+Description=Reconcile NocoBase preview DNS and hostname aliases
+After=docker.service network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/python3 /srv/nb3-preview/cloudflare/cloudflare-sync.py
+TimeoutStartSec=180
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/srv/nb3-preview

@@ -18,6 +18,9 @@ services:
       # many unrelated containers on this host stay invisible to Traefik.
       - --providers.docker.exposedbydefault=false
       - --providers.docker.network=nb3-preview
+      # Keep already deployed PR containers reachable at nb3-<PR> hostnames.
+      - --providers.file.directory=/etc/traefik/dynamic
+      - --providers.file.watch=true
       - --entrypoints.web.address=:80
       - --api.dashboard=false
       - --accesslog=false
@@ -28,6 +31,7 @@ services:
       # Read-only: Traefik only reads labels. The socket is still a privileged
       # interface, which is why this runs on the preview host and nowhere else.
       - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /srv/nb3-preview/routing:/etc/traefik/dynamic:ro
     networks:
       - nb3-preview
 

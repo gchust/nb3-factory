@@ -1,0 +1,10 @@
+[Unit]
+Description=Sync preview DNS once per minute
+
+[Timer]
+OnBootSec=30s
+OnUnitInactiveSec=60s
+Unit=nb3-preview-dns-sync.service
+
+[Install]
+WantedBy=timers.target
