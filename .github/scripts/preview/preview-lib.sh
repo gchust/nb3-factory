@@ -43,7 +43,7 @@ PREVIEW_APP_PORT="${PREVIEW_APP_PORT:-13000}"
 # different base path would not be the thing that was verified.
 PREVIEW_BASE_PATH="${PREVIEW_BASE_PATH:-/main}"
 
-PREVIEW_DOMAIN="${PREVIEW_DOMAIN:-preview.nfvd.net}"
+PREVIEW_DOMAIN="${PREVIEW_DOMAIN:-nfvd.net}"
 
 # A single vCPU is shared with Gitea, act_runner, four PostgreSQL instances and
 # the NocoBase alpha container, so every preview is capped and their number is
@@ -132,7 +132,7 @@ payload_path() {
 }
 
 preview_host() {
-  printf 'pr-%s.%s' "$1" "$PREVIEW_DOMAIN"
+  printf 'nb3-%s.%s' "$1" "$PREVIEW_DOMAIN"
 }
 
 preview_url() {
