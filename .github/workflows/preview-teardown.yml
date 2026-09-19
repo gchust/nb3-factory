@@ -50,17 +50,14 @@ jobs:
           oauth-client-id: ${{ secrets.FACTORY_TAILSCALE_OAUTH_CLIENT_ID }}
           oauth-secret: ${{ secrets.FACTORY_TAILSCALE_OAUTH_CLIENT_SECRET }}
           tags: tag:ci
-          ping: ${{ env.PREVIEW_HOST }}
+          targets: ${{ env.PREVIEW_HOST }}
 
       - name: Install the deploy key
         if: env.PREVIEW_ENABLED == 'true'
         env:
           PREVIEW_SSH_KEY: ${{ secrets.FACTORY_PREVIEW_SSH_KEY }}
         run: |
-          mkdir -p ~/.ssh
-          printf '%s\n' "$PREVIEW_SSH_KEY" > ~/.ssh/preview_key
-          chmod 600 ~/.ssh/preview_key
-          ssh-keyscan -H "$PREVIEW_HOST" >> ~/.ssh/known_hosts 2>/dev/null
+          bash control/.github/scripts/preview-connect.sh
 
       - name: Remove the preview
         if: env.PREVIEW_ENABLED == 'true'

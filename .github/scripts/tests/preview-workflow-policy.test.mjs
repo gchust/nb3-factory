@@ -277,3 +277,16 @@ test('deployable staging reads the exported archive and preserves the flat artif
     rmSync(root, { recursive: true, force: true });
   }
 });
+
+test('preview connection is checked and public HTTPS gates the success report', () => {
+  for (const workflow of [deploy, teardown]) {
+    assert.match(workflow, /targets: \$\{\{ env.PREVIEW_HOST \}\}/);
+    assert.doesNotMatch(workflow, /\n\s+ping:/);
+    assert.match(
+      workflow,
+      /bash control\/\.github\/scripts\/preview-connect.sh/,
+    );
+  }
+  assert.match(deploy, /--retry-all-errors/);
+  assert.match(deploy, /--status "\$\{\{ steps.public.outcome == 'success'/);
+});

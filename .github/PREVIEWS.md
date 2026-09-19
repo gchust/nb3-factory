@@ -30,7 +30,8 @@ Deploy Task Preview（由 workflow_run 触发）
   发布    ──► 把 payload 上传成临时 release 资产（factory-previews）
   取件    ──► ssh 只递过去 URL 与 sha256 → 252 自己走出口拉取、校验
   部署    ──► 252 上 preview-deploy.sh（迁移、起容器）
-  评论    ──► 按 marker 幂等写入 PR；PR 关闭时删掉那个资产
+  公网检查 ──► 从 GitHub runner 检查 HTTPS 地址可访问
+  评论    ──► 检查通过才公布地址；失败仅报告日志；PR 关闭时删掉那个资产
 ```
 
 **依赖集缓存。** 一次构建里 `dist/node_modules` 约占 740MB（`dist/server` 只有 144KB）。
@@ -210,3 +211,9 @@ ssh 252 'bash /srv/nb3-preview/scripts/preview-gc.sh'
 | `.github/scripts/preview/provision.sh`               | 预览机一次性配置                             |
 | `.github/scripts/preview/cloudflare-sync.py`         | 自动 DNS 创建/延迟清理及新域名别名路由       |
 | `.github/scripts/preview/nb3-preview-dns-sync.timer` | 每分钟自动同步                               |
+
+## 连接和可用性检查
+
+Tailscale 使用 `targets` 等待预览机可达；随后 `preview-connect.sh` 最多尝试 6 次获取主机公钥并验证部署密钥认证，失败保留错误和网络状态。加入 tailnet 成功不代表 SSH 已就绪。
+
+部署脚本完成本机健康检查后，Runner 还会对公网 HTTPS 地址执行有限重试。只有公网检查通过，PR 评论才显示地址与登录说明；否则显示部署或公网检查失败及日志链接。

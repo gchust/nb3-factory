@@ -109,19 +109,14 @@ jobs:
           oauth-client-id: ${{ secrets.FACTORY_TAILSCALE_OAUTH_CLIENT_ID }}
           oauth-secret: ${{ secrets.FACTORY_TAILSCALE_OAUTH_CLIENT_SECRET }}
           tags: tag:ci
-          ping: ${{ env.PREVIEW_HOST }}
+          targets: ${{ env.PREVIEW_HOST }}
 
       - name: Install the deploy key
         if: steps.prepare.outputs.ready == 'true' && env.PREVIEW_ENABLED == 'true'
         env:
           PREVIEW_SSH_KEY: ${{ secrets.FACTORY_PREVIEW_SSH_KEY }}
         run: |
-          mkdir -p ~/.ssh
-          printf '%s\n' "$PREVIEW_SSH_KEY" > ~/.ssh/preview_key
-          chmod 600 ~/.ssh/preview_key
-          # The hop is already authenticated end to end by the tailnet, so
-          # recording the host key on first use is enough here.
-          ssh-keyscan -H "$PREVIEW_HOST" >> ~/.ssh/known_hosts 2>/dev/null
+          bash control/.github/scripts/preview-connect.sh
 
       - name: Publish the payload for the host to fetch
         id: publish
@@ -200,6 +195,18 @@ jobs:
                --payload-sha256 '${{ steps.publish.outputs.payload_sha256 }}' \
                --fetch-proxy '$PREVIEW_FETCH_PROXY'"
 
+      - name: Verify the public preview URL
+        id: public
+        if: steps.deploy.outcome == 'success'
+        env:
+          PREVIEW_URL: ${{ steps.prepare.outputs.url }}
+        run: |
+          curl --fail --show-error --silent --location \
+            --connect-timeout 15 --max-time 30 \
+            --retry 6 --retry-delay 10 --retry-all-errors \
+            --output "$RUNNER_TEMP/preview-public.html" "$PREVIEW_URL"
+          test -s "$RUNNER_TEMP/preview-public.html"
+
       - name: Report the preview on the pull request
         if: always() && steps.prepare.outputs.ready == 'true' && env.PREVIEW_ENABLED == 'true'
         continue-on-error: true
@@ -209,4 +216,4 @@ jobs:
           node control/.github/scripts/deploy-preview.mjs publish \
             --run-id "$SOURCE_RUN_ID" \
             --output "$RUNNER_TEMP/preview" \
-            --status "${{ steps.deploy.outcome == 'success' && 'success' || 'failed' }}"
+            --status "${{ steps.public.outcome == 'success' && 'success' || 'failed' }}"

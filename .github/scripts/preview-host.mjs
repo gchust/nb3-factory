@@ -225,13 +225,19 @@ export function renderPreviewComment(plan, note = '') {
     `${PREVIEW_COMMENT_PREFIX}${plan.runId}:${plan.runAttempt} -->`,
     '## 预览环境',
     '',
-    `**预览地址：${plan.url}**`,
+    ...(note
+      ? ['**预览部署或公网访问检查失败，暂无已确认可用的地址。**']
+      : [`**预览地址：${plan.url}**`]),
     '',
-    '这是本次搭建验收通过后的真实运行实例，可以登录、可以操作，数据来自一次性种子。',
+    ...(note
+      ? []
+      : [
+          '这是本次搭建验收通过后的真实运行实例，可以登录、可以操作，数据来自一次性种子。',
+        ]),
     '对应 PR 关闭后会自动回收。',
     '',
     `- 部署提交：\`${plan.headSha}\``,
-    '- 登录账号：`nocobase` / `admin123`',
+    ...(note ? [] : ['- 登录账号：`nocobase` / `admin123`']),
     `- [搭建运行](${plan.runUrl})`,
   ];
   if (plan.depsKey) lines.push(`- 依赖集：\`${plan.depsKey.slice(0, 12)}\``);

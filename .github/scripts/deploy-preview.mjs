@@ -192,7 +192,7 @@ if (mode === 'select') {
   const note =
     status === 'success'
       ? ''
-      : `本次预览部署失败，没有可用地址。请查看[部署日志](${deployRunUrl})；这不影响已经通过的搭建验收。`;
+      : `本次预览部署或公网访问检查失败，尚未确认地址可用。请查看[部署日志](${deployRunUrl})；这不影响已经通过的搭建验收。`;
   const body = renderPreviewComment(plan, note);
   const marker = `${PREVIEW_COMMENT_PREFIX}${runId}:${plan.runAttempt} -->`;
   const existing = (await list(`/issues/${plan.prNumber}/comments`)).find(

@@ -343,4 +343,7 @@ test('a failed deployment is reported without a working link', () => {
     '本次预览部署失败，没有可用地址。',
   );
   assert.ok(body.includes('本次预览部署失败'));
+  assert.ok(!body.includes('https://nb3-12.nfvd.net/main/'));
+  assert.ok(!body.includes('可以登录、可以操作'));
+  assert.ok(!body.includes('admin123'));
 });
