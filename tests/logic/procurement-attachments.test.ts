@@ -7,6 +7,7 @@ import {
   validateAttachmentSelection,
 } from '../../client/components/procurement/attachment-limits.js';
 import {
+  isAbortError,
   isHttpError,
   uploadFiles,
   type UploadRepository,
@@ -14,6 +15,7 @@ import {
 import {
   ATTACHMENT_CATEGORIES,
   MAX_ATTACHMENTS_PER_REQUEST,
+  MAX_ATTACHMENT_BYTES,
   PROCUREMENT_FILE_ACCESS_PATH,
 } from '../../server/providers/procurement-service.js';
 
@@ -56,6 +58,8 @@ describe('attachment selection limits', () => {
     expect(MAX_FILES_PER_UPLOAD).toBe(5);
     expect(MAX_FILE_BYTES).toBe(5 * 1024 * 1024);
     expect(MAX_ATTACHMENTS_PER_REQUEST).toBe(5);
+    // The server enforces the same per-file ceiling the client checks.
+    expect(MAX_ATTACHMENT_BYTES).toBe(MAX_FILE_BYTES);
   });
 });
 
@@ -120,5 +124,37 @@ describe('upload transport retry', () => {
     expect(isHttpError(new TypeError('Failed to fetch'))).toBe(false);
     expect(isHttpError(new Error('boom'))).toBe(false);
     expect(isHttpError(null)).toBe(false);
+  });
+
+  it('stops before uploading when the caller already cancelled', async () => {
+    const controller = new AbortController();
+    controller.abort();
+    const uploadMany = vi.fn<UploadRepository['uploadMany']>();
+
+    await expect(
+      uploadFiles({ uploadMany }, files, { signal: controller.signal }),
+    ).rejects.toMatchObject({ name: 'AbortError' });
+    expect(uploadMany).not.toHaveBeenCalled();
+  });
+
+  it('does not retry an upload the caller cancelled', async () => {
+    const controller = new AbortController();
+    const uploadMany = vi
+      .fn<UploadRepository['uploadMany']>()
+      .mockImplementation(async () => {
+        controller.abort();
+        throw new DOMException('Aborted', 'AbortError');
+      });
+
+    await expect(
+      uploadFiles({ uploadMany }, files, { signal: controller.signal }),
+    ).rejects.toMatchObject({ name: 'AbortError' });
+    expect(uploadMany).toHaveBeenCalledTimes(1);
+  });
+
+  it('recognises an AbortError from the transport', () => {
+    expect(isAbortError(new DOMException('stop', 'AbortError'))).toBe(true);
+    expect(isAbortError(new TypeError('Failed to fetch'))).toBe(false);
+    expect(isAbortError(null)).toBe(false);
   });
 });

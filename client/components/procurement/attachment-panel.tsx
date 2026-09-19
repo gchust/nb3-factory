@@ -13,6 +13,7 @@ import {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactElement,
 } from 'react';
@@ -31,6 +32,7 @@ import { Loading } from '@/components/loading';
 import {
   attachFiles,
   errorCode,
+  errorDetails,
   listAttachments,
   removeAttachment,
   type Attachment,
@@ -40,10 +42,11 @@ import {
 } from './api.js';
 import {
   MAX_FILES_PER_UPLOAD,
+  MAX_FILE_BYTES,
   validateAttachmentSelection,
 } from './attachment-limits.js';
 import { formatBytes, formatDateTime } from './format.js';
-import { isHttpError, uploadFiles } from './upload.js';
+import { isAbortError, isHttpError, uploadFiles } from './upload.js';
 import { PdfPreview } from './pdf-preview.js';
 import { ErrorBanner } from './ui.js';
 
@@ -92,6 +95,10 @@ export function AttachmentPanel({
   const [error, setError] = useState<string | null>(null);
   const [preview, setPreview] = useState<Attachment | null>(null);
   const [pendingRemove, setPendingRemove] = useState<Attachment | null>(null);
+  // Lets the user stop a selection that is still being transferred. Kept in a
+  // ref because the upload promise and the cancel button must share one
+  // controller without re-rendering on every assignment.
+  const uploadControllerRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -114,13 +121,20 @@ export function AttachmentPanel({
     // `revision` forces a re-read when the owning document's state changed.
   }, [api, targetType, targetId, t, revision]);
 
-  const refresh = useCallback(async () => {
-    try {
-      setData(await listAttachments(api, targetType, targetId));
-    } catch {
-      setError(t('procurement.attachment.loadFailed'));
-    }
-  }, [api, targetType, targetId, t]);
+  // `silent` reloads the list without touching `error`: an operation's own
+  // reason (an oversized file, a rejected link, a cancelled upload) must stay
+  // on screen even when the follow-up listing also fails, so the user is never
+  // left with a vague "unable to load files" instead of what actually happened.
+  const refresh = useCallback(
+    async (options?: { readonly silent?: boolean }) => {
+      try {
+        setData(await listAttachments(api, targetType, targetId));
+      } catch {
+        if (!options?.silent) setError(t('procurement.attachment.loadFailed'));
+      }
+    },
+    [api, targetType, targetId, t],
+  );
 
   // The list endpoint returns every attachment of the target; a panel owns one
   // category (`license`/`qualification`, `quotation`/`contract`, ...) and must
@@ -155,15 +169,24 @@ export function AttachmentPanel({
     }
 
     setUploading(true);
+    const controller = new AbortController();
+    uploadControllerRef.current = controller;
     try {
-      const { records } = await uploadFiles(repository, files);
+      const { records } = await uploadFiles(repository, files, {
+        signal: controller.signal,
+      });
       const fileIds = records.map((record) => String(record.id));
       await attachFiles(api, { targetType, targetId, category, fileIds });
       await refresh();
     } catch (cause) {
-      setError(attachmentError(t, cause));
-      await refresh();
+      setError(
+        isAbortError(cause)
+          ? t('procurement.attachment.canceled')
+          : attachmentError(t, cause),
+      );
+      await refresh({ silent: true });
     } finally {
+      uploadControllerRef.current = null;
       setUploading(false);
     }
   };
@@ -177,7 +200,7 @@ export function AttachmentPanel({
       await refresh();
     } catch (cause) {
       setError(attachmentError(t, cause));
-      await refresh();
+      await refresh({ silent: true });
     }
   };
 
@@ -213,9 +236,20 @@ export function AttachmentPanel({
       </p>
 
       {uploading ? (
-        <p className='text-xs text-muted-foreground' role='status'>
-          {t('procurement.attachment.uploading')}
-        </p>
+        <div
+          className='flex items-center gap-2 text-xs text-muted-foreground'
+          role='status'
+        >
+          <span>{t('procurement.attachment.uploading')}</span>
+          <Button
+            onClick={() => uploadControllerRef.current?.abort()}
+            size='xs'
+            type='button'
+            variant='ghost'
+          >
+            {t('procurement.attachment.cancelUpload')}
+          </Button>
+        </div>
       ) : null}
       <ErrorBanner message={error} />
 
@@ -378,7 +412,7 @@ function FilePreviewDialog({
   const [content, setContent] = useState<{
     data?: Uint8Array;
     text?: string;
-    failed?: boolean;
+    failed?: 'forbidden' | 'error';
   }>({});
 
   useEffect(() => {
@@ -389,6 +423,10 @@ function FilePreviewDialog({
       signal: controller.signal,
     })
       .then(async (response) => {
+        if (response.status === 401 || response.status === 403) {
+          setContent({ failed: 'forbidden' });
+          return;
+        }
         if (!response.ok) throw new Error(String(response.status));
         if (kind === 'pdf') {
           // The bytes are handed to the in-app renderer; a blob URL would send
@@ -399,7 +437,7 @@ function FilePreviewDialog({
         }
       })
       .catch(() => {
-        if (!controller.signal.aborted) setContent({ failed: true });
+        if (!controller.signal.aborted) setContent({ failed: 'error' });
       });
     return () => {
       controller.abort();
@@ -443,7 +481,9 @@ function FilePreviewDialog({
           ) : null}
           {content.failed ? (
             <p className='p-4 text-sm text-destructive' role='alert'>
-              {t('procurement.attachment.previewFailed')}
+              {content.failed === 'forbidden'
+                ? t('procurement.attachment.previewForbidden')
+                : t('procurement.attachment.previewFailed')}
             </p>
           ) : null}
           {!content.failed &&
@@ -479,6 +519,14 @@ function attachmentError(
   const code = errorCode(error);
   if (code === 'TOO_MANY_FILES') {
     return t('procurement.attachment.tooMany', { limit: MAX_FILES_PER_UPLOAD });
+  }
+  if (code === 'FILE_TOO_LARGE') {
+    const details = errorDetails(error);
+    const name = typeof details?.filename === 'string' ? details.filename : '';
+    return t('procurement.attachment.tooLarge', {
+      name,
+      size: formatBytes(MAX_FILE_BYTES),
+    });
   }
   if (code === 'BODY_TOO_LARGE') {
     return t('procurement.attachment.bodyTooLarge');

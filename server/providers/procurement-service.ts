@@ -48,6 +48,13 @@ export const ATTACHMENT_CATEGORIES: Readonly<
 
 export const MAX_ATTACHMENTS_PER_REQUEST = 5;
 
+/**
+ * The per-file ceiling shown in the UI. The upload action only bounds the whole
+ * multipart body, so the same limit is enforced here when files are linked to a
+ * document; the client checks it earlier to give a reason without uploading.
+ */
+export const MAX_ATTACHMENT_BYTES = 5 * 1024 * 1024;
+
 export interface ProcurementPrincipal {
   readonly userId: string;
   readonly name: string;
@@ -1189,46 +1196,67 @@ export class ProcurementService {
         'Receipt quantity must be positive.',
       );
     }
-    await this.database.transaction(async (connection) => {
-      await connection.query
-        .insertInto('goodsReceipts')
-        .values({
-          receiptNo,
-          orderId,
-          receivedById: principal.userId,
-          receivedAt,
-          remark: optionalText(input.remark),
-          requestId,
-          createdAt: now,
-          updatedAt: now,
-        })
-        .execute();
-      const created = await connection.query
-        .selectFrom('goodsReceipts')
-        .select('id')
-        .where('receiptNo', '=', receiptNo)
-        .executeTakeFirstOrThrow();
-      const receiptId = Number(created.id);
-      for (const [orderItemId, quantity] of requested) {
+    try {
+      await this.database.transaction(async (connection) => {
         await connection.query
-          .insertInto('goodsReceiptItems')
+          .insertInto('goodsReceipts')
           .values({
-            receiptId,
-            orderItemId,
-            quantity,
+            receiptNo,
+            orderId,
+            receivedById: principal.userId,
+            receivedAt,
+            remark: optionalText(input.remark),
+            requestId,
             createdAt: now,
+            updatedAt: now,
           })
           .execute();
-        const row = byId.get(orderItemId)!;
-        await connection.query
-          .updateTable('purchaseOrderItems')
-          .set({
-            receivedQuantity: round2(num(row.receivedQuantity) + quantity),
-          })
-          .where('id', '=', orderItemId)
-          .execute();
+        const created = await connection.query
+          .selectFrom('goodsReceipts')
+          .select('id')
+          .where('receiptNo', '=', receiptNo)
+          .executeTakeFirstOrThrow();
+        const receiptId = Number(created.id);
+        for (const [orderItemId, quantity] of requested) {
+          await connection.query
+            .insertInto('goodsReceiptItems')
+            .values({
+              receiptId,
+              orderItemId,
+              quantity,
+              createdAt: now,
+            })
+            .execute();
+          const row = byId.get(orderItemId)!;
+          await connection.query
+            .updateTable('purchaseOrderItems')
+            .set({
+              receivedQuantity: round2(num(row.receivedQuantity) + quantity),
+            })
+            .where('id', '=', orderItemId)
+            .execute();
+        }
+      });
+    } catch (error) {
+      // A double-click can start two submissions of the same form before the
+      // first answer arrives. Both pass the existence check above, and the
+      // unique `requestId` index rejects the second insert. Resolve that race
+      // to the already-saved receipt instead of failing an idempotent retry
+      // with an unexpected 500.
+      if (requestId) {
+        const raced = await this.database
+          .query()
+          .selectFrom('goodsReceipts')
+          .selectAll()
+          .where('requestId', '=', requestId)
+          .executeTakeFirst();
+        if (raced) {
+          const [shape] = await this.receiptShapes([raced]);
+          return { receipt: shape, duplicate: true };
+        }
       }
-    });
+      throw error;
+    }
     const created = await this.database
       .query()
       .selectFrom('goodsReceipts')
@@ -1477,18 +1505,34 @@ export class ProcurementService {
     const files = await this.database
       .query()
       .selectFrom('procurementFiles')
-      .select('id')
+      .select(['id', 'filename', 'size'])
       .where('id', 'in', fileIds)
       .execute();
-    const known = new Set(files.map((row) => String(row.id)));
+    const byId = new Map(files.map((row) => [String(row.id), row]));
     for (const fileId of fileIds) {
-      if (!known.has(fileId)) {
+      const file = byId.get(fileId);
+      if (!file) {
         throw new ProcurementError(
           'FILE_NOT_FOUND',
           404,
           'Uploaded file not found.',
           {
             fileId,
+          },
+        );
+      }
+      // uploadMany only caps the whole request body, so an oversized single
+      // file would otherwise reach the document.
+      if (num(file.size) > MAX_ATTACHMENT_BYTES) {
+        throw new ProcurementError(
+          'FILE_TOO_LARGE',
+          400,
+          'A file exceeds the size limit.',
+          {
+            fileId,
+            filename: String(file.filename),
+            size: num(file.size),
+            limit: MAX_ATTACHMENT_BYTES,
           },
         );
       }
@@ -1531,15 +1575,29 @@ export class ProcurementService {
       .deleteFrom('procurementAttachments')
       .where('id', '=', id)
       .execute();
-    try {
-      await this.fileRepository().deleteOne({
-        filter: { id: String(row.fileId) },
-      });
-    } catch {
-      // The stored object and metadata are best-effort cleanup; the link is gone
-      // so the file is no longer reachable through the business record.
+    // The same upload may back more than one document (an operator can link one
+    // file to several records). Only drop the stored object once no other link
+    // references it; deleting it while another document still uses it would
+    // break that document and leave a dangling attachment row behind.
+    const remaining = await this.database
+      .query()
+      .selectFrom('procurementAttachments')
+      .select('id')
+      .where('fileId', '=', String(row.fileId))
+      .execute();
+    let fileDeleted = false;
+    if (remaining.length === 0) {
+      try {
+        await this.fileRepository().deleteOne({
+          filter: { id: String(row.fileId) },
+        });
+        fileDeleted = true;
+      } catch {
+        // The stored object and metadata are best-effort cleanup; the link is
+        // gone so the file is no longer reachable through the business record.
+      }
     }
-    return { id, targetType, targetId };
+    return { id, targetType, targetId, fileDeleted };
   }
 
   public async canReadTarget(
@@ -1609,10 +1667,10 @@ export class ProcurementService {
   }
 
   /**
-   * Guards the file content route. A file that is not attached to any business
-   * record is a freshly uploaded staging object addressed by an unguessable id,
-   * so any signed-in caller may read it; once it is attached, the caller needs
-   * read access to at least one owning document.
+   * Guards the file content route. A file only becomes readable through the
+   * document that owns it: an upload that has not been linked yet is a staging
+   * object, and whoever holds its link still needs read access to at least one
+   * owning document before the bytes are served.
    */
   public async canReadFile(
     principal: ProcurementPrincipal,
@@ -1624,7 +1682,9 @@ export class ProcurementService {
       .select(['targetType', 'targetId'])
       .where('fileId', '=', fileId)
       .execute();
-    if (links.length === 0) return true;
+    // Not linked to any document yet: nobody may read it, including another
+    // signed-in user who was handed the link.
+    if (links.length === 0) return false;
     for (const link of links) {
       const allowed = await this.canReadTarget(
         principal,

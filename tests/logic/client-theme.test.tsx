@@ -43,6 +43,20 @@ describe('app client theme', () => {
     },
   );
 
+  it('renders the inline theme script as non-executable to keep the console clean', () => {
+    const { container } = render(
+      <AppThemeProvider>
+        <ThemeProbe />
+      </AppThemeProvider>,
+    );
+    // next-themes ships an inert inline script for server-rendered first paint.
+    // React 19 logs a console error for executable script tags in components,
+    // so the provider must render it with a non-executable type.
+    const script = container.querySelector('script');
+    expect(script).not.toBeNull();
+    expect(script).toHaveAttribute('type', 'application/json');
+  });
+
   it('falls back from the removed Ant Design preset without changing mode', async () => {
     localStorage.setItem('nocobase:crm:theme:preset', 'ant-design');
     localStorage.setItem('nocobase:crm:theme:color-scheme', 'light');

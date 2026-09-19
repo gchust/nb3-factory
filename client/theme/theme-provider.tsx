@@ -96,6 +96,14 @@ export function AppThemeProvider({
       defaultTheme={mode}
       enableSystem={enableSystem}
       storageKey={storageKey}
+      // next-themes renders an inline theme script to avoid a flash on the
+      // server-rendered first paint. This client renders the app itself, and
+      // initializeTheme in client/index.tsx already restores the saved mode
+      // before the first React render, so the script is inert here. React 19
+      // logs a console error for executable script tags inside components;
+      // declaring the non-executable data type keeps it out of the console
+      // without changing the theme behaviour.
+      scriptProps={{ type: 'application/json' }}
     >
       <ModeStorageSync storageKey={storageKey} defaultTheme={mode} />
       <PresetContext.Provider value={{ preset, setPreset: selectPreset }}>

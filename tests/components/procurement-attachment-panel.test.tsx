@@ -20,15 +20,19 @@ vi.mock('pdfjs-dist/build/pdf.worker.min.mjs?url', () => ({
   default: '/assets/pdf.worker.mjs',
 }));
 
+const i18nMocks = vi.hoisted(() => ({
+  t: (key: string, options?: Record<string, unknown>) =>
+    options ? `${key} ${JSON.stringify(options)}` : key,
+}));
+
+const clientMocks = vi.hoisted(() => ({ api: {} }));
+
 vi.mock('@nocobase/i18n/client', () => ({
-  useTranslation: () => ({
-    t: (key: string, options?: Record<string, unknown>) =>
-      options ? `${key} ${JSON.stringify(options)}` : key,
-  }),
+  useTranslation: () => ({ t: i18nMocks.t }),
 }));
 
 vi.mock('@nocobase/app-client', () => ({
-  useApiClient: () => ({}),
+  useApiClient: () => clientMocks.api,
   useService: () => ({ repository: () => ({ uploadMany: mocks.uploadMany }) }),
 }));
 
@@ -236,6 +240,81 @@ describe('AttachmentPanel', () => {
         screen.getByLabelText('procurement.attachment.selectFiles'),
       ).toBeDisabled();
     });
+  });
+
+  it('lets the user cancel an in-progress upload and says nothing was saved', async () => {
+    mocks.uploadMany.mockImplementation(
+      (_input: unknown, options?: { signal?: AbortSignal }) =>
+        new Promise((_resolve, reject) => {
+          options?.signal?.addEventListener('abort', () => {
+            reject(new DOMException('Aborted', 'AbortError'));
+          });
+        }),
+    );
+    renderPanel();
+    await screen.findByText('procurement.attachment.empty');
+    const input = screen.getByLabelText('procurement.attachment.selectFiles');
+
+    await userEvent.upload(
+      input,
+      new File(['x'], 'a.pdf', { type: 'application/pdf' }),
+    );
+
+    const cancel = await screen.findByRole('button', {
+      name: 'procurement.attachment.cancelUpload',
+    });
+    await userEvent.click(cancel);
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'procurement.attachment.canceled',
+    );
+    expect(mocks.attachFiles).not.toHaveBeenCalled();
+  });
+
+  it('keeps the upload failure reason even when the follow-up listing fails', async () => {
+    mocks.uploadMany.mockRejectedValue(new TypeError('Failed to fetch'));
+    renderPanel();
+    await screen.findByText('procurement.attachment.empty');
+    // Only the reload that follows the failed upload is unavailable.
+    mocks.listAttachments.mockRejectedValue(new Error('list unavailable'));
+    const input = screen.getByLabelText('procurement.attachment.selectFiles');
+
+    await userEvent.upload(
+      input,
+      new File(['x'], 'a.pdf', { type: 'application/pdf' }),
+    );
+
+    const alert = await screen.findByRole('alert');
+    expect(alert).toHaveTextContent('procurement.attachment.networkFailed');
+    expect(alert).not.toHaveTextContent('procurement.attachment.loadFailed');
+  });
+
+  it('explains a permission failure instead of a generic preview error', async () => {
+    const text = {
+      ...ATTACHMENT,
+      id: 5,
+      filename: 'note.txt',
+      ext: 'txt',
+      mimeType: 'text/plain',
+      contentUrl: '/main/uploads/procurement-files/file-5.txt',
+    };
+    mocks.listAttachments.mockResolvedValue({ canWrite: true, items: [text] });
+    const fetchMock = vi.fn(async () => ({ ok: false, status: 403 }));
+    vi.stubGlobal('fetch', fetchMock);
+
+    try {
+      renderPanel();
+      const view = await screen.findByRole('button', {
+        name: /procurement.attachment.view/,
+      });
+      await userEvent.click(view);
+
+      expect(
+        await screen.findByText('procurement.attachment.previewForbidden'),
+      ).toBeInTheDocument();
+    } finally {
+      vi.unstubAllGlobals();
+    }
   });
 
   it('renders a PDF through the in-app viewer, not the browser plugin', async () => {

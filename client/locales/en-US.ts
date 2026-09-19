@@ -321,6 +321,7 @@ const enUS = {
       selectFiles: 'Select files',
       limits: 'Up to 5 files at a time, 5 MB each.',
       uploading: 'Uploading…',
+      cancelUpload: 'Cancel upload',
       saveFirst: 'Save the record before attaching files.',
       readOnly: 'Read-only: files for this record cannot be added or removed.',
       empty: 'No files yet.',
@@ -338,10 +339,13 @@ const enUS = {
       fileMissing: 'The uploaded file could not be found.',
       networkFailed:
         'The upload was interrupted and nothing was saved. Check the connection and try again.',
+      canceled: 'The upload was cancelled and nothing was saved.',
       uploadFailed: 'Upload failed. Nothing was saved.',
       previewUnsupported:
         'This file type cannot be previewed; download it instead.',
       previewFailed: 'Unable to open the preview.',
+      previewForbidden:
+        'You do not have permission to view this file on its record.',
     },
   },
 };
