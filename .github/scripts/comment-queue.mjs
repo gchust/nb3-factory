@@ -38,6 +38,9 @@ export function readReceipt(comment) {
 export function receiptBody(receipt) {
   const data = { ...receipt };
   delete data.receiptId;
+  data.excerpt = String(data.excerpt ?? data.prompt ?? '').slice(0, 1500);
+  delete data.prompt;
+  delete data.task;
   const labels = {
     queued: '排队中',
     dispatched: '已调度 / 执行中',
@@ -46,7 +49,7 @@ export function receiptBody(receipt) {
   const json = JSON.stringify(data)
     .replaceAll('<', '\\u003c')
     .replaceAll('>', '\\u003e');
-  const quote = data.prompt
+  const quote = data.excerpt
     .slice(0, 1500)
     .split('\n')
     .map((line) => `> ${line}`)
@@ -90,28 +93,62 @@ export async function saveReceipt(client, issueNumber, receipt) {
     receipt.receiptId = comment.id;
   }
 }
+// Only the live owner-authored Issue/comment is an input source. Queue excerpts
+// are display hints, including for receipts written by the older snapshot code.
+export function sourceComment(client, issueNumber, comments, id) {
+  const comment = comments.find((item) => item.id === Number(id));
+  if (
+    !comment ||
+    comment.user?.login !== client.repository.split('/')[0] ||
+    comment.user?.type === 'Bot'
+  ) {
+    throw new TaskInputError('原评论已删除或作者不再符合执行条件。');
+  }
+  const buildPrompt = parseBuild(comment.body);
+  const prompt = buildPrompt || comment.body?.trim();
+  if (!prompt) throw new TaskInputError('原评论内容为空。');
+  return {
+    id: comment.id,
+    kind: buildPrompt ? 'build' : 'reply',
+    url: `https://github.com/${client.repository}/issues/${issueNumber}#issuecomment-${comment.id}`,
+    prompt,
+  };
+}
 export async function resolveBuildTask(client, issue, buildId) {
   const { comments, receipts } = await receiptsFor(client, issue.number);
   const current = receipts.find((item) => item.id === Number(buildId));
   if (!current || current.status !== 'dispatched')
     throw new TaskInputError('追加指令未入队或已经结束；不能重复执行。');
+  const source = sourceComment(client, issue.number, comments, buildId);
+  const task = parseIssueTask(issue);
   const previous = receipts.filter(
     (item) =>
       item.id < current.id &&
       item.status === 'done' &&
-      !item.conclusion?.startsWith('rejected:'),
+      !/^(rejected:|cancelled:)/.test(item.conclusion ?? ''),
   );
+  const history = previous.flatMap((item) => {
+    try {
+      const value = sourceComment(client, issue.number, comments, item.id);
+      return [
+        `## 先前${value.kind === 'reply' ? '讨论' : '追加指令'} #${item.id}（当前评论文本，原执行结果：${item.conclusion}；不表示已按编辑后的内容重做）`,
+        value.prompt,
+      ];
+    } catch (error) {
+      if (!(error instanceof TaskInputError)) throw error;
+      return [
+        `## 先前评论 #${item.id} 已删除或不可用，以实际代码及已有回复为准。`,
+      ];
+    }
+  });
   return {
-    ...current.task,
-    commentKind: current.kind || 'build',
-    sourceComment: { id: current.id, url: current.url, prompt: current.prompt },
+    ...task,
+    commentKind: source.kind,
+    sourceComment: { id: source.id, url: source.url, prompt: source.prompt },
     requirements: [
-      '## 原始应用需求（背景与回归约束）',
-      current.task.requirements,
-      ...previous.flatMap((item) => [
-        `## 先前${item.kind === 'reply' ? '讨论' : '追加指令'} #${item.id}（结果：${item.conclusion}，以当前代码为准）`,
-        item.prompt,
-      ]),
+      '## Issue 当前业务需求（背景与回归约束）',
+      task.requirements,
+      ...history,
       ...comments
         .filter(
           (comment) =>
@@ -125,44 +162,54 @@ export async function resolveBuildTask(client, issue, buildId) {
         )
         .map(
           (comment) =>
-            `## 先前 Agent 回复（讨论背景，不代表本轮修改指令）\n${comment.body}`,
+            `## 先前 Agent 回复（可能基于旧版要求，不代表本轮修改指令）\n${comment.body}`,
         ),
-      `## 本轮${current.kind === 'reply' ? '需要回答的评论' : '必须实现的追加指令'} #${current.id}`,
-      current.prompt,
-      '在已有工作分支上增量修改。先检查当前代码和上轮失败记录；后续要求与旧要求冲突时，以本轮明确要求为准。',
+      `## 本轮${source.kind === 'reply' ? '需要回答的评论' : '必须实现的追加指令'} #${source.id}`,
+      source.prompt,
+      '在已有工作分支上增量修改。先检查当前代码和上轮失败记录；以 Issue 和本轮评论的当前明确要求为准。',
     ].join('\n\n'),
-    acceptanceCriteria: `${current.task.acceptanceCriteria}\n\n同时逐条验证本轮追加指令及其验收要求：\n${current.prompt}`,
+    acceptanceCriteria:
+      source.kind === 'build'
+        ? `${task.acceptanceCriteria}\n\n同时逐条验证本轮追加指令及其验收要求：\n${source.prompt}`
+        : task.acceptanceCriteria,
   };
 }
 export async function admitComments(client, issue, comments, receipts) {
   const owner = client.repository.split('/')[0];
+  // Refresh queued display/type and cancel deleted inputs. Dispatched inputs
+  // are read again by prepare; already completed entries are never replayed.
+  for (const receipt of receipts.filter((item) => item.status === 'queued')) {
+    const before = JSON.stringify(receipt);
+    try {
+      const source = sourceComment(client, issue.number, comments, receipt.id);
+      receipt.kind = source.kind;
+      receipt.excerpt = source.prompt.slice(0, 1500);
+    } catch (error) {
+      if (!(error instanceof TaskInputError)) throw error;
+      receipt.status = 'done';
+      receipt.conclusion = `cancelled: ${error.message}`;
+    }
+    delete receipt.prompt;
+    delete receipt.task;
+    if (JSON.stringify(receipt) !== before)
+      await saveReceipt(client, issue.number, receipt);
+  }
   for (const comment of comments.sort((a, b) => a.id - b.id)) {
-    const buildPrompt = parseBuild(comment.body);
-    const prompt = buildPrompt || comment.body?.trim();
     if (
-      !prompt ||
+      !comment.body?.trim() ||
       comment.user?.login !== owner ||
       comment.user?.type === 'Bot' ||
       receipts.some((item) => item.id === comment.id)
     )
       continue;
+    const source = sourceComment(client, issue.number, comments, comment.id);
     const receipt = {
-      id: comment.id,
-      kind: buildPrompt ? 'build' : 'reply',
-      url: `https://github.com/${client.repository}/issues/${issue.number}#issuecomment-${comment.id}`,
-      prompt,
-      task: parseIssueTask(issue),
+      id: source.id,
+      kind: source.kind,
+      url: source.url,
+      excerpt: source.prompt.slice(0, 1500),
       status: 'queued',
     };
-    try {
-      receiptBody(receipt);
-    } catch (error) {
-      if (!(error instanceof TaskInputError)) throw error;
-      receipt.status = 'done';
-      receipt.conclusion = 'rejected: comment too long';
-      receipt.prompt = prompt.slice(0, 1000);
-      receipt.task = { targetBranch: receipt.task.targetBranch };
-    }
     await saveReceipt(client, issue.number, receipt);
     receipts.push(receipt);
   }

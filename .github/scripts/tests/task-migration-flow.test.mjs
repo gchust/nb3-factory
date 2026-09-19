@@ -204,7 +204,7 @@ test('old application-branch completion workflow cannot dispatch a duplicate tas
 });
 
 for (const kind of ['build', 'reply']) {
-  test(`prepare selects existing PR HEAD and frozen ${kind} comment`, async () => {
+  test(`prepare selects existing PR HEAD and live ${kind} comment`, async () => {
     const task = {
       targetBranch: 'apps/demo',
       taskType: '创建新系统',
@@ -219,13 +219,18 @@ for (const kind of ['build', 'reply']) {
         if (call.route === '/issues/2/comments' && call.method === 'GET')
           return [
             {
+              id: 21,
+              user: { login: 'gchust', type: 'User' },
+              body: `${kind === 'build' ? '/build\n' : ''}Add supplier ratings`,
+            },
+            {
               id: 1000,
               user: { login: 'github-actions[bot]', type: 'Bot' },
               body: receiptBody({
                 id: 21,
                 kind,
                 task,
-                prompt: 'Add supplier ratings',
+                prompt: 'Outdated instruction',
                 status: 'dispatched',
               }),
             },
@@ -239,6 +244,11 @@ for (const kind of ['build', 'reply']) {
     assert.equal(result.metadata.buildCommentId, 21);
     assert.equal(result.metadata.task.commentKind, kind);
     assert.match(result.metadata.task.requirements, /Add supplier ratings/);
+    assert.doesNotMatch(
+      result.metadata.task.requirements,
+      /Outdated instruction/,
+    );
+    assert.match(result.metadata.task.requirements, /Build a page/);
     assert.equal(result.metadata.existingPullRequest.number, 3);
     assert.match(result.output, /base_sha=latest-pr-head/);
     assert.match(result.output, new RegExp(`comment_kind=${kind}`));

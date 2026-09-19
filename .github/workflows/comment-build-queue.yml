@@ -2,7 +2,7 @@ name: Comment build queue
 
 on:
   issue_comment:
-    types: [created]
+    types: [created, edited]
   workflow_run:
     workflows: [Code Agent NocoBase Task]
     types: [completed]

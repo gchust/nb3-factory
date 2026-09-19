@@ -21,8 +21,9 @@ export async function coordinate(client, issueNumber, admissionId = Infinity) {
     issue.user?.login !== client.repository.split('/')[0]
   )
     return;
+  let task;
   try {
-    parseIssueTask(issue);
+    task = parseIssueTask(issue);
   } catch (error) {
     if (error instanceof TaskInputError) return;
     throw error;
@@ -152,6 +153,14 @@ export async function coordinate(client, issueNumber, admissionId = Infinity) {
     }
     active.status = 'done';
     active.runId = last.id;
+    // A dispatched /build comment can become a question before prepare reads it.
+    // Use the jobs that actually ran, rather than the admission-time type.
+    const answeredQuestion =
+      jobs.some(
+        (job) => job.name === 'agent' && job.conclusion === 'skipped',
+      ) &&
+      jobs.some((job) => job.name === 'reply' && job.conclusion === 'success');
+    if (answeredQuestion) active.kind = 'reply';
     active.conclusion =
       !claims.length &&
       active.kind !== 'reply' &&
@@ -186,7 +195,7 @@ export async function coordinate(client, issueNumber, admissionId = Infinity) {
   // the Issue-close callback has not yet arrived.
   const pulls = await listAll(client, '/pulls', {
     state: 'all',
-    base: receipts[0].task.targetBranch,
+    base: task.targetBranch,
   });
   if (
     pulls.some(
@@ -244,12 +253,12 @@ async function dispatch(client, issueNumber, id) {
 export async function main(event, client) {
   if (event.comment) {
     if (
-      event.action !== 'created' ||
+      !['created', 'edited'].includes(event.action) ||
       event.issue?.pull_request ||
       event.comment.user?.login !== client.repository.split('/')[0]
     )
       return;
-    if (!event.comment.body?.trim()) return;
+    if (!event.comment.body?.trim() && event.action !== 'edited') return;
     await coordinate(client, event.issue.number, event.comment.id);
     return;
   }

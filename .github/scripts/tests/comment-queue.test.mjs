@@ -93,10 +93,10 @@ test('receipt JSON cannot break out of its marker and owner cannot spoof bot sta
     status: 'queued',
   };
   const body = receiptBody(data);
-  assert.equal(readReceipt({ id: 99, user: bot, body }).prompt, data.prompt);
+  assert.equal(readReceipt({ id: 99, user: bot, body }).excerpt, data.prompt);
   assert.equal(readReceipt({ user: owner, body }), null);
 });
-test('comments are snapshotted in order and wait for the entire current workflow', async () => {
+test('queued comments refresh their display while waiting for the current workflow', async () => {
   const f = fixture({
     comments: [
       command(22),
@@ -113,7 +113,9 @@ test('comments are snapshotted in order and wait for the entire current workflow
   assert.equal(f.dispatches().length, 0);
   f.comments.find((item) => item.id === 21).body = '/build\nEdited';
   await coordinate(f.client, 2);
-  assert.equal(f.receipts()[0].prompt, 'Feature 21');
+  assert.equal(f.receipts()[0].excerpt, 'Edited');
+  assert.equal(f.receipts()[0].prompt, undefined);
+  assert.equal(f.receipts()[0].task, undefined);
   assert.equal(f.receipts().length, 2);
 });
 test('completion dispatches one round; repeated events do not duplicate dispatch', async () => {
@@ -240,14 +242,16 @@ test('bot status updates and agent replies never enqueue themselves', async () =
   assert.equal(f.dispatches().length, 0);
 });
 
-test('an oversized comment is rejected once without blocking the following question', async () => {
+test('long source comments do not overflow queue receipts or lose prompt content', async () => {
   const f = fixture({
     comments: [command(21, 'x'.repeat(65000)), command(22, 'What works?')],
     runs: [run(1)],
   });
   await coordinate(f.client, 2);
-  assert.match(f.receipts()[0].conclusion, /^rejected:/);
-  assert.equal(f.dispatches()[0].body.client_payload.build_comment_id, 22);
+  assert.equal(f.receipts()[0].excerpt.length, 1500);
+  assert.equal(f.dispatches()[0].body.client_payload.build_comment_id, 21);
+  const live = await resolveBuildTask(f.client, issue, 21);
+  assert.equal(live.sourceComment.prompt.length, 65000);
 });
 
 test('another open task PR keeps the next round queued instead of consuming it', async () => {
@@ -395,4 +399,142 @@ test('questions on an old closed PR still work after workflow artifacts expire',
   f.client.getIssue = async () => ({ ...issue, state: 'closed' });
   await coordinate(f.client, 2);
   assert.equal(f.dispatches()[0].body.client_payload.build_comment_id, 21);
+});
+
+test('execution uses current Issue requirements and comment even after dispatch', async () => {
+  const f = fixture({ comments: [command(21)], runs: [run(1)] });
+  await coordinate(f.client, 2);
+  f.comments.find((c) => c.id === 21).body =
+    '/build\nCorrected business request';
+  const updated = {
+    ...issue,
+    body: issue.body
+      .replace('Original', 'New business context')
+      .replace('Works', 'New acceptance'),
+  };
+  const task = await resolveBuildTask(f.client, updated, 21);
+  assert.match(task.requirements, /New business context/);
+  assert.match(task.requirements, /Corrected business request/);
+  assert.match(task.acceptanceCriteria, /New acceptance/);
+  assert.doesNotMatch(task.requirements, /Original|Feature 21/);
+});
+
+test('legacy snapshots never override live source content', async () => {
+  const f = fixture({
+    comments: [
+      command(21, '/build\nBusiness only'),
+      {
+        id: 999,
+        user: bot,
+        body:
+          '<!-- factory-build-v1\n' +
+          JSON.stringify({
+            id: 21,
+            status: 'dispatched',
+            kind: 'build',
+            prompt: 'Use old technology',
+            task: { ...task, requirements: 'Obsolete issue' },
+          }) +
+          '\n-->',
+      },
+    ],
+    runs: [run(1)],
+  });
+  const live = await resolveBuildTask(f.client, issue, 21);
+  assert.match(live.requirements, /Business only/);
+  assert.doesNotMatch(live.requirements, /Use old technology|Obsolete issue/);
+});
+
+for (const body of ['Now answer a question', '/build\nNow implement this']) {
+  test(`editing a queued comment changes execution type: ${body.split('\n')[0]}`, async () => {
+    const f = fixture({
+      comments: [command(21)],
+      runs: [run(1, 0, 'in_progress')],
+    });
+    await coordinate(f.client, 2);
+    f.comments.find((c) => c.id === 21).body = body;
+    await main(
+      { action: 'edited', issue, comment: command(21, body) },
+      f.client,
+    );
+    assert.equal(
+      f.receipts()[0].kind,
+      body.startsWith('/build\n') ? 'build' : 'reply',
+    );
+    const receipt = f.comments.find((c) => readReceipt(c));
+    receipt.body = receiptBody({
+      ...readReceipt(receipt),
+      status: 'dispatched',
+    });
+    const task = await resolveBuildTask(f.client, issue, 21);
+    assert.equal(
+      task.commentKind,
+      body.startsWith('/build\n') ? 'build' : 'reply',
+    );
+  });
+}
+
+for (const removed of [true, false]) {
+  test(`deleted or empty queued comment is skipped: deleted=${removed}`, async () => {
+    const runs = [run(1, 0, 'in_progress')];
+    const f = fixture({ comments: [command(21), command(22)], runs });
+    await coordinate(f.client, 2);
+    if (removed)
+      f.comments.splice(
+        f.comments.findIndex((c) => c.id === 21),
+        1,
+      );
+    else f.comments.find((c) => c.id === 21).body = '';
+    runs[0].status = 'completed';
+    await coordinate(f.client, 2);
+    assert.match(f.receipts()[0].conclusion, /^cancelled:/);
+    assert.equal(f.dispatches()[0].body.client_payload.build_comment_id, 22);
+  });
+}
+
+test('deleting or changing ownership after dispatch cannot execute stale text', async () => {
+  const f = fixture({ comments: [command(21)], runs: [run(1)] });
+  await coordinate(f.client, 2);
+  f.comments.find((c) => c.id === 21).user = { login: 'outsider' };
+  await assert.rejects(resolveBuildTask(f.client, issue, 21), /删除或作者/);
+  f.comments.splice(
+    f.comments.findIndex((c) => c.id === 21),
+    1,
+  );
+  await assert.rejects(resolveBuildTask(f.client, issue, 21), /删除或作者/);
+});
+
+test('editing a finished comment does not enqueue another execution', async () => {
+  const runs = [run(1)];
+  const f = fixture({ comments: [command(21)], runs });
+  await coordinate(f.client, 2);
+  runs.push(run(2, 21));
+  await coordinate(f.client, 2);
+  f.comments.find((c) => c.id === 21).body = '/build\nChanged after completion';
+  await main(
+    {
+      action: 'edited',
+      issue,
+      comment: command(21, '/build\nChanged after completion'),
+    },
+    f.client,
+  );
+  assert.equal(f.dispatches().length, 1);
+  assert.equal(f.receipts()[0].status, 'done');
+});
+
+test('completion recognizes a dispatched build edited into a question', async () => {
+  const runs = [run(1)];
+  const jobs = [];
+  const f = fixture({ comments: [command(21)], runs, jobs });
+  await coordinate(f.client, 2);
+  f.comments.find((c) => c.id === 21).body = 'Please explain the result';
+  runs.push(run(2, 21));
+  jobs.push(
+    { name: 'agent', conclusion: 'skipped' },
+    { name: 'reply', conclusion: 'success' },
+  );
+  await coordinate(f.client, 2);
+  assert.equal(f.receipts()[0].kind, 'reply');
+  assert.equal(f.receipts()[0].conclusion, 'success');
 });
