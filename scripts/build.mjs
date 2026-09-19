@@ -294,10 +294,18 @@ run('Typecheck tooling', 'pnpm', ['exec', 'tsc', '-p', 'tsconfig.node.json']);
 // environment taking precedence — the order `loadStandaloneAppEnv` applies on the server. Letting Vite read `.env`
 // files itself would also pick up `.env.production` and other mode files the server never loads, and the client would
 // be built for one `APP_BASE_PATH` while the server mounts at another.
+//
+// `NODE_ENV` is pinned to `production` regardless of the invoking environment. Vite bakes
+// `process.env.NODE_ENV` into the bundle (`JSON.stringify(process.env.NODE_ENV || mode)`), so an
+// inherited value such as `test` (the factory's verification step exports it) makes React resolve its
+// development build. The deployed client then logs development-only React errors to the browser
+// console, which browser acceptance reports as page errors. This is the client build only; the server
+// keeps the environment it was given.
 run('Build client', 'pnpm', ['exec', 'refine', 'build'], {
   env: {
     ...readEnvFiles(applicationEnvFiles, process.env),
     ...process.env,
+    NODE_ENV: 'production',
   },
 });
 runHookStage(buildHooks, 'afterClientBuild', run);

@@ -111,6 +111,41 @@ describe('client inspection', () => {
         path: '/',
       },
       {
+        auth: 'required',
+        id: 'nb3-factory:equipment',
+        path: '/equipment',
+      },
+      {
+        auth: 'required',
+        id: 'nb3-factory:templates',
+        path: '/templates',
+      },
+      {
+        auth: 'required',
+        id: 'nb3-factory:inspections',
+        path: '/inspections',
+      },
+      {
+        auth: 'required',
+        id: 'nb3-factory:inspection-detail',
+        path: '/inspections/:id',
+      },
+      {
+        auth: 'required',
+        id: 'nb3-factory:repairs',
+        path: '/repairs',
+      },
+      {
+        auth: 'required',
+        id: 'nb3-factory:repair-detail',
+        path: '/repairs/:id',
+      },
+      {
+        auth: 'required',
+        id: 'nb3-factory:review',
+        path: '/review',
+      },
+      {
         auth: 'guest',
         id: 'nb3-factory:login',
         path: '/login',

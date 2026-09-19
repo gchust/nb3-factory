@@ -20,6 +20,17 @@ describe('app client routes', () => {
           name: 'home',
           path: '/',
         },
+        { auth: 'required', name: 'equipment', path: '/equipment' },
+        { auth: 'required', name: 'templates', path: '/templates' },
+        { auth: 'required', name: 'inspections', path: '/inspections' },
+        {
+          auth: 'required',
+          name: 'inspection-detail',
+          path: '/inspections/:id',
+        },
+        { auth: 'required', name: 'repairs', path: '/repairs' },
+        { auth: 'required', name: 'repair-detail', path: '/repairs/:id' },
+        { auth: 'required', name: 'review', path: '/review' },
         { auth: 'guest', name: 'login', path: '/login' },
         { auth: 'guest', name: 'register', path: '/register' },
         {
