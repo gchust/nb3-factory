@@ -107,6 +107,41 @@ describe('client inspection', () => {
     ).toEqual([
       {
         auth: 'required',
+        id: 'nb3-factory:dashboard',
+        path: '/dashboard',
+      },
+      {
+        auth: 'required',
+        id: 'nb3-factory:customers',
+        path: '/customers',
+      },
+      {
+        auth: 'required',
+        id: 'nb3-factory:customer-detail',
+        path: '/customers/:id',
+      },
+      {
+        auth: 'required',
+        id: 'nb3-factory:opportunities',
+        path: '/opportunities',
+      },
+      {
+        auth: 'required',
+        id: 'nb3-factory:opportunity-detail',
+        path: '/opportunities/:id',
+      },
+      {
+        auth: 'required',
+        id: 'nb3-factory:followups',
+        path: '/followups',
+      },
+      {
+        auth: 'required',
+        id: 'nb3-factory:followup-detail',
+        path: '/followups/:id',
+      },
+      {
+        auth: 'required',
         id: 'nb3-factory:home',
         path: '/',
       },

@@ -15,6 +15,25 @@ describe('app client routes', () => {
     expect(applicationRoutes[0]).toMatchObject({
       parent: 'app',
       routes: [
+        { auth: 'required', name: 'dashboard', path: '/dashboard' },
+        { auth: 'required', name: 'customers', path: '/customers' },
+        {
+          auth: 'required',
+          name: 'customer-detail',
+          path: '/customers/:id',
+        },
+        { auth: 'required', name: 'opportunities', path: '/opportunities' },
+        {
+          auth: 'required',
+          name: 'opportunity-detail',
+          path: '/opportunities/:id',
+        },
+        { auth: 'required', name: 'followups', path: '/followups' },
+        {
+          auth: 'required',
+          name: 'followup-detail',
+          path: '/followups/:id',
+        },
         {
           auth: 'required',
           name: 'home',

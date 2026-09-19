@@ -5,3 +5,7 @@ registry/
 # A generated application has none of the directories above but does have this one, which is why
 # this file ships in the package: without it `pnpm format:check` fails on a freshly created app.
 pnpm-lock.yaml
+
+# Generated collection artifacts. `pnpm collections:generate` owns their exact serialization, and
+# reformatting them with Prettier makes `pnpm collections:generate --check` report them stale.
+database/main/collections/
