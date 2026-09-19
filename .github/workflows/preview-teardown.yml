@@ -51,6 +51,8 @@ jobs:
           oauth-secret: ${{ secrets.FACTORY_TAILSCALE_OAUTH_CLIENT_SECRET }}
           tags: tag:ci
           targets: ${{ env.PREVIEW_HOST }}
+          # Keep public DNS on the runner; the preview host is a Tailscale IP.
+          args: --accept-dns=false
 
       - name: Install the deploy key
         if: env.PREVIEW_ENABLED == 'true'

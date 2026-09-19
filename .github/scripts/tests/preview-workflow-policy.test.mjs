@@ -282,6 +282,7 @@ test('preview connection is checked and public HTTPS gates the success report', 
   for (const workflow of [deploy, teardown]) {
     assert.match(workflow, /targets: \$\{\{ env.PREVIEW_HOST \}\}/);
     assert.doesNotMatch(workflow, /\n\s+ping:/);
+    assert.match(workflow, /args: --accept-dns=false/);
     assert.match(
       workflow,
       /bash control\/\.github\/scripts\/preview-connect.sh/,
