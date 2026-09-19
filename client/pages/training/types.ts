@@ -59,7 +59,32 @@ export interface SubmissionReviewView {
   readonly reviewerId: string;
   readonly reviewerName: string;
   readonly createdAt: string;
+  readonly files: readonly FileAttachment[];
 }
+
+/** One stored file attached to a lesson, a submission or a review. */
+export interface FileAttachment {
+  readonly id: string;
+  readonly filename: string;
+  readonly ext: string;
+  readonly mimeType: string;
+  readonly size: number;
+  readonly contentUrl: string;
+  readonly uploadedById: string;
+  readonly createdAt: string;
+}
+
+/** A courseware row: a file attached to a session with a display title. */
+export interface MaterialAttachment extends FileAttachment {
+  readonly materialId: number;
+  readonly sessionId: number;
+  readonly title: string;
+}
+
+/** Largest single upload the interface accepts, mirrored by the route. */
+export const FILE_MAX_SIZE = 5 * 1024 * 1024;
+/** Largest batch the interface accepts in one selection. */
+export const FILE_MAX_COUNT = 5;
 
 export interface SubmissionView {
   readonly id: number;
@@ -77,6 +102,7 @@ export interface SubmissionView {
   readonly reviewedById: string | null;
   readonly reviewedAt: string | null;
   readonly reviews: readonly SubmissionReviewView[];
+  readonly files: readonly FileAttachment[];
 }
 
 export interface AssignmentView {
@@ -98,6 +124,7 @@ export interface AssignmentView {
 export interface SessionDetail {
   readonly session: SessionSummary;
   readonly assignments: readonly AssignmentView[];
+  readonly materials: readonly MaterialAttachment[];
   readonly roster: readonly {
     readonly studentId: string;
     readonly studentName: string;

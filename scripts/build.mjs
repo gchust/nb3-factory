@@ -298,6 +298,13 @@ run('Build client', 'pnpm', ['exec', 'refine', 'build'], {
   env: {
     ...readEnvFiles(applicationEnvFiles, process.env),
     ...process.env,
+    // The client bundle is a production artifact even when the surrounding run
+    // is not: `verify.sh` exports NODE_ENV=test before `pnpm build`, and Vite
+    // bakes the ambient NODE_ENV into the client. Left alone, that resolves
+    // React to its development build, so the "production" bundle carries dev
+    // warnings — including "Encountered a script tag while rendering React
+    // component" on every page — and is materially larger and slower.
+    NODE_ENV: 'production',
   },
 });
 runHookStage(buildHooks, 'afterClientBuild', run);

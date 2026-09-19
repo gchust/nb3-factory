@@ -54,9 +54,9 @@ describe('training demo seed', () => {
     expect(await count(database, 'trainingAssignments')).toBe(12);
     expect(await count(database, 'trainingSubmissions')).toBe(22);
     expect(await count(database, 'trainingSubmissionReviews')).toBe(14);
-    expect(await count(database, 'authorizationPermissionSets')).toBe(3);
+    expect(await count(database, 'authorizationPermissionSets')).toBe(4);
     expect(await count(database, 'authorizationPermissionSetAssignments')).toBe(
-      9,
+      10,
     );
 
     const account = await database
@@ -121,6 +121,15 @@ describe('training demo seed', () => {
       ].sort(),
     );
     expect(await grantsFor('training-student')).toEqual(
+      [
+        'trainingAssignmentDetail',
+        'trainingCatalog',
+        'trainingMyLearning',
+        'trainingSessionDetail',
+      ].sort(),
+    );
+    // The signed-in audience default carries the same read-only pages.
+    expect(await grantsFor('training-learner')).toEqual(
       [
         'trainingAssignmentDetail',
         'trainingCatalog',
@@ -197,10 +206,26 @@ describe('training demo seed', () => {
       canAccess('demo-student-zhao', 'trainingManage'),
     ).resolves.toBe(false);
 
-    // A user with no training role stays denied, so signing up does not hand
-    // out a student seat.
+    // A user who has just signed up holds only the learner audience default:
+    // they may browse the catalog and their own learning, but no management,
+    // grading or statistics surface is opened to them.
     await expect(
       canAccess('freshly-registered-user', 'trainingMyLearning'),
+    ).resolves.toBe(true);
+    await expect(
+      canAccess('freshly-registered-user', 'trainingCatalog'),
+    ).resolves.toBe(true);
+    await expect(
+      canAccess('freshly-registered-user', 'trainingAssignmentDetail'),
+    ).resolves.toBe(true);
+    await expect(
+      canAccess('freshly-registered-user', 'trainingGrading'),
+    ).resolves.toBe(false);
+    await expect(
+      canAccess('freshly-registered-user', 'trainingStats'),
+    ).resolves.toBe(false);
+    await expect(
+      canAccess('freshly-registered-user', 'trainingManage'),
     ).resolves.toBe(false);
   });
 

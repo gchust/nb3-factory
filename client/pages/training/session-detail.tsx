@@ -17,6 +17,7 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Progress } from '@/components/ui/progress';
 import {
   Select,
   SelectContent,
@@ -39,6 +40,7 @@ import {
   useTrainingQuery,
   useTrainingViewer,
 } from './client.js';
+import { AttachmentList, AttachmentUploader } from './files.js';
 import {
   DeniedBlock,
   EmptyBlock,
@@ -59,8 +61,13 @@ import {
   toDateTimeLocal,
   type AssignmentStatus,
   type AssignmentView,
+  type FileAttachment,
+  type MaterialAttachment,
   type SessionDetail,
 } from './types.js';
+
+/** Keeps the processing state visible long enough to be noticed. */
+const MIN_PROCESSING_MS = 600;
 
 export default function TrainingSessionDetailPage(): ReactElement {
   const { t, i18n } = useTranslation();
@@ -71,12 +78,61 @@ export default function TrainingSessionDetailPage(): ReactElement {
   );
   const [createOpen, setCreateOpen] = useState(false);
   const [editing, setEditing] = useState<AssignmentView | null>(null);
+  const [pendingMaterials, setPendingMaterials] = useState<
+    readonly FileAttachment[]
+  >([]);
+  const [uploadBusy, setUploadBusy] = useState(false);
+  const [adding, setAdding] = useState(false);
+  const materialAction = useTrainingAction();
 
   const session = detail.data?.session;
   const canManage =
     (viewer.data?.isAdmin ?? false) ||
     ((viewer.data?.isInstructor ?? false) &&
       session?.instructorId === viewer.data?.userId);
+
+  const addMaterials = async (): Promise<void> => {
+    if (!sessionId) return;
+    setAdding(true);
+    const startedAt = Date.now();
+    try {
+      const result = await materialAction.run((client) =>
+        client.request({
+          path: `training/sessions/${sessionId}/materials`,
+          method: 'POST',
+          json: {
+            files: pendingMaterials.map((file) => ({ fileId: file.id })),
+          },
+        }),
+      );
+      if (result !== undefined) {
+        setPendingMaterials([]);
+        detail.reload();
+      }
+    } finally {
+      const elapsed = Date.now() - startedAt;
+      if (elapsed < MIN_PROCESSING_MS) {
+        await new Promise((resolve) => {
+          setTimeout(resolve, MIN_PROCESSING_MS - elapsed);
+        });
+      }
+      setAdding(false);
+    }
+  };
+
+  const removeMaterial = async (file: FileAttachment): Promise<void> => {
+    const material = (detail.data?.materials ?? []).find(
+      (item) => item.id === file.id,
+    );
+    if (!material) return;
+    const result = await materialAction.run((client) =>
+      client.request({
+        path: `training/materials/${material.materialId}`,
+        method: 'DELETE',
+      }),
+    );
+    if (result !== undefined) detail.reload();
+  };
 
   return (
     <PageContainer>
@@ -129,6 +185,63 @@ export default function TrainingSessionDetailPage(): ReactElement {
               {t('training.session.instructor')}: {session.instructorName}
             </span>
           </div>
+
+          <SectionCard
+            title={t('training.materials.title')}
+            description={t('training.materials.description')}
+          >
+            <AttachmentList
+              files={detail.data?.materials ?? []}
+              emptyMessage={t('training.materials.empty')}
+              labelOf={(file) =>
+                (file as MaterialAttachment).title || file.filename
+              }
+              onRemove={
+                canManage
+                  ? (file) => {
+                      void removeMaterial(file);
+                    }
+                  : undefined
+              }
+            />
+            {canManage ? (
+              <div className='space-y-3 border-t border-border pt-4'>
+                <AttachmentUploader
+                  value={pendingMaterials}
+                  onChange={setPendingMaterials}
+                  onBusyChange={setUploadBusy}
+                />
+                {materialAction.error ? (
+                  <p className='text-sm text-destructive' role='alert'>
+                    {materialAction.error}
+                  </p>
+                ) : null}
+                <Button
+                  disabled={
+                    uploadBusy ||
+                    adding ||
+                    materialAction.pending ||
+                    pendingMaterials.length === 0
+                  }
+                  onClick={() => void addMaterials()}
+                >
+                  <Plus className='size-4' aria-hidden />
+                  {t('training.materials.add')}
+                </Button>
+                {adding || materialAction.pending ? (
+                  <div className='space-y-1' role='status'>
+                    <Progress
+                      value={null}
+                      aria-label={t('training.files.uploading')}
+                    />
+                    <p className='text-xs text-muted-foreground'>
+                      {t('training.files.uploading')}
+                    </p>
+                  </div>
+                ) : null}
+              </div>
+            ) : null}
+          </SectionCard>
 
           <SectionCard title={t('training.session.assignments')}>
             {(detail.data?.assignments.length ?? 0) === 0 ? (

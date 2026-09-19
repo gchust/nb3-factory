@@ -96,6 +96,23 @@ const PAGE_MANAGE = 'trainingManage';
 const PAGE_SESSION_DETAIL = 'trainingSessionDetail';
 const PAGE_ASSIGNMENT_DETAIL = 'trainingAssignmentDetail';
 
+/**
+ * Pages every signed-in user may open, independent of an explicit role.
+ *
+ * Self-registration is how an internal learner gets an account, so a brand
+ * new user must be able to browse the catalog and their own learning without
+ * an administrator assigning a role first. The direct `training-student` role
+ * stays what an administrator grants when someone should be enrollable; this
+ * default only carries the read-only pages.
+ */
+const LEARNER_DEFAULT_SET = 'training-learner';
+const LEARNER_DEFAULT_PAGES: readonly string[] = [
+  PAGE_CATALOG,
+  PAGE_MY_LEARNING,
+  PAGE_SESSION_DETAIL,
+  PAGE_ASSIGNMENT_DETAIL,
+];
+
 const ROLES: readonly {
   key: string;
   title: string;
@@ -798,6 +815,66 @@ async function seedRoles({ query }: SeedContext, now: Date): Promise<void> {
       })
       .execute();
   }
+
+  await seedLearnerDefault(query, now);
+}
+
+/**
+ * Grants the read-only learner pages to every signed-in user through the
+ * `authenticated` audience, so a self-registered account can open the catalog
+ * and its own learning before an administrator assigns a role.
+ */
+async function seedLearnerDefault(
+  query: QueryAdapter,
+  now: Date,
+): Promise<void> {
+  const desiredGrants = pageAccessGrants(LEARNER_DEFAULT_PAGES);
+  const existing = await query
+    .selectFrom('authorizationPermissionSets')
+    .select(['key', 'grants'])
+    .where('key', '=', LEARNER_DEFAULT_SET)
+    .executeTakeFirst();
+  if (!existing) {
+    await query
+      .insertInto('authorizationPermissionSets')
+      .values({
+        id: `demo-permission-set-${LEARNER_DEFAULT_SET}`,
+        key: LEARNER_DEFAULT_SET,
+        title: '学员（默认）',
+        grants: JSON.stringify(desiredGrants),
+        createdAt: now,
+        updatedAt: now,
+      })
+      .execute();
+  } else {
+    const grants = mergeGrants(parseGrants(existing.grants), desiredGrants);
+    if (grants !== undefined) {
+      await query
+        .updateTable('authorizationPermissionSets')
+        .set({ grants: JSON.stringify(grants), updatedAt: now })
+        .where('key', '=', LEARNER_DEFAULT_SET)
+        .execute();
+    }
+  }
+
+  const assignmentId = `authenticated:*:${LEARNER_DEFAULT_SET}`;
+  const assignment = await query
+    .selectFrom('authorizationPermissionSetAssignments')
+    .select('id')
+    .where('id', '=', assignmentId)
+    .executeTakeFirst();
+  if (assignment) return;
+  await query
+    .insertInto('authorizationPermissionSetAssignments')
+    .values({
+      id: assignmentId,
+      subjectType: 'authenticated',
+      subjectId: '*',
+      permissionSetKey: LEARNER_DEFAULT_SET,
+      createdAt: now,
+      updatedAt: now,
+    })
+    .execute();
 }
 
 async function seedCourses({ query }: SeedContext, now: Date): Promise<void> {

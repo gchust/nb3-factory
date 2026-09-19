@@ -7,6 +7,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   TRAINING_ADMIN_ROLE,
   TRAINING_INSTRUCTOR_ROLE,
+  TRAINING_LEARNER_ROLE,
   TRAINING_STUDENT_ROLE,
   TrainingError,
   trainingServiceToken,
@@ -33,6 +34,11 @@ const ROLE_ASSIGNMENTS = [
     id: 'a4',
     subject: { type: 'user', id: 'system-admin-user' },
     permissionSet: 'system-administrator',
+  },
+  {
+    id: 'a5',
+    subject: { type: 'authenticated', id: '*' },
+    permissionSet: TRAINING_LEARNER_ROLE,
   },
 ];
 
@@ -100,6 +106,9 @@ describe('training routes', () => {
       unenrollStudent: vi.fn(async () => undefined),
       createAssignment: vi.fn(async () => ({ id: 1 })),
       updateAssignment: vi.fn(async () => ({ id: 1 })),
+      addSessionMaterials: vi.fn(async () => []),
+      removeSessionMaterial: vi.fn(async () => undefined),
+      canAccessFile: vi.fn(async () => true),
     };
   });
 
@@ -124,6 +133,28 @@ describe('training routes', () => {
       userId: 'student-user',
       isStudent: true,
       isAdmin: false,
+    });
+  });
+
+  it('treats a self-registered user with only the audience default as a student', async () => {
+    const router = await createRouter(service);
+    const response = await router.request('/training/me', {
+      headers: headers('self-registered-user'),
+    });
+    expect(response.status).toBe(200);
+    const body = (await response.json()) as {
+      data: {
+        userId: string;
+        isStudent: boolean;
+        isAdmin: boolean;
+        isInstructor: boolean;
+      };
+    };
+    expect(body.data).toMatchObject({
+      userId: 'self-registered-user',
+      isStudent: true,
+      isAdmin: false,
+      isInstructor: false,
     });
   });
 
@@ -206,6 +237,76 @@ describe('training routes', () => {
       'student-user',
       7,
       '我的答案',
+      [],
+    );
+  });
+
+  it('passes the selected file ids through to the submission', async () => {
+    const router = await createRouter(service);
+    const response = await router.request(
+      '/training/assignments/7/submissions',
+      {
+        method: 'POST',
+        headers: headers('student-user'),
+        body: JSON.stringify({
+          content: '我的答案',
+          fileIds: ['file-a', ' file-b ', ''],
+        }),
+      },
+    );
+    expect(response.status).toBe(201);
+    expect(service.submitAssignment).toHaveBeenCalledWith(
+      'student-user',
+      7,
+      '我的答案',
+      ['file-a', 'file-b'],
+    );
+  });
+
+  it('lets only an instructor manage lesson materials', async () => {
+    const router = await createRouter(service);
+    const denied = await router.request('/training/sessions/3/materials', {
+      method: 'POST',
+      headers: headers('student-user'),
+      body: JSON.stringify({ files: [{ fileId: 'file-a' }] }),
+    });
+    expect(denied.status).toBe(403);
+    expect(service.addSessionMaterials).not.toHaveBeenCalled();
+
+    const allowed = await router.request('/training/sessions/3/materials', {
+      method: 'POST',
+      headers: headers('instructor-user'),
+      body: JSON.stringify({ files: [{ fileId: 'file-a', title: '课件' }] }),
+    });
+    expect(allowed.status).toBe(201);
+    expect(service.addSessionMaterials).toHaveBeenCalledWith(
+      expect.objectContaining({ userId: 'instructor-user' }),
+      3,
+      [{ fileId: 'file-a', title: '课件' }],
+    );
+  });
+
+  it('rejects a material request with no usable file id', async () => {
+    const router = await createRouter(service);
+    const response = await router.request('/training/sessions/3/materials', {
+      method: 'POST',
+      headers: headers('instructor-user'),
+      body: JSON.stringify({ files: [{ title: '缺少文件' }] }),
+    });
+    expect(response.status).toBe(400);
+    expect(service.addSessionMaterials).not.toHaveBeenCalled();
+  });
+
+  it('removes a material for the owning instructor', async () => {
+    const router = await createRouter(service);
+    const response = await router.request('/training/materials/9', {
+      method: 'DELETE',
+      headers: headers('instructor-user'),
+    });
+    expect(response.status).toBe(200);
+    expect(service.removeSessionMaterial).toHaveBeenCalledWith(
+      expect.objectContaining({ userId: 'instructor-user' }),
+      9,
     );
   });
 

@@ -7,10 +7,16 @@ import sqlite from '@nocobase/db-sqlite';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import migration from '../../database/main/migrations/202609190001_create_training_tables.js';
+import fileMigration from '../../database/main/migrations/202609190003_create_training_files.js';
 import { createTrainingService } from '../../server/providers/training.js';
 import type { TrainingViewer } from '../../server/providers/training.js';
 
 const HOUR = 3600_000;
+
+// Deterministic 36-character ids so a file row can be inserted directly.
+const FILE_A = '11111111-1111-1111-1111-111111111111';
+const FILE_B = '22222222-2222-2222-2222-222222222222';
+const FILE_C = '33333333-3333-3333-3333-333333333333';
 
 const admin: TrainingViewer = {
   userId: 'admin-1',
@@ -65,6 +71,7 @@ describe('training service', () => {
       },
     };
     await migration.up(context);
+    await fileMigration.up(context);
     await connection.builder.createCollection('user', (collection) => {
       collection.string('id', { length: 64 }).notNull().primary();
       collection.string('name', { length: 255 }).notNull();
@@ -372,5 +379,149 @@ describe('training service', () => {
     expect(after.roster.map((item) => item.studentId)).not.toContain(
       'student-9',
     );
+  });
+
+  async function addFile(input: {
+    readonly id: string;
+    readonly uploadedById: string;
+    readonly filename?: string;
+    readonly ext?: string;
+    readonly mimeType?: string;
+  }): Promise<string> {
+    const now = new Date();
+    const ext = input.ext ?? 'txt';
+    await database
+      .connection()
+      .query.insertInto('trainingFiles')
+      .values({
+        id: input.id,
+        disk: 'local',
+        key: `test/${input.id}.${ext}`,
+        filename: input.filename ?? `${input.id}.${ext}`,
+        ext,
+        mimeType: input.mimeType ?? 'text/plain',
+        size: 12,
+        uploadedById: input.uploadedById,
+        createdAt: now,
+        updatedAt: now,
+      })
+      .execute();
+    return input.id;
+  }
+
+  it('attaches courseware to a session and lets only its owner manage it', async () => {
+    const fileId = await addFile({ id: FILE_A, uploadedById: 'instructor-1' });
+    const materials = await service().addSessionMaterials(instructor, 1, [
+      { fileId, title: '第一课课件' },
+    ]);
+    expect(materials).toHaveLength(1);
+    expect(materials[0]?.title).toBe('第一课课件');
+    expect(materials[0]?.contentUrl).toBe(`/uploads/training/${fileId}.txt`);
+
+    const studentView = await service().getSessionDetail(student, 1);
+    expect(studentView.materials.map((item) => item.title)).toEqual([
+      '第一课课件',
+    ]);
+
+    const ownFile = await addFile({ id: FILE_B, uploadedById: 'student-1' });
+    await expect(
+      service().addSessionMaterials(student, 1, [{ fileId: ownFile }]),
+    ).rejects.toMatchObject({ code: 'NOT_OWNER' });
+
+    const otherFile = await addFile({
+      id: FILE_C,
+      uploadedById: 'instructor-2',
+    });
+    await expect(
+      service().addSessionMaterials(otherInstructor, 1, [
+        { fileId: otherFile },
+      ]),
+    ).rejects.toMatchObject({ code: 'NOT_OWNER' });
+
+    await service().removeSessionMaterial(instructor, materials[0]!.materialId);
+    const after = await service().getSessionDetail(student, 1);
+    expect(after.materials).toHaveLength(0);
+  });
+
+  it('resolves file access through the lesson and submission it belongs to', async () => {
+    const materialFile = await addFile({
+      id: FILE_A,
+      uploadedById: 'instructor-1',
+    });
+    await service().addSessionMaterials(instructor, 1, [
+      { fileId: materialFile },
+    ]);
+    expect(await service().canAccessFile(student, materialFile)).toBe(true);
+    expect(await service().canAccessFile(outsider, materialFile)).toBe(false);
+    expect(await service().canAccessFile(admin, materialFile)).toBe(true);
+    expect(await service().canAccessFile(otherInstructor, materialFile)).toBe(
+      false,
+    );
+
+    const submissionFile = await addFile({
+      id: FILE_B,
+      uploadedById: 'student-1',
+    });
+    const submission = await service().submitAssignment(
+      'student-1',
+      2,
+      '答案',
+      [submissionFile],
+    );
+    expect(submission.files).toHaveLength(1);
+    const attachmentId = submission.files[0]!.id;
+    expect(await service().canAccessFile(student, attachmentId)).toBe(true);
+    expect(await service().canAccessFile(instructor, attachmentId)).toBe(true);
+    expect(await service().canAccessFile(otherInstructor, attachmentId)).toBe(
+      false,
+    );
+    expect(await service().canAccessFile(outsider, attachmentId)).toBe(false);
+
+    const orphan = await addFile({ id: FILE_C, uploadedById: 'someone-else' });
+    expect(await service().canAccessFile(student, orphan)).toBe(false);
+  });
+
+  it('rejects another user file and reusing an attached file', async () => {
+    const stolen = await addFile({ id: FILE_A, uploadedById: 'student-2' });
+    await expect(
+      service().submitAssignment('student-1', 2, '答案', [stolen]),
+    ).rejects.toMatchObject({ code: 'FILE_NOT_OWNED' });
+
+    const mine = await addFile({ id: FILE_B, uploadedById: 'student-1' });
+    await service().submitAssignment('student-1', 2, '答案', [mine]);
+    await expect(
+      service().addSessionMaterials(admin, 1, [{ fileId: mine }]),
+    ).rejects.toMatchObject({ code: 'FILE_ALREADY_ATTACHED' });
+  });
+
+  it('stores an instructor annotation with the review round', async () => {
+    const submission = await service().submitAssignment(
+      'student-1',
+      2,
+      '待评阅',
+    );
+    const annotation = await addFile({
+      id: FILE_A,
+      uploadedById: 'instructor-1',
+      filename: '批注.pdf',
+      ext: 'pdf',
+      mimeType: 'application/pdf',
+    });
+    const reviewed = await service().reviewSubmission(
+      instructor,
+      submission.id,
+      {
+        decision: 'returned',
+        feedback: '请补充',
+        fileIds: [annotation],
+      },
+    );
+    expect(reviewed.reviews).toHaveLength(1);
+    expect(reviewed.reviews[0]?.files[0]?.filename).toBe('批注.pdf');
+    // The student's own attachments and the instructor's annotation stay apart.
+    expect(reviewed.files).toHaveLength(0);
+
+    expect(await service().canAccessFile(student, annotation)).toBe(true);
+    expect(await service().canAccessFile(outsider, annotation)).toBe(false);
   });
 });

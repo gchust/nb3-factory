@@ -3,6 +3,7 @@ import sqlite from '@nocobase/db-sqlite';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import migration from '../../database/main/migrations/202609190001_create_training_tables.js';
+import fileMigration from '../../database/main/migrations/202609190003_create_training_files.js';
 import type { MigrationContext } from '@nocobase/db';
 
 const TRAINING_TABLES = [
@@ -12,6 +13,10 @@ const TRAINING_TABLES = [
   'training_assignments',
   'training_submissions',
   'training_submission_reviews',
+  'training_files',
+  'training_materials',
+  'training_submission_files',
+  'training_review_files',
 ];
 
 describe('training schema migration', () => {
@@ -53,6 +58,7 @@ describe('training schema migration', () => {
 
   it('creates every training table with the declared columns', async () => {
     await migration.up(context());
+    await fileMigration.up(context());
 
     const names = await tableNames();
     for (const table of TRAINING_TABLES) {
@@ -93,8 +99,49 @@ describe('training schema migration', () => {
     ).toBe(true);
   });
 
+  it('creates the file and attachment tables the File Repository needs', async () => {
+    await migration.up(context());
+    await fileMigration.up(context());
+
+    const files = await database
+      .connection()
+      .schemaInspector.getPhysicalCollection({ tableName: 'training_files' });
+    expect(files).toBeDefined();
+    const fileColumns = files?.columns.map((column) => column.columnName) ?? [];
+    // The File Repository contract: every one of these columns must exist.
+    expect(fileColumns).toEqual(
+      expect.arrayContaining([
+        'id',
+        'disk',
+        'key',
+        'filename',
+        'ext',
+        'mime_type',
+        'size',
+        'uploaded_by_id',
+        'created_at',
+        'updated_at',
+      ]),
+    );
+
+    for (const table of [
+      'training_materials',
+      'training_submission_files',
+      'training_review_files',
+    ]) {
+      const link = await database
+        .connection()
+        .schemaInspector.getPhysicalCollection({ tableName: table });
+      expect(link?.columns.map((column) => column.columnName)).toEqual(
+        expect.arrayContaining(['id', 'file_id', 'created_at', 'updated_at']),
+      );
+    }
+  });
+
   it('drops every training table on rollback', async () => {
     await migration.up(context());
+    await fileMigration.up(context());
+    await fileMigration.down(context());
     await migration.down(context());
 
     const names = await tableNames();

@@ -14,6 +14,7 @@ import { Hono, type Context } from 'hono';
 import {
   TRAINING_ADMIN_ROLE,
   TRAINING_INSTRUCTOR_ROLE,
+  TRAINING_LEARNER_ROLE,
   TRAINING_STUDENT_ROLE,
   TrainingError,
   trainingServiceToken,
@@ -170,6 +171,7 @@ export const trainingRoutes: AppApiRouteContribution<Application> =
           viewer.userId,
           assignmentId,
           content,
+          stringArray(body.fileIds),
         );
         return context.json({ data }, 201);
       }),
@@ -197,8 +199,34 @@ export const trainingRoutes: AppApiRouteContribution<Application> =
           decision,
           score,
           feedback,
+          fileIds: stringArray(body.fileIds),
         });
         return context.json({ data });
+      }),
+    );
+
+    routes.post('/sessions/:sessionId/materials', (context) =>
+      handle(context, async () => {
+        const viewer = await viewerFor(context);
+        requireInstructor(viewer);
+        const sessionId = numericParam(context, 'sessionId');
+        const body = await readJson(context);
+        const data = await training.addSessionMaterials(
+          viewer,
+          sessionId,
+          materialInputs(body.files),
+        );
+        return context.json({ data }, 201);
+      }),
+    );
+
+    routes.delete('/materials/:materialId', (context) =>
+      handle(context, async () => {
+        const viewer = await viewerFor(context);
+        requireInstructor(viewer);
+        const materialId = numericParam(context, 'materialId');
+        await training.removeSessionMaterial(viewer, materialId);
+        return context.json({ data: { materialId } });
       }),
     );
 
@@ -375,7 +403,7 @@ async function handle(
   }
 }
 
-async function resolveViewer(
+export async function resolveViewer(
   authorization: AppAuthorization,
   userId: string,
 ): Promise<TrainingViewer> {
@@ -389,6 +417,18 @@ async function resolveViewer(
       )
       .map((assignment) => assignment.permissionSet),
   );
+  // A permission set assigned to the `authenticated` audience applies to every
+  // signed-in user. The learner set is how a self-registered account gets the
+  // student's read-only pages before an administrator grants a direct role.
+  const audienceRoles = new Set(
+    assignments
+      .filter(
+        (assignment) =>
+          assignment.subject.type === 'authenticated' &&
+          assignment.subject.id === '*',
+      )
+      .map((assignment) => assignment.permissionSet),
+  );
   // The built-in system administrator already administers every application
   // capability, so it is treated as the training administrator here. Without
   // this the maintainer account can sign in but sees only denial pages.
@@ -398,7 +438,10 @@ async function resolveViewer(
     userId,
     isAdmin,
     isInstructor: isAdmin || roles.has(TRAINING_INSTRUCTOR_ROLE),
-    isStudent: roles.has(TRAINING_STUDENT_ROLE),
+    isStudent:
+      roles.has(TRAINING_STUDENT_ROLE) ||
+      audienceRoles.has(TRAINING_STUDENT_ROLE) ||
+      audienceRoles.has(TRAINING_LEARNER_ROLE),
   };
 }
 
@@ -457,4 +500,48 @@ function optionalString(value: unknown): string | null {
   }
   const trimmed = value.trim();
   return trimmed ? trimmed : null;
+}
+
+/** Reads an optional list of file ids from a request body. */
+function stringArray(value: unknown): string[] {
+  if (value === undefined || value === null) return [];
+  if (!Array.isArray(value)) {
+    throw new TrainingError('VALIDATION', '文件列表无效');
+  }
+  const ids: string[] = [];
+  for (const item of value) {
+    if (typeof item !== 'string') {
+      throw new TrainingError('VALIDATION', '文件列表无效');
+    }
+    const trimmed = item.trim();
+    if (trimmed) ids.push(trimmed);
+  }
+  return ids;
+}
+
+/** Reads the courseware entries of a request body. */
+function materialInputs(
+  value: unknown,
+): readonly { fileId: string; title?: string | null }[] {
+  if (!Array.isArray(value)) {
+    throw new TrainingError('VALIDATION', '请提供资料列表');
+  }
+  return value.map((item) => {
+    if (!item || typeof item !== 'object' || Array.isArray(item)) {
+      throw new TrainingError('VALIDATION', '资料条目无效');
+    }
+    const record = item as Record<string, unknown>;
+    const fileId = record.fileId;
+    if (typeof fileId !== 'string' || !fileId.trim()) {
+      throw new TrainingError('VALIDATION', '资料缺少文件标识');
+    }
+    let title: string | null = null;
+    if (record.title !== undefined && record.title !== null) {
+      if (typeof record.title !== 'string') {
+        throw new TrainingError('VALIDATION', '资料标题无效');
+      }
+      title = record.title;
+    }
+    return { fileId: fileId.trim(), title };
+  });
 }

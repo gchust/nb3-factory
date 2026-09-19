@@ -13,6 +13,21 @@ import {
 export const TRAINING_ADMIN_ROLE = 'training-admin';
 export const TRAINING_INSTRUCTOR_ROLE = 'training-instructor';
 export const TRAINING_STUDENT_ROLE = 'training-student';
+/**
+ * Permission set granted to the `authenticated` audience so every signed-in
+ * user can browse the catalog and their own learning. A self-registered
+ * account holds this instead of a direct role.
+ */
+export const TRAINING_LEARNER_ROLE = 'training-learner';
+
+/** Client resource name of the File Repository exposure. */
+export const TRAINING_FILE_RESOURCE = 'trainingFiles';
+/** Public content path the File Repository exposure serves bytes under. */
+export const TRAINING_FILE_ACCESS_PATH = '/uploads/training';
+/** Largest single file the interface accepts, mirrored by the route limit. */
+export const TRAINING_FILE_MAX_SIZE = 5 * 1024 * 1024;
+/** Largest batch the interface accepts in one selection. */
+export const TRAINING_FILE_MAX_COUNT = 5;
 
 const COURSE_STATUSES = ['draft', 'published', 'archived'] as const;
 const SESSION_STATUSES = [
@@ -87,6 +102,25 @@ export interface LearningSession extends SessionSummary {
   readonly nextDueAt: string | null;
 }
 
+/** One stored file as the business API exposes it to the interface. */
+export interface FileAttachmentView {
+  readonly id: string;
+  readonly filename: string;
+  readonly ext: string;
+  readonly mimeType: string;
+  readonly size: number;
+  readonly contentUrl: string;
+  readonly uploadedById: string;
+  readonly createdAt: string;
+}
+
+/** A lesson courseware row: a file attached to a session with a display title. */
+export interface MaterialView extends FileAttachmentView {
+  readonly materialId: number;
+  readonly sessionId: number;
+  readonly title: string;
+}
+
 export interface SubmissionView {
   readonly id: number;
   readonly assignmentId: number;
@@ -103,6 +137,7 @@ export interface SubmissionView {
   readonly reviewedById: string | null;
   readonly reviewedAt: string | null;
   readonly reviews: readonly SubmissionReviewView[];
+  readonly files: readonly FileAttachmentView[];
 }
 
 export interface SubmissionReviewView {
@@ -114,6 +149,7 @@ export interface SubmissionReviewView {
   readonly reviewerId: string;
   readonly reviewerName: string;
   readonly createdAt: string;
+  readonly files: readonly FileAttachmentView[];
 }
 
 export interface AssignmentView {
@@ -135,6 +171,7 @@ export interface AssignmentView {
 export interface SessionDetail {
   readonly session: SessionSummary;
   readonly assignments: readonly AssignmentView[];
+  readonly materials: readonly MaterialView[];
   readonly roster: readonly {
     readonly studentId: string;
     readonly studentName: string;
@@ -203,6 +240,7 @@ export interface TrainingService {
     studentId: string,
     assignmentId: number,
     content: string,
+    fileIds?: readonly string[],
   ): Promise<SubmissionView>;
   reviewSubmission(
     viewer: TrainingViewer,
@@ -211,8 +249,26 @@ export interface TrainingService {
       decision: 'graded' | 'returned';
       score?: number | null;
       feedback?: string | null;
+      fileIds?: readonly string[];
     },
   ): Promise<SubmissionView>;
+  addSessionMaterials(
+    viewer: TrainingViewer,
+    sessionId: number,
+    inputs: readonly { fileId: string; title?: string | null }[],
+  ): Promise<readonly MaterialView[]>;
+  removeSessionMaterial(
+    viewer: TrainingViewer,
+    materialId: number,
+  ): Promise<void>;
+  /**
+   * Whether the caller may read the stored bytes of one file.
+   *
+   * A file is readable by its uploader and by anyone with access to the lesson
+   * or submission it is attached to. Used by the content-route guard, so an
+   * address alone is never enough.
+   */
+  canAccessFile(viewer: TrainingViewer, fileId: string): Promise<boolean>;
   listGradingTodo(viewer: TrainingViewer): Promise<readonly GradingTodoItem[]>;
   completionStats(viewer: TrainingViewer): Promise<readonly CompletionStat[]>;
   listUsersByRole(role: string): Promise<readonly TrainingUserOption[]>;
@@ -292,19 +348,47 @@ export default class TrainingProvider extends ServiceProvider<Application> {
   public override register(): void {
     this.app.container.singleton(trainingServiceToken, () => {
       const database = this.app.container.resolve(databaseManagerToken);
-      return createTrainingService(database);
+      return createTrainingService(database, {
+        accessPath: TRAINING_FILE_ACCESS_PATH,
+        publicBasePath: this.app.publicBasePath,
+      });
     });
   }
 }
 
+export interface TrainingServiceOptions {
+  /** Public content path of the File Repository exposure. */
+  readonly accessPath?: string;
+  /** Deployment base path prepended to a stored file's content URL. */
+  readonly publicBasePath?: string;
+}
+
 export function createTrainingService(
   database: DatabaseManager,
+  options: TrainingServiceOptions = {},
 ): TrainingService {
-  return new TrainingServiceImpl(database);
+  return new TrainingServiceImpl(database, {
+    accessPath: options.accessPath ?? TRAINING_FILE_ACCESS_PATH,
+    publicBasePath: normalizeBasePath(options.publicBasePath ?? ''),
+  });
+}
+
+/** Trims a base path to `''` or `/segment/...` so it can prefix a content URL. */
+function normalizeBasePath(value: string): string {
+  const normalized = value.trim().replace(/^\/+|\/+$/g, '');
+  return normalized ? `/${normalized}` : '';
+}
+
+interface ResolvedTrainingServiceOptions {
+  readonly accessPath: string;
+  readonly publicBasePath: string;
 }
 
 class TrainingServiceImpl implements TrainingService {
-  constructor(private readonly database: DatabaseManager) {}
+  constructor(
+    private readonly database: DatabaseManager,
+    private readonly options: ResolvedTrainingServiceOptions,
+  ) {}
 
   private get query(): QueryAdapter {
     return this.database.query();
@@ -475,7 +559,12 @@ class TrainingServiceImpl implements TrainingService {
 
     const roster = canSeeAll ? await this.loadRoster(sessionId) : [];
 
-    return { session, assignments, roster };
+    return {
+      session,
+      assignments,
+      materials: await this.loadSessionMaterials(sessionId),
+      roster,
+    };
   }
 
   public async getAssignmentDetail(
@@ -564,6 +653,7 @@ class TrainingServiceImpl implements TrainingService {
     studentId: string,
     assignmentId: number,
     content: string,
+    fileIds: readonly string[] = [],
   ): Promise<SubmissionView> {
     const trimmed = content?.trim() ?? '';
     if (!trimmed) {
@@ -580,6 +670,7 @@ class TrainingServiceImpl implements TrainingService {
     if (!(await this.isEnrolled(sessionId, studentId))) {
       throw new TrainingError('NOT_ENROLLED', '您未报名该班次', 403);
     }
+    await this.assertOwnedUnlinkedFiles(fileIds, studentId);
 
     const existing = await this.query
       .selectFrom('trainingSubmissions')
@@ -610,24 +701,41 @@ class TrainingServiceImpl implements TrainingService {
     const now = new Date();
     const isLate = now.getTime() > asDate(assignment.dueAt).getTime();
     const attempt = current ? num(current.attempt) + 1 : 1;
-    await this.query
-      .insertInto('trainingSubmissions')
-      .values({
-        assignmentId,
-        studentId,
-        attempt,
-        content: trimmed,
-        status: 'submitted',
-        isLate,
-        submittedAt: now,
-        score: null,
-        feedback: null,
-        reviewedById: null,
-        reviewedAt: null,
-        createdAt: now,
-        updatedAt: now,
-      })
-      .execute();
+    await this.database.transaction(async (connection) => {
+      await connection.query
+        .insertInto('trainingSubmissions')
+        .values({
+          assignmentId,
+          studentId,
+          attempt,
+          content: trimmed,
+          status: 'submitted',
+          isLate,
+          submittedAt: now,
+          score: null,
+          feedback: null,
+          reviewedById: null,
+          reviewedAt: null,
+          createdAt: now,
+          updatedAt: now,
+        })
+        .execute();
+      const created = await connection.query
+        .selectFrom('trainingSubmissions')
+        .select('id')
+        .where('assignmentId', '=', assignmentId)
+        .where('studentId', '=', studentId)
+        .where('attempt', '=', attempt)
+        .executeTakeFirstOrThrow();
+      await this.linkFiles(
+        connection.query,
+        'trainingSubmissionFiles',
+        'submissionId',
+        num(created.id),
+        fileIds,
+        now,
+      );
+    });
 
     const created = await this.query
       .selectFrom('trainingSubmissions')
@@ -646,6 +754,7 @@ class TrainingServiceImpl implements TrainingService {
       decision: 'graded' | 'returned';
       score?: number | null;
       feedback?: string | null;
+      fileIds?: readonly string[];
     },
   ): Promise<SubmissionView> {
     if (input.decision !== 'graded' && input.decision !== 'returned') {
@@ -719,6 +828,10 @@ class TrainingServiceImpl implements TrainingService {
     if (input.decision === 'returned' && !feedback) {
       throw new TrainingError('FEEDBACK_REQUIRED', '退回重做必须填写评语');
     }
+    const fileIds = input.fileIds ?? [];
+    await this.assertOwnedUnlinkedFiles(fileIds, viewer.userId, {
+      allowAdmin: viewer.isAdmin,
+    });
 
     const now = new Date();
     await this.database.transaction(async (connection) => {
@@ -749,6 +862,23 @@ class TrainingServiceImpl implements TrainingService {
           updatedAt: now,
         })
         .execute();
+      if (fileIds.length) {
+        const review = await connection.query
+          .selectFrom('trainingSubmissionReviews')
+          .select('id')
+          .where('submissionId', '=', submissionId)
+          .where('attempt', '=', num(submission.attempt))
+          .orderBy('id', 'desc')
+          .executeTakeFirstOrThrow();
+        await this.linkFiles(
+          connection.query,
+          'trainingReviewFiles',
+          'reviewId',
+          num(review.id),
+          fileIds,
+          now,
+        );
+      }
     });
 
     const updated = await this.query
@@ -1358,6 +1488,346 @@ class TrainingServiceImpl implements TrainingService {
     return this.toAssignmentView(updated, null);
   }
 
+  public async addSessionMaterials(
+    viewer: TrainingViewer,
+    sessionId: number,
+    inputs: readonly { fileId: string; title?: string | null }[],
+  ): Promise<readonly MaterialView[]> {
+    const session = await this.findSessionRow(sessionId);
+    if (!session) {
+      throw new TrainingError('NOT_FOUND', '班次不存在', 404);
+    }
+    this.assertCanManageSession(viewer, session);
+    const wanted = new Map<string, string | null>();
+    for (const input of inputs) {
+      const fileId = input.fileId?.trim();
+      if (fileId) wanted.set(fileId, input.title ?? null);
+    }
+    if (wanted.size === 0) {
+      throw new TrainingError('VALIDATION', '请先选择要上传的文件');
+    }
+    if (wanted.size > TRAINING_FILE_MAX_COUNT) {
+      throw new TrainingError(
+        'TOO_MANY_FILES',
+        `一次最多上传 ${TRAINING_FILE_MAX_COUNT} 个文件`,
+      );
+    }
+    const files = await this.loadFileRows([...wanted.keys()]);
+    const now = new Date();
+    for (const [fileId, title] of wanted) {
+      const file = files.get(fileId);
+      if (!file) {
+        throw new TrainingError('FILE_NOT_FOUND', '文件不存在', 404);
+      }
+      if (!viewer.isAdmin && text(file.uploadedById) !== viewer.userId) {
+        throw new TrainingError(
+          'FILE_NOT_OWNED',
+          '只能使用自己上传的文件',
+          403,
+        );
+      }
+      const existing = await this.query
+        .selectFrom('trainingMaterials')
+        .select('id')
+        .where('sessionId', '=', sessionId)
+        .where('fileId', '=', fileId)
+        .executeTakeFirst();
+      if (existing) continue;
+      if (await this.isFileLinked(fileId)) {
+        throw new TrainingError(
+          'FILE_ALREADY_ATTACHED',
+          '该文件已附加到其他记录',
+          409,
+        );
+      }
+      await this.query
+        .insertInto('trainingMaterials')
+        .values({
+          sessionId,
+          fileId,
+          title: title?.trim() || text(file.filename),
+          uploadedById: viewer.userId,
+          createdAt: now,
+          updatedAt: now,
+        })
+        .execute();
+    }
+    return this.loadSessionMaterials(sessionId);
+  }
+
+  public async removeSessionMaterial(
+    viewer: TrainingViewer,
+    materialId: number,
+  ): Promise<void> {
+    const material = await this.query
+      .selectFrom('trainingMaterials')
+      .selectAll()
+      .where('id', '=', materialId)
+      .executeTakeFirst();
+    if (!material) {
+      throw new TrainingError('NOT_FOUND', '资料不存在', 404);
+    }
+    const session = await this.findSessionRow(num(material.sessionId));
+    if (!session) {
+      throw new TrainingError('NOT_FOUND', '班次不存在', 404);
+    }
+    this.assertCanManageSession(viewer, session);
+    const fileId = text(material.fileId);
+    await this.database.transaction(async (connection) => {
+      await connection.query
+        .deleteFrom('trainingMaterials')
+        .where('id', '=', materialId)
+        .execute();
+      await connection.query
+        .deleteFrom('trainingFiles')
+        .where('id', '=', fileId)
+        .execute();
+    });
+  }
+
+  public async canAccessFile(
+    viewer: TrainingViewer,
+    fileId: string,
+  ): Promise<boolean> {
+    const file = await this.query
+      .selectFrom('trainingFiles')
+      .select('uploadedById')
+      .where('id', '=', fileId)
+      .executeTakeFirst();
+    if (!file) return false;
+    if (text(file.uploadedById) === viewer.userId) return true;
+
+    const material = await this.query
+      .selectFrom('trainingMaterials')
+      .select('sessionId')
+      .where('fileId', '=', fileId)
+      .executeTakeFirst();
+    if (material) return this.canAccessSession(viewer, num(material.sessionId));
+
+    const submissionFile = await this.query
+      .selectFrom('trainingSubmissionFiles')
+      .select('submissionId')
+      .where('fileId', '=', fileId)
+      .executeTakeFirst();
+    if (submissionFile) {
+      return this.canAccessSubmission(viewer, num(submissionFile.submissionId));
+    }
+
+    const reviewFile = await this.query
+      .selectFrom('trainingReviewFiles')
+      .select('reviewId')
+      .where('fileId', '=', fileId)
+      .executeTakeFirst();
+    if (reviewFile) {
+      const review = await this.query
+        .selectFrom('trainingSubmissionReviews')
+        .select('submissionId')
+        .where('id', '=', num(reviewFile.reviewId))
+        .executeTakeFirst();
+      if (!review) return false;
+      return this.canAccessSubmission(viewer, num(review.submissionId));
+    }
+    return false;
+  }
+
+  private async canAccessSession(
+    viewer: TrainingViewer,
+    sessionId: number,
+  ): Promise<boolean> {
+    const session = await this.findSessionRow(sessionId);
+    if (!session) return false;
+    if (viewer.isAdmin) return true;
+    if (viewer.isInstructor && text(session.instructorId) === viewer.userId) {
+      return true;
+    }
+    return this.isEnrolled(sessionId, viewer.userId);
+  }
+
+  private async canAccessSubmission(
+    viewer: TrainingViewer,
+    submissionId: number,
+  ): Promise<boolean> {
+    const submission = await this.query
+      .selectFrom('trainingSubmissions')
+      .select(['studentId', 'assignmentId'])
+      .where('id', '=', submissionId)
+      .executeTakeFirst();
+    if (!submission) return false;
+    // A submission and the annotations on it belong to their author and to
+    // the instructor who grades them. Being enrolled in the same session is
+    // not enough: a classmate must not read a peer's work even from a direct
+    // address.
+    if (text(submission.studentId) === viewer.userId) return true;
+    if (viewer.isAdmin) return true;
+    if (!viewer.isInstructor) return false;
+    const assignment = await this.findAssignmentRow(
+      num(submission.assignmentId),
+    );
+    if (!assignment) return false;
+    const session = await this.findSessionRow(num(assignment.sessionId));
+    if (!session) return false;
+    return text(session.instructorId) === viewer.userId;
+  }
+
+  private async loadSessionMaterials(
+    sessionId: number,
+  ): Promise<readonly MaterialView[]> {
+    const rows = await this.query
+      .selectFrom('trainingMaterials')
+      .selectAll()
+      .where('sessionId', '=', sessionId)
+      .orderBy('id', 'asc')
+      .execute();
+    if (rows.length === 0) return [];
+    const files = await this.loadFileRows(rows.map((row) => text(row.fileId)));
+    const materials: MaterialView[] = [];
+    for (const row of rows) {
+      const file = files.get(text(row.fileId));
+      if (!file) continue;
+      materials.push({
+        ...this.toAttachmentView(file),
+        materialId: num(row.id),
+        sessionId,
+        title: text(row.title),
+      });
+    }
+    return materials;
+  }
+
+  private async loadFileRows(
+    ids: readonly string[],
+  ): Promise<Map<string, Record<string, unknown>>> {
+    const unique = [...new Set(ids.filter(Boolean))];
+    if (unique.length === 0) return new Map();
+    const rows = await this.query
+      .selectFrom('trainingFiles')
+      .selectAll()
+      .where('id', 'in', unique)
+      .execute();
+    return new Map(rows.map((row) => [text(row.id), row]));
+  }
+
+  private async loadFilesGrouped(
+    linkTable: string,
+    parentColumn: string,
+    parentIds: readonly number[],
+  ): Promise<Map<number, FileAttachmentView[]>> {
+    const grouped = new Map<number, FileAttachmentView[]>();
+    if (parentIds.length === 0) return grouped;
+    const links = await this.query
+      .selectFrom(linkTable)
+      .selectAll()
+      .where(parentColumn, 'in', [...parentIds])
+      .execute();
+    if (links.length === 0) return grouped;
+    const files = await this.loadFileRows(
+      links.map((link) => text(link.fileId)),
+    );
+    for (const link of links) {
+      const file = files.get(text(link.fileId));
+      if (!file) continue;
+      const parentId = num(link[parentColumn]);
+      const list = grouped.get(parentId) ?? [];
+      list.push(this.toAttachmentView(file));
+      grouped.set(parentId, list);
+    }
+    return grouped;
+  }
+
+  private toAttachmentView(row: Record<string, unknown>): FileAttachmentView {
+    const id = text(row.id);
+    const ext = text(row.ext);
+    return {
+      id,
+      filename: text(row.filename),
+      ext,
+      mimeType: text(row.mimeType),
+      size: num(row.size),
+      contentUrl: this.contentUrlFor(id, ext),
+      uploadedById: text(row.uploadedById),
+      createdAt: iso(row.createdAt),
+    };
+  }
+
+  private contentUrlFor(id: string, ext: string): string {
+    const suffix = ext ? `.${ext}` : '';
+    return `${this.options.publicBasePath}${this.options.accessPath}/${id}${suffix}`;
+  }
+
+  /**
+   * Guards the links a caller may create: every file must exist, belong to the
+   * caller, and not already be attached to another record. Enforcing this
+   * before the write keeps an offender from creating a cross-record link that
+   * would later leak another student's file.
+   */
+  private async assertOwnedUnlinkedFiles(
+    fileIds: readonly string[],
+    ownerId: string,
+    options?: { readonly allowAdmin?: boolean },
+  ): Promise<void> {
+    const unique = [...new Set(fileIds.filter(Boolean))];
+    if (unique.length === 0) return;
+    if (unique.length > TRAINING_FILE_MAX_COUNT) {
+      throw new TrainingError(
+        'TOO_MANY_FILES',
+        `一次最多附加 ${TRAINING_FILE_MAX_COUNT} 个文件`,
+      );
+    }
+    const files = await this.loadFileRows(unique);
+    for (const fileId of unique) {
+      const file = files.get(fileId);
+      if (!file) {
+        throw new TrainingError('FILE_NOT_FOUND', '文件不存在', 404);
+      }
+      if (!options?.allowAdmin && text(file.uploadedById) !== ownerId) {
+        throw new TrainingError(
+          'FILE_NOT_OWNED',
+          '只能使用自己上传的文件',
+          403,
+        );
+      }
+      if (await this.isFileLinked(fileId)) {
+        throw new TrainingError(
+          'FILE_ALREADY_ATTACHED',
+          '该文件已附加到其他记录',
+          409,
+        );
+      }
+    }
+  }
+
+  private async isFileLinked(fileId: string): Promise<boolean> {
+    for (const [table, column] of [
+      ['trainingMaterials', 'fileId'],
+      ['trainingSubmissionFiles', 'fileId'],
+      ['trainingReviewFiles', 'fileId'],
+    ] as const) {
+      const row = await this.query
+        .selectFrom(table)
+        .select('id')
+        .where(column, '=', fileId)
+        .executeTakeFirst();
+      if (row) return true;
+    }
+    return false;
+  }
+
+  private async linkFiles(
+    query: QueryAdapter,
+    table: string,
+    column: string,
+    parentId: number,
+    fileIds: readonly string[],
+    now: Date,
+  ): Promise<void> {
+    for (const fileId of [...new Set(fileIds.filter(Boolean))]) {
+      await query
+        .insertInto(table)
+        .values({ [column]: parentId, fileId, createdAt: now, updatedAt: now })
+        .execute();
+    }
+  }
+
   private assertCanManageSession(
     viewer: TrainingViewer,
     session: Record<string, unknown>,
@@ -1585,6 +2055,11 @@ class TrainingServiceImpl implements TrainingService {
       const reviewerNames = await this.loadUserNames(
         reviewRows.map((review) => text(review.reviewerId)),
       );
+      const reviewFiles = await this.loadFilesGrouped(
+        'trainingReviewFiles',
+        'reviewId',
+        reviewRows.map((review) => num(review.id)),
+      );
       reviews = reviewRows.map((review) => ({
         id: num(review.id),
         attempt: num(review.attempt),
@@ -1595,6 +2070,7 @@ class TrainingServiceImpl implements TrainingService {
         reviewerName:
           reviewerNames.get(text(review.reviewerId)) ?? text(review.reviewerId),
         createdAt: iso(review.createdAt),
+        files: reviewFiles.get(num(review.id)) ?? [],
       }));
     }
     const assignment = await this.query
@@ -1602,6 +2078,11 @@ class TrainingServiceImpl implements TrainingService {
       .select('maxScore')
       .where('id', '=', num(row.assignmentId))
       .executeTakeFirst();
+    const files = (
+      await this.loadFilesGrouped('trainingSubmissionFiles', 'submissionId', [
+        num(row.id),
+      ])
+    ).get(num(row.id));
     return {
       id: num(row.id),
       assignmentId: num(row.assignmentId),
@@ -1618,6 +2099,7 @@ class TrainingServiceImpl implements TrainingService {
       reviewedById: row.reviewedById ? text(row.reviewedById) : null,
       reviewedAt: row.reviewedAt ? iso(row.reviewedAt) : null,
       reviews,
+      files: files ?? [],
     };
   }
 

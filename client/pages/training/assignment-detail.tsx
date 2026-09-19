@@ -16,6 +16,7 @@ import {
   useTrainingQuery,
   useTrainingViewer,
 } from './client.js';
+import { AttachmentList, AttachmentUploader } from './files.js';
 import {
   DeniedBlock,
   EmptyBlock,
@@ -31,6 +32,8 @@ import {
   formatDateTime,
   isOverdue,
   type AssignmentDetail,
+  type FileAttachment,
+  type SubmissionReviewView,
   type SubmissionView,
 } from './types.js';
 
@@ -144,6 +147,10 @@ function StudentPanel({
   const { t, i18n } = useTranslation();
   const action = useTrainingAction();
   const [content, setContent] = useState('');
+  const [pendingFiles, setPendingFiles] = useState<readonly FileAttachment[]>(
+    [],
+  );
+  const [uploadBusy, setUploadBusy] = useState(false);
 
   const attempts = [...detail.submissions]
     .filter((submission) => submission.studentId === studentId)
@@ -159,11 +166,15 @@ function StudentPanel({
       client.request({
         path: `training/assignments/${detail.assignment.id}/submissions`,
         method: 'POST',
-        json: { content },
+        json: {
+          content,
+          fileIds: pendingFiles.map((file) => file.id),
+        },
       }),
     );
     if (result !== undefined) {
       setContent('');
+      setPendingFiles([]);
       onChanged();
     }
   };
@@ -226,25 +237,43 @@ function StudentPanel({
               <p className='text-sm whitespace-pre-wrap text-muted-foreground'>
                 {submission.content}
               </p>
+              {submission.files.length > 0 ? (
+                <div className='space-y-1'>
+                  <p className='text-xs font-medium text-muted-foreground'>
+                    {t('training.files.submissionGroup')}
+                  </p>
+                  <AttachmentList files={submission.files} />
+                </div>
+              ) : null}
               {submission.feedback ? (
                 <p className='rounded-md bg-muted/60 p-3 text-sm'>
                   {t('training.submission.feedback')}: {submission.feedback}
                 </p>
               ) : null}
               {submission.reviews.length > 0 ? (
-                <ul className='space-y-1 text-xs text-muted-foreground'>
+                <ul className='space-y-2 text-xs text-muted-foreground'>
                   {submission.reviews.map((review) => (
-                    <li key={review.id}>
-                      {review.decision === 'graded'
-                        ? t('training.review.gradedBy', {
-                            name: review.reviewerName,
-                            score: review.score ?? '—',
-                          })
-                        : t('training.review.returnedBy', {
-                            name: review.reviewerName,
-                          })}
-                      {' · '}
-                      {review.feedback}
+                    <li key={review.id} className='space-y-1'>
+                      <p>
+                        {review.decision === 'graded'
+                          ? t('training.review.gradedBy', {
+                              name: review.reviewerName,
+                              score: review.score ?? '—',
+                            })
+                          : t('training.review.returnedBy', {
+                              name: review.reviewerName,
+                            })}
+                        {' · '}
+                        {review.feedback}
+                      </p>
+                      {review.files.length > 0 ? (
+                        <div className='space-y-1'>
+                          <p className='font-medium'>
+                            {t('training.files.reviewGroup')}
+                          </p>
+                          <AttachmentList files={review.files} />
+                        </div>
+                      ) : null}
                     </li>
                   ))}
                 </ul>
@@ -287,6 +316,16 @@ function StudentPanel({
               placeholder={t('training.submission.contentPlaceholder')}
               onChange={(event) => setContent(event.target.value)}
             />
+            <div className='space-y-1'>
+              <p className='text-xs font-medium text-muted-foreground'>
+                {t('training.files.submissionGroup')}
+              </p>
+              <AttachmentUploader
+                value={pendingFiles}
+                onChange={setPendingFiles}
+                onBusyChange={setUploadBusy}
+              />
+            </div>
             {isOverdue(detail.assignment.dueAt) ? (
               <p className='text-xs text-destructive'>
                 {t('training.submission.lateWarning')}
@@ -298,7 +337,7 @@ function StudentPanel({
               </p>
             ) : null}
             <Button
-              disabled={action.pending || !content.trim()}
+              disabled={action.pending || uploadBusy || !content.trim()}
               onClick={() => void submit()}
             >
               <Send className='size-4' aria-hidden />
@@ -367,6 +406,10 @@ function StudentReviewCard({
   const latest = ordered[ordered.length - 1];
   const [score, setScore] = useState('');
   const [feedback, setFeedback] = useState('');
+  const [pendingFiles, setPendingFiles] = useState<readonly FileAttachment[]>(
+    [],
+  );
+  const [uploadBusy, setUploadBusy] = useState(false);
 
   const review = async (decision: 'graded' | 'returned'): Promise<void> => {
     const result = await action.run((client) =>
@@ -377,12 +420,14 @@ function StudentReviewCard({
           decision,
           score: decision === 'graded' ? Number(score) : null,
           feedback,
+          fileIds: pendingFiles.map((file) => file.id),
         },
       }),
     );
     if (result !== undefined) {
       setScore('');
       setFeedback('');
+      setPendingFiles([]);
       onChanged();
     }
   };
@@ -414,6 +459,14 @@ function StudentReviewCard({
       <p className='text-sm whitespace-pre-wrap text-muted-foreground'>
         {latest.content}
       </p>
+      {latest.files.length > 0 ? (
+        <div className='space-y-1'>
+          <p className='text-xs font-medium text-muted-foreground'>
+            {t('training.files.submissionGroup')}
+          </p>
+          <AttachmentList files={latest.files} />
+        </div>
+      ) : null}
       {ordered.length > 1 ? (
         <ul className='space-y-1 text-xs text-muted-foreground'>
           {ordered.slice(0, -1).map((submission) => (
@@ -454,6 +507,16 @@ function StudentReviewCard({
               onChange={(event) => setFeedback(event.target.value)}
             />
           </div>
+          <div className='space-y-1'>
+            <p className='text-xs font-medium text-muted-foreground'>
+              {t('training.files.reviewGroup')}
+            </p>
+            <AttachmentUploader
+              value={pendingFiles}
+              onChange={setPendingFiles}
+              onBusyChange={setUploadBusy}
+            />
+          </div>
           {action.error ? (
             <p className='text-sm text-destructive' role='alert'>
               {action.error}
@@ -461,14 +524,14 @@ function StudentReviewCard({
           ) : null}
           <div className='flex gap-2'>
             <Button
-              disabled={action.pending || score === ''}
+              disabled={action.pending || uploadBusy || score === ''}
               onClick={() => void review('graded')}
             >
               {t('training.review.grade')}
             </Button>
             <Button
               variant='outline'
-              disabled={action.pending || !feedback.trim()}
+              disabled={action.pending || uploadBusy || !feedback.trim()}
               onClick={() => void review('returned')}
             >
               <Undo2 className='size-4' aria-hidden />
@@ -477,7 +540,7 @@ function StudentReviewCard({
           </div>
         </div>
       ) : (
-        <div className='space-y-1 border-t border-border pt-3 text-sm'>
+        <div className='space-y-2 border-t border-border pt-3 text-sm'>
           {latest.score !== null ? (
             <p>
               {t('training.submission.score', {
@@ -492,25 +555,50 @@ function StudentReviewCard({
             </p>
           ) : null}
           {latest.reviews.length > 0 ? (
-            <ul className='space-y-1 text-xs text-muted-foreground'>
+            <ul className='space-y-2 text-xs text-muted-foreground'>
               {latest.reviews.map((item) => (
-                <li key={item.id}>
-                  {item.decision === 'graded'
-                    ? t('training.review.gradedBy', {
-                        name: item.reviewerName,
-                        score: item.score ?? '—',
-                      })
-                    : t('training.review.returnedBy', {
-                        name: item.reviewerName,
-                      })}
-                  {' · '}
-                  {formatDateTime(item.createdAt, locale)}
-                </li>
+                <ReviewHistoryItem
+                  key={item.id}
+                  review={item}
+                  locale={locale}
+                />
               ))}
             </ul>
           ) : null}
         </div>
       )}
     </div>
+  );
+}
+
+function ReviewHistoryItem({
+  review,
+  locale,
+}: {
+  readonly review: SubmissionReviewView;
+  readonly locale: string;
+}): ReactElement {
+  const { t } = useTranslation();
+  return (
+    <li className='space-y-1'>
+      <p>
+        {review.decision === 'graded'
+          ? t('training.review.gradedBy', {
+              name: review.reviewerName,
+              score: review.score ?? '—',
+            })
+          : t('training.review.returnedBy', {
+              name: review.reviewerName,
+            })}
+        {' · '}
+        {formatDateTime(review.createdAt, locale)}
+      </p>
+      {review.files.length > 0 ? (
+        <div className='space-y-1'>
+          <p className='font-medium'>{t('training.files.reviewGroup')}</p>
+          <AttachmentList files={review.files} />
+        </div>
+      ) : null}
+    </li>
   );
 }
