@@ -7,6 +7,7 @@ import {
   writeFileSync,
 } from 'node:fs';
 import path from 'node:path';
+import { applyBeta34Compatibility } from './template-beta34-compat.mjs';
 
 const [controlArg, workspaceArg, controlSha] = process.argv.slice(2);
 if (!controlArg || !workspaceArg || !/^[a-f0-9]{40}$/.test(controlSha ?? '')) {
@@ -87,6 +88,7 @@ app.devDependencies = {
     factory.devDependencies['@playwright/test'],
 };
 const compatibilityFixes = [];
+compatibilityFixes.push(...applyBeta34Compatibility(workspace, app));
 // Published beta.15 plugins import these two undeclared client dependencies.
 // Scope fixes to this template; future baselines keep their dependency choices.
 if (app.nocobase.defaultTemplateVersion === '1.0.0-beta.15') {

@@ -80,6 +80,9 @@ jobs:
           pnpm install --no-frozen-lockfile
           pnpm plugin:skills:sync
           pnpm exec prettier --write package.json README.MD AGENTS.md eslint.config.js scripts/build.mjs factory-template.json
+          if [[ "$(node -p "require('./package.json').nocobase.defaultTemplateVersion")" == "1.0.0-beta.34" ]]; then
+            pnpm exec prettier --write vitest.config.ts tests/logic/{account-permissions.test.tsx,dev-routes-production-build.test.ts,config.test.ts,inspect-client.test.ts,inspect-server.test.ts,tailwind-sources.test.ts,user-roles.test.ts}
+          fi
 
       - name: Install Chinese browser fonts
         run: bash control/.github/scripts/install-browser-fonts.sh

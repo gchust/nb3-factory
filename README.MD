@@ -122,6 +122,8 @@ Action 在全新目录生成应用、安装并锁定依赖，运行工厂测试�
 
 已知的 `1.0.0-beta.15` 模板漏声明通知 Provider 使用的 `sonner` 和 Workflow 插件使用的 `@xyflow/react`，生产构建也漏复制 NocoBase 包源配置。只对这一模板版本补入缺失依赖、将 `.npmrc` 复制到构建目录，并在元数据的 `compatibilityFixes` 中记录；上游已有声明时保留其版本。其他版本或构建错误会明确失败，不会自动引入旧应用依赖。
 
+`1.0.0-beta.34` 默认模板附带的测试依赖上游仓库目录和固定模板名。工厂仅对该包的该版本修复测试：通过公开导出加载权限组件和迁移、使用生成应用的身份和目录、按真实路径验证 pnpm 符号链接，并补回发布时遗漏的 `.npmignore` Agent 排除规则。Vitest 仅转换相关插件的客户端文件，使原有登录状态 mock 生效。全部测试和行为断言保留；补丁先校验发布文件的 SHA-256，不匹配就终止刷新，修复记录在 `compatibilityFixes` 中。未来版本不应用这些补丁，创建器和模板仍使用 `latest`。
+
 模板刷新自身串行，并且不再阻塞独立的搭建任务；推送时会原子地创建 `factory-backup/develop-<run-id>-<attempt>` 备份并更新 `develop`。如果有人在生成期间更新了 `develop`，Action 会拒绝覆盖。已有 `apps/*` 分支保持原样：要测试新基线，请在新的 Issue 中指定一个尚不存在的 `apps/<name>`。仓库 Secrets、Variables 也不会被 Git 推送改动。
 
 这个 Action 使用内置 `GITHUB_TOKEN`，无需模型 Key 或额外 Token。`develop` 的仓库规则需要允许此工作流强制推送；被规则拒绝时会报错，不会自动修改保护规则。可勾选 `dry_run` 只生成和验证，不更新远端分支。

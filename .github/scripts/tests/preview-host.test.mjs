@@ -136,10 +136,7 @@ test('the tree walk records paths, sizes and links', () => {
 
 test('preview identity is derived consistently', () => {
   assert.equal(previewHost(12, 'nfvd.net'), 'nb3-12.nfvd.net');
-  assert.equal(
-    previewUrl(12, 'nfvd.net'),
-    'https://nb3-12.nfvd.net/main/',
-  );
+  assert.equal(previewUrl(12, 'nfvd.net'), 'https://nb3-12.nfvd.net/main/');
   assert.equal(containerName(12), 'preview-pr-12');
   assert.equal(routerName(12), 'pr12');
 });

@@ -130,12 +130,12 @@ rm -f ./preview_key ./preview_key.pub
 
 ### 5. 可选的仓库变量
 
-| 变量                          | 默认值                      | 说明                                                    |
-| ----------------------------- | --------------------------- | ------------------------------------------------------- |
-| `FACTORY_PREVIEW_HOST`        | `100.120.77.102`            | 预览机的 tailnet 地址                                   |
-| `FACTORY_PREVIEW_USER`        | `root`                      | SSH 用户                                                |
+| 变量                          | 默认值                      | 说明                                                        |
+| ----------------------------- | --------------------------- | ----------------------------------------------------------- |
+| `FACTORY_PREVIEW_HOST`        | `100.120.77.102`            | 预览机的 tailnet 地址                                       |
+| `FACTORY_PREVIEW_USER`        | `root`                      | SSH 用户                                                    |
 | `FACTORY_PREVIEW_DOMAIN`      | `nfvd.net`                  | 根域名，生成 `nb3-<PR>.nfvd.net`，不要填 `preview.nfvd.net` |
-| `FACTORY_PREVIEW_FETCH_PROXY` | `http://192.168.2.250:7890` | 预览机拉取 payload 时的出口代理；能直连时可设为空字符串 |
+| `FACTORY_PREVIEW_FETCH_PROXY` | `http://192.168.2.250:7890` | 预览机拉取 payload 时的出口代理；能直连时可设为空字符串     |
 
 四个凭据缺任意一个，工作流会直接跳过并留一条 `::warning::`，不会失败。
 `FACTORY_PREVIEW_FETCH_PROXY` 不是凭据：它只决定预览机从哪个出口去取 payload。
@@ -198,15 +198,15 @@ ssh 252 'bash /srv/nb3-preview/scripts/preview-gc.sh'
 
 ## 相关文件
 
-| 文件                                         | 作用                                         |
-| -------------------------------------------- | -------------------------------------------- |
-| `.github/workflows/deploy-preview.yml`       | 部署工作流                                   |
-| `.github/workflows/preview-teardown.yml`     | PR 关闭时回收                                |
-| `.github/scripts/deploy-preview.mjs`         | `select` / `prepare` / `publish`             |
-| `.github/scripts/preview-host.mjs`           | 纯函数：依赖集标识、命名、瘦包清单、评论渲染 |
-| `.github/scripts/preview/preview-deploy.sh`  | 预览机上的部署                               |
-| `.github/scripts/preview/preview-destroy.sh` | 回收单个预览                                 |
-| `.github/scripts/preview/preview-gc.sh`      | 回收无引用的缓存与孤儿容器                   |
-| `.github/scripts/preview/provision.sh`       | 预览机一次性配置                             |
-| `.github/scripts/preview/cloudflare-sync.py` | 自动 DNS 创建/延迟清理及新域名别名路由        |
-| `.github/scripts/preview/nb3-preview-dns-sync.timer` | 每分钟自动同步                       |
+| 文件                                                 | 作用                                         |
+| ---------------------------------------------------- | -------------------------------------------- |
+| `.github/workflows/deploy-preview.yml`               | 部署工作流                                   |
+| `.github/workflows/preview-teardown.yml`             | PR 关闭时回收                                |
+| `.github/scripts/deploy-preview.mjs`                 | `select` / `prepare` / `publish`             |
+| `.github/scripts/preview-host.mjs`                   | 纯函数：依赖集标识、命名、瘦包清单、评论渲染 |
+| `.github/scripts/preview/preview-deploy.sh`          | 预览机上的部署                               |
+| `.github/scripts/preview/preview-destroy.sh`         | 回收单个预览                                 |
+| `.github/scripts/preview/preview-gc.sh`              | 回收无引用的缓存与孤儿容器                   |
+| `.github/scripts/preview/provision.sh`               | 预览机一次性配置                             |
+| `.github/scripts/preview/cloudflare-sync.py`         | 自动 DNS 创建/延迟清理及新域名别名路由       |
+| `.github/scripts/preview/nb3-preview-dns-sync.timer` | 每分钟自动同步                               |
