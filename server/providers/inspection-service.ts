@@ -174,6 +174,8 @@ export interface RepairDetail extends RepairView {
   records: RepairRecordView[];
   beforeFiles: AttachmentView[];
   afterFiles: AttachmentView[];
+  /** Read-only evidence the inspector attached to the source abnormal item. */
+  sourceFiles: AttachmentView[];
   taskId: number | null;
 }
 
@@ -1078,33 +1080,44 @@ export class InspectionService {
     this.assertRepairAccess(actor, row);
 
     const [view] = await this.decorateRepairs([row]);
-    const [records, attachments, users, task] = await Promise.all([
-      this.query
-        .selectFrom('repairOrderRecords')
-        .selectAll()
-        .where('repairOrderId', '=', id)
-        .orderBy('id', 'asc')
-        .execute(),
-      this.query
-        .selectFrom('repairOrderAttachments')
-        .selectAll()
-        .where('repairOrderId', '=', id)
-        .orderBy('id', 'asc')
-        .execute(),
-      this.query
-        .selectFrom('user')
-        .select(['id', 'name', 'username'])
-        .execute(),
-      this.query
-        .selectFrom('inspectionResults')
-        .select('taskId')
-        .where('id', '=', Number(row.sourceResultId))
-        .executeTakeFirst(),
-    ]);
+    const [records, attachments, users, task, sourceAttachments] =
+      await Promise.all([
+        this.query
+          .selectFrom('repairOrderRecords')
+          .selectAll()
+          .where('repairOrderId', '=', id)
+          .orderBy('id', 'asc')
+          .execute(),
+        this.query
+          .selectFrom('repairOrderAttachments')
+          .selectAll()
+          .where('repairOrderId', '=', id)
+          .orderBy('id', 'asc')
+          .execute(),
+        this.query
+          .selectFrom('user')
+          .select(['id', 'name', 'username'])
+          .execute(),
+        this.query
+          .selectFrom('inspectionResults')
+          .select('taskId')
+          .where('id', '=', Number(row.sourceResultId))
+          .executeTakeFirst(),
+        // The inspection evidence for exactly this abnormal item, so the
+        // repairer can compare against the site. It is scoped by source result
+        // and never mixed with the work order's own before/after material.
+        this.query
+          .selectFrom('inspectionResultAttachments')
+          .selectAll()
+          .where('resultId', '=', Number(row.sourceResultId))
+          .orderBy('id', 'asc')
+          .execute(),
+      ]);
     const userMap = new Map(
       users.map((item) => [String(item.id), displayName(item)]),
     );
     const enriched = await this.decorateAttachments(attachments);
+    const sourceFiles = await this.decorateAttachments(sourceAttachments);
     return {
       ...view,
       records: records.map((item) => ({
@@ -1116,6 +1129,7 @@ export class InspectionService {
       })),
       beforeFiles: enriched.filter((item) => item.stage === 'before'),
       afterFiles: enriched.filter((item) => item.stage === 'after'),
+      sourceFiles,
       taskId: task ? Number(task.taskId) : null,
     };
   }
@@ -1214,6 +1228,10 @@ export class InspectionService {
       .executeTakeFirst();
     if (!row) notFound('维修工单不存在。');
     this.assertRepairAccess(actor, row);
+    const status = String(row.status);
+    if (status === REPAIR_REVIEW || status === REPAIR_CLOSED) {
+      conflict('工单已提交复核或关闭，不能追加处理记录。');
+    }
     const text = requireString(content, '处理记录', 4000);
     const now = new Date();
     await this.query
@@ -1472,7 +1490,7 @@ export class InspectionService {
 
     const inspection = await this.query
       .selectFrom('inspectionResultAttachments')
-      .select(['taskId', 'uploadedById'])
+      .select(['taskId', 'resultId', 'uploadedById'])
       .where('fileId', '=', fileId)
       .executeTakeFirst();
     if (inspection) {
@@ -1482,7 +1500,19 @@ export class InspectionService {
         .select('assigneeId')
         .where('id', '=', Number(inspection.taskId))
         .executeTakeFirst();
-      return task !== undefined && String(task.assigneeId) === actor.userId;
+      if (task !== undefined && String(task.assigneeId) === actor.userId) {
+        return true;
+      }
+      // The repairer assigned to the work order raised from this abnormal item
+      // may see the inspector's evidence for it. The work order's source result
+      // is the link, so an unrelated repairer stays denied.
+      const linked = await this.query
+        .selectFrom('repairOrders')
+        .select('id')
+        .where('sourceResultId', '=', Number(inspection.resultId))
+        .where('assigneeId', '=', actor.userId)
+        .executeTakeFirst();
+      return linked !== undefined;
     }
 
     const repair = await this.query

@@ -160,6 +160,12 @@ export default function RepairDetailPage(): ReactElement {
             {data.sourceRemark ? (
               <p className='text-muted-foreground'>{data.sourceRemark}</p>
             ) : null}
+            {data.sourceFiles.length > 0 ? (
+              <div className='mt-2 space-y-1'>
+                <Label>{t('repairs.sourceFiles')}</Label>
+                <FilePanel files={data.sourceFiles} editable={false} />
+              </div>
+            ) : null}
           </div>
           {data.reviewRemark ? (
             <div className='sm:col-span-2'>

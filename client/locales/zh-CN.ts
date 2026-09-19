@@ -198,6 +198,7 @@ const zhCN: AppResource = {
     code: '工单编号',
     equipment: '设备',
     source: '来源异常',
+    sourceFiles: '异常项现场照片与资料',
     assignee: '维修负责人',
     priority: '优先级',
     status: '状态',

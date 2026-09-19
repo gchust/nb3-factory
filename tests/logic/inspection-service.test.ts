@@ -354,6 +354,224 @@ describe('inspection service', () => {
     );
   });
 
+  it('keeps the two inspections of one equipment and their photos apart', async () => {
+    // The same equipment inspected twice: two tasks, two independent sets of
+    // check items, and no shared attachment rows.
+    const firstTask = await createTaskAssignedToInspector1();
+    const secondTask = await service.createTask(manager, {
+      equipmentId: 1,
+      templateId: 1,
+      assigneeId: INSPECTOR_1,
+      plannedDate: '2026-09-25T01:00:00.000Z',
+    });
+    const firstDetail = await service.getTask(inspector1, firstTask.id);
+    const secondDetail = await service.getTask(inspector1, secondTask.id);
+    const firstItem = firstDetail.results[0];
+    const secondItem = secondDetail.results[0];
+    if (!firstItem || !secondItem) throw new Error('missing result');
+
+    // Same filename, different stored files: each attachment carries its own
+    // fileId and therefore its own stored object.
+    await service.addInspectionFiles(
+      inspector1,
+      firstTask.id,
+      firstItem.id,
+      [fileInput('file-first')],
+      '第一次巡检',
+    );
+    await service.addInspectionFiles(
+      inspector1,
+      secondTask.id,
+      secondItem.id,
+      [fileInput('file-second')],
+      '第二次巡检',
+    );
+
+    let firstView = await service.getTask(inspector1, firstTask.id);
+    let secondView = await service.getTask(inspector1, secondTask.id);
+    expect(firstView.results[0]?.attachments).toHaveLength(1);
+    expect(secondView.results[0]?.attachments).toHaveLength(1);
+    expect(firstView.results[0]?.attachments[0]?.fileId).toBe('file-first');
+    expect(secondView.results[0]?.attachments[0]?.fileId).toBe('file-second');
+
+    // Removing an attachment from one inspection leaves the other untouched.
+    await service.removeInspectionAttachment(
+      inspector1,
+      firstView.results[0]?.attachments[0]?.id ?? 0,
+    );
+    firstView = await service.getTask(inspector1, firstTask.id);
+    secondView = await service.getTask(inspector1, secondTask.id);
+    expect(firstView.results[0]?.attachments).toHaveLength(0);
+    expect(secondView.results[0]?.attachments).toHaveLength(1);
+    await expect(
+      service.canAccessFile(inspector1, 'file-second'),
+    ).resolves.toBe(true);
+  });
+
+  it('shows the source evidence on the repair order and only to its repairer', async () => {
+    // Attach the inspector's site photo to the abnormal item before submitting,
+    // then raise the work order from that item.
+    const task = await createTaskAssignedToInspector1();
+    const detail = await service.getTask(inspector1, task.id);
+    const item = detail.results[0];
+    if (!item) throw new Error('missing result');
+    await service.addInspectionFiles(
+      inspector1,
+      task.id,
+      item.id,
+      [fileInput('site-photo')],
+      '现场照片',
+    );
+    await service.saveTaskResults(
+      inspector1,
+      task.id,
+      detail.results.map((entry, index) => ({
+        resultId: entry.id,
+        result: index === 0 ? 'abnormal' : 'normal',
+        remark: index === 0 ? '轴承温度过高。' : '',
+      })),
+    );
+    await service.submitTask(inspector1, task.id, {
+      defaultAssigneeIds: [REPAIRER_1, REPAIRER_2],
+    });
+    const [order] = await service.listRepairs(manager);
+    if (!order) throw new Error('missing repair order');
+    expect(order.sourceResultId).toBe(item.id);
+
+    expect(
+      (await service.getRepair(manager, order.id)).sourceFiles,
+    ).toHaveLength(1);
+
+    // The assigned repairer sees the evidence; another repairer and another
+    // inspector do not, even with the fileId.
+    expect(order.assigneeId).toBe(REPAIRER_1);
+    await expect(service.canAccessFile(repairer1, 'site-photo')).resolves.toBe(
+      true,
+    );
+    await expect(service.canAccessFile(repairer2, 'site-photo')).resolves.toBe(
+      false,
+    );
+    await expect(service.canAccessFile(inspector2, 'site-photo')).resolves.toBe(
+      false,
+    );
+    await expect(service.canAccessFile(manager, 'site-photo')).resolves.toBe(
+      true,
+    );
+  });
+
+  it('follows work order status for records and files, and keeps viewing open', async () => {
+    const order = await createRepairOrderFromInspector1();
+    await service.assignRepair(manager, order.id, REPAIRER_1);
+
+    // Returned keeps the repairer able to edit both records and files.
+    await service.startRepair(repairer1, order.id);
+    await service.addRepairRecord(repairer1, order.id, '已处理。');
+    await service.addRepairFiles(
+      repairer1,
+      order.id,
+      'after',
+      [fileInput('after-1')],
+      null,
+    );
+    await service.submitRepairReview(repairer1, order.id);
+    await service.reviewRepair(manager, order.id, 'return', '请补充数据。');
+    await service.addRepairRecord(repairer1, order.id, '补充检测。');
+    await service.addRepairFiles(
+      repairer1,
+      order.id,
+      'after',
+      [fileInput('after-2')],
+      null,
+    );
+
+    // Submitting for review flips both to read-only immediately.
+    await service.startRepair(repairer1, order.id);
+    await service.submitRepairReview(repairer1, order.id);
+    await expect(
+      service.addRepairRecord(repairer1, order.id, '复核后再补。'),
+    ).rejects.toMatchObject({ code: 'CONFLICT' });
+    await expect(
+      service.addRepairFiles(
+        repairer1,
+        order.id,
+        'after',
+        [fileInput('after-3')],
+        null,
+      ),
+    ).rejects.toMatchObject({ code: 'CONFLICT' });
+
+    // Closing keeps them read-only but the evidence stays viewable.
+    await service.reviewRepair(manager, order.id, 'close', '');
+    await expect(
+      service.addRepairRecord(repairer1, order.id, '关单后补。'),
+    ).rejects.toMatchObject({ code: 'CONFLICT' });
+    await expect(
+      service.removeRepairAttachment(
+        repairer1,
+        (await service.getRepair(manager, order.id)).afterFiles[0]?.id ?? 0,
+      ),
+    ).rejects.toMatchObject({ code: 'CONFLICT' });
+    await expect(service.canAccessFile(repairer1, 'after-1')).resolves.toBe(
+      true,
+    );
+    await expect(service.canAccessFile(repairer2, 'after-1')).resolves.toBe(
+      false,
+    );
+  });
+
+  it('leaves historical inspection and repair files intact when the equipment photo changes', async () => {
+    // Build a submitted inspection with evidence and its repair order, then add
+    // work-order material.
+    const task = await createTaskAssignedToInspector1();
+    const detail = await service.getTask(inspector1, task.id);
+    const item = detail.results[0];
+    if (!item) throw new Error('missing result');
+    await service.addInspectionFiles(
+      inspector1,
+      task.id,
+      item.id,
+      [fileInput('history-photo')],
+      null,
+    );
+    await service.saveTaskResults(
+      inspector1,
+      task.id,
+      detail.results.map((entry, index) => ({
+        resultId: entry.id,
+        result: index === 0 ? 'abnormal' : 'normal',
+        remark: index === 0 ? '异常。' : '',
+      })),
+    );
+    await service.submitTask(inspector1, task.id);
+    const [order] = await service.listRepairs(manager);
+    if (!order) throw new Error('missing repair order');
+    await service.addRepairFiles(
+      manager,
+      order.id,
+      'before',
+      [fileInput('history-repair')],
+      null,
+    );
+
+    // Replace, then remove, the equipment's main photo.
+    await service.setEquipmentPhoto(manager, 1, 'equipment-photo-a');
+    await service.setEquipmentPhoto(manager, 1, 'equipment-photo-b');
+    await service.setEquipmentPhoto(manager, 1, null);
+
+    expect((await service.getEquipment(1)).photoFileId).toBeNull();
+    const after = await service.getTask(inspector1, task.id);
+    expect(after.results[0]?.attachments).toHaveLength(1);
+    expect(
+      (await service.getRepair(manager, order.id)).beforeFiles,
+    ).toHaveLength(1);
+    await expect(
+      service.canAccessFile(inspector1, 'history-photo'),
+    ).resolves.toBe(true);
+    await expect(
+      service.canAccessFile(manager, 'history-repair'),
+    ).resolves.toBe(true);
+  });
+
   it('reports dashboard counts for managers and inspectors', async () => {
     await createTaskAssignedToInspector1();
     const overdue = await service.createTask(manager, {

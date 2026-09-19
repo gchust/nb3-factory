@@ -208,6 +208,7 @@ const enUS = {
     code: 'Order',
     equipment: 'Equipment',
     source: 'Source abnormal item',
+    sourceFiles: 'Abnormal item photos and documents',
     assignee: 'Repairer',
     priority: 'Priority',
     status: 'Status',

@@ -107,6 +107,7 @@ export interface RepairOrderDetail extends RepairOrder {
   records: RepairRecord[];
   beforeFiles: Attachment[];
   afterFiles: Attachment[];
+  sourceFiles: Attachment[];
   taskId: number | null;
 }
 
