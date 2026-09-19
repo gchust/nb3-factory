@@ -1,0 +1,74 @@
+name: Publish Task Retrospective
+
+on:
+  workflow_run:
+    workflows: [Code Agent NocoBase Task]
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      run_id:
+        description: Code Agent task run ID (not Issue or PR number)
+        required: true
+        type: string
+      attempt:
+        description: Run attempt (leave empty for latest)
+        required: false
+        type: string
+
+permissions: {}
+
+concurrency:
+  group: factory-retro-${{ inputs.run_id || github.event.workflow_run.id }}
+  queue: max
+
+jobs:
+  publish-retro:
+    # Unlike the media report, a retrospective is worth publishing for failed
+    # runs and handoffs too: those runs are where the next baseline fix hides.
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion != ''
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      actions: read
+      contents: read
+      issues: write
+    env:
+      SOURCE_RUN_ID: ${{ inputs.run_id || github.event.workflow_run.id }}
+      SOURCE_ATTEMPT: ${{ inputs.attempt || github.event.workflow_run.run_attempt }}
+    steps:
+      # Never check out the application PR or execute anything from its artifact.
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          path: control
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24.x
+
+      - name: Select the completed task run
+        id: source
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          node control/.github/scripts/publish-retro.mjs select \
+            --run-id "$SOURCE_RUN_ID" --attempt "$SOURCE_ATTEMPT" --source "$RUNNER_TEMP/retro-source.json"
+
+      - name: Download the agent artifact
+        if: steps.source.outputs.ready == 'true'
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ steps.source.outputs.artifact }}
+          run-id: ${{ env.SOURCE_RUN_ID }}
+          github-token: ${{ github.token }}
+          path: ${{ runner.temp }}/retro-evidence
+
+      - name: Publish the retrospective
+        if: steps.source.outputs.ready == 'true'
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          node control/.github/scripts/publish-retro.mjs publish \
+            --run-id "$SOURCE_RUN_ID" \
+            --source "$RUNNER_TEMP/retro-source.json" \
+            --artifacts "$RUNNER_TEMP/retro-evidence"
