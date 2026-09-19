@@ -111,6 +111,56 @@ describe('client inspection', () => {
         path: '/',
       },
       {
+        auth: 'required',
+        id: 'nb3-factory:training',
+        path: '/',
+      },
+      {
+        auth: 'required',
+        id: 'nb3-factory:trainingCatalog',
+        path: '/training/catalog',
+      },
+      {
+        auth: 'required',
+        id: 'nb3-factory:trainingMyLearning',
+        path: '/training/my-learning',
+      },
+      {
+        auth: 'required',
+        id: 'nb3-factory:trainingGrading',
+        path: '/training/grading',
+      },
+      {
+        auth: 'required',
+        id: 'nb3-factory:trainingStats',
+        path: '/training/stats',
+      },
+      {
+        auth: 'required',
+        id: 'nb3-factory:trainingManage',
+        path: '/training/manage',
+      },
+      {
+        auth: 'required',
+        id: 'nb3-factory:trainingManageCourses',
+        path: '/training/manage/courses',
+      },
+      {
+        auth: 'required',
+        id: 'nb3-factory:trainingManageSessions',
+        path: '/training/manage/sessions',
+      },
+      {
+        auth: 'required',
+        id: 'nb3-factory:trainingSessionDetail',
+        path: '/training/sessions/:sessionId',
+      },
+      {
+        auth: 'required',
+        id: 'nb3-factory:trainingAssignmentDetail',
+        path: '/training/assignments/:assignmentId',
+      },
+      {
         auth: 'guest',
         id: 'nb3-factory:login',
         path: '/login',
