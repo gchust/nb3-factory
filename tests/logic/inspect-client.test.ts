@@ -111,6 +111,76 @@ describe('client inspection', () => {
         path: '/',
       },
       {
+        auth: 'required',
+        id: 'nb3-factory:quality',
+        path: '/',
+      },
+      {
+        auth: 'required',
+        id: 'nb3-factory:quality-batches',
+        path: '/quality/batches',
+      },
+      {
+        auth: 'required',
+        id: 'nb3-factory:quality-batch-create',
+        path: '/quality/batches/create',
+      },
+      {
+        auth: 'required',
+        id: 'nb3-factory:quality-product-create',
+        path: '/quality/batches/create-product',
+      },
+      {
+        auth: 'required',
+        id: 'nb3-factory:quality-tasks',
+        path: '/quality/tasks',
+      },
+      {
+        auth: 'required',
+        id: 'nb3-factory:quality-task-create',
+        path: '/quality/tasks/create',
+      },
+      {
+        auth: 'required',
+        id: 'nb3-factory:quality-task-detail',
+        path: '/quality/tasks/:taskId',
+      },
+      {
+        auth: 'required',
+        id: 'nb3-factory:quality-my-inspections',
+        path: '/quality/my-inspections',
+      },
+      {
+        auth: 'required',
+        id: 'nb3-factory:quality-inspection-run',
+        path: '/quality/my-inspections/:taskId',
+      },
+      {
+        auth: 'required',
+        id: 'nb3-factory:quality-results',
+        path: '/quality/results',
+      },
+      {
+        auth: 'required',
+        id: 'nb3-factory:quality-result-detail',
+        path: '/quality/results/:taskId',
+      },
+      {
+        auth: 'required',
+        id: 'nb3-factory:quality-rectifications',
+        path: '/quality/rectifications',
+      },
+      {
+        auth: 'required',
+        id: 'nb3-factory:quality-rectification-detail',
+        path: '/quality/rectifications/:id',
+      },
+      {
+        auth: 'required',
+        id: 'nb3-factory:quality-stats',
+        path: '/quality/stats',
+      },
+      {
         auth: 'guest',
         id: 'nb3-factory:login',
         path: '/login',

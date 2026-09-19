@@ -312,6 +312,8 @@ Declare such a package in `dependencies` when you write the code; nothing will r
 
 Without `--tar` no archive is produced, which is what you want when the build is only going to be run locally.
 
+The client bundle is always built as a production React application: `scripts/build.mjs` forces `NODE_ENV=production` for the client step. Vite selects React's development condition and the development JSX runtime from `NODE_ENV`, not from the build mode, so a build launched from a non-production environment (the factory exports `NODE_ENV=test` around `pnpm build`) would otherwise ship `react-dom.development` and log React development warnings to the browser console. Keep that override when editing the build.
+
 ### Building for another platform
 
 `pnpm build --help` (or `-h`) lists build options and exits without loading build dependencies, running hooks, or modifying `dist/`. Every successful build records `nocobase.buildTarget` in `dist/package.json`, including builds with no native modules: `platform`, `arch`, `libc`, `nodeMajor`, and `nodeAbi`. Use `libc` only for Linux; its value on other platforms is a compatibility placeholder. Deployment checks should compare these fields with the host runtime and also respect `engines.node`. With `--target current` (the default), the Node version and ABI come from the running process; an explicit platform target defaults to Node 24 unless `--node-version` is supplied.

@@ -294,10 +294,17 @@ run('Typecheck tooling', 'pnpm', ['exec', 'tsc', '-p', 'tsconfig.node.json']);
 // environment taking precedence — the order `loadStandaloneAppEnv` applies on the server. Letting Vite read `.env`
 // files itself would also pick up `.env.production` and other mode files the server never loads, and the client would
 // be built for one `APP_BASE_PATH` while the server mounts at another.
+//
+// NODE_ENV is forced to `production` because Vite chooses React's development condition and the development JSX
+// runtime from NODE_ENV, not from the build mode. A build launched from a test environment (the factory exports
+// NODE_ENV=test around `pnpm build`) would otherwise ship `react-dom.development`, which logs React development
+// warnings — including "Encountered a script tag while rendering React component" — to the browser console of a
+// production deployment. `client/routing/client-route.tsx` and the theme bundling depend on the production branch.
 run('Build client', 'pnpm', ['exec', 'refine', 'build'], {
   env: {
     ...readEnvFiles(applicationEnvFiles, process.env),
     ...process.env,
+    NODE_ENV: 'production',
   },
 });
 runHookStage(buildHooks, 'afterClientBuild', run);

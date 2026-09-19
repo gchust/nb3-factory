@@ -6,6 +6,7 @@ import os from 'node:os';
 import path from 'node:path';
 
 import { type AppIdentityConfig } from '@nocobase/app-server/config';
+import { type AuthConfig } from '@nocobase/app-plugin-authentication/server';
 import { type AppDatabaseConfig } from '@nocobase/app-server/database';
 import { resolveStandaloneAppRuntime } from '@nocobase/app-server/node';
 import {
@@ -73,6 +74,22 @@ describe('application config', () => {
     expect(runtime.config.get<AppSessionConfigInput>('session')!.default).toBe(
       'memory',
     );
+  });
+
+  it('declares the credential issuer so Better Auth keeps the account column', async () => {
+    const runtime = await resolveStandaloneAppRuntime(appRuntime, {
+      rootDir: templateRootDir,
+      configPath,
+      env: { AUTH_SECRET: 'test-auth-secret-at-least-32-characters' },
+    });
+
+    const issuer =
+      runtime.config.get<AuthConfig>('auth')!.account?.additionalFields?.issuer;
+    // Better Auth's adapter factory drops fields it does not know about, so
+    // `issuer` must be declared here or `account.issuer` (NOT NULL) is omitted
+    // on sign-up and administrator-created users.
+    expect(issuer?.fieldName).toBe('issuer');
+    expect(issuer?.defaultValue).toBe('local:credential');
   });
 
   it('reloads a file-backed configuration explicitly', async () => {
