@@ -12,6 +12,8 @@ const client = new GitHubClient({
   apiUrl: process.env.GITHUB_API_URL,
 });
 const issue = await client.getIssue(metadata.issue.number);
+if (metadata.buildCommentId && issue.state !== 'open')
+  throw new Error('Issue 已关闭，停止追加发布。');
 const owner = metadata.repository.split('/')[0];
 const runUrl = `${process.env.GITHUB_SERVER_URL}/${metadata.repository}/actions/runs/${process.env.GITHUB_RUN_ID}`;
 const workRef = await client.getRef(metadata.workBranch);
@@ -68,6 +70,23 @@ if (pull) {
     body: { title, body, base: metadata.task.targetBranch },
   });
 } else {
+  if (metadata.buildCommentId) {
+    const history = await client.request('GET', '/pulls', {
+      query: {
+        state: 'closed',
+        head: `${owner}:${metadata.workBranch}`,
+        per_page: 100,
+      },
+    });
+    if (
+      history.some(
+        (candidate) => candidate.base?.ref === metadata.task.targetBranch,
+      )
+    )
+      throw new Error(
+        '来源 PR 已关闭或合并，停止追加发布，不能为同一 Issue 创建第二个 PR。',
+      );
+  }
   if (openPulls.length > 0) {
     throw new Error(
       `工作分支 ${metadata.workBranch} 已有指向其他目标分支的开放 PR。`,

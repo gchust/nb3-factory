@@ -287,7 +287,9 @@ test('report dispatch is an isolated terminal job, not another Agent invocation'
     path.resolve(import.meta.dirname, '../../workflows/code-agent-task.yml'),
     'utf8',
   );
-  const dispatcher = task.split('\n  dispatch-reports:\n')[1];
+  const dispatcher = task
+    .split('\n  dispatch-reports:\n')[1]
+    ?.split(/\n {2}[a-z][a-z-]*:\n/)[0];
   assert.ok(dispatcher);
   assert.match(
     dispatcher,

@@ -7,6 +7,7 @@ import path from 'node:path';
 import test from 'node:test';
 import { promisify } from 'node:util';
 
+import { receiptBody } from '../comment-queue.mjs';
 import { STATUS_LABELS } from '../factory-lib.mjs';
 
 const exec = promisify(execFile);
@@ -76,6 +77,7 @@ async function runFixture(script, event, handler) {
         env: {
           ...process.env,
           GITHUB_TOKEN: 'fixture-token',
+          GITHUB_RUN_ID: '101',
           GITHUB_REPOSITORY: repository,
           GITHUB_API_URL: `http://127.0.0.1:${server.address().port}`,
           GITHUB_EVENT_NAME:
@@ -200,3 +202,51 @@ test('old application-branch completion workflow cannot dispatch a duplicate tas
   );
   assert.equal(result.stdout, '');
 });
+
+for (const kind of ['build', 'reply']) {
+  test(`prepare selects existing PR HEAD and frozen ${kind} comment`, async () => {
+    const task = {
+      targetBranch: 'apps/demo',
+      taskType: '创建新系统',
+      requirements: 'Original',
+      acceptanceCriteria: 'Works',
+      sampleData: '是',
+    };
+    const result = await runFixture(
+      'prepare-task.mjs',
+      { client_payload: { issue_number: 2, build_comment_id: 21 } },
+      (call) => {
+        if (call.route === '/issues/2/comments' && call.method === 'GET')
+          return [
+            {
+              id: 1000,
+              user: { login: 'github-actions[bot]', type: 'Bot' },
+              body: receiptBody({
+                id: 21,
+                kind,
+                task,
+                prompt: 'Add supplier ratings',
+                status: 'dispatched',
+              }),
+            },
+          ];
+        if (call.route === '/pulls') return [pull(3, 'agent/issue-2')];
+        if (call.route === '/git/ref/heads/agent/issue-2')
+          return { object: { sha: 'latest-pr-head' } };
+        return baseHandler(call);
+      },
+    );
+    assert.equal(result.metadata.buildCommentId, 21);
+    assert.equal(result.metadata.task.commentKind, kind);
+    assert.match(result.metadata.task.requirements, /Add supplier ratings/);
+    assert.equal(result.metadata.existingPullRequest.number, 3);
+    assert.match(result.output, /base_sha=latest-pr-head/);
+    assert.match(result.output, new RegExp(`comment_kind=${kind}`));
+    assert.equal(
+      result.requests.some((call) =>
+        call.body?.labels?.includes('agent:running'),
+      ),
+      kind === 'build',
+    );
+  });
+}

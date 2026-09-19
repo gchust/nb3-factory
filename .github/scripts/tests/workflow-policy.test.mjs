@@ -36,9 +36,9 @@ test('each engine receives only its own secrets and configuration', () => {
   const apiKeys = linesOf('CODE_AGENT_API_KEY');
   const tokens = linesOf('CODEBUDDY_AUTH_TOKEN');
   const codebuddyKeys = linesOf('CODEBUDDY_API_KEY');
-  assert.equal(apiKeys.length, 2); // implementation and verify/repair
-  assert.equal(tokens.length, 2);
-  assert.equal(codebuddyKeys.length, 2);
+  assert.equal(apiKeys.length, 3); // implementation, verify/repair, comment reply
+  assert.equal(tokens.length, 3);
+  assert.equal(codebuddyKeys.length, 3);
   for (const line of apiKeys) {
     assert.ok(
       line.includes(
@@ -105,12 +105,16 @@ test('PR completion uses only trusted control-plane code for both branch generat
 test('implementation and repair default to unlimited invocations and max thinking', () => {
   const timeoutLines = workflow
     .split('\n')
-    .filter((line) => line.includes('CODE_AGENT_INVOCATION_TIMEOUT_SECONDS:'));
+    .filter(
+      (line) =>
+        line.includes('CODE_AGENT_INVOCATION_TIMEOUT_SECONDS:') &&
+        !line.includes("'900'"),
+    );
   const thinkingLines = workflow
     .split('\n')
     .filter((line) => line.includes('CODE_AGENT_THINKING:'));
   assert.equal(timeoutLines.length, 2);
-  assert.equal(thinkingLines.length, 2);
+  assert.equal(thinkingLines.length, 3);
   for (const line of timeoutLines)
     assert.match(line, /vars\.PI_INVOCATION_TIMEOUT_SECONDS \|\| '0'/);
   for (const line of thinkingLines)
@@ -175,4 +179,24 @@ test('a failed agent preserves a checkpoint but cannot publish or automatically 
     /if: needs\.agent\.result == 'success' && needs\.agent\.outputs\.handoff != 'true'/,
   );
   assert.match(workflow, /if: needs\.verify-final\.result == 'success'/);
+});
+
+test('comment questions bypass implementation and publish replies through an isolated job', () => {
+  assert.match(
+    workflow,
+    /if: needs.prepare.outputs.status == 'ready' && needs.prepare.outputs.comment_kind != 'reply'/,
+  );
+  const reply = workflow.split('  reply:')[1].split('  publish-reply:')[0];
+  assert.doesNotMatch(reply, /GITHUB_TOKEN:|issues: write|contents: write/);
+  assert.match(reply, /contents: read/);
+  assert.match(reply, /persist-credentials: false/);
+  assert.match(reply, /needs.agent.outputs.handoff != 'true'/);
+  assert.match(
+    workflow,
+    /BUILD_COMMENT_ID: \$\{\{ needs.prepare.outputs.build_comment_id \}\}/,
+  );
+  assert.match(
+    workflow,
+    /base_ref != needs.prepare.outputs.work_branch \|\| needs.prepare.outputs.build_comment_id != ''/,
+  );
 });

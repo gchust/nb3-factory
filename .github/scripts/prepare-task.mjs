@@ -8,6 +8,11 @@ import {
   issueNumberFromEvent,
   parseIssueTask,
 } from './factory-lib.mjs';
+import {
+  claimComment,
+  receiptsFor,
+  resolveBuildTask,
+} from './comment-queue.mjs';
 import { resolveTaskBranch, taskIssueNumber } from './task-compat.mjs';
 
 const args = parseArgs(process.argv.slice(2));
@@ -32,16 +37,34 @@ try {
   if (issue.pull_request) {
     throw new TaskInputError('任务编号必须指向 Issue，不能指向 Pull Request。');
   }
-  if (issue.state !== 'open') {
-    throw new TaskInputError('只有打开状态的 Issue 才能运行。');
-  }
   if (issue.user?.login !== owner) {
     throw new TaskInputError(
       `为了避免消耗模型额度，只有仓库所有者 @${owner} 创建的 Issue 才会执行。`,
     );
   }
 
-  const task = parseIssueTask(issue);
+  const buildCommentId = event.client_payload?.build_comment_id;
+  if (buildCommentId) {
+    const { receipts } = await receiptsFor(client, issueNumber);
+    if (
+      receipts.some(
+        (item) => item.id === Number(buildCommentId) && item.status === 'done',
+      )
+    ) {
+      appendGithubOutput(outputPath, 'status', 'duplicate');
+      process.exit(0);
+    }
+  }
+  const task = buildCommentId
+    ? await resolveBuildTask(client, issue, buildCommentId)
+    : parseIssueTask(issue);
+  if (buildCommentId) {
+    appendGithubOutput(outputPath, 'build_comment_id', buildCommentId);
+    appendGithubOutput(outputPath, 'comment_kind', task.commentKind);
+  }
+  if (issue.state !== 'open' && task.commentKind !== 'reply') {
+    throw new TaskInputError('只有打开状态的 Issue 才能运行搭建任务。');
+  }
   const repositoryInfo = await client.getRepository();
   const defaultBranch = repositoryInfo.default_branch;
 
@@ -77,6 +100,7 @@ try {
 
   const metadata = {
     schemaVersion: 1,
+    ...(buildCommentId ? { buildCommentId } : {}),
     repository,
     owner,
     defaultBranch,
@@ -114,6 +138,22 @@ try {
     process.exit(0);
   }
 
+  if (
+    buildCommentId &&
+    !(await claimComment(
+      client,
+      issueNumber,
+      buildCommentId,
+      process.env.GITHUB_RUN_ID,
+      event.action === 'code-agent-continue'
+        ? event.client_payload.previous_run_id
+        : undefined,
+    ))
+  ) {
+    appendGithubOutput(outputPath, 'status', 'duplicate');
+    process.exit(0);
+  }
+
   const workRef = await client.getRef(workBranch, true);
   const baseRef = workRef ? workBranch : task.targetBranch;
   const baseSha = workRef?.object?.sha ?? targetRef.object.sha;
@@ -122,17 +162,18 @@ try {
   appendGithubOutput(outputPath, 'base_sha', baseSha);
   appendGithubOutput(outputPath, 'status', 'ready');
 
-  await client.setIssueStatus(
-    issue,
-    'agent:running',
-    [
-      `Code Agent 工厂已开始处理。`,
-      '',
-      `- 目标分支：\`${task.targetBranch}\`${targetCreated ? '（刚从默认分支创建）' : ''}`,
-      `- 工作分支：\`${workBranch}\``,
-      `- [查看本次运行](${process.env.GITHUB_SERVER_URL}/${repository}/actions/runs/${process.env.GITHUB_RUN_ID})`,
-    ].join('\n'),
-  );
+  if (task.commentKind !== 'reply')
+    await client.setIssueStatus(
+      issue,
+      'agent:running',
+      [
+        `Code Agent 工厂已开始处理。`,
+        '',
+        `- 目标分支：\`${task.targetBranch}\`${targetCreated ? '（刚从默认分支创建）' : ''}`,
+        `- 工作分支：\`${workBranch}\``,
+        `- [查看本次运行](${process.env.GITHUB_SERVER_URL}/${repository}/actions/runs/${process.env.GITHUB_RUN_ID})`,
+      ].join('\n'),
+    );
 } catch (error) {
   if (!(error instanceof TaskInputError) || !issueNumber) throw error;
 

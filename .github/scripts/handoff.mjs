@@ -52,6 +52,14 @@ if (command === 'prepare') {
       event_type: 'code-agent-continue',
       client_payload: {
         issue_number: issueNumber,
+        ...(process.env.BUILD_COMMENT_ID
+          ? {
+              build_comment_id: positiveInteger(
+                process.env.BUILD_COMMENT_ID,
+                'BUILD_COMMENT_ID',
+              ),
+            }
+          : {}),
         previous_run_id: previousRunId,
         continuation,
       },
