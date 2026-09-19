@@ -62,8 +62,10 @@ jobs:
           mkdir -p "$RUNNER_TEMP/template-generation" "$RUNNER_TEMP/template-diagnostics"
           cp control/.npmrc "$RUNNER_TEMP/template-generation/.npmrc"
           cd "$RUNNER_TEMP/template-generation"
+          # Current create-app uses the template's database defaults; verification
+          # supplies an isolated SQLite connection via create-runtime-config.mjs.
           pnpm create @nocobase/app@latest nb3-factory \
-            --db-dialect=sqlite --no-install --template=default --template-tag=latest
+            --no-install --template=default --template-tag=latest
 
       - name: Restore factory controls and fresh-template development guidance
         env:

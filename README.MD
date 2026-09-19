@@ -111,8 +111,10 @@ PR 关闭后仅运行默认分支的控制脚本来关闭 Issue 和唤醒队列�
 在 **Actions → Refresh NocoBase Template → Run workflow** 中选择 `develop` 运行。每次都会执行官方创建命令，使用创建器和默认模板的 `latest` 发布版本：
 
 ```bash
-pnpm create @nocobase/app@latest nb3-factory --db-dialect=sqlite --no-install --template=default --template-tag=latest
+pnpm create @nocobase/app@latest nb3-factory --no-install --template=default --template-tag=latest
 ```
+
+创建器和模板继续使用 `latest`，不固定发布版本。当前创建器不再接受 `--db-dialect`；生成时使用模板默认配置，验证时由 `create-runtime-config.mjs` 显式配置独立的 SQLite 数据库。
 
 Action 在全新目录生成应用、安装并锁定依赖，运行工厂测试、应用检查与构建、全新 SQLite Migration/Seed 和登录后的浏览器冒烟。全部通过后，创建一个新的根提交，并以 `--force-with-lease` 强制替换 `develop`；失败时不会更新分支。
 
