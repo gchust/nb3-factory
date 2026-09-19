@@ -12,7 +12,13 @@ import path from 'node:path';
 import test from 'node:test';
 
 const script = path.resolve(import.meta.dirname, '../preview-connect.sh');
-for (const scenario of ['retry', 'unreachable', 'unauthorized']) {
+for (const scenario of [
+  'retry',
+  'unreachable',
+  'unauthorized',
+  'ping-failed-ssh-ready',
+  'relay',
+]) {
   test(`preview SSH preflight: ${scenario}`, () => {
     const root = mkdtempSync(path.join(os.tmpdir(), 'preview-connect-'));
     try {
@@ -23,7 +29,17 @@ for (const scenario of ['retry', 'unreachable', 'unauthorized']) {
           mode: 0o755,
         });
       mock('sleep', 'exit 0');
-      mock('tailscale', 'echo diagnostic-status');
+      mock(
+        'tailscale',
+        `
+if [[ "$1" == ping ]]; then
+  [[ "$*" == *--until-direct=false* ]] || exit 2
+  if [[ "$SCENARIO" == ping-failed-ssh-ready ]]; then echo probe-failed; exit 1; fi
+  echo 'pong via DERP relay'
+else
+  echo diagnostic-status
+fi`,
+      );
       mock(
         'ssh-keyscan',
         `echo scan >> "$HOME/calls"
@@ -44,13 +60,21 @@ echo host-key`,
         },
         encoding: 'utf8',
       });
-      assert.equal(result.status, scenario === 'retry' ? 0 : 1, result.stderr);
+      assert.equal(
+        result.status,
+        ['retry', 'ping-failed-ssh-ready', 'relay'].includes(scenario) ? 0 : 1,
+        result.stderr,
+      );
       assert.equal(
         readFileSync(path.join(root, 'calls'), 'utf8').trim().split('\n')
           .length,
-        scenario === 'retry' ? 2 : 6,
+        scenario === 'retry'
+          ? 2
+          : ['relay', 'ping-failed-ssh-ready'].includes(scenario)
+            ? 1
+            : 6,
       );
-      if (scenario !== 'retry')
+      if (['unreachable', 'unauthorized'].includes(scenario))
         assert.match(result.stdout, /diagnostic-status/);
       assert.ok(!result.stdout.includes('test-key'));
     } finally {

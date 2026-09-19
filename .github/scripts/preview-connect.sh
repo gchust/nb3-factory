@@ -3,6 +3,14 @@
 # diagnostics; never publish a payload until key authentication also works.
 set -euo pipefail
 : "${PREVIEW_HOST:?}" "${PREVIEW_USER:?}" "${PREVIEW_SSH_KEY:?}"
+# Do not use the action's targets gate: a nonzero ping exits its bash -e
+# script before it can report or accept relay connectivity. SSH is the actual
+# prerequisite. Keep ping bounded and diagnostic, including on total failure.
+if tailscale ping --until-direct=false --timeout=5s --c=3 "$PREVIEW_HOST"; then
+  echo "Tailnet probe reached the preview host (direct or relay)."
+else
+  echo "::warning::Tailnet probe failed; checking actual SSH connectivity with retries."
+fi
 mkdir -p ~/.ssh
 chmod 700 ~/.ssh
 printf '%s\n' "$PREVIEW_SSH_KEY" > ~/.ssh/preview_key

@@ -214,6 +214,6 @@ ssh 252 'bash /srv/nb3-preview/scripts/preview-gc.sh'
 
 ## 连接和可用性检查
 
-Tailscale 使用 `targets` 等待预览机可达；随后 `preview-connect.sh` 最多尝试 6 次获取主机公钥并验证部署密钥认证，失败保留错误和网络状态。加入 tailnet 成功不代表 SSH 已就绪。
+Tailscale 加入网络后，用允许中继的有限时 ping 输出诊断，不把 ping 失败作为部署阻断条件；随后 `preview-connect.sh` 最多尝试 6 次获取主机公钥并验证部署密钥认证，失败保留错误和网络状态。加入 tailnet 成功不代表 SSH 已就绪。
 
 部署脚本完成本机健康检查后，Runner 还会对公网 HTTPS 地址执行有限重试。只有公网检查通过，PR 评论才显示地址与登录说明；否则显示部署或公网检查失败及日志链接。

@@ -50,7 +50,6 @@ jobs:
           oauth-client-id: ${{ secrets.FACTORY_TAILSCALE_OAUTH_CLIENT_ID }}
           oauth-secret: ${{ secrets.FACTORY_TAILSCALE_OAUTH_CLIENT_SECRET }}
           tags: tag:ci
-          targets: ${{ env.PREVIEW_HOST }}
           # Keep public DNS on the runner; the preview host is a Tailscale IP.
           args: --accept-dns=false
 
