@@ -1,5 +1,13 @@
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import {
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from 'node:fs';
+import { spawnSync } from 'node:child_process';
+import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
 
@@ -186,7 +194,7 @@ test('the deployable artifact carries the task metadata the preview reads from i
   const stage = task.slice(staged, uploaded);
   assert.match(
     stage,
-    /cp workspace\/storage\/dist\.tar\.gz "\$RUNNER_TEMP\/deployable\/dist\.tar\.gz"/,
+    /cp workspace\/storage\/exports\/dist\.tar\.gz "\$RUNNER_TEMP\/deployable\/dist\.tar\.gz"/,
   );
   assert.match(
     stage,
@@ -194,7 +202,7 @@ test('the deployable artifact carries the task metadata the preview reads from i
   );
   // Uploaded as one directory rather than as two paths where they lie:
   // `upload-artifact` keeps the structure below the paths' common ancestor, so
-  // listing `workspace/storage/dist.tar.gz` and `agent-artifacts/task-metadata.json`
+  // listing `workspace/storage/exports/dist.tar.gz` and `agent-artifacts/task-metadata.json`
   // together would nest each under its own directory and the download would stop
   // being flat.
   assert.match(task, /path: \$\{\{ runner\.temp \}\}\/deployable/);
@@ -206,4 +214,66 @@ test('the deployable artifact carries the task metadata the preview reads from i
     ),
     /readJson\(args\.artifacts, 'task-metadata\.json'\)/,
   );
+});
+
+// Run the workflow's actual staging commands so a producer/consumer directory
+// mismatch fails locally, without rebuilding the application or deploying it.
+test('deployable staging reads the exported archive and preserves the flat artifact layout', () => {
+  const root = mkdtempSync(path.join(os.tmpdir(), 'factory-stage-'));
+  try {
+    const stage = task.match(
+      /- name: Stage the deployable build and its metadata\n\s+run: \|\n([\s\S]*?)\n {6}- name:/,
+    );
+    assert.ok(stage, 'missing deployment staging commands');
+    const script = stage[1].replace(/^ {10}/gm, '');
+    mkdirSync(path.join(root, 'workspace/storage/exports'), {
+      recursive: true,
+    });
+    mkdirSync(path.join(root, 'agent-artifacts'));
+    writeFileSync(
+      path.join(root, 'workspace/storage/exports/dist.tar.gz'),
+      'current build',
+    );
+    // An old artifact must never win over the build just exported.
+    writeFileSync(
+      path.join(root, 'workspace/storage/dist.tar.gz'),
+      'stale build',
+    );
+    writeFileSync(
+      path.join(root, 'agent-artifacts/task-metadata.json'),
+      '{"issueNumber":111}',
+    );
+    const run = () =>
+      spawnSync('bash', ['-e', '-c', script], {
+        cwd: root,
+        env: { ...process.env, RUNNER_TEMP: path.join(root, 'runner-temp') },
+        encoding: 'utf8',
+      });
+    const result = run();
+    assert.equal(result.status, 0, result.stderr);
+    assert.equal(
+      readFileSync(
+        path.join(root, 'runner-temp/deployable/dist.tar.gz'),
+        'utf8',
+      ),
+      'current build',
+    );
+    assert.equal(
+      readFileSync(
+        path.join(root, 'runner-temp/deployable/task-metadata.json'),
+        'utf8',
+      ),
+      '{"issueNumber":111}',
+    );
+
+    rmSync(path.join(root, 'workspace/storage/exports/dist.tar.gz'));
+    const missing = run();
+    assert.notEqual(
+      missing.status,
+      0,
+      'missing current build must fail even if a legacy archive exists',
+    );
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
 });

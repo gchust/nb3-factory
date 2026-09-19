@@ -418,7 +418,7 @@ jobs:
       - name: Stage the deployable build and its metadata
         run: |
           mkdir -p "$RUNNER_TEMP/deployable"
-          cp workspace/storage/dist.tar.gz "$RUNNER_TEMP/deployable/dist.tar.gz"
+          cp workspace/storage/exports/dist.tar.gz "$RUNNER_TEMP/deployable/dist.tar.gz"
           cp agent-artifacts/task-metadata.json "$RUNNER_TEMP/deployable/task-metadata.json"
 
       - name: Upload the deployable build
