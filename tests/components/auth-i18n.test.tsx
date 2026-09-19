@@ -42,8 +42,17 @@ describe('authentication translations', () => {
     expect(screen.getByLabelText('用户名或邮箱')).toBeVisible();
     expect(screen.getByRole('button', { name: '显示密码' })).toBeVisible();
     expect(screen.getByText('AI 原生应用平台')).toBeVisible();
+    // The login page documents how to try each business role with the demo data.
+    expect(screen.getByRole('heading', { name: '演示账号' })).toBeVisible();
+    expect(screen.getByText('研发部经理 — 王强')).toBeVisible();
+    expect(screen.getByText('财务 — 孙丽')).toBeVisible();
+    expect(screen.getByText('sunli')).toBeVisible();
+    expect(screen.getByText(/admin123/)).toBeVisible();
     await act(() => value.changeLanguage('en-US'));
     expect(screen.getByRole('heading', { name: 'Welcome back' })).toBeVisible();
+    expect(
+      screen.getByRole('heading', { name: 'Demo accounts' }),
+    ).toBeVisible();
   });
   it('retranslates an existing password mismatch and preserves custom button copy', async () => {
     const value = await runtime();

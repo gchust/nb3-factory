@@ -111,6 +111,41 @@ describe('client inspection', () => {
         path: '/',
       },
       {
+        auth: 'required',
+        id: 'nb3-factory:expenses',
+        path: '/expenses',
+      },
+      {
+        auth: 'required',
+        id: 'nb3-factory:expenseNew',
+        path: '/expenses/new',
+      },
+      {
+        auth: 'required',
+        id: 'nb3-factory:expenseDetail',
+        path: '/expenses/:reportId',
+      },
+      {
+        auth: 'required',
+        id: 'nb3-factory:expenseEdit',
+        path: '/expenses/:reportId/edit',
+      },
+      {
+        auth: 'required',
+        id: 'nb3-factory:expenseApprovals',
+        path: '/expense-approvals',
+      },
+      {
+        auth: 'required',
+        id: 'nb3-factory:expenseFinance',
+        path: '/expense-finance',
+      },
+      {
+        auth: 'required',
+        id: 'nb3-factory:expenseStatistics',
+        path: '/expense-statistics',
+      },
+      {
         auth: 'guest',
         id: 'nb3-factory:login',
         path: '/login',
