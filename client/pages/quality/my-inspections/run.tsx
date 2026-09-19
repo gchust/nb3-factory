@@ -1,12 +1,13 @@
 import { useApiClient } from '@nocobase/app-client';
 import { useTranslation } from '@nocobase/i18n/client';
 import { CheckCircle2 } from 'lucide-react';
-import { useState, type ReactElement } from 'react';
+import { Fragment, useState, type ReactElement } from 'react';
 import { useParams } from 'react-router';
 
 import { Breadcrumbs } from '@/components/breadcrumbs';
 import { PageContainer } from '@/components/page-container';
 import { RouteChildPage } from '@/components/route-child-page';
+import { AttachmentSection } from '@/components/quality/attachments';
 import {
   EmptyBlock,
   ErrorBlock,
@@ -97,6 +98,7 @@ function InspectionRun({
   const [submitting, setSubmitting] = useState(false);
   const [savedItem, setSavedItem] = useState<string>();
   const [itemErrors, setItemErrors] = useState<Record<string, string>>({});
+  const [expandedItem, setExpandedItem] = useState<string>();
   const [error, setError] = useState<string>();
 
   const submitted = task.status === 'submitted';
@@ -210,6 +212,9 @@ function InspectionRun({
               <th className={tableClasses.headCell}>
                 {t('quality.tasks.item.remark')}
               </th>
+              <th className={tableClasses.headCell}>
+                {t('quality.attachments.title')}
+              </th>
               <th className={tableClasses.headCell} />
             </tr>
           </thead>
@@ -221,94 +226,141 @@ function InspectionRun({
                 remark: '',
               };
               return (
-                <tr key={item.id} className={tableClasses.row}>
-                  <td className={tableClasses.cellMuted}>{item.seq}</td>
-                  <td className={tableClasses.cell}>{item.name}</td>
-                  <td className={tableClasses.cellMuted}>
-                    {item.standard ?? '—'}
-                  </td>
-                  <td className={tableClasses.cell}>
-                    {submitted ? (
-                      <StatusBadge tone={ITEM_RESULT_TONE[item.result]}>
-                        {t(ITEM_RESULT_LABEL[item.result])}
-                      </StatusBadge>
-                    ) : (
-                      <SimpleSelect
-                        ariaLabel={`${item.name} ${t('quality.tasks.item.result')}`}
-                        className='w-28'
-                        options={[
-                          {
-                            value: 'qualified',
-                            label: t('quality.itemResult.qualified'),
-                          },
-                          {
-                            value: 'unqualified',
-                            label: t('quality.itemResult.unqualified'),
-                          },
-                        ]}
-                        placeholder={t('quality.itemResult.pending')}
-                        value={draft.result}
-                        onValueChange={(value) =>
-                          updateDraft(item.id, { result: value })
-                        }
-                      />
-                    )}
-                  </td>
-                  <td className={tableClasses.cell}>
-                    {submitted ? (
-                      (item.measuredValue ?? '—')
-                    ) : (
-                      <Input
-                        aria-label={`${item.name} ${t('quality.tasks.item.measuredValue')}`}
-                        className='w-28'
-                        value={draft.measuredValue}
-                        onChange={(event) =>
-                          updateDraft(item.id, {
-                            measuredValue: event.target.value,
-                          })
-                        }
-                      />
-                    )}
-                  </td>
-                  <td className={tableClasses.cell}>
-                    {submitted ? (
-                      (item.remark ?? '—')
-                    ) : (
-                      <>
-                        <Input
-                          aria-label={`${item.name} ${t('quality.tasks.item.remark')}`}
-                          aria-invalid={Boolean(itemErrors[item.id])}
-                          value={draft.remark}
-                          onChange={(event) =>
-                            updateDraft(item.id, { remark: event.target.value })
+                <Fragment key={item.id}>
+                  <tr className={tableClasses.row}>
+                    <td className={tableClasses.cellMuted}>{item.seq}</td>
+                    <td className={tableClasses.cell}>{item.name}</td>
+                    <td className={tableClasses.cellMuted}>
+                      {item.standard ?? '—'}
+                    </td>
+                    <td className={tableClasses.cell}>
+                      {submitted ? (
+                        <StatusBadge tone={ITEM_RESULT_TONE[item.result]}>
+                          {t(ITEM_RESULT_LABEL[item.result])}
+                        </StatusBadge>
+                      ) : (
+                        <SimpleSelect
+                          ariaLabel={`${item.name} ${t('quality.tasks.item.result')}`}
+                          className='w-28'
+                          options={[
+                            {
+                              value: 'qualified',
+                              label: t('quality.itemResult.qualified'),
+                            },
+                            {
+                              value: 'unqualified',
+                              label: t('quality.itemResult.unqualified'),
+                            },
+                          ]}
+                          placeholder={t('quality.itemResult.pending')}
+                          value={draft.result}
+                          onValueChange={(value) =>
+                            updateDraft(item.id, { result: value })
                           }
                         />
-                        <FieldError>{itemErrors[item.id]}</FieldError>
-                      </>
-                    )}
-                  </td>
-                  <td className={tableClasses.cell}>
-                    {submitted ? null : (
-                      <div className='flex items-center gap-2'>
-                        <Button
-                          type='button'
-                          variant='outline'
-                          size='sm'
-                          disabled={busyItem === item.id || draft.result === ''}
-                          onClick={() => void saveItem(item)}
-                        >
-                          {t('quality.action.save')}
-                        </Button>
-                        {savedItem === item.id ? (
-                          <CheckCircle2
-                            aria-hidden='true'
-                            className='size-4 text-chart-2'
+                      )}
+                    </td>
+                    <td className={tableClasses.cell}>
+                      {submitted ? (
+                        (item.measuredValue ?? '—')
+                      ) : (
+                        <Input
+                          aria-label={`${item.name} ${t('quality.tasks.item.measuredValue')}`}
+                          className='w-28'
+                          value={draft.measuredValue}
+                          onChange={(event) =>
+                            updateDraft(item.id, {
+                              measuredValue: event.target.value,
+                            })
+                          }
+                        />
+                      )}
+                    </td>
+                    <td className={tableClasses.cell}>
+                      {submitted ? (
+                        (item.remark ?? '—')
+                      ) : (
+                        <>
+                          <Input
+                            aria-label={`${item.name} ${t('quality.tasks.item.remark')}`}
+                            aria-invalid={Boolean(itemErrors[item.id])}
+                            value={draft.remark}
+                            onChange={(event) =>
+                              updateDraft(item.id, {
+                                remark: event.target.value,
+                              })
+                            }
                           />
-                        ) : null}
-                      </div>
-                    )}
-                  </td>
-                </tr>
+                          <FieldError>{itemErrors[item.id]}</FieldError>
+                        </>
+                      )}
+                    </td>
+                    <td className={tableClasses.cell}>
+                      <Button
+                        type='button'
+                        variant='outline'
+                        size='sm'
+                        aria-expanded={expandedItem === item.id}
+                        onClick={() =>
+                          setExpandedItem((current) =>
+                            current === item.id ? undefined : item.id,
+                          )
+                        }
+                      >
+                        {t('quality.attachments.open')}
+                      </Button>
+                    </td>
+                    <td className={tableClasses.cell}>
+                      {submitted ? null : (
+                        <div className='flex items-center gap-2'>
+                          <Button
+                            type='button'
+                            variant='outline'
+                            size='sm'
+                            disabled={
+                              busyItem === item.id || draft.result === ''
+                            }
+                            onClick={() => void saveItem(item)}
+                          >
+                            {t('quality.action.save')}
+                          </Button>
+                          {savedItem === item.id ? (
+                            <CheckCircle2
+                              aria-hidden='true'
+                              className='size-4 text-chart-2'
+                            />
+                          ) : null}
+                        </div>
+                      )}
+                    </td>
+                  </tr>
+                  {expandedItem === item.id ? (
+                    <tr className={tableClasses.row}>
+                      <td className={tableClasses.cell} colSpan={8}>
+                        <div className='space-y-3 py-1'>
+                          <AttachmentSection
+                            targetType='item'
+                            targetId={item.id}
+                            category='item_photo'
+                            title={t('quality.attachments.itemPhoto')}
+                          />
+                          <AttachmentSection
+                            targetType='item'
+                            targetId={item.id}
+                            category='item_report'
+                            title={t('quality.attachments.itemReport')}
+                          />
+                          <AttachmentSection
+                            targetType='item'
+                            targetId={item.id}
+                            category='item_note'
+                            title={t('quality.attachments.itemNote')}
+                          />
+                        </div>
+                      </td>
+                    </tr>
+                  ) : null}
+                </Fragment>
               );
             })}
           </tbody>

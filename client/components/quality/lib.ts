@@ -1,4 +1,8 @@
-import { ApiClientError, type ApiClient } from '@nocobase/app-client';
+import {
+  ApiClientError,
+  resolveAppUrl,
+  type ApiClient,
+} from '@nocobase/app-client';
 
 export type TaskStatus = 'pending' | 'in_progress' | 'submitted';
 export type TaskResult = 'qualified' | 'unqualified';
@@ -129,6 +133,46 @@ export interface AssignableUsers {
     readonly name: string;
   }[];
 }
+
+export type AttachmentTargetType = 'batch' | 'item' | 'nonconformance';
+
+export type AttachmentCategory =
+  | 'item_photo'
+  | 'item_report'
+  | 'item_note'
+  | 'batch_factory_report'
+  | 'nc_problem'
+  | 'nc_after';
+
+export interface AttachmentTarget {
+  readonly targetType: AttachmentTargetType;
+  readonly targetId: string;
+  readonly category: AttachmentCategory;
+}
+
+export interface QualityAttachment {
+  readonly id: string;
+  readonly targetType: AttachmentTargetType;
+  readonly targetId: string;
+  readonly category: AttachmentCategory;
+  readonly filename: string;
+  readonly ext: string;
+  readonly mimeType: string;
+  readonly size: number;
+  readonly uploadedById: string;
+  readonly uploadedByName: string;
+  readonly createdAt: string;
+}
+
+export interface AttachmentList {
+  readonly canModify: boolean;
+  readonly files: readonly QualityAttachment[];
+}
+
+/** At most five files are chosen in one selection. */
+export const MAX_ATTACHMENT_FILES = 5;
+/** A single file may be at most 5 MiB. */
+export const MAX_ATTACHMENT_SIZE = 5 * 1024 * 1024;
 
 interface Envelope<T> {
   readonly data: T;
@@ -332,6 +376,111 @@ export function loadAssignableUsers(api: ApiClient): Promise<AssignableUsers> {
   return api
     .request<Envelope<AssignableUsers>>({ path: 'quality/assignable-users' })
     .then((response) => response.data);
+}
+
+export function loadAttachments(
+  api: ApiClient,
+  target: AttachmentTarget,
+): Promise<AttachmentList> {
+  return api
+    .request<Envelope<AttachmentList>>({
+      path: 'quality/attachments',
+      query: {
+        targetType: target.targetType,
+        targetId: target.targetId,
+        category: target.category,
+      },
+    })
+    .then((response) => response.data);
+}
+
+export function uploadAttachment(
+  api: ApiClient,
+  target: AttachmentTarget,
+  file: File,
+): Promise<QualityAttachment> {
+  const form = new FormData();
+  form.set('file', file);
+  form.set('targetType', target.targetType);
+  form.set('targetId', target.targetId);
+  form.set('category', target.category);
+  return api
+    .request<Envelope<QualityAttachment>>({
+      path: 'quality/attachments',
+      method: 'POST',
+      body: form,
+    })
+    .then((response) => response.data);
+}
+
+export function removeAttachment(
+  api: ApiClient,
+  id: string,
+): Promise<{ removed: boolean }> {
+  return api
+    .request<Envelope<{ removed: boolean }>>({
+      path: `quality/attachments/${encodeURIComponent(id)}`,
+      method: 'DELETE',
+    })
+    .then((response) => response.data);
+}
+
+/** Same-origin content URL; the session cookie is what authorizes the read. */
+export function attachmentUrl(id: string, download = false): string {
+  return resolveAppUrl(
+    `/api/quality/attachments/${encodeURIComponent(id)}${download ? '/download' : '/content'}`,
+  );
+}
+
+export type AttachmentPreviewKind = 'image' | 'pdf' | 'text' | 'unsupported';
+
+/** Only formats the browser can render safely are previewed in place. */
+export function attachmentPreviewKind(
+  file: Pick<QualityAttachment, 'mimeType' | 'ext'>,
+): AttachmentPreviewKind {
+  const mime = file.mimeType.toLowerCase();
+  const ext = file.ext.toLowerCase();
+  if (/^image\/(png|jpe?g|gif|webp|bmp|avif)$/.test(mime)) return 'image';
+  if (mime === 'application/pdf' || ext === 'pdf') return 'pdf';
+  if (
+    mime.startsWith('text/') ||
+    ['txt', 'md', 'csv', 'log', 'json'].includes(ext)
+  ) {
+    return 'text';
+  }
+  return 'unsupported';
+}
+
+/** Keeps a PDF page number inside the document's real page range. */
+export function clampPage(page: number, total: number): number {
+  if (!Number.isFinite(page) || total <= 0) return 1;
+  return Math.min(Math.max(Math.round(page), 1), Math.trunc(total));
+}
+
+export function formatFileSize(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${Math.round((bytes / 1024) * 10) / 10} KB`;
+  return `${Math.round((bytes / (1024 * 1024)) * 10) / 10} MB`;
+}
+
+/**
+ * Checks a selection before uploading. Returns a translation key for the
+ * problem, or `undefined` when every file fits the 5-file, 5 MB limits.
+ */
+export function attachmentSelectionError(
+  files: readonly { readonly size: number }[],
+): string | undefined {
+  if (files.length === 0) return undefined;
+  if (files.length > MAX_ATTACHMENT_FILES) {
+    return 'quality.attachments.tooMany';
+  }
+  if (files.some((file) => file.size <= 0)) {
+    return 'quality.attachments.emptyFile';
+  }
+  if (files.some((file) => file.size > MAX_ATTACHMENT_SIZE)) {
+    return 'quality.attachments.tooLarge';
+  }
+  return undefined;
 }
 
 export const TASK_STATUS_LABEL: Record<TaskStatus, string> = {
@@ -670,6 +819,10 @@ const QUALITY_ERROR_KEYS: Readonly<Record<string, string>> = {
   INVALID_STATUS: 'quality.error.invalidStatus',
   INCOMPLETE_ITEMS: 'quality.error.incompleteItems',
   VALIDATION: 'quality.error.validation',
+  READ_ONLY: 'quality.error.readOnly',
+  TOO_LARGE: 'quality.error.tooLarge',
+  EMPTY_FILE: 'quality.error.emptyFile',
+  INVALID_FILE: 'quality.error.invalidFile',
 };
 
 const QUALITY_MESSAGE_KEYS: Readonly<Record<string, string>> = {

@@ -1,11 +1,12 @@
 import { useTranslation } from '@nocobase/i18n/client';
 import { Plus } from 'lucide-react';
-import { useState, type ReactElement } from 'react';
+import { Fragment, useState, type ReactElement } from 'react';
 import { Link, Outlet } from 'react-router';
 
 import { Breadcrumbs } from '@/components/breadcrumbs';
 import { PageContainer } from '@/components/page-container';
 import { PageHeader } from '@/components/page-header';
+import { AttachmentSection } from '@/components/quality/attachments';
 import {
   EmptyBlock,
   ErrorBlock,
@@ -141,6 +142,9 @@ export default function QualityBatchesPage(): ReactElement {
                 <th className={tableClasses.headCell}>
                   {t('quality.batches.column.status')}
                 </th>
+                <th className={tableClasses.headCell}>
+                  {t('quality.attachments.factoryReport')}
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -159,20 +163,50 @@ export default function QualityBatchesPage(): ReactElement {
 
 function BatchRow({ batch }: { readonly batch: QualityBatch }): ReactElement {
   const { t } = useTranslation();
+  const [expanded, setExpanded] = useState(false);
   return (
-    <tr className={tableClasses.row}>
-      <td className={`${tableClasses.cell} font-medium`}>{batch.batchNo}</td>
-      <td className={tableClasses.cell}>
-        {batch.productCode} {batch.productName}
-      </td>
-      <td className={tableClasses.cell}>{batch.quantity}</td>
-      <td className={tableClasses.cellMuted}>{batch.productionLine ?? '—'}</td>
-      <td className={tableClasses.cellMuted}>{formatDate(batch.producedAt)}</td>
-      <td className={tableClasses.cell}>
-        <StatusBadge tone={batch.status === 'completed' ? 'success' : 'info'}>
-          {t(BATCH_STATUS_LABEL[batch.status] ?? batch.status)}
-        </StatusBadge>
-      </td>
-    </tr>
+    <Fragment>
+      <tr className={tableClasses.row}>
+        <td className={`${tableClasses.cell} font-medium`}>{batch.batchNo}</td>
+        <td className={tableClasses.cell}>
+          {batch.productCode} {batch.productName}
+        </td>
+        <td className={tableClasses.cell}>{batch.quantity}</td>
+        <td className={tableClasses.cellMuted}>
+          {batch.productionLine ?? '—'}
+        </td>
+        <td className={tableClasses.cellMuted}>
+          {formatDate(batch.producedAt)}
+        </td>
+        <td className={tableClasses.cell}>
+          <StatusBadge tone={batch.status === 'completed' ? 'success' : 'info'}>
+            {t(BATCH_STATUS_LABEL[batch.status] ?? batch.status)}
+          </StatusBadge>
+        </td>
+        <td className={tableClasses.cell}>
+          <Button
+            type='button'
+            variant='outline'
+            size='sm'
+            aria-expanded={expanded}
+            onClick={() => setExpanded((value) => !value)}
+          >
+            {t('quality.attachments.open')}
+          </Button>
+        </td>
+      </tr>
+      {expanded ? (
+        <tr className={tableClasses.row}>
+          <td className={tableClasses.cell} colSpan={7}>
+            <AttachmentSection
+              targetType='batch'
+              targetId={batch.id}
+              category='batch_factory_report'
+              title={t('quality.attachments.factoryReport')}
+            />
+          </td>
+        </tr>
+      ) : null}
+    </Fragment>
   );
 }

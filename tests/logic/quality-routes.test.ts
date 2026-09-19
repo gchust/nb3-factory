@@ -1,3 +1,4 @@
+// @vitest-environment node
 import type { Application } from '@nocobase/app-server/application';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
@@ -10,18 +11,27 @@ import {
   QUALITY_SUPERVISOR_ROLE,
   qualityServiceToken,
 } from '../../server/providers/quality.js';
+import {
+  createQualityFileService,
+  qualityFileServiceToken,
+} from '../../server/providers/quality-files.js';
 import { qualityApiRoutes } from '../../server/routes/quality.js';
 import {
+  createMemoryAttachmentStorage,
+  createMemoryAttachmentStore,
   createQualityDatabase,
+  type MemoryAttachmentStorage,
   type QualityTestDatabase,
 } from './quality-test-helpers.js';
 
 const SUPERVISOR = 'user-supervisor';
 const INSPECTOR = 'user-inspector';
+const NOBODY = 'user-nobody';
 
 const ROLES = new Map<string, readonly string[]>([
   [SUPERVISOR, [QUALITY_SUPERVISOR_ROLE]],
   [INSPECTOR, [INSPECTOR_ROLE]],
+  [NOBODY, []],
 ]);
 
 interface TestSession {
@@ -76,9 +86,11 @@ function createAuthStub(session: TestSession | null) {
 
 describe('quality API routes', () => {
   let context: QualityTestDatabase;
+  let storage: MemoryAttachmentStorage;
 
   beforeEach(async () => {
     context = await createQualityDatabase();
+    storage = createMemoryAttachmentStorage();
     const now = new Date();
     await context.connection.query
       .insertInto('products')
@@ -89,6 +101,22 @@ describe('quality API routes', () => {
         specification: null,
         unit: '件',
         status: 'active',
+        createdAt: now,
+        updatedAt: now,
+      })
+      .execute();
+    await context.connection.query
+      .insertInto('productionBatches')
+      .values({
+        id: 'batch-1',
+        batchNo: 'B-1',
+        productId: 'product-1',
+        quantity: 10,
+        productionLine: null,
+        producedAt: now,
+        status: 'completed',
+        createdById: SUPERVISOR,
+        remark: null,
         createdAt: now,
         updatedAt: now,
       })
@@ -109,15 +137,21 @@ describe('quality API routes', () => {
       authenticationToken,
       createAuthStub(userId ? sessionFor(userId) : null) as never,
     );
+    const directory = {
+      rolesForUser: (id: string) => Promise.resolve(ROLES.get(id) ?? []),
+      listUsers: () => Promise.resolve([{ id: SUPERVISOR, name: SUPERVISOR }]),
+    };
     container.instance(
       qualityServiceToken,
-      createQualityService({
+      createQualityService({ database: context.database, directory }),
+    );
+    container.instance(
+      qualityFileServiceToken,
+      createQualityFileService({
         database: context.database,
-        directory: {
-          rolesForUser: (id) => Promise.resolve(ROLES.get(id) ?? []),
-          listUsers: () =>
-            Promise.resolve([{ id: SUPERVISOR, name: SUPERVISOR }]),
-        },
+        directory,
+        store: createMemoryAttachmentStore(context, storage),
+        storage,
       }),
     );
     const router = await qualityApiRoutes.createRouter({
@@ -204,5 +238,101 @@ describe('quality API routes', () => {
     const tasks = await request(SUPERVISOR, '/quality/tasks');
     expect(batches.status).toBe(200);
     expect(tasks.status).toBe(200);
+  });
+
+  it('rejects an anonymous attachment request with 401', async () => {
+    const response = await request(
+      null,
+      '/quality/attachments?targetType=batch&targetId=batch-1&category=batch_factory_report',
+    );
+    expect(response.status).toBe(401);
+  });
+
+  it('uploads, lists, streams and removes a batch factory report', async () => {
+    const form = new FormData();
+    form.set(
+      'file',
+      new File(['报告内容'], '报告.txt', { type: 'text/plain' }),
+    );
+    form.set('targetType', 'batch');
+    form.set('targetId', 'batch-1');
+    form.set('category', 'batch_factory_report');
+    const uploaded = await request(SUPERVISOR, '/quality/attachments', {
+      method: 'POST',
+      body: form,
+    });
+    expect(uploaded.status).toBe(200);
+    const created = (await uploaded.json()) as {
+      data: {
+        id: string;
+        filename: string;
+        size: number;
+        uploadedById: string;
+      };
+    };
+    expect(created.data.filename).toBe('报告.txt');
+    expect(created.data.size).toBe(Buffer.byteLength('报告内容'));
+    expect(created.data.uploadedById).toBe(SUPERVISOR);
+
+    const list = await request(
+      INSPECTOR,
+      '/quality/attachments?targetType=batch&targetId=batch-1&category=batch_factory_report',
+    );
+    expect(list.status).toBe(200);
+    const listBody = (await list.json()) as {
+      data: { files: readonly { id: string }[]; canModify: boolean };
+    };
+    expect(listBody.data.files.map((file) => file.id)).toEqual([
+      created.data.id,
+    ]);
+    expect(listBody.data.canModify).toBe(false);
+
+    const content = await request(
+      INSPECTOR,
+      `/quality/attachments/${created.data.id}/content`,
+    );
+    expect(content.status).toBe(200);
+    expect(await content.text()).toBe('报告内容');
+
+    const denied = await request(
+      NOBODY,
+      `/quality/attachments/${created.data.id}/content`,
+    );
+    expect(denied.status).toBe(403);
+
+    const download = await request(
+      INSPECTOR,
+      `/quality/attachments/${created.data.id}/download`,
+    );
+    expect(download.status).toBe(200);
+    expect(download.headers.get('content-disposition')).toContain('attachment');
+
+    const removed = await request(
+      SUPERVISOR,
+      `/quality/attachments/${created.data.id}`,
+      { method: 'DELETE' },
+    );
+    expect(removed.status).toBe(200);
+    const after = await request(
+      SUPERVISOR,
+      `/quality/attachments/${created.data.id}/content`,
+    );
+    expect(after.status).toBe(404);
+  });
+
+  it('rejects an attachment upload with an invalid category', async () => {
+    const form = new FormData();
+    form.set('file', new File(['x'], 'x.txt', { type: 'text/plain' }));
+    form.set('targetType', 'batch');
+    form.set('targetId', 'batch-1');
+    form.set('category', 'item_photo');
+    const response = await request(SUPERVISOR, '/quality/attachments', {
+      method: 'POST',
+      body: form,
+    });
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toMatchObject({
+      code: 'VALIDATION',
+    });
   });
 });

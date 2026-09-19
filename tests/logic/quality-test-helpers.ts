@@ -7,8 +7,14 @@ import {
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
+import { Readable } from 'node:stream';
 
+import type {
+  AttachmentStorage,
+  AttachmentStore,
+} from '../../server/providers/quality-files.js';
 import migration from '../../database/main/migrations/202609190001_create_quality_tables.js';
+import attachmentMigration from '../../database/main/migrations/202609190004_create_quality_attachments.js';
 
 export interface QualityTestDatabase {
   readonly database: DatabaseManager;
@@ -27,11 +33,13 @@ export async function createQualityDatabase(): Promise<QualityTestDatabase> {
     },
   });
   const connection = database.connection();
-  await migration.up({
-    builder: connection.builder,
-    query: connection.query,
-    connection,
-  });
+  for (const definition of [migration, attachmentMigration]) {
+    await definition.up({
+      builder: connection.builder,
+      query: connection.query,
+      connection,
+    });
+  }
   return {
     database,
     connection,
@@ -94,4 +102,79 @@ export async function createIdentityTables(
       collection.unique(['subjectType', 'subjectId', 'permissionSetKey']);
     },
   );
+}
+
+export interface MemoryAttachmentStorage extends AttachmentStorage {
+  readonly objects: Map<string, Buffer>;
+}
+
+/** In-memory byte storage so permission tests need no real disk. */
+export function createMemoryAttachmentStorage(): MemoryAttachmentStorage {
+  const objects = new Map<string, Buffer>();
+  return {
+    objects,
+    async exists(disk, key) {
+      return objects.has(`${disk}:${key}`);
+    },
+    async getStream(disk, key) {
+      const value = objects.get(`${disk}:${key}`);
+      if (!value) throw new Error('missing object');
+      return Readable.from(value);
+    },
+    async delete(disk, key) {
+      objects.delete(`${disk}:${key}`);
+    },
+  };
+}
+
+/** Writes metadata rows straight to the test database for the service seam. */
+export function createMemoryAttachmentStore(
+  context: QualityTestDatabase,
+  storage: MemoryAttachmentStorage,
+): AttachmentStore {
+  return {
+    async upload(input) {
+      const id = crypto.randomUUID();
+      const suffix = input.file.name.includes('.')
+        ? input.file.name.split('.').pop()!.toLowerCase()
+        : '';
+      const ext = /^[a-z0-9]{1,32}$/.test(suffix) ? suffix : '';
+      const key = `objects/${id}${ext ? `.${ext}` : ''}`;
+      storage.objects.set(
+        `local:${key}`,
+        Buffer.from(await input.file.arrayBuffer()),
+      );
+      const now = new Date();
+      const mimeType = input.file.type || 'application/octet-stream';
+      await context.connection.query
+        .insertInto('qualityAttachments')
+        .values({
+          id,
+          disk: 'local',
+          key,
+          filename: input.file.name,
+          ext,
+          mimeType,
+          size: input.file.size,
+          createdAt: now,
+          updatedAt: now,
+          targetType: input.targetType,
+          targetId: input.targetId,
+          category: input.category,
+          uploadedById: input.uploadedById,
+        })
+        .execute();
+      return {
+        id,
+        disk: 'local',
+        key,
+        filename: input.file.name,
+        ext,
+        mimeType,
+        size: input.file.size,
+        createdAt: now.toISOString(),
+        updatedAt: now.toISOString(),
+      };
+    },
+  };
 }

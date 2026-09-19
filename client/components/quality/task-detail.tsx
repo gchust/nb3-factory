@@ -1,5 +1,5 @@
 import { useTranslation } from '@nocobase/i18n/client';
-import type { ReactElement } from 'react';
+import { Fragment, useState, type ReactElement } from 'react';
 import { Link } from 'react-router';
 
 import {
@@ -8,6 +8,8 @@ import {
   LoadingBlock,
   StatusBadge,
 } from '@/components/quality/parts';
+import { AttachmentSection } from '@/components/quality/attachments';
+import { Button } from '@/components/ui/button';
 import { useApiData } from '@/components/quality/use-api-data';
 import {
   ITEM_RESULT_LABEL,
@@ -109,6 +111,7 @@ function ItemTable({
   readonly items: readonly QualityItem[];
 }): ReactElement {
   const { t } = useTranslation();
+  const [expanded, setExpanded] = useState<string>();
   return (
     <section className='space-y-2'>
       <h2 className='font-heading text-lg font-semibold'>
@@ -139,28 +142,74 @@ function ItemTable({
                 <th className={tableClasses.headCell}>
                   {t('quality.tasks.item.remark')}
                 </th>
+                <th className={tableClasses.headCell}>
+                  {t('quality.attachments.title')}
+                </th>
               </tr>
             </thead>
             <tbody>
               {items.map((item) => (
-                <tr key={item.id} className={tableClasses.row}>
-                  <td className={tableClasses.cellMuted}>{item.seq}</td>
-                  <td className={tableClasses.cell}>{item.name}</td>
-                  <td className={tableClasses.cellMuted}>
-                    {item.standard ?? '—'}
-                  </td>
-                  <td className={tableClasses.cell}>
-                    {item.measuredValue ?? '—'}
-                  </td>
-                  <td className={tableClasses.cell}>
-                    <StatusBadge tone={ITEM_RESULT_TONE[item.result]}>
-                      {t(ITEM_RESULT_LABEL[item.result])}
-                    </StatusBadge>
-                  </td>
-                  <td className={tableClasses.cellMuted}>
-                    {item.remark ?? '—'}
-                  </td>
-                </tr>
+                <Fragment key={item.id}>
+                  <tr className={tableClasses.row}>
+                    <td className={tableClasses.cellMuted}>{item.seq}</td>
+                    <td className={tableClasses.cell}>{item.name}</td>
+                    <td className={tableClasses.cellMuted}>
+                      {item.standard ?? '—'}
+                    </td>
+                    <td className={tableClasses.cell}>
+                      {item.measuredValue ?? '—'}
+                    </td>
+                    <td className={tableClasses.cell}>
+                      <StatusBadge tone={ITEM_RESULT_TONE[item.result]}>
+                        {t(ITEM_RESULT_LABEL[item.result])}
+                      </StatusBadge>
+                    </td>
+                    <td className={tableClasses.cellMuted}>
+                      {item.remark ?? '—'}
+                    </td>
+                    <td className={tableClasses.cell}>
+                      <Button
+                        type='button'
+                        variant='outline'
+                        size='sm'
+                        aria-expanded={expanded === item.id}
+                        onClick={() =>
+                          setExpanded((current) =>
+                            current === item.id ? undefined : item.id,
+                          )
+                        }
+                      >
+                        {t('quality.attachments.open')}
+                      </Button>
+                    </td>
+                  </tr>
+                  {expanded === item.id ? (
+                    <tr className={tableClasses.row}>
+                      <td className={tableClasses.cell} colSpan={7}>
+                        <div className='space-y-3 py-1'>
+                          <AttachmentSection
+                            targetType='item'
+                            targetId={item.id}
+                            category='item_photo'
+                            title={t('quality.attachments.itemPhoto')}
+                          />
+                          <AttachmentSection
+                            targetType='item'
+                            targetId={item.id}
+                            category='item_report'
+                            title={t('quality.attachments.itemReport')}
+                          />
+                          <AttachmentSection
+                            targetType='item'
+                            targetId={item.id}
+                            category='item_note'
+                            title={t('quality.attachments.itemNote')}
+                          />
+                        </div>
+                      </td>
+                    </tr>
+                  ) : null}
+                </Fragment>
               ))}
             </tbody>
           </table>

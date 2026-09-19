@@ -6,6 +6,7 @@ import { useParams } from 'react-router';
 import { RouteDialog } from '@/components/route-dialog';
 import { useRouteOverlay } from '@/components/use-route-overlay';
 import { Button } from '@/components/ui/button';
+import { AttachmentSection } from '@/components/quality/attachments';
 import {
   ErrorBlock,
   Field,
@@ -306,6 +307,24 @@ function RectificationDetail(): ReactElement {
           {t('quality.nc.readonlyHint')}
         </p>
       ) : null}
+
+      <section className='space-y-3 border-t pt-4'>
+        <h2 className='font-heading text-base font-semibold'>
+          {t('quality.attachments.evidenceTitle')}
+        </h2>
+        <AttachmentSection
+          targetType='nonconformance'
+          targetId={row.id}
+          category='nc_problem'
+          title={t('quality.attachments.ncProblem')}
+        />
+        <AttachmentSection
+          targetType='nonconformance'
+          targetId={row.id}
+          category='nc_after'
+          title={t('quality.attachments.ncAfter')}
+        />
+      </section>
     </div>
   );
 }
