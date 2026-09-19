@@ -2,7 +2,9 @@ import sqlite from '@nocobase/db-sqlite';
 import { createDatabaseManager, type DatabaseManager } from '@nocobase/db';
 
 import migration from '../../database/main/migrations/202609190001_create_expense_tables.js';
+import fileMigration from '../../database/main/migrations/202609190002_create_expense_files.js';
 import seed from '../../database/main/seeds/202609190100_seed_expense_demo_data.js';
+import managerChainSeed from '../../database/main/seeds/202609190200_seed_expense_manager_chain.js';
 
 export function createTestDatabase(): DatabaseManager {
   return createDatabaseManager({
@@ -12,20 +14,122 @@ export function createTestDatabase(): DatabaseManager {
   });
 }
 
+const migrations = [migration, fileMigration];
+
 export async function migrate(database: DatabaseManager): Promise<void> {
-  await migration.up({
-    builder: database.builder(),
-    query: database.query(),
-    connection: database.connection(),
-  });
+  for (const item of migrations) {
+    await item.up({
+      builder: database.builder(),
+      query: database.query(),
+      connection: database.connection(),
+    });
+  }
 }
 
 export async function rollback(database: DatabaseManager): Promise<void> {
-  await migration.down?.({
-    builder: database.builder(),
-    query: database.query(),
-    connection: database.connection(),
-  });
+  for (const item of [...migrations].reverse()) {
+    await item.down?.({
+      builder: database.builder(),
+      query: database.query(),
+      connection: database.connection(),
+    });
+  }
+}
+
+export interface SeedFileInput {
+  readonly id: string;
+  readonly filename: string;
+  readonly ext?: string;
+  readonly mimeType?: string;
+  readonly size?: number;
+  readonly ownerId?: string | null;
+}
+
+/** Inserts File Repository metadata without touching a disk, for access-control tests. */
+export async function insertFile(
+  database: DatabaseManager,
+  file: SeedFileInput,
+): Promise<void> {
+  const now = new Date('2026-08-03T00:00:00.000Z');
+  const ext = file.ext ?? 'pdf';
+  await database
+    .query()
+    .insertInto('expenseFiles')
+    .values({
+      id: file.id,
+      disk: 'local',
+      key: `objects/${file.id}.${ext}`,
+      filename: file.filename,
+      ext,
+      mimeType: file.mimeType ?? 'application/pdf',
+      size: file.size ?? 1024,
+      ownerId: file.ownerId ?? null,
+      createdAt: now,
+      updatedAt: now,
+    })
+    .execute();
+}
+
+export async function linkItemFile(
+  database: DatabaseManager,
+  link: {
+    readonly id: string;
+    readonly reportId: string;
+    readonly itemId: string;
+    readonly fileId: string;
+  },
+): Promise<void> {
+  await database
+    .query()
+    .insertInto('expenseItemFiles')
+    .values({ ...link, createdAt: new Date('2026-08-03T00:00:00.000Z') })
+    .execute();
+}
+
+export async function linkReportFile(
+  database: DatabaseManager,
+  link: {
+    readonly id: string;
+    readonly reportId: string;
+    readonly fileId: string;
+    readonly kind?: string;
+  },
+): Promise<void> {
+  await database
+    .query()
+    .insertInto('expenseReportFiles')
+    .values({
+      id: link.id,
+      reportId: link.reportId,
+      fileId: link.fileId,
+      kind: link.kind ?? 'supplement',
+      createdAt: new Date('2026-08-03T00:00:00.000Z'),
+    })
+    .execute();
+}
+
+export async function insertItem(
+  database: DatabaseManager,
+  item: {
+    readonly id: string;
+    readonly reportId: string;
+    readonly categoryId?: string;
+    readonly amount?: number;
+  },
+): Promise<void> {
+  await database
+    .query()
+    .insertInto('expenseItems')
+    .values({
+      id: item.id,
+      reportId: item.reportId,
+      categoryId: item.categoryId ?? 'c1',
+      expenseDate: new Date('2026-08-02T00:00:00.000Z'),
+      amount: item.amount ?? 100,
+      description: null,
+      createdAt: new Date('2026-08-02T00:00:00.000Z'),
+    })
+    .execute();
 }
 
 export async function createAuthenticationTables(
@@ -108,10 +212,14 @@ export async function createAuthenticationTables(
 }
 
 export async function runDemoSeed(database: DatabaseManager): Promise<void> {
-  await seed.run({
+  const context = {
     query: database.query(),
     connection: database.connection(),
-  });
+  };
+  await seed.run(context);
+  // The manager-chain seed only links accounts the demo seed left without a
+  // direct manager; production runs both, so the test helper does too.
+  await managerChainSeed.run(context);
 }
 
 export async function insertEmployee(

@@ -6,7 +6,7 @@ import { Link, Outlet } from 'react-router';
 import { Loading } from '@/components/loading';
 import { PageContainer } from '@/components/page-container';
 import { PageHeader } from '@/components/page-header';
-import { Button } from '@/components/ui/button';
+import { Button, buttonVariants } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
@@ -24,6 +24,7 @@ import {
   type ExpenseReportSummary,
 } from './api.js';
 import { expenseErrorMessage } from './errors.js';
+import { invalidateExpenseData } from './refresh.js';
 import { ReportList } from './report-list.js';
 import { Notice } from './shared.jsx';
 
@@ -34,7 +35,6 @@ export default function ExpensesPage(): ReactElement {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>();
   const [message, setMessage] = useState<string>();
-  const [refreshToken, setRefreshToken] = useState(0);
   const [deleteTarget, setDeleteTarget] = useState<ExpenseReportSummary>();
   const [busyId, setBusyId] = useState<string>();
 
@@ -46,7 +46,7 @@ export default function ExpensesPage(): ReactElement {
         if (!controller.signal.aborted) setMeta(result);
       } catch (caught) {
         if (!controller.signal.aborted) {
-          setError(expenseErrorMessage(caught, t('expenses.loadFailed')));
+          setError(expenseErrorMessage(caught, t('expenses.loadFailed'), t));
         }
       } finally {
         if (!controller.signal.aborted) setLoading(false);
@@ -68,10 +68,10 @@ export default function ExpensesPage(): ReactElement {
     try {
       await submitExpenseReport(api, report.id);
       setMessage(t('expenses.messages.submitted', { number: report.number }));
-      setRefreshToken((value) => value + 1);
+      invalidateExpenseData();
     } catch (caught) {
       setError(
-        expenseErrorMessage(caught, t('expenses.messages.actionFailed')),
+        expenseErrorMessage(caught, t('expenses.messages.actionFailed'), t),
       );
     } finally {
       setBusyId(undefined);
@@ -89,10 +89,10 @@ export default function ExpensesPage(): ReactElement {
         t('expenses.messages.deleted', { number: deleteTarget.number }),
       );
       setDeleteTarget(undefined);
-      setRefreshToken((value) => value + 1);
+      invalidateExpenseData();
     } catch (caught) {
       setError(
-        expenseErrorMessage(caught, t('expenses.messages.actionFailed')),
+        expenseErrorMessage(caught, t('expenses.messages.actionFailed'), t),
       );
     } finally {
       setBusyId(undefined);
@@ -115,9 +115,9 @@ export default function ExpensesPage(): ReactElement {
       <PageHeader
         actions={
           canCreate ? (
-            <Button render={<Link to='new' />}>
+            <Link className={buttonVariants()} to='new'>
               {t('expenses.newReport')}
-            </Button>
+            </Link>
           ) : null
         }
         description={t('expenses.description')}
@@ -130,19 +130,19 @@ export default function ExpensesPage(): ReactElement {
       <ReportList
         categories={meta?.categories ?? []}
         emptyDescription={t('expenses.emptyDescription')}
-        refreshToken={refreshToken}
         renderActions={(report) => {
-          const canManageDraft = report.status === 'draft';
-          if (!canManageDraft) return null;
+          // A returned reimbursement is corrected and resubmitted, just like a draft.
+          const canManage =
+            report.status === 'draft' || report.status === 'rejected';
+          if (!canManage) return null;
           return (
             <>
-              <Button
-                render={<Link to={`/expenses/${report.id}/edit`} />}
-                size='sm'
-                variant='outline'
+              <Link
+                className={buttonVariants({ size: 'sm', variant: 'outline' })}
+                to={`/expenses/${report.id}/edit`}
               >
                 {t('expenses.actions.edit')}
-              </Button>
+              </Link>
               <Button
                 disabled={busyId === report.id}
                 onClick={() => {

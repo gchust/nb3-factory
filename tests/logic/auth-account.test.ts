@@ -39,6 +39,25 @@ describe('authentication account creation', () => {
     });
   }
 
+  it('allows a reviewer to switch demo roles without hitting the sign-in limit', () => {
+    const config = authConfig({} as never) as {
+      rateLimit?: {
+        customRules?: Record<string, { window: number; max: number }>;
+      };
+    };
+    // Better Auth defaults sign-in to 3 attempts per 10 seconds. The login page
+    // advertises five demo accounts; the default forced a 429 partway through
+    // trying the roles, so the limit is widened but still real.
+    expect(config.rateLimit?.customRules?.['/sign-in/username']).toEqual({
+      window: 60,
+      max: 20,
+    });
+    expect(config.rateLimit?.customRules?.['/sign-in/email']).toEqual({
+      window: 60,
+      max: 20,
+    });
+  });
+
   it('creates an account with the local credential issuer on sign-up', async () => {
     const auth = createTestAuth();
     const response = await auth.handler(

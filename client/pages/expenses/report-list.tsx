@@ -4,7 +4,7 @@ import { useEffect, useState, type ReactElement, type ReactNode } from 'react';
 import { Link } from 'react-router';
 
 import { Loading } from '@/components/loading';
-import { Button } from '@/components/ui/button';
+import { Button, buttonVariants } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
   Select,
@@ -34,6 +34,7 @@ import {
   statusLabelKey,
 } from './constants.js';
 import { expenseErrorMessage } from './errors.js';
+import { useExpenseInvalidation } from './refresh.js';
 import { EmptyState, Notice, StatusBadge } from './shared.jsx';
 
 export interface ExpenseCategoryOption {
@@ -47,7 +48,6 @@ export function ReportList({
   showEmployee = false,
   defaultStatus = 'all',
   renderActions,
-  refreshToken = 0,
   emptyTitle,
   emptyDescription,
   viewLabelKey = 'expenses.actions.view',
@@ -57,7 +57,6 @@ export function ReportList({
   readonly showEmployee?: boolean;
   readonly defaultStatus?: string;
   readonly renderActions?: (report: ExpenseReportSummary) => ReactNode;
-  readonly refreshToken?: number;
   readonly emptyTitle?: string;
   readonly emptyDescription?: string;
   readonly viewLabelKey?: string;
@@ -72,6 +71,7 @@ export function ReportList({
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>();
+  const invalidation = useExpenseInvalidation();
 
   useEffect(() => {
     const controller = new AbortController();
@@ -89,14 +89,14 @@ export function ReportList({
         setError(undefined);
       } catch (caught) {
         if (!controller.signal.aborted) {
-          setError(expenseErrorMessage(caught, t('expenses.loadFailed')));
+          setError(expenseErrorMessage(caught, t('expenses.loadFailed'), t));
         }
       } finally {
         if (!controller.signal.aborted) setLoading(false);
       }
     })();
     return () => controller.abort();
-  }, [api, scope, status, categoryId, search, refreshToken, t]);
+  }, [api, scope, status, categoryId, search, invalidation, t]);
 
   const statusOptions = [
     { value: 'all', label: t('expenses.filter.allStatuses') },
@@ -236,13 +236,15 @@ export function ReportList({
                   <TableCell>{formatDate(report.createdAt)}</TableCell>
                   <TableCell className='text-right'>
                     <div className='flex justify-end gap-2'>
-                      <Button
-                        render={<Link to={`/expenses/${report.id}`} />}
-                        size='sm'
-                        variant='outline'
+                      <Link
+                        className={buttonVariants({
+                          size: 'sm',
+                          variant: 'outline',
+                        })}
+                        to={`/expenses/${report.id}`}
                       >
                         {t(viewLabelKey)}
-                      </Button>
+                      </Link>
                       {renderActions ? renderActions(report) : null}
                     </div>
                   </TableCell>

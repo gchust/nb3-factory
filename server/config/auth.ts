@@ -25,6 +25,21 @@ const auth: AppConfigFactory<AuthConfig> = defineAppConfig((_runtime) => ({
       },
     },
   },
+  // Better Auth limits sign-in to 3 attempts per 10 seconds per address by
+  // default. The login page advertises five demo accounts and a reviewer
+  // switches between them to check each role, so the default turned ordinary
+  // role-switching into a 429 ("Too many requests") partway through the tour.
+  // Keep a real brute-force limit, just one that a person trying the roles
+  // cannot trip: 20 sign-ins per minute instead of 3 per 10 seconds.
+  rateLimit: {
+    window: 60,
+    max: 100,
+    customRules: {
+      '/sign-in/username': { window: 60, max: 20 },
+      '/sign-in/email': { window: 60, max: 20 },
+      '/sign-up/email': { window: 60, max: 20 },
+    },
+  },
   session: { storeSessionInDatabase: true },
 }));
 

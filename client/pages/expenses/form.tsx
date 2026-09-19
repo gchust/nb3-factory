@@ -27,6 +27,7 @@ import {
 } from './api.js';
 import { formatAmount } from './constants.js';
 import { expenseErrorMessage } from './errors.js';
+import { invalidateExpenseData } from './refresh.js';
 import { Notice } from './shared.jsx';
 
 interface FormItem {
@@ -85,7 +86,9 @@ export function ExpenseReportForm({
         }
       } catch (caught) {
         if (!controller.signal.aborted) {
-          setError(expenseErrorMessage(caught, t('expenses.form.loadFailed')));
+          setError(
+            expenseErrorMessage(caught, t('expenses.form.loadFailed'), t),
+          );
         }
       } finally {
         if (!controller.signal.aborted) setLoading(false);
@@ -132,6 +135,8 @@ export function ExpenseReportForm({
       }
     }
     const payloadItems: ExpenseItemInput[] = items.map((item) => ({
+      // Keeping the existing item id preserves the receipts attached to that item.
+      id: item.id,
       categoryId: item.categoryId,
       expenseDate: item.expenseDate,
       amount: Number(item.amount),
@@ -145,9 +150,12 @@ export function ExpenseReportForm({
       } else {
         await createExpenseReport(api, input);
       }
+      // The list (and, when editing, the detail) that opened this form stays
+      // mounted underneath it, so make every mounted reader refetch.
+      invalidateExpenseData();
       await close();
     } catch (caught) {
-      setError(expenseErrorMessage(caught, t('expenses.form.saveFailed')));
+      setError(expenseErrorMessage(caught, t('expenses.form.saveFailed'), t));
     } finally {
       setSaving(false);
     }

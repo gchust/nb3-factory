@@ -12,6 +12,7 @@ import {
 import { expenseApiRoutes } from '../../server/routes/expenses.js';
 import {
   createTestDatabase,
+  insertFile,
   insertSubmittedReport,
   migrate,
   seedWorkflowFixtures,
@@ -200,5 +201,97 @@ describe('expense API routes', () => {
       jsonRequest('/expenses/reports', 'u-e1', { purpose: '空单', items: [] }),
     );
     expect(response.status).toBe(400);
+  });
+
+  async function createDraft(
+    user: string,
+  ): Promise<{ reportId: string; itemId: string }> {
+    const response = await router.request(
+      '/expenses/reports',
+      jsonRequest('/expenses/reports', user, {
+        purpose: '票据测试',
+        items: [
+          {
+            categoryId: 'c1',
+            expenseDate: '2026-08-05',
+            amount: 100,
+            description: '打车',
+          },
+        ],
+      }),
+    );
+    const body = (await response.json()) as {
+      data: { report: { id: string }; items: { id: string }[] };
+    };
+    return { reportId: body.data.report.id, itemId: body.data.items[0]!.id };
+  }
+
+  it('attaches a receipt over HTTP and freezes it after submission', async () => {
+    const { reportId, itemId } = await createDraft('u-e1');
+    const fileId = crypto.randomUUID();
+    await insertFile(database, {
+      id: fileId,
+      filename: 'receipt.png',
+      ext: 'png',
+      mimeType: 'image/png',
+      size: 1024,
+      ownerId: 'u-e1',
+    });
+    const path = `/expenses/reports/${reportId}/items/${itemId}/files`;
+
+    const anonymous = await router.request(path, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ fileId }),
+    });
+    expect(anonymous.status).toBe(401);
+
+    const linked = await router.request(
+      path,
+      jsonRequest(path, 'u-e1', { fileId }),
+    );
+    expect(linked.status).toBe(200);
+    const linkedBody = (await linked.json()) as {
+      data: { items: { files: { id: string; contentUrl: string }[] }[] };
+    };
+    expect(linkedBody.data.items[0]!.files.map((file) => file.id)).toEqual([
+      fileId,
+    ]);
+
+    await router.request(
+      `/expenses/reports/${reportId}/submit`,
+      jsonRequest(`/expenses/reports/${reportId}/submit`, 'u-e1'),
+    );
+    const blocked = await router.request(
+      path,
+      jsonRequest(path, 'u-e1', { fileId }),
+    );
+    expect(blocked.status).toBe(409);
+  });
+
+  it('refuses to remove another employee’s attachment', async () => {
+    const { reportId, itemId } = await createDraft('u-e1');
+    const fileId = crypto.randomUUID();
+    await insertFile(database, {
+      id: fileId,
+      filename: 'receipt.png',
+      ext: 'png',
+      mimeType: 'image/png',
+      size: 1024,
+      ownerId: 'u-e1',
+    });
+    await router.request(
+      `/expenses/reports/${reportId}/items/${itemId}/files`,
+      jsonRequest(
+        `/expenses/reports/${reportId}/items/${itemId}/files`,
+        'u-e1',
+        { fileId },
+      ),
+    );
+    const response = await router.request(`/expenses/files/${fileId}`, {
+      method: 'DELETE',
+      headers: { 'x-test-user': 'u-e2' },
+    });
+    expect(response.status).toBe(403);
   });
 });

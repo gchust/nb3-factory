@@ -29,6 +29,7 @@ export interface ExpenseActor {
 }
 
 export interface ExpenseItemInput {
+  readonly id?: string | null;
   readonly categoryId: string;
   readonly expenseDate: string;
   readonly amount: number;
@@ -38,6 +39,25 @@ export interface ExpenseItemInput {
 export interface ExpenseReportInput {
   readonly purpose?: string | null;
   readonly items: readonly ExpenseItemInput[];
+}
+
+/**
+ * The logical collection that holds File Repository metadata, the route the
+ * content bytes are served from, and the disk uploaded objects are stored on.
+ * Shared by the provider and the file routes so the two never drift apart.
+ */
+export const EXPENSE_FILE_COLLECTION = 'expenseFiles';
+export const EXPENSE_FILE_ACCESS_PATH = '/expense-files';
+export const EXPENSE_FILE_DISK = 'local';
+
+export interface ExpenseFileView {
+  readonly id: string;
+  readonly filename: string;
+  readonly ext: string;
+  readonly mimeType: string;
+  readonly size: number;
+  readonly createdAt: string;
+  readonly contentUrl: string;
 }
 
 export type ExpenseScope = 'mine' | 'approvals' | 'finance' | 'all';
@@ -62,6 +82,7 @@ export interface ExpenseReportSummary {
   readonly totalAmount: number;
   readonly purpose: string | null;
   readonly itemCount: number;
+  readonly fileCount: number;
   readonly createdAt: string;
   readonly submittedAt: string | null;
   readonly decidedAt: string | null;
@@ -76,6 +97,7 @@ export interface ExpenseItemView {
   readonly expenseDate: string;
   readonly amount: number;
   readonly description: string | null;
+  readonly files: readonly ExpenseFileView[];
 }
 
 export interface ExpenseActionView {
@@ -96,11 +118,15 @@ export interface ExpenseCapabilities {
   readonly canApprove: boolean;
   readonly canReject: boolean;
   readonly canPay: boolean;
+  /** The owner may add or remove receipts/supporting documents only before a decision. */
+  readonly canManageFiles: boolean;
 }
 
 export interface ExpenseReportDetail {
   readonly report: ExpenseReportSummary;
   readonly items: readonly ExpenseItemView[];
+  /** Report-level supporting documents (travel proof and the like), separate from item receipts. */
+  readonly files: readonly ExpenseFileView[];
   readonly actions: readonly ExpenseActionView[];
   readonly payment: {
     readonly amount: number;
@@ -201,6 +227,19 @@ export interface ExpenseService {
     comment: string,
   ): Promise<ExpenseReportDetail>;
   payReport(actor: ExpenseActor, id: string): Promise<ExpenseReportDetail>;
+  linkItemFile(
+    actor: ExpenseActor,
+    reportId: string,
+    itemId: string,
+    fileId: string,
+  ): Promise<ExpenseReportDetail>;
+  linkReportFile(
+    actor: ExpenseActor,
+    reportId: string,
+    fileId: string,
+  ): Promise<ExpenseReportDetail>;
+  removeFile(actor: ExpenseActor, fileId: string): Promise<void>;
+  canAccessFile(actor: ExpenseActor, fileId: string): Promise<boolean>;
   getStatistics(
     actor: ExpenseActor,
     filters: ExpenseListFilters,
@@ -283,6 +322,48 @@ type PaymentRow = {
   paidAt: Date | string;
 };
 
+type FileRow = {
+  id: string;
+  disk: string;
+  key: string;
+  filename: string;
+  ext: string;
+  mimeType: string;
+  size: number | string;
+  ownerId: string | null;
+  createdAt: Date | string;
+  updatedAt: Date | string;
+};
+
+type ItemFileRow = {
+  id: string;
+  reportId: string;
+  itemId: string;
+  fileId: string;
+  createdAt: Date | string;
+};
+
+type ReportFileRow = {
+  id: string;
+  reportId: string;
+  fileId: string;
+  kind: string;
+  createdAt: Date | string;
+};
+
+type FileLink =
+  | {
+      readonly type: 'item';
+      readonly linkId: string;
+      readonly reportId: string;
+      readonly itemId: string;
+    }
+  | {
+      readonly type: 'report';
+      readonly linkId: string;
+      readonly reportId: string;
+    };
+
 const WRITE_ROLES: readonly ExpenseRole[] = ['employee', 'manager', 'admin'];
 const STATISTICS_STATUSES: readonly ExpenseStatus[] = [
   'submitted',
@@ -297,19 +378,25 @@ export default class ExpenseProvider extends ServiceProvider<Application> {
   public override register(): void {
     this.app.container.singleton(expenseServiceToken, () => {
       const database = this.app.container.resolve(databaseManagerToken);
-      return createExpenseService(database);
+      return createExpenseService(database, {
+        publicBasePath: this.app.publicBasePath,
+      });
     });
   }
 }
 
 export function createExpenseService(
   database: DatabaseManager,
+  options: { readonly publicBasePath?: string } = {},
 ): ExpenseService {
-  return new DefaultExpenseService(database);
+  return new DefaultExpenseService(database, options.publicBasePath ?? '');
 }
 
 class DefaultExpenseService implements ExpenseService {
-  constructor(private readonly database: DatabaseManager) {}
+  constructor(
+    private readonly database: DatabaseManager,
+    private readonly publicBasePath: string = '',
+  ) {}
 
   public async resolveActor(
     userId: string,
@@ -408,10 +495,12 @@ class DefaultExpenseService implements ExpenseService {
       return { allowed: false, data: [], total: 0 };
     }
     const reports = await this.queryReports(actor, scope, filters);
-    const [employees, departments, itemCounts] = await Promise.all([
+    const reportIds = reports.map((row) => row.id);
+    const [employees, departments, itemCounts, fileCounts] = await Promise.all([
       this.employeeMap(),
       this.departmentMap(),
-      this.itemCountMap(reports.map((row) => row.id)),
+      this.itemCountMap(reportIds),
+      this.fileCountMap(reportIds),
     ]);
     const data = reports.map((row) =>
       toSummary(
@@ -419,6 +508,7 @@ class DefaultExpenseService implements ExpenseService {
         employees.get(row.employeeId),
         departments.get(row.departmentId),
         itemCounts.get(row.id) ?? 0,
+        fileCounts.get(row.id) ?? 0,
       ),
     );
     return { allowed: true, data, total: data.length };
@@ -498,10 +588,10 @@ class DefaultExpenseService implements ExpenseService {
   ): Promise<ExpenseReportDetail> {
     const report = await this.loadReport(id);
     this.assertOwner(actor, report);
-    if (report.status !== 'draft') {
+    if (report.status !== 'draft' && report.status !== 'rejected') {
       throw new ExpenseError(
         'INVALID_STATE',
-        'Only a draft reimbursement can be edited.',
+        'Only a draft or returned reimbursement can be edited.',
         409,
       );
     }
@@ -520,13 +610,47 @@ class DefaultExpenseService implements ExpenseService {
           updatedAt: now,
         })
         .where('id', '=', id)
-        .where('status', '=', 'draft')
+        .where('status', 'in', ['draft', 'rejected'])
         .execute();
-      await connection.query
-        .deleteFrom<ItemRow>('expenseItems')
+
+      // Update the items that were kept in place so their receipt links survive,
+      // and only create rows for genuinely new items.
+      const existing = await connection.query
+        .selectFrom<ItemRow>('expenseItems')
+        .selectAll()
         .where('reportId', '=', id)
-        .execute();
-      await this.insertItems(connection.query, id, items, now);
+        .execute<ItemRow>();
+      const existingIds = new Set(existing.map((row) => row.id));
+      const keptIds = new Set<string>();
+      for (const item of items) {
+        const keepId =
+          item.id && existingIds.has(item.id) ? item.id : undefined;
+        if (keepId) {
+          keptIds.add(keepId);
+          await connection.query
+            .updateTable<ItemRow>('expenseItems')
+            .set({
+              categoryId: item.categoryId,
+              expenseDate: item.expenseDate,
+              amount: item.amount,
+              description: item.description,
+            })
+            .where('id', '=', keepId)
+            .execute();
+        } else {
+          await this.insertItems(connection.query, id, [item], now);
+        }
+      }
+      const removedIds = existing
+        .filter((row) => !keptIds.has(row.id))
+        .map((row) => row.id);
+      if (removedIds.length > 0) {
+        await this.removeItemFiles(connection.query, removedIds);
+        await connection.query
+          .deleteFrom<ItemRow>('expenseItems')
+          .where('id', 'in', removedIds)
+          .execute();
+      }
     });
 
     return this.getReport(actor, id);
@@ -535,14 +659,24 @@ class DefaultExpenseService implements ExpenseService {
   public async deleteReport(actor: ExpenseActor, id: string): Promise<void> {
     const report = await this.loadReport(id);
     this.assertOwner(actor, report);
-    if (report.status !== 'draft') {
+    if (report.status !== 'draft' && report.status !== 'rejected') {
       throw new ExpenseError(
         'INVALID_STATE',
-        'Only a draft reimbursement can be deleted.',
+        'Only a draft or returned reimbursement can be deleted.',
         409,
       );
     }
     await this.database.transaction(async (connection) => {
+      const items = await connection.query
+        .selectFrom<ItemRow>('expenseItems')
+        .select('id')
+        .where('reportId', '=', id)
+        .execute<{ id: string }>();
+      await this.removeItemFiles(
+        connection.query,
+        items.map((row) => row.id),
+      );
+      await this.removeReportFiles(connection.query, id);
       await connection.query
         .deleteFrom<ItemRow>('expenseItems')
         .where('reportId', '=', id)
@@ -564,10 +698,10 @@ class DefaultExpenseService implements ExpenseService {
   ): Promise<ExpenseReportDetail> {
     const report = await this.loadReport(id);
     this.assertOwner(actor, report);
-    if (report.status !== 'draft') {
+    if (report.status !== 'draft' && report.status !== 'rejected') {
       throw new ExpenseError(
         'INVALID_STATE',
-        'Only a draft reimbursement can be submitted.',
+        'Only a draft or returned reimbursement can be submitted.',
         409,
       );
     }
@@ -729,6 +863,158 @@ class DefaultExpenseService implements ExpenseService {
     return this.getReport(actor, id);
   }
 
+  public async linkItemFile(
+    actor: ExpenseActor,
+    reportId: string,
+    itemId: string,
+    fileId: string,
+  ): Promise<ExpenseReportDetail> {
+    const report = await this.loadReport(reportId);
+    this.assertFileManager(actor, report);
+    const item = await this.database
+      .query()
+      .selectFrom<ItemRow>('expenseItems')
+      .select('id')
+      .where('id', '=', itemId)
+      .where('reportId', '=', reportId)
+      .executeTakeFirst<{ id: string }>();
+    if (!item) {
+      throw new ExpenseError('NOT_FOUND', 'Expense item not found.', 404);
+    }
+    await this.assertOwnedFile(actor, fileId);
+    const existing = await this.findFileLink(fileId);
+    if (existing) {
+      if (existing.type === 'item' && existing.itemId === itemId) {
+        return this.getReport(actor, reportId);
+      }
+      throw new ExpenseError(
+        'FILE_ALREADY_LINKED',
+        'This file is already attached to another record.',
+        409,
+      );
+    }
+    try {
+      await this.database
+        .query()
+        .insertInto<ItemFileRow>('expenseItemFiles')
+        .values({
+          id: crypto.randomUUID(),
+          reportId,
+          itemId,
+          fileId,
+          createdAt: new Date(),
+        })
+        .execute();
+    } catch {
+      throw new ExpenseError(
+        'FILE_ALREADY_LINKED',
+        'This file is already attached to another record.',
+        409,
+      );
+    }
+    return this.getReport(actor, reportId);
+  }
+
+  public async linkReportFile(
+    actor: ExpenseActor,
+    reportId: string,
+    fileId: string,
+  ): Promise<ExpenseReportDetail> {
+    const report = await this.loadReport(reportId);
+    this.assertFileManager(actor, report);
+    await this.assertOwnedFile(actor, fileId);
+    const existing = await this.findFileLink(fileId);
+    if (existing) {
+      if (existing.type === 'report' && existing.reportId === reportId) {
+        return this.getReport(actor, reportId);
+      }
+      throw new ExpenseError(
+        'FILE_ALREADY_LINKED',
+        'This file is already attached to another record.',
+        409,
+      );
+    }
+    try {
+      await this.database
+        .query()
+        .insertInto<ReportFileRow>('expenseReportFiles')
+        .values({
+          id: crypto.randomUUID(),
+          reportId,
+          fileId,
+          kind: 'supplement',
+          createdAt: new Date(),
+        })
+        .execute();
+    } catch {
+      throw new ExpenseError(
+        'FILE_ALREADY_LINKED',
+        'This file is already attached to another record.',
+        409,
+      );
+    }
+    return this.getReport(actor, reportId);
+  }
+
+  public async removeFile(actor: ExpenseActor, fileId: string): Promise<void> {
+    const file = await this.loadFileRow(fileId);
+    if (!file) {
+      throw new ExpenseError('NOT_FOUND', 'File not found.', 404);
+    }
+    const link = await this.findFileLink(fileId);
+    if (!link) {
+      // An upload that was never linked can only be removed by the employee who made it.
+      if (file.ownerId !== actor.userId && actor.role !== 'admin') {
+        throw new ExpenseError(
+          'FORBIDDEN',
+          'You cannot remove this file.',
+          403,
+        );
+      }
+      await this.deleteFileMetadata([fileId]);
+      return;
+    }
+    const report = await this.loadReport(link.reportId);
+    this.assertFileManager(actor, report);
+    await this.database.transaction(async (connection) => {
+      if (link.type === 'item') {
+        await connection.query
+          .deleteFrom<ItemFileRow>('expenseItemFiles')
+          .where('id', '=', link.linkId)
+          .execute();
+      } else {
+        await connection.query
+          .deleteFrom<ReportFileRow>('expenseReportFiles')
+          .where('id', '=', link.linkId)
+          .execute();
+      }
+      await connection.query
+        .deleteFrom<FileRow>('expenseFiles')
+        .where('id', '=', fileId)
+        .execute();
+    });
+  }
+
+  public async canAccessFile(
+    actor: ExpenseActor,
+    fileId: string,
+  ): Promise<boolean> {
+    const file = await this.loadFileRow(fileId);
+    if (!file) return false;
+    if (actor.role === 'admin') return true;
+    if (file.ownerId && file.ownerId === actor.userId) return true;
+    const link = await this.findFileLink(fileId);
+    if (!link) return false;
+    const report = await this.database
+      .query()
+      .selectFrom<ReportRow>('expenseReports')
+      .selectAll()
+      .where('id', '=', link.reportId)
+      .executeTakeFirst<ReportRow>();
+    if (!report) return false;
+    return visibleTo(actor, report);
+  }
+
   public async getStatistics(
     actor: ExpenseActor,
     filters: ExpenseListFilters,
@@ -835,11 +1121,18 @@ class DefaultExpenseService implements ExpenseService {
         this.categoryMap(),
       ]);
 
+    const { filesByItem, reportFiles } = await this.loadReportFiles(
+      report.id,
+      items.map((item) => item.id),
+    );
+
     const summary = toSummary(
       report,
       employees.get(report.employeeId),
       departments.get(report.departmentId),
       items.length,
+      [...filesByItem.values()].reduce((sum, list) => sum + list.length, 0) +
+        reportFiles.length,
     );
 
     return {
@@ -851,7 +1144,9 @@ class DefaultExpenseService implements ExpenseService {
         expenseDate: isoDate(item.expenseDate),
         amount: roundMoney(Number(item.amount)),
         description: item.description,
+        files: filesByItem.get(item.id) ?? [],
       })),
+      files: reportFiles,
       actions: actions.map((action) => ({
         id: action.id,
         action: action.action,
@@ -1076,6 +1371,228 @@ class DefaultExpenseService implements ExpenseService {
     return counts;
   }
 
+  private async fileCountMap(
+    reportIds: readonly string[],
+  ): Promise<Map<string, number>> {
+    if (reportIds.length === 0) return new Map();
+    const query = this.database.query();
+    const [itemLinks, reportLinks] = await Promise.all([
+      query
+        .selectFrom<ItemFileRow>('expenseItemFiles')
+        .select('reportId')
+        .where('reportId', 'in', reportIds)
+        .execute<{ reportId: string }>(),
+      query
+        .selectFrom<ReportFileRow>('expenseReportFiles')
+        .select('reportId')
+        .where('reportId', 'in', reportIds)
+        .execute<{ reportId: string }>(),
+    ]);
+    const counts = new Map<string, number>();
+    for (const row of [...itemLinks, ...reportLinks]) {
+      counts.set(row.reportId, (counts.get(row.reportId) ?? 0) + 1);
+    }
+    return counts;
+  }
+
+  private async loadReportFiles(
+    reportId: string,
+    itemIds: readonly string[],
+  ): Promise<{
+    readonly filesByItem: Map<string, ExpenseFileView[]>;
+    readonly reportFiles: ExpenseFileView[];
+  }> {
+    const query = this.database.query();
+    const [itemLinks, reportLinks] = await Promise.all([
+      itemIds.length > 0
+        ? query
+            .selectFrom<ItemFileRow>('expenseItemFiles')
+            .selectAll()
+            .where('reportId', '=', reportId)
+            .execute<ItemFileRow>()
+        : Promise.resolve([] as ItemFileRow[]),
+      query
+        .selectFrom<ReportFileRow>('expenseReportFiles')
+        .selectAll()
+        .where('reportId', '=', reportId)
+        .execute<ReportFileRow>(),
+    ]);
+    const fileIds = [
+      ...new Set([...itemLinks, ...reportLinks].map((row) => row.fileId)),
+    ];
+    const fileRows =
+      fileIds.length > 0
+        ? await query
+            .selectFrom<FileRow>('expenseFiles')
+            .selectAll()
+            .where('id', 'in', fileIds)
+            .execute<FileRow>()
+        : [];
+    const fileMap = new Map(fileRows.map((row) => [row.id, row]));
+    const filesByItem = new Map<string, ExpenseFileView[]>();
+    for (const link of itemLinks) {
+      const row = fileMap.get(link.fileId);
+      if (!row) continue;
+      const list = filesByItem.get(link.itemId) ?? [];
+      list.push(this.toFileView(row));
+      filesByItem.set(link.itemId, list);
+    }
+    const reportFiles = reportLinks
+      .map((link) => fileMap.get(link.fileId))
+      .filter((row): row is FileRow => row !== undefined)
+      .map((row) => this.toFileView(row));
+    return { filesByItem, reportFiles };
+  }
+
+  private toFileView(row: FileRow): ExpenseFileView {
+    const base = this.publicBasePath.replace(/\/$/, '');
+    const extension = row.ext ? `.${encodeURIComponent(row.ext)}` : '';
+    return {
+      id: row.id,
+      filename: row.filename,
+      ext: row.ext,
+      mimeType: row.mimeType,
+      size: Number(row.size),
+      createdAt: isoDateTime(row.createdAt),
+      contentUrl: `${base}${EXPENSE_FILE_ACCESS_PATH}/${encodeURIComponent(row.id)}${extension}`,
+    };
+  }
+
+  private async loadFileRow(id: string): Promise<FileRow | undefined> {
+    return this.database
+      .query()
+      .selectFrom<FileRow>('expenseFiles')
+      .selectAll()
+      .where('id', '=', id)
+      .executeTakeFirst<FileRow>();
+  }
+
+  private async findFileLink(fileId: string): Promise<FileLink | null> {
+    const query = this.database.query();
+    const item = await query
+      .selectFrom<ItemFileRow>('expenseItemFiles')
+      .selectAll()
+      .where('fileId', '=', fileId)
+      .executeTakeFirst<ItemFileRow>();
+    if (item) {
+      return {
+        type: 'item',
+        linkId: item.id,
+        reportId: item.reportId,
+        itemId: item.itemId,
+      };
+    }
+    const report = await query
+      .selectFrom<ReportFileRow>('expenseReportFiles')
+      .selectAll()
+      .where('fileId', '=', fileId)
+      .executeTakeFirst<ReportFileRow>();
+    if (report) {
+      return { type: 'report', linkId: report.id, reportId: report.reportId };
+    }
+    return null;
+  }
+
+  private async assertOwnedFile(
+    actor: ExpenseActor,
+    fileId: string,
+  ): Promise<void> {
+    const file = await this.loadFileRow(fileId);
+    if (!file) {
+      throw new ExpenseError('NOT_FOUND', 'File not found.', 404);
+    }
+    if (Number(file.size) <= 0) {
+      throw new ExpenseError(
+        'INVALID_FILE',
+        'Empty files cannot be attached.',
+        400,
+      );
+    }
+    if (file.ownerId !== actor.userId && actor.role !== 'admin') {
+      throw new ExpenseError(
+        'FORBIDDEN',
+        'You can only attach files you uploaded yourself.',
+        403,
+      );
+    }
+  }
+
+  private assertFileManager(actor: ExpenseActor, report: ReportRow): void {
+    if (actor.role === 'admin') return;
+    if (report.employeeId !== actor.employeeId) {
+      throw new ExpenseError(
+        'FORBIDDEN',
+        'You can only change files on your own reimbursement.',
+        403,
+      );
+    }
+    if (report.status !== 'draft' && report.status !== 'rejected') {
+      throw new ExpenseError(
+        'INVALID_STATE',
+        'Files can only be changed while the reimbursement is a draft or returned.',
+        409,
+      );
+    }
+  }
+
+  private async removeItemFiles(
+    query: QueryAdapter,
+    itemIds: readonly string[],
+  ): Promise<void> {
+    if (itemIds.length === 0) return;
+    const links = await query
+      .selectFrom<ItemFileRow>('expenseItemFiles')
+      .selectAll()
+      .where('itemId', 'in', itemIds)
+      .execute<ItemFileRow>();
+    if (links.length === 0) return;
+    await query
+      .deleteFrom<ItemFileRow>('expenseItemFiles')
+      .where('itemId', 'in', itemIds)
+      .execute();
+    await query
+      .deleteFrom<FileRow>('expenseFiles')
+      .where(
+        'id',
+        'in',
+        links.map((link) => link.fileId),
+      )
+      .execute();
+  }
+
+  private async removeReportFiles(
+    query: QueryAdapter,
+    reportId: string,
+  ): Promise<void> {
+    const links = await query
+      .selectFrom<ReportFileRow>('expenseReportFiles')
+      .selectAll()
+      .where('reportId', '=', reportId)
+      .execute<ReportFileRow>();
+    if (links.length === 0) return;
+    await query
+      .deleteFrom<ReportFileRow>('expenseReportFiles')
+      .where('reportId', '=', reportId)
+      .execute();
+    await query
+      .deleteFrom<FileRow>('expenseFiles')
+      .where(
+        'id',
+        'in',
+        links.map((link) => link.fileId),
+      )
+      .execute();
+  }
+
+  private async deleteFileMetadata(fileIds: readonly string[]): Promise<void> {
+    if (fileIds.length === 0) return;
+    await this.database
+      .query()
+      .deleteFrom<FileRow>('expenseFiles')
+      .where('id', 'in', [...fileIds])
+      .execute();
+  }
+
   private async employeeMap(): Promise<Map<string, EmployeeRow>> {
     const rows = await this.database
       .query()
@@ -1189,6 +1706,7 @@ class DefaultExpenseService implements ExpenseService {
 }
 
 interface NormalizedItem {
+  readonly id?: string;
   readonly categoryId: string;
   readonly expenseDate: Date;
   readonly amount: number;
@@ -1223,7 +1741,7 @@ function capabilitiesFor(
 ): ExpenseCapabilities {
   const isOwner = report.employeeId === actor.employeeId;
   const canManage = isOwner || actor.role === 'admin';
-  const isDraft = report.status === 'draft';
+  const isEditable = report.status === 'draft' || report.status === 'rejected';
   const isSubmitted = report.status === 'submitted';
   const isApproved = report.status === 'approved';
   const isReviewer = actor.role === 'manager' || actor.role === 'admin';
@@ -1234,12 +1752,13 @@ function capabilitiesFor(
     !isOwner &&
     (actor.role === 'admin' || report.departmentId === actor.departmentId);
   return {
-    canEdit: canManage && isDraft,
-    canDelete: canManage && isDraft,
-    canSubmit: canManage && isDraft,
+    canEdit: canManage && isEditable,
+    canDelete: canManage && isEditable,
+    canSubmit: canManage && isEditable,
     canApprove: canReview,
     canReject: canReview,
     canPay: isFinance && isApproved,
+    canManageFiles: canManage && isEditable,
   };
 }
 
@@ -1260,6 +1779,7 @@ function toSummary(
   employee: EmployeeRow | undefined,
   department: DepartmentRow | undefined,
   itemCount: number,
+  fileCount: number,
 ): ExpenseReportSummary {
   return {
     id: report.id,
@@ -1272,6 +1792,7 @@ function toSummary(
     totalAmount: roundMoney(Number(report.totalAmount)),
     purpose: report.purpose,
     itemCount,
+    fileCount,
     createdAt: isoDateTime(report.createdAt),
     submittedAt: isoDateTimeOrNull(report.submittedAt),
     decidedAt: isoDateTimeOrNull(report.decidedAt),
@@ -1330,6 +1851,7 @@ function normalizeItems(
       );
     }
     return {
+      id: normalizeText(item.id) ?? undefined,
       categoryId,
       expenseDate,
       amount: roundMoney(amount),

@@ -18,11 +18,22 @@ export interface ExpenseReportSummary {
   readonly totalAmount: number;
   readonly purpose: string | null;
   readonly itemCount: number;
+  readonly fileCount: number;
   readonly createdAt: string;
   readonly submittedAt: string | null;
   readonly decidedAt: string | null;
   readonly paidAt: string | null;
   readonly decisionComment: string | null;
+}
+
+export interface ExpenseFileView {
+  readonly id: string;
+  readonly filename: string;
+  readonly ext: string;
+  readonly mimeType: string;
+  readonly size: number;
+  readonly createdAt: string;
+  readonly contentUrl: string;
 }
 
 export interface ExpenseItemView {
@@ -32,6 +43,7 @@ export interface ExpenseItemView {
   readonly expenseDate: string;
   readonly amount: number;
   readonly description: string | null;
+  readonly files: readonly ExpenseFileView[];
 }
 
 export interface ExpenseActionView {
@@ -52,11 +64,14 @@ export interface ExpenseCapabilities {
   readonly canApprove: boolean;
   readonly canReject: boolean;
   readonly canPay: boolean;
+  readonly canManageFiles: boolean;
 }
 
 export interface ExpenseReportDetail {
   readonly report: ExpenseReportSummary;
   readonly items: readonly ExpenseItemView[];
+  /** Report-level supporting documents, separate from the per-item receipts. */
+  readonly files: readonly ExpenseFileView[];
   readonly actions: readonly ExpenseActionView[];
   readonly payment: {
     readonly amount: number;
@@ -108,6 +123,7 @@ export interface ExpenseStatistics {
 }
 
 export interface ExpenseItemInput {
+  readonly id?: string;
   readonly categoryId: string;
   readonly expenseDate: string;
   readonly amount: number;
@@ -245,6 +261,43 @@ export async function payExpenseReport(
     method: 'POST',
   });
   return response.data;
+}
+
+export async function linkExpenseItemFile(
+  api: ApiClient,
+  reportId: string,
+  itemId: string,
+  fileId: string,
+): Promise<ExpenseReportDetail> {
+  const response = await api.request<{ data: ExpenseReportDetail }>({
+    path: `expenses/reports/${encodeURIComponent(reportId)}/items/${encodeURIComponent(itemId)}/files`,
+    method: 'POST',
+    json: { fileId },
+  });
+  return response.data;
+}
+
+export async function linkExpenseReportFile(
+  api: ApiClient,
+  reportId: string,
+  fileId: string,
+): Promise<ExpenseReportDetail> {
+  const response = await api.request<{ data: ExpenseReportDetail }>({
+    path: `expenses/reports/${encodeURIComponent(reportId)}/files`,
+    method: 'POST',
+    json: { fileId },
+  });
+  return response.data;
+}
+
+export async function removeExpenseFile(
+  api: ApiClient,
+  fileId: string,
+): Promise<void> {
+  await api.request<void>({
+    path: `expenses/files/${encodeURIComponent(fileId)}`,
+    method: 'DELETE',
+  });
 }
 
 export async function fetchExpenseStatistics(

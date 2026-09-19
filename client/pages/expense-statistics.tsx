@@ -17,6 +17,7 @@ import {
   statusLabelKey,
 } from './expenses/constants.js';
 import { expenseErrorMessage } from './expenses/errors.js';
+import { useExpenseInvalidation } from './expenses/refresh.js';
 import { EmptyState, Notice, Panel, StatusBadge } from './expenses/shared.jsx';
 
 export default function ExpenseStatisticsPage(): ReactElement {
@@ -25,6 +26,7 @@ export default function ExpenseStatisticsPage(): ReactElement {
   const [stats, setStats] = useState<ExpenseStatistics>();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>();
+  const invalidation = useExpenseInvalidation();
 
   useEffect(() => {
     const controller = new AbortController();
@@ -34,14 +36,14 @@ export default function ExpenseStatisticsPage(): ReactElement {
         if (!controller.signal.aborted) setStats(result);
       } catch (caught) {
         if (!controller.signal.aborted) {
-          setError(expenseErrorMessage(caught, t('expenses.loadFailed')));
+          setError(expenseErrorMessage(caught, t('expenses.loadFailed'), t));
         }
       } finally {
         if (!controller.signal.aborted) setLoading(false);
       }
     })();
     return () => controller.abort();
-  }, [api, t]);
+  }, [api, invalidation, t]);
 
   if (loading) {
     return (

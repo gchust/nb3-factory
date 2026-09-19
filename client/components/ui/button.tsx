@@ -55,4 +55,6 @@ function Button({
   );
 }
 
-export { Button };
+/* eslint-disable react-refresh/only-export-components -- navigation actions reuse the button styles on a real link */
+
+export { Button, buttonVariants };

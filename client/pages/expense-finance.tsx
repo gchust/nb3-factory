@@ -26,7 +26,7 @@ export default function ExpenseFinancePage(): ReactElement {
         if (!controller.signal.aborted) setMeta(result);
       } catch (caught) {
         if (!controller.signal.aborted) {
-          setError(expenseErrorMessage(caught, t('expenses.loadFailed')));
+          setError(expenseErrorMessage(caught, t('expenses.loadFailed'), t));
         }
       } finally {
         if (!controller.signal.aborted) setLoading(false);

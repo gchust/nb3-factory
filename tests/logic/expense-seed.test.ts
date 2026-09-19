@@ -119,6 +119,17 @@ describe('expense demo seed', () => {
     expect(await counts()).toEqual(first);
   });
 
+  it('gives every demo employee a direct manager so all roles can submit', async () => {
+    await runDemoSeed(database);
+    const rows = await database
+      .query()
+      .selectFrom('expenseEmployees')
+      .select(['id', 'role', 'managerUserId'])
+      .execute();
+    const withoutManager = rows.filter((row) => !row.managerUserId);
+    expect(withoutManager).toEqual([]);
+  });
+
   it('creates credential accounts and a global page-access permission set', async () => {
     await runDemoSeed(database);
     const query = database.query();

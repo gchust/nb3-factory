@@ -144,6 +144,44 @@ export const expenseApiRoutes: AppApiRouteContribution<Application> =
       }),
     );
 
+    // Receipts belong to one expense item; supporting documents belong to the report.
+    routes.post('/reports/:id/items/:itemId/files', (context) =>
+      respond(context, async () => {
+        const actor = await resolveActor(context, service);
+        const body = await readJson(context);
+        return context.json({
+          data: await service.linkItemFile(
+            actor,
+            context.req.param('id'),
+            context.req.param('itemId'),
+            requiredText(body?.fileId, 'A file is required.'),
+          ),
+        });
+      }),
+    );
+
+    routes.post('/reports/:id/files', (context) =>
+      respond(context, async () => {
+        const actor = await resolveActor(context, service);
+        const body = await readJson(context);
+        return context.json({
+          data: await service.linkReportFile(
+            actor,
+            context.req.param('id'),
+            requiredText(body?.fileId, 'A file is required.'),
+          ),
+        });
+      }),
+    );
+
+    routes.delete('/files/:fileId', (context) =>
+      respond(context, async () => {
+        const actor = await resolveActor(context, service);
+        await service.removeFile(actor, context.req.param('fileId'));
+        return context.body(null, 204);
+      }),
+    );
+
     routes.get('/statistics', (context) =>
       respond(context, async () => {
         const actor = await resolveActor(context, service);
@@ -229,6 +267,7 @@ function parseReportInput(
       );
     }
     return {
+      id: optionalText(raw.id),
       categoryId: requiredText(raw.categoryId, 'A category is required.'),
       expenseDate: requiredText(raw.expenseDate, 'A date is required.'),
       amount: Number(raw.amount),

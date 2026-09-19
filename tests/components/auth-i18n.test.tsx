@@ -9,8 +9,16 @@ import { PasswordResetForm } from '../../client/extensions/nocobase-auth-ui/form
 import { PasswordResetRequestForm } from '../../client/extensions/nocobase-auth-ui/forms/password-reset-request-form.js';
 import { Loading } from '../../client/components/loading.js';
 
+const { passwordLoginSubmit } = vi.hoisted(() => ({
+  passwordLoginSubmit: vi.fn(),
+}));
+
 vi.mock('@nocobase/app-plugin-authentication/client/actions', () => ({
-  usePasswordLogin: () => ({ isPending: false, submit: vi.fn() }),
+  usePasswordLogin: () => ({
+    error: undefined,
+    isPending: false,
+    submit: passwordLoginSubmit,
+  }),
   usePasswordRegistration: () => ({ isPending: false, submit: vi.fn() }),
   usePasswordReset: () => ({ isPending: false, submit: vi.fn() }),
   usePasswordResetRequest: () => ({
@@ -54,6 +62,27 @@ describe('authentication translations', () => {
       screen.getByRole('heading', { name: 'Demo accounts' }),
     ).toBeVisible();
   });
+  it('signs a reviewer in as each demo role in one click', async () => {
+    const value = await runtime();
+    render(
+      <I18nProvider runtime={value}>
+        <LoginPage />
+      </I18nProvider>,
+    );
+    await act(() => value.changeLanguage('zh-CN'));
+    passwordLoginSubmit.mockClear();
+    fireEvent.click(screen.getByRole('button', { name: /研发部经理 — 王强/ }));
+    expect(passwordLoginSubmit).toHaveBeenCalledWith({
+      identifier: 'wangqiang',
+      password: 'admin123',
+    });
+    fireEvent.click(screen.getByRole('button', { name: /财务 — 孙丽/ }));
+    expect(passwordLoginSubmit).toHaveBeenCalledWith({
+      identifier: 'sunli',
+      password: 'admin123',
+    });
+  });
+
   it('retranslates an existing password mismatch and preserves custom button copy', async () => {
     const value = await runtime();
     const { container } = render(

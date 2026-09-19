@@ -8,7 +8,7 @@ import { Loading } from '@/components/loading';
 import { PageContainer } from '@/components/page-container';
 import { PageHeader } from '@/components/page-header';
 import { RouteChildPage } from '@/components/route-child-page';
-import { Button } from '@/components/ui/button';
+import { Button, buttonVariants } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
@@ -31,8 +31,11 @@ import { Textarea } from '@/components/ui/textarea';
 import {
   approveExpenseReport,
   fetchExpenseReport,
+  linkExpenseItemFile,
+  linkExpenseReportFile,
   payExpenseReport,
   rejectExpenseReport,
+  removeExpenseFile,
   submitExpenseReport,
   type ExpenseReportDetail,
 } from './api.js';
@@ -43,6 +46,8 @@ import {
   formatDateTime,
 } from './constants.js';
 import { expenseErrorMessage } from './errors.js';
+import { ExpenseAttachments } from './files/file-attachments.js';
+import { invalidateExpenseData, useExpenseInvalidation } from './refresh.js';
 import { Field, Notice, Panel, StatusBadge } from './shared.jsx';
 
 export default function ExpenseDetailPage(): ReactElement {
@@ -57,6 +62,7 @@ export default function ExpenseDetailPage(): ReactElement {
   const [busy, setBusy] = useState(false);
   const [dialog, setDialog] = useState<'approve' | 'reject' | 'pay'>();
   const [comment, setComment] = useState('');
+  const invalidation = useExpenseInvalidation();
 
   useEffect(() => {
     if (!reportId) return;
@@ -71,7 +77,7 @@ export default function ExpenseDetailPage(): ReactElement {
       } catch (caught) {
         if (!controller.signal.aborted) {
           setError(
-            expenseErrorMessage(caught, t('expenses.detail.loadFailed')),
+            expenseErrorMessage(caught, t('expenses.detail.loadFailed'), t),
           );
         }
       } finally {
@@ -79,7 +85,7 @@ export default function ExpenseDetailPage(): ReactElement {
       }
     })();
     return () => controller.abort();
-  }, [api, reportId, t]);
+  }, [api, reportId, invalidation, t]);
 
   async function runAction(
     action: () => Promise<ExpenseReportDetail>,
@@ -93,13 +99,39 @@ export default function ExpenseDetailPage(): ReactElement {
       setDialog(undefined);
       setComment('');
       setMessage(t('expenses.messages.actionDone'));
+      // The list that opened this detail is still mounted beneath it and must
+      // reflect the new status, so tell every mounted reader to refetch.
+      invalidateExpenseData();
     } catch (caught) {
       setError(
-        expenseErrorMessage(caught, t('expenses.messages.actionFailed')),
+        expenseErrorMessage(caught, t('expenses.messages.actionFailed'), t),
       );
     } finally {
       setBusy(false);
     }
+  }
+
+  async function refreshDetail(): Promise<void> {
+    if (!reportId) return;
+    setDetail(await fetchExpenseReport(api, reportId));
+  }
+
+  async function attachItemFile(itemId: string, fileId: string): Promise<void> {
+    if (!reportId) return;
+    setDetail(await linkExpenseItemFile(api, reportId, itemId, fileId));
+    invalidateExpenseData();
+  }
+
+  async function attachReportFile(fileId: string): Promise<void> {
+    if (!reportId) return;
+    setDetail(await linkExpenseReportFile(api, reportId, fileId));
+    invalidateExpenseData();
+  }
+
+  async function detachFile(fileId: string): Promise<void> {
+    await removeExpenseFile(api, fileId);
+    await refreshDetail();
+    invalidateExpenseData();
   }
 
   if (loading) {
@@ -131,7 +163,14 @@ export default function ExpenseDetailPage(): ReactElement {
     );
   }
 
-  const { report, items, actions, payment, capabilities } = detail;
+  const {
+    report,
+    items,
+    files: reportFiles,
+    actions,
+    payment,
+    capabilities,
+  } = detail;
 
   return (
     <>
@@ -150,12 +189,12 @@ export default function ExpenseDetailPage(): ReactElement {
                   {t('expenses.detail.back')}
                 </Button>
                 {capabilities.canEdit ? (
-                  <Button
-                    render={<Link to={`/expenses/${report.id}/edit`} />}
-                    variant='outline'
+                  <Link
+                    className={buttonVariants({ variant: 'outline' })}
+                    to={`/expenses/${report.id}/edit`}
                   >
                     {t('expenses.actions.edit')}
-                  </Button>
+                  </Link>
                 ) : null}
                 {capabilities.canSubmit ? (
                   <Button
@@ -244,6 +283,7 @@ export default function ExpenseDetailPage(): ReactElement {
                     <TableHead>{t('expenses.form.category')}</TableHead>
                     <TableHead>{t('expenses.form.date')}</TableHead>
                     <TableHead>{t('expenses.form.description')}</TableHead>
+                    <TableHead>{t('expenses.files.receiptsTitle')}</TableHead>
                     <TableHead className='text-right'>
                       {t('expenses.form.amount')}
                     </TableHead>
@@ -255,6 +295,11 @@ export default function ExpenseDetailPage(): ReactElement {
                       <TableCell>{item.categoryName}</TableCell>
                       <TableCell>{formatDate(item.expenseDate)}</TableCell>
                       <TableCell>{item.description ?? '—'}</TableCell>
+                      <TableCell>
+                        {t('expenses.files.count', {
+                          count: item.files.length,
+                        })}
+                      </TableCell>
                       <TableCell className='text-right'>
                         {formatAmount(item.amount)}
                       </TableCell>
@@ -263,6 +308,55 @@ export default function ExpenseDetailPage(): ReactElement {
                 </TableBody>
               </Table>
             )}
+          </Panel>
+
+          <Panel title={t('expenses.files.receiptsTitle')}>
+            {items.length === 0 ? (
+              <p className='text-sm text-muted-foreground'>
+                {t('expenses.detail.noItems')}
+              </p>
+            ) : (
+              <div className='space-y-4'>
+                {items.map((item) => (
+                  <div
+                    className='space-y-3 rounded-lg border border-border p-3'
+                    key={item.id}
+                  >
+                    <div className='flex flex-wrap items-center justify-between gap-2'>
+                      <p className='text-sm font-medium'>
+                        {item.categoryName} · {formatDate(item.expenseDate)} ·{' '}
+                        {formatAmount(item.amount)}
+                      </p>
+                      <span className='text-xs text-muted-foreground'>
+                        {t('expenses.files.count', {
+                          count: item.files.length,
+                        })}
+                      </span>
+                    </div>
+                    <ExpenseAttachments
+                      attach={(fileId) => attachItemFile(item.id, fileId)}
+                      canManage={capabilities.canManageFiles}
+                      detach={detachFile}
+                      files={item.files}
+                      onSaved={() => setMessage(t('expenses.files.saved'))}
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
+          </Panel>
+
+          <Panel title={t('expenses.files.supplementaryTitle')}>
+            <p className='mb-3 text-sm text-muted-foreground'>
+              {t('expenses.files.supplementaryHint')}
+            </p>
+            <ExpenseAttachments
+              attach={attachReportFile}
+              canManage={capabilities.canManageFiles}
+              detach={detachFile}
+              files={reportFiles}
+              onSaved={() => setMessage(t('expenses.files.saved'))}
+            />
           </Panel>
 
           <Panel title={t('expenses.detail.timeline')}>

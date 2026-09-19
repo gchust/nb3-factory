@@ -208,10 +208,24 @@ describe('expense service workflow', () => {
     );
     expect(rejected.report.status).toBe('rejected');
     expect(rejected.report.decisionComment).toBe('发票不全');
+
+    // A returned reimbursement can be corrected and sent back to the manager,
+    // but not once it is submitted again.
+    const corrected = await service.updateReport(
+      employee,
+      created.report.id,
+      reportInput(),
+    );
+    expect(corrected.report.status).toBe('rejected');
+    const resubmitted = await service.submitReport(employee, created.report.id);
+    expect(resubmitted.report.status).toBe('submitted');
     expect(
       await errorCode(() =>
         service.updateReport(employee, created.report.id, reportInput()),
       ),
+    ).toBe('INVALID_STATE');
+    expect(
+      await errorCode(() => service.submitReport(employee, created.report.id)),
     ).toBe('INVALID_STATE');
   });
 

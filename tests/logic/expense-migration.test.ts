@@ -17,6 +17,9 @@ const TABLES = [
   'expenseItems',
   'expensePayments',
   'expenseActions',
+  'expenseFiles',
+  'expenseItemFiles',
+  'expenseReportFiles',
 ] as const;
 
 describe('expense schema migration', () => {
