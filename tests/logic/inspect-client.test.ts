@@ -111,6 +111,36 @@ describe('client inspection', () => {
         path: '/',
       },
       {
+        auth: 'required',
+        id: 'nb3-factory:venues',
+        path: '/venues',
+      },
+      {
+        auth: 'required',
+        id: 'nb3-factory:tenants',
+        path: '/tenants',
+      },
+      {
+        auth: 'required',
+        id: 'nb3-factory:calendar',
+        path: '/calendar',
+      },
+      {
+        auth: 'required',
+        id: 'nb3-factory:rentals',
+        path: '/rentals',
+      },
+      {
+        auth: 'required',
+        id: 'nb3-factory:rental-detail',
+        path: '/rentals/:id',
+      },
+      {
+        auth: 'required',
+        id: 'nb3-factory:summary',
+        path: '/summary',
+      },
+      {
         auth: 'guest',
         id: 'nb3-factory:login',
         path: '/login',
