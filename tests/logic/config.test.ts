@@ -6,6 +6,7 @@ import os from 'node:os';
 import path from 'node:path';
 
 import type { AuthorizationConfig } from '@nocobase/app-plugin-authorization/server';
+import type { AuthConfig } from '@nocobase/app-plugin-authentication/server';
 import { type AppIdentityConfig } from '@nocobase/app-server/config';
 import { type AppDatabaseConfig } from '@nocobase/app-server/database';
 import { resolveStandaloneAppRuntime } from '@nocobase/app-server/node';
@@ -85,6 +86,34 @@ describe('application config', () => {
     expect(runtime.config.get<AppSessionConfigInput>('session')!.default).toBe(
       'memory',
     );
+  });
+
+  it('fills the credential issuer on every account creation', async () => {
+    const runtime = await resolveStandaloneAppRuntime(appRuntime, {
+      rootDir: templateRootDir,
+      configPath,
+      env: { AUTH_SECRET: 'test-auth-secret-at-least-32-characters' },
+    });
+
+    const before = runtime.config.get<AuthConfig>('auth')!.databaseHooks
+      ?.account?.create?.before as (
+      account: Record<string, unknown>,
+      context: unknown,
+    ) => Promise<{ data?: Record<string, unknown> } | undefined>;
+
+    // Better Auth's email/password sign-up creates the credential account without `issuer`, which the
+    // authentication collection declares NOT NULL. The hook must fill it before the insert.
+    const result = await before(
+      { id: 'account-id', providerId: 'credential', accountId: 'user-id' },
+      undefined,
+    );
+    expect(result?.data).toMatchObject({ issuer: 'local:credential' });
+
+    const preserved = await before(
+      { id: 'account-id', issuer: 'custom:issuer' },
+      undefined,
+    );
+    expect(preserved?.data).toMatchObject({ issuer: 'custom:issuer' });
   });
 
   it('reloads a file-backed configuration explicitly', async () => {

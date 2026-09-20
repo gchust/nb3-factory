@@ -24,6 +24,16 @@ describe('app client routes', () => {
           name: 'home',
           path: '/',
         },
+        // The repair workbench: list, create, detail, and the asset and billing pages around it.
+        { auth: 'required', name: 'tickets', path: '/tickets' },
+        { auth: 'required', name: 'ticket-new', path: '/tickets/new' },
+        { auth: 'required', name: 'ticket-detail', path: '/tickets/:id' },
+        { auth: 'required', name: 'equipment', path: '/equipment' },
+        { auth: 'required', name: 'equipment-detail', path: '/equipment/:id' },
+        { auth: 'required', name: 'buildings', path: '/buildings' },
+        { auth: 'required', name: 'materials', path: '/materials' },
+        { auth: 'required', name: 'settlements', path: '/settlements' },
+        { auth: 'required', name: 'files', path: '/files' },
         { auth: 'guest', name: 'login', path: '/login' },
         { auth: 'guest', name: 'register', path: '/register' },
         {
@@ -59,8 +69,18 @@ describe('app client routes', () => {
     ]);
 
     expect(pageAuthorizations(resolved.routes)).toEqual([
-      // The landing page opted out of page authorization, so it is reachable by every signed-in user.
+      // Every signed-in page opts out of page authorization: the repair pages scope themselves by role on the
+      // server, so a missing page grant must not hide the workspace from a permitted user.
       { name: 'home', authorizedAs: null },
+      { name: 'tickets', authorizedAs: null },
+      { name: 'ticket-new', authorizedAs: null },
+      { name: 'ticket-detail', authorizedAs: null },
+      { name: 'equipment', authorizedAs: null },
+      { name: 'equipment-detail', authorizedAs: null },
+      { name: 'buildings', authorizedAs: null },
+      { name: 'materials', authorizedAs: null },
+      { name: 'settlements', authorizedAs: null },
+      { name: 'files', authorizedAs: null },
     ]);
   });
 });

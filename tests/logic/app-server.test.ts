@@ -694,6 +694,44 @@ describe('app server', () => {
     expect(rejected.status).toBe(401);
   });
 
+  it('registers a new account through the public sign-up endpoint', async () => {
+    const app = trackCloseable(
+      await createInstalledStandaloneServer({ viteDevUrl: false }),
+    );
+    const baseUrl = `http://localhost${app.application.publicBasePath}`;
+
+    // The authentication collection declares `account.issuer` NOT NULL, but Better Auth's email sign-up does
+    // not populate it; without the account-creation hook this returns 500 and no user exists.
+    const signUp = await requestApp(app, `${baseUrl}/api/auth/sign-up/email`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        email: 'qa.signup@example.com',
+        name: 'QA signup',
+        password: 'Passw0rd!23',
+        username: 'qa.signup',
+      }),
+    });
+    expect(signUp.status).toBe(200);
+    const payload = (await signUp.json()) as { user?: { email?: string } };
+    expect(payload.user?.email).toBe('qa.signup@example.com');
+
+    // The newly registered credential is usable, which proves the account row was created.
+    const signIn = await requestApp(
+      app,
+      `${baseUrl}/api/auth/sign-in/username`,
+      {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          username: 'qa.signup',
+          password: 'Passw0rd!23',
+        }),
+      },
+    );
+    expect(signIn.status).toBe(200);
+  });
+
   it('redirects HTML navigation to installation in install mode', async () => {
     vi.stubEnv('APP_BASE_PATH', '/main');
     vi.stubEnv('AUTH_SECRET', 'nocobase-install-mode-test-secret');

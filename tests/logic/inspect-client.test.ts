@@ -124,6 +124,23 @@ describe('client inspection', () => {
         id: 'nb3-factory:home',
         path: '/',
       },
+      { auth: 'required', id: 'nb3-factory:tickets', path: '/tickets' },
+      { auth: 'required', id: 'nb3-factory:ticket-new', path: '/tickets/new' },
+      {
+        auth: 'required',
+        id: 'nb3-factory:ticket-detail',
+        path: '/tickets/:id',
+      },
+      { auth: 'required', id: 'nb3-factory:equipment', path: '/equipment' },
+      {
+        auth: 'required',
+        id: 'nb3-factory:equipment-detail',
+        path: '/equipment/:id',
+      },
+      { auth: 'required', id: 'nb3-factory:buildings', path: '/buildings' },
+      { auth: 'required', id: 'nb3-factory:materials', path: '/materials' },
+      { auth: 'required', id: 'nb3-factory:settlements', path: '/settlements' },
+      { auth: 'required', id: 'nb3-factory:files', path: '/files' },
       {
         auth: 'guest',
         id: 'nb3-factory:login',
