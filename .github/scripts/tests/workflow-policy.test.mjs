@@ -200,3 +200,29 @@ test('comment questions bypass implementation and publish replies through an iso
     /base_ref != needs.prepare.outputs.work_branch \|\| needs.prepare.outputs.build_comment_id != ''/,
   );
 });
+
+test('runner-local timing paths are initialized in steps, not job-level env', () => {
+  const workflow = readFileSync(
+    path.resolve(
+      import.meta.dirname,
+      '..',
+      '..',
+      'workflows',
+      'code-agent-task.yml',
+    ),
+    'utf8',
+  );
+  assert.doesNotMatch(workflow, /^ {6}FACTORY_.*\$\{\{ runner\./m);
+  assert.match(
+    workflow,
+    /FACTORY_TIMINGS_FILE=\$RUNNER_TEMP\/agent-artifacts\/timings\.jsonl/,
+  );
+  assert.match(
+    workflow,
+    /FACTORY_TIMINGS_FILE=\$RUNNER_TEMP\/final-artifacts\/timings\.jsonl/,
+  );
+  assert.match(
+    workflow,
+    /FACTORY_DEPENDENCY_CACHE=\$RUNNER_TEMP\/agent-dependency-cache/,
+  );
+});

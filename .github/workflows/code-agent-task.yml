@@ -70,8 +70,6 @@ jobs:
     needs: prepare
     env:
       CODE_AGENT_ENGINE: ${{ vars.CODE_AGENT_ENGINE }}
-      FACTORY_TIMINGS_FILE: ${{ runner.temp }}/agent-artifacts/timings.jsonl
-      FACTORY_DEPENDENCY_CACHE: ${{ runner.temp }}/agent-dependency-cache
     if: needs.prepare.outputs.status == 'ready' && needs.prepare.outputs.comment_kind != 'reply'
     runs-on: ubuntu-latest
     # GitHub-hosted runners allow at most six hours per job. The factory uses
@@ -92,7 +90,10 @@ jobs:
           persist-credentials: false
 
       - name: Start five-hour runner budget
-        run: echo "FACTORY_RUN_DEADLINE_EPOCH_SECONDS=$(($(date +%s) + 18000))" >> "$GITHUB_ENV"
+        run: |
+          echo "FACTORY_RUN_DEADLINE_EPOCH_SECONDS=$(($(date +%s) + 18000))" >> "$GITHUB_ENV"
+          echo "FACTORY_TIMINGS_FILE=$RUNNER_TEMP/agent-artifacts/timings.jsonl" >> "$GITHUB_ENV"
+          echo "FACTORY_DEPENDENCY_CACHE=$RUNNER_TEMP/agent-dependency-cache" >> "$GITHUB_ENV"
 
       - name: Check out application base
         uses: actions/checkout@v4
@@ -342,12 +343,14 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 90
     env:
-      FACTORY_TIMINGS_FILE: ${{ runner.temp }}/final-artifacts/timings.jsonl
       FACTORY_BUILD_TARGET: linux-x64
       FACTORY_BUILD_NODE_VERSION: '24'
     permissions:
       contents: read
     steps:
+      - name: Initialize final timing output
+        run: echo "FACTORY_TIMINGS_FILE=$RUNNER_TEMP/final-artifacts/timings.jsonl" >> "$GITHUB_ENV"
+
       - name: Check out factory control plane
         uses: actions/checkout@v4
         with:
