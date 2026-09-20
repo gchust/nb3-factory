@@ -29,7 +29,7 @@ while true; do
     --database "$database"
 
   verification_passed=0
-  if FACTORY_SKIP_BROWSER=1 "$control_dir/.github/scripts/verify.sh" \
+  if FACTORY_RETRY_FAILED_CHECK=1 FACTORY_SKIP_BROWSER=1 "$control_dir/.github/scripts/verify.sh" \
     "$workspace" \
     "$runtime_config" \
     "$verification_artifacts" \

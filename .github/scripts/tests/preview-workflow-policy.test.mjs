@@ -110,7 +110,12 @@ test('the deployable build is produced by independent verification', () => {
   assert.ok(uploaded > packed, 'the build must be uploaded after it is packed');
   // Stated explicitly: without a target the build records the runner itself and
   // ships native modules for whatever architecture the runner happens to be.
-  assert.match(task, /pnpm build --tar --target linux-x64/);
+  assert.match(task, /FACTORY_BUILD_TARGET: linux-x64/);
+  assert.match(
+    task,
+    /timed-command\.mjs pack node \.\/scripts\/utils\/pack-dist\.mjs/,
+  );
+  assert.doesNotMatch(task, /pnpm build --tar/);
 });
 
 test('the payload is published for the host to fetch, not pushed to it', () => {

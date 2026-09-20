@@ -51,6 +51,8 @@ for (const scenario of [
         'stop-stale-app.sh',
         'task-compat.mjs',
         'validate-browser-report.mjs',
+        'browser-report-check.mjs',
+        'browser-report-tool.mjs',
       ]) {
         copyFileSync(path.join(scripts, file), path.join(controlScripts, file));
       }

@@ -67,6 +67,23 @@
 
 只填写实际存在的文件。没有录像时 `videos` 为 `[]`；未访问或未截图的业务界面列在 `uncovered`，不要声称全覆盖。文件名只用字母、数字、短横线以及 `.png`/`.webm`。展示清单缺失不会把已通过的业务验收改为失败。
 
+## 即时记录与校验
+
+每完成一项，把真实观察写为一个包含 `criterion/status/actions/evidence/screenshots` 的 JSON 文件，然后执行：
+
+```bash
+node "$FACTORY_BROWSER_REPORT_TOOL" check /absolute/path/check.json
+```
+
+工具立即检查字段和实际 PNG 文件，并按 criterion 更新报告。失败时先修正该项或补充真实证据，不要等整轮结束。工具不会替你判定业务通过。
+全部验收结束，将 `passed/authenticated/summary/failures` 四个字段写入总结 JSON，然后执行：
+
+```bash
+node "$FACTORY_BROWSER_REPORT_TOOL" finish /absolute/path/summary.json
+```
+
+退出码 0 表示完整校验通过；10 表示业务失败，应保留报告交给修复流程；2 表示报告或证据不完整，使用当前会话补充。即使使用工具，工厂仍会独立执行完整校验。不得把未验证的项目改为 passed。
+
 ## 报告格式
 
 报告必须是严格 JSON，不能包含 Markdown 代码围栏：

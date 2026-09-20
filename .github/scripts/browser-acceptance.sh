@@ -51,6 +51,8 @@ node "$control_dir/.github/scripts/build-browser-prompt.mjs" \
   --output "$browser_prompt"
 
 export APP_CONFIG_FILE="$config_file"
+export FACTORY_BROWSER_METADATA="$metadata"
+export FACTORY_BROWSER_REPORT_TOOL="$control_dir/.github/scripts/browser-report-tool.mjs"
 
 "$control_dir/.github/scripts/stop-stale-app.sh" "$port"
 

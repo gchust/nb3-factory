@@ -17,15 +17,36 @@ export NODE_ENV=test
 
 cd "$workspace"
 
-pnpm typecheck
-pnpm test
-pnpm lint
-pnpm format:check
-pnpm build
-# Run the application's own commands. Reaching into scripts/ assumes one template's file
-# layout; a template is free to move migrations behind a CLI, and beta.22 did.
-pnpm migrate
-pnpm seed
+export FACTORY_TIMINGS_FILE="${FACTORY_TIMINGS_FILE:-$artifact_dir/timings.jsonl}"
+timed() { node "$script_dir/timed-command.mjs" "$1" pnpm "$1"; }
+failed_stage="$artifact_dir/../last-failed-stage"
+run_check() {
+  if timed "$1"; then return 0; else
+    local status=$?
+    printf '%s\n' "$1" >"$failed_stage"
+    return "$status"
+  fi
+}
+# First retry the previously failing check, then still run every required check.
+previous=''
+if [[ "${FACTORY_RETRY_FAILED_CHECK:-0}" == '1' && -f "$failed_stage" ]]; then
+  previous="$(cat "$failed_stage")"
+  case "$previous" in
+    format:check|lint|typecheck|test) run_check "$previous" ;;
+    *) previous='' ;;
+  esac
+fi
+for check in format:check lint typecheck test; do
+  [[ "$check" == "$previous" ]] || run_check "$check"
+done
+rm -f "$failed_stage"
+if [[ -n "${FACTORY_BUILD_TARGET:-}" ]]; then
+  NODE_ENV=production node "$script_dir/timed-command.mjs" build pnpm build --target "$FACTORY_BUILD_TARGET" --node-version "${FACTORY_BUILD_NODE_VERSION:-24}"
+else
+  NODE_ENV=production timed build
+fi
+timed migrate
+timed seed
 
 if [[ "${FACTORY_SKIP_BROWSER:-0}" == "1" ]]; then
   echo "Browser smoke skipped by FACTORY_SKIP_BROWSER=1."
@@ -79,7 +100,7 @@ if [[ "$ready" != "1" ]]; then
   exit 1
 fi
 
-node "$script_dir/browser-smoke.mjs" \
+node "$script_dir/timed-command.mjs" browser-smoke node "$script_dir/browser-smoke.mjs" \
   --workspace "$workspace" \
   --url "$url" \
   --screenshot "$artifact_dir/browser-smoke.png"

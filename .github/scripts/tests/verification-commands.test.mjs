@@ -12,7 +12,7 @@ const verify = readFileSync(
 // application's published commands. Reaching into template-owned files broke the beta.22
 // refresh, where the migration commands moved behind the application CLI.
 test('verification applies migrations and seeds through the application commands', () => {
-  assert.match(verify, /^pnpm migrate$/m);
-  assert.match(verify, /^pnpm seed$/m);
+  assert.match(verify, /^timed migrate$/m);
+  assert.match(verify, /^timed seed$/m);
   assert.doesNotMatch(verify, /scripts\/(migrate|seed)\.ts/);
 });

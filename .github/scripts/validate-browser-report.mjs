@@ -1,5 +1,5 @@
-import { Buffer } from 'node:buffer';
-import { readFileSync, statSync, writeFileSync } from 'node:fs';
+import { validateCheck } from './browser-report-check.mjs';
+import { readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 
 const args = parseArgs(process.argv.slice(2));
@@ -25,41 +25,10 @@ if (report.checks.length < minimumChecks) {
 
 let screenshotCount = 0;
 for (const [index, check] of report.checks.entries()) {
-  if (!check || typeof check !== 'object') {
-    invalid(`checks[${index}] must be an object.`);
-  }
-  requireString(check.criterion, `checks[${index}].criterion`);
-  if (!['passed', 'failed'].includes(check.status)) {
-    invalid(`checks[${index}].status must be passed or failed.`);
-  }
-  requireNonEmptyStrings(check.actions, `checks[${index}].actions`);
-  requireNonEmptyStrings(check.evidence, `checks[${index}].evidence`);
-  requireNonEmptyStrings(check.screenshots, `checks[${index}].screenshots`);
-
-  for (const screenshot of check.screenshots) {
-    const screenshotPath = path.resolve(evidenceRoot, screenshot);
-    const relative = path.relative(evidenceRoot, screenshotPath);
-    if (
-      relative.startsWith('..') ||
-      path.isAbsolute(relative) ||
-      !/^[A-Za-z0-9][A-Za-z0-9-]*\.png$/u.test(screenshot)
-    ) {
-      invalid(`Unsafe screenshot path in checks[${index}]: ${screenshot}`);
-    }
-    let stat;
-    try {
-      stat = statSync(screenshotPath);
-    } catch {
-      invalid(`Screenshot does not exist: ${screenshot}`);
-    }
-    if (!stat.isFile() || stat.size < 1_000) {
-      invalid(`Screenshot is empty or invalid: ${screenshot}`);
-    }
-    const signature = readFileSync(screenshotPath).subarray(0, 8);
-    if (!signature.equals(Buffer.from('89504e470d0a1a0a', 'hex'))) {
-      invalid(`Screenshot is not a PNG file: ${screenshot}`);
-    }
-    screenshotCount += 1;
+  try {
+    screenshotCount += validateCheck(check, index, evidenceRoot);
+  } catch (error) {
+    invalid(error.message);
   }
 }
 

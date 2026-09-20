@@ -1,3 +1,4 @@
+import { optimizeTemplateBuild } from './optimize-template-build.mjs';
 import {
   cpSync,
   existsSync,
@@ -96,8 +97,17 @@ app.devDependencies = {
     app.devDependencies?.['@playwright/test'] ||
     factory.devDependencies['@playwright/test'],
 };
+// This committed factory skill documents our build extension; it is not generated plugin output.
+if (existsSync(path.join(control, 'skills/factory-performance'))) {
+  cpSync(
+    path.join(control, 'skills/factory-performance'),
+    path.join(workspace, 'skills/factory-performance'),
+    { recursive: true },
+  );
+}
 const compatibilityFixes = adaptTemplateTests(workspace, app);
 compatibilityFixes.push(...applyBeta34Compatibility(workspace, app));
+compatibilityFixes.push(...optimizeTemplateBuild(workspace));
 // Published beta.15 plugins import these two undeclared client dependencies.
 // Scope fixes to this template; future baselines keep their dependency choices.
 if (app.nocobase.defaultTemplateVersion === '1.0.0-beta.15') {

@@ -42,6 +42,9 @@ Deployment metadata:
 const { generateDatabaseManifests } =
   await import('@nocobase/dev-config/build/database-manifests');
 const { default: spawn } = await import('cross-spawn');
+const { recordTiming } = await import('../.github/scripts/timing.mjs');
+const { deploymentCache, preserveDeploymentDependencies } =
+  await import('../.github/scripts/deployment-cache.mjs');
 const { readCliHooks, runHookStage } = await import('./utils/cli-hooks.mjs');
 
 const rootDir = path.resolve(
@@ -264,12 +267,14 @@ const writeDistEnv = () => {
 const run = (label, command, args, options = {}) => {
   console.log(`\n> ${label}`);
 
+  const started = Date.now();
   const result = spawn.sync(command, args, {
     cwd: options.cwd ?? rootDir,
     env: options.env ?? process.env,
     stdio: 'inherit',
   });
 
+  recordTiming(`build:${label}`, started, result.status ?? 1);
   if (result.error) {
     throw result.error;
   }
@@ -282,6 +287,7 @@ const run = (label, command, args, options = {}) => {
 // Read before anything is built, so a broken CLI assembly fails here rather than after several minutes of work.
 const { build: buildHooks } = readCliHooks(rootDir);
 
+preserveDeploymentDependencies(rootDir);
 fs.rmSync(distDir, { recursive: true, force: true });
 
 // After `dist` is cleared rather than before, so a hook may write into it. Clearing is the build's first step, and a
@@ -353,22 +359,31 @@ run('Generate server package', 'node', [
 // makes pnpm skip the generated file as well. Nothing is needed to keep the install local — a directory holding a
 // `pnpm-workspace.yaml` is a pnpm root in its own right.
 fs.copyFileSync(path.join(rootDir, '.npmrc'), path.join(distDir, '.npmrc'));
-run(
-  'Install server production dependencies',
-  'pnpm',
-  ['install', '--prod', '--no-lockfile'],
-  { cwd: distDir },
+const dependencyCache = deploymentCache(
+  rootDir,
+  process.argv.slice(2).filter((arg) => arg !== '--tar'),
 );
-run('Materialize server dependency links', 'node', [
-  './scripts/utils/clean-dist-bin.mjs',
-]);
-// A `.node` binary is compiled for one platform, architecture, C library, and Node ABI at once, so an install run
-// here produces binaries for this machine. Defaults to this machine so `pnpm build && pnpm start` works; a
-// deployment build passes --target and --node-version.
-run('Retarget native modules', 'node', [
-  './scripts/utils/retarget-native.mjs',
-  ...process.argv.slice(2),
-]);
+const cacheStarted = Date.now();
+const cacheHit = dependencyCache?.restore() ?? false;
+recordTiming('build:dependency-cache-restore', cacheStarted);
+if (!cacheHit) {
+  run(
+    'Install server production dependencies',
+    'pnpm',
+    ['install', '--prod', '--no-lockfile'],
+    { cwd: distDir },
+  );
+  run('Materialize server dependency links', 'node', [
+    './scripts/utils/clean-dist-bin.mjs',
+  ]);
+  // A `.node` binary is compiled for one platform, architecture, C library, and Node ABI at once, so an install run
+  // here produces binaries for this machine. Defaults to this machine so `pnpm build && pnpm start` works; a
+  // deployment build passes --target and --node-version.
+  run('Retarget native modules', 'node', [
+    './scripts/utils/retarget-native.mjs',
+    ...process.argv.slice(2),
+  ]);
+}
 // Removes type declarations, third-party source maps, and third-party documentation from the installed tree. Runs
 // after the native retarget, which installs platform packages of its own, and before verification, which reads
 // `dist/package.json` and package directories rather than any of the files removed here.
@@ -385,6 +400,7 @@ run('Verify server dependencies', 'node', [
 // Last, with the deployment tree complete and installed. A hook here sees what a deployment will see, and runs
 // before `--tar` so whatever it produces is packed with everything else.
 runHookStage(buildHooks, 'afterBuild', run);
+dependencyCache?.save();
 
 console.log(
   '\nBuild complete: dist/client, dist/server, dist/cli, dist/.env, and dist/package.json',

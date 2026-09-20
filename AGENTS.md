@@ -15,6 +15,8 @@ The publisher rejects changes to protected control files even if these instructi
 
 Factory refresh versions the generated root `config.yml`, including `auth.secret`, by the repository owner's explicit choice. Refresh uses a new generated configuration; verification keeps its own configuration and database outside the application.
 
+Factory performance hooks in `scripts/build.mjs` measure each build stage and optionally cache production dependency installation within one job. `.github/scripts/optimize-template-build.mjs` reapplies these narrow hooks during refresh. Independent final verification uses its own cache and explicit deployment target; it packages the verified `dist` without rebuilding. See `.github/PERFORMANCE.md` for cache inputs and timing interpretation.
+
 <!-- factory:boundary:end -->
 
 This is a NocoBase 3 application. Do not apply globally installed NocoBase 2 Skills. You are building the application itself — its pages, its API, its database tables. Everything under this directory is application-owned source code that you may edit directly.

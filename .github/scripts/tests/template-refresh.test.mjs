@@ -79,6 +79,13 @@ function overlayFixture(root) {
     '.github/workflows/refresh-template.yml',
     'factory-workflow\n',
   );
+  for (const name of ['timing.mjs', 'deployment-cache.mjs']) {
+    write(
+      control,
+      `.github/scripts/${name}`,
+      readFileSync(path.join(scripts, name), 'utf8'),
+    );
+  }
   write(control, '.npmrc', '@nocobase:registry=https://npm.nocobase.ai/\n');
   write(control, '.agents/skills/custom/SKILL.md', 'custom guidance');
   write(control, 'client/old-business.ts', 'must not survive refresh');
@@ -128,13 +135,26 @@ function overlayFixture(root) {
 import path from 'node:path';
 const rootDir = process.cwd();
 const distDir = path.join(rootDir, 'dist');
+// const { default: spawn } = await import('cross-spawn');
+fs.rmSync(distDir, { recursive: true, force: true });
 fs.mkdirSync(distDir, { recursive: true });
 function run() {
+  /*
+  const result = spawn.sync(command, args, {
+  if (result.error) {
+  */
   if (!fs.readFileSync(path.join(distDir, '.npmrc'), 'utf8').includes('npm.nocobase.ai')) throw new Error('Missing production registry');
 }
 run(
   'Install server production dependencies',
+  'pnpm',
+  [],
+  { cwd: distDir },
 );
+// Removes type declarations, third-party source maps
+const buildHooks = [];
+function runHookStage() {}
+runHookStage(buildHooks, 'afterBuild', run);
 `,
   );
   write(
@@ -324,7 +344,7 @@ test('beta.15 compatibility fixes preserve upstream dependencies and configure p
         updated.devDependencies['@xyflow/react'],
         index === 0 ? '12.11.3' : index === 1 ? '13.0.0' : undefined,
       );
-      assert.equal(metadata.compatibilityFixes.length, index === 0 ? 4 : 2);
+      assert.equal(metadata.compatibilityFixes.length, index === 0 ? 5 : 3);
       execFileSync(process.execPath, ['scripts/build.mjs'], { cwd: fresh });
       const buildBefore = readFileSync(
         path.join(fresh, 'scripts/build.mjs'),

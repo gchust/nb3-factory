@@ -70,6 +70,8 @@ jobs:
     needs: prepare
     env:
       CODE_AGENT_ENGINE: ${{ vars.CODE_AGENT_ENGINE }}
+      FACTORY_TIMINGS_FILE: ${{ runner.temp }}/agent-artifacts/timings.jsonl
+      FACTORY_DEPENDENCY_CACHE: ${{ runner.temp }}/agent-dependency-cache
     if: needs.prepare.outputs.status == 'ready' && needs.prepare.outputs.comment_kind != 'reply'
     runs-on: ubuntu-latest
     # GitHub-hosted runners allow at most six hours per job. The factory uses
@@ -142,8 +144,8 @@ jobs:
       - name: Install application dependencies
         working-directory: workspace
         run: |
-          pnpm install --frozen-lockfile
-          pnpm plugin:skills:sync
+          node ../control/.github/scripts/timed-command.mjs install pnpm install --frozen-lockfile
+          node ../control/.github/scripts/timed-command.mjs skills-sync pnpm plugin:skills:sync
 
       - name: Build the implementation prompt
         run: |
@@ -330,11 +332,19 @@ jobs:
             echo "handoff=false" >> "$GITHUB_OUTPUT"
           fi
 
+      - name: Summarize implementation and repair timings
+        if: always()
+        run: node control/.github/scripts/timing-summary.mjs
+
   verify-final:
     needs: [prepare, agent]
     if: needs.agent.result == 'success' && needs.agent.outputs.handoff != 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 90
+    env:
+      FACTORY_TIMINGS_FILE: ${{ runner.temp }}/final-artifacts/timings.jsonl
+      FACTORY_BUILD_TARGET: linux-x64
+      FACTORY_BUILD_NODE_VERSION: '24'
     permissions:
       contents: read
     steps:
@@ -384,7 +394,7 @@ jobs:
 
       - name: Install application dependencies
         working-directory: workspace
-        run: pnpm install --frozen-lockfile
+        run: node ../control/.github/scripts/timed-command.mjs install pnpm install --frozen-lockfile
 
       - name: Create clean final verification configuration
         run: |
@@ -402,13 +412,11 @@ jobs:
             "$RUNNER_TEMP/final-artifacts/verify-final" \
             2>&1 | tee "$RUNNER_TEMP/final-artifacts/verify-final.log"
 
-      # Built here rather than in the deploy job so a preview can only ever run
-      # the exact tree that independent verification just accepted. The target
-      # is stated explicitly: without it the build records the runner as the
-      # target and ships native modules for whatever the runner happens to be.
+      # Verification builds for the explicit deployment target. Archive those exact
+      # accepted bytes; rebuilding here would discard the verified artifact.
       - name: Pack the deployable build for the preview host
         working-directory: workspace
-        run: pnpm build --tar --target linux-x64
+        run: node ../control/.github/scripts/timed-command.mjs pack node ./scripts/utils/pack-dist.mjs
 
       # The preview workflow downloads this artifact and reads both files from its
       # root: `dist.tar.gz` to deploy and `task-metadata.json` to know which PR and
@@ -428,6 +436,10 @@ jobs:
           path: ${{ runner.temp }}/deployable
           if-no-files-found: error
           retention-days: 14
+
+      - name: Summarize final timings
+        if: always()
+        run: node control/.github/scripts/timing-summary.mjs
 
       - name: Upload final verification diagnostics
         if: always()
