@@ -253,6 +253,13 @@ const enUS = {
       return: 'Return for revision',
       gradedBy: 'Graded by {{name}} · {{score}}',
       returnedBy: 'Returned by {{name}}',
+      attemptTotal: '{{n}} attempts',
+      pendingTotal: '{{n}} awaiting review',
+      targetAttempt: 'Reviewing attempt #{{attempt}}',
+      latestAttempt: 'Attempt #{{attempt}} (latest)',
+      historyAttempt: 'Attempt #{{attempt}} (earlier version)',
+      historyHint:
+        'Earlier versions are shown for comparison and cannot be reviewed again.',
     },
     materials: {
       title: 'Lesson materials',

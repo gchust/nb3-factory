@@ -42,6 +42,12 @@ const student: TrainingViewer = {
   isInstructor: false,
   isStudent: true,
 };
+const classmate: TrainingViewer = {
+  userId: 'student-2',
+  isAdmin: false,
+  isInstructor: false,
+  isStudent: true,
+};
 const outsider: TrainingViewer = {
   userId: 'student-9',
   isAdmin: false,
@@ -278,6 +284,155 @@ describe('training service', () => {
     expect(detail.submissions).toHaveLength(2);
     expect(detail.assignment.mySubmission?.attempt).toBe(2);
     expect(detail.submissions[0]?.reviews[0]?.decision).toBe('returned');
+  });
+
+  it('keeps each attempt and binds every review to the attempt it judged', async () => {
+    const first = await service().submitAssignment('student-1', 2, '第一版');
+    const returned = await service().reviewSubmission(instructor, first.id, {
+      decision: 'returned',
+      feedback: '请补充细节',
+    });
+    expect(returned.reviews[0]?.attempt).toBe(1);
+
+    const second = await service().submitAssignment('student-1', 2, '第二版');
+    expect(second.attempt).toBe(2);
+
+    const detail = await service().getAssignmentDetail(instructor, 2);
+    const attempts = [...detail.submissions].sort(
+      (a, b) => a.attempt - b.attempt,
+    );
+    expect(attempts.map((attempt) => attempt.attempt)).toEqual([1, 2]);
+    // The resubmission never overwrites the earlier content or its review.
+    expect(attempts[0]?.content).toBe('第一版');
+    expect(attempts[0]?.status).toBe('returned');
+    expect(attempts[0]?.reviews).toHaveLength(1);
+    expect(attempts[0]?.reviews[0]?.feedback).toBe('请补充细节');
+    expect(attempts[1]?.content).toBe('第二版');
+
+    // An already-judged round cannot be judged again, so the history stays
+    // fixed even once a newer attempt exists.
+    await expect(
+      service().reviewSubmission(instructor, first.id, {
+        decision: 'graded',
+        score: 60,
+      }),
+    ).rejects.toMatchObject({
+      code: expect.stringMatching(/ALREADY_REVIEWED|SUPERSEDED_SUBMISSION/),
+    });
+
+    await service().reviewSubmission(instructor, second.id, {
+      decision: 'graded',
+      score: 92,
+      feedback: '改进明显',
+    });
+
+    // After the second round is judged, each attempt still carries exactly the
+    // review made against it, and the first round's verdict is unchanged.
+    const final = await service().getAssignmentDetail(instructor, 2);
+    const finalAttempts = [...final.submissions].sort(
+      (a, b) => a.attempt - b.attempt,
+    );
+    expect(finalAttempts[0]?.reviews.map((review) => review.attempt)).toEqual([
+      1,
+    ]);
+    expect(finalAttempts[1]?.reviews.map((review) => review.attempt)).toEqual([
+      2,
+    ]);
+    expect(finalAttempts[1]?.reviews[0]?.feedback).toBe('改进明显');
+  });
+
+  it('keeps each version attachment with the attempt it was submitted for', async () => {
+    const draft = await addFile({
+      id: FILE_A,
+      uploadedById: 'student-1',
+      filename: '初稿.txt',
+    });
+    const first = await service().submitAssignment('student-1', 2, '第一版', [
+      draft,
+    ]);
+    expect(first.files.map((file) => file.filename)).toEqual(['初稿.txt']);
+    await service().reviewSubmission(instructor, first.id, {
+      decision: 'returned',
+      feedback: '再改一版',
+    });
+
+    const revised = await addFile({
+      id: FILE_B,
+      uploadedById: 'student-1',
+      filename: '修订稿.pdf',
+      ext: 'pdf',
+      mimeType: 'application/pdf',
+    });
+    const second = await service().submitAssignment('student-1', 2, '第二版', [
+      revised,
+    ]);
+    expect(second.files.map((file) => file.filename)).toEqual(['修订稿.pdf']);
+
+    const detail = await service().getAssignmentDetail(student, 2);
+    const attempts = [...detail.submissions].sort(
+      (a, b) => a.attempt - b.attempt,
+    );
+    expect(attempts[0]?.files.map((file) => file.filename)).toEqual([
+      '初稿.txt',
+    ]);
+    expect(attempts[1]?.files.map((file) => file.filename)).toEqual([
+      '修订稿.pdf',
+    ]);
+    // Both versions stay readable by their author and the grading instructor.
+    expect(await service().canAccessFile(student, draft)).toBe(true);
+    expect(await service().canAccessFile(student, revised)).toBe(true);
+    expect(await service().canAccessFile(instructor, revised)).toBe(true);
+  });
+
+  it('blocks a departed student from courseware without affecting the class', async () => {
+    const materialFile = await addFile({
+      id: FILE_A,
+      uploadedById: 'instructor-1',
+    });
+    await service().addSessionMaterials(instructor, 1, [
+      { fileId: materialFile, title: '第一课课件' },
+    ]);
+    expect(await service().canAccessFile(student, materialFile)).toBe(true);
+    expect(await service().canAccessFile(classmate, materialFile)).toBe(true);
+
+    await service().unenrollStudent(1, 'student-1');
+
+    // The student who left loses the courseware, the details page and the
+    // session list entry; the still-enrolled classmate and instructor do not.
+    expect(await service().canAccessFile(student, materialFile)).toBe(false);
+    expect(await service().canAccessFile(classmate, materialFile)).toBe(true);
+    expect(await service().canAccessFile(instructor, materialFile)).toBe(true);
+    await expect(service().getSessionDetail(student, 1)).rejects.toMatchObject({
+      code: 'NOT_ENROLLED',
+    });
+    const learning = await service().listMyLearning(student);
+    expect(learning.map((session) => session.id)).not.toContain(1);
+  });
+
+  it('shows a student only their own submissions, never a classmate work', async () => {
+    const peerFile = await addFile({
+      id: FILE_B,
+      uploadedById: 'student-2',
+    });
+    const peer = await service().submitAssignment(
+      'student-2',
+      2,
+      '同学的答案',
+      [peerFile],
+    );
+
+    const mine = await service().getAssignmentDetail(student, 2);
+    expect(mine.submissions).toHaveLength(0);
+    expect(mine.assignment.mySubmission).toBeNull();
+
+    // The classmate's attachment is refused to the other student even with the
+    // exact file id, while the submitting student and instructor may read it.
+    const peerAttachment = peer.files[0]?.id ?? '';
+    expect(await service().canAccessFile(student, peerAttachment)).toBe(false);
+    expect(await service().canAccessFile(classmate, peerAttachment)).toBe(true);
+    expect(await service().canAccessFile(instructor, peerAttachment)).toBe(
+      true,
+    );
   });
 
   it('hides draft assignments from students but shows them to instructors', async () => {

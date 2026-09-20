@@ -399,11 +399,65 @@ function StudentReviewCard({
   readonly maxScore: number;
   readonly onChanged: () => void;
 }): ReactElement {
+  const { t } = useTranslation();
+  const ordered = [...submissions].sort((a, b) => a.attempt - b.attempt);
+  const latest = ordered[ordered.length - 1];
+  const pending = ordered.filter((item) => item.status === 'submitted').length;
+
+  return (
+    <div className='space-y-3 rounded-lg border border-border p-4'>
+      <div className='flex flex-wrap items-center gap-2 text-sm'>
+        <span className='font-medium'>
+          {latest.studentName ?? latest.studentId}
+        </span>
+        <span className='text-xs text-muted-foreground'>
+          {t('training.review.attemptTotal', { n: ordered.length })}
+        </span>
+        {pending > 0 ? (
+          <StatusBadge
+            label={t('training.review.pendingTotal', { n: pending })}
+            tone='warning'
+          />
+        ) : null}
+      </div>
+      <ol className='space-y-3'>
+        {ordered.map((submission) => (
+          <li key={submission.id}>
+            <InstructorAttemptCard
+              submission={submission}
+              isLatest={submission.id === latest.id}
+              maxScore={maxScore}
+              onChanged={onChanged}
+            />
+          </li>
+        ))}
+      </ol>
+    </div>
+  );
+}
+
+/**
+ * One attempt as the instructor sees it.
+ *
+ * Each attempt carries its own text, its own student attachments and its own
+ * review rounds, so a review always names the attempt it belongs to. Only the
+ * newest attempt is open for review; an earlier round is shown for comparison
+ * and the server refuses to review it again.
+ */
+function InstructorAttemptCard({
+  submission,
+  isLatest,
+  maxScore,
+  onChanged,
+}: {
+  readonly submission: SubmissionView;
+  readonly isLatest: boolean;
+  readonly maxScore: number;
+  readonly onChanged: () => void;
+}): ReactElement {
   const { t, i18n } = useTranslation();
   const action = useTrainingAction();
   const locale = i18n.language;
-  const ordered = [...submissions].sort((a, b) => a.attempt - b.attempt);
-  const latest = ordered[ordered.length - 1];
   const [score, setScore] = useState('');
   const [feedback, setFeedback] = useState('');
   const [pendingFiles, setPendingFiles] = useState<readonly FileAttachment[]>(
@@ -411,10 +465,17 @@ function StudentReviewCard({
   );
   const [uploadBusy, setUploadBusy] = useState(false);
 
+  const awaitingReview = isLatest && submission.status === 'submitted';
+  const heading = awaitingReview
+    ? t('training.review.targetAttempt', { attempt: submission.attempt })
+    : isLatest
+      ? t('training.review.latestAttempt', { attempt: submission.attempt })
+      : t('training.review.historyAttempt', { attempt: submission.attempt });
+
   const review = async (decision: 'graded' | 'returned'): Promise<void> => {
     const result = await action.run((client) =>
       client.request({
-        path: `training/submissions/${latest.id}/review`,
+        path: `training/submissions/${submission.id}/review`,
         method: 'POST',
         json: {
           decision,
@@ -433,75 +494,78 @@ function StudentReviewCard({
   };
 
   return (
-    <div className='space-y-3 rounded-lg border border-border p-4'>
+    <div className='space-y-2 rounded-md border border-border p-3'>
       <div className='flex flex-wrap items-center gap-2 text-sm'>
-        <span className='font-medium'>
-          {latest.studentName ?? latest.studentId}
-        </span>
+        <span className='font-medium'>{heading}</span>
         <StatusFor
-          labelKey={SUBMISSION_STATUS_KEYS[latest.status]}
+          labelKey={SUBMISSION_STATUS_KEYS[submission.status]}
           tone={
-            latest.status === 'graded'
+            submission.status === 'graded'
               ? 'success'
-              : latest.status === 'returned'
+              : submission.status === 'returned'
                 ? 'warning'
                 : 'muted'
           }
         />
-        {latest.isLate ? (
+        {submission.isLate ? (
           <StatusBadge label={t('training.submission.late')} tone='danger' />
         ) : null}
         <span className='text-xs text-muted-foreground'>
-          {t('training.submission.attempt', { count: latest.attempt })} ·{' '}
-          {formatDateTime(latest.submittedAt, locale)}
+          {formatDateTime(submission.submittedAt, locale)}
         </span>
+        {submission.score !== null ? (
+          <span className='text-xs text-muted-foreground'>
+            {t('training.submission.score', {
+              score: submission.score,
+              max: submission.maxScore,
+            })}
+          </span>
+        ) : null}
       </div>
       <p className='text-sm whitespace-pre-wrap text-muted-foreground'>
-        {latest.content}
+        {submission.content}
       </p>
-      {latest.files.length > 0 ? (
+      {submission.files.length > 0 ? (
         <div className='space-y-1'>
           <p className='text-xs font-medium text-muted-foreground'>
             {t('training.files.submissionGroup')}
           </p>
-          <AttachmentList files={latest.files} />
+          <AttachmentList files={submission.files} />
         </div>
       ) : null}
-      {ordered.length > 1 ? (
-        <ul className='space-y-1 text-xs text-muted-foreground'>
-          {ordered.slice(0, -1).map((submission) => (
-            <li key={submission.id}>
-              {t('training.submission.attempt', { count: submission.attempt })}:{' '}
-              {t(SUBMISSION_STATUS_KEYS[submission.status])}
-              {submission.feedback ? ` · ${submission.feedback}` : ''}
-            </li>
+      {submission.reviews.length > 0 ? (
+        <ul className='space-y-2 text-xs text-muted-foreground'>
+          {submission.reviews.map((item) => (
+            <ReviewHistoryItem key={item.id} review={item} locale={locale} />
           ))}
         </ul>
       ) : null}
-
-      {latest.status === 'submitted' ? (
+      {awaitingReview ? (
         <div className='space-y-3 border-t border-border pt-3'>
-          <div className='grid gap-3 sm:grid-cols-2'>
-            <div className='space-y-2'>
-              <Label htmlFor={`score-${latest.id}`}>
-                {t('training.review.scoreLabel', { max: maxScore })}
-              </Label>
-              <Input
-                id={`score-${latest.id}`}
-                type='number'
-                min={0}
-                max={maxScore}
-                value={score}
-                onChange={(event) => setScore(event.target.value)}
-              />
-            </div>
+          <p className='text-sm font-medium'>
+            {t('training.review.targetAttempt', {
+              attempt: submission.attempt,
+            })}
+          </p>
+          <div className='space-y-2'>
+            <Label htmlFor={`score-${submission.id}`}>
+              {t('training.review.scoreLabel', { max: maxScore })}
+            </Label>
+            <Input
+              id={`score-${submission.id}`}
+              type='number'
+              min={0}
+              max={maxScore}
+              value={score}
+              onChange={(event) => setScore(event.target.value)}
+            />
           </div>
           <div className='space-y-2'>
-            <Label htmlFor={`feedback-${latest.id}`}>
+            <Label htmlFor={`feedback-${submission.id}`}>
               {t('training.submission.feedback')}
             </Label>
             <Textarea
-              id={`feedback-${latest.id}`}
+              id={`feedback-${submission.id}`}
               rows={3}
               value={feedback}
               onChange={(event) => setFeedback(event.target.value)}
@@ -539,34 +603,11 @@ function StudentReviewCard({
             </Button>
           </div>
         </div>
-      ) : (
-        <div className='space-y-2 border-t border-border pt-3 text-sm'>
-          {latest.score !== null ? (
-            <p>
-              {t('training.submission.score', {
-                score: latest.score,
-                max: latest.maxScore,
-              })}
-            </p>
-          ) : null}
-          {latest.feedback ? (
-            <p className='text-muted-foreground'>
-              {t('training.submission.feedback')}: {latest.feedback}
-            </p>
-          ) : null}
-          {latest.reviews.length > 0 ? (
-            <ul className='space-y-2 text-xs text-muted-foreground'>
-              {latest.reviews.map((item) => (
-                <ReviewHistoryItem
-                  key={item.id}
-                  review={item}
-                  locale={locale}
-                />
-              ))}
-            </ul>
-          ) : null}
-        </div>
-      )}
+      ) : !isLatest ? (
+        <p className='border-t border-border pt-2 text-xs text-muted-foreground'>
+          {t('training.review.historyHint')}
+        </p>
+      ) : null}
     </div>
   );
 }
@@ -593,6 +634,7 @@ function ReviewHistoryItem({
         {' · '}
         {formatDateTime(review.createdAt, locale)}
       </p>
+      {review.feedback ? <p>{review.feedback}</p> : null}
       {review.files.length > 0 ? (
         <div className='space-y-1'>
           <p className='font-medium'>{t('training.files.reviewGroup')}</p>

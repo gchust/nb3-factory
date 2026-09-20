@@ -1,4 +1,6 @@
 import type { Application } from '@nocobase/app-server/application';
+import { driveManagerToken } from '@nocobase/app-server/drive';
+import { loggingToken } from '@nocobase/app-server/logging';
 import {
   databaseManagerToken,
   type DatabaseManager,
@@ -9,6 +11,8 @@ import {
   ServiceProvider,
   type ServiceToken,
 } from '@nocobase/service-provider';
+
+import { writeTrainingDemoFiles } from '../../database/main/seeds/202609190002_seed_training_demo.js';
 
 export const TRAINING_ADMIN_ROLE = 'training-admin';
 export const TRAINING_INSTRUCTOR_ROLE = 'training-instructor';
@@ -353,6 +357,31 @@ export default class TrainingProvider extends ServiceProvider<Application> {
         publicBasePath: this.app.publicBasePath,
       });
     });
+  }
+
+  /**
+   * Writes the demo courseware and attachment bytes through the configured
+   * drive.
+   *
+   * The seed records the files but cannot reach the disk a deployment points
+   * the drive at, so the bytes are written here instead, against whatever disk
+   * is configured. Objects already present are left alone. Demo material is a
+   * convenience, so a failure is logged and never keeps the application from
+   * serving.
+   */
+  public override async start(): Promise<void> {
+    try {
+      await writeTrainingDemoFiles(
+        this.app.container.resolve(driveManagerToken),
+      );
+    } catch (error) {
+      const logging = this.app.container.has(loggingToken)
+        ? this.app.container.resolve(loggingToken)
+        : undefined;
+      logging
+        ?.getLogger('training')
+        .warn({ error }, 'Training demo files could not be written.');
+    }
   }
 }
 

@@ -8,6 +8,7 @@ import { verifyPassword } from 'better-auth/crypto';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import migration from '../../database/main/migrations/202609190001_create_training_tables.js';
+import fileMigration from '../../database/main/migrations/202609190003_create_training_files.js';
 import seed from '../../database/main/seeds/202609190002_seed_training_demo.js';
 
 async function count(
@@ -323,12 +324,55 @@ describe('training demo seed', () => {
     expect(reviews[0]?.decision).toBe('returned');
   });
 
+  it('records demo courseware, homework and annotation files', async () => {
+    await runSeed();
+
+    const files = await database
+      .connection()
+      .query.selectFrom('trainingFiles')
+      .selectAll()
+      .execute();
+    expect(files).toHaveLength(9);
+    for (const file of files) {
+      // The key points at the object the application writes through whatever
+      // disk the drive is configured with; the seed only owns the row.
+      expect(String(file.disk)).toBe('local');
+      expect(String(file.key)).toBe(
+        `objects/${String(file.id)}.${String(file.ext)}`,
+      );
+      expect(Number(file.size)).toBeGreaterThan(0);
+    }
+    expect(files.filter((file) => file.ext === 'png')).toHaveLength(2);
+    expect(files.filter((file) => file.ext === 'pdf')).toHaveLength(4);
+    expect(files.filter((file) => file.ext === 'txt')).toHaveLength(2);
+
+    // Four courseware rows on the first session, two homework versions for the
+    // returned round and one graded report, plus one annotation per review.
+    expect(await count(database, 'trainingMaterials')).toBe(4);
+    expect(await count(database, 'trainingSubmissionFiles')).toBe(3);
+    expect(await count(database, 'trainingReviewFiles')).toBe(2);
+
+    const grouped = await database
+      .connection()
+      .query.selectFrom('trainingSubmissionFiles')
+      .select(['submissionId', 'fileId'])
+      .execute();
+    const submissionIds = new Set(
+      grouped.map((row) => Number(row.submissionId)),
+    );
+    // The returned attempt and its resubmission are separate submissions, so
+    // the two homework versions never share a row.
+    expect(submissionIds.size).toBe(3);
+  });
+
   it('does not duplicate data when run twice', async () => {
     await runSeed();
     const before = {
       users: await count(database, 'user'),
       submissions: await count(database, 'trainingSubmissions'),
       reviews: await count(database, 'trainingSubmissionReviews'),
+      files: await count(database, 'trainingFiles'),
+      materials: await count(database, 'trainingMaterials'),
       assignments: await count(
         database,
         'authorizationPermissionSetAssignments',
@@ -344,6 +388,8 @@ describe('training demo seed', () => {
     expect(await count(database, 'trainingSubmissionReviews')).toBe(
       before.reviews,
     );
+    expect(await count(database, 'trainingFiles')).toBe(before.files);
+    expect(await count(database, 'trainingMaterials')).toBe(before.materials);
     expect(await count(database, 'authorizationPermissionSetAssignments')).toBe(
       before.assignments,
     );
@@ -364,6 +410,7 @@ async function applyTrainingSchema(database: DatabaseManager): Promise<void> {
     },
   };
   await migration.up(context);
+  await fileMigration.up(context);
 }
 
 async function createIdentityTables(database: DatabaseManager): Promise<void> {

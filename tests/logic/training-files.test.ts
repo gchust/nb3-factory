@@ -30,7 +30,14 @@ import {
   TRAINING_STUDENT_ROLE,
   trainingServiceToken,
   createTrainingService,
+  type TrainingService,
 } from '../../server/providers/training.js';
+import {
+  TRAINING_DEMO_FILES,
+  TRAINING_DEMO_MATERIALS,
+  trainingDemoFileKey,
+  writeTrainingDemoFiles,
+} from '../../database/main/seeds/202609190002_seed_training_demo.js';
 import {
   trainingFileGuards,
   trainingFileRoutes,
@@ -85,6 +92,8 @@ interface MountedApp {
   readonly app: Hono;
   readonly database: DatabaseManager;
   readonly storageDir: string;
+  readonly service: TrainingService;
+  readonly drive: ReturnType<typeof createDriveManager>;
 }
 
 function buildPdf(pages: readonly string[]): Uint8Array {
@@ -274,10 +283,8 @@ async function mount(): Promise<MountedApp> {
   container.instance(authorizationToken, {
     permissionSets: { listAssignments: async () => ROLE_ASSIGNMENTS },
   } as never);
-  container.instance(
-    trainingServiceToken,
-    createTrainingService(database, { publicBasePath: '' }) as never,
-  );
+  const service = createTrainingService(database, { publicBasePath: '' });
+  container.instance(trainingServiceToken, service as never);
   container.instance(
     serverFileRepositoryManagerToken,
     new ServerFileRepositoryManager(database, drive as never),
@@ -293,7 +300,7 @@ async function mount(): Promise<MountedApp> {
     const router = await contribution.createRouter(application);
     app.route(contribution.scope === 'api' ? '/api' : '/', router);
   }
-  return { app, database, storageDir };
+  return { app, database, storageDir, service, drive };
 }
 
 function headers(userId?: string): Record<string, string> {
@@ -483,6 +490,114 @@ describe('training file routes', () => {
       headers: headers('outsider-user'),
     });
     expect(denied.status).toBe(403);
+  });
+
+  it('blocks a departed student from courseware while the class keeps access', async () => {
+    const file = await upload(
+      mounted.app,
+      'instructor-user',
+      'handbook.pdf',
+      'application/pdf',
+      SAMPLE_PDF,
+    );
+    await mounted.app.request('/api/training/sessions/1/materials', {
+      method: 'POST',
+      headers: {
+        ...headers('instructor-user'),
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({ files: [{ fileId: file.id, title: '培训手册' }] }),
+    });
+
+    const fetchContent = (userId: string) =>
+      mounted.app.request(file.contentUrl, { headers: headers(userId) });
+
+    // Both enrolled students can read the lesson courseware to start with.
+    expect((await fetchContent('student-user')).status).toBe(200);
+    expect((await fetchContent('peer-user')).status).toBe(200);
+
+    // The student leaves the session; only their own access is withdrawn.
+    await mounted.service.unenrollStudent(1, 'student-user');
+
+    expect((await fetchContent('student-user')).status).toBe(403);
+    expect((await fetchContent('peer-user')).status).toBe(200);
+    expect((await fetchContent('instructor-user')).status).toBe(200);
+  });
+
+  it('serves the demo files written through the configured drive', async () => {
+    // The application writes the demo bytes through whatever disk the drive is
+    // configured with; the test disk is a temp directory, not the app tree.
+    await writeTrainingDemoFiles(mounted.drive);
+
+    const now = new Date();
+    const query = mounted.database.connection().query;
+    for (const file of TRAINING_DEMO_FILES) {
+      await query
+        .insertInto('trainingFiles')
+        .values({
+          id: file.id,
+          disk: 'local',
+          key: trainingDemoFileKey(file),
+          filename: file.filename,
+          ext: file.ext,
+          mimeType: file.mimeType,
+          size: file.bytes.length,
+          uploadedById: file.ownerId,
+          createdAt: now,
+          updatedAt: now,
+        })
+        .execute();
+    }
+    for (const material of TRAINING_DEMO_MATERIALS) {
+      await query
+        .insertInto('trainingMaterials')
+        .values({
+          sessionId: 1,
+          fileId: material.fileId,
+          title: material.title,
+          uploadedById: 'instructor-user',
+          createdAt: now,
+          updatedAt: now,
+        })
+        .execute();
+    }
+
+    // Every demo object is on disk under the drive's root, and an enrolled
+    // student gets the exact bytes back, including a multi-page PDF and text.
+    const materialIds = new Set(
+      TRAINING_DEMO_MATERIALS.map((material) => material.fileId),
+    );
+    const materials = TRAINING_DEMO_FILES.filter((file) =>
+      materialIds.has(file.id),
+    );
+    expect(materials).toHaveLength(4);
+    for (const file of materials) {
+      const response = await mounted.app.request(
+        `/uploads/training/${file.id}.${file.ext}`,
+        { headers: headers('student-user') },
+      );
+      expect(response.status).toBe(200);
+      const received = new Uint8Array(await response.arrayBuffer());
+      expect(received).toEqual(file.bytes);
+      expect(received.length).toBe(file.bytes.length);
+    }
+    // The three previewable kinds keep a content type the browser can render.
+    const kinds = (
+      await Promise.all(
+        materials
+          .filter((file) => ['png', 'pdf', 'txt'].includes(file.ext))
+          .map(async (file) => {
+            const response = await mounted.app.request(
+              `/uploads/training/${file.id}.${file.ext}`,
+              { headers: headers('student-user') },
+            );
+            return response.headers.get('content-type') ?? '';
+          }),
+      )
+    ).join(' ');
+    expect(kinds).toContain('image/png');
+    expect(kinds).toContain('application/pdf');
+    expect(kinds).toContain('text/plain');
   });
 
   it('refuses an unlinked upload to everyone but its uploader', async () => {

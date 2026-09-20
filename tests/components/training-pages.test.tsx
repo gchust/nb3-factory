@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { MemoryRouter } from 'react-router';
+import { MemoryRouter, Route, Routes } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const viewer = {
@@ -37,9 +37,13 @@ const courses = [
   },
 ];
 
+/** Swapped per test so one mock can serve any signed-in role. */
+let currentViewer: Record<string, unknown> = viewer;
+let assignmentResponse: unknown = null;
+
 const request = vi.fn(
   async (options: { path: string; query?: Record<string, string> }) => {
-    if (options.path === 'training/me') return { data: viewer };
+    if (options.path === 'training/me') return { data: currentViewer };
     if (options.path === 'training/categories') {
       return { data: ['通用', '销售'] };
     }
@@ -51,6 +55,9 @@ const request = vi.fn(
           : courses,
       };
     }
+    if (options.path === 'training/assignments/1' && assignmentResponse) {
+      return { data: assignmentResponse };
+    }
     return { data: [] };
   },
 );
@@ -58,6 +65,16 @@ const request = vi.fn(
 vi.mock('@nocobase/app-client', () => ({
   ApiClientError: class ApiClientError extends Error {},
   useApiClient: () => ({ request }),
+  useService: () => ({
+    repository: () => ({
+      uploadMany: vi.fn(),
+      deleteOne: vi.fn(async () => ({})),
+    }),
+  }),
+}));
+
+vi.mock('@nocobase/app-plugin-file/client', () => ({
+  clientFileRepositoryManagerToken: Symbol('training-file-repository'),
 }));
 
 vi.mock('@nocobase/i18n/client', () => ({
@@ -70,6 +87,8 @@ vi.mock('@nocobase/i18n/client', () => ({
 describe('training pages', () => {
   beforeEach(() => {
     request.mockClear();
+    currentViewer = viewer;
+    assignmentResponse = null;
   });
 
   it('renders the course catalog from the catalog endpoint', async () => {
@@ -150,4 +169,155 @@ describe('training pages', () => {
     expect(screen.getByText('home.linkManage')).toBeInTheDocument();
     expect(screen.getByText('admin.train')).toBeInTheDocument();
   });
+
+  it('shows the instructor every attempt and names the attempt under review', async () => {
+    currentViewer = {
+      userId: 'instructor-1',
+      name: '李讲师',
+      email: 'instructor.li@example.com',
+      isAdmin: false,
+      isInstructor: true,
+      isStudent: false,
+    };
+    assignmentResponse = buildAssignmentDetail();
+    const { default: AssignmentPage } =
+      await import('../../client/pages/training/assignment-detail.js');
+    render(
+      <MemoryRouter initialEntries={['/training/assignments/1']}>
+        <Routes>
+          <Route
+            path='/training/assignments/:assignmentId'
+            element={<AssignmentPage />}
+          />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    expect(await screen.findByText('第一版内容')).toBeInTheDocument();
+    expect(screen.getByText('第二版内容')).toBeInTheDocument();
+    // The first round is labelled as history; the newest one is the target of
+    // the review form, and both attempts keep their own attachments.
+    expect(
+      screen.getByText('training.review.historyAttempt'),
+    ).toBeInTheDocument();
+    expect(
+      screen.getAllByText('training.review.targetAttempt').length,
+    ).toBeGreaterThan(0);
+    expect(screen.getByText('初稿.txt')).toBeInTheDocument();
+    expect(screen.getByText('修订稿.pdf')).toBeInTheDocument();
+    expect(screen.getByText('退回批注.pdf')).toBeInTheDocument();
+    // The earlier verdict stays visible next to the attempt it judged.
+    expect(screen.getByText(/请补充细节/)).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'training.review.grade' }),
+    ).toBeInTheDocument();
+  });
 });
+
+function buildAssignmentDetail(): unknown {
+  const attachment = (
+    id: string,
+    filename: string,
+    ext: string,
+    mimeType: string,
+  ) => ({
+    id,
+    filename,
+    ext,
+    mimeType,
+    size: 12,
+    contentUrl: `/uploads/training/${id}.${ext}`,
+    uploadedById: 'student-1',
+    createdAt: '2026-08-15T08:00:00.000Z',
+  });
+  const session = {
+    id: 1,
+    code: 'SES-101-A',
+    title: '2026 秋季新员工一班',
+    courseId: 1,
+    courseCode: 'TRN-101',
+    courseTitle: '新员工入职培训',
+    instructorId: 'instructor-1',
+    instructorName: '李讲师',
+    startAt: '2026-08-01T01:00:00.000Z',
+    endAt: '2026-09-30T09:00:00.000Z',
+    capacity: 30,
+    location: '线上直播',
+    status: 'in_progress',
+    enrolledCount: 1,
+  };
+  const assignment = {
+    id: 1,
+    sessionId: 1,
+    title: '入职第一周学习心得',
+    description: null,
+    dueAt: '2099-01-01T00:00:00.000Z',
+    maxScore: 100,
+    status: 'published',
+    publishedAt: '2026-08-01T00:00:00.000Z',
+    submissionCount: 1,
+    gradedCount: 0,
+    pendingCount: 1,
+    returnedCount: 0,
+    mySubmission: null,
+  };
+  return {
+    assignment,
+    session,
+    submissions: [
+      {
+        id: 11,
+        assignmentId: 1,
+        studentId: 'student-1',
+        studentName: '赵一',
+        attempt: 1,
+        content: '第一版内容',
+        status: 'returned',
+        isLate: false,
+        submittedAt: '2026-08-13T08:00:00.000Z',
+        score: null,
+        feedback: '请补充细节',
+        maxScore: 100,
+        reviewedById: 'instructor-1',
+        reviewedAt: '2026-08-16T03:00:00.000Z',
+        files: [attachment('f1', '初稿.txt', 'txt', 'text/plain')],
+        reviews: [
+          {
+            id: 1,
+            attempt: 1,
+            decision: 'returned',
+            score: null,
+            feedback: '请补充细节',
+            reviewerId: 'instructor-1',
+            reviewerName: '李讲师',
+            createdAt: '2026-08-16T03:00:00.000Z',
+            files: [
+              {
+                ...attachment('f2', '退回批注.pdf', 'pdf', 'application/pdf'),
+                uploadedById: 'instructor-1',
+              },
+            ],
+          },
+        ],
+      },
+      {
+        id: 12,
+        assignmentId: 1,
+        studentId: 'student-1',
+        studentName: '赵一',
+        attempt: 2,
+        content: '第二版内容',
+        status: 'submitted',
+        isLate: true,
+        submittedAt: '2026-08-18T08:00:00.000Z',
+        score: null,
+        feedback: null,
+        maxScore: 100,
+        reviewedById: null,
+        reviewedAt: null,
+        files: [attachment('f3', '修订稿.pdf', 'pdf', 'application/pdf')],
+        reviews: [],
+      },
+    ],
+  };
+}

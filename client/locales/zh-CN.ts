@@ -243,6 +243,12 @@ const zhCN: AppResource = {
       return: '退回重做',
       gradedBy: '{{name}} 评分 · {{score}}',
       returnedBy: '{{name}} 退回',
+      attemptTotal: '共 {{n}} 次提交',
+      pendingTotal: '{{n}} 次待批阅',
+      targetAttempt: '本次评阅针对第 {{attempt}} 次提交',
+      latestAttempt: '第 {{attempt}} 次提交（最近一次）',
+      historyAttempt: '第 {{attempt}} 次提交（历史版本）',
+      historyHint: '历史版本仅供对照，不能再次评阅。',
     },
     materials: {
       title: '课时资料',

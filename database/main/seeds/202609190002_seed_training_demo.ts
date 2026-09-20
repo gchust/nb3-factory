@@ -675,6 +675,182 @@ interface SeedContext {
   readonly query: QueryAdapter;
 }
 
+/**
+ * Small, clearly fictional sample files.
+ *
+ * This module stays self-contained on purpose: the seed loader runs it with
+ * plain Node ESM, which cannot resolve a relative import that points at a
+ * TypeScript source. The definitions are exported so the application can write
+ * their bytes through the configured drive (`writeTrainingDemoFiles`), because
+ * the seed itself cannot reach the disk a deployment points the drive at.
+ */
+
+export interface TrainingDemoFile {
+  readonly id: string;
+  readonly filename: string;
+  readonly ext: string;
+  readonly mimeType: string;
+  readonly ownerId: string;
+  readonly bytes: Uint8Array;
+}
+
+/** File ids are stable so the seed stays idempotent. */
+export const TRAINING_DEMO_FILE_IDS = {
+  materialImage: 'f1000000-0000-4000-8000-000000000001',
+  materialPdf: 'f1000000-0000-4000-8000-000000000002',
+  materialText: 'f1000000-0000-4000-8000-000000000003',
+  materialZip: 'f1000000-0000-4000-8000-000000000004',
+  homeworkSunDraft: 'f1000000-0000-4000-8000-000000000005',
+  homeworkSunRevised: 'f1000000-0000-4000-8000-000000000006',
+  homeworkZhaoReport: 'f1000000-0000-4000-8000-000000000007',
+  annotationSun: 'f1000000-0000-4000-8000-000000000008',
+  annotationZhao: 'f1000000-0000-4000-8000-000000000009',
+} as const;
+
+/** A 240x160 PNG with four colour bands, so an image preview shows content. */
+const DEMO_IMAGE_BASE64 =
+  'iVBORw0KGgoAAAANSUhEUgAAAPAAAACgCAIAAAC9uXYyAAABWklEQVR42u3SMRHAIBAAQXqamEABklASDfT4iKVQ0+Pjf2dWwc2VNjaEUSTA0GBoMDQYGkODocHQYGgwNIYGQ4OhwdBgaAwNhgZDg6HB0BgaDA2GBkODoTE0GBoMDYYGQ2NoMDQYGgwNhsbQYGgwNBia5EM/3wthGBpDg6HB0GBoDA2GBkODocHQGBoMDYYGQ4OhMTQYGgwNhgZDY2gwNBgaDA2GxtBgaDA0GBoMjaHB0GBoMDQYGkODocHQYGiyD31WhTAMjaHB0GBoMDSGBkODocHQYGgMDYYGQ4OhwdAYGgwNhgZDg6ExNBgaDA2GBkNjaDA0GBoMDYbG0GBoMDQYGgyNocHQYGgwNNmHnv2HMAyNocHQYGgwNIYGQ4OhwdBgaAwNhgZDg6HB0BgaDA2GBkODoTE0GBoMDYYGQ2NoMDQYGgwNhsbQYGgwNBgaDI2hwdBgaDA0yV0Oi6m/2Va4ngAAAABJRU5ErkJggg==';
+/** A three-page PDF used for both courseware and annotations. */
+const DEMO_PDF_BASE64 =
+  'JVBERi0xLjQKMSAwIG9iago8PCAvVHlwZSAvQ2F0YWxvZyAvUGFnZXMgMiAwIFIgPj4KZW5kb2JqCjIgMCBvYmoKPDwgL1R5cGUgL1BhZ2VzIC9LaWRzIFszIDAgUiA1IDAgUiA3IDAgUl0gL0NvdW50IDMgPj4KZW5kb2JqCjMgMCBvYmoKPDwgL1R5cGUgL1BhZ2UgL1BhcmVudCAyIDAgUiAvTWVkaWFCb3ggWzAgMCA0MDAgMzAwXSAvUmVzb3VyY2VzIDw8IC9Gb250IDw8IC9GMSA5IDAgUiA+PiA+PiAvQ29udGVudHMgNCAwIFIgPj4KZW5kb2JqCjQgMCBvYmoKPDwgL0xlbmd0aCA1MiA+PgpzdHJlYW0KQlQgL0YxIDE4IFRmIDQwIDI0MCBUZCAoUGFnZSAxIC0gQ291cnNlIGdvYWxzKSBUaiBFVAplbmRzdHJlYW0KZW5kb2JqCjUgMCBvYmoKPDwgL1R5cGUgL1BhZ2UgL1BhcmVudCAyIDAgUiAvTWVkaWFCb3ggWzAgMCA0MDAgMzAwXSAvUmVzb3VyY2VzIDw8IC9Gb250IDw8IC9GMSA5IDAgUiA+PiA+PiAvQ29udGVudHMgNiAwIFIgPj4KZW5kb2JqCjYgMCBvYmoKPDwgL0xlbmd0aCA0OCA+PgpzdHJlYW0KQlQgL0YxIDE4IFRmIDQwIDI0MCBUZCAoUGFnZSAyIC0gU2NoZWR1bGUpIFRqIEVUCmVuZHN0cmVhbQplbmRvYmoKNyAwIG9iago8PCAvVHlwZSAvUGFnZSAvUGFyZW50IDIgMCBSIC9NZWRpYUJveCBbMCAwIDQwMCAzMDBdIC9SZXNvdXJjZXMgPDwgL0ZvbnQgPDwgL0YxIDkgMCBSID4+ID4+IC9Db250ZW50cyA4IDAgUiA+PgplbmRvYmoKOCAwIG9iago8PCAvTGVuZ3RoIDQ4ID4+CnN0cmVhbQpCVCAvRjEgMTggVGYgNDAgMjQwIFRkIChQYWdlIDMgLSBIb21ld29yaykgVGogRVQKZW5kc3RyZWFtCmVuZG9iago5IDAgb2JqCjw8IC9UeXBlIC9Gb250IC9TdWJ0eXBlIC9UeXBlMSAvQmFzZUZvbnQgL0hlbHZldGljYSA+PgplbmRvYmoKeHJlZgowIDEwCjAwMDAwMDAwMDAgNjU1MzUgZiAKMDAwMDAwMDAwOSAwMDAwMCBuIAowMDAwMDAwMDU4IDAwMDAwIG4gCjAwMDAwMDAxMjcgMDAwMDAgbiAKMDAwMDAwMDI1MyAwMDAwMCBuIAowMDAwMDAwMzU1IDAwMDAwIG4gCjAwMDAwMDA0ODEgMDAwMDAgbiAKMDAwMDAwMDU3OSAwMDAwMCBuIAowMDAwMDAwNzA1IDAwMDAwIG4gCjAwMDAwMDA4MDMgMDAwMDAgbiAKdHJhaWxlcgo8PCAvU2l6ZSAxMCAvUm9vdCAxIDAgUiA+PgpzdGFydHhyZWYKODczCiUlRU9GCg==';
+/** A valid empty ZIP archive: the interface offers a download, not a preview. */
+const DEMO_ZIP_BASE64 = 'UEsFBgAAAAAAAAAAAAAAAAAAAAAAAA==';
+const DEMO_TEXT =
+  '培训学习要点\n1. 了解公司制度与考勤规范\n2. 完成岗位实践记录\n3. 复习数据安全与合规要求\n';
+
+function demoBytes(base64: string): Uint8Array {
+  return new Uint8Array(Buffer.from(base64, 'base64'));
+}
+
+/** The disk name the training file exposure is configured to use. */
+export const TRAINING_DEMO_DISK = 'local';
+
+/** The stored object key for one demo file, relative to the disk root. */
+export function trainingDemoFileKey(file: {
+  readonly id: string;
+  readonly ext: string;
+}): string {
+  return `objects/${file.id}.${file.ext}`;
+}
+
+export const TRAINING_DEMO_FILES: readonly TrainingDemoFile[] = [
+  {
+    id: TRAINING_DEMO_FILE_IDS.materialImage,
+    filename: '课件封面.png',
+    ext: 'png',
+    mimeType: 'image/png',
+    ownerId: 'demo-instructor-li',
+    bytes: demoBytes(DEMO_IMAGE_BASE64),
+  },
+  {
+    id: TRAINING_DEMO_FILE_IDS.materialPdf,
+    filename: '培训手册.pdf',
+    ext: 'pdf',
+    mimeType: 'application/pdf',
+    ownerId: 'demo-instructor-li',
+    bytes: demoBytes(DEMO_PDF_BASE64),
+  },
+  {
+    id: TRAINING_DEMO_FILE_IDS.materialText,
+    filename: '学习要点.txt',
+    ext: 'txt',
+    mimeType: 'text/plain',
+    ownerId: 'demo-instructor-li',
+    bytes: new TextEncoder().encode(DEMO_TEXT),
+  },
+  {
+    id: TRAINING_DEMO_FILE_IDS.materialZip,
+    filename: '课件素材.zip',
+    ext: 'zip',
+    mimeType: 'application/zip',
+    ownerId: 'demo-instructor-li',
+    bytes: demoBytes(DEMO_ZIP_BASE64),
+  },
+  {
+    id: TRAINING_DEMO_FILE_IDS.homeworkSunDraft,
+    filename: '初稿-学习心得.txt',
+    ext: 'txt',
+    mimeType: 'text/plain',
+    ownerId: 'demo-student-sun',
+    bytes: new TextEncoder().encode('初稿：公司很好，课程很好。\n'),
+  },
+  {
+    id: TRAINING_DEMO_FILE_IDS.homeworkSunRevised,
+    filename: '修订稿-学习心得.pdf',
+    ext: 'pdf',
+    mimeType: 'application/pdf',
+    ownerId: 'demo-student-sun',
+    bytes: demoBytes(DEMO_PDF_BASE64),
+  },
+  {
+    id: TRAINING_DEMO_FILE_IDS.homeworkZhaoReport,
+    filename: '学习心得-赵一.pdf',
+    ext: 'pdf',
+    mimeType: 'application/pdf',
+    ownerId: 'demo-student-zhao',
+    bytes: demoBytes(DEMO_PDF_BASE64),
+  },
+  {
+    id: TRAINING_DEMO_FILE_IDS.annotationSun,
+    filename: '退回批注.pdf',
+    ext: 'pdf',
+    mimeType: 'application/pdf',
+    ownerId: 'demo-instructor-li',
+    bytes: demoBytes(DEMO_PDF_BASE64),
+  },
+  {
+    id: TRAINING_DEMO_FILE_IDS.annotationZhao,
+    filename: '评分批注.png',
+    ext: 'png',
+    mimeType: 'image/png',
+    ownerId: 'demo-instructor-li',
+    bytes: demoBytes(DEMO_IMAGE_BASE64),
+  },
+];
+
+/** Courseware rows the seed attaches to the first demo session. */
+export const TRAINING_DEMO_MATERIALS: readonly {
+  readonly fileId: string;
+  readonly title: string;
+}[] = [
+  {
+    fileId: TRAINING_DEMO_FILE_IDS.materialImage,
+    title: '课件封面（示例图片）',
+  },
+  {
+    fileId: TRAINING_DEMO_FILE_IDS.materialPdf,
+    title: '培训手册（示例 PDF，共 3 页）',
+  },
+  {
+    fileId: TRAINING_DEMO_FILE_IDS.materialText,
+    title: '学习要点（示例文字）',
+  },
+  {
+    fileId: TRAINING_DEMO_FILE_IDS.materialZip,
+    title: '课件素材（不支持预览，可下载）',
+  },
+];
+
+/**
+ * Writes the demo bytes through the drive the application is configured with.
+ *
+ * Called at startup; an object already present is left untouched, so this stays
+ * idempotent and cheap on every later start.
+ */
+export async function writeTrainingDemoFiles(drive: {
+  use(name: string): {
+    exists(key: string): Promise<boolean>;
+    put(key: string, contents: Uint8Array): Promise<void>;
+  };
+}): Promise<void> {
+  const disk = drive.use(TRAINING_DEMO_DISK);
+  for (const file of TRAINING_DEMO_FILES) {
+    const key = trainingDemoFileKey(file);
+    if (await disk.exists(key)) continue;
+    await disk.put(key, file.bytes);
+  }
+}
+
 const seed: SeedDefinition = defineSeed({
   name: '202609190002_seed_training_demo',
 
@@ -688,6 +864,7 @@ const seed: SeedDefinition = defineSeed({
     await seedSessions(context, now);
     await seedAssignments(context, now);
     await seedSubmissions(context, now);
+    await seedDemoFileRows(context, now);
   },
 });
 
@@ -1046,6 +1223,204 @@ async function seedSubmissions(
       })
       .execute();
   }
+}
+
+/**
+ * Records the sample files and links the courseware, the two homework versions
+ * and the two annotations.
+ *
+ * The rows are keyed on the fixed demo file ids, so running the seed again
+ * skips what already exists. The bytes themselves are written by
+ * `writeTrainingDemoFiles` through the drive the application is configured
+ * with, because the seed cannot reach the resolved disk location.
+ */
+async function seedDemoFileRows(
+  { query }: SeedContext,
+  now: Date,
+): Promise<void> {
+  if (!(await tableExists(query, 'trainingFiles'))) return;
+  const sessionId = await findSessionId(query, 'SES-101-A');
+  if (!sessionId) return;
+
+  for (const file of TRAINING_DEMO_FILES) {
+    const existing = await query
+      .selectFrom('trainingFiles')
+      .select('id')
+      .where('id', '=', file.id)
+      .executeTakeFirst();
+    if (existing) continue;
+    await query
+      .insertInto('trainingFiles')
+      .values({
+        id: file.id,
+        disk: TRAINING_DEMO_DISK,
+        key: trainingDemoFileKey(file),
+        filename: file.filename,
+        ext: file.ext,
+        mimeType: file.mimeType,
+        size: file.bytes.length,
+        uploadedById: file.ownerId,
+        createdAt: now,
+        updatedAt: now,
+      })
+      .execute();
+  }
+
+  for (const material of TRAINING_DEMO_MATERIALS) {
+    await linkDemoFile(
+      query,
+      'trainingMaterials',
+      'sessionId',
+      sessionId,
+      material.fileId,
+      now,
+      material.title,
+    );
+  }
+
+  const sunDraft = await findSubmissionId(
+    query,
+    sessionId,
+    '入职第一周学习心得',
+    'demo-student-sun',
+    1,
+  );
+  if (sunDraft !== undefined) {
+    await linkDemoFile(
+      query,
+      'trainingSubmissionFiles',
+      'submissionId',
+      sunDraft,
+      TRAINING_DEMO_FILE_IDS.homeworkSunDraft,
+      now,
+    );
+    const reviewId = await findReviewId(query, sunDraft, 1);
+    if (reviewId !== undefined) {
+      await linkDemoFile(
+        query,
+        'trainingReviewFiles',
+        'reviewId',
+        reviewId,
+        TRAINING_DEMO_FILE_IDS.annotationSun,
+        now,
+      );
+    }
+  }
+
+  const sunRevised = await findSubmissionId(
+    query,
+    sessionId,
+    '入职第一周学习心得',
+    'demo-student-sun',
+    2,
+  );
+  if (sunRevised !== undefined) {
+    await linkDemoFile(
+      query,
+      'trainingSubmissionFiles',
+      'submissionId',
+      sunRevised,
+      TRAINING_DEMO_FILE_IDS.homeworkSunRevised,
+      now,
+    );
+  }
+
+  const zhaoSubmission = await findSubmissionId(
+    query,
+    sessionId,
+    '入职第一周学习心得',
+    'demo-student-zhao',
+    1,
+  );
+  if (zhaoSubmission !== undefined) {
+    await linkDemoFile(
+      query,
+      'trainingSubmissionFiles',
+      'submissionId',
+      zhaoSubmission,
+      TRAINING_DEMO_FILE_IDS.homeworkZhaoReport,
+      now,
+    );
+    const reviewId = await findReviewId(query, zhaoSubmission, 1);
+    if (reviewId !== undefined) {
+      await linkDemoFile(
+        query,
+        'trainingReviewFiles',
+        'reviewId',
+        reviewId,
+        TRAINING_DEMO_FILE_IDS.annotationZhao,
+        now,
+      );
+    }
+  }
+}
+
+/** Inserts one link row unless an identical one already exists. */
+async function linkDemoFile(
+  query: QueryAdapter,
+  table: string,
+  column: string,
+  parentId: number,
+  fileId: string,
+  now: Date,
+  title?: string,
+): Promise<void> {
+  const existing = await query
+    .selectFrom(table)
+    .select('id')
+    .where(column, '=', parentId)
+    .where('fileId', '=', fileId)
+    .executeTakeFirst();
+  if (existing) return;
+  const values: Record<string, unknown> = {
+    [column]: parentId,
+    fileId,
+    createdAt: now,
+    updatedAt: now,
+  };
+  if (title !== undefined) {
+    values.title = title;
+    values.uploadedById = 'demo-instructor-li';
+  }
+  await query.insertInto(table).values(values).execute();
+}
+
+async function findSubmissionId(
+  query: QueryAdapter,
+  sessionId: number,
+  assignmentTitle: string,
+  studentId: string,
+  attempt: number,
+): Promise<number | undefined> {
+  const assignmentId = await findAssignmentId(
+    query,
+    sessionId,
+    assignmentTitle,
+  );
+  if (!assignmentId) return undefined;
+  const row = await query
+    .selectFrom('trainingSubmissions')
+    .select('id')
+    .where('assignmentId', '=', assignmentId)
+    .where('studentId', '=', studentId)
+    .where('attempt', '=', attempt)
+    .executeTakeFirst();
+  return row ? Number(row.id) : undefined;
+}
+
+async function findReviewId(
+  query: QueryAdapter,
+  submissionId: number,
+  attempt: number,
+): Promise<number | undefined> {
+  const row = await query
+    .selectFrom('trainingSubmissionReviews')
+    .select('id')
+    .where('submissionId', '=', submissionId)
+    .where('attempt', '=', attempt)
+    .orderBy('id', 'asc')
+    .executeTakeFirst();
+  return row ? Number(row.id) : undefined;
 }
 
 async function findCourseId(
