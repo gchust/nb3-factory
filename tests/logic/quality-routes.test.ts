@@ -8,6 +8,7 @@ import { ServiceContainer } from '@nocobase/service-provider';
 import {
   createQualityService,
   INSPECTOR_ROLE,
+  PRODUCTION_LEAD_ROLE,
   QUALITY_SUPERVISOR_ROLE,
   qualityServiceToken,
 } from '../../server/providers/quality.js';
@@ -26,11 +27,15 @@ import {
 
 const SUPERVISOR = 'user-supervisor';
 const INSPECTOR = 'user-inspector';
+const INSPECTOR_TWO = 'user-inspector-2';
+const LEAD = 'user-lead';
 const NOBODY = 'user-nobody';
 
 const ROLES = new Map<string, readonly string[]>([
   [SUPERVISOR, [QUALITY_SUPERVISOR_ROLE]],
   [INSPECTOR, [INSPECTOR_ROLE]],
+  [INSPECTOR_TWO, [INSPECTOR_ROLE]],
+  [LEAD, [PRODUCTION_LEAD_ROLE]],
   [NOBODY, []],
 ]);
 
@@ -334,5 +339,76 @@ describe('quality API routes', () => {
     await expect(response.json()).resolves.toMatchObject({
       code: 'VALIDATION',
     });
+  });
+
+  it('rejects an oversized attachment with 413', async () => {
+    const form = new FormData();
+    form.set(
+      'file',
+      new File([new Uint8Array(5 * 1024 * 1024 + 1)], 'big.bin', {
+        type: 'application/octet-stream',
+      }),
+    );
+    form.set('targetType', 'batch');
+    form.set('targetId', 'batch-1');
+    form.set('category', 'batch_factory_report');
+    const response = await request(SUPERVISOR, '/quality/attachments', {
+      method: 'POST',
+      body: form,
+    });
+    expect(response.status).toBe(413);
+  });
+
+  it('rejects an invalid round selector with 400', async () => {
+    const response = await request(
+      SUPERVISOR,
+      '/quality/attachments?targetType=batch&targetId=batch-1&category=batch_factory_report&round=abc',
+    );
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toMatchObject({
+      code: 'VALIDATION',
+    });
+  });
+
+  it('lets only the supervisor reassign a task and returns the new assignment', async () => {
+    const created = await request(SUPERVISOR, '/quality/tasks', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        batchId: 'batch-1',
+        inspectorId: INSPECTOR,
+        assignedLeadId: LEAD,
+        sampleSize: 5,
+        items: [{ name: '外径' }],
+      }),
+    });
+    expect(created.status).toBe(200);
+    const task = (await created.json()) as { data: { id: string } };
+
+    const forbidden = await request(
+      INSPECTOR,
+      `/quality/tasks/${task.data.id}/assignment`,
+      {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ inspectorId: INSPECTOR_TWO }),
+      },
+    );
+    expect(forbidden.status).toBe(403);
+
+    const reassigned = await request(
+      SUPERVISOR,
+      `/quality/tasks/${task.data.id}/assignment`,
+      {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ inspectorId: INSPECTOR_TWO }),
+      },
+    );
+    expect(reassigned.status).toBe(200);
+    const body = (await reassigned.json()) as {
+      data: { inspectorId: string };
+    };
+    expect(body.data.inspectorId).toBe(INSPECTOR_TWO);
   });
 });

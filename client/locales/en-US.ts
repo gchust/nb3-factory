@@ -64,6 +64,8 @@ const enUS = {
     'Inspector (second) — a separate assignment scope',
   'auth.trialRoleProductionLead':
     'Production lead — handles rectifications assigned to them',
+  'auth.trialRoleProductionLeadTwo':
+    'Production lead (second) — a separate rectification scope',
   'status.loading': 'Loading',
   'status.loadingPage': 'Loading page',
   'status.loadingSettings': 'Loading settings',
@@ -246,6 +248,10 @@ const enUS = {
       removeItem: 'Remove item',
       noItems: 'No check items',
       notFound: 'Inspection task not found',
+      reassignTitle: 'Reassign the inspector',
+      reassignHint:
+        'The new inspector gains access immediately; the previous one can no longer open this task or its evidence from an old link.',
+      reassign: 'Reassign',
       itemsTitle: 'Check items',
       nonconformancesTitle: 'Nonconformances',
       noNonconformances: 'No nonconformance raised',
@@ -319,12 +325,25 @@ const enUS = {
         updatedAt: 'Updated',
         taskNo: 'Task number',
         item: 'Check item',
+        round: 'Handling round',
       },
       field: {
         reason: 'Cause',
         measure: 'Corrective action',
         comment: 'Review comment',
       },
+      round: 'Round {{round}}',
+      currentRound: 'Current round',
+      pastRound: 'Previous round',
+      pastRoundHint:
+        'Evidence from a previous round is kept for the record and cannot be changed.',
+      reviewHistory: 'Review history',
+      reviewDecision: { close: 'Closed', return: 'Returned' },
+      reassignTitle: 'Reassign the production lead',
+      reassignHint:
+        'The new production lead gains access immediately; the previous one can no longer open this rectification or its evidence.',
+      reassignLead: 'Production lead',
+      reassign: 'Reassign',
       saveDraft: 'Save',
       submitReview: 'Submit for review',
       reviewTitle: 'Supervisor review',

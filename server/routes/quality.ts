@@ -147,6 +147,26 @@ export const qualityApiRoutes: AppApiRouteContribution<Application> =
         ),
       ),
     );
+    // Supervision-only reassignment. Access is resolved from the record on
+    // every request, so the previous assignee loses access immediately.
+    routes.post('/tasks/:id/assignment', (context) =>
+      respond(context, async () =>
+        quality.reassignTask(
+          await actorOf(quality, context),
+          context.req.param('id'),
+          await body(context),
+        ),
+      ),
+    );
+    routes.post('/nonconformances/:id/assignment', (context) =>
+      respond(context, async () =>
+        quality.reassignNonconformance(
+          await actorOf(quality, context),
+          context.req.param('id'),
+          await body(context),
+        ),
+      ),
+    );
 
     routes.get('/stats/pass-rate', (context) =>
       respond(context, async () =>
@@ -237,10 +257,12 @@ async function fileActorOf(
 }
 
 function attachmentTarget(context: Context): AttachmentTarget {
+  const round = queryValue(context, 'round');
   return {
     targetType: queryValue(context, 'targetType') ?? '',
     targetId: queryValue(context, 'targetId') ?? '',
     category: queryValue(context, 'category') ?? '',
+    ...(round === undefined ? {} : { round: Number(round) }),
   };
 }
 

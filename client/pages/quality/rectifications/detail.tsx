@@ -1,6 +1,6 @@
 import { useApiClient } from '@nocobase/app-client';
 import { useTranslation } from '@nocobase/i18n/client';
-import { useId, useState, type FormEvent, type ReactElement } from 'react';
+import { useState, type FormEvent, type ReactElement } from 'react';
 import { useParams } from 'react-router';
 
 import { RouteDialog } from '@/components/route-dialog';
@@ -11,7 +11,9 @@ import {
   ErrorBlock,
   Field,
   LoadingBlock,
+  SimpleSelect,
   StatusBadge,
+  type SelectOption,
 } from '@/components/quality/parts';
 import { useApiData } from '@/components/quality/use-api-data';
 import {
@@ -20,15 +22,18 @@ import {
   fieldErrorMessages,
   formatDateTime,
   formClasses,
+  loadAssignableUsers,
   loadNonconformance,
   loadSession,
   notifyQualityDataChanged,
   qualityErrorText,
+  reassignNonconformance,
   reviewNonconformance,
   updateNonconformance,
   validateHandlingDraft,
   validateReviewDraft,
   withoutFieldError,
+  type AssignableUsers,
   type QualityNonconformance,
 } from '@/components/quality/lib';
 
@@ -50,22 +55,25 @@ function RectificationDetail(): ReactElement {
   const api = useApiClient();
   const { close } = useRouteOverlay();
   const state = useApiData(async (client) => {
-    const [row, session] = await Promise.all([
+    const [row, session, assignable] = await Promise.all([
       loadNonconformance(client, id ?? ''),
       loadSession(client),
+      loadAssignableUsers(client).catch(() => undefined),
     ]);
-    return { row, session };
+    return { row, session, assignable };
   }, id ?? '');
   const [reason, setReason] = useState<string>();
   const [measure, setMeasure] = useState<string>();
   const [comment, setComment] = useState('');
+  const [leadId, setLeadId] = useState<string>();
   const [busy, setBusy] = useState(false);
   const [handlingErrors, setHandlingErrors] = useState<Record<string, string>>(
     {},
   );
   const [reviewErrors, setReviewErrors] = useState<Record<string, string>>({});
   const [error, setError] = useState<string>();
-  const formId = useId();
+  const [reassignError, setReassignError] = useState<string>();
+  const formId = `${id ?? 'nc'}-form`;
 
   function clearHandlingError(field: string): void {
     setHandlingErrors((current) => withoutFieldError(current, field));
@@ -81,7 +89,7 @@ function RectificationDetail(): ReactElement {
   if (!state.data)
     return <ErrorBlock message={t('quality.rectifications.notFound')} />;
 
-  const { row, session } = state.data;
+  const { row, session, assignable } = state.data;
   const reasonValue = reason ?? row.reason ?? '';
   const measureValue = measure ?? row.measure ?? '';
   const isAssignee = session.user.id === row.assignedToId;
@@ -91,6 +99,7 @@ function RectificationDetail(): ReactElement {
     ['open', 'processing', 'returned'].includes(row.status);
   const canReview =
     session.capabilities.supervise && row.status === 'pending_review';
+  const canReassign = session.capabilities.supervise && Boolean(assignable);
 
   async function submitHandling(submitForReview: boolean): Promise<void> {
     setError(undefined);
@@ -140,6 +149,22 @@ function RectificationDetail(): ReactElement {
     }
   }
 
+  async function submitReassign(): Promise<void> {
+    if (!leadId) return;
+    setError(undefined);
+    setReassignError(undefined);
+    setBusy(true);
+    try {
+      await reassignNonconformance(api, row.id, leadId);
+      notifyQualityDataChanged();
+      state.reload();
+    } catch (reassignFailure: unknown) {
+      setReassignError(qualityErrorText(reassignFailure, t));
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return (
     <div className='space-y-5'>
       <div className='flex flex-wrap items-center gap-2'>
@@ -164,6 +189,10 @@ function RectificationDetail(): ReactElement {
         <Detail
           label={t('quality.nc.column.status')}
           value={t(NONCONFORMANCE_STATUS_LABEL[row.status])}
+        />
+        <Detail
+          label={t('quality.nc.column.round')}
+          value={t('quality.nc.round', { round: row.round })}
         />
         <Detail
           label={t('quality.nc.column.updatedAt')}
@@ -290,19 +319,21 @@ function RectificationDetail(): ReactElement {
         </section>
       ) : null}
 
-      {row.reviewedAt ? (
-        <section className='space-y-1 rounded-xl border border-border bg-card p-4 text-sm'>
-          <p className='text-xs text-muted-foreground'>
-            {t('quality.nc.reviewedBy', {
-              name: row.reviewedByName || row.reviewedById || '',
-            })}{' '}
-            · {formatDateTime(row.reviewedAt)}
-          </p>
-          <p>{row.reviewComment || t('quality.nc.noComment')}</p>
-        </section>
+      <ReviewHistory row={row} />
+
+      {canReassign && assignable ? (
+        <ReassignPanel
+          row={row}
+          assignable={assignable}
+          leadId={leadId ?? ''}
+          onLeadChange={setLeadId}
+          busy={busy}
+          error={reassignError}
+          onSubmit={() => void submitReassign()}
+        />
       ) : null}
 
-      {!canHandle && !canReview && !row.reviewedAt ? (
+      {!canHandle && !canReview && row.reviews.length === 0 ? (
         <p className='text-sm text-muted-foreground'>
           {t('quality.nc.readonlyHint')}
         </p>
@@ -312,20 +343,140 @@ function RectificationDetail(): ReactElement {
         <h2 className='font-heading text-base font-semibold'>
           {t('quality.attachments.evidenceTitle')}
         </h2>
-        <AttachmentSection
-          targetType='nonconformance'
-          targetId={row.id}
-          category='nc_problem'
-          title={t('quality.attachments.ncProblem')}
-        />
-        <AttachmentSection
-          targetType='nonconformance'
-          targetId={row.id}
-          category='nc_after'
-          title={t('quality.attachments.ncAfter')}
-        />
+        {roundsOf(row).map((round) => (
+          <div key={round} className='space-y-3'>
+            <p className='text-xs font-medium text-muted-foreground'>
+              {t('quality.nc.round', { round })}
+              {round === row.round
+                ? ` · ${t('quality.nc.currentRound')}`
+                : ` · ${t('quality.nc.pastRound')}`}
+            </p>
+            <AttachmentSection
+              targetType='nonconformance'
+              targetId={row.id}
+              category='nc_problem'
+              round={round}
+              title={t('quality.attachments.ncProblem')}
+              hint={
+                round === row.round ? undefined : t('quality.nc.pastRoundHint')
+              }
+            />
+            <AttachmentSection
+              targetType='nonconformance'
+              targetId={row.id}
+              category='nc_after'
+              round={round}
+              title={t('quality.attachments.ncAfter')}
+              hint={
+                round === row.round ? undefined : t('quality.nc.pastRoundHint')
+              }
+            />
+          </div>
+        ))}
       </section>
     </div>
+  );
+}
+
+/** Rounds 1..current. Every handling cycle keeps its own evidence. */
+function roundsOf(row: QualityNonconformance): readonly number[] {
+  const current = Number.isInteger(row.round) && row.round > 0 ? row.round : 1;
+  return Array.from({ length: current }, (_, index) => index + 1);
+}
+
+function ReviewHistory({
+  row,
+}: {
+  readonly row: QualityNonconformance;
+}): ReactElement | null {
+  const { t } = useTranslation();
+  if (row.reviews.length === 0) return null;
+  return (
+    <section className='space-y-2 border-t pt-4'>
+      <h2 className='font-heading text-base font-semibold'>
+        {t('quality.nc.reviewHistory')}
+      </h2>
+      <ul className='space-y-2'>
+        {row.reviews.map((review) => (
+          <li
+            key={review.id}
+            className='space-y-1 rounded-xl border border-border bg-card p-3 text-sm'
+          >
+            <div className='flex flex-wrap items-center gap-2 text-xs text-muted-foreground'>
+              <StatusBadge
+                tone={review.decision === 'close' ? 'success' : 'warning'}
+              >
+                {t(
+                  review.decision === 'close'
+                    ? 'quality.nc.reviewDecision.close'
+                    : 'quality.nc.reviewDecision.return',
+                )}
+              </StatusBadge>
+              <span>{t('quality.nc.round', { round: review.round })}</span>
+              <span>
+                {t('quality.nc.reviewedBy', {
+                  name: review.reviewedByName || review.reviewedById,
+                })}{' '}
+                · {formatDateTime(review.reviewedAt)}
+              </span>
+            </div>
+            <p>{review.comment || t('quality.nc.noComment')}</p>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
+function ReassignPanel({
+  row,
+  assignable,
+  leadId,
+  onLeadChange,
+  busy,
+  error,
+  onSubmit,
+}: {
+  readonly row: QualityNonconformance;
+  readonly assignable: AssignableUsers;
+  readonly leadId: string;
+  readonly onLeadChange: (value: string) => void;
+  readonly busy: boolean;
+  readonly error?: string;
+  readonly onSubmit: () => void;
+}): ReactElement {
+  const { t } = useTranslation();
+  const options: readonly SelectOption[] = assignable.productionLeads.map(
+    (lead) => ({ value: lead.id, label: lead.name }),
+  );
+  return (
+    <section className='space-y-2 border-t pt-4'>
+      <h2 className='font-heading text-base font-semibold'>
+        {t('quality.nc.reassignTitle')}
+      </h2>
+      <p className='text-xs text-muted-foreground'>
+        {t('quality.nc.reassignHint')}
+      </p>
+      <div className='flex flex-wrap items-center gap-2'>
+        <SimpleSelect
+          value={leadId}
+          onValueChange={onLeadChange}
+          options={options}
+          placeholder={t('quality.tasks.field.selectLead')}
+          ariaLabel={t('quality.nc.reassignLead')}
+          className='w-64'
+        />
+        <Button
+          type='button'
+          variant='outline'
+          disabled={busy || !leadId || leadId === row.assignedToId}
+          onClick={onSubmit}
+        >
+          {t('quality.nc.reassign')}
+        </Button>
+      </div>
+      {error ? <ErrorBlock message={error} /> : null}
+    </section>
   );
 }
 

@@ -15,6 +15,7 @@ import type {
 } from '../../server/providers/quality-files.js';
 import migration from '../../database/main/migrations/202609190001_create_quality_tables.js';
 import attachmentMigration from '../../database/main/migrations/202609190004_create_quality_attachments.js';
+import roundMigration from '../../database/main/migrations/202609190005_add_quality_rounds_and_reviews.js';
 
 export interface QualityTestDatabase {
   readonly database: DatabaseManager;
@@ -33,7 +34,7 @@ export async function createQualityDatabase(): Promise<QualityTestDatabase> {
     },
   });
   const connection = database.connection();
-  for (const definition of [migration, attachmentMigration]) {
+  for (const definition of [migration, attachmentMigration, roundMigration]) {
     await definition.up({
       builder: connection.builder,
       query: connection.query,
@@ -161,6 +162,7 @@ export function createMemoryAttachmentStore(
           targetType: input.targetType,
           targetId: input.targetId,
           category: input.category,
+          round: input.round,
           uploadedById: input.uploadedById,
         })
         .execute();

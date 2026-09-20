@@ -1,5 +1,6 @@
 import type { Application } from '@nocobase/app-server/application';
 import { driveManagerToken } from '@nocobase/app-server/drive';
+import { loggingToken } from '@nocobase/app-server/logging';
 import {
   authorizationToken,
   type AppAuthorization,
@@ -30,6 +31,7 @@ import {
   type QualityActor,
   type QualityDirectory,
 } from './quality.js';
+import { ensureQualitySampleObjects } from './quality-sample-objects.js';
 
 /** A single file may be at most 5 MiB. */
 export const MAX_ATTACHMENT_SIZE = 5 * 1024 * 1024;
@@ -59,6 +61,8 @@ export interface AttachmentView {
   readonly targetType: AttachmentTargetType;
   readonly targetId: string;
   readonly category: AttachmentCategory;
+  /** Handling round the evidence was filed under; always 1 outside rectifications. */
+  readonly round: number;
   readonly filename: string;
   readonly ext: string;
   readonly mimeType: string;
@@ -85,6 +89,8 @@ export interface AttachmentTarget {
   readonly targetType: string;
   readonly targetId: string;
   readonly category: string;
+  /** Optional rectification round selector; omitted means every round. */
+  readonly round?: number;
 }
 
 /** The file columns an upload produces, plus its stored object identity. */
@@ -105,6 +111,7 @@ export interface AttachmentStoreInput {
   readonly targetType: AttachmentTargetType;
   readonly targetId: string;
   readonly category: AttachmentCategory;
+  readonly round: number;
   readonly uploadedById: string;
 }
 
@@ -140,6 +147,41 @@ export const qualityFileServiceToken: ServiceToken<QualityFileService> =
 
 export default class QualityFileProvider extends ServiceProvider<Application> {
   public readonly name = 'app/quality-file-provider';
+
+  /**
+   * The sample attachments' metadata is seeded, but their bytes belong on
+   * whichever disk the running application configures — which a seed cannot
+   * reach. Once the database is connected, write any sample object that is
+   * missing so the seeded evidence previews and downloads like a real upload.
+   * Best effort: demo data must never stop the server from starting.
+   */
+  public override async ready(): Promise<void> {
+    try {
+      const database = this.app.container.resolve(databaseManagerToken);
+      const drive = this.app.container.resolve(driveManagerToken);
+      await ensureQualitySampleObjects({
+        database,
+        storage: {
+          exists: async (disk, key) => await drive.use(disk).exists(key),
+          put: async (disk, key, contents, contentType) => {
+            await drive.use(disk).put(key, contents, { contentType });
+          },
+        },
+      });
+    } catch (error: unknown) {
+      const logging = this.app.container.has(loggingToken)
+        ? this.app.container.resolve(loggingToken)
+        : undefined;
+      if (logging) {
+        logging
+          .getLogger('quality-sample-files')
+          .warn(
+            { err: error },
+            'Could not materialize seeded quality sample attachments.',
+          );
+      }
+    }
+  }
 
   public override register(): void {
     this.app.container.singleton(qualityFileServiceToken, () => {
@@ -202,6 +244,7 @@ export function createRepositoryStore(
               targetType: input.targetType,
               targetId: input.targetId,
               category: input.category,
+              round: input.round,
               uploadedById: input.uploadedById,
             },
           },
@@ -241,6 +284,7 @@ interface AttachmentRow extends Row {
   targetType: string | null;
   targetId: string | null;
   category: string | null;
+  round: number | null;
   uploadedById: string | null;
 }
 
@@ -260,6 +304,7 @@ interface NonconformanceRow extends Row {
   taskId: string;
   assignedToId: string;
   status: string;
+  round: number | null;
 }
 
 export interface QualityFileServiceOptions {
@@ -342,7 +387,7 @@ export function createQualityFileService(
     return database
       .query()
       .selectFrom('nonconformances')
-      .select(['id', 'taskId', 'assignedToId', 'status'])
+      .select(['id', 'taskId', 'assignedToId', 'status', 'round'])
       .where('id', '=', id)
       .executeTakeFirst<NonconformanceRow>();
   }
@@ -367,11 +412,16 @@ export function createQualityFileService(
    * inspector their own tasks, a production lead the rectifications assigned
    * to them. Modification is narrower than viewing and follows the record's
    * status, so a submitted inspection or a closed rectification is read-only.
+   *
+   * `round` narrows rectification modification to the current handling round:
+   * evidence from an earlier round is history and stays read-only even after a
+   * return, so a new round can never overwrite it.
    */
   async function targetPermissions(
     actor: QualityActor,
     targetType: AttachmentTargetType,
     targetId: string,
+    round?: number,
   ): Promise<{ canView: boolean; canModify: boolean }> {
     if (targetType === 'batch') {
       const batch = await database
@@ -417,9 +467,11 @@ export function createQualityFileService(
       isProductionLead(actor) && nonconformance.assignedToId === actor.id;
     const inspector = isInspector(actor) && task?.inspectorId === actor.id;
     const canView = isSupervisor(actor) || assignedLead || inspector;
+    const currentRound = Number(nonconformance.round ?? 1);
     const canModify =
       assignedLead &&
-      ['open', 'processing', 'returned'].includes(nonconformance.status);
+      ['open', 'processing', 'returned'].includes(nonconformance.status) &&
+      (round === undefined || round === currentRound);
     return { canView, canModify };
   }
 
@@ -442,11 +494,13 @@ export function createQualityFileService(
     actor: QualityActor,
     targetType: AttachmentTargetType,
     targetId: string,
+    round?: number,
   ): Promise<void> {
     const { canView, canModify } = await targetPermissions(
       actor,
       targetType,
       targetId,
+      round,
     );
     if (!canView) {
       throw new QualityError(
@@ -500,6 +554,7 @@ export function createQualityFileService(
       targetType: row.targetType,
       targetId: row.targetId,
       category: row.category as AttachmentCategory,
+      round: Number(row.round ?? 1),
       filename: row.filename,
       ext: row.ext,
       mimeType: row.mimeType,
@@ -508,6 +563,18 @@ export function createQualityFileService(
       uploadedByName: names.get(uploadedById) ?? uploadedById,
       createdAt: toIso(row.createdAt) ?? '',
     };
+  }
+
+  async function currentRound(
+    targetType: AttachmentTargetType,
+    targetId: string,
+  ): Promise<number> {
+    if (targetType !== 'nonconformance') return 1;
+    const nonconformance = await findNonconformance(targetId);
+    if (!nonconformance) {
+      throw new QualityError('NOT_FOUND', 'Nonconformance not found.', 404);
+    }
+    return Number(nonconformance.round ?? 1);
   }
 
   return {
@@ -523,20 +590,24 @@ export function createQualityFileService(
       const targetType = requireAttachmentTargetType(target.targetType);
       const targetId = requireTargetId(target.targetId);
       const { category } = requireCategory(targetType, target.category);
+      const round = requireAttachmentRound(target.round);
       await assertCanView(actor, targetType, targetId);
       const { canModify } = await targetPermissions(
         actor,
         targetType,
         targetId,
+        round,
       );
 
-      const rows = await database
+      let query = database
         .query()
         .selectFrom('qualityAttachments')
         .selectAll()
         .where('targetType', '=', targetType)
         .where('targetId', '=', targetId)
-        .where('category', '=', category)
+        .where('category', '=', category);
+      if (round !== undefined) query = query.where('round', '=', round);
+      const rows = await query
         .orderBy('createdAt', 'asc')
         .execute<AttachmentRow>();
       const names = await userMap(directory);
@@ -566,11 +637,16 @@ export function createQualityFileService(
         );
       }
 
+      // The round is derived from the owning record, never from the request:
+      // the production lead's new evidence lands in the current round and past
+      // rounds stay untouched.
+      const round = await currentRound(targetType, targetId);
       const stored = await store.upload({
         file,
         targetType,
         targetId,
         category,
+        round,
         uploadedById: actor.id,
       });
       const names = await userMap(directory);
@@ -579,6 +655,7 @@ export function createQualityFileService(
         targetType,
         targetId,
         category,
+        round,
         filename: stored.filename,
         ext: stored.ext,
         mimeType: stored.mimeType,
@@ -592,7 +669,12 @@ export function createQualityFileService(
     async remove(actor, id): Promise<void> {
       const row = await findAttachment(id);
       const targetType = requireAttachmentTargetType(row.targetType);
-      await assertCanModify(actor, targetType, row.targetId ?? '');
+      await assertCanModify(
+        actor,
+        targetType,
+        row.targetId ?? '',
+        Number(row.round ?? 1),
+      );
       await database
         .query()
         .deleteFrom('qualityAttachments')
@@ -636,6 +718,20 @@ function requireAttachmentTargetType(value: unknown): AttachmentTargetType {
     'targetType must be batch, item or nonconformance.',
     400,
   );
+}
+
+/** Optional rectification round selector; `undefined` means every round. */
+function requireAttachmentRound(value: unknown): number | undefined {
+  if (value === undefined || value === null || value === '') return undefined;
+  const parsed = typeof value === 'number' ? value : Number(value);
+  if (!Number.isInteger(parsed) || parsed <= 0) {
+    throw new QualityError(
+      'VALIDATION',
+      'round must be a positive integer.',
+      400,
+    );
+  }
+  return parsed;
 }
 
 async function userMap(

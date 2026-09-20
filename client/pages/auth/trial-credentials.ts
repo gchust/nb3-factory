@@ -35,4 +35,9 @@ export const TRIAL_ACCOUNTS: readonly TrialAccount[] = [
     roleKey: 'auth.trialRoleProductionLead',
     roleDefault: 'Production lead',
   },
+  {
+    username: 'prod.lead2',
+    roleKey: 'auth.trialRoleProductionLeadTwo',
+    roleDefault: 'Production lead (second)',
+  },
 ];

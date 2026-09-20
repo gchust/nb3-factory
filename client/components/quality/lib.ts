@@ -10,6 +10,18 @@ export type ItemResult = 'pending' | 'qualified' | 'unqualified';
 export type NonconformanceStatus =
   'open' | 'processing' | 'pending_review' | 'closed' | 'returned';
 
+export type ReviewDecision = 'close' | 'return';
+
+export interface QualityNonconformanceReview {
+  readonly id: string;
+  readonly round: number;
+  readonly decision: ReviewDecision;
+  readonly comment: string | null;
+  readonly reviewedById: string;
+  readonly reviewedByName: string;
+  readonly reviewedAt: string;
+}
+
 export interface QualitySession {
   readonly user: { readonly id: string; readonly name: string };
   readonly roles: readonly string[];
@@ -97,6 +109,7 @@ export interface QualityNonconformance {
   readonly status: NonconformanceStatus;
   readonly assignedToId: string;
   readonly assignedToName: string;
+  readonly round: number;
   readonly reason: string | null;
   readonly measure: string | null;
   readonly handledAt: string | null;
@@ -104,6 +117,7 @@ export interface QualityNonconformance {
   readonly reviewedByName: string | null;
   readonly reviewedAt: string | null;
   readonly reviewComment: string | null;
+  readonly reviews: readonly QualityNonconformanceReview[];
   readonly createdAt: string;
 }
 
@@ -148,6 +162,8 @@ export interface AttachmentTarget {
   readonly targetType: AttachmentTargetType;
   readonly targetId: string;
   readonly category: AttachmentCategory;
+  /** Rectification round selector; omitted means every round. */
+  readonly round?: number;
 }
 
 export interface QualityAttachment {
@@ -155,6 +171,7 @@ export interface QualityAttachment {
   readonly targetType: AttachmentTargetType;
   readonly targetId: string;
   readonly category: AttachmentCategory;
+  readonly round: number;
   readonly filename: string;
   readonly ext: string;
   readonly mimeType: string;
@@ -366,6 +383,34 @@ export function reviewNonconformance(
     .then((response) => response.data);
 }
 
+export function reassignTask(
+  api: ApiClient,
+  taskId: string,
+  input: { readonly inspectorId?: string; readonly assignedLeadId?: string },
+): Promise<QualityTaskDetail> {
+  return api
+    .request<Envelope<QualityTaskDetail>>({
+      path: `quality/tasks/${encodeURIComponent(taskId)}/assignment`,
+      method: 'POST',
+      json: input,
+    })
+    .then((response) => response.data);
+}
+
+export function reassignNonconformance(
+  api: ApiClient,
+  id: string,
+  assignedToId: string,
+): Promise<QualityNonconformance> {
+  return api
+    .request<Envelope<QualityNonconformance>>({
+      path: `quality/nonconformances/${encodeURIComponent(id)}/assignment`,
+      method: 'POST',
+      json: { assignedToId },
+    })
+    .then((response) => response.data);
+}
+
 export function loadPassRate(api: ApiClient): Promise<PassRateSummary> {
   return api
     .request<Envelope<PassRateSummary>>({ path: 'quality/stats/pass-rate' })
@@ -385,11 +430,12 @@ export function loadAttachments(
   return api
     .request<Envelope<AttachmentList>>({
       path: 'quality/attachments',
-      query: {
+      query: cleanQuery({
         targetType: target.targetType,
         targetId: target.targetId,
         category: target.category,
-      },
+        round: target.round === undefined ? undefined : String(target.round),
+      }),
     })
     .then((response) => response.data);
 }

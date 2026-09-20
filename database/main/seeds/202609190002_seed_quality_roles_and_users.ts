@@ -46,6 +46,13 @@ export const TRIAL_USERS = {
     username: 'prod.lead',
     email: 'prod.lead@example.invalid',
   },
+  // A second production lead so rectification reassignment can be tried.
+  productionLeadTwo: {
+    id: 'qcuser00000000000000000000000005',
+    name: '生产负责人 孙涛',
+    username: 'prod.lead2',
+    email: 'prod.lead2@example.invalid',
+  },
 } as const;
 
 const HOME_PAGE = 'home';
@@ -89,6 +96,7 @@ const seed: SeedDefinition = defineSeed({
     await ensureUser(query, TRIAL_USERS.inspector);
     await ensureUser(query, TRIAL_USERS.inspectorTwo);
     await ensureUser(query, TRIAL_USERS.productionLead);
+    await ensureUser(query, TRIAL_USERS.productionLeadTwo);
 
     await ensurePermissionSet(
       query,
@@ -114,6 +122,11 @@ const seed: SeedDefinition = defineSeed({
     await ensureAssignment(
       query,
       TRIAL_USERS.productionLead.id,
+      PRODUCTION_LEAD_ROLE,
+    );
+    await ensureAssignment(
+      query,
+      TRIAL_USERS.productionLeadTwo.id,
       PRODUCTION_LEAD_ROLE,
     );
   },

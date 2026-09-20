@@ -106,6 +106,18 @@ export interface InspectionTaskDetail extends InspectionTaskView {
   readonly nonconformances: readonly NonconformanceView[];
 }
 
+export type QualityReviewDecision = 'close' | 'return';
+
+export interface NonconformanceReviewView {
+  readonly id: string;
+  readonly round: number;
+  readonly decision: QualityReviewDecision;
+  readonly comment: string | null;
+  readonly reviewedById: string;
+  readonly reviewedByName: string;
+  readonly reviewedAt: string;
+}
+
 export interface NonconformanceView {
   readonly id: string;
   readonly code: string;
@@ -121,6 +133,8 @@ export interface NonconformanceView {
   readonly status: QualityNonconformanceStatus;
   readonly assignedToId: string;
   readonly assignedToName: string;
+  /** Current handling round; starts at 1 and advances on every return. */
+  readonly round: number;
   readonly reason: string | null;
   readonly measure: string | null;
   readonly handledAt: string | null;
@@ -128,6 +142,8 @@ export interface NonconformanceView {
   readonly reviewedByName: string | null;
   readonly reviewedAt: string | null;
   readonly reviewComment: string | null;
+  /** Every review decision, oldest first, retained after a return or close. */
+  readonly reviews: readonly NonconformanceReviewView[];
   readonly createdAt: string;
 }
 
@@ -218,6 +234,21 @@ export interface QualityService {
     input: Record<string, unknown>,
   ): Promise<NonconformanceView>;
   reviewNonconformance(
+    actor: QualityActor,
+    id: string,
+    input: Record<string, unknown>,
+  ): Promise<NonconformanceView>;
+  /**
+   * Supervision reassignment: moving a task to another inspector or a
+   * rectification to another production lead. Access is resolved live from the
+   * record, so the previous assignee loses access as soon as this succeeds.
+   */
+  reassignTask(
+    actor: QualityActor,
+    taskId: string,
+    input: Record<string, unknown>,
+  ): Promise<InspectionTaskDetail>;
+  reassignNonconformance(
     actor: QualityActor,
     id: string,
     input: Record<string, unknown>,
@@ -367,6 +398,7 @@ interface NonconformanceRow extends Row {
   description: string | null;
   status: QualityNonconformanceStatus;
   assignedToId: string;
+  round: number;
   reason: string | null;
   measure: string | null;
   handledAt: Date | string | null;
@@ -374,6 +406,16 @@ interface NonconformanceRow extends Row {
   reviewedAt: Date | string | null;
   reviewComment: string | null;
   createdAt: Date | string;
+}
+
+interface ReviewRow extends Row {
+  id: string;
+  nonconformanceId: string;
+  round: number;
+  decision: QualityReviewDecision;
+  comment: string | null;
+  reviewedById: string;
+  reviewedAt: Date | string;
 }
 
 export function createQualityService(
@@ -615,6 +657,24 @@ export function createQualityService(
       )
       .execute<ItemRow>();
     const itemMap = new Map(items.map((item) => [item.id, item]));
+    const reviews = await database
+      .query()
+      .selectFrom('nonconformanceReviews')
+      .selectAll()
+      .where(
+        'nonconformanceId',
+        'in',
+        rows.map((row) => row.id),
+      )
+      .orderBy('round', 'asc')
+      .orderBy('reviewedAt', 'asc')
+      .execute<ReviewRow>();
+    const reviewsByNonconformance = new Map<string, ReviewRow[]>();
+    for (const review of reviews) {
+      const list = reviewsByNonconformance.get(review.nonconformanceId) ?? [];
+      list.push(review);
+      reviewsByNonconformance.set(review.nonconformanceId, list);
+    }
     const names = await userMap();
 
     return rows.map((row) => {
@@ -636,6 +696,7 @@ export function createQualityService(
         status: row.status,
         assignedToId: row.assignedToId,
         assignedToName: nameOf(names, row.assignedToId),
+        round: Number(row.round ?? 1),
         reason: row.reason,
         measure: row.measure,
         handledAt: toIso(row.handledAt),
@@ -643,6 +704,15 @@ export function createQualityService(
         reviewedByName: nameOf(names, row.reviewedById),
         reviewedAt: toIso(row.reviewedAt),
         reviewComment: row.reviewComment,
+        reviews: (reviewsByNonconformance.get(row.id) ?? []).map((review) => ({
+          id: review.id,
+          round: Number(review.round),
+          decision: review.decision,
+          comment: review.comment,
+          reviewedById: review.reviewedById,
+          reviewedByName: nameOf(names, review.reviewedById),
+          reviewedAt: toIso(review.reviewedAt) ?? '',
+        })),
         createdAt: toIso(row.createdAt) ?? '',
       };
     });
@@ -681,6 +751,7 @@ export function createQualityService(
           description: item.remark ?? item.standard ?? null,
           status: 'open',
           assignedToId: leadId,
+          round: 1,
           reason: null,
           measure: null,
           handledAt: null,
@@ -1217,18 +1288,118 @@ export function createQualityService(
         );
       }
       const now = new Date();
+      // Every decision is appended to the review history so a returned round's
+      // comment survives the next review. Returning ends the current round and
+      // opens the next one for the production lead's new evidence.
+      const currentRound = Number(row.round ?? 1);
+      const nextRound = decision === 'return' ? currentRound + 1 : currentRound;
+      await database.transaction(async (connection) => {
+        await connection.query
+          .insertInto('nonconformanceReviews')
+          .values({
+            id: crypto.randomUUID(),
+            nonconformanceId: id,
+            round: currentRound,
+            decision,
+            comment,
+            reviewedById: actor.id,
+            reviewedAt: now,
+            createdAt: now,
+          })
+          .execute();
+        await connection.query
+          .updateTable('nonconformances')
+          .set({
+            status: decision === 'close' ? 'closed' : 'returned',
+            round: nextRound,
+            reviewedById: actor.id,
+            reviewedAt: now,
+            reviewComment: comment,
+            updatedAt: now,
+          })
+          .where('id', '=', id)
+          .execute();
+      });
+      return this.getNonconformance(actor, id);
+    },
+
+    async reassignTask(actor, taskId, input): Promise<InspectionTaskDetail> {
+      requireSupervisor(actor);
+      const task = await findTask(taskId);
+      if (!task) {
+        throw new QualityError('NOT_FOUND', 'Inspection task not found.', 404);
+      }
+      const inspectorId = optionalString(input.inspectorId);
+      const assignedLeadId = optionalString(input.assignedLeadId);
+      if (!inspectorId && !assignedLeadId) {
+        throw new QualityError(
+          'VALIDATION',
+          'Provide an inspector or a production lead to reassign.',
+          400,
+        );
+      }
+      if (inspectorId) {
+        const roles = await directory.rolesForUser(inspectorId);
+        if (!roles.includes(INSPECTOR_ROLE)) {
+          throw new QualityError(
+            'VALIDATION',
+            'The selected inspector does not have the inspector role.',
+            400,
+          );
+        }
+      }
+      if (assignedLeadId) {
+        const roles = await directory.rolesForUser(assignedLeadId);
+        if (!roles.includes(PRODUCTION_LEAD_ROLE)) {
+          throw new QualityError(
+            'VALIDATION',
+            'The selected production lead does not have that role.',
+            400,
+          );
+        }
+      }
+      const now = new Date();
       await database
         .query()
-        .updateTable('nonconformances')
+        .updateTable('inspectionTasks')
         .set({
-          status: decision === 'close' ? 'closed' : 'returned',
-          reviewedById: actor.id,
-          reviewedAt: now,
-          reviewComment: comment,
+          ...(inspectorId ? { inspectorId } : {}),
+          ...(assignedLeadId ? { assignedLeadId } : {}),
           updatedAt: now,
         })
-        .where('id', '=', id)
+        .where('id', '=', taskId)
         .execute();
+      const updated = await findTask(taskId);
+      return detailOf(updated ?? task);
+    },
+
+    async reassignNonconformance(
+      actor,
+      id,
+      input,
+    ): Promise<NonconformanceView> {
+      requireSupervisor(actor);
+      const row = await findNonconformance(id);
+      if (!row) {
+        throw new QualityError('NOT_FOUND', 'Nonconformance not found.', 404);
+      }
+      const assignedToId = requireString(input.assignedToId, 'assignedToId');
+      const roles = await directory.rolesForUser(assignedToId);
+      if (!roles.includes(PRODUCTION_LEAD_ROLE)) {
+        throw new QualityError(
+          'VALIDATION',
+          'The selected production lead does not have that role.',
+          400,
+        );
+      }
+      if (assignedToId !== row.assignedToId) {
+        await database
+          .query()
+          .updateTable('nonconformances')
+          .set({ assignedToId, updatedAt: new Date() })
+          .where('id', '=', id)
+          .execute();
+      }
       return this.getNonconformance(actor, id);
     },
 

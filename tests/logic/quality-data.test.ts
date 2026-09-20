@@ -13,6 +13,7 @@ import {
 } from '../../client/pages/auth/trial-credentials.js';
 import sampleSeed from '../../database/main/seeds/202609190003_seed_quality_sample_data.js';
 import migration from '../../database/main/migrations/202609190001_create_quality_tables.js';
+import roundMigration from '../../database/main/migrations/202609190005_add_quality_rounds_and_reviews.js';
 import {
   createIdentityTables,
   createQualityDatabase,
@@ -77,6 +78,44 @@ describe('quality schema migration', () => {
       context.connection.builder.hasCollection('nonconformances'),
     ).resolves.toBe(false);
   });
+
+  it('adds the handling round and review history, and reverses them', async () => {
+    const { builder } = context.connection;
+    await expect(builder.hasCollection('nonconformanceReviews')).resolves.toBe(
+      true,
+    );
+    // Selecting the column proves the alter-collection half was applied.
+    await expect(
+      context.connection.query
+        .selectFrom('nonconformances')
+        .select('round')
+        .limit(0)
+        .execute(),
+    ).resolves.toEqual([]);
+    await expect(
+      context.connection.query
+        .selectFrom('qualityAttachments')
+        .select('round')
+        .limit(0)
+        .execute(),
+    ).resolves.toEqual([]);
+
+    await roundMigration.down!({
+      builder,
+      query: context.connection.query,
+      connection: context.connection,
+    });
+    await expect(builder.hasCollection('nonconformanceReviews')).resolves.toBe(
+      false,
+    );
+    await expect(
+      context.connection.query
+        .selectFrom('nonconformances')
+        .select('round')
+        .limit(0)
+        .execute(),
+    ).rejects.toThrow();
+  });
 });
 
 describe('quality seeds', () => {
@@ -123,6 +162,7 @@ describe('quality seeds', () => {
         TRIAL_USERS.inspector.username,
         TRIAL_USERS.inspectorTwo.username,
         TRIAL_USERS.productionLead.username,
+        TRIAL_USERS.productionLeadTwo.username,
       ].sort(),
     );
   });
@@ -131,10 +171,10 @@ describe('quality seeds', () => {
     await runRoles();
     await runRoles();
 
-    expect(await count('user')).toBe(4);
-    expect(await count('account')).toBe(4);
+    expect(await count('user')).toBe(5);
+    expect(await count('account')).toBe(5);
     expect(await count('authorizationPermissionSets')).toBe(3);
-    expect(await count('authorizationPermissionSetAssignments')).toBe(4);
+    expect(await count('authorizationPermissionSetAssignments')).toBe(5);
 
     const sets = await context.connection.query
       .selectFrom('authorizationPermissionSets')

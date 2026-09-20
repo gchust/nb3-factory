@@ -35,6 +35,8 @@ export interface AttachmentSectionProps {
   readonly category: AttachmentCategory;
   readonly title: string;
   readonly hint?: string;
+  /** Rectification round to show; omitted shows every round. */
+  readonly round?: number;
 }
 
 /**
@@ -48,6 +50,7 @@ export function AttachmentSection({
   category,
   title,
   hint,
+  round,
 }: AttachmentSectionProps): ReactElement {
   const { t } = useTranslation();
   const api = useApiClient();
@@ -55,8 +58,8 @@ export function AttachmentSection({
   const inputRef = useRef<HTMLInputElement>(null);
   const state = useApiData(
     (client: ApiClient) =>
-      loadAttachments(client, { targetType, targetId, category }),
-    `${targetType}|${targetId}|${category}`,
+      loadAttachments(client, { targetType, targetId, category, round }),
+    `${targetType}|${targetId}|${category}|${round ?? 'all'}`,
   );
   const [busy, setBusy] = useState(false);
   const [progress, setProgress] = useState<{

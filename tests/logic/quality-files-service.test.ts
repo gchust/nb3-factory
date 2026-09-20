@@ -444,6 +444,7 @@ describe('quality attachment repository store', () => {
       targetType: 'item',
       targetId: 'item-1',
       category: 'item_photo',
+      round: 1,
       uploadedById: SUPERVISOR,
     });
     expect(stored.filename).toBe('报告.png');

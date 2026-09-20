@@ -1,3 +1,4 @@
+import { useApiClient } from '@nocobase/app-client';
 import { useTranslation } from '@nocobase/i18n/client';
 import { Fragment, useState, type ReactElement } from 'react';
 import { Link } from 'react-router';
@@ -6,7 +7,9 @@ import {
   EmptyBlock,
   ErrorBlock,
   LoadingBlock,
+  SimpleSelect,
   StatusBadge,
+  type SelectOption,
 } from '@/components/quality/parts';
 import { AttachmentSection } from '@/components/quality/attachments';
 import { Button } from '@/components/ui/button';
@@ -20,8 +23,14 @@ import {
   TASK_STATUS_LABEL,
   TASK_STATUS_TONE,
   formatDateTime,
+  loadAssignableUsers,
+  loadSession,
   loadTask,
+  notifyQualityDataChanged,
+  qualityErrorText,
+  reassignTask,
   tableClasses,
+  type AssignableUsers,
   type QualityItem,
   type QualityNonconformance,
   type QualityTaskDetail,
@@ -34,21 +43,105 @@ export function TaskDetailPanel({
   readonly taskId: string;
 }): ReactElement {
   const { t } = useTranslation();
-  const state = useApiData((api) => loadTask(api, taskId), taskId);
+  const state = useApiData(async (client) => {
+    const [task, session, assignable] = await Promise.all([
+      loadTask(client, taskId),
+      loadSession(client),
+      loadAssignableUsers(client).catch(() => undefined),
+    ]);
+    return { task, session, assignable };
+  }, taskId);
 
   if (state.loading) return <LoadingBlock label={t('status.loading')} />;
   if (state.error) {
     return <ErrorBlock message={state.error} onRetry={state.reload} />;
   }
   if (!state.data) return <EmptyBlock message={t('quality.tasks.notFound')} />;
-  const task = state.data;
+  const { task, session, assignable } = state.data;
 
   return (
     <div className='space-y-6'>
+      {session.capabilities.supervise && assignable ? (
+        <ReassignInspector
+          task={task}
+          assignable={assignable}
+          onReassigned={state.reload}
+        />
+      ) : null}
       <TaskSummary task={task} />
       <ItemTable items={task.items} />
       <NonconformanceTable rows={task.nonconformances} />
     </div>
+  );
+}
+
+/**
+ * Supervision-only reassignment of the task's inspector. Access is resolved
+ * from the task on every request, so once this succeeds the previous inspector
+ * can no longer open the task or its evidence from an old link.
+ */
+function ReassignInspector({
+  task,
+  assignable,
+  onReassigned,
+}: {
+  readonly task: QualityTaskDetail;
+  readonly assignable: AssignableUsers;
+  readonly onReassigned: () => void;
+}): ReactElement {
+  const { t } = useTranslation();
+  const api = useApiClient();
+  const [inspectorId, setInspectorId] = useState(task.inspectorId);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string>();
+
+  const options: readonly SelectOption[] = assignable.inspectors.map(
+    (inspector) => ({ value: inspector.id, label: inspector.name }),
+  );
+
+  async function submit(): Promise<void> {
+    if (!inspectorId) return;
+    setBusy(true);
+    setError(undefined);
+    try {
+      await reassignTask(api, task.id, { inspectorId });
+      notifyQualityDataChanged();
+      onReassigned();
+    } catch (failure: unknown) {
+      setError(qualityErrorText(failure, t));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <section className='space-y-2 rounded-xl border border-border bg-card p-4'>
+      <h2 className='font-heading text-base font-semibold'>
+        {t('quality.tasks.reassignTitle')}
+      </h2>
+      <p className='text-xs text-muted-foreground'>
+        {t('quality.tasks.reassignHint')}
+      </p>
+      <div className='flex flex-wrap items-center gap-2'>
+        <SimpleSelect
+          value={inspectorId}
+          onValueChange={setInspectorId}
+          options={options}
+          placeholder={t('quality.tasks.field.selectInspector')}
+          ariaLabel={t('quality.tasks.field.inspector')}
+          className='w-64'
+        />
+        <Button
+          type='button'
+          variant='outline'
+          disabled={busy || !inspectorId || inspectorId === task.inspectorId}
+          onClick={() => void submit()}
+        >
+          {t('quality.tasks.reassign')}
+        </Button>
+      </div>
+      {error ? <ErrorBlock message={error} /> : null}
+    </section>
   );
 }
 
