@@ -80,7 +80,7 @@ jobs:
           pnpm add @nocobase/db-sqlite@latest
           pnpm install --no-frozen-lockfile
           pnpm plugin:skills:sync
-          pnpm exec prettier --write package.json README.MD AGENTS.md eslint.config.js scripts/build.mjs factory-template.json tests/logic vitest.config.ts
+          pnpm exec prettier --write config.yml package.json README.MD AGENTS.md eslint.config.js scripts/build.mjs factory-template.json tests/logic vitest.config.ts
 
       - name: Install Chinese browser fonts
         run: bash control/.github/scripts/install-browser-fonts.sh
