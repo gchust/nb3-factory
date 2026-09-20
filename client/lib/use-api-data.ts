@@ -10,6 +10,7 @@ export interface ApiDataState<T> {
 
 interface Settled<T> {
   readonly key: string;
+  readonly nonce: number;
   readonly data: T | undefined;
   readonly error: unknown;
 }
@@ -19,8 +20,12 @@ interface Settled<T> {
  * and stale-response state. `key` identifies the request so a filter change
  * refetches; `load` may close over the current filters.
  *
- * `loading` is derived from whether the settled result belongs to the current
- * request, so an effect never has to set state synchronously before fetching.
+ * A reload of the same key keeps the previous result visible instead of
+ * swapping the view for a spinner. The view therefore stays mounted, which
+ * matters for in-flight work inside it: a spinner replacing an uploader mid
+ * request would discard bytes that were already sent and never link them.
+ * Changing the key still clears the result, so one record's data is never shown
+ * for another.
  */
 export function useApiData<T>(
   key: string,
@@ -29,9 +34,9 @@ export function useApiData<T>(
   const api = useApiClient();
   const loadRef = useRef(load);
   const [nonce, setNonce] = useState(0);
-  const requestKey = `${key}#${nonce}`;
   const [settled, setSettled] = useState<Settled<T>>({
-    key: '',
+    key: UNRESOLVED,
+    nonce: 0,
     data: undefined,
     error: undefined,
   });
@@ -47,27 +52,31 @@ export function useApiData<T>(
     loadRef
       .current(api)
       .then((data) => {
-        if (active) setSettled({ key: requestKey, data, error: undefined });
+        if (active) setSettled({ key, nonce, data, error: undefined });
       })
       .catch((error: unknown) => {
         if (active) {
-          setSettled({ key: requestKey, data: undefined, error });
+          setSettled({ key, nonce, data: undefined, error });
         }
       });
     return () => {
       active = false;
     };
-  }, [api, requestKey]);
+  }, [api, key, nonce]);
 
   const reload = useCallback(() => setNonce((value) => value + 1), []);
-  const current = settled.key === requestKey;
+  const sameKey = settled.key === key;
+  const current = sameKey && settled.nonce === nonce;
   return {
-    data: current ? settled.data : undefined,
+    data: sameKey ? settled.data : undefined,
     error: current ? settled.error : undefined,
-    loading: !current,
+    loading: !current && !(sameKey && settled.data !== undefined),
     reload,
   };
 }
+
+/** A key no real request uses, so the first load always counts as unresolved. */
+const UNRESOLVED = '\u0000unresolved';
 
 /** Turns an unknown request error into a readable, localized message. */
 export function requestErrorMessage(error: unknown, fallback: string): string {

@@ -312,10 +312,12 @@ export class RentalService {
         .select('id')
         .where('venueId', '=', venueId)
         .where('status', 'in', [...RESERVED_STATUSES])
-        // Datetime columns are stored as UTC text; bind ISO strings rather than
-        // Date objects so the comparison has the same representation.
-        .where('startAt', '<', endAt.toISOString())
-        .where('endAt', '>', startAt.toISOString())
+        // Compare against the exact text a datetime column stores. Binding an
+        // ISO string with its trailing `Z` (or a Date object) serializes
+        // differently, which makes two identical instants compare unequal and
+        // rejects bookings that merely touch at a boundary.
+        .where('startAt', '<', toDbDateTime(endAt))
+        .where('endAt', '>', toDbDateTime(startAt))
         .executeTakeFirst();
       if (conflictRow) {
         throw conflict(
@@ -990,10 +992,10 @@ export class RentalService {
       sql = sql.where('rentalBookings.venueId', '=', filters.venueId);
     }
     if (filters.from) {
-      sql = sql.where('rentalBookings.endAt', '>', filters.from.toISOString());
+      sql = sql.where('rentalBookings.endAt', '>', toDbDateTime(filters.from));
     }
     if (filters.to) {
-      sql = sql.where('rentalBookings.startAt', '<', filters.to.toISOString());
+      sql = sql.where('rentalBookings.startAt', '<', toDbDateTime(filters.to));
     }
     if (filters.search) {
       const term = `%${filters.search}%`;
@@ -1125,6 +1127,18 @@ function optionalAmount(value: unknown): number | undefined {
 
 function round(value: number): number {
   return Math.round(value * 100) / 100;
+}
+
+/**
+ * The text a `datetime` column stores: UTC ISO-8601 without the trailing `Z`.
+ *
+ * Comparisons run against that stored text, so a value bound any other way —
+ * a `Z`-suffixed ISO string or a `Date` — serializes differently and makes two
+ * identical instants compare unequal. That is what rejected bookings whose
+ * window merely touched an existing one at a boundary.
+ */
+function toDbDateTime(value: Date): string {
+  return value.toISOString().slice(0, -1);
 }
 
 function toIso(value: unknown): string {

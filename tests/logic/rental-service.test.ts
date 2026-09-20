@@ -84,6 +84,48 @@ describe('RentalService', () => {
     ).rejects.toMatchObject({ code: 'TIME_CONFLICT', status: 409 });
   });
 
+  it('rejects a booking that overlaps a slot crossing midnight', async () => {
+    await service.createBooking(
+      staff,
+      input('2026-10-01T22:00', '2026-10-02T02:00'),
+    );
+
+    // Starts before midnight but ends after the existing booking begins.
+    await expect(
+      service.createBooking(
+        staff,
+        input('2026-10-01T23:00', '2026-10-02T01:00'),
+      ),
+    ).rejects.toMatchObject({ code: 'TIME_CONFLICT', status: 409 });
+    // Begins on the next day while the previous booking is still running.
+    await expect(
+      service.createBooking(
+        staff,
+        input('2026-10-02T01:00', '2026-10-02T03:00'),
+      ),
+    ).rejects.toMatchObject({ code: 'TIME_CONFLICT', status: 409 });
+  });
+
+  it('accepts bookings that touch but do not overlap, including across midnight', async () => {
+    await service.createBooking(
+      staff,
+      input('2026-10-01T22:00', '2026-10-02T02:00'),
+    );
+
+    // Ends exactly when the existing booking starts.
+    const before = await service.createBooking(
+      staff,
+      input('2026-10-01T20:00', '2026-10-01T22:00'),
+    );
+    expect(before.status).toBe('pending');
+    // Starts exactly when the existing booking ends, on the next day.
+    const after = await service.createBooking(
+      staff,
+      input('2026-10-02T02:00', '2026-10-02T04:00'),
+    );
+    expect(after.status).toBe('pending');
+  });
+
   it('releases the slot after cancellation', async () => {
     const first = await service.createBooking(
       staff,
@@ -96,6 +138,27 @@ describe('RentalService', () => {
       input('2026-10-01T10:00', '2026-10-01T12:00'),
     );
     expect(second.status).toBe('pending');
+  });
+
+  it('frees the whole window of a cancelled cross-day booking for a new one', async () => {
+    const first = await service.createBooking(
+      staff,
+      input('2026-10-20T22:00', '2026-10-21T02:00'),
+    );
+    await expect(
+      service.createBooking(
+        staff,
+        input('2026-10-21T00:00', '2026-10-21T01:00'),
+      ),
+    ).rejects.toMatchObject({ code: 'TIME_CONFLICT' });
+
+    await service.cancelBooking(staff, first.id, { reason: '档期调整' });
+
+    const replacement = await service.createBooking(
+      staff,
+      input('2026-10-21T00:00', '2026-10-21T01:00'),
+    );
+    expect(replacement.status).toBe('pending');
   });
 
   it('rejects an invalid time range and an unavailable venue', async () => {
