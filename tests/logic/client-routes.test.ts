@@ -20,6 +20,14 @@ describe('app client routes', () => {
           name: 'home',
           path: '/',
         },
+        { auth: 'required', name: 'library', path: '/library' },
+        { auth: 'required', name: 'library-detail', path: '/library/:id' },
+        { auth: 'required', name: 'my-borrowings', path: '/my-borrowings' },
+        {
+          auth: 'required',
+          name: 'borrowings-admin',
+          path: '/borrowings-admin',
+        },
         { auth: 'guest', name: 'login', path: '/login' },
         { auth: 'guest', name: 'register', path: '/register' },
         {

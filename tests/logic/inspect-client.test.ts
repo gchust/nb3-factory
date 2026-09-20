@@ -111,6 +111,26 @@ describe('client inspection', () => {
         path: '/',
       },
       {
+        auth: 'required',
+        id: 'nb3-factory:library',
+        path: '/library',
+      },
+      {
+        auth: 'required',
+        id: 'nb3-factory:library-detail',
+        path: '/library/:id',
+      },
+      {
+        auth: 'required',
+        id: 'nb3-factory:my-borrowings',
+        path: '/my-borrowings',
+      },
+      {
+        auth: 'required',
+        id: 'nb3-factory:borrowings-admin',
+        path: '/borrowings-admin',
+      },
+      {
         auth: 'guest',
         id: 'nb3-factory:login',
         path: '/login',
