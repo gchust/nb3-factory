@@ -227,12 +227,120 @@ test('streamed deltas and large tool payloads stay out of the Actions log', (t) 
   const result = runAdapter(fixture);
   assert.equal(result.status, 0, result.stderr);
   assert.doesNotMatch(result.stdout, /hidden-delta/);
-  assert.doesNotMatch(result.stdout, /x{1000}/);
-  assert.match(result.stdout, /"chars":50000/);
+  assert.doesNotMatch(result.stdout, /x{8193}/);
+  assert.match(
+    result.stdout,
+    /truncated 50000 chars; full content in JSONL artifact/,
+  );
   assert.match(result.stdout, /"type":"result"/);
   const transcript = readFileSync(fixture.log, 'utf8');
   assert.match(transcript, /hidden-delta/);
   assert.match(transcript, /x{1000}/);
+});
+
+test('Actions exposes text, tool arguments and results without binary data or secrets', (t) => {
+  const fixture = createFixture(t);
+  const events = [
+    {
+      type: 'assistant',
+      message: {
+        content: [
+          {
+            type: 'text',
+            text: 'First line\nSecond line ' + 'visible '.repeat(40),
+          },
+          {
+            type: 'tool_use',
+            id: 'call-write',
+            name: 'Write',
+            input: {
+              file_path: '/workspace/client/page.tsx',
+              content: 'export default Page;\n',
+              token,
+            },
+          },
+        ],
+      },
+    },
+    {
+      type: 'user',
+      message: {
+        content: [
+          {
+            type: 'tool_result',
+            tool_use_id: 'call-write',
+            is_error: true,
+            content: [
+              {
+                type: 'text',
+                text: 'Permission denied: /workspace/client/page.tsx',
+              },
+              {
+                type: 'image',
+                source: { type: 'base64', data: 'hidden-image-bytes' },
+              },
+              {
+                type: 'document',
+                source: { type: 'base64', data: 'hidden-document-bytes' },
+              },
+              {
+                type: 'text',
+                text: 'screenshot data:image/png;base64,aGlkZGVu',
+              },
+            ],
+          },
+        ],
+      },
+    },
+    {
+      type: 'assistant',
+      message: { content: [{ type: 'text', text: 'a'.repeat(8180) + token }] },
+    },
+    {
+      type: 'assistant',
+      message: {
+        content: Array.from({ length: 10 }, () => ({
+          type: 'text',
+          text: 'z'.repeat(8000),
+        })),
+      },
+    },
+  ];
+  writeShim(
+    fixture,
+    events
+      .map((event) => `console.log(${JSON.stringify(JSON.stringify(event))});`)
+      .join('\n'),
+  );
+  const result = runAdapter(fixture);
+  assert.equal(result.status, 0, result.stderr);
+  const lines = result.stdout.trim().split('\n');
+  const assistant = JSON.parse(lines[0]);
+  assert.equal(
+    assistant.message.content[0].text,
+    events[0].message.content[0].text,
+  );
+  assert.deepEqual(assistant.message.content[1].input, {
+    ...events[0].message.content[1].input,
+    token: '[REDACTED]',
+  });
+  const toolResult = JSON.parse(lines[1]).message.content[0];
+  assert.equal(toolResult.tool_use_id, 'call-write');
+  assert.equal(toolResult.is_error, true);
+  assert.equal(
+    toolResult.content[0].text,
+    'Permission denied: /workspace/client/page.tsx',
+  );
+  assert.doesNotMatch(
+    result.stdout,
+    /hidden-image-bytes|hidden-document-bytes|aGlkZGVu|subscription-token/,
+  );
+  assert.match(result.stdout, /full event in JSONL artifact/);
+  assert.ok(lines.every((line) => line.length < 16 * 1024 + 100));
+  const transcript = readFileSync(fixture.log, 'utf8');
+  assert.match(transcript, /hidden-image-bytes/);
+  assert.match(transcript, /hidden-document-bytes/);
+  assert.doesNotMatch(transcript, new RegExp(token, 'u'));
 });
 
 test('a CodeBuddy result closes the invocation once the turn is finished', (t) => {

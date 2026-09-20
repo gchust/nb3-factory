@@ -266,6 +266,8 @@ export async function runAgentInvocation({
    * Streaming deltas and image tool results belong in the artifact, not the log.
    */
   function writeConsoleAgentEvent(line) {
+    // Redact before a formatter can truncate a credential into an unmatchable prefix.
+    line = redact(line);
     let event;
     try {
       event = JSON.parse(line);
