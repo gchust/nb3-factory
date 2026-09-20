@@ -18,7 +18,7 @@ on:
 permissions: {}
 
 concurrency:
-  group: factory-preview-${{ inputs.run_id || github.event.workflow_run.id }}
+  group: factory-preview-deploy
   queue: max
 
 jobs:

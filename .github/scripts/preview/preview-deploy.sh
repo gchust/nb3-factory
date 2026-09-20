@@ -20,6 +20,7 @@ set -euo pipefail
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=preview-lib.sh
 . "$script_dir/preview-lib.sh"
+. "$script_dir/preview-transaction.sh"
 
 pr=""
 sha=""
@@ -98,7 +99,14 @@ fi
 log "deploying PR #$pr ($sha) as $url"
 
 staging="$(mktemp -d "$PREVIEW_TMP_DIR/pr-${pr}.XXXXXX")"
-cleanup() { rm -rf "$staging"; }
+transaction_started=false
+cleanup() {
+  status=$?
+  trap - EXIT
+  if [[ "$transaction_started" == true ]]; then preview_rollback; fi
+  rm -rf "$staging"
+  exit "$status"
+}
 trap cleanup EXIT
 
 tar -xzf "$payload" -C "$staging"
@@ -124,6 +132,11 @@ fi
 [[ -d "$cache/node_modules" ]] ||
   die "dependency cache $deps_key is missing and the payload carried none; send a full build"
 
+# Snapshot disposable preview state before applying a newly verified build.
+# Fresh initialization matches CI and tolerates changes to unmerged seeds.
+mkdir -p "$PREVIEW_ROOT/backups"
+preview_begin
+
 # --- application files ------------------------------------------------------
 # The built tree is replaced wholesale rather than by copying a list of known
 # directories. A list falls behind what the build emits — an early version of
@@ -131,8 +144,8 @@ fi
 # to attempt a migration and then failed to find the migrator — and it would
 # also let a file dropped from a later build survive from the previous one.
 #
-# Configuration, database, uploaded files and the dependency tree are what
-# outlive a redeploy, so a preview keeps its data.
+# Previous configuration, database and uploads live in the backup. This
+# deployment initializes a new disposable dataset against the verified sources.
 mkdir -p "$dir/dist"
 find "$dir/dist" -mindepth 1 -maxdepth 1 \
   ! -name node_modules ! -name storage -exec rm -rf {} +
@@ -273,4 +286,5 @@ if ! wait_for_preview "$host" 90; then
   die "PR #$pr did not become ready at $url within 90s"
 fi
 
+preview_commit
 log "PR #$pr is live at $url"
