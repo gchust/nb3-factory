@@ -298,6 +298,15 @@ run('Build client', 'pnpm', ['exec', 'refine', 'build'], {
   env: {
     ...readEnvFiles(applicationEnvFiles, process.env),
     ...process.env,
+    // The emitted client must be the production React build, and Vite reads `process.env.NODE_ENV` at
+    // build time for both decisions that have to agree: React's CJS entry (production vs development
+    // build) and esbuild's JSX runtime (jsx-runtime vs jsx-dev-runtime). The verification script exports
+    // NODE_ENV=test, which would select both development halves — React's development build prints
+    // dev-only console errors (React's inline `<script>` warning from the theme provider fires on every
+    // page) and a mismatched pair, such as a production React with a development JSX runtime, crashes at
+    // runtime with `jsxDEV is not a function`. Pin the client build to production instead of inheriting
+    // whatever the caller exported.
+    NODE_ENV: 'production',
   },
 });
 runHookStage(buildHooks, 'afterClientBuild', run);

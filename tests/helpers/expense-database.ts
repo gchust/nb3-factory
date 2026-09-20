@@ -1,8 +1,18 @@
 import sqlite from '@nocobase/db-sqlite';
 import { createDatabaseManager, type DatabaseManager } from '@nocobase/db';
+import { ServerFileRepositoryManager } from '@nocobase/app-plugin-file/server';
+import {
+  createDriveManager,
+  prepareDriveStorage,
+  type NocoBaseDriveManager,
+} from '@nocobase/drive';
+import { mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import path from 'node:path';
 
 import migration from '../../database/main/migrations/202609190001_create_expense_tables.js';
 import fileMigration from '../../database/main/migrations/202609190002_create_expense_files.js';
+import revisionMigration from '../../database/main/migrations/202609190003_create_expense_revisions.js';
 import seed from '../../database/main/seeds/202609190100_seed_expense_demo_data.js';
 import managerChainSeed from '../../database/main/seeds/202609190200_seed_expense_manager_chain.js';
 
@@ -14,7 +24,7 @@ export function createTestDatabase(): DatabaseManager {
   });
 }
 
-const migrations = [migration, fileMigration];
+const migrations = [migration, fileMigration, revisionMigration];
 
 export async function migrate(database: DatabaseManager): Promise<void> {
   for (const item of migrations) {
@@ -43,6 +53,64 @@ export interface SeedFileInput {
   readonly mimeType?: string;
   readonly size?: number;
   readonly ownerId?: string | null;
+}
+
+export interface TestDrive {
+  readonly drive: NocoBaseDriveManager;
+  readonly location: string;
+  dispose(): void;
+}
+
+/**
+ * A private filesystem disk under a temporary directory, matching the
+ * application's `local` disk, so upload and byte-integrity tests exercise the
+ * real File Repository instead of a stub.
+ */
+export async function createTestDrive(): Promise<TestDrive> {
+  const location = mkdtempSync(path.join(tmpdir(), 'expense-files-'));
+  const config = {
+    default: 'local',
+    disks: {
+      local: {
+        driver: 'fs' as const,
+        location,
+        visibility: 'private' as const,
+      },
+    },
+  };
+  await prepareDriveStorage(config);
+  const drive = createDriveManager(config);
+  return {
+    drive,
+    location,
+    dispose: () => rmSync(location, { recursive: true, force: true }),
+  };
+}
+
+/**
+ * The real Server File Repository for the receipt collection.
+ *
+ * `ownerId` stands in for the session the upload route resolves: the route's
+ * policy stamps the uploader onto every uploaded row, and the tests need the
+ * same stamp for the ownership rules to apply.
+ */
+export function createFileRepository(
+  database: DatabaseManager,
+  drive: NocoBaseDriveManager,
+  ownerId = 'u-e1',
+): ReturnType<ServerFileRepositoryManager['repository']> {
+  const manager = new ServerFileRepositoryManager(database, drive);
+  return manager.repository('expenseFiles', {
+    connection: 'main',
+    disk: 'local',
+    accessPath: '/expense-files',
+    policy: {
+      read: true,
+      create: { scope: true, defaults: { ownerId } },
+      update: false,
+      delete: true,
+    },
+  });
 }
 
 /** Inserts File Repository metadata without touching a disk, for access-control tests. */

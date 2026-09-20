@@ -253,6 +253,17 @@ const zhCN: AppResource = {
       rejectDescription: '退回该报销单，并说明退回原因。',
       rejectReason: '退回原因',
       payDescription: '为报销单登记 {{amount}} 的付款。',
+      submissions: '提交记录',
+      submissionsHint:
+        '每次提交都会保留当时的票据和审批意见，退回后重新提交也不会改变历史记录。',
+      revisionLabel: '第 {{revision}} 次提交',
+      revisionTag: '第 {{revision}} 次提交',
+      returnedBy: '{{name}} 退回',
+      approvedBy: '{{name}} 批准',
+      frozenHint: '该次提交的存档，只能预览或下载，不能修改。',
+      noRevisionFiles: '该次提交没有附件。',
+      workingHint:
+        '以下为当前附件，仍可修改；已产生审批结果的历次提交保存在下方。',
     },
     files: {
       receiptsTitle: '票据',
@@ -302,10 +313,13 @@ const zhCN: AppResource = {
     errors: {
       ALREADY_PAID: '该报销单已完成付款。',
       CATEGORY_REQUIRED: '请选择费用类别。',
+      CONFLICT: '该报销单已被其他操作更新，请刷新后重试。',
       EMPLOYEE_NOT_FOUND: '无法创建员工资料，请联系管理员。',
       EMPTY_REPORT: '请先添加至少一条费用明细再提交。',
       FILE_ALREADY_LINKED: '该文件已关联到当前单据。',
       FORBIDDEN: '你没有执行该操作的权限。',
+      HISTORICAL_FILE: '已计入提交历史的票据不能移除。',
+      HISTORICAL_REPORT: '已提交的报销单需要留档，不能删除。',
       INVALID_AMOUNT: '金额必须大于 0。',
       INVALID_BODY: '请求数据格式不正确。',
       INVALID_DATE: '请填写有效的日期。',

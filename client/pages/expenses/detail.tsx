@@ -48,6 +48,7 @@ import {
 import { expenseErrorMessage } from './errors.js';
 import { ExpenseAttachments } from './files/file-attachments.js';
 import { invalidateExpenseData, useExpenseInvalidation } from './refresh.js';
+import { ExpenseRevisionHistory } from './revision-history.js';
 import { Field, Notice, Panel, StatusBadge } from './shared.jsx';
 
 export default function ExpenseDetailPage(): ReactElement {
@@ -168,9 +169,17 @@ export default function ExpenseDetailPage(): ReactElement {
     items,
     files: reportFiles,
     actions,
+    revisions,
     payment,
     capabilities,
   } = detail;
+
+  // Once a submission exists and the report is no longer editable, the frozen
+  // revision is the record of truth; showing the working panels too would just
+  // repeat the same receipts. While a returned report is being corrected they
+  // still matter, so both are shown.
+  const showWorkingFiles =
+    capabilities.canManageFiles || revisions.length === 0;
 
   return (
     <>
@@ -310,54 +319,67 @@ export default function ExpenseDetailPage(): ReactElement {
             )}
           </Panel>
 
-          <Panel title={t('expenses.files.receiptsTitle')}>
-            {items.length === 0 ? (
-              <p className='text-sm text-muted-foreground'>
-                {t('expenses.detail.noItems')}
-              </p>
-            ) : (
-              <div className='space-y-4'>
-                {items.map((item) => (
-                  <div
-                    className='space-y-3 rounded-lg border border-border p-3'
-                    key={item.id}
-                  >
-                    <div className='flex flex-wrap items-center justify-between gap-2'>
-                      <p className='text-sm font-medium'>
-                        {item.categoryName} · {formatDate(item.expenseDate)} ·{' '}
-                        {formatAmount(item.amount)}
-                      </p>
-                      <span className='text-xs text-muted-foreground'>
-                        {t('expenses.files.count', {
-                          count: item.files.length,
-                        })}
-                      </span>
-                    </div>
-                    <ExpenseAttachments
-                      attach={(fileId) => attachItemFile(item.id, fileId)}
-                      canManage={capabilities.canManageFiles}
-                      detach={detachFile}
-                      files={item.files}
-                      onSaved={() => setMessage(t('expenses.files.saved'))}
-                    />
+          {showWorkingFiles ? (
+            <>
+              <Panel title={t('expenses.files.receiptsTitle')}>
+                {revisions.length > 0 ? (
+                  <p className='mb-3 text-sm text-muted-foreground'>
+                    {t('expenses.detail.workingHint')}
+                  </p>
+                ) : null}
+                {items.length === 0 ? (
+                  <p className='text-sm text-muted-foreground'>
+                    {t('expenses.detail.noItems')}
+                  </p>
+                ) : (
+                  <div className='space-y-4'>
+                    {items.map((item) => (
+                      <div
+                        className='space-y-3 rounded-lg border border-border p-3'
+                        key={item.id}
+                      >
+                        <div className='flex flex-wrap items-center justify-between gap-2'>
+                          <p className='text-sm font-medium'>
+                            {item.categoryName} · {formatDate(item.expenseDate)}{' '}
+                            · {formatAmount(item.amount)}
+                          </p>
+                          <span className='text-xs text-muted-foreground'>
+                            {t('expenses.files.count', {
+                              count: item.files.length,
+                            })}
+                          </span>
+                        </div>
+                        <ExpenseAttachments
+                          attach={(fileId) => attachItemFile(item.id, fileId)}
+                          canManage={capabilities.canManageFiles}
+                          detach={detachFile}
+                          files={item.files}
+                          readOnlyHint={t('expenses.files.reviewerHint')}
+                          onSaved={() => setMessage(t('expenses.files.saved'))}
+                        />
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
-            )}
-          </Panel>
+                )}
+              </Panel>
 
-          <Panel title={t('expenses.files.supplementaryTitle')}>
-            <p className='mb-3 text-sm text-muted-foreground'>
-              {t('expenses.files.supplementaryHint')}
-            </p>
-            <ExpenseAttachments
-              attach={attachReportFile}
-              canManage={capabilities.canManageFiles}
-              detach={detachFile}
-              files={reportFiles}
-              onSaved={() => setMessage(t('expenses.files.saved'))}
-            />
-          </Panel>
+              <Panel title={t('expenses.files.supplementaryTitle')}>
+                <p className='mb-3 text-sm text-muted-foreground'>
+                  {t('expenses.files.supplementaryHint')}
+                </p>
+                <ExpenseAttachments
+                  attach={attachReportFile}
+                  canManage={capabilities.canManageFiles}
+                  detach={detachFile}
+                  files={reportFiles}
+                  readOnlyHint={t('expenses.files.reviewerHint')}
+                  onSaved={() => setMessage(t('expenses.files.saved'))}
+                />
+              </Panel>
+            </>
+          ) : null}
+
+          <ExpenseRevisionHistory revisions={revisions} />
 
           <Panel title={t('expenses.detail.timeline')}>
             <ol className='space-y-3'>
@@ -375,6 +397,13 @@ export default function ExpenseDetailPage(): ReactElement {
                     <span className='text-muted-foreground'>
                       {action.actorName}
                     </span>
+                    {action.revision !== null ? (
+                      <span className='text-xs text-muted-foreground'>
+                        {t('expenses.detail.revisionTag', {
+                          revision: action.revision,
+                        })}
+                      </span>
+                    ) : null}
                     <span className='text-xs text-muted-foreground'>
                       {formatDateTime(action.createdAt)}
                     </span>

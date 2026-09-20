@@ -91,6 +91,7 @@ export function ExpenseAttachments({
   onSaved,
   onError,
   emptyText,
+  readOnlyHint,
   accept = DEFAULT_ACCEPT,
   maxFiles = DEFAULT_MAX_FILES,
   maxSize = DEFAULT_MAX_SIZE,
@@ -103,6 +104,8 @@ export function ExpenseAttachments({
   readonly onSaved?: () => void;
   readonly onError?: (message: string) => void;
   readonly emptyText?: string;
+  /** Shown instead of the reviewer hint when read-only, e.g. for frozen history. */
+  readonly readOnlyHint?: string;
   readonly accept?: readonly string[];
   readonly maxFiles?: number;
   readonly maxSize?: number;
@@ -418,7 +421,7 @@ export function ExpenseAttachments({
         </div>
       ) : (
         <p className='text-xs text-muted-foreground'>
-          {t('expenses.files.reviewerHint')}
+          {readOnlyHint ?? t('expenses.files.reviewerHint')}
         </p>
       )}
 

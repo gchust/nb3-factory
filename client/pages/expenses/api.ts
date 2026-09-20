@@ -54,7 +54,37 @@ export interface ExpenseActionView {
   readonly fromStatus: string | null;
   readonly toStatus: string | null;
   readonly comment: string | null;
+  /** The submission this action opened or decided, when it belongs to one. */
+  readonly revision: number | null;
   readonly createdAt: string;
+}
+
+export interface ExpenseRevisionItemView {
+  readonly id: string;
+  readonly itemId: string;
+  readonly categoryId: string;
+  readonly categoryName: string;
+  readonly expenseDate: string;
+  readonly amount: number;
+  readonly description: string | null;
+  readonly files: readonly ExpenseFileView[];
+}
+
+/** Frozen receipts and decision for one submission. */
+export interface ExpenseRevisionView {
+  readonly id: string;
+  readonly revision: number;
+  readonly status: ExpenseStatus;
+  readonly decision: 'approved' | 'rejected' | null;
+  readonly comment: string | null;
+  readonly decidedBy: string | null;
+  readonly decidedByName: string | null;
+  readonly submittedAt: string;
+  readonly decidedAt: string | null;
+  readonly items: readonly ExpenseRevisionItemView[];
+  /** Report-level supporting documents frozen with this submission. */
+  readonly files: readonly ExpenseFileView[];
+  readonly fileCount: number;
 }
 
 export interface ExpenseCapabilities {
@@ -73,6 +103,8 @@ export interface ExpenseReportDetail {
   /** Report-level supporting documents, separate from the per-item receipts. */
   readonly files: readonly ExpenseFileView[];
   readonly actions: readonly ExpenseActionView[];
+  /** Frozen snapshot per submission, oldest first. */
+  readonly revisions: readonly ExpenseRevisionView[];
   readonly payment: {
     readonly amount: number;
     readonly paidAt: string;

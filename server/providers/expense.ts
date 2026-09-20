@@ -108,7 +108,41 @@ export interface ExpenseActionView {
   readonly fromStatus: string | null;
   readonly toStatus: string | null;
   readonly comment: string | null;
+  /** The submission this action opened or decided, when it belongs to one. */
+  readonly revision: number | null;
   readonly createdAt: string;
+}
+
+export interface ExpenseRevisionItemView {
+  readonly id: string;
+  readonly itemId: string;
+  readonly categoryId: string;
+  readonly categoryName: string;
+  readonly expenseDate: string;
+  readonly amount: number;
+  readonly description: string | null;
+  readonly files: readonly ExpenseFileView[];
+}
+
+/**
+ * A frozen snapshot of one submission. The receipts and items here never move,
+ * so the decision recorded on this revision keeps referring to exactly the
+ * material that was reviewed even after the employee replaces them.
+ */
+export interface ExpenseRevisionView {
+  readonly id: string;
+  readonly revision: number;
+  readonly status: ExpenseStatus;
+  readonly decision: 'approved' | 'rejected' | null;
+  readonly comment: string | null;
+  readonly decidedBy: string | null;
+  readonly decidedByName: string | null;
+  readonly submittedAt: string;
+  readonly decidedAt: string | null;
+  readonly items: readonly ExpenseRevisionItemView[];
+  /** Report-level supporting documents frozen with this submission. */
+  readonly files: readonly ExpenseFileView[];
+  readonly fileCount: number;
 }
 
 export interface ExpenseCapabilities {
@@ -128,6 +162,12 @@ export interface ExpenseReportDetail {
   /** Report-level supporting documents (travel proof and the like), separate from item receipts. */
   readonly files: readonly ExpenseFileView[];
   readonly actions: readonly ExpenseActionView[];
+  /**
+   * Frozen snapshot per submission, oldest first. The latest revision mirrors
+   * the current material while the report is editable; earlier revisions keep
+   * the receipts a returned decision was based on.
+   */
+  readonly revisions: readonly ExpenseRevisionView[];
   readonly payment: {
     readonly amount: number;
     readonly paidAt: string;
@@ -311,6 +351,7 @@ type ActionRow = {
   fromStatus: string | null;
   toStatus: string | null;
   comment: string | null;
+  revision: number | null;
   createdAt: Date | string;
 };
 
@@ -350,6 +391,72 @@ type ReportFileRow = {
   kind: string;
   createdAt: Date | string;
 };
+
+type RevisionRow = {
+  id: string;
+  reportId: string;
+  revision: number;
+  status: string;
+  decision: string | null;
+  comment: string | null;
+  decidedBy: string | null;
+  decidedByName: string | null;
+  submittedAt: Date | string;
+  decidedAt: Date | string | null;
+  createdAt: Date | string;
+};
+
+type RevisionItemRow = {
+  id: string;
+  revisionId: string;
+  reportId: string;
+  itemId: string;
+  categoryId: string;
+  categoryName: string;
+  expenseDate: Date | string;
+  amount: number | string;
+  description: string | null;
+  createdAt: Date | string;
+};
+
+type RevisionFileRow = {
+  id: string;
+  revisionId: string;
+  reportId: string;
+  itemId: string | null;
+  fileId: string;
+  filename: string;
+  ext: string;
+  mimeType: string;
+  size: number | string;
+  kind: string;
+  createdAt: Date | string;
+};
+
+/** A file frozen into a revision. `itemId` is null for a report-level supplement. */
+interface RevisionSnapshotFile {
+  readonly itemId: string | null;
+  readonly fileId: string;
+  readonly filename: string;
+  readonly ext: string;
+  readonly mimeType: string;
+  readonly size: number;
+  readonly kind: string;
+}
+
+/** Data captured at submit time to make one revision immutable. */
+interface RevisionSnapshot {
+  readonly revision: number;
+  readonly items: readonly {
+    readonly itemId: string;
+    readonly categoryId: string;
+    readonly categoryName: string;
+    readonly expenseDate: Date;
+    readonly amount: number;
+    readonly description: string | null;
+  }[];
+  readonly files: readonly RevisionSnapshotFile[];
+}
 
 type FileLink =
   | {
@@ -573,6 +680,7 @@ class DefaultExpenseService implements ExpenseService {
           fromStatus: null,
           toStatus: 'draft',
           comment: null,
+          revision: null,
           createdAt: now,
         })
         .execute();
@@ -659,10 +767,10 @@ class DefaultExpenseService implements ExpenseService {
   public async deleteReport(actor: ExpenseActor, id: string): Promise<void> {
     const report = await this.loadReport(id);
     this.assertOwner(actor, report);
-    if (report.status !== 'draft' && report.status !== 'rejected') {
+    if (report.status !== 'draft') {
       throw new ExpenseError(
-        'INVALID_STATE',
-        'Only a draft or returned reimbursement can be deleted.',
+        'HISTORICAL_REPORT',
+        'A reimbursement that was submitted is kept for audit and cannot be deleted.',
         409,
       );
     }
@@ -726,7 +834,13 @@ class DefaultExpenseService implements ExpenseService {
         409,
       );
     }
-    await this.transition(actor, report, 'submitted', 'submit', null);
+    // Freeze the material being submitted before the status flips, so a
+    // resubmission after a return cannot rewrite what this revision reviewed.
+    const snapshot = await this.collectRevisionSnapshot(
+      id,
+      (await this.latestRevisionNumber(id)) + 1,
+    );
+    await this.transition(actor, report, 'submitted', 'submit', null, snapshot);
     return this.getReport(actor, id);
   }
 
@@ -750,6 +864,7 @@ class DefaultExpenseService implements ExpenseService {
       'approved',
       'approve',
       normalizeText(comment),
+      await this.openRevisionNumber(id),
     );
     return this.getReport(actor, id);
   }
@@ -776,7 +891,14 @@ class DefaultExpenseService implements ExpenseService {
         400,
       );
     }
-    await this.transition(actor, report, 'rejected', 'reject', reason);
+    await this.transition(
+      actor,
+      report,
+      'rejected',
+      'reject',
+      reason,
+      await this.openRevisionNumber(id),
+    );
     return this.getReport(actor, id);
   }
 
@@ -792,6 +914,7 @@ class DefaultExpenseService implements ExpenseService {
       );
     }
     const now = new Date();
+    const revision = await this.openRevisionNumber(id);
     await this.database.transaction(async (connection) => {
       const current = await connection.query
         .selectFrom<ReportRow>('expenseReports')
@@ -835,7 +958,7 @@ class DefaultExpenseService implements ExpenseService {
           409,
         );
       }
-      await connection.query
+      const updated = await connection.query
         .updateTable<ReportRow>('expenseReports')
         .set({
           status: 'paid',
@@ -844,7 +967,25 @@ class DefaultExpenseService implements ExpenseService {
           updatedAt: now,
         })
         .where('id', '=', id)
+        .where('status', '=', 'approved')
         .execute();
+      if (Number(updated.updatedCount ?? 1) === 0) {
+        // A concurrent request paid it between the read and the write; roll the
+        // whole transaction back so the ledger row is not posted either.
+        throw new ExpenseError(
+          'ALREADY_PAID',
+          'This reimbursement has already been paid.',
+          409,
+        );
+      }
+      if (revision !== null) {
+        await connection.query
+          .updateTable<RevisionRow>('expenseReportRevisions')
+          .set({ status: 'paid' })
+          .where('reportId', '=', id)
+          .where('revision', '=', revision)
+          .execute();
+      }
       await connection.query
         .insertInto<ActionRow>('expenseActions')
         .values({
@@ -856,6 +997,7 @@ class DefaultExpenseService implements ExpenseService {
           fromStatus: 'approved',
           toStatus: 'paid',
           comment: null,
+          revision,
           createdAt: now,
         })
         .execute();
@@ -961,8 +1103,18 @@ class DefaultExpenseService implements ExpenseService {
     if (!file) {
       throw new ExpenseError('NOT_FOUND', 'File not found.', 404);
     }
+    // A receipt that a past submission was decided on stays reachable through
+    // that revision, so its bytes and metadata are never deleted.
+    const frozen = await this.isFileInRevision(fileId);
     const link = await this.findFileLink(fileId);
     if (!link) {
+      if (frozen) {
+        throw new ExpenseError(
+          'HISTORICAL_FILE',
+          'A receipt kept in the submission history cannot be removed.',
+          409,
+        );
+      }
       // An upload that was never linked can only be removed by the employee who made it.
       if (file.ownerId !== actor.userId && actor.role !== 'admin') {
         throw new ExpenseError(
@@ -988,10 +1140,14 @@ class DefaultExpenseService implements ExpenseService {
           .where('id', '=', link.linkId)
           .execute();
       }
-      await connection.query
-        .deleteFrom<FileRow>('expenseFiles')
-        .where('id', '=', fileId)
-        .execute();
+      // Removing a frozen receipt only detaches it from the working draft; the
+      // revision snapshot and the bytes stay for the earlier decision.
+      if (!frozen) {
+        await connection.query
+          .deleteFrom<FileRow>('expenseFiles')
+          .where('id', '=', fileId)
+          .execute();
+      }
     });
   }
 
@@ -1003,13 +1159,18 @@ class DefaultExpenseService implements ExpenseService {
     if (!file) return false;
     if (actor.role === 'admin') return true;
     if (file.ownerId && file.ownerId === actor.userId) return true;
+    // A file keeps its access when it is only reachable through a frozen
+    // revision (its live link was replaced), because the report still governs it.
     const link = await this.findFileLink(fileId);
-    if (!link) return false;
+    const reportId = link
+      ? link.reportId
+      : await this.findRevisionReportId(fileId);
+    if (!reportId) return false;
     const report = await this.database
       .query()
       .selectFrom<ReportRow>('expenseReports')
       .selectAll()
-      .where('id', '=', link.reportId)
+      .where('id', '=', reportId)
       .executeTakeFirst<ReportRow>();
     if (!report) return false;
     return visibleTo(actor, report);
@@ -1125,6 +1286,7 @@ class DefaultExpenseService implements ExpenseService {
       report.id,
       items.map((item) => item.id),
     );
+    const revisions = await this.loadRevisions(report.id);
 
     const summary = toSummary(
       report,
@@ -1155,8 +1317,10 @@ class DefaultExpenseService implements ExpenseService {
         fromStatus: action.fromStatus,
         toStatus: action.toStatus,
         comment: action.comment,
+        revision: action.revision === null ? null : Number(action.revision),
         createdAt: isoDateTime(action.createdAt),
       })),
+      revisions,
       payment: payment
         ? {
             amount: roundMoney(Number(payment.amount)),
@@ -1277,11 +1441,20 @@ class DefaultExpenseService implements ExpenseService {
     toStatus: ExpenseStatus,
     action: ExpenseAction,
     comment: string | null,
+    revision: number | RevisionSnapshot | null = null,
   ): Promise<void> {
     const now = new Date();
     const isDecision = toStatus === 'approved' || toStatus === 'rejected';
+    const snapshot =
+      revision !== null && typeof revision === 'object' ? revision : null;
+    const revisionNumber =
+      revision === null
+        ? null
+        : typeof revision === 'number'
+          ? revision
+          : revision.revision;
     await this.database.transaction(async (connection) => {
-      await connection.query
+      const updated = await connection.query
         .updateTable<ReportRow>('expenseReports')
         .set({
           status: toStatus,
@@ -1298,6 +1471,33 @@ class DefaultExpenseService implements ExpenseService {
         .where('id', '=', report.id)
         .where('status', '=', report.status)
         .execute();
+      if (Number(updated.updatedCount ?? 1) === 0) {
+        // The status moved on between the read and the write: a duplicate
+        // submission or decision racing this one. Refuse instead of writing a
+        // second action, revision or payment.
+        throw new ExpenseError(
+          'CONFLICT',
+          'The reimbursement changed while this request was in flight. Reload and try again.',
+          409,
+        );
+      }
+      if (snapshot) {
+        await this.insertRevision(connection.query, report, snapshot, now);
+      } else if (isDecision && revisionNumber !== null) {
+        await connection.query
+          .updateTable<RevisionRow>('expenseReportRevisions')
+          .set({
+            status: toStatus,
+            decision: toStatus === 'approved' ? 'approved' : 'rejected',
+            comment,
+            decidedBy: actor.userId,
+            decidedByName: actor.name,
+            decidedAt: now,
+          })
+          .where('reportId', '=', report.id)
+          .where('revision', '=', revisionNumber)
+          .execute();
+      }
       await connection.query
         .insertInto<ActionRow>('expenseActions')
         .values({
@@ -1309,10 +1509,169 @@ class DefaultExpenseService implements ExpenseService {
           fromStatus: report.status,
           toStatus,
           comment,
+          revision: revisionNumber,
           createdAt: now,
         })
         .execute();
     });
+  }
+
+  /**
+   * Captures the items and files of the current draft as an immutable revision.
+   * Called before the status update so a failure leaves neither a revision nor a
+   * status change behind.
+   */
+  private async collectRevisionSnapshot(
+    reportId: string,
+    revision: number,
+  ): Promise<RevisionSnapshot> {
+    const query = this.database.query();
+    const items = await this.loadItems([reportId]);
+    const categories = await this.categoryMap();
+    const [itemLinks, reportLinks] = await Promise.all([
+      query
+        .selectFrom<ItemFileRow>('expenseItemFiles')
+        .selectAll()
+        .where('reportId', '=', reportId)
+        .execute<ItemFileRow>(),
+      query
+        .selectFrom<ReportFileRow>('expenseReportFiles')
+        .selectAll()
+        .where('reportId', '=', reportId)
+        .execute<ReportFileRow>(),
+    ]);
+    const fileIds = [
+      ...new Set([...itemLinks, ...reportLinks].map((row) => row.fileId)),
+    ];
+    const fileRows =
+      fileIds.length > 0
+        ? await query
+            .selectFrom<FileRow>('expenseFiles')
+            .selectAll()
+            .where('id', 'in', fileIds)
+            .execute<FileRow>()
+        : [];
+    const fileMap = new Map(fileRows.map((row) => [row.id, row]));
+    const files: RevisionSnapshotFile[] = [];
+    for (const link of itemLinks) {
+      const row = fileMap.get(link.fileId);
+      if (!row) continue;
+      files.push({
+        itemId: link.itemId,
+        fileId: row.id,
+        filename: row.filename,
+        ext: row.ext,
+        mimeType: row.mimeType,
+        size: Number(row.size),
+        kind: 'receipt',
+      });
+    }
+    for (const link of reportLinks) {
+      const row = fileMap.get(link.fileId);
+      if (!row) continue;
+      files.push({
+        itemId: null,
+        fileId: row.id,
+        filename: row.filename,
+        ext: row.ext,
+        mimeType: row.mimeType,
+        size: Number(row.size),
+        kind: link.kind || 'supplement',
+      });
+    }
+    return {
+      revision,
+      items: items.map((item) => ({
+        itemId: item.id,
+        categoryId: item.categoryId,
+        categoryName: categories.get(item.categoryId)?.name ?? item.categoryId,
+        expenseDate: toDate(item.expenseDate),
+        amount: Number(item.amount),
+        description: item.description,
+      })),
+      files,
+    };
+  }
+
+  private async insertRevision(
+    query: QueryAdapter,
+    report: ReportRow,
+    snapshot: RevisionSnapshot,
+    now: Date,
+  ): Promise<void> {
+    const revisionId = crypto.randomUUID();
+    await query
+      .insertInto<RevisionRow>('expenseReportRevisions')
+      .values({
+        id: revisionId,
+        reportId: report.id,
+        revision: snapshot.revision,
+        status: 'submitted',
+        decision: null,
+        comment: null,
+        decidedBy: null,
+        decidedByName: null,
+        submittedAt: now,
+        decidedAt: null,
+        createdAt: now,
+      })
+      .execute();
+    for (const item of snapshot.items) {
+      await query
+        .insertInto<RevisionItemRow>('expenseRevisionItems')
+        .values({
+          id: crypto.randomUUID(),
+          revisionId,
+          reportId: report.id,
+          itemId: item.itemId,
+          categoryId: item.categoryId,
+          categoryName: item.categoryName,
+          expenseDate: item.expenseDate,
+          amount: item.amount,
+          description: item.description,
+          createdAt: now,
+        })
+        .execute();
+    }
+    for (const file of snapshot.files) {
+      await query
+        .insertInto<RevisionFileRow>('expenseRevisionFiles')
+        .values({
+          id: crypto.randomUUID(),
+          revisionId,
+          reportId: report.id,
+          itemId: file.itemId,
+          fileId: file.fileId,
+          filename: file.filename,
+          ext: file.ext,
+          mimeType: file.mimeType,
+          size: file.size,
+          kind: file.kind,
+          createdAt: now,
+        })
+        .execute();
+    }
+  }
+
+  private async latestRevisionNumber(reportId: string): Promise<number> {
+    const row = await this.database
+      .query()
+      .selectFrom<RevisionRow>('expenseReportRevisions')
+      .select('revision')
+      .where('reportId', '=', reportId)
+      .orderBy('revision', 'desc')
+      .limit(1)
+      .executeTakeFirst<{ revision: number }>();
+    return row ? Number(row.revision) : 0;
+  }
+
+  /**
+   * The revision a decision applies to: the newest submission. Returns null
+   * when the report never reached a revision, which keeps legacy rows working.
+   */
+  private async openRevisionNumber(reportId: string): Promise<number | null> {
+    const latest = await this.latestRevisionNumber(reportId);
+    return latest > 0 ? latest : null;
   }
 
   private async insertItems(
@@ -1444,6 +1803,124 @@ class DefaultExpenseService implements ExpenseService {
     return { filesByItem, reportFiles };
   }
 
+  /**
+   * Loads every submission snapshot for a report, oldest first. Items and files
+   * are read from the frozen revision tables, never from the live links, so a
+   * later edit cannot change what an earlier revision shows.
+   */
+  private async loadRevisions(
+    reportId: string,
+  ): Promise<readonly ExpenseRevisionView[]> {
+    const query = this.database.query();
+    const revisions = await query
+      .selectFrom<RevisionRow>('expenseReportRevisions')
+      .selectAll()
+      .where('reportId', '=', reportId)
+      .orderBy('revision', 'asc')
+      .execute<RevisionRow>();
+    if (revisions.length === 0) return [];
+    const [itemRows, fileRows] = await Promise.all([
+      query
+        .selectFrom<RevisionItemRow>('expenseRevisionItems')
+        .selectAll()
+        .where('reportId', '=', reportId)
+        .orderBy('expenseDate', 'asc')
+        .execute<RevisionItemRow>(),
+      query
+        .selectFrom<RevisionFileRow>('expenseRevisionFiles')
+        .selectAll()
+        .where('reportId', '=', reportId)
+        .execute<RevisionFileRow>(),
+    ]);
+    const itemsByRevision = new Map<string, RevisionItemRow[]>();
+    for (const row of itemRows) {
+      const list = itemsByRevision.get(row.revisionId) ?? [];
+      list.push(row);
+      itemsByRevision.set(row.revisionId, list);
+    }
+    const filesByRevision = new Map<string, RevisionFileRow[]>();
+    for (const row of fileRows) {
+      const list = filesByRevision.get(row.revisionId) ?? [];
+      list.push(row);
+      filesByRevision.set(row.revisionId, list);
+    }
+    return revisions.map((revision) => {
+      const files = filesByRevision.get(revision.id) ?? [];
+      const items = (itemsByRevision.get(revision.id) ?? []).map((item) => ({
+        id: item.id,
+        itemId: item.itemId,
+        categoryId: item.categoryId,
+        categoryName: item.categoryName,
+        expenseDate: isoDate(item.expenseDate),
+        amount: roundMoney(Number(item.amount)),
+        description: item.description,
+        files: files
+          .filter((file) => file.itemId === item.itemId)
+          .map((file) => this.toSnapshotFileView(file)),
+      }));
+      const reportFiles = files
+        .filter((file) => file.itemId === null)
+        .map((file) => this.toSnapshotFileView(file));
+      return {
+        id: revision.id,
+        revision: Number(revision.revision),
+        status: revision.status as ExpenseStatus,
+        decision:
+          revision.decision === 'approved' || revision.decision === 'rejected'
+            ? revision.decision
+            : null,
+        comment: revision.comment,
+        decidedBy: revision.decidedBy,
+        decidedByName: revision.decidedByName,
+        submittedAt: isoDateTime(revision.submittedAt),
+        decidedAt: isoDateTimeOrNull(revision.decidedAt),
+        items,
+        files: reportFiles,
+        fileCount:
+          items.reduce((sum, item) => sum + item.files.length, 0) +
+          reportFiles.length,
+      };
+    });
+  }
+
+  private toSnapshotFileView(row: RevisionFileRow): ExpenseFileView {
+    return {
+      ...this.toFileView({
+        id: row.fileId,
+        disk: '',
+        key: '',
+        filename: row.filename,
+        ext: row.ext,
+        mimeType: row.mimeType,
+        size: row.size,
+        ownerId: null,
+        createdAt: row.createdAt,
+        updatedAt: row.createdAt,
+      }),
+      createdAt: isoDateTime(row.createdAt),
+    };
+  }
+
+  private async findRevisionReportId(fileId: string): Promise<string | null> {
+    const row = await this.database
+      .query()
+      .selectFrom<RevisionFileRow>('expenseRevisionFiles')
+      .select('reportId')
+      .where('fileId', '=', fileId)
+      .executeTakeFirst<{ reportId: string }>();
+    return row ? row.reportId : null;
+  }
+
+  private async isFileInRevision(fileId: string): Promise<boolean> {
+    const row = await this.database
+      .query()
+      .selectFrom<RevisionFileRow>('expenseRevisionFiles')
+      .select('id')
+      .where('fileId', '=', fileId)
+      .executeTakeFirst<{ id: string }>();
+    return row !== undefined;
+  }
+
   private toFileView(row: FileRow): ExpenseFileView {
     const base = this.publicBasePath.replace(/\/$/, '');
     const extension = row.ext ? `.${encodeURIComponent(row.ext)}` : '';
@@ -1518,14 +1995,15 @@ class DefaultExpenseService implements ExpenseService {
   }
 
   private assertFileManager(actor: ExpenseActor, report: ReportRow): void {
-    if (actor.role === 'admin') return;
-    if (report.employeeId !== actor.employeeId) {
+    if (report.employeeId !== actor.employeeId && actor.role !== 'admin') {
       throw new ExpenseError(
         'FORBIDDEN',
         'You can only change files on your own reimbursement.',
         403,
       );
     }
+    // Read-only once a decision is reached, for the administrator too: the
+    // material a manager approved and finance paid must not change afterwards.
     if (report.status !== 'draft' && report.status !== 'rejected') {
       throw new ExpenseError(
         'INVALID_STATE',
@@ -1550,14 +2028,10 @@ class DefaultExpenseService implements ExpenseService {
       .deleteFrom<ItemFileRow>('expenseItemFiles')
       .where('itemId', 'in', itemIds)
       .execute();
-    await query
-      .deleteFrom<FileRow>('expenseFiles')
-      .where(
-        'id',
-        'in',
-        links.map((link) => link.fileId),
-      )
-      .execute();
+    await this.deleteUnreferencedFiles(
+      query,
+      links.map((link) => link.fileId),
+    );
   }
 
   private async removeReportFiles(
@@ -1574,13 +2048,33 @@ class DefaultExpenseService implements ExpenseService {
       .deleteFrom<ReportFileRow>('expenseReportFiles')
       .where('reportId', '=', reportId)
       .execute();
+    await this.deleteUnreferencedFiles(
+      query,
+      links.map((link) => link.fileId),
+    );
+  }
+
+  /**
+   * Deletes file metadata only for files no revision references. A file that was
+   * part of a submitted revision is kept so the earlier decision stays visible.
+   */
+  private async deleteUnreferencedFiles(
+    query: QueryAdapter,
+    fileIds: readonly string[],
+  ): Promise<void> {
+    const unique = [...new Set(fileIds)];
+    if (unique.length === 0) return;
+    const referenced = await query
+      .selectFrom<RevisionFileRow>('expenseRevisionFiles')
+      .select('fileId')
+      .where('fileId', 'in', unique)
+      .execute<{ fileId: string }>();
+    const keep = new Set(referenced.map((row) => row.fileId));
+    const toDelete = unique.filter((id) => !keep.has(id));
+    if (toDelete.length === 0) return;
     await query
       .deleteFrom<FileRow>('expenseFiles')
-      .where(
-        'id',
-        'in',
-        links.map((link) => link.fileId),
-      )
+      .where('id', 'in', toDelete)
       .execute();
   }
 
@@ -1657,13 +2151,21 @@ class DefaultExpenseService implements ExpenseService {
     const prefix = `EXP-${now.getFullYear()}${String(
       now.getMonth() + 1,
     ).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`;
-    const existing = await this.database
+    // Derive the next sequence from the largest number in use rather than from a
+    // row count: deleting a draft would otherwise let a new report reuse the
+    // number of one that is still there.
+    const rows = await this.database
       .query()
       .selectFrom<ReportRow>('expenseReports')
-      .select('id')
+      .select('number')
       .where('number', 'like', `${prefix}-%`)
-      .pluck<string>('id');
-    return `${prefix}-${String(existing.length + 1).padStart(4, '0')}`;
+      .execute<{ number: string }>();
+    let highest = 0;
+    for (const row of rows) {
+      const parsed = Number.parseInt(row.number.slice(prefix.length + 1), 10);
+      if (Number.isFinite(parsed) && parsed > highest) highest = parsed;
+    }
+    return `${prefix}-${String(highest + 1).padStart(4, '0')}`;
   }
 
   private assertOwner(actor: ExpenseActor, report: ReportRow): void {
@@ -1753,7 +2255,9 @@ function capabilitiesFor(
     (actor.role === 'admin' || report.departmentId === actor.departmentId);
   return {
     canEdit: canManage && isEditable,
-    canDelete: canManage && isEditable,
+    // A submitted reimbursement is kept as audit history, so only a draft that
+    // never reached a decision can be deleted.
+    canDelete: canManage && report.status === 'draft',
     canSubmit: canManage && isEditable,
     canApprove: canReview,
     canReject: canReview,
@@ -1891,6 +2395,10 @@ function isoDateTimeOrNull(value: Date | string | null): string | null {
 
 function isoDate(value: Date | string): string {
   return isoDateTime(value).slice(0, 10);
+}
+
+function toDate(value: Date | string): Date {
+  return value instanceof Date ? value : new Date(value);
 }
 
 function endOfDay(value: string): Date {

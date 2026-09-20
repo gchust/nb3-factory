@@ -153,14 +153,18 @@ export default function ExpensesPage(): ReactElement {
               >
                 {t('expenses.actions.submit')}
               </Button>
-              <Button
-                disabled={busyId === report.id}
-                onClick={() => setDeleteTarget(report)}
-                size='sm'
-                variant='destructive'
-              >
-                {t('expenses.actions.delete')}
-              </Button>
+              {/* A submitted reimbursement is kept for audit, so only a draft
+                  that never reached a decision can be deleted. */}
+              {report.status === 'draft' ? (
+                <Button
+                  disabled={busyId === report.id}
+                  onClick={() => setDeleteTarget(report)}
+                  size='sm'
+                  variant='destructive'
+                >
+                  {t('expenses.actions.delete')}
+                </Button>
+              ) : null}
             </>
           );
         }}

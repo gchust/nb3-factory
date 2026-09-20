@@ -268,6 +268,18 @@ const enUS = {
       rejectReason: 'Reason',
       payDescription:
         'Record the payment of {{amount}} for this reimbursement.',
+      submissions: 'Submission history',
+      submissionsHint:
+        'Every submission keeps the receipts and the decision exactly as they were at the time, even after a return and resubmit.',
+      revisionLabel: 'Submission #{{revision}}',
+      revisionTag: 'Submission #{{revision}}',
+      returnedBy: 'Returned by {{name}}',
+      approvedBy: 'Approved by {{name}}',
+      frozenHint:
+        'Frozen record of this submission: you can preview or download, but not change it.',
+      noRevisionFiles: 'No attachments in this submission.',
+      workingHint:
+        'These are the current attachments, which you can still change. Submissions already decided are kept below.',
     },
     files: {
       receiptsTitle: 'Receipts',
@@ -319,11 +331,17 @@ const enUS = {
     errors: {
       ALREADY_PAID: 'This reimbursement has already been paid.',
       CATEGORY_REQUIRED: 'Choose an expense category.',
+      CONFLICT:
+        'The reimbursement changed while this was in flight. Reload and try again.',
       EMPLOYEE_NOT_FOUND:
         'Your employee profile could not be created. Contact an administrator.',
       EMPTY_REPORT: 'Add at least one expense item before submitting.',
       FILE_ALREADY_LINKED: 'This file is already attached.',
       FORBIDDEN: 'You do not have permission to do that.',
+      HISTORICAL_FILE:
+        'A receipt kept in the submission history cannot be removed.',
+      HISTORICAL_REPORT:
+        'A reimbursement that was submitted is kept for audit and cannot be deleted.',
       INVALID_AMOUNT: 'The amount must be greater than zero.',
       INVALID_BODY: 'The request data is not valid.',
       INVALID_DATE: 'Enter a valid date.',
