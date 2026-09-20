@@ -80,6 +80,7 @@ function overlayFixture(root) {
     'factory-workflow\n',
   );
   write(control, '.npmrc', '@nocobase:registry=https://npm.nocobase.ai/\n');
+  write(control, '.agents/skills/custom/SKILL.md', 'custom guidance');
   write(control, 'client/old-business.ts', 'must not survive refresh');
   write(
     control,
@@ -148,7 +149,7 @@ run(
   return { control, fresh };
 }
 
-test('refresh keeps current controls and latest application guidance, and leaves the generated ignore rules alone', () => {
+test('refresh keeps current controls and latest application guidance, and retains agent guidance', () => {
   const root = mkdtempSync(path.join(os.tmpdir(), 'nb3-template-overlay-'));
   try {
     const { control, fresh } = overlayFixture(root);
@@ -191,10 +192,15 @@ test('refresh keeps current controls and latest application guidance, and leaves
     );
     assert.equal(metadata.templateVersion, '2.0.0');
     assert.equal(metadata.controlSha, sha);
-    // The overlay adds no ignore rules of its own: what the generator wrote is the whole file.
+    // Preserve generated ignore rules and explicitly include agent guidance.
+    assert.ok(
+      readFileSync(path.join(fresh, '.gitignore'), 'utf8').startsWith(
+        generatedGitignore,
+      ),
+    );
     assert.equal(
-      readFileSync(path.join(fresh, '.gitignore'), 'utf8'),
-      generatedGitignore,
+      readFileSync(path.join(fresh, '.agents/skills/custom/SKILL.md'), 'utf8'),
+      'custom guidance',
     );
     // Pruning a superseded `database` directory is the one rule the template's script cannot express, so the
     // overlay injects the call into the walk and reports it as a compatibility fix.
@@ -216,8 +222,13 @@ test('refresh keeps current controls and latest application guidance, and leaves
     const files = git(fresh, 'ls-files');
     // A runtime secret the generated rules do not cover is refused by the packaging guard rather than ignored
     // here; that guard has its own test below.
-    assert.doesNotMatch(files, /config\.yml/);
+    assert.ok(files.split('\n').includes('config.yml'));
+    assert.equal(
+      readFileSync(path.join(fresh, 'config.yml'), 'utf8'),
+      'auth: fixture-secret\n',
+    );
     assert.match(files, /client\/fresh\.ts/);
+    assert.match(files, /\.agents\/skills\/custom\/SKILL.md/);
   } finally {
     rmSync(root, { recursive: true, force: true });
   }
@@ -480,6 +491,8 @@ test('packaging allows GitHub issue settings but rejects staged runtime files', 
       '.github/ISSUE_TEMPLATE/config.yml',
       'blank_issues_enabled: false',
     );
+    write(root, 'config.yml', 'auth: fixture-secret');
+    write(root, '.agents/skills/test.md', 'agent guidance');
     init(root, 'template');
     git(root, 'add', '.');
     const run = () =>
@@ -489,14 +502,12 @@ test('packaging allows GitHub issue settings but rejects staged runtime files', 
       });
     assert.equal(run().status, 0);
     for (const file of [
-      'config.yml',
       'nested/config.yml',
       '.env',
       'nested/.env.local',
       'node_modules/a/index.js',
       'dist/server.js',
       'storage/private.txt',
-      '.agents/skills/test.md',
     ]) {
       write(root, file, 'runtime fixture');
       git(root, 'add', '-f', file);
@@ -527,7 +538,61 @@ test('refresh workflow has its own queue and isolates generated code from write 
   assert.match(workflow, /pnpm create @nocobase\/app@latest nb3-factory/);
   assert.match(workflow, /--template-tag=latest/);
   assert.match(workflow, /scripts\/verify.sh/);
+  assert.doesNotMatch(workflow, /rm -f config\.yml/);
   assert.match(publisher, /contents: write/);
   assert.doesNotMatch(publisher, /pnpm |npm |secrets\./);
   assert.match(publisher, /!inputs.dry_run/);
+});
+
+test('beta.38 test adaptation retains behavior assertions and is repeatable', async () => {
+  const { adaptTemplateTests } = await import('../adapt-template-tests.mjs');
+  const root = mkdtempSync(path.join(os.tmpdir(), 'nb3-test-adapter-'));
+  try {
+    write(
+      root,
+      'tests/logic/inspect-server.test.ts',
+      "expect(inspection.app.packageName).toBe('@nocobase/app-template-default');\n",
+    );
+    write(
+      root,
+      'tests/logic/tailwind-sources.test.ts',
+      'expect(file).not.toContain(`node_modules${path.sep}@nocobase${path.sep}`);',
+    );
+    write(root, 'vitest.config.ts', 'test: {\n    root,\n}');
+    const app = {
+      name: 'nb3-factory',
+      nocobase: { defaultTemplateVersion: '1.0.0-beta.38' },
+    };
+    adaptTemplateTests(root, app);
+    assert.equal(
+      readFileSync(
+        path.join(root, 'tests/logic/inspect-server.test.ts'),
+        'utf8',
+      ),
+      "expect(inspection.app.packageName).toBe('nb3-factory');\n",
+    );
+    assert.equal(
+      readFileSync(
+        path.join(root, 'tests/logic/tailwind-sources.test.ts'),
+        'utf8',
+      ),
+      'expect(file).toBe(realpathSync(file));',
+    );
+    const config = readFileSync(path.join(root, 'vitest.config.ts'), 'utf8');
+    assert.ok(config.includes('app-plugin-authorization\\/dist\\/client'));
+    adaptTemplateTests(root, app);
+    assert.equal(
+      readFileSync(path.join(root, 'vitest.config.ts'), 'utf8'),
+      config,
+    );
+    assert.deepEqual(
+      adaptTemplateTests(root, {
+        ...app,
+        nocobase: { defaultTemplateVersion: '1.0.0-beta.39' },
+      }),
+      [],
+    );
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
 });

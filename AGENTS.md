@@ -13,6 +13,8 @@ This repository is also driven by the `gchust/nb3-factory` Issue workflow. Durin
 
 The publisher rejects changes to protected control files even if these instructions are ignored.
 
+Factory refresh versions the generated root `config.yml`, including `auth.secret`, by the repository owner's explicit choice. Refresh uses a new generated configuration; verification keeps its own configuration and database outside the application.
+
 <!-- factory:boundary:end -->
 
 This is a NocoBase 3 application. Do not apply globally installed NocoBase 2 Skills. You are building the application itself — its pages, its API, its database tables. Everything under this directory is application-owned source code that you may edit directly.

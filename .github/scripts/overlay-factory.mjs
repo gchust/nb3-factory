@@ -8,6 +8,7 @@ import {
 } from 'node:fs';
 import path from 'node:path';
 import { applyBeta34Compatibility } from './template-beta34-compat.mjs';
+import { adaptTemplateTests } from './adapt-template-tests.mjs';
 
 const [controlArg, workspaceArg, controlSha] = process.argv.slice(2);
 if (!controlArg || !workspaceArg || !/^[a-f0-9]{40}$/.test(controlSha ?? '')) {
@@ -72,11 +73,19 @@ cpSync(path.join(control, '.npmrc'), path.join(workspace, '.npmrc'));
 writeFileSync(path.join(workspace, 'README.MD'), readme);
 writeFileSync(path.join(workspace, 'AGENTS.md'), agents);
 writeFileSync(path.join(workspace, 'eslint.config.js'), factoryEslint);
-// `.gitignore` is left exactly as the template generator wrote it. The factory used to append a runtime-files block
-// here that listed `/config.yml`, `/node_modules/`, `/dist/`, `/storage/`, `/.agents/` and `*.log` a second time —
-// the generated file already ignores all of them — and the entries it added on its own, `/.env`, `/.env.*` and
-// `/.nb3/`, are covered elsewhere: `/.nb3/` is created by nothing in this repository, and a staged `.env` is refused
-// by the "Runtime files were staged" guard in refresh-template.yml. One list of ignore rules, not two.
+// Preserve repository-owned agent guidance; plugin sync subsequently refreshes installed skills.
+if (existsSync(path.join(control, '.agents'))) {
+  cpSync(path.join(control, '.agents'), path.join(workspace, '.agents'), {
+    recursive: true,
+  });
+}
+// Generated skills and root configuration belong to the refresh baseline.
+const ignorePath = path.join(workspace, '.gitignore');
+const ignore = read(workspace, '.gitignore');
+writeFileSync(
+  ignorePath,
+  `${ignore.trimEnd()}\n\n# Keep agent guidance and generated configuration in refreshed baselines.\n!/.agents/\n!/.agents/**\n!/config.yml\n`,
+);
 app.scripts = {
   ...app.scripts,
   'factory:test': factory.scripts['factory:test'],
@@ -87,7 +96,7 @@ app.devDependencies = {
     app.devDependencies?.['@playwright/test'] ||
     factory.devDependencies['@playwright/test'],
 };
-const compatibilityFixes = [];
+const compatibilityFixes = adaptTemplateTests(workspace, app);
 compatibilityFixes.push(...applyBeta34Compatibility(workspace, app));
 // Published beta.15 plugins import these two undeclared client dependencies.
 // Scope fixes to this template; future baselines keep their dependency choices.

@@ -77,12 +77,10 @@ jobs:
       - name: Install and lock the new application dependencies
         run: |
           cd "$RUNNER_TEMP/template-generation/nb3-factory"
+          pnpm add @nocobase/db-sqlite@latest
           pnpm install --no-frozen-lockfile
           pnpm plugin:skills:sync
-          pnpm exec prettier --write package.json README.MD AGENTS.md eslint.config.js scripts/build.mjs factory-template.json
-          if [[ "$(node -p "require('./package.json').nocobase.defaultTemplateVersion")" == "1.0.0-beta.34" ]]; then
-            pnpm exec prettier --write vitest.config.ts tests/logic/{account-permissions.test.tsx,dev-routes-production-build.test.ts,config.test.ts,inspect-client.test.ts,inspect-server.test.ts,tailwind-sources.test.ts,user-roles.test.ts}
-          fi
+          pnpm exec prettier --write package.json README.MD AGENTS.md eslint.config.js scripts/build.mjs factory-template.json tests/logic vitest.config.ts
 
       - name: Install Chinese browser fonts
         run: bash control/.github/scripts/install-browser-fonts.sh
@@ -90,7 +88,7 @@ jobs:
       - name: Verify factory, application, clean database, and browser login
         run: |
           set -o pipefail
-          node --test control/.github/scripts/tests/*.test.mjs
+          node --test --test-concurrency=1 control/.github/scripts/tests/*.test.mjs
           node control/.github/scripts/create-runtime-config.mjs \
             --output "$RUNNER_TEMP/template-verification.yml" \
             --database "$RUNNER_TEMP/template-verification/database.sqlite"
@@ -103,7 +101,6 @@ jobs:
       - name: Package only the verified baseline as one new root commit
         run: |
           cd "$RUNNER_TEMP/template-generation/nb3-factory"
-          rm -f config.yml
           git init --initial-branch=template
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -111,8 +108,8 @@ jobs:
           node --input-type=module <<'NODE'
           import { execFileSync } from 'node:child_process';
           const files = execFileSync('git', ['diff', '--cached', '--name-only', '-z'], { encoding: 'utf8' }).split('\0');
-          // GitHub's issue-template settings are trusted controls, not runtime secrets.
-          const runtimeFiles = files.filter(file => file !== '.github/ISSUE_TEMPLATE/config.yml' && /(^|\/)(config\.yml|\.env($|\.)|node_modules\/|dist\/|storage\/|\.agents\/)/.test(file));
+          // The owner explicitly versions the generated root config and GitHub issue settings.
+          const runtimeFiles = files.filter(file => !['config.yml', '.github/ISSUE_TEMPLATE/config.yml'].includes(file) && /(^|\/)(config\.yml|\.env($|\.)|node_modules\/|dist\/|storage\/)/.test(file));
           if (runtimeFiles.length) {
             throw new Error(`Runtime files were staged; refusing to package them: ${runtimeFiles.join(', ')}`);
           }

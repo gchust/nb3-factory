@@ -118,7 +118,9 @@ pnpm create @nocobase/app@latest nb3-factory --no-install --template=default --t
 
 Action 在全新目录生成应用、安装并锁定依赖，运行工厂测试、应用检查与构建、全新 SQLite Migration/Seed 和登录后的浏览器冒烟。全部通过后，创建一个新的根提交，并以 `--force-with-lease` 强制替换 `develop`；失败时不会更新分支。
 
-刷新保留 `.github/`、`.npmrc`、工厂使用说明、AGENTS 中的工厂边界，以及 `factory:test` 和浏览器测试依赖。工厂脚本的 Node.js ESLint 配置追加到新模板配置中。应用源码、NocoBase 依赖、开发指引和 Skills 都来自新模板，不从旧基线复制。生成的 `config.yml`、认证密钥、数据库、依赖目录和构建产物不会进入提交。`factory-template.json` 记录实际模板版本、刷新时间和来源控制提交。
+刷新保留 `.github/`、`.npmrc`、`.agents/`（已有自定义指引保留，插件 Skills 按新依赖重新同步）、工厂使用说明、AGENTS 中的工厂边界，以及 `factory:test` 和浏览器测试依赖。工厂脚本的 Node.js ESLint 配置追加到新模板配置中。应用源码、NocoBase 依赖、开发指引和 Skills 都来自新模板，不从旧基线复制。按仓库所有者要求，生成的根目录 `config.yml`（包括其中的 `auth.secret`）会进入提交；每次 refresh 使用本次创建器生成的新配置，不复制旧配置。验证使用独立的外部配置和数据库，数据库、依赖目录和构建产物不会进入提交。`factory-template.json` 记录实际模板版本、刷新时间和来源控制提交。
+
+验证显式安装 SQLite 适配器 `@nocobase/db-sqlite`，与验证配置的 dialect 一致。对 `beta.38` 发布包中的 monorepo 测试假设做定向兼容：检查生成应用的包名、使用公开包入口、校验真实路径，并按工厂策略保留 `.agents`；不跳过测试。兼容变更记录在 `factory-template.json`。
 
 已知的 `1.0.0-beta.15` 模板漏声明通知 Provider 使用的 `sonner` 和 Workflow 插件使用的 `@xyflow/react`，生产构建也漏复制 NocoBase 包源配置。只对这一模板版本补入缺失依赖、将 `.npmrc` 复制到构建目录，并在元数据的 `compatibilityFixes` 中记录；上游已有声明时保留其版本。其他版本或构建错误会明确失败，不会自动引入旧应用依赖。
 
@@ -209,7 +211,7 @@ APP_SERVER_PORT=13399 PROXY_TARGET_URL=http://127.0.0.1:13000/main pnpm dev
 - **Where the application is served.** `APP_BASE_PATH` is the public mount path, `/main` by default, so the development URL looks like `http://127.0.0.1:13000/main/`. `APP_SERVER_PORT` and `APP_SERVER_HOST` change what the server binds to.
 - **Anything a feature you enable requires** — mail delivery, IM webhooks, storage. Every section is already here, commented out where it is optional.
 
-`config.yml` is gitignored because it holds your `auth.secret`. Deploy it through your secret management rather than committing it.
+`config.yml`, including its generated `auth.secret`, is versioned in this factory by the repository owner's explicit choice.
 
 To run against a production build instead:
 
@@ -254,7 +256,7 @@ database/
 
 tests/                   Unit and integration tests
 e2e/                     Browser tests needing a real server
-config.yml              Your configuration, generated at setup; gitignored
+config.yml               Your configuration, generated at setup; versioned
 config.example.yml       Documented configuration template
 ```
 
@@ -458,7 +460,7 @@ Rebuild with a matching `--target` and `--node-version`. ABI 115 is Node 20, 127
 
 ## Configuration
 
-`server/config/` and `client/config/` contain editable TypeScript defaults. `config.yml` holds environment-specific overrides, written for you at generation time and yours to edit from there. It is gitignored because it carries your `auth.secret`; deploy it through your secret management rather than committing it. It is generated from `config.example.yml`, which is kept beside it as the reference for every option.
+`server/config/` and `client/config/` contain editable TypeScript defaults. `config.yml` holds environment-specific overrides, written for you at generation time and yours to edit from there. This factory versions it, including its generated `auth.secret`, by the repository owner's explicit choice. It is generated from `config.example.yml`, which is kept beside it as the reference for every option.
 
 Two settings decide where the application is reachable:
 
