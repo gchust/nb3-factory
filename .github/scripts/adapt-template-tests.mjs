@@ -32,12 +32,7 @@ export function adaptTemplateTests(workspace, app) {
   patch(
     'inspect-client.test.ts',
     'inspection.settings.slice(0, 10).map(({ id }) => id)',
-    'inspection.settings.slice(0, 16).map(({ id }) => id)',
-  );
-  patch(
-    'inspect-client.test.ts',
-    "      'ai',\n      'permission-sets',",
-    "      'ai',\n      'aiSkills',\n      'aiTools',\n      'aiConversations',\n      'aiLLMServices',\n      'aiMCPServices',\n      'aiSettings',\n      'permission-sets',",
+    "inspection.settings.map(({ id }) => id).filter((id) => !['aiSkills', 'aiTools', 'aiConversations', 'aiLLMServices', 'aiMCPServices', 'aiSettings'].includes(id)).slice(0, 10)",
   );
   patch('config.test.ts', 'app-template-default\\/server', 'server');
   // Inline the installed provider so Vitest can apply the existing authentication mock to its imports.
