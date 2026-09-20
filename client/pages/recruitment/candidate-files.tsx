@@ -11,6 +11,7 @@ import {
   clientFileRepositoryManagerToken,
   type FileRecord,
 } from '@/extensions/nocobase-file-component-ui';
+import { assetUrl } from '@/lib/utils';
 
 import {
   attachCandidateFiles,
@@ -55,6 +56,33 @@ const UPLOAD_TARGETS: readonly {
   { category: 'resume', labelKey: 'recruitment.files.uploadResume' },
   { category: 'portfolio', labelKey: 'recruitment.files.uploadPortfolio' },
   { category: 'offer', labelKey: 'recruitment.files.uploadOffer' },
+];
+
+/**
+ * Fictitious sample files shipped with this application, offered as downloads
+ * so a reviewer can immediately try preview, download and upload without
+ * bringing their own files. Every file contains made-up content only.
+ */
+const SAMPLE_FILES: readonly {
+  readonly path: string;
+  readonly labelKey: string;
+}[] = [
+  {
+    path: 'recruitment-demo/resume-sample.pdf',
+    labelKey: 'recruitment.files.sampleResume',
+  },
+  {
+    path: 'recruitment-demo/portfolio-image.png',
+    labelKey: 'recruitment.files.sampleImage',
+  },
+  {
+    path: 'recruitment-demo/portfolio-text.txt',
+    labelKey: 'recruitment.files.sampleText',
+  },
+  {
+    path: 'recruitment-demo/offer-material.txt',
+    labelKey: 'recruitment.files.sampleOffer',
+  },
 ];
 
 export interface CandidateFilesSectionProps {
@@ -352,6 +380,27 @@ export function CandidateFilesSection({
               </div>
             ))}
           </div>
+          <div className='space-y-2 rounded-md border border-border bg-muted/30 p-3'>
+            <p className='text-xs font-medium'>
+              {t('recruitment.files.sampleTitle')}
+            </p>
+            <p className='text-xs text-muted-foreground'>
+              {t('recruitment.files.sampleHint')}
+            </p>
+            <ul className='flex flex-wrap gap-x-4 gap-y-1 text-xs'>
+              {SAMPLE_FILES.map((sample) => (
+                <li key={sample.path}>
+                  <a
+                    className='text-primary underline underline-offset-2'
+                    download
+                    href={assetUrl(sample.path)}
+                  >
+                    {t(sample.labelKey)}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
         </div>
       ) : null}
     </div>
@@ -457,6 +506,12 @@ export interface CandidateAttachmentListProps {
   readonly onError: (messageKey: string) => void;
   /** Optional note shown above the resume, e.g. the version an interview used. */
   readonly resumeNote?: string;
+  /**
+   * The resume version this interview recorded as reference. When present that
+   * exact version is shown first, so an older interview keeps opening the old
+   * version even after the candidate uploaded a newer resume.
+   */
+  readonly resumeFileId?: string | null;
 }
 
 /**
@@ -470,6 +525,7 @@ export function CandidateAttachmentList({
   files,
   onError,
   resumeNote,
+  resumeFileId,
 }: CandidateAttachmentListProps): ReactElement {
   const { t } = useTranslation();
   const [preview, setPreview] = useState<PreviewState>();
@@ -490,7 +546,12 @@ export function CandidateAttachmentList({
 
   const resumes = files.filter((file) => file.category === 'resume');
   const activeResume = resumes.find((file) => !file.superseded) ?? resumes[0];
-  const resumeHistory = resumes.filter((file) => file.id !== activeResume?.id);
+  // Prefer the version this interview actually referenced over the current one.
+  const referenced = resumeFileId
+    ? resumes.find((file) => file.id === resumeFileId)
+    : undefined;
+  const primaryResume = referenced ?? activeResume;
+  const resumeHistory = resumes.filter((file) => file.id !== primaryResume?.id);
   const portfolio = files.filter((file) => file.category === 'portfolio');
 
   return (
@@ -512,16 +573,16 @@ export function CandidateAttachmentList({
         hint={t('recruitment.files.resumeHint')}
         title={t('recruitment.files.resume')}
       >
-        {activeResume ? (
+        {primaryResume ? (
           <FileRow
             badge={t('recruitment.files.version', {
-              version: activeResume.version ?? 1,
+              version: primaryResume.version ?? 1,
             })}
             busy={false}
             canRemove={false}
-            file={activeResume}
-            onDownload={() => onDownload(activeResume)}
-            onPreview={() => openPreview(resumes, activeResume)}
+            file={primaryResume}
+            onDownload={() => onDownload(primaryResume)}
+            onPreview={() => openPreview(resumes, primaryResume)}
             onRemove={() => undefined}
           />
         ) : (
@@ -532,7 +593,11 @@ export function CandidateAttachmentList({
         {resumeHistory.length ? (
           <div className='space-y-2 pt-2'>
             <p className='text-xs text-muted-foreground'>
-              {t('recruitment.files.resumeHistory')}
+              {t(
+                referenced
+                  ? 'recruitment.files.otherResumeVersions'
+                  : 'recruitment.files.resumeHistory',
+              )}
             </p>
             {resumeHistory.map((file) => (
               <FileRow

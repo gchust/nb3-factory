@@ -342,4 +342,42 @@ describe('recruitment service', () => {
       }),
     ).rejects.toMatchObject({ code: 'VALIDATION', status: 400 });
   });
+
+  it('creates one candidate when the same form is submitted twice', async () => {
+    const position = (await context.service.listPositions(li()))[0];
+    const payload = {
+      name: '重复提交候选人',
+      positionId: position.id,
+      phone: '13700000009',
+      requestId: 'form-key-1',
+    };
+
+    // The second submission carries the same key, so it returns the first
+    // candidate instead of inserting a duplicate row.
+    const first = await context.service.createCandidate(li(), payload);
+    const second = await context.service.createCandidate(li(), payload);
+    expect(second.id).toBe(first.id);
+    const all = await context.service.listCandidates(hr());
+    expect(
+      all.filter((candidate) => candidate.name === '重复提交候选人'),
+    ).toHaveLength(1);
+
+    // A new form has a new key and legitimately creates a new candidate.
+    const third = await context.service.createCandidate(li(), {
+      ...payload,
+      requestId: 'form-key-2',
+    });
+    expect(third.id).not.toBe(first.id);
+
+    // Without a key the previous behaviour is unchanged: two records.
+    const fourth = await context.service.createCandidate(li(), {
+      name: '无键候选人',
+      positionId: position.id,
+    });
+    const fifth = await context.service.createCandidate(li(), {
+      name: '无键候选人',
+      positionId: position.id,
+    });
+    expect(fourth.id).not.toBe(fifth.id);
+  });
 });

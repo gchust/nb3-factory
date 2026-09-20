@@ -1,7 +1,7 @@
 import { useApiClient } from '@nocobase/app-client';
 import { useTranslation } from '@nocobase/i18n/client';
 import { Eye, Pencil, Plus } from 'lucide-react';
-import { useState, type ReactElement } from 'react';
+import { useRef, useState, type ReactElement } from 'react';
 
 import { PageContainer } from '@/components/page-container';
 import { PageHeader } from '@/components/page-header';
@@ -27,7 +27,12 @@ import {
 } from './api.js';
 import { CandidateDetailDialog } from './candidate-detail.js';
 import { formatDateTime } from './format.js';
-import { useAsyncData, useRecruitmentMe } from './hooks.js';
+import {
+  useAsyncData,
+  useRecruitmentMe,
+  useSubmitGuard,
+  newRequestId,
+} from './hooks.js';
 import {
   ErrorBanner,
   Field,
@@ -88,7 +93,8 @@ export default function RecruitmentCandidatesPage(): ReactElement {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Candidate | undefined>();
   const [form, setForm] = useState<CandidateForm>(EMPTY_FORM);
-  const [saving, setSaving] = useState(false);
+  const { saving, submit: runSubmit, reset: resetSubmit } = useSubmitGuard();
+  const requestIdRef = useRef('');
   const [error, setError] = useState<string>();
   const [notice, setNotice] = useState<string>();
   const [detailId, setDetailId] = useState<string>();
@@ -103,6 +109,9 @@ export default function RecruitmentCandidatesPage(): ReactElement {
       ...EMPTY_FORM,
       recruiterUsername: isHr ? '' : (me?.username ?? ''),
     });
+    // A fresh key: this is a new candidate, not a retry of a previous form.
+    requestIdRef.current = newRequestId();
+    resetSubmit();
     setError(undefined);
     setDialogOpen(true);
   }
@@ -118,37 +127,41 @@ export default function RecruitmentCandidatesPage(): ReactElement {
       source: candidate.source ?? '',
       note: candidate.note ?? '',
     });
+    resetSubmit();
     setError(undefined);
     setDialogOpen(true);
   }
 
   async function submit(): Promise<void> {
-    setSaving(true);
     setError(undefined);
-    const payload = {
-      name: form.name.trim(),
-      phone: form.phone.trim(),
-      email: form.email.trim(),
-      positionId: form.positionId,
-      source: form.source.trim(),
-      note: form.note.trim(),
-      ...(isHr ? { recruiterUsername: form.recruiterUsername } : {}),
-    };
-    try {
-      if (editing) {
-        await updateCandidate(api, editing.id, payload);
-        setNotice(t('recruitment.notices.candidateUpdated'));
-      } else {
-        await createCandidate(api, payload);
-        setNotice(t('recruitment.notices.candidateCreated'));
-      }
-      setDialogOpen(false);
-      candidates.reload();
-    } catch (cause: unknown) {
-      setError(errorMessageKey(cause));
-    } finally {
-      setSaving(false);
-    }
+    await runSubmit(
+      async () => {
+        const payload = {
+          name: form.name.trim(),
+          phone: form.phone.trim(),
+          email: form.email.trim(),
+          positionId: form.positionId,
+          source: form.source.trim(),
+          note: form.note.trim(),
+          ...(isHr ? { recruiterUsername: form.recruiterUsername } : {}),
+        };
+        if (editing) {
+          await updateCandidate(api, editing.id, payload);
+          setNotice(t('recruitment.notices.candidateUpdated'));
+        } else {
+          // The key travels with the payload so a resend is recognized as the
+          // same submission rather than a second candidate.
+          await createCandidate(api, {
+            ...payload,
+            requestId: requestIdRef.current,
+          });
+          setNotice(t('recruitment.notices.candidateCreated'));
+        }
+        setDialogOpen(false);
+        candidates.reload();
+      },
+      (cause: unknown) => setError(errorMessageKey(cause)),
+    );
   }
 
   return (

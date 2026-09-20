@@ -277,6 +277,7 @@ const enUS = {
       emptyPortfolio: 'No portfolio work uploaded yet.',
       emptyOffer: 'No offer material uploaded yet.',
       resumeHistory: 'Previous resume versions',
+      otherResumeVersions: 'Other resume versions',
       version: 'v{{version}}',
       add: 'Add files',
       limits: 'Up to {{total}} files at a time, each at most {{size}} MB.',
@@ -296,6 +297,13 @@ const enUS = {
         tooMany: 'You can select at most 5 files at a time.',
         type: 'This file type is not allowed.',
       },
+      sampleTitle: 'Sample files (fictitious, for trial only)',
+      sampleHint:
+        'Download one, then upload it with the control above to try preview and download.',
+      sampleResume: 'Resume sample (2-page PDF)',
+      sampleImage: 'Portfolio sample (PNG image)',
+      sampleText: 'Text work sample (TXT)',
+      sampleOffer: 'Offer material sample (TXT)',
     },
     interviews: {
       title: 'Interviews',
@@ -318,6 +326,7 @@ const enUS = {
       statuses: {
         scheduled: 'Scheduled',
         completed: 'Completed',
+        cancelled: 'Cancelled',
       },
       score: 'Score',
       evaluation: 'Evaluation',
@@ -346,6 +355,14 @@ const enUS = {
       candidateFiles: 'Resume and portfolio',
       candidateFilesHint:
         'Preparation material for this interview. Offer materials are not shown here.',
+      cancel: 'Cancel interview',
+      cancelTitle: 'Cancel interview',
+      cancelConfirm:
+        'After cancelling, this interviewer can no longer view the candidate resume or portfolio, and the interview cannot be restored. Cancel it?',
+      cancelYes: 'Cancel interview',
+      cancelNo: 'Keep interview',
+      cancelledBy: 'Cancelled by {{name}}',
+      cancelledEmpty: 'This interview has been cancelled.',
     },
     onboarding: {
       title: 'Onboarding',
@@ -398,6 +415,10 @@ const enUS = {
       invalidTransition: 'That stage change is not allowed.',
       hireRequiresHr: 'Only the HR manager can confirm a hire.',
       conflict: 'This operation conflicts with the current state.',
+      fileInUse:
+        'This file is referenced by an interview record and must be kept; it cannot be removed.',
+      interviewNotCancellable:
+        'Only a scheduled interview can be cancelled; a completed or already cancelled interview cannot.',
       unknown: 'Something went wrong. Please try again.',
     },
     notices: {
@@ -410,6 +431,7 @@ const enUS = {
       rejected: 'Candidate rejected.',
       interviewCreated: 'Interview scheduled.',
       interviewCompleted: 'Evaluation recorded.',
+      interviewCancelled: 'Interview cancelled.',
       onboardingUpdated: 'Onboarding task updated.',
       resumeSaved: 'Resume saved.',
       portfolioAdded: 'Portfolio work added.',

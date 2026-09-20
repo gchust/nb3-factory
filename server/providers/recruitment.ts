@@ -1,4 +1,5 @@
 import type { AppAuthorization } from '@nocobase/app-plugin-authorization';
+import { createHash } from 'node:crypto';
 import type {
   DatabaseManager,
   Expression,
@@ -58,6 +59,12 @@ export const MAX_CANDIDATE_FILES_PER_ATTACH = 5;
 /** Each attached file may be at most 5 MB; the upload control checks first. */
 export const MAX_CANDIDATE_FILE_SIZE = 5 * 1024 * 1024;
 
+/**
+ * A cancelled interview keeps its row but no longer grants the interviewer
+ * access to the candidate's files, and no longer counts as an assignment.
+ */
+export const INTERVIEW_STATUS_CANCELLED = 'cancelled';
+
 export interface Actor {
   readonly userId: string;
   readonly username: string;
@@ -72,7 +79,11 @@ export type RecruitmentErrorCode =
   | 'VALIDATION'
   | 'INVALID_TRANSITION'
   | 'HIRE_REQUIRES_HR'
-  | 'CONFLICT';
+  | 'CONFLICT'
+  /** A file is referenced by an interview record and must be kept. */
+  | 'FILE_IN_USE'
+  /** Only a scheduled interview can be cancelled, or it is already cancelled. */
+  | 'INTERVIEW_NOT_CANCELLABLE';
 
 export class RecruitmentError extends Error {
   public readonly code: RecruitmentErrorCode;
@@ -136,6 +147,8 @@ export interface InterviewDto {
   readonly score: number | null;
   readonly evaluation: string | null;
   readonly completedAt: string | null;
+  readonly cancelledAt: string | null;
+  readonly cancelledBy: string | null;
   /** Resume version that was current when the interview was scheduled. */
   readonly resumeFileId: string | null;
   readonly resumeVersion: number | null;
@@ -462,14 +475,9 @@ export class RecruitmentService {
     }
     if (actor.role === 'interviewer') {
       // An interviewer may open a candidate they interview, and receives the
-      // limited candidate view plus only their own interviews.
-      const assigned = await this.query
-        .selectFrom('recruitmentInterviews')
-        .select('id')
-        .where('candidateId', '=', id)
-        .where('interviewerUsername', '=', actor.username)
-        .executeTakeFirst();
-      if (!assigned) {
+      // limited candidate view plus only their own interviews. A cancelled
+      // interview no longer counts, so cancelling revokes this access.
+      if (!(await this.hasActiveInterviewAssignment(id, actor.username))) {
         throw new RecruitmentError('FORBIDDEN', 'Not allowed.', 403);
       }
     } else {
@@ -525,36 +533,85 @@ export class RecruitmentService {
         ? actor.name
         : await this.nameForUsername(recruiterUsername);
     const now = new Date();
-    const id = crypto.randomUUID();
-    await this.query
-      .insertInto('recruitmentCandidates')
-      .values({
+    // A client-generated `requestId` makes creation idempotent: retrying the
+    // same form (a double click, or a resend after a lost response) maps to the
+    // same primary key, so the primary-key constraint turns the second insert
+    // into a lookup instead of a duplicate row. Without the key the id stays
+    // random, exactly as before.
+    const requestId = optionalString(input.requestId, 64);
+    const id = requestId
+      ? `cand_${createHash('sha256')
+          .update(`${recruiterUsername}:${requestId}`)
+          .digest('hex')
+          .slice(0, 32)}`
+      : crypto.randomUUID();
+    if (requestId) {
+      const existing = await this.findIdempotentCandidate(
         id,
-        name,
-        phone: optionalString(input.phone, 32) ?? null,
-        email: optionalString(input.email, 128) ?? null,
-        positionId,
         recruiterUsername,
-        recruiterName,
-        stage: 'pending',
-        source: optionalString(input.source, 32) ?? null,
-        note: optionalString(input.note, 2000) ?? null,
-        hireConfirmedBy: null,
-        hireConfirmedAt: null,
-        offeredAt: null,
-        onboardedAt: null,
-        rejectedBy: null,
-        rejectionReason: null,
-        createdAt: now,
-        updatedAt: now,
-      })
-      .execute();
+      );
+      if (existing) return mapCandidate(existing, await this.positionMap());
+    }
+    const values = {
+      id,
+      name,
+      phone: optionalString(input.phone, 32) ?? null,
+      email: optionalString(input.email, 128) ?? null,
+      positionId,
+      recruiterUsername,
+      recruiterName,
+      stage: 'pending',
+      source: optionalString(input.source, 32) ?? null,
+      note: optionalString(input.note, 2000) ?? null,
+      hireConfirmedBy: null,
+      hireConfirmedAt: null,
+      offeredAt: null,
+      onboardedAt: null,
+      rejectedBy: null,
+      rejectionReason: null,
+      createdAt: now,
+      updatedAt: now,
+    };
+    try {
+      await this.query
+        .insertInto('recruitmentCandidates')
+        .values(values)
+        .execute();
+    } catch (cause: unknown) {
+      // A concurrent retry won the insert; return its row rather than failing.
+      if (requestId) {
+        const existing = await this.findIdempotentCandidate(
+          id,
+          recruiterUsername,
+        );
+        if (existing) return mapCandidate(existing, await this.positionMap());
+      }
+      throw cause;
+    }
     const row = await this.query
       .selectFrom('recruitmentCandidates')
       .selectAll()
       .where('id', '=', id)
       .executeTakeFirstOrThrow();
     return mapCandidate(row, await this.positionMap());
+  }
+
+  /**
+   * The candidate a repeated `requestId` already created, if any.
+   *
+   * Scoped to the recruiter so a key can only read back that recruiter's own
+   * record; a key belonging to someone else never matches.
+   */
+  private async findIdempotentCandidate(
+    id: string,
+    recruiterUsername: string,
+  ): Promise<Row | undefined> {
+    return this.query
+      .selectFrom('recruitmentCandidates')
+      .selectAll()
+      .where('id', '=', id)
+      .where('recruiterUsername', '=', recruiterUsername)
+      .executeTakeFirst();
   }
 
   async updateCandidate(
@@ -782,10 +839,16 @@ export class RecruitmentService {
       .execute();
     const positions = await this.positionMap();
     const candidates = await this.candidateNameMap();
-    const duplicate = existingRows.find((row) => {
-      const iso = toIso(row.scheduledAt);
-      return iso !== null && new Date(iso).getTime() === scheduledAt.getTime();
-    });
+    const duplicate = existingRows
+      // A cancelled interview is history, not an existing assignment: the same
+      // slot may be scheduled again and produces a new record.
+      .filter((row) => str(row.status) !== INTERVIEW_STATUS_CANCELLED)
+      .find((row) => {
+        const iso = toIso(row.scheduledAt);
+        return (
+          iso !== null && new Date(iso).getTime() === scheduledAt.getTime()
+        );
+      });
     if (duplicate) {
       // Scheduling the same interview twice returns the original record.
       return mapInterview(duplicate, candidates, positions);
@@ -831,6 +894,14 @@ export class RecruitmentService {
     this.assertRole(actor, ['hr', 'recruiter']);
     const interview = await this.requireInterview(id);
     await this.assertInterviewCandidateAccess(actor, interview);
+    // A cancelled interview is history: it cannot be moved or re-evaluated.
+    if (str(interview.status) === INTERVIEW_STATUS_CANCELLED) {
+      throw new RecruitmentError(
+        'INTERVIEW_NOT_CANCELLABLE',
+        'This interview has been cancelled.',
+        409,
+      );
+    }
     const patch: Record<string, unknown> = { updatedAt: new Date() };
     if (input.scheduledAt !== undefined) {
       patch.scheduledAt = requiredDate(input.scheduledAt, 'scheduledAt');
@@ -875,6 +946,59 @@ export class RecruitmentService {
     );
   }
 
+  /**
+   * Cancel a scheduled interview.
+   *
+   * The row is kept and its status becomes `cancelled`; nothing is deleted, so
+   * the scheduling history stays auditable. Because every interviewer check
+   * ignores cancelled rows, the cancelled interviewer immediately loses access
+   * to the candidate's resume, portfolio and content URLs, while any other
+   * interviewer scheduled for the same candidate is unaffected.
+   *
+   * Idempotent: cancelling an already-cancelled interview returns it unchanged.
+   */
+  async cancelInterview(actor: Actor, id: string): Promise<InterviewDto> {
+    this.assertRole(actor, ['hr', 'recruiter']);
+    const interview = await this.requireInterview(id);
+    await this.assertInterviewCandidateAccess(actor, interview);
+    if (str(interview.status) === INTERVIEW_STATUS_CANCELLED) {
+      return mapInterview(
+        interview,
+        await this.candidateNameMap(),
+        await this.positionMap(),
+      );
+    }
+    if (str(interview.status) !== 'scheduled') {
+      throw new RecruitmentError(
+        'INTERVIEW_NOT_CANCELLABLE',
+        'Only a scheduled interview can be cancelled.',
+        409,
+      );
+    }
+    const now = new Date();
+    await this.query
+      .updateTable('recruitmentInterviews')
+      .set({
+        status: INTERVIEW_STATUS_CANCELLED,
+        cancelledBy: actor.username,
+        cancelledAt: now,
+        updatedAt: now,
+      })
+      .where('id', '=', id)
+      .where('status', '=', 'scheduled')
+      .execute();
+    const row = await this.query
+      .selectFrom('recruitmentInterviews')
+      .selectAll()
+      .where('id', '=', id)
+      .executeTakeFirstOrThrow();
+    return mapInterview(
+      row,
+      await this.candidateNameMap(),
+      await this.positionMap(),
+    );
+  }
+
   async completeInterview(
     actor: Actor,
     id: string,
@@ -882,6 +1006,13 @@ export class RecruitmentService {
   ): Promise<InterviewDto> {
     this.assertKnown(actor);
     const interview = await this.requireInterview(id);
+    if (str(interview.status) === INTERVIEW_STATUS_CANCELLED) {
+      throw new RecruitmentError(
+        'INTERVIEW_NOT_CANCELLABLE',
+        'This interview has been cancelled.',
+        409,
+      );
+    }
     const assigned =
       str(interview.interviewerUsername) === actor.username ||
       actor.role === 'hr';
@@ -1004,13 +1135,9 @@ export class RecruitmentService {
     this.assertKnown(actor);
     const candidate = await this.requireCandidate(candidateId);
     if (actor.role === 'interviewer') {
-      const assigned = await this.query
-        .selectFrom('recruitmentInterviews')
-        .select('id')
-        .where('candidateId', '=', candidateId)
-        .where('interviewerUsername', '=', actor.username)
-        .executeTakeFirst();
-      if (!assigned) {
+      if (
+        !(await this.hasActiveInterviewAssignment(candidateId, actor.username))
+      ) {
         throw new RecruitmentError('FORBIDDEN', 'Not allowed.', 403);
       }
       const files = await this.filesForCandidate(candidateId);
@@ -1164,6 +1291,20 @@ export class RecruitmentService {
     if (!file || str(file.candidateId) !== candidateId) {
       throw new RecruitmentError('NOT_FOUND', 'File not found.', 404);
     }
+    // A file an interview recorded as the resume it used is history: deleting
+    // it would leave that interview pointing at nothing, so it must be kept.
+    const referenced = await this.query
+      .selectFrom('recruitmentInterviews')
+      .select('id')
+      .where('resumeFileId', '=', fileId)
+      .executeTakeFirst();
+    if (referenced) {
+      throw new RecruitmentError(
+        'FILE_IN_USE',
+        'This file is referenced by an interview record and must be kept.',
+        409,
+      );
+    }
     await this.query
       .deleteFrom('recruitmentCandidateFiles')
       .where('id', '=', fileId)
@@ -1211,13 +1352,13 @@ export class RecruitmentService {
       if (category === 'offer') {
         throw new RecruitmentError('FORBIDDEN', 'Not allowed.', 403);
       }
-      const assigned = await this.query
-        .selectFrom('recruitmentInterviews')
-        .select('id')
-        .where('candidateId', '=', candidateId)
-        .where('interviewerUsername', '=', actor.username)
-        .executeTakeFirst();
-      if (assigned) return;
+      // Unconditional, per-request check: a cancelled interview no longer
+      // grants access, so a bookmarked content URL stops working at once.
+      if (
+        await this.hasActiveInterviewAssignment(candidateId, actor.username)
+      ) {
+        return;
+      }
     }
     throw new RecruitmentError('FORBIDDEN', 'Not allowed.', 403);
   }
@@ -1275,8 +1416,12 @@ export class RecruitmentService {
       .selectFrom('recruitmentInterviews')
       .selectAll()
       .execute();
-    const scopedInterviews = interviewRows.filter((row) =>
-      candidateIds.has(str(row.candidateId)),
+    const scopedInterviews = interviewRows.filter(
+      (row) =>
+        candidateIds.has(str(row.candidateId)) &&
+        // A cancelled interview is no longer an interview; counting it would
+        // misreport the pipeline. It stays visible in the calendar instead.
+        str(row.status) !== INTERVIEW_STATUS_CANCELLED,
     );
 
     const byStage: Record<string, number> = {};
@@ -1402,6 +1547,26 @@ export class RecruitmentService {
     this.assertCandidateAccess(actor, candidate);
   }
 
+  /**
+   * Whether an interviewer still has a live assignment for a candidate.
+   *
+   * Cancelled interviews are excluded, which is what makes cancellation revoke
+   * access. The check runs on every request rather than being cached anywhere.
+   */
+  private async hasActiveInterviewAssignment(
+    candidateId: string,
+    username: string,
+  ): Promise<boolean> {
+    const assigned = await this.query
+      .selectFrom('recruitmentInterviews')
+      .select('id')
+      .where('candidateId', '=', candidateId)
+      .where('interviewerUsername', '=', username)
+      .where('status', '!=', INTERVIEW_STATUS_CANCELLED)
+      .executeTakeFirst();
+    return Boolean(assigned);
+  }
+
   private candidateFilter(
     actor: Actor,
     filters: CandidateFilters,
@@ -1418,7 +1583,8 @@ export class RecruitmentService {
           eb
             .selectFrom('recruitmentInterviews')
             .select('candidateId')
-            .where('interviewerUsername', '=', actor.username),
+            .where('interviewerUsername', '=', actor.username)
+            .where('status', '!=', INTERVIEW_STATUS_CANCELLED),
         ),
       );
     }
@@ -1454,7 +1620,10 @@ export class RecruitmentService {
   ): ((eb: ExpressionBuilder) => Expression<SqlBool>) | undefined {
     const parts: FilterInput[] = [];
     if (actor.role === 'interviewer') {
+      // A cancelled interview is removed from the interviewer's calendar as
+      // well as from their access: they can no longer open its detail.
       parts.push((eb) => eb('interviewerUsername', '=', actor.username));
+      parts.push((eb) => eb('status', '!=', INTERVIEW_STATUS_CANCELLED));
     }
     if (filters.interviewerUsername && actor.role === 'hr') {
       const interviewerUsername = filters.interviewerUsername;
@@ -1548,7 +1717,9 @@ export class RecruitmentService {
       .selectAll()
       .where('candidateId', '=', candidateId);
     if (actor.role === 'interviewer') {
-      builder = builder.where('interviewerUsername', '=', actor.username);
+      builder = builder
+        .where('interviewerUsername', '=', actor.username)
+        .where('status', '!=', INTERVIEW_STATUS_CANCELLED);
     }
     const rows = await builder.orderBy('scheduledAt', 'asc').execute();
     const candidates = await this.candidateNameMap();
@@ -1836,6 +2007,8 @@ function mapInterview(
         ? null
         : str(row.evaluation),
     completedAt: toIso(row.completedAt),
+    cancelledAt: toIso(row.cancelledAt),
+    cancelledBy: toNullableString(row.cancelledBy),
     resumeFileId: toNullableString(row.resumeFileId),
     resumeVersion:
       row.resumeVersion === null || row.resumeVersion === undefined

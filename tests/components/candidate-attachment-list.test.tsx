@@ -69,4 +69,55 @@ describe('CandidateAttachmentList', () => {
       }),
     ).toBeInTheDocument();
   });
+
+  it('opens the referenced resume version first, even after a newer one exists', () => {
+    const files = [
+      candidateFile('resume-2', 'resume-v2.pdf', 'resume', { version: 2 }),
+      candidateFile('resume-1', 'resume-v1.pdf', 'resume', {
+        version: 1,
+        superseded: true,
+      }),
+    ];
+
+    const { container } = render(
+      <CandidateAttachmentList
+        files={files}
+        onError={() => undefined}
+        resumeFileId='resume-1'
+        resumeNote='Resume referenced: v1'
+      />,
+    );
+
+    // The old interview shows v1 as its primary resume, so the newer v2 moves
+    // into the "other versions" list instead of being highlighted.
+    const text = container.textContent ?? '';
+    expect(text.indexOf('resume-v1.pdf')).toBeLessThan(
+      text.indexOf('resume-v2.pdf'),
+    );
+    expect(
+      screen.getByText('recruitment.files.otherResumeVersions'),
+    ).toBeInTheDocument();
+  });
+
+  it('falls back to the active resume when no version was referenced', () => {
+    const files = [
+      candidateFile('resume-2', 'resume-v2.pdf', 'resume', { version: 2 }),
+      candidateFile('resume-1', 'resume-v1.pdf', 'resume', {
+        version: 1,
+        superseded: true,
+      }),
+    ];
+
+    const { container } = render(
+      <CandidateAttachmentList files={files} onError={() => undefined} />,
+    );
+
+    const text = container.textContent ?? '';
+    expect(text.indexOf('resume-v2.pdf')).toBeLessThan(
+      text.indexOf('resume-v1.pdf'),
+    );
+    expect(
+      screen.getByText('recruitment.files.resumeHistory'),
+    ).toBeInTheDocument();
+  });
 });

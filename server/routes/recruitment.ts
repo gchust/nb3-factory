@@ -158,6 +158,11 @@ export function createRecruitmentRoutes(
       ),
     ),
   );
+  routes.post('/interviews/:id/cancel', (context) =>
+    run(context, (actor) =>
+      service.cancelInterview(actor, context.req.param('id')),
+    ),
+  );
 
   routes.get('/onboarding', (context) =>
     run(context, (actor) => service.listOnboarding(actor)),

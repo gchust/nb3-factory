@@ -17,6 +17,7 @@ import {
 import { Input } from '@/components/ui/input';
 
 import {
+  cancelInterview,
   completeInterview,
   createInterview,
   errorMessageKey,
@@ -105,6 +106,7 @@ export default function RecruitmentInterviewsPage(): ReactElement {
   const [evalResult, setEvalResult] = useState('pass');
   const [evalText, setEvalText] = useState('');
   const [evalOpen, setEvalOpen] = useState(false);
+  const [cancelOpen, setCancelOpen] = useState(false);
 
   const interviewers = (staff.data ?? []).filter(
     (option) => option.role === 'interviewer' || option.role === 'hr',
@@ -203,6 +205,23 @@ export default function RecruitmentInterviewsPage(): ReactElement {
     }
   }
 
+  async function onCancelInterview(): Promise<void> {
+    if (!active) return;
+    setBusy(true);
+    setError(undefined);
+    try {
+      const updated = await cancelInterview(api, active.id);
+      setActive(updated);
+      setCancelOpen(false);
+      setNotice(t('recruitment.notices.interviewCancelled'));
+      interviews.reload();
+    } catch (cause: unknown) {
+      setError(errorMessageKey(cause));
+    } finally {
+      setBusy(false);
+    }
+  }
+
   function openInterview(interview: Interview): void {
     setActive(interview);
     setRescheduleAt(toDateTimeInput(interview.scheduledAt));
@@ -211,6 +230,7 @@ export default function RecruitmentInterviewsPage(): ReactElement {
     setEvalResult(interview.result === 'fail' ? 'fail' : 'pass');
     setEvalText(interview.evaluation ?? '');
     setEvalOpen(false);
+    setCancelOpen(false);
     setError(undefined);
   }
 
@@ -218,6 +238,8 @@ export default function RecruitmentInterviewsPage(): ReactElement {
     active &&
     active.status === 'scheduled' &&
     (isHr || active.interviewerUsername === me?.username);
+  const canCancelActive =
+    canSchedule && active !== undefined && active.status === 'scheduled';
 
   return (
     <PageContainer className='mx-auto max-w-6xl'>
@@ -501,6 +523,19 @@ export default function RecruitmentInterviewsPage(): ReactElement {
           </DialogHeader>
           {active ? (
             <div className='space-y-4'>
+              {active.status === 'cancelled' ? (
+                <div
+                  className='rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive'
+                  role='status'
+                >
+                  {t('recruitment.interviews.cancelledEmpty')}
+                  {active.cancelledBy
+                    ? ` ${t('recruitment.interviews.cancelledBy', {
+                        name: active.cancelledBy,
+                      })}`
+                    : ''}
+                </div>
+              ) : null}
               <dl className='grid grid-cols-2 gap-3 text-sm'>
                 <Info label={t('recruitment.interviews.interviewer')}>
                   {active.interviewerName ?? active.interviewerUsername}
@@ -544,6 +579,7 @@ export default function RecruitmentInterviewsPage(): ReactElement {
                   <CandidateAttachmentList
                     files={candidateDetail.data?.files ?? []}
                     onError={(key) => setError(key)}
+                    resumeFileId={active.resumeFileId}
                     resumeNote={
                       active.resumeVersion !== null
                         ? t('recruitment.interviews.resumeVersion', {
@@ -624,7 +660,7 @@ export default function RecruitmentInterviewsPage(): ReactElement {
                 </section>
               ) : null}
 
-              {canSchedule ? (
+              {canSchedule && active.status === 'scheduled' ? (
                 <section className='space-y-2 rounded-lg border border-border p-3'>
                   <h3 className='text-sm font-medium'>
                     {t('recruitment.interviews.edit')}
@@ -667,6 +703,25 @@ export default function RecruitmentInterviewsPage(): ReactElement {
                 </section>
               ) : null}
 
+              {canCancelActive ? (
+                <section className='space-y-2 rounded-lg border border-destructive/40 p-3'>
+                  <h3 className='text-sm font-medium'>
+                    {t('recruitment.interviews.cancelTitle')}
+                  </h3>
+                  <p className='text-xs text-muted-foreground'>
+                    {t('recruitment.interviews.cancelConfirm')}
+                  </p>
+                  <Button
+                    disabled={busy}
+                    onClick={() => setCancelOpen(true)}
+                    type='button'
+                    variant='destructive'
+                  >
+                    {t('recruitment.interviews.cancel')}
+                  </Button>
+                </section>
+              ) : null}
+
               <ErrorBanner messageKey={error} />
             </div>
           ) : null}
@@ -677,6 +732,35 @@ export default function RecruitmentInterviewsPage(): ReactElement {
               variant='outline'
             >
               {t('recruitment.common.close')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Cancelling is destructive and irreversible, so it asks first. */}
+      <Dialog onOpenChange={setCancelOpen} open={cancelOpen}>
+        <DialogContent className='sm:max-w-md'>
+          <DialogHeader>
+            <DialogTitle>{t('recruitment.interviews.cancelTitle')}</DialogTitle>
+            <DialogDescription>
+              {t('recruitment.interviews.cancelConfirm')}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              onClick={() => setCancelOpen(false)}
+              type='button'
+              variant='outline'
+            >
+              {t('recruitment.interviews.cancelNo')}
+            </Button>
+            <Button
+              disabled={busy}
+              onClick={() => void onCancelInterview()}
+              type='button'
+              variant='destructive'
+            >
+              {t('recruitment.interviews.cancelYes')}
             </Button>
           </DialogFooter>
         </DialogContent>

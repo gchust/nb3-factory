@@ -132,8 +132,14 @@ export function InterviewStatusPill({
   readonly status: string;
 }): ReactElement {
   const { t } = useTranslation();
+  const tone =
+    status === 'completed'
+      ? 'primary'
+      : status === 'cancelled'
+        ? 'danger'
+        : 'accent';
   return (
-    <Pill tone={status === 'completed' ? 'primary' : 'accent'}>
+    <Pill tone={tone}>
       {t(`recruitment.interviews.statuses.${status}`, { defaultValue: status })}
     </Pill>
   );

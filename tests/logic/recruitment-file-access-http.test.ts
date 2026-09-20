@@ -52,11 +52,11 @@ describe('recruitment file content access over HTTP', () => {
     category: 'resume' | 'portfolio' | 'offer',
     filename: string,
     ext: string,
+    candidateId?: string,
   ): Promise<string> {
-    const candidates = await context.service.listCandidates(
-      actor('recruiter.li'),
-    );
-    const candidateId = candidates[0]!.id;
+    const targetCandidate =
+      candidateId ??
+      (await context.service.listCandidates(actor('recruiter.li')))[0]!.id;
     const id = crypto.randomUUID();
     await context.database
       .connection()
@@ -75,7 +75,7 @@ describe('recruitment file content access over HTTP', () => {
       .execute();
     await context.service.attachCandidateFiles(
       actor('recruiter.li'),
-      candidateId,
+      targetCandidate,
       {
         category,
         fileIds: [id],
@@ -132,6 +132,46 @@ describe('recruitment file content access over HTTP', () => {
     const offer = await attach('offer', 'offer.pdf', 'pdf');
     const response = await get(offer, 'pdf', 'recruiter.wang');
     expect(response.status).toBe(403);
+  });
+
+  it('revokes a content URL after its interview is cancelled but keeps other interviewers', async () => {
+    // A fresh candidate keeps this test independent of the seeded interviews,
+    // which already assign other candidates to these interviewers.
+    const positions = await context.service.listPositions(actor('hr.manager'));
+    const created = await context.service.createCandidate(
+      actor('recruiter.li'),
+      {
+        name: `取消访问候选人 ${crypto.randomUUID().slice(0, 8)}`,
+        positionId: positions[0]!.id,
+      },
+    );
+    const candidateId = created.id;
+    const cancelled = await context.service.createInterview(
+      actor('recruiter.li'),
+      {
+        candidateId,
+        interviewerUsername: 'interviewer.zhang',
+        scheduledAt: '2026-11-05T02:00:00.000Z',
+      },
+    );
+    await context.service.createInterview(actor('recruiter.li'), {
+      candidateId,
+      interviewerUsername: 'interviewer.chen',
+      scheduledAt: '2026-11-06T02:00:00.000Z',
+    });
+    const resume = await attach('resume', 'resume.pdf', 'pdf', candidateId);
+
+    // Both interviewers can open the same stored address before cancelling.
+    expect((await get(resume, 'pdf', 'interviewer.zhang')).status).toBe(200);
+    expect((await get(resume, 'pdf', 'interviewer.chen')).status).toBe(200);
+
+    await context.service.cancelInterview(actor('recruiter.li'), cancelled.id);
+
+    // The cancelled interviewer's bookmarked address now fails; the other
+    // interviewer keeps working. The owning recruiter is unaffected.
+    expect((await get(resume, 'pdf', 'interviewer.zhang')).status).toBe(403);
+    expect((await get(resume, 'pdf', 'interviewer.chen')).status).toBe(200);
+    expect((await get(resume, 'pdf', 'recruiter.li')).status).toBe(200);
   });
 
   it('rejects an account with no recruitment role and an anonymous request', async () => {

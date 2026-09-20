@@ -13,6 +13,7 @@ import type { FilePreviewKind } from '../../lib/file-preview';
 import { Button } from '@/components/ui/button';
 import { resolveSafeFileUrl } from '../../lib/file-url';
 import { FileThumbnail } from '../file-thumbnail';
+import { PdfPreview } from './pdf-preview';
 
 export interface FilePreviewContentProps {
   readonly file: FileRecord;
@@ -49,8 +50,13 @@ export function FilePreviewContent(
         />
       );
     case 'pdf':
+      // Rendered to canvases with pdf.js; the native viewer is never embedded.
       return (
-        <iframe title={file.filename} src={url} className='h-[70vh] w-full' />
+        <PdfPreview
+          url={url}
+          filename={file.filename}
+          onDownload={onDownload}
+        />
       );
     case 'audio':
       return <audio controls src={url} className='w-full' />;

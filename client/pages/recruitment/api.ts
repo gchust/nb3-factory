@@ -78,6 +78,8 @@ export interface Interview {
   readonly score: number | null;
   readonly evaluation: string | null;
   readonly completedAt: string | null;
+  readonly cancelledAt: string | null;
+  readonly cancelledBy: string | null;
   readonly resumeFileId: string | null;
   readonly resumeVersion: number | null;
 }
@@ -365,6 +367,18 @@ export async function completeInterview(
   );
 }
 
+export async function cancelInterview(
+  api: ApiClient,
+  id: string,
+): Promise<Interview> {
+  return unwrap(
+    await api.request<{ data: Interview }>({
+      path: `recruitment/interviews/${encodeURIComponent(id)}/cancel`,
+      method: 'POST',
+    }),
+  );
+}
+
 export async function fetchOnboarding(
   api: ApiClient,
 ): Promise<OnboardingTodo[]> {
@@ -425,6 +439,10 @@ export function errorMessageKey(error: unknown): string {
         return 'recruitment.errors.validation';
       case 'CONFLICT':
         return 'recruitment.errors.conflict';
+      case 'FILE_IN_USE':
+        return 'recruitment.errors.fileInUse';
+      case 'INTERVIEW_NOT_CANCELLABLE':
+        return 'recruitment.errors.interviewNotCancellable';
       default:
         break;
     }

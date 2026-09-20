@@ -261,6 +261,7 @@ const zhCN: AppResource = {
       emptyPortfolio: '尚未上传作品。',
       emptyOffer: '尚未上传录用材料。',
       resumeHistory: '历史简历版本',
+      otherResumeVersions: '其他简历版本',
       version: '第{{version}}版',
       add: '上传资料',
       limits: '一次最多选择 {{total}} 个文件，每个不超过 {{size}} MB。',
@@ -280,6 +281,12 @@ const zhCN: AppResource = {
         tooMany: '一次最多选择 5 个文件。',
         type: '不支持该文件类型。',
       },
+      sampleTitle: '示例文件（虚构，仅供试用）',
+      sampleHint: '下载后通过上方上传控件上传，用于试用预览与下载。',
+      sampleResume: '简历示例（2 页 PDF）',
+      sampleImage: '作品示例（PNG 图片）',
+      sampleText: '文字作品示例（TXT）',
+      sampleOffer: '录用材料示例（TXT）',
     },
     interviews: {
       title: '面试日历',
@@ -302,6 +309,7 @@ const zhCN: AppResource = {
       statuses: {
         scheduled: '待面试',
         completed: '已完成',
+        cancelled: '已取消',
       },
       score: '评分',
       evaluation: '评价',
@@ -329,6 +337,14 @@ const zhCN: AppResource = {
       resumeVersion: '参考简历：第{{version}}版',
       candidateFiles: '简历与作品',
       candidateFilesHint: '本场面试的准备资料，不包含录用材料。',
+      cancel: '撤销面试安排',
+      cancelTitle: '撤销面试安排',
+      cancelConfirm:
+        '撤销后该面试官将无法再查看这位候选人的简历与作品，且该面试安排不可恢复。确认撤销？',
+      cancelYes: '确认撤销',
+      cancelNo: '保留面试',
+      cancelledBy: '撤销人：{{name}}',
+      cancelledEmpty: '该面试安排已撤销。',
     },
     onboarding: {
       title: '入职待办',
@@ -379,6 +395,9 @@ const zhCN: AppResource = {
       invalidTransition: '不允许进行该阶段变更。',
       hireRequiresHr: '只有人事负责人可以确认录用。',
       conflict: '该操作与当前状态冲突。',
+      fileInUse: '该资料已被历史面试记录引用，必须保留，无法移除。',
+      interviewNotCancellable:
+        '只有待面试的面试安排可以撤销；已完成或已撤销的无法再次撤销。',
       unknown: '操作失败，请重试。',
     },
     notices: {
@@ -391,6 +410,7 @@ const zhCN: AppResource = {
       rejected: '候选人已淘汰。',
       interviewCreated: '面试已安排。',
       interviewCompleted: '评价已记录。',
+      interviewCancelled: '面试安排已撤销。',
       onboardingUpdated: '入职待办已更新。',
       resumeSaved: '简历已保存。',
       portfolioAdded: '作品已添加。',
@@ -403,6 +423,8 @@ const zhCN: AppResource = {
   overrides: {
     '@nocobase/app-plugin-file': {
       fileEmpty: '空文件无法上传。',
+      // The pdf.js preview reports how many pages it rendered.
+      pageCount: '共 {{count}} 页',
     },
   },
 };

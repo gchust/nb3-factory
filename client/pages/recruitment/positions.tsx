@@ -25,7 +25,7 @@ import {
   type Position,
   type StaffOption,
 } from './api.js';
-import { useAsyncData, useRecruitmentMe } from './hooks.js';
+import { useAsyncData, useRecruitmentMe, useSubmitGuard } from './hooks.js';
 import {
   ErrorBanner,
   Field,
@@ -71,7 +71,7 @@ export default function RecruitmentPositionsPage(): ReactElement {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Position | undefined>();
   const [form, setForm] = useState<PositionForm>(EMPTY_FORM);
-  const [saving, setSaving] = useState(false);
+  const { saving, submit: runSubmit, reset: resetSubmit } = useSubmitGuard();
   const [error, setError] = useState<string>();
   const [notice, setNotice] = useState<string>();
 
@@ -99,6 +99,7 @@ export default function RecruitmentPositionsPage(): ReactElement {
       ownerUsername: me?.username ?? '',
       headcount: '1',
     });
+    resetSubmit();
     setError(undefined);
     setDialogOpen(true);
   }
@@ -113,36 +114,35 @@ export default function RecruitmentPositionsPage(): ReactElement {
       status: position.status,
       description: position.description ?? '',
     });
+    resetSubmit();
     setError(undefined);
     setDialogOpen(true);
   }
 
   async function submit(): Promise<void> {
-    setSaving(true);
     setError(undefined);
-    const payload = {
-      title: form.title.trim(),
-      department: form.department.trim(),
-      headcount: Number(form.headcount),
-      ownerUsername: form.ownerUsername,
-      status: form.status,
-      description: form.description.trim(),
-    };
-    try {
-      if (editing) {
-        await updatePosition(api, editing.id, payload);
-        setNotice(t('recruitment.notices.positionUpdated'));
-      } else {
-        await createPosition(api, payload);
-        setNotice(t('recruitment.notices.positionCreated'));
-      }
-      setDialogOpen(false);
-      positions.reload();
-    } catch (cause: unknown) {
-      setError(errorMessageKey(cause));
-    } finally {
-      setSaving(false);
-    }
+    await runSubmit(
+      async () => {
+        const payload = {
+          title: form.title.trim(),
+          department: form.department.trim(),
+          headcount: Number(form.headcount),
+          ownerUsername: form.ownerUsername,
+          status: form.status,
+          description: form.description.trim(),
+        };
+        if (editing) {
+          await updatePosition(api, editing.id, payload);
+          setNotice(t('recruitment.notices.positionUpdated'));
+        } else {
+          await createPosition(api, payload);
+          setNotice(t('recruitment.notices.positionCreated'));
+        }
+        setDialogOpen(false);
+        positions.reload();
+      },
+      (cause: unknown) => setError(errorMessageKey(cause)),
+    );
   }
 
   return (
