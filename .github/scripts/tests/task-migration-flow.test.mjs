@@ -156,9 +156,14 @@ for (const prefix of ['pi', 'agent']) {
       'complete-pr.mjs',
       { pull_request: pull(3, `${prefix}/issue-2`) },
       (call) => {
+        if (call.route === '/issues/2' && call.method === 'GET')
+          return {
+            ...issue(2, 'agent:review'),
+            user: { login: 'external-user' },
+          };
         if (call.route === '/issues' && call.method === 'GET') {
           return call.query.get('labels') === 'pi:waiting'
-            ? [issue(4, 'pi:waiting')]
+            ? [{ ...issue(4, 'pi:waiting'), user: { login: 'another-user' } }]
             : [issue(5, 'agent:waiting')];
         }
         return baseHandler(call);
@@ -258,5 +263,26 @@ for (const kind of ['build', 'reply']) {
       ),
       kind === 'build',
     );
+  });
+}
+
+for (const event of [
+  { issue: { number: 2 } },
+  { inputs: { issue_number: '2' } },
+  { client_payload: { issue_number: 2 } },
+]) {
+  test(`prepare accepts a non-owner Issue through ${Object.keys(event)[0]}`, async () => {
+    const result = await runFixture('prepare-task.mjs', event, (call) => {
+      if (call.route === '/issues/2')
+        return {
+          ...issue(2, 'agent:pending'),
+          user: { login: 'external-contributor', type: 'User' },
+        };
+      if (call.route === '/pulls') return [];
+      return baseHandler(call);
+    });
+    assert.equal(result.metadata.issue.author, 'external-contributor');
+    assert.equal(result.metadata.task.targetBranch, 'apps/demo');
+    assert.match(result.output, /status=ready/);
   });
 }

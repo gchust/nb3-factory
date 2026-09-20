@@ -101,7 +101,7 @@ test('queued comments refresh their display while waiting for the current workfl
     comments: [
       command(22),
       command(21),
-      command(23, '/build\nSpam', { login: 'outsider' }),
+      command(23, '/build\nBot output', bot),
     ],
     runs: [run(1, 0, 'in_progress')],
   });
@@ -195,13 +195,13 @@ test('closed PR never produces a second PR round', async () => {
   await coordinate(f.client, 2);
   assert.equal(f.dispatches().length, 0);
 });
-test('untrusted comments and PR comments cannot cause writes or dispatch', async () => {
+test('bot comments and PR comments cannot cause writes or dispatch', async () => {
   const f = fixture();
   await main(
     {
       action: 'created',
       issue,
-      comment: command(21, '/build\nSpam', { login: 'outsider' }),
+      comment: command(21, '/build\nBot output', bot),
     },
     f.client,
   );
@@ -216,7 +216,7 @@ test('untrusted comments and PR comments cannot cause writes or dispatch', async
   assert.equal(f.calls.length, 0);
 });
 
-test('ordinary owner comments become read-only question rounds', async () => {
+test('ordinary user comments become read-only question rounds', async () => {
   const f = fixture({
     comments: [command(21, '现在支持哪些权限？')],
     runs: [run(1)],
@@ -354,7 +354,7 @@ test('a continuation cancelled before prepare still finishes the round', async (
   assert.equal(f.dispatches()[0].body.client_payload.build_comment_id, 22);
 });
 
-test('closed Issue rejects new builds but still answers owner questions', async () => {
+test('closed Issue rejects new builds but still answers user questions', async () => {
   const f = fixture({
     comments: [command(21), command(22, 'How does this work?')],
     runs: [run(1)],
@@ -492,10 +492,10 @@ for (const removed of [true, false]) {
   });
 }
 
-test('deleting or changing ownership after dispatch cannot execute stale text', async () => {
+test('deleted or bot-authored comments cannot execute stale text', async () => {
   const f = fixture({ comments: [command(21)], runs: [run(1)] });
   await coordinate(f.client, 2);
-  f.comments.find((c) => c.id === 21).user = { login: 'outsider' };
+  f.comments.find((c) => c.id === 21).user = bot;
   await assert.rejects(resolveBuildTask(f.client, issue, 21), /删除或作者/);
   f.comments.splice(
     f.comments.findIndex((c) => c.id === 21),
@@ -538,3 +538,32 @@ test('completion recognizes a dispatched build edited into a question', async ()
   assert.equal(f.receipts()[0].kind, 'reply');
   assert.equal(f.receipts()[0].conclusion, 'success');
 });
+
+for (const body of [
+  '/build\nExternal feature',
+  'How does this feature work?',
+]) {
+  test(`external user can trigger a round on another user's Issue: ${body}`, async () => {
+    const outsider = { login: 'external-contributor', type: 'User' };
+    const externalIssue = {
+      ...issue,
+      user: { login: 'another-user', type: 'User' },
+    };
+    const comment = command(21, body, outsider);
+    const f = fixture({ comments: [comment], runs: [run(1)] });
+    f.client.getIssue = async () => externalIssue;
+    await main({ action: 'created', issue: externalIssue, comment }, f.client);
+    assert.equal(f.dispatches().length, 1);
+    const task = await resolveBuildTask(f.client, externalIssue, 21);
+    assert.match(
+      task.requirements,
+      body.startsWith('/build')
+        ? /External feature/
+        : /How does this feature work/,
+    );
+    assert.equal(
+      task.commentKind,
+      body.startsWith('/build') ? 'build' : 'reply',
+    );
+  });
+}

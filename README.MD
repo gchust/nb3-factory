@@ -6,7 +6,7 @@
 
 ```mermaid
 flowchart TD
-    Issue["Owner 创建 Issue<br/>指定 apps/name"] --> Queue["按 Issue 分组的并发队列"]
+    Issue["任意用户创建 Issue<br/>指定 apps/name"] --> Queue["按 Issue 分组的并发队列"]
     Queue --> Branch{"目标分支存在？"}
     Branch -->|否| Create["从默认分支创建"]
     Branch -->|是| Reuse["复用最新应用代码"]
@@ -129,6 +129,12 @@ Action 在全新目录生成应用、安装并锁定依赖，运行工厂测试�
 模板刷新自身串行，并且不再阻塞独立的搭建任务；推送时会原子地创建 `factory-backup/develop-<run-id>-<attempt>` 备份并更新 `develop`。如果有人在生成期间更新了 `develop`，Action 会拒绝覆盖。已有 `apps/*` 分支保持原样：要测试新基线，请在新的 Issue 中指定一个尚不存在的 `apps/<name>`。仓库 Secrets、Variables 也不会被 Git 推送改动。
 
 这个 Action 使用内置 `GITHUB_TOKEN`，无需模型 Key 或额外 Token。`develop` 的仓库规则需要允许此工作流强制推送；被规则拒绝时会报错，不会自动修改保护规则。可勾选 `dry_run` 只生成和验证，不更新远端分支。
+
+## 任务触发权限
+
+所有 GitHub 用户都可以通过符合模板格式的 Issue 触发搭建，不要求是仓库所有者或协作者。在有效任务 Issue 下，任何用户的 `/build` 评论均可追加搭建任务，普通评论进入只读问答；这些评论可以来自 Issue 作者之外的用户。机器人评论仍不入队，避免工厂自己的回复循环触发。
+
+手动运行和 repository_dispatch 不再检查 Issue 作者是否为仓库所有者，但 GitHub 对这些操作本身的权限要求不变。任务仍须符合 `apps/<name>` 分支格式、必填字段、Issue 状态和队列规则；验收、控制文件保护与独立发布边界保持不变。模板刷新属于仓库维护操作，仍保持原有的所有者限制。
 
 ## 搭建与验收输入隔离
 

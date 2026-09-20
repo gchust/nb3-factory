@@ -68,8 +68,7 @@ async function list(route, key) {
 }
 async function checkIssue(issue) {
   const data = await api('GET', `/issues/${issue}`);
-  if (data.pull_request || data.user?.login !== repository.split('/')[0])
-    throw new Error('Not an owner-authored task Issue');
+  if (data.pull_request) throw new Error('Task number must refer to an Issue');
 }
 
 if (mode === 'select') {

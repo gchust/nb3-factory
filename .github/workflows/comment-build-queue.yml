@@ -28,7 +28,7 @@ jobs:
     if: >-
       github.event_name != 'issue_comment' ||
       (!github.event.issue.pull_request &&
-       github.event.comment.user.login == github.repository_owner)
+       github.event.comment.user.type != 'Bot')
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:

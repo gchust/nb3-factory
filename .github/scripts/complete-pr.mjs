@@ -20,7 +20,6 @@ const eventPath = process.argv[2] ?? process.env.GITHUB_EVENT_PATH;
 const event = JSON.parse(readFileSync(eventPath, 'utf8'));
 const pull = event.pull_request;
 const repository = process.env.GITHUB_REPOSITORY;
-const owner = event.repository.owner.login;
 const client = new GitHubClient({
   token: process.env.GITHUB_TOKEN,
   repository,
@@ -37,9 +36,7 @@ if (marker != null && marker !== issueNumber) {
   throw new TaskInputError('PR 的来源 Issue 标记与工作分支不一致。');
 }
 const issue = await client.getIssue(issueNumber);
-if (issue.user?.login !== owner) {
-  throw new TaskInputError('Code Agent PR 对应的 Issue 不是仓库所有者创建的。');
-}
+if (issue.pull_request) throw new TaskInputError('任务编号必须指向 Issue。');
 
 await client.ensureStatusLabels();
 if (pull.merged) {
@@ -83,7 +80,7 @@ const waiting = [
 ].sort((a, b) => a.number - b.number);
 let nextIssue;
 for (const candidate of waiting) {
-  if (candidate.pull_request || candidate.user?.login !== owner) continue;
+  if (candidate.pull_request) continue;
   try {
     const task = parseIssueTask(candidate);
     if (task.targetBranch === pull.base.ref) {

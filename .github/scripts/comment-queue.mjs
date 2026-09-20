@@ -93,15 +93,11 @@ export async function saveReceipt(client, issueNumber, receipt) {
     receipt.receiptId = comment.id;
   }
 }
-// Only the live owner-authored Issue/comment is an input source. Queue excerpts
+// Only the live Issue/comment is an input source. Queue excerpts
 // are display hints, including for receipts written by the older snapshot code.
 export function sourceComment(client, issueNumber, comments, id) {
   const comment = comments.find((item) => item.id === Number(id));
-  if (
-    !comment ||
-    comment.user?.login !== client.repository.split('/')[0] ||
-    comment.user?.type === 'Bot'
-  ) {
+  if (!comment || !comment.user?.login || comment.user?.type === 'Bot') {
     throw new TaskInputError('原评论已删除或作者不再符合执行条件。');
   }
   const buildPrompt = parseBuild(comment.body);
@@ -175,7 +171,6 @@ export async function resolveBuildTask(client, issue, buildId) {
   };
 }
 export async function admitComments(client, issue, comments, receipts) {
-  const owner = client.repository.split('/')[0];
   // Refresh queued display/type and cancel deleted inputs. Dispatched inputs
   // are read again by prepare; already completed entries are never replayed.
   for (const receipt of receipts.filter((item) => item.status === 'queued')) {
@@ -197,7 +192,7 @@ export async function admitComments(client, issue, comments, receipts) {
   for (const comment of comments.sort((a, b) => a.id - b.id)) {
     if (
       !comment.body?.trim() ||
-      comment.user?.login !== owner ||
+      !comment.user?.login ||
       comment.user?.type === 'Bot' ||
       receipts.some((item) => item.id === comment.id)
     )

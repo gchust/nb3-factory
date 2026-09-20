@@ -37,12 +37,6 @@ try {
   if (issue.pull_request) {
     throw new TaskInputError('任务编号必须指向 Issue，不能指向 Pull Request。');
   }
-  if (issue.user?.login !== owner) {
-    throw new TaskInputError(
-      `为了避免消耗模型额度，只有仓库所有者 @${owner} 创建的 Issue 才会执行。`,
-    );
-  }
-
   const buildCommentId = event.client_payload?.build_comment_id;
   if (buildCommentId) {
     const { receipts } = await receiptsFor(client, issueNumber);

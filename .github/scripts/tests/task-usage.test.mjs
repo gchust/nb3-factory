@@ -448,7 +448,7 @@ test('reporter posts to the correct Issue, replay updates without double countin
     if (route === '/actions/runs/10/attempts/1/jobs') return send({ jobs });
     if (route === '/actions/runs/10/artifacts') return send({ artifacts });
     if (route === '/issues/21')
-      return send({ number: 21, user: { login: 'owner' } });
+      return send({ number: 21, user: { login: 'external-contributor' } });
     if (route === '/issues/21/comments') return send(comments);
     response.statusCode = 404;
     response.end();

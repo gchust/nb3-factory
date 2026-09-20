@@ -1,6 +1,6 @@
 # NocoBase 3 Factory Task
 
-你正在修改一个完整的 NocoBase 3 业务应用。本次任务来自仓库所有者授权的 GitHub Issue #{{ISSUE_NUMBER}}：{{ISSUE_TITLE}}。
+你正在修改一个完整的 NocoBase 3 业务应用。本仓库允许所有用户提交搭建任务。本次任务来自 GitHub Issue #{{ISSUE_NUMBER}}：{{ISSUE_TITLE}}。
 
 ## 强制要求
 

@@ -16,11 +16,7 @@ import {
 
 export async function coordinate(client, issueNumber, admissionId = Infinity) {
   const issue = await client.getIssue(issueNumber);
-  if (
-    issue.pull_request ||
-    issue.user?.login !== client.repository.split('/')[0]
-  )
-    return;
+  if (issue.pull_request) return;
   let task;
   try {
     task = parseIssueTask(issue);
@@ -29,7 +25,7 @@ export async function coordinate(client, issueNumber, admissionId = Infinity) {
     throw error;
   }
   const { comments, receipts } = await receiptsFor(client, issueNumber);
-  // Activate on a new owner comment; scheduled reconciliation must not replay
+  // Activate on a new human comment; scheduled reconciliation must not replay
   // every historical discussion (and consume quota) when this feature ships.
   const firstId = Math.min(admissionId, ...receipts.map((item) => item.id));
   await admitComments(
@@ -255,7 +251,8 @@ export async function main(event, client) {
     if (
       !['created', 'edited'].includes(event.action) ||
       event.issue?.pull_request ||
-      event.comment.user?.login !== client.repository.split('/')[0]
+      !event.comment.user?.login ||
+      event.comment.user?.type === 'Bot'
     )
       return;
     if (!event.comment.body?.trim() && event.action !== 'edited') return;
@@ -277,10 +274,7 @@ export async function main(event, client) {
   const issues = await listAll(client, '/issues', { state: 'all' });
   const errors = [];
   for (const issue of issues) {
-    if (
-      !issue.pull_request &&
-      issue.user?.login === client.repository.split('/')[0]
-    )
+    if (!issue.pull_request)
       try {
         await coordinate(client, issue.number);
       } catch (error) {
