@@ -75,6 +75,7 @@ test('repair loop keeps retrying until Agent Browser acceptance succeeds', () =>
       [
         "import { writeFileSync } from 'node:fs';",
         "const index = process.argv.indexOf('--output');",
+        "if (process.argv[process.argv.indexOf('--failure-kind') + 1] !== 'browser') throw new Error('QA feedback was not isolated');",
         "writeFileSync(process.argv[index + 1], 'repair\\n');",
       ].join('\n'),
     );

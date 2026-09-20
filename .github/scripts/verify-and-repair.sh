@@ -28,12 +28,14 @@ while true; do
     --output "$runtime_config" \
     --database "$database"
 
+  failure_kind=build
   verification_passed=0
   if FACTORY_RETRY_FAILED_CHECK=1 FACTORY_SKIP_BROWSER=1 "$control_dir/.github/scripts/verify.sh" \
     "$workspace" \
     "$runtime_config" \
     "$verification_artifacts" \
     2>&1 | tee "$verification_log"; then
+    failure_kind=browser
     set +e
     "$control_dir/.github/scripts/browser-acceptance.sh" \
       "$control_dir" \
@@ -74,6 +76,9 @@ while true; do
     --template "$control_dir/.github/prompts/repair.md" \
     --task "$task_prompt" \
     --log "$verification_log" \
+    --failure-kind "$failure_kind" \
+    --report "$verification_artifacts/browser-acceptance/report.json" \
+    --application-log "$verification_artifacts/browser-acceptance/application.log" \
     --retro-path "$artifact_dir/retro.json" \
     --output "$repair_prompt"
 

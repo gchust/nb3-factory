@@ -35,7 +35,7 @@ body:
     id: requirements
     attributes:
       label: 业务需求
-      description: 用业务人员的语言描述角色、工作过程、规则和希望解决的问题。
+      description: 搭建 Agent 只接收此字段。写清角色、功能、业务规则和质量要求；不要写 QA 操作步骤、录屏、报告格式或评分规则。
       placeholder: 我是公司的 IT 服务台负责人，希望员工可以提交工单……
     validations:
       required: true
@@ -44,7 +44,7 @@ body:
     id: acceptance_criteria
     attributes:
       label: 验收要求
-      description: 列出真实用户最终必须能够完成的操作。
+      description: 仅注入 QA prompt，不注入搭建 prompt。写验收场景、边界和证据要求；产品功能必须同时在业务需求中明确。公开 Issue 不提供保密盲测。
       placeholder: |
         1. 员工可以提交并跟进自己的工单
         2. 服务台可以分派并记录处理过程

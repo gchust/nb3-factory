@@ -1,18 +1,49 @@
-import { readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 
 import { replaceTemplate } from './factory-lib.mjs';
 
 const args = parseArgs(process.argv.slice(2));
 const template = readFileSync(args.template, 'utf8');
 const originalPrompt = readFileSync(args.task, 'utf8');
-const verificationLog = readFileSync(args.log, 'utf8');
-const logTail = verificationLog.slice(-60_000);
+// QA transcripts contain passing criteria and evaluator instructions. Never use
+// that stream as implementation input; project only observed failing behavior.
+const kind = args['failure-kind'] || 'build';
+if (!['build', 'browser'].includes(kind))
+  throw new Error('Invalid failure kind');
+let feedback;
+if (kind === 'browser') {
+  if (!args.report || !args['application-log'])
+    throw new Error('Browser feedback paths are required');
+  if (existsSync(args.report)) {
+    const report = JSON.parse(readFileSync(args.report, 'utf8'));
+    if (!Array.isArray(report.checks)) throw new Error('Invalid QA report');
+    const defects = report.checks
+      .filter((check) => check.status === 'failed')
+      .map((check) => ({
+        actions: check.actions,
+        observed: check.evidence,
+      }));
+    if (defects.length === 0)
+      throw new Error('No observed failed checks to repair');
+    feedback = JSON.stringify({ defects }, null, 2);
+  } else {
+    // Startup can fail before QA runs. The server log contains application
+    // diagnostics, not the browser agent transcript or its prompt.
+    feedback =
+      'Application did not reach browser acceptance.\n' +
+      (existsSync(args['application-log'])
+        ? readFileSync(args['application-log'], 'utf8').slice(-60_000)
+        : 'No application log was produced. Investigate application startup.');
+  }
+} else {
+  feedback = readFileSync(args.log, 'utf8').slice(-60_000);
+}
 
 writeFileSync(
   args.output,
   replaceTemplate(template, {
     ORIGINAL_TASK: originalPrompt,
-    VERIFY_LOG: logTail,
+    VERIFY_LOG: feedback,
     // Same file the implementation round wrote: the repair round appends to it
     // instead of starting a second, partial retrospective.
     RETRO_PATH: retroPath(),

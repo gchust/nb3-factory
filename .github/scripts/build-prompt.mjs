@@ -9,17 +9,20 @@ const template = readFileSync(args.template, 'utf8');
 const prompt = replaceTemplate(template, {
   ISSUE_NUMBER: metadata.issue.number,
   ISSUE_TITLE: metadata.issue.title,
-  ISSUE_URL: metadata.issue.url,
   TARGET_BRANCH: metadata.task.targetBranch,
   TASK_TYPE: metadata.task.taskType,
   REQUIREMENTS: metadata.task.requirements,
-  ACCEPTANCE_CRITERIA: metadata.task.acceptanceCriteria,
   SAMPLE_DATA: metadata.task.sampleData,
   // The agent writes its retrospective outside the application tree so it can
   // never end up in the business patch.
   RETRO_PATH: retroPath(),
 });
 
+if (/\{\{(?:ACCEPTANCE_CRITERIA|ISSUE_URL)\}\}/.test(prompt)) {
+  throw new Error(
+    'Implementation template must not request QA criteria or the full Issue URL.',
+  );
+}
 writeFileSync(args.output, prompt);
 
 function parseArgs(argv) {
