@@ -1,0 +1,217 @@
+name: Deploy Task Preview
+
+on:
+  workflow_run:
+    workflows: [Code Agent NocoBase Task]
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      run_id:
+        description: Successful Code Agent task run ID (not Issue or PR number)
+        required: true
+        type: string
+      attempt:
+        description: Run attempt (leave empty for latest)
+        required: false
+        type: string
+
+permissions: {}
+
+concurrency:
+  group: factory-preview-deploy
+  queue: max
+
+jobs:
+  deploy-preview:
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      actions: read
+      # Write, for one thing only: the temporary release asset the host fetches
+      # the payload from. Nothing here writes to a branch.
+      contents: write
+      pull-requests: write
+    env:
+      SOURCE_RUN_ID: ${{ inputs.run_id || github.event.workflow_run.id }}
+      SOURCE_ATTEMPT: ${{ inputs.attempt || github.event.workflow_run.run_attempt }}
+      PREVIEW_HOST: ${{ vars.FACTORY_PREVIEW_HOST || '100.120.77.102' }}
+      PREVIEW_USER: ${{ vars.FACTORY_PREVIEW_USER || 'root' }}
+      PREVIEW_DOMAIN: ${{ vars.FACTORY_PREVIEW_DOMAIN || 'nfvd.net' }}
+      # The preview host reaches GitHub through its own egress; this is that proxy.
+      # Unused when the host can reach it directly.
+      PREVIEW_FETCH_PROXY: ${{ vars.FACTORY_PREVIEW_FETCH_PROXY || 'http://192.168.2.250:7890' }}
+      PREVIEW_RELEASE: factory-previews
+      # A preview is optional infrastructure. When its credentials are absent
+      # this workflow stays a no-op rather than failing the task's run record.
+      PREVIEW_ENABLED: ${{ secrets.FACTORY_PREVIEW_SSH_KEY != '' && secrets.FACTORY_TAILSCALE_OAUTH_CLIENT_ID != '' }}
+    steps:
+      # Trusted control code only. The build artifact is data here: it is
+      # published unchanged and never executed on the runner.
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          path: control
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24.x
+
+      - name: Select a successfully delivered task
+        id: source
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          node control/.github/scripts/deploy-preview.mjs select \
+            --run-id "$SOURCE_RUN_ID" --attempt "$SOURCE_ATTEMPT" \
+            --source "$RUNNER_TEMP/preview-source.json"
+
+      - name: Download the deployable build
+        if: steps.source.outputs.ready == 'true'
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ steps.source.outputs.artifact }}
+          run-id: ${{ env.SOURCE_RUN_ID }}
+          github-token: ${{ github.token }}
+          path: ${{ runner.temp }}/dist-artifact
+
+      - name: Unpack the deployable build
+        if: steps.source.outputs.ready == 'true'
+        run: |
+          mkdir -p "$RUNNER_TEMP/build"
+          tar -xzf "$RUNNER_TEMP/dist-artifact/dist.tar.gz" -C "$RUNNER_TEMP/build"
+          test -f "$RUNNER_TEMP/build/dist/package.json"
+
+      - name: Resolve the pull request and the dependency identity
+        id: prepare
+        if: steps.source.outputs.ready == 'true'
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/preview"
+          node control/.github/scripts/deploy-preview.mjs prepare \
+            --run-id "$SOURCE_RUN_ID" \
+            --source "$RUNNER_TEMP/preview-source.json" \
+            --artifacts "$RUNNER_TEMP/dist-artifact" \
+            --build "$RUNNER_TEMP/build" \
+            --domain "$PREVIEW_DOMAIN" \
+            --output "$RUNNER_TEMP/preview"
+
+      - name: Skip without preview credentials
+        if: steps.prepare.outputs.ready == 'true' && env.PREVIEW_ENABLED != 'true'
+        run: |
+          echo "::warning::PREVIEW SKIPPED: set FACTORY_PREVIEW_SSH_KEY and FACTORY_TAILSCALE_OAUTH_CLIENT_ID to deploy previews."
+
+      - name: Join the tailnet
+        if: steps.prepare.outputs.ready == 'true' && env.PREVIEW_ENABLED == 'true'
+        uses: tailscale/github-action@v3
+        with:
+          oauth-client-id: ${{ secrets.FACTORY_TAILSCALE_OAUTH_CLIENT_ID }}
+          oauth-secret: ${{ secrets.FACTORY_TAILSCALE_OAUTH_CLIENT_SECRET }}
+          tags: tag:ci
+          # Keep public DNS on the runner; the preview host is a Tailscale IP.
+          args: --accept-dns=false
+
+      - name: Install the deploy key
+        if: steps.prepare.outputs.ready == 'true' && env.PREVIEW_ENABLED == 'true'
+        env:
+          PREVIEW_SSH_KEY: ${{ secrets.FACTORY_PREVIEW_SSH_KEY }}
+        run: |
+          bash control/.github/scripts/preview-connect.sh
+
+      - name: Publish the payload for the host to fetch
+        id: publish
+        if: steps.prepare.outputs.ready == 'true' && env.PREVIEW_ENABLED == 'true'
+        env:
+          PR: ${{ steps.prepare.outputs.pr }}
+          DEPS_KEY: ${{ steps.prepare.outputs.deps_key }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          ssh_opts=(-i ~/.ssh/preview_key -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o ConnectTimeout=20)
+          remote="$PREVIEW_USER@$PREVIEW_HOST"
+
+          # The host always runs the scripts from this repository, so a fix is
+          # deployed by pushing, never by editing files on the machine. These are
+          # kilobytes; the payload is what is too big to come this way.
+          tar -czf "$RUNNER_TEMP/preview-scripts.tar.gz" -C control/.github/scripts/preview .
+          ssh "${ssh_opts[@]}" "$remote" 'mkdir -p /srv/nb3-preview/scripts /srv/nb3-preview/tmp'
+          scp -q -i ~/.ssh/preview_key -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes \
+            "$RUNNER_TEMP/preview-scripts.tar.gz" "$remote:/srv/nb3-preview/tmp/scripts.tar.gz"
+          ssh "${ssh_opts[@]}" "$remote" \
+            'tar -xzf /srv/nb3-preview/tmp/scripts.tar.gz -C /srv/nb3-preview/scripts && chmod +x /srv/nb3-preview/scripts/*.sh'
+
+          # The dependency tree is ~740 MB of a ~744 MB build and changes only
+          # with the dependency set, so ask the host before shipping it.
+          present="$(ssh "${ssh_opts[@]}" "$remote" "${{ steps.prepare.outputs.probe }}")"
+          if [[ "$present" == present ]]; then
+            echo "Dependency cache hit; sending the application tree only."
+            tar -czf "$RUNNER_TEMP/payload.tar.gz" \
+              -C "$RUNNER_TEMP/build" -T "$RUNNER_TEMP/preview/slim-entries.txt"
+          else
+            echo "Dependency cache miss; sending the full build."
+            cp "$RUNNER_TEMP/dist-artifact/dist.tar.gz" "$RUNNER_TEMP/payload.tar.gz"
+          fi
+          ls -lh "$RUNNER_TEMP/payload.tar.gz"
+
+          # A temporary release asset is the rendezvous: this runner uploads to
+          # GitHub in seconds, and the host fetches it over its own egress, which
+          # measured 815 KB/s where pushing the same bytes over Tailscale to the
+          # host measured 17 KB/s. The repository is public, so the fetch needs no
+          # credential on the host — and the asset is deleted when the PR closes.
+          asset="preview-pr-$PR.tar.gz"
+          if ! gh release view "$PREVIEW_RELEASE" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release create "$PREVIEW_RELEASE" --repo "$GITHUB_REPOSITORY" --prerelease \
+              --title "Factory preview payloads" \
+              --notes "Temporary build payloads the preview host fetches. One asset per pull request, deleted when it closes."
+          fi
+          # Named before it is uploaded: an asset takes its name from the file, and
+          # the URL the host is given is built from that name.
+          cp "$RUNNER_TEMP/payload.tar.gz" "$RUNNER_TEMP/$asset"
+          gh release upload "$PREVIEW_RELEASE" --repo "$GITHUB_REPOSITORY" --clobber \
+            "$RUNNER_TEMP/$asset"
+          echo "payload_sha256=$(sha256sum "$RUNNER_TEMP/$asset" | cut -d' ' -f1)" >> "$GITHUB_OUTPUT"
+
+      - name: Deploy the preview
+        id: deploy
+        if: steps.publish.outcome == 'success'
+        env:
+          PR: ${{ steps.prepare.outputs.pr }}
+          SHA: ${{ steps.prepare.outputs.sha }}
+          DEPS_KEY: ${{ steps.prepare.outputs.deps_key }}
+        run: |
+          set -euo pipefail
+          # Built here rather than passed in, so the URL the host fetches and the
+          # asset that was just uploaded cannot drift apart.
+          asset_url="https://github.com/$GITHUB_REPOSITORY/releases/download/$PREVIEW_RELEASE/preview-pr-$PR.tar.gz"
+          ssh -i ~/.ssh/preview_key -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o ConnectTimeout=20 \
+            "$PREVIEW_USER@$PREVIEW_HOST" \
+            "bash /srv/nb3-preview/scripts/preview-deploy.sh \
+               --pr '$PR' \
+               --sha '$SHA' \
+               --deps-key '$DEPS_KEY' \
+               --domain '$PREVIEW_DOMAIN' \
+               --payload '/srv/nb3-preview/tmp/payload-pr-$PR.tar.gz' \
+               --payload-url '$asset_url' \
+               --payload-sha256 '${{ steps.publish.outputs.payload_sha256 }}' \
+               --fetch-proxy '$PREVIEW_FETCH_PROXY'"
+
+      - name: Verify the public preview URL
+        id: public
+        if: steps.deploy.outcome == 'success'
+        env:
+          PREVIEW_URL: ${{ steps.prepare.outputs.url }}
+        run: |
+          node control/.github/scripts/preview-public-check.mjs
+          test -s "$RUNNER_TEMP/preview-public.html"
+
+      - name: Report the preview on the pull request
+        if: always() && steps.prepare.outputs.ready == 'true' && env.PREVIEW_ENABLED == 'true'
+        continue-on-error: true
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          node control/.github/scripts/deploy-preview.mjs publish \
+            --run-id "$SOURCE_RUN_ID" \
+            --output "$RUNNER_TEMP/preview" \
+            --status "${{ steps.public.outcome == 'success' && 'success' || 'failed' }}"

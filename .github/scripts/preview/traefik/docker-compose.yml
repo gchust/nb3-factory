@@ -1,0 +1,40 @@
+# Host-level reverse proxy for preview containers.
+#
+# Each preview container declares its own Host rule as a Docker label; Traefik
+# discovers it and routes to it. Adding or removing a preview therefore changes
+# no configuration file: starting or stopping the container is the whole edit.
+#
+# Traefik is bound to loopback only. The public path in is the Cloudflare tunnel
+# on this host, which targets http://localhost:8081 as a wildcard hostname. The
+# preview port is never exposed on the LAN.
+services:
+  traefik:
+    image: traefik:v3
+    container_name: nb3-preview-traefik
+    restart: unless-stopped
+    command:
+      - --providers.docker=true
+      # Nothing is published unless it opts in with traefik.enable=true, so the
+      # many unrelated containers on this host stay invisible to Traefik.
+      - --providers.docker.exposedbydefault=false
+      - --providers.docker.network=nb3-preview
+      # Keep already deployed PR containers reachable at nb3-<PR> hostnames.
+      - --providers.file.directory=/etc/traefik/dynamic
+      - --providers.file.watch=true
+      - --entrypoints.web.address=:80
+      - --api.dashboard=false
+      - --accesslog=false
+      - --log.level=WARN
+    ports:
+      - 127.0.0.1:8081:80
+    volumes:
+      # Read-only: Traefik only reads labels. The socket is still a privileged
+      # interface, which is why this runs on the preview host and nowhere else.
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /srv/nb3-preview/routing:/etc/traefik/dynamic:ro
+    networks:
+      - nb3-preview
+
+networks:
+  nb3-preview:
+    external: true
