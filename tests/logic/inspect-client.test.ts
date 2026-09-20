@@ -125,6 +125,31 @@ describe('client inspection', () => {
         path: '/',
       },
       {
+        auth: 'required',
+        id: 'nb3-factory:customers',
+        path: '/customers',
+      },
+      {
+        auth: 'required',
+        id: 'nb3-factory:contracts',
+        path: '/contracts',
+      },
+      {
+        auth: 'required',
+        id: 'nb3-factory:contract-detail',
+        path: '/contracts/:id',
+      },
+      {
+        auth: 'required',
+        id: 'nb3-factory:acceptance',
+        path: '/acceptance',
+      },
+      {
+        auth: 'required',
+        id: 'nb3-factory:receivables',
+        path: '/receivables',
+      },
+      {
         auth: 'guest',
         id: 'nb3-factory:login',
         path: '/login',

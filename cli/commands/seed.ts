@@ -5,6 +5,7 @@ import path from 'node:path';
 import { resolveStandaloneAppRuntime } from '@nocobase/app-server/node';
 import appRuntime from '../../server/runtime.js';
 import { runDatabaseCommand } from '../database-command.js';
+import { publishLocalDiskLocation } from '../seed-disk.js';
 
 export default class AppSeed extends Command {
   static override summary = 'Run pending database seeds.';
@@ -48,10 +49,13 @@ export default class AppSeed extends Command {
       },
       'seeds',
       flags,
-      async () =>
-        resolveStandaloneAppRuntime(appRuntime, {
+      async () => {
+        const runtime = await resolveStandaloneAppRuntime(appRuntime, {
           rootDir: path.resolve(import.meta.dirname, '..', '..'),
-        }),
+        });
+        publishLocalDiskLocation(runtime.config);
+        return runtime;
+      },
     );
   }
 }

@@ -1,4 +1,4 @@
-import { Home } from 'lucide-react';
+import { ClipboardCheck, FileText, Home, Users, Wallet } from 'lucide-react';
 import {
   defineAppRoutes,
   defineSettingsRoutes,
@@ -15,6 +15,65 @@ const appRoutes: AppClientRouteContribution = defineAppRoutes([
     name: 'home',
     navigation: { title: 'navigation.home', icon: Home },
     path: '/',
+  },
+  {
+    // Business pages are reachable by every signed-in user: this application's roles differ by
+    // record and action scope, not by page. The server narrows every read and write to the
+    // contracts the caller participates in, so a page with no participation shows nothing.
+    authz: 'skip',
+    auth: 'required',
+    componentLoader: () => import('./pages/customers.js'),
+    name: 'customers',
+    navigation: { title: 'delivery.nav.customers', icon: Users },
+    breadcrumb: { title: 'delivery.nav.customers' },
+    path: '/customers',
+  },
+  {
+    // Business pages are reachable by every signed-in user: this application's roles differ by
+    // record and action scope, not by page. The server narrows every read and write to the
+    // contracts the caller participates in, so a page with no participation shows nothing.
+    authz: 'skip',
+    auth: 'required',
+    componentLoader: () => import('./pages/contracts/index.js'),
+    name: 'contracts',
+    navigation: { title: 'delivery.nav.contracts', icon: FileText },
+    breadcrumb: { title: 'delivery.nav.contracts' },
+    path: '/contracts',
+  },
+  {
+    // Business pages are reachable by every signed-in user: this application's roles differ by
+    // record and action scope, not by page. The server narrows every read and write to the
+    // contracts the caller participates in, so a page with no participation shows nothing.
+    authz: 'skip',
+    auth: 'required',
+    componentLoader: () => import('./pages/contracts/detail.js'),
+    name: 'contract-detail',
+    breadcrumb: { title: 'delivery.nav.contractDetail' },
+    path: '/contracts/:id',
+  },
+  {
+    // Business pages are reachable by every signed-in user: this application's roles differ by
+    // record and action scope, not by page. The server narrows every read and write to the
+    // contracts the caller participates in, so a page with no participation shows nothing.
+    authz: 'skip',
+    auth: 'required',
+    componentLoader: () => import('./pages/acceptance.js'),
+    name: 'acceptance',
+    navigation: { title: 'delivery.nav.acceptance', icon: ClipboardCheck },
+    breadcrumb: { title: 'delivery.nav.acceptance' },
+    path: '/acceptance',
+  },
+  {
+    // Business pages are reachable by every signed-in user: this application's roles differ by
+    // record and action scope, not by page. The server narrows every read and write to the
+    // contracts the caller participates in, so a page with no participation shows nothing.
+    authz: 'skip',
+    auth: 'required',
+    componentLoader: () => import('./pages/receivables/index.js'),
+    name: 'receivables',
+    navigation: { title: 'delivery.nav.receivables', icon: Wallet },
+    breadcrumb: { title: 'delivery.nav.receivables' },
+    path: '/receivables',
   },
   {
     auth: 'guest',
