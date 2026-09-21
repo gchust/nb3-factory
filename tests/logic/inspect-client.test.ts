@@ -121,7 +121,7 @@ describe('client inspection', () => {
     ).toEqual([
       {
         auth: 'required',
-        id: 'nb3-factory:home',
+        id: 'nb3-factory:dashboard',
         path: '/',
       },
       {
@@ -143,6 +143,52 @@ describe('client inspection', () => {
         auth: 'guest',
         id: 'nb3-factory:reset-password',
         path: '/reset-password',
+      },
+      {
+        // The business modules are children of one navigation group, so the group itself resolves to the root path.
+        auth: 'required',
+        id: 'nb3-factory:laboratory',
+        path: '/',
+      },
+      {
+        auth: 'required',
+        id: 'nb3-factory:laboratories',
+        path: '/laboratories',
+      },
+      {
+        auth: 'required',
+        id: 'nb3-factory:equipment',
+        path: '/equipment',
+      },
+      {
+        auth: 'required',
+        id: 'nb3-factory:equipment-detail',
+        path: '/equipment/:equipmentId',
+      },
+      {
+        auth: 'required',
+        id: 'nb3-factory:calibrations',
+        path: '/calibrations',
+      },
+      {
+        auth: 'required',
+        id: 'nb3-factory:work-orders',
+        path: '/work-orders',
+      },
+      {
+        auth: 'required',
+        id: 'nb3-factory:work-order-detail',
+        path: '/work-orders/:workOrderId',
+      },
+      {
+        auth: 'required',
+        id: 'nb3-factory:safety-checks',
+        path: '/safety-checks',
+      },
+      {
+        auth: 'required',
+        id: 'nb3-factory:training-records',
+        path: '/training-records',
       },
       {
         auth: 'guest',
