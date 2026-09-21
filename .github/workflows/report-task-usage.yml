@@ -25,11 +25,15 @@ concurrency:
 
 jobs:
   report:
+    outputs:
+      html_ready: ${{ steps.totals.outputs.html_ready }}
+      report_artifact: ${{ steps.archive.outputs.artifact-id }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
       actions: read
       contents: read
+      pull-requests: read
       issues: write
     env:
       SOURCE_RUN_ID: ${{ inputs.run_id || github.event.workflow_run.id }}
@@ -65,6 +69,7 @@ jobs:
           path: ${{ runner.temp }}/usage-evidence
 
       - name: Report totals to the task Issue
+        id: totals
         if: steps.source.outputs.ready == 'true'
         env:
           GITHUB_TOKEN: ${{ github.token }}
@@ -74,10 +79,83 @@ jobs:
             --artifacts "$RUNNER_TEMP/usage-evidence" --summary "$RUNNER_TEMP/task-report/report.json"
 
       - name: Save HTML and numeric usage report
+        id: archive
         if: always() && steps.source.outputs.ready == 'true'
         uses: actions/upload-artifact@v4
         with:
-          name: factory-usage-${{ env.SOURCE_RUN_ID }}-${{ github.run_id }}
+          name: factory-usage-${{ env.SOURCE_RUN_ID }}-${{ github.run_id }}-${{ github.run_attempt }}
           path: ${{ runner.temp }}/task-report
           if-no-files-found: warn
           retention-days: 14
+
+  pages:
+    needs: report
+    if: needs.report.outputs.html_ready == 'true' && needs.report.outputs.report_artifact != ''
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      actions: read
+      contents: write
+      pages: write
+      id-token: write
+      issues: write
+      pull-requests: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          path: control
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24.x
+      - uses: actions/download-artifact@v4
+        with:
+          artifact-ids: ${{ needs.report.outputs.report_artifact }}
+          path: ${{ runner.temp }}/delivery-report
+          merge-multiple: true
+      - name: Archive report without replacing other Issues
+        id: archive
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          node control/.github/scripts/report-pages.mjs archive \
+            --report "$RUNNER_TEMP/delivery-report/report.json" \
+            --html "$RUNNER_TEMP/delivery-report/report.html" \
+            --output "$RUNNER_TEMP/report-publication.json"
+      # Archive before configuring Pages: first-time setup failures lose no reports.
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.archive.outputs.commit_sha }}
+          path: report-site
+          persist-credentials: false
+      - name: Configure existing Pages site
+        id: pages
+        continue-on-error: true
+        uses: actions/configure-pages@v5
+      - name: Upload the complete archived site
+        if: steps.pages.outcome == 'success'
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: report-site
+      - name: Deploy report site
+        if: steps.pages.outcome == 'success'
+        id: deployment
+        uses: actions/deploy-pages@v4
+      - name: Verify HTML and update Issue and PR links
+        if: steps.deployment.outcome == 'success'
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          REPORT_BASE_URL: ${{ steps.deployment.outputs.page_url }}
+        run: |
+          node control/.github/scripts/report-pages.mjs notify \
+            --publication "$RUNNER_TEMP/report-publication.json" \
+            --base-url "$REPORT_BASE_URL"
+      - name: Explain one-time Pages setup
+        if: always() && steps.pages.outcome == 'failure'
+        run: |
+          echo '::warning::Report archived, but Pages is not ready. Set Settings > Pages > Source to GitHub Actions, then rerun the Pages job. No rebuild is needed.'
+          echo 'HTML 已归档。首次请将 Settings → Pages → Source 设为 GitHub Actions，然后重跑 Pages 作业；不需要重新搭建。' >> "$GITHUB_STEP_SUMMARY"

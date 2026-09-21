@@ -1,3 +1,4 @@
+import { makeDeliveryReport } from './delivery-report.mjs';
 import { readStageTimings, renderTaskReport } from './task-report.mjs';
 import { waitForTaskRun } from './wait-for-task-run.mjs';
 import {
@@ -70,6 +71,7 @@ async function list(route, key) {
 async function checkIssue(issue) {
   const data = await api('GET', `/issues/${issue}`);
   if (data.pull_request) throw new Error('Task number must refer to an Issue');
+  return data;
 }
 
 if (mode === 'select') {
@@ -104,7 +106,7 @@ if (mode === 'select') {
     !positive(source.issue)
   )
     throw new Error('Source mismatch');
-  await checkIssue(source.issue);
+  const issue = await checkIssue(source.issue);
   let usage = emptyUsage();
   if (source.invoked) {
     if (source.artifact) usage = await collectUsage(args.artifacts);
@@ -149,11 +151,23 @@ if (mode === 'select') {
     records,
     timings: readStageTimings(path.join(args.artifacts, 'timings.jsonl')),
   };
+  let html;
+  try {
+    const result = await makeDeliveryReport(report, args.artifacts, issue,
+      (branch) => list(`/pulls?state=all&head=${encodeURIComponent(`${repository.split('/')[0]}:${branch}`)}`));
+    report.delivery = result.facts;
+    report.pr = result.pr;
+    report.reportId = result.reportId;
+    html = result.html;
+    output('html_ready', 'true');
+  } catch (error) {
+    // Presentation must never erase numeric usage or restart a business build.
+    console.warn(`::warning::Full report unavailable: ${error.message}`);
+    report.presentationError = '完整报告生成失败，已保留基础统计报告。';
+    html = renderTaskReport(report);
+  }
   writeFileSync(args.summary, `${JSON.stringify(report, null, 2)}\n`);
-  writeFileSync(
-    path.join(path.dirname(args.summary), 'report.html'),
-    renderTaskReport(report),
-  );
+  writeFileSync(path.join(path.dirname(args.summary), 'report.html'), html);
   if (process.env.GITHUB_STEP_SUMMARY)
     appendFileSync(
       process.env.GITHUB_STEP_SUMMARY,

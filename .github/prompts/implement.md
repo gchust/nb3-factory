@@ -37,10 +37,10 @@
 
 ## 交回工厂
 
-简述实际修改、执行的相关自测和未解决问题。发现真实卡点时，可将简短复盘写到 `{{RETRO_PATH}}`，不要写到应用源码里：
+简述实际修改、执行的相关自测和未解决问题。发现真实卡点时及时把简短复盘写到 `{{RETRO_PATH}}`，不要写到应用源码里：
 
 ```json
-{"version":1,"summary":"","blockers":[{"phase":"implementation","title":"","symptom":"","rootCause":"","resolution":""}],"improvements":[]}
+{"version":1,"summary":"","blockers":[{"phase":"implementation","title":"","symptom":"","rootCause":"","resolution":"","status":"open"}],"improvements":[]}
 ```
 
-没有卡点可省略；没有可证实的优化建议就保持空数组，不凑数量。不估算 Token 或耗时，不生成统计页面；这些由工厂记录。不要写入凭据或真实业务数据。
+blockers 可选 status 为 resolved/open/unknown；不要仅因后来通过验收就推断问题已解决。改进项使用 category/title/detail/suggestedChange/mechanizable，记录实际建议及具体改法。没有卡点可省略；没有可证实的优化建议就保持空数组，不凑数量。不估算 Token 或耗时，不生成统计页面；这些由工厂记录。不要写入凭据或真实业务数据。

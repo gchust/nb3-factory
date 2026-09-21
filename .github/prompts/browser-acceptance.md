@@ -48,6 +48,16 @@
 
 清单的 videos 项使用 `{"title":"角色业务验收","file":"acceptance-admin.webm"}`。缺失素材写入 uncovered，不声称全覆盖。focused 或报告修复轮不额外制作展示素材。媒体问题不改变业务结论。
 
+## 交付报告说明
+
+全量验收收尾时，在 `$FACTORY_BROWSER_REPORT` 的同一目录写 `delivery-notes.json`；不更改原验收 schema，不执行 Git 发布：
+
+```json
+{"version":1,"summary":"简短业务结论","highlights":[{"title":"业务能力","detail":"实际完成情况"}],"flow":["实际业务步骤"]}
+```
+
+summary 最多 200 字，highlights 最多 4 项（title 50 字、detail 250 字），flow 最多 8 个节点。只总结已观察内容；不重复列出统计、状态和完整验收。不写 HTML/CSS，不读取报告样例或图片 Base64。focused 和补报告轮不额外生成。说明缺失不影响验收。
+
 ## 任务信息
 
 Issue #{{ISSUE_NUMBER}} {{ISSUE_TITLE}} · {{TASK_TYPE}} · 示例数据：{{SAMPLE_DATA}}

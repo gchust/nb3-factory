@@ -20,4 +20,6 @@
 
 浏览器反馈仅有失败操作和观察结果。不要读取完整 Issue、QA prompt、原始 QA 报告、通过项或历史验收日志来补充考题；需要定位时检查相关应用源码。不修改报告或伪造证据。
 
-简述根因、改动与相关自测。需要记录真实卡点时更新 `{{RETRO_PATH}}`（保留已有记录）：`{"version":1,"summary":"","blockers":[],"improvements":[]}`。无需凑优化建议或估算耗时、Token。
+简述根因、改动与相关自测。每次解决或确认真实卡点后及时更新 `{{RETRO_PATH}}`（保留已有记录）：`{"version":1,"summary":"","blockers":[],"improvements":[]}`。无需凑优化建议或估算耗时、Token。
+
+复盘保留问题的 phase/title/symptom/rootCause/resolution，以及可选的 status（resolved/open/unknown）和实际已知的 cost；不估算。改进项使用 category/title/detail/suggestedChange/mechanizable。历史已解决问题保留，不只写最后一轮摘要。

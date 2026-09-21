@@ -27,3 +27,12 @@ jobs:
         run: node --test --test-concurrency=1 .github/scripts/tests/*.test.mjs
       - name: Run preview DNS regression tests
         run: python3 .github/scripts/tests/preview-dns-sync.test.py
+      - name: Render the shared report review example
+        run: |
+          node .github/reports/render-report.mjs \
+            .github/reports/example.facts.json - "$RUNNER_TEMP/report.example.html"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: factory-report-example
+          path: ${{ runner.temp }}/report.example.html
+          retention-days: 14
