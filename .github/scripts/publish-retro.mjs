@@ -1,3 +1,5 @@
+import { taskOutcome, outcomeLabels } from './task-outcome.mjs';
+import { isValidTargetBranch } from './factory-lib.mjs';
 import { appendFileSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -35,14 +37,7 @@ const PHASES = {
   other: '未分类',
 };
 
-const CONCLUSIONS = {
-  success: '已交付',
-  failure: '失败',
-  cancelled: '已取消',
-  timed_out: '超时',
-  action_required: '需人工介入',
-  skipped: '跳过',
-};
+const CONCLUSIONS = outcomeLabels;
 
 const LIMIT = 800;
 const repository = process.env.GITHUB_REPOSITORY;
@@ -206,6 +201,15 @@ export function renderRetro({
     lines.push('| 指标 | 值 |', '| --- | ---: |', ...stats, '');
   }
 
+  if (!retro.blockers.length && !retro.improvements.length && !raw) {
+    lines.push(
+      repairs > 0
+        ? `本轮进行了 ${repairs} 次修复，但未记录结构化卡点。`
+        : '本轮未记录结构化卡点或优化建议；未记录不表示没有发生。',
+    );
+    return lines.join('\n');
+  }
+
   lines.push('### 一、这次遇到了什么问题，怎么解决的', '');
   if (retro.blockers.length) {
     retro.blockers.forEach((item, index) => {
@@ -222,7 +226,9 @@ export function renderRetro({
     lines.push(
       repair?.handoff
         ? '本轮跑到 Runner 预算上限后交接，未记录卡点。'
-        : '本轮没有记录卡点（一次通过，或 Agent 未填写）。',
+        : repairs > 0
+          ? `本轮进行了 ${repairs} 次修复，但未记录结构化卡点。`
+          : '本轮未记录卡点；没有记录不表示没有发生。',
     );
   }
   lines.push('');
@@ -367,7 +373,14 @@ async function select(args) {
       runAttempt: run.run_attempt,
       artifact: selected.artifact,
       issue: selected.issue,
-      conclusion: run.conclusion ?? '',
+      conclusion:
+        taskOutcome(
+          run,
+          await list(
+            `/actions/runs/${args.runId}/attempts/${run.run_attempt}/jobs`,
+            'jobs',
+          ),
+        ) ?? '',
     }),
   );
   output('artifact', selected.artifact.name);
@@ -416,7 +429,7 @@ async function publish(args) {
     issue < 1 ||
     issue !== source.issue ||
     source.artifact.name !== `factory-agent-${issue}` ||
-    !/^apps\/[a-z0-9][a-z0-9./_-]*$/.test(metadata.task?.targetBranch ?? '')
+    !isValidTargetBranch(metadata.task?.targetBranch)
   )
     throw new Error('Task metadata mismatch');
 

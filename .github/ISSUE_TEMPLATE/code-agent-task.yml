@@ -7,7 +7,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        每个 `apps/<name>` 分支代表一个可持续完善的业务系统。Code Agent 会在独立工作分支修改并向目标分支发起 PR，不会直接提交目标分支。
+        目标分支可选，留空使用 `issues-<Issue 编号>`。同一分支代表一个可持续完善的业务系统。Code Agent 会在独立工作分支修改并向目标分支发起 PR，不会直接提交目标分支。
 
         自动验证失败时，Code Agent 会根据最新日志持续修复并重新验证，不限修复次数；GitHub 托管 Runner 的单个 Job 最长运行 6 小时。
 
@@ -15,10 +15,10 @@ body:
     id: target_branch
     attributes:
       label: 目标分支
-      description: 不存在时会从默认分支创建；存在时会在其最新状态上继续。
-      placeholder: apps/it-service-desk
+      description: 选填，不限 apps/ 前缀。留空使用 issues-<Issue 编号>；不存在时从默认分支创建，存在时复用。
+      placeholder: it-service-desk（留空自动生成）
     validations:
-      required: true
+      required: false
 
   - type: dropdown
     id: task_type

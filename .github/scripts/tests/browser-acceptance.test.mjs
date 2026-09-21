@@ -45,6 +45,7 @@ for (const scenario of [
       for (const file of [
         'agent-browser-wrapper.sh',
         'build-browser-prompt.mjs',
+        'build-qa-repair-prompt.mjs',
         'check-recording-health.mjs',
         'factory-lib.mjs',
         'prepare-recordings.mjs',
@@ -225,14 +226,11 @@ for (const scenario of [
         'utf8',
       );
       assert.match(renderedPrompt, /完整重新加载应用/u);
-      assert.match(renderedPrompt, /管理员的前端权限缓存/u);
-      assert.match(
-        renderedPrompt,
-        /不要再用 Code Agent 的 `read` 工具读取 PNG/u,
-      );
+      assert.match(renderedPrompt, /管理员前端权限缓存/u);
+      assert.match(renderedPrompt, /不要用 Code Agent 的 `read` 工具读取 PNG/u);
       // The recording must cover the whole authenticated session, not a handful of scenes.
       assert.match(renderedPrompt, /acceptance-admin\.webm/u);
-      assert.match(renderedPrompt, /acceptance-normal-user\.webm/u);
+      assert.match(renderedPrompt, /其他角色用不同名称/u);
       if (
         ['valid', 'recording-unavailable', 'evidence-gap'].includes(scenario)
       ) {

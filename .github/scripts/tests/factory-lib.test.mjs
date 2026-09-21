@@ -79,13 +79,15 @@ test('parseIssueTask ignores the legacy repair count field', () => {
   );
 });
 
-test('target branch validation accepts only apps namespace', () => {
+test('target branch validation accepts optional namespaces and rejects invalid refs', () => {
   assert.equal(validateTargetBranch('apps/crm-v2'), 'apps/crm-v2');
   assert.equal(validateTargetBranch('apps/team/crm_2'), 'apps/team/crm_2');
   for (const invalid of [
-    'main',
-    'agent/issue-1',
-    'apps/CRM',
+    'HEAD',
+    'a.lock',
+    'team/.hidden',
+    'a//b',
+    'a/',
     'apps/../main',
     'apps/a lock',
   ]) {

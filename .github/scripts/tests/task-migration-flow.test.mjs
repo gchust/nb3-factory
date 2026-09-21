@@ -286,3 +286,50 @@ for (const event of [
     assert.match(result.output, /status=ready/);
   });
 }
+
+for (const [branch, supplied] of [
+  ['issues-2', false],
+  ['feature/CRM', true],
+]) {
+  for (const exists of [false, true]) {
+    test(`prepare ${exists ? 'reuses' : 'creates'} target ${branch} without an apps namespace`, async () => {
+      const result = await runFixture(
+        'prepare-task.mjs',
+        { issue: { number: 2 } },
+        (call) => {
+          if (call.route === '/issues/2' && call.method === 'GET')
+            return {
+              ...issue(2, 'agent:pending'),
+              body: supplied
+                ? issueBody.replace('apps/demo', branch)
+                : issueBody.replace('### 目标分支\n\napps/demo\n\n', ''),
+            };
+          if (call.route === `/git/ref/heads/${branch}`)
+            return exists ? { object: { sha: 'existing-target' } } : null;
+          if (call.route === '/git/ref/heads/develop')
+            return { object: { sha: 'default-sha' } };
+          if (call.route === '/git/refs' && call.method === 'POST')
+            return { object: { sha: call.body.sha } };
+          if (call.route === '/pulls') return [];
+          return baseHandler(call);
+        },
+      );
+      assert.equal(result.metadata.task.targetBranch, branch);
+      assert.equal(result.metadata.targetCreated, !exists);
+      assert.equal(result.metadata.workBranch, 'agent/issue-2');
+      assert.match(
+        result.output,
+        new RegExp(`base_sha=${exists ? 'existing-target' : 'default-sha'}`),
+      );
+      const created = result.requests.filter(
+        (call) => call.route === '/git/refs',
+      );
+      assert.equal(created.length, exists ? 0 : 1);
+      if (!exists)
+        assert.deepEqual(created[0].body, {
+          ref: `refs/heads/${branch}`,
+          sha: 'default-sha',
+        });
+    });
+  }
+}

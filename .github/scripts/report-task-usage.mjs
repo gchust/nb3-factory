@@ -1,3 +1,4 @@
+import { readStageTimings, renderTaskReport } from './task-report.mjs';
 import { waitForTaskRun } from './wait-for-task-run.mjs';
 import {
   appendFileSync,
@@ -133,11 +134,25 @@ if (mode === 'select') {
     ),
     record,
   ];
-  const body = renderUsage(record, records);
+  const reportUrl = process.env.GITHUB_RUN_ID
+    ? `https://github.com/${repository}/actions/runs/${process.env.GITHUB_RUN_ID}#artifacts`
+    : '';
+  const body =
+    renderUsage(record, records) +
+    (reportUrl
+      ? `\n\n[查看本次 HTML / JSON 报告](${reportUrl})（在 Artifacts 下载后打开 report.html）。`
+      : '');
   mkdirSync(path.dirname(path.resolve(args.summary)), { recursive: true });
+  const report = {
+    record,
+    cumulative: aggregate(records),
+    records,
+    timings: readStageTimings(path.join(args.artifacts, 'timings.jsonl')),
+  };
+  writeFileSync(args.summary, `${JSON.stringify(report, null, 2)}\n`);
   writeFileSync(
-    args.summary,
-    `${JSON.stringify({ record, cumulative: aggregate(records) }, null, 2)}\n`,
+    path.join(path.dirname(args.summary), 'report.html'),
+    renderTaskReport(report),
   );
   if (process.env.GITHUB_STEP_SUMMARY)
     appendFileSync(

@@ -27,8 +27,7 @@ const FIELD_NAMES = {
   sampleData: '示例数据',
 };
 
-const TARGET_BRANCH_RE =
-  /^apps\/[a-z0-9](?:[a-z0-9._-]{0,62})(?:\/[a-z0-9](?:[a-z0-9._-]{0,62}))*$/;
+const TARGET_BRANCH_RE = /^[A-Za-z0-9_][A-Za-z0-9._/-]*$/;
 
 export class TaskInputError extends Error {}
 
@@ -44,17 +43,31 @@ export function extractIssueSections(body = '') {
   return sections;
 }
 
+export function isValidTargetBranch(branch) {
+  return (
+    typeof branch === 'string' &&
+    TARGET_BRANCH_RE.test(branch) &&
+    branch.length <= 120 &&
+    branch !== 'HEAD' &&
+    !branch.includes('..') &&
+    branch
+      .split('/')
+      .every(
+        (part) =>
+          part &&
+          !part.startsWith('.') &&
+          !part.endsWith('.') &&
+          !part.endsWith('.lock'),
+      )
+  );
+}
+
 export function validateTargetBranch(branch) {
-  if (typeof branch !== 'string' || !TARGET_BRANCH_RE.test(branch)) {
+  if (!isValidTargetBranch(branch)) {
     throw new TaskInputError(
-      '目标分支必须使用 `apps/<name>` 格式，并且只包含小写字母、数字、点、下划线、短横线或安全的子路径。',
+      '目标分支名称无效：使用字母、数字、点、下划线、短横线或子路径，最长 120 字符。留空使用 issues-<Issue 编号>。',
     );
   }
-
-  if (branch.length > 120 || branch.includes('..') || branch.endsWith('.')) {
-    throw new TaskInputError('目标分支名称过长或包含 Git 不接受的片段。');
-  }
-
   return branch;
 }
 
@@ -69,7 +82,10 @@ export function parseIssueTask(issue) {
   };
 
   return {
-    targetBranch: validateTargetBranch(required('targetBranch')),
+    targetBranch: validateTargetBranch(
+      sections.get(FIELD_NAMES.targetBranch)?.trim() ||
+        `issues-${issueNumberFromEvent({ issue })}`,
+    ),
     taskType: required('taskType'),
     requirements: required('requirements'),
     acceptanceCriteria: required('acceptanceCriteria'),

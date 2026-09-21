@@ -12,10 +12,11 @@ const prompt = replaceTemplate(template, {
   TARGET_BRANCH: metadata.task.targetBranch,
   TASK_TYPE: metadata.task.taskType,
   REQUIREMENTS: metadata.task.requirements,
+  DISCUSSION_CONTEXT: metadata.task.discussionContext || '无',
   SAMPLE_DATA: metadata.task.sampleData,
   // The agent writes its retrospective outside the application tree so it can
   // never end up in the business patch.
-  RETRO_PATH: retroPath(),
+  RETRO_PATH: retroPath(args['retro-path']),
 });
 
 if (/\{\{(?:ACCEPTANCE_CRITERIA|ISSUE_URL)\}\}/.test(prompt)) {

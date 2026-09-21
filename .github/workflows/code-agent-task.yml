@@ -69,6 +69,7 @@ jobs:
   agent:
     needs: prepare
     env:
+      FACTORY_QA_THINKING: ${{ vars.FACTORY_QA_THINKING }}
       CODE_AGENT_ENGINE: ${{ vars.CODE_AGENT_ENGINE }}
     if: needs.prepare.outputs.status == 'ready' && needs.prepare.outputs.comment_kind != 'reply'
     runs-on: ubuntu-latest

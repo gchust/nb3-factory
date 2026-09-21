@@ -70,14 +70,14 @@ test('renders quantitative stats, blockers and baseline suggestions', () => {
     attempt: 2,
     runUrl: 'https://example.test/run',
     targetBranch: 'apps/demo',
-    conclusion: 'success',
+    conclusion: 'delivered',
     retro: parseRetro(JSON.stringify(RETRO)).data,
     structured: true,
     raw: null,
     repair: { verificationAttempts: 3, repairAttempts: 2 },
   });
   assert.match(body, /^<!-- factory-retro:123:2 -->/u);
-  assert.match(body, /已交付/u);
+  assert.match(body, /已生成\/更新业务 PR/u);
   assert.match(body, /\| 修复轮次 \| 2 \|/u);
   assert.match(body, /### 一、这次遇到了什么问题，怎么解决的/u);
   assert.match(body, /\*\*Seed 重复执行会插重\*\*（工厂验证）/u);
@@ -159,7 +159,7 @@ test('publishes an updatable retro comment and appends to the ledger', async (t)
     runAttempt: 1,
     artifact: { name: 'factory-agent-42' },
     issue: 42,
-    conclusion: 'success',
+    conclusion: 'delivered',
   });
 
   const calls = [];
