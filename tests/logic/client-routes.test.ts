@@ -24,6 +24,12 @@ describe('app client routes', () => {
           name: 'home',
           path: '/',
         },
+        { auth: 'required', name: 'customers', path: '/customers' },
+        { auth: 'required', name: 'projects', path: '/projects' },
+        { auth: 'required', name: 'project-detail', path: '/projects/:id' },
+        { auth: 'required', name: 'issues', path: '/issues' },
+        { auth: 'required', name: 'acceptance', path: '/acceptance' },
+        { auth: 'required', name: 'settlements', path: '/settlements' },
         { auth: 'guest', name: 'login', path: '/login' },
         { auth: 'guest', name: 'register', path: '/register' },
         {
@@ -61,6 +67,14 @@ describe('app client routes', () => {
     expect(pageAuthorizations(resolved.routes)).toEqual([
       // The landing page opted out of page authorization, so it is reachable by every signed-in user.
       { name: 'home', authorizedAs: null },
+      // Roles in this application differ by record and action scope, not by page, so the business
+      // pages are reachable by every signed-in user and the server narrows what they contain.
+      { name: 'customers', authorizedAs: null },
+      { name: 'projects', authorizedAs: null },
+      { name: 'project-detail', authorizedAs: null },
+      { name: 'issues', authorizedAs: null },
+      { name: 'acceptance', authorizedAs: null },
+      { name: 'settlements', authorizedAs: null },
     ]);
   });
 });
