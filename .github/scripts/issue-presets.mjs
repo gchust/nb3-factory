@@ -3,6 +3,7 @@ import { createHash } from 'node:crypto';
 import { extractIssueSections, parseIssueTask, TaskInputError } from './factory-lib.mjs';
 import { listAll, parseBuild } from './comment-queue.mjs';
 import { stripTaskTitle } from './task-compat.mjs';
+import { splitPresetComments } from './preset-comment-inputs.mjs';
 
 export const PRESET_LABEL = 'factory:preset';
 export const PRESET_FORM_PATH = '.github/ISSUE_TEMPLATE/rebuild-from-preset.yml';
@@ -155,12 +156,17 @@ async function copyComments(client, issue, snapshot, hash, comments) {
 }
 
 function addPresetInputs(task, snapshot) {
-  const history = snapshot.comments.filter((comment) => comment.body.trim())
+  const { business, reviews } = splitPresetComments(snapshot.comments);
+  const history = business
     .map((comment) => `## 案例人工评论 #${comment.id}（${comment.author}）\n\n${parseBuild(comment.body) || comment.body}`);
   if (snapshot.extra) history.push(`## 本次补充要求\n\n${snapshot.extra}`);
   const additional = history.join('\n\n');
+  const reviewCriteria = reviews.map((comment) =>
+    `## 案例评审评论 #${comment.id}（${comment.author}）\n\n${comment.body}`).join('\n\n');
   return {
     ...task,
+    // Reviewers inspect code; browser QA must not be asked to read source.
+    ...(reviews.length ? { reviewCriteria } : {}),
     requirements: [task.requirements, additional].filter(Boolean).join('\n\n'),
     acceptanceCriteria: additional
       ? `${task.acceptanceCriteria}\n\n同时验证案例人工输入中的产品要求：\n\n${additional}`
@@ -202,6 +208,10 @@ export async function preparePresetIssue(client, issue) {
         sampleData: task.sampleData,
       })),
       humanCommentCount: snapshot.comments.length,
+      ...(task.reviewCriteria ? {
+        reviewHash: hashInput(task.reviewCriteria),
+        reviewCommentCount: splitPresetComments(snapshot.comments).reviews.length,
+      } : {}),
     },
   };
 }
