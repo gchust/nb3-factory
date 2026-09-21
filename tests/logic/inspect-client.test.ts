@@ -145,6 +145,51 @@ describe('client inspection', () => {
         path: '/reset-password',
       },
       {
+        auth: 'required',
+        id: 'nb3-factory:compliance',
+        path: '/compliance',
+      },
+      {
+        auth: 'required',
+        id: 'nb3-factory:compliance-supplier-detail',
+        path: '/compliance/suppliers/:id',
+      },
+      {
+        auth: 'required',
+        id: 'nb3-factory:compliance-contract-detail',
+        path: '/compliance/contracts/:id',
+      },
+      {
+        auth: 'required',
+        id: 'nb3-factory:compliance-dashboard',
+        path: '/compliance',
+      },
+      {
+        auth: 'required',
+        id: 'nb3-factory:compliance-suppliers',
+        path: '/compliance/suppliers',
+      },
+      {
+        auth: 'required',
+        id: 'nb3-factory:compliance-qualifications',
+        path: '/compliance/qualifications',
+      },
+      {
+        auth: 'required',
+        id: 'nb3-factory:compliance-reviews',
+        path: '/compliance/reviews',
+      },
+      {
+        auth: 'required',
+        id: 'nb3-factory:compliance-contracts',
+        path: '/compliance/contracts',
+      },
+      {
+        auth: 'required',
+        id: 'nb3-factory:compliance-risks',
+        path: '/compliance/risks',
+      },
+      {
         auth: 'guest',
         id: '@nocobase/app-plugin-install:install',
         path: '/install',
@@ -227,6 +272,7 @@ describe('client inspection', () => {
         )
         .slice(0, 10),
     ).toEqual([
+      'compliance-access',
       'ai',
       'permission-sets',
       'new',
@@ -236,7 +282,6 @@ describe('client inspection', () => {
       'default-access',
       'sharing-rules',
       'restriction-rules',
-      'inspector',
     ]);
 
     const output = formatAppClientInspection(inspection);

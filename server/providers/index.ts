@@ -1,5 +1,12 @@
 import type { ApplicationServiceProviderConstructor } from '@nocobase/app-server/application';
 
-const serviceProviders: readonly ApplicationServiceProviderConstructor[] = [];
+import ComplianceProvider from './compliance.js';
+
+const serviceProviders: readonly ApplicationServiceProviderConstructor[] = [
+  ComplianceProvider,
+];
+
+export { complianceServiceToken } from './compliance.js';
+export type { ComplianceService } from './compliance.js';
 
 export default serviceProviders;

@@ -32,15 +32,26 @@ describe('app client routes', () => {
           path: '/forgot-password',
         },
         { auth: 'guest', name: 'reset-password', path: '/reset-password' },
+        {
+          auth: 'required',
+          name: 'compliance',
+          path: '/compliance',
+        },
       ],
     });
     expect(applicationRoutes[1]).toEqual({
       parent: 'settings',
-      routes: [],
+      routes: [
+        expect.objectContaining({
+          name: 'compliance-access',
+          path: 'compliance-access',
+        }),
+      ],
     });
     expect(Object.isFrozen(applicationRoutes[0])).toBe(true);
     expect(Object.isFrozen(applicationRoutes[1])).toBe(true);
     for (const route of applicationRoutes[0].routes) {
+      if (!route.componentLoader) continue;
       await expect(route.componentLoader()).resolves.toMatchObject({
         default: expect.any(Function),
       });
@@ -61,6 +72,15 @@ describe('app client routes', () => {
     expect(pageAuthorizations(resolved.routes)).toEqual([
       // The landing page opted out of page authorization, so it is reachable by every signed-in user.
       { name: 'home', authorizedAs: null },
+      // The compliance pages use the app-owned membership model, so they also opt out.
+      { name: 'compliance-supplier-detail', authorizedAs: null },
+      { name: 'compliance-contract-detail', authorizedAs: null },
+      { name: 'compliance-dashboard', authorizedAs: null },
+      { name: 'compliance-suppliers', authorizedAs: null },
+      { name: 'compliance-qualifications', authorizedAs: null },
+      { name: 'compliance-reviews', authorizedAs: null },
+      { name: 'compliance-contracts', authorizedAs: null },
+      { name: 'compliance-risks', authorizedAs: null },
     ]);
   });
 });
