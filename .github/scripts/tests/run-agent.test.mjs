@@ -81,76 +81,83 @@ test('Code Agent runner keeps the API key indirect and redacts diagnostic artifa
   }
 });
 
-test('Code Agent runner applies DeepSeek V4 compatibility behind a custom proxy', () => {
-  const root = mkdtempSync(path.join(os.tmpdir(), 'nb3-factory-deepseek-'));
-  const workspace = path.join(root, 'workspace');
-  const bin = path.join(root, 'bin');
-  const prompt = path.join(root, 'task.md');
-  const log = path.join(root, 'artifacts', 'agent.jsonl');
-  const agentDir = path.join(root, 'agent');
+for (const model of [
+  'deepseek-v4-flash',
+  'deepseek-v4.1-flash',
+  'deepseek-v4-pro',
+  'deepseek-v4.1-pro',
+]) {
+  test(`Code Agent runner applies DeepSeek compatibility for ${model}`, () => {
+    const root = mkdtempSync(path.join(os.tmpdir(), 'nb3-factory-deepseek-'));
+    const workspace = path.join(root, 'workspace');
+    const bin = path.join(root, 'bin');
+    const prompt = path.join(root, 'task.md');
+    const log = path.join(root, 'artifacts', 'agent.jsonl');
+    const agentDir = path.join(root, 'agent');
 
-  try {
-    mkdirSync(workspace);
-    mkdirSync(bin);
-    writeFileSync(prompt, 'test task\n');
-    writeFileSync(
-      path.join(bin, 'pi'),
-      '#!/usr/bin/env node\nconsole.log(JSON.stringify({ ok: true }));\n',
-      { mode: 0o755 },
-    );
+    try {
+      mkdirSync(workspace);
+      mkdirSync(bin);
+      writeFileSync(prompt, 'test task\n');
+      writeFileSync(
+        path.join(bin, 'pi'),
+        '#!/usr/bin/env node\nconsole.log(JSON.stringify({ ok: true }));\n',
+        { mode: 0o755 },
+      );
 
-    execFileSync(
-      process.execPath,
-      [
-        script,
-        '--workspace',
-        workspace,
-        '--prompt',
-        prompt,
-        '--log',
-        log,
-        '--agentDir',
-        agentDir,
-      ],
-      {
-        env: {
-          ...process.env,
-          PATH: `${bin}:${process.env.PATH}`,
-          CODE_AGENT_API_ENDPOINT: 'https://proxy.example/v1',
-          CODE_AGENT_API_KEY: 'test-key',
-          CODE_AGENT_API_TYPE: 'openai-completions',
-          CODE_AGENT_MODEL: 'deepseek-v4-flash',
+      execFileSync(
+        process.execPath,
+        [
+          script,
+          '--workspace',
+          workspace,
+          '--prompt',
+          prompt,
+          '--log',
+          log,
+          '--agentDir',
+          agentDir,
+        ],
+        {
+          env: {
+            ...process.env,
+            PATH: `${bin}:${process.env.PATH}`,
+            CODE_AGENT_API_ENDPOINT: 'https://proxy.example/v1',
+            CODE_AGENT_API_KEY: 'test-key',
+            CODE_AGENT_API_TYPE: 'openai-completions',
+            CODE_AGENT_MODEL: model,
+          },
+          stdio: 'pipe',
         },
-        stdio: 'pipe',
-      },
-    );
+      );
 
-    const models = JSON.parse(
-      readFileSync(path.join(agentDir, 'models.json'), 'utf8'),
-    );
-    const provider = models.providers['nb3-factory'];
-    const configuredModel = provider.models[0];
+      const models = JSON.parse(
+        readFileSync(path.join(agentDir, 'models.json'), 'utf8'),
+      );
+      const provider = models.providers['nb3-factory'];
+      const configuredModel = provider.models[0];
 
-    assert.equal(provider.compat.supportsDeveloperRole, false);
-    assert.equal(provider.compat.supportsReasoningEffort, true);
-    assert.equal(provider.compat.supportsStore, false);
-    assert.equal(provider.compat.maxTokensField, 'max_tokens');
-    assert.equal(provider.compat.thinkingFormat, 'deepseek');
-    assert.equal(
-      provider.compat.requiresReasoningContentOnAssistantMessages,
-      true,
-    );
-    assert.deepEqual(configuredModel.thinkingLevelMap, {
-      minimal: null,
-      low: 'low',
-      medium: null,
-      high: 'high',
-      max: 'max',
-    });
-  } finally {
-    rmSync(root, { recursive: true, force: true });
-  }
-});
+      assert.equal(provider.compat.supportsDeveloperRole, false);
+      assert.equal(provider.compat.supportsReasoningEffort, true);
+      assert.equal(provider.compat.supportsStore, false);
+      assert.equal(provider.compat.maxTokensField, 'max_tokens');
+      assert.equal(provider.compat.thinkingFormat, 'deepseek');
+      assert.equal(
+        provider.compat.requiresReasoningContentOnAssistantMessages,
+        true,
+      );
+      assert.deepEqual(configuredModel.thinkingLevelMap, {
+        minimal: null,
+        low: model.endsWith('-flash') ? 'low' : null,
+        medium: null,
+        high: 'high',
+        max: 'max',
+      });
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+}
 
 test('Code Agent runner keeps streamed deltas and large tool results out of the Actions log', () => {
   const root = mkdtempSync(path.join(os.tmpdir(), 'nb3-factory-console-'));
@@ -514,6 +521,109 @@ for (const timeout of [undefined, '', '0']) {
         assert.equal(result.status, 0, result.stderr);
         const args = JSON.parse(result.stdout.trim());
         assert.equal(args[args.indexOf('--thinking') + 1], thinking || 'max');
+      }
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+}
+
+for (const scenario of [
+  'error',
+  'aborted',
+  'summary-only',
+  'recovered',
+  'hanging-error',
+]) {
+  test(`Pi handles model outcome ${scenario} even when the CLI exits zero`, () => {
+    const root = mkdtempSync(path.join(os.tmpdir(), 'nb3-pi-outcome-'));
+    try {
+      const bin = path.join(root, 'bin');
+      mkdirSync(bin);
+      writeFileSync(path.join(root, 'task.md'), 'test task');
+      const failed = {
+        role: 'assistant',
+        content: [],
+        stopReason: scenario === 'aborted' ? 'aborted' : 'error',
+        errorMessage:
+          '503 model_price_error secret-test-key https://proxy.example/v1',
+      };
+      const success = {
+        role: 'assistant',
+        content: [{ type: 'text', text: 'done' }],
+        stopReason: 'stop',
+      };
+      const events =
+        scenario === 'summary-only'
+          ? []
+          : [{ type: 'message_end', message: failed }];
+      if (scenario === 'recovered')
+        events.push({ type: 'message_end', message: success });
+      events.push(
+        {
+          type: 'agent_end',
+          messages: scenario === 'recovered' ? [failed, success] : [failed],
+        },
+        { type: 'agent_settled' },
+      );
+      writeFileSync(
+        path.join(bin, 'pi'),
+        '#!/usr/bin/env node\n' +
+          events
+            .map(
+              (event) =>
+                `console.log(${JSON.stringify(JSON.stringify(event))});`,
+            )
+            .join('\n') +
+          (scenario === 'hanging-error'
+            ? '\nsetInterval(() => {}, 1000);'
+            : ''),
+        { mode: 0o755 },
+      );
+      const result = spawnSync(
+        process.execPath,
+        [
+          script,
+          '--workspace',
+          root,
+          '--prompt',
+          path.join(root, 'task.md'),
+          '--log',
+          path.join(root, 'log.jsonl'),
+          '--agentDir',
+          path.join(root, 'agent'),
+        ],
+        {
+          encoding: 'utf8',
+          timeout: 8000,
+          env: {
+            ...process.env,
+            PATH: `${bin}:${process.env.PATH}`,
+            CODE_AGENT_ENGINE: 'pi',
+            CODE_AGENT_API_ENDPOINT: 'https://proxy.example/v1',
+            CODE_AGENT_API_KEY: 'secret-test-key',
+            CODE_AGENT_MODEL: 'deepseek-v4.1-flash',
+            CODE_AGENT_THINKING: 'high',
+          },
+        },
+      );
+      assert.equal(result.error, undefined);
+      assert.equal(
+        result.status === 0,
+        scenario === 'recovered',
+        result.stderr,
+      );
+      if (scenario !== 'recovered')
+        assert.match(
+          result.stderr,
+          /Pi model invocation failed: 503 model_price_error/,
+        );
+      for (const output of [
+        result.stdout,
+        result.stderr,
+        readFileSync(path.join(root, 'log.jsonl'), 'utf8'),
+      ]) {
+        assert.doesNotMatch(output, /secret-test-key|https:\/\/proxy.example/);
       }
     } finally {
       rmSync(root, { recursive: true, force: true });

@@ -101,6 +101,7 @@ export async function runAgentInvocation({
   runDeadlineEpochSeconds = null,
   completionGraceMilliseconds = COMPLETION_GRACE_MILLISECONDS,
   isCompletionEvent = () => false,
+  getEventFailure = () => undefined,
   formatConsoleLine = (line) => line,
 }) {
   const redact = buildRedactor(secrets);
@@ -115,6 +116,7 @@ export async function runAgentInvocation({
 
   const stream = createWriteStream(log, { flags: 'w', mode: 0o600 });
   let stdoutBuffer = '';
+  let eventFailure;
   let timedOut = false;
   let stalled = false;
   let handoffRequested = false;
@@ -218,6 +220,10 @@ export async function runAgentInvocation({
     throw new Error(
       `${label} invocation timed out after ${invocationTimeoutSeconds} seconds.`,
     );
+  } else if (eventFailure) {
+    throw new Error(
+      `${label} model invocation failed: ${redact(eventFailure)}`,
+    );
   } else if (!completionTermination && !stalled && exitCode !== 0) {
     throw new Error(`${label} exited with code ${exitCode}.`);
   }
@@ -246,6 +252,8 @@ export async function runAgentInvocation({
     } catch {
       return;
     }
+    const failure = getEventFailure(event);
+    if (failure !== undefined) eventFailure = failure;
     if (!isCompletionEvent(event)) return;
     if (completionTimer) return;
     completionTimer = setTimeout(() => {

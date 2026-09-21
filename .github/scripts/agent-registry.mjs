@@ -8,7 +8,7 @@ const adapters = new Map([
     {
       module: new URL('./agents/pi.mjs', import.meta.url),
       package: '@earendil-works/pi-coding-agent',
-      version: '0.84.4',
+      version: '0.86.1',
       versionEnv: ['CODE_AGENT_VERSION', 'PI_VERSION'],
     },
   ],
