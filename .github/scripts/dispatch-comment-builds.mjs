@@ -14,9 +14,11 @@ import {
   saveReceipt,
 } from './comment-queue.mjs';
 
+import { isPresetIssue } from './issue-presets.mjs';
+
 export async function coordinate(client, issueNumber, admissionId = Infinity) {
   const issue = await client.getIssue(issueNumber);
-  if (issue.pull_request) return;
+  if (issue.pull_request || isPresetIssue(issue)) return;
   let task;
   try {
     task = parseIssueTask(issue);
