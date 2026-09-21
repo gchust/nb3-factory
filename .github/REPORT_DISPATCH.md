@@ -30,3 +30,9 @@ Actions → **Publish Task Visual Report**、**Publish Agent History** 或
 `FACTORY_MEDIA_TOKEN`，无需新 Secret。媒体、历史和用量的详细约束分别见
 [VISUAL_REPORTS.md](VISUAL_REPORTS.md)、[AGENT_HISTORY.md](AGENT_HISTORY.md) 和
 [TASK_USAGE.md](TASK_USAGE.md)。
+
+## 统一 HTML 报告与 Pages
+
+`Report Task Usage` 现在同时生成固定 v2 模板的交付报告；其下游 Pages 作业归档、显式部署并核对报告后回贴 Issue / PR 链接。每种已接单的结束状态均可生成，不只成功交付。沿用当前调度，不新增模型调用。
+
+首次配置、固定/最新入口、复盘和逐条验收展示以及补发说明见 [reports/README.md](reports/README.md)。Pages 发布失败不改变来源任务结果，原有用量回执与下载 Artifact 保留。

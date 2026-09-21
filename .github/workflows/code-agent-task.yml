@@ -120,6 +120,11 @@ jobs:
             --workspace workspace \
             --patch handoff/agent.patch \
             --branch "${{ needs.prepare.outputs.work_branch }}"
+          # Continue the retrospective, not previous QA conclusions or token logs.
+          mkdir -p "$RUNNER_TEMP/agent-artifacts"
+          if [[ -f handoff/retro.json && ! -L handoff/retro.json ]]; then
+            cp handoff/retro.json "$RUNNER_TEMP/agent-artifacts/retro.json"
+          fi
 
       - name: Download normalized task
         uses: actions/download-artifact@v4

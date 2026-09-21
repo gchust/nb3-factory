@@ -1,0 +1,124 @@
+{
+  "version": 1,
+  "meta": {
+    "repository": "gchust/nb3-factory",
+    "issue": 999998,
+    "runId": "1000002",
+    "attempt": 1,
+    "headSha": "0000000000000000000000000000000000000000",
+    "targetBranch": "issues-999998",
+    "title": "客户资料导入 · 问题与改进样例",
+    "snapshotDate": "2026-09-21",
+    "sampleNotice": "完全虚构的内容示例。用于展示问题、处理过程、改进建议和逐条验收；不对应 #146 或任何真实任务。"
+  },
+  "delivery": {
+    "status": "failed",
+    "ci": "passed",
+    "ciSource": "虚构状态夹具",
+    "qaSummary": "示例：重复客户反馈不够明确，批量导入未通过；重新登录后的数据核对尚未执行。"
+  },
+  "links": [],
+  "attention": [],
+  "checks": [
+    {
+      "id": "A1",
+      "title": "重复客户的错误反馈",
+      "criterion": "导入含重复邮箱的客户数据，显示对应行号并保留可修正的数据。",
+      "status": "failed",
+      "result": "示例：页面只显示“导入失败”，缺少重复行号。",
+      "actions": [
+        "在客户列表导入包含重复邮箱的示例文件。",
+        "打开失败提示，检查能否定位问题记录。"
+      ],
+      "evidence": [
+        "页面显示通用失败提示，没有重复邮箱所在的行号。"
+      ],
+      "screenshots": [],
+      "source": "完全虚构的 QA 记录；未提供真实截图"
+    },
+    {
+      "id": "A2",
+      "title": "导入结果的持久化",
+      "criterion": "导入成功后重新登录，核对客户记录与文件关联。",
+      "status": "not-verified",
+      "result": "示例：前序导入尚未通过，本项没有执行。",
+      "actions": [],
+      "evidence": [],
+      "screenshots": [],
+      "source": "完全虚构的未验证记录"
+    }
+  ],
+  "media": [],
+  "changes": null,
+  "usage": null,
+  "runs": [
+    {
+      "id": "1000002",
+      "attempt": 1,
+      "status": "failed",
+      "detail": "虚构示例：已完成自动检查，浏览器验收有一项未通过、一项未验证。"
+    }
+  ],
+  "retro": {
+    "version": 1,
+    "summary": "示例：已修复失败任务不结束的问题；重复客户反馈仍待完善；一处耗时现象尚未定位根因。",
+    "source": "完全虚构的 retro.json，非 #146 复盘",
+    "blockers": [
+      {
+        "phase": "repair",
+        "title": "导入失败后，任务仍显示“运行中”",
+        "symptom": "示例：数据校验抛错后，任务列表没有出现失败状态。",
+        "rootCause": "示例：异常分支只记录错误日志，没有更新任务状态。",
+        "resolution": "示例：在异常出口写入失败状态，并补充异常分支测试。",
+        "cost": "未测量，不估算耗时或 Token。",
+        "status": "resolved",
+        "source": "虚构修复记录 · 第 1 轮"
+      },
+      {
+        "phase": "qa",
+        "title": "重复客户的提示无法定位到具体记录",
+        "symptom": "示例：含重复邮箱的数据导入失败，用户只能看到通用提示。",
+        "rootCause": "示例：服务端错误已包含行信息，但界面只显示通用错误文案。",
+        "resolution": "尚未完成修复；保留本项为未通过。",
+        "cost": "阻塞重复客户验收；持久化验收尚未执行。",
+        "status": "open",
+        "source": "虚构验收记录 · A1"
+      },
+      {
+        "phase": "implementation",
+        "title": "导入过程中出现一次较长等待",
+        "symptom": "示例：执行导入时等待时间较长，但没有阶段耗时记录。",
+        "rootCause": "",
+        "resolution": "",
+        "cost": "未记录实际耗时。",
+        "source": "虚构现象记录 · 未做根因确认"
+      }
+    ],
+    "improvements": [
+      {
+        "category": "scaffold-defaults",
+        "title": "在任务模板中提供完整的异常收尾",
+        "detail": "示例：每次业务自行补写失败状态容易漏掉异常分支。",
+        "suggestedChange": "示例：任务脚手架默认包含成功 / 失败状态更新和异常测试样例。",
+        "mechanizable": true,
+        "source": "虚构修复复盘"
+      },
+      {
+        "category": "verification",
+        "title": "给导入验收补充重复记录与部分失败场景",
+        "detail": "示例：只验证正常导入，无法发现缺少行号的错误提示。",
+        "suggestedChange": "示例：将重复邮箱、空必填字段与失败后的再次提交纳入逐条验收，并分别记录结果。",
+        "mechanizable": true,
+        "source": "虚构 QA 复盘"
+      },
+      {
+        "category": "tooling",
+        "title": "记录导入阶段耗时，而不是猜测瓶颈",
+        "detail": "示例：当前只知道发生过等待，不能判断解析、写入还是刷新耗时。",
+        "suggestedChange": "示例：为解析、校验、批量写入和状态更新记录耗时，再依据测量决定优化顺序。",
+        "mechanizable": false,
+        "source": "虚构实现复盘"
+      }
+    ]
+  }
+}
