@@ -139,27 +139,29 @@ export async function resolveBuildTask(client, issue, buildId) {
   });
   return {
     ...task,
+    // Agent replies are fallible context, not user requirements. Keep all user
+    // constraints above, but bound model-generated history to the latest notes.
+    discussionContext: comments
+      .filter(
+        (comment) =>
+          comment.user?.login === 'github-actions[bot]' &&
+          comment.user?.type === 'Bot' &&
+          previous.some((item) =>
+            comment.body?.endsWith(`<!-- factory-comment-reply:${item.id} -->`),
+          ),
+      )
+      .slice(-3)
+      .map(
+        (comment) =>
+          `旧回复 #${comment.id}（非本轮要求）\n${comment.body.slice(0, 1900)}`,
+      )
+      .join('\n\n'),
     commentKind: source.kind,
     sourceComment: { id: source.id, url: source.url, prompt: source.prompt },
     requirements: [
       '## Issue 当前业务需求（背景与回归约束）',
       task.requirements,
       ...history,
-      ...comments
-        .filter(
-          (comment) =>
-            comment.user?.login === 'github-actions[bot]' &&
-            comment.user?.type === 'Bot' &&
-            previous.some((item) =>
-              comment.body?.endsWith(
-                `<!-- factory-comment-reply:${item.id} -->`,
-              ),
-            ),
-        )
-        .map(
-          (comment) =>
-            `## 先前 Agent 回复（可能基于旧版要求，不代表本轮修改指令）\n${comment.body}`,
-        ),
       `## 本轮${source.kind === 'reply' ? '需要回答的评论' : '必须实现的追加指令'} #${source.id}`,
       source.prompt,
       '在已有工作分支上增量修改。先检查当前代码和上轮失败记录；以 Issue 和本轮评论的当前明确要求为准。',

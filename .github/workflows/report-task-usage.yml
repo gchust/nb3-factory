@@ -71,13 +71,13 @@ jobs:
         run: |
           node control/.github/scripts/report-task-usage.mjs publish \
             --run-id "$SOURCE_RUN_ID" --source "$RUNNER_TEMP/usage-source.json" \
-            --artifacts "$RUNNER_TEMP/usage-evidence" --summary "$RUNNER_TEMP/task-usage.json"
+            --artifacts "$RUNNER_TEMP/usage-evidence" --summary "$RUNNER_TEMP/task-report/report.json"
 
-      - name: Save numeric usage report
+      - name: Save HTML and numeric usage report
         if: always() && steps.source.outputs.ready == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: factory-usage-${{ env.SOURCE_RUN_ID }}-${{ github.run_id }}
-          path: ${{ runner.temp }}/task-usage.json
+          path: ${{ runner.temp }}/task-report
           if-no-files-found: warn
           retention-days: 14

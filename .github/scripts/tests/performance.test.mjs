@@ -136,6 +136,21 @@ test('fast checks stop expensive work; repair prioritizes failed check without o
   const root = fixture(t);
   const workspace = path.join(root, 'workspace');
   mkdirSync(workspace);
+  spawnSync('git', ['init', workspace]);
+  spawnSync(
+    'git',
+    [
+      '-c',
+      'user.name=Test',
+      '-c',
+      'user.email=test@example.invalid',
+      'commit',
+      '--allow-empty',
+      '-m',
+      'base',
+    ],
+    { cwd: workspace },
+  );
   const config = write(root, 'runtime.yml', 'config');
   const commands = path.join(root, 'commands');
   write(

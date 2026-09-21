@@ -1,9 +1,17 @@
+import { taskOutcome, outcomeLabels } from './task-outcome.mjs';
 import { createHash } from 'node:crypto';
 import { createReadStream, lstatSync, readdirSync } from 'node:fs';
 import path from 'node:path';
 import { createInterface } from 'node:readline';
 
-export const phases = ['implementation', 'repair', 'qa', 'compaction'];
+export const phases = [
+  'implementation',
+  'repair',
+  'qa',
+  'qaFocused',
+  'qaReport',
+  'compaction',
+];
 const tokenKeys = [
   'input',
   'output',
@@ -66,12 +74,16 @@ function addUsage(target, phase, usage) {
 function phaseOf(file) {
   if (file === 'agent-implement.jsonl') return 'implementation';
   if (/^agent-repair-[1-9]\d*\.jsonl$/.test(file)) return 'repair';
-  if (
-    /^verify-[1-9]\d*\/browser-acceptance\/agent-browser-(?:acceptance|report-repair-[1-9]\d*)\.jsonl$/.test(
+  const browser =
+    /^verify-[1-9]\d*\/browser-(acceptance|focused)\/agent-browser-(acceptance|report-repair-[1-9]\d*)\.jsonl$/.exec(
       file,
-    )
-  )
-    return 'qa';
+    );
+  if (browser)
+    return browser[2].startsWith('report-repair')
+      ? 'qaReport'
+      : browser[1] === 'focused'
+        ? 'qaFocused'
+        : 'qa';
   return null;
 }
 
@@ -220,17 +232,7 @@ export function selectSource(run, jobs, artifacts, repository) {
   const finished = builds
     .map((job) => Date.parse(job.completed_at))
     .filter(Number.isFinite);
-  const status = builds.some(
-    (job) => job.name === 'publish' && job.conclusion === 'success',
-  )
-    ? 'delivered'
-    : agent?.steps?.some(
-          (step) =>
-            step.name === 'Dispatch continuation run' &&
-            step.conclusion === 'success',
-        ) && run.conclusion === 'success'
-      ? 'handoff'
-      : run.conclusion;
+  const status = taskOutcome(run, jobs);
   return {
     version: 1,
     repository,
@@ -277,6 +279,15 @@ export function validateRecord(record, repository, issue) {
   )
     throw new Error('Invalid Agent job');
   const usage = record.usage;
+  if (
+    usage?.phases &&
+    !('qaReport' in usage.phases) &&
+    !('qaFocused' in usage.phases)
+  ) {
+    usage.phases.qaFocused = emptyTokens();
+    usage.phases.qaReport = emptyTokens();
+    usage.legacyQa = true;
+  }
   if (
     !usage ||
     !['records', 'missing', 'incomplete'].every((key) => count(usage[key])) ||
@@ -354,18 +365,21 @@ export function renderUsage(record, records) {
     !value.total && (value.usage.missing || value.usage.incomplete)
       ? '未知（未取得可用 usage）'
       : `${number(value.total)}${value.usage.missing || value.usage.incomplete ? '（已记录，可能不完整）' : ''}`;
-  const statuses = {
-    delivered: '已生成/更新业务 PR',
-    handoff: '已保存 Handoff，等待下一轮续跑',
-    failure: '失败',
-    cancelled: '已取消',
-    timed_out: '超时',
-    success: '运行完成（未确认业务交付）',
-  };
+  const headlineTokens = (key) =>
+    cumulative.usage.records
+      ? number(phases.reduce((n, p) => n + cumulative.usage.phases[p][key], 0))
+      : '未知';
+  const coverage =
+    cumulative.usage.missing || cumulative.usage.incomplete
+      ? '（用量不完整，仅为已采集值）'
+      : '';
+  const statuses = outcomeLabels;
   const names = {
     implementation: '初始实现',
     repair: '应用修复',
-    qa: '浏览器验收 / 报告修复',
+    qa: '完整业务 QA（旧记录含报告修复）',
+    qaFocused: '失败路径复测',
+    qaReport: 'QA 补报告',
     compaction: '上下文压缩',
   };
   const url = `https://github.com/${record.repository}/actions/runs/${record.runId}/attempts/${record.attempt}`;
@@ -374,6 +388,10 @@ export function renderUsage(record, records) {
     '## 搭建 Token 与耗时',
     '',
     `本轮状态：**${statuses[record.status] || '未完成'}** · [Run ${record.runId} / attempt ${record.attempt}](${url})`,
+    '',
+    `已采集：非缓存输入 **${headlineTokens('input')}** · 输出（含思考） **${headlineTokens('output')}** · 执行时间 **${duration(cumulative.seconds)}**${coverage}。`,
+    '',
+    '<details><summary>本轮、累计 Token 与统计口径</summary>',
     '',
     '| 指标 | 本轮 Run attempt | 此 Issue 累计（已采集） |',
     '| --- | ---: | ---: |',
@@ -396,6 +414,8 @@ export function renderUsage(record, records) {
     '',
     '> Token 来自 Agent 日志中的 API usage（包含失败修复轮次和已报告的上下文压缩）；不把流式增量、历史快照、上下文长度或思考 token 重复相加。零填充响应、被中断请求或未报告的内部调用可能有遗漏，不等同于供应商账单，也不推算费用。',
     '> 执行时间累计 prepare、agent（含验收）、verify-final、publish 的唯一作业时长，不含媒体发布与统计工作流。端到端时间从已采集首轮启动计算，包含等待间隔；早于功能启用且未补采集的运行不在累计内。',
+    '',
+    '</details>',
     '',
     `<!-- factory-task-usage-data\n${JSON.stringify(record)}\n-->`,
   ].join('\n');

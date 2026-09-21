@@ -6,7 +6,7 @@
 
 ```mermaid
 flowchart TD
-    Issue["任意用户创建 Issue<br/>指定 apps/name"] --> Queue["按 Issue 分组的并发队列"]
+    Issue["任意用户创建 Issue<br/>目标分支可选"] --> Queue["按 Issue 分组的并发队列"]
     Queue --> Branch{"目标分支存在？"}
     Branch -->|否| Create["从默认分支创建"]
     Branch -->|是| Reuse["复用最新应用代码"]
@@ -17,7 +17,7 @@ flowchart TD
     Repair --> Verify
     Verify -->|通过| Final["只读 Job 独立复验 Patch"]
     Final --> Publish["不执行生成代码的 Publisher"]
-    Publish --> PR["agent/issue-N → apps/name"]
+    Publish --> PR["agent/issue-N → 目标分支"]
     PR -->|人工合并| Done["关闭 Issue 并唤醒下一任务"]
 ```
 
@@ -72,10 +72,10 @@ CodeBuddy 执行器把配置目录指向工厂自己的 agent 目录，并以 `-
 
 ## 工作方式
 
-1. 使用 **Code Agent 搭建任务** Issue Form 创建任务，目标分支使用 `apps/<system-name>`。
+1. 使用 **Code Agent 搭建任务** Issue Form 创建任务，目标分支可选，留空使用 `issues-<Issue 编号>`，也可指定 `crm`、`feature/crm` 或既有 `apps/...`。
 2. 目标分支不存在时，工厂从默认分支创建；存在时继续使用它。
-3. Code Agent 只修改本地工作区。流水线会运行类型检查、测试、Lint、格式检查、构建和全新 SQLite Migration/Seed；随后独立 QA Agent 使用 `agent-browser` 登录一次性数据库中的维护者账号，并在需要时注册普通测试用户，逐条实际操作 Issue 的验收要求，保存结构化报告和截图。只打开首页或停留在登录页不会通过。
-4. 代码检查或 Agent Browser 业务验收失败时，工厂会把最新日志与浏览器复现报告交给 Code Agent，并持续执行“修复 → 全量验证 → 浏览器验收”，不设修复次数上限。单次 Code Agent 调用默认不限时（`CODE_AGENT_INVOCATION_TIMEOUT_SECONDS=0`）；如需限制，可显式配置超时秒数。唯一的总时间上限是 GitHub 托管 Runner 单个 Job 允许的 6 小时；模型/API/浏览器基础设施错误、人工取消或超时时才标记 `agent:failed`。
+3. Code Agent 只修改本地工作区。流水线会运行类型检查、测试、Lint、格式检查、构建和全新 SQLite Migration/Seed；随后独立 QA Agent 使用 `agent-browser` 登录一次性数据库中的维护者账号，并按需求准备实际角色的测试账号，逐条实际操作 Issue 的验收要求，保存结构化报告和截图。只打开首页或停留在登录页不会通过。
+4. 代码检查或 Agent Browser 业务验收失败时，工厂会把最新日志与浏览器复现报告交给 Code Agent，并持续执行“修复 → 代码验证 → 失败路径复测 → 完整业务验收”，不设修复次数上限。单次 Code Agent 调用默认不限时（`CODE_AGENT_INVOCATION_TIMEOUT_SECONDS=0`）；如需限制，可显式配置超时秒数。唯一的总时间上限是 GitHub 托管 Runner 单个 Job 允许的 6 小时；模型/API/浏览器基础设施错误、人工取消或超时时才标记 `agent:failed`。
 5. 验证通过后，只读 Job 在全新工作区应用 Patch 并独立复验；Publisher 只应用已验证 Patch、提交和 Push，再创建或更新指向目标分支的 PR。
 6. 人工合并 PR 后，来源 Issue 自动关闭；同一目标分支上最早的等待任务会自动进入队列。
 
@@ -89,6 +89,18 @@ pnpm dev
 ```
 
 同一目标分支只能同时有一个未合并的 Code Agent PR。同一个 Issue 的重跑和跨 Runner continuation 共用一个 `queue: max` 并发组，避免同一任务重叠执行；不同 Issue 使用不同并发组，可以同时搭建不同应用。
+
+## 效率与交付报告
+
+目标分支未填写时使用 `issues-<Issue 编号>`；不存在则从默认分支创建，存在则复用。工作分支仍为 `agent/issue-N`，PR 指向目标分支，旧 `apps/...` 任务无需迁移。
+
+开发 Agent 执行针对性自测，工厂负责固定全量检查。修复循环会先自动格式化变更文件；业务失败后的下一轮先复测失败路径，通过后在全新数据库上执行完整业务 QA。局部通过不能直接发布。最终独立复验保留，修复次数不限。
+
+实现与 QA 不共享隐藏验收指令；修复只获得失败操作和观察。历史 Agent 回复与用户需求分开，最多保留最近三条定位线索；用户已有业务约束不会因此截断。复盘仅记录真实卡点，不强制生成建议。QA 补报告保留浏览器和证据，只补缺项；验收截图可复用为展示截图。
+
+可选 Actions Variable `FACTORY_QA_THINKING` 单独设置 QA 思考等级（由对应执行器验证）。留空继承原配置，不擅自降低默认质量；实际收益应比较同任务的完整耗时、用量和验收结果。
+
+用量评论默认突出非缓存输入、输出和耗时，详细统计折叠。对应统计工作流的 Artifact 包含单文件 `report.html` 和 `report.json`，下载解压后直接打开，无外部依赖、不调用模型渲染。HTML 暂不部署到公共站点。QA、失败路径复测和补报告分项统计；历史混合 QA 数据保持原值。问答和媒体发布不计入搭建用量。未知用量不当作零费用，Workflow 成功不自动等于已交付。
 
 ## 执行器与兼容迁移
 
@@ -126,7 +138,7 @@ Action 在全新目录生成应用、安装并锁定依赖，运行工厂测试�
 
 `1.0.0-beta.34` 默认模板附带的测试依赖上游仓库目录和固定模板名。工厂仅对该包的该版本修复测试：通过公开导出加载权限组件和迁移、使用生成应用的身份和目录、按真实路径验证 pnpm 符号链接，并补回发布时遗漏的 `.npmignore` Agent 排除规则。Vitest 仅转换相关插件的客户端文件，使原有登录状态 mock 生效。全部测试和行为断言保留；补丁先校验发布文件的 SHA-256，不匹配就终止刷新，修复记录在 `compatibilityFixes` 中。未来版本不应用这些补丁，创建器和模板仍使用 `latest`。
 
-模板刷新自身串行，并且不再阻塞独立的搭建任务；推送时会原子地创建 `factory-backup/develop-<run-id>-<attempt>` 备份并更新 `develop`。如果有人在生成期间更新了 `develop`，Action 会拒绝覆盖。已有 `apps/*` 分支保持原样：要测试新基线，请在新的 Issue 中指定一个尚不存在的 `apps/<name>`。仓库 Secrets、Variables 也不会被 Git 推送改动。
+模板刷新自身串行，并且不再阻塞独立的搭建任务；推送时会原子地创建 `factory-backup/develop-<run-id>-<attempt>` 备份并更新 `develop`。如果有人在生成期间更新了 `develop`，Action 会拒绝覆盖。已有应用分支保持原样：测试新基线时可新建 Issue 并留空目标分支，或指定一个尚不存在的分支。仓库 Secrets、Variables 也不会被 Git 推送改动。
 
 这个 Action 使用内置 `GITHUB_TOKEN`，无需模型 Key 或额外 Token。`develop` 的仓库规则需要允许此工作流强制推送；被规则拒绝时会报错，不会自动修改保护规则。可勾选 `dry_run` 只生成和验证，不更新远端分支。
 
@@ -134,7 +146,7 @@ Action 在全新目录生成应用、安装并锁定依赖，运行工厂测试�
 
 所有 GitHub 用户都可以通过符合模板格式的 Issue 触发搭建，不要求是仓库所有者或协作者。在有效任务 Issue 下，任何用户的 `/build` 评论均可追加搭建任务，普通评论进入只读问答；这些评论可以来自 Issue 作者之外的用户。机器人评论仍不入队，避免工厂自己的回复循环触发。
 
-手动运行和 repository_dispatch 不再检查 Issue 作者是否为仓库所有者，但 GitHub 对这些操作本身的权限要求不变。任务仍须符合 `apps/<name>` 分支格式、必填字段、Issue 状态和队列规则；验收、控制文件保护与独立发布边界保持不变。模板刷新属于仓库维护操作，仍保持原有的所有者限制。
+手动运行和 repository_dispatch 不再检查 Issue 作者是否为仓库所有者，但 GitHub 对这些操作本身的权限要求不变。任务仍须符合有效分支名称、必填业务字段、Issue 状态和队列规则；验收、控制文件保护与独立发布边界保持不变。模板刷新属于仓库维护操作，仍保持原有的所有者限制。
 
 ## 搭建与验收输入隔离
 

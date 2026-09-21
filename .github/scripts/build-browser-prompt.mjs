@@ -8,14 +8,17 @@ const template = readFileSync(args.template, 'utf8');
 
 writeFileSync(
   args.output,
-  replaceTemplate(template, {
-    ISSUE_NUMBER: metadata.issue.number,
-    ISSUE_TITLE: metadata.issue.title,
-    TASK_TYPE: metadata.task.taskType,
-    SAMPLE_DATA: metadata.task.sampleData,
-    REQUIREMENTS: metadata.task.requirements,
-    ACCEPTANCE_CRITERIA: metadata.task.acceptanceCriteria,
-  }),
+  (metadata.task.qaScope === 'focused'
+    ? '# 本轮仅复测上次失败路径，不制作额外展示素材。通过后工厂仍会完整验收。\n\n'
+    : '') +
+    replaceTemplate(template, {
+      ISSUE_NUMBER: metadata.issue.number,
+      ISSUE_TITLE: metadata.issue.title,
+      TASK_TYPE: metadata.task.taskType,
+      SAMPLE_DATA: metadata.task.sampleData,
+      REQUIREMENTS: metadata.task.requirements,
+      ACCEPTANCE_CRITERIA: metadata.task.acceptanceCriteria,
+    }),
 );
 
 function parseArgs(argv) {

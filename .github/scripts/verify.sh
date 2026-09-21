@@ -19,6 +19,11 @@ cd "$workspace"
 
 export FACTORY_TIMINGS_FILE="${FACTORY_TIMINGS_FILE:-$artifact_dir/timings.jsonl}"
 timed() { node "$script_dir/timed-command.mjs" "$1" pnpm "$1"; }
+# Only repair-loop workspaces are normalized; independent final verification
+# checks accepted bytes without editing them. Refresh candidates have no Git yet.
+if [[ "${FACTORY_RETRY_FAILED_CHECK:-0}" == '1' ]]; then
+  node "$script_dir/timed-command.mjs" format:auto node "$script_dir/format-changes.mjs" "$workspace"
+fi
 failed_stage="$artifact_dir/../last-failed-stage"
 run_check() {
   if timed "$1"; then return 0; else

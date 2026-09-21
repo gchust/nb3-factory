@@ -151,7 +151,8 @@ test('counts only completed responses plus compaction, across every repair and Q
   assert.equal(usage.missing + usage.incomplete, 0);
   assert.equal(usage.phases.implementation.totalTokens, 1940);
   assert.equal(usage.phases.repair.totalTokens, 1940);
-  assert.equal(usage.phases.qa.totalTokens, 1940);
+  assert.equal(usage.phases.qa.totalTokens, 970);
+  assert.equal(usage.phases.qaReport.totalTokens, 970);
   assert.equal(usage.phases.compaction.totalTokens, 970);
   assert.equal(aggregate([record({ usage })]).total, 6790); // reasoning is not added a second time
 });

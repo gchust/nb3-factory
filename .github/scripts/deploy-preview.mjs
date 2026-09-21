@@ -1,3 +1,4 @@
+import { isValidTargetBranch } from './factory-lib.mjs';
 import {
   appendFileSync,
   existsSync,
@@ -123,7 +124,7 @@ if (mode === 'select') {
     ![`agent/issue-${issue}`, `pi/issue-${issue}`].includes(
       metadata.workBranch,
     ) ||
-    !/^apps\/[a-z0-9][a-z0-9./_-]*$/.test(metadata.task?.targetBranch ?? '')
+    !isValidTargetBranch(metadata.task?.targetBranch)
   )
     throw new Error('Task metadata mismatch');
 
