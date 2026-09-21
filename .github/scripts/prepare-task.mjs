@@ -6,13 +6,13 @@ import {
   TaskInputError,
   appendGithubOutput,
   issueNumberFromEvent,
-  parseIssueTask,
 } from './factory-lib.mjs';
 import {
   claimComment,
   receiptsFor,
   resolveBuildTask,
 } from './comment-queue.mjs';
+import { isPresetIssue, preparePresetIssue } from './issue-presets.mjs';
 import { resolveTaskBranch, taskIssueNumber } from './task-compat.mjs';
 
 const args = parseArgs(process.argv.slice(2));
@@ -32,11 +32,15 @@ try {
   issueNumber = issueNumberFromEvent(event);
   appendGithubOutput(outputPath, 'issue_number', issueNumber);
 
-  await client.ensureStatusLabels();
   let issue = await client.getIssue(issueNumber);
   if (issue.pull_request) {
     throw new TaskInputError('任务编号必须指向 Issue，不能指向 Pull Request。');
   }
+  if (isPresetIssue(issue)) {
+    appendGithubOutput(outputPath, 'status', 'preset');
+    process.exit(0);
+  }
+  await client.ensureStatusLabels();
   const buildCommentId = event.client_payload?.build_comment_id;
   if (buildCommentId) {
     const { receipts } = await receiptsFor(client, issueNumber);
@@ -49,9 +53,11 @@ try {
       process.exit(0);
     }
   }
+  const prepared = await preparePresetIssue(client, issue);
+  issue = prepared.issue;
   const task = buildCommentId
-    ? await resolveBuildTask(client, issue, buildCommentId)
-    : parseIssueTask(issue);
+    ? await resolveBuildTask(client, issue, buildCommentId, prepared.task)
+    : prepared.task;
   if (buildCommentId) {
     appendGithubOutput(outputPath, 'build_comment_id', buildCommentId);
     appendGithubOutput(outputPath, 'comment_kind', task.commentKind);
@@ -94,6 +100,7 @@ try {
 
   const metadata = {
     schemaVersion: 1,
+    ...(prepared.preset ? { preset: prepared.preset } : {}),
     ...(buildCommentId ? { buildCommentId } : {}),
     repository,
     owner,

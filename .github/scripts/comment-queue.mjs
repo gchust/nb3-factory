@@ -110,13 +110,13 @@ export function sourceComment(client, issueNumber, comments, id) {
     prompt,
   };
 }
-export async function resolveBuildTask(client, issue, buildId) {
+export async function resolveBuildTask(client, issue, buildId, initialTask) {
   const { comments, receipts } = await receiptsFor(client, issue.number);
   const current = receipts.find((item) => item.id === Number(buildId));
   if (!current || current.status !== 'dispatched')
     throw new TaskInputError('追加指令未入队或已经结束；不能重复执行。');
   const source = sourceComment(client, issue.number, comments, buildId);
-  const task = parseIssueTask(issue);
+  const task = initialTask ?? parseIssueTask(issue);
   const previous = receipts.filter(
     (item) =>
       item.id < current.id &&
