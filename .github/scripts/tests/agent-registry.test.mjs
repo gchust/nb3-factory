@@ -10,7 +10,7 @@ import { resolveAgent } from '../agent-registry.mjs';
 test('agent registry selects a pinned built-in adapter', () => {
   const adapter = resolveAgent({});
   assert.equal(adapter.id, 'pi');
-  assert.equal(adapter.version, '0.84.4');
+  assert.equal(adapter.version, '0.86.1');
   assert.equal(
     resolveAgent({ CODE_AGENT_ENGINE: 'pi', CODE_AGENT_VERSION: '0.84.5' })
       .version,

@@ -40,11 +40,10 @@ const runDeadlineEpochSeconds = parseRunDeadline(
   process.env.FACTORY_RUN_DEADLINE_EPOCH_SECONDS,
 );
 const normalizedModel = model.toLowerCase();
-const deepseekV4Variant = normalizedModel.includes('deepseek-v4-flash')
-  ? 'flash'
-  : normalizedModel.includes('deepseek-v4-pro')
-    ? 'pro'
-    : null;
+const deepseekV4Variant =
+  normalizedModel.match(
+    /(?:^|\/)deepseek-v4(?:\.\d+)?-(flash|pro)(?:$|[-:])/u,
+  )?.[1] ?? null;
 const isDeepseekV4 = api === 'openai-completions' && deepseekV4Variant != null;
 const supportedApis = new Set([
   'openai-completions',
@@ -168,6 +167,21 @@ await runAgentInvocation({
   invocationTimeoutSeconds,
   idleTimeoutSeconds,
   runDeadlineEpochSeconds,
+  // Pi may exit 0 after a failed model request. Only the last assistant
+  // outcome is authoritative: an internal retry may recover an earlier error.
+  getEventFailure: (event) => {
+    const message =
+      event.type === 'agent_end'
+        ? event.messages?.findLast((item) => item.role === 'assistant')
+        : ['message_end', 'turn_end'].includes(event.type)
+          ? event.message
+          : undefined;
+    if (message?.role !== 'assistant') return undefined;
+    return ['error', 'aborted'].includes(message.stopReason)
+      ? message.errorMessage ||
+          `Model response ended with ${message.stopReason}`
+      : null;
+  },
   isCompletionEvent: (event) =>
     ['agent_end', 'agent_settled'].includes(event.type),
   formatConsoleLine: (line, event) => {
