@@ -125,6 +125,11 @@ describe('client inspection', () => {
         path: '/',
       },
       {
+        auth: 'required',
+        id: 'nb3-factory:customer-memos',
+        path: '/customer-memos',
+      },
+      {
         auth: 'guest',
         id: 'nb3-factory:login',
         path: '/login',

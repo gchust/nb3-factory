@@ -1,4 +1,4 @@
-import { Home } from 'lucide-react';
+import { Home, StickyNote } from 'lucide-react';
 import {
   defineAppRoutes,
   defineSettingsRoutes,
@@ -15,6 +15,16 @@ const appRoutes: AppClientRouteContribution = defineAppRoutes([
     name: 'home',
     navigation: { title: 'navigation.home', icon: Home },
     path: '/',
+  },
+  {
+    // Any signed-in user maintains customer memos; the page needs no extra
+    // page-level permission beyond authentication.
+    authz: 'skip',
+    auth: 'required',
+    componentLoader: () => import('./pages/customer-memos/index.js'),
+    name: 'customer-memos',
+    navigation: { title: 'navigation.customerMemos', icon: StickyNote },
+    path: '/customer-memos',
   },
   {
     auth: 'guest',
