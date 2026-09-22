@@ -67,7 +67,7 @@ jobs:
           pnpm create @nocobase/app@latest nb3-factory \
             --no-install --template=default --template-tag=latest
 
-      - name: Restore factory controls and fresh-template development guidance
+      - name: Restore factory controls without changing template guidance
         env:
           BASE_SHA: ${{ steps.base.outputs.sha }}
         run: |
@@ -79,8 +79,8 @@ jobs:
           cd "$RUNNER_TEMP/template-generation/nb3-factory"
           pnpm add @nocobase/db-sqlite@latest
           pnpm install --no-frozen-lockfile
-          pnpm plugin:skills:sync
-          pnpm exec prettier --write config.yml package.json README.MD AGENTS.md eslint.config.js scripts/build.mjs factory-template.json tests/logic vitest.config.ts
+          pnpm skills:sync
+          pnpm exec prettier --write config.yml package.json README.MD eslint.config.js scripts/build.mjs factory-template.json tests/logic vitest.config.ts
 
       - name: Install Chinese browser fonts
         run: bash control/.github/scripts/install-browser-fonts.sh
