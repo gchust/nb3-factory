@@ -1,5 +1,7 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 
+import { renderAcceptance } from './acceptance-criteria.mjs';
+
 import { replaceTemplate } from './factory-lib.mjs';
 
 const args = parseArgs(process.argv.slice(2));
@@ -17,7 +19,7 @@ writeFileSync(
       TASK_TYPE: metadata.task.taskType,
       SAMPLE_DATA: metadata.task.sampleData,
       REQUIREMENTS: metadata.task.requirements,
-      ACCEPTANCE_CRITERIA: metadata.task.acceptanceCriteria,
+      ACCEPTANCE_CRITERIA: renderAcceptance(metadata.task),
     }),
 );
 

@@ -81,7 +81,8 @@ test('focused QA metadata retains business context but cannot replace full accep
       { criterion: 'Edit', status: 'failed' },
     ],
   });
-  assert.equal(focus.task.acceptanceCriteria, '1. Edit');
+  assert.equal(focus.task.acceptanceCriteria, metadata.task.acceptanceCriteria);
+  assert.deepEqual(focus.task.qaCriteriaIds, ['C02']);
   assert.equal(focus.task.qaScope, 'focused');
   assert.equal(focus.task.requirements, 'Business');
   assert.equal(metadata.task.acceptanceCriteria, '1. Create\n2. Edit');
@@ -104,7 +105,7 @@ test('focused failures repair again; focused success must run full QA on fresh s
   mkdirSync(dest, { recursive: true });
   const workspace = path.join(root, 'workspace');
   mkdirSync(workspace);
-  for (const file of ['qa-retest.mjs', 'timed-command.mjs', 'timing.mjs'])
+  for (const file of ['qa-retest.mjs', 'acceptance-criteria.mjs', 'timed-command.mjs', 'timing.mjs'])
     copyFileSync(path.join(scripts, file), path.join(dest, file));
   write(
     dest,

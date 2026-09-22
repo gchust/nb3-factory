@@ -182,15 +182,15 @@ test('fast checks stop expensive work; repair prioritizes failed check without o
   let result = run(1, 'lint');
   assert.notEqual(result.status, 0);
   assert.deepEqual(readFileSync(commands, 'utf8').trim().split('\n'), [
-    'format:check',
-    'lint',
+    'format:check !.github/**',
+    'lint --ignore-pattern .github/**',
   ]);
   writeFileSync(commands, '');
   result = run(2);
   assert.equal(result.status, 0, result.stderr);
   assert.deepEqual(readFileSync(commands, 'utf8').trim().split('\n'), [
-    'lint',
-    'format:check',
+    'lint --ignore-pattern .github/**',
+    'format:check !.github/**',
     'typecheck',
     'test',
     'build --target linux-x64 --node-version 24',
@@ -219,6 +219,7 @@ test('QA writer rejects bad evidence before saving and retains real failures', (
   );
   const env = {
     ...process.env,
+    FACTORY_BROWSER_METADATA: write(root, 'metadata.json', JSON.stringify({ task: { acceptanceCriteria: '1. Create' } })),
     FACTORY_BROWSER_REPORT: report,
     FACTORY_BROWSER_EVIDENCE_DIR: root,
   };

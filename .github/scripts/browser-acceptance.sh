@@ -13,18 +13,19 @@ config_file="$(realpath "$4")"
 artifact_dir="$(realpath -m "$5")"
 state_dir="$(realpath -m "$6")"
 attempt="$7"
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 mkdir -p "$artifact_dir" "$state_dir"
 
 real_agent_browser="$(command -v agent-browser || true)"
 if [[ -z "$real_agent_browser" ]]; then
   echo "agent-browser is not installed." >&2
-  exit 2
+  exit 20
 fi
 
 chrome_path="${AGENT_BROWSER_EXECUTABLE_PATH:-$(command -v google-chrome || command -v google-chrome-stable || command -v chromium || true)}"
 if [[ -z "$chrome_path" ]]; then
   echo "No Chrome or Chromium executable is available for agent-browser." >&2
-  exit 2
+  exit 20
 fi
 
 port="${FACTORY_APP_PORT:-13000}"
@@ -44,6 +45,18 @@ wrapper_dir="$state_dir/browser-bin"
 mkdir -p "$evidence_dir" "$browser_agent_workspace" "$wrapper_dir"
 : >"$commands_log"
 ln -sf "$control_dir/.github/scripts/agent-browser-wrapper.sh" "$wrapper_dir/agent-browser"
+
+export AGENT_BROWSER_EXECUTABLE_PATH="$chrome_path"
+export FACTORY_REAL_AGENT_BROWSER="$real_agent_browser"
+export FACTORY_BROWSER_PREFLIGHT="${FACTORY_BROWSER_PREFLIGHT:-$artifact_dir/preflight.json}"
+export FACTORY_BROWSER_FIXTURES_MANIFEST="${FACTORY_BROWSER_FIXTURES_MANIFEST:-$artifact_dir/fixtures/manifest.json}"
+if [[ ! -s "$FACTORY_BROWSER_PREFLIGHT" ]]; then
+  node "$script_dir/browser-preflight.mjs" "$FACTORY_BROWSER_PREFLIGHT"
+fi
+node -e 'const fs=require("node:fs"); const p=JSON.parse(fs.readFileSync(process.argv[1])); if(p.version!==1||p.basic!==true) process.exit(20)' "$FACTORY_BROWSER_PREFLIGHT"
+if [[ ! -s "$FACTORY_BROWSER_FIXTURES_MANIFEST" ]]; then
+  python3 "$script_dir/prepare-browser-fixtures.py" "$(dirname "$FACTORY_BROWSER_FIXTURES_MANIFEST")"
+fi
 
 node "$control_dir/.github/scripts/build-browser-prompt.mjs" \
   --metadata "$metadata" \
@@ -84,7 +97,7 @@ cleanup() {
 trap cleanup EXIT
 
 # An application that does not come up is a defect to repair, not a broken harness: exit 10
-# sends it to the repair loop. Only a missing browser or Agent Browser exits 2.
+# sends it to the repair loop. A missing browser or Agent Browser exits 20.
 ready=0
 status=''
 for _ in $(seq 1 90); do
@@ -122,7 +135,7 @@ export FACTORY_BROWSER_EVIDENCE_DIR="$evidence_dir"
 export FACTORY_REAL_AGENT_BROWSER="$real_agent_browser"
 export FACTORY_AGENT_BROWSER_COMMAND_LOG="$commands_log"
 export AGENT_BROWSER_EXECUTABLE_PATH="$chrome_path"
-export AGENT_BROWSER_ALLOWED_DOMAINS="127.0.0.1"
+export AGENT_BROWSER_ALLOWED_DOMAINS="${AGENT_BROWSER_ALLOWED_DOMAINS:-127.0.0.1}"
 export AGENT_BROWSER_CONTENT_BOUNDARIES=1
 export AGENT_BROWSER_MAX_OUTPUT=50000
 export AGENT_BROWSER_NAMESPACE="nb3-factory-${GITHUB_RUN_ID:-local}-${attempt}"
@@ -167,13 +180,20 @@ while true; do
         --output "$artifact_dir/media-parts.json" || true
       exit 0
       ;;
-    10) exit 10 ;; # Business defects go to the application repair loop.
+    10) exit 10 ;; # Only observed business defects reach application repair.
+    20) exit 20 ;; # Blocked environment: retain diagnostics, never repair app code.
     2) ;; # Invalid report/evidence goes back to QA.
     *) exit "$validation_status" ;;
   esac
 
   if [[ -f "$report" ]]; then
     cp "$report" "$artifact_dir/report-invalid-${report_attempt}.json"
+  fi
+  # Bound report-format retries, not application repair attempts. A QA agent
+  # unable to produce valid evidence is a harness problem, not an app defect.
+  if [[ "$report_attempt" -ge 2 ]]; then
+    echo "QA report remains invalid after two repairs; no application repair requested." >&2
+    exit 20
   fi
   report_attempt=$((report_attempt + 1))
   echo "Agent Browser report validation failed; starting QA report repair ${report_attempt}."

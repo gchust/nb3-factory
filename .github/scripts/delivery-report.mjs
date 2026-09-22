@@ -1,3 +1,4 @@
+import { parseAcceptanceCriteria } from './acceptance-criteria.mjs';
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { renderHtml } from '../reports/render-report.mjs';
@@ -29,7 +30,8 @@ export function collectDelivery(root, report, issue = {}) {
   if (metadata && (metadata.repository !== record.repository || metadata.issue?.number !== record.issue))
     throw new Error('Delivery report metadata does not match its source run');
   const repair = optionalJson(root, 'repair-summary.json', warnings);
-  let round = positive(repair?.verificationAttempts) ? repair.verificationAttempts : null;
+  const lastRound = repair?.finalVerificationAttempt ?? repair?.verificationAttempts;
+  let round = positive(lastRound) ? lastRound : null;
   if (!round && existsSync(root)) {
     // Never walk into previous runs or mistake focused QA for final full QA.
     const rounds = readdirSync(root, { withFileTypes:true })
@@ -90,12 +92,12 @@ export function collectDelivery(root, report, issue = {}) {
     if (evidenceUnavailable || screenshots.length !== strings(c.screenshots).length)
       attention.push({checkId:id,title:'验收证据不完整或未内嵌', detail:'保留 Agent 原始结论；缺少的截图或操作记录不视为已验证，原始引用见下方数据。',source:`${prefix}/report.json`});
     return {id,title:text(c.criterion)||`验收项 ${i+1}`,criterion:text(c.criterion),status,actions,evidence,screenshots,
-      evidenceUnavailable,source:`${prefix}/report.json`,result:evidence.at(-1)||'未提供结果说明。'};
+      evidenceUnavailable,source:`${prefix}/report.json`,result:(c.status === 'blocked' ? '环境受阻：' : '') + (text(c.reason)||evidence.at(-1)||'未提供结果说明。')};
   });
   const normalize = value => text(value).replace(/^(?:\d+[.)]|[-*])\s+/u, '').trim();
-  const required = text(metadata?.task?.acceptanceCriteria).split(/\r?\n/).map(v=>v.trim()).filter(Boolean);
-  const numbered = required.filter(v=>/^(?:\d+[.)]|[-*])\s+/u.test(v));
-  const expected = (numbered.length ? numbered : required.slice(0,1)).map(normalize);
+  let expected = [];
+  try { expected = parseAcceptanceCriteria(metadata?.task?.acceptanceCriteria).map(c => c.text); }
+  catch { warnings.push('原始验收要求不可解析，不能推断覆盖完整。'); }
   if (checks.length < expected.length) {
     const recorded = new Set(checks.map(c=>normalize(c.criterion)));
     // Add missing requirements only when the existing rows can be matched by

@@ -110,7 +110,7 @@ test('repair loop keeps retrying until Agent Browser acceptance succeeds', () =>
       JSON.parse(
         readFileSync(path.join(artifacts, 'repair-summary.json'), 'utf8'),
       ),
-      { verificationAttempts: 3, repairAttempts: 2 },
+      { verificationAttempts: 3, repairAttempts: 2, finalVerificationAttempt: 3 },
     );
     assert.match(
       readFileSync(path.join(artifacts, 'verify-2.log'), 'utf8'),

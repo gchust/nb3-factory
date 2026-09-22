@@ -1,3 +1,4 @@
+import { acceptanceCriteria, identifyCheck } from './acceptance-criteria.mjs';
 import { Buffer } from 'node:buffer';
 import {
   closeSync,
@@ -116,7 +117,7 @@ export function matchesTaskPR(pr, metadata, source) {
 
 export function collectMedia(root, output) {
   const summary = readJson(root, 'repair-summary.json');
-  const attempt = summary.verificationAttempts;
+  const attempt = summary.finalVerificationAttempt ?? summary.verificationAttempts;
   if (summary.handoff || !Number.isSafeInteger(attempt) || attempt < 1)
     throw new Error('No completed verification round');
   const prefix = `verify-${attempt}/browser-acceptance`;
@@ -126,7 +127,14 @@ export function collectMedia(root, output) {
     report.authenticated !== true ||
     !Array.isArray(report.checks) ||
     !report.checks.length ||
-    report.checks.some((c) => c.status !== 'passed') ||
+    report.checks.some((c) => {
+      if (c.status === 'passed') return false;
+      if (c.status !== 'not_run' || !c.reason?.trim()) return true;
+      try {
+        const metadata = readJson(root, 'task-metadata.json');
+        return !identifyCheck(c, acceptanceCriteria(metadata.task)).optional;
+      } catch { return true; }
+    }) ||
     !Array.isArray(report.failures) ||
     report.failures.length
   )
