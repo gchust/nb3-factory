@@ -11,6 +11,13 @@ const probe = (address) => {
     '--show-error',
     '--silent',
     '--location',
+    // IPv4 only. A proxied preview host answers with AAAA records as well, and a
+    // runner with no usable IPv6 path can spend the whole connect timeout on one
+    // of those before it is ever given the address that answers — which is how a
+    // live preview came to be reported unreachable for forty seconds here before
+    // the fallback below rescued it (PR #159, 2026-09-21). The fallback resolves
+    // A records only, so nothing in this check depends on IPv6.
+    '--ipv4',
     '--connect-timeout',
     '10',
     '--max-time',

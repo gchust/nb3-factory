@@ -9,6 +9,17 @@ export const PREVIEW_THEME = 'nfvd.net';
 
 export const PREVIEW_COMMENT_PREFIX = '<!-- factory-preview:';
 
+/**
+ * Marks a comment that published a verified address rather than a failure.
+ *
+ * The same build can be deployed twice — the task workflow requests the preview
+ * explicitly and GitHub also raises `workflow_run` for the same completed run —
+ * and only one of the two attempts has to succeed for the preview to be up. The
+ * report reads this mark so a failing second attempt states its own failure
+ * without withdrawing the address the first one confirmed.
+ */
+export const PREVIEW_VERIFIED_MARKER = '<!-- factory-preview-verified -->';
+
 const DOMAIN_PATTERN =
   /^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$/;
 const DEPS_KEY_PATTERN = /^[a-f0-9]{64}$/;
@@ -223,6 +234,7 @@ export function planFrom({ metadata, pr, source, domain }) {
 export function renderPreviewComment(plan, note = '') {
   const lines = [
     `${PREVIEW_COMMENT_PREFIX}${plan.runId}:${plan.runAttempt} -->`,
+    ...(note ? [] : [PREVIEW_VERIFIED_MARKER]),
     '## 预览环境',
     '',
     ...(note

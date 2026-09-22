@@ -123,7 +123,16 @@ test('the payload is published for the host to fetch, not pushed to it', () => {
   // by the host over its own egress measured 815 KB/s. So the SSH channel must
   // carry a URL and a digest, and never the payload itself.
   assert.doesNotMatch(deploy, /scp[^\n]*payload/);
-  assert.match(deploy, /asset="preview-pr-\$PR\.tar\.gz"/);
+  // The name carries the payload's digest, so one name always means one set of
+  // bytes. One name per pull request, replaced with `--clobber`, is what let a
+  // fetch be answered with the bytes the name carried before the replacement:
+  // the digest check then refused a payload that had in fact been published, and
+  // a live preview was reported as a failed deployment (PR #159, 2026-09-21).
+  assert.match(
+    deploy,
+    /digest="\$\(sha256sum "\$RUNNER_TEMP\/payload\.tar\.gz" \| cut -d' ' -f1\)"/,
+  );
+  assert.match(deploy, /asset="preview-pr-\$PR-\$\{digest:0:16\}\.tar\.gz"/);
   // The file is named before the upload: an asset takes its name from the file
   // it was uploaded from, and `gh release upload <file>#<name>` does not rename
   // it — a run that relied on that published `payload.tar.gz` and the host then
@@ -143,12 +152,31 @@ test('the payload is published for the host to fetch, not pushed to it', () => {
     /--payload-sha256 '\$\{\{ steps\.publish\.outputs\.payload_sha256 \}\}'/,
   );
   assert.match(deploy, /--fetch-proxy '\$PREVIEW_FETCH_PROXY'/);
-  // The digest describes the file that was uploaded, computed in that same step.
-  assert.match(deploy, /payload_sha256=\$\(sha256sum/);
-  // And the URL the host is told to fetch is the asset that was just uploaded.
+  // The digest describes the file that was uploaded, computed in that same step,
+  // and it is the digest and the name the host is given.
+  assert.match(deploy, /echo "payload_sha256=\$digest" >> "\$GITHUB_OUTPUT"/);
+  assert.match(deploy, /echo "payload_asset=\$asset" >> "\$GITHUB_OUTPUT"/);
   assert.match(
     deploy,
-    /asset_url="https:\/\/github\.com\/\$GITHUB_REPOSITORY\/releases\/download\/\$PREVIEW_RELEASE\/preview-pr-\$PR\.tar\.gz"/,
+    /asset_url="https:\/\/github\.com\/\$GITHUB_REPOSITORY\/releases\/download\/\$PREVIEW_RELEASE\/\$\{\{ steps\.publish\.outputs\.payload_asset \}\}"/,
+  );
+});
+
+test('one build deployed twice does not replace the running preview', () => {
+  // The task workflow dispatches this workflow for a delivered build and GitHub
+  // also raises `workflow_run` for the same completed run, so the same commit is
+  // requested twice. Replacing the instance would initialize a fresh disposable
+  // dataset under whoever was using the preview, so the duplicate is recognized
+  // by the host and only a deliberate replay may override that.
+  assert.match(deploy, /--redeploy/);
+  assert.match(deploy, /PREVIEW_FORCE: \$\{\{ inputs\.force \|\| 'false' \}\}/);
+  assert.match(
+    deploy,
+    /if \[\[ "\$\{PREVIEW_FORCE:-false\}" == 'true' \]\]; then redeploy="--redeploy"; fi/,
+  );
+  assert.match(
+    deploy,
+    /force:\n\s+description: Replace a running preview even when it already serves this commit\n\s+required: false\n\s+default: false\n\s+type: boolean/,
   );
 });
 
@@ -170,17 +198,20 @@ test('the steps that call gh are given a token', () => {
   assert.match(publishStep, /GH_TOKEN: \$\{\{ github\.token \}\}/);
 
   const deleteStep = teardown.slice(
-    teardown.indexOf('Delete the temporary payload'),
+    teardown.indexOf('Delete the temporary payloads'),
   );
   assert.match(deleteStep, /gh release delete-asset/);
   assert.match(deleteStep, /GH_TOKEN: \$\{\{ github\.token \}\}/);
 });
 
-test('the temporary payload is deleted when the pull request closes', () => {
-  // It is public while it exists, so it must not outlive the preview.
-  assert.match(
-    teardown,
-    /gh release delete-asset "\$PREVIEW_RELEASE" "preview-pr-\$PR\.tar\.gz"/,
+test('the temporary payloads are deleted when the pull request closes', () => {
+  // They are public while they exist, so they must not outlive the preview. A
+  // pull request that was deployed more than once left more than one of them.
+  assert.match(teardown, /mapfile -t assets < </);
+  assert.ok(teardown.includes('--json assets --jq \'.assets[].name\''));
+  assert.ok(teardown.includes('grep -E "^preview-pr-$PR(-[0-9a-f]{16})?\\.tar\\.gz$"'));
+  assert.ok(
+    teardown.includes('gh release delete-asset "$PREVIEW_RELEASE" "$asset"'),
   );
   assert.match(teardown, /PREVIEW_RELEASE: factory-previews/);
   assert.match(teardown, /contents: write/);

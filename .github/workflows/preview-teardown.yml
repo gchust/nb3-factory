@@ -71,15 +71,30 @@ jobs:
             "$PREVIEW_USER@$PREVIEW_HOST" \
             "bash /srv/nb3-preview/scripts/preview-destroy.sh '$PR'"
 
-      # The payload asset is the one thing a closed preview leaves behind on
-      # GitHub, and it is public: the build is not something to keep lying around
-      # once nothing is serving it.
-      - name: Delete the temporary payload
+      # The payload assets are the one thing a closed preview leaves behind on
+      # GitHub, and they are public: the build is not something to keep lying
+      # around once nothing is serving it. There is one per deployed payload, not
+      # one per pull request, so every asset this pull request published goes.
+      - name: Delete the temporary payloads
         env:
           PR: ${{ github.event.pull_request.number }}
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          gh release delete-asset "$PREVIEW_RELEASE" "preview-pr-$PR.tar.gz" \
-            --repo "$GITHUB_REPOSITORY" --yes ||
+          if ! gh release view "$PREVIEW_RELEASE" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "no preview release; nothing to delete"
+            exit 0
+          fi
+          # `preview-pr-7.tar.gz` is the name the first version of this workflow
+          # used; a payload published before the digest naming may still be here.
+          mapfile -t assets < <(gh release view "$PREVIEW_RELEASE" \
+            --repo "$GITHUB_REPOSITORY" --json assets --jq '.assets[].name' \
+            | grep -E "^preview-pr-$PR(-[0-9a-f]{16})?\.tar\.gz$" || true)
+          if (( ${#assets[@]} == 0 )); then
             echo "no payload asset for PR #$PR; nothing to delete"
+            exit 0
+          fi
+          for asset in "${assets[@]}"; do
+            gh release delete-asset "$PREVIEW_RELEASE" "$asset" \
+              --repo "$GITHUB_REPOSITORY" --yes
+          done

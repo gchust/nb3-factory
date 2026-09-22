@@ -164,6 +164,10 @@ container_exists() {
   docker container inspect "$1" >/dev/null 2>&1
 }
 
+container_running() {
+  [[ "$(docker inspect --format '{{.State.Running}}' "$1" 2>/dev/null || true)" == true ]]
+}
+
 remove_container() {
   local name="$1"
   if container_exists "$name"; then
@@ -177,6 +181,23 @@ read_instance_env() {
   local file="$dir/preview.env"
   [[ -f "$file" ]] || return 1
   sed -n "s/^${key}=//p" "$file" | head -n 1
+}
+
+# Whether an instance already serves exactly the build being deployed.
+#
+# A preview is keyed by the commit it serves and the dependency set its tree was
+# linked against, so an instance whose recorded pair matches the request and
+# whose container is up is already that build. The same request arrives twice
+# whenever the task workflow dispatches this deploy explicitly while GitHub also
+# raises `workflow_run` for the same completed run, and replacing the instance
+# would initialize a fresh disposable dataset underneath whoever was using the
+# preview. So the duplicate is recognized here rather than applied twice.
+instance_serves() {
+  local dir="$1" name="$2" sha="$3" deps_key="$4"
+  [[ -n "$sha" && -n "$deps_key" ]] || return 1
+  [[ "$(read_instance_env "$dir" sha || true)" == "$sha" ]] || return 1
+  [[ "$(read_instance_env "$dir" depsKey || true)" == "$deps_key" ]] || return 1
+  container_running "$name"
 }
 
 # Loads preview.env into the current shell when it exists.
