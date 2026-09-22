@@ -14,6 +14,11 @@ on:
         description: Run attempt (leave empty for latest)
         required: false
         type: string
+      force:
+        description: Replace a running preview even when it already serves this commit
+        required: false
+        default: false
+        type: boolean
 
 permissions: {}
 
@@ -42,6 +47,11 @@ jobs:
       # Unused when the host can reach it directly.
       PREVIEW_FETCH_PROXY: ${{ vars.FACTORY_PREVIEW_FETCH_PROXY || 'http://192.168.2.250:7890' }}
       PREVIEW_RELEASE: factory-previews
+      # Only a deliberate replay asks for the running preview to be replaced. An
+      # automatic deploy never does: the same build is requested twice when this
+      # workflow is dispatched by the task and by the completion event, and the
+      # second request must leave the first one's instance alone.
+      PREVIEW_FORCE: ${{ inputs.force || 'false' }}
       # A preview is optional infrastructure. When its credentials are absent
       # this workflow stays a no-op rather than failing the task's run record.
       PREVIEW_ENABLED: ${{ secrets.FACTORY_PREVIEW_SSH_KEY != '' && secrets.FACTORY_TAILSCALE_OAUTH_CLIENT_ID != '' }}
@@ -159,18 +169,28 @@ jobs:
           # measured 815 KB/s where pushing the same bytes over Tailscale to the
           # host measured 17 KB/s. The repository is public, so the fetch needs no
           # credential on the host — and the asset is deleted when the PR closes.
-          asset="preview-pr-$PR.tar.gz"
+          #
+          # The name carries the payload's digest, so one name always means the
+          # same bytes. One name per pull request, replaced with `--clobber`, is
+          # what reported a live preview as a failed deployment (PR #159,
+          # 2026-09-21): the same run was deployed twice, the second upload
+          # replaced the asset, and a fetch seconds later was still answered with
+          # the previous bytes — so the digest check refused a payload that had
+          # in fact been published.
+          digest="$(sha256sum "$RUNNER_TEMP/payload.tar.gz" | cut -d' ' -f1)"
+          asset="preview-pr-$PR-${digest:0:16}.tar.gz"
           if ! gh release view "$PREVIEW_RELEASE" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
             gh release create "$PREVIEW_RELEASE" --repo "$GITHUB_REPOSITORY" --prerelease \
               --title "Factory preview payloads" \
-              --notes "Temporary build payloads the preview host fetches. One asset per pull request, deleted when it closes."
+              --notes "Temporary build payloads the preview host fetches. One asset per deployed payload, deleted when its pull request closes."
           fi
           # Named before it is uploaded: an asset takes its name from the file, and
           # the URL the host is given is built from that name.
           cp "$RUNNER_TEMP/payload.tar.gz" "$RUNNER_TEMP/$asset"
           gh release upload "$PREVIEW_RELEASE" --repo "$GITHUB_REPOSITORY" --clobber \
             "$RUNNER_TEMP/$asset"
-          echo "payload_sha256=$(sha256sum "$RUNNER_TEMP/$asset" | cut -d' ' -f1)" >> "$GITHUB_OUTPUT"
+          echo "payload_asset=$asset" >> "$GITHUB_OUTPUT"
+          echo "payload_sha256=$digest" >> "$GITHUB_OUTPUT"
 
       - name: Deploy the preview
         id: deploy
@@ -181,9 +201,11 @@ jobs:
           DEPS_KEY: ${{ steps.prepare.outputs.deps_key }}
         run: |
           set -euo pipefail
-          # Built here rather than passed in, so the URL the host fetches and the
-          # asset that was just uploaded cannot drift apart.
-          asset_url="https://github.com/$GITHUB_REPOSITORY/releases/download/$PREVIEW_RELEASE/preview-pr-$PR.tar.gz"
+          # Built from the asset name this run published, so the URL the host
+          # fetches and the asset that was just uploaded cannot drift apart.
+          asset_url="https://github.com/$GITHUB_REPOSITORY/releases/download/$PREVIEW_RELEASE/${{ steps.publish.outputs.payload_asset }}"
+          redeploy=""
+          if [[ "${PREVIEW_FORCE:-false}" == 'true' ]]; then redeploy="--redeploy"; fi
           ssh -i ~/.ssh/preview_key -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o ConnectTimeout=20 \
             "$PREVIEW_USER@$PREVIEW_HOST" \
             "bash /srv/nb3-preview/scripts/preview-deploy.sh \
@@ -194,7 +216,8 @@ jobs:
                --payload '/srv/nb3-preview/tmp/payload-pr-$PR.tar.gz' \
                --payload-url '$asset_url' \
                --payload-sha256 '${{ steps.publish.outputs.payload_sha256 }}' \
-               --fetch-proxy '$PREVIEW_FETCH_PROXY'"
+               --fetch-proxy '$PREVIEW_FETCH_PROXY' \
+               $redeploy"
 
       - name: Verify the public preview URL
         id: public

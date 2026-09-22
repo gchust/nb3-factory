@@ -29,17 +29,24 @@ payload=""
 payload_url=""
 payload_sha256=""
 fetch_proxy="${PREVIEW_FETCH_PROXY:-}"
+redeploy=false
 
 usage() {
   cat >&2 <<'USAGE'
 Usage: preview-deploy.sh --pr <number> --sha <commit> --deps-key <key> \
          --payload <dist.tar.gz> [--payload-url <url> --payload-sha256 <digest>] \
-         [--fetch-proxy <url>] [--domain <preview domain>]
+         [--fetch-proxy <url>] [--domain <preview domain>] [--redeploy]
 
 With --payload-url the payload is fetched from that URL when it is missing or
 fails its digest, so a failed transfer is retried by running this again rather
 than re-sending the bytes from CI. --payload-sha256 is required with
 --payload-url: a fetched payload is never deployed unverified.
+
+An instance that already serves this commit with this dependency set is left
+alone: one build can be requested twice — the task workflow dispatches this
+deploy explicitly and GitHub also raises `workflow_run` for the same completed
+run — and the second request would otherwise replace a preview someone may
+already be using. --redeploy replaces it anyway.
 USAGE
   exit 2
 }
@@ -53,6 +60,7 @@ while [[ $# -gt 0 ]]; do
     --payload-url) payload_url="${2:-}"; shift 2 ;;
     --payload-sha256) payload_sha256="${2:-}"; shift 2 ;;
     --fetch-proxy) fetch_proxy="${2:-}"; shift 2 ;;
+    --redeploy) redeploy=true; shift ;;
     --domain) PREVIEW_DOMAIN="${2:-}"; shift 2 ;;
     -h|--help) usage ;;
     *) die "unknown argument: $1" ;;
@@ -90,6 +98,17 @@ container_base="/app"
 # populate the same dependency cache and to read each other's instance state.
 exec 9>"$PREVIEW_ROOT/deploy.lock"
 flock 9
+
+# --- an instance that is already this build ---------------------------------
+# The lock is what makes this answer trustworthy: a deploy in flight holds it
+# while it writes the instance state, so what is read here is either a finished
+# deploy or an unrelated one.
+if [[ "$redeploy" == true ]]; then
+  log "redeploy requested; replacing the running preview even though it may already serve this build"
+elif instance_serves "$dir" "$name" "$sha" "$deps_key"; then
+  log "PR #$pr already serves $sha with dependency set ${deps_key:0:12}; leaving the running preview as it is"
+  exit 0
+fi
 
 existing_count="$(list_instances | wc -l | tr -d ' ')"
 if [[ ! -d "$dir" && "$existing_count" -ge "$PREVIEW_MAX_INSTANCES" ]]; then

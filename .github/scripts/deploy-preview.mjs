@@ -12,6 +12,7 @@ import { matchesTaskPR, readJson } from './visual-report.mjs';
 import {
   PREVIEW_COMMENT_PREFIX,
   PREVIEW_THEME,
+  PREVIEW_VERIFIED_MARKER,
   depsKeyFromEntries,
   depsProbeCommand,
   planFrom,
@@ -194,11 +195,23 @@ if (mode === 'select') {
     status === 'success'
       ? ''
       : `本次预览部署或公网访问检查失败，尚未确认地址可用。请查看[部署日志](${deployRunUrl})；这不影响已经通过的搭建验收。`;
-  const body = renderPreviewComment(plan, note);
   const marker = `${PREVIEW_COMMENT_PREFIX}${runId}:${plan.runAttempt} -->`;
   const existing = (await list(`/issues/${plan.prNumber}/comments`)).find(
     (c) => c.body?.includes(marker) && c.user?.login === 'github-actions[bot]',
   );
+
+  // One build, two deploys: the task workflow dispatches this workflow and
+  // GitHub also raises `workflow_run` for the same completed run. Only one of
+  // them has to succeed for the preview to answer, so a failing attempt does not
+  // withdraw an address another attempt already verified — that is how a live
+  // preview came to be reported as "暂无已确认可用的地址" (PR #159, 2026-09-21).
+  // The failure is still stated; it just does not overwrite the address.
+  const afterVerified = Boolean(
+    status !== 'success' && existing?.body?.includes(PREVIEW_VERIFIED_MARKER),
+  );
+  const body = afterVerified
+    ? `${renderPreviewComment(plan)}\n\n> 本次触发没有通过部署或公网检查，因此没有替换已经在跑的预览；上文的地址来自本次构建已经确认过的部署，仍以它为准。请查看[部署日志](${deployRunUrl})。`
+    : renderPreviewComment(plan, note);
   await api(
     existing ? 'PATCH' : 'POST',
     existing
@@ -208,8 +221,11 @@ if (mode === 'select') {
   );
   if (status === 'success')
     console.log(`Preview published for PR #${plan.prNumber}: ${plan.url}`);
-  else
-    console.warn('::warning::Preview deployment failed; reported on the PR.');
+  else if (afterVerified)
+    console.warn(
+      '::warning::This attempt failed after the address was verified; the published preview is unchanged.',
+    );
+  else console.warn('::warning::Preview deployment failed; reported on the PR.');
 } else
   throw new Error(
     'Usage: deploy-preview.mjs <select|prepare|publish> --run-id N ...',

@@ -41,6 +41,11 @@ for (const succeeds of [true, false]) {
       assert.match(calls, /--resolve nb3-127.nfvd.net:443:104.21.46.85/);
       assert.ok(!calls.includes('--insecure'));
       assert.match(calls, /https:\/\/nb3-127.nfvd.net\/main\//);
+      // Proxied preview hosts answer with AAAA records too, and a runner without
+      // a usable IPv6 path spends the connect timeout on one of those while the
+      // address that answers is never tried — forty seconds of a live preview
+      // reported unreachable before this check's own fallback rescued it.
+      assert.equal(calls.match(/--ipv4/g)?.length, 2);
     } finally {
       rmSync(root, { recursive: true, force: true });
     }

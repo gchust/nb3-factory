@@ -23,6 +23,7 @@ import {
   isDepsKey,
   requireDomain,
   slimEntries,
+  PREVIEW_VERIFIED_MARKER,
 } from '../preview-host.mjs';
 
 // A dependency tree as `depsKeyFromEntries` sees it: path and size, which is
@@ -326,6 +327,9 @@ test('the published comment carries the marker, the URL and the public warning',
     runUrl: 'https://github.com/gchust/nb3-factory/actions/runs/99',
   });
   assert.match(body, /^<!-- factory-preview:99:3 -->/);
+  // The mark is what keeps a later failing attempt at the same build from
+  // withdrawing an address the first attempt verified.
+  assert.ok(body.includes(PREVIEW_VERIFIED_MARKER));
   assert.ok(body.includes('https://nb3-12.nfvd.net/main/'));
   assert.ok(body.includes('a'.repeat(40)));
   assert.ok(body.includes('公开地址'));
@@ -346,4 +350,8 @@ test('a failed deployment is reported without a working link', () => {
   assert.ok(!body.includes('https://nb3-12.nfvd.net/main/'));
   assert.ok(!body.includes('可以登录、可以操作'));
   assert.ok(!body.includes('admin123'));
+  assert.ok(
+    !body.includes(PREVIEW_VERIFIED_MARKER),
+    'a failure must not claim a verified address',
+  );
 });

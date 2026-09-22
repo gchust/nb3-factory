@@ -24,14 +24,14 @@ Code Agent NocoBase Task
                              ├─ dist.tar.gz         要部署的构建
                              └─ task-metadata.json  属于哪个 PR 和目标分支
 
-Deploy Task Preview（由 workflow_run 触发）
+Deploy Task Preview（由 workflow_run 触发，搭建流程也会显式请求一次）
   select  ──► 只挑同时通过 verify-final 和 publish 的运行
   prepare ──► 认领 PR、算出依赖集标识、生成地址
-  发布    ──► 把 payload 上传成临时 release 资产（factory-previews）
+  发布    ──► 把 payload 上传成临时 release 资产（factory-previews），名字带内容摘要
   取件    ──► ssh 只递过去 URL 与 sha256 → 252 自己走出口拉取、校验
-  部署    ──► 252 上 preview-deploy.sh（迁移、起容器）
+  部署    ──► 252 上 preview-deploy.sh（迁移、起容器；同一次构建已经在跑则原样保留）
   公网检查 ──► 从 GitHub runner 检查 HTTPS 地址可访问
-  评论    ──► 检查通过才公布地址；失败仅报告日志；PR 关闭时删掉那个资产
+  评论    ──► 检查通过才公布地址；失败仅报告日志；PR 关闭时删掉这些资产
 ```
 
 **依赖集缓存。** 一次构建里 `dist/node_modules` 约占 740MB（`dist/server` 只有 144KB）。
@@ -45,6 +45,24 @@ Deploy Task Preview（由 workflow_run 触发）
 同一个包约 96 秒。所以 SSH 这条控制通道只承担几十字节（URL + sha256），字节走预览机本来就
 有的网络；下载落在 `payload-pr-<号>.tar.gz.part`，只有摘要校验通过才会改名成正式文件名，
 所以半截的下载永远不会被当成完整包部署。
+
+**为什么资产名带内容摘要。** 资产名是 `preview-pr-<号>-<内容摘要前 16 位>.tar.gz`。同一个
+名字永远只对应同一批字节，所以“刚上传就被取到旧内容”这类缓存窗口不可能再让一个没换成的包
+通过校验——它只会以失败告终，而不是被当成新的。之前是每个 PR 固定一个名字、每次
+`--clobber` 覆盖：同一个 run 被部署两次时，第二次上传后几秒内取回的仍是第一次的字节，摘要
+对不上，于是一次**已经成功部署**的预览被报成“部署失败”（PR #159，2026-09-21）。一个 PR
+因此可能留下多个资产，PR 关闭时由回收流程全部删除。
+
+**为什么同一次构建只部署一次。** 交付成功后这个工作流可能被请求两次：搭建流程的
+`dispatch-reports` 会显式补发一次（bot 触发的续跑不保证产生 `workflow_run` 事件），
+GitHub 也会为同一个 run 的完成事件触发一次。两次请求带的是同一个提交、同一个依赖集，而部署
+会重新初始化示例数据，第二次就会顶掉别人正在试用的那一份。所以 `preview-deploy.sh` 拿到锁之后
+会核对实例记录的 `sha` 与 `depsKey`：已经是这次构建且容器在跑，就原样保留并直接成功返回。
+确实要重新初始化时用 `force`（手动 Run workflow）或 `--redeploy`（直接调脚本）。
+
+**评论不会被后来的失败撤掉。** 报告写在同一处（按 `run:attempt` 认领同一条评论）。一次已确认的
+地址不会被同一个 run 后来的失败尝试改成“暂无已确认可用的地址”：那次失败会在下面补一句说明，
+地址和登录说明保持不变；只有第一次部署就失败的构建才发布“没有可用地址”。
 
 **为什么在 `verify-final` 里构建。** 预览跑的必须是独立验收通过的那棵树，而不是 Agent
 自己声称的版本，所以打包步骤放在 `verify-final` 的验收之后，产物随 artifact 传递。
@@ -145,7 +163,8 @@ rm -f ./preview_key ./preview_key.pub
 
 进入 Actions → **Deploy Task Preview** → **Run workflow**，选择默认分支，填写成功搭建的
 **Actions run ID**（不是 Issue 或 PR 编号）。和补发截图录像的方式一样，它只下载已有的
-构建产物再部署一次，不调用 Code Agent、不重新搭建。
+构建产物再部署一次，不调用 Code Agent、不重新搭建。默认情况下，如果这次构建已经在预览机上
+跑着，补发只做公网检查、不替换实例；确实要重新初始化一份示例数据时勾上 `force`。
 
 ## 回收
 
@@ -174,6 +193,8 @@ ssh 252 'bash /srv/nb3-preview/scripts/preview-gc.sh'
 | 应用启动报 `.node` 相关错误 | `dist/package.json` 的 `nocobase.buildTarget` 与运行时镜像不匹配，用 `PREVIEW_NODE_IMAGE` 指定合适的镜像重跑 `provision.sh`                                                                                                |
 | 一直卡在 apt-get            | 预览机没有直接出网，构建时要传 `PREVIEW_BUILD_PROXY`                                                                                                                                                                       |
 | 取件失败或摘要不匹配        | `preview-deploy.sh` 会打印 `could not fetch the payload` 或 `payload digest mismatch`；先确认预览机能不能解析并连上 github.com（`ssh 252 'curl -sI https://github.com'`），需要代理时由 `FACTORY_PREVIEW_FETCH_PROXY` 指定 |
+| 评论显示失败但地址能打开     | 那个地址来自同一次构建更早一次成功的部署：重复请求失败时不会撤掉已确认的地址（见“评论不会被后来的失败撤掉”），失败尝试的日志在评论里给出 |
+| 部署成功但地址没变（没重新部署） | 同一次构建已经在跑时 `preview-deploy.sh` 不做任何替换；需要重新初始化示例数据时勾上 `force` 再补发 |
 | 磁盘告警                    | `ssh 252 'bash /srv/nb3-preview/scripts/preview-gc.sh'`                                                                                                                                                                    |
 
 预览机上的构建日志在 `/srv/nb3-preview/logs/pr-<号>-{migrate,seed}.log`。取件的半截文件是
@@ -187,10 +208,10 @@ ssh 252 'bash /srv/nb3-preview/scripts/preview-gc.sh'
   想收紧时，在 Cloudflare 控制台给各个 `nb3-<PR>.nfvd.net` 挂 Access 应用（邮箱 OTP）
   即可，不需要改任何代码。
 - **临时 payload 资产也是公开的。** 仓库是 public，`factory-previews` 下的
-  `preview-pr-<号>.tar.gz` 无需凭据即可下载（这正是预览机不必持有 GitHub 凭据的原因）。
-  它装的是这次验收过的构建，内容与公开分支里的源码同源；每个 PR 只保留一个，
-  PR 关闭时由 **Reclaim Task Preview** 删除。想让它更严，就得换成 252 上的上传端点
-  并自建鉴权，那时取件方向也会变成推。
+  `preview-pr-<号>-<摘要>.tar.gz` 无需凭据即可下载（这正是预览机不必持有 GitHub 凭据的原因）。
+  它装的是这次验收过的构建，内容与公开分支里的源码同源；每次部署一个、名字带内容摘要，
+  一个 PR 可能留下多个，PR 关闭时由 **Reclaim Task Preview** 全部删除。想让它更严，就得换成
+  252 上的上传端点并自建鉴权，那时取件方向也会变成推。
 - **CI 的 SSH 用户等价于 root**（它必须能调 Docker，而 Docker 组就是 root）。这个凭据泄露
   等于预览机失守，而预览机上还有 Gitea、四个 PostgreSQL、NocoBase alpha 和 MinIO。
   首次写入 `mode 600`，只传给推送和部署步骤。
@@ -216,7 +237,7 @@ ssh 252 'bash /srv/nb3-preview/scripts/preview-gc.sh'
 
 Tailscale 加入网络后，用允许中继的有限时 ping 输出诊断，不把 ping 失败作为部署阻断条件；随后 `preview-connect.sh` 最多尝试 6 次获取主机公钥并验证部署密钥认证，失败保留错误和网络状态。加入 tailnet 成功不代表 SSH 已就绪。
 
-部署脚本完成本机健康检查后，Runner 还会对公网 HTTPS 地址执行有限重试。只有公网检查通过，PR 评论才显示地址与登录说明；否则显示部署或公网检查失败及日志链接。
+部署脚本完成本机健康检查后，Runner 还会对公网 HTTPS 地址执行有限重试。只有公网检查通过，PR 评论才显示地址与登录说明；否则显示部署或公网检查失败及日志链接。公网探测只走 IPv4：Cloudflare 为这些域名同时发布 AAAA，而 runner 没有可用的 IPv6 出口，先试 IPv6 会白等一整个连接超时；直连不成功时再用 DoH 解析 A 记录、按地址重试。
 
 ## 增量搭建的预览更新
 
