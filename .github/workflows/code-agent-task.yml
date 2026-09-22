@@ -172,7 +172,7 @@ jobs:
         working-directory: workspace
         run: |
           node ../control/.github/scripts/timed-command.mjs install pnpm install --frozen-lockfile
-          node ../control/.github/scripts/timed-command.mjs skills-sync pnpm plugin:skills:sync
+          node ../control/.github/scripts/timed-command.mjs skills-sync pnpm skills:sync
 
       - name: Build the implementation prompt
         run: |

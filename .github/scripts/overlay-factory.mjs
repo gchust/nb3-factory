@@ -54,10 +54,6 @@ function section(file, name) {
 }
 
 const readme = `${section('README.MD', 'readme')}\n\n${read(workspace, 'README.MD')}`;
-const agentGuide = read(workspace, 'AGENTS.md');
-const headingEnd = agentGuide.indexOf('\n');
-if (headingEnd < 0) throw new Error('Generated AGENTS.md has no heading.');
-const agents = `${agentGuide.slice(0, headingEnd)}\n\n${section('AGENTS.md', 'boundary')}\n${agentGuide.slice(headingEnd)}`;
 const eslint = read(workspace, 'eslint.config.js');
 if ([...eslint.matchAll(/^export default /gm)].length !== 1) {
   throw new Error(
@@ -72,14 +68,9 @@ cpSync(path.join(control, '.github'), path.join(workspace, '.github'), {
 });
 cpSync(path.join(control, '.npmrc'), path.join(workspace, '.npmrc'));
 writeFileSync(path.join(workspace, 'README.MD'), readme);
-writeFileSync(path.join(workspace, 'AGENTS.md'), agents);
 writeFileSync(path.join(workspace, 'eslint.config.js'), factoryEslint);
-// Preserve repository-owned agent guidance; plugin sync subsequently refreshes installed skills.
-if (existsSync(path.join(control, '.agents'))) {
-  cpSync(path.join(control, '.agents'), path.join(workspace, '.agents'), {
-    recursive: true,
-  });
-}
+// Keep the generated AGENTS.md and .agents tree untouched. Factory task rules
+// live in .github/prompts; skills:sync uses only the newly installed packages.
 // Generated skills and root configuration belong to the refresh baseline.
 const ignorePath = path.join(workspace, '.gitignore');
 const ignore = read(workspace, '.gitignore');

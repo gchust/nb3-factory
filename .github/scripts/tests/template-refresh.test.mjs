@@ -169,10 +169,11 @@ runHookStage(buildHooks, 'afterBuild', run);
   return { control, fresh };
 }
 
-test('refresh keeps current controls and latest application guidance, and retains agent guidance', () => {
+test('refresh preserves controls and the generated guide without inheriting old agent state', () => {
   const root = mkdtempSync(path.join(os.tmpdir(), 'nb3-template-overlay-'));
   try {
     const { control, fresh } = overlayFixture(root);
+    const generatedGuide = readFileSync(path.join(fresh, 'AGENTS.md'));
     execFileSync(process.execPath, [
       path.join(scripts, 'overlay-factory.mjs'),
       control,
@@ -196,9 +197,11 @@ test('refresh keeps current controls and latest application guidance, and retain
       'Latest skill\n',
     );
     const guide = readFileSync(path.join(fresh, 'AGENTS.md'), 'utf8');
-    assert.match(guide, /Factory boundary/);
-    assert.match(guide, /Latest guidance/);
-    assert.doesNotMatch(guide, /Old upstream/);
+    assert.deepEqual(
+      readFileSync(path.join(fresh, 'AGENTS.md')),
+      generatedGuide,
+    );
+    assert.doesNotMatch(guide, /factory:boundary|Factory boundary|Old upstream/);
     const manifest = JSON.parse(readFileSync(path.join(fresh, 'package.json')));
     assert.equal(manifest.dependencies['new-framework'], '2.0.0');
     assert.equal(manifest.devDependencies['old-only'], undefined);
@@ -212,16 +215,13 @@ test('refresh keeps current controls and latest application guidance, and retain
     );
     assert.equal(metadata.templateVersion, '2.0.0');
     assert.equal(metadata.controlSha, sha);
-    // Preserve generated ignore rules and explicitly include agent guidance.
+    // Preserve generated ignore rules; newly synchronized skills remain versioned.
     assert.ok(
       readFileSync(path.join(fresh, '.gitignore'), 'utf8').startsWith(
         generatedGitignore,
       ),
     );
-    assert.equal(
-      readFileSync(path.join(fresh, '.agents/skills/custom/SKILL.md'), 'utf8'),
-      'custom guidance',
-    );
+    assert.equal(existsSync(path.join(fresh, '.agents')), false);
     // Pruning a superseded `database` directory is the one rule the template's script cannot express, so the
     // overlay injects the call into the walk and reports it as a compatibility fix.
     const prune = readFileSync(
@@ -248,7 +248,60 @@ test('refresh keeps current controls and latest application guidance, and retain
       'auth: fixture-secret\n',
     );
     assert.match(files, /client\/fresh\.ts/);
-    assert.match(files, /\.agents\/skills\/custom\/SKILL.md/);
+    assert.doesNotMatch(files, /\.agents\//);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('overlay keeps fresh skills and ownership without requiring an old factory boundary', () => {
+  const root = mkdtempSync(path.join(os.tmpdir(), 'nb3-template-skills-'));
+  try {
+    const { control, fresh } = overlayFixture(root);
+    // A refresh must work even when the control checkout has no AGENTS.md.
+    rmSync(path.join(control, 'AGENTS.md'));
+    const skill = '.agents/skills/nocobase-app-development/SKILL.md';
+    const staleReference = '.agents/skills/nocobase-app-development/old.md';
+    const ownership = '.agents/.skills-sync.json';
+    write(control, skill, 'Old package skill\n');
+    write(control, staleReference, 'Old reference\n');
+    write(control, ownership, '{"old":"@nocobase/old"}\n');
+    write(fresh, skill, 'New package skill\n');
+    write(
+      fresh,
+      ownership,
+      '{"nocobase-app-development":"@nocobase/app-skills"}\n',
+    );
+    const generatedGuide =
+      'Official guidance without a heading.\n\nKeep spacing.  \n';
+    write(fresh, 'AGENTS.md', generatedGuide);
+    const generatedOwnership = readFileSync(path.join(fresh, ownership));
+    execFileSync(process.execPath, [
+      path.join(scripts, 'overlay-factory.mjs'),
+      control,
+      fresh,
+      sha,
+    ]);
+    assert.equal(
+      readFileSync(path.join(fresh, 'AGENTS.md'), 'utf8'),
+      generatedGuide,
+    );
+    assert.equal(
+      readFileSync(path.join(fresh, skill), 'utf8'),
+      'New package skill\n',
+    );
+    assert.deepEqual(
+      readFileSync(path.join(fresh, ownership)),
+      generatedOwnership,
+    );
+    assert.equal(existsSync(path.join(fresh, staleReference)), false);
+    assert.equal(existsSync(path.join(fresh, '.agents/skills/custom')), false);
+    init(fresh, 'template');
+    commit(fresh);
+    const files = git(fresh, 'ls-files').split('\n');
+    assert.ok(files.includes(skill));
+    assert.ok(files.includes(ownership));
+    assert.ok(!files.includes(staleReference));
   } finally {
     rmSync(root, { recursive: true, force: true });
   }
@@ -562,6 +615,27 @@ test('refresh workflow has its own queue and isolates generated code from write 
   assert.match(publisher, /contents: write/);
   assert.doesNotMatch(publisher, /pnpm |npm |secrets\./);
   assert.match(publisher, /!inputs.dry_run/);
+});
+
+test('factory workflows and implementation guidance use the canonical skills sync command', () => {
+  for (const file of [
+    'workflows/refresh-template.yml',
+    'workflows/code-agent-task.yml',
+    'prompts/implement.md',
+  ]) {
+    const source = readFileSync(path.resolve(scripts, '..', file), 'utf8');
+    assert.match(source, /pnpm skills:sync\b/, file);
+    assert.doesNotMatch(source, /pnpm plugin:skills:sync\b/, file);
+  }
+  const workflow = readFileSync(
+    path.resolve(scripts, '..', 'workflows/refresh-template.yml'),
+    'utf8',
+  );
+  assert.ok(
+    workflow.indexOf('pnpm skills:sync') >
+      workflow.indexOf('pnpm install --no-frozen-lockfile'),
+  );
+  assert.doesNotMatch(workflow, /prettier[^\n]*\bAGENTS\.md\b/);
 });
 
 test('beta.38 test adaptation retains behavior assertions and is repeatable', async () => {
