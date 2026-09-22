@@ -8,7 +8,7 @@
 
 `FACTORY_DEPENDENCY_CACHE` 启用作业内的生产依赖安装缓存。输入包含根 lockfile、registry 配置、生成的 manifest/workspace、vendor 内容、构建脚本、Node 版本/ABI、宿主平台和目标参数及 pnpm 版本。成功构建后保存依赖指纹；下一次清理 dist 前通过目录 rename 暂存已验证的 node_modules，匹配时直接移回，避免复制大量小文件。缓存只在同一工作区、同一文件系统中复用。恢复时还原部署目标元数据，省去安装、链接转换和原生模块处理，仍执行裁剪和服务端依赖验证。应用代码不缓存。最终验证仅构建一次，不启用依赖缓存，使用新 runner，不下载实现 Agent 的缓存。不得把此目录作为跨信任边界的 Actions cache；跨作业缓存需另行设计可信生产者与完整性校验。`FACTORY_DISABLE_DEPENDENCY_CACHE=1` 可强制冷安装。
 
-模板刷新由 optimize-template-build.mjs 重新应用计时与缓存 hooks。上游锚点变化时刷新失败，需对照新模板适配，禁止整份覆盖上游构建脚本。
+旧版内联构建模板由 optimize-template-build.mjs 重新应用计时与缓存 hooks；无法识别的旧版源码仍会使刷新失败。新版模板通过 @nocobase/app-tools 提供构建实现，工厂保留其入口原文，不注入旧版计时、依赖缓存、registry 复制或裁剪补丁，也不复制说明旧 hooks 的 factory-performance Skill。新版仍有外层命令耗时统计，但没有这些工厂内部构建子阶段统计与依赖安装缓存；不得把两种构建路径的统计能力混为一谈。
 
 QA 使用 `$FACTORY_BROWSER_REPORT_TOOL` 的 check 子命令逐项验证字段与 PNG 并保存观察；finish 运行原有完整校验器。即时校验与最终校验共享同一检查项验证函数，不自动生成成功结论，也不省略最终独立校验。
 

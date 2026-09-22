@@ -307,6 +307,90 @@ test('overlay keeps fresh skills and ownership without requiring an old factory 
   }
 });
 
+// Package-owned build entry shipped by the current upstream template.
+// The factory must not search this wrapper for implementation-level anchors.
+const appToolsBuild = `import path from 'node:path';
+import { runAppTool } from '@nocobase/app-tools';
+process.exitCode = await runAppTool('build', {
+  rootDir: path.resolve(import.meta.dirname, '..'),
+});
+`;
+
+test('refresh leaves app-tools entry points untouched without legacy build utilities', () => {
+  const root = mkdtempSync(path.join(os.tmpdir(), 'nb3-app-tools-overlay-'));
+  try {
+    const { control, fresh } = overlayFixture(root);
+    const manifestPath = path.join(fresh, 'package.json');
+    const app = JSON.parse(readFileSync(manifestPath, 'utf8'));
+    app.devDependencies = { '@nocobase/app-tools': '^0.1.0' };
+    writeFileSync(manifestPath, JSON.stringify(app));
+    write(fresh, 'scripts/build.mjs', appToolsBuild);
+    rmSync(path.join(fresh, 'scripts/utils'), { recursive: true });
+    write(
+      control,
+      'skills/factory-performance/SKILL.md',
+      'Legacy build hooks\n',
+    );
+    const guide = readFileSync(path.join(fresh, 'AGENTS.md'));
+    execFileSync(process.execPath, [
+      path.join(scripts, 'overlay-factory.mjs'),
+      control,
+      fresh,
+      sha,
+    ]);
+    assert.equal(
+      readFileSync(path.join(fresh, 'scripts/build.mjs'), 'utf8'),
+      appToolsBuild,
+    );
+    assert.equal(existsSync(path.join(fresh, 'scripts/utils')), false);
+    assert.equal(existsSync(path.join(fresh, 'skills/factory-performance')), false);
+    assert.equal(existsSync(path.join(fresh, '.agents')), false);
+    assert.deepEqual(readFileSync(path.join(fresh, 'AGENTS.md')), guide);
+    assert.equal(
+      readFileSync(
+        path.join(fresh, '.github/workflows/refresh-template.yml'),
+        'utf8',
+      ),
+      'factory-workflow\n',
+    );
+    assert.equal(
+      readFileSync(path.join(fresh, '.npmrc'), 'utf8'),
+      '@nocobase:registry=https://npm.nocobase.ai/\n',
+    );
+    const metadata = JSON.parse(
+      readFileSync(path.join(fresh, 'factory-template.json')),
+    );
+    assert.deepEqual(metadata.compatibilityFixes, []);
+    const updated = JSON.parse(readFileSync(manifestPath, 'utf8'));
+    assert.equal(updated.devDependencies['@nocobase/app-tools'], '^0.1.0');
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('legacy templates still fail when their build source no longer matches the patch', () => {
+  const root = mkdtempSync(path.join(os.tmpdir(), 'nb3-legacy-build-'));
+  try {
+    const { control, fresh } = overlayFixture(root);
+    write(
+      fresh,
+      'scripts/build.mjs',
+      'throw new Error("unsupported build");\n',
+    );
+    assert.throws(
+      () =>
+        execFileSync(
+          process.execPath,
+          [path.join(scripts, 'overlay-factory.mjs'), control, fresh, sha],
+          { stdio: 'pipe' },
+        ),
+      /Unsupported template build hook/,
+    );
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
 test('overlay refuses an unrecognised prune script instead of generating a deployment without its tables', () => {
   const root = mkdtempSync(path.join(os.tmpdir(), 'nb3-template-prune-'));
   try {

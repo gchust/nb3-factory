@@ -88,8 +88,14 @@ app.devDependencies = {
     app.devDependencies?.['@playwright/test'] ||
     factory.devDependencies['@playwright/test'],
 };
+// The official app-tools package owns its build implementation. Do not patch its
+// thin application entry points or carry guidance for legacy inline build hooks.
+const packageOwnedBuild = Boolean(app.devDependencies?.['@nocobase/app-tools']);
 // This committed factory skill documents our build extension; it is not generated plugin output.
-if (existsSync(path.join(control, 'skills/factory-performance'))) {
+if (
+  !packageOwnedBuild &&
+  existsSync(path.join(control, 'skills/factory-performance'))
+) {
   cpSync(
     path.join(control, 'skills/factory-performance'),
     path.join(workspace, 'skills/factory-performance'),
@@ -98,7 +104,9 @@ if (existsSync(path.join(control, 'skills/factory-performance'))) {
 }
 const compatibilityFixes = adaptTemplateTests(workspace, app);
 compatibilityFixes.push(...applyBeta34Compatibility(workspace, app));
-compatibilityFixes.push(...optimizeTemplateBuild(workspace));
+if (!packageOwnedBuild) {
+  compatibilityFixes.push(...optimizeTemplateBuild(workspace));
+}
 // Published beta.15 plugins import these two undeclared client dependencies.
 // Scope fixes to this template; future baselines keep their dependency choices.
 if (app.nocobase.defaultTemplateVersion === '1.0.0-beta.15') {
@@ -118,64 +126,70 @@ if (app.nocobase.defaultTemplateVersion === '1.0.0-beta.15') {
     }
   }
 }
-// Production installation runs in dist and needs the factory scoped registry.
-// Preserve upstream support when present, regardless of the template version.
-const build = read(workspace, 'scripts/build.mjs');
-if (!build.includes("path.join(rootDir, '.npmrc')")) {
-  const install = "run(\n  'Install server production dependencies',";
-  if (!build.includes(install))
-    throw new Error('Cannot apply production registry fix to this template.');
-  writeFileSync(
-    path.join(workspace, 'scripts/build.mjs'),
-    build.replace(
-      install,
-      `fs.copyFileSync(path.join(rootDir, '.npmrc'), path.join(distDir, '.npmrc'));\n${install}`,
-    ),
+if (packageOwnedBuild) {
+  console.log(
+    'Using @nocobase/app-tools; legacy build source patches are not applied.',
   );
-  compatibilityFixes.push('build: copy scoped registry into dist');
-}
-// A plugin declares its migrations, seeds and collections as paths under `./database` and publishes those TypeScript
-// sources next to the compiled `dist/database` mirror, and the resolver prefers the sources — which plain `node`
-// cannot load from inside `node_modules` on a deployment. The template prunes files by extension, which cannot see a
-// directory, so it calls the factory's own rule at the one place that happens to be walking the tree. The anchors
-// below are the template's own lines: a template that rearranges them fails this refresh instead of quietly
-// generating a deployment that boots without its tables.
-const prune = read(workspace, 'scripts/utils/prune-dist-artifacts.mjs');
-if (!prune.includes('prune-superseded-sources.mjs')) {
-  const prunePatches = [
-    [
-      'import',
-      "import { formatMegabytes } from './server-deps.mjs';",
-      "import { formatMegabytes } from './server-deps.mjs';\nimport { removeSupersededDatabaseDirectory } from '../../.github/scripts/prune-superseded-sources.mjs';",
-    ],
-    [
-      'walk',
-      `    if (entry.isDirectory()) {\n      prune(entryPath, treeRoot, removed);`,
-      `    if (entry.isDirectory()) {\n      // Checked before descending: the directory itself is what has to go, so walking into it first would be\n      // wasted work and a second pass.\n      if (removeSupersededDatabaseDirectory(entryPath, removed)) continue;\n      prune(entryPath, treeRoot, removed);`,
-    ],
-    [
-      'report',
-      '`Removed ${removed.count} declaration, source map, and documentation files from the deployment tree (${formatMegabytes(removed.bytes)}).`',
-      '`Removed ${removed.count} declaration, source map, documentation, and superseded source files from the deployment tree (${formatMegabytes(removed.bytes)}).`',
-    ],
-  ];
-  const unpatched = prunePatches
-    .filter(([, anchor]) => !prune.includes(anchor))
-    .map(([what]) => what);
-  if (unpatched.length > 0)
-    throw new Error(
-      `Cannot apply superseded-database pruning to this template; unrecognised: ${unpatched.join(', ')}`,
+} else {
+  // Production installation runs in dist and needs the factory scoped registry.
+  // Preserve upstream support when present, regardless of the template version.
+  const build = read(workspace, 'scripts/build.mjs');
+  if (!build.includes("path.join(rootDir, '.npmrc')")) {
+    const install = "run(\n  'Install server production dependencies',";
+    if (!build.includes(install))
+      throw new Error('Cannot apply production registry fix to this template.');
+    writeFileSync(
+      path.join(workspace, 'scripts/build.mjs'),
+      build.replace(
+        install,
+        `fs.copyFileSync(path.join(rootDir, '.npmrc'), path.join(distDir, '.npmrc'));\n${install}`,
+      ),
     );
-  writeFileSync(
-    path.join(workspace, 'scripts/utils/prune-dist-artifacts.mjs'),
-    prunePatches.reduce(
-      (source, [, anchor, replacement]) => source.replace(anchor, replacement),
-      prune,
-    ),
-  );
-  compatibilityFixes.push(
-    'build: prune plugin database sources superseded by their compiled mirror',
-  );
+    compatibilityFixes.push('build: copy scoped registry into dist');
+  }
+  // A plugin declares its migrations, seeds and collections as paths under `./database` and publishes those TypeScript
+  // sources next to the compiled `dist/database` mirror, and the resolver prefers the sources — which plain `node`
+  // cannot load from inside `node_modules` on a deployment. The template prunes files by extension, which cannot see a
+  // directory, so it calls the factory's own rule at the one place that happens to be walking the tree. The anchors
+  // below are the template's own lines: a template that rearranges them fails this refresh instead of quietly
+  // generating a deployment that boots without its tables.
+  const prune = read(workspace, 'scripts/utils/prune-dist-artifacts.mjs');
+  if (!prune.includes('prune-superseded-sources.mjs')) {
+    const prunePatches = [
+      [
+        'import',
+        "import { formatMegabytes } from './server-deps.mjs';",
+        "import { formatMegabytes } from './server-deps.mjs';\nimport { removeSupersededDatabaseDirectory } from '../../.github/scripts/prune-superseded-sources.mjs';",
+      ],
+      [
+        'walk',
+        `    if (entry.isDirectory()) {\n      prune(entryPath, treeRoot, removed);`,
+        `    if (entry.isDirectory()) {\n      // Checked before descending: the directory itself is what has to go, so walking into it first would be\n      // wasted work and a second pass.\n      if (removeSupersededDatabaseDirectory(entryPath, removed)) continue;\n      prune(entryPath, treeRoot, removed);`,
+      ],
+      [
+        'report',
+        '`Removed ${removed.count} declaration, source map, and documentation files from the deployment tree (${formatMegabytes(removed.bytes)}).`',
+        '`Removed ${removed.count} declaration, source map, documentation, and superseded source files from the deployment tree (${formatMegabytes(removed.bytes)}).`',
+      ],
+    ];
+    const unpatched = prunePatches
+      .filter(([, anchor]) => !prune.includes(anchor))
+      .map(([what]) => what);
+    if (unpatched.length > 0)
+      throw new Error(
+        `Cannot apply superseded-database pruning to this template; unrecognised: ${unpatched.join(', ')}`,
+      );
+    writeFileSync(
+      path.join(workspace, 'scripts/utils/prune-dist-artifacts.mjs'),
+      prunePatches.reduce(
+        (source, [, anchor, replacement]) => source.replace(anchor, replacement),
+        prune,
+      ),
+    );
+    compatibilityFixes.push(
+      'build: prune plugin database sources superseded by their compiled mirror',
+    );
+  }
 }
 writeFileSync(
   path.join(workspace, 'package.json'),
