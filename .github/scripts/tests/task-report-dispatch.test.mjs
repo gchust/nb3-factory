@@ -205,6 +205,7 @@ test('successful delivery dispatches every reporter on the default branch with r
   assert.deepEqual(
     f.calls,
     [
+      'report-task-progress.yml',
       'report-task-usage.yml',
       'publish-agent-history.yml',
       'publish-retro.yml',
@@ -232,7 +233,7 @@ test('handoffs and failed deliveries keep their history, never premature media',
   assert.equal(f.result.status, 0);
   assert.deepEqual(
     f.calls.map((args) => args[2]),
-    ['report-task-usage.yml', 'publish-agent-history.yml', 'publish-retro.yml'],
+    ['report-task-progress.yml', 'report-task-usage.yml', 'publish-agent-history.yml', 'publish-retro.yml'],
   );
 });
 
@@ -245,6 +246,7 @@ test('dispatch retries transient errors without retrying a successful request', 
   assert.deepEqual(
     f.calls.map((args) => args[2]),
     [
+      'report-task-progress.yml',
       'report-task-usage.yml',
       'report-task-usage.yml',
       'publish-agent-history.yml',
@@ -258,7 +260,7 @@ test('dispatch retries transient errors without retrying a successful request', 
 test('a failed usage dispatch still attempts media and leaves explicit replay instructions', (t) => {
   const f = dispatch(t, { failWorkflow: 'report-task-usage.yml' });
   assert.equal(f.result.status, 1);
-  assert.equal(f.calls.length, 7);
+  assert.equal(f.calls.length, 8);
   assert.deepEqual(
     f.calls.slice(-2).map((args) => args[2]),
     ['publish-visual-report.yml', 'deploy-preview.yml'],
@@ -270,7 +272,7 @@ test('a failed usage dispatch still attempts media and leaves explicit replay in
 test('permanent failures are bounded independently for every reporter', (t) => {
   const f = dispatch(t, { failWorkflow: '*' });
   assert.equal(f.result.status, 1);
-  assert.equal(f.calls.length, 15);
+  assert.equal(f.calls.length, 18);
   assert.match(f.summary, /publish-visual-report/);
   assert.match(f.summary, /publish-retro/);
   assert.match(f.summary, /publish-agent-history/);

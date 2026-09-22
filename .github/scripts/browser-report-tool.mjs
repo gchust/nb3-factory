@@ -35,6 +35,7 @@ if (action === 'check') {
   value.id = criterion.id;
   value.criterion = criterion.text;
   validateCheck(value, draft.checks.length, path.resolve(evidence));
+  value.recordedAt = Date.now(); // A recorded check, not an independent pass verdict.
   const index = draft.checks.findIndex(
     (check) => identifyCheck(check, criteria).id === value.id,
   );

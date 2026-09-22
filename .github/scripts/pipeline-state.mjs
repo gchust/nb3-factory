@@ -39,14 +39,27 @@ export function saveState(file, state) {
   writeFileSync(temp, `${JSON.stringify(state, null, 2)}\n`, { mode: 0o600 });
   renameSync(temp, file);
   // Public progress has no prompts, observations, credentials or source logs.
+  const progressPath = path.join(path.dirname(file), 'progress.json');
+  let previous;
+  try { previous = json(progressPath); } catch { /* First progress sample. */ }
+  const now = Date.now();
+  const samePhase = previous?.runId === (process.env.GITHUB_RUN_ID ?? '') &&
+    previous?.attempt === (process.env.GITHUB_RUN_ATTEMPT ?? '') &&
+    previous?.phase === state.phase && previous?.verificationAttempts === state.verificationAttempts &&
+    previous?.repairAttempts === state.repairAttempts;
   const progress = {
+    runId: process.env.GITHUB_RUN_ID ?? '',
+    attempt: process.env.GITHUB_RUN_ATTEMPT ?? '',
+    updatedAt: now,
+    phaseStartedAt: samePhase && Number.isSafeInteger(previous.phaseStartedAt) ? previous.phaseStartedAt : now,
     phase: state.phase,
     outcome: state.outcome ?? 'running',
     verificationAttempts: state.verificationAttempts,
     repairAttempts: state.repairAttempts,
     pendingCriteria: state.pendingCriteria,
   };
-  writeFileSync(path.join(path.dirname(file), 'progress.json'), `${JSON.stringify(progress, null, 2)}\n`);
+  writeFileSync(`${progressPath}.tmp`, `${JSON.stringify(progress, null, 2)}\n`);
+  renameSync(`${progressPath}.tmp`, progressPath);
   const message = `Factory phase: ${state.phase} (${state.outcome ?? 'running'}); verification ${state.verificationAttempts}; repair ${state.repairAttempts}; pending ${state.pendingCriteria.join(', ') || 'none'}`;
   console.error(message);
   if (process.env.GITHUB_STEP_SUMMARY) appendFileSync(process.env.GITHUB_STEP_SUMMARY, `${message}\n\n`);
