@@ -61,6 +61,7 @@ const enUS = {
   'status.retry': 'Retry',
   'navigation.brandHome': 'NocoBase home',
   'navigation.brandApps': 'NocoBase applications',
+  'navigation.pipelineSmoke': 'Pipeline Smoke',
   'auth.passwordMismatch': "Passwords don't match.",
   'status.deniedDescription': 'You do not have permission to access {{label}}.',
   'status.routeFailedDescription':
@@ -93,6 +94,12 @@ const enUS = {
     title: 'Start building your application',
     description:
       'Describe what you need to your AI Agent, then build pages, data models, and business workflows.',
+  },
+  pipelineSmoke: {
+    title: 'Pipeline Smoke',
+    description: 'Used to verify the automated build pipeline.',
+    countLabel: 'Counter value',
+    increment: '+1',
   },
 
   appearance: {

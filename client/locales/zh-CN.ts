@@ -57,6 +57,7 @@ const zhCN: AppResource = {
   'status.retry': '重试',
   'navigation.brandHome': 'NocoBase 首页',
   'navigation.brandApps': 'NocoBase 应用',
+  'navigation.pipelineSmoke': '流程冒烟',
   'auth.passwordMismatch': '两次输入的密码不一致。',
   'status.deniedDescription': '你没有访问 {{label}} 的权限。',
   'status.routeFailedDescription':
@@ -86,6 +87,12 @@ const zhCN: AppResource = {
   home: {
     title: '开始构建你的应用',
     description: '向 AI 助手描述你的需求，逐步构建页面、数据模型和业务流程。',
+  },
+  pipelineSmoke: {
+    title: '流程冒烟',
+    description: '用于验证自动搭建流程。',
+    countLabel: '计数器数值',
+    increment: '+1',
   },
 
   appearance: {
