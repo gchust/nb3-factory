@@ -1,0 +1,199 @@
+{
+  "collection": {
+    "constraints": [
+      {
+        "fields": [
+          "id"
+        ],
+        "type": "primary"
+      },
+      {
+        "fields": [
+          "ticketId",
+          "userId"
+        ],
+        "mode": "index",
+        "name": "idx_service_ticket_shares_ticket_id_user_id",
+        "type": "unique"
+      }
+    ],
+    "db": {
+      "schema": "main",
+      "strict": false
+    },
+    "fields": [
+      {
+        "autoIncrement": true,
+        "db": {
+          "affinity": "integer",
+          "nativeType": "INTEGER",
+          "physicalDataType": "integer"
+        },
+        "name": "id",
+        "nullable": false,
+        "type": "integer"
+      },
+      {
+        "autoIncrement": false,
+        "db": {
+          "affinity": "integer",
+          "nativeType": "INTEGER",
+          "physicalDataType": "integer"
+        },
+        "name": "ticketId",
+        "nullable": false,
+        "type": "integer"
+      },
+      {
+        "autoIncrement": false,
+        "db": {
+          "affinity": "text",
+          "nativeType": "varchar(64)",
+          "physicalDataType": "string"
+        },
+        "length": 64,
+        "name": "userId",
+        "nullable": false,
+        "type": "string"
+      },
+      {
+        "autoIncrement": false,
+        "db": {
+          "affinity": "text",
+          "nativeType": "varchar(64)",
+          "physicalDataType": "string"
+        },
+        "length": 64,
+        "name": "grantedById",
+        "nullable": true,
+        "type": "string"
+      },
+      {
+        "autoIncrement": false,
+        "db": {
+          "affinity": "numeric",
+          "defaultExpression": "'1'",
+          "nativeType": "boolean",
+          "physicalDataType": "boolean"
+        },
+        "defaultValue": "1",
+        "name": "active",
+        "nullable": false,
+        "type": "boolean"
+      },
+      {
+        "autoIncrement": false,
+        "db": {
+          "affinity": "text",
+          "nativeType": "TEXT",
+          "physicalDataType": "text"
+        },
+        "name": "revokedAt",
+        "nullable": true,
+        "type": "datetime"
+      },
+      {
+        "autoIncrement": false,
+        "db": {
+          "affinity": "text",
+          "nativeType": "TEXT",
+          "physicalDataType": "text"
+        },
+        "name": "createdAt",
+        "nullable": false,
+        "type": "datetime"
+      },
+      {
+        "autoIncrement": false,
+        "db": {
+          "affinity": "text",
+          "nativeType": "TEXT",
+          "physicalDataType": "text"
+        },
+        "name": "updatedAt",
+        "nullable": false,
+        "type": "datetime"
+      }
+    ],
+    "indexes": [
+      {
+        "db": {
+          "keys": [
+            {
+              "field": "userId",
+              "order": "asc"
+            }
+          ],
+          "unique": false
+        },
+        "fields": [
+          "userId"
+        ],
+        "name": "idx_service_ticket_shares_user_id",
+        "order": {
+          "userId": "asc"
+        }
+      },
+      {
+        "db": {
+          "keys": [
+            {
+              "field": "ticketId",
+              "order": "asc"
+            },
+            {
+              "field": "userId",
+              "order": "asc"
+            }
+          ],
+          "unique": true
+        },
+        "fields": [
+          "ticketId",
+          "userId"
+        ],
+        "name": "idx_service_ticket_shares_ticket_id_user_id",
+        "order": {
+          "ticketId": "asc",
+          "userId": "asc"
+        }
+      }
+    ],
+    "kind": "table",
+    "name": "serviceTicketShares",
+    "naming": {
+      "tablePrefix": "",
+      "underscored": true
+    }
+  },
+  "formatVersion": 1,
+  "name": "serviceTicketShares",
+  "warnings": [
+    {
+      "aspect": "checkConstraints",
+      "code": "COLLECTION_INSPECTION_PARTIAL",
+      "message": "Physical Schema aspect \"checkConstraints\" is partial.",
+      "path": [
+        "inspection",
+        "aspects",
+        "checkConstraints"
+      ]
+    },
+    {
+      "aspect": "comments",
+      "code": "COLLECTION_INSPECTION_UNSUPPORTED",
+      "message": "Physical Schema aspect \"comments\" is unsupported.",
+      "path": [
+        "inspection",
+        "aspects",
+        "comments"
+      ]
+    },
+    {
+      "aspect": "checkConstraints",
+      "code": "COLLECTION_INSPECTION_WARNING",
+      "message": "SQLite check constraints are parsed from the schema SQL and may be incomplete.",
+      "sourceCode": "SQLITE_CHECK_CONSTRAINT_PARTIAL"
+    }
+  ]
+}

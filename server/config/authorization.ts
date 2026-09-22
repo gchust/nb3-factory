@@ -6,12 +6,18 @@ import {
   type AppConfigFactory,
 } from '@nocobase/app-server/config';
 import { type AuthorizationConfig } from '@nocobase/app-plugin-authorization/server';
+import { serviceAuthorization } from '../service-authorization.js';
 
 // Permission sets, page and database authorization are built in.
 const authorization: AppConfigFactory<AuthorizationConfig> = defineAppConfig(
   (_runtime) => ({
     permissionSets: { rootSet: 'root', defaultSet: 'member' },
-    plugins: [defaultAccess(), sharingRules(), restrictionRules()],
+    plugins: [
+      defaultAccess(),
+      sharingRules(),
+      restrictionRules(),
+      serviceAuthorization(),
+    ],
   }),
 );
 

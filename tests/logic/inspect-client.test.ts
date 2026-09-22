@@ -145,6 +145,71 @@ describe('client inspection', () => {
         path: '/reset-password',
       },
       {
+        auth: 'required',
+        id: 'nb3-factory:service',
+        path: '/',
+      },
+      {
+        auth: 'required',
+        id: 'nb3-factory:serviceDashboard',
+        path: '/service',
+      },
+      {
+        auth: 'required',
+        id: 'nb3-factory:serviceTickets',
+        path: '/service/tickets',
+      },
+      {
+        auth: 'required',
+        id: 'nb3-factory:serviceTicketDetail',
+        path: '/service/tickets/:id',
+      },
+      {
+        auth: 'required',
+        id: 'nb3-factory:serviceCustomers',
+        path: '/service/customers',
+      },
+      {
+        auth: 'required',
+        id: 'nb3-factory:serviceDevices',
+        path: '/service/devices',
+      },
+      {
+        auth: 'required',
+        id: 'nb3-factory:serviceKnowledge',
+        path: '/service/knowledge',
+      },
+      {
+        auth: 'required',
+        id: 'nb3-factory:serviceKnowledgeDetail',
+        path: '/service/knowledge/:id',
+      },
+      {
+        auth: 'required',
+        id: 'nb3-factory:serviceInspections',
+        path: '/service/inspections',
+      },
+      {
+        auth: 'required',
+        id: 'nb3-factory:serviceAutomation',
+        path: '/service/automation',
+      },
+      {
+        auth: 'required',
+        id: 'nb3-factory:serviceAssistant',
+        path: '/service/assistant',
+      },
+      {
+        auth: 'required',
+        id: 'nb3-factory:serviceMessages',
+        path: '/service/messages',
+      },
+      {
+        auth: 'required',
+        id: 'nb3-factory:serviceTeam',
+        path: '/service/team',
+      },
+      {
         auth: 'guest',
         id: '@nocobase/app-plugin-install:install',
         path: '/install',

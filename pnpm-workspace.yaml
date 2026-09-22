@@ -19,6 +19,13 @@ trustLockfile: true
 # See https://pnpm.io/settings/build#strictdepbuilds.
 strictDepBuilds: false
 
+# pnpm 11 re-runs a dependency install before every `pnpm exec`/`pnpm run` by default and
+# prints its "Already up to date" summary on stdout. The install is already performed
+# explicitly with `--frozen-lockfile` before any check runs, and the extra summary breaks a
+# command that parses its own stdout as JSON (see `tests/logic/inspect-client.test.ts`).
+# See https://pnpm.io/settings/dependency-resolution#verifydepsbeforerun.
+verifyDepsBeforeRun: false
+
 minimumReleaseAgeExclude:
   - '@nocobase/app-client@1.0.0-beta.19'
   - '@nocobase/app-plugin-ai-employee@0.1.0-beta.18'

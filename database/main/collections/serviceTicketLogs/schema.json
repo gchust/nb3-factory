@@ -1,0 +1,165 @@
+{
+  "formatVersion": 1,
+  "name": "serviceTicketLogs",
+  "physical": {
+    "checkConstraints": [],
+    "columns": [
+      {
+        "affinity": "integer",
+        "autoIncrement": true,
+        "columnName": "id",
+        "dataType": "integer",
+        "nativeType": "INTEGER",
+        "nullable": false,
+        "ordinalPosition": 1
+      },
+      {
+        "affinity": "integer",
+        "autoIncrement": false,
+        "columnName": "ticket_id",
+        "dataType": "integer",
+        "nativeType": "INTEGER",
+        "nullable": false,
+        "ordinalPosition": 2
+      },
+      {
+        "affinity": "text",
+        "autoIncrement": false,
+        "columnName": "operator_id",
+        "dataType": "string",
+        "length": 64,
+        "nativeType": "varchar(64)",
+        "nullable": true,
+        "ordinalPosition": 3
+      },
+      {
+        "affinity": "text",
+        "autoIncrement": false,
+        "columnName": "operator_name",
+        "dataType": "string",
+        "length": 128,
+        "nativeType": "varchar(128)",
+        "nullable": true,
+        "ordinalPosition": 4
+      },
+      {
+        "affinity": "text",
+        "autoIncrement": false,
+        "columnName": "action",
+        "dataType": "string",
+        "length": 32,
+        "nativeType": "varchar(32)",
+        "nullable": false,
+        "ordinalPosition": 5
+      },
+      {
+        "affinity": "text",
+        "autoIncrement": false,
+        "columnName": "from_status",
+        "dataType": "string",
+        "length": 32,
+        "nativeType": "varchar(32)",
+        "nullable": true,
+        "ordinalPosition": 6
+      },
+      {
+        "affinity": "text",
+        "autoIncrement": false,
+        "columnName": "to_status",
+        "dataType": "string",
+        "length": 32,
+        "nativeType": "varchar(32)",
+        "nullable": true,
+        "ordinalPosition": 7
+      },
+      {
+        "affinity": "text",
+        "autoIncrement": false,
+        "columnName": "note",
+        "dataType": "text",
+        "nativeType": "TEXT",
+        "nullable": true,
+        "ordinalPosition": 8
+      },
+      {
+        "affinity": "text",
+        "autoIncrement": false,
+        "columnName": "reason",
+        "dataType": "text",
+        "nativeType": "TEXT",
+        "nullable": true,
+        "ordinalPosition": 9
+      },
+      {
+        "affinity": "real",
+        "autoIncrement": false,
+        "columnName": "labor_hours",
+        "dataType": "float",
+        "nativeType": "float",
+        "nullable": true,
+        "ordinalPosition": 10
+      },
+      {
+        "affinity": "text",
+        "autoIncrement": false,
+        "columnName": "created_at",
+        "dataType": "text",
+        "nativeType": "TEXT",
+        "nullable": false,
+        "ordinalPosition": 11
+      }
+    ],
+    "foreignKeys": [],
+    "indexes": [
+      {
+        "keys": [
+          {
+            "columnName": "action",
+            "order": "asc"
+          }
+        ],
+        "name": "idx_service_ticket_logs_action",
+        "unique": false
+      },
+      {
+        "keys": [
+          {
+            "columnName": "ticket_id",
+            "order": "asc"
+          }
+        ],
+        "name": "idx_service_ticket_logs_ticket_id",
+        "unique": false
+      }
+    ],
+    "inspection": {
+      "aspects": {
+        "checkConstraints": "partial",
+        "columns": "complete",
+        "comments": "unsupported",
+        "foreignKeys": "complete",
+        "indexes": "complete",
+        "primaryKey": "complete",
+        "uniqueConstraints": "complete",
+        "viewDefinition": "complete"
+      },
+      "warnings": [
+        {
+          "aspect": "checkConstraints",
+          "code": "SQLITE_CHECK_CONSTRAINT_PARTIAL",
+          "message": "SQLite check constraints are parsed from the schema SQL and may be incomplete."
+        }
+      ]
+    },
+    "kind": "table",
+    "primaryKey": {
+      "columns": [
+        "id"
+      ]
+    },
+    "schema": "main",
+    "strict": false,
+    "tableName": "service_ticket_logs",
+    "uniqueConstraints": []
+  }
+}

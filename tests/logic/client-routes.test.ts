@@ -16,24 +16,24 @@ describe('app client routes', () => {
 
   it('declares application and settings route contributions', async () => {
     expect(applicationRoutes).toHaveLength(2);
-    expect(applicationRoutes[0]).toMatchObject({
-      parent: 'app',
-      routes: [
-        {
-          auth: 'required',
-          name: 'home',
-          path: '/',
-        },
-        { auth: 'guest', name: 'login', path: '/login' },
-        { auth: 'guest', name: 'register', path: '/register' },
-        {
-          auth: 'guest',
-          name: 'forgot-password',
-          path: '/forgot-password',
-        },
-        { auth: 'guest', name: 'reset-password', path: '/reset-password' },
-      ],
-    });
+    expect(applicationRoutes[0]).toMatchObject({ parent: 'app' });
+    // The landing page and the application-owned authentication pages stay first; application
+    // pages may be appended to the same contribution.
+    expect(applicationRoutes[0].routes.slice(0, 5)).toMatchObject([
+      {
+        auth: 'required',
+        name: 'home',
+        path: '/',
+      },
+      { auth: 'guest', name: 'login', path: '/login' },
+      { auth: 'guest', name: 'register', path: '/register' },
+      {
+        auth: 'guest',
+        name: 'forgot-password',
+        path: '/forgot-password',
+      },
+      { auth: 'guest', name: 'reset-password', path: '/reset-password' },
+    ]);
     expect(applicationRoutes[1]).toEqual({
       parent: 'settings',
       routes: [],
@@ -41,9 +41,17 @@ describe('app client routes', () => {
     expect(Object.isFrozen(applicationRoutes[0])).toBe(true);
     expect(Object.isFrozen(applicationRoutes[1])).toBe(true);
     for (const route of applicationRoutes[0].routes) {
-      await expect(route.componentLoader()).resolves.toMatchObject({
-        default: expect.any(Function),
-      });
+      if (route.componentLoader) {
+        await expect(route.componentLoader()).resolves.toMatchObject({
+          default: expect.any(Function),
+        });
+      }
+      for (const child of route.children ?? []) {
+        if (!child.componentLoader) continue;
+        await expect(child.componentLoader()).resolves.toMatchObject({
+          default: expect.any(Function),
+        });
+      }
     }
   });
 
@@ -61,6 +69,18 @@ describe('app client routes', () => {
     expect(pageAuthorizations(resolved.routes)).toEqual([
       // The landing page opted out of page authorization, so it is reachable by every signed-in user.
       { name: 'home', authorizedAs: null },
+      { name: 'serviceDashboard', authorizedAs: 'service.dashboard' },
+      { name: 'serviceTickets', authorizedAs: 'service.tickets' },
+      { name: 'serviceTicketDetail', authorizedAs: null },
+      { name: 'serviceCustomers', authorizedAs: 'service.customers' },
+      { name: 'serviceDevices', authorizedAs: 'service.devices' },
+      { name: 'serviceKnowledge', authorizedAs: 'service.knowledge' },
+      { name: 'serviceKnowledgeDetail', authorizedAs: null },
+      { name: 'serviceInspections', authorizedAs: 'service.inspections' },
+      { name: 'serviceAutomation', authorizedAs: 'service.automation' },
+      { name: 'serviceAssistant', authorizedAs: 'service.assistant' },
+      { name: 'serviceMessages', authorizedAs: null },
+      { name: 'serviceTeam', authorizedAs: 'service.members' },
     ]);
   });
 });

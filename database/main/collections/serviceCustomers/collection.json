@@ -1,0 +1,206 @@
+{
+  "collection": {
+    "constraints": [
+      {
+        "fields": [
+          "id"
+        ],
+        "type": "primary"
+      },
+      {
+        "fields": [
+          "name"
+        ],
+        "mode": "index",
+        "name": "idx_service_customers_name",
+        "type": "unique"
+      }
+    ],
+    "db": {
+      "schema": "main",
+      "strict": false
+    },
+    "fields": [
+      {
+        "autoIncrement": true,
+        "db": {
+          "affinity": "integer",
+          "nativeType": "INTEGER",
+          "physicalDataType": "integer"
+        },
+        "name": "id",
+        "nullable": false,
+        "type": "integer"
+      },
+      {
+        "autoIncrement": false,
+        "db": {
+          "affinity": "text",
+          "nativeType": "varchar(128)",
+          "physicalDataType": "string"
+        },
+        "length": 128,
+        "name": "name",
+        "nullable": false,
+        "type": "string"
+      },
+      {
+        "autoIncrement": false,
+        "db": {
+          "affinity": "text",
+          "nativeType": "varchar(64)",
+          "physicalDataType": "string"
+        },
+        "length": 64,
+        "name": "contactName",
+        "nullable": true,
+        "type": "string"
+      },
+      {
+        "autoIncrement": false,
+        "db": {
+          "affinity": "text",
+          "nativeType": "varchar(32)",
+          "physicalDataType": "string"
+        },
+        "length": 32,
+        "name": "contactPhone",
+        "nullable": true,
+        "type": "string"
+      },
+      {
+        "autoIncrement": false,
+        "db": {
+          "affinity": "text",
+          "nativeType": "varchar(16)",
+          "physicalDataType": "string"
+        },
+        "length": 16,
+        "name": "region",
+        "nullable": false,
+        "type": "string"
+      },
+      {
+        "autoIncrement": false,
+        "db": {
+          "affinity": "text",
+          "nativeType": "TEXT",
+          "physicalDataType": "text"
+        },
+        "name": "address",
+        "nullable": true,
+        "type": "text"
+      },
+      {
+        "autoIncrement": false,
+        "db": {
+          "affinity": "text",
+          "defaultExpression": "'active'",
+          "nativeType": "varchar(16)",
+          "physicalDataType": "string"
+        },
+        "defaultValue": "active",
+        "length": 16,
+        "name": "status",
+        "nullable": false,
+        "type": "string"
+      },
+      {
+        "autoIncrement": false,
+        "db": {
+          "affinity": "text",
+          "nativeType": "TEXT",
+          "physicalDataType": "text"
+        },
+        "name": "createdAt",
+        "nullable": false,
+        "type": "datetime"
+      },
+      {
+        "autoIncrement": false,
+        "db": {
+          "affinity": "text",
+          "nativeType": "TEXT",
+          "physicalDataType": "text"
+        },
+        "name": "updatedAt",
+        "nullable": false,
+        "type": "datetime"
+      }
+    ],
+    "indexes": [
+      {
+        "db": {
+          "keys": [
+            {
+              "field": "region",
+              "order": "asc"
+            }
+          ],
+          "unique": false
+        },
+        "fields": [
+          "region"
+        ],
+        "name": "idx_service_customers_region",
+        "order": {
+          "region": "asc"
+        }
+      },
+      {
+        "db": {
+          "keys": [
+            {
+              "field": "name",
+              "order": "asc"
+            }
+          ],
+          "unique": true
+        },
+        "fields": [
+          "name"
+        ],
+        "name": "idx_service_customers_name",
+        "order": {
+          "name": "asc"
+        }
+      }
+    ],
+    "kind": "table",
+    "name": "serviceCustomers",
+    "naming": {
+      "tablePrefix": "",
+      "underscored": true
+    }
+  },
+  "formatVersion": 1,
+  "name": "serviceCustomers",
+  "warnings": [
+    {
+      "aspect": "checkConstraints",
+      "code": "COLLECTION_INSPECTION_PARTIAL",
+      "message": "Physical Schema aspect \"checkConstraints\" is partial.",
+      "path": [
+        "inspection",
+        "aspects",
+        "checkConstraints"
+      ]
+    },
+    {
+      "aspect": "comments",
+      "code": "COLLECTION_INSPECTION_UNSUPPORTED",
+      "message": "Physical Schema aspect \"comments\" is unsupported.",
+      "path": [
+        "inspection",
+        "aspects",
+        "comments"
+      ]
+    },
+    {
+      "aspect": "checkConstraints",
+      "code": "COLLECTION_INSPECTION_WARNING",
+      "message": "SQLite check constraints are parsed from the schema SQL and may be incomplete.",
+      "sourceCode": "SQLITE_CHECK_CONSTRAINT_PARTIAL"
+    }
+  ]
+}

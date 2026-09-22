@@ -1,0 +1,509 @@
+{
+  "collection": {
+    "constraints": [
+      {
+        "fields": [
+          "id"
+        ],
+        "type": "primary"
+      },
+      {
+        "fields": [
+          "externalEventId"
+        ],
+        "mode": "index",
+        "name": "idx_service_tickets_external_event_id",
+        "type": "unique"
+      },
+      {
+        "fields": [
+          "ticketNo"
+        ],
+        "mode": "index",
+        "name": "idx_service_tickets_ticket_no",
+        "type": "unique"
+      }
+    ],
+    "db": {
+      "schema": "main",
+      "strict": false
+    },
+    "fields": [
+      {
+        "autoIncrement": true,
+        "db": {
+          "affinity": "integer",
+          "nativeType": "INTEGER",
+          "physicalDataType": "integer"
+        },
+        "name": "id",
+        "nullable": false,
+        "type": "integer"
+      },
+      {
+        "autoIncrement": false,
+        "db": {
+          "affinity": "text",
+          "nativeType": "varchar(64)",
+          "physicalDataType": "string"
+        },
+        "length": 64,
+        "name": "ticketNo",
+        "nullable": false,
+        "type": "string"
+      },
+      {
+        "autoIncrement": false,
+        "db": {
+          "affinity": "integer",
+          "nativeType": "INTEGER",
+          "physicalDataType": "integer"
+        },
+        "name": "customerId",
+        "nullable": false,
+        "type": "integer"
+      },
+      {
+        "autoIncrement": false,
+        "db": {
+          "affinity": "integer",
+          "nativeType": "INTEGER",
+          "physicalDataType": "integer"
+        },
+        "name": "deviceId",
+        "nullable": false,
+        "type": "integer"
+      },
+      {
+        "autoIncrement": false,
+        "db": {
+          "affinity": "text",
+          "nativeType": "varchar(200)",
+          "physicalDataType": "string"
+        },
+        "length": 200,
+        "name": "title",
+        "nullable": false,
+        "type": "string"
+      },
+      {
+        "autoIncrement": false,
+        "db": {
+          "affinity": "text",
+          "nativeType": "TEXT",
+          "physicalDataType": "text"
+        },
+        "name": "description",
+        "nullable": true,
+        "type": "text"
+      },
+      {
+        "autoIncrement": false,
+        "db": {
+          "affinity": "text",
+          "defaultExpression": "'normal'",
+          "nativeType": "varchar(16)",
+          "physicalDataType": "string"
+        },
+        "defaultValue": "normal",
+        "length": 16,
+        "name": "priority",
+        "nullable": false,
+        "type": "string"
+      },
+      {
+        "autoIncrement": false,
+        "db": {
+          "affinity": "text",
+          "defaultExpression": "'draft'",
+          "nativeType": "varchar(32)",
+          "physicalDataType": "string"
+        },
+        "defaultValue": "draft",
+        "length": 32,
+        "name": "status",
+        "nullable": false,
+        "type": "string"
+      },
+      {
+        "autoIncrement": false,
+        "db": {
+          "affinity": "text",
+          "nativeType": "varchar(16)",
+          "physicalDataType": "string"
+        },
+        "length": 16,
+        "name": "region",
+        "nullable": false,
+        "type": "string"
+      },
+      {
+        "autoIncrement": false,
+        "db": {
+          "affinity": "text",
+          "nativeType": "varchar(64)",
+          "physicalDataType": "string"
+        },
+        "length": 64,
+        "name": "assigneeId",
+        "nullable": true,
+        "type": "string"
+      },
+      {
+        "autoIncrement": false,
+        "db": {
+          "affinity": "numeric",
+          "defaultExpression": "'0'",
+          "nativeType": "boolean",
+          "physicalDataType": "boolean"
+        },
+        "defaultValue": "0",
+        "name": "confidential",
+        "nullable": false,
+        "type": "boolean"
+      },
+      {
+        "autoIncrement": false,
+        "db": {
+          "affinity": "text",
+          "nativeType": "varchar(64)",
+          "physicalDataType": "string"
+        },
+        "length": 64,
+        "name": "reporterId",
+        "nullable": true,
+        "type": "string"
+      },
+      {
+        "autoIncrement": false,
+        "db": {
+          "affinity": "text",
+          "nativeType": "varchar(128)",
+          "physicalDataType": "string"
+        },
+        "length": 128,
+        "name": "reporterName",
+        "nullable": true,
+        "type": "string"
+      },
+      {
+        "autoIncrement": false,
+        "db": {
+          "affinity": "text",
+          "defaultExpression": "'manual'",
+          "nativeType": "varchar(16)",
+          "physicalDataType": "string"
+        },
+        "defaultValue": "manual",
+        "length": 16,
+        "name": "source",
+        "nullable": false,
+        "type": "string"
+      },
+      {
+        "autoIncrement": false,
+        "db": {
+          "affinity": "text",
+          "nativeType": "varchar(128)",
+          "physicalDataType": "string"
+        },
+        "length": 128,
+        "name": "externalEventId",
+        "nullable": true,
+        "type": "string"
+      },
+      {
+        "autoIncrement": false,
+        "db": {
+          "affinity": "text",
+          "nativeType": "TEXT",
+          "physicalDataType": "text"
+        },
+        "name": "processNotes",
+        "nullable": true,
+        "type": "text"
+      },
+      {
+        "autoIncrement": false,
+        "db": {
+          "affinity": "text",
+          "nativeType": "TEXT",
+          "physicalDataType": "text"
+        },
+        "name": "resolution",
+        "nullable": true,
+        "type": "text"
+      },
+      {
+        "autoIncrement": false,
+        "db": {
+          "affinity": "real",
+          "nativeType": "float",
+          "physicalDataType": "float"
+        },
+        "name": "laborHours",
+        "nullable": true,
+        "type": "decimal"
+      },
+      {
+        "autoIncrement": false,
+        "db": {
+          "affinity": "text",
+          "nativeType": "TEXT",
+          "physicalDataType": "text"
+        },
+        "name": "dueAt",
+        "nullable": true,
+        "type": "datetime"
+      },
+      {
+        "autoIncrement": false,
+        "db": {
+          "affinity": "text",
+          "nativeType": "TEXT",
+          "physicalDataType": "text"
+        },
+        "name": "submittedAt",
+        "nullable": true,
+        "type": "datetime"
+      },
+      {
+        "autoIncrement": false,
+        "db": {
+          "affinity": "text",
+          "nativeType": "TEXT",
+          "physicalDataType": "text"
+        },
+        "name": "assignedAt",
+        "nullable": true,
+        "type": "datetime"
+      },
+      {
+        "autoIncrement": false,
+        "db": {
+          "affinity": "text",
+          "nativeType": "TEXT",
+          "physicalDataType": "text"
+        },
+        "name": "startedAt",
+        "nullable": true,
+        "type": "datetime"
+      },
+      {
+        "autoIncrement": false,
+        "db": {
+          "affinity": "text",
+          "nativeType": "TEXT",
+          "physicalDataType": "text"
+        },
+        "name": "closedAt",
+        "nullable": true,
+        "type": "datetime"
+      },
+      {
+        "autoIncrement": false,
+        "db": {
+          "affinity": "text",
+          "nativeType": "TEXT",
+          "physicalDataType": "text"
+        },
+        "name": "createdAt",
+        "nullable": false,
+        "type": "datetime"
+      },
+      {
+        "autoIncrement": false,
+        "db": {
+          "affinity": "text",
+          "nativeType": "TEXT",
+          "physicalDataType": "text"
+        },
+        "name": "updatedAt",
+        "nullable": false,
+        "type": "datetime"
+      }
+    ],
+    "indexes": [
+      {
+        "db": {
+          "keys": [
+            {
+              "field": "confidential",
+              "order": "asc"
+            }
+          ],
+          "unique": false
+        },
+        "fields": [
+          "confidential"
+        ],
+        "name": "idx_service_tickets_confidential",
+        "order": {
+          "confidential": "asc"
+        }
+      },
+      {
+        "db": {
+          "keys": [
+            {
+              "field": "deviceId",
+              "order": "asc"
+            }
+          ],
+          "unique": false
+        },
+        "fields": [
+          "deviceId"
+        ],
+        "name": "idx_service_tickets_device_id",
+        "order": {
+          "deviceId": "asc"
+        }
+      },
+      {
+        "db": {
+          "keys": [
+            {
+              "field": "customerId",
+              "order": "asc"
+            }
+          ],
+          "unique": false
+        },
+        "fields": [
+          "customerId"
+        ],
+        "name": "idx_service_tickets_customer_id",
+        "order": {
+          "customerId": "asc"
+        }
+      },
+      {
+        "db": {
+          "keys": [
+            {
+              "field": "assigneeId",
+              "order": "asc"
+            }
+          ],
+          "unique": false
+        },
+        "fields": [
+          "assigneeId"
+        ],
+        "name": "idx_service_tickets_assignee_id",
+        "order": {
+          "assigneeId": "asc"
+        }
+      },
+      {
+        "db": {
+          "keys": [
+            {
+              "field": "region",
+              "order": "asc"
+            }
+          ],
+          "unique": false
+        },
+        "fields": [
+          "region"
+        ],
+        "name": "idx_service_tickets_region",
+        "order": {
+          "region": "asc"
+        }
+      },
+      {
+        "db": {
+          "keys": [
+            {
+              "field": "status",
+              "order": "asc"
+            }
+          ],
+          "unique": false
+        },
+        "fields": [
+          "status"
+        ],
+        "name": "idx_service_tickets_status",
+        "order": {
+          "status": "asc"
+        }
+      },
+      {
+        "db": {
+          "keys": [
+            {
+              "field": "externalEventId",
+              "order": "asc"
+            }
+          ],
+          "unique": true
+        },
+        "fields": [
+          "externalEventId"
+        ],
+        "name": "idx_service_tickets_external_event_id",
+        "order": {
+          "externalEventId": "asc"
+        }
+      },
+      {
+        "db": {
+          "keys": [
+            {
+              "field": "ticketNo",
+              "order": "asc"
+            }
+          ],
+          "unique": true
+        },
+        "fields": [
+          "ticketNo"
+        ],
+        "name": "idx_service_tickets_ticket_no",
+        "order": {
+          "ticketNo": "asc"
+        }
+      }
+    ],
+    "kind": "table",
+    "name": "serviceTickets",
+    "naming": {
+      "tablePrefix": "",
+      "underscored": true
+    }
+  },
+  "formatVersion": 1,
+  "name": "serviceTickets",
+  "warnings": [
+    {
+      "aspect": "checkConstraints",
+      "code": "COLLECTION_INSPECTION_PARTIAL",
+      "message": "Physical Schema aspect \"checkConstraints\" is partial.",
+      "path": [
+        "inspection",
+        "aspects",
+        "checkConstraints"
+      ]
+    },
+    {
+      "aspect": "comments",
+      "code": "COLLECTION_INSPECTION_UNSUPPORTED",
+      "message": "Physical Schema aspect \"comments\" is unsupported.",
+      "path": [
+        "inspection",
+        "aspects",
+        "comments"
+      ]
+    },
+    {
+      "aspect": "checkConstraints",
+      "code": "COLLECTION_INSPECTION_WARNING",
+      "message": "SQLite check constraints are parsed from the schema SQL and may be incomplete.",
+      "sourceCode": "SQLITE_CHECK_CONSTRAINT_PARTIAL"
+    }
+  ]
+}

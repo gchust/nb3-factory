@@ -36,6 +36,26 @@ function accepts(file: File, rules: readonly string[]): boolean {
   });
 }
 
+/**
+ * Rejects an image whose bytes cannot be decoded before it is uploaded. A file
+ * with an image extension but damaged content would otherwise upload "fine"
+ * and only fail when someone tries to open it.
+ */
+async function imageIsDecodable(file: File): Promise<boolean> {
+  if (!file.type.startsWith('image/')) return true;
+  return await new Promise((resolve) => {
+    const url = URL.createObjectURL(file);
+    const finish = (ok: boolean) => {
+      URL.revokeObjectURL(url);
+      resolve(ok);
+    };
+    const image = new Image();
+    image.onload = () => finish(true);
+    image.onerror = () => finish(false);
+    image.src = url;
+  });
+}
+
 export function FileUploadField(
   inputProps: FileUploadFieldProps,
 ): ReactElement {
@@ -164,7 +184,7 @@ export function FileUploadField(
     }
   };
 
-  const addFiles = (files: readonly File[]): void => {
+  const addFiles = async (files: readonly File[]): Promise<void> => {
     if (disabled) return;
     if (files.length + (multiple ? value.length : 0) + items.length > maximum) {
       onError?.(
@@ -199,7 +219,21 @@ export function FileUploadField(
       }
       return true;
     });
-    const nextItems = selected.map((file): UploadItem => ({
+    const valid: File[] = [];
+    for (const file of selected) {
+      if (await imageIsDecodable(file)) {
+        valid.push(file);
+      } else {
+        onError?.(
+          new Error(
+            t('fileCorrupt', {
+              defaultValue: 'The file content is invalid or damaged.',
+            }),
+          ),
+        );
+      }
+    }
+    const nextItems = valid.map((file): UploadItem => ({
       key: `${file.name}:${file.size}:${file.lastModified}:${Math.random()}`,
       file,
       status: 'pending',
@@ -238,13 +272,13 @@ export function FileUploadField(
     );
   };
   const handleChange = (event: ChangeEvent<HTMLInputElement>): void => {
-    addFiles(Array.from(event.currentTarget.files ?? []));
+    void addFiles(Array.from(event.currentTarget.files ?? []));
     event.currentTarget.value = '';
   };
   const handleDrop = (event: DragEvent<HTMLDivElement>): void => {
     event.preventDefault();
     setDragging(false);
-    addFiles(Array.from(event.dataTransfer.files));
+    void addFiles(Array.from(event.dataTransfer.files));
   };
 
   return (

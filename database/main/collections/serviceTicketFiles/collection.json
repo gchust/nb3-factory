@@ -1,0 +1,166 @@
+{
+  "collection": {
+    "constraints": [
+      {
+        "fields": [
+          "id"
+        ],
+        "type": "primary"
+      },
+      {
+        "fields": [
+          "ticketId",
+          "fileId"
+        ],
+        "mode": "index",
+        "name": "idx_service_ticket_files_ticket_id_file_id",
+        "type": "unique"
+      }
+    ],
+    "db": {
+      "schema": "main",
+      "strict": false
+    },
+    "fields": [
+      {
+        "autoIncrement": true,
+        "db": {
+          "affinity": "integer",
+          "nativeType": "INTEGER",
+          "physicalDataType": "integer"
+        },
+        "name": "id",
+        "nullable": false,
+        "type": "integer"
+      },
+      {
+        "autoIncrement": false,
+        "db": {
+          "affinity": "integer",
+          "nativeType": "INTEGER",
+          "physicalDataType": "integer"
+        },
+        "name": "ticketId",
+        "nullable": false,
+        "type": "integer"
+      },
+      {
+        "autoIncrement": false,
+        "db": {
+          "affinity": "text",
+          "nativeType": "char(36)",
+          "physicalDataType": "char"
+        },
+        "length": 36,
+        "name": "fileId",
+        "nullable": false,
+        "type": "uuid"
+      },
+      {
+        "autoIncrement": false,
+        "db": {
+          "affinity": "text",
+          "defaultExpression": "'attachment'",
+          "nativeType": "varchar(32)",
+          "physicalDataType": "string"
+        },
+        "defaultValue": "attachment",
+        "length": 32,
+        "name": "category",
+        "nullable": false,
+        "type": "string"
+      },
+      {
+        "autoIncrement": false,
+        "db": {
+          "affinity": "text",
+          "nativeType": "TEXT",
+          "physicalDataType": "text"
+        },
+        "name": "createdAt",
+        "nullable": false,
+        "type": "datetime"
+      }
+    ],
+    "indexes": [
+      {
+        "db": {
+          "keys": [
+            {
+              "field": "fileId",
+              "order": "asc"
+            }
+          ],
+          "unique": false
+        },
+        "fields": [
+          "fileId"
+        ],
+        "name": "idx_service_ticket_files_file_id",
+        "order": {
+          "fileId": "asc"
+        }
+      },
+      {
+        "db": {
+          "keys": [
+            {
+              "field": "ticketId",
+              "order": "asc"
+            },
+            {
+              "field": "fileId",
+              "order": "asc"
+            }
+          ],
+          "unique": true
+        },
+        "fields": [
+          "ticketId",
+          "fileId"
+        ],
+        "name": "idx_service_ticket_files_ticket_id_file_id",
+        "order": {
+          "fileId": "asc",
+          "ticketId": "asc"
+        }
+      }
+    ],
+    "kind": "table",
+    "name": "serviceTicketFiles",
+    "naming": {
+      "tablePrefix": "",
+      "underscored": true
+    }
+  },
+  "formatVersion": 1,
+  "name": "serviceTicketFiles",
+  "warnings": [
+    {
+      "aspect": "checkConstraints",
+      "code": "COLLECTION_INSPECTION_PARTIAL",
+      "message": "Physical Schema aspect \"checkConstraints\" is partial.",
+      "path": [
+        "inspection",
+        "aspects",
+        "checkConstraints"
+      ]
+    },
+    {
+      "aspect": "comments",
+      "code": "COLLECTION_INSPECTION_UNSUPPORTED",
+      "message": "Physical Schema aspect \"comments\" is unsupported.",
+      "path": [
+        "inspection",
+        "aspects",
+        "comments"
+      ]
+    },
+    {
+      "aspect": "checkConstraints",
+      "code": "COLLECTION_INSPECTION_WARNING",
+      "message": "SQLite check constraints are parsed from the schema SQL and may be incomplete.",
+      "sourceCode": "SQLITE_CHECK_CONSTRAINT_PARTIAL"
+    }
+  ]
+}

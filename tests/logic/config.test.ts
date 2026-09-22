@@ -52,6 +52,7 @@ describe('application config', () => {
       'default-access',
       'sharing-rules',
       'restriction-rules',
+      'service-model',
     ]);
     expect(runtime.config.get<CachingConfig>('caching')!.default).toBe(
       'memory',

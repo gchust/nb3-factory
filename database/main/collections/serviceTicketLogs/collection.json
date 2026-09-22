@@ -1,0 +1,218 @@
+{
+  "collection": {
+    "constraints": [
+      {
+        "fields": [
+          "id"
+        ],
+        "type": "primary"
+      }
+    ],
+    "db": {
+      "schema": "main",
+      "strict": false
+    },
+    "fields": [
+      {
+        "autoIncrement": true,
+        "db": {
+          "affinity": "integer",
+          "nativeType": "INTEGER",
+          "physicalDataType": "integer"
+        },
+        "name": "id",
+        "nullable": false,
+        "type": "integer"
+      },
+      {
+        "autoIncrement": false,
+        "db": {
+          "affinity": "integer",
+          "nativeType": "INTEGER",
+          "physicalDataType": "integer"
+        },
+        "name": "ticketId",
+        "nullable": false,
+        "type": "integer"
+      },
+      {
+        "autoIncrement": false,
+        "db": {
+          "affinity": "text",
+          "nativeType": "varchar(64)",
+          "physicalDataType": "string"
+        },
+        "length": 64,
+        "name": "operatorId",
+        "nullable": true,
+        "type": "string"
+      },
+      {
+        "autoIncrement": false,
+        "db": {
+          "affinity": "text",
+          "nativeType": "varchar(128)",
+          "physicalDataType": "string"
+        },
+        "length": 128,
+        "name": "operatorName",
+        "nullable": true,
+        "type": "string"
+      },
+      {
+        "autoIncrement": false,
+        "db": {
+          "affinity": "text",
+          "nativeType": "varchar(32)",
+          "physicalDataType": "string"
+        },
+        "length": 32,
+        "name": "action",
+        "nullable": false,
+        "type": "string"
+      },
+      {
+        "autoIncrement": false,
+        "db": {
+          "affinity": "text",
+          "nativeType": "varchar(32)",
+          "physicalDataType": "string"
+        },
+        "length": 32,
+        "name": "fromStatus",
+        "nullable": true,
+        "type": "string"
+      },
+      {
+        "autoIncrement": false,
+        "db": {
+          "affinity": "text",
+          "nativeType": "varchar(32)",
+          "physicalDataType": "string"
+        },
+        "length": 32,
+        "name": "toStatus",
+        "nullable": true,
+        "type": "string"
+      },
+      {
+        "autoIncrement": false,
+        "db": {
+          "affinity": "text",
+          "nativeType": "TEXT",
+          "physicalDataType": "text"
+        },
+        "name": "note",
+        "nullable": true,
+        "type": "text"
+      },
+      {
+        "autoIncrement": false,
+        "db": {
+          "affinity": "text",
+          "nativeType": "TEXT",
+          "physicalDataType": "text"
+        },
+        "name": "reason",
+        "nullable": true,
+        "type": "text"
+      },
+      {
+        "autoIncrement": false,
+        "db": {
+          "affinity": "real",
+          "nativeType": "float",
+          "physicalDataType": "float"
+        },
+        "name": "laborHours",
+        "nullable": true,
+        "type": "decimal"
+      },
+      {
+        "autoIncrement": false,
+        "db": {
+          "affinity": "text",
+          "nativeType": "TEXT",
+          "physicalDataType": "text"
+        },
+        "name": "createdAt",
+        "nullable": false,
+        "type": "datetime"
+      }
+    ],
+    "indexes": [
+      {
+        "db": {
+          "keys": [
+            {
+              "field": "action",
+              "order": "asc"
+            }
+          ],
+          "unique": false
+        },
+        "fields": [
+          "action"
+        ],
+        "name": "idx_service_ticket_logs_action",
+        "order": {
+          "action": "asc"
+        }
+      },
+      {
+        "db": {
+          "keys": [
+            {
+              "field": "ticketId",
+              "order": "asc"
+            }
+          ],
+          "unique": false
+        },
+        "fields": [
+          "ticketId"
+        ],
+        "name": "idx_service_ticket_logs_ticket_id",
+        "order": {
+          "ticketId": "asc"
+        }
+      }
+    ],
+    "kind": "table",
+    "name": "serviceTicketLogs",
+    "naming": {
+      "tablePrefix": "",
+      "underscored": true
+    }
+  },
+  "formatVersion": 1,
+  "name": "serviceTicketLogs",
+  "warnings": [
+    {
+      "aspect": "checkConstraints",
+      "code": "COLLECTION_INSPECTION_PARTIAL",
+      "message": "Physical Schema aspect \"checkConstraints\" is partial.",
+      "path": [
+        "inspection",
+        "aspects",
+        "checkConstraints"
+      ]
+    },
+    {
+      "aspect": "comments",
+      "code": "COLLECTION_INSPECTION_UNSUPPORTED",
+      "message": "Physical Schema aspect \"comments\" is unsupported.",
+      "path": [
+        "inspection",
+        "aspects",
+        "comments"
+      ]
+    },
+    {
+      "aspect": "checkConstraints",
+      "code": "COLLECTION_INSPECTION_WARNING",
+      "message": "SQLite check constraints are parsed from the schema SQL and may be incomplete.",
+      "sourceCode": "SQLITE_CHECK_CONSTRAINT_PARTIAL"
+    }
+  ]
+}

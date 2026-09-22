@@ -70,13 +70,7 @@ export function FilePreviewContent(
     );
   switch (kind) {
     case 'image':
-      return (
-        <img
-          src={url}
-          alt={file.filename}
-          className='max-h-[70vh] max-w-full object-contain'
-        />
-      );
+      return <ImagePreview file={file} url={url} onDownload={onDownload} />;
     case 'pdf':
       return (
         <iframe title={file.filename} src={url} className='h-[70vh] w-full' />
@@ -97,6 +91,35 @@ export function FilePreviewContent(
     default:
       return <DownloadFallback file={file} onDownload={onDownload} />;
   }
+}
+
+function ImagePreview(inputProps: {
+  readonly file: FileRecord;
+  readonly url?: string;
+  readonly onDownload?: () => void;
+}): ReactElement {
+  const { t } = useTranslation('@nocobase/app-plugin-file');
+  const { file, url, onDownload } = inputProps;
+  const [failed, setFailed] = useState(false);
+  if (failed) {
+    return (
+      <DownloadFallback
+        file={file}
+        message={t('files.imageFailed', {
+          defaultValue: 'The image file is invalid or damaged.',
+        })}
+        onDownload={onDownload}
+      />
+    );
+  }
+  return (
+    <img
+      src={url}
+      alt={file.filename}
+      onError={() => setFailed(true)}
+      className='max-h-[70vh] max-w-full object-contain'
+    />
+  );
 }
 
 function MarkdownPreview(inputProps: { readonly text?: string }): ReactElement {

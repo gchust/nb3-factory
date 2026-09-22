@@ -384,7 +384,7 @@ describe('app server', () => {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
-          username: 'missing-user',
+          username: 'missing user',
           password: 'not-the-password',
         }),
       },

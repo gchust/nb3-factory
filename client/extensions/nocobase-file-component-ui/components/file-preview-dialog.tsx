@@ -14,6 +14,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { fileUrlCredentials, resolveSafeFileUrl } from '../lib/file-url';
+import { downloadFile } from '../lib/file-download';
 import { FilePreviewContent } from './previewers/file-preview-content';
 
 export function FilePreviewDialog({
@@ -141,17 +142,6 @@ function OpenFilePreviewDialog(
       </DialogContent>
     </Dialog>
   );
-}
-
-async function downloadFile(file: FileRecord): Promise<void> {
-  const raw = file.contentUrl;
-  const url = raw ? resolveSafeFileUrl(raw) : undefined;
-  if (!url) throw new Error('File URL is not allowed.');
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = file.filename;
-  link.rel = 'noopener';
-  link.click();
 }
 
 function reportDownloadError(

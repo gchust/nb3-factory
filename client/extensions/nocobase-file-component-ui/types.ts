@@ -58,6 +58,9 @@ export interface FilePreviewFieldProps {
   readonly emptyState?: ReactNode;
   readonly showFilenames?: boolean;
   readonly onError?: (error: Error) => void;
+  /** Render a per-file download control next to the preview button. */
+  readonly allowDownload?: boolean;
+  readonly onDownload?: (file: FileRecord) => void | Promise<void>;
 }
 
 export interface FileThumbnailProps {

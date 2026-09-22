@@ -1,9 +1,11 @@
 import { useTranslation } from '@nocobase/i18n/client';
+import { Download } from 'lucide-react';
 import { useState, type ReactElement } from 'react';
-import type { FilePreviewFieldProps } from '../types';
+import type { FileRecord, FilePreviewFieldProps } from '../types';
 import { Button } from '@/components/ui/button';
 import { FilePreviewDialog } from './file-preview-dialog';
 import { FileThumbnail } from './file-thumbnail';
+import { downloadFile } from '../lib/file-download';
 
 export function FilePreviewField(
   inputProps: FilePreviewFieldProps,
@@ -15,7 +17,22 @@ export function FilePreviewField(
     emptyState,
     showFilenames = false,
     onError,
+    allowDownload = false,
+    onDownload,
   } = inputProps;
+
+  const downloadLabel =
+    labels?.download ?? t('files.download', { defaultValue: 'Download' });
+
+  const handleDownload = (file: FileRecord): void => {
+    void Promise.resolve(
+      onDownload ? onDownload(file) : downloadFile(file),
+    ).catch((error: unknown) =>
+      onError?.(
+        error instanceof Error ? error : new Error('File download failed.'),
+      ),
+    );
+  };
 
   const [open, setOpen] = useState(false);
   const [initialIndex, setInitialIndex] = useState(0);
@@ -51,6 +68,18 @@ export function FilePreviewField(
               <span className='truncate text-xs' title={file.filename}>
                 {file.filename}
               </span>
+            ) : null}
+            {allowDownload ? (
+              <Button
+                type='button'
+                size='xs'
+                variant='outline'
+                aria-label={`${downloadLabel}: ${file.filename}`}
+                onClick={() => handleDownload(file)}
+              >
+                <Download aria-hidden='true' />
+                {downloadLabel}
+              </Button>
             ) : null}
           </div>
         ))}

@@ -1,0 +1,151 @@
+{
+  "formatVersion": 1,
+  "name": "serviceCustomers",
+  "physical": {
+    "checkConstraints": [],
+    "columns": [
+      {
+        "affinity": "integer",
+        "autoIncrement": true,
+        "columnName": "id",
+        "dataType": "integer",
+        "nativeType": "INTEGER",
+        "nullable": false,
+        "ordinalPosition": 1
+      },
+      {
+        "affinity": "text",
+        "autoIncrement": false,
+        "columnName": "name",
+        "dataType": "string",
+        "length": 128,
+        "nativeType": "varchar(128)",
+        "nullable": false,
+        "ordinalPosition": 2
+      },
+      {
+        "affinity": "text",
+        "autoIncrement": false,
+        "columnName": "contact_name",
+        "dataType": "string",
+        "length": 64,
+        "nativeType": "varchar(64)",
+        "nullable": true,
+        "ordinalPosition": 3
+      },
+      {
+        "affinity": "text",
+        "autoIncrement": false,
+        "columnName": "contact_phone",
+        "dataType": "string",
+        "length": 32,
+        "nativeType": "varchar(32)",
+        "nullable": true,
+        "ordinalPosition": 4
+      },
+      {
+        "affinity": "text",
+        "autoIncrement": false,
+        "columnName": "region",
+        "dataType": "string",
+        "length": 16,
+        "nativeType": "varchar(16)",
+        "nullable": false,
+        "ordinalPosition": 5
+      },
+      {
+        "affinity": "text",
+        "autoIncrement": false,
+        "columnName": "address",
+        "dataType": "text",
+        "nativeType": "TEXT",
+        "nullable": true,
+        "ordinalPosition": 6
+      },
+      {
+        "affinity": "text",
+        "autoIncrement": false,
+        "columnName": "status",
+        "dataType": "string",
+        "default": {
+          "expression": "'active'",
+          "value": "active"
+        },
+        "length": 16,
+        "nativeType": "varchar(16)",
+        "nullable": false,
+        "ordinalPosition": 7
+      },
+      {
+        "affinity": "text",
+        "autoIncrement": false,
+        "columnName": "created_at",
+        "dataType": "text",
+        "nativeType": "TEXT",
+        "nullable": false,
+        "ordinalPosition": 8
+      },
+      {
+        "affinity": "text",
+        "autoIncrement": false,
+        "columnName": "updated_at",
+        "dataType": "text",
+        "nativeType": "TEXT",
+        "nullable": false,
+        "ordinalPosition": 9
+      }
+    ],
+    "foreignKeys": [],
+    "indexes": [
+      {
+        "keys": [
+          {
+            "columnName": "region",
+            "order": "asc"
+          }
+        ],
+        "name": "idx_service_customers_region",
+        "unique": false
+      },
+      {
+        "keys": [
+          {
+            "columnName": "name",
+            "order": "asc"
+          }
+        ],
+        "name": "idx_service_customers_name",
+        "unique": true
+      }
+    ],
+    "inspection": {
+      "aspects": {
+        "checkConstraints": "partial",
+        "columns": "complete",
+        "comments": "unsupported",
+        "foreignKeys": "complete",
+        "indexes": "complete",
+        "primaryKey": "complete",
+        "uniqueConstraints": "complete",
+        "viewDefinition": "complete"
+      },
+      "warnings": [
+        {
+          "aspect": "checkConstraints",
+          "code": "SQLITE_CHECK_CONSTRAINT_PARTIAL",
+          "message": "SQLite check constraints are parsed from the schema SQL and may be incomplete."
+        }
+      ]
+    },
+    "kind": "table",
+    "primaryKey": {
+      "columns": [
+        "id"
+      ]
+    },
+    "schema": "main",
+    "strict": false,
+    "tableName": "service_customers",
+    "uniqueConstraints": []
+  }
+}

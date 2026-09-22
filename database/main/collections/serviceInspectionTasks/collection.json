@@ -1,0 +1,258 @@
+{
+  "collection": {
+    "constraints": [
+      {
+        "fields": [
+          "id"
+        ],
+        "type": "primary"
+      },
+      {
+        "fields": [
+          "deviceId",
+          "taskDate"
+        ],
+        "mode": "index",
+        "name": "idx_service_inspection_tasks_device_id_task_date",
+        "type": "unique"
+      }
+    ],
+    "db": {
+      "schema": "main",
+      "strict": false
+    },
+    "fields": [
+      {
+        "autoIncrement": true,
+        "db": {
+          "affinity": "integer",
+          "nativeType": "INTEGER",
+          "physicalDataType": "integer"
+        },
+        "name": "id",
+        "nullable": false,
+        "type": "integer"
+      },
+      {
+        "autoIncrement": false,
+        "db": {
+          "affinity": "integer",
+          "nativeType": "INTEGER",
+          "physicalDataType": "integer"
+        },
+        "name": "planId",
+        "nullable": true,
+        "type": "integer"
+      },
+      {
+        "autoIncrement": false,
+        "db": {
+          "affinity": "integer",
+          "nativeType": "INTEGER",
+          "physicalDataType": "integer"
+        },
+        "name": "deviceId",
+        "nullable": false,
+        "type": "integer"
+      },
+      {
+        "autoIncrement": false,
+        "db": {
+          "affinity": "text",
+          "nativeType": "varchar(10)",
+          "physicalDataType": "string"
+        },
+        "length": 10,
+        "name": "taskDate",
+        "nullable": false,
+        "type": "string"
+      },
+      {
+        "autoIncrement": false,
+        "db": {
+          "affinity": "text",
+          "defaultExpression": "'pending'",
+          "nativeType": "varchar(16)",
+          "physicalDataType": "string"
+        },
+        "defaultValue": "pending",
+        "length": 16,
+        "name": "status",
+        "nullable": false,
+        "type": "string"
+      },
+      {
+        "autoIncrement": false,
+        "db": {
+          "affinity": "text",
+          "nativeType": "varchar(64)",
+          "physicalDataType": "string"
+        },
+        "length": 64,
+        "name": "assigneeId",
+        "nullable": true,
+        "type": "string"
+      },
+      {
+        "autoIncrement": false,
+        "db": {
+          "affinity": "text",
+          "nativeType": "TEXT",
+          "physicalDataType": "text"
+        },
+        "name": "note",
+        "nullable": true,
+        "type": "text"
+      },
+      {
+        "autoIncrement": false,
+        "db": {
+          "affinity": "text",
+          "nativeType": "TEXT",
+          "physicalDataType": "text"
+        },
+        "name": "completedAt",
+        "nullable": true,
+        "type": "datetime"
+      },
+      {
+        "autoIncrement": false,
+        "db": {
+          "affinity": "text",
+          "nativeType": "TEXT",
+          "physicalDataType": "text"
+        },
+        "name": "createdAt",
+        "nullable": false,
+        "type": "datetime"
+      },
+      {
+        "autoIncrement": false,
+        "db": {
+          "affinity": "text",
+          "nativeType": "TEXT",
+          "physicalDataType": "text"
+        },
+        "name": "updatedAt",
+        "nullable": false,
+        "type": "datetime"
+      }
+    ],
+    "indexes": [
+      {
+        "db": {
+          "keys": [
+            {
+              "field": "assigneeId",
+              "order": "asc"
+            }
+          ],
+          "unique": false
+        },
+        "fields": [
+          "assigneeId"
+        ],
+        "name": "idx_service_inspection_tasks_assignee_id",
+        "order": {
+          "assigneeId": "asc"
+        }
+      },
+      {
+        "db": {
+          "keys": [
+            {
+              "field": "status",
+              "order": "asc"
+            }
+          ],
+          "unique": false
+        },
+        "fields": [
+          "status"
+        ],
+        "name": "idx_service_inspection_tasks_status",
+        "order": {
+          "status": "asc"
+        }
+      },
+      {
+        "db": {
+          "keys": [
+            {
+              "field": "taskDate",
+              "order": "asc"
+            }
+          ],
+          "unique": false
+        },
+        "fields": [
+          "taskDate"
+        ],
+        "name": "idx_service_inspection_tasks_task_date",
+        "order": {
+          "taskDate": "asc"
+        }
+      },
+      {
+        "db": {
+          "keys": [
+            {
+              "field": "deviceId",
+              "order": "asc"
+            },
+            {
+              "field": "taskDate",
+              "order": "asc"
+            }
+          ],
+          "unique": true
+        },
+        "fields": [
+          "deviceId",
+          "taskDate"
+        ],
+        "name": "idx_service_inspection_tasks_device_id_task_date",
+        "order": {
+          "deviceId": "asc",
+          "taskDate": "asc"
+        }
+      }
+    ],
+    "kind": "table",
+    "name": "serviceInspectionTasks",
+    "naming": {
+      "tablePrefix": "",
+      "underscored": true
+    }
+  },
+  "formatVersion": 1,
+  "name": "serviceInspectionTasks",
+  "warnings": [
+    {
+      "aspect": "checkConstraints",
+      "code": "COLLECTION_INSPECTION_PARTIAL",
+      "message": "Physical Schema aspect \"checkConstraints\" is partial.",
+      "path": [
+        "inspection",
+        "aspects",
+        "checkConstraints"
+      ]
+    },
+    {
+      "aspect": "comments",
+      "code": "COLLECTION_INSPECTION_UNSUPPORTED",
+      "message": "Physical Schema aspect \"comments\" is unsupported.",
+      "path": [
+        "inspection",
+        "aspects",
+        "comments"
+      ]
+    },
+    {
+      "aspect": "checkConstraints",
+      "code": "COLLECTION_INSPECTION_WARNING",
+      "message": "SQLite check constraints are parsed from the schema SQL and may be incomplete.",
+      "sourceCode": "SQLITE_CHECK_CONSTRAINT_PARTIAL"
+    }
+  ]
+}

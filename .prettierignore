@@ -5,3 +5,8 @@ registry/
 # A generated application has none of the directories above but does have this one, which is why
 # this file ships in the package: without it `pnpm format:check` fails on a freshly created app.
 pnpm-lock.yaml
+
+# Collection artifacts are written by `pnpm collections:generate` and compared byte-for-byte by
+# `pnpm collections:generate --check`, so Prettier must not reformat them. This mirrors the
+# `database/*/collections` layout the connection directories use.
+database/*/collections/
