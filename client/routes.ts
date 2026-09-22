@@ -1,4 +1,4 @@
-import { Home } from 'lucide-react';
+import { Home, NotebookPen } from 'lucide-react';
 import {
   defineAppRoutes,
   defineSettingsRoutes,
@@ -15,6 +15,16 @@ const appRoutes: AppClientRouteContribution = defineAppRoutes([
     name: 'home',
     navigation: { title: 'navigation.home', icon: Home },
     path: '/',
+  },
+  {
+    // Customer memos are a plain signed-in feature; `authz: 'skip'` keeps the page reachable for every user because
+    // the application does not model per-page grants for it.
+    authz: 'skip',
+    auth: 'required',
+    componentLoader: () => import('./pages/memos/index.js'),
+    name: 'memos',
+    navigation: { title: 'navigation.memos', icon: NotebookPen },
+    path: '/memos',
   },
   {
     auth: 'guest',

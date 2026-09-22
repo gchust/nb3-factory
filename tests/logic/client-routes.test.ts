@@ -24,6 +24,11 @@ describe('app client routes', () => {
           name: 'home',
           path: '/',
         },
+        {
+          auth: 'required',
+          name: 'memos',
+          path: '/memos',
+        },
         { auth: 'guest', name: 'login', path: '/login' },
         { auth: 'guest', name: 'register', path: '/register' },
         {
@@ -59,8 +64,10 @@ describe('app client routes', () => {
     ]);
 
     expect(pageAuthorizations(resolved.routes)).toEqual([
-      // The landing page opted out of page authorization, so it is reachable by every signed-in user.
+      // The landing page and the memo page opted out of page authorization, so they are reachable by every signed-in
+      // user.
       { name: 'home', authorizedAs: null },
+      { name: 'memos', authorizedAs: null },
     ]);
   });
 });
