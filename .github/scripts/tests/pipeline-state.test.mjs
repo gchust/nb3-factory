@@ -153,7 +153,7 @@ test('checkpoint bindings reject a different input or different patch', (t) => {
   assert.throws(() => restoreState(source, path.join(root, 'bad'), task), /hash/u);
 });
 
-test('legacy checkpoints rebuild and QA; changed control planes invalidate QA conclusions', (t) => {
+test('legacy checkpoints rebuild and QA; changed control planes reject restoration', (t) => {
   const root = directory(t);
   mkdirSync(path.join(root, 'legacy'));
   assert.equal(restoreState(path.join(root, 'legacy'), path.join(root, 'fresh'), task).phase, 'verify');
@@ -167,9 +167,10 @@ test('legacy checkpoints rebuild and QA; changed control planes invalidate QA co
   state.patchHash = createHash('sha256').update('patch').digest('hex');
   saveState(path.join(source, 'pipeline-state.json'), state);
   process.env.FACTORY_CONTROL_SHA = 'new';
-  const restored = restoreState(source, path.join(root, 'new'), task);
-  assert.equal(restored.phase, 'verify');
-  assert.deepEqual(restored.pendingCriteria, []);
+  assert.throws(() => restoreState(source, path.join(root, 'new'), task), /factory SHA differs/);
+  const saved = JSON.parse(readFileSync(path.join(source, 'pipeline-state.json'), 'utf8'));
+  assert.equal(saved.phase, 'qa-full');
+  assert.deepEqual(saved.pendingCriteria, ['B06']);
 });
 
 test('phase start estimates never exceed a fresh five-hour runner budget', () => {

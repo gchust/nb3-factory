@@ -99,10 +99,7 @@ export function restoreState(source, destination, metadata) {
   if (!state.patchHash || hash(readFileSync(path.join(source, 'agent.patch'))) !== state.patchHash)
     throw new Error('Checkpoint patch hash does not match the restored code.');
   if (state.controlSha && process.env.FACTORY_CONTROL_SHA && state.controlSha !== process.env.FACTORY_CONTROL_SHA) {
-    // A new evaluator cannot accept an old evaluator's conclusions.
-    if (state.phase !== 'implementation') state.phase = 'verify';
-    state.pendingCriteria = [];
-    console.error('Factory control plane changed; invalidating prior QA progress.');
+    throw new Error('Checkpoint factory SHA differs from the selected control plane; resume with its pinned SHA instead of restarting QA.');
   }
   state.controlSha = process.env.FACTORY_CONTROL_SHA ?? state.controlSha;
   state.outcome = 'running';

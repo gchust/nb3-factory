@@ -1,5 +1,6 @@
 import { mkdirSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
+import { controlSha } from './handoff-control.mjs';
 
 const [command, ...rest] = process.argv.slice(2);
 const args = parseArgs(rest);
@@ -12,8 +13,10 @@ if (command === 'prepare') {
     '--continuation',
   );
   const output = required(args.output, '--output');
+  const sha = controlSha(process.env.FACTORY_CONTROL_SHA);
   const payload = {
     schemaVersion: 1,
+    controlSha: sha,
     issueNumber,
     previousRunId: runId,
     continuation,
@@ -35,6 +38,7 @@ if (command === 'prepare') {
     args.continuation ?? '1',
     '--continuation',
   );
+  const sha = controlSha(process.env.FACTORY_CONTROL_SHA);
   const token = required(process.env.GITHUB_TOKEN, 'GITHUB_TOKEN');
   const repository = required(
     process.env.GITHUB_REPOSITORY,
@@ -52,6 +56,7 @@ if (command === 'prepare') {
       event_type: 'code-agent-continue',
       client_payload: {
         issue_number: issueNumber,
+        control_sha: sha,
         ...(process.env.BUILD_COMMENT_ID
           ? {
               build_comment_id: positiveInteger(

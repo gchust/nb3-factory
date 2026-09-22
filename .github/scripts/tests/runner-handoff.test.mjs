@@ -150,10 +150,11 @@ test('handoff metadata records the continuation run source', () => {
         '--output',
         output,
       ],
-      { stdio: 'pipe' },
+      { stdio: 'pipe', env: { ...process.env, FACTORY_CONTROL_SHA: 'a'.repeat(40) } },
     );
     assert.deepEqual(JSON.parse(readFileSync(output, 'utf8')), {
       schemaVersion: 1,
+      controlSha: 'a'.repeat(40),
       issueNumber: 6,
       previousRunId: 12345,
       continuation: 2,
