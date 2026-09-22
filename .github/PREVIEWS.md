@@ -168,13 +168,24 @@ rm -f ./preview_key ./preview_key.pub
 
 ## 回收
 
-PR 关闭或合并后，**Reclaim Task Preview** 会删掉对应容器和实例目录。依赖集缓存保留，
-因为它是按依赖集而不是按 PR 共享的；`preview-gc.sh` 负责回收不再被任何预览引用的缓存，
-以及实例目录已丢失但容器还在的孤儿：
+PR 关闭或合并后，**Reclaim Task Preview** 会删掉对应容器、实例目录和该 PR 的 payload 资产。
+依赖集缓存保留，因为它是按依赖集而不是按 PR 共享的；`preview-gc.sh` 负责回收不再被任何预览引用的缓存、
+实例目录已丢失但容器还在的孤儿，以及**已经没有预览的备份**：
 
 ```bash
-ssh 252 'bash /srv/nb3-preview/scripts/preview-gc.sh'
+ssh 252 'bash /srv/nb3-preview/scripts/preview-gc.sh'                    # 三类一起回收
+ssh 252 'bash /srv/nb3-preview/scripts/preview-gc.sh --prune-backups'    # 只回收备份
 ```
+
+预览机上 `nb3-preview-gc.timer` 每小时跑一次 `--all`，所以这件事不再依赖有人记得手动执行。
+
+**为什么备份必须单独回收。** 每次部署都会把上一个实例整份挪到 `backups/pr-<号>.XXXXXX`
+（数据库、上传文件、应用），而一个预览通常会被部署多次，所以一个开过几天的 PR 会留下多份
+~340MB 的备份；`preview-destroy.sh` 只删实例、不动备份（备份是部署失败后回滚的依据），
+其它路径也都不管它。2026-09-22 实测：`backups/` 占 1.5GB，除 1 份外全属于已经不存在的预览，
+而磁盘已到 80%。判定规则只有一条——目录名里的 PR 号还有没有实例目录；没有就删。
+名字不是 `pr-<号>.XXXXXX` / `failed-pr-<号>.XXXXXX` 的一律不动（DNS 同步器的状态就在这棵树下），
+不用时间做启发式：预览可以几周没人看，而它的备份正是重新部署失败时的回滚依据。
 
 回收失败不会影响业务 PR。如果 PR 关闭时回收没跑成功，用上面的命令兜底。
 
@@ -195,7 +206,8 @@ ssh 252 'bash /srv/nb3-preview/scripts/preview-gc.sh'
 | 取件失败或摘要不匹配        | `preview-deploy.sh` 会打印 `could not fetch the payload` 或 `payload digest mismatch`；先确认预览机能不能解析并连上 github.com（`ssh 252 'curl -sI https://github.com'`），需要代理时由 `FACTORY_PREVIEW_FETCH_PROXY` 指定 |
 | 评论显示失败但地址能打开     | 那个地址来自同一次构建更早一次成功的部署：重复请求失败时不会撤掉已确认的地址（见“评论不会被后来的失败撤掉”），失败尝试的日志在评论里给出 |
 | 部署成功但地址没变（没重新部署） | 同一次构建已经在跑时 `preview-deploy.sh` 不做任何替换；需要重新初始化示例数据时勾上 `force` 再补发 |
-| 磁盘告警                    | `ssh 252 'bash /srv/nb3-preview/scripts/preview-gc.sh'`                                                                                                                                                                    |
+| 磁盘告警                    | `ssh 252 'bash /srv/nb3-preview/scripts/preview-gc.sh'`；先用 `du -sh /srv/nb3-preview/{backups,deps,instances,tmp}` 看是谁占的。备份与依赖缓存是主要占用（各约 340MB/份），两者都已由 `nb3-preview-gc.timer` 每小时自动回收                                                                                            |
+| 怀疑 DNS 记录没回收          | 别用本机解析器判断：它会缓存已删除的记录，预览机的记录删掉后本机仍可能解析到 Cloudflare 地址。用 `dig @1.1.1.1 nb3-<号>.nfvd.net`——返回 zone 通配地址（如 `52.184.25.30`）才说明记录已删；权威依据是在预览机上用 `cloudflare/api-token` 查 `/zones/<zone>/dns_records`                                                                                            |
 
 预览机上的构建日志在 `/srv/nb3-preview/logs/pr-<号>-{migrate,seed}.log`。取件的半截文件是
 `/srv/nb3-preview/tmp/payload-pr-<号>.tar.gz.part`，它永远不会被部署，可以随时删。
