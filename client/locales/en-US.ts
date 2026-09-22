@@ -94,6 +94,43 @@ const enUS = {
     description:
       'Describe what you need to your AI Agent, then build pages, data models, and business workflows.',
   },
+  fieldVisits: {
+    title: 'Field service follow-ups',
+    description:
+      'Record every field service follow-up and review the history by customer and date.',
+    create: 'New follow-up',
+    createTitle: 'New follow-up record',
+    editTitle: 'Edit follow-up record',
+    customerName: 'Customer',
+    visitDate: 'Follow-up date',
+    conclusion: 'Conclusion',
+    conclusionPlaceholder: 'Select a conclusion',
+    engineerName: 'Service engineer',
+    notes: 'Notes',
+    actions: 'Actions',
+    editAction: 'Edit',
+    noEngineer: '—',
+    loading: 'Loading follow-up records…',
+    empty: 'No follow-up records match the current search.',
+    loadFailed: 'Unable to load follow-up records.',
+    saveFailed: 'Unable to save the follow-up record. Please try again.',
+    required: '* Fields marked with an asterisk are required.',
+    searchLabel: 'Search by customer name',
+    searchPlaceholder: 'Search customer name',
+    count_one: '{{count}} record',
+    count_other: '{{count}} records',
+    conclusions: {
+      satisfied: 'Satisfied',
+      neutral: 'Neutral',
+      dissatisfied: 'Dissatisfied',
+    },
+    validation: {
+      customerNameRequired: 'Enter the customer name.',
+      customerNameTooLong: 'Customer name must be 64 characters or fewer.',
+      visitDateRequired: 'Select the follow-up date.',
+      conclusionRequired: 'Select a conclusion.',
+    },
+  },
 
   appearance: {
     title: 'Appearance',
@@ -129,6 +166,7 @@ const enUS = {
   },
   navigation: {
     home: 'Home',
+    fieldVisits: 'Field service follow-ups',
     open: 'Open navigation',
     close: 'Close navigation',
     expand: 'Expand navigation',

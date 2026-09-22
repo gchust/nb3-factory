@@ -1,4 +1,4 @@
-import { Home } from 'lucide-react';
+import { ClipboardCheck, Home } from 'lucide-react';
 import {
   defineAppRoutes,
   defineSettingsRoutes,
@@ -15,6 +15,16 @@ const appRoutes: AppClientRouteContribution = defineAppRoutes([
     name: 'home',
     navigation: { title: 'navigation.home', icon: Home },
     path: '/',
+  },
+  {
+    // Follow-up records are reachable by every signed-in user. `authz: 'skip'` keeps the page outside the permission
+    // set system, which this feature deliberately does not extend; the API still requires an authenticated session.
+    authz: 'skip',
+    auth: 'required',
+    componentLoader: () => import('./pages/field-visits/index.js'),
+    name: 'field-visits',
+    navigation: { title: 'navigation.fieldVisits', icon: ClipboardCheck },
+    path: '/field-visits',
   },
   {
     auth: 'guest',

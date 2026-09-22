@@ -24,6 +24,11 @@ describe('app client routes', () => {
           name: 'home',
           path: '/',
         },
+        {
+          auth: 'required',
+          name: 'field-visits',
+          path: '/field-visits',
+        },
         { auth: 'guest', name: 'login', path: '/login' },
         { auth: 'guest', name: 'register', path: '/register' },
         {
@@ -61,6 +66,8 @@ describe('app client routes', () => {
     expect(pageAuthorizations(resolved.routes)).toEqual([
       // The landing page opted out of page authorization, so it is reachable by every signed-in user.
       { name: 'home', authorizedAs: null },
+      // Follow-up records are deliberately outside the permission set system and only require a session.
+      { name: 'field-visits', authorizedAs: null },
     ]);
   });
 });
