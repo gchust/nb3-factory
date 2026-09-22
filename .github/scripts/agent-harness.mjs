@@ -33,8 +33,8 @@ export function parseAgentArgs(argv) {
   };
 }
 
-export function requiredEnv(name) {
-  const value = process.env[name]?.trim();
+export function requiredEnv(name, env = process.env) {
+  const value = env[name]?.trim();
   if (!value) throw new Error(`${name} is required.`);
   return value;
 }
@@ -103,6 +103,8 @@ export async function runAgentInvocation({
   isCompletionEvent = () => false,
   getEventFailure = () => undefined,
   formatConsoleLine = (line) => line,
+  parseEvent = () => ({}),
+  result,
 }) {
   const redact = buildRedactor(secrets);
   mkdirSync(path.dirname(log), { recursive: true });
@@ -212,6 +214,13 @@ export async function runAgentInvocation({
     }
     redactLog(log, redact);
   }
+  const status = handoffRequested ? 'handoff'
+    : timedOut ? 'timed_out'
+    : invocationError || eventFailure ? 'failed'
+    : stalled ? 'stalled'
+    : !completionTermination && exitCode !== 0 ? 'failed' : 'completed';
+  result?.save(log, { status, exitCode,
+    error: invocationError?.message ?? eventFailure }, redact);
   if (invocationError) throw invocationError;
 
   if (handoffRequested) {
@@ -250,11 +259,26 @@ export async function runAgentInvocation({
     try {
       event = JSON.parse(line);
     } catch {
+      if (line.trimStart().startsWith('{')) result?.malformed();
       return;
     }
-    const failure = getEventFailure(event);
+    if (!event || typeof event !== 'object') return;
+    let parsed;
+    try { parsed = parseEvent(event) ?? {}; }
+    catch (error) {
+      // A protocol error must not crash the stdout callback before logs/results
+      // are scrubbed. Terminate through the same lifecycle as other failures.
+      eventFailure = `Invalid agent event: ${error.message}`;
+      result?.malformed();
+      terminateChild('SIGTERM');
+      forceKillTimer ??= setTimeout(() => terminateChild('SIGKILL'), FORCE_KILL_DELAY_MILLISECONDS);
+      return;
+    }
+    result?.observe(parsed, line);
+    const failure = parsed.failure !== undefined ? parsed.failure : getEventFailure(event);
     if (failure !== undefined) eventFailure = failure;
-    if (!isCompletionEvent(event)) return;
+    if (parsed.active) { clearTimeout(completionTimer); completionTimer = undefined; }
+    if (!parsed.complete && !isCompletionEvent(event)) return;
     if (completionTimer) return;
     completionTimer = setTimeout(() => {
       completionTermination = true;

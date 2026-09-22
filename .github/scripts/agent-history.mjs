@@ -27,12 +27,12 @@ const ARCHIVE_TIMEOUT_MS = 300_000;
 // Every accepted artifact file, with the phase it belongs to. Anything not listed is left
 // behind: the archive is a record of what the agents did, not a copy of the artifact.
 const FILE_RULES = [
-  { phase: 'implementation', pattern: /^agent-implement\.jsonl$/u },
-  { phase: 'repair', pattern: /^agent-repair-[1-9]\d*\.jsonl$/u },
+  { phase: 'implementation', pattern: /^agent-implement\.jsonl(?:\.result\.json)?$/u },
+  { phase: 'repair', pattern: /^agent-repair-[1-9]\d*\.jsonl(?:\.result\.json)?$/u },
   {
     phase: 'qa',
     pattern:
-      /^verify-[1-9]\d*\/browser-acceptance\/agent-browser-(?:acceptance|report-repair-[1-9]\d*)\.jsonl$/u,
+      /^verify-[1-9]\d*\/browser-(?:acceptance|focused)\/agent-browser-(?:acceptance|report-repair-[1-9]\d*)\.jsonl(?:\.result\.json)?$/u,
   },
   {
     phase: 'qa',

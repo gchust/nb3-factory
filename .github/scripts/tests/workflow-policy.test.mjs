@@ -36,13 +36,15 @@ test('each engine receives only its own secrets and configuration', () => {
   const apiKeys = linesOf('CODE_AGENT_API_KEY');
   const tokens = linesOf('CODEBUDDY_AUTH_TOKEN');
   const codebuddyKeys = linesOf('CODEBUDDY_API_KEY');
-  assert.equal(apiKeys.length, 3); // implementation, verify/repair, comment reply
-  assert.equal(tokens.length, 3);
-  assert.equal(codebuddyKeys.length, 3);
+  assert.equal(apiKeys.length, 1); // shared by implementation, repair/QA and reply
+  assert.equal((workflow.match(/env: \*agent-run-env/g) ?? []).length, 2);
+  assert.equal((workflow.match(/env: \*agent-install-env/g) ?? []).length, 1);
+  assert.equal(tokens.length, 1);
+  assert.equal(codebuddyKeys.length, 1);
   for (const line of apiKeys) {
     assert.ok(
       line.includes(
-        "vars.CODE_AGENT_ENGINE != 'codebuddy' && (secrets.CODE_AGENT_API_KEY || secrets.PI_API_KEY) || ''",
+        "(vars.CODE_AGENT_ENGINE == '' || vars.CODE_AGENT_ENGINE == 'pi') && (secrets.CODE_AGENT_API_KEY || secrets.PI_API_KEY) || ''",
       ),
       line,
     );
@@ -67,12 +69,23 @@ test('each engine receives only its own secrets and configuration', () => {
     "CODEBUDDY_MODEL: ${{ vars.CODE_AGENT_ENGINE == 'codebuddy' && vars.CODEBUDDY_MODEL || '' }}",
     "CODEBUDDY_THINKING: ${{ vars.CODEBUDDY_THINKING || 'max' }}",
     "CODEBUDDY_BASE_URL: ${{ vars.CODE_AGENT_ENGINE == 'codebuddy' && vars.CODEBUDDY_BASE_URL || '' }}",
-    "CODE_AGENT_API_ENDPOINT: ${{ vars.CODE_AGENT_ENGINE != 'codebuddy' && (secrets.CODE_AGENT_API_ENDPOINT || secrets.PI_API_ENDPOINT) || '' }}",
+    "CODE_AGENT_API_ENDPOINT: ${{ (vars.CODE_AGENT_ENGINE == '' || vars.CODE_AGENT_ENGINE == 'pi') && (secrets.CODE_AGENT_API_ENDPOINT || secrets.PI_API_ENDPOINT) || '' }}",
     'CODEBUDDY_VERSION: ${{ vars.CODEBUDDY_VERSION }}',
     'PI_VERSION: ${{ vars.PI_VERSION }}',
   ]) {
     assert.ok(workflow.includes(expected), expected);
   }
+});
+
+test('new engines have explicit credential mappings, never a Pi fallback', () => {
+  for (const [engine, secret] of [
+    ['claude-code', 'ANTHROPIC_API_KEY'], ['claude-code', 'CLAUDE_CODE_OAUTH_TOKEN'],
+    ['codex', 'CODEX_API_KEY'], ['opencode', 'OPENCODE_API_KEY'],
+  ]) {
+    assert.ok(workflow.includes(`vars.CODE_AGENT_ENGINE == '${engine}' && secrets.${secret} || ''`));
+  }
+  assert.doesNotMatch(workflow, /CODE_AGENT_ENGINE != 'codebuddy'/);
+  assert.doesNotMatch(workflow, /toJSON\(secrets\)|<<:/);
 });
 
 test('different Issues run concurrently while one Issue stays serialized', () => {
@@ -113,8 +126,9 @@ test('implementation and repair default to unlimited invocations and max thinkin
   const thinkingLines = workflow
     .split('\n')
     .filter((line) => line.includes('CODE_AGENT_THINKING:'));
-  assert.equal(timeoutLines.length, 2);
-  assert.equal(thinkingLines.length, 3);
+  assert.equal(timeoutLines.length, 1);
+  assert.match(workflow, /CODE_AGENT_INVOCATION_TIMEOUT_SECONDS=900 node/);
+  assert.equal(thinkingLines.length, 1);
   for (const line of timeoutLines)
     assert.match(line, /vars\.PI_INVOCATION_TIMEOUT_SECONDS \|\| '0'/);
   for (const line of thinkingLines)
