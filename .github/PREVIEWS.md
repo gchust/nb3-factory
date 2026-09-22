@@ -237,7 +237,9 @@ ssh 252 'bash /srv/nb3-preview/scripts/preview-gc.sh'
 
 Tailscale 加入网络后，用允许中继的有限时 ping 输出诊断，不把 ping 失败作为部署阻断条件；随后 `preview-connect.sh` 最多尝试 6 次获取主机公钥并验证部署密钥认证，失败保留错误和网络状态。加入 tailnet 成功不代表 SSH 已就绪。
 
-部署脚本完成本机健康检查后，Runner 还会对公网 HTTPS 地址执行有限重试。只有公网检查通过，PR 评论才显示地址与登录说明；否则显示部署或公网检查失败及日志链接。公网探测只走 IPv4：Cloudflare 为这些域名同时发布 AAAA，而 runner 没有可用的 IPv6 出口，先试 IPv6 会白等一整个连接超时；直连不成功时再用 DoH 解析 A 记录、按地址重试。
+部署脚本完成本机健康检查后，Runner 还会对公网 HTTPS 地址做检查：只有公网检查通过，PR 评论才显示地址与登录说明；否则显示部署或公网检查失败及日志链接。检查先向公共 DNS（DoH）问这个域名的 A 记录，再把地址用 `--resolve` 交给 curl（hostname、TLS 与路由保持原样，不禁用证书），失败就按间隔重问，预算用尽才退回 runner 自己的解析器。
+
+**为什么不先直连。** 每个预览的 DNS 记录由预览机上的定时器创建（`cloudflare-sync.py` 最多滞后一分钟），而检查在容器起来后十几秒就跑了：记录还不存在时，zone 的通配记录（`*.nfvd.net` → 一个连不上的地址）会替它作答，直连只能白等超时——这就是每次部署日志里那段 40 秒 `Failed to connect` 的来源，也让一个其实可用的预览差一点被读成不可达。默认预算 120 秒（大于定时器周期）、间隔 5 秒，可用 `PREVIEW_PUBLIC_CHECK_BUDGET_MS` / `PREVIEW_PUBLIC_CHECK_INTERVAL_MS` 调整；判定标准不变：必须有一次针对该 hostname 的公网 HTTPS 请求成功。
 
 ## 增量搭建的预览更新
 
