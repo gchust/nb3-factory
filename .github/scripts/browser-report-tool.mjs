@@ -1,6 +1,7 @@
 import { readFileSync, writeFileSync, existsSync, renameSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import path from 'node:path';
+import { acceptanceCriteria, identifyCheck } from './acceptance-criteria.mjs';
 import { validateCheck } from './browser-report-check.mjs';
 
 // This writer validates structure and real PNG references, never manufactures observations.
@@ -28,9 +29,14 @@ const draft = existsSync(reportPath)
       failures: [],
     };
 if (action === 'check') {
+  const metadata = JSON.parse(readFileSync(process.env.FACTORY_BROWSER_METADATA, 'utf8'));
+  const criteria = acceptanceCriteria(metadata.task);
+  const criterion = identifyCheck(value, criteria);
+  value.id = criterion.id;
+  value.criterion = criterion.text;
   validateCheck(value, draft.checks.length, path.resolve(evidence));
   const index = draft.checks.findIndex(
-    (check) => check.criterion === value.criterion,
+    (check) => identifyCheck(check, criteria).id === value.id,
   );
   if (index < 0) draft.checks.push(value);
   else draft.checks[index] = value;

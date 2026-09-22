@@ -18,7 +18,18 @@ export NODE_ENV=test
 cd "$workspace"
 
 export FACTORY_TIMINGS_FILE="${FACTORY_TIMINGS_FILE:-$artifact_dir/timings.jsonl}"
-timed() { node "$script_dir/timed-command.mjs" "$1" pnpm "$1"; }
+timed() {
+  case "$1" in
+    lint)
+      node "$script_dir/timed-command.mjs" lint pnpm lint --ignore-pattern '.github/**'
+      ;;
+    format:check)
+      # A negative CLI glob keeps the app's own ignore/config files unchanged.
+      node "$script_dir/timed-command.mjs" format:check pnpm format:check '!.github/**'
+      ;;
+    *) node "$script_dir/timed-command.mjs" "$1" pnpm "$1" ;;
+  esac
+}
 # Only repair-loop workspaces are normalized; independent final verification
 # checks accepted bytes without editing them. Refresh candidates have no Git yet.
 if [[ "${FACTORY_RETRY_FAILED_CHECK:-0}" == '1' ]]; then

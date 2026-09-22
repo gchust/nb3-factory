@@ -19,6 +19,7 @@ const browserAcceptance = path.join(scripts, 'browser-acceptance.sh');
 for (const scenario of [
   'valid',
   'repair',
+  'report-exhausted',
   'defect',
   'app-not-ready',
   'agent-error',
@@ -54,6 +55,7 @@ for (const scenario of [
         'validate-browser-report.mjs',
         'browser-report-check.mjs',
         'browser-report-tool.mjs',
+        'acceptance-criteria.mjs',
       ]) {
         copyFileSync(path.join(scripts, file), path.join(controlScripts, file));
       }
@@ -115,7 +117,7 @@ for (const scenario of [
           "  report.checks[0].criterion = 'Capture editing for the PR';",
           "  if (count > 1) report.checks[0].evidence.push('Verified existing values were prefilled in the edit form.');",
           '  writeFileSync(process.env.FACTORY_BROWSER_REPORT, JSON.stringify(report));',
-          "} else if (!['valid', 'recording-unavailable'].includes(scenario) && count <= 2) {",
+          "} else if (!['valid', 'recording-unavailable'].includes(scenario) && (count <= 2 || scenario === 'report-exhausted')) {",
           "  writeFileSync(process.env.FACTORY_BROWSER_REPORT, JSON.stringify({ passed: true, authenticated: true, summary: 'claims success', checks: [{ name: 'Page loads', status: 'pass', detail: 'page responded' }], failures: [] }));",
           "} else if (scenario === 'defect') {",
           "  const report = JSON.parse(readFileSync(process.env.FACTORY_BROWSER_REPORT, 'utf8'));",
@@ -133,11 +135,12 @@ for (const scenario of [
             taskType: '创建新系统',
             sampleData: '是',
             requirements: 'The page must load.',
-            acceptanceCriteria: '1. Page loads',
+            acceptanceCriteria: scenario === 'evidence-gap' ? '1. Capture editing for the PR' : '1. Page loads',
           },
         }),
       );
       writeFileSync(config, 'test: true\n');
+      writeFileSync(path.join(root, 'preflight.json'), JSON.stringify({version:1,basic:true,capabilities:{}}));
 
       const result = spawnSync(
         browserAcceptance,
@@ -150,6 +153,7 @@ for (const scenario of [
             // The fixture starts a real listener on the application port. Keep it away from
             // the default so the test does not depend on what runs on this machine.
             FACTORY_APP_PORT: '13440',
+            FACTORY_BROWSER_PREFLIGHT: path.join(root, 'preflight.json'),
             TEST_REPORT_SCENARIO: scenario,
             TEST_BROWSER_COMMANDS: path.join(root, 'browser-commands'),
           },
@@ -162,6 +166,8 @@ for (const scenario of [
         result.status,
         ['defect', 'app-not-ready'].includes(scenario)
           ? 10
+          : scenario === 'report-exhausted'
+            ? 20
           : scenario === 'agent-error'
             ? 7
             : 0,
@@ -196,7 +202,7 @@ for (const scenario of [
         );
         assert.match(
           readFileSync(path.join(artifacts, 'report-invalid-0.json'), 'utf8'),
-          scenario === 'evidence-gap' ? /Capture editing/ : /detail/,
+          scenario === 'evidence-gap' ? /Capture editing/ : /claims success/,
         );
       }
       const commands = readFileSync(
@@ -219,7 +225,7 @@ for (const scenario of [
       assert.equal(
         JSON.parse(readFileSync(path.join(artifacts, 'report.json'), 'utf8'))
           .passed,
-        scenario !== 'defect',
+        !['defect', 'agent-error', 'report-exhausted'].includes(scenario),
       );
       const renderedPrompt = readFileSync(
         path.join(state, 'browser-acceptance.md'),

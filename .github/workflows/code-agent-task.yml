@@ -30,6 +30,7 @@ jobs:
       issues: write
       pull-requests: read
     outputs:
+      control_sha: ${{ steps.baseline.outputs.sha }}
       status: ${{ steps.prepare.outputs.status }}
       build_comment_id: ${{ steps.prepare.outputs.build_comment_id }}
       comment_kind: ${{ steps.prepare.outputs.comment_kind }}
@@ -47,9 +48,14 @@ jobs:
           path: control
           persist-credentials: false
 
+      - name: Pin this run's control plane
+        id: baseline
+        run: echo "sha=$(git -C control rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
       - name: Resolve Issue and target branch
         id: prepare
         env:
+          FACTORY_CONTROL_SHA: ${{ steps.baseline.outputs.sha }}
           GITHUB_TOKEN: ${{ github.token }}
         run: |
           node control/.github/scripts/prepare-task.mjs \
@@ -69,6 +75,7 @@ jobs:
   agent:
     needs: prepare
     env:
+      FACTORY_CONTROL_SHA: ${{ needs.prepare.outputs.control_sha }}
       FACTORY_QA_THINKING: ${{ vars.FACTORY_QA_THINKING }}
       CODE_AGENT_ENGINE: ${{ vars.CODE_AGENT_ENGINE }}
     if: needs.prepare.outputs.status == 'ready' && needs.prepare.outputs.comment_kind != 'reply'
@@ -86,13 +93,13 @@ jobs:
       - name: Check out factory control plane
         uses: actions/checkout@v4
         with:
-          ref: ${{ needs.prepare.outputs.default_branch }}
+          ref: ${{ needs.prepare.outputs.control_sha }}
           path: control
           persist-credentials: false
 
       - name: Start five-hour runner budget
         run: |
-          echo "FACTORY_RUN_DEADLINE_EPOCH_SECONDS=$(($(date +%s) + 18000))" >> "$GITHUB_ENV"
+          echo "FACTORY_RUN_DEADLINE_EPOCH_SECONDS=$(($(date +%s) + 18000 - 120))" >> "$GITHUB_ENV"
           echo "FACTORY_TIMINGS_FILE=$RUNNER_TEMP/agent-artifacts/timings.jsonl" >> "$GITHUB_ENV"
           echo "FACTORY_DEPENDENCY_CACHE=$RUNNER_TEMP/agent-dependency-cache" >> "$GITHUB_ENV"
 
@@ -120,7 +127,7 @@ jobs:
             --workspace workspace \
             --patch handoff/agent.patch \
             --branch "${{ needs.prepare.outputs.work_branch }}"
-          # Continue the retrospective, not previous QA conclusions or token logs.
+          # Restore retrospective only here; stage state is validated after task download.
           mkdir -p "$RUNNER_TEMP/agent-artifacts"
           if [[ -f handoff/retro.json && ! -L handoff/retro.json ]]; then
             cp handoff/retro.json "$RUNNER_TEMP/agent-artifacts/retro.json"
@@ -131,6 +138,19 @@ jobs:
         with:
           name: factory-task-${{ needs.prepare.outputs.issue_number }}
           path: task
+
+      - name: Restore pipeline progress
+        id: resume
+        env:
+          CONTINUATION_RUN: ${{ github.event_name == 'repository_dispatch' && github.event.action == 'code-agent-continue' }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/agent-artifacts"
+          if [[ "$CONTINUATION_RUN" == true ]]; then
+            node control/.github/scripts/pipeline-state.mjs restore handoff "$RUNNER_TEMP/agent-artifacts" task/task-metadata.json
+          else
+            node control/.github/scripts/pipeline-state.mjs init "$RUNNER_TEMP/agent-artifacts/pipeline-state.json" task/task-metadata.json
+          fi
+          echo "phase=$(node control/.github/scripts/pipeline-state.mjs phase "$RUNNER_TEMP/agent-artifacts/pipeline-state.json")" >> "$GITHUB_OUTPUT"
 
       - name: Set up pnpm
         uses: pnpm/action-setup@v4
@@ -173,11 +193,38 @@ jobs:
           CODEBUDDY_VERSION: ${{ vars.CODEBUDDY_VERSION }}
         run: node control/.github/scripts/install-agent.mjs
 
+      - name: Install pinned Agent Browser
+        env:
+          AGENT_BROWSER_VERSION: ${{ vars.AGENT_BROWSER_VERSION || '0.36.0' }}
+        run: |
+          npm install --global "agent-browser@${AGENT_BROWSER_VERSION}"
+          agent-browser --version
+
+      - name: Install optional video encoder
+        continue-on-error: true
+        timeout-minutes: 5
+        run: |
+          if ! command -v ffmpeg >/dev/null 2>&1; then
+            sudo apt-get update -o Acquire::Retries=2 -o Acquire::http::Timeout=30
+            sudo apt-get install --yes --no-install-recommends ffmpeg
+          fi
+
+      - name: Prepare and validate browser environment
+        run: |
+          mkdir -p "$RUNNER_TEMP/agent-artifacts/browser-environment"
+          export AGENT_BROWSER_EXECUTABLE_PATH="$(command -v google-chrome || command -v google-chrome-stable || command -v chromium || true)"
+          python3 control/.github/scripts/prepare-browser-fixtures.py "$RUNNER_TEMP/agent-artifacts/browser-environment/fixtures"
+          node control/.github/scripts/browser-preflight.mjs "$RUNNER_TEMP/agent-artifacts/browser-environment/preflight.json"
+          echo "AGENT_BROWSER_EXECUTABLE_PATH=$AGENT_BROWSER_EXECUTABLE_PATH" >> "$GITHUB_ENV"
+          echo "FACTORY_BROWSER_PREFLIGHT=$RUNNER_TEMP/agent-artifacts/browser-environment/preflight.json" >> "$GITHUB_ENV"
+          echo "FACTORY_BROWSER_FIXTURES_MANIFEST=$RUNNER_TEMP/agent-artifacts/browser-environment/fixtures/manifest.json" >> "$GITHUB_ENV"
+
       - name: Run Code Agent implementation
         id: implementation
         if: >-
-          (needs.prepare.outputs.base_ref != needs.prepare.outputs.work_branch || needs.prepare.outputs.build_comment_id != '') &&
-          !(github.event_name == 'repository_dispatch' && github.event.action == 'code-agent-continue')
+          ((needs.prepare.outputs.base_ref != needs.prepare.outputs.work_branch || needs.prepare.outputs.build_comment_id != '') &&
+          !(github.event_name == 'repository_dispatch' && github.event.action == 'code-agent-continue')) ||
+          steps.resume.outputs.phase == 'implementation'
         env:
           # Secrets are injected per engine: a Pi run never receives the subscription
           # token, and a CodeBuddy run never receives the Pi endpoint or key.
@@ -197,6 +244,7 @@ jobs:
           CODE_AGENT_SUPPORTS_REASONING_EFFORT: ${{ vars.CODE_AGENT_SUPPORTS_REASONING_EFFORT || vars.PI_SUPPORTS_REASONING_EFFORT || 'true' }}
           CODE_AGENT_INVOCATION_TIMEOUT_SECONDS: ${{ vars.CODE_AGENT_INVOCATION_TIMEOUT_SECONDS || vars.PI_INVOCATION_TIMEOUT_SECONDS || '0' }}
         run: |
+          node control/.github/scripts/pipeline-state.mjs set "$RUNNER_TEMP/agent-artifacts/pipeline-state.json" implementation
           set +e
           node control/.github/scripts/run-agent.mjs \
             --workspace workspace \
@@ -206,28 +254,17 @@ jobs:
           status=$?
           set -e
           if [[ "$status" -eq 75 ]]; then
+            node control/.github/scripts/pipeline-state.mjs outcome "$RUNNER_TEMP/agent-artifacts/pipeline-state.json" handoff
             echo "handoff=true" >> "$GITHUB_OUTPUT"
             exit 0
           fi
-          exit "$status"
-
-      - name: Install pinned Agent Browser
-        if: steps.implementation.outputs.handoff != 'true'
-        env:
-          AGENT_BROWSER_VERSION: ${{ vars.AGENT_BROWSER_VERSION || '0.36.0' }}
-        run: |
-          npm install --global "agent-browser@${AGENT_BROWSER_VERSION}"
-          agent-browser --version
-
-      - name: Install optional video encoder
-        if: steps.implementation.outputs.handoff != 'true'
-        continue-on-error: true
-        timeout-minutes: 5
-        run: |
-          if ! command -v ffmpeg >/dev/null 2>&1; then
-            sudo apt-get update -o Acquire::Retries=2 -o Acquire::http::Timeout=30
-            sudo apt-get install --yes --no-install-recommends ffmpeg
+          if [[ "$status" -ne 0 ]]; then
+            node control/.github/scripts/pipeline-state.mjs outcome "$RUNNER_TEMP/agent-artifacts/pipeline-state.json" failed
           fi
+          if [[ "$status" -eq 0 ]]; then
+            node control/.github/scripts/pipeline-state.mjs set "$RUNNER_TEMP/agent-artifacts/pipeline-state.json" verify
+          fi
+          exit "$status"
 
       - name: Verify and repair until successful
         id: verify
@@ -282,6 +319,7 @@ jobs:
             --patch "$RUNNER_TEMP/agent-artifacts/agent.patch" \
             --summary "$RUNNER_TEMP/agent-artifacts/change-summary.json" \
             --allow-empty "$ALLOW_EMPTY_PATCH"
+          node control/.github/scripts/pipeline-state.mjs seal "$RUNNER_TEMP/agent-artifacts/pipeline-state.json" "$RUNNER_TEMP/agent-artifacts/agent.patch"
 
       - name: Prepare runner handoff metadata
         id: handoff
@@ -294,7 +332,7 @@ jobs:
             --issue "${{ needs.prepare.outputs.issue_number }}" \
             --run-id "${{ github.run_id }}" \
             --continuation "$next_continuation" \
-            --phase agent \
+            --phase "$(node control/.github/scripts/pipeline-state.mjs phase "$RUNNER_TEMP/agent-artifacts/pipeline-state.json")" \
             --output "$RUNNER_TEMP/agent-artifacts/handoff.json"
           echo "continuation=$next_continuation" >> "$GITHUB_OUTPUT"
 
@@ -360,7 +398,7 @@ jobs:
       - name: Check out factory control plane
         uses: actions/checkout@v4
         with:
-          ref: ${{ needs.prepare.outputs.default_branch }}
+          ref: ${{ needs.prepare.outputs.control_sha }}
           path: control
           persist-credentials: false
 
@@ -472,7 +510,7 @@ jobs:
       - name: Check out factory control plane
         uses: actions/checkout@v4
         with:
-          ref: ${{ needs.prepare.outputs.default_branch }}
+          ref: ${{ needs.prepare.outputs.control_sha }}
           path: control
           persist-credentials: false
 
@@ -546,7 +584,7 @@ jobs:
       - name: Check out factory control plane
         uses: actions/checkout@v4
         with:
-          ref: ${{ needs.prepare.outputs.default_branch }}
+          ref: ${{ needs.prepare.outputs.control_sha }}
           path: control
           persist-credentials: false
 
@@ -568,7 +606,7 @@ jobs:
       # Isolated from application execution and from all model/media secrets.
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.repository.default_branch }}
+          ref: ${{ needs.prepare.outputs.control_sha }}
           path: control
           persist-credentials: false
       - name: Explicitly request task reports (including continuations)
@@ -594,7 +632,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ needs.prepare.outputs.default_branch }}
+          ref: ${{ needs.prepare.outputs.control_sha }}
           path: control
           persist-credentials: false
       - uses: actions/checkout@v4
@@ -663,7 +701,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ needs.prepare.outputs.default_branch }}
+          ref: ${{ needs.prepare.outputs.control_sha }}
           persist-credentials: false
       - uses: actions/setup-node@v4
         with:

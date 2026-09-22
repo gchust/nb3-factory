@@ -19,12 +19,18 @@ export function validateCheck(check, index, evidenceRoot) {
     throwInvalid(`checks[${index}] must be an object.`);
   }
   requireText(check.criterion, `checks[${index}].criterion`);
-  if (!['passed', 'failed'].includes(check.status)) {
-    throwInvalid(`checks[${index}].status must be passed or failed.`);
+  if (!['passed', 'failed', 'blocked', 'not_run'].includes(check.status)) {
+    throwInvalid(`checks[${index}].status must be passed, failed, blocked or not_run.`);
   }
+  const incomplete = ['blocked', 'not_run'].includes(check.status);
+  if (incomplete) requireText(check.reason, `checks[${index}].reason`);
   requireTexts(check.actions, `checks[${index}].actions`);
   requireTexts(check.evidence, `checks[${index}].evidence`);
-  requireTexts(check.screenshots, `checks[${index}].screenshots`);
+  if (!incomplete || check.screenshots?.length) {
+    requireTexts(check.screenshots, `checks[${index}].screenshots`);
+  } else if (!Array.isArray(check.screenshots)) {
+    throwInvalid(`checks[${index}].screenshots must be an array.`);
+  }
 
   for (const screenshot of check.screenshots) {
     const screenshotPath = path.resolve(evidenceRoot, screenshot);

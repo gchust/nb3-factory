@@ -1,26 +1,27 @@
+import { acceptanceCriteria, validateCoverage } from './acceptance-criteria.mjs';
 import { validateCheck } from './browser-report-check.mjs';
 import { readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 
 const args = parseArgs(process.argv.slice(2));
 const metadata = JSON.parse(readFileSync(args.metadata, 'utf8'));
+let report;
 const rawReport = readJson(args.report);
-const report = normalizeReport(rawReport, metadata);
+report = normalizeReport(rawReport);
 const commands = readFileSync(args.commands, 'utf8')
   .split(/\r?\n/u)
   .filter(Boolean);
 const evidenceRoot = path.resolve(args.evidence);
 
 validateShape(report);
-validateBrowserCommands(commands);
+if (report.checks.some((check) => ['passed', 'failed'].includes(check.status)))
+  validateBrowserCommands(commands);
 
-const minimumChecks = countAcceptanceCriteria(
-  metadata.task?.acceptanceCriteria ?? '',
-);
-if (report.checks.length < minimumChecks) {
-  invalid(
-    `Browser report has ${report.checks.length} check(s), but at least ${minimumChecks} acceptance check(s) are required.`,
-  );
+const expectedCriteria = acceptanceCriteria(metadata.task);
+try {
+  validateCoverage(report.checks, expectedCriteria);
+} catch (error) {
+  invalid(error.message);
 }
 
 let screenshotCount = 0;
@@ -32,12 +33,12 @@ for (const [index, check] of report.checks.entries()) {
   }
 }
 
-if (screenshotCount === 0)
+if (screenshotCount === 0 && report.checks.some((check) => ['passed', 'failed'].includes(check.status)))
   invalid('At least one browser screenshot is required.');
 
 const { failures: semanticFailures, evidenceGaps } =
   applySemanticGuards(report);
-if (report !== rawReport || semanticFailures.length > 0) {
+{
   writeFileSync(args.report, `${JSON.stringify(report, null, 2)}\n`);
 }
 if (report !== rawReport) {
@@ -50,27 +51,33 @@ for (const failure of semanticFailures) {
 }
 
 const failedChecks = report.checks.filter((check) => check.status === 'failed');
-const claimsSuccess =
-  report.passed === true &&
-  report.authenticated === true &&
-  failedChecks.length === 0 &&
-  report.failures.length === 0;
-
-if (claimsSuccess) {
-  // Missing evidence is a QA report problem, not an observed application bug.
-  // Keep the live browser session so QA can substantiate umbrella criteria
-  // (for example, an edit recording) without restarting application repair.
-  if (evidenceGaps.length > 0) invalid(evidenceGaps.join('\n'));
-  console.log(
-    `Agent Browser acceptance passed with ${report.checks.length} check(s) and ${screenshotCount} screenshot(s).`,
-  );
-  process.exit(0);
+// Status derives from observed checks. A model's top-level passed=true cannot
+// turn blocked/missing work green. A required blocked item never reaches repair.
+const incomplete = report.checks.filter((check) =>
+  check.status === 'blocked' || (check.status === 'not_run' &&
+    !expectedCriteria.find((c) => c.id === check.id)?.optional),
+);
+if (failedChecks.length > 0) {
+  report.passed = false;
+  writeFileSync(args.report, `${JSON.stringify(report, null, 2)}\n`);
+  console.error('Agent Browser acceptance failed:');
+  for (const gap of evidenceGaps) console.error(`Incomplete QA evidence: ${gap}`);
+  console.error(JSON.stringify(report, null, 2));
+  process.exit(10);
 }
-
-console.error('Agent Browser acceptance failed:');
-for (const gap of evidenceGaps) console.error(`Incomplete QA evidence: ${gap}`);
-console.error(JSON.stringify(report, null, 2));
-process.exit(10);
+if (incomplete.some((check) => check.status === 'blocked')) {
+  report.passed = false;
+  writeFileSync(args.report, `${JSON.stringify(report, null, 2)}\n`);
+  console.error('Agent Browser acceptance blocked; no application repair was requested.');
+  console.error(JSON.stringify(incomplete, null, 2));
+  process.exit(20);
+}
+if (incomplete.length > 0) invalid('Required acceptance checks were not run: ' + incomplete.map((c) => c.id).join(', '));
+if (evidenceGaps.length > 0) invalid(evidenceGaps.join('\n'));
+if (!report.authenticated || report.failures.length > 0 || report.passed !== true)
+  invalid('Report is incomplete or inconsistent; only observed failed checks authorize application repair.');
+console.log(`Agent Browser acceptance passed with ${report.checks.length} check(s) and ${screenshotCount} screenshot(s).`);
+process.exit(0);
 
 function validateShape(value) {
   if (!value || typeof value !== 'object' || Array.isArray(value)) {
@@ -90,7 +97,7 @@ function validateShape(value) {
   }
 }
 
-function normalizeReport(value, taskMetadata) {
+function normalizeReport(value) {
   if (
     value &&
     typeof value === 'object' &&
@@ -100,12 +107,7 @@ function normalizeReport(value, taskMetadata) {
     Array.isArray(value.checks) &&
     Array.isArray(value.failures)
   ) {
-    const originalCriteria = parseAcceptanceCriteria(
-      taskMetadata.task?.acceptanceCriteria ?? '',
-    );
-    const checks = value.checks.map((check, index) =>
-      normalizeCheck(check, index, originalCriteria),
-    );
+    const checks = value.checks.map(normalizeCheck);
     const failures = value.failures.map((failure, index) => {
       const formatted = formatFailure(failure);
       if (!formatted) {
@@ -128,9 +130,6 @@ function normalizeReport(value, taskMetadata) {
     return value;
   }
 
-  const originalCriteria = parseAcceptanceCriteria(
-    taskMetadata.task?.acceptanceCriteria ?? '',
-  );
   const checks = value.criteria.map((criterion, index) => {
     if (!criterion || typeof criterion !== 'object') {
       invalid(`criteria[${index}] must be an object.`);
@@ -147,10 +146,8 @@ function normalizeReport(value, taskMetadata) {
     requireNonEmptyStrings(criterion.evidence, `criteria[${index}].evidence`);
 
     return {
-      criterion:
-        originalCriteria[index] ||
-        String(criterion.name ?? '').trim() ||
-        `Acceptance criterion ${index + 1}`,
+      ...(criterion.id != null ? { id: criterion.id } : {}),
+      criterion: String(criterion.name ?? '').trim(),
       status: result.startsWith('pass') ? 'passed' : 'failed',
       actions: [criterion.details.trim()],
       evidence: [criterion.details.trim()],
@@ -188,7 +185,7 @@ function normalizeReport(value, taskMetadata) {
   };
 }
 
-function normalizeCheck(check, index, originalCriteria) {
+function normalizeCheck(check) {
   if (!check || typeof check !== 'object' || Array.isArray(check)) {
     return check;
   }
@@ -196,7 +193,7 @@ function normalizeCheck(check, index, originalCriteria) {
   const hasCanonicalShape =
     typeof check.criterion === 'string' &&
     check.criterion.trim() &&
-    ['passed', 'failed'].includes(check.status) &&
+    ['passed', 'failed', 'blocked', 'not_run'].includes(check.status) &&
     Array.isArray(check.actions) &&
     Array.isArray(check.evidence) &&
     Array.isArray(check.screenshots);
@@ -244,10 +241,11 @@ function normalizeCheck(check, index, originalCriteria) {
         : undefined;
   const criterion =
     String(check.criterion ?? check.name ?? '').trim() ||
-    originalCriteria[index] ||
-    `Acceptance criterion ${index + 1}`;
+    '';
 
   return {
+    ...(check.id != null ? { id: check.id } : {}),
+    ...(check.reason ? { reason: check.reason } : {}),
     criterion,
     status,
     actions,
@@ -375,20 +373,6 @@ function validateBrowserCommands(commands) {
   }
 }
 
-function countAcceptanceCriteria(text) {
-  return Math.max(1, parseAcceptanceCriteria(text).length);
-}
-
-function parseAcceptanceCriteria(text) {
-  const lines = String(text)
-    .split(/\r?\n/u)
-    .map((line) => line.trim())
-    .filter(Boolean);
-  const listItems = lines
-    .filter((line) => /^(?:\d+[.)]|[-*])\s+/u.test(line))
-    .map((line) => line.replace(/^(?:\d+[.)]|[-*])\s+/u, '').trim());
-  return listItems.length > 0 ? listItems : lines.slice(0, 1);
-}
 
 function requireString(value, name) {
   if (typeof value !== 'string' || !value.trim()) {
@@ -414,6 +398,10 @@ function readJson(file) {
 }
 
 function invalid(message) {
+  if (report && typeof report === 'object') {
+    report.passed = false;
+    writeFileSync(args.report, `${JSON.stringify(report, null, 2)}\n`);
+  }
   console.error(`Invalid Agent Browser report: ${message}`);
   process.exit(2);
 }
