@@ -1,3 +1,4 @@
+import { readResult } from './agent-result.mjs';
 import { taskOutcome, outcomeLabels } from './task-outcome.mjs';
 import { createHash } from 'node:crypto';
 import { createReadStream, lstatSync, readdirSync } from 'node:fs';
@@ -107,6 +108,19 @@ export async function collectUsage(root) {
       }
       if (!phase || !entry.isFile()) continue;
       logs++;
+      // New runs are engine-neutral. Keep the legacy parser below solely for
+      // previously published Pi/CodeBuddy transcripts without a sidecar.
+      let normalized;
+      try { normalized = readResult(path.join(root, name)); }
+      catch { usage.incomplete++; continue; }
+      if (normalized) {
+        for (const measurement of normalized.measurements)
+          addUsage(usage, measurement.phase ?? phase, measurement.usage);
+        if (normalized.status !== 'completed' || normalized.invalidEvents || normalized.incomplete ||
+            (normalized.completion !== 'exit' && !normalized.terminalEvent) || !normalized.measurements.length)
+          usage.incomplete++;
+        continue;
+      }
       let settled = false;
       let events = 0;
       let measurements = 0;

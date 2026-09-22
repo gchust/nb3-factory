@@ -1,37 +1,26 @@
-// Only reviewed control-plane adapters may execute. Never load an adapter path
-// or command supplied by an Issue or the generated application workspace.
-// Each engine reads its own configuration namespace, so a version pinned for
-// one engine can never be installed for another.
+// Only control-plane adapters may execute. Imports are deliberately side-effect
+// free: neither reading usage nor resolving an engine may start a CLI.
+import * as pi from './agents/pi.mjs';
+import * as codebuddy from './agents/codebuddy.mjs';
+import * as claudeCode from './agents/claude-code.mjs';
+import * as codex from './agents/codex.mjs';
+import * as opencode from './agents/opencode.mjs';
+
 const adapters = new Map([
-  [
-    'pi',
-    {
-      module: new URL('./agents/pi.mjs', import.meta.url),
-      package: '@earendil-works/pi-coding-agent',
-      version: '0.86.1',
-      versionEnv: ['CODE_AGENT_VERSION', 'PI_VERSION'],
-    },
-  ],
-  [
-    'codebuddy',
-    {
-      module: new URL('./agents/codebuddy.mjs', import.meta.url),
-      package: '@tencent-ai/codebuddy-code',
-      version: '2.150.0',
-      versionEnv: ['CODEBUDDY_VERSION'],
-    },
-  ],
+  ['pi', pi], ['codebuddy', codebuddy], ['claude-code', claudeCode],
+  ['codex', codex], ['opencode', opencode],
 ]);
+export const agentIds = [...adapters.keys()];
 
 export function resolveAgent(env = process.env) {
   const id = env.CODE_AGENT_ENGINE?.trim() || 'pi';
   const adapter = adapters.get(id);
   if (!adapter) throw new Error(`Unsupported CODE_AGENT_ENGINE: ${id}`);
-  const [name, version] = adapter.versionEnv
+  const [name, version] = adapter.installation.versionEnv
     .map((candidate) => [candidate, env[candidate]?.trim()])
-    .find(([, value]) => value) ?? [adapter.versionEnv[0], adapter.version];
+    .find(([, value]) => value) ?? [adapter.installation.versionEnv[0], adapter.installation.version];
   if (!/^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/.test(version)) {
     throw new Error(`${name} must be a pinned semantic version.`);
   }
-  return { id, ...adapter, version };
+  return { id, ...adapter, ...adapter.installation, version };
 }

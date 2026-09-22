@@ -92,6 +92,8 @@ test('installer uses the registry package and pinned version without a shell', (
       ['pi', '0.84.5', '@earendil-works/pi-coding-agent@0.84.5'],
       ['codebuddy', '2.150.1', '@tencent-ai/codebuddy-code@2.150.1'],
     ]) {
+      writeFileSync(path.join(root, engine),
+        `#!/usr/bin/env node\nconsole.log('${version}');\n`, { mode: 0o755 });
       const result = spawnSync(
         process.execPath,
         [path.resolve(import.meta.dirname, '..', 'install-agent.mjs')],

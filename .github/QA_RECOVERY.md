@@ -20,7 +20,7 @@ the actual observation and screenshot with that delivery check before passing.
 Explicit empty required fields or a required flow showing “Something went wrong”
 remain business failures.
 
-QA invocations load the same trusted guard on both engines: `qa-process-guard.mjs`
+Pi and CodeBuddy QA invocations load the same trusted guard: `qa-process-guard.mjs`
 as a Pi extension, or `codebuddy-qa-guard.mjs` as a CodeBuddy `PreToolUse` hook
 that exits `2` to block the call. Both decide through `qa-guard-rules.mjs` and
 block process termination commands before the bash tool runs, avoiding accidental
@@ -45,3 +45,7 @@ an existing continuation restores that event's original source checkpoint.
 Regression checks: `pnpm factory:test`. The Issue-driven integration test must
 start after the fix is on the default branch, since factory jobs deliberately
 check out their control plane from that branch.
+
+Claude Code/Codex load `pre-tool-use-qa-guard.mjs` as a PreToolUse hook (stderr +
+exit 2); OpenCode loads `opencode-qa-guard.mjs` as a tool.execute.before plugin.
+All five engines share `qa-guard-rules.mjs`. See [Agent adapters](AGENT_ADAPTERS.md).

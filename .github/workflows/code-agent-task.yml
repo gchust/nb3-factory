@@ -185,12 +185,15 @@ jobs:
             --output "$RUNNER_TEMP/implement.md"
 
       - name: Install pinned Code Agent
-        env:
-          # Each engine pins its own package: a version left over from Pi can never
-          # be installed for CodeBuddy, or the other way round.
+        env: &agent-install-env
+          CODE_AGENT_ENGINE: ${{ vars.CODE_AGENT_ENGINE }}
           CODE_AGENT_VERSION: ${{ vars.CODE_AGENT_VERSION }}
           PI_VERSION: ${{ vars.PI_VERSION }}
           CODEBUDDY_VERSION: ${{ vars.CODEBUDDY_VERSION }}
+          CLAUDE_CODE_VERSION: ${{ vars.CLAUDE_CODE_VERSION }}
+          CODEX_VERSION: ${{ vars.CODEX_VERSION }}
+          OPENCODE_VERSION: ${{ vars.OPENCODE_VERSION }}
+          FACTORY_AGENT_INSTALL_RECORD: ${{ runner.temp }}/agent-install.json
         run: node control/.github/scripts/install-agent.mjs
 
       - name: Install pinned Agent Browser
@@ -225,11 +228,13 @@ jobs:
           ((needs.prepare.outputs.base_ref != needs.prepare.outputs.work_branch || needs.prepare.outputs.build_comment_id != '') &&
           !(github.event_name == 'repository_dispatch' && github.event.action == 'code-agent-continue')) ||
           steps.resume.outputs.phase == 'implementation'
-        env:
-          # Secrets are injected per engine: a Pi run never receives the subscription
-          # token, and a CodeBuddy run never receives the Pi endpoint or key.
-          CODE_AGENT_API_ENDPOINT: ${{ vars.CODE_AGENT_ENGINE != 'codebuddy' && (secrets.CODE_AGENT_API_ENDPOINT || secrets.PI_API_ENDPOINT) || '' }}
-          CODE_AGENT_API_KEY: ${{ vars.CODE_AGENT_ENGINE != 'codebuddy' && (secrets.CODE_AGENT_API_KEY || secrets.PI_API_KEY) || '' }}
+        env: &agent-run-env
+          CODE_AGENT_ENGINE: ${{ vars.CODE_AGENT_ENGINE }}
+          FACTORY_AGENT_INSTALL_RECORD: ${{ runner.temp }}/agent-install.json
+          # Explicit engine selection; adding a CLI must not fall through to Pi.
+          # This mapping is shared by implementation, repair/QA, and comment reply.
+          CODE_AGENT_API_ENDPOINT: ${{ (vars.CODE_AGENT_ENGINE == '' || vars.CODE_AGENT_ENGINE == 'pi') && (secrets.CODE_AGENT_API_ENDPOINT || secrets.PI_API_ENDPOINT) || '' }}
+          CODE_AGENT_API_KEY: ${{ (vars.CODE_AGENT_ENGINE == '' || vars.CODE_AGENT_ENGINE == 'pi') && (secrets.CODE_AGENT_API_KEY || secrets.PI_API_KEY) || '' }}
           CODEBUDDY_AUTH_TOKEN: ${{ vars.CODE_AGENT_ENGINE == 'codebuddy' && secrets.CODEBUDDY_AUTH_TOKEN || '' }}
           CODEBUDDY_API_KEY: ${{ vars.CODE_AGENT_ENGINE == 'codebuddy' && secrets.CODEBUDDY_API_KEY || '' }}
           CODEBUDDY_MODEL: ${{ vars.CODE_AGENT_ENGINE == 'codebuddy' && vars.CODEBUDDY_MODEL || '' }}
@@ -243,6 +248,23 @@ jobs:
           CODE_AGENT_SUPPORTS_DEVELOPER_ROLE: ${{ vars.CODE_AGENT_SUPPORTS_DEVELOPER_ROLE || vars.PI_SUPPORTS_DEVELOPER_ROLE }}
           CODE_AGENT_SUPPORTS_REASONING_EFFORT: ${{ vars.CODE_AGENT_SUPPORTS_REASONING_EFFORT || vars.PI_SUPPORTS_REASONING_EFFORT || 'true' }}
           CODE_AGENT_INVOCATION_TIMEOUT_SECONDS: ${{ vars.CODE_AGENT_INVOCATION_TIMEOUT_SECONDS || vars.PI_INVOCATION_TIMEOUT_SECONDS || '0' }}
+          ANTHROPIC_API_KEY: ${{ vars.CODE_AGENT_ENGINE == 'claude-code' && secrets.ANTHROPIC_API_KEY || '' }}
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ vars.CODE_AGENT_ENGINE == 'claude-code' && secrets.CLAUDE_CODE_OAUTH_TOKEN || '' }}
+          ANTHROPIC_BASE_URL: ${{ vars.CODE_AGENT_ENGINE == 'claude-code' && vars.ANTHROPIC_BASE_URL || '' }}
+          CLAUDE_CODE_MODEL: ${{ vars.CLAUDE_CODE_MODEL }}
+          CLAUDE_CODE_EFFORT: ${{ vars.CLAUDE_CODE_EFFORT }}
+          CLAUDE_CODE_QA_EFFORT: ${{ vars.CLAUDE_CODE_QA_EFFORT }}
+          CODEX_API_KEY: ${{ vars.CODE_AGENT_ENGINE == 'codex' && secrets.CODEX_API_KEY || '' }}
+          CODEX_MODEL: ${{ vars.CODEX_MODEL }}
+          CODEX_BASE_URL: ${{ vars.CODE_AGENT_ENGINE == 'codex' && vars.CODEX_BASE_URL || '' }}
+          CODEX_REASONING_EFFORT: ${{ vars.CODEX_REASONING_EFFORT }}
+          CODEX_QA_REASONING_EFFORT: ${{ vars.CODEX_QA_REASONING_EFFORT }}
+          OPENCODE_API_KEY: ${{ vars.CODE_AGENT_ENGINE == 'opencode' && secrets.OPENCODE_API_KEY || '' }}
+          OPENCODE_MODEL: ${{ vars.OPENCODE_MODEL }}
+          OPENCODE_BASE_URL: ${{ vars.CODE_AGENT_ENGINE == 'opencode' && vars.OPENCODE_BASE_URL || '' }}
+          OPENCODE_VARIANT: ${{ vars.OPENCODE_VARIANT }}
+          OPENCODE_QA_VARIANT: ${{ vars.OPENCODE_QA_VARIANT }}
+          CODE_AGENT_IDLE_TIMEOUT_SECONDS: ${{ vars.CODE_AGENT_IDLE_TIMEOUT_SECONDS }}
         run: |
           node control/.github/scripts/pipeline-state.mjs set "$RUNNER_TEMP/agent-artifacts/pipeline-state.json" implementation
           set +e
@@ -269,24 +291,7 @@ jobs:
       - name: Verify and repair until successful
         id: verify
         if: steps.implementation.outputs.handoff != 'true'
-        env:
-          # Secrets are injected per engine: a Pi run never receives the subscription
-          # token, and a CodeBuddy run never receives the Pi endpoint or key.
-          CODE_AGENT_API_ENDPOINT: ${{ vars.CODE_AGENT_ENGINE != 'codebuddy' && (secrets.CODE_AGENT_API_ENDPOINT || secrets.PI_API_ENDPOINT) || '' }}
-          CODE_AGENT_API_KEY: ${{ vars.CODE_AGENT_ENGINE != 'codebuddy' && (secrets.CODE_AGENT_API_KEY || secrets.PI_API_KEY) || '' }}
-          CODEBUDDY_AUTH_TOKEN: ${{ vars.CODE_AGENT_ENGINE == 'codebuddy' && secrets.CODEBUDDY_AUTH_TOKEN || '' }}
-          CODEBUDDY_API_KEY: ${{ vars.CODE_AGENT_ENGINE == 'codebuddy' && secrets.CODEBUDDY_API_KEY || '' }}
-          CODEBUDDY_MODEL: ${{ vars.CODE_AGENT_ENGINE == 'codebuddy' && vars.CODEBUDDY_MODEL || '' }}
-          CODEBUDDY_THINKING: ${{ vars.CODEBUDDY_THINKING || 'max' }}
-          CODEBUDDY_BASE_URL: ${{ vars.CODE_AGENT_ENGINE == 'codebuddy' && vars.CODEBUDDY_BASE_URL || '' }}
-          CODEBUDDY_INTERNET_ENVIRONMENT: ${{ vars.CODE_AGENT_ENGINE == 'codebuddy' && vars.CODEBUDDY_INTERNET_ENVIRONMENT || '' }}
-          CODE_AGENT_API_TYPE: ${{ vars.CODE_AGENT_API_TYPE || vars.PI_API_TYPE || 'openai-completions' }}
-          CODE_AGENT_MODEL: ${{ vars.CODE_AGENT_MODEL || vars.PI_MODEL }}
-          CODE_AGENT_THINKING: ${{ vars.CODE_AGENT_THINKING || vars.PI_THINKING || 'max' }}
-          CODE_AGENT_AUTH_HEADER: ${{ vars.CODE_AGENT_AUTH_HEADER || vars.PI_AUTH_HEADER || 'true' }}
-          CODE_AGENT_SUPPORTS_DEVELOPER_ROLE: ${{ vars.CODE_AGENT_SUPPORTS_DEVELOPER_ROLE || vars.PI_SUPPORTS_DEVELOPER_ROLE }}
-          CODE_AGENT_SUPPORTS_REASONING_EFFORT: ${{ vars.CODE_AGENT_SUPPORTS_REASONING_EFFORT || vars.PI_SUPPORTS_REASONING_EFFORT || 'true' }}
-          CODE_AGENT_INVOCATION_TIMEOUT_SECONDS: ${{ vars.CODE_AGENT_INVOCATION_TIMEOUT_SECONDS || vars.PI_INVOCATION_TIMEOUT_SECONDS || '0' }}
+        env: *agent-run-env
         run: |
           set +e
           control/.github/scripts/verify-and-repair.sh \
@@ -652,32 +657,12 @@ jobs:
           BUILD_RESULT: ${{ needs.publish.result }}
         run: node control/.github/scripts/comment-reply.mjs prompt task/task-metadata.json "$RUNNER_TEMP"
       - name: Install pinned Code Agent
-        env:
-          CODE_AGENT_ENGINE: ${{ vars.CODE_AGENT_ENGINE }}
-          CODE_AGENT_VERSION: ${{ vars.CODE_AGENT_VERSION }}
-          PI_VERSION: ${{ vars.PI_VERSION }}
-          CODEBUDDY_VERSION: ${{ vars.CODEBUDDY_VERSION }}
+        env: *agent-install-env
         run: node control/.github/scripts/install-agent.mjs
       - name: Answer source comment from current code
-        env:
-          CODE_AGENT_ENGINE: ${{ vars.CODE_AGENT_ENGINE }}
-          CODE_AGENT_API_ENDPOINT: ${{ vars.CODE_AGENT_ENGINE != 'codebuddy' && (secrets.CODE_AGENT_API_ENDPOINT || secrets.PI_API_ENDPOINT) || '' }}
-          CODE_AGENT_API_KEY: ${{ vars.CODE_AGENT_ENGINE != 'codebuddy' && (secrets.CODE_AGENT_API_KEY || secrets.PI_API_KEY) || '' }}
-          CODEBUDDY_AUTH_TOKEN: ${{ vars.CODE_AGENT_ENGINE == 'codebuddy' && secrets.CODEBUDDY_AUTH_TOKEN || '' }}
-          CODEBUDDY_API_KEY: ${{ vars.CODE_AGENT_ENGINE == 'codebuddy' && secrets.CODEBUDDY_API_KEY || '' }}
-          CODEBUDDY_MODEL: ${{ vars.CODE_AGENT_ENGINE == 'codebuddy' && vars.CODEBUDDY_MODEL || '' }}
-          CODEBUDDY_THINKING: ${{ vars.CODEBUDDY_THINKING || 'max' }}
-          CODEBUDDY_BASE_URL: ${{ vars.CODE_AGENT_ENGINE == 'codebuddy' && vars.CODEBUDDY_BASE_URL || '' }}
-          CODEBUDDY_INTERNET_ENVIRONMENT: ${{ vars.CODE_AGENT_ENGINE == 'codebuddy' && vars.CODEBUDDY_INTERNET_ENVIRONMENT || '' }}
-          CODE_AGENT_API_TYPE: ${{ vars.CODE_AGENT_API_TYPE || vars.PI_API_TYPE || 'openai-completions' }}
-          CODE_AGENT_MODEL: ${{ vars.CODE_AGENT_MODEL || vars.PI_MODEL }}
-          CODE_AGENT_THINKING: ${{ vars.CODE_AGENT_THINKING || vars.PI_THINKING || 'max' }}
-          CODE_AGENT_AUTH_HEADER: ${{ vars.CODE_AGENT_AUTH_HEADER || vars.PI_AUTH_HEADER || 'true' }}
-          CODE_AGENT_SUPPORTS_DEVELOPER_ROLE: ${{ vars.CODE_AGENT_SUPPORTS_DEVELOPER_ROLE || vars.PI_SUPPORTS_DEVELOPER_ROLE }}
-          CODE_AGENT_SUPPORTS_REASONING_EFFORT: ${{ vars.CODE_AGENT_SUPPORTS_REASONING_EFFORT || vars.PI_SUPPORTS_REASONING_EFFORT || 'true' }}
-          CODE_AGENT_INVOCATION_TIMEOUT_SECONDS: '900'
+        env: *agent-run-env
         run: |
-          node control/.github/scripts/run-agent.mjs \
+          CODE_AGENT_INVOCATION_TIMEOUT_SECONDS=900 node control/.github/scripts/run-agent.mjs \
             --workspace workspace \
             --prompt "$RUNNER_TEMP/comment-prompt.md" \
             --log "$RUNNER_TEMP/comment-agent.jsonl" \

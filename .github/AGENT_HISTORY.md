@@ -54,3 +54,6 @@ gh workflow run publish-agent-history.yml --repo gchust/nb3-factory --ref develo
 
 补发只读取已有 Artifact 和 Job 时间，不重新搭建、不调用模型。已经跑完但缺少记录
 评论的 Run 可以这样补上；Artifact 已过期时只会留下说明，不会伪造记录。
+
+新执行器统一结果 `*.jsonl.result.json` 同样归档，包含执行器、实际版本、模型、
+结束原因与规范化用量；原始 JSONL 保留。适配与配置见 [Code Agent 执行器](AGENT_ADAPTERS.md)。
