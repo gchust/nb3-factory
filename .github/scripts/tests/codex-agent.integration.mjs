@@ -12,7 +12,13 @@ import { promisify } from 'node:util';
 import { createInvocation, installation } from '../agents/codex.mjs';
 import { readResult } from '../agent-result.mjs';
 
-const execute = promisify(execFile);
+const execFileAsync = promisify(execFile);
+function execute(command, args, options) {
+  const result = execFileAsync(command, args, options);
+  // Codex consumes piped stdin even with a positional prompt; signal EOF.
+  result.child.stdin?.end();
+  return result;
+}
 const scripts = path.resolve(import.meta.dirname, '..');
 
 test('real Codex completes QA outside Git; removing the flag reproduces the startup failure', { timeout: 90_000 }, async (t) => {
@@ -70,7 +76,7 @@ test('real Codex completes QA outside Git; removing the flag reproduces the star
   const invocation = createInvocation({ workspace, prompt, agentDir, env });
   const originalArgs = invocation.args.filter((arg) => arg !== '--skip-git-repo-check');
   // Use the same prompt as an argv value for the negative control, avoiding a stdin wait.
-  const original = await execute(invocation.command, [...originalArgs.slice(0, -1), 'Reply with OK.'], {
+  const original = await execute(invocation.command, [...originalArgs.slice(0, -1), readFileSync(prompt, 'utf8')], {
     cwd: invocation.cwd, env: invocation.env, timeout: 15_000,
   }).then(() => null, (error) => error);
   assert.ok(original, 'without the flag Codex must reject this non-Git workspace');
