@@ -7,6 +7,7 @@ on:
       - '.github/scripts/agent-*.mjs'
       - '.github/scripts/install-agent.mjs'
       - '.github/scripts/run-agent.mjs'
+      - '.github/scripts/tests/codex-agent*.mjs'
       - '.github/workflows/agent-adapters.yml'
   workflow_dispatch:
 
@@ -34,3 +35,6 @@ jobs:
         run: node .github/scripts/install-agent.mjs
       - name: Check headless CLI flags without calling a model
         run: node .github/scripts/agent-cli-smoke.mjs
+      - name: Run real Codex in a non-Git QA workspace against a local Responses fixture
+        if: matrix.engine == 'codex'
+        run: node --test .github/scripts/tests/codex-agent.integration.mjs

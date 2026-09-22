@@ -35,7 +35,8 @@ export function createInvocation({ workspace, prompt, agentDir, env }) {
   writeJson(path.join(agentDir, 'hooks.json'), { hooks: isQa ? qaHooks() : {} });
   return {
     label: 'Codex', command: 'codex', model,
-    args: ['exec', '--json', '--ephemeral', '--model', model,
+    // Browser QA runs in a factory-owned temporary directory, not a Git checkout.
+    args: ['exec', '--skip-git-repo-check', '--json', '--ephemeral', '--model', model,
       '--sandbox', 'danger-full-access', '-c', 'approval_policy="never"',
       ...(isQa ? ['--dangerously-bypass-hook-trust'] : []), '-'],
     cwd: workspace,
