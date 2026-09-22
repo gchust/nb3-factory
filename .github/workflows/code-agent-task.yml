@@ -219,6 +219,17 @@ jobs:
           echo "FACTORY_BROWSER_PREFLIGHT=$RUNNER_TEMP/agent-artifacts/browser-environment/preflight.json" >> "$GITHUB_ENV"
           echo "FACTORY_BROWSER_FIXTURES_MANIFEST=$RUNNER_TEMP/agent-artifacts/browser-environment/fixtures/manifest.json" >> "$GITHUB_ENV"
 
+      - name: Start live progress observer
+        continue-on-error: true
+        env:
+          # The observer starts before model credentials exist. It can dispatch
+          # snapshots, but only the independent reporter can write Issue comments.
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          nohup node control/.github/scripts/task-progress.mjs watch \
+            "$RUNNER_TEMP/agent-artifacts" task/task-metadata.json \
+            >"$RUNNER_TEMP/agent-artifacts/live-progress.log" 2>&1 < /dev/null &
+
       - name: Run Code Agent implementation
         id: implementation
         if: >-
@@ -335,6 +346,12 @@ jobs:
             --phase "$(node control/.github/scripts/pipeline-state.mjs phase "$RUNNER_TEMP/agent-artifacts/pipeline-state.json")" \
             --output "$RUNNER_TEMP/agent-artifacts/handoff.json"
           echo "continuation=$next_continuation" >> "$GITHUB_OUTPUT"
+
+      - name: Flush and stop live progress observer
+        if: always()
+        continue-on-error: true
+        timeout-minutes: 1
+        run: node control/.github/scripts/task-progress.mjs stop "$RUNNER_TEMP/agent-artifacts"
 
       - name: Upload Code Agent patch and diagnostics
         if: always()

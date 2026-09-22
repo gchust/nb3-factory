@@ -54,7 +54,19 @@ blocked/not_run 必须给出原因；无法启动浏览器时不要求伪造截�
 
 同一 Run 的所有 Job 使用 prepare 捕获的 control SHA。软预算预留两分钟做上传；长阶段开始前检查剩余预算，全量 QA 参考上一轮耗时，但估计上限低于新 Runner 的可用时间，避免空续跑。
 
-`progress.json` 与 Actions Step Summary 显示阶段、结果、累计轮次和待复测 ID。`repair-summary.json` 保留本 Run 的轮次，`finalVerificationAttempt` 定位累计编号的最终报告目录，避免续跑后媒体/HTML 读取错误。Issue 评论仍由已有独立报告工作流发布，本改动不新增带写权限的 Agent 或每分钟轮询。
+`progress.json` 与 Actions Step Summary 显示阶段、结果、累计轮次和待复测 ID。`repair-summary.json` 保留本 Run 的轮次，`finalVerificationAttempt` 定位累计编号的最终报告目录，避免续跑后媒体/HTML 读取错误。完整交付报告仍由原独立工作流发布；运行中的轻量进度由下述独立上报链路提供。
+
+## 实时进度评论
+
+`task-progress.mjs watch` 在调用模型前启动，只读取当前阶段、验收条目计数和日志文件更新时间，不读取大体积模型日志内容。阶段/验收计数变化最多每分钟合并上报一次，长阶段约每五分钟发送一次快照；本地采样为十秒一次，不调用模型、不运行额外验收。
+
+快照通过 `repository_dispatch: factory-progress` 交给独立的 `report-task-progress.yml`，始终更新同一条机器人进度评论。Agent Job 沿用现有 `contents: write` 以派发事件，不增加 `issues: write`，不接触评论发布凭据。没有常驻第二个 Runner；每次快照会产生一个短报告 Job（因此仍有 Actions 调度开销）。
+
+评论区分“最近 Agent/校验输出”和“最近验收项记录”。后者是报告工具记录的时间，不是新的验收结论；没有记录就显示未知，不把心跳当作进展。QA 计数仅属于当前轮次/范围，不累加旧轮次。阶段开始时间不随心跳刷新。跨 Run/attempt 的旧快照不能覆盖新结果；最终状态从实际 Run/Job 读取，业务 QA 通过不等于 PR 已交付。
+
+Agent 阶段结束时通过 `always()` 停止观察进程并发送末次快照。原有收尾分发器显式请求最终进度报告，`workflow_run.completed` 另外覆盖取消/硬超时；两种请求去重。上报失败只产生可诊断警告/报告 Job 失败，不改变业务验收、续跑或发布结果。进入独立终验后不再有 Agent 心跳，最终评论在 Run 收尾时刷新；时间过旧时应打开 Actions 日志核对，不能仅凭无心跳认定卡死。
+
+新观察进程只对采用本版工厂的新 Run 生效，不热修改已经启动的任务。
 
 ## 验证
 

@@ -33,6 +33,7 @@ dispatch() {
 }
 
 failed=0
+dispatch report-task-progress.yml || failed=1
 dispatch report-task-usage.yml || failed=1
 # The interaction history is worth keeping for failures and handoffs too, not only deliveries.
 dispatch publish-agent-history.yml || failed=1
