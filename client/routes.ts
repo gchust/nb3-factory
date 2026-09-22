@@ -17,6 +17,17 @@ const appRoutes: AppClientRouteContribution = defineAppRoutes([
     path: '/',
   },
   {
+    // Signed-in users may open the smoke page. It is a diagnostic page, not a
+    // business resource, so it opts out of page authorization rather than
+    // requiring a grant.
+    authz: 'skip',
+    auth: 'required',
+    componentLoader: () => import('./pages/pipeline-smoke.js'),
+    name: 'pipeline-smoke',
+    navigation: { title: 'navigation.pipelineSmoke' },
+    path: '/pipeline-smoke',
+  },
+  {
     auth: 'guest',
     componentLoader: () => import('./pages/auth/login.js'),
     name: 'login',
