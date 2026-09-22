@@ -26,6 +26,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
+      actions: read
       contents: write
       issues: write
       pull-requests: read
@@ -41,16 +42,56 @@ jobs:
       base_ref: ${{ steps.prepare.outputs.base_ref }}
       base_sha: ${{ steps.prepare.outputs.base_sha }}
     steps:
+      # repository_dispatch loads the entry workflow from the default branch.
+      # Only this small handoff protocol follows that revision; task code is pinned.
+      - name: Check out handoff bootstrap
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          path: bootstrap
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /.github/scripts/handoff.mjs
+            /.github/scripts/handoff-control.mjs
+          persist-credentials: false
+
+      - name: Download source task control pin
+        if: github.event_name == 'repository_dispatch' && github.event.action == 'code-agent-continue'
+        uses: actions/download-artifact@v4
+        with:
+          name: factory-task-${{ github.event.client_payload.issue_number }}
+          path: previous-task
+          run-id: ${{ github.event.client_payload.previous_run_id }}
+          github-token: ${{ github.token }}
+
+      # New continuations carry a SHA bound to the small source task artifact:
+      # do not download the large checkpoint twice per run.
+      # This one-time fallback adopts pre-pin tasks.
+      - name: Download legacy handoff control metadata
+        if: github.event_name == 'repository_dispatch' && github.event.action == 'code-agent-continue' && !github.event.client_payload.control_sha
+        uses: actions/download-artifact@v4
+        with:
+          name: factory-handoff-${{ github.event.client_payload.issue_number }}
+          path: legacy-handoff
+          run-id: ${{ github.event.client_payload.previous_run_id }}
+          github-token: ${{ github.token }}
+
+      - name: Pin the task chain's control plane
+        id: baseline
+        run: |
+          node bootstrap/.github/scripts/handoff-control.mjs resolve \
+            --event "$GITHUB_EVENT_PATH" \
+            --current-sha "$(git -C bootstrap rev-parse HEAD)" \
+            --checkpoint legacy-handoff \
+            --previous-task previous-task/task-metadata.json \
+            --output "$GITHUB_OUTPUT"
+
       - name: Check out factory control plane
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.repository.default_branch }}
+          ref: ${{ steps.baseline.outputs.sha }}
           path: control
           persist-credentials: false
-
-      - name: Pin this run's control plane
-        id: baseline
-        run: echo "sha=$(git -C control rev-parse HEAD)" >> "$GITHUB_OUTPUT"
 
       - name: Resolve Issue and target branch
         id: prepare
@@ -62,6 +103,14 @@ jobs:
             --event "$GITHUB_EVENT_PATH" \
             --metadata "$RUNNER_TEMP/task-metadata.json" \
             --output "$GITHUB_OUTPUT"
+
+      # Use the bootstrap even when an older pinned prepare-task predates this
+      # field, so its next continuation can use the small artifact as provenance.
+      - name: Record the task chain control pin
+        if: steps.prepare.outputs.status == 'ready'
+        env:
+          FACTORY_CONTROL_SHA: ${{ steps.baseline.outputs.sha }}
+        run: node bootstrap/.github/scripts/handoff-control.mjs record --metadata "$RUNNER_TEMP/task-metadata.json"
 
       - name: Save normalized task metadata
         if: steps.prepare.outputs.status == 'ready'
@@ -97,6 +146,19 @@ jobs:
           path: control
           persist-credentials: false
 
+      # Keep the handoff protocol available even when the pinned task scripts
+      # predate control_sha propagation. Never use this checkout for task code.
+      - name: Check out handoff bootstrap
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          path: bootstrap
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /.github/scripts/handoff.mjs
+            /.github/scripts/handoff-control.mjs
+          persist-credentials: false
+
       - name: Start five-hour runner budget
         run: |
           echo "FACTORY_RUN_DEADLINE_EPOCH_SECONDS=$(($(date +%s) + 18000 - 120))" >> "$GITHUB_ENV"
@@ -119,6 +181,12 @@ jobs:
           path: handoff
           run-id: ${{ github.event.client_payload.previous_run_id }}
           github-token: ${{ github.token }}
+
+      - name: Verify the pinned handoff control plane
+        if: github.event_name == 'repository_dispatch' && github.event.action == 'code-agent-continue'
+        run: |
+          node bootstrap/.github/scripts/handoff-control.mjs verify \
+            --event "$GITHUB_EVENT_PATH" --checkpoint handoff
 
       - name: Restore handoff checkpoint
         if: github.event_name == 'repository_dispatch' && github.event.action == 'code-agent-continue'
@@ -344,7 +412,7 @@ jobs:
           CURRENT_CONTINUATION: ${{ github.event.client_payload.continuation || '0' }}
         run: |
           next_continuation=$((CURRENT_CONTINUATION + 1))
-          node control/.github/scripts/handoff.mjs prepare \
+          node bootstrap/.github/scripts/handoff.mjs prepare \
             --issue "${{ needs.prepare.outputs.issue_number }}" \
             --run-id "${{ github.run_id }}" \
             --continuation "$next_continuation" \
@@ -384,7 +452,7 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
           BUILD_COMMENT_ID: ${{ needs.prepare.outputs.build_comment_id }}
         run: |
-          node control/.github/scripts/handoff.mjs dispatch \
+          node bootstrap/.github/scripts/handoff.mjs dispatch \
             --issue "${{ needs.prepare.outputs.issue_number }}" \
             --previous-run-id "${{ github.run_id }}" \
             --continuation "${{ steps.handoff.outputs.continuation }}"

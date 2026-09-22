@@ -3,7 +3,7 @@
 本流程只控制 `.github/**`。不降低应用验收标准，不用测试环境故障驱动业务代码补丁。
 
 ```text
-prepare：解析任务、固定 control SHA
+prepare：解析任务、固定整条 Handoff 链的 control SHA
   → 浏览器自检 + 固定文件样例
   → 首次实现 / 恢复中断的实现
   → 静态检查、构建、干净数据库
@@ -48,13 +48,21 @@ blocked/not_run 必须给出原因；无法启动浏览器时不要求伪造截�
 
 `pipeline-state.json` 保存当前阶段、累计验证/修复次数、待复测 ID、业务输入哈希、工厂 SHA、补丁哈希及最近全量 QA 耗时。待修复的精简诊断位于 `repair-context/`。
 
-恢复前核对输入与补丁，拒绝串用任务。工厂版本变化使旧 QA 进度失效；旧格式检查点从构建与全量验收开始。实现被中断时继续实现；修复被中断时先恢复诊断修复；定向 QA 被中断时只恢复待复测 ID；全量 QA 被中断时在干净环境重跑全量，不先重复已完成的定向修复。
+恢复前核对输入、补丁与固定工厂 SHA，拒绝串用任务或换版本；不会因为默认分支前进而清空待复测项、重置到全量 QA。旧格式阶段检查点仍从构建与全量验收开始，但必须能够确定其工厂 SHA。实现被中断时继续实现；修复被中断时先恢复诊断修复；定向 QA 被中断时只恢复待复测 ID；全量 QA 被中断时在干净环境重跑全量，不先重复已完成的定向修复。
 
 不恢复浏览器进程、Cookie、测试数据库或旧模型日志。旧结果不能拼成新版本的全量通过。报告补齐若跨 Runner 中断，恢复其 QA 范围并重新建立实际证据，不声称恢复了浏览器内存。
 
-同一 Run 的所有 Job 使用 prepare 捕获的 control SHA。软预算预留两分钟做上传；长阶段开始前检查剩余预算，全量 QA 参考上一轮耗时，但估计上限低于新 Runner 的可用时间，避免空续跑。
+同一搭建及其所有 `code-agent-continue` 的任务执行 Job 使用同一个 control SHA。软预算预留两分钟做上传；长阶段开始前检查剩余预算，全量 QA 参考上一轮耗时，但估计上限低于新 Runner 的可用时间，避免空续跑。
 
 `progress.json` 与 Actions Step Summary 显示阶段、结果、累计轮次和待复测 ID。`repair-summary.json` 保留本 Run 的轮次，`finalVerificationAttempt` 定位累计编号的最终报告目录，避免续跑后媒体/HTML 读取错误。完整交付报告仍由原独立工作流发布；运行中的轻量进度由下述独立上报链路提供。
+
+## 跨 Run 的工厂版本
+
+首次搭建固定触发工作流的提交，将 `controlSha` 写入任务元数据、`pipeline-state.json` 与 `handoff.json`；派发下一轮时传递 `client_payload.control_sha`。续跑的 prepare 先下载来源 Run 的小型 `factory-task-<Issue>` 产物核对 SHA，再 checkout 固定版本的任务脚本。Agent 下载完整检查点后，在应用补丁前再次核对 Issue、来源 Run、续跑序号及 SHA。
+
+没有 `control_sha` 的旧续跑会额外下载一次来源检查点，使用其中实际记录的工厂 SHA（优先兼容旧 `pipeline-state.json`），不是最早 Run 的 SHA，也不是当前 develop。下一轮即使用新的传递协议，不再在 prepare 重复下载大型检查点。缺少来源 SHA、字段冲突或提交不可取得时明确失败，不回退到最新工厂、不自动重做 QA。需要使用新版工厂时启动新搭建；本 PR 不提供隐式升级/降级或热修改运行中任务。
+
+`repository_dispatch` 的入口 YAML 仍由 GitHub 从默认分支加载，因此 Run 页的 `head_sha` **不是任务脚本实际版本**。只有两个轻量 Handoff 协议脚本从该入口版本的 `bootstrap/` 执行；prepare、Agent、QA、终验及 PR 发布使用 `control/` 的固定 SHA。bootstrap 负责旧协议兼容与下一轮派发，不执行任务逻辑。独立报告器仍使用当前默认分支。本机制不冻结入口 YAML 的 Job 定义、仓库变量、Secrets、Runner 镜像或外部服务；修改入口时必须保持与固定版本任务脚本的调用协议兼容。
 
 ## 实时进度评论
 
