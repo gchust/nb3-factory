@@ -66,6 +66,7 @@ jobs:
         if: steps.select.outputs.ready == 'true'
         with:
           artifact-ids: ${{ steps.select.outputs.task }}
+          merge-multiple: true
           run-id: ${{ steps.select.outputs.source_run }}
           github-token: ${{ github.token }}
           path: input/task
@@ -73,6 +74,7 @@ jobs:
         if: steps.select.outputs.ready == 'true'
         with:
           artifact-ids: ${{ steps.select.outputs.agent }}
+          merge-multiple: true
           run-id: ${{ steps.select.outputs.source_run }}
           github-token: ${{ github.token }}
           path: input/agent
@@ -80,6 +82,7 @@ jobs:
         if: steps.select.outputs.ready == 'true'
         with:
           artifact-ids: ${{ steps.select.outputs.final }}
+          merge-multiple: true
           run-id: ${{ steps.select.outputs.source_run }}
           github-token: ${{ github.token }}
           path: input/final
@@ -90,7 +93,7 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
         run: node control/.github/scripts/independent-review.mjs bind --input input
       - uses: actions/upload-artifact@v4
-        if: steps.bind.outcome == 'success'
+        if: always() && steps.select.outputs.ready == 'true'
         with:
           name: factory-review-input-${{ github.run_id }}-${{ github.run_attempt }}
           path: input
