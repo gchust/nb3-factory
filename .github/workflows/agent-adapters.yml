@@ -1,0 +1,40 @@
+name: Agent CLI compatibility
+
+on:
+  pull_request:
+    paths:
+      - '.github/scripts/agents/**'
+      - '.github/scripts/agent-*.mjs'
+      - '.github/scripts/install-agent.mjs'
+      - '.github/scripts/run-agent.mjs'
+      - '.github/scripts/tests/codex-agent*.mjs'
+      - '.github/workflows/agent-adapters.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  cli-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        engine: [pi, codebuddy, claude-code, codex, opencode]
+    env:
+      CODE_AGENT_ENGINE: ${{ matrix.engine }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24.x
+      - name: Install and verify the pinned CLI
+        run: node .github/scripts/install-agent.mjs
+      - name: Check headless CLI flags without calling a model
+        run: node .github/scripts/agent-cli-smoke.mjs
+      - name: Run real Codex in a non-Git QA workspace against a local Responses fixture
+        if: matrix.engine == 'codex'
+        run: node --test .github/scripts/tests/codex-agent.integration.mjs

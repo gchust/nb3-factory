@@ -1,0 +1,292 @@
+{
+  "version": 1,
+  "state": "completed",
+  "reason": "虚构样例，仅用于版式预览。",
+  "basis": {
+    "repository": "gchust/nb3-factory",
+    "issue": 999998,
+    "runId": "1000002",
+    "attempt": 1,
+    "controlSha": "0000000000000000000000000000000000000000",
+    "baseSha": "0000000000000000000000000000000000000000",
+    "patchHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "lockfileHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "reviewCriteriaHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "rubricVersion": 1,
+    "inputHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "packages": [
+      {
+        "name": "@nocobase/example",
+        "version": "0.0.0-fixture"
+      }
+    ]
+  },
+  "reviewer": {
+    "engine": "fixture",
+    "model": "no-model-invoked",
+    "version": null
+  },
+  "process": {
+    "verificationAttempts": 2,
+    "repairAttempts": 1,
+    "finalRound": 2,
+    "rounds": [
+      {
+        "round": 1,
+        "reports": [
+          {
+            "scope": "full",
+            "source": "verify-1/browser-acceptance/report.json",
+            "passed": false,
+            "checks": [
+              {
+                "id": "B01",
+                "criterion": "重复客户错误反馈",
+                "status": "failed",
+                "reason": ""
+              },
+              {
+                "id": "B02",
+                "criterion": "重新登录后核对数据",
+                "status": "not_run",
+                "reason": "样例：未执行"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "round": 2,
+        "reports": [
+          {
+            "scope": "full",
+            "source": "verify-2/browser-acceptance/report.json",
+            "passed": false,
+            "checks": [
+              {
+                "id": "B01",
+                "criterion": "重复客户错误反馈",
+                "status": "passed",
+                "reason": ""
+              },
+              {
+                "id": "B02",
+                "criterion": "重新登录后核对数据",
+                "status": "not_run",
+                "reason": "样例：未执行"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "warnings": [],
+    "scope": "虚构流程：演示首轮失败、修复后通过及仍未执行的验收项。"
+  },
+  "evaluation": {
+    "version": 1,
+    "inputHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "summary": "样例：基础能力帮助业务快速接入，但首轮暴露了错误反馈缺失和文档入口冲突。部分问题已修复，未执行的路径仍保持未评估，不以最终成功掩盖过程。",
+    "modules": [
+      {
+        "name": "数据访问与 Repository",
+        "scope": "样例：客户列表读取、创建和重复数据反馈。",
+        "limitations": "只覆盖单连接基础读写；事务、并发和其他数据库未评估。",
+        "criteria": [
+          "B01"
+        ],
+        "scores": {
+          "design": {
+            "score": 88,
+            "reason": "样例：连接管理与业务查询边界清楚，没有重复封装连接池。",
+            "evidence": [
+              "E1"
+            ]
+          },
+          "completeness": {
+            "score": null,
+            "reason": "未提供模块实现与边界测试，不能仅凭调用成功评价实现完整性。",
+            "evidence": []
+          },
+          "agentFriendliness": {
+            "score": 72,
+            "reason": "样例：主体接入顺畅，但错误反馈需要业务额外识别和转换。",
+            "evidence": [
+              "E1",
+              "E2"
+            ]
+          },
+          "outputQuality": {
+            "score": 84,
+            "reason": "样例：首轮重复客户反馈未通过；修复后该路径通过，但未覆盖并发。",
+            "evidence": [
+              "E2"
+            ]
+          }
+        }
+      },
+      {
+        "name": "客户端 API 与使用指引",
+        "scope": "样例：从 Skill 找入口并接入客户创建操作。",
+        "limitations": "只对照所引用方法，不推广到整个 API 或所有 Skill。",
+        "criteria": [
+          "B02"
+        ],
+        "scores": {
+          "design": {
+            "score": 80,
+            "reason": "样例：方法职责明确，输入输出类型有公开定义。",
+            "evidence": [
+              "E4"
+            ]
+          },
+          "completeness": {
+            "score": null,
+            "reason": "仅查看了类型声明，没有足够实现证据。",
+            "evidence": []
+          },
+          "agentFriendliness": {
+            "score": 58,
+            "reason": "样例：文档方法名与安装版本不一致，导致走错接入路线。",
+            "evidence": [
+              "E3",
+              "E4"
+            ]
+          },
+          "outputQuality": {
+            "score": null,
+            "reason": "该路径最终未执行，不能用整体 PR 状态替代功能质量。",
+            "evidence": []
+          }
+        }
+      }
+    ],
+    "findings": [
+      {
+        "id": "F1",
+        "kind": "strength",
+        "owner": "framework",
+        "severity": "info",
+        "confidence": "confirmed",
+        "status": "not-applicable",
+        "title": "样例：复用现成连接管理，业务代码只表达查询",
+        "detail": "所示业务代码直接通过数据管理入口查询，没有额外实现连接管理逻辑。",
+        "impact": "避免在每个业务服务重复创建和维护数据库连接。没有估算节省的时间或 Token。",
+        "suggestedChange": "保留统一入口，并让后续示例继续展示最短接入路径。",
+        "evidence": [
+          "E1"
+        ]
+      },
+      {
+        "id": "F2",
+        "kind": "issue",
+        "owner": "application",
+        "severity": "major",
+        "confidence": "confirmed",
+        "status": "resolved",
+        "title": "样例：首轮重复客户只显示通用错误",
+        "detail": "首轮缺少可读的业务错误反馈；后续记录显示已修复。该记录不能直接归因为 Repository 缺陷。",
+        "impact": "用户无法判断为何无法创建，需要额外修复轮次。",
+        "suggestedChange": "在业务层保留重复数据场景测试，并读取标准错误信息。",
+        "evidence": [
+          "E2"
+        ]
+      },
+      {
+        "id": "F3",
+        "kind": "misleading",
+        "owner": "documentation",
+        "severity": "major",
+        "confidence": "suspected",
+        "status": "open",
+        "title": "样例：Skill 中的方法名与公开类型不一致",
+        "detail": "当前两份材料存在冲突；仍需确认安装版本与 Skill 发布版本是否匹配。",
+        "claimed": "Skill 示例要求调用 saveOne(input)。",
+        "observed": "本次提供的公开类型仅声明 createOne(input)。",
+        "impact": "可能使 Agent 寻找不存在的方法，增加搜索与试错。",
+        "suggestedChange": "核对同步版本，修正示例并增加公开导出校验。",
+        "evidence": [
+          "E3",
+          "E4"
+        ]
+      },
+      {
+        "id": "F4",
+        "kind": "improvement",
+        "owner": "documentation",
+        "severity": "minor",
+        "confidence": "suspected",
+        "status": "open",
+        "title": "样例：将可运行 API 示例与安装版本一起校验",
+        "detail": "针对已发现的文档与类型冲突，提供可重复执行的轻量检查。",
+        "impact": "帮助后续 Agent 较早发现版本不匹配，而不是靠运行时试错。",
+        "suggestedChange": "为相关 Skill 的最小 API 示例补充类型检查，不扩大到整套业务构建。",
+        "evidence": [
+          "E3",
+          "E4"
+        ]
+      }
+    ],
+    "ui": {
+      "status": "not-reviewed",
+      "score": null,
+      "reason": "本样例未进行实际图像审阅；不能仅凭使用统一组件就评价跨页面样式一致性。",
+      "evidence": []
+    },
+    "evidence": [
+      {
+        "id": "E1",
+        "kind": "code",
+        "path": "app/server/customer-service.ts",
+        "lines": [
+          12,
+          15
+        ],
+        "observation": "虚构示例：客户列表通过现成的数据访问接口读取，没有重复维护数据库连接。",
+        "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "excerpt": "// FICTIONAL FIXTURE — not repository source\nconst db = app.container.resolve(databaseManagerToken);\nreturn db.query().selectFrom(\"customers\").selectAll().execute();"
+      },
+      {
+        "id": "E2",
+        "kind": "qa",
+        "path": "artifacts/verify-1/browser-acceptance/report.json",
+        "lines": [
+          1,
+          4
+        ],
+        "observation": "虚构示例：第一次验收发现重复客户反馈不清晰，第二次已修正。",
+        "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "excerpt": "{ \"checks\": [{ \"id\": \"B01\", \"status\": \"failed\",\n  \"evidence\": [\"Duplicate customer returned a generic error\"] }] }"
+      },
+      {
+        "id": "E3",
+        "kind": "skill",
+        "path": "app/.agents/skills/example/SKILL.md",
+        "lines": [
+          1,
+          3
+        ],
+        "observation": "虚构误导示例：文档示例与安装版本公开方法名称不一致。",
+        "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "excerpt": "# FICTIONAL example only\nCall customerClient.saveOne(input)."
+      },
+      {
+        "id": "E4",
+        "kind": "package",
+        "path": "packages/@nocobase/example/index.d.ts",
+        "lines": [
+          1,
+          3
+        ],
+        "observation": "虚构对照：公开类型只声明 createOne，未声明文档中的 saveOne。",
+        "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "excerpt": "// FICTIONAL FIXTURE\nexport interface CustomerClient { createOne(input: CustomerInput): Promise<Customer>; }"
+      }
+    ],
+    "limitations": [
+      "全部内容是虚构测试夹具，不代表实际 NocoBase3 质量。",
+      "没有完整模块实现证据的维度保留未评估。",
+      "本轮未执行的业务路径不能按通过处理。"
+    ]
+  }
+}

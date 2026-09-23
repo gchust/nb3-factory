@@ -1,0 +1,73 @@
+name: Factory regression tests
+
+on:
+  pull_request:
+    paths: ['.github/**']
+  push:
+    branches: [develop]
+    paths: ['.github/**']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  factory-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Archive the tested control-plane source
+        run: tar -czf "$RUNNER_TEMP/factory-control-source.tar.gz" .github
+      - uses: actions/upload-artifact@v4
+        with:
+          name: factory-control-source
+          path: ${{ runner.temp }}/factory-control-source.tar.gz
+          retention-days: 3
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24.x
+      - name: Run control-plane regression tests
+        # Browser acceptance invokes process cleanup that can kill the listener
+        # fixture in stale-app-port tests. These suites share the process table.
+        run: node --test --test-concurrency=1 .github/scripts/tests/*.test.mjs
+      - name: Verify deterministic browser fixtures
+        run: python3 .github/scripts/tests/browser-fixtures.test.py
+      - name: Run preview DNS regression tests
+        run: python3 .github/scripts/tests/preview-dns-sync.test.py
+      - name: Render the shared report review example
+        run: |
+          node .github/reports/render-review-example.mjs "$RUNNER_TEMP/report.example.html"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: factory-report-example
+          path: ${{ runner.temp }}/report.example.html
+          retention-days: 14
+
+  browser-preflight:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24.x
+      - name: Install the pinned QA browser tool
+        run: npm install --global agent-browser@0.36.0
+      - name: Exercise the real guarded browser without an application or model
+        run: |
+          export AGENT_BROWSER_EXECUTABLE_PATH="$(command -v google-chrome || command -v chromium)"
+          # Each invocation uses a new namespace and cold browser, with no retry.
+          for attempt in 1 2 3; do
+            node .github/scripts/browser-preflight.mjs "$RUNNER_TEMP/browser-preflight/$attempt/report.json"
+          done
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: factory-browser-preflight
+          path: ${{ runner.temp }}/browser-preflight
+          retention-days: 3

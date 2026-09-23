@@ -1,0 +1,71 @@
+name: Code Agent 搭建任务
+description: 让 Code Agent 创建或继续完善一个 NocoBase 3 业务系统
+title: '[Code Agent] '
+labels:
+  - agent:pending
+body:
+  - type: markdown
+    attributes:
+      value: |
+        PR 目标分支可选，留空使用仓库默认分支（develop）。每个新 Issue 从它开始，在 agent/issue-<Issue 编号> 上独立搭建，再向默认分支发起 PR，不会直接提交或自动合并。
+
+        自动验证失败时，Code Agent 会根据最新日志持续修复并重新验证，不限修复次数；GitHub 托管 Runner 的单个 Job 最长运行 6 小时。
+
+  - type: input
+    id: target_branch
+    attributes:
+      label: 目标分支
+      description: 选填，表示 PR 合并目标和新任务的代码起点。留空使用默认分支（develop）；指定业务分支时沿用该系统，不存在则从默认分支创建。
+      placeholder: develop（留空使用默认分支）
+    validations:
+      required: false
+
+  - type: dropdown
+    id: task_type
+    attributes:
+      label: 任务类型
+      options:
+        - 创建新系统
+        - 继续完善现有系统
+        - 修复已有系统
+    validations:
+      required: true
+
+  - type: textarea
+    id: requirements
+    attributes:
+      label: 业务需求
+      description: 搭建 Agent 只接收此字段。写清角色、功能、业务规则和质量要求；不要写 QA 操作步骤、录屏、报告格式或评分规则。
+      placeholder: 我是公司的 IT 服务台负责人，希望员工可以提交工单……
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance_criteria
+    attributes:
+      label: 验收要求
+      description: 仅注入 QA prompt，不注入搭建 prompt。写验收场景、边界和证据要求；产品功能必须同时在业务需求中明确。公开 Issue 不提供保密盲测。
+      placeholder: |
+        1. 员工可以提交并跟进自己的工单
+        2. 服务台可以分派并记录处理过程
+        3. 负责人可以查看逾期情况和人员工作量
+    validations:
+      required: true
+
+  - type: dropdown
+    id: sample_data
+    attributes:
+      label: 示例数据
+      options:
+        - 是
+        - 否
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: confirmation
+    attributes:
+      label: 确认
+      options:
+        - label: 我确认该任务可以由 Code Agent 修改目标应用代码，并由 GitHub Actions 创建 Pull Request。
+          required: true

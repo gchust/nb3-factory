@@ -1,0 +1,17 @@
+[Unit]
+Description=Reclaim disk left behind by finished NocoBase previews
+After=docker.service
+
+[Service]
+Type=oneshot
+ExecStart=/srv/nb3-preview/scripts/preview-gc.sh --all
+# Deleting a 350 MB backup tree takes a moment; the deploy lock this shares with
+# a running deploy is held for as long as it takes, so the limit is generous.
+TimeoutStartSec=900
+NoNewPrivileges=true
+# The script only needs this directory and the Docker socket it is not given
+# directly: docker is reached through the CLI, which needs the socket path.
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/srv/nb3-preview

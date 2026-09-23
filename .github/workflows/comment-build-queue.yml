@@ -1,0 +1,48 @@
+name: Comment build queue
+
+on:
+  issue_comment:
+    types: [created, edited]
+  workflow_run:
+    workflows: [Code Agent NocoBase Task]
+    types: [completed]
+  schedule:
+    - cron: '*/15 * * * *'
+  workflow_dispatch:
+    inputs:
+      issue_number:
+        description: Issue queue to reconcile
+        required: true
+        type: number
+
+permissions: {}
+
+# Only this workflow writes queue receipts. Keep admission and completion
+# atomic relative to other queue events, including events for the same Issue.
+concurrency:
+  group: factory-comment-build-queue
+  queue: max
+
+jobs:
+  reconcile:
+    if: >-
+      github.event_name != 'issue_comment' ||
+      (!github.event.issue.pull_request &&
+       github.event.comment.user.type != 'Bot')
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      actions: read
+      contents: write
+      issues: write
+      pull-requests: read
+    steps:
+      # Never execute application branch code or interpolate comment text.
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          persist-credentials: false
+      - name: Reconcile comment build queue
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: node .github/scripts/dispatch-comment-builds.mjs "$GITHUB_EVENT_PATH"
