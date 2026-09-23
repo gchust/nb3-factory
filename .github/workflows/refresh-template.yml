@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       dry_run:
-        description: Generate and verify only; do not replace develop
+        description: Generate and verify only; do not update develop
         type: boolean
         default: false
 
@@ -163,7 +163,7 @@ jobs:
           name: verified-template
           path: template-artifact
 
-      - name: Back up and replace develop without executing generated code
+      - name: Back up and advance develop without executing generated code
         env:
           BASE_SHA: ${{ needs.generate.outputs.base_sha }}
           BACKUP_BRANCH: factory-backup/develop-${{ github.run_id }}-${{ github.run_attempt }}

@@ -33,6 +33,21 @@ for protected_path in .github .npmrc; do
   fi
 done
 
+# The bundle carries a root commit so it holds nothing but the generated tree.
+# Publish that tree as a new commit on top of the develop it was generated
+# from: replacing develop with the root commit discarded its history and left
+# in-flight task branches with no common history for their pull requests.
+published="$(
+  git log -1 --format=%B "$candidate" |
+    GIT_AUTHOR_NAME="$(git log -1 --format=%an "$candidate")" \
+    GIT_AUTHOR_EMAIL="$(git log -1 --format=%ae "$candidate")" \
+    GIT_AUTHOR_DATE="$(git log -1 --format=%aI "$candidate")" \
+    GIT_COMMITTER_NAME="$(git log -1 --format=%cn "$candidate")" \
+    GIT_COMMITTER_EMAIL="$(git log -1 --format=%ce "$candidate")" \
+    GIT_COMMITTER_DATE="$(git log -1 --format=%cI "$candidate")" \
+    git commit-tree "${candidate}^{tree}" -p "$expected_sha" -F -
+)"
+
 # An exact lease rejects a concurrent change. Atomic push keeps the backup and
 # develop update together; a ruleset or permission rejection changes neither.
 git push --atomic \
@@ -40,11 +55,11 @@ git push --atomic \
   --force-with-lease="refs/heads/${backup_branch}:" \
   origin \
   "${expected_sha}:refs/heads/${backup_branch}" \
-  "${candidate}:refs/heads/develop"
+  "${published}:refs/heads/develop"
 
 if [[ -n "${GITHUB_STEP_SUMMARY:-}" ]]; then
   {
-    echo "Refreshed develop: \`${candidate}\`"
+    echo "Refreshed develop: \`${published}\`"
     echo
     echo "Previous develop: \`${expected_sha}\`"
     echo
