@@ -10,7 +10,7 @@ const started = Date.now();
 const adapter = resolveAgent();
 const options = parseAgentArgs(process.argv.slice(2));
 const qa = process.env.FACTORY_AGENT_ROLE === 'qa';
-const phase = qa
+const phase = process.env.FACTORY_AGENT_ROLE === 'review' ? 'review' : qa
   ? options.log.includes('report-repair') ? 'qa-report-repair' : options.log.includes('browser-focused') ? 'qa-focused' : 'qa'
   : options.log.includes('comment-agent') ? 'reply' : options.log.includes('repair') ? 'repair' : 'implementation';
 process.once('exit', (status) => recordTiming(`agent:${phase}`, started, status));
@@ -39,15 +39,15 @@ try {
     log: options.log,
     parseEvent: adapter.parseEvent,
     result: createResult({ engine: adapter.id, configuredVersion, actualVersion,
-      model: invocation.model, completion: adapter.completion ?? 'event', phase, role: qa ? 'qa' : phase === 'reply' ? 'reply' : 'implementation' }),
+      model: invocation.model, completion: adapter.completion ?? 'event', phase, role: qa ? 'qa' : ['reply', 'review'].includes(phase) ? phase : 'implementation' }),
     secrets: [...(invocation.secrets ?? []), ...credentialNames.map((name) => process.env[name]),
       process.env.FACTORY_ADMIN_PASSWORD, process.env.FACTORY_TEST_PASSWORD],
     invocationTimeoutSeconds, idleTimeoutSeconds, runDeadlineEpochSeconds,
   });
   // Implementation can yield a partial workspace to verification. A read-only reply
   // has no such verifier: a stalled invocation must not publish a partial answer.
-  if (phase === 'reply' && readResult(options.log)?.status !== 'completed') {
-    throw new Error('Comment Agent did not complete; partial reply retained only in diagnostics.');
+  if (['reply', 'review'].includes(phase) && readResult(options.log)?.status !== 'completed') {
+    throw new Error('Read-only Agent did not complete; partial result retained only in diagnostics.');
   }
 } catch (error) {
   invocationError = error;

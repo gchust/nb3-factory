@@ -48,3 +48,10 @@ test('invalid timeout configuration is recorded as not invoked', t => {
   assert.equal(result.status, 1);
   assert.equal(JSON.parse(readFileSync(`${log}.invocation.json`, 'utf8')).invoked, false);
 });
+
+test('stalled independent reviewer retains diagnostics but cannot publish a partial verdict', t => {
+  const { log, result } = run(t, 'review', { FACTORY_AGENT_ROLE: 'review' });
+  assert.equal(result.status, 1, result.stderr);
+  const record = JSON.parse(readFileSync(`${log}.result.json`, 'utf8'));
+  assert.equal(record.status, 'stalled'); assert.equal(record.phase, 'review');
+});

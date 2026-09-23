@@ -1,0 +1,261 @@
+name: Independent code and Skill review
+
+on:
+  issue_comment:
+    types: [created]
+  workflow_dispatch:
+    inputs:
+      issue:
+        description: Executed task Issue (not preset)
+        required: true
+        type: string
+      run:
+        description: Exact delivered task run ID
+        required: true
+        type: string
+      attempt:
+        description: Exact task attempt
+        default: '1'
+        type: string
+
+permissions: {}
+concurrency:
+  group: factory-independent-review-${{ github.event.comment.id || github.run_id }}
+  cancel-in-progress: false
+
+jobs:
+  prepare:
+    if: >-
+      github.actor == github.repository_owner &&
+      (github.event_name == 'workflow_dispatch' ||
+       (!github.event.issue.pull_request && startsWith(github.event.comment.body, '/factory-review ')))
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      actions: read
+    outputs:
+      ready: ${{ steps.bind.outcome == 'success' }}
+      sha: ${{ steps.bind.outputs.sha }}
+      issue: ${{ steps.bind.outputs.issue }}
+      control_sha: ${{ steps.pin.outputs.sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          path: control
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24.x
+      - name: Pin trusted evaluator
+        id: pin
+        run: |
+          echo "sha=$(git -C control rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+          echo "FACTORY_CONTROL_SHA=$(git -C control rev-parse HEAD)" >> "$GITHUB_ENV"
+      - name: Resolve exact source artifact IDs
+        id: select
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          SOURCE_ISSUE: ${{ inputs.issue }}
+          SOURCE_RUN: ${{ inputs.run }}
+          SOURCE_ATTEMPT: ${{ inputs.attempt || '1' }}
+        run: |
+          node control/.github/scripts/independent-review.mjs select --issue "$SOURCE_ISSUE" --run "$SOURCE_RUN" --attempt "$SOURCE_ATTEMPT" --output input
+      - uses: actions/download-artifact@v4
+        if: steps.select.outputs.ready == 'true'
+        with:
+          artifact-ids: ${{ steps.select.outputs.task }}
+          run-id: ${{ steps.select.outputs.source_run }}
+          github-token: ${{ github.token }}
+          path: input/task
+      - uses: actions/download-artifact@v4
+        if: steps.select.outputs.ready == 'true'
+        with:
+          artifact-ids: ${{ steps.select.outputs.agent }}
+          run-id: ${{ steps.select.outputs.source_run }}
+          github-token: ${{ github.token }}
+          path: input/agent
+      - uses: actions/download-artifact@v4
+        if: steps.select.outputs.ready == 'true'
+        with:
+          artifact-ids: ${{ steps.select.outputs.final }}
+          run-id: ${{ steps.select.outputs.source_run }}
+          github-token: ${{ github.token }}
+          path: input/final
+      - name: Bind the rubric to its actual delivered commit
+        id: bind
+        if: steps.select.outputs.ready == 'true'
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: node control/.github/scripts/independent-review.mjs bind --input input
+      - uses: actions/upload-artifact@v4
+        if: steps.bind.outcome == 'success'
+        with:
+          name: factory-review-input-${{ github.run_id }}-${{ github.run_attempt }}
+          path: input
+          retention-days: 14
+          if-no-files-found: error
+
+  review:
+    needs: prepare
+    if: needs.prepare.outputs.ready == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.prepare.outputs.control_sha }}
+          path: control
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.prepare.outputs.sha }}
+          path: workspace
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24.x
+      - uses: actions/download-artifact@v4
+        with:
+          name: factory-review-input-${{ github.run_id }}-${{ github.run_attempt }}
+          path: input
+      - name: Prepare separate review input
+        run: node control/.github/scripts/independent-review.mjs prompt --input input --workspace workspace --output "$RUNNER_TEMP/review"
+      - name: Install selected pinned reviewer
+        env:
+          CODE_AGENT_ENGINE: ${{ vars.CODE_AGENT_ENGINE }}
+          CODE_AGENT_VERSION: ${{ vars.CODE_AGENT_VERSION }}
+          PI_VERSION: ${{ vars.PI_VERSION }}
+          CODEBUDDY_VERSION: ${{ vars.CODEBUDDY_VERSION }}
+          CLAUDE_CODE_VERSION: ${{ vars.CLAUDE_CODE_VERSION }}
+          CODEX_VERSION: ${{ vars.CODEX_VERSION }}
+          OPENCODE_VERSION: ${{ vars.OPENCODE_VERSION }}
+          FACTORY_AGENT_INSTALL_RECORD: ${{ runner.temp }}/agent-install.json
+        run: node control/.github/scripts/install-agent.mjs
+      - name: Read-only independent review
+        env:
+          CODE_AGENT_ENGINE: ${{ vars.CODE_AGENT_ENGINE }}
+          FACTORY_AGENT_INSTALL_RECORD: ${{ runner.temp }}/agent-install.json
+          # Explicit engine selection; adding a CLI must not fall through to Pi.
+          # This mapping is shared by implementation, repair/QA, and comment reply.
+          CODE_AGENT_API_ENDPOINT: ${{ (vars.CODE_AGENT_ENGINE == '' || vars.CODE_AGENT_ENGINE == 'pi') && (secrets.CODE_AGENT_API_ENDPOINT || secrets.PI_API_ENDPOINT) || '' }}
+          CODE_AGENT_API_KEY: ${{ (vars.CODE_AGENT_ENGINE == '' || vars.CODE_AGENT_ENGINE == 'pi') && (secrets.CODE_AGENT_API_KEY || secrets.PI_API_KEY) || '' }}
+          CODEBUDDY_AUTH_TOKEN: ${{ vars.CODE_AGENT_ENGINE == 'codebuddy' && secrets.CODEBUDDY_AUTH_TOKEN || '' }}
+          CODEBUDDY_API_KEY: ${{ vars.CODE_AGENT_ENGINE == 'codebuddy' && secrets.CODEBUDDY_API_KEY || '' }}
+          CODEBUDDY_MODEL: ${{ vars.CODE_AGENT_ENGINE == 'codebuddy' && vars.CODEBUDDY_MODEL || '' }}
+          CODEBUDDY_THINKING: ${{ vars.CODEBUDDY_THINKING || 'max' }}
+          CODEBUDDY_BASE_URL: ${{ vars.CODE_AGENT_ENGINE == 'codebuddy' && vars.CODEBUDDY_BASE_URL || '' }}
+          CODEBUDDY_INTERNET_ENVIRONMENT: ${{ vars.CODE_AGENT_ENGINE == 'codebuddy' && vars.CODEBUDDY_INTERNET_ENVIRONMENT || '' }}
+          CODE_AGENT_API_TYPE: ${{ vars.CODE_AGENT_API_TYPE || vars.PI_API_TYPE || 'openai-completions' }}
+          CODE_AGENT_MODEL: ${{ vars.CODE_AGENT_MODEL || vars.PI_MODEL }}
+          CODE_AGENT_THINKING: ${{ vars.CODE_AGENT_THINKING || vars.PI_THINKING || 'max' }}
+          CODE_AGENT_AUTH_HEADER: ${{ vars.CODE_AGENT_AUTH_HEADER || vars.PI_AUTH_HEADER || 'true' }}
+          CODE_AGENT_SUPPORTS_DEVELOPER_ROLE: ${{ vars.CODE_AGENT_SUPPORTS_DEVELOPER_ROLE || vars.PI_SUPPORTS_DEVELOPER_ROLE }}
+          CODE_AGENT_SUPPORTS_REASONING_EFFORT: ${{ vars.CODE_AGENT_SUPPORTS_REASONING_EFFORT || vars.PI_SUPPORTS_REASONING_EFFORT || 'true' }}
+          CODE_AGENT_INVOCATION_TIMEOUT_SECONDS: 900
+          ANTHROPIC_API_KEY: ${{ vars.CODE_AGENT_ENGINE == 'claude-code' && secrets.ANTHROPIC_API_KEY || '' }}
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ vars.CODE_AGENT_ENGINE == 'claude-code' && secrets.CLAUDE_CODE_OAUTH_TOKEN || '' }}
+          ANTHROPIC_BASE_URL: ${{ vars.CODE_AGENT_ENGINE == 'claude-code' && vars.ANTHROPIC_BASE_URL || '' }}
+          CLAUDE_CODE_MODEL: ${{ vars.CLAUDE_CODE_MODEL }}
+          CLAUDE_CODE_EFFORT: ${{ vars.CLAUDE_CODE_EFFORT }}
+          CLAUDE_CODE_QA_EFFORT: ${{ vars.CLAUDE_CODE_QA_EFFORT }}
+          CODEX_API_KEY: ${{ vars.CODE_AGENT_ENGINE == 'codex' && secrets.CODEX_API_KEY || '' }}
+          CODEX_MODEL: ${{ vars.CODEX_MODEL }}
+          CODEX_BASE_URL: ${{ vars.CODE_AGENT_ENGINE == 'codex' && vars.CODEX_BASE_URL || '' }}
+          CODEX_REASONING_EFFORT: ${{ vars.CODEX_REASONING_EFFORT }}
+          CODEX_QA_REASONING_EFFORT: ${{ vars.CODEX_QA_REASONING_EFFORT }}
+          OPENCODE_API_KEY: ${{ vars.CODE_AGENT_ENGINE == 'opencode' && secrets.OPENCODE_API_KEY || '' }}
+          OPENCODE_MODEL: ${{ vars.OPENCODE_MODEL }}
+          OPENCODE_BASE_URL: ${{ vars.CODE_AGENT_ENGINE == 'opencode' && vars.OPENCODE_BASE_URL || '' }}
+          OPENCODE_VARIANT: ${{ vars.OPENCODE_VARIANT }}
+          OPENCODE_QA_VARIANT: ${{ vars.OPENCODE_QA_VARIANT }}
+          CODE_AGENT_IDLE_TIMEOUT_SECONDS: ${{ vars.CODE_AGENT_IDLE_TIMEOUT_SECONDS }}
+          FACTORY_AGENT_ROLE: review
+          FACTORY_CONTROL_SHA: ${{ needs.prepare.outputs.control_sha }}
+          FACTORY_TIMINGS_FILE: ${{ runner.temp }}/review/timings.jsonl
+        run: |
+          node control/.github/scripts/run-agent.mjs --workspace workspace --prompt "$RUNNER_TEMP/review/review-prompt.md" --log "$RUNNER_TEMP/review/agent-review.jsonl" --agentDir "$RUNNER_TEMP/reviewer"
+          test -z "$(git -C workspace status --porcelain --untracked-files=all)"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: factory-independent-review-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/review
+          retention-days: 14
+          if-no-files-found: warn
+
+  publish:
+    needs: [prepare, review]
+    if: always() && needs.prepare.outputs.ready == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+      issues: write
+    steps:
+      # A fresh job revalidates model-produced JSON against the original input.
+      # No model credential, application install, or application script runs here.
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.prepare.outputs.control_sha }}
+          path: control
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.prepare.outputs.sha }}
+          path: workspace
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24.x
+      - uses: actions/download-artifact@v4
+        with:
+          name: factory-review-input-${{ github.run_id }}-${{ github.run_attempt }}
+          path: input
+      - uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          name: factory-independent-review-${{ github.run_id }}-${{ github.run_attempt }}
+          path: review
+      - name: Independently validate review identity and references
+        id: validation
+        if: needs.review.result == 'success'
+        run: node control/.github/scripts/independent-review.mjs validate --input input --workspace workspace --output review
+      - name: Pack only review outputs for long-term retention
+        id: archive
+        if: always()
+        continue-on-error: true
+        env:
+          VALIDATION_STATUS: ${{ steps.validation.outcome }}
+        run: node control/.github/scripts/independent-review.mjs archive --input input --output review --archive "$RUNNER_TEMP/review-archive" --status "$VALIDATION_STATUS"
+      - name: Upload independent review history
+        id: release
+        if: always() && steps.archive.outputs.asset != ''
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ASSET: ${{ steps.archive.outputs.asset }}
+        run: |
+          gh release view factory-history --repo "$GITHUB_REPOSITORY" >/dev/null
+          gh release upload factory-history "$RUNNER_TEMP/review-archive/$ASSET" --repo "$GITHUB_REPOSITORY" --clobber
+          echo "url=https://github.com/$GITHUB_REPOSITORY/releases/download/factory-history/$ASSET" >> "$GITHUB_OUTPUT"
+      - name: Publish results without altering the business verdict
+        if: always()
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          VALIDATION_STATUS: ${{ steps.validation.outcome }}
+          REVIEW_ARCHIVE_URL: ${{ steps.release.outputs.url }}
+        run: node control/.github/scripts/independent-review.mjs publish --input input --output review --status "$VALIDATION_STATUS"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: factory-validated-review-${{ github.run_id }}-${{ github.run_attempt }}
+          path: review/validated-review.json
+          retention-days: 14
+          if-no-files-found: warn
+      - name: Preserve publication failure without rebuilding the application
+        if: always() && (steps.archive.outcome != 'success' || steps.release.outcome != 'success')
+        run: exit 1
