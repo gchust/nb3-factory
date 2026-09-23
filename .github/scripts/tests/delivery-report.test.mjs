@@ -123,3 +123,13 @@ test('the review fixture is rendered by the same template, not maintained as sep
  const {html}=await renderHtml(facts,null,root);
  assert.match(html,/完全虚构/);assert.match(html,/重复客户/);assert.doesNotMatch(html,/开发者资料与下一步/);
 });
+
+test('provider failure is visible in HTML without an Agent retrospective or raw credentials', async t => {
+ const root=fixture(t);
+ put(root,'task-metadata.json',{repository,issue:{number:146},task:{acceptanceCriteria:'B01. 登录'}});
+ put(root,'agent-implement.jsonl.result.json',{version:1,status:'failed',phase:'implementation',endedAt:12345,retryAttempts:6,error:'503: auth_unavailable secret-not-for-html'});
+ const {html,facts}=await makeDeliveryReport(receipt('failure'),root);
+ assert.match(html,/模型服务暂不可用/); assert.match(html,/重试次数：6/);
+ assert.doesNotMatch(html,/secret-not-for-html/);
+ assert.equal(facts.delivery.status,'failed'); assert.equal(facts.checks[0].status,'not-verified');
+});

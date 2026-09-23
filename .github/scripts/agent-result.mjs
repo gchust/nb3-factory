@@ -3,6 +3,7 @@
 import { createHash } from 'node:crypto';
 import { lstatSync, readFileSync } from 'node:fs';
 import { writeJson } from './agent-adapter.mjs';
+import { classifyAgentFailure } from './agent-failure.mjs';
 
 export const tokenKeys = ['input', 'output', 'cacheRead', 'cacheWrite', 'reasoning', 'totalTokens'];
 const count = (value) => Number.isSafeInteger(value) && value >= 0;
@@ -10,11 +11,17 @@ const count = (value) => Number.isSafeInteger(value) && value >= 0;
 export function createResult(identity) {
   const startedAt = Date.now();
   const measurements = new Map();
+  let retryAttempts = 0;
   let complete = false;
   let invalidEvents = 0;
   let incomplete = false;
   return {
     observe(parsed, line) {
+      if (Number.isSafeInteger(parsed.retryAttempt) && parsed.retryAttempt > 0) {
+        // Native retry notifications have no unique ID. Identical payloads can
+        // describe separate outages; do not collapse them by error text/hash.
+        retryAttempts++;
+      }
       if (parsed.incomplete) incomplete = true;
       if (parsed.active) complete = false;
       if (parsed.complete) complete = true;
@@ -34,6 +41,8 @@ export function createResult(identity) {
       const result = { version: 1, ...identity, startedAt, endedAt: Date.now(),
         status, exitCode, terminalEvent: complete, invalidEvents, incomplete,
         error: error ? redact(String(error)) : undefined,
+        retryAttempts: identity.engine === 'pi' ? retryAttempts : undefined,
+        failure: status === 'failed' ? classifyAgentFailure(error) : undefined,
         measurements: [...measurements.values()] };
       writeJson(`${log}.result.json`, JSON.parse(redact(JSON.stringify(result))));
       return result;

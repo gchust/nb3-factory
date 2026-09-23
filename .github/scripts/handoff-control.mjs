@@ -93,6 +93,14 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
   if (command === 'record') {
     const metadata = readJson(args.metadata);
     metadata.controlSha = controlSha(process.env.FACTORY_CONTROL_SHA);
+    if (process.env.GITHUB_RUN_ID && process.env.GITHUB_RUN_ATTEMPT) {
+      metadata.run = { id: Number(process.env.GITHUB_RUN_ID), attempt: Number(process.env.GITHUB_RUN_ATTEMPT) };
+    }
+    if (process.env.FACTORY_APPLICATION_BASE_SHA) {
+      const ref = process.env.FACTORY_APPLICATION_BASE_REF;
+      if (!ref || ![metadata.workBranch, metadata.task?.targetBranch].includes(ref)) throw new Error('Invalid application base ref.');
+      metadata.applicationBase = { ref, sha: controlSha(process.env.FACTORY_APPLICATION_BASE_SHA) };
+    }
     writeFileSync(args.metadata, `${JSON.stringify(metadata, null, 2)}\n`);
     process.exit(0);
   }

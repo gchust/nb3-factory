@@ -1,5 +1,5 @@
 name: Code Agent NocoBase Task
-run-name: "Factory issue #${{ github.event.issue.number || github.event.client_payload.issue_number || inputs.issue_number }} build ${{ github.event.client_payload.build_comment_id || '0' }} from ${{ github.event.client_payload.previous_run_id || '0' }}"
+run-name: "Factory issue #${{ github.event.issue.number || github.event.client_payload.issue_number || inputs.issue_number }} build ${{ github.event.client_payload.build_comment_id || '0' }} from ${{ github.event.client_payload.previous_run_id || inputs.recovery_run_id || '0' }}"
 
 on:
   issues:
@@ -12,6 +12,14 @@ on:
         description: Open Issue number to run again
         required: true
         type: number
+      recovery_run_id:
+        description: Recover a failed run's saved work (blank starts a normal build)
+        required: false
+        type: string
+      recovery_base_sha:
+        description: Original application base SHA (required only for legacy checkpoints)
+        required: false
+        type: string
 
 permissions: {}
 
@@ -53,15 +61,17 @@ jobs:
           sparse-checkout: |
             /.github/scripts/handoff.mjs
             /.github/scripts/handoff-control.mjs
+            /.github/scripts/handoff-recovery.mjs
+            /.github/scripts/pipeline-state.mjs
           persist-credentials: false
 
       - name: Download source task control pin
-        if: github.event_name == 'repository_dispatch' && github.event.action == 'code-agent-continue'
+        if: (github.event_name == 'repository_dispatch' && github.event.action == 'code-agent-continue') || inputs.recovery_run_id != ''
         uses: actions/download-artifact@v4
         with:
-          name: factory-task-${{ github.event.client_payload.issue_number }}
+          name: factory-task-${{ inputs.recovery_run_id != '' && inputs.issue_number || github.event.client_payload.issue_number }}
           path: previous-task
-          run-id: ${{ github.event.client_payload.previous_run_id }}
+          run-id: ${{ inputs.recovery_run_id || github.event.client_payload.previous_run_id }}
           github-token: ${{ github.token }}
 
       # New continuations carry a SHA bound to the small source task artifact:
@@ -76,13 +86,32 @@ jobs:
           run-id: ${{ github.event.client_payload.previous_run_id }}
           github-token: ${{ github.token }}
 
+      - name: Download failed-run checkpoint
+        if: inputs.recovery_run_id != ''
+        uses: actions/download-artifact@v4
+        with:
+          name: factory-handoff-${{ inputs.issue_number }}
+          path: recovery
+          run-id: ${{ inputs.recovery_run_id }}
+          github-token: ${{ github.token }}
+
+      - name: Validate and normalize explicit recovery
+        id: recovery
+        if: inputs.recovery_run_id != ''
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          node bootstrap/.github/scripts/handoff-recovery.mjs normalize \
+            --event "$GITHUB_EVENT_PATH" --task previous-task/task-metadata.json \
+            --checkpoint recovery --output "$GITHUB_OUTPUT"
+
       - name: Pin the task chain's control plane
         id: baseline
         run: |
           node bootstrap/.github/scripts/handoff-control.mjs resolve \
-            --event "$GITHUB_EVENT_PATH" \
+            --event "${{ steps.recovery.outputs.event_path || github.event_path }}" \
             --current-sha "$(git -C bootstrap rev-parse HEAD)" \
-            --checkpoint legacy-handoff \
+            --checkpoint "${{ inputs.recovery_run_id != '' && 'recovery' || 'legacy-handoff' }}" \
             --previous-task previous-task/task-metadata.json \
             --output "$GITHUB_OUTPUT"
 
@@ -100,9 +129,28 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
         run: |
           node control/.github/scripts/prepare-task.mjs \
-            --event "$GITHUB_EVENT_PATH" \
+            --event "${{ steps.recovery.outputs.event_path || github.event_path }}" \
             --metadata "$RUNNER_TEMP/task-metadata.json" \
             --output "$GITHUB_OUTPUT"
+
+      - name: Reject changed recovery input or application base
+        if: inputs.recovery_run_id != '' && steps.prepare.outputs.status == 'ready'
+        env:
+          BASE_REF: ${{ steps.prepare.outputs.base_ref }}
+          BASE_SHA: ${{ steps.prepare.outputs.base_sha }}
+        run: |
+          node bootstrap/.github/scripts/handoff-recovery.mjs check-base \
+            --checkpoint recovery --metadata "$RUNNER_TEMP/task-metadata.json" \
+            --base-ref "$BASE_REF" --base-sha "$BASE_SHA"
+
+      - name: Save normalized recovery checkpoint
+        if: inputs.recovery_run_id != '' && steps.prepare.outputs.status == 'ready'
+        uses: actions/upload-artifact@v4
+        with:
+          name: factory-recovery-${{ steps.prepare.outputs.issue_number }}
+          path: recovery
+          if-no-files-found: error
+          retention-days: 14
 
       # Use the bootstrap even when an older pinned prepare-task predates this
       # field, so its next continuation can use the small artifact as provenance.
@@ -110,6 +158,8 @@ jobs:
         if: steps.prepare.outputs.status == 'ready'
         env:
           FACTORY_CONTROL_SHA: ${{ steps.baseline.outputs.sha }}
+          FACTORY_APPLICATION_BASE_REF: ${{ steps.prepare.outputs.base_ref }}
+          FACTORY_APPLICATION_BASE_SHA: ${{ steps.prepare.outputs.base_sha }}
         run: node bootstrap/.github/scripts/handoff-control.mjs record --metadata "$RUNNER_TEMP/task-metadata.json"
 
       - name: Save normalized task metadata
@@ -120,6 +170,12 @@ jobs:
           path: ${{ runner.temp }}/task-metadata.json
           if-no-files-found: error
           retention-days: 14
+
+      - name: Report a rejected recovery after task preparation
+        if: failure() && inputs.recovery_run_id != '' && steps.prepare.outputs.status == 'ready'
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: node control/.github/scripts/mark-failure.mjs "${{ steps.prepare.outputs.issue_number }}"
 
   agent:
     needs: prepare
@@ -138,6 +194,7 @@ jobs:
       contents: write
     outputs:
       handoff: ${{ steps.outcome.outputs.handoff }}
+      checkpoint_available: ${{ steps.checkpoint.outcome == 'success' }}
     steps:
       - name: Check out factory control plane
         uses: actions/checkout@v4
@@ -157,6 +214,8 @@ jobs:
           sparse-checkout: |
             /.github/scripts/handoff.mjs
             /.github/scripts/handoff-control.mjs
+            /.github/scripts/handoff-recovery.mjs
+            /.github/scripts/pipeline-state.mjs
           persist-credentials: false
 
       - name: Start five-hour runner budget
@@ -182,14 +241,21 @@ jobs:
           run-id: ${{ github.event.client_payload.previous_run_id }}
           github-token: ${{ github.token }}
 
+      - name: Download normalized recovery checkpoint
+        if: inputs.recovery_run_id != ''
+        uses: actions/download-artifact@v4
+        with:
+          name: factory-recovery-${{ needs.prepare.outputs.issue_number }}
+          path: handoff
+
       - name: Verify the pinned handoff control plane
-        if: github.event_name == 'repository_dispatch' && github.event.action == 'code-agent-continue'
+        if: (github.event_name == 'repository_dispatch' && github.event.action == 'code-agent-continue') || inputs.recovery_run_id != ''
         run: |
           node bootstrap/.github/scripts/handoff-control.mjs verify \
-            --event "$GITHUB_EVENT_PATH" --checkpoint handoff
+            --event "${{ inputs.recovery_run_id != '' && 'handoff/task-event.json' || github.event_path }}" --checkpoint handoff
 
       - name: Restore handoff checkpoint
-        if: github.event_name == 'repository_dispatch' && github.event.action == 'code-agent-continue'
+        if: (github.event_name == 'repository_dispatch' && github.event.action == 'code-agent-continue') || inputs.recovery_run_id != ''
         run: |
           node control/.github/scripts/apply-patch.mjs \
             --workspace workspace \
@@ -210,7 +276,7 @@ jobs:
       - name: Restore pipeline progress
         id: resume
         env:
-          CONTINUATION_RUN: ${{ github.event_name == 'repository_dispatch' && github.event.action == 'code-agent-continue' }}
+          CONTINUATION_RUN: ${{ (github.event_name == 'repository_dispatch' && github.event.action == 'code-agent-continue') || inputs.recovery_run_id != '' }}
         run: |
           mkdir -p "$RUNNER_TEMP/agent-artifacts"
           if [[ "$CONTINUATION_RUN" == true ]]; then
@@ -251,6 +317,10 @@ jobs:
             --template control/.github/prompts/implement.md \
             --retro-path "$RUNNER_TEMP/agent-artifacts/retro.json" \
             --output "$RUNNER_TEMP/implement.md"
+
+      - name: Explain restored work without exposing QA context
+        if: inputs.recovery_run_id != '' && steps.resume.outputs.phase == 'implementation'
+        run: node bootstrap/.github/scripts/handoff-recovery.mjs context --checkpoint handoff --prompt "$RUNNER_TEMP/implement.md"
 
       - name: Install pinned Code Agent
         env: &agent-install-env
@@ -305,7 +375,7 @@ jobs:
         id: implementation
         if: >-
           ((needs.prepare.outputs.base_ref != needs.prepare.outputs.work_branch || needs.prepare.outputs.build_comment_id != '') &&
-          !(github.event_name == 'repository_dispatch' && github.event.action == 'code-agent-continue')) ||
+          !(github.event_name == 'repository_dispatch' && github.event.action == 'code-agent-continue') && inputs.recovery_run_id == '') ||
           steps.resume.outputs.phase == 'implementation'
         env: &agent-run-env
           CODE_AGENT_ENGINE: ${{ vars.CODE_AGENT_ENGINE }}
@@ -409,7 +479,7 @@ jobs:
         id: handoff
         if: steps.implementation.outputs.handoff == 'true' || steps.verify.outputs.handoff == 'true'
         env:
-          CURRENT_CONTINUATION: ${{ github.event.client_payload.continuation || '0' }}
+          CURRENT_CONTINUATION: ${{ inputs.recovery_run_id != '' && '1' || github.event.client_payload.continuation || '0' }}
         run: |
           next_continuation=$((CURRENT_CONTINUATION + 1))
           node bootstrap/.github/scripts/handoff.mjs prepare \
@@ -436,6 +506,7 @@ jobs:
           retention-days: 14
 
       - name: Upload handoff checkpoint
+        id: checkpoint
         # Preserve a recovery checkpoint on failure, without treating it as
         # successful verification or automatically retrying a broken runner.
         if: always() && steps.patch.outcome == 'success' && (steps.handoff.outcome == 'success' || failure())
@@ -678,10 +749,18 @@ jobs:
           path: control
           persist-credentials: false
 
+      - name: Download failure diagnostics
+        uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          name: factory-agent-${{ needs.prepare.outputs.issue_number }}
+          path: failure-artifacts
+
       - name: Mark Issue as failed
         env:
           GITHUB_TOKEN: ${{ github.token }}
-        run: node control/.github/scripts/mark-failure.mjs "${{ needs.prepare.outputs.issue_number }}"
+          FACTORY_CHECKPOINT_AVAILABLE: ${{ needs.agent.outputs.checkpoint_available }}
+        run: node control/.github/scripts/mark-failure.mjs "${{ needs.prepare.outputs.issue_number }}" failure-artifacts
 
   dispatch-reports:
     needs: [prepare, agent, verify-final, publish, report-failure]

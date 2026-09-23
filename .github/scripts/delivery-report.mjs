@@ -5,6 +5,7 @@ import { renderHtml } from '../reports/render-report.mjs';
 import { readJson, safeFile, matchesTaskPR } from './visual-report.mjs';
 import { phases } from './task-usage.mjs';
 import { outcomeLabels } from './task-outcome.mjs';
+import { collectAgentFailure } from './agent-failure.mjs';
 
 const phaseNames = {
   implementation: '初始实现', repair: '应用修复', qa: '完整业务 QA',
@@ -54,6 +55,12 @@ export function collectDelivery(root, report, issue = {}) {
   const changes = optionalJson(root, 'change-summary.json', warnings);
   const qaChecks = Array.isArray(qa?.checks) ? qa.checks : [];
   const attention = [];
+  if (record.status === 'failure') {
+    try {
+      const failure = collectAgentFailure(root);
+      if (failure) attention.push({ title: failure.title, detail: failure.detail, source: failure.source });
+    } catch { warnings.push('Agent 失败诊断无法读取，具体原因请查看本轮运行日志。'); }
+  }
   const media = [];
   const seen = new Set();
   let bytes = 0;
