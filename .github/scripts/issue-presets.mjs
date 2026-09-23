@@ -14,6 +14,10 @@ export function isPresetIssue(issue) {
   return issue.labels?.some((label) => (label.name ?? label) === PRESET_LABEL) ?? false;
 }
 
+export function isManualIssue(issue) {
+  return issue.labels?.some((label) => (label.name ?? label) === 'factory:manual') ?? false;
+}
+
 function isHuman(user) {
   return Boolean(user?.login && user.type !== 'Bot' && !/\[bot\]$/i.test(user.login));
 }

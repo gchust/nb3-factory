@@ -788,6 +788,8 @@ jobs:
         run: bash control/.github/scripts/dispatch-task-reports.sh
 
   reply:
+    env:
+      FACTORY_CONTROL_SHA: ${{ needs.prepare.outputs.control_sha }}
     needs: [prepare, agent, verify-final, publish]
     if: >-
       always() && !cancelled() &&
@@ -829,13 +831,19 @@ jobs:
           CODE_AGENT_INVOCATION_TIMEOUT_SECONDS=900 node control/.github/scripts/run-agent.mjs \
             --workspace workspace \
             --prompt "$RUNNER_TEMP/comment-prompt.md" \
-            --log "$RUNNER_TEMP/comment-agent.jsonl" \
+            --log "$RUNNER_TEMP/comment-artifacts/comment-agent.jsonl" \
             --agentDir "$RUNNER_TEMP/comment-agent"
+      - name: Collect comment reply diagnostics
+        if: always()
+        env: *agent-run-env
+        run: node control/.github/scripts/agent-invocation-record.mjs stage-reply "$RUNNER_TEMP" task/task-metadata.json
+
       - name: Save reply for trusted publisher
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: factory-comment-reply-${{ needs.prepare.outputs.build_comment_id }}
-          path: ${{ runner.temp }}/comment-reply.md
+          path: ${{ runner.temp }}/comment-artifacts
           if-no-files-found: error
           retention-days: 14
 
@@ -867,3 +875,21 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: node .github/scripts/comment-reply.mjs publish task/task-metadata.json reply
+
+  dispatch-reply-history:
+    needs: [prepare, reply, publish-reply]
+    if: always() && needs.prepare.outputs.status == 'ready' && needs.prepare.outputs.build_comment_id != ''
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      actions: write
+    steps:
+      - name: Request comment interaction history
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SOURCE_RUN_ID: ${{ github.run_id }}
+          SOURCE_ATTEMPT: ${{ github.run_attempt }}
+          REPORT_REF: ${{ github.event.repository.default_branch }}
+        run: |
+          gh workflow run publish-agent-history.yml --repo "$GITHUB_REPOSITORY" --ref "$REPORT_REF" \
+            --field "run_id=$SOURCE_RUN_ID" --field "attempt=$SOURCE_ATTEMPT"
