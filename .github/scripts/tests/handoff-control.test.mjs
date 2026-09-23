@@ -29,7 +29,13 @@ function checkpoint(root, extra = {}, pipeline = { controlSha: A }) {
 }
 function cli(file, args, env = {}) {
   return execFileSync(process.execPath, [path.join(scripts, file), ...args], {
-    env: { ...process.env, FACTORY_CONTROL_SHA: A, ...env }, encoding: 'utf8', stdio: 'pipe',
+    env: {
+      ...process.env, FACTORY_CONTROL_SHA: A,
+      // Fixtures must not inherit the enclosing Actions run or application base.
+      GITHUB_RUN_ID: '', GITHUB_RUN_ATTEMPT: '',
+      FACTORY_APPLICATION_BASE_SHA: '', FACTORY_APPLICATION_BASE_REF: '',
+      ...env,
+    }, encoding: 'utf8', stdio: 'pipe',
   });
 }
 
@@ -69,6 +75,24 @@ test('new pins are bound to the source task artifact before executing prepare co
   const recorded = JSON.parse(readFileSync(path.join(root, 'task-metadata.json'), 'utf8'));
   assert.deepEqual(recorded, { ...metadata, controlSha: A });
   assert.equal(resolveControlSha(event({ control_sha: A }), B, undefined, recorded), A);
+});
+
+test('record persists the explicit run identity and application base for recovery', (t) => {
+  const root = directory(t);
+  const metadata = {
+    repository: 'gchust/nb3-factory', issue: { number: 165 },
+    workBranch: 'agent/issue-165', task: { targetBranch: 'issues-165' },
+  };
+  const file = path.join(root, 'task-metadata.json');
+  write(root, 'task-metadata.json', metadata);
+  cli('handoff-control.mjs', ['record', '--metadata', file], {
+    GITHUB_RUN_ID: '12345', GITHUB_RUN_ATTEMPT: '2',
+    FACTORY_APPLICATION_BASE_REF: 'issues-165', FACTORY_APPLICATION_BASE_SHA: B,
+  });
+  assert.deepEqual(JSON.parse(readFileSync(file, 'utf8')), {
+    ...metadata, controlSha: A, run: { id: 12345, attempt: 2 },
+    applicationBase: { ref: 'issues-165', sha: B },
+  });
 });
 
 test('missing legacy provenance fails without selecting the current branch', (t) => {

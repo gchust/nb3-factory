@@ -111,6 +111,12 @@ export function createInvocation({
         defaultProjectTrust: 'never',
         enableInstallTelemetry: false,
         quietStartup: true,
+        // Retry the interrupted model request in this invocation, not the whole
+        // task. Leave SDK retries off to avoid multiplying both retry layers.
+        retry: {
+          enabled: true, maxRetries: 6, baseDelayMs: 5_000,
+          maxAgentDelayMs: 60_000, provider: { maxRetries: 0 },
+        },
       },
       null,
       2,
@@ -178,6 +184,7 @@ export function parseEvent(event) {
   const assistant = message?.role === 'assistant';
   const compaction = event.type === 'compaction_end';
   return {
+    retryAttempt: event.type === 'auto_retry_start' ? event.attempt : undefined,
     active: ['agent_start', 'turn_start', 'compaction_start', 'auto_retry_start'].includes(event.type),
     complete: ['agent_end', 'agent_settled'].includes(event.type) && event.willRetry !== true,
     failure: !assistant ? undefined : ['error', 'aborted'].includes(message.stopReason)
