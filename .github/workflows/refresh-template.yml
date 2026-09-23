@@ -55,6 +55,12 @@ jobs:
         with:
           node-version: 24.x
 
+      # app-tools installs dist/ as its own pnpm root, which never reads the
+      # application's .npmrc, and pnpm 11 ignores scoped registries passed in
+      # the environment. Only the user-level file reaches that nested install.
+      - name: Expose the factory registry to nested pnpm roots
+        run: cat control/.npmrc >> ~/.npmrc
+
       - name: Create a fresh application from the latest published template
         env:
           CI: true

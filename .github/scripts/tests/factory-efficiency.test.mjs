@@ -105,7 +105,7 @@ test('focused failures repair again; focused success must run full QA on fresh s
   mkdirSync(dest, { recursive: true });
   const workspace = path.join(root, 'workspace');
   mkdirSync(workspace);
-  for (const file of ['qa-retest.mjs', 'acceptance-criteria.mjs', 'timed-command.mjs', 'timing.mjs'])
+  for (const file of ['qa-retest.mjs', 'acceptance-criteria.mjs', 'timed-command.mjs', 'timing.mjs', 'apply-database.sh'])
     copyFileSync(path.join(scripts, file), path.join(dest, file));
   write(
     dest,

@@ -701,6 +701,23 @@ test('refresh workflow has its own queue and isolates generated code from write 
   assert.match(publisher, /!inputs.dry_run/);
 });
 
+test('every building job exposes the factory registry to nested dist installs', () => {
+  const read = (file) =>
+    readFileSync(path.resolve(scripts, '..', 'workflows', file), 'utf8');
+  const refresh = read('refresh-template.yml');
+  const task = read('code-agent-task.yml');
+  const jobs = {
+    'refresh generate': refresh.split('\n  publish:')[0],
+    'task agent': task.split('\n  agent:')[1].split('\n  verify-final:')[0],
+    'task verify-final': task.split('\n  verify-final:')[1].split('\n  publish:')[0],
+  };
+  for (const [name, job] of Object.entries(jobs)) {
+    const expose = job.indexOf('cat control/.npmrc >> ~/.npmrc');
+    assert.ok(expose > 0, name);
+    assert.ok(expose < job.search(/pnpm (create|install)/), name);
+  }
+});
+
 test('factory workflows and implementation guidance use the canonical skills sync command', () => {
   for (const file of [
     'workflows/refresh-template.yml',
