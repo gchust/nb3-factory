@@ -10,6 +10,10 @@ test('first setup probes default configuration, not an explicit nonexistent over
   t.after(() => rmSync(root, { recursive: true, force: true }));
   const app = path.join(root, 'app'), bin = path.join(root, 'bin'), out = path.join(root, 'out');
   mkdirSync(app); mkdirSync(bin);
+  const dist = path.join(app, 'dist');
+  mkdirSync(dist); mkdirSync(path.join(app, 'storage/exports'), { recursive: true });
+  writeFileSync(path.join(dist, 'package.json'), JSON.stringify({nocobase:{buildTarget:{platform:process.platform, arch:process.arch, nodeMajor:Number(process.versions.node.split('.')[0])}}}));
+  assert.equal(spawnSync('tar', ['-czf', path.join(app,'storage/exports/dist.tar.gz'), '-C', app, 'dist']).status, 0);
   const original = 'auth:\n  secret: original-test-value\n';
   writeFileSync(path.join(app, 'config.yml'), original);
   writeFileSync(path.join(bin, 'pnpm'), `#!/usr/bin/env node
@@ -26,7 +30,7 @@ else {console.error('intentional fixture stop before login');process.exit(6);}
   });
   assert.equal(result.status,1,'fixture must stop before claiming a real login');
   const checks=JSON.parse(readFileSync(path.join(out,'configuration-checks.json'))).checks;
-  assert.deepEqual(checks.slice(0,2).map(c=>[c.id,c.status]),[['CONFIG-01','passed'],['CONFIG-02','passed']]);
+  assert.deepEqual(checks.filter(c => c.id !== 'CONFIG-NATIVE').slice(0,2).map(c=>[c.id,c.status]),[['CONFIG-01','passed'],['CONFIG-02','passed']]);
   assert.match(checks.at(-1).observation,/intentional fixture stop/);
   assert.equal(readFileSync(path.join(app,'config.yml'),'utf8'),original,'failed probe restores original configuration');
   const calls=readFileSync(path.join(root,'calls.jsonl'),'utf8').trim().split('\n').map(JSON.parse);

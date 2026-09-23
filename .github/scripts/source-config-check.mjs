@@ -7,6 +7,7 @@ import { createWriteStream, existsSync, mkdirSync, readFileSync, renameSync, rmS
 import { setTimeout as delay } from 'node:timers/promises';
 import path from 'node:path';
 import { captureBaseline, freezeBaseline } from './baseline-record.mjs';
+import { restoreSourceDist } from './restore-source-dist.mjs';
 
 const [workspace, output, sourceSha] = process.argv.slice(2);
 if (!workspace || !output || !/^[a-f0-9]{40}$/u.test(sourceSha ?? '')) throw new Error('Expected generated app, evidence directory, exact source SHA');
@@ -34,11 +35,13 @@ function command(args) {
 }
 let restored = false;
 try {
+  restoreSourceDist(app);
+  checks.push({ id: 'CONFIG-NATIVE', status: 'passed', observation: 'Restored host-native dist from the archive verified before upstream retargeting' });
   assert.equal(existsSync(backup), false);
   renameSync(config, backup);
   // A nonexistent explicit override is an invalid file path, not first setup.
   // Exercise the default unconfigured path without any inherited auth source.
-  const unconfiguredEnv = { ...process.env };
+  const unconfiguredEnv = { ...process.env, NOCOBASE_STRICT_STARTUP: 'true' };
   for (const key of ['APP_CONFIG_FILE', 'AUTH_SECRET', 'SESSION_SECRET']) delete unconfiguredEnv[key];
   const missing = run(['start'], unconfiguredEnv);
   assert.notEqual(missing.status, 0);
@@ -61,7 +64,7 @@ try {
   command(['config:set', 'i18n.defaultLocale=en-US', '--json']);
   const port = 13917, url = `http://127.0.0.1:${port}/main/`;
   const log = createWriteStream(path.join(out, 'login-start.log'));
-  const child = spawn('pnpm', ['start'], { cwd: app, detached: true, env: { ...env, NODE_ENV: 'production',
+  const child = spawn('pnpm', ['start'], { cwd: app, detached: true, env: { ...env, NODE_ENV: 'production', NOCOBASE_STRICT_STARTUP: 'true',
     APP_SERVER_HOST: '127.0.0.1', APP_SERVER_PORT: String(port), APP_PUBLIC_ORIGIN: `http://127.0.0.1:${port}` },
     stdio: ['ignore', 'pipe', 'pipe'] });
   let spawnError;
