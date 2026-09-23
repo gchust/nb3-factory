@@ -42,6 +42,8 @@ function fixture({ comments = [], runs = [], jobs = [], pulls = [] } = {}) {
   const client = {
     repository: 'gchust/nb3-factory',
     getIssue: async () => issue,
+    getRepository: async () => ({ default_branch: 'develop' }),
+    getRef: async () => null,
     async addComment(number, body) {
       const value = { id: 1000 + comments.length, body, user: bot };
       comments.push(value);
@@ -60,7 +62,7 @@ function fixture({ comments = [], runs = [], jobs = [], pulls = [] } = {}) {
       if (route === '/actions/workflows/code-agent-task.yml/runs')
         return { workflow_runs: runs };
       if (route.endsWith('/jobs')) return { jobs };
-      if (route === '/pulls') return pulls;
+      if (route === '/pulls') return pulls.map((pull) => ({ base: { ref: 'apps/demo' }, ...pull }));
       if (route === '/dispatches') return null;
       if (route === '/issues') return [issue];
       throw new Error(`Unexpected request ${method} ${route}`);
@@ -567,3 +569,24 @@ for (const body of [
     );
   });
 }
+
+for (const branch of ['', 'develop']) {
+  test(`another default-target PR cannot block a comment round: ${branch || 'omitted'}`, async () => {
+    const f = fixture({ comments: [command(21)], runs: [run(1)], pulls: [{
+      state: 'open', base: { ref: 'develop' },
+      head: { ref: 'agent/issue-99', repo: { full_name: 'gchust/nb3-factory' } },
+    }] });
+    f.client.getIssue = async () => ({ ...issue, body: issue.body.replace('apps/demo', branch) });
+    await coordinate(f.client, 2);
+    assert.equal(f.dispatches().length, 1);
+    assert.equal(f.dispatches()[0].body.client_payload.build_comment_id, 21);
+  });
+}
+test('a PR on another explicit application branch does not block this queue', async () => {
+  const f = fixture({ comments: [command(21)], runs: [run(1)], pulls: [{
+    state: 'open', base: { ref: 'apps/other' },
+    head: { ref: 'agent/issue-99', repo: { full_name: 'gchust/nb3-factory' } },
+  }] });
+  await coordinate(f.client, 2);
+  assert.equal(f.dispatches().length, 1);
+});

@@ -15,6 +15,7 @@ import {
 } from './comment-queue.mjs';
 
 import { isPresetIssue } from './issue-presets.mjs';
+import { resolveTargetBranch } from './task-base.mjs';
 
 export async function coordinate(client, issueNumber, admissionId = Infinity) {
   const issue = await client.getIssue(issueNumber);
@@ -193,8 +194,11 @@ export async function coordinate(client, issueNumber, admissionId = Infinity) {
   // the Issue-close callback has not yet arrived.
   const pulls = await listAll(client, '/pulls', {
     state: 'all',
-    base: task.targetBranch,
   });
+  const { default_branch: defaultBranch } = await client.getRepository();
+  task.targetBranch = await resolveTargetBranch(
+    client, issueNumber, task.targetBranch, pulls, defaultBranch,
+  );
   if (
     pulls.some(
       (pull) =>
@@ -212,8 +216,10 @@ export async function coordinate(client, issueNumber, admissionId = Infinity) {
     }
   }
   if (
+    task.targetBranch !== defaultBranch &&
     pulls.some(
       (pull) =>
+        pull.base?.ref === task.targetBranch &&
         pull.state === 'open' &&
         pull.head?.repo?.full_name === client.repository &&
         /^(agent|pi)\/issue-\d+$/.test(pull.head.ref) &&

@@ -11,9 +11,11 @@ import {
   claimComment,
   receiptsFor,
   resolveBuildTask,
+  listAll,
 } from './comment-queue.mjs';
 import { isPresetIssue, preparePresetIssue } from './issue-presets.mjs';
 import { resolveTaskBranch, taskIssueNumber } from './task-compat.mjs';
+import { resolveTargetBranch, pinInitialBase } from './task-base.mjs';
 
 const args = parseArgs(process.argv.slice(2));
 const event = JSON.parse(readFileSync(args.event, 'utf8'));
@@ -68,6 +70,11 @@ try {
   const repositoryInfo = await client.getRepository();
   const defaultBranch = repositoryInfo.default_branch;
 
+  // Find this Issue's PR independently of its base (legacy tasks included).
+  const openPullRequests = await listAll(client, '/pulls', { state: 'open' });
+  task.targetBranch = await resolveTargetBranch(
+    client, issueNumber, task.targetBranch, openPullRequests, defaultBranch,
+  );
   let targetRef = await client.getRef(task.targetBranch, true);
   let targetCreated = false;
   if (!targetRef) {
@@ -79,7 +86,6 @@ try {
     targetCreated = true;
   }
 
-  const openPullRequests = await client.listOpenPullRequests(task.targetBranch);
   const workBranch = await resolveTaskBranch(
     client,
     issueNumber,
@@ -91,8 +97,12 @@ try {
       pull.head?.repo?.full_name === repository &&
       pull.head?.ref === workBranch,
   );
-  const blockingPullRequest = openPullRequests.find(
+  if (ownPullRequest && ownPullRequest.base.ref !== task.targetBranch) {
+    throw new TaskInputError('现有 PR 的合并目标与任务不一致；请先对齐配置，不自动改写旧 PR。');
+  }
+  const blockingPullRequest = task.targetBranch !== defaultBranch && openPullRequests.find(
     (pull) =>
+      pull.base?.ref === task.targetBranch &&
       pull.head?.repo?.full_name === repository &&
       taskIssueNumber(pull.head?.ref) != null &&
       pull.head.ref !== workBranch,
@@ -157,7 +167,9 @@ try {
 
   const workRef = await client.getRef(workBranch, true);
   const baseRef = workRef ? workBranch : task.targetBranch;
-  const baseSha = workRef?.object?.sha ?? targetRef.object.sha;
+  const baseSha = workRef?.object?.sha ?? (task.targetBranch === defaultBranch
+    ? await pinInitialBase(client, issueNumber, task.targetBranch, targetRef.object.sha)
+    : targetRef.object.sha);
 
   appendGithubOutput(outputPath, 'base_ref', baseRef);
   appendGithubOutput(outputPath, 'base_sha', baseSha);
@@ -170,8 +182,9 @@ try {
       [
         `Code Agent 工厂已开始处理。`,
         '',
-        `- 目标分支：\`${task.targetBranch}\`${targetCreated ? '（刚从默认分支创建）' : ''}`,
+        `- PR 合并目标：\`${task.targetBranch}\`${targetCreated ? '（刚从默认分支创建）' : ''}`,
         `- 工作分支：\`${workBranch}\``,
+        `- 本轮代码起点：\`${baseRef} @ ${baseSha}\``,
         `- [查看本次运行](${process.env.GITHUB_SERVER_URL}/${repository}/actions/runs/${process.env.GITHUB_RUN_ID})`,
       ].join('\n'),
     );

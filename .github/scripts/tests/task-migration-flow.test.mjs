@@ -288,7 +288,7 @@ for (const event of [
 }
 
 for (const [branch, supplied] of [
-  ['issues-2', false],
+  ['issues-2', true],
   ['feature/CRM', true],
 ]) {
   for (const exists of [false, true]) {

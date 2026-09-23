@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
 
-import { extractIssueSections, parseIssueTask, TaskInputError } from './factory-lib.mjs';
+import { extractIssueSections, parseIssueTask, TaskInputError, validateTargetBranch } from './factory-lib.mjs';
 import { listAll, parseBuild } from './comment-queue.mjs';
 import { stripTaskTitle } from './task-compat.mjs';
 import { splitPresetComments } from './preset-comment-inputs.mjs';
@@ -54,7 +54,8 @@ function replaceSection(body, label, value) {
 
 function clonedBody(snapshot, hash) {
   let body = snapshot.source.body.replace(readyPattern, '');
-  body = replaceSection(body, '目标分支', `issues-${snapshot.issueNumber}`);
+  // Old snapshots keep their original target; new cases pin the default branch.
+  body = replaceSection(body, '目标分支', snapshot.targetBranch ?? `issues-${snapshot.issueNumber}`);
   body = replaceSection(body, '任务类型', '创建新系统');
   const extra = snapshot.extra
     ? `> **本次补充要求**\n${snapshot.extra.split('\n').map((line) => `> ${line}`).join('\n')}\n\n`
@@ -102,12 +103,14 @@ async function captureSnapshot(client, issue, number, comments) {
     throw new TaskInputError('来源必须是带 factory:preset 标签、由人工创建的 Issue。');
   }
   // Validate the business fields but do not inherit the source's old branch.
-  const sourceBody = replaceSection(source.body ?? '', '目标分支', `issues-${issue.number}`);
+  const targetBranch = validateTargetBranch((await client.getRepository()).default_branch);
+  const sourceBody = replaceSection(source.body ?? '', '目标分支', targetBranch);
   parseIssueTask({ ...source, body: sourceBody });
   const originals = await listAll(client, `/issues/${number}/comments`);
   const snapshot = {
     version: 1,
     issueNumber: issue.number,
+    targetBranch,
     capturedAt: new Date().toISOString(),
     source: {
       number, title: source.title, body: source.body,
@@ -232,7 +235,7 @@ body:
     attributes:
       value: |
         提交后复制原案例的正文及全部人工评论，不复制机器人回复、PR 或旧运行状态。
-        使用新的 issues-<Issue 编号> 目标分支，从当前默认分支开始；复制完成后只启动一次搭建。
+        从当前默认分支（develop）开始，在 agent/issue-<新 Issue 编号> 上搭建，PR 指向默认分支；不继承来源案例的分支。
         列表由 factory:preset 标签维护，包含已关闭的预置案例。列表同步完成后请刷新创建页面。
   - type: dropdown
     id: preset_issue

@@ -112,7 +112,9 @@ await client.setIssueStatus(
     '',
     `合并前本地预览请检出工作分支：\`git fetch origin && git switch --track origin/${metadata.workBranch}\`。`,
     '',
-    `请检查后手动合并到 \`${metadata.task.targetBranch}\`。合并后 Issue 会自动关闭。`,
+    metadata.task.targetBranch === metadata.defaultBranch
+      ? `PR 以 \`${metadata.task.targetBranch}\` 为比较目标；重复搭建测试通常只评审并保留工作分支，不合入干净模板。不会自动合并。`
+      : `请检查后手动合并到 \`${metadata.task.targetBranch}\`。合并后 Issue 会自动关闭。`,
   ].join('\n'),
 );
 

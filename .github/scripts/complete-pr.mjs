@@ -83,7 +83,7 @@ for (const candidate of waiting) {
   if (candidate.pull_request) continue;
   try {
     const task = parseIssueTask(candidate);
-    if (task.targetBranch === pull.base.ref) {
+    if ((task.targetBranch ?? `issues-${candidate.number}`) === pull.base.ref) {
       nextIssue = candidate;
       break;
     }

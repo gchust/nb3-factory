@@ -39,14 +39,14 @@ function write(root, file, value, mode) {
 const body =
   '### 任务类型\n创建新系统\n### 业务需求\n业务目标\n### 验收要求\n1. 创建\n2. 编辑\n';
 
-test('missing, empty and No response branch default to the Issue number; supplied branches remain reusable', () => {
+test('missing branches are resolved by prepare; supplied branches remain reusable', () => {
   for (const prefix of [
     '',
     '### 目标分支\n\n',
     '### 目标分支\n_No response_\n',
   ]) {
     const issue = { number: 146, body: prefix + body };
-    assert.equal(parseIssueTask(issue).targetBranch, 'issues-146');
+    assert.equal(parseIssueTask(issue).targetBranch, null);
     assert.deepEqual(parseIssueTask(issue), parseIssueTask(issue));
   }
   for (const branch of [
@@ -64,7 +64,7 @@ test('missing, empty and No response branch default to the Issue number; supplie
       branch,
     );
   }
-  assert.throws(() => parseIssueTask({ body }), /Issue 编号/);
+  assert.equal(parseIssueTask({ body }).targetBranch, null);
 });
 
 test('focused QA metadata retains business context but cannot replace full acceptance metadata', () => {
