@@ -11,6 +11,7 @@ export const phases = [
   'qa',
   'qaFocused',
   'qaReport',
+  'review',
   'compaction',
 ];
 const tokenKeys = [
@@ -73,6 +74,7 @@ function addUsage(target, phase, usage) {
 }
 
 function phaseOf(file) {
+  if (file === 'agent-review.jsonl') return 'review';
   if (file === 'agent-implement.jsonl') return 'implementation';
   if (/^agent-repair-[1-9]\d*\.jsonl$/.test(file)) return 'repair';
   const browser =
@@ -293,6 +295,8 @@ export function validateRecord(record, repository, issue) {
   )
     throw new Error('Invalid Agent job');
   const usage = record.usage;
+  // Historical receipts predate the independent reviewer. Missing is not a new invocation.
+  if (usage?.phases && !Object.hasOwn(usage.phases, 'review')) usage.phases.review = emptyTokens();
   if (
     usage?.phases &&
     !('qaReport' in usage.phases) &&
@@ -349,7 +353,7 @@ export function aggregate(records) {
   for (const item of agents.values()) {
     for (const phase of phases)
       for (const key of tokenKeys)
-        usage.phases[phase][key] += item.phases[phase][key];
+        usage.phases[phase][key] += (item.phases[phase]?.[key] ?? 0);
     for (const key of ['records', 'missing', 'incomplete'])
       usage[key] += item[key];
   }
@@ -394,6 +398,7 @@ export function renderUsage(record, records) {
     qa: '完整业务 QA（旧记录含报告修复）',
     qaFocused: '失败路径复测',
     qaReport: 'QA 补报告',
+    review: '独立搭建评审',
     compaction: '上下文压缩',
   };
   const url = `https://github.com/${record.repository}/actions/runs/${record.runId}/attempts/${record.attempt}`;

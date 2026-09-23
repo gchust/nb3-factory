@@ -27,14 +27,14 @@ export function reportManifest(report) {
     title:f?.meta?.title || `Issue #${r.issue}`,reportId:report.reportId,
     summary:f?.delivery?.qaSummary || '',
     path:`${ROOT}/issues/${r.issue}/runs/${r.runId}/attempt-${r.attempt}/index.html`,
-    quality:{qa:Boolean(f?.rawQaReport),retro:Boolean(f?.retro),checks:f?.checks?.length||0,media:f?.media?.length||0,usage:r.usage?.records||0}};
+    quality:{qa:Boolean(f?.rawQaReport),retro:Boolean(f?.retro),review:f?.buildReview?.state==='completed',checks:f?.checks?.length||0,media:f?.media?.length||0,usage:r.usage?.records||0}};
 }
 function validManifest(m) {
   return m?.version===1 && typeof m.repository==='string' && typeof m.path==='string' &&
     Number.isSafeInteger(m.issue) && Number.isSafeInteger(m.runId) && Number.isSafeInteger(m.attempt) && Number.isSafeInteger(m.start);
 }
 function degraded(next,old) {
-  return old?.quality && ['qa','retro','checks','media','usage'].some(k=>Number(next.quality[k])<Number(old.quality[k]));
+  return old?.quality && ['qa','retro','review','checks','media','usage'].some(k=>Number(next.quality[k]??0)<Number(old.quality[k]??0));
 }
 async function getJson(client,file,ref) {
   const value=await client.request('GET',`/contents/${file}`,{query:{ref},allow404:true});

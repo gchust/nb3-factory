@@ -37,9 +37,9 @@ test('each engine receives only its own secrets and configuration', () => {
   const tokens = linesOf('CODEBUDDY_AUTH_TOKEN');
   const codebuddyKeys = linesOf('CODEBUDDY_API_KEY');
   assert.equal(apiKeys.length, 1); // shared by implementation, repair/QA and reply
-  // Repair/QA, reply invocation and the always-path credential scrub share
+  // Repair/QA, independent review, reply invocation and credential scrub share
   // one selected-engine map. The trusted publishers must not receive it.
-  assert.equal((workflow.match(/env: \*agent-run-env/g) ?? []).length, 3);
+  assert.equal((workflow.match(/env: \*agent-run-env/g) ?? []).length, 4);
   const scrub = workflow.split('- name: Collect comment reply diagnostics')[1]
     .split('- name: Save reply for trusted publisher')[0];
   assert.match(scrub, /if: always\(\)/);

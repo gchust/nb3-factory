@@ -135,3 +135,10 @@ test('handoff restores retrospective prose without copying old QA or usage into 
  const restore=workflow.split('- name: Restore handoff checkpoint')[1].split('- name: Download normalized task')[0];
  assert.match(restore,/cp handoff\/retro.json/);assert.doesNotMatch(restore,/cp .*report.json|cp .*jsonl/);
 });
+
+test('replay cannot erase an existing independent build review', async () => {
+ const c=fakeClient(), richer=input(); richer.delivery.buildReview={state:'completed'};
+ await archiveReport(c,richer,htmlOf(richer));
+ const poor=input(); const replay=await archiveReport(c,poor,htmlOf(poor).replace('报告','未评估'));
+ assert.equal(replay.preserved,true); assert.equal(c.files().get(reportManifest(richer).path),htmlOf(richer));
+});
