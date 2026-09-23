@@ -1,4 +1,4 @@
-import { Home } from 'lucide-react';
+import { Home, ListTodo } from 'lucide-react';
 import {
   defineAppRoutes,
   defineSettingsRoutes,
@@ -15,6 +15,18 @@ const appRoutes: AppClientRouteContribution = defineAppRoutes([
     name: 'home',
     navigation: { title: 'navigation.home', icon: Home },
     path: '/',
+  },
+  {
+    // Reading is available to every signed-in user; writes are gated by the
+    // `teamTasks.manage` business action on the server, so the page itself is
+    // not hidden behind a page grant.
+    authz: 'skip',
+    auth: 'required',
+    breadcrumb: { title: 'navigation.teamTasks' },
+    componentLoader: () => import('./pages/team-tasks.js'),
+    name: 'team-tasks',
+    navigation: { title: 'navigation.teamTasks', icon: ListTodo },
+    path: '/team-tasks',
   },
   {
     auth: 'guest',

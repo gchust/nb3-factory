@@ -24,6 +24,11 @@ describe('app client routes', () => {
           name: 'home',
           path: '/',
         },
+        {
+          auth: 'required',
+          name: 'team-tasks',
+          path: '/team-tasks',
+        },
         { auth: 'guest', name: 'login', path: '/login' },
         { auth: 'guest', name: 'register', path: '/register' },
         {
@@ -61,6 +66,8 @@ describe('app client routes', () => {
     expect(pageAuthorizations(resolved.routes)).toEqual([
       // The landing page opted out of page authorization, so it is reachable by every signed-in user.
       { name: 'home', authorizedAs: null },
+      // The task list is likewise reachable by every signed-in user; write access is a server-enforced action.
+      { name: 'team-tasks', authorizedAs: null },
     ]);
   });
 });

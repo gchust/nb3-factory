@@ -348,6 +348,8 @@ describe('app server', () => {
     const application = createApp({
       ...resolvedRuntime,
       plugins: createResolvedTestServerPlugins([
+        authenticationServerPlugin,
+        authorizationServerPlugin,
         defineServerPlugin<AppConfig>({
           baseDir: import.meta.dirname,
           packageName: '@nocobase/app-plugin-runtime-test',
@@ -637,6 +639,204 @@ describe('app server', () => {
     }
   });
 
+  it('enforces team task reads and writes at the server', async () => {
+    const app = trackCloseable(
+      await createInstalledStandaloneServer({ viteDevUrl: false }),
+    );
+    const baseUrl = `http://localhost${app.application.publicBasePath}`;
+
+    // The migration created the table and the seed supplied the required rows.
+    const database = app.application.container.resolve(databaseManagerToken);
+    const knex = await database.connection('main').client<Knex>();
+    // The collection builder stores `teamTasks` as the physical `team_tasks` table.
+    const rows = await knex('team_tasks').orderBy('id', 'asc');
+    expect(rows).toHaveLength(3);
+    expect(rows.filter((row) => row.status === 'pending')).toHaveLength(2);
+    expect(rows.filter((row) => row.status === 'done')).toHaveLength(1);
+
+    const anonymous = await requestApp(app, `${baseUrl}/api/team-tasks`);
+    expect(anonymous.status).toBe(401);
+
+    const adminSignIn = await requestApp(
+      app,
+      `${baseUrl}/api/auth/sign-in/username`,
+      {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ username: 'nocobase', password: 'admin123' }),
+      },
+    );
+    expect(adminSignIn.status).toBe(200);
+    const adminCookie = adminSignIn.headers
+      .getSetCookie()
+      .map((header) => header.split(';')[0])
+      .join('; ');
+
+    const adminList = await requestApp(app, `${baseUrl}/api/team-tasks`, {
+      headers: { cookie: adminCookie },
+    });
+    expect(adminList.status).toBe(200);
+    const adminPayload = (await adminList.json()) as {
+      data: Array<{ id: number; title: string; status: string }>;
+      canManage: boolean;
+    };
+    expect(adminPayload.canManage).toBe(true);
+    expect(adminPayload.data).toHaveLength(3);
+
+    const filtered = await requestApp(
+      app,
+      `${baseUrl}/api/team-tasks?status=pending`,
+      { headers: { cookie: adminCookie } },
+    );
+    expect(filtered.status).toBe(200);
+    expect(((await filtered.json()) as { data: unknown[] }).data).toHaveLength(
+      2,
+    );
+
+    const invalidFilter = await requestApp(
+      app,
+      `${baseUrl}/api/team-tasks?status=archived`,
+      { headers: { cookie: adminCookie } },
+    );
+    expect(invalidFilter.status).toBe(400);
+
+    const blank = await requestApp(app, `${baseUrl}/api/team-tasks`, {
+      method: 'POST',
+      headers: { cookie: adminCookie, 'content-type': 'application/json' },
+      body: JSON.stringify({ title: '   ' }),
+    });
+    expect(blank.status).toBe(400);
+
+    const created = await requestApp(app, `${baseUrl}/api/team-tasks`, {
+      method: 'POST',
+      headers: { cookie: adminCookie, 'content-type': 'application/json' },
+      body: JSON.stringify({
+        title: '  Write the retro  ',
+        notes: 'Keep it short',
+      }),
+    });
+    expect(created.status).toBe(201);
+    const createdTask = (
+      (await created.json()) as {
+        data: {
+          id: number;
+          title: string;
+          notes: string | null;
+          status: string;
+        };
+      }
+    ).data;
+    expect(createdTask.title).toBe('Write the retro');
+    expect(createdTask.notes).toBe('Keep it short');
+    expect(createdTask.status).toBe('pending');
+
+    // Omitting title and status from a partial update preserves both.
+    const updated = await requestApp(
+      app,
+      `${baseUrl}/api/team-tasks/${createdTask.id}`,
+      {
+        method: 'PATCH',
+        headers: { cookie: adminCookie, 'content-type': 'application/json' },
+        body: JSON.stringify({ notes: null }),
+      },
+    );
+    expect(updated.status).toBe(200);
+    const updatedTask = (
+      (await updated.json()) as {
+        data: { title: string; notes: string | null; status: string };
+      }
+    ).data;
+    expect(updatedTask.title).toBe('Write the retro');
+    expect(updatedTask.notes).toBeNull();
+    expect(updatedTask.status).toBe('pending');
+
+    const completed = await requestApp(
+      app,
+      `${baseUrl}/api/team-tasks/${createdTask.id}`,
+      {
+        method: 'PATCH',
+        headers: { cookie: adminCookie, 'content-type': 'application/json' },
+        body: JSON.stringify({ status: 'done' }),
+      },
+    );
+    expect(completed.status).toBe(200);
+    expect(
+      ((await completed.json()) as { data: { status: string } }).data.status,
+    ).toBe('done');
+
+    const missing = await requestApp(app, `${baseUrl}/api/team-tasks/999999`, {
+      method: 'PATCH',
+      headers: { cookie: adminCookie, 'content-type': 'application/json' },
+      body: JSON.stringify({ status: 'done' }),
+    });
+    expect(missing.status).toBe(404);
+
+    // A regular signed-in user may read and filter but every write is refused.
+    // Register through the real Better Auth sign-up endpoint so the credential
+    // account insert, including the NOT NULL `account.issuer` column, is
+    // exercised end to end. The application declares `issuer` so Better Auth's
+    // adapter persists it rather than dropping it.
+    const memberSignUp = await requestApp(
+      app,
+      `${baseUrl}/api/auth/sign-up/email`,
+      {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          name: 'Regular Member',
+          username: 'regularmember',
+          email: 'regular-member@example.com',
+          password: 'member-password-123',
+        }),
+      },
+    );
+    expect(memberSignUp.status).toBe(200);
+
+    const memberSignIn = await requestApp(
+      app,
+      `${baseUrl}/api/auth/sign-in/username`,
+      {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          username: 'regularmember',
+          password: 'member-password-123',
+        }),
+      },
+    );
+    expect(memberSignIn.status).toBe(200);
+    const memberCookie = memberSignIn.headers
+      .getSetCookie()
+      .map((header) => header.split(';')[0])
+      .join('; ');
+
+    const memberList = await requestApp(app, `${baseUrl}/api/team-tasks`, {
+      headers: { cookie: memberCookie },
+    });
+    expect(memberList.status).toBe(200);
+    expect(
+      ((await memberList.json()) as { canManage: boolean }).canManage,
+    ).toBe(false);
+
+    const memberCreate = await requestApp(app, `${baseUrl}/api/team-tasks`, {
+      method: 'POST',
+      headers: { cookie: memberCookie, 'content-type': 'application/json' },
+      body: JSON.stringify({ title: 'Sneaky task' }),
+    });
+    expect(memberCreate.status).toBe(403);
+
+    const memberPatch = await requestApp(
+      app,
+      `${baseUrl}/api/team-tasks/${createdTask.id}`,
+      {
+        method: 'PATCH',
+        headers: { cookie: memberCookie, 'content-type': 'application/json' },
+        body: JSON.stringify({ status: 'pending' }),
+      },
+    );
+    expect(memberPatch.status).toBe(403);
+  });
+
   it('serves Users and API Keys with the application authentication and permissions', async () => {
     const app = trackCloseable(
       await createInstalledStandaloneServer({ viteDevUrl: false }),
@@ -663,6 +863,34 @@ describe('app server', () => {
       headers: { cookie },
     });
     expect(users.status).toBe(200);
+
+    // An administrator may add a user through the Users API. This exercises the
+    // same credential account insert that sign-up uses, including `issuer`.
+    const createdUser = await requestApp(app, `${baseUrl}/api/users`, {
+      method: 'POST',
+      headers: { cookie, 'content-type': 'application/json' },
+      body: JSON.stringify({
+        name: 'Admin Created',
+        username: 'admincreated',
+        email: 'admin-created@example.com',
+        password: 'admin-created-password',
+      }),
+    });
+    expect(createdUser.status).toBe(201);
+
+    const createdUserSignIn = await requestApp(
+      app,
+      `${baseUrl}/api/auth/sign-in/username`,
+      {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          username: 'admincreated',
+          password: 'admin-created-password',
+        }),
+      },
+    );
+    expect(createdUserSignIn.status).toBe(200);
     const created = await requestApp(
       app,
       `${baseUrl}/api/auth/api-key/create`,
