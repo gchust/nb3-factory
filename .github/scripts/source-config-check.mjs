@@ -17,8 +17,8 @@ const config = path.join(app, 'config.yml'), backup = path.join(app, 'factory-co
 const hash = file => createHash('sha256').update(readFileSync(file)).digest('hex');
 const checks = [], original = hash(config);
 const env = { ...process.env, APP_CONFIG_FILE: config };
-function run(args) {
-  const result = spawnSync('pnpm', args, { cwd: app, env, detached: true, encoding: 'utf8', timeout: 90000 });
+function run(args, commandEnv = env) {
+  const result = spawnSync('pnpm', ['--silent', ...args], { cwd: app, env: commandEnv, detached: true, encoding: 'utf8', timeout: 90000 });
   if (result.error) {
     try { if (result.pid) process.kill(-result.pid, 'SIGKILL'); } catch (e) { if (e.code !== 'ESRCH') throw e; }
     throw result.error;
@@ -36,15 +36,19 @@ let restored = false;
 try {
   assert.equal(existsSync(backup), false);
   renameSync(config, backup);
-  const missing = run(['start']);
+  // A nonexistent explicit override is an invalid file path, not first setup.
+  // Exercise the default unconfigured path without any inherited auth source.
+  const unconfiguredEnv = { ...process.env };
+  for (const key of ['APP_CONFIG_FILE', 'AUTH_SECRET', 'SESSION_SECRET']) delete unconfiguredEnv[key];
+  const missing = run(['start'], unconfiguredEnv);
   assert.notEqual(missing.status, 0);
   assert.match(missing.stdout + missing.stderr, /config:init/u);
   checks.push({ id: 'CONFIG-01', status: 'passed', observation: 'Unconfigured production start stops and names config:init' });
-  command(['config:init', '--json']);
+  command(['config:init', '--dialect', 'sqlite', '--json']);
   assert.ok(existsSync(config));
   command(['config:check', '--json']);
   const first = hash(config);
-  command(['config:init', '--json']);
+  command(['config:init', '--dialect', 'sqlite', '--json']);
   assert.equal(hash(config), first);
   checks.push({ id: 'CONFIG-02', status: 'passed', observation: 'First init creates valid configuration; repeated init leaves the file unchanged' });
   command(['config:set', 'i18n.defaultLocale=en-US', '--json']);
