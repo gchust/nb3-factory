@@ -13,6 +13,10 @@ import { selectDistArtifact } from './preview-host.mjs';
 import { matchesTaskPR } from './visual-report.mjs';
 import { scrubHistoryFile } from './history-redaction.mjs';
 
+export function scrubHubLog(name, text, secrets = []) {
+  return scrubHistoryFile(text, name, value => secrets.filter(Boolean).reduce((out, secret) => out.replaceAll(secret, '[REDACTED]'), value));
+}
+
 const positive = n => Number.isSafeInteger(n) && n > 0;
 const digest = bytes => createHash('sha256').update(bytes).digest('hex');
 export function selectHubArtifact(run, jobs, artifacts, repository, issue, attempt) {
@@ -107,14 +111,14 @@ async function runHub(workspace, artifactDir, evidence) {
   let browser;
   const secret = randomBytes(32).toString('hex'), password = `Factory-QA-${randomBytes(12).toString('hex')}`;
   try {
-    let ready = false;
+    let ready = false, lastProbe = 'not_probed';
     for (let i = 0; i < 120; i++) {
       if (spawnError) throw spawnError;
       if (child.exitCode !== null) throw new Error('Hub exited before becoming ready');
-      try { if ((await fetch(`${origin}/main/`, { signal: AbortSignal.timeout(1500) })).ok) { ready = true; break; } } catch { /* bounded startup */ }
+      try { const response = await fetch(`${origin}/main/`, { signal: AbortSignal.timeout(1500) }); lastProbe = `HTTP ${response.status}`; if (response.ok) { ready = true; break; } } catch (error) { lastProbe = error.cause?.code ?? error.name; }
       await delay(1000);
     }
-    assert.ok(ready, 'Hub startup timeout');
+    assert.ok(ready, `Hub startup timeout (${lastProbe}); see hub-start.log`);
     assert.ok(process.env.FACTORY_HUB_BROWSER_DIR, 'Isolated browser dependency directory required');
     const { chromium } = createRequire(path.join(process.env.FACTORY_HUB_BROWSER_DIR, 'package.json'))('playwright');
     browser = await chromium.launch({ channel: 'chrome', headless: true });
@@ -164,7 +168,7 @@ async function runHub(workspace, artifactDir, evidence) {
     assert.equal(logs.enabled, true);
     const entries = logs.entries;
     assert.ok(Array.isArray(entries) && entries.length > 0, 'Actual deployment log entries required');
-    writeFileSync(path.join(out, 'deployment-log.json'), scrubHistoryFile('deployment-log.json', JSON.stringify(logs)).replaceAll(secret, '[REDACTED]').replaceAll(password, '[REDACTED]'));
+    writeFileSync(path.join(out, 'deployment-log.json'), scrubHubLog('deployment-log.json', JSON.stringify(logs), [secret, password]));
     receipt.checks.push({ id: 'HUB-03', status: 'passed', observation: `${entries.length} actual deployment log entries`, evidence: 'deployment-log.json' });
     receipt.status = 'passed';
   } catch (error) {
@@ -178,7 +182,7 @@ async function runHub(workspace, artifactDir, evidence) {
       try { process.kill(-child.pid, 'SIGKILL'); } catch (e) { if (e.code !== 'ESRCH') throw e; }
     }
     await new Promise(resolve => stream.end(resolve));
-    writeFileSync(logFile, scrubHistoryFile('hub-start.log', readFileSync(logFile, 'utf8')).replaceAll(secret, '[REDACTED]').replaceAll(password, '[REDACTED]'));
+    writeFileSync(logFile, scrubHubLog('hub-start.log', readFileSync(logFile, 'utf8'), [secret, password]));
     writeFileSync(path.join(out, 'hub-checks.json'), JSON.stringify(receipt, null, 2));
   }
 }
