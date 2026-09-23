@@ -540,7 +540,7 @@ function publishFixture(root) {
   return { remote, control, candidate, bundle, base, next };
 }
 
-test('publish replaces develop with a root commit and atomically backs up the prior baseline', () => {
+test('publish adds the verified baseline on top of develop and atomically backs up the prior baseline', () => {
   const root = mkdtempSync(path.join(os.tmpdir(), 'nb3-template-publish-'));
   try {
     const f = publishFixture(root);
@@ -555,8 +555,23 @@ test('publish replaces develop with a root commit and atomically backs up the pr
       ],
       { stdio: 'pipe', env: { ...process.env, GITHUB_STEP_SUMMARY: '' } },
     );
-    assert.equal(git(f.remote, 'rev-parse', 'develop'), f.next);
-    assert.equal(git(f.remote, 'rev-list', '--count', 'develop'), '1');
+    const published = git(f.remote, 'rev-parse', 'develop');
+    // History is kept: the generated tree lands as one commit whose parent is
+    // the develop it was generated from, so older branches still share history.
+    assert.equal(git(f.remote, 'rev-parse', `${published}^`), f.base);
+    assert.equal(git(f.remote, 'rev-list', '--count', 'develop'), '2');
+    assert.equal(
+      git(f.remote, 'rev-parse', `${published}^{tree}`),
+      git(f.candidate, 'rev-parse', `${f.next}^{tree}`),
+    );
+    assert.equal(
+      git(f.remote, 'log', '-1', '--format=%s%n%an', published),
+      git(f.candidate, 'log', '-1', '--format=%s%n%an', f.next),
+    );
+    assert.equal(
+      git(f.remote, 'merge-base', 'develop', 'apps/existing'),
+      f.base,
+    );
     assert.equal(
       git(f.remote, 'rev-parse', 'factory-backup/develop-123-1'),
       f.base,
