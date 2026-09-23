@@ -13,12 +13,14 @@ The application build and browser QA have different repair owners:
 - Other nonzero exits: infrastructure failure; retain diagnostics and the
   checkpoint, mark the Issue failed, and require a deliberate retry.
 
-Issue #32 exposed a delivery criterion containing “edit” whose report omitted
-the prefill observation already present in its dedicated edit check. Missing
-evidence must not be rewritten into an application defect. QA must associate
-the actual observation and screenshot with that delivery check before passing.
-Explicit empty required fields or a required flow showing “Something went wrong”
-remain business failures.
+QA's per-check `status` is the verdict. The validator checks the report's
+structure, criterion coverage, screenshots and recorded browser commands, and
+derives the overall result from the checks, but it never reinterprets the prose
+in `actions` or `evidence`. An earlier regex guard read negated observations such
+as “未出现 Something went wrong” as defects and spent whole repair rounds
+(#110, #112). The QA prompt owns the business rules instead: a required flow
+showing “Something went wrong”, or an edit form that loses existing values, must
+be recorded as `failed` by QA itself.
 
 Pi and CodeBuddy QA invocations load the same trusted guard: `qa-process-guard.mjs`
 as a Pi extension, or `codebuddy-qa-guard.mjs` as a CodeBuddy `PreToolUse` hook

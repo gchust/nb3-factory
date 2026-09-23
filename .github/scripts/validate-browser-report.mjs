@@ -36,18 +36,14 @@ for (const [index, check] of report.checks.entries()) {
 if (screenshotCount === 0 && report.checks.some((check) => ['passed', 'failed'].includes(check.status)))
   invalid('At least one browser screenshot is required.');
 
-const { failures: semanticFailures, evidenceGaps } =
-  applySemanticGuards(report);
-{
-  writeFileSync(args.report, `${JSON.stringify(report, null, 2)}\n`);
-}
+// QA's per-check status is the verdict. This validator checks structure and
+// evidence but never reinterprets QA's prose: a regex over actions/evidence read
+// negations such as “未出现 Something went wrong” as defects and spent repairs.
+writeFileSync(args.report, `${JSON.stringify(report, null, 2)}\n`);
 if (report !== rawReport) {
   console.log(
     'Normalized an equivalent Agent Browser report to the factory report schema.',
   );
-}
-for (const failure of semanticFailures) {
-  console.error(`Agent Browser semantic guard failed: ${failure}`);
 }
 
 const failedChecks = report.checks.filter((check) => check.status === 'failed');
@@ -61,7 +57,6 @@ if (failedChecks.length > 0) {
   report.passed = false;
   writeFileSync(args.report, `${JSON.stringify(report, null, 2)}\n`);
   console.error('Agent Browser acceptance failed:');
-  for (const gap of evidenceGaps) console.error(`Incomplete QA evidence: ${gap}`);
   console.error(JSON.stringify(report, null, 2));
   process.exit(10);
 }
@@ -73,7 +68,6 @@ if (incomplete.some((check) => check.status === 'blocked')) {
   process.exit(20);
 }
 if (incomplete.length > 0) invalid('Required acceptance checks were not run: ' + incomplete.map((c) => c.id).join(', '));
-if (evidenceGaps.length > 0) invalid(evidenceGaps.join('\n'));
 if (!report.authenticated || report.failures.length > 0 || report.passed !== true)
   invalid('Report is incomplete or inconsistent; only observed failed checks authorize application repair.');
 console.log(`Agent Browser acceptance passed with ${report.checks.length} check(s) and ${screenshotCount} screenshot(s).`);
@@ -306,53 +300,6 @@ function printableFailureValue(value) {
       .join('; ');
   }
   return value == null ? '' : String(value).trim();
-}
-
-function applySemanticGuards(value) {
-  const failures = [];
-  const evidenceGaps = [];
-  for (const check of value.checks) {
-    if (check.status !== 'passed') continue;
-    const observation = [...check.actions, ...check.evidence].join(' ');
-    const reasons = [];
-
-    if (
-      /(?:提示|显示|出现|show(?:s|ed)?|display(?:s|ed)?)[^.!。]{0,80}something went wrong/i.test(
-        observation,
-      )
-    ) {
-      reasons.push('a required flow displayed “Something went wrong”');
-    }
-
-    if (
-      /(?:编辑|\bedit(?:ing|ed)?\b)/iu.test(check.criterion) &&
-      /(?:(?:opened|opens) with (?:empty|blank) required fields|required fields (?:were|are) (?:empty|blank)|(?:必填字段|已有值|原值)(?:均|都|全部|仍)?(?:为空|未回填|没有回填))/iu.test(
-        observation,
-      )
-    ) {
-      reasons.push('the edit form did not preserve existing required values');
-    }
-
-    if (
-      /(?:编辑|\bedit(?:ing|ed)?\b)/iu.test(check.criterion) &&
-      !/(?:预填|回填|原值|当前值|已有值|prefill|pre-fill|prepopulate|pre-populate|existing value|current value)/iu.test(
-        observation,
-      )
-    ) {
-      evidenceGaps.push(
-        `${check.criterion}: the edit scenario did not verify existing values were prefilled. Verify the existing fields in the browser and document the observation and screenshot in this check; a delivery summary may cite the already verified edit scenario.`,
-      );
-    }
-
-    if (reasons.length === 0) continue;
-    check.status = 'failed';
-    const failure = `${check.criterion}: ${reasons.join('; ')}.`;
-    value.failures.push(failure);
-    failures.push(failure);
-  }
-
-  if (failures.length > 0) value.passed = false;
-  return { failures, evidenceGaps };
 }
 
 function validateBrowserCommands(commands) {

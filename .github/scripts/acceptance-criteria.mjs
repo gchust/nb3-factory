@@ -98,7 +98,7 @@ export function validateCoverage(checks, criteria) {
     if (seen.has(criterion.id)) throw new Error(`Duplicate acceptance result: ${criterion.id}`);
     seen.add(criterion.id);
     check.id = criterion.id;
-    // Evaluate semantic guards against the actual requirement, not an Agent's
+    // Report and repair against the actual requirement, not an Agent's
     // abbreviated replacement which could omit e.g. the edit/prefill obligation.
     check.criterion = criterion.text;
   }

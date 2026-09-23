@@ -174,30 +174,37 @@ test('QA checks using name, details, and evidence screenshots are normalized', (
   }
 });
 
-test('passed edit report cannot hide empty required fields behind a workaround', () => {
+test('QA check status is the verdict; negated observations stay passed', () => {
   const fixture = createFixture();
   try {
     fixture.report.checks[1] = {
-      criterion: 'Edit a record',
+      criterion: '编辑记录',
       status: 'passed',
-      actions: [
-        'The edit form opened with empty required fields, so all values were entered again before saving.',
-      ],
+      actions: ['打开编辑弹窗，确认已有值正确回填，修改说明后保存。'],
       evidence: [
-        'Save first showed Something went wrong; entering the asset number made it succeed.',
+        '全流程未出现 “Something went wrong”，无空白字段。',
+        'The page did not show Something went wrong; required fields were not empty.',
       ],
       screenshots: ['criterion-2.png'],
     };
     writeReport(fixture);
-
     const result = runValidator(fixture);
-    assert.equal(result.status, 10, result.stderr);
-    assert.match(result.stderr, /semantic guard failed/);
-    assert.match(result.stderr, /Something went wrong/);
-    assert.match(result.stderr, /existing values were prefilled/);
-    const guarded = JSON.parse(readFileSync(fixture.reportFile, 'utf8'));
-    assert.equal(guarded.passed, false);
-    assert.equal(guarded.checks[1].status, 'failed');
+    assert.equal(result.status, 0, result.stderr);
+    const report = JSON.parse(readFileSync(fixture.reportFile, 'utf8'));
+    assert.equal(report.checks[1].status, 'passed');
+    assert.deepEqual(report.failures, []);
+  } finally {
+    fixture.cleanup();
+  }
+});
+
+test('a passed edit check is not returned to QA for missing prefill wording', () => {
+  const fixture = createFixture();
+  try {
+    fixture.report.checks[1].criterion = '编辑记录';
+    writeReport(fixture);
+    const result = runValidator(fixture);
+    assert.equal(result.status, 0, result.stderr);
   } finally {
     fixture.cleanup();
   }
@@ -215,105 +222,24 @@ test('browser report cannot pass without recorded browser interaction', () => {
   }
 });
 
-test('missing edit evidence in a delivery summary returns to QA without inventing a business defect', () => {
+test('a failed QA check requests repair even when the summary claims success', () => {
   const fixture = createFixture();
   try {
-    fixture.report.checks[0] = {
-      criterion: 'Edit a record',
-      status: 'passed',
-      actions: ['Opened Edit and verified the existing values were prefilled.'],
-      evidence: [
-        'Changed the description, saved, and verified it after reload.',
-      ],
-      screenshots: ['criterion-1.png'],
-    };
     fixture.report.checks[1] = {
-      criterion:
-        'Capture screenshots and recordings of create, edit and delete for the PR',
-      status: 'passed',
-      actions: ['Recorded the required scenarios.'],
-      evidence: ['Saved screenshots and WebM recordings.'],
+      criterion: '编辑记录',
+      status: 'failed',
+      actions: ['打开编辑弹窗。'],
+      evidence: ['打开编辑弹窗后，必填字段为空，需要重新填写。'],
       screenshots: ['criterion-2.png'],
     };
+    fixture.report.failures = ['编辑记录：已有值未回填。'];
     writeReport(fixture);
-
     const result = runValidator(fixture);
-    assert.equal(result.status, 2, result.stderr);
-    assert.match(result.stderr, /Invalid Agent Browser report/);
-    assert.match(result.stderr, /already verified edit scenario/);
+    assert.equal(result.status, 10, result.stderr);
+    assert.match(result.stderr, /已有值未回填/);
     const report = JSON.parse(readFileSync(fixture.reportFile, 'utf8'));
-    assert.deepEqual(report.failures, []);
-    assert.equal(report.checks[1].status, 'passed');
-
-    // QA can associate the real edit evidence with the delivery check,
-    // without touching the application or rerunning its migrations/build.
-    fixture.report.checks[1].evidence.push(
-      'The edit scenario above verified existing values were prefilled, as shown in criterion-1.png.',
-    );
-    fixture.report.checks[1].screenshots.push('criterion-1.png');
-    writeReport(fixture);
-    assert.equal(runValidator(fixture).status, 0);
-  } finally {
-    fixture.cleanup();
-  }
-});
-
-test('an unverified edit remains incomplete even without an observed defect', () => {
-  const fixture = createFixture();
-  try {
-    fixture.report.checks[1].criterion = '编辑记录';
-    writeReport(fixture);
-    const result = runValidator(fixture);
-    assert.equal(result.status, 2);
-    assert.match(result.stderr, /existing values were prefilled/);
-  } finally {
-    fixture.cleanup();
-  }
-});
-
-test('observed empty edit fields remain an application defect without a generic error', () => {
-  const fixture = createFixture();
-  try {
-    fixture.report.checks[1].criterion = '编辑记录';
-    fixture.report.checks[1].evidence = [
-      '打开编辑弹窗后，必填字段为空，需要重新填写。',
-    ];
-    writeReport(fixture);
-    const result = runValidator(fixture);
-    assert.equal(result.status, 10);
-    assert.match(result.stderr, /did not preserve existing required values/);
-  } finally {
-    fixture.cleanup();
-  }
-});
-
-test('observed business failures take priority over gaps in another check', () => {
-  const fixture = createFixture();
-  try {
-    fixture.report.passed = false;
-    fixture.report.checks[0].status = 'failed';
-    fixture.report.failures = ['Create returned HTTP 500.'];
-    fixture.report.checks[1].criterion = 'Record editing for the PR';
-    writeReport(fixture);
-    const result = runValidator(fixture);
-    assert.equal(result.status, 10);
-    assert.match(result.stderr, /Create returned HTTP 500/);
-  } finally {
-    fixture.cleanup();
-  }
-});
-
-test('a successful edit observation may mention the absence of blank fields', () => {
-  const fixture = createFixture();
-  try {
-    fixture.report.checks[1].criterion = '编辑记录';
-    fixture.report.checks[1].evidence = [
-      '已有值正确回填，无空白字段。',
-      'Existing values were prefilled; no empty required fields were shown.',
-    ];
-    writeReport(fixture);
-    const result = runValidator(fixture);
-    assert.equal(result.status, 0, result.stderr);
+    assert.equal(report.passed, false);
+    assert.equal(report.checks[0].status, 'passed');
   } finally {
     fixture.cleanup();
   }
@@ -404,7 +330,7 @@ function runValidator(fixture) {
   );
 }
 
-// These tests vary the business scenario to exercise semantic guards. Keep its
+// These tests vary the business scenario. Keep its
 // requested criterion in sync; missing/duplicate/unknown IDs have separate tests.
 function writeReport(fixture) {
   writeFileSync(fixture.metadata, JSON.stringify({ task: { acceptanceCriteria:
