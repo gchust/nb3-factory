@@ -28,7 +28,7 @@ function harness(t, codes, repairs = []) {
   const workspace = path.join(root, 'workspace');
   mkdirSync(dest, { recursive: true });
   mkdirSync(workspace);
-  for (const file of ['qa-retest.mjs', 'acceptance-criteria.mjs', 'timed-command.mjs', 'timing.mjs'])
+  for (const file of ['qa-retest.mjs', 'acceptance-criteria.mjs', 'timed-command.mjs', 'timing.mjs', 'apply-database.sh'])
     copyFileSync(path.join(scripts, file), path.join(dest, file));
   write(dest, 'create-runtime-config.mjs', "import {writeFileSync} from 'node:fs';writeFileSync(process.argv[process.argv.indexOf('--output')+1], 'config');");
   write(dest, 'verify.sh', '#!/bin/bash\necho verify >> "$TRACE"\necho verification-output\n', 0o755);

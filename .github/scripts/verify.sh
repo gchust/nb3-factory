@@ -61,8 +61,7 @@ if [[ -n "${FACTORY_BUILD_TARGET:-}" ]]; then
 else
   NODE_ENV=production timed build
 fi
-timed migrate
-timed seed
+"$script_dir/apply-database.sh"
 
 if [[ "${FACTORY_SKIP_BROWSER:-0}" == "1" ]]; then
   echo "Browser smoke skipped by FACTORY_SKIP_BROWSER=1."

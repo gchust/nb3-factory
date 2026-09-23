@@ -91,8 +91,7 @@ while true; do
             --output "$runtime_config" --database "$state_dir/${verification_name}/full/database.sqlite"
           initialization_log="$verification_artifacts/full-initialize.log"
           if ! (cd "$workspace" && export APP_CONFIG_FILE="$runtime_config" NODE_ENV=test &&
-            node "$control_dir/.github/scripts/timed-command.mjs" migrate pnpm migrate &&
-            node "$control_dir/.github/scripts/timed-command.mjs" seed pnpm seed) \
+            "$control_dir/.github/scripts/apply-database.sh") \
             2>&1 | tee "$initialization_log" | tee -a "$verification_log"; then
             failure_kind=build
             repair_log="$initialization_log"
