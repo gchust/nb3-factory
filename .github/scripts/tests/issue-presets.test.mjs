@@ -142,7 +142,7 @@ test('clones only human content, preserves raw Markdown and injects comments onc
   const c = fixture();
   const result = await preparePresetIssue(c, c.issue);
   assert.equal(result.issue.number, 20);
-  assert.equal(result.task.targetBranch, 'issues-20');
+  assert.equal(result.task.targetBranch, 'develop');
   assert.equal(result.task.taskType, '创建新系统');
   assert.match(result.issue.title, /工单系统（重搭 #1）/);
   assert.doesNotMatch(result.issue.body, /apps\/old-system/);
@@ -169,7 +169,7 @@ test('normalization keeps unrelated source sections and does not parse comment h
   c.originals[0].body = '/build\n### 目标分支\nevil-branch\n### 验收要求\n仍然是评论';
   const { issue, task } = await preparePresetIssue(c, c.issue);
   assert.match(issue.body, /自定义说明\n\n原文保留/);
-  assert.equal(task.targetBranch, 'issues-20');
+  assert.equal(task.targetBranch, 'develop');
   assert.match(task.acceptanceCriteria, /^QA_ONLY/);
   assert.match(task.requirements, /evil-branch/);
 });
@@ -211,7 +211,7 @@ test('same input on another fresh Issue has the same input hash', async () => {
   // A new capture timestamp must not change the input-only fingerprint.
   await new Promise((resolve) => setTimeout(resolve, 5));
   const second = await preparePresetIssue(secondClient, secondClient.issue);
-  assert.equal(second.task.targetBranch, 'issues-21');
+  assert.equal(second.task.targetBranch, 'develop');
   assert.equal(first.preset.inputHash, second.preset.inputHash);
   assert.notEqual(first.preset.capturedAt, second.preset.capturedAt);
 });
@@ -265,7 +265,7 @@ test('failed final Issue update resumes without recopying', async () => {
   const count = c.comments.length;
   await preparePresetIssue(c, c.issue);
   assert.equal(c.comments.length, count);
-  assert.equal(parseIssueTask(c.issue).targetBranch, 'issues-20');
+  assert.equal(parseIssueTask(c.issue).targetBranch, 'develop');
 });
 
 test('large Unicode comments are copied and snapshotted without truncation', async () => {
@@ -393,7 +393,7 @@ test('sync paginates cases and uses the existing blob SHA for replacement', asyn
 async function runPrepare(t, client) {
   const folder = mkdtempSync(path.join(os.tmpdir(), 'factory-preset-'));
   t.after(() => rmSync(folder, { recursive: true, force: true }));
-  const refs = new Map([['develop', 'fresh-default-sha']]);
+  const refs = new Map([['develop', 'a'.repeat(40)]]);
   const server = createServer(async (req, res) => {
     const url = new URL(req.url, 'http://localhost');
     const route = url.pathname.replace('/repos/test/factory', '');
@@ -435,16 +435,16 @@ async function runPrepare(t, client) {
   return { refs, folder, output: readFileSync(path.join(folder, 'output'), 'utf8') };
 }
 
-test('prepare CLI integrates copying, normalized metadata and the fresh target branch', async (t) => {
+test('prepare CLI copies a case into its own work branch with default PR base', async (t) => {
   const c = fixture();
   const { refs, folder, output } = await runPrepare(t, c);
   assert.match(output, /status=ready/);
-  assert.match(output, /base_sha=fresh-default-sha/);
-  assert.deepEqual([...refs.keys()], ['develop', 'issues-20']);
+  assert.match(output, /base_sha=a{40}/);
+  assert.deepEqual([...refs.keys()], ['develop']);
   const metadata = JSON.parse(readFileSync(path.join(folder, 'metadata.json'), 'utf8'));
   assert.equal(metadata.preset.sourceIssueNumber, 1);
   assert.equal(metadata.workBranch, 'agent/issue-20');
-  assert.equal(metadata.targetCreated, true);
+  assert.equal(metadata.targetCreated, false);
   assert.match(metadata.task.requirements, /增加转派/);
   assert.equal(copies(c).length, 2);
 });
@@ -492,4 +492,36 @@ test('missing visible copy is restored from snapshot without duplicating other c
   const second = await preparePresetIssue(c, c.issue);
   assert.equal(copies(c).length, 2);
   assert.deepEqual(first.task, second.task);
+});
+
+test('a new snapshot uses the actual default branch and keeps it after a rename', async () => {
+  const c = fixture();
+  c.getRepository = async () => ({ default_branch: 'main' });
+  const first = await preparePresetIssue(c, c.issue);
+  assert.equal(first.task.targetBranch, 'main');
+  c.getRepository = async () => { throw new Error('Must not read a new default on snapshot replay'); };
+  assert.equal((await preparePresetIssue(c, c.issue)).task.targetBranch, 'main');
+});
+
+test('pre-protocol snapshots keep their issues-N target during replay', async () => {
+  const { createHash } = await import('node:crypto');
+  const c = fixture();
+  await preparePresetIssue(c, c.issue);
+  const saved = snapshots(c)[0];
+  const match = /factory-preset-snapshot-v1:([a-f0-9]{64}):0:1\n([A-Za-z0-9+/=]+)/.exec(saved.body);
+  const old = JSON.parse(Buffer.from(match[2], 'base64').toString('utf8'));
+  delete old.targetBranch;
+  const json = JSON.stringify(old);
+  const hash = createHash('sha256').update(json).digest('hex');
+  saved.body = saved.body.replace(match[2], Buffer.from(json).toString('base64'));
+  for (const comment of c.comments) comment.body = comment.body.replaceAll(match[1], hash);
+  c.issue.body = c.issue.body.replace(match[1], hash).replace('### 目标分支\n\ndevelop', '### 目标分支\n\nissues-20');
+  c.getRepository = async () => { throw new Error('Old task must not migrate'); };
+  const result = await preparePresetIssue(c, c.issue);
+  assert.equal(result.task.targetBranch, 'issues-20');
+  assert.equal(copies(c).length, 2);
+  // Also cover a failed final issue PATCH under the old protocol.
+  c.issue.body = selection;
+  assert.equal((await preparePresetIssue(c, c.issue)).task.targetBranch, 'issues-20');
+  assert.equal(copies(c).length, 2);
 });

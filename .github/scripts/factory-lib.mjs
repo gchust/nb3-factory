@@ -65,7 +65,7 @@ export function isValidTargetBranch(branch) {
 export function validateTargetBranch(branch) {
   if (!isValidTargetBranch(branch)) {
     throw new TaskInputError(
-      '目标分支名称无效：使用字母、数字、点、下划线、短横线或子路径，最长 120 字符。留空使用 issues-<Issue 编号>。',
+      '目标分支名称无效：使用字母、数字、点、下划线、短横线或子路径，最长 120 字符。留空使用仓库默认分支（develop）。',
     );
   }
   return branch;
@@ -81,11 +81,10 @@ export function parseIssueTask(issue) {
     return value;
   };
 
+  const targetBranch = sections.get(FIELD_NAMES.targetBranch)?.trim();
   return {
-    targetBranch: validateTargetBranch(
-      sections.get(FIELD_NAMES.targetBranch)?.trim() ||
-        `issues-${issueNumberFromEvent({ issue })}`,
-    ),
+    // Resolve an omitted branch against the repository, not the Issue number.
+    targetBranch: targetBranch ? validateTargetBranch(targetBranch) : null,
     taskType: required('taskType'),
     requirements: required('requirements'),
     acceptanceCriteria: required('acceptanceCriteria'),

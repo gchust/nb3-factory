@@ -22,6 +22,7 @@ function fixture(review = `${marker}\nREVIEW_SENTINEL: inspect private implement
   ]], [2, []]]);
   const client = {
     repository: 'owner/repo',
+    getRepository: async () => ({ default_branch: 'develop' }),
     getIssue: async number => structuredClone(number === 1 ? source : issue),
     async addComment(number, body) {
       const comment = { id: 100 + comments.get(number).length, user: bot, body };

@@ -7,7 +7,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        目标分支可选，留空使用 `issues-<Issue 编号>`。同一分支代表一个可持续完善的业务系统。Code Agent 会在独立工作分支修改并向目标分支发起 PR，不会直接提交目标分支。
+        PR 目标分支可选，留空使用仓库默认分支（develop）。每个新 Issue 从它开始，在 agent/issue-<Issue 编号> 上独立搭建，再向默认分支发起 PR，不会直接提交或自动合并。
 
         自动验证失败时，Code Agent 会根据最新日志持续修复并重新验证，不限修复次数；GitHub 托管 Runner 的单个 Job 最长运行 6 小时。
 
@@ -15,8 +15,8 @@ body:
     id: target_branch
     attributes:
       label: 目标分支
-      description: 选填，不限 apps/ 前缀。留空使用 issues-<Issue 编号>；不存在时从默认分支创建，存在时复用。
-      placeholder: it-service-desk（留空自动生成）
+      description: 选填，表示 PR 合并目标和新任务的代码起点。留空使用默认分支（develop）；指定业务分支时沿用该系统，不存在则从默认分支创建。
+      placeholder: develop（留空使用默认分支）
     validations:
       required: false
 

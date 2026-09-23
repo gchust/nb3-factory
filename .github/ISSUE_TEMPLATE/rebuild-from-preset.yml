@@ -9,7 +9,7 @@ body:
     attributes:
       value: |
         提交后复制原案例的正文及全部人工评论，不复制机器人回复、PR 或旧运行状态。
-        使用新的 issues-<Issue 编号> 目标分支，从当前默认分支开始；复制完成后只启动一次搭建。
+        从当前默认分支（develop）开始，在 agent/issue-<新 Issue 编号> 上搭建，PR 指向默认分支；不继承来源案例的分支。
         列表由 factory:preset 标签维护，包含已关闭的预置案例。列表同步完成后请刷新创建页面。
   - type: dropdown
     id: preset_issue
