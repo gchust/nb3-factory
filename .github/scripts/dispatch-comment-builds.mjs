@@ -14,12 +14,12 @@ import {
   saveReceipt,
 } from './comment-queue.mjs';
 
-import { isPresetIssue } from './issue-presets.mjs';
+import { isManualIssue, isPresetIssue } from './issue-presets.mjs';
 import { resolveTargetBranch } from './task-base.mjs';
 
 export async function coordinate(client, issueNumber, admissionId = Infinity) {
   const issue = await client.getIssue(issueNumber);
-  if (issue.pull_request || isPresetIssue(issue)) return;
+  if (issue.pull_request || isPresetIssue(issue) || isManualIssue(issue)) return;
   let task;
   try {
     task = parseIssueTask(issue);

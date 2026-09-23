@@ -13,7 +13,7 @@ import {
   resolveBuildTask,
   listAll,
 } from './comment-queue.mjs';
-import { isPresetIssue, preparePresetIssue } from './issue-presets.mjs';
+import { isManualIssue, isPresetIssue, preparePresetIssue } from './issue-presets.mjs';
 import { resolveTaskBranch, taskIssueNumber } from './task-compat.mjs';
 import { resolveTargetBranch, pinInitialBase } from './task-base.mjs';
 
@@ -37,6 +37,10 @@ try {
   let issue = await client.getIssue(issueNumber);
   if (issue.pull_request) {
     throw new TaskInputError('任务编号必须指向 Issue，不能指向 Pull Request。');
+  }
+  if (isManualIssue(issue)) {
+    appendGithubOutput(outputPath, 'status', 'manual');
+    process.exit(0);
   }
   if (isPresetIssue(issue)) {
     appendGithubOutput(outputPath, 'status', 'preset');
