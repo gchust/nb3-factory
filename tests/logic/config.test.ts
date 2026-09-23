@@ -77,10 +77,8 @@ describe('application config', () => {
     });
     expect(
       runtime.config.get<AppQueueConfig>('queue')!.jobs?.locations,
-    ).toEqual(
-      expect.arrayContaining([
-        expect.stringMatching(/server\/jobs\/\*\*\/\*\.\{ts,js\}$/),
-      ]),
+    ).toContain(
+      path.join(templateRootDir, 'server', 'jobs', '**', '*.{ts,js}'),
     );
     expect(runtime.config.get<AppSessionConfigInput>('session')!.default).toBe(
       'memory',

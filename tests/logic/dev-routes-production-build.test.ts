@@ -10,9 +10,10 @@ import {
   rm,
   writeFile,
 } from 'node:fs/promises';
+import { readFileSync } from 'node:fs';
+import { findPackageJSON } from 'node:module';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { build } from 'vite';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
@@ -25,11 +26,23 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
  * guard inside `defineDevRoutes()` is ever weakened.
  */
 
-const appClientPlugins = fileURLToPath(
-  new URL(
-    '../../node_modules/@nocobase/app-client/dist/plugins.js',
-    import.meta.url,
-  ),
+const appClientPackagePath = findPackageJSON(
+  '@nocobase/app-client',
+  import.meta.url,
+);
+if (!appClientPackagePath) {
+  throw new Error('Cannot resolve @nocobase/app-client/package.json');
+}
+const appClientPackage = JSON.parse(
+  readFileSync(appClientPackagePath, 'utf8'),
+) as { exports?: { './plugins'?: { import?: string } } };
+const appClientPluginsExport = appClientPackage.exports?.['./plugins']?.import;
+if (!appClientPluginsExport) {
+  throw new Error('@nocobase/app-client does not export ./plugins');
+}
+const appClientPlugins = path.resolve(
+  path.dirname(appClientPackagePath),
+  appClientPluginsExport,
 );
 
 const DEV_PAGE_MARKER = 'dev_page_marker_a7f3c1';

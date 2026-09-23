@@ -12,6 +12,8 @@ e2e/                Tests needing a real server, real auth, or a real database
 
 `vitest.config.ts` discovers `tests/**/*.test.{ts,tsx}` automatically. Theme token tests compile the real CSS; browser checks still need to verify computed styles, typography, spacing and focus.
 
+Templates ship their tests into generated applications. Keep them runnable from the application root after scaffolding: read application identity from `package.json`, resolve application paths relative to the test file, and import dependencies through their published package exports. Do not depend on a monorepo checkout, a fixed template directory name, or a particular pnpm store layout. Run the affected test files in the generated application as well as in the template when changing these contracts.
+
 ## What to test, by change
 
 | You changed         | Test at least                                                                               |
@@ -59,32 +61,28 @@ Run against a real test database. A test that only imports the migration file pr
 
 ## Before finishing
 
-```bash
-pnpm typecheck
-pnpm test
-pnpm lint
-pnpm build
-```
+Scope every check to the changed behavior and its affected consumers. Select relevant checks rather than running a fixed full-application checklist after each edit:
 
-`pnpm check` runs all of these plus formatting.
+| Check               | Scope                                                                                                                                                                                   |
+| ------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Formatting and lint | Pass the changed files to Prettier or ESLint using the project's configuration; include other files only when shared formatting or lint configuration affects them                      |
+| Type checking       | Use the smallest owning TypeScript project configuration that covers the change; preserve project references and compiler settings rather than passing individual source files to `tsc` |
+| Tests               | Use `pnpm exec vitest run <affected-test-files>` with actual relevant paths; include integration or end-to-end tests for affected behavior across boundaries                            |
+| Build               | Build affected packages or supported application targets when emitted output, bundling, or deployment behavior needs verification                                                       |
+| Runtime             | Exercise only the affected workflows, including their authentication and permission boundaries when relevant                                                                            |
 
-Then verify the actual behavior. Green commands mean the code compiles and the assertions you wrote hold — not that the feature works:
+In a workspace, use `pnpm --filter <affected-package> <script>` for each affected package and affected consumer. For standalone applications, inspect available scripts and project configurations before selecting commands. Do not invent selectors that a command does not support. If a necessary check only supports a whole project or package, use that smallest supported scope and explain the limitation.
+
+Expand scope only when shared code, dependencies, configuration, or a failure gives a concrete reason, or when the user explicitly requests it. Full-application verification is appropriate when the impact actually spans the application. Once checks pass, repeat them only after further relevant changes or to resolve failures. `pnpm check` combines full checks, so use it only when all of its work is warranted by the affected scope.
+
+Add focused regression coverage when behavior changes. Documentation-only changes need formatting and link checks for the changed documents, not type checking, runtime tests, or builds.
+
+Then verify the affected behavior, selecting only the applicable steps below. Green commands mean the code compiles and the assertions you wrote hold — not that the feature works:
 
 - Open the page and use it, in both light and dark themes.
 - Confirm the endpoint's responses for signed-out, unpermitted, and permitted callers.
-- Confirm `pnpm migrate` applies cleanly.
+- Confirm `pnpm db:apply` applies cleanly.
 - Switch language and confirm the text changes.
-
-## Diagnostics
-
-```bash
-pnpm client:inspect --json  # Resolved client composition
-pnpm server:inspect --json  # Resolved server composition
-```
-
-Reach for these when a contribution does not appear where you expect. They read static declarations: they do not run providers, execute route factories, load page components, render anything, or touch the database.
-
-**A clean inspection is not evidence of correctness.** `consistent: true` means the wiring the command observed has no contradictions — it says nothing about whether the route is secure or the feature works. Never present an inspection as verification.
 
 ## Reporting
 
@@ -95,3 +93,21 @@ Say what you ran, what passed, and what you did not run. If you could not verify
 Set `NOCOBASE_STRICT_STARTUP=true` when running `pnpm dev` or `pnpm start` in automated verification. Startup failures, including job import failures, exit nonzero after resource cleanup. Strict dev runs the server without watch mode so a failed server cannot remain hidden behind a watcher; restart the command after server or configuration changes. Client HMR remains available. Omit the variable or set it to `false` for normal development with server hot reload. Request errors and individual job execution failures do not terminate the application.
 
 Use the shared Vitest presets for tests that discover queue jobs. They inline the queue loader so dynamically imported TypeScript tasks use Vitest's transformation and module registry. Do not suppress job import warnings or disable automatic discovery to make a startup test pass; assert that discovered jobs register and execute.
+
+## Vite cache isolation
+
+Every auxiliary Vite server started by a test or auxiliary tool must use its own temporary `cacheDir` and remove it after closing the server. A fixture that symlinks the application's `node_modules` also shares its default `.vite` directory. `optimizeDeps.noDiscovery` and an empty `include` are not isolation: plugins can add optimizer entries. Overwriting the live server's dependency files leaves its in-memory module URLs pointing at missing chunks and breaks lazy pages until restart.
+
+Do not delete or rebuild a running development server's cache. For an already corrupted cache, stop all processes using that application cache before rebuilding it, then reload the browser with its cache disabled if stale dependency responses remain. A separate Vitest configuration does not isolate Vite instances created inside tests or child commands.
+
+## Environment changes during development
+
+`pnpm dev` watches `.env` and `.env.local` with stat polling, including creation, atomic saves, and deletion. Changes stop the current development run before starting a fresh one, so both Vite and the server receive updated ports, base paths, proxy settings, and environment values. Shell variables retain precedence. Use the new ready URL after an address change. Proxy mode restarts Vite; `config.yml` changes restart only the local server. Strict startup disables automatic environment restarts as well as server watching. Never restart with the previous child's resolved environment: deleted dotenv keys would persist.
+
+## Shared application tooling
+
+Application scripts delegate to `@nocobase/app-tools`, and standard runtime CLI commands delegate to `@nocobase/app-cli`. In the source repository, run shared implementation tests in those packages and application composition tests in each affected template. Keep custom application command tests local. A generated application consumes compiled packages; do not edit installed package files to customize behavior.
+
+Development starts through `scripts/dev.mjs` calling `runAppTool('dev', { rootDir })`. Vite configuration imports proxy helpers directly from `@nocobase/app-tools/dev/proxy`. Keep watcher, proxy, and supervisor unit tests in `app-tools`; templates verify application entry paths and Vite integration.
+
+Standalone dependency checks and native retargeting use `scripts/server-deps.mjs` through the existing `server:deps:verify` and `server:deps:retarget` package scripts. Internal build utilities are owned and tested by `app-tools`.
