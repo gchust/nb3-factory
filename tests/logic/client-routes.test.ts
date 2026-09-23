@@ -24,6 +24,12 @@ describe('app client routes', () => {
           name: 'home',
           path: '/',
         },
+        {
+          auth: 'required',
+          authz: 'skip',
+          name: 'pipeline-smoke',
+          path: '/pipeline-smoke',
+        },
         { auth: 'guest', name: 'login', path: '/login' },
         { auth: 'guest', name: 'register', path: '/register' },
         {
@@ -59,8 +65,9 @@ describe('app client routes', () => {
     ]);
 
     expect(pageAuthorizations(resolved.routes)).toEqual([
-      // The landing page opted out of page authorization, so it is reachable by every signed-in user.
+      // The landing page and the smoke page opted out of page authorization, so every signed-in user reaches them.
       { name: 'home', authorizedAs: null },
+      { name: 'pipeline-smoke', authorizedAs: null },
     ]);
   });
 });
