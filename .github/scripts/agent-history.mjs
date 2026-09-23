@@ -1,3 +1,5 @@
+import { readResult } from './agent-result.mjs';
+import { collectAgentMetrics, metricsReceipt, readMetricsReceipts, renderAgentMetrics } from './agent-metrics.mjs';
 import { scrubHistoryFile } from './history-redaction.mjs';
 import { createHash } from 'node:crypto';
 import { selectHistorySource } from './agent-history-source.mjs';
@@ -151,13 +153,17 @@ export function packHistory({ artifacts, output, issue, runId, attempt, source, 
     files,
     completeness: inspectHistory(staging, files, source, downloads, skipped),
   };
+  if (source) {
+    manifest.metrics = collectAgentMetrics(staging, manifest);
+    writeFileSync(path.join(staging, 'metrics.json'), `${JSON.stringify(manifest.metrics, null, 2)}\n`);
+  }
   writeFileSync(
     path.join(staging, 'manifest.json'),
     `${JSON.stringify(manifest, null, 2)}\n`,
   );
   // New archives are content-addressed: an incomplete replay cannot overwrite
   // an earlier complete copy when some Actions artifacts have expired.
-  const suffix = source ? `-${createHash('sha256').update(JSON.stringify({ files, completeness: manifest.completeness })).digest('hex').slice(0, 16)}` : '';
+  const suffix = source ? `-${createHash('sha256').update(JSON.stringify({ files, completeness: manifest.completeness, metrics: manifest.metrics })).digest('hex').slice(0, 16)}` : '';
   const archive = path.join(
     output,
     `agent-history-issue-${issue}-run-${runId}-attempt-${attempt}${suffix}.tar.gz`,
@@ -210,8 +216,8 @@ export function inspectHistory(root, files, source, downloads = {}, skipped = []
     }
     for (const name of missing) problems.push({ name, reason: 'missing' });
     if (invocation?.invoked === true && names.has(`${log}.result.json`)) {
-      try { JSON.parse(readFileSync(path.join(root, `${log}.result.json`), 'utf8')); }
-      catch { problems.push({ name: `${log}.result.json`, reason: 'invalid_json' }); }
+      try { readResult(path.join(root, log)); }
+      catch { problems.push({ name: `${log}.result.json`, reason: 'invalid_result' }); }
     }
     invocations.push({ id: invocation?.id ?? null, log, invoked: invocation?.invoked ?? null, missing });
   }
@@ -345,7 +351,7 @@ async function publish(args) {
     problems: [{ name: 'archive', reason: 'missing_or_pack_failed' }] } };
   let body = renderHistory({ issue, runId, attempt, status: args.status ?? source?.status ?? '',
     bytes: packed?.bytes, manifest, assetUrl: args['asset-url'] ?? '',
-    fallbackUrl: args['fallback-url'] ?? '' });
+    fallbackUrl: args['fallback-url'] ?? '' }) + metricsReceipt(manifest.metrics);
   const comments = await list(`/issues/${issue}/comments`);
   const marker = MARKER(runId, attempt);
   const existing = comments.find(c => c.user?.login === 'github-actions[bot]' && c.body?.includes(marker));
@@ -381,7 +387,8 @@ async function publish(args) {
     const indexBody = `${indexMarker}\n## 本任务交互历史索引\n\n` + entries.slice(0, 100).map(({ comment: c, match }) =>
       `- [Run ${match[1]} · attempt ${match[2]}](${commentUrl(c)})${related('task-usage', match[1], match[2], '报告')}${related('visual-report', match[1], match[2], '截图与录像')}`).join('\n') +
       '\n\n各轮归档、缺失说明见对应记录；仅索引已发布的报告和媒体评论，稍后发布的内容仍可在本 Issue 查看。' +
-      (entries.length > 100 ? `\n仅列最近 100 轮，共 ${entries.length} 轮；更早记录仍在本 Issue。` : '');
+      (entries.length > 100 ? `\n仅列最近 100 轮，共 ${entries.length} 轮；更早记录仍在本 Issue。` : '') +
+      renderAgentMetrics(readMetricsReceipts(comments, source.repository, issue));
     const index = comments.find(c => c.user?.login === 'github-actions[bot]' && c.body?.startsWith(indexMarker));
     if (index?.body !== indexBody) await api(index ? 'PATCH' : 'POST',
       index ? `/issues/comments/${index.id}` : `/issues/${issue}/comments`, { body: indexBody });

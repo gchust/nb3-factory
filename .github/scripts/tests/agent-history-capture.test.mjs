@@ -43,7 +43,7 @@ function invocation(root, name) {
     env: { GITHUB_RUN_ID: '123', GITHUB_RUN_ATTEMPT: '2' } });
   capture.start({ command: 'pi', args: ['--print'], model: 'test' });
   put(root, name, '{"type":"turn_end"}\n');
-  put(root, `${name}.result.json`, { version: 1, status: 'completed' });
+  put(root, `${name}.result.json`, { version: 1, engine: 'pi', status: 'completed', invalidEvents: 0, measurements: [] });
   capture.finish();
   return capture;
 }
