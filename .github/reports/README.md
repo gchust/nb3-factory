@@ -14,11 +14,13 @@ QA：delivery-notes.json（可选） ┤                  │
 
 模板由 `.github/reports/report.template.html` 统一维护，使用黑白灰配色、左侧导航、首屏摘要、折叠详情与截图查看器。业务 Agent 不修改模板、不生成 HTML/CSS，不读取含图片的完整示例。
 
-固定章节：**交付总览、验收记录、效果与证据、遇到的问题、可改进的点、执行与用量**。没有“开发者资料与下一步”。
+固定章节：**交付总览、搭建质量与模块评审、NocoBase3 的帮助与问题、验收记录、效果与证据、遇到的问题、可改进的点、执行与用量**。没有“开发者资料与下一步”。
 
 验收逐项保留原始状态、实际操作、观察结果与截图引用；失败、未记录项及证据提示默认展开。完整原始要求和原始 QA 数据可展开核对。只读取选定轮次的记录，focused 结果不能当作全量通过。没有记录时明确标注未提供，不推断成功。
 
 复盘保留 `blockers` 的现象、根因、处理方式、实际代价和可选状态，以及 `improvements` 的原因、具体改法、分类和可自动化标识。兼容没有 `cost/status` 的旧记录；不因后续验收通过就自动标为已解决。Handoff 续跑只恢复复盘，不复用旧验收结论或重复累计旧日志。
+
+模块评分、具体帮助、框架问题、文档误导和视觉结论来自独立的 `build-review.json`；每个分数附理由与证据。首轮与最终轮分别显示，证据不足明确标为未评估，既有验收结论不会被评分改写。
 
 ## Agent 输出
 
@@ -28,7 +30,7 @@ QA：delivery-notes.json（可选） ┤                  │
 {"version":1,"summary":"简短业务结论","highlights":[{"title":"业务能力","detail":"实际完成情况"}],"flow":["步骤一","步骤二"]}
 ```
 
-文件名为 `delivery-notes.json`。正文约束见 `../prompts/browser-acceptance.md`。不额外调用报告模型，不重新读取交互日志或运行应用。说明缺失/格式错误时回退到 QA 摘要；模板故障时保留原有基础统计 HTML，不触发业务修复。
+文件名为 `delivery-notes.json`。正文约束见 `../prompts/browser-acceptance.md`。HTML 渲染本身不调用模型，不重新读取交互日志或运行应用。上游独立评审只调用一次 Code Agent，规则与预算见 [独立搭建评审](../BUILD_REVIEW.md)。说明缺失/格式错误时回退到 QA 摘要；模板故障时保留原有基础统计 HTML，不触发业务修复。
 
 ## 一次性设置
 
@@ -60,10 +62,10 @@ Pages 未启用/配置失败时，HTML 仍保存在 Actions Artifact 和 `gh-pag
 
 ## 视觉样例与验证
 
-`example.facts.json` 是明确标记的虚构评审数据，不伪装成真实验收。用同一模板生成可直接打开的样例：
+`example.facts.json` 和 `example.review.json` 是明确标记的虚构评审数据，不伪装成真实验收。用同一模板生成可直接打开的样例：
 
 ```bash
-node .github/reports/render-report.mjs .github/reports/example.facts.json - /tmp/report.example.html
+node .github/reports/render-review-example.mjs /tmp/report.example.html
 node --test --test-concurrency=1 .github/scripts/tests/*.test.mjs
 python3 .github/scripts/tests/preview-dns-sync.test.py
 ```

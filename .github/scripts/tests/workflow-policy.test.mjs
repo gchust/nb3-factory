@@ -37,7 +37,7 @@ test('each engine receives only its own secrets and configuration', () => {
   const tokens = linesOf('CODEBUDDY_AUTH_TOKEN');
   const codebuddyKeys = linesOf('CODEBUDDY_API_KEY');
   assert.equal(apiKeys.length, 1); // shared by implementation, repair/QA and reply
-  assert.equal((workflow.match(/env: \*agent-run-env/g) ?? []).length, 2);
+  assert.equal((workflow.match(/env: \*agent-run-env/g) ?? []).length, 3); // verification, review and reply
   assert.equal((workflow.match(/env: \*agent-install-env/g) ?? []).length, 1);
   assert.equal(tokens.length, 1);
   assert.equal(codebuddyKeys.length, 1);

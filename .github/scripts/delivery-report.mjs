@@ -1,3 +1,4 @@
+import { digest, loadBuildReview } from './build-review.mjs';
 import { parseAcceptanceCriteria } from './acceptance-criteria.mjs';
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
@@ -9,7 +10,7 @@ import { collectAgentFailure } from './agent-failure.mjs';
 
 const phaseNames = {
   implementation: '初始实现', repair: '应用修复', qa: '完整业务 QA',
-  qaFocused: '失败路径复测', qaReport: 'QA 补报告', compaction: '上下文压缩',
+  qaFocused: '失败路径复测', qaReport: 'QA 补报告', review: '独立搭建评审', compaction: '上下文压缩',
 };
 const strings = value => Array.isArray(value) ? value.filter(v => typeof v === 'string') : [];
 const text = value => typeof value === 'string' ? value : '';
@@ -27,6 +28,7 @@ function optionalJson(root, file, warnings) {
 export function collectDelivery(root, report, issue = {}) {
   const { record, cumulative, records = [record], timings = [] } = report;
   const warnings = [];
+  const buildReview = loadBuildReview(root, record);
   const metadata = optionalJson(root, 'task-metadata.json', warnings);
   if (metadata && (metadata.repository !== record.repository || metadata.issue?.number !== record.issue))
     throw new Error('Delivery report metadata does not match its source run');
@@ -87,6 +89,23 @@ export function collectDelivery(root, report, issue = {}) {
     } catch {
       warnings.push(`截图 ${name} 未内嵌（文件缺失、无效或超出大小预算），原始引用保留在验收记录中。`);
     }
+  }
+  for (const evidence of buildReview.evaluation?.evidence ?? []) {
+    if (evidence.kind !== 'screenshot') continue;
+    const relative = evidence.path.slice('artifacts/'.length);
+    delete evidence.mediaId;
+    try {
+      const { file, size } = safeFile(root, relative, 10*1024*1024);
+      const data = readFileSync(file);
+      if (digest(data) !== evidence.sha256 || !data.subarray(0,8).equals(Buffer.from('89504e470d0a1a0a','hex')))
+        throw new Error('Review screenshot does not match captured evidence');
+      const existing = media.find(item => item.path === relative);
+      if (existing) { evidence.mediaId = existing.id; continue; }
+      if (bytes + size > 15*1024*1024) throw new Error('Review screenshot over budget');
+      bytes += size;
+      evidence.mediaId = `review-${evidence.id}`;
+      media.push({id:evidence.mediaId,title:evidence.observation,path:relative,category:'评审截图 · 含首轮',featured:false});
+    } catch { warnings.push(`评审证据 ${evidence.id} 截图未内嵌，请核对本轮 Artifact。`); }
   }
   const included = new Set(media.map(m => m.id));
   const checks = qaChecks.map((raw,i) => {
@@ -155,7 +174,7 @@ export function collectDelivery(root, report, issue = {}) {
       coverageNote:`用量记录 ${usage.records}；未报告用量 ${usage.missing}；分项不完整 ${usage.incomplete}；缺失作业时间 ${cumulative.missingTimes}。`,
       note:'不把流式增量、上下文长度和思考 Token 重复相加。旧记录未拆分 QA 时保留原有口径；费用：未知。'},
     runs:records.map(r=>({id:String(r.runId),attempt:r.attempt,status:reportStatus(r.status),detail:outcomeLabels[r.status]||'未完成'})),
-    retro,timings,
+    retro,timings,buildReview,
   };
   return {facts,notes,metadata};
 }

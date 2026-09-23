@@ -182,6 +182,8 @@ jobs:
     env:
       FACTORY_CONTROL_SHA: ${{ needs.prepare.outputs.control_sha }}
       FACTORY_QA_THINKING: ${{ vars.FACTORY_QA_THINKING }}
+      FACTORY_BUILD_REVIEW: ${{ vars.FACTORY_BUILD_REVIEW || 'full' }}
+      FACTORY_BUILD_REVIEW_TIMEOUT_SECONDS: ${{ vars.FACTORY_BUILD_REVIEW_TIMEOUT_SECONDS || '300' }}
       CODE_AGENT_ENGINE: ${{ vars.CODE_AGENT_ENGINE }}
     if: needs.prepare.outputs.status == 'ready' && needs.prepare.outputs.comment_kind != 'reply'
     runs-on: ubuntu-latest
@@ -474,6 +476,17 @@ jobs:
             --summary "$RUNNER_TEMP/agent-artifacts/change-summary.json" \
             --allow-empty "$ALLOW_EMPTY_PATCH"
           node control/.github/scripts/pipeline-state.mjs seal "$RUNNER_TEMP/agent-artifacts/pipeline-state.json" "$RUNNER_TEMP/agent-artifacts/agent.patch"
+
+      - name: Review build quality and framework feedback
+        # The patch is already sealed. A failed assessment never starts repair
+        # or changes the independent final verification / publication verdict.
+        if: >-
+          !cancelled() && steps.patch.outcome == 'success' &&
+          steps.implementation.outputs.handoff != 'true' && steps.verify.outputs.handoff != 'true'
+        continue-on-error: true
+        timeout-minutes: 12
+        env: *agent-run-env
+        run: node control/.github/scripts/run-build-review.mjs workspace "$RUNNER_TEMP/agent-artifacts"
 
       - name: Prepare runner handoff metadata
         id: handoff

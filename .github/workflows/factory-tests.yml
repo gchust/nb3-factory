@@ -39,8 +39,7 @@ jobs:
         run: python3 .github/scripts/tests/preview-dns-sync.test.py
       - name: Render the shared report review example
         run: |
-          node .github/reports/render-report.mjs \
-            .github/reports/example.facts.json - "$RUNNER_TEMP/report.example.html"
+          node .github/reports/render-review-example.mjs "$RUNNER_TEMP/report.example.html"
       - uses: actions/upload-artifact@v4
         with:
           name: factory-report-example
