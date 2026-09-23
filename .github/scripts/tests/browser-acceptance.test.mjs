@@ -24,7 +24,7 @@ for (const scenario of [
   'app-not-ready',
   'agent-error',
   'recording-unavailable',
-  'evidence-gap',
+  'missing-screenshot',
 ]) {
   test(`browser acceptance handles ${scenario} with strict verification`, () => {
     const root = mkdtempSync(path.join(os.tmpdir(), 'nb3-browser-acceptance-'));
@@ -112,10 +112,9 @@ for (const scenario of [
           'mkdirSync(process.env.FACTORY_BROWSER_EVIDENCE_DIR, { recursive: true });',
           "writeFileSync(screenshot, Buffer.concat([Buffer.from('89504e470d0a1a0a', 'hex'), Buffer.alloc(1100)]));",
           "writeFileSync(process.env.FACTORY_BROWSER_REPORT, JSON.stringify({ passed: true, authenticated: true, summary: 'passed', checks: [{ criterion: 'Page loads', status: 'passed', actions: ['opened and interacted'], evidence: ['page responded'], screenshots: ['criterion-1.png'] }], failures: [] }));",
-          "if (scenario === 'evidence-gap') {",
+          "if (scenario === 'missing-screenshot') {",
           "  const report = JSON.parse(readFileSync(process.env.FACTORY_BROWSER_REPORT, 'utf8'));",
-          "  report.checks[0].criterion = 'Capture editing for the PR';",
-          "  if (count > 1) report.checks[0].evidence.push('Verified existing values were prefilled in the edit form.');",
+          "  if (count === 1) report.checks[0].screenshots = ['criterion-missing.png'];",
           '  writeFileSync(process.env.FACTORY_BROWSER_REPORT, JSON.stringify(report));',
           "} else if (!['valid', 'recording-unavailable'].includes(scenario) && (count <= 2 || scenario === 'report-exhausted')) {",
           "  writeFileSync(process.env.FACTORY_BROWSER_REPORT, JSON.stringify({ passed: true, authenticated: true, summary: 'claims success', checks: [{ name: 'Page loads', status: 'pass', detail: 'page responded' }], failures: [] }));",
@@ -135,7 +134,7 @@ for (const scenario of [
             taskType: '创建新系统',
             sampleData: '是',
             requirements: 'The page must load.',
-            acceptanceCriteria: scenario === 'evidence-gap' ? '1. Capture editing for the PR' : '1. Page loads',
+            acceptanceCriteria: '1. Page loads',
           },
         }),
       );
@@ -189,20 +188,20 @@ for (const scenario of [
         ),
         ['valid', 'recording-unavailable'].includes(scenario)
           ? '1'
-          : ['agent-error', 'evidence-gap'].includes(scenario)
+          : ['agent-error', 'missing-screenshot'].includes(scenario)
             ? '2'
             : '3',
       );
       if (!['valid', 'recording-unavailable'].includes(scenario)) {
         assert.match(
           readFileSync(path.join(artifacts, 'report-validation-0.log'), 'utf8'),
-          scenario === 'evidence-gap'
-            ? /existing values were prefilled/
+          scenario === 'missing-screenshot'
+            ? /Screenshot does not exist: criterion-missing\.png/
             : /actions must be a non-empty array/,
         );
         assert.match(
           readFileSync(path.join(artifacts, 'report-invalid-0.json'), 'utf8'),
-          scenario === 'evidence-gap' ? /Capture editing/ : /claims success/,
+          scenario === 'missing-screenshot' ? /criterion-missing\.png/ : /claims success/,
         );
       }
       const commands = readFileSync(
@@ -238,7 +237,7 @@ for (const scenario of [
       assert.match(renderedPrompt, /acceptance-admin\.webm/u);
       assert.match(renderedPrompt, /其他角色用不同名称/u);
       if (
-        ['valid', 'recording-unavailable', 'evidence-gap'].includes(scenario)
+        ['valid', 'recording-unavailable', 'missing-screenshot'].includes(scenario)
       ) {
         const health = JSON.parse(
           readFileSync(path.join(artifacts, 'media-health.json'), 'utf8'),

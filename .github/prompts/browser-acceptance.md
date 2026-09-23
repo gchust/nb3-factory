@@ -32,6 +32,7 @@
 ```
 
 `id` 必须来自本轮要求，不按输出顺序重新编号。`status` 使用 passed/failed/blocked/not_run。
+工厂只以每项 `status` 判定结果，不解读 actions/evidence 的文字：观察到“业务验收”第 2 步列出的错误或原值未回填时，必须把该项标为 failed，不能只写进 evidence 却仍标 passed。
 实际观察到业务错误才用 failed。工具、测试准备或运行环境阻塞用 blocked，尚未执行用 not_run；两者必须填 reason，actions/evidence 记录真实尝试与原因，无法取得截图时 screenshots 可为空。必要项 blocked/not_run 不算通过；只有明确带 [optional] 的独立条目可记录 not_run 而不阻塞交付。不能把同一条目中的必要操作一起跳过。编辑场景明确描述原值回填观察；相关综合项可引用已完成场景，不必重复操作。
 
 完成后将总结写为 JSON，调用 `node "$FACTORY_BROWSER_REPORT_TOOL" finish /absolute/path/summary.json`：
