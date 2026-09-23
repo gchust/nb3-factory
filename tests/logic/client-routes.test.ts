@@ -32,6 +32,37 @@ describe('app client routes', () => {
           path: '/forgot-password',
         },
         { auth: 'guest', name: 'reset-password', path: '/reset-password' },
+        {
+          auth: 'required',
+          authz: 'skip',
+          name: 'crmCustomers',
+          path: '/crm/customers',
+          children: [
+            { name: 'crmCustomerNew', path: 'new' },
+            { name: 'crmCustomerDetail', path: ':customerId' },
+            { name: 'crmCustomerEdit', path: ':customerId/edit' },
+          ],
+        },
+        {
+          auth: 'required',
+          authz: 'skip',
+          name: 'crmContacts',
+          path: '/crm/contacts',
+          children: [
+            { name: 'crmContactNew', path: 'new' },
+            { name: 'crmContactEdit', path: ':contactId/edit' },
+          ],
+        },
+        {
+          auth: 'required',
+          authz: 'skip',
+          name: 'crmOpportunities',
+          path: '/crm/opportunities',
+          children: [
+            { name: 'crmOpportunityNew', path: 'new' },
+            { name: 'crmOpportunityEdit', path: ':opportunityId/edit' },
+          ],
+        },
       ],
     });
     expect(applicationRoutes[1]).toEqual({
@@ -59,8 +90,19 @@ describe('app client routes', () => {
     ]);
 
     expect(pageAuthorizations(resolved.routes)).toEqual([
-      // The landing page opted out of page authorization, so it is reachable by every signed-in user.
+      // The landing page and every CRM page opted out of page authorization, so they are reachable by every
+      // signed-in user. There is one ordinary usage mode and no role system behind these pages.
       { name: 'home', authorizedAs: null },
+      { name: 'crmCustomers', authorizedAs: null },
+      { name: 'crmCustomerNew', authorizedAs: null },
+      { name: 'crmCustomerDetail', authorizedAs: null },
+      { name: 'crmCustomerEdit', authorizedAs: null },
+      { name: 'crmContacts', authorizedAs: null },
+      { name: 'crmContactNew', authorizedAs: null },
+      { name: 'crmContactEdit', authorizedAs: null },
+      { name: 'crmOpportunities', authorizedAs: null },
+      { name: 'crmOpportunityNew', authorizedAs: null },
+      { name: 'crmOpportunityEdit', authorizedAs: null },
     ]);
   });
 });

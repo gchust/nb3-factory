@@ -145,6 +145,56 @@ describe('client inspection', () => {
         path: '/reset-password',
       },
       {
+        auth: 'required',
+        id: 'nb3-factory:crmCustomers',
+        path: '/crm/customers',
+      },
+      {
+        auth: 'required',
+        id: 'nb3-factory:crmCustomerNew',
+        path: '/crm/customers/new',
+      },
+      {
+        auth: 'required',
+        id: 'nb3-factory:crmCustomerDetail',
+        path: '/crm/customers/:customerId',
+      },
+      {
+        auth: 'required',
+        id: 'nb3-factory:crmCustomerEdit',
+        path: '/crm/customers/:customerId/edit',
+      },
+      {
+        auth: 'required',
+        id: 'nb3-factory:crmContacts',
+        path: '/crm/contacts',
+      },
+      {
+        auth: 'required',
+        id: 'nb3-factory:crmContactNew',
+        path: '/crm/contacts/new',
+      },
+      {
+        auth: 'required',
+        id: 'nb3-factory:crmContactEdit',
+        path: '/crm/contacts/:contactId/edit',
+      },
+      {
+        auth: 'required',
+        id: 'nb3-factory:crmOpportunities',
+        path: '/crm/opportunities',
+      },
+      {
+        auth: 'required',
+        id: 'nb3-factory:crmOpportunityNew',
+        path: '/crm/opportunities/new',
+      },
+      {
+        auth: 'required',
+        id: 'nb3-factory:crmOpportunityEdit',
+        path: '/crm/opportunities/:opportunityId/edit',
+      },
+      {
         auth: 'guest',
         id: '@nocobase/app-plugin-install:install',
         path: '/install',

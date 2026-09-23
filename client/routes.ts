@@ -1,4 +1,4 @@
-import { Home } from 'lucide-react';
+import { Contact, Home, Target, Users } from 'lucide-react';
 import {
   defineAppRoutes,
   defineSettingsRoutes,
@@ -39,6 +39,78 @@ const appRoutes: AppClientRouteContribution = defineAppRoutes([
     componentLoader: () => import('./pages/auth/reset-password.js'),
     name: 'reset-password',
     path: '/reset-password',
+  },
+  {
+    // The CRM pages are the application's whole business surface. There is one ordinary usage mode, so page
+    // authorization is skipped rather than tied to a role system the application does not have; sign-in is the
+    // boundary, and each endpoint enforces its own authentication.
+    authz: 'skip',
+    auth: 'required',
+    breadcrumb: { title: 'navigation.customers' },
+    componentLoader: () => import('./pages/crm/customers/index.js'),
+    children: [
+      {
+        name: 'crmCustomerNew',
+        path: 'new',
+        componentLoader: () => import('./pages/crm/customers/new.js'),
+      },
+      {
+        name: 'crmCustomerDetail',
+        path: ':customerId',
+        breadcrumb: { title: 'crm.customers.detailTitle' },
+        componentLoader: () => import('./pages/crm/customers/detail.js'),
+      },
+      {
+        name: 'crmCustomerEdit',
+        path: ':customerId/edit',
+        componentLoader: () => import('./pages/crm/customers/edit.js'),
+      },
+    ],
+    name: 'crmCustomers',
+    navigation: { title: 'navigation.customers', icon: Users },
+    path: '/crm/customers',
+  },
+  {
+    authz: 'skip',
+    auth: 'required',
+    breadcrumb: { title: 'navigation.contacts' },
+    componentLoader: () => import('./pages/crm/contacts/index.js'),
+    children: [
+      {
+        name: 'crmContactNew',
+        path: 'new',
+        componentLoader: () => import('./pages/crm/contacts/new.js'),
+      },
+      {
+        name: 'crmContactEdit',
+        path: ':contactId/edit',
+        componentLoader: () => import('./pages/crm/contacts/edit.js'),
+      },
+    ],
+    name: 'crmContacts',
+    navigation: { title: 'navigation.contacts', icon: Contact },
+    path: '/crm/contacts',
+  },
+  {
+    authz: 'skip',
+    auth: 'required',
+    breadcrumb: { title: 'navigation.opportunities' },
+    componentLoader: () => import('./pages/crm/opportunities/index.js'),
+    children: [
+      {
+        name: 'crmOpportunityNew',
+        path: 'new',
+        componentLoader: () => import('./pages/crm/opportunities/new.js'),
+      },
+      {
+        name: 'crmOpportunityEdit',
+        path: ':opportunityId/edit',
+        componentLoader: () => import('./pages/crm/opportunities/edit.js'),
+      },
+    ],
+    name: 'crmOpportunities',
+    navigation: { title: 'navigation.opportunities', icon: Target },
+    path: '/crm/opportunities',
   },
 ]);
 
