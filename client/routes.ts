@@ -1,4 +1,4 @@
-import { Home } from 'lucide-react';
+import { Gauge, Home } from 'lucide-react';
 import {
   defineAppRoutes,
   defineSettingsRoutes,
@@ -15,6 +15,15 @@ const appRoutes: AppClientRouteContribution = defineAppRoutes([
     name: 'home',
     navigation: { title: 'navigation.home', icon: Home },
     path: '/',
+  },
+  {
+    // A non-sensitive smoke page every signed-in user may open, so it opts out of page authorization like home.
+    authz: 'skip',
+    auth: 'required',
+    componentLoader: () => import('./pages/pipeline-smoke.js'),
+    name: 'pipeline-smoke',
+    navigation: { title: 'navigation.pipelineSmoke', icon: Gauge },
+    path: '/pipeline-smoke',
   },
   {
     auth: 'guest',
