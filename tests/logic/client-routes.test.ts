@@ -91,9 +91,14 @@ describe('app client routes', () => {
     // that requires sign-in adds an entry here, because that is a new grant somebody has to be given.
     const resolved = resolveRoutes();
 
-    // The landing page opted out of page authorization, so it is reachable by every signed-in user.
+    // The landing page opted out of page authorization, so it is reachable by every signed-in user. A new page that
+    // requires sign-in appears here with the page id its grant is stored against; the detail drawer is a child route
+    // and adds no check of its own, so it reports no page resource.
     expect(pageAuthorizations(resolved.routes)).toEqual([
       { name: 'home', authorizedAs: null },
+      { name: 'service-requests', authorizedAs: 'service-requests' },
+      { name: 'service-request-detail', authorizedAs: null },
+      { name: 'messages', authorizedAs: 'messages' },
     ]);
   });
 });
