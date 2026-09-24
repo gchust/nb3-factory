@@ -35,6 +35,27 @@ test('evaluation export is a data-only, non-blocking step after the existing usa
   }
 });
 
+test('optional delivery keeps the receiver token in one read-only step and never builds or reviews', () => {
+  const usage = read('report-task-usage.yml');
+  const { delivery } = jobs(usage);
+  assert.match(delivery, /vars\.FACTORY_EVALUATION_DELIVERY == 'true'/);
+  assert.match(delivery, /uses: \.\/\.github\/workflows\/deliver-evaluation\.yml/);
+  const workflow = read('deliver-evaluation.yml');
+  const all = jobs(workflow);
+  assert.equal((workflow.match(/secrets\.EVALUATION_TOKEN/g) ?? []).length, 1);
+  assert.match(all.send, /secrets\.EVALUATION_TOKEN/);
+  assert.match(all.send, /permissions:\n {6}contents: read\n {4}steps:/);
+  for (const name of ['plan', 'record', 'backfill']) assert.doesNotMatch(all[name], /EVALUATION_TOKEN|secrets\./, name);
+  assert.match(all.record, /contents: write/);
+  assert.doesNotMatch(workflow, /pnpm install|agent-browser|run-agent|run-build-review|code-agent-task\.yml|replay-build-review/);
+  assert.match(workflow, /group: factory-evaluation-delivery\n {2}queue: max/);
+  assert.match(workflow, /schedule:/);
+  for (const checkout of workflow.split('actions/checkout@v4').slice(1)) {
+    assert.match(checkout.slice(0, 300), /persist-credentials: false/);
+    assert.match(checkout.slice(0, 300), /ref: \$\{\{ github\.event\.repository\.default_branch \}\}/);
+  }
+});
+
 test('task preparation records the entry workflow separately from the pinned control plane', () => {
   const workflow = read('code-agent-task.yml');
   const record = workflow.split('- name: Record the task chain control pin')[1].split('- name:')[0];

@@ -153,19 +153,105 @@ ZIP 由工厂确定性生成：路径排序、固定时间戳（1980-01-01）、
 | 配置 | 默认 | 用途 |
 | --- | --- | --- |
 | Variable `FACTORY_EVALUATION_EXPORT` | 未设置 = 导出 | 设为 `false` 即关闭导出与登记；原报告、Pages、用量不受影响 |
+| Variable `FACTORY_EVALUATION_DELIVERY` | 未设置 = 关闭 | 只有 `true` 才登记待投递记录并调用投递工作流；关闭时不需要 URL 或 Token |
+| Variable `EVALUATION_ENDPOINT` | 未设置 | 完整接收 URL（例如部署方挂载的 `/api/evaluations/import`）；工厂不拼接业务路径。必须 `https://`，不能含用户名密码、query 或 fragment |
+| Variable `EVALUATION_AUTH_MODE` | `x-api-key` | 固定枚举 `x-api-key` / `bearer`；不接受自定义头名或模板 |
+| Secret `EVALUATION_TOKEN` | 未设置 | 只进入投递工作流 `send` 作业的一个步骤；不进入实现、QA、评审、导出或任何 Artifact |
+
+投递打开但配置不完整时，投递作业失败并列出缺失的配置项名称（不输出值），记录保持待投递；业务结果与归档不受影响。
+仓库里原有的变量没有同义开关，因此新增上述名称。
 
 导出发生在 `Report Task Usage` 的 `report` 作业末尾（`continue-on-error`，只读权限），登记在独立的 `evaluation` 作业
 （`contents: write`），与 Pages 作业并行、互不依赖；Pages 失败不影响登记，登记失败也不影响 Pages 与原评论。
 每种已接单结束状态（交付、失败、取消、超时、Handoff）都会导出现有事实；只补跑评审经由同一可复用工作流形成新修订。
+
+## HTTP 接收约定 v1
+
+这是交付给接收端开发者的合同，由本仓库的本地测试接收器验证，**不代表远端已实现**。
+
+```http
+POST <EVALUATION_ENDPOINT>
+Content-Type: multipart/form-data; boundary=nb3-evaluation-<摘要前缀>
+x-api-key: <EVALUATION_TOKEN>                  # bearer 模式改为 Authorization: Bearer <EVALUATION_TOKEN>
+Idempotency-Key: nb3-eval-v1-<sha256(instance \n type \n key \n revision)>
+X-Evaluation-Schema-Version: 1
+X-Evaluation-Type: evaluation-report | evaluation-batch
+X-Evaluation-Bundle-SHA256: <ZIP 的 SHA-256>
+
+表单字段 bundle = evaluation-bundle.zip（application/zip），无其他字段
+```
+
+接收端完成**持久化**后返回：
+
+| 状态 | 含义 | 工厂处理 |
+| --- | --- | --- |
+| 201 | 首次保存 | 校验回执后记为 `stored` |
+| 200 | 相同幂等键、相同包已存在 | 同上，返回原回执 |
+| 409 | 相同幂等键、不同包 | 记为 `conflict`，停止自动重试 |
+| 202 | v1 不视为已入库 | 记为 `rejected`（`accepted-not-stored`） |
+| 400 / 401 / 403 / 404 / 413 / 422 | 请求、认证、路径、大小或数据问题 | 记为 `rejected` 与具体类别，等待修正，不循环 |
+| 3xx | 不跟随重定向，避免转发凭据 | `rejected`（`redirect-refused`） |
+| 408 / 429 / 500 / 502 / 503 / 504、超时、断连 | 可重试 | 最多 3 次、单次 30 秒；遵守 `Retry-After`，上限 60 秒 |
+
+回执 Schema：[`contracts/evaluation-receipt.v1.schema.json`](contracts/evaluation-receipt.v1.schema.json)，示例
+[`receipt.json`](contracts/examples/receipt.json)：
+
+```json
+{ "receiptId": "receiver-generated-id", "sourceInstance": "owner/factory", "runKey": "owner/factory/issues/146/initial",
+  "revision": 1, "bundleSha256": "<与请求头一致>", "state": "stored" }
+```
+
+批次结果用 `batchKey` 代替 `runKey`。回执必须是 JSON，身份、修订与摘要必须与发送对象一致，否则记为投递失败（`invalid-receipt`），
+不会误报“已接收”。工厂只保存 `receiptId`、状态、HTTP 状态、次数、时间与错误类别，不保存完整 URL、凭据或响应正文。
+
+**接收端建议实现**（Test Manager 后续工作，不在本仓库）：
+
+1. 去重键 `source.instance + type + key + revision`；相同键相同 `bundleSha256` 返回原回执（200），不同则 409。
+2. 先持久化 ZIP 与回执再返回；解析时按上表上限和路径规则拒绝不安全的包，校验 `manifest.json` 每个文件的哈希。
+3. 历史保留全部修订；“当前视图”按 `precedence` 规则选择，不按最大修订号；迟到的旧修订只进入历史。
+4. 用 `subjectKeys` 映射功能点；`mapping=pending` 或空键进入待映射队列，不猜测。
+5. 发现按 `run.key + finding.id` 存储出现记录；跨运行根因归并、指派与关闭是接收端自己的问题生命周期，
+   `confirmedBy=reviewer`、`reviewerStatus=resolved` 都不等于人工确认或已关闭。
+6. 框架评分 0–100 与现有人工评分 0–10 是不同量表与口径，不要直接覆盖功能点评分；v1 与 v2 分开展示，不平均。
+7. 先收到批次再收到样本、或顺序相反都应可按 key 关联；批次中尚无报告的样本仍然计入。
+
+## 投递、重试与补发
+
+`Report Task Usage` 的 `evaluation` 作业在投递开启时把新修订写入 `evaluations/outbox.json`（只含目标哈希、主体、修订、
+包摘要、状态与最近 10 次尝试），随后调用 **Deliver Evaluation Results**：
+
+```text
+plan（actions/contents: read）  按登记摘要找回原 Artifact，逐字节校验包 → 待发清单
+send（contents: read）          唯一持有 EVALUATION_TOKEN 的步骤；同一字节、同一幂等键重试
+record（contents: write）        CAS 写回脱敏回执；stored 为终态，“发送中”从不记为成功
+```
+
+工作流使用 `factory-evaluation-delivery` 串行队列，自动投递与手动补发不会并发发送同一记录；即使重复，接收端幂等也返回同一回执。
+投递器只运行默认分支的受信任控制代码，不 checkout 业务 PR、不运行附件、不装业务依赖、不启动浏览器、不读取模型凭据。
+
+**Actions → Deliver Evaluation Results → Run workflow**：
+
+| mode | 用途 |
+| --- | --- |
+| `replay` | 按 `type` + `key` + `revision`（可选原 `artifact_id`）重发该修订的**原始包**；不是 reassess，也不是业务 rerun |
+| `scan` | 重试当前目标的待投递记录（定时每 6 小时也会执行，每次最多 20 条） |
+| `retry-rejected` | 修正配置或接收端后，重新投递被拒绝的记录 |
+| `backfill` | 接收端晚部署时，把所有当前修订排入待投递，批次在前、样本在后 |
+
+原包的 Artifact 过期、被删除或内容与登记摘要不符时标记 `source-expired` 并说明缺什么；**不会为补发重新运行应用或模型来冒充历史结果**。
+超过 24 次可重试失败的记录转为 `rejected`（`retry-limit`）。GitHub Artifact 有保留期限，删除关联 Run 也可能删除它，
+因此不承诺历史包永久可重放；`evaluation.json` 与清单的原始字节长期保留在 `gh-pages`。
 
 ## 验证
 
 ```bash
 node --test .github/scripts/tests/evaluation-report.test.mjs .github/scripts/tests/evaluation-bundle.test.mjs \
   .github/scripts/tests/evaluation-registry.test.mjs .github/scripts/tests/evaluation-contracts.test.mjs \
-  .github/scripts/tests/evaluation-workflow-policy.test.mjs
+  .github/scripts/tests/evaluation-delivery.test.mjs .github/scripts/tests/evaluation-workflow-policy.test.mjs
 node .github/contracts/render-examples.mjs --check
 node --test --test-concurrency=1 .github/scripts/tests/*.test.mjs
 ```
 
-样例完全虚构（`owner/factory`、零 SHA 等），由测试同一套夹具生成并在测试中逐字节比对，不代表真实案例成绩。
+样例完全虚构（`owner/factory`、占位 SHA 等），由测试同一套夹具生成并在测试中逐字节比对，不代表真实案例成绩。
+`evaluation-delivery.test.mjs` 启动本地 HTTP 接收器验证协议（201/200、断连后重发、429/5xx/超时、4xx、202、伪 JSON、错误回执、
+重定向与过期来源）；它只用于协议验收，不是 Test Manager 的替代服务，也不能证明线上两系统已接通。

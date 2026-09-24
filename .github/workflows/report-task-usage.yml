@@ -207,6 +207,19 @@ jobs:
           node control/.github/scripts/evaluation-archive.mjs commit \
             --input "$RUNNER_TEMP/evaluation-bundle" --artifact-id "${{ steps.bundle.outputs.artifact-id }}"
 
+  delivery:
+    needs: evaluation
+    if: needs.evaluation.result == 'success' && vars.FACTORY_EVALUATION_DELIVERY == 'true'
+    permissions:
+      actions: read
+      contents: write
+    uses: ./.github/workflows/deliver-evaluation.yml
+    with:
+      mode: auto
+      type: ${{ needs.evaluation.outputs.type }}
+      key: ${{ needs.evaluation.outputs.key }}
+      revision: ${{ needs.evaluation.outputs.revision }}
+    secrets: inherit
 
   pages:
     needs: report
