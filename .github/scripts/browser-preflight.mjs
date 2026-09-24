@@ -6,7 +6,7 @@ import { performance } from 'node:perf_hooks';
 import path from 'node:path';
 import { promisify } from 'node:util';
 import { setTimeout as sleep } from 'node:timers/promises';
-import { pathToFileURL } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const execute = promisify(execFile);
 
@@ -41,6 +41,7 @@ export async function preflight(output, executable = 'agent-browser', timeouts =
     AGENT_BROWSER_ALLOWED_DOMAINS: process.env.AGENT_BROWSER_ALLOWED_DOMAINS || '127.0.0.1',
     AGENT_BROWSER_MAX_OUTPUT: '50000',
     AGENT_BROWSER_NO_WEBMCP: '1',
+    AGENT_BROWSER_INIT_SCRIPTS: fileURLToPath(new URL('./browser-worker-compat.js', import.meta.url)),
     AGENT_BROWSER_NAMESPACE: `nb3-preflight-${randomUUID().replaceAll('-', '').slice(0, 16)}`,
     AGENT_BROWSER_SESSION: 'preflight',
   };
@@ -113,7 +114,25 @@ async function probe(type, blob) {
     worker.onerror=()=>{clearTimeout(timer);resolve(false)};
   })} catch {return false} finally {worker?.terminate();if(blob)URL.revokeObjectURL(url)}
 }
-(async()=>send({capabilities:{classicWorker:await probe('classic',false),moduleWorker:await probe('module',false),moduleBlobWorker:await probe('module',true),pdfViewerEnabled:navigator.pdfViewerEnabled===true}}))();
+async function requestProbe(blob) {
+  const script = "onmessage=async e=>{let blocked=false;try{await fetch('http://localhost:'+new URL(location.href).port+'/forbidden')}catch(error){blocked=error.name==='SecurityError'};postMessage({order:e.data.order,bytes:Array.from(new Uint8Array(e.data.buffer)),blocked})}";
+  // The generated script uses the original same-origin URL, not blob location.
+  const code = script.replace("new URL(location.href).port", JSON.stringify(location.port));
+  const url=blob?URL.createObjectURL(new Blob([code],{type:'text/javascript'})):'/request-worker.js';
+  let worker;
+  try {return await new Promise(resolve=>{
+    const replies=[];
+    const timer=setTimeout(()=>resolve(false),3000);
+    worker=new Worker(url,{type:'module'});
+    worker.onerror=()=>{clearTimeout(timer);resolve(false)};
+    worker.onmessage=e=>{
+      replies.push(e.data);
+      if(replies.length===2)setTimeout(()=>{clearTimeout(timer);resolve(replies.length===2 && replies.every((r,i)=>r.order===i+1 && r.bytes.join(',')==='1,2,3' && r.blocked===true))},50);
+    };
+    for(const order of [1,2]){const buffer=new Uint8Array([1,2,3]).buffer;worker.postMessage({order,buffer},[buffer]);}
+  })}catch{return false}finally{worker?.terminate();if(blob)URL.revokeObjectURL(url)}
+}
+(async()=>send({capabilities:{classicWorker:await probe('classic',false),moduleWorker:await probe('module',false),moduleBlobWorker:await probe('module',true),moduleWorkerRequest:await requestProbe(false),moduleBlobWorkerRequest:await requestProbe(true),pdfViewerEnabled:navigator.pdfViewerEnabled===true}}))();
 </script>`;
   const server = createServer((request, response) => {
     if (request.url === '/result') {
@@ -123,6 +142,13 @@ async function probe(type, blob) {
         try { Object.assign(seen, JSON.parse(body)); response.end('ok'); }
         catch { response.writeHead(400).end(); }
       });
+    } else if (request.url === '/request-worker.js') {
+      response.setHeader('Content-Type', 'text/javascript');
+      // Deliberately delay the import to make the lost-first-message race repeatable.
+      setTimeout(() => response.end(`onmessage=async e=>{let blocked=false;try{await fetch('http://localhost:${server.address().port}/forbidden')}catch(error){blocked=error.name==='SecurityError'};postMessage({order:e.data.order,bytes:Array.from(new Uint8Array(e.data.buffer)),blocked})}`), 150);
+    } else if (request.url === '/forbidden') {
+      seen.forbidden = true;
+      response.end('should never be reached');
     } else if (request.url === '/worker.js') {
       response.setHeader('Content-Type', 'text/javascript');
       response.end('postMessage("ready")');
@@ -164,6 +190,7 @@ async function probe(type, blob) {
       await sleep(Math.min(100, remaining));
     }
     report.capabilities = seen.capabilities || {};
+    report.capabilities.workerNetworkLeak = seen.forbidden === true;
     report.basic = seen.interaction === true && seen.upload === true && report.download && Boolean(seen.capabilities);
     if (!report.basic) throw new Error('Browser navigation, interaction, upload/download or capability probe did not complete.');
   } catch (error) {
