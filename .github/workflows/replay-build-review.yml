@@ -115,9 +115,13 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 24.x
+      - name: Apply the sealed candidate
+        run: git -C workspace apply --index ../input/agent/agent.patch
+      - name: Restore original source package snapshot
+        # Separate step: source-snapshot exports isolated registry/store paths via GITHUB_ENV.
+        run: node control/.github/scripts/source-snapshot.mjs restore workspace input/agent/task-metadata.json
       - name: Reconstruct sealed candidate without rebuilding
         run: |
-          git -C workspace apply --index ../input/agent/agent.patch
           cd workspace
           pnpm install --frozen-lockfile --ignore-scripts
           pnpm skills:sync
@@ -177,6 +181,9 @@ jobs:
         run: |
           node control/.github/scripts/replay-build-review.mjs run \
             --input input --workspace workspace --output "$RUNNER_TEMP/review"
+      - name: Stop the reviewer source registry
+        if: always()
+        run: node control/.github/scripts/source-snapshot.mjs stop
       - uses: actions/upload-artifact@v4
         id: export
         if: always()
