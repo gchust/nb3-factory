@@ -508,7 +508,10 @@ jobs:
           !cancelled() && steps.patch.outcome == 'success' &&
           steps.implementation.outputs.handoff != 'true' && steps.verify.outputs.handoff != 'true'
         continue-on-error: true
-        timeout-minutes: 12
+        # The runner accepts at most 30 minutes and saves a validated partial
+        # result on its own timeout; leave time for snapshot setup and cleanup.
+        # This does not change its default 900-second model budget.
+        timeout-minutes: 35
         env: *agent-run-env
         run: node control/.github/scripts/run-build-review.mjs workspace "$RUNNER_TEMP/agent-artifacts"
 
