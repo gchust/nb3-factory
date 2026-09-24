@@ -1,4 +1,4 @@
-import { Home } from 'lucide-react';
+import { Home, Paperclip } from 'lucide-react';
 import {
   defineAppRoutes,
   defineSettingsRoutes,
@@ -15,6 +15,16 @@ const appRoutes: AppClientRouteContribution = defineAppRoutes([
     name: 'home',
     navigation: { title: 'navigation.home', icon: Home },
     path: '/',
+  },
+  {
+    // The attachment feature (#252) is a normal signed-in business page. It needs no page grant, so it skips page
+    // authorization like the landing page; the API endpoints enforce their own authentication.
+    auth: 'required',
+    authz: 'skip',
+    componentLoader: () => import('./pages/documents/index.js'),
+    name: 'documents',
+    navigation: { title: 'navigation.documents', icon: Paperclip },
+    path: '/documents',
   },
   {
     auth: 'guest',

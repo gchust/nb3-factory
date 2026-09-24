@@ -6,7 +6,7 @@ import {
   FileText,
   FileVideo,
 } from 'lucide-react';
-import type { ReactElement } from 'react';
+import { useState, type ReactElement } from 'react';
 
 import { isSafeImagePreview } from '../lib/file-preview';
 import type { FileThumbnailProps } from '../types';
@@ -48,14 +48,23 @@ export function FileThumbnail({
   const imageUrl = resolveSafeFileUrl(
     url ?? (isSafeImagePreview(file) ? (file.contentUrl ?? '') : ''),
   );
-  return imageUrl ? (
-    <img
-      data-slot='file-thumbnail'
-      src={imageUrl}
-      alt={alt}
-      className='h-full w-full object-cover'
-    />
-  ) : (
+  // A corrupted image still passes the URL check and only fails when the
+  // browser tries to decode it, so fall back to the type icon on `error`.
+  // Comparing against the current URL resets the fallback for a new file.
+  const [failedUrl, setFailedUrl] = useState<string>();
+  const failed = imageUrl !== undefined && failedUrl === imageUrl;
+  if (imageUrl && !failed) {
+    return (
+      <img
+        data-slot='file-thumbnail'
+        src={imageUrl}
+        alt={alt}
+        className='h-full w-full object-cover'
+        onError={() => setFailedUrl(imageUrl)}
+      />
+    );
+  }
+  return (
     <span
       data-slot='file-thumbnail'
       aria-label={file.filename}

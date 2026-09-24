@@ -88,6 +88,43 @@ const zhCN: AppResource = {
     description: '向 AI 助手描述你的需求，逐步构建页面、数据模型和业务流程。',
   },
 
+  documents: {
+    title: '资料附件',
+    description:
+      '为每份资料保留一个附件，可在线预览、下载，刷新后关联与预览仍然有效。',
+    new: '新建资料',
+    createTitle: '新建资料',
+    editTitle: '编辑资料',
+    formDescription: '填写资料标题，并上传一个 PNG 图片或 Word 文档。',
+    titleLabel: '标题',
+    titlePlaceholder: '例如：项目需求说明',
+    attachmentLabel: '附件',
+    attachmentHint: '仅支持一个文件：PNG 图片或 DOCX 文档。',
+    chooseFile: '选择文件',
+    noFileChosen: '尚未选择文件',
+    removeFile: '移除文件',
+    retryUpload: '重新上传',
+    uploadFailed: '文件上传失败。',
+    titleRequired: '请填写资料标题。',
+    saveFailed: '资料保存失败。',
+    loadFailed: '资料加载失败。',
+    removeFailed: '移除附件失败。',
+    loading: '正在加载资料…',
+    emptyTitle: '暂无资料',
+    emptyDescription: '创建第一份资料并为其上传附件。',
+    noAttachment: '尚未上传附件',
+    edit: '编辑 {{title}}',
+    previewFile: '预览 {{filename}}',
+    downloadFile: '下载 {{filename}}',
+    removeAttachment: '移除 {{filename}}',
+    removeAttachmentTitle: '确认移除该附件？',
+    removeAttachmentDescription:
+      '“{{title}}”将保留，但附件会被解绑并不再显示。',
+    removeAttachmentConfirm: '移除附件',
+    removing: '正在移除…',
+    saving: '正在保存…',
+  },
+
   appearance: {
     title: '外观',
     mode: '颜色模式',
@@ -120,6 +157,7 @@ const zhCN: AppResource = {
   },
   navigation: {
     home: '首页',
+    documents: '资料附件',
     open: '打开导航',
     close: '关闭导航',
     expand: '展开导航',
@@ -145,6 +183,14 @@ const zhCN: AppResource = {
   datePicker: {
     placeholder: '选择日期',
     rangePlaceholder: '选择日期范围',
+  },
+  // The File plugin's preview shows its own wording; this namespace override
+  // adds the image-decode failure message the feature relies on for a corrupt
+  // PNG without touching the plugin's package.
+  overrides: {
+    '@nocobase/app-plugin-file': {
+      'files.imageFailed': '无法显示该图片，文件可能已损坏或格式不受支持。',
+    },
   },
 };
 

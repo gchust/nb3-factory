@@ -95,6 +95,44 @@ const enUS = {
       'Describe what you need to your AI Agent, then build pages, data models, and business workflows.',
   },
 
+  documents: {
+    title: 'Document attachments',
+    description:
+      'Keep one supporting file with each document, preview it in place and download it again after a refresh.',
+    new: 'New document',
+    createTitle: 'New document',
+    editTitle: 'Edit document',
+    formDescription:
+      'Give the document a title and attach one PNG image or Word document.',
+    titleLabel: 'Title',
+    titlePlaceholder: 'e.g. Project requirements',
+    attachmentLabel: 'Attachment',
+    attachmentHint: 'One file: a PNG image or a DOCX document.',
+    chooseFile: 'Choose file',
+    noFileChosen: 'No file selected',
+    removeFile: 'Remove file',
+    retryUpload: 'Retry upload',
+    uploadFailed: 'The file could not be uploaded.',
+    titleRequired: 'A document title is required.',
+    saveFailed: 'The document could not be saved.',
+    loadFailed: 'The documents could not be loaded.',
+    removeFailed: 'The attachment could not be removed.',
+    loading: 'Loading documents…',
+    emptyTitle: 'No documents yet',
+    emptyDescription: 'Create the first document and attach a file to it.',
+    noAttachment: 'No attachment yet',
+    edit: 'Edit {{title}}',
+    previewFile: 'Preview {{filename}}',
+    downloadFile: 'Download {{filename}}',
+    removeAttachment: 'Remove {{filename}}',
+    removeAttachmentTitle: 'Remove this attachment?',
+    removeAttachmentDescription:
+      '“{{title}}” keeps the document, but its file is detached and no longer shown.',
+    removeAttachmentConfirm: 'Remove attachment',
+    removing: 'Removing…',
+    saving: 'Saving…',
+  },
+
   appearance: {
     title: 'Appearance',
     mode: 'Color mode',
@@ -129,6 +167,7 @@ const enUS = {
   },
   navigation: {
     home: 'Home',
+    documents: 'Documents',
     open: 'Open navigation',
     close: 'Close navigation',
     expand: 'Expand navigation',

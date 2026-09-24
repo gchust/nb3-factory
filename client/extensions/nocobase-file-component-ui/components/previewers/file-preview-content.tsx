@@ -1,3 +1,4 @@
+import { AlertTriangle } from 'lucide-react';
 import { messageKey } from '../../lib/message-key.js';
 import { useTranslation } from '@nocobase/i18n/client';
 import type { FileRecord } from '../../types';
@@ -70,13 +71,7 @@ export function FilePreviewContent(
     );
   switch (kind) {
     case 'image':
-      return (
-        <img
-          src={url}
-          alt={file.filename}
-          className='max-h-[70vh] max-w-full object-contain'
-        />
-      );
+      return <ImagePreview file={file} url={url} onDownload={onDownload} />;
     case 'pdf':
       return (
         <iframe title={file.filename} src={url} className='h-[70vh] w-full' />
@@ -97,6 +92,51 @@ export function FilePreviewContent(
     default:
       return <DownloadFallback file={file} onDownload={onDownload} />;
   }
+}
+
+function ImagePreview(inputProps: {
+  readonly file: FileRecord;
+  readonly url?: string;
+  readonly onDownload?: () => void;
+}): ReactElement {
+  const { t } = useTranslation('@nocobase/app-plugin-file');
+  const { file, url, onDownload } = inputProps;
+  // A corrupt file still arrives as an image (`image/png`) and the browser only
+  // discovers it cannot decode when the element fails to load, so the failure
+  // has to be a state change rather than a check on the file metadata.
+  // Comparing the recorded failure against the current URL resets the state
+  // when a different file is shown, without an effect that sets state.
+  const [failedUrl, setFailedUrl] = useState<string>();
+  const failed = url !== undefined && failedUrl === url;
+  if (failed) {
+    return (
+      <div
+        role='alert'
+        className='flex flex-col items-center gap-3 py-8 text-center'
+      >
+        <AlertTriangle aria-hidden='true' className='size-6 text-destructive' />
+        <p>
+          {t('files.imageFailed', {
+            defaultValue:
+              'Unable to display this image. The file may be corrupted or in an unsupported format.',
+          })}
+        </p>
+        {onDownload ? (
+          <Button type='button' onClick={onDownload}>
+            {t('files.downloadFile', { defaultValue: 'Download file' })}
+          </Button>
+        ) : null}
+      </div>
+    );
+  }
+  return (
+    <img
+      src={url}
+      alt={file.filename}
+      className='max-h-[70vh] max-w-full object-contain'
+      onError={() => setFailedUrl(url)}
+    />
+  );
 }
 
 function MarkdownPreview(inputProps: { readonly text?: string }): ReactElement {

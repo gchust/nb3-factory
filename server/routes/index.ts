@@ -1,6 +1,12 @@
 import type { Application } from '@nocobase/app-server/application';
 import type { AppRouteContribution } from '@nocobase/app-server/router';
 
-const routes: readonly AppRouteContribution<Application>[] = [];
+import { documentAttachmentFileRoutes } from './document-attachments.js';
+import { documentsApiRoutes } from './documents.js';
+
+const routes: readonly AppRouteContribution<Application>[] = [
+  documentsApiRoutes,
+  ...documentAttachmentFileRoutes,
+];
 
 export default routes;

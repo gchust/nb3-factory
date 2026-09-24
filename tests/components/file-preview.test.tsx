@@ -1,8 +1,9 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 
 import {
   FilePreviewDialog,
+  FileThumbnail,
   type FileRecord,
 } from '../../client/extensions/nocobase-file-component-ui/index';
 
@@ -98,4 +99,38 @@ it('shows the denied content response without trying a third-party viewer', asyn
   expect(viewer.load).not.toHaveBeenCalled();
   expect(document.querySelector('iframe')).toBeNull();
   expect(screen.queryByRole('button', { name: /Download/ })).toBeNull();
+});
+
+it('reports an image the browser cannot decode', async () => {
+  render(
+    <FilePreviewDialog
+      files={[{ ...file('png'), mimeType: 'image/png' }]}
+      open
+      onOpenChange={vi.fn()}
+      download={false}
+    />,
+  );
+
+  const image = document.querySelector('img');
+  expect(image).not.toBeNull();
+  // The server accepts these bytes; only the browser's decode attempt reveals
+  // the file is corrupt, so the feedback is triggered by the load failure.
+  fireEvent.error(image!);
+
+  const alert = await screen.findByRole('alert');
+  expect(alert).toHaveTextContent(/corrupted/i);
+  expect(document.querySelector('img')).toBeNull();
+});
+
+it('falls back to the file type icon when a thumbnail image cannot decode', async () => {
+  render(<FileThumbnail file={{ ...file('png'), mimeType: 'image/png' }} />);
+
+  const image = document.querySelector('img');
+  expect(image).not.toBeNull();
+  fireEvent.error(image!);
+
+  await waitFor(() => expect(document.querySelector('img')).toBeNull());
+  expect(
+    document.querySelector('[data-slot="file-thumbnail"]'),
+  ).toHaveAttribute('aria-label', 'attachment.png');
 });
