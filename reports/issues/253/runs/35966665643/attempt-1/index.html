@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="referrer" content="no-referrer"><meta http-equiv="Content-Security-Policy" content="default-src &#39;none&#39;; img-src data:; style-src &#39;unsafe-inline&#39;; script-src &#39;sha256-IMnEUHIP2PoyLCqMYwZ/yRqY2SjANR434pwzI/QIln8=&#39;; base-uri &#39;none&#39;; form-action &#39;none&#39;; connect-src &#39;none&#39;; object-src &#39;none&#39;">
-<meta name="factory-report-id" content="gchust/nb3-factory:253:35966665643:1:8c6a567f34185c400969bc42dd31cef58fe12fe8:template-4:review-76ab552900de7014"><meta name="factory-template-version" content="4">
+<meta name="factory-report-id" content="gchust/nb3-factory:253:35966665643:1:8c6a567f34185c400969bc42dd31cef58fe12fe8:template-4:review-6f4b789f9773caf4"><meta name="factory-template-version" content="4">
 <title>[Code Agent] [预置][M03] 自动化专项：受理与站内通知（重搭 #204） · 交付报告</title><style>
 :root{--bg:#fafafa;--surface:#fff;--ink:#18181b;--muted:#71717a;--border:#e4e4e7;--subtle:#f4f4f5;--green:#167047;--green-bg:#f0f8f3;--amber:#975712;--amber-bg:#fffbeb;--radius:12px}
 *{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:90px}body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans CJK SC","PingFang SC","Microsoft YaHei",sans-serif;font-size:14px;line-height:1.7;-webkit-font-smoothing:antialiased}a{color:inherit;text-decoration:none}button,input{font:inherit}button,a,summary{-webkit-tap-highlight-color:transparent}button{cursor:pointer}button:focus-visible,a:focus-visible,summary:focus-visible,input:focus-visible{outline:3px solid #a1a1aa;outline-offset:3px}button:disabled{opacity:.5;cursor:default}svg{flex-shrink:0;vertical-align:middle}h1,h2,h3,p{margin:0}h1{font-size:clamp(29px,3.4vw,44px);line-height:1.35;letter-spacing:-1.5px;font-weight:680}h2{font-size:23px;letter-spacing:-.55px;font-weight:650;line-height:1.4}h3{font-size:15px;font-weight:650}small,.small{font-size:12px}code,.mono{font-family:"SFMono-Regular",Consolas,"Liberation Mono",monospace}code{font-size:.9em;background:var(--subtle);padding:2px 5px;border-radius:4px;overflow-wrap:anywhere}button{border:0;background:transparent;color:inherit}summary{cursor:pointer;list-style:none}summary::-webkit-details-marker{display:none}.muted{color:var(--muted)}.eyebrow{font-size:11px;font-weight:700;letter-spacing:1.8px;text-transform:uppercase;color:var(--muted)}.tag{display:inline-flex;gap:6px;align-items:center;font-size:11px;line-height:1.5;font-weight:550;border:1px solid var(--border);border-radius:6px;padding:4px 8px;white-space:nowrap;background:var(--surface)}.tag.good{color:var(--green);background:var(--green-bg);border-color:#d6e9dc}.tag.warn{color:var(--amber);background:var(--amber-bg);border-color:#efdfb6}.dot{width:6px;height:6px;border-radius:50%;background:currentColor}.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:1px solid var(--border);border-radius:8px;background:var(--surface);padding:10px 15px;font-size:13px;font-weight:550;line-height:1.5;transition:background .15s,transform .15s}.btn:hover{background:var(--subtle);transform:translateY(-1px)}.btn.primary{color:white;background:#18181b;border-color:#18181b}.btn.primary:hover{background:#333337}.btn.small{padding:7px 11px;font-size:12px}.text-link{font-size:12px;text-decoration:underline;text-underline-offset:4px;color:var(--muted)}.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius)}
@@ -75,7 +75,7 @@
 <a href="#improvements"><span class="nav-index">07</span>可改进的点</a>
 <a href="#execution"><span class="nav-index">08</span>执行与用量</a></nav><div class="sidebar-bottom"><span class="tag">固定模板 v4</span><p>内容来自本次任务产物。<br/>样式与交互由工厂统一维护。</p><div class="repo-name">gchust/nb3-factory</div></div></aside>
 <header class="topbar"><div class="breadcrumb"><span>gchust/nb3-factory</span><span>/</span><span>交付报告</span><span>/</span><strong>#253</strong></div><div class="top-actions"><span class="tag">静态快照 · 非实时状态</span></div></header>
-<main class="main"><noscript><p class="report-banner">正文和验收详情可直接阅读；图片筛选和放大需要 JavaScript。</p></noscript><section class="section" id="overview"><div class="hero"><div><div class="eyebrow">Delivery 253 / 2026-09-24T08:25:42.000Z</div><h1>[Code Agent] [预置][M03] 自动化专项：受理与站内通知（重搭 #204）</h1><p>主管在服务请求列表受理预置的普通与紧急请求，Workflow 分别走普通/紧急分支并留下执行记录，负责人消息中心收到对应持久站内消息，点击可打开正确请求，标记已读后刷新保留，非收件人看不到消息。</p><div class="hero-actions"><a class="btn" rel="noopener noreferrer" target="_blank" href="https://github.com/gchust/nb3-factory/pull/263">查看 PR #263 ↗</a><a class="btn" rel="noopener noreferrer" target="_blank" href="https://github.com/gchust/nb3-factory/issues/253">查看需求 ↗</a><a class="btn" rel="noopener noreferrer" target="_blank" href="https://github.com/gchust/nb3-factory/actions/runs/35966665643/attempts/1">本轮运行与原始产物 ↗</a><a class="btn primary" href="#build-review">查看框架评测</a></div><div class="hero-meta"><span>对应提交 <code title="8c6a567f34185c400969bc42dd31cef58fe12fe8">8c6a567f3418</code></span><span>Run 35966665643 / attempt 1</span><span>目标 <code>factory-baseline/source-cde9a8ea11b5-35945793229-1</code></span></div></div><div class="hero-badge"><span class="tag warn">已提交 PR · 等待人工评审</span></div></div><div class="metrics"><div class="card metric"><div class="metric-head">Agent 原始验收</div><div class="metric-value">4 / 4</div><div class="metric-note">这是 Agent 的报告结论，不代替人工评审</div></div><div class="card metric"><div class="metric-head">修改文件</div><div class="metric-value">26</div><div class="metric-note">15 新增 · 11 修改 · 0 删除</div></div><div class="card metric"><div class="metric-head">截图证据</div><div class="metric-value">15</div><div class="metric-note">来自本次选定报告的媒体清单</div></div><div class="card metric"><div class="metric-head">已记录执行时间</div><div class="metric-value">1:32:38</div><div class="metric-note">此 Issue 累计：已采集 1 个 Run / 1 次尝试</div></div></div><div class="alert"><div><h3>报告资料说明</h3><p>retro.json 格式无效；原始内容已保留，没有据此推断“无问题”。</p></div></div></section><section class="section"><div class="section-head"><div><div class="eyebrow">What was delivered</div><h2>先看业务结果，不先看日志</h2></div></div><div class="note-grid"><article class="card note-card"><h3>普通受理与执行记录</h3><p>受理 REQ-2026-0001 后业务记录 Status=Accepted、Result=Normal，工作流运行 #1 Resolved，Record normal result 节点 Succeeded 且结果 normal。</p></article><article class="card note-card"><h3>紧急分支可核验</h3><p>受理 REQ-2026-0002 后 Result=Urgent，运行 #2 中 Route by urgency 结果 true、Record urgent result Succeeded(urgent)，Record normal result 显示 Not executed。</p></article><article class="card note-card"><h3>持久站内消息与已读</h3><p>负责人在消息中心收到两条 In-App 消息，Open 打开对应请求，Mark read 后刷新仍为已读。</p></article><article class="card note-card"><h3>收件人隔离</h3><p>非收件人 Super Admin 的消息中心始终为 You&#39;re all caught up，看不到两条个人消息。</p></article></div><div class="business-flow" aria-label="业务顺序示意"><div class="business-step"><b>01</b>主管登录并打开 Service requests</div><span aria-hidden="true">→</span><div class="business-step"><b>02</b>受理普通请求 REQ-2026-0001</div><span aria-hidden="true">→</span><div class="business-step"><b>03</b>在 Workflow 执行记录确认普通分支结果</div><span aria-hidden="true">→</span><div class="business-step"><b>04</b>负责人打开消息中心并点击消息进入请求</div><span aria-hidden="true">→</span><div class="business-step"><b>05</b>标记已读后刷新确认保留</div><span aria-hidden="true">→</span><div class="business-step"><b>06</b>主管受理紧急请求 REQ-2026-0002</div><span aria-hidden="true">→</span><div class="business-step"><b>07</b>在运行 #2 确认紧急分支与未执行普通分支</div><span aria-hidden="true">→</span><div class="business-step"><b>08</b>非收件人确认消息中心为空</div></div><p class="check-source">业务顺序示意，操作证据见逐项验收。</p></section><section class="section" id="build-review"><div class="section-head"><div><div class="eyebrow">Build assessment</div><h2>NocoBase3 基础框架评测</h2></div><span class="tag warn">未完成独立评审</span></div><div class="review-disclaimer">评分是评审者基于本次覆盖范围的意见，不是客观测量，也不是 NocoBase3 整体评分。 未评估不是零分或满分，不计算综合平均分。</div><div class="review-process"><div><span>本 Run 验证轮次</span><strong>2</strong></div><div><span>本 Run 工厂修复轮次</span><strong>1</strong></div><div><span>已保留验证轮次</span><strong>2</strong></div></div>
+<main class="main"><noscript><p class="report-banner">正文和验收详情可直接阅读；图片筛选和放大需要 JavaScript。</p></noscript><section class="section" id="overview"><div class="hero"><div><div class="eyebrow">Delivery 253 / 2026-09-24T08:25:42.000Z</div><h1>[Code Agent] [预置][M03] 自动化专项：受理与站内通知（重搭 #204）</h1><p>主管在服务请求列表受理预置的普通与紧急请求，Workflow 分别走普通/紧急分支并留下执行记录，负责人消息中心收到对应持久站内消息，点击可打开正确请求，标记已读后刷新保留，非收件人看不到消息。</p><div class="hero-actions"><a class="btn" rel="noopener noreferrer" target="_blank" href="https://github.com/gchust/nb3-factory/pull/263">查看 PR #263 ↗</a><a class="btn" rel="noopener noreferrer" target="_blank" href="https://github.com/gchust/nb3-factory/issues/253">查看需求 ↗</a><a class="btn" rel="noopener noreferrer" target="_blank" href="https://github.com/gchust/nb3-factory/actions/runs/35966665643/attempts/1">本轮运行与原始产物 ↗</a><a class="btn primary" href="#build-review">查看框架评测</a></div><div class="hero-meta"><span>对应提交 <code title="8c6a567f34185c400969bc42dd31cef58fe12fe8">8c6a567f3418</code></span><span>Run 35966665643 / attempt 1</span><span>目标 <code>factory-baseline/source-cde9a8ea11b5-35945793229-1</code></span></div></div><div class="hero-badge"><span class="tag warn">已提交 PR · 等待人工评审</span></div></div><div class="metrics"><div class="card metric"><div class="metric-head">Agent 原始验收</div><div class="metric-value">4 / 4</div><div class="metric-note">这是 Agent 的报告结论，不代替人工评审</div></div><div class="card metric"><div class="metric-head">修改文件</div><div class="metric-value">26</div><div class="metric-note">15 新增 · 11 修改 · 0 删除</div></div><div class="card metric"><div class="metric-head">截图证据</div><div class="metric-value">15</div><div class="metric-note">来自本次选定报告的媒体清单</div></div><div class="card metric"><div class="metric-head">已记录执行时间</div><div class="metric-value">1:32:38</div><div class="metric-note">此 Issue 累计：已采集 1 个 Run / 1 次尝试</div></div></div><div class="alert"><div><h3>报告资料说明</h3><p>retro.json 格式无效；原始内容已保留，没有据此推断“无问题”。</p></div></div></section><section class="section"><div class="section-head"><div><div class="eyebrow">What was delivered</div><h2>先看业务结果，不先看日志</h2></div></div><div class="note-grid"><article class="card note-card"><h3>普通受理与执行记录</h3><p>受理 REQ-2026-0001 后业务记录 Status=Accepted、Result=Normal，工作流运行 #1 Resolved，Record normal result 节点 Succeeded 且结果 normal。</p></article><article class="card note-card"><h3>紧急分支可核验</h3><p>受理 REQ-2026-0002 后 Result=Urgent，运行 #2 中 Route by urgency 结果 true、Record urgent result Succeeded(urgent)，Record normal result 显示 Not executed。</p></article><article class="card note-card"><h3>持久站内消息与已读</h3><p>负责人在消息中心收到两条 In-App 消息，Open 打开对应请求，Mark read 后刷新仍为已读。</p></article><article class="card note-card"><h3>收件人隔离</h3><p>非收件人 Super Admin 的消息中心始终为 You&#39;re all caught up，看不到两条个人消息。</p></article></div><div class="business-flow" aria-label="业务顺序示意"><div class="business-step"><b>01</b>主管登录并打开 Service requests</div><span aria-hidden="true">→</span><div class="business-step"><b>02</b>受理普通请求 REQ-2026-0001</div><span aria-hidden="true">→</span><div class="business-step"><b>03</b>在 Workflow 执行记录确认普通分支结果</div><span aria-hidden="true">→</span><div class="business-step"><b>04</b>负责人打开消息中心并点击消息进入请求</div><span aria-hidden="true">→</span><div class="business-step"><b>05</b>标记已读后刷新确认保留</div><span aria-hidden="true">→</span><div class="business-step"><b>06</b>主管受理紧急请求 REQ-2026-0002</div><span aria-hidden="true">→</span><div class="business-step"><b>07</b>在运行 #2 确认紧急分支与未执行普通分支</div><span aria-hidden="true">→</span><div class="business-step"><b>08</b>非收件人确认消息中心为空</div></div><p class="check-source">业务顺序示意，操作证据见逐项验收。</p></section><section class="section" id="build-review"><div class="section-head"><div><div class="eyebrow">NocoBase3 framework assessment</div><h2>NocoBase3 基础框架评测</h2></div><span class="tag ">独立 Agent 评审 · 口径 v2</span></div><div class="review-disclaimer">评的是库、插件与指引是否满足需求、容易使用、对 Agent 友好。业务代码与 QA 是使用证据，不是评分主体。 未评估不是零分或满分，不计算综合平均分。</div><p class="check-source">评审源产物：Run 35966665643 / attempt 1 · 后补评审 Run 35987996268 / attempt 1。发布重试不改变评审源产物编号。</p><p class="check-source">本次后补评审用量（独立于原搭建）：3232607 Token（含缓存）；不重复计入原搭建。</p><p class="review-summary">本次需求的两条主线是 Workflow（登记受理 + 按紧急标记分支 + 执行记录）和 Notification/In-App 持久站内信（投递、收件人隔离、已读持久、点击打开请求）。Workflow DSL、条件分支、run 节点、trigger 服务、执行记录，以及 notification.send 的通道/幂等校验和 in-app 的数据库收件箱都直接支持需求；第二轮 QA B01-B04 全通过。主要障碍在 Workflow Artifact 的物化位置：runtime 以 ESM 从 artifact 目录动态 import run 模块，artifact 盘若不在代码根内，裸导入 @nocobase/db 在生产模式解析失败；插件/模板未提供安全默认或在启动/校验期 fail-fast，当前 Skill 也未记录 artifactDisk 需要代码根内可解析 node_modules。应用最终通过新增 workflow-artifacts 盘绕行并修复。</p><div class="review-caption">5 个框架能力单元 · 25 / 25 项已评分 · 主表展示三项重点，设计与可靠性见详情</div><div class="card table-wrap review-matrix framework-matrix"><table><thead><tr><th>框架能力 / 具体被评对象</th><th>需求满足度</th><th>使用便利度</th><th>Agent 友好度</th></tr></thead><tbody><tr><td><a href="#review-module-0"><strong>Workflow DSL、条件分支与持久执行记录</strong></a><p>@nocobase/app-plugin-workflow · app/.agents/skills/nocobase-app-plugin-workflow/SKILL.md · app/.agents/skills/nocobase-app-plugin-workflow/references/dsl-authoring.md</p></td><td data-label="需求满足度"><strong class="review-score">88<small>/100</small></strong></td><td data-label="使用便利度"><strong class="review-score">86<small>/100</small></strong></td><td data-label="Agent 友好度"><strong class="review-score">84<small>/100</small></strong></td></tr><tr><td><a href="#review-module-1"><strong>Workflow Artifact 物化与生产运行时配置</strong></a><p>@nocobase/app-plugin-workflow · app/.agents/skills/nocobase-app-plugin-workflow/references/dsl-authoring.md</p></td><td data-label="需求满足度"><strong class="review-score">66<small>/100</small></strong></td><td data-label="使用便利度"><strong class="review-score">62<small>/100</small></strong></td><td data-label="Agent 友好度"><strong class="review-score">58<small>/100</small></strong></td></tr><tr><td><a href="#review-module-2"><strong>Notification 服务与通道投递</strong></a><p>@nocobase/app-plugin-notification · app/.agents/skills/nocobase-app-plugin-notification/references/sending-notifications.md</p></td><td data-label="需求满足度"><strong class="review-score">90<small>/100</small></strong></td><td data-label="使用便利度"><strong class="review-score">88<small>/100</small></strong></td><td data-label="Agent 友好度"><strong class="review-score">87<small>/100</small></strong></td></tr><tr><td><a href="#review-module-3"><strong>In-App 持久收件箱、已读与收件人隔离</strong></a><p>@nocobase/app-plugin-notification-in-app · app/.agents/skills/nocobase-app-plugin-notification-in-app/SKILL.md · app/.agents/skills/nocobase-app-plugin-notification-in-app/references/inbox-integration.md</p></td><td data-label="需求满足度"><strong class="review-score">92<small>/100</small></strong></td><td data-label="使用便利度"><strong class="review-score">90<small>/100</small></strong></td><td data-label="Agent 友好度"><strong class="review-score">88<small>/100</small></strong></td></tr><tr><td><a href="#review-module-4"><strong>数据库迁移、种子与 Repository 持久化</strong></a><p>@nocobase/db · app/.agents/skills/nocobase-db/SKILL.md</p></td><td data-label="需求满足度"><strong class="review-score">88<small>/100</small></strong></td><td data-label="使用便利度"><strong class="review-score">86<small>/100</small></strong></td><td data-label="Agent 友好度"><strong class="review-score">85<small>/100</small></strong></td></tr></tbody></table></div><p class="check-source">正常业务组合不等于框架缺陷；Agent 用错、工厂误报和环境问题需要分别归因。数字仅适用于列出的职责与覆盖范围。</p><div class="review-modules"><details class="card review-module" id="review-module-0"><summary><strong>Workflow DSL、条件分支与持久执行记录</strong><span>对象、需求覆盖、五项理由与证据</span></summary><div class="subsection-body"><p>defineWorkflow/RunInstruction/ConditionInstruction 的声明与分支编排、run 模块的命名导出与结果 schema、workflowServiceToken.trigger 的异步回执、以及 run/node 执行记录的持久化。</p><div class="review-targets"><div><span class="eyebrow">库</span><strong>@nocobase/app-plugin-workflow</strong><span class="check-source">0.1.0-beta.25</span><p>defineWorkflow · RunInstruction.create · ConditionInstruction.create · workflowServiceToken.trigger · WorkflowServiceContract · WorkflowRunFunction</p><span class="review-refs"><a href="#review-evidence-E1">E1</a> <a href="#review-evidence-E2">E2</a></span></div><div><span class="eyebrow">指引 / Skill</span><strong>app/.agents/skills/nocobase-app-plugin-workflow/SKILL.md</strong><span class="check-source">版本见冻结输入</span><p>Choose the Task Path · Author and Validate · Invoke and Manage: trigger()</p><span class="review-refs"><a href="#review-evidence-E3">E3</a></span></div><div><span class="eyebrow">指引 / Skill</span><strong>app/.agents/skills/nocobase-app-plugin-workflow/references/dsl-authoring.md</strong><span class="check-source">版本见冻结输入</span><p>checker phases · run node module contract · Artifact build</p><span class="review-refs"><a href="#review-evidence-E4">E4</a></span></div></div><div class="review-requirements"><h3>需求 → 框架职责 → 推荐与实际接入</h3><article><header><strong>主管受理后由 Workflow 完成‘登记受理’，并据紧急标记走 normal/urgent 分支，执行记录可看到步骤与最终结果。</strong><span class="tag ">直接支持</span></header><dl class="retro-fields"><div><dt>框架职责与业务边界</dt><dd>框架负责 DSL/指令抽象、DAG 分支执行、run 模块加载与结果契约、运行与节点记录的持久化；应用负责 workflow.ts 的编排和四个 run 模块的业务语义。</dd></div><div><dt>推荐使用方式</dt><dd>在 server/workflows/&lt;key&gt;/workflow.ts 用 defineWorkflow 绑定 WorkflowSourceAst；RunInstruction.create 的 config.module 用扩展名省略的包内相对路径，声明 result schema；条件用 ConditionInstruction.branch；run 模块 export 名为 run 的函数并做 abort/幂等；业务侧 resolve(workflowServiceToken).trigger(key, input)。</dd></div><div><dt>Agent 实际使用</dt><dd>应用按此写 workflow.ts（registerAcceptance → routeByUrgency → markNormal/markUrgent → notifyAssignee），run 模块用 named run、declare result，并在 accept 路由中 trigger。第二轮 QA 运行 #1/#2 显示 Resolved，普通运行 normal 节点 Succeeded、紧急运行 urgent 节点 Succeeded 且 normal 节点 Not executed。</dd></div><div><dt>缺口归因</dt><dd>未记录能力缺口</dd></div></dl><span class="review-refs"><a href="#review-evidence-E1">E1</a> <a href="#review-evidence-E3">E3</a> <a href="#review-evidence-E5">E5</a> <a href="#review-evidence-E31">E31</a></span></article></div><div class="review-dimensions"><article><header><h3>需求满足度</h3><strong class="review-score">88<small>/100</small></strong></header><p>公开契约把 DSL、分支指令、run 结果 schema、异步 trigger 与执行记录分层提供，正好覆盖登记受理与普通/紧急分支；第二轮实测执行记录能区分两个分支。</p><span class="review-refs"><a href="#review-evidence-E1">E1</a> <a href="#review-evidence-E3">E3</a></span></article><article><header><h3>使用便利度</h3><strong class="review-score">86<small>/100</small></strong></header><p>declareWorkflow 的节点/result 声明与 run 模块命名导出约定一致，trigger 以 accepted/runId 回执返回，业务侧无需自建调度或执行表。</p><span class="review-refs"><a href="#review-evidence-E2">E2</a> <a href="#review-evidence-E3">E3</a></span></article><article><header><h3>Agent 友好度</h3><strong class="review-score">84<small>/100</small></strong></header><p>Skill 给出明确任务路径、节点 description 强制、check CLI、trigger 示例与异步语义，Agent 能据此找到正确入口并完成 DSL 编排。</p><span class="review-refs"><a href="#review-evidence-E3">E3</a> <a href="#review-evidence-E4">E4</a></span></article><article><header><h3>设计合理性</h3><strong class="review-score">85<small>/100</small></strong></header><p>DSL 源 AST、指令类、引擎与 Artifact loader 边界清晰；run 模块是普通命名导出函数，业务逻辑与框架流程解耦。</p><span class="review-refs"><a href="#review-evidence-E1">E1</a> <a href="#review-evidence-E2">E2</a></span></article><article><header><h3>实现完整性与可靠性</h3><strong class="review-score">82<small>/100</small></strong></header><p>实现层对 run 模块做容器内路径校验、要求命名 run 导出、对不可 JSON 化的返回值显式报错，运行语义与 Skill 描述一致。</p><span class="review-refs"><a href="#review-evidence-E2">E2</a></span></article></div><p class="check-source">覆盖限制：未运行应用，未独立重放执行记录；分支执行与 node-run 落库依据源码阅读和第二轮 QA 截图/报告，未直接读 engine 的调度实现。</p><p class="check-source">映射验收项：B01, B03</p><div class="review-badges"><span>业务首轮 QA</span><span class="tag bad">报告未通过</span><span>业务最终轮 QA</span><span class="tag good">报告通过</span></div><p class="check-source">这是业务验证背景，不直接换算框架分数；首轮失败不会被最终通过覆盖。</p></div></details><details class="card review-module" id="review-module-1"><summary><strong>Workflow Artifact 物化与生产运行时配置</strong><span>对象、需求覆盖、五项理由与证据</span></summary><div class="subsection-body"><p>WorkflowRuntimeConfig.artifactDisk 的解析、resolveWorkflowRuntimeConfig 对 distRoot/production 的计算、Artifact 盘的校验与 run 模块的运行时 import，以及已部署 revision 的 materialize/enable 入口。</p><div class="review-targets"><div><span class="eyebrow">库</span><strong>@nocobase/app-plugin-workflow</strong><span class="check-source">0.1.0-beta.25</span><p>resolveWorkflowRuntimeConfig · WorkflowRuntimeConfig.artifactDisk · createLocalWorkflowArtifactStore · WorkflowService.discoverArtifacts · WorkflowService.ensureArtifactMaterialized</p><span class="review-refs"><a href="#review-evidence-E6">E6</a> <a href="#review-evidence-E7">E7</a> <a href="#review-evidence-E8">E8</a> <a href="#review-evidence-E9">E9</a> <a href="#review-evidence-E33">E33</a></span></div><div><span class="eyebrow">指引 / Skill</span><strong>app/.agents/skills/nocobase-app-plugin-workflow/references/dsl-authoring.md</strong><span class="check-source">版本见冻结输入</span><p>Artifact build · runtime module loading · Deterministic definition builds</p><span class="review-refs"><a href="#review-evidence-E4">E4</a></span></div></div><div class="review-requirements"><h3>需求 → 框架职责 → 推荐与实际接入</h3><article><header><strong>应用部署/构建后首次受理即可运行 Workflow，无需运维手工发布 Artifact，也不因运行模块位置导致生产环境失败。</strong><span class="tag warn">需要绕行</span></header><dl class="retro-fields"><div><dt>框架职责与业务边界</dt><dd>框架负责定义 artifactDisk 契约、物化/加载 run 模块并保证其在生产构建中可解析；应用负责为 artifactDisk 指定一个位于代码根内、可解析 node_modules 的私有 fs 盘。</dd></div><div><dt>推荐使用方式</dt><dd>当前指南未给出 artifactDisk 的推荐配置；从实现看应把 artifactDisk 指向代码根内的私有 fs 盘（应用用 drive 盘 workflows → paths.root(&#39;workflow-artifacts&#39;)），确保 run 模块物化位置向上可找到 node_modules。该推荐做法在 Skill 中未记录。</dd></div><div><dt>Agent 实际使用</dt><dd>初始配置使生产模式物化到部署 storage 根之外的 storage/private/workflows，run 模块 import &#39;@nocobase/db&#39; 报 Cannot find package；应用新增 code-root 盘并设 artifactDisk:&#39;workflows&#39; 后两条请求端到端跑通。</dd></div><div><dt>缺口归因</dt><dd>NocoBase3 内核</dd></div></dl><span class="review-refs"><a href="#review-evidence-E6">E6</a> <a href="#review-evidence-E7">E7</a> <a href="#review-evidence-E8">E8</a> <a href="#review-evidence-E10">E10</a> <a href="#review-evidence-E11">E11</a> <a href="#review-evidence-E12">E12</a></span></article></div><div class="review-dimensions"><article><header><h3>需求满足度</h3><strong class="review-score">66<small>/100</small></strong></header><p>框架本身能加载并执行 Artifact，但 artifactDisk 由应用提供、配置不当时只在生产首次运行才失败；本次必须先绕行换盘才满足受理需求。</p><span class="review-refs"><a href="#review-evidence-E6">E6</a> <a href="#review-evidence-E7">E7</a></span></article><article><header><h3>使用便利度</h3><strong class="review-score">62<small>/100</small></strong></header><p>artifactDisk 是必填且无默认/无校验，需要额外理解 drive 盘与 node_modules 解析关系；失败信息只在运行记录里以模块找不到的形式出现。</p><span class="review-refs"><a href="#review-evidence-E7">E7</a> <a href="#review-evidence-E9">E9</a></span></article><article><header><h3>Agent 友好度</h3><strong class="review-score">58<small>/100</small></strong></header><p>当前流程 Skill 未提及 artifactDisk、代码根约束或生产/开发差异，Agent 只能靠生产 QA 失败反推；属于发现与恢复指引缺口。</p><span class="review-refs"><a href="#review-evidence-E4">E4</a> <a href="#review-evidence-E7">E7</a></span></article><article><header><h3>设计合理性</h3><strong class="review-score">64<small>/100</small></strong></header><p>resolveWorkflowRuntimeConfig 只推导 distRoot/production，不推导或校验 Artifact 盘位置；createLocalWorkflowArtifactStore 接受任意 private fs 盘；programmatic enable 入口 internalWorkflowServiceToken 又未从 /server 公开导出。</p><span class="review-refs"><a href="#review-evidence-E6">E6</a> <a href="#review-evidence-E8">E8</a> <a href="#review-evidence-E9">E9</a> <a href="#review-evidence-E33">E33</a></span></article><article><header><h3>实现完整性与可靠性</h3><strong class="review-score">56<small>/100</small></strong></header><p>run 模块经绝对 file URL 动态 import，裸导入按模块所在目录解析；store 侧不校验该目录是否能解析依赖，配置合法但运行期才抛 module-not-found，未 fail-fast。</p><span class="review-refs"><a href="#review-evidence-E6">E6</a> <a href="#review-evidence-E8">E8</a></span></article></div><p class="check-source">覆盖限制：快照未包含 create-app 模板源码，无法直接核对模板中 artifactDisk 的原始默认；模板默认值仅来自 retro 自述，插件/指南侧证据独立核对。</p><p class="check-source">映射验收项：B01, B03</p><div class="review-badges"><span>业务首轮 QA</span><span class="tag bad">报告未通过</span><span>业务最终轮 QA</span><span class="tag good">报告通过</span></div><p class="check-source">这是业务验证背景，不直接换算框架分数；首轮失败不会被最终通过覆盖。</p></div></details><details class="card review-module" id="review-module-2"><summary><strong>Notification 服务与通道投递</strong><span>对象、需求覆盖、五项理由与证据</span></summary><div class="subsection-body"><p>notificationServiceToken 与 send() 的通道映射、消息校验、幂等键与请求指纹、以及 source 业务关联；不含外部渠道。</p><div class="review-targets"><div><span class="eyebrow">库</span><strong>@nocobase/app-plugin-notification</strong><span class="check-source">0.1.0-beta.15</span><p>notificationServiceToken · NotificationService.send · NotificationConfig.channels · idempotencyKey · notificationRequestFingerprint</p><span class="review-refs"><a href="#review-evidence-E13">E13</a> <a href="#review-evidence-E14">E14</a></span></div><div><span class="eyebrow">指引 / Skill</span><strong>app/.agents/skills/nocobase-app-plugin-notification/references/sending-notifications.md</strong><span class="check-source">版本见冻结输入</span><p>send() contract · in-app message shape · idempotency</p><span class="review-refs"><a href="#review-evidence-E15">E15</a></span></div></div><div class="review-requirements"><h3>需求 → 框架职责 → 推荐与实际接入</h3><article><header><strong>受理后向负责人发送一条持久站内消息，且重复/重试不产生第二条。</strong><span class="tag ">直接支持</span></header><dl class="retro-fields"><div><dt>框架职责与业务边界</dt><dd>框架负责通道注册与消息校验、幂等去重、投递生命周期；应用负责选择通道并给出收件人、标题、正文与 target。</dd></div><div><dt>推荐使用方式</dt><dd>配置 notification.channels.inbox={provider:&#39;in-app&#39;}，resolve(notificationServiceToken).send({idempotencyKey, source:{type,referenceId}, messages:{inbox:{to:userId,title,body,target:{type:&#39;route&#39;,path}}}})。</dd></div><div><dt>Agent 实际使用</dt><dd>应用按推荐形状在 notify-assignee run 节点发送，idempotencyKey 使用 service-request-accepted:&lt;id&gt;，target 指向 /service-requests/&lt;id&gt;；配置在 server/config/notification.ts 注册 inbox→in-app。</dd></div><div><dt>缺口归因</dt><dd>未记录能力缺口</dd></div></dl><span class="review-refs"><a href="#review-evidence-E13">E13</a> <a href="#review-evidence-E15">E15</a> <a href="#review-evidence-E16">E16</a> <a href="#review-evidence-E17">E17</a></span></article></div><div class="review-dimensions"><article><header><h3>需求满足度</h3><strong class="review-score">90<small>/100</small></strong></header><p>send() 支持按通道名组装消息、source 关联业务、幂等键去重，直接满足持久站内信需求，无需自建消息表。</p><span class="review-refs"><a href="#review-evidence-E13">E13</a> <a href="#review-evidence-E15">E15</a></span></article><article><header><h3>使用便利度</h3><strong class="review-score">88<small>/100</small></strong></header><p>单一 send() 入口、通道到消息的扁平映射，校验错误在入队前抛出；指南给出可直接套用的 inbox 示例。</p><span class="review-refs"><a href="#review-evidence-E13">E13</a> <a href="#review-evidence-E15">E15</a></span></article><article><header><h3>Agent 友好度</h3><strong class="review-score">87<small>/100</small></strong></header><p>Skill 明确 resolve notificationServiceToken、按通道构造完整消息、幂等键语义，并指明 in-app 的 to/title/body/target 要求。</p><span class="review-refs"><a href="#review-evidence-E15">E15</a></span></article><article><header><h3>设计合理性</h3><strong class="review-score">85<small>/100</small></strong></header><p>通道/Provider 注册表与 Notification/Delivery/Attempt 生命周期分离，幂等以请求指纹检测同键不同内容冲突，边界清晰。</p><span class="review-refs"><a href="#review-evidence-E13">E13</a> <a href="#review-evidence-E14">E14</a></span></article><article><header><h3>实现完整性与可靠性</h3><strong class="review-score">86<small>/100</small></strong></header><p>send() 在持久化前完成消息与幂等键校验，已存在同键同指纹时返回 deduplicated 并补投 pending，同键不同内容显式报冲突。</p><span class="review-refs"><a href="#review-evidence-E13">E13</a> <a href="#review-evidence-E14">E14</a></span></article></div><p class="check-source">覆盖限制：未验证外部渠道；未直接读持久化 store 的 SQL，但 in-app 落库由 in-app 插件实现覆盖。</p><p class="check-source">映射验收项：B02, B04</p><div class="review-badges"><span>业务首轮 QA</span><span class="tag bad">报告未通过</span><span>业务最终轮 QA</span><span class="tag good">报告通过</span></div><p class="check-source">这是业务验证背景，不直接换算框架分数；首轮失败不会被最终通过覆盖。</p></div></details><details class="card review-module" id="review-module-3"><summary><strong>In-App 持久收件箱、已读与收件人隔离</strong><span>对象、需求覆盖、五项理由与证据</span></summary><div class="subsection-body"><p>in-app 通道定义与收件人存在性校验、数据库收件箱的按用户读取与 read/unread 持久化、HTTP 路由的会话身份解析、Client 收件箱组件与 target 跳转。</p><div class="review-targets"><div><span class="eyebrow">库</span><strong>@nocobase/app-plugin-notification-in-app</strong><span class="check-source">0.2.0-beta.16</span><p>NotificationInAppProvider · NotificationInAppInbox · createInAppChannelDefinition · createDatabaseProviderDefinition · DatabaseInAppStore</p><span class="review-refs"><a href="#review-evidence-E18">E18</a> <a href="#review-evidence-E19">E19</a> <a href="#review-evidence-E20">E20</a> <a href="#review-evidence-E21">E21</a></span></div><div><span class="eyebrow">指引 / Skill</span><strong>app/.agents/skills/nocobase-app-plugin-notification-in-app/SKILL.md</strong><span class="check-source">版本见冻结输入</span><p>Workflow · Verification Checklist</p><span class="review-refs"><a href="#review-evidence-E22">E22</a></span></div><div><span class="eyebrow">指引 / Skill</span><strong>app/.agents/skills/nocobase-app-plugin-notification-in-app/references/inbox-integration.md</strong><span class="check-source">版本见冻结输入</span><p>Required packages · HTTP and realtime behavior · channel config and target</p><span class="review-refs"><a href="#review-evidence-E23">E23</a></span></div></div><div class="review-requirements"><h3>需求 → 框架职责 → 推荐与实际接入</h3><article><header><strong>负责人能在消息中心看到该消息、点击打开正确请求、标记已读并刷新后保留；非收件人看不到这两条个人消息。</strong><span class="tag ">直接支持</span></header><dl class="retro-fields"><div><dt>框架职责与业务边界</dt><dd>框架负责持久收件箱、按登录用户的读写隔离与已读状态、route target 打开、以及发送前收件人校验；应用负责在页面挂载 Provider/Inbox 并配置 inbox 通道。</dd></div><div><dt>推荐使用方式</dt><dd>在 Client 组合根注册 in-app client 入口并在消息页挂载 NotificationInAppProvider + NotificationInAppInbox；服务端先注册 notification 再注册 in-app；发送时 channels.inbox.provider=&#39;in-app&#39;，target 用不带部署前缀的 route。</dd></div><div><dt>Agent 实际使用</dt><dd>应用消息页直接挂载插件组件，notification.ts 配置 inbox→in-app，notify-assignee 用 route target；第二轮 QA 显示负责人收到消息、Open 跳到 /service-requests/1、Mark read 刷新后保留，且 Super Admin 收件箱为空。</dd></div><div><dt>缺口归因</dt><dd>未记录能力缺口</dd></div></dl><span class="review-refs"><a href="#review-evidence-E18">E18</a> <a href="#review-evidence-E23">E23</a> <a href="#review-evidence-E24">E24</a> <a href="#review-evidence-E31">E31</a></span></article></div><div class="review-dimensions"><article><header><h3>需求满足度</h3><strong class="review-score">92<small>/100</small></strong></header><p>DatabaseInAppStore 持久化条目并按 userId 过滤、维护 readAt，route target 供 UI 跳转，收件人存在性在写库前校验，直接覆盖 B02/B04。</p><span class="review-refs"><a href="#review-evidence-E18">E18</a> <a href="#review-evidence-E23">E23</a></span></article><article><header><h3>使用便利度</h3><strong class="review-score">90<small>/100</small></strong></header><p>插件同时提供 Server 路由与 Client 收件箱组件，应用只需挂载组件与配置通道；指南给出 route/url target 与 channel 配置的确切写法。</p><span class="review-refs"><a href="#review-evidence-E18">E18</a> <a href="#review-evidence-E23">E23</a></span></article><article><header><h3>Agent 友好度</h3><strong class="review-score">88<small>/100</small></strong></header><p>in-app Skill 与 inbox 合约明确注册顺序、公共 realtime 入口、CSRF/分页/隔离检查项，并明确禁止用 toast 或直接改表替代，指引准确。</p><span class="review-refs"><a href="#review-evidence-E22">E22</a> <a href="#review-evidence-E23">E23</a></span></article><article><header><h3>设计合理性</h3><strong class="review-score">88<small>/100</small></strong></header><p>store 有 memory/database/realtime 装饰分层，通道定义负责校验与收件人展开，Provider 通过 user administration 判定收件人存在，扩展点清晰。</p><span class="review-refs"><a href="#review-evidence-E19">E19</a> <a href="#review-evidence-E20">E20</a> <a href="#review-evidence-E21">E21</a></span></article><article><header><h3>实现完整性与可靠性</h3><strong class="review-score">88<small>/100</small></strong></header><p>读取/更新/删除 SQL 均带 userId 条件并以 updatedCount/deletedCount 判定结果，HTTP 身份取自认证会话，收件人不存在则拒绝投递。</p><span class="review-refs"><a href="#review-evidence-E18">E18</a> <a href="#review-evidence-E20">E20</a></span></article></div><p class="check-source">覆盖限制：未做断线重连/实时矩阵验证；未直接读 Client 组件实现，仅以应用挂载点和 QA 结果为证。</p><p class="check-source">映射验收项：B02, B04</p><div class="review-badges"><span>业务首轮 QA</span><span class="tag bad">报告未通过</span><span>业务最终轮 QA</span><span class="tag good">报告通过</span></div><p class="check-source">这是业务验证背景，不直接换算框架分数；首轮失败不会被最终通过覆盖。</p></div></details><details class="card review-module" id="review-module-4"><summary><strong>数据库迁移、种子与 Repository 持久化</strong><span>对象、需求覆盖、五项理由与证据</span></summary><div class="subsection-body"><p>业务表的结构迁移、安装种子数据、以及运行/工作流节点通过 Repository 读写业务记录。</p><div class="review-targets"><div><span class="eyebrow">库</span><strong>@nocobase/db</strong><span class="check-source">1.0.0-beta.14</span><p>defineMigration · defineSeed · Collection Builder · DatabaseManager.repository · Repository.createOne/findOne/updateMany</p><span class="review-refs"><a href="#review-evidence-E25">E25</a> <a href="#review-evidence-E26">E26</a> <a href="#review-evidence-E27">E27</a></span></div><div><span class="eyebrow">指引 / Skill</span><strong>app/.agents/skills/nocobase-db/SKILL.md</strong><span class="check-source">版本见冻结输入</span><p>Migrations and seeds · Repository and Query · Where the code lives</p><span class="review-refs"><a href="#review-evidence-E28">E28</a></span></div></div><div class="review-requirements"><h3>需求 → 框架职责 → 推荐与实际接入</h3><article><header><strong>业务请求表真实落库、种子提供两条预设请求，受理状态与分支结果可被 Workflow 与页面读写。</strong><span class="tag ">直接支持</span></header><dl class="retro-fields"><div><dt>框架职责与业务边界</dt><dd>框架负责迁移/种子发现执行、Builder 建表、Repository 的过滤/取值/写策略与结果判定；应用负责表字段与业务语义。</dd></div><div><dt>推荐使用方式</dt><dd>在 database/&lt;connection&gt;/migrations 用 defineMigration + builder.createCollection 建表；seed 用 defineSeed + repository/query；运行代码用 databaseManagerToken.repository&lt;T&gt;(name) 做 findOne/createOne/updateMany。</dd></div><div><dt>Agent 实际使用</dt><dd>应用建立 serviceRequests 表与两条种子请求，run 模块与服务均通过 repository(&#39;serviceRequests&#39;) 读写；第二轮 QA 显示状态/结果真实持久（Accepted/Normal/Urgent）。</dd></div><div><dt>缺口归因</dt><dd>未记录能力缺口</dd></div></dl><span class="review-refs"><a href="#review-evidence-E25">E25</a> <a href="#review-evidence-E27">E27</a> <a href="#review-evidence-E28">E28</a> <a href="#review-evidence-E29">E29</a> <a href="#review-evidence-E30">E30</a> <a href="#review-evidence-E31">E31</a></span></article></div><div class="review-dimensions"><article><header><h3>需求满足度</h3><strong class="review-score">88<small>/100</small></strong></header><p>迁移/种子定义与 Repository 写读齐备，能真实持久化业务表与分支结果，无需静态数组或内存替代。</p><span class="review-refs"><a href="#review-evidence-E25">E25</a> <a href="#review-evidence-E27">E27</a></span></article><article><header><h3>使用便利度</h3><strong class="review-score">86<small>/100</small></strong></header><p>defineMigration/defineSeed 入口简单，Builder 流式建表，Repository 方法签名直观；Skill 给出按目录放置的明确约定。</p><span class="review-refs"><a href="#review-evidence-E26">E26</a> <a href="#review-evidence-E28">E28</a></span></article><article><header><h3>Agent 友好度</h3><strong class="review-score">85<small>/100</small></strong></header><p>nocobase-db Skill 明确迁移与运行时分层、目录位置与可复制示例，Agent 能定位正确入口，未见误导。</p><span class="review-refs"><a href="#review-evidence-E28">E28</a></span></article><article><header><h3>设计合理性</h3><strong class="review-score">84<small>/100</small></strong></header><p>schema 变更（migration/builder）与运行期读写（Repository）边界清楚，Skill 明示运行时不得改 schema、迁移不得引用运行时。</p><span class="review-refs"><a href="#review-evidence-E25">E25</a> <a href="#review-evidence-E26">E26</a> <a href="#review-evidence-E27">E27</a></span></article><article><header><h3>实现完整性与可靠性</h3><strong class="review-score">84<small>/100</small></strong></header><p>Repository 对 filter 与写策略做校验，updateMany 依据 updatedCount 判定并返回计数，避免静默无效果写入。</p><span class="review-refs"><a href="#review-evidence-E27">E27</a></span></article></div><p class="check-source">覆盖限制：未运行迁移/种子，未核对数据库实际 schema；以源码与第二轮 QA 的业务状态为准。</p><p class="check-source">映射验收项：B01, B02, B03</p><div class="review-badges"><span>业务首轮 QA</span><span class="tag bad">报告未通过</span><span>业务最终轮 QA</span><span class="tag good">报告通过</span></div><p class="check-source">这是业务验证背景，不直接换算框架分数；首轮失败不会被最终通过覆盖。</p></div></details></div><details class="card raw-record"><summary>业务验证背景 · 不计入框架评分</summary><div class="subsection-body"><div class="review-process"><div><span>本 Run 验证轮次</span><strong>2</strong></div><div><span>本 Run 工厂修复轮次</span><strong>1</strong></div><div><span>已保留验证轮次</span><strong>2</strong></div></div>
     <p class="check-source">仅本 Run 已归档记录；工厂修复轮次不等于 Agent 开发中全部试错次数。缺少 verify-1 时不能声称任务首轮通过。</p>
     <details class="card raw-record"><summary>首轮与修复过程 · 查看逐轮原始状态</summary><div class="subsection-body"><div class="table-wrap"><table><thead><tr><th>轮次</th><th>范围</th><th>原始结论</th><th>失败项</th></tr></thead><tbody><tr><td>验证 1</td><td>全量浏览器 QA</td><td><span class="tag bad">报告未通过</span></td><td>B01 主管受理一条普通请求，执行记录显示已运行，业务记录呈现相应受理结果。<br>B02 负责人收到对应站内消息，点击能打开正确请求；标记已读后刷新仍为已读。<br>B03 受理一条紧急请求，能从执行和业务结果确认走了紧急分支；不只验证触发按钮提示。<br>B04 非收件人看不到这两条个人消息；不扩展断线重连或所有消息操作矩阵。
 
@@ -85,7 +85,1059 @@
 
 ## 本次补充要求
 
-只实现来源预设的两条服务请求、普通/紧急两个 Workflow 分支及负责人站内通知，沿用现有工作流执行记录和消息中心。不要增加审批、退回、邮件、Scheduler 或额外系统。固定基线和工厂既有验证不变，真实模块评测结果关联 #249；不合并业务 PR。</td></tr><tr><td>验证 2</td><td>全量浏览器 QA</td><td><span class="tag good">报告通过</span></td><td>未记录 failed 项；不代表全部操作完成</td></tr></tbody></table></div><p class="muted">未提供额外说明。</p></div></details><p class="check-source">评审源产物：Run 35966665643 / attempt 1。发布重试不改变评审源产物编号。</p><div class="card report-empty"><strong>本轮不显示评分</strong><p>独立评审未完成或证据校验失败：modules: duplicates。业务验收结果保持不变。</p></div></section><section class="section" id="framework-feedback"><div class="section-head"><h2>NocoBase3 的帮助与问题</h2></div><div class="card report-empty">尚无独立评审结论；已有实现者自述仍保留在“遇到的问题”和“可改进的点”。</div></section><section class="section" id="acceptance"><div class="section-head"><div><div class="eyebrow">Acceptance record</div><h2>验收记录</h2></div><span class="tag ">4 项要求</span></div>
+只实现来源预设的两条服务请求、普通/紧急两个 Workflow 分支及负责人站内通知，沿用现有工作流执行记录和消息中心。不要增加审批、退回、邮件、Scheduler 或额外系统。固定基线和工厂既有验证不变，真实模块评测结果关联 #249；不合并业务 PR。</td></tr><tr><td>验证 2</td><td>全量浏览器 QA</td><td><span class="tag good">报告通过</span></td><td>未记录 failed 项；不代表全部操作完成</td></tr></tbody></table></div><p class="muted">未提供额外说明。</p></div></details></div></details><article class="card review-ui"><header><h3>业务界面观察 · 非框架评分</h3><span class="review-na">未评估</span></header><p>当前评审模型无法渲染 PNG，未实际查看任何截图，因此不做跨页面样式一致性评价；不据 shadcn 名称或报告描述推断视觉结论。</p><span class="review-refs"></span><p class="check-source">未执行跨页面图像审阅，不能因使用相同组件库而判为视觉一致。</p></article></section><section class="section" id="framework-feedback"><div class="section-head"><div><div class="eyebrow">Infrastructure feedback</div><h2>NocoBase3 的帮助与改进</h2></div></div><p class="section-intro">优点说明具体基础能力的帮助；问题说明改动位置与依据。“有证据 / 待确认”均为独立评审者判断，不代替人工核验。</p><h3 class="review-owner-title">库、插件与指引</h3><div class="review-group"><h3>做得好的地方 <span>2</span></h3><details class="card review-finding" ><summary><div><strong>Workflow DSL、分支与执行记录直接支撑受理与分支验证</strong><div class="review-badges"><span class="tag ">NocoBase3 内核</span><span class="tag ">评审者判断 · 有证据</span><span class="tag ">信息</span><span class="tag ">已解决</span></div></div><span>⌄</span></summary><div class="subsection-body"><p>defineWorkflow + RunInstruction(result schema) + ConditionInstruction.branch 让登记受理、按 urgent 分流、分支结果落库都由框架承担；workflowServiceToken.trigger 返回 accepted/runId 且执行为异步。第二轮 QA 运行 #1 normal 节点 Succeeded、运行 #2 urgent 节点 Succeeded 且 normal 节点 Not executed，运行状态 Resolved。</p><dl class="retro-fields"><div><dt>实际影响 / 提供的帮助</dt><dd>应用无需自建流程引擎或伪造成功状态即可满足 B01/B03 与评审 R01。</dd></div><div><dt>建议改法 / 应保留的能力</dt><dd>保持现有 DSL/分支/执行记录契约；可把这套条件分支 + 结果读回的用法作为 Skill 的完整示例保留。</dd></div></dl><span class="review-refs"><a href="#review-evidence-E1">E1</a> <a href="#review-evidence-E3">E3</a> <a href="#review-evidence-E5">E5</a> <a href="#review-evidence-E31">E31</a></span></div></details><details class="card review-finding" ><summary><div><strong>Notification + In-App 提供真实持久收件箱与按用户隔离</strong><div class="review-badges"><span class="tag ">NocoBase3 内核</span><span class="tag ">评审者判断 · 有证据</span><span class="tag ">信息</span><span class="tag ">已解决</span></div></div><span>⌄</span></summary><div class="subsection-body"><p>notification.send 以通道映射 + 幂等键 + source 关联业务；in-app 插件把消息写入数据库收件箱、以 userId 过滤读写、持久 readAt，并在写库前用 user administration 校验收件人。第二轮 QA 负责人可看到并打开消息、已读刷新保留，非收件人收件箱为空。</p><dl class="retro-fields"><div><dt>实际影响 / 提供的帮助</dt><dd>B02/B04 与评审 R02/R03 由框架能力直接覆盖，应用无需另建消息表或用 toast 冒充。</dd></div><div><dt>建议改法 / 应保留的能力</dt><dd>保持 in-app 收件箱的持久化与 userId 隔离契约；无需变更。</dd></div></dl><span class="review-refs"><a href="#review-evidence-E13">E13</a> <a href="#review-evidence-E18">E18</a> <a href="#review-evidence-E20">E20</a> <a href="#review-evidence-E23">E23</a> <a href="#review-evidence-E31">E31</a></span></div></details></div><div class="review-group"><h3>问题 <span>2</span></h3><details class="card review-finding" open><summary><div><strong>Workflow Artifact 盘缺少代码根约束/校验，生产 run 模块在运行期才因裸导入失败</strong><div class="review-badges"><span class="tag ">NocoBase3 内核</span><span class="tag ">评审者判断 · 有证据</span><span class="tag bad">重要</span><span class="tag ">未解决</span></div></div><span>⌄</span></summary><div class="subsection-body"><p>WorkflowRuntimeConfig.artifactDisk 是必填项，但 resolveWorkflowRuntimeConfig 只推导 distRoot/production，不推导或校验 Artifact 盘必须位于可解析 node_modules 的代码根内；createLocalWorkflowArtifactStore 也只校验 driver===&#39;fs&#39; 且 visibility===&#39;private&#39;。run 模块通过 pathToFileURL + 动态 import 从该盘加载，Node 按模块所在目录向上解析 &#39;@nocobase/*&#39;，因此盘落在部署 storage 根（代码根之外）时，开发模式因 developmentResourceRoot 而正常、生产模式第一次运行即抛 Cannot find package &#39;@nocobase/db&#39;。第一轮 QA 三条运行全部 Error、业务记录停在 Pending、站内信未发出。</p><dl class="retro-fields"><div><dt>实际影响 / 提供的帮助</dt><dd>只使用 Workflow run 模块的应用在生产构建下核心路径不可用，且失败延迟到首次运行才暴露；本次需应用自行新增 code-root 盘并改 artifactDisk 才恢复。</dd></div><div><dt>建议改法 / 应保留的能力</dt><dd>在 @nocobase/app-plugin-workflow 的 artifact-store/服务初始化时校验 Artifact 盘可解析宿主依赖（或在 store 根提供解析入口/打包 run 模块），并在配置解析处提供安全默认；同时在 Workflow Skill 写明 artifactDisk 必须位于代码根内。</dd></div></dl><span class="review-refs"><a href="#review-evidence-E6">E6</a> <a href="#review-evidence-E7">E7</a> <a href="#review-evidence-E8">E8</a> <a href="#review-evidence-E10">E10</a> <a href="#review-evidence-E11">E11</a> <a href="#review-evidence-E12">E12</a></span></div></details><details class="card review-finding" ><summary><div><strong>已部署 Artifact 的 programmatic materialize/enable 无公开入口</strong><div class="review-badges"><span class="tag ">NocoBase3 插件</span><span class="tag ">评审者判断 · 有证据</span><span class="tag ">轻微</span><span class="tag ">未解决</span></div></div><span>⌄</span></summary><div class="subsection-body"><p>tokens.d.ts 定义了 internalWorkflowServiceToken=[REDACTED] discoverArtifacts/ensureArtifactMaterialized），但 /server 入口只导出 workflowServiceToken（类型仅 registerInstruction/trigger），internalWorkflowServiceToken 与 WorkflowServiceApi 都未公开导出，也没有 ./server/tokens 子路径。应用为启动时确保工作流启用，只能把公开 token 宽化成本地 interface 调用非公开方法。</p><dl class="retro-fields"><div><dt>实际影响 / 提供的帮助</dt><dd>业务应用若想自行保证工作流可用，缺少受支持的编程入口，或只能改走需要 settings:workflow:manage 权限的管理 API；类型断言绕过公开契约，升级时易碎。</dd></div><div><dt>建议改法 / 应保留的能力</dt><dd>从 @nocobase/app-plugin-workflow/server 公开一个受支持的 enable/materialize 契约（或明确只允许管理 API 并导出对应客户端），避免应用对公开 token 做类型宽化。</dd></div></dl><span class="review-refs"><a href="#review-evidence-E9">E9</a> <a href="#review-evidence-E33">E33</a> <a href="#review-evidence-E32">E32</a></span></div></details></div><div class="review-group"><h3>误导或明显错误 <span>0</span></h3><p class="muted">本轮未记录此类发现，不代表不存在。</p></div><div class="review-group"><h3>改进建议 <span>1</span></h3><details class="card review-finding" open><summary><div><strong>Workflow Skill 未记录 artifactDisk 与生产/开发 run 模块解析差异</strong><div class="review-badges"><span class="tag ">文档 / Skill / 示例</span><span class="tag ">评审者判断 · 有证据</span><span class="tag bad">重要</span><span class="tag ">未解决</span></div></div><span>⌄</span></summary><div class="subsection-body"><p>app/.agents/skills/nocobase-app-plugin-workflow/SKILL.md 与 references/dsl-authoring.md 详述 DSL、check、Artifact build 与模块相对路径，但通篇没有 artifactDisk、代码根或 node_modules 解析约束；invocation-and-service-api.md 只讲管理 API/服务方法。Agent 无法从指南预知该生产陷阱，只能靠失败的生产 QA 反推。</p><dl class="retro-fields"><div><dt>实际影响 / 提供的帮助</dt><dd>同一错误会在只使用 run 模块的应用中重复出现，增加一轮生产验证修复成本。</dd></div><div><dt>建议改法 / 应保留的能力</dt><dd>在该 Skill 增加一小节：artifactDisk 必须指向代码根内（dist 内）的私有 fs 盘，run 模块以 ESM 从该位置解析 @nocobase/*，并给出 drive 盘 + config 的最小示例与自检方法。</dd></div></dl><span class="review-refs"><a href="#review-evidence-E4">E4</a> <a href="#review-evidence-E7">E7</a> <a href="#review-evidence-E12">E12</a></span></div></details></div><h3 class="review-owner-title">归因待确认 · 不直接扣框架分</h3><div class="review-group"><h3>做得好的地方 <span>0</span></h3><p class="muted">本轮未记录此类发现，不代表不存在。</p></div><div class="review-group"><h3>问题 <span>0</span></h3><p class="muted">本轮未记录此类发现，不代表不存在。</p></div><div class="review-group"><h3>误导或明显错误 <span>0</span></h3><p class="muted">本轮未记录此类发现，不代表不存在。</p></div><div class="review-group"><h3>改进建议 <span>0</span></h3><p class="muted">本轮未记录此类发现，不代表不存在。</p></div><details class="card raw-record"><summary>业务实现与执行环境观察 · 不计入框架得分（0）</summary><div class="subsection-body"><div class="review-group"><h3>做得好的地方 <span>0</span></h3><p class="muted">本轮未记录此类发现，不代表不存在。</p></div><div class="review-group"><h3>问题 <span>0</span></h3><p class="muted">本轮未记录此类发现，不代表不存在。</p></div><div class="review-group"><h3>误导或明显错误 <span>0</span></h3><p class="muted">本轮未记录此类发现，不代表不存在。</p></div><div class="review-group"><h3>改进建议 <span>0</span></h3><p class="muted">本轮未记录此类发现，不代表不存在。</p></div></div></details><details class="card raw-record" open><summary>本次评审的覆盖限制</summary><div class="subsection-body"><ul class="compact-list"><li>当前模型无法渲染 PNG，未实际查看任何截图，未做跨页面视觉一致性评价（ui=not-reviewed）。</li><li>未运行应用、迁移或工作流，未独立重放执行记录；运行证据来自第二轮 QA 报告与截图文件名/摘要。</li><li>快照未包含 create-app 模板源码，无法直接核对模板中 artifactDisk 的原始默认值；模板默认仅由 retro 自述，插件/指南侧结论已独立核对。</li><li>未读 engine 调度实现与客户端组件实现，分支执行与 UI 行为以公开契约、应用代码与 QA 结果为准。</li><li>不能据本次 2 条请求的案例推断全框架表现，也不能保证跨案例可比。</li><li>快照未包含 2 个超出预算、非普通文件或不可读取的文件；未据此确认其实现。</li></ul></div></details><details class="card raw-record"><summary>评审基线与版本指纹</summary><div class="subsection-body"><p>评审针对已封存候选补丁；可能在原搭建内或之后单独补跑。与 PR 当前最新提交不是同一概念，评审不修改补丁。</p><pre>{
+  &quot;reviewer&quot;: {
+    &quot;engine&quot;: &quot;pi&quot;,
+    &quot;model&quot;: &quot;deepseek-v4.1-flash&quot;,
+    &quot;version&quot;: &quot;0.86.1&quot;,
+    &quot;runId&quot;: &quot;35987996268&quot;,
+    &quot;attempt&quot;: 1,
+    &quot;controlSha&quot;: &quot;952084a875e940bdcba52d45f8b805c7f49f0049&quot;,
+    &quot;replay&quot;: true
+  },
+  &quot;repository&quot;: &quot;gchust/nb3-factory&quot;,
+  &quot;issue&quot;: 253,
+  &quot;runId&quot;: 35966665643,
+  &quot;attempt&quot;: 1,
+  &quot;controlSha&quot;: &quot;1bd143f61094211c8c19783e489b5e85d86a91c4&quot;,
+  &quot;rubricVersion&quot;: 2,
+  &quot;baseSha&quot;: &quot;6bf04e702c0a47a417002564992b3b9fa4802607&quot;,
+  &quot;patchHash&quot;: &quot;c89a40a2b08c00924646f21d07341fb0dd479725472505bd56a1717d129b6a44&quot;,
+  &quot;lockfileHash&quot;: &quot;4028cde269099f76598df743fa28edcb94a7e79fec4e7d437ea521fd341267dd&quot;,
+  &quot;packages&quot;: [
+    {
+      &quot;name&quot;: &quot;@nocobase/ai-employee&quot;,
+      &quot;version&quot;: &quot;0.2.0-beta.7&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/ai-employee-avatars&quot;,
+      &quot;version&quot;: &quot;1.0.2&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/app-cli&quot;,
+      &quot;version&quot;: &quot;0.1.0-beta.3&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/app-client&quot;,
+      &quot;version&quot;: &quot;1.0.0-beta.19&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/app-plugin-ai-employee&quot;,
+      &quot;version&quot;: &quot;0.1.0-beta.20&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/app-plugin-api-keys&quot;,
+      &quot;version&quot;: &quot;0.1.0-beta.5&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/app-plugin-authentication&quot;,
+      &quot;version&quot;: &quot;0.1.0-beta.20&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/app-plugin-authorization&quot;,
+      &quot;version&quot;: &quot;0.2.0-beta.17&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/app-plugin-authz-default-access&quot;,
+      &quot;version&quot;: &quot;0.1.0-beta.1&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/app-plugin-authz-restriction-rules&quot;,
+      &quot;version&quot;: &quot;0.1.0-beta.0&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/app-plugin-authz-sharing-rules&quot;,
+      &quot;version&quot;: &quot;0.1.0-beta.1&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/app-plugin-database-explorer&quot;,
+      &quot;version&quot;: &quot;0.1.0-beta.4&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/app-plugin-file&quot;,
+      &quot;version&quot;: &quot;0.1.0-beta.15&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/app-plugin-i18n&quot;,
+      &quot;version&quot;: &quot;0.1.0-beta.8&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/app-plugin-notification&quot;,
+      &quot;version&quot;: &quot;0.1.0-beta.15&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/app-plugin-notification-in-app&quot;,
+      &quot;version&quot;: &quot;0.2.0-beta.16&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/app-plugin-notification-provider&quot;,
+      &quot;version&quot;: &quot;0.1.0-beta.9&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/app-plugin-notification-providers&quot;,
+      &quot;version&quot;: &quot;0.2.0-beta.7&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/app-plugin-scheduler&quot;,
+      &quot;version&quot;: &quot;0.1.0-beta.6&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/app-plugin-users&quot;,
+      &quot;version&quot;: &quot;0.1.0-beta.7&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/app-plugin-workflow&quot;,
+      &quot;version&quot;: &quot;0.1.0-beta.25&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/app-portal-sdk&quot;,
+      &quot;version&quot;: &quot;1.0.0-beta.3&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/app-server&quot;,
+      &quot;version&quot;: &quot;1.0.0-beta.24&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/app-skills&quot;,
+      &quot;version&quot;: &quot;0.1.0-beta.12&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/app-tools&quot;,
+      &quot;version&quot;: &quot;0.1.0-beta.2&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/app-websocket&quot;,
+      &quot;version&quot;: &quot;0.0.1&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/authorization&quot;,
+      &quot;version&quot;: &quot;0.1.0-beta.8&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/caching&quot;,
+      &quot;version&quot;: &quot;0.1.0-beta.2&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/config&quot;,
+      &quot;version&quot;: &quot;0.1.0-beta.1&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/cron&quot;,
+      &quot;version&quot;: &quot;0.1.0&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/db&quot;,
+      &quot;version&quot;: &quot;1.0.0-beta.14&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/db-sqlite&quot;,
+      &quot;version&quot;: &quot;0.1.0-beta.2&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/dev-config&quot;,
+      &quot;version&quot;: &quot;0.1.0-beta.11&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/drive&quot;,
+      &quot;version&quot;: &quot;0.1.0-beta.4&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/i18n&quot;,
+      &quot;version&quot;: &quot;1.0.0-beta.4&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/logging&quot;,
+      &quot;version&quot;: &quot;0.1.0-beta.5&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/nb3-cli&quot;,
+      &quot;version&quot;: &quot;1.0.0-beta.11&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/queue&quot;,
+      &quot;version&quot;: &quot;0.1.0-beta.7&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/repository-input&quot;,
+      &quot;version&quot;: &quot;0.1.0-beta.1&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/service-provider&quot;,
+      &quot;version&quot;: &quot;0.0.2-beta.1&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/session&quot;,
+      &quot;version&quot;: &quot;0.1.0-beta.2&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/snowflake&quot;,
+      &quot;version&quot;: &quot;1.0.0-beta.3&quot;
+    }
+  ],
+  &quot;reviewCriteriaHash&quot;: &quot;625d7eb6e37f57613f7ac787c4b3024c94fb36d31dd9548b64fcdcd341debd1d&quot;,
+  &quot;artifactHash&quot;: &quot;96aabd846317dc5ad702df41af1daefc4b3c0a51817626fe8a4d69f07762dc64&quot;,
+  &quot;inputHash&quot;: &quot;448fad59483b846c20273e257df0e39b18477d915a19f2114dc9cfce0bedeb14&quot;
+}</pre></div></details><div class="review-evidence"><h3>证据与原文</h3><details class="card raw-record" id="review-evidence-E1"><summary><strong>E1</strong> · packages/@nocobase/app-plugin-workflow/dist/server/service.d.ts:20–49</summary><div class="subsection-body"><p>WorkflowService 公开 trigger/triggerRevision/discoverArtifacts/ensureArtifactMaterialized 与私有 assertResourcesPresent；注释说明生产从 Artifact store 按 digest 解析 run 模块，开发从源包解析。</p><pre>export declare class WorkflowService {
+    private readonly database;
+    private readonly store;
+    /** Set in development only, where run modules load from the source package. */
+    private readonly developmentResourceRoot;
+    private readonly engine;
+    private readonly loader;
+    private initializationPromise;
+    constructor(options: WorkflowServiceOptions);
+    /** The workflow collections. `store` here is already the Artifact store. */
+    private get collections();
+    registerInstruction(instruction: WorkflowInstructionClass): void;
+    trigger(workflowKey: string, input: JsonObject, triggerOptions?: WorkflowEventOptions): Promise&lt;WorkflowTriggerReceipt&gt;;
+    triggerRevision(revisionId: WorkflowId, input: JsonObject, triggerOptions?: WorkflowEventOptions): Promise&lt;WorkflowTriggerReceipt&gt;;
+    discoverArtifacts(): Promise&lt;readonly WorkflowDistArtifact[]&gt;;
+    ensureArtifactMaterialized(hash: string): Promise&lt;WorkflowId | undefined&gt;;
+    dispose(): Promise&lt;void&gt;;
+    /**
+     * Refuse to start a run whose code is not where the engine will look for it.
+     *
+     * Production resolves run modules from the Artifact store, keyed by the
+     * revision&#39;s digest. Development resolves them from the source package and
+     * never consults the store, so a definition compiled from source has nothing
+     * committed there and the store cannot be the precondition.
+     */
+    private assertResourcesPresent;
+    private ensureInitialized;
+    private executeRevision;
+    private findAcceptedRun;
+}</pre><p class="check-source">原文件 SHA-256：491a4d7af51f9c98bf3eac34517274cfc7c09d7950221ba623753d241f53d362</p></div></details><details class="card raw-record" id="review-evidence-E2"><summary><strong>E2</strong> · packages/@nocobase/app-plugin-workflow/dist/server/instructions/run/instruction.js:284–330</summary><div class="subsection-body"><p>loadRunModule 经 resolveWorkflowModule 做 realpath 容器校验后，用 pathToFileURL + import() 动态加载；importRunModule 要求 loaded.run 为函数，否则抛 must export a function named run。</p><pre>async function loadRunModule(workflowResourceRoot, specifier, nodeKey) {
+    if (!workflowResourceRoot) {
+        throw new Error(`Run node &quot;${nodeKey}&quot; has no workflow resource root bound to it`);
+    }
+    const target = await resolveWorkflowModule(workflowResourceRoot, specifier);
+    const cached = moduleCache.get(target);
+    if (cached)
+        return cached;
+    const pending = importRunModule(target, specifier);
+    moduleCache.set(target, pending);
+    return pending;
+}
+function resolveInsideRoot(root, relativePath, specifier) {
+    const target = path.resolve(root, relativePath);
+    const relative = path.relative(root, target);
+    if (!relative || relative.startsWith(&#39;..&#39;) || path.isAbsolute(relative)) {
+        throw new Error(`Run module &quot;${specifier}&quot; resolves outside its artifact`);
+    }
+    return target;
+}
+async function resolveWorkflowModule(root, specifier) {
+    const base = resolveInsideRoot(root, specifier, specifier);
+    for (const extension of [&#39;.js&#39;, &#39;.mjs&#39;, &#39;.ts&#39;]) {
+        const target = `${base}${extension}`;
+        try {
+            const realRoot = await fs.realpath(root);
+            const realTarget = await fs.realpath(target);
+            const relative = path.relative(realRoot, realTarget);
+            if (!relative || relative.startsWith(&#39;..&#39;) || path.isAbsolute(relative)) {
+                throw new Error(`Run module &quot;${specifier}&quot; resolves outside its workflow resources`);
+            }
+            return realTarget;
+        }
+        catch (error) {
+            if (error.code !== &#39;ENOENT&#39;)
+                throw error;
+        }
+    }
+    throw new Error(`Run module &quot;${specifier}&quot; was not found`);
+}
+async function importRunModule(target, specifier) {
+    const loaded = (await import(__rewriteRelativeImportExtension(pathToFileURL(target).href)));
+    if (typeof loaded.run !== &#39;function&#39;) {
+        throw new Error(`Run module &quot;${specifier}&quot; must export a function named run`);
+    }
+    return { run: loaded.run };
+}</pre><p class="check-source">原文件 SHA-256：b7333aa5adafc4b28b80258bb532dae8b5bb61cb1db6316a30c0b2de45f38dd9</p></div></details><details class="card raw-record" id="review-evidence-E3"><summary><strong>E3</strong> · app/.agents/skills/nocobase-app-plugin-workflow/SKILL.md:42–58</summary><div class="subsection-body"><p>指南要求 workflow.ts 绑定 WorkflowSourceAst、每个节点非空 description、run 模块命名导出并声明 result schema、先 workflow check、业务侧 resolve workflowServiceToken 调用 trigger、执行异步且 trigger 返回 accepted/skipped 回执。</p><pre>- Keep one workflow package directly below the configured source root. Define invocation `inputSchema` separately from administrator `parameters`, and use stable, globally unique node keys.
+- When updating an existing workflow&#39;s DSL (nodes, flow, configuration, or other definition fields), consider briefly noting what changed from the previous version and why in the workflow-level `description`. Preserve the workflow&#39;s purpose and replace any previous change note so only the latest update is described; see [top-level description guidance](references/dsl-authoring.md#top-level-definition).
+- Bind the `defineWorkflow()` result to a `WorkflowSourceAst`-annotated const and default-export that const. A bare default-exported call does not pass the application&#39;s `isolatedDeclarations` build.
+- Every node must have a non-empty `description`, including nodes in nested branches and custom Instructions. When creating or editing workflow orchestration, fill missing descriptions and keep them aligned with the node logic; follow the [node description guidance](references/dsl-authoring.md#topology-and-keys).
+- Express sequencing with arrays and supported branches. Put executable work in typed `run` modules, use a named `run` export, and declare accurate result schemas for values referenced by later nodes.
+- Run `pnpm nocobase workflow check &lt;package&gt;` before loading or publishing. It performs `typecheck`, `evaluate`, `schema`, `semantic`, and `compile` checks on `workflow.ts`; it does not validate run-script compilation or package resources. Add `--ir` to print the compiled flat IR, which is the definition an Artifact carries.
+- A running development server compiles the workflow source root on demand and produces the same digest a build would, so an edited `workflow.ts` is already loadable there. Do not run a build merely to look at or exercise a definition in development; run one to produce a deployable Artifact.
+- Validate run scripts and business behavior with target-application typecheck, tests, and build, then build the Workflow Artifact through the application&#39;s normal workflow build. Preserve package-relative resource paths. Artifact build, synchronization, enablement, and invocation are separate stages.
+- Never author a source-managed workflow by directly editing materialized workflow tables.
+
+# Invoke and Manage
+
+- Business code resolves `workflowServiceToken` and calls `trigger(workflowKey, input, options?)`. The public service contract does not expose a management `run()` method or a generic public HTTP trigger endpoint.
+- Use the authenticated management API for listing and inspecting definitions, enablement, parameter overrides, and authorized manual execution of a selected definition revision. A manual run may target a historical or disabled revision without changing its enablement.
+- When source is available, use its directory key and `inputSchema` as the contract for new business-trigger code. In a deployed environment where only the management API is available, use runtime records for inspection and manual management; do not infer a new business trigger contract from a title or database id.
+- `trigger()` returns either `skipped` with no event key or `accepted` with an event key after synchronous validation and scheduling succeed. Execution is asynchronous. Resolve the run by event key, and account for a concurrent duplicate call that can return the shared accepted identity before the first call finishes creating the run.
+- An `eventKey` is optional and generated when omitted. Reuse the same stable key only when resubmitting the same business event whose acceptance is unknown; an existing run is deduplicated rather than re-executed. The public contract does not rerun a confirmed failed run by event key.</pre><p class="check-source">原文件 SHA-256：4b1c0d72f8d3608d9cef2afe9df1f6992263c48301e7964163504990f5594375</p></div></details><details class="card raw-record" id="review-evidence-E4"><summary><strong>E4</strong> · app/.agents/skills/nocobase-app-plugin-workflow/references/dsl-authoring.md:428–438</summary><div class="subsection-body"><p>列出 check 的五阶段与不覆盖 run 脚本的事实；说明默认 app 的 Artifact build 在开发复制源码资源、生产收集 package-relative JS 输出而不再打包，运行期按 digest 物化 revision。全段未提 artifactDisk 位置约束。</p><pre>The checker performs, in order:
+
+1. `typecheck`: strict NodeNext TypeScript with the `source` export condition.
+2. `evaluate`: a bounded disposable Node process loads the declarative TypeScript module and requires a valid default AST export.
+3. `schema`: Input Schema, parameters, node config, condition expression, and result schemas.
+4. `semantic`: registered types, unique/safe keys, branches, declared parameters, and visible result references.
+5. `compile`: flat IR topology must have one start, one owner per non-start node, no missing targets, cycles, or unreachable nodes.
+
+`check` does not scan the complete package or write the database. In particular, it does not prove that `config.module` exists or verify its named `run` export. It evaluates `workflow.ts` but does not load the run scripts. Do not publish/load after any issue. Error output contains phase, code, file/line where available, AST path, node key, and contract type; fix the earliest phase first because later phases depend on it.
+
+The default app&#39;s Artifact build scans each direct Workflow package and writes immutable Artifacts to its configured dist root. In development it copies the package&#39;s source resources. In production the normal server TypeScript build runs first, and the Artifact build collects that package-relative JavaScript output without rebundling or renaming modules. Runtime module loading enforces containment and checks the named `run` export. Runtime loading materializes new revisions; activation and enablement are separate management concerns.</pre><p class="check-source">原文件 SHA-256：166cf50d0fdf4c9d99751e2f3fa31dbe0d5f15430cb2ef38d9c7eca2efe70fe0</p></div></details><details class="card raw-record" id="review-evidence-E5"><summary><strong>E5</strong> · app/server/workflows/service-request-acceptance/workflow.ts:30–100</summary><div class="subsection-body"><p>应用用 defineWorkflow 声明 inputSchema，RunInstruction.create 登记受理，ConditionInstruction.create 按 nodeResults.registerAcceptance.urgent 分支到 markUrgent/markNormal，再 RunInstruction 通知负责人。</p><pre>  nodes: [
+    RunInstruction.create({
+      key: &#39;registerAcceptance&#39;,
+      title: &#39;Register acceptance&#39;,
+      description:
+        &#39;Load the pending service request and mark it accepted, returning its urgency flag, assignee and title for downstream routing. Re-running an already accepted request is a no-op that returns the stored values.&#39;,
+      config: {
+        module: &#39;./server/register-acceptance&#39;,
+        args: {
+          requestId: &#39;{{$input.requestId}}&#39;,
+        },
+      },
+      result: {
+        type: &#39;object&#39;,
+        required: [&#39;urgent&#39;, &#39;assigneeId&#39;, &#39;title&#39;],
+        properties: {
+          urgent: { type: &#39;boolean&#39; },
+          assigneeId: { type: &#39;string&#39; },
+          title: { type: &#39;string&#39; },
+        },
+        additionalProperties: false,
+      },
+    }),
+    ConditionInstruction.create({
+      key: &#39;routeByUrgency&#39;,
+      title: &#39;Route by urgency&#39;,
+      description:
+        &#39;Take the yes branch and record an urgent result when the accepted request is urgent; otherwise take the no branch and record a normal result.&#39;,
+      config: {
+        expression: {
+          &#39;===&#39;: [{ var: &#39;nodeResults.registerAcceptance.urgent&#39; }, true],
+        },
+      },
+    }).branch({
+      yes: [
+        RunInstruction.create({
+          key: &#39;markUrgent&#39;,
+          title: &#39;Record urgent result&#39;,
+          description:
+            &#39;Persist the urgent acceptance result on the request before the assignee is notified.&#39;,
+          config: {
+            module: &#39;./server/mark-urgent&#39;,
+            args: { requestId: &#39;{{$input.requestId}}&#39; },
+          },
+        }),
+      ],
+      no: [
+        RunInstruction.create({
+          key: &#39;markNormal&#39;,
+          title: &#39;Record normal result&#39;,
+          description:
+            &#39;Persist the normal acceptance result on the request before the assignee is notified.&#39;,
+          config: {
+            module: &#39;./server/mark-normal&#39;,
+            args: { requestId: &#39;{{$input.requestId}}&#39; },
+          },
+        }),
+      ],
+    }),
+    RunInstruction.create({
+      key: &#39;notifyAssignee&#39;,
+      title: &#39;Notify assignee&#39;,
+      description:
+        &#39;Re-read the accepted request from the database and send one persistent in-app message to its assignee, targeting the request detail route. The stable idempotency key keeps a retry from sending a second message.&#39;,
+      config: {
+        module: &#39;./server/notify-assignee&#39;,
+        args: { requestId: &#39;{{$input.requestId}}&#39; },
+      },
+    }),
+  ],
+});</pre><p class="check-source">原文件 SHA-256：cf5087961c5752538a86c6a557c0e563b37f90705f863d962716113d578d2fb3</p></div></details><details class="card raw-record" id="review-evidence-E6"><summary><strong>E6</strong> · packages/@nocobase/app-plugin-workflow/dist/server/config.js:1–11</summary><div class="subsection-body"><p>resolveWorkflowRuntimeConfig 只根据 serverDir 是否在 dist 下推导 distRoot 与 production，artifactDisk 原样透传，不做任何位置或可解析性校验。</p><pre>import path from &#39;node:path&#39;;
+export function resolveWorkflowRuntimeConfig(config, options) {
+    const built = path.basename(path.dirname(options.serverDir)) === &#39;dist&#39;;
+    return {
+        ...config,
+        distRoot: built
+            ? path.join(options.serverDir, &#39;workflows&#39;)
+            : path.join(options.rootDir, &#39;dist&#39;, &#39;server&#39;, &#39;workflows&#39;),
+        production: config.production || built,
+    };
+}</pre><p class="check-source">原文件 SHA-256：8eb16cea8c7eb10007ddabaa1aa1eee17cbfab8eb9fa2386d4028492200af792</p></div></details><details class="card raw-record" id="review-evidence-E7"><summary><strong>E7</strong> · packages/@nocobase/app-plugin-workflow/dist/server/config.d.ts:1–11</summary><div class="subsection-body"><p>WorkflowRuntimeConfig 要求 sourceRoot/distRoot/artifactDisk/production，artifactDisk 为 string，无默认值说明。</p><pre>export interface WorkflowRuntimeConfig {
+    readonly sourceRoot: string;
+    readonly distRoot: string;
+    readonly artifactDisk: string;
+    readonly production: boolean;
+}
+export interface ResolveWorkflowRuntimeConfigOptions {
+    readonly rootDir: string;
+    readonly serverDir: string;
+}
+export declare function resolveWorkflowRuntimeConfig(config: WorkflowRuntimeConfig, options: ResolveWorkflowRuntimeConfigOptions): WorkflowRuntimeConfig;</pre><p class="check-source">原文件 SHA-256：848b5f5301db235c26bd7ffb2222750f091a5cb614cf44a2c057dc67f52f7ab8</p></div></details><details class="card raw-record" id="review-evidence-E8"><summary><strong>E8</strong> · packages/@nocobase/app-plugin-workflow/dist/server/loader/artifact-store.js:109–115</summary><div class="subsection-body"><p>createLocalWorkflowArtifactStore 仅校验 disk.driver===&#39;fs&#39; 且 visibility===&#39;private&#39;，storeRoot 取 namespaceRoot 或 disk.location，不校验该目录能否解析宿主 node_modules。</p><pre>export function createLocalWorkflowArtifactStore(disk, namespaceRoot) {
+    if (disk.driver !== &#39;fs&#39; || disk.visibility !== &#39;private&#39;)
+        throw new Error(&#39;Workflow artifact disk must be a private fs/local disk&#39;);
+    return new LocalWorkflowArtifactStore({
+        storeRoot: namespaceRoot ?? disk.location,
+    });
+}</pre><p class="check-source">原文件 SHA-256：53cf20a9d46989138bdcc5b764aceb94f4c8f64fcd5e0dd99e287aa5e900968d</p></div></details><details class="card raw-record" id="review-evidence-E9"><summary><strong>E9</strong> · packages/@nocobase/app-plugin-workflow/dist/server/tokens.d.ts:1–9</summary><div class="subsection-body"><p>workflowServiceToken 的公开类型 WorkflowServiceContract 只含 registerInstruction/trigger；含 discoverArtifacts/ensureArtifactMaterialized 的 internalWorkflowServiceToken 虽在此声明，但 /server 入口未导出。</p><pre>import { type ServiceToken } from &#39;@nocobase/service-provider&#39;;
+import type { JsonObject, WorkflowEventOptions, WorkflowInstructionClass, WorkflowTriggerReceipt } from &#39;./engine/index.js&#39;;
+import type { WorkflowService } from &#39;./service.js&#39;;
+export interface WorkflowServiceContract {
+    registerInstruction(instruction: WorkflowInstructionClass): void;
+    trigger(workflowKey: string, input: JsonObject, options?: WorkflowEventOptions): Promise&lt;WorkflowTriggerReceipt&gt;;
+}
+export declare const workflowServiceToken=[REDACTED] declare const internalWorkflowServiceToken=[REDACTED]</pre><p class="check-source">原文件 SHA-256：ee09d0c8a906b50797966971011231f6bbf4ad56cbb3c65e763c29ace0a92048</p></div></details><details class="card raw-record" id="review-evidence-E10"><summary><strong>E10</strong> · app/server/config/drive.ts:7–40</summary><div class="subsection-body"><p>应用在 drive 中新增私有 fs 盘 workflows，location 为 paths.root(&#39;workflow-artifacts&#39;)（dev=应用根，prod=dist 内），注释说明这是让 run 模块能解析 @nocobase/* 的原因；workflow.ts 设 artifactDisk:&#39;workflows&#39;。</p><pre>const drive: AppConfigFactory&lt;AppDriveConfig&gt; = defineAppConfig(({ paths }) =&gt; {
+  const disks: AppDriveConfig[&#39;disks&#39;] = {
+    local: {
+      driver: &#39;fs&#39;,
+      location: paths.storage(),
+      visibility: &#39;private&#39;,
+    },
+    // Compiled workflow Artifacts are loaded as modules, and a module resolves
+    // its own imports by walking up from where it sits. Keeping the Artifact
+    // store inside the compiled code root is what lets a run module&#39;s
+    // `@nocobase/*` imports resolve; the deployment storage root sits outside
+    // the bundle, where no `node_modules` exists for Node to find. This disk is
+    // code-derived state, not business data: a rebuild regenerates it from
+    // `dist/server/workflows`, so it belongs with the build, not with storage.
+    workflows: {
+      driver: &#39;fs&#39;,
+      location: paths.root(&#39;workflow-artifacts&#39;),
+      visibility: &#39;private&#39;,
+    },
+    s3: {
+      driver: &#39;s3&#39;,
+      bucket: &#39;&#39;,
+      region: &#39;us-east-1&#39;,
+      forcePathStyle: false,
+      supportsACL: true,
+      credentials: {},
+      visibility: &#39;private&#39;,
+    },
+  };
+  return {
+    default: &#39;local&#39;,
+    disks,
+  };
+});</pre><p class="check-source">原文件 SHA-256：55a3a964f8f6acc8cf5860d8d467eafaa7c0d48ec80d7fdac126dc7c33617296</p></div></details><details class="card raw-record" id="review-evidence-E11"><summary><strong>E11</strong> · artifacts/verify-1/browser-acceptance/report.json:16–18</summary><div class="subsection-body"><p>第一轮 QA：运行 #1/#2 状态 Error，Register acceptance 节点报 Cannot find package &#39;@nocobase/db&#39; imported from .../storage/private/workflows/.../register-acceptance.js，业务记录仍 Pending。</p><pre>        &quot;受理后刷新列表：All requests 2、Awaiting acceptance 2、Accepted 0，REQ-2026-0001 仍为 Pending、Result 仍为 &#39;—&#39;。&quot;,
+        &quot;执行记录出现 #1、#2 Service request acceptance，状态均为 Error（而非成功运行）。&quot;,
+        &quot;执行 #1 节点 Register acceptance 报错：Cannot find package &#39;@nocobase/db&#39; imported from .../storage/private/workflows/service-request-acceptance/.../server/register-acceptance.js。&quot;,</pre><p class="check-source">原文件 SHA-256：7f9196251e288f908e9b7ae064eb6531237e4acc7d8767000622d1a5cb26c646</p></div></details><details class="card raw-record" id="review-evidence-E12"><summary><strong>E12</strong> · artifacts/retro.json:6–9</summary><div class="subsection-body"><p>修复复盘自述：生产模式 artifact 物化到 dist 之外的 storage，Node ESM 从模块位置找不到 node_modules；改到代码根内 workflow-artifacts 后两条请求端到端跑通。</p><pre>      &quot;title&quot;: &quot;生产构建下 Workflow 运行模块无法解析 @nocobase/* 裸导入&quot;,
+      &quot;symptom&quot;: &quot;工厂生产验证中「Register acceptance」节点报错；workflowRuns #1/#2/#3 状态均为 Error，service_requests 仍为 pending、result 为「—」，负责人与非负责人收件箱为空。同一流程在开发/源码模式（digest 82f0f9c1…）正常，生产构建模式（digest 7e37de02…）失败。&quot;,
+      &quot;rootCause&quot;: &quot;生产模式下 artifact-builder 把 `server/workflows` 的运行模块按原样复制进 dist/server/workflows，运行时再物化到 workflow.artifactDisk。模板默认 artifactDisk 为 `local`，其 location 是部署 storage 根（验证时为 /home/runner/work/_temp/repair-state/.../storage/private），位于代码根之外。运行模块以 ESM 方式加载，Node 从模块自身路径逐级向上查找 node_modules；storage 路径的祖先里没有任何包含 @nocobase/db 的 node_modules，于是导入失败。开发模式因 `!production` 时走 developmentResourceRoot（指向 app 内的 server/workflows）而掩盖了该问题。&quot;,
+      &quot;resolution&quot;: &quot;在 server/config/drive.ts 新增私有 fs 盘 `workflows`，location 为 paths.root(&#39;workflow-artifacts&#39;)（dev=应用根，prod=dist），server/config/workflow.ts 设 artifactDisk: &#39;workflows&#39;。这样物化后的运行模块位于 dist 内，可经 dist/node_modules 解析裸导入；Artifact 属于代码派生状态、由 dist/server/workflows 在运行/重建时重新物化，因此放在构建目录而非业务存储中是正确归属。.gitignore 忽略源码根的 /workflow-artifacts/。新增 tests/logic/config.test.ts 断言该盘位于代码根内且 workflow.artifactDisk 指向它。&quot;,</pre><p class="check-source">原文件 SHA-256：9fa19fde8735911acea409344dbc60a03dfaad3796c4d8253b8d87f30ea901f3</p></div></details><details class="card raw-record" id="review-evidence-E13"><summary><strong>E13</strong> · packages/@nocobase/app-plugin-notification/dist/server/manager.js:187–254</summary><div class="subsection-body"><p>send() 校验幂等键、source、messages 形状与非法属性，逐通道 ensureRuntime + validateMessage 并展开 recipients；按 source+messages 计算请求指纹，同键同指纹返回 deduplicated 并补投 pending，同键不同内容抛冲突。</p><pre>    async send(input) {
+        this.activate();
+        validateNotificationIdempotencyKey(input.idempotencyKey);
+        if (input.source !== undefined &amp;&amp;
+            (!input.source ||
+                typeof input.source.type !== &#39;string&#39; ||
+                !input.source.type.trim() ||
+                (input.source.referenceId !== undefined &amp;&amp;
+                    typeof input.source.referenceId !== &#39;string&#39;)))
+            throw new Error(&#39;Notification source requires a type and an optional string referenceId.&#39;);
+        if (!input.messages ||
+            typeof input.messages !== &#39;object&#39; ||
+            Array.isArray(input.messages))
+            throw new Error(&#39;Notification messages must be a Channel-to-message map.&#39;);
+        for (const key of [
+            &#39;to&#39;,
+            &#39;channels&#39;,
+            &#39;content&#39;,
+            &#39;routing&#39;,
+            &#39;channelOverrides&#39;,
+        ])
+            if (key in input)
+                throw new Error(`Unsupported notification send property &quot;${key}&quot;.`);
+        const channels = Object.keys(input.messages);
+        if (channels.length === 0)
+            throw new Error(&#39;At least one notification message is required.&#39;);
+        const message = {};
+        const expandedRecipients = [];
+        for (const channel of channels) {
+            await this.ensureRuntime(channel);
+            const validated = this.channelManager.validateMessage(channel, input.messages[channel]);
+            message[channel] = validated.message;
+            const [provider] = this.channelManager.providerIdentities(channel);
+            for (const recipient of validated.recipients)
+                expandedRecipients.push({
+                    channels: [{ channel, provider, recipient }],
+                });
+        }
+        const requestFingerprint = notificationRequestFingerprint({
+            ...input,
+            messages: message,
+        });
+        const existing = await this.store.getLogByIdempotencyKey(input.idempotencyKey);
+        if (existing) {
+            if (existing.requestFingerprint !== requestFingerprint) {
+                throw new NotificationIdempotencyConflictError(input.idempotencyKey);
+            }
+            const existingDeliveries = await this.store.listDeliveries(existing.id);
+            await Promise.all(existingDeliveries
+                .filter((delivery) =&gt; delivery.status === &#39;pending&#39;)
+                .map(async (delivery) =&gt; this.dispatch(delivery.id)));
+            const snapshot = await this.statusSnapshot(existing);
+            return {
+                notificationId: snapshot.notificationId,
+                idempotencyKey: input.idempotencyKey,
+                deduplicated: true,
+                status: snapshot.status,
+                deliveries: snapshot.deliveries,
+            };
+        }
+        return this.sendExpanded({
+            idempotencyKey: input.idempotencyKey,
+            requestFingerprint,
+            source: input.source,
+            recipients: expandedRecipients,
+            message,
+        });
+    }</pre><p class="check-source">原文件 SHA-256：8ceaca1b734db599fe58e8d868edfd7af373f2ea0be3f10aa1b1a78534e8edda</p></div></details><details class="card raw-record" id="review-evidence-E14"><summary><strong>E14</strong> · packages/@nocobase/app-plugin-notification/dist/server/idempotency.js:1–22</summary><div class="subsection-body"><p>validateNotificationIdempotencyKey 要求非空、已 trim 且 ≤191 字符；notificationRequestFingerprint 对 source 与 messages 做规范化后 SHA-256，形成 v2 指纹。</p><pre>import { createHash } from &#39;node:crypto&#39;;
+const IDEMPOTENCY_KEY_MAX_LENGTH = 191;
+export function validateNotificationIdempotencyKey(value) {
+    if (typeof value !== &#39;string&#39; || !value || value !== value.trim()) {
+        throw new Error(&#39;Notification idempotencyKey must be a non-empty trimmed string.&#39;);
+    }
+    if (value.length &gt; IDEMPOTENCY_KEY_MAX_LENGTH) {
+        throw new Error(`Notification idempotencyKey must not exceed ${IDEMPOTENCY_KEY_MAX_LENGTH} characters.`);
+    }
+}
+export function notificationRequestFingerprint(input) {
+    const canonical = normalizeValue({
+        source: {
+            type: input.source?.type ?? &#39;application&#39;,
+            referenceId: input.source?.referenceId,
+        },
+        messages: input.messages,
+    });
+    return `v2:${createHash(&#39;sha256&#39;)
+        .update(JSON.stringify(canonical))
+        .digest(&#39;hex&#39;)}`;
+}</pre><p class="check-source">原文件 SHA-256：3473b14e4208f1352713f7fa248f7939faa34d41751134ba2295b25a6d19a330</p></div></details><details class="card raw-record" id="review-evidence-E15"><summary><strong>E15</strong> · app/.agents/skills/nocobase-app-plugin-notification/references/sending-notifications.md:1–34</summary><div class="subsection-body"><p>指南给出 resolve(notificationServiceToken).send({idempotencyKey, source, messages}) 示例，inbox 需应用用户 ID、title、body，target 可用不带部署前缀的 route；说明未知通道/非法消息会在持久化前拒绝，复用同键仅限同一逻辑请求。</p><pre># Sending Notifications
+
+Resolve `notificationServiceToken` from the shared application container. Select configured Channel names through `messages`; each value is the complete message for its Provider.
+
+```ts
+const notification = app.container.resolve(notificationServiceToken);
+await notification.send({
+  idempotencyKey: &#39;approval-123&#39;,
+  source: { type: &#39;approval&#39;, referenceId: &#39;123&#39; },
+  messages: {
+    &#39;system-email&#39;: {
+      to: [&#39;customer@example.com&#39;, &#39;reviewer@example.com&#39;],
+      subject: &#39;Approval result&#39;,
+      html: &#39;&lt;p&gt;Approved&lt;/p&gt;&#39;,
+    },
+    &#39;ops-feishu&#39;: {
+      text: &#39;Approved&#39;,
+      target: { type: &#39;url&#39;, url: &#39;https://example.com/main/approvals/123&#39; },
+    },
+    inbox: {
+      to: &#39;123&#39;,
+      title: &#39;Approval result&#39;,
+      body: &#39;Approved&#39;,
+      target: { type: &#39;route&#39;, path: &#39;/approvals/123&#39; },
+    },
+  },
+});
+```
+
+Email requires a native email address or a non-empty readonly array of addresses, a subject, and text or HTML. Each address receives a separate email and retries independently. In-app messages require application user IDs in the same string/array shape, title, and body; final delivery checks that each user still exists. Webhook messages forbid `to`. The service does not resolve application users into email addresses or phone numbers and never defaults to the current user.
+
+IM targets accept complete HTTP(S) URLs only. In-app targets accept a route without a deployment prefix or a complete HTTP(S) URL. React Router supplies the basename once for routes; URL targets use native links. Email links belong in text/HTML. Legacy `actionUrl` is ignored.
+
+Unknown or disabled Channels and invalid messages or recipient formats reject the entire request before persistence or queue dispatch. Delivery-time failures are recorded independently. Reuse one stable `idempotencyKey` only for the same logical request; changing messages with that key is a conflict. Optional `source` adds business correlation. Use `getByIdempotencyKey`, `getNotification`, and `onStatusChanged` to observe results. A `retrying` Delivery is waiting for automatic execution; a terminal `failed` Delivery may be passed to `retryDelivery({ deliveryId, reason })`. An `unknown` Delivery must be checked externally before creating a new logical send.</pre><p class="check-source">原文件 SHA-256：cbf38795119676b258492b45c0423bfee709fc1dbd5314b1bd521b8efefc2a56</p></div></details><details class="card raw-record" id="review-evidence-E16"><summary><strong>E16</strong> · app/server/config/notification.ts:1–13</summary><div class="subsection-body"><p>应用配置 notification.channels.inbox={provider:&#39;in-app&#39;}，注释说明 inbox 是持久站内通道，in-app provider 将消息落入消息中心而非临时 toast。</p><pre>import {
+  defineAppConfig,
+  type AppConfigFactory,
+} from &#39;@nocobase/app-server/config&#39;;
+import type { NotificationConfig } from &#39;@nocobase/app-plugin-notification/server&#39;;
+
+const notification: AppConfigFactory&lt;NotificationConfig&gt; = defineAppConfig(
+  (_runtime) =&gt; ({
+    // `inbox` is the durable in-app channel the notification service sends
+    // through; the `in-app` provider persists each message in the message
+    // center instead of only pushing a transient toast.
+    channels: { inbox: { provider: &#39;in-app&#39; } },
+  }),</pre><p class="check-source">原文件 SHA-256：19dc5ffbb376cc728712bde000c9c6a30f3d361bed8ab6e8d49e513f7c12ee3f</p></div></details><details class="card raw-record" id="review-evidence-E17"><summary><strong>E17</strong> · app/server/workflows/service-request-acceptance/server/notify-assignee.ts:42–88</summary><div class="subsection-body"><p>通知节点 resolve notificationServiceToken 后 send：idempotencyKey 为 service-request-accepted:&lt;id&gt;，source 关联 service-request，messages.inbox 指定 to/title/body 与 target route /service-requests/&lt;id&gt;。</p><pre>const run: WorkflowRunFunction = async (
+  rawArgs,
+  options,
+): Promise&lt;WorkflowRunJsonValue&gt; =&gt; {
+  options.signal.throwIfAborted();
+  const requestId = readRequestId(rawArgs as Record&lt;string, unknown&gt;);
+  const database = options.services.resolve(databaseManagerToken);
+  const notification = options.services.resolve(notificationServiceToken);
+
+  const request = await database
+    .repository&lt;ServiceRequestRow&gt;(&#39;serviceRequests&#39;)
+    .findOne({ filter: idFilter(requestId) });
+  if (!request) {
+    throw new Error(`Service request &quot;${requestId}&quot; was not found.`);
+  }
+
+  const urgent = Boolean(request.urgent);
+  const urgentLabel = urgent ? &#39;是 / Yes&#39; : &#39;否 / No&#39;;
+  const resultLabel =
+    request.result === &#39;urgent&#39; ? &#39;紧急 / Urgent&#39; : &#39;普通 / Normal&#39;;
+
+  const sent = await notification.send({
+    idempotencyKey: `service-request-accepted:${requestId}`,
+    source: { type: &#39;service-request&#39;, referenceId: requestId },
+    messages: {
+      inbox: {
+        to: String(request.assigneeId),
+        title: `受理通知 / Acceptance notice: ${request.reference}`,
+        body: [
+          &#39;您好，您的服务请求已被受理。&#39;,
+          &#39;Your service request has been accepted.&#39;,
+          &#39;&#39;,
+          `标题 / Title: ${request.title}`,
+          `编号 / Reference: ${request.reference}`,
+          `紧急 / Urgent: ${urgentLabel}`,
+          `结果 / Result: ${resultLabel}`,
+        ].join(&#39;\n&#39;),
+        target: { type: &#39;route&#39;, path: `/service-requests/${request.id}` },
+      },
+    },
+  });
+
+  return {
+    notificationId: sent.notificationId,
+    deduplicated: sent.deduplicated,
+  };
+};</pre><p class="check-source">原文件 SHA-256：67143c499d2dff2870d2769e025b3465b8082592f9437d39a50c4c1c846bf263</p></div></details><details class="card raw-record" id="review-evidence-E18"><summary><strong>E18</strong> · packages/@nocobase/app-plugin-notification-in-app/dist/server/store.js:76–138</summary><div class="subsection-body"><p>DatabaseInAppStore.deliver 向 notificationInAppItems 插入并按 deliveryId 幂等；list/countUnread 以 userId 过滤并支持 unreadOnly/游标；update 的 read/unread 写 readAt，delete/update 均带 userId 条件。</p><pre>    async deliver(input) {
+        const item = {
+            id: randomUUID(),
+            deliveryId: input.deliveryId,
+            notificationId: input.notificationId,
+            userId: input.userId,
+            title: input.message.title,
+            body: input.message.body,
+            target: validateNotificationTarget(input.message.target),
+            createdAt: input.createdAt,
+            updatedAt: input.createdAt,
+        };
+        try {
+            await this.database
+                .query()
+                .insertInto(&#39;notificationInAppItems&#39;)
+                .values(toRow(item))
+                .execute();
+        }
+        catch (error) {
+            const existing = await this.database
+                .query()
+                .selectFrom(&#39;notificationInAppItems&#39;)
+                .selectAll()
+                .where(&#39;deliveryId&#39;, &#39;=&#39;, input.deliveryId)
+                .executeTakeFirst();
+            if (existing)
+                return fromRow(existing);
+            throw error;
+        }
+        return item;
+    }
+    async list(input) {
+        let query = this.database
+            .query()
+            .selectFrom(&#39;notificationInAppItems&#39;)
+            .selectAll()
+            .where(&#39;userId&#39;, &#39;=&#39;, input.userId)
+            .orderBy(&#39;createdAt&#39;, &#39;desc&#39;)
+            .orderBy(&#39;id&#39;, &#39;desc&#39;)
+            .limit(input.limit ?? 25);
+        if (input.unreadOnly)
+            query = query.where(&#39;readAt&#39;, &#39;is&#39;, null);
+        if (input.before)
+            query = query.where((builder) =&gt; builder.or([
+                builder(&#39;createdAt&#39;, &#39;&lt;&#39;, input.before?.createdAt),
+                builder.and([
+                    builder(&#39;createdAt&#39;, &#39;=&#39;, input.before?.createdAt),
+                    builder(&#39;id&#39;, &#39;&lt;&#39;, input.before?.id),
+                ]),
+            ]));
+        return (await query.execute()).map(fromRow);
+    }
+    async countUnread(userId) {
+        const rows = await this.database
+            .query()
+            .selectFrom(&#39;notificationInAppItems&#39;)
+            .select(({ fn }) =&gt; [fn.countAll().as(&#39;count&#39;)])
+            .where(&#39;userId&#39;, &#39;=&#39;, userId)
+            .where(&#39;readAt&#39;, &#39;is&#39;, null)
+            .executeTakeFirst();
+        return Number(rows?.count ?? 0);
+    }</pre><p class="check-source">原文件 SHA-256：13c0bcf80f68b9db1ac91a2befc3169331d134ce3fba1aeaf0f09cf8551ff7de</p></div></details><details class="card raw-record" id="review-evidence-E19"><summary><strong>E19</strong> · packages/@nocobase/app-plugin-notification-in-app/dist/server/definition.js:68–115</summary><div class="subsection-body"><p>in-app channel createChannel.validateMessage 限制字段集合，要求 to 为应用用户 ID 字符串/数组、title/body 非空，并用 validateNotificationTarget 规范化 target；prepare 校验 recipient.userId。</p><pre>        async createChannel() {
+            return {
+                type: &#39;in-app&#39;,
+                validateMessage(value) {
+                    if (!value || typeof value !== &#39;object&#39; || Array.isArray(value))
+                        throw new Error(&#39;In-app message is required.&#39;);
+                    for (const key of Object.keys(value)) {
+                        if (![&#39;to&#39;, &#39;title&#39;, &#39;body&#39;, &#39;target&#39;, &#39;actionUrl&#39;].includes(key))
+                            throw new Error(`Unsupported In-app message field &quot;${key}&quot;.`);
+                    }
+                    const message = value;
+                    const ids = typeof message.to === &#39;string&#39; ? [message.to] : message.to;
+                    if (!Array.isArray(ids) ||
+                        !ids.length ||
+                        ids.some((id) =&gt; typeof id !== &#39;string&#39; || !id.trim() || id !== id.trim()))
+                        throw new Error(&#39;In-app to must contain application user IDs.&#39;);
+                    if (typeof message.title !== &#39;string&#39; ||
+                        !message.title.trim() ||
+                        typeof message.body !== &#39;string&#39; ||
+                        !message.body.trim())
+                        throw new Error(&#39;In-app title and body are required.&#39;);
+                    return {
+                        message: {
+                            to: message.to,
+                            title: message.title,
+                            body: message.body,
+                            target: validateNotificationTarget(message.target),
+                        },
+                        recipients: ids.map((userId) =&gt; ({ userId })),
+                    };
+                },
+                async prepare(input) {
+                    if (!input.recipient.userId)
+                        throw new Error(&#39;In-app recipient userId is required.&#39;);
+                    return {
+                        deliveryId: input.deliveryId,
+                        notificationId: input.notificationId,
+                        recipient: input.recipient,
+                        content: {
+                            ...input.message,
+                            target: validateNotificationTarget(input.message.target),
+                        },
+                    };
+                },
+            };
+        },
+    };
+}</pre><p class="check-source">原文件 SHA-256：45093fc2de92a6dc14826b8fa11d30f9c2f279ffc1e8ded723f698dcf66b6805</p></div></details><details class="card raw-record" id="review-evidence-E20"><summary><strong>E20</strong> · packages/@nocobase/app-plugin-notification-in-app/dist/server/routes/index.js:7–32</summary><div class="subsection-body"><p>路由挂在 /notifications/in-app；resolveUserId 用 authenticationToken.getSession(request.headers) 取会话用户 id，未登录返回 undefined，读写都以该身份进入 store。</p><pre>export const apiRoutes = defineApiRoutes(({ container }) =&gt; {
+    const router = new Hono();
+    const store = container.resolve(inAppNotificationStoreToken);
+    const auth = container.resolve(authenticationToken);
+    const routes = new Hono();
+    routes.route(&#39;/&#39;, createInAppRouter(store, {
+        resolveUserId: async (request) =&gt; {
+            try {
+                const session = await auth.getSession(request.headers);
+                return session?.user.id;
+            }
+            catch (error) {
+                // A refused credential (Better Auth APIError) is not signed in, here.
+                if (error instanceof APIError)
+                    return undefined;
+                throw error;
+            }
+        },
+    }));
+    router.route(&#39;/notifications/in-app&#39;, routes);
+    return router;
+});
+const routes = [
+    apiRoutes,
+];
+export default routes;</pre><p class="check-source">原文件 SHA-256：87fa14bcdf752d9fe4a74dc2e6dcef03f970718e461c221dfb2c95827d98d402</p></div></details><details class="card raw-record" id="review-evidence-E21"><summary><strong>E21</strong> · packages/@nocobase/app-plugin-notification-in-app/dist/server/providers/in-app-notification.js:27–40</summary><div class="subsection-body"><p>boot() 注册 in-app channel 与 database provider；recipientExists 通过 userAdministrationServiceToken.get(userId) 判定收件人是否存在。</p><pre>    async boot() {
+        const { container } = this.app;
+        if (!container.has(notificationExtensionRegistryToken))
+            return;
+        const registry = container.resolve(notificationExtensionRegistryToken);
+        const store = container.resolve(inAppNotificationStoreToken);
+        const users = container.resolve(userAdministrationServiceToken);
+        registry.registerChannel(createInAppChannelDefinition()).registerProvider(createDatabaseProviderDefinition({
+            store,
+            async recipientExists(userId) {
+                return Boolean(await users.get(userId));
+            },
+        }));
+    }</pre><p class="check-source">原文件 SHA-256：ca2a3954be5be0a6ab2cbd8052422b50ecffd93d24f99524cd732b050b9d61ad</p></div></details><details class="card raw-record" id="review-evidence-E22"><summary><strong>E22</strong> · app/.agents/skills/nocobase-app-plugin-notification-in-app/SKILL.md:54–63</summary><div class="subsection-body"><p>Skill 规定先注册 core notification 再注册 in-app/server、Client 组合根注册、页面挂载 Provider、HTTP 状态为准、realtime 仅作失效信号，并要求验证收件人隔离与 CSRF。</p><pre># Workflow
+
+1. Read [Inbox Integration Contract](references/inbox-integration.md) for package requirements, public surfaces, and runtime semantics.
+2. Inspect the target application&#39;s Server plugin list, Client composition, authentication setup, `api.baseURL`, `api.realtimeURL`, and installed package versions.
+3. Register `@nocobase/app-plugin-notification` before `@nocobase/app-plugin-notification-in-app/server` when the application needs the `in-app` Channel contribution.
+4. Register `@nocobase/app-plugin-notification-in-app/client` in the Client composition root. In a development build, verify the page at `/dev/notification-in-app` relative to the App base path.
+5. In React components and custom Hooks, use `useApiClient()` from `@nocobase/app-client` for inbox reads and mutations, and `useService(realtimeClientToken)` for subscriptions. Outside React, resolve the corresponding tokens from the application&#39;s services or receive the clients explicitly. Do not reconstruct `/api` from the browser location or Portal base.
+6. Keep HTTP state authoritative. On a validated `inbox.changed` event, realtime connection open, or window focus, trigger a bounded HTTP refetch.
+7. Use the public `@nocobase/app-plugin-notification-in-app/realtime` entry for shared topic or event types; do not import Server internals.
+8. Test allowed and denied users, CSRF-protected mutations, pagination, custom API hosts, realtime invalidation, reconnect recovery, and Dev Route registration.</pre><p class="check-source">原文件 SHA-256：f361771cc2a7722df2747f724865e37dc6fb6efa2d9f513a22e783701fc6a707</p></div></details><details class="card raw-record" id="review-evidence-E23"><summary><strong>E23</strong> · app/.agents/skills/nocobase-app-plugin-notification-in-app/references/inbox-integration.md:33–65</summary><div class="subsection-body"><p>合约说明写库前校验收件人、API 根为 notifications/in-app、realtime 仅失效、按用户隔离；并给出 configure notification.channels.inbox={provider:&#39;in-app&#39;} 与 messages.inbox.to/title/body/target 以及 route target 不含部署前缀的用法。</p><pre>## Final delivery validation
+
+The database Provider checks the recipient through Authentication’s user administration service immediately before writing the inbox item. A missing user returns a non-retryable `recipient` failure and creates no inbox item or realtime event. A lookup failure remains a retryable storage failure. Custom hosts calling `createDatabaseProviderDefinition` must supply `recipientExists(userId)` backed by their authoritative user directory; do not use a permissive fallback.
+
+## HTTP and realtime behavior
+
+The authenticated inbox API is rooted at `notifications/in-app` relative to the injected `ApiClient` API base. Reads include list and unread-count. Writes include read/unread/delete and read-all, each preceded by an authenticated CSRF-token request.
+
+For a custom host, register the exported `IN_APP_NOTIFICATION_NAMESPACE` and `inAppNotificationServerLocales` with its `I18nRuntime`, initialize the runtime, then mount its request i18n middleware before the inbox router. Notification-owned failures return a stable `error.code/message/ns/key/params` envelope; branch on `code`, display `message`, and use `ns`, `key`, and `params` only when the Client needs to retranslate it. Authentication middleware retains its owning plugin&#39;s error contract.
+
+The WebSocket topic is user-scoped by the Server. An `inbox.changed` event does not carry authoritative inbox contents; it tells the UI to refetch HTTP state. The UI also refetches when the realtime connection opens so events missed during disconnection are recovered. Window focus is a fallback invalidation.
+
+When an application configures `api.baseURL` or `api.realtimeURL`, both transports must use those injected client settings. Never derive the HTTP endpoint from `window.location`, a Portal base, or the WebSocket URL.
+
+#### Ownership and upgrades
+
+The plugin owns the inbox components, Provider, Dev Route, authentication enforcement, per-user isolation, CSRF, persistence, and event publication. Applications receive UI changes by upgrading the plugin. A production inbox surface requires a separate product decision and must use an authenticated App or Settings Route rather than exposing the Dev Route.
+
+## Diagnosis order
+
+1. Confirm the authenticated list and unread-count endpoints return the expected durable state.
+2. Confirm mutations fetch a CSRF token and return the changed item/count.
+3. Confirm the application client points HTTP and realtime transports at the intended backend.
+4. Confirm the realtime connection subscribes to the public topic.
+5. Confirm a valid invalidation increments the UI revision and triggers an HTTP refetch.
+6. Confirm reopening the realtime connection refetches even when no event was received.
+7. Confirm cleanup removes the topic, connection-open, and window-focus listeners.
+
+Do not diagnose a missing UI update by manually changing the inbox table or publishing synthetic production events. Reproduce with an isolated test notification or inspect the durable route and subscription logs.
+
+Configure `notification.channels.inbox: { provider: &#39;in-app&#39; }` and send `messages: { inbox: { to: &#39;user-id&#39;, title: &#39;Title&#39;, body: &#39;Body&#39; } }`. Channel keys are names; multiple names using `in-app` are independent targets. `to` requires an application user ID or a non-empty readonly array, with one Delivery per user. No current user is inferred. The test form requires an explicit recipient.
+
+Use `target: { type: &#39;route&#39;, path: &#39;/topics/123&#39; }` for an internal route without the deployment prefix, or `target: { type: &#39;url&#39;, url: &#39;https://example.com/main/topics/123&#39; }` for a complete HTTP(S) URL. The inbox adds the Router basename only for routes. Without a target, no Open link is shown. Legacy `actionUrl` is ignored; run the new target-column migration without converting old links.</pre><p class="check-source">原文件 SHA-256：fc935413849fcf895cb9eaae6e8597a063ea0059307dc4ab617d5702da3ed409</p></div></details><details class="card raw-record" id="review-evidence-E24"><summary><strong>E24</strong> · app/client/pages/messages/index.tsx:6–22</summary><div class="subsection-body"><p>应用消息页从 @nocobase/app-plugin-notification-in-app/client 挂载 NotificationInAppProvider 与 NotificationInAppInbox，无自建消息列表。</p><pre> */
+import {
+  NotificationInAppInbox,
+  NotificationInAppProvider,
+} from &#39;@nocobase/app-plugin-notification-in-app/client&#39;;
+import type { ReactElement } from &#39;react&#39;;
+
+import { PageContainer } from &#39;@/components/page-container&#39;;
+
+export default function MessagesPage(): ReactElement {
+  return (
+    &lt;NotificationInAppProvider&gt;
+      &lt;PageContainer&gt;
+        &lt;NotificationInAppInbox /&gt;
+      &lt;/PageContainer&gt;
+    &lt;/NotificationInAppProvider&gt;
+  );</pre><p class="check-source">原文件 SHA-256：cfc9039a32140849194983a1236e3a02ec3d9d044930521baf21232a61dbb760</p></div></details><details class="card raw-record" id="review-evidence-E25"><summary><strong>E25</strong> · packages/@nocobase/db/dist/src/migration/define.js:1–6</summary><div class="subsection-body"><p>defineMigration 用 markMigrationDefinition 标记并返回迁移定义，供迁移 loader 发现。</p><pre>import { markMigrationDefinition } from &#39;./internal/marker.js&#39;;
+/** Marks and returns a migration definition for discovery by the migration loader. */
+export function defineMigration(definition) {
+    return markMigrationDefinition(definition);
+}
+</pre><p class="check-source">原文件 SHA-256：eba0dce586442525677889388044224f67d2dbf5da1e88e5846a0b9fa34e5059</p></div></details><details class="card raw-record" id="review-evidence-E26"><summary><strong>E26</strong> · packages/@nocobase/db/dist/src/seed/define.js:1–6</summary><div class="subsection-body"><p>defineSeed 用 markSeedDefinition 标记并返回种子定义，供种子 loader 发现。</p><pre>import { markSeedDefinition } from &#39;./internal/marker.js&#39;;
+/** Marks and returns a seed definition for discovery by the seed loader. */
+export function defineSeed(definition) {
+    return markSeedDefinition(definition);
+}
+</pre><p class="check-source">原文件 SHA-256：b0361ee2f3bb53ef45e9e67d6607d92fc98b6461a71bafb638499cc17347e142</p></div></details><details class="card raw-record" id="review-evidence-E27"><summary><strong>E27</strong> · packages/@nocobase/db/dist/src/repository/repository.js:463–497</summary><div class="subsection-body"><p>Repository.updateMany 校验写策略与 filter（无 all 时拒绝空过滤），规范化 values，执行 adapter.updateMany 并返回 updatedCount/count，避免静默无效写入。</p><pre>    async updateMany(options) {
+        const policyInput = options.writePolicy === undefined ? true : options.writePolicy;
+        assertWriteEnabled(policyInput);
+        const writePolicy = policyInput === true ? true : normalizeFieldWritePolicy(policyInput);
+        const collection = await this.collection();
+        assertWritableCollection(collection);
+        // Before the payload is looked at: a Policy that forbids this operation
+        // refuses the call outright, so an empty or malformed body is reported as
+        // forbidden rather than as invalid input. The caller learns nothing about
+        // the shape of a write they may not perform.
+        resolveWriteShapeNode(this.options.policy, &#39;update&#39;, collection);
+        if (writePolicy !== true)
+            validatePolicyFields(collection, writePolicy, [&#39;writePolicy&#39;]);
+        const filter = await this.normalizeMutationFilter(collection, options.filter, options.context, options.all === true, &#39;update&#39;);
+        const values = validateValues(collection, evaluateValues(options.values), &#39;updateMany&#39;, false, options.context);
+        assertFieldWrites(values, writePolicy, [&#39;values&#39;], [], &#39;update&#39;, collection.name);
+        this.assertPolicyMutationFields(collection, { values }, &#39;update&#39;, [
+            &#39;values&#39;,
+        ]);
+        const selection = options.select
+            ? await this.validateSelect(collection, options.select, options.context, this.readContext(collection))
+            : undefined;
+        if (selection)
+            assertBulkReturningIdentity(collection);
+        const result = await this.options.adapter.updateMany({
+            collection,
+            filter,
+            all: options.all === true,
+            values,
+            fields: selection
+                ? includeExecutionFields(collection, selection.fields)
+                : undefined,
+            select: selection?.select,
+            scopeCheck: await this.scopeCheck(collection, &#39;update&#39;),
+        });</pre><p class="check-source">原文件 SHA-256：31b67e0dcdfd222b6981571d563d9879525a3bf61312ea92a05a269d99c1f311</p></div></details><details class="card raw-record" id="review-evidence-E28"><summary><strong>E28</strong> · app/.agents/skills/nocobase-db/SKILL.md:78–101</summary><div class="subsection-body"><p>Skill 区分 migration 建结构与 seed 装安装数据，给出 defineMigration + builder.createCollection 的完整示例与目录约定，并要求运行时不得改 schema。</p><pre>## 2. Migrations and seeds
+
+A migration creates structure. A seed inserts the records the application needs in order to run. Neither does the other&#39;s job, and a seed is never sample or demonstration content.
+
+```ts
+// database/main/migrations/202609020001_create_orders.ts
+import { defineMigration, type MigrationDefinition } from &#39;@nocobase/db&#39;;
+
+const migration: MigrationDefinition = defineMigration({
+  name: &#39;202609020001_create_orders&#39;,
+
+  async up({ builder }) {
+    await builder.createCollection(&#39;orders&#39;, (collection) =&gt; {
+      collection.increments(&#39;id&#39;);
+      collection.string(&#39;orderNo&#39;, { length: 64, nullable: false });
+      collection.string(&#39;status&#39;, { length: 32, nullable: false });
+      collection.datetime(&#39;createdAt&#39;, { nullable: false });
+      collection.unique(&#39;orderNo&#39;);
+      collection.index(&#39;status&#39;);
+    });
+  },
+
+  async down({ builder }) {
+    await builder.dropCollection(&#39;orders&#39;);</pre><p class="check-source">原文件 SHA-256：2fdca7c2484a669667b6293878b915a5af0f84cbd3c5e80945a28fe5fbabf7d7</p></div></details><details class="card raw-record" id="review-evidence-E29"><summary><strong>E29</strong> · app/database/main/migrations/202609240001_create_service_requests.ts:11–35</summary><div class="subsection-body"><p>应用用 defineMigration + builder.createCollection(&#39;serviceRequests&#39;) 建立 reference/title/urgent/assigneeId/status/result/acceptedAt/createdAt/updatedAt，并加唯一索引与 assigneeId 索引。</p><pre>const migration: MigrationDefinition = defineMigration({
+  name: &#39;202609240001_create_service_requests&#39;,
+  async up({ builder }) {
+    await builder.createCollection(&#39;serviceRequests&#39;, (collection) =&gt; {
+      collection.increments(&#39;id&#39;);
+      collection.string(&#39;reference&#39;, { length: 32 }).notNull();
+      collection.string(&#39;title&#39;, { length: 200 }).notNull();
+      collection.boolean(&#39;urgent&#39;).notNull().defaultTo(false);
+      collection.string(&#39;assigneeId&#39;, { length: 64 }).notNull();
+      collection
+        .string(&#39;status&#39;, { length: 32 })
+        .notNull()
+        .defaultTo(&#39;pending&#39;);
+      collection.string(&#39;result&#39;, { length: 32 });
+      collection.datetime(&#39;acceptedAt&#39;);
+      collection.datetime(&#39;createdAt&#39;).notNull();
+      collection.datetime(&#39;updatedAt&#39;).notNull();
+      collection.unique(&#39;reference&#39;, { mode: &#39;index&#39; });
+      collection.index(&#39;assigneeId&#39;);
+    });
+  },
+  async down({ builder }) {
+    await builder.dropCollection(&#39;serviceRequests&#39;);
+  },
+});</pre><p class="check-source">原文件 SHA-256：22888baa7fd79257124ad1349ffde77143d575b87435a7276701936a600c33c9</p></div></details><details class="card raw-record" id="review-evidence-E30"><summary><strong>E30</strong> · app/database/main/seeds/202609240002_seed_service_request_data.ts:37–101</summary><div class="subsection-body"><p>应用用 defineSeed：按 username/email 幂等创建负责人第二个测试账号，并按 reference 幂等插入两条普通/紧急请求。</p><pre>const seed: SeedDefinition = defineSeed({
+  name: &#39;202609240002_seed_service_request_data&#39;,
+  run: async (context) =&gt; {
+    const { query } = context;
+    const now = new Date();
+
+    const existingAgent = await query
+      .selectFrom(&#39;user&#39;)
+      .select(&#39;id&#39;)
+      .where(&#39;username&#39;, &#39;=&#39;, AGENT_USERNAME)
+      .executeTakeFirst();
+
+    let agentId = existingAgent ? String(existingAgent.id) : undefined;
+
+    if (!agentId) {
+      agentId = crypto.randomUUID();
+      const passwordHash = await hashPassword(AGENT_PASSWORD);
+      await query
+        .insertInto(&#39;user&#39;)
+        .values({
+          id: agentId,
+          name: &#39;Service Agent&#39;,
+          username: AGENT_USERNAME,
+          email: AGENT_EMAIL,
+          emailVerified: true,
+          createdAt: now,
+          updatedAt: now,
+        })
+        .execute();
+      await query
+        .insertInto(&#39;account&#39;)
+        .values({
+          id: crypto.randomUUID(),
+          accountId: agentId,
+          providerId: &#39;credential&#39;,
+          userId: agentId,
+          password=[REDACTED],
+          createdAt: now,
+          updatedAt: now,
+        })
+        .execute();
+    }
+
+    const requests = context.repository(&#39;serviceRequests&#39;);
+    for (const request of REQUESTS) {
+      const existing = await requests.findOne({
+        filter: { reference: request.reference },
+      });
+      if (existing) {
+        continue;
+      }
+      await requests.createOne({
+        values: {
+          reference: request.reference,
+          title: request.title,
+          urgent: request.urgent,
+          assigneeId: agentId,
+          status: &#39;pending&#39;,
+          createdAt: now,
+          updatedAt: now,
+        },
+      });
+    }
+  },
+});</pre><p class="check-source">原文件 SHA-256：e217d56636816d2a9e05cd79a04ed79f5f6feddc9b9222e5d87611c8364e0b3f</p></div></details><details class="card raw-record" id="review-evidence-E31"><summary><strong>E31</strong> · artifacts/verify-2/browser-acceptance/report.json:4–68</summary><div class="subsection-body"><p>第二轮 QA：B01-B04 全部 passed；普通请求 Result=Normal、紧急请求 Result=Urgent，普通分支节点 Not executed，负责人消息可 Open 到正确请求且 Mark read 刷新后保留，非收件人收件箱为空。</p><pre>  &quot;summary&quot;: &quot;B01-B04 全部通过：主管受理普通/紧急两条预置请求，Workflow 运行记录分别确认普通分支结果 normal 与紧急分支结果 urgent（普通分支未执行），负责人消息中心收到对应持久站内消息并可点击打开正确请求，标记已读后刷新保留，非收件人看不到这两条个人消息。未发现 Something went wrong、空白页或非预期 4xx/5xx。&quot;,
+  &quot;checks&quot;: [
+    {
+      &quot;id&quot;: &quot;B01&quot;,
+      &quot;criterion&quot;: &quot;主管受理一条普通请求，执行记录显示已运行，业务记录呈现相应受理结果。&quot;,
+      &quot;status&quot;: &quot;passed&quot;,
+      &quot;actions&quot;: [
+        &quot;以 Super Admin 登录，打开 Service requests 列表&quot;,
+        &quot;点击普通请求 REQ-2026-0001 的 Accept 并确认成功提示&quot;,
+        &quot;打开 Settings &gt; Workflow &gt; Execution records，查看运行 #1&quot;,
+        &quot;在运行 #1 的流程图中点击 Record normal result 节点查看执行结果&quot;
+      ],
+      &quot;evidence&quot;: [
+        &quot;受理前 REQ-2026-0001 为 Pending/Result 空，受理后业务记录变为 Status=Accepted、Result=Normal，Accepted at 8:08:35&quot;,
+        &quot;执行记录 #1 Service request acceptance 状态 Resolved，持续 130 ms，触发时间 Sep 24 2026 8:08&quot;,
+        &quot;Record normal result 节点 Status=Succeeded，Result {\&quot;result\&quot;:\&quot;normal\&quot;}，说明执行了普通分支&quot;
+      ],
+      &quot;screenshots&quot;: [
+        &quot;b01-service-requests-list.png&quot;,
+        &quot;b01-normal-accepted.png&quot;,
+        &quot;b01-execution-records.png&quot;,
+        &quot;b01-run-node-normal-result.png&quot;
+      ],
+      &quot;recordedAt&quot;: 1790237627376
+    },
+    {
+      &quot;id&quot;: &quot;B02&quot;,
+      &quot;criterion&quot;: &quot;负责人收到对应站内消息，点击能打开正确请求；标记已读后刷新仍为已读。&quot;,
+      &quot;status&quot;: &quot;passed&quot;,
+      &quot;actions&quot;: [
+        &quot;以负责人 Service Agent(agent) 登录，打开 Message center&quot;,
+        &quot;确认收到 REQ-2026-0001 的站内消息（标题 受理通知 / Acceptance notice: REQ-2026-0001）&quot;,
+        &quot;点击该消息的 Open，确认打开的是 REQ-2026-0001&quot;,
+        &quot;回到 Message center 点击 Mark read，标题未读计数消失&quot;,
+        &quot;重新加载 /main/messages 页面，确认消息仍为已读&quot;
+      ],
+      &quot;evidence&quot;: [
+        &quot;消息中心显示 1 unread 及消息 受理通知 / Acceptance notice: REQ-2026-0001&quot;,
+        &quot;点击 Open 后 URL 为 /main/service-requests/1，标题 REQ-2026-0001，标题 Third-floor printer is offline，Result Normal&quot;,
+        &quot;Mark read 后页面标题由 Message center 1 unread 变为 Message center，按钮变为 Mark unread&quot;,
+        &quot;刷新后仍无未读计数、按钮仍为 Mark unread，消息正文包含 Reference REQ-2026-0001&quot;
+      ],
+      &quot;screenshots&quot;: [
+        &quot;b02-owner-message-unread.png&quot;,
+        &quot;b02-message-opens-request.png&quot;,
+        &quot;b02-owner-message-read-persisted.png&quot;
+      ],
+      &quot;recordedAt&quot;: 1790237631170
+    },
+    {
+      &quot;id&quot;: &quot;B03&quot;,
+      &quot;criterion&quot;: &quot;受理一条紧急请求，能从执行和业务结果确认走了紧急分支；不只验证触发按钮提示。&quot;,
+      &quot;status&quot;: &quot;passed&quot;,
+      &quot;actions&quot;: [
+        &quot;以 Super Admin 登录，打开 Service requests 列表&quot;,
+        &quot;点击带 Urgent 标记的 REQ-2026-0002 的 Accept&quot;,
+        &quot;打开 Settings &gt; Workflow &gt; Execution records，查看运行 #2&quot;,
+        &quot;在运行 #2 的流程图中依次点击 Route by urgency、Record urgent result、Record normal result 节点&quot;
+      ],
+      &quot;evidence&quot;: [
+        &quot;受理后 REQ-2026-0002 业务记录 Status=Accepted、Result=Urgent（列表 Urgent 统计由 1 变为受理后仍 1，两条均已受理）&quot;,
+        &quot;执行记录 #2 Service request acceptance 状态 Resolved，持续 93 ms&quot;,
+        &quot;Route by urgency 节点 Succeeded，Result=true（紧急条件成立）&quot;,
+        &quot;Record urgent result 节点 Succeeded，Result {\&quot;result\&quot;:\&quot;urgent\&quot;}&quot;,
+        &quot;Record normal result 节点显示 Not executed（本次运行未执行），证明未走普通分支&quot;,</pre><p class="check-source">原文件 SHA-256：7d2ef9f78c84e33abe14f328ab6ea699b935c8d4ff902daf85a3dd0c17ff6b05</p></div></details><details class="card raw-record" id="review-evidence-E32"><summary><strong>E32</strong> · app/server/providers/workflow-gate.ts:41–51</summary><div class="subsection-body"><p>应用声明本地 WorkflowServiceRuntime extends WorkflowServiceContract，额外声明 discoverArtifacts/ensureArtifactMaterialized，并注释说明这些方法超出公开 WorkflowServiceContract，故用本地 interface 而非 any 触达。</p><pre>/**
+ * The runtime workflow service exposes discovery and materialization beyond the
+ * public `WorkflowServiceContract`. They are declared here rather than reached
+ * through `any` so the shape this provider depends on is visible in one place.
+ */
+interface WorkflowServiceRuntime extends WorkflowServiceContract {
+  discoverArtifacts(): Promise&lt;readonly WorkflowArtifactSummary[]&gt;;
+  ensureArtifactMaterialized(
+    digest: string,
+  ): Promise&lt;number | string | undefined&gt;;
+}</pre><p class="check-source">原文件 SHA-256：1ac58fb56851279069dc1173d7a04c3206ab940aca2dbae27d72a23b7b2ed277</p></div></details><details class="card raw-record" id="review-evidence-E33"><summary><strong>E33</strong> · packages/@nocobase/app-plugin-workflow/dist/server/index.d.ts:1–7</summary><div class="subsection-body"><p>/server 入口只导出 workflowServiceToken 与 WorkflowServiceContract，并导出 resolveWorkflowRuntimeConfig/WorkflowRuntimeConfig；未导出 internalWorkflowServiceToken 或 WorkflowServiceApi。</p><pre>export { default } from &#39;./plugin.js&#39;;
+export { workflowServiceToken } from &#39;./tokens.js&#39;;
+export type { WorkflowServiceContract } from &#39;./tokens.js&#39;;
+export type { JsonObject, WorkflowEventOptions, WorkflowTriggerReceipt, } from &#39;./engine/index.js&#39;;
+export { WorkflowInstruction, type WorkflowInstructionClass, type WorkflowInstructionContext, type WorkflowInstructionResult, } from &#39;./instructions/base.js&#39;;
+export { resolveWorkflowRuntimeConfig, type WorkflowRuntimeConfig, } from &#39;./config.js&#39;;
+//# sourceMappingURL=index.d.ts.map</pre><p class="check-source">原文件 SHA-256：ec123efae72f312dac95f339aeced3853d93abe75dfa194a69bf966d5067ad8c</p></div></details></div></section><section class="section" id="acceptance"><div class="section-head"><div><div class="eyebrow">Acceptance record</div><h2>验收记录</h2></div><span class="tag ">4 项要求</span></div>
     <div class="acceptance-toolbar"><div class="acceptance-counts"><span class="tag good">报告通过 4</span><span class="tag ">报告未通过 0</span><span class="tag ">未验证 0</span></div>
     <div class="acceptance-actions"><button class="btn small" data-checks="expand">展开全部记录</button><button class="btn small" data-checks="collapse">收起通过项</button></div></div>
     <p class="section-intro">每项直接显示结果；展开可看原始要求、操作记录、观察结果和截图。证据批注单独显示，不改写原始验收状态。</p>
@@ -269,7 +1321,7 @@ B04. 非收件人看不到这两条个人消息；不扩展断线重连或所有
       &quot;mechanizable&quot;: true
     }
   ]
-}</pre></div></details></section><section class="section" id="execution"><div class="section-head"><div><div class="eyebrow">Execution &amp; usage</div><h2>发生了什么，花了多少</h2></div></div><div class="split"><div class="card run-panel"><h3>运行记录</h3><div class="run"><div class="run-content"><div class="run-top"><strong>35966665643 / attempt 1</strong></div><p><span class="tag ">已提交 PR · 等待人工评审</span></p><p>已生成/更新业务 PR</p></div></div><div class="ci-fact"><strong>自动检查：通过</strong><p class="check-source">流水线已完成最终验证及 PR 发布；不代表人工合并。</p></div></div><div class="card usage-card"><div class="eyebrow">已记录 Token · 含缓存</div><div class="usage-big">53,866,879</div><span class="tag ">按已采集范围统计</span><p>此 Issue 累计：已采集 1 个 Run / 1 次尝试</p><details class="subsection"><summary>展开用量分项 ⌄</summary><div class="subsection-body"><div class="table-wrap"><table><thead><tr><th>指标</th><th>值</th></tr></thead><tbody><tr><td>非缓存输入</td><td class="mono">1,603,994</td></tr><tr><td>输出</td><td class="mono">434,149</td></tr><tr><td>缓存读取</td><td class="mono">51,828,736</td></tr><tr><td>端到端耗时</td><td class="mono">1:32:48</td></tr></tbody></table></div><h3 class="usage-phase-title">按阶段分项</h3><div class="table-wrap"><table><thead><tr><th>阶段</th><th class="num">非缓存输入</th><th class="num">输出</th><th class="num">缓存读取</th><th class="num">缓存写入</th><th class="num">合计</th></tr></thead><tbody><tr><td>初始实现</td><td class="num">575,800</td><td class="num">190,109</td><td class="num">32,532,864</td><td class="num">0</td><td class="num">33,298,773</td></tr><tr><td>应用修复</td><td class="num">185,062</td><td class="num">60,321</td><td class="num">8,816,256</td><td class="num">0</td><td class="num">9,061,639</td></tr><tr><td>完整业务 QA</td><td class="num">111,468</td><td class="num">49,195</td><td class="num">6,809,216</td><td class="num">0</td><td class="num">6,969,879</td></tr><tr><td>失败路径复测</td><td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td></tr><tr><td>QA 补报告</td><td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td></tr><tr><td>独立搭建评审</td><td class="num">239,345</td><td class="num">59,938</td><td class="num">3,670,400</td><td class="num">0</td><td class="num">3,969,683</td></tr><tr><td>上下文压缩</td><td class="num">492,319</td><td class="num">74,586</td><td class="num">0</td><td class="num">0</td><td class="num">566,905</td></tr></tbody></table></div><p class="check-source">用量记录 813；未报告用量 0；分项不完整 0；缺失作业时间 0。</p><p class="check-source">不把流式增量、上下文长度和思考 Token 重复相加。旧记录未拆分 QA 时保留原有口径；费用：未知。</p><p class="check-source">现有 task-usage 模块（按 Agent / job ID 去重）。不等同供应商账单，不推算费用。</p></div></details></div></div></section><details class="card raw-record"><summary>本轮阶段耗时</summary><div class="subsection-body"><p>嵌套阶段不可相加为总耗时；仅展示已完成的计时。</p><div class="table-wrap"><table><tr><th>阶段</th><th>次数</th><th>时长</th></tr><tr><td>agent:implementation</td><td>1</td><td>0:47:56</td></tr><tr><td>agent:qa</td><td>2</td><td>0:13:37</td></tr><tr><td>agent:repair</td><td>1</td><td>0:13:09</td></tr><tr><td>agent:review</td><td>1</td><td>0:07:40</td></tr><tr><td>build</td><td>2</td><td>0:02:00</td></tr><tr><td>test</td><td>2</td><td>0:01:23</td></tr><tr><td>lint</td><td>2</td><td>0:01:00</td></tr><tr><td>typecheck</td><td>2</td><td>0:00:30</td></tr><tr><td>install</td><td>1</td><td>0:00:15</td></tr><tr><td>db:apply</td><td>2</td><td>0:00:10</td></tr><tr><td>format:check</td><td>2</td><td>0:00:10</td></tr><tr><td>format:auto</td><td>2</td><td>0:00:02</td></tr><tr><td>skills-sync</td><td>1</td><td>0:00:01</td></tr></table></div></div></details><footer class="report-footer">Factory report template v4 · gchust/nb3-factory:253:35966665643:1:8c6a567f34185c400969bc42dd31cef58fe12fe8:template-4:review-76ab552900de7014<br>验收逐条保留；问题与改进来自复盘原文。此页面是归档展示，不是重新验收。</footer></main>
+}</pre></div></details></section><section class="section" id="execution"><div class="section-head"><div><div class="eyebrow">Execution &amp; usage</div><h2>发生了什么，花了多少</h2></div></div><div class="split"><div class="card run-panel"><h3>运行记录</h3><div class="run"><div class="run-content"><div class="run-top"><strong>35966665643 / attempt 1</strong></div><p><span class="tag ">已提交 PR · 等待人工评审</span></p><p>已生成/更新业务 PR</p></div></div><div class="ci-fact"><strong>自动检查：通过</strong><p class="check-source">流水线已完成最终验证及 PR 发布；不代表人工合并。</p></div></div><div class="card usage-card"><div class="eyebrow">已记录 Token · 含缓存</div><div class="usage-big">53,866,879</div><span class="tag ">按已采集范围统计</span><p>此 Issue 累计：已采集 1 个 Run / 1 次尝试</p><details class="subsection"><summary>展开用量分项 ⌄</summary><div class="subsection-body"><div class="table-wrap"><table><thead><tr><th>指标</th><th>值</th></tr></thead><tbody><tr><td>非缓存输入</td><td class="mono">1,603,994</td></tr><tr><td>输出</td><td class="mono">434,149</td></tr><tr><td>缓存读取</td><td class="mono">51,828,736</td></tr><tr><td>端到端耗时</td><td class="mono">1:32:48</td></tr></tbody></table></div><h3 class="usage-phase-title">按阶段分项</h3><div class="table-wrap"><table><thead><tr><th>阶段</th><th class="num">非缓存输入</th><th class="num">输出</th><th class="num">缓存读取</th><th class="num">缓存写入</th><th class="num">合计</th></tr></thead><tbody><tr><td>初始实现</td><td class="num">575,800</td><td class="num">190,109</td><td class="num">32,532,864</td><td class="num">0</td><td class="num">33,298,773</td></tr><tr><td>应用修复</td><td class="num">185,062</td><td class="num">60,321</td><td class="num">8,816,256</td><td class="num">0</td><td class="num">9,061,639</td></tr><tr><td>完整业务 QA</td><td class="num">111,468</td><td class="num">49,195</td><td class="num">6,809,216</td><td class="num">0</td><td class="num">6,969,879</td></tr><tr><td>失败路径复测</td><td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td></tr><tr><td>QA 补报告</td><td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td></tr><tr><td>独立搭建评审</td><td class="num">239,345</td><td class="num">59,938</td><td class="num">3,670,400</td><td class="num">0</td><td class="num">3,969,683</td></tr><tr><td>上下文压缩</td><td class="num">492,319</td><td class="num">74,586</td><td class="num">0</td><td class="num">0</td><td class="num">566,905</td></tr></tbody></table></div><p class="check-source">用量记录 813；未报告用量 0；分项不完整 0；缺失作业时间 0。</p><p class="check-source">不把流式增量、上下文长度和思考 Token 重复相加。旧记录未拆分 QA 时保留原有口径；费用：未知。</p><p class="check-source">现有 task-usage 模块（按 Agent / job ID 去重）。不等同供应商账单，不推算费用。</p></div></details></div></div></section><details class="card raw-record"><summary>本轮阶段耗时</summary><div class="subsection-body"><p>嵌套阶段不可相加为总耗时；仅展示已完成的计时。</p><div class="table-wrap"><table><tr><th>阶段</th><th>次数</th><th>时长</th></tr><tr><td>agent:implementation</td><td>1</td><td>0:47:56</td></tr><tr><td>agent:qa</td><td>2</td><td>0:13:37</td></tr><tr><td>agent:repair</td><td>1</td><td>0:13:09</td></tr><tr><td>agent:review</td><td>1</td><td>0:07:40</td></tr><tr><td>build</td><td>2</td><td>0:02:00</td></tr><tr><td>test</td><td>2</td><td>0:01:23</td></tr><tr><td>lint</td><td>2</td><td>0:01:00</td></tr><tr><td>typecheck</td><td>2</td><td>0:00:30</td></tr><tr><td>install</td><td>1</td><td>0:00:15</td></tr><tr><td>db:apply</td><td>2</td><td>0:00:10</td></tr><tr><td>format:check</td><td>2</td><td>0:00:10</td></tr><tr><td>format:auto</td><td>2</td><td>0:00:02</td></tr><tr><td>skills-sync</td><td>1</td><td>0:00:01</td></tr></table></div></div></details><footer class="report-footer">Factory report template v4 · gchust/nb3-factory:253:35966665643:1:8c6a567f34185c400969bc42dd31cef58fe12fe8:template-4:review-6f4b789f9773caf4<br>验收逐条保留；问题与改进来自复盘原文。此页面是归档展示，不是重新验收。</footer></main>
 <dialog aria-labelledby="lightbox-title" class="lightbox" id="lightbox"><div class="lightbox-bar"><h3 id="lightbox-title">浏览器截图</h3><div class="lightbox-controls"><button aria-label="上一张" class="icon-btn" id="photo-prev">←</button><button aria-label="下一张" class="icon-btn" id="photo-next">→</button><button aria-label="关闭放大图片" class="icon-btn" id="photo-close"><svg aria-hidden="true" fill="none" height="16" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7" viewbox="0 0 24 24" width="16"><path d="m6 6 12 12M6 18 18 6"></path></svg></button></div></div><img alt="" class="lightbox-img" id="lightbox-img"/><div class="lightbox-foot"><span id="lightbox-source"></span><span id="lightbox-count"></span></div></dialog><script>
 (() => {
   'use strict';

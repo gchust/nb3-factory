@@ -35,10 +35,10 @@
     "artifact": "factory-agent-253",
     "artifactId": 10797627747,
     "reviewSource": {
-      "runId": 35985444139,
+      "runId": 35987996268,
       "attempt": 1,
-      "artifactId": 10802077545,
-      "controlSha": "da18d586a556da85c9e2ac0fb4507b5bc01d7986"
+      "artifactId": 10803241177,
+      "controlSha": "952084a875e940bdcba52d45f8b805c7f49f0049"
     },
     "usage": {
       "phases": {
@@ -212,10 +212,10 @@
       "artifact": "factory-agent-253",
       "artifactId": 10797627747,
       "reviewSource": {
-        "runId": 35985444139,
+        "runId": 35987996268,
         "attempt": 1,
-        "artifactId": 10802077545,
-        "controlSha": "da18d586a556da85c9e2ac0fb4507b5bc01d7986"
+        "artifactId": 10803241177,
+        "controlSha": "952084a875e940bdcba52d45f8b805c7f49f0049"
       },
       "usage": {
         "phases": {
@@ -892,12 +892,12 @@
     ],
     "buildReview": {
       "version": 1,
-      "state": "failed",
-      "reason": "独立评审未完成或证据校验失败：modules: duplicates。业务验收结果保持不变。",
+      "state": "completed",
+      "reason": "独立 Agent 评审完成；评分是基于本次证据的意见，不替代业务 QA 或人工评审。",
       "basis": {
         "repository": "gchust/nb3-factory",
         "issue": 253,
-        "runId": "35966665643",
+        "runId": 35966665643,
         "attempt": 1,
         "controlSha": "1bd143f61094211c8c19783e489b5e85d86a91c4",
         "rubricVersion": 2,
@@ -1076,17 +1076,1063 @@
         ],
         "reviewCriteriaHash": "625d7eb6e37f57613f7ac787c4b3024c94fb36d31dd9548b64fcdcd341debd1d",
         "artifactHash": "96aabd846317dc5ad702df41af1daefc4b3c0a51817626fe8a4d69f07762dc64",
-        "inputHash": "7210b4198ed0f384be90e3a2cabfa9835376baf30ee5d73700f8d6b3298378c9"
+        "inputHash": "448fad59483b846c20273e257df0e39b18477d915a19f2114dc9cfce0bedeb14"
       },
-      "evaluation": null,
+      "evaluation": {
+        "version": 2,
+        "inputHash": "448fad59483b846c20273e257df0e39b18477d915a19f2114dc9cfce0bedeb14",
+        "summary": "本次需求的两条主线是 Workflow（登记受理 + 按紧急标记分支 + 执行记录）和 Notification/In-App 持久站内信（投递、收件人隔离、已读持久、点击打开请求）。Workflow DSL、条件分支、run 节点、trigger 服务、执行记录，以及 notification.send 的通道/幂等校验和 in-app 的数据库收件箱都直接支持需求；第二轮 QA B01-B04 全通过。主要障碍在 Workflow Artifact 的物化位置：runtime 以 ESM 从 artifact 目录动态 import run 模块，artifact 盘若不在代码根内，裸导入 @nocobase/db 在生产模式解析失败；插件/模板未提供安全默认或在启动/校验期 fail-fast，当前 Skill 也未记录 artifactDisk 需要代码根内可解析 node_modules。应用最终通过新增 workflow-artifacts 盘绕行并修复。",
+        "progress": {
+          "complete": true,
+          "pendingModules": []
+        },
+        "modules": [
+          {
+            "name": "Workflow DSL、条件分支与持久执行记录",
+            "targets": [
+              {
+                "kind": "library",
+                "name": "@nocobase/app-plugin-workflow",
+                "entrypoints": [
+                  "defineWorkflow",
+                  "RunInstruction.create",
+                  "ConditionInstruction.create",
+                  "workflowServiceToken.trigger",
+                  "WorkflowServiceContract",
+                  "WorkflowRunFunction"
+                ],
+                "evidence": [
+                  "E1",
+                  "E2"
+                ]
+              },
+              {
+                "kind": "guidance",
+                "name": "app/.agents/skills/nocobase-app-plugin-workflow/SKILL.md",
+                "entrypoints": [
+                  "Choose the Task Path",
+                  "Author and Validate",
+                  "Invoke and Manage: trigger()"
+                ],
+                "evidence": [
+                  "E3"
+                ]
+              },
+              {
+                "kind": "guidance",
+                "name": "app/.agents/skills/nocobase-app-plugin-workflow/references/dsl-authoring.md",
+                "entrypoints": [
+                  "checker phases",
+                  "run node module contract",
+                  "Artifact build"
+                ],
+                "evidence": [
+                  "E4"
+                ]
+              }
+            ],
+            "scope": "defineWorkflow/RunInstruction/ConditionInstruction 的声明与分支编排、run 模块的命名导出与结果 schema、workflowServiceToken.trigger 的异步回执、以及 run/node 执行记录的持久化。",
+            "limitations": "未运行应用，未独立重放执行记录；分支执行与 node-run 落库依据源码阅读和第二轮 QA 截图/报告，未直接读 engine 的调度实现。",
+            "criteria": [
+              "B01",
+              "B03"
+            ],
+            "requirements": [
+              {
+                "need": "主管受理后由 Workflow 完成‘登记受理’，并据紧急标记走 normal/urgent 分支，执行记录可看到步骤与最终结果。",
+                "responsibility": "框架负责 DSL/指令抽象、DAG 分支执行、run 模块加载与结果契约、运行与节点记录的持久化；应用负责 workflow.ts 的编排和四个 run 模块的业务语义。",
+                "support": "direct",
+                "recommendedUsage": "在 server/workflows/<key>/workflow.ts 用 defineWorkflow 绑定 WorkflowSourceAst；RunInstruction.create 的 config.module 用扩展名省略的包内相对路径，声明 result schema；条件用 ConditionInstruction.branch；run 模块 export 名为 run 的函数并做 abort/幂等；业务侧 resolve(workflowServiceToken).trigger(key, input)。",
+                "actualUsage": "应用按此写 workflow.ts（registerAcceptance → routeByUrgency → markNormal/markUrgent → notifyAssignee），run 模块用 named run、declare result，并在 accept 路由中 trigger。第二轮 QA 运行 #1/#2 显示 Resolved，普通运行 normal 节点 Succeeded、紧急运行 urgent 节点 Succeeded 且 normal 节点 Not executed。",
+                "gapOwner": "none",
+                "evidence": [
+                  "E1",
+                  "E3",
+                  "E5",
+                  "E31"
+                ]
+              }
+            ],
+            "scores": {
+              "requirementFit": {
+                "score": 88,
+                "reason": "公开契约把 DSL、分支指令、run 结果 schema、异步 trigger 与执行记录分层提供，正好覆盖登记受理与普通/紧急分支；第二轮实测执行记录能区分两个分支。",
+                "evidence": [
+                  "E1",
+                  "E3"
+                ]
+              },
+              "usability": {
+                "score": 86,
+                "reason": "declareWorkflow 的节点/result 声明与 run 模块命名导出约定一致，trigger 以 accepted/runId 回执返回，业务侧无需自建调度或执行表。",
+                "evidence": [
+                  "E2",
+                  "E3"
+                ]
+              },
+              "agentFriendliness": {
+                "score": 84,
+                "reason": "Skill 给出明确任务路径、节点 description 强制、check CLI、trigger 示例与异步语义，Agent 能据此找到正确入口并完成 DSL 编排。",
+                "evidence": [
+                  "E3",
+                  "E4"
+                ]
+              },
+              "design": {
+                "score": 85,
+                "reason": "DSL 源 AST、指令类、引擎与 Artifact loader 边界清晰；run 模块是普通命名导出函数，业务逻辑与框架流程解耦。",
+                "evidence": [
+                  "E1",
+                  "E2"
+                ]
+              },
+              "reliability": {
+                "score": 82,
+                "reason": "实现层对 run 模块做容器内路径校验、要求命名 run 导出、对不可 JSON 化的返回值显式报错，运行语义与 Skill 描述一致。",
+                "evidence": [
+                  "E2"
+                ]
+              }
+            }
+          },
+          {
+            "name": "Workflow Artifact 物化与生产运行时配置",
+            "targets": [
+              {
+                "kind": "library",
+                "name": "@nocobase/app-plugin-workflow",
+                "entrypoints": [
+                  "resolveWorkflowRuntimeConfig",
+                  "WorkflowRuntimeConfig.artifactDisk",
+                  "createLocalWorkflowArtifactStore",
+                  "WorkflowService.discoverArtifacts",
+                  "WorkflowService.ensureArtifactMaterialized"
+                ],
+                "evidence": [
+                  "E6",
+                  "E7",
+                  "E8",
+                  "E9",
+                  "E33"
+                ]
+              },
+              {
+                "kind": "guidance",
+                "name": "app/.agents/skills/nocobase-app-plugin-workflow/references/dsl-authoring.md",
+                "entrypoints": [
+                  "Artifact build",
+                  "runtime module loading",
+                  "Deterministic definition builds"
+                ],
+                "evidence": [
+                  "E4"
+                ]
+              }
+            ],
+            "scope": "WorkflowRuntimeConfig.artifactDisk 的解析、resolveWorkflowRuntimeConfig 对 distRoot/production 的计算、Artifact 盘的校验与 run 模块的运行时 import，以及已部署 revision 的 materialize/enable 入口。",
+            "limitations": "快照未包含 create-app 模板源码，无法直接核对模板中 artifactDisk 的原始默认；模板默认值仅来自 retro 自述，插件/指南侧证据独立核对。",
+            "criteria": [
+              "B01",
+              "B03"
+            ],
+            "requirements": [
+              {
+                "need": "应用部署/构建后首次受理即可运行 Workflow，无需运维手工发布 Artifact，也不因运行模块位置导致生产环境失败。",
+                "responsibility": "框架负责定义 artifactDisk 契约、物化/加载 run 模块并保证其在生产构建中可解析；应用负责为 artifactDisk 指定一个位于代码根内、可解析 node_modules 的私有 fs 盘。",
+                "support": "workaround",
+                "recommendedUsage": "当前指南未给出 artifactDisk 的推荐配置；从实现看应把 artifactDisk 指向代码根内的私有 fs 盘（应用用 drive 盘 workflows → paths.root('workflow-artifacts')），确保 run 模块物化位置向上可找到 node_modules。该推荐做法在 Skill 中未记录。",
+                "actualUsage": "初始配置使生产模式物化到部署 storage 根之外的 storage/private/workflows，run 模块 import '@nocobase/db' 报 Cannot find package；应用新增 code-root 盘并设 artifactDisk:'workflows' 后两条请求端到端跑通。",
+                "gapOwner": "framework",
+                "evidence": [
+                  "E6",
+                  "E7",
+                  "E8",
+                  "E10",
+                  "E11",
+                  "E12"
+                ]
+              }
+            ],
+            "scores": {
+              "requirementFit": {
+                "score": 66,
+                "reason": "框架本身能加载并执行 Artifact，但 artifactDisk 由应用提供、配置不当时只在生产首次运行才失败；本次必须先绕行换盘才满足受理需求。",
+                "evidence": [
+                  "E6",
+                  "E7"
+                ]
+              },
+              "usability": {
+                "score": 62,
+                "reason": "artifactDisk 是必填且无默认/无校验，需要额外理解 drive 盘与 node_modules 解析关系；失败信息只在运行记录里以模块找不到的形式出现。",
+                "evidence": [
+                  "E7",
+                  "E9"
+                ]
+              },
+              "agentFriendliness": {
+                "score": 58,
+                "reason": "当前流程 Skill 未提及 artifactDisk、代码根约束或生产/开发差异，Agent 只能靠生产 QA 失败反推；属于发现与恢复指引缺口。",
+                "evidence": [
+                  "E4",
+                  "E7"
+                ]
+              },
+              "design": {
+                "score": 64,
+                "reason": "resolveWorkflowRuntimeConfig 只推导 distRoot/production，不推导或校验 Artifact 盘位置；createLocalWorkflowArtifactStore 接受任意 private fs 盘；programmatic enable 入口 internalWorkflowServiceToken 又未从 /server 公开导出。",
+                "evidence": [
+                  "E6",
+                  "E8",
+                  "E9",
+                  "E33"
+                ]
+              },
+              "reliability": {
+                "score": 56,
+                "reason": "run 模块经绝对 file URL 动态 import，裸导入按模块所在目录解析；store 侧不校验该目录是否能解析依赖，配置合法但运行期才抛 module-not-found，未 fail-fast。",
+                "evidence": [
+                  "E6",
+                  "E8"
+                ]
+              }
+            }
+          },
+          {
+            "name": "Notification 服务与通道投递",
+            "targets": [
+              {
+                "kind": "library",
+                "name": "@nocobase/app-plugin-notification",
+                "entrypoints": [
+                  "notificationServiceToken",
+                  "NotificationService.send",
+                  "NotificationConfig.channels",
+                  "idempotencyKey",
+                  "notificationRequestFingerprint"
+                ],
+                "evidence": [
+                  "E13",
+                  "E14"
+                ]
+              },
+              {
+                "kind": "guidance",
+                "name": "app/.agents/skills/nocobase-app-plugin-notification/references/sending-notifications.md",
+                "entrypoints": [
+                  "send() contract",
+                  "in-app message shape",
+                  "idempotency"
+                ],
+                "evidence": [
+                  "E15"
+                ]
+              }
+            ],
+            "scope": "notificationServiceToken 与 send() 的通道映射、消息校验、幂等键与请求指纹、以及 source 业务关联；不含外部渠道。",
+            "limitations": "未验证外部渠道；未直接读持久化 store 的 SQL，但 in-app 落库由 in-app 插件实现覆盖。",
+            "criteria": [
+              "B02",
+              "B04"
+            ],
+            "requirements": [
+              {
+                "need": "受理后向负责人发送一条持久站内消息，且重复/重试不产生第二条。",
+                "responsibility": "框架负责通道注册与消息校验、幂等去重、投递生命周期；应用负责选择通道并给出收件人、标题、正文与 target。",
+                "support": "direct",
+                "recommendedUsage": "配置 notification.channels.inbox={provider:'in-app'}，resolve(notificationServiceToken).send({idempotencyKey, source:{type,referenceId}, messages:{inbox:{to:userId,title,body,target:{type:'route',path}}}})。",
+                "actualUsage": "应用按推荐形状在 notify-assignee run 节点发送，idempotencyKey 使用 service-request-accepted:<id>，target 指向 /service-requests/<id>；配置在 server/config/notification.ts 注册 inbox→in-app。",
+                "gapOwner": "none",
+                "evidence": [
+                  "E13",
+                  "E15",
+                  "E16",
+                  "E17"
+                ]
+              }
+            ],
+            "scores": {
+              "requirementFit": {
+                "score": 90,
+                "reason": "send() 支持按通道名组装消息、source 关联业务、幂等键去重，直接满足持久站内信需求，无需自建消息表。",
+                "evidence": [
+                  "E13",
+                  "E15"
+                ]
+              },
+              "usability": {
+                "score": 88,
+                "reason": "单一 send() 入口、通道到消息的扁平映射，校验错误在入队前抛出；指南给出可直接套用的 inbox 示例。",
+                "evidence": [
+                  "E13",
+                  "E15"
+                ]
+              },
+              "agentFriendliness": {
+                "score": 87,
+                "reason": "Skill 明确 resolve notificationServiceToken、按通道构造完整消息、幂等键语义，并指明 in-app 的 to/title/body/target 要求。",
+                "evidence": [
+                  "E15"
+                ]
+              },
+              "design": {
+                "score": 85,
+                "reason": "通道/Provider 注册表与 Notification/Delivery/Attempt 生命周期分离，幂等以请求指纹检测同键不同内容冲突，边界清晰。",
+                "evidence": [
+                  "E13",
+                  "E14"
+                ]
+              },
+              "reliability": {
+                "score": 86,
+                "reason": "send() 在持久化前完成消息与幂等键校验，已存在同键同指纹时返回 deduplicated 并补投 pending，同键不同内容显式报冲突。",
+                "evidence": [
+                  "E13",
+                  "E14"
+                ]
+              }
+            }
+          },
+          {
+            "name": "In-App 持久收件箱、已读与收件人隔离",
+            "targets": [
+              {
+                "kind": "library",
+                "name": "@nocobase/app-plugin-notification-in-app",
+                "entrypoints": [
+                  "NotificationInAppProvider",
+                  "NotificationInAppInbox",
+                  "createInAppChannelDefinition",
+                  "createDatabaseProviderDefinition",
+                  "DatabaseInAppStore"
+                ],
+                "evidence": [
+                  "E18",
+                  "E19",
+                  "E20",
+                  "E21"
+                ]
+              },
+              {
+                "kind": "guidance",
+                "name": "app/.agents/skills/nocobase-app-plugin-notification-in-app/SKILL.md",
+                "entrypoints": [
+                  "Workflow",
+                  "Verification Checklist"
+                ],
+                "evidence": [
+                  "E22"
+                ]
+              },
+              {
+                "kind": "guidance",
+                "name": "app/.agents/skills/nocobase-app-plugin-notification-in-app/references/inbox-integration.md",
+                "entrypoints": [
+                  "Required packages",
+                  "HTTP and realtime behavior",
+                  "channel config and target"
+                ],
+                "evidence": [
+                  "E23"
+                ]
+              }
+            ],
+            "scope": "in-app 通道定义与收件人存在性校验、数据库收件箱的按用户读取与 read/unread 持久化、HTTP 路由的会话身份解析、Client 收件箱组件与 target 跳转。",
+            "limitations": "未做断线重连/实时矩阵验证；未直接读 Client 组件实现，仅以应用挂载点和 QA 结果为证。",
+            "criteria": [
+              "B02",
+              "B04"
+            ],
+            "requirements": [
+              {
+                "need": "负责人能在消息中心看到该消息、点击打开正确请求、标记已读并刷新后保留；非收件人看不到这两条个人消息。",
+                "responsibility": "框架负责持久收件箱、按登录用户的读写隔离与已读状态、route target 打开、以及发送前收件人校验；应用负责在页面挂载 Provider/Inbox 并配置 inbox 通道。",
+                "support": "direct",
+                "recommendedUsage": "在 Client 组合根注册 in-app client 入口并在消息页挂载 NotificationInAppProvider + NotificationInAppInbox；服务端先注册 notification 再注册 in-app；发送时 channels.inbox.provider='in-app'，target 用不带部署前缀的 route。",
+                "actualUsage": "应用消息页直接挂载插件组件，notification.ts 配置 inbox→in-app，notify-assignee 用 route target；第二轮 QA 显示负责人收到消息、Open 跳到 /service-requests/1、Mark read 刷新后保留，且 Super Admin 收件箱为空。",
+                "gapOwner": "none",
+                "evidence": [
+                  "E18",
+                  "E23",
+                  "E24",
+                  "E31"
+                ]
+              }
+            ],
+            "scores": {
+              "requirementFit": {
+                "score": 92,
+                "reason": "DatabaseInAppStore 持久化条目并按 userId 过滤、维护 readAt，route target 供 UI 跳转，收件人存在性在写库前校验，直接覆盖 B02/B04。",
+                "evidence": [
+                  "E18",
+                  "E23"
+                ]
+              },
+              "usability": {
+                "score": 90,
+                "reason": "插件同时提供 Server 路由与 Client 收件箱组件，应用只需挂载组件与配置通道；指南给出 route/url target 与 channel 配置的确切写法。",
+                "evidence": [
+                  "E18",
+                  "E23"
+                ]
+              },
+              "agentFriendliness": {
+                "score": 88,
+                "reason": "in-app Skill 与 inbox 合约明确注册顺序、公共 realtime 入口、CSRF/分页/隔离检查项，并明确禁止用 toast 或直接改表替代，指引准确。",
+                "evidence": [
+                  "E22",
+                  "E23"
+                ]
+              },
+              "design": {
+                "score": 88,
+                "reason": "store 有 memory/database/realtime 装饰分层，通道定义负责校验与收件人展开，Provider 通过 user administration 判定收件人存在，扩展点清晰。",
+                "evidence": [
+                  "E19",
+                  "E20",
+                  "E21"
+                ]
+              },
+              "reliability": {
+                "score": 88,
+                "reason": "读取/更新/删除 SQL 均带 userId 条件并以 updatedCount/deletedCount 判定结果，HTTP 身份取自认证会话，收件人不存在则拒绝投递。",
+                "evidence": [
+                  "E18",
+                  "E20"
+                ]
+              }
+            }
+          },
+          {
+            "name": "数据库迁移、种子与 Repository 持久化",
+            "targets": [
+              {
+                "kind": "library",
+                "name": "@nocobase/db",
+                "entrypoints": [
+                  "defineMigration",
+                  "defineSeed",
+                  "Collection Builder",
+                  "DatabaseManager.repository",
+                  "Repository.createOne/findOne/updateMany"
+                ],
+                "evidence": [
+                  "E25",
+                  "E26",
+                  "E27"
+                ]
+              },
+              {
+                "kind": "guidance",
+                "name": "app/.agents/skills/nocobase-db/SKILL.md",
+                "entrypoints": [
+                  "Migrations and seeds",
+                  "Repository and Query",
+                  "Where the code lives"
+                ],
+                "evidence": [
+                  "E28"
+                ]
+              }
+            ],
+            "scope": "业务表的结构迁移、安装种子数据、以及运行/工作流节点通过 Repository 读写业务记录。",
+            "limitations": "未运行迁移/种子，未核对数据库实际 schema；以源码与第二轮 QA 的业务状态为准。",
+            "criteria": [
+              "B01",
+              "B02",
+              "B03"
+            ],
+            "requirements": [
+              {
+                "need": "业务请求表真实落库、种子提供两条预设请求，受理状态与分支结果可被 Workflow 与页面读写。",
+                "responsibility": "框架负责迁移/种子发现执行、Builder 建表、Repository 的过滤/取值/写策略与结果判定；应用负责表字段与业务语义。",
+                "support": "direct",
+                "recommendedUsage": "在 database/<connection>/migrations 用 defineMigration + builder.createCollection 建表；seed 用 defineSeed + repository/query；运行代码用 databaseManagerToken.repository<T>(name) 做 findOne/createOne/updateMany。",
+                "actualUsage": "应用建立 serviceRequests 表与两条种子请求，run 模块与服务均通过 repository('serviceRequests') 读写；第二轮 QA 显示状态/结果真实持久（Accepted/Normal/Urgent）。",
+                "gapOwner": "none",
+                "evidence": [
+                  "E25",
+                  "E27",
+                  "E28",
+                  "E29",
+                  "E30",
+                  "E31"
+                ]
+              }
+            ],
+            "scores": {
+              "requirementFit": {
+                "score": 88,
+                "reason": "迁移/种子定义与 Repository 写读齐备，能真实持久化业务表与分支结果，无需静态数组或内存替代。",
+                "evidence": [
+                  "E25",
+                  "E27"
+                ]
+              },
+              "usability": {
+                "score": 86,
+                "reason": "defineMigration/defineSeed 入口简单，Builder 流式建表，Repository 方法签名直观；Skill 给出按目录放置的明确约定。",
+                "evidence": [
+                  "E26",
+                  "E28"
+                ]
+              },
+              "agentFriendliness": {
+                "score": 85,
+                "reason": "nocobase-db Skill 明确迁移与运行时分层、目录位置与可复制示例，Agent 能定位正确入口，未见误导。",
+                "evidence": [
+                  "E28"
+                ]
+              },
+              "design": {
+                "score": 84,
+                "reason": "schema 变更（migration/builder）与运行期读写（Repository）边界清楚，Skill 明示运行时不得改 schema、迁移不得引用运行时。",
+                "evidence": [
+                  "E25",
+                  "E26",
+                  "E27"
+                ]
+              },
+              "reliability": {
+                "score": 84,
+                "reason": "Repository 对 filter 与写策略做校验，updateMany 依据 updatedCount 判定并返回计数，避免静默无效果写入。",
+                "evidence": [
+                  "E27"
+                ]
+              }
+            }
+          }
+        ],
+        "findings": [
+          {
+            "id": "F1",
+            "kind": "issue",
+            "owner": "framework",
+            "severity": "major",
+            "confidence": "confirmed",
+            "status": "open",
+            "title": "Workflow Artifact 盘缺少代码根约束/校验，生产 run 模块在运行期才因裸导入失败",
+            "detail": "WorkflowRuntimeConfig.artifactDisk 是必填项，但 resolveWorkflowRuntimeConfig 只推导 distRoot/production，不推导或校验 Artifact 盘必须位于可解析 node_modules 的代码根内；createLocalWorkflowArtifactStore 也只校验 driver==='fs' 且 visibility==='private'。run 模块通过 pathToFileURL + 动态 import 从该盘加载，Node 按模块所在目录向上解析 '@nocobase/*'，因此盘落在部署 storage 根（代码根之外）时，开发模式因 developmentResourceRoot 而正常、生产模式第一次运行即抛 Cannot find package '@nocobase/db'。第一轮 QA 三条运行全部 Error、业务记录停在 Pending、站内信未发出。",
+            "impact": "只使用 Workflow run 模块的应用在生产构建下核心路径不可用，且失败延迟到首次运行才暴露；本次需应用自行新增 code-root 盘并改 artifactDisk 才恢复。",
+            "suggestedChange": "在 @nocobase/app-plugin-workflow 的 artifact-store/服务初始化时校验 Artifact 盘可解析宿主依赖（或在 store 根提供解析入口/打包 run 模块），并在配置解析处提供安全默认；同时在 Workflow Skill 写明 artifactDisk 必须位于代码根内。",
+            "evidence": [
+              "E6",
+              "E7",
+              "E8",
+              "E10",
+              "E11",
+              "E12"
+            ]
+          },
+          {
+            "id": "F2",
+            "kind": "improvement",
+            "owner": "documentation",
+            "severity": "major",
+            "confidence": "confirmed",
+            "status": "open",
+            "title": "Workflow Skill 未记录 artifactDisk 与生产/开发 run 模块解析差异",
+            "detail": "app/.agents/skills/nocobase-app-plugin-workflow/SKILL.md 与 references/dsl-authoring.md 详述 DSL、check、Artifact build 与模块相对路径，但通篇没有 artifactDisk、代码根或 node_modules 解析约束；invocation-and-service-api.md 只讲管理 API/服务方法。Agent 无法从指南预知该生产陷阱，只能靠失败的生产 QA 反推。",
+            "impact": "同一错误会在只使用 run 模块的应用中重复出现，增加一轮生产验证修复成本。",
+            "suggestedChange": "在该 Skill 增加一小节：artifactDisk 必须指向代码根内（dist 内）的私有 fs 盘，run 模块以 ESM 从该位置解析 @nocobase/*，并给出 drive 盘 + config 的最小示例与自检方法。",
+            "evidence": [
+              "E4",
+              "E7",
+              "E12"
+            ]
+          },
+          {
+            "id": "F3",
+            "kind": "issue",
+            "owner": "plugin",
+            "severity": "minor",
+            "confidence": "confirmed",
+            "status": "open",
+            "title": "已部署 Artifact 的 programmatic materialize/enable 无公开入口",
+            "detail": "tokens.d.ts 定义了 internalWorkflowServiceToken=[REDACTED] discoverArtifacts/ensureArtifactMaterialized），但 /server 入口只导出 workflowServiceToken（类型仅 registerInstruction/trigger），internalWorkflowServiceToken 与 WorkflowServiceApi 都未公开导出，也没有 ./server/tokens 子路径。应用为启动时确保工作流启用，只能把公开 token 宽化成本地 interface 调用非公开方法。",
+            "impact": "业务应用若想自行保证工作流可用，缺少受支持的编程入口，或只能改走需要 settings:workflow:manage 权限的管理 API；类型断言绕过公开契约，升级时易碎。",
+            "suggestedChange": "从 @nocobase/app-plugin-workflow/server 公开一个受支持的 enable/materialize 契约（或明确只允许管理 API 并导出对应客户端），避免应用对公开 token 做类型宽化。",
+            "evidence": [
+              "E9",
+              "E33",
+              "E32"
+            ]
+          },
+          {
+            "id": "F4",
+            "kind": "strength",
+            "owner": "framework",
+            "severity": "info",
+            "confidence": "confirmed",
+            "status": "resolved",
+            "title": "Workflow DSL、分支与执行记录直接支撑受理与分支验证",
+            "detail": "defineWorkflow + RunInstruction(result schema) + ConditionInstruction.branch 让登记受理、按 urgent 分流、分支结果落库都由框架承担；workflowServiceToken.trigger 返回 accepted/runId 且执行为异步。第二轮 QA 运行 #1 normal 节点 Succeeded、运行 #2 urgent 节点 Succeeded 且 normal 节点 Not executed，运行状态 Resolved。",
+            "impact": "应用无需自建流程引擎或伪造成功状态即可满足 B01/B03 与评审 R01。",
+            "suggestedChange": "保持现有 DSL/分支/执行记录契约；可把这套条件分支 + 结果读回的用法作为 Skill 的完整示例保留。",
+            "evidence": [
+              "E1",
+              "E3",
+              "E5",
+              "E31"
+            ]
+          },
+          {
+            "id": "F5",
+            "kind": "strength",
+            "owner": "framework",
+            "severity": "info",
+            "confidence": "confirmed",
+            "status": "resolved",
+            "title": "Notification + In-App 提供真实持久收件箱与按用户隔离",
+            "detail": "notification.send 以通道映射 + 幂等键 + source 关联业务；in-app 插件把消息写入数据库收件箱、以 userId 过滤读写、持久 readAt，并在写库前用 user administration 校验收件人。第二轮 QA 负责人可看到并打开消息、已读刷新保留，非收件人收件箱为空。",
+            "impact": "B02/B04 与评审 R02/R03 由框架能力直接覆盖，应用无需另建消息表或用 toast 冒充。",
+            "suggestedChange": "保持 in-app 收件箱的持久化与 userId 隔离契约；无需变更。",
+            "evidence": [
+              "E13",
+              "E18",
+              "E20",
+              "E23",
+              "E31"
+            ]
+          }
+        ],
+        "ui": {
+          "status": "not-reviewed",
+          "score": null,
+          "reason": "当前评审模型无法渲染 PNG，未实际查看任何截图，因此不做跨页面样式一致性评价；不据 shadcn 名称或报告描述推断视觉结论。",
+          "evidence": []
+        },
+        "evidence": [
+          {
+            "id": "E1",
+            "kind": "code",
+            "path": "packages/@nocobase/app-plugin-workflow/dist/server/service.d.ts",
+            "observation": "WorkflowService 公开 trigger/triggerRevision/discoverArtifacts/ensureArtifactMaterialized 与私有 assertResourcesPresent；注释说明生产从 Artifact store 按 digest 解析 run 模块，开发从源包解析。",
+            "lines": [
+              20,
+              49
+            ],
+            "excerpt": "export declare class WorkflowService {\n    private readonly database;\n    private readonly store;\n    /** Set in development only, where run modules load from the source package. */\n    private readonly developmentResourceRoot;\n    private readonly engine;\n    private readonly loader;\n    private initializationPromise;\n    constructor(options: WorkflowServiceOptions);\n    /** The workflow collections. `store` here is already the Artifact store. */\n    private get collections();\n    registerInstruction(instruction: WorkflowInstructionClass): void;\n    trigger(workflowKey: string, input: JsonObject, triggerOptions?: WorkflowEventOptions): Promise<WorkflowTriggerReceipt>;\n    triggerRevision(revisionId: WorkflowId, input: JsonObject, triggerOptions?: WorkflowEventOptions): Promise<WorkflowTriggerReceipt>;\n    discoverArtifacts(): Promise<readonly WorkflowDistArtifact[]>;\n    ensureArtifactMaterialized(hash: string): Promise<WorkflowId | undefined>;\n    dispose(): Promise<void>;\n    /**\n     * Refuse to start a run whose code is not where the engine will look for it.\n     *\n     * Production resolves run modules from the Artifact store, keyed by the\n     * revision's digest. Development resolves them from the source package and\n     * never consults the store, so a definition compiled from source has nothing\n     * committed there and the store cannot be the precondition.\n     */\n    private assertResourcesPresent;\n    private ensureInitialized;\n    private executeRevision;\n    private findAcceptedRun;\n}",
+            "sha256": "491a4d7af51f9c98bf3eac34517274cfc7c09d7950221ba623753d241f53d362"
+          },
+          {
+            "id": "E2",
+            "kind": "code",
+            "path": "packages/@nocobase/app-plugin-workflow/dist/server/instructions/run/instruction.js",
+            "observation": "loadRunModule 经 resolveWorkflowModule 做 realpath 容器校验后，用 pathToFileURL + import() 动态加载；importRunModule 要求 loaded.run 为函数，否则抛 must export a function named run。",
+            "lines": [
+              284,
+              330
+            ],
+            "excerpt": "async function loadRunModule(workflowResourceRoot, specifier, nodeKey) {\n    if (!workflowResourceRoot) {\n        throw new Error(`Run node \"${nodeKey}\" has no workflow resource root bound to it`);\n    }\n    const target = await resolveWorkflowModule(workflowResourceRoot, specifier);\n    const cached = moduleCache.get(target);\n    if (cached)\n        return cached;\n    const pending = importRunModule(target, specifier);\n    moduleCache.set(target, pending);\n    return pending;\n}\nfunction resolveInsideRoot(root, relativePath, specifier) {\n    const target = path.resolve(root, relativePath);\n    const relative = path.relative(root, target);\n    if (!relative || relative.startsWith('..') || path.isAbsolute(relative)) {\n        throw new Error(`Run module \"${specifier}\" resolves outside its artifact`);\n    }\n    return target;\n}\nasync function resolveWorkflowModule(root, specifier) {\n    const base = resolveInsideRoot(root, specifier, specifier);\n    for (const extension of ['.js', '.mjs', '.ts']) {\n        const target = `${base}${extension}`;\n        try {\n            const realRoot = await fs.realpath(root);\n            const realTarget = await fs.realpath(target);\n            const relative = path.relative(realRoot, realTarget);\n            if (!relative || relative.startsWith('..') || path.isAbsolute(relative)) {\n                throw new Error(`Run module \"${specifier}\" resolves outside its workflow resources`);\n            }\n            return realTarget;\n        }\n        catch (error) {\n            if (error.code !== 'ENOENT')\n                throw error;\n        }\n    }\n    throw new Error(`Run module \"${specifier}\" was not found`);\n}\nasync function importRunModule(target, specifier) {\n    const loaded = (await import(__rewriteRelativeImportExtension(pathToFileURL(target).href)));\n    if (typeof loaded.run !== 'function') {\n        throw new Error(`Run module \"${specifier}\" must export a function named run`);\n    }\n    return { run: loaded.run };\n}",
+            "sha256": "b7333aa5adafc4b28b80258bb532dae8b5bb61cb1db6316a30c0b2de45f38dd9"
+          },
+          {
+            "id": "E3",
+            "kind": "skill",
+            "path": "app/.agents/skills/nocobase-app-plugin-workflow/SKILL.md",
+            "observation": "指南要求 workflow.ts 绑定 WorkflowSourceAst、每个节点非空 description、run 模块命名导出并声明 result schema、先 workflow check、业务侧 resolve workflowServiceToken 调用 trigger、执行异步且 trigger 返回 accepted/skipped 回执。",
+            "lines": [
+              42,
+              58
+            ],
+            "excerpt": "- Keep one workflow package directly below the configured source root. Define invocation `inputSchema` separately from administrator `parameters`, and use stable, globally unique node keys.\n- When updating an existing workflow's DSL (nodes, flow, configuration, or other definition fields), consider briefly noting what changed from the previous version and why in the workflow-level `description`. Preserve the workflow's purpose and replace any previous change note so only the latest update is described; see [top-level description guidance](references/dsl-authoring.md#top-level-definition).\n- Bind the `defineWorkflow()` result to a `WorkflowSourceAst`-annotated const and default-export that const. A bare default-exported call does not pass the application's `isolatedDeclarations` build.\n- Every node must have a non-empty `description`, including nodes in nested branches and custom Instructions. When creating or editing workflow orchestration, fill missing descriptions and keep them aligned with the node logic; follow the [node description guidance](references/dsl-authoring.md#topology-and-keys).\n- Express sequencing with arrays and supported branches. Put executable work in typed `run` modules, use a named `run` export, and declare accurate result schemas for values referenced by later nodes.\n- Run `pnpm nocobase workflow check <package>` before loading or publishing. It performs `typecheck`, `evaluate`, `schema`, `semantic`, and `compile` checks on `workflow.ts`; it does not validate run-script compilation or package resources. Add `--ir` to print the compiled flat IR, which is the definition an Artifact carries.\n- A running development server compiles the workflow source root on demand and produces the same digest a build would, so an edited `workflow.ts` is already loadable there. Do not run a build merely to look at or exercise a definition in development; run one to produce a deployable Artifact.\n- Validate run scripts and business behavior with target-application typecheck, tests, and build, then build the Workflow Artifact through the application's normal workflow build. Preserve package-relative resource paths. Artifact build, synchronization, enablement, and invocation are separate stages.\n- Never author a source-managed workflow by directly editing materialized workflow tables.\n\n# Invoke and Manage\n\n- Business code resolves `workflowServiceToken` and calls `trigger(workflowKey, input, options?)`. The public service contract does not expose a management `run()` method or a generic public HTTP trigger endpoint.\n- Use the authenticated management API for listing and inspecting definitions, enablement, parameter overrides, and authorized manual execution of a selected definition revision. A manual run may target a historical or disabled revision without changing its enablement.\n- When source is available, use its directory key and `inputSchema` as the contract for new business-trigger code. In a deployed environment where only the management API is available, use runtime records for inspection and manual management; do not infer a new business trigger contract from a title or database id.\n- `trigger()` returns either `skipped` with no event key or `accepted` with an event key after synchronous validation and scheduling succeed. Execution is asynchronous. Resolve the run by event key, and account for a concurrent duplicate call that can return the shared accepted identity before the first call finishes creating the run.\n- An `eventKey` is optional and generated when omitted. Reuse the same stable key only when resubmitting the same business event whose acceptance is unknown; an existing run is deduplicated rather than re-executed. The public contract does not rerun a confirmed failed run by event key.",
+            "sha256": "4b1c0d72f8d3608d9cef2afe9df1f6992263c48301e7964163504990f5594375"
+          },
+          {
+            "id": "E4",
+            "kind": "skill",
+            "path": "app/.agents/skills/nocobase-app-plugin-workflow/references/dsl-authoring.md",
+            "observation": "列出 check 的五阶段与不覆盖 run 脚本的事实；说明默认 app 的 Artifact build 在开发复制源码资源、生产收集 package-relative JS 输出而不再打包，运行期按 digest 物化 revision。全段未提 artifactDisk 位置约束。",
+            "lines": [
+              428,
+              438
+            ],
+            "excerpt": "The checker performs, in order:\n\n1. `typecheck`: strict NodeNext TypeScript with the `source` export condition.\n2. `evaluate`: a bounded disposable Node process loads the declarative TypeScript module and requires a valid default AST export.\n3. `schema`: Input Schema, parameters, node config, condition expression, and result schemas.\n4. `semantic`: registered types, unique/safe keys, branches, declared parameters, and visible result references.\n5. `compile`: flat IR topology must have one start, one owner per non-start node, no missing targets, cycles, or unreachable nodes.\n\n`check` does not scan the complete package or write the database. In particular, it does not prove that `config.module` exists or verify its named `run` export. It evaluates `workflow.ts` but does not load the run scripts. Do not publish/load after any issue. Error output contains phase, code, file/line where available, AST path, node key, and contract type; fix the earliest phase first because later phases depend on it.\n\nThe default app's Artifact build scans each direct Workflow package and writes immutable Artifacts to its configured dist root. In development it copies the package's source resources. In production the normal server TypeScript build runs first, and the Artifact build collects that package-relative JavaScript output without rebundling or renaming modules. Runtime module loading enforces containment and checks the named `run` export. Runtime loading materializes new revisions; activation and enablement are separate management concerns.",
+            "sha256": "166cf50d0fdf4c9d99751e2f3fa31dbe0d5f15430cb2ef38d9c7eca2efe70fe0"
+          },
+          {
+            "id": "E5",
+            "kind": "code",
+            "path": "app/server/workflows/service-request-acceptance/workflow.ts",
+            "observation": "应用用 defineWorkflow 声明 inputSchema，RunInstruction.create 登记受理，ConditionInstruction.create 按 nodeResults.registerAcceptance.urgent 分支到 markUrgent/markNormal，再 RunInstruction 通知负责人。",
+            "lines": [
+              30,
+              100
+            ],
+            "excerpt": "  nodes: [\n    RunInstruction.create({\n      key: 'registerAcceptance',\n      title: 'Register acceptance',\n      description:\n        'Load the pending service request and mark it accepted, returning its urgency flag, assignee and title for downstream routing. Re-running an already accepted request is a no-op that returns the stored values.',\n      config: {\n        module: './server/register-acceptance',\n        args: {\n          requestId: '{{$input.requestId}}',\n        },\n      },\n      result: {\n        type: 'object',\n        required: ['urgent', 'assigneeId', 'title'],\n        properties: {\n          urgent: { type: 'boolean' },\n          assigneeId: { type: 'string' },\n          title: { type: 'string' },\n        },\n        additionalProperties: false,\n      },\n    }),\n    ConditionInstruction.create({\n      key: 'routeByUrgency',\n      title: 'Route by urgency',\n      description:\n        'Take the yes branch and record an urgent result when the accepted request is urgent; otherwise take the no branch and record a normal result.',\n      config: {\n        expression: {\n          '===': [{ var: 'nodeResults.registerAcceptance.urgent' }, true],\n        },\n      },\n    }).branch({\n      yes: [\n        RunInstruction.create({\n          key: 'markUrgent',\n          title: 'Record urgent result',\n          description:\n            'Persist the urgent acceptance result on the request before the assignee is notified.',\n          config: {\n            module: './server/mark-urgent',\n            args: { requestId: '{{$input.requestId}}' },\n          },\n        }),\n      ],\n      no: [\n        RunInstruction.create({\n          key: 'markNormal',\n          title: 'Record normal result',\n          description:\n            'Persist the normal acceptance result on the request before the assignee is notified.',\n          config: {\n            module: './server/mark-normal',\n            args: { requestId: '{{$input.requestId}}' },\n          },\n        }),\n      ],\n    }),\n    RunInstruction.create({\n      key: 'notifyAssignee',\n      title: 'Notify assignee',\n      description:\n        'Re-read the accepted request from the database and send one persistent in-app message to its assignee, targeting the request detail route. The stable idempotency key keeps a retry from sending a second message.',\n      config: {\n        module: './server/notify-assignee',\n        args: { requestId: '{{$input.requestId}}' },\n      },\n    }),\n  ],\n});",
+            "sha256": "cf5087961c5752538a86c6a557c0e563b37f90705f863d962716113d578d2fb3"
+          },
+          {
+            "id": "E6",
+            "kind": "code",
+            "path": "packages/@nocobase/app-plugin-workflow/dist/server/config.js",
+            "observation": "resolveWorkflowRuntimeConfig 只根据 serverDir 是否在 dist 下推导 distRoot 与 production，artifactDisk 原样透传，不做任何位置或可解析性校验。",
+            "lines": [
+              1,
+              11
+            ],
+            "excerpt": "import path from 'node:path';\nexport function resolveWorkflowRuntimeConfig(config, options) {\n    const built = path.basename(path.dirname(options.serverDir)) === 'dist';\n    return {\n        ...config,\n        distRoot: built\n            ? path.join(options.serverDir, 'workflows')\n            : path.join(options.rootDir, 'dist', 'server', 'workflows'),\n        production: config.production || built,\n    };\n}",
+            "sha256": "8eb16cea8c7eb10007ddabaa1aa1eee17cbfab8eb9fa2386d4028492200af792"
+          },
+          {
+            "id": "E7",
+            "kind": "code",
+            "path": "packages/@nocobase/app-plugin-workflow/dist/server/config.d.ts",
+            "observation": "WorkflowRuntimeConfig 要求 sourceRoot/distRoot/artifactDisk/production，artifactDisk 为 string，无默认值说明。",
+            "lines": [
+              1,
+              11
+            ],
+            "excerpt": "export interface WorkflowRuntimeConfig {\n    readonly sourceRoot: string;\n    readonly distRoot: string;\n    readonly artifactDisk: string;\n    readonly production: boolean;\n}\nexport interface ResolveWorkflowRuntimeConfigOptions {\n    readonly rootDir: string;\n    readonly serverDir: string;\n}\nexport declare function resolveWorkflowRuntimeConfig(config: WorkflowRuntimeConfig, options: ResolveWorkflowRuntimeConfigOptions): WorkflowRuntimeConfig;",
+            "sha256": "848b5f5301db235c26bd7ffb2222750f091a5cb614cf44a2c057dc67f52f7ab8"
+          },
+          {
+            "id": "E8",
+            "kind": "code",
+            "path": "packages/@nocobase/app-plugin-workflow/dist/server/loader/artifact-store.js",
+            "observation": "createLocalWorkflowArtifactStore 仅校验 disk.driver==='fs' 且 visibility==='private'，storeRoot 取 namespaceRoot 或 disk.location，不校验该目录能否解析宿主 node_modules。",
+            "lines": [
+              109,
+              115
+            ],
+            "excerpt": "export function createLocalWorkflowArtifactStore(disk, namespaceRoot) {\n    if (disk.driver !== 'fs' || disk.visibility !== 'private')\n        throw new Error('Workflow artifact disk must be a private fs/local disk');\n    return new LocalWorkflowArtifactStore({\n        storeRoot: namespaceRoot ?? disk.location,\n    });\n}",
+            "sha256": "53cf20a9d46989138bdcc5b764aceb94f4c8f64fcd5e0dd99e287aa5e900968d"
+          },
+          {
+            "id": "E9",
+            "kind": "code",
+            "path": "packages/@nocobase/app-plugin-workflow/dist/server/tokens.d.ts",
+            "observation": "workflowServiceToken 的公开类型 WorkflowServiceContract 只含 registerInstruction/trigger；含 discoverArtifacts/ensureArtifactMaterialized 的 internalWorkflowServiceToken 虽在此声明，但 /server 入口未导出。",
+            "lines": [
+              1,
+              9
+            ],
+            "excerpt": "import { type ServiceToken } from '@nocobase/service-provider';\nimport type { JsonObject, WorkflowEventOptions, WorkflowInstructionClass, WorkflowTriggerReceipt } from './engine/index.js';\nimport type { WorkflowService } from './service.js';\nexport interface WorkflowServiceContract {\n    registerInstruction(instruction: WorkflowInstructionClass): void;\n    trigger(workflowKey: string, input: JsonObject, options?: WorkflowEventOptions): Promise<WorkflowTriggerReceipt>;\n}\nexport declare const workflowServiceToken=[REDACTED] declare const internalWorkflowServiceToken=[REDACTED]",
+            "sha256": "ee09d0c8a906b50797966971011231f6bbf4ad56cbb3c65e763c29ace0a92048"
+          },
+          {
+            "id": "E10",
+            "kind": "code",
+            "path": "app/server/config/drive.ts",
+            "observation": "应用在 drive 中新增私有 fs 盘 workflows，location 为 paths.root('workflow-artifacts')（dev=应用根，prod=dist 内），注释说明这是让 run 模块能解析 @nocobase/* 的原因；workflow.ts 设 artifactDisk:'workflows'。",
+            "lines": [
+              7,
+              40
+            ],
+            "excerpt": "const drive: AppConfigFactory<AppDriveConfig> = defineAppConfig(({ paths }) => {\n  const disks: AppDriveConfig['disks'] = {\n    local: {\n      driver: 'fs',\n      location: paths.storage(),\n      visibility: 'private',\n    },\n    // Compiled workflow Artifacts are loaded as modules, and a module resolves\n    // its own imports by walking up from where it sits. Keeping the Artifact\n    // store inside the compiled code root is what lets a run module's\n    // `@nocobase/*` imports resolve; the deployment storage root sits outside\n    // the bundle, where no `node_modules` exists for Node to find. This disk is\n    // code-derived state, not business data: a rebuild regenerates it from\n    // `dist/server/workflows`, so it belongs with the build, not with storage.\n    workflows: {\n      driver: 'fs',\n      location: paths.root('workflow-artifacts'),\n      visibility: 'private',\n    },\n    s3: {\n      driver: 's3',\n      bucket: '',\n      region: 'us-east-1',\n      forcePathStyle: false,\n      supportsACL: true,\n      credentials: {},\n      visibility: 'private',\n    },\n  };\n  return {\n    default: 'local',\n    disks,\n  };\n});",
+            "sha256": "55a3a964f8f6acc8cf5860d8d467eafaa7c0d48ec80d7fdac126dc7c33617296"
+          },
+          {
+            "id": "E11",
+            "kind": "qa",
+            "path": "artifacts/verify-1/browser-acceptance/report.json",
+            "observation": "第一轮 QA：运行 #1/#2 状态 Error，Register acceptance 节点报 Cannot find package '@nocobase/db' imported from .../storage/private/workflows/.../register-acceptance.js，业务记录仍 Pending。",
+            "lines": [
+              16,
+              18
+            ],
+            "excerpt": "        \"受理后刷新列表：All requests 2、Awaiting acceptance 2、Accepted 0，REQ-2026-0001 仍为 Pending、Result 仍为 '—'。\",\n        \"执行记录出现 #1、#2 Service request acceptance，状态均为 Error（而非成功运行）。\",\n        \"执行 #1 节点 Register acceptance 报错：Cannot find package '@nocobase/db' imported from .../storage/private/workflows/service-request-acceptance/.../server/register-acceptance.js。\",",
+            "sha256": "7f9196251e288f908e9b7ae064eb6531237e4acc7d8767000622d1a5cb26c646"
+          },
+          {
+            "id": "E12",
+            "kind": "log",
+            "path": "artifacts/retro.json",
+            "observation": "修复复盘自述：生产模式 artifact 物化到 dist 之外的 storage，Node ESM 从模块位置找不到 node_modules；改到代码根内 workflow-artifacts 后两条请求端到端跑通。",
+            "lines": [
+              6,
+              9
+            ],
+            "excerpt": "      \"title\": \"生产构建下 Workflow 运行模块无法解析 @nocobase/* 裸导入\",\n      \"symptom\": \"工厂生产验证中「Register acceptance」节点报错；workflowRuns #1/#2/#3 状态均为 Error，service_requests 仍为 pending、result 为「—」，负责人与非负责人收件箱为空。同一流程在开发/源码模式（digest 82f0f9c1…）正常，生产构建模式（digest 7e37de02…）失败。\",\n      \"rootCause\": \"生产模式下 artifact-builder 把 `server/workflows` 的运行模块按原样复制进 dist/server/workflows，运行时再物化到 workflow.artifactDisk。模板默认 artifactDisk 为 `local`，其 location 是部署 storage 根（验证时为 /home/runner/work/_temp/repair-state/.../storage/private），位于代码根之外。运行模块以 ESM 方式加载，Node 从模块自身路径逐级向上查找 node_modules；storage 路径的祖先里没有任何包含 @nocobase/db 的 node_modules，于是导入失败。开发模式因 `!production` 时走 developmentResourceRoot（指向 app 内的 server/workflows）而掩盖了该问题。\",\n      \"resolution\": \"在 server/config/drive.ts 新增私有 fs 盘 `workflows`，location 为 paths.root('workflow-artifacts')（dev=应用根，prod=dist），server/config/workflow.ts 设 artifactDisk: 'workflows'。这样物化后的运行模块位于 dist 内，可经 dist/node_modules 解析裸导入；Artifact 属于代码派生状态、由 dist/server/workflows 在运行/重建时重新物化，因此放在构建目录而非业务存储中是正确归属。.gitignore 忽略源码根的 /workflow-artifacts/。新增 tests/logic/config.test.ts 断言该盘位于代码根内且 workflow.artifactDisk 指向它。\",",
+            "sha256": "9fa19fde8735911acea409344dbc60a03dfaad3796c4d8253b8d87f30ea901f3"
+          },
+          {
+            "id": "E13",
+            "kind": "code",
+            "path": "packages/@nocobase/app-plugin-notification/dist/server/manager.js",
+            "observation": "send() 校验幂等键、source、messages 形状与非法属性，逐通道 ensureRuntime + validateMessage 并展开 recipients；按 source+messages 计算请求指纹，同键同指纹返回 deduplicated 并补投 pending，同键不同内容抛冲突。",
+            "lines": [
+              187,
+              254
+            ],
+            "excerpt": "    async send(input) {\n        this.activate();\n        validateNotificationIdempotencyKey(input.idempotencyKey);\n        if (input.source !== undefined &&\n            (!input.source ||\n                typeof input.source.type !== 'string' ||\n                !input.source.type.trim() ||\n                (input.source.referenceId !== undefined &&\n                    typeof input.source.referenceId !== 'string')))\n            throw new Error('Notification source requires a type and an optional string referenceId.');\n        if (!input.messages ||\n            typeof input.messages !== 'object' ||\n            Array.isArray(input.messages))\n            throw new Error('Notification messages must be a Channel-to-message map.');\n        for (const key of [\n            'to',\n            'channels',\n            'content',\n            'routing',\n            'channelOverrides',\n        ])\n            if (key in input)\n                throw new Error(`Unsupported notification send property \"${key}\".`);\n        const channels = Object.keys(input.messages);\n        if (channels.length === 0)\n            throw new Error('At least one notification message is required.');\n        const message = {};\n        const expandedRecipients = [];\n        for (const channel of channels) {\n            await this.ensureRuntime(channel);\n            const validated = this.channelManager.validateMessage(channel, input.messages[channel]);\n            message[channel] = validated.message;\n            const [provider] = this.channelManager.providerIdentities(channel);\n            for (const recipient of validated.recipients)\n                expandedRecipients.push({\n                    channels: [{ channel, provider, recipient }],\n                });\n        }\n        const requestFingerprint = notificationRequestFingerprint({\n            ...input,\n            messages: message,\n        });\n        const existing = await this.store.getLogByIdempotencyKey(input.idempotencyKey);\n        if (existing) {\n            if (existing.requestFingerprint !== requestFingerprint) {\n                throw new NotificationIdempotencyConflictError(input.idempotencyKey);\n            }\n            const existingDeliveries = await this.store.listDeliveries(existing.id);\n            await Promise.all(existingDeliveries\n                .filter((delivery) => delivery.status === 'pending')\n                .map(async (delivery) => this.dispatch(delivery.id)));\n            const snapshot = await this.statusSnapshot(existing);\n            return {\n                notificationId: snapshot.notificationId,\n                idempotencyKey: input.idempotencyKey,\n                deduplicated: true,\n                status: snapshot.status,\n                deliveries: snapshot.deliveries,\n            };\n        }\n        return this.sendExpanded({\n            idempotencyKey: input.idempotencyKey,\n            requestFingerprint,\n            source: input.source,\n            recipients: expandedRecipients,\n            message,\n        });\n    }",
+            "sha256": "8ceaca1b734db599fe58e8d868edfd7af373f2ea0be3f10aa1b1a78534e8edda"
+          },
+          {
+            "id": "E14",
+            "kind": "code",
+            "path": "packages/@nocobase/app-plugin-notification/dist/server/idempotency.js",
+            "observation": "validateNotificationIdempotencyKey 要求非空、已 trim 且 ≤191 字符；notificationRequestFingerprint 对 source 与 messages 做规范化后 SHA-256，形成 v2 指纹。",
+            "lines": [
+              1,
+              22
+            ],
+            "excerpt": "import { createHash } from 'node:crypto';\nconst IDEMPOTENCY_KEY_MAX_LENGTH = 191;\nexport function validateNotificationIdempotencyKey(value) {\n    if (typeof value !== 'string' || !value || value !== value.trim()) {\n        throw new Error('Notification idempotencyKey must be a non-empty trimmed string.');\n    }\n    if (value.length > IDEMPOTENCY_KEY_MAX_LENGTH) {\n        throw new Error(`Notification idempotencyKey must not exceed ${IDEMPOTENCY_KEY_MAX_LENGTH} characters.`);\n    }\n}\nexport function notificationRequestFingerprint(input) {\n    const canonical = normalizeValue({\n        source: {\n            type: input.source?.type ?? 'application',\n            referenceId: input.source?.referenceId,\n        },\n        messages: input.messages,\n    });\n    return `v2:${createHash('sha256')\n        .update(JSON.stringify(canonical))\n        .digest('hex')}`;\n}",
+            "sha256": "3473b14e4208f1352713f7fa248f7939faa34d41751134ba2295b25a6d19a330"
+          },
+          {
+            "id": "E15",
+            "kind": "skill",
+            "path": "app/.agents/skills/nocobase-app-plugin-notification/references/sending-notifications.md",
+            "observation": "指南给出 resolve(notificationServiceToken).send({idempotencyKey, source, messages}) 示例，inbox 需应用用户 ID、title、body，target 可用不带部署前缀的 route；说明未知通道/非法消息会在持久化前拒绝，复用同键仅限同一逻辑请求。",
+            "lines": [
+              1,
+              34
+            ],
+            "excerpt": "# Sending Notifications\n\nResolve `notificationServiceToken` from the shared application container. Select configured Channel names through `messages`; each value is the complete message for its Provider.\n\n```ts\nconst notification = app.container.resolve(notificationServiceToken);\nawait notification.send({\n  idempotencyKey: 'approval-123',\n  source: { type: 'approval', referenceId: '123' },\n  messages: {\n    'system-email': {\n      to: ['customer@example.com', 'reviewer@example.com'],\n      subject: 'Approval result',\n      html: '<p>Approved</p>',\n    },\n    'ops-feishu': {\n      text: 'Approved',\n      target: { type: 'url', url: 'https://example.com/main/approvals/123' },\n    },\n    inbox: {\n      to: '123',\n      title: 'Approval result',\n      body: 'Approved',\n      target: { type: 'route', path: '/approvals/123' },\n    },\n  },\n});\n```\n\nEmail requires a native email address or a non-empty readonly array of addresses, a subject, and text or HTML. Each address receives a separate email and retries independently. In-app messages require application user IDs in the same string/array shape, title, and body; final delivery checks that each user still exists. Webhook messages forbid `to`. The service does not resolve application users into email addresses or phone numbers and never defaults to the current user.\n\nIM targets accept complete HTTP(S) URLs only. In-app targets accept a route without a deployment prefix or a complete HTTP(S) URL. React Router supplies the basename once for routes; URL targets use native links. Email links belong in text/HTML. Legacy `actionUrl` is ignored.\n\nUnknown or disabled Channels and invalid messages or recipient formats reject the entire request before persistence or queue dispatch. Delivery-time failures are recorded independently. Reuse one stable `idempotencyKey` only for the same logical request; changing messages with that key is a conflict. Optional `source` adds business correlation. Use `getByIdempotencyKey`, `getNotification`, and `onStatusChanged` to observe results. A `retrying` Delivery is waiting for automatic execution; a terminal `failed` Delivery may be passed to `retryDelivery({ deliveryId, reason })`. An `unknown` Delivery must be checked externally before creating a new logical send.",
+            "sha256": "cbf38795119676b258492b45c0423bfee709fc1dbd5314b1bd521b8efefc2a56"
+          },
+          {
+            "id": "E16",
+            "kind": "code",
+            "path": "app/server/config/notification.ts",
+            "observation": "应用配置 notification.channels.inbox={provider:'in-app'}，注释说明 inbox 是持久站内通道，in-app provider 将消息落入消息中心而非临时 toast。",
+            "lines": [
+              1,
+              13
+            ],
+            "excerpt": "import {\n  defineAppConfig,\n  type AppConfigFactory,\n} from '@nocobase/app-server/config';\nimport type { NotificationConfig } from '@nocobase/app-plugin-notification/server';\n\nconst notification: AppConfigFactory<NotificationConfig> = defineAppConfig(\n  (_runtime) => ({\n    // `inbox` is the durable in-app channel the notification service sends\n    // through; the `in-app` provider persists each message in the message\n    // center instead of only pushing a transient toast.\n    channels: { inbox: { provider: 'in-app' } },\n  }),",
+            "sha256": "19dc5ffbb376cc728712bde000c9c6a30f3d361bed8ab6e8d49e513f7c12ee3f"
+          },
+          {
+            "id": "E17",
+            "kind": "code",
+            "path": "app/server/workflows/service-request-acceptance/server/notify-assignee.ts",
+            "observation": "通知节点 resolve notificationServiceToken 后 send：idempotencyKey 为 service-request-accepted:<id>，source 关联 service-request，messages.inbox 指定 to/title/body 与 target route /service-requests/<id>。",
+            "lines": [
+              42,
+              88
+            ],
+            "excerpt": "const run: WorkflowRunFunction = async (\n  rawArgs,\n  options,\n): Promise<WorkflowRunJsonValue> => {\n  options.signal.throwIfAborted();\n  const requestId = readRequestId(rawArgs as Record<string, unknown>);\n  const database = options.services.resolve(databaseManagerToken);\n  const notification = options.services.resolve(notificationServiceToken);\n\n  const request = await database\n    .repository<ServiceRequestRow>('serviceRequests')\n    .findOne({ filter: idFilter(requestId) });\n  if (!request) {\n    throw new Error(`Service request \"${requestId}\" was not found.`);\n  }\n\n  const urgent = Boolean(request.urgent);\n  const urgentLabel = urgent ? '是 / Yes' : '否 / No';\n  const resultLabel =\n    request.result === 'urgent' ? '紧急 / Urgent' : '普通 / Normal';\n\n  const sent = await notification.send({\n    idempotencyKey: `service-request-accepted:${requestId}`,\n    source: { type: 'service-request', referenceId: requestId },\n    messages: {\n      inbox: {\n        to: String(request.assigneeId),\n        title: `受理通知 / Acceptance notice: ${request.reference}`,\n        body: [\n          '您好，您的服务请求已被受理。',\n          'Your service request has been accepted.',\n          '',\n          `标题 / Title: ${request.title}`,\n          `编号 / Reference: ${request.reference}`,\n          `紧急 / Urgent: ${urgentLabel}`,\n          `结果 / Result: ${resultLabel}`,\n        ].join('\\n'),\n        target: { type: 'route', path: `/service-requests/${request.id}` },\n      },\n    },\n  });\n\n  return {\n    notificationId: sent.notificationId,\n    deduplicated: sent.deduplicated,\n  };\n};",
+            "sha256": "67143c499d2dff2870d2769e025b3465b8082592f9437d39a50c4c1c846bf263"
+          },
+          {
+            "id": "E18",
+            "kind": "code",
+            "path": "packages/@nocobase/app-plugin-notification-in-app/dist/server/store.js",
+            "observation": "DatabaseInAppStore.deliver 向 notificationInAppItems 插入并按 deliveryId 幂等；list/countUnread 以 userId 过滤并支持 unreadOnly/游标；update 的 read/unread 写 readAt，delete/update 均带 userId 条件。",
+            "lines": [
+              76,
+              138
+            ],
+            "excerpt": "    async deliver(input) {\n        const item = {\n            id: randomUUID(),\n            deliveryId: input.deliveryId,\n            notificationId: input.notificationId,\n            userId: input.userId,\n            title: input.message.title,\n            body: input.message.body,\n            target: validateNotificationTarget(input.message.target),\n            createdAt: input.createdAt,\n            updatedAt: input.createdAt,\n        };\n        try {\n            await this.database\n                .query()\n                .insertInto('notificationInAppItems')\n                .values(toRow(item))\n                .execute();\n        }\n        catch (error) {\n            const existing = await this.database\n                .query()\n                .selectFrom('notificationInAppItems')\n                .selectAll()\n                .where('deliveryId', '=', input.deliveryId)\n                .executeTakeFirst();\n            if (existing)\n                return fromRow(existing);\n            throw error;\n        }\n        return item;\n    }\n    async list(input) {\n        let query = this.database\n            .query()\n            .selectFrom('notificationInAppItems')\n            .selectAll()\n            .where('userId', '=', input.userId)\n            .orderBy('createdAt', 'desc')\n            .orderBy('id', 'desc')\n            .limit(input.limit ?? 25);\n        if (input.unreadOnly)\n            query = query.where('readAt', 'is', null);\n        if (input.before)\n            query = query.where((builder) => builder.or([\n                builder('createdAt', '<', input.before?.createdAt),\n                builder.and([\n                    builder('createdAt', '=', input.before?.createdAt),\n                    builder('id', '<', input.before?.id),\n                ]),\n            ]));\n        return (await query.execute()).map(fromRow);\n    }\n    async countUnread(userId) {\n        const rows = await this.database\n            .query()\n            .selectFrom('notificationInAppItems')\n            .select(({ fn }) => [fn.countAll().as('count')])\n            .where('userId', '=', userId)\n            .where('readAt', 'is', null)\n            .executeTakeFirst();\n        return Number(rows?.count ?? 0);\n    }",
+            "sha256": "13c0bcf80f68b9db1ac91a2befc3169331d134ce3fba1aeaf0f09cf8551ff7de"
+          },
+          {
+            "id": "E19",
+            "kind": "code",
+            "path": "packages/@nocobase/app-plugin-notification-in-app/dist/server/definition.js",
+            "observation": "in-app channel createChannel.validateMessage 限制字段集合，要求 to 为应用用户 ID 字符串/数组、title/body 非空，并用 validateNotificationTarget 规范化 target；prepare 校验 recipient.userId。",
+            "lines": [
+              68,
+              115
+            ],
+            "excerpt": "        async createChannel() {\n            return {\n                type: 'in-app',\n                validateMessage(value) {\n                    if (!value || typeof value !== 'object' || Array.isArray(value))\n                        throw new Error('In-app message is required.');\n                    for (const key of Object.keys(value)) {\n                        if (!['to', 'title', 'body', 'target', 'actionUrl'].includes(key))\n                            throw new Error(`Unsupported In-app message field \"${key}\".`);\n                    }\n                    const message = value;\n                    const ids = typeof message.to === 'string' ? [message.to] : message.to;\n                    if (!Array.isArray(ids) ||\n                        !ids.length ||\n                        ids.some((id) => typeof id !== 'string' || !id.trim() || id !== id.trim()))\n                        throw new Error('In-app to must contain application user IDs.');\n                    if (typeof message.title !== 'string' ||\n                        !message.title.trim() ||\n                        typeof message.body !== 'string' ||\n                        !message.body.trim())\n                        throw new Error('In-app title and body are required.');\n                    return {\n                        message: {\n                            to: message.to,\n                            title: message.title,\n                            body: message.body,\n                            target: validateNotificationTarget(message.target),\n                        },\n                        recipients: ids.map((userId) => ({ userId })),\n                    };\n                },\n                async prepare(input) {\n                    if (!input.recipient.userId)\n                        throw new Error('In-app recipient userId is required.');\n                    return {\n                        deliveryId: input.deliveryId,\n                        notificationId: input.notificationId,\n                        recipient: input.recipient,\n                        content: {\n                            ...input.message,\n                            target: validateNotificationTarget(input.message.target),\n                        },\n                    };\n                },\n            };\n        },\n    };\n}",
+            "sha256": "45093fc2de92a6dc14826b8fa11d30f9c2f279ffc1e8ded723f698dcf66b6805"
+          },
+          {
+            "id": "E20",
+            "kind": "code",
+            "path": "packages/@nocobase/app-plugin-notification-in-app/dist/server/routes/index.js",
+            "observation": "路由挂在 /notifications/in-app；resolveUserId 用 authenticationToken.getSession(request.headers) 取会话用户 id，未登录返回 undefined，读写都以该身份进入 store。",
+            "lines": [
+              7,
+              32
+            ],
+            "excerpt": "export const apiRoutes = defineApiRoutes(({ container }) => {\n    const router = new Hono();\n    const store = container.resolve(inAppNotificationStoreToken);\n    const auth = container.resolve(authenticationToken);\n    const routes = new Hono();\n    routes.route('/', createInAppRouter(store, {\n        resolveUserId: async (request) => {\n            try {\n                const session = await auth.getSession(request.headers);\n                return session?.user.id;\n            }\n            catch (error) {\n                // A refused credential (Better Auth APIError) is not signed in, here.\n                if (error instanceof APIError)\n                    return undefined;\n                throw error;\n            }\n        },\n    }));\n    router.route('/notifications/in-app', routes);\n    return router;\n});\nconst routes = [\n    apiRoutes,\n];\nexport default routes;",
+            "sha256": "87fa14bcdf752d9fe4a74dc2e6dcef03f970718e461c221dfb2c95827d98d402"
+          },
+          {
+            "id": "E21",
+            "kind": "code",
+            "path": "packages/@nocobase/app-plugin-notification-in-app/dist/server/providers/in-app-notification.js",
+            "observation": "boot() 注册 in-app channel 与 database provider；recipientExists 通过 userAdministrationServiceToken.get(userId) 判定收件人是否存在。",
+            "lines": [
+              27,
+              40
+            ],
+            "excerpt": "    async boot() {\n        const { container } = this.app;\n        if (!container.has(notificationExtensionRegistryToken))\n            return;\n        const registry = container.resolve(notificationExtensionRegistryToken);\n        const store = container.resolve(inAppNotificationStoreToken);\n        const users = container.resolve(userAdministrationServiceToken);\n        registry.registerChannel(createInAppChannelDefinition()).registerProvider(createDatabaseProviderDefinition({\n            store,\n            async recipientExists(userId) {\n                return Boolean(await users.get(userId));\n            },\n        }));\n    }",
+            "sha256": "ca2a3954be5be0a6ab2cbd8052422b50ecffd93d24f99524cd732b050b9d61ad"
+          },
+          {
+            "id": "E22",
+            "kind": "skill",
+            "path": "app/.agents/skills/nocobase-app-plugin-notification-in-app/SKILL.md",
+            "observation": "Skill 规定先注册 core notification 再注册 in-app/server、Client 组合根注册、页面挂载 Provider、HTTP 状态为准、realtime 仅作失效信号，并要求验证收件人隔离与 CSRF。",
+            "lines": [
+              54,
+              63
+            ],
+            "excerpt": "# Workflow\n\n1. Read [Inbox Integration Contract](references/inbox-integration.md) for package requirements, public surfaces, and runtime semantics.\n2. Inspect the target application's Server plugin list, Client composition, authentication setup, `api.baseURL`, `api.realtimeURL`, and installed package versions.\n3. Register `@nocobase/app-plugin-notification` before `@nocobase/app-plugin-notification-in-app/server` when the application needs the `in-app` Channel contribution.\n4. Register `@nocobase/app-plugin-notification-in-app/client` in the Client composition root. In a development build, verify the page at `/dev/notification-in-app` relative to the App base path.\n5. In React components and custom Hooks, use `useApiClient()` from `@nocobase/app-client` for inbox reads and mutations, and `useService(realtimeClientToken)` for subscriptions. Outside React, resolve the corresponding tokens from the application's services or receive the clients explicitly. Do not reconstruct `/api` from the browser location or Portal base.\n6. Keep HTTP state authoritative. On a validated `inbox.changed` event, realtime connection open, or window focus, trigger a bounded HTTP refetch.\n7. Use the public `@nocobase/app-plugin-notification-in-app/realtime` entry for shared topic or event types; do not import Server internals.\n8. Test allowed and denied users, CSRF-protected mutations, pagination, custom API hosts, realtime invalidation, reconnect recovery, and Dev Route registration.",
+            "sha256": "f361771cc2a7722df2747f724865e37dc6fb6efa2d9f513a22e783701fc6a707"
+          },
+          {
+            "id": "E23",
+            "kind": "skill",
+            "path": "app/.agents/skills/nocobase-app-plugin-notification-in-app/references/inbox-integration.md",
+            "observation": "合约说明写库前校验收件人、API 根为 notifications/in-app、realtime 仅失效、按用户隔离；并给出 configure notification.channels.inbox={provider:'in-app'} 与 messages.inbox.to/title/body/target 以及 route target 不含部署前缀的用法。",
+            "lines": [
+              33,
+              65
+            ],
+            "excerpt": "## Final delivery validation\n\nThe database Provider checks the recipient through Authentication’s user administration service immediately before writing the inbox item. A missing user returns a non-retryable `recipient` failure and creates no inbox item or realtime event. A lookup failure remains a retryable storage failure. Custom hosts calling `createDatabaseProviderDefinition` must supply `recipientExists(userId)` backed by their authoritative user directory; do not use a permissive fallback.\n\n## HTTP and realtime behavior\n\nThe authenticated inbox API is rooted at `notifications/in-app` relative to the injected `ApiClient` API base. Reads include list and unread-count. Writes include read/unread/delete and read-all, each preceded by an authenticated CSRF-token request.\n\nFor a custom host, register the exported `IN_APP_NOTIFICATION_NAMESPACE` and `inAppNotificationServerLocales` with its `I18nRuntime`, initialize the runtime, then mount its request i18n middleware before the inbox router. Notification-owned failures return a stable `error.code/message/ns/key/params` envelope; branch on `code`, display `message`, and use `ns`, `key`, and `params` only when the Client needs to retranslate it. Authentication middleware retains its owning plugin's error contract.\n\nThe WebSocket topic is user-scoped by the Server. An `inbox.changed` event does not carry authoritative inbox contents; it tells the UI to refetch HTTP state. The UI also refetches when the realtime connection opens so events missed during disconnection are recovered. Window focus is a fallback invalidation.\n\nWhen an application configures `api.baseURL` or `api.realtimeURL`, both transports must use those injected client settings. Never derive the HTTP endpoint from `window.location`, a Portal base, or the WebSocket URL.\n\n#### Ownership and upgrades\n\nThe plugin owns the inbox components, Provider, Dev Route, authentication enforcement, per-user isolation, CSRF, persistence, and event publication. Applications receive UI changes by upgrading the plugin. A production inbox surface requires a separate product decision and must use an authenticated App or Settings Route rather than exposing the Dev Route.\n\n## Diagnosis order\n\n1. Confirm the authenticated list and unread-count endpoints return the expected durable state.\n2. Confirm mutations fetch a CSRF token and return the changed item/count.\n3. Confirm the application client points HTTP and realtime transports at the intended backend.\n4. Confirm the realtime connection subscribes to the public topic.\n5. Confirm a valid invalidation increments the UI revision and triggers an HTTP refetch.\n6. Confirm reopening the realtime connection refetches even when no event was received.\n7. Confirm cleanup removes the topic, connection-open, and window-focus listeners.\n\nDo not diagnose a missing UI update by manually changing the inbox table or publishing synthetic production events. Reproduce with an isolated test notification or inspect the durable route and subscription logs.\n\nConfigure `notification.channels.inbox: { provider: 'in-app' }` and send `messages: { inbox: { to: 'user-id', title: 'Title', body: 'Body' } }`. Channel keys are names; multiple names using `in-app` are independent targets. `to` requires an application user ID or a non-empty readonly array, with one Delivery per user. No current user is inferred. The test form requires an explicit recipient.\n\nUse `target: { type: 'route', path: '/topics/123' }` for an internal route without the deployment prefix, or `target: { type: 'url', url: 'https://example.com/main/topics/123' }` for a complete HTTP(S) URL. The inbox adds the Router basename only for routes. Without a target, no Open link is shown. Legacy `actionUrl` is ignored; run the new target-column migration without converting old links.",
+            "sha256": "fc935413849fcf895cb9eaae6e8597a063ea0059307dc4ab617d5702da3ed409"
+          },
+          {
+            "id": "E24",
+            "kind": "code",
+            "path": "app/client/pages/messages/index.tsx",
+            "observation": "应用消息页从 @nocobase/app-plugin-notification-in-app/client 挂载 NotificationInAppProvider 与 NotificationInAppInbox，无自建消息列表。",
+            "lines": [
+              6,
+              22
+            ],
+            "excerpt": " */\nimport {\n  NotificationInAppInbox,\n  NotificationInAppProvider,\n} from '@nocobase/app-plugin-notification-in-app/client';\nimport type { ReactElement } from 'react';\n\nimport { PageContainer } from '@/components/page-container';\n\nexport default function MessagesPage(): ReactElement {\n  return (\n    <NotificationInAppProvider>\n      <PageContainer>\n        <NotificationInAppInbox />\n      </PageContainer>\n    </NotificationInAppProvider>\n  );",
+            "sha256": "cfc9039a32140849194983a1236e3a02ec3d9d044930521baf21232a61dbb760"
+          },
+          {
+            "id": "E25",
+            "kind": "code",
+            "path": "packages/@nocobase/db/dist/src/migration/define.js",
+            "observation": "defineMigration 用 markMigrationDefinition 标记并返回迁移定义，供迁移 loader 发现。",
+            "lines": [
+              1,
+              6
+            ],
+            "excerpt": "import { markMigrationDefinition } from './internal/marker.js';\n/** Marks and returns a migration definition for discovery by the migration loader. */\nexport function defineMigration(definition) {\n    return markMigrationDefinition(definition);\n}\n",
+            "sha256": "eba0dce586442525677889388044224f67d2dbf5da1e88e5846a0b9fa34e5059"
+          },
+          {
+            "id": "E26",
+            "kind": "code",
+            "path": "packages/@nocobase/db/dist/src/seed/define.js",
+            "observation": "defineSeed 用 markSeedDefinition 标记并返回种子定义，供种子 loader 发现。",
+            "lines": [
+              1,
+              6
+            ],
+            "excerpt": "import { markSeedDefinition } from './internal/marker.js';\n/** Marks and returns a seed definition for discovery by the seed loader. */\nexport function defineSeed(definition) {\n    return markSeedDefinition(definition);\n}\n",
+            "sha256": "b0361ee2f3bb53ef45e9e67d6607d92fc98b6461a71bafb638499cc17347e142"
+          },
+          {
+            "id": "E27",
+            "kind": "code",
+            "path": "packages/@nocobase/db/dist/src/repository/repository.js",
+            "observation": "Repository.updateMany 校验写策略与 filter（无 all 时拒绝空过滤），规范化 values，执行 adapter.updateMany 并返回 updatedCount/count，避免静默无效写入。",
+            "lines": [
+              463,
+              497
+            ],
+            "excerpt": "    async updateMany(options) {\n        const policyInput = options.writePolicy === undefined ? true : options.writePolicy;\n        assertWriteEnabled(policyInput);\n        const writePolicy = policyInput === true ? true : normalizeFieldWritePolicy(policyInput);\n        const collection = await this.collection();\n        assertWritableCollection(collection);\n        // Before the payload is looked at: a Policy that forbids this operation\n        // refuses the call outright, so an empty or malformed body is reported as\n        // forbidden rather than as invalid input. The caller learns nothing about\n        // the shape of a write they may not perform.\n        resolveWriteShapeNode(this.options.policy, 'update', collection);\n        if (writePolicy !== true)\n            validatePolicyFields(collection, writePolicy, ['writePolicy']);\n        const filter = await this.normalizeMutationFilter(collection, options.filter, options.context, options.all === true, 'update');\n        const values = validateValues(collection, evaluateValues(options.values), 'updateMany', false, options.context);\n        assertFieldWrites(values, writePolicy, ['values'], [], 'update', collection.name);\n        this.assertPolicyMutationFields(collection, { values }, 'update', [\n            'values',\n        ]);\n        const selection = options.select\n            ? await this.validateSelect(collection, options.select, options.context, this.readContext(collection))\n            : undefined;\n        if (selection)\n            assertBulkReturningIdentity(collection);\n        const result = await this.options.adapter.updateMany({\n            collection,\n            filter,\n            all: options.all === true,\n            values,\n            fields: selection\n                ? includeExecutionFields(collection, selection.fields)\n                : undefined,\n            select: selection?.select,\n            scopeCheck: await this.scopeCheck(collection, 'update'),\n        });",
+            "sha256": "31b67e0dcdfd222b6981571d563d9879525a3bf61312ea92a05a269d99c1f311"
+          },
+          {
+            "id": "E28",
+            "kind": "skill",
+            "path": "app/.agents/skills/nocobase-db/SKILL.md",
+            "observation": "Skill 区分 migration 建结构与 seed 装安装数据，给出 defineMigration + builder.createCollection 的完整示例与目录约定，并要求运行时不得改 schema。",
+            "lines": [
+              78,
+              101
+            ],
+            "excerpt": "## 2. Migrations and seeds\n\nA migration creates structure. A seed inserts the records the application needs in order to run. Neither does the other's job, and a seed is never sample or demonstration content.\n\n```ts\n// database/main/migrations/202609020001_create_orders.ts\nimport { defineMigration, type MigrationDefinition } from '@nocobase/db';\n\nconst migration: MigrationDefinition = defineMigration({\n  name: '202609020001_create_orders',\n\n  async up({ builder }) {\n    await builder.createCollection('orders', (collection) => {\n      collection.increments('id');\n      collection.string('orderNo', { length: 64, nullable: false });\n      collection.string('status', { length: 32, nullable: false });\n      collection.datetime('createdAt', { nullable: false });\n      collection.unique('orderNo');\n      collection.index('status');\n    });\n  },\n\n  async down({ builder }) {\n    await builder.dropCollection('orders');",
+            "sha256": "2fdca7c2484a669667b6293878b915a5af0f84cbd3c5e80945a28fe5fbabf7d7"
+          },
+          {
+            "id": "E29",
+            "kind": "code",
+            "path": "app/database/main/migrations/202609240001_create_service_requests.ts",
+            "observation": "应用用 defineMigration + builder.createCollection('serviceRequests') 建立 reference/title/urgent/assigneeId/status/result/acceptedAt/createdAt/updatedAt，并加唯一索引与 assigneeId 索引。",
+            "lines": [
+              11,
+              35
+            ],
+            "excerpt": "const migration: MigrationDefinition = defineMigration({\n  name: '202609240001_create_service_requests',\n  async up({ builder }) {\n    await builder.createCollection('serviceRequests', (collection) => {\n      collection.increments('id');\n      collection.string('reference', { length: 32 }).notNull();\n      collection.string('title', { length: 200 }).notNull();\n      collection.boolean('urgent').notNull().defaultTo(false);\n      collection.string('assigneeId', { length: 64 }).notNull();\n      collection\n        .string('status', { length: 32 })\n        .notNull()\n        .defaultTo('pending');\n      collection.string('result', { length: 32 });\n      collection.datetime('acceptedAt');\n      collection.datetime('createdAt').notNull();\n      collection.datetime('updatedAt').notNull();\n      collection.unique('reference', { mode: 'index' });\n      collection.index('assigneeId');\n    });\n  },\n  async down({ builder }) {\n    await builder.dropCollection('serviceRequests');\n  },\n});",
+            "sha256": "22888baa7fd79257124ad1349ffde77143d575b87435a7276701936a600c33c9"
+          },
+          {
+            "id": "E30",
+            "kind": "code",
+            "path": "app/database/main/seeds/202609240002_seed_service_request_data.ts",
+            "observation": "应用用 defineSeed：按 username/email 幂等创建负责人第二个测试账号，并按 reference 幂等插入两条普通/紧急请求。",
+            "lines": [
+              37,
+              101
+            ],
+            "excerpt": "const seed: SeedDefinition = defineSeed({\n  name: '202609240002_seed_service_request_data',\n  run: async (context) => {\n    const { query } = context;\n    const now = new Date();\n\n    const existingAgent = await query\n      .selectFrom('user')\n      .select('id')\n      .where('username', '=', AGENT_USERNAME)\n      .executeTakeFirst();\n\n    let agentId = existingAgent ? String(existingAgent.id) : undefined;\n\n    if (!agentId) {\n      agentId = crypto.randomUUID();\n      const passwordHash = await hashPassword(AGENT_PASSWORD);\n      await query\n        .insertInto('user')\n        .values({\n          id: agentId,\n          name: 'Service Agent',\n          username: AGENT_USERNAME,\n          email: AGENT_EMAIL,\n          emailVerified: true,\n          createdAt: now,\n          updatedAt: now,\n        })\n        .execute();\n      await query\n        .insertInto('account')\n        .values({\n          id: crypto.randomUUID(),\n          accountId: agentId,\n          providerId: 'credential',\n          userId: agentId,\n          password=[REDACTED],\n          createdAt: now,\n          updatedAt: now,\n        })\n        .execute();\n    }\n\n    const requests = context.repository('serviceRequests');\n    for (const request of REQUESTS) {\n      const existing = await requests.findOne({\n        filter: { reference: request.reference },\n      });\n      if (existing) {\n        continue;\n      }\n      await requests.createOne({\n        values: {\n          reference: request.reference,\n          title: request.title,\n          urgent: request.urgent,\n          assigneeId: agentId,\n          status: 'pending',\n          createdAt: now,\n          updatedAt: now,\n        },\n      });\n    }\n  },\n});",
+            "sha256": "e217d56636816d2a9e05cd79a04ed79f5f6feddc9b9222e5d87611c8364e0b3f"
+          },
+          {
+            "id": "E31",
+            "kind": "qa",
+            "path": "artifacts/verify-2/browser-acceptance/report.json",
+            "observation": "第二轮 QA：B01-B04 全部 passed；普通请求 Result=Normal、紧急请求 Result=Urgent，普通分支节点 Not executed，负责人消息可 Open 到正确请求且 Mark read 刷新后保留，非收件人收件箱为空。",
+            "lines": [
+              4,
+              68
+            ],
+            "excerpt": "  \"summary\": \"B01-B04 全部通过：主管受理普通/紧急两条预置请求，Workflow 运行记录分别确认普通分支结果 normal 与紧急分支结果 urgent（普通分支未执行），负责人消息中心收到对应持久站内消息并可点击打开正确请求，标记已读后刷新保留，非收件人看不到这两条个人消息。未发现 Something went wrong、空白页或非预期 4xx/5xx。\",\n  \"checks\": [\n    {\n      \"id\": \"B01\",\n      \"criterion\": \"主管受理一条普通请求，执行记录显示已运行，业务记录呈现相应受理结果。\",\n      \"status\": \"passed\",\n      \"actions\": [\n        \"以 Super Admin 登录，打开 Service requests 列表\",\n        \"点击普通请求 REQ-2026-0001 的 Accept 并确认成功提示\",\n        \"打开 Settings > Workflow > Execution records，查看运行 #1\",\n        \"在运行 #1 的流程图中点击 Record normal result 节点查看执行结果\"\n      ],\n      \"evidence\": [\n        \"受理前 REQ-2026-0001 为 Pending/Result 空，受理后业务记录变为 Status=Accepted、Result=Normal，Accepted at 8:08:35\",\n        \"执行记录 #1 Service request acceptance 状态 Resolved，持续 130 ms，触发时间 Sep 24 2026 8:08\",\n        \"Record normal result 节点 Status=Succeeded，Result {\\\"result\\\":\\\"normal\\\"}，说明执行了普通分支\"\n      ],\n      \"screenshots\": [\n        \"b01-service-requests-list.png\",\n        \"b01-normal-accepted.png\",\n        \"b01-execution-records.png\",\n        \"b01-run-node-normal-result.png\"\n      ],\n      \"recordedAt\": 1790237627376\n    },\n    {\n      \"id\": \"B02\",\n      \"criterion\": \"负责人收到对应站内消息，点击能打开正确请求；标记已读后刷新仍为已读。\",\n      \"status\": \"passed\",\n      \"actions\": [\n        \"以负责人 Service Agent(agent) 登录，打开 Message center\",\n        \"确认收到 REQ-2026-0001 的站内消息（标题 受理通知 / Acceptance notice: REQ-2026-0001）\",\n        \"点击该消息的 Open，确认打开的是 REQ-2026-0001\",\n        \"回到 Message center 点击 Mark read，标题未读计数消失\",\n        \"重新加载 /main/messages 页面，确认消息仍为已读\"\n      ],\n      \"evidence\": [\n        \"消息中心显示 1 unread 及消息 受理通知 / Acceptance notice: REQ-2026-0001\",\n        \"点击 Open 后 URL 为 /main/service-requests/1，标题 REQ-2026-0001，标题 Third-floor printer is offline，Result Normal\",\n        \"Mark read 后页面标题由 Message center 1 unread 变为 Message center，按钮变为 Mark unread\",\n        \"刷新后仍无未读计数、按钮仍为 Mark unread，消息正文包含 Reference REQ-2026-0001\"\n      ],\n      \"screenshots\": [\n        \"b02-owner-message-unread.png\",\n        \"b02-message-opens-request.png\",\n        \"b02-owner-message-read-persisted.png\"\n      ],\n      \"recordedAt\": 1790237631170\n    },\n    {\n      \"id\": \"B03\",\n      \"criterion\": \"受理一条紧急请求，能从执行和业务结果确认走了紧急分支；不只验证触发按钮提示。\",\n      \"status\": \"passed\",\n      \"actions\": [\n        \"以 Super Admin 登录，打开 Service requests 列表\",\n        \"点击带 Urgent 标记的 REQ-2026-0002 的 Accept\",\n        \"打开 Settings > Workflow > Execution records，查看运行 #2\",\n        \"在运行 #2 的流程图中依次点击 Route by urgency、Record urgent result、Record normal result 节点\"\n      ],\n      \"evidence\": [\n        \"受理后 REQ-2026-0002 业务记录 Status=Accepted、Result=Urgent（列表 Urgent 统计由 1 变为受理后仍 1，两条均已受理）\",\n        \"执行记录 #2 Service request acceptance 状态 Resolved，持续 93 ms\",\n        \"Route by urgency 节点 Succeeded，Result=true（紧急条件成立）\",\n        \"Record urgent result 节点 Succeeded，Result {\\\"result\\\":\\\"urgent\\\"}\",\n        \"Record normal result 节点显示 Not executed（本次运行未执行），证明未走普通分支\",",
+            "sha256": "7d2ef9f78c84e33abe14f328ab6ea699b935c8d4ff902daf85a3dd0c17ff6b05"
+          },
+          {
+            "id": "E32",
+            "kind": "code",
+            "path": "app/server/providers/workflow-gate.ts",
+            "observation": "应用声明本地 WorkflowServiceRuntime extends WorkflowServiceContract，额外声明 discoverArtifacts/ensureArtifactMaterialized，并注释说明这些方法超出公开 WorkflowServiceContract，故用本地 interface 而非 any 触达。",
+            "lines": [
+              41,
+              51
+            ],
+            "excerpt": "/**\n * The runtime workflow service exposes discovery and materialization beyond the\n * public `WorkflowServiceContract`. They are declared here rather than reached\n * through `any` so the shape this provider depends on is visible in one place.\n */\ninterface WorkflowServiceRuntime extends WorkflowServiceContract {\n  discoverArtifacts(): Promise<readonly WorkflowArtifactSummary[]>;\n  ensureArtifactMaterialized(\n    digest: string,\n  ): Promise<number | string | undefined>;\n}",
+            "sha256": "1ac58fb56851279069dc1173d7a04c3206ab940aca2dbae27d72a23b7b2ed277"
+          },
+          {
+            "id": "E33",
+            "kind": "code",
+            "path": "packages/@nocobase/app-plugin-workflow/dist/server/index.d.ts",
+            "observation": "/server 入口只导出 workflowServiceToken 与 WorkflowServiceContract，并导出 resolveWorkflowRuntimeConfig/WorkflowRuntimeConfig；未导出 internalWorkflowServiceToken 或 WorkflowServiceApi。",
+            "lines": [
+              1,
+              7
+            ],
+            "excerpt": "export { default } from './plugin.js';\nexport { workflowServiceToken } from './tokens.js';\nexport type { WorkflowServiceContract } from './tokens.js';\nexport type { JsonObject, WorkflowEventOptions, WorkflowTriggerReceipt, } from './engine/index.js';\nexport { WorkflowInstruction, type WorkflowInstructionClass, type WorkflowInstructionContext, type WorkflowInstructionResult, } from './instructions/base.js';\nexport { resolveWorkflowRuntimeConfig, type WorkflowRuntimeConfig, } from './config.js';\n//# sourceMappingURL=index.d.ts.map",
+            "sha256": "ec123efae72f312dac95f339aeced3853d93abe75dfa194a69bf966d5067ad8c"
+          }
+        ],
+        "limitations": [
+          "当前模型无法渲染 PNG，未实际查看任何截图，未做跨页面视觉一致性评价（ui=not-reviewed）。",
+          "未运行应用、迁移或工作流，未独立重放执行记录；运行证据来自第二轮 QA 报告与截图文件名/摘要。",
+          "快照未包含 create-app 模板源码，无法直接核对模板中 artifactDisk 的原始默认值；模板默认仅由 retro 自述，插件/指南侧结论已独立核对。",
+          "未读 engine 调度实现与客户端组件实现，分支执行与 UI 行为以公开契约、应用代码与 QA 结果为准。",
+          "不能据本次 2 条请求的案例推断全框架表现，也不能保证跨案例可比。",
+          "快照未包含 2 个超出预算、非普通文件或不可读取的文件；未据此确认其实现。"
+        ]
+      },
+      "execution": {
+        "buildReviewMode": "full",
+        "source": "reassessment"
+      },
       "reviewer": {
         "engine": "pi",
         "model": "deepseek-v4.1-flash",
         "version": "0.86.1",
-        "runId": "35966665643",
+        "runId": "35987996268",
         "attempt": 1,
-        "controlSha": "1bd143f61094211c8c19783e489b5e85d86a91c4",
-        "replay": false
+        "controlSha": "952084a875e940bdcba52d45f8b805c7f49f0049",
+        "replay": true
+      },
+      "supplementalUsage": {
+        "input": 225586,
+        "output": 33913,
+        "cacheRead": 2973108,
+        "cacheWrite": 0,
+        "reasoning": 0,
+        "totalTokens": 3232607,
+        "records": 51,
+        "incomplete": 0,
+        "runId": 35987996268,
+        "attempt": 1
       },
       "process": {
         "verificationAttempts": 2,
@@ -1175,5 +2221,5 @@
     "number": 263,
     "headSha": "8c6a567f34185c400969bc42dd31cef58fe12fe8"
   },
-  "reportId": "gchust/nb3-factory:253:35966665643:1:8c6a567f34185c400969bc42dd31cef58fe12fe8:template-4:review-76ab552900de7014"
+  "reportId": "gchust/nb3-factory:253:35966665643:1:8c6a567f34185c400969bc42dd31cef58fe12fe8:template-4:review-6f4b789f9773caf4"
 }
