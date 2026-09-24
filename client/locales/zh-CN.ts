@@ -87,6 +87,23 @@ const zhCN: AppResource = {
     title: '开始构建你的应用',
     description: '向 AI 助手描述你的需求，逐步构建页面、数据模型和业务流程。',
   },
+  todos: {
+    title: '待办事项',
+    description: '用于验证过期待办定时检查的最小列表。',
+    refresh: '刷新',
+    loadFailed: '无法加载待办，请重试。',
+    empty: '暂无待办。',
+    columns: {
+      title: '标题',
+      dueAt: '截止时间',
+      status: '状态',
+    },
+    status: {
+      completed: '已完成',
+      overdue: '已过期',
+      open: '未完成',
+    },
+  },
 
   appearance: {
     title: '外观',
@@ -120,6 +137,7 @@ const zhCN: AppResource = {
   },
   navigation: {
     home: '首页',
+    todos: '待办',
     open: '打开导航',
     close: '关闭导航',
     expand: '展开导航',

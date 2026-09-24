@@ -94,6 +94,23 @@ const enUS = {
     description:
       'Describe what you need to your AI Agent, then build pages, data models, and business workflows.',
   },
+  todos: {
+    title: 'Todos',
+    description: 'A minimal list used to verify the scheduled overdue check.',
+    refresh: 'Refresh',
+    loadFailed: 'Unable to load todos. Please try again.',
+    empty: 'No todos yet.',
+    columns: {
+      title: 'Title',
+      dueAt: 'Due time',
+      status: 'Status',
+    },
+    status: {
+      completed: 'Completed',
+      overdue: 'Overdue',
+      open: 'Open',
+    },
+  },
 
   appearance: {
     title: 'Appearance',
@@ -129,6 +146,7 @@ const enUS = {
   },
   navigation: {
     home: 'Home',
+    todos: 'Todos',
     open: 'Open navigation',
     close: 'Close navigation',
     expand: 'Expand navigation',
