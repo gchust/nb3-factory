@@ -6,7 +6,7 @@ Do not create a plugin to add a feature. Plugins are separately published packag
 
 ## Default template scope
 
-Default is the clean application starting point. It registers product capabilities but no `app-plugin-*-example` plugins, example pages, application sample services, or sample APIs. Keep runnable demonstrations in `app-template-examples`. Application-owned server routes start empty; the only built-in application provider exposes Authorization Permission Sets as direct roles in the Users page. Its own pages are a localized homepage and a Theme settings page that only administrators hold by default.
+Default is the clean application starting point. It registers product capabilities but no `app-plugin-*-example` plugins, example pages, application sample services, or sample APIs. Keep runnable demonstrations in `app-template-examples`. Application-owned server routes start empty; the only built-in application provider exposes Authorization Permission Sets as direct roles in the Users page. The only application page is a localized homepage.
 
 `database/main/` contains required permission initialization only; application-owned business migrations and seeds start empty. Do not add article history, demo seeds, or compatibility copies from Examples to this template. Existing installations retain their own executed migration sources when upgrading; see the [upgrade migration rules](.agents/skills/nocobase-app-upgrade/references/edge-cases.md#migrations).
 
@@ -16,17 +16,16 @@ Default is the clean application starting point. It registers product capabiliti
 
 `.agents/skills/nocobase-app-development/` holds the detailed guidance behind this file. Read its `SKILL.md` first — it routes to the reference that matches your task instead of making you read everything:
 
-| Task                                             | Reference                               |
-| ------------------------------------------------ | --------------------------------------- |
-| Add a page, route, or navigation entry           | `references/client-pages-and-routes.md` |
-| Build or style UI                                | `references/components-and-styling.md`  |
-| Add an HTTP endpoint                             | `references/server-routes.md`           |
-| Read or write data                               | `references/database-and-data.md`       |
-| Change the schema                                | `references/migrations.md`              |
-| Switch or add a database connection              | `references/database-connections.md`    |
-| Add translatable text                            | `references/i18n.md`                    |
-| Add a service, background job, or scheduled task | `references/services-and-jobs.md`       |
-| Write tests and verify                           | `references/testing.md`                 |
+| Task                                                         | Reference                            |
+| ------------------------------------------------------------ | ------------------------------------ |
+| Any frontend change: pages, routes, components, styles, copy | `references/frontend/ui-workflow.md` |
+| Add an HTTP endpoint                                         | `references/server-routes.md`        |
+| Read or write data                                           | `references/database-and-data.md`    |
+| Change the schema                                            | `references/migrations.md`           |
+| Switch or add a database connection                          | `references/database-connections.md` |
+| Translate server-produced text or add a language             | `references/i18n.md`                 |
+| Add a service, background job, or scheduled task             | `references/services-and-jobs.md`    |
+| Write tests and verify                                       | `references/testing.md`              |
 
 Read the one page your task needs, not the whole directory.
 
@@ -54,7 +53,7 @@ cli/commands/             Commands this application owns
 tests/                    Tests; never beside the source
 ```
 
-A page with children or page-local helpers uses a folder with `index.tsx`; child folders mirror route paths. Keep page-local components and data in that folder, reserving `client/components/` for application-wide components. See [child routes](.agents/skills/nocobase-app-development/references/client-child-routes.md) for examples.
+A page with children or page-local helpers uses a folder with `index.tsx`; child folders mirror route paths. Keep page-local components and data in that folder, reserving `client/components/` for application-wide components. See [child routes](.agents/skills/nocobase-app-development/references/frontend/references/child-routes.md) for examples.
 
 A feature with a page and an API touches five places: a migration for the table, a route in `server/routes/`, a page in `client/pages/` declared in `client/routes.ts`, navigation on the page route, and strings in `client/locales/`.
 
@@ -64,7 +63,7 @@ A feature with a page and an API touches five places: a migration for the table,
 
 ### The rest is framework structure
 
-Layouts own breadcrumb route context; `AppRouter` selects routes and layouts. See [page routes](.agents/skills/nocobase-app-development/references/client-pages-and-routes.md#putting-the-page-in-a-breadcrumb-trail) for each layout's scope.
+Layouts own breadcrumb route context; `AppRouter` selects routes and layouts. See [pages and routes](.agents/skills/nocobase-app-development/references/frontend/references/page.md) for each layout's scope.
 
 `client/layouts/components/layout-header.tsx` and `layout-sidebar.tsx` are presentation containers accepting children. App, Settings and Dev layouts own menus, branding, permissions, redirects, sidebar arrangement and mobile close controls; sidebar contents own scrolling and collapsed presentation. Desktop icon mode uses tooltips for leaf labels and hover popovers for groups, preserving filtered navigation, parent-page links and inline nested groups. Keep this behavior aligned across layouts. Desktop collapse state is shared through `useSidebarPreference` at `nocobase:sidebar:collapsed` across applications on the same origin; mobile visibility stays local to each layout.
 
@@ -104,7 +103,7 @@ Use `defineSettingsRoutes()` for administrative pages, which mount under `/setti
 
 **Declare navigation on the route.** App, Settings and Dev menus read `navigation: { title: 'navigation.orders' }`; titles resolve in the owning locale namespace. Add the translation in `client/locales/`. Refine resources remain for CRUD and do not add menu entries.
 
-Use recursive groups to organize menus; their path is optional. Pages may also have children, but must manually render `Outlet`. For URL-addressable dialogs and drawers, declare the child in `defineAppRoutes()` in `client/routes.ts`, place the owning page's `Outlet`, then render `RouteDialog` or `RouteDrawer`. Call `useRouteOverlay()` only from a descendant rendered inside the overlay, including its footer, never from the page returning the wrapper. Read `.agents/skills/nocobase-app-development/references/client-child-routes.md` before implementing overlays or close guards.
+Use recursive groups to organize menus; their path is optional. Pages may also have children, but must manually render `Outlet`. For URL-addressable dialogs and drawers, declare the child in `defineAppRoutes()` in `client/routes.ts`, place the owning page's `Outlet`, then render `RouteDialog` or `RouteDrawer`. Call `useRouteOverlay()` only from a descendant rendered inside the overlay, including its footer, never from the page returning the wrapper. Read `.agents/skills/nocobase-app-development/references/frontend/references/overlay.md` before implementing overlays or close guards.
 
 `authz` controls page authorization: use `{ resource: { type: 'page', id: 'orders' }, action: 'access' }` or `'skip'`. Without an explicit rule, authenticated App pages with no page ancestor check their route name as a page resource; child pages, Settings, Dev, guest and optional pages add no check. Parent guards still apply when a child skips. Menus and loaders use the same normalized rule; endpoints enforce authorization independently. Route names identify stored page grants, so renaming one requires migrating grants that reference it.
 
@@ -325,9 +324,17 @@ Declare such a package in `dependencies` when you write the code; nothing will r
 
 `pnpm build --tar` writes `storage/exports/dist.tar.gz` after the build. The archive holds `dist/` as a directory next to `config.example.yml`, so extracting it produces exactly those two paths rather than scattering `server/` and `node_modules/` into whatever directory you unpacked in.
 
-`config.example.yml` travels with it because a deployment has to write a `config.yml` before it can start, and the example is the only statement of what may go in it. Directories of executable shims are left out: a `.bin` entry points at a path on the machine that installed it, and a dangling one makes `pnpm install` in the extracted tree report a corrupt store rather than repair it.
+`config.example.yml` travels with it because a deployment has to write a `config.yml` before it can start — `pnpm config:init`, run inside `dist/`, does that from the example, in place, and `pnpm config:check` there verifies it, database connection included, before the first start — and the example is the only statement of what may go in it. Directories of executable shims are left out: a `.bin` entry points at a path on the machine that installed it, and a dangling one makes `pnpm install` in the extracted tree report a corrupt store rather than repair it.
 
 Without `--tar` no archive is produced, which is what you want when the build is only going to be run locally.
+
+### Building a Docker image
+
+`Dockerfile` and `Dockerfile.dockerignore` build this application from its sources: a build stage runs `pnpm install --frozen-lockfile` and `pnpm build`, and a `node:24-bookworm-slim` runtime stage receives `dist/` and `config.example.yml` only. The runtime has no pnpm; it starts `node dist/server/standalone.js`, and every `dist/package.json` script is `node ./cli/index.js …` run the same way. The deployment root is `/app`, so configuration is `/app/config.yml` and storage is `/app/storage`, both mounted at runtime.
+
+`APP_BASE_PATH` is a build argument because the client is compiled for it, defaulting to `/main`. The build stage runs on `$BUILDPLATFORM` and passes `--target linux-$TARGETARCH`, so a multi-platform build does not compile under emulation; do not move the build stage to the target platform or switch the runtime to Alpine, which would need the musl target. Keep `Dockerfile.dockerignore` beside the Dockerfile: BuildKit reads it only there, and without it `config.yml`, `.env`, and `storage/` enter the build context.
+
+`--build-arg DIST=prebuilt` skips the build stage and packages the `dist/` in the context instead, selected through `FROM dist-${DIST}` so BuildKit never runs the stage it does not use. That stage refuses a `dist/` whose `nocobase.buildTarget` is not linux, glibc, the target architecture and the image's Node major, and one whose `dist/client/index.html` asset prefix differs from `APP_BASE_PATH`. The ignore file re-includes `dist/` last and whole, so dependency directories inside it named like excluded paths (`langchain/storage`) survive, and then excludes `dist/.env`, which can carry `DB_PASSWORD` from local `.env` files. Keep those rules in that order.
 
 ### Building for another platform
 
@@ -358,9 +365,7 @@ Report which checks ran, their scope, and any unverified behavior. See the appli
 
 Add tests for what you changed: a route's authenticated, unauthenticated, and unauthorized responses; a migration's `up` and `down` against a real database; a page's actual behavior. Tests belong in `tests/`, or in `e2e/` when they need a real server. Never place a test beside the source it covers.
 
-For creating or editing theme presets, read `.agents/skills/nocobase-app-development/references/themes.md` (from the application root).
-
-For UI styling, use the shared color, font, size, spacing, radius and shadow contract in `.agents/skills/nocobase-app-development/references/theme-tokens.md` (from the application root). Prefer its Tailwind utilities so components respond to theme changes; keep deliberate fixed-size exceptions explicit.
+For UI styling and for creating or editing theme presets, read `.agents/skills/nocobase-app-development/references/frontend/references/theme.md` (from the application root). It defines the shared color, font, size, spacing, radius and shadow contract; prefer its Tailwind utilities so components respond to theme changes, and keep deliberate fixed-size exceptions explicit.
 
 Application startup defaults belong in `config.yml`: `i18n.defaultLocale` for the language, and `client.app.defaultColorScheme` and `client.app.defaultTheme` for appearance. Valid browser-local choices take precedence. Which languages the application offers is not configured — its own `client/locales/` and `server/locales/` are that list. See the i18n and themes references.
 
