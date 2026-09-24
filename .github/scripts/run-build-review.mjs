@@ -5,7 +5,7 @@ import { existsSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, readdirSyn
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { collectReviewProcess, digest, readReviewJson, rubricVersion, safeRelative, validateEvaluation } from './build-review.mjs';
+import { collectReviewProcess, digest, readReviewJson, rubricVersion, safeRelative, validateEvaluation, reviewArtifactHash } from './build-review.mjs';
 import { resolveAgent } from './agent-registry.mjs';
 import { credentialNames, engineEnv } from './agent-adapter.mjs';
 import { buildRedactor, runAgentInvocation } from './agent-harness.mjs';
@@ -124,14 +124,29 @@ export function materializeEvidence(review, snapshot, catalog) {
   };
 }
 
-export async function runBuildReview(workspace, artifacts, env = process.env) {
+export function finalizeAssessment(snapshot, captured, basis, finished) {
+  const raw = readReviewJson(snapshot, 'assessment.json');
+  validateEvaluation(raw, basis.inputHash, captured.files);
+  const partial = !finished || raw.progress?.complete === false;
+  if (partial && (!raw.modules.length || !raw.evidence.length)) throw new Error('No assessed module checkpoint');
+  const knownCriteria = new Set(captured.process.rounds.flatMap(round => round.reports.flatMap(item => item.checks.map(check => check.id))).filter(Boolean));
+  for (const module of raw.modules) for (const id of module.criteria) {
+    if (!knownCriteria.has(id)) throw new Error(`Module references an unrecorded criterion: ${id}`);
+  }
+  const evaluation = materializeEvidence(raw, snapshot, captured.files);
+  if (captured.omitted.length && evaluation.limitations.length < 30) evaluation.limitations.push(`快照未包含 ${captured.omitted.length} 个超出预算、非普通文件或不可读取的文件；未据此确认其实现。`);
+  return { evaluation, partial };
+}
+
+export async function runBuildReview(workspace, artifacts, env = process.env, options = {}) {
   workspace = path.resolve(workspace); artifacts = path.resolve(artifacts);
   const output = path.join(artifacts, 'build-review.json');
   const metadata = readReviewJson(artifacts, 'task-metadata.json');
+  const original = existsSync(output) ? readReviewJson(artifacts, 'build-review.json') : null;
   const basis = {
     repository: metadata.repository, issue: metadata.issue.number,
-    runId: env.GITHUB_RUN_ID ?? '', attempt: Number(env.GITHUB_RUN_ATTEMPT ?? 1),
-    controlSha: env.FACTORY_CONTROL_SHA ?? '', rubricVersion,
+    runId: options.source?.runId ?? env.GITHUB_RUN_ID ?? '', attempt: Number(options.source?.attempt ?? env.GITHUB_RUN_ATTEMPT ?? 1),
+    controlSha: options.source?.controlSha ?? env.FACTORY_CONTROL_SHA ?? '', rubricVersion,
   };
   // Save a non-scored result before any expensive work, including timeout paths.
   let report = { version: 1, state: 'not-reviewed', reason: '独立评审尚未完成；没有评分。', basis, evaluation: null };
@@ -144,8 +159,8 @@ export async function runBuildReview(workspace, artifacts, env = process.env) {
     const mode = env.FACTORY_BUILD_REVIEW ?? 'full';
     if (!['full', 'off'].includes(mode)) throw new Error('FACTORY_BUILD_REVIEW must be full or off');
     if (mode === 'off') { report.reason = '本轮已明确关闭独立评审；只展示流水线事实。'; return report; }
-    const requested = Number(env.FACTORY_BUILD_REVIEW_TIMEOUT_SECONDS || 300);
-    if (!Number.isInteger(requested) || requested < 30 || requested > 600) throw new Error('Review timeout must be 30–600 seconds');
+    const requested = Number(env.FACTORY_BUILD_REVIEW_TIMEOUT_SECONDS || 900);
+    if (!Number.isInteger(requested) || requested < 30 || requested > 1800) throw new Error('Review timeout must be 30–1800 seconds');
     const deadline = env.FACTORY_RUN_DEADLINE_EPOCH_SECONDS ? Number(env.FACTORY_RUN_DEADLINE_EPOCH_SECONDS) : null;
     if (deadline !== null && !Number.isSafeInteger(deadline)) throw new Error('Invalid runner deadline');
     const remaining = deadline === null ? requested : Math.min(requested, deadline - Math.ceil(Date.now() / 1000) - 30);
@@ -157,20 +172,42 @@ export async function runBuildReview(workspace, artifacts, env = process.env) {
     basis.lockfileHash = captured.files.find(file => file.path === 'app/pnpm-lock.yaml')?.sha256 ?? null;
     basis.packages = captured.packages;
     basis.reviewCriteriaHash = digest(metadata.task?.reviewCriteria ?? '');
+    basis.artifactHash = reviewArtifactHash(artifacts);
+    if (options.source) {
+      if (basis.baseSha !== options.source.baseSha || basis.patchHash !== options.source.patchHash)
+        throw new Error('Replay does not reconstruct the sealed application');
+      if (original?.basis?.lockfileHash && original.basis.lockfileHash !== basis.lockfileHash)
+        throw new Error('Replay lockfile differs from original assessment');
+      if (original?.basis?.packages && JSON.stringify(original.basis.packages) !== JSON.stringify(basis.packages))
+        throw new Error('Replay installed packages differ from original assessment');
+    }
+    const catalogHash = digest(JSON.stringify(captured.files));
+    save(path.join(snapshot, 'review-files.json'), captured.files);
+    const changedFiles = [...new Set(readFileSync(path.join(artifacts, 'agent.patch'), 'utf8')
+      .split('\n').filter(line => line.startsWith('+++ b/')).map(line => `app/${line.slice(6)}`))]
+      .filter(file => captured.files.some(item => item.path === file));
     const input = {
       rubricVersion, basis, requirements: metadata.task?.requirements ?? '',
       acceptanceCriteria: metadata.task?.acceptanceCriteria ?? '', reviewCriteria: metadata.task?.reviewCriteria ?? '',
-      process: captured.process, files: captured.files, omitted: captured.omitted,
+      process: captured.process, changedFiles: changedFiles.slice(0, 80),
+      catalog: { path: 'review-files.json', sha256: catalogHash, count: captured.files.length },
+      omittedCount: captured.omitted.length, budgetSeconds: remaining,
     };
     basis.inputHash = digest(JSON.stringify(input));
     save(path.join(snapshot, 'review-input.json'), input);
+    save(path.join(snapshot, 'assessment.json'), { version: 1, inputHash: basis.inputHash,
+      summary: '尚未完成任何模块的证据评审。', modules: [], findings: [], evidence: [],
+      ui: { status: 'not-reviewed', score: null, reason: '尚未执行跨页面图像审阅。', evidence: [] },
+      limitations: ['评审进行中，未覆盖的模块不推断通过。'], progress: { complete: false, pendingModules: [] } });
+    // Persist the compact input/provenance, not the entire package catalog in the prompt.
+    save(path.join(artifacts, 'build-review-input.json'), input);
     // The snapshot root has no application instructions or reused agent session.
-    writeFileSync(path.join(snapshot, 'AGENTS.md'), 'Read-only assessment. Follow review-prompt.md. Do not build, repair, install, publish, or run application code. Write only assessment.json.\n');
-    const prompt = readFileSync(path.join(HERE, '../prompts/build-review.md'), 'utf8').replaceAll('{{INPUT_HASH}}', basis.inputHash);
+    writeFileSync(path.join(snapshot, 'AGENTS.md'), 'Read-only assessment. Follow review-prompt.md. Do not build, repair, install, publish, or run application code. Update assessment.json atomically via assessment.tmp.json.\n');
+    const prompt = readFileSync(path.join(HERE, '../prompts/build-review.md'), 'utf8').replaceAll('{{INPUT_HASH}}', basis.inputHash).replaceAll('{{BUDGET_SECONDS}}', String(remaining));
     const promptPath = path.join(snapshot, 'review-prompt.md');
     writeFileSync(promptPath, prompt);
     const adapter = resolveAgent(env);
-    const agentEnv = engineEnv({ ...env, FACTORY_AGENT_ROLE: 'review' }, adapter.credentials);
+    const agentEnv = engineEnv({ ...env, CODE_AGENT_THINKING: env.FACTORY_REVIEW_THINKING || 'medium', FACTORY_AGENT_ROLE: 'review' }, adapter.credentials);
     for (const name of ['GITHUB_TOKEN', 'GH_TOKEN', 'FACTORY_ADMIN_PASSWORD', 'FACTORY_TEST_PASSWORD']) delete agentEnv[name];
     const log = path.join(artifacts, 'agent-review.jsonl');
     const invocation = adapter.createInvocation({ workspace: snapshot, prompt: promptPath, log,
@@ -181,25 +218,31 @@ export async function runBuildReview(workspace, artifacts, env = process.env) {
       if (installed.engine !== adapter.id) throw new Error('Reviewer engine differs from installed engine');
       actualVersion = installed.actualVersion; configuredVersion = installed.configuredVersion;
     }
-    report.reviewer = { engine: adapter.id, model: invocation.model, version: actualVersion };
-    await runAgentInvocation({ ...invocation, log, parseEvent: adapter.parseEvent,
+    report.reviewer = { engine: adapter.id, model: invocation.model, version: actualVersion,
+      runId: env.GITHUB_RUN_ID ?? '', attempt: Number(env.GITHUB_RUN_ATTEMPT ?? 1),
+      controlSha: env.FACTORY_CONTROL_SHA ?? '', replay: Boolean(options.source) };
+    writeFileSync(path.join(artifacts, 'agent-review.jsonl.prompt.md'), prompt);
+    let invocationError;
+    try { await runAgentInvocation({ ...invocation, log, parseEvent: adapter.parseEvent,
       secrets: [...(invocation.secrets ?? []), ...credentialNames.map(name => env[name])],
       result: createResult({ engine: adapter.id, model: invocation.model, configuredVersion, actualVersion,
         completion: adapter.completion ?? 'event', phase: 'review', role: 'review' }),
-      invocationTimeoutSeconds: remaining, idleTimeoutSeconds: Math.min(90, remaining),
-    });
+      invocationTimeoutSeconds: remaining, idleTimeoutSeconds: Math.min(180, remaining),
+    }); } catch (error) { invocationError = error; }
     const result = readResult(log);
-    if (result?.status !== 'completed' || (result.completion !== 'exit' && !result.terminalEvent))
-      throw new Error('Reviewer invocation did not complete');
-    const raw = readReviewJson(snapshot, 'assessment.json');
-    validateEvaluation(raw, basis.inputHash, captured.files);
-    const knownCriteria = new Set(captured.process.rounds.flatMap(round => round.reports.flatMap(item => item.checks.map(check => check.id))).filter(Boolean));
-    for (const module of raw.modules) for (const id of module.criteria) {
-      if (!knownCriteria.has(id)) throw new Error(`Module references an unrecorded criterion: ${id}`);
+    const finished = result?.status === 'completed' && (result.completion === 'exit' || result.terminalEvent);
+    // Only bounded timeout may salvage a valid checkpoint; auth/protocol/crash
+    // errors do not turn arbitrary leftover JSON into a successful assessment.
+    if (!finished && result?.status !== 'timed_out') throw invocationError ?? new Error('Reviewer invocation did not complete');
+    const assessed = finalizeAssessment(snapshot, captured, basis, finished);
+    report.evaluation = assessed.evaluation;
+    const partial = assessed.partial;
+    report.state = partial ? 'partial' : 'completed';
+    report.reason = partial ? '评审预算已结束或尚有未评模块；仅展示已保存并通过证据校验的模块，不代表完整评审。' : '独立 Agent 评审完成；评分是基于本次证据的意见，不替代业务 QA 或人工评审。';
+    if (partial) {
+      if (report.evaluation.limitations.length === 30) report.evaluation.limitations.pop();
+      report.evaluation.limitations.push(report.reason);
     }
-    report.evaluation = materializeEvidence(raw, snapshot, captured.files);
-    if (captured.omitted.length && report.evaluation.limitations.length < 30) report.evaluation.limitations.push(`快照未包含 ${captured.omitted.length} 个超出预算、非普通文件或不可读取的文件；未据此确认其实现。`);
-    report.state = 'completed'; report.reason = '独立 Agent 评审完成；评分是基于本次证据的意见，不替代业务 QA 或人工评审。';
   } catch (error) {
     report.state = 'failed'; report.evaluation = null;
     report.reason = `独立评审未完成或证据校验失败：${error.message}。业务验收结果保持不变。`;

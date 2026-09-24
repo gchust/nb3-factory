@@ -1,6 +1,20 @@
 name: Report Task Usage
 
 on:
+  workflow_call:
+    inputs:
+      run_id:
+        required: true
+        type: string
+      attempt:
+        required: true
+        type: string
+      review_run_id:
+        required: false
+        type: string
+      review_artifact_id:
+        required: false
+        type: string
   workflow_run:
     workflows: [Code Agent NocoBase Task]
     types: [completed]
@@ -37,6 +51,8 @@ jobs:
       issues: write
     env:
       SOURCE_RUN_ID: ${{ inputs.run_id || github.event.workflow_run.id }}
+      REVIEW_RUN_ID: ${{ inputs.review_run_id }}
+      REVIEW_ARTIFACT_ID: ${{ inputs.review_artifact_id }}
       SOURCE_ATTEMPT: ${{ inputs.attempt || github.event.workflow_run.run_attempt }}
     steps:
       # Run only trusted control code, never application code from an artifact.
@@ -56,17 +72,29 @@ jobs:
         run: |
           node control/.github/scripts/report-task-usage.mjs select \
             --run-id "$SOURCE_RUN_ID" --attempt "$SOURCE_ATTEMPT" \
-            --source "$RUNNER_TEMP/usage-source.json"
+            --source "$RUNNER_TEMP/usage-source.json" \
+            --review-run-id "$REVIEW_RUN_ID" --review-artifact-id "$REVIEW_ARTIFACT_ID"
 
       - name: Download usage evidence when available
         if: steps.source.outputs.ready == 'true' && steps.source.outputs.artifact != ''
         continue-on-error: true
         uses: actions/download-artifact@v4
         with:
-          name: ${{ steps.source.outputs.artifact }}
+          artifact-ids: ${{ steps.source.outputs.artifact_id }}
+          merge-multiple: true
           run-id: ${{ env.SOURCE_RUN_ID }}
           github-token: ${{ github.token }}
           path: ${{ runner.temp }}/usage-evidence
+
+      - name: Download verified supplemental review
+        if: steps.source.outputs.review_artifact != ''
+        uses: actions/download-artifact@v4
+        with:
+          artifact-ids: ${{ steps.source.outputs.review_artifact }}
+          merge-multiple: true
+          run-id: ${{ env.REVIEW_RUN_ID }}
+          github-token: ${{ github.token }}
+          path: ${{ runner.temp }}/review-supplement
 
       - name: Report totals to the task Issue
         id: totals
@@ -76,7 +104,7 @@ jobs:
         run: |
           node control/.github/scripts/report-task-usage.mjs publish \
             --run-id "$SOURCE_RUN_ID" --source "$RUNNER_TEMP/usage-source.json" \
-            --artifacts "$RUNNER_TEMP/usage-evidence" --summary "$RUNNER_TEMP/task-report/report.json"
+            --artifacts "$RUNNER_TEMP/usage-evidence" --review "$RUNNER_TEMP/review-supplement" --summary "$RUNNER_TEMP/task-report/report.json"
 
       - name: Save HTML and numeric usage report
         id: archive

@@ -183,7 +183,8 @@ jobs:
       FACTORY_CONTROL_SHA: ${{ needs.prepare.outputs.control_sha }}
       FACTORY_QA_THINKING: ${{ vars.FACTORY_QA_THINKING }}
       FACTORY_BUILD_REVIEW: ${{ vars.FACTORY_BUILD_REVIEW || 'full' }}
-      FACTORY_BUILD_REVIEW_TIMEOUT_SECONDS: ${{ vars.FACTORY_BUILD_REVIEW_TIMEOUT_SECONDS || '300' }}
+      FACTORY_REVIEW_THINKING: ${{ vars.FACTORY_REVIEW_THINKING || 'medium' }}
+      FACTORY_BUILD_REVIEW_TIMEOUT_SECONDS: ${{ vars.FACTORY_BUILD_REVIEW_TIMEOUT_SECONDS || '900' }}
       CODE_AGENT_ENGINE: ${{ vars.CODE_AGENT_ENGINE }}
     if: needs.prepare.outputs.status == 'ready' && needs.prepare.outputs.comment_kind != 'reply'
     runs-on: ubuntu-latest

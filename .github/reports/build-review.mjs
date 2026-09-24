@@ -19,14 +19,17 @@ function processHtml(process) {
 
 export function renderBuildReview(input) {
   let report = input;
-  if (report?.state === 'completed') {
+  if (['completed', 'partial'].includes(report?.state)) {
     try { validateBuildReview(report); }
     catch { report = { state: 'failed', reason: '评审数据无效，未采用评分；原始验收仍保留。', process: input.process }; }
   }
-  const review = report?.state === 'completed' ? report.evaluation : null;
+  const review = ['completed', 'partial'].includes(report?.state) ? report.evaluation : null;
   let html = `<section class="section" id="build-review"><div class="section-head"><div><div class="eyebrow">Build assessment</div><h2>搭建质量与模块评审</h2></div>${tag(review ? '独立 Agent 评审' : '未完成独立评审', review ? '' : 'warn')}</div>`;
   html += `<div class="review-disclaimer">评分是评审者基于本次覆盖范围的意见，不是客观测量，也不是 NocoBase3 整体评分。业务 QA、评分和证据完整性分开呈现。</div>`;
   html += processHtml(report?.process);
+  if (report?.basis) html += `<p class="check-source">评审源产物：Run ${escape(report.basis.runId)} / attempt ${escape(report.basis.attempt)}${report.reviewer?.replay ? ` · 后补评审 Run ${escape(report.reviewer.runId)} / attempt ${escape(report.reviewer.attempt)}` : ''}。发布重试不改变评审源产物编号。</p>`;
+  if (report?.state === 'partial') html += `<div class="report-banner"><strong>部分评审 · 尚未全覆盖</strong><p>${escape(report.reason)}</p></div>`;
+  if (report?.supplementalUsage) html += `<p class="check-source">本次后补评审用量（独立于原搭建）：${escape(report.supplementalUsage.totalTokens ?? '未提供')} Token（含缓存）；不重复计入原搭建。</p>`;
   if (!review) return html + `<div class="card report-empty"><strong>本轮不显示评分</strong><p>${escape(report?.reason || '没有独立评审记录，不能据此声称没有问题。')}</p></div></section><section class="section" id="framework-feedback"><div class="section-head"><h2>NocoBase3 的帮助与问题</h2></div><div class="card report-empty">尚无独立评审结论；已有实现者自述仍保留在“遇到的问题”和“可改进的点”。</div></section>`;
   html += `<p class="review-summary">${escape(review.summary)}</p>`;
   const scored = review.modules.reduce((n, module) => n + Object.keys(dimensions).filter(key => module.scores[key].score !== null).length, 0);
@@ -57,7 +60,7 @@ export function renderBuildReview(input) {
     html += '</div>';
   }
   html += `<details class="card raw-record" open><summary>本次评审的覆盖限制</summary><div class="subsection-body">${list(review.limitations)}</div></details>`;
-  html += `<details class="card raw-record"><summary>评审基线与版本指纹</summary><div class="subsection-body"><p>评审发生于独立最终验证前的已封存候选补丁；与 PR 当前最新提交不是同一概念。评审后不会修改该补丁。</p><pre>${escape(JSON.stringify({ reviewer: report.reviewer, ...report.basis }, null, 2))}</pre></div></details>`;
+  html += `<details class="card raw-record"><summary>评审基线与版本指纹</summary><div class="subsection-body"><p>评审针对已封存候选补丁；可能在原搭建内或之后单独补跑。与 PR 当前最新提交不是同一概念，评审不修改补丁。</p><pre>${escape(JSON.stringify({ reviewer: report.reviewer, ...report.basis }, null, 2))}</pre></div></details>`;
   html += '<div class="review-evidence"><h3>证据与原文</h3>';
   for (const evidence of review.evidence) {
     html += `<details class="card raw-record" id="review-evidence-${escape(evidence.id)}"><summary><strong>${escape(evidence.id)}</strong> · ${escape(evidence.path)}${evidence.lines ? `:${evidence.lines.join('–')}` : ''}</summary><div class="subsection-body"><p>${escape(evidence.observation)}</p>${evidence.kind === 'screenshot' ? evidence.mediaId ? `<button class="btn small" data-open="${escape(evidence.mediaId)}">查看原始截图</button>` : '<p class="check-source">截图未内嵌；请从本轮 Artifact 核对，缺图不伪装成已展示。</p>' : `<pre>${escape(evidence.excerpt)}</pre>`}<p class="check-source">原文件 SHA-256：${escape(evidence.sha256)}</p></div></details>`;

@@ -91,6 +91,12 @@ export function validateEvaluation(review, inputHash, catalog) {
   list(review.modules, 'modules', 30); list(review.findings, 'findings', 60);
   list(review.evidence, 'evidence', 100); list(review.limitations, 'limitations', 30);
   review.limitations.forEach(value => text(value, 'limitation'));
+  if (review.progress !== undefined) {
+    need(object(review.progress) && typeof review.progress.complete === 'boolean', 'Invalid assessment progress');
+    list(review.progress.pendingModules, 'pendingModules', 30);
+    review.progress.pendingModules.forEach(name => text(name, 'pending module', 120));
+    need(!review.progress.complete || review.progress.pendingModules.length === 0, 'Completed progress still has pending modules');
+  }
   const ids = new Set();
   for (const evidence of review.evidence) {
     need(object(evidence) && /^E[1-9]\d*$/.test(evidence.id), 'Invalid evidence id');
@@ -151,14 +157,15 @@ export function validateEvaluation(review, inputHash, catalog) {
 
 export function validateBuildReview(report, identity) {
   need(object(report) && report.version === 1, 'Invalid build review version');
-  need(['completed', 'not-reviewed', 'failed'].includes(report.state), 'Invalid build review state');
+  need(['completed', 'partial', 'not-reviewed', 'failed'].includes(report.state), 'Invalid build review state');
   need(object(report.basis), 'Missing review basis');
   if (identity) for (const key of ['repository', 'issue', 'runId', 'attempt']) {
     need(String(report.basis[key]) === String(identity[key]), `Review ${key} does not match this run`);
   }
-  if (report.state === 'completed') {
+  if (['completed', 'partial'].includes(report.state)) {
     need(report.basis.rubricVersion === rubricVersion && /^[a-f0-9]{64}$/.test(report.basis.inputHash), 'Missing rubric/input fingerprint');
     validateEvaluation(report.evaluation, report.basis.inputHash);
+    if (report.state === 'partial') need(report.evaluation.modules.length > 0 && report.evaluation.evidence.length > 0, 'Partial review requires assessed modules and evidence');
     for (const evidence of report.evaluation.evidence) {
       need(/^[a-f0-9]{64}$/.test(evidence.sha256), 'Missing captured evidence hash');
       if (evidence.kind !== 'screenshot') text(evidence.excerpt, 'captured excerpt', 12000);
@@ -167,13 +174,59 @@ export function validateBuildReview(report, identity) {
   return report;
 }
 
+// Publication retries can reuse an earlier producer's sealed artifact. Keep that
+// identity intact: a later publication attempt is not a new assessment.
+export function resolveReviewIdentity(root, report, identity) {
+  if (!identity) return undefined;
+  const basis = report.basis;
+  for (const key of ['repository', 'issue', 'runId']) {
+    need(String(basis?.[key]) === String(identity[key]), `Review ${key} does not match this run`);
+  }
+  const producer = Number(basis.attempt), publication = Number(identity.attempt);
+  need(Number.isSafeInteger(producer) && producer > 0 && producer <= publication, 'Invalid review producer attempt');
+  const metadata = optional(root, 'task-metadata.json');
+  // New or historical producer metadata is mandatory for cross-attempt reuse.
+  if (producer !== publication || metadata?.run) {
+    need(metadata?.repository === identity.repository && metadata.issue?.number === Number(identity.issue) &&
+      Number(metadata.run?.id) === Number(identity.runId) && Number(metadata.run?.attempt) === producer,
+      'Review producer does not match the captured task metadata');
+    if (report.evaluation !== null || basis.patchHash) {
+      need(basis.baseSha === metadata.applicationBase?.sha && basis.controlSha === metadata.controlSha,
+        'Review application/control baseline mismatch');
+      need(basis.patchHash === digest(readFileSync(path.join(root, 'agent.patch'))), 'Review sealed patch mismatch');
+      need(basis.reviewCriteriaHash === digest(metadata.task?.reviewCriteria ?? ''), 'Review criteria mismatch');
+      if (basis.artifactHash) need(basis.artifactHash === reviewArtifactHash(root), 'Review evidence fingerprint mismatch');
+    }
+  }
+  return { ...identity, attempt: producer };
+}
+
+// Does not include mutable publication state, timings or the review itself.
+export function reviewArtifactHash(root) {
+  const process = collectReviewProcess(root);
+  const files = ['task-metadata.json', 'agent.patch', 'repair-summary.json', 'retro.json',
+    ...process.rounds.flatMap(round => round.reports.map(report => report.source))].sort();
+  return digest(JSON.stringify(files.map(file => {
+    try { return [file, digest(readFileSync(path.join(root, file)))]; }
+    catch (error) { if (error.code === 'ENOENT') return [file, null]; throw error; }
+  })));
+}
+
 export function loadBuildReview(root, identity) {
   const process = collectReviewProcess(root);
-  let report;
+  let report, originalError = false;
   try { report = optional(root, 'build-review.json'); }
-  catch { return { version: 1, state: 'failed', reason: '评审文件无法读取；不显示评分。', process, evaluation: null }; }
+  catch { originalError = true; process.warnings.push('原评审文件无法读取'); }
+  try {
+    const supplement = optional(root, 'build-review.supplement.json');
+    if (supplement) {
+      validateBuildReview(supplement, resolveReviewIdentity(root, supplement, identity));
+      if (['completed', 'partial'].includes(supplement.state) && !(report?.state === 'completed' && supplement.state === 'partial')) report = supplement;
+    }
+  } catch (error) { process.warnings.push(`后补评审未采用：${error.message}`); }
+  if (!report && originalError) return { version: 1, state: 'failed', reason: '评审文件无法读取；不显示评分。', process, evaluation: null };
   if (!report) return { version: 1, state: 'not-reviewed', reason: '本轮没有独立评审记录；未评估不代表通过，也不按零分处理。', process, evaluation: null };
-  try { validateBuildReview(report, identity); }
+  try { validateBuildReview(report, resolveReviewIdentity(root, report, identity)); }
   catch (error) { return { version: 1, state: 'failed', reason: `评审未采用：${error.message}`, process, evaluation: null }; }
   // Round facts always come from the original reports, not the reviewer's JSON.
   return { ...report, process };
