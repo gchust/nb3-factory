@@ -141,6 +141,8 @@ export AGENT_BROWSER_MAX_OUTPUT=50000
 export AGENT_BROWSER_NAMESPACE="nb3-factory-${GITHUB_RUN_ID:-local}-${attempt}"
 export AGENT_BROWSER_SESSION="qa-${attempt}"
 export AGENT_BROWSER_NO_WEBMCP=1
+# Same trusted compatibility script as preflight; allowed domains remain enforced.
+export AGENT_BROWSER_INIT_SCRIPTS="$control_dir/.github/scripts/browser-worker-compat.js"
 export PATH="$wrapper_dir:$PATH"
 
 report_attempt=0

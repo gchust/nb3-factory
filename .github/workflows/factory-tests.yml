@@ -64,6 +64,14 @@ jobs:
           # Each invocation uses a new namespace and cold browser, with no retry.
           for attempt in 1 2 3; do
             node .github/scripts/browser-preflight.mjs "$RUNNER_TEMP/browser-preflight/$attempt/report.json"
+            node --input-type=module - "$RUNNER_TEMP/browser-preflight/$attempt/report.json" <<'NODE'
+          import assert from 'node:assert/strict';
+          import {readFileSync} from 'node:fs';
+          const {capabilities:c}=JSON.parse(readFileSync(process.argv[2]));
+          assert.equal(c.moduleWorkerRequest,true,'Guarded module Worker must receive immediate messages and block external fetch');
+          assert.equal(c.moduleBlobWorkerRequest,true,'Guarded blob Worker must retain transfers and message order');
+          assert.equal(c.workerNetworkLeak,false,'Worker guard must not leak a forbidden request');
+          NODE
           done
       - uses: actions/upload-artifact@v4
         if: always()
