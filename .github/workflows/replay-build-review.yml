@@ -116,7 +116,14 @@ jobs:
         with:
           node-version: 24.x
       - name: Apply the sealed candidate
-        run: git -C workspace apply --index ../input/agent/agent.patch
+        run: |
+          test -f input/agent/agent.patch
+          test ! -L input/agent/agent.patch
+          if [[ -s input/agent/agent.patch ]]; then
+            git -C workspace apply --index ../input/agent/agent.patch
+          else
+            echo "Sealed candidate has no new patch; reviewing the pinned checkout unchanged."
+          fi
       - name: Restore original source package snapshot
         # Separate step: source-snapshot exports isolated registry/store paths via GITHUB_ENV.
         run: node control/.github/scripts/source-snapshot.mjs restore workspace input/agent/task-metadata.json
