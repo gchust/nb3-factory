@@ -65,6 +65,16 @@ if (${JSON.stringify(behavior)} === 'old-rubric') review.version = 1;
 if (${JSON.stringify(behavior)} === 'wrong-hash') review.inputHash = 'c'.repeat(64);
 if (${JSON.stringify(behavior)} === 'modify') {fs.chmodSync('app/server/customer.ts',0o600);fs.writeFileSync('app/server/customer.ts','modified');}
 fs.writeFileSync('assessment.json', ${JSON.stringify(behavior)} === 'malformed' ? '{oops' : JSON.stringify(review));
+if (${JSON.stringify(behavior)} === 'check-draft') {
+  const {spawnSync} = require('node:child_process');
+  review.modules[0].targets[0].kind='skill';
+  fs.writeFileSync('assessment.json',JSON.stringify(review));
+  const check=()=>spawnSync(process.execPath,['.review-tools/check-review-draft.mjs'],{encoding:'utf8'});
+  const invalid=check();if(invalid.status!==1 || !invalid.stderr.includes('Invalid framework target kind'))process.exit(8);
+  review.modules[0].targets[0].kind='library';
+  fs.writeFileSync('assessment.json',JSON.stringify(review));
+  const valid=check();if(valid.status!==0 || !JSON.parse(valid.stdout).valid)process.exit(9);
+}
 console.log(JSON.stringify({type:'message_end',message:{role:'assistant',stopReason:'stop',usage:{input:100,output:20,cacheRead:5,cacheWrite:0,totalTokens:125}}}));
 console.log(JSON.stringify({type:'agent_end'}));
 `);
@@ -291,4 +301,13 @@ test('malformed supplemental JSON cannot erase an already valid original assessm
   put(f.artifacts, 'build-review.supplement.json', '{broken');
   const report = loadBuildReview(f.artifacts, { repository: 'owner/factory', issue: 21, runId: 100, attempt: 1 });
   assert.equal(report.state, 'completed'); assert.ok(report.process.warnings.some(w => /后补评审未采用/.test(w)));
+});
+
+test('reviewer can correct a draft with the supplied validator within its single invocation', async t => {
+  const f = fixture(t); installMock(f, 'check-draft');
+  const report = await runBuildReview(f.workspace, f.artifacts, f.env);
+  assert.equal(report.state, 'completed', report.reason);
+  assert.equal(report.evaluation.modules[0].targets[0].kind, 'library');
+  const lines = readFileSync(path.join(f.artifacts, 'agent-review.jsonl'), 'utf8').split('\n');
+  assert.equal(lines.filter(line => line.includes('"type":"message_end"')).length, 1);
 });

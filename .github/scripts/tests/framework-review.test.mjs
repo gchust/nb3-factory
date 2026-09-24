@@ -159,7 +159,9 @@ test('a malformed original cannot prevent a valid new assessment from being adop
 test('default example and runner use v2; only explicit legacy preview uses v1', () => {
   const runner = readFileSync(new URL('../run-build-review.mjs', import.meta.url), 'utf8');
   const prompt = readFileSync(new URL('../../prompts/build-review.md', import.meta.url), 'utf8');
-  assert.match(runner, /captured\.files, basis\.rubricVersion/);
+  assert.match(runner, /import \{ finalizeAssessment \} from '\.\/check-review-draft\.mjs'/);
+  const checker = readFileSync(new URL('../check-review-draft.mjs', import.meta.url), 'utf8');
+  assert.match(checker, /validateEvaluation\(raw, basis\.inputHash, captured\.files, basis\.rubricVersion\)/);
   assert.match(runner, /version: rubricVersion, inputHash/);
   for (const phrase of ['业务需求是测试场景', '正常编写业务规则', '不能仅凭错误次数', '旧 task.reviewCriteria']) {
     assert.ok(prompt.includes(phrase), phrase);

@@ -5,7 +5,9 @@ import { existsSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, readdirSyn
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { collectReviewProcess, digest, readReviewJson, rubricVersion, safeRelative, validateEvaluation, reviewArtifactHash } from './build-review.mjs';
+import { collectReviewProcess, digest, readReviewJson, rubricVersion, safeRelative, reviewArtifactHash } from './build-review.mjs';
+import { finalizeAssessment } from './check-review-draft.mjs';
+export { finalizeAssessment, materializeEvidence } from './check-review-draft.mjs';
 import { resolveAgent } from './agent-registry.mjs';
 import { credentialNames, engineEnv } from './agent-adapter.mjs';
 import { buildRedactor, runAgentInvocation } from './agent-harness.mjs';
@@ -104,49 +106,6 @@ export function createReviewSnapshot(workspace, artifacts, destination) {
     omitted, bytes, process };
 }
 
-export function materializeEvidence(review, snapshot, catalog) {
-  // Any edit to a reviewed input invalidates the assessment, not the delivery.
-  for (const file of catalog) {
-    const target = path.join(snapshot, file.path);
-    if (!existsSync(target) || lstatSync(target).isSymbolicLink() || digest(readFileSync(target)) !== file.sha256)
-      throw new Error(`Reviewer changed captured input: ${file.path}`);
-  }
-  return {
-    ...review,
-    evidence: review.evidence.map(evidence => {
-      const file = catalog.find(item => item.path === evidence.path);
-      const data = readFileSync(path.join(snapshot, file.path));
-      const excerpt = evidence.kind === 'screenshot' ? null : data.toString('utf8')
-        .split('\n').slice(evidence.lines[0] - 1, evidence.lines[1]).join('\n').slice(0, 12000);
-      // A valid file/line reference to only "{" is not a useful citation.
-      // Do not widen the reviewer's range or substitute its claimed quote.
-      if (excerpt !== null && /^[\s{}\[\],:;()]*$/u.test(excerpt))
-        throw new Error(`Evidence ${evidence.id} must select substantive lines: ${evidence.path}`);
-      return { id: evidence.id, kind: evidence.kind, path: evidence.path, observation: evidence.observation,
-        ...(evidence.kind === 'screenshot' ? {} : { lines: evidence.lines, excerpt }), sha256: file.sha256,
-      };
-    }),
-  };
-}
-
-export function finalizeAssessment(snapshot, captured, basis, finished) {
-  const raw = readReviewJson(snapshot, 'assessment.json');
-  validateEvaluation(raw, basis.inputHash, captured.files, basis.rubricVersion);
-  const partial = !finished || raw.progress?.complete === false;
-  if (partial && (!raw.modules.length || !raw.evidence.length)) throw new Error('No assessed module checkpoint');
-  const knownCriteria = new Set(captured.process.rounds.flatMap(round => round.reports.flatMap(item => item.checks.map(check => check.id))).filter(Boolean));
-  for (const module of raw.modules) for (const id of module.criteria) {
-    if (!knownCriteria.has(id)) throw new Error(`Module references an unrecorded criterion: ${id}`);
-  }
-  if (raw.version === 2) for (const module of raw.modules) for (const target of module.targets) {
-    if (target.kind !== 'guidance' && !captured.packages.some(pkg => pkg.name === target.name) &&
-        Object.values(module.scores).some(score => score.score !== null)) throw new Error(`Framework target was not installed: ${target.name}`);
-  }
-  const evaluation = materializeEvidence(raw, snapshot, captured.files);
-  if (captured.omitted.length && evaluation.limitations.length < 30) evaluation.limitations.push(`快照未包含 ${captured.omitted.length} 个超出预算、非普通文件或不可读取的文件；未据此确认其实现。`);
-  return { evaluation, partial };
-}
-
 export async function runBuildReview(workspace, artifacts, env = process.env, options = {}) {
   workspace = path.resolve(workspace); artifacts = path.resolve(artifacts);
   const output = path.join(artifacts, 'build-review.json');
@@ -213,6 +172,13 @@ export async function runBuildReview(workspace, artifacts, env = process.env, op
     save(path.join(artifacts, 'build-review-input.json'), input);
     // The snapshot root has no application instructions or reused agent session.
     writeFileSync(path.join(snapshot, 'AGENTS.md'), 'Read-only assessment. Follow review-prompt.md. Do not build, repair, install, publish, or run application code. Update assessment.json atomically via assessment.tmp.json.\n');
+    // A local, model-free check gives feedback before the same invocation ends.
+    // The trusted final evaluator still runs independently outside this copy.
+    const tools = path.join(snapshot, '.review-tools');
+    mkdirSync(tools, { mode: 0o700 });
+    for (const name of ['build-review.mjs', 'check-review-draft.mjs']) {
+      writeFileSync(path.join(tools, name), readFileSync(path.join(HERE, name)), { mode: 0o400 });
+    }
     const prompt = readFileSync(path.join(HERE, '../prompts/build-review.md'), 'utf8').replaceAll('{{INPUT_HASH}}', basis.inputHash).replaceAll('{{BUDGET_SECONDS}}', String(remaining));
     const promptPath = path.join(snapshot, 'review-prompt.md');
     writeFileSync(promptPath, prompt);
