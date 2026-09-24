@@ -18,7 +18,8 @@ import { isManualIssue, isPresetIssue, preparePresetIssue } from './issue-preset
 import { resolveTaskBranch, taskIssueNumber } from './task-compat.mjs';
 import { resolveTargetBranch, pinInitialBase } from './task-base.mjs';
 import { taskEvaluationIdentity } from './evaluation-identity.mjs';
-import { claimSample, resolveSample } from './evaluation-sample.mjs';
+import { claimSample, recordTerminal, resolveSample, sampleUsage } from './evaluation-sample.mjs';
+import { ARCHIVE_RESERVE_SECONDS } from './pipeline-state.mjs';
 
 const args = parseArgs(process.argv.slice(2));
 const event = JSON.parse(readFileSync(args.event, 'utf8'));
@@ -55,9 +56,13 @@ try {
   const buildCommentId = event.client_payload?.build_comment_id;
   const continuation = event.action === 'code-agent-continue';
   const batchSample = sample && !buildCommentId ? sample : null;
+  const runId = Number(process.env.GITHUB_RUN_ID);
+  // The batch coordinator advances when a sample run ends (bot-started runs emit no workflow_run).
+  if (sample) appendGithubOutput(outputPath, 'evaluation_sample', 'true');
   if (sample?.cancelled) {
-    await client.setIssueStatus(issue, 'agent:failed',
-      `评测批次 \`${sample.receipt.batchKey}\` 已取消：不再开始或自动续跑该样本；已发生的执行、补丁与用量保留。`);
+    const reason = `评测批次 \`${sample.receipt.batchKey}\` 已取消：不再开始或自动续跑该样本；已发生的执行、补丁与用量保留。`;
+    if (batchSample) await recordTerminal(client, batchSample, runId, 'cancelled', reason);
+    await client.setIssueStatus(issue, 'agent:failed', reason);
     appendGithubOutput(outputPath, 'status', 'cancelled');
     process.exit(0);
   }
@@ -204,9 +209,28 @@ try {
 
   // One build per batch sample: a duplicate or reordered dispatch exits without work.
   if (batchSample && !continuation &&
-      !(await claimSample(client, batchSample, Number(process.env.GITHUB_RUN_ID), process.env.GITHUB_SERVER_URL))) {
+      !(await claimSample(client, batchSample, runId, process.env.GITHUB_SERVER_URL))) {
     appendGithubOutput(outputPath, 'status', 'duplicate');
     process.exit(0);
+  }
+  // The budget spans the whole chain, measured from GitHub's job records so that a
+  // continuation, recovery or re-run attempt cannot reset or shrink it.
+  if (batchSample) {
+    const { budget } = batchSample.receipt;
+    const used = await sampleUsage(client, issueNumber, { runId, attempt: Number(process.env.GITHUB_RUN_ATTEMPT || 1), since: issue.created_at });
+    metadata.evaluation.budgetUsed = used;
+    writeFileSync(args.metadata, `${JSON.stringify(metadata, null, 2)}\n`);
+    const refusal = used.executions > budget.maxContinuations
+      ? `已执行 ${used.executions + 1} 次（续跑 / 恢复 / 重跑上限 ${budget.maxContinuations}）`
+      : used.activeSeconds > budget.maxActiveSeconds - ARCHIVE_RESERVE_SECONDS - 300
+        ? `累计主动执行 ${used.activeSeconds} 秒，预算 ${budget.maxActiveSeconds} 秒` : null;
+    if (refusal) {
+      const reason = `**已达到评测计划预算**：${refusal}。不再启动新的执行；已保存的补丁、验收记录与用量保留，这不是业务缺陷结论。`;
+      await recordTerminal(client, batchSample, runId, 'budget-exhausted', reason);
+      await client.setIssueStatus(issue, 'agent:failed', reason);
+      appendGithubOutput(outputPath, 'status', 'budget-exhausted');
+      process.exit(0);
+    }
   }
 
   const workRef = await client.getRef(workBranch, true);

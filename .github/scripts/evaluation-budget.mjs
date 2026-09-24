@@ -18,7 +18,9 @@ export function budgetDeadline(state, runnerDeadline, now = Math.floor(Date.now(
 
 export function continuationRefusal(state, continuation, now = Math.floor(Date.now() / 1000)) {
   if (!state.budget) return null;
-  if (continuation > state.budget.maxContinuations) return `自动续跑次数将超过上限 ${state.budget.maxContinuations}`;
+  // The dispatch field alone could be reset by a recovery; the checkpoint also counts prior executions.
+  const next = Math.max(Number(continuation) || 0, (state.priorExecutions ?? 0) + 1);
+  if (next > state.budget.maxContinuations) return `自动续跑次数将超过上限 ${state.budget.maxContinuations}`;
   // A continuation needs at least one useful phase plus archiving time.
   if (state.budget.maxActiveSeconds - activeSeconds(state, now) < ARCHIVE_RESERVE_SECONDS + 300) return `主动执行时间预算 ${state.budget.maxActiveSeconds} 秒已用尽`;
   return null;

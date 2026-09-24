@@ -47,6 +47,8 @@
 <owner>/<repo>/batches/<batchKey>/<caseKey>/<sampleIndex>
 ```
 
+导出与用量回执优先读取 prepare 作业上传的任务元数据（`factory-task-<Issue>`，Agent 无法改写），Agent 产物中的副本只作后备，
+二者不一致时以 prepare 记录为准并写入 `metadata-mismatch`。
 旧任务没有记录时只由已校验的仓库、Issue 与 `/build` 评论推导（`run.identity=legacy-derived`）；
 缺少任务元数据时为 `unresolved`，只描述该次执行，不与其他执行合并。每条用量回执另存
 `evaluation` 事实（run.key、控制 SHA、应用基线、输入哈希、上一 Run），用于在 Artifact 过期后关联执行链；
@@ -271,9 +273,13 @@ Evaluation batches → start（手动）或每日定时（需开关 + enabled + 
 | 创建 Issue 后客户端中断 | 重试按样本标记找回同一 Issue，补齐缺失的快照 / 回执，不多建样本 |
 | 重复或乱序派发 | 首个 Run 在样本 Issue 上留下认领回执；其他 Run 以 `duplicate` 退出，不再搭建（同一 Run 的重跑尝试与续跑除外） |
 | Handoff（退出 75） | 不是终态，不释放槽位；新的 Run 沿用检查点中的预算，不重置 |
-| 预算 | 修复次数与整条链的累计主动执行时间（不含排队）写入 `pipeline-state.json`；不足以开始下一阶段时以 76 结束为 `budget-exhausted`，长调用截止时间同时下调并预留 300 秒归档；续跑次数或剩余时间不足时不再派发续跑。补丁、检查点、验收记录与用量都保留 |
-| 取消 | `cancel` 后不再创建 / 派发样本，未开始的样本记为 `cancelled`；进行中样本的下一次续跑在 prepare 被拒绝；已发生的执行与用量保留，不关闭或合并任何业务 PR |
-| 未开始 / 受阻 / 报告缺失 | 仍列在样本全集与统计中；最后一个样本结束后最多等待 6 小时收齐报告再关闭批次 |
+| 预算 | 每次 prepare 都从 GitHub 自身的作业记录重算整条链已用的 Agent 执行次数与主动执行时间（不含排队，包括续跑、恢复与重跑尝试），超出即以 `budget-exhausted` 结束且不启动 Agent；这些数值写入任务元数据并作为检查点的下限。检查点中的预算必须与 prepare 记录一致，被删改则拒绝续跑。Agent 作业内：不足以开始下一阶段时以 76 结束，长调用截止时间下调并预留 300 秒归档，达到续跑次数（`maxContinuations` 计算首次之后的全部执行）时不再派发续跑。修复次数来自与 Agent 同一 Runner 的检查点，只能作为工厂内限制，不是安全边界。补丁、检查点、验收记录与用量都保留 |
+| 取消 | `cancel` 后不再创建 / 派发样本，未开始的样本记为 `cancelled`；进行中样本的下一次续跑在 prepare 被拒绝并留下终态回执；已发生的执行与用量保留，不关闭或合并任何业务 PR。开批被中断、没有完整清单的协调 Issue 也可用 `cancel` 关闭 |
+| 推进时机 | 样本 Run 由 `GITHUB_TOKEN` 派发，不产生 `workflow_run`；任务工作流的 `advance-evaluation-batch` 作业在样本 Run 结束时显式请求推进（协调器最多等待该 Run 完成 5 分钟），另有每小时补偿 |
+| 只在 prepare 结束的 Run | 重复派发（agent 被跳过且无终态回执）不作为样本结论；prepare 作出的取消 / 预算耗尽以机器人终态回执记录，受理失败的样本记为 `blocked` |
+| 未开始 / 受阻 / 报告缺失 | 仍列在样本全集与统计中；只有每个样本**最后一个 Run 自己的**报告登记后才关闭批次（较早 Handoff 段的报告不算），最多等待 6 小时 |
+| 开批校验 | 先冻结并校验计划、案例与基线，全部通过后才创建协调 Issue；案例号无效、缺锁文件或 SHA 不在默认分支历史时不留下任何记录。推进、查看与取消只依赖已冻结的清单，不因之后修改 `plans.json` 而停摆 |
+| 身份来源 | 样本的 `run.key` 只取 prepare 作业的任务元数据（Agent 无法改写）；只有 Agent 产物副本时，批次样本身份记为 `unresolved`，不归入任何样本 |
 | 两次定时触发同一日 | 批次键 `<计划>-<UTC 日期>`，第二次复用同一批；手动每次都是新批次（键含 Run ID），同一 Run 重跑复用 |
 
 样本状态：`planned / queued / running / passed / failed / blocked / budget-exhausted / cancelled / unknown`；

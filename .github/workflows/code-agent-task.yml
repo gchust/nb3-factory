@@ -49,6 +49,7 @@ jobs:
       default_branch: ${{ steps.prepare.outputs.default_branch }}
       base_ref: ${{ steps.prepare.outputs.base_ref }}
       base_sha: ${{ steps.prepare.outputs.base_sha }}
+      evaluation_sample: ${{ steps.prepare.outputs.evaluation_sample }}
     steps:
       # repository_dispatch loads the entry workflow from the default branch.
       # Only this small handoff protocol follows that revision; task code is pinned.
@@ -885,6 +886,26 @@ jobs:
           FACTORY_REPORT_REF: ${{ github.event.repository.default_branch }}
           FACTORY_TASK_DELIVERED: ${{ needs.publish.result == 'success' }}
         run: bash control/.github/scripts/dispatch-task-reports.sh
+
+  # Runs started with GITHUB_TOKEN emit no workflow_run event, so a batch sample
+  # asks its coordinator to advance explicitly (it waits for this run to finish).
+  advance-evaluation-batch:
+    needs: [prepare, agent, verify-final, publish, report-failure]
+    if: always() && needs.prepare.outputs.evaluation_sample == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    continue-on-error: true
+    permissions:
+      actions: write
+    steps:
+      - name: Request an evaluation batch advance
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SOURCE_RUN_ID: ${{ github.run_id }}
+          REPORT_REF: ${{ github.event.repository.default_branch }}
+        run: |
+          gh workflow run evaluation-batches.yml --repo "$GITHUB_REPOSITORY" --ref "$REPORT_REF" \
+            --field action=advance --field "source_run=$SOURCE_RUN_ID"
 
   reply:
     env:

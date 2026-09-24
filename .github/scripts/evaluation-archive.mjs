@@ -14,6 +14,7 @@ import { commitRevision, planRevision } from './evaluation-registry.mjs';
 import { parseBoolean } from './factory-lib.mjs';
 
 const MAX_HTML = 32 * 1024 * 1024;
+const RETAIN_AGAIN_DAYS = 30;
 const output = (name, value) => process.env.GITHUB_OUTPUT && appendFileSync(process.env.GITHUB_OUTPUT, `${name}=${value}\n`);
 const json = file => JSON.parse(readFileSync(file, 'utf8'));
 const save = (file, value) => { mkdirSync(path.dirname(file), { recursive: true }); writeFileSync(file, `${JSON.stringify(value, null, 2)}\n`); };
@@ -72,7 +73,9 @@ export async function prepareRevision(client, { input, output: out, now = new Da
     const local = new Map(files.map(item => [item.path, item]));
     // Re-pack only when every original file is available byte-for-byte; otherwise keep the original bundle.
     const originals = stored.files.filter(item => item.path !== 'evaluation.json').map(item => local.get(item.path));
-    reproduced = originals.every(Boolean);
+    // Re-upload an identical copy only to extend retention, not on every replay.
+    const newest = Math.max(0, ...plan.entry.bundle.locations.map(item => Date.parse(item.at ?? '') || 0));
+    reproduced = originals.every(Boolean) && now.getTime() - newest > RETAIN_AGAIN_DAYS * 86400_000;
     if (reproduced) {
       bundle = createBundle({ evaluationBytes, files: originals.map(item => ({ ...item, evidenceIds: item.evidenceIds })) });
       reproduced = bundle.sha256 === plan.entry.bundle.sha256;
@@ -109,7 +112,7 @@ export async function commitPrepared(client, { input, env, runId, attempt, artif
     }
   }
   const location = registration.upload && Number(runId) > 0
-    ? { runId: Number(runId), attempt: Number(attempt) || 1, artifactName: registration.artifactName, artifactId: Number(artifactId) || null }
+    ? { runId: Number(runId), attempt: Number(attempt) || 1, artifactName: registration.artifactName, artifactId: Number(artifactId) || null, at: new Date().toISOString() }
     : null;
   const result = await commitRevision(client, { document, evaluationBytes, manifestBytes, fingerprint: registration.fingerprint,
     bundle: { sha256: registration.bundleSha256, size: registration.bundleSize }, location, outbox });

@@ -66,7 +66,7 @@ test('task preparation records the entry workflow separately from the pinned con
 test('batch coordination accepts no control SHA, budget, script or URL input and never builds itself', () => {
   const workflow = read('evaluation-batches.yml');
   const inputs = workflow.split('workflow_dispatch:\n    inputs:\n')[1].split('\n  schedule:')[0];
-  assert.deepEqual([...inputs.matchAll(/^ {6}([a-z_]+):$/gm)].map(m => m[1]), ['action', 'plan', 'batch', 'dry_run']);
+  assert.deepEqual([...inputs.matchAll(/^ {6}([a-z_]+):$/gm)].map(m => m[1]), ['action', 'plan', 'batch', 'dry_run', 'source_run']);
   const { coordinate, evaluation, delivery } = jobs(workflow);
   assert.match(coordinate, /actions: write\n {6}contents: read\n {6}issues: write/);
   assert.doesNotMatch(coordinate, /secrets\.|contents: write|pnpm install|agent-browser|run-agent|download-artifact/);
@@ -83,4 +83,12 @@ test('batch coordination accepts no control SHA, budget, script or URL input and
   }
   // The daily preset label flow stays independent of evaluation plans.
   assert.doesNotMatch(read('scheduled-preset-tests.yml'), /evaluation/);
+});
+
+test('a batch sample run asks the coordinator to advance without passing anything it trusts', () => {
+  const { 'advance-evaluation-batch': advance } = jobs(read('code-agent-task.yml'));
+  assert.match(advance, /if: always\(\) && needs\.prepare\.outputs\.evaluation_sample == 'true'/);
+  assert.match(advance, /permissions:\n {6}actions: write\n/);
+  assert.match(advance, /--field action=advance --field "source_run=\$SOURCE_RUN_ID"/);
+  assert.doesNotMatch(advance, /secrets\.|checkout/);
 });

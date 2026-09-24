@@ -124,12 +124,15 @@ if (mode === 'select') {
   }
   const record = validateRecord({ ...source, usage }, repository, source.issue);
   // Trusted run identity lets later exports link handoffs without expired artifacts.
-  for (const root of [args.artifacts, args.task].filter(Boolean)) {
+  // Prefer the prepare-job artifact; the Agent artifact copy never supplies a batch-sample key.
+  for (const root of [args.task, args.artifacts].filter(Boolean)) {
     try {
       const metadata = JSON.parse(readFileSync(path.join(root, 'task-metadata.json'), 'utf8'));
       if (metadata.repository !== repository || metadata.issue?.number !== record.issue ||
           (metadata.run && Number(metadata.run.id) !== record.runId)) throw new Error('metadata does not match this run');
-      record.evaluation = executionFacts(metadata, args.artifacts, record);
+      const facts = executionFacts(metadata, args.artifacts, record);
+      if (root !== args.task && facts?.kind === 'batch-sample') throw new Error('batch-sample identity requires the prepare record');
+      record.evaluation = facts;
       break;
     } catch (error) {
       if (error.code !== 'ENOENT') console.warn(`::warning::Evaluation identity unavailable: ${error.message}`);

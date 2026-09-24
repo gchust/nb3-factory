@@ -62,6 +62,15 @@ export function budgetExhausted(state, phase, now = Date.now() / 1000) {
   return null;
 }
 
+// Used time and executions never drop below GitHub's own job records.
+function trustedUsage(budget, metadata, state) {
+  const used = metadata.evaluation?.budgetUsed ?? {};
+  const count = value => (Number.isSafeInteger(value) && value >= 0 ? value : 0);
+  const activeSeconds = Math.max(count(state.activeSeconds), count(used.activeSeconds));
+  return { budget, activeSeconds, activeSecondsBase: activeSeconds,
+    priorExecutions: Math.max(count(state.priorExecutions), count(used.executions)) };
+}
+
 export function saveState(file, state) {
   if (state.budget) state.activeSeconds = activeSeconds(state);
   mkdirSync(path.dirname(file), { recursive: true });
@@ -112,7 +121,7 @@ export function initialize(file, metadata) {
     pendingCriteria: [],
     failureKind: 'build',
     fullQaSeconds: 0,
-    ...(metadata.evaluation?.budget ? { budget: normalizeBudget(metadata.evaluation.budget), activeSeconds: 0, activeSecondsBase: 0 } : {}),
+    ...(metadata.evaluation?.budget ? trustedUsage(normalizeBudget(metadata.evaluation.budget), metadata, {}) : {}),
   };
   saveState(file, state);
   return state;
@@ -134,9 +143,12 @@ export function restoreState(source, destination, metadata) {
   }
   state.controlSha = process.env.FACTORY_CONTROL_SHA ?? state.controlSha;
   state.outcome = 'running';
-  if (state.budget) {
-    state.budget = normalizeBudget(state.budget);
-    state.activeSecondsBase = Number.isSafeInteger(state.activeSeconds) ? state.activeSeconds : 0;
+  // The fresh prepare metadata is trusted; the checkpoint shared the Agent's runner.
+  const expected = normalizeBudget(metadata.evaluation?.budget);
+  if (expected) {
+    if (JSON.stringify(normalizeBudget(state.budget ?? null)) !== JSON.stringify(expected))
+      throw new Error('Checkpoint budget differs from the trusted evaluation sample budget.');
+    Object.assign(state, trustedUsage(expected, metadata, state));
   }
   mkdirSync(destination, { recursive: true });
   const context = path.join(destination, 'repair-context');

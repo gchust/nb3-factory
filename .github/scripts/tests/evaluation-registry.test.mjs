@@ -39,8 +39,9 @@ test('identical facts reuse the revision and its original bytes; new facts appen
   assert.equal(replay.registration.bundleSha256, first.registration.bundleSha256);
   const index = JSON.parse(client.file(`${dir}/index.json`));
   assert.equal(index.revisions.length, 1);
-  assert.deepEqual(index.revisions[0].bundle.locations.map(l => l.runId), [900, 901]); // re-packed identical bytes add a retained copy
-  assert.notEqual(client.ref(), refAfterFirst);
+  // A replay within the retention window neither re-uploads nor commits anything.
+  assert.deepEqual(index.revisions[0].bundle.locations.map(l => l.runId), [900]);
+  assert.equal(client.ref(), refAfterFirst);
   // A reassessment is new content: revision 2; revision 1 keeps its exact bytes.
   const supplement = writeReview(root, 'completed', {}, 'build-review.supplement.json',
     { engine: 'pi', model: 'm', version: '1', runId: '700', attempt: 1, controlSha: 'd'.repeat(40), replay: true });

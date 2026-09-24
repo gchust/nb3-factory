@@ -140,7 +140,8 @@ export async function planDeliveries(client, { mode, type, key, revision, artifa
     if (!entry) throw new Error(`No registered ${itemType} revision ${itemRevision} for ${itemKey}`);
     const id = outboxId({ targetId: config.targetId, type: itemType, key: itemKey, revision: itemRevision });
     const queued = outbox.entries.find(item => item.id === id);
-    if (queued?.state === 'stored' && mode === 'scan') return;
+    // Automatic runs never resend a stored revision; an explicit replay may.
+    if (queued?.state === 'stored' && mode !== 'replay') return;
     const age = now.getTime() - Date.parse(entry.createdAt);
     const found = age > RETRY.bundleRetentionDays * 86400_000 && !preferred ? { zip: null, reason: '超过结果包保留期限。' }
       : await fetchBundle(client, entry, { preferredArtifactId: preferred, fetcher });

@@ -27,6 +27,10 @@ on:
         required: false
         type: boolean
         default: false
+      source_run:
+        description: Task run that requested this advance; only waited for, never trusted as input
+        required: false
+        type: string
   schedule:
     # Daily start of enabled plans (needs FACTORY_EVALUATION_PLANS_ENABLED=true).
     - cron: '23 1 * * *'
@@ -70,13 +74,14 @@ jobs:
           BATCH_PLAN: ${{ inputs.plan }}
           BATCH_KEY: ${{ inputs.batch }}
           BATCH_DRY_RUN: ${{ inputs.dry_run == true }}
+          SOURCE_RUN: ${{ inputs.source_run }}
           FACTORY_EVALUATION_PLANS_ENABLED: ${{ vars.FACTORY_EVALUATION_PLANS_ENABLED }}
           FACTORY_BUILD_REVIEW: ${{ vars.FACTORY_BUILD_REVIEW }}
           CODE_AGENT_ENGINE: ${{ vars.CODE_AGENT_ENGINE }}
         run: |
           export FACTORY_CONTROL_SHA="$(git -C control rev-parse HEAD)"
           node control/.github/scripts/evaluation-batch.mjs "$BATCH_ACTION" --plan "$BATCH_PLAN" --batch "$BATCH_KEY" \
-            --dry-run "$BATCH_DRY_RUN" --output "$RUNNER_TEMP/batch-export"
+            --dry-run "$BATCH_DRY_RUN" --source-run "$SOURCE_RUN" --output "$RUNNER_TEMP/batch-export"
       - name: Save the batch snapshot for registration
         id: export
         if: steps.coordinate.outputs.export == 'true'

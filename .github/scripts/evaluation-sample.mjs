@@ -24,7 +24,9 @@ export const markers = {
   receipt: '<!-- factory-evaluation-sample-v1:',
   dispatched: key => `<!-- factory-evaluation-sample-dispatched:${key} -->`,
   claim: (key, runId) => `<!-- factory-evaluation-sample-claim:${key}:${runId} -->`,
+  terminal: '<!-- factory-evaluation-sample-terminal-v1:',
 };
+export const TERMINAL_DECISIONS = ['cancelled', 'budget-exhausted'];
 const manifestPattern = /<!-- factory-evaluation-batch-manifest-v1:([a-f0-9]{64}):(\d+):(\d+)\n([A-Za-z0-9+/=]+)\n-->$/;
 const statePattern = /<!-- factory-evaluation-batch-state-v1:([A-Za-z0-9][A-Za-z0-9._-]{0,79}):([1-9]\d*):([a-f0-9]{64})\n([A-Za-z0-9+/=]+)\n-->$/;
 
@@ -139,6 +141,49 @@ export async function claimSample(client, sample, runId, serverUrl = 'https://gi
     `开始执行评测样本 \`${key}\`：[本轮 Actions](${serverUrl}/${client.repository}/actions/runs/${runId})。重复派发不会再次搭建同一样本。\n\n${markers.claim(key, runId)}`);
   sample.comments.push(comment);
   return true;
+}
+
+// Budget consumption from GitHub's own job records, not the Agent-writable
+// checkpoint: every earlier Agent execution of this sample (continuations,
+// recoveries and re-run attempts) and its wall-clock duration.
+export async function sampleUsage(client, issueNumber, { runId, attempt = 1, since = null, now = Date.now() } = {}) {
+  let activeSeconds = 0, executions = 0;
+  for (let page = 1; page <= 10; page++) {
+    const { workflow_runs: runs } = await client.request('GET', '/actions/workflows/code-agent-task.yml/runs',
+      { query: { ...(since ? { created: `>=${since}` } : {}), per_page: 100, page } });
+    for (const run of runs.filter(item => item.display_title?.startsWith(`Factory issue #${issueNumber} build 0 `))) {
+      const { jobs } = await client.request('GET', `/actions/runs/${run.id}/jobs`, { query: { filter: 'all', per_page: 100 } });
+      for (const job of jobs.filter(item => item.name === 'agent' && item.started_at && item.conclusion !== 'skipped')) {
+        if (run.id === runId && Number(job.run_attempt ?? 1) >= attempt) continue;
+        const start = Date.parse(job.started_at), end = Date.parse(job.completed_at ?? '') || now;
+        if (!Number.isFinite(start)) continue;
+        executions++;
+        activeSeconds += Math.max(0, Math.round((end - start) / 1000));
+      }
+    }
+    if (runs.length < 100) break;
+  }
+  return { activeSeconds, executions };
+}
+
+// A decision made at prepare (not by a build) is recorded for the coordinator.
+export async function recordTerminal(client, sample, runId, state, reason) {
+  if (!TERMINAL_DECISIONS.includes(state) || !positive(runId)) throw new Error('Invalid sample terminal decision');
+  const value = { version: 1, sampleKey: sample.receipt.sampleKey, runId, state };
+  const comment = await client.addComment(sample.receipt.issueNumber, `${markers.terminal}${JSON.stringify(value)} -->\n\n${reason}`);
+  sample.comments?.push(comment);
+  return comment;
+}
+export function readTerminals(comments, sampleKey) {
+  const found = new Map();
+  for (const comment of comments.filter(c => isBot(c.user) && (c.body ?? '').startsWith(markers.terminal))) {
+    try {
+      const first = comment.body.split(/\r?\n/, 1)[0];
+      const value = JSON.parse(first.slice(markers.terminal.length, -4));
+      if (value.version === 1 && value.sampleKey === sampleKey && positive(value.runId) && TERMINAL_DECISIONS.includes(value.state)) found.set(value.runId, value.state);
+    } catch { /* Not a terminal receipt. */ }
+  }
+  return found;
 }
 
 // The frozen control SHA must be a commit of the default branch history, not an arbitrary ref.

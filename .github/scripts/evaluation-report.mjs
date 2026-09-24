@@ -465,13 +465,23 @@ export function buildEvaluation({ report, root, taskRoot = null, exporter = {} }
   if (!object(record) || !/^[\w.-]+\/[\w.-]+$/.test(record.repository ?? '') || !positive(record.issue) ||
       !positive(record.runId) || !positive(record.attempt)) throw new Error('Invalid report record');
   const limitations = [];
-  const metadata = readOptional(root, 'task-metadata.json', limitations) ?? readOptional(taskRoot, 'task-metadata.json', limitations);
+  // The prepare-job artifact is outside the Agent's reach; the Agent artifact copy is a fallback.
+  const trusted = readOptional(taskRoot, 'task-metadata.json', limitations);
+  const local = readOptional(root, 'task-metadata.json', limitations);
+  const metadata = trusted ?? local;
+  if (trusted && local && canonicalJson(trusted.evaluation ?? null) !== canonicalJson(local.evaluation ?? null))
+    limitations.push({ code: 'metadata-mismatch', detail: 'Agent 产物中的任务身份与 prepare 记录不一致；以 prepare 记录为准。' });
   if (metadata && (metadata.repository !== record.repository || metadata.issue?.number !== record.issue ||
       (metadata.run && (Number(metadata.run.id) !== record.runId || Number(metadata.run.attempt) > record.attempt))))
     throw new Error('Task metadata does not match the reported run');
   let identity;
   if (metadata) identity = resolveTaskIdentity(metadata);
-  else {
+  if (identity && !trusted && identity.kind === 'batch-sample') {
+    // A batch-sample key must come from prepare, which verified the coordinator's assignment.
+    identity = null;
+    limitations.push({ code: 'identity-unverified', detail: '只取得 Agent 产物中的元数据，无法核实批次样本身份；不归入任何样本。' });
+  }
+  if (!identity) {
     identity = { runKey: `${record.repository}/issues/${record.issue}/unresolved/${record.runId}`, kind: 'initial', derivation: 'unresolved' };
     limitations.push({ code: 'metadata-missing', detail: '未取得任务元数据；运行身份无法确认，按单次执行导出，不与其他执行合并。' });
   }

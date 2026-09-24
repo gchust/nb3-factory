@@ -29,12 +29,28 @@ test('the budget is copied once into the checkpoint; handoff and recovery restor
   });
   assert.ok(readState(file).activeSeconds >= 1000);
   writeFileSync(path.join(root, 'a', 'agent.patch'), '');
-  // A continuation cannot reset the budget, even if its metadata said otherwise.
+  // A continuation cannot change the budget: a different one is refused, not adopted.
+  assert.throws(() => restoreState(path.join(root, 'a'), path.join(root, 'x'),
+    { ...metadata(), evaluation: { ...metadata().evaluation, budget: { ...budget, maxActiveSeconds: 86_400 } } }), /trusted evaluation sample budget/);
   const restored = withEnv({ FACTORY_JOB_STARTED_EPOCH_SECONDS: String(Math.floor(Date.now() / 1000) - 500) },
-    () => restoreState(path.join(root, 'a'), path.join(root, 'b'), { ...metadata(), evaluation: { ...metadata().evaluation, budget: { ...budget, maxActiveSeconds: 86_400 } } }));
+    () => restoreState(path.join(root, 'a'), path.join(root, 'b'), metadata()));
   assert.equal(restored.budget.maxActiveSeconds, 3600);
   assert.ok(readState(path.join(root, 'b', 'pipeline-state.json')).activeSeconds >= 1500);
   assert.equal(initialize(path.join(root, 'plain', 'pipeline-state.json'), metadata(false)).budget, undefined, 'ordinary tasks have no budget');
+  // The checkpoint shares the Agent's runner: a removed budget is refused, and GitHub's job records are a floor.
+  const tampered = readState(file); delete tampered.budget; writeFileSync(file, JSON.stringify(tampered));
+  assert.throws(() => restoreState(path.join(root, 'a'), path.join(root, 'c'), metadata()), /trusted evaluation sample budget/);
+  const reset = { ...readState(path.join(root, 'b', 'pipeline-state.json')), activeSeconds: 0, priorExecutions: 0 };
+  writeFileSync(path.join(root, 'b', 'agent.patch'), '');
+  writeFileSync(path.join(root, 'b', 'pipeline-state.json'), JSON.stringify(reset));
+  const trustedMetadata = { ...metadata(), evaluation: { ...metadata().evaluation, budgetUsed: { activeSeconds: 2400, executions: 2 } } };
+  const floored = restoreState(path.join(root, 'b'), path.join(root, 'd'), trustedMetadata);
+  assert.equal(floored.activeSecondsBase, 2400);
+  assert.equal(floored.priorExecutions, 2);
+  assert.match(continuationRefusal(floored, 1), /续跑次数/, 'a recovery cannot reset the continuation count');
+  // A re-run attempt starts a fresh checkpoint but inherits the measured usage.
+  const rerun = initialize(path.join(root, 'rerun', 'pipeline-state.json'), trustedMetadata);
+  assert.equal(rerun.activeSeconds, 2400);
 });
 
 test('repair count and remaining active time stop new phases before they start', () => {

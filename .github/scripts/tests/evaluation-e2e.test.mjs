@@ -29,9 +29,11 @@ test('5 samples, one with two handoffs, a report resent 3 times and one reassess
 
   // Export → register → keep the bundle as an artifact, exactly as the reporter jobs do.
   async function report(sample, root, record, prior) {
-    const exported = temporary(t), prepared = temporary(t);
+    const exported = temporary(t), prepared = temporary(t), task = temporary(t);
+    // The prepare job's own task artifact, which the Agent cannot modify.
+    put(task, 'task-metadata.json', JSON.parse(readFileSync(path.join(root, 'task-metadata.json'))));
     const built = reportFor(root, record, prior);
-    exportDraft({ report: built, artifacts: root, html: null, output: exported, exporter: { controlSha: control, runId: 9000 + record.runId, attempt: 1 } });
+    exportDraft({ report: built, artifacts: root, task, html: null, output: exported, exporter: { controlSha: control, runId: 9000 + record.runId, attempt: 1 } });
     const registration = await prepareRevision(client, { input: exported, output: prepared });
     const id = artifactId++;
     if (registration.upload) client.pages.addArtifact({ id, name: registration.artifactName, runId: 9000 + record.runId,

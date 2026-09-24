@@ -5,7 +5,7 @@ import path from 'node:path';
 import test from 'node:test';
 import { activeBatches, advanceBatch, batchDocument, cancelBatch, PLAN_LIMITS, startBatch, validatePlans } from '../evaluation-batch.mjs';
 import { commitRevision } from '../evaluation-registry.mjs';
-import { claimSample, markers, readManifest, resolveSample, SAMPLE_LABEL, verifyAncestor } from '../evaluation-sample.mjs';
+import { claimSample, markers, readManifest, recordTerminal, resolveSample, sampleUsage, SAMPLE_LABEL, verifyAncestor } from '../evaluation-sample.mjs';
 import { readSnapshot } from '../issue-presets.mjs';
 import { loadContract, validateSchema } from '../json-schema.mjs';
 import { control, fakeRepository, human, lock, names, presetBody, repository } from './evaluation-fixtures.mjs';
@@ -197,4 +197,82 @@ test('forged or inconsistent receipts cannot select a control plane; ordinary Is
   await assert.rejects(resolveSample(client, number), /not trusted/);
   client.state.compare = 'diverged';
   await assert.rejects(verifyAncestor(client, control, 'develop'), /default branch history/);
+});
+
+const registerReport = (client, runKey, runId, outcome) => commitRevision(client.pages, { document: { type: 'evaluation-report', revision: runId % 1000,
+  createdAt: '2026-09-25T04:00:00Z', source: { instance: repository }, run: { key: runKey }, outcome,
+  precedence: { producer: { runId, attempt: 1, startedAt: new Date(runId * 1000).toISOString() }, reviewState: 'not-reviewed', reviewRubric: 0, qaCoverage: 'partial' } },
+evaluationBytes: Buffer.from(String(runId)), manifestBytes: Buffer.from('{}'), fingerprint: String(runId).padStart(64, '0'), bundle: { sha256: 'b'.repeat(64), size: 1 }, location: null });
+
+test('a batch waits for the final run report, not an earlier handoff report', async () => {
+  const client = fakeRepository();
+  await start(client, plan(1));
+  const number = client.samples()[0].number;
+  let batch = await current(client);
+  const runKey = batch.manifest.samples[0].runKey;
+  client.run(number, { id: 8001, delivered: false, handoff: true });
+  await registerReport(client, runKey, 8001, { execution: 'running', acceptance: 'unknown', delivery: 'not-published' });
+  client.run(number, { id: 8002, conclusion: 'failure', delivered: false, previous: 8001 });
+  batch = await advanceBatch(client, batch, { now: Date.parse('2026-09-25T03:00:00Z') });
+  assert.equal(batch.state.state, 'active', 'the handoff report does not close the batch');
+  await registerReport(client, runKey, 8002, { execution: 'budget-exhausted', acceptance: 'unknown', delivery: 'not-published' });
+  batch = await advanceBatch(client, batch, { now: Date.parse('2026-09-25T04:00:00Z') });
+  const [item] = Object.values(batch.state.samples);
+  assert.equal(item.state, 'budget-exhausted');
+  assert.equal(item.report.revision, 2);
+  assert.equal(batch.state.state, 'completed');
+});
+
+test('an invalid case freezes nothing; a manifest-less coordinator can be cancelled to unblock new batches', async () => {
+  const client = fakeRepository();
+  client.state.issues.get(176).labels = [];
+  await assert.rejects(start(client), /factory:preset/);
+  assert.equal([...client.state.issues.values()].filter(i => names(i).includes('factory:evaluation-batch')).length, 0);
+  client.state.issues.get(176).labels = [{ name: 'factory:preset' }];
+  client.state.fail = (method, route, body) => method === 'POST' && route.endsWith('/comments') && body.body.includes('factory-evaluation-batch-manifest-v1');
+  const plans = plan();
+  await assert.rejects(startBatch(client, { plans, planKey: 'smoke', trigger: 'manual', now: 1, runId: 5, controlSha: control, env: {} }), /Injected/);
+  const key = 'smoke-19700101T000000Z-r5';
+  await assert.rejects(startBatch(client, { plans, planKey: 'smoke', trigger: 'manual', now: 2000, runId: 6, controlSha: control, env: {} }), /one active batch/);
+  const closed = await cancelBatch(client, key);
+  assert.equal(closed.coordinator.state, 'closed');
+  assert.equal((await startBatch(client, { plans, planKey: 'smoke', trigger: 'manual', now: 3000, runId: 7, controlSha: control, env: {} })).status, 'started');
+});
+
+test('prepare decisions are terminal receipts, and prepare-only duplicate runs never become the sample result', async () => {
+  const client = fakeRepository();
+  await start(client);
+  const number = client.samples()[0].number;
+  client.run(number, { id: 7101 });
+  // A later duplicate dispatch stopped at prepare (agent skipped): ignored.
+  client.run(number, { id: 7102, delivered: false });
+  client.state.jobs.set(7102, [{ name: 'agent', conclusion: 'skipped', steps: [] }]);
+  let batch = await advanceBatch(client, await current(client), { now: Date.parse('2026-09-25T03:00:00Z') });
+  const [first, second] = Object.values(batch.state.samples);
+  assert.equal(first.state, 'passed');
+  assert.equal(first.terminalRunId, 7101);
+  const next = client.samples()[1].number;
+  client.run(next, { id: 7201, delivered: false });
+  client.state.jobs.set(7201, [{ name: 'agent', conclusion: 'skipped', steps: [] }]);
+  await recordTerminal(client, await resolveSample(client, next), 7201, 'budget-exhausted', '预算已用尽');
+  batch = await advanceBatch(client, await current(client), { now: Date.parse('2026-09-25T04:00:00Z') });
+  assert.equal(Object.values(batch.state.samples)[1].state, 'budget-exhausted');
+  assert.equal(Object.values(batch.state.samples)[1].stateSource, 'prepare');
+  assert.equal(second.state, 'queued');
+});
+
+test('budget usage is measured from GitHub job records across runs and earlier attempts', async () => {
+  const client = fakeRepository();
+  client.state.runs.push({ id: 1, run_attempt: 1, display_title: 'Factory issue #9 build 0 from 0' }, { id: 2, run_attempt: 2, display_title: 'Factory issue #9 build 0 from 1' },
+    { id: 3, run_attempt: 1, display_title: 'Factory issue #10 build 0 from 0' });
+  const job = (attempt, minutes, conclusion = 'success') => ({ name: 'agent', run_attempt: attempt, conclusion, started_at: '2026-09-25T00:00:00Z',
+    completed_at: new Date(Date.parse('2026-09-25T00:00:00Z') + minutes * 60_000).toISOString() });
+  const request = client.request;
+  client.request = async (method, route, options) => {
+    const match = /^\/actions\/runs\/(\d+)\/jobs$/.exec(route);
+    if (match) return { jobs: { 1: [job(1, 10)], 2: [job(1, 20), job(2, 5)], 3: [job(1, 99)] }[match[1]] };
+    return request(method, route, options);
+  };
+  assert.deepEqual(await sampleUsage(client, 9, { runId: 2, attempt: 2 }), { activeSeconds: 1800, executions: 2 });
+  assert.deepEqual(await sampleUsage(client, 9, { runId: 3, attempt: 1 }), { activeSeconds: 2100, executions: 3 });
 });

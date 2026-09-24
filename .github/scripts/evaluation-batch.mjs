@@ -12,7 +12,7 @@ import { segmentPattern, taskEvaluationIdentity } from './evaluation-identity.mj
 import { readSubject } from './evaluation-registry.mjs';
 import { canonicalJson, EXPORTER_VERSION, PRODUCER } from './evaluation-report.mjs';
 import { BATCH_LABEL, chunkText, isBot, MANUAL_LABEL, manifestComment, markers, readManifest, readSampleReceipt, readState,
-  SAMPLE_LABEL, stateComment, verifyAncestor } from './evaluation-sample.mjs';
+  readTerminals, SAMPLE_LABEL, stateComment, verifyAncestor } from './evaluation-sample.mjs';
 import { extractIssueSections, parseBuildReviewMode, parseIssueTask } from './factory-lib.mjs';
 import { clonedBody, readPresetSource, replaceSection, writeSnapshot } from './issue-presets.mjs';
 import { stripTaskTitle } from './task-compat.mjs';
@@ -173,6 +173,7 @@ export async function startBatch(client, { plans, planKey, trigger, now = Date.n
   if (trigger === 'schedule' && (!plan.enabled || plan.schedule !== 'daily')) return { status: 'skipped', reason: `${plan.key} is not an enabled daily plan` };
   const batchKey = batchKeyFor(plan, trigger, now, runId);
   let coordinator = await findCoordinator(client, batchKey);
+  let frozen = null;
   if (!coordinator) {
     const active = [];
     for (const issue of await coordinators(client, 'open')) {
@@ -183,10 +184,9 @@ export async function startBatch(client, { plans, planKey, trigger, now = Date.n
       if (trigger === 'schedule') return { status: 'skipped', reason: `Another batch is active: ${active.join(', ')}` };
       throw new Error(`Only one active batch is supported in v1; active: ${active.join(', ')}. Cancel it or wait.`);
     }
-    if (dryRun) {
-      const manifest = await freezeBatch(client, { plan, batchKey, trigger, now, controlSha, env, coordinatorIssue: 0 });
-      return { status: 'planned', batchKey, manifest };
-    }
+    // Freeze and validate first: a wrong case number or unusable baseline creates nothing.
+    frozen = await freezeBatch(client, { plan, batchKey, trigger, now, controlSha, env, coordinatorIssue: 0 });
+    if (dryRun) return { status: 'planned', batchKey, manifest: frozen };
     await ensureLabel(client, BATCH_LABEL, 'Evaluation batch coordination record (never a build task)');
     await ensureLabel(client, MANUAL_LABEL, 'Factory maintenance Issue; never enters the Code Agent queue');
     coordinator = await client.request('POST', '/issues', { body: {
@@ -197,7 +197,8 @@ export async function startBatch(client, { plans, planKey, trigger, now = Date.n
   const batch = await loadBatch(client, coordinator);
   if (!batch.manifest) {
     // An interrupted start never dispatched a sample, so freezing again is safe and complete.
-    const manifest = await freezeBatch(client, { plan, batchKey, trigger, now, controlSha, env, coordinatorIssue: coordinator.number });
+    const manifest = frozen ? { ...frozen, coordinatorIssue: coordinator.number }
+      : await freezeBatch(client, { plan, batchKey, trigger, now, controlSha, env, coordinatorIssue: coordinator.number });
     const json = JSON.stringify(manifest);
     const hash = sha256(json);
     const parts = chunkText(Buffer.from(json).toString('base64'));
@@ -294,9 +295,19 @@ export async function observeSample(client, batch, item, spec, now) {
   const wall = manifest.budget.maxActiveSeconds * 3 + 6 * 3600;
   const stale = item.dispatchedAt && now - Date.parse(item.dispatchedAt) > wall * 1000;
   if (runs.some(run => run.status !== 'completed')) return stale ? { state: 'unknown', reason: '超过墙钟保护期限仍未结束；释放串行槽位，执行记录保留。' } : { state: 'running' };
-  const latest = runs.at(-1);
-  if (!latest) return { state: 'queued', redispatch: !item.dispatchedAt || now - Date.parse(item.dispatchedAt) > 30 * 60_000 };
-  const { jobs } = await client.request('GET', `/actions/runs/${latest.id}/attempts/${latest.run_attempt}/jobs`, { query: { per_page: 100 } });
+  const terminals = readTerminals(await listAll(client, `/issues/${item.issue}/comments`), spec.key);
+  // The latest run that did something: a prepare decision, an Agent execution, or a failure.
+  // A duplicate or waiting dispatch ends after prepare with success and is ignored.
+  let latest = null, jobs = [];
+  for (const run of [...runs].reverse()) {
+    if (terminals.has(run.id)) return { state: terminals.get(run.id), stateSource: 'prepare', terminalRunId: run.id };
+    ({ jobs } = await client.request('GET', `/actions/runs/${run.id}/attempts/${run.run_attempt}/jobs`, { query: { per_page: 100 } }));
+    if (run.conclusion !== 'success' || jobs.some(job => job.name === 'agent' && job.conclusion && job.conclusion !== 'skipped')) { latest = run; break; }
+  }
+  if (!latest) {
+    if (labelNames(issue).includes('agent:needs-input')) return { state: 'blocked', stateSource: 'run', terminalRunId: runs.at(-1)?.id ?? null, reason: '样本输入未通过受理，需要维护者处理。' };
+    return { state: 'queued', redispatch: !runs.length && (!item.dispatchedAt || now - Date.parse(item.dispatchedAt) > 30 * 60_000) };
+  }
   const outcome = taskOutcome(latest, jobs);
   // Exit 75 is not a terminal state; the slot stays occupied until the chain ends.
   if (outcome === 'handoff') return stale ? { state: 'unknown', reason: 'Handoff 后长时间没有续跑；释放串行槽位。' } : { state: 'running' };
@@ -338,6 +349,7 @@ export async function advanceBatch(client, batch, { now = Date.now() } = {}) {
       const summary = await reportSummary(client, spec.runKey);
       if (!summary) continue;
       item.report = { state: 'available', revision: summary.revision, execution: summary.execution ?? null, acceptance: summary.acceptance ?? null };
+      item.reportRunId = summary.producerRunId;
       // A run-derived terminal state is refined once that run's own report arrives.
       if (TERMINAL.has(item.state) && item.stateSource === 'run' && summary.producerRunId === item.terminalRunId)
         Object.assign(item, { state: fromReport(summary), stateSource: 'report' });
@@ -368,7 +380,8 @@ export async function advanceBatch(client, batch, { now = Date.now() } = {}) {
     const items = manifest.samples.map(s => state.samples[s.key]);
     const lastTerminal = Math.max(0, ...items.map(item => Date.parse(item.terminalAt ?? '') || 0));
     if (items.every(item => TERMINAL.has(item.state)) &&
-        (items.every(item => !item.issue || item.report?.state === 'available') || now - lastTerminal > REPORT_GRACE_SECONDS * 1000)) {
+        // An earlier handoff run's report is not the final result of its sample.
+        (items.every(item => !item.issue || !item.terminalRunId || item.reportRunId === item.terminalRunId) || now - lastTerminal > REPORT_GRACE_SECONDS * 1000)) {
       state.state = state.cancelled ? 'cancelled' : 'completed';
       state.completedAt = stamp;
     }
@@ -383,7 +396,12 @@ export async function cancelBatch(client, batchKey, { now = Date.now() } = {}) {
   const coordinator = await findCoordinator(client, batchKey);
   need(coordinator, `Unknown batch ${batchKey}`);
   const batch = await loadBatch(client, coordinator);
-  need(batch.manifest && batch.state, `Batch ${batchKey} has no frozen manifest`);
+  if (!batch.manifest || !batch.state) {
+    // An interrupted start never dispatched a sample; closing it unblocks new batches.
+    await client.addComment(coordinator.number, `评测批次 \`${batchKey}\` 没有完整的冻结清单，未派发任何样本；按取消请求关闭。`);
+    batch.coordinator = await client.request('PATCH', `/issues/${coordinator.number}`, { body: { state: 'closed' } });
+    return batch;
+  }
   if (batch.state.state === 'active' && !batch.state.cancelled) {
     await saveState(client, batch, { ...structuredClone(batch.state), cancelled: true, cancelledAt: iso(now), sequence: batch.state.sequence + 1, updatedAt: iso(now) });
   }
@@ -438,6 +456,16 @@ export function batchDocument(batch, { exporter = {} } = {}) {
   };
 }
 
+// A sample run requests an advance from its own last job; wait until it has completed.
+export async function waitForRun(client, runId, { attempts = 30, pause = ms => new Promise(resolve => setTimeout(resolve, ms)) } = {}) {
+  for (let n = 0; n < attempts; n++) {
+    const run = await client.request('GET', `/actions/runs/${runId}`);
+    if (run?.status === 'completed' || run?.path !== '.github/workflows/code-agent-task.yml') return run;
+    await pause(10_000);
+  }
+  return null; // The hourly compensation still advances later.
+}
+
 async function main() {
   const [action, ...argv] = process.argv.slice(2);
   const args = Object.fromEntries(Array.from({ length: argv.length / 2 }, (_, i) => [argv[i * 2].replace(/^--/, ''), argv[i * 2 + 1]]));
@@ -445,8 +473,10 @@ async function main() {
   const client = new GitHubClient({ token: process.env.GITHUB_TOKEN, repository: process.env.GITHUB_REPOSITORY, apiUrl: process.env.GITHUB_API_URL });
   const env = process.env;
   const exporter = { controlSha: env.FACTORY_CONTROL_SHA, runId: env.GITHUB_RUN_ID, attempt: env.GITHUB_RUN_ATTEMPT };
-  const { default_branch: defaultBranch } = await client.getRepository();
-  const plans = validatePlans(JSON.parse(readFileSync(path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../evaluations/plans.json'), 'utf8')), { defaultBranch });
+  // Running batches depend only on their frozen manifests; plans are read for starts only.
+  const loadPlans = async () => validatePlans(JSON.parse(readFileSync(path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../evaluations/plans.json'), 'utf8')),
+    { defaultBranch: (await client.getRepository()).default_branch });
+  if (/^[1-9]\d*$/.test(args['source-run'] ?? '')) await waitForRun(client, Number(args['source-run']));
   const lines = [];
   const exportBatch = batch => {
     if (!args.output || !batch?.manifest) return;
@@ -457,6 +487,7 @@ async function main() {
     if (env.GITHUB_OUTPUT) appendFileSync(env.GITHUB_OUTPUT, 'export=true\n');
   };
   if (action === 'start' || action === 'scheduled') {
+    const plans = await loadPlans();
     const selected = action === 'scheduled' ? (env.FACTORY_EVALUATION_PLANS_ENABLED === 'true' ? plans.filter(p => p.enabled && p.schedule === 'daily') : []) : [plans.find(p => p.key === args.plan)];
     if (action === 'scheduled' && !selected.length) lines.push('没有启用的定时评测计划（需要 FACTORY_EVALUATION_PLANS_ENABLED=true 且计划 enabled + schedule=daily）；未创建任务。');
     for (const plan of selected) {

@@ -294,3 +294,21 @@ test('the finalized contract rejects unscoped ids, fabricated scores and oversiz
   huge.evidence = Array.from({ length: 1900 }, (_, i) => ({ ...document.evidence[0], id: `qa/9/${i}.png`, observation: 'x'.repeat(3000) }));
   assert.throws(() => finalizeEvaluation(huge, { revision: 1, createdAt: '2026-09-25T00:00:00Z' }), /refusing to truncate/);
 });
+
+test('identity comes from the prepare record; an Agent-side copy cannot claim a batch sample', t => {
+  const agent = temporary(t), task = temporary(t);
+  buildArtifacts(agent, { sample: { batchKey: 'b-1', caseKey: 'F00', sampleIndex: 1 } });
+  let document = finalize(buildEvaluation({ report: reportFor(agent, usageRecord()), root: agent, exporter }).draft);
+  assert.equal(document.run.identity, 'unresolved');
+  assert.ok(document.limitations.some(l => l.code === 'identity-unverified'));
+  const trusted = JSON.parse(readFileSync(path.join(agent, 'task-metadata.json')));
+  put(task, 'task-metadata.json', trusted);
+  document = finalize(buildEvaluation({ report: reportFor(agent, usageRecord()), root: agent, taskRoot: task, exporter }).draft);
+  assert.equal(document.run.key, `${repository}/batches/b-1/F00/1`);
+  assert.equal(document.run.kind, 'batch-sample');
+  const forged = { ...trusted, evaluation: { ...trusted.evaluation, sampleIndex: 2, sampleKey: 'b-1/F00/2', runKey: `${repository}/batches/b-1/F00/2` } };
+  put(agent, 'task-metadata.json', forged);
+  document = finalize(buildEvaluation({ report: { record: usageRecord(), records: [usageRecord()] }, root: agent, taskRoot: task, exporter }).draft);
+  assert.equal(document.run.key, `${repository}/batches/b-1/F00/1`, 'the prepare record wins');
+  assert.ok(document.limitations.some(l => l.code === 'metadata-mismatch'));
+});
