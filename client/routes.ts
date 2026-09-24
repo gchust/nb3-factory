@@ -1,4 +1,4 @@
-import { Home } from 'lucide-react';
+import { Home, Library } from 'lucide-react';
 import {
   defineAppRoutes,
   defineSettingsRoutes,
@@ -15,6 +15,20 @@ const appRoutes: AppClientRouteContribution = defineAppRoutes([
     name: 'home',
     navigation: { title: 'navigation.home', icon: Home },
     path: '/',
+  },
+  {
+    // The one business page this application ships. Its authorization names the
+    // same page resource registered on the server, so the grant that opens the
+    // menu entry is the grant a permission set records.
+    auth: 'required',
+    authz: {
+      resource: { type: 'page', id: 'library.materials' },
+      action: 'access',
+    },
+    componentLoader: () => import('./pages/library/index.js'),
+    name: 'library-materials',
+    navigation: { title: 'library.navigation', icon: Library },
+    path: '/library',
   },
   {
     auth: 'guest',
