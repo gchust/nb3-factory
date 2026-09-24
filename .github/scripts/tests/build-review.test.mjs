@@ -53,10 +53,16 @@ const fs = require('node:fs');
 const input = JSON.parse(fs.readFileSync('review-input.json', 'utf8'));
 if (process.env.FACTORY_AGENT_ROLE !== 'review' || process.env.GITHUB_TOKEN || process.env.FACTORY_ADMIN_PASSWORD) process.exit(7);
 const score = {score:73,reason:'Fixture observation',evidence:['E1']};
-const review = {version:1,inputHash:input.basis.inputHash,summary:'Fixture-only review',
- modules:[{name:'Data access',scope:'Customer creation',limitations:'No concurrency coverage',criteria:['B01'],scores:{design:score,completeness:{score:null,reason:'No implementation coverage',evidence:[]},agentFriendliness:score,outputQuality:score}}],
+const frameworkScore = {...score,evidence:['E2']};
+const review = {version:2,inputHash:input.basis.inputHash,summary:'Fixture-only framework review',
+ modules:[{name:'Data access',scope:'Customer creation',limitations:'No concurrency coverage',criteria:['B01'],
+ targets:[{kind:'library',id:'@nocobase/example',api:'customer',evidence:['E2']}],
+ capability:{status:'supported',adoption:'used',reason:'Fixture API used by scenario',evidence:['E1','E2']},
+ scores:{requirementFit:{...score,evidence:['E1','E2']},usability:frameworkScore,design:frameworkScore,completeness:{score:null,reason:'No implementation coverage',evidence:[]},agentFriendliness:frameworkScore},applicationOutcome:score}],
  findings:[],ui:{status:'not-reviewed',score:null,reason:'No image inspection',evidence:[]},
- evidence:[{id:'E1',kind:'code',path:'app/server/customer.ts',lines:[1,1],observation:'Read actual captured source',excerpt:'MODEL FABRICATION',mediaId:'MODEL FABRICATION'}],limitations:[]};
+ evidence:[{id:'E1',kind:'code',path:'app/server/customer.ts',lines:[1,1],observation:'Read actual captured source',excerpt:'MODEL FABRICATION',mediaId:'MODEL FABRICATION'},
+ {id:'E2',kind:'package',path:'packages/@nocobase/example/dist/index.d.ts',lines:[1,1],observation:'Read public framework API'}],limitations:[]};
+if (${JSON.stringify(behavior)} === 'old-rubric') review.version = 1;
 if (${JSON.stringify(behavior)} === 'wrong-hash') review.inputHash = 'c'.repeat(64);
 if (${JSON.stringify(behavior)} === 'modify') {fs.chmodSync('app/server/customer.ts',0o600);fs.writeFileSync('app/server/customer.ts','modified');}
 fs.writeFileSync('assessment.json', ${JSON.stringify(behavior)} === 'malformed' ? '{oops' : JSON.stringify(review));
@@ -155,7 +161,7 @@ test('full independent mock CLI path records provenance, real excerpts and separ
   assert.match(result.html, /独立 Agent 评审/); assert.match(result.html, /73<small>/);
   assert.equal(result.facts.buildReview.process.rounds[0].reports[0].checks[0].status, 'failed');
 });
-for (const behavior of ['wrong-hash', 'modify', 'malformed']) test(`review ${behavior} fails softly and keeps delivery intact`, async t => {
+for (const behavior of ['wrong-hash', 'modify', 'malformed', 'old-rubric']) test(`review ${behavior} fails softly and keeps delivery intact`, async t => {
   const f = fixture(t); installMock(f, behavior);
   const result = await runBuildReview(f.workspace, f.artifacts, f.env);
   assert.equal(result.state, 'failed'); assert.equal(result.evaluation, null);
@@ -232,6 +238,7 @@ test('compact entry is fingerprinted and excludes full catalog; replay preserves
   const input = readReviewJsonForTest(f.artifacts, 'build-review-input.json');
   assert.equal(input.files, undefined); assert.equal(input.catalog.path, 'review-files.json');
   assert.ok(input.catalog.count > 0); assert.equal(input.budgetSeconds, 900);
+  assert.equal(input.rubricVersion, 2); assert.match(input.assessmentTarget, /NocoBase3 libraries/);
   const source = { ...original.basis };
   const replay = await runBuildReview(f.workspace, f.artifacts, { ...f.env, GITHUB_RUN_ID: '200', GITHUB_RUN_ATTEMPT: '1' }, { source });
   assert.equal(replay.state, 'completed', replay.reason);

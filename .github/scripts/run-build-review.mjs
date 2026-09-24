@@ -126,6 +126,7 @@ export function materializeEvidence(review, snapshot, catalog) {
 
 export function finalizeAssessment(snapshot, captured, basis, finished) {
   const raw = readReviewJson(snapshot, 'assessment.json');
+  if (raw.version !== basis.rubricVersion) throw new Error('Assessment must use the requested framework rubric');
   validateEvaluation(raw, basis.inputHash, captured.files);
   const partial = !finished || raw.progress?.complete === false;
   if (partial && (!raw.modules.length || !raw.evidence.length)) throw new Error('No assessed module checkpoint');
@@ -187,7 +188,7 @@ export async function runBuildReview(workspace, artifacts, env = process.env, op
       .split('\n').filter(line => line.startsWith('+++ b/')).map(line => `app/${line.slice(6)}`))]
       .filter(file => captured.files.some(item => item.path === file));
     const input = {
-      rubricVersion, basis, requirements: metadata.task?.requirements ?? '',
+      rubricVersion, assessmentTarget: 'NocoBase3 libraries, built-in plugins and development guidance; application is the test scenario', basis, requirements: metadata.task?.requirements ?? '',
       acceptanceCriteria: metadata.task?.acceptanceCriteria ?? '', reviewCriteria: metadata.task?.reviewCriteria ?? '',
       process: captured.process, changedFiles: changedFiles.slice(0, 80),
       catalog: { path: 'review-files.json', sha256: catalogHash, count: captured.files.length },
@@ -195,7 +196,7 @@ export async function runBuildReview(workspace, artifacts, env = process.env, op
     };
     basis.inputHash = digest(JSON.stringify(input));
     save(path.join(snapshot, 'review-input.json'), input);
-    save(path.join(snapshot, 'assessment.json'), { version: 1, inputHash: basis.inputHash,
+    save(path.join(snapshot, 'assessment.json'), { version: rubricVersion, inputHash: basis.inputHash,
       summary: '尚未完成任何模块的证据评审。', modules: [], findings: [], evidence: [],
       ui: { status: 'not-reviewed', score: null, reason: '尚未执行跨页面图像审阅。', evidence: [] },
       limitations: ['评审进行中，未覆盖的模块不推断通过。'], progress: { complete: false, pendingModules: [] } });

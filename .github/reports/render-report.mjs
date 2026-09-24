@@ -213,16 +213,16 @@ export async function renderHtml(facts, inputNotes, evidenceRoot) {
   if(f.delivery.ci==='failed') attention.unshift({title:'自动检查未通过',detail:f.delivery.ciSource||'查看来源运行记录。'});
   let body=m.sampleNotice?`<div class="report-banner">${escape(m.sampleNotice)}</div>`:'';
   if(notesWarning) body+=`<div class="report-banner">${escape(notesWarning)}</div>`;
-  body+=`<section class="section" id="overview"><div class="hero"><div><div class="eyebrow">Delivery ${m.issue} / ${escape(m.snapshotDate)}</div><h1>${escape(m.title)}</h1><p>${escape(notes?.summary || f.delivery.qaSummary || '本轮未提供业务说明，请查看下方状态与已采集证据。')}</p><div class="hero-actions">${links}<a class="btn primary" href="#acceptance">查看验收依据</a></div><div class="hero-meta"><span>对应提交 <code title="${escape(m.headSha)}">${escape(m.headSha ? m.headSha.slice(0,12) : '未取得交付 SHA')}</code></span><span>Run ${escape(m.runId)} / attempt ${m.attempt}</span><span>目标 <code>${escape(m.targetBranch)}</code></span></div></div><div class="hero-badge">${tag(statusLabels[f.delivery.status],f.delivery.status==='failed'?'bad':'warn')}</div></div>`;
+  body+=`<section class="section" id="overview"><div class="hero"><div><div class="eyebrow">Delivery ${m.issue} / ${escape(m.snapshotDate)}</div><h1>${escape(m.title)}</h1><p>${escape(notes?.summary || f.delivery.qaSummary || '本轮未提供业务说明，请查看下方状态与已采集证据。')}</p><div class="hero-actions">${links}<a class="btn primary" href="#build-review">查看框架评测</a><a class="btn" href="#acceptance">查看验收依据</a></div><div class="hero-meta"><span>对应提交 <code title="${escape(m.headSha)}">${escape(m.headSha ? m.headSha.slice(0,12) : '未取得交付 SHA')}</code></span><span>Run ${escape(m.runId)} / attempt ${m.attempt}</span><span>目标 <code>${escape(m.targetBranch)}</code></span></div></div><div class="hero-badge">${tag(statusLabels[f.delivery.status],f.delivery.status==='failed'?'bad':'warn')}</div></div>`;
   body+=`<div class="metrics">${metric('Agent 原始验收',f.checks.length?`${f.checks.filter(c=>c.status==='passed').length} / ${f.checks.length}`:'未提供','这是 Agent 的报告结论，不代替人工评审')}${metric('修改文件',fmt(f.changes?.total),f.changes?`${f.changes.added} 新增 · ${f.changes.modified} 修改 · ${f.changes.deleted} 删除`:'未采集，不按 0 处理')}${metric('截图证据',String(f.media.length),'来自本次选定报告的媒体清单')}${metric('已记录执行时间',duration(f.usage?.executionSeconds),f.usage?.scope||'未采集，不按 0 处理')}</div>`;
   body+=attention.map(a=>`<div class="alert"><div><h3>${escape(a.title)}</h3><p>${escape(a.detail)}</p>${a.source?`<div class="check-source">来源：${escape(a.source)}</div>`:''}</div></div>`).join('');
   body+='</section>';
+  body+=renderBuildReview(f.buildReview);
   if(notes?.highlights.length || notes?.flow.length) {
-    body+=`<section class="section">${sectionHead('What was delivered','先看业务结果，不先看日志')}<div class="note-grid">${notes.highlights.map(h=>`<article class="card note-card"><h3>${escape(h.title)}</h3><p>${escape(h.detail)}</p></article>`).join('')}</div>`;
+    body+=`<section class="section">${sectionHead('What was delivered','业务场景结果与流程')}<div class="note-grid">${notes.highlights.map(h=>`<article class="card note-card"><h3>${escape(h.title)}</h3><p>${escape(h.detail)}</p></article>`).join('')}</div>`;
     if(notes.flow.length) body+=`<div class="business-flow" aria-label="业务顺序示意">${notes.flow.map((s,i)=>`<div class="business-step"><b>${String(i+1).padStart(2,'0')}</b>${escape(s)}</div>`).join('<span aria-hidden="true">→</span>')}</div><p class="check-source">业务顺序示意，操作证据见逐项验收。</p>`;
     body+='</section>';
   }
-  body+=renderBuildReview(f.buildReview);
   body+=renderAcceptance(f);
   const categories=[...new Set(f.media.map(x=>x.category))];
   const featured=new Set(f.media.filter(x=>x.featured).map(x=>x.id));

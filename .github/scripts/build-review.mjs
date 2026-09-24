@@ -3,13 +3,32 @@ import { createHash } from 'node:crypto';
 import { lstatSync, readFileSync, readdirSync } from 'node:fs';
 import path from 'node:path';
 
-export const rubricVersion = 1;
+export const rubricVersion = 2;
 export const dimensions = {
   design: '设计合理性', completeness: '开发完整性',
   agentFriendliness: 'Agent 使用友好度', outputQuality: 'Agent 产出质量',
 };
+// Keep v1 labels for archived mixed application/framework assessments. Never
+// relabel their output-quality scores as framework capability scores.
+export const primaryFrameworkDimensions = {
+  requirementFit: '需求满足度', usability: '开发易用性', agentFriendliness: 'Agent 友好度',
+};
+export const frameworkDimensions = {
+  ...primaryFrameworkDimensions, design: '框架设计合理性', completeness: '框架实现完整性',
+};
+export const capabilityStates = { supported: '满足本次需求', partial: '部分满足', unsupported: '不满足', unknown: '证据不足' };
+export const adoptionStates = { used: '采用公开能力', 'not-used': '未采用', workaround: '存在绕行', unknown: '采用情况待确认' };
+export const targetKinds = { library: '内部库', plugin: '内置插件', guidance: '开发指引 / Skill' };
+export const reviewDimensions = review => review.version === 2 ? frameworkDimensions : dimensions;
+const substantive = evidence => evidence.kind !== 'screenshot' && !/(?:^|\/)package\.json$/.test(evidence.path);
+export function targetsEvidence(target, evidence) {
+  if (!substantive(evidence)) return false;
+  return target.kind === 'guidance' ? evidence.path === target.id : evidence.path.startsWith(`packages/${target.id}/`);
+}
+const scenarioEvidence = evidence => evidence.path.startsWith('artifacts/') ||
+  (evidence.path.startsWith('app/') && !/^app\/(?:\.agents\/|AGENTS\.md$)/.test(evidence.path));
 export const owners = {
-  framework: 'NocoBase3 内核', plugin: 'NocoBase3 插件', template: '应用模板',
+  framework: 'NocoBase3 内部库 / 内核', plugin: 'NocoBase3 插件', template: '应用模板',
   documentation: '文档 / Skill / 示例', application: 'Agent / 业务实现',
   factory: '工厂流程', environment: '环境 / 外部服务', unknown: '归因待确认',
 };
@@ -86,7 +105,7 @@ export function collectReviewProcess(root) {
 }
 
 export function validateEvaluation(review, inputHash, catalog) {
-  need(object(review) && review.version === 1 && review.inputHash === inputHash, 'Review input identity mismatch');
+  need(object(review) && [1, 2].includes(review.version) && review.inputHash === inputHash, 'Review input identity mismatch');
   text(review.summary, 'summary');
   list(review.modules, 'modules', 30); list(review.findings, 'findings', 60);
   list(review.evidence, 'evidence', 100); list(review.limitations, 'limitations', 30);
@@ -132,7 +151,38 @@ export function validateEvaluation(review, inputHash, catalog) {
     text(module.limitations, 'module.limitations'); list(module.criteria, 'module.criteria', 100);
     module.criteria.forEach(id => text(id, 'criterion id', 100)); unique(module.criteria, 'module.criteria');
     need(object(module.scores), 'module.scores required');
-    for (const key of Object.keys(dimensions)) score(module.scores[key], key);
+    for (const key of Object.keys(reviewDimensions(review))) score(module.scores[key], key);
+    if (review.version === 2) {
+      list(module.targets, 'module.targets', 6);
+      need(module.targets.length > 0, 'A framework module needs an explicit library, plugin or guidance target');
+      unique(module.targets.map(target => target.id), 'module.targets');
+      for (const target of module.targets) {
+        need(object(target) && Object.hasOwn(targetKinds, target.kind), 'Invalid framework target kind');
+        text(target.id, 'target.id', 500); text(target.api, 'target.api');
+        if (target.kind === 'guidance') need(safeRelative(target.id) &&
+          /^(?:app\/\.agents\/skills\/.+\.md|app\/AGENTS\.md|packages\/@nocobase\/.+\.md)$/.test(target.id), 'Guidance target must name a captured guide');
+        else need(/^@nocobase\/[a-z0-9-]+$/.test(target.id), 'Library/plugin target must name an @nocobase package');
+        refs(target.evidence);
+        need(target.evidence.every(id => targetsEvidence(target, review.evidence.find(e => e.id === id))), 'Target evidence must come from its own API, implementation or guide, not application code or a package manifest');
+      }
+      const frameworkRefs = values => values.map(id => review.evidence.find(e => e.id === id))
+        .filter(e => module.targets.some(target => targetsEvidence(target, e)));
+      for (const [key, assessment] of Object.entries(module.scores)) {
+        need(Object.hasOwn(frameworkDimensions, key), 'Application outcome does not belong in framework scores');
+        if (assessment.score !== null) need(frameworkRefs(assessment.evidence).length > 0, `${key}: direct framework/guide evidence required; app success alone is not a framework score`);
+      }
+      if (module.scores.completeness.score !== null) need(frameworkRefs(module.scores.completeness.evidence).some(e =>
+        e.path.startsWith('packages/') && /\.(?:[cm]?js|tsx?)$/.test(e.path) && !/\.d\.ts$/.test(e.path)),
+        'Framework completeness requires library/plugin implementation or tests, not just types, guidance or application code');
+      if (module.scores.requirementFit.score !== null) need(module.scores.requirementFit.evidence.some(id => scenarioEvidence(review.evidence.find(e => e.id === id))),
+        'Requirement fit needs a scenario observation as well as framework evidence');
+      const capability = module.capability;
+      need(object(capability) && Object.hasOwn(capabilityStates, capability.status) && Object.hasOwn(adoptionStates, capability.adoption), 'Framework capability and adoption must be distinguished');
+      text(capability.reason, 'capability.reason'); refs(capability.evidence, capability.status !== 'unknown');
+      if (capability.status !== 'unknown') need(frameworkRefs(capability.evidence).length > 0, 'Capability conclusion requires direct framework evidence');
+      if (capability.status === 'unknown') need(module.scores.requirementFit.score === null, 'Unknown capability cannot have a requirement-fit score');
+      score(module.applicationOutcome, 'applicationOutcome');
+    }
   }
   unique(review.findings.map(finding => finding.id), 'findings');
   for (const finding of review.findings) {
@@ -143,6 +193,12 @@ export function validateEvaluation(review, inputHash, catalog) {
     need(['open', 'resolved', 'unknown', 'not-applicable'].includes(finding.status), 'Invalid finding status');
     for (const key of ['title', 'detail', 'impact', 'suggestedChange']) text(finding[key], `finding.${key}`);
     refs(finding.evidence, true);
+    if (review.version === 2 && ['framework', 'plugin', 'documentation', 'template'].includes(finding.owner) && finding.confidence === 'confirmed') {
+      need(finding.evidence.some(id => {
+        const evidence = review.evidence.find(e => e.id === id);
+        return substantive(evidence) && /^(?:packages\/|app\/\.agents\/skills\/|app\/AGENTS\.md$)/.test(evidence.path);
+      }), 'Confirmed framework findings require direct library/plugin/guide evidence; implementation retrospectives alone are only clues');
+    }
     if (finding.kind === 'misleading') {
       text(finding.claimed, 'misleading.claimed'); text(finding.observed, 'misleading.observed');
     }
@@ -163,7 +219,8 @@ export function validateBuildReview(report, identity) {
     need(String(report.basis[key]) === String(identity[key]), `Review ${key} does not match this run`);
   }
   if (['completed', 'partial'].includes(report.state)) {
-    need(report.basis.rubricVersion === rubricVersion && /^[a-f0-9]{64}$/.test(report.basis.inputHash), 'Missing rubric/input fingerprint');
+    need([1, 2].includes(report.basis.rubricVersion) && /^[a-f0-9]{64}$/.test(report.basis.inputHash), 'Missing rubric/input fingerprint');
+    need(report.evaluation?.version === report.basis.rubricVersion, 'Evaluation does not match its recorded rubric version');
     validateEvaluation(report.evaluation, report.basis.inputHash);
     if (report.state === 'partial') need(report.evaluation.modules.length > 0 && report.evaluation.evidence.length > 0, 'Partial review requires assessed modules and evidence');
     for (const evidence of report.evaluation.evidence) {

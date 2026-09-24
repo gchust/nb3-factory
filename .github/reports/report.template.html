@@ -63,9 +63,12 @@
 .review-refs{display:inline-flex;flex-wrap:wrap;gap:6px;margin-top:6px}.review-refs a{font:11px ui-monospace,monospace;padding:3px 8px;border:1px solid var(--border);border-radius:5px;text-decoration:underline;text-underline-offset:3px}.review-ui{padding:22px;margin-top:20px}.review-group{margin:26px 0}.review-group>h3,.review-evidence>h3{font-size:17px;margin-bottom:14px}.review-group>h3>span{font-size:12px;color:var(--muted);font-weight:400;margin-left:8px}.review-finding{margin-bottom:12px}.review-badges{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}.review-contrast{display:grid;grid-template-columns:1fr 1fr;gap:20px;background:var(--subtle);padding:18px;margin-top:18px;border-radius:8px}.review-contrast h4{font-size:11px;color:var(--muted);margin-bottom:6px}.review-evidence{margin-top:26px}.review-evidence summary{overflow-wrap:anywhere}.review-evidence details:target,.review-module:target{outline:2px solid var(--muted);outline-offset:3px}
 @media(max-width:760px){.review-dimensions,.review-contrast{grid-template-columns:1fr}.review-process{gap:8px}.review-process>div{padding:12px}.review-process strong{font-size:21px}.review-module>summary{flex-wrap:wrap}.review-summary{font-size:14px}}
 
+/* Framework rubric: three primary scores remain visible on narrow screens. */
+.review-framework table{min-width:760px}.review-framework code{white-space:normal;overflow-wrap:anywhere}
+@media(max-width:760px){.review-framework table,.review-framework tbody{display:block;min-width:0}.review-framework thead{display:none}.review-framework tr{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));padding:14px;border-bottom:1px solid var(--border)}.review-framework tr:last-child{border-bottom:0}.review-framework td{display:block;padding:8px 4px;border:0}.review-framework td:first-child{grid-column:1/-1;min-width:0;max-width:none}.review-framework td:last-child{grid-column:1/-1;min-width:0}.review-framework td[data-label]::before{content:attr(data-label);display:block;font-size:11px;color:var(--muted);margin-bottom:6px}.review-framework td p{overflow-wrap:anywhere}}
 </style></head><body><aside aria-label="报告导航" class="sidebar"><a class="brand" href="#overview"><div class="brandmark">&gt;_</div><div><strong>Code Agent</strong><span class="subtitle">DELIVERY REPORT</span></div></a><div class="nav-label">ISSUE {{ISSUE}}</div><nav class="nav"><a class="active" href="#overview"><span class="nav-index">01</span>交付总览</a>
-<a href="#build-review"><span class="nav-index">02</span>模块评审</a>
-<a href="#framework-feedback"><span class="nav-index">03</span>基础设施反馈</a>
+<a href="#build-review"><span class="nav-index">02</span>框架评测</a>
+<a href="#framework-feedback"><span class="nav-index">03</span>框架帮助与问题</a>
 <a href="#acceptance"><span class="nav-index">04</span>验收记录</a>
 <a href="#evidence"><span class="nav-index">05</span>效果与证据</a>
 <a href="#problems"><span class="nav-index">06</span>遇到的问题</a>
