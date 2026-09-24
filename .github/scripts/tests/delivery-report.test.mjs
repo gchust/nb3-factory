@@ -32,7 +32,7 @@ function artifacts(t,{status='passed',round=2}={}) {
 test('fixed v2 template keeps every action, observation, screenshot, requirement and explicit missing row',async t=>{
  const {root}=artifacts(t); const result=await makeDeliveryReport(receipt(),root);
  assert.equal(result.facts.checks.length,2); assert.equal(result.facts.checks[1].status,'not-verified');
- for(const phrase of ['验收记录','填写真实表单','新记录显示','完整原始验收要求','遇到的问题','可改进的点','培训列表','factory-template-version','name="factory-report-id"']) assert.ok(result.html.includes(phrase),phrase);
+ for(const phrase of ['验收记录','填写真实表单','新记录显示','完整原始验收要求','问题与改进','独立评测的问题与建议','培训列表','factory-template-version','name="factory-report-id"']) assert.ok(result.html.includes(phrase),phrase);
  assert.ok(result.html.includes('data:image/png;base64,'));
  assert.doesNotMatch(result.html,/开发者资料与下一步|https:\/\/[^"\s]+\.js/);
  assert.equal(result.facts.media.length,1);
@@ -46,7 +46,8 @@ test('legacy retrospective without cost or status is displayed without inventing
 });
 test('missing retro is not zero problems and malformed retro cannot erase QA',async t=>{
  const {root}=artifacts(t); let result=await makeDeliveryReport(receipt(),root);
- assert.match(result.html,/问题复盘未提供/); assert.match(result.html,/改进建议未提供/);
+ assert.match(result.html,/未提供可选的实现者过程笔记/); assert.match(result.html,/未进行独立评测/);
+ assert.doesNotMatch(result.html,/问题复盘未提供|改进建议未提供/);
  put(root,'retro.json',{unrecognized:'保留原始内容'});
  result=await makeDeliveryReport(receipt(),root);
  assert.match(result.html,/创建客户/); assert.equal(result.facts.rawRetro.unrecognized,'保留原始内容');

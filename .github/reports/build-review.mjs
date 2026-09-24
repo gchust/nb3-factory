@@ -33,6 +33,36 @@ function retainedLegacy(report) {
   return `<details class="card raw-record review-legacy"><summary>保留的旧口径 v1 评分 · 不转换为框架得分</summary><div class="subsection-body"><p>历史分数、理由、证据及其原始含义保持不变，不与本次五项框架维度比较或平均。</p><pre>${escape(JSON.stringify(report.legacyReview, null, 2))}</pre></div></details>`;
 }
 
+function renderFindings(findings, framework) {
+  let html = '';
+  const confidence = { confirmed: '评审者判断 · 有证据', suspected: '待确认' };
+  const status = { open: '未解决', resolved: '已解决', unknown: '处理状态未知', 'not-applicable': '不适用' };
+  const severity = { info: '信息', minor: '轻微', major: '重要', critical: '严重' };
+  const groups = framework ? [
+    { title: '库、插件与指引', findings: findings.filter(f => ['framework', 'plugin', 'template', 'documentation'].includes(f.owner)) },
+    { title: '归因待确认 · 不直接扣框架分', findings: findings.filter(f => f.owner === 'unknown') },
+    { title: '业务实现与执行环境观察 · 不计入框架得分', findings: findings.filter(f => ['application', 'factory', 'environment'].includes(f.owner)), collapsed: true },
+  ] : [{ title: '', findings: findings }];
+  for (const group of groups.filter(group => group.findings.length)) {
+    if (group.collapsed) html += `<details class="card raw-record"><summary>${group.title}（${group.findings.length}）</summary><div class="subsection-body">`;
+    else if (group.title) html += `<h3 class="review-owner-title">${group.title}</h3>`;
+    for (const [kind, label] of Object.entries(findingKinds)) {
+      const findings = group.findings.filter(finding => finding.kind === kind);
+      if (!findings.length) continue;
+      html += `<div class="review-group"><h3>${label} <span>${findings.length}</span></h3>`;
+      for (const finding of findings) {
+        const important = ['major', 'critical'].includes(finding.severity) && finding.status !== 'resolved';
+        html += `<details class="card review-finding" id="review-finding-${escape(finding.id)}" ${important ? 'open' : ''}><summary><div><strong>${escape(finding.title)}</strong><div class="review-badges">${tag(owners[finding.owner])}${tag(confidence[finding.confidence], finding.confidence === 'suspected' ? 'warn' : '')}${tag(severity[finding.severity], important ? 'bad' : '')}${tag(status[finding.status])}</div></div><span>⌄</span></summary><div class="subsection-body"><p>${escape(finding.detail)}</p>${kind === 'misleading' ? `<div class="review-contrast"><div><h4>文档 / API 声称</h4><p>${escape(finding.claimed)}</p></div><div><h4>实际观察</h4><p>${escape(finding.observed)}</p></div></div>` : ''}<dl class="retro-fields"><div><dt>实际影响 / 提供的帮助</dt><dd>${escape(finding.impact)}</dd></div><div><dt>建议改法 / 应保留的能力</dt><dd>${escape(finding.suggestedChange)}</dd></div></dl>${refs(finding.evidence)}</div></details>`;
+      }
+      html += '</div>';
+    }
+    if (group.collapsed) html += '</div></details>';
+  }
+  return html;
+}
+
+// Return separate presentation slots after one validation; findings are shared
+// only for exact supplementary-note links, never to rewrite source assessments.
 export function renderBuildReview(input) {
   let report = input;
   if (['completed', 'partial'].includes(report?.state)) {
@@ -50,7 +80,16 @@ export function renderBuildReview(input) {
   if (report?.basis) html += `<p class="check-source">评审源产物：Run ${escape(report.basis.runId)} / attempt ${escape(report.basis.attempt)}${report.reviewer?.replay ? ` · 后补评审 Run ${escape(report.reviewer.runId)} / attempt ${escape(report.reviewer.attempt)}` : ''}。发布重试不改变评审源产物编号。</p>`;
   if (report?.state === 'partial') html += `<div class="report-banner"><strong>部分评审 · 尚未全覆盖</strong><p>${escape(report.reason)}</p></div>`;
   if (report?.supplementalUsage) html += `<p class="check-source">本次后补评审用量（独立于原搭建）：${escape(report.supplementalUsage.totalTokens ?? '未提供')} Token（含缓存）；不重复计入原搭建。</p>`;
-  if (!review) return html + `<div class="card report-empty"><strong>本轮不显示评分</strong><p>${escape(report?.reason || '没有独立评审记录，不能据此声称没有问题。')}</p></div></section><section class="section" id="framework-feedback"><div class="section-head"><h2>NocoBase3 的帮助与问题</h2></div><div class="card report-empty">尚无独立评审结论；已有实现者自述仍保留在“遇到的问题”和“可改进的点”。</div></section>`;
+  if (!review) {
+    const state = report?.execution?.buildReviewMode === 'off' ? '本轮采用轻量模式，未进行独立评测。'
+      : report?.state === 'failed' ? '独立评测未完成或结果无效，当前材料不足。'
+        : '本轮未进行独立评测，不能据此声称没有问题或建议。';
+    return {
+      html: html + `<div class="card report-empty"><strong>本轮不显示评分</strong><p>${escape(report?.reason || state)}</p></div></section><section class="section" id="framework-feedback"><div class="section-head"><h2>框架帮助与证据</h2></div><p class="muted">尚无独立评审结论；已有过程记录见<a class="text-link" href="#problems">问题与改进</a>。</p></section>`,
+      feedbackHtml: `<p class="muted">${state}</p>${report?.reason ? `<p class="check-source">${escape(report.reason)}</p>` : ''}`,
+      findings: [],
+    };
+  }
   html += `<p class="review-summary">${escape(review.summary)}</p>`;
   const scored = review.modules.reduce((n, module) => n + Object.keys(dimensions).filter(key => module.scores[key].score !== null).length, 0);
   html += `<div class="review-caption">${review.modules.length} 个${framework ? '框架能力单元' : '模块'} · ${scored} / ${review.modules.length * Object.keys(dimensions).length} 项已评分${framework ? ' · 主表展示三项重点，设计与可靠性见详情' : ''}</div><div class="card table-wrap review-matrix ${framework ? 'framework-matrix' : ''}"><table><thead><tr><th>${framework ? '框架能力 / 具体被评对象' : '基础模块 / 本次范围'}</th>${primary.map(key => `<th>${dimensions[key]}</th>`).join('')}${framework ? '' : '<th>首轮 QA</th><th>最终轮 QA</th>'}</tr></thead><tbody>`;
@@ -67,35 +106,17 @@ export function renderBuildReview(input) {
   html += '</div>' + retainedLegacy(report);
   if (framework) html += `<details class="card raw-record"><summary>业务验证背景 · 不计入框架评分</summary><div class="subsection-body">${processHtml(report?.process)}</div></details>`;
   html += `<article class="card review-ui"><header><h3>${framework ? '业务界面观察 · 非框架评分' : '界面样式与交互一致性'}</h3>${value(review.ui.score)}</header><p>${escape(review.ui.reason)}</p>${refs(review.ui.evidence)}<p class="check-source">${review.ui.status === 'reviewed' ? '评审者声明已审阅所引用的图像；请展开证据核对观察，不以文件存在代替人工确认。' : '未执行跨页面图像审阅，不能因使用相同组件库而判为视觉一致。'}</p></article></section>`;
-  html += `<section class="section" id="framework-feedback"><div class="section-head"><div><div class="eyebrow">Infrastructure feedback</div><h2>${framework ? 'NocoBase3 的帮助与改进' : '旧口径反馈 · 保留原始归因'}</h2></div></div><p class="section-intro">优点说明具体基础能力的帮助；问题说明改动位置与依据。“有证据 / 待确认”均为独立评审者判断，不代替人工核验。</p>`;
-  const confidence = { confirmed: '评审者判断 · 有证据', suspected: '待确认' };
-  const status = { open: '未解决', resolved: '已解决', unknown: '处理状态未知', 'not-applicable': '不适用' };
-  const severity = { info: '信息', minor: '轻微', major: '重要', critical: '严重' };
-  const groups = framework ? [
-    { title: '库、插件与指引', findings: review.findings.filter(f => ['framework', 'plugin', 'template', 'documentation'].includes(f.owner)) },
-    { title: '归因待确认 · 不直接扣框架分', findings: review.findings.filter(f => f.owner === 'unknown') },
-    { title: '业务实现与执行环境观察 · 不计入框架得分', findings: review.findings.filter(f => ['application', 'factory', 'environment'].includes(f.owner)), collapsed: true },
-  ] : [{ title: '', findings: review.findings }];
-  for (const group of groups) {
-    if (group.collapsed) html += `<details class="card raw-record"><summary>${group.title}（${group.findings.length}）</summary><div class="subsection-body">`;
-    else if (group.title) html += `<h3 class="review-owner-title">${group.title}</h3>`;
-    for (const [kind, label] of Object.entries(findingKinds)) {
-      const findings = group.findings.filter(finding => finding.kind === kind);
-      html += `<div class="review-group"><h3>${label} <span>${findings.length}</span></h3>`;
-      if (!findings.length) html += `<p class="muted">本轮未记录此类发现，不代表不存在。</p>`;
-      for (const finding of findings) {
-        const important = ['major', 'critical'].includes(finding.severity) && finding.status !== 'resolved';
-        html += `<details class="card review-finding" ${important ? 'open' : ''}><summary><div><strong>${escape(finding.title)}</strong><div class="review-badges">${tag(owners[finding.owner])}${tag(confidence[finding.confidence], finding.confidence === 'suspected' ? 'warn' : '')}${tag(severity[finding.severity], important ? 'bad' : '')}${tag(status[finding.status])}</div></div><span>⌄</span></summary><div class="subsection-body"><p>${escape(finding.detail)}</p>${kind === 'misleading' ? `<div class="review-contrast"><div><h4>文档 / API 声称</h4><p>${escape(finding.claimed)}</p></div><div><h4>实际观察</h4><p>${escape(finding.observed)}</p></div></div>` : ''}<dl class="retro-fields"><div><dt>实际影响 / 提供的帮助</dt><dd>${escape(finding.impact)}</dd></div><div><dt>建议改法 / 应保留的能力</dt><dd>${escape(finding.suggestedChange)}</dd></div></dl>${refs(finding.evidence)}</div></details>`;
-      }
-      html += '</div>';
-    }
-    if (group.collapsed) html += '</div></details>';
-  }
+  html += `<section class="section" id="framework-feedback"><div class="section-head"><div><div class="eyebrow">Infrastructure feedback</div><h2>${framework ? '框架帮助与证据' : '旧口径帮助与证据'}</h2></div></div><p class="section-intro">保留具体基础能力的帮助、覆盖范围与原始证据。“有证据 / 待确认”均为独立评审者判断，不代替人工核验。</p>`;
+  const findings = review.findings.filter(finding => finding.kind !== 'strength');
+  html += renderFindings(review.findings.filter(finding => finding.kind === 'strength'), framework);
+  html += '<p class="check-source">问题、误导与建议统一收录在<a class="text-link" href="#problems">问题与改进</a>，不在此重复展示。</p>';
+  const provenance = `来源：独立评审 · 口径 v${review.version} · 源 Run ${escape(report.basis.runId)} / attempt ${escape(report.basis.attempt)}${report.reviewer?.replay ? ` · 后补评审 Run ${escape(report.reviewer.runId)} / attempt ${escape(report.reviewer.attempt)}` : ''}`;
+  const feedbackHtml = `<p class="check-source">${provenance}</p>${report.state === 'partial' ? `<p class="report-banner">评测仅部分完成；以下仅为已有发现，未覆盖部分不能推断为无问题。${escape(report.reason)}</p>` : ''}${findings.length ? renderFindings(findings, framework) : `<p class="muted">${report.state === 'partial' ? '已完成部分未提出问题或改进建议；其余尚未评测。' : '已完成独立评测，本轮未提出问题或改进建议；不等于不存在问题。'}</p>`}`;
   html += `<details class="card raw-record" open><summary>本次评审的覆盖限制</summary><div class="subsection-body">${list(review.limitations)}</div></details>`;
   html += `<details class="card raw-record"><summary>评审基线与版本指纹</summary><div class="subsection-body"><p>评审针对已封存候选补丁；可能在原搭建内或之后单独补跑。与 PR 当前最新提交不是同一概念，评审不修改补丁。</p><pre>${escape(JSON.stringify({ reviewer: report.reviewer, ...report.basis }, null, 2))}</pre></div></details>`;
   html += '<div class="review-evidence"><h3>证据与原文</h3>';
   for (const evidence of review.evidence) {
     html += `<details class="card raw-record" id="review-evidence-${escape(evidence.id)}"><summary><strong>${escape(evidence.id)}</strong> · ${escape(evidence.path)}${evidence.lines ? `:${evidence.lines.join('–')}` : ''}</summary><div class="subsection-body"><p>${escape(evidence.observation)}</p>${evidence.kind === 'screenshot' ? evidence.mediaId ? `<button class="btn small" data-open="${escape(evidence.mediaId)}">查看原始截图</button>` : '<p class="check-source">截图未内嵌；请从本轮 Artifact 核对，缺图不伪装成已展示。</p>' : `<pre>${escape(evidence.excerpt)}</pre>`}<p class="check-source">原文件 SHA-256：${escape(evidence.sha256)}</p></div></details>`;
   }
-  return html + '</div></section>';
+  return { html: html + '</div></section>', feedbackHtml, findings };
 }

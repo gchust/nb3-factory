@@ -7,7 +7,7 @@ import { createHash } from 'node:crypto';
 import { renderBuildReview } from './build-review.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
-const TEMPLATE_VERSION = 4;
+const TEMPLATE_VERSION = 5;
 const escape = (value) => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const fmt = value => Number.isFinite(value) ? value.toLocaleString('en-US') : '未提供';
 const duration = value => Number.isFinite(value) ? `${Math.floor(value/3600)}:${String(Math.floor(value/60)%60).padStart(2,'0')}:${String(value%60).padStart(2,'0')}` : '未提供';
@@ -126,45 +126,54 @@ function renderAcceptance(f) {
   return html;
 }
 
-function renderRetrospective(f,retro,warning) {
-  const source=retro?.source || 'Agent 复盘（原记录未注明运行或阶段来源）';
-  let html=`<section class="section" id="problems">${sectionHead('Problems & resolutions','遇到的问题')}`;
-  if(warning) html+=`<div class="report-banner">${escape(warning)}；原有验收记录仍完整显示。</div>`;
-  if(retro) {
-    if(retro.summary) html+=`<p class="section-intro">${escape(retro.summary)}</p>`;
-    html+='<div class="retro-stack">';
-    for(const [i,b] of retro.blockers.entries()) {
-      // Do not infer "resolved" simply because a resolution string or a later successful run exists.
-      const status=b.status ?? 'unknown';
-      html+=`<article class="card retro-card" id="problem-${i+1}"><header><div><span class="eyebrow">问题 ${String(i+1).padStart(2,'0')} · ${escape(phaseLabels[b.phase]||b.phase)}</span><h3>${escape(b.title)}</h3></div>${tag(problemLabels[status],status==='resolved'?'good':status==='open'?'warn':'')}</header>
-      <p class="problem-symptom">${escape(b.symptom || '未提供问题现象')}</p><dl class="retro-fields">${field('原因',b.rootCause)}${field('处理方式',b.resolution)}</dl>
-      <div class="retro-foot"><span>影响 / 代价：${escape(b.cost || '未提供，不估算')}</span><span>来源：${escape(b.source || source)}</span></div></article>`;
+function renderRetrospective(f, retro, warning, review) {
+  const source = retro?.source || '实现者过程记录（原记录未注明运行或阶段来源）';
+  let html = `<section class="section" id="problems">${sectionHead('Problems & improvements', '问题与改进')}`;
+  html += '<p class="section-intro">汇总本轮已有材料，不新增分析。过程记录与独立评审分别标明来源；评审发现不等于本轮实际阻塞，也不因业务通过而标为已解决。</p>';
+  if (warning) html += `<p class="check-source">${escape(warning)}；原文保留，已有验收与独立评测不受影响。</p>`;
+  html += '<h3 class="context-heading">本轮过程记录</h3>';
+  if (retro?.summary) html += `<p class="section-intro">${escape(retro.summary)}</p>`;
+  if (retro?.blockers.length) {
+    html += '<div class="retro-stack">';
+    for (const [i, b] of retro.blockers.entries()) {
+      // A process observation is not interchangeable with a framework finding.
+      const status = b.status ?? 'unknown';
+      html += `<article class="card retro-card" id="problem-${i+1}"><header><div><span class="eyebrow">问题 ${String(i+1).padStart(2,'0')} · ${escape(phaseLabels[b.phase]||b.phase)}</span><h3>${escape(b.title)}</h3></div>${tag(problemLabels[status],status==='resolved'?'good':status==='open'?'warn':'')}</header>
+        <p class="problem-symptom">${escape(b.symptom || '未提供问题现象')}</p><dl class="retro-fields">${field('原因（实现者自述）',b.rootCause)}${field('处理方式',b.resolution)}</dl>
+        <div class="retro-foot"><span>影响 / 代价：${escape(b.cost || '未提供，不估算')}</span><span>来源：${escape(b.source || source)}</span></div></article>`;
     }
-    if(!retro.blockers.length) html+='<div class="card report-empty">本轮复盘未记录具体问题。</div>';
-    html+='</div>';
+    html += '</div>';
   } else {
-    html+='<div class="card report-empty"><strong>问题复盘未提供</strong><p>现有归档中没有可用的 retro.json，无法还原实现卡点、根因和修复过程；这不等于没有遇到问题。</p></div>';
-    const handoffs=f.runs.filter(r=>r.status==='handoff');
-    if(handoffs.length || f.attention.length) {
-      html+='<h3 class="context-heading">已有运行情况与证据提示</h3><p class="check-source">以下来自已有记录，不冒充 Agent 的根因分析。</p><div class="context-grid">';
-      html+=handoffs.map(r=>`<article class="card note-card"><div class="eyebrow">运行记录 · 非根因分析</div><h3>运行 ${escape(r.id)} 发生交接</h3><p>${escape(r.detail)}</p><p class="check-source">来源：运行 ${escape(r.id)} / attempt ${r.attempt}</p></article>`).join('');
-      html+=f.attention.map(a=>`<article class="card note-card"><div class="eyebrow">${a.checkId?`验收 ${escape(a.checkId)} · `:''}阅读批注</div><h3>${escape(a.title)}</h3><p>${escape(a.detail)}</p>${a.source?`<p class="check-source">来源：${escape(a.source)}</p>`:''}${a.checkId?`<a class="text-link" href="#check-${escape(a.checkId)}" data-expand="check-${escape(a.checkId)}">查看对应验收记录 →</a>`:''}</article>`).join('');
-      html+='</div>';
-    }
+    html += `<p class="muted">${retro ? '实现者未记录具体阻塞，不等于本轮没有问题。' : '本轮未提供可选的实现者过程笔记；不据此推断无问题，也不影响下方已有独立评测。'}</p>`;
   }
-  html+=`</section><section class="section" id="improvements">${sectionHead('Improvement opportunities','可改进的点')}`;
-  if(!retro) html+='<div class="card report-empty"><strong>改进建议未提供</strong><p>现有归档缺少复盘内容，不能凭空补出当时 Agent 的建议。</p></div>';
-  else if(!retro.improvements.length) html+='<div class="card report-empty">本轮复盘未提出改进建议。</div>';
-  else {
-    html+='<p class="section-intro">为什么值得改、具体改哪里，以及能否自动化；与已经发生的问题和修复结果分开记录。</p><div class="retro-stack">';
-    for(const [i,item] of retro.improvements.entries()) {
-      html+=`<article class="card improvement-card" id="improvement-${i+1}"><header><div><span class="eyebrow">建议 ${String(i+1).padStart(2,'0')} · ${escape(categoryLabels[item.category]||item.category)}</span><h3>${escape(item.title)}</h3></div>${tag(item.mechanizable?'可自动化':'需人工判断')}</header>
-      <p>${escape(item.detail || '改进理由未提供')}</p><div class="suggested-change"><strong>建议改动</strong><p>${escape(item.suggestedChange || '具体改动未提供')}</p></div><p class="check-source">来源：${escape(item.source || source)}</p></article>`;
-    }
-    html+='</div>';
+  const handoffs = f.runs.filter(r => r.status === 'handoff');
+  if (handoffs.length || f.attention.length) {
+    html += '<h3 class="context-heading">运行与验收记录</h3><p class="check-source">以下来自已有记录，不冒充 Agent 的根因分析。</p><div class="context-grid">';
+    html += handoffs.map(r=>`<article class="card note-card"><div class="eyebrow">运行记录 · 非根因分析</div><h3>运行 ${escape(r.id)} 发生交接</h3><p>${escape(r.detail)}</p><p class="check-source">来源：运行 ${escape(r.id)} / attempt ${r.attempt}</p></article>`).join('');
+    html += f.attention.map(a=>`<article class="card note-card"><div class="eyebrow">${a.checkId?`验收 ${escape(a.checkId)} · `:''}阅读批注</div><h3>${escape(a.title)}</h3><p>${escape(a.detail)}</p>${a.source?`<p class="check-source">来源：${escape(a.source)}</p>`:''}${a.checkId?`<a class="text-link" href="#check-${escape(a.checkId)}" data-expand="check-${escape(a.checkId)}">查看对应验收记录 →</a>`:''}</article>`).join('');
+    html += '</div>';
   }
-  if(f.rawRetro || (f.retro!==null && f.retro!==undefined)) html+=`<details class="card raw-record"><summary>查看原始复盘数据</summary><div class="subsection-body"><pre>${escape(JSON.stringify(f.rawRetro ?? f.retro,null,2))}</pre></div></details>`;
-  return html+'</section>';
+  // Preserve the old improvements deep link, without a second top-level section.
+  html += `<h3 class="context-heading" id="improvements">独立评测的问题与建议</h3>${review.feedbackHtml}`;
+  if (retro?.improvements.length) {
+    html += '<h3 class="context-heading">实现者补充建议</h3><p class="check-source">来自可选过程笔记，不代表已独立确认；相同建议引用上方评审，其余保留原文。</p><div class="retro-stack">';
+    // Only collapse identical proposals. Similar titles or different explanations
+    // must not erase observations, ownership, status, or conflicting conclusions.
+    const proposalKey = item => JSON.stringify([item.title, item.detail, item.suggestedChange].map(value => value.trim().replace(/\s+/gu, ' ')));
+    const proposals = new Map(review.findings.map(finding => [proposalKey(finding), finding.id]));
+    for (const [i, item] of retro.improvements.entries()) {
+      const existing = item.title.trim() && item.detail.trim() && item.suggestedChange.trim() ? proposals.get(proposalKey(item)) : null;
+      if (existing) {
+        html += `<p class="check-source" id="improvement-${i+1}">来源：${escape(item.source || source)} · ${escape(categoryLabels[item.category]||item.category)} · ${item.mechanizable?'可自动化':'需人工判断'}。同一建议已收录：<a class="text-link" href="#review-finding-${escape(existing)}">查看独立评测 ${escape(existing)}</a>。这不改变实现者记录的确认程度。</p>`;
+        continue;
+      }
+      html += `<article class="card improvement-card" id="improvement-${i+1}"><header><div><span class="eyebrow">建议 ${String(i+1).padStart(2,'0')} · ${escape(categoryLabels[item.category]||item.category)}</span><h3>${escape(item.title)}</h3></div>${tag(item.mechanizable?'可自动化':'需人工判断')}</header>
+        <p>${escape(item.detail || '改进理由未提供')}</p><div class="suggested-change"><strong>建议改动</strong><p>${escape(item.suggestedChange || '具体改动未提供')}</p></div><p class="check-source">来源：${escape(item.source || source)}</p></article>`;
+    }
+    html += '</div>';
+  }
+  if (f.rawRetro || (f.retro !== null && f.retro !== undefined)) html += `<details class="card raw-record"><summary>查看原始复盘数据</summary><div class="subsection-body"><pre>${escape(JSON.stringify(f.rawRetro ?? f.retro,null,2))}</pre></div></details>`;
+  return html + '</section>';
 }
 
 function renderUsageDetails(usage) {
@@ -207,7 +216,7 @@ export async function renderHtml(facts, inputNotes, evidenceRoot) {
   const attention=[...f.attention];
   if(f.delivery.status!=='pr-ready') attention.unshift({title:statusLabels[f.delivery.status],detail:'本轮不是完成交付。请查看本轮验收记录和问题记录。'});
   const openProblems=retro?.blockers.filter(b=>b.status==='open') ?? [];
-  if(openProblems.length) attention.unshift({title:`${openProblems.length} 个已记录问题尚未解决`,detail:openProblems.map(b=>b.title).join('；')+'。具体处理情况见“遇到的问题”。'});
+  if(openProblems.length) attention.unshift({title:`${openProblems.length} 个已记录问题尚未解决`,detail:openProblems.map(b=>b.title).join('；')+'。具体处理情况见“问题与改进”。'});
   const unsuccessful=f.checks.filter(c=>c.status!=='passed');
   if(unsuccessful.length) attention.unshift({title:`${unsuccessful.length} 项验收需要处理`,detail:unsuccessful.map(c=>`${c.id} ${c.title}：${checkLabels[c.status]}`).join('；')});
   if(f.delivery.ci==='failed') attention.unshift({title:'自动检查未通过',detail:f.delivery.ciSource||'查看来源运行记录。'});
@@ -222,7 +231,8 @@ export async function renderHtml(facts, inputNotes, evidenceRoot) {
     if(notes.flow.length) body+=`<div class="business-flow" aria-label="业务顺序示意">${notes.flow.map((s,i)=>`<div class="business-step"><b>${String(i+1).padStart(2,'0')}</b>${escape(s)}</div>`).join('<span aria-hidden="true">→</span>')}</div><p class="check-source">业务顺序示意，操作证据见逐项验收。</p>`;
     body+='</section>';
   }
-  body+=renderBuildReview(f.buildReview);
+  const review=renderBuildReview(f.buildReview);
+  body+=review.html;
   body+=renderAcceptance(f);
   const categories=[...new Set(f.media.map(x=>x.category))];
   const featured=new Set(f.media.filter(x=>x.featured).map(x=>x.id));
@@ -230,10 +240,10 @@ export async function renderHtml(facts, inputNotes, evidenceRoot) {
   body+=`<section class="section" id="evidence">${sectionHead('See the actual result','真实界面，按场景看')}<div class="toolbar"><button class="filter active" data-filter="featured">精选</button><button class="filter" data-filter="all">全部 ${f.media.length}</button>${categories.map(c=>`<button class="filter" data-filter="${escape(c)}">${escape(c)}</button>`).join('')}</div><div class="gallery">`;
   for(const shot of f.media) body+=`<figure class="card shot" data-category="${escape(shot.category)}" data-featured="${featured.has(shot.id)}" data-name="${escape(shot.id)}"><button class="shot-btn" data-open="${escape(shot.id)}" aria-label="放大 ${escape(shot.title)}"><img alt="${escape(shot.title)}" loading="lazy" src="${await imageSource(shot,base)}"><span class="shot-overlay">点击查看原图 ↗</span></button><figcaption><span>${escape(shot.title)}</span><span class="shot-category">${escape(shot.category)}</span></figcaption></figure>`;
   body+=`</div><div class="gallery-foot"><span id="gallery-status">${f.media.length?'截图已经内嵌，可离线查看。':'本轮未提供截图。'}</span><span>录像及未内嵌截图见本轮运行的 Artifact。</span></div>${f.uncovered?.length?`<details class="card raw-record"><summary>未单独截图的界面（${f.uncovered.length}）</summary><div class="subsection-body">${list(f.uncovered)}</div></details>`:''}</section>`;
-  body+=renderRetrospective(f,retro,retroWarning);
+  body+=renderRetrospective(f,retro,retroWarning,review);
   body+=`<section class="section" id="execution">${sectionHead('Execution & usage','发生了什么，花了多少')}<div class="split"><div class="card run-panel"><h3>运行记录</h3>${f.runs.map(r=>`<div class="run"><div class="run-content"><div class="run-top"><strong>${escape(r.id)} / attempt ${r.attempt}</strong></div><p>${tag(statusLabels[r.status],r.status==='failed'?'bad':'')}</p><p>${escape(r.detail)}</p></div></div>`).join('')}<div class="ci-fact"><strong>自动检查：${escape(ciLabels[f.delivery.ci])}</strong><p class="check-source">${escape(f.delivery.ciSource||'未提供')}</p></div></div><div class="card usage-card"><div class="eyebrow">已记录 Token · 含缓存</div><div class="usage-big">${fmt(f.usage?.total)}</div>${tag(f.usage?(f.usage.incomplete?'采集可能不完整':'按已采集范围统计'):'用量未提供',f.usage?.incomplete?'warn':'')}<p>${escape(f.usage?.scope||'没有用量数据，不推算为零。')}</p><details class="subsection"><summary>展开用量分项 ⌄</summary><div class="subsection-body">${renderUsageDetails(f.usage)}<p class="check-source">${escape(f.usage?.source||'没有统计来源')}。不等同供应商账单，不推算费用。</p></div></details></div></div></section>`;
   if(f.timings?.length) body+=`<details class="card raw-record"><summary>本轮阶段耗时</summary><div class="subsection-body"><p>嵌套阶段不可相加为总耗时；仅展示已完成的计时。</p><div class="table-wrap"><table><tr><th>阶段</th><th>次数</th><th>时长</th></tr>${f.timings.map(t=>`<tr><td>${escape(t.stage)}</td><td>${fmt(t.calls)}</td><td>${duration(Math.round(t.durationMs/1000))}</td></tr>`).join('')}</table></div></div></details>`;
-  body+=`<footer class="report-footer">Factory report template v${TEMPLATE_VERSION} · ${escape(reportId)}<br>验收逐条保留；问题与改进来自复盘原文。此页面是归档展示，不是重新验收。</footer>`;
+  body+=`<footer class="report-footer">Factory report template v${TEMPLATE_VERSION} · ${escape(reportId)}<br>验收逐条保留；问题与改进汇总已有评测与可选过程记录，保留各自来源。此页面是归档展示，不是重新验收。</footer>`;
   const template=await readFile(resolve(HERE,'report.template.html'),'utf8');
   const script=template.match(/<script>([\s\S]*?)<\/script>/)?.[1];
   if(!script) throw new Error('模板缺少固定交互脚本');
