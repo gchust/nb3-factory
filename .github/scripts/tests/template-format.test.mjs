@@ -32,6 +32,8 @@ const requiredTargets = [
   'client/plugins.ts',
   'server/plugins.ts',
   'cli/plugins.ts',
+  'server/config/index.ts',
+  'server/config/mail.ts',
   'tests/logic',
   'vitest.config.ts',
 ];
