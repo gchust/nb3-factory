@@ -129,6 +129,7 @@ const enUS = {
   },
   navigation: {
     home: 'Home',
+    tickets: 'Tickets',
     open: 'Open navigation',
     close: 'Close navigation',
     expand: 'Expand navigation',
@@ -154,6 +155,92 @@ const enUS = {
   datePicker: {
     placeholder: 'Pick a date',
     rangePlaceholder: 'Pick a date range',
+  },
+  tickets: {
+    title: 'Support tickets',
+    description:
+      'Raise an IT request and follow it. Handlers see every ticket and move it from waiting to done.',
+    newTicket: 'New ticket',
+    empty: 'No tickets yet.',
+    searchPlaceholder: 'Search tickets',
+    view: 'View',
+    unassigned: 'Unassigned',
+    loadFailed: 'Unable to load tickets.',
+    column: {
+      title: 'Title',
+      category: 'Category',
+      status: 'Status',
+      submitter: 'Submitted by',
+      handler: 'Handler',
+      createdAt: 'Created',
+    },
+    status: {
+      all: 'All',
+      pending: 'Waiting',
+      processing: 'In progress',
+      completed: 'Completed',
+    },
+    category: {
+      computer: 'Computer',
+      account: 'Account',
+      other: 'Other',
+    },
+    create: {
+      title: 'New ticket',
+      description: 'Describe the issue so a handler can pick it up.',
+      submit: 'Submit ticket',
+      success: 'Ticket submitted',
+      successDescription: 'The ticket is now waiting for a handler.',
+      failed: 'Unable to submit the ticket',
+    },
+    common: {
+      retryHint: 'Please try again in a moment.',
+    },
+    detail: {
+      ticketNumber: 'Ticket #{{id}}',
+      submittedBy: 'Submitted by',
+      handledBy: 'Handler',
+      createdAt: 'Created',
+      updatedAt: 'Updated',
+      description: 'Description',
+      handlingNote: 'Handling note',
+      noNote: 'No handling note yet.',
+      handlerHint: 'Only you can see this action while the ticket is open.',
+      readOnly: 'This ticket is completed and can no longer be changed.',
+    },
+    action: {
+      start: 'Start handling',
+      complete: 'Complete',
+      startTitle: 'Start handling',
+      startDescription:
+        'Add a note describing how you will handle this ticket.',
+      completeTitle: 'Complete ticket',
+      completeDescription:
+        'Finish this ticket. The note is optional and replaces the handling note.',
+      started: 'Ticket is now in progress',
+      completed: 'Ticket completed',
+      failed: 'Unable to update the ticket',
+    },
+    field: {
+      title: 'Title',
+      titlePlaceholder: 'Short summary of the problem',
+      category: 'Category',
+      description: 'Description',
+      descriptionPlaceholder: 'What happened, and what you already tried',
+      handlingNote: 'Handling note',
+      handlingNotePlaceholder: 'What you did or plan to do',
+      completeNotePlaceholder: 'Optional final note',
+    },
+    permissionSets: {
+      employee: 'Employee',
+      handler: 'Handler',
+    },
+    collection: {
+      title: 'Tickets',
+    },
+    recordAccess: {
+      submitted: 'Tickets I submitted',
+    },
   },
 };
 

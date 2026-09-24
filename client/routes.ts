@@ -1,4 +1,4 @@
-import { Home } from 'lucide-react';
+import { Home, Ticket } from 'lucide-react';
 import {
   defineAppRoutes,
   defineSettingsRoutes,
@@ -15,6 +15,16 @@ const appRoutes: AppClientRouteContribution = defineAppRoutes([
     name: 'home',
     navigation: { title: 'navigation.home', icon: Home },
     path: '/',
+  },
+  {
+    // Declaring no `authz` means an App page checks its route name as a page
+    // resource, so the seeded `it-employee` and `it-handler` sets decide who
+    // reaches it and who sees it in the menu.
+    auth: 'required',
+    componentLoader: () => import('./pages/tickets.js'),
+    name: 'tickets',
+    navigation: { title: 'navigation.tickets', icon: Ticket },
+    path: '/tickets',
   },
   {
     auth: 'guest',

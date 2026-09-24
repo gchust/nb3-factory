@@ -120,6 +120,7 @@ const zhCN: AppResource = {
   },
   navigation: {
     home: '首页',
+    tickets: '工单',
     open: '打开导航',
     close: '关闭导航',
     expand: '展开导航',
@@ -145,6 +146,90 @@ const zhCN: AppResource = {
   datePicker: {
     placeholder: '选择日期',
     rangePlaceholder: '选择日期范围',
+  },
+  tickets: {
+    title: '支持工单',
+    description:
+      '提交 IT 需求并跟进处理。处理人员可以看到全部工单，将待处理推进至已完成。',
+    newTicket: '新建工单',
+    empty: '暂无工单。',
+    searchPlaceholder: '搜索工单',
+    view: '查看',
+    unassigned: '未分配',
+    loadFailed: '工单加载失败。',
+    column: {
+      title: '标题',
+      category: '分类',
+      status: '状态',
+      submitter: '提交人',
+      handler: '处理人',
+      createdAt: '创建时间',
+    },
+    status: {
+      all: '全部',
+      pending: '待处理',
+      processing: '处理中',
+      completed: '已完成',
+    },
+    category: {
+      computer: '电脑',
+      account: '账号',
+      other: '其他',
+    },
+    create: {
+      title: '新建工单',
+      description: '描述遇到的问题，便于处理人员接手。',
+      submit: '提交工单',
+      success: '工单已提交',
+      successDescription: '工单正在等待处理人员处理。',
+      failed: '工单提交失败',
+    },
+    common: {
+      retryHint: '请稍后重试。',
+    },
+    detail: {
+      ticketNumber: '工单 #{{id}}',
+      submittedBy: '提交人',
+      handledBy: '处理人',
+      createdAt: '创建时间',
+      updatedAt: '更新时间',
+      description: '问题描述',
+      handlingNote: '处理说明',
+      noNote: '暂无处理说明。',
+      handlerHint: '工单未完成时，只有你能看到此操作。',
+      readOnly: '工单已完成，不能再修改。',
+    },
+    action: {
+      start: '开始处理',
+      complete: '完成',
+      startTitle: '开始处理',
+      startDescription: '填写处理说明，说明你打算如何处理该工单。',
+      completeTitle: '完成工单',
+      completeDescription: '结束该工单。处理说明可选，填写后会覆盖原有说明。',
+      started: '工单已进入处理中',
+      completed: '工单已完成',
+      failed: '工单更新失败',
+    },
+    field: {
+      title: '标题',
+      titlePlaceholder: '简要描述问题',
+      category: '分类',
+      description: '问题描述',
+      descriptionPlaceholder: '发生了什么，你已经尝试过什么',
+      handlingNote: '处理说明',
+      handlingNotePlaceholder: '你做了什么或打算怎么做',
+      completeNotePlaceholder: '可选的最终说明',
+    },
+    permissionSets: {
+      employee: '员工',
+      handler: '处理人员',
+    },
+    collection: {
+      title: '工单',
+    },
+    recordAccess: {
+      submitted: '我提交的工单',
+    },
   },
 };
 
