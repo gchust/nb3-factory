@@ -88,6 +88,31 @@ const zhCN: AppResource = {
     description: '向 AI 助手描述你的需求，逐步构建页面、数据模型和业务流程。',
   },
 
+  library: {
+    navigation: '资料库',
+    title: '资料库',
+    description:
+      '你可以阅读的全部资料。这里显示的内容由权限与规则决定，而不是这个页面。',
+    create: '新建资料',
+    edit: '编辑资料',
+    delete: '删除',
+    deleteConfirm: '确定删除“{{title}}”？此操作无法撤销。',
+    saved: '资料已保存',
+    saveFailed: '无法保存资料。',
+    deleted: '资料已删除',
+    deleteFailed: '无法删除资料。',
+    loadFailed: '无法加载资料。',
+    yes: '是',
+    no: '否',
+    field: {
+      title: '标题',
+      body: '正文',
+      published: '已发布',
+      confidential: '保密标记',
+      actions: '操作',
+    },
+  },
+
   appearance: {
     title: '外观',
     mode: '颜色模式',

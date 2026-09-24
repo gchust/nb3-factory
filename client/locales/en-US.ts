@@ -95,6 +95,31 @@ const enUS = {
       'Describe what you need to your AI Agent, then build pages, data models, and business workflows.',
   },
 
+  library: {
+    navigation: 'Library',
+    title: 'Materials library',
+    description:
+      'Every material you are allowed to read. What appears here is decided by permissions and rules, not by this page.',
+    create: 'New material',
+    edit: 'Edit material',
+    delete: 'Delete',
+    deleteConfirm: 'Delete "{{title}}"? This cannot be undone.',
+    saved: 'Material saved',
+    saveFailed: 'Unable to save the material.',
+    deleted: 'Material deleted',
+    deleteFailed: 'Unable to delete the material.',
+    loadFailed: 'Unable to load materials.',
+    yes: 'Yes',
+    no: 'No',
+    field: {
+      title: 'Title',
+      body: 'Body',
+      published: 'Published',
+      confidential: 'Confidential',
+      actions: 'Actions',
+    },
+  },
+
   appearance: {
     title: 'Appearance',
     mode: 'Color mode',
