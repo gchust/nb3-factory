@@ -11,7 +11,9 @@ const workflow: AppConfigFactory<WorkflowRuntimeConfig> = defineAppConfig(
       {
         sourceRoot: paths.server('workflows'),
         distRoot: paths.server('workflows'),
-        artifactDisk: 'local',
+        // See the `workflows` disk in `server/config/drive.ts`: run modules
+        // must be materialized somewhere Node can still resolve their imports.
+        artifactDisk: 'workflows',
         production: env.NODE_ENV === 'production',
       },
       {

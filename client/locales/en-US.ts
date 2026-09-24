@@ -94,6 +94,67 @@ const enUS = {
     description:
       'Describe what you need to your AI Agent, then build pages, data models, and business workflows.',
   },
+  serviceRequests: {
+    title: 'Service requests',
+    description:
+      'Create a request, assign an owner, and accept it to start the acceptance workflow and notify the owner.',
+    create: 'New request',
+    createDescription:
+      'The owner receives an in-app message once the request is accepted.',
+    refresh: 'Refresh',
+    retry: 'Retry',
+    loading: 'Loading service requests',
+    loadFailed: 'Could not load service requests',
+    empty: 'No service requests yet.',
+    searchPlaceholder: 'Search by title',
+    view: 'View',
+    accept: 'Accept',
+    accepted: 'Accepted',
+    acceptedToast: 'Request {{reference}} accepted',
+    acceptedDescription:
+      'The acceptance workflow finished and the owner has been notified.',
+    acceptedSlowDescription:
+      'The acceptance workflow is still running; refresh to see the final result.',
+    acceptFailed: 'Could not accept the request',
+    created: 'Request created',
+    createFailed: 'Could not create the request',
+    missingFields: 'Enter a title and choose an owner.',
+    urgent: 'Urgent',
+    selectAssignee: 'Select an owner',
+    assigneeHint: 'The owner receives the in-app notification.',
+    detailDescription: 'Stored acceptance state for this request.',
+    acceptedAt: 'Accepted at',
+    createdAt: 'Created at',
+    updatedAt: 'Updated at',
+    resultPending: 'Not determined yet',
+    notFound: 'Service request was not found.',
+    backToList: 'Back to requests',
+    openMessages: 'Message center',
+    workflowHint:
+      'Accepting this request runs the acceptance workflow and sends one in-app message to the owner. Its steps and result appear in Workflow management.',
+    columns: {
+      reference: 'Reference',
+      title: 'Title',
+      assignee: 'Owner',
+      status: 'Status',
+      result: 'Result',
+      createdAt: 'Created',
+    },
+    summary: {
+      total: 'All requests',
+      pending: 'Awaiting acceptance',
+      accepted: 'Accepted',
+      urgent: 'Urgent',
+    },
+    status: {
+      pending: 'Pending',
+      accepted: 'Accepted',
+    },
+    result: {
+      urgent: 'Urgent',
+      normal: 'Normal',
+    },
+  },
 
   appearance: {
     title: 'Appearance',
@@ -129,6 +190,8 @@ const enUS = {
   },
   navigation: {
     home: 'Home',
+    serviceRequests: 'Service requests',
+    messages: 'Message center',
     open: 'Open navigation',
     close: 'Close navigation',
     expand: 'Expand navigation',

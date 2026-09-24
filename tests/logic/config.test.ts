@@ -67,6 +67,23 @@ describe('application config', () => {
       visibility: 'private',
     });
     expect(drive.disks.public).toBeUndefined();
+    // A run module resolves its own `@nocobase/*` imports by walking up from
+    // where the Artifact materializes it, so the store has to live inside the
+    // code root (the workspace here, `dist` in a build) where `node_modules`
+    // is reachable. Moving it under storage breaks every workflow run in
+    // production even though the same run passes in development.
+    expect(drive.disks.workflows).toEqual({
+      driver: 'fs',
+      location: path.join(templateRootDir, 'workflow-artifacts'),
+      visibility: 'private',
+    });
+    expect(
+      path.relative(
+        templateRootDir,
+        runtime.config.get<AppDriveConfig>('drive')!.disks.workflows.location,
+      ),
+    ).not.toMatch(/^\.\./u);
+    expect(runtime.config.get('workflow.artifactDisk')).toBe('workflows');
     expect(
       runtime.config.get<AppLoggingConfig>('logging')!.default,
     ).toBeUndefined();

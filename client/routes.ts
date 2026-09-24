@@ -1,4 +1,4 @@
-import { Home } from 'lucide-react';
+import { Bell, ClipboardList, Home } from 'lucide-react';
 import {
   defineAppRoutes,
   defineSettingsRoutes,
@@ -15,6 +15,31 @@ const appRoutes: AppClientRouteContribution = defineAppRoutes([
     name: 'home',
     navigation: { title: 'navigation.home', icon: Home },
     path: '/',
+  },
+  {
+    // The simplified acceptance scenario has no role split, so both pages are
+    // reachable by every signed-in user and opt out of page grants.
+    authz: 'skip',
+    auth: 'required',
+    componentLoader: () => import('./pages/service-requests/index.js'),
+    name: 'service-requests',
+    navigation: { title: 'navigation.serviceRequests', icon: ClipboardList },
+    path: '/service-requests',
+  },
+  {
+    authz: 'skip',
+    auth: 'required',
+    componentLoader: () => import('./pages/service-requests/detail.js'),
+    name: 'service-request-detail',
+    path: '/service-requests/:id',
+  },
+  {
+    authz: 'skip',
+    auth: 'required',
+    componentLoader: () => import('./pages/messages/index.js'),
+    name: 'messages',
+    navigation: { title: 'navigation.messages', icon: Bell },
+    path: '/messages',
   },
   {
     auth: 'guest',
