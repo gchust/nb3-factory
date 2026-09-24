@@ -35,10 +35,10 @@
     "artifact": "factory-agent-254",
     "artifactId": 10796106923,
     "reviewSource": {
-      "runId": 35985473067,
+      "runId": 35988006806,
       "attempt": 1,
-      "artifactId": 10802650508,
-      "controlSha": "da18d586a556da85c9e2ac0fb4507b5bc01d7986"
+      "artifactId": 10802797622,
+      "controlSha": "952084a875e940bdcba52d45f8b805c7f49f0049"
     },
     "usage": {
       "phases": {
@@ -212,10 +212,10 @@
       "artifact": "factory-agent-254",
       "artifactId": 10796106923,
       "reviewSource": {
-        "runId": 35985473067,
+        "runId": 35988006806,
         "attempt": 1,
-        "artifactId": 10802650508,
-        "controlSha": "da18d586a556da85c9e2ac0fb4507b5bc01d7986"
+        "artifactId": 10802797622,
+        "controlSha": "952084a875e940bdcba52d45f8b805c7f49f0049"
       },
       "usage": {
         "phases": {
@@ -717,12 +717,12 @@
     ],
     "buildReview": {
       "version": 1,
-      "state": "failed",
-      "reason": "独立评审未完成或证据校验失败：agentFriendliness: numeric framework score requires evidence from a declared target; app/QA alone is insufficient。业务验收结果保持不变。",
+      "state": "completed",
+      "reason": "独立 Agent 评审完成；评分是基于本次证据的意见，不替代业务 QA 或人工评审。",
       "basis": {
         "repository": "gchust/nb3-factory",
         "issue": 254,
-        "runId": "35966684490",
+        "runId": 35966684490,
         "attempt": 1,
         "controlSha": "1bd143f61094211c8c19783e489b5e85d86a91c4",
         "rubricVersion": 2,
@@ -901,17 +901,1128 @@
         ],
         "reviewCriteriaHash": "81f9bfcb5b2e29945574ef27a80e16470c927103dce9b032cdefc49d40dda12e",
         "artifactHash": "598462cbe1d6a8b6ebeaeea00925365e01fc9be8ae4f1cdc8520839e25ac6db4",
-        "inputHash": "5035282ea15a6d09f047a5715e7f3f6e32ef82349b033225e0c4d27ebc127835"
+        "inputHash": "bb5a31a3fbf11f13ea22e13be00ae5fbaab0a42c4fad549ef774c4ae4f4539ea"
       },
-      "evaluation": null,
+      "evaluation": {
+        "version": 2,
+        "inputHash": "bb5a31a3fbf11f13ea22e13be00ae5fbaab0a42c4fad549ef774c4ae4f4539ea",
+        "progress": {
+          "complete": true,
+          "pendingModules": []
+        },
+        "summary": "本需求用一张待办表和一项“检查过期待办”计划验证 Scheduler 的公开定义/目标注册、真实调度与执行记录，以及停用配置持久化。框架侧的主路径完整：@nocobase/app-plugin-scheduler 提供 schedulerServiceToken 上的 registerTarget()/defineSchedule()、Queue 调度 Job、occurrence 状态机与 /api/schedules enable|disable；Agent 在 Provider.boot() 按 skill 接入，QA 观察到真实 10 秒周期执行、仅过期且未完成记录被标记、重复执行不新增待办、停用后刷新仍保持。@nocobase/db 的迁移/种子/Repository 带 filter 的批量更新也按 nocobase-db skill 使用。主要限制在指引：通用 nocobase-app-development skill 的“Choose your reference”表和 services-and-jobs 参考把“scheduled work”导向 @nocobase/cron，而本需求要求管理员可见的执行记录，应走 Scheduler，二者未对齐。",
+        "modules": [
+          {
+            "name": "Scheduler 计划定义、目标注册与执行记录",
+            "targets": [
+              {
+                "kind": "library",
+                "name": "@nocobase/app-plugin-scheduler",
+                "entrypoints": [
+                  "schedulerServiceToken (@nocobase/app-plugin-scheduler/server/tokens)",
+                  "registerTarget(target)",
+                  "defineSchedule(definition)",
+                  "GET /api/schedules, GET /api/schedules/:id/occurrences",
+                  "POST /api/schedules/:id/enable|disable",
+                  "ScheduleDispatchJob"
+                ],
+                "evidence": [
+                  "E11",
+                  "E12",
+                  "E44",
+                  "E13",
+                  "E14",
+                  "E15",
+                  "E16",
+                  "E17",
+                  "E18",
+                  "E19",
+                  "E20",
+                  "E21",
+                  "E22",
+                  "E23"
+                ]
+              },
+              {
+                "kind": "guidance",
+                "name": "app/.agents/skills/nocobase-app-plugin-scheduler",
+                "entrypoints": [
+                  "SKILL.md",
+                  "references/definitions.md",
+                  "references/targets.md",
+                  "references/operations.md"
+                ],
+                "evidence": [
+                  "E24",
+                  "E25",
+                  "E26",
+                  "E27",
+                  "E28"
+                ]
+              }
+            ],
+            "scope": "计划清单与同步、目标注册表与校验、调度 dispatch Job、occurrence 状态与执行记录、enable/disable 持久化，以及对应的 Skill 指引。",
+            "limitations": "未阅读 Queue 驱动（@nocobase/queue / boringnode）本身的实现；未验证多副本调度、异步 accepted 路径与手动触发，因为这些路径本次均未使用。",
+            "criteria": [
+              "B01",
+              "B02",
+              "B03"
+            ],
+            "requirements": [
+              {
+                "need": "定义一个可在既有 Scheduler 管理界面查看的计划，并注册其执行目标。",
+                "responsibility": "框架负责计划清单、同步、目标注册表与目标校验；应用负责业务逻辑、稳定 key、标题、cron 与目标配置。",
+                "recommendedUsage": "在 Provider 的 boot() 解析 schedulerServiceToken，先 registerTarget() 再 defineSchedule()，由应用启动时 sync() 或 `nb3 schedule:sync` 落库。",
+                "actualUsage": "Agent 在 OverdueTodoProvider.boot() 中按此接入，注册 app.overdue-todos 目标并定义 key todo.overdue-check、cron */10 * * * * *；未发现绕行。",
+                "support": "direct",
+                "gapOwner": "none",
+                "evidence": [
+                  "E1",
+                  "E2",
+                  "E3",
+                  "E21",
+                  "E22",
+                  "E24",
+                  "E26"
+                ]
+              },
+              {
+                "need": "真实调度执行一次并在执行记录中显示结果；业务上只有过期且未完成的记录被标记。",
+                "responsibility": "框架负责 Queue 调度 Job、occurrence 状态机与执行记录；应用负责业务筛选条件与实际写入。",
+                "recommendedUsage": "目标 start() 同步完成时返回 { state: 'completed', outcome: 'succeeded', result }，occurrence 由 ScheduleDispatchJob 记录；重复执行以 occurrenceId 去重。",
+                "actualUsage": "目标 start() 调用业务 service 并以 completed/succeeded 返回；QA 观察到新的 Succeeded 记录，且仅过期未完成记录 overdue=true。",
+                "support": "direct",
+                "gapOwner": "none",
+                "evidence": [
+                  "E1",
+                  "E4",
+                  "E7",
+                  "E9",
+                  "E15",
+                  "E16",
+                  "E17",
+                  "E22",
+                  "E23"
+                ]
+              },
+              {
+                "need": "在既有设置页停用计划并刷新后启用状态正确保存。",
+                "responsibility": "框架负责 enabled 设置与队列投影的持久化；应用无需自建停用存储。",
+                "recommendedUsage": "使用 POST /api/schedules/:id/disable|enable，由 store 同时更新 schedule_definitions.enabled 与队列 schedule 状态。",
+                "actualUsage": "Agent 未自建停用存储；QA 通过设置页开关停用并整页刷新，验证仍保持停用。",
+                "support": "direct",
+                "gapOwner": "none",
+                "evidence": [
+                  "E9",
+                  "E10",
+                  "E18",
+                  "E21",
+                  "E27"
+                ]
+              }
+            ],
+            "scores": {
+              "requirementFit": {
+                "score": 93,
+                "reason": "三个验收点都有直接框架路径：registerTarget/defineSchedule 注册计划、ScheduleDispatchJob+occurrence 状态机产生真实执行记录、setEnabled 同时持久化设置与队列投影，框架公开契约与实现一致，无需绕行。",
+                "evidence": [
+                  "E44",
+                  "E15",
+                  "E16",
+                  "E18"
+                ]
+              },
+              "usability": {
+                "score": 86,
+                "reason": "入口清晰：一个 token 上加两个方法，管理读改走 HTTP API；定义校验在 defineSchedule 内完成并在 sync 时再校验目标。观察一次真实执行需要短 cron 或等待周期，且没有“立即执行”入口，属于轻微不便而非阻塞。",
+                "evidence": [
+                  "E13",
+                  "E14",
+                  "E18",
+                  "E21"
+                ]
+              },
+              "agentFriendliness": {
+                "score": 88,
+                "reason": "Scheduler Skill 给出完整示例、目标契约表、结果联合类型、状态维度与排障清单（定义缺失、无触发、stuck waiting 等），足以让 Agent 在 Provider.boot() 正确接入并区分 enabled/lifecycleState/scheduleStatus。",
+                "evidence": [
+                  "E24",
+                  "E25",
+                  "E27",
+                  "E28"
+                ]
+              },
+              "design": {
+                "score": 91,
+                "reason": "扩展面与私有面分离良好：公开只有 registerTarget/defineSchedule，返回 handle 限定 reportCompletion 只能完成自己目标启动的 occurrence；注册表、store、occurrence 历史对应用不可解析，避免绕过路由鉴权。",
+                "evidence": [
+                  "E11",
+                  "E13",
+                  "E17",
+                  "E22"
+                ]
+              },
+              "reliability": {
+                "score": 88,
+                "reason": "实现兑现公开约定：defineSchedule 校验 key/cron/timezone 并冻结定义；dispatch 对 terminal occurrence 返回 noop 保证重复派发不重复执行；occurrence.complete 校验 reference 与 targetType 并拒绝冲突终态；enable 同时写库与队列。",
+                "evidence": [
+                  "E14",
+                  "E15",
+                  "E16",
+                  "E17",
+                  "E18",
+                  "E20"
+                ]
+              }
+            }
+          },
+          {
+            "name": "数据库迁移、种子与 Repository 批量更新",
+            "targets": [
+              {
+                "kind": "library",
+                "name": "@nocobase/db",
+                "entrypoints": [
+                  "createDatabaseManager",
+                  "databaseManagerToken",
+                  "defineMigration",
+                  "defineSeed",
+                  "Repository.findMany/updateMany/upsertOne"
+                ],
+                "evidence": [
+                  "E29",
+                  "E30",
+                  "E31",
+                  "E32"
+                ]
+              },
+              {
+                "kind": "library",
+                "name": "@nocobase/repository-input",
+                "entrypoints": [
+                  "FilterBuilder.and/or",
+                  "FilterBuilder.boolean/date",
+                  "before()",
+                  "isFalse()"
+                ],
+                "evidence": [
+                  "E33",
+                  "E34",
+                  "E35"
+                ]
+              },
+              {
+                "kind": "guidance",
+                "name": "app/.agents/skills/nocobase-db",
+                "entrypoints": [
+                  "SKILL.md sections 2 migrations/seeds",
+                  "SKILL.md section 4 Repository and Query",
+                  "SKILL.md section 5 Transactions"
+                ],
+                "evidence": [
+                  "E36",
+                  "E37"
+                ]
+              }
+            ],
+            "scope": "todos 表的迁移与种子、Repository 带 filter 的批量更新、布尔/日期过滤操作符及对应的 nocobase-db 指引。",
+            "limitations": "未阅读 @nocobase/db 迁移器/连接的完整实现，也未覆盖事务与多连接路径；这些路径本次未被使用。",
+            "criteria": [
+              "B01",
+              "B02"
+            ],
+            "requirements": [
+              {
+                "need": "一张待办表（标题、截止时间、已完成、已过期）与三条固定基线数据。",
+                "responsibility": "框架负责 schema builder、迁移与种子运行及幂等 upsert；应用负责字段设计与固定数据值。",
+                "recommendedUsage": "defineMigration + builder.createCollection；defineSeed + context.repository.upsertOne，以唯一列作为幂等键。",
+                "actualUsage": "Agent 按 skill 目录放置 migration/seed，用 title 作为 upsert 键；测试验证重复 seed 后仍为 3 行。",
+                "support": "direct",
+                "gapOwner": "none",
+                "evidence": [
+                  "E5",
+                  "E6",
+                  "E7",
+                  "E29",
+                  "E36"
+                ]
+              },
+              {
+                "need": "只把到期且未完成的记录标记为已过期；重复执行不新增记录、不误改完成或未来记录。",
+                "responsibility": "框架负责带 filter 的批量 updateMany、非空 scope 保护与布尔/日期操作符；应用负责业务筛选与幂等设计。",
+                "recommendedUsage": "repository('todos').updateMany({ filter: f => f.and([...]), values: { overdue: true } })，filter 至少含 overdue=false，使二次运行标记 0 条。",
+                "actualUsage": "Agent 组合 boolean().isFalse() 与 date().before(now)，service 返回 updatedCount；测试断言首次 1、二次 0，且重复 seed 不撤销结果。",
+                "support": "composition",
+                "gapOwner": "none",
+                "evidence": [
+                  "E1",
+                  "E7",
+                  "E30",
+                  "E31",
+                  "E33",
+                  "E34",
+                  "E35",
+                  "E37"
+                ]
+              }
+            ],
+            "scores": {
+              "requirementFit": {
+                "score": 90,
+                "reason": "迁移/种子/Repository 三个入口覆盖了建表、幂等基线数据与带条件批量更新；nocobase-db skill 明确 upsertOne 幂等键与 updateMany 非空 scope 规则，与本次实现一致。",
+                "evidence": [
+                  "E29",
+                  "E30",
+                  "E36",
+                  "E37"
+                ]
+              },
+              "usability": {
+                "score": 86,
+                "reason": "过滤器以类型化 builder 表达（and/boolean/date），updateMany 返回 updatedCount 可直接用于业务结果；updateMany 无 scope 时会报 INVALID_FILTER，避免误批量更新。",
+                "evidence": [
+                  "E31",
+                  "E33",
+                  "E34",
+                  "E35"
+                ]
+              },
+              "agentFriendliness": {
+                "score": 86,
+                "reason": "类型声明与 Skill 分工清晰：参数/返回以 @nocobase/db 类型为准，Skill 决定在哪一层写与用哪个 API，并给出 seed 幂等与 filter 示例，Agent 无需猜测。",
+                "evidence": [
+                  "E33",
+                  "E36",
+                  "E37"
+                ]
+              },
+              "design": {
+                "score": 85,
+                "reason": "builder 负责 schema、repository 负责运行时读写、query 面向非集合结果集，边界明确；filter builder 与 repository 分层，批量写有显式 all:true 逃生口而非隐式全表。",
+                "evidence": [
+                  "E29",
+                  "E30",
+                  "E33"
+                ]
+              },
+              "reliability": {
+                "score": 85,
+                "reason": "阅读 updateMany 实现：先做写权限/字段校验，再归一化非空 filter，最后交 adapter；normalizeMutationFilter 对空 scope 抛 INVALID_FILTER，防止无范围批量写。",
+                "evidence": [
+                  "E31",
+                  "E32",
+                  "E34",
+                  "E35"
+                ]
+              }
+            }
+          },
+          {
+            "name": "应用装配、自定义页面/路由与计划工作指引",
+            "targets": [
+              {
+                "kind": "guidance",
+                "name": "app/.agents/skills/nocobase-app-development",
+                "entrypoints": [
+                  "SKILL.md",
+                  "references/services-and-jobs.md",
+                  "references/database-and-data.md"
+                ],
+                "evidence": [
+                  "E38",
+                  "E39",
+                  "E40"
+                ]
+              },
+              {
+                "kind": "library",
+                "name": "@nocobase/app-server",
+                "entrypoints": [
+                  "defineApiRoutes",
+                  "defineServerPlugins",
+                  "AppRouteContribution"
+                ],
+                "evidence": [
+                  "E41"
+                ]
+              },
+              {
+                "kind": "library",
+                "name": "@nocobase/app-client",
+                "entrypoints": [
+                  "defineAppRoutes",
+                  "defineClientPlugins",
+                  "resolveAppClientContributions"
+                ],
+                "evidence": [
+                  "E42"
+                ]
+              },
+              {
+                "kind": "library",
+                "name": "@nocobase/service-provider",
+                "entrypoints": [
+                  "ServiceProvider lifecycle",
+                  "createServiceToken"
+                ],
+                "evidence": [
+                  "E43"
+                ]
+              }
+            ],
+            "scope": "Server 路由贡献、Client 路由/导航贡献、ServiceProvider 生命周期，以及通用 app-development Skill 对 scheduled work 的指引。",
+            "limitations": "未阅读 app-server/app-client/service-provider 的运行时实现，故可靠性留空；未覆盖授权、通知、Workflow 等被明确排除的能力。",
+            "criteria": [],
+            "requirements": [
+              {
+                "need": "只读待办页面与受登录保护的读取接口，并沿用既有布局与翻译机制。",
+                "responsibility": "框架负责路由贡献、Provider 装配与 HTTP 客户端；应用负责页面内容与业务字段。",
+                "recommendedUsage": "server 用 defineApiRoutes 贡献路由工厂；client 用 defineAppRoutes 声明导航与 componentLoader；i18n 用 useTranslation。",
+                "actualUsage": "Agent 新增 server/routes/todos.ts 与 client/pages/todos.tsx，并加入 server/routes/index.ts 数组，页面只读。",
+                "support": "composition",
+                "gapOwner": "none",
+                "evidence": [
+                  "E4",
+                  "E8",
+                  "E41",
+                  "E42"
+                ]
+              },
+              {
+                "need": "可复用业务 service 与生命周期装配，使调度目标复用同一业务逻辑。",
+                "responsibility": "框架负责 ServiceProvider 生命周期与 token 容器；应用负责 service 实现与业务规则。",
+                "recommendedUsage": "在 server/providers 下用 ServiceProvider.register() 绑定 token，并加入 providers/index.ts 数组。",
+                "actualUsage": "Agent 定义 overdueTodoServiceToken 并在 register() 绑定，boot() 解析后交给 Scheduler target；逻辑测试直接构造 service。",
+                "support": "direct",
+                "gapOwner": "none",
+                "evidence": [
+                  "E1",
+                  "E2",
+                  "E40",
+                  "E43"
+                ]
+              },
+              {
+                "need": "定时任务应被引导到管理员可见的 Scheduler，而不是自写 cron 或 setInterval。",
+                "responsibility": "框架/插件文档负责把“需要执行记录可见”的任务指向 Scheduler；应用负责判断任务是否需要 UI 可见。",
+                "recommendedUsage": "通用 Skill 应把 scheduled work 指向 nocobase-app-plugin-scheduler Skill，并保留 @nocobase/cron 仅用于无需 UI 可见的后台任务。",
+                "actualUsage": "Agent 最终使用 Scheduler（cli/plugins.ts 注册 scheduler CLI）；但通用开发 Skill 的映射表把 scheduled work 导向 services-and-jobs.md，其示例用 @nocobase/cron 实现“scan for records overdue today”。",
+                "support": "direct",
+                "gapOwner": "documentation",
+                "evidence": [
+                  "E3",
+                  "E38",
+                  "E39",
+                  "E40"
+                ]
+              }
+            ],
+            "scores": {
+              "requirementFit": {
+                "score": 85,
+                "reason": "路由贡献、导航/componentLoader 与 Provider/token 生命周期足以组合出本需求的只读页面与调度复用逻辑，公开类型与 Skill 示例一致。",
+                "evidence": [
+                  "E40",
+                  "E41",
+                  "E42",
+                  "E43"
+                ]
+              },
+              "usability": {
+                "score": 82,
+                "reason": "defineApiRoutes/defineAppRoutes 与 Provider 数组是稳定的装配入口；不过通用 Skill 未把 Scheduler 列为能力映射行，Agent 需要自行从插件 Skill 找到正确入口。",
+                "evidence": [
+                  "E41",
+                  "E42",
+                  "E43"
+                ]
+              },
+              "agentFriendliness": {
+                "score": 68,
+                "reason": "通用 Skill 的“Choose your reference”表把“run background or scheduled work”映射到 services-and-jobs.md，而该页只讲 @nocobase/cron 并给出“scan for records overdue today”示例，未指向 Scheduler；对本需求“管理员可见计划与执行记录”的入口发现构成明显误导风险。",
+                "evidence": [
+                  "E38",
+                  "E39",
+                  "E40"
+                ]
+              },
+              "design": {
+                "score": 84,
+                "reason": "应用侧抽象边界清楚：路由是工厂贡献、页面用加载器按路由懒加载、服务用 token 解耦实现；与插件装配正交，未强迫业务代码进入框架内部。",
+                "evidence": [
+                  "E41",
+                  "E42",
+                  "E43"
+                ]
+              },
+              "reliability": {
+                "score": null,
+                "reason": "仅阅读类型声明与文档，未阅读 app-server/app-client/service-provider 的运行时实现，不据一次成功调用给可靠性评分。",
+                "evidence": []
+              }
+            }
+          }
+        ],
+        "findings": [
+          {
+            "id": "F1",
+            "kind": "strength",
+            "owner": "framework",
+            "severity": "info",
+            "confidence": "confirmed",
+            "status": "open",
+            "title": "Scheduler 提供完整的目标扩展面与可核对的执行记录契约",
+            "detail": "schedulerServiceToken 只暴露 registerTarget()/defineSchedule()；registerTarget 返回受限 handle，reportCompletion 仅能完成本目标启动的 occurrence；ScheduleDispatchJob 记录 occurrence、按 occurrenceId 去重，enable/disable 同时持久化 enabled 与队列投影。Skill 的目标契约表、结果联合类型与状态维度说明与实现一致。",
+            "impact": "应用无需自写调度、执行记录或启停存储，即可获得管理员可见的计划与历史，且不能绕过管理的授权路由。",
+            "suggestedChange": "保持该公开面；如需手动触发，应复用同一 ScheduleDispatchJob 与 occurrence 记录，而不是新增旁路写入。",
+            "evidence": [
+              "E11",
+              "E13",
+              "E15",
+              "E17",
+              "E22",
+              "E25"
+            ]
+          },
+          {
+            "id": "F2",
+            "kind": "strength",
+            "owner": "framework",
+            "severity": "info",
+            "confidence": "confirmed",
+            "status": "open",
+            "title": "Repository 批量更新与过滤 builder 支持带条件的幂等业务写入",
+            "detail": "updateMany 在实现中先做写权限与字段校验，再归一化 filter；normalizeMutationFilter 对空 scope 抛 INVALID_FILTER。filter builder 提供 and/boolean/date 与 before()/isFalse()，Agent 据此把标记范围限定为 completed=false 且 overdue=false 且 dueAt<now。",
+            "impact": "业务规则（只标记过期未完成、重复执行不增记录）可以在框架层安全表达，无需自写 SQL 或全表更新。",
+            "suggestedChange": "无需变更；可在 Skill 中补一条“批量更新用业务状态字段做幂等闸门”的示例。",
+            "evidence": [
+              "E31",
+              "E32",
+              "E33",
+              "E35",
+              "E37"
+            ]
+          },
+          {
+            "id": "F3",
+            "kind": "misleading",
+            "owner": "documentation",
+            "severity": "major",
+            "confidence": "confirmed",
+            "status": "open",
+            "title": "通用开发 Skill 把 scheduled work 导向 @nocobase/cron，与需要 Scheduler 的可见任务冲突",
+            "detail": "nocobase-app-development 的“Choose your reference”表把“run background or scheduled work”指向 services-and-jobs.md，而该页只展示 createCronJobManager/createCronJobManager 示例，并以“scan for records overdue today”作为示例，从未提及 Scheduler 插件或其 Skill。Scheduler Skill 则明确需要管理员可见执行记录的任务必须由 Scheduler 管理。",
+            "impact": "Agent 若先读通用 Skill，可能选 @nocobase/cron 实现本需求，从而缺少公开计划定义、真实 Scheduler 执行记录与受控启停，直接不满足 B01/B03 的验收口径。",
+            "claimed": "services-and-jobs.md 声称“Work that has to happen because time passed — scan for records overdue today … needs a scheduler, and @nocobase/cron provides one”，通用 Skill 表也把 scheduled work 指向该页。",
+            "observed": "仓库同时安装并在 server/plugins.ts 注册了 @nocobase/app-plugin-scheduler，其 Skill 说明管理员可见任务必须使用 Scheduler；通用 Skill 未在任何映射行提到它。",
+            "suggestedChange": "在 app-development SKILL.md 的能力映射/Choose your reference 中按“是否需要管理员可见的执行记录”分流：需要则指向 nocobase-app-plugin-scheduler Skill，仅纯后台任务指向 @nocobase/cron，并在 services-and-jobs.md 加交叉链接。",
+            "evidence": [
+              "E38",
+              "E39"
+            ]
+          },
+          {
+            "id": "F4",
+            "kind": "improvement",
+            "owner": "plugin",
+            "severity": "info",
+            "confidence": "confirmed",
+            "status": "open",
+            "title": "Scheduler 无经同一执行记录的“立即执行”入口",
+            "detail": "管理路由只有 list、occurrences、enable、disable 四个端点，没有手动触发；验证一次真实执行只能依赖短 cron 或等待下一个调度边界。",
+            "impact": "本次用 */10 秒 cron 观测通过，但手动验证/运维需要一个不绕过 occurrence 的触发方式；需求允许该入口，但框架未提供。",
+            "suggestedChange": "可考虑增加 POST /api/schedules/:id/run，内部仍经 ScheduleDispatchJob 生成 occurrence，避免直接调用 target.start() 绕过执行记录。",
+            "evidence": [
+              "E18",
+              "E21"
+            ]
+          },
+          {
+            "id": "F5",
+            "kind": "issue",
+            "owner": "plugin",
+            "severity": "minor",
+            "confidence": "confirmed",
+            "status": "open",
+            "title": "Scheduler 列表重复 describe，且 enable/disable 跨库与队列非事务",
+            "detail": "DefaultSchedulerService.list() 在同一 map 中对每个 record 调用两次 targets.describe()（第 35 与第 39 行）；store.setEnabled() 先更新队列 schedule 状态，再更新 schedule_definitions.enabled，两步不在同一事务内。",
+            "impact": "列表会做双倍 describe 异步工作；若第二步写失败，可能出现 enabled 与队列投影不一致，直到下次 sync 修正。",
+            "suggestedChange": "list() 缓存 describe 结果只调用一次；setEnabled 用事务或先写库后写队列/失败补偿，保证两处一致。",
+            "evidence": [
+              "E12",
+              "E18",
+              "E44"
+            ]
+          }
+        ],
+        "ui": {
+          "status": "not-reviewed",
+          "score": null,
+          "reason": "本次环境无法查看 PNG 图像内容（模型不支持图像输入），未实际比较待办页与 Scheduler 设置页的跨页面样式一致性，故不评 UI 分。",
+          "evidence": []
+        },
+        "evidence": [
+          {
+            "id": "E1",
+            "kind": "code",
+            "path": "app/server/providers/overdue-todos.ts",
+            "observation": "OverdueTodoProvider.boot() 以 container.has(schedulerServiceToken) 守卫后 registerTarget app.overdue-todos（validate + start 返回 completed/succeeded）并用 defineSchedule 定义 key todo.overdue-check、cron */10 * * * * *、timezone UTC 与目标配置。",
+            "lines": [
+              74,
+              119
+            ],
+            "excerpt": "  public override async boot(): Promise<void> {\n    if (!this.app.container.has(schedulerServiceToken)) {\n      return;\n    }\n\n    const scheduler = this.app.container.resolve(schedulerServiceToken);\n    const service = this.app.container.resolve(overdueTodoServiceToken);\n\n    scheduler.registerTarget({\n      type: 'app.overdue-todos',\n      title: 'Overdue todo check / 检查过期待办',\n      validate(config) {\n        return config !== null &&\n          typeof config === 'object' &&\n          !Array.isArray(config)\n          ? { valid: true }\n          : { valid: false, reason: 'config-must-be-an-object' };\n      },\n      async start() {\n        const result = await service.checkOverdue();\n        return {\n          state: 'completed',\n          outcome: 'succeeded',\n          result: { markedCount: result.markedCount },\n        };\n      },\n    });\n\n    scheduler.defineSchedule({\n      // Stable identity: renaming it creates a new schedule rather than moving\n      // this one, so the key is namespaced by business area.\n      key: 'todo.overdue-check',\n      title: 'Check overdue todos / 检查过期待办',\n      description:\n        'Marks open todos whose deadline has passed as overdue. / 将已过截止时间且未完成的待办标记为已过期。',\n      schedule: {\n        // A ten-second cycle is deliberately short so one real execution can be\n        // observed during verification; a business scan would run far less often.\n        cron: '*/10 * * * * *',\n        timezone: 'UTC',\n      },\n      target: {\n        type: 'app.overdue-todos',\n        config: {},\n      },\n    });",
+            "sha256": "d0e578b57da6921ba8a704d40235b741dc152d81a9c010635b8c3ce349b37463"
+          },
+          {
+            "id": "E2",
+            "kind": "code",
+            "path": "app/server/providers/index.ts",
+            "observation": "Provider 被加入 serviceProviders 数组，使 boot() 在应用启动时执行。",
+            "lines": [
+              8,
+              12
+            ],
+            "excerpt": "const serviceProviders: readonly ApplicationServiceProviderConstructor[] = [\n  overdueTodos,\n];\n\nexport default serviceProviders;",
+            "sha256": "6d9e63bbc6967f27c7781646900cbd8b7b0c0806766a79b033685b95e77fd01c"
+          },
+          {
+            "id": "E3",
+            "kind": "code",
+            "path": "app/cli/plugins.ts",
+            "observation": "scheduler CLI 通过 defineCliPlugins([workflow, scheduler]) 注册，提供 schedule 同步命令入口。",
+            "lines": [
+              5,
+              10
+            ],
+            "excerpt": "import scheduler from '@nocobase/app-plugin-scheduler/cli';\nimport workflow from '@nocobase/app-plugin-workflow/cli';\n\n// Array order is command registration order. A plugin contributes its commands\n// by appearing in this list; removing its entry and its import removes them.\nconst cliPlugins: AppCliPlugins = defineCliPlugins([workflow, scheduler]);",
+            "sha256": "84280fd343c94045b45259cbda4eea69cbbe8d019e49e6a5571e5d7dad222612"
+          },
+          {
+            "id": "E4",
+            "kind": "code",
+            "path": "app/server/routes/todos.ts",
+            "observation": "defineApiRoutes 工厂内用 authenticationToken.required() 保护 /todos，并用 database.repository<TodoRecord>('todos').findMany({sort}) 只读返回列表。",
+            "lines": [
+              15,
+              32
+            ],
+            "excerpt": "export const apiRoutes: AppApiRouteContribution<Application> = defineApiRoutes(\n  (app) => {\n    const router = new Hono();\n    const auth = app.container.resolve(authenticationToken);\n    const database = app.container.resolve(databaseManagerToken);\n\n    router.use('/todos', auth.required());\n    router.get('/todos', async (context) => {\n      const todos = await database\n        .repository<TodoRecord>('todos')\n        .findMany({ sort: (sort) => sort.field('dueAt').asc() });\n\n      return context.json({ data: todos });\n    });\n\n    return router;\n  },\n);",
+            "sha256": "5c67f3c1371ceda07c1721fdeb0bf0b03b4daa4779740d259bcbd1be9dc6fd01"
+          },
+          {
+            "id": "E5",
+            "kind": "code",
+            "path": "app/database/main/migrations/202509240001_create_todos.ts",
+            "observation": "defineMigration 用 builder.createCollection('todos') 建 id/title/dueAt(datetimeTz)/completed/overdue/createdAt，并设 title 唯一与 overdue 索引。",
+            "lines": [
+              11,
+              29
+            ],
+            "excerpt": "const migration: MigrationDefinition = defineMigration({\n  name: '202509240001_create_todos',\n\n  async up({ builder }) {\n    await builder.createCollection('todos', (collection) => {\n      collection.increments('id');\n      collection.string('title', { length: 255, nullable: false });\n      collection.datetimeTz('dueAt', { nullable: false });\n      collection.boolean('completed', { nullable: false, defaultValue: false });\n      collection.boolean('overdue', { nullable: false, defaultValue: false });\n      collection.datetime('createdAt', { nullable: false });\n      collection.unique('title');\n      collection.index('overdue');\n    });\n  },\n\n  async down({ builder }) {\n    await builder.dropCollection('todos');\n  },",
+            "sha256": "337a5bc62171e405186e7a789c7b653457f19c6cd08a7261078227146403126b"
+          },
+          {
+            "id": "E6",
+            "kind": "code",
+            "path": "app/database/main/seeds/202509240002_seed_todos.ts",
+            "observation": "defineSeed 以 title 为 filter 对三条固定待办分别 upsertOne，update 只重置 dueAt，不覆盖 completed/overdue。",
+            "lines": [
+              13,
+              53
+            ],
+            "excerpt": "export default defineSeed({\n  name: '202509240002_seed_todos',\n\n  async run(context) {\n    const todos = context.repository('todos');\n\n    await todos.upsertOne({\n      filter: { title: 'Overdue todo / 已过期待办' },\n      create: {\n        completed: false,\n        createdAt: new Date('2020-01-01T00:00:00.000Z'),\n        dueAt: new Date('2020-01-01T00:00:00.000Z'),\n        overdue: false,\n        title: 'Overdue todo / 已过期待办',\n      },\n      update: { dueAt: new Date('2020-01-01T00:00:00.000Z') },\n    });\n\n    await todos.upsertOne({\n      filter: { title: 'Future todo / 未到期待办' },\n      create: {\n        completed: false,\n        createdAt: new Date('2020-01-01T00:00:00.000Z'),\n        dueAt: new Date('2099-12-31T23:59:59.000Z'),\n        overdue: false,\n        title: 'Future todo / 未到期待办',\n      },\n      update: { dueAt: new Date('2099-12-31T23:59:59.000Z') },\n    });\n\n    await todos.upsertOne({\n      filter: { title: 'Completed todo / 已完成待办' },\n      create: {\n        completed: true,\n        createdAt: new Date('2020-01-01T00:00:00.000Z'),\n        dueAt: new Date('2020-01-01T00:00:00.000Z'),\n        overdue: false,\n        title: 'Completed todo / 已完成待办',\n      },\n      update: { dueAt: new Date('2020-01-01T00:00:00.000Z') },\n    });",
+            "sha256": "7e9e6cdc575d8390c96439e72da7f0f3b23099e7cb42bf52d3cc0cd7466b7c14"
+          },
+          {
+            "id": "E7",
+            "kind": "code",
+            "path": "app/tests/logic/overdue-todos.test.ts",
+            "observation": "测试断言首次 checkOverdue 标记 1 条、二次 0 条；未来与已完成记录保持不变；重新跑 seed 后仍为 3 行且不撤销 overdue。",
+            "lines": [
+              114,
+              147
+            ],
+            "excerpt": "describe('overdue check', () => {\n  it('marks only open todos past their deadline and is idempotent', async () => {\n    const database = createTestDatabase();\n    await applyTodosMigration(database);\n    await runTodosSeed(database);\n\n    const service = createOverdueTodoService(database);\n\n    const first = await service.checkOverdue(NOW);\n    expect(first.markedCount).toBe(1);\n\n    const byTitle = (title: string) =>\n      database.repository('todos').findOne({ filter: { title } });\n\n    const overdue = await byTitle('Overdue todo / 已过期待办');\n    expect(overdue?.overdue).toBe(true);\n    expect(overdue?.completed).toBe(false);\n\n    const future = await byTitle('Future todo / 未到期待办');\n    expect(future?.overdue).toBe(false);\n\n    const completed = await byTitle('Completed todo / 已完成待办');\n    expect(completed?.overdue).toBe(false);\n    expect(completed?.completed).toBe(true);\n\n    const second = await service.checkOverdue(NOW);\n    expect(second.markedCount).toBe(0);\n\n    // Re-running the seed must not undo what the scheduled task set, and must\n    // not add a fourth row.\n    await runTodosSeed(database);\n    expect((await byTitle('Overdue todo / 已过期待办'))?.overdue).toBe(true);\n    expect(await database.repository('todos').findMany()).toHaveLength(3);\n  });",
+            "sha256": "57e5c611101402e722a6f9b41ea5d9b76f07b3bcb46883f8f8db6e09e7fe40ef"
+          },
+          {
+            "id": "E8",
+            "kind": "code",
+            "path": "app/client/pages/todos.tsx",
+            "observation": "页面通过 api.request({path:'todos'}) 读取列表，并标注 overdue 只由 Scheduler target 写入，页面永不写。",
+            "lines": [
+              39,
+              53
+            ],
+            "excerpt": "function requestTodos(\n  api: ApiClient,\n  signal?: AbortSignal,\n): Promise<{ data: readonly Todo[] }> {\n  return api.request<{ data: readonly Todo[] }>({ path: 'todos', signal });\n}\n\n/**\n * A deliberately small screen: it exists so the scheduled overdue check has a\n * visible result. Every value here is read from `GET /api/todos`; the page\n * never writes, because `overdue` is owned by the Scheduler target.\n */\nexport default function TodosPage(): ReactElement {\n  const api = useService(apiClientToken);\n  const { i18n, t } = useTranslation();",
+            "sha256": "10d093235ffc18b1bec0449b94ad3da139736cab838f9c425b4c752ca70404b8"
+          },
+          {
+            "id": "E9",
+            "kind": "qa",
+            "path": "artifacts/verify-1/browser-acceptance/report.json",
+            "observation": "B01 通过：启用后计划详情新增 Succeeded 执行记录，待办列表仅过期待办 overdue=true，应用原始字段显示 id1 与 id2/id3 状态正确。",
+            "lines": [
+              3,
+              20
+            ],
+            "excerpt": "  \"authenticated\": true,\n  \"summary\": \"浏览器验收完成：/main/todos 有 3 条样例（过期待办 / 未来待办 / 已完成待办）。调度计划 'Check overdue todos / 检查过期待办'（目标 app.overdue-todos，每 10 秒 UTC）在重新启用后产生新的 Succeeded 执行记录，且只有过期且未完成的记录被标记为 Overdue，未来与已完成记录保持未过期；再次执行同一目标后待办总数仍为 3；在既有设置页停用并整页刷新后启用状态正确保持停用。控制台与页面无错误。\",\n  \"checks\": [\n    {\n      \"id\": \"B01\",\n      \"criterion\": \"启用计划并观察一次真实调度，执行记录显示结果；只有过期且未完成的记录被标记。\",\n      \"status\": \"passed\",\n      \"actions\": [\n        \"打开 /main/settings/schedules，确认计划名 'Check overdue todos / 检查过期待办'、目标 app.overdue-todos、周期 'Every 10 seconds UTC'\",\n        \"在列表用开关先停用该计划（开关由 Enable 变 Disable 再切回），随后重新启用，等待并刷新计划详情页\",\n        \"打开 /main/todos 检查三条样例待办在真实调度后的状态\"\n      ],\n      \"evidence\": [\n        \"重新启用后计划详情执行记录新增 07:25:37、07:25:41、07:25:51，均 Succeeded；停用窗口 07:25:21–07:25:37 无新记录，证明由该启用计划触发\",\n        \"待办列表显示 3 条：Overdue todo / 已过期待办 -> Overdue，Completed todo / 已完成待办 -> Completed，Future todo / 未到期待办 -> Open\",\n        \"应用数据 API 原始字段：id1 completed=false overdue=true；id3 completed=true overdue=false；id2 completed=false overdue=false。总数 3，仅过期且未完成的记录被标记\",\n        \"控制台与页面均无 error/异常\"\n      ],",
+            "sha256": "0c9be2df8a57cc0b0080bf7647bf9ae657918a04901467878080fe00107ba5a0"
+          },
+          {
+            "id": "E10",
+            "kind": "qa",
+            "path": "artifacts/verify-1/browser-acceptance/report.json",
+            "observation": "B03 通过：设置页停用计划并整页刷新后开关仍为未选中，验证启停设置持久化；未推断长期停用行为。",
+            "lines": [
+              47,
+              66
+            ],
+            "excerpt": "    {\n      \"id\": \"B03\",\n      \"criterion\": \"在既有设置页停用计划并刷新，启用状态正确保存；本项只评价配置持久化，不冒称已验证长期停用。\\n\\n无法实际完成时如实记录 failed、blocked 或 not_run，不以源码检查代替浏览器通过。\\n\\n同时验证案例人工输入中的产品要求：\\n\\n## 本次补充要求\\n\\n只实现来源预设的一张待办业务表、三条待办和一项过期检查计划，验证真实 Scheduler 执行与停用配置保存。不新增巡检设备体系、Workflow、消息或时区矩阵。使用固定基线及既有公共能力，不修改工厂或基线描述文件，结果关联 #249；不合并业务 PR。\",\n      \"status\": \"passed\",\n      \"actions\": [\n        \"打开 /main/settings/schedules，确认计划原状态为启用（开关显示 Disable，checked=true）\",\n        \"点击开关将计划停用，观察开关变为 Enable 且 checked=false\",\n        \"重新加载 /main/settings/schedules 页面，检查开关状态是否保留\"\n      ],\n      \"evidence\": [\n        \"停用后开关显示 Enable（未选中），NEXT TRIGGER 不再前进\",\n        \"整页刷新后开关仍显示 Enable（未选中），启用状态被正确持久保存\",\n        \"刷新后 TRIGGERED 计数停在 28 未再增长，未观察到新的执行记录\",\n        \"本项仅验证配置持久化，未据此推断长期停用下的行为\"\n      ],\n      \"screenshots\": [\n        \"b03-plan-disabled.png\",\n        \"b03-plan-disabled-reloaded.png\"\n      ],\n      \"recordedAt\": 1790234845994",
+            "sha256": "0c9be2df8a57cc0b0080bf7647bf9ae657918a04901467878080fe00107ba5a0"
+          },
+          {
+            "id": "E11",
+            "kind": "code",
+            "path": "packages/@nocobase/app-plugin-scheduler/dist/server/services/scheduler.js",
+            "observation": "DefaultSchedulerService.defineSchedule 冻结并加入内存 manifest；registerTarget 委托注册表并返回带 reportCompletion 的受限 handle。",
+            "lines": [
+              13,
+              23
+            ],
+            "excerpt": "    defineSchedule(definition) {\n        this.manifest.push(Object.freeze({ definition: buildScheduleDefinition(definition) }));\n    }\n    registerTarget(target) {\n        this.targets.register(target);\n        const { type } = target;\n        return {\n            type,\n            reportCompletion: (occurrenceId, reference, completion) => this.occurrences.complete(occurrenceId, reference, completion, type),\n        };\n    }",
+            "sha256": "4fba6168c5c732acb45e9716e2a818a9bde3fcbe5584a91d79033eb4a2227b10"
+          },
+          {
+            "id": "E12",
+            "kind": "code",
+            "path": "packages/@nocobase/app-plugin-scheduler/dist/server/services/scheduler.js",
+            "observation": "list() 对每条记录在第 35 与第 39 行各调用一次 targets.describe()，并据其结果给出 targetState 与 targetSummary。",
+            "lines": [
+              24,
+              43
+            ],
+            "excerpt": "    async list() {\n        const [records, targets] = await Promise.all([\n            this.store.list(),\n            this.store.listTargets(),\n        ]);\n        const byId = new Map(targets.map((target) => [target.id, target]));\n        return Promise.all(records.map(async (record) => {\n            const target = byId.get(record.id);\n            return {\n                ...record,\n                targetState: target\n                    ? ((await this.targets.describe(target.type, target.config))\n                        .state ?? 'invalid')\n                    : 'missing',\n                targetSummary: target\n                    ? await this.targets.describe(target.type, target.config)\n                    : { targetLabel: record.targetType, state: 'missing' },\n            };\n        }));\n    }",
+            "sha256": "4fba6168c5c732acb45e9716e2a818a9bde3fcbe5584a91d79033eb4a2227b10"
+          },
+          {
+            "id": "E44",
+            "kind": "code",
+            "path": "packages/@nocobase/app-plugin-scheduler/dist/server/services/scheduler.js",
+            "observation": "sync() 校验 key 唯一与目标 config，再 store.reconcile；setEnabled 更新 store 后返回列表项；reconcileOccurrences 委托 occurrence store。",
+            "lines": [
+              56,
+              82
+            ],
+            "excerpt": "    async sync(finalize = false) {\n        const manifest = this.manifest;\n        const identities = new Set();\n        for (const entry of manifest) {\n            const identity = entry.definition.key;\n            if (identities.has(identity)) {\n                throw new Error(`Duplicate Schedule definition: ${entry.definition.key}`);\n            }\n            identities.add(identity);\n            const validation = this.targets.validate(entry.definition);\n            if (!validation.valid) {\n                throw new Error(`Invalid Schedule target for ${entry.definition.key}: ${validation.reason ?? 'invalid-config'}`);\n            }\n        }\n        await this.store.reconcile(manifest, finalize);\n    }\n    async setEnabled(id, enabled) {\n        await this.store.setEnabled(id, enabled);\n        const item = (await this.list()).find((entry) => entry.id === id);\n        if (!item)\n            throw new Error('Schedule not found.');\n        return item;\n    }\n    /** Observes occurrences whose target completed without notifying us. */\n    reconcileOccurrences() {\n        return this.occurrences.reconcile(this.targets);\n    }",
+            "sha256": "4fba6168c5c732acb45e9716e2a818a9bde3fcbe5584a91d79033eb4a2227b10"
+          },
+          {
+            "id": "E13",
+            "kind": "code",
+            "path": "packages/@nocobase/app-plugin-scheduler/dist/server/schedules/registry.js",
+            "observation": "ScheduleTargetRegistry 对重复 type 抛错；validate/start 缺目标或 config 非法时返回 failed；inspect 缺 observer 时返回 unknown，referenceHref 可选。",
+            "lines": [
+              3,
+              47
+            ],
+            "excerpt": "    register(target) {\n        if (this.targets.has(target.type))\n            throw new Error(`Schedule target type already registered: ${target.type}`);\n        // The registry is heterogeneous: each target parses its own config out of\n        // the JSON a definition declared, which `validate()` is there to check.\n        this.targets.set(target.type, target);\n    }\n    get(type) {\n        return this.targets.get(type);\n    }\n    validate(definition) {\n        const target = this.get(definition.target.type);\n        return target\n            ? target.validate(definition.target.config)\n            : { valid: false, reason: 'target-not-found' };\n    }\n    async describe(type, config) {\n        const target = this.get(type);\n        if (!target)\n            return { targetLabel: type, state: 'missing' };\n        return target.describe\n            ? target.describe(config)\n            : { targetLabel: target.title, state: 'ready' };\n    }\n    async start(type, config, context) {\n        const target = this.get(type);\n        if (!target)\n            return { state: 'failed', reason: 'target-not-found' };\n        const validation = target.validate(config);\n        if (!validation.valid)\n            return {\n                state: 'failed',\n                reason: validation.reason ?? 'invalid-config',\n            };\n        return target.start(config, context);\n    }\n    inspect(targetType, reference) {\n        const target = this.get(targetType);\n        return target?.inspect\n            ? target.inspect(reference)\n            : Promise.resolve({ state: 'unknown', reason: 'observer-unavailable' });\n    }\n    referenceHref(targetType, reference) {\n        return this.get(targetType)?.referenceHref?.(reference);\n    }",
+            "sha256": "a908b07aa1cc2de224b0a4f9cfc77422064fdcb6d25abb33cb931c31923f07b4"
+          },
+          {
+            "id": "E14",
+            "kind": "code",
+            "path": "packages/@nocobase/app-plugin-scheduler/dist/server/schedules/define.js",
+            "observation": "defineSchedule 校验 key 格式、title、cron 5/6 段、timezone、target.type、limit/from/to，并递归拒绝敏感 config 键，最后冻结定义并算 definitionHash。",
+            "lines": [
+              11,
+              53
+            ],
+            "excerpt": "export function defineSchedule(definition) {\n    if (!definition.key || !/^[A-Za-z0-9][A-Za-z0-9._:-]*$/.test(definition.key))\n        throw new Error('Schedule key must be a stable identifier.');\n    if (!definition.title)\n        throw new Error('Schedule title is required.');\n    const parts = definition.schedule?.cron?.trim().split(/\\s+/) ?? [];\n    if (parts.length !== 5 && parts.length !== 6)\n        throw new Error('Schedule cron must contain five or six fields.');\n    const timezone = definition.schedule.timezone ?? 'UTC';\n    try {\n        CronExpressionParser.parse(definition.schedule.cron, {\n            currentDate: new Date('2020-01-01T00:00:00.000Z'),\n            tz: timezone,\n        });\n    }\n    catch {\n        throw new Error('Schedule cron or timezone is invalid.');\n    }\n    if (!definition.target?.type)\n        throw new Error('Schedule target type is required.');\n    assertNoSensitiveConfig(definition.target.config);\n    if (definition.schedule.limit !== undefined &&\n        (!Number.isInteger(definition.schedule.limit) ||\n            definition.schedule.limit < 1))\n        throw new Error('Schedule limit must be a positive integer.');\n    if (definition.schedule.from &&\n        definition.schedule.to &&\n        definition.schedule.from > definition.schedule.to)\n        throw new Error('Schedule from must not be after to.');\n    const normalized = {\n        ...definition,\n        schedule: {\n            ...definition.schedule,\n            cron: definition.schedule.cron.trim(),\n            timezone,\n        },\n    };\n    const canonical = stableStringify(normalized);\n    return freezeDeep({\n        ...normalized,\n        definitionHash: createHash('sha256').update(canonical).digest('hex'),\n    });\n}",
+            "sha256": "00f0909276af5cc847ca3130860bb7fe917f8ea69b5e74d126610aebab10f51d"
+          },
+          {
+            "id": "E15",
+            "kind": "code",
+            "path": "packages/@nocobase/app-plugin-scheduler/dist/server/jobs/dispatch.js",
+            "observation": "ScheduleDispatchJob 以 queue jobId 作为 occurrenceId；目标非 ready 时 skip；occurrences.start 返回 noop 即不再执行；按 completed/accepted/skipped/failed 分别落状态，异常时记录 dispatch-failed 后重抛。",
+            "lines": [
+              15,
+              68
+            ],
+            "excerpt": "    async execute() {\n        const context = this.context;\n        if (!context.scheduleId) {\n            throw new Error('ScheduleDispatchJob requires a schedule id in its occurrence context.');\n        }\n        // The occurrence is identified by the queue's job id alone. Nothing else\n        // about the firing is read from the transport, which is what keeps\n        // `@boringnode/queue` an unmodified dependency.\n        const executionContext = {\n            scheduleId: this.payload.scheduleId,\n            occurrenceId: context.jobId,\n        };\n        const targetState = (await this.registry.describe(this.payload.target.type, this.payload.target.config)).state;\n        if (targetState && targetState !== 'ready') {\n            await this.occurrences.skip(context.jobId, `target-${targetState ?? 'unavailable'}`);\n            return;\n        }\n        const action = await this.occurrences.start(executionContext, this.payload.definitionHash, this.payload.target.type);\n        if (action === 'noop')\n            return;\n        try {\n            const result = await this.registry.start(this.payload.target.type, this.payload.target.config, executionContext);\n            switch (result.state) {\n                case 'completed':\n                    await this.occurrences.succeed(context.jobId, result.result);\n                    return;\n                case 'accepted': {\n                    await this.occurrences.wait(context.jobId, result.reference, result.receipt);\n                    const observation = await this.registry.inspect(this.payload.target.type, result.reference);\n                    if (observation.state === 'completed')\n                        await this.occurrences.complete(context.jobId, result.reference, observation.completion);\n                    return;\n                }\n                case 'skipped':\n                    await this.occurrences.skip(context.jobId, result.reason);\n                    return;\n                case 'failed':\n                    await this.occurrences.fail(context.jobId, result.reason);\n                    return;\n            }\n        }\n        catch (error) {\n            try {\n                await this.occurrences.fail(context.jobId, 'dispatch-failed');\n            }\n            catch (completionError) {\n                console.error('Failed to record schedule dispatch failure', {\n                    occurrenceId: context.jobId,\n                    error: completionError,\n                });\n            }\n            throw error;\n        }\n    }",
+            "sha256": "df00d05919718b6029e736141949155279809c550d537305f705591ccb2f26cf"
+          },
+          {
+            "id": "E16",
+            "kind": "code",
+            "path": "packages/@nocobase/app-plugin-scheduler/dist/server/occurrences.js",
+            "observation": "occurrence.start 对不存在记录插入 running，对 waiting 或终态记录返回 noop，从而同一 occurrenceId 重复派发不会重复执行。",
+            "lines": [
+              23,
+              73
+            ],
+            "excerpt": "    async start(context, definitionHash, targetType) {\n        const now = new Date();\n        const existing = await this.find(context.occurrenceId);\n        if (existing) {\n            if (existing.status === 'waiting' || TERMINAL.has(existing.status))\n                return 'noop';\n            const updated = await this.database\n                .query()\n                .updateTable('schedule_occurrences')\n                .set({\n                status: 'running',\n                executionCount: existing.executionCount + 1,\n                lastStartedAt: now,\n                updatedAt: now,\n            })\n                .where('id', '=', context.occurrenceId)\n                .where('status', 'in', ['pending', 'running'])\n                .execute();\n            if ((updated.updatedCount ?? 0) === 0) {\n                const current = await this.required(context.occurrenceId);\n                if (current.status === 'waiting' || TERMINAL.has(current.status))\n                    return 'noop';\n            }\n            return 'start';\n        }\n        await this.database\n            .query()\n            .insertInto('schedule_occurrences')\n            .values({\n            id: context.occurrenceId,\n            scheduleId: context.scheduleId,\n            definitionHash,\n            status: 'running',\n            reason: null,\n            targetType,\n            targetReferenceType: null,\n            targetReferenceId: null,\n            targetReceipt: null,\n            resultSummary: null,\n            executionCount: 1,\n            startedAt: now,\n            acceptedAt: null,\n            lastStartedAt: now,\n            lastObservedAt: null,\n            finishedAt: null,\n            createdAt: now,\n            updatedAt: now,\n        })\n            .execute();\n        return 'start';\n    }",
+            "sha256": "7b282a2f9abd98ac66cd2575a7bb4bb63a2d3146b95d654072eedbc8e2b3d788"
+          },
+          {
+            "id": "E17",
+            "kind": "code",
+            "path": "packages/@nocobase/app-plugin-scheduler/dist/server/occurrences.js",
+            "observation": "complete() 校验 expectedTargetType、reference 与终态冲突（REFERENCE_MISMATCH / COMPLETION_CONFLICT），并要求 occurrence 处于 waiting 才能结束。",
+            "lines": [
+              121,
+              146
+            ],
+            "excerpt": "    async complete(occurrenceId, reference, completion, \n    // Set when the caller holds a handle for one target type, so that\n    // registering a target grants no power over another target's occurrences.\n    expectedTargetType) {\n        assertReference(reference);\n        const existing = await this.required(occurrenceId);\n        if (expectedTargetType && existing.targetType !== expectedTargetType)\n            throw new ScheduleOccurrenceError('REFERENCE_MISMATCH', `Occurrence \"${occurrenceId}\" does not belong to target type \"${expectedTargetType}\"`);\n        // A workflow may finish between target.start() returning its run id and\n        // wait() persisting that id on the occurrence. The terminal observer is\n        // best-effort in that small window; dispatch performs an immediate inspect\n        // after wait(), and reconciliation covers any missed notification.\n        if (existing.status === 'running' &&\n            !existing.targetReferenceType &&\n            !existing.targetReferenceId)\n            return;\n        this.assertMatchingReference(existing, reference);\n        if (TERMINAL.has(existing.status)) {\n            if (existing.status === completion.status)\n                return;\n            throw new ScheduleOccurrenceError('COMPLETION_CONFLICT', `Occurrence \"${occurrenceId}\" is already ${existing.status}`);\n        }\n        if (existing.status !== 'waiting')\n            throw new ScheduleOccurrenceError('INVALID_STATE', `Occurrence \"${occurrenceId}\" cannot complete from ${existing.status}`);\n        await this.finish(occurrenceId, completion.status, completion.reason, completion.result, completion.finishedAt, reference);\n    }",
+            "sha256": "7b282a2f9abd98ac66cd2575a7bb4bb63a2d3146b95d654072eedbc8e2b3d788"
+          },
+          {
+            "id": "E18",
+            "kind": "code",
+            "path": "packages/@nocobase/app-plugin-scheduler/dist/server/store.js",
+            "observation": "setEnabled 先校验定义属于当前 appName，然后更新队列 schedule 状态与 schedule_definitions.enabled（两步不在同一事务）。",
+            "lines": [
+              87,
+              106
+            ],
+            "excerpt": "    async setEnabled(id, enabled) {\n        const definition = await this.database\n            .query()\n            .selectFrom('schedule_definitions')\n            .select('id')\n            .where('id', '=', id)\n            .where('appName', '=', this.appName)\n            .executeTakeFirst();\n        if (!definition)\n            throw new Error('Schedule not found.');\n        await this.schedules.update(id, {\n            status: enabled ? 'active' : 'paused',\n        });\n        await this.database\n            .query()\n            .updateTable('schedule_definitions')\n            .set({ enabled, updatedAt: this.now() })\n            .where('id', '=', id)\n            .execute();\n    }",
+            "sha256": "32169395d8341eaa937c197b5d24f39b551988dcbbc47b8461943225144be92e"
+          },
+          {
+            "id": "E19",
+            "kind": "code",
+            "path": "packages/@nocobase/app-plugin-scheduler/dist/server/store.js",
+            "observation": "materialize 用 schedules.upsert 写入 cron/timezone/limit，并按 recalculate 计算或保留 nextRunAt，状态取 enabled 对应 active/paused。",
+            "lines": [
+              281,
+              302
+            ],
+            "excerpt": "    async materialize(plan) {\n        const { id, definition, payload, recalculate, enabled } = plan;\n        const current = await this.schedules.get(id);\n        await this.schedules.upsert({\n            id,\n            name: ScheduleDispatchJob.options.name ?? ScheduleDispatchJob.name,\n            payload,\n            cronExpression: definition.schedule.cron,\n            timezone: definition.schedule.timezone,\n            ...(definition.schedule.from ? { from: definition.schedule.from } : {}),\n            ...(definition.schedule.to ? { to: definition.schedule.to } : {}),\n            ...(definition.schedule.limit !== undefined\n                ? { limit: definition.schedule.limit }\n                : {}),\n        });\n        await this.schedules.update(id, {\n            status: enabled ? 'active' : 'paused',\n            nextRunAt: recalculate || !current\n                ? calculateNextRunAt(definition, this.now())\n                : current.nextRunAt,\n        });\n    }",
+            "sha256": "32169395d8341eaa937c197b5d24f39b551988dcbbc47b8461943225144be92e"
+          },
+          {
+            "id": "E20",
+            "kind": "code",
+            "path": "packages/@nocobase/app-plugin-scheduler/dist/server/providers/scheduler.js",
+            "observation": "SchedulerProvider.start 先 queue.init() 后 scheduler.sync()，sync-only 模式不启动 worker；正常模式为 schedule 队列建 worker 并每 60 秒 reconcile。",
+            "lines": [
+              39,
+              58
+            ],
+            "excerpt": "    async start() {\n        const queue = this.app.container.resolve(queueManagerToken);\n        await queue.init();\n        const startupMode = this.app.container.resolveIfCreated(schedulerStartupModeToken);\n        const scheduler = this.app.container.resolve(schedulerServiceToken);\n        await scheduler.sync(startupMode?.finalize ?? false);\n        if (startupMode?.kind === 'sync-only')\n            return;\n        this.worker = queue.createWorker({\n            queues: ['schedule'],\n            concurrency: 1,\n        });\n        this.workerCompletion = this.worker.start();\n        this.reconcileTimer = setInterval(() => {\n            void scheduler.reconcileOccurrences().catch((error) => {\n                console.error('Scheduler occurrence reconciliation failed', error);\n            });\n        }, 60_000);\n        this.reconcileTimer.unref?.();\n    }",
+            "sha256": "b02823ed995ce38d4c676fb8c23cc2b047fce71c93cffe2f2d5a225acf364ea1"
+          },
+          {
+            "id": "E21",
+            "kind": "code",
+            "path": "packages/@nocobase/app-plugin-scheduler/dist/server/routes/index.js",
+            "observation": "管理路由要求 authentication.required() 与 authorization.middleware()，并检查 page:scheduler.schedules access；只有 list、occurrences、enable、disable 四个端点，无手动触发。",
+            "lines": [
+              7,
+              35
+            ],
+            "excerpt": "export const apiRoutes = defineApiRoutes(({ container }) => {\n    const router = new Hono();\n    const schedules = new Hono();\n    const authentication = container.resolve(authenticationToken);\n    const authorization = container.resolve(authorizationToken);\n    const scheduler = container.resolve(schedulerServiceToken);\n    schedules.use('*', authentication.required(), authorization.middleware());\n    schedules.use('*', async (context, next) => {\n        const allowed = await context.get('authz').can({\n            resource: { type: 'page', id: SCHEDULER_ACCESS_RESOURCE },\n            action: 'access',\n        });\n        if (!allowed)\n            return context.json({ error: 'Schedule access is required.' }, 403);\n        await next();\n    });\n    schedules.get('/', async (context) => context.json({ data: await scheduler.list() }));\n    schedules.get('/:id/occurrences', async (context) => context.json({\n        data: await scheduler.listOccurrences(context.req.param('id')),\n    }));\n    schedules.post('/:id/enable', async (context) => context.json({\n        data: await scheduler.setEnabled(context.req.param('id'), true),\n    }));\n    schedules.post('/:id/disable', async (context) => context.json({\n        data: await scheduler.setEnabled(context.req.param('id'), false),\n    }));\n    router.route('/schedules', schedules);\n    return router;\n});",
+            "sha256": "5923dd0ae2631da0ece7477ddd9ddf2d598010fcc69e2322c70d35e99f0efd2b"
+          },
+          {
+            "id": "E22",
+            "kind": "code",
+            "path": "packages/@nocobase/app-plugin-scheduler/dist/server/tokens.d.ts",
+            "observation": "公开 SchedulerService 只有 registerTarget 与 defineSchedule，schedulerServiceToken 以其为类型；读改计划只经 HTTP API 与 sync 命令。",
+            "lines": [
+              4,
+              27
+            ],
+            "excerpt": "export interface SchedulerService {\n    /**\n     * Registers what a schedule can point at: how its configuration is\n     * validated, how a firing starts, and — for anything that finishes later —\n     * how a run is inspected. The returned handle is how that target reports a\n     * terminal outcome back.\n     */\n    registerTarget<TConfig extends JsonObject>(target: ScheduleTargetType<TConfig>): ScheduleTargetHandle;\n    /**\n     * Registers a scheduled task this app should run. Call during `register()`\n     * or `boot()`, the same way as `registerTarget` — schedules are read once\n     * when `sync()` runs during `start()`, so anything defined afterward has no\n     * effect until the next sync. `key` is the schedule's stable, application-\n     * wide identity.\n     */\n    defineSchedule(definition: ScheduleDefinition): void;\n}\n/**\n * The scheduler's one public service, carrying its one extension point.\n * Reading and changing schedules is reachable through the plugin's HTTP API\n * and its `schedule:sync` command; the store, the target registry and the\n * occurrence history stay private to this package.\n */\nexport declare const schedulerServiceToken=[REDACTED]",
+            "sha256": "c735d08deeb1b293f09c3e5dc9adf484df6add59d4a468e466f82fa1b2201598"
+          },
+          {
+            "id": "E23",
+            "kind": "code",
+            "path": "packages/@nocobase/app-plugin-scheduler/dist/database/migrations/202609020001_scheduler_create_definitions.js",
+            "observation": "scheduleOccurrences 表包含 status、reason、targetType、targetReferenceType/Id、resultSummary、executionCount 与 started/accepted/finished 时间戳，并建 targetReference 索引。",
+            "lines": [
+              42,
+              75
+            ],
+            "excerpt": "        await builder.createCollection('scheduleOccurrences', (collection) => {\n            collection.string('id', { primaryKey: true, nullable: false });\n            collection\n                .belongsTo('schedule', 'scheduleDefinitions')\n                .targetKey('id')\n                .foreignKey('scheduleId')\n                .foreignKeyType('string')\n                .notNull()\n                .constraints(true)\n                .onDelete('restrict');\n            collection.string('definitionHash', { nullable: false });\n            collection.string('status', { nullable: false });\n            collection.string('reason');\n            collection.string('targetType', { nullable: false });\n            collection.json('targetReceipt');\n            collection.string('targetReferenceType');\n            collection.string('targetReferenceId');\n            collection.json('resultSummary');\n            collection.integer('executionCount', {\n                nullable: false,\n                defaultValue: 1,\n            });\n            collection.datetimeTz('startedAt', { nullable: false });\n            collection.datetimeTz('lastStartedAt', { nullable: false });\n            collection.datetimeTz('acceptedAt');\n            collection.datetimeTz('lastObservedAt');\n            collection.datetimeTz('observationDeadlineAt');\n            collection.datetimeTz('finishedAt');\n            collection.datetimeTz('createdAt', { nullable: false });\n            collection.datetimeTz('updatedAt', { nullable: false });\n            collection.index(['targetReferenceType', 'targetReferenceId'], {\n                name: 'schedule_occurrences_target_reference_idx',\n            });\n        });",
+            "sha256": "04f98fe56b1284f4b4d70e3b00ab39555e97f013a4afb4fb18be25537f3b05ad"
+          },
+          {
+            "id": "E24",
+            "kind": "skill",
+            "path": "app/.agents/skills/nocobase-app-plugin-scheduler/SKILL.md",
+            "observation": "Skill 说明每计划指向注册目标、从 Provider 的 register()/boot() 调用 defineSchedule、以及不得直接改 schedule_definitions/occurrences 或替换 ScheduleDispatchJob。",
+            "lines": [
+              26,
+              48
+            ],
+            "excerpt": "| A simple operation that happens hourly                                                    | Own target type | Cron alone is not a reason to introduce Workflow                                                           |\n| Immediate asynchronous execution or a one-time delay                                      | Queue           | No Cron Schedule is needed                                                                                 |\n| Another execution system with its own references, status queries, and completion protocol | Own target type | The same `registerTarget()` call, with `inspect()` and completion reporting for work that finishes later   |\n\nEvery schedule points at a registered target; `registerTarget()` is the target extension surface, and there is no built-in target type. `workflow` means `target.type: 'workflow'`, registered by the Workflow plugin, not an additional Queue Job wrapping a workflow. An application's own targets do not depend on the Workflow plugin. Neither approach guarantees exactly-once external business effects; design business idempotency for both.\n\n## Read by Task\n\n- To create or change a schedule, read [Definitions, Registration, and Synchronization](references/definitions.md), including application-owned and Workflow declarations.\n- To register or review a target, integrate Queue, report completion, or diagnose a historical occurrence after retargeting, read [Target Extensions and Execution Protocol](references/targets.md).\n- To integrate or review the UI/API and permissions, interpret status, or diagnose missing definitions, read [Operations and Verification](references/operations.md), including the complete management route table, separate status dimensions, and application identity checks.\n- To review Workflow readiness or recover a scheduled Workflow execution, read the Workflow integration section in [Definitions, Registration, and Synchronization](references/definitions.md); it covers built-in completion reporting and stable event identity.\n- To author the workflow itself, use the installed Workflow plugin's `nocobase-app-plugin-workflow` skill. Confirm supported Instructions instead of inventing nodes from business terminology.\n\n## Development Loop\n\n1. Establish which tasks and execution records administrators need to see. Check Server/Client/CLI registration, page permissions, the application's `schedule` Queue connection, and target availability, then choose an application-owned target type or `workflow`.\n2. Implement business logic and Providers in application source, and call `schedulerServiceToken.defineSchedule(definition)` with an application-wide stable key from that Provider's `register()`/`boot()`.\n3. Validate payload/input, timezone, idempotency, and the full asynchronous chain: dispatch, actual business worker consumption, terminal notification, and recovery from persisted execution state. Obtain credentials through secure business Service configuration, never `target.config`.\n4. Run application type checks, relevant tests, and build. Synchronize definitions and, in development, use an administrator account to find the task in the UI and track a real execution to its final state. Confirm the business result.\n5. Report the schedule key, execution model, timezone, validation evidence, and unverified runtime boundaries. Use `--finalize` in production only when the complete manifest is visible.\n\nSchedules are defined in code. There is no management API for creating or editing Cron definitions, but the UI and API support enabling and disabling tasks. Do not modify `schedule_definitions`, `schedule_occurrences`, or the Queue driver's schedule projection directly, or replace the infrastructure `ScheduleDispatchJob`.",
+            "sha256": "ff15880abf17327c0613e38fb53820031a9db904882c4a65b7d3211cfa223215"
+          },
+          {
+            "id": "E25",
+            "kind": "skill",
+            "path": "app/.agents/skills/nocobase-app-plugin-scheduler/references/targets.md",
+            "observation": "目标契约表给出 type/title、validate、describe、start、inspect、referenceHref 要求；共享结果协议给出 completed/accepted/skipped/failed 与 completion 形状。",
+            "lines": [
+              102,
+              132
+            ],
+            "excerpt": "## The Target Contract\n\n`ScheduleTargetType<TConfig>` is exported from `@nocobase/app-plugin-scheduler/server`, where TConfig is a JSON object:\n\n| Member                      | Implementation requirements                                                                                                                                                                                                                                                                           |\n| --------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |\n| `type` / `title`            | Stable, unique namespaced type name / display name; registering an existing type throws                                                                                                                                                                                                               |\n| `validate(config: unknown)` | Synchronously validate JSON structure and return `{ valid, reason? }`; called during synchronization and execution startup                                                                                                                                                                            |\n| `describe(config)`          | Optional; asynchronously return `{ targetLabel, description?, href?, state? }`, with state `ready/disabled/missing/invalid`; prefer an explicit state and perform no business side effects. Omitted, a target reads as its own title in the `ready` state, which suits a task that is always runnable |\n| `start(config, context)`    | Start execution asynchronously, follow the result union below, and deduplicate using occurrenceId. Context carries only `scheduleId` and `occurrenceId` — no request user, container, scheduled time, or credentials                                                                                  |\n| `inspect(reference)`        | Optional interface, but implement for asynchronous execution to recover actual executor state                                                                                                                                                                                                         |\n| `referenceHref(reference)`  | Optional controlled detail path; encode ids and avoid unvalidated external URLs                                                                                                                                                                                                                       |\n\nAfter registration, declare `target: { type: 'your-stable-type', config: { ... } }`. The extension owner handles parameters, business permissions, credentials, and the executor. Application integration does not require changing Scheduler's private registry, tables, or dispatch Job.\n\n`registerTarget()` is the target extension surface. The target registry, the schedule store and the occurrence history are private to the plugin; read and change schedules through the HTTP API, and synchronize through `nb3 schedule:sync`.\n\n## Shared Result Protocol\n\n`start()` must return one of these four `ScheduleTargetStartResult` variants:\n\n| Return value                                                           | Meaning                                                            |\n| ---------------------------------------------------------------------- | ------------------------------------------------------------------ |\n| `{ state: 'completed', outcome: 'succeeded', result?: JsonObject }`    | Business execution has succeeded; never use for merely queued work |\n| `{ state: 'accepted', reference: { type, id }, receipt?: JsonObject }` | Accepted; Scheduler enters waiting until terminal completion       |\n| `{ state: 'skipped', reason: string }`                                 | This execution should be skipped                                   |\n| `{ state: 'failed', reason: string }`                                  | Startup or synchronous execution failed                            |\n\n`inspect()` returns `ScheduleTargetObservation`: `{ state: 'pending' }`, `{ state: 'running' }`, `{ state: 'completed', completion }`, or `{ state: 'unknown', reason }`. Unknown is not success; a missing record is not proof of completion.\n\nCompletion has shape `{ status: 'succeeded' | 'failed' | 'cancelled' | 'timed_out', reason?: string, result?: JsonObject, finishedAt?: Date }`, reported through the handle `registerTarget()` returned. Report the real terminal outcome without reversing an already completed state.",
+            "sha256": "433d5a379287672bb6596ed32709326af1d8900a8b7cfe18bb8d07146b8b5764"
+          },
+          {
+            "id": "E26",
+            "kind": "skill",
+            "path": "app/.agents/skills/nocobase-app-plugin-scheduler/references/definitions.md",
+            "observation": "指引明确没有 Server 声明字段，计划由 Provider 解析 schedulerServiceToken 后调 defineSchedule 注册，并给出完整示例。",
+            "lines": [
+              9,
+              23
+            ],
+            "excerpt": "There is no Server declaration field for schedules — nothing to add to `defineServerPlugin()`, and no conventional file path to discover. A schedule is registered imperatively, wherever the application or a plugin needs it, by resolving `schedulerServiceToken` and calling `defineSchedule(definition)`. Do this from a Provider's `register()` or `boot()`, guarded the same way a target registration is guarded, since the scheduler plugin might not be installed:\n\n```ts\nimport { schedulerServiceToken } from '@nocobase/app-plugin-scheduler/server/tokens';\nimport type { AppPluginApplication } from '@nocobase/app-server/plugins';\nimport { ServiceProvider } from '@nocobase/service-provider';\n\nexport default class MaintenanceScheduleProvider extends ServiceProvider<AppPluginApplication> {\n  public readonly name = 'app/maintenance-schedule';\n\n  public override async boot(): Promise<void> {\n    if (!this.app.container.has(schedulerServiceToken)) return;\n    this.app.container.resolve(schedulerServiceToken).defineSchedule({\n      key: 'daily-maintenance',\n      title: 'Daily maintenance',",
+            "sha256": "0e39c7f64eb54a7715924aa4b7b25484b95194825d02cf1e9d9341b988d6f40c"
+          },
+          {
+            "id": "E27",
+            "kind": "skill",
+            "path": "app/.agents/skills/nocobase-app-plugin-scheduler/references/operations.md",
+            "observation": "管理入口列出 /settings/schedules 与四个 API 路径，说明需 scheduler.schedules:access 权限，并给出 registerTarget/defineSchedule 的公开签名。",
+            "lines": [
+              9,
+              34
+            ],
+            "excerpt": "## Management Entry Points\n\nThe list page is `/settings/schedules`; details are at `/settings/schedules/:scheduleId`. Definitions are maintained in source. The UI supports viewing and enabling/disabling tasks, with no API for creating or editing Cron definitions.\n\nAll routes below require authentication and authorization for `{ resource: { type: 'page', id: 'scheduler.schedules' }, action: 'access' }`. Enabling/disabling currently uses the same permission, not a separate update action.\n\n| Method and path                      | Response / effect                                                                                             |\n| ------------------------------------ | ------------------------------------------------------------------------------------------------------------- |\n| `GET /api/schedules`                 | `{ data: ScheduleListItem[] }`                                                                                |\n| `GET /api/schedules/:id/occurrences` | `{ data: ScheduleOccurrenceView[] }`; currently at most the latest 100 records, with no pagination parameters |\n| `POST /api/schedules/:id/enable`     | `{ data: ScheduleListItem }`; enables the task, no request body                                               |\n| `POST /api/schedules/:id/disable`    | `{ data: ScheduleListItem }`; pauses the task, no request body                                                |\n\nUse the id returned by list for `:id`, not the definition key or workflowKey. Enabling/disabling affects future scheduling; it does not cancel already dispatched Queue Jobs or workflows.\n\n`schedulerServiceToken` from `@nocobase/app-plugin-scheduler/server/tokens` is the plugin's one public service, and it is a contribution surface rather than an administration one:\n\n```ts\nregisterTarget<TConfig extends JsonObject>(\n  target: ScheduleTargetType<TConfig>,\n): ScheduleTargetHandle;\n\ndefineSchedule(definition: ScheduleDefinition): void;\n```\n\nThe returned handle carries `reportCompletion(occurrenceId, reference, completion)`, and completes only occurrences its own target started. `defineSchedule` has no return value; it validates and stores the definition in the in-memory manifest consumed by the next sync.",
+            "sha256": "07f5b0a208eab2d40bfb5cca5cc01adaed6856bdcce90a464e2622f2b638f775"
+          },
+          {
+            "id": "E28",
+            "kind": "skill",
+            "path": "app/.agents/skills/nocobase-app-plugin-scheduler/references/operations.md",
+            "observation": "验证与排障指引建议用短 cron 观察一次真实执行，并区分 enabled/lifecycleState/scheduleStatus/targetState，列出定义缺失、无触发、stuck waiting 的排查步骤。",
+            "lines": [
+              56,
+              74
+            ],
+            "excerpt": "Validate according to the change, beyond comparing synchronized Skill files:\n\n- The definition module imports, typechecks, and builds. Synchronization succeeds, and the list shows the expected key, timezone, and next execution.\n- In development, use a short Cron interval to observe an execution: a short target produces its business result and succeeds; asynchronous Queue Jobs or Workflows wait first and eventually reflect the real outcome.\n- Check actual status and reason for invalid payloads and missing/disabled targets. Successful synchronization does not prove input validity.\n- For asynchronous adapters, cover duplicate dispatch, the same reference for the same occurrence, successful completion, terminal failure after retries, and recovery through inspection after a lost notification. Verify a real business worker loads and consumes the Job on the selected connection/queue and produces the expected business result; Job discovery alone is insufficient.\n- Confirm enable/disable settings survive normal synchronization. Test finalization of removed definitions only in an authorized test environment.\n- For custom pages or Routes, verify anonymous, unauthorized, and authorized access. Run relevant application lint, typecheck, tests, and build, and report unverified external-system boundaries.\n\nDo not trigger production business effects merely to validate integration. Use a development environment or the application's existing test adapter.\n\n## Diagnose Problems\n\n- **Command missing:** check the Scheduler CLI contribution in `cli/plugins.ts`.\n- **Definition absent:** first confirm the target application root, actual running `appName`, environment/database, and UI/API endpoint are the same ones used for synchronization. In that application, call `GET /api/schedules`, match `appName` and the exact schedule `key`, and use the returned `id` for history and enable/disable routes. A renamed application or key has a different persistent identity; environment selects the deployment/database rather than adding a field to that identity. If the row is still absent, check that the registering Provider actually runs — it is listed in `server/providers/index.ts` or its plugin's `serviceProviders`, the `.has(schedulerServiceToken)` guard did not skip it because Scheduler is not installed, and `defineSchedule()` is called from `register()`/`boot()` rather than `start()` or later.\n- **Startup failure:** check which connection the logical `schedule` Queue selects, whether its driver supports scheduled jobs, migrations, duplicate keys/types/job names, Provider boot registration, and manifest validation errors.\n- **No trigger:** check nextRunAt, timezone, from/to, limit, enablement, and lifecycleState, then confirm the application and worker are running. The sync-only command is not a background daemon.\n- **Workflow does not execute:** read the Workflow integration section in [Definitions, Registration, and Synchronization](definitions.md); check its directory key, current definition enablement, Artifact availability, and inputSchema, then trace the stable eventKey and original run. Schedule synchronization does not validate the entire workflow's readiness.\n- **Stuck waiting:** follow the target reference and inspect the real executor, completion notification, and observer. Scheduler's periodic reconciliation does not perform the business worker's execution.",
+            "sha256": "07f5b0a208eab2d40bfb5cca5cc01adaed6856bdcce90a464e2622f2b638f775"
+          },
+          {
+            "id": "E29",
+            "kind": "code",
+            "path": "packages/@nocobase/db/dist/src/index.d.ts",
+            "observation": "@nocobase/db 公开 defineMigration、defineSeed、createDatabaseManager、databaseManagerToken 及 MigrationContext/SeedContext 等类型。",
+            "lines": [
+              21,
+              32
+            ],
+            "excerpt": "export { defineMigration } from './migration/define.js';\nexport { loadMigrations, validateMigrations } from './migration/loader.js';\nexport { createMigrator } from './migration/migrator.js';\nexport { TASK_LOCK_EXPIRY_MS, TASK_LOCK_HEARTBEAT_INTERVAL_MS, } from './migration/internal/lock.js';\nexport type { Migrator } from './migration/migrator.js';\nexport type { ChecksumMismatch, ChecksumMismatchPolicy, } from './migration/checksum-history.js';\nexport type { CreateMigratorOptions, DatabaseMigratorOptions, MigrationContext, MigrationHistoryRecord, MigrationDefinition, MigrationRepairOptions, MigrationRepairResult, MigrationRollbackOptions, MigrationRollbackResult, StaleTaskLockTakeover, TaskLockReleaseOptions, TaskLockReleaseResult, TaskLockState, MigrationRunResult, MigrationSource, MigrationTransactionMode, } from './migration/types.js';\nexport { defineSeed } from './seed/define.js';\nexport { loadSeeds, validateSeeds } from './seed/loader.js';\nexport { createSeeder } from './seed/seeder.js';\nexport type { Seeder } from './seed/seeder.js';\nexport type { CreateSeederOptions, DatabaseSeederOptions, SeedContext, SeedDefinition, SeedRepairOptions, SeedRepairResult, SeedRunResult, SeedSource, SeedTransactionMode, } from './seed/types.js';",
+            "sha256": "68dd12d55c1e21bf5a8efc369f0ef394d7025908196eb955e2b4a28b151ddfb6"
+          },
+          {
+            "id": "E30",
+            "kind": "code",
+            "path": "packages/@nocobase/db/dist/src/repository/repository.d.ts",
+            "observation": "Repository 声明 updateOne/upsertOne/updateMany/deleteMany 等带 select 重载，updateMany 返回 UpdateManyResult。",
+            "lines": [
+              60,
+              82
+            ],
+            "excerpt": "    updateOne(options: UpdateOneOptions<TUpdate, TRecord>): Promise<SingleMutationResult<TRecord>>;\n    upsertOne(options: UpsertOneOptions<TCreate, TUpdate, TRecord>): Promise<SingleMutationResult<TRecord>>;\n    updateMany<TSelection extends AnySelectBuilder<TRecord>>(options: UpdateManyOptions<TRecord, TUpdate> & {\n        readonly select: (select: SelectBuilder<TRecord>) => TSelection;\n    }): Promise<UpdateManyResult<SelectedBuilderRecord<TRecord, TSelection>>>;\n    updateMany(options: UpdateManyOptions<TRecord, TUpdate> & {\n        readonly select: SelectAst;\n    }): Promise<UpdateManyResult<TRecord>>;\n    updateMany(options: UpdateManyOptions<TRecord, TUpdate>): Promise<UpdateManyResult>;\n    deleteOne<TSelection extends AnySelectBuilder<TRecord>>(options: DeleteOneOptions<TRecord> & {\n        readonly select: (select: SelectBuilder<TRecord>) => TSelection;\n    }): Promise<DeleteOneResult<SelectedBuilderRecord<TRecord, TSelection>>>;\n    deleteOne(options: DeleteOneOptions<TRecord> & {\n        readonly select: SelectAst;\n    }): Promise<DeleteOneResult<TRecord>>;\n    deleteOne(options: DeleteOneOptions<TRecord>): Promise<DeleteOneResult>;\n    deleteMany<TSelection extends AnySelectBuilder<TRecord>>(options: DeleteManyOptions<TRecord> & {\n        readonly select: (select: SelectBuilder<TRecord>) => TSelection;\n    }): Promise<DeleteManyResult<SelectedBuilderRecord<TRecord, TSelection>>>;\n    deleteMany(options: DeleteManyOptions<TRecord> & {\n        readonly select: SelectAst;\n    }): Promise<DeleteManyResult<TRecord>>;\n    deleteMany(options: DeleteManyOptions<TRecord>): Promise<DeleteManyResult>;",
+            "sha256": "73261ab1598025253eb259b280f9825c8afeb637517f72b727aea1b876e09d44"
+          },
+          {
+            "id": "E31",
+            "kind": "code",
+            "path": "packages/@nocobase/db/dist/src/repository/repository.js",
+            "observation": "updateMany 实现先做写权限与字段校验，再 normalizeMutationFilter 归一化筛选，传入 all 标志后交 adapter.updateMany。",
+            "lines": [
+              463,
+              497
+            ],
+            "excerpt": "    async updateMany(options) {\n        const policyInput = options.writePolicy === undefined ? true : options.writePolicy;\n        assertWriteEnabled(policyInput);\n        const writePolicy = policyInput === true ? true : normalizeFieldWritePolicy(policyInput);\n        const collection = await this.collection();\n        assertWritableCollection(collection);\n        // Before the payload is looked at: a Policy that forbids this operation\n        // refuses the call outright, so an empty or malformed body is reported as\n        // forbidden rather than as invalid input. The caller learns nothing about\n        // the shape of a write they may not perform.\n        resolveWriteShapeNode(this.options.policy, 'update', collection);\n        if (writePolicy !== true)\n            validatePolicyFields(collection, writePolicy, ['writePolicy']);\n        const filter = await this.normalizeMutationFilter(collection, options.filter, options.context, options.all === true, 'update');\n        const values = validateValues(collection, evaluateValues(options.values), 'updateMany', false, options.context);\n        assertFieldWrites(values, writePolicy, ['values'], [], 'update', collection.name);\n        this.assertPolicyMutationFields(collection, { values }, 'update', [\n            'values',\n        ]);\n        const selection = options.select\n            ? await this.validateSelect(collection, options.select, options.context, this.readContext(collection))\n            : undefined;\n        if (selection)\n            assertBulkReturningIdentity(collection);\n        const result = await this.options.adapter.updateMany({\n            collection,\n            filter,\n            all: options.all === true,\n            values,\n            fields: selection\n                ? includeExecutionFields(collection, selection.fields)\n                : undefined,\n            select: selection?.select,\n            scopeCheck: await this.scopeCheck(collection, 'update'),\n        });",
+            "sha256": "31b67e0dcdfd222b6981571d563d9879525a3bf61312ea92a05a269d99c1f311"
+          },
+          {
+            "id": "E32",
+            "kind": "code",
+            "path": "packages/@nocobase/db/dist/src/repository/repository.js",
+            "observation": "批量变更的 filter 归一化后若 scope 为空，抛出 INVALID_FILTER：Bulk mutations require a non-empty filter or all: true。",
+            "lines": [
+              685,
+              695
+            ],
+            "excerpt": "                    collection: collection.name,\n                });\n            }\n            return this.normalizePolicyMutationScope(collection, operation);\n        }\n        const normalized = await this.normalizeFilterWithoutPolicy(collection, filter, context);\n        const scoped = await this.combineMutationPolicyScope(collection, normalized, operation);\n        if (!scoped || scoped.root.items.length === 0) {\n            invalid('INVALID_FILTER', 'Bulk mutations require a non-empty filter or all: true.', { collection: collection.name, path: ['filter'] });\n        }\n        return scoped;",
+            "sha256": "31b67e0dcdfd222b6981571d563d9879525a3bf61312ea92a05a269d99c1f311"
+          },
+          {
+            "id": "E33",
+            "kind": "code",
+            "path": "packages/@nocobase/repository-input/dist/filter-builder.d.ts",
+            "observation": "DefaultFilterBuilder 声明 and/or/variable 与 string/text/number/date/time/boolean/json/relation 操作符入口。",
+            "lines": [
+              2,
+              14
+            ],
+            "excerpt": "export declare class DefaultFilterBuilder<TRecord extends object = RepositoryRecord> implements FilterBuilder<TRecord> {\n    and(items: readonly FilterNode[]): FilterGroupNode;\n    or(items: readonly FilterNode[]): FilterGroupNode;\n    variable(path: string): FilterVariable;\n    string(path: string | RepositoryPath): StringFilterOperators;\n    text(path: string | RepositoryPath): TextFilterOperators;\n    number(path: string | RepositoryPath): NumberFilterOperators;\n    date(path: string | RepositoryPath): DateFilterOperators;\n    time(path: string | RepositoryPath): TimeFilterOperators;\n    boolean(path: string | RepositoryPath): BooleanFilterOperators;\n    json(path: string | RepositoryPath): JsonFilterOperators;\n    relation<TTarget extends object = RepositoryRecord>(path: string | RepositoryPath): RelationFilterOperators<TTarget>;\n}",
+            "sha256": "afee875ee6356adf0b381cbd585cae3f66ff55f125c638d0765cc8e718a776c5"
+          },
+          {
+            "id": "E34",
+            "kind": "code",
+            "path": "packages/@nocobase/repository-input/dist/filter-builder.js",
+            "observation": "filter builder 实现 and/or 返回 group 节点，boolean(path) 与 date(path) 分别返回对应操作符对象。",
+            "lines": [
+              3,
+              35
+            ],
+            "excerpt": "    and(items) {\n        return { kind: 'group', logic: 'and', items };\n    }\n    or(items) {\n        return { kind: 'group', logic: 'or', items };\n    }\n    variable(path) {\n        return { kind: 'variable', path };\n    }\n    string(path) {\n        return new StringOperators(normalizePath(path), 'string');\n    }\n    text(path) {\n        return new StringOperators(normalizePath(path), 'text');\n    }\n    number(path) {\n        return new NumberOperators(normalizePath(path), 'number');\n    }\n    date(path) {\n        return new DateOperators(normalizePath(path), 'date');\n    }\n    time(path) {\n        return new TimeOperators(normalizePath(path), 'time');\n    }\n    boolean(path) {\n        return new BooleanOperators(normalizePath(path), 'boolean');\n    }\n    json(path) {\n        return new JsonOperators(normalizePath(path));\n    }\n    relation(path) {\n        return new RelationOperators(normalizePath(path));\n    }",
+            "sha256": "6234f15e70188871c0606e4640a5bc7798791e2f48ea1d350e23785ed544df11"
+          },
+          {
+            "id": "E35",
+            "kind": "code",
+            "path": "packages/@nocobase/repository-input/dist/filter-builder.js",
+            "observation": "DateOperators 提供 on/before/after/between 等；BooleanOperators 提供 isTrue/isFalse 生成相应条件节点。",
+            "lines": [
+              143,
+              181
+            ],
+            "excerpt": "class DateOperators extends BaseOperators {\n    on(value) {\n        return dateCondition(this.path, this.group, '$dateOn', value);\n    }\n    notOn(value) {\n        return dateCondition(this.path, this.group, '$dateNotOn', value);\n    }\n    before(value) {\n        return dateCondition(this.path, this.group, '$dateBefore', value);\n    }\n    after(value) {\n        return dateCondition(this.path, this.group, '$dateAfter', value);\n    }\n    notBefore(value) {\n        return dateCondition(this.path, this.group, '$dateNotBefore', value);\n    }\n    notAfter(value) {\n        return dateCondition(this.path, this.group, '$dateNotAfter', value);\n    }\n    between(value) {\n        return condition(this.path, this.group, '$dateBetween', value.map(normalizeDateOperand));\n    }\n}\nclass TimeOperators extends BaseOperators {\n    eq(value) {\n        return condition(this.path, this.group, '$eq', value);\n    }\n    ne(value) {\n        return condition(this.path, this.group, '$ne', value);\n    }\n}\nclass BooleanOperators extends BaseOperators {\n    isTrue() {\n        return condition(this.path, this.group, '$isTruly');\n    }\n    isFalse() {\n        return condition(this.path, this.group, '$isFalsy');\n    }\n}",
+            "sha256": "6234f15e70188871c0606e4640a5bc7798791e2f48ea1d350e23785ed544df11"
+          },
+          {
+            "id": "E36",
+            "kind": "skill",
+            "path": "app/.agents/skills/nocobase-db/SKILL.md",
+            "observation": "Skill 指出 seed 应以稳定业务值加唯一约束为幂等键，upsertOne 是直接表达方式，seed 无 rollback/truncate。",
+            "lines": [
+              132,
+              137
+            ],
+            "excerpt": "- **Immutable once merged.** Check with `git log -- <file>` if unsure. Before the branch is merged you may correct the file in place; after it, every change is a new, later file. Never hard-code a previous checksum to make an edited migration look untouched. Correcting it in place changes nothing on its own — it is recorded as executed, so a plain apply skips it and the database keeps the schema the old file produced. `pnpm db:redo` rolls the latest batch back and applies it again.\n- **The file name body matches `name`**, and the name is unique across every source in the application.\n- **Declare `irreversible: true`** when there is no real reverse operation, instead of writing a `down()` that quietly does nothing.\n- **A seed is idempotent**, keyed on a stable business value backed by a unique constraint, so a repeated run is a no-op — `upsertOne` is the direct way to express that. A seed context has no `builder` at all, and a seed has no rollback or truncate behavior.\n\nA backfill belongs in the migration that makes it necessary, using `query` from the same context — not in a seed.",
+            "sha256": "2fdca7c2484a669667b6293878b915a5af0f84cbd3c5e80945a28fe5fbabf7d7"
+          },
+          {
+            "id": "E37",
+            "kind": "skill",
+            "path": "app/.agents/skills/nocobase-db/SKILL.md",
+            "observation": "Skill 列出 Repository 方法集，并说明 updateMany/deleteMany 拒绝空 scope、只有明确全表时才传 all:true。",
+            "lines": [
+              240,
+              246
+            ],
+            "excerpt": "The methods are `findOne`, `findMany`, `count`, `exists`, `aggregate`, `groupBy`, `createOne`, `createMany`, `updateOne`, `updateMany`, `upsertOne`, `deleteOne` and `deleteMany`; `describeMutation` and `validateMutation` report capabilities and pre-validate input, and `withPolicy` returns a scoped Repository.\n\nBoundaries that are easy to get wrong:\n\n- `findOne` takes the first match; `updateOne` and `deleteOne` require exactly one; `upsertOne` requires a unique equality condition.\n- `updateMany` and `deleteMany` refuse an empty scope. Pass `all: true` only when the task explicitly calls for every row — never to make an error go away.\n- `createMany` and `updateMany` do not accept nested relation writes. `createOne` accepts `create` and `connect` on a relation, not the full set.",
+            "sha256": "2fdca7c2484a669667b6293878b915a5af0f84cbd3c5e80945a28fe5fbabf7d7"
+          },
+          {
+            "id": "E38",
+            "kind": "skill",
+            "path": "app/.agents/skills/nocobase-app-development/SKILL.md",
+            "observation": "“Choose your reference”表把“Add a reusable service, share it across routes, run background or scheduled work”指向 references/services-and-jobs.md，未提到 Scheduler。",
+            "lines": [
+              89,
+              107
+            ],
+            "excerpt": "## Choose your reference\n\nRead the page for the task in front of you. Do not read all of them.\n\n| Task                                                                                | Read                                                             |\n| ----------------------------------------------------------------------------------- | ---------------------------------------------------------------- |\n| Copy a worked screen instead of designing one from nothing                          | `client/pages/reference/README.md` in the application            |\n| Create a page, write a page component, configure routes or navigation               | [client pages and routes](references/client-pages-and-routes.md) |\n| Add child pages, page Tabs, Dialogs, or Drawers using child routes; add menu groups | [child routes and overlays](references/client-child-routes.md)   |\n| Add or compose UI, add a shadcn primitive, style consistently, support dark mode    | [components and styling](references/components-and-styling.md)   |\n| Add or change frontend form validation, field errors, or validation schemas         | [React Hook Form and Zod](references/react-hook-form.md)         |\n| Add or change top-right header buttons, tooltips, menus, or configuration panels    | [header action interactions](references/header-actions.md)       |\n| Add an API endpoint, a webhook, or a callback; authenticate and authorize it        | [server routes](references/server-routes.md)                     |\n| Call an API from the frontend using the application's HTTP client                   | [client API requests](references/client-api.md)                  |\n| Query or write data, resolve the database, work with transactions                   | [database and data access](references/database-and-data.md)      |\n| Create a table, alter a column, add an index, write required initial data           | [migrations and seeds](references/migrations.md)                 |\n| Switch the database, register a dialect, add a second connection                    | [database connections](references/database-connections.md)       |\n| Name translation keys, add a locale, reword a plugin's string                       | [internationalization](references/i18n.md)                       |\n| Add a reusable service, share it across routes, run background or scheduled work    | [services and jobs](references/services-and-jobs.md)             |",
+            "sha256": "c7126d1c3019dc81d7c59624f7a24144d2735c39cf94a788c944a1ca2b426f33"
+          },
+          {
+            "id": "E39",
+            "kind": "skill",
+            "path": "app/.agents/skills/nocobase-app-development/references/services-and-jobs.md",
+            "observation": "该页“Work that runs on a schedule”称时间驱动任务需要 scheduler，由 @nocobase/cron 提供，并给出 createCronJobManager 与“scan for records overdue today”示例。",
+            "lines": [
+              129,
+              159
+            ],
+            "excerpt": "## Work that runs on a schedule\n\nA job runs when something dispatches it. Work that has to happen _because time passed_ — scan for records overdue today, send a nightly digest, expire stale sessions — needs a scheduler, and `@nocobase/cron` provides one.\n\nThere is no container token for it: create a manager in a provider, and tie its lifecycle to the provider's.\n\n```ts\nimport { createCronJobManager, type CronJobManager } from '@nocobase/cron';\n\nexport default class OverdueScanProvider extends ServiceProvider<Application> {\n  public readonly name: string = 'app/overdue-scan-provider';\n\n  private readonly cron: CronJobManager = createCronJobManager();\n\n  public override async start(): Promise<void> {\n    this.cron.addJob({\n      cronTime: '0 8 * * *',\n      onTick: async () => {\n        // Keep this thin: resolve the service and call it.\n      },\n    });\n    this.cron.start();\n  }\n\n  public override async shutdown(): Promise<void> {\n    this.cron.close();\n  }\n}\n```\n\n`start()` and `shutdown()` are the right hooks — a manager created in `register()` would outlive nothing and never be released. `addJob` accepts the options of the `cron` package, including `timeZone`, which matters as soon as \"8am\" means a particular office's morning.",
+            "sha256": "37009a76c8623ae436da8dae953aab54c95ae75571b79a06036f4b5846158a95"
+          },
+          {
+            "id": "E40",
+            "kind": "skill",
+            "path": "app/.agents/skills/nocobase-app-development/references/services-and-jobs.md",
+            "observation": "服务指引给出 createServiceToken + ServiceProvider.register() 绑定 token 的模式，并说明 register/boot/start/shutdown 生命周期分工。",
+            "lines": [
+              5,
+              60
+            ],
+            "excerpt": "## Services\n\nPut domain logic in a service under `server/providers/` once more than one route needs it, or once it is worth testing on its own. A route that only reads and returns a list may query directly.\n\nA service is registered by a provider under a token, so anything in the application can resolve it without importing the implementation:\n\n```ts\n// server/providers/orders.ts\nimport type { Application } from '@nocobase/app-server/application';\nimport { databaseManagerToken } from '@nocobase/db';\nimport {\n  createServiceToken,\n  ServiceProvider,\n  type ServiceToken,\n} from '@nocobase/service-provider';\n\nexport interface OrderService {\n  list(): Promise<Order[]>;\n  create(input: CreateOrderInput): Promise<Order>;\n}\n\nexport const orderServiceToken=[REDACTED] =\n  createServiceToken<OrderService>('app/order-service');\n\nexport default class OrderProvider extends ServiceProvider<Application> {\n  public readonly name: string = 'app/order-provider';\n\n  public override register(): void {\n    this.app.container.singleton(orderServiceToken, () => {\n      const database = this.app.container.resolve(databaseManagerToken);\n      return createOrderService(database);\n    });\n  }\n}\n```\n\nAdd the provider to the array in `server/providers/index.ts` and export its token from there so routes can import it.\n\nResolve it where you need it:\n\n```ts\nconst orders = app.container.resolve(orderServiceToken);\n```\n\n**The token is the identity.** Two `createServiceToken` calls with the same name are two different keys — the container matches by object identity. Always import the token from where it is defined rather than recreating one.\n\n`singleton` builds the service once, on first resolve. Use `instance` for an already-constructed value.\n\nKeep the layers apart: a service should not read a Hono context, return HTTP status codes, or decide retry behavior. It takes its dependencies and returns domain results.\n\n## Provider lifecycle\n\n| Method       | Runs                             | For                                              |\n| ------------ | -------------------------------- | ------------------------------------------------ |\n| `register()` | Assembly, before anything starts | Binding tokens. Do not connect or start anything |\n| `boot()`     | After all providers registered   | Work needing other services                      |",
+            "sha256": "37009a76c8623ae436da8dae953aab54c95ae75571b79a06036f4b5846158a95"
+          },
+          {
+            "id": "E41",
+            "kind": "code",
+            "path": "packages/@nocobase/app-server/dist/router/routes.d.ts",
+            "observation": "AppRouterFactory 接收应用返回 Hono；defineApiRoutes/defineRootRoutes 生成 AppApiRouteContribution/AppRootRouteContribution。",
+            "lines": [
+              1,
+              23
+            ],
+            "excerpt": "import type { Hono } from 'hono';\nexport type AppRouterFactory<TApplication> = (app: TApplication) => Hono | Promise<Hono>;\nexport type AppHttpMiddlewareRegister<TApplication> = (router: Hono, app: TApplication) => void | Promise<void>;\nexport interface AppHttpMiddleware<TApplication> {\n    readonly name: string;\n    readonly register: AppHttpMiddlewareRegister<TApplication>;\n}\nexport interface AppApiRouteContribution<TApplication> {\n    readonly scope: 'api';\n    readonly createRouter: AppRouterFactory<TApplication>;\n}\nexport interface AppRootRouteContribution<TApplication> {\n    readonly scope: 'root';\n    readonly createRouter: AppRouterFactory<TApplication>;\n}\nexport type AppRouteContribution<TApplication> = AppApiRouteContribution<TApplication> | AppRootRouteContribution<TApplication>;\nexport interface DefineHttpMiddlewareOptions<TApplication> {\n    readonly name: string;\n    readonly register: AppHttpMiddlewareRegister<TApplication>;\n}\nexport declare function defineHttpMiddleware<TApplication>(options: DefineHttpMiddlewareOptions<TApplication>): AppHttpMiddleware<TApplication>;\nexport declare function defineApiRoutes<TApplication>(createRouter: AppRouterFactory<TApplication>): AppApiRouteContribution<TApplication>;\nexport declare function defineRootRoutes<TApplication>(createRouter: AppRouterFactory<TApplication>): AppRootRouteContribution<TApplication>;",
+            "sha256": "a85b078705c8bdf8ee04dec1a946f39708d1aff68d1581562abe4c20ebabcb74"
+          },
+          {
+            "id": "E42",
+            "kind": "code",
+            "path": "packages/@nocobase/app-client/dist/plugins.d.ts",
+            "observation": "app-client 公开 defineClientPlugins、defineAppRoutes、defineSettingsRoutes、defineDevRoutes 与 resolveAppClientContributions 等贡献入口。",
+            "lines": [
+              275,
+              301
+            ],
+            "excerpt": "export declare function defineClientPlugin<TOptions = void>(definition: AppClientPluginDefinition<TOptions>): AppClientPluginFactory<TOptions>;\n/**\n * Collects the application's registered plugins in declaration order.\n */\nexport declare function defineClientPlugins(registrations: readonly AppClientPluginRegistration[]): AppClientPlugins;\nexport declare function defineAppRoutes(routes: readonly AppClientRouteDefinition[]): AppClientAppRoutesContribution;\nexport declare function defineSettingsRoutes(routes: readonly AppClientSettingsRouteDefinition[]): AppClientSettingsRoutesContribution;\n/**\n * Declares pages under the built-in Dev Route, for tooling a developer uses while building the application rather\n * than anything a deployed application should expose.\n *\n * The guard lives here rather than at each call site so a plugin author writes `defineDevRoutes([...])` exactly the\n * way they write `defineSettingsRoutes([...])`, with no way to forget it. A production build replaces\n * `import.meta.env.PROD` with `true` at transform time, which makes the argument unreachable and lets the bundler\n * drop every page component behind it — along with any module only those pages import. Nothing about this surface\n * reaches the production bundle.\n *\n * `env` is read through a local type and an optional access because this module is compiled by consumers that do not\n * load bundler ambient types, and is imported under plain Node by `client:inspect` and by Vitest, where\n * `import.meta.env` is undefined. Both of those are development contexts, so both see the routes.\n */\nexport declare function defineDevRoutes(routes: readonly AppClientDevRouteDefinition[]): AppClientDevRoutesContribution;\nexport declare function defineClientRouteComponentOverrides(overrides: readonly AppClientRouteComponentOverrideDefinition[]): readonly AppClientRouteComponentOverrideDefinition[];\nexport declare function defineClientSourceExtension(extension: AppClientSourceExtension): AppClientSourceExtension;\nexport declare function defineClientReactProviders(reactProviders: readonly AppClientReactProviderDefinition[]): readonly AppClientReactProviderDefinition[];\nexport declare function resolveAppClientContributions(contributions: readonly AppClientContributions[]): ResolvedAppClientContributions;\nexport declare function applyClientRouteComponentOverrides(routes: readonly AppClientRegisteredRoute[], overrides: readonly AppClientRouteComponentOverrideDefinition[]): readonly AppClientRegisteredRoute[];",
+            "sha256": "6939c627d1f9347bbad55501e8cd4e57704e3f4991866660fa31b7b0ff9776b1"
+          },
+          {
+            "id": "E43",
+            "kind": "code",
+            "path": "packages/@nocobase/service-provider/dist/provider.d.ts",
+            "observation": "ServiceProvider 定义 name 与 register/boot/start/ready/shutdown 生命周期，供应用与插件注册服务。",
+            "lines": [
+              1,
+              19
+            ],
+            "excerpt": "export interface ServiceProviderLifecycle {\n    readonly name: string;\n    register(): void;\n    boot(): Promise<void>;\n    start(): Promise<void>;\n    ready(): Promise<void>;\n    shutdown(): Promise<void>;\n}\nexport declare abstract class ServiceProvider<TApplication = unknown> implements ServiceProviderLifecycle {\n    protected readonly app: TApplication;\n    abstract readonly name: string;\n    constructor(app: TApplication);\n    register(): void;\n    boot(): Promise<void>;\n    start(): Promise<void>;\n    ready(): Promise<void>;\n    shutdown(): Promise<void>;\n}\nexport type ServiceProviderConstructor<TApplication = unknown, TArguments extends readonly unknown[] = []> = new (app: TApplication, ...args: TArguments) => ServiceProvider<TApplication>;",
+            "sha256": "764184ad5e2e9cb20d3ea4c790e4acc5dd9f4849464e8220aba40243be60996c"
+          }
+        ],
+        "limitations": [
+          "本次只评审 Scheduler、@nocobase/db/Repository 与应用装配指引三个能力单元，不代表整个 NocoBase3 框架。",
+          "无法查看 PNG 图像内容，UI 跨页面一致性未评价。",
+          "未阅读 @nocobase/queue 驱动、迁移器与 app-server/app-client 运行时实现，相关路径按 null 处理。",
+          "异步 accepted/inspect 路径、多副本调度与最终化同步本次未使用，未据其推断可靠性。",
+          "快照未包含 1 个超出预算、非普通文件或不可读取的文件；未据此确认其实现。"
+        ]
+      },
+      "execution": {
+        "buildReviewMode": "full",
+        "source": "reassessment"
+      },
       "reviewer": {
         "engine": "pi",
         "model": "deepseek-v4.1-flash",
         "version": "0.86.1",
-        "runId": "35966684490",
+        "runId": "35988006806",
         "attempt": 1,
-        "controlSha": "1bd143f61094211c8c19783e489b5e85d86a91c4",
-        "replay": false
+        "controlSha": "952084a875e940bdcba52d45f8b805c7f49f0049",
+        "replay": true
+      },
+      "supplementalUsage": {
+        "input": 261310,
+        "output": 36873,
+        "cacheRead": 2141588,
+        "cacheWrite": 0,
+        "reasoning": 0,
+        "totalTokens": 2439771,
+        "records": 44,
+        "incomplete": 0,
+        "runId": 35988006806,
+        "attempt": 1
       },
       "process": {
         "verificationAttempts": 1,
@@ -958,5 +2069,5 @@
     "number": 259,
     "headSha": "b113305751e13d76890557b2a5261ce2fd760e51"
   },
-  "reportId": "gchust/nb3-factory:254:35966684490:1:b113305751e13d76890557b2a5261ce2fd760e51:template-4:review-c3a2a0e67f52882b"
+  "reportId": "gchust/nb3-factory:254:35966684490:1:b113305751e13d76890557b2a5261ce2fd760e51:template-4:review-2214c6addf0f1443"
 }
