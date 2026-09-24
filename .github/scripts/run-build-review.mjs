@@ -116,11 +116,14 @@ export function materializeEvidence(review, snapshot, catalog) {
     evidence: review.evidence.map(evidence => {
       const file = catalog.find(item => item.path === evidence.path);
       const data = readFileSync(path.join(snapshot, file.path));
+      const excerpt = evidence.kind === 'screenshot' ? null : data.toString('utf8')
+        .split('\n').slice(evidence.lines[0] - 1, evidence.lines[1]).join('\n').slice(0, 12000);
+      // A valid file/line reference to only "{" is not a useful citation.
+      // Do not widen the reviewer's range or substitute its claimed quote.
+      if (excerpt !== null && /^[\s{}\[\],:;()]*$/u.test(excerpt))
+        throw new Error(`Evidence ${evidence.id} must select substantive lines: ${evidence.path}`);
       return { id: evidence.id, kind: evidence.kind, path: evidence.path, observation: evidence.observation,
-        ...(evidence.kind === 'screenshot' ? {} : { lines: evidence.lines }), sha256: file.sha256,
-        ...(evidence.kind === 'screenshot' ? {} : {
-          excerpt: data.toString('utf8').split('\n').slice(evidence.lines[0] - 1, evidence.lines[1]).join('\n').slice(0, 12000) || '(empty line)',
-        }),
+        ...(evidence.kind === 'screenshot' ? {} : { lines: evidence.lines, excerpt }), sha256: file.sha256,
       };
     }),
   };
