@@ -37,3 +37,11 @@ test('isolated workflow has exact pins, no model/deployment secrets and no write
   assert.match(text,/--template hub --dialect sqlite/);
   assert.match(text,/if: always\(\)/);
 });
+
+test('Hub startup and browser login use the explicit Hub mount, not the Host proxy', () => {
+  const script = readFileSync(new URL('../hub-smoke.mjs', import.meta.url), 'utf8');
+  assert.match(script, /APP_NAME: 'hub', APP_BASE_PATH: '\/hub'/);
+  assert.match(script, /fetch\(`\$\{origin\}\/hub\//);
+  assert.match(script, /login\(page, `\$\{origin\}\/hub\//);
+  assert.doesNotMatch(script, /\$\{origin\}\/main\//);
+});

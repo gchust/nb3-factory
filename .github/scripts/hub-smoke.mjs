@@ -104,7 +104,7 @@ async function runHub(workspace, artifactDir, evidence) {
   const port = await freePort(), origin = `http://127.0.0.1:${port}`;
   const logFile = path.join(out, 'hub-start.log'), stream = createWriteStream(logFile);
   const child = spawn('pnpm', ['start'], { cwd: app, detached: true,
-    env: { ...process.env, NODE_ENV: 'production', NOCOBASE_STRICT_STARTUP: 'true', APP_CONFIG_FILE: path.join(app, 'config.yml'), APP_SERVER_HOST: '127.0.0.1', APP_SERVER_PORT: String(port), APP_PUBLIC_ORIGIN: origin },
+    env: { ...process.env, APP_NAME: 'hub', APP_BASE_PATH: '/hub', NODE_ENV: 'production', NOCOBASE_STRICT_STARTUP: 'true', APP_CONFIG_FILE: path.join(app, 'config.yml'), APP_SERVER_HOST: '127.0.0.1', APP_SERVER_PORT: String(port), APP_PUBLIC_ORIGIN: origin },
     stdio: ['ignore', 'pipe', 'pipe'] });
   let spawnError; child.once('error', e => { spawnError = e; });
   child.stdout.pipe(stream, { end: false }); child.stderr.pipe(stream, { end: false });
@@ -115,7 +115,7 @@ async function runHub(workspace, artifactDir, evidence) {
     for (let i = 0; i < 120; i++) {
       if (spawnError) throw spawnError;
       if (child.exitCode !== null) throw new Error('Hub exited before becoming ready');
-      try { const response = await fetch(`${origin}/main/`, { signal: AbortSignal.timeout(1500) }); lastProbe = `HTTP ${response.status}`; if (response.ok) { ready = true; break; } } catch (error) { lastProbe = error.cause?.code ?? error.name; }
+      try { const response = await fetch(`${origin}/hub/`, { signal: AbortSignal.timeout(1500) }); lastProbe = `HTTP ${response.status}`; if (response.ok) { ready = true; break; } } catch (error) { lastProbe = error.cause?.code ?? error.name; }
       await delay(1000);
     }
     assert.ok(ready, `Hub startup timeout (${lastProbe}); see hub-start.log`);
@@ -124,7 +124,7 @@ async function runHub(workspace, artifactDir, evidence) {
     browser = await chromium.launch({ channel: 'chrome', headless: true });
     const context = await browser.newContext({ viewport: { width: 1440, height: 960 } });
     const page = await context.newPage();
-    const apiRoot = await login(page, `${origin}/main/`);
+    const apiRoot = await login(page, `${origin}/hub/`);
     assert.equal(loopback(apiRoot).origin, origin);
     async function request(route, options = {}) {
       const response = await context.request.fetch(`${apiRoot}/hub${route}`, { ...options, maxRedirects: 0, timeout: 120000 });
