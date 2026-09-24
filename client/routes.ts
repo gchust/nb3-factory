@@ -1,4 +1,4 @@
-import { Home, Palette } from 'lucide-react';
+import { Home, NotebookPen, Palette } from 'lucide-react';
 import {
   defineAppRoutes,
   defineSettingsRoutes,
@@ -15,6 +15,20 @@ const appRoutes: AppClientRouteContribution = defineAppRoutes([
     name: 'home',
     navigation: { title: 'navigation.home', icon: Home },
     path: '/',
+  },
+  {
+    // Customer memos are an internal, signed-in feature. Like the landing page, the route opts out of page
+    // authorization so any user who can sign in can reach it; the API still authenticates every request.
+    authz: 'skip',
+    auth: 'required',
+    componentLoader: () => import('./pages/customer-memos/index.js'),
+    name: 'customer-memos',
+    navigation: {
+      title: 'navigation.customerMemos',
+      icon: NotebookPen,
+      order: 10,
+    },
+    path: '/customer-memos',
   },
   {
     auth: 'guest',
