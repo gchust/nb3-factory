@@ -122,7 +122,9 @@ async function runHub(workspace, artifactDir, evidence) {
   child.stdout.pipe(stream, { end: false }); child.stderr.pipe(stream, { end: false });
   let browser, counter;
   const browserEvents = [];
-  const secret = randomBytes(32).toString('hex'), password = `Factory-QA-${randomBytes(12).toString('hex')}`;
+  // The verified F00 artifact seeds nocobase/admin123 in an empty database.
+  // It predates configurable initialAdmin; do not guess a new password override.
+  const secret = randomBytes(32).toString('hex'), password = 'admin123';
   try {
     let ready = false, lastProbe = 'not_probed';
     for (let i = 0; i < 120; i++) {
@@ -152,7 +154,7 @@ async function runHub(workspace, artifactDir, evidence) {
     assert.equal(release.checksum, receipt.artifactSha256);
     const automatic = { autoRun: true };
     // Runtime-only configuration for an empty, private test volume; never saved in evidence.
-    const config = JSON.stringify({ i18n: { defaultLocale: 'en-US' }, users: { initialAdmin: { username: 'nocobase', password } }, auth: { secret, emailAndPassword: { enabled: true, autoSignIn: false }, session: { storeSessionInDatabase: true } }, session: { secret }, database: { default: 'main', connections: { main: { dialect: 'sqlite', database: path.join(temporary, `${appId}.sqlite`), schemaManagement: 'managed', migrations: automatic, seeds: automatic } }, migrations: automatic, seeds: automatic }, logging: { level: 'info', file: { enabled: true } }, snowflake: { workerId: 1, epoch: 1605024000 } });
+    const config = JSON.stringify({ i18n: { defaultLocale: 'en-US' }, auth: { secret, emailAndPassword: { enabled: true, autoSignIn: false }, session: { storeSessionInDatabase: true } }, session: { secret }, database: { default: 'main', connections: { main: { dialect: 'sqlite', database: path.join(temporary, `${appId}.sqlite`), schemaManagement: 'managed', migrations: automatic, seeds: automatic } }, migrations: automatic, seeds: automatic }, logging: { level: 'info', file: { enabled: true } }, snowflake: { workerId: 1, epoch: 1605024000 } });
     const deployment = await request(`/apps/${appId}/deploy`, { method: 'POST', data: { releaseId: release.id, config: { mode: 'file', content: config } } });
     let status;
     for (let i = 0; i < 150; i++) {

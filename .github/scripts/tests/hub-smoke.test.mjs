@@ -63,3 +63,11 @@ test('counter browser entry resolves deployment basePath, not just hostUrl', () 
   assert.match(script, /const target = hostedApplicationUrl\(detail, origin\)/);
   assert.match(script, /await login\(counter, target.href, password\)/);
 });
+
+
+test('the fixed F00 artifact uses its real seeded account, not an unsupported password override', () => {
+  const script = readFileSync(new URL('../hub-smoke.mjs', import.meta.url), 'utf8');
+  assert.match(script, /password = 'admin123'/);
+  assert.doesNotMatch(script, /users: \{ initialAdmin/);
+  assert.match(script, /assert\.ok\(authenticated\.ok\(\), 'Test account login failed'\)/);
+});
