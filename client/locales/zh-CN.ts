@@ -126,6 +126,7 @@ const zhCN: AppResource = {
     collapse: '收起导航',
     label: '应用导航',
     breadcrumb: '面包屑',
+    todos: '待办事项',
   },
   dataTable: {
     noResults: '暂无数据。',
@@ -145,6 +146,55 @@ const zhCN: AppResource = {
   datePicker: {
     placeholder: '选择日期',
     rangePlaceholder: '选择日期范围',
+  },
+  todos: {
+    title: '待办事项',
+    description: '用于验证定时任务「检查过期待办」的最小列表。',
+    refresh: '刷新',
+    new: '新建待办',
+    newDescription:
+      '创建一条带截止时间的待办。截止时间过后仍未完成时，定时任务会将其标记为已过期。',
+    create: '创建',
+    empty: '暂无待办。',
+    searchPlaceholder: '搜索标题',
+    banner: {
+      title: '过期状态如何出现',
+      description:
+        '定时计划「检查过期待办」每 10 秒运行一次，将所有已过截止时间且未完成的待办标记为已过期。点击「刷新」加载最新结果；本页面不会自行标记任何待办为已过期。',
+    },
+    resultHint:
+      '「已过期」标记仅由定时任务写入，因此刷新后发生变化的值就是一次真实的调度执行。',
+    column: {
+      title: '标题',
+      deadline: '截止时间',
+      status: '状态',
+      actions: '已完成',
+    },
+    status: {
+      completed: '已完成',
+      expired: '已过期',
+      pending: '进行中',
+    },
+    stats: {
+      total: '总数',
+      incomplete: '未完成',
+      expired: '已过期',
+      completed: '已完成',
+    },
+    field: {
+      title: '标题',
+      titlePlaceholder: '需要做什么？',
+      deadline: '截止时间',
+    },
+    created: '待办已创建。',
+    updated: '待办已更新。',
+    error: {
+      invalid: '请输入标题并选择截止时间。',
+      duplicate: '已存在同名待办。',
+      notFound: '该待办已不存在。',
+      forbidden: '你没有执行该操作的权限。',
+      failed: '请求失败，请重试。',
+    },
   },
 };
 

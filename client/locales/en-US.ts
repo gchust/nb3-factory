@@ -135,6 +135,7 @@ const enUS = {
     collapse: 'Collapse navigation',
     label: 'Application navigation',
     breadcrumb: 'Breadcrumb',
+    todos: 'Todos',
   },
   dataTable: {
     noResults: 'No results.',
@@ -154,6 +155,56 @@ const enUS = {
   datePicker: {
     placeholder: 'Pick a date',
     rangePlaceholder: 'Pick a date range',
+  },
+  todos: {
+    title: 'Todos',
+    description:
+      'A minimal list that verifies the scheduled “检查过期待办” task.',
+    refresh: 'Refresh',
+    new: 'New todo',
+    newDescription:
+      'Create a todo with a deadline. The scheduled task marks it expired once the deadline passes and it is still incomplete.',
+    create: 'Create',
+    empty: 'No todos yet.',
+    searchPlaceholder: 'Search title',
+    banner: {
+      title: 'How expired todos appear',
+      description:
+        'The scheduled plan “检查过期待办” runs every 10 seconds and marks incomplete todos whose deadline has passed as expired. Use Refresh to load its latest result; this page never marks a todo expired on its own.',
+    },
+    resultHint:
+      'The expired mark is written only by the scheduled task, so a value that changes after Refresh is a real scheduling run.',
+    column: {
+      title: 'Title',
+      deadline: 'Deadline',
+      status: 'Status',
+      actions: 'Completed',
+    },
+    status: {
+      completed: 'Completed',
+      expired: 'Expired',
+      pending: 'Pending',
+    },
+    stats: {
+      total: 'Total',
+      incomplete: 'Incomplete',
+      expired: 'Expired',
+      completed: 'Completed',
+    },
+    field: {
+      title: 'Title',
+      titlePlaceholder: 'What needs to be done?',
+      deadline: 'Deadline',
+    },
+    created: 'Todo created.',
+    updated: 'Todo updated.',
+    error: {
+      invalid: 'Enter a title and choose a deadline.',
+      duplicate: 'A todo with that title already exists.',
+      notFound: 'This todo no longer exists.',
+      forbidden: 'You do not have permission to do that.',
+      failed: 'The request failed. Please try again.',
+    },
   },
 };
 
