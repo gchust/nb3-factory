@@ -1,3 +1,4 @@
+import { selectSupplement, adoptSupplement } from './replay-build-review.mjs';
 import { makeDeliveryReport } from './delivery-report.mjs';
 import { readStageTimings, renderTaskReport } from './task-report.mjs';
 import { waitForTaskRun } from './wait-for-task-run.mjs';
@@ -94,7 +95,13 @@ if (mode === 'select') {
   const source = selectSource(run, jobs, artifacts, repository);
   if (source) {
     await checkIssue(source.issue);
+    if (args['review-run-id'] || args['review-artifact-id']) {
+      source.reviewSource = await selectSupplement(route => api('GET', route), repository,
+        Number(args['review-run-id']), Number(args['review-artifact-id']));
+      output('review_artifact', source.reviewSource.artifactId);
+    }
     writeFileSync(args.source, JSON.stringify(source));
+    output('artifact_id', source.artifactId || '');
     output('artifact', source.artifact || '');
     output('ready', 'true');
   } else console.log('No accepted task artifacts; skipping usage report.');
@@ -106,6 +113,7 @@ if (mode === 'select') {
     !positive(source.issue)
   )
     throw new Error('Source mismatch');
+  if (source.reviewSource) await adoptSupplement(args.artifacts, args.review, source);
   const issue = await checkIssue(source.issue);
   let usage = emptyUsage();
   if (source.invoked) {

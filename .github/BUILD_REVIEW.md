@@ -9,7 +9,7 @@
                                   │
                   代码 + 安装包/Skill + 原始 QA/复盘
                                   ↓
-                       一次独立评审调用（有预算）
+                       一次独立评审调用（逐模块保存）
                                   ↓
                  身份 / 字段 / 引用 / 文件指纹校验
                                   ↓
@@ -45,7 +45,8 @@ GitHub Repository Variables：
 | 变量 | 默认值 | 含义 |
 | --- | --- | --- |
 | `FACTORY_BUILD_REVIEW` | `full` | `full` 调用独立评审；`off` 只保留过程事实，适合纯流水线 smoke 测试 |
-| `FACTORY_BUILD_REVIEW_TIMEOUT_SECONDS` | `300` | 单次调用上限，30–600 秒；同时受 Runner 剩余预算限制 |
+| `FACTORY_BUILD_REVIEW_TIMEOUT_SECONDS` | `900` | 单次调用上限，30–1800 秒；同时受 Runner 剩余预算限制 |
+| `FACTORY_REVIEW_THINKING` | `medium` | Pi 评审的思考档位；不改变实现或 QA 配置，其他引擎仍使用其原有参数 |
 
 复用本次已安装的 Code Agent、模型及该引擎的凭据，不增加服务或新的 Secret。
 只调用一次，不另开评审修复循环，不因缺分重试模型；适配器本身的协议重试规则不变。
@@ -53,7 +54,7 @@ GitHub Repository Variables：
 老用量回执没有该阶段时按没有调用兼容，不补造历史费用。费用仍未知，不等同供应商账单。
 
 评审增加一次有上限的 Agent 调用，且位于上传 Artifact 前，因此会增加本轮交付等待时间。
-模型错误、超时、JSON/引用不合法只标评审未完成；`continue-on-error` 不改变业务结果。
+模型错误或 JSON/引用不合法只标评审未完成；超时仅可保留已原子保存并通过完整引用与文件哈希校验的模块，以 `partial` 标注，绝不冒充完整评审；`continue-on-error` 不改变业务结果。
 Handoff、取消、没有封存补丁或剩余预算不足时不调用模型。历史报告没有评审时明确显示
 “未评估”；补发报告只重渲染已有材料，不会回填历史评分或再次调用评审模型。
 
@@ -82,7 +83,7 @@ GitHub token 和测试账号密码，指令禁止修改/执行应用及联网，
 
 字段契约和约束见 `.github/scripts/build-review.mjs`，模型指令及 JSON 结构见
 `.github/prompts/build-review.md`。`build-review.json` 使用 version 1，状态为
-`completed / not-reviewed / failed`，只有 completed 可以包含已校验的 evaluation。
+`completed / partial / not-reviewed / failed`。completed 和 partial 可包含已校验的 evaluation；partial 显著标注尚未全覆盖，未知维度仍为 null。
 
 ```bash
 node --test .github/scripts/tests/build-review.test.mjs
@@ -93,4 +94,40 @@ node .github/reports/render-review-example.mjs /tmp/report.example.html
 
 样例数据完全虚构，仅展示评分、首轮失败、待确认误导及未知项的版式，不代表真实案例成绩。
 回归测试用可控 CLI 验证真实 runner → 证据校验 → 用量 → HTML 链路，不调用收费模型。
-真实模型与业务任务的联调需要合并到默认分支后执行新的搭建；模型输出质量仍需人工抽查。
+真实模型输出质量仍需人工抽查；可用下述后补入口复用已归档业务，而无需重新搭建。
+
+## 超时与发布重试
+
+评审先读取精简 `review-input.json`（变更文件、需求与各轮 QA）；完整文件清单单独放在
+`review-files.json`，按模块检索，而不是整份清单灌入上下文。评审者每完成一个模块，
+原子更新 `assessment.json`；截止时间到达后已校验的部分结果仍可展示，未覆盖项明确保留。
+原始 300 秒超时的失败记录不会事后改成成功；补跑属于新的评审执行。
+
+`basis.runId/attempt` 始终是源应用产物的生产身份，`reviewer.runId/attempt/controlSha`
+记录实际执行评审的位置。报告的 publication attempt 可晚于 producer attempt，但必须同仓库、
+同 Issue、同 Run，且原始 task metadata、基线、封存补丁、评审要求和已有证据指纹相符。
+不能只删除 attempt 校验或把旧 JSON 的 attempt 改成新值。源记录比发布尝试更新时拒绝采用。
+旧记录没有新指纹时仅依赖它实际记录的元数据与补丁，不声称已回溯验证不存在的指纹。
+
+## 只补跑模块评审
+
+Actions → **Reassess Build Quality** → Run workflow，提供执行 Issue、原搭建 Run ID、
+要更新的发布 attempt。也可在带 `factory:manual` 标签的维护 Issue 由仓库 owner 发一条：
+
+```text
+/factory-build-review 224 35881009045 2
+```
+
+不要把该命令放进业务 Issue 的普通需求评论。它不创建新业务、不修改已有业务 PR、不运行
+build/migrate/seed/浏览器验收：选择精确原 Artifact ID，校验生产作业时间，按原基础 SHA
+和原补丁恢复应用，使用 frozen lockfile 安装依赖（忽略安装脚本），同步同版本 Skill。
+存在原评审版本记录时还须核对锁文件和安装包列表；不跟随当前 develop 或最新依赖。
+评审会话和原始评分产物分开保存，新用量也单独展示，不伪装成第二次业务搭建。
+
+后补产物通过独立工作流/作业及 Artifact ID 校验后，由原 **Report Task Usage** 可复用
+工作流重新生成完整 HTML，并沿用 Pages 发布。来源 attempt、后补运行身份、部分完成状态
+在页面显式呈现。报告内容指纹随评审修订变化，防止把旧页面误判为新评审已上线。
+已归档完整评审不会被缺失或部分评审覆盖。原搭建日志、QA 结论、超时记录始终保留。
+
+依赖安装与 Skill 同步属于在隔离 Runner 上重建只读评审输入，不是生产系统操作。
+文件与证据校验不是操作系统沙箱，也不能保证模型判断正确；仍须抽查评分依据。

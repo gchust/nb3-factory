@@ -7,7 +7,7 @@ import { createHash } from 'node:crypto';
 import { renderBuildReview } from './build-review.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
-const TEMPLATE_VERSION = 3;
+const TEMPLATE_VERSION = 4;
 const escape = (value) => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const fmt = value => Number.isFinite(value) ? value.toLocaleString('en-US') : '未提供';
 const duration = value => Number.isFinite(value) ? `${Math.floor(value/3600)}:${String(Math.floor(value/60)%60).padStart(2,'0')}:${String(value%60).padStart(2,'0')}` : '未提供';
@@ -201,7 +201,8 @@ export async function renderHtml(facts, inputNotes, evidenceRoot) {
     try { validateRetro(f.retro); retro=f.retro; }
     catch(error) { retroWarning=`复盘格式无效：${error.message}`; }
   }
-  const reportId=`${m.repository}:${m.issue}:${m.runId}:${m.attempt}:${m.headSha}:template-${TEMPLATE_VERSION}`;
+  const reviewRevision=f.buildReview ? ':review-'+createHash('sha256').update(JSON.stringify(f.buildReview)).digest('hex').slice(0,16) : '';
+  const reportId=`${m.repository}:${m.issue}:${m.runId}:${m.attempt}:${m.headSha}:template-${TEMPLATE_VERSION}${reviewRevision}`;
   const links=f.links.map(l=>`<a class="btn" rel="noopener noreferrer" target="_blank" href="${escape(url(l.url))}">${escape(l.label)} ↗</a>`).join('');
   const attention=[...f.attention];
   if(f.delivery.status!=='pr-ready') attention.unshift({title:statusLabels[f.delivery.status],detail:'本轮不是完成交付。请查看本轮验收记录和问题记录。'});

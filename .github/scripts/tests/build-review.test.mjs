@@ -195,3 +195,86 @@ test('review execution is wired after patch seal, before artifact upload and nev
   assert.match(step, /continue-on-error: true/); assert.match(step, /!cancelled\(\)/);
   assert.match(step, /handoff != 'true'/); assert.match(step, /env: \*agent-run-env/);
 });
+
+test('publication retry keeps producer attempt and requires matching metadata, patch, rubric and QA', async t => {
+  const f = fixture(t); installMock(f);
+  f.metadata.run = { id: 100, attempt: 1 };
+  f.metadata.controlSha = f.env.FACTORY_CONTROL_SHA;
+  f.metadata.applicationBase = { sha: execFileSync('git', ['rev-parse', 'HEAD'], { cwd: f.workspace, encoding: 'utf8' }).trim() };
+  put(f.artifacts, 'task-metadata.json', f.metadata);
+  const original = await runBuildReview(f.workspace, f.artifacts, f.env);
+  const identity = { repository: 'owner/factory', issue: 21, runId: 100, attempt: 2 };
+  const adopted = loadBuildReview(f.artifacts, identity);
+  assert.equal(adopted.state, 'completed', adopted.reason); assert.equal(adopted.basis.attempt, 1);
+  assert.equal(loadBuildReview(f.artifacts, { ...identity, runId: 101 }).evaluation, null);
+  assert.equal(loadBuildReview(f.artifacts, { ...identity, attempt: 0 }).evaluation, null);
+  put(f.artifacts, 'agent.patch', 'different candidate');
+  assert.match(loadBuildReview(f.artifacts, identity).reason, /patch mismatch/);
+  put(f.artifacts, 'agent.patch', 'sealed fixture patch\n');
+  put(f.artifacts, 'verify-1/browser-acceptance/report.json', { passed: true, checks: [] });
+  assert.match(loadBuildReview(f.artifacts, identity).reason, /evidence fingerprint mismatch/);
+  assert.equal(original.evaluation.modules[0].scores.design.score, 73);
+});
+
+test('legacy timeout diagnostic is preserved across publication retry, never promoted to scores', t => {
+  const f = fixture(t);
+  f.metadata.run = { id: 100, attempt: 1 }; f.metadata.controlSha = 'b'.repeat(40);
+  put(f.artifacts, 'task-metadata.json', f.metadata);
+  put(f.artifacts, 'build-review.json', { version: 1, state: 'failed', reason: 'Original timeout', evaluation: null,
+    basis: { repository: 'owner/factory', issue: 21, runId: '100', attempt: 1, controlSha: f.metadata.controlSha } });
+  const report = loadBuildReview(f.artifacts, { repository: 'owner/factory', issue: 21, runId: 100, attempt: 2 });
+  assert.equal(report.reason, 'Original timeout'); assert.equal(report.evaluation, null);
+});
+
+test('compact entry is fingerprinted and excludes full catalog; replay preserves original installation', async t => {
+  const f = fixture(t); installMock(f);
+  const original = await runBuildReview(f.workspace, f.artifacts, f.env);
+  const input = readReviewJsonForTest(f.artifacts, 'build-review-input.json');
+  assert.equal(input.files, undefined); assert.equal(input.catalog.path, 'review-files.json');
+  assert.ok(input.catalog.count > 0); assert.equal(input.budgetSeconds, 900);
+  const source = { ...original.basis };
+  const replay = await runBuildReview(f.workspace, f.artifacts, { ...f.env, GITHUB_RUN_ID: '200', GITHUB_RUN_ATTEMPT: '1' }, { source });
+  assert.equal(replay.state, 'completed', replay.reason);
+  assert.equal(replay.basis.runId, '100'); assert.equal(replay.reviewer.runId, '200');
+  assert.equal(replay.reviewer.replay, true);
+  put(f.workspace, 'pnpm-lock.yaml', 'changed lockfile');
+  assert.match((await runBuildReview(f.workspace, f.artifacts, f.env, { source })).reason, /lockfile differs/);
+});
+const readReviewJsonForTest = (root, name) => JSON.parse(readFileSync(path.join(root, name), 'utf8'));
+
+test('budget exhaustion preserves only a valid evidenced checkpoint as partial', async t => {
+  const { finalizeAssessment } = await import('../run-build-review.mjs');
+  const f = fixture(t); installMock(f);
+  const original = await runBuildReview(f.workspace, f.artifacts, f.env);
+  const captured = createReviewSnapshot(f.workspace, f.artifacts, f.snapshot);
+  put(f.snapshot, 'assessment.json', original.evaluation);
+  const partial = finalizeAssessment(f.snapshot, captured, original.basis, false);
+  assert.equal(partial.partial, true); assert.equal(partial.evaluation.modules[0].scores.design.score, 73);
+  const report = { ...original, state: 'partial', evaluation: partial.evaluation };
+  validateBuildReview(report);
+  const view = facts(); view.buildReview = report;
+  const rendered = await renderHtml(view, null, path.join(here, 'reports'));
+  assert.match(rendered.html, /部分评审 · 尚未全覆盖/); assert.match(rendered.html, /73<small>/);
+  put(f.snapshot, 'assessment.json', { ...original.evaluation, evidence: [] });
+  assert.throws(() => finalizeAssessment(f.snapshot, captured, original.basis, false), /Unknown evidence/);
+  put(f.snapshot, 'assessment.json', { ...original.evaluation, inputHash: '0'.repeat(64) });
+  assert.throws(() => finalizeAssessment(f.snapshot, captured, original.basis, false), /identity mismatch/);
+  put(f.snapshot, 'assessment.json', { ...original.evaluation, modules: [], evidence: [] });
+  assert.throws(() => finalizeAssessment(f.snapshot, captured, original.basis, false), /No assessed module/);
+});
+
+test('new assessment revision changes the public HTML identity for the same publication attempt', async () => {
+  const f = facts(); f.buildReview = example();
+  const original = await renderHtml(f, null, path.join(here, 'reports'));
+  f.buildReview.evaluation.modules[0].scores.design.score = 66;
+  const updated = await renderHtml(f, null, path.join(here, 'reports'));
+  assert.notEqual(original.reportId, updated.reportId);
+});
+
+test('malformed supplemental JSON cannot erase an already valid original assessment', async t => {
+  const f = fixture(t); installMock(f);
+  await runBuildReview(f.workspace, f.artifacts, f.env);
+  put(f.artifacts, 'build-review.supplement.json', '{broken');
+  const report = loadBuildReview(f.artifacts, { repository: 'owner/factory', issue: 21, runId: 100, attempt: 1 });
+  assert.equal(report.state, 'completed'); assert.ok(report.process.warnings.some(w => /后补评审未采用/.test(w)));
+});

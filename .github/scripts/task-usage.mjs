@@ -264,6 +264,7 @@ export function selectSource(run, jobs, artifacts, repository) {
     agentJobId: agent?.id ?? null,
     invoked,
     artifact: artifactsForAgent[0]?.name ?? null,
+    artifactId: artifactsForAgent[0]?.id ?? null,
   };
 }
 
