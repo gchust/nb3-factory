@@ -35,10 +35,10 @@
     "artifact": "factory-agent-250",
     "artifactId": 10796980728,
     "reviewSource": {
-      "runId": 35985429233,
+      "runId": 35987960672,
       "attempt": 1,
-      "artifactId": 10801613852,
-      "controlSha": "da18d586a556da85c9e2ac0fb4507b5bc01d7986"
+      "artifactId": 10803370976,
+      "controlSha": "952084a875e940bdcba52d45f8b805c7f49f0049"
     },
     "usage": {
       "phases": {
@@ -212,10 +212,10 @@
       "artifact": "factory-agent-250",
       "artifactId": 10796980728,
       "reviewSource": {
-        "runId": 35985429233,
+        "runId": 35987960672,
         "attempt": 1,
-        "artifactId": 10801613852,
-        "controlSha": "da18d586a556da85c9e2ac0fb4507b5bc01d7986"
+        "artifactId": 10803370976,
+        "controlSha": "952084a875e940bdcba52d45f8b805c7f49f0049"
       },
       "usage": {
         "phases": {
@@ -993,12 +993,12 @@
     ],
     "buildReview": {
       "version": 1,
-      "state": "failed",
-      "reason": "独立评审未完成或证据校验失败：Unknown evidence id: [object Object]。业务验收结果保持不变。",
+      "state": "completed",
+      "reason": "独立 Agent 评审完成；评分是基于本次证据的意见，不替代业务 QA 或人工评审。",
       "basis": {
         "repository": "gchust/nb3-factory",
         "issue": 250,
-        "runId": "35966607785",
+        "runId": 35966607785,
         "attempt": 1,
         "controlSha": "1bd143f61094211c8c19783e489b5e85d86a91c4",
         "rubricVersion": 2,
@@ -1177,17 +1177,1172 @@
         ],
         "reviewCriteriaHash": "c7f0542f49f6ae43d8c8e313b0bf31f3ec19de652099c1921d4e4c8cc43d163d",
         "artifactHash": "52bde1b5572fb0a5bb54b9bc936c199b5b38f4e655484da3403d3f93e37f191f",
-        "inputHash": "bc2947e35a38343d0bd387afd402b17909aef67cc34ed452c13b736efd7df8f1"
+        "inputHash": "efd5cb9a15fc883551e37444fd1f8b95ba92da0f0e058511770a9a707c324120"
       },
-      "evaluation": null,
+      "evaluation": {
+        "version": 2,
+        "inputHash": "efd5cb9a15fc883551e37444fd1f8b95ba92da0f0e058511770a9a707c324120",
+        "progress": {
+          "complete": true,
+          "pendingModules": []
+        },
+        "summary": "本次 IT 工单案例直接检验了 NocoBase3 的授权模型、数据库/Repository、服务与路由装配、认证沿用和客户端页面注册五个基础能力单元。框架职责范围内的记录范围策略、以期望状态为谓词的更新、类型化路由与 provider/token 装配均能直接支撑需求；应用按指引落地后员工越权读返回 404、员工推进返回 403、重复完成返回 409，浏览器验收 B01–B05 通过。主要缺口在指引组合层：authorization 的 code-and-seeds 参考推荐 seed 导入共享 permission-set 模块，而 @nocobase/db 载入器在 Vitest 启动路径无法把相对 .js 解析回 .ts，nocobase-db Skill 又要求 seed 自包含，形成互相冲突且要等启动失败才暴露的指引；另有应用 provider 对未安装可选插件缺少装配提示。视觉评审因当前模型无法读取 PNG 而未进行。",
+        "modules": [
+          {
+            "name": "授权模型与记录范围",
+            "targets": [
+              {
+                "kind": "library",
+                "name": "@nocobase/authorization",
+                "entrypoints": [
+                  "defineRecordAccess",
+                  "RecordAccessRegistry.add/resolve/listFor",
+                  "permissionSet().grant().build()"
+                ],
+                "evidence": [
+                  "E1",
+                  "E5"
+                ]
+              },
+              {
+                "kind": "library",
+                "name": "@nocobase/app-plugin-authorization",
+                "entrypoints": [
+                  "authorizationToken",
+                  "DatabaseAuthorizationService.policyFor",
+                  "databaseGrant",
+                  "authz.recordAccess.add / db.collections.add / pages.add",
+                  "authz.middleware()"
+                ],
+                "evidence": [
+                  "E2",
+                  "E3",
+                  "E4"
+                ]
+              },
+              {
+                "kind": "guidance",
+                "name": "app/.agents/skills/nocobase-app-plugin-authorization/SKILL.md",
+                "entrypoints": [
+                  "Implement in this order",
+                  "Enforcement rules"
+                ],
+                "evidence": [
+                  "E6"
+                ]
+              },
+              {
+                "kind": "guidance",
+                "name": "app/.agents/skills/nocobase-app-plugin-authorization/references/code-and-seeds.md",
+                "entrypoints": [
+                  "code declarations versus editable configuration",
+                  "permission-set seed persistence"
+                ],
+                "evidence": [
+                  "E7"
+                ]
+              }
+            ],
+            "scope": "员工只读自己提交的工单、处理人员读全部、页面授权与数据授权分离、状态推进的服务端授权与拒绝语义。",
+            "limitations": "未逐行核对授权匹配引擎 authorizer.js 的 grant 解析；未评估 default-access/sharing/restriction 规则插件；R01/R03 的浏览器端只依赖已归档 QA 记录。",
+            "criteria": [
+              "B02",
+              "B03",
+              "B04",
+              "B05"
+            ],
+            "requirements": [
+              {
+                "need": "员工只能读取自己提交的工单，服务端强制，不按用户名硬编码，不只是隐藏按钮。",
+                "responsibility": "框架提供可注册的记录范围策略、可持久化的 permission set 与按请求求值的 Repository Policy；应用负责声明 submitterId 范围并写入授权数据。",
+                "recommendedUsage": "在 owning provider 中用 defineRecordAccess 注册自定义范围，seed 持久化 permission set 与分配，路由以 policyFor+withPolicy 执行。",
+                "actualUsage": "Agent 定义 tickets.submitted 范围并在 provider 注册，seed 写入 it-employee/it-handler 两套 permission set；员工读取他人工单返回 404，伪造 submitterId 被忽略。",
+                "support": "direct",
+                "gapOwner": "none",
+                "evidence": [
+                  "E2",
+                  "E3",
+                  "E6",
+                  "E29",
+                  "E31"
+                ]
+              },
+              {
+                "need": "页面访问与数据访问分离；处理人员能读到全部测试工单。",
+                "responsibility": "框架区分 page grant 与 database.collection grant；应用负责为两类 job 选择页面与数据动作。",
+                "recommendedUsage": "authz.pages.add 注册页面，permissionSet 分别授予 page:access 与集合读/写动作，路由侧不依赖页面可见性。",
+                "actualUsage": "Agent 在 provider 注册 collection/page，seed 中 it-handler 用 allRecords 读全部，页面路由 name=tickets 由默认页面检查控制可见。",
+                "support": "direct",
+                "gapOwner": "none",
+                "evidence": [
+                  "E2",
+                  "E4",
+                  "E6",
+                  "E29"
+                ]
+              },
+              {
+                "need": "处理人员“开始处理/完成”是类型化动作，服务端检查授权与状态；已完成只读，员工不能推进状态；三个状态不必引入 Workflow。",
+                "responsibility": "框架提供 update 授权决策、带策略的 Repository 与以期望状态为条件的更新；应用负责状态机与字段规则。",
+                "recommendedUsage": "以自定义路由 + authentication.required + authorization.middleware，policy.update 为 false 直接 403，updateOne 的 filter 带当前状态，RECORD_NOT_FOUND 映射为冲突。",
+                "actualUsage": "Agent 的 /tickets/:id/start、/complete 先检查 policy.update，再以 filter {id,status:from} 更新，重复完成返回 409；未使用 Workflow。",
+                "support": "direct",
+                "gapOwner": "none",
+                "evidence": [
+                  "E2",
+                  "E8",
+                  "E9",
+                  "E28",
+                  "E29"
+                ]
+              }
+            ],
+            "scores": {
+              "requirementFit": {
+                "score": 87,
+                "reason": "R01/R03 的服务端记录范围、页面/数据分离与状态流转均由现有能力直接支持：defineRecordAccess 提供可校验的自定义范围，policyFor 把请求授权折叠为 Repository Policy，provider 注册与 seed 持久化职责清晰；应用据此落地后越权读 404、员工推进 403。",
+                "evidence": [
+                  "E1",
+                  "E2",
+                  "E4",
+                  "E6"
+                ]
+              },
+              "usability": {
+                "score": 85,
+                "reason": "policyFor 一次折叠四个决策、withPolicy 直接绑定，注册顺序与 seed 边界在 Skill 中说明；但内置 recordsIOwn 固定 ownerId，本表必须自写 scope，增加了必要但非零的接入代码。",
+                "evidence": [
+                  "E2",
+                  "E3",
+                  "E5",
+                  "E7"
+                ]
+              },
+              "agentFriendliness": {
+                "score": 85,
+                "reason": "Skill 明确要求注册 collection/scope、逐条路由鉴权、把业务状态写进 mutation 谓词，并给出 seed 持久化模式；扣分点在与 db Skill 冲突的 seed 导入建议（见 F2）。",
+                "evidence": [
+                  "E6",
+                  "E7"
+                ]
+              },
+              "design": {
+                "score": 88,
+                "reason": "记录范围是可持久化的策略数据，defineRecordAccess/RecordAccessRegistry 与 Repository Policy 边界清晰，permission set 只产出值、可在后台编辑，不把角色判断塞进路由。",
+                "evidence": [
+                  "E1",
+                  "E2",
+                  "E5"
+                ]
+              },
+              "reliability": {
+                "score": 86,
+                "reason": "实现层 Registry.add 拒绝重复/空 key 与非法 resources，resolve 拒绝未知或不适用策略；policyFor 对 deny 折叠为 false 并只做结构转换，本次测试覆盖 403/404/409 拒绝路径。",
+                "evidence": [
+                  "E1",
+                  "E2",
+                  "E3"
+                ]
+              }
+            }
+          },
+          {
+            "name": "数据库、迁移与 Repository 策略",
+            "targets": [
+              {
+                "kind": "library",
+                "name": "@nocobase/db",
+                "entrypoints": [
+                  "defineMigration / builder.createCollection",
+                  "defineSeed",
+                  "databaseManagerToken",
+                  "Repository.withPolicy",
+                  "Repository.updateOne 与 RECORD_NOT_FOUND"
+                ],
+                "evidence": [
+                  "E8",
+                  "E9",
+                  "E10",
+                  "E11"
+                ]
+              },
+              {
+                "kind": "guidance",
+                "name": "app/.agents/skills/nocobase-db/SKILL.md",
+                "entrypoints": [
+                  "Migrations and seeds",
+                  "Repository and Query",
+                  "self-contained rule"
+                ],
+                "evidence": [
+                  "E12"
+                ]
+              }
+            ],
+            "scope": "单张工单表的 schema 迁移、安装种子、运行时读写与带策略、带期望状态的更新语义。",
+            "limitations": "未验证 SQLite 以外的方言；未查看迁移历史/checksum 实现的全部路径；seed 导入缺口只在归档日志与载入器代码层面确认。",
+            "criteria": [
+              "B01",
+              "B03",
+              "B04"
+            ],
+            "requirements": [
+              {
+                "need": "一张工单业务表真实持久保存，刷新后仍可查看。",
+                "responsibility": "框架负责迁移声明 schema、Repository 负责运行时持久化；应用负责字段与业务值。",
+                "recommendedUsage": "defineMigration 的 builder.createCollection 建表，运行时代码经 databaseManagerToken 用 Repository 读写。",
+                "actualUsage": "Agent 的迁移建立 tickets 表与索引，service 用 findMany/createOne/updateOne，浏览器刷新与 QA 均通过。",
+                "support": "direct",
+                "gapOwner": "none",
+                "evidence": [
+                  "E9",
+                  "E12",
+                  "E29"
+                ]
+              },
+              {
+                "need": "状态迁移以期望状态为谓词，重复完成被拒绝，已完成只读。",
+                "responsibility": "框架提供带策略的更新与单条更新失败语义；应用负责状态机。",
+                "recommendedUsage": "withPolicy 后 updateOne 的 filter 含当前状态，捕获 RECORD_NOT_FOUND 映射为业务冲突。",
+                "actualUsage": "Agent 的 transition 用 filter {id,status:from}，并把 RECORD_NOT_FOUND 转成 409 INVALID_TRANSITION。",
+                "support": "direct",
+                "gapOwner": "none",
+                "evidence": [
+                  "E8",
+                  "E9",
+                  "E29"
+                ]
+              },
+              {
+                "need": "种子幂等且可重复执行，安装数据真实落库。",
+                "responsibility": "框架负责 seed 载入、事务与幂等约定；应用负责稳定业务键与写入内容。",
+                "recommendedUsage": "nocobase-db 要求 seed 自包含、以稳定键幂等；authorization 参考则示例 import database/seed-data/permission-sets.ts 后写库。",
+                "actualUsage": "Agent 先按 authorization 参考把 permission-set 值抽到共享模块，应用启动测试即报 Cannot find module permission-sets.js，随后改为在 seed 内联字段清单。",
+                "support": "workaround",
+                "gapOwner": "plugin",
+                "evidence": [
+                  "E7",
+                  "E10",
+                  "E11",
+                  "E12"
+                ]
+              }
+            ],
+            "scores": {
+              "requirementFit": {
+                "score": 88,
+                "reason": "单表迁移、Repository 读写与以期望状态为谓词的更新链均由 @nocobase/db 直接支持；应用迁移、种子与 updateOne({filter:{id,status:from}}) 落地后刷新持久、重复完成 409。",
+                "evidence": [
+                  "E8",
+                  "E9",
+                  "E12"
+                ]
+              },
+              "usability": {
+                "score": 82,
+                "reason": "withPolicy 与 RECORD_NOT_FOUND 语义清楚，迁移/种子示例完整；但 seed 共享模块导入在测试启动路径失败，迫使自包含改写（见 F1）。",
+                "evidence": [
+                  "E10",
+                  "E11",
+                  "E12"
+                ]
+              },
+              "agentFriendliness": {
+                "score": 78,
+                "reason": "Skill 对 Repository/Query 边界和 self-contained 规则写得很细，但与 authorization 参考组合时自相矛盾，且载入器直到 boot 才报错，正确写法要靠失败后推断（见 F1/F2）。",
+                "evidence": [
+                  "E10",
+                  "E12"
+                ]
+              },
+              "design": {
+                "score": 86,
+                "reason": "策略节点在 enforce.js 中统一解析与相交，期望状态谓词放在 mutation 而非先读后写，迁移/种子/运行时代码分层明确。",
+                "evidence": [
+                  "E8",
+                  "E9",
+                  "E11"
+                ]
+              },
+              "reliability": {
+                "score": 87,
+                "reason": "enforce.js 在查看输入前因策略 false 直接拒绝，combinePolicyFilter 以 and 相交调用方与策略范围；updateOne 将 adapter 的 missing 映射为 RECORD_NOT_FOUND，应用据此返回 409。",
+                "evidence": [
+                  "E8",
+                  "E9"
+                ]
+              }
+            }
+          },
+          {
+            "name": "服务装配与 HTTP 路由",
+            "targets": [
+              {
+                "kind": "library",
+                "name": "@nocobase/app-server",
+                "entrypoints": [
+                  "defineApiRoutes",
+                  "defineRootRoutes",
+                  "AppRouteContribution",
+                  "Application"
+                ],
+                "evidence": [
+                  "E13"
+                ]
+              },
+              {
+                "kind": "library",
+                "name": "@nocobase/service-provider",
+                "entrypoints": [
+                  "ServiceProvider",
+                  "createServiceToken"
+                ],
+                "evidence": [
+                  "E14",
+                  "E15"
+                ]
+              },
+              {
+                "kind": "guidance",
+                "name": "app/.agents/skills/nocobase-app-development/references/server-routes.md",
+                "entrypoints": [
+                  "Every route owns its own security",
+                  "Enforce record, field and relation policies"
+                ],
+                "evidence": [
+                  "E16"
+                ]
+              },
+              {
+                "kind": "guidance",
+                "name": "app/.agents/skills/nocobase-app-development/references/services-and-jobs.md",
+                "entrypoints": [
+                  "Services",
+                  "Provider lifecycle"
+                ],
+                "evidence": [
+                  "E17"
+                ]
+              }
+            ],
+            "scope": "工单 API 端点的注册与鉴权、领域服务经 token 装配、路由与领域逻辑分层。",
+            "limitations": "未覆盖 root route、API key 路径与多实例部署；未评估 defineRepositoryApiRoutes 捷径，本次应用选择自定义 handler。",
+            "criteria": [
+              "B01",
+              "B02",
+              "B03",
+              "B04",
+              "B05"
+            ],
+            "requirements": [
+              {
+                "need": "工单 REST 端点必须在认证后访问，匿名不得访问。",
+                "responsibility": "框架负责 API 路由注册与认证中间件；应用负责端点语义。",
+                "recommendedUsage": "defineApiRoutes + authentication.required()，贡献按序导出；敏感操作再加 authorization.middleware()。",
+                "actualUsage": "Agent 用 defineApiRoutes 建 /tickets 子路由并挂 auth.required+authz.middleware，匿名请求 401 已由测试确认。",
+                "support": "direct",
+                "gapOwner": "none",
+                "evidence": [
+                  "E13",
+                  "E16",
+                  "E28"
+                ]
+              },
+              {
+                "need": "领域逻辑独立于 HTTP，可单测与复用。",
+                "responsibility": "框架提供 provider+token 的依赖装配；应用拆分 service。",
+                "recommendedUsage": "ServiceProvider.register 绑定 token，boot 做需要其它服务的工作，路由只解析并映射错误。",
+                "actualUsage": "Agent 用 ServiceProvider 绑定 ticketsServiceToken，TicketsService 只返回 domain 结果，TicketsError 在路由 onError 转 HTTP。",
+                "support": "direct",
+                "gapOwner": "none",
+                "evidence": [
+                  "E15",
+                  "E17",
+                  "E28"
+                ]
+              },
+              {
+                "need": "应用 provider 在插件被裁剪的环境仍能 boot。",
+                "responsibility": "框架规定 provider 生命周期；应用应判断可选依赖是否存在。",
+                "recommendedUsage": "指引未明确说明 boot 中如何容忍未安装的可选插件（见 F3）。",
+                "actualUsage": "Agent 的 TicketsProvider.boot 无条件 resolve authorizationToken，模板禁插件运行测试报 Service not registered，后改为 container.has() 早退。",
+                "support": "workaround",
+                "gapOwner": "documentation",
+                "evidence": [
+                  "E16",
+                  "E17"
+                ]
+              }
+            ],
+            "scores": {
+              "requirementFit": {
+                "score": 88,
+                "reason": "defineApiRoutes 与 ServiceProvider/token 直接支撑认证后的类型化业务端点与独立领域服务：路由只做 HTTP 与错误映射，service 经 token 解析，匿名 401、员工越权动作 403。",
+                "evidence": [
+                  "E13",
+                  "E15",
+                  "E16"
+                ]
+              },
+              "usability": {
+                "score": 86,
+                "reason": "route factory + Hono 子路由可把中间件限定在 /tickets，provider/token 模式与 Skill 示例一致；agent 仅需在 provider boot 处加可选依赖守卫。",
+                "evidence": [
+                  "E14",
+                  "E15",
+                  "E17"
+                ]
+              },
+              "agentFriendliness": {
+                "score": 84,
+                "reason": "server-routes 与 services-and-jobs 给出完整可抄的装配与鉴权示例，错误定位清楚；未覆盖插件未安装时 provider 如何降级（见 F3）。",
+                "evidence": [
+                  "E16",
+                  "E17"
+                ]
+              },
+              "design": {
+                "score": 87,
+                "reason": "路由、领域服务与 provider 生命周期边界清楚，API/root 贡献在 router/routes.js 中以 scope 标记，token 以对象身份而非字符串匹配。",
+                "evidence": [
+                  "E13",
+                  "E14",
+                  "E15"
+                ]
+              },
+              "reliability": {
+                "score": 84,
+                "reason": "defineApiRoutes 产出冻结的 scope 贡献，createServiceToken 校验空名，ServiceProvider 明确 register/boot 分离；本次只在应用侧观察到 provider 缺少可选依赖守卫。",
+                "evidence": [
+                  "E13",
+                  "E14",
+                  "E15"
+                ]
+              }
+            }
+          },
+          {
+            "name": "认证与会话沿用",
+            "targets": [
+              {
+                "kind": "library",
+                "name": "@nocobase/app-plugin-authentication",
+                "entrypoints": [
+                  "authenticationToken",
+                  "Auth.required()",
+                  "AuthEnv",
+                  "users.initialAdmin 默认管理员 seed"
+                ],
+                "evidence": [
+                  "E18",
+                  "E21"
+                ]
+              },
+              {
+                "kind": "guidance",
+                "name": "app/.agents/skills/nocobase-app-plugin-authentication/SKILL.md",
+                "entrypoints": [
+                  "initial administrator bootstrap",
+                  "user administration ownership"
+                ],
+                "evidence": [
+                  "E20"
+                ]
+              },
+              {
+                "kind": "guidance",
+                "name": "app/.agents/skills/nocobase-app-plugin-authentication/references/user-lifecycle-and-deployment.md",
+                "entrypoints": [
+                  "Public origin",
+                  "Business request CSRF"
+                ],
+                "evidence": [
+                  "E19"
+                ]
+              }
+            ],
+            "scope": "沿用既有登录/用户/会话，准备测试账号，处理带 cookie 写请求的 CSRF 边界。",
+            "limitations": "未验证 OAuth/找回密码/禁用用户等路径；未运行真实浏览器 CSRF 失败复现，只依据文档、实现与归档日志。",
+            "criteria": [
+              "B02"
+            ],
+            "requirements": [
+              {
+                "need": "沿用现有用户与权限能力，不建第二套身份系统，复用工厂测试密码。",
+                "responsibility": "框架负责身份、凭据、会话存储与密码哈希；应用负责账号清单与初始分配。",
+                "recommendedUsage": "users.initialAdmin 只引导初始管理员，后续账号用用户管理服务；seed 可复用框架默认管理员 seed 的 user/account 写入方式。",
+                "actualUsage": "Agent 的 users seed 用 better-auth hashPassword 写入 user/account 并读 users.initialAdmin 密码，与框架自带默认管理员 seed 完全同构，登录与 QA 通过。",
+                "support": "direct",
+                "gapOwner": "none",
+                "evidence": [
+                  "E18",
+                  "E20",
+                  "E21",
+                  "E27"
+                ]
+              },
+              {
+                "need": "带 cookie 的写请求需要可信 Origin，测试/部署要配置 publicOrigin。",
+                "responsibility": "框架负责 CSRF 校验与从 publicOrigin 派生可信源；应用/测试负责配置正确 Origin。",
+                "recommendedUsage": "部署设置 app.publicOrigin，额外前端源用 auth.trustedOrigins；测试请求携带匹配 Origin。",
+                "actualUsage": "Agent 的集成测试最初 POST 返回 INVALID_CSRF_ORIGIN，按文档设置 app.publicOrigin 并补 Origin 头后通过。",
+                "support": "direct",
+                "gapOwner": "none",
+                "evidence": [
+                  "E18",
+                  "E19",
+                  "E27"
+                ]
+              }
+            ],
+            "scores": {
+              "requirementFit": {
+                "score": 86,
+                "reason": "沿用既有 Authentication 的 user/account/session，未引入第二套身份：authenticationToken + auth.required 直接可用，seed 账号复用 users.initialAdmin 密码并采用与框架默认管理员 seed 相同的写入方式。",
+                "evidence": [
+                  "E18",
+                  "E20",
+                  "E21"
+                ]
+              },
+              "usability": {
+                "score": 85,
+                "reason": "登录、cookie 写请求与 CSRF 行为由插件统一处理，guidance 对 publicOrigin/trustedOrigins 说明具体；agent 依据文档设置后测试通过。",
+                "evidence": [
+                  "E19",
+                  "E20"
+                ]
+              },
+              "agentFriendliness": {
+                "score": 87,
+                "reason": "user-lifecycle 文档明确 INVALID_CSRF_ORIGIN 的触发条件与修法，SKILL 说明 initialAdmin 只用于初始管理员，使 agent 能在失败后自行恢复。",
+                "evidence": [
+                  "E19",
+                  "E20"
+                ]
+              },
+              "design": {
+                "score": 84,
+                "reason": "Authentication 负责身份/凭据/会话，Authorization 负责授权，边界清晰；初始管理员通过配置与 seed 引导，后续账号变更走用户管理服务。",
+                "evidence": [
+                  "E18",
+                  "E20"
+                ]
+              },
+              "reliability": {
+                "score": 84,
+                "reason": "实现从 app.publicOrigin 派生 Better Auth baseURL 与 cookie 前缀，框架自带默认管理员 seed 对 user/account 的写入与校验同文档一致；本次未跑真实浏览器的 CSRF 拒绝路径。",
+                "evidence": [
+                  "E18",
+                  "E21"
+                ]
+              }
+            }
+          },
+          {
+            "name": "客户端路由与页面注册",
+            "targets": [
+              {
+                "kind": "library",
+                "name": "@nocobase/app-client",
+                "entrypoints": [
+                  "defineAppRoutes",
+                  "defineSettingsRoutes",
+                  "AppClientRouteContribution",
+                  "useApiClient"
+                ],
+                "evidence": [
+                  "E22",
+                  "E23"
+                ]
+              },
+              {
+                "kind": "guidance",
+                "name": "app/.agents/skills/nocobase-app-development/references/client-pages-and-routes.md",
+                "entrypoints": [
+                  "default page authorization check",
+                  "useCan for action visibility"
+                ],
+                "evidence": [
+                  "E24",
+                  "E25"
+                ]
+              },
+              {
+                "kind": "guidance",
+                "name": "app/.agents/skills/nocobase-app-plugin-authorization/references/client-development.md",
+                "entrypoints": [
+                  "Obtain row eligibility from the server",
+                  "client visibility never replaces server enforcement"
+                ],
+                "evidence": [
+                  "E26"
+                ]
+              }
+            ],
+            "scope": "工单页面的路由声明、默认页面授权检查、状态筛选与详情刷新保留、按角色显示动作。",
+            "limitations": "未逐行核对 useCan 客户端缓存与失效实现；未审阅两个以上页面/状态的实际 PNG，故不做视觉结论。",
+            "criteria": [
+              "B01",
+              "B05"
+            ],
+            "requirements": [
+              {
+                "need": "工单页面按角色可见，状态筛选与真实状态一致，详情刷新后仍保留。",
+                "responsibility": "框架负责路由注册、页面授权检查与 HTTP 客户端；应用负责页面内容与查询参数。",
+                "recommendedUsage": "defineAppRoutes 声明稳定 name，无 authz 的 App 页面默认检查 page/access；用 useApiClient 请求，详情放 URL。",
+                "actualUsage": "Agent 路由 name='tickets' 未写 authz，由默认页面检查控制；页面用 useApiClient、状态 Tab 与 ?ticket= 详情，服务器端 meta 提供能力。",
+                "support": "direct",
+                "gapOwner": "none",
+                "evidence": [
+                  "E22",
+                  "E24",
+                  "E26",
+                  "E29"
+                ]
+              },
+              {
+                "need": "开始处理/完成按钮只对有权者显示，且客户端显示不替代服务端授权。",
+                "responsibility": "框架提供 useCan/服务端资格两种可见性来源并保证客户端检查不授权；应用负责展示。",
+                "recommendedUsage": "按钮用 useCan，或由服务端返回行级资格；两者都不得替代服务端执行。",
+                "actualUsage": "Agent 选择服务端 meta.canCreate/canProcess 控制按钮，指引明确允许从服务端取得资格。",
+                "support": "direct",
+                "gapOwner": "none",
+                "evidence": [
+                  "E25",
+                  "E26"
+                ]
+              }
+            ],
+            "scores": {
+              "requirementFit": {
+                "score": 86,
+                "reason": "defineAppRoutes 的默认页面授权检查、useApiClient 与服务端行级资格直接支撑按角色显示与状态筛选；应用路由 name='tickets' 无 authz 即由 it-employee/it-handler 的页面 grant 决定可见性。",
+                "evidence": [
+                  "E22",
+                  "E24",
+                  "E26"
+                ]
+              },
+              "usability": {
+                "score": 85,
+                "reason": "路由声明与导航、页面守卫一致，客户端请求经 useApiClient 遵循 api.baseURL；详情用 URL 参数满足刷新保留。",
+                "evidence": [
+                  "E22",
+                  "E23",
+                  "E25"
+                ]
+              },
+              "agentFriendliness": {
+                "score": 86,
+                "reason": "client-pages-and-routes 与 client-development 明确默认页面检查、useCan 与服务端资格来源，agent 选择服务端 meta 方式也在指引允许范围内。",
+                "evidence": [
+                  "E24",
+                  "E26"
+                ]
+              },
+              "design": {
+                "score": 86,
+                "reason": "路由与页面授权是声明式数据，normalizeRouteAuthz 校验并归一化 authz，客户端可见性与服务端授权分离。",
+                "evidence": [
+                  "E22",
+                  "E23",
+                  "E24"
+                ]
+              },
+              "reliability": {
+                "score": 82,
+                "reason": "已读 normalizeRouteAuthz 与 defineAppRoutes 实现，默认页面检查与显式 authz 校验可靠；但未逐行核对 useCan 客户端缓存失效实现，故略低。",
+                "evidence": [
+                  "E22",
+                  "E23"
+                ]
+              }
+            }
+          }
+        ],
+        "findings": [
+          {
+            "id": "F1",
+            "kind": "issue",
+            "owner": "plugin",
+            "severity": "minor",
+            "confidence": "confirmed",
+            "status": "open",
+            "title": "Seed 动态导入无法把相对 .js 指示符解析回 .ts 源，破坏应用启动测试",
+            "detail": "task-loader.importTaskDefinition 用原生动态 import 加载 seed 文件，@nocobase/db 的 __rewriteRelativeImportExtension 只作用于任务文件自身的 URL；seed 内部的 '../../seed-data/permission-sets.js' 交由 Node/Vitest 解析，找不到同名 .js 时抛 AppDatabaseTaskError。Agent 依 authorization 参考写出共享模块后，仅在测试启动路径失败（pnpm db:apply 的 tsx 与编译构建正常）。",
+            "impact": "应用按参考组织 seed 数据时，模板的 app-server 运行测试无法 boot，必须把 seed 改写成自包含文件才能通过。",
+            "suggestedChange": "在 @nocobase/db 的 seed/migration 载入器把相对 .js 解析到实际存在的 .ts（或在 Vitest 集成层注册同等解析），并在 nocobase-db Skill 中写明该限制。",
+            "evidence": [
+              "E10",
+              "E11"
+            ]
+          },
+          {
+            "id": "F2",
+            "kind": "misleading",
+            "owner": "documentation",
+            "severity": "minor",
+            "confidence": "confirmed",
+            "status": "open",
+            "claimed": "code-and-seeds.md 以示例声明 seed 位于 database/main/seeds 并 import database/seed-data/permission-sets.ts，暗示这是可直接采用的初始配置写法。",
+            "observed": "同一仓库的 nocobase-db Skill 要求 seed self-contained、不得 import 共享常量；而 @nocobase/db 载入器在 Vitest 路径无法解析该相对导入，按示例写会 boot 失败。",
+            "title": "两份 Skill 对 seed 是否可导入共享模块给出冲突指引",
+            "detail": "authorization 的 code-and-seeds 参考把 permission-set 值放在独立模块并在 seed 中导入；nocobase-db Skill 的 self-contained 规则明确禁止导入会演进的 Collection/模型/共享常量。两条都是被评指引，组合使用时正确写法只能靠一次失败的 boot 推断。",
+            "impact": "Agent 按其中一份指引实现就可能违反另一份并在测试启动阶段失败，增加试错成本与不一致的 seed 组织方式。",
+            "suggestedChange": "统一口径：要么让载入器支持该导入，要么在 authorization 参考中把 seed-data 导入标注为仅构建/tsx 可用并给出自包含替代片段。",
+            "evidence": [
+              "E7",
+              "E12",
+              "E10"
+            ]
+          },
+          {
+            "id": "F3",
+            "kind": "improvement",
+            "owner": "documentation",
+            "severity": "minor",
+            "confidence": "suspected",
+            "status": "open",
+            "title": "缺少应用 provider 容忍未安装可选插件的装配指引",
+            "detail": "authorization Skill 要求 provider 在 boot 解析依赖，services-and-jobs 只列生命周期阶段；两份指引都未说明可选插件 token 可能不存在。Agent 的 TicketsProvider.boot 无条件 resolve authorizationToken，在模板禁插件的 app-server 运行测试中报 Service not registered，需自行改为 container.has() 早退。",
+            "impact": "按推荐 provider 模式开发的应用在插件裁剪或测试矩阵下启动失败，且错误信息不指向缺少可选依赖，增加定位成本。",
+            "suggestedChange": "在 services-and-jobs 或 authorization Skill 的 provider 章节补充：boot 解析可选插件 token 前用 container.has 判断并优雅降级。",
+            "evidence": [
+              "E16",
+              "E17"
+            ]
+          },
+          {
+            "id": "F4",
+            "kind": "strength",
+            "owner": "framework",
+            "severity": "info",
+            "confidence": "confirmed",
+            "status": "not-applicable",
+            "title": "记录范围策略与 Repository 策略链把服务端授权做成可持久化数据而非路由分支",
+            "detail": "defineRecordAccess/RecordAccessRegistry 提供可校验的自定义记录范围，permissionSet 只产出值，policyFor 把 read/create/update/delete 折叠为 Repository Policy，enforce.js 在读写前拒绝并以 and 相交 filter。Agent 用 tickets.submitted 与两套 permission set 落地，服务端对越权读返回 404、员工 start 返回 403、重复 complete 返回 409。",
+            "impact": "应用无需在路由写角色 if 判断，权限可由管理员在后台编辑，且拒绝语义在服务端统一。",
+            "suggestedChange": "无。",
+            "evidence": [
+              "E1",
+              "E2",
+              "E9"
+            ]
+          }
+        ],
+        "ui": {
+          "status": "not-reviewed",
+          "score": null,
+          "reason": "已尝试读取 B01-after-refresh、B05-employeeA-list-completed、B02-employee2-list 三张 PNG，但当前评审模型不支持图像输入，无法据此判断跨页面样式一致性，故不做视觉评分。",
+          "evidence": []
+        },
+        "evidence": [
+          {
+            "id": "E1",
+            "kind": "code",
+            "path": "packages/@nocobase/authorization/dist/core/record-access.js",
+            "observation": "RecordAccessRegistry.add 校验 key 唯一、resolver 必填、resources 合法；resolve() 对未知或不适用的记录范围抛错；defineRecordAccess 要求 key 并强制至少一个 resource。",
+            "lines": [
+              1,
+              38
+            ],
+            "excerpt": "export class RecordAccessRegistry {\n    entries = new Map();\n    add(policy) {\n        if (!policy.key || this.entries.has(policy.key))\n            throw new TypeError('Duplicate or empty record access key');\n        if (typeof policy.resolve !== 'function')\n            throw new TypeError('Record access requires a resolver');\n        if (!policy.resources.length ||\n            policy.resources.some((r) => !r.type || !r.id))\n            throw new TypeError('Record access requires valid resources');\n        const { resolve, ...metadata } = policy;\n        this.entries.set(policy.key, {\n            ...structuredClone(metadata),\n            resolve,\n        });\n    }\n    get(key) {\n        const policy = this.entries.get(key);\n        if (!policy)\n            return;\n        const { resolve, ...metadata } = policy;\n        return { ...structuredClone(metadata), resolve };\n    }\n    list() {\n        return [...this.entries.keys()].map((key) => this.get(key));\n    }\n    listFor(resource) {\n        return this.list().filter((policy) => policy.resources.some((r) => r.type === resource.type && (r.id === '*' || r.id === resource.id)));\n    }\n    async resolve(key, context) {\n        const policy = this.entries.get(key);\n        if (!policy ||\n            !policy.resources.some((resource) => resource.type === context.resource.type &&\n                (resource.id === '*' || resource.id === context.resource.id)))\n            throw new TypeError(`Unknown or inapplicable record access policy: ${key}`);\n        return policy.resolve(context);\n    }\n}",
+            "sha256": "7fa2a1452a6cfde53bdd0ac362fcfe0dbb76aec27489d87ae1cac9b3ad161f6c"
+          },
+          {
+            "id": "E2",
+            "kind": "code",
+            "path": "packages/@nocobase/app-plugin-authorization/dist/server/database/api.js",
+            "observation": "DatabaseAuthorizationService.policyFor 对 read/create/update/delete 各调用 scope.authorize 并折叠为 Repository Policy；deny→false，permit→true，条件决策转成 scope/fields/relations。",
+            "lines": [
+              33,
+              47
+            ],
+            "excerpt": "    async policyFor(collection, scope, operation) {\n        const resource = { type: 'database.collection', id: collection };\n        const decide = async (action) => foldDecision(action, await scope.authorize({\n            resource,\n            action,\n            params: operation ? { operation } : {},\n        }));\n        const [read, create, update, remove] = await Promise.all([\n            decide('read'),\n            decide('create'),\n            decide('update'),\n            decide('delete'),\n        ]);\n        return { read, create, update, delete: remove };\n    }",
+            "sha256": "1747321bc8b182673c108d9c605df526171a588db86225ec8d871e75cefb2487"
+          },
+          {
+            "id": "E3",
+            "kind": "code",
+            "path": "packages/@nocobase/app-plugin-authorization/dist/server/database/record-access.js",
+            "observation": "内置 recordsIOwn/recordsICreated 固定绑定 ownerId/createdById 字段，说明 tickets 这类使用 submitterId 的表需要自定义记录范围。",
+            "lines": [
+              19,
+              34
+            ],
+            "excerpt": "export function recordsIOwn() {\n    return databaseRecordAccess({\n        key: 'recordsIOwn',\n        requiredFields: ['ownerId'],\n        title: { key: 'options.recordAccessPolicies.recordsIOwn' },\n        resolve: ({ principal, params }) => condition(params?.field ?? 'ownerId', '$eq', userId(principal)),\n    });\n}\nexport function recordsICreated() {\n    return databaseRecordAccess({\n        key: 'recordsICreated',\n        requiredFields: ['createdById'],\n        title: { key: 'options.recordAccessPolicies.recordsICreated' },\n        resolve: ({ principal, params }) => condition(params?.field ?? 'createdById', '$eq', userId(principal)),\n    });\n}",
+            "sha256": "9daad7864056c0656d803a4ad1a0d20205444e3a6dba7bce0e644fc53d123765"
+          },
+          {
+            "id": "E4",
+            "kind": "code",
+            "path": "packages/@nocobase/app-plugin-authorization/dist/server/database/builders.js",
+            "observation": "databaseGrant 把集合上的 read/create/update 配置序列化为带 policy 的动作数组，供 permission set 持久化使用。",
+            "lines": [
+              2,
+              10
+            ],
+            "excerpt": "export function databaseGrant(resource, definition) {\n    return {\n        resource: { type: 'database.collection', id: resource },\n        actions: Object.entries(definition).map(([action, config]) => ({\n            action,\n            policy: { type: 'database', ...config },\n        })),\n    };\n}",
+            "sha256": "2b3626d2fa1fd7d01356bc83acd97fc05c22f1ba4c431895c90e0ccae755754f"
+          },
+          {
+            "id": "E5",
+            "kind": "code",
+            "path": "packages/@nocobase/authorization/dist/plugins/permission-sets/builder.js",
+            "observation": "permissionSet(key).grant(...).build() 只返回结构化 {key, grants} 值，不写存储，与声明与配置分离的文档口径一致。",
+            "lines": [
+              1,
+              24
+            ],
+            "excerpt": "/** Build permission-set data without writing to a store. */\nexport class PermissionSetBuilder {\n    definition;\n    constructor(definition) {\n        this.definition = definition;\n    }\n    title(title) {\n        return new PermissionSetBuilder({ ...this.definition, title });\n    }\n    grant(...grants) {\n        return new PermissionSetBuilder({\n            ...this.definition,\n            grants: [...this.definition.grants, ...structuredClone(grants)],\n        });\n    }\n    build() {\n        return structuredClone(this.definition);\n    }\n}\nexport function permissionSet(key) {\n    if (!key)\n        throw new TypeError('A permission set needs a key');\n    return new PermissionSetBuilder({ key, grants: [] });\n}",
+            "sha256": "fca79fdfd2cf655b48323cc45d2c79cb45e47a73c409153a715bcd156d823156"
+          },
+          {
+            "id": "E6",
+            "kind": "skill",
+            "path": "app/.agents/skills/nocobase-app-plugin-authorization/SKILL.md",
+            "observation": "Skill 明确实现顺序：迁移自包含、provider 注册 collection/page/record-access、每条路由鉴权、业务状态写入 mutation 谓词、页面 grant 与服务端授权分离。",
+            "lines": [
+              55,
+              72
+            ],
+            "excerpt": "1. Declare schema and relationships through self-contained migrations. Choose stable resource, page and scope names. Keep authorization decisions out of migration code.\n2. Declare reusable data permissions with `defineDatabasePermission`; compose user-facing actions with `defineAuthorizationResource`. Explicitly name fields, relation capabilities and every table touched by a workflow.\n3. Register collections, pages, flat resource groups, resources and record-access strategies in the owning provider. Resolve dependencies at boot and release subject registrations at shutdown.\n4. Protect every server route with authentication. For a simple single-scope Repository operation, retain `defineRepositoryApiRoutes` and add `authz.db.authorizeRepository` to map methods to business actions; it reuses or initializes the request authorization scope. For workflows, persisted-state checks, multiple scopes or custom responses, use a custom handler with `authz.middleware()`, call the request scope's `authorize()` once and apply every returned table policy using `repository.withPolicy()`. Follow the selection criteria and complete code in [Repository route integration](references/repository-routes.md).\n5. Add page authorization and `useCan` for action visibility. Obtain per-record eligibility from the server when needed. Handle pending/error states without displaying stale access.\n6. Complete the accompanying permission configuration from the responsibility matrix: sets, page/action grants, selected scopes, supported rules and intended assignments. Use seeds for fresh installations and authorized provisioning for existing installations; do not assume editing a seed updates a running App. Resolve optional capabilities through their installed Skills and preserve unrelated administrator edits.\n7. Verify denied as well as allowed requests through the production route factory and actual database policies. Then verify the UI with ordinary users and inherited memberships.\n\n## Enforcement rules\n\n- Register collections explicitly with `authz.db.collections.add({ name, title, actions? })`. Metadata comes from DB; registration grants nothing. Unregistered collections are denied even to unrestricted users.\n- Business groups compose database capabilities; administration groups compose settings/system capabilities. Page grants are separate. Page visibility never authorizes a server endpoint.\n- `can` is for feature visibility. `require`/`guard` require unconditional permission and reject conditional decisions. Composed business endpoints use `authorize`, reject denial/missing policies, and consume `conditions.database` without resolving aggregate grants again.\n- For simple business CRUD, keep the original Repository route definition and use `db.authorizeRepository` to bind each method to its business action. Follow [Repository route integration](references/repository-routes.md). Multi-scope actions and workflow transitions require custom handlers. `db.policyFor` aggregates collection grants; it does not define a business-action boundary.\n- Scope every read and write in the workflow, including parent lookups. Keep multi-record writes transactional and include expected business state in mutation predicates. Authorization does not validate a quote's amount or its workflow transition.\n- Fields and relation operations are code-owned. The permission workspace configures business operations, their scopes and pages; do not build a second raw-field permission editor.\n- Relation writes do not inherit the target collection's standalone constraints. Declare target record access and join-table fields explicitly; prevent foreign-key fields from bypassing association controls.\n- Request scopes cache rules and grants. Reuse one within a request; create a new one for a new request/identity. Do not persist authorization decisions in module state.",
+            "sha256": "78477312e2b9add541586fb747c7d93f2ea3a5a88d398d3635f1d0b3380466e6"
+          },
+          {
+            "id": "E7",
+            "kind": "skill",
+            "path": "app/.agents/skills/nocobase-app-plugin-authorization/references/code-and-seeds.md",
+            "observation": "该参考推荐把 permission-set 值放在 database/seed-data/permission-sets.ts，并在 seed 中 import { engineer } from '../../seed-data/permission-sets.js' 后写库。",
+            "lines": [
+              34,
+              72
+            ],
+            "excerpt": "## Share declarations, not runtime instances\n\nKeep a portable feature module such as `server/sales-resources.ts` with `defineAuthorizationResource` declarations. Put permission-set values in `database/seed-data/permission-sets.ts`, importing the same resource references. The corresponding code for a customer-owned feature can live under its own `sales/` directory. Use that feature's names consistently; the installed example uses `example.sales.*` and `authorizationExample*` names.\n\n```ts\nimport { permissionSet } from '@nocobase/authorization/permissions';\nimport { quotes } from '../../server/sales-resources.js';\n\nexport const engineer = permissionSet('sales-engineer')\n  .title('Sales engineer')\n  .grant({\n    resource: { type: 'page', id: 'sales.quotes' },\n    actions: [{ action: 'access' }],\n  })\n  .grant(\n    quotes.reference().grant({\n      view: { quotes: 'allRecords' },\n      edit: { quotes: 'sales.prepared' },\n      submit: { quotes: 'sales.prepared', projects: 'sales.region' },\n    }),\n  )\n  .build();\n```\n\nThe declarations used here are in [the sales workflow](business-module.md). Register `sales.prepared` and `sales.region` before serving requests. Use `{ key, ns }` titles and matching client translations in a localized product; plain titles here keep the snippets small. Store policy references and parameters, never resolver functions.\n\n## A normal App seed has a database context\n\n`defineSeed` from `@nocobase/db` receives `{ query, connection }`. `connection` is a restricted `SeedConnection`, not a complete runtime `DatabaseConnection`; the seed has no application container. Do not cast it to construct an App authorization service or assume `authorizationToken` can be resolved there.\n\nFor initial installation, a seed may write the documented persistence rows below after the owning plugins' migrations. Keep this adapter confined to installation data, use fluent values as its input, and test against the installed schema. Runtime routes must use the services instead. The current example uses this bootstrap pattern and separate data modules per table.\n\n```ts\nimport { defineSeed } from '@nocobase/db';\nimport { encodeAuthorizationTitle } from '@nocobase/authorization/core';\nimport { engineer } from '../../seed-data/permission-sets.js';\n\nexport default defineSeed({\n  name: '202609190001_sales_jobs',",
+            "sha256": "881fa0de5b943950465f935636fb6de90832984d6dea65ab9c3b6e30fbaecf0d"
+          },
+          {
+            "id": "E8",
+            "kind": "code",
+            "path": "packages/@nocobase/db/dist/src/repository/policy/enforce.js",
+            "observation": "策略 read/update/delete 为 false 时在解析阶段抛 READ_FORBIDDEN/WRITE_FORBIDDEN；combinePolicyFilter 用 and 把调用方 filter 与策略 scope 相交。",
+            "lines": [
+              1,
+              34
+            ],
+            "excerpt": "import { invalid, isPlainRecord } from '../internal/guards.js';\n/**\n * Resolve the read node, rejecting the call outright when reading is forbidden.\n * Returns `undefined` when no Policy is bound and `true` when it adds no limits.\n */\nexport function resolveReadNode(policy, collection) {\n    const node = policy?.read;\n    if (node === false) {\n        invalid('READ_FORBIDDEN', 'Reading from this Repository is forbidden by Policy.', { collection: collection.name });\n    }\n    return node;\n}\n/** The scalar field allowlist of the bound read node, or `undefined` when unbound. */\nexport function policyReadFields(policy) {\n    const node = policy?.read;\n    return node && typeof node === 'object' ? node.fields : undefined;\n}\n/** The relation allowlist of the bound read node, or `undefined` when unbound. */\nexport function policyReadRelations(policy) {\n    const node = policy?.read;\n    return node && typeof node === 'object' ? node.relations : undefined;\n}\n/**\n * Resolve the node behind an `update` or `delete`, rejecting the call outright\n * when the operation is forbidden.\n */\nexport function resolveMutationNode(policy, operation, collection) {\n    const node = operation === 'update' ? policy?.update : policy?.delete;\n    if (node === false) {\n        invalid('WRITE_FORBIDDEN', `${operation} is forbidden by Policy.`, {\n            collection: collection.name,\n        });\n    }\n    return node;",
+            "sha256": "b980d123d642709875e3088e2b6de7f8e466d1d513b1ec3a1618b38c6d40e7a3"
+          },
+          {
+            "id": "E9",
+            "kind": "code",
+            "path": "packages/@nocobase/db/dist/src/repository/repository.js",
+            "observation": "updateOne 先解析 update 写策略与字段，再经 adapter 更新；结果 'missing' 调用 recordNotFound，等价于 RECORD_NOT_FOUND。",
+            "lines": [
+              351,
+              392
+            ],
+            "excerpt": "    async updateOne(options) {\n        const policyInput = options.writePolicy === undefined ? true : options.writePolicy;\n        assertWriteEnabled(policyInput);\n        const writePolicy = policyInput === true ? true : normalizeWritePolicy(policyInput, 'update');\n        const collection = await this.collection();\n        assertWritableCollection(collection);\n        // Before the payload is looked at: a Policy that forbids this operation\n        // refuses the call outright, so an empty or malformed body is reported as\n        // forbidden rather than as invalid input. The caller learns nothing about\n        // the shape of a write they may not perform.\n        resolveWriteShapeNode(this.options.policy, 'update', collection);\n        await validateWritePolicyMetadata(this.options.collections, collection, writePolicy);\n        const mutation = await normalizeModelMutation(this.options.collections, collection, evaluateValues(options.values), 'updateOne', 1, { nodes: 0, clientKeys: new Set(), context: options.context });\n        this.assertPolicyMutationFields(collection, mutation, 'update', ['values']);\n        assertMutationWritePolicy(mutation, writePolicy, ['values'], [], 'update', collection.name);\n        const filter = await this.normalizeSingleMutationFilter(collection, options.filter, options.context, 'update');\n        validateIfVersion(collection, options.ifVersion);\n        const selection = await this.validateSelect(collection, options.select, options.context, this.readContext(collection));\n        const requestedFields = selection.fields;\n        const result = await this.options.adapter.updateOne({\n            collection,\n            fields: includeExecutionFields(collection, requestedFields),\n            filter,\n            values: mutation.values,\n            ifVersion: options.ifVersion,\n            relations: mutation.relations,\n            select: selection.select,\n            scopeCheck: await this.scopeCheck(collection, 'update'),\n            relationScopes: await this.writeRelationScopes(collection, 'update'),\n        });\n        if (result === 'multiple')\n            multipleRecordsMatched(collection);\n        if (result === 'conflict')\n            versionConflict(collection);\n        if (result === 'missing')\n            recordNotFound(collection);\n        return {\n            record: pickSelection(result.record, requestedFields, selection.select),\n            createdTargets: result.createdTargets,\n            version: result.version,\n        };\n    }",
+            "sha256": "31b67e0dcdfd222b6981571d563d9879525a3bf61312ea92a05a269d99c1f311"
+          },
+          {
+            "id": "E10",
+            "kind": "code",
+            "path": "packages/@nocobase/db/dist/src/migration/internal/task-loader.js",
+            "observation": "importTaskDefinition 用原生动态 import 加载 seed 文件，__rewriteRelativeImportExtension 只作用于该文件 URL，不会重写 seed 内部相对导入的 .js 指示符。",
+            "lines": [
+              56,
+              62
+            ],
+            "excerpt": "/** The mtime query keeps a re-read after an edit from serving a cached module. */\nexport async function importTaskDefinition(filePath, mtimeMs) {\n    const url = pathToFileURL(filePath);\n    url.searchParams.set('mtime', String(Math.trunc(mtimeMs)));\n    const module = await import(__rewriteRelativeImportExtension(url.href));\n    return module.default;\n}",
+            "sha256": "4f27b0ccdcd61d466752932a2fac4068ec33efe948aa40a22187fdadc5b438a3"
+          },
+          {
+            "id": "E11",
+            "kind": "code",
+            "path": "packages/@nocobase/db/dist/src/seed/loader.js",
+            "observation": "loadSeedFile 读取源码后动态导入 default export，并校验 defineSeed 的 name 与文件名一致；加载失败直接抛出并冒泡为 AppDatabaseTaskError。",
+            "lines": [
+              52,
+              68
+            ],
+            "excerpt": "async function loadSeedFile(packageName, filePath, fileName, manifest) {\n    const [source, fileStat] = await Promise.all([\n        readFile(filePath, 'utf8'),\n        stat(filePath),\n    ]);\n    const checksums = resolveTaskChecksum(filePath, source, manifest);\n    const seed = await importTaskDefinition(filePath, fileStat.mtimeMs);\n    validateSeedDefinition(seed, filePath, fileName);\n    return {\n        packageName,\n        name: seed.name,\n        filePath,\n        fileName,\n        ...checksums,\n        seed,\n    };\n}",
+            "sha256": "58b05c9cfe397c2e4245c763c1153adbfcd08590838222d550d9f14ac48e5209"
+          },
+          {
+            "id": "E12",
+            "kind": "skill",
+            "path": "app/.agents/skills/nocobase-db/SKILL.md",
+            "observation": "Skill 规定 seed 用 repository、必须幂等，并明确 self-contained 规则：不得 import 会演进的 Collection/模型/共享常量。",
+            "lines": [
+              127,
+              139
+            ],
+            "excerpt": "Each context carries its own tools, and which one to use is not a free choice — see [Repository and Query](#4-repository-and-query). In short: a migration works through `builder` and `query`, and a seed writes through `repository`.\n\nThe rules are absolute, because these files are history that has already run on other machines:\n\n- **Self-contained.** Spell out every table, field, index, constraint and metadata operation in the file. Never import a Collection definition, model, registry or shared constant that keeps evolving — that silently changes both the behavior and the checksum of something already applied.\n- **Immutable once merged.** Check with `git log -- <file>` if unsure. Before the branch is merged you may correct the file in place; after it, every change is a new, later file. Never hard-code a previous checksum to make an edited migration look untouched. Correcting it in place changes nothing on its own — it is recorded as executed, so a plain apply skips it and the database keeps the schema the old file produced. `pnpm db:redo` rolls the latest batch back and applies it again.\n- **The file name body matches `name`**, and the name is unique across every source in the application.\n- **Declare `irreversible: true`** when there is no real reverse operation, instead of writing a `down()` that quietly does nothing.\n- **A seed is idempotent**, keyed on a stable business value backed by a unique constraint, so a repeated run is a no-op — `upsertOne` is the direct way to express that. A seed context has no `builder` at all, and a seed has no rollback or truncate behavior.\n\nA backfill belongs in the migration that makes it necessary, using `query` from the same context — not in a seed.\n\nBoth run inside a transaction by default. `transaction: false` opts out, and a failure then leaves partial work behind with no history record, so take it only when the operation genuinely cannot run in one.",
+            "sha256": "2fdca7c2484a669667b6293878b915a5af0f84cbd3c5e80945a28fe5fbabf7d7"
+          },
+          {
+            "id": "E13",
+            "kind": "code",
+            "path": "packages/@nocobase/app-server/dist/router/routes.js",
+            "observation": "defineApiRoutes/defineRootRoutes 返回带 scope:'api'|'root' 的冻结贡献，由运行时决定挂载前缀。",
+            "lines": [
+              7,
+              18
+            ],
+            "excerpt": "export function defineApiRoutes(createRouter) {\n    return Object.freeze({\n        scope: 'api',\n        createRouter,\n    });\n}\nexport function defineRootRoutes(createRouter) {\n    return Object.freeze({\n        scope: 'root',\n        createRouter,\n    });\n}",
+            "sha256": "4a5a2d50c819c2cb33a51a1a65681e16c31ced82001d689f239da855035ec617"
+          },
+          {
+            "id": "E14",
+            "kind": "code",
+            "path": "packages/@nocobase/service-provider/dist/token.js",
+            "observation": "createServiceToken 生成按对象身份匹配的冻结 token，并拒绝空名字。",
+            "lines": [
+              1,
+              7
+            ],
+            "excerpt": "const serviceTokenType = Symbol('service-token-type');\nexport function createServiceToken(name) {\n    if (!name.trim()) {\n        throw new Error('Service token name must not be empty.');\n    }\n    return Object.freeze({ name });\n}",
+            "sha256": "07b62d73e4b1b85507b9afb727fff1ca31e5fc52af1e324cad311b361717a8eb"
+          },
+          {
+            "id": "E15",
+            "kind": "code",
+            "path": "packages/@nocobase/service-provider/dist/provider.js",
+            "observation": "ServiceProvider 定义 register/boot/start/ready/shutdown 生命周期钩子，register 与 boot 分离。",
+            "lines": [
+              1,
+              11
+            ],
+            "excerpt": "export class ServiceProvider {\n    app;\n    constructor(app) {\n        this.app = app;\n    }\n    register() { }\n    async boot() { }\n    async start() { }\n    async ready() { }\n    async shutdown() { }\n}",
+            "sha256": "5de6708073c4bd508b7ede97f648f40d75f0e14bd0b9913a0d81e8876b8ea186"
+          },
+          {
+            "id": "E16",
+            "kind": "skill",
+            "path": "app/.agents/skills/nocobase-app-development/references/server-routes.md",
+            "observation": "指引要求每条路由自带 auth.required；授权路由用 authorization.middleware；普通 CRUD 用 policyFor+withPolicy，并把业务状态谓词放入更新条件。",
+            "lines": [
+              86,
+              103
+            ],
+            "excerpt": "Use a stable `resource`/`action` pair per operation — `read` and `create` are distinct decisions.\n\n### Enforce record, field and relation policies\n\nRead [application permission development](authorization.md) and the installed `nocobase-app-plugin-authorization` Skill before building data access. Register each governed collection explicitly in the owning provider with `authz.db.collections.add({ name, title, actions? })`; DB supplies field/relation metadata. Unregistered collections are denied even to unrestricted users.\n\nFor ordinary collection CRUD, resolve and bind the policy:\n\n```ts\nconst policy = await authz.db.policyFor('customers', context.get('authz'));\nif (policy.read === false) return context.json({ code: 'FORBIDDEN' }, 403);\nconst customers = database.repository('customers').withPolicy(policy);\nreturn context.json({ data: await customers.findMany() });\n```\n\nFor a composed business operation, call the request scope's `authorize()` once, reject denied or missing policies, and bind each table's `decision.conditions.database[collection]` policy. Do not replace it with aggregate collection authorization: grants from another business operation could widen the result. `require` rejects conditional decisions; `can` reports feature visibility rather than access to a specific record.\n\nBound repositories enforce rows, fields and relations together. Keep multi-table writes transactional and business-state predicates in the update. Map out-of-scope `RECORD_NOT_FOUND` errors consistently without exposing hidden records. Never fetch unrestricted rows and filter them in the browser.",
+            "sha256": "41654300ce197056aaf093b7c9d1a29e3834e9459e27015bcbbefbcaca90d17e"
+          },
+          {
+            "id": "E17",
+            "kind": "skill",
+            "path": "app/.agents/skills/nocobase-app-development/references/services-and-jobs.md",
+            "observation": "服务通过 provider+token 注册，token 身份用对象同一性；register 只绑 token，boot 才做需要其它服务的工作。",
+            "lines": [
+              9,
+              60
+            ],
+            "excerpt": "A service is registered by a provider under a token, so anything in the application can resolve it without importing the implementation:\n\n```ts\n// server/providers/orders.ts\nimport type { Application } from '@nocobase/app-server/application';\nimport { databaseManagerToken } from '@nocobase/db';\nimport {\n  createServiceToken,\n  ServiceProvider,\n  type ServiceToken,\n} from '@nocobase/service-provider';\n\nexport interface OrderService {\n  list(): Promise<Order[]>;\n  create(input: CreateOrderInput): Promise<Order>;\n}\n\nexport const orderServiceToken=[REDACTED] =\n  createServiceToken<OrderService>('app/order-service');\n\nexport default class OrderProvider extends ServiceProvider<Application> {\n  public readonly name: string = 'app/order-provider';\n\n  public override register(): void {\n    this.app.container.singleton(orderServiceToken, () => {\n      const database = this.app.container.resolve(databaseManagerToken);\n      return createOrderService(database);\n    });\n  }\n}\n```\n\nAdd the provider to the array in `server/providers/index.ts` and export its token from there so routes can import it.\n\nResolve it where you need it:\n\n```ts\nconst orders = app.container.resolve(orderServiceToken);\n```\n\n**The token is the identity.** Two `createServiceToken` calls with the same name are two different keys — the container matches by object identity. Always import the token from where it is defined rather than recreating one.\n\n`singleton` builds the service once, on first resolve. Use `instance` for an already-constructed value.\n\nKeep the layers apart: a service should not read a Hono context, return HTTP status codes, or decide retry behavior. It takes its dependencies and returns domain results.\n\n## Provider lifecycle\n\n| Method       | Runs                             | For                                              |\n| ------------ | -------------------------------- | ------------------------------------------------ |\n| `register()` | Assembly, before anything starts | Binding tokens. Do not connect or start anything |\n| `boot()`     | After all providers registered   | Work needing other services                      |",
+            "sha256": "37009a76c8623ae436da8dae953aab54c95ae75571b79a06036f4b5846158a95"
+          },
+          {
+            "id": "E18",
+            "kind": "code",
+            "path": "packages/@nocobase/app-plugin-authentication/dist/server/providers/authentication.js",
+            "observation": "认证实例以 app.publicOrigin 作为 Better Auth baseURL，并由其派生 cookie prefix 与 cookie 属性。",
+            "lines": [
+              63,
+              89
+            ],
+            "excerpt": "        const auth = createAuthentication({\n            connection: database?.connection(),\n            secondaryStorage: createAuthStorage(caching),\n            appName: app.name,\n            ...authConfig,\n            logger: authConfig.logger ??\n                (logger\n                    ? {\n                        level: 'debug',\n                        log: (level, message, ...details) => {\n                            logger[level]({ ...(details.length ? { details } : {}) }, message);\n                        },\n                    }\n                    : undefined),\n            baseURL: app.publicOrigin,\n            basePath: resolvePublicPath('/api/auth', app.publicBasePath),\n            advanced: {\n                cookiePrefix: createCookiePrefix(app.name, {\n                    publicOrigin: app.publicOrigin,\n                    // Only a standalone app owns its port. An embedded app carries a\n                    // `server` config all the same, because the template's defaults are\n                    // merged in both modes, but there the port belongs to the host and\n                    // says nothing about which app a cookie belongs to.\n                    listenPort: this.app.mode === 'standalone'\n                        ? this.app.config.get('server')?.port\n                        : undefined,\n                }),",
+            "sha256": "960999e1872ead24b384b651baff965577adadbb1ba94930321404508f12fb4b"
+          },
+          {
+            "id": "E19",
+            "kind": "skill",
+            "path": "app/.agents/skills/nocobase-app-plugin-authentication/references/user-lifecycle-and-deployment.md",
+            "observation": "文档说明 app.publicOrigin 决定 base URL 与回调，且 Auth.required()/optional() 对带 cookie 的写在 Origin 不可信时以 INVALID_CSRF_ORIGIN 失败。",
+            "lines": [
+              109,
+              115
+            ],
+            "excerpt": "**Public origin.** Set `app.publicOrigin` to the HTTPS address the browser\nsees. Better Auth derives its base URL and callback URLs from it and from the\napplication's public base path; a container-internal address breaks OAuth\ncallbacks and cookie attributes. The reverse proxy must forward host,\nprotocol, and cookies.\n\n**Business request CSRF.** `Auth.required()` and `Auth.optional()` reject cookie-bearing writes unless `Origin` (or, when absent, `Referer`) matches Better Auth's configured base origin or a trusted origin. Configure `app.publicOrigin` for deployed applications and add separate frontend origins through `auth.trustedOrigins`; without a trusted origin, browser writes fail closed with `INVALID_CSRF_ORIGIN`. Cookie-free API key requests can proceed after authentication. A credential header does not exempt a request carrying cookies, including routes that skip session lookup.",
+            "sha256": "d4777c40b4055ae99de7812bba14ee1bb2649e57d6e55d8b2ce393cf91ff3040"
+          },
+          {
+            "id": "E20",
+            "kind": "skill",
+            "path": "app/.agents/skills/nocobase-app-plugin-authentication/SKILL.md",
+            "observation": "文档规定 users.initialAdmin 只建初始管理员并哈希密码；后续账号变更应使用用户管理服务，不要新增竞争的 administrator seed。",
+            "lines": [
+              138,
+              141
+            ],
+            "excerpt": "## Initial administrator\n\nBefore the first seed run, set `users.initialAdmin.username` and `users.initialAdmin.password` in application configuration to customize the bootstrap account. Omitting the entire node preserves `nocobase/admin123`; an explicit node requires a nonempty password and defaults the username to `nocobase`. Usernames contain 3–30 letters, digits, underscores or dots and are stored lowercase; the email remains `admin@nocobase.com`. Initialization only runs when the user table is empty, hashes the password and grants the newly created account root permission through the authorization plugin. After initialization, configuration changes do not reset accounts or rerun the recorded seeds. The root permission seed selects the administrator by the same configured username. Use the user administration service for subsequent account changes. Do not edit historical seeds or add a competing administrator seed.\n",
+            "sha256": "c03b189be85b6feeb39ea5cc1a348f3a3d585b3e7bdcc0c72fd9d4a1cf452551"
+          },
+          {
+            "id": "E21",
+            "kind": "code",
+            "path": "packages/@nocobase/app-plugin-authentication/dist/database/seeds/202608220003_authentication_create_default_admin_user.js",
+            "observation": "框架自身的默认管理员 seed 直接以 hashPassword 写入 user 与 account 两张表，并按 users.initialAdmin 读取密码。",
+            "lines": [
+              3,
+              56
+            ],
+            "excerpt": "const seed = defineSeed({\n    name: '202608220003_authentication_create_default_admin_user',\n    async run({ query, config }) {\n        const existingUser = await query\n            .selectFrom('user')\n            .select('id')\n            .limit(1)\n            .executeTakeFirst();\n        if (existingUser)\n            return;\n        const initialAdmin = config.get('users.initialAdmin');\n        const credentials = initialAdmin === undefined\n            ? { username: 'nocobase', password=[REDACTED]' }\n            : initialAdmin;\n        if (!credentials ||\n            typeof credentials !== 'object' ||\n            Array.isArray(credentials)) {\n            throw new Error('users.initialAdmin must be an object.');\n        }\n        const { username = 'nocobase', password } = credentials;\n        if (typeof username !== 'string' ||\n            !/^[a-zA-Z0-9_.]{3,30}$/.test(username)) {\n            throw new Error('users.initialAdmin.username must contain 3–30 letters, digits, underscores or dots.');\n        }\n        if (typeof password !== 'string' || password.trim().length === 0) {\n            throw new Error('users.initialAdmin.password is required when users.initialAdmin is configured.');\n        }\n        const now = new Date();\n        const userId = crypto.randomUUID();\n        const passwordHash = await hashPassword(password);\n        await query\n            .insertInto('user')\n            .values({\n            id: userId,\n            name: 'Super Admin',\n            username: username.toLowerCase(),\n            email: 'admin@nocobase.com',\n            emailVerified: true,\n            createdAt: now,\n            updatedAt: now,\n        })\n            .execute();\n        await query\n            .insertInto('account')\n            .values({\n            id: crypto.randomUUID(),\n            accountId: userId,\n            providerId: 'credential',\n            userId,\n            password=[REDACTED],\n            createdAt: now,\n            updatedAt: now,\n        })\n            .execute();",
+            "sha256": "cc976b38ac8dbfdd975d51f2fe8fc4a99ae4691e2d1e89c8dae1e7196beab01c"
+          },
+          {
+            "id": "E22",
+            "kind": "code",
+            "path": "packages/@nocobase/app-client/dist/plugins.js",
+            "observation": "normalizeRouteAuthz 对无 authz 的已登录 App 页面默认生成 {resource:{type:'page',id:route.name},action:'access'}，并校验显式 authz 的形状。",
+            "lines": [
+              549,
+              585
+            ],
+            "excerpt": "function normalizeRouteAuthz(route, id, isPage, auth, context) {\n    if ('access' in route) {\n        throw new Error(`Client route \"${id}\" uses removed access; declare authz instead.`);\n    }\n    const value = 'authz' in route ? route.authz : undefined;\n    if (value !== undefined) {\n        if (!isPage)\n            throw new Error(`Client route group \"${id}\" cannot declare authz.`);\n        if (value === 'skip')\n            return value;\n        if (!value ||\n            typeof value !== 'object' ||\n            !('resource' in value) ||\n            !value.resource ||\n            typeof value.resource !== 'object' ||\n            typeof value.resource.type !== 'string' ||\n            !value.resource.type.trim() ||\n            typeof value.resource.id !== 'string' ||\n            !value.resource.id.trim() ||\n            typeof value.action !== 'string' ||\n            !value.action.trim())\n            throw new Error(`Client route \"${id}\" must use authz \"skip\" or { resource: { type, id }, action }.`);\n        return Object.freeze({\n            resource: Object.freeze({ ...value.resource }),\n            action: value.action,\n        });\n    }\n    return isPage &&\n        auth === 'required' &&\n        context.surface === 'app' &&\n        !context.hasPageAncestor\n        ? Object.freeze({\n            resource: Object.freeze({ type: 'page', id: route.name.trim() }),\n            action: 'access',\n        })\n        : 'skip';\n}",
+            "sha256": "dbf946fb68ecab3873a57d766a7bdf784962fd91704843901cc5bd21909ab1a1"
+          },
+          {
+            "id": "E23",
+            "kind": "code",
+            "path": "packages/@nocobase/app-client/dist/plugins.js",
+            "observation": "defineAppRoutes/defineSettingsRoutes 冻结导航路由并分别挂在 app/settings 父节点下。",
+            "lines": [
+              70,
+              92
+            ],
+            "excerpt": "export function defineAppRoutes(routes) {\n    return Object.freeze({\n        parent: 'app',\n        routes: freezeNavigationRoutes(routes),\n    });\n}\nfunction freezeNavigationRoutes(routes) {\n    return Object.freeze(routes.map((route) => Object.freeze({\n        ...route,\n        ...(route.navigation\n            ? { navigation: Object.freeze({ ...route.navigation }) }\n            : {}),\n        ...(route.children\n            ? { children: freezeNavigationRoutes(route.children) }\n            : {}),\n    })));\n}\nexport function defineSettingsRoutes(routes) {\n    return Object.freeze({\n        parent: 'settings',\n        routes: freezeNavigationRoutes(routes),\n    });\n}",
+            "sha256": "dbf946fb68ecab3873a57d766a7bdf784962fd91704843901cc5bd21909ab1a1"
+          },
+          {
+            "id": "E24",
+            "kind": "skill",
+            "path": "app/.agents/skills/nocobase-app-development/references/client-pages-and-routes.md",
+            "observation": "文档说明认证 App 页面默认页面授权检查、authz:'skip' 仅跳过当前页面授权，菜单与页面加载器消费归一化结果。",
+            "lines": [
+              72,
+              76
+            ],
+            "excerpt": "Descendants inherit their entry route’s auth mode and cannot switch it. Authenticated App pages without a page ancestor retain the default `{ resource: { type: 'page', id: name }, action: 'access' }` check; nested pages add a check only when they declare `authz`. Every parent check must pass before its children render. Registration normalizes every route to an explicit `authz` request or `'skip'`; menus, page loaders, and permission discovery consume that result. Omitted authorization on Settings, Dev, guest, and optional pages resolves to `'skip'`. An explicit request is checked independently of `auth`. Route groups cannot declare `authz`.\n\n### Opting a page out of authorization\n\n`authz: 'skip'` skips only the current page's authorization check. Its authentication mode, parent guards, and server authorization still apply.",
+            "sha256": "3d74a6f4adfa30c8e2876e4e7b07595a9b8bbb3ed58d4725fa367e656f7e7952"
+          },
+          {
+            "id": "E25",
+            "kind": "skill",
+            "path": "app/.agents/skills/nocobase-app-development/references/client-pages-and-routes.md",
+            "observation": "指引建议按钮用 useCan，并强调 pending/failed 均不得放行、客户端可见性不能替代服务端授权。",
+            "lines": [
+              228,
+              232
+            ],
+            "excerpt": "The authorization provider clears the permission snapshot before rendering a new session. Route navigation and page guards subscribe to the authorization revision; preserve these checks when customizing the shell so account changes and permission updates take effect without a reload. Pending checks hide protected content, and failed checks deny access.\n\n## Checking feature visibility\n\nUse `useCan` from `@nocobase/app-plugin-authorization/client` for buttons and other permission-dependent UI: `useCan({ resource: { type: 'page', id: 'orders' }, action: 'access' })`. Its `{ can, isPending, error, retry }` result follows the current session and realtime permission updates; pending and failed checks do not allow access. Non-React consumers resolve `authorizationClientToken` and call `client.can({ resource, action })`. Page guards and navigation use this authorization client directly, without Refine permission hooks. Route `authz` declarations use the same `{ resource: { type, id }, action }` request; no string adapter is involved. Client visibility never replaces authorization on the endpoint.",
+            "sha256": "3d74a6f4adfa30c8e2876e4e7b07595a9b8bbb3ed58d4725fa367e656f7e7952"
+          },
+          {
+            "id": "E26",
+            "kind": "skill",
+            "path": "app/.agents/skills/nocobase-app-plugin-authorization/references/client-development.md",
+            "observation": "指引要求行级资格由服务端计算返回，客户端只展示，不得用客户端标志替代服务端执行。",
+            "lines": [
+              44,
+              50
+            ],
+            "excerpt": "## Obtain row eligibility from the server\n\nThe sales list endpoints return per-record allowed operations; the client combines this with feature visibility. On the server, compute submission eligibility from the same declared action policies: required quote read/write fields, quote scope, actual parent-project scope, positive amount and draft status. Check all required scopes; merely seeing the row through View does not prove Submit.\n\nDo not implement a parallel role-to-button matrix or infer permissions from role names. Never download all rows and filter them locally. Eligibility is a UI hint and can become stale; the mutation endpoint must authorize and validate again.\n\n```tsx",
+            "sha256": "9ef09a64dd14da31200f7993d4207992532221f4a3eef41d2120b2ac57034dcc"
+          },
+          {
+            "id": "E27",
+            "kind": "qa",
+            "path": "app/tests/logic/tickets.test.ts",
+            "observation": "Agent 的集成测试覆盖：他人工单 404、伪造 submitterId 被忽略、员工 start 403、handler start/complete 200、重复 complete 409、status=pending 过滤。",
+            "lines": [
+              93,
+              183
+            ],
+            "excerpt": "    // Server-sourced scope: another employee's ticket is invisible, not\n    // merely absent from the list.\n    const hidden = await request(\n      server,\n      `${baseUrl}/api/tickets/${othersTicket!.id}`,\n      { headers: { cookie: employeeCookie } },\n    );\n    expect(hidden.status).toBe(404);\n\n    // The submitter is the session, not the payload: a client cannot claim\n    // to be somebody else.\n    const created = await postTicket(\n      server,\n      `${baseUrl}/api/tickets`,\n      employeeCookie,\n      {\n        title: 'VPN will not connect',\n        category: 'other',\n        description: 'The client hangs on the login screen.',\n        submitterId: 'some-other-user',\n      },\n    );\n    expect(created.status).toBe(201);\n    const raised = (await json<TicketResult>(created)).data;\n    expect(raised.status).toBe('pending');\n    expect(raised.submitterName).toBe('Employee One');\n    expect(raised.handlerName).toBeNull();\n\n    // A required field is enforced before anything is written.\n    const invalid = await postTicket(\n      server,\n      `${baseUrl}/api/tickets`,\n      employeeCookie,\n      { title: '', category: 'other' },\n    );\n    expect(invalid.status).toBe(400);\n\n    // An employee cannot advance a ticket's status; the grant is missing, so\n    // the request is refused before the row is read.\n    const employeeStart = await postTicket(\n      server,\n      `${baseUrl}/api/tickets/${raised.id}/start`,\n      employeeCookie,\n      { handlingNote: 'not allowed' },\n    );\n    expect(employeeStart.status).toBe(403);\n\n    // The handler moves it waiting -> in progress with a required note.\n    const started = await postTicket(\n      server,\n      `${baseUrl}/api/tickets/${raised.id}/start`,\n      handlerCookie,\n      { handlingNote: 'Reissued the VPN profile.' },\n    );\n    expect(started.status).toBe(200);\n    const processing = (await json<TicketResult>(started)).data;\n    expect(processing.status).toBe('processing');\n    expect(processing.handlerName).toBe('Handler One');\n    expect(processing.handlingNote).toBe('Reissued the VPN profile.');\n\n    // Completing without a new note keeps the one it was started with.\n    const completed = await postTicket(\n      server,\n      `${baseUrl}/api/tickets/${raised.id}/complete`,\n      handlerCookie,\n      {},\n    );\n    expect(completed.status).toBe(200);\n    const done = (await json<TicketResult>(completed)).data;\n    expect(done.status).toBe('completed');\n    expect(done.handlingNote).toBe('Reissued the VPN profile.');\n\n    // A completed ticket is read-only: the same transition is refused.\n    const repeated = await postTicket(\n      server,\n      `${baseUrl}/api/tickets/${raised.id}/complete`,\n      handlerCookie,\n      { handlingNote: 'again' },\n    );\n    expect(repeated.status).toBe(409);\n\n    // A status filter narrows the list without widening it.\n    const pending = await getTickets(\n      server,\n      `${baseUrl}/api/tickets?status=pending`,\n      handlerCookie,\n    );\n    expect(pending.data.length).toBeGreaterThan(0);\n    for (const ticket of pending.data) {\n      expect(ticket.status).toBe('pending');\n    }",
+            "sha256": "5d55403cbc8444d972f754de0d91312813eb5d95e5d4c11b3343de6c20853c1f"
+          },
+          {
+            "id": "E28",
+            "kind": "code",
+            "path": "app/server/providers/tickets/service.ts",
+            "observation": "start/complete 先检查 policy.update，再以 findTicketForUpdate 读取即将更新的记录，员工越权在读取前即被拒。",
+            "lines": [
+              195,
+              232
+            ],
+            "excerpt": "    const policy = await this.policyFor(scope);\n    if (policy.update === false) {\n      throw new TicketsError(403, 'FORBIDDEN', 'You may not handle tickets');\n    }\n\n    const existing = await this.findTicketForUpdate(policy, ticketId);\n    if (existing.status !== 'pending') {\n      throw new TicketsError(\n        409,\n        'INVALID_TRANSITION',\n        'Only a pending ticket can be started',\n      );\n    }\n\n    await this.transition(policy, ticketId, 'pending', {\n      status: 'processing',\n      handlerId,\n      handlingNote: note,\n      updatedAt: new Date(),\n    });\n    return this.get(scope, ticketId);\n  }\n\n  async complete(\n    scope: AuthorizationScope,\n    id: unknown,\n    input: TicketNoteInput,\n  ): Promise<Ticket> {\n    const ticketId = requireTicketId(id);\n    const policy = await this.policyFor(scope);\n    if (policy.update === false) {\n      throw new TicketsError(403, 'FORBIDDEN', 'You may not handle tickets');\n    }\n\n    const existing = await this.findTicketForUpdate(policy, ticketId);\n    if (existing.status !== 'processing') {\n      throw new TicketsError(\n        409,",
+            "sha256": "7e47188d17101706c990de91e6aae2386e36e0afc7ce0211782b11713c13757c"
+          },
+          {
+            "id": "E29",
+            "kind": "code",
+            "path": "app/server/providers/tickets/service.ts",
+            "observation": "应用用 authorization.db.policyFor 与 database.repository(...).withPolicy 绑定策略，transition 以 filter {id,status:from} 更新并把 RECORD_NOT_FOUND 映射为 409。",
+            "lines": [
+              260,
+              320
+            ],
+            "excerpt": "  private policyFor(scope: AuthorizationScope): Promise<RepositoryPolicy> {\n    return this.authorization.db.policyFor(TICKETS_COLLECTION, scope);\n  }\n\n  private repository(policy: RepositoryPolicy) {\n    return this.database.repository(TICKETS_COLLECTION).withPolicy(policy);\n  }\n\n  /** Read a ticket through the read decision the caller actually holds. */\n  private async findTicket(\n    policy: RepositoryPolicy,\n    ticketId: number,\n  ): Promise<TicketRecord> {\n    const record = (await this.repository(policy).findOne({\n      filter: { id: ticketId },\n    })) as unknown as TicketRecord | undefined;\n    if (!record) {\n      throw ticketNotFound();\n    }\n    return record;\n  }\n\n  /**\n   * Read a ticket that is about to be updated.\n   *\n   * The update decision is checked before the row is read, so an employee is\n   * refused without learning whether the ticket exists.\n   */\n  private async findTicketForUpdate(\n    policy: RepositoryPolicy,\n    ticketId: number,\n  ): Promise<{ status: TicketStatus; handlingNote: string | null }> {\n    const record = await this.findTicket(policy, ticketId);\n    return {\n      status: isTicketStatus(record.status) ? record.status : 'pending',\n      handlingNote: asString(record.handlingNote),\n    };\n  }\n\n  private async transition(\n    policy: RepositoryPolicy,\n    ticketId: number,\n    from: TicketStatus,\n    values: UpdateMutationValues<TicketRecord>,\n  ): Promise<void> {\n    try {\n      // The expected status is part of the filter so two handlers racing on one\n      // ticket cannot both advance it; the loser updates no row.\n      await this.repository(policy).updateOne({\n        filter: { id: ticketId, status: from },\n        values,\n      });\n    } catch (error) {\n      if (\n        error instanceof RepositoryError &&\n        error.code === 'RECORD_NOT_FOUND'\n      ) {\n        throw new TicketsError(\n          409,\n          'INVALID_TRANSITION',\n          'The ticket moved to another state while it was being handled',",
+            "sha256": "7e47188d17101706c990de91e6aae2386e36e0afc7ce0211782b11713c13757c"
+          },
+          {
+            "id": "E30",
+            "kind": "code",
+            "path": "app/database/main/seeds/202609010003_tickets_permissions.ts",
+            "observation": "应用 seed 写出 it-employee/it-handler 两套 permission set：员工 read 用 tickets.submitted 范围，处理人员 read/update 用 allRecords，并写入账号分配。",
+            "lines": [
+              50,
+              105
+            ],
+            "excerpt": "];\n\nconst TICKET_UPDATE_FIELDS = [\n  'status',\n  'handlingNote',\n  'handlerId',\n  'updatedAt',\n];\n\nconst pageGrant = {\n  resource: { type: 'page', id: PAGE },\n  actions: [{ action: 'access' }],\n} as const;\n\nconst ticketsPermissionSets = [\n  permissionSet('it-employee')\n    .title({ key: 'tickets.permissionSets.employee', ns: 'crm' })\n    .grant(pageGrant)\n    .grant(\n      databaseGrant(COLLECTION, {\n        read: {\n          recordAccess: [{ key: SUBMITTED_SCOPE }],\n          fields: TICKET_FIELDS,\n        },\n        create: { fields: TICKET_CREATE_FIELDS },\n      }),\n    )\n    .build(),\n  permissionSet('it-handler')\n    .title({ key: 'tickets.permissionSets.handler', ns: 'crm' })\n    .grant(pageGrant)\n    .grant(\n      databaseGrant(COLLECTION, {\n        read: { recordAccess: ['allRecords'], fields: TICKET_FIELDS },\n        update: {\n          recordAccess: ['allRecords'],\n          fields: TICKET_UPDATE_FIELDS,\n        },\n      }),\n    )\n    .build(),\n];\n\nconst ASSIGNMENTS: Readonly<Record<string, string>> = {\n  employee1: 'it-employee',\n  employee2: 'it-employee',\n  handler1: 'it-handler',\n};\n\nexport default defineSeed({\n  name: '202609010003_tickets_permissions',\n  async run({ query }) {\n    const now = new Date();\n\n    for (const set of ticketsPermissionSets) {\n      const existingSet = await query",
+            "sha256": "0ba17b3e18389e7adf528f97a563744fa9fe76b7cde9a8946642a5ff2c2c3efc"
+          },
+          {
+            "id": "E31",
+            "kind": "code",
+            "path": "app/server/providers/tickets/record-access.ts",
+            "observation": "应用用 defineRecordAccess 声明 tickets.submitted 范围，按 submitterId = principal.id 解析，并在注释中说明不复用绑定 ownerId 的内置范围。",
+            "lines": [
+              1,
+              32
+            ],
+            "excerpt": "import { condition } from '@nocobase/app-plugin-authorization';\nimport { defineRecordAccess } from '@nocobase/authorization/core';\n\nimport {\n  TICKETS_COLLECTION,\n  TICKETS_SUBMITTED_SCOPE,\n} from '../../tickets-resources.js';\n\n/**\n * \"The tickets I submitted\", usable as a record scope in a permission set.\n *\n * The built-in `recordsIOwn` scope is keyed to a column named `ownerId`, so it\n * cannot describe this table. Declaring the scope alongside the collection it\n * belongs to keeps the employee's read restriction in the permission data,\n * where an administrator can see it, instead of in a route's `if` statement.\n */\nexport function ticketsSubmitted() {\n  return defineRecordAccess(TICKETS_SUBMITTED_SCOPE, (access) =>\n    access\n      .title({ key: 'tickets.recordAccess.submitted', ns: 'crm' })\n      .resources({ type: 'database.collection', id: TICKETS_COLLECTION })\n      .resolve(({ principal }) => {\n        if (principal.type !== 'user') {\n          throw new Error(\n            'The submitted-tickets scope requires a signed-in user',\n          );\n        }\n        return condition('submitterId', '$eq', principal.id);\n      }),\n  );\n}\n",
+            "sha256": "64caa82dfac62cc53e6192a6ac2835975f50a6318ec2bafa6e9deca7c896168c"
+          }
+        ],
+        "limitations": [
+          "每个非 null 分数都对应本模块 targets 中的框架实现或指引证据；未覆盖的路径以 null 或模块 limitations 说明。",
+          "视觉评审未进行：评审模型不支持读取 PNG，因此 ui.score 为 null，不对跨页面样式一致性下结论。",
+          "未验证 SQLite 以外的数据库方言、未跑 OAuth/密码重置/禁用用户路径、未核对授权匹配引擎 authorizer.js 的全部 grant 解析实现。",
+          "本次结论只代表该工单案例涉及的五个能力单元，不能据此推断 NocoBase3 全框架表现。",
+          "快照未包含 1 个超出预算、非普通文件或不可读取的文件；未据此确认其实现。"
+        ]
+      },
+      "execution": {
+        "buildReviewMode": "full",
+        "source": "reassessment"
+      },
       "reviewer": {
         "engine": "pi",
         "model": "deepseek-v4.1-flash",
         "version": "0.86.1",
-        "runId": "35966607785",
+        "runId": "35987960672",
         "attempt": 1,
-        "controlSha": "1bd143f61094211c8c19783e489b5e85d86a91c4",
-        "replay": false
+        "controlSha": "952084a875e940bdcba52d45f8b805c7f49f0049",
+        "replay": true
+      },
+      "supplementalUsage": {
+        "input": 222535,
+        "output": 39341,
+        "cacheRead": 2694986,
+        "cacheWrite": 0,
+        "reasoning": 0,
+        "totalTokens": 2956862,
+        "records": 49,
+        "incomplete": 0,
+        "runId": 35987960672,
+        "attempt": 1
       },
       "process": {
         "verificationAttempts": 2,
@@ -1246,5 +2401,5 @@
     "number": 262,
     "headSha": "e354da7b7a86dbb47571523098f596fe1c0b01c5"
   },
-  "reportId": "gchust/nb3-factory:250:35966607785:1:e354da7b7a86dbb47571523098f596fe1c0b01c5:template-4:review-33694e11bd1f1fbc"
+  "reportId": "gchust/nb3-factory:250:35966607785:1:e354da7b7a86dbb47571523098f596fe1c0b01c5:template-4:review-71932a0b1420f840"
 }
