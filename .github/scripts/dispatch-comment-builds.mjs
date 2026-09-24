@@ -1,3 +1,4 @@
+import { isSharedTaskBase } from './source-baseline-ref.mjs';
 import { readFileSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
 import {
@@ -216,7 +217,7 @@ export async function coordinate(client, issueNumber, admissionId = Infinity) {
     }
   }
   if (
-    task.targetBranch !== defaultBranch &&
+    !isSharedTaskBase(task.targetBranch, defaultBranch) &&
     pulls.some(
       (pull) =>
         pull.base?.ref === task.targetBranch &&

@@ -135,6 +135,7 @@ export function assertSafeChangedPaths(paths) {
   const forbidden = paths.filter(
     (file) =>
       file === '.npmrc' ||
+      file === 'factory-source.json' ||
       file === '.gitmodules' ||
       file === 'config.yml' ||
       file.startsWith('.github/'),

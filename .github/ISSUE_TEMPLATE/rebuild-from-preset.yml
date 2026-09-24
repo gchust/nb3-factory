@@ -30,6 +30,13 @@ body:
         - "#208 - [预置][E02][需测试渠道] 一条外部测试通知"
     validations:
       required: true
+  - type: input
+    id: source_baseline
+    attributes:
+      label: 测试基线分支
+      description: 可选，填写已验证的 factory-baseline/source- 分支；留空使用当前默认分支。不会继承来源案例的分支。
+    validations:
+      required: false
   - type: textarea
     id: additional_requirements
     attributes:

@@ -61,6 +61,9 @@ jobs:
       - name: Expose the factory registry to nested pnpm roots
         run: cat control/.npmrc >> ~/.npmrc
 
+      - name: Pin the actual published application generator
+        run: node control/.github/scripts/template-creator.mjs pin control
+
       - name: Create a fresh application from the latest published template
         env:
           CI: true
@@ -70,7 +73,7 @@ jobs:
           cd "$RUNNER_TEMP/template-generation"
           # Current create-app uses the template's database defaults; verification
           # supplies an isolated SQLite connection via create-runtime-config.mjs.
-          pnpm create @nocobase/app@latest nb3-factory \
+          pnpm create "@nocobase/app@$FACTORY_CREATOR_VERSION" nb3-factory \
             --no-install --template=default --template-tag=latest
 
       - name: Restore factory controls without changing template guidance
@@ -79,6 +82,7 @@ jobs:
         run: |
           node control/.github/scripts/overlay-factory.mjs \
             control "$RUNNER_TEMP/template-generation/nb3-factory" "$BASE_SHA"
+          node control/.github/scripts/template-creator.mjs record "$RUNNER_TEMP/template-generation/nb3-factory/factory-template.json"
 
       - name: Install and lock the new application dependencies
         run: |

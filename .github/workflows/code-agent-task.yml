@@ -311,11 +311,26 @@ jobs:
       - name: Install Chinese browser fonts
         run: bash control/.github/scripts/install-browser-fonts.sh
 
+      - name: Restore the selected source baseline packages
+        run: |
+          if [[ -f control/.github/scripts/source-snapshot.mjs ]]; then
+            node control/.github/scripts/source-snapshot.mjs restore workspace task/task-metadata.json
+          elif [[ -f workspace/factory-source.json ]]; then
+            echo "Pinned control plane cannot restore the selected source baseline." >&2
+            exit 1
+          fi
+
       - name: Install application dependencies
         working-directory: workspace
         run: |
           node ../control/.github/scripts/timed-command.mjs install pnpm install --frozen-lockfile
           node ../control/.github/scripts/timed-command.mjs skills-sync pnpm skills:sync
+
+      - name: Capture the actual installed package and Skill baseline
+        run: |
+          if [[ -f control/.github/scripts/baseline-record.mjs ]]; then
+            node control/.github/scripts/baseline-record.mjs workspace "$RUNNER_TEMP/agent-artifacts/baseline.json"
+          fi
 
       - name: Build the implementation prompt
         run: |
@@ -510,6 +525,14 @@ jobs:
             --output "$RUNNER_TEMP/agent-artifacts/handoff.json"
           echo "continuation=$next_continuation" >> "$GITHUB_OUTPUT"
 
+      - name: Stop the task source registry
+        if: always()
+        continue-on-error: true
+        run: |
+          if [[ -f workspace/factory-source.json ]]; then
+            node control/.github/scripts/source-snapshot.mjs stop
+          fi
+
       - name: Flush and stop live progress observer
         if: always()
         continue-on-error: true
@@ -629,6 +652,15 @@ jobs:
       - name: Install Chinese browser fonts
         run: bash control/.github/scripts/install-browser-fonts.sh
 
+      - name: Restore the selected source baseline packages
+        run: |
+          if [[ -f control/.github/scripts/source-snapshot.mjs ]]; then
+            node control/.github/scripts/source-snapshot.mjs restore workspace agent-artifacts/task-metadata.json
+          elif [[ -f workspace/factory-source.json ]]; then
+            echo "Pinned control plane cannot restore the selected source baseline." >&2
+            exit 1
+          fi
+
       - name: Install application dependencies
         working-directory: workspace
         run: node ../control/.github/scripts/timed-command.mjs install pnpm install --frozen-lockfile
@@ -667,6 +699,14 @@ jobs:
           path: ${{ runner.temp }}/deployable
           if-no-files-found: error
           retention-days: 14
+
+      - name: Stop the final verifier source registry
+        if: always()
+        continue-on-error: true
+        run: |
+          if [[ -f workspace/factory-source.json ]]; then
+            node control/.github/scripts/source-snapshot.mjs stop
+          fi
 
       - name: Summarize final timings
         if: always()

@@ -707,7 +707,9 @@ test('refresh workflow has its own queue and isolates generated code from write 
   assert.ok(!task.includes(`group: ${group}`));
   const publisher = workflow.split('\n  publish:')[1];
   assert.match(workflow.split('\n  publish:')[0], /contents: read/);
-  assert.match(workflow, /pnpm create @nocobase\/app@latest nb3-factory/);
+  assert.match(workflow, /template-creator.mjs pin control/);
+  assert.match(workflow, /pnpm create "@nocobase\/app@\$FACTORY_CREATOR_VERSION" nb3-factory/);
+  assert.match(workflow, /template-creator.mjs record/);
   assert.match(workflow, /--template-tag=latest/);
   assert.match(workflow, /scripts\/verify.sh/);
   assert.doesNotMatch(workflow, /rm -f config\.yml/);
