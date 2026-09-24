@@ -126,12 +126,16 @@ export function materializeEvidence(review, snapshot, catalog) {
 
 export function finalizeAssessment(snapshot, captured, basis, finished) {
   const raw = readReviewJson(snapshot, 'assessment.json');
-  validateEvaluation(raw, basis.inputHash, captured.files);
+  validateEvaluation(raw, basis.inputHash, captured.files, basis.rubricVersion);
   const partial = !finished || raw.progress?.complete === false;
   if (partial && (!raw.modules.length || !raw.evidence.length)) throw new Error('No assessed module checkpoint');
   const knownCriteria = new Set(captured.process.rounds.flatMap(round => round.reports.flatMap(item => item.checks.map(check => check.id))).filter(Boolean));
   for (const module of raw.modules) for (const id of module.criteria) {
     if (!knownCriteria.has(id)) throw new Error(`Module references an unrecorded criterion: ${id}`);
+  }
+  if (raw.version === 2) for (const module of raw.modules) for (const target of module.targets) {
+    if (target.kind !== 'guidance' && !captured.packages.some(pkg => pkg.name === target.name) &&
+        Object.values(module.scores).some(score => score.score !== null)) throw new Error(`Framework target was not installed: ${target.name}`);
   }
   const evaluation = materializeEvidence(raw, snapshot, captured.files);
   if (captured.omitted.length && evaluation.limitations.length < 30) evaluation.limitations.push(`快照未包含 ${captured.omitted.length} 个超出预算、非普通文件或不可读取的文件；未据此确认其实现。`);
@@ -195,7 +199,7 @@ export async function runBuildReview(workspace, artifacts, env = process.env, op
     };
     basis.inputHash = digest(JSON.stringify(input));
     save(path.join(snapshot, 'review-input.json'), input);
-    save(path.join(snapshot, 'assessment.json'), { version: 1, inputHash: basis.inputHash,
+    save(path.join(snapshot, 'assessment.json'), { version: rubricVersion, inputHash: basis.inputHash,
       summary: '尚未完成任何模块的证据评审。', modules: [], findings: [], evidence: [],
       ui: { status: 'not-reviewed', score: null, reason: '尚未执行跨页面图像审阅。', evidence: [] },
       limitations: ['评审进行中，未覆盖的模块不推断通过。'], progress: { complete: false, pendingModules: [] } });

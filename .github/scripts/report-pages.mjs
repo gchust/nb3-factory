@@ -27,14 +27,22 @@ export function reportManifest(report) {
     title:f?.meta?.title || `Issue #${r.issue}`,reportId:report.reportId,
     summary:f?.delivery?.qaSummary || '',
     path:`${ROOT}/issues/${r.issue}/runs/${r.runId}/attempt-${r.attempt}/index.html`,
-    quality:{qa:Boolean(f?.rawQaReport),retro:Boolean(f?.retro),review:['completed','partial'].includes(f?.buildReview?.state),reviewComplete:f?.buildReview?.state==='completed',checks:f?.checks?.length||0,media:f?.media?.length||0,usage:r.usage?.records||0}};
+    quality:{reviewRubric:['completed','partial'].includes(f?.buildReview?.state) ? (f.buildReview.basis?.rubricVersion ?? 1) : 0,qa:Boolean(f?.rawQaReport),retro:Boolean(f?.retro),review:['completed','partial'].includes(f?.buildReview?.state),reviewComplete:f?.buildReview?.state==='completed',checks:f?.checks?.length||0,media:f?.media?.length||0,usage:r.usage?.records||0}};
 }
 function validManifest(m) {
   return m?.version===1 && typeof m.repository==='string' && typeof m.path==='string' &&
     Number.isSafeInteger(m.issue) && Number.isSafeInteger(m.runId) && Number.isSafeInteger(m.attempt) && Number.isSafeInteger(m.start);
 }
+const reviewRubric = m => m?.quality?.reviewRubric ?? (m?.quality?.review ? 1 : 0);
 function degraded(next,old) {
-  return old?.quality && ['qa','retro','review','reviewComplete','checks','media','usage'].some(k=>Number(next.quality[k]??0)<Number((k==='reviewComplete' ? old.quality.reviewComplete ?? old.quality.review : old.quality[k])??0));
+  if (!old?.quality) return false;
+  // Completeness is comparable only within the same rubric. An older rubric
+  // must never overwrite a newer one during a delayed publication replay.
+  if (reviewRubric(next) < reviewRubric(old)) return true;
+  return ['qa','retro','review','reviewComplete','checks','media','usage'].some(k => {
+    if (k === 'reviewComplete' && reviewRubric(next) > reviewRubric(old)) return false;
+    return Number(next.quality[k]??0)<Number((k==='reviewComplete' ? old.quality.reviewComplete ?? old.quality.review : old.quality[k])??0);
+  });
 }
 async function getJson(client,file,ref) {
   const value=await client.request('GET',`/contents/${file}`,{query:{ref},allow404:true});
@@ -71,6 +79,16 @@ export async function archiveReport(client,report,html) {
     const latest=registry.issues[String(next.issue)];
     const isLatest=!latest || compareReports(manifest,latest)>=0;
     const files=[];
+    const retained=[];
+    if (!preserve && previous && reviewRubric(previous) > 0 && reviewRubric(next) > reviewRubric(previous)) {
+      // Keep exact historical bytes under their rubric, including inline images;
+      // never relabel old scores or silently discard a complete v1 for a v2 partial.
+      for (const name of ['index.html', 'report.json', 'manifest.json']) {
+        const file = await client.request('GET', `/contents/${dir}${name}`, {query:{ref:sha}});
+        if (!/^[a-f0-9]{40}$/.test(file?.sha ?? '')) throw new Error('Cannot retain previous rubric snapshot');
+        retained.push({path:`${dir}rubric-${reviewRubric(previous)}/${name}`,mode:'100644',type:'blob',sha:file.sha});
+      }
+    }
     if(!preserve) {
       files.push([next.path,html],[`${dir}report.json`,JSON.stringify(report,null,2)],
         [`${dir}manifest.json`,JSON.stringify(next)]);
@@ -83,7 +101,7 @@ export async function archiveReport(client,report,html) {
     files.push([`${ROOT}/manifest.json`,JSON.stringify(registry)],
       [`${ROOT}/index.html`,indexPage(Object.values(registry.issues))]);
     if(!sha) files.push(['index.html',redirectPage(`./${ROOT}/`)],['.nojekyll','']);
-    const tree=[];
+    const tree=[...retained];
     for(const [file,content] of files) {
       const blob=await client.request('POST','/git/blobs',{body:{content,encoding:'utf-8'}});
       tree.push({path:file,mode:'100644',type:'blob',sha:blob.sha});

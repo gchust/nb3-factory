@@ -1,4 +1,4 @@
-# 独立搭建评审
+# NocoBase3 基础框架评测
 
 每次具备候选补丁的非 Handoff 搭建，在 `agent.patch` 封存后、独立最终验证前，
 使用全新 Code Agent 会话评审本次实际使用的 NocoBase3 能力。它不修改应用，
@@ -19,19 +19,38 @@
 ```
 
 评审读取本次 `task.reviewCriteria`，没有自定义要求时使用内置评分标准。
+**评分主体是 NocoBase3 的库、插件及指引；需求是场景，业务代码、错误与 QA 是使用证据。**
+同一能力单元可组合相关库/插件/指引；业务自写的 CRM service、页面完整度和业务代码分层不作为框架评分对象。
 实现与浏览器 QA 的提示词不增加评审要求。评审文件留在 Artifact，不进入业务补丁。
 
 ## 报告内容
 
 | 部分 | 来源与含义 |
 | --- | --- |
-| 模块评分 | 每个实际使用的基础模块，分别评设计合理性、开发完整性、Agent 使用友好度、Agent 产出质量；0–100 整数或 `null`，附理由、覆盖范围及证据 |
+| 框架评分（口径 v2） | 五项均评框架：需求满足度、使用便利度、Agent 友好度、设计合理性、实现完整性与可靠性。主表突出前三项，后两项及证据在模块详情中；0–100 整数或 `null` |
+| 对象与需求映射 | `targets` 列出具体库/插件包名或指引路径及入口；`requirements` 对照业务需求、框架职责、推荐用法、实际接入、支持方式及缺口归因 |
 | 首轮 / 最终轮 QA | 评审者只提供模块与原始 criterion ID 的映射；状态从原始全量 QA 读取，focused 不算全量，首轮失败不会被最终通过覆盖 |
 | 验证 / 修复过程 | 从本 Run 的 `repair-summary.json` 和各轮报告采集；不是 Agent 自报统计，也不等于 Agent 开发中所有自测和修正次数 |
 | NocoBase3 的帮助 | 具体能力、接入位置、避免重复实现的职责及验证证据；不估算节省时间或 Token |
 | 问题、误导与改进 | 区分内核、插件、模板、文档/Skill、业务实现、工厂、环境；提供影响、改法、严重程度及确认程度 |
-| 界面一致性 | 评审者实际审阅至少两张不同页面/状态截图后才可评价；无图像能力或证据不足显示未评估 |
+| 业务界面观察 | 实际审阅至少两张不同页面/状态截图才可评价；无图像能力或证据不足显示未评估。此分数不进入框架五项维度；评价主题/组件/布局指引需另有对应框架证据 |
 | 基线与证据 | 原始源码片段、截图、文件哈希、安装版本、候选补丁哈希、控制代码 SHA、评审输入指纹和引擎/模型 |
+
+## 评分依据与职责边界
+
+- `requirementFit`：框架在职责范围内能否满足需求；区分直接支持、正常组合、绕行、缺口、未知和职责外要求。
+- `usability`：找到入口后是否容易装配、配置、调用和定位错误；与 Agent 是否能发现入口分开。
+- `agentFriendliness`：公开 API、类型、Skill、示例和错误提示是否足以指导 Agent；没有读取轨迹不能断言 Agent 没读过文档。
+- `design`：库/插件本身的抽象、边界和扩展方式，不按业务代码有没有拆 service 打分。
+- `reliability`：已查阅的框架实现是否兑现公开约定；只见声明或业务 QA 时为 null。仅评指引时可评价内容完整性与准确性，不能替代库实现。
+
+正常的业务查询条件、业务规则、UI 组合不是 workaround；框架不必提供现成 CRM。
+Agent 没用某个插件不证明插件不满足需求，应核对推荐方式、合理替代方案和未被发现的现成能力。
+Agent 用错、环境故障、工厂误判不能直接扣框架分。框架正反发现、归因待确认、业务/环境观察分组展示。
+
+每个非 null 分数必须引用所属 `targets` 的实际框架文件或指引；校验按文件路径而非模型声明的 evidence.kind，
+不接受仅业务源码、QA 或 package.json 支撑的框架得分。库可靠性还要求实现文件，类型声明不算实现。
+同一条证据的存在并不能证明推理正确，职责归属和扣分理由仍须人工抽查。
 
 分数是评审意见，不是客观测量，不生成 NocoBase3 全局评分或默认平均分。
 未使用、未覆盖、证据不足不按零分或满分处理。`confirmed` 表示评审者认为有证据，
@@ -82,11 +101,11 @@ GitHub token 和测试账号密码，指令禁止修改/执行应用及联网，
 ## 输出与验证
 
 字段契约和约束见 `.github/scripts/build-review.mjs`，模型指令及 JSON 结构见
-`.github/prompts/build-review.md`。`build-review.json` 使用 version 1，状态为
+`.github/prompts/build-review.md`。`build-review.json` 外层继续使用 version 1；`basis.rubricVersion` 与 `evaluation.version` 同为 2，状态为
 `completed / partial / not-reviewed / failed`。completed 和 partial 可包含已校验的 evaluation；partial 显著标注尚未全覆盖，未知维度仍为 null。
 
 ```bash
-node --test .github/scripts/tests/build-review.test.mjs
+node --test .github/scripts/tests/build-review.test.mjs .github/scripts/tests/framework-review.test.mjs
 node --test .github/scripts/tests/delivery-report.test.mjs .github/scripts/tests/task-usage.test.mjs .github/scripts/tests/report-pages.test.mjs
 node --test --test-concurrency=1 .github/scripts/tests/*.test.mjs
 node .github/reports/render-review-example.mjs /tmp/report.example.html
@@ -131,3 +150,17 @@ build/migrate/seed/浏览器验收：选择精确原 Artifact ID，校验生产�
 
 依赖安装与 Skill 同步属于在隔离 Runner 上重建只读评审输入，不是生产系统操作。
 文件与证据校验不是操作系统沙箱，也不能保证模型判断正确；仍须抽查评分依据。
+
+## 口径升级与历史结果
+
+新调用和只补跑评审均使用 v2；旧记录的 rubricVersion/evaluation.version=1 仍可校验、回放，
+醒目标为“旧口径 v1 · 不作为新框架评分”，保留原来的四项分数及 Agent 产出质量，绝不改名或重新分配给新维度。
+新运行写出旧 schema 时拒绝采用。新旧口径分数不做平均、趋势或横向比较。
+
+补充评审必须通过原有生产身份、补丁、QA、基线及来源校验。新 v2 部分评审可与完整 v1 共存，
+不能因旧口径“完整”而阻止新口径出现；同口径的完整结果仍不被部分或缺失结果覆盖。
+同一 Run/发布 attempt 升级时，Pages 在 `rubric-1/` 保留旧 HTML/JSON/manifest 的原始字节，
+再发布新口径。迟到的 v1 补发不能覆盖已发布的 v2；QA、媒体或用量缺失时仍保护原有完整报告。
+
+例如 #224 已有结果属于 v1，不能转换为 v2 得分。合并本改动后，可使用现有只补跑命令，
+从同一冻结业务产物重新评审；不重新搭建业务、不改写旧日志，也不需要合并业务 PR。

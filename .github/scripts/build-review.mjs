@@ -3,11 +3,25 @@ import { createHash } from 'node:crypto';
 import { lstatSync, readFileSync, readdirSync } from 'node:fs';
 import path from 'node:path';
 
-export const rubricVersion = 1;
-export const dimensions = {
+export const rubricVersion = 2;
+const legacyDimensions = {
   design: '设计合理性', completeness: '开发完整性',
   agentFriendliness: 'Agent 使用友好度', outputQuality: 'Agent 产出质量',
 };
+export const dimensions = {
+  requirementFit: '需求满足度', usability: '使用便利度', agentFriendliness: 'Agent 友好度',
+  design: '设计合理性', reliability: '实现完整性与可靠性',
+};
+export function dimensionsFor(version) {
+  if (version === 1) return legacyDimensions;
+  if (version === 2) return dimensions;
+  throw new Error('Unsupported review rubric');
+}
+export const supportLabels = {
+  direct: '直接支持', composition: '正常组合', workaround: '需要绕行',
+  missing: '能力缺口', unknown: '尚未确认', 'out-of-scope': '框架职责之外',
+};
+export const targetKinds = { library: '库', plugin: '插件', guidance: '指引 / Skill' };
 export const owners = {
   framework: 'NocoBase3 内核', plugin: 'NocoBase3 插件', template: '应用模板',
   documentation: '文档 / Skill / 示例', application: 'Agent / 业务实现',
@@ -85,12 +99,22 @@ export function collectReviewProcess(root) {
   };
 }
 
-export function validateEvaluation(review, inputHash, catalog) {
-  need(object(review) && review.version === 1 && review.inputHash === inputHash, 'Review input identity mismatch');
+// Match paths, not the model's evidence.kind: application code cannot be relabeled
+// as package/Skill evidence. Manifest metadata identifies versions, not capabilities.
+function isTargetEvidence(target, evidence) {
+  if (evidence.kind === 'screenshot') return false;
+  const root = target.kind === 'guidance' ? target.name : `packages/${target.name}`;
+  return (evidence.path === root || evidence.path.startsWith(root + '/')) &&
+    !evidence.path.endsWith('/package.json') && !evidence.path.endsWith('.map');
+}
+export function validateEvaluation(review, inputHash, catalog, expectedVersion = review?.version) {
+  need(object(review) && [1, 2].includes(review.version) && review.version === expectedVersion && review.inputHash === inputHash, 'Review input identity mismatch');
+  const scoreDimensions = dimensionsFor(review.version);
   text(review.summary, 'summary');
   list(review.modules, 'modules', 30); list(review.findings, 'findings', 60);
   list(review.evidence, 'evidence', 100); list(review.limitations, 'limitations', 30);
   review.limitations.forEach(value => text(value, 'limitation'));
+  if (review.version === 2) need(object(review.progress), 'Framework review requires explicit progress');
   if (review.progress !== undefined) {
     need(object(review.progress) && typeof review.progress.complete === 'boolean', 'Invalid assessment progress');
     list(review.progress.pendingModules, 'pendingModules', 30);
@@ -126,13 +150,52 @@ export function validateEvaluation(review, inputHash, catalog) {
     need(value.score === null || (Number.isInteger(value.score) && value.score >= 0 && value.score <= 100), `${name}: score must be 0–100 or null`);
     text(value.reason, `${name}.reason`); refs(value.evidence, value.score !== null);
   }
+  function frameworkModule(module) {
+    list(module.targets, 'module.targets', 12);
+    need(module.targets.length > 0, 'Framework module needs explicit library/plugin/guidance targets');
+    unique(module.targets.map(target => target.name), 'targets');
+    for (const target of module.targets) {
+      need(object(target) && Object.hasOwn(targetKinds, target.kind), 'Invalid framework target kind');
+      text(target.name, 'target.name', 250);
+      if (target.kind === 'guidance') need(safeRelative(target.name) &&
+        /^(app\/\.agents\/skills\/|app\/AGENTS\.md$|packages\/@nocobase\/[^/]+\/(?:docs|skills)\/)/.test(target.name), 'Guidance target must identify captured instructions');
+      else need(/^@nocobase\/[a-z0-9][a-z0-9._-]*$/.test(target.name), 'Target must identify a NocoBase3 package, not business code');
+      list(target.entrypoints, 'target.entrypoints', 12);
+      need(target.entrypoints.length > 0, 'Target requires API or guidance entrypoints');
+      target.entrypoints.forEach(entry => text(entry, 'entrypoint', 300));
+      refs(target.evidence);
+      for (const id of target.evidence) need(isTargetEvidence(target, review.evidence.find(e => e.id === id)), 'Target evidence must come from its framework source or guidance');
+    }
+    list(module.requirements, 'module.requirements', 20);
+    need(module.requirements.length > 0, 'Framework module needs a requirement-to-capability mapping');
+    for (const item of module.requirements) {
+      for (const key of ['need', 'responsibility', 'recommendedUsage', 'actualUsage']) text(item[key], `requirement.${key}`);
+      need(Object.hasOwn(supportLabels, item.support), 'Invalid requirement support classification');
+      need(item.gapOwner === 'none' || Object.hasOwn(owners, item.gapOwner), 'Invalid gap owner');
+      if (['workaround', 'missing'].includes(item.support)) need(item.gapOwner !== 'none', 'A capability gap needs attribution (or unknown)');
+      refs(item.evidence, !['unknown', 'out-of-scope'].includes(item.support));
+    }
+    const linked = values => values.map(id => review.evidence.find(e => e.id === id))
+      .filter(e => module.targets.some(target => target.evidence.includes(e.id) && isTargetEvidence(target, e)));
+    for (const [key, value] of Object.entries(module.scores)) {
+      if (value.score === null) continue;
+      const sources = linked(value.evidence);
+      need(sources.length > 0, `${key}: numeric framework score requires evidence from a declared target; app/QA alone is insufficient`);
+      if (key === 'requirementFit') need(module.requirements.some(item => !['unknown', 'out-of-scope'].includes(item.support)), 'Unknown or out-of-scope requirements cannot receive a fit score');
+      if (key === 'reliability') need(sources.some(e => module.targets.every(target => target.kind === 'guidance') ||
+        (module.targets.some(target => target.kind !== 'guidance' && isTargetEvidence(target, e)) && /\.(?:[cm]?js|jsx|tsx?|sql)$/.test(e.path) && !/\.d\.(?:[cm]?ts)$/.test(e.path))), 'Framework reliability requires implementation evidence; declarations/QA alone are insufficient');
+    }
+  }
   unique(review.modules.map(module => module.name), 'modules');
   for (const module of review.modules) {
     text(module.name, 'module.name', 120); text(module.scope, 'module.scope');
     text(module.limitations, 'module.limitations'); list(module.criteria, 'module.criteria', 100);
     module.criteria.forEach(id => text(id, 'criterion id', 100)); unique(module.criteria, 'module.criteria');
     need(object(module.scores), 'module.scores required');
-    for (const key of Object.keys(dimensions)) score(module.scores[key], key);
+    if (review.version === 2) need(Object.keys(module.scores).length === Object.keys(scoreDimensions).length &&
+      Object.keys(module.scores).every(key => Object.hasOwn(scoreDimensions, key)), 'Framework rubric has five dimensions; application output quality is not a framework score');
+    for (const key of Object.keys(scoreDimensions)) score(module.scores[key], key);
+    if (review.version === 2) frameworkModule(module);
   }
   unique(review.findings.map(finding => finding.id), 'findings');
   for (const finding of review.findings) {
@@ -143,6 +206,12 @@ export function validateEvaluation(review, inputHash, catalog) {
     need(['open', 'resolved', 'unknown', 'not-applicable'].includes(finding.status), 'Invalid finding status');
     for (const key of ['title', 'detail', 'impact', 'suggestedChange']) text(finding[key], `finding.${key}`);
     refs(finding.evidence, true);
+    if (review.version === 2 && finding.confidence === 'confirmed' &&
+        ['framework', 'plugin', 'template', 'documentation'].includes(finding.owner)) {
+      need(finding.evidence.some(id => review.modules.some(module => module.targets.some(target =>
+        target.evidence.includes(id) && isTargetEvidence(target, review.evidence.find(e => e.id === id))))),
+      'Confirmed framework feedback needs target evidence, not author self-report or QA alone');
+    }
     if (finding.kind === 'misleading') {
       text(finding.claimed, 'misleading.claimed'); text(finding.observed, 'misleading.observed');
     }
@@ -163,8 +232,15 @@ export function validateBuildReview(report, identity) {
     need(String(report.basis[key]) === String(identity[key]), `Review ${key} does not match this run`);
   }
   if (['completed', 'partial'].includes(report.state)) {
-    need(report.basis.rubricVersion === rubricVersion && /^[a-f0-9]{64}$/.test(report.basis.inputHash), 'Missing rubric/input fingerprint');
-    validateEvaluation(report.evaluation, report.basis.inputHash);
+    need([1, 2].includes(report.basis.rubricVersion) && /^[a-f0-9]{64}$/.test(report.basis.inputHash), 'Missing rubric/input fingerprint');
+    validateEvaluation(report.evaluation, report.basis.inputHash, undefined, report.basis.rubricVersion);
+    if (report.basis.rubricVersion === 2) {
+      need(Array.isArray(report.basis.packages), 'Framework review needs captured package identities');
+      if (report.state === 'completed') need(report.evaluation.progress.complete, 'Completed framework review still has unfinished progress');
+      for (const module of report.evaluation.modules) if (Object.values(module.scores).some(score => score.score !== null)) {
+        for (const target of module.targets) if (target.kind !== 'guidance') need(report.basis.packages.some(pkg => pkg.name === target.name), 'Scored framework target was not installed');
+      }
+    }
     if (report.state === 'partial') need(report.evaluation.modules.length > 0 && report.evaluation.evidence.length > 0, 'Partial review requires assessed modules and evidence');
     for (const evidence of report.evaluation.evidence) {
       need(/^[a-f0-9]{64}$/.test(evidence.sha256), 'Missing captured evidence hash');
@@ -221,7 +297,16 @@ export function loadBuildReview(root, identity) {
     const supplement = optional(root, 'build-review.supplement.json');
     if (supplement) {
       validateBuildReview(supplement, resolveReviewIdentity(root, supplement, identity));
-      if (['completed', 'partial'].includes(supplement.state) && !(report?.state === 'completed' && supplement.state === 'partial')) report = supplement;
+      // A new rubric is a new assessment, not a relabeling of old scores. A
+      // valid v2 partial can coexist with a complete v1; never downgrade v2 to v1.
+      let originalValid = false;
+      try { validateBuildReview(report, resolveReviewIdentity(root, report, identity)); originalValid = true; } catch {}
+      const older = originalValid && ['completed', 'partial'].includes(report.state) ? report : null;
+      if (['completed', 'partial'].includes(supplement.state) &&
+          (!older || supplement.basis.rubricVersion > older.basis.rubricVersion ||
+           (supplement.basis.rubricVersion === older.basis.rubricVersion && !(older.state === 'completed' && supplement.state === 'partial')))) {
+        report = { ...supplement, ...(older?.basis.rubricVersion === 1 && supplement.basis.rubricVersion === 2 ? { legacyReview: older } : {}) };
+      }
     }
   } catch (error) { process.warnings.push(`后补评审未采用：${error.message}`); }
   if (!report && originalError) return { version: 1, state: 'failed', reason: '评审文件无法读取；不显示评分。', process, evaluation: null };
