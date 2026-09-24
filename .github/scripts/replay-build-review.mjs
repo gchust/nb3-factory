@@ -1,7 +1,7 @@
 // Review a sealed historical application without rebuilding it or changing its PR.
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
-import { appendFileSync, copyFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { appendFileSync, copyFileSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { GitHubClient } from './factory-lib.mjs';
@@ -110,9 +110,12 @@ async function main() {
     const source = readReviewJson(args.input, 'binding.json');
     assert.equal(execFileSync('git', ['rev-parse', 'HEAD'], { cwd: args.workspace, encoding: 'utf8' }).trim(), source.baseSha);
     const artifacts = path.join(args.input, 'agent');
+    // A rejected replay must not copy the previous review's invocation as this run.
+    for (const name of ['agent-review.jsonl', 'agent-review.jsonl.result.json', 'agent-review.jsonl.prompt.md', 'agent-review.jsonl.invocation.json', 'build-review-input.json', 'build-review-files.json'])
+      rmSync(path.join(artifacts, name), { force: true });
     const result = await runBuildReview(args.workspace, artifacts, process.env, { source });
     mkdirSync(args.output, { recursive: true });
-    for (const name of ['build-review.json', 'build-review-input.json', 'agent-review.jsonl', 'agent-review.jsonl.result.json', 'agent-review.jsonl.prompt.md'])
+    for (const name of ['build-review.json', 'build-review-input.json', 'build-review-files.json', 'agent-review.jsonl', 'agent-review.jsonl.result.json', 'agent-review.jsonl.prompt.md', 'agent-review.jsonl.invocation.json'])
       if (existsSync(path.join(artifacts, name))) copyFileSync(path.join(artifacts, name), path.join(args.output, name));
     write(args.output, 'binding.json', source);
     console.log(`Review ${result.state}: ${result.evaluation?.modules.length ?? 0} modules. ${result.reason}`);

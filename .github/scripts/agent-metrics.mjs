@@ -8,8 +8,8 @@ import { readResult, tokenKeys } from './agent-result.mjs';
 const safeCount = n => Number.isSafeInteger(n) && n >= 0;
 const hash = value => createHash('sha256').update(JSON.stringify(value)).digest('hex');
 export const METRICS_MARKER = '<!-- factory-agent-metrics-v1\n';
-const phases = ['implementation', 'repair', 'qa', 'qa-focused', 'qa-report-repair', 'reply', 'unknown'];
-const labels = ['初始实现', '应用修复', '浏览器验收', '定向复测', '验收报告修复', '评论问答', '未分类'];
+const phases = ['implementation', 'repair', 'qa', 'qa-focused', 'qa-report-repair', 'reply', 'review', 'unknown'];
+const labels = ['初始实现', '应用修复', '浏览器验收', '定向复测', '验收报告修复', '评论问答', '模块评审', '未分类'];
 function readJson(root, file) {
   try { return JSON.parse(readFileSync(path.join(root, file), 'utf8')); }
   catch { return null; }
@@ -68,7 +68,8 @@ export function collectAgentMetrics(root, manifest) {
       seen.add(id);
       let result;
       try { result = readResult(path.join(root, item.log)); } catch { /* Unknown, not zero or legacy fallback. */ }
-      const phase = a.role === 'reply' ? 'reply' : phases.includes(invocation?.phase) ? invocation.phase : 'unknown';
+      const reportedPhase = invocation?.phase ?? result?.phase;
+      const phase = a.role === 'reply' ? 'reply' : phases.includes(reportedPhase) ? reportedPhase : 'unknown';
       const row = { id, jobId: a.jobId, phase, log: item.log,
         invoked: invocation?.invoked === false ? false : invocation?.invoked === true || result ? true : null,
         status: result?.status ?? null,

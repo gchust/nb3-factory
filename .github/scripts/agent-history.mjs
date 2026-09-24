@@ -33,6 +33,9 @@ const ARCHIVE_TIMEOUT_MS = 300_000;
 // Every accepted artifact file, with the phase it belongs to. Anything not listed is left
 // behind: the archive is a record of what the agents did, not a copy of the artifact.
 const FILE_RULES = [
+  { phase: 'review', pattern: /^agent-review\.jsonl(?:\.result\.json|\.prompt\.md|\.invocation\.json)?$/u },
+  { phase: 'review', pattern: /^build-review(?:-input|-files)?\.json$/u },
+  { phase: 'review', pattern: /^review-binding\.json$/u },
   { phase: 'reply', pattern: /^comment-agent\.jsonl(?:\.result\.json|\.prompt\.md|\.invocation\.json)?$/u },
   { phase: 'reply', pattern: /^comment-reply\.md$/u },
   { phase: 'verification', pattern: /^timings\.jsonl$/u },
@@ -58,6 +61,7 @@ const FILE_RULES = [
 ];
 
 const PHASE_LABELS = {
+  review: '模块评审',
   reply: '评论问答',
   implementation: '初始实现',
   repair: '应用修复',
@@ -67,6 +71,7 @@ const PHASE_LABELS = {
 };
 
 const STATUS_LABELS = {
+  review: '独立评审补跑（不改变业务交付）',
   delivered: '已生成/更新业务 PR',
   handoff: '已保存 Handoff，等待下一轮续跑',
   failure: '失败',

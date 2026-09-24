@@ -120,3 +120,25 @@ test('archive contains metrics without exposing raw prompts in inline numeric re
   assert.equal(packed.manifest.metrics.calls.length, 1);
   assert.doesNotMatch(metricsReceipt(packed.manifest.metrics), /\.prompt\.md|command|args|"calls"/);
 });
+
+
+test('automatic module review is retained, classified and counted once beside implementation', t => {
+  const f = fixture(t);
+  f.call('agent/agent-implement.jsonl', 'implementation');
+  f.call('agent/agent-review.jsonl', 'review', { invocation: {phase:'review'}, result:{phase:'review'} });
+  const packed = packHistory({ artifacts:f.root,output:path.join(f.root,'archive'),source:{...source,artifacts:[source.artifacts[0]]},issue:42,runId:100,attempt:1 });
+  const metrics = packed.manifest.metrics;
+  assert.equal(metrics.calls.length, 2);
+  assert.equal(aggregateAgentMetrics([metrics,metrics]).phases.review.invocations, 1);
+  assert.equal(aggregateAgentMetrics([metrics,metrics]).phases.review.tokens.totalTokens.reported, 100);
+  assert.match(renderAgentMetrics([metrics]), /模块评审/);
+});
+test('older reviewer result can identify its phase but cannot invent a missing capture', t => {
+  const f = fixture(t);
+  f.call('agent/agent-review.jsonl', 'old-review', {result:{phase:'review'}});
+  rmSync(path.join(f.root,'agent/agent-review.jsonl.invocation.json'));
+  const packed = packHistory({ artifacts:f.root,output:path.join(f.root,'archive'),source:{...source,artifacts:[source.artifacts[0]]},issue:42,runId:100,attempt:1 });
+  assert.equal(packed.manifest.completeness.status, 'partial');
+  assert.equal(packed.manifest.metrics.calls[0].phase, 'review');
+  assert.equal(packed.manifest.metrics.calls[0].captured, false);
+});
