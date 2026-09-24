@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="referrer" content="no-referrer"><meta http-equiv="Content-Security-Policy" content="default-src &#39;none&#39;; img-src data:; style-src &#39;unsafe-inline&#39;; script-src &#39;sha256-IMnEUHIP2PoyLCqMYwZ/yRqY2SjANR434pwzI/QIln8=&#39;; base-uri &#39;none&#39;; form-action &#39;none&#39;; connect-src &#39;none&#39;; object-src &#39;none&#39;">
-<meta name="factory-report-id" content="gchust/nb3-factory:224:35881009045:2:fd1ca3583679e2472371e638bf72555d4afd5fb3:template-3"><meta name="factory-template-version" content="3">
+<meta name="factory-report-id" content="gchust/nb3-factory:224:35881009045:2:fd1ca3583679e2472371e638bf72555d4afd5fb3:template-4:review-008b0e8c401296ca"><meta name="factory-template-version" content="3">
 <title>[Code Agent] [预置][S02] 简版 CRM：客户、联系人、商机（重搭 #200） · 交付报告</title><style>
 :root{--bg:#fafafa;--surface:#fff;--ink:#18181b;--muted:#71717a;--border:#e4e4e7;--subtle:#f4f4f5;--green:#167047;--green-bg:#f0f8f3;--amber:#975712;--amber-bg:#fffbeb;--radius:12px}
 *{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:90px}body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans CJK SC","PingFang SC","Microsoft YaHei",sans-serif;font-size:14px;line-height:1.7;-webkit-font-smoothing:antialiased}a{color:inherit;text-decoration:none}button,input{font:inherit}button,a,summary{-webkit-tap-highlight-color:transparent}button{cursor:pointer}button:focus-visible,a:focus-visible,summary:focus-visible,input:focus-visible{outline:3px solid #a1a1aa;outline-offset:3px}button:disabled{opacity:.5;cursor:default}svg{flex-shrink:0;vertical-align:middle}h1,h2,h3,p{margin:0}h1{font-size:clamp(29px,3.4vw,44px);line-height:1.35;letter-spacing:-1.5px;font-weight:680}h2{font-size:23px;letter-spacing:-.55px;font-weight:650;line-height:1.4}h3{font-size:15px;font-weight:650}small,.small{font-size:12px}code,.mono{font-family:"SFMono-Regular",Consolas,"Liberation Mono",monospace}code{font-size:.9em;background:var(--subtle);padding:2px 5px;border-radius:4px;overflow-wrap:anywhere}button{border:0;background:transparent;color:inherit}summary{cursor:pointer;list-style:none}summary::-webkit-details-marker{display:none}.muted{color:var(--muted)}.eyebrow{font-size:11px;font-weight:700;letter-spacing:1.8px;text-transform:uppercase;color:var(--muted)}.tag{display:inline-flex;gap:6px;align-items:center;font-size:11px;line-height:1.5;font-weight:550;border:1px solid var(--border);border-radius:6px;padding:4px 8px;white-space:nowrap;background:var(--surface)}.tag.good{color:var(--green);background:var(--green-bg);border-color:#d6e9dc}.tag.warn{color:var(--amber);background:var(--amber-bg);border-color:#efdfb6}.dot{width:6px;height:6px;border-radius:50%;background:currentColor}.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:1px solid var(--border);border-radius:8px;background:var(--surface);padding:10px 15px;font-size:13px;font-weight:550;line-height:1.5;transition:background .15s,transform .15s}.btn:hover{background:var(--subtle);transform:translateY(-1px)}.btn.primary{color:white;background:#18181b;border-color:#18181b}.btn.primary:hover{background:#333337}.btn.small{padding:7px 11px;font-size:12px}.text-link{font-size:12px;text-decoration:underline;text-underline-offset:4px;color:var(--muted)}.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius)}
@@ -72,11 +72,660 @@
 <a href="#improvements"><span class="nav-index">07</span>可改进的点</a>
 <a href="#execution"><span class="nav-index">08</span>执行与用量</a></nav><div class="sidebar-bottom"><span class="tag">固定模板 v3</span><p>内容来自本次任务产物。<br/>样式与交互由工厂统一维护。</p><div class="repo-name">gchust/nb3-factory</div></div></aside>
 <header class="topbar"><div class="breadcrumb"><span>gchust/nb3-factory</span><span>/</span><span>交付报告</span><span>/</span><strong>#224</strong></div><div class="top-actions"><span class="tag">静态快照 · 非实时状态</span></div></header>
-<main class="main"><noscript><p class="report-banner">正文和验收详情可直接阅读；图片筛选和放大需要 JavaScript。</p></noscript><section class="section" id="overview"><div class="hero"><div><div class="eyebrow">Delivery 224 / 2026-09-23T23:15:04.000Z</div><h1>[Code Agent] [预置][S02] 简版 CRM：客户、联系人、商机（重搭 #200）</h1><p>简版 CRM 三模块可用：客户/联系人/商机列表与新增编辑表单、客户详情联系人与商机、按阶段筛选、按客户聚合预计金额均经浏览器验证通过；新增记录真实入库，校验可拦截缺客户与负金额。</p><div class="hero-actions"><a class="btn" rel="noopener noreferrer" target="_blank" href="https://github.com/gchust/nb3-factory/pull/229">查看 PR #229 ↗</a><a class="btn" rel="noopener noreferrer" target="_blank" href="https://github.com/gchust/nb3-factory/issues/224">查看需求 ↗</a><a class="btn" rel="noopener noreferrer" target="_blank" href="https://github.com/gchust/nb3-factory/actions/runs/35881009045/attempts/2">本轮运行与原始产物 ↗</a><a class="btn primary" href="#acceptance">查看验收依据</a></div><div class="hero-meta"><span>对应提交 <code title="fd1ca3583679e2472371e638bf72555d4afd5fb3">fd1ca3583679</code></span><span>Run 35881009045 / attempt 2</span><span>目标 <code>develop</code></span></div></div><div class="hero-badge"><span class="tag warn">已提交 PR · 等待人工评审</span></div></div><div class="metrics"><div class="card metric"><div class="metric-head">Agent 原始验收</div><div class="metric-value">5 / 5</div><div class="metric-note">这是 Agent 的报告结论，不代替人工评审</div></div><div class="card metric"><div class="metric-head">修改文件</div><div class="metric-value">27</div><div class="metric-note">20 新增 · 7 修改 · 0 删除</div></div><div class="card metric"><div class="metric-head">截图证据</div><div class="metric-value">10</div><div class="metric-note">来自本次选定报告的媒体清单</div></div><div class="card metric"><div class="metric-head">已记录执行时间</div><div class="metric-value">2:14:54</div><div class="metric-note">此 Issue 累计：已采集 1 个 Run / 2 次尝试</div></div></div></section><section class="section"><div class="section-head"><div><div class="eyebrow">What was delivered</div><h2>先看业务结果，不先看日志</h2></div></div><div class="note-grid"><article class="card note-card"><h3>客户详情关联与真实聚合</h3><p>新增客户与联系人后刷新详情仍正确关联；客户详情显示其商机列表与预计金额合计，星河科技合计 200000 与其 120000+80000 两条记录一致，非固定值。</p></article><article class="card note-card"><h3>商机阶段与筛选</h3><p>将商机改为 Won 保存后按 Won 筛选可命中，按 Following 筛选不混入该记录。</p></article><article class="card note-card"><h3>金额编辑与合计联动</h3><p>商机金额由 100 改为 150 并刷新，客户详情合计从 100 变为 150，增加 50。</p></article><article class="card note-card"><h3>必填与非负校验</h3><p>缺所属客户提示 Select a customer.，负金额提示 Enter an amount of zero or more.，均未保存且列表无异常记录。</p></article></div><div class="business-flow" aria-label="业务顺序示意"><div class="business-step"><b>01</b>管理员账号登录进入 CRM 业务界面</div><span aria-hidden="true">→</span><div class="business-step"><b>02</b>新增客户 验收客户甲 并新增联系人 验收联系人甲 关联该客户</div><span aria-hidden="true">→</span><div class="business-step"><b>03</b>刷新客户详情确认联系人仍关联</div><span aria-hidden="true">→</span><div class="business-step"><b>04</b>新增商机 验收商机甲 金额 100，详情合计与列表出现该记录</div><span aria-hidden="true">→</span><div class="business-step"><b>05</b>编辑商机阶段为 Won，按阶段筛选命中且另一阶段不混入</div><span aria-hidden="true">→</span><div class="business-step"><b>06</b>编辑商机金额为 150，刷新后合计变为 150</div><span aria-hidden="true">→</span><div class="business-step"><b>07</b>尝试缺少客户与负金额提交，均被校验拦截</div></div><p class="check-source">业务顺序示意，操作证据见逐项验收。</p></section><section class="section" id="build-review"><div class="section-head"><div><div class="eyebrow">Build assessment</div><h2>搭建质量与模块评审</h2></div><span class="tag warn">未完成独立评审</span></div><div class="review-disclaimer">评分是评审者基于本次覆盖范围的意见，不是客观测量，也不是 NocoBase3 整体评分。业务 QA、评分和证据完整性分开呈现。</div><div class="review-process"><div><span>本 Run 验证轮次</span><strong>2</strong></div><div><span>本 Run 工厂修复轮次</span><strong>1</strong></div><div><span>已保留验证轮次</span><strong>2</strong></div></div>
+<main class="main"><noscript><p class="report-banner">正文和验收详情可直接阅读；图片筛选和放大需要 JavaScript。</p></noscript><section class="section" id="overview"><div class="hero"><div><div class="eyebrow">Delivery 224 / 2026-09-23T23:15:04.000Z</div><h1>[Code Agent] [预置][S02] 简版 CRM：客户、联系人、商机（重搭 #200）</h1><p>简版 CRM 三模块可用：客户/联系人/商机列表与新增编辑表单、客户详情联系人与商机、按阶段筛选、按客户聚合预计金额均经浏览器验证通过；新增记录真实入库，校验可拦截缺客户与负金额。</p><div class="hero-actions"><a class="btn" rel="noopener noreferrer" target="_blank" href="https://github.com/gchust/nb3-factory/pull/229">查看 PR #229 ↗</a><a class="btn" rel="noopener noreferrer" target="_blank" href="https://github.com/gchust/nb3-factory/issues/224">查看需求 ↗</a><a class="btn" rel="noopener noreferrer" target="_blank" href="https://github.com/gchust/nb3-factory/actions/runs/35881009045/attempts/2">本轮运行与原始产物 ↗</a><a class="btn primary" href="#acceptance">查看验收依据</a></div><div class="hero-meta"><span>对应提交 <code title="fd1ca3583679e2472371e638bf72555d4afd5fb3">fd1ca3583679</code></span><span>Run 35881009045 / attempt 2</span><span>目标 <code>develop</code></span></div></div><div class="hero-badge"><span class="tag warn">已提交 PR · 等待人工评审</span></div></div><div class="metrics"><div class="card metric"><div class="metric-head">Agent 原始验收</div><div class="metric-value">5 / 5</div><div class="metric-note">这是 Agent 的报告结论，不代替人工评审</div></div><div class="card metric"><div class="metric-head">修改文件</div><div class="metric-value">27</div><div class="metric-note">20 新增 · 7 修改 · 0 删除</div></div><div class="card metric"><div class="metric-head">截图证据</div><div class="metric-value">10</div><div class="metric-note">来自本次选定报告的媒体清单</div></div><div class="card metric"><div class="metric-head">已记录执行时间</div><div class="metric-value">2:14:54</div><div class="metric-note">此 Issue 累计：已采集 1 个 Run / 2 次尝试</div></div></div></section><section class="section"><div class="section-head"><div><div class="eyebrow">What was delivered</div><h2>先看业务结果，不先看日志</h2></div></div><div class="note-grid"><article class="card note-card"><h3>客户详情关联与真实聚合</h3><p>新增客户与联系人后刷新详情仍正确关联；客户详情显示其商机列表与预计金额合计，星河科技合计 200000 与其 120000+80000 两条记录一致，非固定值。</p></article><article class="card note-card"><h3>商机阶段与筛选</h3><p>将商机改为 Won 保存后按 Won 筛选可命中，按 Following 筛选不混入该记录。</p></article><article class="card note-card"><h3>金额编辑与合计联动</h3><p>商机金额由 100 改为 150 并刷新，客户详情合计从 100 变为 150，增加 50。</p></article><article class="card note-card"><h3>必填与非负校验</h3><p>缺所属客户提示 Select a customer.，负金额提示 Enter an amount of zero or more.，均未保存且列表无异常记录。</p></article></div><div class="business-flow" aria-label="业务顺序示意"><div class="business-step"><b>01</b>管理员账号登录进入 CRM 业务界面</div><span aria-hidden="true">→</span><div class="business-step"><b>02</b>新增客户 验收客户甲 并新增联系人 验收联系人甲 关联该客户</div><span aria-hidden="true">→</span><div class="business-step"><b>03</b>刷新客户详情确认联系人仍关联</div><span aria-hidden="true">→</span><div class="business-step"><b>04</b>新增商机 验收商机甲 金额 100，详情合计与列表出现该记录</div><span aria-hidden="true">→</span><div class="business-step"><b>05</b>编辑商机阶段为 Won，按阶段筛选命中且另一阶段不混入</div><span aria-hidden="true">→</span><div class="business-step"><b>06</b>编辑商机金额为 150，刷新后合计变为 150</div><span aria-hidden="true">→</span><div class="business-step"><b>07</b>尝试缺少客户与负金额提交，均被校验拦截</div></div><p class="check-source">业务顺序示意，操作证据见逐项验收。</p></section><section class="section" id="build-review"><div class="section-head"><div><div class="eyebrow">Build assessment</div><h2>搭建质量与模块评审</h2></div><span class="tag ">独立 Agent 评审</span></div><div class="review-disclaimer">评分是评审者基于本次覆盖范围的意见，不是客观测量，也不是 NocoBase3 整体评分。业务 QA、评分和证据完整性分开呈现。</div><div class="review-process"><div><span>本 Run 验证轮次</span><strong>2</strong></div><div><span>本 Run 工厂修复轮次</span><strong>1</strong></div><div><span>已保留验证轮次</span><strong>2</strong></div></div>
     <p class="check-source">仅本 Run 已归档记录；工厂修复轮次不等于 Agent 开发中全部试错次数。缺少 verify-1 时不能声称任务首轮通过。</p>
     <details class="card raw-record"><summary>首轮与修复过程 · 查看逐轮原始状态</summary><div class="subsection-body"><div class="table-wrap"><table><thead><tr><th>轮次</th><th>范围</th><th>原始结论</th><th>失败项</th></tr></thead><tbody><tr><td>验证 1</td><td>全量浏览器 QA</td><td><span class="tag bad">报告未通过</span></td><td>B01 新增客户及其联系人，刷新客户详情，联系人仍关联到正确客户。<br>B02 为该客户新增金额 100 的商机，详情中的商机列表和金额合计包含该条真实记录。<br>B03 将该商机阶段改为“赢单”，按阶段筛选能正确找到；另一阶段筛选不混入它。<br>B04 将该商机金额改为 150，刷新后合计随之增加 50。<br>B05 缺失必填客户或输入负金额时不能保存，错误可理解；不扩展正文之外的异常组合。
 
-无法实际完成时如实记录 failed、blocked 或 not_run，不以源码检查代替浏览器通过。</td></tr><tr><td>验证 2</td><td>全量浏览器 QA</td><td><span class="tag good">报告通过</span></td><td>未记录 failed 项；不代表全部操作完成</td></tr></tbody></table></div><p class="muted">未提供额外说明。</p></div></details><div class="card report-empty"><strong>本轮不显示评分</strong><p>评审未采用：Review attempt does not match this run</p></div></section><section class="section" id="framework-feedback"><div class="section-head"><h2>NocoBase3 的帮助与问题</h2></div><div class="card report-empty">尚无独立评审结论；已有实现者自述仍保留在“遇到的问题”和“可改进的点”。</div></section><section class="section" id="acceptance"><div class="section-head"><div><div class="eyebrow">Acceptance record</div><h2>验收记录</h2></div><span class="tag ">5 项要求</span></div>
+无法实际完成时如实记录 failed、blocked 或 not_run，不以源码检查代替浏览器通过。</td></tr><tr><td>验证 2</td><td>全量浏览器 QA</td><td><span class="tag good">报告通过</span></td><td>未记录 failed 项；不代表全部操作完成</td></tr></tbody></table></div><p class="muted">未提供额外说明。</p></div></details><p class="check-source">评审源产物：Run 35881009045 / attempt 1 · 后补评审 Run 35937706392 / attempt 1。发布重试不改变评审源产物编号。</p><p class="check-source">本次后补评审用量（独立于原搭建）：1477334 Token（含缓存）；不重复计入原搭建。</p><p class="review-summary">本次搭建用迁移+幂等种子建三表，以自定义 Hono 服务做关联查询与 SUM 聚合，前端用子路由/RouteDialog 实现列表、表单与客户详情，沿用了模板登录与 i18n；最终 QA 的 B01–B05 在真实浏览器通过，且合计随真实记录 100→150 变化，R01/R02 的真实关系与聚合成立。首轮因在 RouteDialog 外调用 useRouteOverlay 导致所有新增/编辑页崩溃（B01–B05 全 failed），修复轮迁移进后代组件后通过；最终仍遗留编辑表单客户下拉显示外键数字的界面瑕疵。此外 seed 初始化 datetime 需避开时区后缀这一规则未写入 Skill/文档，造成返工。</p><div class="review-caption">5 个模块 · 20 / 20 项已评分 · 未评估项不进入任何平均值</div><div class="card table-wrap review-matrix"><table><thead><tr><th>基础模块 / 本次范围</th><th>设计合理性</th><th>开发完整性</th><th>Agent 使用友好度</th><th>Agent 产出质量</th><th>首轮 QA</th><th>最终轮 QA</th></tr></thead><tbody><tr><td><a href="#review-module-0"><strong>数据访问：迁移、种子与运行时写入</strong></a><p>本轮 CRM 用 NocoBase App 的 database/main 迁移与种子建立 customers/contacts/opportunities 三表（含 belongsTo 外键与级联删除、索引、decimal 默认值），并用 database.query() 在服务层读写；覆盖 B01/B02/B04 涉及的真实建表与持久化。</p></td><td><strong class="review-score">85<small>/100</small></strong></td><td><strong class="review-score">88<small>/100</small></strong></td><td><strong class="review-score">70<small>/100</small></strong></td><td><strong class="review-score">84<small>/100</small></strong></td><td><span class="tag bad">报告未通过</span></td><td><span class="tag good">报告通过</span></td></tr><tr><td><a href="#review-module-1"><strong>服务端路由与服务层（关联查询与真实聚合）</strong></a><p>自定义 Hono API：/crm/customers、/crm/contacts、/crm/opportunities 的列表/详情/创建/更新，customerId 关系过滤、SUM 金额聚合、stage 筛选与 400/404 错误映射；对应 R01/R02 与 B02–B05。</p></td><td><strong class="review-score">82<small>/100</small></strong></td><td><strong class="review-score">84<small>/100</small></strong></td><td><strong class="review-score">80<small>/100</small></strong></td><td><strong class="review-score">86<small>/100</small></strong></td><td><span class="tag bad">报告未通过</span></td><td><span class="tag good">报告通过</span></td></tr><tr><td><a href="#review-module-2"><strong>客户端页面、路由与 UI 组件</strong></a><p>客户/联系人/商机三个列表、新增/编辑 RouteDialog 表单、客户详情 RouteChildPage（联系人与商机及金额合计）、阶段筛选，使用 shadcn primitives 与自定义 DataTable/StatePanel/StageBadge；覆盖 B01–B05。</p></td><td><strong class="review-score">82<small>/100</small></strong></td><td><strong class="review-score">74<small>/100</small></strong></td><td><strong class="review-score">68<small>/100</small></strong></td><td><strong class="review-score">72<small>/100</small></strong></td><td><span class="tag bad">报告未通过</span></td><td><span class="tag good">报告通过</span></td></tr><tr><td><a href="#review-module-3"><strong>国际化（i18n）</strong></a><p>沿用模板的 @nocobase/i18n 与 client/locales 机制，为 CRM 面增加 en-US/zh-CN 文案，并用 t() 渲染标签、状态、空态与错误提示。</p></td><td><strong class="review-score">86<small>/100</small></strong></td><td><strong class="review-score">90<small>/100</small></strong></td><td><strong class="review-score">84<small>/100</small></strong></td><td><strong class="review-score">88<small>/100</small></strong></td><td><span class="tag warn">未验证</span></td><td><span class="tag warn">未验证</span></td></tr><tr><td><a href="#review-module-4"><strong>登录与访问边界（authentication）</strong></a><p>按需求只保留一种普通业务使用方式：沿用模板登录，页面 authz:&#39;skip&#39;+auth:&#39;required&#39;，服务端每个 CRM 端点 auth.required()；不新建角色体系。</p></td><td><strong class="review-score">84<small>/100</small></strong></td><td><strong class="review-score">84<small>/100</small></strong></td><td><strong class="review-score">82<small>/100</small></strong></td><td><strong class="review-score">80<small>/100</small></strong></td><td><span class="tag warn">未验证</span></td><td><span class="tag warn">未验证</span></td></tr></tbody></table></div><p class="check-source">模块与验收项的映射由评审者提供，状态读取原始全量 QA。缺少首轮、缺少映射或只有定向复测时显示未验证；最终通过不抹去首轮失败。</p><div class="review-modules"><details class="card review-module" id="review-module-0"><summary><strong>数据访问：迁移、种子与运行时写入</strong><span>展开四项理由与证据</span></summary><div class="subsection-body"><p>本轮 CRM 用 NocoBase App 的 database/main 迁移与种子建立 customers/contacts/opportunities 三表（含 belongsTo 外键与级联删除、索引、decimal 默认值），并用 database.query() 在服务层读写；覆盖 B01/B02/B04 涉及的真实建表与持久化。</p><div class="review-dimensions"><article><header><h3>设计合理性</h3><strong class="review-score">85<small>/100</small></strong></header><p>迁移是自包含且不可变的定义，未导入运行时 schema；belongsTo/cascade/索引/decimal 默认值的抽象与 Skill 的 migrations 指南一致，服务层用 query builder 参数化读写。</p><span class="review-refs"><a href="#review-evidence-E1">E1</a> <a href="#review-evidence-E2">E2</a> <a href="#review-evidence-E11">E11</a></span></article><article><header><h3>开发完整性</h3><strong class="review-score">88<small>/100</small></strong></header><p>三表字段、可空性、外键与索引齐全，down 按 opportunities→contacts→customers 逆序删除；种子恰好写入 2/3/3 条并可在重复执行时跳过。</p><span class="review-refs"><a href="#review-evidence-E1">E1</a> <a href="#review-evidence-E2">E2</a> <a href="#review-evidence-E12">E12</a></span></article><article><header><h3>Agent 使用友好度</h3><strong class="review-score">70<small>/100</small></strong></header><p>migrations/database-and-data 文档覆盖了迁移、seed 与 query builder，但未说明 datetime 为 naive 值、字符串不得带时区后缀，导致按常见 new Date().toISOString() 写法返工。</p><span class="review-refs"><a href="#review-evidence-E11">E11</a> <a href="#review-evidence-E10">E10</a></span></article><article><header><h3>Agent 产出质量</h3><strong class="review-score">84<small>/100</small></strong></header><p>真实 SQLite 测试验证了表/外键/索引与回滚，seed 固定时间戳且幂等；未使用静态数组冒充数据，满足 R02 的真实持久化要求。</p><span class="review-refs"><a href="#review-evidence-E12">E12</a> <a href="#review-evidence-E2">E2</a></span></article></div><p class="check-source">覆盖限制：未独立重跑迁移/种子，仅依据源码、逻辑测试与浏览器结果；未覆盖多连接、事务回滚与并发写入。</p><p class="check-source">映射验收项：B01, B02, B04</p></div></details><details class="card review-module" id="review-module-1"><summary><strong>服务端路由与服务层（关联查询与真实聚合）</strong><span>展开四项理由与证据</span></summary><div class="subsection-body"><p>自定义 Hono API：/crm/customers、/crm/contacts、/crm/opportunities 的列表/详情/创建/更新，customerId 关系过滤、SUM 金额聚合、stage 筛选与 400/404 错误映射；对应 R01/R02 与 B02–B05。</p><div class="review-dimensions"><article><header><h3>设计合理性</h3><strong class="review-score">82<small>/100</small></strong></header><p>服务与路由分离，ServiceToken 单例装配，关系与聚合都落在服务层；不过关联查询用 customerId 手写 where 与全量 customerNames 映射，未使用框架更抽象的关联/Repository 能力，R01 的“公共 Repository/关联查询”只满足其关系真实性的实质。</p><span class="review-refs"><a href="#review-evidence-E3">E3</a> <a href="#review-evidence-E5">E5</a></span></article><article><header><h3>开发完整性</h3><strong class="review-score">84<small>/100</small></strong></header><p>需求所需的全部列表/创建/更新与详情聚合均实现，stage 查询参数与错误码映射完整；缺少按 id 读取单个联系人或商机的接口，编辑页需先拉全量再查找。</p><span class="review-refs"><a href="#review-evidence-E3">E3</a> <a href="#review-evidence-E4">E4</a> <a href="#review-evidence-E5">E5</a></span></article><article><header><h3>Agent 使用友好度</h3><strong class="review-score">80<small>/100</small></strong></header><p>接口用类型化 Error 区分 400/404，客户端据 status 显示翻译文案；但错误 message 为英文原文、契约只靠类型声明，且文档未给出该自定义路由模式的完整示例。</p><span class="review-refs"><a href="#review-evidence-E5">E5</a> <a href="#review-evidence-E8">E8</a></span></article><article><header><h3>Agent 产出质量</h3><strong class="review-score">86<small>/100</small></strong></header><p>聚合取自数据库 SUM、筛选与修改后一致，最终 QA 以 100→150 的合计变化验证无硬编码演示金额，逻辑测试覆盖聚合、筛选与非法输入。</p><span class="review-refs"><a href="#review-evidence-E3">E3</a> <a href="#review-evidence-E13">E13</a> <a href="#review-evidence-E14">E14</a></span></article></div><p class="check-source">覆盖限制：未实际发起 HTTP 请求，仅依据实现与其测试；未验证未登录以外的权限组合（本轮只有一种使用方式）。</p><p class="check-source">映射验收项：B02, B03, B04, B05</p></div></details><details class="card review-module" id="review-module-2"><summary><strong>客户端页面、路由与 UI 组件</strong><span>展开四项理由与证据</span></summary><div class="subsection-body"><p>客户/联系人/商机三个列表、新增/编辑 RouteDialog 表单、客户详情 RouteChildPage（联系人与商机及金额合计）、阶段筛选，使用 shadcn primitives 与自定义 DataTable/StatePanel/StageBadge；覆盖 B01–B05。</p><div class="review-dimensions"><article><header><h3>设计合理性</h3><strong class="review-score">82<small>/100</small></strong></header><p>按 Skill 用子路由+RouteDialog 承载表单、RouteChildPage 承载覆盖式详情，页面复用 PageContainer 与 ui primitives，useCrmData 自管请求状态；整体结构清晰。</p><span class="review-refs"><a href="#review-evidence-E7">E7</a> <a href="#review-evidence-E8">E8</a> <a href="#review-evidence-E10">E10</a></span></article><article><header><h3>开发完整性</h3><strong class="review-score">74<small>/100</small></strong></header><p>列表/表单/详情/筛选/校验均存在且最终 QA 通过，但编辑表单的关联客户下拉回填显示外键数字而非名称，属未完成的显示细节。</p><span class="review-refs"><a href="#review-evidence-E6">E6</a> <a href="#review-evidence-E14">E14</a></span></article><article><header><h3>Agent 使用友好度</h3><strong class="review-score">68<small>/100</small></strong></header><p>Skill 已明确写出 overlay hook 的调用位置规则，首轮仍在页面组件中调用导致全部新增/编辑页崩溃；关联 Select 也未按 shadcn 的 string value 约定使用，说明该 API 对 Agent 的约束不够直观。</p><span class="review-refs"><a href="#review-evidence-E10">E10</a> <a href="#review-evidence-E13">E13</a> <a href="#review-evidence-E6">E6</a></span></article><article><header><h3>Agent 产出质量</h3><strong class="review-score">72<small>/100</small></strong></header><p>功能路径最终可用且有渲染回归测试，但首轮 B01–B05 全失败暴露了页面级缺陷，最终仍遗留下拉显示外键数字的界面瑕疵。</p><span class="review-refs"><a href="#review-evidence-E13">E13</a> <a href="#review-evidence-E14">E14</a> <a href="#review-evidence-E6">E6</a></span></article></div><p class="check-source">覆盖限制：图像无法在本引擎查看，未做视觉评审；未验证键盘/窄屏/主题等跨状态表现。</p><p class="check-source">映射验收项：B01, B02, B03, B04, B05</p></div></details><details class="card review-module" id="review-module-3"><summary><strong>国际化（i18n）</strong><span>展开四项理由与证据</span></summary><div class="subsection-body"><p>沿用模板的 @nocobase/i18n 与 client/locales 机制，为 CRM 面增加 en-US/zh-CN 文案，并用 t() 渲染标签、状态、空态与错误提示。</p><div class="review-dimensions"><article><header><h3>设计合理性</h3><strong class="review-score">86<small>/100</small></strong></header><p>沿用 AppResource 类型与既有 locale 命名空间，新增 crm.* 键而不改外壳，错误提示通过 messages 参数注入而非硬编码。</p><span class="review-refs"><a href="#review-evidence-E9">E9</a> <a href="#review-evidence-E8">E8</a></span></article><article><header><h3>开发完整性</h3><strong class="review-score">90<small>/100</small></strong></header><p>common/customers/contacts/opportunities/stage 全部键在 en-US 与 zh-CN 均有对应译文，覆盖表单标签、必填与金额校验、空态与合计标题。</p><span class="review-refs"><a href="#review-evidence-E9">E9</a></span></article><article><header><h3>Agent 使用友好度</h3><strong class="review-score">84<small>/100</small></strong></header><p>键命名一致、类型由 en-US 派生可静态检查漏译；但页面仍直接写 t(&#39;crm.stage.&#39;+stage) 之类的动态键，类型检查无法覆盖。</p><span class="review-refs"><a href="#review-evidence-E9">E9</a></span></article><article><header><h3>Agent 产出质量</h3><strong class="review-score">88<small>/100</small></strong></header><p>最终 QA 的中英文界面标签与“Select a customer.”“Enter an amount of zero or more.”等错误文案均可理解，未出现未翻译占位。</p><span class="review-refs"><a href="#review-evidence-E9">E9</a> <a href="#review-evidence-E14">E14</a></span></article></div><p class="check-source">覆盖限制：未在中文/英文界面间实际切换核对截断与回退，仅审阅 locale 源码与页面取词。</p><p class="check-source">映射验收项：未建立映射</p></div></details><details class="card review-module" id="review-module-4"><summary><strong>登录与访问边界（authentication）</strong><span>展开四项理由与证据</span></summary><div class="subsection-body"><p>按需求只保留一种普通业务使用方式：沿用模板登录，页面 authz:&#39;skip&#39;+auth:&#39;required&#39;，服务端每个 CRM 端点 auth.required()；不新建角色体系。</p><div class="review-dimensions"><article><header><h3>设计合理性</h3><strong class="review-score">84<small>/100</small></strong></header><p>选择 authz:&#39;skip&#39; 且服务端统一 auth.required()，与“只有一种使用方式、不新做角色体系”的需求一致，边界说明写在代码注释中。</p><span class="review-refs"><a href="#review-evidence-E7">E7</a> <a href="#review-evidence-E5">E5</a></span></article><article><header><h3>开发完整性</h3><strong class="review-score">84<small>/100</small></strong></header><p>所有 CRM 路由挂在同一子路由并统一套用 auth.required()，路由测试断言匿名请求返回 401；页面侧全部 auth:&#39;required&#39;。</p><span class="review-refs"><a href="#review-evidence-E5">E5</a> <a href="#review-evidence-E12">E12</a></span></article><article><header><h3>Agent 使用友好度</h3><strong class="review-score">82<small>/100</small></strong></header><p>pages-and-routes 文档清楚区分 auth 与 authz 的语义并给出 authz:&#39;skip&#39; 示例，Agent 直接照用；但 authz:&#39;skip&#39; 的取舍需要自行判断，注释补充了理由。</p><span class="review-refs"><a href="#review-evidence-E7">E7</a> <a href="#review-evidence-E10">E10</a></span></article><article><header><h3>Agent 产出质量</h3><strong class="review-score">80<small>/100</small></strong></header><p>登录后功能可用且匿名被拒，满足本轮验收；未提供更细的授权证据，因为需求本身未要求。</p><span class="review-refs"><a href="#review-evidence-E12">E12</a> <a href="#review-evidence-E13">E13</a> <a href="#review-evidence-E14">E14</a></span></article></div><p class="check-source">覆盖限制：未实际验证未登录直连与跨用户访问控制；未涉及角色/页面级授权矩阵。</p><p class="check-source">映射验收项：未建立映射</p></div></details></div><article class="card review-ui"><header><h3>界面样式与交互一致性</h3><span class="review-na">未评估</span></header><p>当前引擎无法渲染/查看 PNG（读取返回 image omitted），无法对布局、字体、间距、组件与加载/空/错误状态做跨页面视觉评审；仅能从 QA 文本与源码判断功能表现。</p><span class="review-refs"></span><p class="check-source">未执行跨页面图像审阅，不能因使用相同组件库而判为视觉一致。</p></article></section><section class="section" id="framework-feedback"><div class="section-head"><div><div class="eyebrow">Infrastructure feedback</div><h2>NocoBase3 的帮助与问题</h2></div></div><p class="section-intro">优点说明具体帮助；问题区分内核、插件、模板、文档、业务实现和测试环境。下列“有证据 / 待确认”均为独立评审者的判断。</p><div class="review-group"><h3>做得好的地方 <span>2</span></h3><details class="card review-finding" ><summary><div><strong>金额合计与关联均由数据库真实记录聚合，未用静态数组冒充</strong><div class="review-badges"><span class="tag ">Agent / 业务实现</span><span class="tag ">评审者判断 · 有证据</span><span class="tag ">信息</span><span class="tag ">不适用</span></div></div><span>⌄</span></summary><div class="subsection-body"><p>getCustomer 按 customerId 查询联系人与商机，并对同一过滤条件执行 SUM(amount)，迁移层用 belongsTo+onDelete(&#39;cascade&#39;) 保证关系完整性；浏览器 QA 用新增 100、修改 150 的记录验证合计随之变化，星河的 200,000 也只统计本客户记录。</p><dl class="retro-fields"><div><dt>实际影响 / 提供的帮助</dt><dd>满足 R01/R02 对真实关系与真实聚合的要求，避免硬编码演示金额带来的假通过。</dd></div><div><dt>建议改法 / 应保留的能力</dt><dd>保留该服务层聚合实现与对应的真实数据库测试。</dd></div></dl><span class="review-refs"><a href="#review-evidence-E3">E3</a> <a href="#review-evidence-E1">E1</a> <a href="#review-evidence-E13">E13</a> <a href="#review-evidence-E14">E14</a></span></div></details><details class="card review-finding" ><summary><div><strong>种子按存在性跳过、时间戳固定，具幂等与可复现性</strong><div class="review-badges"><span class="tag ">Agent / 业务实现</span><span class="tag ">评审者判断 · 有证据</span><span class="tag ">信息</span><span class="tag ">不适用</span></div></div><span>⌄</span></summary><div class="subsection-body"><p>seed 先按 name 查找客户，再按 (name, customerId) 判断子记录是否存在并跳过，写入使用固定 SEEDED_AT；逻辑测试对同一数据库运行两次验证不新增、不覆盖用户修改。</p><dl class="retro-fields"><div><dt>实际影响 / 提供的帮助</dt><dd>重复执行迁移/种子不会污染用户数据，符合 Skill 对 seed 的不可变与幂等要求。</dd></div><div><dt>建议改法 / 应保留的能力</dt><dd>保留该幂等写法，若未来支持重命名客户需改为按稳定键去重。</dd></div></dl><span class="review-refs"><a href="#review-evidence-E2">E2</a> <a href="#review-evidence-E12">E12</a></span></div></details></div><div class="review-group"><h3>问题 <span>3</span></h3><details class="card review-finding" ><summary><div><strong>首轮所有新增/编辑页面在 RouteDialog 外部调用 useRouteOverlay 导致整页无法加载</strong><div class="review-badges"><span class="tag ">Agent / 业务实现</span><span class="tag ">评审者判断 · 有证据</span><span class="tag ">重要</span><span class="tag ">已解决</span></div></div><span>⌄</span></summary><div class="subsection-body"><p>首轮实现把 useRouteOverlay() 写在返回 &lt;RouteDialog&gt; 的页面组件（Provider 之外），React context 取不到值而抛错，页面只显示 &#39;Unable to load page&#39;，B01–B05 全部 failed；修复轮把取数与关闭逻辑移入 RouteDialog 内部的后代组件后通过。Skill 早已在 client-child-routes.md 写明该 hook 只能在其内部后代调用。</p><dl class="retro-fields"><div><dt>实际影响 / 提供的帮助</dt><dd>首轮 CRM 的所有写入路径不可用，验收全失败，需要额外一轮修复与回归。</dd></div><div><dt>建议改法 / 应保留的能力</dt><dd>保留修复后的“页面组件只返回外壳、逻辑放在 Provider 后代”结构，并沿用新增的 overlay 渲染回归测试防止复发。</dd></div></dl><span class="review-refs"><a href="#review-evidence-E13">E13</a> <a href="#review-evidence-E10">E10</a> <a href="#review-evidence-E8">E8</a></span></div></details><details class="card review-finding" ><summary><div><strong>编辑表单的关联客户下拉回填显示外键数字而非客户名称</strong><div class="review-badges"><span class="tag ">Agent / 业务实现</span><span class="tag ">评审者判断 · 有证据</span><span class="tag ">轻微</span><span class="tag ">未解决</span></div></div><span>⌄</span></summary><div class="subsection-body"><p>ContactForm/OpportunityForm 的 Select 以 number 作为 value，SelectItem 的 value 也是 option.id（number）；shadcn/Radix Select 约定 value 为 string。最终 QA 观察到编辑回填时显示如 &#39;3&#39; 的外键数字，功能不受影响但界面错误。</p><dl class="retro-fields"><div><dt>实际影响 / 提供的帮助</dt><dd>用户编辑联系人/商机时无法从下拉直接确认当前所属客户名称，需要人工比对，属可感知的显示缺陷。</dd></div><div><dt>建议改法 / 应保留的能力</dt><dd>把 Select 的 value/onValueChange/SelectItem 统一为 String(id)，或在 SelectValue 中按 customerId 查名称渲染；并在表单测试中断言回填显示客户名称。</dd></div></dl><span class="review-refs"><a href="#review-evidence-E6">E6</a> <a href="#review-evidence-E14">E14</a></span></div></details><details class="card review-finding" ><summary><div><strong>migrations/database-and-data 未说明 datetime 是 naive 值、字符串不得带时区后缀</strong><div class="review-badges"><span class="tag ">文档 / Skill / 示例</span><span class="tag ">评审者判断 · 有证据</span><span class="tag ">轻微</span><span class="tag ">未解决</span></div></div><span>⌄</span></summary><div class="subsection-body"><p>框架 temporal 校验中 datetime 的正则不含时区后缀（仅 datetimeTz 允许 Z/±hh:mm），而 Skill 只列出 datetime 字段类型并示例 collection.datetime(...)，未说明字符串输入的时区规则；Agent 按 new Date().toISOString() 初始化 seed 时触发 RepositoryError，返工约两轮。</p><dl class="retro-fields"><div><dt>实际影响 / 提供的帮助</dt><dd>最自然的 ISO 写法在 datetime 上失败，浪费一轮以上调试，且错误信息不指向文档缺失。</dd></div><div><dt>建议改法 / 应保留的能力</dt><dd>在 migrations.md 与 database-and-data.md 的 datetime 小节写明：可写 new Date() 或 &#39;2026-01-01T00:00:00.000&#39;，不可带 &#39;Z&#39;；需要时改用 datetimeTz。</dd></div></dl><span class="review-refs"><a href="#review-evidence-E11">E11</a> <a href="#review-evidence-E10">E10</a></span></div></details></div><div class="review-group"><h3>误导或明显错误 <span>0</span></h3><p class="muted">本轮未记录此类发现，不代表不存在。</p></div><div class="review-group"><h3>改进建议 <span>1</span></h3><details class="card review-finding" ><summary><div><strong>联系人/商机编辑页先拉全量列表再在客户端 find 单条记录</strong><div class="review-badges"><span class="tag ">Agent / 业务实现</span><span class="tag warn">待确认</span><span class="tag ">轻微</span><span class="tag ">未解决</span></div></div><span>⌄</span></summary><div class="subsection-body"><p>服务端只提供 GET /crm/customers/:id，联系人与商机没有 GET :id；EditContactForm/EditOpportunityForm 调用 listContacts/listOpportunities 后 find() 目标记录，数据量增大时会多传数据且详情可能因分页或缺省而找不到。</p><dl class="retro-fields"><div><dt>实际影响 / 提供的帮助</dt><dd>当前种子数据量下无影响，但接口契约不完备，规模上升后编辑入口可能失败或浪费带宽。</dd></div><div><dt>建议改法 / 应保留的能力</dt><dd>为 contacts/opportunities 增加 GET /:id 并让编辑页直接读取单条，列表接口保持列表职责。</dd></div></dl><span class="review-refs"><a href="#review-evidence-E3">E3</a> <a href="#review-evidence-E5">E5</a></span></div></details></div><details class="card raw-record" open><summary>本次评审的覆盖限制</summary><div class="subsection-body"><ul class="compact-list"><li>评审者为独立只读评审，未重新执行应用、迁移或浏览器验收，功能结论基于归档 QA 报告、源码与逻辑测试。</li><li>图像不可查看，未进行跨页面视觉评审；界面质量仅依据 QA 文本与组件源码。</li><li>未验证未登录以外的权限组合、未覆盖多连接数据库与事务回滚。</li><li>没有足够证据判定框架本身缺陷；F1/F2/F4 归因于 Agent 实现，F3 为文档缺口。</li><li>快照未包含 1 个超出预算、非普通文件或不可读取的文件；未据此确认其实现。</li></ul></div></details><details class="card raw-record"><summary>评审基线与版本指纹</summary><div class="subsection-body"><p>评审针对已封存候选补丁；可能在原搭建内或之后单独补跑。与 PR 当前最新提交不是同一概念，评审不修改补丁。</p><pre>{
+  &quot;reviewer&quot;: {
+    &quot;engine&quot;: &quot;pi&quot;,
+    &quot;model&quot;: &quot;deepseek-v4.1-flash&quot;,
+    &quot;version&quot;: &quot;0.86.1&quot;,
+    &quot;runId&quot;: &quot;35937706392&quot;,
+    &quot;attempt&quot;: 1,
+    &quot;controlSha&quot;: &quot;542e63602666d7a7bd9de05be567d1870e8fe3fd&quot;,
+    &quot;replay&quot;: true
+  },
+  &quot;repository&quot;: &quot;gchust/nb3-factory&quot;,
+  &quot;issue&quot;: 224,
+  &quot;runId&quot;: 35881009045,
+  &quot;attempt&quot;: 1,
+  &quot;controlSha&quot;: &quot;65d8d8e355c56ce1d809fd37140094c05a0097ea&quot;,
+  &quot;rubricVersion&quot;: 1,
+  &quot;baseSha&quot;: &quot;65d8d8e355c56ce1d809fd37140094c05a0097ea&quot;,
+  &quot;patchHash&quot;: &quot;3204a620a7d79cdcb4bd9479852c941e953b6206e08bd4d488d1cf1fd2bca735&quot;,
+  &quot;lockfileHash&quot;: &quot;9b47188308d984514c0c1660e995dadf84ce640c255e2846f0f76e4c69da84c0&quot;,
+  &quot;packages&quot;: [
+    {
+      &quot;name&quot;: &quot;@nocobase/ai-employee&quot;,
+      &quot;version&quot;: &quot;0.2.0-beta.6&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/ai-employee-avatars&quot;,
+      &quot;version&quot;: &quot;1.0.2&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/app-client&quot;,
+      &quot;version&quot;: &quot;1.0.0-beta.19&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/app-plugin-ai-employee&quot;,
+      &quot;version&quot;: &quot;0.1.0-beta.18&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/app-plugin-api-keys&quot;,
+      &quot;version&quot;: &quot;0.1.0-beta.4&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/app-plugin-authentication&quot;,
+      &quot;version&quot;: &quot;0.1.0-beta.18&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/app-plugin-authorization&quot;,
+      &quot;version&quot;: &quot;0.2.0-beta.15&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/app-plugin-authz-default-access&quot;,
+      &quot;version&quot;: &quot;0.1.0-beta.0&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/app-plugin-authz-restriction-rules&quot;,
+      &quot;version&quot;: &quot;0.1.0-beta.0&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/app-plugin-authz-sharing-rules&quot;,
+      &quot;version&quot;: &quot;0.1.0-beta.0&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/app-plugin-database-explorer&quot;,
+      &quot;version&quot;: &quot;0.1.0-beta.4&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/app-plugin-file&quot;,
+      &quot;version&quot;: &quot;0.1.0-beta.15&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/app-plugin-i18n&quot;,
+      &quot;version&quot;: &quot;0.1.0-beta.8&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/app-plugin-install&quot;,
+      &quot;version&quot;: &quot;0.1.0-beta.9&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/app-plugin-notification&quot;,
+      &quot;version&quot;: &quot;0.1.0-beta.13&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/app-plugin-notification-in-app&quot;,
+      &quot;version&quot;: &quot;0.2.0-beta.14&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/app-plugin-notification-provider&quot;,
+      &quot;version&quot;: &quot;0.1.0-beta.9&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/app-plugin-notification-providers&quot;,
+      &quot;version&quot;: &quot;0.2.0-beta.6&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/app-plugin-scheduler&quot;,
+      &quot;version&quot;: &quot;0.1.0-beta.4&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/app-plugin-users&quot;,
+      &quot;version&quot;: &quot;0.1.0-beta.6&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/app-plugin-workflow&quot;,
+      &quot;version&quot;: &quot;0.1.0-beta.23&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/app-portal-sdk&quot;,
+      &quot;version&quot;: &quot;1.0.0-beta.3&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/app-server&quot;,
+      &quot;version&quot;: &quot;1.0.0-beta.21&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/app-skills&quot;,
+      &quot;version&quot;: &quot;0.0.2-beta.7&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/app-websocket&quot;,
+      &quot;version&quot;: &quot;0.0.1&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/authorization&quot;,
+      &quot;version&quot;: &quot;0.1.0-beta.8&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/caching&quot;,
+      &quot;version&quot;: &quot;0.1.0-beta.2&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/config&quot;,
+      &quot;version&quot;: &quot;0.1.0-beta.1&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/cron&quot;,
+      &quot;version&quot;: &quot;0.1.0&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/db&quot;,
+      &quot;version&quot;: &quot;1.0.0-beta.11&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/db-sqlite&quot;,
+      &quot;version&quot;: &quot;0.1.0-beta.2&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/dev-config&quot;,
+      &quot;version&quot;: &quot;0.1.0-beta.10&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/drive&quot;,
+      &quot;version&quot;: &quot;0.1.0-beta.4&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/i18n&quot;,
+      &quot;version&quot;: &quot;1.0.0-beta.4&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/logging&quot;,
+      &quot;version&quot;: &quot;0.1.0-beta.5&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/nb3-cli&quot;,
+      &quot;version&quot;: &quot;1.0.0-beta.9&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/queue&quot;,
+      &quot;version&quot;: &quot;0.1.0-beta.7&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/repository-input&quot;,
+      &quot;version&quot;: &quot;0.1.0-beta.1&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/service-provider&quot;,
+      &quot;version&quot;: &quot;0.0.2-beta.1&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/session&quot;,
+      &quot;version&quot;: &quot;0.1.0-beta.2&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/snowflake&quot;,
+      &quot;version&quot;: &quot;1.0.0-beta.3&quot;
+    }
+  ],
+  &quot;reviewCriteriaHash&quot;: &quot;977a1a33dc347a7f47afebb632be49bdc647d599eecd2ab33e02b34ebb061a01&quot;,
+  &quot;artifactHash&quot;: &quot;7ac6e0e19b17d41f12c59860fa4b27c64c1bf9e287a90d09f614f7c4df4b109d&quot;,
+  &quot;inputHash&quot;: &quot;10d872845732f51b040c71e10c4a426bf693345e50c1f981639796322617a992&quot;
+}</pre></div></details><div class="review-evidence"><h3>证据与原文</h3><details class="card raw-record" id="review-evidence-E1"><summary><strong>E1</strong> · app/database/main/migrations/202609230001_create_crm_tables.ts:23–63</summary><div class="subsection-body"><p>contacts 与 opportunities 通过 belongsTo(&#39;customer&#39;,&#39;customers&#39;) 声明外键，notNull/constraints(true)/onDelete(&#39;cascade&#39;)，并 index(&#39;customerId&#39;)；opportunities 的 amount 为 decimal(14,2) notNull default 0，stage 为 string(32) notNull default &#39;following&#39; 且带索引。</p><pre>    await builder.createCollection(&#39;contacts&#39;, (collection) =&gt; {
+      collection.increments(&#39;id&#39;);
+      collection.string(&#39;name&#39;, { length: 255, nullable: false });
+      collection.string(&#39;contactInfo&#39;, { length: 255, nullable: true });
+      collection
+        .belongsTo(&#39;customer&#39;, &#39;customers&#39;)
+        .targetKey(&#39;id&#39;)
+        .foreignKey(&#39;customerId&#39;)
+        .foreignKeyType(&#39;integer&#39;)
+        .notNull()
+        .constraints(true)
+        .onDelete(&#39;cascade&#39;);
+      collection.index(&#39;customerId&#39;);
+      collection.datetime(&#39;createdAt&#39;, { nullable: false });
+      collection.datetime(&#39;updatedAt&#39;, { nullable: false });
+    });
+
+    await builder.createCollection(&#39;opportunities&#39;, (collection) =&gt; {
+      collection.increments(&#39;id&#39;);
+      collection.string(&#39;name&#39;, { length: 255, nullable: false });
+      collection
+        .belongsTo(&#39;customer&#39;, &#39;customers&#39;)
+        .targetKey(&#39;id&#39;)
+        .foreignKey(&#39;customerId&#39;)
+        .foreignKeyType(&#39;integer&#39;)
+        .notNull()
+        .constraints(true)
+        .onDelete(&#39;cascade&#39;);
+      collection.index(&#39;customerId&#39;);
+      collection.decimal(&#39;amount&#39;, {
+        precision: 14,
+        scale: 2,
+        nullable: false,
+        defaultValue: 0,
+      });
+      collection.string(&#39;stage&#39;, {
+        length: 32,
+        nullable: false,
+        defaultValue: &#39;following&#39;,
+      });
+      collection.index(&#39;stage&#39;);</pre><p class="check-source">原文件 SHA-256：3c623dd51cf170eeefb7d60fb663ced9f5f33e95684b97051b7c81c9bf4d1384</p></div></details><details class="card raw-record" id="review-evidence-E2"><summary><strong>E2</strong> · app/database/main/seeds/202609230002_seed_crm_data.ts:69–110</summary><div class="subsection-body"><p>seed 先按 name 查找/插入客户，再按 (name, customerId) 判断联系人与商机是否已存在并跳过，所有写入使用固定 SEEDED_AT=&#39;2026-01-01T00:00:00.000&#39;，因此重复执行不新增、不覆盖用户修改。</p><pre>    const customerIds = new Map&lt;string, number&gt;();
+    for (const customer of CUSTOMERS) {
+      let id = await findCustomerId(query, customer.name);
+      if (id === null) {
+        id = await insertCustomer(query, customer);
+      }
+      customerIds.set(customer.name, id);
+    }
+
+    for (const contact of CONTACTS) {
+      const customerId = customerIds.get(contact.customer);
+      if (customerId === undefined) continue;
+      if (await exists(query, &#39;contacts&#39;, contact.name, customerId)) continue;
+      await query
+        .insertInto(&#39;contacts&#39;)
+        .values({
+          name: contact.name,
+          contactInfo: contact.contactInfo,
+          customerId,
+          createdAt: SEEDED_AT,
+          updatedAt: SEEDED_AT,
+        })
+        .execute();
+    }
+
+    for (const opportunity of OPPORTUNITIES) {
+      const customerId = customerIds.get(opportunity.customer);
+      if (customerId === undefined) continue;
+      if (await exists(query, &#39;opportunities&#39;, opportunity.name, customerId)) {
+        continue;
+      }
+      await query
+        .insertInto(&#39;opportunities&#39;)
+        .values({
+          name: opportunity.name,
+          customerId,
+          amount: opportunity.amount,
+          stage: opportunity.stage,
+          createdAt: SEEDED_AT,
+          updatedAt: SEEDED_AT,
+        })
+        .execute();</pre><p class="check-source">原文件 SHA-256：46fe340cf1fd325f8122592f47191a524daafcba39e53354fbc129a711e95f82</p></div></details><details class="card raw-record" id="review-evidence-E3"><summary><strong>E3</strong> · app/server/providers/crm.ts:177–208</summary><div class="subsection-body"><p>getCustomer 按 customerId 分别查询 contacts 与 opportunities，再用 expression.fn.sum(&#39;amount&#39;) 对同一 customerId 过滤做聚合，opportunityAmountTotal 取自数据库实际记录而非常量。</p><pre>    async getCustomer(id) {
+      const row = await query
+        .selectFrom(&#39;customers&#39;)
+        .selectAll()
+        .where(&#39;id&#39;, &#39;=&#39;, id)
+        .executeTakeFirst();
+      if (!row) return null;
+
+      const contacts = await query
+        .selectFrom(&#39;contacts&#39;)
+        .selectAll()
+        .where(&#39;customerId&#39;, &#39;=&#39;, id)
+        .orderBy(&#39;id&#39;, &#39;asc&#39;)
+        .execute();
+      const opportunities = await query
+        .selectFrom(&#39;opportunities&#39;)
+        .selectAll()
+        .where(&#39;customerId&#39;, &#39;=&#39;, id)
+        .orderBy(&#39;id&#39;, &#39;asc&#39;)
+        .execute();
+      const totalRow = await query
+        .selectFrom(&#39;opportunities&#39;)
+        .select((expression) =&gt; [expression.fn.sum(&#39;amount&#39;).as(&#39;total&#39;)])
+        .where(&#39;customerId&#39;, &#39;=&#39;, id)
+        .executeTakeFirst();
+
+      return {
+        ...mapCustomer(row),
+        contacts: contacts.map(mapContact),
+        opportunities: opportunities.map(mapOpportunity),
+        opportunityAmountTotal: Number(totalRow?.total ?? 0),
+      };</pre><p class="check-source">原文件 SHA-256：7ae15fcfccfc4e9024996e0913b00309a07d8d523aacaacc8dfd7dba7303823a</p></div></details><details class="card raw-record" id="review-evidence-E4"><summary><strong>E4</strong> · app/server/providers/crm.ts:429–448</summary><div class="subsection-body"><p>requireAmount 拒绝非有限数与负数并抛 CrmValidationError；requireStage 用 isOpportunityStage 校验枚举；requireName 拒绝空白字符串。</p><pre>function requireAmount(value: unknown): number {
+  const amount =
+    typeof value === &#39;number&#39;
+      ? value
+      : typeof value === &#39;string&#39; &amp;&amp; value.trim() !== &#39;&#39;
+        ? Number(value)
+        : Number.NaN;
+  if (!Number.isFinite(amount) || amount &lt; 0) {
+    throw new CrmValidationError(&#39;Amount must be a non-negative number.&#39;);
+  }
+  return amount;
+}
+
+function requireStage(value: unknown): OpportunityStage {
+  if (!isOpportunityStage(value)) {
+    throw new CrmValidationError(
+      `Stage must be one of: ${OPPORTUNITY_STAGES.join(&#39;, &#39;)}.`,
+    );
+  }
+  return value;</pre><p class="check-source">原文件 SHA-256：7ae15fcfccfc4e9024996e0913b00309a07d8d523aacaacc8dfd7dba7303823a</p></div></details><details class="card raw-record" id="review-evidence-E5"><summary><strong>E5</strong> · app/server/routes/crm.ts:33–92</summary><div class="subsection-body"><p>routes.onError 把 CrmValidationError 映射为 400、CrmNotFoundError 映射为 404；routes.use(&#39;*&#39;, auth.required()) 为整组 CRM 接口加登录要求；GET /opportunities 对 stage 查询参数做枚举校验。</p><pre>    routes.onError((error, context) =&gt; {
+      if (error instanceof CrmValidationError) {
+        return context.json({ code: error.code, message: error.message }, 400);
+      }
+      if (error instanceof CrmNotFoundError) {
+        return context.json({ code: error.code, message: error.message }, 404);
+      }
+      throw error;
+    });
+
+    routes.use(&#39;*&#39;, auth.required());
+
+    routes.get(&#39;/customers&#39;, async (context) =&gt;
+      context.json({ data: await crm.listCustomers() }),
+    );
+
+    routes.post(&#39;/customers&#39;, async (context) =&gt; {
+      const input = await readJson(context);
+      return context.json({ data: await crm.createCustomer(input) }, 201);
+    });
+
+    routes.get(&#39;/customers/:id&#39;, async (context) =&gt; {
+      const detail = await crm.getCustomer(readId(context.req.param(&#39;id&#39;)));
+      if (!detail) throw new CrmNotFoundError(&#39;Customer not found.&#39;);
+      return context.json({ data: detail });
+    });
+
+    routes.patch(&#39;/customers/:id&#39;, async (context) =&gt; {
+      const input = await readJson(context);
+      return context.json({
+        data: await crm.updateCustomer(readId(context.req.param(&#39;id&#39;)), input),
+      });
+    });
+
+    routes.get(&#39;/contacts&#39;, async (context) =&gt;
+      context.json({ data: await crm.listContacts() }),
+    );
+
+    routes.post(&#39;/contacts&#39;, async (context) =&gt; {
+      const input = await readJson(context);
+      return context.json({ data: await crm.createContact(input) }, 201);
+    });
+
+    routes.patch(&#39;/contacts/:id&#39;, async (context) =&gt; {
+      const input = await readJson(context);
+      return context.json({
+        data: await crm.updateContact(readId(context.req.param(&#39;id&#39;)), input),
+      });
+    });
+
+    routes.get(&#39;/opportunities&#39;, async (context) =&gt; {
+      const stage = context.req.query(&#39;stage&#39;);
+      if (stage !== undefined &amp;&amp; !isOpportunityStage(stage)) {
+        throw new CrmValidationError(
+          &#39;stage must be one of: following, won, lost.&#39;,
+        );
+      }
+      return context.json({
+        data: await crm.listOpportunities(
+          stage === undefined ? undefined : stage,</pre><p class="check-source">原文件 SHA-256：7c83f58066e0aeacd6dc9dac49f7517b008ea76df172f71557dad2164542900e</p></div></details><details class="card raw-record" id="review-evidence-E6"><summary><strong>E6</strong> · app/client/pages/crm/components.tsx:221–237</summary><div class="subsection-body"><p>ContactForm 的关联客户 Select 使用 value={customer}（number|null）而 SelectItem value={option.id}（number）；shadcn/Radix Select 的 value 约定为 string，QA 观察到编辑回填时显示外键数字。</p><pre>        &lt;Select
+          id={customerId}
+          value={customer}
+          required
+          onValueChange={setCustomer}
+        &gt;
+          &lt;SelectTrigger className=&#39;w-full&#39;&gt;
+            &lt;SelectValue placeholder={t(&#39;crm.contacts.customerPlaceholder&#39;)} /&gt;
+          &lt;/SelectTrigger&gt;
+          &lt;SelectContent&gt;
+            {customers.map((option) =&gt; (
+              &lt;SelectItem key={option.id} value={option.id}&gt;
+                {option.name}
+              &lt;/SelectItem&gt;
+            ))}
+          &lt;/SelectContent&gt;
+        &lt;/Select&gt;</pre><p class="check-source">原文件 SHA-256：e46daf24a94143adb8a3eeeb69b57866e7de91fed7131d31cfdaaaced8abd370</p></div></details><details class="card raw-record" id="review-evidence-E7"><summary><strong>E7</strong> · app/client/routes.ts:45–71</summary><div class="subsection-body"><p>crmCustomers 路由 authz:&#39;skip&#39; + auth:&#39;required&#39;，并在 children 中声明 new、:customerId、:customerId/edit 三个 componentLoader，使用户进入客户列表后保持挂载、以子路由承载表单与详情。</p><pre>    // authorization is skipped rather than tied to a role system the application does not have; sign-in is the
+    // boundary, and each endpoint enforces its own authentication.
+    authz: &#39;skip&#39;,
+    auth: &#39;required&#39;,
+    breadcrumb: { title: &#39;navigation.customers&#39; },
+    componentLoader: () =&gt; import(&#39;./pages/crm/customers/index.js&#39;),
+    children: [
+      {
+        name: &#39;crmCustomerNew&#39;,
+        path: &#39;new&#39;,
+        componentLoader: () =&gt; import(&#39;./pages/crm/customers/new.js&#39;),
+      },
+      {
+        name: &#39;crmCustomerDetail&#39;,
+        path: &#39;:customerId&#39;,
+        breadcrumb: { title: &#39;crm.customers.detailTitle&#39; },
+        componentLoader: () =&gt; import(&#39;./pages/crm/customers/detail.js&#39;),
+      },
+      {
+        name: &#39;crmCustomerEdit&#39;,
+        path: &#39;:customerId/edit&#39;,
+        componentLoader: () =&gt; import(&#39;./pages/crm/customers/edit.js&#39;),
+      },
+    ],
+    name: &#39;crmCustomers&#39;,
+    navigation: { title: &#39;navigation.customers&#39;, icon: Users },
+    path: &#39;/crm/customers&#39;,</pre><p class="check-source">原文件 SHA-256：68f63a1daa03475da5eb3b5cdebe619c81a2510a651c540ebe370364a0a131b1</p></div></details><details class="card raw-record" id="review-evidence-E8"><summary><strong>E8</strong> · app/client/pages/crm/hooks.ts:20–68</summary><div class="subsection-body"><p>useCrmData 用 identity=key#version 与 AbortController 管理请求，loading 由 identity 比较派生，避免 effect 内同步 setState 与竞态，并在重载时保留旧数据。</p><pre>export function useCrmData&lt;T&gt;(
+  key: string,
+  loader: (signal: AbortSignal) =&gt; Promise&lt;T&gt;,
+): CrmDataState&lt;T&gt; {
+  const loaderRef = useRef(loader);
+  useEffect(() =&gt; {
+    loaderRef.current = loader;
+  });
+
+  const [version, setVersion] = useState(0);
+  // The identity of the request the state belongs to. `loading` is derived by comparing it with the
+  // current request, so the effect never calls setState synchronously and a stale response cannot
+  // claim a request it did not answer.
+  const identity = `${key}#${version}`;
+  const [state, setState] = useState&lt;{
+    identity: string | null;
+    data: T | null;
+    error: unknown;
+  }&gt;({ identity: null, data: null, error: null });
+
+  useEffect(() =&gt; {
+    const controller = new AbortController();
+    const requestIdentity = identity;
+    loaderRef.current(controller.signal).then(
+      (data) =&gt; {
+        if (controller.signal.aborted) return;
+        setState({ identity: requestIdentity, data, error: null });
+      },
+      (error: unknown) =&gt; {
+        if (controller.signal.aborted) return;
+        if (error instanceof DOMException &amp;&amp; error.name === &#39;AbortError&#39;)
+          return;
+        setState((previous) =&gt; ({
+          identity: requestIdentity,
+          data: previous.data,
+          error,
+        }));
+      },
+    );
+    return () =&gt; controller.abort();
+  }, [identity]);
+
+  const reload = useCallback(() =&gt; setVersion((value) =&gt; value + 1), []);
+
+  return {
+    data: state.data,
+    error: state.error,
+    loading: state.identity !== identity,
+    reload,</pre><p class="check-source">原文件 SHA-256：4fb5a960644b2fde25be901d29d1de3694c4d1117bdb0707783c9044111c1a48</p></div></details><details class="card raw-record" id="review-evidence-E9"><summary><strong>E9</strong> · app/client/locales/en-US.ts:142–215</summary><div class="subsection-body"><p>crm 命名空间覆盖 common/customers/contacts/opportunities/stage 的全部文案，包含必填与金额错误提示；zh-CN.ts 存在同构的 crm 命名空间并给出中文译文。</p><pre>  crm: {
+    common: {
+      actions: &#39;Actions&#39;,
+      back: &#39;Back to list&#39;,
+      cancel: &#39;Cancel&#39;,
+      edit: &#39;Edit&#39;,
+      error: &#39;Something went wrong. Please try again.&#39;,
+      invalidInput: &#39;Please check the values and try again.&#39;,
+      loading: &#39;Loading…&#39;,
+      nameRequired: &#39;A name is required.&#39;,
+      notFound: &#39;The record no longer exists.&#39;,
+      refresh: &#39;Refresh&#39;,
+      save: &#39;Save&#39;,
+      saving: &#39;Saving…&#39;,
+    },
+    customers: {
+      title: &#39;Customers&#39;,
+      description: &#39;The companies you do business with.&#39;,
+      add: &#39;Add customer&#39;,
+      addTitle: &#39;New customer&#39;,
+      editTitle: &#39;Edit customer&#39;,
+      detailTitle: &#39;Customer detail&#39;,
+      name: &#39;Name&#39;,
+      namePlaceholder: &#39;e.g. Acme Corporation&#39;,
+      industry: &#39;Industry&#39;,
+      industryPlaceholder: &#39;Optional&#39;,
+      contacts: &#39;Contacts&#39;,
+      opportunities: &#39;Opportunities&#39;,
+      total: &#39;Total opportunity amount&#39;,
+      empty: &#39;No customers yet.&#39;,
+      noContacts: &#39;No contacts for this customer.&#39;,
+      noOpportunities: &#39;No opportunities for this customer.&#39;,
+    },
+    contacts: {
+      title: &#39;Contacts&#39;,
+      description: &#39;The people associated with your customers.&#39;,
+      add: &#39;Add contact&#39;,
+      addTitle: &#39;New contact&#39;,
+      editTitle: &#39;Edit contact&#39;,
+      name: &#39;Name&#39;,
+      namePlaceholder: &#39;e.g. Jane Doe&#39;,
+      contactInfo: &#39;Contact info&#39;,
+      contactInfoPlaceholder: &#39;Phone or email&#39;,
+      customer: &#39;Customer&#39;,
+      customerPlaceholder: &#39;Select a customer&#39;,
+      customerRequired: &#39;Select a customer.&#39;,
+      noCustomers: &#39;Create a customer before adding a contact.&#39;,
+      empty: &#39;No contacts yet.&#39;,
+    },
+    opportunities: {
+      title: &#39;Opportunities&#39;,
+      description: &#39;Potential deals and where they stand.&#39;,
+      add: &#39;Add opportunity&#39;,
+      addTitle: &#39;New opportunity&#39;,
+      editTitle: &#39;Edit opportunity&#39;,
+      name: &#39;Name&#39;,
+      namePlaceholder: &#39;e.g. Annual renewal&#39;,
+      customer: &#39;Customer&#39;,
+      customerPlaceholder: &#39;Select a customer&#39;,
+      customerRequired: &#39;Select a customer.&#39;,
+      amount: &#39;Expected amount&#39;,
+      amountPlaceholder: &#39;0.00&#39;,
+      amountInvalid: &#39;Enter an amount of zero or more.&#39;,
+      stage: &#39;Stage&#39;,
+      filterStage: &#39;Filter by stage&#39;,
+      allStages: &#39;All stages&#39;,
+      noCustomers: &#39;Create a customer before adding an opportunity.&#39;,
+      empty: &#39;No opportunities yet.&#39;,
+    },
+    stage: {
+      following: &#39;Following&#39;,
+      won: &#39;Won&#39;,
+      lost: &#39;Lost&#39;,
+    },</pre><p class="check-source">原文件 SHA-256：56791dd019326917ccc98ae0fd1e457cd86839493b3a8f66a7928eec3e0a88da</p></div></details><details class="card raw-record" id="review-evidence-E10"><summary><strong>E10</strong> · app/.agents/skills/nocobase-app-development/references/client-child-routes.md:285–305</summary><div class="subsection-body"><p>Skill 明确规定：useRouteOverlay() 只能在 RouteDialog/RouteDrawer 内部渲染的后代组件中调用；返回包装器的页面组件位于 Provider 之外、不得调用该 hook。首轮实现正违反了这条规则。</p><pre>Call `useRouteOverlay()` only in a descendant component rendered inside the `RouteDialog` or `RouteDrawer` being closed, including a component passed as `footer`. The provider is inside the overlay wrapper. The page component that returns the wrapper is outside that provider and must not call the hook for that overlay.
+
+Keep the wrapper in the page and put the hook in a separate component, rendered as JSX:
+
+```tsx
+import { RouteDialog } from &#39;@/components/route-dialog&#39;;
+import { useRouteOverlay } from &#39;@/components/use-route-overlay&#39;;
+import { Button } from &#39;@/components/ui/button&#39;;
+
+export default function OrderEditPage() {
+  return (
+    &lt;RouteDialog title=&#39;Edit order&#39; footer={&lt;Actions /&gt;}&gt;
+      &lt;p&gt;Edit the order here.&lt;/p&gt;
+    &lt;/RouteDialog&gt;
+  );
+}
+
+function Actions() {
+  const { close, isClosing } = useRouteOverlay();
+  return (
+    &lt;Button</pre><p class="check-source">原文件 SHA-256：963a81696ac3846da94ae907cd79b767be70bc39379f5cc8e9d6110b69e1463b</p></div></details><details class="card raw-record" id="review-evidence-E11"><summary><strong>E11</strong> · packages/@nocobase/db/dist/src/repository/temporal.js:45–75</summary><div class="subsection-body"><p>datetime 的合法字符串正则不含时区后缀（仅 datetimeTz 允许 Z/±hh:mm），offset 分支只在 datetimeTz 生效，说明 datetime 是 naive 值、不接受 &#39;Z&#39; 后缀。</p><pre>        : `^${datePattern}T${timePattern}${field.type === &#39;datetimeTz&#39; ? &#39;(Z|[+-]\\d{2}:\\d{2})&#39; : &#39;&#39;}$`;
+    const match = value.match(new RegExp(pattern));
+    if (!match)
+        return fail();
+    const year = Number(match[1]);
+    const month = Number(match[2]);
+    const day = Number(match[3]);
+    const calendar = new Date(Date.UTC(year, month - 1, day));
+    if (year &lt; 1000 ||
+        year &gt; 9999 ||
+        calendar.getUTCFullYear() !== year ||
+        calendar.getUTCMonth() !== month - 1 ||
+        calendar.getUTCDate() !== day)
+        return fail();
+    if (field.type === &#39;date&#39;)
+        return value;
+    if (Number(match[4]) &gt; 23 || Number(match[5]) &gt; 59 || Number(match[6]) &gt; 59)
+        return fail();
+    const local = `${match[1]}-${match[2]}-${match[3]}T${match[4]}:${match[5]}:${match[6]}.${(match[7] ?? &#39;&#39;).padEnd(3, &#39;0&#39;)}`;
+    if (field.type === &#39;datetime&#39;)
+        return local;
+    const offset = match[8];
+    if (offset !== &#39;Z&#39; &amp;&amp;
+        (Number(offset.slice(1, 3)) &gt; 14 ||
+            Number(offset.slice(4)) &gt; 59 ||
+            (Number(offset.slice(1, 3)) === 14 &amp;&amp; Number(offset.slice(4)) !== 0) ||
+            offset === &#39;-00:00&#39;))
+        return fail();
+    const instant = new Date(`${local}${offset}`);
+    if (!Number.isFinite(instant.getTime()) ||
+        instant.getUTCFullYear() &lt; 1000 ||</pre><p class="check-source">原文件 SHA-256：b508832a9171cbb8922d8c39dbae52db48cf780c53ba740d11589afbb235c04e</p></div></details><details class="card raw-record" id="review-evidence-E12"><summary><strong>E12</strong> · app/tests/logic/crm.test.ts:81–125</summary><div class="subsection-body"><p>测试对真实 SQLite 执行迁移并断言三张表、name/industry 可空性、contacts 外键 on_delete=CASCADE、idx_opportunities_stage 与 idx_contacts_customer_id 存在，随后 rollback 并断言三表消失；seed 测试断言首次写入与二次幂等。</p><pre>describe(&#39;CRM migration&#39;, () =&gt; {
+  it(&#39;creates the three tables, their foreign keys and indexes, and reverses them&#39;, async () =&gt; {
+    const { database } = createFixture();
+    await migrate(database);
+    const client = await database.connection(&#39;main&#39;).client&lt;Knex&gt;();
+
+    expect(await client.schema.hasTable(&#39;customers&#39;)).toBe(true);
+    expect(await client.schema.hasTable(&#39;contacts&#39;)).toBe(true);
+    expect(await client.schema.hasTable(&#39;opportunities&#39;)).toBe(true);
+
+    const customerColumns = await client(&#39;customers&#39;)
+      .columnInfo()
+      .then((info: Record&lt;string, { nullable: boolean }&gt;) =&gt; info);
+    expect(customerColumns.name.nullable).toBe(false);
+    expect(customerColumns.industry.nullable).toBe(true);
+
+    const contactForeignKey = await client
+      .raw(&#39;PRAGMA foreign_key_list(contacts)&#39;)
+      .then(
+        (rows: Array&lt;{ table: string; from: string; on_delete: string }&gt;) =&gt;
+          rows[0],
+      );
+    expect(contactForeignKey).toMatchObject({
+      table: &#39;customers&#39;,
+      from: &#39;customer_id&#39;,
+      on_delete: &#39;CASCADE&#39;,
+    });
+
+    const indexes = await client(&#39;sqlite_master&#39;)
+      .where({ type: &#39;index&#39; })
+      .pluck(&#39;name&#39;);
+    expect(indexes).toContain(&#39;idx_opportunities_stage&#39;);
+    expect(indexes).toContain(&#39;idx_contacts_customer_id&#39;);
+
+    const migrator = database.createMigrator({
+      directory: migrationsDirectory,
+      packageName: PACKAGE_NAME,
+    });
+    const rollback = await migrator.rollback();
+    expect(rollback.rolledBack).toContain(&#39;202609230001_create_crm_tables&#39;);
+    expect(await client.schema.hasTable(&#39;customers&#39;)).toBe(false);
+    expect(await client.schema.hasTable(&#39;contacts&#39;)).toBe(false);
+    expect(await client.schema.hasTable(&#39;opportunities&#39;)).toBe(false);
+  });
+});</pre><p class="check-source">原文件 SHA-256：e21212a6b888344d379c239012af04cc256bfc33decb2e32dfec9c1996f941d0</p></div></details><details class="card raw-record" id="review-evidence-E13"><summary><strong>E13</strong> · artifacts/verify-1/browser-acceptance/report.json:4–18</summary><div class="subsection-body"><p>首轮报告 passed=false：客户/联系人/商机列表与详情可打开、合计 CN¥200,000 来自真实记录、阶段筛选可用，但所有新增/编辑路由只渲染 &#39;Unable to load page&#39;，控制台抛 &#39;useRouteOverlay must be used inside RouteDialog or RouteDrawer&#39;，B01–B05 全部 failed。</p><pre>  &quot;summary&quot;: &quot;管理员可登录并打开客户/联系人/商机列表及客户详情，客户详情显示联系人与商机且合计 CN¥200,000 来自真实记录，商机阶段筛选可用；但所有新增和编辑路由均显示 Unable to load page（控制台 useRouteOverlay must be used inside RouteDialog or RouteDrawer），无法新增客户/联系人/商机、无法编辑阶段或金额、无法验证必填与负金额校验，B01-B05 全部未通过。&quot;,
+  &quot;checks&quot;: [
+    {
+      &quot;id&quot;: &quot;B01&quot;,
+      &quot;criterion&quot;: &quot;新增客户及其联系人，刷新客户详情，联系人仍关联到正确客户。&quot;,
+      &quot;status&quot;: &quot;failed&quot;,
+      &quot;actions&quot;: [
+        &quot;用管理员账号登录，打开 Customers 列表，确认存在种子客户 星河科技、蓝海贸易&quot;,
+        &quot;点击 Add customer，页面跳转到 /main/crm/customers/new&quot;,
+        &quot;页面显示 &#39;Unable to load page&#39; 和 Retry；点击 Retry 后、以及整页重新加载后仍然相同&quot;,
+        &quot;直接打开 /main/crm/contacts/new 的 Add contact 页面，同样显示 &#39;Unable to load page&#39;&quot;
+      ],
+      &quot;evidence&quot;: [
+        &quot;点击 Add customer 后 URL 变为 /main/crm/customers/new，主区域只渲染 &#39;Unable to load page&#39;，没有名称/行业输入框，无法新增客户&quot;,
+        &quot;浏览器控制台报未处理异常：Error: useRouteOverlay must be used inside RouteDialog or RouteDrawer&quot;,</pre><p class="check-source">原文件 SHA-256：491105c0a83a5f9823bb5f8d47dbf93aa1982a67f6cb708bb0d76dc17eee7253</p></div></details><details class="card raw-record" id="review-evidence-E14"><summary><strong>E14</strong> · artifacts/verify-2/browser-acceptance/report.json:4–4</summary><div class="subsection-body"><p>最终报告 passed=true，B01–B05 在真实浏览器完成；同时明确指出关联客户选择器在表单回填时显示外键数字（如 3）而非客户名称，称其为界面显示瑕疵、不影响功能结论。</p><pre>  &quot;summary&quot;: &quot;以管理员账号在真实浏览器完成 B01-B05：客户、联系人、商机新增与商机编辑均实际提交并刷新核验；客户详情正确关联联系人和商机，按客户聚合的预计金额随真实记录变化（100→150，+50），阶段改为 Win 后按阶段筛选命中且另一阶段不混入，缺必填客户与负金额均被可理解的校验拦截。控制台无页面错误，网络请求无 4xx/5xx。另观察到关联客户选择器在表单中回填时显示外键数字（如 3）而非客户名称，属界面显示瑕疵，不影响本轮的关联、合计、筛选与校验结果。&quot;,</pre><p class="check-source">原文件 SHA-256：11f75556031a59862bdd131a37da61ab83a8f00b09a3c7ae9a6745a83c8edff4</p></div></details></div></section><section class="section" id="acceptance"><div class="section-head"><div><div class="eyebrow">Acceptance record</div><h2>验收记录</h2></div><span class="tag ">5 项要求</span></div>
     <div class="acceptance-toolbar"><div class="acceptance-counts"><span class="tag good">报告通过 5</span><span class="tag ">报告未通过 0</span><span class="tag ">未验证 0</span></div>
     <div class="acceptance-actions"><button class="btn small" data-checks="expand">展开全部记录</button><button class="btn small" data-checks="collapse">收起通过项</button></div></div>
     <p class="section-intro">每项直接显示结果；展开可看原始要求、操作记录、观察结果和截图。证据批注单独显示，不改写原始验收状态。</p>
@@ -309,7 +958,7 @@ B05. 缺失必填客户或输入负金额时不能保存，错误可理解；不
       &quot;mechanizable&quot;: true
     }
   ]
-}</pre></div></details></section><section class="section" id="execution"><div class="section-head"><div><div class="eyebrow">Execution &amp; usage</div><h2>发生了什么，花了多少</h2></div></div><div class="split"><div class="card run-panel"><h3>运行记录</h3><div class="run"><div class="run-content"><div class="run-top"><strong>35881009045 / attempt 1</strong></div><p><span class="tag bad">本轮未完成</span></p><p>失败</p></div></div><div class="run"><div class="run-content"><div class="run-top"><strong>35881009045 / attempt 2</strong></div><p><span class="tag ">已提交 PR · 等待人工评审</span></p><p>已生成/更新业务 PR</p></div></div><div class="ci-fact"><strong>自动检查：通过</strong><p class="check-source">流水线已完成最终验证及 PR 发布；不代表人工合并。</p></div></div><div class="card usage-card"><div class="eyebrow">已记录 Token · 含缓存</div><div class="usage-big">48,849,674</div><span class="tag warn">采集可能不完整</span><p>此 Issue 累计：已采集 1 个 Run / 2 次尝试</p><details class="subsection"><summary>展开用量分项 ⌄</summary><div class="subsection-body"><div class="table-wrap"><table><thead><tr><th>指标</th><th>值</th></tr></thead><tbody><tr><td>非缓存输入</td><td class="mono">1,986,526</td></tr><tr><td>输出</td><td class="mono">423,436</td></tr><tr><td>缓存读取</td><td class="mono">46,439,712</td></tr><tr><td>端到端耗时</td><td class="mono">7:53:05</td></tr></tbody></table></div><h3 class="usage-phase-title">按阶段分项</h3><div class="table-wrap"><table><thead><tr><th>阶段</th><th class="num">非缓存输入</th><th class="num">输出</th><th class="num">缓存读取</th><th class="num">缓存写入</th><th class="num">合计</th></tr></thead><tbody><tr><td>初始实现</td><td class="num">923,020</td><td class="num">222,258</td><td class="num">30,864,684</td><td class="num">0</td><td class="num">32,009,962</td></tr><tr><td>应用修复</td><td class="num">100,794</td><td class="num">38,336</td><td class="num">2,341,296</td><td class="num">0</td><td class="num">2,480,426</td></tr><tr><td>完整业务 QA</td><td class="num">293,230</td><td class="num">94,862</td><td class="num">8,347,000</td><td class="num">0</td><td class="num">8,735,092</td></tr><tr><td>失败路径复测</td><td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td></tr><tr><td>QA 补报告</td><td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td></tr><tr><td>独立搭建评审</td><td class="num">285,150</td><td class="num">41,054</td><td class="num">4,886,732</td><td class="num">0</td><td class="num">5,212,936</td></tr><tr><td>上下文压缩</td><td class="num">384,332</td><td class="num">26,926</td><td class="num">0</td><td class="num">0</td><td class="num">411,258</td></tr></tbody></table></div><p class="check-source">用量记录 880；未报告用量 0；分项不完整 2；缺失作业时间 0。</p><p class="check-source">不把流式增量、上下文长度和思考 Token 重复相加。旧记录未拆分 QA 时保留原有口径；费用：未知。</p><p class="check-source">现有 task-usage 模块（按 Agent / job ID 去重）。不等同供应商账单，不推算费用。</p></div></details></div></div></section><details class="card raw-record"><summary>本轮阶段耗时</summary><div class="subsection-body"><p>嵌套阶段不可相加为总耗时；仅展示已完成的计时。</p><div class="table-wrap"><table><tr><th>阶段</th><th>次数</th><th>时长</th></tr><tr><td>agent:implementation</td><td>1</td><td>0:30:08</td></tr><tr><td>agent:qa</td><td>2</td><td>0:13:29</td></tr><tr><td>agent:repair</td><td>1</td><td>0:07:30</td></tr><tr><td>agent:review</td><td>1</td><td>0:05:01</td></tr><tr><td>build:Build client</td><td>4</td><td>0:02:12</td></tr><tr><td>build</td><td>2</td><td>0:01:55</td></tr><tr><td>test</td><td>2</td><td>0:01:29</td></tr><tr><td>lint</td><td>2</td><td>0:00:37</td></tr><tr><td>typecheck</td><td>2</td><td>0:00:26</td></tr><tr><td>build:Typecheck client</td><td>4</td><td>0:00:23</td></tr><tr><td>build:Build workflow artifacts</td><td>4</td><td>0:00:18</td></tr><tr><td>build:Build server</td><td>4</td><td>0:00:16</td></tr><tr><td>build:Typecheck tooling</td><td>4</td><td>0:00:15</td></tr><tr><td>format:check</td><td>2</td><td>0:00:13</td></tr><tr><td>migrate</td><td>2</td><td>0:00:12</td></tr><tr><td>seed</td><td>2</td><td>0:00:11</td></tr><tr><td>build:Install server production dependencies</td><td>1</td><td>0:00:06</td></tr><tr><td>install</td><td>1</td><td>0:00:05</td></tr><tr><td>format:auto</td><td>2</td><td>0:00:04</td></tr><tr><td>build:Rewrite server path aliases</td><td>4</td><td>0:00:03</td></tr><tr><td>build:Build server workspace dependencies</td><td>4</td><td>0:00:02</td></tr><tr><td>build:Prune deployment artifacts</td><td>4</td><td>0:00:02</td></tr><tr><td>skills-sync</td><td>1</td><td>0:00:01</td></tr><tr><td>build:Materialize server dependency links</td><td>1</td><td>0:00:00</td></tr><tr><td>build:Verify server dependencies</td><td>4</td><td>0:00:00</td></tr><tr><td>build:Generate server package</td><td>4</td><td>0:00:00</td></tr><tr><td>build:Retarget native modules</td><td>1</td><td>0:00:00</td></tr><tr><td>build:dependency-cache-restore</td><td>4</td><td>0:00:00</td></tr></table></div></div></details><footer class="report-footer">Factory report template v3 · gchust/nb3-factory:224:35881009045:2:fd1ca3583679e2472371e638bf72555d4afd5fb3:template-3<br>验收逐条保留；问题与改进来自复盘原文。此页面是归档展示，不是重新验收。</footer></main>
+}</pre></div></details></section><section class="section" id="execution"><div class="section-head"><div><div class="eyebrow">Execution &amp; usage</div><h2>发生了什么，花了多少</h2></div></div><div class="split"><div class="card run-panel"><h3>运行记录</h3><div class="run"><div class="run-content"><div class="run-top"><strong>35881009045 / attempt 1</strong></div><p><span class="tag bad">本轮未完成</span></p><p>失败</p></div></div><div class="run"><div class="run-content"><div class="run-top"><strong>35881009045 / attempt 2</strong></div><p><span class="tag ">已提交 PR · 等待人工评审</span></p><p>已生成/更新业务 PR</p></div></div><div class="ci-fact"><strong>自动检查：通过</strong><p class="check-source">流水线已完成最终验证及 PR 发布；不代表人工合并。</p></div></div><div class="card usage-card"><div class="eyebrow">已记录 Token · 含缓存</div><div class="usage-big">48,849,674</div><span class="tag warn">采集可能不完整</span><p>此 Issue 累计：已采集 1 个 Run / 2 次尝试</p><details class="subsection"><summary>展开用量分项 ⌄</summary><div class="subsection-body"><div class="table-wrap"><table><thead><tr><th>指标</th><th>值</th></tr></thead><tbody><tr><td>非缓存输入</td><td class="mono">1,986,526</td></tr><tr><td>输出</td><td class="mono">423,436</td></tr><tr><td>缓存读取</td><td class="mono">46,439,712</td></tr><tr><td>端到端耗时</td><td class="mono">7:53:05</td></tr></tbody></table></div><h3 class="usage-phase-title">按阶段分项</h3><div class="table-wrap"><table><thead><tr><th>阶段</th><th class="num">非缓存输入</th><th class="num">输出</th><th class="num">缓存读取</th><th class="num">缓存写入</th><th class="num">合计</th></tr></thead><tbody><tr><td>初始实现</td><td class="num">923,020</td><td class="num">222,258</td><td class="num">30,864,684</td><td class="num">0</td><td class="num">32,009,962</td></tr><tr><td>应用修复</td><td class="num">100,794</td><td class="num">38,336</td><td class="num">2,341,296</td><td class="num">0</td><td class="num">2,480,426</td></tr><tr><td>完整业务 QA</td><td class="num">293,230</td><td class="num">94,862</td><td class="num">8,347,000</td><td class="num">0</td><td class="num">8,735,092</td></tr><tr><td>失败路径复测</td><td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td></tr><tr><td>QA 补报告</td><td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td></tr><tr><td>独立搭建评审</td><td class="num">285,150</td><td class="num">41,054</td><td class="num">4,886,732</td><td class="num">0</td><td class="num">5,212,936</td></tr><tr><td>上下文压缩</td><td class="num">384,332</td><td class="num">26,926</td><td class="num">0</td><td class="num">0</td><td class="num">411,258</td></tr></tbody></table></div><p class="check-source">用量记录 880；未报告用量 0；分项不完整 2；缺失作业时间 0。</p><p class="check-source">不把流式增量、上下文长度和思考 Token 重复相加。旧记录未拆分 QA 时保留原有口径；费用：未知。</p><p class="check-source">现有 task-usage 模块（按 Agent / job ID 去重）。不等同供应商账单，不推算费用。</p></div></details></div></div></section><details class="card raw-record"><summary>本轮阶段耗时</summary><div class="subsection-body"><p>嵌套阶段不可相加为总耗时；仅展示已完成的计时。</p><div class="table-wrap"><table><tr><th>阶段</th><th>次数</th><th>时长</th></tr><tr><td>agent:implementation</td><td>1</td><td>0:30:08</td></tr><tr><td>agent:qa</td><td>2</td><td>0:13:29</td></tr><tr><td>agent:repair</td><td>1</td><td>0:07:30</td></tr><tr><td>agent:review</td><td>1</td><td>0:05:01</td></tr><tr><td>build:Build client</td><td>4</td><td>0:02:12</td></tr><tr><td>build</td><td>2</td><td>0:01:55</td></tr><tr><td>test</td><td>2</td><td>0:01:29</td></tr><tr><td>lint</td><td>2</td><td>0:00:37</td></tr><tr><td>typecheck</td><td>2</td><td>0:00:26</td></tr><tr><td>build:Typecheck client</td><td>4</td><td>0:00:23</td></tr><tr><td>build:Build workflow artifacts</td><td>4</td><td>0:00:18</td></tr><tr><td>build:Build server</td><td>4</td><td>0:00:16</td></tr><tr><td>build:Typecheck tooling</td><td>4</td><td>0:00:15</td></tr><tr><td>format:check</td><td>2</td><td>0:00:13</td></tr><tr><td>migrate</td><td>2</td><td>0:00:12</td></tr><tr><td>seed</td><td>2</td><td>0:00:11</td></tr><tr><td>build:Install server production dependencies</td><td>1</td><td>0:00:06</td></tr><tr><td>install</td><td>1</td><td>0:00:05</td></tr><tr><td>format:auto</td><td>2</td><td>0:00:04</td></tr><tr><td>build:Rewrite server path aliases</td><td>4</td><td>0:00:03</td></tr><tr><td>build:Build server workspace dependencies</td><td>4</td><td>0:00:02</td></tr><tr><td>build:Prune deployment artifacts</td><td>4</td><td>0:00:02</td></tr><tr><td>skills-sync</td><td>1</td><td>0:00:01</td></tr><tr><td>build:Materialize server dependency links</td><td>1</td><td>0:00:00</td></tr><tr><td>build:Verify server dependencies</td><td>4</td><td>0:00:00</td></tr><tr><td>build:Generate server package</td><td>4</td><td>0:00:00</td></tr><tr><td>build:Retarget native modules</td><td>1</td><td>0:00:00</td></tr><tr><td>build:dependency-cache-restore</td><td>4</td><td>0:00:00</td></tr></table></div></div></details><footer class="report-footer">Factory report template v4 · gchust/nb3-factory:224:35881009045:2:fd1ca3583679e2472371e638bf72555d4afd5fb3:template-4:review-008b0e8c401296ca<br>验收逐条保留；问题与改进来自复盘原文。此页面是归档展示，不是重新验收。</footer></main>
 <dialog aria-labelledby="lightbox-title" class="lightbox" id="lightbox"><div class="lightbox-bar"><h3 id="lightbox-title">浏览器截图</h3><div class="lightbox-controls"><button aria-label="上一张" class="icon-btn" id="photo-prev">←</button><button aria-label="下一张" class="icon-btn" id="photo-next">→</button><button aria-label="关闭放大图片" class="icon-btn" id="photo-close"><svg aria-hidden="true" fill="none" height="16" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7" viewbox="0 0 24 24" width="16"><path d="m6 6 12 12M6 18 18 6"></path></svg></button></div></div><img alt="" class="lightbox-img" id="lightbox-img"/><div class="lightbox-foot"><span id="lightbox-source"></span><span id="lightbox-count"></span></div></dialog><script>
 (() => {
   'use strict';
