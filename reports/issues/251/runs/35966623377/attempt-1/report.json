@@ -35,10 +35,10 @@
     "artifact": "factory-agent-251",
     "artifactId": 10800301220,
     "reviewSource": {
-      "runId": 35985434698,
+      "runId": 35987987210,
       "attempt": 1,
-      "artifactId": 10801823094,
-      "controlSha": "da18d586a556da85c9e2ac0fb4507b5bc01d7986"
+      "artifactId": 10803791441,
+      "controlSha": "952084a875e940bdcba52d45f8b805c7f49f0049"
     },
     "usage": {
       "phases": {
@@ -212,10 +212,10 @@
       "artifact": "factory-agent-251",
       "artifactId": 10800301220,
       "reviewSource": {
-        "runId": 35985434698,
+        "runId": 35987987210,
         "attempt": 1,
-        "artifactId": 10801823094,
-        "controlSha": "da18d586a556da85c9e2ac0fb4507b5bc01d7986"
+        "artifactId": 10803791441,
+        "controlSha": "952084a875e940bdcba52d45f8b805c7f49f0049"
       },
       "usage": {
         "phases": {
@@ -987,12 +987,12 @@
     ],
     "buildReview": {
       "version": 1,
-      "state": "failed",
-      "reason": "独立评审未完成或证据校验失败：Evidence needs a bounded line range。业务验收结果保持不变。",
+      "state": "completed",
+      "reason": "独立 Agent 评审完成；评分是基于本次证据的意见，不替代业务 QA 或人工评审。",
       "basis": {
         "repository": "gchust/nb3-factory",
         "issue": 251,
-        "runId": "35966623377",
+        "runId": 35966623377,
         "attempt": 1,
         "controlSha": "1bd143f61094211c8c19783e489b5e85d86a91c4",
         "rubricVersion": 2,
@@ -1171,17 +1171,1333 @@
         ],
         "reviewCriteriaHash": "3cadc61837b4c67455620dfeb5fc0770cafe06b274e398b1d9b951e2c7fcfd0b",
         "artifactHash": "f8c51d843294d47bef4363710d9357247bc40ec7b7beefdc36e7ccf460bf4971",
-        "inputHash": "7e79235a0fa0fca72bef696fc7509b4bf8ecf5030d9295f353adc9940bd67e0c"
+        "inputHash": "c8d8750cdc0049d55aa529cd02b77ed3e43f5d5073d3ecca2a80462eb7db9b74"
       },
-      "evaluation": null,
+      "evaluation": {
+        "version": 2,
+        "inputHash": "c8d8750cdc0049d55aa529cd02b77ed3e43f5d5073d3ecca2a80462eb7db9b74",
+        "progress": {
+          "complete": true,
+          "pendingModules": []
+        },
+        "summary": "以资料库场景为样本审查 NocoBase3 基础能力：业务资源/动作声明、记录作用域、权限集、默认访问、共享规则、限制规则、用户停用与数据库迁移。最终 QA 五条验收全部通过，服务端授权、约束合成（expand 并集 / restrict 交集）与停用会话失效表现良好；但客户端权限快照 (GET /authz/permissions) 会静默丢弃带 policy 的记录作用域 grant，且指引仍用 useCan 判断这类动作可见性，导致首轮 B01 动作不渲染；数据库 Skill 也未提及 shouldRun/hasCollection 条件迁移能力。",
+        "modules": [
+          {
+            "name": "业务授权内核与动作/记录作用域注册",
+            "scope": "business resource/action 声明、record-access 作用域策略、权限集 grant 展开、服务端按记录授权与 GET /authz/permissions 客户端快照。",
+            "limitations": "未在真实运行应用中复现 resolvePermissions 分支，仅以源码与首轮 QA 行为交叉印证；未覆盖 relation 嵌套写入与字段级 allowlist 的全部分支。",
+            "criteria": [
+              "B01"
+            ],
+            "targets": [
+              {
+                "kind": "library",
+                "name": "@nocobase/authorization",
+                "entrypoints": [
+                  "defineAuthorizationResource",
+                  "defineRecordAccess / createAppAuthorization",
+                  "Authorization.resolvePermissions",
+                  "buildResourceGrant",
+                  "composedGrants / ResourceRegistry.expand"
+                ],
+                "evidence": [
+                  "E1",
+                  "E2",
+                  "E3",
+                  "E4"
+                ]
+              },
+              {
+                "kind": "plugin",
+                "name": "@nocobase/app-plugin-authorization",
+                "entrypoints": [
+                  "defineDatabasePermission",
+                  "DatabaseResourceAuthorizer.authorize",
+                  "DatabaseResourceAuthorizer.resolveEffectiveScope",
+                  "GET /authz/permissions",
+                  "AuthorizationClient.can"
+                ],
+                "evidence": [
+                  "E5",
+                  "E6",
+                  "E7",
+                  "E8"
+                ]
+              },
+              {
+                "kind": "guidance",
+                "name": "app/.agents/skills/nocobase-app-plugin-authorization",
+                "entrypoints": [
+                  "SKILL.md",
+                  "references/client-development.md",
+                  "references/core-api.md",
+                  "references/business-module.md",
+                  "references/fluent-registration.md"
+                ],
+                "evidence": [
+                  "E9",
+                  "E10",
+                  "E11"
+                ]
+              }
+            ],
+            "requirements": [
+              {
+                "need": "声明资料库业务资源与 view/create/edit/delete 动作、recordsIOwn 记录作用域和页面访问，并让服务端按记录授权与过滤。",
+                "responsibility": "框架负责资源/动作声明、记录作用域策略、权限集展开与数据库端记录过滤；应用负责 materials 三张样本记录与角色/权限集映射。",
+                "recommendedUsage": "用 defineAuthorizationResource 声明资源、defineDatabasePermission 绑定字段与动作 scope、defineRecordAccess 实现 recordsIOwn；权限集通过 reference().grant({action:{scopeKey:...}}) 赋予。",
+                "actualUsage": "Agent 采用推荐入口：app/server/library/authorization.ts 声明 library.materials 与 recordsIOwn；seed 权限集对编辑者授予 view/create/edit/delete 的 recordsIOwn，对读者仅 grant('view')；服务端 PATCH 自己的记录返回 200、他人返回 403，列表按作用域过滤。",
+                "support": "composition",
+                "gapOwner": "none",
+                "evidence": [
+                  "E1",
+                  "E2",
+                  "E3",
+                  "E29",
+                  "E30"
+                ]
+              },
+              {
+                "need": "客户端根据授权渲染动作可见性，并按行展示可编辑/可删除资格。",
+                "responsibility": "框架负责 feature-visibility 快照与 useCan，以及服务端按行资格判定；应用负责把两者组合到界面。",
+                "recommendedUsage": "client-development.md：useCan({resource,action}) 只判动作可见性；行级资格由服务端返回并按行渲染，变更端点再次独立鉴权。",
+                "actualUsage": "Agent 起初只用 useCan 渲染按钮，因记录作用域 grant 被快照跳过导致按钮全部不显示（首轮 B01 失败）；改为服务端在列表响应返回 canEdit/canDelete 与 meta.canCreate，客户端移除 useCan、仅渲染服务端结果后通过。",
+                "support": "composition",
+                "gapOwner": "none",
+                "evidence": [
+                  "E7",
+                  "E9",
+                  "E11",
+                  "E35",
+                  "E36"
+                ]
+              }
+            ],
+            "scores": {
+              "requirementFit": {
+                "score": 82,
+                "reason": "业务资源 + 记录作用域 + 权限集的标准组合能完整表达资料库读写规则，服务端授权与过滤经 QA 验证正确；扣分在于客户端 feature-visibility 路径无法直接服务于记录作用域动作，需应用自行改道。",
+                "evidence": [
+                  "E2",
+                  "E5",
+                  "E9"
+                ]
+              },
+              "usability": {
+                "score": 74,
+                "reason": "声明式 builder 与 fluent grant 直观，作用域/约束分离清晰；但 useCan 对带作用域 grant 恒为 false 且无提示，使用者在界面层必须先踩坑再绕行。",
+                "evidence": [
+                  "E1",
+                  "E7",
+                  "E9"
+                ]
+              },
+              "agentFriendliness": {
+                "score": 66,
+                "reason": "Skill 对服务端策略、字段与验证步骤描述详尽，Agent 能据此完成服务端实现；但 client-development 与 business-module 仍示范用 useCan 判断 scoped submit/edit 可见性，与 resolvePermissions 的实际行为矛盾，直接导致一轮 QA 返工。",
+                "evidence": [
+                  "E1",
+                  "E9",
+                  "E11"
+                ]
+              },
+              "design": {
+                "score": 86,
+                "reason": "资源/动作/作用域/约束分层明确，buildResourceGrant 与 expand 把业务授权展开为 database grant 并保留 origin 追踪，结构可组合、可测试。",
+                "evidence": [
+                  "E2",
+                  "E3",
+                  "E4"
+                ]
+              },
+              "reliability": {
+                "score": 80,
+                "reason": "服务端 authorize 不依赖客户端快照：未注册集合与无匹配 grant 显式拒绝，记录作用域经 resolveEffectiveScope 合成为 filter/输入输出约束，QA 中 403/200 与列表过滤一致；扣分在于 permissions() 快照与 useCan 的契约在 scoped grant 上不自洽。",
+                "evidence": [
+                  "E1",
+                  "E5",
+                  "E6"
+                ]
+              }
+            }
+          },
+          {
+            "name": "默认访问基线（default access）",
+            "scope": "默认访问规则的声明/持久化/解析，对已获 view 动作的读者扩展可读记录范围，且不放大写操作。",
+            "limitations": "未在设置 UI 中逐项核对默认访问编辑器；未验证多条默认规则对不同动作的边界组合。",
+            "criteria": [
+              "B01"
+            ],
+            "targets": [
+              {
+                "kind": "library",
+                "name": "@nocobase/authorization",
+                "entrypoints": [
+                  "defaultAccess()",
+                  "DefaultAccessService.resolveRules (effect expand)"
+                ],
+                "evidence": [
+                  "E12"
+                ]
+              },
+              {
+                "kind": "plugin",
+                "name": "@nocobase/app-plugin-authz-default-access",
+                "entrypoints": [
+                  "defaultAccess()",
+                  "DatabaseDefaultAccessStore.set/get/list"
+                ],
+                "evidence": [
+                  "E13"
+                ]
+              },
+              {
+                "kind": "guidance",
+                "name": "packages/@nocobase/app-plugin-authz-default-access/skills/nocobase-app-plugin-authz-default-access",
+                "entrypoints": [
+                  "SKILL.md"
+                ],
+                "evidence": [
+                  "E14"
+                ]
+              }
+            ],
+            "requirements": [
+              {
+                "need": "给已获 view 动作的读者一条公开、非保密资料的默认可读基线，同时不扩大写操作。",
+                "responsibility": "框架提供 default-access 约束并把它作为 expand 作用域合入已授予动作；应用决定基线 scope 与适用资源。",
+                "recommendedUsage": "按 SKILL 流程先确认资源/动作/命名作用域存在，用 defaultAccess.set 保存完整规则；只读基线不应复制到写操作。",
+                "actualUsage": "agent 在 server/config/authorization.ts 注册 defaultAccess()，并在 seed 中向 authorizationDefaultAccessRules 写入 library.materials 的 view 规则，scope 为 library.public 命名作用域；QA 中读者 B 仅见公开资料 P。",
+                "support": "direct",
+                "gapOwner": "none",
+                "evidence": [
+                  "E12",
+                  "E13",
+                  "E14",
+                  "E37"
+                ]
+              }
+            ],
+            "scores": {
+              "requirementFit": {
+                "score": 88,
+                "reason": "默认访问准确定位为‘已授予动作的可读范围扩展’，公开 P 的基线经 QA 验证生效，且未泄漏到写动作。",
+                "evidence": [
+                  "E12",
+                  "E14",
+                  "E37"
+                ]
+              },
+              "usability": {
+                "score": 85,
+                "reason": "规则形状（resource/actions/scopeKey/scope）与权限集 grant 一致，builder/服务/seed 三条路径均可写，学习成本低。",
+                "evidence": [
+                  "E12",
+                  "E13",
+                  "E14"
+                ]
+              },
+              "agentFriendliness": {
+                "score": 83,
+                "reason": "SKILL 明确列出四条开发流程与验证点，并提示不要用只读基线覆盖写操作，Agent 可直接照做。",
+                "evidence": [
+                  "E13",
+                  "E14"
+                ]
+              },
+              "design": {
+                "score": 84,
+                "reason": "default access 作为独立 constraint 以 effect:'expand' 参与合成，与 permission-set/sharing 同层可预期地叠加。",
+                "evidence": [
+                  "E12",
+                  "E14"
+                ]
+              },
+              "reliability": {
+                "score": 82,
+                "reason": "规则按 resourceType/resourceId 精确匹配并事务化写入，QA 中公开资料可见、保密与草稿不在默认基线内。",
+                "evidence": [
+                  "E12",
+                  "E13"
+                ]
+              }
+            }
+          },
+          {
+            "name": "共享规则（sharing rules）",
+            "scope": "共享规则的创建/更新/删除与 subject 赋值，选中记录或动态策略作为 expand 作用域合入已授予动作。",
+            "limitations": "未逐一验证继承主体（团队/岗位）与动态 policy selection 的全部分支；仅覆盖显式记录共享与撤销。",
+            "criteria": [
+              "B02",
+              "B04"
+            ],
+            "targets": [
+              {
+                "kind": "library",
+                "name": "@nocobase/authorization",
+                "entrypoints": [
+                  "SharingRuleService.resolveRules (effect expand)"
+                ],
+                "evidence": [
+                  "E15"
+                ]
+              },
+              {
+                "kind": "plugin",
+                "name": "@nocobase/app-plugin-authz-sharing-rules",
+                "entrypoints": [
+                  "DatabaseSharingRuleStore.create/update/delete",
+                  "sharingRules()"
+                ],
+                "evidence": [
+                  "E16"
+                ]
+              },
+              {
+                "kind": "guidance",
+                "name": "packages/@nocobase/app-plugin-authz-sharing-rules/skills/nocobase-app-plugin-authz-sharing-rules",
+                "entrypoints": [
+                  "SKILL.md"
+                ],
+                "evidence": [
+                  "E17"
+                ]
+              }
+            ],
+            "requirements": [
+              {
+                "need": "管理员在运行时把私有草稿 D 单条共享给读者 B，撤销后 B 立即失去访问；共享不得授予缺失的动作。",
+                "responsibility": "框架负责共享规则与 subject 赋值的持久化、把 selection 解析为 expand 作用域；应用决定共享对象、记录与已授予动作。",
+                "recommendedUsage": "按 SKILL 流程：先经权限集授予动作，再保存完整共享规则（显式 ids 用于单次交接），撤销后独立来源应保留。",
+                "actualUsage": "读者 B 先获得 reader 权限集的 view；seed 仅预置保密 C 的共享用于展示限制优先（草稿 D 改为运行时共享）。QA 中管理员创建 D 共享后 B 可读、删除后立即不可读。",
+                "support": "direct",
+                "gapOwner": "none",
+                "evidence": [
+                  "E15",
+                  "E16",
+                  "E17",
+                  "E38",
+                  "E39"
+                ]
+              }
+            ],
+            "scores": {
+              "requirementFit": {
+                "score": 86,
+                "reason": "显式记录共享 + subject 赋值能精确表达单条草稿交接，撤销即时生效且不改变独立授予，符合 B02 的共享语义。",
+                "evidence": [
+                  "E15",
+                  "E17",
+                  "E38"
+                ]
+              },
+              "usability": {
+                "score": 84,
+                "reason": "服务/存储接口与设置 UI 并行，规则形状与其它约束一致；update 会整体替换 assignment，减少半更新状态。",
+                "evidence": [
+                  "E15",
+                  "E16"
+                ]
+              },
+              "agentFriendliness": {
+                "score": 80,
+                "reason": "SKILL 明确共享只扩展范围、不授予动作，并给出交接与撤销验证清单；Agent 最终行为符合，但首轮把共享误当默认状态写入 seed，说明‘默认共享’的反例提示还可更醒目。",
+                "evidence": [
+                  "E16",
+                  "E17"
+                ]
+              },
+              "design": {
+                "score": 85,
+                "reason": "共享以 expand 约束参与合成，与默认访问/权限集并列，显式 ids 与动态 policy 统一为 selection，抽象干净。",
+                "evidence": [
+                  "E15",
+                  "E16"
+                ]
+              },
+              "reliability": {
+                "score": 84,
+                "reason": "create/update/delete 均在事务中维护规则与赋值，delete 幂等（未知 key 直接返回）；QA 中共享-撤销循环稳定。",
+                "evidence": [
+                  "E15",
+                  "E16"
+                ]
+              }
+            }
+          },
+          {
+            "name": "限制规则（restriction rules）",
+            "scope": "限制规则的持久化与解析，以 restrict 作用域与已有范围求交集，并应用于选定的 subject。",
+            "limitations": "未验证跨 collection.database 边界与 relation 目标的全分支；仅覆盖业务资源的 view 限制。",
+            "criteria": [
+              "B04"
+            ],
+            "targets": [
+              {
+                "kind": "library",
+                "name": "@nocobase/authorization",
+                "entrypoints": [
+                  "RestrictionRuleService.resolveRules (effect restrict)"
+                ],
+                "evidence": [
+                  "E18"
+                ]
+              },
+              {
+                "kind": "plugin",
+                "name": "@nocobase/app-plugin-authz-restriction-rules",
+                "entrypoints": [
+                  "DatabaseRestrictionRuleStore.create/update/delete",
+                  "restrictionRules()"
+                ],
+                "evidence": [
+                  "E19"
+                ]
+              },
+              {
+                "kind": "guidance",
+                "name": "packages/@nocobase/app-plugin-authz-restriction-rules/skills/nocobase-app-plugin-authz-restriction-rules",
+                "entrypoints": [
+                  "SKILL.md"
+                ],
+                "evidence": [
+                  "E20"
+                ]
+              }
+            ],
+            "requirements": [
+              {
+                "need": "保密资料 C 即使被共享给读者 B 也不可读，限制必须优先于共享等其它来源且不放大访问。",
+                "responsibility": "框架负责把匹配的 restriction 解析为 restrict 作用域并与展开范围求交；应用定义非保密命名作用域与对 B 的赋值。",
+                "recommendedUsage": "SKILL 流程：以肯定式不变量描述限制（只允许非保密），保存完整规则，并在所有受保护读写上验证排除项仍不可达。",
+                "actualUsage": "seed 为 library.materials.view 定义 library.nonConfidential 限制并直接赋给读者 B；QA 中 B 对保密 C 始终不可见，且限制优先于共享来源（B04 通过）。",
+                "support": "direct",
+                "gapOwner": "none",
+                "evidence": [
+                  "E18",
+                  "E19",
+                  "E20",
+                  "E38"
+                ]
+              }
+            ],
+            "scores": {
+              "requirementFit": {
+                "score": 88,
+                "reason": "restrict 交集语义正确表达‘无论其它来源如何都不得越界’，保密 C 在共享存在时仍被排除，正是要求的核心。",
+                "evidence": [
+                  "E18",
+                  "E20",
+                  "E38"
+                ]
+              },
+              "usability": {
+                "score": 85,
+                "reason": "规则与共享同构，reason 字段便于审计；创建/更新/删除接口完整，设置 UI 可直接对照。",
+                "evidence": [
+                  "E18",
+                  "E19"
+                ]
+              },
+              "agentFriendliness": {
+                "score": 82,
+                "reason": "SKILL 强调‘肯定式不变量、不能授权或放大’，Agent 据此为正；不过 collection-wide 限制与业务动作限制的取舍仍需自行判断。",
+                "evidence": [
+                  "E19",
+                  "E20"
+                ]
+              },
+              "design": {
+                "score": 86,
+                "reason": "restriction 作为独立 effect 在合成末段求交，与 expand 来源解耦，多个匹配限制自然求交，语义可组合。",
+                "evidence": [
+                  "E18",
+                  "E19"
+                ]
+              },
+              "reliability": {
+                "score": 85,
+                "reason": "规则与 subject 赋值事务化维护，resolveRules 对 resource/action/subject 做确定匹配；QA 反复验证保密 C 不可达。",
+                "evidence": [
+                  "E18",
+                  "E19"
+                ]
+              }
+            }
+          },
+          {
+            "name": "用户停用与会话失效（users + authentication）",
+            "scope": "用户停用/启用、会话与实时连接撤销、登录与会话校验对 disabledAt 的拒绝。",
+            "limitations": "未实机验证实时连接断开，仅依据实现与 QA 的会话刷新失效结果；未覆盖外部身份提供方的停用路径。",
+            "criteria": [
+              "B05"
+            ],
+            "targets": [
+              {
+                "kind": "plugin",
+                "name": "@nocobase/app-plugin-users",
+                "entrypoints": [
+                  "users.disable",
+                  "POST /users/:userId/disable",
+                  "POST /users/:userId/revoke-sessions"
+                ],
+                "evidence": [
+                  "E21",
+                  "E42",
+                  "E43"
+                ]
+              },
+              {
+                "kind": "plugin",
+                "name": "@nocobase/app-plugin-authentication",
+                "entrypoints": [
+                  "DefaultUserAdministrationService.disable",
+                  "DefaultUserAdministrationService.revokeSessions",
+                  "session create before/after ACCOUNT_DISABLED",
+                  "session get disabledAt"
+                ],
+                "evidence": [
+                  "E22",
+                  "E23"
+                ]
+              },
+              {
+                "kind": "guidance",
+                "name": "packages/@nocobase/app-plugin-users/skills/nocobase-app-plugin-users",
+                "entrypoints": [
+                  "SKILL.md"
+                ],
+                "evidence": [
+                  "E24"
+                ]
+              },
+              {
+                "kind": "guidance",
+                "name": "packages/@nocobase/app-plugin-authentication/skills/nocobase-app-plugin-authentication",
+                "entrypoints": [
+                  "SKILL.md"
+                ],
+                "evidence": [
+                  "E25"
+                ]
+              }
+            ],
+            "requirements": [
+              {
+                "need": "管理员停用用户 B 后，B 的现有会话立即失效，重新登录被拒绝。",
+                "responsibility": "框架负责停用状态落库、撤销会话与实时连接，并在登录及会话校验时拒绝禁用账户；应用只需调用管理接口。",
+                "recommendedUsage": "authentication SKILL 明确：禁用账户以 403 ACCOUNT_DISABLED 拒绝登录并立刻撤销会话/实时连接，不要再加平行 active 标志。",
+                "actualUsage": "Agent 未自造状态位，直接调用 users.disable；users 服务编排权限集校验、加锁与 authentication 的 disable（写 disabledAt 并 revokeSessions），会话钩子与 getSession 均检查 disabledAt。QA B05 中 B 刷新后会话失效。",
+                "support": "direct",
+                "gapOwner": "none",
+                "evidence": [
+                  "E21",
+                  "E22",
+                  "E23",
+                  "E24",
+                  "E25"
+                ]
+              }
+            ],
+            "scores": {
+              "requirementFit": {
+                "score": 90,
+                "reason": "停用即撤销会话、登录即拒绝的契约完整实现了 B05，且用户服务与认证服务职责切分清楚。",
+                "evidence": [
+                  "E22",
+                  "E24",
+                  "E25"
+                ]
+              },
+              "usability": {
+                "score": 88,
+                "reason": "disable/enable/revoke-sessions 路由与返回结构一致，日志记录安全事件，管理端无需了解内部实现。",
+                "evidence": [
+                  "E21",
+                  "E22"
+                ]
+              },
+              "agentFriendliness": {
+                "score": 85,
+                "reason": "两个 SKILL 都明确给出禁用语义、不要新增 active 标志以及验证清单，Agent 无需猜测即可接入。",
+                "evidence": [
+                  "E24",
+                  "E25"
+                ]
+              },
+              "design": {
+                "score": 87,
+                "reason": "disabledAt 作为唯一事实来源，session create 的 before/after 与 getSession 复用同一判定，避免多处状态漂移。",
+                "evidence": [
+                  "E22",
+                  "E23"
+                ]
+              },
+              "reliability": {
+                "score": 88,
+                "reason": "登录前、登录后与请求时三层检查加上会话删除，边界（如删除用户的在途登录）也被显式处理，QA 验证会话刷新失效。",
+                "evidence": [
+                  "E22",
+                  "E23"
+                ]
+              }
+            }
+          },
+          {
+            "name": "数据库迁移与种子（db）",
+            "scope": "materials 表迁移、权限规则安装数据与清理数据迁移、迁移的执行条件与幂等/事务语义。",
+            "limitations": "未在不同 SQL 方言上验证；condition/shouldRun 的跳过历史记录语义仅按实现与文档判断。",
+            "criteria": [],
+            "targets": [
+              {
+                "kind": "library",
+                "name": "@nocobase/db",
+                "entrypoints": [
+                  "defineMigration",
+                  "migration shouldRun",
+                  "MigrationLoader",
+                  "builder.hasCollection",
+                  "migration/seed query context"
+                ],
+                "evidence": [
+                  "E26",
+                  "E27"
+                ]
+              },
+              {
+                "kind": "guidance",
+                "name": "packages/@nocobase/db/skills/nocobase-db",
+                "entrypoints": [
+                  "SKILL.md"
+                ],
+                "evidence": [
+                  "E28"
+                ]
+              }
+            ],
+            "requirements": [
+              {
+                "need": "创建 materials 表、写入受控权限安装数据，并能兼容未启用授权插件的嵌入式运行时。",
+                "responsibility": "框架负责迁移历史、默认事务、条件执行与 seed 幂等工具；应用负责自包含 schema、种子数据与按环境适用的清理迁移。",
+                "recommendedUsage": "db SKILL：迁移自包含、不可变、无反向操作时声明 irreversible，seed 以稳定业务值幂等写入；条件/跨插件场景应使用框架提供的适用性判断。",
+                "actualUsage": "建表迁移为纯 schema 且自包含；seed 幂等写入规则。跨插件表的清理迁移最初无条件执行，在未加载共享规则插件的嵌入式测试中报 no such table 并中断启动，Agent 随后用 shouldRun + builder.hasCollection 守卫修复。",
+                "support": "workaround",
+                "gapOwner": "documentation",
+                "evidence": [
+                  "E26",
+                  "E27",
+                  "E28",
+                  "E31",
+                  "E32"
+                ]
+              }
+            ],
+            "scores": {
+              "requirementFit": {
+                "score": 80,
+                "reason": "建表与种子满足了资料库需求，但清理迁移的跨运行时适用性框架虽有 shouldRun/hasCollection 能力，Agent 需在失败后自行发现，属于补足后满足。",
+                "evidence": [
+                  "E26",
+                  "E28",
+                  "E31"
+                ]
+              },
+              "usability": {
+                "score": 72,
+                "reason": "迁移上下文与 builder/query 划分清晰、默认事务省心；但条件执行入口未在 Skill 中呈现，使用者在嵌入式/跨插件场景几乎必然先遇到运行期失败。",
+                "evidence": [
+                  "E26",
+                  "E27",
+                  "E28"
+                ]
+              },
+              "agentFriendliness": {
+                "score": 68,
+                "reason": "Skill 的迁移铁律（自包含、不可变、irreversible、seed 幂等）非常明确；但完全未提及 shouldRun 与 hasCollection，导致 Agent 无法从指引预判跨插件迁移的安全写法。",
+                "evidence": [
+                  "E26",
+                  "E28",
+                  "E31"
+                ]
+              },
+              "design": {
+                "score": 82,
+                "reason": "shouldRun 返回布尔并校验类型、跳过时不写入历史，hasCollection 同时覆盖已加载与计划中的集合，条件迁移的设计合理。",
+                "evidence": [
+                  "E26",
+                  "E27"
+                ]
+              },
+              "reliability": {
+                "score": 78,
+                "reason": "默认事务与跳过不落历史保证一致性，修复后嵌入式测试通过；扣分在于无条件下删除他插件表的写法会中断应用启动，框架未在指引层面阻止。",
+                "evidence": [
+                  "E26",
+                  "E27",
+                  "E31"
+                ]
+              }
+            }
+          }
+        ],
+        "findings": [
+          {
+            "id": "F1",
+            "kind": "misleading",
+            "owner": "documentation",
+            "severity": "major",
+            "confidence": "confirmed",
+            "status": "open",
+            "title": "指引示范用 useCan 判断带记录作用域动作的可见性，与实际快照行为矛盾",
+            "detail": "client-development.md 与 business-module.md 把 useCan({resource,action}) 作为动作可见性的推荐方式，示例中的 submit/edit 是带作用域的授权；但 GET /authz/permissions 的 resolvePermissions 会跳过任何带 policy 的 grant，除非该 (resourceType,resourceId,action) 注册了 scope，而组合业务动作不会注册 action scope，因此这些 grant 永远不进入快照，useCan 恒为 false。",
+            "claimed": "client-development.md 称 useCan 用于判断某能力是否被授予并对 scoped submit/edit 示范；business-module.md 第 195 行要求用它做动作可见性。",
+            "observed": "resolvePermissions 在 grant.policy 已定义且 getAction(...)?.scope 未注册时 continue，授权码中 scoped grant 与 permission 快照均缺少可执行的 scope，导致 useCan 对 create/edit/delete 返回 false；首轮 B01 因此界面无任何维护动作，而同一会话服务端 PATCH 返回 200。",
+            "impact": "按指引实现的界面会隐藏本已授权的动作，形成服务端允许、客户端不可用的假象；本次直接造成一轮 QA 失败与返工。",
+            "suggestedChange": "在 client-development.md/core-api.md 明确说明权限快照会省略记录作用域 grant，且 useCan 不能用于这类动作；把示例改为服务端返回行级资格，或让快照显式暴露‘存在但受记录作用域限制’的信号。",
+            "evidence": [
+              "E1",
+              "E9",
+              "E11",
+              "E32",
+              "E33"
+            ]
+          },
+          {
+            "id": "F2",
+            "kind": "issue",
+            "owner": "framework",
+            "severity": "major",
+            "confidence": "confirmed",
+            "status": "open",
+            "title": "权限快照静默丢弃带策略的 grant，且无可诊断信号",
+            "detail": "resolvePermissions 对带 policy 的 grant 直接跳过（无 scope 注册时），既不降级为可见能力，也不给出原因；AuthorizationClient.can 只按 snapshot.permissions 匹配，调用方无法区分‘未授予动作’与‘已授予但受记录作用域限制’，排查时缺少 reason code 或日志。",
+            "impact": "客户端可见性判断产生假阴性且难以定位；使用者在界面层被迫自行探测服务端资格，增加应用复杂度与返工成本。",
+            "suggestedChange": "为被省略的 scoped grant 提供显式标记（如 scoped/unbounded 区分）或在快照中附带省略原因，并在 core-api.md 记录该语义。",
+            "evidence": [
+              "E1",
+              "E7",
+              "E8",
+              "E10"
+            ]
+          },
+          {
+            "id": "F3",
+            "kind": "issue",
+            "owner": "application",
+            "severity": "major",
+            "confidence": "confirmed",
+            "status": "resolved",
+            "title": "交付种子预置草稿 D 的共享规则，违反私有草稿默认不可见",
+            "detail": "初始 seed 在安装时写入草稿 D 的共享规则并赋给读者 B，使 B 在管理员执行任何共享动作前即可读取私有草稿 D；这违背了共享只用于显式交接例外、默认应最小化的原则。",
+            "impact": "交付初始状态存在越权可见，首轮 B02 失败；需新增数据迁移清理已下发环境中的旧规则。",
+            "suggestedChange": "种子只写入有意的默认基线（如公开 P 的默认访问）和用于验证限制优先的保密 C 共享；草稿 D 保留为运行时共享，并对已分发数据库提供清理迁移。",
+            "evidence": [
+              "E17",
+              "E32",
+              "E33"
+            ]
+          },
+          {
+            "id": "F4",
+            "kind": "issue",
+            "owner": "documentation",
+            "severity": "minor",
+            "confidence": "confirmed",
+            "status": "open",
+            "title": "db Skill 未说明条件迁移能力 shouldRun/hasCollection",
+            "detail": "框架 migrator 支持 migration.shouldRun（返回布尔，false 时跳过且不写历史）、loader 校验其类型，builder.hasCollection 可判定集合存在；但 nocobase-db SKILL.md 的迁移铁律与 Builder 章节完全未提及这两者。跨插件表清理迁移因此写成无条件删除，在未加载对应插件的嵌入式运行时以 no such table 中断应用启动。",
+            "impact": "Agent 无法从指引预判跨插件/跨运行时迁移的安全写法，只能在运行期失败后靠阅读源码补救。",
+            "suggestedChange": "在 nocobase-db SKILL.md 迁移章节补充 shouldRun 与 hasCollection 的适用场景（跨插件表、可选运行时、数据清理迁移）及‘跳过不写历史’的语义。",
+            "evidence": [
+              "E26",
+              "E27",
+              "E28",
+              "E31",
+              "E32"
+            ]
+          },
+          {
+            "id": "F5",
+            "kind": "strength",
+            "owner": "framework",
+            "severity": "info",
+            "confidence": "confirmed",
+            "status": "not-applicable",
+            "title": "多来源约束的 expand/restrict 合成与服务端独立落地",
+            "detail": "默认访问与共享以 effect:'expand' 扩展范围，限制以 effect:'restrict' 在合成末段求交；authorize 在无匹配 grant 时显式拒绝（NO_OBJECT_PERMISSION），未注册集合拒绝，记录作用域经 resolveEffectiveScope 转为查询/字段约束，不依赖客户端快照。QA 中保密 C 在共享存在时仍不可见、A 对自己记录 200 对他人 403、读者仅见公开 P。",
+            "impact": "为业务规则提供了可组合且难以被客户端绕过的授权基线，是本框架在本次场景中的核心优势。",
+            "suggestedChange": "保持该分层；仅在文档层补齐客户端快照与记录作用域的差异说明（见 F1/F2）。",
+            "evidence": [
+              "E5",
+              "E12",
+              "E15",
+              "E18",
+              "E34"
+            ]
+          },
+          {
+            "id": "F6",
+            "kind": "strength",
+            "owner": "plugin",
+            "severity": "info",
+            "confidence": "confirmed",
+            "status": "not-applicable",
+            "title": "停用用户即撤销会话并在登录/校验处拒绝",
+            "detail": "users.disable 编排权限集可移除性校验、加锁并调用 authentication 的 disable；后者写入 disabledAt 并 revokeSessions，同时断开实时连接。session create 的 before/after 与 getSession 均检查 disabledAt 并以 403 ACCOUNT_DISABLED 拒绝，覆盖在途登录的边界。QA B05 中 B 刷新会话即失效。",
+            "impact": "无需应用自造 active 标志即可获得一致、可审计的账户停用语义。",
+            "suggestedChange": "无需改动；可作为其它账户生命周期能力的实现范式。",
+            "evidence": [
+              "E21",
+              "E22",
+              "E23",
+              "E43"
+            ]
+          }
+        ],
+        "ui": {
+          "status": "not-reviewed",
+          "score": null,
+          "reason": "为控制预算未把 artifacts 中的 PNG 作为图像查看，仅依据文档、DOM 描述与 QA 报告，故不评价跨页面视觉一致性。",
+          "evidence": []
+        },
+        "evidence": [
+          {
+            "id": "E1",
+            "kind": "code",
+            "path": "packages/@nocobase/authorization/dist/core/authorization.js",
+            "observation": "resolvePermissions 收集 grants 时，对 grant.policy 已定义且 resourceTypes.getAction(type,id,action)?.scope 未注册的 grant 直接 continue；因此组合业务动作/默认 database 动作的记录作用域 grant 不会进入 permissions 快照，也不产生任何原因。",
+            "lines": [
+              293,
+              326
+            ],
+            "excerpt": "    async resolvePermissions(identity, grantsService = this.grants) {\n        const unrestricted = (await grantsService.unrestricted?.(identity)) === true;\n        const grants = await grantsService.resolveAll(identity);\n        const grouped = new Map();\n        for (const grant of grants) {\n            if (grant.policy !== undefined) {\n                if (!this.resourceTypes.getAction(grant.resource.type, grant.resource.id, grant.action)?.scope)\n                    continue;\n                const decision = await this.authorizeWithGrants({ ...identity, resource: grant.resource, action: grant.action }, grantsService, this.constraints, false);\n                if (decision.effect !== 'permit')\n                    continue;\n            }\n            const key = `${grant.resource.type}\\u0000${grant.resource.id}`;\n            const permission = grouped.get(key) ?? {\n                resource: grant.resource,\n                actions: new Set(),\n            };\n            permission.actions.add(grant.action);\n            grouped.set(key, permission);\n        }\n        return {\n            unrestricted,\n            permissions: [...grouped.values()]\n                .sort((left, right) => {\n                const leftKey = `${left.resource.type}\\u0000${left.resource.id}`;\n                const rightKey = `${right.resource.type}\\u0000${right.resource.id}`;\n                return leftKey.localeCompare(rightKey);\n            })\n                .map((permission) => ({\n                resource: permission.resource,\n                actions: [...permission.actions].sort(),\n            })),\n        };\n    }",
+            "sha256": "62f8440985b1322618205e2eb18ec532fceda4ea4d6ac37d6909369abc02f127"
+          },
+          {
+            "id": "E2",
+            "kind": "code",
+            "path": "packages/@nocobase/authorization/dist/core/builders.js",
+            "observation": "defineAuthorizationResource 要求资源有 group 与至少一个 action，返回 AuthorizationResourceBuilder；动作/作用域在 builder 内声明，是资源注册的公开入口。",
+            "lines": [
+              99,
+              113
+            ],
+            "excerpt": "/** Build a portable resource without registering it into an application. */\nexport function defineAuthorizationResource(name, configure) {\n    if (!name)\n        throw new TypeError('A resource name is required');\n    const result = configure(new AuthorizationResourceBuilder({\n        name,\n        title: name,\n        group: '',\n        actions: [],\n    }));\n    const definition = result.build();\n    if (!definition.group || !definition.actions.length)\n        throw new TypeError('A resource requires a group and actions');\n    return new AuthorizationResourceBuilder(definition);\n}",
+            "sha256": "317f4a2ba43e0bea3c5e549244de94e67c69a1b3fc8007be770dc0938f30c843"
+          },
+          {
+            "id": "E3",
+            "kind": "code",
+            "path": "packages/@nocobase/authorization/dist/core/resource-grant.js",
+            "observation": "buildResourceGrant 对数组形式动作生成 {action}（无 policy），对对象形式生成 {action, policy:{type:'resource',...scopes}}；因此 grant({view:{materials:'recordsIOwn'}}) 携带 policy。",
+            "lines": [
+              1,
+              13
+            ],
+            "excerpt": "export function buildResourceGrant(definition, actions) {\n    if ((Array.isArray(actions) ? actions : Object.keys(actions)).some((action) => !definition.actions.some((item) => item.name === action)))\n        throw new TypeError('Unknown business resource or action');\n    return structuredClone({\n        resource: { type: 'resource', id: definition.name },\n        actions: Array.isArray(actions)\n            ? actions.map((action) => ({ action }))\n            : Object.entries(actions).map(([action, scopes]) => ({\n                action,\n                policy: { type: 'resource', ...scopes },\n            })),\n    });\n}",
+            "sha256": "39c5eda69005b67f3d92e766bcd7f11097fc9a63d9590785e4042ea8ae162536"
+          },
+          {
+            "id": "E4",
+            "kind": "code",
+            "path": "packages/@nocobase/authorization/dist/core/resources.js",
+            "observation": "ResourceRegistry.expand 把业务 resource grant 连同其 policy 展开为 database.collection 动作 grant，并保留 origin.resource/action/scopeKey，把选中作用域写入 recordAccess。",
+            "lines": [
+              93,
+              143
+            ],
+            "excerpt": "    expand(grant) {\n        if (grant.resource.type !== 'resource')\n            return [grant];\n        const action = this.definitions\n            .get(grant.resource.id)\n            ?.actions.find((action) => action.name === grant.action);\n        if (!action || (grant.policy && grant.policy.type !== 'resource'))\n            throw new TypeError('Invalid business resource grant');\n        for (const key of Object.keys(grant.policy ?? {}))\n            if (key !== 'type' && !action.scopes?.[key])\n                throw new TypeError(`Unknown action scope: ${key}`);\n        for (const [key, scope] of Object.entries(action.scopes ?? {})) {\n            const selected = grant.policy?.[key] ?? scope.defaultValue;\n            const selectedKey = typeof selected === 'string'\n                ? selected\n                : selected && typeof selected === 'object' && !Array.isArray(selected)\n                    ? Reflect.get(selected, 'key')\n                    : undefined;\n            if (selected !== undefined &&\n                selected !== '' &&\n                (typeof selectedKey !== 'string' ||\n                    (scope.options !== undefined && !scope.options.includes(selectedKey))))\n                throw new TypeError('Unknown scope option');\n        }\n        return [\n            grant,\n            ...action.grants.flatMap((target) => target.actions.map((operation) => {\n                const scopeKey = operation.policy?.scope;\n                const selected = typeof scopeKey === 'string'\n                    ? (grant.policy?.[scopeKey] ??\n                        action.scopes?.[scopeKey]?.defaultValue)\n                    : undefined;\n                return {\n                    ...grant,\n                    resource: target.resource,\n                    action: operation.action,\n                    policy: operation.policy && {\n                        ...operation.policy,\n                        ...(selected !== undefined && selected !== ''\n                            ? { recordAccess: [selected] }\n                            : {}),\n                    },\n                    origin: {\n                        resource: grant.resource,\n                        action: grant.action,\n                        ...(typeof scopeKey === 'string' ? { scopeKey } : {}),\n                    },\n                };\n            })),\n        ];\n    }",
+            "sha256": "8c255dbecdc9f19068d314e1cd0cb665b0e430e7fd848fb528561886986e9de3"
+          },
+          {
+            "id": "E5",
+            "kind": "code",
+            "path": "packages/@nocobase/app-plugin-authorization/dist/server/database/authorizer.js",
+            "observation": "resolveEffectiveScope 对每个 grant 分支以 anyScope(positive) 做并集、再用 branchRestrictions 交集；最终把 required 与全局 restrictions 以 allScopes 合成，实现 expand 并集/restrict 交集。",
+            "lines": [
+              209,
+              247
+            ],
+            "excerpt": "    async resolveEffectiveScope(principal, resource, action, configs, constraints, requestedFields) {\n        // Each grant keeps its own fields and role filters through scope evaluation.\n        const branches = await Promise.all(configs.map(async (config) => {\n            const positive = await this.compileScopes(principal, resource, action, config.recordAccess ?? []);\n            positive.push(...(await this.compileConstraints([...constraints, ...(config.branchConstraints ?? [])].filter((item) => item.effect === 'expand'), principal, resource, action)));\n            const branchRestrictions = await this.compileConstraints((config.branchConstraints ?? []).filter((item) => item.effect === 'restrict'), principal, resource, action);\n            return {\n                config,\n                scope: allScopes([anyScope(positive), ...branchRestrictions]),\n            };\n        }));\n        const restrictions = await this.compileConstraints(constraints.filter((item) => item.effect === 'restrict'), principal, resource, action);\n        const fields = resolveDatabaseFields(configs, action);\n        const requested = {\n            ...requestedFields,\n            ...(action === 'read'\n                ? { output: resolveActionFields(action, fields, resource) }\n                : { input: resolveActionFields(action, fields, resource) }),\n        };\n        const required = [\n            anyScope(branches.map((branch) => branch.scope)),\n        ];\n        for (const direction of [\n            'input',\n            'output',\n            'filter',\n            'sort',\n            'group',\n        ]) {\n            for (const field of requested[direction] ?? []) {\n                if (branches.every((branch) => databaseFieldsAllowed({ [direction]: [field] }, resolveDatabaseFields([branch.config], action))))\n                    continue;\n                required.push(anyScope(branches\n                    .filter((branch) => databaseFieldsAllowed({ [direction]: [field] }, resolveDatabaseFields([branch.config], action)))\n                    .map((branch) => branch.scope)));\n            }\n        }\n        return allScopes([...required, ...restrictions]);\n    }",
+            "sha256": "2c894d4928e4c5551455a38092cec17f76cd146c3297221d0de3117043889168"
+          },
+          {
+            "id": "E6",
+            "kind": "code",
+            "path": "packages/@nocobase/app-plugin-authorization/dist/server/database/authorizer.js",
+            "observation": "authorize 先拒绝未注册集合与未知字段，再解析 grants；configs 为空时返回 NO_OBJECT_PERMISSION 拒绝，否则以 GRANT_MATCHED 记录来源。服务端判定独立于客户端快照。",
+            "lines": [
+              39,
+              75
+            ],
+            "excerpt": "    async authorize(request, grantsService, constraintsService) {\n        const resourceId = request.resource.id;\n        const unregistered = this.unregistered(resourceId);\n        if (unregistered)\n            return unregistered;\n        const resolved = await this.collection(resourceId, request.action);\n        if ('effect' in resolved)\n            return resolved;\n        const resource = resolved;\n        const params = request.params;\n        if (!databaseCollectionFieldsKnown(resource, params?.fields)) {\n            return this.deny('UNKNOWN_DATABASE_FIELD', `One or more requested fields are not registered for ${resourceId}`);\n        }\n        const resolvedGrants = await grantsService.resolve({\n            principal: request.principal,\n            subjects: request.subjects,\n            resource: { type: 'database.collection', id: resourceId },\n            action: request.action,\n        });\n        const grants = params?.operation\n            ? resolvedGrants.filter((grant) => grant.origin?.resource.id === params.operation?.resource &&\n                grant.origin?.action === params.operation?.action)\n            : resolvedGrants;\n        const configs = grants.flatMap(toDatabaseGrant);\n        if (configs.length === 0) {\n            return this.deny('NO_OBJECT_PERMISSION', `No database grant allows ${resourceId}.${request.action}`);\n        }\n        const fields = resolveDatabaseFields(configs, request.action);\n        if (!databaseFieldsAllowed(params?.fields, fields)) {\n            return this.deny('FIELD_NOT_ALLOWED', 'One or more input, output, filter, sort, or group fields are not allowed');\n        }\n        const reasons = grants.map((grant) => ({\n            code: 'GRANT_MATCHED',\n            message: `${grant.source.plugin}:${grant.source.id} allows ${resourceId}.${request.action}`,\n            plugin: 'database',\n            details: { source: grant.source },\n        }));",
+            "sha256": "2c894d4928e4c5551455a38092cec17f76cd146c3297221d0de3117043889168"
+          },
+          {
+            "id": "E7",
+            "kind": "code",
+            "path": "packages/@nocobase/app-plugin-authorization/dist/client/authorization-client.js",
+            "observation": "AuthorizationClient.can 读取 permissions() 快照，若 unrestricted 返回 true，否则仅按 resource.type/id 与 actions 匹配；不区分未授予与记录作用域限制。",
+            "lines": [
+              9,
+              17
+            ],
+            "excerpt": "    async can({ resource, action }) {\n        const snapshot = await this.permissions();\n        if (snapshot.unrestricted)\n            return true;\n        return snapshot.permissions.some((permission) => permission.resource.type === resource.type &&\n            (permission.resource.id === '*' ||\n                permission.resource.id === resource.id) &&\n            permission.actions.includes(action));\n    }",
+            "sha256": "1eeca171750f7877dde2bc26ca2c8a6406eb1cd13da18257788c74938bd7de13"
+          },
+          {
+            "id": "E8",
+            "kind": "code",
+            "path": "packages/@nocobase/app-plugin-authorization/dist/server/routes/authorization.js",
+            "observation": "授权路由要求登录并挂载 authorization.middleware()，/permissions 由 authorization.permissions.handler 生成客户端可见性快照。",
+            "lines": [
+              12,
+              17
+            ],
+            "excerpt": "    routes.use('*', auth.required());\n    routes.use('*', authorization.middleware());\n    routes.get('/permissions', (context) => authorization.permissions.handler({\n        request: context.req.raw,\n        authorization: context.get('authz'),\n    }));",
+            "sha256": "a53543409f0a2cc0689aa513bef4e42f55b539e4fbed1c13c7c63dc30df2838b"
+          },
+          {
+            "id": "E9",
+            "kind": "skill",
+            "path": "app/.agents/skills/nocobase-app-plugin-authorization/references/client-development.md",
+            "observation": "指引要求用 useCan({resource,action}) 做功能可见性，并明确‘通过只代表功能被授予，不代表某条记录可写’，行级资格应从服务端获取。",
+            "lines": [
+              28,
+              48
+            ],
+            "excerpt": "## Check feature visibility\n\n```tsx\nimport { useCan } from '@nocobase/app-plugin-authorization/client';\n\nconst permission = useCan({\n  resource: { type: 'resource', id: 'sales.quotes' },\n  action: 'submit',\n});\n// permission: { can, isPending, error, retry }\n```\n\nCall Hooks inside a component or custom Hook. While pending or failed, `can` is false; show a loading state or retryable permission error without exposing stale actions. `{ enabled: false }` as the second argument skips a check. Never call Hooks conditionally. A successful check means the feature is granted, not that a particular quote can be submitted.\n\nReact code can obtain the shared client with `useAuthorizationClient()`. Outside React, resolve `authorizationClientToken` from the App container and call `client.can({ resource, action })`. `useAuthorizationRevision()` supports custom state that must reload on invalidation. Avoid a module-global client or permission response surviving an identity change. The standard provider and `useCan` already handle session invalidation; do not duplicate snapshot caching.\n\n## Obtain row eligibility from the server\n\nThe sales list endpoints return per-record allowed operations; the client combines this with feature visibility. On the server, compute submission eligibility from the same declared action policies: required quote read/write fields, quote scope, actual parent-project scope, positive amount and draft status. Check all required scopes; merely seeing the row through View does not prove Submit.\n\nDo not implement a parallel role-to-button matrix or infer permissions from role names. Never download all rows and filter them locally. Eligibility is a UI hint and can become stale; the mutation endpoint must authorize and validate again.",
+            "sha256": "9ef09a64dd14da31200f7993d4207992532221f4a3eef41d2120b2ac57034dcc"
+          },
+          {
+            "id": "E10",
+            "kind": "skill",
+            "path": "app/.agents/skills/nocobase-app-plugin-authorization/references/core-api.md",
+            "observation": "core-api 说明 can(request) 判断功能可用性而非记录访问，permissions() 是客户端可见性快照、不是可执行数据策略。",
+            "lines": [
+              9,
+              17
+            ],
+            "excerpt": "| Request-scope API                          | Result and use                                                                                        |\n| ------------------------------------------ | ----------------------------------------------------------------------------------------------------- |\n| `authorize({ resource, action, params? })` | Full decision: `permit`, `deny`, or `conditional` with `conditions`                                   |\n| `explain(request)`                         | Full decision with reasons and contributing sources                                                   |\n| `can(request)`                             | Boolean; composed resource checks report feature availability, not record access                      |\n| `require(request)`                         | Throws `AuthorizationDeniedError` on denied or conditional access; use for unconditional capabilities |\n| `permissions()`                            | Client visibility snapshot with `unrestricted` and permissions; not an executable data policy         |\n\nCreate one scope per request. Its grant and constraint caches are shared by underlying composed checks; reuse that scope within the request, never across identities or requests. Execute conditional decisions only through the resource adapter that understands their conditions. Unknown types, invalid conditional decisions and handler failures deny access.",
+            "sha256": "71d33b9c4a1f7fd46afec2a484d5ef3369e3d8afc912e824a89f99ff58bdaa39"
+          },
+          {
+            "id": "E11",
+            "kind": "skill",
+            "path": "app/.agents/skills/nocobase-app-plugin-authorization/references/business-module.md",
+            "observation": "business-module 要求 edit 带 preparer 作用域、submit 带 preparer+region 作用域，并在客户端章节要求用 useCan 判断动作可见性。",
+            "lines": [
+              179,
+              195
+            ],
+            "excerpt": "Create the engineer set with page access and quote actions separately. Configure edit with a preparer scope; submit with preparer and region scopes. Do not use project ownership as an edit default if that would reopen a colleague's quote.\n\nThe following rule-based extensions require the corresponding installed Skills; follow [capability discovery](optional-capabilities.md) first. Without them, describe the missing capability as separate development rather than assuming the example configuration is available. Add default access only for an intentional baseline. Add sharing for the delegation exception: the delegated quote's edit and submit scopes plus its actual parent project's submit scope, assigned to the Proposal team. Sharing the quote does not automatically grant its parent or the submit action. Add restrictions for confidential records at the appropriate boundary; a collection restriction covers all operation branches when the invariant must apply everywhere.\n\nUse the three optional rule Skills for implementation. Follow [code declarations and seeds](code-and-seeds.md) for an executable permission-set declaration, persistence row shapes and initialization rules. Migrations contain schema operations only. Keep demonstration account creation and practice reset out of production features.\n\n## 6. Relations and transitions\n\nAn order's team, checks and collaborators have different capabilities. The delivery role may connect an active team, create/update/delete checks, and set collaborators with a public `note`; that does not permit editing team records or an internal join-table note. Declare each through the fluent relation API and keep protected foreign keys out of root writable fields.\n\nRead expansion and relation mutation need separate allowlists. Test nested create/update/upsert/delete and connect/disconnect/set only where the feature offers them. Upsert requires both create and update grants. A denied nested operation must roll back the entire mutation. The complete relation declaration pattern is in [fluent declarations](fluent-registration.md).\n\nBusiness state remains an independent rule: completed orders can be read while delivery arrangement is closed. Checking an authorization capability does not override that state restriction.\n\n## 7. Client and verification\n\nDeclare page `authz` with a stable `page` ID and `access`. Follow [client development](client-development.md), including a complete action component. Use `useCan({ resource, action })` for action visibility and the server's per-record eligibility for row controls. Show useful loading/error/retry behavior. Invalidate affected lists and relationship controls after mutation while preserving the current selection when appropriate.",
+            "sha256": "e9bdb72f17fa8ca9d83c0e0e837f99dde748d62f19bff6d632d991f98f68f2aa"
+          },
+          {
+            "id": "E12",
+            "kind": "code",
+            "path": "packages/@nocobase/authorization/dist/plugins/default-access/plugin.js",
+            "observation": "DefaultAccessService.resolveRules 对 action+scopeKey 匹配且资源相符的规则生成 effect:'expand' 的约束，value 为配置的 scope。",
+            "lines": [
+              43,
+              62
+            ],
+            "excerpt": "    resolveRules(input, rules) {\n        return rules\n            .flatMap((rule) => {\n            const configured = rule.actions.find((action) => action.action === input.action &&\n                action.scopeKey === input.scopeKey);\n            return rule.resource.type === input.resource.type &&\n                (rule.resource.id === '*' ||\n                    rule.resource.id === input.resource.id) &&\n                configured\n                ? [{ rule, configured }]\n                : [];\n        })\n            .map(({ rule, configured }) => ({\n            source: {\n                plugin: this.id,\n                id: `${rule.resource.type}:${rule.resource.id}`,\n            },\n            effect: 'expand',\n            value: configured.scope,\n        }));",
+            "sha256": "49929ec1c1afbce87716973592da1b46676ae33cb7ed4f75bd22ef21ff43d451"
+          },
+          {
+            "id": "E13",
+            "kind": "code",
+            "path": "packages/@nocobase/app-plugin-authz-default-access/dist/server/stores/default-access.js",
+            "observation": "DatabaseDefaultAccessStore 通过 transaction 按 resourceType/resourceId 插入或更新 authorizationDefaultAccessRules，actions 以 JSON 字符串持久化。",
+            "lines": [
+              9,
+              63
+            ],
+            "excerpt": "    async list() {\n        const rows = await this.connection()\n            .query.selectFrom('authorizationDefaultAccessRules')\n            .select(['id', 'resourceType', 'resourceId', 'actions'])\n            .orderBy('resourceType', 'asc')\n            .orderBy('resourceId', 'asc')\n            .execute();\n        return rows.map((row) => this.fromRow(row));\n    }\n    async get(resourceType, resourceId) {\n        const row = await this.connection()\n            .query.selectFrom('authorizationDefaultAccessRules')\n            .select(['id', 'resourceType', 'resourceId', 'actions'])\n            .where('resourceType', '=', resourceType)\n            .where('resourceId', '=', resourceId)\n            .executeTakeFirst();\n        if (!row)\n            return undefined;\n        return this.fromRow(row);\n    }\n    async set(rule) {\n        const now = new Date();\n        await this.connection().transaction(async (connection) => {\n            const existing = await connection.query\n                .selectFrom('authorizationDefaultAccessRules')\n                .select('id')\n                .where('resourceType', '=', rule.resource.type)\n                .where('resourceId', '=', rule.resource.id)\n                .executeTakeFirst();\n            const id = existing ? String(existing.id) : crypto.randomUUID();\n            if (existing)\n                await connection.query\n                    .updateTable('authorizationDefaultAccessRules')\n                    .set({\n                    actions: JSON.stringify(rule.actions),\n                    updatedAt: now,\n                })\n                    .where('resourceType', '=', rule.resource.type)\n                    .where('resourceId', '=', rule.resource.id)\n                    .execute();\n            else\n                await connection.query\n                    .insertInto('authorizationDefaultAccessRules')\n                    .values({\n                    id,\n                    resourceType: rule.resource.type,\n                    resourceId: rule.resource.id,\n                    actions: JSON.stringify(rule.actions),\n                    createdAt: now,\n                    updatedAt: now,\n                })\n                    .execute();\n        });\n        return rule;\n    }",
+            "sha256": "7fe9bcd721481ebfd1b59217fd7721bd1e305c249850c733a6930e75d882f662"
+          },
+          {
+            "id": "E14",
+            "kind": "skill",
+            "path": "packages/@nocobase/app-plugin-authz-default-access/skills/nocobase-app-plugin-authz-default-access/SKILL.md",
+            "observation": "SKILL 说明默认访问只为已授予动作提供共享记录基线、不授予动作/页面/字段，并给出识别默认范围、复用命名作用域、保存完整规则与验证的流程。",
+            "lines": [
+              6,
+              19
+            ],
+            "excerpt": "# Develop default access\n\nAdds a shared record baseline for holders of an already granted business action. It does not grant the action, page access or additional fields. A baseline combines with permission-set scope and sharing, so choose it as an intentional minimum accessible range rather than a fallback used only when no role scope exists.\n\nRead the installed `nocobase-app-plugin-authorization` Skill first for business actions, fields, server policy enforcement and inherited subjects. Check client/server plugin registration and authorization config before relying on this feature. Installation, service signatures and HTTP routes are included below. Use public exports for runtime operations; use the main Skill’s `references/code-and-seeds.md` for controlled installation data.\n\n## Development workflow\n\n1. Identify which records every holder of a particular operation should receive by default. A read baseline can be broad while edit remains preparer-only; do not copy read defaults into write operations.\n2. Confirm the resource/action/named scope exists and the scope points to the intended collection. Reuse an applicable record-access strategy or implement one through the main authorization Skill.\n3. Save the complete resource rule with `defaultAccess.set`; include all action/scope entries that must remain. Clearing deletes the resource rule, not the permission-set action.\n4. Verify a holder receives the baseline, a person without the action remains denied, and restrictions still remove excluded rows. Also verify an explicit narrow role scope is not unexpectedly broadened by a permissive default.\n\nThe sales example uses related-project ownership for the quote-view baseline and preparer identity for editing. The engineer set separately grants broad viewing, which confidentiality restrictions narrow. The optional comparison source is `database/seed-data/default-access-rules.ts`; the builder and API below are sufficient without it. A project's owner is not necessarily the author of every quote on that project.",
+            "sha256": "774245679595edc185306c6b2c849c8037da060ae59f2a619044af2fabad6e2c"
+          },
+          {
+            "id": "E15",
+            "kind": "code",
+            "path": "packages/@nocobase/authorization/dist/plugins/sharing-rules/service.js",
+            "observation": "SharingRuleService.resolveRules 对 action+scopeKey 与 subject 均匹配的规则生成 effect:'expand'，selection.type==='records' 时展开为 ids，否则使用 policy。",
+            "lines": [
+              40,
+              64
+            ],
+            "excerpt": "    resolveRules(input, rules) {\n        const subjects = resolveAuthorizationSubjects(input);\n        return rules\n            .flatMap((rule) => {\n            const configured = rule.actions.find((action) => action.action === input.action &&\n                action.scopeKey === input.scopeKey);\n            return rule.resource.type === input.resource.type &&\n                (rule.resource.id === '*' ||\n                    rule.resource.id === input.resource.id) &&\n                sharesWithSubject(rule.subjects, subjects) &&\n                configured\n                ? [{ rule, configured }]\n                : [];\n        })\n            .map(({ rule, configured }) => ({\n            source: {\n                plugin: this.id,\n                id: rule.key,\n                ...(rule.title === undefined ? {} : { title: rule.title }),\n            },\n            effect: 'expand',\n            value: configured.selection.type === 'records'\n                ? { type: 'ids', ids: configured.selection.ids }\n                : configured.selection.policy,\n        }));",
+            "sha256": "9c02b7b5ba7148666e7128bc6ca70073396dec5d103e298506bc22faa3562c5b"
+          },
+          {
+            "id": "E16",
+            "kind": "code",
+            "path": "packages/@nocobase/app-plugin-authz-sharing-rules/dist/server/stores/sharing-rules.js",
+            "observation": "DatabaseSharingRuleStore.create/update/delete 在事务内维护 authorizationSharingRules 与 assignment 行；update 先清空再写入 subject，delete 对未知 key 幂等返回。",
+            "lines": [
+              12,
+              63
+            ],
+            "excerpt": "    async create(rule) {\n        const id = crypto.randomUUID();\n        const now = new Date();\n        await this.connection().transaction(async (connection) => {\n            await connection.query\n                .insertInto(RULES)\n                .values(this.toValues(rule, id, now, now))\n                .execute();\n            await this.replaceAssignments(connection, id, rule.subjects);\n        });\n        return rule;\n    }\n    async update(key, rule) {\n        await this.connection().transaction(async (connection) => {\n            const current = await connection.query\n                .selectFrom(RULES)\n                .select('id')\n                .where('key', '=', key)\n                .executeTakeFirst();\n            if (!current)\n                throw new Error(`Unknown Sharing Rule: ${key}`);\n            const id = String(current.id);\n            await connection.query\n                .updateTable(RULES)\n                .set(this.toUpdateValues(rule))\n                .where('id', '=', id)\n                .execute();\n            await connection.query\n                .deleteFrom(ASSIGNMENTS)\n                .where('sharingRuleId', '=', id)\n                .execute();\n            await this.replaceAssignments(connection, id, rule.subjects);\n        });\n        return rule;\n    }\n    async delete(key) {\n        await this.connection().transaction(async (connection) => {\n            const current = await connection.query\n                .selectFrom(RULES)\n                .select('id')\n                .where('key', '=', key)\n                .executeTakeFirst();\n            if (!current)\n                return;\n            const id = String(current.id);\n            await connection.query\n                .deleteFrom(ASSIGNMENTS)\n                .where('sharingRuleId', '=', id)\n                .execute();\n            await connection.query.deleteFrom(RULES).where('id', '=', id).execute();\n        });\n    }",
+            "sha256": "468f5c5dba12318099a6d3d326b8ec559d6f7c9d2af5de9c614a376a78911cff"
+          },
+          {
+            "id": "E17",
+            "kind": "skill",
+            "path": "packages/@nocobase/app-plugin-authz-sharing-rules/skills/nocobase-app-plugin-authz-sharing-rules/SKILL.md",
+            "observation": "SKILL 强调共享只扩展记录范围、不授予操作/字段/页面，先经权限集授予动作，再为显式交接或动态策略保存完整规则，并验证撤销只失去该来源。",
+            "lines": [
+              6,
+              19
+            ],
+            "excerpt": "# Develop sharing rules\n\nAdds selected records or a dynamic record scope for selected subjects who already hold the action. Sharing does not grant the operation, fields, page access or related records. Permission-set/default/shared scopes combine before restrictions narrow them.\n\nRead the installed `nocobase-app-plugin-authorization` Skill first for business actions, fields, server policy enforcement and inherited subjects. Check client/server plugin registration and authorization config before relying on this feature. Installation, service signatures and HTTP routes are included below. Use public exports for runtime operations; use the main Skill’s `references/code-and-seeds.md` for controlled installation data.\n\n## Development workflow\n\n1. Identify the real collaboration exception: who receives which records, for which actions, and why. Use explicit records for one handover; use a dynamic strategy for a maintained region/team rule.\n2. Grant the recipients the business action through a permission set first. Register inherited subjects and their active membership resolver through the main authorization Skill.\n3. Inspect every scope required by the operation. Quote submission needs the selected quote and its actual parent project. Add each action/scope selection deliberately; view, edit and submit are different permissions.\n4. Save a complete sharing rule using `sharingRules.create/update` or the settings UI. Keep selection IDs tied to their scope's collection and preserve other entries on update.\n5. Verify the handover works, an unshared parent still blocks the workflow, restrictions still exclude confidential records, and sharing alone cannot activate a missing operation.\n6. Revoke the sharing recipient or team role and verify the next request loses only that access source. Independent direct-user sharing and direct job assignments must survive.",
+            "sha256": "c8a1480b3803d3de96a07025f5c538f002959be8bd506443e41cabe5d0a6a7f4"
+          },
+          {
+            "id": "E18",
+            "kind": "code",
+            "path": "packages/@nocobase/authorization/dist/plugins/restriction-rules/service.js",
+            "observation": "RestrictionRuleService.resolveRules 对资源/动作匹配且作用于该 subject 的规则生成 effect:'restrict'，value 为配置 scope，语义为交集收窄。",
+            "lines": [
+              36,
+              57
+            ],
+            "excerpt": "    resolveRules(input, rules) {\n        const subjects = resolveAuthorizationSubjects(input);\n        return rules\n            .flatMap((rule) => {\n            const configured = rule.actions.find((action) => action.action === input.action &&\n                action.scopeKey === input.scopeKey);\n            return restrictionMatches(rule, input) &&\n                appliesToSubject(rule.subjects, subjects) &&\n                configured\n                ? [{ rule, configured }]\n                : [];\n        })\n            .map(({ rule, configured }) => ({\n            source: {\n                plugin: this.id,\n                id: rule.key,\n                ...(rule.title === undefined ? {} : { title: rule.title }),\n            },\n            effect: 'restrict',\n            value: configured.scope,\n        }));\n    }",
+            "sha256": "f40e35749dc7025933b5da20443895921c33128d4b0666369cfb24ebf20c2a7e"
+          },
+          {
+            "id": "E19",
+            "kind": "code",
+            "path": "packages/@nocobase/app-plugin-authz-restriction-rules/dist/server/stores/restriction-rules.js",
+            "observation": "DatabaseRestrictionRuleStore.create/update/delete 事务化维护 authorizationRestrictionRules 与 assignment，delete 删除 assignment 后删除规则。",
+            "lines": [
+              12,
+              64
+            ],
+            "excerpt": "    async create(rule) {\n        const now = new Date();\n        const id = crypto.randomUUID();\n        await this.connection().transaction(async (connection) => {\n            await connection.query\n                .insertInto(COLLECTION)\n                .values(this.toValues(rule, id, now, now))\n                .execute();\n            await this.replaceAssignments(connection, id, rule.subjects);\n        });\n        return rule;\n    }\n    async update(key, rule) {\n        await this.connection().transaction(async (connection) => {\n            const row = await connection.query\n                .selectFrom(COLLECTION)\n                .select('id')\n                .where('key', '=', key)\n                .executeTakeFirst();\n            if (!row)\n                throw new Error(`Unknown Restriction Rule: ${key}`);\n            const id = String(row.id);\n            await connection.query\n                .updateTable(COLLECTION)\n                .set({ ...this.toUpdateValues(rule), updatedAt: new Date() })\n                .where('id', '=', id)\n                .execute();\n            await connection.query\n                .deleteFrom(ASSIGNMENTS)\n                .where('restrictionRuleId', '=', id)\n                .execute();\n            await this.replaceAssignments(connection, id, rule.subjects);\n        });\n        return rule;\n    }\n    async delete(key) {\n        await this.connection().transaction(async (connection) => {\n            const row = await connection.query\n                .selectFrom(COLLECTION)\n                .select('id')\n                .where('key', '=', key)\n                .executeTakeFirst();\n            if (!row)\n                return;\n            await connection.query\n                .deleteFrom(ASSIGNMENTS)\n                .where('restrictionRuleId', '=', String(row.id))\n                .execute();\n            await connection.query\n                .deleteFrom(COLLECTION)\n                .where('id', '=', String(row.id))\n                .execute();\n        });",
+            "sha256": "7b5515186e3f66a30cf1f9af38e209c324d16f84c0693b95b99bf74c30371a9c"
+          },
+          {
+            "id": "E20",
+            "kind": "skill",
+            "path": "packages/@nocobase/app-plugin-authz-restriction-rules/skills/nocobase-app-plugin-authz-restriction-rules/SKILL.md",
+            "observation": "SKILL 说明限制是交集/允许条件而非拒绝清单，多个匹配限制收窄访问、不能授权或放大，并要求以肯定式不变量描述、在所有受保护路径验证。",
+            "lines": [
+              6,
+              20
+            ],
+            "excerpt": "# Develop restriction rules\n\nIntersects an already granted record range with the records still allowed for selected subjects. The scope is an allow-condition, not a list of records to deny. Multiple matching restrictions narrow access; none can grant an action or widen a range.\n\nRead the installed `nocobase-app-plugin-authorization` Skill first for business actions, fields, server policy enforcement and inherited subjects. Check client/server plugin registration and authorization config before relying on this feature. Installation, service signatures and HTTP routes are included below. Use public exports for runtime operations; use the main Skill’s `references/code-and-seeds.md` for controlled installation data.\n\n## Development workflow\n\n1. State the invariant positively: for example, this team may access only non-confidential projects. Define who it applies to and whether it covers one operation or every route to a collection.\n2. Use a business resource/action/scope rule for an operation-specific limit. For a limit across business branches and direct table grants, create an underlying `database.collection` rule with the collection's CRUD actions. The business settings picker shows declared business scopes; collection-wide invariants can be provisioned through the service API.\n3. Register a suitable strategy and save the complete rule. Apply the restriction directly to a user as well when it must remain after that person's team membership is removed.\n4. Bind policies on all protected reads/writes. For relation targets, explicitly declare relation record access; standalone target collection restrictions are not inherited automatically by nested relation writes.\n5. Verify the excluded row remains inaccessible after adding broad sharing and another permission set, and across each protected operation. Verify unrelated actors retain their intended access.\n\nUse the included rule API and the main Skill’s bundled public-record resolver; the example source is optional for comparison. The coordinator's direct confidentiality restriction persists when its team role is removed. Test with ordinary users: unrestricted administrators bypass rule constraints.",
+            "sha256": "deddc920c5dd41ab8c1f009fccc4b66ee875a5b249de271e327ccd70da082d5a"
+          },
+          {
+            "id": "E21",
+            "kind": "code",
+            "path": "packages/@nocobase/app-plugin-users/dist/server/services/users.js",
+            "observation": "users.disable 在事务中执行 roleScope.assertCanDisable、permissionSets.assertSubjectRemovable、lockUserForAdministration 后调用底层 users.disable(userId)，把停用与权限主体移除一致化。",
+            "lines": [
+              93,
+              107
+            ],
+            "excerpt": "    async disable(userId) {\n        const user = await this.services.database.transaction(async (connection) => {\n            for (const scope of this.services.roleScopes.list()) {\n                await scope.assertCanDisable?.(userId, connection);\n            }\n            // A disabled account can no longer act, so disabling it removes the\n            // subject from every Permission Set as surely as revoking would.\n            await this.services.permissionSets\n                ?.withTransaction(connection)\n                .assertSubjectRemovable({ type: 'user', id: userId });\n            await lockUserForAdministration(connection, userId);\n            return this.services.users.withConnection(connection).disable(userId);\n        });\n        return this.withRoleScopes(user, this.services.database.connection());\n    }",
+            "sha256": "1797b9fd6624e1934590df7cbe95a4e61d3897bbe5515fa6e8662bc1d4da801c"
+          },
+          {
+            "id": "E22",
+            "kind": "code",
+            "path": "packages/@nocobase/app-plugin-authentication/dist/server/user-administration.js",
+            "observation": "DefaultUserAdministrationService.disable 写 disabledAt 后调用 revokeSessions；revokeSessions 删除用户全部会话并 disconnectUser 断开实时连接。",
+            "lines": [
+              134,
+              173
+            ],
+            "excerpt": "    async disable(userId) {\n        await this.requireUser(userId);\n        const context = await this.options.auth.administrationContext();\n        await context.internalAdapter.updateUser(userId, {\n            disabledAt: new Date(),\n        });\n        await this.revokeSessions(userId);\n        return (await this.get(userId));\n    }\n    async enable(userId) {\n        await this.requireUser(userId);\n        const context = await this.options.auth.administrationContext();\n        await context.internalAdapter.updateUser(userId, { disabledAt: null });\n        return (await this.get(userId));\n    }\n    async resetPassword(userId, password) {\n        await this.requireUser(userId);\n        const context = await this.options.auth.administrationContext();\n        validatePassword(password, context.password.config);\n        const hash = await context.password.hash(password);\n        const account = await context.internalAdapter.findCredentialAccount(userId);\n        if (account) {\n            await context.internalAdapter.updatePassword(userId, hash);\n        }\n        else {\n            await context.internalAdapter.linkAccount({\n                accountId: userId,\n                providerId: 'credential',\n                userId,\n                password=[REDACTED],\n            });\n        }\n        await this.revokeSessions(userId);\n    }\n    async revokeSessions(userId) {\n        await this.requireUser(userId);\n        const context = await this.options.auth.administrationContext();\n        await context.internalAdapter.deleteUserSessions(userId);\n        this.options.realtime?.disconnectUser(userId);\n    }",
+            "sha256": "eb723a2fc8d32c9fb2b660fe2cff7c64a0123cb5a57c2fb7ca62bcb698dfc74d"
+          },
+          {
+            "id": "E23",
+            "kind": "code",
+            "path": "packages/@nocobase/app-plugin-authentication/dist/server/auth.js",
+            "observation": "session create.after 读取 disabledAt，账户不存在或已停用时删除刚创建的会话并以 FORBIDDEN/ACCOUNT_DISABLED 拒绝登录，覆盖在途登录边界。",
+            "lines": [
+              47,
+              66
+            ],
+            "excerpt": "                        after: async (session, context) => {\n                            await configuredSessionCreate?.after?.(session, context);\n                            const user = context\n                                ? await context.context.internalAdapter.findUserById(session.userId)\n                                : await connection.query\n                                    .selectFrom('user')\n                                    .select('disabledAt')\n                                    .where('id', '=', session.userId)\n                                    .executeTakeFirst();\n                            if (!user || Reflect.get(user, 'disabledAt') != null) {\n                                // A login already in flight may persist after user deletion.\n                                // Remove its new session before returning it to the caller.\n                                const adapter = context?.context.internalAdapter ??\n                                    (await this.auth.$context).internalAdapter;\n                                await adapter.deleteSession(session.token);\n                                throw APIError.from('FORBIDDEN', {\n                                    code: 'ACCOUNT_DISABLED',\n                                    message: 'This account is disabled.',\n                                });\n                            }",
+            "sha256": "39be057de8227c5aef3eb57a2a15b04bfa0aa8922c60be23e8618d31659c9c48"
+          },
+          {
+            "id": "E24",
+            "kind": "skill",
+            "path": "packages/@nocobase/app-plugin-users/skills/nocobase-app-plugin-users/SKILL.md",
+            "observation": "users SKILL 规定禁用用户由 Authentication 拒绝并失去既有 HTTP 会话与实时连接，验证项要求停用后会话失效、启用后需重新登录。",
+            "lines": [
+              96,
+              113
+            ],
+            "excerpt": "- Disabled users are rejected by Authentication and lose their existing HTTP\n  Sessions and Realtime connections.\n- Password hashes, Session tokens, reset tokens, and submitted passwords are\n  never returned by the service or included in security events.\n\n## Verification\n\n- A role without `page:users/access` cannot navigate to the page.\n- Anonymous API requests return `401`; authenticated requests without the\n  requested `user` action return `403`.\n- Creating a user with a required role scope creates both records, while role\n  assignment failure rolls back the user.\n- Duplicate emails or usernames return a stable `409` conflict. Password reset\n  and database Session revocation commit or roll back together.\n- Disabling a user invalidates HTTP Sessions and Realtime connections; enabling\n  the user requires a new login.\n- Role changes become visible after transaction commit and do not alter\n  assignments outside the registered scope.",
+            "sha256": "d4ec01695e050d14f830338b386b2ecd56bf0d7fc1777d6feae90746e794fb7f"
+          },
+          {
+            "id": "E25",
+            "kind": "skill",
+            "path": "packages/@nocobase/app-plugin-authentication/skills/nocobase-app-plugin-authentication/SKILL.md",
+            "observation": "authentication SKILL 规定禁用账户以 403 ACCOUNT_DISABLED 拒绝登录并立刻撤销会话与实时连接，明确不要新增平行 active 标志。",
+            "lines": [
+              108,
+              121
+            ],
+            "excerpt": "- Secrets stay in server configuration or environment. Nothing under `client/`\n  may read one.\n- Never log a password, session token, verification value, ticket, or OAuth\n  token. Log user ids, request ids, and outcomes.\n- A disabled account is rejected at sign-in with `403 ACCOUNT_DISABLED`, and\n  its existing sessions and realtime connections are revoked at once. Do not\n  add a parallel \"active\" flag.\n\n## Verification\n\n- Anonymous requests to a protected route return `401` with\n  `{ code: 'UNAUTHORIZED' }`; the same request with a session returns the\n  route's own response.\n- An authenticated request that lacks permission returns `403` from",
+            "sha256": "c03b189be85b6feeb39ea5cc1a348f3a3d585b3e7bdcc0c72fd9d4a1cf452551"
+          },
+          {
+            "id": "E26",
+            "kind": "code",
+            "path": "packages/@nocobase/db/dist/src/migration/migrator.js",
+            "observation": "迁移执行前若 migration.shouldRun 存在则调用并要求返回布尔，false 时记入 skipped 且不写历史；否则正常执行并记录批次。",
+            "lines": [
+              50,
+              64
+            ],
+            "excerpt": "            for (const migration of pending) {\n                if (migration.migration.shouldRun) {\n                    const shouldRun = await migration.migration.shouldRun({\n                        ...createMigrationContext(connection, this.options.config, this.options.container),\n                        parameters: migration.parameters,\n                        configuration: migration.configuration,\n                    });\n                    if (typeof shouldRun !== 'boolean') {\n                        throw new Error(`Migration \"${migration.name}\" shouldRun must return a boolean.`);\n                    }\n                    if (!shouldRun) {\n                        skipped.push(migration.name);\n                        continue;\n                    }\n                }",
+            "sha256": "dfc3035555b8c77ecc334fd12d2d66f119f6345cb222eb9885220fd4ae66deb5"
+          },
+          {
+            "id": "E27",
+            "kind": "code",
+            "path": "packages/@nocobase/db/dist/src/collection/builder/builder.js",
+            "observation": "builder.hasCollection(name) 对已加载集合返回其存在性，否则检查 plannedCollections，可在迁移中判断目标集合/表是否适用。",
+            "lines": [
+              96,
+              101
+            ],
+            "excerpt": "    async hasCollection(name) {\n        if (this.collections) {\n            return Boolean(await this.collections.get(name));\n        }\n        return this.plannedCollections.has(name);\n    }",
+            "sha256": "105281a90da5f2b63b36b38dd7f3640498ebfd284293ef37887c3a93fd4dd029"
+          },
+          {
+            "id": "E28",
+            "kind": "skill",
+            "path": "packages/@nocobase/db/skills/nocobase-db/SKILL.md",
+            "observation": "db SKILL 的迁移铁律要求自包含、合并后不可变、无反向操作声明 irreversible、seed 幂等，并说明默认事务与 transaction:false 的风险；未提及 shouldRun 或 hasCollection。",
+            "lines": [
+              129,
+              141
+            ],
+            "excerpt": "The rules are absolute, because these files are history that has already run on other machines:\n\n- **Self-contained.** Spell out every table, field, index, constraint and metadata operation in the file. Never import a Collection definition, model, registry or shared constant that keeps evolving — that silently changes both the behavior and the checksum of something already applied.\n- **Immutable once merged.** Check with `git log -- <file>` if unsure. Before the branch is merged you may correct the file in place; after it, every change is a new, later file. Never hard-code a previous checksum to make an edited migration look untouched. Correcting it in place changes nothing on its own — it is recorded as executed, so a plain apply skips it and the database keeps the schema the old file produced. `pnpm db:redo` rolls the latest batch back and applies it again.\n- **The file name body matches `name`**, and the name is unique across every source in the application.\n- **Declare `irreversible: true`** when there is no real reverse operation, instead of writing a `down()` that quietly does nothing.\n- **A seed is idempotent**, keyed on a stable business value backed by a unique constraint, so a repeated run is a no-op — `upsertOne` is the direct way to express that. A seed context has no `builder` at all, and a seed has no rollback or truncate behavior.\n\nA backfill belongs in the migration that makes it necessary, using `query` from the same context — not in a seed.\n\nBoth run inside a transaction by default. `transaction: false` opts out, and a failure then leaves partial work behind with no history record, so take it only when the operation genuinely cannot run in one.\n\nA task's `connection` is not the runtime connection either. It carries `dialect`, `capabilities` and `client()` — enough to branch on the database, and deliberately not a way back to the manager. Anything conditional on the dialect reads it from there.",
+            "sha256": "2fdca7c2484a669667b6293878b915a5af0f84cbd3c5e80945a28fe5fbabf7d7"
+          },
+          {
+            "id": "E29",
+            "kind": "code",
+            "path": "app/server/library/authorization.ts",
+            "observation": "应用用 defineAuthorizationResource/defineDatabasePermission 注册 library.materials，声明 view/create/edit/delete 动作并用 defineRecordAccess 提供 recordsIOwn 作用域。",
+            "lines": [
+              104,
+              122
+            ],
+            "excerpt": "export const materialResource = defineAuthorizationResource(\n  MATERIAL_RESOURCE_ID,\n  (resource) =>\n    resource\n      .group('library')\n      .title('Materials')\n      .action('view', (action) =>\n        action.grant(MATERIAL_SCOPE_KEY, materialRead),\n      )\n      .action('create', (action) =>\n        action.grant(MATERIAL_SCOPE_KEY, materialCreate),\n      )\n      .action('edit', (action) =>\n        action.grant(MATERIAL_SCOPE_KEY, materialEdit),\n      )\n      .action('delete', (action) =>\n        action.grant(MATERIAL_SCOPE_KEY, materialDelete),\n      ),\n);",
+            "sha256": "793bc87acd99cb17bc606c79a66435f1b39877e91f5031714e1e188cc468142e"
+          },
+          {
+            "id": "E30",
+            "kind": "code",
+            "path": "app/database/seed-data/library-permission-sets.ts",
+            "observation": "编辑者权限集对 materialResource.reference().grant 传入 {view/create/edit/delete:{materials:'recordsIOwn'}}，读者权限集只 grant('view')，因此编辑动作携带 policy。",
+            "lines": [
+              24,
+              41
+            ],
+            "excerpt": "export const libraryEditorPermissionSet = permissionSet('library-editor')\n  .title('Library editor')\n  .grant(libraryPageGrant)\n  .grant(\n    materialResource.reference().grant({\n      view: { [MATERIAL_SCOPE_KEY]: 'recordsIOwn' },\n      create: { [MATERIAL_SCOPE_KEY]: 'recordsIOwn' },\n      edit: { [MATERIAL_SCOPE_KEY]: 'recordsIOwn' },\n      delete: { [MATERIAL_SCOPE_KEY]: 'recordsIOwn' },\n    }),\n  )\n  .build();\n\nexport const libraryReaderPermissionSet = permissionSet('library-reader')\n  .title('Library reader')\n  .grant(libraryPageGrant)\n  .grant(materialResource.reference().grant('view'))\n  .build();",
+            "sha256": "aa5f353d572a5999b33fd293027042c0eeca5f6f9010fa6fb8d2f8706605708e"
+          },
+          {
+            "id": "E31",
+            "kind": "code",
+            "path": "app/database/main/migrations/202609300002_remove_default_draft_sharing.ts",
+            "observation": "清理迁移用 shouldRun 与 builder.hasCollection 判断授权共享两张逻辑表是否存在，不存在则跳过，存在时删除草稿 D 的规则与赋值。",
+            "lines": [
+              16,
+              39
+            ],
+            "excerpt": "const migration = defineMigration({\n  name: '202609300002_remove_default_draft_sharing',\n  transaction: true,\n  // The sharing tables belong to the authorization sharing-rules plugin, so\n  // they are only present when that plugin is registered. A database without\n  // them (an embedded runtime that loads no plugins, or an application that\n  // never enabled sharing) has nothing to clean up, so the migration is\n  // inapplicable and stays unrecorded instead of failing on a missing table.\n  async shouldRun({ builder }) {\n    return (\n      (await builder.hasCollection('authorizationSharingRules')) &&\n      (await builder.hasCollection('authorizationSharingRuleAssignments'))\n    );\n  },\n  async up({ query }) {\n    await query\n      .deleteFrom('authorizationSharingRuleAssignments')\n      .where('sharingRuleId', '=', DRAFT_SHARING_RULE_ID)\n      .execute();\n    await query\n      .deleteFrom('authorizationSharingRules')\n      .where('id', '=', DRAFT_SHARING_RULE_ID)\n      .execute();\n  },",
+            "sha256": "7dbfabdb95f57187ae635e77d8f0b16db43b7eb9054182309a57cbf23df2d8a3"
+          },
+          {
+            "id": "E32",
+            "kind": "log",
+            "path": "artifacts/retro.json",
+            "observation": "retro 记录 B01 根因为 useCan 快照跳过带 policy 的 grant、B02 根因为 seed 预置草稿 D 共享、B03 根因为清理迁移在未加载共享插件时无表，均给出修复与 resolved 状态。",
+            "lines": [
+              6,
+              26
+            ],
+            "excerpt": "      \"phase\": \"repair\",\n      \"title\": \"B01 页面动作权限渲染缺陷\",\n      \"symptom\": \"资料员 A 登录后列表可见 P/D/C，但 Actions 列没有任何编辑/删除按钮，页面也没有 New material 按钮；同一会话直接 PATCH /main/api/library/materials/library-draft-d 返回 200，证明服务端允许 A 更新自己的记录。阅读者 B 的 Actions 列为空且 PATCH 返回 403 属预期。\",\n      \"rootCause\": \"客户端用 useCan({ resource: 'library.materials', action: 'edit'|'create'|'delete' }) 判断动作可见性，而 useCan 读取 GET /api/authz/permissions 的权限快照。resolvePermissions 会跳过任何带 policy 的 grant，除非该 (resourceType, resourceId, action) 注册了 scope；业务资源与 database.collection 默认动作都没有 scope，因此这些按 recordsIOwn 作用域的 grant（含展开出的 database grant）不会进入快照，useCan 对 create/edit/delete 一律返回 false。服务端 PATCH 走 authorize 与 Policy，不依赖快照，所以仍然成功。\",\n      \"resolution\": \"改为由服务端返回资格：GET /api/library/materials 除过滤后的记录外，为每行返回 canEdit/canDelete（用该动作自身的 Policy 对行 id 执行 repository.exists 判定），并在顶层 meta.canCreate 返回集合级新建能力；客户端移除 useCan，仅按服务端结果渲染按钮。为让 delete 的 Policy 可读，materialDelete 增加 read([...READ_FIELDS])（delete 写入仍由 delete 节点决定）。每个变更端点照旧独立授权。\",\n      \"status\": \"resolved\"\n    },\n    {\n      \"phase\": \"repair\",\n      \"title\": \"B02 交付默认预置草稿 D 共享规则\",\n      \"symptom\": \"交付初始状态已存在 'Share private draft D' (library-share-draft-d, shared with Library Reader B)，B 首次登录 Library 即可读取私有草稿 D；删除该规则后 B 只剩公开资料 P，重建后 B 又可读取 D，而保密资料 C 始终不可见。共享/撤销机制本身正常。\",\n      \"rootCause\": \"seed 202609300001_library_seed.ts 在初始化时写入草稿 D 与保密 C 两条共享规则及其对 B 的赋值，使私有草稿在管理员共享前就默认可读。\",\n      \"resolution\": \"seed 不再写入草稿 D 的共享规则，D 只在管理员于运行时创建共享规则后才对 B 可见。保密 C 的共享规则保留（它从不暴露 C，且用于证明限制规则优先于其他共享来源，对应既有 B04）。新增数据迁移 202609300002_remove_default_draft_sharing.ts，从已收到旧初始状态的数据库中删除草稿 D 的规则与赋值（down 还原），以兼容已存在的库。\",\n      \"status\": \"resolved\"\n    },\n    {\n      \"phase\": \"repair\",\n      \"title\": \"清理草稿共享规则的数据迁移在未加载授权插件的运行时中报 no such table\",\n      \"symptom\": \"tests/logic/app-server.test.ts 的 'registers application-owned providers and routes from the runtime' 在 app.start() 失败：AppDatabaseTaskError: Database migrations failed for connection \\\"main\\\": delete from `authorization_sharing_rule_assignments` where `sharing_rule_id` = 'library-share-draft-d' - no such table: authorization_sharing_rule_assignments。该用例用 defineServerPlugins([]) 覆盖运行时插件，授权共享规则插件及其建表迁移不运行，但应用自有迁移 202609300002 仍被应用。\",\n      \"rootCause\": \"202609300002 无条件删除授权共享规则表（authorizationSharingRules / authorizationSharingRuleAssignments）中的草稿 D 行；这两个表由 @nocobase/app-plugin-authz-sharing-rules 的插件迁移创建。app-server 测试刻意不加载任何插件，表因此不存在，delete 报错并中断启动。\",\n      \"resolution\": \"给迁移增加 shouldRun，用 builder.hasCollection 检查两个逻辑 Collection 是否存在；表不存在时不适用且不写入历史（嵌入式、未启用共享的运行时不再失败），表存在时（真实应用与已收到旧 seed 的数据库）照常删除草稿 D 的规则与赋值。已在持久开发库上运行 pnpm db:apply，确认迁移执行、草稿 D 规则被删除、保密 C 规则保留，并重跑 app-server.test.ts 与 library-permissions.test.ts 通过。\",",
+            "sha256": "c80236b84b5a3529251160367196e7527a6c98bc7ea5bd527a755f5e4d038ba5"
+          },
+          {
+            "id": "E33",
+            "kind": "qa",
+            "path": "artifacts/verify-1/browser-acceptance/report.json",
+            "observation": "首轮 B01 失败：资料员 A 列表可见 P/D/C 但界面无任何新建/编辑/删除动作，同会话直接 PATCH 自己记录返回 200，证明为客户端可见性缺陷。",
+            "lines": [
+              6,
+              23
+            ],
+            "excerpt": "    {\n      \"id\": \"B01\",\n      \"status\": \"failed\",\n      \"actions\": [\n        \"以管理员 nocobase/admin123 在真实浏览器登录，打开 Library 页面，确认已持久化三条资料记录：公开资料 P、私有草稿 D、保密资料 C。\",\n        \"以阅读者 B (reader.b) 登录 Library，列表只显示公开资料 P；Actions 列为空，没有编辑/删除动作；为确认不是仅界面隐藏，在同一会话直接 PATCH /main/api/library/materials/library-public-p，返回 403 FORBIDDEN，B 不能编辑。\",\n        \"以资料员 A (librarian.a) 登录 Library，列表显示 P、D、C 三条记录，但 Actions 列为空（DOM 中 table tbody button/a 数量为 0），页面也没有 New material 按钮，A 无法在界面新建、编辑或删除资料。\",\n        \"为区分界面缺陷与服务端权限失败，以 A 的同一浏览器会话直接 PATCH /main/api/library/materials/library-draft-d，返回 200 并回显更新后的记录，说明 A 对自己拥有的记录具备服务端更新权限，缺的是页面上的维护动作。\"\n      ],\n      \"evidence\": [\n        \"B 能阅读公开资料 P 且不能编辑（PATCH 403）。A 能读取三条记录，但资料库页面根本没有新建/编辑/删除动作，A 无法通过界面维护自己的资料；A 的 PATCH 返回 200 证明服务端已允许 A 更新其拥有的记录，因此这是页面动作权限渲染缺陷，B01 未通过。\"\n      ],\n      \"screenshots\": [\n        \"editor-library.png\",\n        \"reader-library-revoked-d.png\"\n      ],\n      \"criterion\": \"B 登录能阅读公开资料 P，不能编辑；A 可维护自己的资料。\",\n      \"recordedAt\": 1790239007218",
+            "sha256": "4fbfc28fc74074225351b75dd4c9b168da7c48aaae4271774a4172b982777ca1"
+          },
+          {
+            "id": "E34",
+            "kind": "qa",
+            "path": "artifacts/verify-3/browser-acceptance/report.json",
+            "observation": "最终一轮报告 passed:true，B01 状态 passed：读者仅见公开 P 且无编辑动作，资料员可维护自己的资料。",
+            "lines": [
+              2,
+              9
+            ],
+            "excerpt": "  \"passed\": true,\n  \"authenticated\": true,\n  \"summary\": \"在真实浏览器中完成 B01-B05：阅读者 B 仅能读公开资料 P、无编辑动作，资料员 A 可维护自己的资料；管理员单条共享草稿 D 给 B 后 B 可读、撤销后立即不可读；保密资料 C 有共享来源时 B 仍不可见且 A 访问不受影响；停用 B 后其已有会话刷新失效。\",\n  \"checks\": [\n    {\n      \"id\": \"B01\",\n      \"criterion\": \"B 登录能阅读公开资料 P，不能编辑；A 可维护自己的资料。\",\n      \"status\": \"passed\",",
+            "sha256": "c8afb37bc89dc39974e96c2fbdd9910dfb1afd37fb85848cb8bb847848941b96"
+          },
+          {
+            "id": "E35",
+            "kind": "code",
+            "path": "app/server/routes/index.ts",
+            "observation": "应用修复后由服务端为每行计算 canEdit/canDelete（用各动作自身 Policy 判定），并在 meta.canCreate 返回集合级能力；每个变更端点仍独立授权。",
+            "lines": [
+              95,
+              116
+            ],
+            "excerpt": "      // that carry a record scope, so the list response states the same\n      // eligibility the action endpoints enforce: a collection-wide create\n      // capability and a per-row edit/delete flag proved with each action's own\n      // Policy. The page only renders what the server reports, and every\n      // mutation is authorized again on its own path.\n      const [editRepository, deleteRepository, createRepository] =\n        await Promise.all([\n          repositoryFor(context, 'edit'),\n          repositoryFor(context, 'delete'),\n          repositoryFor(context, 'create'),\n        ]);\n      const data = await Promise.all(\n        records.map(async (record) => ({\n          ...record,\n          canEdit: await rowIsInScope(editRepository, record.id),\n          canDelete: await rowIsInScope(deleteRepository, record.id),\n        })),\n      );\n      return context.json({\n        data,\n        meta: { canCreate: createRepository !== undefined },\n      });",
+            "sha256": "e2931ae1808b1fcba275c4b6dfebf9c087e2edf1ad1f6aea8117301326748fed"
+          },
+          {
+            "id": "E36",
+            "kind": "code",
+            "path": "app/client/pages/library/index.tsx",
+            "observation": "客户端仅按服务端返回的 canEdit/canDelete 渲染编辑/删除按钮，不再依赖 useCan。",
+            "lines": [
+              248,
+              270
+            ],
+            "excerpt": "                    <TableCell className='text-right'>\n                      <div className='flex justify-end gap-2'>\n                        {material.canEdit ? (\n                          <Button\n                            variant='outline'\n                            size='sm'\n                            onClick={() => openEdit(material)}\n                          >\n                            <Pencil />\n                            {t('library.edit')}\n                          </Button>\n                        ) : null}\n                        {material.canDelete ? (\n                          <Button\n                            variant='destructive'\n                            size='sm'\n                            onClick={() => setDeleting(material)}\n                          >\n                            <Trash2 />\n                            {t('library.delete')}\n                          </Button>\n                        ) : null}\n                      </div>",
+            "sha256": "41038b548a58e89ecfefb80360f32a9b4768ace84599115c8ab106a27b87dd4f"
+          },
+          {
+            "id": "E37",
+            "kind": "code",
+            "path": "app/database/main/seeds/202609300001_library_seed.ts",
+            "observation": "seed 在 authorizationDefaultAccessRules 写入 library.materials 的 view 默认访问规则，scope 指向命名作用域 library.public。",
+            "lines": [
+              153,
+              182
+            ],
+            "excerpt": "    // --- Default Access: published, non-confidential materials for viewers --\n    if (\n      !(await idExists(\n        query,\n        'authorizationDefaultAccessRules',\n        'resourceId',\n        'library.materials',\n      ))\n    ) {\n      await query\n        .insertInto('authorizationDefaultAccessRules')\n        .values({\n          id: 'library-default-view',\n          resourceType: 'resource',\n          resourceId: 'library.materials',\n          actions: JSON.stringify([\n            {\n              action: 'view',\n              scopeKey: 'materials',\n              scope: {\n                type: 'database',\n                recordAccess: 'library.public',\n              },\n            },\n          ]),\n          createdAt: now,\n          updatedAt: now,\n        })\n        .execute();\n    }",
+            "sha256": "09c1c05a02a2526f438964ab7f022387f27ae278b5e47e87758b19cf3651a881"
+          },
+          {
+            "id": "E38",
+            "kind": "code",
+            "path": "app/database/main/seeds/202609300001_library_seed.ts",
+            "observation": "seed 定义 library-hide-confidential 限制规则（library.nonConfidential 作用域）并赋给读者 B，构成必须优先于共享的来源。",
+            "lines": [
+              184,
+              226
+            ],
+            "excerpt": "    // --- Restriction: the reader never sees confidential materials ---------\n    if (\n      !(await idExists(\n        query,\n        'authorizationRestrictionRules',\n        'key',\n        'library-hide-confidential',\n      ))\n    ) {\n      await query\n        .insertInto('authorizationRestrictionRules')\n        .values({\n          id: 'library-hide-confidential',\n          key: 'library-hide-confidential',\n          title: encodeAuthorizationTitle('Hide confidential materials'),\n          resourceType: 'resource',\n          resourceId: 'library.materials',\n          actions: JSON.stringify([\n            {\n              action: 'view',\n              scopeKey: 'materials',\n              scope: {\n                type: 'database',\n                recordAccess: 'library.nonConfidential',\n              },\n            },\n          ]),\n          reason: 'Confidential materials are never shown to readers.',\n          createdAt: now,\n          updatedAt: now,\n        })\n        .execute();\n      await query\n        .insertInto('authorizationRestrictionRuleAssignments')\n        .values({\n          id: 'library-hide-confidential-reader-b',\n          restrictionRuleId: 'library-hide-confidential',\n          subjectType: 'user',\n          subjectId: READER_USER_ID,\n          createdAt: now,\n        })\n        .execute();\n    }",
+            "sha256": "09c1c05a02a2526f438964ab7f022387f27ae278b5e47e87758b19cf3651a881"
+          },
+          {
+            "id": "E39",
+            "kind": "code",
+            "path": "app/database/main/seeds/202609300001_library_seed.ts",
+            "observation": "seed 只预置保密 C 的共享规则（显式 records 选择）并赋给读者 B，注释说明草稿 D 改由管理员运行时共享。",
+            "lines": [
+              228,
+              273
+            ],
+            "excerpt": "    // --- Sharing: expose confidential C so the restriction can be shown to\n    // --- outrank another sharing source. Private draft D is deliberately not\n    // --- shared: an administrator opens it at runtime.\n    const confidentialSharingRule = {\n      id: 'library-share-confidential-c',\n      key: 'library-share-confidential-c',\n      title: 'Share confidential C',\n    };\n    if (\n      !(await idExists(\n        query,\n        'authorizationSharingRules',\n        'key',\n        confidentialSharingRule.key,\n      ))\n    ) {\n      await query\n        .insertInto('authorizationSharingRules')\n        .values({\n          id: confidentialSharingRule.id,\n          key: confidentialSharingRule.key,\n          title: encodeAuthorizationTitle(confidentialSharingRule.title),\n          resourceType: 'resource',\n          resourceId: 'library.materials',\n          actions: JSON.stringify([\n            {\n              action: 'view',\n              scopeKey: 'materials',\n              selection: { type: 'records', ids: [CONFIDENTIAL_MATERIAL_ID] },\n            },\n          ]),\n          createdAt: now,\n          updatedAt: now,\n        })\n        .execute();\n      await query\n        .insertInto('authorizationSharingRuleAssignments')\n        .values({\n          id: `${confidentialSharingRule.id}-reader-b`,\n          sharingRuleId: confidentialSharingRule.id,\n          subjectType: 'user',\n          subjectId: READER_USER_ID,\n          createdAt: now,\n        })\n        .execute();\n    }",
+            "sha256": "09c1c05a02a2526f438964ab7f022387f27ae278b5e47e87758b19cf3651a881"
+          },
+          {
+            "id": "E40",
+            "kind": "code",
+            "path": "app/server/config/authorization.ts",
+            "observation": "应用在授权配置中注册 defaultAccess()、sharingRules()、restrictionRules() 三个规则插件与 permissionSets 默认集。",
+            "lines": [
+              10,
+              16
+            ],
+            "excerpt": "// Permission sets, page and database authorization are built in.\nconst authorization: AppConfigFactory<AuthorizationConfig> = defineAppConfig(\n  (_runtime) => ({\n    permissionSets: { rootSet: 'root', defaultSet: 'member' },\n    plugins: [defaultAccess(), sharingRules(), restrictionRules()],\n  }),\n);",
+            "sha256": "e219ee368968cf2d9e44116a30418e794e2261aac5cad7d530cd2c0b77d10141"
+          },
+          {
+            "id": "E42",
+            "kind": "code",
+            "path": "packages/@nocobase/app-plugin-users/dist/server/routes/index.js",
+            "observation": "POST /:userId/disable 先做用户动作鉴权，再调用 users.disable 并记录安全事件。",
+            "lines": [
+              118,
+              124
+            ],
+            "excerpt": "    routes.post('/:userId/disable', async (context) => {\n        const userId = context.req.param('userId');\n        await requireUserAction(context, userId, 'disable');\n        const user = await users.disable(userId);\n        logSecurityEvent(securityLogger, context, 'user.disable', userId);\n        return context.json({ data: user });\n    });",
+            "sha256": "e26855a6eb67b1a2978cac7802ed5e9d58f391f9383418410d793d045d1d1a10"
+          },
+          {
+            "id": "E43",
+            "kind": "code",
+            "path": "packages/@nocobase/app-plugin-users/dist/server/routes/index.js",
+            "observation": "POST /:userId/revoke-sessions 鉴权后调用 users.revokeSessions 并记录安全事件。",
+            "lines": [
+              155,
+              160
+            ],
+            "excerpt": "    routes.post('/:userId/revoke-sessions', async (context) => {\n        const userId = context.req.param('userId');\n        await requireUserAction(context, userId, 'revoke-sessions');\n        await users.revokeSessions(userId);\n        logSecurityEvent(securityLogger, context, 'user.sessions.revoke', userId);\n        return context.json({ data: { success: true } });",
+            "sha256": "e26855a6eb67b1a2978cac7802ed5e9d58f391f9383418410d793d045d1d1a10"
+          }
+        ],
+        "limitations": [
+          "本次结论基于冻结快照的源码阅读与工厂 QA 记录，未运行应用或数据库，未在不同方言/规模下复现。",
+          "客户端权限快照缺陷以源码逻辑与首轮 QA 行为交叉印证，未在运行进程中单步调试 resolvePermissions。",
+          "未把截图作为图像查看，因此不评价跨页面视觉一致性，ui 状态为 not-reviewed。",
+          "仅围绕资料库场景的路径取样，不能据此推断框架在其它能力域的整体表现。",
+          "快照未包含 2 个超出预算、非普通文件或不可读取的文件；未据此确认其实现。"
+        ]
+      },
+      "execution": {
+        "buildReviewMode": "full",
+        "source": "reassessment"
+      },
       "reviewer": {
         "engine": "pi",
         "model": "deepseek-v4.1-flash",
         "version": "0.86.1",
-        "runId": "35966623377",
+        "runId": "35987987210",
         "attempt": 1,
-        "controlSha": "1bd143f61094211c8c19783e489b5e85d86a91c4",
-        "replay": false
+        "controlSha": "952084a875e940bdcba52d45f8b805c7f49f0049",
+        "replay": true
+      },
+      "supplementalUsage": {
+        "input": 484180,
+        "output": 66650,
+        "cacheRead": 3883286,
+        "cacheWrite": 0,
+        "reasoning": 0,
+        "totalTokens": 4434116,
+        "records": 78,
+        "incomplete": 0,
+        "runId": 35987987210,
+        "attempt": 1
       },
       "process": {
         "verificationAttempts": 3,
@@ -1301,5 +2617,5 @@
     "number": 266,
     "headSha": "bc465ee2f5c957f0cf922c708c0a54230b607cb8"
   },
-  "reportId": "gchust/nb3-factory:251:35966623377:1:bc465ee2f5c957f0cf922c708c0a54230b607cb8:template-4:review-1b0064d8b7869292"
+  "reportId": "gchust/nb3-factory:251:35966623377:1:bc465ee2f5c957f0cf922c708c0a54230b607cb8:template-4:review-ab967c16b35bc14b"
 }

@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="referrer" content="no-referrer"><meta http-equiv="Content-Security-Policy" content="default-src &#39;none&#39;; img-src data:; style-src &#39;unsafe-inline&#39;; script-src &#39;sha256-IMnEUHIP2PoyLCqMYwZ/yRqY2SjANR434pwzI/QIln8=&#39;; base-uri &#39;none&#39;; form-action &#39;none&#39;; connect-src &#39;none&#39;; object-src &#39;none&#39;">
-<meta name="factory-report-id" content="gchust/nb3-factory:251:35966623377:1:bc465ee2f5c957f0cf922c708c0a54230b607cb8:template-4:review-1b0064d8b7869292"><meta name="factory-template-version" content="4">
+<meta name="factory-report-id" content="gchust/nb3-factory:251:35966623377:1:bc465ee2f5c957f0cf922c708c0a54230b607cb8:template-4:review-ab967c16b35bc14b"><meta name="factory-template-version" content="4">
 <title>[Code Agent] [预置][M01] 权限专项：一页资料库（重搭 #202） · 交付报告</title><style>
 :root{--bg:#fafafa;--surface:#fff;--ink:#18181b;--muted:#71717a;--border:#e4e4e7;--subtle:#f4f4f5;--green:#167047;--green-bg:#f0f8f3;--amber:#975712;--amber-bg:#fffbeb;--radius:12px}
 *{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:90px}body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans CJK SC","PingFang SC","Microsoft YaHei",sans-serif;font-size:14px;line-height:1.7;-webkit-font-smoothing:antialiased}a{color:inherit;text-decoration:none}button,input{font:inherit}button,a,summary{-webkit-tap-highlight-color:transparent}button{cursor:pointer}button:focus-visible,a:focus-visible,summary:focus-visible,input:focus-visible{outline:3px solid #a1a1aa;outline-offset:3px}button:disabled{opacity:.5;cursor:default}svg{flex-shrink:0;vertical-align:middle}h1,h2,h3,p{margin:0}h1{font-size:clamp(29px,3.4vw,44px);line-height:1.35;letter-spacing:-1.5px;font-weight:680}h2{font-size:23px;letter-spacing:-.55px;font-weight:650;line-height:1.4}h3{font-size:15px;font-weight:650}small,.small{font-size:12px}code,.mono{font-family:"SFMono-Regular",Consolas,"Liberation Mono",monospace}code{font-size:.9em;background:var(--subtle);padding:2px 5px;border-radius:4px;overflow-wrap:anywhere}button{border:0;background:transparent;color:inherit}summary{cursor:pointer;list-style:none}summary::-webkit-details-marker{display:none}.muted{color:var(--muted)}.eyebrow{font-size:11px;font-weight:700;letter-spacing:1.8px;text-transform:uppercase;color:var(--muted)}.tag{display:inline-flex;gap:6px;align-items:center;font-size:11px;line-height:1.5;font-weight:550;border:1px solid var(--border);border-radius:6px;padding:4px 8px;white-space:nowrap;background:var(--surface)}.tag.good{color:var(--green);background:var(--green-bg);border-color:#d6e9dc}.tag.warn{color:var(--amber);background:var(--amber-bg);border-color:#efdfb6}.dot{width:6px;height:6px;border-radius:50%;background:currentColor}.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:1px solid var(--border);border-radius:8px;background:var(--surface);padding:10px 15px;font-size:13px;font-weight:550;line-height:1.5;transition:background .15s,transform .15s}.btn:hover{background:var(--subtle);transform:translateY(-1px)}.btn.primary{color:white;background:#18181b;border-color:#18181b}.btn.primary:hover{background:#333337}.btn.small{padding:7px 11px;font-size:12px}.text-link{font-size:12px;text-decoration:underline;text-underline-offset:4px;color:var(--muted)}.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius)}
@@ -75,9 +75,1113 @@
 <a href="#improvements"><span class="nav-index">07</span>可改进的点</a>
 <a href="#execution"><span class="nav-index">08</span>执行与用量</a></nav><div class="sidebar-bottom"><span class="tag">固定模板 v4</span><p>内容来自本次任务产物。<br/>样式与交互由工厂统一维护。</p><div class="repo-name">gchust/nb3-factory</div></div></aside>
 <header class="topbar"><div class="breadcrumb"><span>gchust/nb3-factory</span><span>/</span><span>交付报告</span><span>/</span><strong>#251</strong></div><div class="top-actions"><span class="tag">静态快照 · 非实时状态</span></div></header>
-<main class="main"><noscript><p class="report-banner">正文和验收详情可直接阅读；图片筛选和放大需要 JavaScript。</p></noscript><section class="section" id="overview"><div class="hero"><div><div class="eyebrow">Delivery 251 / 2026-09-24T09:29:40.000Z</div><h1>[Code Agent] [预置][M01] 权限专项：一页资料库（重搭 #202）</h1><p>最小权限资料库通过真实浏览器验收：默认访问让获准读者仅见公开资料，单条共享可临时开放草稿，撤销后立即失效，保密限制始终优先，停用账号使既有会话立即失效。</p><div class="hero-actions"><a class="btn" rel="noopener noreferrer" target="_blank" href="https://github.com/gchust/nb3-factory/pull/266">查看 PR #266 ↗</a><a class="btn" rel="noopener noreferrer" target="_blank" href="https://github.com/gchust/nb3-factory/issues/251">查看需求 ↗</a><a class="btn" rel="noopener noreferrer" target="_blank" href="https://github.com/gchust/nb3-factory/actions/runs/35966623377/attempts/1">本轮运行与原始产物 ↗</a><a class="btn primary" href="#build-review">查看框架评测</a></div><div class="hero-meta"><span>对应提交 <code title="bc465ee2f5c957f0cf922c708c0a54230b607cb8">bc465ee2f5c9</code></span><span>Run 35966623377 / attempt 1</span><span>目标 <code>factory-baseline/source-cde9a8ea11b5-35945793229-1</code></span></div></div><div class="hero-badge"><span class="tag warn">已提交 PR · 等待人工评审</span></div></div><div class="metrics"><div class="card metric"><div class="metric-head">Agent 原始验收</div><div class="metric-value">5 / 5</div><div class="metric-note">这是 Agent 的报告结论，不代替人工评审</div></div><div class="card metric"><div class="metric-head">修改文件</div><div class="metric-value">14</div><div class="metric-note">8 新增 · 6 修改 · 0 删除</div></div><div class="card metric"><div class="metric-head">截图证据</div><div class="metric-value">15</div><div class="metric-note">来自本次选定报告的媒体清单</div></div><div class="card metric"><div class="metric-head">已记录执行时间</div><div class="metric-value">2:37:06</div><div class="metric-note">此 Issue 累计：已采集 1 个 Run / 1 次尝试</div></div></div></section><section class="section"><div class="section-head"><div><div class="eyebrow">What was delivered</div><h2>先看业务结果，不先看日志</h2></div></div><div class="note-grid"><article class="card note-card"><h3>默认访问与角色权限</h3><p>阅读者 B 仅有 view 权限，create/edit/delete 无权限，列表与同会话 API 都只返回公开资料 P；资料员 A 可回填并编辑自己拥有的草稿 D，修改后持久化。</p></article><article class="card note-card"><h3>单条共享与撤销</h3><p>管理员通过 Sharing Rules 以 Specific record IDs 将草稿 D 共享给 B，B 刷新后即可读到 D；删除该规则后 B 刷新立即不再返回 D，API 同步恢复为仅 P。</p></article><article class="card note-card"><h3>保密限制优先于共享</h3><p>C 的共享规则对 B 开放 view，但 Restriction Rules 将 B 限定为非保密资料，B 在任何阶段都读不到 C；A 仍可见并编辑 C，原访问权不受影响。</p></article><article class="card note-card"><h3>停用账号即会话失效</h3><p>管理员在 User management 停用 B 后，其已有会话刷新被重定向到登录页，重新登录返回 Forbidden，无法继续访问。</p></article></div><div class="business-flow" aria-label="业务顺序示意"><div class="business-step"><b>01</b>管理员核对三条资料与权限/共享/限制规则</div><span aria-hidden="true">→</span><div class="business-step"><b>02</b>B 登录仅见公开资料 P 且无编辑动作</div><span aria-hidden="true">→</span><div class="business-step"><b>03</b>管理员为草稿 D 建单条共享给 B</div><span aria-hidden="true">→</span><div class="business-step"><b>04</b>B 刷新后可见 D，仍不可见 C</div><span aria-hidden="true">→</span><div class="business-step"><b>05</b>管理员删除 D 的共享规则</div><span aria-hidden="true">→</span><div class="business-step"><b>06</b>B 刷新后 D 消失</div><span aria-hidden="true">→</span><div class="business-step"><b>07</b>确认 C 共享下 B 仍不可见、A 访问正常</div><span aria-hidden="true">→</span><div class="business-step"><b>08</b>管理员停用 B，B 已有会话失效</div></div><p class="check-source">业务顺序示意，操作证据见逐项验收。</p></section><section class="section" id="build-review"><div class="section-head"><div><div class="eyebrow">Build assessment</div><h2>NocoBase3 基础框架评测</h2></div><span class="tag warn">未完成独立评审</span></div><div class="review-disclaimer">评分是评审者基于本次覆盖范围的意见，不是客观测量，也不是 NocoBase3 整体评分。 未评估不是零分或满分，不计算综合平均分。</div><div class="review-process"><div><span>本 Run 验证轮次</span><strong>3</strong></div><div><span>本 Run 工厂修复轮次</span><strong>2</strong></div><div><span>已保留验证轮次</span><strong>2</strong></div></div>
+<main class="main"><noscript><p class="report-banner">正文和验收详情可直接阅读；图片筛选和放大需要 JavaScript。</p></noscript><section class="section" id="overview"><div class="hero"><div><div class="eyebrow">Delivery 251 / 2026-09-24T09:29:40.000Z</div><h1>[Code Agent] [预置][M01] 权限专项：一页资料库（重搭 #202）</h1><p>最小权限资料库通过真实浏览器验收：默认访问让获准读者仅见公开资料，单条共享可临时开放草稿，撤销后立即失效，保密限制始终优先，停用账号使既有会话立即失效。</p><div class="hero-actions"><a class="btn" rel="noopener noreferrer" target="_blank" href="https://github.com/gchust/nb3-factory/pull/266">查看 PR #266 ↗</a><a class="btn" rel="noopener noreferrer" target="_blank" href="https://github.com/gchust/nb3-factory/issues/251">查看需求 ↗</a><a class="btn" rel="noopener noreferrer" target="_blank" href="https://github.com/gchust/nb3-factory/actions/runs/35966623377/attempts/1">本轮运行与原始产物 ↗</a><a class="btn primary" href="#build-review">查看框架评测</a></div><div class="hero-meta"><span>对应提交 <code title="bc465ee2f5c957f0cf922c708c0a54230b607cb8">bc465ee2f5c9</code></span><span>Run 35966623377 / attempt 1</span><span>目标 <code>factory-baseline/source-cde9a8ea11b5-35945793229-1</code></span></div></div><div class="hero-badge"><span class="tag warn">已提交 PR · 等待人工评审</span></div></div><div class="metrics"><div class="card metric"><div class="metric-head">Agent 原始验收</div><div class="metric-value">5 / 5</div><div class="metric-note">这是 Agent 的报告结论，不代替人工评审</div></div><div class="card metric"><div class="metric-head">修改文件</div><div class="metric-value">14</div><div class="metric-note">8 新增 · 6 修改 · 0 删除</div></div><div class="card metric"><div class="metric-head">截图证据</div><div class="metric-value">15</div><div class="metric-note">来自本次选定报告的媒体清单</div></div><div class="card metric"><div class="metric-head">已记录执行时间</div><div class="metric-value">2:37:06</div><div class="metric-note">此 Issue 累计：已采集 1 个 Run / 1 次尝试</div></div></div></section><section class="section"><div class="section-head"><div><div class="eyebrow">What was delivered</div><h2>先看业务结果，不先看日志</h2></div></div><div class="note-grid"><article class="card note-card"><h3>默认访问与角色权限</h3><p>阅读者 B 仅有 view 权限，create/edit/delete 无权限，列表与同会话 API 都只返回公开资料 P；资料员 A 可回填并编辑自己拥有的草稿 D，修改后持久化。</p></article><article class="card note-card"><h3>单条共享与撤销</h3><p>管理员通过 Sharing Rules 以 Specific record IDs 将草稿 D 共享给 B，B 刷新后即可读到 D；删除该规则后 B 刷新立即不再返回 D，API 同步恢复为仅 P。</p></article><article class="card note-card"><h3>保密限制优先于共享</h3><p>C 的共享规则对 B 开放 view，但 Restriction Rules 将 B 限定为非保密资料，B 在任何阶段都读不到 C；A 仍可见并编辑 C，原访问权不受影响。</p></article><article class="card note-card"><h3>停用账号即会话失效</h3><p>管理员在 User management 停用 B 后，其已有会话刷新被重定向到登录页，重新登录返回 Forbidden，无法继续访问。</p></article></div><div class="business-flow" aria-label="业务顺序示意"><div class="business-step"><b>01</b>管理员核对三条资料与权限/共享/限制规则</div><span aria-hidden="true">→</span><div class="business-step"><b>02</b>B 登录仅见公开资料 P 且无编辑动作</div><span aria-hidden="true">→</span><div class="business-step"><b>03</b>管理员为草稿 D 建单条共享给 B</div><span aria-hidden="true">→</span><div class="business-step"><b>04</b>B 刷新后可见 D，仍不可见 C</div><span aria-hidden="true">→</span><div class="business-step"><b>05</b>管理员删除 D 的共享规则</div><span aria-hidden="true">→</span><div class="business-step"><b>06</b>B 刷新后 D 消失</div><span aria-hidden="true">→</span><div class="business-step"><b>07</b>确认 C 共享下 B 仍不可见、A 访问正常</div><span aria-hidden="true">→</span><div class="business-step"><b>08</b>管理员停用 B，B 已有会话失效</div></div><p class="check-source">业务顺序示意，操作证据见逐项验收。</p></section><section class="section" id="build-review"><div class="section-head"><div><div class="eyebrow">NocoBase3 framework assessment</div><h2>NocoBase3 基础框架评测</h2></div><span class="tag ">独立 Agent 评审 · 口径 v2</span></div><div class="review-disclaimer">评的是库、插件与指引是否满足需求、容易使用、对 Agent 友好。业务代码与 QA 是使用证据，不是评分主体。 未评估不是零分或满分，不计算综合平均分。</div><p class="check-source">评审源产物：Run 35966623377 / attempt 1 · 后补评审 Run 35987987210 / attempt 1。发布重试不改变评审源产物编号。</p><p class="check-source">本次后补评审用量（独立于原搭建）：4434116 Token（含缓存）；不重复计入原搭建。</p><p class="review-summary">以资料库场景为样本审查 NocoBase3 基础能力：业务资源/动作声明、记录作用域、权限集、默认访问、共享规则、限制规则、用户停用与数据库迁移。最终 QA 五条验收全部通过，服务端授权、约束合成（expand 并集 / restrict 交集）与停用会话失效表现良好；但客户端权限快照 (GET /authz/permissions) 会静默丢弃带 policy 的记录作用域 grant，且指引仍用 useCan 判断这类动作可见性，导致首轮 B01 动作不渲染；数据库 Skill 也未提及 shouldRun/hasCollection 条件迁移能力。</p><div class="review-caption">6 个框架能力单元 · 30 / 30 项已评分 · 主表展示三项重点，设计与可靠性见详情</div><div class="card table-wrap review-matrix framework-matrix"><table><thead><tr><th>框架能力 / 具体被评对象</th><th>需求满足度</th><th>使用便利度</th><th>Agent 友好度</th></tr></thead><tbody><tr><td><a href="#review-module-0"><strong>业务授权内核与动作/记录作用域注册</strong></a><p>@nocobase/authorization · @nocobase/app-plugin-authorization · app/.agents/skills/nocobase-app-plugin-authorization</p></td><td data-label="需求满足度"><strong class="review-score">82<small>/100</small></strong></td><td data-label="使用便利度"><strong class="review-score">74<small>/100</small></strong></td><td data-label="Agent 友好度"><strong class="review-score">66<small>/100</small></strong></td></tr><tr><td><a href="#review-module-1"><strong>默认访问基线（default access）</strong></a><p>@nocobase/authorization · @nocobase/app-plugin-authz-default-access · packages/@nocobase/app-plugin-authz-default-access/skills/nocobase-app-plugin-authz-default-access</p></td><td data-label="需求满足度"><strong class="review-score">88<small>/100</small></strong></td><td data-label="使用便利度"><strong class="review-score">85<small>/100</small></strong></td><td data-label="Agent 友好度"><strong class="review-score">83<small>/100</small></strong></td></tr><tr><td><a href="#review-module-2"><strong>共享规则（sharing rules）</strong></a><p>@nocobase/authorization · @nocobase/app-plugin-authz-sharing-rules · packages/@nocobase/app-plugin-authz-sharing-rules/skills/nocobase-app-plugin-authz-sharing-rules</p></td><td data-label="需求满足度"><strong class="review-score">86<small>/100</small></strong></td><td data-label="使用便利度"><strong class="review-score">84<small>/100</small></strong></td><td data-label="Agent 友好度"><strong class="review-score">80<small>/100</small></strong></td></tr><tr><td><a href="#review-module-3"><strong>限制规则（restriction rules）</strong></a><p>@nocobase/authorization · @nocobase/app-plugin-authz-restriction-rules · packages/@nocobase/app-plugin-authz-restriction-rules/skills/nocobase-app-plugin-authz-restriction-rules</p></td><td data-label="需求满足度"><strong class="review-score">88<small>/100</small></strong></td><td data-label="使用便利度"><strong class="review-score">85<small>/100</small></strong></td><td data-label="Agent 友好度"><strong class="review-score">82<small>/100</small></strong></td></tr><tr><td><a href="#review-module-4"><strong>用户停用与会话失效（users + authentication）</strong></a><p>@nocobase/app-plugin-users · @nocobase/app-plugin-authentication · packages/@nocobase/app-plugin-users/skills/nocobase-app-plugin-users · packages/@nocobase/app-plugin-authentication/skills/nocobase-app-plugin-authentication</p></td><td data-label="需求满足度"><strong class="review-score">90<small>/100</small></strong></td><td data-label="使用便利度"><strong class="review-score">88<small>/100</small></strong></td><td data-label="Agent 友好度"><strong class="review-score">85<small>/100</small></strong></td></tr><tr><td><a href="#review-module-5"><strong>数据库迁移与种子（db）</strong></a><p>@nocobase/db · packages/@nocobase/db/skills/nocobase-db</p></td><td data-label="需求满足度"><strong class="review-score">80<small>/100</small></strong></td><td data-label="使用便利度"><strong class="review-score">72<small>/100</small></strong></td><td data-label="Agent 友好度"><strong class="review-score">68<small>/100</small></strong></td></tr></tbody></table></div><p class="check-source">正常业务组合不等于框架缺陷；Agent 用错、工厂误报和环境问题需要分别归因。数字仅适用于列出的职责与覆盖范围。</p><div class="review-modules"><details class="card review-module" id="review-module-0"><summary><strong>业务授权内核与动作/记录作用域注册</strong><span>对象、需求覆盖、五项理由与证据</span></summary><div class="subsection-body"><p>business resource/action 声明、record-access 作用域策略、权限集 grant 展开、服务端按记录授权与 GET /authz/permissions 客户端快照。</p><div class="review-targets"><div><span class="eyebrow">库</span><strong>@nocobase/authorization</strong><span class="check-source">0.1.0-beta.8</span><p>defineAuthorizationResource · defineRecordAccess / createAppAuthorization · Authorization.resolvePermissions · buildResourceGrant · composedGrants / ResourceRegistry.expand</p><span class="review-refs"><a href="#review-evidence-E1">E1</a> <a href="#review-evidence-E2">E2</a> <a href="#review-evidence-E3">E3</a> <a href="#review-evidence-E4">E4</a></span></div><div><span class="eyebrow">插件</span><strong>@nocobase/app-plugin-authorization</strong><span class="check-source">0.2.0-beta.17</span><p>defineDatabasePermission · DatabaseResourceAuthorizer.authorize · DatabaseResourceAuthorizer.resolveEffectiveScope · GET /authz/permissions · AuthorizationClient.can</p><span class="review-refs"><a href="#review-evidence-E5">E5</a> <a href="#review-evidence-E6">E6</a> <a href="#review-evidence-E7">E7</a> <a href="#review-evidence-E8">E8</a></span></div><div><span class="eyebrow">指引 / Skill</span><strong>app/.agents/skills/nocobase-app-plugin-authorization</strong><span class="check-source">版本见冻结输入</span><p>SKILL.md · references/client-development.md · references/core-api.md · references/business-module.md · references/fluent-registration.md</p><span class="review-refs"><a href="#review-evidence-E9">E9</a> <a href="#review-evidence-E10">E10</a> <a href="#review-evidence-E11">E11</a></span></div></div><div class="review-requirements"><h3>需求 → 框架职责 → 推荐与实际接入</h3><article><header><strong>声明资料库业务资源与 view/create/edit/delete 动作、recordsIOwn 记录作用域和页面访问，并让服务端按记录授权与过滤。</strong><span class="tag ">正常组合</span></header><dl class="retro-fields"><div><dt>框架职责与业务边界</dt><dd>框架负责资源/动作声明、记录作用域策略、权限集展开与数据库端记录过滤；应用负责 materials 三张样本记录与角色/权限集映射。</dd></div><div><dt>推荐使用方式</dt><dd>用 defineAuthorizationResource 声明资源、defineDatabasePermission 绑定字段与动作 scope、defineRecordAccess 实现 recordsIOwn；权限集通过 reference().grant({action:{scopeKey:...}}) 赋予。</dd></div><div><dt>Agent 实际使用</dt><dd>Agent 采用推荐入口：app/server/library/authorization.ts 声明 library.materials 与 recordsIOwn；seed 权限集对编辑者授予 view/create/edit/delete 的 recordsIOwn，对读者仅 grant(&#39;view&#39;)；服务端 PATCH 自己的记录返回 200、他人返回 403，列表按作用域过滤。</dd></div><div><dt>缺口归因</dt><dd>未记录能力缺口</dd></div></dl><span class="review-refs"><a href="#review-evidence-E1">E1</a> <a href="#review-evidence-E2">E2</a> <a href="#review-evidence-E3">E3</a> <a href="#review-evidence-E29">E29</a> <a href="#review-evidence-E30">E30</a></span></article><article><header><strong>客户端根据授权渲染动作可见性，并按行展示可编辑/可删除资格。</strong><span class="tag ">正常组合</span></header><dl class="retro-fields"><div><dt>框架职责与业务边界</dt><dd>框架负责 feature-visibility 快照与 useCan，以及服务端按行资格判定；应用负责把两者组合到界面。</dd></div><div><dt>推荐使用方式</dt><dd>client-development.md：useCan({resource,action}) 只判动作可见性；行级资格由服务端返回并按行渲染，变更端点再次独立鉴权。</dd></div><div><dt>Agent 实际使用</dt><dd>Agent 起初只用 useCan 渲染按钮，因记录作用域 grant 被快照跳过导致按钮全部不显示（首轮 B01 失败）；改为服务端在列表响应返回 canEdit/canDelete 与 meta.canCreate，客户端移除 useCan、仅渲染服务端结果后通过。</dd></div><div><dt>缺口归因</dt><dd>未记录能力缺口</dd></div></dl><span class="review-refs"><a href="#review-evidence-E7">E7</a> <a href="#review-evidence-E9">E9</a> <a href="#review-evidence-E11">E11</a> <a href="#review-evidence-E35">E35</a> <a href="#review-evidence-E36">E36</a></span></article></div><div class="review-dimensions"><article><header><h3>需求满足度</h3><strong class="review-score">82<small>/100</small></strong></header><p>业务资源 + 记录作用域 + 权限集的标准组合能完整表达资料库读写规则，服务端授权与过滤经 QA 验证正确；扣分在于客户端 feature-visibility 路径无法直接服务于记录作用域动作，需应用自行改道。</p><span class="review-refs"><a href="#review-evidence-E2">E2</a> <a href="#review-evidence-E5">E5</a> <a href="#review-evidence-E9">E9</a></span></article><article><header><h3>使用便利度</h3><strong class="review-score">74<small>/100</small></strong></header><p>声明式 builder 与 fluent grant 直观，作用域/约束分离清晰；但 useCan 对带作用域 grant 恒为 false 且无提示，使用者在界面层必须先踩坑再绕行。</p><span class="review-refs"><a href="#review-evidence-E1">E1</a> <a href="#review-evidence-E7">E7</a> <a href="#review-evidence-E9">E9</a></span></article><article><header><h3>Agent 友好度</h3><strong class="review-score">66<small>/100</small></strong></header><p>Skill 对服务端策略、字段与验证步骤描述详尽，Agent 能据此完成服务端实现；但 client-development 与 business-module 仍示范用 useCan 判断 scoped submit/edit 可见性，与 resolvePermissions 的实际行为矛盾，直接导致一轮 QA 返工。</p><span class="review-refs"><a href="#review-evidence-E1">E1</a> <a href="#review-evidence-E9">E9</a> <a href="#review-evidence-E11">E11</a></span></article><article><header><h3>设计合理性</h3><strong class="review-score">86<small>/100</small></strong></header><p>资源/动作/作用域/约束分层明确，buildResourceGrant 与 expand 把业务授权展开为 database grant 并保留 origin 追踪，结构可组合、可测试。</p><span class="review-refs"><a href="#review-evidence-E2">E2</a> <a href="#review-evidence-E3">E3</a> <a href="#review-evidence-E4">E4</a></span></article><article><header><h3>实现完整性与可靠性</h3><strong class="review-score">80<small>/100</small></strong></header><p>服务端 authorize 不依赖客户端快照：未注册集合与无匹配 grant 显式拒绝，记录作用域经 resolveEffectiveScope 合成为 filter/输入输出约束，QA 中 403/200 与列表过滤一致；扣分在于 permissions() 快照与 useCan 的契约在 scoped grant 上不自洽。</p><span class="review-refs"><a href="#review-evidence-E1">E1</a> <a href="#review-evidence-E5">E5</a> <a href="#review-evidence-E6">E6</a></span></article></div><p class="check-source">覆盖限制：未在真实运行应用中复现 resolvePermissions 分支，仅以源码与首轮 QA 行为交叉印证；未覆盖 relation 嵌套写入与字段级 allowlist 的全部分支。</p><p class="check-source">映射验收项：B01</p><div class="review-badges"><span>业务首轮 QA</span><span class="tag bad">报告未通过</span><span>业务最终轮 QA</span><span class="tag good">报告通过</span></div><p class="check-source">这是业务验证背景，不直接换算框架分数；首轮失败不会被最终通过覆盖。</p></div></details><details class="card review-module" id="review-module-1"><summary><strong>默认访问基线（default access）</strong><span>对象、需求覆盖、五项理由与证据</span></summary><div class="subsection-body"><p>默认访问规则的声明/持久化/解析，对已获 view 动作的读者扩展可读记录范围，且不放大写操作。</p><div class="review-targets"><div><span class="eyebrow">库</span><strong>@nocobase/authorization</strong><span class="check-source">0.1.0-beta.8</span><p>defaultAccess() · DefaultAccessService.resolveRules (effect expand)</p><span class="review-refs"><a href="#review-evidence-E12">E12</a></span></div><div><span class="eyebrow">插件</span><strong>@nocobase/app-plugin-authz-default-access</strong><span class="check-source">0.1.0-beta.1</span><p>defaultAccess() · DatabaseDefaultAccessStore.set/get/list</p><span class="review-refs"><a href="#review-evidence-E13">E13</a></span></div><div><span class="eyebrow">指引 / Skill</span><strong>packages/@nocobase/app-plugin-authz-default-access/skills/nocobase-app-plugin-authz-default-access</strong><span class="check-source">版本见冻结输入</span><p>SKILL.md</p><span class="review-refs"><a href="#review-evidence-E14">E14</a></span></div></div><div class="review-requirements"><h3>需求 → 框架职责 → 推荐与实际接入</h3><article><header><strong>给已获 view 动作的读者一条公开、非保密资料的默认可读基线，同时不扩大写操作。</strong><span class="tag ">直接支持</span></header><dl class="retro-fields"><div><dt>框架职责与业务边界</dt><dd>框架提供 default-access 约束并把它作为 expand 作用域合入已授予动作；应用决定基线 scope 与适用资源。</dd></div><div><dt>推荐使用方式</dt><dd>按 SKILL 流程先确认资源/动作/命名作用域存在，用 defaultAccess.set 保存完整规则；只读基线不应复制到写操作。</dd></div><div><dt>Agent 实际使用</dt><dd>agent 在 server/config/authorization.ts 注册 defaultAccess()，并在 seed 中向 authorizationDefaultAccessRules 写入 library.materials 的 view 规则，scope 为 library.public 命名作用域；QA 中读者 B 仅见公开资料 P。</dd></div><div><dt>缺口归因</dt><dd>未记录能力缺口</dd></div></dl><span class="review-refs"><a href="#review-evidence-E12">E12</a> <a href="#review-evidence-E13">E13</a> <a href="#review-evidence-E14">E14</a> <a href="#review-evidence-E37">E37</a></span></article></div><div class="review-dimensions"><article><header><h3>需求满足度</h3><strong class="review-score">88<small>/100</small></strong></header><p>默认访问准确定位为‘已授予动作的可读范围扩展’，公开 P 的基线经 QA 验证生效，且未泄漏到写动作。</p><span class="review-refs"><a href="#review-evidence-E12">E12</a> <a href="#review-evidence-E14">E14</a> <a href="#review-evidence-E37">E37</a></span></article><article><header><h3>使用便利度</h3><strong class="review-score">85<small>/100</small></strong></header><p>规则形状（resource/actions/scopeKey/scope）与权限集 grant 一致，builder/服务/seed 三条路径均可写，学习成本低。</p><span class="review-refs"><a href="#review-evidence-E12">E12</a> <a href="#review-evidence-E13">E13</a> <a href="#review-evidence-E14">E14</a></span></article><article><header><h3>Agent 友好度</h3><strong class="review-score">83<small>/100</small></strong></header><p>SKILL 明确列出四条开发流程与验证点，并提示不要用只读基线覆盖写操作，Agent 可直接照做。</p><span class="review-refs"><a href="#review-evidence-E13">E13</a> <a href="#review-evidence-E14">E14</a></span></article><article><header><h3>设计合理性</h3><strong class="review-score">84<small>/100</small></strong></header><p>default access 作为独立 constraint 以 effect:&#39;expand&#39; 参与合成，与 permission-set/sharing 同层可预期地叠加。</p><span class="review-refs"><a href="#review-evidence-E12">E12</a> <a href="#review-evidence-E14">E14</a></span></article><article><header><h3>实现完整性与可靠性</h3><strong class="review-score">82<small>/100</small></strong></header><p>规则按 resourceType/resourceId 精确匹配并事务化写入，QA 中公开资料可见、保密与草稿不在默认基线内。</p><span class="review-refs"><a href="#review-evidence-E12">E12</a> <a href="#review-evidence-E13">E13</a></span></article></div><p class="check-source">覆盖限制：未在设置 UI 中逐项核对默认访问编辑器；未验证多条默认规则对不同动作的边界组合。</p><p class="check-source">映射验收项：B01</p><div class="review-badges"><span>业务首轮 QA</span><span class="tag bad">报告未通过</span><span>业务最终轮 QA</span><span class="tag good">报告通过</span></div><p class="check-source">这是业务验证背景，不直接换算框架分数；首轮失败不会被最终通过覆盖。</p></div></details><details class="card review-module" id="review-module-2"><summary><strong>共享规则（sharing rules）</strong><span>对象、需求覆盖、五项理由与证据</span></summary><div class="subsection-body"><p>共享规则的创建/更新/删除与 subject 赋值，选中记录或动态策略作为 expand 作用域合入已授予动作。</p><div class="review-targets"><div><span class="eyebrow">库</span><strong>@nocobase/authorization</strong><span class="check-source">0.1.0-beta.8</span><p>SharingRuleService.resolveRules (effect expand)</p><span class="review-refs"><a href="#review-evidence-E15">E15</a></span></div><div><span class="eyebrow">插件</span><strong>@nocobase/app-plugin-authz-sharing-rules</strong><span class="check-source">0.1.0-beta.1</span><p>DatabaseSharingRuleStore.create/update/delete · sharingRules()</p><span class="review-refs"><a href="#review-evidence-E16">E16</a></span></div><div><span class="eyebrow">指引 / Skill</span><strong>packages/@nocobase/app-plugin-authz-sharing-rules/skills/nocobase-app-plugin-authz-sharing-rules</strong><span class="check-source">版本见冻结输入</span><p>SKILL.md</p><span class="review-refs"><a href="#review-evidence-E17">E17</a></span></div></div><div class="review-requirements"><h3>需求 → 框架职责 → 推荐与实际接入</h3><article><header><strong>管理员在运行时把私有草稿 D 单条共享给读者 B，撤销后 B 立即失去访问；共享不得授予缺失的动作。</strong><span class="tag ">直接支持</span></header><dl class="retro-fields"><div><dt>框架职责与业务边界</dt><dd>框架负责共享规则与 subject 赋值的持久化、把 selection 解析为 expand 作用域；应用决定共享对象、记录与已授予动作。</dd></div><div><dt>推荐使用方式</dt><dd>按 SKILL 流程：先经权限集授予动作，再保存完整共享规则（显式 ids 用于单次交接），撤销后独立来源应保留。</dd></div><div><dt>Agent 实际使用</dt><dd>读者 B 先获得 reader 权限集的 view；seed 仅预置保密 C 的共享用于展示限制优先（草稿 D 改为运行时共享）。QA 中管理员创建 D 共享后 B 可读、删除后立即不可读。</dd></div><div><dt>缺口归因</dt><dd>未记录能力缺口</dd></div></dl><span class="review-refs"><a href="#review-evidence-E15">E15</a> <a href="#review-evidence-E16">E16</a> <a href="#review-evidence-E17">E17</a> <a href="#review-evidence-E38">E38</a> <a href="#review-evidence-E39">E39</a></span></article></div><div class="review-dimensions"><article><header><h3>需求满足度</h3><strong class="review-score">86<small>/100</small></strong></header><p>显式记录共享 + subject 赋值能精确表达单条草稿交接，撤销即时生效且不改变独立授予，符合 B02 的共享语义。</p><span class="review-refs"><a href="#review-evidence-E15">E15</a> <a href="#review-evidence-E17">E17</a> <a href="#review-evidence-E38">E38</a></span></article><article><header><h3>使用便利度</h3><strong class="review-score">84<small>/100</small></strong></header><p>服务/存储接口与设置 UI 并行，规则形状与其它约束一致；update 会整体替换 assignment，减少半更新状态。</p><span class="review-refs"><a href="#review-evidence-E15">E15</a> <a href="#review-evidence-E16">E16</a></span></article><article><header><h3>Agent 友好度</h3><strong class="review-score">80<small>/100</small></strong></header><p>SKILL 明确共享只扩展范围、不授予动作，并给出交接与撤销验证清单；Agent 最终行为符合，但首轮把共享误当默认状态写入 seed，说明‘默认共享’的反例提示还可更醒目。</p><span class="review-refs"><a href="#review-evidence-E16">E16</a> <a href="#review-evidence-E17">E17</a></span></article><article><header><h3>设计合理性</h3><strong class="review-score">85<small>/100</small></strong></header><p>共享以 expand 约束参与合成，与默认访问/权限集并列，显式 ids 与动态 policy 统一为 selection，抽象干净。</p><span class="review-refs"><a href="#review-evidence-E15">E15</a> <a href="#review-evidence-E16">E16</a></span></article><article><header><h3>实现完整性与可靠性</h3><strong class="review-score">84<small>/100</small></strong></header><p>create/update/delete 均在事务中维护规则与赋值，delete 幂等（未知 key 直接返回）；QA 中共享-撤销循环稳定。</p><span class="review-refs"><a href="#review-evidence-E15">E15</a> <a href="#review-evidence-E16">E16</a></span></article></div><p class="check-source">覆盖限制：未逐一验证继承主体（团队/岗位）与动态 policy selection 的全部分支；仅覆盖显式记录共享与撤销。</p><p class="check-source">映射验收项：B02, B04</p><div class="review-badges"><span>业务首轮 QA</span><span class="tag bad">报告未通过</span><span>业务最终轮 QA</span><span class="tag good">报告通过</span></div><p class="check-source">这是业务验证背景，不直接换算框架分数；首轮失败不会被最终通过覆盖。</p></div></details><details class="card review-module" id="review-module-3"><summary><strong>限制规则（restriction rules）</strong><span>对象、需求覆盖、五项理由与证据</span></summary><div class="subsection-body"><p>限制规则的持久化与解析，以 restrict 作用域与已有范围求交集，并应用于选定的 subject。</p><div class="review-targets"><div><span class="eyebrow">库</span><strong>@nocobase/authorization</strong><span class="check-source">0.1.0-beta.8</span><p>RestrictionRuleService.resolveRules (effect restrict)</p><span class="review-refs"><a href="#review-evidence-E18">E18</a></span></div><div><span class="eyebrow">插件</span><strong>@nocobase/app-plugin-authz-restriction-rules</strong><span class="check-source">0.1.0-beta.0</span><p>DatabaseRestrictionRuleStore.create/update/delete · restrictionRules()</p><span class="review-refs"><a href="#review-evidence-E19">E19</a></span></div><div><span class="eyebrow">指引 / Skill</span><strong>packages/@nocobase/app-plugin-authz-restriction-rules/skills/nocobase-app-plugin-authz-restriction-rules</strong><span class="check-source">版本见冻结输入</span><p>SKILL.md</p><span class="review-refs"><a href="#review-evidence-E20">E20</a></span></div></div><div class="review-requirements"><h3>需求 → 框架职责 → 推荐与实际接入</h3><article><header><strong>保密资料 C 即使被共享给读者 B 也不可读，限制必须优先于共享等其它来源且不放大访问。</strong><span class="tag ">直接支持</span></header><dl class="retro-fields"><div><dt>框架职责与业务边界</dt><dd>框架负责把匹配的 restriction 解析为 restrict 作用域并与展开范围求交；应用定义非保密命名作用域与对 B 的赋值。</dd></div><div><dt>推荐使用方式</dt><dd>SKILL 流程：以肯定式不变量描述限制（只允许非保密），保存完整规则，并在所有受保护读写上验证排除项仍不可达。</dd></div><div><dt>Agent 实际使用</dt><dd>seed 为 library.materials.view 定义 library.nonConfidential 限制并直接赋给读者 B；QA 中 B 对保密 C 始终不可见，且限制优先于共享来源（B04 通过）。</dd></div><div><dt>缺口归因</dt><dd>未记录能力缺口</dd></div></dl><span class="review-refs"><a href="#review-evidence-E18">E18</a> <a href="#review-evidence-E19">E19</a> <a href="#review-evidence-E20">E20</a> <a href="#review-evidence-E38">E38</a></span></article></div><div class="review-dimensions"><article><header><h3>需求满足度</h3><strong class="review-score">88<small>/100</small></strong></header><p>restrict 交集语义正确表达‘无论其它来源如何都不得越界’，保密 C 在共享存在时仍被排除，正是要求的核心。</p><span class="review-refs"><a href="#review-evidence-E18">E18</a> <a href="#review-evidence-E20">E20</a> <a href="#review-evidence-E38">E38</a></span></article><article><header><h3>使用便利度</h3><strong class="review-score">85<small>/100</small></strong></header><p>规则与共享同构，reason 字段便于审计；创建/更新/删除接口完整，设置 UI 可直接对照。</p><span class="review-refs"><a href="#review-evidence-E18">E18</a> <a href="#review-evidence-E19">E19</a></span></article><article><header><h3>Agent 友好度</h3><strong class="review-score">82<small>/100</small></strong></header><p>SKILL 强调‘肯定式不变量、不能授权或放大’，Agent 据此为正；不过 collection-wide 限制与业务动作限制的取舍仍需自行判断。</p><span class="review-refs"><a href="#review-evidence-E19">E19</a> <a href="#review-evidence-E20">E20</a></span></article><article><header><h3>设计合理性</h3><strong class="review-score">86<small>/100</small></strong></header><p>restriction 作为独立 effect 在合成末段求交，与 expand 来源解耦，多个匹配限制自然求交，语义可组合。</p><span class="review-refs"><a href="#review-evidence-E18">E18</a> <a href="#review-evidence-E19">E19</a></span></article><article><header><h3>实现完整性与可靠性</h3><strong class="review-score">85<small>/100</small></strong></header><p>规则与 subject 赋值事务化维护，resolveRules 对 resource/action/subject 做确定匹配；QA 反复验证保密 C 不可达。</p><span class="review-refs"><a href="#review-evidence-E18">E18</a> <a href="#review-evidence-E19">E19</a></span></article></div><p class="check-source">覆盖限制：未验证跨 collection.database 边界与 relation 目标的全分支；仅覆盖业务资源的 view 限制。</p><p class="check-source">映射验收项：B04</p><div class="review-badges"><span>业务首轮 QA</span><span class="tag good">报告通过</span><span>业务最终轮 QA</span><span class="tag good">报告通过</span></div><p class="check-source">这是业务验证背景，不直接换算框架分数；首轮失败不会被最终通过覆盖。</p></div></details><details class="card review-module" id="review-module-4"><summary><strong>用户停用与会话失效（users + authentication）</strong><span>对象、需求覆盖、五项理由与证据</span></summary><div class="subsection-body"><p>用户停用/启用、会话与实时连接撤销、登录与会话校验对 disabledAt 的拒绝。</p><div class="review-targets"><div><span class="eyebrow">插件</span><strong>@nocobase/app-plugin-users</strong><span class="check-source">0.1.0-beta.7</span><p>users.disable · POST /users/:userId/disable · POST /users/:userId/revoke-sessions</p><span class="review-refs"><a href="#review-evidence-E21">E21</a> <a href="#review-evidence-E42">E42</a> <a href="#review-evidence-E43">E43</a></span></div><div><span class="eyebrow">插件</span><strong>@nocobase/app-plugin-authentication</strong><span class="check-source">0.1.0-beta.20</span><p>DefaultUserAdministrationService.disable · DefaultUserAdministrationService.revokeSessions · session create before/after ACCOUNT_DISABLED · session get disabledAt</p><span class="review-refs"><a href="#review-evidence-E22">E22</a> <a href="#review-evidence-E23">E23</a></span></div><div><span class="eyebrow">指引 / Skill</span><strong>packages/@nocobase/app-plugin-users/skills/nocobase-app-plugin-users</strong><span class="check-source">版本见冻结输入</span><p>SKILL.md</p><span class="review-refs"><a href="#review-evidence-E24">E24</a></span></div><div><span class="eyebrow">指引 / Skill</span><strong>packages/@nocobase/app-plugin-authentication/skills/nocobase-app-plugin-authentication</strong><span class="check-source">版本见冻结输入</span><p>SKILL.md</p><span class="review-refs"><a href="#review-evidence-E25">E25</a></span></div></div><div class="review-requirements"><h3>需求 → 框架职责 → 推荐与实际接入</h3><article><header><strong>管理员停用用户 B 后，B 的现有会话立即失效，重新登录被拒绝。</strong><span class="tag ">直接支持</span></header><dl class="retro-fields"><div><dt>框架职责与业务边界</dt><dd>框架负责停用状态落库、撤销会话与实时连接，并在登录及会话校验时拒绝禁用账户；应用只需调用管理接口。</dd></div><div><dt>推荐使用方式</dt><dd>authentication SKILL 明确：禁用账户以 403 ACCOUNT_DISABLED 拒绝登录并立刻撤销会话/实时连接，不要再加平行 active 标志。</dd></div><div><dt>Agent 实际使用</dt><dd>Agent 未自造状态位，直接调用 users.disable；users 服务编排权限集校验、加锁与 authentication 的 disable（写 disabledAt 并 revokeSessions），会话钩子与 getSession 均检查 disabledAt。QA B05 中 B 刷新后会话失效。</dd></div><div><dt>缺口归因</dt><dd>未记录能力缺口</dd></div></dl><span class="review-refs"><a href="#review-evidence-E21">E21</a> <a href="#review-evidence-E22">E22</a> <a href="#review-evidence-E23">E23</a> <a href="#review-evidence-E24">E24</a> <a href="#review-evidence-E25">E25</a></span></article></div><div class="review-dimensions"><article><header><h3>需求满足度</h3><strong class="review-score">90<small>/100</small></strong></header><p>停用即撤销会话、登录即拒绝的契约完整实现了 B05，且用户服务与认证服务职责切分清楚。</p><span class="review-refs"><a href="#review-evidence-E22">E22</a> <a href="#review-evidence-E24">E24</a> <a href="#review-evidence-E25">E25</a></span></article><article><header><h3>使用便利度</h3><strong class="review-score">88<small>/100</small></strong></header><p>disable/enable/revoke-sessions 路由与返回结构一致，日志记录安全事件，管理端无需了解内部实现。</p><span class="review-refs"><a href="#review-evidence-E21">E21</a> <a href="#review-evidence-E22">E22</a></span></article><article><header><h3>Agent 友好度</h3><strong class="review-score">85<small>/100</small></strong></header><p>两个 SKILL 都明确给出禁用语义、不要新增 active 标志以及验证清单，Agent 无需猜测即可接入。</p><span class="review-refs"><a href="#review-evidence-E24">E24</a> <a href="#review-evidence-E25">E25</a></span></article><article><header><h3>设计合理性</h3><strong class="review-score">87<small>/100</small></strong></header><p>disabledAt 作为唯一事实来源，session create 的 before/after 与 getSession 复用同一判定，避免多处状态漂移。</p><span class="review-refs"><a href="#review-evidence-E22">E22</a> <a href="#review-evidence-E23">E23</a></span></article><article><header><h3>实现完整性与可靠性</h3><strong class="review-score">88<small>/100</small></strong></header><p>登录前、登录后与请求时三层检查加上会话删除，边界（如删除用户的在途登录）也被显式处理，QA 验证会话刷新失效。</p><span class="review-refs"><a href="#review-evidence-E22">E22</a> <a href="#review-evidence-E23">E23</a></span></article></div><p class="check-source">覆盖限制：未实机验证实时连接断开，仅依据实现与 QA 的会话刷新失效结果；未覆盖外部身份提供方的停用路径。</p><p class="check-source">映射验收项：B05</p><div class="review-badges"><span>业务首轮 QA</span><span class="tag good">报告通过</span><span>业务最终轮 QA</span><span class="tag good">报告通过</span></div><p class="check-source">这是业务验证背景，不直接换算框架分数；首轮失败不会被最终通过覆盖。</p></div></details><details class="card review-module" id="review-module-5"><summary><strong>数据库迁移与种子（db）</strong><span>对象、需求覆盖、五项理由与证据</span></summary><div class="subsection-body"><p>materials 表迁移、权限规则安装数据与清理数据迁移、迁移的执行条件与幂等/事务语义。</p><div class="review-targets"><div><span class="eyebrow">库</span><strong>@nocobase/db</strong><span class="check-source">1.0.0-beta.14</span><p>defineMigration · migration shouldRun · MigrationLoader · builder.hasCollection · migration/seed query context</p><span class="review-refs"><a href="#review-evidence-E26">E26</a> <a href="#review-evidence-E27">E27</a></span></div><div><span class="eyebrow">指引 / Skill</span><strong>packages/@nocobase/db/skills/nocobase-db</strong><span class="check-source">版本见冻结输入</span><p>SKILL.md</p><span class="review-refs"><a href="#review-evidence-E28">E28</a></span></div></div><div class="review-requirements"><h3>需求 → 框架职责 → 推荐与实际接入</h3><article><header><strong>创建 materials 表、写入受控权限安装数据，并能兼容未启用授权插件的嵌入式运行时。</strong><span class="tag warn">需要绕行</span></header><dl class="retro-fields"><div><dt>框架职责与业务边界</dt><dd>框架负责迁移历史、默认事务、条件执行与 seed 幂等工具；应用负责自包含 schema、种子数据与按环境适用的清理迁移。</dd></div><div><dt>推荐使用方式</dt><dd>db SKILL：迁移自包含、不可变、无反向操作时声明 irreversible，seed 以稳定业务值幂等写入；条件/跨插件场景应使用框架提供的适用性判断。</dd></div><div><dt>Agent 实际使用</dt><dd>建表迁移为纯 schema 且自包含；seed 幂等写入规则。跨插件表的清理迁移最初无条件执行，在未加载共享规则插件的嵌入式测试中报 no such table 并中断启动，Agent 随后用 shouldRun + builder.hasCollection 守卫修复。</dd></div><div><dt>缺口归因</dt><dd>文档 / Skill / 示例</dd></div></dl><span class="review-refs"><a href="#review-evidence-E26">E26</a> <a href="#review-evidence-E27">E27</a> <a href="#review-evidence-E28">E28</a> <a href="#review-evidence-E31">E31</a> <a href="#review-evidence-E32">E32</a></span></article></div><div class="review-dimensions"><article><header><h3>需求满足度</h3><strong class="review-score">80<small>/100</small></strong></header><p>建表与种子满足了资料库需求，但清理迁移的跨运行时适用性框架虽有 shouldRun/hasCollection 能力，Agent 需在失败后自行发现，属于补足后满足。</p><span class="review-refs"><a href="#review-evidence-E26">E26</a> <a href="#review-evidence-E28">E28</a> <a href="#review-evidence-E31">E31</a></span></article><article><header><h3>使用便利度</h3><strong class="review-score">72<small>/100</small></strong></header><p>迁移上下文与 builder/query 划分清晰、默认事务省心；但条件执行入口未在 Skill 中呈现，使用者在嵌入式/跨插件场景几乎必然先遇到运行期失败。</p><span class="review-refs"><a href="#review-evidence-E26">E26</a> <a href="#review-evidence-E27">E27</a> <a href="#review-evidence-E28">E28</a></span></article><article><header><h3>Agent 友好度</h3><strong class="review-score">68<small>/100</small></strong></header><p>Skill 的迁移铁律（自包含、不可变、irreversible、seed 幂等）非常明确；但完全未提及 shouldRun 与 hasCollection，导致 Agent 无法从指引预判跨插件迁移的安全写法。</p><span class="review-refs"><a href="#review-evidence-E26">E26</a> <a href="#review-evidence-E28">E28</a> <a href="#review-evidence-E31">E31</a></span></article><article><header><h3>设计合理性</h3><strong class="review-score">82<small>/100</small></strong></header><p>shouldRun 返回布尔并校验类型、跳过时不写入历史，hasCollection 同时覆盖已加载与计划中的集合，条件迁移的设计合理。</p><span class="review-refs"><a href="#review-evidence-E26">E26</a> <a href="#review-evidence-E27">E27</a></span></article><article><header><h3>实现完整性与可靠性</h3><strong class="review-score">78<small>/100</small></strong></header><p>默认事务与跳过不落历史保证一致性，修复后嵌入式测试通过；扣分在于无条件下删除他插件表的写法会中断应用启动，框架未在指引层面阻止。</p><span class="review-refs"><a href="#review-evidence-E26">E26</a> <a href="#review-evidence-E27">E27</a> <a href="#review-evidence-E31">E31</a></span></article></div><p class="check-source">覆盖限制：未在不同 SQL 方言上验证；condition/shouldRun 的跳过历史记录语义仅按实现与文档判断。</p><p class="check-source">映射验收项：未建立映射</p><div class="review-badges"><span>业务首轮 QA</span><span class="tag warn">未验证</span><span>业务最终轮 QA</span><span class="tag warn">未验证</span></div><p class="check-source">这是业务验证背景，不直接换算框架分数；首轮失败不会被最终通过覆盖。</p></div></details></div><details class="card raw-record"><summary>业务验证背景 · 不计入框架评分</summary><div class="subsection-body"><div class="review-process"><div><span>本 Run 验证轮次</span><strong>3</strong></div><div><span>本 Run 工厂修复轮次</span><strong>2</strong></div><div><span>已保留验证轮次</span><strong>2</strong></div></div>
     <p class="check-source">仅本 Run 已归档记录；工厂修复轮次不等于 Agent 开发中全部试错次数。缺少 verify-1 时不能声称任务首轮通过。</p>
-    <details class="card raw-record"><summary>首轮与修复过程 · 查看逐轮原始状态</summary><div class="subsection-body"><div class="table-wrap"><table><thead><tr><th>轮次</th><th>范围</th><th>原始结论</th><th>失败项</th></tr></thead><tbody><tr><td>验证 1</td><td>全量浏览器 QA</td><td><span class="tag bad">报告未通过</span></td><td>B01 B 登录能阅读公开资料 P，不能编辑；A 可维护自己的资料。<br>B02 共享前 B 看不到私有草稿 D；管理员共享这一条后，B 能打开 D，保密资料 C 不随之开放。</td></tr><tr><td>验证 3</td><td>全量浏览器 QA</td><td><span class="tag good">报告通过</span></td><td>未记录 failed 项；不代表全部操作完成</td></tr><tr><td>验证 3</td><td>失败项复测（非全量）</td><td><span class="tag good">报告通过</span></td><td>未记录 failed 项；不代表全部操作完成</td></tr></tbody></table></div><p class="muted">未提供额外说明。</p></div></details><p class="check-source">评审源产物：Run 35966623377 / attempt 1。发布重试不改变评审源产物编号。</p><div class="card report-empty"><strong>本轮不显示评分</strong><p>独立评审未完成或证据校验失败：Evidence needs a bounded line range。业务验收结果保持不变。</p></div></section><section class="section" id="framework-feedback"><div class="section-head"><h2>NocoBase3 的帮助与问题</h2></div><div class="card report-empty">尚无独立评审结论；已有实现者自述仍保留在“遇到的问题”和“可改进的点”。</div></section><section class="section" id="acceptance"><div class="section-head"><div><div class="eyebrow">Acceptance record</div><h2>验收记录</h2></div><span class="tag ">5 项要求</span></div>
+    <details class="card raw-record"><summary>首轮与修复过程 · 查看逐轮原始状态</summary><div class="subsection-body"><div class="table-wrap"><table><thead><tr><th>轮次</th><th>范围</th><th>原始结论</th><th>失败项</th></tr></thead><tbody><tr><td>验证 1</td><td>全量浏览器 QA</td><td><span class="tag bad">报告未通过</span></td><td>B01 B 登录能阅读公开资料 P，不能编辑；A 可维护自己的资料。<br>B02 共享前 B 看不到私有草稿 D；管理员共享这一条后，B 能打开 D，保密资料 C 不随之开放。</td></tr><tr><td>验证 3</td><td>全量浏览器 QA</td><td><span class="tag good">报告通过</span></td><td>未记录 failed 项；不代表全部操作完成</td></tr><tr><td>验证 3</td><td>失败项复测（非全量）</td><td><span class="tag good">报告通过</span></td><td>未记录 failed 项；不代表全部操作完成</td></tr></tbody></table></div><p class="muted">未提供额外说明。</p></div></details></div></details><article class="card review-ui"><header><h3>业务界面观察 · 非框架评分</h3><span class="review-na">未评估</span></header><p>为控制预算未把 artifacts 中的 PNG 作为图像查看，仅依据文档、DOM 描述与 QA 报告，故不评价跨页面视觉一致性。</p><span class="review-refs"></span><p class="check-source">未执行跨页面图像审阅，不能因使用相同组件库而判为视觉一致。</p></article></section><section class="section" id="framework-feedback"><div class="section-head"><div><div class="eyebrow">Infrastructure feedback</div><h2>NocoBase3 的帮助与改进</h2></div></div><p class="section-intro">优点说明具体基础能力的帮助；问题说明改动位置与依据。“有证据 / 待确认”均为独立评审者判断，不代替人工核验。</p><h3 class="review-owner-title">库、插件与指引</h3><div class="review-group"><h3>做得好的地方 <span>2</span></h3><details class="card review-finding" ><summary><div><strong>多来源约束的 expand/restrict 合成与服务端独立落地</strong><div class="review-badges"><span class="tag ">NocoBase3 内核</span><span class="tag ">评审者判断 · 有证据</span><span class="tag ">信息</span><span class="tag ">不适用</span></div></div><span>⌄</span></summary><div class="subsection-body"><p>默认访问与共享以 effect:&#39;expand&#39; 扩展范围，限制以 effect:&#39;restrict&#39; 在合成末段求交；authorize 在无匹配 grant 时显式拒绝（NO_OBJECT_PERMISSION），未注册集合拒绝，记录作用域经 resolveEffectiveScope 转为查询/字段约束，不依赖客户端快照。QA 中保密 C 在共享存在时仍不可见、A 对自己记录 200 对他人 403、读者仅见公开 P。</p><dl class="retro-fields"><div><dt>实际影响 / 提供的帮助</dt><dd>为业务规则提供了可组合且难以被客户端绕过的授权基线，是本框架在本次场景中的核心优势。</dd></div><div><dt>建议改法 / 应保留的能力</dt><dd>保持该分层；仅在文档层补齐客户端快照与记录作用域的差异说明（见 F1/F2）。</dd></div></dl><span class="review-refs"><a href="#review-evidence-E5">E5</a> <a href="#review-evidence-E12">E12</a> <a href="#review-evidence-E15">E15</a> <a href="#review-evidence-E18">E18</a> <a href="#review-evidence-E34">E34</a></span></div></details><details class="card review-finding" ><summary><div><strong>停用用户即撤销会话并在登录/校验处拒绝</strong><div class="review-badges"><span class="tag ">NocoBase3 插件</span><span class="tag ">评审者判断 · 有证据</span><span class="tag ">信息</span><span class="tag ">不适用</span></div></div><span>⌄</span></summary><div class="subsection-body"><p>users.disable 编排权限集可移除性校验、加锁并调用 authentication 的 disable；后者写入 disabledAt 并 revokeSessions，同时断开实时连接。session create 的 before/after 与 getSession 均检查 disabledAt 并以 403 ACCOUNT_DISABLED 拒绝，覆盖在途登录的边界。QA B05 中 B 刷新会话即失效。</p><dl class="retro-fields"><div><dt>实际影响 / 提供的帮助</dt><dd>无需应用自造 active 标志即可获得一致、可审计的账户停用语义。</dd></div><div><dt>建议改法 / 应保留的能力</dt><dd>无需改动；可作为其它账户生命周期能力的实现范式。</dd></div></dl><span class="review-refs"><a href="#review-evidence-E21">E21</a> <a href="#review-evidence-E22">E22</a> <a href="#review-evidence-E23">E23</a> <a href="#review-evidence-E43">E43</a></span></div></details></div><div class="review-group"><h3>问题 <span>2</span></h3><details class="card review-finding" open><summary><div><strong>权限快照静默丢弃带策略的 grant，且无可诊断信号</strong><div class="review-badges"><span class="tag ">NocoBase3 内核</span><span class="tag ">评审者判断 · 有证据</span><span class="tag bad">重要</span><span class="tag ">未解决</span></div></div><span>⌄</span></summary><div class="subsection-body"><p>resolvePermissions 对带 policy 的 grant 直接跳过（无 scope 注册时），既不降级为可见能力，也不给出原因；AuthorizationClient.can 只按 snapshot.permissions 匹配，调用方无法区分‘未授予动作’与‘已授予但受记录作用域限制’，排查时缺少 reason code 或日志。</p><dl class="retro-fields"><div><dt>实际影响 / 提供的帮助</dt><dd>客户端可见性判断产生假阴性且难以定位；使用者在界面层被迫自行探测服务端资格，增加应用复杂度与返工成本。</dd></div><div><dt>建议改法 / 应保留的能力</dt><dd>为被省略的 scoped grant 提供显式标记（如 scoped/unbounded 区分）或在快照中附带省略原因，并在 core-api.md 记录该语义。</dd></div></dl><span class="review-refs"><a href="#review-evidence-E1">E1</a> <a href="#review-evidence-E7">E7</a> <a href="#review-evidence-E8">E8</a> <a href="#review-evidence-E10">E10</a></span></div></details><details class="card review-finding" ><summary><div><strong>db Skill 未说明条件迁移能力 shouldRun/hasCollection</strong><div class="review-badges"><span class="tag ">文档 / Skill / 示例</span><span class="tag ">评审者判断 · 有证据</span><span class="tag ">轻微</span><span class="tag ">未解决</span></div></div><span>⌄</span></summary><div class="subsection-body"><p>框架 migrator 支持 migration.shouldRun（返回布尔，false 时跳过且不写历史）、loader 校验其类型，builder.hasCollection 可判定集合存在；但 nocobase-db SKILL.md 的迁移铁律与 Builder 章节完全未提及这两者。跨插件表清理迁移因此写成无条件删除，在未加载对应插件的嵌入式运行时以 no such table 中断应用启动。</p><dl class="retro-fields"><div><dt>实际影响 / 提供的帮助</dt><dd>Agent 无法从指引预判跨插件/跨运行时迁移的安全写法，只能在运行期失败后靠阅读源码补救。</dd></div><div><dt>建议改法 / 应保留的能力</dt><dd>在 nocobase-db SKILL.md 迁移章节补充 shouldRun 与 hasCollection 的适用场景（跨插件表、可选运行时、数据清理迁移）及‘跳过不写历史’的语义。</dd></div></dl><span class="review-refs"><a href="#review-evidence-E26">E26</a> <a href="#review-evidence-E27">E27</a> <a href="#review-evidence-E28">E28</a> <a href="#review-evidence-E31">E31</a> <a href="#review-evidence-E32">E32</a></span></div></details></div><div class="review-group"><h3>误导或明显错误 <span>1</span></h3><details class="card review-finding" open><summary><div><strong>指引示范用 useCan 判断带记录作用域动作的可见性，与实际快照行为矛盾</strong><div class="review-badges"><span class="tag ">文档 / Skill / 示例</span><span class="tag ">评审者判断 · 有证据</span><span class="tag bad">重要</span><span class="tag ">未解决</span></div></div><span>⌄</span></summary><div class="subsection-body"><p>client-development.md 与 business-module.md 把 useCan({resource,action}) 作为动作可见性的推荐方式，示例中的 submit/edit 是带作用域的授权；但 GET /authz/permissions 的 resolvePermissions 会跳过任何带 policy 的 grant，除非该 (resourceType,resourceId,action) 注册了 scope，而组合业务动作不会注册 action scope，因此这些 grant 永远不进入快照，useCan 恒为 false。</p><div class="review-contrast"><div><h4>文档 / API 声称</h4><p>client-development.md 称 useCan 用于判断某能力是否被授予并对 scoped submit/edit 示范；business-module.md 第 195 行要求用它做动作可见性。</p></div><div><h4>实际观察</h4><p>resolvePermissions 在 grant.policy 已定义且 getAction(...)?.scope 未注册时 continue，授权码中 scoped grant 与 permission 快照均缺少可执行的 scope，导致 useCan 对 create/edit/delete 返回 false；首轮 B01 因此界面无任何维护动作，而同一会话服务端 PATCH 返回 200。</p></div></div><dl class="retro-fields"><div><dt>实际影响 / 提供的帮助</dt><dd>按指引实现的界面会隐藏本已授权的动作，形成服务端允许、客户端不可用的假象；本次直接造成一轮 QA 失败与返工。</dd></div><div><dt>建议改法 / 应保留的能力</dt><dd>在 client-development.md/core-api.md 明确说明权限快照会省略记录作用域 grant，且 useCan 不能用于这类动作；把示例改为服务端返回行级资格，或让快照显式暴露‘存在但受记录作用域限制’的信号。</dd></div></dl><span class="review-refs"><a href="#review-evidence-E1">E1</a> <a href="#review-evidence-E9">E9</a> <a href="#review-evidence-E11">E11</a> <a href="#review-evidence-E32">E32</a> <a href="#review-evidence-E33">E33</a></span></div></details></div><div class="review-group"><h3>改进建议 <span>0</span></h3><p class="muted">本轮未记录此类发现，不代表不存在。</p></div><h3 class="review-owner-title">归因待确认 · 不直接扣框架分</h3><div class="review-group"><h3>做得好的地方 <span>0</span></h3><p class="muted">本轮未记录此类发现，不代表不存在。</p></div><div class="review-group"><h3>问题 <span>0</span></h3><p class="muted">本轮未记录此类发现，不代表不存在。</p></div><div class="review-group"><h3>误导或明显错误 <span>0</span></h3><p class="muted">本轮未记录此类发现，不代表不存在。</p></div><div class="review-group"><h3>改进建议 <span>0</span></h3><p class="muted">本轮未记录此类发现，不代表不存在。</p></div><details class="card raw-record"><summary>业务实现与执行环境观察 · 不计入框架得分（1）</summary><div class="subsection-body"><div class="review-group"><h3>做得好的地方 <span>0</span></h3><p class="muted">本轮未记录此类发现，不代表不存在。</p></div><div class="review-group"><h3>问题 <span>1</span></h3><details class="card review-finding" ><summary><div><strong>交付种子预置草稿 D 的共享规则，违反私有草稿默认不可见</strong><div class="review-badges"><span class="tag ">Agent / 业务实现</span><span class="tag ">评审者判断 · 有证据</span><span class="tag ">重要</span><span class="tag ">已解决</span></div></div><span>⌄</span></summary><div class="subsection-body"><p>初始 seed 在安装时写入草稿 D 的共享规则并赋给读者 B，使 B 在管理员执行任何共享动作前即可读取私有草稿 D；这违背了共享只用于显式交接例外、默认应最小化的原则。</p><dl class="retro-fields"><div><dt>实际影响 / 提供的帮助</dt><dd>交付初始状态存在越权可见，首轮 B02 失败；需新增数据迁移清理已下发环境中的旧规则。</dd></div><div><dt>建议改法 / 应保留的能力</dt><dd>种子只写入有意的默认基线（如公开 P 的默认访问）和用于验证限制优先的保密 C 共享；草稿 D 保留为运行时共享，并对已分发数据库提供清理迁移。</dd></div></dl><span class="review-refs"><a href="#review-evidence-E17">E17</a> <a href="#review-evidence-E32">E32</a> <a href="#review-evidence-E33">E33</a></span></div></details></div><div class="review-group"><h3>误导或明显错误 <span>0</span></h3><p class="muted">本轮未记录此类发现，不代表不存在。</p></div><div class="review-group"><h3>改进建议 <span>0</span></h3><p class="muted">本轮未记录此类发现，不代表不存在。</p></div></div></details><details class="card raw-record" open><summary>本次评审的覆盖限制</summary><div class="subsection-body"><ul class="compact-list"><li>本次结论基于冻结快照的源码阅读与工厂 QA 记录，未运行应用或数据库，未在不同方言/规模下复现。</li><li>客户端权限快照缺陷以源码逻辑与首轮 QA 行为交叉印证，未在运行进程中单步调试 resolvePermissions。</li><li>未把截图作为图像查看，因此不评价跨页面视觉一致性，ui 状态为 not-reviewed。</li><li>仅围绕资料库场景的路径取样，不能据此推断框架在其它能力域的整体表现。</li><li>快照未包含 2 个超出预算、非普通文件或不可读取的文件；未据此确认其实现。</li></ul></div></details><details class="card raw-record"><summary>评审基线与版本指纹</summary><div class="subsection-body"><p>评审针对已封存候选补丁；可能在原搭建内或之后单独补跑。与 PR 当前最新提交不是同一概念，评审不修改补丁。</p><pre>{
+  &quot;reviewer&quot;: {
+    &quot;engine&quot;: &quot;pi&quot;,
+    &quot;model&quot;: &quot;deepseek-v4.1-flash&quot;,
+    &quot;version&quot;: &quot;0.86.1&quot;,
+    &quot;runId&quot;: &quot;35987987210&quot;,
+    &quot;attempt&quot;: 1,
+    &quot;controlSha&quot;: &quot;952084a875e940bdcba52d45f8b805c7f49f0049&quot;,
+    &quot;replay&quot;: true
+  },
+  &quot;repository&quot;: &quot;gchust/nb3-factory&quot;,
+  &quot;issue&quot;: 251,
+  &quot;runId&quot;: 35966623377,
+  &quot;attempt&quot;: 1,
+  &quot;controlSha&quot;: &quot;1bd143f61094211c8c19783e489b5e85d86a91c4&quot;,
+  &quot;rubricVersion&quot;: 2,
+  &quot;baseSha&quot;: &quot;6bf04e702c0a47a417002564992b3b9fa4802607&quot;,
+  &quot;patchHash&quot;: &quot;c55b8a7e1da64c722aa0da687eacb9829c1c942d3e0e5ca1e4b4177a461f8e24&quot;,
+  &quot;lockfileHash&quot;: &quot;4028cde269099f76598df743fa28edcb94a7e79fec4e7d437ea521fd341267dd&quot;,
+  &quot;packages&quot;: [
+    {
+      &quot;name&quot;: &quot;@nocobase/ai-employee&quot;,
+      &quot;version&quot;: &quot;0.2.0-beta.7&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/ai-employee-avatars&quot;,
+      &quot;version&quot;: &quot;1.0.2&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/app-cli&quot;,
+      &quot;version&quot;: &quot;0.1.0-beta.3&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/app-client&quot;,
+      &quot;version&quot;: &quot;1.0.0-beta.19&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/app-plugin-ai-employee&quot;,
+      &quot;version&quot;: &quot;0.1.0-beta.20&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/app-plugin-api-keys&quot;,
+      &quot;version&quot;: &quot;0.1.0-beta.5&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/app-plugin-authentication&quot;,
+      &quot;version&quot;: &quot;0.1.0-beta.20&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/app-plugin-authorization&quot;,
+      &quot;version&quot;: &quot;0.2.0-beta.17&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/app-plugin-authz-default-access&quot;,
+      &quot;version&quot;: &quot;0.1.0-beta.1&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/app-plugin-authz-restriction-rules&quot;,
+      &quot;version&quot;: &quot;0.1.0-beta.0&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/app-plugin-authz-sharing-rules&quot;,
+      &quot;version&quot;: &quot;0.1.0-beta.1&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/app-plugin-database-explorer&quot;,
+      &quot;version&quot;: &quot;0.1.0-beta.4&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/app-plugin-file&quot;,
+      &quot;version&quot;: &quot;0.1.0-beta.15&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/app-plugin-i18n&quot;,
+      &quot;version&quot;: &quot;0.1.0-beta.8&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/app-plugin-notification&quot;,
+      &quot;version&quot;: &quot;0.1.0-beta.15&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/app-plugin-notification-in-app&quot;,
+      &quot;version&quot;: &quot;0.2.0-beta.16&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/app-plugin-notification-provider&quot;,
+      &quot;version&quot;: &quot;0.1.0-beta.9&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/app-plugin-notification-providers&quot;,
+      &quot;version&quot;: &quot;0.2.0-beta.7&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/app-plugin-scheduler&quot;,
+      &quot;version&quot;: &quot;0.1.0-beta.6&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/app-plugin-users&quot;,
+      &quot;version&quot;: &quot;0.1.0-beta.7&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/app-plugin-workflow&quot;,
+      &quot;version&quot;: &quot;0.1.0-beta.25&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/app-portal-sdk&quot;,
+      &quot;version&quot;: &quot;1.0.0-beta.3&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/app-server&quot;,
+      &quot;version&quot;: &quot;1.0.0-beta.24&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/app-skills&quot;,
+      &quot;version&quot;: &quot;0.1.0-beta.12&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/app-tools&quot;,
+      &quot;version&quot;: &quot;0.1.0-beta.2&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/app-websocket&quot;,
+      &quot;version&quot;: &quot;0.0.1&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/authorization&quot;,
+      &quot;version&quot;: &quot;0.1.0-beta.8&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/caching&quot;,
+      &quot;version&quot;: &quot;0.1.0-beta.2&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/config&quot;,
+      &quot;version&quot;: &quot;0.1.0-beta.1&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/cron&quot;,
+      &quot;version&quot;: &quot;0.1.0&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/db&quot;,
+      &quot;version&quot;: &quot;1.0.0-beta.14&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/db-sqlite&quot;,
+      &quot;version&quot;: &quot;0.1.0-beta.2&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/dev-config&quot;,
+      &quot;version&quot;: &quot;0.1.0-beta.11&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/drive&quot;,
+      &quot;version&quot;: &quot;0.1.0-beta.4&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/i18n&quot;,
+      &quot;version&quot;: &quot;1.0.0-beta.4&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/logging&quot;,
+      &quot;version&quot;: &quot;0.1.0-beta.5&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/nb3-cli&quot;,
+      &quot;version&quot;: &quot;1.0.0-beta.11&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/queue&quot;,
+      &quot;version&quot;: &quot;0.1.0-beta.7&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/repository-input&quot;,
+      &quot;version&quot;: &quot;0.1.0-beta.1&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/service-provider&quot;,
+      &quot;version&quot;: &quot;0.0.2-beta.1&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/session&quot;,
+      &quot;version&quot;: &quot;0.1.0-beta.2&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/snowflake&quot;,
+      &quot;version&quot;: &quot;1.0.0-beta.3&quot;
+    }
+  ],
+  &quot;reviewCriteriaHash&quot;: &quot;3cadc61837b4c67455620dfeb5fc0770cafe06b274e398b1d9b951e2c7fcfd0b&quot;,
+  &quot;artifactHash&quot;: &quot;f8c51d843294d47bef4363710d9357247bc40ec7b7beefdc36e7ccf460bf4971&quot;,
+  &quot;inputHash&quot;: &quot;c8d8750cdc0049d55aa529cd02b77ed3e43f5d5073d3ecca2a80462eb7db9b74&quot;
+}</pre></div></details><div class="review-evidence"><h3>证据与原文</h3><details class="card raw-record" id="review-evidence-E1"><summary><strong>E1</strong> · packages/@nocobase/authorization/dist/core/authorization.js:293–326</summary><div class="subsection-body"><p>resolvePermissions 收集 grants 时，对 grant.policy 已定义且 resourceTypes.getAction(type,id,action)?.scope 未注册的 grant 直接 continue；因此组合业务动作/默认 database 动作的记录作用域 grant 不会进入 permissions 快照，也不产生任何原因。</p><pre>    async resolvePermissions(identity, grantsService = this.grants) {
+        const unrestricted = (await grantsService.unrestricted?.(identity)) === true;
+        const grants = await grantsService.resolveAll(identity);
+        const grouped = new Map();
+        for (const grant of grants) {
+            if (grant.policy !== undefined) {
+                if (!this.resourceTypes.getAction(grant.resource.type, grant.resource.id, grant.action)?.scope)
+                    continue;
+                const decision = await this.authorizeWithGrants({ ...identity, resource: grant.resource, action: grant.action }, grantsService, this.constraints, false);
+                if (decision.effect !== &#39;permit&#39;)
+                    continue;
+            }
+            const key = `${grant.resource.type}\u0000${grant.resource.id}`;
+            const permission = grouped.get(key) ?? {
+                resource: grant.resource,
+                actions: new Set(),
+            };
+            permission.actions.add(grant.action);
+            grouped.set(key, permission);
+        }
+        return {
+            unrestricted,
+            permissions: [...grouped.values()]
+                .sort((left, right) =&gt; {
+                const leftKey = `${left.resource.type}\u0000${left.resource.id}`;
+                const rightKey = `${right.resource.type}\u0000${right.resource.id}`;
+                return leftKey.localeCompare(rightKey);
+            })
+                .map((permission) =&gt; ({
+                resource: permission.resource,
+                actions: [...permission.actions].sort(),
+            })),
+        };
+    }</pre><p class="check-source">原文件 SHA-256：62f8440985b1322618205e2eb18ec532fceda4ea4d6ac37d6909369abc02f127</p></div></details><details class="card raw-record" id="review-evidence-E2"><summary><strong>E2</strong> · packages/@nocobase/authorization/dist/core/builders.js:99–113</summary><div class="subsection-body"><p>defineAuthorizationResource 要求资源有 group 与至少一个 action，返回 AuthorizationResourceBuilder；动作/作用域在 builder 内声明，是资源注册的公开入口。</p><pre>/** Build a portable resource without registering it into an application. */
+export function defineAuthorizationResource(name, configure) {
+    if (!name)
+        throw new TypeError(&#39;A resource name is required&#39;);
+    const result = configure(new AuthorizationResourceBuilder({
+        name,
+        title: name,
+        group: &#39;&#39;,
+        actions: [],
+    }));
+    const definition = result.build();
+    if (!definition.group || !definition.actions.length)
+        throw new TypeError(&#39;A resource requires a group and actions&#39;);
+    return new AuthorizationResourceBuilder(definition);
+}</pre><p class="check-source">原文件 SHA-256：317f4a2ba43e0bea3c5e549244de94e67c69a1b3fc8007be770dc0938f30c843</p></div></details><details class="card raw-record" id="review-evidence-E3"><summary><strong>E3</strong> · packages/@nocobase/authorization/dist/core/resource-grant.js:1–13</summary><div class="subsection-body"><p>buildResourceGrant 对数组形式动作生成 {action}（无 policy），对对象形式生成 {action, policy:{type:&#39;resource&#39;,...scopes}}；因此 grant({view:{materials:&#39;recordsIOwn&#39;}}) 携带 policy。</p><pre>export function buildResourceGrant(definition, actions) {
+    if ((Array.isArray(actions) ? actions : Object.keys(actions)).some((action) =&gt; !definition.actions.some((item) =&gt; item.name === action)))
+        throw new TypeError(&#39;Unknown business resource or action&#39;);
+    return structuredClone({
+        resource: { type: &#39;resource&#39;, id: definition.name },
+        actions: Array.isArray(actions)
+            ? actions.map((action) =&gt; ({ action }))
+            : Object.entries(actions).map(([action, scopes]) =&gt; ({
+                action,
+                policy: { type: &#39;resource&#39;, ...scopes },
+            })),
+    });
+}</pre><p class="check-source">原文件 SHA-256：39c5eda69005b67f3d92e766bcd7f11097fc9a63d9590785e4042ea8ae162536</p></div></details><details class="card raw-record" id="review-evidence-E4"><summary><strong>E4</strong> · packages/@nocobase/authorization/dist/core/resources.js:93–143</summary><div class="subsection-body"><p>ResourceRegistry.expand 把业务 resource grant 连同其 policy 展开为 database.collection 动作 grant，并保留 origin.resource/action/scopeKey，把选中作用域写入 recordAccess。</p><pre>    expand(grant) {
+        if (grant.resource.type !== &#39;resource&#39;)
+            return [grant];
+        const action = this.definitions
+            .get(grant.resource.id)
+            ?.actions.find((action) =&gt; action.name === grant.action);
+        if (!action || (grant.policy &amp;&amp; grant.policy.type !== &#39;resource&#39;))
+            throw new TypeError(&#39;Invalid business resource grant&#39;);
+        for (const key of Object.keys(grant.policy ?? {}))
+            if (key !== &#39;type&#39; &amp;&amp; !action.scopes?.[key])
+                throw new TypeError(`Unknown action scope: ${key}`);
+        for (const [key, scope] of Object.entries(action.scopes ?? {})) {
+            const selected = grant.policy?.[key] ?? scope.defaultValue;
+            const selectedKey = typeof selected === &#39;string&#39;
+                ? selected
+                : selected &amp;&amp; typeof selected === &#39;object&#39; &amp;&amp; !Array.isArray(selected)
+                    ? Reflect.get(selected, &#39;key&#39;)
+                    : undefined;
+            if (selected !== undefined &amp;&amp;
+                selected !== &#39;&#39; &amp;&amp;
+                (typeof selectedKey !== &#39;string&#39; ||
+                    (scope.options !== undefined &amp;&amp; !scope.options.includes(selectedKey))))
+                throw new TypeError(&#39;Unknown scope option&#39;);
+        }
+        return [
+            grant,
+            ...action.grants.flatMap((target) =&gt; target.actions.map((operation) =&gt; {
+                const scopeKey = operation.policy?.scope;
+                const selected = typeof scopeKey === &#39;string&#39;
+                    ? (grant.policy?.[scopeKey] ??
+                        action.scopes?.[scopeKey]?.defaultValue)
+                    : undefined;
+                return {
+                    ...grant,
+                    resource: target.resource,
+                    action: operation.action,
+                    policy: operation.policy &amp;&amp; {
+                        ...operation.policy,
+                        ...(selected !== undefined &amp;&amp; selected !== &#39;&#39;
+                            ? { recordAccess: [selected] }
+                            : {}),
+                    },
+                    origin: {
+                        resource: grant.resource,
+                        action: grant.action,
+                        ...(typeof scopeKey === &#39;string&#39; ? { scopeKey } : {}),
+                    },
+                };
+            })),
+        ];
+    }</pre><p class="check-source">原文件 SHA-256：8c255dbecdc9f19068d314e1cd0cb665b0e430e7fd848fb528561886986e9de3</p></div></details><details class="card raw-record" id="review-evidence-E5"><summary><strong>E5</strong> · packages/@nocobase/app-plugin-authorization/dist/server/database/authorizer.js:209–247</summary><div class="subsection-body"><p>resolveEffectiveScope 对每个 grant 分支以 anyScope(positive) 做并集、再用 branchRestrictions 交集；最终把 required 与全局 restrictions 以 allScopes 合成，实现 expand 并集/restrict 交集。</p><pre>    async resolveEffectiveScope(principal, resource, action, configs, constraints, requestedFields) {
+        // Each grant keeps its own fields and role filters through scope evaluation.
+        const branches = await Promise.all(configs.map(async (config) =&gt; {
+            const positive = await this.compileScopes(principal, resource, action, config.recordAccess ?? []);
+            positive.push(...(await this.compileConstraints([...constraints, ...(config.branchConstraints ?? [])].filter((item) =&gt; item.effect === &#39;expand&#39;), principal, resource, action)));
+            const branchRestrictions = await this.compileConstraints((config.branchConstraints ?? []).filter((item) =&gt; item.effect === &#39;restrict&#39;), principal, resource, action);
+            return {
+                config,
+                scope: allScopes([anyScope(positive), ...branchRestrictions]),
+            };
+        }));
+        const restrictions = await this.compileConstraints(constraints.filter((item) =&gt; item.effect === &#39;restrict&#39;), principal, resource, action);
+        const fields = resolveDatabaseFields(configs, action);
+        const requested = {
+            ...requestedFields,
+            ...(action === &#39;read&#39;
+                ? { output: resolveActionFields(action, fields, resource) }
+                : { input: resolveActionFields(action, fields, resource) }),
+        };
+        const required = [
+            anyScope(branches.map((branch) =&gt; branch.scope)),
+        ];
+        for (const direction of [
+            &#39;input&#39;,
+            &#39;output&#39;,
+            &#39;filter&#39;,
+            &#39;sort&#39;,
+            &#39;group&#39;,
+        ]) {
+            for (const field of requested[direction] ?? []) {
+                if (branches.every((branch) =&gt; databaseFieldsAllowed({ [direction]: [field] }, resolveDatabaseFields([branch.config], action))))
+                    continue;
+                required.push(anyScope(branches
+                    .filter((branch) =&gt; databaseFieldsAllowed({ [direction]: [field] }, resolveDatabaseFields([branch.config], action)))
+                    .map((branch) =&gt; branch.scope)));
+            }
+        }
+        return allScopes([...required, ...restrictions]);
+    }</pre><p class="check-source">原文件 SHA-256：2c894d4928e4c5551455a38092cec17f76cd146c3297221d0de3117043889168</p></div></details><details class="card raw-record" id="review-evidence-E6"><summary><strong>E6</strong> · packages/@nocobase/app-plugin-authorization/dist/server/database/authorizer.js:39–75</summary><div class="subsection-body"><p>authorize 先拒绝未注册集合与未知字段，再解析 grants；configs 为空时返回 NO_OBJECT_PERMISSION 拒绝，否则以 GRANT_MATCHED 记录来源。服务端判定独立于客户端快照。</p><pre>    async authorize(request, grantsService, constraintsService) {
+        const resourceId = request.resource.id;
+        const unregistered = this.unregistered(resourceId);
+        if (unregistered)
+            return unregistered;
+        const resolved = await this.collection(resourceId, request.action);
+        if (&#39;effect&#39; in resolved)
+            return resolved;
+        const resource = resolved;
+        const params = request.params;
+        if (!databaseCollectionFieldsKnown(resource, params?.fields)) {
+            return this.deny(&#39;UNKNOWN_DATABASE_FIELD&#39;, `One or more requested fields are not registered for ${resourceId}`);
+        }
+        const resolvedGrants = await grantsService.resolve({
+            principal: request.principal,
+            subjects: request.subjects,
+            resource: { type: &#39;database.collection&#39;, id: resourceId },
+            action: request.action,
+        });
+        const grants = params?.operation
+            ? resolvedGrants.filter((grant) =&gt; grant.origin?.resource.id === params.operation?.resource &amp;&amp;
+                grant.origin?.action === params.operation?.action)
+            : resolvedGrants;
+        const configs = grants.flatMap(toDatabaseGrant);
+        if (configs.length === 0) {
+            return this.deny(&#39;NO_OBJECT_PERMISSION&#39;, `No database grant allows ${resourceId}.${request.action}`);
+        }
+        const fields = resolveDatabaseFields(configs, request.action);
+        if (!databaseFieldsAllowed(params?.fields, fields)) {
+            return this.deny(&#39;FIELD_NOT_ALLOWED&#39;, &#39;One or more input, output, filter, sort, or group fields are not allowed&#39;);
+        }
+        const reasons = grants.map((grant) =&gt; ({
+            code: &#39;GRANT_MATCHED&#39;,
+            message: `${grant.source.plugin}:${grant.source.id} allows ${resourceId}.${request.action}`,
+            plugin: &#39;database&#39;,
+            details: { source: grant.source },
+        }));</pre><p class="check-source">原文件 SHA-256：2c894d4928e4c5551455a38092cec17f76cd146c3297221d0de3117043889168</p></div></details><details class="card raw-record" id="review-evidence-E7"><summary><strong>E7</strong> · packages/@nocobase/app-plugin-authorization/dist/client/authorization-client.js:9–17</summary><div class="subsection-body"><p>AuthorizationClient.can 读取 permissions() 快照，若 unrestricted 返回 true，否则仅按 resource.type/id 与 actions 匹配；不区分未授予与记录作用域限制。</p><pre>    async can({ resource, action }) {
+        const snapshot = await this.permissions();
+        if (snapshot.unrestricted)
+            return true;
+        return snapshot.permissions.some((permission) =&gt; permission.resource.type === resource.type &amp;&amp;
+            (permission.resource.id === &#39;*&#39; ||
+                permission.resource.id === resource.id) &amp;&amp;
+            permission.actions.includes(action));
+    }</pre><p class="check-source">原文件 SHA-256：1eeca171750f7877dde2bc26ca2c8a6406eb1cd13da18257788c74938bd7de13</p></div></details><details class="card raw-record" id="review-evidence-E8"><summary><strong>E8</strong> · packages/@nocobase/app-plugin-authorization/dist/server/routes/authorization.js:12–17</summary><div class="subsection-body"><p>授权路由要求登录并挂载 authorization.middleware()，/permissions 由 authorization.permissions.handler 生成客户端可见性快照。</p><pre>    routes.use(&#39;*&#39;, auth.required());
+    routes.use(&#39;*&#39;, authorization.middleware());
+    routes.get(&#39;/permissions&#39;, (context) =&gt; authorization.permissions.handler({
+        request: context.req.raw,
+        authorization: context.get(&#39;authz&#39;),
+    }));</pre><p class="check-source">原文件 SHA-256：a53543409f0a2cc0689aa513bef4e42f55b539e4fbed1c13c7c63dc30df2838b</p></div></details><details class="card raw-record" id="review-evidence-E9"><summary><strong>E9</strong> · app/.agents/skills/nocobase-app-plugin-authorization/references/client-development.md:28–48</summary><div class="subsection-body"><p>指引要求用 useCan({resource,action}) 做功能可见性，并明确‘通过只代表功能被授予，不代表某条记录可写’，行级资格应从服务端获取。</p><pre>## Check feature visibility
+
+```tsx
+import { useCan } from &#39;@nocobase/app-plugin-authorization/client&#39;;
+
+const permission = useCan({
+  resource: { type: &#39;resource&#39;, id: &#39;sales.quotes&#39; },
+  action: &#39;submit&#39;,
+});
+// permission: { can, isPending, error, retry }
+```
+
+Call Hooks inside a component or custom Hook. While pending or failed, `can` is false; show a loading state or retryable permission error without exposing stale actions. `{ enabled: false }` as the second argument skips a check. Never call Hooks conditionally. A successful check means the feature is granted, not that a particular quote can be submitted.
+
+React code can obtain the shared client with `useAuthorizationClient()`. Outside React, resolve `authorizationClientToken` from the App container and call `client.can({ resource, action })`. `useAuthorizationRevision()` supports custom state that must reload on invalidation. Avoid a module-global client or permission response surviving an identity change. The standard provider and `useCan` already handle session invalidation; do not duplicate snapshot caching.
+
+## Obtain row eligibility from the server
+
+The sales list endpoints return per-record allowed operations; the client combines this with feature visibility. On the server, compute submission eligibility from the same declared action policies: required quote read/write fields, quote scope, actual parent-project scope, positive amount and draft status. Check all required scopes; merely seeing the row through View does not prove Submit.
+
+Do not implement a parallel role-to-button matrix or infer permissions from role names. Never download all rows and filter them locally. Eligibility is a UI hint and can become stale; the mutation endpoint must authorize and validate again.</pre><p class="check-source">原文件 SHA-256：9ef09a64dd14da31200f7993d4207992532221f4a3eef41d2120b2ac57034dcc</p></div></details><details class="card raw-record" id="review-evidence-E10"><summary><strong>E10</strong> · app/.agents/skills/nocobase-app-plugin-authorization/references/core-api.md:9–17</summary><div class="subsection-body"><p>core-api 说明 can(request) 判断功能可用性而非记录访问，permissions() 是客户端可见性快照、不是可执行数据策略。</p><pre>| Request-scope API                          | Result and use                                                                                        |
+| ------------------------------------------ | ----------------------------------------------------------------------------------------------------- |
+| `authorize({ resource, action, params? })` | Full decision: `permit`, `deny`, or `conditional` with `conditions`                                   |
+| `explain(request)`                         | Full decision with reasons and contributing sources                                                   |
+| `can(request)`                             | Boolean; composed resource checks report feature availability, not record access                      |
+| `require(request)`                         | Throws `AuthorizationDeniedError` on denied or conditional access; use for unconditional capabilities |
+| `permissions()`                            | Client visibility snapshot with `unrestricted` and permissions; not an executable data policy         |
+
+Create one scope per request. Its grant and constraint caches are shared by underlying composed checks; reuse that scope within the request, never across identities or requests. Execute conditional decisions only through the resource adapter that understands their conditions. Unknown types, invalid conditional decisions and handler failures deny access.</pre><p class="check-source">原文件 SHA-256：71d33b9c4a1f7fd46afec2a484d5ef3369e3d8afc912e824a89f99ff58bdaa39</p></div></details><details class="card raw-record" id="review-evidence-E11"><summary><strong>E11</strong> · app/.agents/skills/nocobase-app-plugin-authorization/references/business-module.md:179–195</summary><div class="subsection-body"><p>business-module 要求 edit 带 preparer 作用域、submit 带 preparer+region 作用域，并在客户端章节要求用 useCan 判断动作可见性。</p><pre>Create the engineer set with page access and quote actions separately. Configure edit with a preparer scope; submit with preparer and region scopes. Do not use project ownership as an edit default if that would reopen a colleague&#39;s quote.
+
+The following rule-based extensions require the corresponding installed Skills; follow [capability discovery](optional-capabilities.md) first. Without them, describe the missing capability as separate development rather than assuming the example configuration is available. Add default access only for an intentional baseline. Add sharing for the delegation exception: the delegated quote&#39;s edit and submit scopes plus its actual parent project&#39;s submit scope, assigned to the Proposal team. Sharing the quote does not automatically grant its parent or the submit action. Add restrictions for confidential records at the appropriate boundary; a collection restriction covers all operation branches when the invariant must apply everywhere.
+
+Use the three optional rule Skills for implementation. Follow [code declarations and seeds](code-and-seeds.md) for an executable permission-set declaration, persistence row shapes and initialization rules. Migrations contain schema operations only. Keep demonstration account creation and practice reset out of production features.
+
+## 6. Relations and transitions
+
+An order&#39;s team, checks and collaborators have different capabilities. The delivery role may connect an active team, create/update/delete checks, and set collaborators with a public `note`; that does not permit editing team records or an internal join-table note. Declare each through the fluent relation API and keep protected foreign keys out of root writable fields.
+
+Read expansion and relation mutation need separate allowlists. Test nested create/update/upsert/delete and connect/disconnect/set only where the feature offers them. Upsert requires both create and update grants. A denied nested operation must roll back the entire mutation. The complete relation declaration pattern is in [fluent declarations](fluent-registration.md).
+
+Business state remains an independent rule: completed orders can be read while delivery arrangement is closed. Checking an authorization capability does not override that state restriction.
+
+## 7. Client and verification
+
+Declare page `authz` with a stable `page` ID and `access`. Follow [client development](client-development.md), including a complete action component. Use `useCan({ resource, action })` for action visibility and the server&#39;s per-record eligibility for row controls. Show useful loading/error/retry behavior. Invalidate affected lists and relationship controls after mutation while preserving the current selection when appropriate.</pre><p class="check-source">原文件 SHA-256：e9bdb72f17fa8ca9d83c0e0e837f99dde748d62f19bff6d632d991f98f68f2aa</p></div></details><details class="card raw-record" id="review-evidence-E12"><summary><strong>E12</strong> · packages/@nocobase/authorization/dist/plugins/default-access/plugin.js:43–62</summary><div class="subsection-body"><p>DefaultAccessService.resolveRules 对 action+scopeKey 匹配且资源相符的规则生成 effect:&#39;expand&#39; 的约束，value 为配置的 scope。</p><pre>    resolveRules(input, rules) {
+        return rules
+            .flatMap((rule) =&gt; {
+            const configured = rule.actions.find((action) =&gt; action.action === input.action &amp;&amp;
+                action.scopeKey === input.scopeKey);
+            return rule.resource.type === input.resource.type &amp;&amp;
+                (rule.resource.id === &#39;*&#39; ||
+                    rule.resource.id === input.resource.id) &amp;&amp;
+                configured
+                ? [{ rule, configured }]
+                : [];
+        })
+            .map(({ rule, configured }) =&gt; ({
+            source: {
+                plugin: this.id,
+                id: `${rule.resource.type}:${rule.resource.id}`,
+            },
+            effect: &#39;expand&#39;,
+            value: configured.scope,
+        }));</pre><p class="check-source">原文件 SHA-256：49929ec1c1afbce87716973592da1b46676ae33cb7ed4f75bd22ef21ff43d451</p></div></details><details class="card raw-record" id="review-evidence-E13"><summary><strong>E13</strong> · packages/@nocobase/app-plugin-authz-default-access/dist/server/stores/default-access.js:9–63</summary><div class="subsection-body"><p>DatabaseDefaultAccessStore 通过 transaction 按 resourceType/resourceId 插入或更新 authorizationDefaultAccessRules，actions 以 JSON 字符串持久化。</p><pre>    async list() {
+        const rows = await this.connection()
+            .query.selectFrom(&#39;authorizationDefaultAccessRules&#39;)
+            .select([&#39;id&#39;, &#39;resourceType&#39;, &#39;resourceId&#39;, &#39;actions&#39;])
+            .orderBy(&#39;resourceType&#39;, &#39;asc&#39;)
+            .orderBy(&#39;resourceId&#39;, &#39;asc&#39;)
+            .execute();
+        return rows.map((row) =&gt; this.fromRow(row));
+    }
+    async get(resourceType, resourceId) {
+        const row = await this.connection()
+            .query.selectFrom(&#39;authorizationDefaultAccessRules&#39;)
+            .select([&#39;id&#39;, &#39;resourceType&#39;, &#39;resourceId&#39;, &#39;actions&#39;])
+            .where(&#39;resourceType&#39;, &#39;=&#39;, resourceType)
+            .where(&#39;resourceId&#39;, &#39;=&#39;, resourceId)
+            .executeTakeFirst();
+        if (!row)
+            return undefined;
+        return this.fromRow(row);
+    }
+    async set(rule) {
+        const now = new Date();
+        await this.connection().transaction(async (connection) =&gt; {
+            const existing = await connection.query
+                .selectFrom(&#39;authorizationDefaultAccessRules&#39;)
+                .select(&#39;id&#39;)
+                .where(&#39;resourceType&#39;, &#39;=&#39;, rule.resource.type)
+                .where(&#39;resourceId&#39;, &#39;=&#39;, rule.resource.id)
+                .executeTakeFirst();
+            const id = existing ? String(existing.id) : crypto.randomUUID();
+            if (existing)
+                await connection.query
+                    .updateTable(&#39;authorizationDefaultAccessRules&#39;)
+                    .set({
+                    actions: JSON.stringify(rule.actions),
+                    updatedAt: now,
+                })
+                    .where(&#39;resourceType&#39;, &#39;=&#39;, rule.resource.type)
+                    .where(&#39;resourceId&#39;, &#39;=&#39;, rule.resource.id)
+                    .execute();
+            else
+                await connection.query
+                    .insertInto(&#39;authorizationDefaultAccessRules&#39;)
+                    .values({
+                    id,
+                    resourceType: rule.resource.type,
+                    resourceId: rule.resource.id,
+                    actions: JSON.stringify(rule.actions),
+                    createdAt: now,
+                    updatedAt: now,
+                })
+                    .execute();
+        });
+        return rule;
+    }</pre><p class="check-source">原文件 SHA-256：7fe9bcd721481ebfd1b59217fd7721bd1e305c249850c733a6930e75d882f662</p></div></details><details class="card raw-record" id="review-evidence-E14"><summary><strong>E14</strong> · packages/@nocobase/app-plugin-authz-default-access/skills/nocobase-app-plugin-authz-default-access/SKILL.md:6–19</summary><div class="subsection-body"><p>SKILL 说明默认访问只为已授予动作提供共享记录基线、不授予动作/页面/字段，并给出识别默认范围、复用命名作用域、保存完整规则与验证的流程。</p><pre># Develop default access
+
+Adds a shared record baseline for holders of an already granted business action. It does not grant the action, page access or additional fields. A baseline combines with permission-set scope and sharing, so choose it as an intentional minimum accessible range rather than a fallback used only when no role scope exists.
+
+Read the installed `nocobase-app-plugin-authorization` Skill first for business actions, fields, server policy enforcement and inherited subjects. Check client/server plugin registration and authorization config before relying on this feature. Installation, service signatures and HTTP routes are included below. Use public exports for runtime operations; use the main Skill’s `references/code-and-seeds.md` for controlled installation data.
+
+## Development workflow
+
+1. Identify which records every holder of a particular operation should receive by default. A read baseline can be broad while edit remains preparer-only; do not copy read defaults into write operations.
+2. Confirm the resource/action/named scope exists and the scope points to the intended collection. Reuse an applicable record-access strategy or implement one through the main authorization Skill.
+3. Save the complete resource rule with `defaultAccess.set`; include all action/scope entries that must remain. Clearing deletes the resource rule, not the permission-set action.
+4. Verify a holder receives the baseline, a person without the action remains denied, and restrictions still remove excluded rows. Also verify an explicit narrow role scope is not unexpectedly broadened by a permissive default.
+
+The sales example uses related-project ownership for the quote-view baseline and preparer identity for editing. The engineer set separately grants broad viewing, which confidentiality restrictions narrow. The optional comparison source is `database/seed-data/default-access-rules.ts`; the builder and API below are sufficient without it. A project&#39;s owner is not necessarily the author of every quote on that project.</pre><p class="check-source">原文件 SHA-256：774245679595edc185306c6b2c849c8037da060ae59f2a619044af2fabad6e2c</p></div></details><details class="card raw-record" id="review-evidence-E15"><summary><strong>E15</strong> · packages/@nocobase/authorization/dist/plugins/sharing-rules/service.js:40–64</summary><div class="subsection-body"><p>SharingRuleService.resolveRules 对 action+scopeKey 与 subject 均匹配的规则生成 effect:&#39;expand&#39;，selection.type===&#39;records&#39; 时展开为 ids，否则使用 policy。</p><pre>    resolveRules(input, rules) {
+        const subjects = resolveAuthorizationSubjects(input);
+        return rules
+            .flatMap((rule) =&gt; {
+            const configured = rule.actions.find((action) =&gt; action.action === input.action &amp;&amp;
+                action.scopeKey === input.scopeKey);
+            return rule.resource.type === input.resource.type &amp;&amp;
+                (rule.resource.id === &#39;*&#39; ||
+                    rule.resource.id === input.resource.id) &amp;&amp;
+                sharesWithSubject(rule.subjects, subjects) &amp;&amp;
+                configured
+                ? [{ rule, configured }]
+                : [];
+        })
+            .map(({ rule, configured }) =&gt; ({
+            source: {
+                plugin: this.id,
+                id: rule.key,
+                ...(rule.title === undefined ? {} : { title: rule.title }),
+            },
+            effect: &#39;expand&#39;,
+            value: configured.selection.type === &#39;records&#39;
+                ? { type: &#39;ids&#39;, ids: configured.selection.ids }
+                : configured.selection.policy,
+        }));</pre><p class="check-source">原文件 SHA-256：9c02b7b5ba7148666e7128bc6ca70073396dec5d103e298506bc22faa3562c5b</p></div></details><details class="card raw-record" id="review-evidence-E16"><summary><strong>E16</strong> · packages/@nocobase/app-plugin-authz-sharing-rules/dist/server/stores/sharing-rules.js:12–63</summary><div class="subsection-body"><p>DatabaseSharingRuleStore.create/update/delete 在事务内维护 authorizationSharingRules 与 assignment 行；update 先清空再写入 subject，delete 对未知 key 幂等返回。</p><pre>    async create(rule) {
+        const id = crypto.randomUUID();
+        const now = new Date();
+        await this.connection().transaction(async (connection) =&gt; {
+            await connection.query
+                .insertInto(RULES)
+                .values(this.toValues(rule, id, now, now))
+                .execute();
+            await this.replaceAssignments(connection, id, rule.subjects);
+        });
+        return rule;
+    }
+    async update(key, rule) {
+        await this.connection().transaction(async (connection) =&gt; {
+            const current = await connection.query
+                .selectFrom(RULES)
+                .select(&#39;id&#39;)
+                .where(&#39;key&#39;, &#39;=&#39;, key)
+                .executeTakeFirst();
+            if (!current)
+                throw new Error(`Unknown Sharing Rule: ${key}`);
+            const id = String(current.id);
+            await connection.query
+                .updateTable(RULES)
+                .set(this.toUpdateValues(rule))
+                .where(&#39;id&#39;, &#39;=&#39;, id)
+                .execute();
+            await connection.query
+                .deleteFrom(ASSIGNMENTS)
+                .where(&#39;sharingRuleId&#39;, &#39;=&#39;, id)
+                .execute();
+            await this.replaceAssignments(connection, id, rule.subjects);
+        });
+        return rule;
+    }
+    async delete(key) {
+        await this.connection().transaction(async (connection) =&gt; {
+            const current = await connection.query
+                .selectFrom(RULES)
+                .select(&#39;id&#39;)
+                .where(&#39;key&#39;, &#39;=&#39;, key)
+                .executeTakeFirst();
+            if (!current)
+                return;
+            const id = String(current.id);
+            await connection.query
+                .deleteFrom(ASSIGNMENTS)
+                .where(&#39;sharingRuleId&#39;, &#39;=&#39;, id)
+                .execute();
+            await connection.query.deleteFrom(RULES).where(&#39;id&#39;, &#39;=&#39;, id).execute();
+        });
+    }</pre><p class="check-source">原文件 SHA-256：468f5c5dba12318099a6d3d326b8ec559d6f7c9d2af5de9c614a376a78911cff</p></div></details><details class="card raw-record" id="review-evidence-E17"><summary><strong>E17</strong> · packages/@nocobase/app-plugin-authz-sharing-rules/skills/nocobase-app-plugin-authz-sharing-rules/SKILL.md:6–19</summary><div class="subsection-body"><p>SKILL 强调共享只扩展记录范围、不授予操作/字段/页面，先经权限集授予动作，再为显式交接或动态策略保存完整规则，并验证撤销只失去该来源。</p><pre># Develop sharing rules
+
+Adds selected records or a dynamic record scope for selected subjects who already hold the action. Sharing does not grant the operation, fields, page access or related records. Permission-set/default/shared scopes combine before restrictions narrow them.
+
+Read the installed `nocobase-app-plugin-authorization` Skill first for business actions, fields, server policy enforcement and inherited subjects. Check client/server plugin registration and authorization config before relying on this feature. Installation, service signatures and HTTP routes are included below. Use public exports for runtime operations; use the main Skill’s `references/code-and-seeds.md` for controlled installation data.
+
+## Development workflow
+
+1. Identify the real collaboration exception: who receives which records, for which actions, and why. Use explicit records for one handover; use a dynamic strategy for a maintained region/team rule.
+2. Grant the recipients the business action through a permission set first. Register inherited subjects and their active membership resolver through the main authorization Skill.
+3. Inspect every scope required by the operation. Quote submission needs the selected quote and its actual parent project. Add each action/scope selection deliberately; view, edit and submit are different permissions.
+4. Save a complete sharing rule using `sharingRules.create/update` or the settings UI. Keep selection IDs tied to their scope&#39;s collection and preserve other entries on update.
+5. Verify the handover works, an unshared parent still blocks the workflow, restrictions still exclude confidential records, and sharing alone cannot activate a missing operation.
+6. Revoke the sharing recipient or team role and verify the next request loses only that access source. Independent direct-user sharing and direct job assignments must survive.</pre><p class="check-source">原文件 SHA-256：c8a1480b3803d3de96a07025f5c538f002959be8bd506443e41cabe5d0a6a7f4</p></div></details><details class="card raw-record" id="review-evidence-E18"><summary><strong>E18</strong> · packages/@nocobase/authorization/dist/plugins/restriction-rules/service.js:36–57</summary><div class="subsection-body"><p>RestrictionRuleService.resolveRules 对资源/动作匹配且作用于该 subject 的规则生成 effect:&#39;restrict&#39;，value 为配置 scope，语义为交集收窄。</p><pre>    resolveRules(input, rules) {
+        const subjects = resolveAuthorizationSubjects(input);
+        return rules
+            .flatMap((rule) =&gt; {
+            const configured = rule.actions.find((action) =&gt; action.action === input.action &amp;&amp;
+                action.scopeKey === input.scopeKey);
+            return restrictionMatches(rule, input) &amp;&amp;
+                appliesToSubject(rule.subjects, subjects) &amp;&amp;
+                configured
+                ? [{ rule, configured }]
+                : [];
+        })
+            .map(({ rule, configured }) =&gt; ({
+            source: {
+                plugin: this.id,
+                id: rule.key,
+                ...(rule.title === undefined ? {} : { title: rule.title }),
+            },
+            effect: &#39;restrict&#39;,
+            value: configured.scope,
+        }));
+    }</pre><p class="check-source">原文件 SHA-256：f40e35749dc7025933b5da20443895921c33128d4b0666369cfb24ebf20c2a7e</p></div></details><details class="card raw-record" id="review-evidence-E19"><summary><strong>E19</strong> · packages/@nocobase/app-plugin-authz-restriction-rules/dist/server/stores/restriction-rules.js:12–64</summary><div class="subsection-body"><p>DatabaseRestrictionRuleStore.create/update/delete 事务化维护 authorizationRestrictionRules 与 assignment，delete 删除 assignment 后删除规则。</p><pre>    async create(rule) {
+        const now = new Date();
+        const id = crypto.randomUUID();
+        await this.connection().transaction(async (connection) =&gt; {
+            await connection.query
+                .insertInto(COLLECTION)
+                .values(this.toValues(rule, id, now, now))
+                .execute();
+            await this.replaceAssignments(connection, id, rule.subjects);
+        });
+        return rule;
+    }
+    async update(key, rule) {
+        await this.connection().transaction(async (connection) =&gt; {
+            const row = await connection.query
+                .selectFrom(COLLECTION)
+                .select(&#39;id&#39;)
+                .where(&#39;key&#39;, &#39;=&#39;, key)
+                .executeTakeFirst();
+            if (!row)
+                throw new Error(`Unknown Restriction Rule: ${key}`);
+            const id = String(row.id);
+            await connection.query
+                .updateTable(COLLECTION)
+                .set({ ...this.toUpdateValues(rule), updatedAt: new Date() })
+                .where(&#39;id&#39;, &#39;=&#39;, id)
+                .execute();
+            await connection.query
+                .deleteFrom(ASSIGNMENTS)
+                .where(&#39;restrictionRuleId&#39;, &#39;=&#39;, id)
+                .execute();
+            await this.replaceAssignments(connection, id, rule.subjects);
+        });
+        return rule;
+    }
+    async delete(key) {
+        await this.connection().transaction(async (connection) =&gt; {
+            const row = await connection.query
+                .selectFrom(COLLECTION)
+                .select(&#39;id&#39;)
+                .where(&#39;key&#39;, &#39;=&#39;, key)
+                .executeTakeFirst();
+            if (!row)
+                return;
+            await connection.query
+                .deleteFrom(ASSIGNMENTS)
+                .where(&#39;restrictionRuleId&#39;, &#39;=&#39;, String(row.id))
+                .execute();
+            await connection.query
+                .deleteFrom(COLLECTION)
+                .where(&#39;id&#39;, &#39;=&#39;, String(row.id))
+                .execute();
+        });</pre><p class="check-source">原文件 SHA-256：7b5515186e3f66a30cf1f9af38e209c324d16f84c0693b95b99bf74c30371a9c</p></div></details><details class="card raw-record" id="review-evidence-E20"><summary><strong>E20</strong> · packages/@nocobase/app-plugin-authz-restriction-rules/skills/nocobase-app-plugin-authz-restriction-rules/SKILL.md:6–20</summary><div class="subsection-body"><p>SKILL 说明限制是交集/允许条件而非拒绝清单，多个匹配限制收窄访问、不能授权或放大，并要求以肯定式不变量描述、在所有受保护路径验证。</p><pre># Develop restriction rules
+
+Intersects an already granted record range with the records still allowed for selected subjects. The scope is an allow-condition, not a list of records to deny. Multiple matching restrictions narrow access; none can grant an action or widen a range.
+
+Read the installed `nocobase-app-plugin-authorization` Skill first for business actions, fields, server policy enforcement and inherited subjects. Check client/server plugin registration and authorization config before relying on this feature. Installation, service signatures and HTTP routes are included below. Use public exports for runtime operations; use the main Skill’s `references/code-and-seeds.md` for controlled installation data.
+
+## Development workflow
+
+1. State the invariant positively: for example, this team may access only non-confidential projects. Define who it applies to and whether it covers one operation or every route to a collection.
+2. Use a business resource/action/scope rule for an operation-specific limit. For a limit across business branches and direct table grants, create an underlying `database.collection` rule with the collection&#39;s CRUD actions. The business settings picker shows declared business scopes; collection-wide invariants can be provisioned through the service API.
+3. Register a suitable strategy and save the complete rule. Apply the restriction directly to a user as well when it must remain after that person&#39;s team membership is removed.
+4. Bind policies on all protected reads/writes. For relation targets, explicitly declare relation record access; standalone target collection restrictions are not inherited automatically by nested relation writes.
+5. Verify the excluded row remains inaccessible after adding broad sharing and another permission set, and across each protected operation. Verify unrelated actors retain their intended access.
+
+Use the included rule API and the main Skill’s bundled public-record resolver; the example source is optional for comparison. The coordinator&#39;s direct confidentiality restriction persists when its team role is removed. Test with ordinary users: unrestricted administrators bypass rule constraints.</pre><p class="check-source">原文件 SHA-256：deddc920c5dd41ab8c1f009fccc4b66ee875a5b249de271e327ccd70da082d5a</p></div></details><details class="card raw-record" id="review-evidence-E21"><summary><strong>E21</strong> · packages/@nocobase/app-plugin-users/dist/server/services/users.js:93–107</summary><div class="subsection-body"><p>users.disable 在事务中执行 roleScope.assertCanDisable、permissionSets.assertSubjectRemovable、lockUserForAdministration 后调用底层 users.disable(userId)，把停用与权限主体移除一致化。</p><pre>    async disable(userId) {
+        const user = await this.services.database.transaction(async (connection) =&gt; {
+            for (const scope of this.services.roleScopes.list()) {
+                await scope.assertCanDisable?.(userId, connection);
+            }
+            // A disabled account can no longer act, so disabling it removes the
+            // subject from every Permission Set as surely as revoking would.
+            await this.services.permissionSets
+                ?.withTransaction(connection)
+                .assertSubjectRemovable({ type: &#39;user&#39;, id: userId });
+            await lockUserForAdministration(connection, userId);
+            return this.services.users.withConnection(connection).disable(userId);
+        });
+        return this.withRoleScopes(user, this.services.database.connection());
+    }</pre><p class="check-source">原文件 SHA-256：1797b9fd6624e1934590df7cbe95a4e61d3897bbe5515fa6e8662bc1d4da801c</p></div></details><details class="card raw-record" id="review-evidence-E22"><summary><strong>E22</strong> · packages/@nocobase/app-plugin-authentication/dist/server/user-administration.js:134–173</summary><div class="subsection-body"><p>DefaultUserAdministrationService.disable 写 disabledAt 后调用 revokeSessions；revokeSessions 删除用户全部会话并 disconnectUser 断开实时连接。</p><pre>    async disable(userId) {
+        await this.requireUser(userId);
+        const context = await this.options.auth.administrationContext();
+        await context.internalAdapter.updateUser(userId, {
+            disabledAt: new Date(),
+        });
+        await this.revokeSessions(userId);
+        return (await this.get(userId));
+    }
+    async enable(userId) {
+        await this.requireUser(userId);
+        const context = await this.options.auth.administrationContext();
+        await context.internalAdapter.updateUser(userId, { disabledAt: null });
+        return (await this.get(userId));
+    }
+    async resetPassword(userId, password) {
+        await this.requireUser(userId);
+        const context = await this.options.auth.administrationContext();
+        validatePassword(password, context.password.config);
+        const hash = await context.password.hash(password);
+        const account = await context.internalAdapter.findCredentialAccount(userId);
+        if (account) {
+            await context.internalAdapter.updatePassword(userId, hash);
+        }
+        else {
+            await context.internalAdapter.linkAccount({
+                accountId: userId,
+                providerId: &#39;credential&#39;,
+                userId,
+                password=[REDACTED],
+            });
+        }
+        await this.revokeSessions(userId);
+    }
+    async revokeSessions(userId) {
+        await this.requireUser(userId);
+        const context = await this.options.auth.administrationContext();
+        await context.internalAdapter.deleteUserSessions(userId);
+        this.options.realtime?.disconnectUser(userId);
+    }</pre><p class="check-source">原文件 SHA-256：eb723a2fc8d32c9fb2b660fe2cff7c64a0123cb5a57c2fb7ca62bcb698dfc74d</p></div></details><details class="card raw-record" id="review-evidence-E23"><summary><strong>E23</strong> · packages/@nocobase/app-plugin-authentication/dist/server/auth.js:47–66</summary><div class="subsection-body"><p>session create.after 读取 disabledAt，账户不存在或已停用时删除刚创建的会话并以 FORBIDDEN/ACCOUNT_DISABLED 拒绝登录，覆盖在途登录边界。</p><pre>                        after: async (session, context) =&gt; {
+                            await configuredSessionCreate?.after?.(session, context);
+                            const user = context
+                                ? await context.context.internalAdapter.findUserById(session.userId)
+                                : await connection.query
+                                    .selectFrom(&#39;user&#39;)
+                                    .select(&#39;disabledAt&#39;)
+                                    .where(&#39;id&#39;, &#39;=&#39;, session.userId)
+                                    .executeTakeFirst();
+                            if (!user || Reflect.get(user, &#39;disabledAt&#39;) != null) {
+                                // A login already in flight may persist after user deletion.
+                                // Remove its new session before returning it to the caller.
+                                const adapter = context?.context.internalAdapter ??
+                                    (await this.auth.$context).internalAdapter;
+                                await adapter.deleteSession(session.token);
+                                throw APIError.from(&#39;FORBIDDEN&#39;, {
+                                    code: &#39;ACCOUNT_DISABLED&#39;,
+                                    message: &#39;This account is disabled.&#39;,
+                                });
+                            }</pre><p class="check-source">原文件 SHA-256：39be057de8227c5aef3eb57a2a15b04bfa0aa8922c60be23e8618d31659c9c48</p></div></details><details class="card raw-record" id="review-evidence-E24"><summary><strong>E24</strong> · packages/@nocobase/app-plugin-users/skills/nocobase-app-plugin-users/SKILL.md:96–113</summary><div class="subsection-body"><p>users SKILL 规定禁用用户由 Authentication 拒绝并失去既有 HTTP 会话与实时连接，验证项要求停用后会话失效、启用后需重新登录。</p><pre>- Disabled users are rejected by Authentication and lose their existing HTTP
+  Sessions and Realtime connections.
+- Password hashes, Session tokens, reset tokens, and submitted passwords are
+  never returned by the service or included in security events.
+
+## Verification
+
+- A role without `page:users/access` cannot navigate to the page.
+- Anonymous API requests return `401`; authenticated requests without the
+  requested `user` action return `403`.
+- Creating a user with a required role scope creates both records, while role
+  assignment failure rolls back the user.
+- Duplicate emails or usernames return a stable `409` conflict. Password reset
+  and database Session revocation commit or roll back together.
+- Disabling a user invalidates HTTP Sessions and Realtime connections; enabling
+  the user requires a new login.
+- Role changes become visible after transaction commit and do not alter
+  assignments outside the registered scope.</pre><p class="check-source">原文件 SHA-256：d4ec01695e050d14f830338b386b2ecd56bf0d7fc1777d6feae90746e794fb7f</p></div></details><details class="card raw-record" id="review-evidence-E25"><summary><strong>E25</strong> · packages/@nocobase/app-plugin-authentication/skills/nocobase-app-plugin-authentication/SKILL.md:108–121</summary><div class="subsection-body"><p>authentication SKILL 规定禁用账户以 403 ACCOUNT_DISABLED 拒绝登录并立刻撤销会话与实时连接，明确不要新增平行 active 标志。</p><pre>- Secrets stay in server configuration or environment. Nothing under `client/`
+  may read one.
+- Never log a password, session token, verification value, ticket, or OAuth
+  token. Log user ids, request ids, and outcomes.
+- A disabled account is rejected at sign-in with `403 ACCOUNT_DISABLED`, and
+  its existing sessions and realtime connections are revoked at once. Do not
+  add a parallel &quot;active&quot; flag.
+
+## Verification
+
+- Anonymous requests to a protected route return `401` with
+  `{ code: &#39;UNAUTHORIZED&#39; }`; the same request with a session returns the
+  route&#39;s own response.
+- An authenticated request that lacks permission returns `403` from</pre><p class="check-source">原文件 SHA-256：c03b189be85b6feeb39ea5cc1a348f3a3d585b3e7bdcc0c72fd9d4a1cf452551</p></div></details><details class="card raw-record" id="review-evidence-E26"><summary><strong>E26</strong> · packages/@nocobase/db/dist/src/migration/migrator.js:50–64</summary><div class="subsection-body"><p>迁移执行前若 migration.shouldRun 存在则调用并要求返回布尔，false 时记入 skipped 且不写历史；否则正常执行并记录批次。</p><pre>            for (const migration of pending) {
+                if (migration.migration.shouldRun) {
+                    const shouldRun = await migration.migration.shouldRun({
+                        ...createMigrationContext(connection, this.options.config, this.options.container),
+                        parameters: migration.parameters,
+                        configuration: migration.configuration,
+                    });
+                    if (typeof shouldRun !== &#39;boolean&#39;) {
+                        throw new Error(`Migration &quot;${migration.name}&quot; shouldRun must return a boolean.`);
+                    }
+                    if (!shouldRun) {
+                        skipped.push(migration.name);
+                        continue;
+                    }
+                }</pre><p class="check-source">原文件 SHA-256：dfc3035555b8c77ecc334fd12d2d66f119f6345cb222eb9885220fd4ae66deb5</p></div></details><details class="card raw-record" id="review-evidence-E27"><summary><strong>E27</strong> · packages/@nocobase/db/dist/src/collection/builder/builder.js:96–101</summary><div class="subsection-body"><p>builder.hasCollection(name) 对已加载集合返回其存在性，否则检查 plannedCollections，可在迁移中判断目标集合/表是否适用。</p><pre>    async hasCollection(name) {
+        if (this.collections) {
+            return Boolean(await this.collections.get(name));
+        }
+        return this.plannedCollections.has(name);
+    }</pre><p class="check-source">原文件 SHA-256：105281a90da5f2b63b36b38dd7f3640498ebfd284293ef37887c3a93fd4dd029</p></div></details><details class="card raw-record" id="review-evidence-E28"><summary><strong>E28</strong> · packages/@nocobase/db/skills/nocobase-db/SKILL.md:129–141</summary><div class="subsection-body"><p>db SKILL 的迁移铁律要求自包含、合并后不可变、无反向操作声明 irreversible、seed 幂等，并说明默认事务与 transaction:false 的风险；未提及 shouldRun 或 hasCollection。</p><pre>The rules are absolute, because these files are history that has already run on other machines:
+
+- **Self-contained.** Spell out every table, field, index, constraint and metadata operation in the file. Never import a Collection definition, model, registry or shared constant that keeps evolving — that silently changes both the behavior and the checksum of something already applied.
+- **Immutable once merged.** Check with `git log -- &lt;file&gt;` if unsure. Before the branch is merged you may correct the file in place; after it, every change is a new, later file. Never hard-code a previous checksum to make an edited migration look untouched. Correcting it in place changes nothing on its own — it is recorded as executed, so a plain apply skips it and the database keeps the schema the old file produced. `pnpm db:redo` rolls the latest batch back and applies it again.
+- **The file name body matches `name`**, and the name is unique across every source in the application.
+- **Declare `irreversible: true`** when there is no real reverse operation, instead of writing a `down()` that quietly does nothing.
+- **A seed is idempotent**, keyed on a stable business value backed by a unique constraint, so a repeated run is a no-op — `upsertOne` is the direct way to express that. A seed context has no `builder` at all, and a seed has no rollback or truncate behavior.
+
+A backfill belongs in the migration that makes it necessary, using `query` from the same context — not in a seed.
+
+Both run inside a transaction by default. `transaction: false` opts out, and a failure then leaves partial work behind with no history record, so take it only when the operation genuinely cannot run in one.
+
+A task&#39;s `connection` is not the runtime connection either. It carries `dialect`, `capabilities` and `client()` — enough to branch on the database, and deliberately not a way back to the manager. Anything conditional on the dialect reads it from there.</pre><p class="check-source">原文件 SHA-256：2fdca7c2484a669667b6293878b915a5af0f84cbd3c5e80945a28fe5fbabf7d7</p></div></details><details class="card raw-record" id="review-evidence-E29"><summary><strong>E29</strong> · app/server/library/authorization.ts:104–122</summary><div class="subsection-body"><p>应用用 defineAuthorizationResource/defineDatabasePermission 注册 library.materials，声明 view/create/edit/delete 动作并用 defineRecordAccess 提供 recordsIOwn 作用域。</p><pre>export const materialResource = defineAuthorizationResource(
+  MATERIAL_RESOURCE_ID,
+  (resource) =&gt;
+    resource
+      .group(&#39;library&#39;)
+      .title(&#39;Materials&#39;)
+      .action(&#39;view&#39;, (action) =&gt;
+        action.grant(MATERIAL_SCOPE_KEY, materialRead),
+      )
+      .action(&#39;create&#39;, (action) =&gt;
+        action.grant(MATERIAL_SCOPE_KEY, materialCreate),
+      )
+      .action(&#39;edit&#39;, (action) =&gt;
+        action.grant(MATERIAL_SCOPE_KEY, materialEdit),
+      )
+      .action(&#39;delete&#39;, (action) =&gt;
+        action.grant(MATERIAL_SCOPE_KEY, materialDelete),
+      ),
+);</pre><p class="check-source">原文件 SHA-256：793bc87acd99cb17bc606c79a66435f1b39877e91f5031714e1e188cc468142e</p></div></details><details class="card raw-record" id="review-evidence-E30"><summary><strong>E30</strong> · app/database/seed-data/library-permission-sets.ts:24–41</summary><div class="subsection-body"><p>编辑者权限集对 materialResource.reference().grant 传入 {view/create/edit/delete:{materials:&#39;recordsIOwn&#39;}}，读者权限集只 grant(&#39;view&#39;)，因此编辑动作携带 policy。</p><pre>export const libraryEditorPermissionSet = permissionSet(&#39;library-editor&#39;)
+  .title(&#39;Library editor&#39;)
+  .grant(libraryPageGrant)
+  .grant(
+    materialResource.reference().grant({
+      view: { [MATERIAL_SCOPE_KEY]: &#39;recordsIOwn&#39; },
+      create: { [MATERIAL_SCOPE_KEY]: &#39;recordsIOwn&#39; },
+      edit: { [MATERIAL_SCOPE_KEY]: &#39;recordsIOwn&#39; },
+      delete: { [MATERIAL_SCOPE_KEY]: &#39;recordsIOwn&#39; },
+    }),
+  )
+  .build();
+
+export const libraryReaderPermissionSet = permissionSet(&#39;library-reader&#39;)
+  .title(&#39;Library reader&#39;)
+  .grant(libraryPageGrant)
+  .grant(materialResource.reference().grant(&#39;view&#39;))
+  .build();</pre><p class="check-source">原文件 SHA-256：aa5f353d572a5999b33fd293027042c0eeca5f6f9010fa6fb8d2f8706605708e</p></div></details><details class="card raw-record" id="review-evidence-E31"><summary><strong>E31</strong> · app/database/main/migrations/202609300002_remove_default_draft_sharing.ts:16–39</summary><div class="subsection-body"><p>清理迁移用 shouldRun 与 builder.hasCollection 判断授权共享两张逻辑表是否存在，不存在则跳过，存在时删除草稿 D 的规则与赋值。</p><pre>const migration = defineMigration({
+  name: &#39;202609300002_remove_default_draft_sharing&#39;,
+  transaction: true,
+  // The sharing tables belong to the authorization sharing-rules plugin, so
+  // they are only present when that plugin is registered. A database without
+  // them (an embedded runtime that loads no plugins, or an application that
+  // never enabled sharing) has nothing to clean up, so the migration is
+  // inapplicable and stays unrecorded instead of failing on a missing table.
+  async shouldRun({ builder }) {
+    return (
+      (await builder.hasCollection(&#39;authorizationSharingRules&#39;)) &amp;&amp;
+      (await builder.hasCollection(&#39;authorizationSharingRuleAssignments&#39;))
+    );
+  },
+  async up({ query }) {
+    await query
+      .deleteFrom(&#39;authorizationSharingRuleAssignments&#39;)
+      .where(&#39;sharingRuleId&#39;, &#39;=&#39;, DRAFT_SHARING_RULE_ID)
+      .execute();
+    await query
+      .deleteFrom(&#39;authorizationSharingRules&#39;)
+      .where(&#39;id&#39;, &#39;=&#39;, DRAFT_SHARING_RULE_ID)
+      .execute();
+  },</pre><p class="check-source">原文件 SHA-256：7dbfabdb95f57187ae635e77d8f0b16db43b7eb9054182309a57cbf23df2d8a3</p></div></details><details class="card raw-record" id="review-evidence-E32"><summary><strong>E32</strong> · artifacts/retro.json:6–26</summary><div class="subsection-body"><p>retro 记录 B01 根因为 useCan 快照跳过带 policy 的 grant、B02 根因为 seed 预置草稿 D 共享、B03 根因为清理迁移在未加载共享插件时无表，均给出修复与 resolved 状态。</p><pre>      &quot;phase&quot;: &quot;repair&quot;,
+      &quot;title&quot;: &quot;B01 页面动作权限渲染缺陷&quot;,
+      &quot;symptom&quot;: &quot;资料员 A 登录后列表可见 P/D/C，但 Actions 列没有任何编辑/删除按钮，页面也没有 New material 按钮；同一会话直接 PATCH /main/api/library/materials/library-draft-d 返回 200，证明服务端允许 A 更新自己的记录。阅读者 B 的 Actions 列为空且 PATCH 返回 403 属预期。&quot;,
+      &quot;rootCause&quot;: &quot;客户端用 useCan({ resource: &#39;library.materials&#39;, action: &#39;edit&#39;|&#39;create&#39;|&#39;delete&#39; }) 判断动作可见性，而 useCan 读取 GET /api/authz/permissions 的权限快照。resolvePermissions 会跳过任何带 policy 的 grant，除非该 (resourceType, resourceId, action) 注册了 scope；业务资源与 database.collection 默认动作都没有 scope，因此这些按 recordsIOwn 作用域的 grant（含展开出的 database grant）不会进入快照，useCan 对 create/edit/delete 一律返回 false。服务端 PATCH 走 authorize 与 Policy，不依赖快照，所以仍然成功。&quot;,
+      &quot;resolution&quot;: &quot;改为由服务端返回资格：GET /api/library/materials 除过滤后的记录外，为每行返回 canEdit/canDelete（用该动作自身的 Policy 对行 id 执行 repository.exists 判定），并在顶层 meta.canCreate 返回集合级新建能力；客户端移除 useCan，仅按服务端结果渲染按钮。为让 delete 的 Policy 可读，materialDelete 增加 read([...READ_FIELDS])（delete 写入仍由 delete 节点决定）。每个变更端点照旧独立授权。&quot;,
+      &quot;status&quot;: &quot;resolved&quot;
+    },
+    {
+      &quot;phase&quot;: &quot;repair&quot;,
+      &quot;title&quot;: &quot;B02 交付默认预置草稿 D 共享规则&quot;,
+      &quot;symptom&quot;: &quot;交付初始状态已存在 &#39;Share private draft D&#39; (library-share-draft-d, shared with Library Reader B)，B 首次登录 Library 即可读取私有草稿 D；删除该规则后 B 只剩公开资料 P，重建后 B 又可读取 D，而保密资料 C 始终不可见。共享/撤销机制本身正常。&quot;,
+      &quot;rootCause&quot;: &quot;seed 202609300001_library_seed.ts 在初始化时写入草稿 D 与保密 C 两条共享规则及其对 B 的赋值，使私有草稿在管理员共享前就默认可读。&quot;,
+      &quot;resolution&quot;: &quot;seed 不再写入草稿 D 的共享规则，D 只在管理员于运行时创建共享规则后才对 B 可见。保密 C 的共享规则保留（它从不暴露 C，且用于证明限制规则优先于其他共享来源，对应既有 B04）。新增数据迁移 202609300002_remove_default_draft_sharing.ts，从已收到旧初始状态的数据库中删除草稿 D 的规则与赋值（down 还原），以兼容已存在的库。&quot;,
+      &quot;status&quot;: &quot;resolved&quot;
+    },
+    {
+      &quot;phase&quot;: &quot;repair&quot;,
+      &quot;title&quot;: &quot;清理草稿共享规则的数据迁移在未加载授权插件的运行时中报 no such table&quot;,
+      &quot;symptom&quot;: &quot;tests/logic/app-server.test.ts 的 &#39;registers application-owned providers and routes from the runtime&#39; 在 app.start() 失败：AppDatabaseTaskError: Database migrations failed for connection \&quot;main\&quot;: delete from `authorization_sharing_rule_assignments` where `sharing_rule_id` = &#39;library-share-draft-d&#39; - no such table: authorization_sharing_rule_assignments。该用例用 defineServerPlugins([]) 覆盖运行时插件，授权共享规则插件及其建表迁移不运行，但应用自有迁移 202609300002 仍被应用。&quot;,
+      &quot;rootCause&quot;: &quot;202609300002 无条件删除授权共享规则表（authorizationSharingRules / authorizationSharingRuleAssignments）中的草稿 D 行；这两个表由 @nocobase/app-plugin-authz-sharing-rules 的插件迁移创建。app-server 测试刻意不加载任何插件，表因此不存在，delete 报错并中断启动。&quot;,
+      &quot;resolution&quot;: &quot;给迁移增加 shouldRun，用 builder.hasCollection 检查两个逻辑 Collection 是否存在；表不存在时不适用且不写入历史（嵌入式、未启用共享的运行时不再失败），表存在时（真实应用与已收到旧 seed 的数据库）照常删除草稿 D 的规则与赋值。已在持久开发库上运行 pnpm db:apply，确认迁移执行、草稿 D 规则被删除、保密 C 规则保留，并重跑 app-server.test.ts 与 library-permissions.test.ts 通过。&quot;,</pre><p class="check-source">原文件 SHA-256：c80236b84b5a3529251160367196e7527a6c98bc7ea5bd527a755f5e4d038ba5</p></div></details><details class="card raw-record" id="review-evidence-E33"><summary><strong>E33</strong> · artifacts/verify-1/browser-acceptance/report.json:6–23</summary><div class="subsection-body"><p>首轮 B01 失败：资料员 A 列表可见 P/D/C 但界面无任何新建/编辑/删除动作，同会话直接 PATCH 自己记录返回 200，证明为客户端可见性缺陷。</p><pre>    {
+      &quot;id&quot;: &quot;B01&quot;,
+      &quot;status&quot;: &quot;failed&quot;,
+      &quot;actions&quot;: [
+        &quot;以管理员 nocobase/admin123 在真实浏览器登录，打开 Library 页面，确认已持久化三条资料记录：公开资料 P、私有草稿 D、保密资料 C。&quot;,
+        &quot;以阅读者 B (reader.b) 登录 Library，列表只显示公开资料 P；Actions 列为空，没有编辑/删除动作；为确认不是仅界面隐藏，在同一会话直接 PATCH /main/api/library/materials/library-public-p，返回 403 FORBIDDEN，B 不能编辑。&quot;,
+        &quot;以资料员 A (librarian.a) 登录 Library，列表显示 P、D、C 三条记录，但 Actions 列为空（DOM 中 table tbody button/a 数量为 0），页面也没有 New material 按钮，A 无法在界面新建、编辑或删除资料。&quot;,
+        &quot;为区分界面缺陷与服务端权限失败，以 A 的同一浏览器会话直接 PATCH /main/api/library/materials/library-draft-d，返回 200 并回显更新后的记录，说明 A 对自己拥有的记录具备服务端更新权限，缺的是页面上的维护动作。&quot;
+      ],
+      &quot;evidence&quot;: [
+        &quot;B 能阅读公开资料 P 且不能编辑（PATCH 403）。A 能读取三条记录，但资料库页面根本没有新建/编辑/删除动作，A 无法通过界面维护自己的资料；A 的 PATCH 返回 200 证明服务端已允许 A 更新其拥有的记录，因此这是页面动作权限渲染缺陷，B01 未通过。&quot;
+      ],
+      &quot;screenshots&quot;: [
+        &quot;editor-library.png&quot;,
+        &quot;reader-library-revoked-d.png&quot;
+      ],
+      &quot;criterion&quot;: &quot;B 登录能阅读公开资料 P，不能编辑；A 可维护自己的资料。&quot;,
+      &quot;recordedAt&quot;: 1790239007218</pre><p class="check-source">原文件 SHA-256：4fbfc28fc74074225351b75dd4c9b168da7c48aaae4271774a4172b982777ca1</p></div></details><details class="card raw-record" id="review-evidence-E34"><summary><strong>E34</strong> · artifacts/verify-3/browser-acceptance/report.json:2–9</summary><div class="subsection-body"><p>最终一轮报告 passed:true，B01 状态 passed：读者仅见公开 P 且无编辑动作，资料员可维护自己的资料。</p><pre>  &quot;passed&quot;: true,
+  &quot;authenticated&quot;: true,
+  &quot;summary&quot;: &quot;在真实浏览器中完成 B01-B05：阅读者 B 仅能读公开资料 P、无编辑动作，资料员 A 可维护自己的资料；管理员单条共享草稿 D 给 B 后 B 可读、撤销后立即不可读；保密资料 C 有共享来源时 B 仍不可见且 A 访问不受影响；停用 B 后其已有会话刷新失效。&quot;,
+  &quot;checks&quot;: [
+    {
+      &quot;id&quot;: &quot;B01&quot;,
+      &quot;criterion&quot;: &quot;B 登录能阅读公开资料 P，不能编辑；A 可维护自己的资料。&quot;,
+      &quot;status&quot;: &quot;passed&quot;,</pre><p class="check-source">原文件 SHA-256：c8afb37bc89dc39974e96c2fbdd9910dfb1afd37fb85848cb8bb847848941b96</p></div></details><details class="card raw-record" id="review-evidence-E35"><summary><strong>E35</strong> · app/server/routes/index.ts:95–116</summary><div class="subsection-body"><p>应用修复后由服务端为每行计算 canEdit/canDelete（用各动作自身 Policy 判定），并在 meta.canCreate 返回集合级能力；每个变更端点仍独立授权。</p><pre>      // that carry a record scope, so the list response states the same
+      // eligibility the action endpoints enforce: a collection-wide create
+      // capability and a per-row edit/delete flag proved with each action&#39;s own
+      // Policy. The page only renders what the server reports, and every
+      // mutation is authorized again on its own path.
+      const [editRepository, deleteRepository, createRepository] =
+        await Promise.all([
+          repositoryFor(context, &#39;edit&#39;),
+          repositoryFor(context, &#39;delete&#39;),
+          repositoryFor(context, &#39;create&#39;),
+        ]);
+      const data = await Promise.all(
+        records.map(async (record) =&gt; ({
+          ...record,
+          canEdit: await rowIsInScope(editRepository, record.id),
+          canDelete: await rowIsInScope(deleteRepository, record.id),
+        })),
+      );
+      return context.json({
+        data,
+        meta: { canCreate: createRepository !== undefined },
+      });</pre><p class="check-source">原文件 SHA-256：e2931ae1808b1fcba275c4b6dfebf9c087e2edf1ad1f6aea8117301326748fed</p></div></details><details class="card raw-record" id="review-evidence-E36"><summary><strong>E36</strong> · app/client/pages/library/index.tsx:248–270</summary><div class="subsection-body"><p>客户端仅按服务端返回的 canEdit/canDelete 渲染编辑/删除按钮，不再依赖 useCan。</p><pre>                    &lt;TableCell className=&#39;text-right&#39;&gt;
+                      &lt;div className=&#39;flex justify-end gap-2&#39;&gt;
+                        {material.canEdit ? (
+                          &lt;Button
+                            variant=&#39;outline&#39;
+                            size=&#39;sm&#39;
+                            onClick={() =&gt; openEdit(material)}
+                          &gt;
+                            &lt;Pencil /&gt;
+                            {t(&#39;library.edit&#39;)}
+                          &lt;/Button&gt;
+                        ) : null}
+                        {material.canDelete ? (
+                          &lt;Button
+                            variant=&#39;destructive&#39;
+                            size=&#39;sm&#39;
+                            onClick={() =&gt; setDeleting(material)}
+                          &gt;
+                            &lt;Trash2 /&gt;
+                            {t(&#39;library.delete&#39;)}
+                          &lt;/Button&gt;
+                        ) : null}
+                      &lt;/div&gt;</pre><p class="check-source">原文件 SHA-256：41038b548a58e89ecfefb80360f32a9b4768ace84599115c8ab106a27b87dd4f</p></div></details><details class="card raw-record" id="review-evidence-E37"><summary><strong>E37</strong> · app/database/main/seeds/202609300001_library_seed.ts:153–182</summary><div class="subsection-body"><p>seed 在 authorizationDefaultAccessRules 写入 library.materials 的 view 默认访问规则，scope 指向命名作用域 library.public。</p><pre>    // --- Default Access: published, non-confidential materials for viewers --
+    if (
+      !(await idExists(
+        query,
+        &#39;authorizationDefaultAccessRules&#39;,
+        &#39;resourceId&#39;,
+        &#39;library.materials&#39;,
+      ))
+    ) {
+      await query
+        .insertInto(&#39;authorizationDefaultAccessRules&#39;)
+        .values({
+          id: &#39;library-default-view&#39;,
+          resourceType: &#39;resource&#39;,
+          resourceId: &#39;library.materials&#39;,
+          actions: JSON.stringify([
+            {
+              action: &#39;view&#39;,
+              scopeKey: &#39;materials&#39;,
+              scope: {
+                type: &#39;database&#39;,
+                recordAccess: &#39;library.public&#39;,
+              },
+            },
+          ]),
+          createdAt: now,
+          updatedAt: now,
+        })
+        .execute();
+    }</pre><p class="check-source">原文件 SHA-256：09c1c05a02a2526f438964ab7f022387f27ae278b5e47e87758b19cf3651a881</p></div></details><details class="card raw-record" id="review-evidence-E38"><summary><strong>E38</strong> · app/database/main/seeds/202609300001_library_seed.ts:184–226</summary><div class="subsection-body"><p>seed 定义 library-hide-confidential 限制规则（library.nonConfidential 作用域）并赋给读者 B，构成必须优先于共享的来源。</p><pre>    // --- Restriction: the reader never sees confidential materials ---------
+    if (
+      !(await idExists(
+        query,
+        &#39;authorizationRestrictionRules&#39;,
+        &#39;key&#39;,
+        &#39;library-hide-confidential&#39;,
+      ))
+    ) {
+      await query
+        .insertInto(&#39;authorizationRestrictionRules&#39;)
+        .values({
+          id: &#39;library-hide-confidential&#39;,
+          key: &#39;library-hide-confidential&#39;,
+          title: encodeAuthorizationTitle(&#39;Hide confidential materials&#39;),
+          resourceType: &#39;resource&#39;,
+          resourceId: &#39;library.materials&#39;,
+          actions: JSON.stringify([
+            {
+              action: &#39;view&#39;,
+              scopeKey: &#39;materials&#39;,
+              scope: {
+                type: &#39;database&#39;,
+                recordAccess: &#39;library.nonConfidential&#39;,
+              },
+            },
+          ]),
+          reason: &#39;Confidential materials are never shown to readers.&#39;,
+          createdAt: now,
+          updatedAt: now,
+        })
+        .execute();
+      await query
+        .insertInto(&#39;authorizationRestrictionRuleAssignments&#39;)
+        .values({
+          id: &#39;library-hide-confidential-reader-b&#39;,
+          restrictionRuleId: &#39;library-hide-confidential&#39;,
+          subjectType: &#39;user&#39;,
+          subjectId: READER_USER_ID,
+          createdAt: now,
+        })
+        .execute();
+    }</pre><p class="check-source">原文件 SHA-256：09c1c05a02a2526f438964ab7f022387f27ae278b5e47e87758b19cf3651a881</p></div></details><details class="card raw-record" id="review-evidence-E39"><summary><strong>E39</strong> · app/database/main/seeds/202609300001_library_seed.ts:228–273</summary><div class="subsection-body"><p>seed 只预置保密 C 的共享规则（显式 records 选择）并赋给读者 B，注释说明草稿 D 改由管理员运行时共享。</p><pre>    // --- Sharing: expose confidential C so the restriction can be shown to
+    // --- outrank another sharing source. Private draft D is deliberately not
+    // --- shared: an administrator opens it at runtime.
+    const confidentialSharingRule = {
+      id: &#39;library-share-confidential-c&#39;,
+      key: &#39;library-share-confidential-c&#39;,
+      title: &#39;Share confidential C&#39;,
+    };
+    if (
+      !(await idExists(
+        query,
+        &#39;authorizationSharingRules&#39;,
+        &#39;key&#39;,
+        confidentialSharingRule.key,
+      ))
+    ) {
+      await query
+        .insertInto(&#39;authorizationSharingRules&#39;)
+        .values({
+          id: confidentialSharingRule.id,
+          key: confidentialSharingRule.key,
+          title: encodeAuthorizationTitle(confidentialSharingRule.title),
+          resourceType: &#39;resource&#39;,
+          resourceId: &#39;library.materials&#39;,
+          actions: JSON.stringify([
+            {
+              action: &#39;view&#39;,
+              scopeKey: &#39;materials&#39;,
+              selection: { type: &#39;records&#39;, ids: [CONFIDENTIAL_MATERIAL_ID] },
+            },
+          ]),
+          createdAt: now,
+          updatedAt: now,
+        })
+        .execute();
+      await query
+        .insertInto(&#39;authorizationSharingRuleAssignments&#39;)
+        .values({
+          id: `${confidentialSharingRule.id}-reader-b`,
+          sharingRuleId: confidentialSharingRule.id,
+          subjectType: &#39;user&#39;,
+          subjectId: READER_USER_ID,
+          createdAt: now,
+        })
+        .execute();
+    }</pre><p class="check-source">原文件 SHA-256：09c1c05a02a2526f438964ab7f022387f27ae278b5e47e87758b19cf3651a881</p></div></details><details class="card raw-record" id="review-evidence-E40"><summary><strong>E40</strong> · app/server/config/authorization.ts:10–16</summary><div class="subsection-body"><p>应用在授权配置中注册 defaultAccess()、sharingRules()、restrictionRules() 三个规则插件与 permissionSets 默认集。</p><pre>// Permission sets, page and database authorization are built in.
+const authorization: AppConfigFactory&lt;AuthorizationConfig&gt; = defineAppConfig(
+  (_runtime) =&gt; ({
+    permissionSets: { rootSet: &#39;root&#39;, defaultSet: &#39;member&#39; },
+    plugins: [defaultAccess(), sharingRules(), restrictionRules()],
+  }),
+);</pre><p class="check-source">原文件 SHA-256：e219ee368968cf2d9e44116a30418e794e2261aac5cad7d530cd2c0b77d10141</p></div></details><details class="card raw-record" id="review-evidence-E42"><summary><strong>E42</strong> · packages/@nocobase/app-plugin-users/dist/server/routes/index.js:118–124</summary><div class="subsection-body"><p>POST /:userId/disable 先做用户动作鉴权，再调用 users.disable 并记录安全事件。</p><pre>    routes.post(&#39;/:userId/disable&#39;, async (context) =&gt; {
+        const userId = context.req.param(&#39;userId&#39;);
+        await requireUserAction(context, userId, &#39;disable&#39;);
+        const user = await users.disable(userId);
+        logSecurityEvent(securityLogger, context, &#39;user.disable&#39;, userId);
+        return context.json({ data: user });
+    });</pre><p class="check-source">原文件 SHA-256：e26855a6eb67b1a2978cac7802ed5e9d58f391f9383418410d793d045d1d1a10</p></div></details><details class="card raw-record" id="review-evidence-E43"><summary><strong>E43</strong> · packages/@nocobase/app-plugin-users/dist/server/routes/index.js:155–160</summary><div class="subsection-body"><p>POST /:userId/revoke-sessions 鉴权后调用 users.revokeSessions 并记录安全事件。</p><pre>    routes.post(&#39;/:userId/revoke-sessions&#39;, async (context) =&gt; {
+        const userId = context.req.param(&#39;userId&#39;);
+        await requireUserAction(context, userId, &#39;revoke-sessions&#39;);
+        await users.revokeSessions(userId);
+        logSecurityEvent(securityLogger, context, &#39;user.sessions.revoke&#39;, userId);
+        return context.json({ data: { success: true } });</pre><p class="check-source">原文件 SHA-256：e26855a6eb67b1a2978cac7802ed5e9d58f391f9383418410d793d045d1d1a10</p></div></details></div></section><section class="section" id="acceptance"><div class="section-head"><div><div class="eyebrow">Acceptance record</div><h2>验收记录</h2></div><span class="tag ">5 项要求</span></div>
     <div class="acceptance-toolbar"><div class="acceptance-counts"><span class="tag good">报告通过 5</span><span class="tag ">报告未通过 0</span><span class="tag ">未验证 0</span></div>
     <div class="acceptance-actions"><button class="btn small" data-checks="expand">展开全部记录</button><button class="btn small" data-checks="collapse">收起通过项</button></div></div>
     <p class="section-intro">每项直接显示结果；展开可看原始要求、操作记录、观察结果和截图。证据批注单独显示，不改写原始验收状态。</p>
@@ -300,7 +1404,7 @@ B05. 管理员通过原有用户管理停用 B，B 的已有会话刷新后不�
     }
   ],
   &quot;improvements&quot;: []
-}</pre></div></details></section><section class="section" id="execution"><div class="section-head"><div><div class="eyebrow">Execution &amp; usage</div><h2>发生了什么，花了多少</h2></div></div><div class="split"><div class="card run-panel"><h3>运行记录</h3><div class="run"><div class="run-content"><div class="run-top"><strong>35966623377 / attempt 1</strong></div><p><span class="tag ">已提交 PR · 等待人工评审</span></p><p>已生成/更新业务 PR</p></div></div><div class="ci-fact"><strong>自动检查：通过</strong><p class="check-source">流水线已完成最终验证及 PR 发布；不代表人工合并。</p></div></div><div class="card usage-card"><div class="eyebrow">已记录 Token · 含缓存</div><div class="usage-big">88,930,927</div><span class="tag warn">采集可能不完整</span><p>此 Issue 累计：已采集 1 个 Run / 1 次尝试</p><details class="subsection"><summary>展开用量分项 ⌄</summary><div class="subsection-body"><div class="table-wrap"><table><thead><tr><th>指标</th><th>值</th></tr></thead><tbody><tr><td>非缓存输入</td><td class="mono">2,056,076</td></tr><tr><td>输出</td><td class="mono">633,571</td></tr><tr><td>缓存读取</td><td class="mono">86,241,280</td></tr><tr><td>端到端耗时</td><td class="mono">2:37:17</td></tr></tbody></table></div><h3 class="usage-phase-title">按阶段分项</h3><div class="table-wrap"><table><thead><tr><th>阶段</th><th class="num">非缓存输入</th><th class="num">输出</th><th class="num">缓存读取</th><th class="num">缓存写入</th><th class="num">合计</th></tr></thead><tbody><tr><td>初始实现</td><td class="num">981,741</td><td class="num">250,892</td><td class="num">51,244,672</td><td class="num">0</td><td class="num">52,477,305</td></tr><tr><td>应用修复</td><td class="num">187,156</td><td class="num">91,816</td><td class="num">10,783,488</td><td class="num">0</td><td class="num">11,062,460</td></tr><tr><td>完整业务 QA</td><td class="num">195,423</td><td class="num">123,770</td><td class="num">18,339,456</td><td class="num">0</td><td class="num">18,658,649</td></tr><tr><td>失败路径复测</td><td class="num">54,971</td><td class="num">23,257</td><td class="num">2,776,448</td><td class="num">0</td><td class="num">2,854,676</td></tr><tr><td>QA 补报告</td><td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td></tr><tr><td>独立搭建评审</td><td class="num">132,716</td><td class="num">36,310</td><td class="num">2,955,264</td><td class="num">0</td><td class="num">3,124,290</td></tr><tr><td>上下文压缩</td><td class="num">504,069</td><td class="num">107,526</td><td class="num">141,952</td><td class="num">0</td><td class="num">753,547</td></tr></tbody></table></div><p class="check-source">用量记录 1280；未报告用量 4；分项不完整 0；缺失作业时间 0。</p><p class="check-source">不把流式增量、上下文长度和思考 Token 重复相加。旧记录未拆分 QA 时保留原有口径；费用：未知。</p><p class="check-source">现有 task-usage 模块（按 Agent / job ID 去重）。不等同供应商账单，不推算费用。</p></div></details></div></div></section><details class="card raw-record"><summary>本轮阶段耗时</summary><div class="subsection-body"><p>嵌套阶段不可相加为总耗时；仅展示已完成的计时。</p><div class="table-wrap"><table><tr><th>阶段</th><th>次数</th><th>时长</th></tr><tr><td>agent:implementation</td><td>1</td><td>1:10:48</td></tr><tr><td>agent:qa</td><td>2</td><td>0:42:18</td></tr><tr><td>agent:repair</td><td>2</td><td>0:17:05</td></tr><tr><td>agent:qa-focused</td><td>1</td><td>0:06:38</td></tr><tr><td>agent:review</td><td>1</td><td>0:05:08</td></tr><tr><td>test</td><td>3</td><td>0:02:15</td></tr><tr><td>build</td><td>2</td><td>0:01:59</td></tr><tr><td>lint</td><td>3</td><td>0:01:32</td></tr><tr><td>typecheck</td><td>3</td><td>0:00:47</td></tr><tr><td>install</td><td>1</td><td>0:00:16</td></tr><tr><td>db:apply</td><td>3</td><td>0:00:16</td></tr><tr><td>format:check</td><td>3</td><td>0:00:15</td></tr><tr><td>format:auto</td><td>3</td><td>0:00:03</td></tr><tr><td>skills-sync</td><td>1</td><td>0:00:01</td></tr></table></div></div></details><footer class="report-footer">Factory report template v4 · gchust/nb3-factory:251:35966623377:1:bc465ee2f5c957f0cf922c708c0a54230b607cb8:template-4:review-1b0064d8b7869292<br>验收逐条保留；问题与改进来自复盘原文。此页面是归档展示，不是重新验收。</footer></main>
+}</pre></div></details></section><section class="section" id="execution"><div class="section-head"><div><div class="eyebrow">Execution &amp; usage</div><h2>发生了什么，花了多少</h2></div></div><div class="split"><div class="card run-panel"><h3>运行记录</h3><div class="run"><div class="run-content"><div class="run-top"><strong>35966623377 / attempt 1</strong></div><p><span class="tag ">已提交 PR · 等待人工评审</span></p><p>已生成/更新业务 PR</p></div></div><div class="ci-fact"><strong>自动检查：通过</strong><p class="check-source">流水线已完成最终验证及 PR 发布；不代表人工合并。</p></div></div><div class="card usage-card"><div class="eyebrow">已记录 Token · 含缓存</div><div class="usage-big">88,930,927</div><span class="tag warn">采集可能不完整</span><p>此 Issue 累计：已采集 1 个 Run / 1 次尝试</p><details class="subsection"><summary>展开用量分项 ⌄</summary><div class="subsection-body"><div class="table-wrap"><table><thead><tr><th>指标</th><th>值</th></tr></thead><tbody><tr><td>非缓存输入</td><td class="mono">2,056,076</td></tr><tr><td>输出</td><td class="mono">633,571</td></tr><tr><td>缓存读取</td><td class="mono">86,241,280</td></tr><tr><td>端到端耗时</td><td class="mono">2:37:17</td></tr></tbody></table></div><h3 class="usage-phase-title">按阶段分项</h3><div class="table-wrap"><table><thead><tr><th>阶段</th><th class="num">非缓存输入</th><th class="num">输出</th><th class="num">缓存读取</th><th class="num">缓存写入</th><th class="num">合计</th></tr></thead><tbody><tr><td>初始实现</td><td class="num">981,741</td><td class="num">250,892</td><td class="num">51,244,672</td><td class="num">0</td><td class="num">52,477,305</td></tr><tr><td>应用修复</td><td class="num">187,156</td><td class="num">91,816</td><td class="num">10,783,488</td><td class="num">0</td><td class="num">11,062,460</td></tr><tr><td>完整业务 QA</td><td class="num">195,423</td><td class="num">123,770</td><td class="num">18,339,456</td><td class="num">0</td><td class="num">18,658,649</td></tr><tr><td>失败路径复测</td><td class="num">54,971</td><td class="num">23,257</td><td class="num">2,776,448</td><td class="num">0</td><td class="num">2,854,676</td></tr><tr><td>QA 补报告</td><td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td></tr><tr><td>独立搭建评审</td><td class="num">132,716</td><td class="num">36,310</td><td class="num">2,955,264</td><td class="num">0</td><td class="num">3,124,290</td></tr><tr><td>上下文压缩</td><td class="num">504,069</td><td class="num">107,526</td><td class="num">141,952</td><td class="num">0</td><td class="num">753,547</td></tr></tbody></table></div><p class="check-source">用量记录 1280；未报告用量 4；分项不完整 0；缺失作业时间 0。</p><p class="check-source">不把流式增量、上下文长度和思考 Token 重复相加。旧记录未拆分 QA 时保留原有口径；费用：未知。</p><p class="check-source">现有 task-usage 模块（按 Agent / job ID 去重）。不等同供应商账单，不推算费用。</p></div></details></div></div></section><details class="card raw-record"><summary>本轮阶段耗时</summary><div class="subsection-body"><p>嵌套阶段不可相加为总耗时；仅展示已完成的计时。</p><div class="table-wrap"><table><tr><th>阶段</th><th>次数</th><th>时长</th></tr><tr><td>agent:implementation</td><td>1</td><td>1:10:48</td></tr><tr><td>agent:qa</td><td>2</td><td>0:42:18</td></tr><tr><td>agent:repair</td><td>2</td><td>0:17:05</td></tr><tr><td>agent:qa-focused</td><td>1</td><td>0:06:38</td></tr><tr><td>agent:review</td><td>1</td><td>0:05:08</td></tr><tr><td>test</td><td>3</td><td>0:02:15</td></tr><tr><td>build</td><td>2</td><td>0:01:59</td></tr><tr><td>lint</td><td>3</td><td>0:01:32</td></tr><tr><td>typecheck</td><td>3</td><td>0:00:47</td></tr><tr><td>install</td><td>1</td><td>0:00:16</td></tr><tr><td>db:apply</td><td>3</td><td>0:00:16</td></tr><tr><td>format:check</td><td>3</td><td>0:00:15</td></tr><tr><td>format:auto</td><td>3</td><td>0:00:03</td></tr><tr><td>skills-sync</td><td>1</td><td>0:00:01</td></tr></table></div></div></details><footer class="report-footer">Factory report template v4 · gchust/nb3-factory:251:35966623377:1:bc465ee2f5c957f0cf922c708c0a54230b607cb8:template-4:review-ab967c16b35bc14b<br>验收逐条保留；问题与改进来自复盘原文。此页面是归档展示，不是重新验收。</footer></main>
 <dialog aria-labelledby="lightbox-title" class="lightbox" id="lightbox"><div class="lightbox-bar"><h3 id="lightbox-title">浏览器截图</h3><div class="lightbox-controls"><button aria-label="上一张" class="icon-btn" id="photo-prev">←</button><button aria-label="下一张" class="icon-btn" id="photo-next">→</button><button aria-label="关闭放大图片" class="icon-btn" id="photo-close"><svg aria-hidden="true" fill="none" height="16" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7" viewbox="0 0 24 24" width="16"><path d="m6 6 12 12M6 18 18 6"></path></svg></button></div></div><img alt="" class="lightbox-img" id="lightbox-img"/><div class="lightbox-foot"><span id="lightbox-source"></span><span id="lightbox-count"></span></div></dialog><script>
 (() => {
   'use strict';
