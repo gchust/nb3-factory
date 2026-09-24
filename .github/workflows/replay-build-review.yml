@@ -116,9 +116,12 @@ jobs:
         with:
           node-version: 24.x
       - name: Reconstruct sealed candidate without rebuilding
+        run: git -C workspace apply --index ../input/agent/agent.patch
+      - name: Restore frozen source packages for reassessment
+        run: node control/.github/scripts/source-snapshot.mjs restore workspace input/agent/task-metadata.json
+      - name: Install frozen review dependencies and guidance
+        working-directory: workspace
         run: |
-          git -C workspace apply --index ../input/agent/agent.patch
-          cd workspace
           pnpm install --frozen-lockfile --ignore-scripts
           pnpm skills:sync
       - name: Install selected pinned reviewer
@@ -177,6 +180,10 @@ jobs:
         run: |
           node control/.github/scripts/replay-build-review.mjs run \
             --input input --workspace workspace --output "$RUNNER_TEMP/review"
+      - name: Stop reassessment source registry
+        if: always()
+        continue-on-error: true
+        run: node control/.github/scripts/source-snapshot.mjs stop
       - uses: actions/upload-artifact@v4
         id: export
         if: always()
