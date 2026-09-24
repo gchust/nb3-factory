@@ -87,6 +87,11 @@ const zhCN: AppResource = {
     title: '开始构建你的应用',
     description: '向 AI 助手描述你的需求，逐步构建页面、数据模型和业务流程。',
   },
+  pipelineSmoke: {
+    title: '流程冒烟',
+    description: '用于验证自动搭建流程',
+    increment: '+1',
+  },
 
   appearance: {
     title: '外观',
@@ -120,6 +125,7 @@ const zhCN: AppResource = {
   },
   navigation: {
     home: '首页',
+    pipelineSmoke: '流程冒烟',
     open: '打开导航',
     close: '关闭导航',
     expand: '展开导航',
