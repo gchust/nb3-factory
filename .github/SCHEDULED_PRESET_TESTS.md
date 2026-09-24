@@ -1,73 +1,69 @@
-# 定时使用预设案例做搭建测试
+# 每日自动使用预设案例做搭建测试
 
-Action：**Scheduled preset build tests**（`scheduled-preset-tests.yml`）。
+给想测试的预设 Issue 加上 `factory:daily` 标签，之后每天自动搭建一次。移除标签就退出后续调度。**不需要填写编号、配置仓库变量或每天手动运行 Action。**
 
-只负责选择案例、创建独立执行 Issue、派发既有搭建工作流。不另写 Agent / QA / 报告流程，也不自动合并测试 PR。
+Action：**Scheduled preset build tests**（`scheduled-preset-tests.yml`）。只负责选择案例、创建独立执行 Issue、派发既有搭建工作流，不另写 Agent / QA / 报告流程，不自动合并测试 PR。
 
 ```text
-定时名单 / 手动选择预设 Issue 编号
-  → 校验 factory:preset 案例
-  → 每个案例创建新 Issue
-  → 原 prepare 复制正文与人工评论、固定应用基线
-  → Code Agent → QA → PR / 报告
+预设 Issue：factory:preset + factory:daily
+                    ↓ 每天自动读取标签名单
+              每个案例创建新 Issue
+                    ↓
+      原 prepare 复制正文与人工评论、固定应用基线
+                    ↓
+          Code Agent → QA → PR / HTML 报告
 ```
 
-## 选择与启用
+## 日常操作
 
-**定时运行**：在仓库 **Settings → Secrets and variables → Actions → Variables** 添加：
-
-| Repository variable | 示例 | 含义 |
-| --- | --- | --- |
-| `FACTORY_PRESET_TEST_ISSUES` | `176,155` | 每轮要测试的预设 Issue 编号；留空或删除即停止定时搭建 |
-
-例如 `176` 只测试流程冒烟；`176,155` 同时选择流程冒烟和客户备忘录。可填写任意已有的人工预设，支持逗号、中文逗号、空格或换行分隔，允许 `#176` 写法；重复编号只执行一次。
-来源必须有 `factory:preset` 标签，已关闭的案例也能用；PR、机器人创建的案例、`factory:manual` 任务和不存在的编号会明确报错。完整名单校验成功前不创建任何任务。
-案例维护方式见 [预置搭建案例](ISSUE_PRESETS.md)。
-
-**默认不启动定时搭建**，因为没有预设名单。配置变量后，在每次定时运行时读取最新名单；不需要修改脚本或维护第二份模板目录。
-
-**手动运行**：进入 **Actions → Scheduled preset build tests → Run workflow**：
-
-| 输入 | 用法 |
+| 预设 Issue 的标签 | 行为 |
 | --- | --- |
-| `preset_issues` | 填写本次要测试的编号，如 `176,155`；留空使用仓库变量 |
-| `dry_run` | 默认勾选，只预览名单和跳过原因；取消勾选才真正创建 Issue 并调用 Agent |
+| `factory:preset` | 保存为可重复使用的案例，不参加每日自动测试 |
+| `factory:preset` + `factory:daily` | 每天自动创建独立任务重新搭建 |
+| 移除 `factory:daily` | 下轮不再调度，保留原预设和历史结果；不取消已创建的任务 |
 
-选择方式是**输入编号列表，支持多个预设**，不是写死的模板下拉列表。新增预设不需要修改此 Action。
-手动输入只影响本次，不会修改后续定时名单。定时触发会实际派发，不受手动表单的 `dry_run` 默认值影响。
+例如，给流程冒烟 #176 和客户备忘录 #155 同时加上 `factory:daily`，此后每天各执行一次。只希望跑冒烟时，从 #155 移除该标签即可。
+可以在 Issue 右侧添加、移除标签，也可以在 Issues 列表批量修改。标签加在**来源预设 Issue**上，不是执行 Issue 或 PR 上。
+
+合入默认分支后，工作流自动初始化 `factory:daily` 标签，不启动搭建，也不替你选择案例。此后只需用标签维护名单。
+每次定时运行都读取最新标签，包含**已关闭的预设**；没有同时带两个标签的案例时，正常结束，不创建任务、不调用 Agent。
+仅有 `factory:daily` 而没有 `factory:preset` 不会被选中。误标的 PR、机器人案例或 `factory:manual` 任务会被明确报错，不执行，也不阻止其他有效案例。
+案例维护方式见 [预置搭建案例](ISSUE_PRESETS.md)。
 
 ## 时间与结果
 
-默认每天 **03:17 UTC（北京时间 11:17）**。修改工作流中的 `cron: '17 3 * * *'` 可调整频率，例如 `17 */6 * * *` 为每六小时一次。
-GitHub 定时任务只在默认分支执行，可能延迟；工作流需先合入默认分支。未选择案例时定时 Job 会跳过。
+默认每天 **03:17 UTC（北京时间 11:17）** 自动运行。修改工作流中的 `cron: '17 3 * * *'` 可调整时间。
+GitHub 定时任务只在默认分支执行，可能延迟；工作流需先合入默认分支。加标签不会立即搭建，从下一次每日扫描生效。
 
-每次可执行的案例都会创建独立 Issue，从既有默认分支基线受理；不会复用上次生成的业务代码、旧分支或 PR。
-本 Action **不自动 Refresh 模板、不构建 NocoBase 上游源码、不切换源码基线**；要改变被测版本，应先用现有基线流程更新默认分支，再启动测试。各任务继续由既有 prepare 记录实际应用 SHA。
+每轮可执行案例都会创建独立 Issue，从既有默认分支基线受理，不复用上次生成的业务代码、旧分支或 PR。
+本 Action **不自动 Refresh 模板、不构建 NocoBase 上游源码、不切换源码基线**；要改变被测版本，使用现有基线更新流程。各任务继续由既有 prepare 记录实际应用 SHA。
 
-Action 的 Summary 展示每个案例的**已派发 / 已有任务 / 因在途任务跳过 / 失败**，并链接到执行 Issue。
-“已派发”只表示搭建工作流已受理，不表示测试通过；业务验收结果仍查看对应 Issue、PR 和 HTML 报告。
-不同 Issue 的搭建沿用现有并行机制，调度入口串行不等于业务测试串行。
+Action Summary 展示每个案例的**已派发 / 已有任务 / 因在途任务跳过 / 失败**，并链接到执行 Issue。
+“已派发”不等于测试通过；业务验收结果仍查看对应 Issue、PR 和 HTML 报告。不同案例沿用现有并行机制。
 
-## 重跑与异常
+## 避免重复与积压
 
-同一预设存在带 `agent:pending`、`agent:queued`、`agent:running`、`agent:verifying` 或 `agent:waiting` 标签的未关闭自动测试 Issue 时，跳过本轮，避免积压。
-`agent:review` / 失败 / 已关闭的任务不阻止下一轮；**待评审的测试 PR 不需要先合并**。
+同一预设上一轮的未关闭自动测试 Issue 仍带 `agent:pending`、`agent:queued`、`agent:running`、`agent:verifying` 或 `agent:waiting` 时，跳过本轮，避免积压。
+`agent:review` / 失败 / 已关闭的任务不阻止下一轮；**待评审测试 PR 不需要先合并**。
 
-执行 Issue 带 `factory:test-preset-<编号>` 标签和调度来源评论。不要移除这些关联标记，否则去重和在途检测会失效。
-同一调度 Run 的重跑复用已创建的 Issue，读取持久回执；回执写入失败时再查询真实搭建 Run，避免再次派发已受理任务。
-单个派发失败会在 Summary 中保留已有 Issue 和错误，其他已校验案例仍会尝试派发，调度 Job 最终标记失败。
+执行 Issue 只带运行状态和 `factory:test-preset-<编号>` 来源标签，不继承 `factory:preset` 或 `factory:daily`，不会再次被选为预设。
+同一调度 Run 重跑复用已创建的 Issue；持久回执丢失时查询真实搭建 Run，避免重复派发。不要删除调度来源评论或执行 Issue 的来源标签。
+单个案例出错会保留错误及已有 Issue，继续其他案例，并将调度 Job 标记失败。
 
-若派发失败，重跑对应调度 Action；若任务取消后仍残留在途标签，先确认没有在运行的搭建，再关闭该执行 Issue，下一轮才会重新测试。不要通过合并测试 PR 来解除等待。
+正常每日运行无需人工操作。派发失败时可重跑对应调度 Run；取消任务后若残留在途标签，确认没有活动搭建后关闭该执行 Issue，恢复后续自动测试。不要通过合并测试 PR 来解除等待。
 
 只使用内置 `GITHUB_TOKEN`（`contents: read`、`issues: write`、`actions: write`），无需新增 PAT 或模型配置。
 创建 Issue 后显式调用原 `code-agent-task.yml` 的 `workflow_dispatch`，不依赖机器人创建 Issue 自动触发工作流。
 
-## 验证
+## 可选的维护入口
+
+**Run workflow** 仅用于即时检查或排障：`dry_run` 默认开启，预览当前标签名单且不写入；取消勾选则立即执行一轮。
+它不是启用每日任务的前置步骤。定时触发始终实际派发，不受手动表单默认值影响，也不会记住上一次手动预览状态。
 
 ```bash
 node --test .github/scripts/tests/scheduled-preset-tests.test.mjs
 ```
 
-新增测试会被现有 **Factory regression tests** 自动收集。首次合并后，先以 `176` + `dry_run=true` 检查名单，再取消只预览执行真实闭环；最后配置定时名单。
+专项覆盖标签增删、开放和关闭预设、分页、独立次日任务、来源隔离、重跑恢复、在途去重、标签初始化和工作流触发边界。现有 **Factory regression tests** 自动收集这些测试。
 
 参考：[GitHub 定时事件](https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#schedule)、[工作流触发规则](https://docs.github.com/en/actions/how-tos/write-workflows/choose-when-workflows-run/trigger-a-workflow#triggering-a-workflow-from-a-workflow)。
