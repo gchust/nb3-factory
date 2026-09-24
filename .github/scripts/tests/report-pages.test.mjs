@@ -20,7 +20,7 @@ function fakeClient() {
    if(method==='GET'&&route.startsWith('/git/commits/'))return commits.get(route.split('/').at(-1));
    if(method==='GET'&&route.startsWith('/contents/')) {
     const commit=commits.get(query?.ref==='gh-pages'?ref:query?.ref);const tree=commit&&trees.get(commit.tree.sha); const hash=tree?.get(route.slice('/contents/'.length));
-    return hash?{encoding:'base64',content:Buffer.from(blobs.get(hash)).toString('base64')}:null;
+    return hash?{sha:hash,encoding:'base64',content:Buffer.from(blobs.get(hash)).toString('base64')}:null;
    }
    if(method==='POST'&&route==='/git/blobs'){const sha=digest(body.content);blobs.set(sha,body.content);return {sha};}
    if(method==='POST'&&route==='/git/trees'){
@@ -141,4 +141,28 @@ test('replay cannot erase an existing independent build review', async () => {
  await archiveReport(c,richer,htmlOf(richer));
  const poor=input(); const replay=await archiveReport(c,poor,htmlOf(poor).replace('报告','未评估'));
  assert.equal(replay.preserved,true); assert.equal(c.files().get(reportManifest(richer).path),htmlOf(richer));
+});
+
+test('rubric upgrade preserves exact v1 bytes, permits v2 partial, and rejects a late v1 overwrite', async () => {
+ const client=fakeClient(), old=input(), next=input();
+ old.delivery.buildReview={state:'completed',basis:{rubricVersion:1}};
+ next.delivery.buildReview={state:'partial',basis:{rubricVersion:2}};
+ next.reportId += ':review-new-rubric';
+ const oldHtml=htmlOf(old), newHtml=htmlOf(next).replace('报告','框架评测');
+ await archiveReport(client,old,oldHtml);
+ const updated=await archiveReport(client,next,newHtml);
+ assert.equal(updated.preserved,false);
+ const directory=reportManifest(next).path.replace('index.html','');
+ assert.equal(client.files().get(directory+'rubric-1/index.html'),oldHtml);
+ assert.deepEqual(JSON.parse(client.files().get(directory+'rubric-1/report.json')),old);
+ assert.equal(client.files().get(directory+'index.html'),newHtml);
+ assert.equal(updated.manifest.quality.reviewRubric,2);
+ const late=await archiveReport(client,old,oldHtml);
+ assert.equal(late.preserved,true);
+ assert.equal(client.files().get(directory+'index.html'),newHtml);
+ // Same-rubric partial must still not erase a complete assessment.
+ const complete=structuredClone(next); complete.delivery.buildReview.state='completed';
+ complete.reportId += ':complete';
+ await archiveReport(client,complete,htmlOf(complete));
+ assert.equal((await archiveReport(client,next,newHtml)).preserved,true);
 });

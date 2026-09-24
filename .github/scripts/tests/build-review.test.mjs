@@ -53,11 +53,15 @@ function installMock(f, behavior = 'success') {
 const fs = require('node:fs');
 const input = JSON.parse(fs.readFileSync('review-input.json', 'utf8'));
 if (process.env.FACTORY_AGENT_ROLE !== 'review' || process.env.GITHUB_TOKEN || process.env.FACTORY_ADMIN_PASSWORD) process.exit(7);
-const score = {score:73,reason:'Fixture observation',evidence:['E1']};
-const review = {version:1,inputHash:input.basis.inputHash,summary:'Fixture-only review',
- modules:[{name:'Data access',scope:'Customer creation',limitations:'No concurrency coverage',criteria:['B01'],scores:{design:score,completeness:{score:null,reason:'No implementation coverage',evidence:[]},agentFriendliness:score,outputQuality:score}}],
+const score = {score:73,reason:'Fixture framework contract and usage',evidence:['E2','E1']};
+const review = {version:input.rubricVersion,inputHash:input.basis.inputHash,progress:{complete:true,pendingModules:[]},summary:'Fixture-only review',
+ modules:[{name:'Data access',scope:'Customer creation',limitations:'No concurrency coverage',criteria:['B01'],
+ targets:[{kind:'library',name:'@nocobase/example',entrypoints:['customer'],evidence:['E2']}],
+ requirements:[{need:'Create customer',responsibility:'Framework supplies data contract, application supplies customer rules',support:'composition',recommendedUsage:'Use the declared customer value',actualUsage:'Uses customer in application',gapOwner:'none',evidence:['E1','E2']}],
+ scores:{requirementFit:score,usability:score,design:score,reliability:{score:null,reason:'No implementation coverage',evidence:[]},agentFriendliness:score}}],
  findings:[],ui:{status:'not-reviewed',score:null,reason:'No image inspection',evidence:[]},
- evidence:[{id:'E1',kind:'code',path:'app/server/customer.ts',lines:[1,1],observation:'Read actual captured source',excerpt:'MODEL FABRICATION',mediaId:'MODEL FABRICATION'}],limitations:[]};
+ evidence:[{id:'E1',kind:'code',path:'app/server/customer.ts',lines:[1,1],observation:'Read actual captured source',excerpt:'MODEL FABRICATION',mediaId:'MODEL FABRICATION'}, {id:'E2',kind:'package',path:'packages/@nocobase/example/dist/index.d.ts',lines:[1,1],observation:'Read framework declaration'}],limitations:[]};
+if (${JSON.stringify(behavior)} === 'old-rubric') review.version = 1;
 if (${JSON.stringify(behavior)} === 'wrong-hash') review.inputHash = 'c'.repeat(64);
 if (${JSON.stringify(behavior)} === 'modify') {fs.chmodSync('app/server/customer.ts',0o600);fs.writeFileSync('app/server/customer.ts','modified');}
 fs.writeFileSync('assessment.json', ${JSON.stringify(behavior)} === 'malformed' ? '{oops' : JSON.stringify(review));
@@ -164,7 +168,7 @@ test('full independent mock CLI path records provenance, real excerpts and separ
   assert.match(result.html, /独立 Agent 评审/); assert.match(result.html, /73<small>/);
   assert.equal(result.facts.buildReview.process.rounds[0].reports[0].checks[0].status, 'failed');
 });
-for (const behavior of ['wrong-hash', 'modify', 'malformed']) test(`review ${behavior} fails softly and keeps delivery intact`, async t => {
+for (const behavior of ['wrong-hash', 'modify', 'malformed', 'old-rubric']) test(`review ${behavior} fails softly and keeps delivery intact`, async t => {
   const f = fixture(t); installMock(f, behavior);
   const result = await runBuildReview(f.workspace, f.artifacts, f.env);
   assert.equal(result.state, 'failed'); assert.equal(result.evaluation, null);
