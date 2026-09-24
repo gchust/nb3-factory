@@ -3,7 +3,7 @@ import type { ClientServiceProviderConstructor } from '@nocobase/app-client/plug
 import { ServiceProvider } from '@nocobase/service-provider';
 
 export class DefaultClientServiceProvider extends ServiceProvider<ClientApplication> {
-  public readonly name: string = 'nb3-factory/client';
+  public readonly name: string = 'crm/client';
   private previousDocumentTitle: string | undefined;
 
   public override boot(): Promise<void> {

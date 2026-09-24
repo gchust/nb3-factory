@@ -12,7 +12,7 @@ import serviceProviders from './service-provider.js';
 import sourceExtensions from './source-extensions.js';
 
 const appRuntime = defineAppRuntime({
-  packageName: 'nb3-factory',
+  packageName: 'crm',
   basename: getPortalBase(),
   createAppConfig: createAppClientConfig,
   defaultConfigs,

@@ -158,8 +158,8 @@ Generated     .agents/skills/ — synchronized copies, gitignored, replaced
               .claude/skills/ — symbolic links to the above so Claude Code
               discovers them; gitignored, rewritten by the same sync
 
-Config        config.yml — gitignored, holds secrets; document options in
-              config.example.yml instead
+Config        config.yml — written by pnpm config:init, gitignored, holds
+              secrets; document options in config.example.yml instead
 ```
 
 Reach a plugin's capability only through its documented package exports. Never import a plugin's internal source path or write to its tables directly.
@@ -220,6 +220,8 @@ Navigation groups retain their expanded or collapsed state while the navigation 
 ## Publish application releases
 
 This section applies to Default applications that include the `app upload` and `app deploy` CLI commands. Examples and Hub applications do not provide these publishing commands.
+
+`HUB_API_KEY` is created in Hub, not in the application: the **API Keys** page (`<HUB_URL>/api-keys`, requiring `hub.app / manage-api-keys`) binds a key to selected applications and grants **Upload release**, **Deploy release**, or both. Uploading needs `upload-release`; anything that deploys needs `deploy` as well. Bindings and permissions cannot be edited after creation, and a key never exceeds its creator's current permissions, so a key with the wrong scope is deleted and recreated. Tell the user to create the key before the first upload rather than guessing its value.
 
 Use `pnpm build --tar`, then `pnpm nocobase app upload` with `HUB_URL`, `HUB_APP_ID`, and `HUB_API_KEY`. The Hub URL includes the application's mount path. Both commands read the App root `.env` with per-value precedence: command flags > terminal/CI environment > `.env`. Keep `.env` gitignored; no `.env.local` or mode-specific files are loaded. Upload and deploy with `app upload --deploy`; upload only with `app upload`. Automation belongs in the caller’s script; Hub has no deployment-mode setting. For an existing Release use `app deploy --release-id <id>`. Add `--json` in CI, check `ok` and the process exit code, and preserve the idempotency key on network retries. A fresh deployment key requests a new deployment of the same Release. Never print API keys or put them in committed configuration. See README.MD for arguments, limits, and exit codes.
 
