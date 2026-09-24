@@ -17,13 +17,21 @@ describe('app client routes', () => {
   it('declares application and settings route contributions', async () => {
     expect(applicationRoutes).toHaveLength(2);
     const [app, settings] = applicationRoutes;
-    // The landing page and the four authentication pages are the whole of this template's routing. The reference
-    // pages under `client/pages/reference/` are deliberately absent: they are source to read while building a page,
-    // not screens this application serves, so nothing routes them and a build never reaches them.
+    // The landing page, the pipeline smoke page and the four authentication pages are the whole of this template's
+    // routing. The reference pages under `client/pages/reference/` are deliberately absent: they are source to read
+    // while building a page, not screens this application serves, so nothing routes them and a build never reaches
+    // them.
     expect(app).toMatchObject({
       parent: 'app',
       routes: [
         { auth: 'required', authz: 'skip', name: 'home', path: '/' },
+        {
+          auth: 'required',
+          authz: 'skip',
+          name: 'pipeline-smoke',
+          navigation: { title: 'navigation.pipelineSmoke' },
+          path: '/pipeline-smoke',
+        },
         { auth: 'guest', name: 'login', path: '/login' },
         { auth: 'guest', name: 'register', path: '/register' },
         {
@@ -75,9 +83,11 @@ describe('app client routes', () => {
       },
     ]);
 
-    // The landing page opted out of page authorization, so it is reachable by every signed-in user.
+    // The landing page and the pipeline smoke page opted out of page authorization, so they are reachable by every
+    // signed-in user.
     expect(pageAuthorizations(resolved.routes)).toEqual([
       { name: 'home', authorizedAs: null },
+      { name: 'pipeline-smoke', authorizedAs: null },
     ]);
     // A settings page carries no rule by default. This one asks for a page grant, so it stays invisible until an
     // administrator is granted it — which is the whole reason its name is pinned here.

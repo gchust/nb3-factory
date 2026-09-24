@@ -1,4 +1,4 @@
-import { Home, Palette } from 'lucide-react';
+import { FlaskConical, Home, Palette } from 'lucide-react';
 import {
   defineAppRoutes,
   defineSettingsRoutes,
@@ -15,6 +15,16 @@ const appRoutes: AppClientRouteContribution = defineAppRoutes([
     name: 'home',
     navigation: { title: 'navigation.home', icon: Home },
     path: '/',
+  },
+  {
+    // Reachable by every signed-in user: a smoke page exists to prove the pipeline wired a page and a button, so it
+    // asks for no page grant rather than making it disappear behind a permission nobody was meant to create.
+    authz: 'skip',
+    auth: 'required',
+    componentLoader: () => import('./pages/pipeline-smoke.js'),
+    name: 'pipeline-smoke',
+    navigation: { title: 'navigation.pipelineSmoke', icon: FlaskConical },
+    path: '/pipeline-smoke',
   },
   {
     auth: 'guest',
