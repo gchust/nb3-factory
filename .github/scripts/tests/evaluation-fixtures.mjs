@@ -6,6 +6,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { reviewArtifactHash } from '../build-review.mjs';
 import { taskEvaluationIdentity } from '../evaluation-identity.mjs';
+import { SAMPLE_LABEL } from '../evaluation-sample.mjs';
 import { executionFacts } from '../evaluation-report.mjs';
 import { aggregate, emptyUsage } from '../task-usage.mjs';
 
@@ -231,4 +232,87 @@ export async function startReceiver(t, { faults = [], token = 'receiver-token', 
   await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
   t.after(() => new Promise(resolve => { server.close(resolve); server.closeAllConnections(); }));
   return { url: `http://127.0.0.1:${server.address().port}/api/evaluations/import`, stored, requests, token };
+}
+
+const bot = { login: 'github-actions[bot]', type: 'Bot' };
+export const human = { login: 'owner', type: 'User' };
+export const lock = Buffer.from('lockfileVersion: 9.0\n');
+export const presetBody = ['### 目标分支', '', 'issues-176', '', '### 任务类型', '', '创建新系统', '', '### 业务需求', '', '做一个计数器',
+  '', '### 验收要求', '', 'B01. 点击加一', '', '### 框架评测', '', '轻量'].join('\n');
+export const names = issue => issue.labels.map(label => label.name ?? label);
+
+// A GitHub repository in memory: Issues, comments, labels, workflow runs/jobs,
+// contents at the frozen commit, and the gh-pages evaluation registry.
+export function fakeRepository() {
+  const pages = fakeGitHub();
+  const state = { issues: new Map(), comments: new Map(), labels: new Set(), runs: [], jobs: new Map(), dispatches: [], next: 500, commentId: 1, fail: null, compare: 'identical' };
+  state.issues.set(176, { number: 176, title: '[预置][F00] 流程冒烟：单页计数器', body: presetBody, state: 'closed', user: human,
+    labels: [{ name: 'factory:preset' }], html_url: `https://github.com/${repository}/issues/176`, updated_at: '2026-09-20T00:00:00Z' });
+  state.comments.set(176, [{ id: 90, user: human, body: '补充：计数器从 0 开始', created_at: '2026-09-20T01:00:00Z', html_url: 'x' }]);
+  const page = (list, query) => { const offset = ((query?.page ?? 1) - 1) * 100; return structuredClone(list.slice(offset, offset + 100)); };
+  const client = {
+    repository, token: 't', apiUrl: 'https://api.github.invalid', state, pages,
+    async getRepository() { return { default_branch: 'develop' }; },
+    async getRef(branch) { return branch === 'gh-pages' ? pages.getRef() : { object: { sha: control } }; },
+    createRef: (...args) => pages.createRef(...args),
+    async getIssue(number) { return client.request('GET', `/issues/${number}`); },
+    async addComment(number, body) { return client.request('POST', `/issues/${number}/comments`, { body: { body } }); },
+    async ensureStatusLabels() {},
+    async request(method, route, options = {}) {
+      const { body, query } = options;
+      if (state.fail?.(method, route, body)) { state.fail = null; throw new Error(`Injected failure: ${method} ${route}`); }
+      if (route.startsWith('/git/') || route.startsWith('/actions/artifacts') || route.startsWith('/contents/evaluations/') || (route.startsWith('/contents/') && query?.ref === 'gh-pages'))
+        return pages.request(method, route, options);
+      if (method === 'GET' && route === '') return client.getRepository();
+      if (method === 'GET' && route.startsWith('/contents/')) {
+        if (query?.ref !== control) return null;
+        if (route === '/contents/pnpm-lock.yaml') return { encoding: 'base64', content: lock.toString('base64'), sha: 'l' };
+        if (route === '/contents/factory-template.json') return { encoding: 'base64', content: Buffer.from('{"templateVersion":"1.0.0-beta.45"}').toString('base64') };
+        return null;
+      }
+      if (method === 'GET' && route.startsWith('/compare/')) return { status: state.compare };
+      if (route.startsWith('/labels/') && method === 'GET') return state.labels.has(decodeURIComponent(route.slice(8))) ? {} : null;
+      if (route === '/labels' && method === 'POST') { state.labels.add(body.name); return body; }
+      if (route === '/issues' && method === 'GET') {
+        const wanted = (query.labels ?? '').split(',').filter(Boolean);
+        return page([...state.issues.values()].filter(issue => wanted.every(label => names(issue).includes(label)) &&
+          (query.state === 'all' || issue.state === query.state)), query);
+      }
+      if (route === '/issues' && method === 'POST') {
+        const issue = { number: state.next++, title: body.title, body: body.body, labels: body.labels.map(name => ({ name })), state: 'open', user: bot };
+        state.issues.set(issue.number, issue); return structuredClone(issue);
+      }
+      let match = /^\/issues\/(\d+)$/.exec(route);
+      if (match) {
+        const issue = state.issues.get(Number(match[1]));
+        if (method === 'PATCH') Object.assign(issue, body);
+        return structuredClone(issue);
+      }
+      match = /^\/issues\/(\d+)\/comments$/.exec(route);
+      if (match) {
+        const list = state.comments.get(Number(match[1])) ?? [];
+        if (method === 'GET') return page(list, query);
+        const comment = { id: state.commentId++, user: bot, body: body.body, created_at: new Date().toISOString() };
+        list.push(comment); state.comments.set(Number(match[1]), list); return structuredClone(comment);
+      }
+      match = /^\/issues\/comments\/(\d+)$/.exec(route);
+      if (match && method === 'PATCH') {
+        const comment = [...state.comments.values()].flat().find(item => item.id === Number(match[1]));
+        comment.body = body.body; return structuredClone(comment);
+      }
+      if (route === '/actions/workflows/code-agent-task.yml/dispatches' && method === 'POST') { state.dispatches.push(body); return null; }
+      if (route === '/actions/workflows/code-agent-task.yml/runs' && method === 'GET') return { workflow_runs: page(state.runs, query) };
+      match = /^\/actions\/runs\/(\d+)\/attempts\/(\d+)\/jobs$/.exec(route);
+      if (match) return { jobs: state.jobs.get(Number(match[1])) ?? [] };
+      throw new Error(`Unexpected ${method} ${route}`);
+    },
+    // Simulate what the task workflow would do for a dispatched sample.
+    run(issue, { id, status = 'completed', conclusion = 'success', delivered = true, handoff = false, previous = 0 }) {
+      state.runs.push({ id, run_attempt: 1, status, conclusion, display_title: `Factory issue #${issue} build 0 from ${previous}`, created_at: new Date(Date.now() + id).toISOString() });
+      state.jobs.set(id, [{ name: 'agent', conclusion: 'success', steps: handoff ? [{ name: 'Dispatch continuation run', conclusion: 'success' }] : [] },
+        ...(delivered ? [{ name: 'publish', conclusion: 'success' }] : [])]);
+    },
+    samples() { return [...state.issues.values()].filter(issue => names(issue).includes(SAMPLE_LABEL)); },
+  };
+  return client;
 }

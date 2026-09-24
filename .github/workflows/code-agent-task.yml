@@ -63,6 +63,7 @@ jobs:
             /.github/scripts/handoff-control.mjs
             /.github/scripts/handoff-recovery.mjs
             /.github/scripts/pipeline-state.mjs
+            /.github/scripts/evaluation-sample.mjs
           persist-credentials: false
 
       - name: Download source task control pin
@@ -105,12 +106,25 @@ jobs:
             --event "$GITHUB_EVENT_PATH" --task previous-task/task-metadata.json \
             --checkpoint recovery --output "$GITHUB_OUTPUT"
 
+      # An evaluation-batch sample starts on its batch's frozen control plane,
+      # proven by bot receipts and the checksummed batch manifest (not by any
+      # dispatch field). Ordinary Issues output nothing and keep the default.
+      - name: Resolve a frozen evaluation sample control plane
+        id: sample
+        if: github.event.action != 'code-agent-continue' && inputs.recovery_run_id == ''
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          SAMPLE_ISSUE: ${{ github.event.issue.number || github.event.client_payload.issue_number || inputs.issue_number }}
+        run: node bootstrap/.github/scripts/evaluation-sample.mjs pin --issue "$SAMPLE_ISSUE" --output "$GITHUB_OUTPUT"
+
       - name: Pin the task chain's control plane
         id: baseline
+        env:
+          SAMPLE_CONTROL_SHA: ${{ steps.sample.outputs.control_sha }}
         run: |
           node bootstrap/.github/scripts/handoff-control.mjs resolve \
             --event "${{ steps.recovery.outputs.event_path || github.event_path }}" \
-            --current-sha "$(git -C bootstrap rev-parse HEAD)" \
+            --current-sha "${SAMPLE_CONTROL_SHA:-$(git -C bootstrap rev-parse HEAD)}" \
             --checkpoint "${{ inputs.recovery_run_id != '' && 'recovery' || 'legacy-handoff' }}" \
             --previous-task previous-task/task-metadata.json \
             --output "$GITHUB_OUTPUT"
@@ -224,6 +238,7 @@ jobs:
 
       - name: Start five-hour runner budget
         run: |
+          echo "FACTORY_JOB_STARTED_EPOCH_SECONDS=$(date +%s)" >> "$GITHUB_ENV"
           echo "FACTORY_RUN_DEADLINE_EPOCH_SECONDS=$(($(date +%s) + 18000 - 120))" >> "$GITHUB_ENV"
           echo "FACTORY_TIMINGS_FILE=$RUNNER_TEMP/agent-artifacts/timings.jsonl" >> "$GITHUB_ENV"
           echo "FACTORY_DEPENDENCY_CACHE=$RUNNER_TEMP/agent-dependency-cache" >> "$GITHUB_ENV"
@@ -289,6 +304,13 @@ jobs:
             node control/.github/scripts/pipeline-state.mjs init "$RUNNER_TEMP/agent-artifacts/pipeline-state.json" task/task-metadata.json
           fi
           echo "phase=$(node control/.github/scripts/pipeline-state.mjs phase "$RUNNER_TEMP/agent-artifacts/pipeline-state.json")" >> "$GITHUB_OUTPUT"
+
+      # Only batch samples carry a budget; it bounds long calls and leaves archive time.
+      - name: Apply the evaluation sample budget
+        run: |
+          if [[ -f control/.github/scripts/evaluation-budget.mjs ]]; then
+            node control/.github/scripts/evaluation-budget.mjs deadline "$RUNNER_TEMP/agent-artifacts/pipeline-state.json" >> "$GITHUB_ENV"
+          fi
 
       - name: Set up pnpm
         uses: pnpm/action-setup@v4
@@ -523,6 +545,12 @@ jobs:
           CURRENT_CONTINUATION: ${{ inputs.recovery_run_id != '' && '1' || github.event.client_payload.continuation || '0' }}
         run: |
           next_continuation=$((CURRENT_CONTINUATION + 1))
+          # A spent evaluation budget ends the chain here: the checkpoint is kept, no continuation is sent.
+          if [[ -f control/.github/scripts/evaluation-budget.mjs ]] && \
+            ! node control/.github/scripts/evaluation-budget.mjs handoff "$RUNNER_TEMP/agent-artifacts/pipeline-state.json" "$next_continuation"; then
+            echo "::warning::Evaluation sample budget exhausted; facts are saved without an automatic continuation."
+            exit 1
+          fi
           node bootstrap/.github/scripts/handoff.mjs prepare \
             --issue "${{ needs.prepare.outputs.issue_number }}" \
             --run-id "${{ github.run_id }}" \

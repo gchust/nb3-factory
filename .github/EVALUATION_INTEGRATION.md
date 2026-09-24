@@ -158,6 +158,8 @@ ZIP 由工厂确定性生成：路径排序、固定时间戳（1980-01-01）、
 | Variable `EVALUATION_AUTH_MODE` | `x-api-key` | 固定枚举 `x-api-key` / `bearer`；不接受自定义头名或模板 |
 | Secret `EVALUATION_TOKEN` | 未设置 | 只进入投递工作流 `send` 作业的一个步骤；不进入实现、QA、评审、导出或任何 Artifact |
 
+| Variable `FACTORY_EVALUATION_PLANS_ENABLED` | 未设置 = 关闭 | 只有 `true` 时每日定时才启动 `enabled` 且 `schedule=daily` 的评测计划；手动启动、推进与取消不受它限制 |
+
 投递打开但配置不完整时，投递作业失败并列出缺失的配置项名称（不输出值），记录保持待投递；业务结果与归档不受影响。
 仓库里原有的变量没有同义开关，因此新增上述名称。
 
@@ -242,12 +244,55 @@ record（contents: write）        CAS 写回脱敏回执；stored 为终态，�
 超过 24 次可重试失败的记录转为 `rejected`（`retry-limit`）。GitHub Artifact 有保留期限，删除关联 Run 也可能删除它，
 因此不承诺历史包永久可重放；`evaluation.json` 与清单的原始字节长期保留在 `gh-pages`。
 
+## 固定基线的独立重复评测（批次）
+
+受信任维护者在 [`evaluations/plans.json`](evaluations/plans.json) 定义计划；Issue、评论或派发字段都不能提供计划、控制 SHA、预算、脚本或 URL。
+校验上限：每批最多 10 个案例、每案例 1–10 个样本、每批共 20 个样本；v1 只允许 `maxConcurrentSamples=1`；
+修复上限 0–10 次，单样本主动执行 600–86400 秒，自动续跑 0–10 次；`baselineRef` 必须是默认分支（已发布模板轨道，
+不自动测试上游源码或刷新模板）。`reviewMode` 为 `inherit`（沿用预设的“框架评测”选择，否则 `FACTORY_BUILD_REVIEW`）、`full` 或 `off`；
+关闭评审的样本显示“未评审”，不会被当作模块通过。
+
+```text
+Evaluation batches → start（手动）或每日定时（需开关 + enabled + schedule=daily）
+  → 固定控制 SHA = 应用基线 SHA（默认分支当前提交，须在默认分支历史中）、锁文件哈希、模板版本、评审模式、预算
+  → 一次性捕获每个预置案例的正文与人工评论（caseHash）
+  → factory:manual 维护 Issue 上写入分块校验的冻结清单与全部计划样本 → 状态快照
+  → 逐个创建样本 Issue：冻结快照副本、代码起点回执、样本回执 → 最后才写入可运行正文 → 显式 workflow_dispatch
+  → 现有任务 / QA / 修复 / 终验 / PR / 报告；报告自动登记修订
+  → 任务结束、每小时补偿或手动 advance 推进：终态才释放唯一的串行槽位
+  → 每次状态变化形成 evaluation-batch 快照（同一套修订登记与可选投递）
+```
+
+| 情形 | 行为 |
+| --- | --- |
+| 同一批的第 3 个样本 | 使用开批时捕获的同一份案例快照；来源预设之后的修改或新评论只影响下一批 |
+| 样本的控制代码 | prepare 在检出任务脚本前读取机器人样本回执、分块校验的批次清单与最新状态并逐项核对，再选用批次冻结的 SHA；该 SHA 必须在默认分支历史中；入口工作流版本单独记录 |
+| 样本的应用基线 | 协调器预先写入现有的 `factory-task-base-v1` 回执；prepare 另外核对与清单一致 |
+| 创建 Issue 后客户端中断 | 重试按样本标记找回同一 Issue，补齐缺失的快照 / 回执，不多建样本 |
+| 重复或乱序派发 | 首个 Run 在样本 Issue 上留下认领回执；其他 Run 以 `duplicate` 退出，不再搭建（同一 Run 的重跑尝试与续跑除外） |
+| Handoff（退出 75） | 不是终态，不释放槽位；新的 Run 沿用检查点中的预算，不重置 |
+| 预算 | 修复次数与整条链的累计主动执行时间（不含排队）写入 `pipeline-state.json`；不足以开始下一阶段时以 76 结束为 `budget-exhausted`，长调用截止时间同时下调并预留 300 秒归档；续跑次数或剩余时间不足时不再派发续跑。补丁、检查点、验收记录与用量都保留 |
+| 取消 | `cancel` 后不再创建 / 派发样本，未开始的样本记为 `cancelled`；进行中样本的下一次续跑在 prepare 被拒绝；已发生的执行与用量保留，不关闭或合并任何业务 PR |
+| 未开始 / 受阻 / 报告缺失 | 仍列在样本全集与统计中；最后一个样本结束后最多等待 6 小时收齐报告再关闭批次 |
+| 两次定时触发同一日 | 批次键 `<计划>-<UTC 日期>`，第二次复用同一批；手动每次都是新批次（键含 Run ID），同一 Run 重跑复用 |
+
+样本状态：`planned / queued / running / passed / failed / blocked / budget-exhausted / cancelled / unknown`；
+`stateSource` 说明来源（样本自己的报告优先，其次是最后一个 Run 的结论）。样本长时间既无活动 Run 又无结论时，
+超过墙钟保护期（预算的 3 倍再加 6 小时）会记为 `unknown` 并释放槽位，执行记录保留。
+Schema：[`contracts/evaluation-batch.v1.schema.json`](contracts/evaluation-batch.v1.schema.json)，示例
+[`batch-in-progress.json`](contracts/examples/batch-in-progress.json)。批次只列同条件样本的可核实事实，不计算全局平均分，不排除失败样本；
+Agent 引擎与模型取自运行时仓库变量，批次期间修改会使样本不可比，逐样本报告记录实际值。
+
+操作：**Actions → Evaluation batches → Run workflow**：`start`（填 `plan`，可勾选 `dry_run` 只预览冻结结果）、
+`advance`、`cancel`（填 `batch`）、`status`。首版的“一个活动批次”是全局限制；原有 `factory:daily` 预设调度与普通 Issue 搭建策略不变。
+
 ## 验证
 
 ```bash
 node --test .github/scripts/tests/evaluation-report.test.mjs .github/scripts/tests/evaluation-bundle.test.mjs \
   .github/scripts/tests/evaluation-registry.test.mjs .github/scripts/tests/evaluation-contracts.test.mjs \
-  .github/scripts/tests/evaluation-delivery.test.mjs .github/scripts/tests/evaluation-workflow-policy.test.mjs
+  .github/scripts/tests/evaluation-delivery.test.mjs .github/scripts/tests/evaluation-workflow-policy.test.mjs \
+  .github/scripts/tests/evaluation-batch.test.mjs .github/scripts/tests/evaluation-budget.test.mjs .github/scripts/tests/evaluation-e2e.test.mjs
 node .github/contracts/render-examples.mjs --check
 node --test --test-concurrency=1 .github/scripts/tests/*.test.mjs
 ```
@@ -255,3 +300,6 @@ node --test --test-concurrency=1 .github/scripts/tests/*.test.mjs
 样例完全虚构（`owner/factory`、占位 SHA 等），由测试同一套夹具生成并在测试中逐字节比对，不代表真实案例成绩。
 `evaluation-delivery.test.mjs` 启动本地 HTTP 接收器验证协议（201/200、断连后重发、429/5xx/超时、4xx、202、伪 JSON、错误回执、
 重定向与过期来源）；它只用于协议验收，不是 Test Manager 的替代服务，也不能证明线上两系统已接通。
+`evaluation-e2e.test.mjs` 不调用模型地走完整链路：冻结计划 → 5 个同案例样本（其中一个两次 Handoff）→ 固定评审夹具 → 结果包 →
+本地接收器 → 重发三次与补跑一次评审，断言仍为 5 个业务样本、重发不新增修订或用量、重评只新增一个独立评审用量来源，
+两个样本的相似发现保留为两条独立出现记录。

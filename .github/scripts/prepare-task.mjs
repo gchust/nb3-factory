@@ -18,6 +18,7 @@ import { isManualIssue, isPresetIssue, preparePresetIssue } from './issue-preset
 import { resolveTaskBranch, taskIssueNumber } from './task-compat.mjs';
 import { resolveTargetBranch, pinInitialBase } from './task-base.mjs';
 import { taskEvaluationIdentity } from './evaluation-identity.mjs';
+import { claimSample, resolveSample } from './evaluation-sample.mjs';
 
 const args = parseArgs(process.argv.slice(2));
 const event = JSON.parse(readFileSync(args.event, 'utf8'));
@@ -48,8 +49,21 @@ try {
     appendGithubOutput(outputPath, 'status', 'preset');
     process.exit(0);
   }
+  // Batch samples prove their frozen batch from bot receipts; ordinary Issues get null.
+  const sample = await resolveSample(client, issueNumber, { issue });
   await client.ensureStatusLabels();
   const buildCommentId = event.client_payload?.build_comment_id;
+  const continuation = event.action === 'code-agent-continue';
+  const batchSample = sample && !buildCommentId ? sample : null;
+  if (sample?.cancelled) {
+    await client.setIssueStatus(issue, 'agent:failed',
+      `评测批次 \`${sample.receipt.batchKey}\` 已取消：不再开始或自动续跑该样本；已发生的执行、补丁与用量保留。`);
+    appendGithubOutput(outputPath, 'status', 'cancelled');
+    process.exit(0);
+  }
+  if (batchSample && !continuation && process.env.FACTORY_CONTROL_SHA !== batchSample.receipt.controlSha) {
+    throw new TaskInputError('评测样本必须使用批次冻结的控制代码；拒绝以当前默认分支执行。');
+  }
   if (buildCommentId) {
     const { receipts } = await receiptsFor(client, issueNumber);
     if (
@@ -132,11 +146,19 @@ try {
     },
     task,
     // Stable logical-run identity for exported evaluations; not business input.
-    evaluation: taskEvaluationIdentity({
-      repository,
-      issueNumber: issue.number,
-      buildCommentId: buildCommentId ? Number(buildCommentId) : null,
-    }),
+    evaluation: {
+      ...taskEvaluationIdentity({
+        repository,
+        issueNumber: issue.number,
+        buildCommentId: buildCommentId ? Number(buildCommentId) : null,
+        sample: batchSample ? batchSample.receipt : null,
+      }),
+      ...(batchSample ? {
+        budget: batchSample.receipt.budget,
+        coordinatorIssue: batchSample.receipt.coordinatorIssue,
+        manifestHash: batchSample.manifestHash,
+      } : {}),
+    },
     workBranch,
     targetCreated,
     existingPullRequest: ownPullRequest
@@ -180,11 +202,21 @@ try {
     process.exit(0);
   }
 
+  // One build per batch sample: a duplicate or reordered dispatch exits without work.
+  if (batchSample && !continuation &&
+      !(await claimSample(client, batchSample, Number(process.env.GITHUB_RUN_ID), process.env.GITHUB_SERVER_URL))) {
+    appendGithubOutput(outputPath, 'status', 'duplicate');
+    process.exit(0);
+  }
+
   const workRef = await client.getRef(workBranch, true);
   const baseRef = workRef ? workBranch : task.targetBranch;
   const baseSha = workRef?.object?.sha ?? (isSharedTaskBase(task.targetBranch, defaultBranch)
     ? await pinInitialBase(client, issueNumber, task.targetBranch, targetRef.object.sha)
     : targetRef.object.sha);
+  if (batchSample && !workRef && baseSha !== batchSample.receipt.baseSha) {
+    throw new TaskInputError('评测样本的代码起点与批次冻结基线不一致，拒绝改用其他基线。');
+  }
 
   appendGithubOutput(outputPath, 'base_ref', baseRef);
   appendGithubOutput(outputPath, 'base_sha', baseSha);

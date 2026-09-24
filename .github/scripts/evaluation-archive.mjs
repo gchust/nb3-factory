@@ -2,13 +2,14 @@
 //   export  (report job, read-only)  facts → draft.json + attachment copies
 //   prepare (evaluation job)         reuse or propose a revision, pack the bundle
 //   commit  (evaluation job)         register it under CAS, optionally queue delivery
-import { appendFileSync, copyFileSync, existsSync, lstatSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { appendFileSync, copyFileSync, existsSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createBundle, verifyBundle } from './evaluation-bundle.mjs';
 import { deliveryConfig, DeliveryConfigError } from './evaluation-target.mjs';
 import { keyDigest } from './evaluation-identity.mjs';
-import { buildEvaluation, finalizeEvaluation, fingerprintEvaluation } from './evaluation-report.mjs';
+import { buildEvaluation, finalizeEvaluation, fingerprintEvaluation, documentKeyOf } from './evaluation-report.mjs';
 import { commitRevision, planRevision } from './evaluation-registry.mjs';
 import { parseBoolean } from './factory-lib.mjs';
 
@@ -21,7 +22,9 @@ export const artifactName = (type, key, revision) => `factory-evaluation-${type 
 
 // Export only copies files the exporter selected from the trusted artifact tree.
 export function exportDraft({ report, artifacts, task, html, output: out, exporter }) {
-  const { draft, attachments } = buildEvaluation({ report, root: existsSync(artifacts) ? artifacts : null, taskRoot: task && existsSync(task) ? task : null, exporter });
+  // A run that stopped before its Agent artifact still exports its receipts and metadata.
+  const root = artifacts && existsSync(artifacts) ? artifacts : mkdtempSync(path.join(os.tmpdir(), 'evaluation-empty-'));
+  const { draft, attachments } = buildEvaluation({ report, root, taskRoot: task && existsSync(task) ? task : null, exporter });
   mkdirSync(path.join(out, 'files'), { recursive: true });
   const files = [];
   for (const item of attachments) {
@@ -59,7 +62,7 @@ export async function prepareRevision(client, { input, output: out, now = new Da
   const files = loadFiles(input);
   const evidence = files.filter(item => item.role === 'evidence');
   const fingerprint = fingerprintEvaluation(draft, evidence);
-  const key = draft.run.key;
+  const key = documentKeyOf(draft);
   const plan = await planRevision(client, { type: draft.type, key, fingerprint });
   let evaluationBytes, document, bundle, reproduced = true;
   if (plan.reused) {
@@ -123,7 +126,7 @@ async function main() {
     const { draft, files } = exportDraft({ report: json(args.report), artifacts: args.artifacts, task: args.task, html: args.html, output: args.output,
       exporter: { controlSha: process.env.FACTORY_EXPORTER_SHA, runId: process.env.GITHUB_RUN_ID, attempt: process.env.GITHUB_RUN_ATTEMPT } });
     output('ready', 'true');
-    console.log(`Exported ${draft.run.key} (${draft.outcome.execution}/${draft.outcome.acceptance}) with ${files.length} file(s); no model was called.`);
+    console.log(`Exported ${documentKeyOf(draft)} (${draft.outcome.execution}/${draft.outcome.acceptance}) with ${files.length} file(s); no model was called.`);
   } else if (mode === 'prepare') {
     const registration = await prepareRevision(client(), { input: args.input, output: args.output });
     output('upload', registration.upload); output('artifact_name', registration.artifactName);

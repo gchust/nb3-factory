@@ -4,9 +4,11 @@
 import { mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { advanceBatch, batchDocument, startBatch, validatePlans } from '../scripts/evaluation-batch.mjs';
 import { createBundle } from '../scripts/evaluation-bundle.mjs';
+import { commitRevision } from '../scripts/evaluation-registry.mjs';
 import { buildEvaluation, finalizeEvaluation } from '../scripts/evaluation-report.mjs';
-import { buildArtifacts, png, put, reportFor, temporary, usageRecord, writeReview } from '../scripts/tests/evaluation-fixtures.mjs';
+import { buildArtifacts, control, fakeRepository, png, put, reportFor, temporary, usageRecord, writeReview } from '../scripts/tests/evaluation-fixtures.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const OUT = path.join(HERE, 'examples');
@@ -21,7 +23,29 @@ function render(root, report, revision = 1) {
   return finalizeEvaluation(draft, { revision, createdAt }).document;
 }
 
-export function examples() {
+// A batch in progress: one sample passed with its report, one inside a handoff chain, one not started.
+async function batchExample() {
+  const client = fakeRepository();
+  const plans = validatePlans({ schemaVersion: 1, plans: [{ key: 'nb3-daily-smoke', enabled: true, schedule: 'daily', baselineRef: 'develop',
+    cases: [{ key: 'F00', presetIssueNumber: 176, samples: 3 }], execution: { maxConcurrentSamples: 1, maxRepairAttempts: 2, maxActiveSecondsPerSample: 3600, maxContinuations: 2 },
+    reviewMode: 'inherit' }] }, { defaultBranch: 'develop' });
+  let now = Date.parse('2026-09-25T01:23:00Z');
+  const started = await startBatch(client, { plans, planKey: 'nb3-daily-smoke', trigger: 'schedule', now, runId: 1000100, controlSha: control, env: { GITHUB_SHA: control } });
+  let batch = await advanceBatch(client, started.batch, { now });
+  const [first] = client.samples();
+  client.run(first.number, { id: 1000201 });
+  await commitRevision(client, { document: { type: 'evaluation-report', revision: 1, createdAt: '2026-09-25T02:40:00Z', source: { instance: client.repository },
+    run: { key: batch.manifest.samples[0].runKey }, outcome: { execution: 'completed', acceptance: 'passed', delivery: 'published' },
+    precedence: { producer: { runId: 1000201, attempt: 1, startedAt: '2026-09-25T01:30:00Z' }, reviewState: 'completed', reviewRubric: 2, qaCoverage: 'complete' } },
+  evaluationBytes: Buffer.from('{}'), manifestBytes: Buffer.from('{}'), fingerprint: 'a'.repeat(64), bundle: { sha256: 'b'.repeat(64), size: 1 }, location: null,
+  now: new Date('2026-09-25T02:40:00Z') });
+  batch = await advanceBatch(client, batch, { now: (now += 5_400_000) });
+  client.run(client.samples()[1].number, { id: 1000202, delivered: false, handoff: true });
+  batch = await advanceBatch(client, batch, { now: (now += 3_600_000) });
+  return finalizeEvaluation(batchDocument(batch, { exporter }), { revision: batch.state.sequence, createdAt }).document;
+}
+
+export async function examples() {
   const out = {};
   let root = temporary(t);
   buildArtifacts(root);
@@ -65,6 +89,8 @@ export function examples() {
   out['receipt.json'] = { receiptId: 'receiver-generated-id', sourceInstance: completed.source.instance, runKey: completed.run.key,
     revision: completed.revision, bundleSha256: 'a'.repeat(64), state: 'stored' };
 
+  out['batch-in-progress.json'] = await batchExample();
+
   const invalid = {};
   const clone = value => structuredClone(value);
   let bad = clone(completed); bad.reviews[0].modules[0].scores.design.score = 101; invalid['report-score-out-of-range.json'] = bad;
@@ -76,6 +102,9 @@ export function examples() {
   invalid['receipt-accepted-not-stored.json'] = { ...out['receipt.json'], state: 'accepted' };
   invalid['receipt-missing-identity.json'] = (({ runKey, ...rest }) => rest)(out['receipt.json']);
   bad = clone(out['bundle-manifest.json']); bad.files[0].path = '../evaluation.json'; invalid['bundle-manifest-path-escape.json'] = bad;
+  bad = clone(out['batch-in-progress.json']); bad.samples = bad.samples.filter(s => s.report.state === 'available'); bad.summary.globalScore = 88;
+  invalid['batch-hides-samples-with-global-score.json'] = bad;
+  bad = clone(out['batch-in-progress.json']); bad.baseline.maxConcurrentSamples = 4; invalid['batch-parallel-samples.json'] = bad;
   for (const fn of cleanups.splice(0)) fn();
   return { valid: out, invalid };
 }
@@ -85,7 +114,7 @@ export const contractOf = name => name.startsWith('receipt') ? 'evaluation-recei
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const check = process.argv.includes('--check');
-  const { valid, invalid } = examples();
+  const { valid, invalid } = await examples();
   const files = [...Object.entries(valid).map(([name, value]) => [name, value]), ...Object.entries(invalid).map(([name, value]) => [`invalid/${name}`, value])];
   let drift = 0;
   if (!check) { rmSync(OUT, { recursive: true, force: true }); mkdirSync(path.join(OUT, 'invalid'), { recursive: true }); }

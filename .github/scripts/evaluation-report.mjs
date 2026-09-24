@@ -460,6 +460,7 @@ function baselineOf(metadata, root, reviews, facts, warnings, reviewPackages) {
 }
 
 export function buildEvaluation({ report, root, taskRoot = null, exporter = {} }) {
+  if (typeof root !== 'string') throw new Error('An artifact directory is required (use an empty one when nothing was captured)');
   const record = report?.record;
   if (!object(record) || !/^[\w.-]+\/[\w.-]+$/.test(record.repository ?? '') || !positive(record.issue) ||
       !positive(record.runId) || !positive(record.attempt)) throw new Error('Invalid report record');
@@ -480,7 +481,7 @@ export function buildEvaluation({ report, root, taskRoot = null, exporter = {} }
   const producerKey = `run/${record.runId}/attempt/${record.attempt}`;
   const pipeline = readOptional(root, 'pipeline-state.json', limitations);
   const repair = readOptional(root, 'repair-summary.json', limitations);
-  const process = collectReviewProcess(root ?? '');
+  const process = collectReviewProcess(root);
   const qa = qaOf(root, process, pipeline, repair, metadata, producerKey, limitations);
   const evidence = new Map();
   const attachments = new Map();
@@ -607,10 +608,15 @@ export function fingerprintEvaluation(document, attachments = []) {
     attachments: attachments.map(a => [a.path, a.sha256]).sort() }));
 }
 
+export const documentKeyOf = document => document.type === 'evaluation-batch' ? document.batch.subjectKey : document.run.key;
+
 export function finalizeEvaluation(draft, { revision, createdAt }) {
   if (!positive(revision)) throw new Error('Revision must be a positive integer');
-  const { schemaVersion, type, source, run, ...rest } = draft;
-  const document = { schemaVersion, type, source, run, revision, createdAt: iso(Date.parse(createdAt)), ...rest };
+  // Keep the identity block first, then the revision it was archived under.
+  const { schemaVersion, type, source, ...rest } = draft;
+  const identity = type === 'evaluation-batch' ? { batch: rest.batch } : { run: rest.run };
+  delete rest.batch; delete rest.run;
+  const document = { schemaVersion, type, source, ...identity, revision, createdAt: iso(Date.parse(createdAt)), ...rest };
   if (!document.createdAt) throw new Error('Invalid revision creation time');
   assertSchema(loadContract(`${type}.v${schemaVersion}`), document, type);
   const bytes = Buffer.from(`${JSON.stringify(document, null, 2)}\n`);

@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 1,
+  "plans": [
+    {
+      "key": "nb3-daily-smoke",
+      "enabled": false,
+      "schedule": "daily",
+      "baselineRef": "develop",
+      "cases": [
+        { "key": "F00", "presetIssueNumber": 176, "samples": 3 }
+      ],
+      "execution": {
+        "maxConcurrentSamples": 1,
+        "maxRepairAttempts": 2,
+        "maxActiveSecondsPerSample": 3600,
+        "maxContinuations": 2
+      },
+      "reviewMode": "inherit"
+    },
+    {
+      "key": "nb3-customer-memo",
+      "enabled": false,
+      "schedule": null,
+      "baselineRef": "develop",
+      "cases": [
+        { "key": "S01", "presetIssueNumber": 155, "samples": 3 }
+      ],
+      "execution": {
+        "maxConcurrentSamples": 1,
+        "maxRepairAttempts": 3,
+        "maxActiveSecondsPerSample": 7200,
+        "maxContinuations": 2
+      },
+      "reviewMode": "full"
+    }
+  ]
+}

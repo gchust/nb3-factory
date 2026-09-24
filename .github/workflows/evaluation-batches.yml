@@ -1,0 +1,157 @@
+name: Evaluation batches
+run-name: "Evaluation batch ${{ inputs.action || (github.event_name == 'schedule' && github.event.schedule == '23 1 * * *' && 'scheduled') || 'advance' }}"
+
+# Repeatable, frozen-baseline evaluation batches. Only trusted plans in
+# .github/evaluations/plans.json can start a batch; samples reuse the existing
+# task pipeline one complete chain at a time. Nothing here builds, reviews,
+# runs application code or reads model credentials.
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: start a plan / advance active batches / cancel a batch / status only
+        required: true
+        type: choice
+        options: [start, advance, cancel, status]
+        default: start
+      plan:
+        description: Plan key from .github/evaluations/plans.json (start)
+        required: false
+        type: string
+      batch:
+        description: Batch key (cancel)
+        required: false
+        type: string
+      dry_run:
+        description: Preview the frozen batch without creating Issues or dispatching (start)
+        required: false
+        type: boolean
+        default: false
+  schedule:
+    # Daily start of enabled plans (needs FACTORY_EVALUATION_PLANS_ENABLED=true).
+    - cron: '23 1 * * *'
+    # Low-frequency compensation for active batches only.
+    - cron: '53 * * * *'
+  workflow_run:
+    workflows: [Code Agent NocoBase Task]
+    types: [completed]
+
+permissions: {}
+
+concurrency:
+  group: factory-evaluation-batch
+  queue: max
+
+jobs:
+  coordinate:
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.head_repository.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      actions: write
+      contents: read
+      issues: write
+    outputs:
+      export: ${{ steps.export.outputs.artifact-id }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          path: control
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24.x
+      - name: Coordinate evaluation batches
+        id: coordinate
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          BATCH_ACTION: ${{ inputs.action || (github.event_name == 'schedule' && github.event.schedule == '23 1 * * *' && 'scheduled') || 'advance' }}
+          BATCH_PLAN: ${{ inputs.plan }}
+          BATCH_KEY: ${{ inputs.batch }}
+          BATCH_DRY_RUN: ${{ inputs.dry_run == true }}
+          FACTORY_EVALUATION_PLANS_ENABLED: ${{ vars.FACTORY_EVALUATION_PLANS_ENABLED }}
+          FACTORY_BUILD_REVIEW: ${{ vars.FACTORY_BUILD_REVIEW }}
+          CODE_AGENT_ENGINE: ${{ vars.CODE_AGENT_ENGINE }}
+        run: |
+          export FACTORY_CONTROL_SHA="$(git -C control rev-parse HEAD)"
+          node control/.github/scripts/evaluation-batch.mjs "$BATCH_ACTION" --plan "$BATCH_PLAN" --batch "$BATCH_KEY" \
+            --dry-run "$BATCH_DRY_RUN" --output "$RUNNER_TEMP/batch-export"
+      - name: Save the batch snapshot for registration
+        id: export
+        if: steps.coordinate.outputs.export == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: factory-evaluation-batch-export-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/batch-export
+          if-no-files-found: error
+          retention-days: 14
+
+  # Same registration as single reports: identical snapshots reuse their revision.
+  evaluation:
+    needs: coordinate
+    if: needs.coordinate.outputs.export != ''
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      actions: read
+      contents: write
+    outputs:
+      type: ${{ steps.commit.outputs.type }}
+      key: ${{ steps.commit.outputs.key }}
+      revision: ${{ steps.commit.outputs.revision }}
+    env:
+      FACTORY_EVALUATION_DELIVERY: ${{ vars.FACTORY_EVALUATION_DELIVERY }}
+      EVALUATION_ENDPOINT: ${{ vars.EVALUATION_ENDPOINT }}
+      EVALUATION_AUTH_MODE: ${{ vars.EVALUATION_AUTH_MODE }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          path: control
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24.x
+      - uses: actions/download-artifact@v4
+        with:
+          artifact-ids: ${{ needs.coordinate.outputs.export }}
+          path: ${{ runner.temp }}/batch-export
+          merge-multiple: true
+      - name: Reuse or allocate the batch revision
+        id: prepare
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          node control/.github/scripts/evaluation-archive.mjs prepare \
+            --input "$RUNNER_TEMP/batch-export" --output "$RUNNER_TEMP/batch-bundle"
+      - name: Keep the exact bundle bytes for replay
+        id: bundle
+        if: steps.prepare.outputs.upload == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.prepare.outputs.artifact_name }}
+          path: ${{ runner.temp }}/batch-bundle/evaluation-bundle.zip
+          if-no-files-found: error
+          retention-days: 90
+      - name: Register the revision and queue optional delivery
+        id: commit
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          node control/.github/scripts/evaluation-archive.mjs commit \
+            --input "$RUNNER_TEMP/batch-bundle" --artifact-id "${{ steps.bundle.outputs.artifact-id }}"
+
+  delivery:
+    needs: evaluation
+    if: needs.evaluation.result == 'success' && vars.FACTORY_EVALUATION_DELIVERY == 'true'
+    permissions:
+      actions: read
+      contents: write
+    uses: ./.github/workflows/deliver-evaluation.yml
+    with:
+      mode: auto
+      type: ${{ needs.evaluation.outputs.type }}
+      key: ${{ needs.evaluation.outputs.key }}
+      revision: ${{ needs.evaluation.outputs.revision }}
+    secrets: inherit

@@ -5,7 +5,7 @@
 import { createHash } from 'node:crypto';
 import { setTimeout as sleep } from 'node:timers/promises';
 import { keyDigest } from './evaluation-identity.mjs';
-import { comparePrecedence } from './evaluation-report.mjs';
+import { comparePrecedence, documentKeyOf } from './evaluation-report.mjs';
 
 export const BRANCH = 'gh-pages';
 export const ROOT = 'evaluations';
@@ -115,7 +115,7 @@ const summaryOf = document => document.type === 'evaluation-report'
 
 export async function commitRevision(client, { document, evaluationBytes, manifestBytes, fingerprint, bundle, location, outbox = null, now = new Date() }) {
   const { type } = document;
-  const key = type === 'evaluation-report' ? document.run.key : document.batch.subjectKey;
+  const key = documentKeyOf(document);
   const dir = revisionDir(key, document.revision);
   return commitTree(client, `evaluation: ${type} ${keyDigest(key)} r${document.revision}`, async ref => {
     const index = (ref ? await readSubject(client, type, key, ref) : null) ??

@@ -34,7 +34,36 @@ export function readState(file) {
   return state;
 }
 
+// Trusted evaluation-plan budget, copied once into the checkpoint. Handoffs,
+// new attempts and recoveries restore it instead of re-reading any input.
+export function normalizeBudget(value) {
+  if (value == null) return null;
+  const valid = (n, min, max) => Number.isSafeInteger(n) && n >= min && n <= max;
+  if (!valid(value.maxRepairAttempts, 0, 10) || !valid(value.maxActiveSeconds, 600, 86_400) || !valid(value.maxContinuations, 0, 10))
+    throw new Error('Invalid evaluation sample budget.');
+  return { maxRepairAttempts: value.maxRepairAttempts, maxActiveSeconds: value.maxActiveSeconds, maxContinuations: value.maxContinuations };
+}
+// Active time excludes queueing: previous jobs' total plus this job since it started.
+export function activeSeconds(state, now = Date.now() / 1000) {
+  const started = Number(process.env.FACTORY_JOB_STARTED_EPOCH_SECONDS);
+  const base = Number.isSafeInteger(state.activeSecondsBase) ? state.activeSecondsBase : 0;
+  return Number.isSafeInteger(started) && started > 0 ? base + Math.max(0, Math.floor(now - started)) : state.activeSeconds ?? base;
+}
+const minimumFor = (state, phase) => phase === 'qa-full'
+  ? Math.max(900, Math.min(10_800, Math.ceil((state.fullQaSeconds || 0) * 1.1)))
+  : phase === 'verify' ? 120 : 300;
+export const ARCHIVE_RESERVE_SECONDS = 300;
+export function budgetExhausted(state, phase, now = Date.now() / 1000) {
+  const budget = state.budget;
+  if (!budget) return null;
+  if (phase === 'repair' && state.repairAttempts >= budget.maxRepairAttempts) return `工厂修复次数已达上限 ${budget.maxRepairAttempts}`;
+  const remaining = budget.maxActiveSeconds - activeSeconds(state, now) - ARCHIVE_RESERVE_SECONDS;
+  if (phase && remaining < minimumFor(state, phase)) return `剩余主动执行时间不足以开始 ${phase}（预算 ${budget.maxActiveSeconds} 秒）`;
+  return null;
+}
+
 export function saveState(file, state) {
+  if (state.budget) state.activeSeconds = activeSeconds(state);
   mkdirSync(path.dirname(file), { recursive: true });
   const temp = `${file}.tmp`;
   writeFileSync(temp, `${JSON.stringify(state, null, 2)}\n`, { mode: 0o600 });
@@ -83,6 +112,7 @@ export function initialize(file, metadata) {
     pendingCriteria: [],
     failureKind: 'build',
     fullQaSeconds: 0,
+    ...(metadata.evaluation?.budget ? { budget: normalizeBudget(metadata.evaluation.budget), activeSeconds: 0, activeSecondsBase: 0 } : {}),
   };
   saveState(file, state);
   return state;
@@ -104,6 +134,10 @@ export function restoreState(source, destination, metadata) {
   }
   state.controlSha = process.env.FACTORY_CONTROL_SHA ?? state.controlSha;
   state.outcome = 'running';
+  if (state.budget) {
+    state.budget = normalizeBudget(state.budget);
+    state.activeSecondsBase = Number.isSafeInteger(state.activeSeconds) ? state.activeSeconds : 0;
+  }
   mkdirSync(destination, { recursive: true });
   const context = path.join(destination, 'repair-context');
   mkdirSync(context, { recursive: true });
@@ -125,10 +159,7 @@ export function canStart(state, phase, deadline, now = Date.now() / 1000) {
   if (!deadline) return true;
   if (!Number.isSafeInteger(Number(deadline)) || Number(deadline) <= 0)
     throw new Error('Invalid runner deadline.');
-  const minimum = phase === 'qa-full'
-    ? Math.max(900, Math.min(10_800, Math.ceil((state.fullQaSeconds || 0) * 1.1)))
-    : phase === 'verify' ? 120 : 300;
-  return Number(deadline) - now >= minimum;
+  return Number(deadline) - now >= minimumFor(state, phase);
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
@@ -144,6 +175,9 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
     } else if (command === 'phase') {
       console.log(state.phase);
     } else if (command === 'budget') {
+      // 76: the trusted evaluation budget is spent (terminal); 75: runner time only (handoff).
+      const exhausted = budgetExhausted(state, args[0]);
+      if (exhausted) { console.error(`Evaluation budget exhausted: ${exhausted}`); process.exit(76); }
       if (!canStart(state, args[0], process.env.FACTORY_RUN_DEADLINE_EPOCH_SECONDS)) process.exit(75);
     } else if (command === 'seal') {
       state.patchHash = hash(readFileSync(args[0]));
@@ -157,7 +191,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
       if (args[3] !== undefined) state.fullQaSeconds = Number(args[3]);
       saveState(file, state);
     } else if (command === 'outcome') {
-      if (!['running', 'passed', 'failed', 'blocked', 'handoff'].includes(args[0])) throw new Error('Unknown pipeline outcome.');
+      if (!['running', 'passed', 'failed', 'blocked', 'handoff', 'budget-exhausted'].includes(args[0])) throw new Error('Unknown pipeline outcome.');
       state.outcome = args[0];
       saveState(file, state);
     } else if (command === 'focus') {

@@ -1,0 +1,485 @@
+// Repeatable evaluation batches: a trusted plan, one frozen baseline and case
+// capture per batch, a complete planned-sample manifest, and a small serial
+// coordinator that advances on explicit triggers, task completion and a
+// low-frequency schedule. Every sample is an independent Issue that reuses the
+// existing task pipeline; no worker, queue or database is added.
+import { createHash } from 'node:crypto';
+import { appendFileSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { listAll } from './comment-queue.mjs';
+import { segmentPattern, taskEvaluationIdentity } from './evaluation-identity.mjs';
+import { readSubject } from './evaluation-registry.mjs';
+import { canonicalJson, EXPORTER_VERSION, PRODUCER } from './evaluation-report.mjs';
+import { BATCH_LABEL, chunkText, isBot, MANUAL_LABEL, manifestComment, markers, readManifest, readSampleReceipt, readState,
+  SAMPLE_LABEL, stateComment, verifyAncestor } from './evaluation-sample.mjs';
+import { extractIssueSections, parseBuildReviewMode, parseIssueTask } from './factory-lib.mjs';
+import { clonedBody, readPresetSource, replaceSection, writeSnapshot } from './issue-presets.mjs';
+import { stripTaskTitle } from './task-compat.mjs';
+import { taskOutcome } from './task-outcome.mjs';
+
+export const PLAN_LIMITS = { plans: 20, cases: 10, samplesPerCase: 10, samplesPerPlan: 20, repairs: [0, 10], activeSeconds: [600, 86_400], continuations: [0, 10] };
+export const SAMPLE_STATES = ['planned', 'queued', 'running', 'passed', 'failed', 'blocked', 'budget-exhausted', 'cancelled', 'unknown'];
+const TERMINAL = new Set(['passed', 'failed', 'blocked', 'budget-exhausted', 'cancelled', 'unknown']);
+const ACTIVE_LABELS = new Set(['agent:pending', 'agent:queued', 'agent:running', 'agent:verifying', 'agent:waiting']);
+const WORKFLOW = 'code-agent-task.yml';
+export const REPORT_GRACE_SECONDS = 6 * 3600;
+const sha256 = value => createHash('sha256').update(value).digest('hex');
+const positive = value => Number.isSafeInteger(value) && value > 0;
+const integer = (value, [min, max]) => Number.isSafeInteger(value) && value >= min && value <= max;
+const need = (condition, message) => { if (!condition) throw new Error(message); };
+const only = (value, keys, name) => need(value && typeof value === 'object' && !Array.isArray(value) &&
+  Object.keys(value).every(key => keys.includes(key)), `${name}: unsupported or missing fields`);
+const iso = ms => new Date(ms).toISOString().replace(/\.\d{3}Z$/, 'Z');
+const labelNames = issue => (issue.labels ?? []).map(label => label.name ?? label);
+
+// Plans are maintained in the repository by trusted maintainers; bounds prevent a
+// single misconfiguration from creating a large number of paid tasks.
+export function validatePlans(document, { defaultBranch } = {}) {
+  only(document, ['schemaVersion', 'plans'], 'plans.json');
+  need(document.schemaVersion === 1 && Array.isArray(document.plans) && document.plans.length <= PLAN_LIMITS.plans, 'plans.json: schemaVersion 1 with at most 20 plans');
+  const keys = new Set();
+  return document.plans.map(plan => {
+    only(plan, ['key', 'enabled', 'schedule', 'baselineRef', 'cases', 'execution', 'reviewMode'], `plan ${plan?.key}`);
+    need(typeof plan.key === 'string' && /^[A-Za-z0-9][A-Za-z0-9._-]{0,39}$/.test(plan.key) && !keys.has(plan.key), `Invalid or duplicate plan key ${plan.key}`);
+    keys.add(plan.key);
+    need(typeof plan.enabled === 'boolean', `${plan.key}: enabled must be boolean`);
+    need(plan.schedule === null || plan.schedule === 'daily', `${plan.key}: schedule must be null or daily`);
+    need(!defaultBranch || plan.baselineRef === defaultBranch, `${plan.key}: v1 batches freeze the default branch (${defaultBranch}); prepared source baselines are not supported`);
+    need(Array.isArray(plan.cases) && plan.cases.length > 0 && plan.cases.length <= PLAN_LIMITS.cases, `${plan.key}: 1–${PLAN_LIMITS.cases} cases`);
+    const caseKeys = new Set();
+    let total = 0;
+    const cases = plan.cases.map(item => {
+      only(item, ['key', 'presetIssueNumber', 'samples'], `${plan.key} case`);
+      need(typeof item.key === 'string' && /^[A-Za-z0-9][A-Za-z0-9._-]{0,19}$/.test(item.key) && !caseKeys.has(item.key), `${plan.key}: invalid or duplicate case key`);
+      caseKeys.add(item.key);
+      need(positive(item.presetIssueNumber), `${plan.key}/${item.key}: presetIssueNumber must be a positive Issue number`);
+      need(integer(item.samples, [1, PLAN_LIMITS.samplesPerCase]), `${plan.key}/${item.key}: 1–${PLAN_LIMITS.samplesPerCase} samples`);
+      total += item.samples;
+      return { key: item.key, presetIssueNumber: item.presetIssueNumber, samples: item.samples };
+    });
+    need(total <= PLAN_LIMITS.samplesPerPlan, `${plan.key}: at most ${PLAN_LIMITS.samplesPerPlan} samples per batch`);
+    only(plan.execution, ['maxConcurrentSamples', 'maxRepairAttempts', 'maxActiveSecondsPerSample', 'maxContinuations'], `${plan.key} execution`);
+    const e = plan.execution;
+    need(e.maxConcurrentSamples === 1, `${plan.key}: v1 runs one complete sample chain at a time`);
+    need(integer(e.maxRepairAttempts, PLAN_LIMITS.repairs), `${plan.key}: maxRepairAttempts 0–10`);
+    need(integer(e.maxActiveSecondsPerSample, PLAN_LIMITS.activeSeconds), `${plan.key}: maxActiveSecondsPerSample 600–86400`);
+    need(e.maxContinuations === undefined || integer(e.maxContinuations, PLAN_LIMITS.continuations), `${plan.key}: maxContinuations 0–10`);
+    need(['inherit', 'full', 'off'].includes(plan.reviewMode), `${plan.key}: reviewMode must be inherit, full or off`);
+    return { key: plan.key, enabled: plan.enabled, schedule: plan.schedule, baselineRef: plan.baselineRef, cases, reviewMode: plan.reviewMode,
+      execution: { maxConcurrentSamples: 1, maxRepairAttempts: e.maxRepairAttempts, maxActiveSecondsPerSample: e.maxActiveSecondsPerSample,
+        maxContinuations: e.maxContinuations ?? PLAN_LIMITS.continuations[1] } };
+  });
+}
+
+export function batchKeyFor(plan, trigger, now, runId) {
+  const stamp = new Date(now).toISOString();
+  const key = trigger === 'schedule' ? `${plan.key}-${stamp.slice(0, 10).replaceAll('-', '')}`
+    : `${plan.key}-${stamp.slice(0, 19).replace(/[-:]/g, '')}Z-r${runId}`;
+  need(segmentPattern.test(key), 'Invalid batch key');
+  return key;
+}
+
+async function readBytes(client, file, ref) {
+  const value = await client.request('GET', `/contents/${file}`, { query: { ref }, allow404: true });
+  if (!value) return null;
+  if (value.encoding === 'base64' && value.content) return Buffer.from(value.content, 'base64');
+  const blob = await client.request('GET', `/git/blobs/${value.sha}`);
+  return Buffer.from(blob.content, 'base64');
+}
+
+async function ensureLabel(client, name, description) {
+  const route = `/labels/${encodeURIComponent(name)}`;
+  if (await client.request('GET', route, { allow404: true })) return;
+  try { await client.request('POST', '/labels', { body: { name, color: 'c5def5', description } }); }
+  catch (error) { if (!await client.request('GET', route, { allow404: true })) throw error; }
+}
+
+async function coordinators(client, state = 'all') {
+  return (await listAll(client, '/issues', { state, labels: BATCH_LABEL })).filter(issue => !issue.pull_request && isBot(issue.user));
+}
+async function findCoordinator(client, batchKey) {
+  const found = (await coordinators(client)).filter(issue => (issue.body ?? '').includes(markers.batch(batchKey)));
+  need(found.length <= 1, `Ambiguous coordinator Issues for batch ${batchKey}`);
+  return found[0] ?? null;
+}
+
+async function loadBatch(client, coordinator) {
+  const comments = await listAll(client, `/issues/${coordinator.number}/comments`);
+  const loaded = readManifest(comments);
+  if (!loaded) return { coordinator, comments, manifest: null };
+  const latest = readState(comments, loaded.manifest.batchKey, loaded.hash);
+  return { coordinator, comments, manifest: loaded.manifest, manifestHash: loaded.hash, state: latest?.state ?? null };
+}
+
+function summaryTable(manifest, state) {
+  const rows = manifest.samples.map(sample => {
+    const item = state.samples[sample.key];
+    return `| ${sample.caseKey} | ${sample.sampleIndex} | ${item.issue ? `#${item.issue}` : '—'} | ${item.state} | ${item.report?.state === 'available' ? `r${item.report.revision}` : '未取得'} |`;
+  });
+  return [`### 评测批次 \`${manifest.batchKey}\` · ${state.state === 'active' ? (state.cancelled ? '取消中' : '进行中') : state.state === 'cancelled' ? '已取消' : '已结束'}`,
+    '', `快照 ${state.sequence}。冻结控制代码 \`${manifest.controlSha.slice(0, 12)}\`，应用基线 \`${manifest.applicationBaseSha.slice(0, 12)}\`。`,
+    '', '| 案例 | 样本 | Issue | 状态 | 报告 |', '| --- | ---: | --- | --- | --- |', ...rows,
+    '', '样本状态由持久清单与可信终态决定；“已派发”不代表验收通过。不计算 NocoBase 全局平均评分。'].join('\n');
+}
+async function saveState(client, batch, state) {
+  state.updatedAt ??= state.createdAt;
+  const comment = await client.addComment(batch.coordinator.number, stateComment(state, batch.manifestHash, summaryTable(batch.manifest, state)));
+  batch.comments.push(comment);
+  batch.state = state;
+}
+
+// Freeze everything a sample depends on exactly once, before any sample exists.
+export async function freezeBatch(client, { plan, batchKey, trigger, now, controlSha, env, coordinatorIssue }) {
+  const repository = await client.getRepository();
+  const defaultBranch = repository.default_branch;
+  need(plan.baselineRef === defaultBranch, `${plan.key}: v1 batches freeze the default branch`);
+  need(/^[a-f0-9]{40}$/.test(controlSha ?? ''), 'The coordinator control SHA is required');
+  await verifyAncestor(client, controlSha, defaultBranch);
+  const lock = await readBytes(client, 'pnpm-lock.yaml', controlSha);
+  need(lock, 'The frozen baseline has no pnpm-lock.yaml; it is not a usable application baseline');
+  let templateVersion = null;
+  try { templateVersion = JSON.parse((await readBytes(client, 'factory-template.json', controlSha))?.toString('utf8') ?? 'null')?.templateVersion ?? null; }
+  catch { /* Optional descriptor. */ }
+  const cases = [];
+  for (const item of plan.cases) {
+    const { source, comments } = await readPresetSource(client, item.presetIssueNumber);
+    // Validate the business fields once; each sample receives this exact capture.
+    parseIssueTask({ ...source, body: replaceSection(source.body ?? '', '目标分支', defaultBranch) });
+    const captured = parseBuildReviewMode(extractIssueSections(source.body ?? '').get('框架评测'));
+    const buildReviewMode = plan.reviewMode === 'inherit' ? captured ?? (env.FACTORY_BUILD_REVIEW === 'off' ? 'off' : 'full') : plan.reviewMode;
+    const snapshot = { source, comments };
+    cases.push({ key: item.key, presetIssueNumber: item.presetIssueNumber, title: source.title, samples: item.samples,
+      caseHash: sha256(canonicalJson(snapshot)), capturedAt: iso(now), commentCount: comments.length, buildReviewMode, snapshot });
+  }
+  const samples = plan.cases.flatMap(item => Array.from({ length: item.samples }, (_, index) => {
+    const identity = taskEvaluationIdentity({ repository: client.repository, issueNumber: 1, sample: { batchKey, caseKey: item.key, sampleIndex: index + 1 } });
+    return { key: identity.sampleKey, caseKey: item.key, sampleIndex: index + 1, runKey: identity.runKey };
+  }));
+  return {
+    version: 1, type: 'evaluation-batch-manifest', repository: client.repository, batchKey, planKey: plan.key,
+    planFingerprint: sha256(canonicalJson(plan)), trigger, slot: trigger === 'schedule' ? iso(now).slice(0, 10) : null, createdAt: iso(now),
+    coordinatorIssue, defaultBranch, controlSha, entrySha: /^[a-f0-9]{40}$/.test(env.GITHUB_SHA ?? '') ? env.GITHUB_SHA : null,
+    applicationBaseSha: controlSha, lockfileSha256: sha256(lock), templateVersion, reviewMode: plan.reviewMode,
+    budget: { maxRepairAttempts: plan.execution.maxRepairAttempts, maxActiveSeconds: plan.execution.maxActiveSecondsPerSample,
+      maxContinuations: plan.execution.maxContinuations },
+    maxConcurrentSamples: plan.execution.maxConcurrentSamples, agentEngine: env.CODE_AGENT_ENGINE || 'pi', cases, samples,
+  };
+}
+
+export async function startBatch(client, { plans, planKey, trigger, now = Date.now(), runId, controlSha, env = {}, dryRun = false }) {
+  const plan = plans.find(item => item.key === planKey);
+  need(plan, `Unknown evaluation plan ${planKey}`);
+  if (trigger === 'schedule' && (!plan.enabled || plan.schedule !== 'daily')) return { status: 'skipped', reason: `${plan.key} is not an enabled daily plan` };
+  const batchKey = batchKeyFor(plan, trigger, now, runId);
+  let coordinator = await findCoordinator(client, batchKey);
+  if (!coordinator) {
+    const active = [];
+    for (const issue of await coordinators(client, 'open')) {
+      const batch = await loadBatch(client, issue);
+      if (batch.state?.state === 'active' || !batch.manifest) active.push(batch.manifest?.batchKey ?? `#${issue.number}`);
+    }
+    if (active.length) {
+      if (trigger === 'schedule') return { status: 'skipped', reason: `Another batch is active: ${active.join(', ')}` };
+      throw new Error(`Only one active batch is supported in v1; active: ${active.join(', ')}. Cancel it or wait.`);
+    }
+    if (dryRun) {
+      const manifest = await freezeBatch(client, { plan, batchKey, trigger, now, controlSha, env, coordinatorIssue: 0 });
+      return { status: 'planned', batchKey, manifest };
+    }
+    await ensureLabel(client, BATCH_LABEL, 'Evaluation batch coordination record (never a build task)');
+    await ensureLabel(client, MANUAL_LABEL, 'Factory maintenance Issue; never enters the Code Agent queue');
+    coordinator = await client.request('POST', '/issues', { body: {
+      title: `[评测批次] ${plan.key} · ${batchKey}`.slice(0, 250), labels: [MANUAL_LABEL, BATCH_LABEL],
+      body: `${markers.batch(batchKey)}\n\n评测批次协调记录：冻结计划、基线与案例快照，串行推进独立样本 Issue。\n\n` +
+        '这是维护 Issue（`factory:manual`），不会进入业务 Agent 队列；请勿删除机器人快照评论。取消批次请运行 **Evaluation batches** 的 `cancel`。' } });
+  }
+  const batch = await loadBatch(client, coordinator);
+  if (!batch.manifest) {
+    // An interrupted start never dispatched a sample, so freezing again is safe and complete.
+    const manifest = await freezeBatch(client, { plan, batchKey, trigger, now, controlSha, env, coordinatorIssue: coordinator.number });
+    const json = JSON.stringify(manifest);
+    const hash = sha256(json);
+    const parts = chunkText(Buffer.from(json).toString('base64'));
+    for (const [index, part] of parts.entries()) batch.comments.push(await client.addComment(coordinator.number, manifestComment(hash, index, parts.length, part)));
+    Object.assign(batch, { manifest, manifestHash: hash });
+  }
+  if (!batch.state) {
+    await saveState(client, batch, { version: 1, batchKey, manifestHash: batch.manifestHash, sequence: 1, state: 'active', cancelled: false,
+      createdAt: iso(now), updatedAt: iso(now),
+      samples: Object.fromEntries(batch.manifest.samples.map(s => [s.key, { state: 'planned', stateSource: 'plan', issue: null, dispatchedAt: null,
+        terminalAt: null, terminalRunId: null, report: null, reason: null }])) });
+  }
+  return { status: 'started', batchKey, coordinator: coordinator.number, batch };
+}
+
+async function findSampleIssue(client, sampleKey, since) {
+  const found = (await listAll(client, '/issues', { state: 'all', labels: SAMPLE_LABEL, since }))
+    .filter(issue => !issue.pull_request && isBot(issue.user) && (issue.body ?? '').includes(markers.sample(sampleKey)));
+  need(found.length <= 1, `Duplicate Issues exist for sample ${sampleKey}`);
+  return found[0] ?? null;
+}
+
+// Idempotent: a retry after "Issue created, response lost" finds the marker and resumes.
+export async function ensureSample(client, batch, spec) {
+  const { manifest, manifestHash } = batch;
+  await ensureLabel(client, SAMPLE_LABEL, 'Independent evaluation-batch sample created by the coordinator');
+  await client.ensureStatusLabels();
+  let issue = await findSampleIssue(client, spec.key, manifest.createdAt);
+  if (!issue) {
+    issue = await client.request('POST', '/issues', { body: { title: `[Code Agent] 评测样本 ${spec.key}`.slice(0, 250),
+      body: `评测样本准备中；冻结输入写入完成前不会开始搭建。\n\n${markers.sample(spec.key)}`, labels: [SAMPLE_LABEL, 'agent:pending'] } });
+  }
+  const comments = await listAll(client, `/issues/${issue.number}/comments`);
+  const frozen = manifest.cases.find(item => item.key === spec.caseKey);
+  const snapshot = { version: 1, issueNumber: issue.number, targetBranch: manifest.defaultBranch, buildReviewMode: frozen.buildReviewMode,
+    capturedAt: frozen.capturedAt, source: frozen.snapshot.source, extra: '', comments: frozen.snapshot.comments };
+  const { hash } = await writeSnapshot(client, issue.number, snapshot, comments);
+  const base = comments.filter(c => isBot(c.user) && (c.body ?? '').startsWith('<!-- factory-task-base-v1:'));
+  if (base.some(c => !c.body.includes(`"sha":"${manifest.applicationBaseSha}"`))) throw new Error(`Sample ${spec.key} already pins another application base`);
+  if (!base.length) {
+    const receipt = JSON.stringify({ repository: client.repository, issueNumber: issue.number, targetBranch: manifest.defaultBranch, sha: manifest.applicationBaseSha });
+    comments.push(await client.addComment(issue.number, `<!-- factory-task-base-v1:${receipt} -->\n\n评测批次 \`${manifest.batchKey}\` 冻结的代码起点：\`${manifest.defaultBranch} @ ${manifest.applicationBaseSha}\`。样本重试与续跑不会跟随默认分支移动。`));
+  }
+  if (!readSampleReceipt(comments, issue.number)) {
+    const receipt = { version: 1, repository: client.repository, issueNumber: issue.number, batchKey: manifest.batchKey, sampleKey: spec.key,
+      caseKey: spec.caseKey, sampleIndex: spec.sampleIndex, coordinatorIssue: manifest.coordinatorIssue, manifestHash, controlSha: manifest.controlSha,
+      baseSha: manifest.applicationBaseSha, lockfileSha256: manifest.lockfileSha256, buildReviewMode: frozen.buildReviewMode, budget: manifest.budget };
+    comments.push(await client.addComment(issue.number, `${markers.receipt}${JSON.stringify(receipt)} -->\n\n评测批次 \`${manifest.batchKey}\` 的独立样本 ` +
+      `\`${spec.key}\`（[协调记录 #${manifest.coordinatorIssue}](https://github.com/${client.repository}/issues/${manifest.coordinatorIssue})）。` +
+      `预算：修复 ≤ ${manifest.budget.maxRepairAttempts} 次，主动执行 ≤ ${manifest.budget.maxActiveSeconds} 秒，续跑 ≤ ${manifest.budget.maxContinuations} 次。`));
+  }
+  // Last: until every input exists the Issue is not a runnable preset copy.
+  if (!(issue.body ?? '').startsWith('<!-- factory-preset-ready:')) {
+    issue = await client.request('PATCH', `/issues/${issue.number}`, { body: {
+      title: `[Code Agent] ${stripTaskTitle(frozen.snapshot.source.title)}（评测 ${manifest.batchKey} · ${spec.caseKey} #${spec.sampleIndex}）`.slice(0, 250),
+      body: `${clonedBody(snapshot, hash)}\n\n${markers.sample(spec.key)}\n` } });
+  }
+  return { issue, comments };
+}
+
+async function runsFor(client, issueNumber, since) {
+  const runs = [];
+  for (let page = 1; page <= 10; page++) {
+    const { workflow_runs: batch } = await client.request('GET', `/actions/workflows/${WORKFLOW}/runs`, { query: { created: `>=${since}`, per_page: 100, page } });
+    runs.push(...batch.filter(run => run.display_title?.startsWith(`Factory issue #${issueNumber} build 0 `)));
+    if (batch.length < 100) break;
+  }
+  return runs.sort((a, b) => Date.parse(a.created_at) - Date.parse(b.created_at) || a.id - b.id);
+}
+
+async function dispatch(client, batch, spec, issue, comments) {
+  await client.request('POST', `/actions/workflows/${WORKFLOW}/dispatches`, { body: { ref: batch.manifest.defaultBranch, inputs: { issue_number: String(issue.number) } } });
+  const { comment } = readSampleReceipt(comments, issue.number);
+  if (!comment.body.includes(markers.dispatched(spec.key)))
+    await client.request('PATCH', `/issues/comments/${comment.id}`, { body: { body: `${comment.body}\n\n${markers.dispatched(spec.key)}\n已派发到搭建工作流；这不表示验收已通过。` } });
+}
+
+async function reportSummary(client, runKey) {
+  let index = null;
+  try { index = await readSubject(client, 'evaluation-report', runKey, 'gh-pages'); } catch { return null; }
+  const entry = index?.revisions.find(item => item.revision === index.current);
+  return entry ? { revision: entry.revision, producerRunId: entry.precedence?.producer?.runId ?? null, ...entry.summary } : null;
+}
+const fromReport = summary => summary.execution === 'budget-exhausted' ? 'budget-exhausted' : summary.execution === 'blocked' ? 'blocked'
+  : summary.execution === 'cancelled' ? 'cancelled' : summary.acceptance === 'passed' ? 'passed'
+    : ['failed', 'blocked'].includes(summary.acceptance) ? summary.acceptance : summary.execution === 'timed-out' ? 'failed' : 'unknown';
+
+// Terminal means: no queued/in-progress run, and the latest run is not a handoff.
+export async function observeSample(client, batch, item, spec, now) {
+  const { manifest } = batch;
+  const issue = await client.getIssue(item.issue);
+  const since = new Date(Date.parse(item.dispatchedAt ?? manifest.createdAt) - 10 * 60_000).toISOString();
+  const runs = await runsFor(client, item.issue, since);
+  const wall = manifest.budget.maxActiveSeconds * 3 + 6 * 3600;
+  const stale = item.dispatchedAt && now - Date.parse(item.dispatchedAt) > wall * 1000;
+  if (runs.some(run => run.status !== 'completed')) return stale ? { state: 'unknown', reason: '超过墙钟保护期限仍未结束；释放串行槽位，执行记录保留。' } : { state: 'running' };
+  const latest = runs.at(-1);
+  if (!latest) return { state: 'queued', redispatch: !item.dispatchedAt || now - Date.parse(item.dispatchedAt) > 30 * 60_000 };
+  const { jobs } = await client.request('GET', `/actions/runs/${latest.id}/attempts/${latest.run_attempt}/jobs`, { query: { per_page: 100 } });
+  const outcome = taskOutcome(latest, jobs);
+  // Exit 75 is not a terminal state; the slot stays occupied until the chain ends.
+  if (outcome === 'handoff') return stale ? { state: 'unknown', reason: 'Handoff 后长时间没有续跑；释放串行槽位。' } : { state: 'running' };
+  const summary = await reportSummary(client, spec.runKey);
+  if (summary && summary.producerRunId === latest.id) return { state: fromReport(summary), stateSource: 'report', terminalRunId: latest.id };
+  const names = labelNames(issue);
+  const state = outcome === 'delivered' ? 'passed' : outcome === 'cancelled' ? 'cancelled'
+    : outcome === 'failure' ? (names.includes('agent:needs-input') ? 'blocked' : 'failed') : outcome === 'timed_out' ? 'failed' : 'unknown';
+  return { state, stateSource: 'run', terminalRunId: latest.id };
+}
+
+export async function advanceBatch(client, batch, { now = Date.now() } = {}) {
+  const { manifest } = batch;
+  const state = structuredClone(batch.state);
+  const stamp = iso(now);
+  // Append a new snapshot only when something actually changed.
+  const commit = async () => {
+    if (JSON.stringify(state) === JSON.stringify(batch.state)) return;
+    state.sequence = batch.state.sequence + 1;
+    state.updatedAt = stamp;
+    await saveState(client, batch, structuredClone(state));
+  };
+  if (state.state === 'active') {
+    for (const spec of manifest.samples) {
+      const item = state.samples[spec.key];
+      if (['queued', 'running'].includes(item.state) && item.issue) {
+        const observed = await observeSample(client, batch, item, spec, now);
+        if (observed.redispatch && !state.cancelled) {
+          // The first dispatch produced no run; the prepare claim still prevents a double build.
+          const { issue, comments } = await ensureSample(client, batch, spec);
+          await dispatch(client, batch, spec, issue, comments);
+          Object.assign(item, { dispatchedAt: stamp, reason: '派发后未出现搭建 Run，已按同一样本重新派发。' });
+        }
+        item.state = observed.state;
+        if (TERMINAL.has(observed.state)) Object.assign(item, { terminalAt: stamp, stateSource: observed.stateSource ?? 'run',
+          terminalRunId: observed.terminalRunId ?? null, reason: observed.reason ?? item.reason });
+      }
+      if (!item.issue) continue;
+      const summary = await reportSummary(client, spec.runKey);
+      if (!summary) continue;
+      item.report = { state: 'available', revision: summary.revision, execution: summary.execution ?? null, acceptance: summary.acceptance ?? null };
+      // A run-derived terminal state is refined once that run's own report arrives.
+      if (TERMINAL.has(item.state) && item.stateSource === 'run' && summary.producerRunId === item.terminalRunId)
+        Object.assign(item, { state: fromReport(summary), stateSource: 'report' });
+    }
+    if (state.cancelled) for (const spec of manifest.samples) {
+      const item = state.samples[spec.key];
+      if (item.state === 'planned') Object.assign(item, { state: 'cancelled', stateSource: 'batch', terminalAt: stamp, reason: '批次已取消，未派发。' });
+    }
+    const active = manifest.samples.filter(s => ['queued', 'running'].includes(state.samples[s.key].state));
+    const next = manifest.samples.find(s => state.samples[s.key].state === 'planned');
+    if (!state.cancelled && next && active.length < manifest.maxConcurrentSamples) {
+      const { issue, comments } = await ensureSample(client, batch, next);
+      Object.assign(state.samples[next.key], { state: 'queued', stateSource: 'coordinator', issue: issue.number, dispatchedAt: stamp });
+      // Persist the assignment first: the sample pin requires it before prepare runs.
+      await commit();
+      if (!(await runsFor(client, issue.number, manifest.createdAt)).length) {
+        try { await dispatch(client, batch, next, issue, comments); }
+        catch (error) {
+          // Recorded, so the next trigger re-dispatches instead of waiting for a run that never started.
+          Object.assign(state.samples[next.key], { dispatchedAt: null, reason: `派发失败：${error.message.slice(0, 200)}` });
+          await commit();
+          throw error;
+        }
+      }
+    }
+    // Close only after each dispatched sample's own report is registered (or a grace
+    // period passed), so a late report still refines its sample and reaches the batch.
+    const items = manifest.samples.map(s => state.samples[s.key]);
+    const lastTerminal = Math.max(0, ...items.map(item => Date.parse(item.terminalAt ?? '') || 0));
+    if (items.every(item => TERMINAL.has(item.state)) &&
+        (items.every(item => !item.issue || item.report?.state === 'available') || now - lastTerminal > REPORT_GRACE_SECONDS * 1000)) {
+      state.state = state.cancelled ? 'cancelled' : 'completed';
+      state.completedAt = stamp;
+    }
+  }
+  await commit();
+  if (batch.state.state !== 'active' && batch.coordinator.state === 'open')
+    batch.coordinator = await client.request('PATCH', `/issues/${batch.coordinator.number}`, { body: { state: 'closed' } });
+  return batch;
+}
+
+export async function cancelBatch(client, batchKey, { now = Date.now() } = {}) {
+  const coordinator = await findCoordinator(client, batchKey);
+  need(coordinator, `Unknown batch ${batchKey}`);
+  const batch = await loadBatch(client, coordinator);
+  need(batch.manifest && batch.state, `Batch ${batchKey} has no frozen manifest`);
+  if (batch.state.state === 'active' && !batch.state.cancelled) {
+    await saveState(client, batch, { ...structuredClone(batch.state), cancelled: true, cancelledAt: iso(now), sequence: batch.state.sequence + 1, updatedAt: iso(now) });
+  }
+  return advanceBatch(client, batch, { now });
+}
+
+export async function activeBatches(client) {
+  const batches = [];
+  for (const issue of await coordinators(client, 'open')) {
+    const batch = await loadBatch(client, issue);
+    if (batch.manifest && batch.state) batches.push(batch);
+  }
+  return batches;
+}
+
+// Public, versioned snapshot of the whole planned set. Missing reports stay listed.
+export function batchDocument(batch, { exporter = {} } = {}) {
+  const { manifest, state, manifestHash } = batch;
+  const samples = manifest.samples.map(spec => {
+    const item = state.samples[spec.key];
+    return { key: spec.key, caseKey: spec.caseKey, sampleIndex: spec.sampleIndex, runKey: spec.runKey, issue: item.issue ?? null,
+      state: item.state, stateSource: item.stateSource ?? 'plan', dispatchedAt: item.dispatchedAt ?? null, terminalAt: item.terminalAt ?? null,
+      reason: item.reason ?? null, report: item.report ?? { state: 'missing', revision: null, execution: null, acceptance: null } };
+  });
+  const byState = Object.fromEntries(SAMPLE_STATES.map(name => [name, samples.filter(s => s.state === name).length]));
+  const available = samples.filter(s => s.report.state === 'available').length;
+  const limitations = [
+    { code: 'no-global-score', detail: '批次只列出同条件样本的可核实事实，不计算 NocoBase 全局平均评分，也不排除失败样本。' },
+    { code: 'agent-config-runtime', detail: 'Agent 引擎与模型取自各样本运行时的仓库变量；批次期间修改变量会使样本不可比，逐样本报告记录实际值。' },
+  ];
+  if (available < samples.length) limitations.push({ code: 'reports-missing', detail: `${samples.length - available} 个计划样本尚无报告；它们仍计入样本全集。` });
+  if (state.cancelled) limitations.push({ code: 'batch-cancelled', detail: '批次已取消：未开始的样本不再派发，已发生的执行与用量保留。' });
+  return {
+    schemaVersion: 1, type: 'evaluation-batch',
+    source: { producer: PRODUCER, instance: manifest.repository, project: manifest.repository,
+      exporter: { version: EXPORTER_VERSION, controlSha: /^[a-f0-9]{40}$/.test(exporter.controlSha ?? '') ? exporter.controlSha : null,
+        runId: positive(Number(exporter.runId)) ? Number(exporter.runId) : null, attempt: positive(Number(exporter.attempt)) ? Number(exporter.attempt) : null } },
+    batch: { key: manifest.batchKey, subjectKey: `${manifest.repository}/batches/${manifest.batchKey}`, planKey: manifest.planKey,
+      planFingerprint: manifest.planFingerprint, manifestSha256: manifestHash, trigger: manifest.trigger, slot: manifest.slot,
+      coordinatorIssue: manifest.coordinatorIssue, frozenAt: manifest.createdAt, sequence: state.sequence },
+    state: state.state, cancelled: state.cancelled === true,
+    baseline: { controlSha: manifest.controlSha, entrySha: manifest.entrySha, applicationBaseSha: manifest.applicationBaseSha,
+      defaultBranch: manifest.defaultBranch, lockfileSha256: manifest.lockfileSha256, templateVersion: manifest.templateVersion,
+      reviewMode: manifest.reviewMode, budget: manifest.budget, maxConcurrentSamples: manifest.maxConcurrentSamples, agentEngine: manifest.agentEngine },
+    cases: manifest.cases.map(item => ({ key: item.key, presetIssueNumber: item.presetIssueNumber, title: item.title, caseHash: item.caseHash,
+      capturedAt: item.capturedAt, commentCount: item.commentCount, buildReviewMode: item.buildReviewMode, samples: item.samples })),
+    samples,
+    summary: { planned: samples.length, byState, reports: { available, missing: samples.length - available },
+      acceptance: { passed: samples.filter(s => s.report.acceptance === 'passed').length, failed: samples.filter(s => s.report.acceptance === 'failed').length,
+        other: samples.filter(s => !['passed', 'failed'].includes(s.report.acceptance)).length } },
+    limitations,
+  };
+}
+
+async function main() {
+  const [action, ...argv] = process.argv.slice(2);
+  const args = Object.fromEntries(Array.from({ length: argv.length / 2 }, (_, i) => [argv[i * 2].replace(/^--/, ''), argv[i * 2 + 1]]));
+  const { GitHubClient } = await import('./factory-lib.mjs');
+  const client = new GitHubClient({ token: process.env.GITHUB_TOKEN, repository: process.env.GITHUB_REPOSITORY, apiUrl: process.env.GITHUB_API_URL });
+  const env = process.env;
+  const exporter = { controlSha: env.FACTORY_CONTROL_SHA, runId: env.GITHUB_RUN_ID, attempt: env.GITHUB_RUN_ATTEMPT };
+  const { default_branch: defaultBranch } = await client.getRepository();
+  const plans = validatePlans(JSON.parse(readFileSync(path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../evaluations/plans.json'), 'utf8')), { defaultBranch });
+  const lines = [];
+  const exportBatch = batch => {
+    if (!args.output || !batch?.manifest) return;
+    mkdirSync(args.output, { recursive: true });
+    writeFileSync(path.join(args.output, 'draft.json'), `${JSON.stringify(batchDocument(batch, { exporter }), null, 2)}\n`);
+    writeFileSync(path.join(args.output, 'files.json'), '[]\n');
+    mkdirSync(path.join(args.output, 'files'), { recursive: true });
+    if (env.GITHUB_OUTPUT) appendFileSync(env.GITHUB_OUTPUT, 'export=true\n');
+  };
+  if (action === 'start' || action === 'scheduled') {
+    const selected = action === 'scheduled' ? (env.FACTORY_EVALUATION_PLANS_ENABLED === 'true' ? plans.filter(p => p.enabled && p.schedule === 'daily') : []) : [plans.find(p => p.key === args.plan)];
+    if (action === 'scheduled' && !selected.length) lines.push('没有启用的定时评测计划（需要 FACTORY_EVALUATION_PLANS_ENABLED=true 且计划 enabled + schedule=daily）；未创建任务。');
+    for (const plan of selected) {
+      need(plan, `Unknown evaluation plan ${args.plan}`);
+      const result = await startBatch(client, { plans, planKey: plan.key, trigger: action === 'scheduled' ? 'schedule' : 'manual', runId: env.GITHUB_RUN_ID,
+        controlSha: env.FACTORY_CONTROL_SHA, env, dryRun: args['dry-run'] === 'true' });
+      if (result.status === 'planned') lines.push(`只预览 ${result.batchKey}：${result.manifest.samples.length} 个样本，基线 ${result.manifest.controlSha.slice(0, 12)}；没有写入或派发。`);
+      else if (result.status === 'skipped') lines.push(`跳过 ${plan.key}：${result.reason}`);
+      else { const batch = await advanceBatch(client, result.batch); exportBatch(batch); lines.push(summaryTable(batch.manifest, batch.state)); }
+    }
+  } else if (action === 'advance' || action === 'status') {
+    for (const batch of await activeBatches(client)) {
+      const next = action === 'advance' ? await advanceBatch(client, batch) : batch;
+      exportBatch(next); lines.push(summaryTable(next.manifest, next.state));
+    }
+    if (!lines.length) lines.push('没有进行中的评测批次。');
+  } else if (action === 'cancel') {
+    need(segmentPattern.test(args.batch ?? ''), 'cancel requires --batch <batchKey>');
+    const batch = await cancelBatch(client, args.batch);
+    exportBatch(batch); lines.push(summaryTable(batch.manifest, batch.state));
+  } else throw new Error('Usage: evaluation-batch.mjs <start|scheduled|advance|status|cancel> ...');
+  const text = `# 评测批次\n\n${lines.join('\n\n')}\n`;
+  console.log(text);
+  if (env.GITHUB_STEP_SUMMARY) appendFileSync(env.GITHUB_STEP_SUMMARY, text);
+}
+if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) main().catch(error => { console.error(error.message); process.exitCode = 1; });

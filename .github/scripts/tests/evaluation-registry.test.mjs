@@ -134,3 +134,21 @@ test('delivery receipts update the outbox under CAS and a stored receipt is fina
   await assert.rejects(recordDeliveries(client, [{ ...base, id: `${entry.id}x`, state: 'pending', attempts: [] }]), /identity/);
   await assert.rejects(recordDeliveries(client, [{ ...base, state: 'rejected', bundleSha256: digest('other'), attempts: [] }]), /differs/);
 });
+
+test('a run that failed before its Agent artifact still exports metadata and receipts, without inventing QA', async t => {
+  const client = fakeGitHub(), task = temporary(t), full = temporary(t);
+  buildArtifacts(full, { review: 'none' });
+  put(task, 'task-metadata.json', JSON.parse(readFileSync(path.join(full, 'task-metadata.json'))));
+  const record = usageRecord({ status: 'failure', agentJobId: null, records: 0 });
+  record.jobs = [{ id: 1, name: 'prepare', seconds: 20 }];
+  const exported = temporary(t), prepared = temporary(t);
+  exportDraft({ report: { record, records: [record] }, artifacts: path.join(task, 'absent'), task, html: null, output: exported, exporter });
+  const registration = await prepareRevision(client, { input: exported, output: prepared });
+  const document = JSON.parse(readFileSync(path.join(prepared, 'evaluation.json')));
+  assert.equal(registration.revision, 1);
+  assert.equal(document.run.identity, 'recorded');
+  assert.deepEqual([document.outcome.execution, document.outcome.acceptance, document.outcome.delivery], ['completed', 'unknown', 'not-published']);
+  assert.equal(document.qa.coverage, 'none');
+  assert.equal(document.reviews[0].state, 'not-reviewed');
+  assert.equal(document.metrics.usage.totals.total, null, 'no Agent job: usage stays unknown instead of zero');
+});
