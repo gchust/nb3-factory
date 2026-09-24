@@ -44,6 +44,7 @@ function comparison(root, files, source) {
   const m = metadataFile ? readJson(root, metadataFile) : null;
   if (!m || m.repository !== source.repository || m.issue?.number !== source.issue) return null;
   const identity = { input: m.preset?.inputHash ?? null, review: m.preset?.reviewHash ?? null,
+    ...(m.task?.buildReviewMode ? { buildReviewMode: m.task.buildReviewMode } : {}),
     control: m.controlSha ?? null, application: m.applicationBase?.sha ?? null };
   // Unknown ordinary inputs are not guessed from an Issue number or mutable title.
   return identity.input && identity.control && identity.application ? { ...identity, key: hash(identity) } : null;

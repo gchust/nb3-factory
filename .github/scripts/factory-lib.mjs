@@ -71,6 +71,25 @@ export function validateTargetBranch(branch) {
   return branch;
 }
 
+// Only this control field selects the optional assessment; it is not business input.
+export function parseBuildReviewMode(value) {
+  const normalized = String(value ?? '').trim();
+  if (['', '_No response_', 'auto', '自动'].includes(normalized)) return null;
+  if (['full', '完整'].includes(normalized)) return 'full';
+  if (['off', '轻量'].includes(normalized)) return 'off';
+  throw new TaskInputError('框架评测必须为 自动、完整 或 轻量。轻量不跳过业务验收。');
+}
+
+export function resolveBuildReviewMode(task, env, replay = false) {
+  const configured = task?.buildReviewMode;
+  if (configured != null && !['full', 'off'].includes(configured))
+    throw new TaskInputError('Invalid captured buildReviewMode');
+  // An explicit reassessment request must work even for a smoke task.
+  const mode = replay ? 'full' : configured ?? (env.FACTORY_BUILD_REVIEW || 'full');
+  if (!['full', 'off'].includes(mode)) throw new TaskInputError('FACTORY_BUILD_REVIEW must be full or off');
+  return mode;
+}
+
 export function parseIssueTask(issue) {
   const sections = extractIssueSections(issue.body ?? '');
   const required = (key) => {
@@ -82,7 +101,9 @@ export function parseIssueTask(issue) {
   };
 
   const targetBranch = sections.get(FIELD_NAMES.targetBranch)?.trim();
+  const buildReviewMode = parseBuildReviewMode(sections.get('框架评测'));
   return {
+    ...(buildReviewMode ? { buildReviewMode } : {}),
     // Resolve an omitted branch against the repository, not the Issue number.
     targetBranch: targetBranch ? validateTargetBranch(targetBranch) : null,
     taskType: required('taskType'),
