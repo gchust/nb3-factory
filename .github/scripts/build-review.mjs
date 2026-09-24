@@ -155,7 +155,7 @@ export function validateEvaluation(review, inputHash, catalog, expectedVersion =
     need(module.targets.length > 0, 'Framework module needs explicit library/plugin/guidance targets');
     unique(module.targets.map(target => target.name), 'targets');
     for (const target of module.targets) {
-      need(object(target) && Object.hasOwn(targetKinds, target.kind), 'Invalid framework target kind');
+      need(object(target) && Object.hasOwn(targetKinds, target.kind), `Invalid framework target kind in ${module.name}: ${String(target?.kind)} (expected library/plugin/guidance)`);
       text(target.name, 'target.name', 250);
       if (target.kind === 'guidance') need(safeRelative(target.name) &&
         /^(app\/\.agents\/skills\/|app\/AGENTS\.md$|packages\/@nocobase\/[^/]+\/(?:docs|skills)\/)/.test(target.name), 'Guidance target must identify captured instructions');
@@ -164,7 +164,7 @@ export function validateEvaluation(review, inputHash, catalog, expectedVersion =
       need(target.entrypoints.length > 0, 'Target requires API or guidance entrypoints');
       target.entrypoints.forEach(entry => text(entry, 'entrypoint', 300));
       refs(target.evidence);
-      for (const id of target.evidence) need(isTargetEvidence(target, review.evidence.find(e => e.id === id)), 'Target evidence must come from its framework source or guidance');
+      for (const id of target.evidence) need(isTargetEvidence(target, review.evidence.find(e => e.id === id)), `Target evidence must come from its framework source or guidance: ${module.name} / ${target.name} / ${id}`);
     }
     list(module.requirements, 'module.requirements', 20);
     need(module.requirements.length > 0, 'Framework module needs a requirement-to-capability mapping');

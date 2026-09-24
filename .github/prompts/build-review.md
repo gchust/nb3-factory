@@ -67,6 +67,20 @@ module.criteria 只引用原始 QA 中存在的 ID，不自行填写修复数或
 ui 分数是业务界面的观察，不参与五项框架分；进一步评价框架组件/主题/布局指引是否有助于一致产出，需要引用其实现与指引。
 仅看到截图文件、DOM 或 shadcn 名称不是视觉评审；不把首轮截图的问题断言成最终仍存在。
 
+## 每次保存后立即校验，不等最终退出
+
+运行 `node .review-tools/check-review-draft.mjs`。这是工厂提供的只读、无模型、无网络检查，不运行应用。
+它与最终验收使用同一校验实现，会检查完整 JSON 契约、实际文件哈希、引用行号、目标对应关系、已安装包和原始 QA ID。
+检查失败时在本次已有调用和预算内，按真实证据修正草稿，再原子保存并检查。不要修改 `.review-tools/`、输入清单或快照，不自行编一个宽松校验器。
+只有检查成功且计划模块确实已处理，才结束并设 complete=true。预算耗尽保留真实草稿；不能为了通过删掉未评模块、删改证据或凭空改分。
+草稿检查通过仅表示契约与引用合规，不能证明推理正确；最终仍由工厂独立重新检查，不采信你自述的通过。
+
+目标类型与证据类型是两个不同字段：
+- `module.targets[].kind` 只能是 `library`、`plugin`、`guidance`。Skill/文档目标一律用 `guidance`，不能填 `skill` 或 `package`。
+- `evidence[].kind` 才使用 `code/package/skill/qa/screenshot/log`。其他位置的 `evidence` 只能是顶层证据 ID 数组，例如 `["E1","E2"]`，不能嵌入证据对象。
+- 每个 target.evidence 的路径必须在该 target 本身内。包目标 `@nocobase/db` 只能引用 `packages/@nocobase/db/...`；`app/.agents/skills/...` 要单独建 guidance 目标，不能塞进包目标。
+- 评分证据至少一个 ID 同时在本模块对应 target.evidence 中。不能借另一模块或另一指引的 ID 充当本目标证据。
+
 ## 证据与 JSON
 
 path 必须来自 review-files.json；文本提供 1-based lines [start,end]（最多 100 行）及真实 observation；PNG 使用 kind:screenshot、不写 lines。
