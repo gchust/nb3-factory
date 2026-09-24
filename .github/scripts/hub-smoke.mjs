@@ -127,9 +127,9 @@ async function runHub(workspace, artifactDir, evidence) {
     const apiRoot = await login(page, `${origin}/hub/`);
     assert.equal(loopback(apiRoot).origin, origin);
     async function request(route, options = {}) {
-      const response = await context.request.fetch(`${apiRoot}/hub${route}`, { ...options, maxRedirects: 0, timeout: 120000 });
+      const response = await context.request.fetch(`${apiRoot}/hub${route}`, { ...options, headers: { ...options.headers, origin, referer: `${origin}/hub/` }, maxRedirects: 0, timeout: 120000 });
       const json = await response.json();
-      assert.ok(response.ok(), `Hub ${route}: HTTP ${response.status()} ${json.error?.code ?? ''} ${json.error?.message ?? ''}`);
+      assert.ok(response.ok(), `Hub ${route}: HTTP ${response.status()} ${json.error?.code ?? json.code ?? ''} ${json.error?.message ?? json.message ?? ''}`);
       return json.data;
     }
     const appId = `factory-${binding.issue}-${process.env.GITHUB_RUN_ID ?? Date.now()}`;
