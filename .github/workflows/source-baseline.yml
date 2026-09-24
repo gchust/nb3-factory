@@ -4,9 +4,12 @@ on:
   pull_request:
     paths:
       - '.github/workflows/source-baseline.yml'
-      - '.github/scripts/source-config-check.mjs'
+      - '.github/scripts/source-*.mjs'
       - '.github/scripts/restore-source-dist.mjs'
       - '.github/scripts/baseline-record.mjs'
+      - '.github/scripts/publish-source-baseline.sh'
+  issue_comment:
+    types: [created]
   workflow_dispatch:
     inputs:
       source_sha:
@@ -14,34 +17,64 @@ on:
         required: true
         default: cde9a8ea11b54dd436f65c9f696cc58f0969a7ee
         type: string
+      publish:
+        description: Publish an isolated source baseline branch after both runners pass
+        type: boolean
+        default: false
 
-permissions:
-  contents: read
+permissions: {}
 
 jobs:
   source-baseline:
+    if: >-
+      github.event_name == 'pull_request' ||
+      (github.actor == github.repository_owner &&
+       (github.event_name == 'workflow_dispatch' ||
+        (!github.event.issue.pull_request && startsWith(github.event.comment.body, '/factory-source '))))
     runs-on: ubuntu-latest
     timeout-minutes: 90
-    env:
-      SOURCE_SHA: ${{ inputs.source_sha || 'cde9a8ea11b54dd436f65c9f696cc58f0969a7ee' }}
+    permissions:
+      contents: read
+    outputs:
+      source_sha: ${{ steps.pin.outputs.source_sha }}
+      control_sha: ${{ steps.pin.outputs.control_sha }}
+      snapshot: ${{ steps.snapshot.outputs.artifact-id }}
     steps:
       - uses: actions/checkout@v4
         with:
+          ref: ${{ github.event_name == 'pull_request' && github.sha || github.event.repository.default_branch }}
           path: control
-          persist-credentials: false
-      - name: Validate the explicit source pin
-        run: |
-          [[ "$SOURCE_SHA" =~ ^[a-f0-9]{40}$ ]] || exit 1
-          echo "FACTORY_CONTROL_SHA=$(git -C control rev-parse HEAD)" >> "$GITHUB_ENV"
-      - uses: actions/checkout@v4
-        with:
-          repository: nocobase/nocobase3
-          ref: ${{ env.SOURCE_SHA }}
-          path: source
           persist-credentials: false
       - uses: actions/setup-node@v4
         with:
           node-version: 24.x
+      - name: Validate the explicit source pin
+        id: pin
+        env:
+          REQUESTED_SHA: ${{ inputs.source_sha || 'cde9a8ea11b54dd436f65c9f696cc58f0969a7ee' }}
+        run: |
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import {readFileSync,appendFileSync} from 'node:fs';
+          import {execFileSync} from 'node:child_process';
+          const event=JSON.parse(readFileSync(process.env.GITHUB_EVENT_PATH));
+          let sha=process.env.REQUESTED_SHA;
+          if(process.env.GITHUB_EVENT_NAME==='issue_comment') {
+            assert.ok(event.issue.labels.some(l=>l.name==='factory:manual'));
+            const match=/^\/factory-source ([a-f0-9]{40})\s*$/u.exec(event.comment.body);
+            assert.ok(match,'Expected /factory-source <exact SHA>'); sha=match[1];
+          }
+          assert.match(sha,/^[a-f0-9]{40}$/u);
+          const control=execFileSync('git',['-C','control','rev-parse','HEAD'],{encoding:'utf8'}).trim();
+          appendFileSync(process.env.GITHUB_ENV,`SOURCE_SHA=${sha}\nFACTORY_CONTROL_SHA=${control}\n`);
+          appendFileSync(process.env.GITHUB_OUTPUT,`source_sha=${sha}\ncontrol_sha=${control}\n`);
+          NODE
+      - uses: actions/checkout@v4
+        with:
+          repository: nocobase/nocobase3
+          ref: ${{ steps.pin.outputs.source_sha }}
+          path: source
+          persist-credentials: false
       - uses: pnpm/action-setup@v4
         with:
           version: 11.7.0
@@ -57,13 +90,28 @@ jobs:
         run: pnpm local-registry:prepare
       - name: Verify an application made from these exact source packages
         working-directory: source
-        run: |
-          pnpm local-registry:verify --template default --dialect sqlite --workdir "$RUNNER_TEMP/source-smoke"
+        run: pnpm local-registry:verify --template default --dialect sqlite --workdir "$RUNNER_TEMP/source-smoke"
       - name: Install browser fonts
         run: bash control/.github/scripts/install-browser-fonts.sh
       - name: Verify first configuration, idempotence and real browser login
+        run: node control/.github/scripts/source-config-check.mjs "$RUNNER_TEMP/source-smoke/crm" "$RUNNER_TEMP/source-evidence" "$SOURCE_SHA"
+      - name: Export only verified package bytes and clean application source
         run: |
-          node control/.github/scripts/source-config-check.mjs "$RUNNER_TEMP/source-smoke/crm" "$RUNNER_TEMP/source-evidence" "$SOURCE_SHA"
+          mkdir -p "$RUNNER_TEMP/source-export"
+          node control/.github/scripts/source-snapshot.mjs export source "$RUNNER_TEMP/snapshot-packages" "$SOURCE_SHA"
+          tar -czf "$RUNNER_TEMP/source-export/packages.tar.gz" -C "$RUNNER_TEMP/snapshot-packages" manifest.json packages
+          node control/.github/scripts/source-candidate.mjs copy "$RUNNER_TEMP/source-smoke/crm" "$RUNNER_TEMP/clean-source-app"
+          tar -czf "$RUNNER_TEMP/source-export/application.tar.gz" -C "$RUNNER_TEMP/clean-source-app" .
+          cp "$RUNNER_TEMP/snapshot-packages/manifest.json" "$RUNNER_TEMP/source-export/packages.json"
+          cd "$RUNNER_TEMP/source-export"
+          sha256sum packages.tar.gz application.tar.gz > SHA256SUMS
+      - uses: actions/upload-artifact@v4
+        id: snapshot
+        with:
+          name: source-packages-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/source-export
+          if-no-files-found: error
+          retention-days: 14
       - name: Write an explicit source verification receipt
         if: always()
         env:
@@ -83,3 +131,112 @@ jobs:
         if: always()
         working-directory: source
         run: node scripts/local-registry.mjs stop
+
+  portable:
+    needs: source-baseline
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    permissions:
+      contents: read
+      actions: read
+    env:
+      SOURCE_SHA: ${{ needs.source-baseline.outputs.source_sha }}
+      FACTORY_CONTROL_SHA: ${{ needs.source-baseline.outputs.control_sha }}
+    outputs:
+      candidate: ${{ steps.candidate.outputs.artifact-id }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.source-baseline.outputs.control_sha }}
+          path: control
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24.x
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.7.0
+          run_install: false
+      - uses: actions/download-artifact@v4
+        with:
+          artifact-ids: ${{ needs.source-baseline.outputs.snapshot }}
+          merge-multiple: true
+          path: ${{ runner.temp }}/portable-input
+      - name: Restore the package snapshot on a different clean runner
+        run: |
+          cd "$RUNNER_TEMP/portable-input"
+          sha256sum --check SHA256SUMS
+          mkdir -p "$RUNNER_TEMP/portable-registry" "$RUNNER_TEMP/portable-app"
+          tar -xzf packages.tar.gz -C "$RUNNER_TEMP/portable-registry"
+          tar -xzf application.tar.gz -C "$RUNNER_TEMP/portable-app"
+          node "$GITHUB_WORKSPACE/control/.github/scripts/overlay-factory.mjs" "$GITHUB_WORKSPACE/control" "$RUNNER_TEMP/portable-app" "$FACTORY_CONTROL_SHA"
+          node "$GITHUB_WORKSPACE/control/.github/scripts/source-snapshot.mjs" start "$RUNNER_TEMP/portable-registry" "$RUNNER_TEMP/portable-app"
+          echo "FACTORY_CREATOR_VERSION=$(node -p 'JSON.parse(require("fs").readFileSync("packages.json")).packages.find(p=>p.name==="@nocobase/create-app").version')" >> "$GITHUB_ENV"
+      - name: Lock the factory overlay against only the frozen source packages
+        working-directory: ${{ runner.temp }}/portable-app
+        run: |
+          pnpm install --no-frozen-lockfile
+          pnpm skills:sync
+          node "$GITHUB_WORKSPACE/control/.github/scripts/source-candidate.mjs" describe . "$RUNNER_TEMP/source-candidate" "$RUNNER_TEMP/portable-input/packages.tar.gz"
+          pnpm exec prettier --write package.json factory-template.json factory-source.json eslint.config.js README.MD
+      - name: Verify the restored source as a normal factory application
+        run: |
+          bash control/.github/scripts/install-browser-fonts.sh
+          node control/.github/scripts/create-runtime-config.mjs --output "$RUNNER_TEMP/portable.yml" --database "$RUNNER_TEMP/portable-db/database.sqlite"
+          set -o pipefail
+          bash control/.github/scripts/verify.sh "$RUNNER_TEMP/portable-app" "$RUNNER_TEMP/portable.yml" "$RUNNER_TEMP/portable-evidence" 2>&1 | tee "$RUNNER_TEMP/portable-verify.log"
+          node control/.github/scripts/baseline-record.mjs "$RUNNER_TEMP/portable-app" "$RUNNER_TEMP/portable-evidence/baseline.json" "$SOURCE_SHA"
+          node control/.github/scripts/source-candidate.mjs bundle "$RUNNER_TEMP/portable-app" "$RUNNER_TEMP/source-candidate" "$RUNNER_TEMP/portable-input/packages.tar.gz"
+      - uses: actions/upload-artifact@v4
+        id: candidate
+        with:
+          name: source-candidate-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/source-candidate
+          if-no-files-found: error
+          retention-days: 14
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: source-portability-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            ${{ runner.temp }}/portable-evidence
+            ${{ runner.temp }}/portable-verify.log
+          retention-days: 14
+
+  publish:
+    needs: [source-baseline, portable]
+    if: >-
+      github.actor == github.repository_owner &&
+      ((github.event_name == 'workflow_dispatch' && inputs.publish) || github.event_name == 'issue_comment')
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+      issues: write
+      actions: read
+    env:
+      FACTORY_CONTROL_SHA: ${{ needs.source-baseline.outputs.control_sha }}
+      TRACKING_ISSUE: ${{ github.event.issue.number || '210' }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.source-baseline.outputs.control_sha }}
+          path: control
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24.x
+      - uses: actions/download-artifact@v4
+        with:
+          artifact-ids: ${{ needs.source-baseline.outputs.snapshot }}
+          merge-multiple: true
+          path: snapshot
+      - uses: actions/download-artifact@v4
+        with:
+          artifact-ids: ${{ needs.portable.outputs.candidate }}
+          merge-multiple: true
+          path: candidate
+      - name: Publish only the verified source branch and immutable package archive
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: bash control/.github/scripts/publish-source-baseline.sh control candidate snapshot/packages.tar.gz
