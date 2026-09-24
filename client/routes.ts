@@ -1,4 +1,4 @@
-import { Home } from 'lucide-react';
+import { Activity, Home } from 'lucide-react';
 import {
   defineAppRoutes,
   defineSettingsRoutes,
@@ -15,6 +15,17 @@ const appRoutes: AppClientRouteContribution = defineAppRoutes([
     name: 'home',
     navigation: { title: 'navigation.home', icon: Home },
     path: '/',
+  },
+  {
+    // A smoke page for the build pipeline, reachable by any signed-in user. `authz: 'skip'` keeps it out of page
+    // authorization so it needs no new permission grant; it still requires a session because `auth` stays
+    // `'required'`, and navigation is shown only to signed-in users who reach the app shell.
+    auth: 'required',
+    authz: 'skip',
+    componentLoader: () => import('./pages/pipeline-smoke.js'),
+    name: 'pipeline-smoke',
+    navigation: { title: 'navigation.pipelineSmoke', icon: Activity },
+    path: '/pipeline-smoke',
   },
   {
     auth: 'guest',
