@@ -53,6 +53,18 @@ function loopback(value) {
   assert.ok(!url.username && !url.password);
   return url;
 }
+// Hub exposes a Host origin, not an application's entry URL. Match its client
+// applicationUrl contract by resolving the deployed basePath beneath that origin.
+export function hostedApplicationUrl(detail, origin) {
+  assert.ok(typeof detail.hostUrl === 'string' && detail.hostUrl, 'Hub must publish a host URL');
+  const basePath = detail.deployment?.basePath;
+  assert.ok(typeof basePath === 'string' && /^\/?[a-zA-Z0-9_-]+(?:\/[a-zA-Z0-9_-]+)*\/?$/u.test(basePath), 'A deployed application basePath is required');
+  const host = loopback(new URL(detail.hostUrl, origin).href);
+  assert.equal(host.origin, loopback(origin).origin, 'Hosted app must use the same isolated Hub proxy');
+  assert.ok(!host.search && !host.hash);
+  if (!host.pathname.endsWith('/')) host.pathname += '/';
+  return new URL(`${basePath.replace(/^\/+|\/+$/gu, '')}/`, host);
+}
 async function api(route) {
   const repo = process.env.GITHUB_REPOSITORY;
   assert.match(repo ?? '', /^[\w.-]+\/[\w.-]+$/u);
@@ -157,9 +169,8 @@ async function runHub(workspace, artifactDir, evidence) {
     assert.ok(Array.isArray(entries) && entries.length > 0, 'Actual deployment log entries required');
     writeFileSync(path.join(out, 'deployment-log.json'), scrubHubLog('deployment-log.json', JSON.stringify(logs), [secret, password]));
     receipt.checks.push({ id: 'HUB-03', status: 'passed', observation: `${entries.length} actual deployment log entries`, evidence: 'deployment-log.json' });
-    assert.ok(typeof detail.hostUrl === 'string' && detail.hostUrl, 'Hub must publish a host URL');
-    const target = loopback(new URL(detail.hostUrl, origin).href);
-    assert.equal(target.origin, origin, 'Hosted app must use the same isolated Hub proxy');
+    const target = hostedApplicationUrl(detail, origin);
+    receipt.deploymentBasePath = detail.deployment.basePath;
     const business = await browser.newContext({ viewport: { width: 1440, height: 960 } });
     counter = await business.newPage();
     receipt.hostUrl = target.href;

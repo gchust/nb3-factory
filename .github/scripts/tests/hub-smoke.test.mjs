@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
-import { selectHubArtifact, bindHubArtifact, assertDeployed } from '../hub-smoke.mjs';
+import { selectHubArtifact, bindHubArtifact, assertDeployed, hostedApplicationUrl } from '../hub-smoke.mjs';
 
 const repository = 'gchust/nb3-factory';
 const run = {id:31,run_attempt:2,path:'.github/workflows/code-agent-task.yml',head_repository:{full_name:repository},event:'issues',status:'completed',conclusion:'success'};
@@ -44,4 +44,22 @@ test('Hub startup and browser login use the explicit Hub mount, not the Host pro
   assert.match(script, /fetch\(`\$\{origin\}\/hub\//);
   assert.match(script, /login\(page, `\$\{origin\}\/hub\//);
   assert.doesNotMatch(script, /\$\{origin\}\/main\//);
+});
+
+// Regression: deployment/logs passed, but hostUrl "/" opened Host's 404 root.
+test('counter browser entry resolves deployment basePath, not just hostUrl', () => {
+  const origin = 'http://127.0.0.1:12345';
+  const app = {hostUrl:'/', deployment:{basePath:'/factory-216-31'}};
+  assert.equal(hostedApplicationUrl(app, origin).href, `${origin}/factory-216-31/`);
+  assert.equal(hostedApplicationUrl({...app,hostUrl:origin}, origin).href, `${origin}/factory-216-31/`);
+  assert.equal(hostedApplicationUrl({...app,hostUrl:`${origin}/host`}, origin).href, `${origin}/host/factory-216-31/`);
+  assert.equal(hostedApplicationUrl({...app,deployment:{basePath:'factory-216-31/'}}, origin).href, `${origin}/factory-216-31/`);
+  for (const basePath of [undefined, '', '/', '../hub', '//other.example', 'http://other.example']) {
+    assert.throws(() => hostedApplicationUrl({...app,deployment:{basePath}}, origin));
+  }
+  assert.throws(() => hostedApplicationUrl({...app,hostUrl:'http://127.0.0.1:12346'}, origin));
+  assert.throws(() => hostedApplicationUrl({...app,hostUrl:'https://example.com'}, origin));
+  const script = readFileSync(new URL('../hub-smoke.mjs', import.meta.url), 'utf8');
+  assert.match(script, /const target = hostedApplicationUrl\(detail, origin\)/);
+  assert.match(script, /await login\(counter, target.href, password\)/);
 });
