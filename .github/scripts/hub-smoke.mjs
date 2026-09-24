@@ -78,10 +78,10 @@ async function freePort() {
 }
 async function login(page, url, password = 'admin123') {
   await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 60000 });
-  await page.getByLabel('Username or email', { exact: true }).fill('nocobase');
-  await page.getByLabel('Password', { exact: true }).fill(password);
+  await page.getByLabel(/^(?:Username or email|用户名或邮箱|用户名或电子邮箱)$/u).fill('nocobase');
+  await page.getByLabel(/^(?:Password|密码)$/u).fill(password);
   const response = page.waitForResponse(r => r.request().method() === 'POST' && /\/sign-in\//u.test(r.url()), { timeout: 30000 });
-  await page.getByRole('button', { name: 'Sign in', exact: true }).click();
+  await page.getByRole('button', { name: /^(?:Sign in|登录)$/u }).click();
   const authenticated = await response;
   assert.ok(authenticated.ok(), 'Test account login failed');
   await page.waitForFunction(() => !/\/(?:login|register)\/?$/u.test(location.pathname), undefined, { timeout: 30000 });
@@ -108,7 +108,8 @@ async function runHub(workspace, artifactDir, evidence) {
     stdio: ['ignore', 'pipe', 'pipe'] });
   let spawnError; child.once('error', e => { spawnError = e; });
   child.stdout.pipe(stream, { end: false }); child.stderr.pipe(stream, { end: false });
-  let browser;
+  let browser, counter;
+  const browserEvents = [];
   const secret = randomBytes(32).toString('hex'), password = `Factory-QA-${randomBytes(12).toString('hex')}`;
   try {
     let ready = false, lastProbe = 'not_probed';
@@ -150,11 +151,20 @@ async function runHub(workspace, artifactDir, evidence) {
     let detail = await request(`/apps/${appId}`);
     assertDeployed(status, detail, release.id);
     receipt.checks.push({ id: 'HUB-01', status: 'passed', appId, releaseId: release.id, deploymentId: deployment.id, observed: status, runtime: detail.runtime });
+    const logs = await request(`/apps/${appId}/deployments/${deployment.id}/logs`);
+    assert.equal(logs.enabled, true);
+    const entries = logs.entries;
+    assert.ok(Array.isArray(entries) && entries.length > 0, 'Actual deployment log entries required');
+    writeFileSync(path.join(out, 'deployment-log.json'), scrubHubLog('deployment-log.json', JSON.stringify(logs), [secret, password]));
+    receipt.checks.push({ id: 'HUB-03', status: 'passed', observation: `${entries.length} actual deployment log entries`, evidence: 'deployment-log.json' });
     assert.ok(typeof detail.hostUrl === 'string' && detail.hostUrl, 'Hub must publish a host URL');
     const target = loopback(new URL(detail.hostUrl, origin).href);
     assert.equal(target.origin, origin, 'Hosted app must use the same isolated Hub proxy');
     const business = await browser.newContext({ viewport: { width: 1440, height: 960 } });
-    const counter = await business.newPage();
+    counter = await business.newPage();
+    receipt.hostUrl = target.href;
+    counter.on('pageerror', error => browserEvents.push({ kind: 'pageerror', message: error.message.slice(0, 1500) }));
+    counter.on('response', response => { if (response.status() >= 400) browserEvents.push({ kind: 'http', path: new URL(response.url()).pathname, status: response.status() }); });
     await login(counter, target.href, password);
     await counter.getByRole('link', { name: /Pipeline Smoke|流程冒烟/u }).click();
     await counter.locator('[aria-label="Count"], [aria-label="计数"]').waitFor({ state: 'visible' });
@@ -164,17 +174,16 @@ async function runHub(workspace, artifactDir, evidence) {
     await counter.waitForFunction(() => document.querySelector('[aria-label="Count"], [aria-label="计数"]')?.textContent?.trim() === '1');
     await counter.screenshot({ path: path.join(out, 'counter-1.png') });
     receipt.checks.push({ id: 'HUB-02', status: 'passed', observation: 'The original verified counter runs through the real Hub/Host, 0 -> 1', evidence: ['counter-0.png', 'counter-1.png'] });
-    const logs = await request(`/apps/${appId}/deployments/${deployment.id}/logs`);
-    assert.equal(logs.enabled, true);
-    const entries = logs.entries;
-    assert.ok(Array.isArray(entries) && entries.length > 0, 'Actual deployment log entries required');
-    writeFileSync(path.join(out, 'deployment-log.json'), scrubHubLog('deployment-log.json', JSON.stringify(logs), [secret, password]));
-    receipt.checks.push({ id: 'HUB-03', status: 'passed', observation: `${entries.length} actual deployment log entries`, evidence: 'deployment-log.json' });
     receipt.status = 'passed';
   } catch (error) {
     receipt.error = error.message.replaceAll(secret, '[REDACTED]').replaceAll(password, '[REDACTED]');
     throw new Error(receipt.error);
   } finally {
+    if (counter && receipt.status !== 'passed') {
+      receipt.browser = { url: counter.url(), events: browserEvents };
+      try { receipt.browser.text = (await counter.locator('body').innerText({ timeout: 2000 })).slice(0, 2500); await counter.screenshot({ path: path.join(out, 'counter-failure.png'), timeout: 5000 }); }
+      catch { receipt.browser.capture = 'unavailable'; }
+    }
     await browser?.close();
     if (child.pid) {
       try { process.kill(-child.pid, 'SIGTERM'); } catch (e) { if (e.code !== 'ESRCH') throw e; }
@@ -183,7 +192,7 @@ async function runHub(workspace, artifactDir, evidence) {
     }
     await new Promise(resolve => stream.end(resolve));
     writeFileSync(logFile, scrubHubLog('hub-start.log', readFileSync(logFile, 'utf8'), [secret, password]));
-    writeFileSync(path.join(out, 'hub-checks.json'), JSON.stringify(receipt, null, 2));
+    writeFileSync(path.join(out, 'hub-checks.json'), scrubHubLog('hub-checks.json', JSON.stringify(receipt, null, 2), [secret, password]));
   }
 }
 async function main() {
