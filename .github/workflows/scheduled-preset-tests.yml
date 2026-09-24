@@ -1,4 +1,5 @@
-name: Scheduled preset build tests
+name: Preset build tests (daily / manual)
+run-name: "Preset tests · ${{ github.event_name == 'schedule' && 'daily' || github.event_name == 'workflow_dispatch' && (inputs.dry_run && 'preview' || 'manual') || 'initialize' }}"
 
 on:
   schedule:
@@ -8,21 +9,23 @@ on:
     paths:
       - '.github/workflows/scheduled-preset-tests.yml'
       - '.github/scripts/scheduled-preset-tests.mjs'
-  # Optional maintenance preview; never required to enable daily builds.
+  # Run the same labelled presets immediately, without changing the daily schedule.
   workflow_dispatch:
     inputs:
       dry_run:
-        description: '只预览 factory:daily 案例和跳过原因，不创建 Issue、不调用 Agent'
+        description: '仅预览（可选）；默认立即搭建 factory:daily 案例，不影响每日定时'
         required: true
-        default: true
+        default: false
         type: boolean
 
 permissions: {}
 
-# Serialize only the launcher. Child builds retain their existing per-Issue queue.
+# Serialize only the launcher; keep manual and scheduled requests queued, not replaced.
+# Child builds retain their existing per-Issue queue and active-case guard.
 concurrency:
   group: factory-scheduled-preset-tests
   cancel-in-progress: false
+  queue: max
 
 jobs:
   initialize-label:

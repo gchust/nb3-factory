@@ -1,12 +1,12 @@
-# 每日自动使用预设案例做搭建测试
+# 预设搭建测试：每日自动与手动立即执行
 
 给想测试的预设 Issue 加上 `factory:daily` 标签，之后每天自动搭建一次。移除标签就退出后续调度。**不需要填写编号、配置仓库变量或每天手动运行 Action。**
 
-Action：**Scheduled preset build tests**（`scheduled-preset-tests.yml`）。只负责选择案例、创建独立执行 Issue、派发既有搭建工作流，不另写 Agent / QA / 报告流程，不自动合并测试 PR。
+Action：**Preset build tests (daily / manual)**（`scheduled-preset-tests.yml`）。只负责选择案例、创建独立执行 Issue、派发既有搭建工作流，不另写 Agent / QA / 报告流程，不自动合并测试 PR。
 
 ```text
 预设 Issue：factory:preset + factory:daily
-                    ↓ 每天自动读取标签名单
+                    ↓ 每日定时 / Run workflow 手动触发
               每个案例创建新 Issue
                     ↓
       原 prepare 复制正文与人工评论、固定应用基线
@@ -33,7 +33,7 @@ Action：**Scheduled preset build tests**（`scheduled-preset-tests.yml`）。�
 ## 时间与结果
 
 默认每天 **03:17 UTC（北京时间 11:17）** 自动运行。修改工作流中的 `cron: '17 3 * * *'` 可调整时间。
-GitHub 定时任务只在默认分支执行，可能延迟；工作流需先合入默认分支。加标签不会立即搭建，从下一次每日扫描生效。
+GitHub 定时任务只在默认分支执行，可能延迟；工作流需先合入默认分支。加标签本身不会立即搭建；可以等待下一次每日扫描，也可以随时手动触发一轮。
 
 每轮可执行案例都会创建独立 Issue，从既有默认分支基线受理，不复用上次生成的业务代码、旧分支或 PR。
 本 Action **不自动 Refresh 模板、不构建 NocoBase 上游源码、不切换源码基线**；要改变被测版本，使用现有基线更新流程。各任务继续由既有 prepare 记录实际应用 SHA。
@@ -55,15 +55,23 @@ Action Summary 展示每个案例的**已派发 / 已有任务 / 因在途任务
 只使用内置 `GITHUB_TOKEN`（`contents: read`、`issues: write`、`actions: write`），无需新增 PAT 或模型配置。
 创建 Issue 后显式调用原 `code-agent-task.yml` 的 `workflow_dispatch`，不依赖机器人创建 Issue 自动触发工作流。
 
-## 可选的维护入口
+## 手动立即执行（同时保留每日定时）
 
-**Run workflow** 仅用于即时检查或排障：`dry_run` 默认开启，预览当前标签名单且不写入；取消勾选则立即执行一轮。
-它不是启用每日任务的前置步骤。定时触发始终实际派发，不受手动表单默认值影响，也不会记住上一次手动预览状态。
+进入 **Actions → Preset build tests (daily / manual) → Run workflow**，选择默认分支 `develop`，直接点击 **Run workflow** 即可。
+默认立即为当前同时带 `factory:preset` + `factory:daily` 的案例派发搭建任务，不用输入编号、不用等定时时间。`dry_run` 默认关闭；只有勾选时才仅预览，不创建任务、不调用 Agent。
+工作流需先合入默认分支，GitHub 才会显示手动运行按钮。Actions 运行名称区分 `manual`（手动搭建）、`daily`（定时搭建）、`preview`（只预览）和 `initialize`（标签初始化）。
+
+**手动执行是额外的一轮，不会关闭、改期或消耗当天的定时任务。** 定时与手动共用同一份标签名单和同一个派发步骤；定时触发始终实际派发，不受上一次手动预览状态影响。
+例如，上午手动跑完后，11:17 的定时扫描仍会重新创建任务。若到点时同一案例还在执行，则该案例按既有规则跳过，不重复堆积，后续每日扫描继续。
+
+调度入口使用同一并发队列，允许多个请求排队，避免手动触发替换正在等待的定时请求；达到 GitHub 队列容量上限时仍可能被取消。它只串行派发，不改变独立案例的并行搭建机制。
+
+## 验证
 
 ```bash
 node --test .github/scripts/tests/scheduled-preset-tests.test.mjs
 ```
 
-专项覆盖标签增删、开放和关闭预设、分页、独立次日任务、来源隔离、重跑恢复、在途去重、标签初始化和工作流触发边界。现有 **Factory regression tests** 自动收集这些测试。
+专项覆盖标签增删、开放和关闭预设、分页、同日手动/定时独立轮次、手动预览不影响定时、在途跳过后继续调度、独立次日任务、来源隔离、重跑恢复、在途去重、标签初始化和工作流触发边界。现有 **Factory regression tests** 自动收集这些测试。
 
 参考：[GitHub 定时事件](https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#schedule)、[工作流触发规则](https://docs.github.com/en/actions/how-tos/write-workflows/choose-when-workflows-run/trigger-a-workflow#triggering-a-workflow-from-a-workflow)。

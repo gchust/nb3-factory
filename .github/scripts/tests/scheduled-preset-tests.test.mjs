@@ -180,6 +180,45 @@ test('a new daily round creates a fresh Issue after previous delivery, rather th
   assert.equal(dispatches(state).length, 2);
 });
 
+// The fixture gives every launcher the same UTC date. Only a rerun of the
+// same run ID is deduplicated; a manual launch must not consume a daily slot.
+test('manual launches and scheduled launches create independent rounds on the same day', async () => {
+  const sources = [preset(176), preset(155)];
+  const original = structuredClone(sources);
+  const { execute, state } = fixture(sources);
+  for (const [round, runId] of ['900', '901', '902'].entries()) {
+    const result = await execute({ runId, dryRun: false });
+    assert.deepEqual(result.rows.map((row) => row.status), ['dispatched', 'dispatched']);
+    assert.deepEqual(result.rows.map((row) => row.issue), [1000 + round * 2, 1001 + round * 2]);
+    // Delivery is complete; an unmerged review PR must not block the next trigger.
+    for (const task of state.tasks) {
+      task.labels = task.labels.map((label) => label === 'agent:pending' ? 'agent:review' : label);
+    }
+  }
+  assert.equal(dispatches(state).length, 6);
+  assert.deepEqual(sources, original);
+});
+
+test('manual preview does not persist or turn the next scheduled launch into a preview', async () => {
+  const { execute, state } = fixture();
+  assert.equal((await execute({ runId: '900', dryRun: true })).rows[0].status, 'planned');
+  assert.equal(writes(state).length, 0);
+  assert.equal((await execute({ runId: '901' })).rows[0].status, 'dispatched');
+  assert.equal(state.tasks.length, 1);
+  assert.equal(dispatches(state).length, 1);
+});
+
+test('overlapping manual and daily triggers skip active work without disabling future rounds', async () => {
+  const { execute, state } = fixture();
+  assert.equal((await execute({ runId: '900' })).rows[0].status, 'dispatched');
+  assert.equal((await execute({ runId: '901' })).rows[0].status, 'skipped-active');
+  assert.equal(dispatches(state).length, 1);
+  state.tasks[0].labels = ['factory:test-preset-176', 'agent:review'];
+  assert.equal((await execute({ runId: '902' })).rows[0].status, 'dispatched');
+  assert.equal(dispatches(state).length, 2);
+  assert.deepEqual(names(state.sources[0]), ['factory:preset', 'factory:daily']);
+});
+
 test('daily preset discovery paginates beyond 100 and deduplicates issue numbers', async () => {
   const sources = Array.from({ length: 101 }, (_, index) => preset(index + 1));
   const { execute, state } = fixture([...sources, preset(101)]);
@@ -316,12 +355,17 @@ test('summary escapes table and HTML content', () => {
   assert.match(summary, /&#124;/);
 });
 
-test('workflow schedules real daily builds with no ID list, variables or manual-run prerequisite', () => {
+test('workflow supports real manual and daily builds together with only optional preview', () => {
   const workflow = readFileSync(new URL('../../workflows/scheduled-preset-tests.yml', import.meta.url), 'utf8');
   assert.match(workflow, /cron: '17 3 \* \* \*'/);
   assert.doesNotMatch(workflow, /FACTORY_PRESET_TEST_ISSUES|PRESET_ISSUES|preset_issues|vars\./);
   assert.match(workflow, /if: github.event_name == 'schedule' \|\| github.event_name == 'workflow_dispatch'/);
-  assert.match(workflow, /default: true\s+type: boolean/);
+  assert.match(workflow, /workflow_dispatch:\s+inputs:\s+dry_run:[\s\S]*?default: false\s+type: boolean/);
+  assert.match(workflow, /concurrency:\s+group: factory-scheduled-preset-tests\s+cancel-in-progress: false\s+queue: max/);
+  assert.match(workflow, /^  schedule:/m);
+  assert.match(workflow, /^  workflow_dispatch:/m);
+  assert.match(workflow, /run-name:.*'daily'.*'preview'.*'manual'/);
+  assert.equal((workflow.match(/run: node \.github\/scripts\/scheduled-preset-tests\.mjs$/gm) ?? []).length, 1);
   assert.match(workflow, /actions: write/);
   assert.match(workflow, /GITHUB_TOKEN: \$\{\{ github.token \}\}/);
   assert.match(workflow, /github.event_name == 'workflow_dispatch' && inputs.dry_run/);
