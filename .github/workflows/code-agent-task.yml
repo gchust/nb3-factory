@@ -570,6 +570,9 @@ jobs:
     env:
       FACTORY_BUILD_TARGET: linux-x64
       FACTORY_BUILD_NODE_VERSION: '24'
+      # Verification builds for the explicit deployment target and archives
+      # that same build with `--tar`; nothing is rebuilt for the preview.
+      FACTORY_BUILD_ARCHIVE: '1'
     permissions:
       contents: read
     steps:
@@ -645,12 +648,6 @@ jobs:
             "$RUNNER_TEMP/final.yml" \
             "$RUNNER_TEMP/final-artifacts/verify-final" \
             2>&1 | tee "$RUNNER_TEMP/final-artifacts/verify-final.log"
-
-      # Verification builds for the explicit deployment target. Archive those exact
-      # accepted bytes; rebuilding here would discard the verified artifact.
-      - name: Pack the deployable build for the preview host
-        working-directory: workspace
-        run: node ../control/.github/scripts/timed-command.mjs pack node ./scripts/utils/pack-dist.mjs
 
       # The preview workflow downloads this artifact and reads both files from its
       # root: `dist.tar.gz` to deploy and `task-metadata.json` to know which PR and

@@ -65,7 +65,7 @@ GitHub 也会为同一个 run 的完成事件触发一次。两次请求带的�
 地址和登录说明保持不变；只有第一次部署就失败的构建才发布“没有可用地址”。
 
 **为什么在 `verify-final` 里构建。** 预览跑的必须是独立验收通过的那棵树，而不是 Agent
-自己声称的版本，所以打包步骤放在 `verify-final` 的验收之后，产物随 artifact 传递。
+自己声称的版本，所以由 `verify-final` 验收用的那次构建带 `--tar` 直接归档，验收通过后才暂存上传，产物随 artifact 传递。
 
 `verify-final` 先把 `dist.tar.gz` 和 `task-metadata.json` 拷进同一个目录再上传，因为
 `upload-artifact` 会保留路径的公共祖先之下的结构：直接把两个各在一处的文件列成 `path`

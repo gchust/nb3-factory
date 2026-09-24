@@ -56,11 +56,17 @@ for check in format:check lint typecheck test; do
   [[ "$check" == "$previous" ]] || run_check "$check"
 done
 rm -f "$failed_stage"
+build_args=()
 if [[ -n "${FACTORY_BUILD_TARGET:-}" ]]; then
-  NODE_ENV=production node "$script_dir/timed-command.mjs" build pnpm build --target "$FACTORY_BUILD_TARGET" --node-version "${FACTORY_BUILD_NODE_VERSION:-24}"
-else
-  NODE_ENV=production timed build
+  build_args+=(--target "$FACTORY_BUILD_TARGET" --node-version "${FACTORY_BUILD_NODE_VERSION:-24}")
 fi
+# The template's own `--tar` archives the dist this one build produced, so the
+# deployable is the verified bytes. Templates since app-tools no longer ship a
+# standalone pack script the factory could run after the build instead.
+if [[ "${FACTORY_BUILD_ARCHIVE:-0}" == '1' ]]; then
+  build_args+=(--tar)
+fi
+NODE_ENV=production node "$script_dir/timed-command.mjs" build pnpm build ${build_args[@]+"${build_args[@]}"}
 "$script_dir/apply-database.sh"
 
 if [[ "${FACTORY_SKIP_BROWSER:-0}" == "1" ]]; then
