@@ -10,7 +10,7 @@ import { buildRedactor } from './agent-harness.mjs';
 
 const sha256 = (value) => createHash('sha256').update(value).digest('hex');
 
-export function beginInvocation({ log, prompt, workspace, engine, phase, secrets, env = process.env }) {
+export function beginInvocation({ log, prompt, workspace, engine, phase, secrets, env = process.env, contextFiles = [] }) {
   const knownRedact = buildRedactor(secrets);
   const redact = value => scrubSecrets(knownRedact(value));
   const context = [];
@@ -26,7 +26,7 @@ export function beginInvocation({ log, prompt, workspace, engine, phase, secrets
       context.push({ path: relative, sha256: sha256(readFileSync(file)) });
     }
   }
-  for (const file of ['AGENTS.md', 'pnpm-lock.yaml', 'factory-template.json', '.agents/skills']) collect(file);
+  for (const file of ['AGENTS.md', 'pnpm-lock.yaml', 'factory-template.json', '.agents/skills', ...contextFiles]) collect(file);
   mkdirSync(path.dirname(log), { recursive: true });
   const text = redact(readFileSync(prompt, 'utf8'));
   writeFileSync(`${log}.prompt.md`, text, { mode: 0o600 });

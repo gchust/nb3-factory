@@ -81,3 +81,20 @@ node --test --test-concurrency=1 .github/scripts/tests/*.test.mjs
 
 真实工作流验收需在合并后覆盖普通搭建、评论问答、评论调用失败、补发与缺失产物；
 模拟测试通过不等于五家模型供应商均已完成真实调用验证。
+
+## 模块评审与补跑
+
+自动模块评审也进入正常历史包：`agent-review.jsonl`、脱敏 Prompt、调用记录、
+统一结果，以及 `build-review.json`、实际评审输入和文件哈希目录。指标单列“模块评审”，
+不并入实现或评论。旧记录缺调用侧车时仍归档可用日志/用量，但标为部分缺失。
+
+`Reassess Build Quality` 的独立补跑完成后，由 `Publish Build Review History` 归档到
+原执行 Issue。归档按新的评审 run/attempt 计量，原搭建/发布 attempt 仅作为来源保存；
+只读取已有产物，不再调用模型、不重搭应用。维护者可在 `factory:manual` Issue 补发：
+
+```text
+/factory-review-history <评审补跑 Run ID> <attempt>
+```
+
+此命令不是原业务搭建 Run ID。旧 Artifact 未包含的 Prompt/调用信息不可补造；原产物
+已过期时明确失败。发布失败不会改写业务通过状态，已有有效历史链接继续保留。

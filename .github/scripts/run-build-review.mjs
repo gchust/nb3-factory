@@ -12,6 +12,7 @@ import { buildRedactor, runAgentInvocation } from './agent-harness.mjs';
 import { createResult, readResult } from './agent-result.mjs';
 import { scrubSecrets } from './agent-history.mjs';
 import { recordTiming } from './timing.mjs';
+import { beginInvocation } from './agent-invocation-record.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const MAX_BYTES = 48 * 1024 * 1024;
@@ -153,7 +154,7 @@ export async function runBuildReview(workspace, artifacts, env = process.env, op
   const redact = buildRedactor(credentialNames.map(name => env[name]).filter(Boolean));
   const persist = () => save(output, JSON.parse(scrubSecrets(redact(JSON.stringify(report)))));
   persist();
-  let snapshot;
+  let snapshot, capture, invocationError;
   const started = Date.now();
   try {
     const mode = env.FACTORY_BUILD_REVIEW ?? 'full';
@@ -183,6 +184,7 @@ export async function runBuildReview(workspace, artifacts, env = process.env, op
     }
     const catalogHash = digest(JSON.stringify(captured.files));
     save(path.join(snapshot, 'review-files.json'), captured.files);
+    save(path.join(artifacts, 'build-review-files.json'), captured.files);
     const changedFiles = [...new Set(readFileSync(path.join(artifacts, 'agent.patch'), 'utf8')
       .split('\n').filter(line => line.startsWith('+++ b/')).map(line => `app/${line.slice(6)}`))]
       .filter(file => captured.files.some(item => item.path === file));
@@ -210,6 +212,9 @@ export async function runBuildReview(workspace, artifacts, env = process.env, op
     const agentEnv = engineEnv({ ...env, CODE_AGENT_THINKING: env.FACTORY_REVIEW_THINKING || 'medium', FACTORY_AGENT_ROLE: 'review' }, adapter.credentials);
     for (const name of ['GITHUB_TOKEN', 'GH_TOKEN', 'FACTORY_ADMIN_PASSWORD', 'FACTORY_TEST_PASSWORD']) delete agentEnv[name];
     const log = path.join(artifacts, 'agent-review.jsonl');
+    capture = beginInvocation({ log, prompt: promptPath, workspace: snapshot, engine: adapter.id,
+      phase: 'review', secrets: credentialNames.map(name => env[name]), env,
+      contextFiles: ['review-input.json', 'review-files.json'] });
     const invocation = adapter.createInvocation({ workspace: snapshot, prompt: promptPath, log,
       agentDir: path.join(snapshot, '.review-agent'), env: agentEnv });
     let actualVersion = null, configuredVersion = adapter.version;
@@ -221,8 +226,7 @@ export async function runBuildReview(workspace, artifacts, env = process.env, op
     report.reviewer = { engine: adapter.id, model: invocation.model, version: actualVersion,
       runId: env.GITHUB_RUN_ID ?? '', attempt: Number(env.GITHUB_RUN_ATTEMPT ?? 1),
       controlSha: env.FACTORY_CONTROL_SHA ?? '', replay: Boolean(options.source) };
-    writeFileSync(path.join(artifacts, 'agent-review.jsonl.prompt.md'), prompt);
-    let invocationError;
+    capture.start({ ...invocation, actualVersion, configuredVersion });
     try { await runAgentInvocation({ ...invocation, log, parseEvent: adapter.parseEvent,
       secrets: [...(invocation.secrets ?? []), ...credentialNames.map(name => env[name])],
       result: createResult({ engine: adapter.id, model: invocation.model, configuredVersion, actualVersion,
@@ -244,9 +248,11 @@ export async function runBuildReview(workspace, artifacts, env = process.env, op
       report.evaluation.limitations.push(report.reason);
     }
   } catch (error) {
+    invocationError ??= error;
     report.state = 'failed'; report.evaluation = null;
     report.reason = `独立评审未完成或证据校验失败：${error.message}。业务验收结果保持不变。`;
   } finally {
+    capture?.finish(invocationError);
     persist();
     recordTiming('agent:review', started, report.state === 'failed' ? 1 : 0);
     if (snapshot) rmSync(snapshot, { recursive: true, force: true });
