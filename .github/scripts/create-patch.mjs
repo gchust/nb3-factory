@@ -9,7 +9,7 @@ const args = parseArgs(process.argv.slice(2));
 const workspace = path.resolve(args.workspace);
 const patchPath = path.resolve(args.patch);
 const summaryPath = path.resolve(args.summary);
-const protectedPaths = ['.github', '.npmrc', '.gitmodules', 'config.yml'];
+const protectedPaths = ['.github', '.npmrc', '.gitmodules', 'config.yml', 'factory-source.json'];
 
 restoreProtectedPaths();
 git(['add', '--intent-to-add', '--all']);

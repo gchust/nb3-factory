@@ -98,7 +98,7 @@ jobs:
       - name: Export only verified package bytes and clean application source
         run: |
           mkdir -p "$RUNNER_TEMP/source-export"
-          node control/.github/scripts/source-snapshot.mjs export source "$RUNNER_TEMP/snapshot-packages" "$SOURCE_SHA"
+          node control/.github/scripts/source-snapshot.mjs export source "$RUNNER_TEMP/snapshot-packages" "$SOURCE_SHA" "$RUNNER_TEMP/source-smoke/crm"
           tar -czf "$RUNNER_TEMP/source-export/packages.tar.gz" -C "$RUNNER_TEMP/snapshot-packages" manifest.json packages
           node control/.github/scripts/source-candidate.mjs copy "$RUNNER_TEMP/source-smoke/crm" "$RUNNER_TEMP/clean-source-app"
           tar -czf "$RUNNER_TEMP/source-export/application.tar.gz" -C "$RUNNER_TEMP/clean-source-app" .

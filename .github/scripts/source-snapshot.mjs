@@ -48,7 +48,25 @@ export function validateSnapshot(value) {
   assert.ok(names.has('@nocobase/create-app') && names.has('@nocobase/app-template-default'));
   return value;
 }
-export async function exportSnapshot(repo, output, sourceSha, fetcher = fetch) {
+export function installedScopedVersions(application, workspaceVersions) {
+  const versions = { ...workspaceVersions };
+  const root = path.join(application, 'node_modules', '.pnpm');
+  for (const entry of readdirSync(root, { withFileTypes: true })) {
+    if (!entry.isDirectory()) continue;
+    const scope = path.join(root, entry.name, 'node_modules', '@nocobase');
+    if (!existsSync(scope)) continue;
+    for (const name of readdirSync(scope)) {
+      const manifest = path.join(scope, name, 'package.json');
+      if (!existsSync(manifest)) continue;
+      const pkg = readJson(manifest);
+      assert.equal(pkg.name, `@nocobase/${name}`);
+      if (versions[pkg.name]) assert.equal(versions[pkg.name], pkg.version, `Multiple installed versions for ${pkg.name}`);
+      versions[pkg.name] = pkg.version;
+    }
+  }
+  return versions;
+}
+export async function exportSnapshot(repo, output, sourceSha, application, fetcher = fetch) {
   assert.ok(sha(sourceSha));
   assert.equal(execFileSync('git', ['rev-parse', 'HEAD'], { cwd: repo, encoding: 'utf8' }).trim(), sourceSha);
   const stateDir = path.join(os.tmpdir(), `nocobase-local-registry-${hash(path.resolve(repo)).slice(0, 12)}`);
@@ -57,7 +75,7 @@ export async function exportSnapshot(repo, output, sourceSha, fetcher = fetch) {
   assert.equal(new URL(state.registry).origin, ORIGIN);
   const result = { version: 1, source: { repository: 'nocobase/nocobase3', sha: sourceSha }, packages: [] };
   mkdirSync(path.join(output, 'packages'), { recursive: true });
-  for (const [name, version] of Object.entries(state.versions).sort(([a], [b]) => a.localeCompare(b))) {
+  for (const [name, version] of Object.entries(installedScopedVersions(application, state.versions)).sort(([a], [b]) => a.localeCompare(b))) {
     assert.ok(pkgName(name));
     const response = await fetcher(`${ORIGIN}/${encodeURIComponent(name)}/${encodeURIComponent(version)}`, { signal: AbortSignal.timeout(30000) });
     assert.ok(response.ok, `No published snapshot metadata for ${name}`);
@@ -75,7 +93,7 @@ export async function exportSnapshot(repo, output, sourceSha, fetcher = fetch) {
     const fields = ['name', 'version', 'dependencies', 'bundleDependencies', 'bundledDependencies', 'optionalDependencies', 'peerDependencies', 'peerDependenciesMeta', 'engines', 'os', 'cpu', 'libc', 'bin', 'type', 'main', 'module', 'exports', 'imports', 'scripts', 'deprecated'];
     const metadata = Object.fromEntries(fields.filter(k => manifest[k] !== undefined).map(k => [k, manifest[k]]));
     metadata.dist = { integrity: `sha512-${createHash('sha512').update(bytes).digest('base64')}`, shasum: createHash('sha1').update(bytes).digest('hex') };
-    result.packages.push({ name, version, file, sha256: digest, manifest: metadata });
+    result.packages.push({ name, version, origin: state.versions[name] ? 'source' : 'published-dependency', file, sha256: digest, manifest: metadata });
   }
   validateSnapshot(result);
   writeJson(path.join(output, 'manifest.json'), result);
@@ -203,8 +221,8 @@ async function restore(workspace, metadataFile) {
   console.log(`Restored ${snapshot.packages.length} packages from source ${value.sourceSha}`);
 }
 async function main() {
-  const [mode, first, second, third] = process.argv.slice(2);
-  if (mode === 'export') await exportSnapshot(path.resolve(first), path.resolve(second), third);
+  const [mode, first, second, third, fourth] = process.argv.slice(2);
+  if (mode === 'export') await exportSnapshot(path.resolve(first), path.resolve(second), third, path.resolve(fourth));
   else if (mode === 'serve') {
     const server = snapshotServer(first);
     server.listen(PORT, '127.0.0.1');
@@ -220,6 +238,6 @@ async function main() {
       if (Number.isSafeInteger(pid) && pid > 1) try { process.kill(pid, 'SIGTERM'); } catch (error) { if (error.code !== 'ESRCH') throw error; }
     }
   }
-  else throw new Error('Usage: source-snapshot.mjs export REPO OUT SHA | serve DIR | start DIR [APP] | restore APP');
+  else throw new Error('Usage: source-snapshot.mjs export REPO OUT SHA APP | serve DIR | start DIR [APP] | restore APP');
 }
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) main().catch(error => { console.error(error.message); process.exitCode = 1; });

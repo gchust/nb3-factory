@@ -1,3 +1,4 @@
+import { validateDescriptor } from './source-snapshot.mjs';
 // Observable package/Skill baseline, not a claim that npm latest equals a source
 // checkout. Never publish configuration, credentials or complete node_modules.
 import { createHash } from 'node:crypto';
@@ -14,6 +15,14 @@ function json(file) { try { return JSON.parse(readFileSync(file, 'utf8')); } cat
 
 export function captureBaseline(workspace, { controlSha = null, sourceSha = null, creatorVersion = null } = {}) {
   const root = realpathSync(workspace);
+  let sourceSnapshot;
+  try { sourceSnapshot = JSON.parse(readFileSync(path.join(root, 'factory-source.json'), 'utf8')); }
+  catch (error) { if (error.code !== 'ENOENT') throw error; }
+  if (sourceSnapshot) {
+    validateDescriptor(sourceSnapshot, process.env.GITHUB_REPOSITORY ?? sourceSnapshot.repository);
+    if (sourceSha && sourceSha !== sourceSnapshot.sourceSha) throw new Error('Source SHA conflicts with frozen snapshot');
+    sourceSha ??= sourceSnapshot.sourceSha;
+  }
   if (sourceSha !== null && !isSha(sourceSha)) throw new Error('An unpublished baseline requires an exact source SHA');
   const files = [], omissions = [];
   const ancestors = new Set();
@@ -36,9 +45,10 @@ export function captureBaseline(workspace, { controlSha = null, sourceSha = null
         ...(real !== file ? { target: path.relative(root, real).split(path.sep).join('/') } : {}) });
     } else omissions.push({ path: relative, reason: 'not_a_bounded_file' });
   }
-  for (const name of ['package.json', 'pnpm-lock.yaml', 'factory-template.json', 'AGENTS.md', '.agents/skills']) collect(name);
+  for (const name of ['package.json', 'pnpm-lock.yaml', 'factory-template.json', ...(sourceSnapshot ? ['factory-source.json'] : []), 'AGENTS.md', '.agents/skills']) collect(name);
   const pkg = json(path.join(root, 'package.json'));
   const template = json(path.join(root, 'factory-template.json'));
+  creatorVersion ??= /^@nocobase\/create-app@([0-9][\w.+-]*)$/u.exec(template?.creator ?? '')?.[1] ?? null;
   const packages = [];
   for (const name of Object.keys({ ...pkg?.dependencies, ...pkg?.devDependencies }).filter(n => /^@nocobase\/[a-z0-9-]+$/u.test(n)).sort()) {
     const file = path.join(root, 'node_modules', name, 'package.json');
@@ -55,6 +65,7 @@ export function captureBaseline(workspace, { controlSha = null, sourceSha = null
   const facts = { version: 1, kind: sourceSha ? 'source-snapshot' : 'installed-packages',
     controlSha: isSha(controlSha) ? controlSha : null, workspaceSha,
     source: sourceSha ? { repository: 'nocobase/nocobase3', sha: sourceSha } : null,
+    ...(sourceSnapshot ? { sourceSnapshot } : {}),
     creatorVersion, templateVersion: template?.templateVersion ?? pkg?.nocobase?.defaultTemplateVersion ?? null,
     lockSha256: files.find(f => f.path === 'pnpm-lock.yaml')?.sha256 ?? null,
     packages, files, omissions };

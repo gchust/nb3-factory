@@ -1,3 +1,4 @@
+import { isSourceBaselineRef, isSharedTaskBase } from './source-baseline-ref.mjs';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 
@@ -81,6 +82,9 @@ try {
   );
   let targetRef = await client.getRef(task.targetBranch, true);
   let targetCreated = false;
+  if (!targetRef && isSourceBaselineRef(task.targetBranch)) {
+    throw new TaskInputError('指定的源码基线不存在，不能从默认分支伪造替代。');
+  }
   if (!targetRef) {
     const defaultRef = await client.getRef(defaultBranch);
     targetRef = await client.createRef(
@@ -104,7 +108,7 @@ try {
   if (ownPullRequest && ownPullRequest.base.ref !== task.targetBranch) {
     throw new TaskInputError('现有 PR 的合并目标与任务不一致；请先对齐配置，不自动改写旧 PR。');
   }
-  const blockingPullRequest = task.targetBranch !== defaultBranch && openPullRequests.find(
+  const blockingPullRequest = !isSharedTaskBase(task.targetBranch, defaultBranch) && openPullRequests.find(
     (pull) =>
       pull.base?.ref === task.targetBranch &&
       pull.head?.repo?.full_name === repository &&
@@ -171,7 +175,7 @@ try {
 
   const workRef = await client.getRef(workBranch, true);
   const baseRef = workRef ? workBranch : task.targetBranch;
-  const baseSha = workRef?.object?.sha ?? (task.targetBranch === defaultBranch
+  const baseSha = workRef?.object?.sha ?? (isSharedTaskBase(task.targetBranch, defaultBranch)
     ? await pinInitialBase(client, issueNumber, task.targetBranch, targetRef.object.sha)
     : targetRef.object.sha);
 
