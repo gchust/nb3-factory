@@ -35,10 +35,10 @@
     "artifact": "factory-agent-224",
     "artifactId": 10763178416,
     "reviewSource": {
-      "runId": 35937706392,
+      "runId": 35966342221,
       "attempt": 1,
-      "artifactId": 10782969320,
-      "controlSha": "542e63602666d7a7bd9de05be567d1870e8fe3fd"
+      "artifactId": 10794716454,
+      "controlSha": "1bd143f61094211c8c19783e489b5e85d86a91c4"
     },
     "usage": {
       "phases": {
@@ -310,10 +310,10 @@
       "artifact": "factory-agent-224",
       "artifactId": 10763178416,
       "reviewSource": {
-        "runId": 35937706392,
+        "runId": 35966342221,
         "attempt": 1,
-        "artifactId": 10782969320,
-        "controlSha": "542e63602666d7a7bd9de05be567d1870e8fe3fd"
+        "artifactId": 10794716454,
+        "controlSha": "1bd143f61094211c8c19783e489b5e85d86a91c4"
       },
       "usage": {
         "phases": {
@@ -1253,7 +1253,7 @@
         "runId": 35881009045,
         "attempt": 1,
         "controlSha": "65d8d8e355c56ce1d809fd37140094c05a0097ea",
-        "rubricVersion": 1,
+        "rubricVersion": 2,
         "baseSha": "65d8d8e355c56ce1d809fd37140094c05a0097ea",
         "patchHash": "3204a620a7d79cdcb4bd9479852c941e953b6206e08bd4d488d1cf1fd2bca735",
         "lockfileHash": "9b47188308d984514c0c1660e995dadf84ce640c255e2846f0f76e4c69da84c0",
@@ -1425,234 +1425,595 @@
         ],
         "reviewCriteriaHash": "977a1a33dc347a7f47afebb632be49bdc647d599eecd2ab33e02b34ebb061a01",
         "artifactHash": "7ac6e0e19b17d41f12c59860fa4b27c64c1bf9e287a90d09f614f7c4df4b109d",
-        "inputHash": "10d872845732f51b040c71e10c4a426bf693345e50c1f981639796322617a992"
+        "inputHash": "ded3bf783805a7e20fa6608cd610f720bcb0b1eec6f52a4e8dd72e60339bcb42"
       },
       "evaluation": {
-        "version": 1,
-        "inputHash": "10d872845732f51b040c71e10c4a426bf693345e50c1f981639796322617a992",
+        "version": 2,
+        "inputHash": "ded3bf783805a7e20fa6608cd610f720bcb0b1eec6f52a4e8dd72e60339bcb42",
         "progress": {
           "complete": true,
           "pendingModules": []
         },
-        "summary": "本次搭建用迁移+幂等种子建三表，以自定义 Hono 服务做关联查询与 SUM 聚合，前端用子路由/RouteDialog 实现列表、表单与客户详情，沿用了模板登录与 i18n；最终 QA 的 B01–B05 在真实浏览器通过，且合计随真实记录 100→150 变化，R01/R02 的真实关系与聚合成立。首轮因在 RouteDialog 外调用 useRouteOverlay 导致所有新增/编辑页崩溃（B01–B05 全 failed），修复轮迁移进后代组件后通过；最终仍遗留编辑表单客户下拉显示外键数字的界面瑕疵。此外 seed 初始化 datetime 需避开时区后缀这一规则未写入 Skill/文档，造成返工。",
+        "summary": "本次 CRM 需求落在 NocoBase3 的两条主干上：@nocobase/db 的迁移/集合/关系与运行期 query+聚合，以及 @nocobase/app-server + app-plugin-authentication 的路由/认证边界；客户端用 @nocobase/app-client 的声明式路由/子路由与 HTTP 客户端，文案走 @nocobase/i18n。四个能力单元（建模迁移、服务与聚合、服务端 API/认证、客户端路由与请求）加 i18n 均在真实 SQLite 与浏览器上支撑了 B01-B05，最终轮全通过，合计随真实记录 100→150。主要摩擦是文档缺口而非能力缺口：datetime 与 datetimeTz 的时区语义未写明（应用用 ISO 带 Z 写入而返工两轮），client-api 未说明模板不提供 react-query，聚合只有一句“读 QueryAdapter 类型”而无示例。首轮 0/5 的根因是应用把 useRouteOverlay 放在 RouteDialog 的同一组件（已文档化并被最终修复），不是框架缺陷；未发现框架职责内的核心路径不可用。",
         "modules": [
           {
-            "name": "数据访问：迁移、种子与运行时写入",
-            "scope": "本轮 CRM 用 NocoBase App 的 database/main 迁移与种子建立 customers/contacts/opportunities 三表（含 belongsTo 外键与级联删除、索引、decimal 默认值），并用 database.query() 在服务层读写；覆盖 B01/B02/B04 涉及的真实建表与持久化。",
-            "limitations": "未独立重跑迁移/种子，仅依据源码、逻辑测试与浏览器结果；未覆盖多连接、事务回滚与并发写入。",
+            "name": "数据建模、迁移与种子（@nocobase/db 集合/迁移/种子）",
+            "targets": [
+              {
+                "kind": "library",
+                "name": "@nocobase/db",
+                "entrypoints": [
+                  "defineMigration",
+                  "builder.createCollection",
+                  "collection.string/decimal/datetime",
+                  "collection.belongsTo(...).notNull().constraints(true).onDelete('cascade')",
+                  "collection.index",
+                  "defineSeed"
+                ],
+                "evidence": [
+                  "E2",
+                  "E3",
+                  "E26"
+                ]
+              },
+              {
+                "kind": "guidance",
+                "name": "app/.agents/skills/nocobase-app-development/references/migrations.md",
+                "entrypoints": [
+                  "Writing a migration",
+                  "A migration is immutable and self-contained",
+                  "Field builders",
+                  "Seeds"
+                ],
+                "evidence": [
+                  "E18"
+                ]
+              },
+              {
+                "kind": "guidance",
+                "name": "app/AGENTS.md",
+                "entrypoints": [
+                  "migration example",
+                  "database.query() runtime rule"
+                ],
+                "evidence": [
+                  "E33"
+                ]
+              }
+            ],
+            "scope": "三实体的集合/字段/关系/约束建模、迁移执行与幂等种子；应用侧只决定字段取值与业务规则。",
+            "limitations": "未阅读 migrator 的事务/校验实现；未在干净数据库重跑 pnpm migrate，仅依据最终验收与迁移源码。",
             "criteria": [
               "B01",
               "B02",
-              "B04"
-            ],
-            "scores": {
-              "design": {
-                "score": 85,
-                "reason": "迁移是自包含且不可变的定义，未导入运行时 schema；belongsTo/cascade/索引/decimal 默认值的抽象与 Skill 的 migrations 指南一致，服务层用 query builder 参数化读写。",
-                "evidence": [
-                  "E1",
-                  "E2",
-                  "E11"
-                ]
-              },
-              "completeness": {
-                "score": 88,
-                "reason": "三表字段、可空性、外键与索引齐全，down 按 opportunities→contacts→customers 逆序删除；种子恰好写入 2/3/3 条并可在重复执行时跳过。",
-                "evidence": [
-                  "E1",
-                  "E2",
-                  "E12"
-                ]
-              },
-              "agentFriendliness": {
-                "score": 70,
-                "reason": "migrations/database-and-data 文档覆盖了迁移、seed 与 query builder，但未说明 datetime 为 naive 值、字符串不得带时区后缀，导致按常见 new Date().toISOString() 写法返工。",
-                "evidence": [
-                  "E11",
-                  "E10"
-                ]
-              },
-              "outputQuality": {
-                "score": 84,
-                "reason": "真实 SQLite 测试验证了表/外键/索引与回滚，seed 固定时间戳且幂等；未使用静态数组冒充数据，满足 R02 的真实持久化要求。",
-                "evidence": [
-                  "E12",
-                  "E2"
-                ]
-              }
-            }
-          },
-          {
-            "name": "服务端路由与服务层（关联查询与真实聚合）",
-            "scope": "自定义 Hono API：/crm/customers、/crm/contacts、/crm/opportunities 的列表/详情/创建/更新，customerId 关系过滤、SUM 金额聚合、stage 筛选与 400/404 错误映射；对应 R01/R02 与 B02–B05。",
-            "limitations": "未实际发起 HTTP 请求，仅依据实现与其测试；未验证未登录以外的权限组合（本轮只有一种使用方式）。",
-            "criteria": [
-              "B02",
-              "B03",
               "B04",
               "B05"
             ],
-            "scores": {
-              "design": {
-                "score": 82,
-                "reason": "服务与路由分离，ServiceToken 单例装配，关系与聚合都落在服务层；不过关联查询用 customerId 手写 where 与全量 customerNames 映射，未使用框架更抽象的关联/Repository 能力，R01 的“公共 Repository/关联查询”只满足其关系真实性的实质。",
+            "requirements": [
+              {
+                "need": "客户/联系人/商机三实体，联系人、商机必填归属客户且客户删除后不留孤儿；金额非负、阶段固定三值；不能靠前端拼接静态关系。",
+                "responsibility": "框架负责集合/字段/关系/约束的建模与执行；应用负责字段取值、业务校验与聚合口径。",
+                "support": "direct",
+                "recommendedUsage": "migrations.md 要求迁移自包含、用 builder.createCollection + belongsTo/notNull/constraints/onDelete cascade + decimal precision/scale + index；AGENTS.md 同样给出该模式。",
+                "actualUsage": "Agent 在 202609230001 完全按此建模，三表三关系与索引齐全，未导入演化定义。",
+                "gapOwner": "none",
                 "evidence": [
-                  "E3",
-                  "E5"
+                  "E1",
+                  "E2",
+                  "E18",
+                  "E33"
                 ]
               },
-              "completeness": {
-                "score": 84,
-                "reason": "需求所需的全部列表/创建/更新与详情聚合均实现，stage 查询参数与错误码映射完整；缺少按 id 读取单个联系人或商机的接口，编辑页需先拉全量再查找。",
+              {
+                "need": "只准备 2 客户/3 联系人/3 商机，写真实数据库，可重复初始化。",
+                "responsibility": "框架负责种子定义、幂等执行与时间值契约；应用决定数据内容。",
+                "support": "direct",
+                "recommendedUsage": "migrations.md 的 Seeds：defineSeed + insertInto，固定可复现，并明确重复运行行为。",
+                "actualUsage": "Agent 用 defineSeed 做 find-or-insert 幂等种子，固定无时区时间戳；但首次使用带 Z 的 ISO 字符串写 createdAt 触发 RepositoryError，返工约两轮。",
+                "gapOwner": "documentation",
                 "evidence": [
-                  "E3",
                   "E4",
-                  "E5"
+                  "E18",
+                  "E26",
+                  "E28"
+                ]
+              }
+            ],
+            "scores": {
+              "requirementFit": {
+                "score": 92,
+                "reason": "本次所需字段与关系（nullable string、decimal(p,s)、belongsTo+onDelete cascade、index）在 @nocobase/db 的公开构建器 E2 中逐项具备；迁移与种子 E1/E4 按 E18 指引落地并在真实数据库通过 B01/B02/B04/B05（E27）。",
+                "evidence": [
+                  "E2",
+                  "E3",
+                  "E18"
+                ]
+              },
+              "usability": {
+                "score": 83,
+                "reason": "fluent builder 与 defineMigration/defineSeed 一致、示例完整（E18），迁移与种子一次可读可写；扣分点是 datetime 的朴素值契约未在 E18 说明，实际写入需绕开带 Z 字符串（E26），造成返工（E28）。",
+                "evidence": [
+                  "E18",
+                  "E26"
                 ]
               },
               "agentFriendliness": {
-                "score": 80,
-                "reason": "接口用类型化 Error 区分 400/404，客户端据 status 显示翻译文案；但错误 message 为英文原文、契约只靠类型声明，且文档未给出该自定义路由模式的完整示例。",
+                "score": 82,
+                "reason": "migrations.md 提供完整可复制示例、不可变迁移规则与种子幂等要求（E18），AGENTS.md 也给出入口（E33）；但没有 datetime 与 datetimeTz 的时区说明，Agent 只能从错误信息反推（E26/E28）。",
                 "evidence": [
-                  "E5",
-                  "E8"
+                  "E18",
+                  "E33",
+                  "E26"
                 ]
               },
-              "outputQuality": {
-                "score": 86,
-                "reason": "聚合取自数据库 SUM、筛选与修改后一致，最终 QA 以 100→150 的合计变化验证无硬编码演示金额，逻辑测试覆盖聚合、筛选与非法输入。",
+              "design": {
+                "score": 90,
+                "reason": "defineMigration/defineSeed 为稳定公开入口，迁移声明自包含且命名策略负责逻辑名到物理名，集合与关系构建器边界清晰（E2/E3/E18）。",
                 "evidence": [
+                  "E2",
                   "E3",
-                  "E13",
-                  "E14"
+                  "E18"
+                ]
+              },
+              "reliability": {
+                "score": 84,
+                "reason": "迁移按声明生成表/关系/索引并在真实 SQLite 上完成 B01-B05（E1/E27）；temporal.js 对 datetime 的校验是确定性的且给出可读错误（E26），但未审查 migrator 事务实现，故非满分。",
+                "evidence": [
+                  "E26",
+                  "E1",
+                  "E27"
                 ]
               }
             }
           },
           {
-            "name": "客户端页面、路由与 UI 组件",
-            "scope": "客户/联系人/商机三个列表、新增/编辑 RouteDialog 表单、客户详情 RouteChildPage（联系人与商机及金额合计）、阶段筛选，使用 shadcn primitives 与自定义 DataTable/StatePanel/StageBadge；覆盖 B01–B05。",
-            "limitations": "图像无法在本引擎查看，未做视觉评审；未验证键盘/窄屏/主题等跨状态表现。",
-            "criteria": [
-              "B01",
-              "B02",
-              "B03",
-              "B04",
-              "B05"
-            ],
-            "scores": {
-              "design": {
-                "score": 82,
-                "reason": "按 Skill 用子路由+RouteDialog 承载表单、RouteChildPage 承载覆盖式详情，页面复用 PageContainer 与 ui primitives，useCrmData 自管请求状态；整体结构清晰。",
+            "name": "服务装配与真实数据访问/聚合（@nocobase/service-provider + @nocobase/db query）",
+            "targets": [
+              {
+                "kind": "library",
+                "name": "@nocobase/service-provider",
+                "entrypoints": [
+                  "createServiceToken",
+                  "ServiceProvider.register",
+                  "container.singleton"
+                ],
                 "evidence": [
-                  "E7",
                   "E8",
-                  "E10"
+                  "E34"
                 ]
               },
-              "completeness": {
-                "score": 74,
-                "reason": "列表/表单/详情/筛选/校验均存在且最终 QA 通过，但编辑表单的关联客户下拉回填显示外键数字而非名称，属未完成的显示细节。",
+              {
+                "kind": "library",
+                "name": "@nocobase/db",
+                "entrypoints": [
+                  "databaseManagerToken",
+                  "DatabaseManager.query()",
+                  "expression.fn.sum",
+                  "QueryAdapter.execute/executeTakeFirst",
+                  "transaction"
+                ],
                 "evidence": [
                   "E6",
-                  "E14"
+                  "E7",
+                  "E29"
                 ]
               },
-              "agentFriendliness": {
-                "score": 68,
-                "reason": "Skill 已明确写出 overlay hook 的调用位置规则，首轮仍在页面组件中调用导致全部新增/编辑页崩溃；关联 Select 也未按 shadcn 的 string value 约定使用，说明该 API 对 Agent 的约束不够直观。",
+              {
+                "kind": "guidance",
+                "name": "app/.agents/skills/nocobase-app-development/references/database-and-data.md",
+                "entrypoints": [
+                  "Resolving the database",
+                  "Reading",
+                  "Where data access belongs"
+                ],
                 "evidence": [
-                  "E10",
-                  "E13",
-                  "E6"
+                  "E19"
                 ]
               },
-              "outputQuality": {
-                "score": 72,
-                "reason": "功能路径最终可用且有渲染回归测试，但首轮 B01–B05 全失败暴露了页面级缺陷，最终仍遗留下拉显示外键数字的界面瑕疵。",
+              {
+                "kind": "guidance",
+                "name": "app/.agents/skills/nocobase-app-development/references/services-and-jobs.md",
+                "entrypoints": [
+                  "Services",
+                  "The token is the identity",
+                  "Keep the layers apart"
+                ],
                 "evidence": [
-                  "E13",
-                  "E14",
-                  "E6"
+                  "E20"
                 ]
               }
-            }
-          },
-          {
-            "name": "国际化（i18n）",
-            "scope": "沿用模板的 @nocobase/i18n 与 client/locales 机制，为 CRM 面增加 en-US/zh-CN 文案，并用 t() 渲染标签、状态、空态与错误提示。",
-            "limitations": "未在中文/英文界面间实际切换核对截断与回退，仅审阅 locale 源码与页面取词。",
-            "criteria": [],
-            "scores": {
-              "design": {
-                "score": 86,
-                "reason": "沿用 AppResource 类型与既有 locale 命名空间，新增 crm.* 键而不改外壳，错误提示通过 messages 参数注入而非硬编码。",
+            ],
+            "scope": "运行期真实读写、按客户聚合商机金额、阶段过滤、服务/token 装配与层间边界。",
+            "limitations": "未阅读 connection/命名策略全量实现；聚合执行证据来自查询构建器 adapter 的数值选择/解码与最终验收，未单独压测极端数值。",
+            "criteria": [
+              "B02",
+              "B03",
+              "B04"
+            ],
+            "requirements": [
+              {
+                "need": "客户详情显示其商机预计金额合计且数字来自真实记录；金额修改刷新后合计随记录变化；商机列表按阶段筛选。",
+                "responsibility": "框架负责真实读写、聚合与条件查询的服务装配；应用定义聚合口径、筛选语义与业务校验。",
+                "support": "direct",
+                "recommendedUsage": "database-and-data.md：resolve databaseManagerToken 后用 database.query()，聚合经 expression builder；services-and-jobs.md：createServiceToken + ServiceProvider.register。",
+                "actualUsage": "Agent 在 providers/crm.ts 用 token + createCrmService(database)，getCustomer 用 fn.sum('amount') 按 customerId 聚合，listOpportunities 带 stage where；B02/B03/B04 在真实记录上通过。",
+                "gapOwner": "none",
                 "evidence": [
-                  "E9",
-                  "E8"
-                ]
-              },
-              "completeness": {
-                "score": 90,
-                "reason": "common/customers/contacts/opportunities/stage 全部键在 en-US 与 zh-CN 均有对应译文，覆盖表单标签、必填与金额校验、空态与合计标题。",
-                "evidence": [
-                  "E9"
-                ]
-              },
-              "agentFriendliness": {
-                "score": 84,
-                "reason": "键命名一致、类型由 en-US 派生可静态检查漏译；但页面仍直接写 t('crm.stage.'+stage) 之类的动态键，类型检查无法覆盖。",
-                "evidence": [
-                  "E9"
-                ]
-              },
-              "outputQuality": {
-                "score": 88,
-                "reason": "最终 QA 的中英文界面标签与“Select a customer.”“Enter an amount of zero or more.”等错误文案均可理解，未出现未翻译占位。",
-                "evidence": [
-                  "E9",
-                  "E14"
+                  "E5",
+                  "E6",
+                  "E7",
+                  "E19",
+                  "E20",
+                  "E27"
                 ]
               }
-            }
-          },
-          {
-            "name": "登录与访问边界（authentication）",
-            "scope": "按需求只保留一种普通业务使用方式：沿用模板登录，页面 authz:'skip'+auth:'required'，服务端每个 CRM 端点 auth.required()；不新建角色体系。",
-            "limitations": "未实际验证未登录直连与跨用户访问控制；未涉及角色/页面级授权矩阵。",
-            "criteria": [],
+            ],
             "scores": {
-              "design": {
-                "score": 84,
-                "reason": "选择 authz:'skip' 且服务端统一 auth.required()，与“只有一种使用方式、不新做角色体系”的需求一致，边界说明写在代码注释中。",
+              "requirementFit": {
+                "score": 91,
+                "reason": "database.query()/fn.sum 的公开类型（E7）与执行实现（E29）支持按客户聚合真实记录；providers/crm.ts 的接入（E5）在最终验收中给出 100→150 且按客户隔离（E27）。",
                 "evidence": [
                   "E7",
+                  "E29",
                   "E5"
                 ]
               },
-              "completeness": {
-                "score": 84,
-                "reason": "所有 CRM 路由挂在同一子路由并统一套用 auth.required()，路由测试断言匿名请求返回 401；页面侧全部 auth:'required'。",
+              "usability": {
+                "score": 86,
+                "reason": "databaseManagerToken + query() 的解析方式与 token/provider 装配步骤短且一致（E6/E8/E19/E20）；聚合通过 expression builder 可用但示例缺失，需要自行读类型。",
                 "evidence": [
-                  "E5",
-                  "E12"
+                  "E6",
+                  "E8",
+                  "E19",
+                  "E20",
+                  "E34"
                 ]
               },
               "agentFriendliness": {
-                "score": 82,
-                "reason": "pages-and-routes 文档清楚区分 auth 与 authz 的语义并给出 authz:'skip' 示例，Agent 直接照用；但 authz:'skip' 的取舍需要自行判断，注释补充了理由。",
+                "score": 80,
+                "reason": "services-and-jobs.md 给出完整可复制的 token/provider 示例与身份/层间规则（E20），database-and-data.md 给出读写示例（E19）；聚合只有一句“read the QueryAdapter types”，没有 sum 示例，Agent 需自行探索（E7/E28）。",
                 "evidence": [
-                  "E7",
+                  "E19",
+                  "E20",
+                  "E7"
+                ]
+              },
+              "design": {
+                "score": 90,
+                "reason": "token 以对象身份为键、ServiceProvider 生命周期与 service/route 分层（E8/E20），DatabaseManager 同时提供 query/builder/repository/transaction，职责边界明确（E6）。",
+                "evidence": [
+                  "E6",
+                  "E8",
+                  "E20",
+                  "E34"
+                ]
+              },
+              "reliability": {
+                "score": 82,
+                "reason": "查询构建器 adapter 对 sum/count/avg 做数值选择与别名解码（E29），manager 的 query()/transaction() 契约明确（E6）；最终验收确认合计来自真实记录（E27），但未覆盖聚合的边界数值，故留有余量。",
+                "evidence": [
+                  "E29",
+                  "E6",
+                  "E27"
+                ]
+              }
+            }
+          },
+          {
+            "name": "服务端 API 与认证边界（@nocobase/app-server router + @nocobase/app-plugin-authentication）",
+            "targets": [
+              {
+                "kind": "library",
+                "name": "@nocobase/app-server",
+                "entrypoints": [
+                  "defineApiRoutes",
+                  "AppApiRouteContribution",
+                  "AppRouterFactory"
+                ],
+                "evidence": [
                   "E10"
                 ]
               },
-              "outputQuality": {
-                "score": 80,
-                "reason": "登录后功能可用且匿名被拒，满足本轮验收；未提供更细的授权证据，因为需求本身未要求。",
+              {
+                "kind": "library",
+                "name": "@nocobase/app-plugin-authentication",
+                "entrypoints": [
+                  "authenticationToken",
+                  "auth.required()"
+                ],
                 "evidence": [
+                  "E11",
+                  "E30"
+                ]
+              },
+              {
+                "kind": "guidance",
+                "name": "app/.agents/skills/nocobase-app-development/references/server-routes.md",
+                "entrypoints": [
+                  "Two kinds",
+                  "Every route owns its own security",
+                  "Keep the layers apart"
+                ],
+                "evidence": [
+                  "E21"
+                ]
+              }
+            ],
+            "scope": "CRM 读写 HTTP 接口、统一错误到 400/404 的映射、登录作为唯一访问边界。",
+            "limitations": "未对匿名请求单独发压验证 401（仅读实现与已验证路径）；未覆盖角色/授权体系，按需求本就不做。",
+            "criteria": [
+              "B01",
+              "B02",
+              "B05"
+            ],
+            "requirements": [
+              {
+                "need": "三个列表与新增/编辑表单的读写接口，沿用已有登录、只有一种普通业务使用方式，不新做角色；必填缺失与负金额返回可理解错误。",
+                "responsibility": "框架负责路由贡献装配、请求解析、认证中间件与错误状态；应用负责业务校验与错误语义映射。",
+                "support": "direct",
+                "recommendedUsage": "server-routes.md：defineApiRoutes + 隔离子路由内 auth.required()，onError 映射业务错误，业务逻辑下沉 service。",
+                "actualUsage": "Agent 在 routes/crm.ts 以隔离子路由 self-mount auth.required()，onError 将 CrmValidationError→400/NotFound→404，readJson 校验 JSON 对象，路径不写 /api。",
+                "gapOwner": "none",
+                "evidence": [
+                  "E9",
+                  "E10",
+                  "E11",
+                  "E21"
+                ]
+              }
+            ],
+            "scores": {
+              "requirementFit": {
+                "score": 92,
+                "reason": "defineApiRoutes 与 auth.required() 是公开入口（E10/E11），实现按约定返回 401（E30）；B01/B02/B05 在带认证的真实浏览器中通过（E27）。",
+                "evidence": [
+                  "E10",
+                  "E11",
+                  "E30"
+                ]
+              },
+              "usability": {
+                "score": 88,
+                "reason": "路由贡献工厂、隔离子路由与 onError 组合步骤清晰（E21），错误映射直接可复用（E9）；无需重复认证装配代码。",
+                "evidence": [
+                  "E21",
+                  "E9"
+                ]
+              },
+              "agentFriendliness": {
+                "score": 88,
+                "reason": "server-routes.md 用完整示例说明入口、认证不可依赖挂载位置、层间归属（E21），与 AppApiRouteContribution 类型一致（E10），Agent 直接照做。",
+                "evidence": [
+                  "E21",
+                  "E10"
+                ]
+              },
+              "design": {
+                "score": 88,
+                "reason": "路由贡献以 scope 'api'/'root' 区分并由 runtime 装配，router 作为服务而非应用本体，认证是可组合中间件（E10/E11/E30）。",
+                "evidence": [
+                  "E10",
+                  "E11",
+                  "E30"
+                ]
+              },
+              "reliability": {
+                "score": 86,
+                "reason": "auth.required() 的无会话路径返回 401 UNAUTHORIZED、凭据被拒按原状态返回（E30）；defineApiRoutes 冻结返回 scope 贡献（E10）；最终验收无 4xx/5xx 页面错误（E27）。",
+                "evidence": [
+                  "E30",
+                  "E10",
+                  "E27"
+                ]
+              }
+            }
+          },
+          {
+            "name": "客户端路由/页面与数据请求（@nocobase/app-client）",
+            "targets": [
+              {
+                "kind": "library",
+                "name": "@nocobase/app-client",
+                "entrypoints": [
+                  "defineAppRoutes",
+                  "AppClientRouteDefinition(children/authz/breadcrumb/navigation)",
+                  "useApiClient",
+                  "ApiClient.request"
+                ],
+                "evidence": [
+                  "E14",
+                  "E15",
+                  "E31"
+                ]
+              },
+              {
+                "kind": "guidance",
+                "name": "app/.agents/skills/nocobase-app-development/references/client-child-routes.md",
+                "entrypoints": [
+                  "How a child route presents itself",
+                  "Child pages shown as dialogs or drawers",
+                  "Close the overlay"
+                ],
+                "evidence": [
+                  "E23"
+                ]
+              },
+              {
+                "kind": "guidance",
+                "name": "app/.agents/skills/nocobase-app-development/references/client-api.md",
+                "entrypoints": [
+                  "Resolve the client",
+                  "Custom HTTP endpoints",
+                  "Cancellation and errors"
+                ],
+                "evidence": [
+                  "E22"
+                ]
+              }
+            ],
+            "scope": "声明式路由与子路由、overlay 表单、列表/详情页面、经应用客户端的自定义端点请求与取消/错误处理。",
+            "limitations": "未运行浏览器亲自复核视觉与交互（模型无法读取 PNG）；页面组合与 overlay 行为依据最终验收报告与源码。",
+            "criteria": [
+              "B01",
+              "B02",
+              "B03",
+              "B04",
+              "B05"
+            ],
+            "requirements": [
+              {
+                "need": "三列表与新增/编辑表单、客户详情子页、商机阶段筛选；沿用登录与现有主页/设置，不新增角色。",
+                "responsibility": "框架负责路由/子路由/overlay 装配、HTTP 客户端与 baseURL、页面认证边界；应用负责页面组合与交互。",
+                "support": "composition",
+                "recommendedUsage": "client-child-routes.md：子路由承载 overlay 与详情页，useRouteOverlay 只在 overlay 后代组件调用；client-api.md：useApiClient + request + AbortController。",
+                "actualUsage": "Agent 用 defineAppRoutes 声明三组带 children 的页面并自持 auth，api.ts 全部走 useApiClient 的 request；round1 在渲染 RouteDialog 的同一组件调用 useRouteOverlay，六个 overlay 页全部 “Unable to load page”，round2 按文档移入后代组件后 B01-B05 通过。",
+                "gapOwner": "application",
+                "evidence": [
+                  "E9",
                   "E12",
                   "E13",
-                  "E14"
+                  "E16",
+                  "E17",
+                  "E22",
+                  "E23",
+                  "E27",
+                  "E28"
+                ]
+              }
+            ],
+            "scores": {
+              "requirementFit": {
+                "score": 88,
+                "reason": "defineAppRoutes 的 children/authz/breadcrumb 与 useApiClient 覆盖列表、子页与 overlay（E14/E15），最终验收五个场景全通过（E27）。",
+                "evidence": [
+                  "E14",
+                  "E15",
+                  "E27"
+                ]
+              },
+              "usability": {
+                "score": 80,
+                "reason": "路由与 HTTP 客户端 API 一致、取消模式有文档（E22/E31），但 overlay 的 provider 边界很窄：hook 放在渲染 wrapper 的组件即整页失败，Agent 首轮踩中（E28）。",
+                "evidence": [
+                  "E22",
+                  "E23",
+                  "E31"
+                ]
+              },
+              "agentFriendliness": {
+                "score": 85,
+                "reason": "client-child-routes 明确给出 useRouteOverlay 的 WRONG 反例与确切报错（E23），client-api 给出 AbortController 取数模板（E22）；未说明模板不提供 react-query/QueryClientProvider，Agent 先尝试后返工（E28）。",
+                "evidence": [
+                  "E23",
+                  "E22"
+                ]
+              },
+              "design": {
+                "score": 86,
+                "reason": "路由贡献类型把 auth/authz/breadcrumb/navigation 与 componentLoader 分离，overlay 是应用组件而路由注册不变，HTTP 客户端经 token/hook 统一解析（E14/E31/E22）。",
+                "evidence": [
+                  "E14",
+                  "E31",
+                  "E22"
+                ]
+              },
+              "reliability": {
+                "score": 82,
+                "reason": "plugins.js 在装配期校验 componentLoader/path、auth 继承不可变与保留路径（E31），useApiClient 等价 useService(apiClientToken)（E15）；浏览器端最终一轮无页面错误（E27），但未覆盖路由错误分支。",
+                "evidence": [
+                  "E31",
+                  "E15",
+                  "E27"
+                ]
+              }
+            }
+          },
+          {
+            "name": "多语言文案机制（@nocobase/i18n）",
+            "targets": [
+              {
+                "kind": "library",
+                "name": "@nocobase/i18n",
+                "entrypoints": [
+                  "useTranslation",
+                  "LocaleResource",
+                  "APP_NS",
+                  "namespace fallback chain"
+                ],
+                "evidence": [
+                  "E32"
+                ]
+              },
+              {
+                "kind": "guidance",
+                "name": "app/.agents/skills/nocobase-app-plugin-i18n/SKILL.md",
+                "entrypoints": [
+                  "Adding a string",
+                  "Naming translation keys"
+                ],
+                "evidence": [
+                  "E24"
+                ]
+              }
+            ],
+            "scope": "应用级文案 key 组织、en/zh 双语与命名空间回退，沿用已有翻译机制不新增机器。",
+            "limitations": "未做语言切换的浏览器复核；未覆盖插件命名空间/服务端消息场景。",
+            "criteria": [
+              "B03"
+            ],
+            "requirements": [
+              {
+                "need": "沿用翻译机制，CRM 页面与阶段标签支持中英两种文案。",
+                "responsibility": "框架负责 i18n runtime、命名空间与 key 类型约束；应用负责 key 命名与各语言文案。",
+                "support": "direct",
+                "recommendedUsage": "i18n SKILL：应用文案放 client/locales，en-US 派生 LocaleResource<typeof enUS>，其余语言用该类型标注，页面用 @nocobase/i18n/client 的 useTranslation。",
+                "actualUsage": "Agent 在 en-US.ts 定义 crm.* 并导出 AppResource，zh-CN 用 AppResource 标注，页面/阶段标签经 useTranslation 渲染。",
+                "gapOwner": "none",
+                "evidence": [
+                  "E24",
+                  "E25"
+                ]
+              }
+            ],
+            "scores": {
+              "requirementFit": {
+                "score": 88,
+                "reason": "useTranslation 与 LocaleResource 类型约束在 E24/E25 中按指引落地，导航与 crm.* 文案齐全；最终验收在界面可见阶段标签的本地化（E27）。",
+                "evidence": [
+                  "E24",
+                  "E25",
+                  "E27"
+                ]
+              },
+              "usability": {
+                "score": 87,
+                "reason": "key 结构在 en-US 定义一次、其余语言用 AppResource 标注，缺键会由类型报错，接入成本低（E24/E25）。",
+                "evidence": [
+                  "E24",
+                  "E25"
+                ]
+              },
+              "agentFriendliness": {
+                "score": 88,
+                "reason": "i18n SKILL 明确文件位置、类型派生、命名规范与 useTranslation 用法（E24），Agent 无需探索即可照做。",
+                "evidence": [
+                  "E24"
+                ]
+              },
+              "design": {
+                "score": 84,
+                "reason": "命名空间按包/渲染树解析，应用命名空间有回退链，key 类型从英文派生（E24/E32），应用与插件文案边界清楚。",
+                "evidence": [
+                  "E24",
+                  "E32"
+                ]
+              },
+              "reliability": {
+                "score": 82,
+                "reason": "useTranslation 实现基于 react-i18next 并用 getNamespaceChain 生成回退链（E32），类型派生与文件结构一致（E25）；未验证语言切换的运行时路径。",
+                "evidence": [
+                  "E32",
+                  "E25"
                 ]
               }
             }
@@ -1661,108 +2022,143 @@
         "findings": [
           {
             "id": "F1",
-            "kind": "issue",
-            "owner": "application",
-            "severity": "major",
+            "kind": "strength",
+            "owner": "framework",
+            "severity": "info",
             "confidence": "confirmed",
-            "status": "resolved",
-            "title": "首轮所有新增/编辑页面在 RouteDialog 外部调用 useRouteOverlay 导致整页无法加载",
-            "detail": "首轮实现把 useRouteOverlay() 写在返回 <RouteDialog> 的页面组件（Provider 之外），React context 取不到值而抛错，页面只显示 'Unable to load page'，B01–B05 全部 failed；修复轮把取数与关闭逻辑移入 RouteDialog 内部的后代组件后通过。Skill 早已在 client-child-routes.md 写明该 hook 只能在其内部后代调用。",
-            "impact": "首轮 CRM 的所有写入路径不可用，验收全失败，需要额外一轮修复与回归。",
-            "suggestedChange": "保留修复后的“页面组件只返回外壳、逻辑放在 Provider 后代”结构，并沿用新增的 overlay 渲染回归测试防止复发。",
+            "status": "not-applicable",
+            "title": "迁移/集合/关系构建器按本次需求一次成型",
+            "detail": "@nocobase/db 的 builder 公开 decimal(precision/scale)、belongsTo+onDelete cascade、notNull、index 等（E2/E3），migrations.md 要求迁移自包含并给出完整示例（E18）。",
+            "impact": "三实体关系与级联约束无需应用自造，B01/B02/B04/B05 在真实数据库通过。",
+            "suggestedChange": "无需改动。",
             "evidence": [
-              "E13",
-              "E10",
-              "E8"
+              "E1",
+              "E2",
+              "E18",
+              "E27"
             ]
           },
           {
             "id": "F2",
             "kind": "issue",
-            "owner": "application",
-            "severity": "minor",
-            "confidence": "confirmed",
-            "status": "open",
-            "title": "编辑表单的关联客户下拉回填显示外键数字而非客户名称",
-            "detail": "ContactForm/OpportunityForm 的 Select 以 number 作为 value，SelectItem 的 value 也是 option.id（number）；shadcn/Radix Select 约定 value 为 string。最终 QA 观察到编辑回填时显示如 '3' 的外键数字，功能不受影响但界面错误。",
-            "impact": "用户编辑联系人/商机时无法从下拉直接确认当前所属客户名称，需要人工比对，属可感知的显示缺陷。",
-            "suggestedChange": "把 Select 的 value/onValueChange/SelectItem 统一为 String(id)，或在 SelectValue 中按 customerId 查名称渲染；并在表单测试中断言回填显示客户名称。",
-            "evidence": [
-              "E6",
-              "E14"
-            ]
-          },
-          {
-            "id": "F3",
-            "kind": "issue",
             "owner": "documentation",
             "severity": "minor",
             "confidence": "confirmed",
             "status": "open",
-            "title": "migrations/database-and-data 未说明 datetime 是 naive 值、字符串不得带时区后缀",
-            "detail": "框架 temporal 校验中 datetime 的正则不含时区后缀（仅 datetimeTz 允许 Z/±hh:mm），而 Skill 只列出 datetime 字段类型并示例 collection.datetime(...)，未说明字符串输入的时区规则；Agent 按 new Date().toISOString() 初始化 seed 时触发 RepositoryError，返工约两轮。",
-            "impact": "最自然的 ISO 写法在 datetime 上失败，浪费一轮以上调试，且错误信息不指向文档缺失。",
-            "suggestedChange": "在 migrations.md 与 database-and-data.md 的 datetime 小节写明：可写 new Date() 或 '2026-01-01T00:00:00.000'，不可带 'Z'；需要时改用 datetimeTz。",
+            "title": "datetime 与 datetimeTz 的时区语义未在迁移/数据访问指引中说明",
+            "detail": "实现中 datetime 的字符串正则不接受时区后缀，datetimeTz 才接受 Z/±HH:MM（E26）；migrations.md 字段构建器只列 datetime，且没有“朴素值、不得带 Z”的说明（E18）。Agent 复盘记录用 new Date().toISOString() 写 createdAt 触发 RepositoryError 并返工约两轮（E28）。",
+            "impact": "最自然的 ISO 写法在 datetime 上失败，只能靠错误信息反推；增加了试错成本。",
+            "suggestedChange": "在 migrations.md 与 database-and-data.md 的 datetime 小节写明 datetime 为无时区朴素值、datetimeTz 用于带时区值，并给正反例（new Date() / '...T00:00:00.000' 可；'...Z' 仅 datetimeTz 可）。",
+            "claimed": "未声称 datetime 接受任意合法日期字符串；属缺文档，不是错误说明。",
+            "observed": "temporal.js 对 datetime 拒绝带 Z 输入并抛 RepositoryError。",
             "evidence": [
-              "E11",
-              "E10"
+              "E26",
+              "E18",
+              "E28"
+            ]
+          },
+          {
+            "id": "F3",
+            "kind": "improvement",
+            "owner": "documentation",
+            "severity": "minor",
+            "confidence": "confirmed",
+            "status": "open",
+            "title": "client-api 未说明模板不提供 react-query/QueryClientProvider",
+            "detail": "@nocobase/app-client 的公开导出与 dist 中没有任何 QueryClientProvider/react-query（E14），client-api.md 也只讲 request + AbortController（E22）。Agent 复盘称先写 react-query useQuery 再改成自建 useCrmData（E28）。",
+            "impact": "按社区惯性先引入 react-query 会返工；指引已隐含的正解不够显式。",
+            "suggestedChange": "在 client-api.md 明确“模板不挂载 react-query，取数用 useApiClient + 自建 hook（AbortController）”，并附最小示例。",
+            "evidence": [
+              "E14",
+              "E22",
+              "E28"
             ]
           },
           {
             "id": "F4",
-            "kind": "improvement",
-            "owner": "application",
-            "severity": "minor",
-            "confidence": "suspected",
-            "status": "open",
-            "title": "联系人/商机编辑页先拉全量列表再在客户端 find 单条记录",
-            "detail": "服务端只提供 GET /crm/customers/:id，联系人与商机没有 GET :id；EditContactForm/EditOpportunityForm 调用 listContacts/listOpportunities 后 find() 目标记录，数据量增大时会多传数据且详情可能因分页或缺省而找不到。",
-            "impact": "当前种子数据量下无影响，但接口契约不完备，规模上升后编辑入口可能失败或浪费带宽。",
-            "suggestedChange": "为 contacts/opportunities 增加 GET /:id 并让编辑页直接读取单条，列表接口保持列表职责。",
+            "kind": "strength",
+            "owner": "documentation",
+            "severity": "info",
+            "confidence": "confirmed",
+            "status": "not-applicable",
+            "title": "子路由 overlay 指引把 provider 边界与反例写全",
+            "detail": "client-child-routes.md 明确 useRouteOverlay 只能在 overlay 后代组件调用，给出 WRONG 示例与确切报错文本（E23）。",
+            "impact": "round1 的 useRouteOverlay 误用（F5）可据指引直接定位并修复，未演变为框架缺陷。",
+            "suggestedChange": "无需改动。",
             "evidence": [
-              "E3",
-              "E5"
+              "E23",
+              "E28"
             ]
           },
           {
             "id": "F5",
-            "kind": "strength",
+            "kind": "issue",
             "owner": "application",
-            "severity": "info",
+            "severity": "major",
             "confidence": "confirmed",
-            "status": "not-applicable",
-            "title": "金额合计与关联均由数据库真实记录聚合，未用静态数组冒充",
-            "detail": "getCustomer 按 customerId 查询联系人与商机，并对同一过滤条件执行 SUM(amount)，迁移层用 belongsTo+onDelete('cascade') 保证关系完整性；浏览器 QA 用新增 100、修改 150 的记录验证合计随之变化，星河的 200,000 也只统计本客户记录。",
-            "impact": "满足 R01/R02 对真实关系与真实聚合的要求，避免硬编码演示金额带来的假通过。",
-            "suggestedChange": "保留该服务层聚合实现与对应的真实数据库测试。",
+            "status": "resolved",
+            "title": "首轮所有 overlay 新增/编辑页因 hook 放在 wrapper 组件而整页失败（应用侧）",
+            "detail": "round1 在渲染 RouteDialog 的同一组件调用 useRouteOverlay，控制台抛 'useRouteOverlay must be used inside RouteDialog or RouteDrawer'，B01-B05 全失败（E28/E27）。round2 将调用移入 RouteDialog 后代组件后通过（E17）。",
+            "impact": "首轮验收 0/5；属应用代码误用已文档化的 API，不是框架缺陷。",
+            "suggestedChange": "应用保持现有修复；无需改框架。",
             "evidence": [
-              "E3",
-              "E1",
-              "E13",
-              "E14"
+              "E28",
+              "E27",
+              "E17"
             ]
           },
           {
             "id": "F6",
-            "kind": "strength",
-            "owner": "application",
+            "kind": "issue",
+            "owner": "environment",
+            "severity": "minor",
+            "confidence": "confirmed",
+            "status": "unknown",
+            "title": ".github 控制面脚本基线 lint 为红，与应用代码无关",
+            "detail": "Agent 复盘记录 pnpm lint 在干净仓库即因 .github/scripts、.github/reports 的 .mjs 报 66 个 no-undef（E28）。",
+            "impact": "无法用完整 lint 结果证明应用改动干净，属工厂/环境背景，不扣 NocoBase3。",
+            "suggestedChange": "为 .github 脚本提供独立 eslint Node 环境或分开判定。",
+            "evidence": [
+              "E28"
+            ]
+          },
+          {
+            "id": "F7",
+            "kind": "improvement",
+            "owner": "documentation",
             "severity": "info",
             "confidence": "confirmed",
-            "status": "not-applicable",
-            "title": "种子按存在性跳过、时间戳固定，具幂等与可复现性",
-            "detail": "seed 先按 name 查找客户，再按 (name, customerId) 判断子记录是否存在并跳过，写入使用固定 SEEDED_AT；逻辑测试对同一数据库运行两次验证不新增、不覆盖用户修改。",
-            "impact": "重复执行迁移/种子不会污染用户数据，符合 Skill 对 seed 的不可变与幂等要求。",
-            "suggestedChange": "保留该幂等写法，若未来支持重命名客户需改为按稳定键去重。",
+            "status": "open",
+            "title": "database-and-data 对聚合只给一句指引，缺 sum 示例",
+            "detail": "database-and-data.md 说聚合“通过 expression builder 可用，读 QueryAdapter 类型”（E19），E7 只有类型声明；本次按客户求和是最典型的聚合需求，无最小示例。",
+            "impact": "Agent 需自行从类型推导 fn.sum/别名/解码写法，增加探索成本。",
+            "suggestedChange": "在 Reading 小节补一个 fn.sum(...).as(...) + executeTakeFirst 的聚合示例，并说明数值解码由适配器处理。",
             "evidence": [
-              "E2",
-              "E12"
+              "E19",
+              "E7",
+              "E29"
+            ]
+          },
+          {
+            "id": "F8",
+            "kind": "issue",
+            "owner": "application",
+            "severity": "minor",
+            "confidence": "confirmed",
+            "status": "open",
+            "title": "客户下拉在编辑回填时显示外键数字（应用侧 Select 用法）",
+            "detail": "verify-2 报告在编辑表单观察到关联客户选择器回填显示数字（如 3）而非客户名称；app/client/pages/crm/components.tsx 用数值作为 SelectItem/Select value（E27 记录，源码可核）。",
+            "impact": "不影响关联、合计、筛选与校验结论，但影响编辑体验；属应用组件用法，不是 @nocobase 包缺陷。",
+            "suggestedChange": "应用侧把 Select value 统一为字符串并以 id→name 映射渲染。",
+            "evidence": [
+              "E27"
             ]
           }
         ],
         "ui": {
           "status": "not-reviewed",
           "score": null,
-          "reason": "当前引擎无法渲染/查看 PNG（读取返回 image omitted），无法对布局、字体、间距、组件与加载/空/错误状态做跨页面视觉评审；仅能从 QA 文本与源码判断功能表现。",
+          "reason": "当前模型无法解析 PNG，未能实际查看跨页面图像，故不做视觉一致性或界面评分；QA 文本中记录的客户选择器回填数字问题仅作背景（F8）。",
           "evidence": []
         },
         "evidence": [
@@ -1770,176 +2166,417 @@
             "id": "E1",
             "kind": "code",
             "path": "app/database/main/migrations/202609230001_create_crm_tables.ts",
-            "observation": "contacts 与 opportunities 通过 belongsTo('customer','customers') 声明外键，notNull/constraints(true)/onDelete('cascade')，并 index('customerId')；opportunities 的 amount 为 decimal(14,2) notNull default 0，stage 为 string(32) notNull default 'following' 且带索引。",
+            "observation": "三表迁移：defineMigration + builder.createCollection；contacts/opportunities 用 belongsTo('customer','customers').notNull().constraints(true).onDelete('cascade') 并建 customerId 索引；amount 用 decimal precision 14/scale 2；stage 建索引。",
             "lines": [
-              23,
+              11,
               63
             ],
             "sha256": "3c623dd51cf170eeefb7d60fb663ced9f5f33e95684b97051b7c81c9bf4d1384",
-            "excerpt": "    await builder.createCollection('contacts', (collection) => {\n      collection.increments('id');\n      collection.string('name', { length: 255, nullable: false });\n      collection.string('contactInfo', { length: 255, nullable: true });\n      collection\n        .belongsTo('customer', 'customers')\n        .targetKey('id')\n        .foreignKey('customerId')\n        .foreignKeyType('integer')\n        .notNull()\n        .constraints(true)\n        .onDelete('cascade');\n      collection.index('customerId');\n      collection.datetime('createdAt', { nullable: false });\n      collection.datetime('updatedAt', { nullable: false });\n    });\n\n    await builder.createCollection('opportunities', (collection) => {\n      collection.increments('id');\n      collection.string('name', { length: 255, nullable: false });\n      collection\n        .belongsTo('customer', 'customers')\n        .targetKey('id')\n        .foreignKey('customerId')\n        .foreignKeyType('integer')\n        .notNull()\n        .constraints(true)\n        .onDelete('cascade');\n      collection.index('customerId');\n      collection.decimal('amount', {\n        precision: 14,\n        scale: 2,\n        nullable: false,\n        defaultValue: 0,\n      });\n      collection.string('stage', {\n        length: 32,\n        nullable: false,\n        defaultValue: 'following',\n      });\n      collection.index('stage');"
+            "excerpt": "const migration: MigrationDefinition = defineMigration({\n  name: '202609230001_create_crm_tables',\n\n  async up({ builder }) {\n    await builder.createCollection('customers', (collection) => {\n      collection.increments('id');\n      collection.string('name', { length: 255, nullable: false });\n      collection.string('industry', { length: 255, nullable: true });\n      collection.datetime('createdAt', { nullable: false });\n      collection.datetime('updatedAt', { nullable: false });\n    });\n\n    await builder.createCollection('contacts', (collection) => {\n      collection.increments('id');\n      collection.string('name', { length: 255, nullable: false });\n      collection.string('contactInfo', { length: 255, nullable: true });\n      collection\n        .belongsTo('customer', 'customers')\n        .targetKey('id')\n        .foreignKey('customerId')\n        .foreignKeyType('integer')\n        .notNull()\n        .constraints(true)\n        .onDelete('cascade');\n      collection.index('customerId');\n      collection.datetime('createdAt', { nullable: false });\n      collection.datetime('updatedAt', { nullable: false });\n    });\n\n    await builder.createCollection('opportunities', (collection) => {\n      collection.increments('id');\n      collection.string('name', { length: 255, nullable: false });\n      collection\n        .belongsTo('customer', 'customers')\n        .targetKey('id')\n        .foreignKey('customerId')\n        .foreignKeyType('integer')\n        .notNull()\n        .constraints(true)\n        .onDelete('cascade');\n      collection.index('customerId');\n      collection.decimal('amount', {\n        precision: 14,\n        scale: 2,\n        nullable: false,\n        defaultValue: 0,\n      });\n      collection.string('stage', {\n        length: 32,\n        nullable: false,\n        defaultValue: 'following',\n      });\n      collection.index('stage');"
           },
           {
             "id": "E2",
             "kind": "code",
-            "path": "app/database/main/seeds/202609230002_seed_crm_data.ts",
-            "observation": "seed 先按 name 查找/插入客户，再按 (name, customerId) 判断联系人与商机是否已存在并跳过，所有写入使用固定 SEEDED_AT='2026-01-01T00:00:00.000'，因此重复执行不新增、不覆盖用户修改。",
+            "path": "packages/@nocobase/db/dist/src/collection/types.d.ts",
+            "observation": "公开字段构建器包含 decimal(…precision)、datetime/datetimeTz、belongsTo(…target)，RelationFieldBuilder 提供 notNull/foreignKey/onDelete/index，可表达本次全部字段与关系。",
             "lines": [
-              69,
-              110
+              395,
+              409
             ],
-            "sha256": "46fe340cf1fd325f8122592f47191a524daafcba39e53354fbc129a711e95f82",
-            "excerpt": "    const customerIds = new Map<string, number>();\n    for (const customer of CUSTOMERS) {\n      let id = await findCustomerId(query, customer.name);\n      if (id === null) {\n        id = await insertCustomer(query, customer);\n      }\n      customerIds.set(customer.name, id);\n    }\n\n    for (const contact of CONTACTS) {\n      const customerId = customerIds.get(contact.customer);\n      if (customerId === undefined) continue;\n      if (await exists(query, 'contacts', contact.name, customerId)) continue;\n      await query\n        .insertInto('contacts')\n        .values({\n          name: contact.name,\n          contactInfo: contact.contactInfo,\n          customerId,\n          createdAt: SEEDED_AT,\n          updatedAt: SEEDED_AT,\n        })\n        .execute();\n    }\n\n    for (const opportunity of OPPORTUNITIES) {\n      const customerId = customerIds.get(opportunity.customer);\n      if (customerId === undefined) continue;\n      if (await exists(query, 'opportunities', opportunity.name, customerId)) {\n        continue;\n      }\n      await query\n        .insertInto('opportunities')\n        .values({\n          name: opportunity.name,\n          customerId,\n          amount: opportunity.amount,\n          stage: opportunity.stage,\n          createdAt: SEEDED_AT,\n          updatedAt: SEEDED_AT,\n        })\n        .execute();"
+            "sha256": "10e28ee4845c4300ddc190b925a57d8be3d1be9c23e43a2c032f9997aabfc19e",
+            "excerpt": "    decimal(name: string, options?: Partial<FieldDefinition>): FieldDefinitionBuilder;\n    float(name: string, options?: Partial<FieldDefinition>): FieldDefinitionBuilder;\n    double(name: string, options?: Partial<FieldDefinition>): FieldDefinitionBuilder;\n    date(name: string, options?: Partial<FieldDefinition>): FieldDefinitionBuilder;\n    time(name: string, options?: Partial<FieldDefinition>): FieldDefinitionBuilder;\n    datetimeTz(name: string, options?: Partial<FieldDefinition>): FieldDefinitionBuilder;\n    datetime(name: string, options?: Partial<FieldDefinition>): FieldDefinitionBuilder;\n    json(name: string, options?: Partial<FieldDefinition>): FieldDefinitionBuilder;\n    blob(name: string, options?: Partial<FieldDefinition>): FieldDefinitionBuilder;\n    uuid(name: string, options?: Partial<FieldDefinition>): FieldDefinitionBuilder;\n    native(name: string, nativeType: string, options?: Partial<FieldDefinition>): FieldDefinitionBuilder;\n    belongsTo(name: string, target: string, options?: Partial<RelationFieldDefinition>): RelationFieldBuilder;\n    hasOne(name: string, target: string, options?: Partial<RelationFieldDefinition>): RelationFieldBuilder;\n    hasMany(name: string, target: string, options?: Partial<RelationFieldDefinition>): RelationFieldBuilder;\n    belongsToMany(name: string, target: string, options?: Partial<RelationFieldDefinition>): RelationFieldBuilder;"
           },
           {
             "id": "E3",
             "kind": "code",
-            "path": "app/server/providers/crm.ts",
-            "observation": "getCustomer 按 customerId 分别查询 contacts 与 opportunities，再用 expression.fn.sum('amount') 对同一 customerId 过滤做聚合，opportunityAmountTotal 取自数据库实际记录而非常量。",
+            "path": "packages/@nocobase/db/dist/src/index.d.ts",
+            "observation": "@nocobase/db 公开导出 defineMigration、defineSeed、databaseManagerToken、createDatabaseManager，迁移/种子/运行时数据库入口均为正式 API。",
             "lines": [
-              177,
-              208
+              1,
+              25
             ],
-            "sha256": "7ae15fcfccfc4e9024996e0913b00309a07d8d523aacaacc8dfd7dba7303823a",
-            "excerpt": "    async getCustomer(id) {\n      const row = await query\n        .selectFrom('customers')\n        .selectAll()\n        .where('id', '=', id)\n        .executeTakeFirst();\n      if (!row) return null;\n\n      const contacts = await query\n        .selectFrom('contacts')\n        .selectAll()\n        .where('customerId', '=', id)\n        .orderBy('id', 'asc')\n        .execute();\n      const opportunities = await query\n        .selectFrom('opportunities')\n        .selectAll()\n        .where('customerId', '=', id)\n        .orderBy('id', 'asc')\n        .execute();\n      const totalRow = await query\n        .selectFrom('opportunities')\n        .select((expression) => [expression.fn.sum('amount').as('total')])\n        .where('customerId', '=', id)\n        .executeTakeFirst();\n\n      return {\n        ...mapCustomer(row),\n        contacts: contacts.map(mapContact),\n        opportunities: opportunities.map(mapOpportunity),\n        opportunityAmountTotal: Number(totalRow?.total ?? 0),\n      };"
+            "sha256": "1b65e1f8c3a51f8863399b8ea873cb07552f651537e7ee84a4018fe03581477a",
+            "excerpt": "export { CollectionMetadataStoreRequiredError, createDatabaseManager, } from './database/manager.js';\nexport { upsertPhysicalRow } from './database/upsert-physical-row.js';\nexport type { UpsertPhysicalRowOptions } from './database/upsert-physical-row.js';\nexport { databaseManagerToken } from './database/token.js';\nexport { resolveDatabaseDriver } from './database/resolve-driver.js';\nexport { defineDatabase } from './database/config.js';\nexport { SchemaManagementNotAllowedError } from './database/schema-management.js';\nexport type { AnyConnectionConfig, BaseConnectionConfig, ConnectionConfig, DatabaseConfig, DatabaseConfigFromDrivers, ConnectionConfigFromDrivers, DriverConnectionConfig, DatabaseDialect, DatabaseDriverDefinition, DatabaseDriverFactory, DatabaseDriverRegistration, DatabaseDriver, ExtensibleDatabaseConfig, SchemaManagementMode, CollectionMetadataStoreConfig, DirectoryCollectionMetadataStoreConfig, } from './database/config.js';\nexport type { DatabaseConnection } from './database/connection.js';\nexport type { DatabaseManager } from './database/manager.js';\nexport type { DatabaseDriverRuntime, DatabaseDriverRuntimeContext, DatabaseDriverRuntimeFactory, DatabaseNumericRuntimeStrategy, DatabaseQueryRuntimeStrategy, DatabaseRepositoryRuntimeStrategy, DatabaseSchemaRuntimeStrategy, } from './database/runtime.js';\nexport { CollectionRelationValidationError } from './collection/registry/relation-validator.js';\nexport { CollectionResolutionError } from './collection/resolver/errors.js';\nexport type { BuilderExecOptions, BuilderResult, CollectionAlterBuilder, CollectionDefinition, CollectionDefinitionBuilder, CollectionOperation, FieldDefinition, FieldDefinitionBuilder, RelationFieldBuilder, RelationFieldDefinition, OptimisticLockDefinition, } from './collection/types.js';\nexport type { CollectionBuilder } from './collection/builder/builder.js';\nexport type { CollectionResolutionResult, CollectionResolutionWarning, } from './collection/resolver/types.js';\nexport { COLLECTION_ARTIFACT_FILE_NAMES, COLLECTION_ARTIFACT_FORMAT_VERSION, COLLECTION_ARTIFACT_MANIFEST_FILE_NAME, assertCollectionArtifactDirectoryNames, CollectionArtifactNameError, findCollectionArtifactNameConflicts, serializeCollectionArtifact, serializeCollectionArtifactManifest, validateCollectionArtifactDirectoryName, } from './collection/artifact/index.js';\nexport type { CollectionArtifactCollectionFile, CollectionArtifactFileKind, CollectionArtifactFiles, CollectionArtifactFormatVersion, CollectionArtifactInput, CollectionArtifactManifest, CollectionArtifactManifestInput, CollectionArtifactMetadataFile, CollectionArtifactNameErrorCode, CollectionArtifactSchemaFile, } from './collection/artifact/index.js';\nexport type { ComparisonOperator, DeleteQuery, Expression, ExpressionBuilder, InsertQuery, QueryAdapter, Row, SelectQuery, SqlBool, UpdateQuery, } from './query/types.js';\nexport { defineMigration } from './migration/define.js';\nexport { loadMigrations, validateMigrations } from './migration/loader.js';\nexport { createMigrator } from './migration/migrator.js';\nexport type { Migrator } from './migration/migrator.js';\nexport type { CreateMigratorOptions, DatabaseMigratorOptions, MigrationContext, MigrationHistoryRecord, MigrationDefinition, MigrationRollbackResult, MigrationRunResult, MigrationSource, MigrationTransactionMode, } from './migration/types.js';\nexport { defineSeed } from './seed/define.js';"
           },
           {
             "id": "E4",
             "kind": "code",
-            "path": "app/server/providers/crm.ts",
-            "observation": "requireAmount 拒绝非有限数与负数并抛 CrmValidationError；requireStage 用 isOpportunityStage 校验枚举；requireName 拒绝空白字符串。",
+            "path": "app/database/main/seeds/202609230002_seed_crm_data.ts",
+            "observation": "defineSeed 种子用 findCustomerId/exists 做“存在即跳过”的幂等写入，固定 SEEDED_AT='2026-01-01T00:00:00.000'（无 Z），2 客户/3 联系/3 商机。",
             "lines": [
-              429,
-              448
+              65,
+              110
             ],
-            "sha256": "7ae15fcfccfc4e9024996e0913b00309a07d8d523aacaacc8dfd7dba7303823a",
-            "excerpt": "function requireAmount(value: unknown): number {\n  const amount =\n    typeof value === 'number'\n      ? value\n      : typeof value === 'string' && value.trim() !== ''\n        ? Number(value)\n        : Number.NaN;\n  if (!Number.isFinite(amount) || amount < 0) {\n    throw new CrmValidationError('Amount must be a non-negative number.');\n  }\n  return amount;\n}\n\nfunction requireStage(value: unknown): OpportunityStage {\n  if (!isOpportunityStage(value)) {\n    throw new CrmValidationError(\n      `Stage must be one of: ${OPPORTUNITY_STAGES.join(', ')}.`,\n    );\n  }\n  return value;"
+            "sha256": "46fe340cf1fd325f8122592f47191a524daafcba39e53354fbc129a711e95f82",
+            "excerpt": "const seed: SeedDefinition = defineSeed({\n  name: '202609230002_seed_crm_data',\n\n  async run({ query }) {\n    const customerIds = new Map<string, number>();\n    for (const customer of CUSTOMERS) {\n      let id = await findCustomerId(query, customer.name);\n      if (id === null) {\n        id = await insertCustomer(query, customer);\n      }\n      customerIds.set(customer.name, id);\n    }\n\n    for (const contact of CONTACTS) {\n      const customerId = customerIds.get(contact.customer);\n      if (customerId === undefined) continue;\n      if (await exists(query, 'contacts', contact.name, customerId)) continue;\n      await query\n        .insertInto('contacts')\n        .values({\n          name: contact.name,\n          contactInfo: contact.contactInfo,\n          customerId,\n          createdAt: SEEDED_AT,\n          updatedAt: SEEDED_AT,\n        })\n        .execute();\n    }\n\n    for (const opportunity of OPPORTUNITIES) {\n      const customerId = customerIds.get(opportunity.customer);\n      if (customerId === undefined) continue;\n      if (await exists(query, 'opportunities', opportunity.name, customerId)) {\n        continue;\n      }\n      await query\n        .insertInto('opportunities')\n        .values({\n          name: opportunity.name,\n          customerId,\n          amount: opportunity.amount,\n          stage: opportunity.stage,\n          createdAt: SEEDED_AT,\n          updatedAt: SEEDED_AT,\n        })\n        .execute();"
           },
           {
             "id": "E5",
             "kind": "code",
-            "path": "app/server/routes/crm.ts",
-            "observation": "routes.onError 把 CrmValidationError 映射为 400、CrmNotFoundError 映射为 404；routes.use('*', auth.required()) 为整组 CRM 接口加登录要求；GET /opportunities 对 stage 查询参数做枚举校验。",
+            "path": "app/server/providers/crm.ts",
+            "observation": "createServiceToken('app/crm-service') + createCrmService(database)；getCustomer 用 expression.fn.sum('amount') 按 customerId 求合计；CrmProvider.register 用 container.singleton 解析 databaseManagerToken。",
             "lines": [
-              33,
-              92
+              95,
+              97
             ],
-            "sha256": "7c83f58066e0aeacd6dc9dac49f7517b008ea76df172f71557dad2164542900e",
-            "excerpt": "    routes.onError((error, context) => {\n      if (error instanceof CrmValidationError) {\n        return context.json({ code: error.code, message: error.message }, 400);\n      }\n      if (error instanceof CrmNotFoundError) {\n        return context.json({ code: error.code, message: error.message }, 404);\n      }\n      throw error;\n    });\n\n    routes.use('*', auth.required());\n\n    routes.get('/customers', async (context) =>\n      context.json({ data: await crm.listCustomers() }),\n    );\n\n    routes.post('/customers', async (context) => {\n      const input = await readJson(context);\n      return context.json({ data: await crm.createCustomer(input) }, 201);\n    });\n\n    routes.get('/customers/:id', async (context) => {\n      const detail = await crm.getCustomer(readId(context.req.param('id')));\n      if (!detail) throw new CrmNotFoundError('Customer not found.');\n      return context.json({ data: detail });\n    });\n\n    routes.patch('/customers/:id', async (context) => {\n      const input = await readJson(context);\n      return context.json({\n        data: await crm.updateCustomer(readId(context.req.param('id')), input),\n      });\n    });\n\n    routes.get('/contacts', async (context) =>\n      context.json({ data: await crm.listContacts() }),\n    );\n\n    routes.post('/contacts', async (context) => {\n      const input = await readJson(context);\n      return context.json({ data: await crm.createContact(input) }, 201);\n    });\n\n    routes.patch('/contacts/:id', async (context) => {\n      const input = await readJson(context);\n      return context.json({\n        data: await crm.updateContact(readId(context.req.param('id')), input),\n      });\n    });\n\n    routes.get('/opportunities', async (context) => {\n      const stage = context.req.query('stage');\n      if (stage !== undefined && !isOpportunityStage(stage)) {\n        throw new CrmValidationError(\n          'stage must be one of: following, won, lost.',\n        );\n      }\n      return context.json({\n        data: await crm.listOpportunities(\n          stage === undefined ? undefined : stage,"
+            "sha256": "7ae15fcfccfc4e9024996e0913b00309a07d8d523aacaacc8dfd7dba7303823a",
+            "excerpt": "  createServiceToken<CrmService>('app/crm-service');\n\nexport function createCrmService(database: DatabaseManager): CrmService {"
           },
           {
             "id": "E6",
             "kind": "code",
-            "path": "app/client/pages/crm/components.tsx",
-            "observation": "ContactForm 的关联客户 Select 使用 value={customer}（number|null）而 SelectItem value={option.id}（number）；shadcn/Radix Select 的 value 约定为 string，QA 观察到编辑回填时显示外键数字。",
+            "path": "packages/@nocobase/db/dist/src/database/manager.d.ts",
+            "observation": "DatabaseManager 公开 query()/builder()/repository()/collections()/transaction()；query() 注释说明其按逻辑 Collection/Field 名工作。",
             "lines": [
-              221,
-              237
+              22,
+              40
             ],
-            "sha256": "e46daf24a94143adb8a3eeeb69b57866e7de91fed7131d31cfdaaaced8abd370",
-            "excerpt": "        <Select\n          id={customerId}\n          value={customer}\n          required\n          onValueChange={setCustomer}\n        >\n          <SelectTrigger className='w-full'>\n            <SelectValue placeholder={t('crm.contacts.customerPlaceholder')} />\n          </SelectTrigger>\n          <SelectContent>\n            {customers.map((option) => (\n              <SelectItem key={option.id} value={option.id}>\n                {option.name}\n              </SelectItem>\n            ))}\n          </SelectContent>\n        </Select>"
+            "sha256": "adca84680d15ec41bd646d7f3e4b04bb4e27afb8ff529c3625e6106191aa58f4",
+            "excerpt": " */\nexport interface DatabaseManager {\n    connection(name?: string): DatabaseConnection;\n    /** Collection schema and metadata builder. Uses Collection and Field logical names. */\n    builder(name?: string): CollectionBuilder;\n    /** Database-layer query builder. Does not read Collection metadata or collection table prefixes. */\n    query(name?: string): QueryAdapter;\n    /**\n     * Resolved Collections of one connection, by logical name. Same object as\n     * `connection(name).collections`, so its cache is shared with every Builder,\n     * Repository and Migration on that connection: `invalidate()` and\n     * `refresh()` affect all of them.\n     */\n    collections(name?: string): ConnectionCollections;\n    repository<TRecord extends object = RepositoryRecord, TCreate extends object = Partial<TRecord>, TUpdate extends object = Partial<TRecord>>(collection: string, connection?: string): Repository<TRecord, TCreate, TUpdate>;\n    createMigrator(options: DatabaseMigratorOptions): Migrator;\n    createSeeder(options: DatabaseSeederOptions): Seeder;\n    connect(name?: string): Promise<DatabaseConnection>;\n    transaction<T>(fn: (connection: DatabaseConnection) => Promise<T>, name?: string): Promise<T>;"
           },
           {
             "id": "E7",
             "kind": "code",
-            "path": "app/client/routes.ts",
-            "observation": "crmCustomers 路由 authz:'skip' + auth:'required'，并在 children 中声明 new、:customerId、:customerId/edit 三个 componentLoader，使用户进入客户列表后保持挂载、以子路由承载表单与详情。",
+            "path": "packages/@nocobase/db/dist/src/query/types.d.ts",
+            "observation": "QueryAdapter 表达式工厂 fn.sum/avg/count 等聚合函数为公开类型，execute 系列返回行/首行。",
             "lines": [
-              45,
-              71
+              31,
+              48
             ],
-            "sha256": "68f63a1daa03475da5eb3b5cdebe619c81a2510a651c540ebe370364a0a131b1",
-            "excerpt": "    // authorization is skipped rather than tied to a role system the application does not have; sign-in is the\n    // boundary, and each endpoint enforces its own authentication.\n    authz: 'skip',\n    auth: 'required',\n    breadcrumb: { title: 'navigation.customers' },\n    componentLoader: () => import('./pages/crm/customers/index.js'),\n    children: [\n      {\n        name: 'crmCustomerNew',\n        path: 'new',\n        componentLoader: () => import('./pages/crm/customers/new.js'),\n      },\n      {\n        name: 'crmCustomerDetail',\n        path: ':customerId',\n        breadcrumb: { title: 'crm.customers.detailTitle' },\n        componentLoader: () => import('./pages/crm/customers/detail.js'),\n      },\n      {\n        name: 'crmCustomerEdit',\n        path: ':customerId/edit',\n        componentLoader: () => import('./pages/crm/customers/edit.js'),\n      },\n    ],\n    name: 'crmCustomers',\n    navigation: { title: 'navigation.customers', icon: Users },\n    path: '/crm/customers',"
+            "sha256": "0d12dfc9e38eb2c928c8763e963bf556fcdeb5f0d7c87621253f220a4a3f2670",
+            "excerpt": "export interface AggregateExpression<T = unknown> extends Expression<T> {\n    as<TAlias extends string>(alias: TAlias): AliasedExpression<T, TAlias>;\n    distinct(): AggregateExpression<T>;\n}\nexport type ExpressionFactory<T = SqlBool> = (eb: ExpressionBuilder) => Expression<T>;\nexport type ExpressionInput<T = unknown> = Expression<T> | ExpressionFactory<T>;\nexport interface FunctionModule {\n    count<T = number>(column: ReferenceExpression | Expression<unknown>): AggregateExpression<T>;\n    countAll<T = number>(table?: string): AggregateExpression<T>;\n    sum<T = string | number | null>(column: ReferenceExpression | Expression<unknown>): AggregateExpression<T>;\n    avg<T = string | number | null>(column: ReferenceExpression | Expression<unknown>): AggregateExpression<T>;\n    min<T = unknown>(column: ReferenceExpression | Expression<unknown>): AggregateExpression<T>;\n    max<T = unknown>(column: ReferenceExpression | Expression<unknown>): AggregateExpression<T>;\n}\nexport interface ExpressionBuilder {\n    (lhs: ReferenceExpression | Expression<unknown>, op: ComparisonOperator, rhs: OperandValueExpressionOrList): Expression<SqlBool>;\n    readonly eb: ExpressionBuilder;\n    readonly fn: FunctionModule;"
           },
           {
             "id": "E8",
             "kind": "code",
-            "path": "app/client/pages/crm/hooks.ts",
-            "observation": "useCrmData 用 identity=key#version 与 AbortController 管理请求，loading 由 identity 比较派生，避免 effect 内同步 setState 与竞态，并在重载时保留旧数据。",
+            "path": "packages/@nocobase/service-provider/dist/token.d.ts",
+            "observation": "createServiceToken<T>(name) 返回按对象身份匹配的 ServiceToken，作为服务解析/注入的公开键。",
             "lines": [
-              20,
-              68
+              1,
+              7
             ],
-            "sha256": "4fb5a960644b2fde25be901d29d1de3694c4d1117bdb0707783c9044111c1a48",
-            "excerpt": "export function useCrmData<T>(\n  key: string,\n  loader: (signal: AbortSignal) => Promise<T>,\n): CrmDataState<T> {\n  const loaderRef = useRef(loader);\n  useEffect(() => {\n    loaderRef.current = loader;\n  });\n\n  const [version, setVersion] = useState(0);\n  // The identity of the request the state belongs to. `loading` is derived by comparing it with the\n  // current request, so the effect never calls setState synchronously and a stale response cannot\n  // claim a request it did not answer.\n  const identity = `${key}#${version}`;\n  const [state, setState] = useState<{\n    identity: string | null;\n    data: T | null;\n    error: unknown;\n  }>({ identity: null, data: null, error: null });\n\n  useEffect(() => {\n    const controller = new AbortController();\n    const requestIdentity = identity;\n    loaderRef.current(controller.signal).then(\n      (data) => {\n        if (controller.signal.aborted) return;\n        setState({ identity: requestIdentity, data, error: null });\n      },\n      (error: unknown) => {\n        if (controller.signal.aborted) return;\n        if (error instanceof DOMException && error.name === 'AbortError')\n          return;\n        setState((previous) => ({\n          identity: requestIdentity,\n          data: previous.data,\n          error,\n        }));\n      },\n    );\n    return () => controller.abort();\n  }, [identity]);\n\n  const reload = useCallback(() => setVersion((value) => value + 1), []);\n\n  return {\n    data: state.data,\n    error: state.error,\n    loading: state.identity !== identity,\n    reload,"
+            "sha256": "b197d8e57ed686d2e61dbf776614040901c90c9166d0c97274a26b4703869b7c",
+            "excerpt": "declare const serviceTokenType: unique symbol;\nexport interface ServiceToken<T> {\n    readonly name: string;\n    readonly [serviceTokenType]?: T;\n}\nexport declare function createServiceToken<T>(name: string): ServiceToken<T>;\nexport {};"
           },
           {
             "id": "E9",
             "kind": "code",
-            "path": "app/client/locales/en-US.ts",
-            "observation": "crm 命名空间覆盖 common/customers/contacts/opportunities/stage 的全部文案，包含必填与金额错误提示；zh-CN.ts 存在同构的 crm 命名空间并给出中文译文。",
+            "path": "app/server/routes/crm.ts",
+            "observation": "defineApiRoutes 工厂内建隔离子路由，routes.use('*', auth.required()) 自持认证，onError 把 CrmValidationError→400 / CrmNotFoundError→404，readJson 拒绝非对象体。",
             "lines": [
-              142,
-              215
+              26,
+              43
             ],
-            "sha256": "56791dd019326917ccc98ae0fd1e457cd86839493b3a8f66a7928eec3e0a88da",
-            "excerpt": "  crm: {\n    common: {\n      actions: 'Actions',\n      back: 'Back to list',\n      cancel: 'Cancel',\n      edit: 'Edit',\n      error: 'Something went wrong. Please try again.',\n      invalidInput: 'Please check the values and try again.',\n      loading: 'Loading…',\n      nameRequired: 'A name is required.',\n      notFound: 'The record no longer exists.',\n      refresh: 'Refresh',\n      save: 'Save',\n      saving: 'Saving…',\n    },\n    customers: {\n      title: 'Customers',\n      description: 'The companies you do business with.',\n      add: 'Add customer',\n      addTitle: 'New customer',\n      editTitle: 'Edit customer',\n      detailTitle: 'Customer detail',\n      name: 'Name',\n      namePlaceholder: 'e.g. Acme Corporation',\n      industry: 'Industry',\n      industryPlaceholder: 'Optional',\n      contacts: 'Contacts',\n      opportunities: 'Opportunities',\n      total: 'Total opportunity amount',\n      empty: 'No customers yet.',\n      noContacts: 'No contacts for this customer.',\n      noOpportunities: 'No opportunities for this customer.',\n    },\n    contacts: {\n      title: 'Contacts',\n      description: 'The people associated with your customers.',\n      add: 'Add contact',\n      addTitle: 'New contact',\n      editTitle: 'Edit contact',\n      name: 'Name',\n      namePlaceholder: 'e.g. Jane Doe',\n      contactInfo: 'Contact info',\n      contactInfoPlaceholder: 'Phone or email',\n      customer: 'Customer',\n      customerPlaceholder: 'Select a customer',\n      customerRequired: 'Select a customer.',\n      noCustomers: 'Create a customer before adding a contact.',\n      empty: 'No contacts yet.',\n    },\n    opportunities: {\n      title: 'Opportunities',\n      description: 'Potential deals and where they stand.',\n      add: 'Add opportunity',\n      addTitle: 'New opportunity',\n      editTitle: 'Edit opportunity',\n      name: 'Name',\n      namePlaceholder: 'e.g. Annual renewal',\n      customer: 'Customer',\n      customerPlaceholder: 'Select a customer',\n      customerRequired: 'Select a customer.',\n      amount: 'Expected amount',\n      amountPlaceholder: '0.00',\n      amountInvalid: 'Enter an amount of zero or more.',\n      stage: 'Stage',\n      filterStage: 'Filter by stage',\n      allStages: 'All stages',\n      noCustomers: 'Create a customer before adding an opportunity.',\n      empty: 'No opportunities yet.',\n    },\n    stage: {\n      following: 'Following',\n      won: 'Won',\n      lost: 'Lost',\n    },"
+            "sha256": "7c83f58066e0aeacd6dc9dac49f7517b008ea76df172f71557dad2164542900e",
+            "excerpt": "  defineApiRoutes((app) => {\n    const router = new Hono();\n    const auth = app.container.resolve(authenticationToken);\n    const crm = app.container.resolve(crmServiceToken);\n\n    const routes = new Hono();\n\n    routes.onError((error, context) => {\n      if (error instanceof CrmValidationError) {\n        return context.json({ code: error.code, message: error.message }, 400);\n      }\n      if (error instanceof CrmNotFoundError) {\n        return context.json({ code: error.code, message: error.message }, 404);\n      }\n      throw error;\n    });\n\n    routes.use('*', auth.required());"
           },
           {
             "id": "E10",
-            "kind": "skill",
-            "path": "app/.agents/skills/nocobase-app-development/references/client-child-routes.md",
-            "observation": "Skill 明确规定：useRouteOverlay() 只能在 RouteDialog/RouteDrawer 内部渲染的后代组件中调用；返回包装器的页面组件位于 Provider 之外、不得调用该 hook。首轮实现正违反了这条规则。",
+            "kind": "code",
+            "path": "packages/@nocobase/app-server/dist/router/routes.d.ts",
+            "observation": "AppApiRouteContribution/defineApiRoutes 是公开装配入口，scope 'api' 由运行时装到 /api。",
             "lines": [
-              285,
-              305
+              8,
+              22
             ],
-            "sha256": "963a81696ac3846da94ae907cd79b767be70bc39379f5cc8e9d6110b69e1463b",
-            "excerpt": "Call `useRouteOverlay()` only in a descendant component rendered inside the `RouteDialog` or `RouteDrawer` being closed, including a component passed as `footer`. The provider is inside the overlay wrapper. The page component that returns the wrapper is outside that provider and must not call the hook for that overlay.\n\nKeep the wrapper in the page and put the hook in a separate component, rendered as JSX:\n\n```tsx\nimport { RouteDialog } from '@/components/route-dialog';\nimport { useRouteOverlay } from '@/components/use-route-overlay';\nimport { Button } from '@/components/ui/button';\n\nexport default function OrderEditPage() {\n  return (\n    <RouteDialog title='Edit order' footer={<Actions />}>\n      <p>Edit the order here.</p>\n    </RouteDialog>\n  );\n}\n\nfunction Actions() {\n  const { close, isClosing } = useRouteOverlay();\n  return (\n    <Button"
+            "sha256": "a85b078705c8bdf8ee04dec1a946f39708d1aff68d1581562abe4c20ebabcb74",
+            "excerpt": "export interface AppApiRouteContribution<TApplication> {\n    readonly scope: 'api';\n    readonly createRouter: AppRouterFactory<TApplication>;\n}\nexport interface AppRootRouteContribution<TApplication> {\n    readonly scope: 'root';\n    readonly createRouter: AppRouterFactory<TApplication>;\n}\nexport type AppRouteContribution<TApplication> = AppApiRouteContribution<TApplication> | AppRootRouteContribution<TApplication>;\nexport interface DefineHttpMiddlewareOptions<TApplication> {\n    readonly name: string;\n    readonly register: AppHttpMiddlewareRegister<TApplication>;\n}\nexport declare function defineHttpMiddleware<TApplication>(options: DefineHttpMiddlewareOptions<TApplication>): AppHttpMiddleware<TApplication>;\nexport declare function defineApiRoutes<TApplication>(createRouter: AppRouterFactory<TApplication>): AppApiRouteContribution<TApplication>;"
           },
           {
             "id": "E11",
             "kind": "code",
-            "path": "packages/@nocobase/db/dist/src/repository/temporal.js",
-            "observation": "datetime 的合法字符串正则不含时区后缀（仅 datetimeTz 允许 Z/±hh:mm），offset 分支只在 datetimeTz 生效，说明 datetime 是 naive 值、不接受 'Z' 后缀。",
+            "path": "packages/@nocobase/app-plugin-authentication/dist/server/tokens.d.ts",
+            "observation": "authenticationToken 为公开服务令牌，Auth.required()/optional() 为公开中间件。",
             "lines": [
-              45,
-              75
+              1,
+              6
             ],
-            "sha256": "b508832a9171cbb8922d8c39dbae52db48cf780c53ba740d11589afbb235c04e",
-            "excerpt": "        : `^${datePattern}T${timePattern}${field.type === 'datetimeTz' ? '(Z|[+-]\\\\d{2}:\\\\d{2})' : ''}$`;\n    const match = value.match(new RegExp(pattern));\n    if (!match)\n        return fail();\n    const year = Number(match[1]);\n    const month = Number(match[2]);\n    const day = Number(match[3]);\n    const calendar = new Date(Date.UTC(year, month - 1, day));\n    if (year < 1000 ||\n        year > 9999 ||\n        calendar.getUTCFullYear() !== year ||\n        calendar.getUTCMonth() !== month - 1 ||\n        calendar.getUTCDate() !== day)\n        return fail();\n    if (field.type === 'date')\n        return value;\n    if (Number(match[4]) > 23 || Number(match[5]) > 59 || Number(match[6]) > 59)\n        return fail();\n    const local = `${match[1]}-${match[2]}-${match[3]}T${match[4]}:${match[5]}:${match[6]}.${(match[7] ?? '').padEnd(3, '0')}`;\n    if (field.type === 'datetime')\n        return local;\n    const offset = match[8];\n    if (offset !== 'Z' &&\n        (Number(offset.slice(1, 3)) > 14 ||\n            Number(offset.slice(4)) > 59 ||\n            (Number(offset.slice(1, 3)) === 14 && Number(offset.slice(4)) !== 0) ||\n            offset === '-00:00'))\n        return fail();\n    const instant = new Date(`${local}${offset}`);\n    if (!Number.isFinite(instant.getTime()) ||\n        instant.getUTCFullYear() < 1000 ||"
+            "sha256": "f8e3a4fbe8a8d4079d17a56828cefe65325ad4fa7724018499f98b472d2d92ac",
+            "excerpt": "import { type ServiceToken } from '@nocobase/service-provider';\nimport type { Auth } from './auth.js';\nimport type { UserAdministrationService } from './user-administration.js';\nexport declare const authenticationToken=[REDACTED] declare const userAdministrationServiceToken=[REDACTED] sourceMappingURL=tokens.d.ts.map"
           },
           {
             "id": "E12",
             "kind": "code",
-            "path": "app/tests/logic/crm.test.ts",
-            "observation": "测试对真实 SQLite 执行迁移并断言三张表、name/industry 可空性、contacts 外键 on_delete=CASCADE、idx_opportunities_stage 与 idx_contacts_customer_id 存在，随后 rollback 并断言三表消失；seed 测试断言首次写入与二次幂等。",
+            "path": "app/client/routes.ts",
+            "observation": "defineAppRoutes 声明 CRM 路由组：auth:'required'、authz:'skip'、breadcrumb，customers 带 new/:customerId/:customerId/edit 子路由；同文件另有 home 与 guest 登录页及contacts/opportunities 两组同构路由。",
             "lines": [
-              81,
-              125
+              45,
+              75
             ],
-            "sha256": "e21212a6b888344d379c239012af04cc256bfc33decb2e32dfec9c1996f941d0",
-            "excerpt": "describe('CRM migration', () => {\n  it('creates the three tables, their foreign keys and indexes, and reverses them', async () => {\n    const { database } = createFixture();\n    await migrate(database);\n    const client = await database.connection('main').client<Knex>();\n\n    expect(await client.schema.hasTable('customers')).toBe(true);\n    expect(await client.schema.hasTable('contacts')).toBe(true);\n    expect(await client.schema.hasTable('opportunities')).toBe(true);\n\n    const customerColumns = await client('customers')\n      .columnInfo()\n      .then((info: Record<string, { nullable: boolean }>) => info);\n    expect(customerColumns.name.nullable).toBe(false);\n    expect(customerColumns.industry.nullable).toBe(true);\n\n    const contactForeignKey = await client\n      .raw('PRAGMA foreign_key_list(contacts)')\n      .then(\n        (rows: Array<{ table: string; from: string; on_delete: string }>) =>\n          rows[0],\n      );\n    expect(contactForeignKey).toMatchObject({\n      table: 'customers',\n      from: 'customer_id',\n      on_delete: 'CASCADE',\n    });\n\n    const indexes = await client('sqlite_master')\n      .where({ type: 'index' })\n      .pluck('name');\n    expect(indexes).toContain('idx_opportunities_stage');\n    expect(indexes).toContain('idx_contacts_customer_id');\n\n    const migrator = database.createMigrator({\n      directory: migrationsDirectory,\n      packageName: PACKAGE_NAME,\n    });\n    const rollback = await migrator.rollback();\n    expect(rollback.rolledBack).toContain('202609230001_create_crm_tables');\n    expect(await client.schema.hasTable('customers')).toBe(false);\n    expect(await client.schema.hasTable('contacts')).toBe(false);\n    expect(await client.schema.hasTable('opportunities')).toBe(false);\n  });\n});"
+            "sha256": "68f63a1daa03475da5eb3b5cdebe619c81a2510a651c540ebe370364a0a131b1",
+            "excerpt": "    // authorization is skipped rather than tied to a role system the application does not have; sign-in is the\n    // boundary, and each endpoint enforces its own authentication.\n    authz: 'skip',\n    auth: 'required',\n    breadcrumb: { title: 'navigation.customers' },\n    componentLoader: () => import('./pages/crm/customers/index.js'),\n    children: [\n      {\n        name: 'crmCustomerNew',\n        path: 'new',\n        componentLoader: () => import('./pages/crm/customers/new.js'),\n      },\n      {\n        name: 'crmCustomerDetail',\n        path: ':customerId',\n        breadcrumb: { title: 'crm.customers.detailTitle' },\n        componentLoader: () => import('./pages/crm/customers/detail.js'),\n      },\n      {\n        name: 'crmCustomerEdit',\n        path: ':customerId/edit',\n        componentLoader: () => import('./pages/crm/customers/edit.js'),\n      },\n    ],\n    name: 'crmCustomers',\n    navigation: { title: 'navigation.customers', icon: Users },\n    path: '/crm/customers',\n  },\n  {\n    authz: 'skip',\n    auth: 'required',"
           },
           {
             "id": "E13",
-            "kind": "qa",
-            "path": "artifacts/verify-1/browser-acceptance/report.json",
-            "observation": "首轮报告 passed=false：客户/联系人/商机列表与详情可打开、合计 CN¥200,000 来自真实记录、阶段筛选可用，但所有新增/编辑路由只渲染 'Unable to load page'，控制台抛 'useRouteOverlay must be used inside RouteDialog or RouteDrawer'，B01–B05 全部 failed。",
+            "kind": "code",
+            "path": "app/client/pages/crm/api.ts",
+            "observation": "所有请求经 api.request({path:'crm/...', method, json, query}) 相对 baseURL 发起，路径不写 /api；列表/新增/更新一一对应。",
             "lines": [
-              4,
-              18
+              55,
+              95
             ],
-            "sha256": "491105c0a83a5f9823bb5f8d47dbf93aa1982a67f6cb708bb0d76dc17eee7253",
-            "excerpt": "  \"summary\": \"管理员可登录并打开客户/联系人/商机列表及客户详情，客户详情显示联系人与商机且合计 CN¥200,000 来自真实记录，商机阶段筛选可用；但所有新增和编辑路由均显示 Unable to load page（控制台 useRouteOverlay must be used inside RouteDialog or RouteDrawer），无法新增客户/联系人/商机、无法编辑阶段或金额、无法验证必填与负金额校验，B01-B05 全部未通过。\",\n  \"checks\": [\n    {\n      \"id\": \"B01\",\n      \"criterion\": \"新增客户及其联系人，刷新客户详情，联系人仍关联到正确客户。\",\n      \"status\": \"failed\",\n      \"actions\": [\n        \"用管理员账号登录，打开 Customers 列表，确认存在种子客户 星河科技、蓝海贸易\",\n        \"点击 Add customer，页面跳转到 /main/crm/customers/new\",\n        \"页面显示 'Unable to load page' 和 Retry；点击 Retry 后、以及整页重新加载后仍然相同\",\n        \"直接打开 /main/crm/contacts/new 的 Add contact 页面，同样显示 'Unable to load page'\"\n      ],\n      \"evidence\": [\n        \"点击 Add customer 后 URL 变为 /main/crm/customers/new，主区域只渲染 'Unable to load page'，没有名称/行业输入框，无法新增客户\",\n        \"浏览器控制台报未处理异常：Error: useRouteOverlay must be used inside RouteDialog or RouteDrawer\","
+            "sha256": "f560ebb339ba5e3ac5ccb9ecfde90341e94472bf1fdb9ec89d85387c2be802e5",
+            "excerpt": "\ninterface RequestOptions {\n  readonly signal?: AbortSignal;\n}\n\nexport async function listCustomers(\n  api: ApiClient,\n  options: RequestOptions = {},\n): Promise<CustomerRecord[]> {\n  const { data } = await api.request<{ data: CustomerRecord[] }>({\n    path: 'crm/customers',\n    signal: options.signal,\n  });\n  return data;\n}\n\nexport async function getCustomer(\n  api: ApiClient,\n  id: number,\n  options: RequestOptions = {},\n): Promise<CustomerDetailRecord> {\n  const { data } = await api.request<{ data: CustomerDetailRecord }>({\n    path: `crm/customers/${encodeURIComponent(String(id))}`,\n    signal: options.signal,\n  });\n  return data;\n}\n\nexport async function createCustomer(\n  api: ApiClient,\n  input: CustomerInput,\n): Promise<CustomerRecord> {\n  const { data } = await api.request<{ data: CustomerRecord }>({\n    path: 'crm/customers',\n    method: 'POST',\n    json: input,\n  });\n  return data;\n}\n\nexport async function updateCustomer("
           },
           {
             "id": "E14",
+            "kind": "code",
+            "path": "packages/@nocobase/app-client/dist/index.d.ts",
+            "observation": "@nocobase/app-client 公开导出 useApiClient/ApiClient/ApiClientError 与 defineAppRoutes/defineSettingsRoutes 等路由贡献 API。",
+            "lines": [
+              1,
+              12
+            ],
+            "sha256": "bb188c317b7d02ec647dbb82d05c81cb7003fd8c525c45886811fc0dffad486f",
+            "excerpt": "export { apiClientToken, ClientApplication, createApp, realtimeClientToken, type ClientApplicationOptions, type ClientApplicationRenderConfigFactory, } from './application.js';\nexport { AppClientRoot, type AppClientRootProps } from './app-client.js';\nexport { ClientApplicationContext } from './application-context.js';\nexport { resolveAppBase, resolveAppUrl } from './client.js';\nexport { ApiClientError, buildFindManyOptions, createApiClient, type ApiClient, type ApiJsonRequestOptions, type ApiRequestOptions, type CreateApiClientOptions, type RemoteFindManyOptions, type RemoteFindManyOptionsJson, type RemoteRepository, type RemoteRepositoryQuery, } from '@nocobase/api-client';\nexport { useApiClient, useClientApplication, useService } from './hooks.js';\nexport type { RealtimeClient, RealtimeErrorEvent, RealtimeEvent, RealtimeListener, } from '@nocobase/realtime/client';\nexport { createAppClientConfig, defineAppConfig, defaultAppConfigs, type AppConfigFactory, defineAppClientRenderConfig, normalizeAppClientBasename, type AppClientConfig, type AppClientConfigContext, type AppClientConfigFactory, type AppClientConfigMap, type AppClientConfigPrimitive, type AppClientConfigValue, type AppClientReactProvider, type AppClientRefineConfig, type AppClientRenderConfig, } from './config.js';\nexport { createAppI18nRuntime, readStoredLocale, writeStoredLocale, type AppClientLocaleContribution, type CreateAppI18nRuntimeOptions, } from './i18n.js';\nexport { applyClientRouteComponentOverrides, defineAppRoutes, defineClientPlugin, defineClientPlugins, defineClientReactProviders, defineClientRouteComponentOverrides, defineClientSourceExtension, defineDevRoutes, defineSettingsRoutes, isAppClientDevRouteGroup, isAppClientSettingsRouteGroup, resolveAppClientContributions, } from './plugins.js';\nexport type { AppClientAppRoutesContribution, AppClientContribution, AppClientContributions, AppClientContributionSource, AppClientDevRouteDefinition, AppClientDevRouteGroupDefinition, AppClientDevRoutePageDefinition, AppClientDevRoutesContribution, AppClientLocales, AppClientNavigationSurface, AppClientPluginContributions, AppClientPluginDefinition, AppClientPluginFactory, AppClientPluginRegistration, AppClientPlugins, AppClientReactProviderDefinition, AppClientReactProviderLayer, AppClientReactProviders, AppClientRefineRegistry, AppClientRefineSetterValue, AppClientRefineSetters, AppClientRegisteredDevRoute, AppClientRegisteredDevRouteGroup, AppClientRegisteredReactProvider, AppClientRegisteredRoute, AppClientRegisteredServiceProvider, AppClientRegisteredSetting, AppClientRegisteredSettingGroup, AppClientRouteAuth, AppClientRouteAuthz, AppClientRouteComponentLoader, AppClientRouteComponentModule, AppClientRouteComponentOverrideDefinition, AppClientRouteContribution, AppClientRouteDefinition, AppClientRoutePageDefinition, AppClientRouteGroupDefinition, AppClientRoutes, AppClientServiceProviders, AppClientSettingIcon, AppClientSettingsRouteDefinition, AppClientSettingsRouteGroupDefinition, AppClientSettingsRouteNavigation, AppClientSettingsRoutePageDefinition, AppClientSettingsRoutesContribution, ClientServiceProviderConstructor, ClientServiceProviderContext, ResolvedAppClientContributions, } from './plugins.js';\n//# sourceMappingURL=index.d.ts.map"
+          },
+          {
+            "id": "E15",
+            "kind": "code",
+            "path": "packages/@nocobase/app-client/dist/hooks.d.ts",
+            "observation": "useApiClient() 无参返回当前应用 HTTP 客户端（等价 useService(apiClientToken)）。",
+            "lines": [
+              1,
+              6
+            ],
+            "sha256": "498a051e52462ba74b517faa3fc349e5b0c85f3d340ec8267f5cc045747d8edc",
+            "excerpt": "import type { ServiceToken } from '@nocobase/service-provider';\nimport type { ApiClient } from '@nocobase/api-client';\nimport { type ClientApplication } from './application.js';\nexport declare function useClientApplication(): ClientApplication;\nexport declare function useService<T>(token=[REDACTED] T;\nexport declare function useApiClient(): ApiClient;"
+          },
+          {
+            "id": "E16",
+            "kind": "code",
+            "path": "app/client/pages/crm/hooks.ts",
+            "observation": "useCrmData 用 AbortController + 请求 identity 派生 loading，符合 client-api 指引的取消/陈旧响应处理。",
+            "lines": [
+              20,
+              67
+            ],
+            "sha256": "4fb5a960644b2fde25be901d29d1de3694c4d1117bdb0707783c9044111c1a48",
+            "excerpt": "export function useCrmData<T>(\n  key: string,\n  loader: (signal: AbortSignal) => Promise<T>,\n): CrmDataState<T> {\n  const loaderRef = useRef(loader);\n  useEffect(() => {\n    loaderRef.current = loader;\n  });\n\n  const [version, setVersion] = useState(0);\n  // The identity of the request the state belongs to. `loading` is derived by comparing it with the\n  // current request, so the effect never calls setState synchronously and a stale response cannot\n  // claim a request it did not answer.\n  const identity = `${key}#${version}`;\n  const [state, setState] = useState<{\n    identity: string | null;\n    data: T | null;\n    error: unknown;\n  }>({ identity: null, data: null, error: null });\n\n  useEffect(() => {\n    const controller = new AbortController();\n    const requestIdentity = identity;\n    loaderRef.current(controller.signal).then(\n      (data) => {\n        if (controller.signal.aborted) return;\n        setState({ identity: requestIdentity, data, error: null });\n      },\n      (error: unknown) => {\n        if (controller.signal.aborted) return;\n        if (error instanceof DOMException && error.name === 'AbortError')\n          return;\n        setState((previous) => ({\n          identity: requestIdentity,\n          data: previous.data,\n          error,\n        }));\n      },\n    );\n    return () => controller.abort();\n  }, [identity]);\n\n  const reload = useCallback(() => setVersion((value) => value + 1), []);\n\n  return {\n    data: state.data,\n    error: state.error,\n    loading: state.identity !== identity,"
+          },
+          {
+            "id": "E17",
+            "kind": "code",
+            "path": "app/client/pages/crm/customers/new.tsx",
+            "observation": "页面组件只返回 RouteDialog，useRouteOverlay 在 RouteDialog 的后代 NewCustomerForm 内调用（round2 修复后的形态）。",
+            "lines": [
+              11,
+              30
+            ],
+            "sha256": "d8e25470d4cb8a2746bc8d22daaf119aa58dbf24d143720f6d81a2114bc2a1f6",
+            "excerpt": "export default function NewCustomerDialog(): ReactElement {\n  const { t } = useTranslation();\n  return (\n    <RouteDialog title={t('crm.customers.addTitle')}>\n      <NewCustomerForm />\n    </RouteDialog>\n  );\n}\n\n// The overlay context is provided inside RouteDialog, so the hook that closes it\n// must run in a descendant of the dialog rather than in the page component that\n// renders the dialog.\nfunction NewCustomerForm(): ReactElement {\n  const api = useApiClient();\n  const { close } = useRouteOverlay();\n  const errorMessages = useRequestErrorMessages();\n  const [submitting, setSubmitting] = useState(false);\n  const [error, setError] = useState<string | null>(null);\n\n  async function handleSubmit(values: CustomerInput): Promise<void> {"
+          },
+          {
+            "id": "E18",
+            "kind": "skill",
+            "path": "app/.agents/skills/nocobase-app-development/references/migrations.md",
+            "observation": "迁移指引：自包含/不可改历史（“Never import an evolving definition”）、builder 示例、字段构建器列表、Seeds 用 defineSeed 且固定可复现。",
+            "lines": [
+              39,
+              53
+            ],
+            "sha256": "b795457dd774aba89fefbc55c51980bc48b298ef6d8b01e9222f1d52cfa28af1",
+            "excerpt": "## A migration is immutable and self-contained\n\n**Spell out the exact structure.** Declare every field, index, and constraint in the migration itself.\n\n**Never import an evolving definition into a migration** — not a collection schema, not a model, not a registry, not a constant shared with runtime code. Those keep changing, and a migration that reads one silently means something different after it has already been applied. This is the rule that matters most on this page.\n\n**Once the branch that introduced a migration is merged, never edit it.** Check with `git log -- <file>` if you are unsure. Before the merge you may correct it in place; after, every change is a new migration. Never hard-code a previous checksum to make an edited migration look untouched.\n\nWrite `down` as the explicit reverse in a safe dependency order. If an operation truly cannot be reversed, say so in the migration and in its test rather than writing a `down` that quietly does nothing.\n\n## Field builders\n\n`increments`, `integer`, `bigInt`, `string`, `text`, `boolean`, `decimal`, `datetime`, `json`, `blob`, `uuid`, and `native` for a dialect-specific type. Options include `nullable`, `length`, `defaultValue`, `precision`, and `scale`.\n\nRelations: `belongsTo`, `hasOne`, `hasMany`, `belongsToMany`. Constraints and indexes: `primary`, `unique`, `foreignKey`, `index`."
+          },
+          {
+            "id": "E19",
+            "kind": "skill",
+            "path": "app/.agents/skills/nocobase-app-development/references/database-and-data.md",
+            "observation": "运行期数据访问：解析 databaseManagerToken，database.query() 读写，聚合“通过 expression builder 可用，读 QueryAdapter 类型”，并强调数据访问放 service。",
+            "lines": [
+              20,
+              51
+            ],
+            "sha256": "c8b74f59998ab1a7935fd18ea0de6a52ce7c513ec2eb7cd3be3a936a4d383786",
+            "excerpt": "| -------------------------- | ------------------------------------------------ |\n| `database.query()`         | Query builder for reading and writing rows       |\n| `database.builder()`       | Schema builder; for migrations, not runtime code |\n| `database.transaction(fn)` | Runs `fn` with a connection inside a transaction |\n\nEach takes an optional connection name and uses the default connection when omitted.\n\n## Reading\n\n```ts\nconst query = database.query();\n\nconst orders = await query\n  .selectFrom('orders')\n  .selectAll()\n  .where('status', '=', 'open')\n  .orderBy('createdAt', 'desc')\n  .limit(50)\n  .execute();\n\nconst order = await query\n  .selectFrom('orders')\n  .selectAll()\n  .where('id', '=', id)\n  .executeTakeFirst();\n```\n\n`execute()` returns an array, `executeTakeFirst()` a row or `undefined`, and `executeTakeFirstOrThrow()` a row or throws. Also available: `value(column)` for a single value, `pluck(column)` for one column across rows, and `exists()`.\n\nValues passed to `where` are parameterized. Never build SQL by interpolating a string.\n\nJoins, `groupBy`, `having`, and aggregate functions through the expression builder are all available; read the `QueryAdapter` types in `@nocobase/db` for the full surface."
+          },
+          {
+            "id": "E20",
+            "kind": "skill",
+            "path": "app/.agents/skills/nocobase-app-development/references/services-and-jobs.md",
+            "observation": "服务指引给出完整 createServiceToken + ServiceProvider.register + container.singleton 示例，并说明 token 身份与层间边界。",
+            "lines": [
+              16,
+              53
+            ],
+            "sha256": "3c6c11e7f57efb1fcb4ab19d6ab981c54b06792a5220ab7bcd8ad8a04e0299be",
+            "excerpt": "  createServiceToken,\n  ServiceProvider,\n  type ServiceToken,\n} from '@nocobase/service-provider';\n\nexport interface OrderService {\n  list(): Promise<Order[]>;\n  create(input: CreateOrderInput): Promise<Order>;\n}\n\nexport const orderServiceToken=[REDACTED] =\n  createServiceToken<OrderService>('app/order-service');\n\nexport default class OrderProvider extends ServiceProvider<Application> {\n  public readonly name: string = 'app/order-provider';\n\n  public override register(): void {\n    this.app.container.singleton(orderServiceToken, () => {\n      const database = this.app.container.resolve(databaseManagerToken);\n      return createOrderService(database);\n    });\n  }\n}\n```\n\nAdd the provider to the array in `server/providers/index.ts` and export its token from there so routes can import it.\n\nResolve it where you need it:\n\n```ts\nconst orders = app.container.resolve(orderServiceToken);\n```\n\n**The token is the identity.** Two `createServiceToken` calls with the same name are two different keys — the container matches by object identity. Always import the token from where it is defined rather than recreating one.\n\n`singleton` builds the service once, on first resolve. Use `instance` for an already-constructed value.\n\nKeep the layers apart: a service should not read a Hono context, return HTTP status codes, or decide retry behavior. It takes its dependencies and returns domain results."
+          },
+          {
+            "id": "E21",
+            "kind": "skill",
+            "path": "app/.agents/skills/nocobase-app-development/references/server-routes.md",
+            "observation": "路由指引：defineApiRoutes 生成 /api 下路由、独立子路由自持 auth.required()、“mounting under /api does not authenticate anything”，并分离 route/service 层。",
+            "lines": [
+              9,
+              49
+            ],
+            "sha256": "b071c2051264026d546d4667c840b2dee20e0eeafd4779023f7e973ec39adc09",
+            "excerpt": "| `defineApiRoutes()`  | `/orders`        | `/api/orders`    | Application APIs the browser calls               |\n| `defineRootRoutes()` | `/callbacks/pay` | `/callbacks/pay` | Webhooks, OAuth callbacks, protocol entry points |\n\nDo not repeat `/api` in the path, and never write the deployment base path such as `/main` — both are added by the runtime.\n\n## An authenticated endpoint\n\n```ts\nimport { authenticationToken } from '@nocobase/app-plugin-authentication';\nimport type { Application } from '@nocobase/app-server/application';\nimport {\n  defineApiRoutes,\n  type AppApiRouteContribution,\n} from '@nocobase/app-server/router';\nimport { Hono } from 'hono';\n\nexport const apiRoutes: AppApiRouteContribution<Application> = defineApiRoutes(\n  (app) => {\n    const router = new Hono();\n    const auth = app.container.resolve(authenticationToken);\n    const orders = app.container.resolve(orderServiceToken);\n\n    router.use('/orders', auth.required());\n    router.get('/orders', async (context) =>\n      context.json({ data: await orders.list() }),\n    );\n\n    return router;\n  },\n);\n```\n\nThe factory creates and returns its own router. Resolve dependencies from `app.container` inside the factory.\n\n## Every route owns its own security\n\n**Mounting under `/api` does not authenticate anything.** `/api` is a location. A route with no `auth.required()` is public regardless of where it mounts.\n\nNever depend on middleware installed by another route, or on the order contributions happen to be registered in. Contribution order changes when a plugin is added, and a route protected only by someone else's middleware silently becomes public.\n\n`auth.required()` rejects anonymous requests with `401`. `auth.optional()` attaches the session when present without rejecting."
+          },
+          {
+            "id": "E22",
+            "kind": "skill",
+            "path": "app/.agents/skills/nocobase-app-development/references/client-api.md",
+            "observation": "前端 API 指引：useApiClient/request 相对 baseURL、AbortController 取消与 ApiClientError 处理、以及远程 Repository 与自定义 request 的区分。",
+            "lines": [
+              6,
+              15
+            ],
+            "sha256": "794559aa25b5baedeb88dc0fe5f612cf24f3742b2c6fde1003a5e66d5be23e43",
+            "excerpt": "\nInside a React component or custom Hook:\n\n```tsx\nimport { useApiClient } from '@nocobase/app-client';\n\nconst api = useApiClient();\n```\n\n`useApiClient()` is a no-argument shorthand for `useService(apiClientToken)`. Both return the same client from the current application and require application context. Neither creates a client or manages request state."
+          },
+          {
+            "id": "E23",
+            "kind": "skill",
+            "path": "app/.agents/skills/nocobase-app-development/references/client-child-routes.md",
+            "observation": "子路由与 overlay 指引明确：useRouteOverlay 只能在 overlay 后代调用，给出 WRONG 反例与确切报错 “must be used inside RouteDialog or RouteDrawer”。",
+            "lines": [
+              174,
+              214
+            ],
+            "sha256": "963a81696ac3846da94ae907cd79b767be70bc39379f5cc8e9d6110b69e1463b",
+            "excerpt": "| `RouteDialog`    | Centred over the page     | Yes   |\n| `RouteDrawer`    | At the side of the page   | Yes   |\n| `RouteChildPage` | Covering the content area | No    |\n\nAmong these wrappers, `RouteChildPage` represents a page destination and its route declares `breadcrumb`; `RouteDialog` and `RouteDrawer` leave it unset. Breadcrumbs are not restricted to these wrappers: ordinary page routes can also declare them. See [breadcrumb declarations](client-pages-and-routes.md#putting-the-page-in-a-breadcrumb-trail).\n\n```tsx\nimport { PageContainer } from '@/components/page-container';\n\nexport default function ArchivedOrdersPage() {\n  return (\n    <>\n      <RouteChildPage>\n        <PageContainer className='mx-auto max-w-6xl'>\n          <Breadcrumbs />\n          <PageHeader title={t('orders.archived.title')} />\n          {/* the page's own content */}\n        </PageContainer>\n      </RouteChildPage>\n      {/* A deeper layer is a sibling of this one, not content inside it. */}\n      <Outlet />\n    </>\n  );\n}\n```\n\n- Place a deeper route's `<Outlet />` beside `RouteChildPage`, not inside it, so the deeper layer does not scroll with its parent layer.\n- The covered page keeps its DOM, including form state and scroll position. The wrapper marks preceding siblings `inert` while covered and restores them on cleanup.\n- `RouteChildPage` is non-modal: the sidebar and header remain reachable. It has no close button or Escape handler; return through breadcrumbs or browser history.\n- Use it for child pages that cover a parent, not for top-level pages.\n\n## Child pages shown as dialogs or drawers\n\nWhen a feature needs a dialog or drawer that represents a page, form, editor, details view, or another URL-addressable state, implement it as a child route. Do not use local `open` state for this case.\n\nFollow this order:\n\n1. Add the child route.\n2. Decide where the owning page renders `<Outlet />`.\n3. Render the child with `RouteDialog` or `RouteDrawer`.\n4. Use `useRouteOverlay()` in a descendant component rendered inside that overlay to close it."
+          },
+          {
+            "id": "E24",
+            "kind": "skill",
+            "path": "app/.agents/skills/nocobase-app-plugin-i18n/SKILL.md",
+            "observation": "i18n 指引：应用文案放 client/locales，en-US 结构派生 LocaleResource<typeof enUS>，其他语言用该类型标注，useTranslation 来自 @nocobase/i18n/client。",
+            "lines": [
+              34,
+              52
+            ],
+            "sha256": "dc8922bc3b9cbf7263f7f20ea09b2299d373a094084b97b41770968ed674d58f",
+            "excerpt": "**A namespace is a package name, and the namespace in scope follows the render tree.**\n\nAn application's pages get the application's namespace; a plugin's pages get that plugin's, because the host wraps each contribution using the `packageName` it already records. So a component in its own package's routes translates with no namespace at all.\n\nThe exception is what most mistakes come from: a component a plugin exports for the application to render is in the _application's_ scope, not its own. It has to name its namespace.\n\n# Procedure\n\n## Adding a string\n\n1. Find the package that owns the text. Application text goes in `client/locales/`; a plugin's text goes in that plugin's `client/locales/`.\n2. Add the key to `en-US.ts`. The structure is written once: the type is derived from the value with `LocaleResource<typeof enUS>`, and other locales are annotated with it, which is what makes a typo a compile error.\n3. Add the translation to every other locale file. A missing key falls back rather than breaking, so this can lag, and `typecheck` reports it.\n4. Render it with `useTranslation` from `@nocobase/i18n/client`.\n\n```tsx\nimport { useTranslation } from '@nocobase/i18n/client';\n\nconst { t } = useTranslation();"
+          },
+          {
+            "id": "E25",
+            "kind": "code",
+            "path": "app/client/locales/en-US.ts",
+            "observation": "定义 crm.* 文案并 export type AppResource = LocaleResource<typeof enUS>；zh-CN.ts 以 AppResource 标注，键结构对齐。",
+            "lines": [
+              225,
+              225
+            ],
+            "sha256": "56791dd019326917ccc98ae0fd1e457cd86839493b3a8f66a7928eec3e0a88da",
+            "excerpt": "export type AppResource = LocaleResource<typeof enUS>;"
+          },
+          {
+            "id": "E26",
+            "kind": "code",
+            "path": "packages/@nocobase/db/dist/src/repository/temporal.js",
+            "observation": "normalizeTemporalValue：datetime 的字符串正则不含时区，datetimeTz 才接受 Z/±HH:MM；不匹配抛 RepositoryError 'Expected a valid V1 temporal value with at most millisecond precision.'。",
+            "lines": [
+              1,
+              73
+            ],
+            "sha256": "b508832a9171cbb8922d8c39dbae52db48cf780c53ba740d11589afbb235c04e",
+            "excerpt": "import { RepositoryError } from './errors.js';\nexport function isTemporalType(type) {\n    return ['date', 'time', 'datetime', 'datetimeTz'].includes(type);\n}\n/** Validate before parsing; Date.parse alone silently normalizes invalid dates. */\nexport function normalizeTemporalValue(field, input, code = 'INVALID_MUTATION', path = ['values', field.name]) {\n    const fail = () => {\n        throw new RepositoryError(code, `Invalid ${field.type} value for Field \"${field.name}\". Expected a valid V1 temporal value with at most millisecond precision.`, { field: field.name, path });\n    };\n    if (input === null) {\n        if (field.nullable === false || field.primaryKey)\n            return fail();\n        return null;\n    }\n    let value = input;\n    if (value instanceof Date) {\n        if (!Number.isFinite(value.getTime()))\n            return fail();\n        const pad = (part) => String(part).padStart(2, '0');\n        const milliseconds = String(value.getMilliseconds()).padStart(3, '0');\n        value =\n            field.type === 'date'\n                ? `${value.getFullYear()}-${pad(value.getMonth() + 1)}-${pad(value.getDate())}`\n                : field.type === 'time'\n                    ? `${pad(value.getHours())}:${pad(value.getMinutes())}:${pad(value.getSeconds())}.${milliseconds}`\n                    : field.type === 'datetime'\n                        ? `${value.getFullYear()}-${pad(value.getMonth() + 1)}-${pad(value.getDate())}T${pad(value.getHours())}:${pad(value.getMinutes())}:${pad(value.getSeconds())}.${milliseconds}`\n                        : value.toISOString();\n    }\n    if (typeof value !== 'string')\n        return fail();\n    const datePattern = '(\\\\d{4})-(\\\\d{2})-(\\\\d{2})';\n    const timePattern = '(\\\\d{2}):(\\\\d{2}):(\\\\d{2})(?:\\\\.(\\\\d{1,3}))?';\n    if (field.type === 'time') {\n        const time = value.match(new RegExp(`^${timePattern}$`));\n        if (!time ||\n            Number(time[1]) > 23 ||\n            Number(time[2]) > 59 ||\n            Number(time[3]) > 59)\n            return fail();\n        return `${time[1]}:${time[2]}:${time[3]}.${(time[4] ?? '').padEnd(3, '0')}`;\n    }\n    const pattern = field.type === 'date'\n        ? `^${datePattern}$`\n        : `^${datePattern}T${timePattern}${field.type === 'datetimeTz' ? '(Z|[+-]\\\\d{2}:\\\\d{2})' : ''}$`;\n    const match = value.match(new RegExp(pattern));\n    if (!match)\n        return fail();\n    const year = Number(match[1]);\n    const month = Number(match[2]);\n    const day = Number(match[3]);\n    const calendar = new Date(Date.UTC(year, month - 1, day));\n    if (year < 1000 ||\n        year > 9999 ||\n        calendar.getUTCFullYear() !== year ||\n        calendar.getUTCMonth() !== month - 1 ||\n        calendar.getUTCDate() !== day)\n        return fail();\n    if (field.type === 'date')\n        return value;\n    if (Number(match[4]) > 23 || Number(match[5]) > 59 || Number(match[6]) > 59)\n        return fail();\n    const local = `${match[1]}-${match[2]}-${match[3]}T${match[4]}:${match[5]}:${match[6]}.${(match[7] ?? '').padEnd(3, '0')}`;\n    if (field.type === 'datetime')\n        return local;\n    const offset = match[8];\n    if (offset !== 'Z' &&\n        (Number(offset.slice(1, 3)) > 14 ||\n            Number(offset.slice(4)) > 59 ||\n            (Number(offset.slice(1, 3)) === 14 && Number(offset.slice(4)) !== 0) ||\n            offset === '-00:00'))\n        return fail();\n    const instant = new Date(`${local}${offset}`);"
+          },
+          {
+            "id": "E27",
             "kind": "qa",
             "path": "artifacts/verify-2/browser-acceptance/report.json",
-            "observation": "最终报告 passed=true，B01–B05 在真实浏览器完成；同时明确指出关联客户选择器在表单回填时显示外键数字（如 3）而非客户名称，称其为界面显示瑕疵、不影响功能结论。",
+            "observation": "最终轮真实浏览器：B01-B05 全部 passed，合计随真实记录 100→150（+50），阶段筛选不混入；另观察到客户选择器回填显示外键数字。",
             "lines": [
-              4,
-              4
+              1,
+              1
             ],
             "sha256": "11f75556031a59862bdd131a37da61ab83a8f00b09a3c7ae9a6745a83c8edff4",
-            "excerpt": "  \"summary\": \"以管理员账号在真实浏览器完成 B01-B05：客户、联系人、商机新增与商机编辑均实际提交并刷新核验；客户详情正确关联联系人和商机，按客户聚合的预计金额随真实记录变化（100→150，+50），阶段改为 Win 后按阶段筛选命中且另一阶段不混入，缺必填客户与负金额均被可理解的校验拦截。控制台无页面错误，网络请求无 4xx/5xx。另观察到关联客户选择器在表单中回填时显示外键数字（如 3）而非客户名称，属界面显示瑕疵，不影响本轮的关联、合计、筛选与校验结果。\","
+            "excerpt": "{"
+          },
+          {
+            "id": "E28",
+            "kind": "log",
+            "path": "artifacts/retro.json",
+            "observation": "Agent 复盘记录：migration/seed/service/route 全链路；blockers 含 datetime 不接受带 Z 字符串（约两轮）、app-client 无 QueryClientProvider（自建 hook）、.github 基线 lint 66 错、round1 useRouteOverlay 误用（resolved）。",
+            "lines": [
+              1,
+              1
+            ],
+            "sha256": "1279d28b0447942fea0133db96c35110ed864f081ec35411921869edf790d455",
+            "excerpt": "{"
+          },
+          {
+            "id": "E29",
+            "kind": "code",
+            "path": "packages/@nocobase/db/dist/src/query/internal/knex/adapter.js",
+            "observation": "查询构建器执行实现：prepareDecimalSelections/prepareAggregateDecoder/selectionAggregates 处理 sum/count/avg 的数值与别名解码，说明聚合不是只声明在类型里。",
+            "lines": [
+              166,
+              188
+            ],
+            "sha256": "0991dd178a9167fbcf6c5f950cae9b41db347d3c8a1fbdb2b95bfeaf341b8c0e",
+            "excerpt": "        const numericLookup = hasNativeNumericResults(this.getClient())\n            ? undefined\n            : lookup;\n        const selections = await prepareDecimalSelections(this.state.selections, [this.tableName, ...this.state.joins.map((join) => join.table)], numericLookup);\n        const numericCollections = lookup\n            ? await collectNumericCollections(this.state, this.tableName, lookup)\n            : undefined;\n        const { query, resultMap } = this.buildSelectQuery(selections, numericCollections);\n        const decode = await prepareAggregateDecoder(selections, [this.tableName, ...this.state.joins.map((join) => join.table)], numericLookup);\n        const rows = await query;\n        return normalizeRows(rows).map((row) => decode(mapResultRow(row, resultMap, this.naming)));\n    }\n    async executeTakeFirst() {\n        const lookup = memoizedCollectionLookup(this.lookup);\n        const numericLookup = hasNativeNumericResults(this.getClient())\n            ? undefined\n            : lookup;\n        const selections = await prepareDecimalSelections(this.state.selections, [this.tableName, ...this.state.joins.map((join) => join.table)], numericLookup);\n        const numericCollections = lookup\n            ? await collectNumericCollections(this.state, this.tableName, lookup)\n            : undefined;\n        const { query, resultMap } = this.buildSelectQuery(selections, numericCollections);\n        const decode = await prepareAggregateDecoder(selections, [this.tableName, ...this.state.joins.map((join) => join.table)], numericLookup);"
+          },
+          {
+            "id": "E30",
+            "kind": "code",
+            "path": "packages/@nocobase/app-plugin-authentication/dist/server/auth.js",
+            "observation": "required() 实现：无会话返回 401 {code:'UNAUTHORIZED'}，Better Auth 拒绝凭据按原状态返回，命中后 context.set('auth')。",
+            "lines": [
+              160,
+              186
+            ],
+            "sha256": "4d7122cbe21204845c043f04c7339c89e4ea6fe946dec28ecc75c81002898c0c",
+            "excerpt": "    required(options = {}) {\n        return async (context, next) => {\n            if (options.skip?.(context)) {\n                await next();\n                return;\n            }\n            let auth;\n            try {\n                auth = await this.getSession(context.req.raw.headers);\n                // A refused credential is Better Auth's APIError; answer with its own status and body.\n            }\n            catch (error) {\n                if (error instanceof APIError) {\n                    return context.json(error.body ?? { code: error.status, message: error.message }, error.statusCode);\n                }\n                throw error;\n            }\n            if (!auth) {\n                return context.json({\n                    code: 'UNAUTHORIZED',\n                    message: 'Authentication required',\n                }, 401);\n            }\n            context.set('auth', auth);\n            await next();\n        };\n    }"
+          },
+          {
+            "id": "E31",
+            "kind": "code",
+            "path": "packages/@nocobase/app-client/dist/plugins.js",
+            "observation": "路由解析实现会校验 componentLoader/path、auth 继承不可变、保留路径仅 guest、authz 归一化，说明路由契约由实现兑现。",
+            "lines": [
+              441,
+              466
+            ],
+            "sha256": "dbf946fb68ecab3873a57d766a7bdf784962fd91704843901cc5bd21909ab1a1",
+            "excerpt": "        const isPage = typeof route.componentLoader === 'function';\n        if ('componentLoader' in route && !isPage)\n            throw new Error(`Client route \"${id}\" must define a componentLoader function.`);\n        const kind = surface === 'app' ? 'route' : describeSurface(surface);\n        if (!isPage && !route.children)\n            throw new Error(`Client ${kind} \"${id}\" must define a componentLoader function.`);\n        if (!isPage && !route.navigation)\n            throw new Error(`Client ${kind} group \"${id}\" must define navigation.`);\n        const rawPath = route.path;\n        if (isPage && rawPath === undefined)\n            throw new Error(`Client route \"${id}\" must define a path.`);\n        const relative = rawPath === undefined\n            ? ''\n            : normalizeRoutePath(parentPath ? '/' + rawPath.replace(/^\\/+/, '') : rawPath, packageName, name);\n        const path = `${parentPath.replace(/\\/$/, '')}${relative === '/' && parentPath ? '' : relative}` ||\n            '/';\n        const declaredAuth = 'auth' in route ? route.auth : undefined;\n        if (parentAuth && declaredAuth && parentAuth !== declaredAuth)\n            throw new Error(`Client route \"${id}\" cannot change inherited auth \"${parentAuth}\".`);\n        const auth = normalizeRouteAuth(parentAuth ?? declaredAuth, packageName, name);\n        if (surface === 'app' && isPage && path === '/' && source !== 'application')\n            throw new Error(`Client route \"${name}\" from plugin \"${packageName}\" cannot use reserved application root path \"/\".`);\n        if (surface === 'app' &&\n            RESERVED_APPLICATION_ROUTE_PATHS.has(path.toLowerCase()) &&\n            auth !== 'guest')\n            throw new Error(`Client route \"${name}\" cannot use reserved path \"${path}\" unless auth is \"guest\".`);"
+          },
+          {
+            "id": "E32",
+            "kind": "code",
+            "path": "packages/@nocobase/i18n/dist/client/context.js",
+            "observation": "useTranslation 基于 react-i18next，resolveNamespaces 用 getNamespaceChain 生成命名空间回退链，应用命名空间之外的 key 回退到应用/基础命名空间。",
+            "lines": [
+              68,
+              96
+            ],
+            "sha256": "cf82bb1c20253a9366538dcdb1d5cf043452e87d4994a7423612717122c56f1c",
+            "excerpt": "function resolveNamespaces(runtime, namespaces) {\n    const requested = typeof namespaces === 'string' ? [namespaces] : namespaces;\n    const primary = requested.map((namespace) => runtime.registry.resolveNamespace(namespace));\n    const fallbacks = requested.flatMap((namespace) => runtime.getNamespaceChain(namespace).slice(1));\n    return [...new Set([...primary, ...fallbacks])];\n}\nfunction resolveTranslationOptions(runtime, value) {\n    if (typeof value !== 'object' || value === null || !('ns' in value)) {\n        return value;\n    }\n    const options = value;\n    if (typeof options.ns !== 'string' && !isNamespaceList(options.ns)) {\n        return value;\n    }\n    return {\n        ...value,\n        ns: resolveNamespaces(runtime, options.ns),\n    };\n}\n/**\n * Translates within the namespace in scope, or the one named.\n *\n * Works without a runtime mounted — a focused test, or a host that has not set i18n up — where it returns each key's\n * declared default instead of warning. Callers therefore have to pass `defaultValue` for a string that must stay\n * readable in that case; `t('a.b')` on its own would render as its key.\n */\nexport function useTranslation(ns, options) {\n    const runtime = useOptionalI18nRuntime();\n    const resolvedNamespaces = useMemo(() => (runtime && ns ? resolveNamespaces(runtime, ns) : ns), [runtime, ns]);"
+          },
+          {
+            "id": "E33",
+            "kind": "skill",
+            "path": "app/AGENTS.md",
+            "observation": "模板总指引给出迁移示例，并明确运行期用 databaseManagerToken + database.query() 读写默认连接、database/<conn>/{migrations,seeds} 约定。",
+            "lines": [
+              169,
+              190
+            ],
+            "sha256": "61dfadef1c535921448a91c94a7cc758824a5373da71e021d2ab44b47379080f",
+            "excerpt": "const migration: MigrationDefinition = defineMigration({\n  name: '202609020001_create_orders',\n  async up({ builder }) {\n    await builder.createCollection('orders', (collection) => {\n      collection.increments('id');\n      collection.string('reference', { length: 64, nullable: false });\n      collection.datetime('createdAt', { nullable: false });\n    });\n  },\n  async down({ builder }) {\n    await builder.dropCollection('orders');\n  },\n});\n```\n\n**A migration is immutable history and must be self-contained.** Spell out every field, index, and constraint in the migration itself. Never import a collection definition, model, or registry that keeps evolving — doing so silently changes what an already-applied migration means. Write `down` as the explicit reverse in a safe dependency order.\n\nEdit an existing migration only while the branch that introduced it is unmerged. Once merged, every correction is a new migration.\n\nThe exported `name` must match the filename. Apply with `pnpm migrate` and verify against a real database.\n\nAt runtime, resolve `databaseManagerToken` from the container and use `database.query()` to read and write the default connection. Use `database.query('analytics')` for another connection. Application tasks use `database/<connectionName>/{migrations,seeds}` and bind to that connection explicitly; plugin tasks and default runtime access stay on `database.default`. Only managed connections run migrations or seeds. See the migrations reference for execution and upgrade rules."
+          },
+          {
+            "id": "E34",
+            "kind": "code",
+            "path": "packages/@nocobase/service-provider/dist/provider.d.ts",
+            "observation": "ServiceProvider 公开 register/boot/start/shutdown 生命周期钩子，装配期注册服务、启动期再初始化。",
+            "lines": [
+              1,
+              17
+            ],
+            "sha256": "764184ad5e2e9cb20d3ea4c790e4acc5dd9f4849464e8220aba40243be60996c",
+            "excerpt": "export interface ServiceProviderLifecycle {\n    readonly name: string;\n    register(): void;\n    boot(): Promise<void>;\n    start(): Promise<void>;\n    ready(): Promise<void>;\n    shutdown(): Promise<void>;\n}\nexport declare abstract class ServiceProvider<TApplication = unknown> implements ServiceProviderLifecycle {\n    protected readonly app: TApplication;\n    abstract readonly name: string;\n    constructor(app: TApplication);\n    register(): void;\n    boot(): Promise<void>;\n    start(): Promise<void>;\n    ready(): Promise<void>;\n    shutdown(): Promise<void>;"
           }
         ],
         "limitations": [
-          "评审者为独立只读评审，未重新执行应用、迁移或浏览器验收，功能结论基于归档 QA 报告、源码与逻辑测试。",
-          "图像不可查看，未进行跨页面视觉评审；界面质量仅依据 QA 文本与组件源码。",
-          "未验证未登录以外的权限组合、未覆盖多连接数据库与事务回滚。",
-          "没有足够证据判定框架本身缺陷；F1/F2/F4 归因于 Agent 实现，F3 为文档缺口。",
+          "只评本案例涉及的模块，不能据此推断 NocoBase3 全框架表现。",
+          "未亲自运行应用、迁移或浏览器验收；运行结论引用 artifacts 中 verify-1/verify-2 与 retro，源码结论引用 packages/@nocobase 与指引原文。",
+          "migrator 事务、connection/命名策略全量实现、路由错误分支与语言切换运行时路径未逐行审阅，相关可靠性分数已留余量。",
+          "未采用 Repository/defineRepositoryApiRoutes：按评审口径不视为缺陷，且本模板 AGENTS.md 推荐的正是 database.query()。",
+          "PNG 无法解析，ui 未评审。",
           "快照未包含 1 个超出预算、非普通文件或不可读取的文件；未据此确认其实现。"
         ]
       },
@@ -1947,21 +2584,21 @@
         "engine": "pi",
         "model": "deepseek-v4.1-flash",
         "version": "0.86.1",
-        "runId": "35937706392",
+        "runId": "35966342221",
         "attempt": 1,
-        "controlSha": "542e63602666d7a7bd9de05be567d1870e8fe3fd",
+        "controlSha": "1bd143f61094211c8c19783e489b5e85d86a91c4",
         "replay": true
       },
       "supplementalUsage": {
-        "input": 92022,
-        "output": 18712,
-        "cacheRead": 1366600,
+        "input": 124399,
+        "output": 43437,
+        "cacheRead": 3174912,
         "cacheWrite": 0,
         "reasoning": 0,
-        "totalTokens": 1477334,
-        "records": 26,
+        "totalTokens": 3342748,
+        "records": 54,
         "incomplete": 0,
-        "runId": 35937706392,
+        "runId": 35966342221,
         "attempt": 1
       },
       "process": {
@@ -2063,5 +2700,5 @@
     "number": 229,
     "headSha": "fd1ca3583679e2472371e638bf72555d4afd5fb3"
   },
-  "reportId": "gchust/nb3-factory:224:35881009045:2:fd1ca3583679e2472371e638bf72555d4afd5fb3:template-4:review-008b0e8c401296ca"
+  "reportId": "gchust/nb3-factory:224:35881009045:2:fd1ca3583679e2472371e638bf72555d4afd5fb3:template-4:review-c61f69e7e2b344cf"
 }
