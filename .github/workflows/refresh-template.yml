@@ -105,7 +105,13 @@ jobs:
       - name: Format the generated application and plugin registrations
         run: |
           cd "$RUNNER_TEMP/template-generation/nb3-factory"
-          pnpm exec prettier --write config.yml package.json README.MD eslint.config.js scripts/build.mjs factory-template.json client/plugins.ts server/plugins.ts cli/plugins.ts tests/logic vitest.config.ts
+          format_paths=(package.json README.MD eslint.config.js scripts/build.mjs factory-template.json client/plugins.ts server/plugins.ts cli/plugins.ts tests/logic vitest.config.ts)
+          # New templates create config.yml through config:init, not create-app.
+          # Verification uses an external APP_CONFIG_FILE; do not generate secrets here.
+          if [[ -f config.yml ]]; then
+            format_paths+=(config.yml)
+          fi
+          pnpm exec prettier --write "${format_paths[@]}"
 
       - name: Install Chinese browser fonts
         run: bash control/.github/scripts/install-browser-fonts.sh
