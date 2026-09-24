@@ -1,0 +1,47 @@
+name: Scheduled preset build tests
+
+on:
+  schedule:
+    # UTC; disabled until FACTORY_PRESET_TEST_ISSUES contains selected preset IDs.
+    - cron: '17 3 * * *'
+  workflow_dispatch:
+    inputs:
+      preset_issues:
+        description: '预设 Issue 编号，逗号分隔（如 176,155）；留空使用 FACTORY_PRESET_TEST_ISSUES'
+        required: false
+        type: string
+      dry_run:
+        description: '只预览所选案例和跳过原因，不创建 Issue、不调用 Agent'
+        required: true
+        default: true
+        type: boolean
+
+permissions: {}
+
+# Serialize only the launcher. Child builds retain their existing per-Issue queue.
+concurrency:
+  group: factory-scheduled-preset-tests
+  cancel-in-progress: false
+
+jobs:
+  launch:
+    if: github.event_name == 'workflow_dispatch' || vars.FACTORY_PRESET_TEST_ISSUES != ''
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      issues: write
+      actions: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24.x
+      - name: Create independent preset tests and dispatch the existing build workflow
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          PRESET_ISSUES: ${{ inputs.preset_issues || vars.FACTORY_PRESET_TEST_ISSUES }}
+          DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run }}
+        run: node .github/scripts/scheduled-preset-tests.mjs
