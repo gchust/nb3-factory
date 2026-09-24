@@ -13,6 +13,7 @@ import { createResult, readResult } from './agent-result.mjs';
 import { scrubSecrets } from './agent-history.mjs';
 import { recordTiming } from './timing.mjs';
 import { beginInvocation } from './agent-invocation-record.mjs';
+import { resolveBuildReviewMode } from './factory-lib.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const MAX_BYTES = 48 * 1024 * 1024;
@@ -161,8 +162,8 @@ export async function runBuildReview(workspace, artifacts, env = process.env, op
   let snapshot, capture, invocationError;
   const started = Date.now();
   try {
-    const mode = env.FACTORY_BUILD_REVIEW ?? 'full';
-    if (!['full', 'off'].includes(mode)) throw new Error('FACTORY_BUILD_REVIEW must be full or off');
+    const mode = resolveBuildReviewMode(metadata.task, env, Boolean(options.source));
+    report.execution = { buildReviewMode: mode, source: options.source ? 'reassessment' : metadata.task?.buildReviewMode ? 'task' : 'repository' };
     if (mode === 'off') { report.reason = '本轮已明确关闭独立评审；只展示流水线事实。'; return report; }
     const requested = Number(env.FACTORY_BUILD_REVIEW_TIMEOUT_SECONDS || 900);
     if (!Number.isInteger(requested) || requested < 30 || requested > 1800) throw new Error('Review timeout must be 30–1800 seconds');

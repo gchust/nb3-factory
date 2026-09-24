@@ -1,7 +1,7 @@
 import { isSourceBaselineRef } from './source-baseline-ref.mjs';
 import { createHash } from 'node:crypto';
 
-import { extractIssueSections, parseIssueTask, TaskInputError, validateTargetBranch } from './factory-lib.mjs';
+import { extractIssueSections, parseIssueTask, parseBuildReviewMode, TaskInputError, validateTargetBranch } from './factory-lib.mjs';
 import { listAll, parseBuild } from './comment-queue.mjs';
 import { stripTaskTitle } from './task-compat.mjs';
 import { splitPresetComments } from './preset-comment-inputs.mjs';
@@ -62,6 +62,10 @@ function clonedBody(snapshot, hash) {
   // Old snapshots keep their original target; new cases pin the default branch.
   body = replaceSection(body, '目标分支', snapshot.targetBranch ?? `issues-${snapshot.issueNumber}`);
   body = replaceSection(body, '任务类型', '创建新系统');
+  if (Object.hasOwn(snapshot, 'buildReviewMode')) {
+    const mode = parseBuildReviewMode(snapshot.buildReviewMode);
+    body = replaceSection(body, '框架评测', mode === 'off' ? '轻量' : mode === 'full' ? '完整' : '自动');
+  }
   const extra = snapshot.extra
     ? `> **本次补充要求**\n${snapshot.extra.split('\n').map((line) => `> ${line}`).join('\n')}\n\n`
     : '';
@@ -120,6 +124,9 @@ async function captureSnapshot(client, issue, number, comments) {
     version: 1,
     issueNumber: issue.number,
     targetBranch,
+    // Explicit task choice wins; auto inherits the source preset, not its title/number.
+    buildReviewMode: parseBuildReviewMode(extractIssueSections(issue.body).get('框架评测'))
+      ?? parseBuildReviewMode(extractIssueSections(source.body).get('框架评测')),
     capturedAt: new Date().toISOString(),
     source: {
       number, title: source.title, body: source.body,
@@ -204,7 +211,11 @@ export async function preparePresetIssue(client, issue) {
       },
     });
   }
-  const task = addPresetInputs(parseIssueTask(issue), snapshot);
+  const parsed = parseIssueTask(issue);
+  const { buildReviewMode: currentMode, ...businessTask } = parsed;
+  const mode = Object.hasOwn(snapshot, 'buildReviewMode')
+    ? parseBuildReviewMode(snapshot.buildReviewMode) : currentMode;
+  const task = addPresetInputs({ ...businessTask, ...(mode ? { buildReviewMode: mode } : {}) }, snapshot);
   return {
     issue,
     task,
@@ -252,6 +263,18 @@ body:
       label: 预置案例
       options:
 ${options.map((option) => `        - ${JSON.stringify(option)}`).join('\n')}
+    validations:
+      required: true
+  - type: dropdown
+    id: build_review
+    attributes:
+      label: 框架评测
+      description: 自动沿用来源预设或仓库默认；轻量只关闭额外框架评分，仍运行搭建、业务验收、独立终验、PR 和归档。
+      options:
+        - 自动
+        - 轻量
+        - 完整
+      default: 0
     validations:
       required: true
   - type: input

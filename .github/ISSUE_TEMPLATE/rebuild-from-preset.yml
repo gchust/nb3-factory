@@ -30,6 +30,18 @@ body:
         - "#208 - [预置][E02][需测试渠道] 一条外部测试通知"
     validations:
       required: true
+  - type: dropdown
+    id: build_review
+    attributes:
+      label: 框架评测
+      description: 自动沿用来源预设或仓库默认；轻量只关闭额外框架评分，仍运行搭建、业务验收、独立终验、PR 和归档。
+      options:
+        - 自动
+        - 轻量
+        - 完整
+      default: 0
+    validations:
+      required: true
   - type: input
     id: source_baseline
     attributes:

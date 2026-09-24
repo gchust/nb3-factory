@@ -17,6 +17,7 @@ export function inputHash(metadata) {
     requirements: task.requirements,
     acceptanceCriteria: task.acceptanceCriteria,
     sampleData: task.sampleData,
+    ...(task.buildReviewMode ? { buildReviewMode: task.buildReviewMode } : {}),
   }));
 }
 
