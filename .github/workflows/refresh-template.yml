@@ -1,6 +1,13 @@
 name: Refresh NocoBase Template
 
 on:
+  pull_request:
+    branches: [develop]
+    paths:
+      - '.github/workflows/refresh-template.yml'
+      - '.github/scripts/template-*.mjs'
+      - '.github/scripts/overlay-factory.mjs'
+      - '.github/scripts/verify.sh'
   workflow_dispatch:
     inputs:
       dry_run:
@@ -17,7 +24,7 @@ concurrency:
 
 jobs:
   generate:
-    if: github.actor == github.repository_owner
+    if: github.actor == github.repository_owner && (github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository))
     runs-on: ubuntu-latest
     timeout-minutes: 120
     permissions:
@@ -26,6 +33,7 @@ jobs:
       base_sha: ${{ steps.base.outputs.sha }}
     steps:
       - name: Require develop as the selected workflow branch
+        if: github.event_name == 'workflow_dispatch'
         env:
           SELECTED_REF: ${{ github.ref }}
         run: |
@@ -37,7 +45,8 @@ jobs:
       - name: Check out current factory control plane
         uses: actions/checkout@v4
         with:
-          ref: develop
+          # PRs verify their merge commit; manual publication still checks out develop.
+          ref: ${{ github.event_name == 'pull_request' && github.sha || 'develop' }}
           path: control
           persist-credentials: false
 
@@ -97,6 +106,7 @@ jobs:
           APP_ROOT="$RUNNER_TEMP/template-generation/nb3-factory"
           node control/.github/scripts/template-plugins.mjs install \
             "$APP_ROOT" "$RUNNER_TEMP/template-diagnostics"
+          node control/.github/scripts/template-mail-config.mjs "$APP_ROOT"
           # Re-registration can be a no-op; always sync before inspecting Skills.
           (cd "$APP_ROOT" && pnpm skills:sync)
           node control/.github/scripts/template-plugins.mjs inspect \
@@ -105,7 +115,7 @@ jobs:
       - name: Format the generated application and plugin registrations
         run: |
           cd "$RUNNER_TEMP/template-generation/nb3-factory"
-          format_paths=(package.json README.MD eslint.config.js scripts/build.mjs factory-template.json client/plugins.ts server/plugins.ts cli/plugins.ts tests/logic vitest.config.ts)
+          format_paths=(package.json README.MD eslint.config.js scripts/build.mjs factory-template.json client/plugins.ts server/plugins.ts cli/plugins.ts server/config/index.ts server/config/mail.ts tests/logic vitest.config.ts)
           # New templates create config.yml through config:init, not create-app.
           # Verification uses an external APP_CONFIG_FILE; do not generate secrets here.
           if [[ -f config.yml ]]; then
@@ -149,7 +159,7 @@ jobs:
           mkdir -p "$RUNNER_TEMP/template-artifact"
           git bundle create "$RUNNER_TEMP/template-artifact/template.bundle" refs/heads/template
           cp factory-template.json "$RUNNER_TEMP/template-diagnostics/factory-template.json"
-          echo "Fresh template verified. Dry run: ${{ inputs.dry_run }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "Fresh template verified. Dry run: ${{ github.event_name == 'pull_request' || inputs.dry_run }}" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Save the verified baseline
         uses: actions/upload-artifact@v4
@@ -170,7 +180,7 @@ jobs:
 
   publish:
     needs: generate
-    if: ${{ !inputs.dry_run }}
+    if: ${{ github.event_name == 'workflow_dispatch' && !inputs.dry_run }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
