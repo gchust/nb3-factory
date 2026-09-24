@@ -34,6 +34,12 @@
     "invoked": true,
     "artifact": "factory-agent-252",
     "artifactId": 10803258904,
+    "reviewSource": {
+      "runId": 35990977273,
+      "attempt": 1,
+      "artifactId": 10804098886,
+      "controlSha": "41941eca5031f312eeca7478e8f6b71d00d75248"
+    },
     "usage": {
       "phases": {
         "implementation": {
@@ -294,6 +300,12 @@
       "invoked": true,
       "artifact": "factory-agent-252",
       "artifactId": 10803258904,
+      "reviewSource": {
+        "runId": 35990977273,
+        "attempt": 1,
+        "artifactId": 10804098886,
+        "controlSha": "41941eca5031f312eeca7478e8f6b71d00d75248"
+      },
       "usage": {
         "phases": {
           "implementation": {
@@ -874,12 +886,12 @@
     ],
     "buildReview": {
       "version": 1,
-      "state": "failed",
-      "reason": "独立评审未完成或证据校验失败：agentFriendliness: numeric framework score requires evidence from a declared target; app/QA alone is insufficient。业务验收结果保持不变。",
+      "state": "completed",
+      "reason": "独立 Agent 评审完成；评分是基于本次证据的意见，不替代业务 QA 或人工评审。",
       "basis": {
         "repository": "gchust/nb3-factory",
         "issue": 252,
-        "runId": "35985523766",
+        "runId": 35985523766,
         "attempt": 1,
         "controlSha": "da18d586a556da85c9e2ac0fb4507b5bc01d7986",
         "rubricVersion": 2,
@@ -1058,21 +1070,1121 @@
         ],
         "reviewCriteriaHash": "f96c89968a5aad8ee3b924f819ced113d6f80cffa4029491350d785ad1687f76",
         "artifactHash": "92a5319bab4946f13d9eb54030326c83a47fdc4f444215f85e99aee73b0b9550",
-        "inputHash": "3d1de75f720c6a9a88cc98ba77a2180ee10e8477d131dea03aa73464fb9b99b3"
+        "inputHash": "1f8267f581bf35fd219933b008784950ef070181772bf02edc45aba9c35252d3"
       },
-      "evaluation": null,
+      "evaluation": {
+        "version": 2,
+        "inputHash": "1f8267f581bf35fd219933b008784950ef070181772bf02edc45aba9c35252d3",
+        "progress": {
+          "complete": true,
+          "pendingModules": []
+        },
+        "summary": "本轮 #252 资料附件页面直接落在 NocoBase3 的 File 仓库、Registry 文件 UI 与 @nocobase/db 迁移/种子上。Server File Repository 直接提供上传、元数据、派生 contentUrl、内容流式路由和失败补偿；@nocobase/db 的 defineMigration/createCollection/foreignKey/defineSeed 直接支撑文件集合、业务关联与幂等种子；客户端 useService(clientFileRepositoryManagerToken) 与服务端 container.resolve(serverFileRepositoryManagerToken) 按 Skill 装配即可复用，应用只写业务 CRUD 与关联。主要缺口是 Registry 默认 image 预览分支没有解码失败反馈（OOXML 分支有），损坏图片只能在应用自有副本上加 onError，属于插件默认 UI 的小缺口而不是核心路径不可用。QA B01–B04 全通过，证据指向真实字节与刷新后持久。",
+        "modules": [
+          {
+            "name": "文件仓库服务与存储路由（Server File Repository）",
+            "targets": [
+              {
+                "kind": "plugin",
+                "name": "@nocobase/app-plugin-file",
+                "entrypoints": [
+                  "@nocobase/app-plugin-file/server: defineFileRepositoryApiRoutes",
+                  "serverFileRepositoryManagerToken -> ServerFileRepositoryManager.uploadOne/uploadMany/getUrl",
+                  "GET <accessPath>/<uuid>.<ext> content stream route"
+                ],
+                "evidence": [
+                  "E1",
+                  "E2",
+                  "E3",
+                  "E4"
+                ]
+              },
+              {
+                "kind": "guidance",
+                "name": "app/.agents/skills/nocobase-app-plugin-file/SKILL.md",
+                "entrypoints": [
+                  "Collection/upload/routes recipe (lines 44-165)",
+                  "serverFileRepositoryManagerToken usage (lines 133-150)",
+                  "Failure codes and absent capabilities (lines 236-253)"
+                ],
+                "evidence": [
+                  "E15",
+                  "E16",
+                  "E17",
+                  "E19"
+                ]
+              }
+            ],
+            "scope": "文件字节存储、元数据持久化、派生 contentUrl、内容流式读取、上传补偿，以及应用侧文件集合/路由/策略装配。",
+            "limitations": "未验证 uploadMany、redirect 模式、getStorageUrl、非 local disk 与多连接；未运行应用，结论基于冻结源码与 QA 记录。",
+            "criteria": [
+              "B01",
+              "B02",
+              "B04"
+            ],
+            "requirements": [
+              {
+                "need": "上传 PNG/DOCX 后元数据持久化，刷新后拿到稳定可预览/下载的内容 URL。",
+                "responsibility": "框架负责字节存储、元数据持久化、派生 contentUrl 与内容流式路由；应用负责资料表、关联字段与页面组合。",
+                "recommendedUsage": "Skill 指引：先建应用自有文件集合迁移，再用 defineFileRepositoryApiRoutes 暴露 upload/CRUD，服务端 container.resolve(serverFileRepositoryManagerToken).repository(collection).uploadOne；客户端用 manager.repository(name).uploadOne。",
+                "actualUsage": "Agent 在 app/server/routes/document-attachments.ts 用 defineFileRepositoryApiRoutes 配置 documentAttachments/document_files/local，页面用 clientFileRepositoryManagerToken 的 repository.uploadOne 上传；业务路由再按 files.getUrl 拼 contentUrl；QA B01/B02 上传保存刷新后仍可预览下载。",
+                "support": "direct",
+                "gapOwner": "none",
+                "evidence": [
+                  "E1",
+                  "E2",
+                  "E3",
+                  "E15",
+                  "E17",
+                  "E21",
+                  "E20"
+                ]
+              },
+              {
+                "need": "损坏 PNG 在检测到损坏的阶段给出清晰失败，不伪称预览成功；不要求上传阶段做内容嗅探。",
+                "responsibility": "框架明确不做 content sniffing，只校验声明大小/mime 与存储大小一致；应用负责决定是否拒绝损坏内容并在预览层反馈。",
+                "recommendedUsage": "Skill 明示 no content sniffing；损坏文件上传成功属预期，失败反馈落在预览组件。",
+                "actualUsage": "上传阶段 corrupt.png 被接受（POST uploadOne 200，按设计），预览阶段由应用改写的 ImagePreview onError 给出 role=alert 文案；QA B04 记录实际失败在预览阶段。",
+                "support": "composition",
+                "gapOwner": "none",
+                "evidence": [
+                  "E3",
+                  "E19",
+                  "E25"
+                ]
+              },
+              {
+                "need": "移除业务附件关联，刷新后不再显示；不要求物理清理底层文件。",
+                "responsibility": "框架文档说明删元数据不删对象、无物理清理；应用负责关联字段与清理策略。",
+                "recommendedUsage": "关联保存在业务表的 attachmentId，外键 onDelete set null；移除时 PATCH attachmentId=null。",
+                "actualUsage": "Agent 迁移里 documents.attachmentId 外键 set null，PATCH /documents/:id 置空；QA B03 刷新后关联消失且其他资料不受影响。",
+                "support": "direct",
+                "gapOwner": "none",
+                "evidence": [
+                  "E1",
+                  "E19",
+                  "E23"
+                ]
+              }
+            ],
+            "scores": {
+              "requirementFit": {
+                "score": 90,
+                "reason": "server 仓库直接提供上传、元数据、派生 contentUrl 与内容流路由（E1/E2/E3），Skill 给出完整装配配方（E15）；QA B01/B02 以字节哈希和刷新后持久印证。",
+                "evidence": [
+                  "E1",
+                  "E2",
+                  "E3",
+                  "E15"
+                ]
+              },
+              "usability": {
+                "score": 88,
+                "reason": "defineFileRepositoryApiRoutes + manager.repository().uploadOne 装配紧凑，Skill 提供 collection/routes/manager token 三段式配方（E15/E17）；Policy 的 read:false/create:true 与公开字节路由需读文档才能用对（E2/E19）。",
+                "evidence": [
+                  "E15",
+                  "E17",
+                  "E2"
+                ]
+              },
+              "agentFriendliness": {
+                "score": 86,
+                "reason": "Skill 明确入口、token 与失败码，Agent 按它接入 server/client；但内容 URL 需应用自行拼接、上传鉴权需自行安装（E16/E19），发现成本略高。",
+                "evidence": [
+                  "E15",
+                  "E16",
+                  "E19"
+                ]
+              },
+              "design": {
+                "score": 87,
+                "reason": "职责边界清晰：插件管字节/元数据/路由，应用管 collection 与关联；contentUrl 派生不落库，upload policy 仅在上传路径派生放宽（E1/E2/E15）。",
+                "evidence": [
+                  "E1",
+                  "E2",
+                  "E15"
+                ]
+              },
+              "reliability": {
+                "score": 86,
+                "reason": "实现证据：upload 失败时 compensate 先核对数据库提交再删对象并区分 FILE_COMMIT_UNCERTAIN/FILE_CLEANUP_FAILED；内容路由按 uuid+ext 复核记录与磁盘对象并设 nosniff/CSP（E3/E4/E2）。",
+                "evidence": [
+                  "E3",
+                  "E4",
+                  "E2"
+                ]
+              }
+            }
+          },
+          {
+            "name": "文件上传与预览 UI（Registry component-ui）",
+            "targets": [
+              {
+                "kind": "plugin",
+                "name": "@nocobase/app-plugin-file",
+                "entrypoints": [
+                  "Registry component-ui: FileUploadField, FilePreviewDialog, FileThumbnail, FileList",
+                  "resolveFilePreviewKind + OfficeOpenXmlPreview"
+                ],
+                "evidence": [
+                  "E5",
+                  "E6",
+                  "E7",
+                  "E8"
+                ]
+              },
+              {
+                "kind": "guidance",
+                "name": "app/.agents/skills/nocobase-app-plugin-file/SKILL.md",
+                "entrypoints": [
+                  "Reuse preview UI first (lines 12-25)",
+                  "Registry components and OOXML viewer section (lines 166-225)",
+                  "Preview failure and content-access rules (lines 226-253)"
+                ],
+                "evidence": [
+                  "E18",
+                  "E19"
+                ]
+              }
+            ],
+            "scope": "Registry 上传控件、预览弹窗、缩略图、格式判定与本地 OOXML viewer 的应用内复用与扩展。",
+            "limitations": "未实际运行组件或浏览器；视觉评审不可执行。未验证 XLSX/PPTX、PDF、audio/video、Office Online 回退与 download={false}。",
+            "criteria": [
+              "B01",
+              "B02",
+              "B04"
+            ],
+            "requirements": [
+              {
+                "need": "复用现成上传控件，PNG 与 DOCX 在应用内看到真实内容（非文件名）。",
+                "responsibility": "框架提供 Registry 上传/预览组件、格式判定与本地 OOXML viewer；应用把业务记录接入并组合。",
+                "recommendedUsage": "Skill 指引先看 client/extensions/nocobase-file-component-ui，用 FileUploadField 受控值 + FilePreviewDialog(files, contentUrl)。",
+                "actualUsage": "Agent 从 extension index 复用 FileUploadField/FilePreviewDialog/FileThumbnail；QA B01 预览 32x32 真图并下载哈希一致，B02 DOCX 渲染出真实文本。",
+                "support": "direct",
+                "gapOwner": "none",
+                "evidence": [
+                  "E5",
+                  "E7",
+                  "E8",
+                  "E18",
+                  "E20",
+                  "E35"
+                ]
+              },
+              {
+                "need": "损坏 PNG 预览时给出清晰失败而非伪成功。",
+                "responsibility": "框架预览组件负责在解码失败时给出可解释反馈；应用负责选择组件并可在应用自有副本上扩展。",
+                "recommendedUsage": "Skill 说 extend the existing UI，但未说明 image 分支缺少 onError。",
+                "actualUsage": "默认 image 分支仅 <img> 无 onError（E6）；Agent 在应用自有副本新增 ImagePreview onError -> role=alert（E25）并在 FileThumbnail 加 error 回退（E33）；QA B04 通过。",
+                "support": "workaround",
+                "gapOwner": "plugin",
+                "evidence": [
+                  "E6",
+                  "E19",
+                  "E25",
+                  "E33"
+                ]
+              },
+              {
+                "need": "DOCX 在应用内本地预览，不依赖第三方预览服务。",
+                "responsibility": "框架提供 @silurus/ooxml 本地 viewer 与错误/下载回退。",
+                "recommendedUsage": "Skill 表格说明 DOCX 用本地 viewer、same-origin credentials。",
+                "actualUsage": "Agent 未改 OOXML 组件，直接用 FilePreviewDialog；QA B02 刷新后在 data-office-open-xml-format=docx 容器渲染真实文本 Factory DOCX sample。",
+                "support": "direct",
+                "gapOwner": "none",
+                "evidence": [
+                  "E7",
+                  "E8",
+                  "E18"
+                ]
+              }
+            ],
+            "scores": {
+              "requirementFit": {
+                "score": 84,
+                "reason": "上传控件、PNG 与 DOCX 真实预览均直接可用（E5/E7/E8，QA B01/B02）；仅损坏图片清晰失败需应用改写组件（E6/E25）。",
+                "evidence": [
+                  "E5",
+                  "E7",
+                  "E8",
+                  "E6"
+                ]
+              },
+              "usability": {
+                "score": 84,
+                "reason": "组件受控 API 与导入路径清晰，Skill 给出受控用法（E18/E5）；默认 image 分支无错误态令损坏即失败需要额外改动（E6/E25）。",
+                "evidence": [
+                  "E5",
+                  "E18",
+                  "E6"
+                ]
+              },
+              "agentFriendliness": {
+                "score": 80,
+                "reason": "Skill 准确指向目录与 FilePreviewDialog 并解释 OOXML 回退；但没有提示 image 解码失败无反馈，默认会显示破图而非错误（E18/E6/E19）。",
+                "evidence": [
+                  "E18",
+                  "E6",
+                  "E19"
+                ]
+              },
+              "design": {
+                "score": 78,
+                "reason": "OOXML 分支有结构化错误+下载回退，image 分支只有裸 <img>；FilePreviewContent 的 error prop 只覆盖 fetch 错误不覆盖元素加载错误，抽象不一致（E7/E6）。",
+                "evidence": [
+                  "E7",
+                  "E6"
+                ]
+              },
+              "reliability": {
+                "score": 78,
+                "reason": "实现证据：OOXML 失败会 destroy viewer 并回退下载、PDF/text fetch 会 abort/revoke（E7）；但 image 无 onError，损坏图没有定义行为，需应用 patch（E6/E25）。",
+                "evidence": [
+                  "E7",
+                  "E6",
+                  "E5"
+                ]
+              }
+            }
+          },
+          {
+            "name": "数据库迁移、集合构建与种子（@nocobase/db）",
+            "targets": [
+              {
+                "kind": "library",
+                "name": "@nocobase/db",
+                "entrypoints": [
+                  "defineMigration + MigrationDefinition.up/down",
+                  "builder.createCollection + fluent uuid/string/integer/datetime/foreignKey",
+                  "defineSeed + SeedDefinition.run + repository.upsertOne",
+                  "loadMigrations/loadSeeds validation"
+                ],
+                "evidence": [
+                  "E9",
+                  "E10",
+                  "E11",
+                  "E12"
+                ]
+              },
+              {
+                "kind": "guidance",
+                "name": "app/.agents/skills/nocobase-db/SKILL.md",
+                "entrypoints": [
+                  "Migrations and seeds shape (lines 85-125)",
+                  "Builder createCollection/foreignKey/field list (lines 143-164)"
+                ],
+                "evidence": [
+                  "E26",
+                  "E27"
+                ]
+              },
+              {
+                "kind": "guidance",
+                "name": "app/.agents/skills/nocobase-app-development/references/migrations.md",
+                "entrypoints": [
+                  "Database task directories and run order (lines 7-19)"
+                ],
+                "evidence": [
+                  "E28"
+                ]
+              }
+            ],
+            "scope": "应用自有文件集合与业务表的 schema 迁移、外键约束、幂等种子写入。",
+            "limitations": "未执行迁移/种子命令；未验证回滚、多连接、checksum drift 与 SQLite 以外方言。",
+            "criteria": [
+              "B01",
+              "B02",
+              "B03"
+            ],
+            "requirements": [
+              {
+                "need": "建一张文件元数据表（列与 File 插件契约一致）和一张业务资料表（标题必填 + 附件关联）。",
+                "responsibility": "框架负责迁移运行与 Collection Builder/fluent API；应用负责表结构、字段类型与约束。",
+                "recommendedUsage": "Skill 的 collection recipe 给出固定 9 列与 createCollection 回调写法；迁移用 builder.createCollection，外键用 collection.foreignKey。",
+                "actualUsage": "Agent 迁移用 defineMigration + createCollection，document_files 用 uuid/string/integer/datetime，documents 用 uuid 主键、title、attachmentId 外键 onDelete set null。",
+                "support": "direct",
+                "gapOwner": "none",
+                "evidence": [
+                  "E9",
+                  "E10",
+                  "E26",
+                  "E23"
+                ]
+              },
+              {
+                "need": "两条示例资料，重复运行不覆盖用户上传的关联。",
+                "responsibility": "框架负责 seed 运行与幂等语义；应用负责数据内容。",
+                "recommendedUsage": "Skill：seed 用 defineSeed + repository.upsertOne，幂等键用唯一业务值。",
+                "actualUsage": "Agent seed 用 upsertOne(filter id, update 仅 title) 写入两条，id/时间固定，重跑不置空 attachmentId。",
+                "support": "direct",
+                "gapOwner": "none",
+                "evidence": [
+                  "E12",
+                  "E26",
+                  "E27",
+                  "E24"
+                ]
+              },
+              {
+                "need": "移除附件关联但不删除资料行。",
+                "responsibility": "框架支持外键约束；应用负责 onDelete 行为。",
+                "recommendedUsage": "collection.foreignKey('attachmentId', { references, onDelete:'set null' })。",
+                "actualUsage": "Agent 设置 onDelete set null，PATCH 把 attachmentId 置 null；QA B03 通过。",
+                "support": "direct",
+                "gapOwner": "none",
+                "evidence": [
+                  "E9",
+                  "E23"
+                ]
+              }
+            ],
+            "scores": {
+              "requirementFit": {
+                "score": 92,
+                "reason": "defineMigration/createCollection/fluent 字段与外键直接落地两张表，defineSeed+upsertOne 写入两条资料；QA B01-B03 证明持久与关联行为（E9/E10/E26/E23）。",
+                "evidence": [
+                  "E9",
+                  "E10",
+                  "E26",
+                  "E23"
+                ]
+              },
+              "usability": {
+                "score": 88,
+                "reason": "Builder/fluent 与 seed repository 两个上下文分工明确，Skill 给出可直接套用的示例（E26/E27/E11）。",
+                "evidence": [
+                  "E26",
+                  "E27",
+                  "E11"
+                ]
+              },
+              "agentFriendliness": {
+                "score": 88,
+                "reason": "Skill 明确目录、命名与幂等规则；loader 对 name=文件名、up/down、transaction 做显式校验，错误信息可定位（E10/E12/E26）。",
+                "evidence": [
+                  "E10",
+                  "E12",
+                  "E26"
+                ]
+              },
+              "design": {
+                "score": 89,
+                "reason": "defineMigration/defineSeed 标记与 loader 分离，builder 只建 schema、repository 只写数据，边界与 Skill 一致（E11/E9/E26）。",
+                "evidence": [
+                  "E11",
+                  "E9",
+                  "E26"
+                ]
+              },
+              "reliability": {
+                "score": 88,
+                "reason": "实现证据：migration loader 强制 name=文件名与 up/down/irreversible；seed loader 强制 defineSeed 与 run；foreignKey 作为 constraint 下发（E10/E12/E9）。",
+                "evidence": [
+                  "E10",
+                  "E12",
+                  "E9"
+                ]
+              }
+            }
+          },
+          {
+            "name": "应用装配：客户端服务容器与路由贡献（app-client/app-server）",
+            "targets": [
+              {
+                "kind": "library",
+                "name": "@nocobase/app-client",
+                "entrypoints": [
+                  "defineClientPlugins / defineClientPlugin",
+                  "useService / useApiClient / ClientApplicationContext"
+                ],
+                "evidence": [
+                  "E13",
+                  "E29"
+                ]
+              },
+              {
+                "kind": "library",
+                "name": "@nocobase/app-server",
+                "entrypoints": [
+                  "defineApiRoutes / defineRootRoutes route contributions",
+                  "routerToken / ServiceProvider container"
+                ],
+                "evidence": [
+                  "E14"
+                ]
+              },
+              {
+                "kind": "guidance",
+                "name": "app/.agents/skills/nocobase-app-development/references/client-api.md",
+                "entrypoints": [
+                  "Resolve apiClientToken via useApiClient (lines 3-20)"
+                ],
+                "evidence": [
+                  "E36"
+                ]
+              }
+            ],
+            "scope": "插件注册顺序、客户端/服务端服务令牌解析、业务 API 与文件上传路由的贡献挂载。",
+            "limitations": "未运行应用；未验证服务端 ServiceProvider 注册、鉴权中间件执行顺序与跨插件 contribution 组合。",
+            "criteria": [
+              "B01"
+            ],
+            "requirements": [
+              {
+                "need": "把 file 插件服务先注册，页面/路由再通过 token 解析，避免自建 client/db。",
+                "responsibility": "框架负责插件注册顺序、service container 与 token 解析；应用负责在 plugins.ts 挂载。",
+                "recommendedUsage": "Skill/指引：在 client/plugins.ts、server/plugins.ts 注册 file 插件，用 useService(clientFileRepositoryManagerToken) 与 container.resolve(serverFileRepositoryManagerToken)。",
+                "actualUsage": "Agent 在 client/plugins.ts 与 server/plugins.ts 注册 file()，页面 useService 解析 client token，服务端 container.resolve server token。",
+                "support": "direct",
+                "gapOwner": "none",
+                "evidence": [
+                  "E13",
+                  "E29",
+                  "E30",
+                  "E31",
+                  "E20",
+                  "E22"
+                ]
+              },
+              {
+                "need": "业务 CRUD 与文件上传路由挂到应用 router，并在上传路径加鉴权。",
+                "responsibility": "框架提供 api/root 路由贡献与路由服务；应用负责业务路由与鉴权安装。",
+                "recommendedUsage": "Skill：defineFileRepositoryApiRoutes 返回 api+root 贡献，按需在自己的 contribution router 上加 auth.required()，不要 router.use('*')。",
+                "actualUsage": "Agent 在 routes/index.ts 合并 documentsApiRoutes 与 documentAttachmentFileRoutes，并用 requireAuthentication 只守卫 uploadOne 路径。",
+                "support": "direct",
+                "gapOwner": "none",
+                "evidence": [
+                  "E14",
+                  "E16",
+                  "E32",
+                  "E21"
+                ]
+              }
+            ],
+            "scores": {
+              "requirementFit": {
+                "score": 88,
+                "reason": "插件注册顺序 + token 解析 + 路由贡献都按 Skill 直接落地；客户端 useService 与服务端 container.resolve 均命中公开入口（E13/E29/E14/E30）。",
+                "evidence": [
+                  "E13",
+                  "E29",
+                  "E14",
+                  "E30"
+                ]
+              },
+              "usability": {
+                "score": 85,
+                "reason": "useService/useApiClient 是单行入口，defineClientPlugins 做重复注册检查；路由贡献 scope 概念简单（E13/E29/E14）。",
+                "evidence": [
+                  "E13",
+                  "E29",
+                  "E14"
+                ]
+              },
+              "agentFriendliness": {
+                "score": 84,
+                "reason": "client-api.md 与 Skill 明确 token 解析和插件挂载；但路由鉴权需自行组合，指引只是原则性提醒（E36/E16/E13）。",
+                "evidence": [
+                  "E36",
+                  "E16",
+                  "E13"
+                ]
+              },
+              "design": {
+                "score": 86,
+                "reason": "app-client 以 token/container 暴露运行时，app-server 以 scope 化 contribution 暴露 router，职责分离清楚（E13/E14/E29）。",
+                "evidence": [
+                  "E13",
+                  "E14",
+                  "E29"
+                ]
+              },
+              "reliability": {
+                "score": 85,
+                "reason": "实现证据：defineClientPlugins 拒绝重复注册；defineApiRoutes/defineRootRoutes 冻结 scope 契约；useService 在无 context 时显式报错（E29/E14/E13）。",
+                "evidence": [
+                  "E29",
+                  "E14",
+                  "E13"
+                ]
+              }
+            }
+          }
+        ],
+        "findings": [
+          {
+            "id": "F1",
+            "kind": "strength",
+            "owner": "plugin",
+            "severity": "info",
+            "confidence": "confirmed",
+            "status": "resolved",
+            "title": "Server File Repository 以公开、可组合的契约直接覆盖上传/元数据/内容读取",
+            "detail": "uploadOne 组合字节存储与元数据写入并派生 contentUrl，内容路由按 uuid+ext 复核记录后流式返回，Skill 给出 collection/routes/manager token 的完整配方，应用的业务 CRUD 无需重造上传与元数据体系。",
+            "impact": "本次 PNG/DOCX 上传、刷新后持久、下载与关联移除只写了业务侧代码，基础文件职责未被自建替代。",
+            "suggestedChange": "保持该契约稳定；为 uploadMany/redirect 模式补同样的端到端示例即可。",
+            "evidence": [
+              "E1",
+              "E2",
+              "E15"
+            ]
+          },
+          {
+            "id": "F2",
+            "kind": "issue",
+            "owner": "plugin",
+            "severity": "minor",
+            "confidence": "confirmed",
+            "status": "open",
+            "title": "Registry 默认 image 预览分支没有解码失败反馈",
+            "detail": "component-ui 的 FilePreviewContent 在 case 'image' 只渲染 <img>，没有 onError 状态；FileThumbnail 同样没有失败回退。损坏图片会显示浏览器破图而非明确错误。Agent 只能在应用自有副本里新增 ImagePreview onError 与 FileThumbnail 回退才满足 B04。",
+            "impact": "应用若直接使用默认组件，损坏 raster 文件的失败反馈缺失；每个应用需重复补同样的错误处理。",
+            "suggestedChange": "在默认 image 预览与 FileThumbnail 中加入与 OOXML 分支一致的失败状态（role=alert + 可选下载），或提供可注入的 error renderer。",
+            "evidence": [
+              "E6",
+              "E25"
+            ]
+          },
+          {
+            "id": "F3",
+            "kind": "strength",
+            "owner": "plugin",
+            "severity": "info",
+            "confidence": "confirmed",
+            "status": "resolved",
+            "title": "OOXML 本地预览带错误回退与视图销毁，DOCX 真实内容可渲染",
+            "detail": "OfficeOpenXmlPreview 用 same-origin credentials fetch 文档，失败时 destroy viewer 并显示带下载的 role=alert 回退，切换/卸载时 abort 请求。Agent 未修改该组件即通过 QA B02 的真实文本核对。",
+            "impact": "DOCX 预览无需第三方服务或自建预览体系，刷新后仍有效。",
+            "suggestedChange": "无；可作为 image 分支补齐错误反馈时的参考实现。",
+            "evidence": [
+              "E7"
+            ]
+          },
+          {
+            "id": "F4",
+            "kind": "issue",
+            "owner": "documentation",
+            "severity": "minor",
+            "confidence": "confirmed",
+            "status": "open",
+            "title": "File Skill 未提示 raster image 默认无解码失败反馈",
+            "detail": "Skill 的格式表把 raster image 列为 Built-in preview components，failure 段落只描述 OOXML request/rendering failure 的下载回退，没有说明 image 分支在解码失败时不会给出明确错误，也没提示需要扩展该分支。Agent 只能通过阅读/修改组件源码发现。",
+            "impact": "Agent 若只按 Skill 组装，可能误以为损坏图片会被组件明确拒绝或报错。",
+            "suggestedChange": "在预览 UI 段或失败段补一句：image 预览只在元素 error 时由应用扩展给出反馈；默认组件不检测损坏内容。",
+            "evidence": [
+              "E18",
+              "E6",
+              "E19"
+            ]
+          },
+          {
+            "id": "F5",
+            "kind": "strength",
+            "owner": "framework",
+            "severity": "info",
+            "confidence": "confirmed",
+            "status": "resolved",
+            "title": "@nocobase/db 的迁移/种子校验让文件集合与外键迁移可靠落地",
+            "detail": "migration/seed loader 强制 name 与文件名一致、up/down 契约，seed 通过 upsertOne 表达幂等；fluent foreignKey 支持 references/onDelete，应用据此用 set null 实现可移除关联。",
+            "impact": "文件集合列契约与业务关联一次写对，QA B01-B03 的持久与移除行为都由该迁移支撑。",
+            "suggestedChange": "无。",
+            "evidence": [
+              "E10",
+              "E12",
+              "E26"
+            ]
+          },
+          {
+            "id": "F6",
+            "kind": "improvement",
+            "owner": "plugin",
+            "severity": "minor",
+            "confidence": "confirmed",
+            "status": "open",
+            "title": "让 Registry 组件对损坏 raster 的失败处理成为默认可复用能力",
+            "detail": "当前只有 OOXML 有完整的失败+下载回退，image/thumbnail 需要应用各自 patch。把 image 的 onError 状态纳入 Registry 源码（并保留应用覆盖点）可减少重复接入代码与不一致。",
+            "impact": "降低后续文件格式扩展的应用改动量，保持组件行为一致。",
+            "suggestedChange": "在 registry/component-ui 的 file-preview-content.tsx 与 file-thumbnail.tsx 内置 onError 状态，沿用现有 i18n 与 resolveSafeFileUrl。",
+            "evidence": [
+              "E6",
+              "E7",
+              "E25"
+            ]
+          }
+        ],
+        "ui": {
+          "status": "not-reviewed",
+          "score": null,
+          "reason": "当前运行环境无法解析 PNG 图像，无法亲自查看两个以上页面/状态截图，故不做跨页面样式一致性评价。",
+          "evidence": []
+        },
+        "evidence": [
+          {
+            "id": "E1",
+            "kind": "code",
+            "path": "packages/@nocobase/app-plugin-file/dist/server/repository.js",
+            "observation": "uploadOne 校验 collection、store 字节与元数据、写库，并返回带 contentUrl（getUrl 派生）的归一化 record。",
+            "lines": [
+              206,
+              227
+            ],
+            "excerpt": "            uploadOne: async ({ file }) => {\n                await validateCollection();\n                if (!(file instanceof File))\n                    throw new FileRepositoryError('INVALID_FILE', 'Exactly one File is required.');\n                const owned = [];\n                let result;\n                let databaseAttempted = false;\n                try {\n                    const values = await store(file, owned);\n                    databaseAttempted = true;\n                    result = await writable.createOne({ values });\n                }\n                catch (cause) {\n                    return compensate(owned, cause, databaseAttempted);\n                }\n                return {\n                    ...result,\n                    record: {\n                        ...normalizeFileRecord(result.record),\n                        contentUrl: getUrl(result.record),\n                    },\n                };",
+            "sha256": "3e3a1d1f33208ae8e7038c8afa89149195897db3679edbad860a379e80ce8fb1"
+          },
+          {
+            "id": "E2",
+            "kind": "code",
+            "path": "packages/@nocobase/app-plugin-file/dist/server/routes.js",
+            "observation": "内容字节路由解析 uuid+ext、按 id 查记录、校验 ext 与磁盘对象存在，再以 Content-Type/Content-Length/nosniff/CSP/attachment 头流式返回。",
+            "lines": [
+              192,
+              220
+            ],
+            "excerpt": "                router.get(`${entry.accessPath}/:file`, async (c) => {\n                    const match = /^([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})(?:\\.([a-z0-9]{1,32}))?$/.exec(c.req.param('file'));\n                    if (!match)\n                        return c.notFound();\n                    const record = await files.findOne({ filter: { id: match[1] } });\n                    if (!record || record.ext !== (match[2] ?? ''))\n                        return c.notFound();\n                    const disk = app.container\n                        .resolve(driveManagerToken)\n                        .use(record.disk);\n                    if (!(await disk.exists(record.key)))\n                        return c.notFound();\n                    c.header('Cache-Control', 'private, no-store');\n                    if (entry.accessMode === 'redirect') {\n                        const url = await files.getStorageUrl(record);\n                        const publicBasePath = app.publicBasePath ?? '';\n                        // Check the final target after the host rewrites root-relative redirects.\n                        const location = new URL(addBasePathToLocation(url, publicBasePath), c.req.url);\n                        if (location.origin === new URL(c.req.url).origin &&\n                            entries.some((item) => location.pathname.startsWith(`${joinBasePath(publicBasePath, item.accessPath)}/`)))\n                            throw new FileRepositoryError('STORAGE_URL_UNAVAILABLE', 'Storage URL points back to a file access route.');\n                        return c.redirect(url, 302);\n                    }\n                    c.header('Content-Type', validMime(record.mimeType));\n                    c.header('Content-Length', String(record.size));\n                    c.header('X-Content-Type-Options', 'nosniff');\n                    c.header('Content-Security-Policy', \"sandbox; default-src 'none'\");\n                    c.header('Content-Disposition', `attachment; filename*=UTF-8''${encodeURIComponent(Buffer.from(record.filename).toString('utf8')).replace(/['()*]/g, (char) => `%${char.charCodeAt(0).toString(16).toUpperCase()}`)}`);\n                    return c.body(Readable.toWeb(await disk.getStream(record.key)));",
+            "sha256": "6982c2d56153fe60426c48783c0653f4224691075e1c95a3d6e39f7405a46025"
+          },
+          {
+            "id": "E3",
+            "kind": "code",
+            "path": "packages/@nocobase/app-plugin-file/dist/server/repository.js",
+            "observation": "store() 去除客户端路径与控制字符、推导 ext、写流并在磁盘返回大小与上传大小不一致时抛 INVALID_FILE_METADATA。",
+            "lines": [
+              122,
+              164
+            ],
+            "excerpt": "        const getUrl = (record) => `${accessPath}/${encodeURIComponent(record.id)}${record.ext ? `.${encodeURIComponent(record.ext)}` : ''}`;\n        const store = async (file, owned) => {\n            const disk = this.drive.use(options.disk);\n            const id = randomUUID();\n            // Strip client paths, controls and malformed Unicode before generating any headers.\n            const filename = (Buffer.from(file.name).toString('utf8').split(/[\\\\/]/).pop() ?? '')\n                .normalize('NFC')\n                // eslint-disable-next-line no-control-regex -- Strip controls from an untrusted filename.\n                .replace(/[\\u0000-\\u001f\\u007f]/g, '')\n                .trim() || 'file';\n            const suffix = filename.lastIndexOf('.') > 0\n                ? filename.slice(filename.lastIndexOf('.') + 1).toLowerCase()\n                : '';\n            const ext = /^[a-z0-9]{1,32}$/.test(suffix) ? suffix : '';\n            const key = `objects/${id}${ext ? `.${ext}` : ''}`;\n            const mimeType = validMime(file.type);\n            owned.push(key); // A failed put may have left a partial object.\n            await disk.putStream(key, Readable.fromWeb(file.stream()), { contentType: mimeType, contentLength: file.size });\n            const metadata = await disk.getMetaData(key);\n            if (!Number.isSafeInteger(metadata.contentLength) ||\n                metadata.contentLength < 0 ||\n                metadata.contentLength !== file.size)\n                throw new FileRepositoryError('INVALID_FILE_METADATA', 'Stored file size does not match the uploaded file.');\n            const now = new Date().toISOString();\n            const definition = await this.database\n                .connection(options.connection)\n                .collections.get(collection);\n            const timestamp = (name) => definition?.fields?.find((field) => field.name === name)?.type ===\n                'datetime'\n                ? now.slice(0, -1)\n                : now;\n            return {\n                id,\n                disk: options.disk,\n                key,\n                filename,\n                ext,\n                mimeType: validMime(metadata.contentType ?? mimeType),\n                size: metadata.contentLength,\n                createdAt: timestamp('createdAt'),\n                updatedAt: timestamp('updatedAt'),\n            };\n        };",
+            "sha256": "3e3a1d1f33208ae8e7038c8afa89149195897db3679edbad860a379e80ce8fb1"
+          },
+          {
+            "id": "E4",
+            "kind": "code",
+            "path": "packages/@nocobase/app-plugin-file/dist/server/repository.js",
+            "observation": "upload 失败补偿：若已尝试写库，先 exists 核对提交再删未提交对象，并区分 FILE_COMMIT_UNCERTAIN 与 FILE_CLEANUP_FAILED。",
+            "lines": [
+              165,
+              186
+            ],
+            "excerpt": "        const compensate = async (keys, cause, databaseAttempted) => {\n            if (databaseAttempted) {\n                // A lost commit acknowledgement must never delete an object a record now owns.\n                try {\n                    const committed = await Promise.all(keys.map((key) => repository.exists({ filter: { key, disk: options.disk } })));\n                    keys = keys.filter((_key, index) => !committed[index]);\n                }\n                catch (verificationError) {\n                    throw new FileRepositoryError('FILE_COMMIT_UNCERTAIN', 'Could not verify database commit; uploaded objects were retained for reconciliation.', { cause: new AggregateError([cause, verificationError]) });\n                }\n            }\n            const results = await Promise.allSettled(keys.map((key) => this.drive.use(options.disk).delete(key)));\n            const failures = results.filter((result) => result.status === 'rejected');\n            if (failures.length)\n                throw new FileRepositoryError('FILE_CLEANUP_FAILED', 'Upload failed and some objects could not be removed.', {\n                    cause: new AggregateError([\n                        cause,\n                        ...failures.map((result) => result.reason),\n                    ]),\n                });\n            throw cause;\n        };",
+            "sha256": "3e3a1d1f33208ae8e7038c8afa89149195897db3679edbad860a379e80ce8fb1"
+          },
+          {
+            "id": "E5",
+            "kind": "code",
+            "path": "packages/@nocobase/app-plugin-file/registry/component-ui/components/file-upload-field.tsx",
+            "observation": "upload() 用 AbortController 调用 repository.uploadOne，成功后提交 record，失败经 onError 上报并保留可重试项。",
+            "lines": [
+              124,
+              175
+            ],
+            "excerpt": "        candidate.key === item.key\n          ? { ...candidate, status: 'uploading', controller, error: undefined }\n          : candidate,\n      ),\n    );\n    try {\n      const { record } = await repository.uploadOne(\n        { file: item.file },\n        { signal: controller.signal },\n      );\n      controllersRef.current.delete(item.key);\n      if (!mountedRef.current || controller.signal.aborted) return;\n      setItems((current) =>\n        current.filter((candidate) => candidate.key !== item.key),\n      );\n      commitCompletedRecord(record);\n    } catch (error) {\n      controllersRef.current.delete(item.key);\n      if (\n        controller.signal.aborted ||\n        (error instanceof Error && error.name === 'AbortError')\n      ) {\n        if (mountedRef.current) {\n          setItems((current) =>\n            current.filter((candidate) => candidate.key !== item.key),\n          );\n        }\n        return;\n      }\n      if (!mountedRef.current) return;\n      const uploadError =\n        error instanceof Error ? error : new Error('File upload failed.');\n      setItems((current) =>\n        current.map((candidate) =>\n          candidate.key === item.key\n            ? { ...candidate, error: uploadError, status: 'error' }\n            : candidate,\n        ),\n      );\n      onError?.(uploadError);\n    }\n  };\n\n  const addFiles = (files: readonly File[]): void => {\n    if (disabled) return;\n    if (files.length + (multiple ? value.length : 0) + items.length > maximum) {\n      onError?.(\n        new Error(\n          t('fileLimitReached', {\n            defaultValue: 'The maximum number of files has been reached.',\n          }),\n        ),",
+            "sha256": "a2a7cbdf9b7e0cd6fd5ff3314c61b8008be40afb7cc21a51687c1868d37dcdd5"
+          },
+          {
+            "id": "E6",
+            "kind": "code",
+            "path": "packages/@nocobase/app-plugin-file/registry/component-ui/components/previewers/file-preview-content.tsx",
+            "observation": "默认 image 分支只返回裸 <img src=url>，没有 onError 或失败状态，损坏图片不会产生明确错误反馈。",
+            "lines": [
+              71,
+              79
+            ],
+            "excerpt": "  switch (kind) {\n    case 'image':\n      return (\n        <img\n          src={url}\n          alt={file.filename}\n          className='max-h-[70vh] max-w-full object-contain'\n        />\n      );",
+            "sha256": "f30abbadc57a0f0ed28cdb68d4ced7bba9a6e3a4c3d59d3b6fc49f89d9497144"
+          },
+          {
+            "id": "E7",
+            "kind": "code",
+            "path": "packages/@nocobase/app-plugin-file/registry/component-ui/components/previewers/office-open-xml-preview.tsx",
+            "observation": "OOXML 预览 fetch 文档、失败时 destroy viewer 并渲染带下载的 OfficeOpenXmlDownloadFallback（role=alert），卸载时 abort。",
+            "lines": [
+              75,
+              110
+            ],
+            "excerpt": "      controller.abort();\n      viewer?.destroy();\n    };\n  }, [error, format, t, url]);\n\n  const resolvedError = error ?? viewerError;\n  if (resolvedError) {\n    return (\n      <OfficeOpenXmlDownloadFallback\n        file={file}\n        message={resolvedError}\n        onDownload={onDownload}\n      />\n    );\n  }\n  if (!url) {\n    return (\n      <div role='status'>\n        {t('files.loadingPreview', { defaultValue: 'Loading preview...' })}\n      </div>\n    );\n  }\n\n  return (\n    <div className='relative h-[70vh] min-h-0 w-full overflow-hidden bg-muted/30'>\n      {!loaded ? (\n        <div\n          role='status'\n          className='absolute inset-0 z-10 flex items-center justify-center bg-background'\n        >\n          {t('files.loadingPreview', { defaultValue: 'Loading preview...' })}\n        </div>\n      ) : null}\n      <div\n        ref={hostRef}\n        className='h-full min-h-0 w-full overflow-hidden'",
+            "sha256": "b32b48615f0400191ba28d427f9070fa69c74282829aba2087746563350d28c8"
+          },
+          {
+            "id": "E8",
+            "kind": "code",
+            "path": "packages/@nocobase/app-plugin-file/registry/component-ui/lib/file-preview.ts",
+            "observation": "resolveFilePreviewKind/resolveOfficeOpenXmlFormat 将 docx/pptx/xlsx 判为 ooxml、安全 raster 图判为 image，并拒绝 active content。",
+            "lines": [
+              96,
+              130
+            ],
+            "excerpt": "  const extension = fileExtension(file.filename);\n  if (\n    ACTIVE_MIME_TYPES.has(mimeType) ||\n    mimeType.endsWith('+xml') ||\n    ACTIVE_EXTENSIONS.has(extension) ||\n    OFFICE_EXTENSIONS.has(extension)\n  ) {\n    return undefined;\n  }\n\n  const extensionFormat = OFFICE_OPEN_XML_EXTENSIONS[extension];\n  if (extensionFormat) return extensionFormat;\n  return OFFICE_OPEN_XML_MIME_TYPES[mimeType];\n}\n\nexport function resolveFilePreviewKind(file: FileRecord): FilePreviewKind {\n  const mimeType = file.mimeType.split(';', 1)[0]?.trim().toLowerCase() ?? '';\n  const extension = fileExtension(file.filename);\n  if (\n    ACTIVE_MIME_TYPES.has(mimeType) ||\n    mimeType.endsWith('+xml') ||\n    ACTIVE_EXTENSIONS.has(extension)\n  ) {\n    return 'unsupported';\n  }\n  if (mimeType === 'text/markdown' || extension === '.md') return 'markdown';\n  if (resolveOfficeOpenXmlFormat(file)) return 'ooxml';\n  if (OFFICE_MIME_TYPES.has(mimeType) || OFFICE_EXTENSIONS.has(extension)) {\n    return 'office';\n  }\n  if (isSafeImagePreview(file)) return 'image';\n  if (mimeType === 'application/pdf' || extension === '.pdf') return 'pdf';\n  if (mimeType.startsWith('audio/')) return 'audio';\n  if (mimeType.startsWith('video/')) return 'video';\n  if (",
+            "sha256": "4bb84baf6dfc6a5dc344db66adbc20960ab76b010898ff30f060c2c817809ed0"
+          },
+          {
+            "id": "E9",
+            "kind": "code",
+            "path": "packages/@nocobase/db/dist/src/collection/fluent/index.js",
+            "observation": "CollectionBuilder.foreignKey 将 fields 与 options（如 references、onDelete）作为 foreignKey constraint 压入定义。",
+            "lines": [
+              139,
+              146
+            ],
+            "excerpt": "    foreignKey(fields, options) {\n        this.definition.constraints?.push({\n            type: 'foreignKey',\n            fields: array(fields),\n            ...options,\n        });\n        return this;\n    }",
+            "sha256": "1736d3fbe360adc70d70bc2d493e2671e705431f1278fa75d8f2df3fabf4af17"
+          },
+          {
+            "id": "E10",
+            "kind": "code",
+            "path": "packages/@nocobase/db/dist/src/migration/loader.js",
+            "observation": "迁移 loader 强制 definition.name 等于文件名，并要求 up() 以及 down() 或 irreversible。",
+            "lines": [
+              83,
+              98
+            ],
+            "excerpt": "    const expectedName = taskNameFromFileName(fileName);\n    if (value.name !== expectedName) {\n        throw new Error(`Migration file ${filePath} has name \"${value.name}\", but file name requires \"${expectedName}\".`);\n    }\n    if (value.shouldRun !== undefined && typeof value.shouldRun !== 'function') {\n        throw new Error(`Migration \"${value.name}\" shouldRun must be a function when provided.`);\n    }\n    if (typeof value.up !== 'function') {\n        throw new Error(`Migration \"${value.name}\" must define an up(context) function.`);\n    }\n    if (value.down !== undefined && typeof value.down !== 'function') {\n        throw new Error(`Migration \"${value.name}\" down must be a function when provided.`);\n    }\n    if (value.down === undefined && value.irreversible !== true) {\n        throw new Error(`Migration \"${value.name}\" must define down(context) or set irreversible: true.`);\n    }",
+            "sha256": "69cab39cc68b7312d0fd29c1c89a78176fd96b424acf6b8bbe13e3cda954f48d"
+          },
+          {
+            "id": "E11",
+            "kind": "code",
+            "path": "packages/@nocobase/db/dist/src/migration/define.js",
+            "observation": "defineMigration 通过 marker 标记定义，供迁移 loader 发现。",
+            "lines": [
+              1,
+              6
+            ],
+            "excerpt": "import { markMigrationDefinition } from './internal/marker.js';\n/** Marks and returns a migration definition for discovery by the migration loader. */\nexport function defineMigration(definition) {\n    return markMigrationDefinition(definition);\n}\n",
+            "sha256": "eba0dce586442525677889388044224f67d2dbf5da1e88e5846a0b9fa34e5059"
+          },
+          {
+            "id": "E12",
+            "kind": "code",
+            "path": "packages/@nocobase/db/dist/src/seed/loader.js",
+            "observation": "seed loader 要求 default export 为 defineSeed、name 等于文件名且 run 为函数。",
+            "lines": [
+              74,
+              87
+            ],
+            "excerpt": "        throw new Error(`Seed file ${filePath} must define a non-empty string name.`);\n    }\n    const expectedName = taskNameFromFileName(fileName);\n    if (value.name !== expectedName) {\n        throw new Error(`Seed file ${filePath} has name \"${value.name}\", but file name requires \"${expectedName}\".`);\n    }\n    if (typeof value.run !== 'function') {\n        throw new Error(`Seed \"${value.name}\" must define a run(context) function.`);\n    }\n    if (!isValidTransactionMode(value.transaction)) {\n        throw new Error(`Seed \"${value.name}\" transaction must be true, false, or \"auto\".`);\n    }\n}\n",
+            "sha256": "58b05c9cfe397c2e4245c763c1153adbfcd08590838222d550d9f14ac48e5209"
+          },
+          {
+            "id": "E13",
+            "kind": "code",
+            "path": "packages/@nocobase/app-client/dist/hooks.js",
+            "observation": "useService(token) 从 ClientApplicationContext 解析服务；useApiClient 是 useService(apiClientToken) 的简写。",
+            "lines": [
+              11,
+              16
+            ],
+            "excerpt": "export function useService(token) {\n    return useClientApplication().services.resolve(token);\n}\nexport function useApiClient() {\n    return useService(apiClientToken);\n}",
+            "sha256": "6e63d580cb93a555f719e533e21e5f1f5fe72e94b4be130ba53ce818eecf5d55"
+          },
+          {
+            "id": "E14",
+            "kind": "code",
+            "path": "packages/@nocobase/app-server/dist/router/routes.js",
+            "observation": "defineApiRoutes/defineRootRoutes 返回冻结的 scope('api'/'root')+createRouter 路由贡献契约。",
+            "lines": [
+              7,
+              18
+            ],
+            "excerpt": "export function defineApiRoutes(createRouter) {\n    return Object.freeze({\n        scope: 'api',\n        createRouter,\n    });\n}\nexport function defineRootRoutes(createRouter) {\n    return Object.freeze({\n        scope: 'root',\n        createRouter,\n    });\n}",
+            "sha256": "4a5a2d50c819c2cb33a51a1a65681e16c31ced82001d689f239da855035ec617"
+          },
+          {
+            "id": "E15",
+            "kind": "skill",
+            "path": "app/.agents/skills/nocobase-app-plugin-file/SKILL.md",
+            "observation": "Skill 给出文件集合迁移与固定 9 列（id/disk/key/filename/ext/mimeType/size/createdAt/updatedAt）的 createCollection 配方。",
+            "lines": [
+              44,
+              65
+            ],
+            "excerpt": "  name: '202609080001_create_invoice_files',\n  async up({ builder }) {\n    await builder.createCollection('invoice_files', (collection) => {\n      collection.uuid('id').primary().notNull();\n      collection.string('disk', { length: 255 }).notNull();\n      collection.text('key').notNull();\n      collection.text('filename').notNull();\n      collection.string('ext', { length: 32 }).notNull();\n      collection.string('mimeType', { length: 255 }).notNull();\n      collection.bigInt('size').notNull();\n      collection.datetime('createdAt').notNull();\n      collection.datetime('updatedAt').notNull();\n    });\n  },\n  async down({ builder }) {\n    await builder.dropCollection('invoice_files');\n  },\n});\nexport default migration;\n```\n\nThe fields are fixed; mapping is unsupported. The primary key must accept a 36-character UUID, string fields accept string/char/text, size accepts integer/bigInt, and timestamps accept datetime/datetimeTz. Apply with the App's migration command. Never import a live collection schema from a migration.",
+            "sha256": "3fab337bc1a1412ba9affb4cd5ec2e79e76abe1f9b1803b7f2ebe4e293f188f5"
+          },
+          {
+            "id": "E16",
+            "kind": "skill",
+            "path": "app/.agents/skills/nocobase-app-plugin-file/SKILL.md",
+            "observation": "Skill 给出 defineFileRepositoryApiRoutes 的 repositories/policy/actions 配置示例与 uploadOne 暴露方式。",
+            "lines": [
+              74,
+              100
+            ],
+            "excerpt": "import { defineFileRepositoryApiRoutes } from '@nocobase/app-plugin-file/server';\n\nconst fileRoutes: ReturnType<typeof defineFileRepositoryApiRoutes> =\n  defineFileRepositoryApiRoutes({\n    repositories: [\n      {\n        name: 'invoiceAttachments',\n        collection: 'invoice_files',\n        connection: 'main',\n        disk: 'local',\n        accessPath: '/uploads/invoices',\n        accessMode: 'stream',\n        policy: {\n          read: {\n            scope: true,\n            fields: [\n              'id',\n              'filename',\n              'ext',\n              'mimeType',\n              'size',\n              'createdAt',\n              'updatedAt',\n            ],\n          },\n          create: { scope: true },\n          update: false,",
+            "sha256": "3fab337bc1a1412ba9affb4cd5ec2e79e76abe1f9b1803b7f2ebe4e293f188f5"
+          },
+          {
+            "id": "E17",
+            "kind": "skill",
+            "path": "app/.agents/skills/nocobase-app-plugin-file/SKILL.md",
+            "observation": "Skill 说明 server 端 container.resolve(serverFileRepositoryManagerToken).repository(collection) 与 client 端 manager.repository(name) 的用法与参数差异。",
+            "lines": [
+              133,
+              150
+            ],
+            "excerpt": "import { serverFileRepositoryManagerToken } from '@nocobase/app-plugin-file/server';\n\nconst manager = container.resolve(serverFileRepositoryManagerToken);\nconst files = manager.repository('invoice_files', {\n  connection: 'main',\n  disk: 'local',\n  accessPath: '/uploads/invoices',\n  // Only the upload path binds this; the Repository itself is unrestricted,\n  // as a db.repository() call is.\n  policy: { read: true, create: true, update: false, delete: false },\n});\nconst { record } = await files.uploadOne({ file });\nconst url = files.getUrl(record);\n```\n\nServer repository() takes the exact logical name from createCollection, not its physical table name (for example, crmAccountFiles is not crm_account_files), and requires disk/accessPath matching its routes. getUrl is synchronous and App-local; getStorageUrl asynchronously uses the record's disk/key to obtain a public or signed storage URL. Neither queries the database. Direct Server CRUD does not decorate URLs; uploads do.\n\nClient code resolves `clientFileRepositoryManagerToken` and calls `manager.repository('invoiceAttachments')` with the resource name. It reuses apiClientToken, session and base URL; do not pass disk/connection/accessPath.",
+            "sha256": "3fab337bc1a1412ba9affb4cd5ec2e79e76abe1f9b1803b7f2ebe4e293f188f5"
+          },
+          {
+            "id": "E18",
+            "kind": "skill",
+            "path": "app/.agents/skills/nocobase-app-plugin-file/SKILL.md",
+            "observation": "Skill 要求先复用 client/extensions/nocobase-file-component-ui，用 FilePreviewDialog+contentUrl，并以本地 @silurus/ooxml viewer 覆盖 DOCX/XLSX/PPTX。",
+            "lines": [
+              12,
+              25
+            ],
+            "excerpt": "## Find and reuse the preview UI first\n\nInspect `client/extensions/nocobase-file-component-ui/` before writing upload or preview components. Current Default templates preinstall this application-owned Registry source and its client dependencies; older applications and other templates may not. Import from its `index.ts`, not from plugin-internal paths. Registering the plugin supplies services and translations; it does not automatically install or upgrade the copied UI.\n\n| Format                                               | Registry preview                  | Content access                                                                 |\n| ---------------------------------------------------- | --------------------------------- | ------------------------------------------------------------------------------ |\n| DOCX / XLSX / PPTX                                   | Local `@silurus/ooxml` viewer     | Same-origin session credentials; no public URL or third-party service required |\n| Raster image / PDF / text / Markdown / audio / video | Built-in preview components       | See the content access rules below                                             |\n| Legacy DOC / XLS / PPT and OpenDocument              | Office Online fallback            | Internet-accessible absolute URL; cannot use the App session                   |\n| Unsupported or unsafe active content                 | Explanation and optional download | Download still requires permission                                             |\n\nFor custom attachment lists, uploads or business associations, reuse `FilePreviewDialog` with file records and `contentUrl`; it requires no repository prop. Extend the existing UI or add the necessary content adapter rather than reimplementing format detection and dropping supported formats. A DOCX download fallback indicates a request/rendering failure or an outdated/custom component, not that the plugin lacks DOCX support. Report the actual failure and preserve its evidence.\n\nIf the installed package, synchronized Skill and copied UI disagree, inspect the resolved plugin version, run `pnpm skills:sync` to refresh guidance, and reconcile the UI source separately. Skills synchronization does not upgrade Registry copies.",
+            "sha256": "3fab337bc1a1412ba9affb4cd5ec2e79e76abe1f9b1803b7f2ebe4e293f188f5"
+          },
+          {
+            "id": "E19",
+            "kind": "skill",
+            "path": "app/.agents/skills/nocobase-app-plugin-file/SKILL.md",
+            "observation": "Skill 描述 OOXML 失败回退，并明确无 route authentication、physical cleanup、content sniffing 等内置能力，应用需自行实现。",
+            "lines": [
+              236,
+              253
+            ],
+            "excerpt": "\nFor Bearer-only content authorization, adapt the installed Registry source in the App. Add an authenticated content loader to the OOXML fetch path and `PreviewBody`'s PDF/text fetches, and adapt download and media/image paths as needed. Resolve authentication through the App's supported client/session services and send credentials only to the trusted content endpoint. Do not put tokens in `contentUrl`. If the adapter creates blob URLs, keep an App-owned trusted URL set, pass it to the relevant `resolveSafeFileUrl` calls, and revoke URLs when replaced or unmounted. Merely assigning a `blob:` URL to `FileRecord.contentUrl` is insufficient: the default components reject untrusted blob URLs.\n\nOOXML request or rendering failure displays an error and, when downloads are enabled, a download action. `download={false}` removes that action. This is not a second preview service or a guarantee that downloading the same inaccessible URL will succeed.\n\n## Verify and handle failures\n\nVerify upload → query → contentUrl → identical downloaded bytes, including batch upload, resource aliases and host prefixes. After materialization run the consuming App's typecheck/build and exercise upload, cancel/retry, remove, download and preview. Restricted files need anonymous, forbidden-user and permitted-user tests against both API and content routes. Inspectors check registration only.\n\nFor preview integration or changes, verify each of DOCX/XLSX/PPTX with real files in development and a served production build. Check relative same-origin URLs, an authorized and unauthorized session, cross-origin CORS success/failure, failed requests and invalid documents, and `download={false}`. Close or switch files while loading and after a failure: pending requests must abort, viewers must be destroyed, and the next file must render without stale state. Unit mocks and a successful build do not establish document rendering fidelity.\n\n- Upload defaults are 5 MiB single / 20 MiB batch for the whole multipart body, including overhead. Direct Server uploads have no HTTP limit; UI maxSize checks an individual file. The Client supplies the multipart boundary.\n- BODY_TOO_LARGE (413): reduce request size or adjust route limits. INVALID_FILE/INVALID_FILES (400): send native File values and a nonempty batch.\n- INVALID_FILE_COLLECTION: first compare the migration name, route collection and Server repository argument; then await collections.get(logicalName) and check the active connection and generated metadata. SQLite physical text does not imply a broken datetime definition. Fix the specific lookup, metadata or schema problem and retry the same upload; do not bypass File Repository. Use a new migration for corrections to already-merged history.\n- STORAGE_URL_UNAVAILABLE: configure a capable disk or stream mode.\n- FILE_COMMIT_UNCERTAIN / FILE_CLEANUP_FAILED: reconcile database records and stored objects before retrying; uploads have no idempotency key.\n\nThere is no built-in route authentication, row ACL, Range/206, ETag, conditional download, resumable upload, physical cleanup, content sniffing or malware scan. Metadata deletion retains objects; cancelled forms may leave unlinked files. Implement the policies required by the business, including referenced-file deletion and orphan cleanup.",
+            "sha256": "3fab337bc1a1412ba9affb4cd5ec2e79e76abe1f9b1803b7f2ebe4e293f188f5"
+          },
+          {
+            "id": "E20",
+            "kind": "code",
+            "path": "app/client/pages/documents/index.tsx",
+            "observation": "页面用 useApiClient 与 useService(clientFileRepositoryManagerToken) 解析 client file repository，并 repository('documentAttachments')。",
+            "lines": [
+              103,
+              108
+            ],
+            "excerpt": "  const api = useApiClient();\n  const fileManager = useService(clientFileRepositoryManagerToken);\n  const repository = useMemo(\n    () => fileManager.repository(ATTACHMENT_REPOSITORY),\n    [fileManager],\n  );",
+            "sha256": "a253a773da40c6389850c1b775ba459c85ddada143370e61f0a3a318778f0e4d"
+          },
+          {
+            "id": "E21",
+            "kind": "code",
+            "path": "app/server/routes/document-attachments.ts",
+            "observation": "应用用 defineFileRepositoryApiRoutes 暴露 documentAttachments：collection document_files、disk local、accessPath /uploads/documents、policy create:true 且仅 uploadOne。",
+            "lines": [
+              19,
+              30
+            ],
+            "excerpt": "const contributions = defineFileRepositoryApiRoutes({\n  repositories: [\n    {\n      name: DOCUMENT_ATTACHMENT_REPOSITORY,\n      collection: DOCUMENT_ATTACHMENT_FILES_COLLECTION,\n      disk: DOCUMENT_ATTACHMENT_DISK,\n      accessPath: DOCUMENT_ATTACHMENT_ACCESS_PATH,\n      policy: { read: false, create: true, update: false, delete: false },\n      actions: { uploadOne: {} },\n    },\n  ],\n});",
+            "sha256": "75ad5871dca8bbc98e1ef162b39c15c924b105884e0982d325f199c8cfdcb781"
+          },
+          {
+            "id": "E22",
+            "kind": "code",
+            "path": "app/server/routes/documents.ts",
+            "observation": "业务路由 container.resolve(serverFileRepositoryManagerToken).repository(...)，用 files.getUrl 拼 contentUrl，并用 files.exists 校验 attachmentId 存在。",
+            "lines": [
+              36,
+              58
+            ],
+            "excerpt": "    const auth = app.container.resolve(authenticationToken);\n    const database = app.container.resolve(databaseManagerToken);\n    const documents = database.repository(DOCUMENTS_COLLECTION);\n    const files = app.container\n      .resolve(serverFileRepositoryManagerToken)\n      .repository(DOCUMENT_ATTACHMENT_FILES_COLLECTION, {\n        disk: DOCUMENT_ATTACHMENT_DISK,\n        accessPath: DOCUMENT_ATTACHMENT_ACCESS_PATH,\n        policy: { read: true, create: false, update: false, delete: false },\n      });\n    const basePath = (app.publicBasePath ?? '').replace(/\\/$/, '');\n    const contentUrl = (record: Pick<FileRecord, 'id' | 'ext'>): string =>\n      `${basePath}${files.getUrl(record)}`;\n    const attachmentView = (record: FileRecord | undefined) =>\n      record ? { ...record, contentUrl: contentUrl(record) } : null;\n\n    const resolveAttachmentId = async (\n      value: unknown,\n    ): Promise<string | null | typeof INVALID_ATTACHMENT> => {\n      if (value === undefined || value === null || value === '') return null;\n      if (typeof value !== 'string') return INVALID_ATTACHMENT;\n      const exists = await files.exists({ filter: { id: value } });\n      return exists ? value : INVALID_ATTACHMENT;",
+            "sha256": "f4964561adf6c3a5eeca329b3ab33dccdeaa7cfe5cdb65ec7da7af925b3accf9"
+          },
+          {
+            "id": "E23",
+            "kind": "code",
+            "path": "app/database/main/migrations/202609240001_create_document_attachments.ts",
+            "observation": "迁移建 document_files（文件契约列）与 documents（title 必填、attachmentId 外键 onDelete set null）。",
+            "lines": [
+              14,
+              44
+            ],
+            "excerpt": "  name: '202609240001_create_document_attachments',\n  async up({ builder }) {\n    await builder.createCollection('document_files', (collection) => {\n      collection.uuid('id').primary();\n      collection.string('disk', { length: 64, nullable: false });\n      collection.string('key', { length: 512, nullable: false });\n      collection.string('filename', { length: 255, nullable: false });\n      collection.string('ext', {\n        length: 32,\n        nullable: false,\n        defaultValue: '',\n      });\n      collection.string('mimeType', { length: 255, nullable: false });\n      collection.integer('size', { nullable: false });\n      collection.datetime('createdAt', { nullable: false });\n      collection.datetime('updatedAt', { nullable: false });\n    });\n\n    await builder.createCollection('documents', (collection) => {\n      collection.uuid('id').primary();\n      collection.string('title', { length: 200, nullable: false });\n      collection.uuid('attachmentId', { nullable: true });\n      collection.foreignKey('attachmentId', {\n        references: { collection: 'document_files', fields: ['id'] },\n        onDelete: 'set null',\n      });\n      collection.datetime('createdAt', { nullable: false });\n      collection.datetime('updatedAt', { nullable: false });\n    });\n  },\n  async down({ builder }) {",
+            "sha256": "ee8036b668532bb2bac93b17783af07dd9ab13a6f46932fd3e9ddf2b56070f64"
+          },
+          {
+            "id": "E24",
+            "kind": "code",
+            "path": "app/database/main/seeds/202609240002_sample_documents.ts",
+            "observation": "种子用 repository.upsertOne 按固定 id 写入两条资料，update 仅 title，重跑不覆盖 attachmentId。",
+            "lines": [
+              29,
+              45
+            ],
+            "excerpt": "  name: '202609240002_sample_documents',\n  async run(context) {\n    const documents = context.repository('documents');\n    for (const document of SAMPLE_DOCUMENTS) {\n      await documents.upsertOne({\n        filter: { id: document.id },\n        create: {\n          id: document.id,\n          title: document.title,\n          createdAt: document.createdAt,\n          updatedAt: document.updatedAt,\n        },\n        update: { title: document.title },\n      });\n    }\n  },\n});",
+            "sha256": "37a0d20d66535b552a2376f7aa227a18913f886d3c1d66c6f086c7bac8a91b99"
+          },
+          {
+            "id": "E25",
+            "kind": "code",
+            "path": "app/client/extensions/nocobase-file-component-ui/components/previewers/file-preview-content.tsx",
+            "observation": "应用在自有副本新增 ImagePreview：onError 记录 failedUrl 并以 role=alert 显示损坏/不支持提示和下载按钮。",
+            "lines": [
+              97,
+              140
+            ],
+            "excerpt": "function ImagePreview(inputProps: {\n  readonly file: FileRecord;\n  readonly url?: string;\n  readonly onDownload?: () => void;\n}): ReactElement {\n  const { t } = useTranslation('@nocobase/app-plugin-file');\n  const { file, url, onDownload } = inputProps;\n  // A corrupt file still arrives as an image (`image/png`) and the browser only\n  // discovers it cannot decode when the element fails to load, so the failure\n  // has to be a state change rather than a check on the file metadata.\n  // Comparing the recorded failure against the current URL resets the state\n  // when a different file is shown, without an effect that sets state.\n  const [failedUrl, setFailedUrl] = useState<string>();\n  const failed = url !== undefined && failedUrl === url;\n  if (failed) {\n    return (\n      <div\n        role='alert'\n        className='flex flex-col items-center gap-3 py-8 text-center'\n      >\n        <AlertTriangle aria-hidden='true' className='size-6 text-destructive' />\n        <p>\n          {t('files.imageFailed', {\n            defaultValue:\n              'Unable to display this image. The file may be corrupted or in an unsupported format.',\n          })}\n        </p>\n        {onDownload ? (\n          <Button type='button' onClick={onDownload}>\n            {t('files.downloadFile', { defaultValue: 'Download file' })}\n          </Button>\n        ) : null}\n      </div>\n    );\n  }\n  return (\n    <img\n      src={url}\n      alt={file.filename}\n      className='max-h-[70vh] max-w-full object-contain'\n      onError={() => setFailedUrl(url)}\n    />\n  );\n}",
+            "sha256": "3c487e15d69e318308ba2f239dee604781f007e7915414538cca20057d59b8cf"
+          },
+          {
+            "id": "E26",
+            "kind": "skill",
+            "path": "app/.agents/skills/nocobase-db/SKILL.md",
+            "observation": "nocobase-db Skill 给出 defineMigration/createCollection/dropCollection 与 defineSeed/upsertOne 的完整示例，并规定迁移用 builder、seed 用 repository。",
+            "lines": [
+              85,
+              123
+            ],
+            "excerpt": "\nconst migration: MigrationDefinition = defineMigration({\n  name: '202609020001_create_orders',\n\n  async up({ builder }) {\n    await builder.createCollection('orders', (collection) => {\n      collection.increments('id');\n      collection.string('orderNo', { length: 64, nullable: false });\n      collection.string('status', { length: 32, nullable: false });\n      collection.datetime('createdAt', { nullable: false });\n      collection.unique('orderNo');\n      collection.index('status');\n    });\n  },\n\n  async down({ builder }) {\n    await builder.dropCollection('orders');\n  },\n});\n\nexport default migration;\n```\n\n```ts\n// database/main/seeds/202609030002_default_order_statuses.ts\nimport { defineSeed } from '@nocobase/db';\n\nexport default defineSeed({\n  name: '202609030002_default_order_statuses',\n\n  async run({ repository }) {\n    await repository('orderStatuses').upsertOne({\n      filter: { code: 'draft' },\n      create: { code: 'draft', title: 'Draft' },\n      update: { title: 'Draft' },\n    });\n  },\n});\n```",
+            "sha256": "2fdca7c2484a669667b6293878b915a5af0f84cbd3c5e80945a28fe5fbabf7d7"
+          },
+          {
+            "id": "E27",
+            "kind": "skill",
+            "path": "app/.agents/skills/nocobase-db/SKILL.md",
+            "observation": "Skill 列出 createCollection 回调、foreignKey(references) 示例及全部字段/约束 builder 名称。",
+            "lines": [
+              147,
+              164
+            ],
+            "excerpt": "`createCollection(name, callback)` takes a callback, not a field array:\n\n```ts\nawait builder.createCollection('orderItems', (collection) => {\n  collection.increments('id');\n  collection.integer('orderId', { nullable: false });\n  collection.integer('quantity', { nullable: false, defaultValue: 1 });\n  collection.foreignKey('orderId', {\n    references: { collection: 'orders', fields: ['id'] },\n    name: 'fk_order_items_order',\n  });\n  collection.index(['orderId', 'quantity']);\n});\n```\n\nField builders are `increments`, `integer`, `bigInt`, `string`, `char`, `text`, `boolean`, `decimal`, `float`, `double`, `date`, `time`, `datetime`, `datetimeTz`, `json`, `blob`, `uuid`, and `native` for a dialect-specific type. Options include `nullable`, `length`, `defaultValue`, `precision` and `scale`; the equivalent chained form (`.notNull()`, `.defaultTo()`, `.unique()`) is also available — pick one style and keep the file consistent.\n\nRelations are `belongsTo`, `hasOne`, `hasMany` and `belongsToMany`. Constraints and indexes are `primary`, `unique`, `foreignKey` and `index`, each taking one field name or an array.",
+            "sha256": "2fdca7c2484a669667b6293878b915a5af0f84cbd3c5e80945a28fe5fbabf7d7"
+          },
+          {
+            "id": "E28",
+            "kind": "skill",
+            "path": "app/.agents/skills/nocobase-app-development/references/migrations.md",
+            "observation": "指引说明 database/main/migrations 与 seeds 的位置、pnpm db:apply 执行顺序与种子幂等/不覆盖用户数据的要求。",
+            "lines": [
+              7,
+              19
+            ],
+            "excerpt": "Migrations under `database/main/migrations/` are the application's schema history. Seeds under `database/main/seeds/` insert records the application requires to run. Migrations create structure. Seeds never do.\n\n`database/tsconfig.json` extends the server configuration so editor tooling and ESLint recognize migrations and seeds as Node source. Keep it in place when adding connection directories.\n\n## Running\n\n```bash\npnpm db:apply\n```\n\nThis applies pending migrations and then pending seeds for `database.default`, including registered plugins, ordered by name across all sources. Both halves run only what is pending, so on an already-migrated database it applies seeds alone. The template defaults to `main`. Plugin migrations, seeds and runtime default reads/writes always use this same connection; changing `database.default` changes the application system database.\n\nSeeds are the second half of that run, so the structure a seed writes into must already exist from an earlier migration. Keep seed data fixed and reproducible — no current timestamps or random values in identifying fields — and never let a repeat run silently overwrite data a user has edited.",
+            "sha256": "3754e5ced8a2dc97c212c152168924b90349bce155651d9edfff66f246196004"
+          },
+          {
+            "id": "E29",
+            "kind": "code",
+            "path": "packages/@nocobase/app-client/dist/plugins.js",
+            "observation": "defineClientPlugins 遍历注册项，拒绝同一 packageName 重复注册，并冻结插件与 routeComponentOverrides。",
+            "lines": [
+              44,
+              60
+            ],
+            "excerpt": "export function defineClientPlugins(registrations) {\n    const seen = new Set();\n    const plugins = [];\n    const routeComponentOverrides = [];\n    for (const plugin of registrations) {\n        if (seen.has(plugin.packageName)) {\n            throw new Error(`Client plugin \"${plugin.packageName}\" is registered more than once.`);\n        }\n        seen.add(plugin.packageName);\n        plugins.push(plugin);\n        routeComponentOverrides.push(...plugin.routeComponentOverrides);\n    }\n    return Object.freeze({\n        plugins: Object.freeze(plugins),\n        routeComponentOverrides: Object.freeze(routeComponentOverrides),\n    });\n}",
+            "sha256": "dbf946fb68ecab3873a57d766a7bdf784962fd91704843901cc5bd21909ab1a1"
+          },
+          {
+            "id": "E30",
+            "kind": "code",
+            "path": "app/client/plugins.ts",
+            "observation": "应用导入 @nocobase/app-plugin-file/client 并在 defineClientPlugins 数组中注册 file()。",
+            "lines": [
+              20,
+              41
+            ],
+            "excerpt": "import file from '@nocobase/app-plugin-file/client';\n\n// Array order is contribution order. A plugin is enabled by appearing in this\n// list; removing its entry and its import disables it.\nconst clientPlugins: AppClientPlugins = defineClientPlugins([\n  authentication(),\n  aiEmployee(),\n  authorization(),\n  defaultAccess(),\n  sharingRules(),\n  restrictionRules(),\n  databaseExplorer(),\n  users({ mount: 'settings', path: '/users' }),\n  apiKeys({ path: '/api-keys' }),\n  i18n(),\n  notificationProvider({ demo: false }),\n  notificationInApp(),\n  workflow(),\n  notification(),\n  file(),\n  scheduler(),\n]);",
+            "sha256": "683ea3493c20307d15513f7c6d6c9d777c83c938ef63d274363c4f6bcc35c831"
+          },
+          {
+            "id": "E31",
+            "kind": "code",
+            "path": "app/server/plugins.ts",
+            "observation": "应用导入 @nocobase/app-plugin-file/server 并在 defineServerPlugins 数组中注册 file。",
+            "lines": [
+              20,
+              38
+            ],
+            "excerpt": "import file from '@nocobase/app-plugin-file/server';\n\nconst serverPlugins: AppServerPlugins = defineServerPlugins([\n  authentication,\n  aiEmployee,\n  authorization,\n  defaultAccess,\n  sharingRules,\n  restrictionRules,\n  databaseExplorer,\n  users,\n  apiKeys,\n  i18n,\n  notification,\n  notificationInApp,\n  notificationProviders,\n  workflow,\n  file,\n  scheduler,",
+            "sha256": "46687bebe614cacae3104728153df5b53fb0270cff9a149b23c81d876dab90f2"
+          },
+          {
+            "id": "E32",
+            "kind": "code",
+            "path": "app/server/routes/index.ts",
+            "observation": "应用把 documentsApiRoutes 与 documentAttachmentFileRoutes 合并为路由贡献列表导出。",
+            "lines": [
+              7,
+              11
+            ],
+            "excerpt": "const routes: readonly AppRouteContribution<Application>[] = [\n  documentsApiRoutes,\n  ...documentAttachmentFileRoutes,\n];\n",
+            "sha256": "b836992cc8ba67a5e270c258d598f07dedb9808f2abbe2b04c15001fa2fbe795"
+          },
+          {
+            "id": "E33",
+            "kind": "code",
+            "path": "app/client/extensions/nocobase-file-component-ui/components/file-thumbnail.tsx",
+            "observation": "应用为 FileThumbnail 增加 failedUrl 状态与 onError，损坏图片回退为类型图标。",
+            "lines": [
+              51,
+              66
+            ],
+            "excerpt": "  // A corrupted image still passes the URL check and only fails when the\n  // browser tries to decode it, so fall back to the type icon on `error`.\n  // Comparing against the current URL resets the fallback for a new file.\n  const [failedUrl, setFailedUrl] = useState<string>();\n  const failed = imageUrl !== undefined && failedUrl === imageUrl;\n  if (imageUrl && !failed) {\n    return (\n      <img\n        data-slot='file-thumbnail'\n        src={imageUrl}\n        alt={alt}\n        className='h-full w-full object-cover'\n        onError={() => setFailedUrl(imageUrl)}\n      />\n    );\n  }",
+            "sha256": "db7ea5ff49e90455a61f51ab9318a20827171a1cb8b7486c66c961db65b8a2f4"
+          },
+          {
+            "id": "E34",
+            "kind": "log",
+            "path": "artifacts/verify-1/browser-acceptance/report.json",
+            "observation": "QA 报告 B01-B04 全 passed，并记录 PNG 预览真实尺寸与字节哈希、DOCX 渲染真实文本、损坏 PNG 在预览阶段给出清晰失败。",
+            "lines": [
+              1,
+              40
+            ],
+            "excerpt": "{\n  \"passed\": true,\n  \"authenticated\": true,\n  \"summary\": \"管理员角色在真实浏览器完成 B01–B04：新增资料上传 PNG，刷新后预览真实 32×32 图片并下载（SHA-256 与夹具一致）；另一条资料 DOCX 保存刷新后在应用内渲染真实内容 Factory DOCX sample；移除附件刷新后关联消失；损坏 PNG 在预览阶段给出清晰失败反馈。较早一次 DOCX 卡在 Loading preview 经排查为 QA 自身 Worker/CDP 插桩污染会话，已用干净浏览器重测纠正，非业务缺陷。\",\n  \"checks\": [\n    {\n      \"id\": \"B02\",\n      \"criterion\": \"为另一条资料上传 DOCX，保存、刷新后在应用内看到文档真实内容；不能以文件名截图代替预览。\",\n      \"status\": \"passed\",\n      \"actions\": [\n        \"编辑“项目需求说明书”，确认标题原值回填为“项目需求说明书”\",\n        \"通过文件控件上传工厂夹具 sample.docx，点击 Save\",\n        \"刷新 /main/documents 后重新打开并点击 Preview sample.docx\",\n        \"读取预览容器渲染文本，并与夹具 DOCX 的 word/document.xml 期望内容“Factory DOCX sample”核对\"\n      ],\n      \"evidence\": [\n        \"DOCX 上传保存成功，刷新后“项目需求说明书”显示 sample.docx 关联（975 B）\",\n        \"重开预览后弹窗渲染出文档真实内容：容器 [data-office-open-xml-format=docx] 的 innerText 为“Factory DOCX sample”（按行断为 Factory/DOCX/sample），innerHTML 长度 1922，非仅文件名\",\n        \"服务器返回的 docx 为有效夹具：200、975 字节、sha256=06408d7e3a01fd82bc32240dbd035d6366ac701f50c1a90f12eb49f47288cd6e，与清单一致，期望内容即 Factory DOCX sample\",\n        \"说明：较早一次看到“Loading preview”卡住，经排查是 QA 自身对 window.Worker/CDP worker 的插桩污染了会话；在干净浏览器重测时 module blob worker 双向消息往返正常（classic 与 module 均返回 pong），DOCX 预览随即渲染真实内容，故判定通过\"\n      ],\n      \"screenshots\": [\n        \"B02b-docx-preview-fresh2.png\",\n        \"B02-form-docx-staged.png\"\n      ],\n      \"recordedAt\": 1790246790697\n    },\n    {\n      \"id\": \"B01\",\n      \"criterion\": \"新增资料并上传 PNG，保存、刷新后能预览真实图片并下载。\",\n      \"status\": \"passed\",\n      \"actions\": [\n        \"在 Documents 页点击 New document，填写标题“PNG 图片资料”，通过文件控件上传工厂夹具 sample.png，点击 Save\",\n        \"刷新 /main/documents 页面重新加载列表\",\n        \"点击 Preview sample.png 打开预览弹窗\",\n        \"核对预览内 <img> 的真实尺寸并从服务器 URL 下载文件校验 SHA-256\"\n      ],\n      \"evidence\": [\n        \"保存后列表出现“PNG 图片资料”，带 Preview/Download/Remove 三个附件操作\",\n        \"刷新后关联仍存在\",",
+            "sha256": "c2906af633121ac7a42de9fc2ac934dcc3b1340eae266ec2e5e844cac2723ad1"
+          },
+          {
+            "id": "E35",
+            "kind": "code",
+            "path": "app/client/pages/documents/index.tsx",
+            "observation": "页面用受控 FileUploadField（repository/value/onChange/onStatusChange/onError、accept image/* 与 .docx、maxFiles=1）接入上传。",
+            "lines": [
+              495,
+              511
+            ],
+            "excerpt": "          <FileUploadField\n            repository={repository}\n            value={files}\n            onChange={(next) => setFiles([...next])}\n            onStatusChange={setUploadStatus}\n            onError={(cause) =>\n              setError(errorMessage(cause, t('documents.uploadFailed')))\n            }\n            accept={ACCEPTED_FILE_TYPES}\n            maxFiles={1}\n            labels={{\n              choose: t('documents.chooseFile'),\n              empty: t('documents.noFileChosen'),\n              remove: t('documents.removeFile'),\n              retry: t('documents.retryUpload'),\n            }}\n          />",
+            "sha256": "a253a773da40c6389850c1b775ba459c85ddada143370e61f0a3a318778f0e4d"
+          },
+          {
+            "id": "E36",
+            "kind": "skill",
+            "path": "app/.agents/skills/nocobase-app-development/references/client-api.md",
+            "observation": "client-api 指引要求解析 apiClientToken/useApiClient 而非自建 HTTP client，并说明 useApiClient 是 useService(apiClientToken) 的简写。",
+            "lines": [
+              3,
+              20
+            ],
+            "excerpt": "Use the application's HTTP client for application API calls. Resolve `apiClientToken` rather than constructing another client, hardcoding `/api`, or deriving an API URL from the browser location. The application configures `api.baseURL`, including any deployment base path. Import `useApiClient`, the token, other hooks, `ApiClient` type and `ApiClientError` through `@nocobase/app-client` so plugins use the application's shared runtime and error-class identity.\n\n## Resolve the client\n\nInside a React component or custom Hook:\n\n```tsx\nimport { useApiClient } from '@nocobase/app-client';\n\nconst api = useApiClient();\n```\n\n`useApiClient()` is a no-argument shorthand for `useService(apiClientToken)`. Both return the same client from the current application and require application context. Neither creates a client or manages request state.\n\nInside a Client ServiceProvider method, resolve it after services have been registered:\n\n```ts\nconst api = this.app.services.resolve(apiClientToken);",
+            "sha256": "794559aa25b5baedeb88dc0fe5f612cf24f3742b2c6fde1003a5e66d5be23e43"
+          }
+        ],
+        "limitations": [
+          "视觉评审未执行：当前运行环境无法解析 PNG 图像，ui 保持 not-reviewed，未评价跨页面样式一致性。",
+          "本轮只覆盖 #252 资料附件直接涉及的文件仓库、Registry 文件 UI、@nocobase/db 与应用装配，不代表全框架或其它插件表现，也不能保证跨案例可比。",
+          "changedFiles 为空且 agent.patch 为空，无法据补丁把改动归属到具体轮次；分析基于冻结快照中的 app 源码、packages 实现与已归档 QA。",
+          "B02 早期 'Loading preview' 卡顿在 QA 报告中被归因于 QA 自身 Worker/CDP 插桩污染会话并在干净浏览器复测通过，未计入框架缺陷。",
+          "未运行应用、迁移或浏览器，未验证 uploadMany、redirect disk、非 local 存储、PDF/XLSX/PPTX/Office Online 回退与物理清理策略。",
+          "快照未包含 1 个超出预算、非普通文件或不可读取的文件；未据此确认其实现。"
+        ]
+      },
       "execution": {
         "buildReviewMode": "full",
-        "source": "repository"
+        "source": "reassessment"
       },
       "reviewer": {
         "engine": "pi",
         "model": "deepseek-v4.1-flash",
         "version": "0.86.1",
-        "runId": "35985523766",
+        "runId": "35990977273",
         "attempt": 1,
-        "controlSha": "da18d586a556da85c9e2ac0fb4507b5bc01d7986",
-        "replay": false
+        "controlSha": "41941eca5031f312eeca7478e8f6b71d00d75248",
+        "replay": true
+      },
+      "supplementalUsage": {
+        "input": 115827,
+        "output": 39118,
+        "cacheRead": 2636228,
+        "cacheWrite": 0,
+        "reasoning": 0,
+        "totalTokens": 2791173,
+        "records": 48,
+        "incomplete": 0,
+        "runId": 35990977273,
+        "attempt": 1
       },
       "process": {
         "verificationAttempts": 1,
@@ -1125,5 +2237,5 @@
     "number": 272,
     "headSha": "ecdb4f10308621e91848b286dee443782b602e11"
   },
-  "reportId": "gchust/nb3-factory:252:35985523766:1:ecdb4f10308621e91848b286dee443782b602e11:template-4:review-d1e9e299663979d8"
+  "reportId": "gchust/nb3-factory:252:35985523766:1:ecdb4f10308621e91848b286dee443782b602e11:template-4:review-fd3ac286ad1980b8"
 }
