@@ -9,6 +9,7 @@ import { createReviewSnapshot, materializeEvidence, runBuildReview } from '../ru
 import { aggregate, collectUsage, emptyUsage, validateRecord } from '../task-usage.mjs';
 import { makeDeliveryReport } from '../delivery-report.mjs';
 import { renderHtml } from '../../reports/render-report.mjs';
+import { packHistory } from '../agent-history.mjs';
 
 const here = path.resolve(import.meta.dirname, '../..');
 const example = () => JSON.parse(readFileSync(path.join(here, 'reports/example.review.json'), 'utf8'));
@@ -154,6 +155,14 @@ test('full independent mock CLI path records provenance, real excerpts and separ
   assert.equal(usage.phases.review.totalTokens, 125); assert.equal(usage.phases.implementation.totalTokens, 0);
   const normalized = JSON.parse(readFileSync(path.join(f.artifacts, 'agent-review.jsonl.result.json'), 'utf8'));
   assert.equal(normalized.version, 1); assert.equal(normalized.role, 'review');
+  const capture = JSON.parse(readFileSync(path.join(f.artifacts, 'agent-review.jsonl.invocation.json')));
+  assert.equal(capture.phase, 'review'); assert.equal(capture.invoked, true); assert.equal(capture.status, 'finished');
+  for (const name of ['review-input.json', 'review-files.json']) assert.ok(capture.context.some(c => c.path === name));
+  assert.equal(capture.promptSha256, digest(readFileSync(path.join(f.artifacts, 'agent-review.jsonl.prompt.md'))));
+  const packed = packHistory({artifacts:f.artifacts,output:path.join(f.root,'history'),issue:21,runId:100,attempt:1});
+  assert.equal(packed.manifest.completeness.invocations.find(i => i.log === 'agent-review.jsonl').missing.length, 0);
+  assert.ok(packed.manifest.files.some(f => f.name === 'build-review-files.json' && f.phase === 'review'));
+  assert.ok(packed.manifest.files.some(f => f.name === 'build-review-input.json' && f.phase === 'review'));
   const record = { version: 1, repository: 'owner/factory', issue: 21, runId: 100, attempt: 1, status: 'delivered', start: 1, end: 2, jobs: [], agentJobId: null, usage };
   const result = await makeDeliveryReport({ record, records: [record], cumulative: aggregate([record]), timings: [] }, f.artifacts);
   assert.match(result.html, /独立 Agent 评审/); assert.match(result.html, /73<small>/);
@@ -173,6 +182,7 @@ test('disabled and exhausted-budget runs do not invoke any CLI or invent scores'
     const result = await runBuildReview(f.workspace, f.artifacts, { ...f.env, ...setting });
     assert.equal(result.state, 'not-reviewed'); assert.equal(result.evaluation, null);
     assert.equal(existsSync(path.join(f.artifacts, 'agent-review.jsonl')), false);
+    assert.equal(existsSync(path.join(f.artifacts, 'agent-review.jsonl.invocation.json')), false);
   }
 });
 test('old usage receipts still aggregate, without adding a fictitious reviewer invocation', () => {

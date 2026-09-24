@@ -1,0 +1,69 @@
+name: Preset build tests (daily / manual)
+run-name: "Preset tests · ${{ github.event_name == 'schedule' && 'daily' || github.event_name == 'workflow_dispatch' && (inputs.dry_run && 'preview' || 'manual') || 'initialize' }}"
+
+on:
+  schedule:
+    # UTC. Every day, build the presets carrying factory:daily; no manual launch or variable needed.
+    - cron: '17 3 * * *'
+  push:
+    paths:
+      - '.github/workflows/scheduled-preset-tests.yml'
+      - '.github/scripts/scheduled-preset-tests.mjs'
+  # Run the same labelled presets immediately, without changing the daily schedule.
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: '仅预览（可选）；默认立即搭建 factory:daily 案例，不影响每日定时'
+        required: true
+        default: false
+        type: boolean
+
+permissions: {}
+
+# Serialize only the launcher; keep manual and scheduled requests queued, not replaced.
+# Child builds retain their existing per-Issue queue and active-case guard.
+concurrency:
+  group: factory-scheduled-preset-tests
+  cancel-in-progress: false
+  queue: max
+
+jobs:
+  initialize-label:
+    if: github.event_name == 'push' && github.ref_name == github.event.repository.default_branch
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24.x
+      - name: Make the daily selection label available after merge (no build)
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: node .github/scripts/scheduled-preset-tests.mjs --init-label
+
+  launch:
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      issues: write
+      actions: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24.x
+      - name: Discover daily presets and dispatch independent build tests
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run }}
+        run: node .github/scripts/scheduled-preset-tests.mjs

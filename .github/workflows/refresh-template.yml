@@ -89,8 +89,29 @@ jobs:
           cd "$RUNNER_TEMP/template-generation/nb3-factory"
           pnpm add @nocobase/db-sqlite@latest
           pnpm install --no-frozen-lockfile
-          pnpm skills:sync
-          pnpm exec prettier --write config.yml package.json README.MD eslint.config.js scripts/build.mjs factory-template.json tests/logic vitest.config.ts
+
+      - name: Install, register, and inspect the required Pro plugin baseline
+        env:
+          CI: true
+        run: |
+          APP_ROOT="$RUNNER_TEMP/template-generation/nb3-factory"
+          node control/.github/scripts/template-plugins.mjs install \
+            "$APP_ROOT" "$RUNNER_TEMP/template-diagnostics"
+          # Re-registration can be a no-op; always sync before inspecting Skills.
+          (cd "$APP_ROOT" && pnpm skills:sync)
+          node control/.github/scripts/template-plugins.mjs inspect \
+            "$APP_ROOT" "$RUNNER_TEMP/template-diagnostics"
+
+      - name: Format the generated application and plugin registrations
+        run: |
+          cd "$RUNNER_TEMP/template-generation/nb3-factory"
+          format_paths=(package.json README.MD eslint.config.js scripts/build.mjs factory-template.json client/plugins.ts server/plugins.ts cli/plugins.ts tests/logic vitest.config.ts)
+          # New templates create config.yml through config:init, not create-app.
+          # Verification uses an external APP_CONFIG_FILE; do not generate secrets here.
+          if [[ -f config.yml ]]; then
+            format_paths+=(config.yml)
+          fi
+          pnpm exec prettier --write "${format_paths[@]}"
 
       - name: Install Chinese browser fonts
         run: bash control/.github/scripts/install-browser-fonts.sh
