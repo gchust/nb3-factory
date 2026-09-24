@@ -135,6 +135,43 @@ const enUS = {
     collapse: 'Collapse navigation',
     label: 'Application navigation',
     breadcrumb: 'Breadcrumb',
+    todos: 'Todos',
+  },
+  todos: {
+    title: 'Todos',
+    description:
+      'Todos whose deadline has passed and that are still open are marked expired by the scheduled check.',
+    refresh: 'Refresh',
+    newTodo: 'New todo',
+    newTodoDescription: 'Add a todo with a deadline.',
+    create: 'Create',
+    scheduledHint:
+      'The “Check overdue todos” plan flags open todos whose deadline has passed.',
+    completed: 'Completed',
+    incomplete: 'Not completed',
+    expired: 'Expired',
+    active: 'Active',
+    markComplete: 'Mark complete',
+    markIncomplete: 'Mark incomplete',
+    columns: {
+      title: 'Title',
+      dueAt: 'Due at',
+      completed: 'Completed',
+      expired: 'Expired',
+    },
+    empty: {
+      title: 'No todos yet',
+      description: 'Create the first todo to get started.',
+    },
+    error: {
+      forbidden: 'You do not have access to this list.',
+      requestFailed: 'Unable to load todos.',
+      retry: 'Retry',
+      createFailed: 'Unable to create the todo.',
+      updateFailed: 'Unable to update the todo.',
+      titleRequired: 'A title is required.',
+      dueAtRequired: 'A due date is required.',
+    },
   },
   dataTable: {
     noResults: 'No results.',
