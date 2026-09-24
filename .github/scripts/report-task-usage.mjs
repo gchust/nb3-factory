@@ -1,4 +1,5 @@
 import { selectSupplement, adoptSupplement } from './replay-build-review.mjs';
+import { executionFacts } from './evaluation-report.mjs';
 import { makeDeliveryReport } from './delivery-report.mjs';
 import { readStageTimings, renderTaskReport } from './task-report.mjs';
 import { waitForTaskRun } from './wait-for-task-run.mjs';
@@ -103,6 +104,7 @@ if (mode === 'select') {
     writeFileSync(args.source, JSON.stringify(source));
     output('artifact_id', source.artifactId || '');
     output('artifact', source.artifact || '');
+    output('task_artifact_id', source.taskArtifactId || '');
     output('ready', 'true');
   } else console.log('No accepted task artifacts; skipping usage report.');
 } else if (mode === 'publish') {
@@ -121,6 +123,18 @@ if (mode === 'select') {
     else usage.incomplete++;
   }
   const record = validateRecord({ ...source, usage }, repository, source.issue);
+  // Trusted run identity lets later exports link handoffs without expired artifacts.
+  for (const root of [args.artifacts, args.task].filter(Boolean)) {
+    try {
+      const metadata = JSON.parse(readFileSync(path.join(root, 'task-metadata.json'), 'utf8'));
+      if (metadata.repository !== repository || metadata.issue?.number !== record.issue ||
+          (metadata.run && Number(metadata.run.id) !== record.runId)) throw new Error('metadata does not match this run');
+      record.evaluation = executionFacts(metadata, args.artifacts, record);
+      break;
+    } catch (error) {
+      if (error.code !== 'ENOENT') console.warn(`::warning::Evaluation identity unavailable: ${error.message}`);
+    }
+  }
   const comments = await list(`/issues/${source.issue}/comments`);
   const existing = comments.find(
     (c) =>

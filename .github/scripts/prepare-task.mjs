@@ -17,6 +17,7 @@ import {
 import { isManualIssue, isPresetIssue, preparePresetIssue } from './issue-presets.mjs';
 import { resolveTaskBranch, taskIssueNumber } from './task-compat.mjs';
 import { resolveTargetBranch, pinInitialBase } from './task-base.mjs';
+import { taskEvaluationIdentity } from './evaluation-identity.mjs';
 
 const args = parseArgs(process.argv.slice(2));
 const event = JSON.parse(readFileSync(args.event, 'utf8'));
@@ -130,6 +131,12 @@ try {
       author: issue.user.login,
     },
     task,
+    // Stable logical-run identity for exported evaluations; not business input.
+    evaluation: taskEvaluationIdentity({
+      repository,
+      issueNumber: issue.number,
+      buildCommentId: buildCommentId ? Number(buildCommentId) : null,
+    }),
     workBranch,
     targetCreated,
     existingPullRequest: ownPullRequest

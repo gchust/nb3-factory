@@ -158,6 +158,7 @@ jobs:
         if: steps.prepare.outputs.status == 'ready'
         env:
           FACTORY_CONTROL_SHA: ${{ steps.baseline.outputs.sha }}
+          FACTORY_ENTRY_SHA: ${{ github.sha }}
           FACTORY_APPLICATION_BASE_REF: ${{ steps.prepare.outputs.base_ref }}
           FACTORY_APPLICATION_BASE_SHA: ${{ steps.prepare.outputs.base_sha }}
         run: node bootstrap/.github/scripts/handoff-control.mjs record --metadata "$RUNNER_TEMP/task-metadata.json"

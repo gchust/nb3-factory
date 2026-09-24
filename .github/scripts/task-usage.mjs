@@ -235,6 +235,19 @@ export function selectSource(run, jobs, artifacts, repository) {
       )
     : [];
   if (artifactsForAgent.length > 1) throw new Error('Ambiguous Agent artifact');
+  // The small normalized task artifact identifies runs whose Agent failed before copying it.
+  const prepare = builds.find((job) => job.name === 'prepare');
+  const taskArtifacts = prepare
+    ? artifacts.filter(
+        (a) =>
+          a.name === `factory-task-${issue}` &&
+          !a.expired &&
+          Date.parse(a.created_at) >= Date.parse(prepare.started_at) &&
+          Date.parse(a.created_at) <= Date.parse(prepare.completed_at),
+      )
+    : [];
+  // run-name records the source of a continuation or explicit recovery.
+  const previousRunId = Number(/ from ([1-9]\d*)$/.exec(run.display_title ?? '')?.[1]);
   const invoked =
     agent?.steps?.some(
       (step) =>
@@ -265,6 +278,9 @@ export function selectSource(run, jobs, artifacts, repository) {
     invoked,
     artifact: artifactsForAgent[0]?.name ?? null,
     artifactId: artifactsForAgent[0]?.id ?? null,
+    taskArtifactId: taskArtifacts.length === 1 ? taskArtifacts[0].id : null,
+    event: run.event,
+    previousRunId: positive(previousRunId) ? previousRunId : null,
   };
 }
 
