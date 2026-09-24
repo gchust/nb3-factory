@@ -4,7 +4,7 @@
 
 修复循环先对变更应用文件自动格式化，再执行格式检查与 Lint；修复轮优先重跑上次失败的静态检查，然后执行其余所有检查。任何失败都会阻止构建/验收，最终独立验证仍执行全套检查、迁移、Seed 和浏览器冒烟。业务 QA 仍逐项操作。完整业务 QA 失败后优先复测失败路径；复测通过后新建数据库再做完整业务验收，同一代码不重复构建。最终交付不能只依赖局部通过。
 
-最终验证设置 `FACTORY_BUILD_TARGET=linux-x64`、`FACTORY_BUILD_NODE_VERSION=24`。验证通过后只运行归档脚本，发布的是验收后的同一份 dist；不要重新执行 pnpm build --tar。
+最终验证设置 `FACTORY_BUILD_TARGET=linux-x64`、`FACTORY_BUILD_NODE_VERSION=24`、`FACTORY_BUILD_ARCHIVE=1`，唯一一次构建带模板自带的 `--tar`，归档即被验收的同一份 dist；验证通过后只暂存上传，不再单独构建或调用应用内打包脚本（新版模板已不提供 `scripts/utils/pack-dist.mjs`）。
 
 `FACTORY_DEPENDENCY_CACHE` 启用作业内的生产依赖安装缓存。输入包含根 lockfile、registry 配置、生成的 manifest/workspace、vendor 内容、构建脚本、Node 版本/ABI、宿主平台和目标参数及 pnpm 版本。成功构建后保存依赖指纹；下一次清理 dist 前通过目录 rename 暂存已验证的 node_modules，匹配时直接移回，避免复制大量小文件。缓存只在同一工作区、同一文件系统中复用。恢复时还原部署目标元数据，省去安装、链接转换和原生模块处理，仍执行裁剪和服务端依赖验证。应用代码不缓存。最终验证仅构建一次，不启用依赖缓存，使用新 runner，不下载实现 Agent 的缓存。不得把此目录作为跨信任边界的 Actions cache；跨作业缓存需另行设计可信生产者与完整性校验。`FACTORY_DISABLE_DEPENDENCY_CACHE=1` 可强制冷安装。
 

@@ -203,6 +203,52 @@ test('fast checks stop expensive work; repair prioritizes failed check without o
   );
 });
 
+test('only an archiving verification asks its single build for the tarball', (t) => {
+  const root = fixture(t);
+  const workspace = path.join(root, 'workspace');
+  mkdirSync(workspace);
+  const config = write(root, 'runtime.yml', 'config');
+  const commands = path.join(root, 'commands');
+  write(
+    root,
+    'bin/pnpm',
+    '#!/usr/bin/env bash\nprintf "%s\\n" "$*" >> "$COMMAND_LOG"\n',
+    0o755,
+  );
+  const builds = (extra) => {
+    writeFileSync(commands, '');
+    const result = spawnSync(
+      'bash',
+      [path.join(scripts, 'verify.sh'), workspace, config, path.join(root, 'artifacts')],
+      {
+        env: {
+          ...process.env,
+          PATH: `${root}/bin:${process.env.PATH}`,
+          COMMAND_LOG: commands,
+          FACTORY_SKIP_BROWSER: '1',
+          ...extra,
+        },
+        encoding: 'utf8',
+      },
+    );
+    assert.equal(result.status, 0, result.stderr);
+    return readFileSync(commands, 'utf8')
+      .trim()
+      .split('\n')
+      .filter((line) => line.startsWith('build'));
+  };
+  assert.deepEqual(builds({}), ['build']);
+  assert.deepEqual(builds({ FACTORY_BUILD_ARCHIVE: '1' }), ['build --tar']);
+  assert.deepEqual(
+    builds({
+      FACTORY_BUILD_TARGET: 'linux-x64',
+      FACTORY_BUILD_NODE_VERSION: '24',
+      FACTORY_BUILD_ARCHIVE: '1',
+    }),
+    ['build --target linux-x64 --node-version 24 --tar'],
+  );
+});
+
 test('QA writer rejects bad evidence before saving and retains real failures', (t) => {
   const root = fixture(t);
   const report = path.join(root, 'report.json');

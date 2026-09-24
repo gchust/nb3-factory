@@ -100,22 +100,26 @@ test('preview workflows keep every run step a block scalar', () => {
 });
 
 test('the deployable build is produced by independent verification', () => {
-  const verified = task.indexOf('Independently verify the applied patch');
-  const packed = task.indexOf('Pack the deployable build for the preview host');
-  const uploaded = task.indexOf(
+  const finalJob = task.slice(
+    task.indexOf('\n  verify-final:\n'),
+    task.indexOf('\n  publish:\n'),
+  );
+  const verified = finalJob.indexOf('Independently verify the applied patch');
+  const staged = finalJob.indexOf('Stage the deployable build and its metadata');
+  const uploaded = finalJob.indexOf(
     'factory-dist-${{ needs.prepare.outputs.issue_number }}',
   );
   assert.ok(verified > 0, 'verification step not found');
-  assert.ok(packed > verified, 'the build must be packed after verification');
-  assert.ok(uploaded > packed, 'the build must be uploaded after it is packed');
+  assert.ok(staged > verified, 'the build must be staged after verification');
+  assert.ok(uploaded > staged, 'the build must be uploaded after it is staged');
   // Stated explicitly: without a target the build records the runner itself and
   // ships native modules for whatever architecture the runner happens to be.
-  assert.match(task, /FACTORY_BUILD_TARGET: linux-x64/);
-  assert.match(
-    task,
-    /timed-command\.mjs pack node \.\/scripts\/utils\/pack-dist\.mjs/,
-  );
-  assert.doesNotMatch(task, /pnpm build --tar/);
+  assert.match(finalJob, /FACTORY_BUILD_TARGET: linux-x64/);
+  // The verification build archives itself; only the final job asks for it,
+  // and nothing runs a second build or an application-local pack script.
+  assert.match(finalJob, /FACTORY_BUILD_ARCHIVE: '1'/);
+  assert.equal(task.match(/FACTORY_BUILD_ARCHIVE/g).length, 1);
+  assert.doesNotMatch(task, /pnpm build --tar|pack-dist/);
 });
 
 test('the payload is published for the host to fetch, not pushed to it', () => {
