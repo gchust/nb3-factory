@@ -1,0 +1,2740 @@
+{
+  "schemaVersion": 1,
+  "type": "evaluation-report",
+  "source": {
+    "producer": "nb3-factory",
+    "instance": "gchust/nb3-factory",
+    "project": "gchust/nb3-factory",
+    "exporter": {
+      "version": 1,
+      "controlSha": "08430b4d5ad2aa42b6d597487815a6bb0bb6ca3f",
+      "runId": 36158244868,
+      "attempt": 1
+    }
+  },
+  "run": {
+    "key": "gchust/nb3-factory/issues/339/initial",
+    "kind": "initial",
+    "identity": "recorded",
+    "batchKey": null,
+    "caseKey": null,
+    "sampleIndex": null,
+    "sampleKey": null,
+    "task": {
+      "repository": "gchust/nb3-factory",
+      "issue": 339,
+      "buildCommentId": null,
+      "title": "简版 CRM：客户、联系人、商机"
+    },
+    "case": {
+      "source": "preset",
+      "presetIssueNumber": 200,
+      "capturedAt": "2026-09-25T15:06:14Z",
+      "inputHash": "05bcff80b9f91eef7a20606efaa87b72cc295ed7fe2308a5358243b957b94aeb",
+      "reviewHash": "977a1a33dc347a7f47afebb632be49bdc647d599eecd2ab33e02b34ebb061a01"
+    }
+  },
+  "revision": 1,
+  "createdAt": "2026-09-25T16:04:13Z",
+  "precedence": {
+    "producer": {
+      "runId": 36151903756,
+      "attempt": 1,
+      "startedAt": "2026-09-25T15:06:03Z"
+    },
+    "executionOrder": 1,
+    "knownLaterExecutions": 0,
+    "chainTerminal": true,
+    "reviewRubric": 2,
+    "reviewState": "completed",
+    "review": {
+      "kind": "build",
+      "at": "2026-09-25T15:06:03Z",
+      "runId": 36151903756,
+      "attempt": 1
+    },
+    "qaCoverage": "complete"
+  },
+  "baseline": {
+    "track": "published-template",
+    "application": {
+      "baseRef": "develop",
+      "baseSha": "08430b4d5ad2aa42b6d597487815a6bb0bb6ca3f",
+      "candidate": {
+        "patchSha256": "163ad27ecb33ab40ef1d4de80120be84227cfcc950986aba99795cf387019732",
+        "headSha": "f6aa924db130be97aa79983d575ee2552dce6a29"
+      }
+    },
+    "factory": {
+      "controlSha": "08430b4d5ad2aa42b6d597487815a6bb0bb6ca3f",
+      "entrySha": "08430b4d5ad2aa42b6d597487815a6bb0bb6ca3f"
+    },
+    "template": {
+      "creatorVersion": "0.1.0-beta.21",
+      "templateVersion": "1.0.0-beta.46"
+    },
+    "dependencies": {
+      "lockfileSha256": "bb68c415b59b0556f145c14a3cad8ddc3f06410abdfaaf5ba04f9f0576d2e538",
+      "baselineFingerprint": "6b666e48aafb1de2b34479fbb6bc6172d916d8c07c615f5a24f47c9d00f53b8b",
+      "packages": [
+        {
+          "name": "@nocobase/ai-employee",
+          "version": "0.2.0-beta.8"
+        },
+        {
+          "name": "@nocobase/ai-employee-avatars",
+          "version": "1.0.2"
+        },
+        {
+          "name": "@nocobase/app-cli",
+          "version": "0.1.0-beta.5"
+        },
+        {
+          "name": "@nocobase/app-client",
+          "version": "1.0.0-beta.20"
+        },
+        {
+          "name": "@nocobase/app-plugin-ai-employee",
+          "version": "0.1.0-beta.22"
+        },
+        {
+          "name": "@nocobase/app-plugin-ai-knowledge-base",
+          "version": "0.1.0-beta.9"
+        },
+        {
+          "name": "@nocobase/app-plugin-api-keys",
+          "version": "0.1.0-beta.7"
+        },
+        {
+          "name": "@nocobase/app-plugin-authentication",
+          "version": "1.0.0-beta.23"
+        },
+        {
+          "name": "@nocobase/app-plugin-authorization",
+          "version": "0.2.0-beta.19"
+        },
+        {
+          "name": "@nocobase/app-plugin-authz-default-access",
+          "version": "0.1.0-beta.3"
+        },
+        {
+          "name": "@nocobase/app-plugin-authz-restriction-rules",
+          "version": "0.1.0-beta.2"
+        },
+        {
+          "name": "@nocobase/app-plugin-authz-sharing-rules",
+          "version": "0.1.0-beta.3"
+        },
+        {
+          "name": "@nocobase/app-plugin-database-explorer",
+          "version": "0.1.0-beta.5"
+        },
+        {
+          "name": "@nocobase/app-plugin-file",
+          "version": "0.1.0-beta.15"
+        },
+        {
+          "name": "@nocobase/app-plugin-i18n",
+          "version": "0.1.0-beta.8"
+        },
+        {
+          "name": "@nocobase/app-plugin-mail",
+          "version": "0.1.0-beta.0"
+        },
+        {
+          "name": "@nocobase/app-plugin-notification",
+          "version": "0.1.0-beta.17"
+        },
+        {
+          "name": "@nocobase/app-plugin-notification-in-app",
+          "version": "0.2.0-beta.18"
+        },
+        {
+          "name": "@nocobase/app-plugin-notification-provider",
+          "version": "0.1.0-beta.10"
+        },
+        {
+          "name": "@nocobase/app-plugin-notification-providers",
+          "version": "0.2.0-beta.7"
+        },
+        {
+          "name": "@nocobase/app-plugin-scheduler",
+          "version": "0.1.0-beta.8"
+        },
+        {
+          "name": "@nocobase/app-plugin-users",
+          "version": "0.1.0-beta.10"
+        },
+        {
+          "name": "@nocobase/app-plugin-workflow",
+          "version": "0.1.0-beta.27"
+        },
+        {
+          "name": "@nocobase/app-portal-sdk",
+          "version": "1.0.0-beta.3"
+        },
+        {
+          "name": "@nocobase/app-server",
+          "version": "1.0.0-beta.26"
+        },
+        {
+          "name": "@nocobase/app-skills",
+          "version": "0.1.0-beta.15"
+        },
+        {
+          "name": "@nocobase/app-tools",
+          "version": "0.1.0-beta.5"
+        },
+        {
+          "name": "@nocobase/app-websocket",
+          "version": "0.0.1"
+        },
+        {
+          "name": "@nocobase/authorization",
+          "version": "0.1.0-beta.9"
+        },
+        {
+          "name": "@nocobase/caching",
+          "version": "0.1.0-beta.2"
+        },
+        {
+          "name": "@nocobase/config",
+          "version": "0.1.0-beta.1"
+        },
+        {
+          "name": "@nocobase/cron",
+          "version": "0.1.0"
+        },
+        {
+          "name": "@nocobase/db",
+          "version": "1.0.0-beta.15"
+        },
+        {
+          "name": "@nocobase/db-sqlite",
+          "version": "0.1.0-beta.2"
+        },
+        {
+          "name": "@nocobase/dev-config",
+          "version": "0.1.0-beta.12"
+        },
+        {
+          "name": "@nocobase/drive",
+          "version": "0.1.0-beta.4"
+        },
+        {
+          "name": "@nocobase/i18n",
+          "version": "1.0.0-beta.4"
+        },
+        {
+          "name": "@nocobase/logging",
+          "version": "0.1.0-beta.5"
+        },
+        {
+          "name": "@nocobase/nb3-cli",
+          "version": "1.0.0-beta.11"
+        },
+        {
+          "name": "@nocobase/queue",
+          "version": "0.1.0-beta.7"
+        },
+        {
+          "name": "@nocobase/repository-input",
+          "version": "0.1.0-beta.1"
+        },
+        {
+          "name": "@nocobase/service-provider",
+          "version": "0.0.2-beta.1"
+        },
+        {
+          "name": "@nocobase/session",
+          "version": "0.1.0-beta.2"
+        },
+        {
+          "name": "@nocobase/snowflake",
+          "version": "1.0.0-beta.3"
+        }
+      ]
+    },
+    "skills": {
+      "fingerprint": "64dd2cba2c9214009f91d3a3fbbfb2669a92067b4c3be4a5097fb4a8a355c92d",
+      "files": 105
+    },
+    "sourceSnapshot": null,
+    "inputs": {
+      "taskInputHash": "05bcff80b9f91eef7a20606efaa87b72cc295ed7fe2308a5358243b957b94aeb",
+      "pipelineInputHash": "d91dccefb2e93110a8d9a4f71a8548a9ab838ba72c2da74a90482e86463de16b",
+      "reviewHash": "977a1a33dc347a7f47afebb632be49bdc647d599eecd2ab33e02b34ebb061a01",
+      "reviewCriteriaHash": "977a1a33dc347a7f47afebb632be49bdc647d599eecd2ab33e02b34ebb061a01",
+      "prompts": [
+        {
+          "phase": "implementation",
+          "path": "agent-implement.jsonl.invocation.json",
+          "sha256": "e7aa19dfbd206a49095ca5e32b8f49742452e8110801eb9d902ae9fde10f9073"
+        },
+        {
+          "phase": "review",
+          "path": "agent-review.jsonl.invocation.json",
+          "sha256": "f4d47f932699c35767e0cd8c5344871b1469c763f5a7d6d739e7a87ac9781b14"
+        },
+        {
+          "phase": "qa",
+          "path": "verify-1/browser-acceptance/agent-browser-acceptance.jsonl.invocation.json",
+          "sha256": "0ef7090f3488fa8a2270ac117b68c403f8d8dd6dfc9f82e8531ef37402efdc2f"
+        }
+      ]
+    },
+    "rubric": {
+      "id": "nb3-framework",
+      "version": 2
+    },
+    "agent": {
+      "engine": "pi",
+      "model": "deepseek-v4.1-flash",
+      "version": "0.86.1",
+      "buildReviewMode": "full"
+    },
+    "environment": {
+      "browserFixturesSha256": "3b527d18aa2f6d58fdfea5cdd916631ea1ee3425abeba09bb1f961f2128c554b",
+      "browserPreflight": "passed"
+    }
+  },
+  "executions": [
+    {
+      "key": "run/36151903756/attempt/1",
+      "kind": "implementation",
+      "order": 1,
+      "workflow": "code-agent-task",
+      "runId": 36151903756,
+      "attempt": 1,
+      "event": "issues",
+      "previousRunId": null,
+      "conclusion": "delivered",
+      "startedAt": "2026-09-25T15:06:03Z",
+      "endedAt": "2026-09-25T16:02:58Z",
+      "jobSeconds": 3404,
+      "controlSha": "08430b4d5ad2aa42b6d597487815a6bb0bb6ca3f",
+      "patchSha256": "163ad27ecb33ab40ef1d4de80120be84227cfcc950986aba99795cf387019732",
+      "source": "usage-receipt"
+    }
+  ],
+  "outcome": {
+    "execution": "completed",
+    "acceptance": "passed",
+    "delivery": "published",
+    "pullRequest": {
+      "number": 341,
+      "headSha": "f6aa924db130be97aa79983d575ee2552dce6a29"
+    },
+    "detail": "执行链已终结；业务验收与代码交付分别见 acceptance / delivery。"
+  },
+  "qa": {
+    "coverage": "complete",
+    "rounds": [
+      {
+        "round": 1,
+        "executionKey": "run/36151903756/attempt/1",
+        "scope": "full",
+        "passed": true,
+        "source": "verify-1/browser-acceptance/report.json",
+        "checks": [
+          {
+            "id": "B01",
+            "criterion": "新增客户及其联系人，刷新客户详情，联系人仍关联到正确客户。",
+            "status": "passed",
+            "evidence": [
+              "qa/1/b01-contact-form.png",
+              "qa/1/b01-contacts-list.png",
+              "qa/1/b01-customer-detail-refresh.png"
+            ]
+          },
+          {
+            "id": "B02",
+            "criterion": "为该客户新增金额 100 的商机，详情中的商机列表和金额合计包含该条真实记录。",
+            "status": "passed",
+            "evidence": [
+              "qa/1/b02-opportunity-form.png",
+              "qa/1/b02-customer-detail-total.png"
+            ]
+          },
+          {
+            "id": "B03",
+            "criterion": "将该商机阶段改为“赢单”，按阶段筛选能正确找到；另一阶段筛选不混入它。",
+            "status": "passed",
+            "evidence": [
+              "qa/1/b03-edit-stage-won.png",
+              "qa/1/b03-list-stage-won.png",
+              "qa/1/b03-filter-won.png",
+              "qa/1/b03-filter-inprogress.png"
+            ]
+          },
+          {
+            "id": "B04",
+            "criterion": "将该商机金额改为 150，刷新后合计随之增加 50。",
+            "status": "passed",
+            "evidence": [
+              "qa/1/b04-edit-amount-150.png",
+              "qa/1/b04-customer-detail-total-150.png"
+            ]
+          },
+          {
+            "id": "B05",
+            "criterion": "缺失必填客户或输入负金额时不能保存，错误可理解；不扩展正文之外的异常组合。\n\n无法实际完成时如实记录 failed、blocked 或 not_run，不以源码检查代替浏览器通过。",
+            "status": "passed",
+            "evidence": [
+              "qa/1/b05-missing-customer-error.png",
+              "qa/1/b05-negative-amount-error.png"
+            ]
+          }
+        ]
+      }
+    ],
+    "firstFull": {
+      "status": "passed",
+      "round": 1,
+      "executionKey": "run/36151903756/attempt/1",
+      "basis": "本产物包含第 1 轮起的全部验证，取第一次实际全量 QA。"
+    },
+    "finalFull": {
+      "status": "passed",
+      "round": 1,
+      "executionKey": "run/36151903756/attempt/1",
+      "basis": "最后一次实际全量 QA。"
+    },
+    "criteria": [
+      {
+        "id": "B01",
+        "text": "新增客户及其联系人，刷新客户详情，联系人仍关联到正确客户。",
+        "optional": false,
+        "firstFull": "passed",
+        "finalFull": "passed"
+      },
+      {
+        "id": "B02",
+        "text": "为该客户新增金额 100 的商机，详情中的商机列表和金额合计包含该条真实记录。",
+        "optional": false,
+        "firstFull": "passed",
+        "finalFull": "passed"
+      },
+      {
+        "id": "B03",
+        "text": "将该商机阶段改为“赢单”，按阶段筛选能正确找到；另一阶段筛选不混入它。",
+        "optional": false,
+        "firstFull": "passed",
+        "finalFull": "passed"
+      },
+      {
+        "id": "B04",
+        "text": "将该商机金额改为 150，刷新后合计随之增加 50。",
+        "optional": false,
+        "firstFull": "passed",
+        "finalFull": "passed"
+      },
+      {
+        "id": "B05",
+        "text": "缺失必填客户或输入负金额时不能保存，错误可理解；不扩展正文之外的异常组合。\n\n无法实际完成时如实记录 failed、blocked 或 not_run，不以源码检查代替浏览器通过。",
+        "optional": false,
+        "firstFull": "passed",
+        "finalFull": "passed"
+      }
+    ],
+    "firstPassWithoutRepair": "yes",
+    "counts": {
+      "execution": {
+        "verificationAttempts": 1,
+        "repairAttempts": 0,
+        "source": "repair-summary.json（仅本执行）"
+      },
+      "chain": {
+        "verificationAttempts": 1,
+        "repairAttempts": 0,
+        "source": "pipeline-state.json（跨 Handoff 累计检查点，不再相加）"
+      }
+    },
+    "note": "工厂修复次数不等于 Agent 开发中的全部自测和修正；未记录 Agent 内部试错，不宣称开发全程无错误。"
+  },
+  "reviews": [
+    {
+      "key": "review/36151903756.1/v2-8d616d35df49",
+      "role": "original",
+      "selected": true,
+      "state": "completed",
+      "reason": "独立 Agent 评审完成；评分是基于本次证据的意见，不替代业务 QA 或人工评审。",
+      "rubric": {
+        "id": "nb3-framework",
+        "version": 2,
+        "scale": {
+          "min": 0,
+          "max": 100
+        },
+        "businessUiIncluded": false,
+        "dimensions": [
+          {
+            "key": "requirementFit",
+            "label": "需求满足度"
+          },
+          {
+            "key": "usability",
+            "label": "使用便利度"
+          },
+          {
+            "key": "agentFriendliness",
+            "label": "Agent 友好度"
+          },
+          {
+            "key": "design",
+            "label": "设计合理性"
+          },
+          {
+            "key": "reliability",
+            "label": "实现完整性与可靠性"
+          }
+        ]
+      },
+      "reviewer": {
+        "engine": "pi",
+        "model": "deepseek-v4.1-flash",
+        "version": "0.86.1",
+        "runId": 36151903756,
+        "attempt": 1,
+        "controlSha": "08430b4d5ad2aa42b6d597487815a6bb0bb6ca3f",
+        "replay": false
+      },
+      "producer": {
+        "runId": 36151903756,
+        "attempt": 1
+      },
+      "basis": {
+        "inputHash": "8d616d35df49e31a43f3a1fb1f3b3cdd4094026eec72470cfbf87e63b44b4997",
+        "patchSha256": "163ad27ecb33ab40ef1d4de80120be84227cfcc950986aba99795cf387019732",
+        "baseSha": "08430b4d5ad2aa42b6d597487815a6bb0bb6ca3f",
+        "lockfileSha256": "bb68c415b59b0556f145c14a3cad8ddc3f06410abdfaaf5ba04f9f0576d2e538",
+        "reviewCriteriaHash": "977a1a33dc347a7f47afebb632be49bdc647d599eecd2ab33e02b34ebb061a01",
+        "artifactHash": "5c287aa623adff475bcd11e3ce22e797406e1a9b8951dbe4dce5385c62a89225"
+      },
+      "buildReviewMode": "full",
+      "summary": "本轮 CRM 场景中，NocoBase3 的迁移/种子、Repository 查询与过滤、服务提供者与路由鉴权、客户端路由声明与请求/表单/本地化能力整体可直接使用，B01–B05 全量通过，未出现需要绕过框架的自造数据层或鉴权旁路。已确认一处指引缺口：nocobase-db Skill 未说明 belongsTo 的数据库外键与级联只在关系声明 constraints 时生成，应用为此重复声明 foreignKey；另建议为 Repository 聚合补最小示例，避免被应用层求和替代。评审未运行应用，且当前模型无法解码 PNG，故数据库物理结果与跨页面视觉一致性未验证。",
+      "progress": {
+        "complete": true,
+        "pendingModules": []
+      },
+      "modules": [
+        {
+          "key": "review/36151903756.1/v2-8d616d35df49/M1",
+          "name": "数据库迁移、集合定义与种子",
+          "subjectKeys": [
+            "pkg:@nocobase/db",
+            "skill:nocobase-db",
+            "skill:nocobase-app-development"
+          ],
+          "mapping": "resolved",
+          "targets": [
+            {
+              "kind": "library",
+              "name": "@nocobase/db",
+              "subjectKey": "pkg:@nocobase/db",
+              "entrypoints": [
+                "defineMigration",
+                "defineSeed",
+                "CollectionBuilder.createCollection / dropCollection",
+                "fluent fields (increments/string/integer/decimal)",
+                "fluent relations (belongsTo) and constraints (foreignKey)"
+              ],
+              "evidence": [
+                "review/36151903756.1/v2-8d616d35df49/E1",
+                "review/36151903756.1/v2-8d616d35df49/E2",
+                "review/36151903756.1/v2-8d616d35df49/E3",
+                "review/36151903756.1/v2-8d616d35df49/E4",
+                "review/36151903756.1/v2-8d616d35df49/E5",
+                "review/36151903756.1/v2-8d616d35df49/E6",
+                "review/36151903756.1/v2-8d616d35df49/E7"
+              ]
+            },
+            {
+              "kind": "guidance",
+              "name": "app/.agents/skills/nocobase-db/SKILL.md",
+              "subjectKey": "skill:nocobase-db",
+              "entrypoints": [
+                "第 2 节 migration/seed 结构",
+                "第 3 节 Builder 与 relation/constraint"
+              ],
+              "evidence": [
+                "review/36151903756.1/v2-8d616d35df49/E9"
+              ]
+            },
+            {
+              "kind": "guidance",
+              "name": "app/.agents/skills/nocobase-app-development/references/migrations.md",
+              "subjectKey": "skill:nocobase-app-development",
+              "entrypoints": [
+                "数据库目录、db:apply 运行方式、验证清单",
+                "指向 nocobase-db Skill 的入口"
+              ],
+              "evidence": [
+                "review/36151903756.1/v2-8d616d35df49/E8"
+              ]
+            }
+          ],
+          "scope": "本次仅覆盖 customers/contacts/opportunities 三张表的迁移与种子：defineMigration/defineSeed 标记、builder.createCollection、fluent 字段与 belongsTo/foreignKey 约束、级联删除。未覆盖迁移回滚、校验和漂移、插件迁移、多连接与事务内建表。",
+          "limitations": "未运行 db:apply，也未核对真实数据库物理 schema；级联行为仅由实现路径和 B01 的关联写入间接支持，未做删除测试。relation.constraints 的默认值只从 compiler 分支推断，未查默认赋值点。",
+          "criteria": [
+            "B01",
+            "B02"
+          ],
+          "qa": {
+            "firstFull": "passed",
+            "finalFull": "passed"
+          },
+          "requirements": [
+            {
+              "need": "创建 crm_customers/crm_contacts/crm_opportunities 三张表，包含主键、字符串/整型/小数金额字段与索引。",
+              "responsibility": "框架提供 defineMigration、迁移发现标记与 CollectionBuilder 流畅字段 API；业务负责字段名、长度、默认值与索引选择。",
+              "support": "direct",
+              "recommendedUsage": "nocobase-db Skill 第 3 节：builder.createCollection(name, callback)，在回调里用 increments/string/decimal 等声明字段，用 index/unique 声明索引。",
+              "actualUsage": "应用迁移严格按此写法，命名与字段声明与 Skill 示例同构；B01/B04 的写入与读取全部通过，未受阻。",
+              "gapOwner": "none",
+              "evidence": [
+                "review/36151903756.1/v2-8d616d35df49/E3",
+                "review/36151903756.1/v2-8d616d35df49/E5",
+                "review/36151903756.1/v2-8d616d35df49/E9",
+                "review/36151903756.1/v2-8d616d35df49/E16"
+              ]
+            },
+            {
+              "need": "联系人、商机归属客户，并在客户删除时级联清理。",
+              "responsibility": "框架负责 relation（belongsTo）与约束（foreignKey）两类声明及其 onDelete 编译；业务负责选择归属字段与级联策略。",
+              "support": "composition",
+              "recommendedUsage": "Skill 第 3 节把 relations 与 constraints 分列，示例用外键声明数据库约束；但未提到 belongsTo 需 constraints(true) 才发出外键，也未在文档化的关系选项里列出 constraints()。",
+              "actualUsage": "迁移同时写 belongsTo(..., onDelete:'cascade') 与显式 foreignKey(..., onDelete:'cascade')，并在注释中说明关系选项不足以发出级联；B01 的关联刷新与种子关联写入通过。",
+              "gapOwner": "documentation",
+              "evidence": [
+                "review/36151903756.1/v2-8d616d35df49/E4",
+                "review/36151903756.1/v2-8d616d35df49/E6",
+                "review/36151903756.1/v2-8d616d35df49/E7",
+                "review/36151903756.1/v2-8d616d35df49/E9",
+                "review/36151903756.1/v2-8d616d35df49/E16"
+              ]
+            },
+            {
+              "need": "安装种子数据可重复执行且不覆盖用户修改。",
+              "responsibility": "框架提供 defineSeed 与 seed context 的 repository；业务负责稳定的业务标识与幂等判断。",
+              "support": "direct",
+              "recommendedUsage": "Skill 第 2 节：seed 无 builder，写安装数据用 repository，按唯一业务值幂等。",
+              "actualUsage": "应用按业务名先 findOne 再 createOne，并显式记录不使用 upsertOne 的原因；B01–B03 的样本数据来自该种子。",
+              "gapOwner": "none",
+              "evidence": [
+                "review/36151903756.1/v2-8d616d35df49/E2",
+                "review/36151903756.1/v2-8d616d35df49/E9",
+                "review/36151903756.1/v2-8d616d35df49/E17"
+              ]
+            }
+          ],
+          "scores": {
+            "requirementFit": {
+              "score": 88,
+              "reason": "三表结构、字段类型、外键与索引都在冻结的 builder/fluent 实现中直接支持，迁移与种子写法与 Skill 推荐入口一致；仅关系级联需要额外显式 foreignKey 约束，属可用的小缺口。",
+              "evidence": [
+                "review/36151903756.1/v2-8d616d35df49/E3",
+                "review/36151903756.1/v2-8d616d35df49/E5",
+                "review/36151903756.1/v2-8d616d35df49/E6",
+                "review/36151903756.1/v2-8d616d35df49/E9"
+              ]
+            },
+            "usability": {
+              "score": 82,
+              "reason": "createCollection + 回调式字段声明直观，字段/索引 API 齐全；但 belongsTo 的 onDelete 与 constraints 关系选项未在指引中说明，导致同一声明需写两遍更易出错。",
+              "evidence": [
+                "review/36151903756.1/v2-8d616d35df49/E4",
+                "review/36151903756.1/v2-8d616d35df49/E6",
+                "review/36151903756.1/v2-8d616d35df49/E7",
+                "review/36151903756.1/v2-8d616d35df49/E9"
+              ]
+            },
+            "agentFriendliness": {
+              "score": 83,
+              "reason": "nocobase-db Skill 第 2/3 节和 migrations.md 明确给出迁移/种子形状与字段列表，入口可发现；但 relation.constraints 的缺失使 Agent 只能靠试错或注释确认级联，指引可补一句默认行为。",
+              "evidence": [
+                "review/36151903756.1/v2-8d616d35df49/E6",
+                "review/36151903756.1/v2-8d616d35df49/E8",
+                "review/36151903756.1/v2-8d616d35df49/E9"
+              ]
+            },
+            "design": {
+              "score": 86,
+              "reason": "defineMigration/defineSeed 只做标记以便加载器发现，schema 变更集中在 CollectionBuilder 与 compiler，relation 元数据与数据库约束职责分离，边界清晰。",
+              "evidence": [
+                "review/36151903756.1/v2-8d616d35df49/E1",
+                "review/36151903756.1/v2-8d616d35df49/E2",
+                "review/36151903756.1/v2-8d616d35df49/E5",
+                "review/36151903756.1/v2-8d616d35df49/E6"
+              ]
+            },
+            "reliability": {
+              "score": 84,
+              "reason": "读了 builder.apply 与 compiler 约束编译实现：foreignKey 约束会带上 onDelete，belongsTo 只在 relation.constraints 为真时才追加外键，与迁移写法一致；未运行真实数据库验证物理结果。",
+              "evidence": [
+                "review/36151903756.1/v2-8d616d35df49/E5",
+                "review/36151903756.1/v2-8d616d35df49/E6",
+                "review/36151903756.1/v2-8d616d35df49/E7"
+              ]
+            }
+          }
+        },
+        {
+          "key": "review/36151903756.1/v2-8d616d35df49/M2",
+          "name": "Repository 查询、关联加载与过滤",
+          "subjectKeys": [
+            "pkg:@nocobase/db",
+            "pkg:@nocobase/repository-input",
+            "skill:nocobase-db",
+            "skill:nocobase-app-development"
+          ],
+          "mapping": "resolved",
+          "targets": [
+            {
+              "kind": "library",
+              "name": "@nocobase/db",
+              "subjectKey": "pkg:@nocobase/db",
+              "entrypoints": [
+                "DatabaseManager.repository()",
+                "Repository.findMany / findOne / count / aggregate / groupBy",
+                "Repository.createOne / updateOne",
+                "select/include relation loading"
+              ],
+              "evidence": [
+                "review/36151903756.1/v2-8d616d35df49/E11",
+                "review/36151903756.1/v2-8d616d35df49/E12"
+              ]
+            },
+            {
+              "kind": "library",
+              "name": "@nocobase/repository-input",
+              "subjectKey": "pkg:@nocobase/repository-input",
+              "entrypoints": [
+                "FilterBuilder.and / or",
+                "FilterBuilder.string/number",
+                "StringFilterOperators.includes(mode:'insensitive')",
+                "filter/sort/select 的 AST"
+              ],
+              "evidence": [
+                "review/36151903756.1/v2-8d616d35df49/E13",
+                "review/36151903756.1/v2-8d616d35df49/E14"
+              ]
+            },
+            {
+              "kind": "guidance",
+              "name": "app/.agents/skills/nocobase-db/SKILL.md",
+              "subjectKey": "skill:nocobase-db",
+              "entrypoints": [
+                "第 4 节 Repository/Query 选择与搜索/分页/聚合",
+                "第 5 节排序与选字段"
+              ],
+              "evidence": [
+                "review/36151903756.1/v2-8d616d35df49/E10"
+              ]
+            },
+            {
+              "kind": "guidance",
+              "name": "app/.agents/skills/nocobase-app-development/references/database-and-data.md",
+              "subjectKey": "skill:nocobase-app-development",
+              "entrypoints": [
+                "database.repository/query/transaction 的应用侧入口"
+              ],
+              "evidence": [
+                "review/36151903756.1/v2-8d616d35df49/E15"
+              ]
+            }
+          ],
+          "scope": "本次涉及 repository.findMany/findOne/createOne/updateOne、字符串不区分大小写过滤、数字等值过滤、按客户过滤、sort 与 select/include 关联加载，以及聚合 API 的存在性。未覆盖分页游标、事务、groupBy 实际使用与 policy 绑定。",
+          "limitations": "应用在服务层用 reduce 计算金额合计而未调用 repository.aggregate，因此聚合仅核对到公开签名与实现体，未验证其运行结果。关联加载只读到 select.include 的构造与 B01 刷新后的页面结果，未追踪底层 join 实现。",
+          "criteria": [
+            "B02",
+            "B03"
+          ],
+          "qa": {
+            "firstFull": "passed",
+            "finalFull": "passed"
+          },
+          "requirements": [
+            {
+              "need": "客户与联系人列表支持按关键词模糊过滤，且大小写不敏感。",
+              "responsibility": "框架提供 FilterBuilder 与字符串操作符及 mode 选项；业务负责关键词字段与组合条件。",
+              "support": "direct",
+              "recommendedUsage": "Skill 第 4 节：filter/select/sort 接受 builder 回调或 JSON AST；用 builder.string(path).includes(value, { mode:'insensitive' })，组合用 and/or。",
+              "actualUsage": "应用在 listCustomers/listContacts 里用 builder.or + builder.string(...).includes(..., { mode:'insensitive' })，并由 B03 阶段过滤与列表行为验证。",
+              "gapOwner": "none",
+              "evidence": [
+                "review/36151903756.1/v2-8d616d35df49/E10",
+                "review/36151903756.1/v2-8d616d35df49/E13",
+                "review/36151903756.1/v2-8d616d35df49/E14",
+                "review/36151903756.1/v2-8d616d35df49/E18"
+              ]
+            },
+            {
+              "need": "客户详情返回其联系人与商机（关联数据）。",
+              "responsibility": "框架提供 select/include 关联加载与 relations 解析；业务负责返回字段与 DTO 形状。",
+              "support": "direct",
+              "recommendedUsage": "Skill 第 4/5 节：select 回调用 include('customer', cb) 选中关联字段，字段名用 Collection 逻辑名。",
+              "actualUsage": "应用在 listContacts/listOpportunities 用 select.fields(...).include('customer', ...) 取客户名；B01 刷新客户详情后联系人归属正确。",
+              "gapOwner": "none",
+              "evidence": [
+                "review/36151903756.1/v2-8d616d35df49/E10",
+                "review/36151903756.1/v2-8d616d35df49/E11",
+                "review/36151903756.1/v2-8d616d35df49/E19"
+              ]
+            },
+            {
+              "need": "客户详情的商机金额合计，并随商机金额变更更新。",
+              "responsibility": "框架提供 aggregate/groupBy；合计口径与舍入是业务规则。",
+              "support": "direct",
+              "recommendedUsage": "Skill 第 4 节把 aggregate/groupBy 列为 Repository 方法，可对集合做 count/sum 等聚合；示例未给出聚合写法。",
+              "actualUsage": "应用先 listOpportunities 取全部行，再在服务层 reduce 求合计并四舍五入；B02/B04 验证合计随商机金额变化。能力可用但未被采用，Agent 的发现过程未记录。",
+              "gapOwner": "none",
+              "evidence": [
+                "review/36151903756.1/v2-8d616d35df49/E10",
+                "review/36151903756.1/v2-8d616d35df49/E11",
+                "review/36151903756.1/v2-8d616d35df49/E12",
+                "review/36151903756.1/v2-8d616d35df49/E18"
+              ]
+            },
+            {
+              "need": "创建/更新客户、联系人、商机并返回写入结果。",
+              "responsibility": "框架提供 createOne/updateOne 并返回 result.record；业务负责输入校验与字段规则。",
+              "support": "direct",
+              "recommendedUsage": "Skill 第 4 节：写操作返回结果对象，记录在 result.record；findOne/updateOne/deleteOne 的作用域约束。",
+              "actualUsage": "应用用 createOne({ values }) 取 result.record，用 updateOne({ filter, values })；B01–B04 的增改均成功。",
+              "gapOwner": "none",
+              "evidence": [
+                "review/36151903756.1/v2-8d616d35df49/E10",
+                "review/36151903756.1/v2-8d616d35df49/E12",
+                "review/36151903756.1/v2-8d616d35df49/E18"
+              ]
+            }
+          ],
+          "scores": {
+            "requirementFit": {
+              "score": 89,
+              "reason": "过滤、关联加载与增改都由冻结实现直接支持，且与 Skill 第 4 节的方法清单和 db-api 说明一致；金额合计虽由业务在 JS 完成，但框架聚合能力确实存在，未构成缺口。",
+              "evidence": [
+                "review/36151903756.1/v2-8d616d35df49/E10",
+                "review/36151903756.1/v2-8d616d35df49/E11",
+                "review/36151903756.1/v2-8d616d35df49/E13"
+              ]
+            },
+            "usability": {
+              "score": 86,
+              "reason": "builder 回调与 JSON AST 等价、and/or 组合自然，includes 的 mode 选项可直接表达不区分大小写；select/include 的链式写法与字段逻辑名一致，重复接入代码不多。",
+              "evidence": [
+                "review/36151903756.1/v2-8d616d35df49/E11",
+                "review/36151903756.1/v2-8d616d35df49/E13",
+                "review/36151903756.1/v2-8d616d35df49/E14"
+              ]
+            },
+            "agentFriendliness": {
+              "score": 83,
+              "reason": "Skill 明确列出方法与 filter/values/select/sort 接受回调和 AST，database-and-data.md 指向 Skill；但聚合只有方法名、没有示例，应用因此选择先取全量再求和的替代写法。",
+              "evidence": [
+                "review/36151903756.1/v2-8d616d35df49/E10",
+                "review/36151903756.1/v2-8d616d35df49/E12",
+                "review/36151903756.1/v2-8d616d35df49/E15"
+              ]
+            },
+            "design": {
+              "score": 85,
+              "reason": "Repository 只面对 Collection 记录并提供 find/count/aggregate/groupBy 等对称方法，过滤/排序/选字段统一为可序列化 AST，写操作返回结构化结果对象，公开抽象边界清晰。",
+              "evidence": [
+                "review/36151903756.1/v2-8d616d35df49/E11",
+                "review/36151903756.1/v2-8d616d35df49/E12",
+                "review/36151903756.1/v2-8d616d35df49/E13"
+              ]
+            },
+            "reliability": {
+              "score": 85,
+              "reason": "阅读了 repository 的 prepareRead/normalizeFilter 路径与 filter-builder 实现，string.includes 会把 mode 写入节点，aggregate 会先 normalize 再校验字段；未运行聚合与分页，故不更高。",
+              "evidence": [
+                "review/36151903756.1/v2-8d616d35df49/E11",
+                "review/36151903756.1/v2-8d616d35df49/E12",
+                "review/36151903756.1/v2-8d616d35df49/E13"
+              ]
+            }
+          }
+        },
+        {
+          "key": "review/36151903756.1/v2-8d616d35df49/M3",
+          "name": "服务提供者、API 路由与鉴权",
+          "subjectKeys": [
+            "pkg:@nocobase/service-provider",
+            "pkg:@nocobase/app-server",
+            "pkg:@nocobase/app-plugin-authentication",
+            "skill:nocobase-app-development"
+          ],
+          "mapping": "resolved",
+          "targets": [
+            {
+              "kind": "library",
+              "name": "@nocobase/service-provider",
+              "subjectKey": "pkg:@nocobase/service-provider",
+              "entrypoints": [
+                "ServiceProvider.register/boot/start",
+                "createServiceToken",
+                "ServiceContainer.singleton/resolve"
+              ],
+              "evidence": [
+                "review/36151903756.1/v2-8d616d35df49/E20",
+                "review/36151903756.1/v2-8d616d35df49/E21"
+              ]
+            },
+            {
+              "kind": "library",
+              "name": "@nocobase/app-server",
+              "subjectKey": "pkg:@nocobase/app-server",
+              "entrypoints": [
+                "defineApiRoutes（scope api）",
+                "defineRootRoutes",
+                "defineHttpMiddleware"
+              ],
+              "evidence": [
+                "review/36151903756.1/v2-8d616d35df49/E22"
+              ]
+            },
+            {
+              "kind": "library",
+              "name": "@nocobase/app-plugin-authentication",
+              "subjectKey": "pkg:@nocobase/app-plugin-authentication",
+              "entrypoints": [
+                "authenticationToken",
+                "auth.required()",
+                "auth.optional()"
+              ],
+              "evidence": [
+                "review/36151903756.1/v2-8d616d35df49/E23",
+                "review/36151903756.1/v2-8d616d35df49/E24"
+              ]
+            },
+            {
+              "kind": "guidance",
+              "name": "app/.agents/skills/nocobase-app-development/references/server-routes.md",
+              "subjectKey": "skill:nocobase-app-development",
+              "entrypoints": [
+                "defineApiRoutes 工厂示例",
+                "auth.required 与 /api 不等于已认证",
+                "每个路由自持安全边界"
+              ],
+              "evidence": [
+                "review/36151903756.1/v2-8d616d35df49/E25"
+              ]
+            },
+            {
+              "kind": "guidance",
+              "name": "app/.agents/skills/nocobase-app-development/references/services-and-jobs.md",
+              "subjectKey": "skill:nocobase-app-development",
+              "entrypoints": [
+                "服务注册与 token 身份",
+                "register/boot 阶段分工"
+              ],
+              "evidence": [
+                "review/36151903756.1/v2-8d616d35df49/E26"
+              ]
+            }
+          ],
+          "scope": "本次覆盖 CRM 服务由 provider 注册到容器、路由通过 token 解析服务、defineApiRoutes 挂载 /api/crm/* 以及 auth.required() 的登录校验。未覆盖 authorization.middleware 权限流程、jobs、插件 provider 与客户端 service provider。",
+          "limitations": "未运行服务或发请求，401 与错误映射只由实现与冻结路由代码核对；未核验路由注册顺序、插件贡献与真实会话存储。",
+          "criteria": [
+            "B01",
+            "B02",
+            "B03"
+          ],
+          "qa": {
+            "firstFull": "passed",
+            "finalFull": "passed"
+          },
+          "requirements": [
+            {
+              "need": "把 CRM 业务服务注册为可解析 token，供路由与测试复用。",
+              "responsibility": "框架提供 ServiceContainer 的 singleton/resolve 与 ServiceProvider 生命周期；业务负责服务实现与 token 命名。",
+              "support": "direct",
+              "recommendedUsage": "services-and-jobs 第 7–41 行：provider 内 this.app.container.singleton(token, () => ...)，token 由 createServiceToken 定义并按对象身份匹配，register 只做装配。",
+              "actualUsage": "应用定义 crmServiceToken 并实现 provider，在 register 里从 databaseManagerToken 解析库后 singleton 注册；路由按同一 token 解析，B01–B03 全部通过。",
+              "gapOwner": "none",
+              "evidence": [
+                "review/36151903756.1/v2-8d616d35df49/E21",
+                "review/36151903756.1/v2-8d616d35df49/E26",
+                "review/36151903756.1/v2-8d616d35df49/E27"
+              ]
+            },
+            {
+              "need": "以 HTTP 接口暴露客户/联系人/商机的增查改。",
+              "responsibility": "框架提供 defineApiRoutes 工厂与 scope 管理；业务负责路径、方法与响应形状。",
+              "support": "direct",
+              "recommendedUsage": "server-routes 第 25–41 行：defineApiRoutes((app)=>{ const router=new Hono(); ... return router; })，依赖在工厂内从 app.container 解析。",
+              "actualUsage": "应用在 defineApiRoutes 内建 Hono 子路由并加 onError 映射 404/400，B01–B05 的页面操作全部经这些接口完成。",
+              "gapOwner": "none",
+              "evidence": [
+                "review/36151903756.1/v2-8d616d35df49/E22",
+                "review/36151903756.1/v2-8d616d35df49/E25",
+                "review/36151903756.1/v2-8d616d35df49/E28"
+              ]
+            },
+            {
+              "need": "仅登录用户能读写 CRM 数据（沿用已有登录，不做角色体系）。",
+              "responsibility": "框架提供 authenticationToken 与 auth.required() 的 401 语义；业务决定哪些路由需要认证与是否再做授权。",
+              "support": "direct",
+              "recommendedUsage": "server-routes 第 17–49 行：resolve(authenticationToken) 后 router.use('/crm/*', auth.required())，并强调每个路由自持安全边界。",
+              "actualUsage": "应用对所有 /crm/* 挂 auth.required()，页面 authz:'skip' 与“任何登录用户可用”的口径一致；B01–B05 在登录会话下执行。",
+              "gapOwner": "none",
+              "evidence": [
+                "review/36151903756.1/v2-8d616d35df49/E23",
+                "review/36151903756.1/v2-8d616d35df49/E24",
+                "review/36151903756.1/v2-8d616d35df49/E25",
+                "review/36151903756.1/v2-8d616d35df49/E28"
+              ]
+            }
+          ],
+          "scores": {
+            "requirementFit": {
+              "score": 90,
+              "reason": "服务注册、路由暴露与登录鉴权都被冻结实现直接支持，入口与 server-routes/services-and-jobs 的示例一致；对“单一普通业务模式”只需 auth.required()，未出现被迫绕行。",
+              "evidence": [
+                "review/36151903756.1/v2-8d616d35df49/E20",
+                "review/36151903756.1/v2-8d616d35df49/E22",
+                "review/36151903756.1/v2-8d616d35df49/E23",
+                "review/36151903756.1/v2-8d616d35df49/E25"
+              ]
+            },
+            "usability": {
+              "score": 88,
+              "reason": "容器按 token 解析、provider 生命周期清晰，路由工厂内一次解析依赖即可复用；Hono 子路由与 onError 的接入步骤短，重复样板少。",
+              "evidence": [
+                "review/36151903756.1/v2-8d616d35df49/E20",
+                "review/36151903756.1/v2-8d616d35df49/E21",
+                "review/36151903756.1/v2-8d616d35df49/E22",
+                "review/36151903756.1/v2-8d616d35df49/E28"
+              ]
+            },
+            "agentFriendliness": {
+              "score": 88,
+              "reason": "两份 Skill 都给出可复制的最小示例与“不要依赖他人中间件”的显式规则，token 与 require 用法可直接照做；诊断信息含 token 名，便于定位未注册服务。",
+              "evidence": [
+                "review/36151903756.1/v2-8d616d35df49/E25",
+                "review/36151903756.1/v2-8d616d35df49/E26",
+                "review/36151903756.1/v2-8d616d35df49/E21"
+              ]
+            },
+            "design": {
+              "score": 88,
+              "reason": "服务提供者只负责装配、服务不读 HTTP context，路由负责解析/鉴权/状态码，认证以独立 token 与中间件暴露，公开抽象与扩展点边界清楚。",
+              "evidence": [
+                "review/36151903756.1/v2-8d616d35df49/E20",
+                "review/36151903756.1/v2-8d616d35df49/E21",
+                "review/36151903756.1/v2-8d616d35df49/E22",
+                "review/36151903756.1/v2-8d616d35df49/E23"
+              ]
+            },
+            "reliability": {
+              "score": 86,
+              "reason": "阅读了容器实现（未注册/循环依赖会报错、singleton 惰性且缓存）与 auth.required() 的 401 路径，公开约定在实现中兑现；未发真实请求验证，故留有余量。",
+              "evidence": [
+                "review/36151903756.1/v2-8d616d35df49/E20",
+                "review/36151903756.1/v2-8d616d35df49/E23",
+                "review/36151903756.1/v2-8d616d35df49/E24"
+              ]
+            }
+          }
+        },
+        {
+          "key": "review/36151903756.1/v2-8d616d35df49/M4",
+          "name": "客户端路由、导航与页面组合",
+          "subjectKeys": [
+            "pkg:@nocobase/app-client",
+            "skill:nocobase-app-development"
+          ],
+          "mapping": "resolved",
+          "targets": [
+            {
+              "kind": "library",
+              "name": "@nocobase/app-client",
+              "subjectKey": "pkg:@nocobase/app-client",
+              "entrypoints": [
+                "defineAppRoutes",
+                "defineSettingsRoutes",
+                "AppClientRouteContribution",
+                "resolveRouteTree/normalizeRouteAuthz"
+              ],
+              "evidence": [
+                "review/36151903756.1/v2-8d616d35df49/E29",
+                "review/36151903756.1/v2-8d616d35df49/E30"
+              ]
+            },
+            {
+              "kind": "guidance",
+              "name": "app/.agents/skills/nocobase-app-development/references/frontend/references/page.md",
+              "subjectKey": "skill:nocobase-app-development",
+              "entrypoints": [
+                "defineAppRoutes 示例与字段表",
+                "auth 规则",
+                "authz 规则",
+                "保留路径与懒加载"
+              ],
+              "evidence": [
+                "review/36151903756.1/v2-8d616d35df49/E31"
+              ]
+            },
+            {
+              "kind": "guidance",
+              "name": "app/.agents/skills/nocobase-app-development/references/frontend/references/child-routes.md",
+              "subjectKey": "skill:nocobase-app-development",
+              "entrypoints": [
+                "Outlet 归属",
+                "RouteDialog/RouteDrawer/RouteChildPage 选择",
+                "参数化子页命名"
+              ],
+              "evidence": [
+                "review/36151903756.1/v2-8d616d35df49/E32"
+              ]
+            }
+          ],
+          "scope": "本次覆盖三个 CRM 菜单及其 new/:id/edit 子路由、登录页保留、登录后默认落地与 authz:'skip' 的单一业务权限口径。未覆盖设置页/Dev 页、breadcrumb、overlay 组件的运行行为与路由恢复。",
+          "limitations": "未运行客户端，菜单渲染、懒加载与 Outlet 嵌套只由注册实现与页面代码核对；未做浏览器导航或样式验证。",
+          "criteria": [
+            "B01",
+            "B03"
+          ],
+          "qa": {
+            "firstFull": "passed",
+            "finalFull": "passed"
+          },
+          "requirements": [
+            {
+              "need": "提供 Customers/Contacts/Opportunities 三个菜单，并在各列表页下挂新建/详情/编辑子页。",
+              "responsibility": "框架提供 defineAppRoutes 贡献、navigation 元数据与 children 树解析；业务负责路径、图标与组件加载器。",
+              "support": "direct",
+              "recommendedUsage": "page.md 第 18–54 行与 child-routes 第 11–59 行：App 路由用 name/path/authz/navigation/componentLoader/children，父页自行放 Outlet，新建/编辑用 RouteDialog、详情用 RouteDrawer。",
+              "actualUsage": "应用 routes.ts 按推荐结构声明三组菜单与子路由，懒加载 import('./pages/...js')，列表页与详情页使用列表/详情组件；B01、B03 通过页面操作验证。",
+              "gapOwner": "none",
+              "evidence": [
+                "review/36151903756.1/v2-8d616d35df49/E30",
+                "review/36151903756.1/v2-8d616d35df49/E31",
+                "review/36151903756.1/v2-8d616d35df49/E32",
+                "review/36151903756.1/v2-8d616d35df49/E33"
+              ]
+            },
+            {
+              "need": "保留已有登录页，并保证登录后有一处稳定落地页。",
+              "responsibility": "框架提供 auth 归一（默认 required）、保留路径与 auth:'guest' 校验；业务负责首页声明。",
+              "support": "direct",
+              "recommendedUsage": "page.md 第 62–72 行：/login 等保留路径只能 guest，保留既有 home 路由不要整体覆写文件。",
+              "actualUsage": "应用保留 home 与四个 guest 登录路由，home 用 authz:'skip' 使任意登录用户可落地；登录成功截图与后续页面均可达。",
+              "gapOwner": "none",
+              "evidence": [
+                "review/36151903756.1/v2-8d616d35df49/E29",
+                "review/36151903756.1/v2-8d616d35df49/E31",
+                "review/36151903756.1/v2-8d616d35df49/E33"
+              ]
+            },
+            {
+              "need": "页面权限采用单一普通业务使用方式，不新做角色体系。",
+              "responsibility": "框架强制每个页面声明 authz 并在注册期校验取值；业务选择资源/动作或 skip。",
+              "support": "direct",
+              "recommendedUsage": "page.md 第 139–165 行：authz 必填，'skip' 表示“每个登录用户可用”，资源式用于需授权页面；auth 只管浏览器导航。",
+              "actualUsage": "所有 CRM 页与子页统一 authz:'skip'，与“任何登录用户可读写”的服务端 auth.required() 口径一致，未引入角色配置。",
+              "gapOwner": "none",
+              "evidence": [
+                "review/36151903756.1/v2-8d616d35df49/E29",
+                "review/36151903756.1/v2-8d616d35df49/E31",
+                "review/36151903756.1/v2-8d616d35df49/E33"
+              ]
+            }
+          ],
+          "scores": {
+            "requirementFit": {
+              "score": 90,
+              "reason": "路由、菜单、子页呈现与页面权限均由 app-client 直接支持，page.md/child-routes 的推荐写法与本次声明一一对应；单一业务模式用 authz:'skip' 即精确命中指引口径。",
+              "evidence": [
+                "review/36151903756.1/v2-8d616d35df49/E29",
+                "review/36151903756.1/v2-8d616d35df49/E31",
+                "review/36151903756.1/v2-8d616d35df49/E32"
+              ]
+            },
+            "usability": {
+              "score": 88,
+              "reason": "路由以单个数组声明、导航元数据内联、组件按需懒加载，父子嵌套与静态路径校验在注册期完成，接入步骤与重复代码都少。",
+              "evidence": [
+                "review/36151903756.1/v2-8d616d35df49/E29",
+                "review/36151903756.1/v2-8d616d35df49/E30",
+                "review/36151903756.1/v2-8d616d35df49/E31"
+              ]
+            },
+            "agentFriendliness": {
+              "score": 90,
+              "reason": "page.md 提供含 authz/navigation/children 的完整可复制示例与字段表，child-routes 明确 Outlet 归属与 overlay 选择；注册期错误信息定位到具体 route id 与原因。",
+              "evidence": [
+                "review/36151903756.1/v2-8d616d35df49/E29",
+                "review/36151903756.1/v2-8d616d35df49/E30",
+                "review/36151903756.1/v2-8d616d35df49/E31",
+                "review/36151903756.1/v2-8d616d35df49/E32"
+              ]
+            },
+            "design": {
+              "score": 88,
+              "reason": "路由声明与页面实现解耦（componentLoader 懒加载），注册期统一归一 auth/authz、校验保留路径与路径冲突，App/Settings/Dev 共享同一套贡献模型。",
+              "evidence": [
+                "review/36151903756.1/v2-8d616d35df49/E29",
+                "review/36151903756.1/v2-8d616d35df49/E30"
+              ]
+            },
+            "reliability": {
+              "score": 86,
+              "reason": "阅读 resolveRouteTree/normalizeRouteAuthz 实现，确认缺 authz、组上声明 authz、动态路径配 navigation 等都在注册期抛错，公开规则被兑现；未运行客户端验证渲染。",
+              "evidence": [
+                "review/36151903756.1/v2-8d616d35df49/E29",
+                "review/36151903756.1/v2-8d616d35df49/E30"
+              ]
+            }
+          }
+        },
+        {
+          "key": "review/36151903756.1/v2-8d616d35df49/M5",
+          "name": "客户端数据获取、表单校验与本地化",
+          "subjectKeys": [
+            "pkg:@nocobase/app-client",
+            "pkg:@nocobase/i18n",
+            "skill:nocobase-app-development"
+          ],
+          "mapping": "resolved",
+          "targets": [
+            {
+              "kind": "library",
+              "name": "@nocobase/app-client",
+              "subjectKey": "pkg:@nocobase/app-client",
+              "entrypoints": [
+                "useApiClient",
+                "useService",
+                "ApiClientError 再导出"
+              ],
+              "evidence": [
+                "review/36151903756.1/v2-8d616d35df49/E34"
+              ]
+            },
+            {
+              "kind": "library",
+              "name": "@nocobase/i18n",
+              "subjectKey": "pkg:@nocobase/i18n",
+              "entrypoints": [
+                "useTranslation",
+                "I18nProvider/NamespaceScope"
+              ],
+              "evidence": [
+                "review/36151903756.1/v2-8d616d35df49/E35"
+              ]
+            },
+            {
+              "kind": "guidance",
+              "name": "app/.agents/skills/nocobase-app-development/references/frontend/references/api.md",
+              "subjectKey": "skill:nocobase-app-development",
+              "entrypoints": [
+                "useApiClient 获取方式",
+                "api.request 用法",
+                "ApiClientError 字段与错误处理表"
+              ],
+              "evidence": [
+                "review/36151903756.1/v2-8d616d35df49/E36"
+              ]
+            },
+            {
+              "kind": "guidance",
+              "name": "app/.agents/skills/nocobase-app-development/references/frontend/references/form.md",
+              "subjectKey": "skill:nocobase-app-development",
+              "entrypoints": [
+                "react-hook-form + zod + resolver 结构",
+                "业务码 setError 映射",
+                "root 错误提示"
+              ],
+              "evidence": [
+                "review/36151903756.1/v2-8d616d35df49/E37"
+              ]
+            },
+            {
+              "kind": "guidance",
+              "name": "app/.agents/skills/nocobase-app-development/references/frontend/references/i18n.md",
+              "subjectKey": "skill:nocobase-app-development",
+              "entrypoints": [
+                "useTranslation 导入来源",
+                "计数与动态键规则"
+              ],
+              "evidence": [
+                "review/36151903756.1/v2-8d616d35df49/E38"
+              ]
+            }
+          ],
+          "scope": "本次覆盖客户端请求 CRM 接口、加载态/取消、表单 zod 校验与服务端业务码到字段的映射、顶部错误提示，以及中英文文案。未覆盖上传、分页列表状态、日期/金额格式化组件与错误边界测试。",
+          "limitations": "未运行前端，错误分支与取消行为只由代码与指引核对；i18n 只读到 useTranslation 实现与文案规范，未验证两种语言的实际渲染。",
+          "criteria": [
+            "B04",
+            "B05"
+          ],
+          "qa": {
+            "firstFull": "passed",
+            "finalFull": "passed"
+          },
+          "requirements": [
+            {
+              "need": "前端加载客户/联系人/商机数据并发起新建、更新请求。",
+              "responsibility": "框架提供 useApiClient 与应用级 client；业务负责请求路径、查询参数与加载状态。",
+              "support": "direct",
+              "recommendedUsage": "api.md 第 40–49 行：组件/Hook 用 useApiClient()，request({path, method, json, signal})，不要自建 client 或硬编码 /api；加载用 useEffect + AbortController。",
+              "actualUsage": "useCustomers 用 useApiClient + AbortController 加载下拉项，表单用 api.request 发 POST/PATCH；B01–B04 的读写均成功。",
+              "gapOwner": "none",
+              "evidence": [
+                "review/36151903756.1/v2-8d616d35df49/E34",
+                "review/36151903756.1/v2-8d616d35df49/E36",
+                "review/36151903756.1/v2-8d616d35df49/E40",
+                "review/36151903756.1/v2-8d616d35df49/E41"
+              ]
+            },
+            {
+              "need": "表单必填与金额非负等校验，错误显示在对应控件。",
+              "responsibility": "框架/Skill 提供 react-hook-form+zod+resolver 的推荐结构与字段组件；业务负责具体规则与文案。",
+              "support": "direct",
+              "recommendedUsage": "form.md：schema 在组件内 useMemo 构造以便用 t 生成消息，zodResolver(schema)，Field/FieldError 渲染 fieldState.error。",
+              "actualUsage": "customer-form/opportunity-form 在组件内构造 zod schema，必填与金额下限用 t 消息；B05 显示“Select a customer.”与“Enter an amount of 0 or more.”且不保存。",
+              "gapOwner": "none",
+              "evidence": [
+                "review/36151903756.1/v2-8d616d35df49/E37",
+                "review/36151903756.1/v2-8d616d35df49/E39"
+              ]
+            },
+            {
+              "need": "服务端业务错误映射到字段或顶部提示，且不泄露原始后端文本。",
+              "responsibility": "框架提供 ApiClientError.code/payload/status 与错误分类指引；业务负责业务码与文案。",
+              "support": "direct",
+              "recommendedUsage": "api.md 第 439–466 行：按 status/code 分支，业务码用 form.setError 到字段，其他错误 root 提示；不要展示 error.message/payload 原文。",
+              "actualUsage": "api-error.ts 从 ApiClientError.payload.field 取字段名，表单按 code/status setError 到字段或 root，B05 的对象未持久化且提示可理解。",
+              "gapOwner": "none",
+              "evidence": [
+                "review/36151903756.1/v2-8d616d35df49/E36",
+                "review/36151903756.1/v2-8d616d35df49/E37",
+                "review/36151903756.1/v2-8d616d35df49/E40"
+              ]
+            },
+            {
+              "need": "界面支持中英文文案。",
+              "responsibility": "框架提供 @nocobase/i18n/client 的 useTranslation 与 provider；业务负责 locale 文件与键。",
+              "support": "direct",
+              "recommendedUsage": "i18n.md 第 198–233 行：从 @nocobase/i18n/client 导入 useTranslation，动态键需覆盖所有取值，计数用 _one/_other。",
+              "actualUsage": "页面统一从 @nocobase/i18n/client 取 t，并在 zh-CN/en-US 维护键；注册期与运行时未出现键缺失告警。",
+              "gapOwner": "none",
+              "evidence": [
+                "review/36151903756.1/v2-8d616d35df49/E35",
+                "review/36151903756.1/v2-8d616d35df49/E38",
+                "review/36151903756.1/v2-8d616d35df49/E39"
+              ]
+            }
+          ],
+          "scores": {
+            "requirementFit": {
+              "score": 88,
+              "reason": "请求、校验、错误映射与本地化都有框架与 Skill 的直接支持，且与 api.md/form.md/i18n.md 的推荐写法一致；唯一保留是实际交互未运行。",
+              "evidence": [
+                "review/36151903756.1/v2-8d616d35df49/E34",
+                "review/36151903756.1/v2-8d616d35df49/E36",
+                "review/36151903756.1/v2-8d616d35df49/E37"
+              ]
+            },
+            "usability": {
+              "score": 86,
+              "reason": "useApiClient 一行取得应用 client，ApiClientError 字段可用、payload 已文档化；schema 与表单组件结构清晰，业务码到字段的映射只多一个很小的 helper。",
+              "evidence": [
+                "review/36151903756.1/v2-8d616d35df49/E34",
+                "review/36151903756.1/v2-8d616d35df49/E36",
+                "review/36151903756.1/v2-8d616d35df49/E37",
+                "review/36151903756.1/v2-8d616d35df49/E40"
+              ]
+            },
+            "agentFriendliness": {
+              "score": 86,
+              "reason": "api.md 给出 ApiClientError 全字段与四类错误的处理表，form.md 给出可复制的 setError 模式，i18n.md 说明导入来源与键不校验的坑；聚合/格式化等进阶示例仍偏少。",
+              "evidence": [
+                "review/36151903756.1/v2-8d616d35df49/E34",
+                "review/36151903756.1/v2-8d616d35df49/E36",
+                "review/36151903756.1/v2-8d616d35df49/E37",
+                "review/36151903756.1/v2-8d616d35df49/E38"
+              ]
+            },
+            "design": {
+              "score": 85,
+              "reason": "请求由应用级 client + token 统一解析，错误类型单一便于 instanceof，i18n 以 provider/namespace 组织且 useTranslation 可在无 runtime 时回退默认值，抽象边界清楚。",
+              "evidence": [
+                "review/36151903756.1/v2-8d616d35df49/E34",
+                "review/36151903756.1/v2-8d616d35df49/E35",
+                "review/36151903756.1/v2-8d616d35df49/E36"
+              ]
+            },
+            "reliability": {
+              "score": 84,
+              "reason": "阅读了 useApiClient/useService 的解析与报错、useTranslation 的回退实现对公开约定有实现级依据；未运行请求与渲染，故不更高。",
+              "evidence": [
+                "review/36151903756.1/v2-8d616d35df49/E34",
+                "review/36151903756.1/v2-8d616d35df49/E35"
+              ]
+            }
+          }
+        }
+      ],
+      "findings": [
+        {
+          "id": "review/36151903756.1/v2-8d616d35df49/F1",
+          "localId": "F1",
+          "kind": "issue",
+          "owner": "documentation",
+          "severity": "minor",
+          "confidence": "confirmed",
+          "confirmedBy": "reviewer",
+          "reviewerStatus": "open",
+          "title": "nocobase-db Skill 未说明 belongsTo 的外键/级联需 constraints(true)，应用被迫重复声明 foreignKey",
+          "detail": "compiler 只在 relation.constraints 为真时才为 belongsTo 追加外键约束，onDelete 也只有在此时被带入；而 Skill 第 3 节把 relations 与 constraints 分列，既未说明该默认行为，也未在文档化的关系选项中列出 constraints()。",
+          "impact": "按 Skill 只写 belongsTo(..., { onDelete:'cascade' }) 的迁移不会得到数据库级外键或级联，Agent 需靠实现或报错才知道要补显式 foreignKey 约束，容易出现重复声明或静默缺失约束。",
+          "suggestedChange": "在 nocobase-db Skill 第 3 节的 relation 列表与示例中说明 constraints(true) 控制是否发出数据库外键、onDelete/onUpdate 仅在该约束上生效，并给出一种推荐写法。",
+          "claimed": null,
+          "observed": null,
+          "evidence": [
+            "review/36151903756.1/v2-8d616d35df49/E4",
+            "review/36151903756.1/v2-8d616d35df49/E6",
+            "review/36151903756.1/v2-8d616d35df49/E7",
+            "review/36151903756.1/v2-8d616d35df49/E9"
+          ],
+          "moduleKeys": [
+            "review/36151903756.1/v2-8d616d35df49/M1"
+          ],
+          "subjectKeys": [
+            "pkg:@nocobase/db",
+            "skill:nocobase-db",
+            "skill:nocobase-app-development"
+          ]
+        },
+        {
+          "id": "review/36151903756.1/v2-8d616d35df49/F2",
+          "localId": "F2",
+          "kind": "improvement",
+          "owner": "documentation",
+          "severity": "info",
+          "confidence": "confirmed",
+          "confirmedBy": "reviewer",
+          "reviewerStatus": "open",
+          "title": "Repository 聚合能力有方法名但无示例，容易被替代实现绕过",
+          "detail": "Skill 第 4 节把 aggregate/groupBy 列入 Repository 方法清单，但没有给出 sum 某关联列或 count 的示例；本案例的金额合计由业务加载全部商机后在 JS reduce。",
+          "impact": "在被问到“合计/统计”类需求时，Agent 可能倾向取全量再在应用层求和，错过下推数据库的现成能力，数据量增大后是性能与一致性问题，但本次未造成功能失败。",
+          "suggestedChange": "在 nocobase-db Skill 第 4 节补一个最小 aggregate 示例（如按过滤条件 sum 某字段并读 result），并说明与 groupBy 的分工。",
+          "claimed": null,
+          "observed": null,
+          "evidence": [
+            "review/36151903756.1/v2-8d616d35df49/E10",
+            "review/36151903756.1/v2-8d616d35df49/E11",
+            "review/36151903756.1/v2-8d616d35df49/E12"
+          ],
+          "moduleKeys": [
+            "review/36151903756.1/v2-8d616d35df49/M2"
+          ],
+          "subjectKeys": [
+            "pkg:@nocobase/db",
+            "pkg:@nocobase/repository-input",
+            "skill:nocobase-db",
+            "skill:nocobase-app-development"
+          ]
+        },
+        {
+          "id": "review/36151903756.1/v2-8d616d35df49/F3",
+          "localId": "F3",
+          "kind": "strength",
+          "owner": "framework",
+          "severity": "info",
+          "confidence": "confirmed",
+          "confirmedBy": "reviewer",
+          "reviewerStatus": "open",
+          "title": "迁移→Repository→服务/路由→客户端声明的入口与 Skill 推荐一致",
+          "detail": "本场景的三个表迁移、种子、查询过滤关联、服务注册与路由鉴权、客户端路由与请求都用了框架公开入口（defineMigration/defineSeed、repository、ServiceProvider/authenticationToken、defineAppRoutes/useApiClient），未出现自造数据层或绕过鉴权。",
+          "impact": "框架在本次职责范围内提供了连贯、可发现的装配路径，业务规则留在应用层，B01–B05 全量通过，降低了企业级 Vibe Coding 的接入成本。",
+          "suggestedChange": "无（作为正向基线保留）。",
+          "claimed": null,
+          "observed": null,
+          "evidence": [
+            "review/36151903756.1/v2-8d616d35df49/E1",
+            "review/36151903756.1/v2-8d616d35df49/E5",
+            "review/36151903756.1/v2-8d616d35df49/E11",
+            "review/36151903756.1/v2-8d616d35df49/E13"
+          ],
+          "moduleKeys": [
+            "review/36151903756.1/v2-8d616d35df49/M1",
+            "review/36151903756.1/v2-8d616d35df49/M2"
+          ],
+          "subjectKeys": [
+            "pkg:@nocobase/db",
+            "skill:nocobase-db",
+            "skill:nocobase-app-development",
+            "pkg:@nocobase/repository-input"
+          ]
+        }
+      ],
+      "ui": {
+        "status": "not-reviewed",
+        "score": null,
+        "reason": "当前评审模型无法解码 PNG，虽存在 verify-1 的 14 张截图，但未真正查看任何页面图像，故不评价跨页面样式一致性。",
+        "evidence": [],
+        "framework": false
+      },
+      "limitations": [
+        "评审只读冻结快照，不能核对最新上游；confirmed 仅表示冻结材料支持当前判断。",
+        "未运行应用、迁移或任何测试，数据库物理 schema 与级联行为未在真实数据库验证。",
+        "当前评审模型无法解码 PNG，verify-1 的截图未做视觉复核，跨页面样式一致性未评。",
+        "聚合（aggregate/groupBy）、分页游标、事务与 policy 绑定仅在公开签名/实现路径层面核对，未验证运行结果。",
+        "不能据本次 CRM 场景推断 NocoBase3 全框架表现，也不能保证跨案例可比。",
+        "快照未包含 1 个超出预算、非普通文件或不可读取的文件；未据此确认其实现。"
+      ],
+      "usageSource": null
+    }
+  ],
+  "processNotes": {
+    "state": "absent",
+    "source": null,
+    "author": "implementer",
+    "independent": false,
+    "summary": null,
+    "blockers": [],
+    "improvements": [],
+    "note": "过程笔记可选；缺失不代表没有问题、没有评审或没有改进。"
+  },
+  "metrics": {
+    "usage": {
+      "sources": [
+        {
+          "key": "agent-job:108127109673",
+          "executionKey": "run/36151903756/attempt/1",
+          "scope": "一次 Agent 作业内的实现、修复、QA 与同轮评审调用",
+          "phases": {
+            "implementation": {
+              "input": 507593,
+              "output": 162957,
+              "cacheRead": 21783424,
+              "cacheWrite": 0,
+              "total": 22453974
+            },
+            "repair": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0,
+              "total": 0
+            },
+            "qa": {
+              "input": 33996,
+              "output": 14498,
+              "cacheRead": 1870592,
+              "cacheWrite": 0,
+              "total": 1919086
+            },
+            "qaFocused": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0,
+              "total": 0
+            },
+            "qaReport": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0,
+              "total": 0
+            },
+            "review": {
+              "input": 184213,
+              "output": 48185,
+              "cacheRead": 4702208,
+              "cacheWrite": 0,
+              "total": 4934606
+            },
+            "compaction": {
+              "input": 284096,
+              "output": 41463,
+              "cacheRead": 0,
+              "cacheWrite": 0,
+              "total": 325559
+            }
+          },
+          "records": 441,
+          "missing": 0,
+          "incomplete": 0,
+          "complete": true
+        }
+      ],
+      "totals": {
+        "input": 1009898,
+        "output": 267103,
+        "cacheRead": 28356224,
+        "cacheWrite": 0,
+        "total": 29633225,
+        "complete": true
+      },
+      "definition": "沿用 task-usage 口径：按唯一来源键（Agent 作业 / 后补评审 Run）去重，不相加已含这些调用的汇总，不把思考 Token 再加到输出；缺失为 null，不等同供应商账单。"
+    },
+    "time": {
+      "executionSeconds": 3404,
+      "missingJobTimes": 0,
+      "endToEndSeconds": 3415,
+      "jobs": [
+        {
+          "id": 108126967220,
+          "name": "prepare",
+          "executionKey": "run/36151903756/attempt/1",
+          "seconds": 20
+        },
+        {
+          "id": 108127109673,
+          "name": "agent",
+          "executionKey": "run/36151903756/attempt/1",
+          "seconds": 3124
+        },
+        {
+          "id": 108146357594,
+          "name": "verify-final",
+          "executionKey": "run/36151903756/attempt/1",
+          "seconds": 241
+        },
+        {
+          "id": 108147849593,
+          "name": "publish",
+          "executionKey": "run/36151903756/attempt/1",
+          "seconds": 19
+        }
+      ],
+      "definition": "executionSeconds 为 prepare / agent / verify-final / publish 唯一作业时长之和，不含排队；endToEndSeconds 含排队及续跑间隔。"
+    },
+    "counts": {
+      "businessBuilds": 1,
+      "executions": 1,
+      "reviewExecutions": 1
+    }
+  },
+  "evidence": [
+    {
+      "id": "review/36151903756.1/v2-8d616d35df49/E1",
+      "origin": {
+        "kind": "review",
+        "key": "review/36151903756.1/v2-8d616d35df49",
+        "localId": "E1"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/db/dist/src/migration/define.js",
+      "lines": [
+        1,
+        5
+      ],
+      "sha256": "eba0dce586442525677889388044224f67d2dbf5da1e88e5846a0b9fa34e5059",
+      "observation": "defineMigration 只调用 markMigrationDefinition 做标记，供迁移加载器发现定义。",
+      "excerpt": "import { markMigrationDefinition } from './internal/marker.js';\n/** Marks and returns a migration definition for discovery by the migration loader. */\nexport function defineMigration(definition) {\n    return markMigrationDefinition(definition);\n}",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36151903756.1/v2-8d616d35df49/E2",
+      "origin": {
+        "kind": "review",
+        "key": "review/36151903756.1/v2-8d616d35df49",
+        "localId": "E2"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/db/dist/src/seed/define.js",
+      "lines": [
+        1,
+        5
+      ],
+      "sha256": "b0361ee2f3bb53ef45e9e67d6607d92fc98b6461a71bafb638499cc17347e142",
+      "observation": "defineSeed 以同样方式标记 seed 定义，返回原定义。",
+      "excerpt": "import { markSeedDefinition } from './internal/marker.js';\n/** Marks and returns a seed definition for discovery by the seed loader. */\nexport function defineSeed(definition) {\n    return markSeedDefinition(definition);\n}",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36151903756.1/v2-8d616d35df49/E3",
+      "origin": {
+        "kind": "review",
+        "key": "review/36151903756.1/v2-8d616d35df49",
+        "localId": "E3"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/db/dist/src/collection/fluent/index.js",
+      "lines": [
+        36,
+        72
+      ],
+      "sha256": "1736d3fbe360adc70d70bc2d493e2671e705431f1278fa75d8f2df3fabf4af17",
+      "observation": "流畅字段构造器提供 increments/integer/bigInt/string/char/enum/text/boolean/decimal/date/datetime 等，decimal 接受 precision/scale 等选项。",
+      "excerpt": "    increments(name) {\n        return this.field({\n            name,\n            type: 'increments',\n            primaryKey: true,\n            autoIncrement: true,\n        });\n    }\n    integer(name, options = {}) {\n        return this.field({ name, type: 'integer', ...options });\n    }\n    bigInt(name, options = {}) {\n        return this.field({ name, type: 'bigInt', ...options });\n    }\n    string(name, options = {}) {\n        return this.field({ name, type: 'string', ...options });\n    }\n    char(name, options) {\n        return this.field({ ...options, name, type: 'char' });\n    }\n    enum(name, options) {\n        return this.field({\n            ...options,\n            name,\n            type: 'enum',\n            values: [...options.values],\n        });\n    }\n    text(name, options = {}) {\n        return this.field({ name, type: 'text', ...options });\n    }\n    boolean(name, options = {}) {\n        return this.field({ name, type: 'boolean', ...options });\n    }\n    decimal(name, options = {}) {\n        return this.field({ name, type: 'decimal', ...options });\n    }",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36151903756.1/v2-8d616d35df49/E4",
+      "origin": {
+        "kind": "review",
+        "key": "review/36151903756.1/v2-8d616d35df49",
+        "localId": "E4"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/db/dist/src/collection/fluent/index.js",
+      "lines": [
+        111,
+        151
+      ],
+      "sha256": "1736d3fbe360adc70d70bc2d493e2671e705431f1278fa75d8f2df3fabf4af17",
+      "observation": "关系构造器 belongsTo(name, target, options) 与约束构造器 foreignKey(fields, options)、index(fields) 并列；toDefinition 汇总字段与约束。",
+      "excerpt": "    belongsTo(name, target, options = {}) {\n        return this.relation({ name, target, type: 'belongsTo', ...options });\n    }\n    hasOne(name, target, options = {}) {\n        return this.relation({ name, target, type: 'hasOne', ...options });\n    }\n    hasMany(name, target, options = {}) {\n        return this.relation({ name, target, type: 'hasMany', ...options });\n    }\n    belongsToMany(name, target, options = {}) {\n        return this.relation({ name, target, type: 'belongsToMany', ...options });\n    }\n    primary(fields, options = {}) {\n        this.definition.constraints?.push({\n            type: 'primary',\n            fields: array(fields),\n            ...options,\n        });\n        return this;\n    }\n    unique(fields, options = {}) {\n        this.definition.constraints?.push({\n            type: 'unique',\n            fields: array(fields),\n            ...options,\n        });\n        return this;\n    }\n    foreignKey(fields, options) {\n        this.definition.constraints?.push({\n            type: 'foreignKey',\n            fields: array(fields),\n            ...options,\n        });\n        return this;\n    }\n    index(fields, options = {}) {\n        this.definition.indexes?.push({ fields: array(fields), ...options });\n        return this;\n    }\n    toDefinition() {",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36151903756.1/v2-8d616d35df49/E5",
+      "origin": {
+        "kind": "review",
+        "key": "review/36151903756.1/v2-8d616d35df49",
+        "localId": "E5"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/db/dist/src/collection/builder/builder.js",
+      "lines": [
+        85,
+        108
+      ],
+      "sha256": "105281a90da5f2b63b36b38dd7f3640498ebfd284293ef37887c3a93fd4dd029",
+      "observation": "createCollection 规范化回调定义后调用 apply 执行 createCollection 操作，dropCollection 对应 dropCollection 操作。",
+      "excerpt": "    async createCollection(name, input, options = {}) {\n        const definition = normalizeCollectionInput(input);\n        return this.apply([{ type: 'createCollection', name, definition }], options);\n    }\n    async createCollections(inputs, options = {}) {\n        return this.apply(inputs.map(({ name, definition }) => ({\n            type: 'createCollection',\n            name,\n            definition: normalizeCollectionInput(definition),\n        })), options);\n    }\n    async hasCollection(name) {\n        if (this.collections) {\n            return Boolean(await this.collections.get(name));\n        }\n        return this.plannedCollections.has(name);\n    }\n    async alterCollection(name, input, options = {}) {\n        const changes = normalizeAlterInput(input);\n        return this.apply([{ type: 'alterCollection', collection: name, changes }], options);\n    }\n    async dropCollection(name, options = {}) {\n        return this.apply([{ type: 'dropCollection', collection: name }], options);\n    }",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36151903756.1/v2-8d616d35df49/E6",
+      "origin": {
+        "kind": "review",
+        "key": "review/36151903756.1/v2-8d616d35df49",
+        "localId": "E6"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/db/dist/src/collection/compiler/compiler.js",
+      "lines": [
+        327,
+        348
+      ],
+      "sha256": "f43a40b96901bbf81c0a6a0a5c9deefa6deb42c6f9e1b9d12d738ee733cf4916",
+      "observation": "normalizeCollectionDefinition 仅当 relation.constraints 为真时才为 belongsTo 追加 foreignKey 约束；否则只补关系列索引。",
+      "excerpt": "            const relation = relationField(field);\n            if (relation?.type === 'belongsTo') {\n                const relationColumn = relation.foreignKey\n                    ? this.columnName(relation, {\n                        ...definition,\n                        fields,\n                    })\n                    : undefined;\n                if (relation.index !== false &&\n                    relationColumn &&\n                    !indexes.some((index) => {\n                        const columns = index.fields?.map((fieldName) => this.resolveColumn(fieldName, fields, definition));\n                        return columns?.length === 1 && columns[0] === relationColumn;\n                    })) {\n                    indexes.push({ fields: [relation.name] });\n                }\n                if (relation.constraints) {\n                    constraints.push(this.relationForeignKeyConstraint(relation));\n                }\n            }\n        }\n        return { fields, indexes, constraints };",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36151903756.1/v2-8d616d35df49/E7",
+      "origin": {
+        "kind": "review",
+        "key": "review/36151903756.1/v2-8d616d35df49",
+        "localId": "E7"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/db/dist/src/collection/fluent/index.js",
+      "lines": [
+        400,
+        410
+      ],
+      "sha256": "1736d3fbe360adc70d70bc2d493e2671e705431f1278fa75d8f2df3fabf4af17",
+      "observation": "关系构造器暴露 constraints(value=true) 与 onDelete(action)、onUpdate(action) 选项，写入 relation 定义。",
+      "excerpt": "        this.definition.through = collection;\n        return this;\n    }\n    constraints(value = true) {\n        this.definition.constraints = value;\n        return this;\n    }\n    onDelete(action) {\n        this.definition.onDelete = action;\n        return this;\n    }",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36151903756.1/v2-8d616d35df49/E8",
+      "origin": {
+        "kind": "review",
+        "key": "review/36151903756.1/v2-8d616d35df49",
+        "localId": "E8"
+      },
+      "kind": "skill",
+      "path": "app/.agents/skills/nocobase-app-development/references/migrations.md",
+      "lines": [
+        5,
+        19
+      ],
+      "sha256": "3754e5ced8a2dc97c212c152168924b90349bce155651d9edfff66f246196004",
+      "observation": "迁移与种子的写法归 nocobase-db Skill 第 2/3 节；应用侧说明 db:apply 的运行顺序，并规定重复运行 seed 不得覆盖已编辑数据。",
+      "excerpt": "How to write the files themselves — the migration and seed shape, the immutability and self-containment rules, the Collection Builder, and which of `builder`, `query` and `repository` a task context should reach for — belongs to the package that owns them. Read `.agents/skills/nocobase-db/SKILL.md` sections 2 and 3 before writing one, and run `pnpm skills:sync` if that file is missing.\n\nMigrations under `database/main/migrations/` are the application's schema history. Seeds under `database/main/seeds/` insert records the application requires to run. Migrations create structure. Seeds never do.\n\n`database/tsconfig.json` extends the server configuration so editor tooling and ESLint recognize migrations and seeds as Node source. Keep it in place when adding connection directories.\n\n## Running\n\n```bash\npnpm db:apply\n```\n\nThis applies pending migrations and then pending seeds for `database.default`, including registered plugins, ordered by name across all sources. Both halves run only what is pending, so on an already-migrated database it applies seeds alone. The template defaults to `main`. Plugin migrations, seeds and runtime default reads/writes always use this same connection; changing `database.default` changes the application system database.\n\nSeeds are the second half of that run, so the structure a seed writes into must already exist from an earlier migration. Keep seed data fixed and reproducible — no current timestamps or random values in identifying fields — and never let a repeat run silently overwrite data a user has edited.",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36151903756.1/v2-8d616d35df49/E9",
+      "origin": {
+        "kind": "review",
+        "key": "review/36151903756.1/v2-8d616d35df49",
+        "localId": "E9"
+      },
+      "kind": "skill",
+      "path": "app/.agents/skills/nocobase-db/SKILL.md",
+      "lines": [
+        145,
+        170
+      ],
+      "sha256": "2fdca7c2484a669667b6293878b915a5af0f84cbd3c5e80945a28fe5fbabf7d7",
+      "observation": "builder 是迁移专用 schema API；createCollection 采用回调；字段构造器列举 increments..native，关系为 belongsTo/hasOne/hasMany/belongsToMany，约束与索引为 primary/unique/foreignKey/index。",
+      "excerpt": "`builder` is the schema API, and a migration is where it belongs. Runtime code has `db.builder()` available and should not use it: schema that changes outside the migration history is schema nothing can reproduce.\n\n`createCollection(name, callback)` takes a callback, not a field array:\n\n```ts\nawait builder.createCollection('orderItems', (collection) => {\n  collection.increments('id');\n  collection.integer('orderId', { nullable: false });\n  collection.integer('quantity', { nullable: false, defaultValue: 1 });\n  collection.foreignKey('orderId', {\n    references: { collection: 'orders', fields: ['id'] },\n    name: 'fk_order_items_order',\n  });\n  collection.index(['orderId', 'quantity']);\n});\n```\n\nField builders are `increments`, `integer`, `bigInt`, `string`, `char`, `text`, `boolean`, `decimal`, `float`, `double`, `date`, `time`, `datetime`, `datetimeTz`, `json`, `blob`, `uuid`, and `native` for a dialect-specific type. Options include `nullable`, `length`, `defaultValue`, `precision` and `scale`; the equivalent chained form (`.notNull()`, `.defaultTo()`, `.unique()`) is also available — pick one style and keep the file consistent.\n\nRelations are `belongsTo`, `hasOne`, `hasMany` and `belongsToMany`. Constraints and indexes are `primary`, `unique`, `foreignKey` and `index`, each taking one field name or an array.\n\nChange an existing table with explicit alter, rename and drop operations in a safe dependency order. Do not drop and recreate — that destroys data and is not what `down()` should undo.\n\nBuilder arguments are **logical names**. Physical table and column names are generated deterministically from `underscored` and `tablePrefix`; never store or concatenate `tableName` and `columnName` yourself. The exception is a raw index or constraint name such as `fk_order_items_order`, which is passed through unconverted and must be spelled the same way when dropped.\n\n`db.builder()` is a method on the manager; `connection.builder` is a property. Getting that backwards is the most common typo in this area.",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36151903756.1/v2-8d616d35df49/E10",
+      "origin": {
+        "kind": "review",
+        "key": "review/36151903756.1/v2-8d616d35df49",
+        "localId": "E10"
+      },
+      "kind": "skill",
+      "path": "app/.agents/skills/nocobase-db/SKILL.md",
+      "lines": [
+        236,
+        240
+      ],
+      "sha256": "2fdca7c2484a669667b6293878b915a5af0f84cbd3c5e80945a28fe5fbabf7d7",
+      "observation": "说明 filter/values/select/sort 接受 builder 回调或可序列化 AST，写操作返回 result.record，并列出 findOne/findMany/count/exists/aggregate/groupBy 等全部 Repository 方法。",
+      "excerpt": "Resolve the manager once — in a route factory, or as a constructor dependency of a service — not inside every handler. `db.repository()`, `db.query()`, `db.builder()`, `db.collections()` and `db.transaction()` take the connection name as their last argument and use the default connection when it is omitted, so single-connection code never names one.\n\n`filter`, `values`, `select` and `sort` each accept a builder callback or the equivalent serializable JSON AST, and mean the same thing either way. They do not accept a shorthand string array such as `['id', 'name']` or `['-createdAt']`. Field names are Collection logical names, never column names. A write returns a result object — the record is `result.record`, alongside `result.version` and the created relation targets — rather than the record itself. `findMany` is awaited for an array or iterated asynchronously to consume a large result incrementally.\n\nThe methods are `findOne`, `findMany`, `count`, `exists`, `aggregate`, `groupBy`, `createOne`, `createMany`, `updateOne`, `updateMany`, `upsertOne`, `deleteOne` and `deleteMany`; `describeMutation` and `validateMutation` report capabilities and pre-validate input, and `withPolicy` returns a scoped Repository.",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36151903756.1/v2-8d616d35df49/E11",
+      "origin": {
+        "kind": "review",
+        "key": "review/36151903756.1/v2-8d616d35df49",
+        "localId": "E11"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/db/dist/src/repository/repository.js",
+      "lines": [
+        62,
+        140
+      ],
+      "sha256": "31b67e0dcdfd222b6981571d563d9879525a3bf61312ea92a05a269d99c1f311",
+      "observation": "Repository.findMany 返回惰性查询，findOne 要求 filter 或非空 sort，count/exists/aggregate/groupBy 均先规范化过滤与选择并套用读策略。",
+      "excerpt": "    findMany(options = {}) {\n        return new DefaultRepositoryQuery(() => this.executeMany(snapshotQueryInput(options)), () => this.executeStream(snapshotQueryInput(options))[Symbol.asyncIterator]());\n    }\n    async prepareRead(options) {\n        this.options.adapter.assertReadable();\n        const collection = await this.collection();\n        const policy = this.readContext(collection);\n        const selection = await this.validateSelect(collection, options.select, options.context, policy);\n        const filter = await this.normalizeFilter(collection, options.filter, options.context, policy);\n        const sort = await this.validateSort(collection, options.sort, false, policy);\n        validatePagination(options.limit, options.offset, sort, options.cursor);\n        validateCursorDirection(options.direction, options.cursor);\n        const distinct = validateDistinct(collection, options.distinct, sort, policy);\n        const cursor = validateCursor(collection, options.cursor, sort, options.sort !== undefined);\n        return {\n            collection,\n            fields: selection.fields,\n            select: selection.select,\n            filter,\n            sort,\n            distinct,\n            cursor,\n            direction: options.direction,\n            limit: options.limit,\n            offset: options.offset,\n        };\n    }\n    async executeMany(options) {\n        return (await this.options.adapter.findMany(await this.prepareRead(options)));\n    }\n    async *executeStream(options) {\n        for await (const record of this.options.adapter.stream(await this.prepareRead(options))) {\n            yield record;\n        }\n    }\n    async findOne(options) {\n        const collection = await this.collection();\n        const policy = this.readContext(collection);\n        const selection = await this.validateSelect(collection, options.select, options.context, policy);\n        const callerFilter = await this.normalizeFilterWithoutPolicy(collection, options.filter, options.context);\n        if (!callerFilter && options.sort === undefined) {\n            invalid('INVALID_FILTER', 'findOne() requires filter or non-empty sort.', {\n                collection: collection.name,\n            });\n        }\n        const filter = await this.applyReadPolicy(collection, callerFilter, policy);\n        const sort = await this.validateSort(collection, options.sort, !callerFilter, policy);\n        return (await this.options.adapter.findOne({\n            collection,\n            fields: selection.fields,\n            select: selection.select,\n            filter,\n            sort,\n            limit: 1,\n        }));\n    }\n    async count(options = {}) {\n        const collection = await this.collection();\n        return this.options.adapter.count({\n            collection,\n            filter: await this.normalizeFilter(collection, options.filter, options.context, this.readContext(collection)),\n        });\n    }\n    async exists(options = {}) {\n        const collection = await this.collection();\n        return this.options.adapter.exists({\n            collection,\n            filter: await this.normalizeFilter(collection, options.filter, options.context, this.readContext(collection)),\n        });\n    }\n    async aggregate(options) {\n        const collection = await this.collection();\n        const policy = this.readContext(collection);\n        const aggregate = normalizeAggregateInput(collection, options.aggregate);\n        validateAggregate(collection, aggregate, policy);\n        const filter = await this.normalizeFilter(collection, options.filter, options.context, policy);\n        return this.options.adapter.aggregate({ collection, aggregate, filter });\n    }\n    async groupBy(options) {",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36151903756.1/v2-8d616d35df49/E12",
+      "origin": {
+        "kind": "review",
+        "key": "review/36151903756.1/v2-8d616d35df49",
+        "localId": "E12"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/db/dist/src/repository/repository.js",
+      "lines": [
+        260,
+        355
+      ],
+      "sha256": "31b67e0dcdfd222b6981571d563d9879525a3bf61312ea92a05a269d99c1f311",
+      "observation": "createOne/updateOne 接受 filter 与 values，经过规范化与写策略后交给 adapter，并返回结构化结果。",
+      "excerpt": "        catch (error) {\n            if (!(error instanceof RepositoryError))\n                throw error;\n            return { valid: false, errors: [toValidationError(error)] };\n        }\n    }\n    async createOne(options) {\n        const policyInput = options.writePolicy === undefined ? true : options.writePolicy;\n        assertWriteEnabled(policyInput);\n        const writePolicy = policyInput === true ? true : normalizeWritePolicy(policyInput, 'create');\n        const collection = await this.collection();\n        assertWritableCollection(collection);\n        // Before the payload is looked at: a Policy that forbids this operation\n        // refuses the call outright, so an empty or malformed body is reported as\n        // forbidden rather than as invalid input. The caller learns nothing about\n        // the shape of a write they may not perform.\n        resolveWriteShapeNode(this.options.policy, 'create', collection);\n        await validateWritePolicyMetadata(this.options.collections, collection, writePolicy);\n        const createValues = applyCreateDefaults(this.options.policy, evaluateValues(options.values));\n        const mutation = await normalizeModelMutation(this.options.collections, collection, createValues.values, 'createOne', 1, { nodes: 0, clientKeys: new Set(), context: options.context });\n        this.assertPolicyMutationFields(collection, mutation, 'create', ['values'], createValues.protectedFields);\n        assertMutationWritePolicy(mutation, writePolicy, ['values'], [], 'create', collection.name);\n        const selection = await this.validateSelect(collection, options.select, options.context, this.readContext(collection));\n        const requestedFields = selection.fields;\n        const executionFields = includeExecutionFields(collection, requestedFields);\n        const result = await this.options.adapter.createOne({\n            collection,\n            fields: executionFields,\n            values: mutation.values,\n            relations: mutation.relations,\n            select: selection.select,\n            scopeCheck: await this.scopeCheck(collection, 'create'),\n            relationScopes: await this.writeRelationScopes(collection, 'create'),\n        });\n        return {\n            record: pickSelection(result.record, requestedFields, selection.select),\n            createdTargets: result.createdTargets,\n            version: result.version,\n        };\n    }\n    async createMany(options) {\n        const policyInput = options.writePolicy === undefined ? true : options.writePolicy;\n        assertWriteEnabled(policyInput);\n        const writePolicy = policyInput === true ? true : normalizeFieldWritePolicy(policyInput);\n        const collection = await this.collection();\n        assertWritableCollection(collection);\n        // Before the payload is looked at: a Policy that forbids this operation\n        // refuses the call outright, so an empty or malformed body is reported as\n        // forbidden rather than as invalid input. The caller learns nothing about\n        // the shape of a write they may not perform.\n        resolveWriteShapeNode(this.options.policy, 'create', collection);\n        if (writePolicy !== true)\n            validatePolicyFields(collection, writePolicy, ['writePolicy']);\n        const input = evaluateValues(options.values);\n        if (!Array.isArray(input) || input.length === 0) {\n            invalid('INVALID_MUTATION', 'createMany() values must not be empty.', {\n                collection: collection.name,\n                path: ['values'],\n            });\n        }\n        const recordsWithDefaults = input.map((record, index) => {\n            const createValues = applyCreateDefaults(this.options.policy, record);\n            return {\n                values: validateValues(collection, createValues.values, 'createMany', false, options.context, ['values', index]),\n                protectedFields: createValues.protectedFields,\n            };\n        });\n        const records = recordsWithDefaults.map((record) => record.values);\n        recordsWithDefaults.forEach((record, index) => this.assertPolicyMutationFields(collection, { values: record.values }, 'create', ['values', index], record.protectedFields));\n        records.forEach((values, index) => assertFieldWrites(values, writePolicy, ['values', index], [], 'create', collection.name));\n        const selection = options.select\n            ? await this.validateSelect(collection, options.select, options.context, this.readContext(collection))\n            : undefined;\n        if (selection)\n            assertBulkReturningIdentity(collection);\n        const result = await this.options.adapter.createMany({\n            collection,\n            records,\n            fields: selection\n                ? includeExecutionFields(collection, selection.fields)\n                : undefined,\n            select: selection?.select,\n            scopeCheck: await this.scopeCheck(collection, 'create'),\n        });\n        return selection\n            ? {\n                createdCount: result.count,\n                records: pickManySelections(result.records, selection),\n            }\n            : { createdCount: result.count };\n    }\n    async updateOne(options) {\n        const policyInput = options.writePolicy === undefined ? true : options.writePolicy;\n        assertWriteEnabled(policyInput);\n        const writePolicy = policyInput === true ? true : normalizeWritePolicy(policyInput, 'update');\n        const collection = await this.collection();",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36151903756.1/v2-8d616d35df49/E13",
+      "origin": {
+        "kind": "review",
+        "key": "review/36151903756.1/v2-8d616d35df49",
+        "localId": "E13"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/repository-input/dist/filter-builder.js",
+      "lines": [
+        97,
+        121
+      ],
+      "sha256": "6234f15e70188871c0606e4640a5bc7798791e2f48ea1d350e23785ed544df11",
+      "observation": "字符串操作符 includes/notIncludes/eq/startsWith 等把操作符写入条件节点；build 在 options.mode 存在时把 mode 合并进节点。",
+      "excerpt": "class StringOperators extends BaseOperators {\n    includes(value, options) {\n        return this.build('$includes', value, options);\n    }\n    notIncludes(value, options) {\n        return this.build('$notIncludes', value, options);\n    }\n    eq(value, options) {\n        return this.build('$eq', value, options);\n    }\n    ne(value, options) {\n        return this.build('$ne', value, options);\n    }\n    startsWith(value, options) {\n        return this.build('$startsWith', value, options);\n    }\n    endsWith(value, options) {\n        return this.build('$endsWith', value, options);\n    }\n    build(operator, value, options) {\n        const node = condition(this.path, this.group, operator, value);\n        if (options?.mode !== undefined)\n            Object.assign(node, { mode: options.mode });\n        return node;\n    }",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36151903756.1/v2-8d616d35df49/E14",
+      "origin": {
+        "kind": "review",
+        "key": "review/36151903756.1/v2-8d616d35df49",
+        "localId": "E14"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/repository-input/dist/filter-builder.d.ts",
+      "lines": [
+        1,
+        14
+      ],
+      "sha256": "afee875ee6356adf0b381cbd585cae3f66ff55f125c638d0765cc8e718a776c5",
+      "observation": "DefaultFilterBuilder 公开 and/or/variable 与 string/text/number/date/time/boolean/json/relation 分组入口。",
+      "excerpt": "import type { BooleanFilterOperators, DateFilterOperators, FilterBuilder, FilterConditionNode, FilterFieldGroup, FilterGroupNode, FilterNode, FilterVariable, JsonFilterOperators, NumberFilterOperators, RelationFilterOperators, RepositoryPath, RepositoryRecord, StringFilterOperators, TextFilterOperators, TimeFilterOperators } from './types.js';\nexport declare class DefaultFilterBuilder<TRecord extends object = RepositoryRecord> implements FilterBuilder<TRecord> {\n    and(items: readonly FilterNode[]): FilterGroupNode;\n    or(items: readonly FilterNode[]): FilterGroupNode;\n    variable(path: string): FilterVariable;\n    string(path: string | RepositoryPath): StringFilterOperators;\n    text(path: string | RepositoryPath): TextFilterOperators;\n    number(path: string | RepositoryPath): NumberFilterOperators;\n    date(path: string | RepositoryPath): DateFilterOperators;\n    time(path: string | RepositoryPath): TimeFilterOperators;\n    boolean(path: string | RepositoryPath): BooleanFilterOperators;\n    json(path: string | RepositoryPath): JsonFilterOperators;\n    relation<TTarget extends object = RepositoryRecord>(path: string | RepositoryPath): RelationFilterOperators<TTarget>;\n}",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36151903756.1/v2-8d616d35df49/E15",
+      "origin": {
+        "kind": "review",
+        "key": "review/36151903756.1/v2-8d616d35df49",
+        "localId": "E15"
+      },
+      "kind": "skill",
+      "path": "app/.agents/skills/nocobase-app-development/references/database-and-data.md",
+      "lines": [
+        17,
+        27
+      ],
+      "sha256": "ac41ad066e65d77998fccba7b01131b733633aaf467b3f2695d43b61348ab4d0",
+      "observation": "应用侧通过 database.repository(collection) 处理集合记录与关系，database.query() 处理非集合结果集；权限由路由在进入 filter/values/select 前决定。",
+      "excerpt": "From there, `database.repository(collection)` is the default for a collection's records and their relations, `database.query()` is for a result set that is not any collection's records, and `database.transaction(fn)` groups writes that must succeed or fail together. Each takes an optional connection name and uses the default connection when omitted.\n\nKeep `@nocobase/db` in `dependencies`, not `devDependencies`. The deployed server resolves it at runtime, and TypeScript also reads that declaration to infer the database configuration through the public package name; declaring it only as a development dependency can cause TS2883 in an installed application even while a source workspace builds successfully.\n\n## Where data access belongs\n\nPut queries in a service and call the service from the route, once more than one handler needs the same data or the logic is worth testing on its own. A route that only reads and returns a list may query directly.\n\nNever expose a raw row shape as an API response without deciding what belongs in it. Internal columns leak through a select-everything query.\n\nNeither Repository nor Query applies the application's permissions. The route decides what the caller may see and change before any of it reaches a filter, a values object, or a field selection — see [application permission development](authorization.md).",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36151903756.1/v2-8d616d35df49/E16",
+      "origin": {
+        "kind": "review",
+        "key": "review/36151903756.1/v2-8d616d35df49",
+        "localId": "E16"
+      },
+      "kind": "code",
+      "path": "app/database/main/migrations/20260210120000_create_crm.ts",
+      "lines": [
+        10,
+        71
+      ],
+      "sha256": "92cb4e02a7fc5913cc45fbda35dfa2c5a68c9871b0a3810e10910a1a456c38d4",
+      "observation": "迁移用 defineMigration + builder.createCollection 建三表，字段含 string/integer/decimal，联系人/商机同时声明 belongsTo 与显式 foreignKey，onDelete 为 cascade。",
+      "excerpt": "const migration: MigrationDefinition = defineMigration({\n  name: '20260210120000_create_crm',\n\n  async up({ builder }) {\n    await builder.createCollection('crm_customers', (collection) => {\n      collection.increments('id');\n      collection.string('name', { length: 120, nullable: false });\n      collection.string('industry', { length: 120, nullable: true });\n      collection.index('name');\n    });\n\n    await builder.createCollection('crm_contacts', (collection) => {\n      collection.increments('id');\n      collection.string('name', { length: 120, nullable: false });\n      collection.string('contactInfo', { length: 200, nullable: true });\n      // The scalar foreign key is declared explicitly. The relation carries the\n      // join metadata the Repository reads; the constraint below it is what\n      // actually emits the cascade the relation option describes.\n      collection.integer('customerId', { nullable: false });\n      collection.foreignKey('customerId', {\n        references: { collection: 'crm_customers', fields: ['id'] },\n        name: 'fk_crm_contacts_customer',\n        onDelete: 'cascade',\n      });\n      collection.belongsTo('customer', 'crm_customers', {\n        foreignKey: 'customerId',\n        targetKey: 'id',\n        nullable: false,\n        onDelete: 'cascade',\n      });\n      collection.index('customerId');\n    });\n\n    await builder.createCollection('crm_opportunities', (collection) => {\n      collection.increments('id');\n      collection.string('name', { length: 160, nullable: false });\n      collection.integer('customerId', { nullable: false });\n      collection.foreignKey('customerId', {\n        references: { collection: 'crm_customers', fields: ['id'] },\n        name: 'fk_crm_opportunities_customer',\n        onDelete: 'cascade',\n      });\n      collection.belongsTo('customer', 'crm_customers', {\n        foreignKey: 'customerId',\n        targetKey: 'id',\n        nullable: false,\n        onDelete: 'cascade',\n      });\n      collection.decimal('amount', {\n        precision: 14,\n        scale: 2,\n        nullable: false,\n        defaultValue: 0,\n      });\n      collection.string('stage', {\n        length: 32,\n        nullable: false,\n        defaultValue: 'following',\n      });\n      collection.index('customerId');\n      collection.index('stage');\n    });",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36151903756.1/v2-8d616d35df49/E17",
+      "origin": {
+        "kind": "review",
+        "key": "review/36151903756.1/v2-8d616d35df49",
+        "localId": "E17"
+      },
+      "kind": "code",
+      "path": "app/database/main/seeds/20260210120100_crm_sample_data.ts",
+      "lines": [
+        33,
+        40
+      ],
+      "sha256": "74ff45655ce27002dc0c1c6fae2c92999cb6c6c49aff079d47cd802503b5a175",
+      "observation": "种子用 defineSeed 并在 run 中从 context.repository 取三张表，按业务名先查后建实现幂等。",
+      "excerpt": "export default defineSeed({\n  name: '20260210120100_crm_sample_data',\n\n  async run(context) {\n    const customers = context.repository<CustomerRecord>('crm_customers');\n    const contacts = context.repository<ContactRecord>('crm_contacts');\n    const opportunities =\n      context.repository<OpportunityRecord>('crm_opportunities');",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36151903756.1/v2-8d616d35df49/E18",
+      "origin": {
+        "kind": "review",
+        "key": "review/36151903756.1/v2-8d616d35df49",
+        "localId": "E18"
+      },
+      "kind": "code",
+      "path": "app/server/providers/crm.ts",
+      "lines": [
+        233,
+        275
+      ],
+      "sha256": "2e0a1c6143076a5458613c642d4d8b1adff95026ab0b333cdf0bd8e183970655",
+      "observation": "listCustomers 用 builder.or + string.includes(mode insensitive)；getCustomerDetail 取客户后并行加载联系人与商机，并在 JS 中 reduce 求 totalAmount。",
+      "excerpt": "  async listCustomers(search?: string): Promise<CustomerDto[]> {\n    const keyword = search?.trim();\n    const rows = await this.customers.findMany({\n      ...(keyword\n        ? {\n            filter: (builder: FilterBuilder<CustomerRow>) =>\n              builder.or([\n                builder\n                  .string('name')\n                  .includes(keyword, { mode: 'insensitive' }),\n                builder\n                  .string('industry')\n                  .includes(keyword, { mode: 'insensitive' }),\n              ]),\n          }\n        : {}),\n      sort: (sort) => sort.field('id').desc(),\n    });\n    return rows.map((row) => this.toCustomer(row));\n  }\n\n  async getCustomerDetail(id: number): Promise<CustomerDetailDto> {\n    const customer = await this.customers.findOne({\n      filter: { id },\n    });\n    if (!customer) {\n      throw new CrmNotFoundError('Customer not found.');\n    }\n    const [contacts, opportunities] = await Promise.all([\n      this.listContacts({ customerId: id }),\n      this.listOpportunities({ customerId: id }),\n    ]);\n    const totalAmount = opportunities.reduce(\n      (sum, item) => sum + item.amount,\n      0,\n    );\n    return {\n      ...this.toCustomer(customer),\n      contacts,\n      opportunities,\n      totalAmount: Math.round(totalAmount * 100) / 100,\n    };\n  }",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36151903756.1/v2-8d616d35df49/E19",
+      "origin": {
+        "kind": "review",
+        "key": "review/36151903756.1/v2-8d616d35df49",
+        "localId": "E19"
+      },
+      "kind": "code",
+      "path": "app/server/providers/crm.ts",
+      "lines": [
+        305,
+        342
+      ],
+      "sha256": "2e0a1c6143076a5458613c642d4d8b1adff95026ab0b333cdf0bd8e183970655",
+      "observation": "listContacts 用 builder.and/or + number().eq 组合过滤，并用 select.fields(...).include('customer', ...) 加载客户名。",
+      "excerpt": "  async listContacts(options: ListContactsOptions = {}): Promise<ContactDto[]> {\n    const keyword = options.search?.trim();\n    const hasFilter = options.customerId !== undefined || keyword !== undefined;\n    const rows = await this.contacts.findMany({\n      ...(hasFilter\n        ? {\n            filter: (builder: FilterBuilder<ContactRow>) => {\n              const conditions: FilterNode[] = [];\n              if (options.customerId !== undefined) {\n                conditions.push(\n                  builder.number('customerId').eq(options.customerId),\n                );\n              }\n              if (keyword) {\n                conditions.push(\n                  builder.or([\n                    builder\n                      .string('name')\n                      .includes(keyword, { mode: 'insensitive' }),\n                    builder\n                      .string('contactInfo')\n                      .includes(keyword, { mode: 'insensitive' }),\n                  ]),\n                );\n              }\n              return conditions.length === 1\n                ? conditions[0]\n                : builder.and(conditions);\n            },\n          }\n        : {}),\n      sort: (sort) => sort.field('id').desc(),\n      select: (select) =>\n        select\n          .fields('id', 'name', 'contactInfo', 'customerId')\n          .include('customer', (customer) => customer.fields('id', 'name')),\n    });\n    return rows.map((row) => this.toContact(row));",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36151903756.1/v2-8d616d35df49/E20",
+      "origin": {
+        "kind": "review",
+        "key": "review/36151903756.1/v2-8d616d35df49",
+        "localId": "E20"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/service-provider/dist/container.js",
+      "lines": [
+        1,
+        40
+      ],
+      "sha256": "69dafbced91dd305a59e368eb04592a9aeecd8052415849babafb879363e07ca",
+      "observation": "ServiceContainer 提供 instance/singleton/has/resolve/resolveIfCreated/assertAvailable；singleton 惰性构建，未注册 token 与循环依赖都会抛出带 token 名的错误。",
+      "excerpt": "export class ServiceContainer {\n    bindings = new Map();\n    resolving = [];\n    instance(token, value) {\n        this.assertAvailable(token);\n        this.bindings.set(token, {\n            factory: () => value,\n            instance: value,\n            state: 'created',\n        });\n    }\n    singleton(token, factory) {\n        this.assertAvailable(token);\n        this.bindings.set(token, {\n            factory,\n            instance: undefined,\n            state: 'pending',\n        });\n    }\n    has(token) {\n        return this.bindings.has(token);\n    }\n    resolve(token) {\n        const binding = this.bindings.get(token);\n        if (!binding) {\n            throw new Error(`Service \"${token.name}\" is not registered.`);\n        }\n        if (binding.state === 'created') {\n            return binding.instance;\n        }\n        if (binding.state === 'failed') {\n            throw binding.error;\n        }\n        if (binding.state === 'creating') {\n            const cycle = [...this.resolving, token]\n                .map((item) => item.name)\n                .join(' -> ');\n            throw new Error(`Circular service dependency detected: ${cycle}.`);\n        }\n        binding.state = 'creating';",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36151903756.1/v2-8d616d35df49/E21",
+      "origin": {
+        "kind": "review",
+        "key": "review/36151903756.1/v2-8d616d35df49",
+        "localId": "E21"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/service-provider/dist/provider.js",
+      "lines": [
+        1,
+        11
+      ],
+      "sha256": "5de6708073c4bd508b7ede97f648f40d75f0e14bd0b9913a0d81e8876b8ea186",
+      "observation": "ServiceProvider 固定 app 依赖并暴露 register/boot/start/ready/shutdown 生命周期钩子，默认空实现。",
+      "excerpt": "export class ServiceProvider {\n    app;\n    constructor(app) {\n        this.app = app;\n    }\n    register() { }\n    async boot() { }\n    async start() { }\n    async ready() { }\n    async shutdown() { }\n}",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36151903756.1/v2-8d616d35df49/E22",
+      "origin": {
+        "kind": "review",
+        "key": "review/36151903756.1/v2-8d616d35df49",
+        "localId": "E22"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/app-server/dist/router/routes.js",
+      "lines": [
+        1,
+        18
+      ],
+      "sha256": "4a5a2d50c819c2cb33a51a1a65681e16c31ced82001d689f239da855035ec617",
+      "observation": "defineApiRoutes 返回 scope 'api' 的贡献，defineRootRoutes 返回 scope 'root'，defineHttpMiddleware 单独声明 HTTP 中间件；三者都返回冻结的贡献对象。",
+      "excerpt": "export function defineHttpMiddleware(options) {\n    return Object.freeze({\n        name: options.name,\n        register: options.register,\n    });\n}\nexport function defineApiRoutes(createRouter) {\n    return Object.freeze({\n        scope: 'api',\n        createRouter,\n    });\n}\nexport function defineRootRoutes(createRouter) {\n    return Object.freeze({\n        scope: 'root',\n        createRouter,\n    });\n}",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36151903756.1/v2-8d616d35df49/E23",
+      "origin": {
+        "kind": "review",
+        "key": "review/36151903756.1/v2-8d616d35df49",
+        "localId": "E23"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/app-plugin-authentication/dist/server/auth.js",
+      "lines": [
+        180,
+        231
+      ],
+      "sha256": "39be057de8227c5aef3eb57a2a15b04bfa0aa8922c60be23e8618d31659c9c48",
+      "observation": "Auth.optional() 在有会话时设置 context.auth，Auth.required() 在无会话时返回 401 UNAUTHORIZED 'Authentication required'，其余会话错误按 Better Auth APIError 状态返回。",
+      "excerpt": "    optional(options = {}) {\n        return async (context, next) => {\n            const originFailure = await this.checkCookieWriteOrigin(context);\n            if (originFailure)\n                return originFailure;\n            if (options.skip?.(context)) {\n                await next();\n                return;\n            }\n            try {\n                context.set('auth', await this.getSession(context.req.raw.headers));\n            }\n            catch (error) {\n                if (error instanceof APIError) {\n                    return context.json(error.body ?? { code: error.status, message: error.message }, error.statusCode);\n                }\n                throw error;\n            }\n            await next();\n        };\n    }\n    required(options = {}) {\n        return async (context, next) => {\n            const originFailure = await this.checkCookieWriteOrigin(context);\n            if (originFailure)\n                return originFailure;\n            if (options.skip?.(context)) {\n                await next();\n                return;\n            }\n            let auth;\n            try {\n                auth = await this.getSession(context.req.raw.headers);\n                // A refused credential is Better Auth's APIError; answer with its own status and body.\n            }\n            catch (error) {\n                if (error instanceof APIError) {\n                    return context.json(error.body ?? { code: error.status, message: error.message }, error.statusCode);\n                }\n                throw error;\n            }\n            if (!auth) {\n                return context.json({\n                    code: 'UNAUTHORIZED',\n                    message: 'Authentication required',\n                }, 401);\n            }\n            context.set('auth', auth);\n            await next();\n        };\n    }\n}",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36151903756.1/v2-8d616d35df49/E24",
+      "origin": {
+        "kind": "review",
+        "key": "review/36151903756.1/v2-8d616d35df49",
+        "localId": "E24"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/app-plugin-authentication/dist/server/tokens.js",
+      "lines": [
+        1,
+        4
+      ],
+      "sha256": "1e113bc48b461350418949f91fc5e205094d20e7fb7d46e58da832116a32bf89",
+      "observation": "authenticationToken 由 createServiceToken('@nocobase/app/authentication') 建立，按对象身份从容器解析认证服务。",
+      "excerpt": "import { createServiceToken, } from '@nocobase/service-provider';\nexport const authenticationToken=[REDACTED]'@nocobase/app/authentication');\nexport const userAdministrationServiceToken=[REDACTED]'@nocobase/app/authentication/user-administration');\n//# sourceMappingURL=tokens.js.map",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36151903756.1/v2-8d616d35df49/E25",
+      "origin": {
+        "kind": "review",
+        "key": "review/36151903756.1/v2-8d616d35df49",
+        "localId": "E25"
+      },
+      "kind": "skill",
+      "path": "app/.agents/skills/nocobase-app-development/references/server-routes.md",
+      "lines": [
+        17,
+        49
+      ],
+      "sha256": "cbf30ba33ca0af760a34442e92ac668c0ec8a312423da0690a98f3dfd0099b25",
+      "observation": "server-routes 给出 defineApiRoutes 工厂内 app.container.resolve(authenticationToken) 与 auth.required() 的完整示例，并强调每个路由各自负责 security，/api 不等于已认证。",
+      "excerpt": "import { authenticationToken } from '@nocobase/app-plugin-authentication';\nimport type { Application } from '@nocobase/app-server/application';\nimport {\n  defineApiRoutes,\n  type AppApiRouteContribution,\n} from '@nocobase/app-server/router';\nimport { Hono } from 'hono';\n\nexport const apiRoutes: AppApiRouteContribution<Application> = defineApiRoutes(\n  (app) => {\n    const router = new Hono();\n    const auth = app.container.resolve(authenticationToken);\n    const orders = app.container.resolve(orderServiceToken);\n\n    router.use('/orders', auth.required());\n    router.get('/orders', async (context) =>\n      context.json({ data: await orders.list() }),\n    );\n\n    return router;\n  },\n);\n```\n\nThe factory creates and returns its own router. Resolve dependencies from `app.container` inside the factory.\n\n## Every route owns its own security\n\n**Mounting under `/api` does not authenticate anything.** `/api` is a location. A route with no `auth.required()` is public regardless of where it mounts.\n\nNever depend on middleware installed by another route, or on the order contributions happen to be registered in. Contribution order changes when a plugin is added, and a route protected only by someone else's middleware silently becomes public.\n\n`auth.required()` rejects anonymous requests with `401`. `auth.optional()` attaches the session when present without rejecting.",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36151903756.1/v2-8d616d35df49/E26",
+      "origin": {
+        "kind": "review",
+        "key": "review/36151903756.1/v2-8d616d35df49",
+        "localId": "E26"
+      },
+      "kind": "skill",
+      "path": "app/.agents/skills/nocobase-app-development/references/services-and-jobs.md",
+      "lines": [
+        7,
+        53
+      ],
+      "sha256": "613fdef9ed49e08978e364bbd5013710b8c60517284713e00b7e9c6b34d75356",
+      "observation": "services-and-jobs 说明服务由 provider 在 token 下注册、createServiceToken 身份语义、register/boot 阶段分工，以及路由用 app.container.resolve(token) 解析。",
+      "excerpt": "Put domain logic in a service under `server/providers/` once more than one route needs it, or once it is worth testing on its own. A route that only reads and returns a list may query directly.\n\nA service is registered by a provider under a token, so anything in the application can resolve it without importing the implementation:\n\n```ts\n// server/providers/orders.ts\nimport type { Application } from '@nocobase/app-server/application';\nimport { databaseManagerToken } from '@nocobase/db';\nimport {\n  createServiceToken,\n  ServiceProvider,\n  type ServiceToken,\n} from '@nocobase/service-provider';\n\nexport interface OrderService {\n  list(): Promise<Order[]>;\n  create(input: CreateOrderInput): Promise<Order>;\n}\n\nexport const orderServiceToken=[REDACTED] =\n  createServiceToken<OrderService>('app/order-service');\n\nexport default class OrderProvider extends ServiceProvider<Application> {\n  public readonly name: string = 'app/order-provider';\n\n  public override register(): void {\n    this.app.container.singleton(orderServiceToken, () => {\n      const database = this.app.container.resolve(databaseManagerToken);\n      return createOrderService(database);\n    });\n  }\n}\n```\n\nAdd the provider to the array in `server/providers/index.ts` and export its token from there so routes can import it.\n\nResolve it where you need it:\n\n```ts\nconst orders = app.container.resolve(orderServiceToken);\n```\n\n**The token is the identity.** Two `createServiceToken` calls with the same name are two different keys — the container matches by object identity. Always import the token from where it is defined rather than recreating one.\n\n`singleton` builds the service once, on first resolve. Use `instance` for an already-constructed value.\n\nKeep the layers apart: a service should not read a Hono context, return HTTP status codes, or decide retry behavior. It takes its dependencies and returns domain results.",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36151903756.1/v2-8d616d35df49/E27",
+      "origin": {
+        "kind": "review",
+        "key": "review/36151903756.1/v2-8d616d35df49",
+        "localId": "E27"
+      },
+      "kind": "code",
+      "path": "app/server/providers/crm.ts",
+      "lines": [
+        1,
+        15
+      ],
+      "sha256": "2e0a1c6143076a5458613c642d4d8b1adff95026ab0b333cdf0bd8e183970655",
+      "observation": "应用用 createServiceToken('app-template-default/crm') 定义服务身份，并实现 ServiceProvider，从 databaseManagerToken 取库后注册服务。",
+      "excerpt": "import {\n  databaseManagerToken,\n  type DatabaseManager,\n  type FilterBuilder,\n  type FilterNode,\n} from '@nocobase/db';\nimport type { Application } from '@nocobase/app-server/application';\nimport {\n  ServiceProvider,\n  createServiceToken,\n} from '@nocobase/service-provider';\n\nexport const crmServiceToken=[REDACTED]  'app-template-default/crm',\n);",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36151903756.1/v2-8d616d35df49/E28",
+      "origin": {
+        "kind": "review",
+        "key": "review/36151903756.1/v2-8d616d35df49",
+        "localId": "E28"
+      },
+      "kind": "code",
+      "path": "app/server/routes/crm.ts",
+      "lines": [
+        54,
+        78
+      ],
+      "sha256": "d09821066c4dd56590806efccfa9140a1c677dcb45994e824b3882acabb5679d",
+      "observation": "路由用 defineApiRoutes 建 Hono 子路由器，resolve authenticationToken 与 crmServiceToken，并 router.use('/crm/*', auth.required())，再用 onError 区分 404/400 业务错误。",
+      "excerpt": "/**\n * The CRM feature runs in a single ordinary usage mode: any signed-in user may\n * read and write every record. Authentication is therefore the only guard these\n * routes install, and the service layer is the sole owner of input validation.\n */\nexport const crmApiRoutes: AppApiRouteContribution<Application> =\n  defineApiRoutes((app) => {\n    const router = new Hono();\n    const auth = app.container.resolve(authenticationToken);\n    const crm = app.container.resolve(crmServiceToken);\n\n    router.onError((error, context) => {\n      if (error instanceof CrmNotFoundError) {\n        return context.json({ message: error.message, code: error.code }, 404);\n      }\n      if (error instanceof CrmValidationError) {\n        return context.json(\n          { message: error.message, code: error.code, field: error.field },\n          400,\n        );\n      }\n      throw error;\n    });\n\n    router.use('/crm/*', auth.required());",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36151903756.1/v2-8d616d35df49/E29",
+      "origin": {
+        "kind": "review",
+        "key": "review/36151903756.1/v2-8d616d35df49",
+        "localId": "E29"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/app-client/dist/plugins.js",
+      "lines": [
+        558,
+        586
+      ],
+      "sha256": "083590228307e75286dc0c0bb3962d864c027e7609824083fea6c5a97ee94a15",
+      "observation": "normalizeRouteAuthz 拒绝已移除的 access 字段；页面必须显式声明 'skip' 或 { resource:{type,id}, action }，否则注册期抛错；路由组声明 authz 也会抛错。",
+      "excerpt": "function normalizeRouteAuthz(route, id, isPage) {\n    if ('access' in route) {\n        throw new Error(`Client route \"${id}\" uses removed access; declare authz instead.`);\n    }\n    const value = 'authz' in route ? route.authz : undefined;\n    if (value !== undefined) {\n        if (!isPage)\n            throw new Error(`Client route group \"${id}\" cannot declare authz.`);\n        if (value === 'skip')\n            return value;\n        if (!value ||\n            typeof value !== 'object' ||\n            !('resource' in value) ||\n            !value.resource ||\n            typeof value.resource !== 'object' ||\n            typeof value.resource.type !== 'string' ||\n            !value.resource.type.trim() ||\n            typeof value.resource.id !== 'string' ||\n            !value.resource.id.trim() ||\n            typeof value.action !== 'string' ||\n            !value.action.trim())\n            throw new Error(`Client route \"${id}\" must use authz \"skip\" or { resource: { type, id }, action }.`);\n        return Object.freeze({\n            resource: Object.freeze({ ...value.resource }),\n            action: value.action,\n        });\n    }\n    if (isPage)\n        throw new Error(`Client route \"${id}\" must declare authz: { resource: { type, id }, action } or \"skip\".`);",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36151903756.1/v2-8d616d35df49/E30",
+      "origin": {
+        "kind": "review",
+        "key": "review/36151903756.1/v2-8d616d35df49",
+        "localId": "E30"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/app-client/dist/plugins.js",
+      "lines": [
+        476,
+        495
+      ],
+      "sha256": "083590228307e75286dc0c0bb3962d864c027e7609824083fea6c5a97ee94a15",
+      "observation": "resolveRouteTree 为声明 navigation 的页面校验静态路径（含 : 参数或 * 通配时注册报错），并冻结 navigation/breadcrumb，缺省 auth 归一为 required。",
+      "excerpt": "        const navigation = route.navigation\n            ? Object.freeze({\n                ...route.navigation,\n                title: normalizeSettingTitle(route.navigation.title, id, packageName, 'route'),\n            })\n            : undefined;\n        if (navigation &&\n            isPage &&\n            path\n                .split('/')\n                .some((segment) => segment.startsWith(':') || segment.includes('*')))\n            throw new Error(`Client route \"${id}\" navigation requires a static path.`);\n        // A menu entry needs a static path; a breadcrumb does not, since it names the kind of page rather than the\n        // record. Nothing falls back to anything: a route in both a menu and a trail declares both.\n        const breadcrumb = route.breadcrumb\n            ? Object.freeze({\n                ...route.breadcrumb,\n                title: normalizeSettingTitle(route.breadcrumb.title, id, packageName, kind),\n            })\n            : undefined;",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36151903756.1/v2-8d616d35df49/E31",
+      "origin": {
+        "kind": "review",
+        "key": "review/36151903756.1/v2-8d616d35df49",
+        "localId": "E31"
+      },
+      "kind": "skill",
+      "path": "app/.agents/skills/nocobase-app-development/references/frontend/references/page.md",
+      "lines": [
+        18,
+        73
+      ],
+      "sha256": "028c81b6a4d9c9c8e5091202b346d8e85a0b9a2bbf2a07fee6ed434d00b26fcb",
+      "observation": "page.md 给出 defineAppRoutes 完整示例（含 auth/authz/navigation/componentLoader/children）、字段表与规则：authz 必填、保留路径、懒加载 import('./x.js')、base path 由运行时添加。",
+      "excerpt": "const appRoutes: AppClientRouteContribution = defineAppRoutes([\n  // … existing routes (home, sign-in pages); keep them\n  {\n    name: 'projects',\n    path: '/projects',\n    auth: 'required',\n    authz: 'skip',\n    navigation: { title: 'navigation.projects', icon: FolderKanban },\n    componentLoader: () => import('./pages/projects/index.js'),\n    children: [\n      {\n        // /projects/new: create dialog (RouteDialog)\n        name: 'project-new',\n        path: 'new',\n        authz: 'skip',\n        componentLoader: () => import('./pages/projects/new.js'),\n      },\n      {\n        // /projects/:projectId: detail drawer (RouteDrawer)\n        name: 'project-detail',\n        path: ':projectId',\n        authz: 'skip',\n        componentLoader: () => import('./pages/projects/detail/index.js'),\n        children: [\n          {\n            // /projects/:projectId/edit: edit dialog, stacked on the detail drawer\n            name: 'project-edit',\n            path: 'edit',\n            authz: 'skip',\n            componentLoader: () => import('./pages/projects/detail/edit.js'),\n          },\n        ],\n      },\n    ],\n  },\n]);\n```\n\n| Field             | Description                                                                                                                                                                                                  |\n| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |\n| `name`            | Route name. Only letters, digits, `.`, `_` and `-` are allowed; kebab-case is recommended. Unique among the application's App routes. It is the target of route overrides, so do not change it after release |\n| `path`            | A root route starts with `/`; a child route is one segment relative to its parent (`new`, `:projectId`). It cannot contain query parameters, `#`, `*` or `..`                                                |\n| `auth`            | Who can open the page; see section 3. Defaults to `'required'`                                                                                                                                               |\n| `authz`           | Page authorization, required on every page; see section 4                                                                                                                                                    |\n| `navigation`      | Menu entry: `title` (translation key), `icon`, `order`; see section 6. Omit it when the page needs no menu entry                                                                                             |\n| `breadcrumb`      | Breadcrumb title (translation key); see section 7                                                                                                                                                            |\n| `componentLoader` | Lazily loads the page module; the module must `export default` the page component                                                                                                                            |\n| `children`        | Child routes; see `child-routes.md`                                                                                                                                                                          |\n\nRules:\n\n- **Keep `componentLoader` lazy**. Route information is declared synchronously, so the router can resolve navigation without downloading every page; page code is downloaded only when the page is visited.\n- **Write import paths with the `.js` extension**, even when the source file is `.tsx`. This is how this project resolves modules, not a typo.\n- **Paths are internal to the application**: do not write the deployment base path `/main`. The application is mounted under a base path (`/main` by default), and the runtime adds it automatically: `/projects` is `/main/projects` in the browser.\n- **Reserved paths**: `/login`, `/register`, `/forgot-password` and `/reset-password` can only use `auth: 'guest'`. They are already declared in `client/routes.ts`, and their pages are in `client/pages/auth/`.\n- App routes share one path space with settings pages and dev pages: do not declare an App route that starts with `/settings` or `/dev`, or it will conflict with them.",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36151903756.1/v2-8d616d35df49/E32",
+      "origin": {
+        "kind": "review",
+        "key": "review/36151903756.1/v2-8d616d35df49",
+        "localId": "E32"
+      },
+      "kind": "skill",
+      "path": "app/.agents/skills/nocobase-app-development/references/frontend/references/child-routes.md",
+      "lines": [
+        11,
+        59
+      ],
+      "sha256": "d8acb79db638b919c78830f8323cd64a8df95e9a1d3ca432260b0ea94044041b",
+      "observation": "child-routes 区分 inline/RouteChildPage/RouteDialog/RouteDrawer 四种呈现，要求父页自行放置 Outlet，参数化子页用于 detail、dialog 用于新建编辑、drawer 用于详情。",
+      "excerpt": "- **The parent page must place `<Outlet />` itself**, where the child content should appear. Pages do not insert an Outlet automatically, and neither do `RouteChildPage`, `RouteDialog` or `RouteDrawer`; only a plain navigation group gets its Outlet from the route renderer.\n- Child routes inherit the entry route's `auth` and cannot change it. Every child page declares `authz` like any page: `'skip'` when the parent page's check is enough, or its own request. A child page renders only after the parent page's check passes.\n- Link to a child route with a relative path and keep the current query parameters: `<Link to={{ pathname: String(id), search: location.search }}>`.\n- Route declarations have no `index` field. Do not invent an index route, and do not register a child route at the parent's own path; when \"opening the parent URL shows a particular child page\" is needed, use the redirect in section 4.\n- Do not change the shell, the route renderer or the ServiceProvider to add a menu entry. Keep the CRUD resources that business code uses, but they produce no menu entries.\n- Design paths around business needs; there is no fixed naming format. Do not write the deployment base path `/main`.\n\n## 2. File layout\n\nA page with child routes becomes a folder: the page itself is `index.tsx`, and each child route is named after its path segment and placed beside it. When a child route has children of its own, it becomes a folder too:\n\n```text\nclient/pages/projects/\n  index.tsx                  /projects                     List page; <Outlet context={{ reload }} /> at the end\n  new.tsx                    /projects/new                 RouteDialog: new project\n  detail/index.tsx           /projects/:projectId          RouteDrawer: project details; <Outlet context={...} /> inside the drawer\n  detail/edit.tsx            /projects/:projectId/edit     RouteDialog: edit project, stacked on the drawer\n  project-form.tsx           Form component shared by create and edit\n  project-delete-dialog.tsx  Delete confirmation (AlertDialog, state inside the component)\n  types.ts\n```\n\n- A fixed path segment uses a file of the same name: `/projects/new` is `projects/new.tsx`.\n- A parameter segment uses a name that describes what the page is for: `:projectId` is `detail/`.\n- Components and types used only by these pages stay in the same folder, not in `client/components/` (which holds components shared across the whole application).\n- Keep components and constants in separate files: when one file exports both a component and a constant, Fast Refresh stops working and ESLint (`react-refresh/only-export-components`) reports an error. Put constants and types in a separate module such as `types.ts`.\n\nAdding a set of child routes usually changes these files:\n\n| File               | What to change                                                   |\n| ------------------ | ---------------------------------------------------------------- |\n| `client/routes.ts` | Declare the pages, menu entries and nested `children`            |\n| Parent page        | Place `Outlet`; add links or tabs that point to the child routes |\n| Child pages        | Default-export the page component                                |\n| `client/locales/`  | Menu and page copy (`en-US.ts`, `zh-CN.ts`)                      |\n| `tests/`           | The route test (see section 12 of `page.md`) and behavior tests  |\n\n## 3. Four ways to present a child route\n\nA child route renders in the parent page's Outlet. It can be displayed inline, or it can cover the parent page with one of the three components below:\n\n|                 | Inline (tabs, etc.)                      | `RouteChildPage`                             | `RouteDialog`                          | `RouteDrawer`    |\n| --------------- | ---------------------------------------- | -------------------------------------------- | -------------------------------------- | ---------------- |\n| Position        | Where the Outlet sits in the parent page | Covers the whole content area                | Center of the page                     | Side of the page |\n| Modal           | No                                       | No; the sidebar and header remain usable     | Yes                                    | Yes              |\n| `breadcrumb`    | Omit                                     | Write (it is a destination)                  | Omit                                   | Omit             |\n| `PageContainer` | None; uses the parent page's             | Adds its own                                 | None                                   | None             |\n| How to leave    | Switch to another child route            | Breadcrumbs or browser back                  | Close button, Esc, backdrop, `close()` | Same as left     |\n| Use for         | Page tabs                                | Child pages with long forms or many sections | Create and edit forms                  | Record details   |",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36151903756.1/v2-8d616d35df49/E33",
+      "origin": {
+        "kind": "review",
+        "key": "review/36151903756.1/v2-8d616d35df49",
+        "localId": "E33"
+      },
+      "kind": "code",
+      "path": "app/client/routes.ts",
+      "lines": [
+        8,
+        93
+      ],
+      "sha256": "07bad94897117c52c038805d591dc6a2490b0ce62dce702dd4fe2a646455ac55",
+      "observation": "应用在 defineAppRoutes 中为 customers/contacts/opportunities 声明菜单与 new/:id/edit 子路由，全部 auth:'required' 且 authz:'skip'，并保留登录相关路由。",
+      "excerpt": "const appRoutes: AppClientRouteContribution = defineAppRoutes([\n  {\n    // Every signed-in user reaches the landing page. `authz: 'skip'` takes it out of page authorization entirely, so\n    // no permission change can leave a user signed in with nowhere to land.\n    authz: 'skip',\n    auth: 'required',\n    componentLoader: () => import('./pages/home.js'),\n    name: 'home',\n    navigation: { title: 'navigation.home', icon: Home },\n    path: '/',\n  },\n  {\n    auth: 'required',\n    authz: 'skip',\n    componentLoader: () => import('./pages/crm/customers/index.js'),\n    name: 'crm-customers',\n    navigation: { title: 'crm.customers.title', icon: Building2 },\n    path: '/crm/customers',\n    children: [\n      {\n        authz: 'skip',\n        componentLoader: () => import('./pages/crm/customers/new.js'),\n        name: 'crm-customer-new',\n        path: 'new',\n      },\n      {\n        authz: 'skip',\n        componentLoader: () => import('./pages/crm/customers/detail/index.js'),\n        name: 'crm-customer-detail',\n        path: ':customerId',\n        children: [\n          {\n            authz: 'skip',\n            componentLoader: () =>\n              import('./pages/crm/customers/detail/edit.js'),\n            name: 'crm-customer-edit',\n            path: 'edit',\n          },\n        ],\n      },\n    ],\n  },\n  {\n    auth: 'required',\n    authz: 'skip',\n    componentLoader: () => import('./pages/crm/contacts/index.js'),\n    name: 'crm-contacts',\n    navigation: { title: 'crm.contacts.title', icon: UserRound },\n    path: '/crm/contacts',\n    children: [\n      {\n        authz: 'skip',\n        componentLoader: () => import('./pages/crm/contacts/new.js'),\n        name: 'crm-contact-new',\n        path: 'new',\n      },\n      {\n        authz: 'skip',\n        componentLoader: () => import('./pages/crm/contacts/edit.js'),\n        name: 'crm-contact-edit',\n        path: ':contactId/edit',\n      },\n    ],\n  },\n  {\n    auth: 'required',\n    authz: 'skip',\n    componentLoader: () => import('./pages/crm/opportunities/index.js'),\n    name: 'crm-opportunities',\n    navigation: { title: 'crm.opportunities.title', icon: Target },\n    path: '/crm/opportunities',\n    children: [\n      {\n        authz: 'skip',\n        componentLoader: () => import('./pages/crm/opportunities/new.js'),\n        name: 'crm-opportunity-new',\n        path: 'new',\n      },\n      {\n        authz: 'skip',\n        componentLoader: () => import('./pages/crm/opportunities/edit.js'),\n        name: 'crm-opportunity-edit',\n        path: ':opportunityId/edit',\n      },\n    ],\n  },",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36151903756.1/v2-8d616d35df49/E34",
+      "origin": {
+        "kind": "review",
+        "key": "review/36151903756.1/v2-8d616d35df49",
+        "localId": "E34"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/app-client/dist/hooks.js",
+      "lines": [
+        1,
+        16
+      ],
+      "sha256": "6e63d580cb93a555f719e533e21e5f1f5fe72e94b4be130ba53ce818eecf5d55",
+      "observation": "useApiClient() 即 useService(apiClientToken)，从 ClientApplicationContext 解析应用级 API 客户端；不在 AppClientRoot 内会抛出明确错误。",
+      "excerpt": "import { useContext } from 'react';\nimport { apiClientToken } from './application.js';\nimport { ClientApplicationContext } from './application-context.js';\nexport function useClientApplication() {\n    const app = useContext(ClientApplicationContext);\n    if (!app) {\n        throw new Error('useClientApplication() must be used inside AppClientRoot.');\n    }\n    return app;\n}\nexport function useService(token) {\n    return useClientApplication().services.resolve(token);\n}\nexport function useApiClient() {\n    return useService(apiClientToken);\n}",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36151903756.1/v2-8d616d35df49/E35",
+      "origin": {
+        "kind": "review",
+        "key": "review/36151903756.1/v2-8d616d35df49",
+        "localId": "E35"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/i18n/dist/client/context.js",
+      "lines": [
+        94,
+        113
+      ],
+      "sha256": "cf82bb1c20253a9366538dcdb1d5cf043452e87d4994a7423612717122c56f1c",
+      "observation": "useTranslation(ns, options) 在无 i18n runtime 时回退到 defaultValue，支持字符串 defaultValue 与命名空间解析，返回带 t/i18n/ready 的绑定对象。",
+      "excerpt": "export function useTranslation(ns, options) {\n    const runtime = useOptionalI18nRuntime();\n    const resolvedNamespaces = useMemo(() => (runtime && ns ? resolveNamespaces(runtime, ns) : ns), [runtime, ns]);\n    const response = useI18nextTranslation(resolvedNamespaces, options);\n    const underlyingT = response.t;\n    const t = useCallback(((key, optionsOrDefaultValue, trailingOptions) => {\n        if (!runtime) {\n            return underlyingT(key, optionsOrDefaultValue, trailingOptions);\n        }\n        if (typeof optionsOrDefaultValue === 'string') {\n            return underlyingT(key, optionsOrDefaultValue, resolveTranslationOptions(runtime, trailingOptions));\n        }\n        return underlyingT(key, resolveTranslationOptions(runtime, optionsOrDefaultValue));\n    }), [runtime, underlyingT]);\n    return useMemo(() => Object.assign([t, response.i18n, response.ready], {\n        t,\n        i18n: response.i18n,\n        ready: response.ready,\n    }), [response.i18n, response.ready, t]);\n}",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36151903756.1/v2-8d616d35df49/E36",
+      "origin": {
+        "kind": "review",
+        "key": "review/36151903756.1/v2-8d616d35df49",
+        "localId": "E36"
+      },
+      "kind": "skill",
+      "path": "app/.agents/skills/nocobase-app-development/references/frontend/references/api.md",
+      "lines": [
+        439,
+        466
+      ],
+      "sha256": "ae81211ca4a144c8e01b4462d316c57a41ccfa611c6fbc22ce9f33fd896fa4f9",
+      "observation": "api.md 定义 ApiClientError 的 status/code/payload/requestId/method/url/message 字段（payload 为完整响应体），并给出 404/403/业务错误码/其他错误的分支处理与“不展示原始 message”的约束。",
+      "excerpt": "### ApiClientError\n\nWhen the response is not 2xx, `api.request` throws `ApiClientError`:\n\n| Field           | Contents                                                                                       |\n| --------------- | ---------------------------------------------------------------------------------------------- |\n| `status`        | The HTTP status code                                                                           |\n| `code`          | The business error code, taken from `error.code` or `code` in the response body; may be absent |\n| `payload`       | The complete parsed response body, typed `unknown`                                             |\n| `requestId`     | The `x-request-id` response header, for matching the error with server logs; may be absent     |\n| `method`, `url` | The request method and full URL                                                                |\n| `message`       | Taken from the error message the backend returned; **do not show it to users**                 |\n\n- Network errors (offline, server unreachable) and cancellations do not throw `ApiClientError`; they throw fetch's own errors. In `catch`, write `error: unknown`, narrow it with `error instanceof ApiClientError` first, and only then read these fields.\n- Handle only the errors you can handle; rethrow the rest for the caller.\n\n### Handling each kind of error\n\nWrite the checks directly in the component that uses them (for example `ProjectSummary` above and `CompleteProjectButton` below); do not create an application-wide utility function for this.\n\n| Case                       | Check                                                                    | Handling                                                                                                                                                    |\n| -------------------------- | ------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |\n| Record not found           | `error instanceof ApiClientError && error.status === 404`                | Say the record does not exist or has been deleted, offer a next step (close the overlay, go back to the list) and refresh the list; no retry (guideline R3) |\n| No permission              | `error instanceof ApiClientError && error.status === 403`                | Say the user does not have permission; no retry (guideline S4)                                                                                              |\n| Business error code        | `error instanceof ApiClientError && error.code === 'PROJECT_NAME_TAKEN'` | Show it below the matching field with `form.setError(...)`; see `form.md`                                                                                   |\n| Other (network, 5xx, etc.) | None of the above                                                        | Say \"The request failed. Please try again.\"; when loading data, offer \"Retry\"                                                                               |\n\n- **Do not show raw messages from the backend**: the text in `error.message` and `payload` may be an English exception, a stack trace or SQL, and must not appear in the UI (guideline I3).",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36151903756.1/v2-8d616d35df49/E37",
+      "origin": {
+        "kind": "review",
+        "key": "review/36151903756.1/v2-8d616d35df49",
+        "localId": "E37"
+      },
+      "kind": "skill",
+      "path": "app/.agents/skills/nocobase-app-development/references/frontend/references/form.md",
+      "lines": [
+        120,
+        140
+      ],
+      "sha256": "d8ce98ac6937f2aa37b4716918fe84fb5bcb87a5b9b72789b735b6cd3f0647c2",
+      "observation": "form.md 示范按业务码把错误 setError 到具体字段并聚焦，404 交给调用方，其余错误 setError('root', ...) 显示翻译文案，不使用后端原始 message。",
+      "excerpt": "    } catch (error: unknown) {\n      const apiError = error instanceof ApiClientError ? error : undefined;\n      if (apiError?.status === 409 && apiError.code === 'PROJECT_NAME_TAKEN') {\n        // Duplicate name: show the error below the name field and move focus there.\n        form.setError(\n          'name',\n          { message: t('projects.form.nameTaken') },\n          { shouldFocus: true },\n        );\n      } else if (project && apiError?.status === 404) {\n        // The record has been deleted: let the caller explain and refresh the list, so the user does not submit again.\n        onNotFound?.();\n      } else {\n        // Other errors appear at the top of the form, without the raw message the backend returned.\n        form.setError('root', {\n          message:\n            apiError?.status === 403\n              ? t('projects.error.forbidden')\n              : t('projects.error.requestFailed'),\n        });\n      }",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36151903756.1/v2-8d616d35df49/E38",
+      "origin": {
+        "kind": "review",
+        "key": "review/36151903756.1/v2-8d616d35df49",
+        "localId": "E38"
+      },
+      "kind": "skill",
+      "path": "app/.agents/skills/nocobase-app-development/references/frontend/references/i18n.md",
+      "lines": [
+        198,
+        233
+      ],
+      "sha256": "b0bf95c37f025b1fcec85a4a39a711f00c4b6898f350a50b5ca6790be201e777",
+      "observation": "i18n.md 要求从 @nocobase/i18n/client 导入 useTranslation（而非 react-i18next），并用 _one/_other 与 t(key,{count}) 处理计数文案。",
+      "excerpt": "- Import `useTranslation()` from `@nocobase/i18n/client`, not directly from `react-i18next` or `i18next`.\n- Call it at the top level of the component to get `t`. Use that `t` in event handlers; do not call the hook again inside a handler.\n- The application's own copy needs no namespace: in application code, the application's namespace is the default.\n\n```tsx\n// client/pages/projects/project-count-text.tsx\nimport { useTranslation } from '@nocobase/i18n/client';\nimport type { ReactElement } from 'react';\n\nexport interface ProjectCountTextProps {\n  /** Number of projects in the current list. */\n  readonly count: number;\n  /** The keyword in the search box; an empty string when there is no search. */\n  readonly search: string;\n}\n\n/** The count line above the list: how many projects match when there is a search term, otherwise the total. */\nexport function ProjectCountText({\n  count,\n  search,\n}: ProjectCountTextProps): ReactElement {\n  const { t } = useTranslation();\n  return (\n    <p className='text-sm text-muted-foreground'>\n      {search\n        ? t('projects.searchCount', { count, search })\n        : t('projects.count', { count })}\n    </p>\n  );\n}\n```\n\n### Interpolation and plurals\n\n- **Interpolate; do not concatenate.** Write `{{search}}` in the copy and pass a parameter with the same name in the call. Do not join translated fragments and variables together: word order varies by language. The English above is \"3 projects match …\", while the Chinese is \"匹配“…”的项目有 3 个\", with the count at the end. Interpolated values need no escaping; React handles that when rendering.\n- **Use the `_one` and `_other` suffixes for copy that depends on a count.** Call the key without the suffix and pass `count`: `t('projects.count', { count })`, not `t('projects.count_one')`.",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36151903756.1/v2-8d616d35df49/E39",
+      "origin": {
+        "kind": "review",
+        "key": "review/36151903756.1/v2-8d616d35df49",
+        "localId": "E39"
+      },
+      "kind": "code",
+      "path": "app/client/pages/crm/customer-form.tsx",
+      "lines": [
+        44,
+        130
+      ],
+      "sha256": "a9c27b3ff220a8d8eed04519054bb0421b194768dbaa3564c165bd4c62aeac9e",
+      "observation": "表单在组件内用 useMemo 构造 zod schema（消息走 t），useApiClient 发 POST/PATCH，catch 中按 ApiClientError 的 code/status setError 到字段或 root。",
+      "excerpt": "}: CustomerFormProps): ReactElement {\n  const { t } = useTranslation();\n  const api = useApiClient();\n\n  const schema = useMemo(\n    () =>\n      z.object({\n        name: z\n          .string()\n          .trim()\n          .min(1, t('crm.form.nameRequired'))\n          .max(NAME_MAX, t('crm.form.nameTooLong', { max: NAME_MAX })),\n        industry: z\n          .string()\n          .trim()\n          .max(\n            INDUSTRY_MAX,\n            t('crm.form.industryTooLong', { max: INDUSTRY_MAX }),\n          ),\n      }),\n    [t],\n  );\n\n  const form = useForm({\n    resolver: zodResolver(schema),\n    mode: 'onTouched',\n    defaultValues: {\n      name: customer?.name ?? '',\n      industry: customer?.industry ?? '',\n    },\n  });\n\n  const onSubmit = form.handleSubmit(async (values) => {\n    const json = { name: values.name, industry: values.industry || null };\n    let saved: Customer;\n    onSubmittingChange?.(true);\n    try {\n      const result = customer\n        ? await api.request<{ data: Customer }>({\n            path: `crm/customers/${customer.id}`,\n            method: 'PATCH',\n            json,\n          })\n        : await api.request<{ data: Customer }>({\n            path: 'crm/customers',\n            method: 'POST',\n            json,\n          });\n      saved = result.data;\n    } catch (error: unknown) {\n      const apiError = error instanceof ApiClientError ? error : undefined;\n      const field = apiError ? validationField(apiError) : undefined;\n      if (customer && apiError?.status === 404) {\n        onNotFound?.();\n      } else if (field === 'name' || field === 'industry') {\n        form.setError(\n          field,\n          { message: t('crm.form.invalid') },\n          { shouldFocus: true },\n        );\n      } else {\n        form.setError('root', {\n          message:\n            apiError?.status === 403\n              ? t('crm.error.forbidden')\n              : t('crm.error.requestFailed'),\n        });\n      }\n      return;\n    } finally {\n      onSubmittingChange?.(false);\n    }\n    toast.success(\n      customer\n        ? t('crm.customers.edit.success', { name: saved.name })\n        : t('crm.customers.create.success', { name: saved.name }),\n    );\n    onSubmitted(saved);\n  });\n\n  const rootError = form.formState.errors.root?.message;\n\n  return (\n    <form id={formId} noValidate onSubmit={(event) => void onSubmit(event)}>\n      <FieldGroup>\n        {rootError ? (\n          <Alert variant='destructive'>",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36151903756.1/v2-8d616d35df49/E40",
+      "origin": {
+        "kind": "review",
+        "key": "review/36151903756.1/v2-8d616d35df49",
+        "localId": "E40"
+      },
+      "kind": "code",
+      "path": "app/client/pages/crm/api-error.ts",
+      "lines": [
+        1,
+        16
+      ],
+      "sha256": "fa8916e7ccd179419769d2c918a5d3bd945d991aa05d43b3aadb513a7e5bbc92",
+      "observation": "validationField 把 ApiClientError.code==='CRM_INVALID_INPUT' 的 payload.field 映射为表单字段名，与 form.md 的业务码映射一致。",
+      "excerpt": "import { ApiClientError } from '@nocobase/app-client';\n\n/**\n * The field name the CRM API named in a `CRM_INVALID_INPUT` response, when it\n * named one. The forms use it to move a server-side validation failure onto the\n * matching control, the way a business error code is mapped in `form.md`.\n */\nexport function validationField(error: ApiClientError): string | undefined {\n  if (error.code !== 'CRM_INVALID_INPUT') return undefined;\n  const payload = error.payload;\n  if (payload && typeof payload === 'object' && 'field' in payload) {\n    const field = (payload as { field?: unknown }).field;\n    return typeof field === 'string' ? field : undefined;\n  }\n  return undefined;\n}",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36151903756.1/v2-8d616d35df49/E41",
+      "origin": {
+        "kind": "review",
+        "key": "review/36151903756.1/v2-8d616d35df49",
+        "localId": "E41"
+      },
+      "kind": "code",
+      "path": "app/client/pages/crm/use-customers.ts",
+      "lines": [
+        17,
+        39
+      ],
+      "sha256": "5baf8e0223b64fb29548b57baca4c34a47c29022cdc86c8aa7af687a8a43b802",
+      "observation": "useCustomers 用 useApiClient + useEffect + AbortController 加载客户下拉选项，请求带 signal 并在卸载/参数变化时取消。",
+      "excerpt": "export function useCustomers(): CustomerOptionsResult {\n  const api = useApiClient();\n  const [result, setResult] = useState<CustomerOptionsResult>();\n\n  useEffect(() => {\n    const controller = new AbortController();\n    api\n      .request<{ data: Customer[] }>({\n        path: 'crm/customers',\n        signal: controller.signal,\n      })\n      .then(\n        ({ data }) => {\n          if (!controller.signal.aborted) setResult({ customers: data });\n        },\n        (error: unknown) => {\n          if (!controller.signal.aborted) setResult({ error });\n        },\n      );\n    return () => controller.abort();\n  }, [api]);\n\n  return result ?? {};",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "qa/1/b01-contact-form.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/1",
+        "localId": "b01-contact-form.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-1/browser-acceptance/evidence/b01-contact-form.png",
+      "lines": null,
+      "sha256": "dee6949f9922bfd9066ac14930494484b01aeacd28df80ba9edc4ccbfce19dcd",
+      "observation": "验收项 B01 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-1/browser-acceptance/b01-contact-form.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/1/b01-contacts-list.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/1",
+        "localId": "b01-contacts-list.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-1/browser-acceptance/evidence/b01-contacts-list.png",
+      "lines": null,
+      "sha256": "60d48fff53f2a3a31e551773750f49e8d256578d2f6c57645e1856499ad1cf3a",
+      "observation": "验收项 B01 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-1/browser-acceptance/b01-contacts-list.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/1/b01-customer-detail-refresh.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/1",
+        "localId": "b01-customer-detail-refresh.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-1/browser-acceptance/evidence/b01-customer-detail-refresh.png",
+      "lines": null,
+      "sha256": "2cbcf92433cb85e5412bad8102258a4130bec5f903e4482f8245e5610cdadfe3",
+      "observation": "验收项 B01 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-1/browser-acceptance/b01-customer-detail-refresh.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/1/b02-opportunity-form.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/1",
+        "localId": "b02-opportunity-form.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-1/browser-acceptance/evidence/b02-opportunity-form.png",
+      "lines": null,
+      "sha256": "b6c1e63535e4e7ce2bf8ee8491a4580a374ea47264e1fdf64e3b51c4d8e47f95",
+      "observation": "验收项 B02 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-1/browser-acceptance/b02-opportunity-form.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/1/b02-customer-detail-total.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/1",
+        "localId": "b02-customer-detail-total.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-1/browser-acceptance/evidence/b02-customer-detail-total.png",
+      "lines": null,
+      "sha256": "1b8c8bc861cac9becefd0884b2eca16cb2c3bdab648adbfa8e59c7d1fa0669f0",
+      "observation": "验收项 B02 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-1/browser-acceptance/b02-customer-detail-total.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/1/b03-edit-stage-won.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/1",
+        "localId": "b03-edit-stage-won.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-1/browser-acceptance/evidence/b03-edit-stage-won.png",
+      "lines": null,
+      "sha256": "9725b2b93f1dca1e8c7c5096db7eecbc2f9b6d42b4531aaa6a5e29dbfb4f9d82",
+      "observation": "验收项 B03 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-1/browser-acceptance/b03-edit-stage-won.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/1/b03-list-stage-won.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/1",
+        "localId": "b03-list-stage-won.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-1/browser-acceptance/evidence/b03-list-stage-won.png",
+      "lines": null,
+      "sha256": "37a87aa45ef965b4bc89f6239523ca63bc7b8f813252816064eef937ecfdad1c",
+      "observation": "验收项 B03 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-1/browser-acceptance/b03-list-stage-won.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/1/b03-filter-won.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/1",
+        "localId": "b03-filter-won.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-1/browser-acceptance/evidence/b03-filter-won.png",
+      "lines": null,
+      "sha256": "d4dd08be303d94d2f5a201082fa4638536b0169788ddd7f2af4e1c82424d7aca",
+      "observation": "验收项 B03 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-1/browser-acceptance/b03-filter-won.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/1/b03-filter-inprogress.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/1",
+        "localId": "b03-filter-inprogress.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-1/browser-acceptance/evidence/b03-filter-inprogress.png",
+      "lines": null,
+      "sha256": "0624cc39cfa87d2094b71ef2228704fbdf1aafc40ca1c3b1fcb8fd0f9e1bd69b",
+      "observation": "验收项 B03 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-1/browser-acceptance/b03-filter-inprogress.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/1/b04-edit-amount-150.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/1",
+        "localId": "b04-edit-amount-150.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-1/browser-acceptance/evidence/b04-edit-amount-150.png",
+      "lines": null,
+      "sha256": "dcb3945ceb74343f7cb47b5c4380358b1c2994095aade5180c82adc074f421e9",
+      "observation": "验收项 B04 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-1/browser-acceptance/b04-edit-amount-150.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/1/b04-customer-detail-total-150.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/1",
+        "localId": "b04-customer-detail-total-150.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-1/browser-acceptance/evidence/b04-customer-detail-total-150.png",
+      "lines": null,
+      "sha256": "414948f8ad48831c88d0704f99df631efd291a2ca7fb60148a46fd2811d14052",
+      "observation": "验收项 B04 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-1/browser-acceptance/b04-customer-detail-total-150.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/1/b05-missing-customer-error.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/1",
+        "localId": "b05-missing-customer-error.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-1/browser-acceptance/evidence/b05-missing-customer-error.png",
+      "lines": null,
+      "sha256": "ec0d5acad2bf7f586412965d8270d4875bc73c63dd39c6af3c762227f770326e",
+      "observation": "验收项 B05 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-1/browser-acceptance/b05-missing-customer-error.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/1/b05-negative-amount-error.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/1",
+        "localId": "b05-negative-amount-error.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-1/browser-acceptance/evidence/b05-negative-amount-error.png",
+      "lines": null,
+      "sha256": "da3b9118e5182bd2e09694919c93ddfc0489aca467f372eed8cd05e92196f25e",
+      "observation": "验收项 B05 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-1/browser-acceptance/b05-negative-amount-error.png",
+      "availability": "attached",
+      "note": null
+    }
+  ],
+  "links": [
+    {
+      "rel": "task-issue",
+      "label": "Issue #339",
+      "url": "https://github.com/gchust/nb3-factory/issues/339",
+      "path": null
+    },
+    {
+      "rel": "run",
+      "label": "Run 36151903756 / attempt 1",
+      "url": "https://github.com/gchust/nb3-factory/actions/runs/36151903756/attempts/1",
+      "path": null
+    },
+    {
+      "rel": "pull-request",
+      "label": "PR #341",
+      "url": "https://github.com/gchust/nb3-factory/pull/341",
+      "path": null
+    },
+    {
+      "rel": "report-archive",
+      "label": "固定版本 HTML 报告（gh-pages 归档路径）",
+      "url": null,
+      "path": "reports/issues/339/runs/36151903756/attempt-1/index.html"
+    }
+  ],
+  "limitations": []
+}
