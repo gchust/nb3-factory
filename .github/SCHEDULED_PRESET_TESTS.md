@@ -46,11 +46,13 @@ Action Summary 展示每个案例的**已派发 / 已有任务 / 因在途任务
 
 ## 避免重复与积压
 
-同一预设上一轮的未关闭自动测试 Issue 仍带 `agent:pending`、`agent:queued`、`agent:running`、`agent:verifying` 或 `agent:waiting` 时，跳过本轮，避免积压。
+同一预设的未关闭执行 Issue（包括手工从预设创建的搭建任务）仍带 `agent:pending`、`agent:queued`、`agent:running`、`agent:verifying` 或 `agent:waiting` 时，跳过本轮，避免积压。
 `agent:review` / 失败 / 已关闭的任务不阻止下一轮；**待评审测试 PR 不需要先合并**。
 
-执行 Issue 只带运行状态和 `factory:test-preset-<编号>` 来源标签，不继承 `factory:preset` 或 `factory:daily`，不会再次被选为预设。
-同一调度 Run 重跑复用已创建的 Issue；持久回执丢失时查询真实搭建 Run，避免重复派发。不要删除调度来源评论或执行 Issue 的来源标签。
+执行 Issue 新建时只添加 `agent:pending`，不再创建或依赖 `factory:test-preset-<编号>` 标签，也不继承 `factory:preset` 或 `factory:daily`。
+来源直接读取 Issue 正文：准备前读取“预置案例”字段；准备后读取正文开头“复制自预置案例 #N”的本仓库链接，与手工从预设创建任务一致。普通需求中的 Issue 引用不作为来源。
+同一调度 Run 重跑通过已有调度回执复用执行 Issue；派发回执保存失败时查询真实搭建 Run，避免重复派发。保留正文来源信息和调度来源评论。已准备任务的来源信息损坏时，扫描明确失败，不猜测来源后继续创建任务。
+历史执行 Issue 无需重写；旧编号标签不参与新版本判断。本改动不批量删除历史标签，避免影响仍使用旧版本代码的运行。
 单个案例出错会保留错误及已有 Issue，继续其他案例，并将调度 Job 标记失败。
 
 正常每日运行无需人工操作。派发失败时可重跑对应调度 Run；取消任务后若残留在途标签，确认没有活动搭建后关闭该执行 Issue，恢复后续自动测试。不要通过合并测试 PR 来解除等待。
@@ -75,6 +77,6 @@ Action Summary 展示每个案例的**已派发 / 已有任务 / 因在途任务
 node --test .github/scripts/tests/scheduled-preset-tests.test.mjs
 ```
 
-专项覆盖标签增删、开放和关闭预设、分页、同日手动/定时独立轮次、手动预览不影响定时、在途跳过后继续调度、独立次日任务、来源隔离、重跑恢复、在途去重、标签初始化和工作流触发边界。现有 **Factory regression tests** 自动收集这些测试。
+专项覆盖标签增删、开放和关闭预设、正文来源解析、手工任务在途检测、无编号标签的历史任务兼容、分页、同日手动/定时独立轮次、手动预览不影响定时、在途跳过后继续调度、独立次日任务、来源隔离、重跑恢复、在途去重、标签初始化和工作流触发边界。现有 **Factory regression tests** 自动收集这些测试。
 
 参考：[GitHub 定时事件](https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#schedule)、[工作流触发规则](https://docs.github.com/en/actions/how-tos/write-workflows/choose-when-workflows-run/trigger-a-workflow#triggering-a-workflow-from-a-workflow)。

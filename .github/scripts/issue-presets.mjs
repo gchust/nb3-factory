@@ -51,6 +51,18 @@ function sourceNumber(body) {
   return number;
 }
 
+// Both the Issue form and the prepared body already contain the preset source.
+// Read only those protocol fields, never incidental Issue references in requirements.
+export function getPresetSourceNumber(body = '', repositoryUrl) {
+  if (!readyPattern.test(body)) return sourceNumber(body);
+  const source = /^> 复制自\[预置案例 #([1-9]\d*)\]\(([^)\r\n]+)\)。/.exec(body.replace(readyPattern, ''));
+  const number = Number(source?.[1]);
+  if (!Number.isSafeInteger(number) || number <= 0 || source[2] !== `${repositoryUrl}/issues/${number}`) {
+    throw new TaskInputError('已准备的预置任务缺少有效的本仓库来源链接，请恢复正文开头的预置案例来源信息。');
+  }
+  return number;
+}
+
 export function replaceSection(body, label, value) {
   const section = new RegExp(`^###\\s+${label}\\s*\\r?\\n[\\s\\S]*?(?=^###\\s+|(?![\\s\\S]))`, 'm');
   const replacement = `### ${label}\n\n${value}\n\n`;
