@@ -317,6 +317,7 @@ node --test --test-concurrency=1 .github/scripts/tests/*.test.mjs
 ```
 
 样例完全虚构（`owner/factory`、占位 SHA 等），由测试同一套夹具生成并在测试中逐字节比对，不代表真实案例成绩。
+无效样例见 [`invalid-cases.json`](contracts/examples/invalid-cases.json)：每条在一个有效样例上按 JSON Pointer 删除 / 设置少数字段并说明原因，结果必须被对应 Schema 拒绝。
 `evaluation-delivery.test.mjs` 启动本地 HTTP 接收器验证协议（201/200、断连后重发、429/5xx/超时、4xx、202、伪 JSON、错误回执、
 重定向与过期来源）；它只用于协议验收，不是 Test Manager 的替代服务，也不能证明线上两系统已接通。
 `evaluation-e2e.test.mjs` 不调用模型地走完整链路：冻结计划 → 5 个同案例样本（其中一个两次 Handoff）→ 固定评审夹具 → 结果包 →

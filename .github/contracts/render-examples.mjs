@@ -1,7 +1,7 @@
 // Regenerates the fictional, redacted contract examples from the same fixtures
 // the tests use, so examples cannot drift from the exporter. No model is called.
 //   node .github/contracts/render-examples.mjs [--check]
-import { mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { advanceBatch, batchDocument, startBatch, validatePlans } from '../scripts/evaluation-batch.mjs';
@@ -92,22 +92,34 @@ export async function examples() {
 
   out['batch-in-progress.json'] = await batchExample();
 
-  const invalid = {};
-  const clone = value => structuredClone(value);
-  let bad = clone(completed); bad.reviews[0].modules[0].scores.design.score = 101; invalid['report-score-out-of-range.json'] = bad;
-  bad = clone(completed); bad.reviews[0].findings[0].id = 'F1'; bad.reviews[0].findings[0].localId = 'F01'; invalid['report-unscoped-finding.json'] = bad;
-  bad = clone(completed); bad.featurePointId = 12; invalid['report-receiver-field.json'] = bad;
-  bad = clone(completed); bad.outcome.execution = 'success'; invalid['report-merged-success-state.json'] = bad;
-  bad = clone(completed); bad.reviews[0].ui.framework = true; invalid['report-ui-as-framework-score.json'] = bad;
-  bad = clone(completed); bad.metrics.counts.businessBuilds = 2; invalid['report-double-counted-build.json'] = bad;
-  invalid['receipt-accepted-not-stored.json'] = { ...out['receipt.json'], state: 'accepted' };
-  invalid['receipt-missing-identity.json'] = (({ runKey, ...rest }) => rest)(out['receipt.json']);
-  bad = clone(out['bundle-manifest.json']); bad.files[0].path = '../evaluation.json'; invalid['bundle-manifest-path-escape.json'] = bad;
-  bad = clone(out['batch-in-progress.json']); bad.samples = bad.samples.filter(s => s.report.state === 'available'); bad.summary.globalScore = 88;
-  invalid['batch-hides-samples-with-global-score.json'] = bad;
-  bad = clone(out['batch-in-progress.json']); bad.baseline.maxConcurrentSamples = 4; invalid['batch-parallel-samples.json'] = bad;
   for (const fn of cleanups.splice(0)) fn();
-  return { valid: out, invalid };
+  return { valid: out, invalid: invalidExamples(out) };
+}
+
+// Invalid examples are small edits of valid ones (examples/invalid-cases.json), so
+// they stay readable and follow the valid examples when those are regenerated.
+const pointer = value => value.split('/').slice(1).map(part => part.replaceAll('~1', '/').replaceAll('~0', '~'));
+function edit(document, target, apply) {
+  const parts = pointer(target);
+  const last = parts.pop();
+  const parent = parts.reduce((node, part) => {
+    if (node?.[part] === undefined) throw new Error(`No ${target} in the base example`);
+    return node[part];
+  }, document);
+  apply(parent, Array.isArray(parent) ? Number(last) : last);
+}
+export function invalidExamples(valid) {
+  const { cases } = JSON.parse(readFileSync(path.join(OUT, 'invalid-cases.json'), 'utf8'));
+  return Object.fromEntries(cases.map(item => {
+    const value = structuredClone(valid[item.base]);
+    if (!value) throw new Error(`${item.name}: unknown base ${item.base}`);
+    for (const target of item.remove ?? []) edit(value, target, (parent, key) => {
+      if (!(key in parent)) throw new Error(`No ${target} in the base example`);
+      if (Array.isArray(parent)) parent.splice(key, 1); else delete parent[key];
+    });
+    for (const [target, replacement] of Object.entries(item.set ?? {})) edit(value, target, (parent, key) => { parent[key] = replacement; });
+    return [item.name, { contract: contractOf(item.base), value }];
+  }));
 }
 
 export const contractOf = name => name.startsWith('receipt') ? 'evaluation-receipt.v1' : name.startsWith('bundle-manifest') ? 'evaluation-bundle.v1'
@@ -115,15 +127,17 @@ export const contractOf = name => name.startsWith('receipt') ? 'evaluation-recei
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const check = process.argv.includes('--check');
-  const { valid, invalid } = await examples();
-  const files = [...Object.entries(valid).map(([name, value]) => [name, value]), ...Object.entries(invalid).map(([name, value]) => [`invalid/${name}`, value])];
+  const { valid } = await examples();
   let drift = 0;
-  if (!check) { rmSync(OUT, { recursive: true, force: true }); mkdirSync(path.join(OUT, 'invalid'), { recursive: true }); }
-  for (const [name, value] of files) {
+  for (const [name, value] of Object.entries(valid)) {
     const text = `${JSON.stringify(value, null, 2)}\n`;
     const file = path.join(OUT, name);
     if (check) { let old = ''; try { old = readFileSync(file, 'utf8'); } catch {} if (old !== text) { drift++; console.error(`Example out of date: ${name}`); } }
     else writeFileSync(file, text);
   }
-  if (drift) process.exitCode = 1; else console.log(`${check ? 'Verified' : 'Wrote'} ${files.length} contract examples.`);
+  // Generated examples that are no longer produced are stale.
+  for (const name of readdirSync(OUT).filter(file => file.endsWith('.json') && file !== 'invalid-cases.json' && !valid[file])) {
+    if (check) { drift++; console.error(`Stale example: ${name}`); } else rmSync(path.join(OUT, name));
+  }
+  if (drift) process.exitCode = 1; else console.log(`${check ? 'Verified' : 'Wrote'} ${Object.keys(valid).length} contract examples.`);
 }

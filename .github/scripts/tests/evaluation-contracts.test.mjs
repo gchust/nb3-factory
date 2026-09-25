@@ -14,11 +14,10 @@ test('checked-in examples are generated from the exporter and match their contra
     assert.deepEqual(read(name), value, `${name} is out of date; run node .github/contracts/render-examples.mjs`);
     assert.deepEqual(validateSchema(loadContract(contractOf(name)), value), [], name);
   }
-  for (const [name, value] of Object.entries(invalid)) {
-    assert.deepEqual(read(`invalid/${name}`), value, name);
-    assert.ok(validateSchema(loadContract(contractOf(name)), value).length > 0, `${name} must be rejected`);
-  }
-  assert.deepEqual(readdirSync(directory).filter(f => f.endsWith('.json')).sort(), Object.keys(valid).sort());
+  assert.ok(Object.keys(invalid).length >= 10);
+  for (const [name, { contract, value }] of Object.entries(invalid))
+    assert.ok(validateSchema(loadContract(contract), value).length > 0, `${name} must be rejected`);
+  assert.deepEqual(readdirSync(directory).sort(), [...Object.keys(valid), 'invalid-cases.json'].sort(), 'only generated examples and the invalid-case list');
   // Five required outcome classes: success, failure, blocked, partial and legacy.
   for (const name of ['report-completed.json', 'report-failed.json', 'report-blocked.json', 'report-partial-handoff.json', 'report-legacy-v1-with-v2.json'])
     assert.ok(valid[name], name);
