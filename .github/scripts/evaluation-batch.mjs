@@ -185,16 +185,22 @@ export async function startBatch(client, { plans, planKey, trigger, now = Date.n
   const batchKey = batchKeyFor(plan, trigger, now, runId);
   let coordinator = await findCoordinator(client, batchKey);
   let frozen = null;
-  if (!coordinator) {
+  const own = coordinator ? await loadBatch(client, coordinator) : null;
+  // Creating a batch and resuming an unfinished start share one exclusion check,
+  // which excludes only the batch itself. An unreadable open batch fails the start.
+  if (!own || !own.manifest || !own.state) {
     const active = [];
     for (const issue of await coordinators(client, 'open')) {
-      const batch = await loadBatch(client, issue);
-      if (batch.state?.state === 'active' || !batch.manifest) active.push(batch.manifest?.batchKey ?? `#${issue.number}`);
+      if (issue.number === coordinator?.number) continue;
+      const other = await loadBatch(client, issue);
+      if (occupiesSlot(other)) active.push(other.manifest?.batchKey ?? `#${issue.number}`);
     }
     if (active.length) {
-      if (trigger === 'schedule') return { status: 'skipped', reason: `Another batch is active: ${active.join(', ')}` };
-      throw new Error(`Only one active batch is supported in v1; active: ${active.join(', ')}. Cancel it or wait.`);
+      if (trigger === 'schedule') return { status: 'skipped', reason: `Another batch is active or unfinished: ${active.join(', ')}` };
+      throw new Error(`Only one active batch is supported in v1; active or unfinished: ${active.join(', ')}. Resume its start or cancel it, or wait.`);
     }
+  }
+  if (!coordinator) {
     // Freeze and validate first: a wrong case number or unusable baseline creates nothing.
     frozen = await freezeBatch(client, { plan, batchKey, trigger, now, controlSha, env, coordinatorIssue: 0 });
     if (dryRun) return { status: 'planned', batchKey, manifest: frozen };
@@ -205,7 +211,7 @@ export async function startBatch(client, { plans, planKey, trigger, now = Date.n
       body: `${markers.batch(batchKey)}\n\n评测批次协调记录：冻结计划、基线与案例快照，串行推进独立样本 Issue。\n\n` +
         '这是维护 Issue（`factory:manual`），不会进入业务 Agent 队列；请勿删除机器人快照评论。取消批次请运行 **Evaluation batches** 的 `cancel`。' } });
   }
-  const batch = await loadBatch(client, coordinator);
+  const batch = own ?? await loadBatch(client, coordinator);
   if (!batch.manifest) {
     // An interrupted start never dispatched a sample, so freezing again is safe and complete.
     const manifest = frozen ? { ...frozen, coordinatorIssue: coordinator.number }
@@ -224,6 +230,10 @@ export async function startBatch(client, { plans, planKey, trigger, now = Date.n
   }
   return { status: 'started', batchKey, coordinator: coordinator.number, batch };
 }
+
+// Only a batch confirmed completed or cancelled frees the single active slot; a batch
+// missing its manifest or first state is an unfinished start, not a finished batch.
+export const occupiesSlot = batch => !batch.manifest || !batch.state || !['completed', 'cancelled'].includes(batch.state.state);
 
 async function findSampleIssue(client, sampleKey, since) {
   const found = (await listAll(client, '/issues', { state: 'all', labels: SAMPLE_LABEL, since }))
@@ -381,6 +391,11 @@ export async function advanceBatch(client, batch, { now = Date.now(), env = null
             agentConfigObserved: [...new Set([...(item.agentConfigObserved ?? []), current])] });
         }
         item.state = observed.state;
+        // Cancelled while the sample is still only queued: no Run is in progress and none
+        // did any work, so nothing can be waited for. It ends as cancelled; a late
+        // dispatch or continuation is refused at prepare/admission.
+        if (state.cancelled && observed.state === 'queued')
+          Object.assign(item, { state: 'cancelled', stateSource: 'batch', terminalAt: stamp, reason: '批次已取消；该样本没有实际执行（派发未产生搭建 Run），直接结束。' });
         // Settings seen while the chain is still dispatched or running (every sample run,
         // handoffs included, requests an advance when it ends) count for comparability;
         // the advance that finds the chain finished is not evidence of how it ran.

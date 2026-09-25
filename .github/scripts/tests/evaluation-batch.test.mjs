@@ -594,3 +594,51 @@ test('a newer report revision of the same execution also updates the state deriv
   assert.equal(document.summary.byState.passed, 1);
   assert.equal(document.summary.byState.unknown, 0);
 });
+
+test('a start interrupted before its first state holds the slot; resuming shares the exclusion check', async () => {
+  const client = fakeRepository();
+  const plans = plan(1);
+  const coordinatorsCount = () => [...client.state.issues.values()].filter(i => names(i).includes('factory:evaluation-batch')).length;
+  client.state.fail = (method, route, body) => method === 'POST' && route.endsWith('/comments') && body.body.includes('factory-evaluation-batch-state-v1');
+  await assert.rejects(startBatch(client, { plans, planKey: 'smoke', trigger: 'manual', now: 1, runId: 9910, controlSha: control, env: {} }), /Injected/);
+  // Manifest saved, first state missing: this is an unfinished start, not a finished batch.
+  await assert.rejects(startBatch(client, { plans, planKey: 'smoke', trigger: 'manual', now: 2, runId: 9911, controlSha: control, env: {} }), /unfinished: smoke-r9910/);
+  assert.equal((await startBatch(client, { plans, planKey: 'smoke', trigger: 'schedule', now: Date.parse('2026-09-25T01:23:00Z'), runId: 1, controlSha: control, env: {} })).status, 'skipped');
+  // Re-running the original start resumes it: no new coordinator, one sample dispatched.
+  const resumed = await startBatch(client, { plans, planKey: 'smoke', trigger: 'manual', now: 3, runId: 9910, controlSha: control, env: {} });
+  await advanceBatch(client, resumed.batch, { now: 3 });
+  assert.equal(coordinatorsCount(), 1);
+  assert.equal(client.state.dispatches.length, 1);
+  // An unfinished start never resumes beside another active batch.
+  const other = fakeRepository();
+  other.state.fail = (method, route, body) => method === 'POST' && route.endsWith('/comments') && body.body.includes('factory-evaluation-batch-state-v1');
+  await assert.rejects(startBatch(other, { plans, planKey: 'smoke', trigger: 'manual', now: 1, runId: 9920, controlSha: control, env: {} }), /Injected/);
+  const halfStarted = [...other.state.issues.values()].find(i => names(i).includes('factory:evaluation-batch'));
+  halfStarted.state = 'closed'; // simulate an inconsistent/raced record
+  const b = await startBatch(other, { plans, planKey: 'smoke', trigger: 'manual', now: 2, runId: 9921, controlSha: control, env: {} });
+  await advanceBatch(other, b.batch, { now: 2 });
+  halfStarted.state = 'open';
+  await assert.rejects(startBatch(other, { plans, planKey: 'smoke', trigger: 'manual', now: 3, runId: 9920, controlSha: control, env: {} }), /active or unfinished: smoke-r9921/);
+  assert.equal(other.state.dispatches.length, 1, 'only one batch ever dispatches');
+});
+
+test('cancelling after a failed first dispatch finishes the batch and frees the slot without any run', async () => {
+  const client = fakeRepository();
+  client.state.fail = (method, route) => method === 'POST' && route.endsWith('/dispatches');
+  const started = await startBatch(client, { plans: plan(2), planKey: 'smoke', trigger: 'manual', now: Date.parse('2026-09-25T02:00:00Z'), runId: 9930, controlSha: control, env: {} });
+  await assert.rejects(advanceBatch(client, started.batch, { now: Date.parse('2026-09-25T02:00:00Z') }), /Injected/);
+  let batch = await cancelBatch(client, started.batchKey, { now: Date.parse('2026-09-25T02:10:00Z') });
+  assert.deepEqual(Object.values(batch.state.samples).map(s => s.state), ['cancelled', 'cancelled']);
+  assert.equal(batch.state.state, 'cancelled');
+  batch = await advanceBatch(client, await current(client), { now: Date.parse('2026-09-28T02:10:00Z') });
+  assert.equal(batch.state.state, 'cancelled');
+  assert.equal(client.state.dispatches.length, 0, 'no dispatch, no run, no model');
+  assert.equal(client.state.runs.length, 0);
+  assert.equal(batchDocument(batch).samples[0].report.state, 'not-applicable');
+  const next = await startBatch(client, { plans: plan(1), planKey: 'smoke', trigger: 'manual', now: Date.parse('2026-09-28T03:00:00Z'), runId: 9931, controlSha: control, env: {} });
+  assert.equal(next.status, 'started', 'a cancelled batch no longer blocks the next one');
+  // A late run of the cancelled sample is still refused at prepare/admission.
+  const sample = await resolveSample(client, client.samples()[0].number);
+  assert.equal(sample.cancelled, true);
+  assert.equal(sample.released, 'cancelled');
+});
