@@ -201,6 +201,7 @@ jobs:
       FACTORY_BUILD_REVIEW: ${{ vars.FACTORY_BUILD_REVIEW || 'full' }}
       FACTORY_REVIEW_THINKING: ${{ vars.FACTORY_REVIEW_THINKING || 'medium' }}
       FACTORY_BUILD_REVIEW_TIMEOUT_SECONDS: ${{ vars.FACTORY_BUILD_REVIEW_TIMEOUT_SECONDS || '900' }}
+      FACTORY_BUILD_REVIEW_IDLE_TIMEOUT_SECONDS: ${{ vars.FACTORY_BUILD_REVIEW_IDLE_TIMEOUT_SECONDS || '600' }}
       CODE_AGENT_ENGINE: ${{ vars.CODE_AGENT_ENGINE }}
     if: needs.prepare.outputs.status == 'ready' && needs.prepare.outputs.comment_kind != 'reply'
     runs-on: ubuntu-latest

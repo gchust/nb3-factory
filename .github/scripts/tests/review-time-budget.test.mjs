@@ -25,3 +25,13 @@ test('budget alignment retains one bounded invocation, non-scored lightweight mo
   assert.match(step, /continue-on-error: true/);
   assert.match(workflow, /needs\.verify-final\.result == 'success'/);
 });
+
+test('initial and replay reviews share a configurable idle budget bounded by the invocation', () => {
+  assert.match(runner, /FACTORY_BUILD_REVIEW_IDLE_TIMEOUT_SECONDS \|\| 600/);
+  assert.match(runner, /Math\.min\(requestedIdle, remaining\)/);
+  assert.match(runner, /invocationTimeoutSeconds: remaining, idleTimeoutSeconds/);
+  const replay = readFileSync(new URL('../../workflows/replay-build-review.yml', import.meta.url), 'utf8');
+  for (const source of [workflow, replay]) {
+    assert.match(source, /FACTORY_BUILD_REVIEW_IDLE_TIMEOUT_SECONDS:.*vars\.FACTORY_BUILD_REVIEW_IDLE_TIMEOUT_SECONDS \|\| '600'/);
+  }
+});
