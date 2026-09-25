@@ -1,5 +1,9 @@
 import type { ApplicationServiceProviderConstructor } from '@nocobase/app-server/application';
 
-const serviceProviders: readonly ApplicationServiceProviderConstructor[] = [];
+import { CrmProvider } from './crm.js';
+
+const serviceProviders: readonly ApplicationServiceProviderConstructor[] = [
+  CrmProvider,
+];
 
 export default serviceProviders;

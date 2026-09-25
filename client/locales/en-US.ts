@@ -95,6 +95,148 @@ const enUS = {
     description:
       'Describe what you need to your AI Agent, then build pages, data models, and business workflows.',
   },
+  crm: {
+    actions: {
+      label: 'Actions',
+      edit: 'Edit',
+      create: 'Create',
+      save: 'Save',
+      cancel: 'Cancel',
+      saving: 'Saving…',
+    },
+    filters: {
+      clear: 'Clear filters',
+    },
+    stages: {
+      following: 'In progress',
+      won: 'Won',
+      lost: 'Lost',
+    },
+    error: {
+      title: 'Something went wrong',
+      forbidden: 'You do not have permission to do that.',
+      requestFailed: 'The request failed. Please try again.',
+    },
+    form: {
+      nameRequired: 'Name is required.',
+      nameTooLong: 'Name must be {{max}} characters or fewer.',
+      industryTooLong: 'Industry must be {{max}} characters or fewer.',
+      contactInfoTooLong:
+        'Contact information must be {{max}} characters or fewer.',
+      customerRequired: 'Select a customer.',
+      amountInvalid: 'Enter an amount of 0 or more.',
+      amountTooLarge: 'Enter an amount no greater than {{max}}.',
+      customersEmpty:
+        'Create a customer before adding a contact or an opportunity.',
+      invalid: 'This value is not valid.',
+    },
+    customers: {
+      title: 'Customers',
+      description: 'The companies you work with.',
+      fields: {
+        name: 'Name',
+        industry: 'Industry',
+      },
+      search: {
+        placeholder: 'Search customers',
+        label: 'Search customers',
+      },
+      actions: {
+        more: 'Actions for {{name}}',
+      },
+      create: {
+        action: 'New customer',
+        title: 'New customer',
+        success: 'Customer "{{name}}" created.',
+      },
+      edit: {
+        title: 'Edit customer',
+        success: 'Customer "{{name}}" updated.',
+      },
+      empty: {
+        title: 'No customers yet',
+        description:
+          'Add your first customer to start tracking contacts and opportunities.',
+        noResults: 'No customers match your search.',
+      },
+      detail: {
+        title: 'Customer',
+        contacts: 'Contacts',
+        opportunities: 'Opportunities',
+        totalAmount: 'Total estimated amount',
+        noContacts: 'This customer has no contacts yet.',
+        noOpportunities: 'This customer has no opportunities yet.',
+        notFound: 'This customer no longer exists.',
+      },
+    },
+    contacts: {
+      title: 'Contacts',
+      description: 'People at your customer companies.',
+      fields: {
+        name: 'Name',
+        contactInfo: 'Contact information',
+        customer: 'Customer',
+      },
+      search: {
+        placeholder: 'Search contacts',
+        label: 'Search contacts',
+      },
+      actions: {
+        more: 'Actions for {{name}}',
+      },
+      create: {
+        action: 'New contact',
+        title: 'New contact',
+        success: 'Contact "{{name}}" created.',
+      },
+      edit: {
+        title: 'Edit contact',
+        success: 'Contact "{{name}}" updated.',
+      },
+      empty: {
+        title: 'No contacts yet',
+        description:
+          'Add a contact to record how to reach someone at a customer.',
+        noResults: 'No contacts match your search.',
+      },
+    },
+    opportunities: {
+      title: 'Opportunities',
+      description: 'The deals you are working on.',
+      fields: {
+        name: 'Name',
+        customer: 'Customer',
+        amount: 'Estimated amount',
+        stage: 'Stage',
+      },
+      search: {
+        placeholder: 'Search opportunities',
+        label: 'Search opportunities',
+      },
+      filters: {
+        stage: 'Stage',
+        allStages: 'All stages',
+      },
+      actions: {
+        more: 'Actions for {{name}}',
+      },
+      create: {
+        action: 'New opportunity',
+        title: 'New opportunity',
+        success: 'Opportunity "{{name}}" created.',
+      },
+      edit: {
+        title: 'Edit opportunity',
+        success: 'Opportunity "{{name}}" updated.',
+      },
+      empty: {
+        title: 'No opportunities yet',
+        description:
+          'Add an opportunity to track a deal and its estimated amount.',
+        noResults: 'No opportunities match your filters.',
+      },
+    },
+  },
 
   appearance: {
     title: 'Appearance',

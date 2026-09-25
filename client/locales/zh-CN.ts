@@ -88,6 +88,143 @@ const zhCN: AppResource = {
     title: '开始构建你的应用',
     description: '向 AI 助手描述你的需求，逐步构建页面、数据模型和业务流程。',
   },
+  crm: {
+    actions: {
+      label: '操作',
+      edit: '编辑',
+      create: '创建',
+      save: '保存',
+      cancel: '取消',
+      saving: '保存中…',
+    },
+    filters: {
+      clear: '清除筛选',
+    },
+    stages: {
+      following: '跟进中',
+      won: '赢单',
+      lost: '输单',
+    },
+    error: {
+      title: '出错了',
+      forbidden: '你没有执行此操作的权限。',
+      requestFailed: '请求失败，请重试。',
+    },
+    form: {
+      nameRequired: '请输入名称。',
+      nameTooLong: '名称不能超过 {{max}} 个字符。',
+      industryTooLong: '行业不能超过 {{max}} 个字符。',
+      contactInfoTooLong: '联系方式不能超过 {{max}} 个字符。',
+      customerRequired: '请选择所属客户。',
+      amountInvalid: '请输入不小于 0 的金额。',
+      amountTooLarge: '金额不能超过 {{max}}。',
+      customersEmpty: '请先创建客户，然后再添加联系人或商机。',
+      invalid: '该值无效。',
+    },
+    customers: {
+      title: '客户',
+      description: '你正在合作的客户公司。',
+      fields: {
+        name: '名称',
+        industry: '行业',
+      },
+      search: {
+        placeholder: '搜索客户',
+        label: '搜索客户',
+      },
+      actions: {
+        more: '{{name}} 的操作',
+      },
+      create: {
+        action: '新建客户',
+        title: '新建客户',
+        success: '已创建客户“{{name}}”。',
+      },
+      edit: {
+        title: '编辑客户',
+        success: '已更新客户“{{name}}”。',
+      },
+      empty: {
+        title: '暂无客户',
+        description: '添加第一个客户，开始管理联系人和商机。',
+        noResults: '没有匹配的客户。',
+      },
+      detail: {
+        title: '客户',
+        contacts: '联系人',
+        opportunities: '商机',
+        totalAmount: '商机预估金额合计',
+        noContacts: '该客户暂无联系人。',
+        noOpportunities: '该客户暂无商机。',
+        notFound: '该客户已不存在。',
+      },
+    },
+    contacts: {
+      title: '联系人',
+      description: '客户公司的联系人。',
+      fields: {
+        name: '名称',
+        contactInfo: '联系方式',
+        customer: '所属客户',
+      },
+      search: {
+        placeholder: '搜索联系人',
+        label: '搜索联系人',
+      },
+      actions: {
+        more: '{{name}} 的操作',
+      },
+      create: {
+        action: '新建联系人',
+        title: '新建联系人',
+        success: '已创建联系人“{{name}}”。',
+      },
+      edit: {
+        title: '编辑联系人',
+        success: '已更新联系人“{{name}}”。',
+      },
+      empty: {
+        title: '暂无联系人',
+        description: '添加联系人，记录如何联系客户公司的相关人员。',
+        noResults: '没有匹配的联系人。',
+      },
+    },
+    opportunities: {
+      title: '商机',
+      description: '你正在跟进的机会。',
+      fields: {
+        name: '名称',
+        customer: '所属客户',
+        amount: '预估金额',
+        stage: '阶段',
+      },
+      search: {
+        placeholder: '搜索商机',
+        label: '搜索商机',
+      },
+      filters: {
+        stage: '阶段',
+        allStages: '全部阶段',
+      },
+      actions: {
+        more: '{{name}} 的操作',
+      },
+      create: {
+        action: '新建商机',
+        title: '新建商机',
+        success: '已创建商机“{{name}}”。',
+      },
+      edit: {
+        title: '编辑商机',
+        success: '已更新商机“{{name}}”。',
+      },
+      empty: {
+        title: '暂无商机',
+        description: '添加商机，跟踪机会及其预估金额。',
+        noResults: '没有匹配的商机。',
+      },
+    },
+  },
 
   appearance: {
     title: '外观',
