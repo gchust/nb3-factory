@@ -55,18 +55,21 @@ const appRoutes: AppClientRouteContribution = defineAppRoutes([
         // /projects/new: the create dialog. The static segment new takes precedence over :projectId.
         name: 'project-new',
         path: 'new',
+        authz: 'skip',
         componentLoader: () => import('./pages/projects/new.js'),
       },
       {
         // /projects/:projectId: the detail drawer
         name: 'project-detail',
         path: ':projectId',
+        authz: 'skip',
         componentLoader: () => import('./pages/projects/detail/index.js'),
         children: [
           {
             // /projects/:projectId/edit: the edit dialog, stacked on the detail drawer
             name: 'project-edit',
             path: 'edit',
+            authz: 'skip',
             componentLoader: () => import('./pages/projects/detail/edit.js'),
           },
         ],
@@ -80,7 +83,7 @@ const appRoutes: AppClientRouteContribution = defineAppRoutes([
 - Declare them in `defineAppRoutes()` in `client/routes.ts`, not in a page component file.
 - An overlay is a child route of "the page to return to after closing": create and detail are children of the list route; edit is a child of the detail route, so the edit dialog stacks on the drawer and closing it returns to the drawer.
 - Child routes declare no `navigation` (they are not menu items, and a dynamic path cannot be one anyway) and no `breadcrumb` (an overlay is not a destination).
-- A child route without `authz` adds no permission check of its own, and the parent route's check still applies; endpoints enforce permissions themselves (see `page.md`).
+- Every child route declares `authz`; `'skip'` adds no check of its own, and the parent route's check still applies. Endpoints enforce permissions themselves (see `page.md`).
 - Lay out files by path segment: `new.tsx`, `detail/index.tsx`, `detail/edit.tsx` (see `child-routes.md`). After adding routes, add their names to the page grant list in the route test (see section 12 of `page.md`).
 
 ### 2.2 Place the Outlet in the parent page
@@ -177,7 +180,7 @@ What the components already do:
 
 - **Size**: a dialog is centered, is the screen width minus 2rem wide on narrow screens, and has a maximum height of `100svh - 2rem`; a drawer sits against the right edge at full height and takes the full width on narrow screens. The title area and the bottom button area are fixed and only the content area scrolls, so the bottom buttons stay reachable on narrow screens too (guideline A4); there is no need to add `max-h` or `overflow` to the panel.
 - **Content container**: the content area already has `p-4` padding. Do not nest a `PageContainer` inside it, and do not add outer padding of your own.
-- **Ways to close**: a close button is built into the top-right corner (its accessible name comes from `actions.close`); Esc and clicking the backdrop close the overlay too. Each overlay layer has its own backdrop, and when layers stack only the topmost one closes.
+- **Ways to close**: a close button is built into the top-right corner (its accessible name comes from `routeOverlay.close`); Esc and clicking the backdrop close the overlay too. Each overlay layer has its own backdrop, and when layers stack only the topmost one closes.
 - **Closing is navigation**: closing first calls `beforeClose`, then navigates to `closeTo` with `replace`. Because it uses `replace`, pressing the browser's "Forward" after closing does not reopen the overlay.
 - **Focus**: on open, focus moves into the overlay; when the focused element inside the overlay disappears (for example, a button is replaced by a skeleton after clicking "Retry"), focus returns to the overlay panel; after closing, focus returns to the element that had focus before opening (usually the link that opened it). When a nested overlay closes, focus returns to the element in the parent layer that opened it, or to the parent layer's panel if that element is gone; when `/projects/12/edit` is opened directly, both layers mount at once, and after the dialog closes, focus is on the drawer panel.
 - When the element that focus should return to is no longer on the page after closing (for example, the list row disappears after a delete), the component cannot handle it. Move focus to a stable place yourself; see `afterDelete` above (guideline A6).

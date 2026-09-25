@@ -1,5 +1,20 @@
 # Application Development Guidelines
 
+## Factory-local plugin authorization compatibility
+
+This baseline applies withLegacyPluginDevAuthz from client/plugin-dev-authz.ts to
+the client plugin registry. Knowledge Base 0.1.0-beta.9 omits authorization on six
+Dev pages, and Mail 0.1.0-beta.0 omits it on five Dev child pages; app-client
+1.0.0-beta.20 requires explicit declarations. The adapter restores their prior
+authz: 'skip' behavior only at the eleven listed package/route ancestry paths.
+Settings routes, existing guards, Mail ancestor guards, and login requirements
+remain unchanged. Unknown missing declarations still fail validation.
+Component overrides cannot change route authorization, so this application-owned
+adapter runs after the standard plugin registration array. Do not patch installed
+dependencies or weaken the runtime validator. Remove the adapter and its registry
+call when upgraded plugins supply all declarations. This is a one-off local
+template refresh; automatic fresh-template generation does not carry the adapter.
+
 This is a NocoBase 3 application. Do not apply globally installed NocoBase 2 Skills. You are building the application itself — its pages, its API, its database tables. Everything under this directory is application-owned source code that you may edit directly.
 
 Do not create a plugin to add a feature. Plugins are separately published packages for capabilities shared across several applications; building one for this application's own feature adds a package boundary, a version, and a release process to work that belongs in `client/` and `server/`. Create one only when the user explicitly asks for a reusable published package.
@@ -59,7 +74,7 @@ A feature with a page and an API touches five places: a migration for the table,
 
 `client/runtime.ts` composes the browser application; `client/react-providers.ts` declares React providers in outer-to-inner layers `root`, `application`, and `extension`. Applications use the first two and plugins own the last; `before` and `after` order providers only within their layer.
 
-`server/runtime.ts` composes configuration, plugins, providers and routes; `server/app.ts` assembles the application. `server/standalone.ts` starts the Node listener and `server/embedded.ts` lets a host mount the same runtime. Register endpoints through `server/routes/index.ts`; background jobs in `server/jobs/` are discovered automatically. Editable module defaults live in `server/config/` and are collected by `defaultAppConfigs` in its `index.ts`; `server/config.ts` loads deployment settings and `server/environment.ts` maps environment variables.
+`server/runtime.ts` composes configuration, plugins, providers and routes; `server/app.ts` assembles the application. `server/standalone.ts` starts the Node listener and `server/embedded.ts` lets a host mount the same runtime. Register endpoints through `server/routes/index.ts`; background jobs in `server/jobs/` are discovered automatically. Editable module defaults live in `server/config/` and are collected by `defaultAppConfigs` in its `index.ts`; `server/config.ts` loads the configuration file. Each section declares the environment variables that set it in `env` of its `defineAppConfig`; `pnpm config:env` lists them all.
 
 ### The rest is framework structure
 
@@ -90,6 +105,7 @@ const appRoutes: AppClientRouteContribution = defineAppRoutes([
     name: 'orders',
     path: '/orders',
     auth: 'required',
+    authz: { resource: { type: 'page', id: 'orders' }, action: 'access' },
     componentLoader: () => import('./pages/orders.js'),
   },
 ]);
@@ -105,7 +121,7 @@ Use `defineSettingsRoutes()` for administrative pages, which mount under `/setti
 
 Use recursive groups to organize menus; their path is optional. Pages may also have children, but must manually render `Outlet`. For URL-addressable dialogs and drawers, declare the child in `defineAppRoutes()` in `client/routes.ts`, place the owning page's `Outlet`, then render `RouteDialog` or `RouteDrawer`. Call `useRouteOverlay()` only from a descendant rendered inside the overlay, including its footer, never from the page returning the wrapper. Read `.agents/skills/nocobase-app-development/references/frontend/references/overlay.md` before implementing overlays or close guards.
 
-`authz` controls page authorization: use `{ resource: { type: 'page', id: 'orders' }, action: 'access' }` or `'skip'`. Without an explicit rule, authenticated App pages with no page ancestor check their route name as a page resource; child pages, Settings, Dev, guest and optional pages add no check. Parent guards still apply when a child skips. Menus and loaders use the same normalized rule; endpoints enforce authorization independently. Route names identify stored page grants, so renaming one requires migrating grants that reference it.
+Every page route, on every surface and at every depth, declares `authz`: `{ resource: { type: 'page', id: 'orders' }, action: 'access' }` for a product page, the page's `settings` item for a settings page, or `'skip'`. Nothing is inferred from the route name, and registration rejects a page without it. Parent guards still apply when a child skips. Menus and loaders read the declared rule; endpoints enforce authorization independently. The page id identifies stored page grants, so changing it requires migrating the grants that reference it.
 
 ### Components and styling
 
@@ -116,6 +132,8 @@ pnpm exec shadcn add card
 ```
 
 Build your own components by composing these primitives, and put them in `client/components/`. A few such compositions ship with the template for the shadcn documentation pages that describe a pattern rather than a registry item: `DataTable` with `DataTableColumnHeader`, `DataTablePagination` and `DataTableViewOptions` in `client/components/data-table*.tsx`, `DatePicker` and `DateRangePicker` in `client/components/date-picker.tsx`, and the `Typography*` prose primitives in `client/components/typography.tsx`. Reach for these before writing a table, a date field or long-form text from scratch.
+
+`PageContainer`, `PageHeader`, `RouteDialog`, `RouteDrawer`, `RouteChildPage` and `useRouteOverlay` in `client/components/` come from the NocoBase UI Library, as do the authentication layout and forms in `client/extensions/nocobase-auth-ui/`; like the rest of the source, they belong to the application. `pnpm exec shadcn add @nocobase/<item>` adds another item from the library: a single component lands in `client/components/`, a complete feature in `client/extensions/nocobase-<item>/`.
 
 **Read the reference pages before building a page.** `client/pages/reference/` is worked source, not part of the running application: nothing routes it, so a build never reaches it and no user ever sees it. `examples/` holds eight complete business screens on mock data — a dashboard, orders, customers, a product form, an inbox, a survey, team settings and a schedule — and `components/` holds one page per shadcn/ui primitive showing its variants and a realistic use. Both share the frame in `shared.tsx`. An example is a folder holding its page beside the mock data that page reads — `examples/orders/orders.tsx` and `orders.data.ts` — so the screen and its records move together.
 
@@ -383,7 +401,7 @@ Navigation groups retain their expanded or collapsed state while the navigation 
 
 ## Development logging
 
-`pnpm dev` owns the ready banner and public URL; `APP_SERVER_START_LOG=false` suppresses the underlying listener announcement through `server/environment.ts`. Keep that mapping when editing deployment environment settings. Request starts, request headers and config diagnostics use DEBUG; the normal INFO output contains completion summaries. See the shared application development Skill for hosted logging and upgrade limits.
+`pnpm dev` owns the ready banner and public URL; `APP_SERVER_START_LOG=false` suppresses the underlying listener announcement through the `env` of `server/config/server.ts`. Keep that mapping when editing deployment environment settings. Request starts, request headers and config diagnostics use DEBUG; the normal INFO output contains completion summaries. See the shared application development Skill for hosted logging and upgrade limits.
 
 ## Runtime paths and application creation
 

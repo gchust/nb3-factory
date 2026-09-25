@@ -20,6 +20,7 @@ import scheduler from '@nocobase/app-plugin-scheduler/client';
 import file from '@nocobase/app-plugin-file/client';
 import aiKnowledgeBase from '@nocobase/app-plugin-ai-knowledge-base/client';
 import mail from '@nocobase/app-plugin-mail/client';
+import { withLegacyPluginDevAuthz } from './plugin-dev-authz.js';
 
 // Array order is contribution order. A plugin is enabled by appearing in this
 // list; removing its entry and its import disables it.
@@ -44,4 +45,4 @@ const clientPlugins: AppClientPlugins = defineClientPlugins([
   mail(),
 ]);
 
-export default clientPlugins;
+export default withLegacyPluginDevAuthz(clientPlugins);
