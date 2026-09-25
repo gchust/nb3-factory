@@ -92,8 +92,10 @@ describe('app client routes', () => {
     const resolved = resolveRoutes();
 
     // The landing page opted out of page authorization, so it is reachable by every signed-in user.
+    // The pipeline smoke page opts out the same way: it is an application smoke check, not a grant to hand out.
     expect(pageAuthorizations(resolved.routes)).toEqual([
       { name: 'home', authorizedAs: null },
+      { name: 'pipeline-smoke', authorizedAs: null },
     ]);
   });
 });
