@@ -1,4 +1,4 @@
-# 统一 HTML 交付报告
+# 每个搭建任务的 NocoBase3 改进报告
 
 每个已接单的搭建 Run（交付、失败、超时、取消或 Handoff）结束后，现有 **Report Task Usage** 工作流生成统一 HTML，并归档到 `gh-pages`。启用 Pages 后，工作流显式部署整个报告站点，核对本轮页面标识，再更新 Issue / 对应 PR 的一条报告评论。
 
@@ -18,7 +18,14 @@ QA：delivery-notes.json（可选） ┤                  │
 
 模板由 `.github/reports/report.template.html` 统一维护，使用黑白灰配色、左侧导航、首屏摘要、折叠详情与截图查看器。业务 Agent 不修改模板、不生成 HTML/CSS，不读取含图片的完整示例。
 
-固定章节：**交付总览、NocoBase3 基础框架评测、框架帮助与证据、验收记录、效果与证据、问题与改进、执行与用量**。没有“开发者资料与下一步”。
+报告的首要产出是改进 NocoBase3 作为企业级 Vibe Coding 基础设施的能力：每次搭建都是一个能力验证场景，交付结果是证据背景。
+固定章节：**框架改进总览、问题与改进详情、框架能力评测、框架帮助与证据、业务交付背景、验收记录、效果与证据、执行与用量**。
+
+首屏把有证据的问题、待确认的问题、改进建议分开计数，列出框架发现的影响、建议改动和证据入口。只统计 v2 中归属 framework/plugin/template/documentation 的非 strength 发现；归因待定、应用、工厂、环境观察另列，不混为框架缺陷。按原评审 severity 排序，不生成全局修复优先级。问题数保留原评审 resolved 记录，不冒充当前未修复问题总数。
+
+确认边界始终可见：本轮评审基于冻结依赖与指引，confirmed 是评审者的有据判断；最新 NocoBase3 源码是否仍存在该问题，当前流水线未复核。应用交付成功、业务绕行和原记录“已解决”均不等于上游已修复。没有评测时显示“尚未评估”，不显示零问题。
+
+新评审给非 strength 发现补充 diagnosis：问题类型、触发条件、应有行为、实际观察、应用绕行与代价、改进后的验收标准。历史报告缺字段时保留原文、明确未提供，不推断或追填。问题详情先展示独立评测，再折叠保留实现者过程和运行背景。
 
 验收逐项保留原始状态、实际操作、观察结果与截图引用；失败、未记录项及证据提示默认展开。完整原始要求和原始 QA 数据可展开核对。只读取选定轮次的记录，focused 结果不能当作全量通过。没有记录时明确标注未提供，不推断成功。
 
@@ -34,7 +41,7 @@ QA：delivery-notes.json（可选） ┤                  │
 同名不同说明、不同处理状态或现场卡点不合并。原始复盘仍可展开核对，不改写任何原始 JSON。
 缺复盘只显示简短的可选笔记说明，不再显示两个“未提供”大占位框。轻量、未执行、评测失败、
 部分完成、已评测但未提出建议分别说明，不能把未知变成零问题。保留旧 `#improvements` 深链接。
-模板版本为 v5；合并后可对已有 Run 补发报告复用原始材料，不补造当时未提交的复盘。
+模板版本为 v6；合并后新报告使用该版式，已有页面须对对应 Run 补发报告才会更新。补发仅复用原始材料，不补造诊断、不重新评审、更不等于重新核对最新上游代码。
 
 旧口径 v1 的四项评分保留原含义并明确提示不是新框架得分，不自动转换。更新口径时同一发布 attempt 的旧页面与数据保留在 `rubric-1/` 下；迟到的旧口径回放不能覆盖新口径。
 
@@ -43,7 +50,12 @@ QA：delivery-notes.json（可选） ┤                  │
 `retro.json` 是可选的实现者过程笔记，不是第二份必交评测。只在有独特排错背景时按现有 Prompt 记录，缺失不要求补写或增加模型调用。QA 继续使用原有 `report.json` schema；全量验收结束可在同目录补充：
 
 ```json
-{"version":1,"summary":"简短业务结论","highlights":[{"title":"业务能力","detail":"实际完成情况"}],"flow":["步骤一","步骤二"]}
+{
+  "version": 1,
+  "summary": "简短业务结论",
+  "highlights": [{ "title": "业务能力", "detail": "实际完成情况" }],
+  "flow": ["步骤一", "步骤二"]
+}
 ```
 
 文件名为 `delivery-notes.json`。正文约束见 `../prompts/browser-acceptance.md`。HTML 渲染本身不调用模型，不重新读取交互日志或运行应用。上游独立评审只调用一次 Code Agent，规则与预算见 [独立搭建评审](../BUILD_REVIEW.md)。说明缺失/格式错误时回退到 QA 摘要；模板故障时保留原有基础统计 HTML，不触发业务修复。
@@ -90,6 +102,7 @@ python3 .github/scripts/tests/preview-dns-sync.test.py
 Factory regression tests 会生成并上传 `factory-report-example` Artifact，避免手写样例和正式模板产生分歧。
 
 参考：
+
 - https://docs.github.com/en/pages/getting-started-with-github-pages/using-custom-workflows-with-github-pages
 - https://docs.github.com/en/pages/getting-started-with-github-pages/configuring-a-publishing-source-for-your-github-pages-site
 - https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax#concurrency

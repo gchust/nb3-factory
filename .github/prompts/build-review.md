@@ -35,13 +35,13 @@
 
 五项 0–100 整数或 null；主表突出前三项，不计算综合平均分。
 
-| 字段 | 对象与依据 |
-| --- | --- |
-| requirementFit | 框架在本次职责范围内是否满足需求，直接支持/正常组合/绕行/缺失分别是什么；业务最后通过不是充分条件 |
-| usability | 找到入口后是否容易装配和调用，默认行为、步骤、API 一致性、重复接入代码和错误定位是否合理 |
-| agentFriendliness | 能否发现正确入口；Skill、文档、示例、类型和诊断是否足够让 Agent 正确使用并恢复错误；不假装知道日志没有记录的 Agent 行为 |
-| design | 相关库/插件的公开抽象、边界和扩展 API，而非业务代码有没有拆分 service |
-| reliability | 本次涉及的框架实现是否兑现公开约定、错误路径是否可靠；必须阅读相关实现。只见类型/文档或业务 QA 时用 null；纯指引单元则检查其内容完整性与准确性 |
+| 字段              | 对象与依据                                                                                                                                     |
+| ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| requirementFit    | 框架在本次职责范围内是否满足需求，直接支持/正常组合/绕行/缺失分别是什么；业务最后通过不是充分条件                                              |
+| usability         | 找到入口后是否容易装配和调用，默认行为、步骤、API 一致性、重复接入代码和错误定位是否合理                                                       |
+| agentFriendliness | 能否发现正确入口；Skill、文档、示例、类型和诊断是否足够让 Agent 正确使用并恢复错误；不假装知道日志没有记录的 Agent 行为                        |
+| design            | 相关库/插件的公开抽象、边界和扩展 API，而非业务代码有没有拆分 service                                                                          |
+| reliability       | 本次涉及的框架实现是否兑现公开约定、错误路径是否可靠；必须阅读相关实现。只见类型/文档或业务 QA 时用 null；纯指引单元则检查其内容完整性与准确性 |
 
 90–100：本次范围内证据充分且无实质障碍；75–89：可用且有明确小缺口；60–74：明显障碍或需绕行；40–59：重要需求未满足；0–39：职责内核心路径不可用。
 null 表示证据不足/未覆盖，不等于 0 或满分。这是评审意见，不是全框架评分，也不能保证跨案例可比。
@@ -51,6 +51,9 @@ null 表示证据不足/未覆盖，不等于 0 或满分。这是评审意见�
 
 ## 正向贡献、归因与改进
 
+本项目用搭建任务改进 NocoBase3 作为企业级 Vibe Coding 基础设施的能力。报告首先回答：本次场景暴露了什么框架问题、影响什么、证据在哪里、应该改什么。业务交付与五项分数是背景，不能代替可行动的发现。
+summary 用 2–3 句先交代主要问题或尚未确认的缺口及影响，再说明可用能力和覆盖限制；没有问题证据就如实说明，不为了报告效果凑缺陷。
+
 strength：能力 → 推荐接入 → 实际采用 → 避免自行实现的基础职责；不虚构时间或 Token 节省。
 issue/improvement：具体到库/插件/API/指引位置；业务产出不好、工厂误报和环境阻塞不直接扣框架分。
 misleading：必须对照 claimed（原说明）与 observed（实际实现/行为）；缺文档、难理解与明确错误分开。
@@ -58,6 +61,16 @@ Agent 用错 API 时，先核查文档是否写清前提、示例是否完整、
 实现者自述 rootCause 只是线索，未独立核对用 suspected；应用绕过修复不等于上游缺陷 resolved。
 owner 为 application/factory/environment 的发现仅作为背景，不混成 NocoBase3 缺陷；unknown 留作待确认归因。
 旧 task.reviewCriteria 可提供额外检查点，但业务代码约束不能被强行升级为框架职责或改回旧评分字段。
+
+每条非 strength 发现补充 diagnosis，方便维护者复核与安排改进：
+
+- category：runtime-defect（实现违背约定）、capability-gap（需求属于框架职责但缺少能力或公开接入）、guidance-gap（指引/示例缺失、矛盾或错误）、usability-improvement（现有能力可用但有改进空间）。这是问题类型，不能替代 owner 归因；业务错误仍归 application。
+- trigger：可从已有材料确认的触发前提和操作；缺少复现信息写“未记录”，不能编造命令或声称本次已复现。
+- expected / actual：框架应提供的行为或入口，与冻结版本实际实现/日志的差异；建议类明确这是期望能力，不假装违背已有约定。
+- workaround：应用如何绕行、代价或限制；没有记录写“未记录”，不能估算耗时或 Token。应用通过不代表上游修好。
+- acceptance：建议改进后应如何验证，给出能判定通过或失败的行为；这是未来回归标准，不能写成已跑过的测试。
+  detail / impact / suggestedChange 继续保留，具体包、API、指引位置及证据引用必须可追溯。severity 表示本场景观察到的严重程度，不凭空给出全局 P0/P1 排期或声称影响所有企业场景。
+  本评审只读冻结输入，不能核对最新上游；confirmed 只表示冻结材料支持评审判断。status=resolved 仅在材料证明被归因对象已修复时使用，不能把应用 workaround 当作框架修复。报告发布日、PR 状态和最终 QA 均不能充当上游修复证据。
 
 ## 业务过程与视觉只作证据
 
@@ -76,6 +89,7 @@ ui 分数是业务界面的观察，不参与五项框架分；进一步评价�
 草稿检查通过仅表示契约与引用合规，不能证明推理正确；最终仍由工厂独立重新检查，不采信你自述的通过。
 
 目标类型与证据类型是两个不同字段：
+
 - `module.targets[].kind` 只能是 `library`、`plugin`、`guidance`。Skill/文档目标一律用 `guidance`，不能填 `skill` 或 `package`。
 - `evidence[].kind` 才使用 `code/package/skill/qa/screenshot/log`。其他位置的 `evidence` 只能是顶层证据 ID 数组，例如 `["E1","E2"]`，不能嵌入证据对象。
 - 每个 target.evidence 的路径必须在该 target 本身内。包目标 `@nocobase/db` 只能引用 `packages/@nocobase/db/...`；`app/.agents/skills/...` 要单独建 guidance 目标，不能塞进包目标。
@@ -95,29 +109,57 @@ path 必须来自 review-files.json；文本提供 1-based lines [start,end]（�
 {
   "version": 2,
   "inputHash": "{{INPUT_HASH}}",
-  "progress": {"complete": false, "pendingModules": []},
+  "progress": { "complete": false, "pendingModules": [] },
   "summary": "本次需求中 NocoBase3 基础能力的满足情况、使用障碍、帮助和限制",
-  "modules": [{
-    "name": "能力单元（不是业务菜单）",
-    "targets": [{"kind": "library", "name": "@nocobase/example", "entrypoints": ["已核对的公开 API"], "evidence": []}],
-    "scope": "本次实际涉及的基础职责与 API",
-    "limitations": "尚未覆盖的路径与缺少的证据",
-    "criteria": [],
-    "requirements": [{
-      "need": "业务需求", "responsibility": "框架负责的基础职责，应用负责的业务规则",
-      "support": "unknown", "recommendedUsage": "按当前指引的推荐方式或未确认",
-      "actualUsage": "Agent 的实际接入与受阻情况或未确认", "gapOwner": "unknown", "evidence": []
-    }],
-    "scores": {
-      "requirementFit": {"score": null, "reason": "未评估理由", "evidence": []},
-      "usability": {"score": null, "reason": "未评估理由", "evidence": []},
-      "agentFriendliness": {"score": null, "reason": "未评估理由", "evidence": []},
-      "design": {"score": null, "reason": "未评估理由", "evidence": []},
-      "reliability": {"score": null, "reason": "未评估理由", "evidence": []}
+  "modules": [
+    {
+      "name": "能力单元（不是业务菜单）",
+      "targets": [
+        {
+          "kind": "library",
+          "name": "@nocobase/example",
+          "entrypoints": ["已核对的公开 API"],
+          "evidence": []
+        }
+      ],
+      "scope": "本次实际涉及的基础职责与 API",
+      "limitations": "尚未覆盖的路径与缺少的证据",
+      "criteria": [],
+      "requirements": [
+        {
+          "need": "业务需求",
+          "responsibility": "框架负责的基础职责，应用负责的业务规则",
+          "support": "unknown",
+          "recommendedUsage": "按当前指引的推荐方式或未确认",
+          "actualUsage": "Agent 的实际接入与受阻情况或未确认",
+          "gapOwner": "unknown",
+          "evidence": []
+        }
+      ],
+      "scores": {
+        "requirementFit": {
+          "score": null,
+          "reason": "未评估理由",
+          "evidence": []
+        },
+        "usability": { "score": null, "reason": "未评估理由", "evidence": [] },
+        "agentFriendliness": {
+          "score": null,
+          "reason": "未评估理由",
+          "evidence": []
+        },
+        "design": { "score": null, "reason": "未评估理由", "evidence": [] },
+        "reliability": { "score": null, "reason": "未评估理由", "evidence": [] }
+      }
     }
-  }],
+  ],
   "findings": [],
-  "ui": {"status": "not-reviewed", "score": null, "reason": "未查看跨页面图像", "evidence": []},
+  "ui": {
+    "status": "not-reviewed",
+    "score": null,
+    "reason": "未查看跨页面图像",
+    "evidence": []
+  },
   "evidence": [],
   "limitations": ["不能据本次案例推断全框架表现"]
 }
@@ -125,5 +167,6 @@ path 必须来自 review-files.json；文本提供 1-based lines [start,end]（�
 
 finding：id F1/F2...、kind strength/issue/misleading/improvement、owner framework/plugin/template/documentation/application/factory/environment/unknown、severity info/minor/major/critical、confidence confirmed/suspected、status open/resolved/unknown/not-applicable，以及 title/detail/impact/suggestedChange/evidence。
 misleading 还须 claimed/observed。confirmed 只是评审者有证据的判断，不是人工确认。
+新评审的非 strength finding 还提供 `diagnosis: { category, trigger, expected, actual, workaround, acceptance }`；除 category 枚举外均为非空字符串，未知项明确写“未记录”或“未确认”。历史 v2 缺少 diagnosis 仍可展示，但不自动补造。
 evidence：id E1/E2...、kind code/package/skill/qa/screenshot/log、path、lines（文本）、observation。
 没有发现用 []，不凑建议；没有可评模块则说明原因。正常业务代码是使用证据，不是框架缺陷。

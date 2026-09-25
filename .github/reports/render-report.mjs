@@ -7,13 +7,13 @@ import { createHash } from 'node:crypto';
 import { renderBuildReview } from './build-review.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
-const TEMPLATE_VERSION = 5;
+const TEMPLATE_VERSION = 6;
 const escape = (value) => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const fmt = value => Number.isFinite(value) ? value.toLocaleString('en-US') : '未提供';
 const duration = value => Number.isFinite(value) ? `${Math.floor(value/3600)}:${String(Math.floor(value/60)%60).padStart(2,'0')}:${String(value%60).padStart(2,'0')}` : '未提供';
 const statusLabels = { cancelled:'本轮已取消', timed_out:'本轮超时', unknown:'运行完成（未确认业务交付）', skipped:'本轮跳过', action_required:'需人工介入', 'pr-ready':'已提交 PR · 等待人工评审', handoff:'已保存交接 · 尚未完成', failed:'本轮未完成', running:'任务执行中' };
 const checkLabels = { passed:'Agent 报告通过', failed:'Agent 报告未通过', 'not-verified':'未验证' };
-const problemLabels = { resolved:'已解决', open:'未解决', unknown:'处理结果未提供' };
+const problemLabels = { resolved:'本任务已处理', open:'未解决', unknown:'处理结果未提供' };
 const phaseLabels = { implementation:'实现阶段', verify:'自动验证', qa:'浏览器验收', repair:'修复阶段' };
 const categoryLabels = { 'template-overlay':'模板兼容', 'skills-docs':'Skill 与文档', 'scaffold-defaults':'脚手架默认值', verification:'验收机制', tooling:'工具与构建', other:'其他' };
 const ciLabels = { passed:'通过', failed:'未通过', 'not-run':'未运行', unknown:'未提供' };
@@ -130,6 +130,9 @@ function renderRetrospective(f, retro, warning, review) {
   const source = retro?.source || '实现者过程记录（原记录未注明运行或阶段来源）';
   let html = `<section class="section" id="problems">${sectionHead('Problems & improvements', '问题与改进')}`;
   html += '<p class="section-intro">汇总本轮已有材料，不新增分析。过程记录与独立评审分别标明来源；评审发现不等于本轮实际阻塞，也不因业务通过而标为已解决。</p>';
+  // Preserve the old improvements deep link, without a second top-level section.
+  html += `<h3 class="context-heading" id="improvements">独立评测的问题与建议</h3>${review.feedbackHtml}`;
+  html += '<details class="card raw-record process-notes"><summary>实现者过程与运行背景 · 不自动归为框架问题</summary><div class="subsection-body"><p class="check-source">本任务已处理只描述应用侧处理结果，不代表 NocoBase3 上游已修复。</p>';
   if (warning) html += `<p class="check-source">${escape(warning)}；原文保留，已有验收与独立评测不受影响。</p>`;
   html += '<h3 class="context-heading">本轮过程记录</h3>';
   if (retro?.summary) html += `<p class="section-intro">${escape(retro.summary)}</p>`;
@@ -138,13 +141,13 @@ function renderRetrospective(f, retro, warning, review) {
     for (const [i, b] of retro.blockers.entries()) {
       // A process observation is not interchangeable with a framework finding.
       const status = b.status ?? 'unknown';
-      html += `<article class="card retro-card" id="problem-${i+1}"><header><div><span class="eyebrow">问题 ${String(i+1).padStart(2,'0')} · ${escape(phaseLabels[b.phase]||b.phase)}</span><h3>${escape(b.title)}</h3></div>${tag(problemLabels[status],status==='resolved'?'good':status==='open'?'warn':'')}</header>
+      html += `<article class="card retro-card" id="problem-${i+1}"><header><div><span class="eyebrow">问题 ${String(i+1).padStart(2,'0')} · ${escape(phaseLabels[b.phase]||b.phase)}</span><h3>${escape(b.title)}</h3></div>${tag(problemLabels[status],status==='open'?'warn':'')}</header>
         <p class="problem-symptom">${escape(b.symptom || '未提供问题现象')}</p><dl class="retro-fields">${field('原因（实现者自述）',b.rootCause)}${field('处理方式',b.resolution)}</dl>
         <div class="retro-foot"><span>影响 / 代价：${escape(b.cost || '未提供，不估算')}</span><span>来源：${escape(b.source || source)}</span></div></article>`;
     }
     html += '</div>';
   } else {
-    html += `<p class="muted">${retro ? '实现者未记录具体阻塞，不等于本轮没有问题。' : '本轮未提供可选的实现者过程笔记；不据此推断无问题，也不影响下方已有独立评测。'}</p>`;
+    html += `<p class="muted">${retro ? '实现者未记录具体阻塞，不等于本轮没有问题。' : '本轮未提供可选的实现者过程笔记；不据此推断无问题，也不影响已有独立评测。'}</p>`;
   }
   const handoffs = f.runs.filter(r => r.status === 'handoff');
   if (handoffs.length || f.attention.length) {
@@ -153,8 +156,6 @@ function renderRetrospective(f, retro, warning, review) {
     html += f.attention.map(a=>`<article class="card note-card"><div class="eyebrow">${a.checkId?`验收 ${escape(a.checkId)} · `:''}阅读批注</div><h3>${escape(a.title)}</h3><p>${escape(a.detail)}</p>${a.source?`<p class="check-source">来源：${escape(a.source)}</p>`:''}${a.checkId?`<a class="text-link" href="#check-${escape(a.checkId)}" data-expand="check-${escape(a.checkId)}">查看对应验收记录 →</a>`:''}</article>`).join('');
     html += '</div>';
   }
-  // Preserve the old improvements deep link, without a second top-level section.
-  html += `<h3 class="context-heading" id="improvements">独立评测的问题与建议</h3>${review.feedbackHtml}`;
   if (retro?.improvements.length) {
     html += '<h3 class="context-heading">实现者补充建议</h3><p class="check-source">来自可选过程笔记，不代表已独立确认；相同建议引用上方评审，其余保留原文。</p><div class="retro-stack">';
     // Only collapse identical proposals. Similar titles or different explanations
@@ -173,7 +174,7 @@ function renderRetrospective(f, retro, warning, review) {
     html += '</div>';
   }
   if (f.rawRetro || (f.retro !== null && f.retro !== undefined)) html += `<details class="card raw-record"><summary>查看原始复盘数据</summary><div class="subsection-body"><pre>${escape(JSON.stringify(f.rawRetro ?? f.retro,null,2))}</pre></div></details>`;
-  return html + '</section>';
+  return html + '</div></details></section>';
 }
 
 function renderUsageDetails(usage) {
@@ -222,17 +223,19 @@ export async function renderHtml(facts, inputNotes, evidenceRoot) {
   if(f.delivery.ci==='failed') attention.unshift({title:'自动检查未通过',detail:f.delivery.ciSource||'查看来源运行记录。'});
   let body=m.sampleNotice?`<div class="report-banner">${escape(m.sampleNotice)}</div>`:'';
   if(notesWarning) body+=`<div class="report-banner">${escape(notesWarning)}</div>`;
-  body+=`<section class="section" id="overview"><div class="hero"><div><div class="eyebrow">Delivery ${m.issue} / ${escape(m.snapshotDate)}</div><h1>${escape(m.title)}</h1><p>${escape(notes?.summary || f.delivery.qaSummary || '本轮未提供业务说明，请查看下方状态与已采集证据。')}</p><div class="hero-actions">${links}<a class="btn primary" href="${f.buildReview?.basis?.rubricVersion === 2 ? '#build-review' : '#acceptance'}">${f.buildReview?.basis?.rubricVersion === 2 ? '查看框架评测' : '查看验收依据'}</a></div><div class="hero-meta"><span>对应提交 <code title="${escape(m.headSha)}">${escape(m.headSha ? m.headSha.slice(0,12) : '未取得交付 SHA')}</code></span><span>Run ${escape(m.runId)} / attempt ${m.attempt}</span><span>目标 <code>${escape(m.targetBranch)}</code></span></div></div><div class="hero-badge">${tag(statusLabels[f.delivery.status],f.delivery.status==='failed'?'bad':'warn')}</div></div>`;
+  const review=renderBuildReview(f.buildReview);
+  body+=`<section class="section" id="overview"><div class="hero"><div><div class="eyebrow">NocoBase3 improvement report · ${m.issue} / ${escape(m.snapshotDate)}</div><h1>${escape(m.title)}</h1><p>本次搭建为 NocoBase3 的企业级 Vibe Coding 基础设施带来了哪些问题证据与改进方向？</p><div class="hero-actions"><a class="btn primary" href="#problems">查看问题与改进</a><a class="btn" href="#delivery">查看业务交付</a></div></div></div>${review.overviewHtml}</section>`;
+  body+=renderRetrospective(f,retro,retroWarning,review);
+  body+=review.html;
+  body+=`<section class="section" id="delivery">${sectionHead('Business delivery context','业务交付与验收背景',tag(statusLabels[f.delivery.status],f.delivery.status==='failed'?'bad':''))}<p class="section-intro">${escape(notes?.summary || f.delivery.qaSummary || '本轮未提供业务说明，请查看状态与已采集证据。')}</p><div class="hero-actions">${links}<a class="btn" href="#acceptance">查看验收依据</a></div><div class="hero-meta"><span>应用交付提交 <code title="${escape(m.headSha)}">${escape(m.headSha ? m.headSha.slice(0,12) : '未取得交付 SHA')}</code></span><span>Run ${escape(m.runId)} / attempt ${m.attempt}</span><span>目标 <code>${escape(m.targetBranch)}</code></span></div>`;
   body+=`<div class="metrics">${metric('Agent 原始验收',f.checks.length?`${f.checks.filter(c=>c.status==='passed').length} / ${f.checks.length}`:'未提供','这是 Agent 的报告结论，不代替人工评审')}${metric('修改文件',fmt(f.changes?.total),f.changes?`${f.changes.added} 新增 · ${f.changes.modified} 修改 · ${f.changes.deleted} 删除`:'未采集，不按 0 处理')}${metric('截图证据',String(f.media.length),'来自本次选定报告的媒体清单')}${metric('已记录执行时间',duration(f.usage?.executionSeconds),f.usage?.scope||'未采集，不按 0 处理')}</div>`;
   body+=attention.map(a=>`<div class="alert"><div><h3>${escape(a.title)}</h3><p>${escape(a.detail)}</p>${a.source?`<div class="check-source">来源：${escape(a.source)}</div>`:''}</div></div>`).join('');
   body+='</section>';
   if(notes?.highlights.length || notes?.flow.length) {
-    body+=`<section class="section">${sectionHead('What was delivered','先看业务结果，不先看日志')}<div class="note-grid">${notes.highlights.map(h=>`<article class="card note-card"><h3>${escape(h.title)}</h3><p>${escape(h.detail)}</p></article>`).join('')}</div>`;
+    body+=`<section class="section">${sectionHead('What was delivered','业务场景与交付说明')}<div class="note-grid">${notes.highlights.map(h=>`<article class="card note-card"><h3>${escape(h.title)}</h3><p>${escape(h.detail)}</p></article>`).join('')}</div>`;
     if(notes.flow.length) body+=`<div class="business-flow" aria-label="业务顺序示意">${notes.flow.map((s,i)=>`<div class="business-step"><b>${String(i+1).padStart(2,'0')}</b>${escape(s)}</div>`).join('<span aria-hidden="true">→</span>')}</div><p class="check-source">业务顺序示意，操作证据见逐项验收。</p>`;
     body+='</section>';
   }
-  const review=renderBuildReview(f.buildReview);
-  body+=review.html;
   body+=renderAcceptance(f);
   const categories=[...new Set(f.media.map(x=>x.category))];
   const featured=new Set(f.media.filter(x=>x.featured).map(x=>x.id));
@@ -240,7 +243,6 @@ export async function renderHtml(facts, inputNotes, evidenceRoot) {
   body+=`<section class="section" id="evidence">${sectionHead('See the actual result','真实界面，按场景看')}<div class="toolbar"><button class="filter active" data-filter="featured">精选</button><button class="filter" data-filter="all">全部 ${f.media.length}</button>${categories.map(c=>`<button class="filter" data-filter="${escape(c)}">${escape(c)}</button>`).join('')}</div><div class="gallery">`;
   for(const shot of f.media) body+=`<figure class="card shot" data-category="${escape(shot.category)}" data-featured="${featured.has(shot.id)}" data-name="${escape(shot.id)}"><button class="shot-btn" data-open="${escape(shot.id)}" aria-label="放大 ${escape(shot.title)}"><img alt="${escape(shot.title)}" loading="lazy" src="${await imageSource(shot,base)}"><span class="shot-overlay">点击查看原图 ↗</span></button><figcaption><span>${escape(shot.title)}</span><span class="shot-category">${escape(shot.category)}</span></figcaption></figure>`;
   body+=`</div><div class="gallery-foot"><span id="gallery-status">${f.media.length?'截图已经内嵌，可离线查看。':'本轮未提供截图。'}</span><span>录像及未内嵌截图见本轮运行的 Artifact。</span></div>${f.uncovered?.length?`<details class="card raw-record"><summary>未单独截图的界面（${f.uncovered.length}）</summary><div class="subsection-body">${list(f.uncovered)}</div></details>`:''}</section>`;
-  body+=renderRetrospective(f,retro,retroWarning,review);
   body+=`<section class="section" id="execution">${sectionHead('Execution & usage','发生了什么，花了多少')}<div class="split"><div class="card run-panel"><h3>运行记录</h3>${f.runs.map(r=>`<div class="run"><div class="run-content"><div class="run-top"><strong>${escape(r.id)} / attempt ${r.attempt}</strong></div><p>${tag(statusLabels[r.status],r.status==='failed'?'bad':'')}</p><p>${escape(r.detail)}</p></div></div>`).join('')}<div class="ci-fact"><strong>自动检查：${escape(ciLabels[f.delivery.ci])}</strong><p class="check-source">${escape(f.delivery.ciSource||'未提供')}</p></div></div><div class="card usage-card"><div class="eyebrow">已记录 Token · 含缓存</div><div class="usage-big">${fmt(f.usage?.total)}</div>${tag(f.usage?(f.usage.incomplete?'采集可能不完整':'按已采集范围统计'):'用量未提供',f.usage?.incomplete?'warn':'')}<p>${escape(f.usage?.scope||'没有用量数据，不推算为零。')}</p><details class="subsection"><summary>展开用量分项 ⌄</summary><div class="subsection-body">${renderUsageDetails(f.usage)}<p class="check-source">${escape(f.usage?.source||'没有统计来源')}。不等同供应商账单，不推算费用。</p></div></details></div></div></section>`;
   if(f.timings?.length) body+=`<details class="card raw-record"><summary>本轮阶段耗时</summary><div class="subsection-body"><p>嵌套阶段不可相加为总耗时；仅展示已完成的计时。</p><div class="table-wrap"><table><tr><th>阶段</th><th>次数</th><th>时长</th></tr>${f.timings.map(t=>`<tr><td>${escape(t.stage)}</td><td>${fmt(t.calls)}</td><td>${duration(Math.round(t.durationMs/1000))}</td></tr>`).join('')}</table></div></div></details>`;
   body+=`<footer class="report-footer">Factory report template v${TEMPLATE_VERSION} · ${escape(reportId)}<br>验收逐条保留；问题与改进汇总已有评测与可选过程记录，保留各自来源。此页面是归档展示，不是重新验收。</footer>`;
