@@ -6,12 +6,12 @@ import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import test from 'node:test';
 import { commitPrepared, exportDraft, prepareRevision } from '../evaluation-archive.mjs';
-import { activeBatches, advanceBatch, batchDocument, startBatch, validatePlans } from '../evaluation-batch.mjs';
+import { advanceBatch, batchDocument, startBatch, validatePlans } from '../evaluation-batch.mjs';
 import { writeZip } from '../evaluation-bundle.mjs';
 import { deliverBundle, deliveryConfig } from '../evaluation-delivery.mjs';
 import { readSubject } from '../evaluation-registry.mjs';
 import { resolveSample, SAMPLE_LABEL } from '../evaluation-sample.mjs';
-import { buildArtifacts, fakeRepository, put, reportFor, startReceiver, temporary, usageRecord, writeReview } from './evaluation-fixtures.mjs';
+import { buildArtifacts, fakeRepository, openBatches, put, reportFor, startReceiver, temporary, usageRecord, writeReview } from './evaluation-fixtures.mjs';
 
 const control = 'c'.repeat(40);
 const plans = validatePlans({ schemaVersion: 1, plans: [{ key: 'repeat', enabled: false, schedule: null, baselineRef: 'develop',
@@ -62,7 +62,7 @@ test('5 samples, one with two handoffs, a report resent 3 times and one reassess
       const record = usageRecord({ issue: issue.number, runId: id, status, start: now + step * 1000, event: previous ? 'repository_dispatch' : 'workflow_dispatch', previousRunId: previous });
       records.push(await report(index, root, record, records));
       previous = id;
-      batch = await advanceBatch(client, (await activeBatches(client))[0], { now: tick() });
+      batch = await advanceBatch(client, (await openBatches(client))[0], { now: tick() });
       if (!final) assert.equal(client.samples().length, index, 'a handoff keeps the serial slot');
     }
   }
@@ -74,9 +74,9 @@ test('5 samples, one with two handoffs, a report resent 3 times and one reassess
   put(batchExport, 'files.json', []);
   await prepareRevision(client, { input: batchExport, output: batchBundle });
   await commitPrepared(client, { input: batchBundle, env: {}, runId: 9999, attempt: 1, artifactId: 1 });
-  batch = await advanceBatch(client, (await activeBatches(client))[0], { now: tick() });
+  batch = await advanceBatch(client, (await openBatches(client))[0], { now: tick() });
   assert.equal(batch.coordinator.state, 'closed');
-  assert.deepEqual(await activeBatches(client), []);
+  assert.deepEqual(await openBatches(client), []);
   const summary = batchDocument(batch);
   assert.equal(summary.summary.planned, 5);
   assert.equal(summary.summary.byState.passed, 5);

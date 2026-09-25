@@ -90,7 +90,7 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
           EVALUATION_ENDPOINT: ${{ vars.EVALUATION_ENDPOINT }}
           EVALUATION_AUTH_MODE: ${{ vars.EVALUATION_AUTH_MODE }}
-          DELIVERY_MODE: ${{ (inputs.mode == 'backfill' || inputs.mode == '') && 'scan' || inputs.mode || 'scan' }}
+          DELIVERY_MODE: ${{ inputs.mode == 'replay' && 'replay' || inputs.mode == 'retry-rejected' && 'retry-rejected' || 'scan' }}
           SUBJECT_TYPE: ${{ inputs.type }}
           SUBJECT_KEY: ${{ inputs.key }}
           SUBJECT_REVISION: ${{ inputs.revision }}

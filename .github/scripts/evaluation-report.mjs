@@ -14,7 +14,7 @@ import { phases } from './task-usage.mjs';
 
 export const EXPORTER_VERSION = 1;
 export const PRODUCER = 'nb3-factory';
-export const RUBRIC_ID = 'nb3-framework';
+const RUBRIC_ID = 'nb3-framework';
 export const LIMITS = { jsonBytes: 4 * 1024 * 1024, fileBytes: 10 * 1024 * 1024, evidenceBytes: 48 * 1024 * 1024, files: 2048 };
 const sha = /^[a-f0-9]{40}$/;
 const sha256Pattern = /^[a-f0-9]{64}$/;

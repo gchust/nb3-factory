@@ -5,6 +5,7 @@ import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'nod
 import os from 'node:os';
 import path from 'node:path';
 import { reviewArtifactHash } from '../build-review.mjs';
+import { coordinators, loadBatch } from '../evaluation-batch.mjs';
 import { taskEvaluationIdentity } from '../evaluation-identity.mjs';
 import { SAMPLE_LABEL } from '../evaluation-sample.mjs';
 import { executionFacts } from '../evaluation-report.mjs';
@@ -247,6 +248,16 @@ export const lock = Buffer.from('lockfileVersion: 9.0\n');
 export const presetBody = ['### 目标分支', '', 'issues-176', '', '### 任务类型', '', '创建新系统', '', '### 业务需求', '', '做一个计数器',
   '', '### 验收要求', '', 'B01. 点击加一', '', '### 框架评测', '', '轻量'].join('\n');
 export const names = issue => issue.labels.map(label => label.name ?? label);
+
+// Open coordinators with a complete manifest and state, in creation order.
+export async function openBatches(client) {
+  const batches = [];
+  for (const issue of await coordinators(client, 'open')) {
+    const batch = await loadBatch(client, issue);
+    if (batch.manifest && batch.state) batches.push(batch);
+  }
+  return batches;
+}
 
 // A GitHub repository in memory: Issues, comments, labels, workflow runs/jobs,
 // contents at the frozen commit, and the gh-pages evaluation registry.

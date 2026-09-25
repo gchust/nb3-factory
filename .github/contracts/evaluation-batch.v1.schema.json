@@ -131,8 +131,8 @@
           "dispatchedAt": { "oneOf": [{ "type": "null" }, { "type": "string", "format": "date-time" }] },
           "terminalAt": { "oneOf": [{ "type": "null" }, { "type": "string", "format": "date-time" }] },
           "reason": { "type": ["string", "null"], "maxLength": 500 },
-          "agentConfigFingerprint": { "description": "Agent settings fingerprint observed when this sample was dispatched.", "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/sha256" }] },
-          "comparable": { "description": "false when the sample was dispatched under settings different from the frozen batch; null when not dispatched or unknown.", "type": ["boolean", "null"] },
+          "agentConfigFingerprint": { "description": "Latest Agent settings fingerprint observed while this sample was dispatched or running.", "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/sha256" }] },
+          "comparable": { "description": "false when any settings observed while the sample was dispatched or running differ from the frozen batch; null when not dispatched or unknown.", "type": ["boolean", "null"] },
           "report": {
             "type": "object",
             "additionalProperties": false,

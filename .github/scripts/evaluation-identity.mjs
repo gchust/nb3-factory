@@ -3,7 +3,7 @@
 // Run: handoffs, recoveries and re-run attempts stay executions of the same key.
 import { createHash } from 'node:crypto';
 
-export const IDENTITY_VERSION = 1;
+const IDENTITY_VERSION = 1;
 const repositoryPattern = /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/;
 export const segmentPattern = /^[A-Za-z0-9][A-Za-z0-9._-]{0,79}$/;
 const keyPattern = /^[A-Za-z0-9][A-Za-z0-9._/-]{0,299}$/;

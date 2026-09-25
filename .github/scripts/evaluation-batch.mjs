@@ -9,23 +9,23 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { listAll } from './comment-queue.mjs';
 import { segmentPattern, taskEvaluationIdentity } from './evaluation-identity.mjs';
-import { currentRevision, readSubject } from './evaluation-registry.mjs';
+import { currentRevision, readBytes, readSubject } from './evaluation-registry.mjs';
 import { canonicalJson, EXPORTER_VERSION, PRODUCER } from './evaluation-report.mjs';
-import { BATCH_LABEL, chunkText, isBot, MANUAL_LABEL, manifestComment, markers, readManifest, readSampleReceipt, readState,
-  readTerminals, SAMPLE_LABEL, stateComment, verifyAncestor } from './evaluation-sample.mjs';
+import { BATCH_LABEL, chunkText, FINISHED_STATES, isBot, MANUAL_LABEL, manifestComment, markers, readManifest, readSampleReceipt, readState,
+  readTerminals, SAMPLE_LABEL, SAMPLE_STATES, stateComment, verifyAncestor } from './evaluation-sample.mjs';
 import { extractIssueSections, parseBuildReviewMode, parseIssueTask } from './factory-lib.mjs';
 import { clonedBody, readPresetSource, replaceSection, writeSnapshot } from './issue-presets.mjs';
 import { stripTaskTitle } from './task-compat.mjs';
 import { taskOutcome } from './task-outcome.mjs';
 
 export const PLAN_LIMITS = { plans: 20, cases: 10, samplesPerCase: 10, samplesPerPlan: 20, repairs: [0, 10], activeSeconds: [600, 86_400], continuations: [0, 10] };
-export const SAMPLE_STATES = ['planned', 'queued', 'running', 'passed', 'failed', 'blocked', 'budget-exhausted', 'cancelled', 'unknown'];
-const TERMINAL = new Set(['passed', 'failed', 'blocked', 'budget-exhausted', 'cancelled', 'unknown']);
-const ACTIVE_LABELS = new Set(['agent:pending', 'agent:queued', 'agent:running', 'agent:verifying', 'agent:waiting']);
 const WORKFLOW = 'code-agent-task.yml';
-export const REPORT_GRACE_SECONDS = 6 * 3600;
+// How long a finished batch waits for its samples' final reports before completing anyway.
+const REPORT_GRACE_SECONDS = 6 * 3600;
+// A queued sample without any Run after this long is dispatched again (the claim prevents a double build).
+const REDISPATCH_AFTER_MS = 30 * 60_000;
 // Non-secret settings that change how samples are built, tested or reviewed.
-export const AGENT_CONFIG_VARS = ['CODE_AGENT_ENGINE', 'CODE_AGENT_VERSION', 'PI_VERSION', 'CODEBUDDY_VERSION', 'CLAUDE_CODE_VERSION', 'CODEX_VERSION',
+const AGENT_CONFIG_VARS = ['CODE_AGENT_ENGINE', 'CODE_AGENT_VERSION', 'PI_VERSION', 'CODEBUDDY_VERSION', 'CLAUDE_CODE_VERSION', 'CODEX_VERSION',
   'OPENCODE_VERSION', 'CODE_AGENT_MODEL', 'PI_MODEL', 'CODEBUDDY_MODEL', 'CLAUDE_CODE_MODEL', 'CODEX_MODEL', 'OPENCODE_MODEL', 'CODE_AGENT_API_TYPE',
   'CODE_AGENT_THINKING', 'PI_THINKING', 'CODEBUDDY_THINKING', 'CLAUDE_CODE_EFFORT', 'CLAUDE_CODE_QA_EFFORT', 'CODEX_REASONING_EFFORT', 'CODEX_QA_REASONING_EFFORT',
   'OPENCODE_VARIANT', 'OPENCODE_QA_VARIANT', 'FACTORY_QA_THINKING', 'FACTORY_REVIEW_THINKING', 'FACTORY_BUILD_REVIEW', 'FACTORY_BUILD_REVIEW_TIMEOUT_SECONDS',
@@ -84,19 +84,11 @@ export function validatePlans(document, { defaultBranch } = {}) {
 
 // Retry identity only: a scheduled slot is its UTC date, a manual start is its
 // originating Run. Re-running any attempt of that Run resumes the same batch.
-export function batchKeyFor(plan, trigger, now, runId) {
+function batchKeyFor(plan, trigger, now, runId) {
   need(trigger === 'schedule' || /^[1-9]\d*$/.test(String(runId ?? '')), 'A manual batch needs its originating run ID');
   const key = trigger === 'schedule' ? `${plan.key}-${new Date(now).toISOString().slice(0, 10).replaceAll('-', '')}` : `${plan.key}-r${runId}`;
   need(segmentPattern.test(key), 'Invalid batch key');
   return key;
-}
-
-async function readBytes(client, file, ref) {
-  const value = await client.request('GET', `/contents/${file}`, { query: { ref }, allow404: true });
-  if (!value) return null;
-  if (value.encoding === 'base64' && value.content) return Buffer.from(value.content, 'base64');
-  const blob = await client.request('GET', `/git/blobs/${value.sha}`);
-  return Buffer.from(blob.content, 'base64');
 }
 
 async function ensureLabel(client, name, description) {
@@ -106,7 +98,7 @@ async function ensureLabel(client, name, description) {
   catch (error) { if (!await client.request('GET', route, { allow404: true })) throw error; }
 }
 
-async function coordinators(client, state = 'all') {
+export async function coordinators(client, state = 'all') {
   return (await listAll(client, '/issues', { state, labels: BATCH_LABEL })).filter(issue => !issue.pull_request && isBot(issue.user));
 }
 async function findCoordinator(client, batchKey) {
@@ -115,7 +107,7 @@ async function findCoordinator(client, batchKey) {
   return found[0] ?? null;
 }
 
-async function loadBatch(client, coordinator) {
+export async function loadBatch(client, coordinator) {
   const comments = await listAll(client, `/issues/${coordinator.number}/comments`);
   const loaded = readManifest(comments);
   if (!loaded) return { coordinator, comments, manifest: null };
@@ -141,7 +133,7 @@ async function saveState(client, batch, state) {
 }
 
 // Freeze everything a sample depends on exactly once, before any sample exists.
-export async function freezeBatch(client, { plan, batchKey, trigger, now, controlSha, env, coordinatorIssue }) {
+async function freezeBatch(client, { plan, batchKey, trigger, now, controlSha, env, coordinatorIssue }) {
   const repository = await client.getRepository();
   const defaultBranch = repository.default_branch;
   need(plan.baselineRef === defaultBranch, `${plan.key}: v1 batches freeze the default branch`);
@@ -225,15 +217,14 @@ export async function startBatch(client, { plans, planKey, trigger, now = Date.n
   if (!batch.state) {
     await saveState(client, batch, { version: 1, batchKey, manifestHash: batch.manifestHash, sequence: 1, state: 'active', cancelled: false,
       createdAt: iso(now), updatedAt: iso(now),
-      samples: Object.fromEntries(batch.manifest.samples.map(s => [s.key, { state: 'planned', stateSource: 'plan', issue: null, dispatchedAt: null,
-        terminalAt: null, terminalRunId: null, report: null, reason: null }])) });
+      samples: Object.fromEntries(batch.manifest.samples.map(s => [s.key, newSample()])) });
   }
   return { status: 'started', batchKey, coordinator: coordinator.number, batch };
 }
 
 // Only a batch confirmed completed or cancelled frees the single active slot; a batch
 // missing its manifest or first state is an unfinished start, not a finished batch.
-export const occupiesSlot = batch => !batch.manifest || !batch.state || !['completed', 'cancelled'].includes(batch.state.state);
+const occupiesSlot = batch => !batch.manifest || !batch.state || !['completed', 'cancelled'].includes(batch.state.state);
 
 async function findSampleIssue(client, sampleKey, since) {
   const found = (await listAll(client, '/issues', { state: 'all', labels: SAMPLE_LABEL, since }))
@@ -243,7 +234,7 @@ async function findSampleIssue(client, sampleKey, since) {
 }
 
 // Idempotent: a retry after "Issue created, response lost" finds the marker and resumes.
-export async function ensureSample(client, batch, spec) {
+async function ensureSample(client, batch, spec) {
   const { manifest, manifestHash } = batch;
   await ensureLabel(client, SAMPLE_LABEL, 'Independent evaluation-batch sample created by the coordinator');
   await client.ensureStatusLabels();
@@ -297,174 +288,171 @@ async function dispatch(client, batch, spec, issue, comments) {
     await client.request('PATCH', `/issues/comments/${comment.id}`, { body: { body: `${comment.body}\n\n${markers.dispatched(spec.key)}\n已派发到搭建工作流；这不表示验收已通过。` } });
 }
 
-// A report belongs to one execution: the same Run and the same attempt. The newest
-// revision describing exactly that execution is its current report (a later
-// reassessment of it may add one); reports of other attempts or handoff segments
-// stay history and never stand in for it. A publication-only re-run still gets
-// its own report, produced for that attempt.
-async function reportFor(client, runKey, runId, attempt) {
-  if (!runId) return null;
-  // A failed read throws: it must never look like "no report" and erase a confirmed one.
-  // The caller's per-batch isolation then keeps this batch's last snapshot unchanged.
+// ---- Sample lifecycle --------------------------------------------------------
+// planned → queued (dispatched) → running (a Run is active, or a handoff chain
+// continues) → finished (FINISHED_STATES). A finished sample names the execution
+// its result belongs to (`final`: run ID + attempt) and where the result came from
+// (`stateSource`): that execution's report, its Run conclusion, a prepare decision
+// or the batch itself. Only report/run results expect a report, and only the report
+// of exactly that execution is ever the sample's report.
+const newSample = () => ({ state: 'planned', stateSource: 'plan', issue: null, dispatchedAt: null, terminalAt: null,
+  final: null, report: null, reason: null, configObserved: [] });
+const executionOf = run => ({ runId: run.id, attempt: run.run_attempt ?? 1 });
+const finished = (state, stateSource, run, reason) => ({ state, stateSource, final: run ? executionOf(run) : null, ...(reason ? { reason } : {}) });
+const expectsReport = item => Boolean(item.issue && item.final && ['run', 'report'].includes(item.stateSource));
+const observeConfig = (item, fingerprint) => {
+  item.configObserved ??= [];
+  if (fingerprint && !item.configObserved.includes(fingerprint)) item.configObserved.push(fingerprint);
+};
+
+// The newest revision describing exactly this execution is its report (a later
+// reassessment of it may add one); other attempts and handoff segments stay history.
+// A publication-only re-run still gets its own report, produced for that attempt.
+// A failed read throws: it must never look like "no report" and erase a confirmed one.
+async function reportFor(client, runKey, final) {
+  if (!final) return null;
   const index = await readSubject(client, 'evaluation-report', runKey, 'gh-pages');
-  const matching = (index?.revisions ?? []).filter(item => item.precedence?.producer?.runId === runId && (item.precedence?.producer?.attempt ?? 1) === (attempt ?? 1));
+  const matching = (index?.revisions ?? []).filter(item => item.precedence?.producer?.runId === final.runId &&
+    (item.precedence?.producer?.attempt ?? 1) === final.attempt);
   if (!matching.length) return null;
   const entry = matching.find(item => item.revision === currentRevision('evaluation-report', matching));
-  return { revision: entry.revision, producerRunId: runId, producerAttempt: attempt ?? 1, ...entry.summary };
+  return { revision: entry.revision, ...entry.summary };
 }
 const fromReport = summary => summary.execution === 'budget-exhausted' ? 'budget-exhausted' : summary.execution === 'blocked' ? 'blocked'
   : summary.execution === 'cancelled' ? 'cancelled' : summary.acceptance === 'passed' ? 'passed'
     : ['failed', 'blocked'].includes(summary.acceptance) ? summary.acceptance : summary.execution === 'timed-out' ? 'failed' : 'unknown';
+const fromRun = (outcome, issue) => outcome === 'delivered' ? 'passed' : outcome === 'cancelled' ? 'cancelled'
+  : outcome === 'failure' ? (labelNames(issue).includes('agent:needs-input') ? 'blocked' : 'failed') : outcome === 'timed_out' ? 'failed' : 'unknown';
 
-// Terminal means: no queued/in-progress run, and the latest run is not a handoff.
-export async function observeSample(client, batch, item, spec, now) {
+// Observation of a dispatched chain: { state: 'running' } while any Run is active or a
+// handoff continues, { state: 'queued' } before any Run did work, otherwise finished().
+async function observeSample(client, batch, item, spec, now) {
   const { manifest } = batch;
   const issue = await client.getIssue(item.issue);
-  const since = new Date(Date.parse(item.dispatchedAt ?? manifest.createdAt) - 10 * 60_000).toISOString();
-  const runs = await runsFor(client, item.issue, since);
-  const wall = manifest.budget.maxActiveSeconds * 3 + 6 * 3600;
-  const stale = item.dispatchedAt && now - Date.parse(item.dispatchedAt) > wall * 1000;
-  // Unfinished work keeps the slot: "no progress" is not "terminated". Only a
+  const runs = await runsFor(client, item.issue, new Date(Date.parse(item.dispatchedAt ?? manifest.createdAt) - 10 * 60_000).toISOString());
+  const stale = item.dispatchedAt && now - Date.parse(item.dispatchedAt) > (manifest.budget.maxActiveSeconds * 3 + 6 * 3600) * 1000;
+  // Unfinished work keeps the slot: "no progress" is not "terminated"; only a
   // maintainer's cancellation of the Run can end it.
   if (runs.some(run => run.status !== 'completed'))
     return { state: 'running', reason: stale ? '超过墙钟保护期限仍有未结束的 Run；不释放串行槽位，需要维护者检查或取消该 Run。' : item.reason ?? null };
   const terminals = readTerminals(await listAll(client, `/issues/${item.issue}/comments`), spec.key);
-  // The latest run that did something: a prepare decision, an Agent execution, or a failure.
-  // A duplicate or waiting dispatch ends after prepare with success and is ignored.
+  // The latest Run that did something: a prepare decision, an Agent execution or a
+  // failure. A duplicate or waiting dispatch ends after prepare with success and is ignored.
   let latest = null, jobs = [];
   for (const run of [...runs].reverse()) {
-    if (terminals.has(run.id)) return { state: terminals.get(run.id), stateSource: 'prepare', terminalRunId: run.id, terminalRunAttempt: run.run_attempt ?? 1 };
+    if (terminals.has(run.id)) return finished(terminals.get(run.id), 'prepare', run);
     ({ jobs } = await client.request('GET', `/actions/runs/${run.id}/attempts/${run.run_attempt}/jobs`, { query: { per_page: 100 } }));
     if (run.conclusion !== 'success' || jobs.some(job => job.name === 'agent' && job.conclusion && job.conclusion !== 'skipped')) { latest = run; break; }
   }
   if (!latest) {
     // Rejected at prepare: no build ran and no report will follow.
-    if (labelNames(issue).includes('agent:needs-input')) return { state: 'blocked', stateSource: 'prepare', terminalRunId: runs.at(-1)?.id ?? null,
-      terminalRunAttempt: runs.at(-1)?.run_attempt ?? 1, reason: '样本输入未通过受理，需要维护者处理。' };
-    return { state: 'queued', redispatch: !runs.length && (!item.dispatchedAt || now - Date.parse(item.dispatchedAt) > 30 * 60_000) };
+    if (labelNames(issue).includes('agent:needs-input')) return finished('blocked', 'prepare', runs.at(-1), '样本输入未通过受理，需要维护者处理。');
+    return { state: 'queued', redispatch: !runs.length && (!item.dispatchedAt || now - Date.parse(item.dispatchedAt) > REDISPATCH_AFTER_MS) };
   }
   const outcome = taskOutcome(latest, jobs);
-  // Exit 75 is not a terminal state; the slot stays occupied until the chain ends.
-  // With no Run active for that long, the sample is released and prepare refuses
-  // any late continuation, so it can never run beside the next sample.
-  if (outcome === 'handoff') return stale ? { state: 'unknown', stateSource: 'run', terminalRunId: latest.id, terminalRunAttempt: latest.run_attempt ?? 1,
-    reason: 'Handoff 后长时间没有续跑；释放串行槽位，迟到的续跑会在 prepare 被拒绝。' } : { state: 'running' };
-  const summary = await reportFor(client, spec.runKey, latest.id, latest.run_attempt ?? 1);
-  if (summary) return { state: fromReport(summary), stateSource: 'report', terminalRunId: latest.id, terminalRunAttempt: latest.run_attempt ?? 1 };
-  const names = labelNames(issue);
-  const state = outcome === 'delivered' ? 'passed' : outcome === 'cancelled' ? 'cancelled'
-    : outcome === 'failure' ? (names.includes('agent:needs-input') ? 'blocked' : 'failed') : outcome === 'timed_out' ? 'failed' : 'unknown';
-  return { state, stateSource: 'run', terminalRunId: latest.id, terminalRunAttempt: latest.run_attempt ?? 1 };
+  // Exit 75 is not terminal. Only a handoff with no Run for that long is released;
+  // prepare and admission then refuse any late continuation of the released sample.
+  if (outcome === 'handoff') return stale ? finished('unknown', 'run', latest, 'Handoff 后长时间没有续跑；释放串行槽位，迟到的续跑会在 prepare 被拒绝。') : { state: 'running' };
+  const summary = await reportFor(client, spec.runKey, executionOf(latest));
+  return summary ? finished(fromReport(summary), 'report', latest) : finished(fromRun(outcome, issue), 'run', latest);
 }
 
-const needsReport = item => Boolean(item.issue && item.terminalRunId && ['run', 'report'].includes(item.stateSource));
+function applyObservation(item, observed, { stamp, cancelled, fingerprint }) {
+  if (FINISHED_STATES.has(observed.state)) {
+    Object.assign(item, { state: observed.state, stateSource: observed.stateSource, final: observed.final, terminalAt: stamp, reason: observed.reason ?? item.reason });
+  } else if (cancelled && observed.state === 'queued') {
+    // Cancelled while only queued: no Run is in progress and none did any work, so there
+    // is nothing to wait for. No task is dispatched to make it exit.
+    Object.assign(item, { state: 'cancelled', stateSource: 'batch', final: null, terminalAt: stamp, reason: '批次已取消；该样本没有实际执行（派发未产生搭建 Run），直接结束。' });
+  } else {
+    item.state = observed.state;
+    if (observed.reason !== undefined) item.reason = observed.reason;
+    // Settings in effect while the chain is still active count for comparability;
+    // the advance that finds it finished is not evidence of how it ran.
+    observeConfig(item, fingerprint);
+  }
+}
+
+// The report of a finished sample's final execution (or none); the state follows its
+// newest revision unless the result came from a prepare or batch decision.
+function applyReport(item, summary) {
+  if (!summary) { item.report = null; return; }
+  item.report = { state: 'available', revision: summary.revision, execution: summary.execution ?? null, acceptance: summary.acceptance ?? null };
+  if (['run', 'report'].includes(item.stateSource)) Object.assign(item, { state: fromReport(summary), stateSource: 'report' });
+}
 
 export async function advanceBatch(client, batch, { now = Date.now(), env = null } = {}) {
   const { manifest } = batch;
   const state = structuredClone(batch.state);
   const stamp = iso(now);
-  // The settings in effect when this trigger runs; samples dispatched under other
-  // settings are marked as not directly comparable.
-  const current = env ? agentConfig(env).fingerprint : null;
+  const samples = () => manifest.samples.map(spec => ({ spec, item: state.samples[spec.key] }));
+  // The settings in effect for this trigger; drift from the frozen batch is recorded.
+  const fingerprint = env ? agentConfig(env).fingerprint : null;
   const frozenConfig = manifest.agentConfig?.fingerprint ?? null;
-  if (current && frozenConfig && current !== frozenConfig && state.state === 'active' && !state.agentConfigDrift) {
-    state.agentConfigDrift = { observedAt: stamp, fingerprint: current };
-  }
+  if (fingerprint && frozenConfig && fingerprint !== frozenConfig && state.state === 'active' && !state.agentConfigDrift)
+    state.agentConfigDrift = { observedAt: stamp, fingerprint };
   // Append a new snapshot only when something actually changed.
   const commit = async () => {
     if (JSON.stringify(state) === JSON.stringify(batch.state)) return;
-    state.sequence = batch.state.sequence + 1;
-    state.updatedAt = stamp;
+    Object.assign(state, { sequence: batch.state.sequence + 1, updatedAt: stamp });
     await saveState(client, batch, structuredClone(state));
   };
+  const redispatch = async (spec, item) => {
+    const { issue, comments } = await ensureSample(client, batch, spec);
+    await dispatch(client, batch, spec, issue, comments);
+    Object.assign(item, { dispatchedAt: stamp, reason: '派发后未出现搭建 Run，已按同一样本重新派发。' });
+  };
+
+  // 1. Observe every dispatched chain that has not finished.
   if (state.state === 'active') {
-    for (const spec of manifest.samples) {
-      const item = state.samples[spec.key];
-      if (['queued', 'running'].includes(item.state) && item.issue) {
-        const observed = await observeSample(client, batch, item, spec, now);
-        if (observed.redispatch && !state.cancelled) {
-          // The first dispatch produced no run; the prepare claim still prevents a double build.
-          const { issue, comments } = await ensureSample(client, batch, spec);
-          await dispatch(client, batch, spec, issue, comments);
-          Object.assign(item, { dispatchedAt: stamp, reason: '派发后未出现搭建 Run，已按同一样本重新派发。' });
-          if (current) Object.assign(item, { agentConfigFingerprint: current,
-            agentConfigObserved: [...new Set([...(item.agentConfigObserved ?? []), current])] });
-        }
-        item.state = observed.state;
-        // Cancelled while the sample is still only queued: no Run is in progress and none
-        // did any work, so nothing can be waited for. It ends as cancelled; a late
-        // dispatch or continuation is refused at prepare/admission.
-        if (state.cancelled && observed.state === 'queued')
-          Object.assign(item, { state: 'cancelled', stateSource: 'batch', terminalAt: stamp, reason: '批次已取消；该样本没有实际执行（派发未产生搭建 Run），直接结束。' });
-        // Settings seen while the chain is still dispatched or running (every sample run,
-        // handoffs included, requests an advance when it ends) count for comparability;
-        // the advance that finds the chain finished is not evidence of how it ran.
-        if (current && !TERMINAL.has(observed.state)) item.agentConfigObserved = [...new Set([...(item.agentConfigObserved ?? []), current])];
-        if (observed.state === 'running' && observed.reason !== undefined) item.reason = observed.reason;
-        if (TERMINAL.has(observed.state)) Object.assign(item, { terminalAt: stamp, stateSource: observed.stateSource ?? 'run',
-          terminalRunId: observed.terminalRunId ?? null, terminalRunAttempt: observed.terminalRunAttempt ?? null, reason: observed.reason ?? item.reason });
-      }
+    for (const { spec, item } of samples()) {
+      if (!['queued', 'running'].includes(item.state) || !item.issue) continue;
+      const observed = await observeSample(client, batch, item, spec, now);
+      if (observed.redispatch && !state.cancelled) await redispatch(spec, item);
+      applyObservation(item, observed, { stamp, cancelled: state.cancelled, fingerprint });
     }
   }
-  // Reports keep arriving after the samples ended; a finished but still open batch
-  // keeps taking them, so a late final report refines its sample. Only the report of
-  // the sample's final execution is its current report: the public report fields and
-  // counts never fall back to an earlier attempt or segment.
-  for (const spec of manifest.samples) {
-    const item = state.samples[spec.key];
-    if (!item.issue) continue;
-    const summary = needsReport(item) && TERMINAL.has(item.state) ? await reportFor(client, spec.runKey, item.terminalRunId, item.terminalRunAttempt) : null;
-    if (!summary) {
-      item.report = null;
-      delete item.reportRunId; delete item.reportRunAttempt;
-      continue;
-    }
-    item.report = { state: 'available', revision: summary.revision, execution: summary.execution ?? null, acceptance: summary.acceptance ?? null };
-    Object.assign(item, { reportRunId: summary.producerRunId, reportRunAttempt: summary.producerAttempt });
-    // The state follows that execution's newest report revision (a complete report can
-    // replace an earlier incomplete one). Prepare/batch decisions never reach here.
-    if (['run', 'report'].includes(item.stateSource)) Object.assign(item, { state: fromReport(summary), stateSource: 'report' });
+  // 2. Reports keep arriving after samples finish, also while a finished batch waits
+  //    for its archive. Public report fields never fall back to another execution.
+  for (const { spec, item } of samples()) {
+    if (item.issue) applyReport(item, expectsReport(item) && FINISHED_STATES.has(item.state) ? await reportFor(client, spec.runKey, item.final) : null);
   }
   if (state.state === 'active') {
-    if (state.cancelled) for (const spec of manifest.samples) {
-      const item = state.samples[spec.key];
+    // 3. A cancelled batch dispatches nothing more.
+    if (state.cancelled) for (const { item } of samples()) {
       if (item.state === 'planned') Object.assign(item, { state: 'cancelled', stateSource: 'batch', terminalAt: stamp, reason: '批次已取消，未派发。' });
     }
-    const active = manifest.samples.filter(s => ['queued', 'running'].includes(state.samples[s.key].state));
-    const next = manifest.samples.find(s => state.samples[s.key].state === 'planned');
-    if (!state.cancelled && next && active.length < manifest.maxConcurrentSamples) {
-      const { issue, comments } = await ensureSample(client, batch, next);
-      Object.assign(state.samples[next.key], { state: 'queued', stateSource: 'coordinator', issue: issue.number, dispatchedAt: stamp,
-        agentConfigFingerprint: current, agentConfigObserved: current ? [current] : [] });
+    // 4. Fill the serial slot with the next planned sample.
+    const occupied = samples().filter(({ item }) => ['queued', 'running'].includes(item.state)).length;
+    const next = samples().find(({ item }) => item.state === 'planned');
+    if (!state.cancelled && next && occupied < manifest.maxConcurrentSamples) {
+      const { issue, comments } = await ensureSample(client, batch, next.spec);
+      Object.assign(next.item, { state: 'queued', stateSource: 'coordinator', issue: issue.number, dispatchedAt: stamp });
+      observeConfig(next.item, fingerprint);
       // Persist the assignment first: the sample pin requires it before prepare runs.
       await commit();
       if (!(await runsFor(client, issue.number, manifest.createdAt)).length) {
-        try { await dispatch(client, batch, next, issue, comments); }
+        try { await dispatch(client, batch, next.spec, issue, comments); }
         catch (error) {
           // Recorded, so the next trigger re-dispatches instead of waiting for a run that never started.
-          Object.assign(state.samples[next.key], { dispatchedAt: null, reason: `派发失败：${error.message.slice(0, 200)}` });
+          Object.assign(next.item, { dispatchedAt: null, reason: `派发失败：${error.message.slice(0, 200)}` });
           await commit();
           throw error;
         }
       }
     }
-    // Close only after each dispatched sample's own report is registered (or a grace
-    // period passed), so a late report still refines its sample and reaches the batch.
-    const items = manifest.samples.map(s => state.samples[s.key]);
-    const lastTerminal = Math.max(0, ...items.map(item => Date.parse(item.terminalAt ?? '') || 0));
-    if (items.every(item => TERMINAL.has(item.state)) &&
-        // An earlier handoff run's or earlier attempt's report is not the final result;
-        // samples ended at prepare produce no report.
-        (items.every(item => !needsReport(item) || (item.reportRunId === item.terminalRunId && item.reportRunAttempt === (item.terminalRunAttempt ?? 1))) ||
-         now - lastTerminal > REPORT_GRACE_SECONDS * 1000)) {
-      state.state = state.cancelled ? 'cancelled' : 'completed';
-      state.completedAt = stamp;
+    // 5. Complete when every sample finished and each final report arrived (samples ended
+    //    at prepare or by the batch have none), or once the grace period has passed.
+    const items = samples().map(({ item }) => item);
+    const lastFinished = Math.max(0, ...items.map(item => Date.parse(item.terminalAt ?? '') || 0));
+    if (items.every(item => FINISHED_STATES.has(item.state)) &&
+        (items.every(item => !expectsReport(item) || item.report) || now - lastFinished > REPORT_GRACE_SECONDS * 1000)) {
+      Object.assign(state, { state: state.cancelled ? 'cancelled' : 'completed', completedAt: stamp });
     }
   }
   await commit();
-  // Finishing the samples and archiving the final snapshot are separate: the
-  // coordinator stays open (without blocking a new batch) until the snapshot
-  // of this exact state sequence is registered, so compensation retries it.
+  // 6. Finishing and archiving are separate: the coordinator stays open (without
+  //    blocking a new batch) until the snapshot of this exact sequence is registered.
   if (batch.state.state !== 'active' && batch.coordinator.state === 'open' && await finalSnapshotRegistered(client, batch))
     batch.coordinator = await client.request('PATCH', `/issues/${batch.coordinator.number}`, { body: { state: 'closed' } });
   return batch;
@@ -493,29 +481,19 @@ export async function cancelBatch(client, batchKey, { now = Date.now() } = {}) {
   return advanceBatch(client, batch, { now });
 }
 
-export async function activeBatches(client) {
-  const batches = [];
-  for (const issue of await coordinators(client, 'open')) {
-    const batch = await loadBatch(client, issue);
-    if (batch.manifest && batch.state) batches.push(batch);
-  }
-  return batches;
-}
-
 // Public, versioned snapshot of the whole planned set. Missing reports stay listed.
 export function batchDocument(batch, { exporter = {} } = {}) {
   const { manifest, state, manifestHash } = batch;
   const frozenConfig = manifest.agentConfig?.fingerprint ?? null;
   const samples = manifest.samples.map(spec => {
     const item = state.samples[spec.key];
-    const fingerprint = item.agentConfigFingerprint ?? null;
-    const observed = item.agentConfigObserved ?? (fingerprint ? [fingerprint] : []);
+    const observed = item.configObserved ?? [];
     return { key: spec.key, caseKey: spec.caseKey, sampleIndex: spec.sampleIndex, runKey: spec.runKey, issue: item.issue ?? null,
       state: item.state, stateSource: item.stateSource ?? 'plan', dispatchedAt: item.dispatchedAt ?? null, terminalAt: item.terminalAt ?? null,
-      reason: item.reason ?? null, agentConfigFingerprint: fingerprint,
+      reason: item.reason ?? null, agentConfigFingerprint: observed.at(-1) ?? null,
       comparable: !item.issue || !observed.length || !frozenConfig ? null : observed.every(value => value === frozenConfig),
       // Ended at prepare or by the batch: no build ran, so no report will exist.
-      report: item.report ?? { state: TERMINAL.has(item.state) && !needsReport(item) ? 'not-applicable' : 'missing', revision: null, execution: null, acceptance: null } };
+      report: item.report ?? { state: FINISHED_STATES.has(item.state) && !expectsReport(item) ? 'not-applicable' : 'missing', revision: null, execution: null, acceptance: null } };
   });
   const byState = Object.fromEntries(SAMPLE_STATES.map(name => [name, samples.filter(s => s.state === name).length]));
   const available = samples.filter(s => s.report.state === 'available').length;
@@ -556,7 +534,7 @@ export function batchDocument(batch, { exporter = {} } = {}) {
 }
 
 // A sample run requests an advance from its own last job; wait until it has completed.
-export async function waitForRun(client, runId, { attempts = 30, pause = ms => new Promise(resolve => setTimeout(resolve, ms)) } = {}) {
+async function waitForRun(client, runId, { attempts = 30, pause = ms => new Promise(resolve => setTimeout(resolve, ms)) } = {}) {
   for (let n = 0; n < attempts; n++) {
     const run = await client.request('GET', `/actions/runs/${runId}`);
     if (run?.status === 'completed' || run?.path !== '.github/workflows/code-agent-task.yml') return run;

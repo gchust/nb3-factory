@@ -6,12 +6,12 @@ import { createHash } from 'node:crypto';
 import { crc32, inflateRawSync } from 'node:zlib';
 import { assertSchema, loadContract } from './json-schema.mjs';
 
-export const BUNDLE_LIMITS = { zipBytes: 64 * 1024 * 1024, unpackedBytes: 128 * 1024 * 1024, files: 2048, jsonBytes: 4 * 1024 * 1024 };
+const BUNDLE_LIMITS = { zipBytes: 64 * 1024 * 1024, unpackedBytes: 128 * 1024 * 1024, files: 2048, jsonBytes: 4 * 1024 * 1024 };
 const sha256 = value => createHash('sha256').update(value).digest('hex');
 const DOS_DATE = (0 << 9) | (1 << 5) | 1; // 1980-01-01, the earliest ZIP date.
 const UTF8 = 0x0800;
 
-export function safeEntryName(name) {
+function safeEntryName(name) {
   return typeof name === 'string' && name.length > 0 && name.length <= 300 && !name.includes('\\') && !name.includes('\0') &&
     !name.startsWith('/') && !/^[A-Za-z]:/.test(name) &&
     name.split('/').every(part => part && part !== '.' && part !== '..' && !/[\u0000-\u001f]/u.test(part));
@@ -107,7 +107,7 @@ export function readZip(buffer, { maxFiles = BUNDLE_LIMITS.files, maxUnpacked = 
 export const idempotencyKey = ({ instance, type, key, revision }) =>
   `nb3-eval-v1-${sha256(`${instance}\n${type}\n${key}\n${revision}`)}`;
 
-export function subjectOf(document) {
+function subjectOf(document) {
   if (document.type === 'evaluation-report') return { type: document.type, key: document.run.key, revision: document.revision, sourceInstance: document.source.instance };
   if (document.type === 'evaluation-batch') return { type: document.type, key: document.batch.subjectKey, revision: document.revision, sourceInstance: document.source.instance };
   throw new Error('Unknown evaluation document type');

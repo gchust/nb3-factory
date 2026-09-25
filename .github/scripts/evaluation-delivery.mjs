@@ -9,13 +9,13 @@ import { fileURLToPath } from 'node:url';
 import { setTimeout as sleep } from 'node:timers/promises';
 import { idempotencyKey, readZip, verifyBundle } from './evaluation-bundle.mjs';
 import { keyDigest } from './evaluation-identity.mjs';
-import { commitTree, enqueue, outboxId, readIndex, readOutbox, readRegistryJson, readSubject, recordDeliveries, revisionDir, ROOT, subjectDir } from './evaluation-registry.mjs';
+import { commitTree, enqueue, outboxId, readIndex, readOutbox, readRegistryJson, readSubject, recordDeliveries, ROOT } from './evaluation-registry.mjs';
 import { assertSchema, loadContract } from './json-schema.mjs';
 import { deliveryConfig, DeliveryConfigError } from './evaluation-target.mjs';
 
-export { AUTH_MODES, deliveryConfig, DeliveryConfigError, targetIdOf } from './evaluation-target.mjs';
+export { deliveryConfig, DeliveryConfigError, targetIdOf } from './evaluation-target.mjs';
 
-export const RETRY = { attempts: 3, timeoutMs: 30_000, maxRetryAfterSeconds: 60, maxTotalAttempts: 24, bundleRetentionDays: 90 };
+const RETRY = { attempts: 3, timeoutMs: 30_000, maxRetryAfterSeconds: 60, maxTotalAttempts: 24, bundleRetentionDays: 90 };
 export const SCAN_LIMIT = 10;
 // The send job has 30 minutes; stop taking bundles well before, leaving time to save results.
 export const SEND_BUDGET_MS = 20 * 60_000;
@@ -29,7 +29,7 @@ function retryAfterMs(value, now) {
   return Math.max(1, Math.min(RETRY.maxRetryAfterSeconds, Math.ceil(seconds))) * 1000;
 }
 
-export function classifyStatus(status) {
+function classifyStatus(status) {
   if (status === 200 || status === 201) return { outcome: 'stored' };
   if (status === 409) return { outcome: 'conflict', error: 'idempotency-conflict' };
   if (status === 429 || status === 408 || [500, 502, 503, 504].includes(status)) return { outcome: 'retryable', error: `http-${status}` };
@@ -39,7 +39,7 @@ export function classifyStatus(status) {
   return { outcome: 'rejected', error: category ?? `http-${status}` };
 }
 
-export function validateReceipt(value, expected) {
+function validateReceipt(value, expected) {
   assertSchema(loadContract('evaluation-receipt.v1'), value, 'receiver receipt');
   const key = expected.type === 'evaluation-batch' ? value.batchKey : value.runKey;
   if (value.sourceInstance !== expected.sourceInstance || key !== expected.key || value.revision !== expected.revision ||
@@ -119,7 +119,7 @@ async function artifactZip(client, id, fetcher = fetch) {
 
 // Find the registered bundle in a retained artifact and verify it byte-for-byte.
 // status: available | missing (gone/expired) | invalid (bytes differ) | unavailable (try again later)
-export async function fetchBundle(client, entry, { preferredArtifactId = null, fetcher } = {}) {
+async function fetchBundle(client, entry, { preferredArtifactId = null, fetcher } = {}) {
   const locations = [...entry.bundle.locations].reverse();
   const tried = [];
   let unavailable = false, invalid = false;
@@ -177,12 +177,12 @@ export async function planDeliveries(client, { mode, type, key, revision, artifa
       bundleSha256: entry.bundle.sha256, zip: found.zip, source: found.status, reason: found.reason ?? null,
       previousAttempts: queued?.attempts ?? 0 });
   };
-  if (mode === 'auto' || mode === 'replay') await pick(type, key, Number(revision), Number(artifactId) || null);
+  if (mode === 'replay') await pick(type, key, Number(revision), Number(artifactId) || null);
   else if (mode === 'scan' || mode === 'retry-rejected') {
     const wanted = mode === 'scan' ? ['pending'] : ['rejected'];
     for (const entry of outbox.entries.filter(item => item.targetId === config.targetId && wanted.includes(item.state)).slice(0, limit))
       await pick(entry.type, entry.key, entry.revision, null);
-  } else throw new Error('Delivery mode must be auto, replay, scan or retry-rejected');
+  } else throw new Error('Delivery mode must be replay, scan or retry-rejected');
   return { targetId: config.targetId, items };
 }
 
@@ -228,7 +228,7 @@ export async function sendDeliveries(plan, { env, fetcher, pause, allowInsecureL
 const strip = ({ zip, source, previousAttempts, sourceInstance, ...item }) => item;
 
 // Late receiver deployment: queue every current revision, batches before samples.
-export async function enqueueBackfill(client, env, { limit = 500, now = new Date() } = {}) {
+async function enqueueBackfill(client, env, { limit = 500, now = new Date() } = {}) {
   const config = deliveryConfig(env, { requireToken: false });
   return commitTree(client, 'evaluation: enqueue delivery backfill', async ref => {
     const { index } = await readIndex(client);
@@ -298,4 +298,3 @@ async function main() {
   } else throw new Error('Usage: evaluation-delivery.mjs <plan|send|record|backfill> ...');
 }
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) main().catch(error => { console.error(error.message); process.exitCode = 1; });
-export { revisionDir, subjectDir };

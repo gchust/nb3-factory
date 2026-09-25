@@ -5,7 +5,7 @@ import { createHash } from 'node:crypto';
 
 const sha256 = value => createHash('sha256').update(value).digest('hex');
 const loopback = host => ['127.0.0.1', 'localhost', '[::1]'].includes(host);
-export const AUTH_MODES = ['x-api-key', 'bearer'];
+const AUTH_MODES = ['x-api-key', 'bearer'];
 export class DeliveryConfigError extends Error {}
 
 

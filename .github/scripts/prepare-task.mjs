@@ -18,7 +18,7 @@ import { isManualIssue, isPresetIssue, preparePresetIssue } from './issue-preset
 import { resolveTaskBranch, taskIssueNumber } from './task-compat.mjs';
 import { resolveTargetBranch, pinInitialBase } from './task-base.mjs';
 import { taskEvaluationIdentity } from './evaluation-identity.mjs';
-import { budgetRefusal, claimSample, recordTerminal, resolveSample, sampleUsage } from './evaluation-sample.mjs';
+import { gateSample, recordTerminal, resolveSample } from './evaluation-sample.mjs';
 
 const args = parseArgs(process.argv.slice(2));
 const event = JSON.parse(readFileSync(args.event, 'utf8'));
@@ -58,22 +58,21 @@ try {
   const runId = Number(process.env.GITHUB_RUN_ID);
   // The batch coordinator advances when a sample run ends (bot-started runs emit no workflow_run).
   if (sample) appendGithubOutput(outputPath, 'evaluation_sample', 'true');
-  if (sample?.cancelled) {
-    const reason = `评测批次 \`${sample.receipt.batchKey}\` 已取消：不再开始或自动续跑该样本；已发生的执行、补丁与用量保留。`;
-    if (batchSample) await recordTerminal(client, batchSample, runId, 'cancelled', reason);
-    await client.setIssueStatus(issue, 'agent:failed', reason);
-    appendGithubOutput(outputPath, 'status', 'cancelled');
-    process.exit(0);
-  }
-  if (batchSample?.released) {
-    // The serial slot was already given to the next sample; a late run must not overlap it.
-    await client.setIssueStatus(issue, 'agent:failed',
-      `评测样本 \`${batchSample.receipt.sampleKey}\` 已由批次记为 \`${batchSample.released}\` 并释放串行槽位：不再开始或续跑。已发生的执行、补丁与用量保留。`);
-    appendGithubOutput(outputPath, 'status', 'released');
-    process.exit(0);
-  }
-  if (batchSample && !continuation && process.env.FACTORY_CONTROL_SHA !== batchSample.receipt.controlSha) {
-    throw new TaskInputError('评测样本必须使用批次冻结的控制代码；拒绝以当前默认分支执行。');
+  let budgetUsed = null;
+  if (sample) {
+    // One gate, shared with the Agent job's admission (see gateSample for the rules).
+    const gate = await gateSample(client, sample, { runId, attempt: Number(process.env.GITHUB_RUN_ATTEMPT || 1),
+      incremental: !batchSample, fresh: Boolean(batchSample) && !continuation,
+      controlSha: process.env.FACTORY_CONTROL_SHA, serverUrl: process.env.GITHUB_SERVER_URL });
+    if (gate.decision === 'rejected') throw new TaskInputError(gate.reason);
+    if (gate.decision !== 'run') {
+      // Decisions the coordinator cannot see in a Run's own result are recorded for it.
+      if (batchSample && ['cancelled', 'budget-exhausted'].includes(gate.decision)) await recordTerminal(client, batchSample, runId, gate.decision, gate.reason);
+      if (gate.decision !== 'duplicate') await client.setIssueStatus(issue, 'agent:failed', gate.reason);
+      appendGithubOutput(outputPath, 'status', gate.decision);
+      process.exit(0);
+    }
+    budgetUsed = gate.used;
   }
   if (buildCommentId) {
     const { receipts } = await receiptsFor(client, issueNumber);
@@ -166,6 +165,8 @@ try {
       }),
       ...(batchSample ? {
         budget: batchSample.receipt.budget,
+        // GitHub-measured usage so far: the checkpoint's floor for this execution.
+        budgetUsed,
         coordinatorIssue: batchSample.receipt.coordinatorIssue,
         manifestHash: batchSample.manifestHash,
       } : {}),
@@ -211,29 +212,6 @@ try {
   ) {
     appendGithubOutput(outputPath, 'status', 'duplicate');
     process.exit(0);
-  }
-
-  // One build per batch sample: a duplicate or reordered dispatch exits without work.
-  if (batchSample && !continuation &&
-      !(await claimSample(client, batchSample, runId, process.env.GITHUB_SERVER_URL))) {
-    appendGithubOutput(outputPath, 'status', 'duplicate');
-    process.exit(0);
-  }
-  // The budget spans the whole chain, measured from GitHub's job records so that a
-  // continuation, recovery or re-run attempt cannot reset or shrink it.
-  if (batchSample) {
-    const { budget } = batchSample.receipt;
-    const used = await sampleUsage(client, issueNumber, { runId, attempt: Number(process.env.GITHUB_RUN_ATTEMPT || 1), since: issue.created_at });
-    metadata.evaluation.budgetUsed = used;
-    writeFileSync(args.metadata, `${JSON.stringify(metadata, null, 2)}\n`);
-    const refusal = budgetRefusal(budget, used);
-    if (refusal) {
-      const reason = `**已达到评测计划预算**：${refusal}。不再启动新的执行；已保存的补丁、验收记录与用量保留，这不是业务缺陷结论。`;
-      await recordTerminal(client, batchSample, runId, 'budget-exhausted', reason);
-      await client.setIssueStatus(issue, 'agent:failed', reason);
-      appendGithubOutput(outputPath, 'status', 'budget-exhausted');
-      process.exit(0);
-    }
   }
 
   const workRef = await client.getRef(workBranch, true);

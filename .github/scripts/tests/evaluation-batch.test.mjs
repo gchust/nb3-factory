@@ -3,16 +3,16 @@ import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import test from 'node:test';
-import { activeBatches, advanceBatch, batchDocument, cancelBatch, finalSnapshotRegistered, PLAN_LIMITS, runCoordinator, startBatch, validatePlans, writeBatchExport } from '../evaluation-batch.mjs';
+import { advanceBatch, batchDocument, cancelBatch, finalSnapshotRegistered, PLAN_LIMITS, runCoordinator, startBatch, validatePlans, writeBatchExport } from '../evaluation-batch.mjs';
 import { existsSync } from 'node:fs';
 import { commitPrepared, prepareRevision } from '../evaluation-archive.mjs';
 import { mkdtempSync, rmSync } from 'node:fs';
 import os from 'node:os';
 import { commitRevision, readSubject } from '../evaluation-registry.mjs';
-import { admitSample, claimSample, markers, readManifest, recordTerminal, resolveSample, sampleUsage, SAMPLE_LABEL, verifyAncestor } from '../evaluation-sample.mjs';
+import { admitSample, claimSample, gateSample, markers, readManifest, recordTerminal, resolveSample, sampleUsage, SAMPLE_LABEL, verifyAncestor } from '../evaluation-sample.mjs';
 import { readSnapshot } from '../issue-presets.mjs';
 import { loadContract, validateSchema } from '../json-schema.mjs';
-import { control, fakeRepository, human, lock, names, presetBody, repository } from './evaluation-fixtures.mjs';
+import { control, fakeRepository, human, lock, names, openBatches, presetBody, repository } from './evaluation-fixtures.mjs';
 
 const bot = { login: 'github-actions[bot]', type: 'Bot' };
 
@@ -25,7 +25,7 @@ async function start(client, plans = plan(), now = Date.parse('2026-09-25T02:00:
   if (result.batch) await advanceBatch(client, result.batch, { now });
   return result;
 }
-const current = async client => (await activeBatches(client))[0];
+const current = async client => (await openBatches(client))[0];
 
 test('plans are bounded, schema-checked and v1 serial; the checked-in plans are valid', () => {
   const plans = validatePlans(plansFile, { defaultBranch: 'develop' });
@@ -120,6 +120,27 @@ test('duplicate or reordered dispatches never build a sample twice', async () =>
   client.run(number, { id: 111, status: 'in_progress' });
   await advanceBatch(client, await current(client), { now: Date.parse('2026-09-25T04:00:00Z') });
   assert.equal(client.state.dispatches.length, 1);
+});
+
+test('one ordered gate: frozen control before the claim, incremental builds only stop for a cancelled batch', async () => {
+  const client = fakeRepository();
+  const { batchKey } = await start(client, plan(2));
+  const number = client.samples()[0].number;
+  const claims = () => client.state.comments.get(number).filter(c => c.body.includes('factory-evaluation-sample-claim')).length;
+  const fresh = { runId: 501, fresh: true, controlSha: control };
+  // A dispatch from another control SHA is rejected before it can take the claim.
+  assert.equal((await gateSample(client, await resolveSample(client, number), { ...fresh, controlSha: 'd'.repeat(40) })).decision, 'rejected');
+  assert.equal(claims(), 0);
+  assert.deepEqual(await gateSample(client, await resolveSample(client, number), fresh), { decision: 'run', used: { activeSeconds: 0, executions: 0 } });
+  assert.equal((await gateSample(client, await resolveSample(client, number), { ...fresh, runId: 502 })).decision, 'duplicate');
+  assert.equal(claims(), 1);
+  // Once the sample is released only an incremental /build (an ordinary task) may start on its Issue.
+  client.run(number, { id: 501, conclusion: 'failure', delivered: false });
+  await advanceBatch(client, await current(client), { now: Date.parse('2026-09-25T03:00:00Z') });
+  assert.equal((await gateSample(client, await resolveSample(client, number), { runId: 503 })).decision, 'released');
+  assert.equal((await gateSample(client, await resolveSample(client, number), { runId: 503, incremental: true })).decision, 'run');
+  await cancelBatch(client, batchKey, { now: Date.parse('2026-09-25T04:00:00Z') });
+  assert.equal((await gateSample(client, await resolveSample(client, number), { runId: 504, incremental: true })).decision, 'cancelled');
 });
 
 test('handoffs keep the serial slot and the budget-exhausted state comes from the sample report', async () => {
@@ -269,7 +290,7 @@ test('prepare decisions are terminal receipts, and prepare-only duplicate runs n
   let batch = await advanceBatch(client, await current(client), { now: Date.parse('2026-09-25T03:00:00Z') });
   const [first, second] = Object.values(batch.state.samples);
   assert.equal(first.state, 'passed');
-  assert.equal(first.terminalRunId, 7101);
+  assert.equal(first.final.runId, 7101);
   const next = client.samples()[1].number;
   client.run(next, { id: 7201, delivered: false });
   client.state.jobs.set(7201, [{ name: 'agent', conclusion: 'skipped', steps: [] }]);
@@ -361,7 +382,7 @@ test('a finished batch stays open until its final snapshot is registered, then c
   // The archive step failed: compensation still finds the batch and re-exports it.
   batch = await advanceBatch(client, await current(client), { now: Date.parse('2026-09-25T04:00:00Z') });
   assert.equal(batch.coordinator.state, 'open');
-  assert.equal((await activeBatches(client)).length, 1);
+  assert.equal((await openBatches(client)).length, 1);
   assert.equal((await startBatch(client, { plans: plan(1), planKey: 'smoke', trigger: 'manual', now: 5, runId: 99, controlSha: control, env: {} })).status, 'started',
     'a completed batch awaiting its archive does not block the next batch');
   await registerBatch(client, batch);
@@ -431,7 +452,7 @@ test('a report of attempt 1 never stands in for a successful attempt 2 of the sa
   Object.assign(client.state.runs.at(-1), { run_attempt: 2 });
   batch = await advanceBatch(client, batch, { now: Date.parse('2026-09-25T03:00:00Z') });
   assert.equal(batch.state.samples[key].state, 'passed', 'judged from attempt 2 itself, not from attempt 1\'s report');
-  assert.equal(batch.state.samples[key].terminalRunAttempt, 2);
+  assert.equal(batch.state.samples[key].final.attempt, 2);
   assert.equal(batch.state.state, 'active', 'attempt 2\'s own report has not arrived yet');
   // The grace period passes and the batch completes; the late report still refines the open batch.
   batch = await advanceBatch(client, batch, { now: Date.parse('2026-09-25T10:00:00Z') });
@@ -454,7 +475,7 @@ test('a finished batch awaiting its archive and a running batch are exported and
   first = await advanceBatch(client, first, { now: Date.parse('2026-09-25T03:00:00Z') });
   assert.equal(first.state.state, 'completed');
   await startBatch(client, { plans: plan(1), planKey: 'smoke', trigger: 'manual', now: 9, runId: 9201, controlSha: control, env: {} });
-  const open = await activeBatches(client);
+  const open = await openBatches(client);
   assert.equal(open.length, 2);
   const output = mkdtempSync(path.join(os.tmpdir(), 'batch-export-'));
   t.after(() => rmSync(output, { recursive: true, force: true }));
@@ -468,8 +489,8 @@ test('a finished batch awaiting its archive and a running batch are exported and
     await prepareRevision(client, { input: path.join(output, key), output: bundle });
     await commitPrepared(client, { input: bundle, env: {}, runId: 9300, attempt: 1, artifactId: null });
   }
-  for (const batch of await activeBatches(client)) await advanceBatch(client, batch, { now: Date.parse('2026-09-25T05:00:00Z') });
-  const remaining = await activeBatches(client);
+  for (const batch of await openBatches(client)) await advanceBatch(client, batch, { now: Date.parse('2026-09-25T05:00:00Z') });
+  const remaining = await openBatches(client);
   assert.deepEqual(remaining.map(b => b.manifest.batchKey), ['smoke-r9201'], 'the archived finished batch closed; the running one stays');
   assert.equal(client.samples().length, samplesBefore, 'compensation creates no business samples');
 });

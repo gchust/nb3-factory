@@ -16,7 +16,7 @@ const segment = /^[A-Za-z0-9][A-Za-z0-9._-]{0,79}$/;
 const positive = value => Number.isSafeInteger(value) && value > 0;
 export const isBot = user => user?.login === 'github-actions[bot]' && user?.type === 'Bot';
 const labels = issue => (issue.labels ?? []).map(label => label.name ?? label);
-export const isSampleIssue = issue => labels(issue).includes(SAMPLE_LABEL);
+const isSampleIssue = issue => labels(issue).includes(SAMPLE_LABEL);
 
 export const markers = {
   batch: key => `<!-- factory-evaluation-batch:${key} -->`,
@@ -26,8 +26,12 @@ export const markers = {
   claim: (key, runId) => `<!-- factory-evaluation-sample-claim:${key}:${runId} -->`,
   terminal: '<!-- factory-evaluation-sample-terminal-v1:',
 };
-export const TERMINAL_DECISIONS = ['cancelled', 'budget-exhausted'];
-export const RELEASED_STATES = new Set(['passed', 'failed', 'blocked', 'budget-exhausted', 'cancelled', 'unknown']);
+const TERMINAL_DECISIONS = ['cancelled', 'budget-exhausted'];
+// Sample lifecycle shared by the coordinator and the task workflow:
+// planned → queued → running → one of FINISHED_STATES. A finished sample has
+// released the serial slot and may never run again.
+export const SAMPLE_STATES = ['planned', 'queued', 'running', 'passed', 'failed', 'blocked', 'budget-exhausted', 'cancelled', 'unknown'];
+export const FINISHED_STATES = new Set(['passed', 'failed', 'blocked', 'budget-exhausted', 'cancelled', 'unknown']);
 const manifestPattern = /<!-- factory-evaluation-batch-manifest-v1:([a-f0-9]{64}):(\d+):(\d+)\n([A-Za-z0-9+/=]+)\n-->$/;
 const statePattern = /<!-- factory-evaluation-batch-state-v1:([A-Za-z0-9][A-Za-z0-9._-]{0,79}):([1-9]\d*):([a-f0-9]{64})\n([A-Za-z0-9+/=]+)\n-->$/;
 
@@ -91,7 +95,7 @@ export function readSampleReceipt(comments, issueNumber) {
     throw new Error('Invalid evaluation sample receipt');
   return { receipt, comment: found[0] };
 }
-export const claimsOf = (comments, sampleKey) => comments.filter(c => isBot(c.user))
+const claimsOf = (comments, sampleKey) => comments.filter(c => isBot(c.user))
   .map(c => new RegExp(`<!-- factory-evaluation-sample-claim:${sampleKey.replace(/[.*+?^${}()|[\]\\/]/g, '\\$&')}:(\\d+) -->$`).exec(c.body ?? '')?.[1])
   .filter(Boolean).map(Number);
 
@@ -131,7 +135,7 @@ export async function resolveSample(client, issueNumber, { issue } = {}) {
   if (assigned?.issue !== issueNumber) throw new Error('Batch state does not assign this Issue to the sample');
   // Once the coordinator released the slot, the sample may never run again.
   return { receipt, manifest, manifestHash: loaded.hash, cancelled: state.cancelled === true,
-    released: RELEASED_STATES.has(assigned.state) ? assigned.state : null, comments, issue };
+    released: FINISHED_STATES.has(assigned.state) ? assigned.state : null, comments, issue };
 }
 
 // One build per sample. Returns false for a duplicate or reordered dispatch;
@@ -170,27 +174,48 @@ export async function sampleUsage(client, issueNumber, { runId, attempt = 1, sin
   return { activeSeconds, executions };
 }
 
-// One rule for prepare and for the Agent job itself: executions after the first
-// are capped, and a new execution needs useful time plus archive time.
-export const BUDGET_MARGIN_SECONDS = 600;
+// One budget rule for every new execution of a sample (prepare, the Agent job's
+// own admission, and the handoff guard): `used` counts the executions before it.
+// Executions after the first are capped, and a new one needs one useful phase
+// (300 s) plus the archive reserve (pipeline-state's ARCHIVE_RESERVE_SECONDS, 300 s).
+const BUDGET_MARGIN_SECONDS = 600;
 export function budgetRefusal(budget, used) {
-  if (used.executions > budget.maxContinuations) return `已执行 ${used.executions + 1} 次（续跑 / 恢复 / 重跑上限 ${budget.maxContinuations}）`;
-  if (used.activeSeconds > budget.maxActiveSeconds - BUDGET_MARGIN_SECONDS) return `累计主动执行 ${used.activeSeconds} 秒，预算 ${budget.maxActiveSeconds} 秒`;
+  if (used.executions > budget.maxContinuations)
+    return `续跑次数将超过上限：这将是第 ${used.executions + 1} 次执行，初始执行之外最多 ${budget.maxContinuations} 次续跑 / 恢复 / 重跑`;
+  if (used.activeSeconds > budget.maxActiveSeconds - BUDGET_MARGIN_SECONDS)
+    return `主动执行时间预算 ${budget.maxActiveSeconds} 秒已用尽（已用 ${used.activeSeconds} 秒，新执行至少需要 ${BUDGET_MARGIN_SECONDS} 秒）`;
   return null;
 }
 
-// Prepare's outputs can be reused by "Re-run failed jobs", so the Agent job
-// re-checks the live batch state and GitHub-side usage before any model call.
+// The single gate before work starts on a sample Issue, rules in order:
+//   cancelled batch        → cancelled (also stops an incremental /build on the Issue)
+//   incremental /build     → run (an ordinary task, outside the sample's budget)
+//   released sample        → released (its serial slot already went to the next sample)
+//   fresh dispatch         → rejected unless it runs the frozen control code,
+//                            duplicate unless this Run claims the sample
+//   spent budget           → budget-exhausted, otherwise run (with GitHub-measured usage)
+// prepare calls it for every Run; the Agent job calls it again (no claim) because
+// "Re-run failed jobs" reuses prepare's outputs.
+export async function gateSample(client, sample, { runId, attempt = 1, incremental = false, fresh = false, controlSha = null, serverUrl } = {}) {
+  if (sample.cancelled) return { decision: 'cancelled', reason: `评测批次 \`${sample.receipt.batchKey}\` 已取消：不再开始或自动续跑该样本；已发生的执行、补丁与用量保留。` };
+  if (incremental) return { decision: 'run', used: null };
+  if (sample.released) return { decision: 'released',
+    reason: `评测样本 \`${sample.receipt.sampleKey}\` 已由批次记为 \`${sample.released}\` 并释放串行槽位：不再开始或续跑。已发生的执行、补丁与用量保留。` };
+  if (fresh && controlSha !== sample.receipt.controlSha) return { decision: 'rejected', reason: '评测样本必须使用批次冻结的控制代码；拒绝以当前默认分支执行。' };
+  if (fresh && !(await claimSample(client, sample, runId, serverUrl))) return { decision: 'duplicate', reason: '该样本已由另一个 Run 认领；重复派发不会再次搭建。' };
+  const used = await sampleUsage(client, sample.receipt.issueNumber, { runId, attempt, since: sample.issue.created_at });
+  const refusal = budgetRefusal(sample.receipt.budget, used);
+  return refusal ? { decision: 'budget-exhausted', used,
+    reason: `**已达到评测计划预算**：${refusal}。不再启动新的执行；已保存的补丁、验收记录与用量保留，这不是业务缺陷结论。` } : { decision: 'run', used };
+}
+
 export async function admitSample(client, metadata, { runId, attempt }) {
   const identity = metadata?.evaluation;
   if (identity?.kind !== 'batch-sample') return { admitted: true, sample: null };
   const sample = await resolveSample(client, metadata.issue.number);
   if (!sample || sample.receipt.sampleKey !== identity.sampleKey) throw new Error('Batch sample receipt no longer matches the task metadata');
-  if (sample.cancelled) return { admitted: false, reason: `评测批次 ${sample.receipt.batchKey} 已取消` };
-  if (sample.released) return { admitted: false, reason: `样本已由批次记为 ${sample.released} 并释放串行槽位` };
-  const used = await sampleUsage(client, metadata.issue.number, { runId, attempt, since: sample.issue.created_at });
-  const refusal = budgetRefusal(sample.receipt.budget, used);
-  return refusal ? { admitted: false, reason: `已达到评测计划预算：${refusal}`, used } : { admitted: true, sample, used };
+  const gate = await gateSample(client, sample, { runId, attempt });
+  return { admitted: gate.decision === 'run', reason: gate.reason, used: gate.used, sample };
 }
 
 // A decision made at prepare (not by a build) is recorded for the coordinator.
