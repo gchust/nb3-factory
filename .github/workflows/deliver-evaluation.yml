@@ -135,6 +135,7 @@ jobs:
           EVALUATION_AUTH_MODE: ${{ vars.EVALUATION_AUTH_MODE }}
           EVALUATION_TOKEN: ${{ secrets.EVALUATION_TOKEN }}
           EVALUATION_DELIVERY_FORMAT: ${{ vars.EVALUATION_DELIVERY_FORMAT }}
+          EVALUATION_TIMEOUT_SECONDS: ${{ vars.EVALUATION_TIMEOUT_SECONDS || '180' }}
         run: |
           node control/.github/scripts/evaluation-delivery.mjs send \
             --plan "$RUNNER_TEMP/delivery-plan" --output "$RUNNER_TEMP/delivery-results/results.json"

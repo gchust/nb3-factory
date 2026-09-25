@@ -13,10 +13,11 @@ import { commitTree, enqueue, outboxId, readIndex, readOutbox, readRegistryJson,
 import { assertSchema, loadContract } from './json-schema.mjs';
 import { deliveryConfig, DeliveryConfigError } from './evaluation-target.mjs';
 import { problemSubmission } from './problem-submission.mjs';
+import { reportLinkSubmission } from './report-link-submission.mjs';
 
 export { deliveryConfig, DeliveryConfigError, targetIdOf } from './evaluation-target.mjs';
 
-const RETRY = { attempts: 3, timeoutMs: 30_000, maxRetryAfterSeconds: 60, maxTotalAttempts: 24, bundleRetentionDays: 90 };
+const RETRY = { attempts: 3, timeoutMs: 180_000, maxRetryAfterSeconds: 60, maxTotalAttempts: 24, bundleRetentionDays: 90 };
 export const SCAN_LIMIT = 10;
 // The send job has 30 minutes; stop taking bundles well before, leaving time to save results.
 export const SEND_BUDGET_MS = 20 * 60_000;
@@ -64,14 +65,19 @@ function multipart(zip, format) {
 }
 
 // Bounded retry of one bundle: the same bytes and idempotency key on every attempt.
-export async function deliverBundle({ zip, subject, config, fetcher = fetch, pause = sleep, now = () => Date.now(), attempts = RETRY.attempts, timeoutMs = RETRY.timeoutMs }) {
+export async function deliverBundle({ zip, subject, config, fetcher = fetch, pause = sleep, now = () => Date.now(), attempts = RETRY.attempts, timeoutMs = config.timeoutMs ?? RETRY.timeoutMs }) {
   const bundleSha256 = sha256(zip);
   const expected = { ...subject, bundleSha256 };
-  const { boundary, body } = multipart(zip, config.format);
+  const linked = config.format === 'testmanage3-links-v1';
+  const { boundary, body } = linked
+    ? { body: Buffer.from(JSON.stringify(reportLinkSubmission(JSON.parse(readZip(zip).find(file => file.path === 'evaluation.json').data.toString('utf8'))))) }
+    : multipart(zip, config.format);
+  if (linked && body.length > 4 * 1024 * 1024) throw new Error('Report metadata exceeds 4 MiB');
   const headers = {
-    'Content-Type': `multipart/form-data; boundary=${boundary}`, Accept: 'application/json', 'User-Agent': 'nb3-factory-evaluation/1',
+    'Content-Type': linked ? 'application/json' : `multipart/form-data; boundary=${boundary}`, Accept: 'application/json', 'User-Agent': 'nb3-factory-evaluation/1',
     'Idempotency-Key': idempotencyKey({ instance: subject.sourceInstance, type: subject.type, key: subject.key, revision: subject.revision }),
     'X-Evaluation-Schema-Version': '1', 'X-Evaluation-Type': subject.type, 'X-Evaluation-Bundle-SHA256': bundleSha256,
+    ...(linked ? { 'X-Evaluation-Payload-SHA256': sha256(body) } : {}),
     ...(config.authMode === 'bearer' ? { Authorization: `Bearer ${config.token}` } : { 'x-api-key': config.token }),
   };
   const history = [];
@@ -225,7 +231,8 @@ export async function sendDeliveries(plan, { env, fetcher, pause, allowInsecureL
         outcome: 'source-expired', error: item.source === 'invalid' ? 'source-invalid' : 'source-expired', durationMs: 0 }], receipt: null, reason: item.reason });
       continue;
     }
-    if (now() + ITEM_WORST_CASE_MS > deadline) { deferred++; continue; }
+    const worstCaseMs = RETRY.attempts * config.timeoutMs + (RETRY.attempts - 1) * RETRY.maxRetryAfterSeconds * 1000;
+    if (now() + worstCaseMs > deadline) { deferred++; continue; }
     const outcome = await deliverBundle({ zip: item.zip, subject: { type: item.type, key: item.key, revision: item.revision, sourceInstance: item.sourceInstance },
       config, fetcher, pause, now });
     if (outcome.bundleSha256 !== item.bundleSha256) throw new Error('Bundle changed after verification');
