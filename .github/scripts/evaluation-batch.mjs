@@ -300,9 +300,11 @@ const newSample = () => ({ state: 'planned', stateSource: 'plan', issue: null, d
 const executionOf = run => ({ runId: run.id, attempt: run.run_attempt ?? 1 });
 const finished = (state, stateSource, run, reason) => ({ state, stateSource, final: run ? executionOf(run) : null, ...(reason ? { reason } : {}) });
 const expectsReport = item => Boolean(item.issue && item.final && ['run', 'report'].includes(item.stateSource));
+// The settings sequence as observed, collapsing only consecutive repeats (A → B → A
+// stays three entries), so the last entry is the latest settings.
 const observeConfig = (item, fingerprint) => {
   item.configObserved ??= [];
-  if (fingerprint && !item.configObserved.includes(fingerprint)) item.configObserved.push(fingerprint);
+  if (fingerprint && item.configObserved.at(-1) !== fingerprint) item.configObserved.push(fingerprint);
 };
 
 // The newest revision describing exactly this execution is its report (a later
@@ -325,7 +327,8 @@ const fromRun = (outcome, issue) => outcome === 'delivered' ? 'passed' : outcome
   : outcome === 'failure' ? (labelNames(issue).includes('agent:needs-input') ? 'blocked' : 'failed') : outcome === 'timed_out' ? 'failed' : 'unknown';
 
 // Observation of a dispatched chain: { state: 'running' } while any Run is active or a
-// handoff continues, { state: 'queued' } before any Run did work, otherwise finished().
+// handoff continues, { state: 'queued' } before any Run did work, otherwise finished()
+// from the Run alone; the report of that execution is read once, by applyReport.
 async function observeSample(client, batch, item, spec, now) {
   const { manifest } = batch;
   const issue = await client.getIssue(item.issue);
@@ -353,8 +356,7 @@ async function observeSample(client, batch, item, spec, now) {
   // Exit 75 is not terminal. Only a handoff with no Run for that long is released;
   // prepare and admission then refuse any late continuation of the released sample.
   if (outcome === 'handoff') return stale ? finished('unknown', 'run', latest, 'Handoff 后长时间没有续跑；释放串行槽位，迟到的续跑会在 prepare 被拒绝。') : { state: 'running' };
-  const summary = await reportFor(client, spec.runKey, executionOf(latest));
-  return summary ? finished(fromReport(summary), 'report', latest) : finished(fromRun(outcome, issue), 'run', latest);
+  return finished(fromRun(outcome, issue), 'run', latest);
 }
 
 function applyObservation(item, observed, { stamp, cancelled, fingerprint }) {

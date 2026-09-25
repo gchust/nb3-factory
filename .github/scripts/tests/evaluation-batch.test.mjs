@@ -3,12 +3,12 @@ import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import test from 'node:test';
-import { advanceBatch, batchDocument, cancelBatch, finalSnapshotRegistered, PLAN_LIMITS, runCoordinator, startBatch, validatePlans, writeBatchExport } from '../evaluation-batch.mjs';
+import { advanceBatch, agentConfig, batchDocument, cancelBatch, finalSnapshotRegistered, PLAN_LIMITS, runCoordinator, startBatch, validatePlans, writeBatchExport } from '../evaluation-batch.mjs';
 import { existsSync } from 'node:fs';
 import { commitPrepared, prepareRevision } from '../evaluation-archive.mjs';
 import { mkdtempSync, rmSync } from 'node:fs';
 import os from 'node:os';
-import { commitRevision, readSubject } from '../evaluation-registry.mjs';
+import { commitRevision, readSubject, subjectDir } from '../evaluation-registry.mjs';
 import { admitSample, claimSample, gateSample, markers, readManifest, recordTerminal, resolveSample, sampleUsage, SAMPLE_LABEL, verifyAncestor } from '../evaluation-sample.mjs';
 import { readSnapshot } from '../issue-presets.mjs';
 import { loadContract, validateSchema } from '../json-schema.mjs';
@@ -424,6 +424,38 @@ test('re-running only the Agent job re-admits the sample: released, cancelled or
     { runId: 8900, attempt: 2 });
   assert.equal(released.admitted, false);
   assert.match(released.reason, /释放串行槽位/);
+});
+
+test('a finishing sample reads its report index once per advance, and the report still decides the state', async () => {
+  const client = fakeRepository();
+  await start(client, plan(2));
+  const number = client.samples()[0].number;
+  const batch = await current(client);
+  const runKey = batch.manifest.samples[0].runKey;
+  client.run(number, { id: 7700 });
+  await registerReport(client, runKey, 7700, { execution: 'budget-exhausted', acceptance: 'unknown', delivery: 'not-published' });
+  const index = `/contents/${subjectDir(runKey)}/index.json`;
+  let reads = 0;
+  const request = client.request;
+  client.request = async (method, route, options) => { if (route === index) reads++; return request(method, route, options); };
+  const advanced = await advanceBatch(client, batch, { now: Date.parse('2026-09-25T03:00:00Z') });
+  assert.equal(reads, 1);
+  assert.deepEqual([advanced.state.samples[batch.manifest.samples[0].key].state, advanced.state.samples[batch.manifest.samples[0].key].stateSource],
+    ['budget-exhausted', 'report'], 'the successful Run is overridden by its own report');
+});
+
+test('the latest settings fingerprint follows A → B → A; any drift keeps the sample not comparable', async () => {
+  const client = fakeRepository();
+  const a = { CODE_AGENT_ENGINE: 'pi', CODE_AGENT_MODEL: 'model-a' }, b = { ...a, CODE_AGENT_MODEL: 'model-b' };
+  const started = await startBatch(client, { plans: plan(1), planKey: 'smoke', trigger: 'manual', now: Date.parse('2026-09-25T02:00:00Z'), runId: 32, controlSha: control, env: a });
+  let batch = await advanceBatch(client, started.batch, { now: Date.parse('2026-09-25T02:00:00Z'), env: a });
+  client.run(client.samples()[0].number, { id: 7800, status: 'in_progress' });
+  for (const [env, hour] of [[a, 3], [b, 4], [b, 5], [a, 6]]) batch = await advanceBatch(client, batch, { now: Date.parse(`2026-09-25T0${hour}:00:00Z`), env });
+  const [key] = Object.keys(batch.state.samples);
+  assert.deepEqual(batch.state.samples[key].configObserved, [a, b, a].map(env => agentConfig(env).fingerprint), 'only consecutive repeats collapse');
+  const [sample] = batchDocument(batch).samples;
+  assert.equal(sample.agentConfigFingerprint, agentConfig(a).fingerprint);
+  assert.equal(sample.comparable, false);
 });
 
 test('a re-dispatch under changed settings records them, so the sample is not comparable', async () => {
