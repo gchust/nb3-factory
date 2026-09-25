@@ -10,7 +10,7 @@ import { fileURLToPath } from 'node:url';
 import { createBundle, verifyBundle } from './evaluation-bundle.mjs';
 import { deliveryConfig, DeliveryConfigError } from './evaluation-target.mjs';
 import { keyDigest } from './evaluation-identity.mjs';
-import { buildEvaluation, carryReviewHistory, finalizeEvaluation, fingerprintEvaluation, documentKeyOf, refreshCurrentView } from './evaluation-report.mjs';
+import { buildEvaluation, carryReviewHistory, detachMissingAttachments, finalizeEvaluation, fingerprintEvaluation, documentKeyOf, refreshCurrentView } from './evaluation-report.mjs';
 import { commitRevision, planRevision, readHistory, registeredDocuments } from './evaluation-registry.mjs';
 import { parseBoolean } from './factory-lib.mjs';
 
@@ -58,15 +58,15 @@ function loadFiles(input) {
   });
 }
 
-// The screenshots a registered view references, taken from this export's files of the
-// same build; null unless every one is present byte for byte.
+// A refreshed view's bundle: the screenshots it references that this export of the same
+// build holds byte for byte. Any other one stays referenced by path and digest only.
 function viewFiles(view, files) {
-  const local = new Map(files.map(item => [item.path, item]));
+  const local = new Map(files.filter(item => item.role === 'evidence').map(item => [item.path, item]));
+  detachMissingAttachments(view, (attachment, sha256) =>
+    local.has(attachment) && createHash('sha256').update(local.get(attachment).data).digest('hex') === sha256);
   const needed = new Map();
   for (const item of view.evidence.filter(entry => entry.attachment)) {
-    const file = local.get(item.attachment);
-    if (!file || file.role !== 'evidence' || createHash('sha256').update(file.data).digest('hex') !== item.sha256) return null;
-    const entry = needed.get(item.attachment) ?? { ...file, evidenceIds: [] };
+    const entry = needed.get(item.attachment) ?? { ...local.get(item.attachment), evidenceIds: [] };
     entry.evidenceIds = [...new Set([...entry.evidenceIds, item.id])];
     needed.set(item.attachment, entry);
   }
@@ -82,12 +82,13 @@ export async function prepareRevision(client, { input, output: out, now = new Da
   const history = await readHistory(client, { type: draft.type, key });
   if (draft.type === 'evaluation-report') {
     const registered = await registeredDocuments(client, history, key);
+    const exported = structuredClone(draft);
     carryReviewHistory(draft, registered);
-    // A late older review is registered inside the refreshed current view (it keeps the
-    // newer review selected). Without its exact screenshots it is registered as history.
-    const view = refreshCurrentView(draft, registered, history.index?.current);
-    const needed = view && viewFiles(view, files);
-    if (needed) [draft, files] = [view, needed];
+    // A late older review is registered inside the refreshed current view, which keeps the
+    // newer review selected; its usage never depends on whether screenshots can be re-packed.
+    // The view merges this export's own records, as exported, with the registered history.
+    const view = refreshCurrentView(exported, registered, history.index?.current);
+    if (view) [draft, files] = [view, viewFiles(view, files)];
   }
   const evidence = files.filter(item => item.role === 'evidence');
   const fingerprint = fingerprintEvaluation(draft, evidence);

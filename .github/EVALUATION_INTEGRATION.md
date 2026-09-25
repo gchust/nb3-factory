@@ -93,7 +93,7 @@ Schema：[`contracts/evaluation-report.v1.schema.json`](contracts/evaluation-rep
 | `metrics` | 按唯一来源键（`agent-job:<id>`、`review-run:<run>:<attempt>`）的用量、作业时长与端到端时长、业务搭建数（恒为 1）、评审执行数 |
 | `evidence` | 标准化证据：带作用域的 id、原始出处、行号、文件哈希、脚本提取的摘录（再经密钥清洗）、附件路径或仅引用说明 |
 | `links` | Issue、Run、PR、gh-pages 固定报告路径；辅助信息，不作身份 |
-| `limitations` | 受限说明，`code` 为稳定机器码（如 `first-round-unavailable`、`review-partial`、`evidence-omitted`、`legacy-executions-unresolved`、`later-executions`、`usage-incomplete`、`reviews-carried`、`usage-history-unavailable`、`baseline-unknown`） |
+| `limitations` | 受限说明，`code` 为稳定机器码（如 `first-round-unavailable`、`review-partial`、`evidence-omitted`、`legacy-executions-unresolved`、`later-executions`、`usage-incomplete`、`reviews-carried`、`usage-history-unavailable`、`usage-source-conflict`、`baseline-unknown`） |
 
 ### 评审、模块与发现
 
@@ -128,14 +128,19 @@ Schema：[`contracts/evaluation-report.v1.schema.json`](contracts/evaluation-rep
 `incomplete`，不等同供应商账单，不推算费用。
 
 每次补评只导出它自己这次评审的用量；登记新修订时，读取同一份登记快照中该逻辑 run 的**全部**已登记修订（逐个按索引摘要校验），
-沿用其中的 `review` 执行（按评审结果时间排序）与 `review-run:*` 来源（按唯一键去重，Agent 作业用量始终来自用量回执），
+沿用其中的 `review` 执行（按评审结果时间排序）与 `review-run:*` 来源（Agent 作业用量始终来自用量回执），
 因此新修订的 `metrics.usage.totals` 是整个逻辑 run 的累计且每次真实评审只计一次，并带 `reviews-carried`。
 只要有任何已登记修订字节缺失或被改动，`totals.complete=false` 并带 `usage-history-unavailable`；同样材料重新导出或之后再补评
 都保持这一标记，直到该修订恢复可读并核实后才恢复完整。不同修订的 `totals` 不能相加。
 
-较早的补评晚于较新的补评才登记时，它不会成为当前视图；若当前视图尚未计入它的评审用量，本次登记的是**刷新后的当前视图**：
-仍选用较新的评审，把较早的评审作为未选用的评审保留在其中，并计入其执行与用量（结果包沿用同一搭建的截图，逐字节核对）。
-截图不齐时只把它登记为历史修订。
+同一来源（同一 `review-run:<run>:<attempt>`）只保留一份有效记录，与到达顺序无关：完整的优先于不完整的，其次取调用记录更多的，
+测量值相同视为同一份；两份都完整却不一致时保留先登记的一份，并以 `usage-source-conflict` 标记、`totals.complete=false`，
+不相加也不猜测，之后的修订继续保留这一标记。
+
+较早的补评晚于较新的补评才登记时，它不会成为当前视图；若它带来当前视图尚未计入的内容（新的评审执行、更完整的同源记录或冲突），
+本次登记的是**刷新后的当前视图**：仍选用较新的评审，把较早的评审作为未选用的评审保留在其中，并按上述规则重新计算累计。
+累计不依赖截图能否重新打包：结果包只附带本次导出中逐字节一致的截图，其余截图保留原路径与摘要、标为 `reference-only`
+并带 `evidence-omitted`，不伪造、不改动已归档的旧包。
 
 ## 结果包
 

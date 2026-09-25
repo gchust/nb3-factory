@@ -363,6 +363,19 @@ function usageSource(key, executionKey, usage, scope) {
 }
 
 const compareTuples = (a, b) => { for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) return a[i] - b[i]; return 0; };
+const omittedDetail = count => `${count} 张截图未随包附带；以路径和哈希引用，证据不可公开不等于问题不存在。`;
+
+// One record per usage source, whatever order the records arrive in: a complete record
+// beats an incomplete one, then the one with more call records; the same measurement is
+// one record. Two complete but different measurements cannot be reconciled: the record
+// registered first is kept and the conflict reported, never guessed or added up.
+function pickSource(known, candidate) {
+  const measured = ({ source }) => canonicalJson({ ...source, scope: null });
+  if (measured(known) === measured(candidate)) return { kept: known };
+  if (known.source.complete !== candidate.source.complete) return { kept: known.source.complete ? known : candidate };
+  if (!known.source.complete) return { kept: (candidate.source.records ?? 0) > (known.source.records ?? 0) ? candidate : known };
+  return { kept: known.registered || !candidate.registered ? known : candidate, conflict: true };
+}
 
 // Totals over unique sources only; any unmeasured part makes a total null, never zero.
 function usageTotals(sources) {
@@ -380,32 +393,42 @@ function usageTotals(sources) {
 // earlier revision. While any registered revision cannot be read intact, the review
 // history is known to have a gap: the totals stay incomplete, however often the
 // same material is exported again, until that revision is readable again.
-export function carryReviewHistory(draft, { documents = [], unavailable = [] } = {}) {
+// `documents` are registered revisions; `pending` (a draft not registered yet) is merged
+// after them, and `registered` says whether the target's own records already are.
+export function carryReviewHistory(draft, { documents = [], unavailable = [], pending = [], registered = false } = {}) {
   const usage = draft.metrics.usage;
   const limit = (code, detail) => { if (!draft.limitations.some(item => item.code === code)) draft.limitations.push({ code, detail }); };
-  const sourceKeys = new Set(usage.sources.map(source => source.key));
+  const merged = new Map(usage.sources.map(source => [source.key, { source, registered }]));
   const executionKeys = new Set(draft.executions.map(execution => execution.key));
-  const sources = [], executions = [];
-  for (const prior of documents) {
-    for (const source of prior.metrics?.usage?.sources ?? [])
-      if (source.key.startsWith('review-run:') && !sourceKeys.has(source.key)) { sourceKeys.add(source.key); sources.push(source); }
+  const executions = [];
+  let carried = false, conflicts = 0;
+  for (const [prior, isRegistered] of [...documents.map(item => [item, true]), ...pending.map(item => [item, false])]) {
+    for (const source of (prior.metrics?.usage?.sources ?? []).filter(item => item.key.startsWith('review-run:'))) {
+      const candidate = { source, registered: isRegistered };
+      const known = merged.get(source.key);
+      const { kept, conflict } = known ? pickSource(known, candidate) : { kept: candidate };
+      if (conflict) conflicts++;
+      if (kept !== known) { merged.set(source.key, kept); carried ||= kept.source !== known?.source; }
+    }
     for (const execution of prior.executions ?? [])
       if (execution.kind === 'review' && !executionKeys.has(execution.key)) { executionKeys.add(execution.key); executions.push(execution); }
   }
-  if (sources.length || executions.length) {
+  usage.sources = [...merged.values()].map(item => item.source);
+  // A conflict cannot be resolved later, so a registered one stays reported.
+  if (documents.some(item => item.limitations?.some(limitation => limitation.code === 'usage-source-conflict'))) conflicts++;
+  if (carried || executions.length) {
     // Review runs follow the build chain in the order they produced their results.
     const reviewRuns = [...draft.executions.filter(execution => execution.kind === 'review'), ...executions]
       .sort((a, b) => compareTuples([Date.parse(a.endedAt ?? '') || 0, a.runId, a.attempt], [Date.parse(b.endedAt ?? '') || 0, b.runId, b.attempt]));
     draft.executions = [...draft.executions.filter(execution => execution.kind !== 'review'), ...reviewRuns]
       .map((execution, index) => ({ ...execution, order: index + 1 }));
-    usage.sources.push(...sources);
     Object.assign(draft.metrics.counts, { executions: draft.executions.length, reviewExecutions: draft.metrics.counts.reviewExecutions + executions.length });
     // Independent of which revision it was read from, so an identical re-export reuses its revision.
     limit('reviews-carried', `包含更早补跑评审的执行与用量（${executions.length} 次，按唯一键去重）；其评审内容见各自的登记修订。`);
   }
   // Totals and their two flags always describe the history as read now (a refreshed
   // earlier view may carry flags from when it was registered).
-  usage.totals = { ...usageTotals(usage.sources), ...(unavailable.length ? { complete: false } : {}) };
+  usage.totals = { ...usageTotals(usage.sources), ...(unavailable.length || conflicts ? { complete: false } : {}) };
   const flag = (code, on, detail) => {
     const at = draft.limitations.findIndex(item => item.code === code);
     if (on && at < 0) draft.limitations.push({ code, detail });
@@ -413,21 +436,38 @@ export function carryReviewHistory(draft, { documents = [], unavailable = [] } =
   };
   flag('usage-history-unavailable', unavailable.length > 0,
     `${unavailable.length} 个登记修订的字节缺失或被改动，其中的补跑评审执行与用量无法核实；累计用量不完整，直到这些修订恢复。`);
+  flag('usage-source-conflict', conflicts > 0, '同一用量来源存在两份完整但不一致的记录，无法判断哪份正确；保留先登记的一份，累计用量不完整。');
   flag('usage-incomplete', !usage.totals.complete, '部分用量未取得或不完整；缺失值为 null，不按零处理。');
   return draft;
 }
 
-// An older review registered after a newer one would stay history, and the current view
-// (registered before it) would not count its review run. In that case the next revision
-// is the current view again: its selected review unchanged, the late review kept beside
-// it unselected, and its review run carried. Returns null when the draft may be
-// registered as it is (it becomes current, or the current view already counts it).
+// A refreshed view is bundled only with screenshots whose original bytes are available
+// (present(path, sha256)); every other one keeps its path and digest but is marked as not
+// attached, never re-created.
+export function detachMissingAttachments(document, present) {
+  for (const item of document.evidence) {
+    if (!item.attachment || present(item.attachment, item.sha256)) continue;
+    Object.assign(item, { attachment: null, availability: 'reference-only', note: '刷新当前视图时未取得该截图的原始字节；保留原路径与摘要，附件不可用。' });
+  }
+  const omitted = document.evidence.filter(item => item.kind === 'screenshot' && !item.attachment).length;
+  document.limitations = document.limitations.filter(item => item.code !== 'evidence-omitted');
+  if (omitted) document.limitations.push({ code: 'evidence-omitted', detail: omittedDetail(omitted) });
+  return document;
+}
+
+// An older review registered after a newer one stays history, so the current view
+// (registered before it) would not count what it brings: a review run, or a better
+// record of one. Then the next revision is the current view again, its selected review
+// unchanged, with the review history as known now and the late review kept beside it
+// unselected. Returns null when the draft may be registered as it is (it becomes
+// current, or the current view already counts everything it brings).
 export function refreshCurrentView(draft, { documents = [], unavailable = [] }, currentRevision) {
   const current = documents.find(document => document.revision === currentRevision);
   if (!current || comparePrecedence(draft, current) >= 0) return null;
-  const counted = new Set(current.metrics.usage.sources.map(source => source.key));
-  if (draft.metrics.usage.sources.every(source => !source.key.startsWith('review-run:') || counted.has(source.key))) return null;
   const { revision, createdAt, ...view } = structuredClone(current);
+  carryReviewHistory(view, { documents, unavailable, pending: [draft], registered: true });
+  const counted = document => canonicalJson([document.metrics.usage, document.executions]);
+  if (counted(view) === counted(current)) return null;
   view.source = structuredClone(draft.source);
   const late = draft.reviews.find(review => review.selected);
   if (late && !view.reviews.some(review => review.key === late.key)) {
@@ -435,7 +475,7 @@ export function refreshCurrentView(draft, { documents = [], unavailable = [] }, 
     const ids = new Set(view.evidence.map(item => item.id));
     view.evidence.push(...draft.evidence.filter(item => item.origin?.key === late.key && !ids.has(item.id)).map(item => structuredClone(item)));
   }
-  return carryReviewHistory(view, { documents: [...documents, draft], unavailable });
+  return view;
 }
 
 function metricsOf(chain, reviews, supplement) {
@@ -623,7 +663,7 @@ export function buildEvaluation({ report, root, taskRoot = null, exporter = {} }
   }
   for (const round of qa.rounds) for (const check of round.checks) check.evidence ??= [];
   const omitted = [...evidence.values()].filter(item => item.kind === 'screenshot' && !item.attachment).length;
-  if (omitted) limitations.push({ code: 'evidence-omitted', detail: `${omitted} 张截图未随包附带；以路径和哈希引用，证据不可公开不等于问题不存在。` });
+  if (omitted) limitations.push({ code: 'evidence-omitted', detail: omittedDetail(omitted) });
   const supplementRaw = readOptional(root, 'build-review.supplement.json', []);
   const supplementUsage = object(supplementRaw?.supplementalUsage) && positive(supplementRaw.supplementalUsage.runId) ? supplementRaw.supplementalUsage : null;
   const executions = [...chain.executions];

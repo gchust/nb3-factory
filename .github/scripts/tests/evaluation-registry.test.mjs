@@ -57,10 +57,10 @@ test('identical facts reuse the revision and its original bytes; new facts appen
 });
 
 // A reassessment adopted with its trusted review time (the Actions API time of its review artifact).
-function reassess(root, runId, totalTokens, reviewedAt) {
+function reassess(root, runId, totalTokens, reviewedAt, { records = 1, incomplete = 0 } = {}) {
   const supplement = writeReview(root, 'completed', {}, 'build-review.supplement.json',
     { engine: 'pi', model: 'm', version: '1', runId: String(runId), attempt: 1, controlSha: 'd'.repeat(40), replay: true });
-  supplement.supplementalUsage = { input: totalTokens - 1, output: 1, cacheRead: 0, cacheWrite: 0, reasoning: 0, totalTokens, records: 1, incomplete: 0,
+  supplement.supplementalUsage = { input: totalTokens - 1, output: 1, cacheRead: 0, cacheWrite: 0, reasoning: 0, totalTokens, records, incomplete,
     runId, attempt: 1, reviewedAt };
   put(root, 'build-review.supplement.json', supplement);
 }
@@ -96,7 +96,7 @@ test('an older reassessment exported again, or for the first time after a newer 
   }
 });
 
-test('without the same screenshots a late older review is only history; the newer review stays current', async t => {
+test('a late older review is counted by the current view even when its screenshots cannot be re-packed', async t => {
   const client = fakeGitHub(), root = temporary(t);
   buildArtifacts(root);
   const report = reportFor(root, usageRecord());
@@ -105,12 +105,54 @@ test('without the same screenshots a late older review is only history; the newe
   await register(t, client, root, report, { runId: 910 });
   rmSync(path.join(root, 'verify-1/browser-acceptance/evidence/b01.png'));
   reassess(root, 700, 11, '2026-09-25T03:00:00Z');
-  const late = JSON.parse((await register(t, client, root, report, { runId: 911 })).bytes);
+  const refreshed = await register(t, client, root, report, { runId: 911 });
   const { index, document } = currentOf(client, original.run.key);
-  assert.equal(late.revision, 3);
-  assert.equal(selectedReviewer(late), 700, 'registered as its own history revision');
-  assert.equal(index.current, 2);
-  assert.equal(selectedReviewer(document), 701);
+  assert.equal(index.current, 3);
+  assert.equal(selectedReviewer(document), 701, 'the newer review stays selected');
+  assert.deepEqual([document.metrics.usage.totals.total, document.metrics.usage.totals.complete], [original.metrics.usage.totals.total + 11 + 15, true]);
+  // The screenshot keeps its path and digest but is not attached, and nothing is re-created.
+  const shot = document.evidence.find(item => item.origin.kind === 'qa' && item.kind === 'screenshot' && item.path.endsWith('b01.png'));
+  assert.deepEqual([shot.attachment, shot.availability, shot.sha256], [null, 'reference-only', original.evidence.find(item => item.id === shot.id).sha256]);
+  assert.ok(document.limitations.some(l => l.code === 'evidence-omitted'));
+  assert.ok(!JSON.parse(client.file(`evaluations/subjects/${keyDigest(original.run.key)}/r3/manifest.json`)).files.some(f => f.path.endsWith('b01.png')));
+  assert.equal(refreshed.registration.reused, false);
+});
+
+test('one record per usage source: a completed record is never replaced by an earlier incomplete one', async t => {
+  const client = fakeGitHub(), root = temporary(t);
+  buildArtifacts(root);
+  const report = reportFor(root, usageRecord());
+  const original = JSON.parse((await register(t, client, root, report)).bytes);
+  const base = original.metrics.usage.totals.total;
+  const totals = () => { const { document } = currentOf(client, original.run.key); return [document.metrics.usage.totals.total, document.metrics.usage.totals.complete]; };
+  reassess(root, 700, 6, '2026-09-25T03:00:00Z', { records: 1, incomplete: 1 });
+  await register(t, client, root, report, { runId: 901 });
+  assert.deepEqual(totals(), [base + 6, false]);
+  // The same review run collected again, now complete: it replaces the incomplete record, never adds to it.
+  reassess(root, 700, 11, '2026-09-25T03:00:00Z', { records: 2 });
+  await register(t, client, root, report, { runId: 902 });
+  assert.deepEqual(totals(), [base + 11, true]);
+  reassess(root, 701, 15, '2026-09-25T04:00:00Z');
+  await register(t, client, root, report, { runId: 903 });
+  assert.deepEqual(totals(), [base + 11 + 15, true], 'history keeps the completed record, whatever order it is read in');
+  // An incomplete record arriving later does not downgrade it either.
+  reassess(root, 700, 6, '2026-09-25T03:00:00Z', { records: 1, incomplete: 1 });
+  await register(t, client, root, report, { runId: 904 });
+  assert.deepEqual(totals(), [base + 11 + 15, true]);
+  // Two complete but different records of one review run cannot be reconciled: reported, not guessed.
+  reassess(root, 700, 12, '2026-09-25T03:00:00Z', { records: 2 });
+  await register(t, client, root, report, { runId: 905 });
+  const { document } = currentOf(client, original.run.key);
+  assert.equal(document.metrics.usage.totals.complete, false);
+  assert.ok(document.limitations.some(l => l.code === 'usage-source-conflict'));
+  assert.equal(document.metrics.usage.sources.filter(s => s.key === 'review-run:700:1').length, 1);
+  assert.equal(document.metrics.usage.sources.find(s => s.key === 'review-run:700:1').phases.review.total, 11, 'the record registered first is kept');
+  // An unresolvable conflict stays reported by later revisions.
+  reassess(root, 702, 20, '2026-09-25T05:00:00Z');
+  await register(t, client, root, report, { runId: 906 });
+  const later = currentOf(client, original.run.key).document;
+  assert.equal(selectedReviewer(later), 702);
+  assert.deepEqual([later.metrics.usage.totals.complete, later.limitations.some(l => l.code === 'usage-source-conflict')], [false, true]);
 });
 
 test('a review-history gap stays incomplete across re-exports and new reviews until the revision is readable again', async t => {
