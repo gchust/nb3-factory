@@ -211,6 +211,8 @@ jobs:
     permissions:
       actions: read
       contents: write
+      # Read-only: re-checks a batch sample's live state before any model call.
+      issues: read
     outputs:
       handoff: ${{ steps.outcome.outputs.handoff }}
       checkpoint_available: ${{ steps.checkpoint.outcome == 'success' }}
@@ -292,6 +294,16 @@ jobs:
         with:
           name: factory-task-${{ needs.prepare.outputs.issue_number }}
           path: task
+
+      # "Re-run failed jobs" reuses prepare's outputs, so a batch sample is admitted
+      # again here: a cancelled/released sample or a spent budget starts no model.
+      - name: Admit the evaluation sample for this execution
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          if [[ -f control/.github/scripts/evaluation-sample.mjs ]]; then
+            node control/.github/scripts/evaluation-sample.mjs admit --metadata task/task-metadata.json --output "$GITHUB_ENV"
+          fi
 
       - name: Restore pipeline progress
         id: resume

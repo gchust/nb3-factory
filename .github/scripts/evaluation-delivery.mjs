@@ -79,11 +79,17 @@ export async function deliverBundle({ zip, subject, config, fetcher = fetch, pau
       const verdict = classifyStatus(status);
       Object.assign(record, verdict, { error: verdict.error ?? null });
       if (verdict.outcome === 'stored') {
-        try {
-          const text = await response.text();
-          const receipt = validateReceipt(JSON.parse(text), expected);
-          return { state: 'stored', attempts: history, receipt: { ...receipt, httpStatus: status }, reason: null, bundleSha256 };
-        } catch { Object.assign(record, { outcome: 'rejected', error: 'invalid-receipt' }); }
+        let text = null;
+        // A body cut off by a disconnect or timeout is a transport failure: resend
+        // with the same idempotency key to confirm. Only a complete body is judged.
+        try { text = await response.text(); }
+        catch (failure) { Object.assign(record, { outcome: 'retryable', error: failure?.name === 'TimeoutError' || failure?.name === 'AbortError' ? 'receipt-timeout' : 'receipt-interrupted' }); }
+        if (text !== null) {
+          try {
+            const receipt = validateReceipt(JSON.parse(text), expected);
+            return { state: 'stored', attempts: history, receipt: { ...receipt, httpStatus: status }, reason: null, bundleSha256 };
+          } catch { Object.assign(record, { outcome: 'rejected', error: 'invalid-receipt' }); }
+        }
       } else { try { await response.body?.cancel(); } catch { /* Only the status is kept. */ } }
       if (record.outcome === 'conflict') return { state: 'conflict', attempts: history, receipt: null, reason: 'same idempotency key already holds different content', bundleSha256 };
       if (record.outcome === 'rejected') return { state: 'rejected', attempts: history, receipt: null, reason: record.error, bundleSha256 };

@@ -18,8 +18,7 @@ import { isManualIssue, isPresetIssue, preparePresetIssue } from './issue-preset
 import { resolveTaskBranch, taskIssueNumber } from './task-compat.mjs';
 import { resolveTargetBranch, pinInitialBase } from './task-base.mjs';
 import { taskEvaluationIdentity } from './evaluation-identity.mjs';
-import { claimSample, recordTerminal, resolveSample, sampleUsage } from './evaluation-sample.mjs';
-import { ARCHIVE_RESERVE_SECONDS } from './pipeline-state.mjs';
+import { budgetRefusal, claimSample, recordTerminal, resolveSample, sampleUsage } from './evaluation-sample.mjs';
 
 const args = parseArgs(process.argv.slice(2));
 const event = JSON.parse(readFileSync(args.event, 'utf8'));
@@ -227,10 +226,7 @@ try {
     const used = await sampleUsage(client, issueNumber, { runId, attempt: Number(process.env.GITHUB_RUN_ATTEMPT || 1), since: issue.created_at });
     metadata.evaluation.budgetUsed = used;
     writeFileSync(args.metadata, `${JSON.stringify(metadata, null, 2)}\n`);
-    const refusal = used.executions > budget.maxContinuations
-      ? `已执行 ${used.executions + 1} 次（续跑 / 恢复 / 重跑上限 ${budget.maxContinuations}）`
-      : used.activeSeconds > budget.maxActiveSeconds - ARCHIVE_RESERVE_SECONDS - 300
-        ? `累计主动执行 ${used.activeSeconds} 秒，预算 ${budget.maxActiveSeconds} 秒` : null;
+    const refusal = budgetRefusal(budget, used);
     if (refusal) {
       const reason = `**已达到评测计划预算**：${refusal}。不再启动新的执行；已保存的补丁、验收记录与用量保留，这不是业务缺陷结论。`;
       await recordTerminal(client, batchSample, runId, 'budget-exhausted', reason);

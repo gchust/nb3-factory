@@ -225,6 +225,13 @@ export async function startReceiver(t, { faults = [], token = 'receiver-token', 
       revision: evaluation.revision, bundleSha256, state: 'stored' };
     if (!previous) stored.set(key, { bundleSha256, receipt, evaluation });
     if (fault === 'drop-after-store') { request.socket.destroy(); return; }
+    // Stored, headers sent, then the receipt body is cut off or never finished.
+    if (fault === 'partial-drop' || fault === 'partial-hang') {
+      response.writeHead(201, { 'content-type': 'application/json' });
+      response.write(JSON.stringify(receipt).slice(0, 12));
+      if (fault === 'partial-drop') setTimeout(() => request.socket.destroy(), 20);
+      return;
+    }
     if (fault === 'wrong-receipt') return reply(201, { ...receipt, revision: receipt.revision + 1 });
     if (fault === 'not-json') { response.writeHead(201); response.end('<html>ok</html>'); return; }
     reply(previous ? 200 : 201, receipt);

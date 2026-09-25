@@ -207,3 +207,20 @@ test('sending stops taking bundles before its time budget and saves each result 
   assert.equal(result.deferred, 1, 'the third bundle stays pending for the next scan');
   assert.deepEqual(saved, [1, 2]);
 });
+
+test('a receipt body cut off after 201 is a transport failure: the same key is resent and confirmed', async t => {
+  for (const fault of ['partial-drop', 'partial-hang']) {
+    const receiver = await startReceiver(t, { faults: [fault] });
+    const { zip, subject } = await registered(t);
+    const result = await deliverBundle({ zip, subject, config: configFor(receiver), pause: noPause, timeoutMs: 400 });
+    assert.equal(result.state, 'stored', fault);
+    assert.deepEqual(result.attempts.map(a => [a.httpStatus, a.outcome]), [[201, 'retryable'], [200, 'stored']], fault);
+    assert.equal(result.attempts[0].error, fault === 'partial-drop' ? 'receipt-interrupted' : 'receipt-timeout');
+    assert.equal(receiver.stored.size, 1);
+    assert.equal(new Set(receiver.requests.map(r => r.headers['idempotency-key'])).size, 1);
+  }
+  // A complete but wrong receipt is still a protocol error, not retried.
+  const wrong = await startReceiver(t, { faults: ['wrong-receipt'] });
+  const { zip, subject } = await registered(t);
+  assert.equal((await deliverBundle({ zip, subject, config: configFor(wrong), pause: noPause })).reason, 'invalid-receipt');
+});

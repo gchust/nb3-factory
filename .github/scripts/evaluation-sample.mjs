@@ -131,7 +131,7 @@ export async function resolveSample(client, issueNumber, { issue } = {}) {
   if (assigned?.issue !== issueNumber) throw new Error('Batch state does not assign this Issue to the sample');
   // Once the coordinator released the slot, the sample may never run again.
   return { receipt, manifest, manifestHash: loaded.hash, cancelled: state.cancelled === true,
-    released: RELEASED_STATES.has(assigned.state) ? assigned.state : null, comments };
+    released: RELEASED_STATES.has(assigned.state) ? assigned.state : null, comments, issue };
 }
 
 // One build per sample. Returns false for a duplicate or reordered dispatch;
@@ -168,6 +168,29 @@ export async function sampleUsage(client, issueNumber, { runId, attempt = 1, sin
     if (runs.length < 100) break;
   }
   return { activeSeconds, executions };
+}
+
+// One rule for prepare and for the Agent job itself: executions after the first
+// are capped, and a new execution needs useful time plus archive time.
+export const BUDGET_MARGIN_SECONDS = 600;
+export function budgetRefusal(budget, used) {
+  if (used.executions > budget.maxContinuations) return `已执行 ${used.executions + 1} 次（续跑 / 恢复 / 重跑上限 ${budget.maxContinuations}）`;
+  if (used.activeSeconds > budget.maxActiveSeconds - BUDGET_MARGIN_SECONDS) return `累计主动执行 ${used.activeSeconds} 秒，预算 ${budget.maxActiveSeconds} 秒`;
+  return null;
+}
+
+// Prepare's outputs can be reused by "Re-run failed jobs", so the Agent job
+// re-checks the live batch state and GitHub-side usage before any model call.
+export async function admitSample(client, metadata, { runId, attempt }) {
+  const identity = metadata?.evaluation;
+  if (identity?.kind !== 'batch-sample') return { admitted: true, sample: null };
+  const sample = await resolveSample(client, metadata.issue.number);
+  if (!sample || sample.receipt.sampleKey !== identity.sampleKey) throw new Error('Batch sample receipt no longer matches the task metadata');
+  if (sample.cancelled) return { admitted: false, reason: `评测批次 ${sample.receipt.batchKey} 已取消` };
+  if (sample.released) return { admitted: false, reason: `样本已由批次记为 ${sample.released} 并释放串行槽位` };
+  const used = await sampleUsage(client, metadata.issue.number, { runId, attempt, since: sample.issue.created_at });
+  const refusal = budgetRefusal(sample.receipt.budget, used);
+  return refusal ? { admitted: false, reason: `已达到评测计划预算：${refusal}`, used } : { admitted: true, sample, used };
 }
 
 // A decision made at prepare (not by a build) is recorded for the coordinator.
@@ -212,8 +235,20 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   const [command, ...rest] = process.argv.slice(2);
   const args = {};
   for (let i = 0; i < rest.length; i += 2) args[rest[i].replace(/^--/, '')] = rest[i + 1];
-  if (command !== 'pin' || !positive(Number(args.issue)) || !args.output) throw new Error('Usage: evaluation-sample.mjs pin --issue N --output FILE');
   const client = new FetchClient({ token: process.env.GITHUB_TOKEN, repository: process.env.GITHUB_REPOSITORY, apiUrl: process.env.GITHUB_API_URL });
+  if (command === 'admit') {
+    if (!args.metadata || !args.output) throw new Error('Usage: evaluation-sample.mjs admit --metadata FILE --output GITHUB_ENV');
+    const { readFileSync } = await import('node:fs');
+    const result = await admitSample(client, JSON.parse(readFileSync(args.metadata, 'utf8')),
+      { runId: Number(process.env.GITHUB_RUN_ID), attempt: Number(process.env.GITHUB_RUN_ATTEMPT || 1) });
+    if (!result.admitted) {
+      console.error(`::error::Evaluation sample not admitted: ${result.reason}. No model is started; earlier executions and usage are kept.`);
+      process.exit(1);
+    }
+    if (result.used) appendFileSync(args.output, `FACTORY_EVALUATION_USED_SECONDS=${result.used.activeSeconds}\nFACTORY_EVALUATION_USED_EXECUTIONS=${result.used.executions}\n`);
+    process.exit(0);
+  }
+  if (command !== 'pin' || !positive(Number(args.issue)) || !args.output) throw new Error('Usage: evaluation-sample.mjs <pin --issue N|admit --metadata FILE> --output FILE');
   const sample = await resolveSample(client, Number(args.issue));
   if (!sample) {
     appendFileSync(args.output, 'sample=false\n');

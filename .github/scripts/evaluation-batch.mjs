@@ -364,8 +364,14 @@ export async function advanceBatch(client, batch, { now = Date.now(), env = null
           const { issue, comments } = await ensureSample(client, batch, spec);
           await dispatch(client, batch, spec, issue, comments);
           Object.assign(item, { dispatchedAt: stamp, reason: '派发后未出现搭建 Run，已按同一样本重新派发。' });
+          if (current) Object.assign(item, { agentConfigFingerprint: current,
+            agentConfigObserved: [...new Set([...(item.agentConfigObserved ?? []), current])] });
         }
         item.state = observed.state;
+        // Settings seen while the chain is still dispatched or running (every sample run,
+        // handoffs included, requests an advance when it ends) count for comparability;
+        // the advance that finds the chain finished is not evidence of how it ran.
+        if (current && !TERMINAL.has(observed.state)) item.agentConfigObserved = [...new Set([...(item.agentConfigObserved ?? []), current])];
         if (observed.state === 'running' && observed.reason !== undefined) item.reason = observed.reason;
         if (TERMINAL.has(observed.state)) Object.assign(item, { terminalAt: stamp, stateSource: observed.stateSource ?? 'run',
           terminalRunId: observed.terminalRunId ?? null, reason: observed.reason ?? item.reason });
@@ -388,7 +394,7 @@ export async function advanceBatch(client, batch, { now = Date.now(), env = null
     if (!state.cancelled && next && active.length < manifest.maxConcurrentSamples) {
       const { issue, comments } = await ensureSample(client, batch, next);
       Object.assign(state.samples[next.key], { state: 'queued', stateSource: 'coordinator', issue: issue.number, dispatchedAt: stamp,
-        agentConfigFingerprint: current });
+        agentConfigFingerprint: current, agentConfigObserved: current ? [current] : [] });
       // Persist the assignment first: the sample pin requires it before prepare runs.
       await commit();
       if (!(await runsFor(client, issue.number, manifest.createdAt)).length) {
@@ -413,9 +419,19 @@ export async function advanceBatch(client, batch, { now = Date.now(), env = null
     }
   }
   await commit();
-  if (batch.state.state !== 'active' && batch.coordinator.state === 'open')
+  // Finishing the samples and archiving the final snapshot are separate: the
+  // coordinator stays open (without blocking a new batch) until the snapshot
+  // of this exact state sequence is registered, so compensation retries it.
+  if (batch.state.state !== 'active' && batch.coordinator.state === 'open' && await finalSnapshotRegistered(client, batch))
     batch.coordinator = await client.request('PATCH', `/issues/${batch.coordinator.number}`, { body: { state: 'closed' } });
   return batch;
+}
+
+export async function finalSnapshotRegistered(client, batch) {
+  let index = null;
+  try { index = await readSubject(client, 'evaluation-batch', `${batch.manifest.repository}/batches/${batch.manifest.batchKey}`, 'gh-pages'); }
+  catch { return false; }
+  return Boolean(index?.revisions.some(item => item.precedence?.sequence === batch.state.sequence));
 }
 
 export async function cancelBatch(client, batchKey, { now = Date.now() } = {}) {
@@ -450,10 +466,11 @@ export function batchDocument(batch, { exporter = {} } = {}) {
   const samples = manifest.samples.map(spec => {
     const item = state.samples[spec.key];
     const fingerprint = item.agentConfigFingerprint ?? null;
+    const observed = item.agentConfigObserved ?? (fingerprint ? [fingerprint] : []);
     return { key: spec.key, caseKey: spec.caseKey, sampleIndex: spec.sampleIndex, runKey: spec.runKey, issue: item.issue ?? null,
       state: item.state, stateSource: item.stateSource ?? 'plan', dispatchedAt: item.dispatchedAt ?? null, terminalAt: item.terminalAt ?? null,
       reason: item.reason ?? null, agentConfigFingerprint: fingerprint,
-      comparable: !item.issue ? null : fingerprint && frozenConfig ? fingerprint === frozenConfig : null,
+      comparable: !item.issue || !observed.length || !frozenConfig ? null : observed.every(value => value === frozenConfig),
       report: item.report ?? { state: 'missing', revision: null, execution: null, acceptance: null } };
   });
   const byState = Object.fromEntries(SAMPLE_STATES.map(name => [name, samples.filter(s => s.state === name).length]));

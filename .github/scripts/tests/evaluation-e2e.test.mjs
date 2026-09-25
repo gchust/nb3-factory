@@ -66,8 +66,16 @@ test('5 samples, one with two handoffs, a report resent 3 times and one reassess
       if (!final) assert.equal(client.samples().length, index, 'a handoff keeps the serial slot');
     }
   }
-  // The last sample ended and every report is registered: the batch closed itself.
+  // The last sample ended and every report is registered; the coordinator stays open
+  // until the final batch snapshot is archived through the same registration path.
   assert.equal(batch.state.state, 'completed');
+  const batchExport = temporary(t), batchBundle = temporary(t);
+  put(batchExport, 'draft.json', batchDocument(batch));
+  put(batchExport, 'files.json', []);
+  await prepareRevision(client, { input: batchExport, output: batchBundle });
+  await commitPrepared(client, { input: batchBundle, env: {}, runId: 9999, attempt: 1, artifactId: 1 });
+  batch = await advanceBatch(client, (await activeBatches(client))[0], { now: tick() });
+  assert.equal(batch.coordinator.state, 'closed');
   assert.deepEqual(await activeBatches(client), []);
   const summary = batchDocument(batch);
   assert.equal(summary.summary.planned, 5);

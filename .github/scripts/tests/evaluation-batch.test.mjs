@@ -3,9 +3,9 @@ import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import test from 'node:test';
-import { activeBatches, advanceBatch, batchDocument, cancelBatch, PLAN_LIMITS, startBatch, validatePlans } from '../evaluation-batch.mjs';
-import { commitRevision } from '../evaluation-registry.mjs';
-import { claimSample, markers, readManifest, recordTerminal, resolveSample, sampleUsage, SAMPLE_LABEL, verifyAncestor } from '../evaluation-sample.mjs';
+import { activeBatches, advanceBatch, batchDocument, cancelBatch, finalSnapshotRegistered, PLAN_LIMITS, startBatch, validatePlans } from '../evaluation-batch.mjs';
+import { commitRevision, readSubject } from '../evaluation-registry.mjs';
+import { admitSample, claimSample, markers, readManifest, recordTerminal, resolveSample, sampleUsage, SAMPLE_LABEL, verifyAncestor } from '../evaluation-sample.mjs';
 import { readSnapshot } from '../issue-presets.mjs';
 import { loadContract, validateSchema } from '../json-schema.mjs';
 import { control, fakeRepository, human, lock, names, presetBody, repository } from './evaluation-fixtures.mjs';
@@ -156,6 +156,9 @@ test('cancel stops new samples, keeps executions, and a cancelled batch refuses 
   assert.equal(batch.state.state, 'active', 'stays open briefly so the last sample report can still arrive');
   batch = await advanceBatch(client, await current(client), { now: Date.parse('2026-09-25T19:00:00Z') });
   assert.equal(batch.state.state, 'cancelled');
+  assert.equal(client.state.issues.get(batch.manifest.coordinatorIssue).state, 'open', 'open until the final snapshot is archived');
+  await registerBatch(client, batch);
+  batch = await advanceBatch(client, await current(client), { now: Date.parse('2026-09-25T20:00:00Z') });
   assert.equal(client.state.issues.get(batch.manifest.coordinatorIssue).state, 'closed');
   assert.equal(client.samples().length, 1);
   const document = batchDocument(batch);
@@ -199,10 +202,21 @@ test('forged or inconsistent receipts cannot select a control plane; ordinary Is
   await assert.rejects(verifyAncestor(client, control, 'develop'), /default branch history/);
 });
 
-const registerReport = (client, runKey, runId, outcome) => commitRevision(client.pages, { document: { type: 'evaluation-report', revision: runId % 1000,
-  createdAt: '2026-09-25T04:00:00Z', source: { instance: repository }, run: { key: runKey }, outcome,
-  precedence: { producer: { runId, attempt: 1, startedAt: new Date(runId * 1000).toISOString() }, reviewState: 'not-reviewed', reviewRubric: 0, qaCoverage: 'partial' } },
-evaluationBytes: Buffer.from(String(runId)), manifestBytes: Buffer.from('{}'), fingerprint: String(runId).padStart(64, '0'), bundle: { sha256: 'b'.repeat(64), size: 1 }, location: null });
+async function registerBatch(client, batch) {
+  const document = batchDocument(batch);
+  const index = await readSubject(client.pages, 'evaluation-batch', document.batch.subjectKey, 'gh-pages');
+  const revision = (index?.revisions.length ?? 0) + 1;
+  return commitRevision(client.pages, { document: { ...document, revision, createdAt: '2026-09-25T00:00:00Z' },
+    evaluationBytes: Buffer.from(`batch-${batch.state.sequence}`), manifestBytes: Buffer.from('{}'), fingerprint: String(batch.state.sequence).padStart(64, 'f'),
+    bundle: { sha256: 'c'.repeat(64), size: 1 }, location: null });
+}
+async function registerReport(client, runKey, runId, outcome) {
+  const index = await readSubject(client.pages, 'evaluation-report', runKey, 'gh-pages');
+  return commitRevision(client.pages, { document: { type: 'evaluation-report', revision: (index?.revisions.length ?? 0) + 1,
+    createdAt: '2026-09-25T04:00:00Z', source: { instance: repository }, run: { key: runKey }, outcome,
+    precedence: { producer: { runId, attempt: 1, startedAt: new Date(runId * 1000).toISOString() }, reviewState: 'not-reviewed', reviewRubric: 0, qaCoverage: 'partial' } },
+  evaluationBytes: Buffer.from(String(runId)), manifestBytes: Buffer.from('{}'), fingerprint: String(runId).padStart(64, '0'), bundle: { sha256: 'b'.repeat(64), size: 1 }, location: null });
+}
 
 test('a batch waits for the final run report, not an earlier handoff report', async () => {
   const client = fakeRepository();
@@ -328,4 +342,74 @@ test('Agent settings are fingerprinted at freeze and at each dispatch; drift mar
   assert.equal(document.summary.comparable, false);
   assert.ok(document.limitations.some(l => l.code === 'agent-config-drift'));
   assert.deepEqual(validateSchema(loadContract('evaluation-batch.v1'), { ...document, revision: 1, createdAt: '2026-09-25T00:00:00Z' }), []);
+});
+
+test('a finished batch stays open until its final snapshot is registered, then closes without new samples', async () => {
+  const client = fakeRepository();
+  await start(client, plan(1));
+  client.run(client.samples()[0].number, { id: 4401 });
+  let batch = await current(client);
+  await registerReport(client, batch.manifest.samples[0].runKey, 4401, { execution: 'completed', acceptance: 'passed', delivery: 'published' });
+  batch = await advanceBatch(client, batch, { now: Date.parse('2026-09-25T03:00:00Z') });
+  assert.equal(batch.state.state, 'completed');
+  assert.equal(await finalSnapshotRegistered(client, batch), false);
+  // The archive step failed: compensation still finds the batch and re-exports it.
+  batch = await advanceBatch(client, await current(client), { now: Date.parse('2026-09-25T04:00:00Z') });
+  assert.equal(batch.coordinator.state, 'open');
+  assert.equal((await activeBatches(client)).length, 1);
+  assert.equal((await startBatch(client, { plans: plan(1), planKey: 'smoke', trigger: 'manual', now: 5, runId: 99, controlSha: control, env: {} })).status, 'started',
+    'a completed batch awaiting its archive does not block the next batch');
+  await registerBatch(client, batch);
+  batch = await advanceBatch(client, batch, { now: Date.parse('2026-09-25T05:00:00Z') });
+  assert.equal(batch.coordinator.state, 'closed');
+  assert.equal(client.samples().filter(i => i.body.includes(batch.manifest.batchKey)).length, 1);
+});
+
+test('re-running only the Agent job re-admits the sample: released, cancelled or over budget starts no model', async () => {
+  const client = fakeRepository();
+  const { batchKey } = await start(client, plan(2));
+  const number = client.samples()[0].number;
+  const sample = await resolveSample(client, number);
+  const metadata = { issue: { number }, evaluation: { kind: 'batch-sample', sampleKey: sample.receipt.sampleKey } };
+  const jobs = new Map();
+  const request = client.request;
+  client.request = async (method, route, options) => {
+    const match = /^\/actions\/runs\/(\d+)\/jobs$/.exec(route);
+    return match ? { jobs: jobs.get(Number(match[1])) ?? [] } : request(method, route, options);
+  };
+  assert.deepEqual(await admitSample(client, { issue: { number: 1 }, evaluation: { kind: 'initial' } }, { runId: 1, attempt: 1 }), { admitted: true, sample: null });
+  let admission = await admitSample(client, metadata, { runId: 8800, attempt: 2 });
+  assert.equal(admission.admitted, true);
+  // Attempt 1's Agent job already spent almost the whole budget.
+  client.state.runs.push({ id: 8800, run_attempt: 2, status: 'in_progress', display_title: `Factory issue #${number} build 0 from 0`, created_at: new Date().toISOString() });
+  jobs.set(8800, [{ name: 'agent', run_attempt: 1, conclusion: 'failure', started_at: '2026-09-25T00:00:00Z', completed_at: '2026-09-25T00:55:00Z' }]);
+  admission = await admitSample(client, metadata, { runId: 8800, attempt: 2 });
+  assert.equal(admission.admitted, false);
+  assert.match(admission.reason, /预算/);
+  jobs.clear();
+  await cancelBatch(client, batchKey, { now: Date.parse('2026-09-25T03:00:00Z') });
+  assert.match((await admitSample(client, metadata, { runId: 8800, attempt: 2 })).reason, /已取消/);
+  const other = fakeRepository();
+  await start(other, plan(2));
+  const first = other.samples()[0].number;
+  other.run(first, { id: 8900, conclusion: 'failure', delivered: false });
+  await advanceBatch(other, await current(other), { now: Date.parse('2026-09-25T03:00:00Z') });
+  const released = await admitSample(other, { issue: { number: first }, evaluation: { kind: 'batch-sample', sampleKey: (await resolveSample(other, first)).receipt.sampleKey } },
+    { runId: 8900, attempt: 2 });
+  assert.equal(released.admitted, false);
+  assert.match(released.reason, /释放串行槽位/);
+});
+
+test('a re-dispatch under changed settings records them, so the sample is not comparable', async () => {
+  const client = fakeRepository();
+  const a = { CODE_AGENT_ENGINE: 'pi', CODE_AGENT_MODEL: 'model-a' }, b = { ...a, CODE_AGENT_MODEL: 'model-b' };
+  const started = await startBatch(client, { plans: plan(1), planKey: 'smoke', trigger: 'manual', now: Date.parse('2026-09-25T02:00:00Z'), runId: 31, controlSha: control, env: a });
+  let batch = await advanceBatch(client, started.batch, { now: Date.parse('2026-09-25T02:00:00Z'), env: a });
+  assert.equal(client.state.dispatches.length, 1);
+  // The first dispatch never produced a run; the next advance runs under settings B.
+  batch = await advanceBatch(client, batch, { now: Date.parse('2026-09-25T03:00:00Z'), env: b });
+  assert.equal(client.state.dispatches.length, 2);
+  const [sample] = batchDocument(batch).samples;
+  assert.equal(sample.agentConfigFingerprint, batch.state.agentConfigDrift.fingerprint);
+  assert.equal(sample.comparable, false);
 });

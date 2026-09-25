@@ -63,12 +63,14 @@ export function budgetExhausted(state, phase, now = Date.now() / 1000) {
 }
 
 // Used time and executions never drop below GitHub's own job records.
+// Sources: prepare's measurement in the metadata, and the Agent job's own
+// admission re-measurement (for "Re-run failed jobs" that skip prepare).
 function trustedUsage(budget, metadata, state) {
   const used = metadata.evaluation?.budgetUsed ?? {};
-  const count = value => (Number.isSafeInteger(value) && value >= 0 ? value : 0);
-  const activeSeconds = Math.max(count(state.activeSeconds), count(used.activeSeconds));
+  const count = value => (Number.isSafeInteger(Number(value)) && Number(value) >= 0 ? Number(value) : 0);
+  const activeSeconds = Math.max(count(state.activeSeconds), count(used.activeSeconds), count(process.env.FACTORY_EVALUATION_USED_SECONDS));
   return { budget, activeSeconds, activeSecondsBase: activeSeconds,
-    priorExecutions: Math.max(count(state.priorExecutions), count(used.executions)) };
+    priorExecutions: Math.max(count(state.priorExecutions), count(used.executions), count(process.env.FACTORY_EVALUATION_USED_EXECUTIONS)) };
 }
 
 export function saveState(file, state) {

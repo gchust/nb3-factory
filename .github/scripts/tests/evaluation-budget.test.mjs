@@ -51,6 +51,11 @@ test('the budget is copied once into the checkpoint; handoff and recovery restor
   // A re-run attempt starts a fresh checkpoint but inherits the measured usage.
   const rerun = initialize(path.join(root, 'rerun', 'pipeline-state.json'), trustedMetadata);
   assert.equal(rerun.activeSeconds, 2400);
+  // "Re-run failed jobs" skips prepare; the Agent job's own admission is the newer floor.
+  const readmitted = withEnv({ FACTORY_EVALUATION_USED_SECONDS: '3000', FACTORY_EVALUATION_USED_EXECUTIONS: '3' },
+    () => initialize(path.join(root, 'readmit', 'pipeline-state.json'), trustedMetadata));
+  assert.equal(readmitted.activeSeconds, 3000);
+  assert.equal(readmitted.priorExecutions, 3);
 });
 
 test('repair count and remaining active time stop new phases before they start', () => {
@@ -117,4 +122,10 @@ test('the task workflow applies the sample budget and the frozen sample control 
   assert.ok(handoff.indexOf('evaluation-budget.mjs handoff') < handoff.indexOf('handoff.mjs prepare'));
   for (const guard of workflow.match(/evaluation-budget\.mjs (?:deadline|handoff)/g)) assert.ok(guard);
   assert.equal((workflow.match(/\[\[ -f control\/\.github\/scripts\/evaluation-budget\.mjs \]\]/g) ?? []).length, 2, 'older pinned control planes are unaffected');
+  const agent = workflow.split('\n  agent:\n')[1].split('\n  verify-final:\n')[0];
+  assert.match(agent, /permissions:\n {6}actions: read\n {6}contents: write\n(?: {6}#.*\n)? {6}issues: read\n/);
+  const admit = agent.indexOf('evaluation-sample.mjs admit');
+  assert.ok(admit > 0 && admit < agent.indexOf('- name: Restore pipeline progress') && admit < agent.indexOf('install-agent.mjs') &&
+    admit < agent.indexOf('Run Code Agent implementation'), 'admission precedes the checkpoint and every model call');
+  assert.match(agent, /\[\[ -f control\/\.github\/scripts\/evaluation-sample\.mjs \]\]/);
 });
