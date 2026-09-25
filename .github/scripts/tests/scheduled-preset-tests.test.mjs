@@ -1,12 +1,21 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
+import { getPresetSourceNumber, preparePresetIssue } from '../issue-presets.mjs';
 import { DAILY_PRESET_LABEL, initializeDailyLabel, renderSummary, runPresetTests } from '../scheduled-preset-tests.mjs';
 
 const bot = { login: 'github-actions[bot]', type: 'Bot' };
-const names = (issue) => issue.labels.map((label) => label.name ?? label);
+const names = (issue) => (issue.labels ?? []).map((label) => label.name ?? label);
+const selectionBody = (number) => `### 预置案例\n\n#${number} - 案例\n`;
+const preparedBody = (number) => `<!-- factory-preset-ready:${'a'.repeat(64)} -->\n` +
+  `> 复制自[预置案例 #${number}](https://github.com/owner/repo/issues/${number})。人工评论按原顺序复制；一次性搭建，不逐轮回放。\n\n业务正文`;
+const task = (number, overrides = {}) => ({
+  number, body: selectionBody(176), state: 'open', labels: ['agent:running'],
+  user: bot, updated_at: '2026-09-20T00:00:00Z', ...overrides,
+});
 const preset = (number, overrides = {}) => ({
-  number, title: `案例 ${number}`, body: '业务需求', state: 'closed',
+  number, title: `案例 ${number}`, body: '### 任务类型\n\n创建新系统\n\n### 业务需求\n\n业务需求\n\n### 验收要求\n\n验证页面', state: 'closed',
+  html_url: `https://github.com/owner/repo/issues/${number}`, updated_at: '2026-09-20T00:00:00Z',
   labels: [{ name: 'factory:preset' }, { name: DAILY_PRESET_LABEL }],
   user: { login: 'owner', type: 'User' }, ...overrides,
 });
@@ -16,6 +25,9 @@ function fixture(sources = [preset(176)]) {
   const client = {
     repository: 'owner/repo',
     async getRepository() { return { default_branch: 'develop' }; },
+    async getIssue(number) {
+      return structuredClone([...state.sources, ...state.tasks].find((issue) => issue.number === number));
+    },
     async ensureStatusLabels() { state.calls.push({ method: 'ENSURE', route: '/labels' }); },
     async addComment(number, body) {
       return this.request('POST', `/issues/${number}/comments`, { body: { body } });
@@ -24,7 +36,7 @@ function fixture(sources = [preset(176)]) {
       state.calls.push({ method, route, ...structuredClone(options) });
       if (state.fail?.(method, route, options)) throw new Error('Injected API failure');
       if (method === 'GET' && /^\/actions\/runs\/\d+$/.test(route)) {
-        return { created_at: '2026-09-24T03:17:00Z' };
+        return { created_at: '2026-09-24T03:17:00Z', run_started_at: '2026-09-25T03:17:00Z' };
       }
       if (method === 'GET' && route.endsWith('/runs')) {
         const offset = (options.query.page - 1) * 100;
@@ -38,16 +50,22 @@ function fixture(sources = [preset(176)]) {
         return options.body;
       }
       if (route === '/issues' && method === 'GET') {
-        const required = options.query.labels.split(',');
+        const required = options.query.labels?.split(',') ?? [];
         const found = [...state.sources, ...state.tasks].filter((issue) =>
           required.every((label) => names(issue).includes(label)) &&
-          (options.query.state === 'all' || issue.state === options.query.state));
+          (options.query.state === 'all' || issue.state === options.query.state) &&
+          (!options.query.since || issue.updated_at >= options.query.since));
         const offset = (options.query.page - 1) * 100;
         return structuredClone(found.slice(offset, offset + 100));
       }
       if (route === '/issues' && method === 'POST') {
-        const issue = { ...structuredClone(options.body), number: 1000 + state.tasks.length, state: 'open', user: bot };
+        const issue = { ...structuredClone(options.body), number: 1000 + state.tasks.length, state: 'open', user: bot, updated_at: '2026-09-24T03:17:01Z' };
         state.tasks.push(issue);
+        return structuredClone(issue);
+      }
+      if (method === 'PATCH' && /^\/issues\/\d+$/.test(route)) {
+        const issue = state.tasks.find((item) => item.number === Number(route.split('/').at(-1)));
+        Object.assign(issue, options.body);
         return structuredClone(issue);
       }
       const commentsMatch = /^\/issues\/(\d+)\/comments$/.exec(route);
@@ -137,7 +155,9 @@ test('automatic launch needs no numbers or manual input; builds independent sele
   assert.deepEqual(result.rows.map((row) => row.preset), [155, 176]);
   assert.equal(state.tasks.length, 2);
   assert.match(state.tasks[0].body, /### 预置案例\n\n#155\n/);
-  assert.deepEqual(state.tasks[0].labels, ['factory:test-preset-155', 'agent:pending']);
+  assert.deepEqual(state.tasks[0].labels, ['agent:pending']);
+  assert.equal(state.labels.size, 0, 'does not create a label for any preset');
+  assert.ok(!state.calls.some((call) => JSON.stringify(call).includes('factory:test-preset-')));
   assert.equal(dispatches(state).length, 2);
   assert.deepEqual(dispatches(state)[0].body, { ref: 'develop', inputs: { issue_number: '1000' } });
   assert.match(state.comments.get(1000)[0].body, /factory-preset-test-dispatched:900:155/);
@@ -169,8 +189,8 @@ test('adding daily label selects the case on the next automatic scan; removing p
 test('a new daily round creates a fresh Issue after previous delivery, rather than rerunning the old application', async () => {
   const { execute, state } = fixture();
   await execute();
-  state.tasks[0].labels = ['factory:test-preset-176', 'agent:review'];
-  state.tasks[0].body = 'old generated application';
+  state.tasks[0].labels = ['agent:review'];
+  state.tasks[0].body = preparedBody(176);
   const result = await execute({ runId: '901' });
   assert.equal(result.rows[0].status, 'dispatched');
   assert.equal(result.rows[0].issue, 1001);
@@ -213,7 +233,7 @@ test('overlapping manual and daily triggers skip active work without disabling f
   assert.equal((await execute({ runId: '900' })).rows[0].status, 'dispatched');
   assert.equal((await execute({ runId: '901' })).rows[0].status, 'skipped-active');
   assert.equal(dispatches(state).length, 1);
-  state.tasks[0].labels = ['factory:test-preset-176', 'agent:review'];
+  state.tasks[0].labels = ['agent:review'];
   assert.equal((await execute({ runId: '902' })).rows[0].status, 'dispatched');
   assert.equal(dispatches(state).length, 2);
   assert.deepEqual(names(state.sources[0]), ['factory:preset', 'factory:daily']);
@@ -237,10 +257,11 @@ test('source discovery failure cannot dispatch a partial list', async () => {
   assert.equal(writes(state).length, 0);
 });
 
-test('same launcher rerun does not recreate or redispatch after preset prepare rewrites the body', async () => {
-  const { execute, state } = fixture();
+test('same launcher rerun does not recreate or redispatch after real preset prepare rewrites the body', async () => {
+  const { client, execute, state } = fixture();
   await execute();
-  state.tasks[0].body = '<!-- factory-preset-ready:hash -->\n正常业务正文';
+  await preparePresetIssue(client, await client.getIssue(state.tasks[0].number));
+  assert.match(state.tasks[0].body, /复制自\[预置案例 #176\]/);
   const result = await execute();
   assert.equal(result.rows[0].status, 'already-submitted');
   assert.equal(state.tasks.length, 1);
@@ -270,7 +291,7 @@ test('receipt failure after accepted dispatch is reconciled against actual task 
 test('pending previous tests block overlap, but review/failed/closed tests allow a fresh round', async () => {
   for (const label of ['agent:pending', 'agent:queued', 'agent:running', 'agent:verifying', 'agent:waiting']) {
     const { execute, state } = fixture();
-    state.tasks.push({ number: 88, body: '', state: 'open', labels: ['factory:test-preset-176', label] });
+    state.tasks.push(task(88, { labels: [label] }));
     const result = await execute();
     assert.equal(result.rows[0].status, 'skipped-active');
     assert.equal(result.rows[0].issue, 88);
@@ -278,7 +299,7 @@ test('pending previous tests block overlap, but review/failed/closed tests allow
   }
   for (const [label, issueState] of [['agent:review', 'open'], ['agent:failed', 'open'], ['agent:running', 'closed']]) {
     const { execute, state } = fixture();
-    state.tasks.push({ number: 88, body: '', state: issueState, labels: ['factory:test-preset-176', label] });
+    state.tasks.push(task(88, { state: issueState, labels: [label] }));
     assert.equal((await execute()).rows[0].status, 'dispatched');
   }
 });
@@ -311,9 +332,8 @@ test('one dispatch failure preserves results and does not suppress other daily p
 
 test('pagination reaches an active task beyond the first 100 results', async () => {
   const { execute, state } = fixture();
-  state.tasks = Array.from({ length: 101 }, (_, index) => ({
-    number: index + 1, body: '', state: 'open',
-    labels: ['factory:test-preset-176', index === 100 ? 'agent:running' : 'agent:review'],
+  state.tasks = Array.from({ length: 101 }, (_, index) => task(index + 1, {
+    labels: [index === 100 ? 'agent:running' : 'agent:review'],
   }));
   const result = await execute();
   assert.equal(result.rows[0].status, 'skipped-active');
@@ -379,4 +399,127 @@ test('merging initializes only the label on the default branch; pushes and label
   assert.match(workflow, /scheduled-preset-tests\.mjs --init-label/);
   assert.doesNotMatch(workflow, /^  issues:|^  label:/m);
   assert.doesNotMatch(workflow.split('  launch:')[0], /actions: write/);
+});
+
+test('manual preset Issues in either preparation state block overlap without any generated label', async () => {
+  for (const body of [selectionBody(176), preparedBody(176)]) {
+    const { execute, state } = fixture();
+    state.tasks.push(task(88, { body, user: { login: 'owner', type: 'User' } }));
+    const result = await execute();
+    assert.equal(result.rows[0].status, 'skipped-active');
+    assert.equal(result.rows[0].issue, 88);
+    assert.equal(writes(state).length, 0);
+    assert.ok(!state.calls.some((call) => call.route.includes('/comments')), 'active lookup needs only Issue bodies');
+  }
+});
+
+test('legacy task labels are optional and never override the source in the Issue body', async () => {
+  const { execute, state } = fixture([preset(155), preset(176)]);
+  state.tasks.push(task(88, {
+    body: preparedBody(176), labels: ['agent:running', 'factory:test-preset-155'],
+  }));
+  assert.deepEqual((await execute()).rows.map((row) => row.status), ['dispatched', 'skipped-active']);
+  state.tasks[0].labels = ['agent:running'];
+  const result = await execute();
+  assert.deepEqual(result.rows.map((row) => row.status), ['already-submitted', 'skipped-active']);
+  assert.equal(dispatches(state).length, 1);
+  assert.ok(!state.calls.some((call) => JSON.stringify(call).includes('factory:test-preset-')));
+});
+
+test('old prepared task receipts still deduplicate after all numbered labels are removed', async () => {
+  const { execute, state } = fixture();
+  state.tasks.push(task(88, {
+    body: preparedBody(176), labels: ['agent:review'], updated_at: '2026-09-24T03:17:01Z',
+  }));
+  state.comments.set(88, [{ id: 100, user: bot,
+    body: '<!-- factory-preset-test:900:176 -->\n\n<!-- factory-preset-test-dispatched:900:176 -->',
+  }]);
+  const result = await execute();
+  assert.equal(result.rows[0].status, 'already-submitted');
+  assert.equal(result.rows[0].issue, 88);
+  assert.equal(writes(state).length, 0);
+});
+
+test('PRs, source presets, maintenance Issues and incidental references cannot block a preset', async () => {
+  const { execute, state } = fixture();
+  state.tasks.push(
+    task(80, { pull_request: {} }),
+    task(81, { labels: ['factory:preset', 'agent:running'] }),
+    task(82, { labels: ['factory:manual', 'agent:running'] }),
+    task(83, { body: '参考 #176，名称与 [预置案例 #176](https://github.com/owner/repo/issues/176) 一致。' }),
+    task(84, { body: selectionBody(1760), title: '重搭 #176' }),
+    task(85, { body: '', labels: ['factory:test-preset-176', 'agent:running'] }),
+  );
+  assert.equal((await execute()).rows[0].status, 'dispatched');
+  assert.equal(dispatches(state).length, 1);
+});
+
+test('open and recent tasks are each scanned once per batch, not once per preset', async () => {
+  const { execute, state } = fixture([preset(155), preset(176), preset(200)]);
+  await execute();
+  const taskQueries = state.calls.filter((call) => call.method === 'GET' && call.route === '/issues' && !call.query.labels);
+  assert.equal(taskQueries.length, 2);
+  assert.deepEqual(taskQueries.map((call) => call.query.state), ['open', 'all']);
+  assert.equal(taskQueries[0].query.since, undefined, 'old active tasks are not cut off');
+  assert.equal(taskQueries[1].query.since, '2026-09-24T03:17:00Z', 'retries use original creation time, not run_started_at');
+});
+
+test('closed same-run tasks beyond the first page retain their persistent dispatch receipts', async () => {
+  const { execute, state } = fixture();
+  state.tasks = Array.from({ length: 101 }, (_, index) => task(index + 1, {
+    state: 'closed', body: index === 100 ? preparedBody(176) : 'unrelated',
+    updated_at: '2026-09-24T03:17:01Z',
+  }));
+  state.comments.set(101, [
+    ...Array.from({ length: 100 }, (_, index) => ({ id: index, user: bot, body: 'previous output' })),
+    { id: 101, user: bot, body: '<!-- factory-preset-test:900:176 -->\n\n<!-- factory-preset-test-dispatched:900:176 -->' },
+  ]);
+  const result = await execute();
+  assert.equal(result.rows[0].status, 'already-submitted');
+  assert.equal(result.rows[0].issue, 101);
+  assert.equal(writes(state).length, 0);
+});
+
+test('task discovery errors or broken prepared provenance fail before starting more builds', async () => {
+  const { execute, state } = fixture();
+  state.fail = (method, route, options) => route === '/issues' && !options.query?.labels;
+  await assert.rejects(execute(), /Injected API failure/);
+  assert.equal(writes(state).length, 0);
+  state.fail = null;
+  state.tasks.push(task(88, { body: `<!-- factory-preset-ready:${'a'.repeat(64)} -->\n丢失来源` }));
+  await assert.rejects(execute(), /Issue #88.*来源无效/);
+  assert.equal(writes(state).length, 0);
+});
+
+test('source lookup reads the Issue form and the actual prepared body without adding metadata', async () => {
+  const { client, execute, state } = fixture();
+  await execute();
+  const repositoryUrl = 'https://github.com/owner/repo';
+  assert.equal(getPresetSourceNumber(state.tasks[0].body, repositoryUrl), 176);
+  assert.equal(getPresetSourceNumber(state.tasks[0].body.replaceAll('\n', '\r\n'), repositoryUrl), 176);
+  const prepared = await preparePresetIssue(client, state.tasks[0]);
+  assert.equal(getPresetSourceNumber(prepared.issue.body, repositoryUrl), 176);
+  assert.equal(getPresetSourceNumber(prepared.issue.body.replaceAll('\n', '\r\n'), repositoryUrl), 176);
+  assert.ok(!prepared.issue.body.includes('factory:test-preset-'));
+});
+
+test('source lookup ignores ordinary references and rejects invalid preset protocol fields', async () => {
+  const repositoryUrl = 'https://github.com/owner/repo';
+  assert.equal(getPresetSourceNumber('', repositoryUrl), null);
+  assert.equal(getPresetSourceNumber('需求参考 #1 和 [预置案例 #1](https://github.com/test/factory/issues/1)', repositoryUrl), null);
+  for (const value of ['#0', '#9007199254740992', '暂无预置案例']) {
+    assert.throws(() => getPresetSourceNumber(`### 预置案例\n\n${value}\n`, repositoryUrl), /请选择有效的预置案例/);
+  }
+  const { client, execute, state } = fixture();
+  await execute();
+  const { issue } = await preparePresetIssue(client, state.tasks[0]);
+  for (const replacement of [
+    'https://github.com/another/repository/issues/1',
+    'https://github.com.evil.invalid/test/factory/issues/1',
+    'https://github.com/owner/repo/issues/1760',
+    'https://github.com/owner/repo/issues/176#untrusted',
+  ]) {
+    assert.throws(() => getPresetSourceNumber(issue.body.replace(state.sources[0].html_url, replacement), repositoryUrl), /来源链接/);
+  }
+  assert.throws(() => getPresetSourceNumber(issue.body.replace(/^> 复制自.*\n/m, ''), repositoryUrl), /来源链接/);
 });

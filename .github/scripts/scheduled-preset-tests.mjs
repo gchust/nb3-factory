@@ -1,13 +1,15 @@
 import { appendFileSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
 
+import { getPresetSourceNumber, isManualIssue, isPresetIssue } from './issue-presets.mjs';
+
 export const DAILY_PRESET_LABEL = 'factory:daily';
 const WORKFLOW = 'code-agent-task.yml';
 const ACTIVE_LABELS = new Set([
   'agent:pending', 'agent:queued', 'agent:running', 'agent:verifying', 'agent:waiting',
 ]);
 const labelNames = (issue) => (issue.labels ?? []).map((label) => label.name ?? label);
-const isFactoryComment = (comment) => comment.user?.login === 'github-actions[bot]';
+const isFactoryAuthored = (item) => item.user?.login === 'github-actions[bot]' && item.user.type === 'Bot';
 
 async function listAll(client, route, query = {}) {
   const items = [];
@@ -27,7 +29,9 @@ function validatePreset(issue) {
   }
 }
 
-async function ensureLabel(client, name, description = 'Independent build tests from this preset; not a source preset') {
+export async function initializeDailyLabel(client) {
+  const name = DAILY_PRESET_LABEL;
+  const description = 'Run this factory:preset automatically every day; remove to stop future runs';
   const route = `/labels/${encodeURIComponent(name)}`;
   if (await client.request('GET', route, { allow404: true })) return;
   try {
@@ -40,15 +44,28 @@ async function ensureLabel(client, name, description = 'Independent build tests 
   }
 }
 
-export async function initializeDailyLabel(client) {
-  await ensureLabel(client, DAILY_PRESET_LABEL, 'Run this factory:preset automatically every day; remove to stop future runs');
+function groupByPreset(issues, repositoryUrl) {
+  const groups = new Map();
+  for (const issue of issues) {
+    if (issue.pull_request || isPresetIssue(issue) || isManualIssue(issue)) continue;
+    let number;
+    try {
+      number = getPresetSourceNumber(issue.body ?? '', repositoryUrl);
+    } catch (error) {
+      throw new Error(`执行 Issue #${issue.number} 的预置来源无效：${error.message}`);
+    }
+    if (number == null) continue;
+    const group = groups.get(number) ?? [];
+    group.push(issue);
+    groups.set(number, group);
+  }
+  return groups;
 }
 
-async function findPrevious(client, label, since, marker) {
-  const candidates = await listAll(client, '/issues', { state: 'all', labels: label, since });
-  for (const issue of candidates.filter((item) => !item.pull_request)) {
+async function findPrevious(client, candidates, marker) {
+  for (const issue of candidates) {
     const comments = await listAll(client, `/issues/${issue.number}/comments`);
-    const receipt = comments.find((comment) => isFactoryComment(comment) && comment.body?.includes(marker));
+    const receipt = comments.find((comment) => isFactoryAuthored(comment) && comment.body?.includes(marker));
     // The prepare phase replaces the Issue body. The bot receipt survives it.
     if (issue.body?.includes(marker) || receipt) return { issue, receipt };
   }
@@ -80,16 +97,23 @@ export async function runPresetTests({ client, runId, dryRun = false, serverUrl 
   if (!since || !Number.isFinite(Date.parse(since))) throw new Error('无法读取调度运行的创建时间。');
   const runUrl = `${serverUrl}/${client.repository}/actions/runs/${runId}`;
 
+  // Scan each candidate set once for the whole batch; no per-preset label or
+  // search index. Old active tasks matter, even if untouched since before this run.
+  const activeByPreset = groupByPreset((await listAll(client, '/issues', { state: 'open' }))
+    .filter((issue) => labelNames(issue).some((name) => ACTIVE_LABELS.has(name))), result.repositoryUrl);
+  // created_at is the original launch time, not the current retry's start time.
+  const previousByPreset = groupByPreset((await listAll(client, '/issues', { state: 'all', since }))
+    .filter(isFactoryAuthored), result.repositoryUrl);
+
   for (const source of sources) {
     const row = { preset: source.number, title: source.title, status: '', issue: null, message: '' };
     result.rows.push(row);
     try {
       // A mislabelled PR/bot/manual task must not build or suppress other daily cases.
       validatePreset(source);
-      const label = `factory:test-preset-${source.number}`;
       const marker = `<!-- factory-preset-test:${runId}:${source.number} -->`;
       const sentMarker = `<!-- factory-preset-test-dispatched:${runId}:${source.number} -->`;
-      let { issue, receipt } = await findPrevious(client, label, since, marker);
+      let { issue, receipt } = await findPrevious(client, previousByPreset.get(source.number) ?? [], marker);
       row.issue = issue?.number ?? null;
       if (issue && (issue.state !== 'open' || receipt?.body?.includes(sentMarker) ||
           await hasTaskRun(client, issue.number, since))) {
@@ -97,9 +121,8 @@ export async function runPresetTests({ client, runId, dryRun = false, serverUrl 
         row.message = '本轮已有任务；不重复创建或派发。';
         continue;
       }
-      const active = (await listAll(client, '/issues', { state: 'open', labels: label }))
-        .find((task) => !task.pull_request && task.number !== issue?.number &&
-          labelNames(task).some((name) => ACTIVE_LABELS.has(name)));
+      const active = (activeByPreset.get(source.number) ?? [])
+        .find((task) => task.number !== issue?.number);
       if (active) {
         row.issue = active.number;
         row.status = 'skipped-active';
@@ -112,14 +135,13 @@ export async function runPresetTests({ client, runId, dryRun = false, serverUrl 
         continue;
       }
       if (!issue) {
-        await ensureLabel(client, label);
         await client.ensureStatusLabels();
         issue = await client.request('POST', '/issues', {
           body: {
             title: `[Code Agent] 每日预设搭建测试 #${source.number}`,
             // Feed the existing preset prepare protocol, not copied business code.
             body: `${marker}\n\n### 预置案例\n\n#${source.number}\n`,
-            labels: [label, 'agent:pending'],
+            labels: ['agent:pending'],
           },
         });
         row.issue = issue.number;
