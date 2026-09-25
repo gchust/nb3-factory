@@ -1,5 +1,9 @@
 import type { ApplicationServiceProviderConstructor } from '@nocobase/app-server/application';
 
-const serviceProviders: readonly ApplicationServiceProviderConstructor[] = [];
+import TestNotificationProvider from './test-notification.js';
+
+const serviceProviders: readonly ApplicationServiceProviderConstructor[] = [
+  TestNotificationProvider,
+];
 
 export default serviceProviders;

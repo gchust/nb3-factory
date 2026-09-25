@@ -6,6 +6,7 @@ import os from 'node:os';
 import path from 'node:path';
 
 import type { AuthorizationConfig } from '@nocobase/app-plugin-authorization/server';
+import type { NotificationConfig } from '@nocobase/app-plugin-notification/server';
 import { type AppIdentityConfig } from '@nocobase/app-server/config';
 import { type AppDatabaseConfig } from '@nocobase/app-server/database';
 import { resolveStandaloneAppRuntime } from '@nocobase/app-server/node';
@@ -56,6 +57,17 @@ describe('application config', () => {
     expect(runtime.config.get<CachingConfig>('caching')!.default).toBe(
       'memory',
     );
+    // The external test channel and its controlled-failure twin are application defaults, reachable whatever the
+    // environment names them, so the diagnostics page always has a target to send to.
+    const notificationChannels = Object.entries(
+      runtime.config.get<NotificationConfig>('notification')!.channels,
+    );
+    expect(notificationChannels).toHaveLength(2);
+    expect(
+      notificationChannels.every(
+        ([, channel]) => channel.provider === 'test-webhook',
+      ),
+    ).toBe(true);
     expect(runtime.config.get<AppDatabaseConfig>('database')!.default).toBe(
       'main',
     );

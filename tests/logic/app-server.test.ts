@@ -694,6 +694,98 @@ describe('app server', () => {
     expect(rejected.status).toBe(401);
   });
 
+  it('sends an external test notification and records the controlled failure reason', async () => {
+    // The delivery worker reaches the application's own isolated receiver over loopback HTTP, so this test has to
+    // listen on the port the channel configuration advertises rather than an arbitrary one. The port is chosen
+    // first and passed both to the runtime and to the listener. That is the only way to exercise the real path:
+    // test target -> send -> delivery -> receiver -> recorded status.
+    const port = await findFreePort();
+    const origin = `http://127.0.0.1:${port}`;
+    const app = trackCloseable(
+      await createInstalledStandaloneServer({
+        viteDevUrl: false,
+        // `pnpm dev` sets `APP_PUBLIC_ORIGIN` and `BETTER_AUTH_TRUSTED_ORIGINS` for the browser so a
+        // cookie-authenticated write clears Better Auth's CSRF origin check. A test that calls the app directly has to
+        // set the same thing, otherwise the send is rejected with INVALID_CSRF_ORIGIN before it reaches the route.
+        env: { APP_SERVER_PORT: String(port), APP_PUBLIC_ORIGIN: origin },
+      }),
+    );
+    await startStandaloneServerOnPort(app, port);
+    const baseUrl = `${origin}${app.application.publicBasePath}`;
+    // The test header gates the notification test routes; the origin header clears the cookie-write CSRF check.
+    const testHeaders = {
+      'x-nocobase-notification-test': '1',
+      origin,
+    };
+
+    const signIn = await requestApp(
+      app,
+      `${baseUrl}/api/auth/sign-in/username`,
+      {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ username: 'nocobase', password: 'admin123' }),
+      },
+    );
+    expect(signIn.status).toBe(200);
+    const cookie = signIn.headers
+      .getSetCookie()
+      .map((header) => header.split(';')[0])
+      .join('; ');
+
+    const targets = await requestApp(
+      app,
+      `${baseUrl}/api/notifications/test/targets`,
+      { headers: { ...testHeaders, cookie } },
+    );
+    expect(targets.status).toBe(200);
+    await expect(targets.json()).resolves.toMatchObject({
+      data: [
+        { channel: { name: 'test-inbox' } },
+        { channel: { name: 'test-inbox-failure' } },
+      ],
+    });
+
+    const acceptedId = await sendTestNotification(
+      app,
+      baseUrl,
+      cookie,
+      testHeaders,
+      'test-inbox',
+    );
+    const accepted = await readTestNotificationStatus(
+      app,
+      baseUrl,
+      cookie,
+      testHeaders,
+      acceptedId,
+    );
+    expect(accepted.log.status).toBe('completed');
+    expect(accepted.deliveries[0]?.delivery.status).toBe('accepted');
+    expect(accepted.deliveries[0]?.delivery.lastError).toBeUndefined();
+
+    const failedId = await sendTestNotification(
+      app,
+      baseUrl,
+      cookie,
+      testHeaders,
+      'test-inbox-failure',
+    );
+    const failed = await readTestNotificationStatus(
+      app,
+      baseUrl,
+      cookie,
+      testHeaders,
+      failedId,
+    );
+    expect(failed.log.status).toBe('failed');
+    expect(failed.deliveries[0]?.delivery.status).toBe('failed');
+    // The controlled failure is only useful when the receiver's reason survives to the diagnostics view.
+    expect(failed.deliveries[0]?.delivery.lastError?.message).toContain(
+      'rejected this notification on purpose',
+    );
+  });
+
   it('mounts standalone app-local routes behind the public base path', async () => {
     const app = trackCloseable(
       await createIsolatedStandaloneServer({ viteDevUrl: false }),
@@ -988,6 +1080,95 @@ async function startStandaloneTestServer(
   }
 
   return `ws://${normalizeListenAddress(listenInfo)}:${listenInfo.port}`;
+}
+
+async function startStandaloneServerOnPort(
+  app: StandaloneServer,
+  port: number,
+): Promise<void> {
+  const server = (await startNodeAppServer(app, {
+    hostname: '127.0.0.1',
+    port,
+    registerProcessSignals: false,
+  })) as Server;
+  servers.push(server);
+}
+
+function findFreePort(): Promise<number> {
+  return new Promise((resolve, reject) => {
+    const server = createHttpServer();
+    server.once('error', reject);
+    server.listen(0, '127.0.0.1', () => {
+      const address = server.address();
+      server.close(() => {
+        if (address && typeof address !== 'string') {
+          resolve(address.port);
+          return;
+        }
+        reject(new Error('Failed to resolve a free port.'));
+      });
+    });
+  });
+}
+
+interface TestNotificationStatus {
+  readonly log: { readonly status: string };
+  readonly deliveries: readonly {
+    readonly delivery: {
+      readonly status: string;
+      readonly lastError?: { readonly message: string };
+    };
+  }[];
+}
+
+async function sendTestNotification(
+  app: FetchableResource,
+  baseUrl: string,
+  cookie: string,
+  testHeaders: Readonly<Record<string, string>>,
+  channel: string,
+): Promise<string> {
+  const response = await requestApp(
+    app,
+    `${baseUrl}/api/notifications/test/send`,
+    {
+      method: 'POST',
+      headers: {
+        ...testHeaders,
+        cookie,
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        channel,
+        values: {
+          title: 'Factory test',
+          text: 'Delivery from the isolated test channel.',
+        },
+      }),
+    },
+  );
+  expect(response.status).toBe(202);
+  const body = (await response.json()) as {
+    data: { notificationId: string };
+  };
+  return body.data.notificationId;
+}
+
+async function readTestNotificationStatus(
+  app: FetchableResource,
+  baseUrl: string,
+  cookie: string,
+  testHeaders: Readonly<Record<string, string>>,
+  notificationId: string,
+): Promise<TestNotificationStatus> {
+  const response = await requestApp(
+    app,
+    `${baseUrl}/api/notifications/test/${notificationId}/status`,
+    { headers: { ...testHeaders, cookie } },
+  );
+  expect(response.status).toBe(200);
+  const body = (await response.json()) as { data: TestNotificationStatus };
+  return body.data;
 }
 
 function normalizeListenAddress(info: AddressInfo): string {
