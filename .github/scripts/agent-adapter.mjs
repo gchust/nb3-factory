@@ -15,6 +15,9 @@ export const credentialNames = [
 // credentials. Empty Actions secrets must behave as absent variables.
 export function engineEnv(source, allowed) {
   const env = { ...source };
+  // Installation provenance belongs to the outer runner. Agent tools and
+  // nested installers must not inherit its writable record destination.
+  delete env.FACTORY_AGENT_INSTALL_RECORD;
   for (const name of credentialNames) {
     if (!allowed.includes(name) || !env[name]?.trim()) delete env[name];
   }

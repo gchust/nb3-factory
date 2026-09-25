@@ -67,7 +67,7 @@ for (const event of ${JSON.stringify(events[id])}) console.log(JSON.stringify(ev
     const result = spawnSync(process.execPath, [path.join(scripts, 'run-agent.mjs'),
       '--workspace', f.workspace, '--prompt', f.prompt, '--log', f.log, '--agentDir', f.agentDir], {
       encoding: 'utf8', timeout: 15_000,
-      env: { ...process.env, ...settings, CODE_AGENT_ENGINE: id, PATH: `${f.bin}:${process.env.PATH}` },
+      env: { ...process.env, ...settings, CODE_AGENT_ENGINE: id, PATH: `${f.bin}:${process.env.PATH}`, FACTORY_AGENT_INSTALL_RECORD: '' },
     });
     assert.equal(result.status, 0, result.stderr);
     assert.equal(readFileSync(path.join(f.workspace, 'changed.txt'), 'utf8'), 'implementation fixture');
@@ -83,6 +83,37 @@ for (const event of ${JSON.stringify(events[id])}) console.log(JSON.stringify(ev
     for (const [key, value] of Object.entries(settings)) if (key.endsWith('API_KEY')) assert.equal(published.includes(value), false);
   });
 }
+
+test('runner verifies its installation record without exposing it to any engine', (t) => {
+  for (const id of agentIds) {
+    const f = fixture(t);
+    const adapter = resolveAgent({ CODE_AGENT_ENGINE: id });
+    const record = path.join(f.root, 'runner-install.json');
+    const original = JSON.stringify({ version: 1, engine: id, configuredVersion: adapter.version, actualVersion: adapter.version });
+    writeFileSync(record, original);
+    writeFileSync(path.join(f.bin, adapter.command), `#!/usr/bin/env node
+import fs from 'node:fs';
+if (process.env.FACTORY_AGENT_INSTALL_RECORD !== undefined) throw new Error('Runner installation record leaked to Agent tools');
+fs.writeFileSync('invoked.txt', 'started');
+for (const event of ${JSON.stringify(events[id])}) console.log(JSON.stringify(event));
+`, { mode: 0o755 });
+    const env = { ...process.env, ...settings, CODE_AGENT_ENGINE: id, PATH: `${f.bin}:${process.env.PATH}`, FACTORY_AGENT_INSTALL_RECORD: record };
+    const args = [path.join(scripts, 'run-agent.mjs'), '--workspace', f.workspace, '--prompt', f.prompt, '--log', f.log, '--agentDir', f.agentDir];
+    const result = spawnSync(process.execPath, args, { encoding: 'utf8', timeout: 15_000, env });
+    assert.equal(result.status, 0, `${id}: ${result.stderr}`);
+    assert.equal(readResult(f.log).actualVersion, adapter.version, id);
+    assert.equal(readFileSync(record, 'utf8'), original, id);
+    assert.equal(env.FACTORY_AGENT_INSTALL_RECORD, record);
+
+    // Removing the child variable must not bypass the runner's own check.
+    rmSync(path.join(f.workspace, 'invoked.txt'));
+    writeFileSync(record, JSON.stringify({ ...JSON.parse(original), engine: id === 'pi' ? 'codebuddy' : 'pi' }));
+    const mismatch = spawnSync(process.execPath, args, { encoding: 'utf8', timeout: 15_000, env });
+    assert.notEqual(mismatch.status, 0, id);
+    assert.match(mismatch.stderr, /Installed agent does not match selected engine/);
+    assert.throws(() => readFileSync(path.join(f.workspace, 'invoked.txt')), { code: 'ENOENT' });
+  }
+});
 
 test('normalized usage replaces raw parsing, deduplicates results and keeps cache semantics', async (t) => {
   for (const id of agentIds) {
@@ -121,7 +152,7 @@ test('all vendor terminal failures override exit code zero', (t) => {
     writeFileSync(path.join(f.bin, adapter.command), `#!/usr/bin/env node\nconsole.log(${JSON.stringify(JSON.stringify(failureEvents[id]))});\n`, { mode: 0o755 });
     const result = spawnSync(process.execPath, [path.join(scripts, 'run-agent.mjs'), '--workspace', f.workspace, '--prompt', f.prompt, '--log', f.log, '--agentDir', f.agentDir], {
       encoding: 'utf8', timeout: 10_000,
-      env: { ...process.env, ...settings, CODE_AGENT_ENGINE: id, PATH: `${f.bin}:${process.env.PATH}` },
+      env: { ...process.env, ...settings, CODE_AGENT_ENGINE: id, PATH: `${f.bin}:${process.env.PATH}`, FACTORY_AGENT_INSTALL_RECORD: '' },
     });
     assert.notEqual(result.status, 0, id);
     assert.equal(readResult(f.log).status, 'failed', id);
@@ -188,7 +219,7 @@ test('installer verifies the actual executable and persists the selected pin', (
     const record = path.join(f.root, 'installed.json');
     writeFileSync(path.join(f.bin, 'npm'), '#!/usr/bin/env node\n', { mode: 0o755 });
     writeFileSync(path.join(f.bin, adapter.command), `#!/usr/bin/env node\nconsole.log('${adapter.version}');\n`, { mode: 0o755 });
-    const env = { ...process.env, CODE_AGENT_ENGINE: id, PATH: `${f.bin}:${process.env.PATH}`, FACTORY_AGENT_INSTALL_RECORD: record };
+    const env = { ...process.env, CODE_AGENT_ENGINE: id, [adapter.versionEnv[0]]: adapter.version, PATH: `${f.bin}:${process.env.PATH}`, FACTORY_AGENT_INSTALL_RECORD: record };
     const success = spawnSync(process.execPath, [path.join(scripts, 'install-agent.mjs')], { encoding: 'utf8', env });
     assert.equal(success.status, 0, success.stderr);
     assert.equal(JSON.parse(readFileSync(record)).actualVersion, adapter.version);

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
@@ -92,6 +92,7 @@ test('installer uses the registry package and pinned version without a shell', (
       ['pi', '0.84.5', '@earendil-works/pi-coding-agent@0.84.5'],
       ['codebuddy', '2.150.1', '@tencent-ai/codebuddy-code@2.150.1'],
     ]) {
+      const record = path.join(root, `${engine}-install.json`);
       writeFileSync(path.join(root, engine),
         `#!/usr/bin/env node\nconsole.log('${version}');\n`, { mode: 0o755 });
       const result = spawnSync(
@@ -101,6 +102,7 @@ test('installer uses the registry package and pinned version without a shell', (
           encoding: 'utf8',
           env: {
             ...process.env,
+            FACTORY_AGENT_INSTALL_RECORD: record,
             PATH: `${root}:${process.env.PATH}`,
             CODE_AGENT_ENGINE: engine,
             CODE_AGENT_VERSION: engine === 'codebuddy' ? '' : version,
@@ -109,6 +111,9 @@ test('installer uses the registry package and pinned version without a shell', (
         },
       );
       assert.equal(result.status, 0, result.stderr);
+      assert.deepEqual(JSON.parse(readFileSync(record, 'utf8')), {
+        version: 1, engine, configuredVersion: version, actualVersion: version,
+      });
       assert.deepEqual(JSON.parse(result.stdout), [
         'install',
         '--global',
