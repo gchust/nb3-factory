@@ -1,0 +1,27 @@
+{
+  "description": "Invalid examples. Each case starts from a valid example (base), removes the listed JSON Pointers in order, then sets the listed values; the result must be rejected by the base's contract.",
+  "cases": [
+    { "name": "report-score-out-of-range", "base": "report-completed.json", "reason": "Scores are 0–100.",
+      "set": { "/reviews/0/modules/0/scores/design/score": 101 } },
+    { "name": "report-unscoped-finding", "base": "report-completed.json", "reason": "A finding ID must be scoped to its review, not a bare local ID.",
+      "set": { "/reviews/0/findings/0/id": "F1", "/reviews/0/findings/0/localId": "F01" } },
+    { "name": "report-receiver-field", "base": "report-completed.json", "reason": "Receiver-side fields (feature point IDs) are never part of the report.",
+      "set": { "/featurePointId": 12 } },
+    { "name": "report-merged-success-state", "base": "report-completed.json", "reason": "Execution and acceptance stay separate; there is no merged 'success' state.",
+      "set": { "/outcome/execution": "success" } },
+    { "name": "report-ui-as-framework-score", "base": "report-completed.json", "reason": "Business UI is never counted as a framework score.",
+      "set": { "/reviews/0/ui/framework": true } },
+    { "name": "report-double-counted-build", "base": "report-completed.json", "reason": "One report describes exactly one business build.",
+      "set": { "/metrics/counts/businessBuilds": 2 } },
+    { "name": "receipt-accepted-not-stored", "base": "receipt.json", "reason": "Only a stored result is a receipt; 'accepted' is not persistence.",
+      "set": { "/state": "accepted" } },
+    { "name": "receipt-missing-identity", "base": "receipt.json", "reason": "A receipt names the run it stored.",
+      "remove": ["/runKey"] },
+    { "name": "bundle-manifest-path-escape", "base": "bundle-manifest.json", "reason": "Bundle paths never leave the bundle.",
+      "set": { "/files/0/path": "../evaluation.json" } },
+    { "name": "batch-hides-samples-with-global-score", "base": "batch-in-progress.json", "reason": "A batch lists every planned sample and computes no global score.",
+      "remove": ["/samples/2", "/samples/1"], "set": { "/summary/globalScore": 88 } },
+    { "name": "batch-parallel-samples", "base": "batch-in-progress.json", "reason": "v1 runs one sample chain at a time.",
+      "set": { "/baseline/maxConcurrentSamples": 4 } }
+  ]
+}

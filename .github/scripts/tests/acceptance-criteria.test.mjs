@@ -5,7 +5,7 @@ import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, rmSync } from 'nod
 import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
-import { parseAcceptance, parseAcceptanceCriteria, acceptanceCriteria, renderAcceptance, validateCoverage } from '../acceptance-criteria.mjs';
+import { parseAcceptance, parseAcceptanceCriteria, acceptanceCriteria, renderAcceptance, reportVerdict, validateCoverage } from '../acceptance-criteria.mjs';
 import { retestMetadata } from '../qa-retest.mjs';
 
 const scripts = path.resolve(import.meta.dirname, '..');
@@ -106,4 +106,22 @@ test('an entirely blocked browser needs no invented screenshot and cannot claim 
   for (const c of f.checks) Object.assign(c, {status: 'blocked', reason: 'Browser unavailable', screenshots: []});
   assert.equal(f.run().status, 20);
   assert.equal(JSON.parse(readFileSync(path.join(f.root, 'report.json'))).passed, false);
+});
+
+test('reportVerdict is side-effect free and reads observed per-check statuses', () => {
+  const criteria = parseAcceptanceCriteria('B01. 创建\nB02. [optional] 导出');
+  const report = (statuses, passed = true) => ({ passed, authenticated: true, failures: [],
+    checks: statuses.map((status, i) => ({ id: `B0${i + 1}`, criterion: i ? '导出' : '创建', status })) });
+  const blocked = report(['passed', 'blocked'], false);
+  const before = JSON.stringify(blocked);
+  assert.equal(reportVerdict(blocked, criteria), 'blocked', 'passed=false written for a blocked report stays blocked');
+  assert.equal(JSON.stringify(blocked), before);
+  assert.equal(reportVerdict(report(['failed', 'blocked'], false), criteria), 'failed');
+  assert.equal(reportVerdict(report(['passed', 'not_run']), criteria), 'passed', 'an optional criterion may be skipped');
+  assert.equal(reportVerdict(report(['not_run', 'passed']), criteria), 'incomplete', 'a required one may not');
+  assert.equal(reportVerdict(report(['passed']), criteria), 'incomplete', 'every criterion needs a result');
+  assert.equal(reportVerdict(report(['passed', 'passed'], false), criteria), 'incomplete', 'an invalid report is not a pass');
+  // Without criteria only an all-passed report can pass.
+  assert.equal(reportVerdict(report(['passed', 'passed']), null), 'passed');
+  assert.equal(reportVerdict(report(['passed', 'not_run']), null), 'incomplete');
 });

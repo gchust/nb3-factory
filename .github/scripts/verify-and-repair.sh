@@ -30,6 +30,7 @@ summary() {
     0) outcome=passed ;;
     20) outcome=blocked ;;
     75) outcome=handoff ;;
+    76) outcome=budget-exhausted ;;
   esac
   state outcome "$outcome"
 }
@@ -39,10 +40,17 @@ handoff() {
   echo "Runner budget reached during $phase; requesting handoff."
   exit 75
 }
+exhausted() {
+  trap - EXIT
+  summary ',"budgetExhausted":true' 76
+  echo "Evaluation sample budget reached before $1; keeping the sealed facts without another repair or continuation."
+  exit 76
+}
 budget() {
   local status=0
   state budget "$1" || status=$?
   if [[ "$status" -eq 75 ]]; then handoff; fi
+  if [[ "$status" -eq 76 ]]; then exhausted "$1"; fi
   if [[ "$status" -ne 0 ]]; then exit "$status"; fi
 }
 # A summary survives QA errors, report blocks, and every handoff path.

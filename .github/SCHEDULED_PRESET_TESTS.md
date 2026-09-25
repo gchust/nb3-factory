@@ -14,6 +14,9 @@ Action：**Preset build tests (daily / manual)**（`scheduled-preset-tests.yml`�
           Code Agent → QA → PR / HTML 报告
 ```
 
+需要同一冻结基线、同一案例快照的多次独立样本、预算与批次结果时，使用 [评测批次](EVALUATION_INTEGRATION.md#固定基线的独立重复评测批次)；
+本页的每日标签调度保持原样，二者互不影响。
+
 ## 日常操作
 
 | 预设 Issue 的标签 | 行为 |

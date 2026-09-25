@@ -179,11 +179,14 @@ for (const branch of ['', 'develop']) {
     assert.equal(first.metadata.task.targetBranch, 'develop');
     assert.equal(first.metadata.workBranch, 'agent/issue-20');
     assert.equal(first.metadata.targetCreated, false);
+    // A stable logical-run key is recorded once and survives retries of the same Issue.
+    assert.deepEqual(first.metadata.evaluation, { version: 1, runKey: `${repository}/issues/20/initial`, kind: 'initial' });
     assert.match(first.output, /status=ready/); // Another Issue already has a develop PR.
     assert.match(first.output, new RegExp(`base_ref=develop\\nbase_sha=${initial}`));
     f.c.refs.set('develop', advanced);
     const retry = await f.prepare();
     assert.match(retry.output, new RegExp(`base_sha=${initial}`));
+    assert.deepEqual(retry.metadata.evaluation, first.metadata.evaluation);
     assert.equal(f.calls.filter((call) => call.route === '/git/refs').length, 0);
     await f.publish();
     const published = f.calls.find((call) => call.route === '/pulls' && call.method === 'POST');

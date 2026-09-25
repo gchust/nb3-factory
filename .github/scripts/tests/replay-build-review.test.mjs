@@ -47,7 +47,9 @@ test('supplement must originate in a completed review job, not merely a matching
     '/actions/runs/200/attempts/1/jobs?per_page=100': { jobs: [{ ...jobs[0], name: 'review', status: 'completed' }] },
   };
   const get = async route => responses[route];
-  assert.equal((await selectSupplement(get, 'owner/factory', 200, 84)).artifactId, 84);
+  const selected = await selectSupplement(get, 'owner/factory', 200, 84);
+  assert.equal(selected.artifactId, 84);
+  assert.equal(selected.reviewedAt, new Date(artifact.created_at).toISOString(), 'review order comes from the Actions API, not the review');
   responses['/actions/runs/200'].path = '.github/workflows/other.yml';
   await assert.rejects(selectSupplement(get, 'owner/factory', 200, 84));
 });
@@ -64,9 +66,11 @@ test('supplement adoption binds producer, immutable source artifact, patch, QA a
     reviewer: { runId: '200', attempt: 1, controlSha: sha } };
   put(supplement, 'build-review.json', report);
   const publication = { repository: 'owner/factory', issue: 224, runId: 100, attempt: 2, artifactId: 42,
-    reviewSource: { runId: 200, attempt: 1, artifactId: 84, controlSha: sha } };
+    reviewSource: { runId: 200, attempt: 1, artifactId: 84, controlSha: sha, reviewedAt: '2026-09-23T10:04:00.000Z' } };
   await adoptSupplement(root, supplement, publication);
-  assert.equal(JSON.parse(readFileSync(path.join(root, 'build-review.supplement.json'))).basis.attempt, 1);
+  const adopted = JSON.parse(readFileSync(path.join(root, 'build-review.supplement.json')));
+  assert.equal(adopted.basis.attempt, 1);
+  assert.equal(adopted.supplementalUsage.reviewedAt, '2026-09-23T10:04:00.000Z');
   await assert.rejects(adoptSupplement(root, supplement, { ...publication, artifactId: 99 }));
   put(root, 'agent.patch', 'wrong patch'); await assert.rejects(adoptSupplement(root, supplement, publication));
 });

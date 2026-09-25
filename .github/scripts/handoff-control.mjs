@@ -93,6 +93,8 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
   if (command === 'record') {
     const metadata = readJson(args.metadata);
     metadata.controlSha = controlSha(process.env.FACTORY_CONTROL_SHA);
+    // The entry workflow can differ from the pinned control plane; record both.
+    if (/^[a-f0-9]{40}$/u.test(process.env.FACTORY_ENTRY_SHA ?? '')) metadata.entrySha = process.env.FACTORY_ENTRY_SHA;
     if (process.env.GITHUB_RUN_ID && process.env.GITHUB_RUN_ATTEMPT) {
       metadata.run = { id: Number(process.env.GITHUB_RUN_ID), attempt: Number(process.env.GITHUB_RUN_ATTEMPT) };
     }

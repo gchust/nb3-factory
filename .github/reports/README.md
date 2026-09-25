@@ -11,6 +11,9 @@ QA：delivery-notes.json（可选） ┤                  │
                                gh-pages 全量归档 → GitHub Pages → 评论链接
 ```
 
+同一作业还把这些事实转换为版本化的外部结果 `evaluation.json`（不调用模型、不替换本报告），按运行身份登记修订，
+并可选投递给实现同一协议的接收端，见 [评测结果导出与接收端对接](../EVALUATION_INTEGRATION.md)。
+
 ## 页面与风格
 
 模板由 `.github/reports/report.template.html` 统一维护，使用黑白灰配色、左侧导航、首屏摘要、折叠详情与截图查看器。业务 Agent 不修改模板、不生成 HTML/CSS，不读取含图片的完整示例。

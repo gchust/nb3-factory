@@ -17,6 +17,8 @@ import {
 import { isManualIssue, isPresetIssue, preparePresetIssue } from './issue-presets.mjs';
 import { resolveTaskBranch, taskIssueNumber } from './task-compat.mjs';
 import { resolveTargetBranch, pinInitialBase } from './task-base.mjs';
+import { taskEvaluationIdentity } from './evaluation-identity.mjs';
+import { gateSample, recordTerminal, resolveSample } from './evaluation-sample.mjs';
 
 const args = parseArgs(process.argv.slice(2));
 const event = JSON.parse(readFileSync(args.event, 'utf8'));
@@ -47,8 +49,31 @@ try {
     appendGithubOutput(outputPath, 'status', 'preset');
     process.exit(0);
   }
+  // Batch samples prove their frozen batch from bot receipts; ordinary Issues get null.
+  const sample = await resolveSample(client, issueNumber, { issue });
   await client.ensureStatusLabels();
   const buildCommentId = event.client_payload?.build_comment_id;
+  const continuation = event.action === 'code-agent-continue';
+  const batchSample = sample && !buildCommentId ? sample : null;
+  const runId = Number(process.env.GITHUB_RUN_ID);
+  // The batch coordinator advances when a sample run ends (bot-started runs emit no workflow_run).
+  if (sample) appendGithubOutput(outputPath, 'evaluation_sample', 'true');
+  let budgetUsed = null;
+  if (sample) {
+    // One gate, shared with the Agent job's admission (see gateSample for the rules).
+    const gate = await gateSample(client, sample, { runId, attempt: Number(process.env.GITHUB_RUN_ATTEMPT || 1),
+      incremental: !batchSample, fresh: Boolean(batchSample) && !continuation,
+      controlSha: process.env.FACTORY_CONTROL_SHA, serverUrl: process.env.GITHUB_SERVER_URL });
+    if (gate.decision === 'rejected') throw new TaskInputError(gate.reason);
+    if (gate.decision !== 'run') {
+      // Decisions the coordinator cannot see in a Run's own result are recorded for it.
+      if (batchSample && ['cancelled', 'budget-exhausted'].includes(gate.decision)) await recordTerminal(client, batchSample, runId, gate.decision, gate.reason);
+      if (gate.decision !== 'duplicate') await client.setIssueStatus(issue, 'agent:failed', gate.reason);
+      appendGithubOutput(outputPath, 'status', gate.decision);
+      process.exit(0);
+    }
+    budgetUsed = gate.used;
+  }
   if (buildCommentId) {
     const { receipts } = await receiptsFor(client, issueNumber);
     if (
@@ -130,6 +155,22 @@ try {
       author: issue.user.login,
     },
     task,
+    // Stable logical-run identity for exported evaluations; not business input.
+    evaluation: {
+      ...taskEvaluationIdentity({
+        repository,
+        issueNumber: issue.number,
+        buildCommentId: buildCommentId ? Number(buildCommentId) : null,
+        sample: batchSample ? batchSample.receipt : null,
+      }),
+      ...(batchSample ? {
+        budget: batchSample.receipt.budget,
+        // GitHub-measured usage so far: the checkpoint's floor for this execution.
+        budgetUsed,
+        coordinatorIssue: batchSample.receipt.coordinatorIssue,
+        manifestHash: batchSample.manifestHash,
+      } : {}),
+    },
     workBranch,
     targetCreated,
     existingPullRequest: ownPullRequest
@@ -178,6 +219,9 @@ try {
   const baseSha = workRef?.object?.sha ?? (isSharedTaskBase(task.targetBranch, defaultBranch)
     ? await pinInitialBase(client, issueNumber, task.targetBranch, targetRef.object.sha)
     : targetRef.object.sha);
+  if (batchSample && !workRef && baseSha !== batchSample.receipt.baseSha) {
+    throw new TaskInputError('评测样本的代码起点与批次冻结基线不一致，拒绝改用其他基线。');
+  }
 
   appendGithubOutput(outputPath, 'base_ref', baseRef);
   appendGithubOutput(outputPath, 'base_sha', baseSha);

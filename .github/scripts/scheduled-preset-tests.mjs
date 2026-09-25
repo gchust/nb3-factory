@@ -2,6 +2,7 @@ import { appendFileSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
 
 import { getPresetSourceNumber, isManualIssue, isPresetIssue } from './issue-presets.mjs';
+import { SAMPLE_LABEL } from './evaluation-sample.mjs';
 
 export const DAILY_PRESET_LABEL = 'factory:daily';
 const WORKFLOW = 'code-agent-task.yml';
@@ -47,7 +48,8 @@ export async function initializeDailyLabel(client) {
 function groupByPreset(issues, repositoryUrl) {
   const groups = new Map();
   for (const issue of issues) {
-    if (issue.pull_request || isPresetIssue(issue) || isManualIssue(issue)) continue;
+    // Evaluation-batch samples copy the same preset body but have their own serial scheduler.
+    if (issue.pull_request || isPresetIssue(issue) || isManualIssue(issue) || labelNames(issue).includes(SAMPLE_LABEL)) continue;
     let number;
     try {
       number = getPresetSourceNumber(issue.body ?? '', repositoryUrl);

@@ -1,4 +1,4 @@
-import { acceptanceCriteria, validateCoverage } from './acceptance-criteria.mjs';
+import { acceptanceCriteria, reportVerdict, validateCoverage } from './acceptance-criteria.mjs';
 import { validateCheck } from './browser-report-check.mjs';
 import { readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
@@ -46,30 +46,30 @@ if (report !== rawReport) {
   );
 }
 
-const failedChecks = report.checks.filter((check) => check.status === 'failed');
-// Status derives from observed checks. A model's top-level passed=true cannot
-// turn blocked/missing work green. A required blocked item never reaches repair.
+// The shared verdict (see reportVerdict); the evaluation export reads it the same way.
+const verdict = reportVerdict(report, expectedCriteria);
 const incomplete = report.checks.filter((check) =>
   check.status === 'blocked' || (check.status === 'not_run' &&
     !expectedCriteria.find((c) => c.id === check.id)?.optional),
 );
-if (failedChecks.length > 0) {
+if (verdict === 'failed') {
   report.passed = false;
   writeFileSync(args.report, `${JSON.stringify(report, null, 2)}\n`);
   console.error('Agent Browser acceptance failed:');
   console.error(JSON.stringify(report, null, 2));
   process.exit(10);
 }
-if (incomplete.some((check) => check.status === 'blocked')) {
+if (verdict === 'blocked') {
   report.passed = false;
   writeFileSync(args.report, `${JSON.stringify(report, null, 2)}\n`);
   console.error('Agent Browser acceptance blocked; no application repair was requested.');
   console.error(JSON.stringify(incomplete, null, 2));
   process.exit(20);
 }
-if (incomplete.length > 0) invalid('Required acceptance checks were not run: ' + incomplete.map((c) => c.id).join(', '));
-if (!report.authenticated || report.failures.length > 0 || report.passed !== true)
+if (verdict !== 'passed') {
+  if (incomplete.length > 0) invalid('Required acceptance checks were not run: ' + incomplete.map((c) => c.id).join(', '));
   invalid('Report is incomplete or inconsistent; only observed failed checks authorize application repair.');
+}
 console.log(`Agent Browser acceptance passed with ${report.checks.length} check(s) and ${screenshotCount} screenshot(s).`);
 process.exit(0);
 
