@@ -3,6 +3,7 @@ import { appendFileSync } from 'node:fs';
 import { isTaskStatus } from './task-compat.mjs';
 
 export const FACTORY_PROVIDER = 'nb3-factory';
+export const BUILD_LABEL = 'factory:build';
 
 export const STATUS_LABELS = {
   'agent:pending': ['d4c5f9', 'Waiting for the factory to accept the task'],
@@ -244,11 +245,21 @@ export class GitHubClient {
     });
     const existing = new Set(labels.map((label) => label.name));
 
-    for (const [name, [color, description]] of Object.entries(STATUS_LABELS)) {
+    const taskLabels = {
+      [BUILD_LABEL]: ['0075ca', 'Application build task managed by the factory'],
+      ...STATUS_LABELS,
+    };
+    for (const [name, [color, description]] of Object.entries(taskLabels)) {
       if (existing.has(name)) continue;
-      await this.request('POST', '/labels', {
-        body: { name, color, description },
-      });
+      try {
+        await this.request('POST', '/labels', {
+          body: { name, color, description },
+        });
+      } catch (error) {
+        // Sync and build workflows can initialize a label at the same time.
+        // A label outside the first list page is also already initialized.
+        if (!await this.request('GET', `/labels/${encodeURIComponent(name)}`, { allow404: true })) throw error;
+      }
     }
   }
 
@@ -259,6 +270,7 @@ export class GitHubClient {
       typeof label === 'string' ? label : label.name,
     );
     const labels = current.filter((name) => !isTaskStatus(name));
+    if (!labels.includes(BUILD_LABEL)) labels.push(BUILD_LABEL);
     labels.push(status);
 
     const updated = await this.request('PATCH', `/issues/${issue.number}`, {

@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
+import { BUILD_LABEL } from '../factory-lib.mjs';
 import { getPresetSourceNumber, preparePresetIssue } from '../issue-presets.mjs';
 import { DAILY_PRESET_LABEL, initializeDailyLabel, renderSummary, runPresetTests } from '../scheduled-preset-tests.mjs';
 
@@ -155,7 +156,8 @@ test('automatic launch needs no numbers or manual input; builds independent sele
   assert.deepEqual(result.rows.map((row) => row.preset), [155, 176]);
   assert.equal(state.tasks.length, 2);
   assert.match(state.tasks[0].body, /### 预置案例\n\n#155\n/);
-  assert.deepEqual(state.tasks[0].labels, ['agent:pending']);
+  assert.equal(state.tasks[0].title, '案例 155');
+  assert.deepEqual(state.tasks[0].labels, [BUILD_LABEL, 'agent:pending']);
   assert.equal(state.labels.size, 0, 'does not create a label for any preset');
   assert.ok(!state.calls.some((call) => JSON.stringify(call).includes('factory:test-preset-')));
   assert.equal(dispatches(state).length, 2);
@@ -163,6 +165,18 @@ test('automatic launch needs no numbers or manual input; builds independent sele
   assert.match(state.comments.get(1000)[0].body, /factory-preset-test-dispatched:900:155/);
   assert.match(renderSummary(result), /最终验收结果/);
   assert.deepEqual(sources, original);
+});
+
+test('scheduled tasks use clean business titles before and after preset preparation', async () => {
+  for (const title of ['[Code Agent] [预置][S01] 客户备忘录', '[预置][低频综合回归] 客户备忘录']) {
+    const { client, state, execute } = fixture([preset(176, { title })]);
+    await execute();
+    assert.equal(state.tasks[0].title, '客户备忘录');
+    assert.deepEqual(state.tasks[0].labels, [BUILD_LABEL, 'agent:pending']);
+    const { issue } = await preparePresetIssue(client, state.tasks[0]);
+    assert.equal(issue.title, '客户备忘录');
+    assert.equal(getPresetSourceNumber(issue.body, 'https://github.com/owner/repo'), 176);
+  }
 });
 
 test('removing daily label stops future scheduling without cancelling or modifying the existing task', async () => {

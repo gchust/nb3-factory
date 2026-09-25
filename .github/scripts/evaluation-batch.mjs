@@ -13,7 +13,7 @@ import { currentRevision, readBytes, readSubject } from './evaluation-registry.m
 import { canonicalJson, EXPORTER_VERSION, PRODUCER } from './evaluation-report.mjs';
 import { BATCH_LABEL, chunkText, FINISHED_STATES, isBot, MANUAL_LABEL, manifestComment, markers, readManifest, readSampleReceipt, readState,
   readTerminals, SAMPLE_LABEL, SAMPLE_STATES, stateComment, verifyAncestor } from './evaluation-sample.mjs';
-import { extractIssueSections, parseBuildReviewMode, parseIssueTask } from './factory-lib.mjs';
+import { BUILD_LABEL, extractIssueSections, parseBuildReviewMode, parseIssueTask } from './factory-lib.mjs';
 import { clonedBody, readPresetSource, replaceSection, writeSnapshot } from './issue-presets.mjs';
 import { stripTaskTitle } from './task-compat.mjs';
 import { taskOutcome } from './task-outcome.mjs';
@@ -236,15 +236,16 @@ async function findSampleIssue(client, sampleKey, since) {
 // Idempotent: a retry after "Issue created, response lost" finds the marker and resumes.
 async function ensureSample(client, batch, spec) {
   const { manifest, manifestHash } = batch;
+  const frozen = manifest.cases.find(item => item.key === spec.caseKey);
+  const title = (stripTaskTitle(frozen.snapshot.source.title) || '从预置案例重新搭建').slice(0, 250);
   await ensureLabel(client, SAMPLE_LABEL, 'Independent evaluation-batch sample created by the coordinator');
   await client.ensureStatusLabels();
   let issue = await findSampleIssue(client, spec.key, manifest.createdAt);
   if (!issue) {
-    issue = await client.request('POST', '/issues', { body: { title: `[Code Agent] 评测样本 ${spec.key}`.slice(0, 250),
-      body: `评测样本准备中；冻结输入写入完成前不会开始搭建。\n\n${markers.sample(spec.key)}`, labels: [SAMPLE_LABEL, 'agent:pending'] } });
+    issue = await client.request('POST', '/issues', { body: { title,
+      body: `评测样本准备中；冻结输入写入完成前不会开始搭建。\n\n${markers.sample(spec.key)}`, labels: [BUILD_LABEL, SAMPLE_LABEL, 'agent:pending'] } });
   }
   const comments = await listAll(client, `/issues/${issue.number}/comments`);
-  const frozen = manifest.cases.find(item => item.key === spec.caseKey);
   const snapshot = { version: 1, issueNumber: issue.number, targetBranch: manifest.defaultBranch, buildReviewMode: frozen.buildReviewMode,
     capturedAt: frozen.capturedAt, source: frozen.snapshot.source, extra: '', comments: frozen.snapshot.comments };
   const { hash } = await writeSnapshot(client, issue.number, snapshot, comments);
@@ -265,7 +266,7 @@ async function ensureSample(client, batch, spec) {
   // Last: until every input exists the Issue is not a runnable preset copy.
   if (!(issue.body ?? '').startsWith('<!-- factory-preset-ready:')) {
     issue = await client.request('PATCH', `/issues/${issue.number}`, { body: {
-      title: `[Code Agent] ${stripTaskTitle(frozen.snapshot.source.title)}（评测 ${manifest.batchKey} · ${spec.caseKey} #${spec.sampleIndex}）`.slice(0, 250),
+      title,
       body: `${clonedBody(snapshot, hash)}\n\n${markers.sample(spec.key)}\n` } });
   }
   return { issue, comments };

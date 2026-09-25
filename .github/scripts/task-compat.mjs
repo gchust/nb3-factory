@@ -45,5 +45,8 @@ export function taskMarkerNumber(body) {
 }
 
 export function stripTaskTitle(title) {
-  return title.replace(/^\[(?:Code Agent|Pi)(?:\s+#\d+)?\]\s*/i, '').trim();
+  // Strip only known factory metadata; keep brackets that belong to the business title.
+  return title.trim()
+    .replace(/^(?:\[(?:(?:Code Agent|Pi)(?:\s+#\d+)?|预置|[FSME]\d{2}|低频综合回归|需 HTTP 验收|需测试模型|需测试渠道)\]\s*)+/i, '')
+    .replace(/（重搭 #\d+）$/, '').trim();
 }

@@ -1,7 +1,9 @@
 import { appendFileSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
 
+import { BUILD_LABEL } from './factory-lib.mjs';
 import { getPresetSourceNumber, isManualIssue, isPresetIssue } from './issue-presets.mjs';
+import { stripTaskTitle } from './task-compat.mjs';
 import { SAMPLE_LABEL } from './evaluation-sample.mjs';
 
 export const DAILY_PRESET_LABEL = 'factory:daily';
@@ -140,10 +142,10 @@ export async function runPresetTests({ client, runId, dryRun = false, serverUrl 
         await client.ensureStatusLabels();
         issue = await client.request('POST', '/issues', {
           body: {
-            title: `[Code Agent] 每日预设搭建测试 #${source.number}`,
+            title: (stripTaskTitle(source.title) || '从预置案例重新搭建').slice(0, 250),
             // Feed the existing preset prepare protocol, not copied business code.
             body: `${marker}\n\n### 预置案例\n\n#${source.number}\n`,
-            labels: ['agent:pending'],
+            labels: [BUILD_LABEL, 'agent:pending'],
           },
         });
         row.issue = issue.number;

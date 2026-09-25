@@ -78,6 +78,23 @@ test('start freezes control, base, lockfile and case input once, records all pla
   assert.ok(document.limitations.some(l => l.code === 'no-global-score'));
 });
 
+test('evaluation samples keep clean titles and build labels across interrupted creation and retry', async () => {
+  const client = fakeRepository();
+  client.state.issues.get(176).title = '[Code Agent] [预置][F00] 流程冒烟：计数器';
+  client.state.fail = (method, route, body) => method === 'POST' && /\/issues\/5\d\d\/comments$/.test(route) && body.body.includes('factory-task-base-v1');
+  await assert.rejects(start(client), /Injected failure/);
+  assert.equal(client.samples()[0].title, '流程冒烟：计数器');
+  assert.deepEqual(names(client.samples()[0]).sort(), ['agent:pending', 'factory:build', 'factory:evaluation-sample']);
+  await advanceBatch(client, await current(client), { now: Date.parse('2026-09-25T02:10:00Z') });
+  assert.equal(client.samples().length, 1);
+  const issue = client.samples()[0];
+  assert.equal(issue.title, '流程冒烟：计数器');
+  assert.deepEqual(names(issue).sort(), ['agent:pending', 'factory:build', 'factory:evaluation-sample']);
+  const sample = await resolveSample(client, issue.number);
+  assert.ok(issue.body.includes(markers.sample(sample.receipt.sampleKey)));
+  assert.equal(client.state.dispatches.length, 1);
+});
+
 test('later samples use the frozen capture even after the source preset changes', async () => {
   const client = fakeRepository();
   await start(client);
