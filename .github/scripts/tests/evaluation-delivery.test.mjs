@@ -33,6 +33,21 @@ const fetcherFor = client => async (url, options) => {
 };
 const configFor = receiver => deliveryConfig({ EVALUATION_ENDPOINT: receiver.url, EVALUATION_TOKEN: receiver.token }, { allowInsecureLoopback: true });
 
+test('TestManage delivery includes explicit factory problems and the unchanged complete report bundle', async t => {
+  const { zip, subject, document } = await registered(t);
+  const config = deliveryConfig({ EVALUATION_ENDPOINT: 'https://receiver.example/import', EVALUATION_TOKEN: 'test-only', EVALUATION_DELIVERY_FORMAT: 'testmanage3-problems-v1' });
+  let called = false;
+  const result = await deliverBundle({ zip, subject, config, pause: noPause, fetcher: async (_url, options) => {
+    const form = await new Response(options.body, { headers: { 'content-type': options.headers['Content-Type'] } }).formData();
+    assert.deepEqual(Buffer.from(await form.get('bundle').arrayBuffer()), zip);
+    const submission = JSON.parse(form.get('problems'));
+    assert.equal(submission.version, 1); assert.ok(Array.isArray(submission.problems));
+    assert.equal(document.run.task.repository, subject.sourceInstance); called = true;
+    return new Response(JSON.stringify({ receiptId: 'testmanage-receipt', sourceInstance: subject.sourceInstance, runKey: subject.key, revision: subject.revision, bundleSha256: options.headers['X-Evaluation-Bundle-SHA256'], state: 'stored' }), { status: 201 });
+  } });
+  assert.ok(called); assert.equal(result.state, 'stored');
+});
+
 test('configuration comes only from maintainer settings; misconfiguration names the setting and never the secret', () => {
   assert.throws(() => deliveryConfig({}), error => error instanceof DeliveryConfigError && /EVALUATION_ENDPOINT/.test(error.message) && /EVALUATION_TOKEN/.test(error.message));
   for (const endpoint of ['http://receiver.example/import', 'https://user:pw@receiver.example/import', 'https://receiver.example/import?token=abc', 'https://receiver.example/#x', 'nonsense'])

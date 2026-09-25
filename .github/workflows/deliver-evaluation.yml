@@ -129,11 +129,12 @@ jobs:
           name: factory-evaluation-delivery-plan-${{ github.run_id }}-${{ github.run_attempt }}
           path: ${{ runner.temp }}/delivery-plan
       # The only step that sees the receiver token. It has no repository write access.
-      - name: Send bundles with idempotency keys and bounded retries
+      - name: Submit factory problems and complete reports with bounded retries
         env:
           EVALUATION_ENDPOINT: ${{ vars.EVALUATION_ENDPOINT }}
           EVALUATION_AUTH_MODE: ${{ vars.EVALUATION_AUTH_MODE }}
           EVALUATION_TOKEN: ${{ secrets.EVALUATION_TOKEN }}
+          EVALUATION_DELIVERY_FORMAT: ${{ vars.EVALUATION_DELIVERY_FORMAT }}
         run: |
           node control/.github/scripts/evaluation-delivery.mjs send \
             --plan "$RUNNER_TEMP/delivery-plan" --output "$RUNNER_TEMP/delivery-results/results.json"
