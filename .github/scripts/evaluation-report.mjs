@@ -362,6 +362,8 @@ function usageSource(key, executionKey, usage, scope) {
   };
 }
 
+const compareTuples = (a, b) => { for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) return a[i] - b[i]; return 0; };
+
 // Totals over unique sources only; any unmeasured part makes a total null, never zero.
 function usageTotals(sources) {
   const sum = field => {
@@ -373,35 +375,67 @@ function usageTotals(sources) {
 }
 
 // A reassessment exports only its own review run, so the current view of a logical
-// run also carries the earlier review runs of the previous registered revision
-// (which carried its own predecessors), each by its unique key. Agent-job usage
-// always comes from the usage ledger, never from an earlier revision. When that
-// revision cannot be read intact, nothing is carried and the totals are incomplete.
-export function carryReviewHistory(draft, { document: prior = null, unavailable = false } = {}) {
+// run also carries the review runs of every registered revision, each once by its
+// unique key. Agent-job usage always comes from the usage ledger, never from an
+// earlier revision. While any registered revision cannot be read intact, the review
+// history is known to have a gap: the totals stay incomplete, however often the
+// same material is exported again, until that revision is readable again.
+export function carryReviewHistory(draft, { documents = [], unavailable = [] } = {}) {
   const usage = draft.metrics.usage;
   const limit = (code, detail) => { if (!draft.limitations.some(item => item.code === code)) draft.limitations.push({ code, detail }); };
-  if (unavailable) {
-    usage.totals.complete = false;
-    limit('usage-history-unavailable', '上一登记修订的字节缺失或被改动，未能沿用更早补跑评审的执行与用量；累计用量不完整。');
-    limit('usage-incomplete', '部分用量未取得或不完整；缺失值为 null，不按零处理。');
-    return draft;
-  }
   const sourceKeys = new Set(usage.sources.map(source => source.key));
-  const sources = (prior?.metrics?.usage?.sources ?? []).filter(source => source.key.startsWith('review-run:') && !sourceKeys.has(source.key));
   const executionKeys = new Set(draft.executions.map(execution => execution.key));
-  const executions = (prior?.executions ?? []).filter(execution => execution.kind === 'review' && !executionKeys.has(execution.key));
-  if (!sources.length && !executions.length) return draft;
-  // Earlier review runs precede this export's own; orders are renumbered in sequence.
-  const own = draft.executions.findIndex(execution => execution.kind === 'review');
-  draft.executions.splice(own < 0 ? draft.executions.length : own, 0, ...executions);
-  draft.executions = draft.executions.map((execution, index) => ({ ...execution, order: index + 1 }));
-  usage.sources.push(...sources);
-  usage.totals = usageTotals(usage.sources);
-  Object.assign(draft.metrics.counts, { executions: draft.executions.length, reviewExecutions: draft.metrics.counts.reviewExecutions + executions.length });
-  // Independent of which revision it was read from, so an identical re-export reuses its revision.
-  limit('reviews-carried', `包含更早补跑评审的执行与用量（${executions.length} 次，按唯一键去重）；其评审内容见各自的登记修订。`);
-  if (!usage.totals.complete) limit('usage-incomplete', '部分用量未取得或不完整；缺失值为 null，不按零处理。');
+  const sources = [], executions = [];
+  for (const prior of documents) {
+    for (const source of prior.metrics?.usage?.sources ?? [])
+      if (source.key.startsWith('review-run:') && !sourceKeys.has(source.key)) { sourceKeys.add(source.key); sources.push(source); }
+    for (const execution of prior.executions ?? [])
+      if (execution.kind === 'review' && !executionKeys.has(execution.key)) { executionKeys.add(execution.key); executions.push(execution); }
+  }
+  if (sources.length || executions.length) {
+    // Review runs follow the build chain in the order they produced their results.
+    const reviewRuns = [...draft.executions.filter(execution => execution.kind === 'review'), ...executions]
+      .sort((a, b) => compareTuples([Date.parse(a.endedAt ?? '') || 0, a.runId, a.attempt], [Date.parse(b.endedAt ?? '') || 0, b.runId, b.attempt]));
+    draft.executions = [...draft.executions.filter(execution => execution.kind !== 'review'), ...reviewRuns]
+      .map((execution, index) => ({ ...execution, order: index + 1 }));
+    usage.sources.push(...sources);
+    Object.assign(draft.metrics.counts, { executions: draft.executions.length, reviewExecutions: draft.metrics.counts.reviewExecutions + executions.length });
+    // Independent of which revision it was read from, so an identical re-export reuses its revision.
+    limit('reviews-carried', `包含更早补跑评审的执行与用量（${executions.length} 次，按唯一键去重）；其评审内容见各自的登记修订。`);
+  }
+  // Totals and their two flags always describe the history as read now (a refreshed
+  // earlier view may carry flags from when it was registered).
+  usage.totals = { ...usageTotals(usage.sources), ...(unavailable.length ? { complete: false } : {}) };
+  const flag = (code, on, detail) => {
+    const at = draft.limitations.findIndex(item => item.code === code);
+    if (on && at < 0) draft.limitations.push({ code, detail });
+    if (!on && at >= 0) draft.limitations.splice(at, 1);
+  };
+  flag('usage-history-unavailable', unavailable.length > 0,
+    `${unavailable.length} 个登记修订的字节缺失或被改动，其中的补跑评审执行与用量无法核实；累计用量不完整，直到这些修订恢复。`);
+  flag('usage-incomplete', !usage.totals.complete, '部分用量未取得或不完整；缺失值为 null，不按零处理。');
   return draft;
+}
+
+// An older review registered after a newer one would stay history, and the current view
+// (registered before it) would not count its review run. In that case the next revision
+// is the current view again: its selected review unchanged, the late review kept beside
+// it unselected, and its review run carried. Returns null when the draft may be
+// registered as it is (it becomes current, or the current view already counts it).
+export function refreshCurrentView(draft, { documents = [], unavailable = [] }, currentRevision) {
+  const current = documents.find(document => document.revision === currentRevision);
+  if (!current || comparePrecedence(draft, current) >= 0) return null;
+  const counted = new Set(current.metrics.usage.sources.map(source => source.key));
+  if (draft.metrics.usage.sources.every(source => !source.key.startsWith('review-run:') || counted.has(source.key))) return null;
+  const { revision, createdAt, ...view } = structuredClone(current);
+  view.source = structuredClone(draft.source);
+  const late = draft.reviews.find(review => review.selected);
+  if (late && !view.reviews.some(review => review.key === late.key)) {
+    view.reviews.push({ ...structuredClone(late), selected: false });
+    const ids = new Set(view.evidence.map(item => item.id));
+    view.evidence.push(...draft.evidence.filter(item => item.origin?.key === late.key && !ids.has(item.id)).map(item => structuredClone(item)));
+  }
+  return carryReviewHistory(view, { documents: [...documents, draft], unavailable });
 }
 
 function metricsOf(chain, reviews, supplement) {
@@ -597,9 +631,11 @@ export function buildEvaluation({ report, root, taskRoot = null, exporter = {} }
     if (!review.reviewer?.replay || !review.reviewer.runId) continue;
     const key = `review-run/${review.reviewer.runId}/attempt/${review.reviewer.attempt ?? 1}`;
     if (executions.some(e => e.key === key)) continue;
+    // The adopted supplement's artifact time (Actions API) is when this review produced its result.
+    const endedAt = supplementUsage?.runId === review.reviewer.runId ? iso(Date.parse(supplementUsage.reviewedAt ?? '')) : null;
     executions.push({ key, kind: 'review', order: executions.length + 1, workflow: 'reassess-build-quality', runId: review.reviewer.runId,
       attempt: review.reviewer.attempt ?? 1, event: null, previousRunId: null, conclusion: review.state === 'failed' ? 'failed' : 'completed',
-      startedAt: null, endedAt: null, jobSeconds: null, controlSha: review.reviewer.controlSha, patchSha256: review.basis.patchSha256, source: 'build-review' });
+      startedAt: null, endedAt, jobSeconds: null, controlSha: review.reviewer.controlSha, patchSha256: review.basis.patchSha256, source: 'build-review' });
   }
   const metrics = metricsOf({ ...chain, executions }, reviews, supplementUsage);
   if (!metrics.usage.totals.complete) limitations.push({ code: 'usage-incomplete', detail: '部分用量未取得或不完整；缺失值为 null，不按零处理。' });
@@ -636,7 +672,7 @@ export function buildEvaluation({ report, root, taskRoot = null, exporter = {} }
     run: identityBlock,
     precedence: { producer: { runId: record.runId, attempt: record.attempt, startedAt: iso(record.start) },
       executionOrder: chain.executions.length, knownLaterExecutions: chain.later, chainTerminal: outcome.execution !== 'running',
-      reviewRubric: rubric, reviewState: primary?.state ?? 'not-reviewed', qaCoverage: qa.coverage },
+      reviewRubric: rubric, reviewState: primary?.state ?? 'not-reviewed', review: reviewOrder(primary, supplementUsage, record), qaCoverage: qa.coverage },
     baseline, executions, outcome, qa, reviews, processNotes: notesOf(root, producerKey), metrics,
     evidence: [...evidence.values()], links,
     limitations: dedupeLimitations(limitations),
@@ -659,6 +695,17 @@ export function fingerprintEvaluation(document, attachments = []) {
 
 export const documentKeyOf = document => document.type === 'evaluation-batch' ? document.batch.subjectKey : document.run.key;
 
+// Which review the selected one is, in execution order: any reassessment follows the
+// build's own review; reassessments are ordered by the Actions API time of their review
+// artifact. Run and attempt only break ties.
+function reviewOrder(primary, supplement, record) {
+  if (!primary || primary.state === 'not-reviewed') return { kind: null, at: null, runId: null, attempt: null };
+  if (primary.role === 'supplement') return { kind: 'reassessment',
+    at: supplement?.runId === primary.reviewer?.runId ? iso(Date.parse(supplement.reviewedAt ?? '')) : null,
+    runId: primary.reviewer?.runId ?? null, attempt: primary.reviewer?.attempt ?? null };
+  return { kind: 'build', at: iso(record.start), runId: record.runId, attempt: record.attempt };
+}
+
 export function finalizeEvaluation(draft, { revision, createdAt }) {
   if (!positive(revision)) throw new Error('Revision must be a positive integer');
   // Keep the identity block first, then the revision it was archived under.
@@ -677,11 +724,16 @@ export function finalizeEvaluation(draft, { revision, createdAt }) {
 export function comparePrecedence(a, b) {
   const pa = a.precedence, pb = b.precedence;
   const order = x => [Date.parse(x.producer.startedAt) || 0, x.producer.runId, x.producer.attempt];
-  const oa = order(pa), ob = order(pb);
-  for (let i = 0; i < oa.length; i++) if (oa[i] !== ob[i]) return oa[i] - ob[i];
+  const byProducer = compareTuples(order(pa), order(pb));
+  if (byProducer) return byProducer;
   if (pa.reviewRubric !== pb.reviewRubric) return pa.reviewRubric - pb.reviewRubric;
   const complete = x => ({ completed: 3, partial: 2, failed: 1, 'not-reviewed': 0 })[x.reviewState] ?? 0;
   if (complete(pa) !== complete(pb)) return complete(pa) - complete(pb);
+  // Then the newer review of the same facts: re-exporting an older reassessment keeps it as
+  // history. Run and attempt only break ties (or order reviews recorded without a time).
+  const reviewed = x => [{ build: 1, reassessment: 2 }[x.review?.kind] ?? 0, Date.parse(x.review?.at ?? '') || 0, x.review?.runId ?? 0, x.review?.attempt ?? 0];
+  const byReview = compareTuples(reviewed(pa), reviewed(pb));
+  if (byReview) return byReview;
   const qa = x => ({ complete: 2, partial: 1, none: 0 })[x.qaCoverage] ?? 0;
   return qa(pa) - qa(pb);
 }

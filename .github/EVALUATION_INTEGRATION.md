@@ -63,8 +63,11 @@
 **当前视图不是最大修订号。** 修订号只是归档顺序；`precedence` 给出比较事实：
 
 1. `producer`（产出执行的开始时间、Run、attempt）更晚者优先；`knownLaterExecutions > 0` 表示更晚的执行已存在。
-2. 同一产出执行：`reviewRubric` 高者优先（v2 > v1），再比较评审完整性（completed > partial > failed > not-reviewed）与 `qaCoverage`。
-3. 以上相同时取较大修订号。
+2. 同一产出执行：`reviewRubric` 高者优先（v2 > v1），再比较评审完整性（completed > partial > failed > not-reviewed）。
+3. 再比较所选评审的先后 `precedence.review`：补评（`kind=reassessment`）晚于搭建自带评审（`kind=build`）；补评之间按 `at`
+   （GitHub Actions API 给出的该次评审结果 Artifact 创建时间，不取评审自述）比较，Run 与 attempt 只用于并列时排序。
+   因此旧补评被重新导出或晚于新补评才登记时，都不会顶替已采纳的新评审；只重跑发布的 attempt 复用同一评审结果，先后不变。
+4. 再比较 `qaCoverage`；以上都相同时取较大修订号。
 
 迟到的旧产出（例如先交付的续跑报告之后才补发的第一段报告）会得到新修订号但不成为当前视图，
 见 [`report-late-older.json`](contracts/examples/report-late-older.json)。工厂在修订索引中记录 `current`，
@@ -124,10 +127,15 @@ Schema：[`contracts/evaluation-report.v1.schema.json`](contracts/evaluation-rep
 思考 Token 不再加到输出；后补评审是独立来源 `review-run:*`，不增加业务搭建数。缺失为 `null` 并保留
 `incomplete`，不等同供应商账单，不推算费用。
 
-每次补评只导出它自己这次评审的用量；登记新修订时，从同一份登记快照中的上一修订沿用更早补评的 `review` 执行与
-`review-run:*` 来源（按唯一键去重，Agent 作业用量始终来自用量回执），因此当前修订的 `metrics.usage.totals` 是整个逻辑 run
-的累计且每次真实评审只计一次，并带 `reviews-carried`。上一修订字节缺失或被改动时不沿用，`totals.complete=false`
-并带 `usage-history-unavailable`；不同修订的 `totals` 不能相加。
+每次补评只导出它自己这次评审的用量；登记新修订时，读取同一份登记快照中该逻辑 run 的**全部**已登记修订（逐个按索引摘要校验），
+沿用其中的 `review` 执行（按评审结果时间排序）与 `review-run:*` 来源（按唯一键去重，Agent 作业用量始终来自用量回执），
+因此新修订的 `metrics.usage.totals` 是整个逻辑 run 的累计且每次真实评审只计一次，并带 `reviews-carried`。
+只要有任何已登记修订字节缺失或被改动，`totals.complete=false` 并带 `usage-history-unavailable`；同样材料重新导出或之后再补评
+都保持这一标记，直到该修订恢复可读并核实后才恢复完整。不同修订的 `totals` 不能相加。
+
+较早的补评晚于较新的补评才登记时，它不会成为当前视图；若当前视图尚未计入它的评审用量，本次登记的是**刷新后的当前视图**：
+仍选用较新的评审，把较早的评审作为未选用的评审保留在其中，并计入其执行与用量（结果包沿用同一搭建的截图，逐字节核对）。
+截图不齐时只把它登记为历史修订。
 
 ## 结果包
 

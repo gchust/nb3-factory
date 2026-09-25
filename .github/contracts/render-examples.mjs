@@ -78,7 +78,8 @@ export async function examples() {
   root = temporary(t);
   buildArtifacts(root, { identity: 'legacy', review: 'v1' });
   const supplement = writeReview(root, 'partial', {}, 'build-review.supplement.json', reviewer(1000700));
-  supplement.supplementalUsage = { input: 1200, output: 300, cacheRead: 0, cacheWrite: 0, reasoning: 0, totalTokens: 1500, records: 2, incomplete: 0, runId: 1000700, attempt: 1 };
+  supplement.supplementalUsage = { input: 1200, output: 300, cacheRead: 0, cacheWrite: 0, reasoning: 0, totalTokens: 1500, records: 2, incomplete: 0, runId: 1000700, attempt: 1,
+    reviewedAt: '2026-09-25T07:30:00Z' };
   put(root, 'build-review.supplement.json', supplement);
   out['report-legacy-v1-with-v2.json'] = render(root, reportFor(root, usageRecord()), 3);
 

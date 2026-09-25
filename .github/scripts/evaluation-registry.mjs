@@ -99,13 +99,16 @@ export async function readHistory(client, { type, key }) {
   return { sha, index: sha ? await readSubject(client, type, key, sha) : null };
 }
 
-// The newest registered revision of that snapshot, verified against its index entry.
-export async function latestDocument(client, { sha, index }, key) {
-  const entry = index?.revisions.at(-1);
-  if (!entry) return { document: null, unavailable: false };
-  const bytes = await readBytes(client, `${revisionDir(key, entry.revision)}/evaluation.json`, sha);
-  if (!bytes || sha256(bytes) !== entry.evaluationSha256) return { document: null, unavailable: true };
-  return { document: JSON.parse(bytes.toString('utf8')), unavailable: false };
+// Every registered revision of that snapshot, each verified against its index entry.
+// A missing or altered one is listed as unavailable, never silently skipped.
+export async function registeredDocuments(client, { sha, index }, key) {
+  const documents = [], unavailable = [];
+  for (const entry of index?.revisions ?? []) {
+    const bytes = await readBytes(client, `${revisionDir(key, entry.revision)}/evaluation.json`, sha);
+    if (bytes && sha256(bytes) === entry.evaluationSha256) documents.push(JSON.parse(bytes.toString('utf8')));
+    else unavailable.push(entry.revision);
+  }
+  return { documents, unavailable };
 }
 
 // Read-only planning: reuse the revision of identical logical content, otherwise

@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readFileSync, rmSync } from 'node:fs';
 import path from 'node:path';
 import test from 'node:test';
 import { commitPrepared, exportDraft, prepareRevision } from '../evaluation-archive.mjs';
@@ -56,22 +56,90 @@ test('identical facts reuse the revision and its original bytes; new facts appen
   assert.equal(JSON.parse(client.file(`${dir}/index.json`)).current, 2);
 });
 
-test('an altered previous revision carries no review history and leaves the cumulative usage incomplete', async t => {
+// A reassessment adopted with its trusted review time (the Actions API time of its review artifact).
+function reassess(root, runId, totalTokens, reviewedAt) {
+  const supplement = writeReview(root, 'completed', {}, 'build-review.supplement.json',
+    { engine: 'pi', model: 'm', version: '1', runId: String(runId), attempt: 1, controlSha: 'd'.repeat(40), replay: true });
+  supplement.supplementalUsage = { input: totalTokens - 1, output: 1, cacheRead: 0, cacheWrite: 0, reasoning: 0, totalTokens, records: 1, incomplete: 0,
+    runId, attempt: 1, reviewedAt };
+  put(root, 'build-review.supplement.json', supplement);
+}
+const currentOf = (client, key) => {
+  const dir = `evaluations/subjects/${keyDigest(key)}`;
+  const index = JSON.parse(client.file(`${dir}/index.json`));
+  return { index, document: JSON.parse(client.file(`${dir}/r${index.current}/evaluation.json`)) };
+};
+const selectedReviewer = document => document.reviews.find(review => review.selected).reviewer.runId;
+const reviewKeys = document => document.metrics.usage.sources.filter(s => s.key.startsWith('review-run:')).map(s => s.key);
+
+test('an older reassessment exported again, or for the first time after a newer one, never becomes current', async t => {
+  for (const order of [['A', 'B', 'A'], ['B', 'A']]) {
+    const client = fakeGitHub(), root = temporary(t);
+    buildArtifacts(root);
+    const report = reportFor(root, usageRecord());
+    const original = JSON.parse((await register(t, client, root, report)).bytes);
+    const reviews = { A: [700, 11, '2026-09-25T03:00:00Z'], B: [701, 15, '2026-09-25T04:00:00Z'] };
+    for (const [index, name] of order.entries()) {
+      reassess(root, ...reviews[name]);
+      await register(t, client, root, report, { runId: 910 + index });
+    }
+    const { index, document } = currentOf(client, original.run.key);
+    const label = order.join(' → ');
+    assert.equal(index.revisions.length, order.length + 1, `${label}: every distinct export is kept as history`);
+    assert.equal(selectedReviewer(document), 701, `${label}: the newer review stays current`);
+    assert.deepEqual(document.precedence.review, { kind: 'reassessment', at: '2026-09-25T04:00:00Z', runId: 701, attempt: 1 });
+    if (order.length === 2) assert.ok(document.reviews.some(r => !r.selected && r.reviewer?.runId === 700), 'the late older review is kept, unselected');
+    assert.deepEqual(reviewKeys(document).sort(), ['review-run:700:1', 'review-run:701:1']);
+    assert.equal(document.metrics.usage.totals.total, original.metrics.usage.totals.total + 11 + 15);
+    assert.deepEqual(document.executions.filter(e => e.kind === 'review').map(e => e.runId), [700, 701], `${label}: reviews in the order they ran`);
+    assert.equal(document.metrics.counts.businessBuilds, 1);
+  }
+});
+
+test('without the same screenshots a late older review is only history; the newer review stays current', async t => {
   const client = fakeGitHub(), root = temporary(t);
   buildArtifacts(root);
   const report = reportFor(root, usageRecord());
-  const first = await register(t, client, root, report);
-  const dir = `evaluations/subjects/${keyDigest(JSON.parse(first.bytes).run.key)}`;
-  client.file(`${dir}/r1/evaluation.json`).fill(0x20, 0, 1);
-  const supplement = writeReview(root, 'completed', {}, 'build-review.supplement.json',
-    { engine: 'pi', model: 'm', version: '1', runId: '700', attempt: 1, controlSha: 'd'.repeat(40), replay: true });
-  supplement.supplementalUsage = { input: 1, output: 1, cacheRead: 0, cacheWrite: 0, reasoning: 0, totalTokens: 2, records: 1, incomplete: 0, runId: 700, attempt: 1 };
-  put(root, 'build-review.supplement.json', supplement);
-  const document = JSON.parse((await register(t, client, root, report, { runId: 902 })).bytes);
-  assert.equal(document.revision, 2);
-  assert.equal(document.metrics.usage.totals.complete, false, 'never claims a complete cumulative view');
-  assert.deepEqual(document.limitations.filter(l => ['usage-history-unavailable', 'usage-incomplete'].includes(l.code)).map(l => l.code).sort(),
-    ['usage-history-unavailable', 'usage-incomplete']);
+  const original = JSON.parse((await register(t, client, root, report)).bytes);
+  reassess(root, 701, 15, '2026-09-25T04:00:00Z');
+  await register(t, client, root, report, { runId: 910 });
+  rmSync(path.join(root, 'verify-1/browser-acceptance/evidence/b01.png'));
+  reassess(root, 700, 11, '2026-09-25T03:00:00Z');
+  const late = JSON.parse((await register(t, client, root, report, { runId: 911 })).bytes);
+  const { index, document } = currentOf(client, original.run.key);
+  assert.equal(late.revision, 3);
+  assert.equal(selectedReviewer(late), 700, 'registered as its own history revision');
+  assert.equal(index.current, 2);
+  assert.equal(selectedReviewer(document), 701);
+});
+
+test('a review-history gap stays incomplete across re-exports and new reviews until the revision is readable again', async t => {
+  const client = fakeGitHub(), root = temporary(t);
+  buildArtifacts(root);
+  const report = reportFor(root, usageRecord());
+  const original = JSON.parse((await register(t, client, root, report)).bytes);
+  reassess(root, 700, 11, '2026-09-25T03:00:00Z');
+  const a = JSON.parse((await register(t, client, root, report, { runId: 901 })).bytes);
+  const stored = client.file(`evaluations/subjects/${keyDigest(original.run.key)}/r${a.revision}/evaluation.json`);
+  stored.fill(0x20, 0, 1);
+  const gap = document => [document.metrics.usage.totals.complete, document.limitations.some(l => l.code === 'usage-history-unavailable')];
+  reassess(root, 701, 15, '2026-09-25T04:00:00Z');
+  const b = JSON.parse((await register(t, client, root, report, { runId: 902 })).bytes);
+  assert.deepEqual(gap(b), [false, true]);
+  // The same material again: the gap is still there, so it may not turn complete.
+  const again = await register(t, client, root, report, { runId: 903 });
+  assert.equal(again.registration.reused, true);
+  assert.deepEqual(gap(JSON.parse(again.bytes)), [false, true]);
+  reassess(root, 702, 20, '2026-09-25T05:00:00Z');
+  const c = JSON.parse((await register(t, client, root, report, { runId: 904 })).bytes);
+  assert.deepEqual(gap(c), [false, true], 'a later review does not close an earlier gap');
+  assert.deepEqual(reviewKeys(c).sort(), ['review-run:701:1', 'review-run:702:1']);
+  // Once the revision is readable again its review is verified and carried; only then complete.
+  stored.fill(0x7b, 0, 1);
+  const restored = JSON.parse((await register(t, client, root, report, { runId: 905 })).bytes);
+  assert.deepEqual(gap(restored), [true, false]);
+  assert.deepEqual(reviewKeys(restored).sort(), ['review-run:700:1', 'review-run:701:1', 'review-run:702:1']);
+  assert.equal(restored.metrics.usage.totals.total, original.metrics.usage.totals.total + 11 + 15 + 20);
 });
 
 test('a late, older producer report is kept as history but never becomes the current view', async t => {

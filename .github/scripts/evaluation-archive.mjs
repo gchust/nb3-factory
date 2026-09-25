@@ -2,6 +2,7 @@
 //   export  (report job, read-only)  facts → draft.json + attachment copies
 //   prepare (evaluation job)         reuse or propose a revision, pack the bundle
 //   commit  (evaluation job)         register it under CAS, optionally queue delivery
+import { createHash } from 'node:crypto';
 import { appendFileSync, copyFileSync, existsSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -9,8 +10,8 @@ import { fileURLToPath } from 'node:url';
 import { createBundle, verifyBundle } from './evaluation-bundle.mjs';
 import { deliveryConfig, DeliveryConfigError } from './evaluation-target.mjs';
 import { keyDigest } from './evaluation-identity.mjs';
-import { buildEvaluation, carryReviewHistory, finalizeEvaluation, fingerprintEvaluation, documentKeyOf } from './evaluation-report.mjs';
-import { commitRevision, latestDocument, planRevision, readHistory } from './evaluation-registry.mjs';
+import { buildEvaluation, carryReviewHistory, finalizeEvaluation, fingerprintEvaluation, documentKeyOf, refreshCurrentView } from './evaluation-report.mjs';
+import { commitRevision, planRevision, readHistory, registeredDocuments } from './evaluation-registry.mjs';
 import { parseBoolean } from './factory-lib.mjs';
 
 const MAX_HTML = 32 * 1024 * 1024;
@@ -57,15 +58,38 @@ function loadFiles(input) {
   });
 }
 
+// The screenshots a registered view references, taken from this export's files of the
+// same build; null unless every one is present byte for byte.
+function viewFiles(view, files) {
+  const local = new Map(files.map(item => [item.path, item]));
+  const needed = new Map();
+  for (const item of view.evidence.filter(entry => entry.attachment)) {
+    const file = local.get(item.attachment);
+    if (!file || file.role !== 'evidence' || createHash('sha256').update(file.data).digest('hex') !== item.sha256) return null;
+    const entry = needed.get(item.attachment) ?? { ...file, evidenceIds: [] };
+    entry.evidenceIds = [...new Set([...entry.evidenceIds, item.id])];
+    needed.set(item.attachment, entry);
+  }
+  return [...needed.values()];
+}
+
 // Logical attachments are the evidence; the HTML rendering is not part of the fingerprint.
 export async function prepareRevision(client, { input, output: out, now = new Date() }) {
-  const draft = json(path.join(input, 'draft.json'));
-  const files = loadFiles(input);
-  const evidence = files.filter(item => item.role === 'evidence');
+  let draft = json(path.join(input, 'draft.json'));
+  let files = loadFiles(input);
   const key = documentKeyOf(draft);
   // The same snapshot decides the carried review history and the revision number.
   const history = await readHistory(client, { type: draft.type, key });
-  if (draft.type === 'evaluation-report') carryReviewHistory(draft, await latestDocument(client, history, key));
+  if (draft.type === 'evaluation-report') {
+    const registered = await registeredDocuments(client, history, key);
+    carryReviewHistory(draft, registered);
+    // A late older review is registered inside the refreshed current view (it keeps the
+    // newer review selected). Without its exact screenshots it is registered as history.
+    const view = refreshCurrentView(draft, registered, history.index?.current);
+    const needed = view && viewFiles(view, files);
+    if (needed) [draft, files] = [view, needed];
+  }
+  const evidence = files.filter(item => item.role === 'evidence');
   const fingerprint = fingerprintEvaluation(draft, evidence);
   const plan = await planRevision(client, { type: draft.type, key, fingerprint, history });
   let evaluationBytes, document, bundle, reproduced = true;

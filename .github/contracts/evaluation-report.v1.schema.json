@@ -58,7 +58,7 @@
       "description": "Facts a receiver compares before choosing a current revision; the largest revision is only archive order.",
       "type": "object",
       "additionalProperties": false,
-      "required": ["producer", "executionOrder", "knownLaterExecutions", "chainTerminal", "reviewRubric", "reviewState", "qaCoverage"],
+      "required": ["producer", "executionOrder", "knownLaterExecutions", "chainTerminal", "reviewRubric", "reviewState", "review", "qaCoverage"],
       "properties": {
         "producer": {
           "type": "object",
@@ -71,6 +71,16 @@
         "chainTerminal": { "type": "boolean" },
         "reviewRubric": { "enum": [0, 1, 2] },
         "reviewState": { "$ref": "#/$defs/reviewState" },
+        "review": {
+          "description": "The selected review's execution, compared after reviewRubric and reviewState so a newer review of the same facts wins: a reassessment follows the build's own review, reassessments are ordered by at (the Actions API time of their review artifact), run and attempt only break ties. All null when not reviewed.",
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "at", "runId", "attempt"],
+          "properties": {
+            "kind": { "enum": ["build", "reassessment", null] },
+            "at": { "$ref": "#/$defs/optionalTime" }, "runId": { "type": ["integer", "null"], "minimum": 1 }, "attempt": { "type": ["integer", "null"], "minimum": 1 }
+          }
+        },
         "qaCoverage": { "$ref": "#/$defs/coverage" }
       }
     },

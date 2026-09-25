@@ -79,7 +79,9 @@ export async function selectSupplement(get, repository, runId, artifactId) {
   const created = Date.parse(artifact.created_at);
   assert.ok(jobs.jobs.some(j => j.name === 'review' && j.status === 'completed' &&
     created >= Date.parse(j.started_at) && created <= Date.parse(j.completed_at)), 'Supplement not bound to a finished review job');
-  return { runId, attempt: run.run_attempt, artifactId, controlSha: run.head_sha };
+  // When the review produced this result, from the Actions API: orders reassessments
+  // (a re-exported older review never replaces a newer one) without trusting the review.
+  return { runId, attempt: run.run_attempt, artifactId, controlSha: run.head_sha, reviewedAt: new Date(created).toISOString() };
 }
 export async function adoptSupplement(root, supplement, publication) {
   const binding = readReviewJson(supplement, 'binding.json');
@@ -97,7 +99,7 @@ export async function adoptSupplement(root, supplement, publication) {
   validateBuildReview(report, resolveReviewIdentity(root, report, publication));
   const usage = await collectUsage(supplement);
   report.supplementalUsage = { ...usage.phases.review, records: usage.records, incomplete: usage.incomplete,
-    runId: source.runId, attempt: source.attempt };
+    runId: source.runId, attempt: source.attempt, reviewedAt: source.reviewedAt ?? null };
   // Retain the original failed/timed-out assessment separately, never forge its attempt.
   write(root, 'build-review.supplement.json', report);
 }
