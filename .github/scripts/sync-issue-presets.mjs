@@ -5,6 +5,7 @@ import { listAll } from './comment-queue.mjs';
 import { PRESET_FORM_PATH, PRESET_LABEL, renderPresetForm } from './issue-presets.mjs';
 
 export async function syncIssuePresets(client) {
+  await client.ensureStatusLabels();
   const repository = await client.getRepository();
   const branch = repository.default_branch;
   const label = await client.request('GET', `/labels/${encodeURIComponent(PRESET_LABEL)}`, { allow404: true });

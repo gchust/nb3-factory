@@ -7,7 +7,7 @@ import path from 'node:path';
 import { promisify } from 'node:util';
 import test from 'node:test';
 
-import { parseIssueTask, STATUS_LABELS, TaskInputError } from '../factory-lib.mjs';
+import { BUILD_LABEL, GitHubClient, parseIssueTask, STATUS_LABELS, TaskInputError } from '../factory-lib.mjs';
 import { admitComments, receiptBody, resolveBuildTask } from '../comment-queue.mjs';
 import { coordinate } from '../dispatch-comment-builds.mjs';
 import { isPresetIssue, preparePresetIssue, PRESET_FORM_PATH, renderPresetForm } from '../issue-presets.mjs';
@@ -39,7 +39,7 @@ QA_ONLY: 用两个账号验证数据隔离。
 
 - [x] 同意搭建。
 `;
-const selection = `### 预置案例\n\n#1 - 工单系统\n\n### 本次补充要求\n\n支持导出\n\n### 确认\n\n- [x] 同意\n`;
+const selection = `### 预置案例\n\n#1 - 工单系统\n\n### 本次补充要求\n\n支持导出\n`;
 
 function fixture(issueNumber = 20) {
   const source = { number: 1, title: '[Code Agent] 工单系统', body: taskBody,
@@ -117,7 +117,34 @@ test('form includes closed human cases, sorts by number and quotes special title
   ]);
   const options = form.split('\n').filter((line) => line.startsWith('        - "'))
     .map((line) => JSON.parse(line.trim().slice(2)));
-  assert.deepEqual(options, ['#1 - [Code Agent] 工单系统', '#9 - 冒号: "quotes" 下一行']);
+  assert.deepEqual(options, ['#1 - 工单系统', '#9 - 冒号: "quotes" 下一行']);
+});
+
+test('ordinary and generated preset forms use build labels without title prefixes or confirmation fields', () => {
+  const ordinary = readFileSync(new URL('../../ISSUE_TEMPLATE/code-agent-task.yml', import.meta.url), 'utf8');
+  for (const form of [ordinary, renderPresetForm([fixture().source])]) {
+    assert.ok(form.includes('labels:\n  - factory:build\n  - agent:pending\n'));
+    assert.doesNotMatch(form, /type: checkboxes|id: confirmation/);
+    assert.doesNotMatch(form, /\[Code Agent\]/);
+  }
+  assert.doesNotMatch(ordinary, /^title:/m, 'ordinary tasks start with an empty title');
+});
+
+test('preset choices and cloned titles remove old factory metadata and retain the source in the body', async () => {
+  for (const title of [
+    '[Code Agent] [预置][S01] 客户备忘录',
+    '[预置][低频综合回归] 客户备忘录',
+    '[预置][M05][需 HTTP 验收] 客户备忘录',
+    '[Pi #1] [预置][E01][需测试模型] 客户备忘录（重搭 #1）',
+  ]) {
+    const c = fixture();
+    c.source.title = title;
+    assert.match(renderPresetForm([c.source]), /#1 - 客户备忘录/);
+    const { issue } = await preparePresetIssue(c, c.issue);
+    assert.equal(issue.title, '客户备忘录');
+    assert.match(issue.body, /复制自\[预置案例 #1\]/);
+    assert.equal(c.source.title, title, 'source case remains unchanged');
+  }
 });
 
 test('checked-in form matches the generator with its current synchronized choices', () => {
@@ -144,7 +171,9 @@ test('clones only human content, preserves raw Markdown and injects comments onc
   assert.equal(result.issue.number, 20);
   assert.equal(result.task.targetBranch, 'develop');
   assert.equal(result.task.taskType, '创建新系统');
-  assert.match(result.issue.title, /工单系统（重搭 #1）/);
+  assert.equal(result.issue.title, '工单系统');
+  assert.doesNotMatch(result.issue.body, /### 确认|同意搭建/);
+  assert.match(c.source.body, /### 确认/, 'the original case remains unchanged');
   assert.doesNotMatch(result.issue.body, /apps\/old-system/);
   assert.match(result.issue.body, /支持导出/);
   assert.equal(copies(c).length, 2);
@@ -346,9 +375,11 @@ function syncClient(issues, existing = null) {
   const calls = [];
   return {
     calls,
+    ensureStatusLabels: GitHubClient.prototype.ensureStatusLabels,
     async getRepository() { return { default_branch: 'custom-default' }; },
     async request(method, route, options = {}) {
       calls.push([method, route, options]);
+      if (method === 'GET' && route === '/labels') return Object.keys(STATUS_LABELS).map((name) => ({ name }));
       if (method === 'GET' && route.startsWith('/labels/')) return null;
       if (method === 'POST' && route === '/labels') return {};
       if (method === 'GET' && route === '/issues') {
@@ -372,7 +403,8 @@ test('sync bootstraps the label and creates the form on the actual default branc
   assert.equal(put.branch, 'custom-default');
   assert.equal(put.sha, undefined);
   assert.match(Buffer.from(put.content, 'base64').toString('utf8'), /#1 -/);
-  assert.equal(c.calls.find(([method]) => method === 'POST')[2].body.name, 'factory:preset');
+  assert.deepEqual(c.calls.filter(([method, route]) => method === 'POST' && route === '/labels')
+    .map((call) => call[2].body.name), [BUILD_LABEL, 'factory:preset']);
 });
 
 test('sync performs no commit when generated choices are unchanged', async () => {
@@ -404,7 +436,7 @@ async function runPrepare(t, client) {
       let value;
       if (req.method === 'GET' && route === '') value = await client.getRepository();
       else if (req.method === 'GET' && /^\/issues\/\d+$/.test(route)) value = await client.getIssue(Number(route.split('/').at(-1)));
-      else if (req.method === 'GET' && route === '/labels') value = Object.keys(STATUS_LABELS).map((name) => ({ name }));
+      else if (req.method === 'GET' && route === '/labels') value = [BUILD_LABEL, ...Object.keys(STATUS_LABELS)].map((name) => ({ name }));
       else if (req.method === 'GET' && route.startsWith('/git/ref/heads/')) {
         const sha = refs.get(route.slice('/git/ref/heads/'.length));
         if (!sha) { res.writeHead(404); res.end('{}'); return; }
@@ -445,8 +477,21 @@ test('prepare CLI copies a case into its own work branch with default PR base', 
   assert.equal(metadata.preset.sourceIssueNumber, 1);
   assert.equal(metadata.workBranch, 'agent/issue-20');
   assert.equal(metadata.targetCreated, false);
+  assert.equal(metadata.issue.title, '工单系统');
+  assert.deepEqual(c.issue.labels, [BUILD_LABEL, 'agent:running']);
   assert.match(metadata.task.requirements, /增加转派/);
   assert.equal(copies(c).length, 2);
+});
+
+test('prepare CLI accepts ordinary tasks without a confirmation and adds the persistent build label', async (t) => {
+  const c = fixture();
+  c.issue.title = '客户资料管理';
+  c.issue.body = taskBody.split('### 确认')[0].replace('apps/old-system', 'develop');
+  c.issue.labels = ['customer'];
+  const { output } = await runPrepare(t, c);
+  assert.match(output, /status=ready/);
+  assert.equal(c.issue.title, '客户资料管理');
+  assert.deepEqual(c.issue.labels, ['customer', BUILD_LABEL, 'agent:running']);
 });
 
 test('prepare CLI skips preset Issues before any status writes or branch creation', async (t) => {

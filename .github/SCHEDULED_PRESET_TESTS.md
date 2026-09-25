@@ -46,7 +46,8 @@ Action Summary 展示每个案例的**已派发 / 已有任务 / 因在途任务
 同一预设的未关闭执行 Issue（包括手工从预设创建的搭建任务）仍带 `agent:pending`、`agent:queued`、`agent:running`、`agent:verifying` 或 `agent:waiting` 时，跳过本轮，避免积压。
 `agent:review` / 失败 / 已关闭的任务不阻止下一轮；**待评审测试 PR 不需要先合并**。
 
-执行 Issue 新建时只添加 `agent:pending`，不再创建或依赖 `factory:test-preset-<编号>` 标签，也不继承 `factory:preset` 或 `factory:daily`。
+执行 Issue 新建时添加 `factory:build` 和 `agent:pending`，标题使用去掉工厂前缀的业务名称。
+`factory:build` 在状态切换后保留；不再创建或依赖 `factory:test-preset-<编号>` 标签，也不继承 `factory:preset` 或 `factory:daily`。
 来源直接读取 Issue 正文：准备前读取“预置案例”字段；准备后读取正文开头“复制自预置案例 #N”的本仓库链接，与手工从预设创建任务一致。普通需求中的 Issue 引用不作为来源。
 同一调度 Run 重跑通过已有调度回执复用执行 Issue；派发回执保存失败时查询真实搭建 Run，避免重复派发。保留正文来源信息和调度来源评论。已准备任务的来源信息损坏时，扫描明确失败，不猜测来源后继续创建任务。
 历史执行 Issue 无需重写；旧编号标签不参与新版本判断。本改动不批量删除历史标签，避免影响仍使用旧版本代码的运行。
