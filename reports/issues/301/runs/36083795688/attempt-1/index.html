@@ -1,0 +1,1045 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="referrer" content="no-referrer"><meta http-equiv="Content-Security-Policy" content="default-src &#39;none&#39;; img-src data:; style-src &#39;unsafe-inline&#39;; script-src &#39;sha256-KDOvf5Lk8fERjbHS1TqAE/2g+RC1DIrZnb3zNdhari0=&#39;; base-uri &#39;none&#39;; form-action &#39;none&#39;; connect-src &#39;none&#39;; object-src &#39;none&#39;">
+<meta name="factory-report-id" content="gchust/nb3-factory:301:36083795688:1::template-5:review-ee07dfe41c9e69c0"><meta name="factory-template-version" content="5">
+<title>[Code Agent] [预置][M05][需 HTTP 验收] API 与结构查看：设备清单（重搭 #206） · 交付报告</title><style>
+:root{--bg:#fafafa;--surface:#fff;--ink:#18181b;--muted:#71717a;--border:#e4e4e7;--subtle:#f4f4f5;--green:#167047;--green-bg:#f0f8f3;--amber:#975712;--amber-bg:#fffbeb;--radius:12px}
+*{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:90px}body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans CJK SC","PingFang SC","Microsoft YaHei",sans-serif;font-size:14px;line-height:1.7;-webkit-font-smoothing:antialiased}a{color:inherit;text-decoration:none}button,input{font:inherit}button,a,summary{-webkit-tap-highlight-color:transparent}button{cursor:pointer}button:focus-visible,a:focus-visible,summary:focus-visible,input:focus-visible{outline:3px solid #a1a1aa;outline-offset:3px}button:disabled{opacity:.5;cursor:default}svg{flex-shrink:0;vertical-align:middle}h1,h2,h3,p{margin:0}h1{font-size:clamp(29px,3.4vw,44px);line-height:1.35;letter-spacing:-1.5px;font-weight:680}h2{font-size:23px;letter-spacing:-.55px;font-weight:650;line-height:1.4}h3{font-size:15px;font-weight:650}small,.small{font-size:12px}code,.mono{font-family:"SFMono-Regular",Consolas,"Liberation Mono",monospace}code{font-size:.9em;background:var(--subtle);padding:2px 5px;border-radius:4px;overflow-wrap:anywhere}button{border:0;background:transparent;color:inherit}summary{cursor:pointer;list-style:none}summary::-webkit-details-marker{display:none}.muted{color:var(--muted)}.eyebrow{font-size:11px;font-weight:700;letter-spacing:1.8px;text-transform:uppercase;color:var(--muted)}.tag{display:inline-flex;gap:6px;align-items:center;font-size:11px;line-height:1.5;font-weight:550;border:1px solid var(--border);border-radius:6px;padding:4px 8px;white-space:nowrap;background:var(--surface)}.tag.good{color:var(--green);background:var(--green-bg);border-color:#d6e9dc}.tag.warn{color:var(--amber);background:var(--amber-bg);border-color:#efdfb6}.dot{width:6px;height:6px;border-radius:50%;background:currentColor}.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:1px solid var(--border);border-radius:8px;background:var(--surface);padding:10px 15px;font-size:13px;font-weight:550;line-height:1.5;transition:background .15s,transform .15s}.btn:hover{background:var(--subtle);transform:translateY(-1px)}.btn.primary{color:white;background:#18181b;border-color:#18181b}.btn.primary:hover{background:#333337}.btn.small{padding:7px 11px;font-size:12px}.text-link{font-size:12px;text-decoration:underline;text-underline-offset:4px;color:var(--muted)}.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius)}
+.sidebar{position:fixed;left:0;top:0;bottom:0;width:222px;background:var(--surface);border-right:1px solid var(--border);z-index:30;display:flex;flex-direction:column;padding:26px 18px}.brand{display:flex;align-items:center;gap:10px;padding:0 8px}.brandmark{width:34px;height:34px;display:flex;align-items:center;justify-content:center;background:#18181b;color:#fff;border-radius:9px;font-family:monospace;font-size:16px;font-weight:800}.brand strong{font-size:15px}.brand .subtitle{display:block;font-size:10px;letter-spacing:1.4px;color:var(--muted);margin-top:1px}.nav-label{font-size:10px;font-weight:650;letter-spacing:1.4px;color:#a1a1aa;margin:36px 10px 10px}.nav{display:grid;gap:5px}.nav a{display:flex;align-items:center;gap:11px;color:var(--muted);padding:11px 12px;border-radius:7px;font-size:12px;transition:background .15s}.nav a.active,.nav a:hover{background:var(--subtle);color:var(--ink)}.nav .count{margin-left:auto;color:#a1a1aa;font-size:10px;font-variant-numeric:tabular-nums}.sidebar-bottom{margin-top:auto;border-top:1px solid var(--border);padding:18px 9px 0}.sidebar-bottom p{font-size:11px;color:var(--muted);margin:8px 0}.repo-name{font-size:12px;font-weight:650;overflow-wrap:anywhere}.topbar{height:62px;position:sticky;top:0;background:rgba(250,250,250,.96);border-bottom:1px solid var(--border);z-index:20;margin-left:222px;padding:0 42px;display:flex;justify-content:space-between;gap:15px;align-items:center;backdrop-filter:blur(12px)}.breadcrumb{display:flex;gap:10px;align-items:center;color:var(--muted);font-size:12px}.breadcrumb strong{color:var(--ink);font-weight:550}.top-actions{display:flex;gap:8px;align-items:center}.main{margin-left:222px;padding:42px 42px 60px;max-width:1560px}.section{margin-bottom:44px;scroll-margin-top:82px}.section-head{display:flex;align-items:end;justify-content:space-between;gap:18px;margin-bottom:20px}.section-head .eyebrow{margin-bottom:8px}.section-head .desc{margin-top:8px;color:var(--muted);font-size:12px}.hero{display:grid;grid-template-columns:1fr auto;gap:24px;align-items:start}.hero .eyebrow{margin-bottom:13px}.hero-badge{padding-top:8px}.hero p{margin-top:15px;font-size:14px;max-width:780px;color:#52525b;line-height:1.9}.hero-actions{margin-top:22px;display:flex;gap:10px;flex-wrap:wrap}.hero-meta{display:flex;gap:16px;flex-wrap:wrap;margin-top:16px;font-size:11px;color:var(--muted)}.hero-meta span{display:flex;gap:6px;align-items:center}.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:13px;margin-top:30px}.metric{padding:18px 20px}.metric-head{display:flex;justify-content:space-between;align-items:center;color:var(--muted);font-size:12px}.metric-value{font-size:29px;font-weight:650;letter-spacing:-1.3px;margin:8px 0 0;font-variant-numeric:tabular-nums;line-height:1.4}.metric-value span{font-size:15px;color:#a1a1aa;margin-left:3px;font-weight:450}.metric-note{font-size:10px;color:var(--muted);margin-top:5px}.alert{display:flex;gap:12px;background:var(--amber-bg);border:1px solid #eddfbd;border-radius:10px;padding:15px 18px;margin-top:18px;color:var(--amber)}.alert>svg{margin-top:3px}.alert h3{font-size:13px;margin-bottom:4px}.alert p{font-size:12px;line-height:1.8}.alert a{font-weight:600;text-decoration:underline;text-underline-offset:3px}.split{display:grid;grid-template-columns:1.1fr 1fr;gap:18px}.capabilities{padding:23px}.capability{display:flex;gap:13px;padding:16px 0;border-bottom:1px solid var(--border)}.capability:last-child{border-bottom:0;padding-bottom:0}.capability:first-of-type{padding-top:18px}.capability .symbol{display:grid;place-items:center;background:var(--subtle);width:35px;height:35px;border-radius:9px;flex-shrink:0}.capability p{font-size:12px;color:var(--muted);margin-top:3px}.flow-panel{padding:23px}.flow{display:grid;grid-template-columns:1fr 1fr;gap:14px 20px;margin-top:20px}.flow-node{position:relative;display:flex;gap:9px;align-items:center;font-size:12px;min-height:52px;background:var(--subtle);border-radius:8px;padding:10px 12px}.flow-num{font-size:10px;color:#a1a1aa;font-family:monospace}.flow-note{font-size:11px;color:var(--muted);margin-top:17px;padding-top:14px;border-top:1px solid var(--border)}.acceptance-list{overflow:hidden}.criterion{border-bottom:1px solid var(--border)}.criterion:last-child{border-bottom:0}.criterion>summary{display:flex;gap:14px;align-items:center;padding:20px 22px}.criterion>summary:hover{background:#fcfcfc}.step-num{display:grid;place-items:center;width:32px;height:32px;border:1px solid var(--border);border-radius:8px;font-size:11px;color:var(--muted);flex-shrink:0}.criterion-title{flex:1;min-width:0}.criterion-title h3{font-size:14px}.criterion-title p{font-size:11px;margin-top:3px;color:var(--muted)}.criterion .chevron{margin-left:2px;color:#a1a1aa;transition:transform .15s}.criterion[open] .chevron{transform:rotate(90deg)}.criterion-details{padding:0 23px 23px 69px}.criterion-details .criterion-original{font-size:12px;background:var(--subtle);border-radius:8px;padding:12px 14px;margin-bottom:15px;line-height:1.8;color:#52525b}.evidence-split{display:grid;grid-template-columns:1fr 1fr;gap:20px}.evidence-col h4{font-size:11px;color:var(--muted);letter-spacing:.5px;margin:0 0 8px}.evidence-col ol,.evidence-col ul{padding-left:18px;margin:0;font-size:12px;color:#52525b}.evidence-col li{margin-bottom:7px}.photo-links{display:flex;gap:6px;flex-wrap:wrap;margin-top:15px}.photo-link{padding:5px 9px;background:var(--subtle);border:1px solid var(--border);border-radius:5px;font-size:10px;display:inline-flex;gap:5px;align-items:center}.photo-link:hover{background:var(--border)}.inline-gap{font-size:12px;color:var(--amber);padding:12px 14px;margin:14px 0;background:var(--amber-bg);border-radius:7px;border:1px solid #eddfbd}.toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:18px}.filter{border:1px solid transparent;border-radius:7px;padding:7px 11px;font-size:11px;color:var(--muted)}.filter.active{background:#18181b;color:white;border-color:#18181b}.filter:not(.active):hover{background:var(--subtle)}.gallery{display:grid;grid-template-columns:repeat(3,1fr);gap:15px}.shot{margin:0;overflow:hidden;transition:box-shadow .18s,transform .18s}.shot:hover{box-shadow:0 4px 18px #18181b0b;transform:translateY(-2px)}.shot[hidden]{display:none}.shot-btn{display:block;width:100%;padding:0;position:relative;background:#f4f4f5;overflow:hidden}.shot img{display:block;width:100%;aspect-ratio:1280/633;object-fit:contain}.shot-overlay{position:absolute;bottom:8px;right:8px;font-size:10px;background:rgba(24,24,27,.85);color:white;padding:3px 7px;border-radius:4px;opacity:0;transition:opacity .15s}.shot-btn:hover .shot-overlay,.shot-btn:focus-visible .shot-overlay{opacity:1}.shot figcaption{padding:12px 13px;display:flex;justify-content:space-between;gap:8px;align-items:center;font-size:11px}.shot-category{font-size:9px;color:#a1a1aa;white-space:nowrap}.gallery-foot{font-size:11px;color:var(--muted);margin-top:13px;display:flex;justify-content:space-between;gap:16px}.subsection{margin-top:26px}.subsection>summary{display:flex;align-items:center;justify-content:space-between;padding:17px 20px;gap:12px}.subsection>summary h3{font-size:13px;display:flex;gap:9px;align-items:center}.subsection-body{padding:0 20px 20px}.video-grid{display:grid;grid-template-columns:1fr 1fr;gap:15px}.video-card{background:#f4f4f5;border:1px solid var(--border);border-radius:8px;overflow:hidden}.video-card video{display:block;width:100%;aspect-ratio:1280/633;background:#18181b}.video-caption{padding:11px 13px;font-size:11px}.video-note{font-size:11px;color:var(--muted);margin-top:12px}.notice{font-size:12px;padding:13px 15px;background:var(--subtle);border-radius:8px;color:#52525b}.run-panel{padding:22px}.timeline{margin-top:18px}.run{display:flex;gap:15px;padding:0 0 22px}.run:last-child{padding-bottom:0}.run-track{display:flex;flex-direction:column;align-items:center}.run-dot{width:10px;height:10px;border-radius:50%;background:#a1a1aa;border:2px solid white;box-shadow:0 0 0 1px #d4d4d8;margin-top:6px}.run-dot.good{background:var(--green)}.run-line{width:1px;background:var(--border);flex:1;min-height:60px;margin-top:9px}.run-content{flex:1}.run-top{display:flex;gap:9px;align-items:center;justify-content:space-between}.run-title{font-size:13px;font-weight:600}.run p{font-size:11px;color:var(--muted);margin-top:6px}.usage-card{padding:22px}.usage-big{font-size:33px;letter-spacing:-1px;font-weight:650;line-height:1.3;margin:14px 0 8px}.usage-sub{color:var(--muted);font-size:11px}.token-bar{height:7px;border-radius:9px;background:#e4e4e7;overflow:hidden;display:flex;margin-top:20px}.token-bar .cache{width:95.75%;background:#3f3f46}.token-bar .other{flex:1;background:#a1a1aa}.usage-legend{font-size:10px;display:flex;gap:18px;color:var(--muted);margin-top:8px}.usage-foot{margin-top:17px;border-top:1px solid var(--border);padding-top:13px;font-size:11px;color:var(--muted)}.table-wrap{overflow-x:auto}table{border-collapse:collapse;width:100%;font-size:11px;min-width:550px}th{text-align:left;color:var(--muted);font-weight:500;background:var(--subtle);padding:10px 13px}td{padding:11px 13px;border-bottom:1px solid var(--border);vertical-align:top}td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}tr:last-child td{border-bottom:0}.dev-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}.dev-card{padding:22px}.fact-list{margin-top:15px}.fact{display:flex;justify-content:space-between;gap:16px;border-bottom:1px solid var(--border);padding:9px 0;font-size:11px}.fact:last-child{border:0}.fact .key{color:var(--muted);white-space:nowrap}.fact .value{text-align:right;overflow-wrap:anywhere;min-width:0}.check-line{display:flex;gap:9px;align-items:start;font-size:12px;padding:8px 0}.check-line svg{margin-top:3px;color:var(--green)}.check-line small{display:block;color:var(--muted);font-size:10px}.files{display:grid;grid-template-columns:1fr 1fr;gap:7px 20px;font-size:10px;font-family:monospace;overflow-wrap:anywhere}.files a:hover{text-decoration:underline}.raw{background:#f4f4f5;border:1px solid var(--border);padding:15px;border-radius:7px;overflow:auto;max-height:450px;white-space:pre-wrap;word-break:break-word;font-size:10px;line-height:1.7}.source-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px 24px;margin-top:16px}.source-grid a{display:flex;gap:7px;align-items:center;font-size:11px;text-decoration:underline;text-underline-offset:3px;color:#52525b}.footer{border-top:1px solid var(--border);padding-top:22px;color:var(--muted);font-size:10px;display:flex;justify-content:space-between;gap:24px}.footer p{max-width:800px}.snapshot{font-size:10px;color:var(--muted);margin-top:14px}.lightbox{padding:0;background:#fff;border:1px solid #e4e4e7;border-radius:14px;max-width:min(96vw,1600px);width:1440px;max-height:94vh;box-shadow:0 30px 100px #0006}.lightbox::backdrop{background:#09090be0;backdrop-filter:blur(5px)}.lightbox-bar{display:flex;align-items:center;justify-content:space-between;padding:13px 18px;font-size:12px;gap:16px}.lightbox-bar h3{font-size:13px}.lightbox-img{display:block;width:100%;max-height:75vh;object-fit:contain;background:#f4f4f5}.lightbox-controls{display:flex;gap:6px;align-items:center}.icon-btn{width:33px;height:33px;display:grid;place-items:center;border:1px solid var(--border);border-radius:6px}.icon-btn:hover{background:var(--subtle)}.lightbox-foot{padding:10px 18px;display:flex;justify-content:space-between;align-items:center;font-size:10px;color:var(--muted)}.sr-only{position:absolute;width:1px;height:1px;padding:0;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}.noscript{padding:15px;border:1px solid #eddfbd;background:var(--amber-bg);margin-bottom:20px;font-size:12px}
+@media(min-width:1680px){.main{margin-left:max(222px,calc((100vw - 1300px)/2));max-width:1350px}.topbar{padding-left:max(42px,calc((100vw - 1300px)/2 - 222px + 42px))}}
+@media(max-width:1160px){.sidebar{width:188px;padding:25px 12px}.main{margin-left:188px;padding:32px 26px 50px}.topbar{margin-left:188px;padding:0 26px}.hero{grid-template-columns:1fr}.hero-badge{grid-row:1;padding:0}.hero{gap:15px}.gallery{grid-template-columns:1fr 1fr}.metric{padding:15px}.metric-value{font-size:25px}.split{grid-template-columns:1fr 1fr}.flow{gap:10px}.flow-node{font-size:11px;padding:9px}.criterion-details{padding-left:23px}}
+@media(max-width:820px){.sidebar{position:static;width:auto;height:auto;padding:16px 20px;display:block;border-right:0;border-bottom:1px solid var(--border)}.brand{padding:0}.nav-label,.sidebar-bottom{display:none}.nav{display:flex;overflow:auto;margin-top:14px;gap:3px}.nav a{font-size:11px;padding:8px 10px;white-space:nowrap;gap:6px}.nav .count{display:none}.nav a svg{width:14px}.topbar{margin:0;padding:0 20px;height:52px}.main{margin:0;padding:26px 20px 40px}.split,.dev-grid{grid-template-columns:1fr}.metrics{gap:10px}.metric-head svg{display:none}.metric{padding:13px}.metric-head{font-size:10px}.metric-value{font-size:24px}.metric-note{font-size:9px}.section{margin-bottom:34px}.criterion>summary{padding:16px;gap:10px}.criterion-title h3{font-size:12px}.criterion-title p{font-size:10px}.criterion>summary>.tag{font-size:9px}.step-num{width:26px;height:26px}.section-head{align-items:start}h2{font-size:21px}.evidence-split{grid-template-columns:1fr}.breadcrumb{font-size:10px;gap:7px}.top-actions .tag{font-size:9px}.source-grid{grid-template-columns:1fr}.hero h1{letter-spacing:-.8px}.hero p{font-size:13px}.hero-meta{gap:10px}.snapshot{font-size:9px}.footer{flex-direction:column;gap:10px}.video-grid{grid-template-columns:1fr}}
+@media(max-width:480px){.metrics{grid-template-columns:1fr 1fr}.gallery{grid-template-columns:1fr}.criterion>summary{flex-wrap:wrap}.criterion-title{min-width:65%}.criterion>summary>.tag{margin-left:36px}.criterion>summary>.chevron{margin-left:auto}.hero-actions .btn{flex:1;padding:10px;font-size:12px}.hero-actions .text-link{width:100%;margin-top:4px}.section-head .tag{display:none}.files{grid-template-columns:1fr}.lightbox-bar{padding:10px}.lightbox-bar h3{font-size:11px}.topbar .tag{display:none}.usage-legend{gap:9px}.flow{grid-template-columns:1fr 1fr}.gallery-foot{display:block}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{transition:none!important}}
+@media print{.sidebar,.topbar,.hero-actions,.toolbar,.lightbox,.photo-links,video{display:none!important}.main{margin:0;padding:10px}.card{break-inside:avoid}.criterion>summary{break-after:avoid}.gallery{grid-template-columns:1fr 1fr 1fr}.shot[hidden]{display:block}.section{break-inside:auto}.subsection-body,.criterion-details{display:block!important}.hero{grid-template-columns:1fr}.footer{font-size:8px}body{background:#fff;font-size:11px}}
+
+/* Reusable-report additions; base theme is unchanged from the approved sample. */
+.hero{grid-template-columns:minmax(0,1fr) auto}.hero h1{overflow-wrap:anywhere}.main>section{min-width:0}
+.report-banner{padding:12px 16px;border:1px solid var(--border);background:var(--surface);border-radius:8px;margin-bottom:24px;color:var(--muted);font-size:12px}
+.note-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}.note-card{padding:20px}.note-card p{margin-top:8px;color:var(--muted);font-size:13px}
+.business-flow{display:flex;flex-wrap:wrap;gap:10px;margin-top:18px}.business-step{padding:12px 16px;background:var(--subtle);border:1px solid var(--border);border-radius:8px}.business-step b{color:var(--muted);font-size:11px;margin-right:8px}
+.check-source{font-size:11px;color:var(--muted);margin-top:12px;overflow-wrap:anywhere}.compact-list{padding-left:20px}.compact-list li{margin:7px 0}.report-empty{padding:20px;color:var(--muted)}
+.tag.bad{color:#9f2929;background:#fef2f2;border-color:#f3d1d1}.alert.bad{border-color:#f3d1d1;background:#fef2f2}.run-panel p{margin:8px 0}.table-wrap{max-width:100%;overflow-x:auto}.facts-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.facts-grid>div{padding:12px;border-bottom:1px solid var(--border)}
+.report-footer{padding:28px 0;color:var(--muted);font-size:11px;border-top:1px solid var(--border);overflow-wrap:anywhere}.note-card,.criterion-title,.run-content{min-width:0;overflow-wrap:anywhere}
+@media(max-width:760px){.note-grid,.facts-grid{grid-template-columns:1fr}.hero{grid-template-columns:1fr}.hero-badge{justify-content:flex-start}.hero h1{font-size:29px}.metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.criterion summary{flex-wrap:wrap}}
+
+.split > *{min-width:0}.usage-card .table-wrap{max-width:100%;overflow-x:auto}
+/* Fixed template v2: results remain visible; no developer/next-step appendix. */
+.nav-index{font-size:10px;color:var(--muted);width:18px;flex:none;font-variant-numeric:tabular-nums}
+.section-intro{font-size:13px;color:var(--muted);line-height:1.8;margin:0 0 18px}
+.acceptance-toolbar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin:0 0 12px}
+.acceptance-counts,.acceptance-actions{display:flex;gap:8px;flex-wrap:wrap}
+.criterion-title{min-width:0}.criterion-title .criterion-result{font-size:12px;color:#52525b;line-height:1.75;margin-top:6px;white-space:normal}
+.record-meta{display:block;color:var(--muted);font-size:10px;margin-top:6px}
+.criterion-badges{display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex:none}
+.check-notice{background:var(--amber-bg);border:1px solid #e9dfc7;border-radius:8px;padding:15px;margin-bottom:20px;font-size:12px}
+.check-notice>strong{display:block;margin-top:8px}.check-notice p{margin-top:7px;line-height:1.8}
+.raw-record{margin-top:16px}.raw-record>summary{font-size:12px;padding:16px 20px;cursor:pointer;color:var(--muted)}
+.raw-record .subsection-body{padding:0 20px 20px}.raw-record pre{margin-top:12px}
+.retro-stack{display:grid;gap:16px}.retro-card,.improvement-card{padding:22px 24px;min-width:0}
+.retro-card header,.improvement-card header{display:flex;align-items:flex-start;justify-content:space-between;gap:18px}
+.retro-card h3,.improvement-card h3{font-size:16px;margin-top:6px;line-height:1.5}
+.problem-symptom,.improvement-card>p{font-size:13px;line-height:1.85;margin:16px 0;color:#52525b}
+.retro-fields{display:grid;grid-template-columns:1fr 1fr;gap:20px;border-top:1px solid var(--border);padding-top:16px;margin:16px 0}
+.retro-fields dt{font-size:11px;color:var(--muted);margin-bottom:6px}.retro-fields dd{font-size:12px;line-height:1.85;margin:0;overflow-wrap:anywhere}
+.retro-foot{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;font-size:10px;color:var(--muted);border-top:1px solid var(--border);padding-top:12px;line-height:1.8}
+.suggested-change{padding:14px 16px;background:var(--subtle);border-radius:7px;font-size:12px;line-height:1.85}.suggested-change strong{font-size:11px;color:var(--muted)}.suggested-change p{margin:6px 0 0}
+.context-heading{font-size:14px;margin:20px 0 5px}.context-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px}
+.context-grid h3{margin-top:6px}.context-grid .text-link{display:inline-block;font-size:12px;margin-top:12px}
+.report-empty strong{color:var(--ink);font-size:14px}.report-empty p{font-size:12px;margin-top:8px;line-height:1.8}
+.ci-fact{padding:14px 0 0;margin-top:12px;border-top:1px solid var(--border);font-size:12px}
+.usage-phase-title{font-size:13px;margin:22px 0 12px}
+@media(max-width:760px){.retro-fields,.context-grid{grid-template-columns:1fr}.retro-card,.improvement-card{padding:18px}.retro-card header,.improvement-card header{flex-wrap:wrap;gap:10px}.retro-foot{display:block}.retro-foot span{display:block}}
+@media(max-width:480px){.criterion>summary{display:grid;grid-template-columns:26px minmax(0,1fr) 14px;align-items:start}.criterion-title{min-width:0}.criterion-badges{grid-column:2;align-items:flex-start;flex-direction:row;flex-wrap:wrap}.criterion>summary>.chevron{grid-column:3;grid-row:1}.acceptance-actions{width:100%}.acceptance-actions .btn{flex:1}.hero-meta{line-height:1.8}.raw-record>summary{padding:14px 16px}.raw-record .subsection-body{padding:0 16px 16px}}
+@media print{.acceptance-actions{display:none}.retro-card,.improvement-card{break-inside:avoid}}
+
+/* Build review v3: neutral scores; uncertainty and original failures stay visible. */
+.review-disclaimer{padding:14px 18px;border-left:3px solid var(--border);background:var(--subtle);font-size:12px;color:var(--muted);line-height:1.8;margin-bottom:18px}
+.review-process{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}.review-process>div{padding:18px;border:1px solid var(--border);border-radius:10px}.review-process span{display:block;font-size:11px;color:var(--muted)}.review-process strong{font-size:26px;display:block;margin-top:7px;font-variant-numeric:tabular-nums}
+.review-summary{font-size:16px;line-height:1.9;margin:26px 0 16px}.review-caption{font-size:11px;color:var(--muted);margin-bottom:10px}.review-matrix table{min-width:1000px}.review-matrix th{font-size:11px;white-space:nowrap}.review-matrix td{padding:18px 14px}.review-matrix td:first-child{min-width:210px;max-width:310px}.review-matrix td p{font-size:11px;color:var(--muted);line-height:1.7;margin-top:6px}
+.review-score{font-size:22px;font-variant-numeric:tabular-nums;white-space:nowrap}.review-score small{font-size:10px;color:var(--muted);font-weight:400;margin-left:3px}.review-na{font-size:12px;color:var(--muted);white-space:nowrap}
+.review-modules{display:grid;gap:12px;margin:20px 0}.review-module>summary,.review-finding>summary{padding:20px;display:flex;align-items:flex-start;justify-content:space-between;gap:16px;cursor:pointer;font-size:14px}.review-module>summary>span{font-size:11px;color:var(--muted)}.review-module .subsection-body,.review-finding .subsection-body{padding:0 22px 22px;font-size:13px;line-height:1.9}
+.review-dimensions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin:18px 0}.review-dimensions article{background:var(--subtle);border:1px solid var(--border);border-radius:8px;padding:18px}.review-dimensions header,.review-ui header{display:flex;align-items:center;justify-content:space-between;gap:16px}.review-dimensions h3,.review-ui h3{font-size:13px}.review-dimensions p,.review-ui p{margin:12px 0;font-size:13px;line-height:1.85}
+.review-refs{display:inline-flex;flex-wrap:wrap;gap:6px;margin-top:6px}.review-refs a{font:11px ui-monospace,monospace;padding:3px 8px;border:1px solid var(--border);border-radius:5px;text-decoration:underline;text-underline-offset:3px}.review-ui{padding:22px;margin-top:20px}.review-group{margin:26px 0}.review-group>h3,.review-evidence>h3{font-size:17px;margin-bottom:14px}.review-group>h3>span{font-size:12px;color:var(--muted);font-weight:400;margin-left:8px}.review-finding{margin-bottom:12px;overflow-wrap:anywhere}.review-finding>summary>div{min-width:0}.review-badges{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}.review-contrast{display:grid;grid-template-columns:1fr 1fr;gap:20px;background:var(--subtle);padding:18px;margin-top:18px;border-radius:8px}.review-contrast h4{font-size:11px;color:var(--muted);margin-bottom:6px}.review-evidence{margin-top:26px}.review-evidence summary{overflow-wrap:anywhere}.review-evidence details:target,.review-module:target{outline:2px solid var(--muted);outline-offset:3px}
+@media(max-width:760px){.review-dimensions,.review-contrast{grid-template-columns:1fr}.review-process{gap:8px}.review-process>div{padding:12px}.review-process strong{font-size:21px}.review-module>summary{flex-wrap:wrap}.review-summary{font-size:14px}}
+
+/* Framework rubric v2: three primary dimensions; business evidence stays separate. */
+.framework-matrix table{min-width:0;table-layout:fixed}.framework-matrix th:first-child{width:43%}.framework-matrix td:first-child{min-width:0;max-width:none}.framework-matrix td p{overflow-wrap:anywhere}.review-targets{display:grid;gap:10px;margin:18px 0}.review-targets>div{padding:14px 16px;border:1px solid var(--border);border-radius:8px;overflow-wrap:anywhere}.review-targets strong{display:block;font-size:13px}.review-targets p{margin:6px 0}.review-requirements{margin:24px 0}.review-requirements>h3{font-size:14px}.review-requirements article{margin:12px 0;padding:16px;border:1px solid var(--border);border-radius:8px}.review-requirements header{display:flex;justify-content:space-between;gap:14px;align-items:start}.review-requirements header .tag{white-space:nowrap}.review-owner-title{font-size:16px;margin-top:28px}.review-targets .eyebrow{font-size:10px}
+@media(max-width:760px){.framework-matrix table,.framework-matrix tbody{display:block;width:100%}.framework-matrix thead{display:none}.framework-matrix tr{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border-bottom:1px solid var(--border)}.framework-matrix tr:last-child{border-bottom:0}.framework-matrix td{display:block;padding:12px;border:0}.framework-matrix td:first-child{grid-column:1/-1;padding-bottom:4px}.framework-matrix td[data-label]::before{content:attr(data-label);display:block;font-size:10px;color:var(--muted);margin-bottom:5px}.framework-matrix .review-score{font-size:20px}.review-requirements header{flex-wrap:wrap}.review-targets>div{padding:12px}.review-module .subsection-body{padding:0 16px 16px}}
+</style></head><body><aside aria-label="报告导航" class="sidebar"><a class="brand" href="#overview"><div class="brandmark">&gt;_</div><div><strong>Code Agent</strong><span class="subtitle">DELIVERY REPORT</span></div></a><div class="nav-label">ISSUE 301</div><nav class="nav"><a class="active" href="#overview"><span class="nav-index">01</span>交付总览</a>
+<a href="#build-review"><span class="nav-index">02</span>框架评测</a>
+<a href="#framework-feedback"><span class="nav-index">03</span>框架帮助与证据</a>
+<a href="#acceptance"><span class="nav-index">04</span>验收记录</a>
+<a href="#evidence"><span class="nav-index">05</span>效果与证据</a>
+<a href="#problems"><span class="nav-index">06</span>问题与改进</a>
+<a href="#execution"><span class="nav-index">07</span>执行与用量</a></nav><div class="sidebar-bottom"><span class="tag">固定模板 v5</span><p>内容来自本次任务产物。<br/>样式与交互由工厂统一维护。</p><div class="repo-name">gchust/nb3-factory</div></div></aside>
+<header class="topbar"><div class="breadcrumb"><span>gchust/nb3-factory</span><span>/</span><span>交付报告</span><span>/</span><strong>#301</strong></div><div class="top-actions"><span class="tag">静态快照 · 非实时状态</span></div></header>
+<main class="main"><noscript><p class="report-banner">正文和验收详情可直接阅读；图片筛选和放大需要 JavaScript。</p></noscript><section class="section" id="overview"><div class="hero"><div><div class="eyebrow">Delivery 301 / 2026-09-25T02:12:51.000Z</div><h1>[Code Agent] [预置][M05][需 HTTP 验收] API 与结构查看：设备清单（重搭 #206）</h1><p>本轮未提供业务说明，请查看下方状态与已采集证据。</p><div class="hero-actions"><a class="btn" rel="noopener noreferrer" target="_blank" href="https://github.com/gchust/nb3-factory/issues/301">查看需求 ↗</a><a class="btn" rel="noopener noreferrer" target="_blank" href="https://github.com/gchust/nb3-factory/actions/runs/36083795688/attempts/1">本轮运行与原始产物 ↗</a><a class="btn primary" href="#build-review">查看框架评测</a></div><div class="hero-meta"><span>对应提交 <code title="">未取得交付 SHA</code></span><span>Run 36083795688 / attempt 1</span><span>目标 <code>develop</code></span></div></div><div class="hero-badge"><span class="tag bad">本轮未完成</span></div></div><div class="metrics"><div class="card metric"><div class="metric-head">Agent 原始验收</div><div class="metric-value">0 / 2</div><div class="metric-note">这是 Agent 的报告结论，不代替人工评审</div></div><div class="card metric"><div class="metric-head">修改文件</div><div class="metric-value">0</div><div class="metric-note">0 新增 · 0 修改 · 0 删除</div></div><div class="card metric"><div class="metric-head">截图证据</div><div class="metric-value">0</div><div class="metric-note">来自本次选定报告的媒体清单</div></div><div class="card metric"><div class="metric-head">已记录执行时间</div><div class="metric-value">0:21:37</div><div class="metric-note">此 Issue 累计：已采集 1 个 Run / 1 次尝试</div></div></div><div class="alert"><div><h3>2 项验收需要处理</h3><p>A1 管理人员通过既有页面创建集成用户的测试密钥，然后可撤销；公开截图不得出现密钥明文。：未验证；A2 授权管理人员在现有数据结构页面看到真实设备表及编号/名称字段，普通业务账号无该设置入口。
+
+以上只评价浏览器操作。独立 HTTP 验收见评审评论；浏览器 QA 不执行源码检查或伪造 API 证据。无法完成时如实记录 failed、blocked 或 not_run。：未验证</p></div></div><div class="alert"><div><h3>本轮未完成</h3><p>本轮不是完成交付。请查看本轮验收记录和问题记录。</p></div></div></section><section class="section" id="build-review"><div class="section-head"><div><div class="eyebrow">NocoBase3 framework assessment</div><h2>NocoBase3 基础框架评测</h2></div><span class="tag ">独立 Agent 评审 · 口径 v2</span></div><div class="review-disclaimer">评的是库、插件与指引是否满足需求、容易使用、对 Agent 友好。业务代码与 QA 是使用证据，不是评分主体。 未评估不是零分或满分，不计算综合平均分。</div><p class="check-source">评审源产物：Run 36083795688 / attempt 1。发布重试不改变评审源产物编号。</p><p class="review-summary">本案例要求设备清单、只读外部集成账号、API Keys 与 Database Explorer。冻结快照中 app/ 是未改动的模板，artifacts/agent.patch 为空、change-summary 记录 0 个变更文件、process 也没有任何验证轮次，因此没有 Agent 代码或 QA 作为使用证据。仅就框架职责本身审阅：模板已在 client/plugins.ts 与 server/plugins.ts 双侧注册 API Keys、Database Explorer、Authorization、Users 与三个 authz 规则插件，并在 server/config/auth.ts / client/config/auth.ts 接入 apiKey()/apiKeyClient()；四个插件都带有同步到 .agents/skills 的 SKILL，公开入口、装配步骤、权限边界和验证清单齐全，读取到的实现也兑现了各自契约。因此本需求所需的基础能力在框架内可用，主要未确认项是 Agent 是否真正发现并正确装配（无日志）。</p><div class="review-caption">5 个框架能力单元 · 25 / 25 项已评分 · 主表展示三项重点，设计与可靠性见详情</div><div class="card table-wrap review-matrix framework-matrix"><table><thead><tr><th>框架能力 / 具体被评对象</th><th>需求满足度</th><th>使用便利度</th><th>Agent 友好度</th></tr></thead><tbody><tr><td><a href="#review-module-0"><strong>用户绑定的 API Keys 凭证生命周期</strong></a><p>@nocobase/app-plugin-api-keys · packages/@nocobase/app-plugin-api-keys/skills/nocobase-app-plugin-api-keys/SKILL.md</p></td><td data-label="需求满足度"><strong class="review-score">92<small>/100</small></strong></td><td data-label="使用便利度"><strong class="review-score">88<small>/100</small></strong></td><td data-label="Agent 友好度"><strong class="review-score">88<small>/100</small></strong></td></tr><tr><td><a href="#review-module-1"><strong>Database Explorer 只读结构页与页面授权</strong></a><p>@nocobase/app-plugin-database-explorer · packages/@nocobase/app-plugin-database-explorer/skills/nocobase-app-plugin-database-explorer/SKILL.md</p></td><td data-label="需求满足度"><strong class="review-score">90<small>/100</small></strong></td><td data-label="使用便利度"><strong class="review-score">88<small>/100</small></strong></td><td data-label="Agent 友好度"><strong class="review-score">88<small>/100</small></strong></td></tr><tr><td><a href="#review-module-2"><strong>业务授权：只读集成账号的读/写动作区分</strong></a><p>@nocobase/app-plugin-authorization · packages/@nocobase/app-plugin-authorization/skills/nocobase-app-plugin-authorization/SKILL.md · app/.agents/skills/nocobase-app-development/references/authorization.md</p></td><td data-label="需求满足度"><strong class="review-score">84<small>/100</small></strong></td><td data-label="使用便利度"><strong class="review-score">78<small>/100</small></strong></td><td data-label="Agent 友好度"><strong class="review-score">82<small>/100</small></strong></td></tr><tr><td><a href="#review-module-3"><strong>设备表数据层与受权读取端点装配</strong></a><p>@nocobase/db · packages/@nocobase/db/skills/nocobase-db/SKILL.md · app/.agents/skills/nocobase-app-development/references/server-routes.md · app/.agents/skills/nocobase-app-development/references/database-and-data.md</p></td><td data-label="需求满足度"><strong class="review-score">82<small>/100</small></strong></td><td data-label="使用便利度"><strong class="review-score">78<small>/100</small></strong></td><td data-label="Agent 友好度"><strong class="review-score">82<small>/100</small></strong></td></tr><tr><td><a href="#review-module-4"><strong>集成账号的创建与角色指派</strong></a><p>@nocobase/app-plugin-users · packages/@nocobase/app-plugin-users/skills/nocobase-app-plugin-users/SKILL.md</p></td><td data-label="需求满足度"><strong class="review-score">84<small>/100</small></strong></td><td data-label="使用便利度"><strong class="review-score">82<small>/100</small></strong></td><td data-label="Agent 友好度"><strong class="review-score">84<small>/100</small></strong></td></tr></tbody></table></div><p class="check-source">正常业务组合不等于框架缺陷；Agent 用错、工厂误报和环境问题需要分别归因。数字仅适用于列出的职责与覆盖范围。</p><div class="review-modules"><details class="card review-module" id="review-module-0"><summary><strong>用户绑定的 API Keys 凭证生命周期</strong><span>对象、需求覆盖、五项理由与证据</span></summary><div class="subsection-body"><p>为某个用户创建、命名、撤销访问密钥，外部调用以 x-api-key 解析为该用户会话；密钥一次性展示与哈希存储。</p><div class="review-targets"><div><span class="eyebrow">插件</span><strong>@nocobase/app-plugin-api-keys</strong><span class="check-source">0.1.0-beta.6</span><p>apiKey() 及 NocoBase 三个默认值（@nocobase/app-plugin-api-keys/server） · ApiKeyService.create/get/verify/disable/remove · HTTP POST /api/auth/api-key/create|update|delete 与 GET /list</p><span class="review-refs"><a href="#review-evidence-E5">E5</a> <a href="#review-evidence-E6">E6</a> <a href="#review-evidence-E7">E7</a> <a href="#review-evidence-E8">E8</a></span></div><div><span class="eyebrow">指引 / Skill</span><strong>packages/@nocobase/app-plugin-api-keys/skills/nocobase-app-plugin-api-keys/SKILL.md</strong><span class="check-source">版本见冻结输入</span><p>Register it（4 步双侧注册） · The three defaults（enableSessionForAPIKeys） · Verification（创建/读取/撤销/禁用四步）</p><span class="review-refs"><a href="#review-evidence-E1">E1</a> <a href="#review-evidence-E2">E2</a> <a href="#review-evidence-E3">E3</a> <a href="#review-evidence-E4">E4</a> <a href="#review-evidence-E9">E9</a></span></div></div><div class="review-requirements"><h3>需求 → 框架职责 → 推荐与实际接入</h3><article><header><strong>管理员为集成账号创建、命名并撤销一把访问密钥。</strong><span class="tag ">直接支持</span></header><dl class="retro-fields"><div><dt>框架职责与业务边界</dt><dd>框架负责 apikey 表、密钥端点、设置页与密钥默认配置；应用负责授予哪个角色可打开页面、密钥归属哪个账号。</dd></div><div><dt>推荐使用方式</dt><dd>SKILL 的 Register it 四步：两侧 plugins.ts 注册、server/config/auth.ts 加 apiKey()、client/config/auth.ts 加 apiKeyClient()、跑 pnpm db:apply、授予 page:api-keys/access。</dd></div><div><dt>Agent 实际使用</dt><dd>未知：快照无 Agent 变更文件，无 QA 日志，无法得知其发现与装配过程。</dd></div><div><dt>缺口归因</dt><dd>未记录能力缺口</dd></div></dl><span class="review-refs"><a href="#review-evidence-E1">E1</a> <a href="#review-evidence-E5">E5</a> <a href="#review-evidence-E6">E6</a> <a href="#review-evidence-E7">E7</a></span></article><article><header><strong>外部调用用该用户密钥读取设备列表，撤销后同一密钥读取失败。</strong><span class="tag ">直接支持</span></header><dl class="retro-fields"><div><dt>框架职责与业务边界</dt><dd>框架负责把密钥解析为所有者会话并沿用其角色授权；应用负责业务路由与给该账号的权限集。</dd></div><div><dt>推荐使用方式</dt><dd>SKILL 的 Call the API with a key 与 Verification 第 2、3 步：curl -H &#39;x-api-key: &lt;key&gt;&#39;，撤销后应得 401 而非 500。</dd></div><div><dt>Agent 实际使用</dt><dd>未知：无归档请求或 QA 证据。</dd></div><div><dt>缺口归因</dt><dd>未记录能力缺口</dd></div></dl><span class="review-refs"><a href="#review-evidence-E2">E2</a> <a href="#review-evidence-E3">E3</a> <a href="#review-evidence-E4">E4</a></span></article><article><header><strong>公开截图不得出现密钥明文。</strong><span class="tag ">直接支持</span></header><dl class="retro-fields"><div><dt>框架职责与业务边界</dt><dd>框架负责只在创建时一次性返回密钥、列表只显示前缀提示、库中只存哈希；应用负责不把密钥写进日志或截图。</dd></div><div><dt>推荐使用方式</dt><dd>SKILL 的 Other constraints：The key is shown once，列表用 start 前缀标识。</dd></div><div><dt>Agent 实际使用</dt><dd>未知：无截图或日志可核对。</dd></div><div><dt>缺口归因</dt><dd>未记录能力缺口</dd></div></dl><span class="review-refs"><a href="#review-evidence-E7">E7</a> <a href="#review-evidence-E9">E9</a></span></article></div><div class="review-dimensions"><article><header><h3>需求满足度</h3><strong class="review-score">92<small>/100</small></strong></header><p>SKILL 明确 create/name/revoke 与 x-api-key 路径，实现层补上 enableSessionForAPIKeys:true、requireName:true 等默认值和哈希存储的 apikey 表，正好覆盖本需求的凭证生命周期。</p><span class="review-refs"><a href="#review-evidence-E2">E2</a> <a href="#review-evidence-E5">E5</a> <a href="#review-evidence-E6">E6</a> <a href="#review-evidence-E7">E7</a> <a href="#review-evidence-E8">E8</a></span></article><article><header><h3>使用便利度</h3><strong class="review-score">88<small>/100</small></strong></header><p>注册是明确的四步且每一步失败症状被写出；默认值可直接用，服务层 create 返回一次性 secret，撤销在既有设置页完成，重复接入成本低。</p><span class="review-refs"><a href="#review-evidence-E1">E1</a> <a href="#review-evidence-E2">E2</a> <a href="#review-evidence-E8">E8</a> <a href="#review-evidence-E9">E9</a></span></article><article><header><h3>Agent 友好度</h3><strong class="review-score">88<small>/100</small></strong></header><p>SKILL front-matter 描述命中 scripts/integrations/api key 场景，正文含最易错点 enableSessionForAPIKeys 与四步验证清单，且由 skills:sync 进入 .agents/skills，Agent 有清晰入口可循。</p><span class="review-refs"><a href="#review-evidence-E1">E1</a> <a href="#review-evidence-E3">E3</a> <a href="#review-evidence-E4">E4</a></span></article><article><header><h3>设计合理性</h3><strong class="review-score">88<small>/100</small></strong></header><p>以 Better Auth API Key 为内核，包内固定表迁移与版本、对外暴露 serverOnly 管理端点与 ApiKeyService，并在 SKILL 中写明插件/应用所有权边界，抽象与扩展面清楚。</p><span class="review-refs"><a href="#review-evidence-E4">E4</a> <a href="#review-evidence-E5">E5</a> <a href="#review-evidence-E6">E6</a> <a href="#review-evidence-E8">E8</a></span></article><article><header><h3>实现完整性与可靠性</h3><strong class="review-score">86<small>/100</small></strong></header><p>迁移自包含地声明哈希列与索引，get/delete 以 configId 绑定配置、disable 可重复、配置缺失即 fail closed；实现与 SKILL 描述的 401/哈希行为一致。</p><span class="review-refs"><a href="#review-evidence-E5">E5</a> <a href="#review-evidence-E6">E6</a> <a href="#review-evidence-E7">E7</a> <a href="#review-evidence-E8">E8</a></span></article></div><p class="check-source">覆盖限制：未归档 Agent 的接入代码，无法确认它选择了内置设置页还是自建页面，也无法确认撤销后 401 的实际请求行为。</p><p class="check-source">映射验收项：未建立映射</p><div class="review-badges"><span>业务首轮 QA</span><span class="tag warn">未验证</span><span>业务最终轮 QA</span><span class="tag warn">未验证</span></div><p class="check-source">这是业务验证背景，不直接换算框架分数；首轮失败不会被最终通过覆盖。</p></div></details><details class="card review-module" id="review-module-1"><summary><strong>Database Explorer 只读结构页与页面授权</strong><span>对象、需求覆盖、五项理由与证据</span></summary><div class="subsection-body"><p>在既有设置页只读浏览连接、Collection 与字段，并以一条 page:database-explorer/access 同时管控导航与端点。</p><div class="review-targets"><div><span class="eyebrow">插件</span><strong>@nocobase/app-plugin-database-explorer</strong><span class="check-source">0.1.0-beta.5</span><p>四个只读 GET 端点 GET /api/database-explorer/connections... · DATABASE_EXPLORER_PAGE=&#39;database-explorer&#39; 页面资源 · listConnections/listCollections/readCollection/readPhysicalCollection</p><span class="review-refs"><a href="#review-evidence-E10">E10</a> <a href="#review-evidence-E11">E11</a> <a href="#review-evidence-E12">E12</a></span></div><div><span class="eyebrow">指引 / Skill</span><strong>packages/@nocobase/app-plugin-database-explorer/skills/nocobase-app-plugin-database-explorer/SKILL.md</strong><span class="check-source">版本见冻结输入</span><p>Public surfaces（端点与错误码） · App workflow（注册与单条页面授权） · Ownership / read-only 说明</p><span class="review-refs"><a href="#review-evidence-E13">E13</a> <a href="#review-evidence-E14">E14</a></span></div></div><div class="review-requirements"><h3>需求 → 框架职责 → 推荐与实际接入</h3><article><header><strong>授权管理人员在现有数据结构页看到真实设备表及编号/名称字段。</strong><span class="tag ">直接支持</span></header><dl class="retro-fields"><div><dt>框架职责与业务边界</dt><dd>框架负责只读结构页与只读端点，从真实数据库/元数据解析；应用负责授予该角色页面权限。</dd></div><div><dt>推荐使用方式</dt><dd>SKILL 的 App workflow：两侧注册插件，给该角色一条 {resource:{type:&#39;page&#39;,id:&#39;database-explorer&#39;},actions:[{action:&#39;access&#39;}]}。</dd></div><div><dt>Agent 实际使用</dt><dd>未知：无 Agent 变更或 QA 记录可确认其是否查看真实表而非硬编码。</dd></div><div><dt>缺口归因</dt><dd>未记录能力缺口</dd></div></dl><span class="review-refs"><a href="#review-evidence-E10">E10</a> <a href="#review-evidence-E11">E11</a> <a href="#review-evidence-E13">E13</a></span></article><article><header><strong>普通业务账号无该设置入口。</strong><span class="tag ">直接支持</span></header><dl class="retro-fields"><div><dt>框架职责与业务边界</dt><dd>框架用同一页面资源同时约束导航与端点，未授权返回 403。</dd></div><div><dt>推荐使用方式</dt><dd>SKILL：The same grant governs the navigation entry and the endpoints, so there is nothing else to align。</dd></div><div><dt>Agent 实际使用</dt><dd>未知：无 QA 证据。</dd></div><div><dt>缺口归因</dt><dd>未记录能力缺口</dd></div></dl><span class="review-refs"><a href="#review-evidence-E10">E10</a> <a href="#review-evidence-E13">E13</a> <a href="#review-evidence-E14">E14</a></span></article></div><div class="review-dimensions"><article><header><h3>需求满足度</h3><strong class="review-score">90<small>/100</small></strong></header><p>实现只有 GET 的四个只读端点并在中间件中校验 page:database-explorer/access，Skill 说明其展示真实连接/Collection/字段，直接满足查看真实设备表且普通账号无入口。</p><span class="review-refs"><a href="#review-evidence-E10">E10</a> <a href="#review-evidence-E11">E11</a> <a href="#review-evidence-E13">E13</a></span></article><article><header><h3>使用便利度</h3><strong class="review-score">88<small>/100</small></strong></header><p>两侧注册加一条页面授权即可同时控制导航和端点，错误码与 403/503 语义明确，接入步骤短。</p><span class="review-refs"><a href="#review-evidence-E10">E10</a> <a href="#review-evidence-E13">E13</a> <a href="#review-evidence-E14">E14</a></span></article><article><header><h3>Agent 友好度</h3><strong class="review-score">88<small>/100</small></strong></header><p>SKILL 列出公开端点、错误码、注册样例、前置插件与只读限定，Agent 可直接按图装配并区分只读语义。</p><span class="review-refs"><a href="#review-evidence-E13">E13</a> <a href="#review-evidence-E14">E14</a></span></article><article><header><h3>设计合理性</h3><strong class="review-score">87<small>/100</small></strong></header><p>连接摘要是 allow-list、错误只记分类不记消息、detail 用子路由承载查询串，读-only 边界清晰且不暴露凭据。</p><span class="review-refs"><a href="#review-evidence-E11">E11</a> <a href="#review-evidence-E12">E12</a> <a href="#review-evidence-E14">E14</a></span></article><article><header><h3>实现完整性与可靠性</h3><strong class="review-score">85<small>/100</small></strong></header><p>实现层为每个端点装上 authentication.required()+authorization.middleware() 并逐请求判定页面权限，未授权返回 403、无数据库返回 503，读取函数不打开全部连接；行为与 Skill 契约一致。</p><span class="review-refs"><a href="#review-evidence-E10">E10</a> <a href="#review-evidence-E11">E11</a> <a href="#review-evidence-E12">E12</a></span></article></div><p class="check-source">覆盖限制：没有截图，无法核对页面实际呈现的设备表与字段；无 Agent 代码确认其是否复用了该页而非自建表结构页。</p><p class="check-source">映射验收项：未建立映射</p><div class="review-badges"><span>业务首轮 QA</span><span class="tag warn">未验证</span><span>业务最终轮 QA</span><span class="tag warn">未验证</span></div><p class="check-source">这是业务验证背景，不直接换算框架分数；首轮失败不会被最终通过覆盖。</p></div></details><details class="card review-module" id="review-module-2"><summary><strong>业务授权：只读集成账号的读/写动作区分</strong><span>对象、需求覆盖、五项理由与证据</span></summary><div class="subsection-body"><p>给外部集成账号仅 read 的设备列表业务权限，create/update 拒绝且服务端强制；不引入第二套身份系统。</p><div class="review-targets"><div><span class="eyebrow">插件</span><strong>@nocobase/app-plugin-authorization</strong><span class="check-source">0.2.0-beta.18</span><p>authorizationToken 与 authorization.middleware() · authz.db.collections.add / policyFor / authorizeRepository · database.collection 的 read/create/update/delete 动作</p><span class="review-refs"><a href="#review-evidence-E15">E15</a> <a href="#review-evidence-E16">E16</a> <a href="#review-evidence-E17">E17</a></span></div><div><span class="eyebrow">指引 / Skill</span><strong>packages/@nocobase/app-plugin-authorization/skills/nocobase-app-plugin-authorization/SKILL.md</strong><span class="check-source">版本见冻结输入</span><p>Implement in this order（声明→注册→路由保护→配置） · Enforcement rules（必须有显式注册）</p><span class="review-refs"><a href="#review-evidence-E18">E18</a> <a href="#review-evidence-E19">E19</a></span></div><div><span class="eyebrow">指引 / Skill</span><strong>app/.agents/skills/nocobase-app-development/references/authorization.md</strong><span class="check-source">版本见冻结输入</span><p>Turn requirements into a matrix · Implement in application-owned files</p><span class="review-refs"><a href="#review-evidence-E20">E20</a></span></div></div><div class="review-requirements"><h3>需求 → 框架职责 → 推荐与实际接入</h3><article><header><strong>外部集成账号只拥有读取设备列表的业务权限，不能创建或修改设备。</strong><span class="tag ">正常组合</span></header><dl class="retro-fields"><div><dt>框架职责与业务边界</dt><dd>框架负责动作级授权、未注册集合拒绝与 403 语义；应用负责声明设备集合/业务资源、定义只读权限集并指派账号。</dd></div><div><dt>推荐使用方式</dt><dd>SKILL Implement in this order：迁移建表→defineDatabasePermission/defineAuthorizationResource→provider 注册→路由用 authorization.middleware() 与 policyFor/authorizeRepository→配置权限集。</dd></div><div><dt>Agent 实际使用</dt><dd>未知：快照无应用代码或 QA，无法确认其实际选择。</dd></div><div><dt>缺口归因</dt><dd>未记录能力缺口</dd></div></dl><span class="review-refs"><a href="#review-evidence-E15">E15</a> <a href="#review-evidence-E16">E16</a> <a href="#review-evidence-E17">E17</a> <a href="#review-evidence-E18">E18</a></span></article><article><header><strong>普通业务账号无设置入口且权限边界由服务端强制。</strong><span class="tag ">正常组合</span></header><dl class="retro-fields"><div><dt>框架职责与业务边界</dt><dd>框架把页面可见性与业务动作授权分开，未注册集合对所有身份都拒绝；应用负责页面 authz 与权限集。</dd></div><div><dt>推荐使用方式</dt><dd>authorization.md：Declare route page access in client/routes.ts，接口安装认证与授权，客户端可见性不代替 API 强制。</dd></div><div><dt>Agent 实际使用</dt><dd>未知：无日志或 QA。</dd></div><div><dt>缺口归因</dt><dd>未记录能力缺口</dd></div></dl><span class="review-refs"><a href="#review-evidence-E19">E19</a> <a href="#review-evidence-E20">E20</a></span></article></div><div class="review-dimensions"><article><header><h3>需求满足度</h3><strong class="review-score">84<small>/100</small></strong></header><p>authorizer 将 read/create/update/delete 作为独立动作，缺授权即 NO_OBJECT_PERMISSION 拒绝，未注册集合一律拒绝；authorizeRepository 把 Repository 方法绑定到业务动作，足以表达“只读设备列表”。</p><span class="review-refs"><a href="#review-evidence-E15">E15</a> <a href="#review-evidence-E16">E16</a> <a href="#review-evidence-E17">E17</a> <a href="#review-evidence-E18">E18</a></span></article><article><header><h3>使用便利度</h3><strong class="review-score">78<small>/100</small></strong></header><p>能力完整但装配链路较长：需先声明集合/业务资源与策略，再写路由中间件，最后配置权限集和指派；对小型搭建测试是不小的前置工作。</p><span class="review-refs"><a href="#review-evidence-E18">E18</a> <a href="#review-evidence-E19">E19</a> <a href="#review-evidence-E20">E20</a></span></article><article><header><h3>Agent 友好度</h3><strong class="review-score">82<small>/100</small></strong></header><p>Skill 与 app 指引都给出实现顺序、选择标准和验证清单，能引导 Agent；但集合必须显式 authz.db.collections.add 的硬前提若被漏读会导致全部拒绝，恢复依赖读到 Enforcement rules。</p><span class="review-refs"><a href="#review-evidence-E18">E18</a> <a href="#review-evidence-E19">E19</a> <a href="#review-evidence-E20">E20</a></span></article><article><header><h3>设计合理性</h3><strong class="review-score">86<small>/100</small></strong></header><p>模型把动作/作用域/字段/关系分层，Repository 策略可窄化并可 withPolicy 绑定，拒绝原因结构化，扩展面清晰。</p><span class="review-refs"><a href="#review-evidence-E15">E15</a> <a href="#review-evidence-E16">E16</a> <a href="#review-evidence-E17">E17</a></span></article><article><header><h3>实现完整性与可靠性</h3><strong class="review-score">83<small>/100</small></strong></header><p>实现会校验 repository 名与动作绑定、按单一集合单作用域拒绝，并在条件缺失时返回 403；读到的拒绝路径与 Skill 契约一致。</p><span class="review-refs"><a href="#review-evidence-E15">E15</a> <a href="#review-evidence-E16">E16</a> <a href="#review-evidence-E17">E17</a></span></article></div><p class="check-source">覆盖限制：无 Agent 权限集/种子或 QA，无法确认它是否完成了业务资源声明与只读权限集分配；未审阅 sharing/restriction 规则在此需求下的必要性。</p><p class="check-source">映射验收项：未建立映射</p><div class="review-badges"><span>业务首轮 QA</span><span class="tag warn">未验证</span><span>业务最终轮 QA</span><span class="tag warn">未验证</span></div><p class="check-source">这是业务验证背景，不直接换算框架分数；首轮失败不会被最终通过覆盖。</p></div></details><details class="card review-module" id="review-module-3"><summary><strong>设备表数据层与受权读取端点装配</strong><span>对象、需求覆盖、五项理由与证据</span></summary><div class="subsection-body"><p>用迁移建立含编号/名称的设备集合，持久化到真实库，并提供一个受认证与授权约束的列表读取端点。</p><div class="review-targets"><div><span class="eyebrow">库</span><strong>@nocobase/db</strong><span class="check-source">1.0.0-beta.15</span><p>defineMigration / defineSeed · Collection Builder createCollection · databaseManagerToken 与 Repository/Query</p><span class="review-refs"><a href="#review-evidence-E21">E21</a> <a href="#review-evidence-E22">E22</a></span></div><div><span class="eyebrow">指引 / Skill</span><strong>packages/@nocobase/db/skills/nocobase-db/SKILL.md</strong><span class="check-source">版本见冻结输入</span><p>2. Migrations and seeds 的 defineMigration 示例</p><span class="review-refs"><a href="#review-evidence-E23">E23</a></span></div><div><span class="eyebrow">指引 / Skill</span><strong>app/.agents/skills/nocobase-app-development/references/server-routes.md</strong><span class="check-source">版本见冻结输入</span><p>defineApiRoutes 认证端点模板 · authz policyFor/authorizeRepository 绑定</p><span class="review-refs"><a href="#review-evidence-E24">E24</a></span></div><div><span class="eyebrow">指引 / Skill</span><strong>app/.agents/skills/nocobase-app-development/references/database-and-data.md</strong><span class="check-source">版本见冻结输入</span><p>databaseManagerToken 与 repository/query/transaction 选择</p><span class="review-refs"><a href="#review-evidence-E25">E25</a></span></div></div><div class="review-requirements"><h3>需求 → 框架职责 → 推荐与实际接入</h3><article><header><strong>设备清单只有编号和名称两个业务字段，且真实持久保存。</strong><span class="tag ">直接支持</span></header><dl class="retro-fields"><div><dt>框架职责与业务边界</dt><dd>框架提供迁移/Builder 与运行时 Repository；应用写自包含迁移与种子。</dd></div><div><dt>推荐使用方式</dt><dd>db SKILL 的 defineMigration 示例与 database-and-data.md 的 databaseManagerToken/repository 用法。</dd></div><div><dt>Agent 实际使用</dt><dd>未知：快照 database/main 未生成，无 Agent 代码。</dd></div><div><dt>缺口归因</dt><dd>未记录能力缺口</dd></div></dl><span class="review-refs"><a href="#review-evidence-E21">E21</a> <a href="#review-evidence-E22">E22</a> <a href="#review-evidence-E23">E23</a></span></article><article><header><strong>外部调用读取设备列表，且受该账号权限约束。</strong><span class="tag ">正常组合</span></header><dl class="retro-fields"><div><dt>框架职责与业务边界</dt><dd>框架提供 defineApiRoutes、认证中间件与 policyFor/authorizeRepository；应用写路由/服务与业务动作映射。</dd></div><div><dt>推荐使用方式</dt><dd>server-routes.md：每个路由自装 auth.required()，用 policyFor/authorizeRepository 绑定策略，不依赖他人中间件。</dd></div><div><dt>Agent 实际使用</dt><dd>未知：无路由代码或请求证据。</dd></div><div><dt>缺口归因</dt><dd>未记录能力缺口</dd></div></dl><span class="review-refs"><a href="#review-evidence-E24">E24</a> <a href="#review-evidence-E25">E25</a></span></article></div><div class="review-dimensions"><article><header><h3>需求满足度</h3><strong class="review-score">82<small>/100</small></strong></header><p>defineMigration 与 Collection Builder 可直接建立两字段集合，databaseManagerToken/repository 支持持久读写，defineApiRoutes+policyFor/authorizeRepository 可挂上授权读取，路径齐全但需应用自行组合。</p><span class="review-refs"><a href="#review-evidence-E21">E21</a> <a href="#review-evidence-E23">E23</a> <a href="#review-evidence-E24">E24</a> <a href="#review-evidence-E25">E25</a></span></article><article><header><h3>使用便利度</h3><strong class="review-score">78<small>/100</small></strong></header><p>迁移、路由、服务、权限注册分散在多处且有明确归属；示例清楚但一次功能要触达五个位置，步骤偏多。</p><span class="review-refs"><a href="#review-evidence-E23">E23</a> <a href="#review-evidence-E24">E24</a> <a href="#review-evidence-E25">E25</a></span></article><article><header><h3>Agent 友好度</h3><strong class="review-score">82<small>/100</small></strong></header><p>db SKILL、server-routes.md 与 database-and-data.md 提供最小可运行示例和验证清单，Agent 有明确入口；但需自行在授权、路由、迁移之间穿梭，入口不止一个。</p><span class="review-refs"><a href="#review-evidence-E23">E23</a> <a href="#review-evidence-E24">E24</a> <a href="#review-evidence-E25">E25</a></span></article><article><header><h3>设计合理性</h3><strong class="review-score">82<small>/100</small></strong></header><p>db 公开导出 defineMigration/defineSeed/databaseManagerToken 与策略绑定 API，运行时与 schema 分层，边界明确。</p><span class="review-refs"><a href="#review-evidence-E21">E21</a> <a href="#review-evidence-E22">E22</a> <a href="#review-evidence-E24">E24</a></span></article><article><header><h3>实现完整性与可靠性</h3><strong class="review-score">80<small>/100</small></strong></header><p>defineMigration 通过 marker 被迁移加载器识别，公开导出面与文档一致；但本次未运行迁移，可靠性仅基于读到的最小实现。</p><span class="review-refs"><a href="#review-evidence-E21">E21</a> <a href="#review-evidence-E22">E22</a></span></article></div><p class="check-source">覆盖限制：无 Agent 迁移或路由代码，无法确认建表、字段命名与端点是否按指引落地；未运行验证可靠性。</p><p class="check-source">映射验收项：未建立映射</p><div class="review-badges"><span>业务首轮 QA</span><span class="tag warn">未验证</span><span>业务最终轮 QA</span><span class="tag warn">未验证</span></div><p class="check-source">这是业务验证背景，不直接换算框架分数；首轮失败不会被最终通过覆盖。</p></div></details><details class="card review-module" id="review-module-4"><summary><strong>集成账号的创建与角色指派</strong><span>对象、需求覆盖、五项理由与证据</span></summary><div class="subsection-body"><p>创建一个集成账号并通过现有用户管理 API/页面完成身份与角色指派，供 API Key 绑定使用。</p><div class="review-targets"><div><span class="eyebrow">插件</span><strong>@nocobase/app-plugin-users</strong><span class="check-source">0.1.0-beta.9</span><p>userManagementServiceToken · HTTP /api/users 与 user 动作 read/create/assign-role · userRoleScopeRegistryToken</p><span class="review-refs"><a href="#review-evidence-E26">E26</a> <a href="#review-evidence-E27">E27</a></span></div><div><span class="eyebrow">指引 / Skill</span><strong>packages/@nocobase/app-plugin-users/skills/nocobase-app-plugin-users/SKILL.md</strong><span class="check-source">版本见冻结输入</span><p>Register and place the page · Ownership 与验证清单</p><span class="review-refs"><a href="#review-evidence-E28">E28</a> <a href="#review-evidence-E29">E29</a></span></div></div><div class="review-requirements"><h3>需求 → 框架职责 → 推荐与实际接入</h3><article><header><strong>只准备一个集成账号，并使其只具备被授予的业务权限。</strong><span class="tag ">直接支持</span></header><dl class="retro-fields"><div><dt>框架职责与业务边界</dt><dd>框架 Authentication 拥有身份/凭据/会话，Users 拥有管理 API 与事务，Authorization 拥有权限集；应用负责创建账号与指派权限集。</dd></div><div><dt>推荐使用方式</dt><dd>Users SKILL：注册 Authentication/Authorization/Users，授予 page:users/access 与所需 user 动作，用 /api/users 创建并 assign-role。</dd></div><div><dt>Agent 实际使用</dt><dd>未知：无归档 Agent 操作或 QA。</dd></div><div><dt>缺口归因</dt><dd>未记录能力缺口</dd></div></dl><span class="review-refs"><a href="#review-evidence-E26">E26</a> <a href="#review-evidence-E28">E28</a> <a href="#review-evidence-E29">E29</a></span></article><article><header><strong>集成账号沿用既有身份系统而非第二套。</strong><span class="tag ">正常组合</span></header><dl class="retro-fields"><div><dt>框架职责与业务边界</dt><dd>框架用同一 user/permission-set 模型，API Key 解析为该用户会话。</dd></div><div><dt>推荐使用方式</dt><dd>Users SKILL 的 Ownership：Authentication 拥有身份，Authorization 拥有权限集与指派。</dd></div><div><dt>Agent 实际使用</dt><dd>未知：无日志。</dd></div><div><dt>缺口归因</dt><dd>未记录能力缺口</dd></div></dl><span class="review-refs"><a href="#review-evidence-E27">E27</a> <a href="#review-evidence-E28">E28</a></span></article></div><div class="review-dimensions"><article><header><h3>需求满足度</h3><strong class="review-score">84<small>/100</small></strong></header><p>Users 提供带 read/create/assign-role 动作的 /api/users 管理 API 与页面，能创建集成账号并指派权限集，身份由 Authentication 统一持有，满足单账号需求。</p><span class="review-refs"><a href="#review-evidence-E26">E26</a> <a href="#review-evidence-E27">E27</a> <a href="#review-evidence-E28">E28</a></span></article><article><header><h3>使用便利度</h3><strong class="review-score">82<small>/100</small></strong></header><p>注册与页面放置步骤明确（settings 或 app 挂载），创建走标准 API/页面，无需自写身份逻辑。</p><span class="review-refs"><a href="#review-evidence-E26">E26</a> <a href="#review-evidence-E28">E28</a></span></article><article><header><h3>Agent 友好度</h3><strong class="review-score">84<small>/100</small></strong></header><p>SKILL 列出公开入口、权限动作、所有权边界与验证清单，Agent 可按步骤创建并检查 401/403。</p><span class="review-refs"><a href="#review-evidence-E28">E28</a> <a href="#review-evidence-E29">E29</a></span></article><article><header><h3>设计合理性</h3><strong class="review-score">84<small>/100</small></strong></header><p>身份、权限集与管理 API 分属不同插件，Users 提供 userRoleScopeRegistryToken 扩展点且不创建角色/不自动授权，边界干净。</p><span class="review-refs"><a href="#review-evidence-E26">E26</a> <a href="#review-evidence-E27">E27</a> <a href="#review-evidence-E28">E28</a></span></article><article><header><h3>实现完整性与可靠性</h3><strong class="review-score">82<small>/100</small></strong></header><p>实现层逐路由做 user 动作校验并把 AuthorizationDeniedError 映射为 403，创建用户同时校验 create 与 assign-role；与 SKILL 的验证描述一致。</p><span class="review-refs"><a href="#review-evidence-E26">E26</a> <a href="#review-evidence-E27">E27</a></span></article></div><p class="check-source">覆盖限制：无 Agent 使用的账号创建记录；authentication 的凭据/会话实现未单独审阅，本模块只覆盖 Users 管理与角色指派。</p><p class="check-source">映射验收项：未建立映射</p><div class="review-badges"><span>业务首轮 QA</span><span class="tag warn">未验证</span><span>业务最终轮 QA</span><span class="tag warn">未验证</span></div><p class="check-source">这是业务验证背景，不直接换算框架分数；首轮失败不会被最终通过覆盖。</p></div></details></div><details class="card raw-record"><summary>业务验证背景 · 不计入框架评分</summary><div class="subsection-body"><div class="review-process"><div><span>本 Run 验证轮次</span><strong>未提供</strong></div><div><span>本 Run 工厂修复轮次</span><strong>未提供</strong></div><div><span>已保留验证轮次</span><strong>0</strong></div></div>
+    <p class="check-source">仅本 Run 已归档记录；工厂修复轮次不等于 Agent 开发中全部试错次数。缺少 verify-1 时不能声称任务首轮通过。</p>
+    <details class="card raw-record"><summary>首轮与修复过程 · 查看逐轮原始状态</summary><div class="subsection-body"><div class="table-wrap"><table><thead><tr><th>轮次</th><th>范围</th><th>原始结论</th><th>失败项</th></tr></thead><tbody><tr><td colspan="4">无记录；不是 0 次失败。</td></tr></tbody></table></div><p class="muted">未提供额外说明。</p></div></details></div></details><article class="card review-ui"><header><h3>业务界面观察 · 非框架评分</h3><span class="review-na">未评估</span></header><p>快照中没有 artifacts/verify-*/browser-* 截图，且 app/ 无被评业务页面，未查看任何页面图像，无法评价跨页面视觉一致性。</p><span class="review-refs"></span><p class="check-source">未执行跨页面图像审阅，不能因使用相同组件库而判为视觉一致。</p></article></section><section class="section" id="framework-feedback"><div class="section-head"><div><div class="eyebrow">Infrastructure feedback</div><h2>框架帮助与证据</h2></div></div><p class="section-intro">保留具体基础能力的帮助、覆盖范围与原始证据。“有证据 / 待确认”均为独立评审者判断，不代替人工核验。</p><h3 class="review-owner-title">库、插件与指引</h3><div class="review-group"><h3>做得好的地方 <span>2</span></h3><details class="card review-finding" id="review-finding-F1" ><summary><div><strong>API Keys 直接内置 NocoBase 所需的默认值与管理端点</strong><div class="review-badges"><span class="tag ">NocoBase3 插件</span><span class="tag ">评审者判断 · 有证据</span><span class="tag ">信息</span><span class="tag ">未解决</span></div></div><span>⌄</span></summary><div class="subsection-body"><p>createApiKeysPlugin 统一补上 enableSessionForAPIKeys:true、rateLimit 关闭、requireName:true，使 x-api-key 能解析成所有者会话；同时以 createAuthEndpoint.serverOnly 提供受信的 get/delete 管理操作，密钥只存哈希。</p><dl class="retro-fields"><div><dt>实际影响 / 提供的帮助</dt><dd>应用无需自行实现密钥表、默认配置或管理 API，安全默认值由插件兜底。</dd></div><div><dt>建议改法 / 应保留的能力</dt><dd>保持该默认值与管理端点契约，版本升级时同步 apikey 迁移。</dd></div></dl><span class="review-refs"><a href="#review-evidence-E2">E2</a> <a href="#review-evidence-E6">E6</a> <a href="#review-evidence-E9">E9</a></span></div></details><details class="card review-finding" id="review-finding-F2" ><summary><div><strong>Database Explorer 以单一页面授权覆盖导航与只读端点</strong><div class="review-badges"><span class="tag ">NocoBase3 插件</span><span class="tag ">评审者判断 · 有证据</span><span class="tag ">信息</span><span class="tag ">未解决</span></div></div><span>⌄</span></summary><div class="subsection-body"><p>实现只挂 GET 端点，并在中间件中先认证再以 page:database-explorer/access 判定，未授权返回 403；连接摘要走 allow-list，不泄露 host/凭据。</p><dl class="retro-fields"><div><dt>实际影响 / 提供的帮助</dt><dd>授权管理人员可读真实结构，普通账号既无菜单也无法直接调用端点，无需第二套权限。</dd></div><div><dt>建议改法 / 应保留的能力</dt><dd>维持只读端点集合与单条页面授权模型。</dd></div></dl><span class="review-refs"><a href="#review-evidence-E10">E10</a> <a href="#review-evidence-E11">E11</a> <a href="#review-evidence-E13">E13</a></span></div></details></div><p class="check-source">问题、误导与建议统一收录在<a class="text-link" href="#problems">问题与改进</a>，不在此重复展示。</p><details class="card raw-record" open><summary>本次评审的覆盖限制</summary><div class="subsection-body"><ul class="compact-list"><li>本 Run 未归档 Agent 代码或 QA 轮次，actualUsage 与 Agent 行为只能记为未知，不能据此确认或否认框架缺陷。</li><li>未运行应用、安装依赖或执行任何验证，可靠性结论仅基于阅读到的实现与公开契约。</li><li>未审阅 authentication 的凭据/会话实现，也未审阅 sharing/restriction 规则在本需求下的必要性。</li><li>没有截图，未进行 UI 评审，不能评价跨页面视觉一致性。</li></ul></div></details><details class="card raw-record"><summary>评审基线与版本指纹</summary><div class="subsection-body"><p>评审针对已封存候选补丁；可能在原搭建内或之后单独补跑。与 PR 当前最新提交不是同一概念，评审不修改补丁。</p><pre>{
+  &quot;reviewer&quot;: {
+    &quot;engine&quot;: &quot;pi&quot;,
+    &quot;model&quot;: &quot;deepseek-v4.1-flash&quot;,
+    &quot;version&quot;: &quot;0.86.1&quot;,
+    &quot;runId&quot;: &quot;36083795688&quot;,
+    &quot;attempt&quot;: 1,
+    &quot;controlSha&quot;: &quot;23344e163ee19abbce7f7d3c5df1d237f4fba741&quot;,
+    &quot;replay&quot;: false
+  },
+  &quot;repository&quot;: &quot;gchust/nb3-factory&quot;,
+  &quot;issue&quot;: 301,
+  &quot;runId&quot;: &quot;36083795688&quot;,
+  &quot;attempt&quot;: 1,
+  &quot;controlSha&quot;: &quot;23344e163ee19abbce7f7d3c5df1d237f4fba741&quot;,
+  &quot;rubricVersion&quot;: 2,
+  &quot;baseSha&quot;: &quot;23344e163ee19abbce7f7d3c5df1d237f4fba741&quot;,
+  &quot;patchHash&quot;: &quot;e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855&quot;,
+  &quot;lockfileHash&quot;: &quot;f8aad5ada5e9f71222187efd4920f699319c20f2ca35b67e78b0ed72c4912aa6&quot;,
+  &quot;packages&quot;: [
+    {
+      &quot;name&quot;: &quot;@nocobase/ai-employee&quot;,
+      &quot;version&quot;: &quot;0.2.0-beta.7&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/ai-employee-avatars&quot;,
+      &quot;version&quot;: &quot;1.0.2&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/app-cli&quot;,
+      &quot;version&quot;: &quot;0.1.0-beta.4&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/app-client&quot;,
+      &quot;version&quot;: &quot;1.0.0-beta.19&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/app-plugin-ai-employee&quot;,
+      &quot;version&quot;: &quot;0.1.0-beta.21&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/app-plugin-ai-knowledge-base&quot;,
+      &quot;version&quot;: &quot;0.1.0-beta.9&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/app-plugin-api-keys&quot;,
+      &quot;version&quot;: &quot;0.1.0-beta.6&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/app-plugin-authentication&quot;,
+      &quot;version&quot;: &quot;1.0.0-beta.22&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/app-plugin-authorization&quot;,
+      &quot;version&quot;: &quot;0.2.0-beta.18&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/app-plugin-authz-default-access&quot;,
+      &quot;version&quot;: &quot;0.1.0-beta.2&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/app-plugin-authz-restriction-rules&quot;,
+      &quot;version&quot;: &quot;0.1.0-beta.1&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/app-plugin-authz-sharing-rules&quot;,
+      &quot;version&quot;: &quot;0.1.0-beta.2&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/app-plugin-database-explorer&quot;,
+      &quot;version&quot;: &quot;0.1.0-beta.5&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/app-plugin-file&quot;,
+      &quot;version&quot;: &quot;0.1.0-beta.15&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/app-plugin-i18n&quot;,
+      &quot;version&quot;: &quot;0.1.0-beta.8&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/app-plugin-mail&quot;,
+      &quot;version&quot;: &quot;0.1.0-beta.0&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/app-plugin-notification&quot;,
+      &quot;version&quot;: &quot;0.1.0-beta.16&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/app-plugin-notification-in-app&quot;,
+      &quot;version&quot;: &quot;0.2.0-beta.17&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/app-plugin-notification-provider&quot;,
+      &quot;version&quot;: &quot;0.1.0-beta.9&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/app-plugin-notification-providers&quot;,
+      &quot;version&quot;: &quot;0.2.0-beta.7&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/app-plugin-scheduler&quot;,
+      &quot;version&quot;: &quot;0.1.0-beta.7&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/app-plugin-users&quot;,
+      &quot;version&quot;: &quot;0.1.0-beta.9&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/app-plugin-workflow&quot;,
+      &quot;version&quot;: &quot;0.1.0-beta.26&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/app-portal-sdk&quot;,
+      &quot;version&quot;: &quot;1.0.0-beta.3&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/app-server&quot;,
+      &quot;version&quot;: &quot;1.0.0-beta.25&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/app-skills&quot;,
+      &quot;version&quot;: &quot;0.1.0-beta.14&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/app-tools&quot;,
+      &quot;version&quot;: &quot;0.1.0-beta.4&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/app-websocket&quot;,
+      &quot;version&quot;: &quot;0.0.1&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/authorization&quot;,
+      &quot;version&quot;: &quot;0.1.0-beta.8&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/caching&quot;,
+      &quot;version&quot;: &quot;0.1.0-beta.2&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/config&quot;,
+      &quot;version&quot;: &quot;0.1.0-beta.1&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/cron&quot;,
+      &quot;version&quot;: &quot;0.1.0&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/db&quot;,
+      &quot;version&quot;: &quot;1.0.0-beta.15&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/db-sqlite&quot;,
+      &quot;version&quot;: &quot;0.1.0-beta.2&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/dev-config&quot;,
+      &quot;version&quot;: &quot;0.1.0-beta.12&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/drive&quot;,
+      &quot;version&quot;: &quot;0.1.0-beta.4&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/i18n&quot;,
+      &quot;version&quot;: &quot;1.0.0-beta.4&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/logging&quot;,
+      &quot;version&quot;: &quot;0.1.0-beta.5&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/nb3-cli&quot;,
+      &quot;version&quot;: &quot;1.0.0-beta.11&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/queue&quot;,
+      &quot;version&quot;: &quot;0.1.0-beta.7&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/repository-input&quot;,
+      &quot;version&quot;: &quot;0.1.0-beta.1&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/service-provider&quot;,
+      &quot;version&quot;: &quot;0.0.2-beta.1&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/session&quot;,
+      &quot;version&quot;: &quot;0.1.0-beta.2&quot;
+    },
+    {
+      &quot;name&quot;: &quot;@nocobase/snowflake&quot;,
+      &quot;version&quot;: &quot;1.0.0-beta.3&quot;
+    }
+  ],
+  &quot;reviewCriteriaHash&quot;: &quot;c64f66557b5b203d042f324b6f3f1e77eec9be3be8513106dba62db828a768f1&quot;,
+  &quot;artifactHash&quot;: &quot;972b42400db2c171b4ba010ff545676a34b2245c1baadd8539b2978b9d9a0ec8&quot;,
+  &quot;inputHash&quot;: &quot;3bceaa487641ae8250d036e983be1db22a3d423511b60f2111cc8b201a27918a&quot;
+}</pre></div></details><div class="review-evidence"><h3>证据与原文</h3><details class="card raw-record" id="review-evidence-E1"><summary><strong>E1</strong> · packages/@nocobase/app-plugin-api-keys/skills/nocobase-app-plugin-api-keys/SKILL.md:43–59</summary><div class="subsection-body"><p>Register it 列出双侧 plugins.ts、server/client config/auth.ts 加 apiKey()/apiKeyClient()、授予 page:api-keys/access、pnpm db:apply 四步，并说明第 1 步与第 2 步各自缺失时的失败症状。</p><pre>## Register it
+
+Both halves are required, and each fails differently on its own.
+
+1. Add the default export to the App&#39;s `server/plugins.ts` and
+   `client/plugins.ts`. Configure the page with
+   `apiKeys({ path: &#39;/api-keys&#39; })`; it mounts under `/settings`.
+2. Add `apiKey()` to `plugins` in `server/config/auth.ts`, and `apiKeyClient()`
+   to `plugins` in `client/config/auth.ts`.
+3. Grant `page:api-keys/access` to the roles that may manage keys. Keys are
+   self-service and every endpoint acts only on the caller&#39;s own, so this is
+   normally granted to all authenticated users.
+4. Run `pnpm db:apply`.
+
+Only step 1 leaves the `apikey` table created and no endpoints mounted. Only
+step 2 mounts endpoints against a table that does not exist, and every call
+fails at the database.</pre><p class="check-source">原文件 SHA-256：644e026c18c2e1f71e1d6db1b6d70a4a61574e518b4e0343c7f2b59c14060153</p></div></details><details class="card raw-record" id="review-evidence-E2"><summary><strong>E2</strong> · packages/@nocobase/app-plugin-api-keys/skills/nocobase-app-plugin-api-keys/SKILL.md:63–77</summary><div class="subsection-body"><p>The three defaults 说明 NocoBase 默认 enableSessionForAPIKeys:true、rateLimit 关闭、requireName:true；若关掉 enableSessionForAPIKeys 则携带密钥的请求全部 401。</p><pre>`apiKey()` supplies `enableSessionForAPIKeys: true`, `rateLimit: { enabled:
+false }` and `requireName: true`, so an App normally passes nothing.
+
+`enableSessionForAPIKeys` is the one that has to be set. Better Auth defaults
+it off, and with it off a key authenticates nothing: the Settings page still
+issues keys, and every request carrying one answers 401. Nothing points at the
+configuration, so do not override it without meaning to.
+
+`rateLimit` is off because Better Auth&#39;s own default is 10 requests per key per
+day, which is a quota for issuing keys rather than for using them. Pass
+`{ enabled: true, maxRequests: 1000, timeWindow: 60_000 }` for a quota the App
+actually wants.
+
+All three are overridable, and passing all three back reproduces Better Auth&#39;s
+own behaviour exactly.</pre><p class="check-source">原文件 SHA-256：644e026c18c2e1f71e1d6db1b6d70a4a61574e518b4e0343c7f2b59c14060153</p></div></details><details class="card raw-record" id="review-evidence-E3"><summary><strong>E3</strong> · packages/@nocobase/app-plugin-api-keys/skills/nocobase-app-plugin-api-keys/SKILL.md:92–114</summary><div class="subsection-body"><p>What a key can reach 列出密钥可及端点，并提示密钥可再签发密钥、/list-sessions 会返回未签名 token 两个后果。</p><pre>## What a key can reach, and what it cannot
+
+A key is its owner, so it reaches the Better Auth endpoints a Session reaches.
+Verified against `@better-auth/api-key` 1.7.1 with only an `x-api-key` header:
+
+| Endpoint                                                 | Result                     |
+| -------------------------------------------------------- | -------------------------- |
+| `POST /api-key/create`, `GET /api-key/list`              | reachable                  |
+| `POST /update-user`                                      | reachable                  |
+| `GET /list-sessions`                                     | reachable                  |
+| `POST /sign-out`                                         | reachable                  |
+| `POST /delete-user`, `/change-email`, `/revoke-sessions` | 401                        |
+| `POST /change-password`                                  | requires `currentPassword` |
+
+Two consequences to plan for:
+
+- **A key mints keys.** The successor holds its own expiry and revocation, and
+  nothing links it to the key that made it. Revoking a leaked key means
+  reviewing the owner&#39;s whole list, not deleting the one key you know about.
+- **`/list-sessions` returns the unsigned session token.** The cookie is
+  `token.signature`, so replaying the token alone does not authenticate; it
+  becomes a takeover only if the auth secret leaks too or cookie signing is
+  off.</pre><p class="check-source">原文件 SHA-256：644e026c18c2e1f71e1d6db1b6d70a4a61574e518b4e0343c7f2b59c14060153</p></div></details><details class="card raw-record" id="review-evidence-E4"><summary><strong>E4</strong> · packages/@nocobase/app-plugin-api-keys/skills/nocobase-app-plugin-api-keys/SKILL.md:149–164</summary><div class="subsection-body"><p>Verification 给出创建/携带密钥/撤销/禁用四步核验，并说明 serverOnly 端与 ApiKeyService 是受信服务端能力、需调用方自行授权。</p><pre>## Verification
+
+1. Grant `page:api-keys/access`, sign in, open the Settings page, create a key,
+   and copy it.
+2. `curl -H &#39;x-api-key: &lt;key&gt;&#39; &lt;app&gt;/api/&lt;a route behind auth.required()&gt;` —
+   expect the same response the signed-in user gets.
+3. Revoke the key in the page, repeat step 2 — expect 401, not 500.
+4. Disable the owning user, repeat step 2 with a second key — expect 401.
+
+## Trusted server extensions
+
+`apiKey()` also accepts a configuration array, each with a unique `configId`. The three NocoBase defaults apply to each entry and remain overridable. A non-Session configuration must never share the default Session configuration’s identity. Verification checks the actual stored configuration, so presenting such a key in `x-api-key` does not grant its owner’s Session.
+
+`new ApiKeyService(authentication, configId)` provides trusted database-backed `create({ userId, name, expiresIn? })`, `get(id)`, `verify(secret)`, `disable(id)` and `remove(id)` operations. Create returns `{ key, secret }` once; summaries never include the stored hash. Get, disable and remove are configuration-bound; disable and remove are repeatable. Missing configurations fail closed. The service uses the registered Better Auth configuration, endpoints and formal Authentication plugin API. Secondary storage is not supported by this service.
+
+These methods are server-only capabilities, not authorization checks. Callers must authorize the actor, bind their own business resource, and enforce scopes before allowing the operation. Keep application-specific rules outside this plugin. Applications that reserve a configuration for their own management API must also reject public Better Auth management requests for that configuration; otherwise its owner can update its enabled state or expiration through the self-service endpoints. Better Auth may prune expired rows during normal API Key operations.</pre><p class="check-source">原文件 SHA-256：644e026c18c2e1f71e1d6db1b6d70a4a61574e518b4e0343c7f2b59c14060153</p></div></details><details class="card raw-record" id="review-evidence-E5"><summary><strong>E5</strong> · packages/@nocobase/app-plugin-api-keys/dist/server/api-keys.js:13–32</summary><div class="subsection-body"><p>createApiKeysPlugin 为每份配置合并 enableSessionForAPIKeys:true、rateLimit:{enabled:false}、requireName:true 三个默认值，并校验配置存在且为数据库存储。</p><pre>function createApiKeysPlugin(options = {}) {
+    const configurations = (Array.isArray(options) ? options : [options]).map((configuration) =&gt; ({
+        enableSessionForAPIKeys: true,
+        rateLimit: { enabled: false },
+        requireName: true,
+        ...configuration,
+    }));
+    const plugin = betterAuthApiKey(Array.isArray(options) ? configurations : configurations[0]);
+    const managedQuery = plugin.endpoints.getApiKey.options.query.partial();
+    const managedBody = plugin.endpoints.deleteApiKey.options.body;
+    function requireDatabaseConfiguration(configId) {
+        const id = configId ?? &#39;default&#39;;
+        const config = configurations.find((item) =&gt; (item.configId ?? &#39;default&#39;) === id);
+        if (!config)
+            throw new Error(`API key configuration &quot;${id}&quot; is not registered.`);
+        if (config.customStorage ||
+            (config.storage &amp;&amp; config.storage !== &#39;database&#39;))
+            throw new Error(&#39;Server API key management requires the default database schema and storage.&#39;);
+        return id;
+    }</pre><p class="check-source">原文件 SHA-256：a3f1ec328d0af50a77c8aeccd31c066e2ac484c7128ca1e4375741e8bf842a21</p></div></details><details class="card raw-record" id="review-evidence-E6"><summary><strong>E6</strong> · packages/@nocobase/app-plugin-api-keys/dist/server/api-keys.js:37–68</summary><div class="subsection-body"><p>getServerApiKey/deleteServerApiKey 用 createAuthEndpoint.serverOnly 暴露，按 id+configId 查询并剥离 key 哈希后返回，删除按 keyId+configId 执行。</p><pre>            getServerApiKey=[REDACTED] method: &#39;GET&#39;, query: managedQuery }, async (ctx) =&gt; {
+                const configId = requireDatabaseConfiguration(ctx.query.configId);
+                if (!ctx.query.id)
+                    return null;
+                const row = await ctx.context.adapter.findOne({
+                    model: &#39;apikey&#39;,
+                    where: [
+                        { field: &#39;id&#39;, value: ctx.query.id },
+                        { field: &#39;configId&#39;, value: configId },
+                    ],
+                });
+                if (!row)
+                    return null;
+                const { key: _hash, ...key } = row;
+                return {
+                    ...key,
+                    permissions: typeof key.permissions === &#39;string&#39;
+                        ? JSON.parse(key.permissions)
+                        : (key.permissions ?? null),
+                };
+            }),
+            deleteServerApiKey=[REDACTED] method: &#39;POST&#39;, body: managedBody }, async (ctx) =&gt; {
+                const configId = requireDatabaseConfiguration(ctx.body.configId);
+                await ctx.context.adapter.deleteMany({
+                    model: &#39;apikey&#39;,
+                    where: [
+                        { field: &#39;id&#39;, value: ctx.body.keyId },
+                        { field: &#39;configId&#39;, value: configId },
+                    ],
+                });
+                return { success: true };
+            }),</pre><p class="check-source">原文件 SHA-256：a3f1ec328d0af50a77c8aeccd31c066e2ac484c7128ca1e4375741e8bf842a21</p></div></details><details class="card raw-record" id="review-evidence-E7"><summary><strong>E7</strong> · packages/@nocobase/app-plugin-api-keys/dist/database/migrations/202609150001_create_api_key_table.js:16–50</summary><div class="subsection-body"><p>迁移自包含地创建 apikey 表，包含 key 哈希列、start 前缀列、referenceId、enabled、expiresAt 与多个索引，并未从 Better Auth 的 schema 推导。</p><pre>    async up({ builder }) {
+        await builder.createCollection(&#39;apikey&#39;, (collection) =&gt; {
+            collection.string(&#39;id&#39;, { length: 64 }).notNull();
+            collection
+                .string(&#39;configId&#39;, { length: 128 })
+                .notNull()
+                .defaultTo(&#39;default&#39;);
+            collection.string(&#39;name&#39;, { length: 255 }).nullable();
+            collection.string(&#39;prefix&#39;, { length: 64 }).nullable();
+            // The first few characters, shown in the UI so a listed key is
+            // recognizable. `key` itself is a hash and is never displayed.
+            collection.string(&#39;start&#39;, { length: 64 }).nullable();
+            collection.string(&#39;key&#39;, { length: 255 }).notNull();
+            collection.string(&#39;referenceId&#39;, { length: 64 }).notNull();
+            collection.integer(&#39;refillInterval&#39;).nullable();
+            collection.integer(&#39;refillAmount&#39;).nullable();
+            collection.datetime(&#39;lastRefillAt&#39;).nullable();
+            collection.boolean(&#39;enabled&#39;).notNull().defaultTo(true);
+            collection.boolean(&#39;rateLimitEnabled&#39;).notNull().defaultTo(true);
+            collection.integer(&#39;rateLimitTimeWindow&#39;).nullable();
+            collection.integer(&#39;rateLimitMax&#39;).nullable();
+            collection.integer(&#39;requestCount&#39;).notNull().defaultTo(0);
+            collection.integer(&#39;remaining&#39;).nullable();
+            collection.datetime(&#39;lastRequest&#39;).nullable();
+            collection.datetime(&#39;expiresAt&#39;).nullable();
+            collection.datetime(&#39;createdAt&#39;).notNull();
+            collection.datetime(&#39;updatedAt&#39;).notNull();
+            collection.text(&#39;permissions&#39;).nullable();
+            collection.text(&#39;metadata&#39;).nullable();
+            collection.primary(&#39;id&#39;, { name: &#39;pk_apikey&#39; });
+            collection.index(&#39;key&#39;, { name: &#39;idx_apikey_key&#39; });
+            collection.index(&#39;referenceId&#39;, { name: &#39;idx_apikey_reference&#39; });
+            collection.index(&#39;configId&#39;, { name: &#39;idx_apikey_config&#39; });
+            collection.index(&#39;expiresAt&#39;, { name: &#39;idx_apikey_expires_at&#39; });
+        });</pre><p class="check-source">原文件 SHA-256：270d6f8ec497876bff3aa8d304aa6ad51889b5e5ef632a475e8ca797bd80eb86</p></div></details><details class="card raw-record" id="review-evidence-E8"><summary><strong>E8</strong> · packages/@nocobase/app-plugin-api-keys/dist/server/service.js:18–57</summary><div class="subsection-body"><p>ApiKeyService.create 返回一次性 secret 与不含哈希的 key；verify 返回有效密钥或 null；get/disable/remove 均带 configId，disable 对已禁用键可重复调用。</p><pre>    async create(input) {
+        const endpoints = await this.runtime();
+        const { key: secret, ...key } = await endpoints.createApiKey({
+            body: { ...input, configId: this.configId },
+        });
+        return { key, secret };
+    }
+    async verify(secret) {
+        const endpoints = await this.runtime();
+        const result = await endpoints.verifyApiKey({
+            body: { configId: this.configId, key: secret },
+        });
+        return result.valid ? result.key : null;
+    }
+    async get(id) {
+        const endpoints = await this.runtime();
+        return endpoints.getServerApiKey({
+            query: { id, configId: this.configId },
+        });
+    }
+    async disable(id) {
+        const key = await this.get(id);
+        if (!key || !key.enabled)
+            return;
+        const endpoints = await this.runtime();
+        await endpoints.updateApiKey({
+            body: {
+                configId: this.configId,
+                keyId: id,
+                userId: key.referenceId,
+                enabled: false,
+            },
+        });
+    }
+    async remove(id) {
+        const endpoints = await this.runtime();
+        await endpoints.deleteServerApiKey({
+            body: { keyId: id, configId: this.configId },
+        });
+    }</pre><p class="check-source">原文件 SHA-256：96319c05804cb9d4835fed5ae17104d9907ece28c515f8e58da55ee1ec241beb</p></div></details><details class="card raw-record" id="review-evidence-E9"><summary><strong>E9</strong> · packages/@nocobase/app-plugin-api-keys/skills/nocobase-app-plugin-api-keys/SKILL.md:127–137</summary><div class="subsection-body"><p>Other constraints 说明密钥只显示一次、库中只存哈希与 start 前缀、客户端只能提交 name/expiresIn/prefix/metadata，expiresIn 以天为单位。</p><pre>  signed in catches it.
+- **Disabling a user disables that user&#39;s keys immediately**, because
+  Authentication re-reads `user.disabledAt` on every request.
+- **The key is shown once.** Only a hash is stored, alongside the first few
+  characters used to identify it in a list. A lost key is replaced, not
+  recovered.
+- **A client may set only `name`, `expiresIn`, `prefix`, and `metadata`.**
+  Better Auth refuses `remaining`, `permissions`, and the rate-limit fields on
+  a request that carries headers, so an App that needs those sets them
+  server-side.
+- `expiresIn` is seconds, validated in whole days between 1 and 365.</pre><p class="check-source">原文件 SHA-256：644e026c18c2e1f71e1d6db1b6d70a4a61574e518b4e0343c7f2b59c14060153</p></div></details><details class="card raw-record" id="review-evidence-E10"><summary><strong>E10</strong> · packages/@nocobase/app-plugin-database-explorer/dist/server/routes/index.js:42–55</summary><div class="subsection-body"><p>路由先挂 authentication.required() 与 authorization.middleware()，再逐请求以 page:database-explorer/access 判定，未授权返回 403 DATABASE_EXPLORER_FORBIDDEN。</p><pre>    routes.use(&#39;*&#39;, authentication.required(), authorization.middleware());
+    routes.use(&#39;*&#39;, async (context, next) =&gt; {
+        const allowed = await context.get(&#39;authz&#39;).can({
+            resource: { type: &#39;page&#39;, id: DATABASE_EXPLORER_PAGE },
+            action: &#39;access&#39;,
+        });
+        if (!allowed) {
+            return context.json({
+                code: &#39;DATABASE_EXPLORER_FORBIDDEN&#39;,
+                message: &#39;Database Explorer access is required.&#39;,
+            }, 403);
+        }
+        await next();
+    });</pre><p class="check-source">原文件 SHA-256：646209467dc481edaafcfb3dd0dd0b4d8e14b9e902dad1eb085b7f97f67cc305</p></div></details><details class="card raw-record" id="review-evidence-E11"><summary><strong>E11</strong> · packages/@nocobase/app-plugin-database-explorer/dist/server/routes/index.js:72–88</summary><div class="subsection-body"><p>只注册 connections、collections、collection、physical 四个 GET 路由，没有写端点，并在缺少 databaseManagerToken 时返回 503。</p><pre>    routes.get(&#39;/connections&#39;, (context) =&gt; context.json({ data: listConnections(config()) }));
+    routes.get(&#39;/connections/:connection/collections&#39;, async (context) =&gt; {
+        const data = await listCollections(manager(), config(), context.req.param(&#39;connection&#39;), {
+            ...optionalLimit(context.req.query(&#39;limit&#39;)),
+            ...optionalCursor(context.req.query(&#39;cursor&#39;)),
+        });
+        return context.json({ data });
+    });
+    routes.get(&#39;/connections/:connection/collections/:collection&#39;, async (context) =&gt; {
+        const data = await readCollection(manager(), config(), context.req.param(&#39;connection&#39;), context.req.param(&#39;collection&#39;));
+        return context.json({ data });
+    });
+    routes.get(&#39;/connections/:connection/collections/:collection/physical&#39;, async (context) =&gt; {
+        const data = await readPhysicalCollection(manager(), config(), context.req.param(&#39;connection&#39;), context.req.param(&#39;collection&#39;));
+        return context.json({ data });
+    });
+    router.route(&#39;/database-explorer&#39;, routes);</pre><p class="check-source">原文件 SHA-256：646209467dc481edaafcfb3dd0dd0b4d8e14b9e902dad1eb085b7f97f67cc305</p></div></details><details class="card raw-record" id="review-evidence-E12"><summary><strong>E12</strong> · packages/@nocobase/app-plugin-database-explorer/dist/server/explorer.js:17–52</summary><div class="subsection-body"><p>listConnections 只从配置读取连接名与默认连接、不打开数据库；listCollections 分页返回 name/tableName/schema/kind 等只读字段。</p><pre>export function listConnections(config) {
+    const connections = config?.connections ?? {};
+    const names = Object.keys(connections);
+    const configured = config?.default;
+    const fallback = names.length &gt; 0 ? (names[0] ?? null) : null;
+    const defaultConnection = configured !== undefined &amp;&amp; Object.hasOwn(connections, configured)
+        ? configured
+        : fallback;
+    return {
+        default: defaultConnection,
+        items: describeConnections(connections, defaultConnection),
+    };
+}
+export async function listCollections(manager, config, connectionName, query = {}) {
+    const page = await read(connectionName, async () =&gt; {
+        const connection = openConnection(manager, config, connectionName);
+        return connection.collections.list({
+            limit: query.limit ?? DEFAULT_COLLECTION_PAGE_SIZE,
+            // The cursor is an opaque blob that encodes the filter it was issued
+            // under, so it travels back unread.
+            ...(query.cursor === undefined ? {} : { cursor: query.cursor }),
+        });
+    });
+    return {
+        items: page.items.map((item) =&gt; ({
+            name: item.name,
+            tableName: item.tableName,
+            schema: item.schema,
+            kind: item.kind,
+            ...(item.title === undefined ? {} : { title: item.title }),
+            ...(item.description === undefined
+                ? {}
+                : { description: item.description }),
+        })),
+        ...(page.nextCursor === undefined ? {} : { nextCursor: page.nextCursor }),
+    };</pre><p class="check-source">原文件 SHA-256：3532dcc479d003d281dfa761a1e0c246c75ec25048709d528e9a0c6299327a01</p></div></details><details class="card raw-record" id="review-evidence-E13"><summary><strong>E13</strong> · packages/@nocobase/app-plugin-database-explorer/skills/nocobase-app-plugin-database-explorer/SKILL.md:14–55</summary><div class="subsection-body"><p>Skill 列出 Settings 页与四个只读端点、错误码，给出双侧注册与一条 page:database-explorer/access 授权的装配样例，并声明同一授权同时管导航与端点。</p><pre>## Public surfaces
+
+A Settings page at `/settings/database-explorer`, and four read endpoints:
+
+| Method and path                                                              | Returns                                                       |
+| ---------------------------------------------------------------------------- | ------------------------------------------------------------- |
+| `GET /api/database-explorer/connections`                                     | Every configured connection, and which one is default         |
+| `GET /api/database-explorer/connections/:connection/collections`             | One page of collections; `limit` is 1–200, `cursor` is opaque |
+| `GET /api/database-explorer/connections/:connection/collections/:collection` | The resolved definition, its fields, and resolution warnings  |
+| `GET .../collections/:collection/physical`                                   | Physical columns, indexes, keys, and constraints              |
+
+Success is `{ data }`; failure is `{ code, message }`. The codes are `DATABASE_UNAVAILABLE`, `DATABASE_EXPLORER_FORBIDDEN`, `CONNECTION_NOT_FOUND`, `CONNECTION_UNAVAILABLE`, `CONNECTION_UNREACHABLE`, `SCHEMA_READ_DENIED`, `COLLECTION_NOT_FOUND`, `INVALID_LIST_OPTIONS`, and `INVALID_CURSOR`.
+
+The server entry also exports the read functions (`listConnections`, `listCollections`, `readCollection`, `readPhysicalCollection`), the `DATABASE_EXPLORER_PAGE` constant, and the response types.
+
+## Prerequisites
+
+Register `@nocobase/app-plugin-authentication` and `@nocobase/app-plugin-authorization` before this plugin on both runtimes. An application configured with `database.default: none` gets `503 DATABASE_UNAVAILABLE` from every endpoint.
+
+## App workflow
+
+Add the plugin to both composition roots and to the application&#39;s `dependencies`:
+
+```ts
+// server/plugins.ts
+import databaseExplorer from &#39;@nocobase/app-plugin-database-explorer/server&#39;;
+
+// client/plugins.ts
+import databaseExplorer from &#39;@nocobase/app-plugin-database-explorer/client&#39;;
+// then call it: databaseExplorer()
+```
+
+A System Administrator can already open the page, because that permission set grants `page:*/access`. To let another role in, add one grant to its permission set:
+
+```json
+{
+  &quot;resource&quot;: { &quot;type&quot;: &quot;page&quot;, &quot;id&quot;: &quot;database-explorer&quot; },
+  &quot;actions&quot;: [{ &quot;action&quot;: &quot;access&quot; }]
+}
+```
+
+The same grant governs the navigation entry and the endpoints, so there is nothing else to align.</pre><p class="check-source">原文件 SHA-256：05680c372e14c8bb534bc1ad7c119a775b8b009b281d4821bc488425f8a9c09f</p></div></details><details class="card raw-record" id="review-evidence-E14"><summary><strong>E14</strong> · packages/@nocobase/app-plugin-database-explorer/skills/nocobase-app-plugin-database-explorer/SKILL.md:57–65</summary><div class="subsection-body"><p>Ownership 说明连接摘要用 allow-list 不暴露凭据、日志只记录分类，并界定“只读”唯一例外是首次读取可能创建元数据表。</p><pre>## Ownership
+
+The plugin owns the page&#39;s route name, path, and access resource, its endpoints and their response shapes, and the rule about what a connection may reveal. Applications own whether the plugin is registered and who is granted the page.
+
+Connection responses never carry a password, user name, host, port, socket path, SQLite filename, TLS material, driver options, or pool settings. That list is enforced as an allow-list in `server/connection-summary.ts`, so a field a new dialect adds stays inside by default. Do not turn it into a deny-list, and do not add a locator to it because a screen looks sparse. The same restraint applies to logs: a driver error is recorded by classification only, never by message or cause.
+
+Read-only has one qualifier worth stating when someone asks. The Explorer writes nothing, but reading a collection initializes a registry whose metadata store creates `__nocobase_collection_metadata` on a managed connection when it is missing. No collection is created, altered or dropped and no row changes; that one bookkeeping table is the only object a read can bring into existence, and only when the first NocoBase activity against a database is an Explorer read. External connections cannot reach it.
+
+The two detail panes are child routes (`fields` and `columns`), and the selected connection and collection ride in the query string, so any view can be linked to and is restored by Back. Opening the bare page URL redirects to the fields pane, keeping the query.</pre><p class="check-source">原文件 SHA-256：05680c372e14c8bb534bc1ad7c119a775b8b009b281d4821bc488425f8a9c09f</p></div></details><details class="card raw-record" id="review-evidence-E15"><summary><strong>E15</strong> · packages/@nocobase/app-plugin-authorization/dist/server/database/authorizer.js:18–27</summary><div class="subsection-body"><p>注解与 unregistered() 表明未注册 Collection 处于权限模型之外，不受限身份也只是跳过 grant 而非跳过模型，一律返回 COLLECTION_NOT_REGISTERED。</p><pre>    /**
+     * An unregistered Collection is outside the permission model, so nothing can
+     * be granted on it and nothing bypasses that — a superuser skips grants, not
+     * the model.
+     */
+    unregistered(name) {
+        if (this.collections.has(name))
+            return undefined;
+        return this.deny(&#39;COLLECTION_NOT_REGISTERED&#39;, `Collection ${name} is not part of the permission model`);
+    }</pre><p class="check-source">原文件 SHA-256：2c894d4928e4c5551455a38092cec17f76cd146c3297221d0de3117043889168</p></div></details><details class="card raw-record" id="review-evidence-E16"><summary><strong>E16</strong> · packages/@nocobase/app-plugin-authorization/dist/server/database/authorizer.js:52–69</summary><div class="subsection-body"><p>authorize 解析 database.collection 的 grant，拒绝字段越界，并在无 grant 时返回 NO_OBJECT_PERMISSION，说明 read/create/update/delete 是独立动作。</p><pre>        const resolvedGrants = await grantsService.resolve({
+            principal: request.principal,
+            subjects: request.subjects,
+            resource: { type: &#39;database.collection&#39;, id: resourceId },
+            action: request.action,
+        });
+        const grants = params?.operation
+            ? resolvedGrants.filter((grant) =&gt; grant.origin?.resource.id === params.operation?.resource &amp;&amp;
+                grant.origin?.action === params.operation?.action)
+            : resolvedGrants;
+        const configs = grants.flatMap(toDatabaseGrant);
+        if (configs.length === 0) {
+            return this.deny(&#39;NO_OBJECT_PERMISSION&#39;, `No database grant allows ${resourceId}.${request.action}`);
+        }
+        const fields = resolveDatabaseFields(configs, request.action);
+        if (!databaseFieldsAllowed(params?.fields, fields)) {
+            return this.deny(&#39;FIELD_NOT_ALLOWED&#39;, &#39;One or more input, output, filter, sort, or group fields are not allowed&#39;);
+        }</pre><p class="check-source">原文件 SHA-256：2c894d4928e4c5551455a38092cec17f76cd146c3297221d0de3117043889168</p></div></details><details class="card raw-record" id="review-evidence-E17"><summary><strong>E17</strong> · packages/@nocobase/app-plugin-authorization/dist/server/authorize-repository.js:13–45</summary><div class="subsection-body"><p>createBusinessRepositoryAuthorization 校验 repository 名与动作绑定合法性，把 findMany/createOne/updateOne 等映射到 read/create/update 业务动作，未授权返回 403。</p><pre>export function createBusinessRepositoryAuthorization(authz, options) {
+    if (!options.repository || options.repository.includes(&#39;*&#39;))
+        throw new TypeError(&#39;Repository name must be non-empty and contain no wildcard&#39;);
+    const repository = options.repository;
+    const resource = options.resource.name;
+    const bindings = new Map();
+    for (const [method, action] of Object.entries(options.actions)) {
+        if (!Object.hasOwn(operations, method) || typeof action !== &#39;string&#39;)
+            throw new TypeError(&#39;Invalid Repository action binding&#39;);
+        const definition = authz.resources.operation(resource, action);
+        const scopes = Object.values(definition?.scopes ?? {});
+        const collection = scopes[0]?.resource.id;
+        if (!definition ||
+            scopes.length !== 1 ||
+            !collection ||
+            scopes[0].resource.type !== &#39;database.collection&#39; ||
+            definition.grants.some((grant) =&gt; grant.resource.type !== &#39;database.collection&#39; ||
+                grant.resource.id !== collection) ||
+            !definition.grants.some((grant) =&gt; grant.actions.some((entry) =&gt; entry.action === operations[method]))) {
+            throw new TypeError(`Repository ${repository}:${method} requires a single-collection, single-scope business action with the matching database operation`);
+        }
+        bindings.set(method, { action, collection });
+    }
+    const identity = authz.middleware();
+    return async (context, next) =&gt; {
+        const segment = context.req.path.slice(context.req.path.lastIndexOf(&#39;/&#39;) + 1);
+        const colon = segment.lastIndexOf(&#39;:&#39;);
+        if (colon &lt; 0 || decodeURIComponent(segment.slice(0, colon)) !== repository)
+            return next();
+        const method = segment.slice(colon + 1);
+        const binding = bindings.get(method);
+        if (!binding)
+            return context.json({ code: &#39;FORBIDDEN&#39; }, 403);</pre><p class="check-source">原文件 SHA-256：b4d39ca0d94f86dd44881b42600a349633f049718c27eeff8ab3e238f4d9cd10</p></div></details><details class="card raw-record" id="review-evidence-E18"><summary><strong>E18</strong> · packages/@nocobase/app-plugin-authorization/skills/nocobase-app-plugin-authorization/SKILL.md:63–73</summary><div class="subsection-body"><p>Enforcement rules 要求用 authz.db.collections.add 显式注册集合（未注册即拒绝），页面可见性与服务端授权分离，写操作要用 withPolicy 等绑定策略。</p><pre>## Enforcement rules
+
+- Register collections explicitly with `authz.db.collections.add({ name, title, actions? })`. Metadata comes from DB; registration grants nothing. Unregistered collections are denied even to unrestricted users.
+- Business groups compose database capabilities; administration groups compose settings/system capabilities. Page grants are separate. Page visibility never authorizes a server endpoint.
+- `can` is for feature visibility. `require`/`guard` require unconditional permission and reject conditional decisions. Composed business endpoints use `authorize`, reject denial/missing policies, and consume `conditions.database` without resolving aggregate grants again.
+- For simple business CRUD, keep the original Repository route definition and use `db.authorizeRepository` to bind each method to its business action. Follow [Repository route integration](references/repository-routes.md). Multi-scope actions and workflow transitions require custom handlers. `db.policyFor` aggregates collection grants; it does not define a business-action boundary.
+- Scope every read and write in the workflow, including parent lookups. Keep multi-record writes transactional and include expected business state in mutation predicates. Authorization does not validate a quote&#39;s amount or its workflow transition.
+- Fields and relation operations are code-owned. The permission workspace configures business operations, their scopes and pages; do not build a second raw-field permission editor.
+- Relation writes do not inherit the target collection&#39;s standalone constraints. Declare target record access and join-table fields explicitly; prevent foreign-key fields from bypassing association controls.
+- Request scopes cache rules and grants. Reuse one within a request; create a new one for a new request/identity. Do not persist authorization decisions in module state.
+</pre><p class="check-source">原文件 SHA-256：78477312e2b9add541586fb747c7d93f2ea3a5a88d398d3635f1d0b3380466e6</p></div></details><details class="card raw-record" id="review-evidence-E19"><summary><strong>E19</strong> · packages/@nocobase/app-plugin-authorization/skills/nocobase-app-plugin-authorization/SKILL.md:53–62</summary><div class="subsection-body"><p>Implement in this order 给出从迁移、defineDatabasePermission、provider 注册、路由保护到权限配置、UI 可见性和验证的完整顺序。</p><pre>## Implement in this order
+
+1. Declare schema and relationships through self-contained migrations. Choose stable resource, page and scope names. Keep authorization decisions out of migration code.
+2. Declare reusable data permissions with `defineDatabasePermission`; compose user-facing actions with `defineAuthorizationResource`. Explicitly name fields, relation capabilities and every table touched by a workflow.
+3. Register collections, pages, flat resource groups, resources and record-access strategies in the owning provider. Resolve dependencies at boot and release subject registrations at shutdown.
+4. Protect every server route with authentication. For a simple single-scope Repository operation, retain `defineRepositoryApiRoutes` and add `authz.db.authorizeRepository` to map methods to business actions; it reuses or initializes the request authorization scope. For workflows, persisted-state checks, multiple scopes or custom responses, use a custom handler with `authz.middleware()`, call the request scope&#39;s `authorize()` once and apply every returned table policy using `repository.withPolicy()`. Follow the selection criteria and complete code in [Repository route integration](references/repository-routes.md).
+5. Add page authorization and `useCan` for action visibility. Obtain per-record eligibility from the server when needed. Handle pending/error states without displaying stale access.
+6. Complete the accompanying permission configuration from the responsibility matrix: sets, page/action grants, selected scopes, supported rules and intended assignments. Use seeds for fresh installations and authorized provisioning for existing installations; do not assume editing a seed updates a running App. Resolve optional capabilities through their installed Skills and preserve unrelated administrator edits.
+7. Verify denied as well as allowed requests through the production route factory and actual database policies. Then verify the UI with ordinary users and inherited memberships.
+</pre><p class="check-source">原文件 SHA-256：78477312e2b9add541586fb747c7d93f2ea3a5a88d398d3635f1d0b3380466e6</p></div></details><details class="card raw-record" id="review-evidence-E20"><summary><strong>E20</strong> · app/.agents/skills/nocobase-app-development/references/authorization.md:11–27</summary><div class="subsection-body"><p>指引要求把需求转成 actor/页面/操作/范围/字段矩阵，在应用自有文件里声明权限，并强调每个 server/routes 端点都要装认证与授权、客户端可见性不等于服务端强制。</p><pre>## Turn requirements into a matrix
+
+Record actor/job, page, business operation, data scope, readable/writable fields, relation capabilities and administrator responsibilities. Use real jobs as permission sets and business relationships as scopes. Clarify material missing boundaries, such as whether a delegate can submit as well as edit, and whether a confidentiality restriction must cover every operation.
+
+Keep page access independent from business action grants. Distinguish operations that can touch the same table: editing a draft may update amount/notes while submission only changes state after checking the parent project. A user can hold both a personal job and a team job; revoking the team source should preserve unrelated personal responsibilities.
+
+## Implement in application-owned files
+
+For new and existing features alike, classify the requested changes by content. Supported operations, fields/relations, resolver behavior and enforcement belong to the model; selecting supported scopes/parameters, grants, rules and recipients belongs to configuration. A request can require both. When developing a permission model, also complete its usable initial or adjusted business configuration from the responsibility matrix; do not stop at declarations unless the user explicitly asks for model-only work. Clarify unknown recipients without guessing assignments.
+
+Declare reusable data permissions and composed resources in a feature module. In `server/providers/`, resolve `authorizationToken`, register collections/pages/groups/resources and record-access strategies, and register inherited subjects when the feature owns a team/department model. Read the authorization Skill’s bundled `references/code-and-seeds.md` before choosing initialization: code declares capabilities, provider boot registers them, and seeds initialize the agreed business configuration for fresh installations. Use authorized services or controlled data changes for existing installations. Seeded permission sets, selected scopes, rules and assignments remain editable in the backend; seeds do not make them code-owned or protected. App features own business resource declarations and initial business configuration, not root/member protection or other platform permission configuration. Never rewrite administrator configuration at boot. Normal seeds have a restricted database context, not the running authorization service. Keep schema changes in migrations and initial assignments in idempotent seeds or controlled provisioning. Do not create a plugin package for an application-owned feature.
+
+Every `server/routes/` endpoint installs authentication and authorization. A composed operation calls the request scope&#39;s `authorize` once and binds each returned `conditions.database` policy through `repository.withPolicy`. Do not replace it with aggregate authorization or an in-memory filter. Use ordinary `db.policyFor` for collection CRUD and `db.authorizeRepository` for simple business Repository routes, mapping each method to its business action. The authorization Skill documents these choices and their contracts.
+
+Declare route page access in `client/routes.ts`; use `useCan({ resource, action })` for button visibility and server-computed eligibility for record-sensitive actions. Keep pending/failed checks closed and refresh after permission changes. Client visibility does not enforce the API. The authorization Skill’s `references/client-development.md` includes the component, relation controls and settings lifecycle; all required APIs are bundled in that Skill rather than external package documentation.
+
+The permission workspace edits actions, scopes and page grants. Field and relation capabilities are code-owned. A new field or workflow must update its declaration and enforcement; it is not an administrator entering arbitrary database grants. Follow the dedicated Skill for custom scope resolvers, multi-table transactions, relation targets, protected assignments and last-administrator checks.</pre><p class="check-source">原文件 SHA-256：fe502b821a50ef690756e2270ad41873ae547564daa3aa94520e4a500e729468</p></div></details><details class="card raw-record" id="review-evidence-E21"><summary><strong>E21</strong> · packages/@nocobase/db/dist/src/index.js:1–17</summary><div class="subsection-body"><p>包公开导出 databaseManagerToken、defineMigration、loadMigrations、defineSeed 等受支持 API，并注明内部模块不对外再导出。</p><pre>// Supported package API. Internal modules are intentionally not re-exported.
+export { CollectionMetadataStoreRequiredError, createDatabaseManager, } from &#39;./database/manager.js&#39;;
+export { upsertPhysicalRow } from &#39;./database/upsert-physical-row.js&#39;;
+export { databaseManagerToken } from &#39;./database/token.js&#39;;
+export { resolveDatabaseDriver } from &#39;./database/resolve-driver.js&#39;;
+export { defineDatabase } from &#39;./database/config.js&#39;;
+export { SchemaManagementNotAllowedError } from &#39;./database/schema-management.js&#39;;
+export { CollectionRelationValidationError } from &#39;./collection/registry/relation-validator.js&#39;;
+export { CollectionResolutionError } from &#39;./collection/resolver/errors.js&#39;;
+export { COLLECTION_ARTIFACT_FILE_NAMES, COLLECTION_ARTIFACT_FORMAT_VERSION, COLLECTION_ARTIFACT_MANIFEST_FILE_NAME, assertCollectionArtifactDirectoryNames, CollectionArtifactNameError, findCollectionArtifactNameConflicts, serializeCollectionArtifact, serializeCollectionArtifactManifest, validateCollectionArtifactDirectoryName, } from &#39;./collection/artifact/index.js&#39;;
+export { defineMigration } from &#39;./migration/define.js&#39;;
+export { loadMigrations, validateMigrations } from &#39;./migration/loader.js&#39;;
+export { createMigrator } from &#39;./migration/migrator.js&#39;;
+export { TASK_LOCK_EXPIRY_MS, TASK_LOCK_HEARTBEAT_INTERVAL_MS, } from &#39;./migration/internal/lock.js&#39;;
+export { defineSeed } from &#39;./seed/define.js&#39;;
+export { loadSeeds, validateSeeds } from &#39;./seed/loader.js&#39;;
+export { createSeeder } from &#39;./seed/seeder.js&#39;;</pre><p class="check-source">原文件 SHA-256：554d5e749ac0205f193699da2d837640a4e8ee382541738f365e2b6280525cdc</p></div></details><details class="card raw-record" id="review-evidence-E22"><summary><strong>E22</strong> · packages/@nocobase/db/dist/src/migration/define.js:1–5</summary><div class="subsection-body"><p>defineMigration 仅标记并返回迁移定义，供迁移加载器发现，保证迁移声明的机械约定。</p><pre>import { markMigrationDefinition } from &#39;./internal/marker.js&#39;;
+/** Marks and returns a migration definition for discovery by the migration loader. */
+export function defineMigration(definition) {
+    return markMigrationDefinition(definition);
+}</pre><p class="check-source">原文件 SHA-256：eba0dce586442525677889388044224f67d2dbf5da1e88e5846a0b9fa34e5059</p></div></details><details class="card raw-record" id="review-evidence-E23"><summary><strong>E23</strong> · packages/@nocobase/db/skills/nocobase-db/SKILL.md:78–106</summary><div class="subsection-body"><p>db Skill 在 Migrations and seeds 段给出 defineMigration 的完整示例（createCollection + increments/string/datetime + down 的 dropCollection），并强调迁移不改 schema 与运行时代码分离。</p><pre>## 2. Migrations and seeds
+
+A migration creates structure. A seed inserts the records the application needs in order to run. Neither does the other&#39;s job, and a seed is never sample or demonstration content.
+
+```ts
+// database/main/migrations/202609020001_create_orders.ts
+import { defineMigration, type MigrationDefinition } from &#39;@nocobase/db&#39;;
+
+const migration: MigrationDefinition = defineMigration({
+  name: &#39;202609020001_create_orders&#39;,
+
+  async up({ builder }) {
+    await builder.createCollection(&#39;orders&#39;, (collection) =&gt; {
+      collection.increments(&#39;id&#39;);
+      collection.string(&#39;orderNo&#39;, { length: 64, nullable: false });
+      collection.string(&#39;status&#39;, { length: 32, nullable: false });
+      collection.datetime(&#39;createdAt&#39;, { nullable: false });
+      collection.unique(&#39;orderNo&#39;);
+      collection.index(&#39;status&#39;);
+    });
+  },
+
+  async down({ builder }) {
+    await builder.dropCollection(&#39;orders&#39;);
+  },
+});
+
+export default migration;
+```</pre><p class="check-source">原文件 SHA-256：2fdca7c2484a669667b6293878b915a5af0f84cbd3c5e80945a28fe5fbabf7d7</p></div></details><details class="card raw-record" id="review-evidence-E24"><summary><strong>E24</strong> · app/.agents/skills/nocobase-app-development/references/server-routes.md:43–103</summary><div class="subsection-body"><p>server-routes 指引强调挂载 /api 不等于认证、每个路由自装 auth.required()，并给出 authorization.middleware()、policyFor 与 withPolicy 的读取策略示例。</p><pre>## Every route owns its own security
+
+**Mounting under `/api` does not authenticate anything.** `/api` is a location. A route with no `auth.required()` is public regardless of where it mounts.
+
+Never depend on middleware installed by another route, or on the order contributions happen to be registered in. Contribution order changes when a plugin is added, and a route protected only by someone else&#39;s middleware silently becomes public.
+
+`auth.required()` rejects anonymous requests with `401`. `auth.optional()` attaches the session when present without rejecting.
+
+## Authorization, when identity is not enough
+
+Authentication answers who is calling. Authorization answers whether they may perform this action. Sensitive operations need both:
+
+```ts
+import {
+  authorizationToken,
+  type AuthorizationEnv,
+} from &#39;@nocobase/app-plugin-authorization&#39;;
+
+export const orderAdminRoutes: AppApiRouteContribution&lt;Application&gt; =
+  defineApiRoutes((app) =&gt; {
+    const router = new Hono();
+    const routes = new Hono&lt;AuthorizationEnv&gt;();
+    const auth = app.container.resolve(authenticationToken);
+    const authorization = app.container.resolve(authorizationToken);
+
+    routes.use(&#39;*&#39;, auth.required(), authorization.middleware());
+    routes.get(&#39;/&#39;, async (context) =&gt; {
+      const allowed = await context.get(&#39;authz&#39;).can({
+        resource: { type: &#39;database.collection&#39;, id: &#39;orders&#39; },
+        action: &#39;read&#39;,
+      });
+      if (!allowed) {
+        return context.json({ error: &#39;Not allowed.&#39; }, 403);
+      }
+
+      return context.json({ data: await listOrders() });
+    });
+
+    router.route(&#39;/orders-admin&#39;, routes);
+    return router;
+  });
+```
+
+Use a stable `resource`/`action` pair per operation — `read` and `create` are distinct decisions.
+
+### Enforce record, field and relation policies
+
+Read [application permission development](authorization.md) and the installed `nocobase-app-plugin-authorization` Skill before building data access. Register each governed collection explicitly in the owning provider with `authz.db.collections.add({ name, title, actions? })`; DB supplies field/relation metadata. Unregistered collections are denied even to unrestricted users.
+
+For ordinary collection CRUD, resolve and bind the policy:
+
+```ts
+const policy = await authz.db.policyFor(&#39;customers&#39;, context.get(&#39;authz&#39;));
+if (policy.read === false) return context.json({ code: &#39;FORBIDDEN&#39; }, 403);
+const customers = database.repository(&#39;customers&#39;).withPolicy(policy);
+return context.json({ data: await customers.findMany() });
+```
+
+For a composed business operation, call the request scope&#39;s `authorize()` once, reject denied or missing policies, and bind each table&#39;s `decision.conditions.database[collection]` policy. Do not replace it with aggregate collection authorization: grants from another business operation could widen the result. `require` rejects conditional decisions; `can` reports feature visibility rather than access to a specific record.
+
+Bound repositories enforce rows, fields and relations together. Keep multi-table writes transactional and business-state predicates in the update. Map out-of-scope `RECORD_NOT_FOUND` errors consistently without exposing hidden records. Never fetch unrestricted rows and filter them in the browser.</pre><p class="check-source">原文件 SHA-256：aa7dd429416fbb4e6718c3f95457cdc4cfb01b832288c4a70fdac181f84e0187</p></div></details><details class="card raw-record" id="review-evidence-E25"><summary><strong>E25</strong> · app/.agents/skills/nocobase-app-development/references/database-and-data.md:7–27</summary><div class="subsection-body"><p>database-and-data 指引说明从容器解析 databaseManagerToken，并区分 repository/query/transaction；同时提醒 Repository/Query 不施加权限，需由路由决定可见性。</p><pre>Resolve `databaseManagerToken` from the container:
+
+```ts
+import { databaseManagerToken } from &#39;@nocobase/db&#39;;
+
+const database = app.container.resolve(databaseManagerToken);
+```
+
+In a route factory, resolve it once in the factory rather than inside each handler. In a service, take it as a constructor dependency — see [services and jobs](services-and-jobs.md).
+
+From there, `database.repository(collection)` is the default for a collection&#39;s records and their relations, `database.query()` is for a result set that is not any collection&#39;s records, and `database.transaction(fn)` groups writes that must succeed or fail together. Each takes an optional connection name and uses the default connection when omitted.
+
+Keep `@nocobase/db` in `dependencies`, not `devDependencies`. The deployed server resolves it at runtime, and TypeScript also reads that declaration to infer the database configuration through the public package name; declaring it only as a development dependency can cause TS2883 in an installed application even while a source workspace builds successfully.
+
+## Where data access belongs
+
+Put queries in a service and call the service from the route, once more than one handler needs the same data or the logic is worth testing on its own. A route that only reads and returns a list may query directly.
+
+Never expose a raw row shape as an API response without deciding what belongs in it. Internal columns leak through a select-everything query.
+
+Neither Repository nor Query applies the application&#39;s permissions. The route decides what the caller may see and change before any of it reaches a filter, a values object, or a field selection — see [application permission development](authorization.md).</pre><p class="check-source">原文件 SHA-256：ac41ad066e65d77998fccba7b01131b733633aaf467b3f2695d43b61348ab4d0</p></div></details><details class="card raw-record" id="review-evidence-E26"><summary><strong>E26</strong> · packages/@nocobase/app-plugin-users/dist/server/routes/index.js:58–85</summary><div class="subsection-body"><p>users 路由统一先认证与授权；GET / 需 user read，POST / 同时校验 user create 与 assign-role，成功返回 201。</p><pre>    routes.use(&#39;*&#39;, authentication.required(), authorization.middleware());
+    routes.get(&#39;/options&#39;, async (context) =&gt; {
+        await requireUserAction(context, &#39;*&#39;, &#39;read&#39;);
+        return context.json({ data: await users.options() });
+    });
+    routes.get(&#39;/&#39;, async (context) =&gt; {
+        await requireUserAction(context, &#39;*&#39;, &#39;read&#39;);
+        return context.json({
+            data: await users.list({
+                page: optionalNumber(context.req.query(&#39;page&#39;)),
+                pageSize: optionalNumber(context.req.query(&#39;pageSize&#39;)),
+                search: context.req.query(&#39;search&#39;),
+                status: optionalStatus(context.req.query(&#39;status&#39;)),
+                roleScope: context.req.query(&#39;roleScope&#39;),
+                role: context.req.query(&#39;role&#39;),
+            }),
+        });
+    });
+    routes.post(&#39;/&#39;, async (context) =&gt; {
+        await requireUserAction(context, &#39;*&#39;, &#39;create&#39;);
+        await requireUserAction(context, &#39;*&#39;, &#39;assign-role&#39;);
+        const input = parseCreateUser(await context.req.json());
+        const user = await users.create(input);
+        logSecurityEvent(securityLogger, context, &#39;user.create&#39;, user.id, {
+            roleScopes: Object.keys(input.roleScopes ?? {}).sort(),
+        });
+        return context.json({ data: user }, 201);
+    });</pre><p class="check-source">原文件 SHA-256：e26855a6eb67b1a2978cac7802ed5e9d58f391f9383418410d793d045d1d1a10</p></div></details><details class="card raw-record" id="review-evidence-E27"><summary><strong>E27</strong> · packages/@nocobase/app-plugin-users/dist/server/routes/index.js:30–57</summary><div class="subsection-body"><p>错误映射把 AuthorizationDeniedError 转为 403 FORBIDDEN，把 UserInputError 转为 400，其余上游错误按类型映射状态码。</p><pre>    routes.onError((error, context) =&gt; {
+        if (error instanceof AuthorizationDeniedError) {
+            return context.json({ code: &#39;FORBIDDEN&#39;, message: error.message }, 403);
+        }
+        if (error instanceof UserManagementError) {
+            return context.json({ code: error.code, message: error.message }, error.status);
+        }
+        // Disabling an account can take away the last assignment of a
+        // Permission Set the application must keep someone able to use.
+        if (error instanceof PermissionSetLastAssignmentError) {
+            return context.json({ code: &#39;LAST_ASSIGNMENT&#39;, message: error.message }, 409);
+        }
+        if (error instanceof UserRoleScopeError) {
+            return context.json({ code: error.code, message: error.message }, error.status);
+        }
+        if (error instanceof UserAdministrationError) {
+            const status = error.code === &#39;USER_NOT_FOUND&#39;
+                ? 404
+                : error.code.endsWith(&#39;_CONFLICT&#39;)
+                    ? 409
+                    : 400;
+            return context.json({ code: error.code, message: error.message }, status);
+        }
+        if (error instanceof UserInputError) {
+            return context.json({ code: &#39;INVALID_USER_INPUT&#39;, message: error.message }, 400);
+        }
+        throw error;
+    });</pre><p class="check-source">原文件 SHA-256：e26855a6eb67b1a2978cac7802ed5e9d58f391f9383418410d793d045d1d1a10</p></div></details><details class="card raw-record" id="review-evidence-E28"><summary><strong>E28</strong> · packages/@nocobase/app-plugin-users/skills/nocobase-app-plugin-users/SKILL.md:24–45</summary><div class="subsection-body"><p>Users SKILL 列出 /api/users 等 HTTP API 与 user 动作集合，并给出注册顺序、页面挂载（settings/app）与 page:users/access 授权步骤。</p><pre>- HTTP API: `/api/users`, `/api/users/options`, and the user-specific update,
+  enable, disable, role-scope, password-reset, and Session-revocation routes.
+
+Every HTTP route requires Authentication and Authorization. Routes check a
+`user` resource with one of `read`, `create`, `update`, `disable`, `enable`,
+`assign-role`, `reset-password`, or `revoke-sessions`. Account creation checks
+both `create` and `assign-role`.
+
+## Register and place the page
+
+1. Register Authentication, Authorization, and then Users in the App&#39;s Client
+   and Server plugin arrays.
+2. Configure the Client factory. `users({ mount: &#39;settings&#39;, path: &#39;/users&#39; })`
+   produces `/settings/users`; `mount: &#39;app&#39;` makes the path App-relative and
+   registers a primary-navigation entry protected by the same page access rule.
+3. Grant `page:users/access` to roles that may open the page.
+4. Grant only the `user` actions those roles need. The plugin creates no roles
+   and grants no access by itself.
+5. Use `componentLoader` only to replace the page implementation. It does not
+   change the route identity, mount, or path.
+
+The default `app` permission-set scope is supplied by Users whenever `permissionSetsToken` is available. Do not copy a user-roles Provider into an application. Set `users.permissionSets: false` to replace the default with an application-owned scope; Hub uses this setting.</pre><p class="check-source">原文件 SHA-256：d4ec01695e050d14f830338b386b2ecd56bf0d7fc1777d6feae90746e794fb7f</p></div></details><details class="card raw-record" id="review-evidence-E29"><summary><strong>E29</strong> · packages/@nocobase/app-plugin-users/skills/nocobase-app-plugin-users/SKILL.md:86–100</summary><div class="subsection-body"><p>Permissions and constraints 说明浏览器路由访问只是导航控制、服务端独立授权，插件不建角色不自动授权，且密码/会话 token 不返回。</p><pre>## Permissions and constraints
+
+- Browser route access is only navigation control. The Server independently
+  authenticates and authorizes every request.
+- An App-mounted page hides its primary-navigation entry until
+  `page:users/access` is allowed. Direct navigation is checked separately by
+  the Client Route.
+- A conditional grant is not accepted as an unrestricted user-management
+  grant; use explicit static grants for this resource.
+- The plugin does not provide user deletion or invitations.
+- Disabled users are rejected by Authentication and lose their existing HTTP
+  Sessions and Realtime connections.
+- Password hashes, Session tokens, reset tokens, and submitted passwords are
+  never returned by the service or included in security events.
+</pre><p class="check-source">原文件 SHA-256：d4ec01695e050d14f830338b386b2ecd56bf0d7fc1777d6feae90746e794fb7f</p></div></details><details class="card raw-record" id="review-evidence-E30"><summary><strong>E30</strong> · artifacts/change-summary.json:1–11</summary><div class="subsection-body"><p>变更摘要记录 added/modified/deleted/renamed/files 均为 0、files 为空数组且 reusedExistingWorkBranch 为 true，表明本 Run 没有可审阅的应用变更。</p><pre>{
+  &quot;counts&quot;: {
+    &quot;added&quot;: 0,
+    &quot;modified&quot;: 0,
+    &quot;deleted&quot;: 0,
+    &quot;renamed&quot;: 0,
+    &quot;files&quot;: 0
+  },
+  &quot;files&quot;: [],
+  &quot;reusedExistingWorkBranch&quot;: true
+}</pre><p class="check-source">原文件 SHA-256：c770990c43ec8403a7ec2f2617412078ab38090ef127851696e8d9e0a516950f</p></div></details></div></section><section class="section" id="acceptance"><div class="section-head"><div><div class="eyebrow">Acceptance record</div><h2>验收记录</h2></div><span class="tag ">2 项要求</span></div>
+    <div class="acceptance-toolbar"><div class="acceptance-counts"><span class="tag good">报告通过 0</span><span class="tag ">报告未通过 0</span><span class="tag warn">未验证 2</span></div>
+    <div class="acceptance-actions"><button class="btn small" data-checks="expand">展开全部记录</button><button class="btn small" data-checks="collapse">收起通过项</button></div></div>
+    <p class="section-intro">每项直接显示结果；展开可看原始要求、操作记录、观察结果和截图。证据批注单独显示，不改写原始验收状态。</p>
+    <div class="card acceptance-list"><details class="criterion" id="check-A1" data-status="not-verified" data-attention="false" open>
+      <summary><span class="step-num">01</span><div class="criterion-title"><h3>管理人员通过既有页面创建集成用户的测试密钥，然后可撤销；公开截图不得出现密钥明文。</h3><p class="criterion-result">本轮没有此项实际验收记录。</p><span class="record-meta">A1 · 0 条操作 · 0 条观察 · 0 张证据</span></div>
+      <div class="criterion-badges"><span class="tag warn">未验证</span></div><span class="chevron">⌄</span></summary>
+      <div class="criterion-details"><div class="criterion-original"><h3>原始验收要求</h3><p>管理人员通过既有页面创建集成用户的测试密钥，然后可撤销；公开截图不得出现密钥明文。</p></div>
+      <div class="evidence-split"><div class="evidence-col"><h3>实际操作</h3><p class="muted">未提供</p></div><div class="evidence-col"><h3>观察结果</h3><p class="muted">未提供</p></div></div>
+      <div class="photo-links"></div><p class="check-source">来源：task-metadata.json · 原始状态：not-verified</p></div></details><details class="criterion" id="check-A2" data-status="not-verified" data-attention="false" open>
+      <summary><span class="step-num">02</span><div class="criterion-title"><h3>授权管理人员在现有数据结构页面看到真实设备表及编号/名称字段，普通业务账号无该设置入口。
+
+以上只评价浏览器操作。独立 HTTP 验收见评审评论；浏览器 QA 不执行源码检查或伪造 API 证据。无法完成时如实记录 failed、blocked 或 not_run。</h3><p class="criterion-result">本轮没有此项实际验收记录。</p><span class="record-meta">A2 · 0 条操作 · 0 条观察 · 0 张证据</span></div>
+      <div class="criterion-badges"><span class="tag warn">未验证</span></div><span class="chevron">⌄</span></summary>
+      <div class="criterion-details"><div class="criterion-original"><h3>原始验收要求</h3><p>授权管理人员在现有数据结构页面看到真实设备表及编号/名称字段，普通业务账号无该设置入口。
+
+以上只评价浏览器操作。独立 HTTP 验收见评审评论；浏览器 QA 不执行源码检查或伪造 API 证据。无法完成时如实记录 failed、blocked 或 not_run。</p></div>
+      <div class="evidence-split"><div class="evidence-col"><h3>实际操作</h3><p class="muted">未提供</p></div><div class="evidence-col"><h3>观察结果</h3><p class="muted">未提供</p></div></div>
+      <div class="photo-links"></div><p class="check-source">来源：task-metadata.json · 原始状态：not-verified</p></div></details></div><details class="card raw-record"><summary>完整原始验收要求</summary><div class="subsection-body"><pre>B01. 管理人员通过既有页面创建集成用户的测试密钥，然后可撤销；公开截图不得出现密钥明文。
+
+B02. 授权管理人员在现有数据结构页面看到真实设备表及编号/名称字段，普通业务账号无该设置入口。
+
+以上只评价浏览器操作。独立 HTTP 验收见评审评论；浏览器 QA 不执行源码检查或伪造 API 证据。无法完成时如实记录 failed、blocked 或 not_run。</pre></div></details><details class="card raw-record"><summary>查看原始验收摘要与逐条数据</summary><div class="subsection-body"><p>原始摘要未提供</p><pre>[
+  {
+    &quot;id&quot;: &quot;A1&quot;,
+    &quot;title&quot;: &quot;管理人员通过既有页面创建集成用户的测试密钥，然后可撤销；公开截图不得出现密钥明文。&quot;,
+    &quot;criterion&quot;: &quot;管理人员通过既有页面创建集成用户的测试密钥，然后可撤销；公开截图不得出现密钥明文。&quot;,
+    &quot;status&quot;: &quot;not-verified&quot;,
+    &quot;actions&quot;: [],
+    &quot;evidence&quot;: [],
+    &quot;screenshots&quot;: [],
+    &quot;source&quot;: &quot;task-metadata.json&quot;,
+    &quot;result&quot;: &quot;本轮没有此项实际验收记录。&quot;
+  },
+  {
+    &quot;id&quot;: &quot;A2&quot;,
+    &quot;title&quot;: &quot;授权管理人员在现有数据结构页面看到真实设备表及编号/名称字段，普通业务账号无该设置入口。\n\n以上只评价浏览器操作。独立 HTTP 验收见评审评论；浏览器 QA 不执行源码检查或伪造 API 证据。无法完成时如实记录 failed、blocked 或 not_run。&quot;,
+    &quot;criterion&quot;: &quot;授权管理人员在现有数据结构页面看到真实设备表及编号/名称字段，普通业务账号无该设置入口。\n\n以上只评价浏览器操作。独立 HTTP 验收见评审评论；浏览器 QA 不执行源码检查或伪造 API 证据。无法完成时如实记录 failed、blocked 或 not_run。&quot;,
+    &quot;status&quot;: &quot;not-verified&quot;,
+    &quot;actions&quot;: [],
+    &quot;evidence&quot;: [],
+    &quot;screenshots&quot;: [],
+    &quot;source&quot;: &quot;task-metadata.json&quot;,
+    &quot;result&quot;: &quot;本轮没有此项实际验收记录。&quot;
+  }
+]</pre></div></details></section><section class="section" id="evidence"><div class="section-head"><div><div class="eyebrow">See the actual result</div><h2>真实界面，按场景看</h2></div></div><div class="toolbar"><button class="filter active" data-filter="featured">精选</button><button class="filter" data-filter="all">全部 0</button></div><div class="gallery"></div><div class="gallery-foot"><span id="gallery-status">本轮未提供截图。</span><span>录像及未内嵌截图见本轮运行的 Artifact。</span></div></section><section class="section" id="problems"><div class="section-head"><div><div class="eyebrow">Problems &amp; improvements</div><h2>问题与改进</h2></div></div><p class="section-intro">汇总本轮已有材料，不新增分析。过程记录与独立评审分别标明来源；评审发现不等于本轮实际阻塞，也不因业务通过而标为已解决。</p><h3 class="context-heading">本轮过程记录</h3><p class="muted">本轮未提供可选的实现者过程笔记；不据此推断无问题，也不影响下方已有独立评测。</p><h3 class="context-heading" id="improvements">独立评测的问题与建议</h3><p class="check-source">来源：独立评审 · 口径 v2 · 源 Run 36083795688 / attempt 1</p><h3 class="review-owner-title">库、插件与指引</h3><div class="review-group"><h3>改进建议 <span>1</span></h3><details class="card review-finding" id="review-finding-F3" ><summary><div><strong>只读端点指引可更早强调集合必须显式注册</strong><div class="review-badges"><span class="tag ">文档 / Skill / 示例</span><span class="tag ">评审者判断 · 有证据</span><span class="tag ">轻微</span><span class="tag ">未解决</span></div></div><span>⌄</span></summary><div class="subsection-body"><p>authorizer 对未注册集合一律返回 COLLECTION_NOT_REGISTERED，连不受限身份也不放行；该硬前提写在 authorization Skill 的 Enforcement rules，而 server-routes.md 的读取示例更直观地展示 policyFor。</p><dl class="retro-fields"><div><dt>实际影响 / 提供的帮助</dt><dd>漏读该规则的 Agent 可能让设备接口全部被拒且难定位。</dd></div><div><dt>建议改法 / 应保留的能力</dt><dd>在 server-routes.md 的 policyFor 示例旁或行内引用 authorization.md/Skill 的注册要求，提示注册先于授权。</dd></div></dl><span class="review-refs"><a href="#review-evidence-E15">E15</a> <a href="#review-evidence-E18">E18</a></span></div></details></div><details class="card raw-record"><summary>业务实现与执行环境观察 · 不计入框架得分（1）</summary><div class="subsection-body"><div class="review-group"><h3>问题 <span>1</span></h3><details class="card review-finding" id="review-finding-F4" open><summary><div><strong>本次归档没有 Agent 变更与验证记录，无法核验使用证据</strong><div class="review-badges"><span class="tag ">工厂流程</span><span class="tag ">评审者判断 · 有证据</span><span class="tag bad">重要</span><span class="tag ">处理状态未知</span></div></div><span>⌄</span></summary><div class="subsection-body"><p>artifacts/agent.patch 为 0 字节，change-summary.json 记录 added/modified/deleted/renamed/files 全为 0 且 reusedExistingWorkBranch 为 true，review-input.process.rounds 为空，app/ 也没有 device 相关文件。</p><dl class="retro-fields"><div><dt>实际影响 / 提供的帮助</dt><dd>无法判断 Agent 是否发现框架能力、是否装配正确、首轮是否失败或需要绕行；本评审只能评价框架自身的可用性。</dd></div><div><dt>建议改法 / 应保留的能力</dt><dd>工厂应在归档时保留本次 Run 的实际 diff 与 QA 轮次，或标注为未产出并说明原因。</dd></div></dl><span class="review-refs"><a href="#review-evidence-E30">E30</a></span></div></details></div></div></details></section><section class="section" id="execution"><div class="section-head"><div><div class="eyebrow">Execution &amp; usage</div><h2>发生了什么，花了多少</h2></div></div><div class="split"><div class="card run-panel"><h3>运行记录</h3><div class="run"><div class="run-content"><div class="run-top"><strong>36083795688 / attempt 1</strong></div><p><span class="tag bad">本轮未完成</span></p><p>失败</p></div></div><div class="ci-fact"><strong>自动检查：未提供</strong><p class="check-source">本轮独立最终验证结果未确认。</p></div></div><div class="card usage-card"><div class="eyebrow">已记录 Token · 含缓存</div><div class="usage-big">8,485,565</div><span class="tag warn">采集可能不完整</span><p>此 Issue 累计：已采集 1 个 Run / 1 次尝试</p><details class="subsection"><summary>展开用量分项 ⌄</summary><div class="subsection-body"><div class="table-wrap"><table><thead><tr><th>指标</th><th>值</th></tr></thead><tbody><tr><td>非缓存输入</td><td class="mono">326,433</td></tr><tr><td>输出</td><td class="mono">67,100</td></tr><tr><td>缓存读取</td><td class="mono">8,092,032</td></tr><tr><td>端到端耗时</td><td class="mono">0:21:42</td></tr></tbody></table></div><h3 class="usage-phase-title">按阶段分项</h3><div class="table-wrap"><table><thead><tr><th>阶段</th><th class="num">非缓存输入</th><th class="num">输出</th><th class="num">缓存读取</th><th class="num">缓存写入</th><th class="num">合计</th></tr></thead><tbody><tr><td>初始实现</td><td class="num">189,717</td><td class="num">27,300</td><td class="num">6,187,904</td><td class="num">0</td><td class="num">6,404,921</td></tr><tr><td>应用修复</td><td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td></tr><tr><td>完整业务 QA</td><td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td></tr><tr><td>失败路径复测</td><td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td></tr><tr><td>QA 补报告</td><td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">0</td></tr><tr><td>独立搭建评审</td><td class="num">81,283</td><td class="num">31,501</td><td class="num">1,904,128</td><td class="num">0</td><td class="num">2,016,912</td></tr><tr><td>上下文压缩</td><td class="num">55,433</td><td class="num">8,299</td><td class="num">0</td><td class="num">0</td><td class="num">63,732</td></tr></tbody></table></div><p class="check-source">用量记录 123；未报告用量 3；分项不完整 1；缺失作业时间 0。</p><p class="check-source">不把流式增量、上下文长度和思考 Token 重复相加。旧记录未拆分 QA 时保留原有口径；费用：未知。</p><p class="check-source">现有 task-usage 模块（按 Agent / job ID 去重）。不等同供应商账单，不推算费用。</p></div></details></div></div></section><details class="card raw-record"><summary>本轮阶段耗时</summary><div class="subsection-body"><p>嵌套阶段不可相加为总耗时；仅展示已完成的计时。</p><div class="table-wrap"><table><tr><th>阶段</th><th>次数</th><th>时长</th></tr><tr><td>agent:implementation</td><td>1</td><td>0:13:21</td></tr><tr><td>agent:review</td><td>1</td><td>0:06:15</td></tr><tr><td>install</td><td>1</td><td>0:00:11</td></tr><tr><td>skills-sync</td><td>1</td><td>0:00:01</td></tr></table></div></div></details><footer class="report-footer">Factory report template v5 · gchust/nb3-factory:301:36083795688:1::template-5:review-ee07dfe41c9e69c0<br>验收逐条保留；问题与改进汇总已有评测与可选过程记录，保留各自来源。此页面是归档展示，不是重新验收。</footer></main>
+<dialog aria-labelledby="lightbox-title" class="lightbox" id="lightbox"><div class="lightbox-bar"><h3 id="lightbox-title">浏览器截图</h3><div class="lightbox-controls"><button aria-label="上一张" class="icon-btn" id="photo-prev">←</button><button aria-label="下一张" class="icon-btn" id="photo-next">→</button><button aria-label="关闭放大图片" class="icon-btn" id="photo-close"><svg aria-hidden="true" fill="none" height="16" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7" viewbox="0 0 24 24" width="16"><path d="m6 6 12 12M6 18 18 6"></path></svg></button></div></div><img alt="" class="lightbox-img" id="lightbox-img"/><div class="lightbox-foot"><span id="lightbox-source"></span><span id="lightbox-count"></span></div></dialog><script>
+(() => {
+  'use strict';
+  const shots = Array.from(document.querySelectorAll('.shot'));
+  const filters = Array.from(document.querySelectorAll('[data-filter]'));
+  function filterShots(category) {
+    let shown = 0;
+    for (const shot of shots) {
+      const visible = category === 'all' || (category === 'featured' ? shot.dataset.featured === 'true' : shot.dataset.category === category);
+      shot.hidden = !visible;
+      if (visible) shown += 1;
+    }
+    for (const button of filters) {
+      const active = button.dataset.filter === category;
+      button.classList.toggle('active', active);
+      button.setAttribute('aria-pressed', String(active));
+    }
+    document.getElementById('gallery-status').textContent = shots.length ? `当前显示 ${shown} / ${shots.length} 张 · 点击放大，方向键切换` : '本轮未提供截图。';
+  }
+  for (const button of filters) button.addEventListener('click', () => filterShots(button.dataset.filter));
+  filterShots('featured');
+  const dialog = document.getElementById('lightbox');
+  const image = document.getElementById('lightbox-img');
+  let current = 0;
+  function showPhoto(index) {
+    if (!shots.length) return;
+    current = (index + shots.length) % shots.length;
+    const shot = shots[current];
+    const source = shot.querySelector('img');
+    image.src = source.src;
+    image.alt = source.alt;
+    document.getElementById('lightbox-title').textContent = shot.querySelector('figcaption > span').textContent;
+    document.getElementById('lightbox-source').textContent = shot.dataset.name;
+    document.getElementById('lightbox-count').textContent = `${current + 1} / ${shots.length} `;
+    if (!dialog.open) dialog.showModal();
+  }
+  for (const button of document.querySelectorAll('[data-open]')) {
+    button.addEventListener('click', () => {
+      const index = shots.findIndex(shot => shot.dataset.name === button.dataset.open);
+      if (index >= 0) showPhoto(index);
+    });
+  }
+  document.getElementById('photo-prev').addEventListener('click', () => showPhoto(current - 1));
+  document.getElementById('photo-next').addEventListener('click', () => showPhoto(current + 1));
+  document.getElementById('photo-close').addEventListener('click', () => dialog.close());
+  dialog.addEventListener('click', event => { if (event.target === dialog) dialog.close(); });
+  document.addEventListener('keydown', event => {
+    if (!dialog.open) return;
+    if (event.key === 'ArrowLeft') { event.preventDefault(); showPhoto(current - 1); }
+    if (event.key === 'ArrowRight') { event.preventDefault(); showPhoto(current + 1); }
+  });
+  for (const link of document.querySelectorAll('[data-expand]')) {
+    link.addEventListener('click', () => {
+      const target = document.getElementById(link.dataset.expand);
+      if (target) target.open = true;
+    });
+  }
+  for (const button of document.querySelectorAll('[data-checks]')) {
+    button.addEventListener('click', () => {
+      for (const check of document.querySelectorAll('details.criterion')) {
+        if (button.dataset.checks === 'expand') check.open = true;
+        else if (check.dataset.status === 'passed' && check.dataset.attention !== 'true') check.open = false;
+      }
+    });
+  }
+  function revealHash() {
+    const target = document.getElementById(location.hash.slice(1));
+    for (let node = target; node; node = node.parentElement) {
+      if (node.matches('details')) node.open = true;
+    }
+    if (target) target.scrollIntoView();
+  }
+  window.addEventListener('hashchange', revealHash);
+  revealHash();
+  if ('IntersectionObserver' in window) {
+    const navLinks = Array.from(document.querySelectorAll('.nav a'));
+    const observer = new IntersectionObserver(entries => {
+      for (const entry of entries) {
+        if (!entry.isIntersecting) continue;
+        navLinks.forEach(a => a.classList.toggle('active', a.getAttribute('href') === '#' + entry.target.id));
+      }
+    }, {rootMargin: '-12% 0px -65% 0px', threshold: 0});
+    document.querySelectorAll('section[id]').forEach(section => observer.observe(section));
+  }
+})();
+</script></body></html>
