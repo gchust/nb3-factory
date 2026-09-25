@@ -294,8 +294,9 @@ async function dispatch(client, batch, spec, issue, comments) {
 // its own report, produced for that attempt.
 async function reportFor(client, runKey, runId, attempt) {
   if (!runId) return null;
-  let index = null;
-  try { index = await readSubject(client, 'evaluation-report', runKey, 'gh-pages'); } catch { return null; }
+  // A failed read throws: it must never look like "no report" and erase a confirmed one.
+  // The caller's per-batch isolation then keeps this batch's last snapshot unchanged.
+  const index = await readSubject(client, 'evaluation-report', runKey, 'gh-pages');
   const matching = (index?.revisions ?? []).filter(item => item.precedence?.producer?.runId === runId && (item.precedence?.producer?.attempt ?? 1) === (attempt ?? 1));
   if (!matching.length) return null;
   const entry = matching.find(item => item.revision === currentRevision('evaluation-report', matching));
@@ -405,8 +406,9 @@ export async function advanceBatch(client, batch, { now = Date.now(), env = null
     }
     item.report = { state: 'available', revision: summary.revision, execution: summary.execution ?? null, acceptance: summary.acceptance ?? null };
     Object.assign(item, { reportRunId: summary.producerRunId, reportRunAttempt: summary.producerAttempt });
-    // A run-derived terminal state is refined once that execution's own report arrives.
-    if (item.stateSource === 'run') Object.assign(item, { state: fromReport(summary), stateSource: 'report' });
+    // The state follows that execution's newest report revision (a complete report can
+    // replace an earlier incomplete one). Prepare/batch decisions never reach here.
+    if (['run', 'report'].includes(item.stateSource)) Object.assign(item, { state: fromReport(summary), stateSource: 'report' });
   }
   if (state.state === 'active') {
     if (state.cancelled) for (const spec of manifest.samples) {
@@ -567,9 +569,10 @@ export async function runCoordinator(client, { action, args = {}, env = {}, expo
   if (/^[1-9]\d*$/.test(args['source-run'] ?? '')) await waitForRun(client, Number(args['source-run']));
   const lines = [], exported = [], failures = [];
   const exportBatch = batch => { if (args.output && batch?.manifest) exported.push(writeBatchExport(args.output, batch, exporter)); };
-  const isolated = async (label, work) => {
+  const isolated = async (context, work) => {
     try { await work(); }
     catch (error) {
+      const label = context.label;
       failures.push({ label, error: error.message.slice(0, 300) });
       lines.push(`### ${label} 本轮协调失败\n\n${error.message.slice(0, 300)}\n\n已记录；其他批次照常推进与归档，下一次推进会重试。`);
     }
@@ -580,7 +583,7 @@ export async function runCoordinator(client, { action, args = {}, env = {}, expo
     if (action === 'scheduled' && !selected.length) lines.push('没有启用的定时评测计划（需要 FACTORY_EVALUATION_PLANS_ENABLED=true 且计划 enabled + schedule=daily）；未创建任务。');
     for (const plan of selected) {
       need(plan, `Unknown evaluation plan ${args.plan}`);
-      await isolated(plan.key, async () => {
+      await isolated({ label: plan.key }, async () => {
         const result = await startBatch(client, { plans, planKey: plan.key, trigger: action === 'scheduled' ? 'schedule' : 'manual', runId: env.GITHUB_RUN_ID,
           controlSha: env.FACTORY_CONTROL_SHA, env, dryRun: args['dry-run'] === 'true' });
         if (result.status === 'planned') lines.push(`只预览 ${result.batchKey}：${result.manifest.samples.length} 个样本，基线 ${result.manifest.controlSha.slice(0, 12)}；没有写入或派发。`);
@@ -589,8 +592,14 @@ export async function runCoordinator(client, { action, args = {}, env = {}, expo
       });
     }
   } else if (action === 'advance' || action === 'status') {
-    for (const batch of await activeBatches(client)) {
-      await isolated(batch.manifest.batchKey, async () => {
+    // Loading is part of each batch's isolation: one unreadable batch (identified by
+    // its Issue until its key is known) cannot stop the others.
+    for (const issue of await coordinators(client, 'open')) {
+      const context = { label: `#${issue.number}` };
+      await isolated(context, async () => {
+        const batch = await loadBatch(client, issue);
+        if (!batch.manifest || !batch.state) return;
+        context.label = `${batch.manifest.batchKey} (#${issue.number})`;
         const next = action === 'advance' ? await advanceBatch(client, batch, { env }) : batch;
         exportBatch(next); lines.push(summaryTable(next.manifest, next.state));
       });

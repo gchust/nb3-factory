@@ -214,12 +214,13 @@ async function registerBatch(client, batch) {
     evaluationBytes: Buffer.from(`batch-${batch.state.sequence}`), manifestBytes: Buffer.from('{}'), fingerprint: String(batch.state.sequence).padStart(64, 'f'),
     bundle: { sha256: 'c'.repeat(64), size: 1 }, location: null });
 }
-async function registerReport(client, runKey, runId, outcome, attempt = 1) {
+async function registerReport(client, runKey, runId, outcome, attempt = 1, tag = '') {
   const index = await readSubject(client.pages, 'evaluation-report', runKey, 'gh-pages');
   return commitRevision(client.pages, { document: { type: 'evaluation-report', revision: (index?.revisions.length ?? 0) + 1,
     createdAt: '2026-09-25T04:00:00Z', source: { instance: repository }, run: { key: runKey }, outcome,
     precedence: { producer: { runId, attempt, startedAt: new Date(runId * 1000 + attempt * 60_000).toISOString() }, reviewState: 'not-reviewed', reviewRubric: 0, qaCoverage: 'partial' } },
-  evaluationBytes: Buffer.from(`${runId}.${attempt}`), manifestBytes: Buffer.from('{}'), fingerprint: `${runId}${attempt}`.padStart(64, '0'), bundle: { sha256: 'b'.repeat(64), size: 1 }, location: null });
+  evaluationBytes: Buffer.from(`${runId}.${attempt}${tag}`), manifestBytes: Buffer.from('{}'), fingerprint: createHash('sha256').update(`${runId}.${attempt}.${tag}`).digest('hex'),
+    bundle: { sha256: 'b'.repeat(64), size: 1 }, location: null });
 }
 
 test('a batch waits for the final run report, not an earlier handoff report', async () => {
@@ -522,7 +523,8 @@ test('one batch failing to coordinate never keeps another batch from being expor
   t.after(() => rmSync(output, { recursive: true, force: true }));
   client.state.fail = (method, route) => method === 'POST' && route.endsWith('/dispatches');
   const result = await runCoordinator(client, { action: 'advance', args: { output } });
-  assert.deepEqual(result.failures.map(f => f.label), ['smoke-r9401']);
+  assert.equal(result.failures.length, 1);
+  assert.match(result.failures[0].label, /^smoke-r9401 \(#\d+\)$/);
   assert.ok(result.exported.includes(finished.manifest.batchKey), 'the waiting batch still exports');
   assert.ok(existsSync(path.join(output, finished.manifest.batchKey, 'draft.json')));
   assert.ok(result.lines.some(line => line.includes('本轮协调失败')));
@@ -532,4 +534,63 @@ test('one batch failing to coordinate never keeps another batch from being expor
   assert.deepEqual(retry.failures, []);
   assert.equal(client.samples().length, samples);
   assert.equal(client.state.dispatches.filter(d => Number(d.inputs.issue_number) === client.samples().at(-1).number).length, 1);
+});
+
+test('an unreadable batch is isolated at load time; the others still advance and export', async t => {
+  const client = fakeRepository();
+  await start(client, plan(1));
+  client.run(client.samples()[0].number, { id: 7800 });
+  let finished = await current(client);
+  await registerReport(client, finished.manifest.samples[0].runKey, 7800, { execution: 'completed', acceptance: 'passed', delivery: 'published' });
+  finished = await advanceBatch(client, finished, { now: Date.parse('2026-09-25T03:00:00Z') });
+  const running = await startBatch(client, { plans: plan(1), planKey: 'smoke', trigger: 'manual', now: 9, runId: 9501, controlSha: control, env: {} });
+  const output = mkdtempSync(path.join(os.tmpdir(), 'batch-export-'));
+  t.after(() => rmSync(output, { recursive: true, force: true }));
+  client.state.fail = (method, route) => method === 'GET' && route === `/issues/${running.coordinator}/comments`;
+  const result = await runCoordinator(client, { action: 'advance', args: { output } });
+  assert.deepEqual(result.failures.map(f => f.label), [`#${running.coordinator}`], 'identified by its Issue before its key is known');
+  assert.ok(existsSync(path.join(output, finished.manifest.batchKey, 'draft.json')), 'the healthy batch still exports');
+  // Starting a new batch still refuses when an open batch cannot be read.
+  client.state.fail = (method, route) => method === 'GET' && route === `/issues/${running.coordinator}/comments`;
+  await assert.rejects(startBatch(client, { plans: plan(1), planKey: 'smoke', trigger: 'manual', now: 10, runId: 9502, controlSha: control, env: {} }), /Injected/);
+});
+
+test('a failed report read keeps the confirmed report, counts and snapshot; the error stays visible', async () => {
+  const client = fakeRepository();
+  await start(client, plan(1));
+  client.run(client.samples()[0].number, { id: 7900 });
+  let batch = await current(client);
+  await registerReport(client, batch.manifest.samples[0].runKey, 7900, { execution: 'completed', acceptance: 'passed', delivery: 'published' });
+  batch = await advanceBatch(client, batch, { now: Date.parse('2026-09-25T03:00:00Z') });
+  const before = { sequence: batch.state.sequence, document: batchDocument(batch) };
+  assert.equal(before.document.samples[0].report.state, 'available');
+  client.state.fail = (method, route) => method === 'GET' && route.startsWith('/contents/evaluations/subjects/');
+  await assert.rejects(advanceBatch(client, await current(client), { now: Date.parse('2026-09-25T04:00:00Z') }), /Injected/);
+  const after = await current(client);
+  assert.equal(after.state.sequence, before.sequence, 'no snapshot is committed from a failed read');
+  assert.deepEqual(batchDocument(after).samples[0].report, before.document.samples[0].report);
+  assert.deepEqual(batchDocument(after).summary.acceptance, { passed: 1, failed: 0, other: 0 });
+  client.state.fail = (method, route) => method === 'GET' && route.startsWith('/contents/evaluations/subjects/');
+  const result = await runCoordinator(client, { action: 'advance', args: {} });
+  assert.equal(result.failures.length, 1, 'recorded as a coordination failure, not silently swallowed');
+});
+
+test('a newer report revision of the same execution also updates the state derived from it', async () => {
+  const client = fakeRepository();
+  await start(client, plan(1));
+  client.run(client.samples()[0].number, { id: 8100 });
+  let batch = await current(client);
+  const runKey = batch.manifest.samples[0].runKey, key = batch.manifest.samples[0].key;
+  // r1 was exported while the QA evidence download failed; r2 has the complete evidence.
+  await registerReport(client, runKey, 8100, { execution: 'completed', acceptance: 'unknown', delivery: 'published' }, 1, 'partial');
+  batch = await advanceBatch(client, batch, { now: Date.parse('2026-09-25T03:00:00Z') });
+  assert.equal(batch.state.samples[key].state, 'unknown');
+  await registerReport(client, runKey, 8100, { execution: 'completed', acceptance: 'passed', delivery: 'published' }, 1, 'complete');
+  batch = await advanceBatch(client, await current(client), { now: Date.parse('2026-09-25T04:00:00Z') });
+  const document = batchDocument(batch);
+  assert.equal(batch.state.samples[key].state, 'passed');
+  assert.equal(document.samples[0].report.revision, 2);
+  assert.deepEqual(document.summary.acceptance, { passed: 1, failed: 0, other: 0 });
+  assert.equal(document.summary.byState.passed, 1);
+  assert.equal(document.summary.byState.unknown, 0);
 });
