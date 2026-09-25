@@ -7,7 +7,7 @@ import { createHash } from 'node:crypto';
 import { renderBuildReview } from './build-review.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
-const TEMPLATE_VERSION = 6;
+const TEMPLATE_VERSION = 7;
 const escape = (value) => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const fmt = value => Number.isFinite(value) ? value.toLocaleString('en-US') : '未提供';
 const duration = value => Number.isFinite(value) ? `${Math.floor(value/3600)}:${String(Math.floor(value/60)%60).padStart(2,'0')}:${String(value%60).padStart(2,'0')}` : '未提供';
@@ -132,7 +132,9 @@ function renderRetrospective(f, retro, warning, review) {
   html += '<p class="section-intro">汇总本轮已有材料，不新增分析。过程记录与独立评审分别标明来源；评审发现不等于本轮实际阻塞，也不因业务通过而标为已解决。</p>';
   // Preserve the old improvements deep link, without a second top-level section.
   html += `<h3 class="context-heading" id="improvements">独立评测的问题与建议</h3>${review.feedbackHtml}`;
-  html += '<details class="card raw-record process-notes"><summary>实现者过程与运行背景 · 不自动归为框架问题</summary><div class="subsection-body"><p class="check-source">本任务已处理只描述应用侧处理结果，不代表 NocoBase3 上游已修复。</p>';
+  const hasProcessFindings = Boolean(retro?.blockers.length || retro?.improvements.length);
+  const processCounts = retro ? ` · ${retro.blockers.length} 个过程问题 / ${retro.improvements.length} 条建议` : '';
+  html += `<details class="card raw-record process-notes" id="process-notes"${hasProcessFindings || warning ? ' open' : ''}><summary>实现者过程与运行背景${processCounts} · 不自动归为框架问题</summary><div class="subsection-body"><p class="check-source">本任务已处理只描述应用侧处理结果，不代表 NocoBase3 上游已修复。</p>`;
   if (warning) html += `<p class="check-source">${escape(warning)}；原文保留，已有验收与独立评测不受影响。</p>`;
   html += '<h3 class="context-heading">本轮过程记录</h3>';
   if (retro?.summary) html += `<p class="section-intro">${escape(retro.summary)}</p>`;
@@ -224,7 +226,9 @@ export async function renderHtml(facts, inputNotes, evidenceRoot) {
   let body=m.sampleNotice?`<div class="report-banner">${escape(m.sampleNotice)}</div>`:'';
   if(notesWarning) body+=`<div class="report-banner">${escape(notesWarning)}</div>`;
   const review=renderBuildReview(f.buildReview);
-  body+=`<section class="section" id="overview"><div class="hero"><div><div class="eyebrow">NocoBase3 improvement report · ${m.issue} / ${escape(m.snapshotDate)}</div><h1>${escape(m.title)}</h1><p>本次搭建为 NocoBase3 的企业级 Vibe Coding 基础设施带来了哪些问题证据与改进方向？</p><div class="hero-actions"><a class="btn primary" href="#problems">查看问题与改进</a><a class="btn" href="#delivery">查看业务交付</a></div></div></div>${review.overviewHtml}</section>`;
+  const processSummary = retro?.blockers.length || retro?.improvements.length
+    ? `<p class="report-banner">实现者过程记录：${retro.blockers.length} 个问题、${retro.improvements.length} 条改进建议。属于实现者自述，不计入独立确认的框架问题数。<a class="text-link" href="#process-notes" data-expand="process-notes">查看已记录的问题与建议 →</a></p>` : '';
+  body+=`<section class="section" id="overview"><div class="hero"><div><div class="eyebrow">NocoBase3 improvement report · ${m.issue} / ${escape(m.snapshotDate)}</div><h1>${escape(m.title)}</h1><p>本次搭建为 NocoBase3 的企业级 Vibe Coding 基础设施带来了哪些问题证据与改进方向？</p><div class="hero-actions"><a class="btn primary" href="#problems">查看问题与改进</a><a class="btn" href="#delivery">查看业务交付</a></div></div></div>${review.overviewHtml}${processSummary}</section>`;
   body+=renderRetrospective(f,retro,retroWarning,review);
   body+=review.html;
   body+=`<section class="section" id="delivery">${sectionHead('Business delivery context','业务交付与验收背景',tag(statusLabels[f.delivery.status],f.delivery.status==='failed'?'bad':''))}<p class="section-intro">${escape(notes?.summary || f.delivery.qaSummary || '本轮未提供业务说明，请查看状态与已采集证据。')}</p><div class="hero-actions">${links}<a class="btn" href="#acceptance">查看验收依据</a></div><div class="hero-meta"><span>应用交付提交 <code title="${escape(m.headSha)}">${escape(m.headSha ? m.headSha.slice(0,12) : '未取得交付 SHA')}</code></span><span>Run ${escape(m.runId)} / attempt ${m.attempt}</span><span>目标 <code>${escape(m.targetBranch)}</code></span></div>`;

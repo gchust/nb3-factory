@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
-import { chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
+import { chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
@@ -20,7 +20,8 @@ const put = (root, relative, content) => {
   return file;
 };
 function fixture(t) {
-  const root = mkdtempSync(path.join(os.tmpdir(), 'build-review-test-'));
+  // macOS aliases its temporary root; only fixture-owned symlinks are under test.
+  const root = realpathSync(mkdtempSync(path.join(os.tmpdir(), 'build-review-test-')));
   t.after(() => rmSync(root, { recursive: true, force: true }));
   const workspace = path.join(root, 'workspace'), artifacts = path.join(root, 'artifacts'), snapshot = path.join(root, 'snapshot');
   mkdirSync(workspace); mkdirSync(artifacts); mkdirSync(snapshot);
@@ -45,6 +46,7 @@ function fixture(t) {
   const env = { ...process.env, GITHUB_RUN_ID: '100', GITHUB_RUN_ATTEMPT: '1', FACTORY_CONTROL_SHA: 'b'.repeat(40), FACTORY_BUILD_REVIEW: 'full',
     CODE_AGENT_ENGINE: 'pi', CODE_AGENT_API_KEY: 'private-review-fixture-key', CODE_AGENT_API_ENDPOINT: 'https://fixture.invalid/v1', CODE_AGENT_MODEL: 'fixture-model' };
   delete env.FACTORY_RUN_DEADLINE_EPOCH_SECONDS; delete env.FACTORY_AGENT_INSTALL_RECORD;
+  delete env.FACTORY_BUILD_REVIEW_IDLE_TIMEOUT_SECONDS;
   return { root, workspace, artifacts, snapshot, source, metadata, env };
 }
 function installMock(f, behavior = 'success') {
@@ -63,8 +65,8 @@ const review = {version:input.rubricVersion,inputHash:input.basis.inputHash,prog
  evidence:[{id:'E1',kind:'code',path:'app/server/customer.ts',lines:[1,1],observation:'Read actual captured source',excerpt:'MODEL FABRICATION',mediaId:'MODEL FABRICATION'}, {id:'E2',kind:'package',path:'packages/@nocobase/example/dist/index.d.ts',lines:[1,1],observation:'Read framework declaration'}],limitations:[]};
 if (${JSON.stringify(behavior)} === 'old-rubric') review.version = 1;
 if (${JSON.stringify(behavior)} === 'wrong-hash') review.inputHash = 'c'.repeat(64);
-if (${JSON.stringify(behavior)} === 'modify') {fs.chmodSync('app/server/customer.ts',0o600);fs.writeFileSync('app/server/customer.ts','modified');}
-fs.writeFileSync('assessment.json', ${JSON.stringify(behavior)} === 'malformed' ? '{oops' : JSON.stringify(review));
+if (['modify', 'stall-modify'].includes(${JSON.stringify(behavior)})) {fs.chmodSync('app/server/customer.ts',0o600);fs.writeFileSync('app/server/customer.ts','modified');}
+if (${JSON.stringify(behavior)} !== 'stall-empty') fs.writeFileSync('assessment.json', ['malformed', 'stall-malformed'].includes(${JSON.stringify(behavior)}) ? '{oops' : JSON.stringify(review));
 if (${JSON.stringify(behavior)} === 'check-draft') {
   const {spawnSync} = require('node:child_process');
   review.modules[0].targets[0].kind='skill';
@@ -75,8 +77,18 @@ if (${JSON.stringify(behavior)} === 'check-draft') {
   fs.writeFileSync('assessment.json',JSON.stringify(review));
   const valid=check();if(valid.status!==0 || !JSON.parse(valid.stdout).valid)process.exit(9);
 }
-console.log(JSON.stringify({type:'message_end',message:{role:'assistant',stopReason:'stop',usage:{input:100,output:20,cacheRead:5,cacheWrite:0,totalTokens:125}}}));
-console.log(JSON.stringify({type:'agent_end'}));
+if (${JSON.stringify(behavior)}.startsWith('stall')) {
+  console.log(JSON.stringify({type:'turn_start'}));
+  setInterval(() => {}, 1000);
+} else if (${JSON.stringify(behavior)} === 'auth-error') {
+  console.log(JSON.stringify({type:'message_end',message:{role:'assistant',stopReason:'error',errorMessage:'401: invalid_api_key'}}));
+  console.log(JSON.stringify({type:'agent_end'}));
+} else if (${JSON.stringify(behavior)} === 'crash') {
+  process.exit(17);
+} else {
+  console.log(JSON.stringify({type:'message_end',message:{role:'assistant',stopReason:'stop',usage:{input:100,output:20,cacheRead:5,cacheWrite:0,totalTokens:125}}}));
+  if (${JSON.stringify(behavior)} !== 'no-terminal') console.log(JSON.stringify({type:'agent_end'}));
+}
 `);
   chmodSync(path.join(bin, 'pi'), 0o755);
   f.env.PATH = `${bin}:${process.env.PATH}`;
@@ -285,6 +297,57 @@ test('budget exhaustion preserves only a valid evidenced checkpoint as partial',
   assert.throws(() => finalizeAssessment(f.snapshot, captured, original.basis, false), /identity mismatch/);
   put(f.snapshot, 'assessment.json', { ...original.evaluation, modules: [], evidence: [] });
   assert.throws(() => finalizeAssessment(f.snapshot, captured, original.basis, false), /No assessed module/);
+});
+
+test('idle watchdog preserves a validated checkpoint as partial with its actual stop reason', async t => {
+  const f = fixture(t); installMock(f, 'stall');
+  f.env.FACTORY_BUILD_REVIEW_IDLE_TIMEOUT_SECONDS = '3';
+  const report = await runBuildReview(f.workspace, f.artifacts, f.env);
+  assert.equal(report.state, 'partial', report.reason);
+  assert.match(report.reason, /连续 3 秒.*stalled/);
+  assert.equal(report.evaluation.modules[0].scores.design.score, 73);
+  assert.ok(report.evaluation.limitations.includes(report.reason));
+  validateBuildReview(report);
+  const result = readReviewJsonForTest(f.artifacts, 'agent-review.jsonl.result.json');
+  assert.equal(result.status, 'stalled');
+  assert.equal(result.terminalEvent, false);
+  assert.match(readReviewJsonForTest(f.artifacts, 'agent-review.jsonl.invocation.json').error, /连续 3 秒.*stalled/);
+  assert.equal(readReviewJsonForTest(f.artifacts, 'build-review.json').state, 'partial');
+  assert.equal(readFileSync(f.source, 'utf8'), 'export const customer = 1;\n');
+});
+
+for (const [behavior, error] of [
+  ['stall-empty', /No assessed module/],
+  ['stall-malformed', /JSON/],
+  ['stall-modify', /changed captured input/],
+]) test(`idle interruption retains the stop reason but rejects ${behavior} checkpoints`, async t => {
+  const f = fixture(t); installMock(f, behavior);
+  f.env.FACTORY_BUILD_REVIEW_IDLE_TIMEOUT_SECONDS = '3';
+  const report = await runBuildReview(f.workspace, f.artifacts, f.env);
+  assert.equal(report.state, 'failed');
+  assert.equal(report.evaluation, null);
+  assert.match(report.reason, /连续 3 秒.*stalled/);
+  assert.match(report.reason, error);
+});
+
+for (const behavior of ['auth-error', 'crash', 'no-terminal']) {
+  test(`a valid checkpoint cannot turn ${behavior} into a partial review`, async t => {
+    const f = fixture(t); installMock(f, behavior);
+    const report = await runBuildReview(f.workspace, f.artifacts, f.env);
+    assert.equal(report.state, 'failed');
+    assert.equal(report.evaluation, null);
+    if (behavior === 'no-terminal') assert.match(report.reason, /status: completed, exit code: 0/);
+  });
+}
+
+test('invalid review idle timeout fails before a model invocation', async t => {
+  const f = fixture(t); installMock(f);
+  for (const value of ['0', '-1', '1.5', '1801', 'invalid']) {
+    const report = await runBuildReview(f.workspace, f.artifacts, { ...f.env, FACTORY_BUILD_REVIEW_IDLE_TIMEOUT_SECONDS: value });
+    assert.equal(report.state, 'failed');
+    assert.match(report.reason, /FACTORY_BUILD_REVIEW_IDLE_TIMEOUT_SECONDS/);
+    assert.equal(existsSync(path.join(f.artifacts, 'agent-review.jsonl')), false);
+  }
 });
 
 test('new assessment revision changes the public HTML identity for the same publication attempt', async () => {

@@ -57,6 +57,7 @@ test('invalid optional notes and invalid review are independent and cannot erase
   let result = await render(value);
   assert.match(result.html, /复盘格式无效/);
   assert.match(result.html, /invalid-retro-record/);
+  assert.match(section(result.html, 'problems'), /id="process-notes" open/);
   assert.match(section(result.html, 'problems'), /弹窗指引/);
   const acceptance = section(result.html, 'acceptance');
   value.buildReview.evaluation.findings[1].evidence = ['DOES-NOT-EXIST'];
@@ -139,7 +140,45 @@ test('failed or missing review never suppresses optional process recommendations
   const { html } = await render(value);
   assert.match(section(html, 'problems'), /仍须保留的建议/);
   assert.match(section(html, 'problems'), /自述未核验/);
+  assert.match(section(html, 'problems'), /id="process-notes" open/);
+  assert.match(section(html, 'overview'), /0 个问题、1 条改进建议/);
   assert.match(section(html, 'problems'), /未完成或结果无效/);
+});
+
+test('recorded process issues and suggestions stay visible even when independent review fails', async () => {
+  const value = facts();
+  value.retro = fixture('example.facts.json').retro;
+  const count = `${value.retro.blockers.length} 个问题、${value.retro.improvements.length} 条改进建议`;
+  const before = structuredClone(value.retro);
+  for (const state of ['failed', 'missing', 'off', 'completed', 'partial', 'invalid']) {
+    value.buildReview = fixture('example.framework-review.json');
+    if (state === 'failed') value.buildReview = { state: 'failed', reason: '连续 180 秒没有输出（stalled）', evaluation: null };
+    if (state === 'missing') delete value.buildReview;
+    if (state === 'off') value.buildReview = { state: 'not-reviewed', execution: { buildReviewMode: 'off' }, evaluation: null };
+    if (state === 'partial') {
+      value.buildReview.state = 'partial';
+      value.buildReview.evaluation.progress = { complete: false, pendingModules: ['未覆盖能力'] };
+    }
+    if (state === 'invalid') value.buildReview.evaluation.findings[1].evidence = ['MISSING'];
+    const { html } = await render(value);
+    assert.ok(section(html, 'overview').includes(count), state);
+    assert.match(section(html, 'overview'), /不计入独立确认的框架问题数/);
+    assert.match(section(html, 'problems'), /<details class="card raw-record process-notes" id="process-notes" open>/);
+    assert.match(section(html, 'overview'), /href="#process-notes" data-expand="process-notes"/);
+    assert.deepEqual(value.retro, before);
+  }
+});
+
+test('absent or empty notes do not claim zero independent findings or open an empty section', async () => {
+  const value = facts();
+  value.buildReview = { state: 'failed', reason: 'stalled', evaluation: null };
+  for (const retro of [null, { version: 1, summary: '', blockers: [], improvements: [] }]) {
+    value.retro = retro;
+    const { html } = await render(value);
+    assert.doesNotMatch(section(html, 'overview'), /实现者过程记录：|0 个问题/);
+    assert.match(section(html, 'overview'), /框架问题尚未评估/);
+    assert.doesNotMatch(section(html, 'problems'), /id="process-notes" open/);
+  }
 });
 
 test('findings, optional prose and source metadata are escaped; provenance is not inferred', async () => {
@@ -154,5 +193,5 @@ test('findings, optional prose and source metadata are escaped; provenance is no
   assert.equal(ids.length, new Set(ids).size);
   const links = [...html.matchAll(/href="#(review-(?:finding|evidence)-[^"]+)"/g)].map(match => match[1]);
   for (const id of links) assert.ok(ids.includes(id), `missing target ${id}`);
-  assert.match(html, /factory-template-version" content="6"/);
+  assert.match(html, /factory-template-version" content="7"/);
 });

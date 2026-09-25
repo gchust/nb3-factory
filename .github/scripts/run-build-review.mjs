@@ -133,6 +133,9 @@ export async function runBuildReview(workspace, artifacts, env = process.env, op
     if (deadline !== null && !Number.isSafeInteger(deadline)) throw new Error('Invalid runner deadline');
     const remaining = deadline === null ? requested : Math.min(requested, deadline - Math.ceil(Date.now() / 1000) - 30);
     if (remaining < 30) { report.reason = 'Runner 剩余预算不足，未额外调用评审模型。'; return report; }
+    const requestedIdle = Number(env.FACTORY_BUILD_REVIEW_IDLE_TIMEOUT_SECONDS || 600);
+    if (!Number.isInteger(requestedIdle) || requestedIdle < 1 || requestedIdle > 1800) throw new Error('FACTORY_BUILD_REVIEW_IDLE_TIMEOUT_SECONDS must be 1–1800 seconds');
+    const idleTimeoutSeconds = Math.min(requestedIdle, remaining);
     snapshot = mkdtempSync(path.join(os.tmpdir(), 'factory-build-review-'));
     const captured = createReviewSnapshot(workspace, artifacts, snapshot);
     basis.baseSha = git(workspace, ['rev-parse', 'HEAD']).trim();
@@ -205,18 +208,27 @@ export async function runBuildReview(workspace, artifacts, env = process.env, op
       secrets: [...(invocation.secrets ?? []), ...credentialNames.map(name => env[name])],
       result: createResult({ engine: adapter.id, model: invocation.model, configuredVersion, actualVersion,
         completion: adapter.completion ?? 'event', phase: 'review', role: 'review' }),
-      invocationTimeoutSeconds: remaining, idleTimeoutSeconds: Math.min(180, remaining),
+      invocationTimeoutSeconds: remaining, idleTimeoutSeconds,
     }); } catch (error) { invocationError = error; }
     const result = readResult(log);
     const finished = result?.status === 'completed' && (result.completion === 'exit' || result.terminalEvent);
-    // Only bounded timeout may salvage a valid checkpoint; auth/protocol/crash
-    // errors do not turn arbitrary leftover JSON into a successful assessment.
-    if (!finished && result?.status !== 'timed_out') throw invocationError ?? new Error('Reviewer invocation did not complete');
-    const assessed = finalizeAssessment(snapshot, captured, basis, finished);
+    // Both watchdogs may interrupt a valid checkpoint. Auth/protocol/crash
+    // failures still cannot promote leftover JSON into an assessment.
+    const interruption = result?.status === 'stalled'
+      ? `评审连续 ${idleTimeoutSeconds} 秒没有 stdout/stderr 输出（stalled）`
+      : result?.status === 'timed_out' ? `评审达到 ${remaining} 秒调用时限（timed_out）` : null;
+    if (interruption) invocationError ??= new Error(interruption);
+    if (!finished && !interruption) throw invocationError ?? new Error(`Reviewer invocation did not complete (status: ${result?.status ?? 'missing'}, exit code: ${result?.exitCode ?? 'unknown'})`);
+    let assessed;
+    try { assessed = finalizeAssessment(snapshot, captured, basis, finished); }
+    catch (error) {
+      if (interruption) throw new Error(`${interruption}；未取得可发布的模块检查点：${error.message}`);
+      throw error;
+    }
     report.evaluation = assessed.evaluation;
     const partial = assessed.partial;
     report.state = partial ? 'partial' : 'completed';
-    report.reason = partial ? '评审预算已结束或尚有未评模块；仅展示已保存并通过证据校验的模块，不代表完整评审。' : '独立 Agent 评审完成；评分是基于本次证据的意见，不替代业务 QA 或人工评审。';
+    report.reason = partial ? `${interruption ?? '尚有未评模块'}；仅展示已保存并通过证据校验的模块，不代表完整评审。` : '独立 Agent 评审完成；评分是基于本次证据的意见，不替代业务 QA 或人工评审。';
     if (partial) {
       if (report.evaluation.limitations.length === 30) report.evaluation.limitations.pop();
       report.evaluation.limitations.push(report.reason);
