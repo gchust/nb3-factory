@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
@@ -207,7 +208,8 @@ test('a temporary source failure keeps the delivery pending and is retried once 
 });
 
 test('sending stops taking bundles before its time budget and saves each result as it happens', async t => {
-  assert.ok(SCAN_LIMIT * 0 + ITEM_WORST_CASE_MS * 5 < SEND_BUDGET_MS, 'a normal scan fits the budget with room to spare');
+  assert.equal(SCAN_LIMIT, 10);
+  assert.ok(ITEM_WORST_CASE_MS < SEND_BUDGET_MS, 'one bounded delivery fits; remaining work is deferred before the deadline');
   assert.ok(SEND_BUDGET_MS + 5 * 60_000 <= 30 * 60_000, 'results are saved before the 30-minute job timeout');
   const receiver = await startReceiver(t);
   const { zip, subject, registration } = await registered(t);
@@ -238,4 +240,36 @@ test('a receipt body cut off after 201 is a transport failure: the same key is r
   const wrong = await startReceiver(t, { faults: ['wrong-receipt'] });
   const { zip, subject } = await registered(t);
   assert.equal((await deliverBundle({ zip, subject, config: configFor(wrong), pause: noPause })).reason, 'invalid-receipt');
+});
+
+
+test('link mode submits JSON metadata and selected problems without ZIP, HTML or screenshot bytes', async t => {
+  const { zip, subject, document } = await registered(t);
+  const config = deliveryConfig({ EVALUATION_ENDPOINT: 'https://receiver.example/import', EVALUATION_TOKEN: 'test-only', EVALUATION_DELIVERY_FORMAT: 'testmanage3-links-v1' });
+  const timeouts = [];
+  t.mock.method(AbortSignal, 'timeout', ms => { timeouts.push(ms); return new AbortController().signal; });
+  const result = await deliverBundle({ zip, subject, config, pause: noPause, fetcher: async (_url, options) => {
+    assert.equal(options.headers['Content-Type'], 'application/json');
+    const payload = JSON.parse(options.body.toString('utf8'));
+    assert.deepEqual(Object.keys(payload).sort(), ['document', 'problems', 'reportUrl', 'version']);
+    assert.deepEqual(payload.document, document);
+    assert.equal(payload.reportUrl, 'https://owner.github.io/factory/' + document.links.find(link => link.rel === 'report-archive').path);
+    assert.ok(Array.isArray(payload.problems));
+    assert.equal(options.headers['X-Evaluation-Payload-SHA256'], createHash('sha256').update(options.body).digest('hex'));
+    return new Response(JSON.stringify({ receiptId: 'link-receipt', sourceInstance: subject.sourceInstance, runKey: subject.key, revision: subject.revision, bundleSha256: options.headers['X-Evaluation-Bundle-SHA256'], state: 'stored' }), { status: 201 });
+  } });
+  assert.equal(result.state, 'stored');
+  assert.deepEqual(timeouts, [180000]);
+  assert.equal(deliveryConfig({ EVALUATION_ENDPOINT: 'https://r.example/import', EVALUATION_TOKEN: 't', EVALUATION_TIMEOUT_SECONDS: '240' }).timeoutMs, 240000);
+  for (const timeout of ['0', 'NaN', '301', '29', '30.5']) assert.throws(() => deliveryConfig({ EVALUATION_ENDPOINT: 'https://r.example/import', EVALUATION_TOKEN: 't', EVALUATION_TIMEOUT_SECONDS: timeout }), /EVALUATION_TIMEOUT_SECONDS/);
+});
+
+test('custom timeout is included in the pre-delivery budget check', async t => {
+  const { zip, subject, registration } = await registered(t);
+  const env = { EVALUATION_ENDPOINT: 'https://r.example/import', EVALUATION_TOKEN: 't', EVALUATION_TIMEOUT_SECONDS: '300' };
+  const targetId = targetIdOf(env.EVALUATION_ENDPOINT);
+  const item = { ...subject, targetId, id: 'budget', zip, source: 'available', previousAttempts: 0, bundleSha256: registration.bundleSha256 };
+  const sent = await sendDeliveries({ targetId, items: [item] }, { env, now: () => 0, deadline: ITEM_WORST_CASE_MS + 1, fetcher: () => { throw new Error('Must defer before network access'); } });
+  assert.equal(sent.deferred, 1);
+  assert.deepEqual(sent.results, []);
 });
