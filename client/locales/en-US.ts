@@ -113,6 +113,8 @@ const enUS = {
     cancel: 'Cancel',
     confirm: 'Confirm',
     language: 'Language',
+    create: 'Create',
+    saving: 'Saving…',
   },
   notices: {
     serverLocaleFallback:
@@ -135,6 +137,7 @@ const enUS = {
     collapse: 'Collapse navigation',
     label: 'Application navigation',
     breadcrumb: 'Breadcrumb',
+    customerMemos: 'Customer memos',
   },
   dataTable: {
     noResults: 'No results.',
@@ -154,6 +157,64 @@ const enUS = {
   datePicker: {
     placeholder: 'Pick a date',
     rangePlaceholder: 'Pick a date range',
+  },
+  customerMemos: {
+    title: 'Customer memos',
+    description: 'Keep a customer name and a note for each memo.',
+    fields: {
+      customerName: 'Customer name',
+      remark: 'Remark',
+      createdAt: 'Created at',
+    },
+    create: {
+      action: 'New memo',
+      title: 'New customer memo',
+      success: 'Created "{{name}}".',
+    },
+    edit: {
+      title: 'Edit customer memo',
+      success: 'Saved "{{name}}".',
+    },
+    detail: {
+      title: 'Customer memo',
+    },
+    form: {
+      description: 'The customer name is required; the remark is optional.',
+      customerNameRequired: 'Enter a customer name.',
+      customerNameTooLong: 'Customer name must be at most {{max}} characters.',
+      remarkTooLong: 'Remark must be at most {{max}} characters.',
+    },
+    search: {
+      placeholder: 'Search by customer name',
+      label: 'Search by customer name',
+    },
+    filters: {
+      clear: 'Clear search',
+    },
+    empty: {
+      title: 'No customer memos yet',
+      description: 'Create the first memo to get started.',
+      noResults: 'No matching customer memos.',
+    },
+    error: {
+      title: 'Unable to load customer memos',
+      forbidden: 'You do not have permission to view these customer memos.',
+      requestFailed: 'The request failed. Please try again.',
+      notFound: 'This customer memo no longer exists.',
+    },
+    actions: {
+      label: 'Actions',
+      more: 'More actions for {{name}}',
+      edit: 'Edit',
+      delete: 'Delete',
+    },
+    delete: {
+      title: 'Delete "{{name}}"?',
+      description: 'This permanently deletes the memo. This cannot be undone.',
+      confirm: 'Delete',
+      success: 'Deleted "{{name}}".',
+      notFound: '"{{name}}" was already deleted.',
+    },
   },
 };
 

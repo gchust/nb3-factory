@@ -106,6 +106,8 @@ const zhCN: AppResource = {
     cancel: '取消',
     confirm: '确认',
     language: '语言',
+    create: '新建',
+    saving: '保存中…',
   },
   notices: {
     serverLocaleFallback: '服务端不支持该语言，服务端内容已回落为英文。',
@@ -126,6 +128,7 @@ const zhCN: AppResource = {
     collapse: '收起导航',
     label: '应用导航',
     breadcrumb: '面包屑',
+    customerMemos: '客户备忘录',
   },
   dataTable: {
     noResults: '暂无数据。',
@@ -145,6 +148,64 @@ const zhCN: AppResource = {
   datePicker: {
     placeholder: '选择日期',
     rangePlaceholder: '选择日期范围',
+  },
+  customerMemos: {
+    title: '客户备忘录',
+    description: '记录客户名称与备注，方便随时查阅。',
+    fields: {
+      customerName: '客户名称',
+      remark: '备注',
+      createdAt: '创建时间',
+    },
+    create: {
+      action: '新建备忘录',
+      title: '新建客户备忘录',
+      success: '已创建“{{name}}”。',
+    },
+    edit: {
+      title: '编辑客户备忘录',
+      success: '已保存“{{name}}”。',
+    },
+    detail: {
+      title: '客户备忘录',
+    },
+    form: {
+      description: '客户名称为必填项，备注为选填。',
+      customerNameRequired: '请输入客户名称。',
+      customerNameTooLong: '客户名称最多 {{max}} 个字符。',
+      remarkTooLong: '备注最多 {{max}} 个字符。',
+    },
+    search: {
+      placeholder: '按客户名称搜索',
+      label: '按客户名称搜索',
+    },
+    filters: {
+      clear: '清除搜索',
+    },
+    empty: {
+      title: '暂无客户备忘录',
+      description: '创建第一条备忘录开始使用。',
+      noResults: '没有匹配的客户备忘录。',
+    },
+    error: {
+      title: '无法加载客户备忘录',
+      forbidden: '你没有查看客户备忘录的权限。',
+      requestFailed: '请求失败，请重试。',
+      notFound: '该客户备忘录已不存在。',
+    },
+    actions: {
+      label: '操作',
+      more: '“{{name}}”的更多操作',
+      edit: '编辑',
+      delete: '删除',
+    },
+    delete: {
+      title: '删除“{{name}}”？',
+      description: '删除后无法恢复，请谨慎操作。',
+      confirm: '删除',
+      success: '已删除“{{name}}”。',
+      notFound: '“{{name}}”已被删除。',
+    },
   },
 };
 
