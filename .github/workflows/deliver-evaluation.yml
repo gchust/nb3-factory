@@ -109,7 +109,8 @@ jobs:
 
   send:
     needs: plan
-    if: needs.plan.result == 'success' && needs.plan.outputs.count != '0'
+    # Replay/scan skip backfill; explicitly override inherited skipped-job status.
+    if: always() && !cancelled() && needs.plan.result == 'success' && needs.plan.outputs.count != '0'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
