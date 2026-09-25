@@ -89,6 +89,11 @@ test('batch coordination accepts no control SHA, budget, script or URL input and
   assert.match(workflow, /group: factory-evaluation-batch\n {2}queue: max/);
   assert.match(evaluation, /contents: write/);
   assert.doesNotMatch(evaluation, /secrets\./);
+  // Each open batch is exported to its own directory and registered in its own matrix job.
+  assert.match(coordinate, /batches: \$\{\{ steps\.coordinate\.outputs\.batches \}\}/);
+  assert.match(evaluation, /fail-fast: false/);
+  assert.match(evaluation, /batch: \$\{\{ fromJSON\(needs\.coordinate\.outputs\.batches\) \}\}/);
+  assert.match(evaluation, /--input "\$RUNNER_TEMP\/batch-export\/\$BATCH_KEY"/);
   assert.doesNotMatch(coordinate, /API_KEY|TOKEN: \$\{\{ vars|OAUTH/);
   assert.match(coordinate, /CODE_AGENT_MODEL: \$\{\{ vars\.CODE_AGENT_MODEL \}\}/);
   for (const checkout of workflow.split('actions/checkout@v4').slice(1)) {

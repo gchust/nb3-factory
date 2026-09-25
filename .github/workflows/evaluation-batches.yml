@@ -57,6 +57,7 @@ jobs:
       issues: write
     outputs:
       export: ${{ steps.export.outputs.artifact-id }}
+      batches: ${{ steps.coordinate.outputs.batches }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -122,18 +123,20 @@ jobs:
           retention-days: 14
 
   # Same registration as single reports: identical snapshots reuse their revision.
+  # One matrix job per exported batch: a failing archive never hides another batch.
   evaluation:
     needs: coordinate
-    if: needs.coordinate.outputs.export != ''
+    if: needs.coordinate.outputs.export != '' && needs.coordinate.outputs.batches != ''
+    strategy:
+      fail-fast: false
+      max-parallel: 1
+      matrix:
+        batch: ${{ fromJSON(needs.coordinate.outputs.batches) }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
       actions: write
       contents: write
-    outputs:
-      type: ${{ steps.commit.outputs.type }}
-      key: ${{ steps.commit.outputs.key }}
-      revision: ${{ steps.commit.outputs.revision }}
     env:
       FACTORY_EVALUATION_DELIVERY: ${{ vars.FACTORY_EVALUATION_DELIVERY }}
       EVALUATION_ENDPOINT: ${{ vars.EVALUATION_ENDPOINT }}
@@ -156,9 +159,11 @@ jobs:
         id: prepare
         env:
           GITHUB_TOKEN: ${{ github.token }}
+          BATCH_KEY: ${{ matrix.batch }}
         run: |
+          [[ "$BATCH_KEY" =~ ^[A-Za-z0-9][A-Za-z0-9._-]{0,79}$ ]] || { echo "Invalid batch key" >&2; exit 1; }
           node control/.github/scripts/evaluation-archive.mjs prepare \
-            --input "$RUNNER_TEMP/batch-export" --output "$RUNNER_TEMP/batch-bundle"
+            --input "$RUNNER_TEMP/batch-export/$BATCH_KEY" --output "$RUNNER_TEMP/batch-bundle"
       - name: Keep the exact bundle bytes for replay
         id: bundle
         if: steps.prepare.outputs.upload == 'true'

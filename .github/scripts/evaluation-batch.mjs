@@ -291,8 +291,13 @@ async function reportSummary(client, runKey) {
   let index = null;
   try { index = await readSubject(client, 'evaluation-report', runKey, 'gh-pages'); } catch { return null; }
   const entry = index?.revisions.find(item => item.revision === index.current);
-  return entry ? { revision: entry.revision, producerRunId: entry.precedence?.producer?.runId ?? null, ...entry.summary } : null;
+  return entry ? { revision: entry.revision, producerRunId: entry.precedence?.producer?.runId ?? null,
+    producerAttempt: entry.precedence?.producer?.attempt ?? null, ...entry.summary } : null;
 }
+// A report belongs to one execution: the same Run and the same attempt. A report of
+// attempt 1 stays history and never stands in for attempt 2 (a publication-only
+// re-run still gets its own report, produced for that attempt).
+const reportOf = (summary, runId, attempt) => Boolean(summary) && summary.producerRunId === runId && summary.producerAttempt === (attempt ?? 1);
 const fromReport = summary => summary.execution === 'budget-exhausted' ? 'budget-exhausted' : summary.execution === 'blocked' ? 'blocked'
   : summary.execution === 'cancelled' ? 'cancelled' : summary.acceptance === 'passed' ? 'passed'
     : ['failed', 'blocked'].includes(summary.acceptance) ? summary.acceptance : summary.execution === 'timed-out' ? 'failed' : 'unknown';
@@ -314,27 +319,31 @@ export async function observeSample(client, batch, item, spec, now) {
   // A duplicate or waiting dispatch ends after prepare with success and is ignored.
   let latest = null, jobs = [];
   for (const run of [...runs].reverse()) {
-    if (terminals.has(run.id)) return { state: terminals.get(run.id), stateSource: 'prepare', terminalRunId: run.id };
+    if (terminals.has(run.id)) return { state: terminals.get(run.id), stateSource: 'prepare', terminalRunId: run.id, terminalRunAttempt: run.run_attempt ?? 1 };
     ({ jobs } = await client.request('GET', `/actions/runs/${run.id}/attempts/${run.run_attempt}/jobs`, { query: { per_page: 100 } }));
     if (run.conclusion !== 'success' || jobs.some(job => job.name === 'agent' && job.conclusion && job.conclusion !== 'skipped')) { latest = run; break; }
   }
   if (!latest) {
-    if (labelNames(issue).includes('agent:needs-input')) return { state: 'blocked', stateSource: 'run', terminalRunId: runs.at(-1)?.id ?? null, reason: '样本输入未通过受理，需要维护者处理。' };
+    // Rejected at prepare: no build ran and no report will follow.
+    if (labelNames(issue).includes('agent:needs-input')) return { state: 'blocked', stateSource: 'prepare', terminalRunId: runs.at(-1)?.id ?? null,
+      terminalRunAttempt: runs.at(-1)?.run_attempt ?? 1, reason: '样本输入未通过受理，需要维护者处理。' };
     return { state: 'queued', redispatch: !runs.length && (!item.dispatchedAt || now - Date.parse(item.dispatchedAt) > 30 * 60_000) };
   }
   const outcome = taskOutcome(latest, jobs);
   // Exit 75 is not a terminal state; the slot stays occupied until the chain ends.
   // With no Run active for that long, the sample is released and prepare refuses
   // any late continuation, so it can never run beside the next sample.
-  if (outcome === 'handoff') return stale ? { state: 'unknown', stateSource: 'run', terminalRunId: latest.id,
+  if (outcome === 'handoff') return stale ? { state: 'unknown', stateSource: 'run', terminalRunId: latest.id, terminalRunAttempt: latest.run_attempt ?? 1,
     reason: 'Handoff 后长时间没有续跑；释放串行槽位，迟到的续跑会在 prepare 被拒绝。' } : { state: 'running' };
   const summary = await reportSummary(client, spec.runKey);
-  if (summary && summary.producerRunId === latest.id) return { state: fromReport(summary), stateSource: 'report', terminalRunId: latest.id };
+  if (reportOf(summary, latest.id, latest.run_attempt)) return { state: fromReport(summary), stateSource: 'report', terminalRunId: latest.id, terminalRunAttempt: latest.run_attempt ?? 1 };
   const names = labelNames(issue);
   const state = outcome === 'delivered' ? 'passed' : outcome === 'cancelled' ? 'cancelled'
     : outcome === 'failure' ? (names.includes('agent:needs-input') ? 'blocked' : 'failed') : outcome === 'timed_out' ? 'failed' : 'unknown';
-  return { state, stateSource: 'run', terminalRunId: latest.id };
+  return { state, stateSource: 'run', terminalRunId: latest.id, terminalRunAttempt: latest.run_attempt ?? 1 };
 }
+
+const needsReport = item => Boolean(item.issue && item.terminalRunId && ['run', 'report'].includes(item.stateSource));
 
 export async function advanceBatch(client, batch, { now = Date.now(), env = null } = {}) {
   const { manifest } = batch;
@@ -374,17 +383,24 @@ export async function advanceBatch(client, batch, { now = Date.now(), env = null
         if (current && !TERMINAL.has(observed.state)) item.agentConfigObserved = [...new Set([...(item.agentConfigObserved ?? []), current])];
         if (observed.state === 'running' && observed.reason !== undefined) item.reason = observed.reason;
         if (TERMINAL.has(observed.state)) Object.assign(item, { terminalAt: stamp, stateSource: observed.stateSource ?? 'run',
-          terminalRunId: observed.terminalRunId ?? null, reason: observed.reason ?? item.reason });
+          terminalRunId: observed.terminalRunId ?? null, terminalRunAttempt: observed.terminalRunAttempt ?? null, reason: observed.reason ?? item.reason });
       }
-      if (!item.issue) continue;
-      const summary = await reportSummary(client, spec.runKey);
-      if (!summary) continue;
-      item.report = { state: 'available', revision: summary.revision, execution: summary.execution ?? null, acceptance: summary.acceptance ?? null };
-      item.reportRunId = summary.producerRunId;
-      // A run-derived terminal state is refined once that run's own report arrives.
-      if (TERMINAL.has(item.state) && item.stateSource === 'run' && summary.producerRunId === item.terminalRunId)
-        Object.assign(item, { state: fromReport(summary), stateSource: 'report' });
     }
+  }
+  // Reports keep arriving after the samples ended; a finished but still open batch
+  // keeps taking them, so a late final report refines its sample.
+  for (const spec of manifest.samples) {
+    const item = state.samples[spec.key];
+    if (!item.issue) continue;
+    const summary = await reportSummary(client, spec.runKey);
+    if (!summary) continue;
+    item.report = { state: 'available', revision: summary.revision, execution: summary.execution ?? null, acceptance: summary.acceptance ?? null };
+    Object.assign(item, { reportRunId: summary.producerRunId, reportRunAttempt: summary.producerAttempt });
+    // A run-derived terminal state is refined once that execution's own report arrives.
+    if (TERMINAL.has(item.state) && item.stateSource === 'run' && reportOf(summary, item.terminalRunId, item.terminalRunAttempt))
+      Object.assign(item, { state: fromReport(summary), stateSource: 'report' });
+  }
+  if (state.state === 'active') {
     if (state.cancelled) for (const spec of manifest.samples) {
       const item = state.samples[spec.key];
       if (item.state === 'planned') Object.assign(item, { state: 'cancelled', stateSource: 'batch', terminalAt: stamp, reason: '批次已取消，未派发。' });
@@ -412,8 +428,10 @@ export async function advanceBatch(client, batch, { now = Date.now(), env = null
     const items = manifest.samples.map(s => state.samples[s.key]);
     const lastTerminal = Math.max(0, ...items.map(item => Date.parse(item.terminalAt ?? '') || 0));
     if (items.every(item => TERMINAL.has(item.state)) &&
-        // An earlier handoff run's report is not the final result of its sample.
-        (items.every(item => !item.issue || !item.terminalRunId || item.reportRunId === item.terminalRunId) || now - lastTerminal > REPORT_GRACE_SECONDS * 1000)) {
+        // An earlier handoff run's or earlier attempt's report is not the final result;
+        // samples ended at prepare produce no report.
+        (items.every(item => !needsReport(item) || (item.reportRunId === item.terminalRunId && item.reportRunAttempt === (item.terminalRunAttempt ?? 1))) ||
+         now - lastTerminal > REPORT_GRACE_SECONDS * 1000)) {
       state.state = state.cancelled ? 'cancelled' : 'completed';
       state.completedAt = stamp;
     }
@@ -519,6 +537,18 @@ export async function waitForRun(client, runId, { attempts = 30, pause = ms => n
   return null; // The hourly compensation still advances later.
 }
 
+// Several batches can be open at once (one running, others awaiting their final
+// archive), so each snapshot gets its own directory and is registered on its own.
+export function writeBatchExport(output, batch, exporter = {}) {
+  const key = batch.manifest.batchKey;
+  need(segmentPattern.test(key), 'Invalid batch key for export');
+  const directory = path.join(output, key);
+  mkdirSync(path.join(directory, 'files'), { recursive: true });
+  writeFileSync(path.join(directory, 'draft.json'), `${JSON.stringify(batchDocument(batch, { exporter }), null, 2)}\n`);
+  writeFileSync(path.join(directory, 'files.json'), '[]\n');
+  return key;
+}
+
 async function main() {
   const [action, ...argv] = process.argv.slice(2);
   const args = Object.fromEntries(Array.from({ length: argv.length / 2 }, (_, i) => [argv[i * 2].replace(/^--/, ''), argv[i * 2 + 1]]));
@@ -531,14 +561,8 @@ async function main() {
     { defaultBranch: (await client.getRepository()).default_branch });
   if (/^[1-9]\d*$/.test(args['source-run'] ?? '')) await waitForRun(client, Number(args['source-run']));
   const lines = [];
-  const exportBatch = batch => {
-    if (!args.output || !batch?.manifest) return;
-    mkdirSync(args.output, { recursive: true });
-    writeFileSync(path.join(args.output, 'draft.json'), `${JSON.stringify(batchDocument(batch, { exporter }), null, 2)}\n`);
-    writeFileSync(path.join(args.output, 'files.json'), '[]\n');
-    mkdirSync(path.join(args.output, 'files'), { recursive: true });
-    if (env.GITHUB_OUTPUT) appendFileSync(env.GITHUB_OUTPUT, 'export=true\n');
-  };
+  const exported = [];
+  const exportBatch = batch => { if (args.output && batch?.manifest) exported.push(writeBatchExport(args.output, batch, exporter)); };
   if (action === 'start' || action === 'scheduled') {
     const plans = await loadPlans();
     const selected = action === 'scheduled' ? (env.FACTORY_EVALUATION_PLANS_ENABLED === 'true' ? plans.filter(p => p.enabled && p.schedule === 'daily') : []) : [plans.find(p => p.key === args.plan)];
@@ -562,6 +586,7 @@ async function main() {
     const batch = await cancelBatch(client, args.batch);
     exportBatch(batch); lines.push(summaryTable(batch.manifest, batch.state));
   } else throw new Error('Usage: evaluation-batch.mjs <start|scheduled|advance|status|cancel> ...');
+  if (exported.length && env.GITHUB_OUTPUT) appendFileSync(env.GITHUB_OUTPUT, `export=true\nbatches=${JSON.stringify(exported)}\n`);
   const text = `# 评测批次\n\n${lines.join('\n\n')}\n`;
   console.log(text);
   if (env.GITHUB_STEP_SUMMARY) appendFileSync(env.GITHUB_STEP_SUMMARY, text);

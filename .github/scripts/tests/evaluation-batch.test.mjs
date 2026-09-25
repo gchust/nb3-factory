@@ -3,7 +3,10 @@ import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import test from 'node:test';
-import { activeBatches, advanceBatch, batchDocument, cancelBatch, finalSnapshotRegistered, PLAN_LIMITS, startBatch, validatePlans } from '../evaluation-batch.mjs';
+import { activeBatches, advanceBatch, batchDocument, cancelBatch, finalSnapshotRegistered, PLAN_LIMITS, startBatch, validatePlans, writeBatchExport } from '../evaluation-batch.mjs';
+import { commitPrepared, prepareRevision } from '../evaluation-archive.mjs';
+import { mkdtempSync, rmSync } from 'node:fs';
+import os from 'node:os';
 import { commitRevision, readSubject } from '../evaluation-registry.mjs';
 import { admitSample, claimSample, markers, readManifest, recordTerminal, resolveSample, sampleUsage, SAMPLE_LABEL, verifyAncestor } from '../evaluation-sample.mjs';
 import { readSnapshot } from '../issue-presets.mjs';
@@ -210,12 +213,12 @@ async function registerBatch(client, batch) {
     evaluationBytes: Buffer.from(`batch-${batch.state.sequence}`), manifestBytes: Buffer.from('{}'), fingerprint: String(batch.state.sequence).padStart(64, 'f'),
     bundle: { sha256: 'c'.repeat(64), size: 1 }, location: null });
 }
-async function registerReport(client, runKey, runId, outcome) {
+async function registerReport(client, runKey, runId, outcome, attempt = 1) {
   const index = await readSubject(client.pages, 'evaluation-report', runKey, 'gh-pages');
   return commitRevision(client.pages, { document: { type: 'evaluation-report', revision: (index?.revisions.length ?? 0) + 1,
     createdAt: '2026-09-25T04:00:00Z', source: { instance: repository }, run: { key: runKey }, outcome,
-    precedence: { producer: { runId, attempt: 1, startedAt: new Date(runId * 1000).toISOString() }, reviewState: 'not-reviewed', reviewRubric: 0, qaCoverage: 'partial' } },
-  evaluationBytes: Buffer.from(String(runId)), manifestBytes: Buffer.from('{}'), fingerprint: String(runId).padStart(64, '0'), bundle: { sha256: 'b'.repeat(64), size: 1 }, location: null });
+    precedence: { producer: { runId, attempt, startedAt: new Date(runId * 1000 + attempt * 60_000).toISOString() }, reviewState: 'not-reviewed', reviewRubric: 0, qaCoverage: 'partial' } },
+  evaluationBytes: Buffer.from(`${runId}.${attempt}`), manifestBytes: Buffer.from('{}'), fingerprint: `${runId}${attempt}`.padStart(64, '0'), bundle: { sha256: 'b'.repeat(64), size: 1 }, location: null });
 }
 
 test('a batch waits for the final run report, not an earlier handoff report', async () => {
@@ -412,4 +415,59 @@ test('a re-dispatch under changed settings records them, so the sample is not co
   const [sample] = batchDocument(batch).samples;
   assert.equal(sample.agentConfigFingerprint, batch.state.agentConfigDrift.fingerprint);
   assert.equal(sample.comparable, false);
+});
+
+test('a report of attempt 1 never stands in for a successful attempt 2 of the same run, even after completion', async () => {
+  const client = fakeRepository();
+  await start(client, plan(1));
+  const number = client.samples()[0].number;
+  let batch = await current(client);
+  const runKey = batch.manifest.samples[0].runKey, key = batch.manifest.samples[0].key;
+  // Attempt 1 failed and its report is registered; the user re-ran and attempt 2 succeeded.
+  client.run(number, { id: 7300 });
+  await registerReport(client, runKey, 7300, { execution: 'completed', acceptance: 'failed', delivery: 'not-published' }, 1);
+  Object.assign(client.state.runs.at(-1), { run_attempt: 2 });
+  batch = await advanceBatch(client, batch, { now: Date.parse('2026-09-25T03:00:00Z') });
+  assert.equal(batch.state.samples[key].state, 'passed', 'judged from attempt 2 itself, not from attempt 1\'s report');
+  assert.equal(batch.state.samples[key].terminalRunAttempt, 2);
+  assert.equal(batch.state.state, 'active', 'attempt 2\'s own report has not arrived yet');
+  // The grace period passes and the batch completes; the late report still refines the open batch.
+  batch = await advanceBatch(client, batch, { now: Date.parse('2026-09-25T10:00:00Z') });
+  assert.equal(batch.state.state, 'completed');
+  const completedAt = batch.state.sequence;
+  await registerReport(client, runKey, 7300, { execution: 'budget-exhausted', acceptance: 'unknown', delivery: 'not-published' }, 2);
+  batch = await advanceBatch(client, await current(client), { now: Date.parse('2026-09-25T11:00:00Z') });
+  assert.equal(batch.state.samples[key].state, 'budget-exhausted');
+  assert.equal(batch.state.samples[key].report.revision, 2);
+  assert.ok(batch.state.sequence > completedAt, 'a new snapshot must be archived before the coordinator closes');
+  assert.equal(await finalSnapshotRegistered(client, batch), false);
+});
+
+test('a finished batch awaiting its archive and a running batch are exported and registered independently', async t => {
+  const client = fakeRepository();
+  await start(client, plan(1));
+  client.run(client.samples()[0].number, { id: 7400 });
+  let first = await current(client);
+  await registerReport(client, first.manifest.samples[0].runKey, 7400, { execution: 'completed', acceptance: 'passed', delivery: 'published' });
+  first = await advanceBatch(client, first, { now: Date.parse('2026-09-25T03:00:00Z') });
+  assert.equal(first.state.state, 'completed');
+  await startBatch(client, { plans: plan(1), planKey: 'smoke', trigger: 'manual', now: 9, runId: 9201, controlSha: control, env: {} });
+  const open = await activeBatches(client);
+  assert.equal(open.length, 2);
+  const output = mkdtempSync(path.join(os.tmpdir(), 'batch-export-'));
+  t.after(() => rmSync(output, { recursive: true, force: true }));
+  const keys = [];
+  for (const batch of open) keys.push(writeBatchExport(output, await advanceBatch(client, batch, { now: Date.parse('2026-09-25T04:00:00Z') })));
+  assert.equal(new Set(keys).size, 2, 'no snapshot overwrites another');
+  const samplesBefore = client.samples().length;
+  for (const key of keys) {
+    const bundle = mkdtempSync(path.join(os.tmpdir(), 'batch-bundle-'));
+    t.after(() => rmSync(bundle, { recursive: true, force: true }));
+    await prepareRevision(client, { input: path.join(output, key), output: bundle });
+    await commitPrepared(client, { input: bundle, env: {}, runId: 9300, attempt: 1, artifactId: null });
+  }
+  for (const batch of await activeBatches(client)) await advanceBatch(client, batch, { now: Date.parse('2026-09-25T05:00:00Z') });
+  const remaining = await activeBatches(client);
+  assert.deepEqual(remaining.map(b => b.manifest.batchKey), ['smoke-r9201'], 'the archived finished batch closed; the running one stays');
+  assert.equal(client.samples().length, samplesBefore, 'compensation creates no business samples');
 });
