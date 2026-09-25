@@ -42,6 +42,12 @@ export interface DataTableProps<TData, TValue = unknown> {
   readonly pagination?: boolean;
   readonly pageSize?: number;
   readonly pageSizeOptions?: readonly number[];
+  /**
+   * Set to `false` when the table has no row selection, so the footer does not
+   * report "0 of N row(s) selected". Defaults to `true`, matching the
+   * pagination component.
+   */
+  readonly showSelectedCount?: boolean;
   readonly getRowId?: (
     row: TData,
     index: number,
@@ -69,6 +75,7 @@ export function DataTable<TData, TValue = unknown>({
   pagination = true,
   pageSize = 10,
   pageSizeOptions,
+  showSelectedCount,
   getRowId,
   onRowClick,
 }: DataTableProps<TData, TValue>): ReactElement {
@@ -157,7 +164,11 @@ export function DataTable<TData, TValue = unknown>({
         </Table>
       </div>
       {pagination ? (
-        <DataTablePagination table={table} pageSizeOptions={pageSizeOptions} />
+        <DataTablePagination
+          table={table}
+          pageSizeOptions={pageSizeOptions}
+          showSelectedCount={showSelectedCount}
+        />
       ) : null}
     </div>
   );

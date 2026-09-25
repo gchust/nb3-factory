@@ -67,6 +67,17 @@ describe('application config', () => {
       visibility: 'private',
     });
     expect(drive.disks.public).toBeUndefined();
+    // Workflow run modules are imported from the Artifact store, so their bare
+    // package imports resolve relative to it. The Artifact disk therefore lives
+    // inside the compiled server tree, not on the relocatable storage disk.
+    expect(drive.disks.workflowArtifacts).toEqual({
+      driver: 'fs',
+      location: fileURLToPath(new URL('../../server', import.meta.url)),
+      visibility: 'private',
+    });
+    expect(runtime.config.get('workflow.artifactDisk')).toBe(
+      'workflowArtifacts',
+    );
     expect(
       runtime.config.get<AppLoggingConfig>('logging')!.default,
     ).toBeUndefined();
