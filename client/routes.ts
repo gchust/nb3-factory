@@ -1,4 +1,4 @@
-import { Home } from 'lucide-react';
+import { Activity, Home } from 'lucide-react';
 import {
   defineAppRoutes,
   defineSettingsRoutes,
@@ -15,6 +15,20 @@ const appRoutes: AppClientRouteContribution = defineAppRoutes([
     name: 'home',
     navigation: { title: 'navigation.home', icon: Home },
     path: '/',
+  },
+  {
+    // Every signed-in user may open this smoke-test page, so it opts out of page authorization: no permission
+    // grant has to be created for it. `auth: 'required'` still keeps signed-out visitors away.
+    authz: 'skip',
+    auth: 'required',
+    componentLoader: () => import('./pages/pipeline-smoke.js'),
+    name: 'pipeline-smoke',
+    navigation: {
+      title: 'navigation.pipelineSmoke',
+      icon: Activity,
+      order: 10,
+    },
+    path: '/pipeline-smoke',
   },
   {
     auth: 'guest',

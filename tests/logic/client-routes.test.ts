@@ -92,8 +92,11 @@ describe('app client routes', () => {
     const resolved = resolveRoutes();
 
     // The landing page opted out of page authorization, so it is reachable by every signed-in user.
+    // The pipeline smoke page opts out the same way; it exists to exercise the build pipeline for every signed-in
+    // user, so no page grant is created for it.
     expect(pageAuthorizations(resolved.routes)).toEqual([
       { name: 'home', authorizedAs: null },
+      { name: 'pipeline-smoke', authorizedAs: null },
     ]);
   });
 });
