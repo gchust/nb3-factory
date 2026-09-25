@@ -30,10 +30,12 @@ export function deliveryConfig(env, { allowInsecureLoopback = false, requireToke
     } catch { problems.push('EVALUATION_ENDPOINT 不是有效 URL'); }
   }
   const authMode = String(env.EVALUATION_AUTH_MODE || 'x-api-key').trim();
+  const format = String(env.EVALUATION_DELIVERY_FORMAT || 'bundle-v1').trim();
+  if (!['bundle-v1', 'testmanage3-problems-v1'].includes(format)) problems.push('EVALUATION_DELIVERY_FORMAT must be bundle-v1 or testmanage3-problems-v1');
   if (!AUTH_MODES.includes(authMode)) problems.push('Variable EVALUATION_AUTH_MODE 只能是 x-api-key 或 bearer');
   const token = String(env.EVALUATION_TOKEN ?? '');
   if (requireToken && !token) problems.push('Secret EVALUATION_TOKEN 未设置');
   if (token && /[\r\n]/.test(token)) problems.push('Secret EVALUATION_TOKEN 含换行');
   if (problems.length) throw new DeliveryConfigError(problems.join('；'));
-  return { endpoint: endpoint.href, authMode, token, targetId: targetIdOf(endpoint.href), origin: endpoint.origin };
+  return { endpoint: endpoint.href, authMode, token, targetId: targetIdOf(endpoint.href), origin: endpoint.origin, format };
 }

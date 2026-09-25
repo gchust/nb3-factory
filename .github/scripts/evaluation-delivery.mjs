@@ -12,6 +12,7 @@ import { keyDigest } from './evaluation-identity.mjs';
 import { commitTree, enqueue, outboxId, readIndex, readOutbox, readRegistryJson, readSubject, recordDeliveries, ROOT } from './evaluation-registry.mjs';
 import { assertSchema, loadContract } from './json-schema.mjs';
 import { deliveryConfig, DeliveryConfigError } from './evaluation-target.mjs';
+import { problemSubmission } from './problem-submission.mjs';
 
 export { deliveryConfig, DeliveryConfigError, targetIdOf } from './evaluation-target.mjs';
 
@@ -47,18 +48,26 @@ function validateReceipt(value, expected) {
   return { receiptId: value.receiptId, state: value.state };
 }
 
-function multipart(zip) {
+function multipart(zip, format) {
   const boundary = `nb3-evaluation-${sha256(zip).slice(0, 24)}`;
   if (zip.includes(Buffer.from(boundary))) throw new Error('Bundle collides with its multipart boundary');
   const head = Buffer.from(`--${boundary}\r\nContent-Disposition: form-data; name="bundle"; filename="evaluation-bundle.zip"\r\nContent-Type: application/zip\r\n\r\n`);
-  return { boundary, body: Buffer.concat([head, zip, Buffer.from(`\r\n--${boundary}--\r\n`)]) };
+  let submission = Buffer.alloc(0);
+  if (format === 'testmanage3-problems-v1') {
+    const document = JSON.parse(readZip(zip).find(file => file.path === 'evaluation.json').data.toString('utf8'));
+    const json = JSON.stringify(problemSubmission(document));
+    if (Buffer.byteLength(json) > 1024 * 1024) throw new Error('Problem submission exceeds 1 MiB');
+    if (json.includes(boundary)) throw new Error('Problem submission collides with its multipart boundary');
+    submission = Buffer.from(`\r\n--${boundary}\r\nContent-Disposition: form-data; name="problems"\r\nContent-Type: application/json\r\n\r\n${json}`);
+  }
+  return { boundary, body: Buffer.concat([head, zip, submission, Buffer.from(`\r\n--${boundary}--\r\n`)]) };
 }
 
 // Bounded retry of one bundle: the same bytes and idempotency key on every attempt.
 export async function deliverBundle({ zip, subject, config, fetcher = fetch, pause = sleep, now = () => Date.now(), attempts = RETRY.attempts, timeoutMs = RETRY.timeoutMs }) {
   const bundleSha256 = sha256(zip);
   const expected = { ...subject, bundleSha256 };
-  const { boundary, body } = multipart(zip);
+  const { boundary, body } = multipart(zip, config.format);
   const headers = {
     'Content-Type': `multipart/form-data; boundary=${boundary}`, Accept: 'application/json', 'User-Agent': 'nb3-factory-evaluation/1',
     'Idempotency-Key': idempotencyKey({ instance: subject.sourceInstance, type: subject.type, key: subject.key, revision: subject.revision }),
