@@ -61,6 +61,7 @@ const enUS = {
   'status.retry': 'Retry',
   'navigation.brandHome': 'NocoBase home',
   'navigation.brandApps': 'NocoBase applications',
+  'navigation.customerMemos': 'Customer memos',
   'auth.passwordMismatch': "Passwords don't match.",
   'routeOverlay.close': 'Close',
   'status.deniedDescription': 'You do not have permission to access {{label}}.',
@@ -95,6 +96,73 @@ const enUS = {
     description:
       'Describe what you need to your AI Agent, then build pages, data models, and business workflows.',
   },
+  customerMemos: {
+    title: 'Customer memos',
+    description: 'Notes about customers, kept in one place.',
+    create: {
+      action: 'New memo',
+      title: 'New customer memo',
+      description: 'Record a customer and the notes that go with it.',
+      success: 'Created the memo for {{name}}.',
+    },
+    edit: {
+      title: 'Edit customer memo',
+      description: 'Update the customer name or its notes.',
+      success: 'Saved the memo for {{name}}.',
+    },
+    delete: {
+      title: 'Delete the memo for {{name}}?',
+      description: 'This deletes the memo permanently. It cannot be undone.',
+      confirm: 'Delete',
+      success: 'Deleted the memo for {{name}}.',
+      notFound: 'The memo for {{name}} no longer exists.',
+    },
+    detail: {
+      title: 'Customer memo',
+      description: 'What this memo records.',
+    },
+    notFound: {
+      title: 'Memo not found',
+      description: 'This memo has been deleted, or the link is wrong.',
+    },
+    empty: {
+      title: 'No customer memos yet',
+      description: 'Create the first one to keep track of a customer.',
+      noResults: 'No memos match the search.',
+    },
+    search: {
+      placeholder: 'Search by customer name',
+      label: 'Search customer memos',
+    },
+    filters: {
+      clear: 'Clear filters',
+    },
+    actions: {
+      label: 'Actions',
+      more: 'Actions for {{name}}',
+      view: 'View',
+      edit: 'Edit',
+      delete: 'Delete',
+    },
+    error: {
+      title: 'Unable to load customer memos',
+      forbidden: 'You do not have permission to do that.',
+      requestFailed: 'Something went wrong. Please try again.',
+    },
+    fields: {
+      name: 'Customer name',
+      notes: 'Notes',
+      createdAt: 'Created',
+      updatedAt: 'Updated',
+    },
+    form: {
+      nameRequired: 'Enter the customer name.',
+      nameTooLong: 'The customer name must be at most {{max}} characters.',
+      notesTooLong: 'The notes must be at most {{max}} characters.',
+      notesPlaceholder: 'What should be remembered about this customer?',
+      notesDescription: 'Optional.',
+    },
+  },
 
   appearance: {
     title: 'Appearance',
@@ -111,6 +179,8 @@ const enUS = {
   actions: {
     close: 'Close',
     save: 'Save',
+    saving: 'Saving…',
+    create: 'Create',
     cancel: 'Cancel',
     confirm: 'Confirm',
     language: 'Language',

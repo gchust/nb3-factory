@@ -57,6 +57,7 @@ const zhCN: AppResource = {
   'status.retry': '重试',
   'navigation.brandHome': 'NocoBase 首页',
   'navigation.brandApps': 'NocoBase 应用',
+  'navigation.customerMemos': '客户备忘录',
   'auth.passwordMismatch': '两次输入的密码不一致。',
   'routeOverlay.close': '关闭',
   'status.deniedDescription': '你没有访问 {{label}} 的权限。',
@@ -88,6 +89,73 @@ const zhCN: AppResource = {
     title: '开始构建你的应用',
     description: '向 AI 助手描述你的需求，逐步构建页面、数据模型和业务流程。',
   },
+  customerMemos: {
+    title: '客户备忘录',
+    description: '集中记录关于客户的备忘信息。',
+    create: {
+      action: '新建备忘录',
+      title: '新建客户备忘录',
+      description: '记录一位客户及其相关信息。',
+      success: '已创建 {{name}} 的备忘录。',
+    },
+    edit: {
+      title: '编辑客户备忘录',
+      description: '修改客户名称或备忘内容。',
+      success: '已保存 {{name}} 的备忘录。',
+    },
+    delete: {
+      title: '删除 {{name}} 的备忘录？',
+      description: '删除后将无法恢复。',
+      confirm: '删除',
+      success: '已删除 {{name}} 的备忘录。',
+      notFound: '{{name}} 的备忘录已不存在。',
+    },
+    detail: {
+      title: '客户备忘录',
+      description: '该备忘录记录的内容。',
+    },
+    notFound: {
+      title: '未找到备忘录',
+      description: '该备忘录已被删除，或链接有误。',
+    },
+    empty: {
+      title: '暂无客户备忘录',
+      description: '创建第一条备忘录，开始记录客户信息。',
+      noResults: '没有符合搜索条件的备忘录。',
+    },
+    search: {
+      placeholder: '按客户名称搜索',
+      label: '搜索客户备忘录',
+    },
+    filters: {
+      clear: '清除筛选',
+    },
+    actions: {
+      label: '操作',
+      more: '{{name}} 的操作',
+      view: '查看',
+      edit: '编辑',
+      delete: '删除',
+    },
+    error: {
+      title: '无法加载客户备忘录',
+      forbidden: '你没有执行该操作的权限。',
+      requestFailed: '出错了，请重试。',
+    },
+    fields: {
+      name: '客户名称',
+      notes: '备注',
+      createdAt: '创建时间',
+      updatedAt: '更新时间',
+    },
+    form: {
+      nameRequired: '请输入客户名称。',
+      nameTooLong: '客户名称不能超过 {{max}} 个字符。',
+      notesTooLong: '备注不能超过 {{max}} 个字符。',
+      notesPlaceholder: '关于该客户需要记住什么？',
+      notesDescription: '选填。',
+    },
+  },
 
   appearance: {
     title: '外观',
@@ -104,6 +172,8 @@ const zhCN: AppResource = {
   actions: {
     close: '关闭',
     save: '保存',
+    saving: '正在保存…',
+    create: '创建',
     cancel: '取消',
     confirm: '确认',
     language: '语言',
