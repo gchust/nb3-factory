@@ -94,6 +94,125 @@ const enUS = {
     description:
       'Describe what you need to your AI Agent, then build pages, data models, and business workflows.',
   },
+  crm: {
+    actions: {
+      create: 'Create',
+      edit: 'Edit',
+      save: 'Save',
+      saving: 'Saving…',
+      retry: 'Retry',
+      clearFilters: 'Clear filters',
+    },
+    error: {
+      title: 'Something went wrong',
+      forbidden: 'You do not have permission to do this.',
+      requestFailed: 'The request failed. Please try again.',
+      notFoundTitle: 'Record not found',
+      notFoundDescription: 'This record no longer exists.',
+    },
+    stages: {
+      following: 'Following up',
+      won: 'Won',
+      lost: 'Lost',
+    },
+    customers: {
+      title: 'Customers',
+      description:
+        'Manage customers and see their contacts and opportunities at a glance.',
+      emptyTitle: 'No customers yet',
+      emptyDescription: 'Create your first customer to get started.',
+      fields: {
+        name: 'Name',
+        industry: 'Industry',
+        contactCount: 'Contacts',
+        opportunityCount: 'Opportunities',
+        totalAmount: 'Total amount',
+      },
+      create: {
+        title: 'New customer',
+        description: 'Add a customer to the CRM.',
+        success: 'Customer "{{name}}" created.',
+      },
+      edit: {
+        title: 'Edit customer',
+        success: 'Customer "{{name}}" updated.',
+      },
+      detail: {
+        title: 'Customer details',
+        contacts: 'Contacts',
+        opportunities: 'Opportunities',
+        noContacts: 'No contacts for this customer.',
+        noOpportunities: 'No opportunities for this customer.',
+        totalAmount: 'Total opportunity amount',
+      },
+      form: {
+        nameRequired: 'Enter a customer name.',
+        nameTooLong: 'The name may not be longer than {{max}} characters.',
+        industryTooLong:
+          'The industry may not be longer than {{max}} characters.',
+        nameTaken: 'A customer with this name already exists.',
+      },
+    },
+    contacts: {
+      title: 'Contacts',
+      description: 'Manage the people at each customer.',
+      emptyTitle: 'No contacts yet',
+      emptyDescription: 'Add the first contact for a customer.',
+      fields: {
+        name: 'Name',
+        contactInfo: 'Contact info',
+        customer: 'Customer',
+      },
+      create: {
+        title: 'New contact',
+        success: 'Contact "{{name}}" created.',
+      },
+      edit: {
+        title: 'Edit contact',
+        success: 'Contact "{{name}}" updated.',
+      },
+      form: {
+        nameRequired: 'Enter a contact name.',
+        nameTooLong: 'The name may not be longer than {{max}} characters.',
+        contactInfoTooLong:
+          'The contact info may not be longer than {{max}} characters.',
+        customerRequired: 'Select a customer.',
+        nameTaken: 'This customer already has a contact with this name.',
+        noCustomers: 'Create a customer before adding a contact.',
+      },
+    },
+    opportunities: {
+      title: 'Opportunities',
+      description: 'Track opportunities by customer and stage.',
+      emptyTitle: 'No opportunities yet',
+      emptyDescription: 'Add the first opportunity for a customer.',
+      emptyFiltered: 'No opportunities match this stage.',
+      fields: {
+        name: 'Name',
+        customer: 'Customer',
+        amount: 'Estimated amount',
+        stage: 'Stage',
+      },
+      filter: {
+        allStages: 'All stages',
+      },
+      create: {
+        title: 'New opportunity',
+        success: 'Opportunity "{{name}}" created.',
+      },
+      edit: {
+        title: 'Edit opportunity',
+        success: 'Opportunity "{{name}}" updated.',
+      },
+      form: {
+        nameRequired: 'Enter an opportunity name.',
+        nameTooLong: 'The name may not be longer than {{max}} characters.',
+        amountInvalid: 'Enter an amount of zero or greater.',
+        customerRequired: 'Select a customer.',
+        nameTaken: 'This customer already has an opportunity with this name.',
+      },
+    },
+  },
 
   appearance: {
     title: 'Appearance',
@@ -129,6 +248,9 @@ const enUS = {
   },
   navigation: {
     home: 'Home',
+    customers: 'Customers',
+    contacts: 'Contacts',
+    opportunities: 'Opportunities',
     open: 'Open navigation',
     close: 'Close navigation',
     expand: 'Expand navigation',

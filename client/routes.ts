@@ -1,4 +1,4 @@
-import { Home } from 'lucide-react';
+import { Contact, Home, TrendingUp, Users } from 'lucide-react';
 import {
   defineAppRoutes,
   defineSettingsRoutes,
@@ -15,6 +15,71 @@ const appRoutes: AppClientRouteContribution = defineAppRoutes([
     name: 'home',
     navigation: { title: 'navigation.home', icon: Home },
     path: '/',
+  },
+  {
+    auth: 'required',
+    authz: 'skip',
+    componentLoader: () => import('./pages/crm/customers/index.js'),
+    name: 'customers',
+    navigation: { title: 'navigation.customers', icon: Users },
+    path: '/customers',
+    children: [
+      {
+        componentLoader: () => import('./pages/crm/customers/new.js'),
+        name: 'customers-new',
+        path: 'new',
+      },
+      {
+        componentLoader: () => import('./pages/crm/customers/detail/index.js'),
+        name: 'customers-detail',
+        path: ':customerId',
+      },
+      {
+        componentLoader: () => import('./pages/crm/customers/detail/edit.js'),
+        name: 'customers-edit',
+        path: ':customerId/edit',
+      },
+    ],
+  },
+  {
+    auth: 'required',
+    authz: 'skip',
+    componentLoader: () => import('./pages/crm/contacts/index.js'),
+    name: 'contacts',
+    navigation: { title: 'navigation.contacts', icon: Contact },
+    path: '/contacts',
+    children: [
+      {
+        componentLoader: () => import('./pages/crm/contacts/new.js'),
+        name: 'contacts-new',
+        path: 'new',
+      },
+      {
+        componentLoader: () => import('./pages/crm/contacts/edit.js'),
+        name: 'contacts-edit',
+        path: ':contactId',
+      },
+    ],
+  },
+  {
+    auth: 'required',
+    authz: 'skip',
+    componentLoader: () => import('./pages/crm/opportunities/index.js'),
+    name: 'opportunities',
+    navigation: { title: 'navigation.opportunities', icon: TrendingUp },
+    path: '/opportunities',
+    children: [
+      {
+        componentLoader: () => import('./pages/crm/opportunities/new.js'),
+        name: 'opportunities-new',
+        path: 'new',
+      },
+      {
+        componentLoader: () => import('./pages/crm/opportunities/edit.js'),
+        name: 'opportunities-edit',
+        path: ':opportunityId',
+      },
+    ],
   },
   {
     auth: 'guest',

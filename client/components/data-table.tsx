@@ -42,6 +42,12 @@ export interface DataTableProps<TData, TValue = unknown> {
   readonly pagination?: boolean;
   readonly pageSize?: number;
   readonly pageSizeOptions?: readonly number[];
+  /**
+   * Whether the pagination footer shows the "N of M row(s) selected" count.
+   * Lists without row selection pass `false` to hide a line that would always
+   * read "0 of N".
+   */
+  readonly showSelectedCount?: boolean;
   readonly getRowId?: (
     row: TData,
     index: number,
@@ -69,6 +75,7 @@ export function DataTable<TData, TValue = unknown>({
   pagination = true,
   pageSize = 10,
   pageSizeOptions,
+  showSelectedCount,
   getRowId,
   onRowClick,
 }: DataTableProps<TData, TValue>): ReactElement {
@@ -157,7 +164,11 @@ export function DataTable<TData, TValue = unknown>({
         </Table>
       </div>
       {pagination ? (
-        <DataTablePagination table={table} pageSizeOptions={pageSizeOptions} />
+        <DataTablePagination
+          table={table}
+          pageSizeOptions={pageSizeOptions}
+          showSelectedCount={showSelectedCount}
+        />
       ) : null}
     </div>
   );

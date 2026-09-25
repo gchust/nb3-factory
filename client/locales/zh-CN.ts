@@ -87,6 +87,122 @@ const zhCN: AppResource = {
     title: '开始构建你的应用',
     description: '向 AI 助手描述你的需求，逐步构建页面、数据模型和业务流程。',
   },
+  crm: {
+    actions: {
+      create: '新建',
+      edit: '编辑',
+      save: '保存',
+      saving: '正在保存…',
+      retry: '重试',
+      clearFilters: '清除筛选',
+    },
+    error: {
+      title: '出错了',
+      forbidden: '你没有执行此操作的权限。',
+      requestFailed: '请求失败，请重试。',
+      notFoundTitle: '未找到记录',
+      notFoundDescription: '该记录已不存在。',
+    },
+    stages: {
+      following: '跟进中',
+      won: '已赢单',
+      lost: '已丢单',
+    },
+    customers: {
+      title: '客户',
+      description: '管理客户，一览其联系人与商机。',
+      emptyTitle: '暂无客户',
+      emptyDescription: '先创建一个客户。',
+      fields: {
+        name: '名称',
+        industry: '行业',
+        contactCount: '联系人',
+        opportunityCount: '商机',
+        totalAmount: '总金额',
+      },
+      create: {
+        title: '新建客户',
+        description: '向 CRM 添加一个客户。',
+        success: '客户“{{name}}”已创建。',
+      },
+      edit: {
+        title: '编辑客户',
+        success: '客户“{{name}}”已更新。',
+      },
+      detail: {
+        title: '客户详情',
+        contacts: '联系人',
+        opportunities: '商机',
+        noContacts: '该客户暂无联系人。',
+        noOpportunities: '该客户暂无商机。',
+        totalAmount: '商机总金额',
+      },
+      form: {
+        nameRequired: '请输入客户名称。',
+        nameTooLong: '名称不能超过 {{max}} 个字符。',
+        industryTooLong: '行业不能超过 {{max}} 个字符。',
+        nameTaken: '已存在同名客户。',
+      },
+    },
+    contacts: {
+      title: '联系人',
+      description: '管理每个客户下的人员。',
+      emptyTitle: '暂无联系人',
+      emptyDescription: '为客户添加第一个联系人。',
+      fields: {
+        name: '姓名',
+        contactInfo: '联系方式',
+        customer: '所属客户',
+      },
+      create: {
+        title: '新建联系人',
+        success: '联系人“{{name}}”已创建。',
+      },
+      edit: {
+        title: '编辑联系人',
+        success: '联系人“{{name}}”已更新。',
+      },
+      form: {
+        nameRequired: '请输入联系人姓名。',
+        nameTooLong: '姓名不能超过 {{max}} 个字符。',
+        contactInfoTooLong: '联系方式不能超过 {{max}} 个字符。',
+        customerRequired: '请选择客户。',
+        nameTaken: '该客户下已存在同名联系人。',
+        noCustomers: '请先创建客户，再添加联系人。',
+      },
+    },
+    opportunities: {
+      title: '商机',
+      description: '按客户与阶段跟踪商机。',
+      emptyTitle: '暂无商机',
+      emptyDescription: '为客户添加第一个商机。',
+      emptyFiltered: '没有符合该阶段的商机。',
+      fields: {
+        name: '名称',
+        customer: '所属客户',
+        amount: '预计金额',
+        stage: '阶段',
+      },
+      filter: {
+        allStages: '全部阶段',
+      },
+      create: {
+        title: '新建商机',
+        success: '商机“{{name}}”已创建。',
+      },
+      edit: {
+        title: '编辑商机',
+        success: '商机“{{name}}”已更新。',
+      },
+      form: {
+        nameRequired: '请输入商机名称。',
+        nameTooLong: '名称不能超过 {{max}} 个字符。',
+        amountInvalid: '请输入大于等于 0 的金额。',
+        customerRequired: '请选择客户。',
+        nameTaken: '该客户下已存在同名商机。',
+      },
+    },
+  },
 
   appearance: {
     title: '外观',
@@ -120,6 +236,9 @@ const zhCN: AppResource = {
   },
   navigation: {
     home: '首页',
+    customers: '客户',
+    contacts: '联系人',
+    opportunities: '商机',
     open: '打开导航',
     close: '关闭导航',
     expand: '展开导航',
