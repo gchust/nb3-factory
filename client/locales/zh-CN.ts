@@ -87,6 +87,47 @@ const zhCN: AppResource = {
     title: '开始构建你的应用',
     description: '向 AI 助手描述你的需求，逐步构建页面、数据模型和业务流程。',
   },
+  todos: {
+    title: '调度任务验证',
+    description:
+      '一个最小可用的待办列表，用于验证调度任务会把已过期且未完成的记录标记为已过期，而未来到期的与已完成的记录保持不变。',
+    stats: {
+      total: '待办总数',
+      expired: '已过期',
+      pending: '待处理',
+    },
+    columns: {
+      title: '标题',
+      dueAt: '到期时间',
+      completed: '是否完成',
+      expired: '是否过期',
+    },
+    completed: '已完成',
+    pending: '未完成',
+    expired: '已过期',
+    notExpired: '未过期',
+    loading: '正在加载待办…',
+    empty: '暂无待办。',
+    errors: {
+      loadTodos: '无法加载待办。',
+      loadSchedule: '无法加载调度信息。',
+    },
+    schedule: {
+      title: '过期检查调度',
+      enabled: '已启用',
+      disabled: '已停用',
+      unavailable: '调度不可用',
+      name: '名称',
+      cron: '执行周期',
+      nextRun: '下次执行',
+      lastRun: '上次执行',
+      runCount: '执行次数',
+      completedCount: '成功次数',
+      open: '打开调度与执行结果',
+      loading: '正在加载调度…',
+      warn: '未注册过期检查调度。',
+    },
+  },
 
   appearance: {
     title: '外观',
@@ -120,6 +161,7 @@ const zhCN: AppResource = {
   },
   navigation: {
     home: '首页',
+    todos: '待办事项',
     open: '打开导航',
     close: '关闭导航',
     expand: '展开导航',

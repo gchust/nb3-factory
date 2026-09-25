@@ -1,4 +1,10 @@
 import { createApp } from '../../server/app.js';
+import {
+  TODO_EXPIRY_SCHEDULE_KEY,
+  TODO_EXPIRY_TARGET_TYPE,
+  todoServiceToken,
+  type TodoRecord,
+} from '../../server/providers/index.js';
 import authConfig from '../../server/config/auth.js';
 // @vitest-environment node
 
@@ -692,6 +698,91 @@ describe('app server', () => {
       headers: { 'x-api-key': key.key },
     });
     expect(rejected.status).toBe(401);
+  });
+
+  it('serves the todo table and registers the expired-todo schedule', async () => {
+    const app = trackCloseable(
+      await createInstalledStandaloneServer({ viteDevUrl: false }),
+    );
+    const baseUrl = `http://localhost${app.application.publicBasePath}`;
+
+    const anonymous = await requestApp(app, `${baseUrl}/api/todos`);
+    expect(anonymous.status).toBe(401);
+
+    const signIn = await requestApp(
+      app,
+      `${baseUrl}/api/auth/sign-in/username`,
+      {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ username: 'nocobase', password: 'admin123' }),
+      },
+    );
+    expect(signIn.status).toBe(200);
+    const cookie = signIn.headers
+      .getSetCookie()
+      .map((header) => header.split(';')[0])
+      .join('; ');
+
+    const seeded = await requestApp(app, `${baseUrl}/api/todos`, {
+      headers: { cookie },
+    });
+    expect(seeded.status).toBe(200);
+    const seededBody = (await seeded.json()) as { data: TodoRecord[] };
+    expect(seededBody.data).toHaveLength(3);
+    expect(seededBody.data.every((todo) => !todo.expired)).toBe(true);
+
+    // The same service the schedule target runs. It is called twice to prove
+    // that a repeated run changes nothing the first run did not already change.
+    const todoService = app.application.container.resolve(todoServiceToken);
+    await todoService.markExpired();
+    // Nothing is left to mark: a repeated run is a no-op, not a second write.
+    const repeated = await todoService.markExpired();
+    expect(repeated.marked).toBe(0);
+
+    const after = await requestApp(app, `${baseUrl}/api/todos`, {
+      headers: { cookie },
+    });
+    expect(after.status).toBe(200);
+    const afterBody = (await after.json()) as { data: TodoRecord[] };
+    // Repeated execution never creates a duplicate.
+    expect(afterBody.data).toHaveLength(3);
+    const expired = afterBody.data.filter((todo) => todo.expired);
+    expect(expired).toHaveLength(1);
+    expect(expired[0]?.completed).toBe(false);
+    // Future-dated and completed records are left alone.
+    for (const todo of afterBody.data) {
+      if (todo.completed || new Date(todo.dueAt).getTime() >= Date.now()) {
+        expect(todo.expired).toBe(false);
+      }
+    }
+
+    const schedules = await requestApp(app, `${baseUrl}/api/schedules`, {
+      headers: { cookie },
+    });
+    expect(schedules.status).toBe(200);
+    const schedulesBody = (await schedules.json()) as {
+      data: Array<{
+        id: string;
+        key: string;
+        enabled: boolean;
+        targetType: string;
+      }>;
+    };
+    const schedule = schedulesBody.data.find(
+      (item) => item.key === TODO_EXPIRY_SCHEDULE_KEY,
+    );
+    expect(schedule).toBeDefined();
+    expect(schedule?.enabled).toBe(true);
+    expect(schedule?.targetType).toBe(TODO_EXPIRY_TARGET_TYPE);
+
+    // The execution-results entry point the page links to.
+    const occurrences = await requestApp(
+      app,
+      `${baseUrl}/api/schedules/${encodeURIComponent(schedule?.id ?? '')}/occurrences`,
+      { headers: { cookie } },
+    );
+    expect(occurrences.status).toBe(200);
   });
 
   it('mounts standalone app-local routes behind the public base path', async () => {

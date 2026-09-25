@@ -1,4 +1,4 @@
-import { Home } from 'lucide-react';
+import { Home, ListTodo } from 'lucide-react';
 import {
   defineAppRoutes,
   defineSettingsRoutes,
@@ -15,6 +15,16 @@ const appRoutes: AppClientRouteContribution = defineAppRoutes([
     name: 'home',
     navigation: { title: 'navigation.home', icon: Home },
     path: '/',
+  },
+  {
+    auth: 'required',
+    // The page and the API check the same page resource, so a user who cannot
+    // read the todos never sees the menu entry that would lead to a 403.
+    authz: { resource: { type: 'page', id: 'todos' }, action: 'access' },
+    componentLoader: () => import('./pages/todos.js'),
+    name: 'todos',
+    navigation: { title: 'navigation.todos', icon: ListTodo },
+    path: '/todos',
   },
   {
     auth: 'guest',

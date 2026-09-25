@@ -94,6 +94,47 @@ const enUS = {
     description:
       'Describe what you need to your AI Agent, then build pages, data models, and business workflows.',
   },
+  todos: {
+    title: 'Scheduled task verification',
+    description:
+      'A minimal todo list used to verify that the scheduled task marks past-due, incomplete records as expired while future-dated and completed records stay unchanged.',
+    stats: {
+      total: 'Total todos',
+      expired: 'Expired',
+      pending: 'Pending',
+    },
+    columns: {
+      title: 'Title',
+      dueAt: 'Due at',
+      completed: 'Completed',
+      expired: 'Expired',
+    },
+    completed: 'Completed',
+    pending: 'Incomplete',
+    expired: 'Expired',
+    notExpired: 'Not expired',
+    loading: 'Loading todos…',
+    empty: 'No todos yet.',
+    errors: {
+      loadTodos: 'Unable to load todos.',
+      loadSchedule: 'Unable to load schedule information.',
+    },
+    schedule: {
+      title: 'Expiry schedule',
+      enabled: 'Enabled',
+      disabled: 'Disabled',
+      unavailable: 'Schedule unavailable',
+      name: 'Name',
+      cron: 'Cron',
+      nextRun: 'Next run',
+      lastRun: 'Last run',
+      runCount: 'Runs',
+      completedCount: 'Successful runs',
+      open: 'Open schedule and execution results',
+      loading: 'Loading schedule…',
+      warn: 'The expiry schedule is not registered.',
+    },
+  },
 
   appearance: {
     title: 'Appearance',
@@ -129,6 +170,7 @@ const enUS = {
   },
   navigation: {
     home: 'Home',
+    todos: 'Todos',
     open: 'Open navigation',
     close: 'Close navigation',
     expand: 'Expand navigation',
