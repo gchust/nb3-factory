@@ -94,6 +94,11 @@ const enUS = {
     description:
       'Describe what you need to your AI Agent, then build pages, data models, and business workflows.',
   },
+  pipelineSmoke: {
+    title: 'Pipeline Smoke',
+    description: 'Used to verify the automated setup pipeline.',
+    increment: '+1',
+  },
 
   appearance: {
     title: 'Appearance',
@@ -129,6 +134,7 @@ const enUS = {
   },
   navigation: {
     home: 'Home',
+    pipelineSmoke: 'Pipeline Smoke',
     open: 'Open navigation',
     close: 'Close navigation',
     expand: 'Expand navigation',

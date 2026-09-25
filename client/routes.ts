@@ -1,4 +1,4 @@
-import { Home } from 'lucide-react';
+import { FlaskConical, Home } from 'lucide-react';
 import {
   defineAppRoutes,
   defineSettingsRoutes,
@@ -15,6 +15,16 @@ const appRoutes: AppClientRouteContribution = defineAppRoutes([
     name: 'home',
     navigation: { title: 'navigation.home', icon: Home },
     path: '/',
+  },
+  {
+    // A signed-in user can reach the smoke page without a stored page grant, so build verification never depends on
+    // permission administration. `authz: 'skip'` mirrors the landing page for that reason.
+    authz: 'skip',
+    auth: 'required',
+    componentLoader: () => import('./pages/pipeline-smoke.js'),
+    name: 'pipeline-smoke',
+    navigation: { title: 'navigation.pipelineSmoke', icon: FlaskConical },
+    path: '/pipeline-smoke',
   },
   {
     auth: 'guest',
