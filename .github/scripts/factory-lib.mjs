@@ -251,9 +251,15 @@ export class GitHubClient {
     };
     for (const [name, [color, description]] of Object.entries(taskLabels)) {
       if (existing.has(name)) continue;
-      await this.request('POST', '/labels', {
-        body: { name, color, description },
-      });
+      try {
+        await this.request('POST', '/labels', {
+          body: { name, color, description },
+        });
+      } catch (error) {
+        // Sync and build workflows can initialize a label at the same time.
+        // A label outside the first list page is also already initialized.
+        if (!await this.request('GET', `/labels/${encodeURIComponent(name)}`, { allow404: true })) throw error;
+      }
     }
   }
 

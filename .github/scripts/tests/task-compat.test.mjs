@@ -95,6 +95,53 @@ test('label initialization creates the persistent build label once', async () =>
   assert.deepEqual(created, [BUILD_LABEL]);
 });
 
+test('concurrent sync and build initialization both succeed when the build label is new', async () => {
+  const labels = new Set(Object.keys(STATUS_LABELS));
+  let reads = 0;
+  let release;
+  const barrier = new Promise((resolve) => { release = resolve; });
+  const clients = Array.from({ length: 2 }, () => {
+    const github = new GitHubClient({ token: 'test', repository });
+    github.request = async (method, route, options) => {
+      if (method === 'GET' && route === '/labels') {
+        const snapshot = [...labels].map((name) => ({ name }));
+        if (++reads === 2) release();
+        await barrier;
+        return snapshot;
+      }
+      if (method === 'GET' && route === `/labels/${encodeURIComponent(BUILD_LABEL)}`) {
+        assert.equal(options.allow404, true);
+        return labels.has(BUILD_LABEL) ? { name: BUILD_LABEL } : null;
+      }
+      assert.equal(method, 'POST');
+      assert.equal(route, '/labels');
+      if (labels.has(options.body.name)) throw new Error('422: already_exists');
+      labels.add(options.body.name);
+      return { name: options.body.name };
+    };
+    return github;
+  });
+  await Promise.all(clients.map((github) => github.ensureStatusLabels()));
+  assert.equal(labels.size, Object.keys(STATUS_LABELS).length + 1);
+});
+
+test('a build label outside the first page is accepted but a real creation failure still rejects', async () => {
+  for (const exists of [true, false]) {
+    const github = new GitHubClient({ token: 'test', repository });
+    const failure = new Error(exists ? '422: already_exists' : '403: forbidden');
+    github.request = async (method, route, options) => {
+      if (method === 'GET' && route === '/labels') return Object.keys(STATUS_LABELS).map((name) => ({ name }));
+      if (method === 'POST' && route === '/labels') throw failure;
+      assert.equal(method, 'GET');
+      assert.equal(route, `/labels/${encodeURIComponent(BUILD_LABEL)}`);
+      assert.equal(options.allow404, true);
+      return exists ? { name: BUILD_LABEL } : null;
+    };
+    if (exists) await github.ensureStatusLabels();
+    else await assert.rejects(github.ensureStatusLabels(), (error) => error === failure);
+  }
+});
+
 test('status updates remove both old and new statuses but preserve business and build labels', async () => {
   const github = new GitHubClient({ token: 'test', repository });
   const writes = [];
