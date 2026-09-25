@@ -1,4 +1,5 @@
 import { dimensionsFor, findingKinds, moduleRoundResult, owners, supportLabels, targetKinds, validateBuildReview } from '../scripts/build-review.mjs';
+import { findingCategory, findingStatus, isFrameworkFinding, orderFindings, renderFrameworkOverview, severityLabels } from './framework-overview.mjs';
 
 const escape = value => String(value ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const tag = (label, kind = '') => `<span class="tag ${kind}">${escape(label)}</span>`;
@@ -35,11 +36,9 @@ function retainedLegacy(report) {
 
 function renderFindings(findings, framework) {
   let html = '';
-  const confidence = { confirmed: '评审者判断 · 有证据', suspected: '待确认' };
-  const status = { open: '未解决', resolved: '已解决', unknown: '处理状态未知', 'not-applicable': '不适用' };
-  const severity = { info: '信息', minor: '轻微', major: '重要', critical: '严重' };
+  const confidence = { confirmed: '评审者判断 · 冻结材料有据', suspected: '待确认' };
   const groups = framework ? [
-    { title: '库、插件与指引', findings: findings.filter(f => ['framework', 'plugin', 'template', 'documentation'].includes(f.owner)) },
+    { title: 'NocoBase3 库、插件、模板与指引', findings: findings.filter(isFrameworkFinding) },
     { title: '归因待确认 · 不直接扣框架分', findings: findings.filter(f => f.owner === 'unknown') },
     { title: '业务实现与执行环境观察 · 不计入框架得分', findings: findings.filter(f => ['application', 'factory', 'environment'].includes(f.owner)), collapsed: true },
   ] : [{ title: '', findings: findings }];
@@ -50,9 +49,11 @@ function renderFindings(findings, framework) {
       const findings = group.findings.filter(finding => finding.kind === kind);
       if (!findings.length) continue;
       html += `<div class="review-group"><h3>${label} <span>${findings.length}</span></h3>`;
-      for (const finding of findings) {
-        const important = ['major', 'critical'].includes(finding.severity) && finding.status !== 'resolved';
-        html += `<details class="card review-finding" id="review-finding-${escape(finding.id)}" ${important ? 'open' : ''}><summary><div><strong>${escape(finding.title)}</strong><div class="review-badges">${tag(owners[finding.owner])}${tag(confidence[finding.confidence], finding.confidence === 'suspected' ? 'warn' : '')}${tag(severity[finding.severity], important ? 'bad' : '')}${tag(status[finding.status])}</div></div><span>⌄</span></summary><div class="subsection-body"><p>${escape(finding.detail)}</p>${kind === 'misleading' ? `<div class="review-contrast"><div><h4>文档 / API 声称</h4><p>${escape(finding.claimed)}</p></div><div><h4>实际观察</h4><p>${escape(finding.observed)}</p></div></div>` : ''}<dl class="retro-fields"><div><dt>实际影响 / 提供的帮助</dt><dd>${escape(finding.impact)}</dd></div><div><dt>建议改法 / 应保留的能力</dt><dd>${escape(finding.suggestedChange)}</dd></div></dl>${refs(finding.evidence)}</div></details>`;
+      for (const finding of orderFindings(findings)) {
+        const important = kind !== 'strength' && isFrameworkFinding(finding) && ['major', 'critical'].includes(finding.severity);
+        const diagnosis = finding.diagnosis;
+        const diagnosisHtml = diagnosis ? `<dl class="retro-fields diagnosis-fields">${[['trigger', '触发条件'], ['expected', '应有能力 / 行为'], ['actual', '实际观察'], ['workaround', '应用绕行与代价'], ['acceptance', '改进后的验收标准']].map(([key, label]) => `<div><dt>${label}</dt><dd>${escape(diagnosis[key])}</dd></div>`).join('')}</dl>` : framework && kind !== 'strength' ? '<p class="check-source">本条未提供结构化触发条件、绕行与回归标准，请按原文和证据复核，不自动补造。</p>' : '';
+        html += `<details class="card review-finding" id="review-finding-${escape(finding.id)}" ${important ? 'open' : ''}><summary><div><strong>${escape(finding.title)}</strong><div class="review-badges">${tag(owners[finding.owner])}${tag(findingCategory(finding))}${tag(confidence[finding.confidence], finding.confidence === 'suspected' ? 'warn' : '')}${tag(severityLabels[finding.severity], important ? 'bad' : '')}${tag(findingStatus(finding.status))}</div></div><span>⌄</span></summary><div class="subsection-body"><p>${escape(finding.detail)}</p>${kind === 'misleading' ? `<div class="review-contrast"><div><h4>文档 / API 声称</h4><p>${escape(finding.claimed)}</p></div><div><h4>实际观察</h4><p>${escape(finding.observed)}</p></div></div>` : ''}<dl class="retro-fields"><div><dt>实际影响 / 提供的帮助</dt><dd>${escape(finding.impact)}</dd></div><div><dt>建议改法 / 应保留的能力</dt><dd>${escape(finding.suggestedChange)}</dd></div></dl>${diagnosisHtml}${framework && kind !== 'strength' && isFrameworkFinding(finding) ? '<p class="check-source upstream-boundary">最新上游状态：未复核。原评审“已解决”不作为上游修复证明；应用绕行、业务 QA 通过均不关闭框架问题。</p>' : ''}${refs(finding.evidence)}</div></details>`;
       }
       html += '</div>';
     }
@@ -70,6 +71,7 @@ export function renderBuildReview(input) {
     catch { report = { state: 'failed', reason: '评审数据无效，未采用评分；原始验收仍保留。', process: input.process }; }
   }
   const review = ['completed', 'partial'].includes(report?.state) ? report.evaluation : null;
+  const overviewHtml = renderFrameworkOverview(report);
   const framework = review?.version === 2;
   const dimensions = dimensionsFor(framework ? 2 : 1);
   const primary = framework ? ['requirementFit', 'usability', 'agentFriendliness'] : Object.keys(dimensions);
@@ -85,6 +87,7 @@ export function renderBuildReview(input) {
       : report?.state === 'failed' ? '独立评测未完成或结果无效，当前材料不足。'
         : '本轮未进行独立评测，不能据此声称没有问题或建议。';
     return {
+      overviewHtml,
       html: html + `<div class="card report-empty"><strong>本轮不显示评分</strong><p>${escape(report?.reason || state)}</p></div></section><section class="section" id="framework-feedback"><div class="section-head"><h2>框架帮助与证据</h2></div><p class="muted">尚无独立评审结论；已有过程记录见<a class="text-link" href="#problems">问题与改进</a>。</p></section>`,
       feedbackHtml: `<p class="muted">${state}</p>${report?.reason ? `<p class="check-source">${escape(report.reason)}</p>` : ''}`,
       findings: [],
@@ -113,10 +116,10 @@ export function renderBuildReview(input) {
   const provenance = `来源：独立评审 · 口径 v${review.version} · 源 Run ${escape(report.basis.runId)} / attempt ${escape(report.basis.attempt)}${report.reviewer?.replay ? ` · 后补评审 Run ${escape(report.reviewer.runId)} / attempt ${escape(report.reviewer.attempt)}` : ''}`;
   const feedbackHtml = `<p class="check-source">${provenance}</p>${report.state === 'partial' ? `<p class="report-banner">评测仅部分完成；以下仅为已有发现，未覆盖部分不能推断为无问题。${escape(report.reason)}</p>` : ''}${findings.length ? renderFindings(findings, framework) : `<p class="muted">${report.state === 'partial' ? '已完成部分未提出问题或改进建议；其余尚未评测。' : '已完成独立评测，本轮未提出问题或改进建议；不等于不存在问题。'}</p>`}`;
   html += `<details class="card raw-record" open><summary>本次评审的覆盖限制</summary><div class="subsection-body">${list(review.limitations)}</div></details>`;
-  html += `<details class="card raw-record"><summary>评审基线与版本指纹</summary><div class="subsection-body"><p>评审针对已封存候选补丁；可能在原搭建内或之后单独补跑。与 PR 当前最新提交不是同一概念，评审不修改补丁。</p><pre>${escape(JSON.stringify({ reviewer: report.reviewer, ...report.basis }, null, 2))}</pre></div></details>`;
+  html += `<details class="card raw-record" id="review-basis"><summary>评审基线与版本指纹</summary><div class="subsection-body"><p>评审针对已封存候选补丁与当时的依赖；可能在原搭建内或之后单独补跑。与 PR 或 NocoBase3 当前最新提交不是同一概念。评审只读冻结材料，引用运行日志不代表评审者重新复现；此报告未执行最新上游源码复核。</p><pre>${escape(JSON.stringify({ reviewer: report.reviewer, ...report.basis }, null, 2))}</pre></div></details>`;
   html += '<div class="review-evidence"><h3>证据与原文</h3>';
   for (const evidence of review.evidence) {
     html += `<details class="card raw-record" id="review-evidence-${escape(evidence.id)}"><summary><strong>${escape(evidence.id)}</strong> · ${escape(evidence.path)}${evidence.lines ? `:${evidence.lines.join('–')}` : ''}</summary><div class="subsection-body"><p>${escape(evidence.observation)}</p>${evidence.kind === 'screenshot' ? evidence.mediaId ? `<button class="btn small" data-open="${escape(evidence.mediaId)}">查看原始截图</button>` : '<p class="check-source">截图未内嵌；请从本轮 Artifact 核对，缺图不伪装成已展示。</p>' : `<pre>${escape(evidence.excerpt)}</pre>`}<p class="check-source">原文件 SHA-256：${escape(evidence.sha256)}</p></div></details>`;
   }
-  return { html: html + '</div></section>', feedbackHtml, findings };
+  return { html: html + '</div></section>', feedbackHtml, findings, overviewHtml };
 }

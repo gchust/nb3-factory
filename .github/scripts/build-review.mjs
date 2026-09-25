@@ -28,6 +28,10 @@ export const owners = {
   factory: '工厂流程', environment: '环境 / 外部服务', unknown: '归因待确认',
 };
 export const findingKinds = { strength: '做得好的地方', issue: '问题', misleading: '误导或明显错误', improvement: '改进建议' };
+export const diagnosisCategories = {
+  'runtime-defect': '实现缺陷', 'capability-gap': '能力 / 接入缺口',
+  'guidance-gap': '指引 / 示例缺陷', 'usability-improvement': '易用性改进',
+};
 export const digest = value => createHash('sha256').update(value).digest('hex');
 const count = value => Number.isSafeInteger(value) && value >= 0;
 const checkStates = ['passed', 'failed', 'blocked', 'not_run', 'unknown'];
@@ -206,6 +210,12 @@ export function validateEvaluation(review, inputHash, catalog, expectedVersion =
     need(['open', 'resolved', 'unknown', 'not-applicable'].includes(finding.status), 'Invalid finding status');
     for (const key of ['title', 'detail', 'impact', 'suggestedChange']) text(finding[key], `finding.${key}`);
     refs(finding.evidence, true);
+    // Optional for archived v2 reports; new reviews provide an actionable record.
+    if (finding.diagnosis !== undefined) {
+      need(review.version === 2 && finding.kind !== 'strength' && object(finding.diagnosis), 'Invalid finding diagnosis');
+      need(Object.hasOwn(diagnosisCategories, finding.diagnosis.category), 'Invalid diagnosis category');
+      for (const key of ['trigger', 'expected', 'actual', 'workaround', 'acceptance']) text(finding.diagnosis[key], `diagnosis.${key}`);
+    }
     if (review.version === 2 && finding.confidence === 'confirmed' &&
         ['framework', 'plugin', 'template', 'documentation'].includes(finding.owner)) {
       need(finding.evidence.some(id => review.modules.some(module => module.targets.some(target =>

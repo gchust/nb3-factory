@@ -154,5 +154,5 @@ test('findings, optional prose and source metadata are escaped; provenance is no
   assert.equal(ids.length, new Set(ids).size);
   const links = [...html.matchAll(/href="#(review-(?:finding|evidence)-[^"]+)"/g)].map(match => match[1]);
   for (const id of links) assert.ok(ids.includes(id), `missing target ${id}`);
-  assert.match(html, /factory-template-version" content="5"/);
+  assert.match(html, /factory-template-version" content="6"/);
 });

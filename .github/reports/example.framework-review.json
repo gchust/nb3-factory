@@ -96,30 +96,19 @@
         "name": "数据访问与持久化",
         "scope": "虚构样例：框架负责查询入口与连接；应用负责客户业务条件。",
         "limitations": "未覆盖并发、多连接、事务和其他数据库。",
-        "criteria": [
-          "B01",
-          "B02"
-        ],
+        "criteria": ["B01", "B02"],
         "targets": [
           {
             "kind": "library",
             "name": "@nocobase/example-data",
-            "entrypoints": [
-              "query(table)"
-            ],
-            "evidence": [
-              "E1"
-            ]
+            "entrypoints": ["query(table)"],
+            "evidence": ["E1"]
           },
           {
             "kind": "guidance",
             "name": "app/.agents/skills/example-data/SKILL.md",
-            "entrypoints": [
-              "连接装配与查询组合示例"
-            ],
-            "evidence": [
-              "E2"
-            ]
+            "entrypoints": ["连接装配与查询组合示例"],
+            "evidence": ["E2"]
           }
         ],
         "requirements": [
@@ -130,56 +119,34 @@
             "recommendedUsage": "先解析连接，再使用 query(table) 组合业务条件。",
             "actualUsage": "Agent 按文档接入；未另写数据存储层。",
             "gapOwner": "none",
-            "evidence": [
-              "E1",
-              "E2",
-              "E3",
-              "E4"
-            ]
+            "evidence": ["E1", "E2", "E3", "E4"]
           }
         ],
         "scores": {
           "requirementFit": {
             "score": 88,
             "reason": "查询能力覆盖本次读写；业务条件是正常组合，不因没有完整 CRM 接口扣分。",
-            "evidence": [
-              "E1",
-              "E3",
-              "E4"
-            ]
+            "evidence": ["E1", "E3", "E4"]
           },
           "usability": {
             "score": 82,
             "reason": "公开入口与连接装配步骤明确，应用只需补充业务查询条件。",
-            "evidence": [
-              "E1",
-              "E2",
-              "E3"
-            ]
+            "evidence": ["E1", "E2", "E3"]
           },
           "agentFriendliness": {
             "score": 86,
             "reason": "Skill 提供定位入口和完整接入顺序，实际应用采用了该路径。",
-            "evidence": [
-              "E2",
-              "E3"
-            ]
+            "evidence": ["E2", "E3"]
           },
           "design": {
             "score": 84,
             "reason": "查询与连接职责在库内，业务规则留在应用；不以业务 service 拆分作为框架设计依据。",
-            "evidence": [
-              "E1",
-              "E2"
-            ]
+            "evidence": ["E1", "E2"]
           },
           "reliability": {
             "score": 80,
             "reason": "本样例已查看查询实现及对应运行记录；仅评价展示的单连接路径。",
-            "evidence": [
-              "E1",
-              "E4"
-            ]
+            "evidence": ["E1", "E4"]
           }
         }
       },
@@ -187,29 +154,19 @@
         "name": "页面路由与接入指引",
         "scope": "虚构样例：库提供弹窗路由；指引应明确 Hook 的上下文边界。",
         "limitations": "只查看到声明和使用证据，没有库实现，可靠性未评估。",
-        "criteria": [
-          "B01"
-        ],
+        "criteria": ["B01"],
         "targets": [
           {
             "kind": "library",
             "name": "@nocobase/example-router",
-            "entrypoints": [
-              "useDialog()"
-            ],
-            "evidence": [
-              "E5"
-            ]
+            "entrypoints": ["useDialog()"],
+            "evidence": ["E5"]
           },
           {
             "kind": "guidance",
             "name": "app/.agents/skills/example-router/SKILL.md",
-            "entrypoints": [
-              "弹窗路由接入示例"
-            ],
-            "evidence": [
-              "E6"
-            ]
+            "entrypoints": ["弹窗路由接入示例"],
+            "evidence": ["E6"]
           }
         ],
         "requirements": [
@@ -220,39 +177,24 @@
             "recommendedUsage": "声明提供 Hook，但指引未明确必须在 Provider 后代调用。",
             "actualUsage": "首次接入受阻；修复位置后业务 QA 通过。",
             "gapOwner": "documentation",
-            "evidence": [
-              "E5",
-              "E6",
-              "E7",
-              "E4"
-            ]
+            "evidence": ["E5", "E6", "E7", "E4"]
           }
         ],
         "scores": {
           "requirementFit": {
             "score": 80,
             "reason": "当前需求有公开能力且实际接入完成；首次失败不能直接证明功能缺失。",
-            "evidence": [
-              "E5",
-              "E4"
-            ]
+            "evidence": ["E5", "E4"]
           },
           "usability": {
             "score": 73,
             "reason": "上下文前提需要从报错反推，增加接入步骤。",
-            "evidence": [
-              "E5",
-              "E6",
-              "E7"
-            ]
+            "evidence": ["E5", "E6", "E7"]
           },
           "agentFriendliness": {
             "score": 62,
             "reason": "本样例指引省略关键前提，Agent 很容易在错误位置调用。",
-            "evidence": [
-              "E6",
-              "E7"
-            ]
+            "evidence": ["E6", "E7"]
           },
           "design": {
             "score": null,
@@ -279,11 +221,7 @@
         "detail": "虚构样例：已使用查询入口，应用无需维护数据库连接管理。",
         "impact": "避免重新实现连接解析与通用查询入口。",
         "suggestedChange": "保留查询与业务规则之间的职责边界。",
-        "evidence": [
-          "E1",
-          "E2",
-          "E3"
-        ]
+        "evidence": ["E1", "E2", "E3"]
       },
       {
         "id": "F2",
@@ -296,13 +234,17 @@
         "detail": "虚构样例：将说明与首轮诊断对照发现关键前提未说明。",
         "impact": "增加首次接入出错的风险；不认定 Hook 实现有 bug。",
         "suggestedChange": "在 Hook 说明中给出包含 Provider 的完整示例。",
-        "evidence": [
-          "E5",
-          "E6",
-          "E7"
-        ],
+        "evidence": ["E5", "E6", "E7"],
         "claimed": "Call useDialog from your page.",
-        "observed": "记录显示缺少 DialogProvider 后代上下文时调用失败。"
+        "observed": "记录显示缺少 DialogProvider 后代上下文时调用失败。",
+        "diagnosis": {
+          "category": "guidance-gap",
+          "trigger": "虚构样例：Agent 按当前 Skill 在页面中调用 useDialog。",
+          "expected": "指引说明 Hook 必须位于 DialogProvider 后代，并给出完整装配示例。",
+          "actual": "示例只说明从页面调用；冻结日志记录上下文缺失错误，根因仍待确认。",
+          "workaround": "业务把调用移到 Provider 后代后通过；没有测量耗时，不说明上游指引已修复。",
+          "acceptance": "建议回归：依照修订后的最小完整示例接入，打开与关闭弹窗均无需额外猜测上下文。"
+        }
       },
       {
         "id": "F3",
@@ -315,10 +257,7 @@
         "detail": "虚构样例：首轮的业务页面未处于正确上下文，最终已修复。",
         "impact": "首轮操作失败；属于使用证据，需结合指引另行归因。",
         "suggestedChange": "调整业务调用位置；不把此项当作库实现缺陷。",
-        "evidence": [
-          "E7",
-          "E4"
-        ]
+        "evidence": ["E7", "E4"]
       }
     ],
     "ui": {
@@ -332,10 +271,7 @@
         "id": "E1",
         "kind": "package",
         "path": "packages/@nocobase/example-data/dist/index.js",
-        "lines": [
-          1,
-          2
-        ],
+        "lines": [1, 2],
         "observation": "虚构证据，仅供展示和校验测试。",
         "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
         "excerpt": "// Fictional package implementation\nexport const query = (table) => connection.table(table);"
@@ -344,10 +280,7 @@
         "id": "E2",
         "kind": "skill",
         "path": "app/.agents/skills/example-data/SKILL.md",
-        "lines": [
-          1,
-          2
-        ],
+        "lines": [1, 2],
         "observation": "虚构证据，仅供展示和校验测试。",
         "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
         "excerpt": "# Fictional data guide\nResolve the connection, call query(table), then compose business filters."
@@ -356,10 +289,7 @@
         "id": "E3",
         "kind": "code",
         "path": "app/server/customers.ts",
-        "lines": [
-          1,
-          2
-        ],
+        "lines": [1, 2],
         "observation": "虚构证据，仅供展示和校验测试。",
         "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
         "excerpt": "// Fictional application usage\nreturn query(\"customers\").where(\"active\", true);"
@@ -368,10 +298,7 @@
         "id": "E4",
         "kind": "qa",
         "path": "artifacts/verify-2/browser-acceptance/report.json",
-        "lines": [
-          1,
-          1
-        ],
+        "lines": [1, 1],
         "observation": "虚构证据，仅供展示和校验测试。",
         "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
         "excerpt": "{\"checks\":[{\"id\":\"B01\",\"status\":\"passed\"}]}"
@@ -380,10 +307,7 @@
         "id": "E5",
         "kind": "package",
         "path": "packages/@nocobase/example-router/dist/index.d.ts",
-        "lines": [
-          1,
-          1
-        ],
+        "lines": [1, 1],
         "observation": "虚构证据，仅供展示和校验测试。",
         "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
         "excerpt": "export declare function useDialog(): Dialog;"
@@ -392,10 +316,7 @@
         "id": "E6",
         "kind": "skill",
         "path": "app/.agents/skills/example-router/SKILL.md",
-        "lines": [
-          1,
-          2
-        ],
+        "lines": [1, 2],
         "observation": "虚构证据，仅供展示和校验测试。",
         "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
         "excerpt": "# Fictional route guide\nCall useDialog from your page."
@@ -404,10 +325,7 @@
         "id": "E7",
         "kind": "log",
         "path": "artifacts/verify-1.log",
-        "lines": [
-          1,
-          1
-        ],
+        "lines": [1, 1],
         "observation": "虚构证据，仅供展示和校验测试。",
         "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
         "excerpt": "Fictional failure: useDialog requires a DialogProvider ancestor."
