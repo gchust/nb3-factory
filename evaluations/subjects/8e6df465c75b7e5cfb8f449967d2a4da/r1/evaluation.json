@@ -1,0 +1,2530 @@
+{
+  "schemaVersion": 1,
+  "type": "evaluation-report",
+  "source": {
+    "producer": "nb3-factory",
+    "instance": "gchust/nb3-factory",
+    "project": "gchust/nb3-factory",
+    "exporter": {
+      "version": 1,
+      "controlSha": "9bcf462193e736132309cb461baf795426c9a02b",
+      "runId": 36119054341,
+      "attempt": 1
+    }
+  },
+  "run": {
+    "key": "gchust/nb3-factory/issues/322/initial",
+    "kind": "initial",
+    "identity": "recorded",
+    "batchKey": null,
+    "caseKey": null,
+    "sampleIndex": null,
+    "sampleKey": null,
+    "task": {
+      "repository": "gchust/nb3-factory",
+      "issue": 322,
+      "buildCommentId": null,
+      "title": "[Code Agent] [预置][M03] 自动化专项：受理与站内通知（重搭 #204）"
+    },
+    "case": {
+      "source": "preset",
+      "presetIssueNumber": 204,
+      "capturedAt": "2026-09-25T08:48:33Z",
+      "inputHash": "3377fa5bdf6411245cbcf1941c203946c7f4fa2f9137c508b6522949f1a69109",
+      "reviewHash": "625d7eb6e37f57613f7ac787c4b3024c94fb36d31dd9548b64fcdcd341debd1d"
+    }
+  },
+  "revision": 1,
+  "createdAt": "2026-09-25T09:33:19Z",
+  "precedence": {
+    "producer": {
+      "runId": 36114924151,
+      "attempt": 1,
+      "startedAt": "2026-09-25T08:48:24Z"
+    },
+    "executionOrder": 1,
+    "knownLaterExecutions": 0,
+    "chainTerminal": true,
+    "reviewRubric": 2,
+    "reviewState": "completed",
+    "review": {
+      "kind": "build",
+      "at": "2026-09-25T08:48:24Z",
+      "runId": 36114924151,
+      "attempt": 1
+    },
+    "qaCoverage": "complete"
+  },
+  "baseline": {
+    "track": "published-template",
+    "application": {
+      "baseRef": "develop",
+      "baseSha": "bc7d8800f6124e9162be59c929076c7998c45c8e",
+      "candidate": {
+        "patchSha256": "a9fdbc531f6b240fd29ba509af628255bb80d32e0a69a17c1a87b29f13742f64",
+        "headSha": null
+      }
+    },
+    "factory": {
+      "controlSha": "bc7d8800f6124e9162be59c929076c7998c45c8e",
+      "entrySha": "bc7d8800f6124e9162be59c929076c7998c45c8e"
+    },
+    "template": {
+      "creatorVersion": "0.1.0-beta.20",
+      "templateVersion": "1.0.0-beta.45"
+    },
+    "dependencies": {
+      "lockfileSha256": "f8aad5ada5e9f71222187efd4920f699319c20f2ca35b67e78b0ed72c4912aa6",
+      "baselineFingerprint": "47d88a4a1101497e8f8b42972f33f02566210d1514dceaf29a8ffc6ce1ca87cd",
+      "packages": [
+        {
+          "name": "@nocobase/ai-employee",
+          "version": "0.2.0-beta.7"
+        },
+        {
+          "name": "@nocobase/ai-employee-avatars",
+          "version": "1.0.2"
+        },
+        {
+          "name": "@nocobase/app-cli",
+          "version": "0.1.0-beta.4"
+        },
+        {
+          "name": "@nocobase/app-client",
+          "version": "1.0.0-beta.19"
+        },
+        {
+          "name": "@nocobase/app-plugin-ai-employee",
+          "version": "0.1.0-beta.21"
+        },
+        {
+          "name": "@nocobase/app-plugin-ai-knowledge-base",
+          "version": "0.1.0-beta.9"
+        },
+        {
+          "name": "@nocobase/app-plugin-api-keys",
+          "version": "0.1.0-beta.6"
+        },
+        {
+          "name": "@nocobase/app-plugin-authentication",
+          "version": "1.0.0-beta.22"
+        },
+        {
+          "name": "@nocobase/app-plugin-authorization",
+          "version": "0.2.0-beta.18"
+        },
+        {
+          "name": "@nocobase/app-plugin-authz-default-access",
+          "version": "0.1.0-beta.2"
+        },
+        {
+          "name": "@nocobase/app-plugin-authz-restriction-rules",
+          "version": "0.1.0-beta.1"
+        },
+        {
+          "name": "@nocobase/app-plugin-authz-sharing-rules",
+          "version": "0.1.0-beta.2"
+        },
+        {
+          "name": "@nocobase/app-plugin-database-explorer",
+          "version": "0.1.0-beta.5"
+        },
+        {
+          "name": "@nocobase/app-plugin-file",
+          "version": "0.1.0-beta.15"
+        },
+        {
+          "name": "@nocobase/app-plugin-i18n",
+          "version": "0.1.0-beta.8"
+        },
+        {
+          "name": "@nocobase/app-plugin-mail",
+          "version": "0.1.0-beta.0"
+        },
+        {
+          "name": "@nocobase/app-plugin-notification",
+          "version": "0.1.0-beta.16"
+        },
+        {
+          "name": "@nocobase/app-plugin-notification-in-app",
+          "version": "0.2.0-beta.17"
+        },
+        {
+          "name": "@nocobase/app-plugin-notification-provider",
+          "version": "0.1.0-beta.9"
+        },
+        {
+          "name": "@nocobase/app-plugin-notification-providers",
+          "version": "0.2.0-beta.7"
+        },
+        {
+          "name": "@nocobase/app-plugin-scheduler",
+          "version": "0.1.0-beta.7"
+        },
+        {
+          "name": "@nocobase/app-plugin-users",
+          "version": "0.1.0-beta.9"
+        },
+        {
+          "name": "@nocobase/app-plugin-workflow",
+          "version": "0.1.0-beta.26"
+        },
+        {
+          "name": "@nocobase/app-portal-sdk",
+          "version": "1.0.0-beta.3"
+        },
+        {
+          "name": "@nocobase/app-server",
+          "version": "1.0.0-beta.25"
+        },
+        {
+          "name": "@nocobase/app-skills",
+          "version": "0.1.0-beta.14"
+        },
+        {
+          "name": "@nocobase/app-tools",
+          "version": "0.1.0-beta.4"
+        },
+        {
+          "name": "@nocobase/app-websocket",
+          "version": "0.0.1"
+        },
+        {
+          "name": "@nocobase/authorization",
+          "version": "0.1.0-beta.8"
+        },
+        {
+          "name": "@nocobase/caching",
+          "version": "0.1.0-beta.2"
+        },
+        {
+          "name": "@nocobase/config",
+          "version": "0.1.0-beta.1"
+        },
+        {
+          "name": "@nocobase/cron",
+          "version": "0.1.0"
+        },
+        {
+          "name": "@nocobase/db",
+          "version": "1.0.0-beta.15"
+        },
+        {
+          "name": "@nocobase/db-sqlite",
+          "version": "0.1.0-beta.2"
+        },
+        {
+          "name": "@nocobase/dev-config",
+          "version": "0.1.0-beta.12"
+        },
+        {
+          "name": "@nocobase/drive",
+          "version": "0.1.0-beta.4"
+        },
+        {
+          "name": "@nocobase/i18n",
+          "version": "1.0.0-beta.4"
+        },
+        {
+          "name": "@nocobase/logging",
+          "version": "0.1.0-beta.5"
+        },
+        {
+          "name": "@nocobase/nb3-cli",
+          "version": "1.0.0-beta.11"
+        },
+        {
+          "name": "@nocobase/queue",
+          "version": "0.1.0-beta.7"
+        },
+        {
+          "name": "@nocobase/repository-input",
+          "version": "0.1.0-beta.1"
+        },
+        {
+          "name": "@nocobase/service-provider",
+          "version": "0.0.2-beta.1"
+        },
+        {
+          "name": "@nocobase/session",
+          "version": "0.1.0-beta.2"
+        },
+        {
+          "name": "@nocobase/snowflake",
+          "version": "1.0.0-beta.3"
+        }
+      ]
+    },
+    "skills": {
+      "fingerprint": "332ced19da8ee376093174500f916cf9140a9feccda0ad44b5f8a96f2daed2a9",
+      "files": 105
+    },
+    "sourceSnapshot": null,
+    "inputs": {
+      "taskInputHash": "3377fa5bdf6411245cbcf1941c203946c7f4fa2f9137c508b6522949f1a69109",
+      "pipelineInputHash": "6e3590395fcbd0b5fb1488f751048b57c14e8e1c35e117668b589de01f0db207",
+      "reviewHash": "625d7eb6e37f57613f7ac787c4b3024c94fb36d31dd9548b64fcdcd341debd1d",
+      "reviewCriteriaHash": "625d7eb6e37f57613f7ac787c4b3024c94fb36d31dd9548b64fcdcd341debd1d",
+      "prompts": [
+        {
+          "phase": "implementation",
+          "path": "agent-implement.jsonl.invocation.json",
+          "sha256": "2367fc72fab472a081a0970b5d5e83c7002bf4a90a8f2da531a2d8f9140a6a7f"
+        },
+        {
+          "phase": "review",
+          "path": "agent-review.jsonl.invocation.json",
+          "sha256": "e5d2bbe099df6df5bbaf83031e6626460fae7235483fb475f36067af2560d7ae"
+        },
+        {
+          "phase": "qa",
+          "path": "verify-1/browser-acceptance/agent-browser-acceptance.jsonl.invocation.json",
+          "sha256": "40a6c28b38a14f7da3853ad21ed6c76f68fd39ec53536162d3959ba94bf94a0b"
+        }
+      ]
+    },
+    "rubric": {
+      "id": "nb3-framework",
+      "version": 2
+    },
+    "agent": {
+      "engine": "pi",
+      "model": "deepseek-v4.1-flash",
+      "version": "0.86.1",
+      "buildReviewMode": "full"
+    },
+    "environment": {
+      "browserFixturesSha256": "3b527d18aa2f6d58fdfea5cdd916631ea1ee3425abeba09bb1f961f2128c554b",
+      "browserPreflight": "passed"
+    }
+  },
+  "executions": [
+    {
+      "key": "run/36114924151/attempt/1",
+      "kind": "implementation",
+      "order": 1,
+      "workflow": "code-agent-task",
+      "runId": 36114924151,
+      "attempt": 1,
+      "event": "workflow_dispatch",
+      "previousRunId": null,
+      "conclusion": "cancelled",
+      "startedAt": "2026-09-25T08:48:24Z",
+      "endedAt": "2026-09-25T09:32:38Z",
+      "jobSeconds": null,
+      "controlSha": "bc7d8800f6124e9162be59c929076c7998c45c8e",
+      "patchSha256": "a9fdbc531f6b240fd29ba509af628255bb80d32e0a69a17c1a87b29f13742f64",
+      "source": "usage-receipt"
+    }
+  ],
+  "outcome": {
+    "execution": "cancelled",
+    "acceptance": "passed",
+    "delivery": "not-published",
+    "pullRequest": null,
+    "detail": "执行被取消。"
+  },
+  "qa": {
+    "coverage": "complete",
+    "rounds": [
+      {
+        "round": 1,
+        "executionKey": "run/36114924151/attempt/1",
+        "scope": "full",
+        "passed": true,
+        "source": "verify-1/browser-acceptance/report.json",
+        "checks": [
+          {
+            "id": "B01",
+            "criterion": "主管受理一条普通请求，执行记录显示已运行，业务记录呈现相应受理结果。",
+            "status": "passed",
+            "evidence": [
+              "qa/1/supervisor-list-before.png",
+              "qa/1/b01-normal-list-after.png",
+              "qa/1/b01-b03-workflow-runs.png",
+              "qa/1/b01-run1-normal-node-succeeded.png"
+            ]
+          },
+          {
+            "id": "B02",
+            "criterion": "负责人收到对应站内消息，点击能打开正确请求；标记已读后刷新仍为已读。",
+            "status": "passed",
+            "evidence": [
+              "qa/1/b02-assignee-inbox.png",
+              "qa/1/b02-open-request-drawer.png",
+              "qa/1/b02-one-unread.png",
+              "qa/1/b02-read-persisted-after-refresh.png"
+            ]
+          },
+          {
+            "id": "B03",
+            "criterion": "受理一条紧急请求，能从执行和业务结果确认走了紧急分支；不只验证触发按钮提示。",
+            "status": "passed",
+            "evidence": [
+              "qa/1/b03-urgent-accepted.png",
+              "qa/1/b03-run2-urgent-node-succeeded.png",
+              "qa/1/b03-run2-normal-node-not-executed.png"
+            ]
+          },
+          {
+            "id": "B04",
+            "criterion": "非收件人看不到这两条个人消息；不扩展断线重连或所有消息操作矩阵。\n\n无法实际完成时如实记录 failed、blocked 或 not_run，不以源码检查代替浏览器通过。",
+            "status": "passed",
+            "evidence": [
+              "qa/1/b04-supervisor-messages-empty.png",
+              "qa/1/b04-admin-messages-empty.png"
+            ]
+          }
+        ]
+      }
+    ],
+    "firstFull": {
+      "status": "passed",
+      "round": 1,
+      "executionKey": "run/36114924151/attempt/1",
+      "basis": "本产物包含第 1 轮起的全部验证，取第一次实际全量 QA。"
+    },
+    "finalFull": {
+      "status": "passed",
+      "round": 1,
+      "executionKey": "run/36114924151/attempt/1",
+      "basis": "最后一次实际全量 QA。"
+    },
+    "criteria": [
+      {
+        "id": "B01",
+        "text": "主管受理一条普通请求，执行记录显示已运行，业务记录呈现相应受理结果。",
+        "optional": false,
+        "firstFull": "passed",
+        "finalFull": "passed"
+      },
+      {
+        "id": "B02",
+        "text": "负责人收到对应站内消息，点击能打开正确请求；标记已读后刷新仍为已读。",
+        "optional": false,
+        "firstFull": "passed",
+        "finalFull": "passed"
+      },
+      {
+        "id": "B03",
+        "text": "受理一条紧急请求，能从执行和业务结果确认走了紧急分支；不只验证触发按钮提示。",
+        "optional": false,
+        "firstFull": "passed",
+        "finalFull": "passed"
+      },
+      {
+        "id": "B04",
+        "text": "非收件人看不到这两条个人消息；不扩展断线重连或所有消息操作矩阵。\n\n无法实际完成时如实记录 failed、blocked 或 not_run，不以源码检查代替浏览器通过。",
+        "optional": false,
+        "firstFull": "passed",
+        "finalFull": "passed"
+      }
+    ],
+    "firstPassWithoutRepair": "yes",
+    "counts": {
+      "execution": {
+        "verificationAttempts": 1,
+        "repairAttempts": 0,
+        "source": "repair-summary.json（仅本执行）"
+      },
+      "chain": {
+        "verificationAttempts": 1,
+        "repairAttempts": 0,
+        "source": "pipeline-state.json（跨 Handoff 累计检查点，不再相加）"
+      }
+    },
+    "note": "工厂修复次数不等于 Agent 开发中的全部自测和修正；未记录 Agent 内部试错，不宣称开发全程无错误。"
+  },
+  "reviews": [
+    {
+      "key": "review/36114924151.1/v2-d492c64515aa",
+      "role": "original",
+      "selected": true,
+      "state": "completed",
+      "reason": "独立 Agent 评审完成；评分是基于本次证据的意见，不替代业务 QA 或人工评审。",
+      "rubric": {
+        "id": "nb3-framework",
+        "version": 2,
+        "scale": {
+          "min": 0,
+          "max": 100
+        },
+        "businessUiIncluded": false,
+        "dimensions": [
+          {
+            "key": "requirementFit",
+            "label": "需求满足度"
+          },
+          {
+            "key": "usability",
+            "label": "使用便利度"
+          },
+          {
+            "key": "agentFriendliness",
+            "label": "Agent 友好度"
+          },
+          {
+            "key": "design",
+            "label": "设计合理性"
+          },
+          {
+            "key": "reliability",
+            "label": "实现完整性与可靠性"
+          }
+        ]
+      },
+      "reviewer": {
+        "engine": "pi",
+        "model": "deepseek-v4.1-flash",
+        "version": "0.86.1",
+        "runId": 36114924151,
+        "attempt": 1,
+        "controlSha": "bc7d8800f6124e9162be59c929076c7998c45c8e",
+        "replay": false
+      },
+      "producer": {
+        "runId": 36114924151,
+        "attempt": 1
+      },
+      "basis": {
+        "inputHash": "d492c64515aa490cc74594d38f2f3dd6bc264ab352c5bd6ac1986f5cec1a8442",
+        "patchSha256": "a9fdbc531f6b240fd29ba509af628255bb80d32e0a69a17c1a87b29f13742f64",
+        "baseSha": "bc7d8800f6124e9162be59c929076c7998c45c8e",
+        "lockfileSha256": "f8aad5ada5e9f71222187efd4920f699319c20f2ca35b67e78b0ed72c4912aa6",
+        "reviewCriteriaHash": "625d7eb6e37f57613f7ac787c4b3024c94fb36d31dd9548b64fcdcd341debd1d",
+        "artifactHash": "531c67cbc1f734311bf3b3342197a025b9faed0da7cf12017929ada03fd1ef88"
+      },
+      "buildReviewMode": "full",
+      "summary": "本需求要求用现有 Workflow 完成“登记受理→按紧急标记分支→持久站内通知”，并让负责人通过现有消息中心读取、跳转与持久已读。五个能力单元均显示：Workflow 的 DSL/trigger/执行记录、Notification 的统一投递、In-App 的持久收件箱与用户隔离在本次职责范围内形成直接支持；主要缺口是 Workflow Artifact 盘的位置约束未在 Skill 中说明，需要应用自行配置私有 fs 盘。",
+      "progress": {
+        "complete": true,
+        "pendingModules": []
+      },
+      "modules": [
+        {
+          "key": "review/36114924151.1/v2-d492c64515aa/M1",
+          "name": "Workflow DSL 与分支编排",
+          "subjectKeys": [
+            "pkg:@nocobase/app-plugin-workflow",
+            "skill:nocobase-app-plugin-workflow"
+          ],
+          "mapping": "resolved",
+          "targets": [
+            {
+              "kind": "library",
+              "name": "@nocobase/app-plugin-workflow",
+              "subjectKey": "pkg:@nocobase/app-plugin-workflow",
+              "entrypoints": [
+                "defineWorkflow / WorkflowSourceAst（包根导出）",
+                "ConditionInstruction.create(...).branch({yes,no})",
+                "RunInstruction.create({module,args,result})",
+                "workflowServiceToken（/server）trigger(key,input,options)"
+              ],
+              "evidence": [
+                "review/36114924151.1/v2-d492c64515aa/E1",
+                "review/36114924151.1/v2-d492c64515aa/E2",
+                "review/36114924151.1/v2-d492c64515aa/E3",
+                "review/36114924151.1/v2-d492c64515aa/E4"
+              ]
+            },
+            {
+              "kind": "guidance",
+              "name": "app/.agents/skills/nocobase-app-plugin-workflow",
+              "subjectKey": "skill:nocobase-app-plugin-workflow",
+              "entrypoints": [
+                "SKILL.md：Author and Validate / Invoke and Manage",
+                "references/dsl-authoring.md：包目录、workflow.ts 与分支契约",
+                "references/invocation-and-service-api.md：trigger 服务契约"
+              ],
+              "evidence": [
+                "review/36114924151.1/v2-d492c64515aa/E5",
+                "review/36114924151.1/v2-d492c64515aa/E6",
+                "review/36114924151.1/v2-d492c64515aa/E7"
+              ]
+            }
+          ],
+          "scope": "工作流 DSL 定义、条件分支语义与业务触发入口（defineWorkflow、ConditionInstruction、RunInstruction、workflowServiceToken.trigger）。",
+          "limitations": "未逐行阅读 engine/dispatcher 的调度实现；未验证运行中重复 eventKey 的并发竞争路径，只依据 service.js 的 skipped/accepted 收据与文档契约。",
+          "criteria": [
+            "B01",
+            "B03"
+          ],
+          "qa": {
+            "firstFull": "passed",
+            "finalFull": "passed"
+          },
+          "requirements": [
+            {
+              "need": "受理一条请求要依次登记受理、按紧急标记分流、再通知负责人，形成多步可追踪流程。",
+              "responsibility": "框架负责 DSL、条件分支语义、异步 trigger 与运行编排；应用负责每步的业务实现、inputSchema 契约、触发时机与脚本幂等。",
+              "support": "direct",
+              "recommendedUsage": "在 server/workflows/<key>/workflow.ts 用 defineWorkflow 声明 RunInstruction 与 ConditionInstruction.branch；业务 resolve workflowServiceToken 后 trigger(key,input,{eventKey}) 并显式处理 accepted/skipped。",
+              "actualUsage": "Agent 创建 service-request-acceptance 包，registerAcceptance→isUrgent yes/no→notifyAssignee；provider 用 trigger 并带 force/eventKey、处理 skipped；未发现因找不到入口而受阻的日志。",
+              "gapOwner": "none",
+              "evidence": [
+                "review/36114924151.1/v2-d492c64515aa/E1",
+                "review/36114924151.1/v2-d492c64515aa/E2",
+                "review/36114924151.1/v2-d492c64515aa/E3",
+                "review/36114924151.1/v2-d492c64515aa/E4",
+                "review/36114924151.1/v2-d492c64515aa/E5",
+                "review/36114924151.1/v2-d492c64515aa/E6",
+                "review/36114924151.1/v2-d492c64515aa/E7",
+                "review/36114924151.1/v2-d492c64515aa/E27",
+                "review/36114924151.1/v2-d492c64515aa/E29"
+              ]
+            },
+            {
+              "need": "普通与紧急必须走不同结果分支，并在执行记录中只体现实际执行的分支。",
+              "responsibility": "框架提供条件节点与分支调度；应用负责判定表达式与各分支结果写入。",
+              "support": "direct",
+              "recommendedUsage": "ConditionInstruction 的 expression 用 JSON Logic 并返回布尔，yes/no 数组分别声明分支节点，后续节点用 nodeResults 引用。",
+              "actualUsage": "workflow.ts 用 '===': [nodeResults.registerAcceptance.urgent, true] 分派 recordUrgentResult/recordNormalResult；QA 确认紧急运行中普通节点显示 Not executed。",
+              "gapOwner": "none",
+              "evidence": [
+                "review/36114924151.1/v2-d492c64515aa/E2",
+                "review/36114924151.1/v2-d492c64515aa/E6",
+                "review/36114924151.1/v2-d492c64515aa/E10",
+                "review/36114924151.1/v2-d492c64515aa/E27",
+                "review/36114924151.1/v2-d492c64515aa/E33",
+                "review/36114924151.1/v2-d492c64515aa/E35"
+              ]
+            },
+            {
+              "need": "同一请求重复受理不应重复执行登记或发送通知。",
+              "responsibility": "框架以 eventKey 去重；应用复用稳定业务 key 并保证脚本幂等。",
+              "support": "direct",
+              "recommendedUsage": "trigger 传入代表同一业务事件的稳定 eventKey，重复调用返回既有 accepted run 而不重复执行。",
+              "actualUsage": "Agent 传 eventKey=service-request-accept:<id>，run 脚本用 session/status 与 idempotencyKey 保证不重复；本次 QA 未见重复受理用例。",
+              "gapOwner": "none",
+              "evidence": [
+                "review/36114924151.1/v2-d492c64515aa/E3",
+                "review/36114924151.1/v2-d492c64515aa/E4",
+                "review/36114924151.1/v2-d492c64515aa/E7",
+                "review/36114924151.1/v2-d492c64515aa/E29"
+              ]
+            }
+          ],
+          "scores": {
+            "requirementFit": {
+              "score": 90,
+              "reason": "defineWorkflow/ConditionInstruction/RunInstruction 与 workflowServiceToken.trigger 直接覆盖“登记→分支→通知”的编排需求，分支语义在 ConditionInstruction 实现中明确按布尔选择 yes/no。",
+              "evidence": [
+                "review/36114924151.1/v2-d492c64515aa/E1",
+                "review/36114924151.1/v2-d492c64515aa/E2",
+                "review/36114924151.1/v2-d492c64515aa/E3",
+                "review/36114924151.1/v2-d492c64515aa/E6"
+              ]
+            },
+            "usability": {
+              "score": 86,
+              "reason": "DSL 结构与 dsl-authoring 示例一致，节点 key/result schema 装配步骤清楚；trigger 需要 force 才绕过启用开关，应用为自身定义额外传 force，略增理解成本。",
+              "evidence": [
+                "review/36114924151.1/v2-d492c64515aa/E3",
+                "review/36114924151.1/v2-d492c64515aa/E7",
+                "review/36114924151.1/v2-d492c64515aa/E27"
+              ]
+            },
+            "agentFriendliness": {
+              "score": 89,
+              "reason": "Skill 明确选择 Workflow 的判据、包目录与检查命令，dsl-authoring 的完整示例与本次 workflow.ts 同构，降低了自行造 DSL 的概率。",
+              "evidence": [
+                "review/36114924151.1/v2-d492c64515aa/E5",
+                "review/36114924151.1/v2-d492c64515aa/E6",
+                "review/36114924151.1/v2-d492c64515aa/E7"
+              ]
+            },
+            "design": {
+              "score": 88,
+              "reason": "defineWorkflow 生成可序列化 AST，Instruction 类承载节点语义，业务脚本经 module 引用与编排解耦，公开边界是包根与 /server token。",
+              "evidence": [
+                "review/36114924151.1/v2-d492c64515aa/E1",
+                "review/36114924151.1/v2-d492c64515aa/E2",
+                "review/36114924151.1/v2-d492c64515aa/E4"
+              ]
+            },
+            "reliability": {
+              "score": 84,
+              "reason": "trigger 对 not-found/disabled 返回 skipped 且 accepted 收据含 eventKey/runId，必要时按 eventKey 回查 run；条件节点只在布尔求值后才调度选中分支。",
+              "evidence": [
+                "review/36114924151.1/v2-d492c64515aa/E2",
+                "review/36114924151.1/v2-d492c64515aa/E3",
+                "review/36114924151.1/v2-d492c64515aa/E4"
+              ]
+            }
+          }
+        },
+        {
+          "key": "review/36114924151.1/v2-d492c64515aa/M2",
+          "name": "Workflow 触发与执行记录",
+          "subjectKeys": [
+            "pkg:@nocobase/app-plugin-workflow",
+            "skill:nocobase-app-plugin-workflow"
+          ],
+          "mapping": "resolved",
+          "targets": [
+            {
+              "kind": "library",
+              "name": "@nocobase/app-plugin-workflow",
+              "subjectKey": "pkg:@nocobase/app-plugin-workflow",
+              "entrypoints": [
+                "workflow-runs / workflow-node-runs Collection 定义",
+                "EXECUTION_STATUS / NODE_RUN_STATUS 常量",
+                "finalizeWorkflowRun 终态落库"
+              ],
+              "evidence": [
+                "review/36114924151.1/v2-d492c64515aa/E8",
+                "review/36114924151.1/v2-d492c64515aa/E9",
+                "review/36114924151.1/v2-d492c64515aa/E10",
+                "review/36114924151.1/v2-d492c64515aa/E11"
+              ]
+            },
+            {
+              "kind": "guidance",
+              "name": "app/.agents/skills/nocobase-app-plugin-workflow",
+              "subjectKey": "skill:nocobase-app-plugin-workflow",
+              "entrypoints": [
+                "references/execution-diagnostics.md：状态模型",
+                "references/execution-diagnostics.md：诊断序列与 nodeRun attempt 语义"
+              ],
+              "evidence": [
+                "review/36114924151.1/v2-d492c64515aa/E12"
+              ]
+            }
+          ],
+          "scope": "Workflow Run / Node Run 的持久化状态与诊断读取，用于从执行记录确认步骤与最终结果。",
+          "limitations": "未阅读管理路由的完整实现与前端执行记录页面组件；分支名判定除 QA 外仅由集合字段与状态常量支撑。",
+          "criteria": [
+            "B01",
+            "B03"
+          ],
+          "qa": {
+            "firstFull": "passed",
+            "finalFull": "passed"
+          },
+          "requirements": [
+            {
+              "need": "执行记录要能看到各步骤状态、最终结果，以及未被执行的分支。",
+              "responsibility": "框架持久化 run/nodeRun 的状态、结果、时间与事件身份；应用提供稳定节点 key、标题和可读结果。",
+              "support": "direct",
+              "recommendedUsage": "按 run 的 definition id/hash 与 nodeRuns 读取每个节点 attempt 的状态与 payload，节点 key 保持全局唯一且每个节点写 description。",
+              "actualUsage": "浏览器验收在 Settings>Workflows>Execution records 打开运行 #1/#2，看到 Record normal/urgent Succeeded、另一分支 Not executed、运行 Resolved。",
+              "gapOwner": "none",
+              "evidence": [
+                "review/36114924151.1/v2-d492c64515aa/E8",
+                "review/36114924151.1/v2-d492c64515aa/E9",
+                "review/36114924151.1/v2-d492c64515aa/E10",
+                "review/36114924151.1/v2-d492c64515aa/E12",
+                "review/36114924151.1/v2-d492c64515aa/E33",
+                "review/36114924151.1/v2-d492c64515aa/E35"
+              ]
+            },
+            {
+              "need": "运行失败时能定位到具体节点与原因。",
+              "responsibility": "框架保存 nodeRun 的 error/log 与 attempt，并按状态模型区分 FAILED/ERROR；应用负责抛错语义。",
+              "support": "direct",
+              "recommendedUsage": "先按 run 定位失败叶子节点 attempt，再取 payload 的 error/log 并在 truncated 时结合结构化日志，不用旧 attempt 推断。",
+              "actualUsage": "本次两次运行均 Resolved，未出现失败路径；应用在 run 脚本中会 throw 参数错误。",
+              "gapOwner": "unknown",
+              "evidence": [
+                "review/36114924151.1/v2-d492c64515aa/E9",
+                "review/36114924151.1/v2-d492c64515aa/E11",
+                "review/36114924151.1/v2-d492c64515aa/E12"
+              ]
+            }
+          ],
+          "scores": {
+            "requirementFit": {
+              "score": 88,
+              "reason": "workflow-runs/workflow-node-runs 集合落库了 status、eventKey、input/output 与每节点 status/result/error/log，足以支撑需求中的执行记录确认；execution-diagnostics 给出对应状态模型。",
+              "evidence": [
+                "review/36114924151.1/v2-d492c64515aa/E8",
+                "review/36114924151.1/v2-d492c64515aa/E9",
+                "review/36114924151.1/v2-d492c64515aa/E10",
+                "review/36114924151.1/v2-d492c64515aa/E12"
+              ]
+            },
+            "usability": {
+              "score": 84,
+              "reason": "状态常量与诊断序列清晰、可按节点定位；但 Node Run summary 的 branchKey 现为空，确认分支需要逐节点查看，文档虽已注明仍增加操作步骤。",
+              "evidence": [
+                "review/36114924151.1/v2-d492c64515aa/E9",
+                "review/36114924151.1/v2-d492c64515aa/E12"
+              ]
+            },
+            "agentFriendliness": {
+              "score": 88,
+              "reason": "Skill 的 execution-diagnostics 给出触发收据、run、nodeRun、payload 的完整诊断顺序和常见症状表，能指导 Agent 不把 accepted 当成功。",
+              "evidence": [
+                "review/36114924151.1/v2-d492c64515aa/E12"
+              ]
+            },
+            "design": {
+              "score": 86,
+              "reason": "run 与 nodeRun 分表并带 workflowId/hash/eventKey/sourceType 身份，状态以常量表达，终态与可选 observer 解耦。",
+              "evidence": [
+                "review/36114924151.1/v2-d492c64515aa/E8",
+                "review/36114924151.1/v2-d492c64515aa/E9",
+                "review/36114924151.1/v2-d492c64515aa/E11"
+              ]
+            },
+            "reliability": {
+              "score": 85,
+              "reason": "finalizeWorkflowRun 仅在与 expectedStatus 匹配时更新终态并能容忍 observer 失败不丢失权威状态；node-run 保存 result/error/log 供诊断。",
+              "evidence": [
+                "review/36114924151.1/v2-d492c64515aa/E9",
+                "review/36114924151.1/v2-d492c64515aa/E11"
+              ]
+            }
+          }
+        },
+        {
+          "key": "review/36114924151.1/v2-d492c64515aa/M3",
+          "name": "Notification 投递服务",
+          "subjectKeys": [
+            "pkg:@nocobase/app-plugin-notification",
+            "skill:nocobase-app-plugin-notification"
+          ],
+          "mapping": "resolved",
+          "targets": [
+            {
+              "kind": "library",
+              "name": "@nocobase/app-plugin-notification",
+              "subjectKey": "pkg:@nocobase/app-plugin-notification",
+              "entrypoints": [
+                "notificationServiceToken.send({idempotencyKey,source,messages})",
+                "NotificationManager.send 校验与幂等",
+                "notificationExtensionRegistryToken 注册 channel/provider"
+              ],
+              "evidence": [
+                "review/36114924151.1/v2-d492c64515aa/E13",
+                "review/36114924151.1/v2-d492c64515aa/E14",
+                "review/36114924151.1/v2-d492c64515aa/E15"
+              ]
+            },
+            {
+              "kind": "guidance",
+              "name": "app/.agents/skills/nocobase-app-plugin-notification",
+              "subjectKey": "skill:nocobase-app-plugin-notification",
+              "entrypoints": [
+                "SKILL.md：发送/配置/诊断入口",
+                "references/sending-notifications.md：send 契约与 Channel 语义",
+                "references/integration-and-configuration.md：notification.channels 配置"
+              ],
+              "evidence": [
+                "review/36114924151.1/v2-d492c64515aa/E16",
+                "review/36114924151.1/v2-d492c64515aa/E17",
+                "review/36114924151.1/v2-d492c64515aa/E18"
+              ]
+            }
+          ],
+          "scope": "统一通知投递服务：Channel/Provider 注册、消息校验、幂等与持久化，用于把业务事件投递到站内 Channel。",
+          "limitations": "未逐行阅读 channel-manager 的 queue/lease/retry 调度；可靠性判断限于 send/幂等/store 创建路径与文档契约。",
+          "criteria": [
+            "B02"
+          ],
+          "qa": {
+            "firstFull": "passed",
+            "finalFull": "passed"
+          },
+          "requirements": [
+            {
+              "need": "受理成功后向负责人发送一条持久站内消息，不使用 toast 或自建消息表。",
+              "responsibility": "框架提供统一 send、Channel/Provider 校验与投递生命周期；应用选择 Channel、组织文案与目标路由。",
+              "support": "direct",
+              "recommendedUsage": "配置 notification.channels.inbox={provider:'in-app'}，resolve notificationServiceToken 后 send({idempotencyKey,source,messages:{inbox:{to,title,body,target:{type:'route',path}}}})。",
+              "actualUsage": "应用把 channels.inbox 配为 in-app，workflow run 脚本按其契约 send，带 idempotencyKey 与 source，target 为 /service-requests/<id>。",
+              "gapOwner": "none",
+              "evidence": [
+                "review/36114924151.1/v2-d492c64515aa/E13",
+                "review/36114924151.1/v2-d492c64515aa/E14",
+                "review/36114924151.1/v2-d492c64515aa/E16",
+                "review/36114924151.1/v2-d492c64515aa/E17",
+                "review/36114924151.1/v2-d492c64515aa/E18",
+                "review/36114924151.1/v2-d492c64515aa/E28",
+                "review/36114924151.1/v2-d492c64515aa/E32"
+              ]
+            },
+            {
+              "need": "工作流重试或重复受理不得产生重复消息。",
+              "responsibility": "框架以 idempotencyKey+fingerprint 去重并在冲突时拒绝；应用复用稳定业务 key。",
+              "support": "direct",
+              "recommendedUsage": "对同一逻辑发送复用稳定 idempotencyKey，禁止用同一 key 改变消息内容；观察到 deduplicated。",
+              "actualUsage": "应用对每个 requestId 用 service-request-accepted:<id> 作为 key，符合文档语义；本次 QA 未覆盖重复路径。",
+              "gapOwner": "unknown",
+              "evidence": [
+                "review/36114924151.1/v2-d492c64515aa/E13",
+                "review/36114924151.1/v2-d492c64515aa/E15",
+                "review/36114924151.1/v2-d492c64515aa/E17",
+                "review/36114924151.1/v2-d492c64515aa/E28"
+              ]
+            }
+          ],
+          "scores": {
+            "requirementFit": {
+              "score": 90,
+              "reason": "send 的 messages 映射与 Channel/Provider 注册直接支持向已配置的 in-app Channel 投递持久消息，幂等与 source 关联覆盖“持久站内消息”要求。",
+              "evidence": [
+                "review/36114924151.1/v2-d492c64515aa/E13",
+                "review/36114924151.1/v2-d492c64515aa/E14",
+                "review/36114924151.1/v2-d492c64515aa/E17"
+              ]
+            },
+            "usability": {
+              "score": 88,
+              "reason": "Channel 配置为扁平映射、message 按 Channel 一次给全，in-app 只需一个 provider；未知/禁用 Channel 在持久化前整体拒绝，错误靠 code 区分。",
+              "evidence": [
+                "review/36114924151.1/v2-d492c64515aa/E13",
+                "review/36114924151.1/v2-d492c64515aa/E17",
+                "review/36114924151.1/v2-d492c64515aa/E18"
+              ]
+            },
+            "agentFriendliness": {
+              "score": 88,
+              "reason": "notification Skill 与 app-development 能力映射表都指向该插件，sending-notifications 给出可直接套用的完整 send 示例，Agent 无需猜 API。",
+              "evidence": [
+                "review/36114924151.1/v2-d492c64515aa/E16",
+                "review/36114924151.1/v2-d492c64515aa/E17",
+                "review/36114924151.1/v2-d492c64515aa/E18",
+                "review/36114924151.1/v2-d492c64515aa/E26"
+              ]
+            },
+            "design": {
+              "score": 87,
+              "reason": "以 ServiceProvider 注册 notificationServiceToken，send 前统一校验，Channel/Provider 经 registry 扩展且 Notification/Delivery 分表，边界清楚。",
+              "evidence": [
+                "review/36114924151.1/v2-d492c64515aa/E13",
+                "review/36114924151.1/v2-d492c64515aa/E14"
+              ]
+            },
+            "reliability": {
+              "score": 86,
+              "reason": "send 对非法属性、空 messages 与非对象 messages 直接抛错，幂等冲突显式抛 NotificationIdempotencyConflictError；store 在事务内同时写 Notification 与 Deliveries。",
+              "evidence": [
+                "review/36114924151.1/v2-d492c64515aa/E13",
+                "review/36114924151.1/v2-d492c64515aa/E15"
+              ]
+            }
+          }
+        },
+        {
+          "key": "review/36114924151.1/v2-d492c64515aa/M4",
+          "name": "In-App 持久收件箱",
+          "subjectKeys": [
+            "pkg:@nocobase/app-plugin-notification-in-app",
+            "skill:nocobase-app-plugin-notification-in-app"
+          ],
+          "mapping": "resolved",
+          "targets": [
+            {
+              "kind": "library",
+              "name": "@nocobase/app-plugin-notification-in-app",
+              "subjectKey": "pkg:@nocobase/app-plugin-notification-in-app",
+              "entrypoints": [
+                "/notifications/in-app list|unread-count|read|unread|delete|read-all 路由",
+                "createInAppStore 持久化与 per-user 过滤",
+                "NotificationInAppInbox / NotificationInAppProvider（client）",
+                "InAppNotificationProvider 的 recipientExists 最终校验"
+              ],
+              "evidence": [
+                "review/36114924151.1/v2-d492c64515aa/E19",
+                "review/36114924151.1/v2-d492c64515aa/E20",
+                "review/36114924151.1/v2-d492c64515aa/E21",
+                "review/36114924151.1/v2-d492c64515aa/E22",
+                "review/36114924151.1/v2-d492c64515aa/E23"
+              ]
+            },
+            {
+              "kind": "guidance",
+              "name": "app/.agents/skills/nocobase-app-plugin-notification-in-app",
+              "subjectKey": "skill:nocobase-app-plugin-notification-in-app",
+              "entrypoints": [
+                "SKILL.md：注册、验证、诊断与安全检查",
+                "references/inbox-integration.md：路由、目标与事件契约"
+              ],
+              "evidence": [
+                "review/36114924151.1/v2-d492c64515aa/E24",
+                "review/36114924151.1/v2-d492c64515aa/E25"
+              ]
+            }
+          ],
+          "scope": "站内消息的服务端持久化、按用户隔离、已读状态与客户端收件箱展示/跳转。",
+          "limitations": "未阅读 realtime 客户端订阅实现与 DB store 的完整 SQL 分支；隔离与已读结论基于路由、store 与 QA 截图。",
+          "criteria": [
+            "B02",
+            "B04"
+          ],
+          "qa": {
+            "firstFull": "passed",
+            "finalFull": "passed"
+          },
+          "requirements": [
+            {
+              "need": "负责人收到对应站内消息并能点击打开正确请求。",
+              "responsibility": "框架持久化消息、解析 session 用户、提供 target.route 打开与客户端渲染；应用决定消息文案与目标路径。",
+              "support": "direct",
+              "recommendedUsage": "注册 in-app 的 server/client 插件，在页面挂 NotificationInAppProvider 与 NotificationInAppInbox；发送时 target 用 {type:'route',path}，由 Router 补 basename。",
+              "actualUsage": "messages.tsx 直接挂插件组件，消息 Open 链接打开 /main/service-requests/<id> 抽屉；QA 确认打开正确请求。",
+              "gapOwner": "none",
+              "evidence": [
+                "review/36114924151.1/v2-d492c64515aa/E19",
+                "review/36114924151.1/v2-d492c64515aa/E21",
+                "review/36114924151.1/v2-d492c64515aa/E22",
+                "review/36114924151.1/v2-d492c64515aa/E23",
+                "review/36114924151.1/v2-d492c64515aa/E24",
+                "review/36114924151.1/v2-d492c64515aa/E25",
+                "review/36114924151.1/v2-d492c64515aa/E32",
+                "review/36114924151.1/v2-d492c64515aa/E34"
+              ]
+            },
+            {
+              "need": "标记已读后刷新仍为已读。",
+              "responsibility": "框架以 readAt 持久化已读并按 userId 更新；客户端刷新重新读取。",
+              "support": "direct",
+              "recommendedUsage": "先取 /csrf 再用 x-csrf-token 提交 mark read，读取时以服务端 list/unread-count 为权威。",
+              "actualUsage": "QA 标记一条已读并刷新，unread 从 2 变为 1 且保持；未用本地状态伪造。",
+              "gapOwner": "none",
+              "evidence": [
+                "review/36114924151.1/v2-d492c64515aa/E19",
+                "review/36114924151.1/v2-d492c64515aa/E20",
+                "review/36114924151.1/v2-d492c64515aa/E22",
+                "review/36114924151.1/v2-d492c64515aa/E36"
+              ]
+            },
+            {
+              "need": "非收件人看不到他人消息。",
+              "responsibility": "框架从认证 session 取 userId 过滤 list/unread-count，写操作同时校验 id+userId，禁止客户端传入用户。",
+              "support": "direct",
+              "recommendedUsage": "服务端始终用 middleware 绑定的 notificationUserId，客户端不得传 userId。",
+              "actualUsage": "QA 用另一位用户（supervisor）查看消息中心，看到空态；未知/伪造请求路径未覆盖。",
+              "gapOwner": "none",
+              "evidence": [
+                "review/36114924151.1/v2-d492c64515aa/E19",
+                "review/36114924151.1/v2-d492c64515aa/E20",
+                "review/36114924151.1/v2-d492c64515aa/E24",
+                "review/36114924151.1/v2-d492c64515aa/E37"
+              ]
+            },
+            {
+              "need": "收件人不存在时投递应失败而非静默丢弃。",
+              "responsibility": "框架在最终投递时通过用户管理服务校验收件人存在。",
+              "support": "direct",
+              "recommendedUsage": "依赖 in-app Channel 的 recipientExists，业务侧不预校验用户。",
+              "actualUsage": "应用把负责人 ID 直接交给 in-app provider；不存在用户路径未在本轮 QA 覆盖。",
+              "gapOwner": "unknown",
+              "evidence": [
+                "review/36114924151.1/v2-d492c64515aa/E21",
+                "review/36114924151.1/v2-d492c64515aa/E25"
+              ]
+            }
+          ],
+          "scores": {
+            "requirementFit": {
+              "score": 90,
+              "reason": "服务端路由与 store 覆盖持久化、已读、按用户隔离，客户端组件提供列表/unread 与 route 跳转，直接满足负责人读消息与打开请求的需求。",
+              "evidence": [
+                "review/36114924151.1/v2-d492c64515aa/E19",
+                "review/36114924151.1/v2-d492c64515aa/E20",
+                "review/36114924151.1/v2-d492c64515aa/E21",
+                "review/36114924151.1/v2-d492c64515aa/E24"
+              ]
+            },
+            "usability": {
+              "score": 88,
+              "reason": "组件与事件契约清晰，target.route 自动补 basename；需先取 CSRF 再写，且 HTTP 与 realtime 双通道需理解失效信号语义。",
+              "evidence": [
+                "review/36114924151.1/v2-d492c64515aa/E22",
+                "review/36114924151.1/v2-d492c64515aa/E23",
+                "review/36114924151.1/v2-d492c64515aa/E24"
+              ]
+            },
+            "agentFriendliness": {
+              "score": 88,
+              "reason": "in-app SKILL 给出注册顺序、客户端接入与安全检查，inbox-integration 明确路由、target 与 user 隔离，Agent 可直接照做。",
+              "evidence": [
+                "review/36114924151.1/v2-d492c64515aa/E24",
+                "review/36114924151.1/v2-d492c64515aa/E25"
+              ]
+            },
+            "design": {
+              "score": 87,
+              "reason": "路由层只做认证/CSRF/参数，store 抽象持久化，客户端 api 与 inbox 组件分离，realtime 作为可选失效信号而非权威。",
+              "evidence": [
+                "review/36114924151.1/v2-d492c64515aa/E19",
+                "review/36114924151.1/v2-d492c64515aa/E20",
+                "review/36114924151.1/v2-d492c64515aa/E21"
+              ]
+            },
+            "reliability": {
+              "score": 88,
+              "reason": "写操作先校验认证与 CSRF，store 的 list/update/markAllRead/delete 均以 userId 约束，QA 观察到刷新后已读保留。",
+              "evidence": [
+                "review/36114924151.1/v2-d492c64515aa/E19",
+                "review/36114924151.1/v2-d492c64515aa/E20",
+                "review/36114924151.1/v2-d492c64515aa/E23"
+              ]
+            }
+          }
+        },
+        {
+          "key": "review/36114924151.1/v2-d492c64515aa/M5",
+          "name": "应用装配与能力发现指引",
+          "subjectKeys": [
+            "skill:nocobase-app-development",
+            "guide:app/AGENTS.md"
+          ],
+          "mapping": "resolved",
+          "targets": [
+            {
+              "kind": "guidance",
+              "name": "app/.agents/skills/nocobase-app-development",
+              "subjectKey": "skill:nocobase-app-development",
+              "entrypoints": [
+                "SKILL.md：能力映射表（workflow/notification → 插件 Skill）",
+                "SKILL.md：notification.channels 与 send 约定提示"
+              ],
+              "evidence": [
+                "review/36114924151.1/v2-d492c64515aa/E26"
+              ]
+            },
+            {
+              "kind": "guidance",
+              "name": "app/AGENTS.md",
+              "subjectKey": "guide:app/AGENTS.md",
+              "entrypoints": [
+                "AGENTS.md：Skills 加载与路由、模板边界",
+                "AGENTS.md：业务代码放置位置与插件边界"
+              ],
+              "evidence": [
+                "review/36114924151.1/v2-d492c64515aa/E38",
+                "review/36114924151.1/v2-d492c64515aa/E39"
+              ]
+            }
+          ],
+          "scope": "模板/应用层指引如何发现并装配既有 Workflow 与 Notification 能力，以及业务代码放置约定。",
+          "limitations": "未核对 app-development 的全部 reference 与 skills:sync 源包版本；只审阅了入口与能力映射相关段落。",
+          "criteria": [],
+          "qa": {
+            "firstFull": "unknown",
+            "finalFull": "unknown"
+          },
+          "requirements": [
+            {
+              "need": "沿用本轮模板与公共能力、原有登录/主页/设置/翻译机制，并按任务阅读 Skill 而不自建能力。",
+              "responsibility": "指引负责把需求映射到既有插件 Skill，并规定业务代码放置位置。",
+              "support": "direct",
+              "recommendedUsage": "先读 app-development SKILL 的能力映射表定位插件，再按 “Where things go” 放置 client/server/migrations/locales。",
+              "actualUsage": "仓库已同步 workflow/notification/in-app 等 Skill；Agent 按其建立 routes、provider、migrations、i18n，未创建新插件。",
+              "gapOwner": "none",
+              "evidence": [
+                "review/36114924151.1/v2-d492c64515aa/E26",
+                "review/36114924151.1/v2-d492c64515aa/E38",
+                "review/36114924151.1/v2-d492c64515aa/E39"
+              ]
+            },
+            {
+              "need": "需求要落到既有 Workflow/Notification 能力而非新造。",
+              "responsibility": "指引应显式列出插件与插件 Skill 的对应关系。",
+              "support": "direct",
+              "recommendedUsage": "按能力映射表读取 app-plugin-workflow 与 app-plugin-notification 的 SKILL。",
+              "actualUsage": "Agent 依据映射表选用两个插件，未自建流程引擎或消息表。",
+              "gapOwner": "none",
+              "evidence": [
+                "review/36114924151.1/v2-d492c64515aa/E26",
+                "review/36114924151.1/v2-d492c64515aa/E38"
+              ]
+            }
+          ],
+          "scores": {
+            "requirementFit": {
+              "score": 88,
+              "reason": "能力映射表把多步流程与站内消息分别指向 workflow/notification 插件，并提示 notification.channels 与 send 约定，足以让 Agent 找到既有能力。",
+              "evidence": [
+                "review/36114924151.1/v2-d492c64515aa/E26",
+                "review/36114924151.1/v2-d492c64515aa/E38"
+              ]
+            },
+            "usability": {
+              "score": 86,
+              "reason": "入口按任务分流、放置位置表格清晰；能力映射仍要求 Agent 再跳读多个插件 Skill，缺少一个“受理类需求”的端到端组合示例。",
+              "evidence": [
+                "review/36114924151.1/v2-d492c64515aa/E26",
+                "review/36114924151.1/v2-d492c64515aa/E38",
+                "review/36114924151.1/v2-d492c64515aa/E39"
+              ]
+            },
+            "agentFriendliness": {
+              "score": 89,
+              "reason": "AGENTS.md 先规定 skills:sync 与统一入口，SKILL 再按任务路由到 reference，Agent 可按图索骥而不通读全部文档。",
+              "evidence": [
+                "review/36114924151.1/v2-d492c64515aa/E26",
+                "review/36114924151.1/v2-d492c64515aa/E38"
+              ]
+            },
+            "design": {
+              "score": 84,
+              "reason": "指引以“入口→映射表→reference”分层组织，业务代码放置与插件边界明确；但模板/应用与插件 Skill 的职责分界主要靠约定。",
+              "evidence": [
+                "review/36114924151.1/v2-d492c64515aa/E26",
+                "review/36114924151.1/v2-d492c64515aa/E39"
+              ]
+            },
+            "reliability": {
+              "score": 82,
+              "reason": "指引内容与实际技能目录和插件注册一致（workflow/notification/in-app 技能存在且被 app-development 映射），未见与实现矛盾；未逐条核对全部 reference。",
+              "evidence": [
+                "review/36114924151.1/v2-d492c64515aa/E26",
+                "review/36114924151.1/v2-d492c64515aa/E38"
+              ]
+            }
+          }
+        }
+      ],
+      "findings": [
+        {
+          "id": "review/36114924151.1/v2-d492c64515aa/F1",
+          "localId": "F1",
+          "kind": "strength",
+          "owner": "plugin",
+          "severity": "info",
+          "confidence": "confirmed",
+          "confirmedBy": "reviewer",
+          "reviewerStatus": "open",
+          "title": "Workflow DSL 与本次需求同构，直接支持分支与执行记录",
+          "detail": "defineWorkflow/ConditionInstruction/RunInstruction 的公开契约与 dsl-authoring 的完整示例一致；ConditionInstruction 实现按 JSON Logic 布尔结果选择 yes/no 分支，run 与 nodeRun 集合持久化状态与结果，本次无需自建流程引擎或伪造成功状态。",
+          "impact": "应用只需编写业务 run 脚本与触发时机，编排、分支调度和执行记录由框架承担。",
+          "suggestedChange": "无需变更；继续在 dsl-authoring 中保留该端到端示例。",
+          "claimed": null,
+          "observed": null,
+          "evidence": [
+            "review/36114924151.1/v2-d492c64515aa/E1",
+            "review/36114924151.1/v2-d492c64515aa/E2",
+            "review/36114924151.1/v2-d492c64515aa/E6",
+            "review/36114924151.1/v2-d492c64515aa/E8",
+            "review/36114924151.1/v2-d492c64515aa/E9"
+          ],
+          "moduleKeys": [
+            "review/36114924151.1/v2-d492c64515aa/M1",
+            "review/36114924151.1/v2-d492c64515aa/M2"
+          ],
+          "subjectKeys": [
+            "pkg:@nocobase/app-plugin-workflow",
+            "skill:nocobase-app-plugin-workflow"
+          ]
+        },
+        {
+          "id": "review/36114924151.1/v2-d492c64515aa/F2",
+          "localId": "F2",
+          "kind": "strength",
+          "owner": "plugin",
+          "severity": "info",
+          "confidence": "confirmed",
+          "confirmedBy": "reviewer",
+          "reviewerStatus": "open",
+          "title": "站内消息经统一投递进入持久收件箱，按用户隔离且已读落库",
+          "detail": "NotificationManager.send 校验后按 idempotencyKey 持久化 Notification/Delivery；in-app 服务端路由先认证再从可信 session 取 userId，写操作校验 CSRF，store 的 list/countUnread/update/markAllRead 都以 userId 约束，readAt 用数据库列持久化。",
+          "impact": "应用不必自建消息表或 toast，负责人隔离与刷新后已读保留由框架保证。",
+          "suggestedChange": "无需变更。",
+          "claimed": null,
+          "observed": null,
+          "evidence": [
+            "review/36114924151.1/v2-d492c64515aa/E13",
+            "review/36114924151.1/v2-d492c64515aa/E19",
+            "review/36114924151.1/v2-d492c64515aa/E20"
+          ],
+          "moduleKeys": [
+            "review/36114924151.1/v2-d492c64515aa/M3",
+            "review/36114924151.1/v2-d492c64515aa/M4"
+          ],
+          "subjectKeys": [
+            "pkg:@nocobase/app-plugin-notification",
+            "skill:nocobase-app-plugin-notification",
+            "pkg:@nocobase/app-plugin-notification-in-app",
+            "skill:nocobase-app-plugin-notification-in-app"
+          ]
+        },
+        {
+          "id": "review/36114924151.1/v2-d492c64515aa/F3",
+          "localId": "F3",
+          "kind": "improvement",
+          "owner": "documentation",
+          "severity": "minor",
+          "confidence": "suspected",
+          "confirmedBy": null,
+          "reviewerStatus": "open",
+          "title": "Workflow Artifact 盘的位置约束未在 Workflow Skill 中说明",
+          "detail": "workflow provider 在未配置 artifactDisk 时回退到 drive.default，并只要求该盘为 private 的 fs/local；物化的 run 模块会从该盘以裸包名 import（如 @nocobase/db），因此盘位置需要落在能解析部署 node_modules 的目录。应用因此在 drive.ts 额外声明 workflowArtifacts 盘指向 server 树，并在 config/workflow.ts 显式传入。workflow Skill 的 dsl-authoring 与 README 未提到需要这类盘配置。",
+          "impact": "默认模板下 run 模块的模块解析可能失败或需要试错才能定位，属于发现成本与配置可预见性问题。",
+          "suggestedChange": "在 workflow Skill（或默认模板）说明 artifactDisk 需为私有 fs 盘并位于可解析部署依赖的目录，或在模板中预置该盘。",
+          "claimed": null,
+          "observed": null,
+          "evidence": [
+            "review/36114924151.1/v2-d492c64515aa/E30",
+            "review/36114924151.1/v2-d492c64515aa/E40",
+            "review/36114924151.1/v2-d492c64515aa/E41"
+          ],
+          "moduleKeys": [],
+          "subjectKeys": []
+        },
+        {
+          "id": "review/36114924151.1/v2-d492c64515aa/F4",
+          "localId": "F4",
+          "kind": "improvement",
+          "owner": "plugin",
+          "severity": "minor",
+          "confidence": "confirmed",
+          "confirmedBy": "reviewer",
+          "reviewerStatus": "open",
+          "title": "Node Run 未持久化 branchKey，分支确认依赖逐节点查看",
+          "detail": "workflow-node-runs 集合包含 nodeKey/status/result/error/log，但没有 branchKey 字段；execution-diagnostics 也明确“Node Run summary currently reports branchKey: null”。本次 QA 需要分别点击普通与紧急两个结果节点，才能从“Not executed/Succeeded”确认走的分支。",
+          "impact": "在分支工作流中，仅凭运行摘要无法直接看出执行路径，诊断与验收成本增加。",
+          "suggestedChange": "在 nodeRun 上保存实际 branchKey（或提供已执行路径视图），使运行详情能直接表达分支。",
+          "claimed": null,
+          "observed": null,
+          "evidence": [
+            "review/36114924151.1/v2-d492c64515aa/E9",
+            "review/36114924151.1/v2-d492c64515aa/E12"
+          ],
+          "moduleKeys": [
+            "review/36114924151.1/v2-d492c64515aa/M2"
+          ],
+          "subjectKeys": [
+            "pkg:@nocobase/app-plugin-workflow",
+            "skill:nocobase-app-plugin-workflow"
+          ]
+        }
+      ],
+      "ui": {
+        "status": "not-reviewed",
+        "score": null,
+        "reason": "本次只读取验收报告与截图文件路径，未实际查看至少两个页面/状态的 PNG，故不评价跨页面样式一致性。",
+        "evidence": [],
+        "framework": false
+      },
+      "limitations": [
+        "不能据本次小型搭建案例推断 NocoBase3 全框架表现。",
+        "未阅读 Workflow engine/dispatcher、管理路由与前端执行记录页面的完整实现；相关可靠性结论限于已读文件。",
+        "未查看 PNG 图像，ui 状态为 not-reviewed，不评价视觉一致性。",
+        "未核对 Notification channel-manager 的 queue/lease/retry 全路径，也未覆盖失败/重试的运行证据。",
+        "未评估权限、i18n、数据库迁移等其他框架能力，因本轮未计划为独立模块。",
+        "快照未包含 1 个超出预算、非普通文件或不可读取的文件；未据此确认其实现。"
+      ],
+      "usageSource": null
+    }
+  ],
+  "processNotes": {
+    "state": "absent",
+    "source": null,
+    "author": "implementer",
+    "independent": false,
+    "summary": null,
+    "blockers": [],
+    "improvements": [],
+    "note": "过程笔记可选；缺失不代表没有问题、没有评审或没有改进。"
+  },
+  "metrics": {
+    "usage": {
+      "sources": [
+        {
+          "key": "agent-job:108006726246",
+          "executionKey": "run/36114924151/attempt/1",
+          "scope": "一次 Agent 作业内的实现、修复、QA 与同轮评审调用",
+          "phases": {
+            "implementation": {
+              "input": 392811,
+              "output": 52809,
+              "cacheRead": 9551488,
+              "cacheWrite": 0,
+              "total": 9997108
+            },
+            "repair": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0,
+              "total": 0
+            },
+            "qa": {
+              "input": 203072,
+              "output": 31344,
+              "cacheRead": 4397312,
+              "cacheWrite": 0,
+              "total": 4631728
+            },
+            "qaFocused": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0,
+              "total": 0
+            },
+            "qaReport": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0,
+              "total": 0
+            },
+            "review": {
+              "input": 312748,
+              "output": 50704,
+              "cacheRead": 1829504,
+              "cacheWrite": 0,
+              "total": 2192956
+            },
+            "compaction": {
+              "input": 115723,
+              "output": 12170,
+              "cacheRead": 0,
+              "cacheWrite": 0,
+              "total": 127893
+            }
+          },
+          "records": 273,
+          "missing": 7,
+          "incomplete": 0,
+          "complete": false
+        }
+      ],
+      "totals": {
+        "input": 1024354,
+        "output": 147027,
+        "cacheRead": 15778304,
+        "cacheWrite": 0,
+        "total": 16949685,
+        "complete": false
+      },
+      "definition": "沿用 task-usage 口径：按唯一来源键（Agent 作业 / 后补评审 Run）去重，不相加已含这些调用的汇总，不把思考 Token 再加到输出；缺失为 null，不等同供应商账单。"
+    },
+    "time": {
+      "executionSeconds": null,
+      "missingJobTimes": 1,
+      "endToEndSeconds": 2654,
+      "jobs": [
+        {
+          "id": 108006652448,
+          "name": "prepare",
+          "executionKey": "run/36114924151/attempt/1",
+          "seconds": 13
+        },
+        {
+          "id": 108006726246,
+          "name": "agent",
+          "executionKey": "run/36114924151/attempt/1",
+          "seconds": 2375
+        },
+        {
+          "id": 108018493466,
+          "name": "verify-final",
+          "executionKey": "run/36114924151/attempt/1",
+          "seconds": 259
+        },
+        {
+          "id": 108019831704,
+          "name": "publish",
+          "executionKey": "run/36114924151/attempt/1",
+          "seconds": null
+        }
+      ],
+      "definition": "executionSeconds 为 prepare / agent / verify-final / publish 唯一作业时长之和，不含排队；endToEndSeconds 含排队及续跑间隔。"
+    },
+    "counts": {
+      "businessBuilds": 1,
+      "executions": 1,
+      "reviewExecutions": 1
+    }
+  },
+  "evidence": [
+    {
+      "id": "review/36114924151.1/v2-d492c64515aa/E1",
+      "origin": {
+        "kind": "review",
+        "key": "review/36114924151.1/v2-d492c64515aa",
+        "localId": "E1"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/app-plugin-workflow/dist/server/instructions/definition.js",
+      "lines": [
+        103,
+        118
+      ],
+      "sha256": "e7cca1871107860edf58fab924e2905c5987d5235790083456e40d6e60f70c24",
+      "observation": "defineWorkflow 把 title/description/parameters/inputSchema/nodes 归一为可序列化 AST，节点经 unwrapNode 处理后断言 JSON 兼容。",
+      "excerpt": "export function defineWorkflow(source) {\n    const ast = {\n        title: source.title,\n        ...(source.description === undefined\n            ? {}\n            : { description: source.description }),\n        ...(source.options === undefined ? {} : { options: source.options }),\n        ...(source.parameters === undefined\n            ? {}\n            : { parameters: source.parameters }),\n        inputSchema: source.inputSchema ?? { type: 'object' },\n        nodes: source.nodes.map((node, index) => unwrapNode(node, `workflow.nodes[${index}]`)),\n    };\n    assertJsonCompatible(ast, 'workflow');\n    return ast;\n}",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36114924151.1/v2-d492c64515aa/E2",
+      "origin": {
+        "kind": "review",
+        "key": "review/36114924151.1/v2-d492c64515aa",
+        "localId": "E2"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/app-plugin-workflow/dist/server/instructions/condition/instruction.js",
+      "lines": [
+        58,
+        80
+      ],
+      "sha256": "dabd51b9943c6be05a28c8e2e952a1505d0bff4bbde1f300224227793d4b6e16",
+      "observation": "ConditionInstruction.run 读取 JSON Logic expression，要求求值为布尔后按 yes/no 找到分支并保存 nodeRun、执行选中分支。",
+      "excerpt": "    async run() {\n        const config = readConditionConfig(this.config);\n        const evaluated = config.expression === undefined\n            ? true\n            : evaluateJsonLogic(config.expression, this.processor.getConditionDataBindings());\n        if (typeof evaluated !== 'boolean') {\n            throw new TypeError(`Condition expression must evaluate to a boolean, received ${evaluated === null ? 'null' : typeof evaluated}`);\n        }\n        const branchKey = evaluated\n            ? CONDITION_BRANCH_KEYS.yes\n            : CONDITION_BRANCH_KEYS.no;\n        const branch = this.processor\n            .getBranches(this.node)\n            .find((candidate) => candidate.branchKey === branchKey);\n        const result = { status: NODE_RUN_STATUS.RESOLVED, result: evaluated };\n        if (!branch)\n            return result;\n        const savedNodeRun = await this.processor.saveNodeRun({ ...result, nodeId: this.node.id, nodeKey: this.node.key }, this.nodeRun, {\n            startedAt: this.nodeRun.startedAt,\n            finishedAt: new Date().toISOString(),\n        });\n        await this.processor.run(branch, savedNodeRun);\n    }",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36114924151.1/v2-d492c64515aa/E3",
+      "origin": {
+        "kind": "review",
+        "key": "review/36114924151.1/v2-d492c64515aa",
+        "localId": "E3"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/app-plugin-workflow/dist/server/service.js",
+      "lines": [
+        66,
+        81
+      ],
+      "sha256": "1a11e956a61a6cbfc7d28c98642dbeb17752826e671cbeb94fe268b49320372b",
+      "observation": "trigger 按 key+current 查当前定义，未找到或未启用时返回 skipped（not-found/disabled），否则物化并执行该 revision。",
+      "excerpt": "    async trigger(workflowKey, input, triggerOptions = {}) {\n        const row = await this.collections.workflows.findOne({\n            filter: { key: workflowKey, current: true },\n            select: (select) => select.fields('id', 'enabled', 'hash'),\n        });\n        if (!row)\n            return { status: 'skipped', reason: 'not-found' };\n        if (!triggerOptions.force && !triggerOptions.manually && !row.enabled)\n            return { status: 'skipped', reason: 'disabled' };\n        if (typeof row.hash === 'string')\n            await this.loader.ensureMaterialized(row.hash);\n        const workflow = await loadWorkflow(this.collections, row.id);\n        if (!workflow)\n            throw new WorkflowInvocationError('WORKFLOW_NOT_FOUND', `Workflow \"${workflowKey}\" was not found`);\n        return this.executeRevision(workflow, input, triggerOptions);\n    }",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36114924151.1/v2-d492c64515aa/E4",
+      "origin": {
+        "kind": "review",
+        "key": "review/36114924151.1/v2-d492c64515aa",
+        "localId": "E4"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/app-plugin-workflow/dist/server/service.js",
+      "lines": [
+        164,
+        176
+      ],
+      "sha256": "1a11e956a61a6cbfc7d28c98642dbeb17752826e671cbeb94fe268b49320372b",
+      "observation": "executeRevision 生成或复用 eventKey 后触发 engine；返回 accepted 收据包含 eventKey 与 runId，必要时按 eventKey 回查已接受 run。",
+      "excerpt": "        const eventKey = triggerOptions.eventKey ?? randomUUID();\n        const execution = await this.engine.trigger(workflow, input, {\n            ...triggerOptions,\n            eventKey,\n            ...(triggerOptions.parentRunId === undefined\n                ? {}\n                : { parentRunId: triggerOptions.parentRunId }),\n            ...(stack === undefined ? {} : { stack }),\n        });\n        if (execution && typeof execution === 'object' && 'id' in execution)\n            return { status: 'accepted', eventKey, runId: String(execution.id) };\n        const run = await this.findAcceptedRun(eventKey);\n        return { status: 'accepted', eventKey, runId: String(run.id) };",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36114924151.1/v2-d492c64515aa/E5",
+      "origin": {
+        "kind": "review",
+        "key": "review/36114924151.1/v2-d492c64515aa",
+        "localId": "E5"
+      },
+      "kind": "skill",
+      "path": "app/.agents/skills/nocobase-app-plugin-workflow/SKILL.md",
+      "lines": [
+        51,
+        63
+      ],
+      "sha256": "4b1c0d72f8d3608d9cef2afe9df1f6992263c48301e7964163504990f5594375",
+      "observation": "Skill 要求用 defineWorkflow 绑定 WorkflowSourceAst、默认导出、每节点写 description、用 run 模块承载可执行工作，并用 workflowServiceToken.trigger 触发。",
+      "excerpt": "\n# Invoke and Manage\n\n- Business code resolves `workflowServiceToken` and calls `trigger(workflowKey, input, options?)`. The public service contract does not expose a management `run()` method or a generic public HTTP trigger endpoint.\n- Use the authenticated management API for listing and inspecting definitions, enablement, parameter overrides, and authorized manual execution of a selected definition revision. A manual run may target a historical or disabled revision without changing its enablement.\n- When source is available, use its directory key and `inputSchema` as the contract for new business-trigger code. In a deployed environment where only the management API is available, use runtime records for inspection and manual management; do not infer a new business trigger contract from a title or database id.\n- `trigger()` returns either `skipped` with no event key or `accepted` with an event key after synchronous validation and scheduling succeed. Execution is asynchronous. Resolve the run by event key, and account for a concurrent duplicate call that can return the shared accepted identity before the first call finishes creating the run.\n- An `eventKey` is optional and generated when omitted. Reuse the same stable key only when resubmitting the same business event whose acceptance is unknown; an existing run is deduplicated rather than re-executed. The public contract does not rerun a confirmed failed run by event key.\n\n# Safety\n\n- Treat invocation as side-effecting. Do not invoke, enable or disable, or change administrator parameters unless the request authorizes that operation.\n- Confirm the exact target and input before invocation. Request additional confirmation when the operation is bulk, targets production unexpectedly, or is known to cause irreversible external effects.",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36114924151.1/v2-d492c64515aa/E6",
+      "origin": {
+        "kind": "review",
+        "key": "review/36114924151.1/v2-d492c64515aa",
+        "localId": "E6"
+      },
+      "kind": "skill",
+      "path": "app/.agents/skills/nocobase-app-plugin-workflow/references/dsl-authoring.md",
+      "lines": [
+        62,
+        139
+      ],
+      "sha256": "166cf50d0fdf4c9d99751e2f3fa31dbe0d5f15430cb2ef38d9c7eca2efe70fe0",
+      "observation": "dsl-authoring 给出包含 RunInstruction、ConditionInstruction.branch({yes,no})、nodeResults 引用的完整 workflow.ts 例子，与本次实现结构一致。",
+      "excerpt": "const workflow: WorkflowSourceAst = defineWorkflow({\n  title: 'Quotation decision',\n  description: 'Calculates a quotation and routes high-value cases.',\n  inputSchema: {\n    type: 'object',\n    required: ['quotationId', 'amount'],\n    properties: {\n      quotationId: { type: 'string', minLength: 1 },\n      amount: { type: 'number', minimum: 0 },\n    },\n    additionalProperties: false,\n  },\n  parameters: {\n    approvalLimit: {\n      type: 'number',\n      title: 'Approval limit',\n      default: 100000,\n    },\n  },\n  nodes: [\n    RunInstruction.create({\n      key: 'calculateRisk',\n      description:\n        'Use the quotation amount as the risk score for the approval-limit comparison.',\n      title: 'Calculate risk',\n      config: {\n        module: './server/calculate-risk',\n        args: {\n          quotationId: '{{$input.quotationId}}',\n          amount: '{{$input.amount}}',\n        },\n      },\n      result: {\n        type: 'object',\n        required: ['score'],\n        properties: { score: { type: 'number' } },\n        additionalProperties: false,\n      },\n    }),\n    ConditionInstruction.create({\n      key: 'needsApproval',\n      description:\n        'Compare the risk score with the approval limit; yes flags manual review, while no skips flagging.',\n      config: {\n        expression: {\n          '>': [\n            { var: 'nodeResults.calculateRisk.score' },\n            { var: 'parameters.approvalLimit' },\n          ],\n        },\n      },\n    }).branch({\n      yes: [\n        RunInstruction.create({\n          key: 'flagForManualReview',\n          description:\n            'Log the quotation ID requiring manual review; this example does not wait for approval.',\n          config: {\n            module: './server/flag-for-manual-review',\n            args: { quotationId: '{{$input.quotationId}}' },\n          },\n        }),\n      ],\n      no: [],\n    }),\n    RunInstruction.create({\n      key: 'recordRoutingOutcome',\n      description:\n        'Log whether the quotation needs manual review after either decision branch returns.',\n      config: {\n        module: './server/record-routing-outcome',\n        args: { needsManualReview: '{{$nodeResults.needsApproval}}' },\n      },\n    }),\n  ],\n});\n\nexport default workflow;",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36114924151.1/v2-d492c64515aa/E7",
+      "origin": {
+        "kind": "review",
+        "key": "review/36114924151.1/v2-d492c64515aa",
+        "localId": "E7"
+      },
+      "kind": "skill",
+      "path": "app/.agents/skills/nocobase-app-plugin-workflow/references/invocation-and-service-api.md",
+      "lines": [
+        79,
+        106
+      ],
+      "sha256": "060af3cef9c4826b1c514dce7e8da18783c3090ff8e4efe05ea1a21e182da674",
+      "observation": "文档说明业务 resolve workflowServiceToken 后 trigger(key,input,{eventKey})，需处理 skipped，accepted 后按 eventKey 解析 run，并解释 eventKey 去重语义。",
+      "excerpt": "```ts\nimport { workflowServiceToken } from '@nocobase/app-plugin-workflow/server';\n\nif (!app.container.has(workflowServiceToken)) {\n  throw new Error('Workflow service is not configured.');\n}\nconst workflowRuntime = app.container.resolve(workflowServiceToken);\nconst receipt = await workflowRuntime.trigger(\n  'quotation-decision',\n  { quotationId: 'Q-100', amount: 150000 },\n  { eventKey: 'quotation-submitted:Q-100' },\n);\nif (receipt.status === 'skipped') {\n  return receipt; // caller handles the runtime result; do not poll for a run\n}\nconst { eventKey, runId } = receipt;\n```\n\n`workflowRuntime.trigger(key, input, options?)`:\n\n- Resolves the workflow by stable key at runtime.\n- May return a `skipped` receipt. It has no `eventKey` and creates no run to poll; handle the receipt after calling rather than pre-filtering DSL keys through runtime management state.\n- Requires a JSON object and validates it against the `inputSchema` declared by the selected DSL package's `workflow.ts`. Read and obey that schema before writing the trigger call; `input` is not the workflow's administrator `parameters` object.\n- Rejects input over 65,536 UTF-8 bytes.\n- Resolves administrator defaults/overrides into an immutable run input snapshot.\n- Accepts optional `eventKey` and `parentRunId`; parent linkage is used for nested calls and stack-limit checks.\n- Creates the Workflow Run and enqueues work before returning `{ status: 'accepted', eventKey, runId }` in the ordinary path; execution continues asynchronously. `runId` is the stable execution reference for status queries and integrations such as Scheduler.\n- Uses event key for invocation deduplication. Reusing it must represent the same business event. If a run already exists, another trigger with that key does not execute it again; reuse is appropriate when the caller does not know whether the original submission was accepted, not as a rerun mechanism for a confirmed failure.",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36114924151.1/v2-d492c64515aa/E8",
+      "origin": {
+        "kind": "review",
+        "key": "review/36114924151.1/v2-d492c64515aa",
+        "localId": "E8"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/app-plugin-workflow/dist/server/collections/workflow-runs.js",
+      "lines": [
+        2,
+        42
+      ],
+      "sha256": "faa1b50b3f8c4439b64b015fbe29149c0126765a9d28149aacbfc8a8d0f0ba5b",
+      "observation": "workflow-runs 集合定义 workflowId、workflowKey、hash、eventKey(唯一)、input/parameters、status、output、startedAt/finishedAt、sourceType/sourceId 等字段与索引。",
+      "excerpt": "export function defineWorkflowRuns(collection) {\n    collection.bigInt('id').primary().autoIncrement().notNull();\n    collection\n        .belongsTo('workflow', WORKFLOW_COLLECTIONS.workflows)\n        .targetKey('id')\n        .foreignKey('workflowId')\n        .foreignKeyType('bigInt')\n        .notNull()\n        .constraints(false);\n    collection.string('workflowKey').notNull();\n    collection.string('hash');\n    collection.string('eventKey').notNull().unique({ mode: 'index' });\n    collection\n        .hasMany('nodeRuns', WORKFLOW_COLLECTIONS.nodeRuns)\n        .sourceKey('id')\n        .foreignKey('workflowRunId')\n        .onDelete('cascade');\n    collection.json('input').notNull().defaultTo({});\n    collection.json('parameters').notNull().defaultTo({});\n    collection.integer('status');\n    collection.boolean('dispatched').notNull().defaultTo(false);\n    collection.bigInt('parentRunId');\n    collection.json('stack');\n    collection.json('output');\n    // These are instants, not wall clocks, so they are `datetimeTz`: it is the\n    // only logical type whose value survives a driver that decodes timestamps\n    // itself. The Repository is what applies that per dialect — see\n    // `server/collections/store.ts`.\n    collection.datetimeTz('startedAt');\n    collection.datetimeTz('finishedAt');\n    collection.datetimeTz('expiresAt');\n    collection.datetimeTz('createdAt').notNull();\n    collection.boolean('manually').notNull().defaultTo(false);\n    collection.string('reason');\n    collection.string('sourceType');\n    collection.string('sourceId');\n    collection.index(['dispatched', 'id']);\n    collection.index(['status', 'expiresAt']);\n    collection.index(['parentRunId', 'status']);\n    collection.index(['sourceType', 'sourceId']);\n}",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36114924151.1/v2-d492c64515aa/E9",
+      "origin": {
+        "kind": "review",
+        "key": "review/36114924151.1/v2-d492c64515aa",
+        "localId": "E9"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/app-plugin-workflow/dist/server/collections/workflow-node-runs.js",
+      "lines": [
+        2,
+        33
+      ],
+      "sha256": "51341b2b9f43d52b9cbb9b8cf4613ae3394784163a15f521a529ea543ec169be",
+      "observation": "workflow-node-runs 集合定义 workflowRun、node、nodeKey、status、meta、result、error、log 与时间字段，供按节点查看执行结果；未见 branchKey 字段。",
+      "excerpt": "export function defineWorkflowNodeRuns(collection) {\n    collection.bigInt('id').primary().autoIncrement().notNull();\n    collection\n        .belongsTo('workflowRun', WORKFLOW_COLLECTIONS.runs)\n        .targetKey('id')\n        .foreignKey('workflowRunId')\n        .foreignKeyType('bigInt')\n        .notNull()\n        .constraints(false)\n        .onDelete('cascade');\n    collection\n        .belongsTo('node', WORKFLOW_COLLECTIONS.nodes)\n        .targetKey('id')\n        .foreignKey('nodeId')\n        .foreignKeyType('bigInt')\n        .notNull()\n        .constraints(false);\n    collection.string('nodeKey').notNull();\n    collection.integer('status').notNull();\n    collection.json('meta');\n    collection.json('result');\n    collection.text('error');\n    // These are instants, not wall clocks, so they are `datetimeTz`: it is the\n    // only logical type whose value survives a driver that decodes timestamps\n    // itself. The Repository is what applies that per dialect — see\n    // `server/collections/store.ts`.\n    collection.datetimeTz('startedAt').notNull();\n    collection.datetimeTz('finishedAt');\n    collection.datetimeTz('expiresAt');\n    collection.text('log');\n    collection.index(['workflowRun', 'id']);\n}",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36114924151.1/v2-d492c64515aa/E10",
+      "origin": {
+        "kind": "review",
+        "key": "review/36114924151.1/v2-d492c64515aa",
+        "localId": "E10"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/app-plugin-workflow/dist/server/engine/constants.js",
+      "lines": [
+        1,
+        18
+      ],
+      "sha256": "5dc64ba1c3d64b146043e7cf0eab167ebf41aaca6b96bb0019f36d9c475af651",
+      "observation": "EXECUTION_STATUS 定义 QUEUEING=null、STARTED=0、RESOLVED=1、FAILED=-1、ERROR=-2、ABORTED=-3；NODE_RUN_STATUS 与 timeout reason 同源。",
+      "excerpt": "export const EXECUTION_STATUS = {\n    QUEUEING: null,\n    STARTED: 0,\n    RESOLVED: 1,\n    FAILED: -1,\n    ERROR: -2,\n    ABORTED: -3,\n};\nexport const NODE_RUN_STATUS = {\n    PENDING: 0,\n    RESOLVED: 1,\n    FAILED: -1,\n    ERROR: -2,\n    ABORTED: -3,\n};\nexport const EXECUTION_REASON = {\n    TIMEOUT: 'timeout',\n};",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36114924151.1/v2-d492c64515aa/E11",
+      "origin": {
+        "kind": "review",
+        "key": "review/36114924151.1/v2-d492c64515aa",
+        "localId": "E11"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/app-plugin-workflow/dist/server/engine/finalize-run.js",
+      "lines": [
+        2,
+        48
+      ],
+      "sha256": "563769e4cd05cbeb5e5793004ad426d38613422d099951f3d6c942c27c7cdcf8",
+      "observation": "finalizeWorkflowRun 以 id+expectedStatus 条件更新终态、output、reason 与 finishedAt；0 更新则返回 null，observer 失败只记录不丢失权威终态。",
+      "excerpt": "export async function finalizeWorkflowRun(options) {\n    const finishedAt = options.finishedAt ?? nowInstant();\n    const result = await options.store.runs.updateMany({\n        filter: {\n            id: asIdFilter(options.runId),\n            status: options.expectedStatus,\n        },\n        values: {\n            status: options.status,\n            output: serializeJson(options.output),\n            reason: options.reason,\n            finishedAt,\n        },\n    });\n    if (result.updatedCount === 0)\n        return null;\n    const row = await options.store.runs.findOne({\n        filter: { id: asIdFilter(options.runId) },\n        select: (select) => select.fields('sourceType', 'sourceId'),\n    });\n    const event = {\n        runId: options.runId,\n        status: options.status,\n        reason: options.reason,\n        output: options.output,\n        finishedAt,\n        sourceType: typeof row?.sourceType === 'string' ? row.sourceType : null,\n        sourceId: typeof row?.sourceId === 'string' ? row.sourceId : null,\n    };\n    if (options.status !== 0) {\n        try {\n            await options.observer?.(event);\n        }\n        catch (error) {\n            // The authoritative Workflow terminal state must survive an optional\n            // projection observer being temporarily unavailable. Scheduler repairs\n            // a missed fast-path notification through its persisted observer.\n            options.logger?.error('Workflow terminal observer failed', {\n                runId: options.runId,\n                sourceType: event.sourceType,\n                sourceId: event.sourceId,\n                error,\n            });\n        }\n    }\n    return event;\n}",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36114924151.1/v2-d492c64515aa/E12",
+      "origin": {
+        "kind": "review",
+        "key": "review/36114924151.1/v2-d492c64515aa",
+        "localId": "E12"
+      },
+      "kind": "skill",
+      "path": "app/.agents/skills/nocobase-app-plugin-workflow/references/execution-diagnostics.md",
+      "lines": [
+        13,
+        45
+      ],
+      "sha256": "57621d46dd2484c8673c521e9024991ba9604c9dd30fcdebb4f7e6d061a73da3",
+      "observation": "execution-diagnostics 给出 run/nodeRun 状态表、按 trigger 收据→run→nodeRuns→payload 的诊断顺序，并提醒收据 accepted 不等于成功、branchKey 当前为 null。",
+      "excerpt": "## Status model\n\nWorkflow Run status:\n\n| Stored value | Name       | Meaning                                        |\n| -----------: | ---------- | ---------------------------------------------- |\n|       `null` | `QUEUEING` | Accepted/persisted but not started by a worker |\n|          `0` | `STARTED`  | Active execution                               |\n|          `1` | `RESOLVED` | Completed successfully                         |\n|         `-1` | `FAILED`   | Business/instruction failure state             |\n|         `-2` | `ERROR`    | Execution/infrastructure error                 |\n|         `-3` | `ABORTED`  | Aborted, including timeout handling            |\n\nNode Run status uses `0 PENDING`, `1 RESOLVED`, `-1 FAILED`, `-2 ERROR`, and `-3 ABORTED`. Run reason `timeout` indicates timeout termination.\n\nDo not infer success from a service call alone. `trigger()` may return `{ status: 'skipped', reason: 'not-found' | 'disabled' }`; an accepted receipt only confirms scheduling and supplies an event key. Do not infer the current attempt from the first matching node run: reruns create multiple attempts.\n\n## Diagnostic sequence\n\nFollow this order so evidence remains tied to the executed revision:\n\n1. Inspect the service trigger receipt first. For `skipped`, diagnose key/current/enabled state and do not poll for a run. For `accepted`, record its event key and resolve the run by that identity. In the ordinary path the run is created before the receipt returns; a concurrent duplicate call can briefly observe the shared accepted identity before the first call finishes creating it.\n2. Resolve the workflow key/definition and list revisions.\n3. Inspect the run, capturing workflow id/key, workflow version, artifact hash, event key, input, timestamps, manual flag, parent relationship where available, status, and reason.\n4. Use the run's definition id/hash, not merely the current workflow, to understand its code and topology.\n5. Inspect `getRun(id).nodeRuns` for the latest attempt per node key and reconstruct the visible executed path.\n6. Call `nodeRuns(runId, nodeKey?)` when reruns or repeated attempts are possible; compare ids/timestamps/statuses in ascending order.\n7. Fetch `nodeRunPayload(runId, nodeRunId)` only for relevant attempts. Record result, error, log, and `truncated`.\n8. Correlate structured server logs by run/execution id, node id/key, artifact digest, and module. Run-node logs include duration and `success/error/aborted`.\n9. Compare the failing node's config, resolved parameters/input, expected result contract, timeout, and artifact module specifier.\n10. Separate root cause from propagated failure. A condition parent can fail because its selected branch child failed.\n11. Recommend a source or setting fix, a deliberately new authorized invocation, manual execution of a selected revision, or compensation. Reusing the same event key only deduplicates an uncertain submission; it does not rerun a confirmed failed execution. Do not erase history.\n",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36114924151.1/v2-d492c64515aa/E13",
+      "origin": {
+        "kind": "review",
+        "key": "review/36114924151.1/v2-d492c64515aa",
+        "localId": "E13"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/app-plugin-notification/dist/server/manager.js",
+      "lines": [
+        187,
+        253
+      ],
+      "sha256": "8ceaca1b734db599fe58e8d868edfd7af373f2ea0be3f10aa1b1a78534e8edda",
+      "observation": "NotificationManager.send 校验 idempotencyKey、source、messages 为非空 Channel 映射，拒绝 to/channels 等旧属性；按 idempotencyKey+fingerprint 去重，冲突抛 NotificationIdempotencyConflictError。",
+      "excerpt": "    async send(input) {\n        this.activate();\n        validateNotificationIdempotencyKey(input.idempotencyKey);\n        if (input.source !== undefined &&\n            (!input.source ||\n                typeof input.source.type !== 'string' ||\n                !input.source.type.trim() ||\n                (input.source.referenceId !== undefined &&\n                    typeof input.source.referenceId !== 'string')))\n            throw new Error('Notification source requires a type and an optional string referenceId.');\n        if (!input.messages ||\n            typeof input.messages !== 'object' ||\n            Array.isArray(input.messages))\n            throw new Error('Notification messages must be a Channel-to-message map.');\n        for (const key of [\n            'to',\n            'channels',\n            'content',\n            'routing',\n            'channelOverrides',\n        ])\n            if (key in input)\n                throw new Error(`Unsupported notification send property \"${key}\".`);\n        const channels = Object.keys(input.messages);\n        if (channels.length === 0)\n            throw new Error('At least one notification message is required.');\n        const message = {};\n        const expandedRecipients = [];\n        for (const channel of channels) {\n            await this.ensureRuntime(channel);\n            const validated = this.channelManager.validateMessage(channel, input.messages[channel]);\n            message[channel] = validated.message;\n            const [provider] = this.channelManager.providerIdentities(channel);\n            for (const recipient of validated.recipients)\n                expandedRecipients.push({\n                    channels: [{ channel, provider, recipient }],\n                });\n        }\n        const requestFingerprint = notificationRequestFingerprint({\n            ...input,\n            messages: message,\n        });\n        const existing = await this.store.getLogByIdempotencyKey(input.idempotencyKey);\n        if (existing) {\n            if (existing.requestFingerprint !== requestFingerprint) {\n                throw new NotificationIdempotencyConflictError(input.idempotencyKey);\n            }\n            const existingDeliveries = await this.store.listDeliveries(existing.id);\n            await Promise.all(existingDeliveries\n                .filter((delivery) => delivery.status === 'pending')\n                .map(async (delivery) => this.dispatch(delivery.id)));\n            const snapshot = await this.statusSnapshot(existing);\n            return {\n                notificationId: snapshot.notificationId,\n                idempotencyKey: input.idempotencyKey,\n                deduplicated: true,\n                status: snapshot.status,\n                deliveries: snapshot.deliveries,\n            };\n        }\n        return this.sendExpanded({\n            idempotencyKey: input.idempotencyKey,\n            requestFingerprint,\n            source: input.source,\n            recipients: expandedRecipients,\n            message,\n        });",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36114924151.1/v2-d492c64515aa/E14",
+      "origin": {
+        "kind": "review",
+        "key": "review/36114924151.1/v2-d492c64515aa",
+        "localId": "E14"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/app-plugin-notification/dist/server/providers/notification.js",
+      "lines": [
+        10,
+        40
+      ],
+      "sha256": "054b9582bde6cefd4303f8a3bff23fea924551884b910cbe6f2d25326c5df3c1",
+      "observation": "NotificationProvider 校验 database/queue/logging/authorization 依赖后，单例注册 notificationRuntimeToken 与 notificationServiceToken，并注册 notification 资源类型授权。",
+      "excerpt": "export class NotificationProvider extends ServiceProvider {\n    name = '@nocobase/app-plugin-notification';\n    register() {\n        if (!this.app.container.has(databaseManagerToken))\n            throw new Error('Notification core requires the database manager dependency.');\n        if (!this.app.container.has(queueManagerToken))\n            throw new Error('Notification core requires the queue manager dependency.');\n        if (!this.app.container.has(loggingToken))\n            throw new Error('Notification core requires the logging dependency.');\n        const registry = createNotificationRegistry();\n        this.app.container.instance(notificationExtensionRegistryToken, registry);\n        this.app.container.singleton(notificationRuntimeToken, (container) => createNotificationManager({\n            database: container.resolve(databaseManagerToken),\n            queue: container.resolve(queueManagerToken),\n            logger: container\n                .resolve(loggingToken)\n                .getLogger('notification')\n                .child({\n                module: 'notification',\n            }),\n            config: this.app.config.get('notification'),\n            registry,\n        }));\n        this.app.container.singleton(notificationServiceToken, (container) => container.resolve(notificationRuntimeToken));\n    }\n    async boot() {\n        if (!this.app.container.has(authorizationToken)) {\n            throw new Error('Notification core requires the authorization dependency.');\n        }\n        registerNotificationAuthorization(this.app.container.resolve(authorizationToken));\n    }",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36114924151.1/v2-d492c64515aa/E15",
+      "origin": {
+        "kind": "review",
+        "key": "review/36114924151.1/v2-d492c64515aa",
+        "localId": "E15"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/app-plugin-notification/dist/server/store.js",
+      "lines": [
+        24,
+        53
+      ],
+      "sha256": "186f94c50b976e9e73f74b6bfa4adfedd6931b9be8f1822636ab3283dae84ab6",
+      "observation": "createOrGetByIdempotency 在事务内插入 notificationDispatches 与 notificationDeliveries，并返回既有 log 的 requestFingerprint 供上层比较。",
+      "excerpt": "    async createOrGetByIdempotency(bundle) {\n        const { idempotencyKey, requestFingerprint } = bundle.log;\n        if (!idempotencyKey || !requestFingerprint) {\n            throw new Error('An idempotency key and request fingerprint are required to create a notification.');\n        }\n        try {\n            await this.database.transaction(async (connection) => {\n                await connection.query\n                    .insertInto('notificationDispatches')\n                    .values(toLogRow(bundle.log))\n                    .execute();\n                if (bundle.deliveries.length > 0)\n                    await connection.query\n                        .insertInto('notificationDeliveries')\n                        .values(bundle.deliveries.map(toDeliveryRow))\n                        .execute();\n            });\n            return { outcome: 'created', bundle };\n        }\n        catch (error) {\n            if (!isUniqueConstraintViolation(error))\n                throw error;\n            const existing = await this.getBundleByIdempotencyKey(idempotencyKey);\n            if (!existing)\n                throw error;\n            return existing.log.requestFingerprint === requestFingerprint\n                ? { outcome: 'existing', bundle: existing }\n                : { outcome: 'conflict', bundle: existing };\n        }\n    }",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36114924151.1/v2-d492c64515aa/E16",
+      "origin": {
+        "kind": "review",
+        "key": "review/36114924151.1/v2-d492c64515aa",
+        "localId": "E16"
+      },
+      "kind": "skill",
+      "path": "app/.agents/skills/nocobase-app-plugin-notification/SKILL.md",
+      "lines": [
+        8,
+        24
+      ],
+      "sha256": "ae1f658ee83dfb738d505c8e3264da7bd3c9cd0b515c43a28a842aa553b8a500",
+      "observation": "notification SKILL 指引先看已注册插件与生效配置，再按概念/配置/发送/诊断/扩展的顺序读取 reference，并说明 send 与测试 API 的权限要求。",
+      "excerpt": "last-reviewed: 2026-09-21\nrisk-level: medium\nmetadata:\n  domain-owner: '@nocobase/app-plugin-notification'\n  current-scope: 'applications that install the notification runtime and the required Channel packages'\n---\n\n# Notification development\n\nInspect the application's registered plugins and effective notification configuration before changing integration code. Missing required input blocks an actual send; use the recipient and Channel scope already authorized in the conversation and ask only for missing information.\n\n1. Read [Notification concepts](references/notification-concepts.md) for package ownership and delivery status semantics.\n2. For plugin registration, configuration, migrations, or test APIs, read [Integration and configuration](references/integration-and-configuration.md). Configure a Channel name mapped to one flat Provider configuration.\n3. For sending or typed consumers, read [Sending notifications](references/sending-notifications.md). Resolve `notificationServiceToken`; construct complete messages keyed by Channel name and use native recipient addresses. Validate the intended external effect before sending.\n4. For failures and retries, read [Delivery diagnostics](references/delivery-diagnostics.md). Preserve Notification, Delivery, Attempt, and retry-audit history; distinguish accepted submission from final delivery.\n5. For custom transports, read [Channel and Provider extensions](references/channel-and-provider-extensions.md). Register globally unique Provider definitions through `notificationExtensionRegistryToken` and retain the queue/lease/retry lifecycle.\n6. Verify changed packages and consumers with lint, typecheck, tests, and build. Cover atomic validation, independent delivery, recipient rules, and retries bound to original identities.",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36114924151.1/v2-d492c64515aa/E17",
+      "origin": {
+        "kind": "review",
+        "key": "review/36114924151.1/v2-d492c64515aa",
+        "localId": "E17"
+      },
+      "kind": "skill",
+      "path": "app/.agents/skills/nocobase-app-plugin-notification/references/sending-notifications.md",
+      "lines": [
+        1,
+        38
+      ],
+      "sha256": "cbf38795119676b258492b45c0423bfee709fc1dbd5314b1bd521b8efefc2a56",
+      "observation": "sending-notifications 给出 notificationServiceToken.send 的 messages 示例，说明 in-app 需要用户 ID/title/body、target route 与 URL 规则，以及 idempotencyKey、source 和非法请求整体拒绝的语义。",
+      "excerpt": "# Sending Notifications\n\nResolve `notificationServiceToken` from the shared application container. Select configured Channel names through `messages`; each value is the complete message for its Provider.\n\n```ts\nconst notification = app.container.resolve(notificationServiceToken);\nawait notification.send({\n  idempotencyKey: 'approval-123',\n  source: { type: 'approval', referenceId: '123' },\n  messages: {\n    'system-email': {\n      to: ['customer@example.com', 'reviewer@example.com'],\n      subject: 'Approval result',\n      html: '<p>Approved</p>',\n    },\n    'ops-feishu': {\n      text: 'Approved',\n      target: { type: 'url', url: 'https://example.com/main/approvals/123' },\n    },\n    inbox: {\n      to: '123',\n      title: 'Approval result',\n      body: 'Approved',\n      target: { type: 'route', path: '/approvals/123' },\n    },\n  },\n});\n```\n\nEmail requires a native email address or a non-empty readonly array of addresses, a subject, and text or HTML. Each address receives a separate email and retries independently. In-app messages require application user IDs in the same string/array shape, title, and body; final delivery checks that each user still exists. Webhook messages forbid `to`. The service does not resolve application users into email addresses or phone numbers and never defaults to the current user.\n\nIM targets accept complete HTTP(S) URLs only. In-app targets accept a route without a deployment prefix or a complete HTTP(S) URL. React Router supplies the basename once for routes; URL targets use native links. Email links belong in text/HTML. Legacy `actionUrl` is ignored.\n\nUnknown or disabled Channels and invalid messages or recipient formats reject the entire request before persistence or queue dispatch. Delivery-time failures are recorded independently. Reuse one stable `idempotencyKey` only for the same logical request; changing messages with that key is a conflict. Optional `source` adds business correlation. Use `getByIdempotencyKey`, `getNotification`, and `onStatusChanged` to observe results. A `retrying` Delivery is waiting for automatic execution; a terminal `failed` Delivery may be passed to `retryDelivery({ deliveryId, reason })`. An `unknown` Delivery must be checked externally before creating a new logical send.\n\nFor typed custom hosts, pass a literal Channel map to `createNotificationManager`. `ConfiguredNotificationChannels<typeof channels>` maps each key through its Provider identifier to the registered message contract. Import the relevant Provider package so its declaration merging is loaded.\n\nThere is no legacy sending API, shared content, per-Channel override, Provider routing, grouping, condition selection, or cross-Channel fallback. Intentional multi-send uses multiple `messages` entries.",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36114924151.1/v2-d492c64515aa/E18",
+      "origin": {
+        "kind": "review",
+        "key": "review/36114924151.1/v2-d492c64515aa",
+        "localId": "E18"
+      },
+      "kind": "skill",
+      "path": "app/.agents/skills/nocobase-app-plugin-notification/references/integration-and-configuration.md",
+      "lines": [
+        3,
+        45
+      ],
+      "sha256": "8d414c6fc183e5f3e6088429ae9a1d74f9c1cace1a4b2d1ed9b91206b3d87e7a",
+      "observation": "integration-and-configuration 说明 notification.channels 为 name→扁平 Provider 配置映射、重复 YAML key 报错，并给出 inbox: {provider: in-app} 示例与 in-app 路由的 CSRF/用户隔离要求。",
+      "excerpt": "Register the core Server plugin before the in-app and built-in Provider plugins. Register their Client plugins for the desired logs and inbox UI. Apply plugin migrations and start the application's queue through its normal lifecycle. Hub does not register end-user notification plugins by default; add them explicitly only when the product needs them.\n\n`notification.channels` is a name-to-configuration map. Keys must be non-empty trimmed names of at most 100 characters. Each entry has a `provider`, optional `enabled` (default true), and flat Provider-specific settings. Duplicate YAML keys are configuration errors. Provider identifiers are globally unique; the Provider definition supplies the message type. `name`, `type`, and `providers` are not Channel configuration fields.\n\n```yaml\nnotification:\n  channels:\n    system-email:\n      provider: smtp\n      host: smtp.example.com\n      port: 587\n      auth: { user: '${SMTP_USER}', pass: '${SMTP_PASSWORD}' }\n      from: notifications@example.com\n    marketing-email:\n      provider: resend\n      apiKey=[REDACTED]}'\n      from: marketing@example.com\n    ops-feishu:\n      provider: feishu-webhook\n      webhookUrl: '${FEISHU_WEBHOOK_URL}'\n    inbox:\n      provider: in-app\n\n  retry:\n    maxAttempts: 1\n    intervalMs: 5000\n```\n\n`notification.retry.maxAttempts` is the maximum number of automatic attempts for one Delivery, including the first attempt; it defaults to `1`, so automatic retries are disabled by default. `notification.retry.intervalMs` is the fixed wait between automatic attempts and defaults to `5000` milliseconds. A validated Provider `Retry-After` hint takes precedence over this interval.\n\nThe application owns secret interpolation. SMTP supports `host`, `port`, `secure`, `auth`, `from`, and `replyTo`; Resend uses `apiKey`, `from`, and optional `replyTo`. Webhook Providers use `webhookUrl` and optional signing `secret`. Feishu requires HTTPS on `open.feishu.cn` or `open.larksuite.com`; DingTalk requires HTTPS on `oapi.dingtalk.com`. Redirects are rejected. Keep credentials out of public descriptors and logs.\n\nKeep Channel names and Provider identifiers stable while deliveries remain pending or retryable. Removing, disabling, or changing a Channel's Provider prevents the old Delivery from being retried elsewhere.\n\n## Registration without plugin discovery\n\nCustom hosts can create a registry, register Channel and Provider definitions, create one manager with the host database/queue/logger, then mount routes and own lifecycle. Register definitions before `start()` or the first `send()` for that Channel.\n\nThe core `manager.router` exposes `GET /logs` and `GET /logs/:id` without adding authentication itself. The plugin's normal route contribution mounts it at `/api/notifications` with required authentication, authorization middleware, and `page:notification.logs` `access` checks. Custom hosts must provide equivalent protection.\n\nFor a custom host, register the exported `NOTIFICATION_NAMESPACE` / `notificationServerLocales` and `IN_APP_NOTIFICATION_NAMESPACE` / `inAppNotificationServerLocales` pairs with the host `I18nRuntime`, initialize it, then mount its request i18n middleware before the core logs and in-app routers. Notification-owned failures use a stable `error.code/message/ns/key/params` envelope; clients should branch on `code`, display `message`, and may retranslate with `ns`, `key`, and `params`. Authentication middleware retains its owning plugin's error contract.\n\nThe in-app router must derive the current user from trusted authentication state. Never accept a client-supplied user id as the current identity. Its write endpoints use a CSRF token/cookie pair.",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36114924151.1/v2-d492c64515aa/E19",
+      "origin": {
+        "kind": "review",
+        "key": "review/36114924151.1/v2-d492c64515aa",
+        "localId": "E19"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/app-plugin-notification-in-app/dist/server/router.js",
+      "lines": [
+        32,
+        81
+      ],
+      "sha256": "77860b90efd6497c908f0b777f1049bdb12f78606de9394658ac73dc8fba4784",
+      "observation": "in-app 路由中间件先解析认证用户，未认证返回 401 并绑定 notificationUserId；list 按该 userId 过滤，read-all 与 /:id 写操作校验 CSRF，并按 userId 更新。",
+      "excerpt": "    router.get('/', async (context) => {\n        const limit = parseLimit(context.req.query('limit'));\n        if (limit === undefined)\n            return context.json(inAppNotificationErrorBody(getRequestTranslator(context, IN_APP_NOTIFICATION_NAMESPACE), 'IN_APP_NOTIFICATION_INVALID_LIMIT', 'errors.invalidLimit', `limit must be an integer between 1 and ${MAX_PAGE_SIZE}.`, { max: MAX_PAGE_SIZE }), 400);\n        const cursorValue = context.req.query('cursor');\n        const before = parseCursor(cursorValue);\n        if (cursorValue && !before)\n            return context.json(inAppNotificationErrorBody(getRequestTranslator(context, IN_APP_NOTIFICATION_NAMESPACE), 'IN_APP_NOTIFICATION_INVALID_CURSOR', 'errors.invalidCursor', 'cursor is invalid.'), 400);\n        const rows = await store.list({\n            userId: context.var.notificationUserId,\n            unreadOnly: context.req.query('unreadOnly') === 'true',\n            limit: limit + 1,\n            before,\n        });\n        const data = rows.slice(0, limit);\n        return context.json({\n            data,\n            nextCursor: rows.length > limit && data.length > 0\n                ? encodeCursor(data[data.length - 1])\n                : undefined,\n        });\n    });\n    router.get('/unread-count', async (context) => context.json({\n        count: await store.countUnread(context.var.notificationUserId),\n    }));\n    router.post('/read-all', async (context) => {\n        if (!validCsrf(context.req.header('x-csrf-token'), getCookie(context, 'notification_in_app_csrf')))\n            return context.json(inAppNotificationErrorBody(getRequestTranslator(context, IN_APP_NOTIFICATION_NAMESPACE), 'IN_APP_NOTIFICATION_INVALID_CSRF', 'errors.invalidCsrf', 'Invalid CSRF token.'), 403);\n        return context.json({\n            updated: await store.markAllRead(context.var.notificationUserId),\n        });\n    });\n    router.post('/:id', async (context) => {\n        if (!validCsrf(context.req.header('x-csrf-token'), getCookie(context, 'notification_in_app_csrf')))\n            return context.json(inAppNotificationErrorBody(getRequestTranslator(context, IN_APP_NOTIFICATION_NAMESPACE), 'IN_APP_NOTIFICATION_INVALID_CSRF', 'errors.invalidCsrf', 'Invalid CSRF token.'), 403);\n        const body = await context.req.json().catch(() => undefined);\n        if (!isRecord(body))\n            return context.json(inAppNotificationErrorBody(getRequestTranslator(context, IN_APP_NOTIFICATION_NAMESPACE), 'IN_APP_NOTIFICATION_INVALID_BODY', 'errors.invalidBody', 'Request body must be a JSON object.'), 400);\n        const action = body.action ?? 'read';\n        if (!isInboxAction(action))\n            return context.json(inAppNotificationErrorBody(getRequestTranslator(context, IN_APP_NOTIFICATION_NAMESPACE), 'IN_APP_NOTIFICATION_INVALID_ACTION', 'errors.invalidAction', 'action must be read, unread, or delete.'), 400);\n        const updated = await store.update({\n            id: context.req.param('id'),\n            userId: context.var.notificationUserId,\n            action,\n        });\n        return updated\n            ? context.json({ data: updated })\n            : context.json(inAppNotificationErrorBody(getRequestTranslator(context, IN_APP_NOTIFICATION_NAMESPACE), 'IN_APP_NOTIFICATION_NOT_FOUND', 'errors.notFound', 'Not found.'), 404);\n    });",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36114924151.1/v2-d492c64515aa/E20",
+      "origin": {
+        "kind": "review",
+        "key": "review/36114924151.1/v2-d492c64515aa",
+        "localId": "E20"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/app-plugin-notification-in-app/dist/server/store.js",
+      "lines": [
+        108,
+        193
+      ],
+      "sha256": "13c0bcf80f68b9db1ac91a2befc3169331d134ce3fba1aeaf0f09cf8551ff7de",
+      "observation": "数据库 in-app store 的 list/countUnread 以 userId 为条件并支持 unreadOnly 与游标，update/markAllRead 也以 userId 约束，read 写 readAt、unread 置 null、delete 同时校验 userId。",
+      "excerpt": "    async list(input) {\n        let query = this.database\n            .query()\n            .selectFrom('notificationInAppItems')\n            .selectAll()\n            .where('userId', '=', input.userId)\n            .orderBy('createdAt', 'desc')\n            .orderBy('id', 'desc')\n            .limit(input.limit ?? 25);\n        if (input.unreadOnly)\n            query = query.where('readAt', 'is', null);\n        if (input.before)\n            query = query.where((builder) => builder.or([\n                builder('createdAt', '<', input.before?.createdAt),\n                builder.and([\n                    builder('createdAt', '=', input.before?.createdAt),\n                    builder('id', '<', input.before?.id),\n                ]),\n            ]));\n        return (await query.execute()).map(fromRow);\n    }\n    async countUnread(userId) {\n        const rows = await this.database\n            .query()\n            .selectFrom('notificationInAppItems')\n            .select(({ fn }) => [fn.countAll().as('count')])\n            .where('userId', '=', userId)\n            .where('readAt', 'is', null)\n            .executeTakeFirst();\n        return Number(rows?.count ?? 0);\n    }\n    async update(input) {\n        const now = new Date().toISOString();\n        if (input.action === 'delete') {\n            const current = await this.database\n                .query()\n                .selectFrom('notificationInAppItems')\n                .selectAll()\n                .where('id', '=', input.id)\n                .where('userId', '=', input.userId)\n                .executeTakeFirst();\n            if (!current)\n                return undefined;\n            const result = await this.database\n                .query()\n                .deleteFrom('notificationInAppItems')\n                .where('id', '=', input.id)\n                .where('userId', '=', input.userId)\n                .execute();\n            return result.deletedCount === 1\n                ? { ...fromRow(current), updatedAt: now }\n                : undefined;\n        }\n        const set = input.action === 'read'\n            ? { readAt: now, updatedAt: now }\n            : { readAt: null, updatedAt: now };\n        const result = await this.database\n            .query()\n            .updateTable('notificationInAppItems')\n            .set(set)\n            .where('id', '=', input.id)\n            .where('userId', '=', input.userId)\n            .execute();\n        if (result.updatedCount !== 1)\n            return undefined;\n        const row = await this.database\n            .query()\n            .selectFrom('notificationInAppItems')\n            .selectAll()\n            .where('id', '=', input.id)\n            .executeTakeFirst();\n        return row ? fromRow(row) : undefined;\n    }\n    async markAllRead(userId) {\n        const result = await this.database\n            .query()\n            .updateTable('notificationInAppItems')\n            .set({\n            readAt: new Date().toISOString(),\n            updatedAt: new Date().toISOString(),\n        })\n            .where('userId', '=', userId)\n            .where('readAt', 'is', null)\n            .execute();\n        return result.updatedCount ?? 0;\n    }",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36114924151.1/v2-d492c64515aa/E21",
+      "origin": {
+        "kind": "review",
+        "key": "review/36114924151.1/v2-d492c64515aa",
+        "localId": "E21"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/app-plugin-notification-in-app/dist/server/providers/in-app-notification.js",
+      "lines": [
+        27,
+        40
+      ],
+      "sha256": "ca2a3954be5be0a6ab2cbd8052422b50ecffd93d24f99524cd732b050b9d61ad",
+      "observation": "InAppNotificationProvider.boot 在存在 notification registry 时注册 in-app Channel 与 database provider，recipientExists 通过用户管理服务校验收件人存在。",
+      "excerpt": "    async boot() {\n        const { container } = this.app;\n        if (!container.has(notificationExtensionRegistryToken))\n            return;\n        const registry = container.resolve(notificationExtensionRegistryToken);\n        const store = container.resolve(inAppNotificationStoreToken);\n        const users = container.resolve(userAdministrationServiceToken);\n        registry.registerChannel(createInAppChannelDefinition()).registerProvider(createDatabaseProviderDefinition({\n            store,\n            async recipientExists(userId) {\n                return Boolean(await users.get(userId));\n            },\n        }));\n    }",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36114924151.1/v2-d492c64515aa/E22",
+      "origin": {
+        "kind": "review",
+        "key": "review/36114924151.1/v2-d492c64515aa",
+        "localId": "E22"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/app-plugin-notification-in-app/dist/client/api.js",
+      "lines": [
+        1,
+        46
+      ],
+      "sha256": "ccb9144e02c0ef357727ad260818f9069b125c80870133cee2188ca49f4f74ae",
+      "observation": "客户端 api 通过注入的 client 请求 notifications/in-app 列表、unread-count；写操作先取 csrf 再带 x-csrf-token 提交 action。",
+      "excerpt": "export async function fetchInbox(client, filters, signal) {\n    const query = new URLSearchParams({ limit: String(filters.limit ?? 25) });\n    if (filters.unreadOnly)\n        query.set('unreadOnly', 'true');\n    if (filters.cursor)\n        query.set('cursor', filters.cursor);\n    const value = await client.request({\n        path: `notifications/in-app?${query}`,\n        signal,\n    });\n    if (Array.isArray(value))\n        return { data: value };\n    if (isRecord(value) && Array.isArray(value.data)) {\n        return {\n            data: value.data,\n            nextCursor: typeof value.nextCursor === 'string' ? value.nextCursor : undefined,\n        };\n    }\n    throw new Error('Inbox returned an invalid response.');\n}\nexport async function fetchUnreadCount(client, signal) {\n    const response = await client.request({\n        path: 'notifications/in-app/unread-count',\n        signal,\n    });\n    return response.count;\n}\nexport async function mutateInboxItem(client, id, action) {\n    const response = await mutation(client, `notifications/in-app/${encodeURIComponent(id)}`, { action });\n    return response.data;\n}\nexport async function markInboxRead(client) {\n    const response = await mutation(client, 'notifications/in-app/read-all', {});\n    return response.updated;\n}\nasync function mutation(client, path, body) {\n    const csrf = await client.request({\n        path: 'notifications/in-app/csrf',\n    });\n    return client.request({\n        path,\n        method: 'POST',\n        headers: { 'x-csrf-token': csrf.token },\n        json: body,\n    });\n}",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36114924151.1/v2-d492c64515aa/E23",
+      "origin": {
+        "kind": "review",
+        "key": "review/36114924151.1/v2-d492c64515aa",
+        "localId": "E23"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/app-plugin-notification-in-app/dist/client/components/notification-in-app-inbox.js",
+      "lines": [
+        200,
+        206
+      ],
+      "sha256": "cc9857befc4c70b67fabf577835e3586ddd7848d34d99a5074e15b3a705a93cc",
+      "observation": "收件箱条目对 target.type==='route' 用 react-router NavLink 打开、url 用 <a>，并把 Mark read/unread 与 delete 作为 mutation 触发。",
+      "excerpt": "    return (_jsxs(\"article\", { className: `flex gap-3 p-4 sm:p-5 ${item.readAt ? 'bg-card' : 'bg-primary/[0.035]'}`, children: [_jsx(\"div\", { className: 'mt-0.5 grid size-9 shrink-0 place-items-center rounded-xl bg-muted text-muted-foreground', children: _jsx(Bell, { className: 'size-4' }) }), _jsxs(\"div\", { className: 'min-w-0 flex-1', children: [_jsxs(\"div\", { className: 'flex items-start justify-between gap-2', children: [_jsxs(\"div\", { className: 'flex min-w-0 items-center gap-2', children: [_jsx(\"h2\", { className: 'truncate font-medium', title: item.title, children: item.title }), !item.readAt ? (_jsx(\"span\", { className: 'size-2 shrink-0 rounded-full bg-primary', \"aria-label\": t('inbox.unreadFilter', { defaultValue: 'Unread' }) })) : null] }), _jsx(Badge, { variant: 'outline', className: 'shrink-0', children: t('inbox.channel', { defaultValue: 'In-app' }) })] }), _jsx(\"p\", { ref: bodyRef, id: bodyId, className: `mt-1 whitespace-pre-wrap text-sm leading-6 text-muted-foreground [overflow-wrap:anywhere] ${expanded ? '' : 'line-clamp-3'}`, children: item.body }), overflowing ? (_jsx(Button, { variant: 'link', size: 'sm', className: 'h-auto px-0 py-1', \"aria-expanded\": expanded, \"aria-controls\": bodyId, onClick: () => setExpanded((value) => !value), children: expanded\n                            ? t('inbox.collapse', { defaultValue: 'Show less' })\n                            : t('inbox.expand', { defaultValue: 'Show more' }) })) : null, _jsxs(\"div\", { className: 'mt-3 flex flex-wrap items-center gap-2 text-xs text-muted-foreground', children: [_jsx(\"time\", { dateTime: item.createdAt, children: new Date(item.createdAt).toLocaleString() }), isNotificationTarget(item.target) ? (_jsxs(Button, { nativeButton: false, role: 'link', render: item.target.type === 'route' ? (_jsx(NavLink, { to: item.target.path })) : (_jsx(\"a\", { href: item.target.url })), variant: 'link', size: 'sm', className: 'h-auto px-1 text-xs', children: [t('inbox.open', { defaultValue: 'Open' }), \" \", _jsx(ExternalLink, {})] })) : null, _jsx(Button, { variant: 'ghost', size: 'sm', className: 'ml-auto', onClick: () => void onMutate(item, item.readAt ? 'unread' : 'read'), children: item.readAt\n                                    ? t('inbox.markUnread', { defaultValue: 'Mark unread' })\n                                    : t('inbox.markRead', { defaultValue: 'Mark read' }) }), _jsx(Button, { \"aria-label\": t('inbox.delete', {\n                                    defaultValue: 'Delete notification',\n                                }), variant: 'ghost', size: 'icon-sm', onClick: () => void onMutate(item, 'delete'), children: _jsx(Trash2, {}) })] })] })] }));",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36114924151.1/v2-d492c64515aa/E24",
+      "origin": {
+        "kind": "review",
+        "key": "review/36114924151.1/v2-d492c64515aa",
+        "localId": "E24"
+      },
+      "kind": "skill",
+      "path": "app/.agents/skills/nocobase-app-plugin-notification-in-app/SKILL.md",
+      "lines": [
+        36,
+        68
+      ],
+      "sha256": "f361771cc2a7722df2747f724865e37dc6fb6efa2d9f513a22e783701fc6a707",
+      "observation": "in-app SKILL 要求先注册 core notification 再注册 in-app，客户端用 useApiClient/realtime client，HTTP 为权威、realtime 仅作失效信号，并保留服务端 per-user 过滤。",
+      "excerpt": "| ------------- | -------- | ------------------------------------------------------------------ | -------------------------------------------------------------- | --------------------------------------------------------------- |\n| `action`      | yes      | `verify` for existing code; `register` for a new target            | `register/verify/diagnose`                                     | \"Should I register, verify, or diagnose the inbox?\"             |\n| `application` | yes      | infer from one unambiguous workspace application                   | application root with Server and Client configuration          | \"Which application should register the inbox plugin?\"           |\n| `apiConfig`   | no       | the target application's injected `ApiClient` and `RealtimeClient` | authenticated client with the intended `baseURL`/`realtimeURL` | \"Should this application use its default or a custom API host?\" |\n\nRules:\n\n- Resolve package versions and enabled plugins from the target application before changing source.\n- Register the package's public `/client` and `/server` entries; do not import implementation files.\n- If the target application is ambiguous, stop mutation and ask.\n\n# Mandatory Clarification Gate\n\n- Max clarification rounds: `2`.\n- Max questions per round: `3`.\n- Read-only inspection and diagnosis may proceed when the application is unambiguous.\n- Missing required input blocks mutation; report the missing contract instead of guessing.\n\n# Workflow\n\n1. Read [Inbox Integration Contract](references/inbox-integration.md) for package requirements, public surfaces, and runtime semantics.\n2. Inspect the target application's Server plugin list, Client composition, authentication setup, `api.baseURL`, `api.realtimeURL`, and installed package versions.\n3. Register `@nocobase/app-plugin-notification` before `@nocobase/app-plugin-notification-in-app/server` when the application needs the `in-app` Channel contribution.\n4. Register `@nocobase/app-plugin-notification-in-app/client` in the Client composition root. In a development build, verify the page at `/dev/notification-in-app` relative to the App base path.\n5. In React components and custom Hooks, use `useApiClient()` from `@nocobase/app-client` for inbox reads and mutations, and `useService(realtimeClientToken)` for subscriptions. Outside React, resolve the corresponding tokens from the application's services or receive the clients explicitly. Do not reconstruct `/api` from the browser location or Portal base.\n6. Keep HTTP state authoritative. On a validated `inbox.changed` event, realtime connection open, or window focus, trigger a bounded HTTP refetch.\n7. Use the public `@nocobase/app-plugin-notification-in-app/realtime` entry for shared topic or event types; do not import Server internals.\n8. Test allowed and denied users, CSRF-protected mutations, pagination, custom API hosts, realtime invalidation, reconnect recovery, and Dev Route registration.\n9. Run lint, typecheck, tests, and build for the plugin and affected application.\n\n# Reference Loading Map\n\n| Reference                                                     | Use When                                                                            | Notes                                               |",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36114924151.1/v2-d492c64515aa/E25",
+      "origin": {
+        "kind": "review",
+        "key": "review/36114924151.1/v2-d492c64515aa",
+        "localId": "E25"
+      },
+      "kind": "skill",
+      "path": "app/.agents/skills/nocobase-app-plugin-notification-in-app/references/inbox-integration.md",
+      "lines": [
+        26,
+        65
+      ],
+      "sha256": "fc935413849fcf895cb9eaae6e8597a063ea0059307dc4ab617d5702da3ed409",
+      "observation": "inbox-integration 说明最终投递用 recipientExists 校验用户、路由为 notifications/in-app、写操作需 CSRF、target route 由 Router 补 basename，且 realtime topic 为用户级失效信号。",
+      "excerpt": "\n```text\n/dev/notification-in-app\n```\n\nRegister `@nocobase/app-plugin-notification-in-app/client` in the application Client composition root. The page mounts `NotificationInAppProvider` locally and cleans up its realtime and focus listeners when navigation leaves the page. The Dev Route and its exclusive dependencies are absent from production builds.\n\n## Final delivery validation\n\nThe database Provider checks the recipient through Authentication’s user administration service immediately before writing the inbox item. A missing user returns a non-retryable `recipient` failure and creates no inbox item or realtime event. A lookup failure remains a retryable storage failure. Custom hosts calling `createDatabaseProviderDefinition` must supply `recipientExists(userId)` backed by their authoritative user directory; do not use a permissive fallback.\n\n## HTTP and realtime behavior\n\nThe authenticated inbox API is rooted at `notifications/in-app` relative to the injected `ApiClient` API base. Reads include list and unread-count. Writes include read/unread/delete and read-all, each preceded by an authenticated CSRF-token request.\n\nFor a custom host, register the exported `IN_APP_NOTIFICATION_NAMESPACE` and `inAppNotificationServerLocales` with its `I18nRuntime`, initialize the runtime, then mount its request i18n middleware before the inbox router. Notification-owned failures return a stable `error.code/message/ns/key/params` envelope; branch on `code`, display `message`, and use `ns`, `key`, and `params` only when the Client needs to retranslate it. Authentication middleware retains its owning plugin's error contract.\n\nThe WebSocket topic is user-scoped by the Server. An `inbox.changed` event does not carry authoritative inbox contents; it tells the UI to refetch HTTP state. The UI also refetches when the realtime connection opens so events missed during disconnection are recovered. Window focus is a fallback invalidation.\n\nWhen an application configures `api.baseURL` or `api.realtimeURL`, both transports must use those injected client settings. Never derive the HTTP endpoint from `window.location`, a Portal base, or the WebSocket URL.\n\n#### Ownership and upgrades\n\nThe plugin owns the inbox components, Provider, Dev Route, authentication enforcement, per-user isolation, CSRF, persistence, and event publication. Applications receive UI changes by upgrading the plugin. A production inbox surface requires a separate product decision and must use an authenticated App or Settings Route rather than exposing the Dev Route.\n\n## Diagnosis order\n\n1. Confirm the authenticated list and unread-count endpoints return the expected durable state.\n2. Confirm mutations fetch a CSRF token and return the changed item/count.\n3. Confirm the application client points HTTP and realtime transports at the intended backend.\n4. Confirm the realtime connection subscribes to the public topic.\n5. Confirm a valid invalidation increments the UI revision and triggers an HTTP refetch.\n6. Confirm reopening the realtime connection refetches even when no event was received.\n7. Confirm cleanup removes the topic, connection-open, and window-focus listeners.\n\nDo not diagnose a missing UI update by manually changing the inbox table or publishing synthetic production events. Reproduce with an isolated test notification or inspect the durable route and subscription logs.\n\nConfigure `notification.channels.inbox: { provider: 'in-app' }` and send `messages: { inbox: { to: 'user-id', title: 'Title', body: 'Body' } }`. Channel keys are names; multiple names using `in-app` are independent targets. `to` requires an application user ID or a non-empty readonly array, with one Delivery per user. No current user is inferred. The test form requires an explicit recipient.\n\nUse `target: { type: 'route', path: '/topics/123' }` for an internal route without the deployment prefix, or `target: { type: 'url', url: 'https://example.com/main/topics/123' }` for a complete HTTP(S) URL. The inbox adds the Router basename only for routes. Without a target, no Open link is shown. Legacy `actionUrl` is ignored; run the new target-column migration without converting old links.",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36114924151.1/v2-d492c64515aa/E26",
+      "origin": {
+        "kind": "review",
+        "key": "review/36114924151.1/v2-d492c64515aa",
+        "localId": "E26"
+      },
+      "kind": "skill",
+      "path": "app/.agents/skills/nocobase-app-development/SKILL.md",
+      "lines": [
+        44,
+        59
+      ],
+      "sha256": "e7980544a22c3863127705804f415e979050b7f64d7b9ef2588c59edf4ae2635",
+      "observation": "app-development 能力映射表把多步流程指向 app-plugin-workflow、站内消息指向 app-plugin-notification，并提示 notification.channels 与 send({idempotencyKey,messages}) 配置，且要求先读对应 Skill 再实现。",
+      "excerpt": "| The requirement sounds like                               | Read the Skill for                    |\n| --------------------------------------------------------- | ------------------------------------- |\n| Approvals, multi-step processes, \"when X happens then Y\"  | `@nocobase/app-plugin-workflow`       |\n| Email, IM, or in-app messages                             | `@nocobase/app-plugin-notification`   |\n| Roles, permissions, per-user or per-record access         | `@nocobase/app-plugin-authorization`  |\n| Sign-in, registration, sessions                           | `@nocobase/app-plugin-authentication` |\n| File upload and metadata through Repository               | `@nocobase/app-plugin-file`           |\n| Translated text and language switching                    | `@nocobase/app-plugin-i18n`           |\n| User administration and application-owned role assignment | `@nocobase/app-plugin-users`          |\n| Reading or writing data, schema changes, migrations       | `@nocobase/db`                        |\n\nRead the relevant Skill before writing the feature, but treat this table as a map rather than an installed-package list. Implementing a permission system, a notification sender, or a scheduler by hand when a registered plugin provides one is the most expensive mistake available here.\n\nFor notification configuration or sending, follow the notification plugin Skill: `notification.channels` maps each name to one flat Provider configuration, and `send({ idempotencyKey, messages })` supplies a complete message per Channel. Use native addresses; email and in-app arrays create independent deliveries, while Webhooks forbid `to`.\n\nSkills synchronization reads direct `@nocobase/*` dependencies from the application manifest and retains compatibility with explicitly registered plugins. It does not make an unregistered runtime plugin active; the composition roots remain the authority for registration and contribution order.",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36114924151.1/v2-d492c64515aa/E27",
+      "origin": {
+        "kind": "review",
+        "key": "review/36114924151.1/v2-d492c64515aa",
+        "localId": "E27"
+      },
+      "kind": "code",
+      "path": "app/server/workflows/service-request-acceptance/workflow.ts",
+      "lines": [
+        30,
+        75
+      ],
+      "sha256": "add16c0f8e4d791ebc9f21386dc9dfdc99944b91071c5dab973de75b175f696b",
+      "observation": "应用 workflow.ts 声明 registerAcceptance RunInstruction、isUrgent ConditionInstruction 及其 yes 分支，inputSchema 限定 requestId/locale，符合框架 DSL。",
+      "excerpt": "  nodes: [\n    RunInstruction.create({\n      key: 'registerAcceptance',\n      title: 'Register acceptance',\n      description:\n        'Read the service request by input requestId, move it from pending to processing, and return the assignee, urgent flag and title that the notification needs.',\n      config: {\n        module: './server/register-acceptance',\n        args: { requestId: '{{$input.requestId}}' },\n      },\n      result: {\n        type: 'object',\n        properties: {\n          assigneeId: { oneOf: [{ type: 'string' }, { type: 'null' }] },\n          urgent: { type: 'boolean' },\n          title: { type: 'string' },\n        },\n        required: ['assigneeId', 'urgent', 'title'],\n        additionalProperties: false,\n      },\n    }),\n    ConditionInstruction.create({\n      key: 'isUrgent',\n      title: 'Is the request urgent?',\n      description:\n        'Compare the accepted request urgent flag with true; an urgent request takes the urgent result branch and a normal request takes the normal result branch.',\n      config: {\n        expression: {\n          '===': [{ var: 'nodeResults.registerAcceptance.urgent' }, true],\n        },\n      },\n    }).branch({\n      yes: [\n        RunInstruction.create({\n          key: 'recordUrgentResult',\n          title: 'Record urgent acceptance',\n          description:\n            'Persist the urgent acceptance result on the request so the list and detail pages show that the request was accepted as urgent.',\n          config: {\n            module: './server/record-result',\n            args: {\n              requestId: '{{$input.requestId}}',\n              result: 'urgent',\n            },\n          },\n        }),",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36114924151.1/v2-d492c64515aa/E28",
+      "origin": {
+        "kind": "review",
+        "key": "review/36114924151.1/v2-d492c64515aa",
+        "localId": "E28"
+      },
+      "kind": "code",
+      "path": "app/server/workflows/service-request-acceptance/server/acceptance.ts",
+      "lines": [
+        114,
+        135
+      ],
+      "sha256": "a5e157a80d369fb12ed0c462fb17e63109aeff01c64e1235b5b05afa28490ad2",
+      "observation": "notifyAssignee 从 services 解析 notificationServiceToken 与 i18n，按 idempotencyKey=service-request-accepted:<id>、source、messages.inbox{to,title,body,target} 调用 send。",
+      "excerpt": "  const notification = options.services.resolve(notificationServiceToken);\n  const i18n = options.services.resolve(i18nToken);\n  const locale = i18n.resolveLocale(input.locale);\n  await i18n.ensureLocaleLoaded(locale);\n  const t = i18n.getFixedT(APP_NS, locale);\n  const title = t('serviceRequest.notification.title');\n  const body = input.urgent\n    ? t('serviceRequest.notification.bodyUrgent', { title: input.title })\n    : t('serviceRequest.notification.bodyNormal', { title: input.title });\n  await notification.send({\n    idempotencyKey: `service-request-accepted:${input.requestId}`,\n    source: { type: 'service-request', referenceId: String(input.requestId) },\n    messages: {\n      inbox: {\n        to: input.assigneeId,\n        title,\n        body,\n        target: { type: 'route', path: `/service-requests/${input.requestId}` },\n      },\n    },\n  });\n  return null;",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36114924151.1/v2-d492c64515aa/E29",
+      "origin": {
+        "kind": "review",
+        "key": "review/36114924151.1/v2-d492c64515aa",
+        "localId": "E29"
+      },
+      "kind": "code",
+      "path": "app/server/providers/service-request.ts",
+      "lines": [
+        245,
+        267
+      ],
+      "sha256": "dd4721ea1369f9cb587bcb5073d3c7f162dc6dc0834aa739693c3fef13b27cdf",
+      "observation": "accept 服务先 ensureArtifactMaterialized，再 workflow.trigger(key,{requestId,locale},{force,eventKey,sourceType,sourceId}) 并把 skipped 映射为 500 错误。",
+      "excerpt": "    // Invoke the current definition through the public business contract. The\n    // run is asynchronous, so the route returns the run id and the client polls\n    // the record until it leaves `processing`.\n    const receipt = await this.workflow.trigger(\n      SERVICE_REQUEST_WORKFLOW_KEY,\n      { requestId: id, locale: options.locale },\n      {\n        // The application owns this definition and runs it as part of the accept\n        // action, so it is triggered regardless of the management UI switch.\n        force: true,\n        eventKey: `service-request-accept:${id}`,\n        sourceType: 'service-request',\n        sourceId: String(id),\n      },\n    );\n    if (receipt.status === 'skipped') {\n      throw new ServiceRequestError(\n        'SERVICE_REQUEST_WORKFLOW_SKIPPED',\n        `Workflow ${SERVICE_REQUEST_WORKFLOW_KEY} did not start (${receipt.reason}).`,\n        500,\n      );\n    }\n    return { runId: receipt.runId };",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36114924151.1/v2-d492c64515aa/E30",
+      "origin": {
+        "kind": "review",
+        "key": "review/36114924151.1/v2-d492c64515aa",
+        "localId": "E30"
+      },
+      "kind": "code",
+      "path": "app/server/config/drive.ts",
+      "lines": [
+        1,
+        40
+      ],
+      "sha256": "5b24c573b1663714abf1adfd314779ad25f493595a5fc7ca0ecd2b2675dbcdad",
+      "observation": "应用在 drive 配置中额外声明 workflowArtifacts 私有 fs 盘并指向 paths.server()，注释说明 run 模块的裸包名 import 必须能在编译后的 server 树中解析。",
+      "excerpt": "import {\n  defineAppConfig,\n  type AppConfigFactory,\n} from '@nocobase/app-server/config';\nimport type { AppDriveConfig } from '@nocobase/drive';\n\nconst drive: AppConfigFactory<AppDriveConfig> = defineAppConfig(({ paths }) => {\n  const disks: AppDriveConfig['disks'] = {\n    local: {\n      driver: 'fs',\n      location: paths.storage(),\n      visibility: 'private',\n    },\n    // Workflow run modules are loaded from a materialized Artifact directory by\n    // a plain Node `import()`. Their bare imports (`@nocobase/db`, the token\n    // owners) resolve relative to that directory, so it has to live inside the\n    // compiled server tree where the deployment's `node_modules` is reachable.\n    // The default `local` disk points at storage, which may be relocated\n    // outside the application, and a run module there cannot resolve them. The\n    // location matches the built Artifact root, so a build needs no extra copy.\n    workflowArtifacts: {\n      driver: 'fs',\n      location: paths.server(),\n      visibility: 'private',\n    },\n    s3: {\n      driver: 's3',\n      bucket: '',\n      region: 'us-east-1',\n      forcePathStyle: false,\n      supportsACL: true,\n      credentials: {},\n      visibility: 'private',\n    },\n  };\n  return {\n    default: 'local',\n    disks,\n  };\n});",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36114924151.1/v2-d492c64515aa/E32",
+      "origin": {
+        "kind": "review",
+        "key": "review/36114924151.1/v2-d492c64515aa",
+        "localId": "E32"
+      },
+      "kind": "code",
+      "path": "app/server/config/notification.ts",
+      "lines": [
+        1,
+        16
+      ],
+      "sha256": "2312a7d1a2e99bd0052b6b6ecf4ba5abd85ec8e45dd1740456e3c5c346e2c34a",
+      "observation": "应用 notification 配置将 channels.inbox.provider 设为 in-app，并说明 in-app provider 由插件在启动时注册。",
+      "excerpt": "import {\n  defineAppConfig,\n  type AppConfigFactory,\n} from '@nocobase/app-server/config';\nimport type { NotificationConfig } from '@nocobase/app-plugin-notification/server';\n\nconst notification: AppConfigFactory<NotificationConfig> = defineAppConfig(\n  (_runtime) => ({\n    // `inbox` is the application's channel name; the In-app Notification plugin\n    // registers the `in-app` provider at boot, so the provider is available\n    // without this application implementing or configuring a transport.\n    channels: { inbox: { provider: 'in-app' } },\n  }),\n);\n\nexport default notification;",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36114924151.1/v2-d492c64515aa/E33",
+      "origin": {
+        "kind": "review",
+        "key": "review/36114924151.1/v2-d492c64515aa",
+        "localId": "E33"
+      },
+      "kind": "qa",
+      "path": "artifacts/verify-1/browser-acceptance/report.json",
+      "lines": [
+        5,
+        27
+      ],
+      "sha256": "e826825441dcfc0a366fddd10222471eb104ef942a07bfcebca0f402100e85ae",
+      "observation": "验收报告 B01 记录：受理后业务结果为 Normal，执行记录 #1 Resolved 131ms，Record normal acceptance Succeeded、Notify the assignee Succeeded。",
+      "excerpt": "  \"checks\": [\n    {\n      \"id\": \"B01\",\n      \"criterion\": \"主管受理一条普通请求，执行记录显示已运行，业务记录呈现相应受理结果。\",\n      \"status\": \"passed\",\n      \"actions\": [\n        \"以 supervisor/password123 登录，打开 Service requests 列表\",\n        \"在普通请求 Update the shared team mailbox 行点击 Accept\",\n        \"以 nocobase 管理员登录，进入 Settings > Workflows > Execution records，打开运行记录 #1，点击 Record normal acceptance 节点\"\n      ],\n      \"evidence\": [\n        \"受理后业务列表该行 Acceptance status=Accepted、Acceptance result=Normal，并弹出 Request accepted 对话框\",\n        \"执行记录 #1 Service request acceptance 状态 Resolved、Duration 131 ms，触发时间 9:15:07 AM\",\n        \"运行 #1 的 Record normal acceptance 节点显示 Succeeded、Duration 16 ms；Notify the assignee 节点 Succeeded\"\n      ],\n      \"screenshots\": [\n        \"supervisor-list-before.png\",\n        \"b01-normal-list-after.png\",\n        \"b01-b03-workflow-runs.png\",\n        \"b01-run1-normal-node-succeeded.png\"\n      ],\n      \"recordedAt\": 1790328100478\n    },",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36114924151.1/v2-d492c64515aa/E34",
+      "origin": {
+        "kind": "review",
+        "key": "review/36114924151.1/v2-d492c64515aa",
+        "localId": "E34"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-1/browser-acceptance/evidence/b02-assignee-inbox.png",
+      "lines": null,
+      "sha256": "bbe94a442ee3c4bc48005c897531179c6a017d988cd8f36e639f61172ca2a995",
+      "observation": "负责人消息中心截图：标题显示 2 unread，列出两条 In-app 的 Service request accepted 消息。",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-1/browser-acceptance/b02-assignee-inbox.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "review/36114924151.1/v2-d492c64515aa/E35",
+      "origin": {
+        "kind": "review",
+        "key": "review/36114924151.1/v2-d492c64515aa",
+        "localId": "E35"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-1/browser-acceptance/evidence/b03-run2-urgent-node-succeeded.png",
+      "lines": null,
+      "sha256": "7de338f04bc066b243a43b2d82f97edd9b25e88993636d8062dbc03fa3b3af11",
+      "observation": "紧急运行 #2 的 Record urgent acceptance 节点截图，显示 Succeeded 与运行时间。",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-1/browser-acceptance/b03-run2-urgent-node-succeeded.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "review/36114924151.1/v2-d492c64515aa/E36",
+      "origin": {
+        "kind": "review",
+        "key": "review/36114924151.1/v2-d492c64515aa",
+        "localId": "E36"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-1/browser-acceptance/evidence/b02-read-persisted-after-refresh.png",
+      "lines": null,
+      "sha256": "9744d6dab8635216e435ecd0c73ff74a520df822429251be7a01c3e85e453bd8",
+      "observation": "标记一条已读并刷新后的消息中心截图，显示 1 unread，已读状态保留。",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-1/browser-acceptance/b02-read-persisted-after-refresh.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "review/36114924151.1/v2-d492c64515aa/E37",
+      "origin": {
+        "kind": "review",
+        "key": "review/36114924151.1/v2-d492c64515aa",
+        "localId": "E37"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-1/browser-acceptance/evidence/b04-supervisor-messages-empty.png",
+      "lines": null,
+      "sha256": "33ec8e5f2584de29b18b2584a128d3c72c114fd20cbc4589aef08bec8e1cd218",
+      "observation": "非收件人（supervisor）的消息中心截图，显示无消息，Mark all read 不可用。",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-1/browser-acceptance/b04-supervisor-messages-empty.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "review/36114924151.1/v2-d492c64515aa/E38",
+      "origin": {
+        "kind": "review",
+        "key": "review/36114924151.1/v2-d492c64515aa",
+        "localId": "E38"
+      },
+      "kind": "skill",
+      "path": "app/AGENTS.md",
+      "lines": [
+        13,
+        34
+      ],
+      "sha256": "ace9bda99b015ae7c9b2f324a6019ac8f828fcbed6110845edbdcb5fe92b8268",
+      "observation": "AGENTS.md 说明 skills:sync 的加载方式，把 app-development 作为统一入口，并区分 app-upgrade 与 deployment Skill 的使用场景。",
+      "excerpt": "## Load the development skills\n\n`pnpm install` runs `pnpm skills:sync` through the application's `postinstall` hook. If `.agents/skills/nocobase-app-development/` is missing, install dependencies from the application root; if install scripts were disabled or synchronized Skills are stale, run `pnpm skills:sync` explicitly.\n\n`.agents/skills/nocobase-app-development/` holds the detailed guidance behind this file. Read its `SKILL.md` first — it routes to the reference that matches your task instead of making you read everything:\n\n| Task                                                         | Reference                            |\n| ------------------------------------------------------------ | ------------------------------------ |\n| Any frontend change: pages, routes, components, styles, copy | `references/frontend/ui-workflow.md` |\n| Add an HTTP endpoint                                         | `references/server-routes.md`        |\n| Read or write data                                           | `references/database-and-data.md`    |\n| Change the schema                                            | `references/migrations.md`           |\n| Switch or add a database connection                          | `references/database-connections.md` |\n| Translate server-produced text or add a language             | `references/i18n.md`                 |\n| Add a service, background job, or scheduled task             | `references/services-and-jobs.md`    |\n| Write tests and verify                                       | `references/testing.md`              |\n\nRead the one page your task needs, not the whole directory.\n\n`.agents/skills/nocobase-app-upgrade/` is a separate Skill for a separate job: merging a newer release of the template this application was generated from. Read it when the task is upgrading the template rather than building a feature, and read it before touching anything — an upgrade done by copying the newest template over this application destroys the work that made it this application.\n\n`.agents/skills/nocobase-deployment/` covers moving this application from source to a production server or a Hub: building for the target platform, what the archive does and does not carry, migrations and business data, production configuration, workflow artifacts after a production build, and what to verify afterwards. Read it before building for deployment, and when an application starts in production but does not work.",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36114924151.1/v2-d492c64515aa/E39",
+      "origin": {
+        "kind": "review",
+        "key": "review/36114924151.1/v2-d492c64515aa",
+        "localId": "E39"
+      },
+      "kind": "skill",
+      "path": "app/AGENTS.md",
+      "lines": [
+        36,
+        58
+      ],
+      "sha256": "ace9bda99b015ae7c9b2f324a6019ac8f828fcbed6110845edbdcb5fe92b8268",
+      "observation": "AGENTS.md 规定业务代码的放置位置（client/routes.ts、server/routes、server/providers、migrations/seeds、client/locales、tests），并要求页面+API 特性覆盖这些位置。",
+      "excerpt": "## Where things go\n\nBusiness code goes in these places. This is where you work, and where you should stay unless the task genuinely requires otherwise:\n\n```text\nclient/routes.ts          Declare a page route\nclient/pages/             The page component; a folder when a page has children or files of its own\nclient/components/        Your components\nclient/components/ui/     shadcn/ui primitives; add with the CLI, do not hand-write\nclient/locales/           Every user-visible string\nclient/service-provider.ts Client startup and CRUD resource integration\nserver/routes/            HTTP endpoints\nserver/providers/         Services and their lifecycle\ndatabase/main/migrations/      Schema changes\ndatabase/main/seeds/           Required initial data\ndatabase/main/collections/     Generated Collection artifacts; regenerate, never edit\ncli/commands/             Commands this application owns\ntests/                    Tests; never beside the source\n```\n\nA page with children or page-local helpers uses a folder with `index.tsx`; child folders mirror route paths. Keep page-local components and data in that folder, reserving `client/components/` for application-wide components. See [child routes](.agents/skills/nocobase-app-development/references/frontend/references/child-routes.md) for examples.\n\nA feature with a page and an API touches five places: a migration for the table, a route in `server/routes/`, a page in `client/pages/` declared in `client/routes.ts`, navigation on the page route, and strings in `client/locales/`.",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36114924151.1/v2-d492c64515aa/E40",
+      "origin": {
+        "kind": "review",
+        "key": "review/36114924151.1/v2-d492c64515aa",
+        "localId": "E40"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/app-plugin-workflow/dist/server/provider.js",
+      "lines": [
+        88,
+        100
+      ],
+      "sha256": "4f8e2e507d4309af6fa8d82bb6160241c497921c138fcde6b78560dff9fe0afa",
+      "observation": "resolveWorkflowArtifactDisk 在未配置 artifactDisk 时回退 drive.default，并要求该盘存在、driver 为 fs、visibility 为 private，否则抛错。",
+      "excerpt": "function resolveWorkflowArtifactDisk(workflow, drive) {\n    const name = workflow.artifactDisk ?? drive.default;\n    const disk = drive.disks[name];\n    if (!disk) {\n        throw new Error(`Workflow Artifact disk \"${name}\" is not configured`);\n    }\n    if (disk.driver !== 'fs') {\n        throw new Error(`Workflow Artifact disk \"${name}\" must use the fs/local driver`);\n    }\n    if (disk.visibility !== 'private') {\n        throw new Error(`Workflow Artifact disk \"${name}\" must have private visibility`);\n    }\n    return disk;",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36114924151.1/v2-d492c64515aa/E41",
+      "origin": {
+        "kind": "review",
+        "key": "review/36114924151.1/v2-d492c64515aa",
+        "localId": "E41"
+      },
+      "kind": "code",
+      "path": "app/server/config/workflow.ts",
+      "lines": [
+        1,
+        24
+      ],
+      "sha256": "e229164119d137f3414f55224065e842f3403a35407c6b756e2e3c6832aea9cd",
+      "observation": "应用 workflow 配置用 resolveWorkflowRuntimeConfig 指定 sourceRoot/distRoot 与 artifactDisk='workflowArtifacts'，注释说明盘需位于编译后的 server 树以便 run 模块解析包导入。",
+      "excerpt": "import {\n  defineAppConfig,\n  type AppConfigFactory,\n} from '@nocobase/app-server/config';\nimport type { WorkflowRuntimeConfig } from '@nocobase/app-plugin-workflow/server';\nimport { resolveWorkflowRuntimeConfig } from '@nocobase/app-plugin-workflow/server';\n\nconst workflow: AppConfigFactory<WorkflowRuntimeConfig> = defineAppConfig(\n  ({ paths, env }) =>\n    resolveWorkflowRuntimeConfig(\n      {\n        sourceRoot: paths.server('workflows'),\n        distRoot: paths.server('workflows'),\n        // The `workflowArtifacts` disk lives in the compiled server tree so the\n        // materialized run modules resolve their package imports. `local`\n        // (storage) can be relocated outside the application; see drive.ts.\n        artifactDisk: 'workflowArtifacts',\n        production: env.NODE_ENV === 'production',\n      },\n      {\n        rootDir: paths.root(),\n        serverDir: paths.server(),\n      },\n    ),",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "qa/1/supervisor-list-before.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/1",
+        "localId": "supervisor-list-before.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-1/browser-acceptance/evidence/supervisor-list-before.png",
+      "lines": null,
+      "sha256": "4ae4e7b9c19fc832167f9d741ef73ded7ae620c24b8d08efae0770f4d1a8dda0",
+      "observation": "验收项 B01 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-1/browser-acceptance/supervisor-list-before.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/1/b01-normal-list-after.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/1",
+        "localId": "b01-normal-list-after.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-1/browser-acceptance/evidence/b01-normal-list-after.png",
+      "lines": null,
+      "sha256": "1dcd589e26cfd4cb64dbeda9bc69f7f848390e35be8da533438a7bc2f66cf7b8",
+      "observation": "验收项 B01 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-1/browser-acceptance/b01-normal-list-after.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/1/b01-b03-workflow-runs.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/1",
+        "localId": "b01-b03-workflow-runs.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-1/browser-acceptance/evidence/b01-b03-workflow-runs.png",
+      "lines": null,
+      "sha256": "1e03024f4f9027969239b8ea35760780d88811140bc92348dee2ae18c51fc25d",
+      "observation": "验收项 B01 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-1/browser-acceptance/b01-b03-workflow-runs.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/1/b01-run1-normal-node-succeeded.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/1",
+        "localId": "b01-run1-normal-node-succeeded.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-1/browser-acceptance/evidence/b01-run1-normal-node-succeeded.png",
+      "lines": null,
+      "sha256": "0dedcfded6ae19a63468558ea817bbffb329c407aced594a4019d3a755b122e7",
+      "observation": "验收项 B01 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-1/browser-acceptance/b01-run1-normal-node-succeeded.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/1/b02-assignee-inbox.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/1",
+        "localId": "b02-assignee-inbox.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-1/browser-acceptance/evidence/b02-assignee-inbox.png",
+      "lines": null,
+      "sha256": "bbe94a442ee3c4bc48005c897531179c6a017d988cd8f36e639f61172ca2a995",
+      "observation": "验收项 B02 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-1/browser-acceptance/b02-assignee-inbox.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/1/b02-open-request-drawer.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/1",
+        "localId": "b02-open-request-drawer.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-1/browser-acceptance/evidence/b02-open-request-drawer.png",
+      "lines": null,
+      "sha256": "62696d028b7a75c820974dac00222a76c8e38d0cbe67dcbab3af5578ec4d63fc",
+      "observation": "验收项 B02 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-1/browser-acceptance/b02-open-request-drawer.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/1/b02-one-unread.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/1",
+        "localId": "b02-one-unread.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-1/browser-acceptance/evidence/b02-one-unread.png",
+      "lines": null,
+      "sha256": "90c8e4cc823b6cd4df5479209d4456a7e9c32a1098b0513b297e3df662064f4e",
+      "observation": "验收项 B02 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-1/browser-acceptance/b02-one-unread.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/1/b02-read-persisted-after-refresh.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/1",
+        "localId": "b02-read-persisted-after-refresh.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-1/browser-acceptance/evidence/b02-read-persisted-after-refresh.png",
+      "lines": null,
+      "sha256": "9744d6dab8635216e435ecd0c73ff74a520df822429251be7a01c3e85e453bd8",
+      "observation": "验收项 B02 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-1/browser-acceptance/b02-read-persisted-after-refresh.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/1/b03-urgent-accepted.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/1",
+        "localId": "b03-urgent-accepted.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-1/browser-acceptance/evidence/b03-urgent-accepted.png",
+      "lines": null,
+      "sha256": "93fa21c76a77fe418c923297b2c307f864f044f70de886f5e0f3c6c522adae41",
+      "observation": "验收项 B03 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-1/browser-acceptance/b03-urgent-accepted.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/1/b03-run2-urgent-node-succeeded.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/1",
+        "localId": "b03-run2-urgent-node-succeeded.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-1/browser-acceptance/evidence/b03-run2-urgent-node-succeeded.png",
+      "lines": null,
+      "sha256": "7de338f04bc066b243a43b2d82f97edd9b25e88993636d8062dbc03fa3b3af11",
+      "observation": "验收项 B03 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-1/browser-acceptance/b03-run2-urgent-node-succeeded.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/1/b03-run2-normal-node-not-executed.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/1",
+        "localId": "b03-run2-normal-node-not-executed.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-1/browser-acceptance/evidence/b03-run2-normal-node-not-executed.png",
+      "lines": null,
+      "sha256": "c90d24183bc58c4fb99e293dfe769df0fd2c1b8c1523057a3ec6bb3a27887509",
+      "observation": "验收项 B03 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-1/browser-acceptance/b03-run2-normal-node-not-executed.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/1/b04-supervisor-messages-empty.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/1",
+        "localId": "b04-supervisor-messages-empty.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-1/browser-acceptance/evidence/b04-supervisor-messages-empty.png",
+      "lines": null,
+      "sha256": "33ec8e5f2584de29b18b2584a128d3c72c114fd20cbc4589aef08bec8e1cd218",
+      "observation": "验收项 B04 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-1/browser-acceptance/b04-supervisor-messages-empty.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/1/b04-admin-messages-empty.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/1",
+        "localId": "b04-admin-messages-empty.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-1/browser-acceptance/evidence/b04-admin-messages-empty.png",
+      "lines": null,
+      "sha256": "74cb5036560f1052712fdc8dc2c42d45cb1d84074afe44f9be7c0fecfa81262f",
+      "observation": "验收项 B04 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-1/browser-acceptance/b04-admin-messages-empty.png",
+      "availability": "attached",
+      "note": null
+    }
+  ],
+  "links": [
+    {
+      "rel": "task-issue",
+      "label": "Issue #322",
+      "url": "https://github.com/gchust/nb3-factory/issues/322",
+      "path": null
+    },
+    {
+      "rel": "run",
+      "label": "Run 36114924151 / attempt 1",
+      "url": "https://github.com/gchust/nb3-factory/actions/runs/36114924151/attempts/1",
+      "path": null
+    },
+    {
+      "rel": "report-archive",
+      "label": "固定版本 HTML 报告（gh-pages 归档路径）",
+      "url": null,
+      "path": "reports/issues/322/runs/36114924151/attempt-1/index.html"
+    }
+  ],
+  "limitations": [
+    {
+      "code": "usage-incomplete",
+      "detail": "部分用量未取得或不完整；缺失值为 null，不按零处理。"
+    },
+    {
+      "code": "time-incomplete",
+      "detail": "1 个作业缺少时长。"
+    }
+  ]
+}
