@@ -1,4 +1,4 @@
-import { Home } from 'lucide-react';
+import { Home, TicketCheck } from 'lucide-react';
 import {
   defineAppRoutes,
   defineSettingsRoutes,
@@ -15,6 +15,17 @@ const appRoutes: AppClientRouteContribution = defineAppRoutes([
     name: 'home',
     navigation: { title: 'navigation.home', icon: Home },
     path: '/',
+  },
+  {
+    // Both roles share this page: the server decides which tickets the signed-in
+    // user may see and whether the process actions apply, so no page-level
+    // authorization is added here.
+    authz: 'skip',
+    auth: 'required',
+    componentLoader: () => import('./pages/it-tickets/index.js'),
+    name: 'it-tickets',
+    navigation: { title: 'navigation.itTickets', icon: TicketCheck },
+    path: '/it-tickets',
   },
   {
     auth: 'guest',
