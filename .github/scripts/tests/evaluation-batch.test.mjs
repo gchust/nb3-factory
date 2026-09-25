@@ -3,7 +3,8 @@ import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import test from 'node:test';
-import { activeBatches, advanceBatch, batchDocument, cancelBatch, finalSnapshotRegistered, PLAN_LIMITS, startBatch, validatePlans, writeBatchExport } from '../evaluation-batch.mjs';
+import { activeBatches, advanceBatch, batchDocument, cancelBatch, finalSnapshotRegistered, PLAN_LIMITS, runCoordinator, startBatch, validatePlans, writeBatchExport } from '../evaluation-batch.mjs';
+import { existsSync } from 'node:fs';
 import { commitPrepared, prepareRevision } from '../evaluation-archive.mjs';
 import { mkdtempSync, rmSync } from 'node:fs';
 import os from 'node:os';
@@ -470,4 +471,65 @@ test('a finished batch awaiting its archive and a running batch are exported and
   const remaining = await activeBatches(client);
   assert.deepEqual(remaining.map(b => b.manifest.batchKey), ['smoke-r9201'], 'the archived finished batch closed; the running one stays');
   assert.equal(client.samples().length, samplesBefore, 'compensation creates no business samples');
+});
+
+test('public report fields and counts use only the final execution report, in both directions', async () => {
+  for (const [old, next, expected] of [['failed', 'success', 'passed'], ['passed', 'failure', 'failed']]) {
+    const client = fakeRepository();
+    await start(client, plan(1));
+    const number = client.samples()[0].number;
+    let batch = await current(client);
+    const runKey = batch.manifest.samples[0].runKey;
+    client.run(number, { id: 7500, conclusion: next, delivered: next === 'success' });
+    await registerReport(client, runKey, 7500, { execution: 'completed', acceptance: old, delivery: 'not-published' }, 1);
+    Object.assign(client.state.runs.at(-1), { run_attempt: 2 });
+    batch = await advanceBatch(client, batch, { now: Date.parse('2026-09-25T03:00:00Z') });
+    batch = await advanceBatch(client, batch, { now: Date.parse('2026-09-25T10:00:00Z') }); // grace period passed
+    assert.equal(batch.state.state, 'completed', 'finishing after the grace period is allowed');
+    const document = batchDocument(batch);
+    const [sample] = document.samples;
+    assert.equal(sample.state, expected);
+    assert.deepEqual(sample.report, { state: 'missing', revision: null, execution: null, acceptance: null }, `attempt 1's ${old} report is history only`);
+    assert.deepEqual(document.summary.acceptance, { passed: 0, failed: 0, other: 1 });
+    assert.deepEqual(document.summary.reports, { available: 0, missing: 1, notApplicable: 0 });
+    assert.ok(document.limitations.some(l => l.code === 'reports-missing'), 'completion is not "all reports present"');
+    assert.deepEqual(validateSchema(loadContract('evaluation-batch.v1'), { ...document, revision: 1, createdAt: '2026-09-25T00:00:00Z' }), []);
+  }
+  // Ended at prepare: no build ran, so no report is expected and none is missing.
+  const client = fakeRepository();
+  await start(client, plan(1));
+  const number = client.samples()[0].number;
+  client.run(number, { id: 7600, delivered: false });
+  client.state.jobs.set(7600, [{ name: 'agent', conclusion: 'skipped', steps: [] }]);
+  await recordTerminal(client, await resolveSample(client, number), 7600, 'budget-exhausted', '预算已用尽');
+  const batch = await advanceBatch(client, await current(client), { now: Date.parse('2026-09-25T03:00:00Z') });
+  assert.equal(batch.state.state, 'completed');
+  const document = batchDocument(batch);
+  assert.equal(document.samples[0].report.state, 'not-applicable');
+  assert.deepEqual(document.summary.reports, { available: 0, missing: 0, notApplicable: 1 });
+});
+
+test('one batch failing to coordinate never keeps another batch from being exported and archived', async t => {
+  const client = fakeRepository();
+  await start(client, plan(1));
+  client.run(client.samples()[0].number, { id: 7700 });
+  let finished = await current(client);
+  await registerReport(client, finished.manifest.samples[0].runKey, 7700, { execution: 'completed', acceptance: 'passed', delivery: 'published' });
+  finished = await advanceBatch(client, finished, { now: Date.parse('2026-09-25T03:00:00Z') });
+  assert.equal(finished.state.state, 'completed');
+  await startBatch(client, { plans: plan(2), planKey: 'smoke', trigger: 'manual', now: 9, runId: 9401, controlSha: control, env: {} });
+  const output = mkdtempSync(path.join(os.tmpdir(), 'batch-export-'));
+  t.after(() => rmSync(output, { recursive: true, force: true }));
+  client.state.fail = (method, route) => method === 'POST' && route.endsWith('/dispatches');
+  const result = await runCoordinator(client, { action: 'advance', args: { output } });
+  assert.deepEqual(result.failures.map(f => f.label), ['smoke-r9401']);
+  assert.ok(result.exported.includes(finished.manifest.batchKey), 'the waiting batch still exports');
+  assert.ok(existsSync(path.join(output, finished.manifest.batchKey, 'draft.json')));
+  assert.ok(result.lines.some(line => line.includes('本轮协调失败')));
+  const samples = client.samples().length;
+  // The next compensation recovers the failed batch without creating another sample.
+  const retry = await runCoordinator(client, { action: 'advance', args: { output } });
+  assert.deepEqual(retry.failures, []);
+  assert.equal(client.samples().length, samples);
+  assert.equal(client.state.dispatches.filter(d => Number(d.inputs.issue_number) === client.samples().at(-1).number).length, 1);
 });

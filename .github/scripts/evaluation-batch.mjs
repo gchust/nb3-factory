@@ -9,7 +9,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { listAll } from './comment-queue.mjs';
 import { segmentPattern, taskEvaluationIdentity } from './evaluation-identity.mjs';
-import { readSubject } from './evaluation-registry.mjs';
+import { currentRevision, readSubject } from './evaluation-registry.mjs';
 import { canonicalJson, EXPORTER_VERSION, PRODUCER } from './evaluation-report.mjs';
 import { BATCH_LABEL, chunkText, isBot, MANUAL_LABEL, manifestComment, markers, readManifest, readSampleReceipt, readState,
   readTerminals, SAMPLE_LABEL, stateComment, verifyAncestor } from './evaluation-sample.mjs';
@@ -287,17 +287,20 @@ async function dispatch(client, batch, spec, issue, comments) {
     await client.request('PATCH', `/issues/comments/${comment.id}`, { body: { body: `${comment.body}\n\n${markers.dispatched(spec.key)}\n已派发到搭建工作流；这不表示验收已通过。` } });
 }
 
-async function reportSummary(client, runKey) {
+// A report belongs to one execution: the same Run and the same attempt. The newest
+// revision describing exactly that execution is its current report (a later
+// reassessment of it may add one); reports of other attempts or handoff segments
+// stay history and never stand in for it. A publication-only re-run still gets
+// its own report, produced for that attempt.
+async function reportFor(client, runKey, runId, attempt) {
+  if (!runId) return null;
   let index = null;
   try { index = await readSubject(client, 'evaluation-report', runKey, 'gh-pages'); } catch { return null; }
-  const entry = index?.revisions.find(item => item.revision === index.current);
-  return entry ? { revision: entry.revision, producerRunId: entry.precedence?.producer?.runId ?? null,
-    producerAttempt: entry.precedence?.producer?.attempt ?? null, ...entry.summary } : null;
+  const matching = (index?.revisions ?? []).filter(item => item.precedence?.producer?.runId === runId && (item.precedence?.producer?.attempt ?? 1) === (attempt ?? 1));
+  if (!matching.length) return null;
+  const entry = matching.find(item => item.revision === currentRevision('evaluation-report', matching));
+  return { revision: entry.revision, producerRunId: runId, producerAttempt: attempt ?? 1, ...entry.summary };
 }
-// A report belongs to one execution: the same Run and the same attempt. A report of
-// attempt 1 stays history and never stands in for attempt 2 (a publication-only
-// re-run still gets its own report, produced for that attempt).
-const reportOf = (summary, runId, attempt) => Boolean(summary) && summary.producerRunId === runId && summary.producerAttempt === (attempt ?? 1);
 const fromReport = summary => summary.execution === 'budget-exhausted' ? 'budget-exhausted' : summary.execution === 'blocked' ? 'blocked'
   : summary.execution === 'cancelled' ? 'cancelled' : summary.acceptance === 'passed' ? 'passed'
     : ['failed', 'blocked'].includes(summary.acceptance) ? summary.acceptance : summary.execution === 'timed-out' ? 'failed' : 'unknown';
@@ -335,8 +338,8 @@ export async function observeSample(client, batch, item, spec, now) {
   // any late continuation, so it can never run beside the next sample.
   if (outcome === 'handoff') return stale ? { state: 'unknown', stateSource: 'run', terminalRunId: latest.id, terminalRunAttempt: latest.run_attempt ?? 1,
     reason: 'Handoff 后长时间没有续跑；释放串行槽位，迟到的续跑会在 prepare 被拒绝。' } : { state: 'running' };
-  const summary = await reportSummary(client, spec.runKey);
-  if (reportOf(summary, latest.id, latest.run_attempt)) return { state: fromReport(summary), stateSource: 'report', terminalRunId: latest.id, terminalRunAttempt: latest.run_attempt ?? 1 };
+  const summary = await reportFor(client, spec.runKey, latest.id, latest.run_attempt ?? 1);
+  if (summary) return { state: fromReport(summary), stateSource: 'report', terminalRunId: latest.id, terminalRunAttempt: latest.run_attempt ?? 1 };
   const names = labelNames(issue);
   const state = outcome === 'delivered' ? 'passed' : outcome === 'cancelled' ? 'cancelled'
     : outcome === 'failure' ? (names.includes('agent:needs-input') ? 'blocked' : 'failed') : outcome === 'timed_out' ? 'failed' : 'unknown';
@@ -388,17 +391,22 @@ export async function advanceBatch(client, batch, { now = Date.now(), env = null
     }
   }
   // Reports keep arriving after the samples ended; a finished but still open batch
-  // keeps taking them, so a late final report refines its sample.
+  // keeps taking them, so a late final report refines its sample. Only the report of
+  // the sample's final execution is its current report: the public report fields and
+  // counts never fall back to an earlier attempt or segment.
   for (const spec of manifest.samples) {
     const item = state.samples[spec.key];
     if (!item.issue) continue;
-    const summary = await reportSummary(client, spec.runKey);
-    if (!summary) continue;
+    const summary = needsReport(item) && TERMINAL.has(item.state) ? await reportFor(client, spec.runKey, item.terminalRunId, item.terminalRunAttempt) : null;
+    if (!summary) {
+      item.report = null;
+      delete item.reportRunId; delete item.reportRunAttempt;
+      continue;
+    }
     item.report = { state: 'available', revision: summary.revision, execution: summary.execution ?? null, acceptance: summary.acceptance ?? null };
     Object.assign(item, { reportRunId: summary.producerRunId, reportRunAttempt: summary.producerAttempt });
     // A run-derived terminal state is refined once that execution's own report arrives.
-    if (TERMINAL.has(item.state) && item.stateSource === 'run' && reportOf(summary, item.terminalRunId, item.terminalRunAttempt))
-      Object.assign(item, { state: fromReport(summary), stateSource: 'report' });
+    if (item.stateSource === 'run') Object.assign(item, { state: fromReport(summary), stateSource: 'report' });
   }
   if (state.state === 'active') {
     if (state.cancelled) for (const spec of manifest.samples) {
@@ -489,15 +497,18 @@ export function batchDocument(batch, { exporter = {} } = {}) {
       state: item.state, stateSource: item.stateSource ?? 'plan', dispatchedAt: item.dispatchedAt ?? null, terminalAt: item.terminalAt ?? null,
       reason: item.reason ?? null, agentConfigFingerprint: fingerprint,
       comparable: !item.issue || !observed.length || !frozenConfig ? null : observed.every(value => value === frozenConfig),
-      report: item.report ?? { state: 'missing', revision: null, execution: null, acceptance: null } };
+      // Ended at prepare or by the batch: no build ran, so no report will exist.
+      report: item.report ?? { state: TERMINAL.has(item.state) && !needsReport(item) ? 'not-applicable' : 'missing', revision: null, execution: null, acceptance: null } };
   });
   const byState = Object.fromEntries(SAMPLE_STATES.map(name => [name, samples.filter(s => s.state === name).length]));
   const available = samples.filter(s => s.report.state === 'available').length;
+  const notApplicable = samples.filter(s => s.report.state === 'not-applicable').length;
+  const missing = samples.length - available - notApplicable;
   const limitations = [
     { code: 'no-global-score', detail: '批次只列出同条件样本的可核实事实，不计算 NocoBase 全局平均评分，也不排除失败样本。' },
     { code: 'agent-config-runtime', detail: '样本按运行时仓库变量执行 Agent；批次只冻结并比对非密钥配置指纹，漂移单独标记，逐样本报告记录实际引擎与模型。' },
   ];
-  if (available < samples.length) limitations.push({ code: 'reports-missing', detail: `${samples.length - available} 个计划样本尚无报告；它们仍计入样本全集。` });
+  if (missing) limitations.push({ code: 'reports-missing', detail: `${missing} 个计划样本尚无其最终执行的报告（未开始、执行中或报告未到达）；它们仍计入样本全集，验收计入“其他”。` });
   if (state.cancelled) limitations.push({ code: 'batch-cancelled', detail: '批次已取消：未开始的样本不再派发，已发生的执行与用量保留。' });
   const drifted = samples.filter(s => s.comparable === false).length;
   if (state.agentConfigDrift || drifted) limitations.push({ code: 'agent-config-drift',
@@ -519,7 +530,7 @@ export function batchDocument(batch, { exporter = {} } = {}) {
     cases: manifest.cases.map(item => ({ key: item.key, presetIssueNumber: item.presetIssueNumber, title: item.title, caseHash: item.caseHash,
       capturedAt: item.capturedAt, commentCount: item.commentCount, buildReviewMode: item.buildReviewMode, samples: item.samples })),
     samples,
-    summary: { planned: samples.length, byState, reports: { available, missing: samples.length - available },
+    summary: { planned: samples.length, byState, reports: { available, missing, notApplicable },
       comparable: !state.agentConfigDrift && !drifted && Boolean(frozenConfig),
       acceptance: { passed: samples.filter(s => s.report.acceptance === 'passed').length, failed: samples.filter(s => s.report.acceptance === 'failed').length,
         other: samples.filter(s => !['passed', 'failed'].includes(s.report.acceptance)).length } },
@@ -549,36 +560,40 @@ export function writeBatchExport(output, batch, exporter = {}) {
   return key;
 }
 
-async function main() {
-  const [action, ...argv] = process.argv.slice(2);
-  const args = Object.fromEntries(Array.from({ length: argv.length / 2 }, (_, i) => [argv[i * 2].replace(/^--/, ''), argv[i * 2 + 1]]));
-  const { GitHubClient } = await import('./factory-lib.mjs');
-  const client = new GitHubClient({ token: process.env.GITHUB_TOKEN, repository: process.env.GITHUB_REPOSITORY, apiUrl: process.env.GITHUB_API_URL });
-  const env = process.env;
-  const exporter = { controlSha: env.FACTORY_CONTROL_SHA, runId: env.GITHUB_RUN_ID, attempt: env.GITHUB_RUN_ATTEMPT };
-  // Running batches depend only on their frozen manifests; plans are read for starts only.
-  const loadPlans = async () => validatePlans(JSON.parse(readFileSync(path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../evaluations/plans.json'), 'utf8')),
-    { defaultBranch: (await client.getRepository()).default_branch });
+// Each batch (and each scheduled plan) is coordinated on its own: an error is
+// recorded and the rest still advance and export, so one failing batch never
+// keeps another from being archived. The caller still fails visibly.
+export async function runCoordinator(client, { action, args = {}, env = {}, exporter = {}, readPlans }) {
   if (/^[1-9]\d*$/.test(args['source-run'] ?? '')) await waitForRun(client, Number(args['source-run']));
-  const lines = [];
-  const exported = [];
+  const lines = [], exported = [], failures = [];
   const exportBatch = batch => { if (args.output && batch?.manifest) exported.push(writeBatchExport(args.output, batch, exporter)); };
+  const isolated = async (label, work) => {
+    try { await work(); }
+    catch (error) {
+      failures.push({ label, error: error.message.slice(0, 300) });
+      lines.push(`### ${label} 本轮协调失败\n\n${error.message.slice(0, 300)}\n\n已记录；其他批次照常推进与归档，下一次推进会重试。`);
+    }
+  };
   if (action === 'start' || action === 'scheduled') {
-    const plans = await loadPlans();
+    const plans = await readPlans();
     const selected = action === 'scheduled' ? (env.FACTORY_EVALUATION_PLANS_ENABLED === 'true' ? plans.filter(p => p.enabled && p.schedule === 'daily') : []) : [plans.find(p => p.key === args.plan)];
     if (action === 'scheduled' && !selected.length) lines.push('没有启用的定时评测计划（需要 FACTORY_EVALUATION_PLANS_ENABLED=true 且计划 enabled + schedule=daily）；未创建任务。');
     for (const plan of selected) {
       need(plan, `Unknown evaluation plan ${args.plan}`);
-      const result = await startBatch(client, { plans, planKey: plan.key, trigger: action === 'scheduled' ? 'schedule' : 'manual', runId: env.GITHUB_RUN_ID,
-        controlSha: env.FACTORY_CONTROL_SHA, env, dryRun: args['dry-run'] === 'true' });
-      if (result.status === 'planned') lines.push(`只预览 ${result.batchKey}：${result.manifest.samples.length} 个样本，基线 ${result.manifest.controlSha.slice(0, 12)}；没有写入或派发。`);
-      else if (result.status === 'skipped') lines.push(`跳过 ${plan.key}：${result.reason}`);
-      else { const batch = await advanceBatch(client, result.batch, { env }); exportBatch(batch); lines.push(summaryTable(batch.manifest, batch.state)); }
+      await isolated(plan.key, async () => {
+        const result = await startBatch(client, { plans, planKey: plan.key, trigger: action === 'scheduled' ? 'schedule' : 'manual', runId: env.GITHUB_RUN_ID,
+          controlSha: env.FACTORY_CONTROL_SHA, env, dryRun: args['dry-run'] === 'true' });
+        if (result.status === 'planned') lines.push(`只预览 ${result.batchKey}：${result.manifest.samples.length} 个样本，基线 ${result.manifest.controlSha.slice(0, 12)}；没有写入或派发。`);
+        else if (result.status === 'skipped') lines.push(`跳过 ${plan.key}：${result.reason}`);
+        else { const batch = await advanceBatch(client, result.batch, { env }); exportBatch(batch); lines.push(summaryTable(batch.manifest, batch.state)); }
+      });
     }
   } else if (action === 'advance' || action === 'status') {
     for (const batch of await activeBatches(client)) {
-      const next = action === 'advance' ? await advanceBatch(client, batch, { env }) : batch;
-      exportBatch(next); lines.push(summaryTable(next.manifest, next.state));
+      await isolated(batch.manifest.batchKey, async () => {
+        const next = action === 'advance' ? await advanceBatch(client, batch, { env }) : batch;
+        exportBatch(next); lines.push(summaryTable(next.manifest, next.state));
+      });
     }
     if (!lines.length) lines.push('没有进行中的评测批次。');
   } else if (action === 'cancel') {
@@ -586,9 +601,28 @@ async function main() {
     const batch = await cancelBatch(client, args.batch);
     exportBatch(batch); lines.push(summaryTable(batch.manifest, batch.state));
   } else throw new Error('Usage: evaluation-batch.mjs <start|scheduled|advance|status|cancel> ...');
+  return { lines, exported, failures };
+}
+
+async function main() {
+  const [action, ...argv] = process.argv.slice(2);
+  const args = Object.fromEntries(Array.from({ length: argv.length / 2 }, (_, i) => [argv[i * 2].replace(/^--/, ''), argv[i * 2 + 1]]));
+  const { GitHubClient } = await import('./factory-lib.mjs');
+  const client = new GitHubClient({ token: process.env.GITHUB_TOKEN, repository: process.env.GITHUB_REPOSITORY, apiUrl: process.env.GITHUB_API_URL });
+  const env = process.env;
+  // Running batches depend only on their frozen manifests; plans are read for starts only.
+  const readPlans = async () => validatePlans(JSON.parse(readFileSync(path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../evaluations/plans.json'), 'utf8')),
+    { defaultBranch: (await client.getRepository()).default_branch });
+  const { lines, exported, failures } = await runCoordinator(client, { action, args, env, readPlans,
+    exporter: { controlSha: env.FACTORY_CONTROL_SHA, runId: env.GITHUB_RUN_ID, attempt: env.GITHUB_RUN_ATTEMPT } });
+  // Written even when a batch failed, so the others still reach the archive matrix.
   if (exported.length && env.GITHUB_OUTPUT) appendFileSync(env.GITHUB_OUTPUT, `export=true\nbatches=${JSON.stringify(exported)}\n`);
   const text = `# 评测批次\n\n${lines.join('\n\n')}\n`;
   console.log(text);
   if (env.GITHUB_STEP_SUMMARY) appendFileSync(env.GITHUB_STEP_SUMMARY, text);
+  if (failures.length) {
+    console.error(`::error::${failures.length} evaluation batch(es) failed to coordinate: ${failures.map(f => f.label).join(', ')}`);
+    process.exitCode = 1;
+  }
 }
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) main().catch(error => { console.error(error.message); process.exitCode = 1; });

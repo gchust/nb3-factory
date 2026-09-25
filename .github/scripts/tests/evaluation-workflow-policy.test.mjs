@@ -94,6 +94,9 @@ test('batch coordination accepts no control SHA, budget, script or URL input and
   assert.match(evaluation, /fail-fast: false/);
   assert.match(evaluation, /batch: \$\{\{ fromJSON\(needs\.coordinate\.outputs\.batches\) \}\}/);
   assert.match(evaluation, /--input "\$RUNNER_TEMP\/batch-export\/\$BATCH_KEY"/);
+  // A batch that failed to coordinate fails the step, but the others' exports still archive.
+  assert.match(coordinate, /if: '!cancelled\(\) && steps\.coordinate\.outputs\.export == ''true'''/);
+  assert.match(evaluation, /if: "!cancelled\(\) && needs\.coordinate\.outputs\.export != '' && needs\.coordinate\.outputs\.batches != ''"/);
   assert.doesNotMatch(coordinate, /API_KEY|TOKEN: \$\{\{ vars|OAUTH/);
   assert.match(coordinate, /CODE_AGENT_MODEL: \$\{\{ vars\.CODE_AGENT_MODEL \}\}/);
   for (const checkout of workflow.split('actions/checkout@v4').slice(1)) {

@@ -138,7 +138,7 @@
             "additionalProperties": false,
             "required": ["state", "revision", "execution", "acceptance"],
             "properties": {
-              "state": { "enum": ["available", "missing"] },
+              "state": { "description": "available: the report of the sample's final execution (same run and attempt); not-applicable: ended at prepare or by the batch, no build ran.", "enum": ["available", "missing", "not-applicable"] },
               "revision": { "type": ["integer", "null"], "minimum": 1 },
               "execution": { "enum": ["running", "completed", "cancelled", "timed-out", "budget-exhausted", "blocked", "unknown", null] },
               "acceptance": { "enum": ["passed", "failed", "blocked", "not-run", "unknown", null] }
@@ -166,8 +166,8 @@
         "reports": {
           "type": "object",
           "additionalProperties": false,
-          "required": ["available", "missing"],
-          "properties": { "available": { "$ref": "#/$defs/count" }, "missing": { "$ref": "#/$defs/count" } }
+          "required": ["available", "missing", "notApplicable"],
+          "properties": { "available": { "$ref": "#/$defs/count" }, "missing": { "$ref": "#/$defs/count" }, "notApplicable": { "$ref": "#/$defs/count" } }
         },
         "comparable": { "description": "true only when every dispatched sample ran under the frozen Agent settings.", "type": "boolean" },
         "acceptance": {
