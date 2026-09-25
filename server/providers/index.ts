@@ -1,5 +1,9 @@
 import type { ApplicationServiceProviderConstructor } from '@nocobase/app-server/application';
 
-const serviceProviders: readonly ApplicationServiceProviderConstructor[] = [];
+import { DeviceAuthorizationProvider } from './devices.js';
+
+const serviceProviders: readonly ApplicationServiceProviderConstructor[] = [
+  DeviceAuthorizationProvider,
+];
 
 export default serviceProviders;

@@ -1,4 +1,4 @@
-import { Home } from 'lucide-react';
+import { HardDrive, Home } from 'lucide-react';
 import {
   defineAppRoutes,
   defineSettingsRoutes,
@@ -15,6 +15,22 @@ const appRoutes: AppClientRouteContribution = defineAppRoutes([
     name: 'home',
     navigation: { title: 'navigation.home', icon: Home },
     path: '/',
+  },
+  {
+    // The device inventory. Its authorization names the same page resource the
+    // server registers, so the grant that opens the menu entry is the grant a
+    // permission set records. The external integration account is not granted
+    // it — only an administrator opens this page — while the account reads the
+    // list through the API with its own key.
+    auth: 'required',
+    authz: {
+      resource: { type: 'page', id: 'devices.inventory' },
+      action: 'access',
+    },
+    componentLoader: () => import('./pages/devices/index.js'),
+    name: 'device-inventory',
+    navigation: { title: 'deviceInventory.navigation', icon: HardDrive },
+    path: '/devices',
   },
   {
     auth: 'guest',

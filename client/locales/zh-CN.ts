@@ -88,6 +88,27 @@ const zhCN: AppResource = {
     description: '向 AI 助手描述你的需求，逐步构建页面、数据模型和业务流程。',
   },
 
+  deviceInventory: {
+    navigation: '设备清单',
+    title: '设备清单',
+    description:
+      '登记在册的设备，按编号与名称管理。仅管理员可维护，集成账号只能读取清单。',
+    create: '新建设备',
+    edit: '编辑设备',
+    delete: '删除',
+    deleteConfirm: '确定删除“{{name}}”？此操作无法撤销。',
+    saved: '设备已保存',
+    saveFailed: '无法保存设备。',
+    deleted: '设备已删除',
+    deleteFailed: '无法删除设备。',
+    loadFailed: '无法加载设备清单。',
+    field: {
+      code: '编号',
+      name: '名称',
+      actions: '操作',
+    },
+  },
+
   appearance: {
     title: '外观',
     mode: '颜色模式',

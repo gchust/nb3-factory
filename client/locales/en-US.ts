@@ -95,6 +95,27 @@ const enUS = {
       'Describe what you need to your AI Agent, then build pages, data models, and business workflows.',
   },
 
+  deviceInventory: {
+    navigation: 'Devices',
+    title: 'Device inventory',
+    description:
+      'The devices on record, by number and name. Only an administrator maintains them; the integration account reads the list.',
+    create: 'New device',
+    edit: 'Edit device',
+    delete: 'Delete',
+    deleteConfirm: 'Delete "{{name}}"? This cannot be undone.',
+    saved: 'Device saved',
+    saveFailed: 'Unable to save the device.',
+    deleted: 'Device deleted',
+    deleteFailed: 'Unable to delete the device.',
+    loadFailed: 'Unable to load the devices.',
+    field: {
+      code: 'Number',
+      name: 'Name',
+      actions: 'Actions',
+    },
+  },
+
   appearance: {
     title: 'Appearance',
     mode: 'Color mode',
