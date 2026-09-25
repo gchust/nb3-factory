@@ -89,6 +89,61 @@ const enUS = {
     emptyDescription:
       'No enabled plugin contributes a dev page you have access to.',
   },
+  customerMemos: {
+    title: 'Customer memos',
+    description: 'Keep a short note about each customer.',
+    create: {
+      action: 'New memo',
+      title: 'New customer memo',
+      success: 'Customer memo for {{name}} created.',
+    },
+    edit: {
+      title: 'Edit customer memo',
+      success: 'Customer memo for {{name}} saved.',
+    },
+    detail: { title: 'Customer memo' },
+    delete: {
+      title: 'Delete the memo for {{name}}?',
+      description:
+        'The memo will be removed from the list. This cannot be undone.',
+      confirm: 'Delete',
+      success: 'Customer memo for {{name}} deleted.',
+      notFound: 'This customer memo was already deleted.',
+    },
+    fields: {
+      customerName: 'Customer name',
+      notes: 'Notes',
+      createdAt: 'Created at',
+    },
+    form: {
+      description: 'The customer name is required; notes are optional.',
+      customerNameRequired: 'Enter a customer name.',
+      customerNameTooLong: 'Use at most {{max}} characters.',
+      notesTooLong: 'Use at most {{max}} characters.',
+    },
+    search: {
+      placeholder: 'Search by customer name',
+      label: 'Search by customer name',
+    },
+    filters: { clear: 'Clear search' },
+    empty: {
+      title: 'No customer memos yet',
+      description: 'Create the first memo to start keeping notes.',
+      noResults: 'No customer memos match this search.',
+    },
+    error: {
+      title: 'Unable to load customer memos',
+      notFound: 'This customer memo no longer exists.',
+      forbidden: 'You do not have permission to do that.',
+      requestFailed: 'The request failed. Please try again.',
+    },
+    actions: {
+      label: 'Actions',
+      more: 'More actions for {{name}}',
+      edit: 'Edit',
+      delete: 'Delete',
+    },
+  },
   home: {
     title: 'Start building your application',
     description:
@@ -112,6 +167,8 @@ const enUS = {
     save: 'Save',
     cancel: 'Cancel',
     confirm: 'Confirm',
+    create: 'Create',
+    saving: 'Saving…',
     language: 'Language',
   },
   notices: {
@@ -129,6 +186,7 @@ const enUS = {
   },
   navigation: {
     home: 'Home',
+    customerMemos: 'Customer memos',
     open: 'Open navigation',
     close: 'Close navigation',
     expand: 'Expand navigation',

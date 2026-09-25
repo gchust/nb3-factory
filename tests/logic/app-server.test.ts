@@ -694,6 +694,152 @@ describe('app server', () => {
     expect(rejected.status).toBe(401);
   });
 
+  it('stores customer memos through the application API and the real database', async () => {
+    const app = trackCloseable(
+      await createInstalledStandaloneServer({
+        viteDevUrl: false,
+        // A browser write carries the origin the application is reached on; declaring it here keeps the
+        // authentication middleware's CSRF origin check working the way it does in a real deployment.
+        env: { APP_PUBLIC_ORIGIN: 'http://localhost' },
+      }),
+    );
+    const baseUrl = `http://localhost${app.application.publicBasePath}`;
+    const endpoint = `${baseUrl}/api/customer-memos`;
+
+    // Every route owns its own security: an anonymous caller is refused even though the page opts out of page grants.
+    const anonymous = await requestApp(app, endpoint);
+    expect(anonymous.status).toBe(401);
+
+    const signIn = await requestApp(
+      app,
+      `${baseUrl}/api/auth/sign-in/username`,
+      {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ username: 'nocobase', password: 'admin123' }),
+      },
+    );
+    expect(signIn.status).toBe(200);
+    const cookie = signIn.headers
+      .getSetCookie()
+      .map((header) => header.split(';')[0])
+      .join('; ');
+    // A browser sends Origin on every write, and the authentication middleware refuses a cookie write without a
+    // trusted origin, so the writes below carry the same header the real client would.
+    const writeHeaders = {
+      cookie,
+      origin: 'http://localhost',
+      'content-type': 'application/json',
+    };
+
+    // The seed ran: the example records are in the real table, not in a static array.
+    const seeded = await requestApp(app, endpoint, { headers: { cookie } });
+    expect(seeded.status).toBe(200);
+    const seededBody = (await seeded.json()) as {
+      data: { customerName: string; notes: string | null }[];
+    };
+    expect(seededBody.data.map((memo) => memo.customerName)).toEqual(
+      expect.arrayContaining([
+        'Acme Trading Co.',
+        'Blue Oak Cafe',
+        'Cedar & Pine Studio',
+      ]),
+    );
+
+    // The search matches part of the name and no other record leaks in.
+    const searched = await requestApp(app, `${endpoint}?search=Acme`, {
+      headers: { cookie },
+    });
+    expect(searched.status).toBe(200);
+    const searchedBody = (await searched.json()) as {
+      data: { customerName: string }[];
+    };
+    expect(searchedBody.data.length).toBeGreaterThan(0);
+    for (const memo of searchedBody.data) {
+      expect(memo.customerName).toContain('Acme');
+    }
+
+    // Clearing the search restores the whole list.
+    const cleared = await requestApp(app, endpoint, { headers: { cookie } });
+    const clearedBody = (await cleared.json()) as { data: unknown[] };
+    expect(clearedBody.data.length).toBeGreaterThanOrEqual(
+      seededBody.data.length,
+    );
+
+    // A blank customer name is refused with a stable code, not free text.
+    const invalid = await requestApp(app, endpoint, {
+      method: 'POST',
+      headers: writeHeaders,
+      body: JSON.stringify({ customerName: '   ', notes: 'no name' }),
+    });
+    expect(invalid.status).toBe(422);
+    await expect(invalid.json()).resolves.toMatchObject({
+      code: 'CUSTOMER_NAME_REQUIRED',
+    });
+
+    // Create, read back, edit and delete against the database.
+    const created = await requestApp(app, endpoint, {
+      method: 'POST',
+      headers: writeHeaders,
+      body: JSON.stringify({
+        customerName: 'Delta Freight Ltd.',
+        notes: 'Prefers email.',
+      }),
+    });
+    expect(created.status).toBe(201);
+    const createdMemo = (
+      (await created.json()) as {
+        data: {
+          id: number;
+          customerName: string;
+          notes: string | null;
+          createdAt: string;
+        };
+      }
+    ).data;
+    expect(createdMemo.customerName).toBe('Delta Freight Ltd.');
+    expect(createdMemo.notes).toBe('Prefers email.');
+    expect(Number.isNaN(Date.parse(createdMemo.createdAt))).toBe(false);
+
+    const fetched = await requestApp(app, `${endpoint}/${createdMemo.id}`, {
+      headers: { cookie },
+    });
+    expect(fetched.status).toBe(200);
+    await expect(fetched.json()).resolves.toMatchObject({
+      data: { id: createdMemo.id, customerName: 'Delta Freight Ltd.' },
+    });
+
+    const updated = await requestApp(app, `${endpoint}/${createdMemo.id}`, {
+      method: 'PATCH',
+      headers: writeHeaders,
+      body: JSON.stringify({ customerName: 'Delta Freight Ltd.', notes: null }),
+    });
+    expect(updated.status).toBe(200);
+    await expect(updated.json()).resolves.toMatchObject({
+      data: { id: createdMemo.id, notes: null },
+    });
+
+    // A missing record and a non-numeric id both read as 404 rather than crashing the query.
+    const missing = await requestApp(app, `${endpoint}/999999999`, {
+      headers: { cookie },
+    });
+    expect(missing.status).toBe(404);
+    const malformed = await requestApp(app, `${endpoint}/not-a-number`, {
+      headers: { cookie },
+    });
+    expect(malformed.status).toBe(404);
+
+    const deleted = await requestApp(app, `${endpoint}/${createdMemo.id}`, {
+      method: 'DELETE',
+      headers: { cookie, origin: 'http://localhost' },
+    });
+    expect(deleted.status).toBe(200);
+    const afterDelete = await requestApp(app, `${endpoint}/${createdMemo.id}`, {
+      headers: { cookie },
+    });
+    expect(afterDelete.status).toBe(404);
+  });
+
   it('mounts standalone app-local routes behind the public base path', async () => {
     const app = trackCloseable(
       await createIsolatedStandaloneServer({ viteDevUrl: false }),

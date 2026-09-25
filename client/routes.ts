@@ -1,4 +1,4 @@
-import { Home } from 'lucide-react';
+import { Home, StickyNote } from 'lucide-react';
 import {
   defineAppRoutes,
   defineSettingsRoutes,
@@ -39,6 +39,38 @@ const appRoutes: AppClientRouteContribution = defineAppRoutes([
     componentLoader: () => import('./pages/auth/reset-password.js'),
     name: 'reset-password',
     path: '/reset-password',
+  },
+  {
+    // The one business page this application owns. `authz: 'skip'` because the application defines no permission
+    // roles; the API behind it still enforces authentication on every request.
+    authz: 'skip',
+    auth: 'required',
+    componentLoader: () => import('./pages/customer-memos/index.js'),
+    name: 'customer-memos',
+    navigation: { title: 'navigation.customerMemos', icon: StickyNote },
+    path: '/customer-memos',
+    // Overlays are child routes: /customer-memos/new creates, /customer-memos/:memoId shows the detail drawer, and
+    // /customer-memos/:memoId/edit stacks the edit dialog on that drawer.
+    children: [
+      {
+        componentLoader: () => import('./pages/customer-memos/new.js'),
+        name: 'customer-memo-new',
+        path: 'new',
+      },
+      {
+        componentLoader: () => import('./pages/customer-memos/detail/index.js'),
+        name: 'customer-memo-detail',
+        path: ':memoId',
+        children: [
+          {
+            componentLoader: () =>
+              import('./pages/customer-memos/detail/edit.js'),
+            name: 'customer-memo-edit',
+            path: 'edit',
+          },
+        ],
+      },
+    ],
   },
 ]);
 

@@ -48,6 +48,11 @@ export interface DataTableProps<TData, TValue = unknown> {
     parent?: Row<TData>,
   ) => string;
   readonly onRowClick?: (row: Row<TData>) => void;
+  /**
+   * Forwarded to `DataTablePagination`; pass `false` on a table without row
+   * selection so it does not show a meaningless "0 of N row(s) selected".
+   */
+  readonly showSelectedCount?: boolean;
 }
 
 /**
@@ -71,6 +76,7 @@ export function DataTable<TData, TValue = unknown>({
   pageSizeOptions,
   getRowId,
   onRowClick,
+  showSelectedCount = true,
 }: DataTableProps<TData, TValue>): ReactElement {
   const { t } = useTranslation();
   const [sorting, setSorting] = useState<SortingState>([]);
@@ -157,7 +163,11 @@ export function DataTable<TData, TValue = unknown>({
         </Table>
       </div>
       {pagination ? (
-        <DataTablePagination table={table} pageSizeOptions={pageSizeOptions} />
+        <DataTablePagination
+          table={table}
+          pageSizeOptions={pageSizeOptions}
+          showSelectedCount={showSelectedCount}
+        />
       ) : null}
     </div>
   );
