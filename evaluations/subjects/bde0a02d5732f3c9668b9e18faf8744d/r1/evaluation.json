@@ -1,0 +1,669 @@
+{
+  "schemaVersion": 1,
+  "type": "evaluation-report",
+  "source": {
+    "producer": "nb3-factory",
+    "instance": "gchust/nb3-factory",
+    "project": "gchust/nb3-factory",
+    "exporter": {
+      "version": 1,
+      "controlSha": "9bcf462193e736132309cb461baf795426c9a02b",
+      "runId": 36119064172,
+      "attempt": 1
+    }
+  },
+  "run": {
+    "key": "gchust/nb3-factory/issues/319/initial",
+    "kind": "initial",
+    "identity": "recorded",
+    "batchKey": null,
+    "caseKey": null,
+    "sampleIndex": null,
+    "sampleKey": null,
+    "task": {
+      "repository": "gchust/nb3-factory",
+      "issue": 319,
+      "buildCommentId": null,
+      "title": "[Code Agent] [预置][S03] 简版 IT 工单：提单、处理、完成（重搭 #201）"
+    },
+    "case": {
+      "source": "preset",
+      "presetIssueNumber": 201,
+      "capturedAt": "2026-09-25T08:48:25Z",
+      "inputHash": "b0e2358154b7c34ca01e789945167a3bd2478de63a7aa6f8ee68a2b4d4c098d1",
+      "reviewHash": "c7f0542f49f6ae43d8c8e313b0bf31f3ec19de652099c1921d4e4c8cc43d163d"
+    }
+  },
+  "revision": 1,
+  "createdAt": "2026-09-25T09:34:07Z",
+  "precedence": {
+    "producer": {
+      "runId": 36114911898,
+      "attempt": 1,
+      "startedAt": "2026-09-25T08:48:16Z"
+    },
+    "executionOrder": 1,
+    "knownLaterExecutions": 0,
+    "chainTerminal": true,
+    "reviewRubric": 0,
+    "reviewState": "not-reviewed",
+    "review": {
+      "kind": null,
+      "at": null,
+      "runId": null,
+      "attempt": null
+    },
+    "qaCoverage": "complete"
+  },
+  "baseline": {
+    "track": "published-template",
+    "application": {
+      "baseRef": "develop",
+      "baseSha": "bc7d8800f6124e9162be59c929076c7998c45c8e",
+      "candidate": {
+        "patchSha256": null,
+        "headSha": null
+      }
+    },
+    "factory": {
+      "controlSha": "bc7d8800f6124e9162be59c929076c7998c45c8e",
+      "entrySha": "bc7d8800f6124e9162be59c929076c7998c45c8e"
+    },
+    "template": {
+      "creatorVersion": "0.1.0-beta.20",
+      "templateVersion": "1.0.0-beta.45"
+    },
+    "dependencies": {
+      "lockfileSha256": "f8aad5ada5e9f71222187efd4920f699319c20f2ca35b67e78b0ed72c4912aa6",
+      "baselineFingerprint": "47d88a4a1101497e8f8b42972f33f02566210d1514dceaf29a8ffc6ce1ca87cd",
+      "packages": [
+        {
+          "name": "@nocobase/ai-employee",
+          "version": "0.2.0-beta.7"
+        },
+        {
+          "name": "@nocobase/ai-employee-avatars",
+          "version": "1.0.2"
+        },
+        {
+          "name": "@nocobase/app-cli",
+          "version": "0.1.0-beta.4"
+        },
+        {
+          "name": "@nocobase/app-client",
+          "version": "1.0.0-beta.19"
+        },
+        {
+          "name": "@nocobase/app-plugin-ai-employee",
+          "version": "0.1.0-beta.21"
+        },
+        {
+          "name": "@nocobase/app-plugin-ai-knowledge-base",
+          "version": "0.1.0-beta.9"
+        },
+        {
+          "name": "@nocobase/app-plugin-api-keys",
+          "version": "0.1.0-beta.6"
+        },
+        {
+          "name": "@nocobase/app-plugin-authentication",
+          "version": "1.0.0-beta.22"
+        },
+        {
+          "name": "@nocobase/app-plugin-authorization",
+          "version": "0.2.0-beta.18"
+        },
+        {
+          "name": "@nocobase/app-plugin-authz-default-access",
+          "version": "0.1.0-beta.2"
+        },
+        {
+          "name": "@nocobase/app-plugin-authz-restriction-rules",
+          "version": "0.1.0-beta.1"
+        },
+        {
+          "name": "@nocobase/app-plugin-authz-sharing-rules",
+          "version": "0.1.0-beta.2"
+        },
+        {
+          "name": "@nocobase/app-plugin-database-explorer",
+          "version": "0.1.0-beta.5"
+        },
+        {
+          "name": "@nocobase/app-plugin-file",
+          "version": "0.1.0-beta.15"
+        },
+        {
+          "name": "@nocobase/app-plugin-i18n",
+          "version": "0.1.0-beta.8"
+        },
+        {
+          "name": "@nocobase/app-plugin-mail",
+          "version": "0.1.0-beta.0"
+        },
+        {
+          "name": "@nocobase/app-plugin-notification",
+          "version": "0.1.0-beta.16"
+        },
+        {
+          "name": "@nocobase/app-plugin-notification-in-app",
+          "version": "0.2.0-beta.17"
+        },
+        {
+          "name": "@nocobase/app-plugin-notification-provider",
+          "version": "0.1.0-beta.9"
+        },
+        {
+          "name": "@nocobase/app-plugin-notification-providers",
+          "version": "0.2.0-beta.7"
+        },
+        {
+          "name": "@nocobase/app-plugin-scheduler",
+          "version": "0.1.0-beta.7"
+        },
+        {
+          "name": "@nocobase/app-plugin-users",
+          "version": "0.1.0-beta.9"
+        },
+        {
+          "name": "@nocobase/app-plugin-workflow",
+          "version": "0.1.0-beta.26"
+        },
+        {
+          "name": "@nocobase/app-portal-sdk",
+          "version": "1.0.0-beta.3"
+        },
+        {
+          "name": "@nocobase/app-server",
+          "version": "1.0.0-beta.25"
+        },
+        {
+          "name": "@nocobase/app-skills",
+          "version": "0.1.0-beta.14"
+        },
+        {
+          "name": "@nocobase/app-tools",
+          "version": "0.1.0-beta.4"
+        },
+        {
+          "name": "@nocobase/app-websocket",
+          "version": "0.0.1"
+        },
+        {
+          "name": "@nocobase/authorization",
+          "version": "0.1.0-beta.8"
+        },
+        {
+          "name": "@nocobase/caching",
+          "version": "0.1.0-beta.2"
+        },
+        {
+          "name": "@nocobase/config",
+          "version": "0.1.0-beta.1"
+        },
+        {
+          "name": "@nocobase/cron",
+          "version": "0.1.0"
+        },
+        {
+          "name": "@nocobase/db",
+          "version": "1.0.0-beta.15"
+        },
+        {
+          "name": "@nocobase/db-sqlite",
+          "version": "0.1.0-beta.2"
+        },
+        {
+          "name": "@nocobase/dev-config",
+          "version": "0.1.0-beta.12"
+        },
+        {
+          "name": "@nocobase/drive",
+          "version": "0.1.0-beta.4"
+        },
+        {
+          "name": "@nocobase/i18n",
+          "version": "1.0.0-beta.4"
+        },
+        {
+          "name": "@nocobase/logging",
+          "version": "0.1.0-beta.5"
+        },
+        {
+          "name": "@nocobase/nb3-cli",
+          "version": "1.0.0-beta.11"
+        },
+        {
+          "name": "@nocobase/queue",
+          "version": "0.1.0-beta.7"
+        },
+        {
+          "name": "@nocobase/repository-input",
+          "version": "0.1.0-beta.1"
+        },
+        {
+          "name": "@nocobase/service-provider",
+          "version": "0.0.2-beta.1"
+        },
+        {
+          "name": "@nocobase/session",
+          "version": "0.1.0-beta.2"
+        },
+        {
+          "name": "@nocobase/snowflake",
+          "version": "1.0.0-beta.3"
+        }
+      ]
+    },
+    "skills": {
+      "fingerprint": "332ced19da8ee376093174500f916cf9140a9feccda0ad44b5f8a96f2daed2a9",
+      "files": 105
+    },
+    "sourceSnapshot": null,
+    "inputs": {
+      "taskInputHash": "b0e2358154b7c34ca01e789945167a3bd2478de63a7aa6f8ee68a2b4d4c098d1",
+      "pipelineInputHash": "56715ac442a0fe07e8b92d99530cb55a22f5d1309916d2f069de7cdd2ccbc0d1",
+      "reviewHash": "c7f0542f49f6ae43d8c8e313b0bf31f3ec19de652099c1921d4e4c8cc43d163d",
+      "reviewCriteriaHash": "c7f0542f49f6ae43d8c8e313b0bf31f3ec19de652099c1921d4e4c8cc43d163d",
+      "prompts": [
+        {
+          "phase": "implementation",
+          "path": "agent-implement.jsonl.invocation.json",
+          "sha256": "a01633e2e9f2077f08d1bfee9e5c8d5bf1a5e65ee67b029766867c62f592aa89"
+        },
+        {
+          "phase": "qa",
+          "path": "verify-1/browser-acceptance/agent-browser-acceptance.jsonl.invocation.json",
+          "sha256": "aa1539d40e5422a2fe682920d953e3ea1e9137f94cc888900e410a65288c9839"
+        }
+      ]
+    },
+    "rubric": null,
+    "agent": {
+      "engine": "pi",
+      "model": "deepseek-v4.1-flash",
+      "version": "0.86.1",
+      "buildReviewMode": null
+    },
+    "environment": {
+      "browserFixturesSha256": "3b527d18aa2f6d58fdfea5cdd916631ea1ee3425abeba09bb1f961f2128c554b",
+      "browserPreflight": "passed"
+    }
+  },
+  "executions": [
+    {
+      "key": "run/36114911898/attempt/1",
+      "kind": "implementation",
+      "order": 1,
+      "workflow": "code-agent-task",
+      "runId": 36114911898,
+      "attempt": 1,
+      "event": "workflow_dispatch",
+      "previousRunId": null,
+      "conclusion": "cancelled",
+      "startedAt": "2026-09-25T08:48:16Z",
+      "endedAt": "2026-09-25T09:32:46Z",
+      "jobSeconds": null,
+      "controlSha": "bc7d8800f6124e9162be59c929076c7998c45c8e",
+      "patchSha256": null,
+      "source": "usage-receipt"
+    }
+  ],
+  "outcome": {
+    "execution": "cancelled",
+    "acceptance": "unknown",
+    "delivery": "not-published",
+    "pullRequest": null,
+    "detail": "执行被取消。"
+  },
+  "qa": {
+    "coverage": "complete",
+    "rounds": [
+      {
+        "round": 1,
+        "executionKey": "run/36114911898/attempt/1",
+        "scope": "full",
+        "passed": false,
+        "source": "verify-1/browser-acceptance/report.json",
+        "checks": [
+          {
+            "id": "B01",
+            "criterion": "员工 A 提交一张工单，刷新后在自己的列表中仍可查看。",
+            "status": "passed",
+            "evidence": [
+              "qa/1/b01-employee1-list-before.png",
+              "qa/1/b01-employee1-new-ticket-form.png",
+              "qa/1/b01-employee1-list-after-refresh.png"
+            ]
+          }
+        ]
+      }
+    ],
+    "firstFull": {
+      "status": "unknown",
+      "round": 1,
+      "executionKey": "run/36114911898/attempt/1",
+      "basis": "本产物包含第 1 轮起的全部验证，取第一次实际全量 QA。"
+    },
+    "finalFull": {
+      "status": "unknown",
+      "round": 1,
+      "executionKey": "run/36114911898/attempt/1",
+      "basis": "最后一次实际全量 QA。"
+    },
+    "criteria": [
+      {
+        "id": "B01",
+        "text": "员工 A 提交一张工单，刷新后在自己的列表中仍可查看。",
+        "optional": false,
+        "firstFull": "passed",
+        "finalFull": "passed"
+      },
+      {
+        "id": "B02",
+        "text": "员工 B 登录后不能看到 A 的工单，不能使用处理人员动作。",
+        "optional": false,
+        "firstFull": "unknown",
+        "finalFull": "unknown"
+      },
+      {
+        "id": "B03",
+        "text": "处理人员找到该单并点击“开始处理”，状态变为处理中并持久保存。",
+        "optional": false,
+        "firstFull": "unknown",
+        "finalFull": "unknown"
+      },
+      {
+        "id": "B04",
+        "text": "填写处理说明后完成，刷新确认状态和说明仍在；已完成单不能再次修改。",
+        "optional": false,
+        "firstFull": "unknown",
+        "finalFull": "unknown"
+      },
+      {
+        "id": "B05",
+        "text": "切回员工 A，能看到完成结果；状态筛选与真实状态一致。\n\n无法实际完成时如实记录 failed、blocked 或 not_run，不以源码检查代替浏览器通过。",
+        "optional": false,
+        "firstFull": "unknown",
+        "finalFull": "unknown"
+      }
+    ],
+    "firstPassWithoutRepair": "unknown",
+    "counts": {
+      "execution": {
+        "verificationAttempts": null,
+        "repairAttempts": null,
+        "source": "repair-summary.json（仅本执行）"
+      },
+      "chain": {
+        "verificationAttempts": 1,
+        "repairAttempts": 0,
+        "source": "pipeline-state.json（跨 Handoff 累计检查点，不再相加）"
+      }
+    },
+    "note": "工厂修复次数不等于 Agent 开发中的全部自测和修正；未记录 Agent 内部试错，不宣称开发全程无错误。"
+  },
+  "reviews": [
+    {
+      "key": "review/36114911898.1/v0-3ccc4bb18823",
+      "role": "original",
+      "selected": true,
+      "state": "not-reviewed",
+      "reason": "本轮没有独立评审记录；未评估不代表通过，也不按零分处理。",
+      "rubric": null,
+      "reviewer": null,
+      "producer": {
+        "runId": null,
+        "attempt": null
+      },
+      "basis": {
+        "inputHash": null,
+        "patchSha256": null,
+        "baseSha": null,
+        "lockfileSha256": null,
+        "reviewCriteriaHash": null,
+        "artifactHash": null
+      },
+      "buildReviewMode": null,
+      "summary": null,
+      "progress": null,
+      "modules": [],
+      "findings": [],
+      "ui": null,
+      "limitations": [],
+      "usageSource": null
+    }
+  ],
+  "processNotes": {
+    "state": "present",
+    "source": "retro.json",
+    "author": "implementer",
+    "independent": false,
+    "summary": "Implemented the simplified IT ticket system: one itTickets migration, idempotent seeds (2 employees, 1 handler, 3 tickets, 2 permission-set roles), a role-aware ItTicketService plus /api/it-tickets routes, and a bilingual list/detail/create/complete page. Reused Better Auth sessions and Authorization Permission Sets for roles instead of a second identity system. All unit/integration tests, typecheck, lint, format, build, migration/seed apply and browser flows for both roles passed.",
+    "blockers": [
+      {
+        "id": "notes/run/36114911898/attempt/1/B1",
+        "phase": "implementation",
+        "title": "Hyphenated sample usernames are rejected at sign-in by Better Auth",
+        "symptom": "Seeded accounts (it-handler, it-employee-1, it-employee-2) were created successfully by the seed, but POST /api/auth/sign-in/username returned 422 INVALID_USERNAME ('Username is invalid'); employees could not sign in to reach the page.",
+        "rootCause": "Better Auth's username plugin validates sign-in identifiers with /^[a-zA-Z0-9_.]+$/. Hyphens pass the database write but fail that validator, so the failure only appears at the sign-in form, long after the seed reports success.",
+        "resolution": "Renamed the sample accounts to underscore form (it_handler, it_employee_1, it_employee_2) in the server constants and the sample-data seeds, and left a comment explaining the validator constraint. Verified all three accounts sign in and the role-gated flows work end to end.",
+        "cost": null,
+        "status": "resolved"
+      }
+    ],
+    "improvements": [
+      {
+        "id": "notes/run/36114911898/attempt/1/I1",
+        "category": "seed-safety",
+        "title": "Sample-data seeds should validate sign-in identifiers",
+        "detail": "The seed inserts accounts directly into the user/account tables, so an identifier Better Auth's username plugin would reject is accepted without warning and only fails later in the browser.",
+        "suggestedChange": "Have the users/authentication seed helpers validate usernames with the same rule the configured Better Auth username plugin uses (or expose a shared validator) and fail the seed with a clear message when an identifier could not be used to sign in.",
+        "mechanizable": true
+      }
+    ],
+    "note": "实现者自述，未经独立核验；不是框架评审结论。"
+  },
+  "metrics": {
+    "usage": {
+      "sources": [
+        {
+          "key": "agent-job:108006692978",
+          "executionKey": "run/36114911898/attempt/1",
+          "scope": "一次 Agent 作业内的实现、修复、QA 与同轮评审调用",
+          "phases": {
+            "implementation": {
+              "input": 613749,
+              "output": 80322,
+              "cacheRead": 12126976,
+              "cacheWrite": 0,
+              "total": 12821047
+            },
+            "repair": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0,
+              "total": 0
+            },
+            "qa": {
+              "input": 125489,
+              "output": 26599,
+              "cacheRead": 2706944,
+              "cacheWrite": 0,
+              "total": 2859032
+            },
+            "qaFocused": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0,
+              "total": 0
+            },
+            "qaReport": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0,
+              "total": 0
+            },
+            "review": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0,
+              "total": 0
+            },
+            "compaction": {
+              "input": 71641,
+              "output": 5485,
+              "cacheRead": 0,
+              "cacheWrite": 0,
+              "total": 77126
+            }
+          },
+          "records": 251,
+          "missing": 5,
+          "incomplete": 1,
+          "complete": false
+        }
+      ],
+      "totals": {
+        "input": 810879,
+        "output": 112406,
+        "cacheRead": 14833920,
+        "cacheWrite": 0,
+        "total": 15757205,
+        "complete": false
+      },
+      "definition": "沿用 task-usage 口径：按唯一来源键（Agent 作业 / 后补评审 Run）去重，不相加已含这些调用的汇总，不把思考 Token 再加到输出；缺失为 null，不等同供应商账单。"
+    },
+    "time": {
+      "executionSeconds": null,
+      "missingJobTimes": 2,
+      "endToEndSeconds": 2670,
+      "jobs": [
+        {
+          "id": 108006611359,
+          "name": "prepare",
+          "executionKey": "run/36114911898/attempt/1",
+          "seconds": 15
+        },
+        {
+          "id": 108006692978,
+          "name": "agent",
+          "executionKey": "run/36114911898/attempt/1",
+          "seconds": 2650
+        },
+        {
+          "id": 108019874192,
+          "name": "verify-final",
+          "executionKey": "run/36114911898/attempt/1",
+          "seconds": null
+        },
+        {
+          "id": 108019874535,
+          "name": "publish",
+          "executionKey": "run/36114911898/attempt/1",
+          "seconds": null
+        }
+      ],
+      "definition": "executionSeconds 为 prepare / agent / verify-final / publish 唯一作业时长之和，不含排队；endToEndSeconds 含排队及续跑间隔。"
+    },
+    "counts": {
+      "businessBuilds": 1,
+      "executions": 1,
+      "reviewExecutions": 0
+    }
+  },
+  "evidence": [
+    {
+      "id": "qa/1/b01-employee1-list-before.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/1",
+        "localId": "b01-employee1-list-before.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-1/browser-acceptance/evidence/b01-employee1-list-before.png",
+      "lines": null,
+      "sha256": "f8c9125193d47af4f2bcf3e5194d773cab790b317f0e97586c5a3190313a3146",
+      "observation": "验收项 B01 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-1/browser-acceptance/b01-employee1-list-before.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/1/b01-employee1-new-ticket-form.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/1",
+        "localId": "b01-employee1-new-ticket-form.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-1/browser-acceptance/evidence/b01-employee1-new-ticket-form.png",
+      "lines": null,
+      "sha256": "a03d2cb397368e20c9a17fa6ae906bdd0d6d2f7fb1e5a40ae2c1904fbb68c581",
+      "observation": "验收项 B01 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-1/browser-acceptance/b01-employee1-new-ticket-form.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/1/b01-employee1-list-after-refresh.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/1",
+        "localId": "b01-employee1-list-after-refresh.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-1/browser-acceptance/evidence/b01-employee1-list-after-refresh.png",
+      "lines": null,
+      "sha256": "c7dd0daef567dc25ddb8be446c1575708f320c557c0f3e075e75be1333d2b1e1",
+      "observation": "验收项 B01 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-1/browser-acceptance/b01-employee1-list-after-refresh.png",
+      "availability": "attached",
+      "note": null
+    }
+  ],
+  "links": [
+    {
+      "rel": "task-issue",
+      "label": "Issue #319",
+      "url": "https://github.com/gchust/nb3-factory/issues/319",
+      "path": null
+    },
+    {
+      "rel": "run",
+      "label": "Run 36114911898 / attempt 1",
+      "url": "https://github.com/gchust/nb3-factory/actions/runs/36114911898/attempts/1",
+      "path": null
+    },
+    {
+      "rel": "report-archive",
+      "label": "固定版本 HTML 报告（gh-pages 归档路径）",
+      "url": null,
+      "path": "reports/issues/319/runs/36114911898/attempt-1/index.html"
+    }
+  ],
+  "limitations": [
+    {
+      "code": "review-not-run",
+      "detail": "本执行没有独立框架评审；未评估不代表通过，也不按零分处理。"
+    },
+    {
+      "code": "usage-incomplete",
+      "detail": "部分用量未取得或不完整；缺失值为 null，不按零处理。"
+    },
+    {
+      "code": "time-incomplete",
+      "detail": "2 个作业缺少时长。"
+    }
+  ]
+}
