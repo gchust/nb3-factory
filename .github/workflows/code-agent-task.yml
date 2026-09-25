@@ -49,6 +49,7 @@ jobs:
       default_branch: ${{ steps.prepare.outputs.default_branch }}
       base_ref: ${{ steps.prepare.outputs.base_ref }}
       base_sha: ${{ steps.prepare.outputs.base_sha }}
+      evaluation_sample: ${{ steps.prepare.outputs.evaluation_sample }}
     steps:
       # repository_dispatch loads the entry workflow from the default branch.
       # Only this small handoff protocol follows that revision; task code is pinned.
@@ -63,6 +64,7 @@ jobs:
             /.github/scripts/handoff-control.mjs
             /.github/scripts/handoff-recovery.mjs
             /.github/scripts/pipeline-state.mjs
+            /.github/scripts/evaluation-sample.mjs
           persist-credentials: false
 
       - name: Download source task control pin
@@ -105,12 +107,25 @@ jobs:
             --event "$GITHUB_EVENT_PATH" --task previous-task/task-metadata.json \
             --checkpoint recovery --output "$GITHUB_OUTPUT"
 
+      # An evaluation-batch sample starts on its batch's frozen control plane,
+      # proven by bot receipts and the checksummed batch manifest (not by any
+      # dispatch field). Ordinary Issues output nothing and keep the default.
+      - name: Resolve a frozen evaluation sample control plane
+        id: sample
+        if: github.event.action != 'code-agent-continue' && inputs.recovery_run_id == ''
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          SAMPLE_ISSUE: ${{ github.event.issue.number || github.event.client_payload.issue_number || inputs.issue_number }}
+        run: node bootstrap/.github/scripts/evaluation-sample.mjs pin --issue "$SAMPLE_ISSUE" --output "$GITHUB_OUTPUT"
+
       - name: Pin the task chain's control plane
         id: baseline
+        env:
+          SAMPLE_CONTROL_SHA: ${{ steps.sample.outputs.control_sha }}
         run: |
           node bootstrap/.github/scripts/handoff-control.mjs resolve \
             --event "${{ steps.recovery.outputs.event_path || github.event_path }}" \
-            --current-sha "$(git -C bootstrap rev-parse HEAD)" \
+            --current-sha "${SAMPLE_CONTROL_SHA:-$(git -C bootstrap rev-parse HEAD)}" \
             --checkpoint "${{ inputs.recovery_run_id != '' && 'recovery' || 'legacy-handoff' }}" \
             --previous-task previous-task/task-metadata.json \
             --output "$GITHUB_OUTPUT"
@@ -158,6 +173,7 @@ jobs:
         if: steps.prepare.outputs.status == 'ready'
         env:
           FACTORY_CONTROL_SHA: ${{ steps.baseline.outputs.sha }}
+          FACTORY_ENTRY_SHA: ${{ github.sha }}
           FACTORY_APPLICATION_BASE_REF: ${{ steps.prepare.outputs.base_ref }}
           FACTORY_APPLICATION_BASE_SHA: ${{ steps.prepare.outputs.base_sha }}
         run: node bootstrap/.github/scripts/handoff-control.mjs record --metadata "$RUNNER_TEMP/task-metadata.json"
@@ -195,6 +211,8 @@ jobs:
     permissions:
       actions: read
       contents: write
+      # Read-only: re-checks a batch sample's live state before any model call.
+      issues: read
     outputs:
       handoff: ${{ steps.outcome.outputs.handoff }}
       checkpoint_available: ${{ steps.checkpoint.outcome == 'success' }}
@@ -223,6 +241,7 @@ jobs:
 
       - name: Start five-hour runner budget
         run: |
+          echo "FACTORY_JOB_STARTED_EPOCH_SECONDS=$(date +%s)" >> "$GITHUB_ENV"
           echo "FACTORY_RUN_DEADLINE_EPOCH_SECONDS=$(($(date +%s) + 18000 - 120))" >> "$GITHUB_ENV"
           echo "FACTORY_TIMINGS_FILE=$RUNNER_TEMP/agent-artifacts/timings.jsonl" >> "$GITHUB_ENV"
           echo "FACTORY_DEPENDENCY_CACHE=$RUNNER_TEMP/agent-dependency-cache" >> "$GITHUB_ENV"
@@ -276,6 +295,16 @@ jobs:
           name: factory-task-${{ needs.prepare.outputs.issue_number }}
           path: task
 
+      # "Re-run failed jobs" reuses prepare's outputs, so a batch sample is admitted
+      # again here: a cancelled/released sample or a spent budget starts no model.
+      - name: Admit the evaluation sample for this execution
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          if [[ -f control/.github/scripts/evaluation-sample.mjs ]]; then
+            node control/.github/scripts/evaluation-sample.mjs admit --metadata task/task-metadata.json --output "$GITHUB_ENV"
+          fi
+
       - name: Restore pipeline progress
         id: resume
         env:
@@ -288,6 +317,13 @@ jobs:
             node control/.github/scripts/pipeline-state.mjs init "$RUNNER_TEMP/agent-artifacts/pipeline-state.json" task/task-metadata.json
           fi
           echo "phase=$(node control/.github/scripts/pipeline-state.mjs phase "$RUNNER_TEMP/agent-artifacts/pipeline-state.json")" >> "$GITHUB_OUTPUT"
+
+      # Only batch samples carry a budget; it bounds long calls and leaves archive time.
+      - name: Apply the evaluation sample budget
+        run: |
+          if [[ -f control/.github/scripts/evaluation-budget.mjs ]]; then
+            node control/.github/scripts/evaluation-budget.mjs deadline "$RUNNER_TEMP/agent-artifacts/pipeline-state.json" >> "$GITHUB_ENV"
+          fi
 
       - name: Set up pnpm
         uses: pnpm/action-setup@v4
@@ -522,6 +558,12 @@ jobs:
           CURRENT_CONTINUATION: ${{ inputs.recovery_run_id != '' && '1' || github.event.client_payload.continuation || '0' }}
         run: |
           next_continuation=$((CURRENT_CONTINUATION + 1))
+          # A spent evaluation budget ends the chain here: the checkpoint is kept, no continuation is sent.
+          if [[ -f control/.github/scripts/evaluation-budget.mjs ]] && \
+            ! node control/.github/scripts/evaluation-budget.mjs handoff "$RUNNER_TEMP/agent-artifacts/pipeline-state.json" "$next_continuation"; then
+            echo "::warning::Evaluation sample budget exhausted; facts are saved without an automatic continuation."
+            exit 1
+          fi
           node bootstrap/.github/scripts/handoff.mjs prepare \
             --issue "${{ needs.prepare.outputs.issue_number }}" \
             --run-id "${{ github.run_id }}" \
@@ -856,6 +898,26 @@ jobs:
           FACTORY_REPORT_REF: ${{ github.event.repository.default_branch }}
           FACTORY_TASK_DELIVERED: ${{ needs.publish.result == 'success' }}
         run: bash control/.github/scripts/dispatch-task-reports.sh
+
+  # Runs started with GITHUB_TOKEN emit no workflow_run event, so a batch sample
+  # asks its coordinator to advance explicitly (it waits for this run to finish).
+  advance-evaluation-batch:
+    needs: [prepare, agent, verify-final, publish, report-failure]
+    if: always() && needs.prepare.outputs.evaluation_sample == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    continue-on-error: true
+    permissions:
+      actions: write
+    steps:
+      - name: Request an evaluation batch advance
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SOURCE_RUN_ID: ${{ github.run_id }}
+          REPORT_REF: ${{ github.event.repository.default_branch }}
+        run: |
+          gh workflow run evaluation-batches.yml --repo "$GITHUB_REPOSITORY" --ref "$REPORT_REF" \
+            --field action=advance --field "source_run=$SOURCE_RUN_ID"
 
   reply:
     env:

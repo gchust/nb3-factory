@@ -32,8 +32,10 @@ if (root) {
 }
 const recoverable = process.env.FACTORY_CHECKPOINT_AVAILABLE === 'true' &&
   ['failed', 'blocked'].includes(state?.outcome) && state.phase !== 'done';
+const exhausted = state?.outcome === 'budget-exhausted';
 const body = [
-  failure ? `**${failure.title}**。${failure.detail}` : '本次搭建未完成，请根据失败步骤检查运行日志。',
+  exhausted ? '**已达到评测计划预算**。已保存补丁、验收记录与用量，不再启动新的修复或自动续跑；这不是业务缺陷结论。'
+    : failure ? `**${failure.title}**。${failure.detail}` : '本次搭建未完成，请根据失败步骤检查运行日志。',
   '', `[查看本次运行日志](${runUrl})。`,
   ...(recoverable ? ['', `已保存恢复检查点；服务或配置修复后，在 Code Agent NocoBase Task 的 Run workflow 中填写 issue_number=${issueNumber}、recovery_run_id=${process.env.GITHUB_RUN_ID}，继续已有工作。`,
     ...(metadata?.applicationBase ? [] : ['旧版检查点还需填写 recovery_base_sha（原应用基线提交），不能使用工厂 Run 的 head_sha 代替猜测。'])] : []),

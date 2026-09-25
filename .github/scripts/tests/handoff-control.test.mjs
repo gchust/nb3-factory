@@ -216,7 +216,11 @@ test('workflow resolves before task code, verifies before applying a patch and u
   assert.ok(agent.indexOf('handoff-control.mjs verify') < agent.indexOf('node control/.github/scripts/apply-patch.mjs'));
   assert.match(agent, /node bootstrap\/\.github\/scripts\/handoff.mjs prepare/);
   assert.match(agent, /node bootstrap\/\.github\/scripts\/handoff.mjs dispatch/);
-  assert.doesNotMatch(workflow, /node bootstrap\/\.github\/scripts\/(?!handoff)/);
+  // The bootstrap only pins the control plane: the handoff protocol, plus the
+  // frozen evaluation-sample pin that must run before any task code is checked out.
+  assert.doesNotMatch(workflow, /node bootstrap\/\.github\/scripts\/(?!handoff|evaluation-sample\.mjs pin)/);
+  assert.ok(prepare.indexOf('evaluation-sample.mjs pin') < prepare.indexOf('handoff-control.mjs resolve'));
+  assert.doesNotMatch(agent, /bootstrap\/\.github\/scripts\/evaluation-sample/);
   for (const job of ['agent', 'verify-final', 'publish']) {
     const block = workflow.split(`  ${job}:`)[1].split(/\n  [a-z-]+:\n/u)[0];
     assert.ok(block.includes('ref: ${{ needs.prepare.outputs.control_sha }}'), job);

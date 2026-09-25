@@ -1,0 +1,348 @@
+# 评测结果导出、归档与接收端对接
+
+工厂在每个已接单的搭建 Run 结束后，把**已有**事实与独立评审转换成版本化的外部结果
+（Evaluation Report v1），独立归档，并可选投递给实现同一协议的接收端（例如 Test Manager 3）。
+这是本项目拟定的最小协议，不是行业标准，也不代表任何接收端已经实现。
+
+```text
+搭建 Run 结束 → Report Task Usage（原有：用量 / HTML / report.json）
+                   │ 纯数据转换，不调用模型
+                   ▼
+            evaluation.json + 证据截图 + report.html
+                   │ 按 run.key 分配修订（CAS）
+                   ▼
+   gh-pages evaluations/（原始字节 + 清单 + 修订索引）   Artifact：evaluation-bundle.zip（90 天）
+                   │ 仅当 FACTORY_EVALUATION_DELIVERY=true
+                   ▼
+   Deliver Evaluation Results → POST <EVALUATION_ENDPOINT> → 回执（脱敏）写回 outbox
+```
+
+## 边界
+
+- **不新增评分或复盘模型调用。** 框架评分、发现与证据来自已通过校验的 `build-review.json`
+  （含只补跑评审的 `build-review.supplement.json`）；缺失就标记未知或受限，不重新总结。
+  重评只能走现有 **Reassess Build Quality**；补发与重渲染没有模型用量。
+- 结果协议是归一化公共 DTO；接收端不需要解析 `verify-*` 目录、工厂日志、Issue 模板或 Agent 事件。
+- 工厂不输出、不调用管理端的 `featurePointId`、`problemId`、负责人或状态变更；不创建、指派或关闭管理端问题。
+- 投递失败或接收端下线不改变业务验收、PR、QA 或修复，也不阻止评测批次推进。
+- 两个仓库不共享数据库或业务源码；Schema 使用本仓库固定文件，不在运行时下载。
+
+## 运行身份与修订
+
+| 操作 | `run.key` | 执行记录 `executions` | 报告修订 `revision` |
+| --- | --- | --- | --- |
+| 新 Issue 从干净基线搭建（含批次样本） | 新 key | 新实现链 | 从 1 开始 |
+| 同一 Issue 的 Handoff / 失败恢复 | 不变 | 追加 `continuation` / `recovery` | 新事实形成后增加 |
+| Actions 重跑同一 Run（attempt+1） | 不变 | 追加 `rerun-attempt`，同一 Agent 作业不重复计量 | 同上 |
+| 重新派发同一 Issue 的普通搭建 | 不变 | 追加 `restart`；需要独立样本请新建 Issue | 同上 |
+| 原 Issue 追加 `/build` | 新 key，`kind=incremental` | 独立历史 | 从 1 开始 |
+| 对冻结业务只补跑评审 | 不变 | 追加 `review`（独立用量）；此前每次补评的执行与用量一并保留 | 新修订；旧评审保留 |
+| 原包补发 | 不变 | **不新增** | **保持原修订与原字节** |
+
+键空间（在受信任 prepare 阶段写入 `task-metadata.json` 的 `evaluation`，由后续阶段校验）：
+
+```text
+<owner>/<repo>/issues/<Issue>/initial
+<owner>/<repo>/issues/<Issue>/build/<buildCommentId>
+<owner>/<repo>/batches/<batchKey>/<caseKey>/<sampleIndex>
+```
+
+导出与用量回执优先读取 prepare 作业上传的任务元数据（`factory-task-<Issue>`，Agent 无法改写），Agent 产物中的副本只作后备，
+二者不一致时以 prepare 记录为准并写入 `metadata-mismatch`。
+旧任务没有记录时只由已校验的仓库、Issue 与 `/build` 评论推导（`run.identity=legacy-derived`）；
+缺少任务元数据时为 `unresolved`，只描述该次执行，不与其他执行合并。每条用量回执另存
+`evaluation` 事实（run.key、控制 SHA、应用基线、输入哈希、上一 Run），用于在 Artifact 过期后关联执行链；
+早于该字段的回执计入 `legacy-executions-unresolved`，控制代码、输入或基线不一致的同键回执计入 `chain-mismatch`，二者都不合并。
+
+**修订分配**：导出器对归一化事实、所选评审身份和证据附件的逻辑哈希计算指纹（排除修订号、创建时间、
+导出器 Run、HTML 渲染）。受信任的 `evaluation` 作业读取 `gh-pages` 的
+`evaluations/subjects/<sha256(key)[:32]>/index.json`：相同指纹复用已登记修订与**原始字节**
+（`createdAt` 不变），不同内容取下一个连续编号，以非强制 ref 更新（CAS）提交；竞争失败会重新读取，
+同一修订号出现不同内容时拒绝写入。结果包在登记前先上传，登记只引用已存在的 Artifact。
+
+**当前视图不是最大修订号。** 修订号只是归档顺序；`precedence` 给出比较事实：
+
+1. `producer`（产出执行的开始时间、Run、attempt）更晚者优先；`knownLaterExecutions > 0` 表示更晚的执行已存在。
+2. 同一产出执行：`reviewRubric` 高者优先（v2 > v1），再比较评审完整性（completed > partial > failed > not-reviewed）。
+3. 再比较所选评审的先后 `precedence.review`：补评（`kind=reassessment`）晚于搭建自带评审（`kind=build`）；补评之间按 `at`
+   （GitHub Actions API 给出的该次评审结果 Artifact 创建时间，不取评审自述）比较，Run 与 attempt 只用于并列时排序。
+   因此旧补评被重新导出或晚于新补评才登记时，都不会顶替已采纳的新评审；只重跑发布的 attempt 复用同一评审结果，先后不变。
+4. 再比较 `qaCoverage`；以上都相同时取较大修订号。
+
+迟到的旧产出（例如先交付的续跑报告之后才补发的第一段报告）会得到新修订号但不成为当前视图，
+见 [`report-late-older.json`](contracts/examples/report-late-older.json)。工厂在修订索引中记录 `current`，
+接收端应按同一规则自行判断。
+
+## Evaluation Report v1
+
+Schema：[`contracts/evaluation-report.v1.schema.json`](contracts/evaluation-report.v1.schema.json)。
+`schemaVersion` 是协议主版本，与评分口径版本无关；未知字段一律拒绝，新增可选字段需先更新本文档与 Schema 的次版本说明，
+语义冲突必须升主版本。所有未知事实为 `null`，真实的零才是 `0`。
+
+| 字段 | 含义与来源 |
+| --- | --- |
+| `source` | `producer=nb3-factory`，`instance`/`project` 为仓库标识；`exporter` 记录导出器版本、控制 SHA 与报告 Run（不参与指纹） |
+| `run` | `key`、`kind`（initial / incremental / batch-sample）、`identity`（recorded / legacy-derived / unresolved）、批次与案例键、任务 Issue / `/build` 评论、冻结预置输入的 `inputHash` / `reviewHash` |
+| `revision` / `createdAt` | 同一 `run.key` 的归档修订与该修订首次形成时间；补发不刷新 |
+| `baseline` | 应用基线与候选补丁哈希 / 交付 head、实际 `controlSha` 与入口工作流 `entrySha`（二者可以不同）、模板与创建器版本、锁文件、已安装 `@nocobase/*` 包、Skill 指纹、源码快照、输入与各次调用的**提示词指纹**、评分口径、引擎 / 模型、浏览器夹具 |
+| `executions` | 关联执行，有稳定 `key`、`kind`、顺序、事件与上一 Run；只补跑评审为 `kind=review` |
+| `outcome` | 分开表示：`execution`（running / completed / cancelled / timed-out / budget-exhausted / blocked / unknown）、`acceptance`（passed / failed / blocked / not-run / unknown）、`delivery`（published / not-published / unknown）；`completed` 只表示执行终结 |
+| `qa` | 各轮全量 / 定向记录与逐项状态、`firstFull` / `finalFull`、逐条验收的首轮与终轮、`firstPassWithoutRepair`、本执行与跨链累计的验证 / 修复次数 |
+| `reviews` | 每次真实评审一条；可同时有 v2 与旧口径 v1、被替代或未通过校验的评审（无分数） |
+| `processNotes` | 可选 `retro.json`，明确为实现者自述；`absent` 不代表没有问题 |
+| `metrics` | 按唯一来源键（`agent-job:<id>`、`review-run:<run>:<attempt>`）的用量、作业时长与端到端时长、业务搭建数（恒为 1）、评审执行数 |
+| `evidence` | 标准化证据：带作用域的 id、原始出处、行号、文件哈希、脚本提取的摘录（再经密钥清洗）、附件路径或仅引用说明 |
+| `links` | Issue、Run、PR、gh-pages 固定报告路径；辅助信息，不作身份 |
+| `limitations` | 受限说明，`code` 为稳定机器码（如 `first-round-unavailable`、`review-partial`、`evidence-omitted`、`legacy-executions-unresolved`、`later-executions`、`usage-incomplete`、`reviews-carried`、`usage-history-unavailable`、`usage-source-conflict`、`baseline-unknown`） |
+
+### 评审、模块与发现
+
+- `reviews[].key` 形如 `review/<评审 Run>.<attempt>/v<口径>-<输入哈希前 12 位>`，是该次真实评审的身份；
+  `modules[].key`、`findings[].id`、`evidence[].id` 都带这个前缀（QA 截图为 `qa/<轮次>/<文件>`），两次评审同为 `F1`、`E1` 也不会互相覆盖。
+- `rubric` 给出口径 id（`nb3-framework`）、版本、实际维度与满分 100。v2 为五项：`requirementFit`、`usability`、
+  `agentFriendliness`、`design`、`reliability`；v1 四项原样保留（`design`、`completeness`、`agentFriendliness`、`outputQuality`），
+  不改名、不映射、不跨口径平均。非空分数都有理由和证据；`null` 表示未使用、未执行、不适用或证据不足。
+- 业务界面观察在 `ui`，`framework=false`，不属于框架维度。
+- `modules[].subjectKeys` 只来自已校验 targets：`pkg:@nocobase/<包>`、`guide:@nocobase/<包>/<docs|skills 路径>`、
+  `skill:<同步 Skill 名>`、`guide:app/AGENTS.md`。无法规范化时 `mapping=pending` 并保留原始 targets；不要用中文模块名当身份，也不要猜功能点。
+- `findings[].confidence=confirmed` 只表示**评审者**认为证据充分，导出为 `confirmedBy: "reviewer"`，不是人工确认；
+  `reviewerStatus` 是评审时的看法（open / resolved / unknown / not-applicable），不能直接当成管理端问题已关闭。
+  发现只通过共享的已校验证据 id 关联模块与 `subjectKeys`，关联不到就留空。
+- 工厂只对同一来源去重展示；跨运行根因归并与正式问题生命周期由接收端负责。
+
+### 首轮与计数
+
+每轮全量 QA 的整体结论与工厂 QA 校验器使用同一判定（`reportVerdict`）：有 `failed` 为失败，否则有 `blocked` 为受阻
+（校验器为受阻报告写入的 `passed=false` 不会被当成失败）；每个必测项都通过、标为 `[optional]` 的可选项可以 `not_run` 时才算通过，
+逐项仍如实记录 `not-run`，整体通过不代表可选项执行过；必测项缺失、未执行或报告不一致为 `unknown`。
+
+“首轮 QA 通过”只来自第一次实际全量 QA。Handoff 续跑的产物不含第 1 轮时 `firstFull=unknown` 且 `qa.coverage=partial`；
+只有失败路径复测时不推断全量通过。`firstPassWithoutRepair=yes` 还要求第 1 轮即全量通过且整条链没有工厂修复；
+它不代表 Agent 开发中没有自测试错。`qa.counts.execution` 来自本执行的 `repair-summary.json`，
+`qa.counts.chain` 来自跨 Handoff 的累计检查点 `pipeline-state.json`，二者不相加。
+
+### 用量
+
+复用 `task-usage` 口径：同一 Agent 作业被下游重跑复用只算一次，不相加已含逐调用记录的汇总，
+思考 Token 不再加到输出；后补评审是独立来源 `review-run:*`，不增加业务搭建数。缺失为 `null` 并保留
+`incomplete`，不等同供应商账单，不推算费用。
+
+每次补评只导出它自己这次评审的用量；登记新修订时，读取同一份登记快照中该逻辑 run 的**全部**已登记修订（逐个按索引摘要校验），
+沿用其中的 `review` 执行（按评审结果时间排序）与 `review-run:*` 来源（Agent 作业用量始终来自用量回执），
+因此新修订的 `metrics.usage.totals` 是整个逻辑 run 的累计且每次真实评审只计一次，并带 `reviews-carried`。
+只要有任何已登记修订字节缺失或被改动，`totals.complete=false` 并带 `usage-history-unavailable`；同样材料重新导出或之后再补评
+都保持这一标记，直到该修订恢复可读并核实后才恢复完整。不同修订的 `totals` 不能相加。
+
+同一来源（同一 `review-run:<run>:<attempt>`）只保留一份有效记录，与到达顺序无关：完整的优先于不完整的，其次取调用记录更多的，
+测量值相同视为同一份；两份都完整却不一致时保留先登记的一份，并以 `usage-source-conflict` 标记、`totals.complete=false`，
+不相加也不猜测，之后的修订继续保留这一标记。
+
+较早的补评晚于较新的补评才登记时，它不会成为当前视图；若它带来当前视图尚未计入的内容（新的评审执行、更完整的同源记录或冲突），
+本次登记的是**刷新后的当前视图**：仍选用较新的评审，把较早的评审作为未选用的评审保留在其中，并按上述规则重新计算累计。
+累计不依赖截图能否重新打包：结果包只附带本次导出中逐字节一致的截图，其余截图保留原路径与摘要、标为 `reference-only`
+并带 `evidence-omitted`，不伪造、不改动已归档的旧包。
+
+## 结果包
+
+```text
+evaluation-bundle.zip
+├── evaluation.json      # 公共 DTO（evaluation-report 或 evaluation-batch）
+├── manifest.json        # 其余每个文件的路径、用途、大小、SHA-256；不含自身
+├── report.html          # 现有统一 HTML（可选）
+└── evidence/verify-N/browser-(acceptance|focused)/*.png
+```
+
+清单 Schema：[`contracts/evaluation-bundle.v1.schema.json`](contracts/evaluation-bundle.v1.schema.json)。
+ZIP 由工厂确定性生成：路径排序、固定时间戳（1980-01-01）、不压缩；相同内容字节相同。ZIP 自身的 SHA-256 在
+`X-Evaluation-Bundle-SHA256` 与投递回执中，不写进包内。
+
+| 上限 | 值 | 超出时 |
+| --- | --- | --- |
+| `evaluation.json` | 4 MiB | 导出失败并说明，不静默截断证据 |
+| 单张截图 / 截图合计 | 10 MiB / 48 MiB | 以路径与哈希引用（`availability=reference-only`），并写 `evidence-omitted` |
+| `report.html` | 32 MiB | 不随包附带，写 `report-html-omitted` |
+| ZIP / 解包 / 文件数 | 64 MiB / 128 MiB / 2048 | 读取即拒绝 |
+
+包内只有 DTO、清单、统一 HTML 与验收截图。不打包 `.env`、`config.yml`、Cookie、私钥、API Key、测试账号密码、
+`node_modules`、完整插件源码或原始模型日志；源码证据是评审校验过的有限摘录（每条不超过 100 行）。
+证据不可公开不等于问题不存在：未附带的证据保留原始路径与哈希，供有权限者在内部 Artifact 核对。
+读取方拒绝绝对路径、`..`、反斜杠、盘符、重复路径、符号链接 / 特殊文件、加密、伪造大小、校验和不符与超限解压。
+
+`gh-pages` 的 `evaluations/` 只保存脱敏元数据、每个修订的 `evaluation.json` / `manifest.json` 原始字节与修订索引，
+与现有 `reports/` 同一分支、同样的非强制更新；它随 Pages 一起公开，内容不超过已公开的 `report.json`。
+结果包本身只在 Actions Artifact（90 天，受仓库设置上限约束）。
+
+## 工厂配置
+
+| 配置 | 默认 | 用途 |
+| --- | --- | --- |
+| Variable `FACTORY_EVALUATION_EXPORT` | 未设置 = 导出 | 设为 `false` 即关闭导出与登记；原报告、Pages、用量不受影响 |
+| Variable `FACTORY_EVALUATION_DELIVERY` | 未设置 = 关闭 | 只有 `true` 才登记待投递记录并调用投递工作流；关闭时不需要 URL 或 Token |
+| Variable `EVALUATION_ENDPOINT` | 未设置 | 完整接收 URL（例如部署方挂载的 `/api/evaluations/import`）；工厂不拼接业务路径。必须 `https://`，不能含用户名密码、query 或 fragment |
+| Variable `EVALUATION_AUTH_MODE` | `x-api-key` | 固定枚举 `x-api-key` / `bearer`；不接受自定义头名或模板 |
+| Secret `EVALUATION_TOKEN` | 未设置 | 只进入投递工作流 `send` 作业的一个步骤；不进入实现、QA、评审、导出或任何 Artifact |
+
+| Variable `FACTORY_EVALUATION_PLANS_ENABLED` | 未设置 = 关闭 | 只有 `true` 时每日定时才启动 `enabled` 且 `schedule=daily` 的评测计划；手动启动、推进与取消不受它限制 |
+
+投递打开但配置不完整时，投递作业失败并列出缺失的配置项名称（不输出值），记录保持待投递；业务结果与归档不受影响。
+仓库里原有的变量没有同义开关，因此新增上述名称。
+
+导出发生在 `Report Task Usage` 的 `report` 作业末尾（`continue-on-error`，只读权限），登记在独立的 `evaluation` 作业
+（`contents: write`），与 Pages 作业并行、互不依赖；Pages 失败不影响登记，登记失败也不影响 Pages 与原评论。
+每种已接单结束状态（交付、失败、取消、超时、Handoff）都会导出现有事实；只补跑评审经由同一可复用工作流形成新修订。
+
+## HTTP 接收约定 v1
+
+这是交付给接收端开发者的合同，由本仓库的本地测试接收器验证，**不代表远端已实现**。
+
+```http
+POST <EVALUATION_ENDPOINT>
+Content-Type: multipart/form-data; boundary=nb3-evaluation-<摘要前缀>
+x-api-key: <EVALUATION_TOKEN>                  # bearer 模式改为 Authorization: Bearer <EVALUATION_TOKEN>
+Idempotency-Key: nb3-eval-v1-<sha256(instance \n type \n key \n revision)>
+X-Evaluation-Schema-Version: 1
+X-Evaluation-Type: evaluation-report | evaluation-batch
+X-Evaluation-Bundle-SHA256: <ZIP 的 SHA-256>
+
+表单字段 bundle = evaluation-bundle.zip（application/zip），无其他字段
+```
+
+接收端完成**持久化**后返回：
+
+| 状态 | 含义 | 工厂处理 |
+| --- | --- | --- |
+| 201 | 首次保存 | 校验回执后记为 `stored` |
+| 200 | 相同幂等键、相同包已存在 | 同上，返回原回执 |
+| 409 | 相同幂等键、不同包 | 记为 `conflict`，停止自动重试 |
+| 202 | v1 不视为已入库 | 记为 `rejected`（`accepted-not-stored`） |
+| 400 / 401 / 403 / 404 / 413 / 422 | 请求、认证、路径、大小或数据问题 | 记为 `rejected` 与具体类别，等待修正，不循环 |
+| 3xx | 不跟随重定向，避免转发凭据 | `rejected`（`redirect-refused`） |
+| 408 / 429 / 500 / 502 / 503 / 504、超时、断连 | 可重试 | 最多 3 次、单次 30 秒；遵守 `Retry-After`，上限 60 秒 |
+| 200 / 201 但回执正文未收完（断连或超时） | 传输故障，接收端可能已入库 | 以同一幂等键重试确认；只有完整收到的回执格式或身份不符才是 `invalid-receipt` |
+
+回执 Schema：[`contracts/evaluation-receipt.v1.schema.json`](contracts/evaluation-receipt.v1.schema.json)，示例
+[`receipt.json`](contracts/examples/receipt.json)：
+
+```json
+{ "receiptId": "receiver-generated-id", "sourceInstance": "owner/factory", "runKey": "owner/factory/issues/146/initial",
+  "revision": 1, "bundleSha256": "<与请求头一致>", "state": "stored" }
+```
+
+批次结果用 `batchKey` 代替 `runKey`。回执必须是 JSON，身份、修订与摘要必须与发送对象一致，否则记为投递失败（`invalid-receipt`），
+不会误报“已接收”。工厂只保存 `receiptId`、状态、HTTP 状态、次数、时间与错误类别，不保存完整 URL、凭据或响应正文。
+
+**接收端建议实现**（Test Manager 后续工作，不在本仓库）：
+
+1. 去重键 `source.instance + type + key + revision`；相同键相同 `bundleSha256` 返回原回执（200），不同则 409。
+2. 先持久化 ZIP 与回执再返回；解析时按上表上限和路径规则拒绝不安全的包，校验 `manifest.json` 每个文件的哈希。
+3. 历史保留全部修订；“当前视图”按 `precedence` 规则选择，不按最大修订号；迟到的旧修订只进入历史。
+4. 用 `subjectKeys` 映射功能点；`mapping=pending` 或空键进入待映射队列，不猜测。
+5. 发现按 `run.key + finding.id` 存储出现记录；跨运行根因归并、指派与关闭是接收端自己的问题生命周期，
+   `confirmedBy=reviewer`、`reviewerStatus=resolved` 都不等于人工确认或已关闭。
+6. 框架评分 0–100 与现有人工评分 0–10 是不同量表与口径，不要直接覆盖功能点评分；v1 与 v2 分开展示，不平均。
+7. 先收到批次再收到样本、或顺序相反都应可按 key 关联；批次中尚无报告的样本仍然计入。
+
+## 投递、重试与补发
+
+`Report Task Usage`（以及批次协调器）的 `evaluation` 作业在投递开启时把新修订写入 `evaluations/outbox.json`（只含目标哈希、主体、修订、
+包摘要、状态与最近 10 次尝试），然后以 `workflow_dispatch` **不等待地**请求一次 **Deliver Evaluation Results** 扫描就结束。
+投递工作流只能被派发或定时触发，不被任何工作流调用，因此慢接收端不会占住报告或批次的串行并发组；请求失败时由定时扫描补发。
+
+```text
+plan（actions/contents: read）  按登记摘要找回原 Artifact，逐字节校验包 → 待发清单
+send（contents: read）          唯一持有 EVALUATION_TOKEN 的步骤；同一字节、同一幂等键重试
+record（contents: write）        CAS 写回脱敏回执；stored 为终态，“发送中”从不记为成功
+```
+
+工作流使用 `factory-evaluation-delivery` 串行队列，自动投递与手动补发不会并发发送同一记录；即使重复，接收端幂等也返回同一回执。
+投递器只运行默认分支的受信任控制代码，不 checkout 业务 PR、不运行附件、不装业务依赖、不启动浏览器、不读取模型凭据。
+
+**Actions → Deliver Evaluation Results → Run workflow**：
+
+| mode | 用途 |
+| --- | --- |
+| `replay` | 按 `type` + `key` + `revision`（可选原 `artifact_id`）重发该修订的**原始包**；不是 reassess，也不是业务 rerun |
+| `scan` | 重试当前目标的待投递记录（定时每 6 小时也会执行，每次最多 10 条） |
+| `retry-rejected` | 修正配置或接收端后，重新投递被拒绝的记录 |
+| `backfill` | 接收端晚部署时，把所有当前修订排入待投递，批次在前、样本在后 |
+
+读取原包分三类：确认过期 / 不存在记为 `source-expired`，字节与登记摘要不符记为 `source-invalid`，二者都说明缺什么且**不会为补发重新运行应用或模型来冒充历史结果**；
+GitHub 限流、5xx、网络或超时等临时故障保持 `pending`，不计为投递次数，由下次扫描重试。
+`send` 作业有 20 分钟发送预算（作业上限 30 分钟）：按单个包的最坏耗时（3 次 × 30 秒超时 + 2 次最长 60 秒 `Retry-After`）判断，
+来不及发完的包不开始、保持 `pending`；每发完一个包就写入结果文件，作业中断也不丢失已发生的尝试。
+超过 24 次可重试失败的记录转为 `rejected`（`retry-limit`）。GitHub Artifact 有保留期限，删除关联 Run 也可能删除它，
+因此不承诺历史包永久可重放；`evaluation.json` 与清单的原始字节长期保留在 `gh-pages`。
+
+## 固定基线的独立重复评测（批次）
+
+受信任维护者在 [`evaluations/plans.json`](evaluations/plans.json) 定义计划；Issue、评论或派发字段都不能提供计划、控制 SHA、预算、脚本或 URL。
+校验上限：每批最多 10 个案例、每案例 1–10 个样本、每批共 20 个样本；v1 只允许 `maxConcurrentSamples=1`；
+修复上限 0–10 次，单样本主动执行 600–86400 秒，自动续跑 0–10 次；`baselineRef` 必须是默认分支（已发布模板轨道，
+不自动测试上游源码或刷新模板）。`reviewMode` 为 `inherit`（沿用预设的“框架评测”选择，否则 `FACTORY_BUILD_REVIEW`）、`full` 或 `off`；
+关闭评审的样本显示“未评审”，不会被当作模块通过。
+
+```text
+Evaluation batches → start（手动）或每日定时（需开关 + enabled + schedule=daily）
+  → 固定控制 SHA = 应用基线 SHA（默认分支当前提交，须在默认分支历史中）、锁文件哈希、模板版本、评审模式、预算
+  → 一次性捕获每个预置案例的正文与人工评论（caseHash）
+  → factory:manual 维护 Issue 上写入分块校验的冻结清单与全部计划样本 → 状态快照
+  → 逐个创建样本 Issue：冻结快照副本、代码起点回执、样本回执 → 最后才写入可运行正文 → 显式 workflow_dispatch
+  → 现有任务 / QA / 修复 / 终验 / PR / 报告；报告自动登记修订
+  → 任务结束、每小时补偿或手动 advance 推进：终态才释放唯一的串行槽位
+  → 每次状态变化形成 evaluation-batch 快照（同一套修订登记与可选投递）
+```
+
+| 情形 | 行为 |
+| --- | --- |
+| 同一批的第 3 个样本 | 使用开批时捕获的同一份案例快照；来源预设之后的修改或新评论只影响下一批 |
+| 样本的控制代码 | prepare 在检出任务脚本前读取机器人样本回执、分块校验的批次清单与最新状态并逐项核对，再选用批次冻结的 SHA；该 SHA 必须在默认分支历史中；入口工作流版本单独记录 |
+| 样本的应用基线 | 协调器预先写入现有的 `factory-task-base-v1` 回执；prepare 另外核对与清单一致 |
+| 创建 Issue 后客户端中断 | 重试按样本标记找回同一 Issue，补齐缺失的快照 / 回执，不多建样本 |
+| 重复或乱序派发 | 首个 Run 在样本 Issue 上留下认领回执；其他 Run 以 `duplicate` 退出，不再搭建（同一 Run 的重跑尝试与续跑除外）。prepare 与 Agent 作业共用同一道样本闸门，按固定顺序判断：批次已取消 → 样本已释放 → 新派发必须使用冻结控制代码（不符则拒绝，且不占用认领）→ 认领 → 预算 |
+| Handoff（退出 75） | 不是终态，不释放槽位；新的 Run 沿用检查点中的预算，不重置 |
+| 预算 | 每次 prepare 都从 GitHub 自身的作业记录重算整条链已用的 Agent 执行次数与主动执行时间（不含排队，包括续跑、恢复与重跑尝试），超出即以 `budget-exhausted` 结束且不启动 Agent；这些数值写入任务元数据并作为检查点的下限。GitHub 的“Re-run failed jobs”会复用 prepare 的结果，
+因此 Agent 作业在恢复检查点和任何模型调用之前再次核对批次是否取消、样本是否已释放，并重新计量用量；任一不满足即失败退出、不启动模型。检查点中的预算必须与 prepare 记录一致，被删改则拒绝续跑。Agent 作业内：不足以开始下一阶段时以 76 结束，长调用截止时间下调并预留 300 秒归档，达到续跑次数（`maxContinuations` 计算首次之后的全部执行）时不再派发续跑。修复次数来自与 Agent 同一 Runner 的检查点，只能作为工厂内限制，不是安全边界。补丁、检查点、验收记录与用量都保留 |
+| 取消 | `cancel` 后不再创建 / 派发样本，未开始的样本记为 `cancelled`；已排队但从未产生实际执行（例如首次派发失败）的样本也直接结束为 `cancelled`，不会为取消再派发一次真实任务；仍有未结束 Run 的样本继续等待其结束；进行中样本的下一次续跑在 prepare 被拒绝并留下终态回执；已发生的执行与用量保留，不关闭或合并任何业务 PR。开批被中断、没有完整清单的协调 Issue 也可用 `cancel` 关闭。样本 Issue 上追加的 `/build` 是普通增量任务（不计入样本预算），批次取消后同样被拒绝 |
+| 推进时机 | 样本 Run 由 `GITHUB_TOKEN` 派发，不产生 `workflow_run`；任务工作流的 `advance-evaluation-batch` 作业在样本 Run 结束时显式请求推进（协调器最多等待该 Run 完成 5 分钟），另有每小时补偿 |
+| 只在 prepare 结束的 Run | 重复派发（agent 被跳过且无终态回执）不作为样本结论；prepare 作出的取消 / 预算耗尽以机器人终态回执记录，受理失败的样本记为 `blocked` |
+| 未开始 / 受阻 / 报告缺失 | 仍列在样本全集与统计中；只有每个样本**最后一次执行自己的**报告（同一 Run 且同一 attempt）登记后批次才算完成：较早 Handoff 段或同一 Run 较早 attempt 的报告只作历史，只重跑发布的 attempt 也有它自己的报告；在 prepare 就结束的样本不需要报告；最多等待 6 小时 |
+| 样本当前报告 | 只有样本最终执行（同一 Run、同一 attempt）的报告才是它的当前报告，并进入 `samples[].report` 与验收 / 报告统计；同一执行出现更新的修订（例如补齐证据后重新导出）时，报告引用与由报告得出的样本状态一起更新；执行中的样本没有当前报告，在 prepare 或被批次结束的样本为 `not-applicable`。批次在等待期后结束不等于报告齐全：缺失的仍计入 `reports.missing`、`reports-missing`，验收计入“其他”，不沿用旧 attempt 的结论 |
+| 协调失败隔离 | 每个批次（及每个定时计划）单独协调，隔离范围包括读取该批次的清单与状态：某个批次加载、建样本或派发失败时以 Issue 编号（已知时附批次键）记录错误并继续处理其他批次；读取报告索引失败时该批次本轮不提交新快照，已确认的报告与统计保持不变。启动新批次时若无法读取某个打开的批次，仍拒绝启动；已导出的快照照常进入归档矩阵；协调步骤仍以失败结束，便于发现问题，下一次推进重试失败的批次且不重复创建样本 |
+| 完成与归档分开 | 批次完成后即不再阻止新批次，但协调 Issue 保持打开，直到与最终状态序号相同的批次快照修订登记成功才关闭；期间迟到的报告仍会修正样本并形成新快照。归档失败时每小时补偿会重新导出，不重新创建或执行样本。同一轮可能处理多个打开的批次，每个批次导出到独立目录，由矩阵作业逐个登记，一个失败不影响其他批次 |
+| 单活动批次 | 只有确认 `completed` 或 `cancelled` 的批次才释放唯一的活动名额；缺清单或缺首份状态的批次属于“开批未完成”，同样占用名额，需要重跑原开批恢复或 `cancel`。新开批次与恢复未完成的开批共用同一互斥检查（仅排除自身），无法读取某个打开批次时拒绝启动 |
+| 开批校验 | 先冻结并校验计划、案例与基线，全部通过后才创建协调 Issue；案例号无效、缺锁文件或 SHA 不在默认分支历史时不留下任何记录。推进、查看与取消只依赖已冻结的清单，不因之后修改 `plans.json` 而停摆 |
+| 身份来源 | 样本的 `run.key` 只取 prepare 作业的任务元数据（Agent 无法改写）；只有 Agent 产物副本时，批次样本身份记为 `unresolved`，不归入任何样本 |
+| 两次定时触发同一日 | 批次键 `<计划>-<UTC 日期>`，第二次复用同一批。手动批次键为 `<计划>-r<发起的 Run ID>`，不含时间：同一 Run 任意尝试、任意时刻重跑都恢复原批次、不新增样本；新的手动试验请新发起一次 Run |
+
+样本状态：`planned / queued / running / passed / failed / blocked / budget-exhausted / cancelled / unknown`；
+`stateSource` 说明来源（样本自己的报告优先，其次是最后一个 Run 的结论）。只要还有未结束的 Run，就不释放串行槽位：超过墙钟保护期
+（预算的 3 倍再加 6 小时）只标记“需要维护者检查或取消该 Run”。只有 Handoff 后长时间没有任何 Run 时，才记为 `unknown` 并释放槽位；
+此后该样本在 prepare 一律被拒绝（`released`），迟到的续跑或重跑不会与下一个样本同时执行。
+Schema：[`contracts/evaluation-batch.v1.schema.json`](contracts/evaluation-batch.v1.schema.json)，示例
+[`batch-in-progress.json`](contracts/examples/batch-in-progress.json)。批次只列同条件样本的可核实事实，不计算全局平均分，不排除失败样本；
+冻结清单记录非密钥 Agent 配置（引擎、版本、模型、思考 / effort、评审模式与超时等，不含任何密钥）及其指纹；
+每次派发（含补偿重派）以及样本执行链仍在进行时的每次推进（每个样本 Run 结束都会请求推进）都记录当时的配置指纹。`samples[].agentConfigFingerprint` 是最近一次记录的指纹；任何一次与冻结时不同的样本记为 `comparable: false`，批次 `summary.comparable=false` 并写入
+`agent-config-drift`。首版只**固定代码与案例并检测 Agent 配置漂移**，不强制冻结配置：样本仍按运行时仓库变量执行，
+逐样本报告另记实际引擎与模型；`comparable=false` 的样本不能用于版本优劣归因。
+
+操作：**Actions → Evaluation batches → Run workflow**：`start`（填 `plan`，可勾选 `dry_run` 只预览冻结结果）、
+`advance`、`cancel`（填 `batch`）、`status`。首版的“一个活动批次”是全局限制；原有 `factory:daily` 预设调度与普通 Issue 搭建策略不变。
+
+## 验证
+
+```bash
+node --test .github/scripts/tests/evaluation-report.test.mjs .github/scripts/tests/evaluation-bundle.test.mjs \
+  .github/scripts/tests/evaluation-registry.test.mjs .github/scripts/tests/evaluation-contracts.test.mjs \
+  .github/scripts/tests/evaluation-delivery.test.mjs .github/scripts/tests/evaluation-workflow-policy.test.mjs \
+  .github/scripts/tests/evaluation-batch.test.mjs .github/scripts/tests/evaluation-budget.test.mjs .github/scripts/tests/evaluation-e2e.test.mjs
+node .github/contracts/render-examples.mjs --check
+node --test --test-concurrency=1 .github/scripts/tests/*.test.mjs
+```
+
+样例完全虚构（`owner/factory`、占位 SHA 等），由测试同一套夹具生成并在测试中逐字节比对，不代表真实案例成绩。
+无效样例见 [`invalid-cases.json`](contracts/examples/invalid-cases.json)：每条在一个有效样例上按 JSON Pointer 删除 / 设置少数字段并说明原因，结果必须被对应 Schema 拒绝。
+`evaluation-delivery.test.mjs` 启动本地 HTTP 接收器验证协议（201/200、断连后重发、429/5xx/超时、4xx、202、伪 JSON、错误回执、
+重定向与过期来源）；它只用于协议验收，不是 Test Manager 的替代服务，也不能证明线上两系统已接通。
+`evaluation-e2e.test.mjs` 不调用模型地走完整链路：冻结计划 → 5 个同案例样本（其中一个两次 Handoff）→ 固定评审夹具 → 结果包 →
+本地接收器 → 重发三次与连续补跑两次评审，断言仍为 5 个业务样本、重发不新增修订或用量、每次重评只新增一个独立评审用量来源且当前修订累计两次补评（同内容重新导出复用原修订），
+两个样本的相似发现保留为两条独立出现记录。

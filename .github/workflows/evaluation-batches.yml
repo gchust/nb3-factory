@@ -1,0 +1,193 @@
+name: Evaluation batches
+run-name: "Evaluation batch ${{ inputs.action || (github.event_name == 'schedule' && github.event.schedule == '23 1 * * *' && 'scheduled') || 'advance' }}"
+
+# Repeatable, frozen-baseline evaluation batches. Only trusted plans in
+# .github/evaluations/plans.json can start a batch; samples reuse the existing
+# task pipeline one complete chain at a time. Nothing here builds, reviews,
+# runs application code or reads model credentials.
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: start a plan / advance active batches / cancel a batch / status only
+        required: true
+        type: choice
+        options: [start, advance, cancel, status]
+        default: start
+      plan:
+        description: Plan key from .github/evaluations/plans.json (start)
+        required: false
+        type: string
+      batch:
+        description: Batch key (cancel)
+        required: false
+        type: string
+      dry_run:
+        description: Preview the frozen batch without creating Issues or dispatching (start)
+        required: false
+        type: boolean
+        default: false
+      source_run:
+        description: Task run that requested this advance; only waited for, never trusted as input
+        required: false
+        type: string
+  schedule:
+    # Daily start of enabled plans (needs FACTORY_EVALUATION_PLANS_ENABLED=true).
+    - cron: '23 1 * * *'
+    # Low-frequency compensation for active batches only.
+    - cron: '53 * * * *'
+  workflow_run:
+    workflows: [Code Agent NocoBase Task]
+    types: [completed]
+
+permissions: {}
+
+concurrency:
+  group: factory-evaluation-batch
+  queue: max
+
+jobs:
+  coordinate:
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.head_repository.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      actions: write
+      contents: read
+      issues: write
+    outputs:
+      export: ${{ steps.export.outputs.artifact-id }}
+      batches: ${{ steps.coordinate.outputs.batches }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          path: control
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24.x
+      - name: Coordinate evaluation batches
+        id: coordinate
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          BATCH_ACTION: ${{ inputs.action || (github.event_name == 'schedule' && github.event.schedule == '23 1 * * *' && 'scheduled') || 'advance' }}
+          BATCH_PLAN: ${{ inputs.plan }}
+          BATCH_KEY: ${{ inputs.batch }}
+          BATCH_DRY_RUN: ${{ inputs.dry_run == true }}
+          SOURCE_RUN: ${{ inputs.source_run }}
+          FACTORY_EVALUATION_PLANS_ENABLED: ${{ vars.FACTORY_EVALUATION_PLANS_ENABLED }}
+          FACTORY_BUILD_REVIEW: ${{ vars.FACTORY_BUILD_REVIEW }}
+          # Non-secret Agent settings only, fingerprinted to flag configuration drift within a batch.
+          CODE_AGENT_ENGINE: ${{ vars.CODE_AGENT_ENGINE }}
+          CODE_AGENT_VERSION: ${{ vars.CODE_AGENT_VERSION }}
+          PI_VERSION: ${{ vars.PI_VERSION }}
+          CODEBUDDY_VERSION: ${{ vars.CODEBUDDY_VERSION }}
+          CLAUDE_CODE_VERSION: ${{ vars.CLAUDE_CODE_VERSION }}
+          CODEX_VERSION: ${{ vars.CODEX_VERSION }}
+          OPENCODE_VERSION: ${{ vars.OPENCODE_VERSION }}
+          CODE_AGENT_MODEL: ${{ vars.CODE_AGENT_MODEL }}
+          PI_MODEL: ${{ vars.PI_MODEL }}
+          CODEBUDDY_MODEL: ${{ vars.CODEBUDDY_MODEL }}
+          CLAUDE_CODE_MODEL: ${{ vars.CLAUDE_CODE_MODEL }}
+          CODEX_MODEL: ${{ vars.CODEX_MODEL }}
+          OPENCODE_MODEL: ${{ vars.OPENCODE_MODEL }}
+          CODE_AGENT_API_TYPE: ${{ vars.CODE_AGENT_API_TYPE }}
+          CODE_AGENT_THINKING: ${{ vars.CODE_AGENT_THINKING }}
+          PI_THINKING: ${{ vars.PI_THINKING }}
+          CODEBUDDY_THINKING: ${{ vars.CODEBUDDY_THINKING }}
+          CLAUDE_CODE_EFFORT: ${{ vars.CLAUDE_CODE_EFFORT }}
+          CLAUDE_CODE_QA_EFFORT: ${{ vars.CLAUDE_CODE_QA_EFFORT }}
+          CODEX_REASONING_EFFORT: ${{ vars.CODEX_REASONING_EFFORT }}
+          CODEX_QA_REASONING_EFFORT: ${{ vars.CODEX_QA_REASONING_EFFORT }}
+          OPENCODE_VARIANT: ${{ vars.OPENCODE_VARIANT }}
+          OPENCODE_QA_VARIANT: ${{ vars.OPENCODE_QA_VARIANT }}
+          FACTORY_QA_THINKING: ${{ vars.FACTORY_QA_THINKING }}
+          FACTORY_REVIEW_THINKING: ${{ vars.FACTORY_REVIEW_THINKING }}
+          FACTORY_BUILD_REVIEW_TIMEOUT_SECONDS: ${{ vars.FACTORY_BUILD_REVIEW_TIMEOUT_SECONDS }}
+          CODE_AGENT_INVOCATION_TIMEOUT_SECONDS: ${{ vars.CODE_AGENT_INVOCATION_TIMEOUT_SECONDS }}
+          CODE_AGENT_IDLE_TIMEOUT_SECONDS: ${{ vars.CODE_AGENT_IDLE_TIMEOUT_SECONDS }}
+          AGENT_BROWSER_VERSION: ${{ vars.AGENT_BROWSER_VERSION }}
+        run: |
+          export FACTORY_CONTROL_SHA="$(git -C control rev-parse HEAD)"
+          node control/.github/scripts/evaluation-batch.mjs "$BATCH_ACTION" --plan "$BATCH_PLAN" --batch "$BATCH_KEY" \
+            --dry-run "$BATCH_DRY_RUN" --source-run "$SOURCE_RUN" --output "$RUNNER_TEMP/batch-export"
+      # Runs even if one batch failed to coordinate: the others' snapshots still archive.
+      - name: Save the batch snapshot for registration
+        id: export
+        if: '!cancelled() && steps.coordinate.outputs.export == ''true'''
+        uses: actions/upload-artifact@v4
+        with:
+          name: factory-evaluation-batch-export-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/batch-export
+          if-no-files-found: error
+          retention-days: 14
+
+  # Same registration as single reports: identical snapshots reuse their revision.
+  # One matrix job per exported batch: a failing archive never hides another batch.
+  evaluation:
+    needs: coordinate
+    if: "!cancelled() && needs.coordinate.outputs.export != '' && needs.coordinate.outputs.batches != ''"
+    strategy:
+      fail-fast: false
+      max-parallel: 1
+      matrix:
+        batch: ${{ fromJSON(needs.coordinate.outputs.batches) }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      actions: write
+      contents: write
+    env:
+      FACTORY_EVALUATION_DELIVERY: ${{ vars.FACTORY_EVALUATION_DELIVERY }}
+      EVALUATION_ENDPOINT: ${{ vars.EVALUATION_ENDPOINT }}
+      EVALUATION_AUTH_MODE: ${{ vars.EVALUATION_AUTH_MODE }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          path: control
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24.x
+      - uses: actions/download-artifact@v4
+        with:
+          artifact-ids: ${{ needs.coordinate.outputs.export }}
+          path: ${{ runner.temp }}/batch-export
+          merge-multiple: true
+      - name: Reuse or allocate the batch revision
+        id: prepare
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          BATCH_KEY: ${{ matrix.batch }}
+        run: |
+          [[ "$BATCH_KEY" =~ ^[A-Za-z0-9][A-Za-z0-9._-]{0,79}$ ]] || { echo "Invalid batch key" >&2; exit 1; }
+          node control/.github/scripts/evaluation-archive.mjs prepare \
+            --input "$RUNNER_TEMP/batch-export/$BATCH_KEY" --output "$RUNNER_TEMP/batch-bundle"
+      - name: Keep the exact bundle bytes for replay
+        id: bundle
+        if: steps.prepare.outputs.upload == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.prepare.outputs.artifact_name }}
+          path: ${{ runner.temp }}/batch-bundle/evaluation-bundle.zip
+          if-no-files-found: error
+          retention-days: 90
+      - name: Register the revision and queue optional delivery
+        id: commit
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          node control/.github/scripts/evaluation-archive.mjs commit \
+            --input "$RUNNER_TEMP/batch-bundle" --artifact-id "${{ steps.bundle.outputs.artifact-id }}"
+      # Fire-and-forget: this workflow's concurrency group is never held by a receiver.
+      - name: Request delivery without waiting
+        if: steps.commit.outputs.queued == 'true'
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPORT_REF: ${{ github.event.repository.default_branch }}
+        run: |
+          gh workflow run deliver-evaluation.yml --repo "$GITHUB_REPOSITORY" --ref "$REPORT_REF" --field mode=scan \
+            || echo '::warning::Delivery request failed; the scheduled scan will send the queued revision.'

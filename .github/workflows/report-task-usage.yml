@@ -42,6 +42,7 @@ jobs:
     outputs:
       html_ready: ${{ steps.totals.outputs.html_ready }}
       report_artifact: ${{ steps.archive.outputs.artifact-id }}
+      evaluation_export: ${{ steps.evaluation-export.outputs.artifact-id }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
@@ -86,6 +87,18 @@ jobs:
           github-token: ${{ github.token }}
           path: ${{ runner.temp }}/usage-evidence
 
+      # Small prepare-job metadata identifies runs whose Agent stopped before copying it.
+      - name: Download normalized task metadata when available
+        if: steps.source.outputs.ready == 'true' && steps.source.outputs.task_artifact_id != ''
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          artifact-ids: ${{ steps.source.outputs.task_artifact_id }}
+          merge-multiple: true
+          run-id: ${{ env.SOURCE_RUN_ID }}
+          github-token: ${{ github.token }}
+          path: ${{ runner.temp }}/usage-task
+
       - name: Download verified supplemental review
         if: steps.source.outputs.review_artifact != ''
         uses: actions/download-artifact@v4
@@ -104,7 +117,7 @@ jobs:
         run: |
           node control/.github/scripts/report-task-usage.mjs publish \
             --run-id "$SOURCE_RUN_ID" --source "$RUNNER_TEMP/usage-source.json" \
-            --artifacts "$RUNNER_TEMP/usage-evidence" --review "$RUNNER_TEMP/review-supplement" --summary "$RUNNER_TEMP/task-report/report.json"
+            --artifacts "$RUNNER_TEMP/usage-evidence" --task "$RUNNER_TEMP/usage-task" --review "$RUNNER_TEMP/review-supplement" --summary "$RUNNER_TEMP/task-report/report.json"
 
       - name: Save HTML and numeric usage report
         id: archive
@@ -115,6 +128,97 @@ jobs:
           path: ${{ runner.temp }}/task-report
           if-no-files-found: warn
           retention-days: 14
+
+      # Pure data conversion of the facts above: no model call, no application code.
+      # A failure is diagnosable here and never changes the usage report or the build.
+      - name: Export versioned evaluation report
+        id: export
+        if: always() && steps.totals.outcome == 'success' && vars.FACTORY_EVALUATION_EXPORT != 'false'
+        continue-on-error: true
+        run: |
+          FACTORY_EXPORTER_SHA="$(git -C control rev-parse HEAD)" node control/.github/scripts/evaluation-archive.mjs export \
+            --report "$RUNNER_TEMP/task-report/report.json" --artifacts "$RUNNER_TEMP/usage-evidence" \
+            --task "$RUNNER_TEMP/usage-task" --html "$RUNNER_TEMP/task-report/report.html" \
+            --output "$RUNNER_TEMP/evaluation-export"
+
+      # Also isolated: a failed evaluation upload must not fail this job and skip Pages.
+      - name: Save evaluation export for registration
+        id: evaluation-export
+        if: always() && steps.export.outputs.ready == 'true'
+        continue-on-error: true
+        uses: actions/upload-artifact@v4
+        with:
+          name: factory-evaluation-export-${{ env.SOURCE_RUN_ID }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/evaluation-export
+          if-no-files-found: error
+          retention-days: 14
+
+  # Revision registration is independent of Pages: an unavailable site or
+  # receiver never loses the archived evaluation, and vice versa.
+  evaluation:
+    needs: report
+    if: needs.report.outputs.evaluation_export != ''
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      actions: write
+      contents: write
+    outputs:
+      type: ${{ steps.commit.outputs.type }}
+      key: ${{ steps.commit.outputs.key }}
+      revision: ${{ steps.commit.outputs.revision }}
+    env:
+      FACTORY_EVALUATION_DELIVERY: ${{ vars.FACTORY_EVALUATION_DELIVERY }}
+      EVALUATION_ENDPOINT: ${{ vars.EVALUATION_ENDPOINT }}
+      EVALUATION_AUTH_MODE: ${{ vars.EVALUATION_AUTH_MODE }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          path: control
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24.x
+      - uses: actions/download-artifact@v4
+        with:
+          artifact-ids: ${{ needs.report.outputs.evaluation_export }}
+          path: ${{ runner.temp }}/evaluation-export
+          merge-multiple: true
+      - name: Reuse or allocate the report revision
+        id: prepare
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          node control/.github/scripts/evaluation-archive.mjs prepare \
+            --input "$RUNNER_TEMP/evaluation-export" --output "$RUNNER_TEMP/evaluation-bundle"
+      - name: Keep the exact bundle bytes for replay
+        id: bundle
+        if: steps.prepare.outputs.upload == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.prepare.outputs.artifact_name }}
+          path: ${{ runner.temp }}/evaluation-bundle/evaluation-bundle.zip
+          if-no-files-found: error
+          retention-days: 90
+      - name: Register the revision and queue optional delivery
+        id: commit
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          node control/.github/scripts/evaluation-archive.mjs commit \
+            --input "$RUNNER_TEMP/evaluation-bundle" --artifact-id "${{ steps.bundle.outputs.artifact-id }}"
+      # Fire-and-forget: this workflow's concurrency group is never held by a receiver.
+      - name: Request delivery without waiting
+        if: steps.commit.outputs.queued == 'true'
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPORT_REF: ${{ github.event.repository.default_branch }}
+        run: |
+          gh workflow run deliver-evaluation.yml --repo "$GITHUB_REPOSITORY" --ref "$REPORT_REF" --field mode=scan \
+            || echo '::warning::Delivery request failed; the scheduled scan will send the queued revision.'
+
 
   pages:
     needs: report

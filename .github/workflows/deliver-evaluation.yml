@@ -1,0 +1,173 @@
+name: Deliver Evaluation Results
+
+# Optional: sends already-registered evaluation bundles to one receiver
+# configured by maintainers. It never builds, reviews, runs application code,
+# installs dependencies, starts a browser or reads model credentials. It is
+# only dispatched or scheduled, never called, so no other workflow waits on it.
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: replay one registered revision / scan pending / retry-rejected after fixing config / backfill a newly deployed receiver
+        required: true
+        type: choice
+        options: [replay, scan, retry-rejected, backfill]
+        default: replay
+      type:
+        description: Registered document type (replay only)
+        required: false
+        type: choice
+        options: [evaluation-report, evaluation-batch]
+        default: evaluation-report
+      key:
+        description: Registered run.key or batch subject key (replay only)
+        required: false
+        type: string
+      revision:
+        description: Registered revision number (replay only; resends the original bytes)
+        required: false
+        type: string
+      artifact_id:
+        description: Optional original bundle Artifact ID; still verified against the registered SHA-256
+        required: false
+        type: string
+  schedule:
+    # Small compensation scan of queued records only; it does nothing unless delivery is enabled.
+    - cron: '41 */6 * * *'
+
+permissions: {}
+
+concurrency:
+  group: factory-evaluation-delivery
+  queue: max
+
+jobs:
+  backfill:
+    if: inputs.mode == 'backfill' && vars.FACTORY_EVALUATION_DELIVERY == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          path: control
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24.x
+      - name: Queue every current revision, batches first
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          EVALUATION_ENDPOINT: ${{ vars.EVALUATION_ENDPOINT }}
+          EVALUATION_AUTH_MODE: ${{ vars.EVALUATION_AUTH_MODE }}
+        run: node control/.github/scripts/evaluation-delivery.mjs backfill
+
+  plan:
+    needs: backfill
+    if: always() && vars.FACTORY_EVALUATION_DELIVERY == 'true' && needs.backfill.result != 'failure' && needs.backfill.result != 'cancelled'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      actions: read
+      contents: read
+    outputs:
+      count: ${{ steps.plan.outputs.count }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          path: control
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24.x
+      # Verifies artifact identity and the registered bundle SHA-256; the receiver token is not present here.
+      - name: Select and verify original bundles
+        id: plan
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          EVALUATION_ENDPOINT: ${{ vars.EVALUATION_ENDPOINT }}
+          EVALUATION_AUTH_MODE: ${{ vars.EVALUATION_AUTH_MODE }}
+          DELIVERY_MODE: ${{ inputs.mode == 'replay' && 'replay' || inputs.mode == 'retry-rejected' && 'retry-rejected' || 'scan' }}
+          SUBJECT_TYPE: ${{ inputs.type }}
+          SUBJECT_KEY: ${{ inputs.key }}
+          SUBJECT_REVISION: ${{ inputs.revision }}
+          ARTIFACT_ID: ${{ inputs.artifact_id }}
+        run: |
+          node control/.github/scripts/evaluation-delivery.mjs plan --mode "$DELIVERY_MODE" \
+            --type "$SUBJECT_TYPE" --key "$SUBJECT_KEY" --revision "$SUBJECT_REVISION" \
+            --artifact-id "$ARTIFACT_ID" --output "$RUNNER_TEMP/delivery-plan"
+      - uses: actions/upload-artifact@v4
+        if: steps.plan.outputs.count != '0'
+        with:
+          name: factory-evaluation-delivery-plan-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/delivery-plan
+          if-no-files-found: error
+          retention-days: 3
+
+  send:
+    needs: plan
+    if: needs.plan.result == 'success' && needs.plan.outputs.count != '0'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          path: control
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24.x
+      - uses: actions/download-artifact@v4
+        with:
+          name: factory-evaluation-delivery-plan-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/delivery-plan
+      # The only step that sees the receiver token. It has no repository write access.
+      - name: Send bundles with idempotency keys and bounded retries
+        env:
+          EVALUATION_ENDPOINT: ${{ vars.EVALUATION_ENDPOINT }}
+          EVALUATION_AUTH_MODE: ${{ vars.EVALUATION_AUTH_MODE }}
+          EVALUATION_TOKEN: ${{ secrets.EVALUATION_TOKEN }}
+        run: |
+          node control/.github/scripts/evaluation-delivery.mjs send \
+            --plan "$RUNNER_TEMP/delivery-plan" --output "$RUNNER_TEMP/delivery-results/results.json"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: factory-evaluation-delivery-results-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/delivery-results
+          if-no-files-found: warn
+          retention-days: 14
+
+  record:
+    needs: [plan, send]
+    if: always() && needs.plan.result == 'success' && needs.plan.outputs.count != '0'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          path: control
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24.x
+      - uses: actions/download-artifact@v4
+        id: results
+        continue-on-error: true
+        with:
+          name: factory-evaluation-delivery-results-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/delivery-results
+      - name: Record sanitized receipts (never a business verdict)
+        if: steps.results.outcome == 'success'
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: node control/.github/scripts/evaluation-delivery.mjs record --results "$RUNNER_TEMP/delivery-results/results.json"

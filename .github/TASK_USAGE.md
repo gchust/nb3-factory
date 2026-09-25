@@ -26,6 +26,8 @@ Issue，包括成功、失败、取消、超时和 5 小时 Handoff。独立统�
 这些数字用于比较搭建效率，不等同供应商账单，也不根据零值 cost 字段猜测费用。
 统计只输出数值和固定说明，不把模型内容、工具输出或密钥复制到 Issue。
 
+外部评测结果按唯一来源键复用本口径，不另行估算 Token，见 [评测结果导出](EVALUATION_INTEGRATION.md#用量)。
+
 ## 给已完成的任务补统计
 
 Actions → Report Task Usage → Run workflow，选择默认分支，输入搭建 **Run ID**。

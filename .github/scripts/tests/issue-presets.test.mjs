@@ -475,6 +475,7 @@ test('prepare CLI copies a case into its own work branch with default PR base', 
   assert.deepEqual([...refs.keys()], ['develop']);
   const metadata = JSON.parse(readFileSync(path.join(folder, 'metadata.json'), 'utf8'));
   assert.equal(metadata.preset.sourceIssueNumber, 1);
+  assert.equal(metadata.evaluation.runKey, 'test/factory/issues/20/initial');
   assert.equal(metadata.workBranch, 'agent/issue-20');
   assert.equal(metadata.targetCreated, false);
   assert.equal(metadata.issue.title, '工单系统');

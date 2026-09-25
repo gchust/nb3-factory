@@ -19,7 +19,7 @@ export function isManualIssue(issue) {
   return issue.labels?.some((label) => (label.name ?? label) === 'factory:manual') ?? false;
 }
 
-function isHuman(user) {
+export function isHuman(user) {
   return Boolean(user?.login && user.type !== 'Bot' && !/\[bot\]$/i.test(user.login));
 }
 
@@ -27,7 +27,7 @@ function isFactoryComment(comment) {
   return comment.user?.login === 'github-actions[bot]' && comment.user?.type === 'Bot';
 }
 
-function hashInput(text) {
+export function hashInput(text) {
   return createHash('sha256').update(text).digest('hex');
 }
 
@@ -63,13 +63,13 @@ export function getPresetSourceNumber(body = '', repositoryUrl) {
   return number;
 }
 
-function replaceSection(body, label, value) {
+export function replaceSection(body, label, value) {
   const section = new RegExp(`^###\\s+${label}\\s*\\r?\\n[\\s\\S]*?(?=^###\\s+|(?![\\s\\S]))`, 'm');
   const replacement = `### ${label}\n\n${value}\n\n`;
   return section.test(body) ? body.replace(section, () => replacement) : replacement + body;
 }
 
-function clonedBody(snapshot, hash) {
+export function clonedBody(snapshot, hash) {
   let body = snapshot.source.body.replace(readyPattern, '');
   // Old presets may retain the retired form confirmation; it is not business input.
   body = body.replace(/^###\s+确认\s*\r?\n[\s\S]*?(?=^###\s+|(?![\s\S]))/m, '');
@@ -90,7 +90,7 @@ function clonedBody(snapshot, hash) {
 // A complete, checksummed snapshot survives runner/artifact retention and source
 // edits. Partial snapshot writes are never used to start a build. Chunking keeps
 // large conversations below GitHub's per-comment limit without dropping input.
-function readSnapshot(comments, issueNumber, expectedHash, selectedNumber) {
+export function readSnapshot(comments, issueNumber, expectedHash, selectedNumber) {
   const groups = new Map();
   for (const comment of comments.filter(isFactoryComment).sort((a, b) => a.id - b.id)) {
     const match = snapshotPattern.exec(comment.body ?? '');
@@ -119,35 +119,19 @@ function readSnapshot(comments, issueNumber, expectedHash, selectedNumber) {
   return null;
 }
 
-async function captureSnapshot(client, issue, number, comments) {
-  if (number === issue.number) throw new TaskInputError('不能从当前 Issue 复制自身。');
+// One-time capture of a source preset: body plus all human comments in order.
+export async function readPresetSource(client, number) {
   const source = await client.getIssue(number);
   if (source.pull_request || !isPresetIssue(source) || !isHuman(source.user)) {
     throw new TaskInputError('来源必须是带 factory:preset 标签、由人工创建的 Issue。');
   }
-  // Validate the business fields but do not inherit the source's old branch.
-  const selected = extractIssueSections(issue.body).get('测试基线分支')?.trim();
-  if (selected && (!isSourceBaselineRef(selected) || !await client.getRef(selected, true))) {
-    throw new TaskInputError('测试基线必须是已发布的 factory-baseline/source- 分支；留空使用默认分支。');
-  }
-  const targetBranch = selected || validateTargetBranch((await client.getRepository()).default_branch);
-  const sourceBody = replaceSection(source.body ?? '', '目标分支', targetBranch);
-  parseIssueTask({ ...source, body: sourceBody });
   const originals = await listAll(client, `/issues/${number}/comments`);
-  const snapshot = {
-    version: 1,
-    issueNumber: issue.number,
-    targetBranch,
-    // Explicit task choice wins; auto inherits the source preset, not its title/number.
-    buildReviewMode: parseBuildReviewMode(extractIssueSections(issue.body).get('框架评测'))
-      ?? parseBuildReviewMode(extractIssueSections(source.body).get('框架评测')),
-    capturedAt: new Date().toISOString(),
+  return {
     source: {
       number, title: source.title, body: source.body,
       author: source.user.login, url: source.html_url,
       updatedAt: source.updated_at,
     },
-    extra: extractIssueSections(issue.body).get('本次补充要求') || '',
     comments: originals.filter((comment) => isHuman(comment.user))
       .sort((a, b) => a.id - b.id)
       .map((comment) => ({
@@ -156,18 +140,51 @@ async function captureSnapshot(client, issue, number, comments) {
         body: comment.body ?? '',
       })),
   };
+}
+
+// Chunked, checksummed bot comments; an existing complete copy is never duplicated.
+export async function writeSnapshot(client, issueNumber, snapshot, comments) {
   const json = JSON.stringify(snapshot);
   const hash = hashInput(json);
   if (clonedBody(snapshot, hash).length > 65000) {
     throw new TaskInputError('原 Issue 正文加来源信息后超过 GitHub 长度限制，请先缩短原正文。人工评论不会截断。');
   }
+  const present = new Set(comments.filter(isFactoryComment).map((comment) => snapshotPattern.exec(comment.body ?? ''))
+    .filter((match) => match?.[1] === hash).map((match) => Number(match[2])));
   const parts = chunks(Buffer.from(json).toString('base64'));
   for (const [index, part] of parts.entries()) {
-    comments.push(await client.addComment(issue.number,
-      `预置案例 #${number} 输入快照 ${index + 1}/${parts.length}（由工厂读取，请勿删除）。\n\n` +
+    if (present.has(index)) continue;
+    comments.push(await client.addComment(issueNumber,
+      `预置案例 #${snapshot.source.number} 输入快照 ${index + 1}/${parts.length}（由工厂读取，请勿删除）。\n\n` +
       `<!-- factory-preset-snapshot-v1:${hash}:${index}:${parts.length}\n${part}\n-->`));
   }
   return { snapshot, hash };
+}
+
+async function captureSnapshot(client, issue, number, comments) {
+  if (number === issue.number) throw new TaskInputError('不能从当前 Issue 复制自身。');
+  const { source, comments: originals } = await readPresetSource(client, number);
+  // Validate the business fields but do not inherit the source's old branch.
+  const selected = extractIssueSections(issue.body).get('测试基线分支')?.trim();
+  if (selected && (!isSourceBaselineRef(selected) || !await client.getRef(selected, true))) {
+    throw new TaskInputError('测试基线必须是已发布的 factory-baseline/source- 分支；留空使用默认分支。');
+  }
+  const targetBranch = selected || validateTargetBranch((await client.getRepository()).default_branch);
+  const sourceBody = replaceSection(source.body ?? '', '目标分支', targetBranch);
+  parseIssueTask({ ...source, body: sourceBody });
+  const snapshot = {
+    version: 1,
+    issueNumber: issue.number,
+    targetBranch,
+    // Explicit task choice wins; auto inherits the source preset, not its title/number.
+    buildReviewMode: parseBuildReviewMode(extractIssueSections(issue.body).get('框架评测'))
+      ?? parseBuildReviewMode(extractIssueSections(source.body).get('框架评测')),
+    capturedAt: new Date().toISOString(),
+    source,
+    extra: extractIssueSections(issue.body).get('本次补充要求') || '',
+    comments: originals,
+  };
+  return writeSnapshot(client, issue.number, snapshot, comments);
 }
 
 async function copyComments(client, issue, snapshot, hash, comments) {

@@ -203,9 +203,10 @@ jobs:
   report:
     needs: [prepare, review]
     if: always() && needs.prepare.outputs.ready == 'true' && needs.review.outputs.artifact_id != ''
+    # actions: write lets the reused reporter request evaluation delivery without waiting on it.
     permissions:
       contents: write
-      actions: read
+      actions: write
       issues: write
       pull-requests: write
       pages: write

@@ -468,6 +468,14 @@ test('PRs, source presets, maintenance Issues and incidental references cannot b
   assert.equal(dispatches(state).length, 1);
 });
 
+test('an evaluation-batch sample of the same case neither blocks nor deduplicates the daily round', async () => {
+  const { execute, state } = fixture();
+  state.tasks.push(task(86, { body: `${preparedBody(176)}\n\n<!-- factory-evaluation-sample:b-1/F00/1 -->`,
+    labels: ['factory:evaluation-sample', 'agent:running'], user: bot }));
+  assert.equal((await execute()).rows[0].status, 'dispatched');
+  assert.ok(!state.calls.some((call) => call.route === '/issues/86/comments'), 'samples are not scanned for daily receipts');
+});
+
 test('open and recent tasks are each scanned once per batch, not once per preset', async () => {
   const { execute, state } = fixture([preset(155), preset(176), preset(200)]);
   await execute();

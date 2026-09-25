@@ -91,6 +91,29 @@ export function identifyCheck(check, criteria) {
   return found[0];
 }
 
+// The overall verdict of one browser report, shared by QA's validator and the
+// evaluation exporter; it never mutates the report. Observed per-check statuses
+// decide it, so a model's top-level passed=true cannot turn blocked, skipped or
+// missing work green, and passed=false written for a blocked report stays blocked.
+// A required criterion must pass; an [optional] one may be not_run. Without the
+// criteria (null), only a report whose every check passed can pass.
+// Returns failed | blocked | passed | incomplete.
+export function reportVerdict(report, criteria) {
+  const checks = Array.isArray(report?.checks) ? report.checks : [];
+  let matched = checks.map(() => null);
+  if (criteria) {
+    try { matched = checks.map((check) => identifyCheck(check, criteria)); } catch { return 'incomplete'; }
+    const ids = new Set(matched.map((c) => c.id));
+    if (ids.size !== checks.length || criteria.some((c) => !ids.has(c.id))) return 'incomplete';
+  }
+  if (checks.some((check) => check?.status === 'failed')) return 'failed';
+  if (checks.some((check) => check?.status === 'blocked')) return 'blocked';
+  const done = checks.length > 0 && checks.every((check, index) =>
+    check?.status === 'passed' || (check?.status === 'not_run' && matched[index]?.optional === true));
+  return done && report.passed === true && report.authenticated === true &&
+    Array.isArray(report.failures) && report.failures.length === 0 ? 'passed' : 'incomplete';
+}
+
 export function validateCoverage(checks, criteria) {
   const seen = new Set();
   for (const check of checks) {
