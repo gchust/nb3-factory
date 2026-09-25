@@ -36,7 +36,7 @@
 | Actions 重跑同一 Run（attempt+1） | 不变 | 追加 `rerun-attempt`，同一 Agent 作业不重复计量 | 同上 |
 | 重新派发同一 Issue 的普通搭建 | 不变 | 追加 `restart`；需要独立样本请新建 Issue | 同上 |
 | 原 Issue 追加 `/build` | 新 key，`kind=incremental` | 独立历史 | 从 1 开始 |
-| 对冻结业务只补跑评审 | 不变 | 追加 `review`（独立用量） | 新修订；旧评审保留 |
+| 对冻结业务只补跑评审 | 不变 | 追加 `review`（独立用量）；此前每次补评的执行与用量一并保留 | 新修订；旧评审保留 |
 | 原包补发 | 不变 | **不新增** | **保持原修订与原字节** |
 
 键空间（在受信任 prepare 阶段写入 `task-metadata.json` 的 `evaluation`，由后续阶段校验）：
@@ -90,7 +90,7 @@ Schema：[`contracts/evaluation-report.v1.schema.json`](contracts/evaluation-rep
 | `metrics` | 按唯一来源键（`agent-job:<id>`、`review-run:<run>:<attempt>`）的用量、作业时长与端到端时长、业务搭建数（恒为 1）、评审执行数 |
 | `evidence` | 标准化证据：带作用域的 id、原始出处、行号、文件哈希、脚本提取的摘录（再经密钥清洗）、附件路径或仅引用说明 |
 | `links` | Issue、Run、PR、gh-pages 固定报告路径；辅助信息，不作身份 |
-| `limitations` | 受限说明，`code` 为稳定机器码（如 `first-round-unavailable`、`review-partial`、`evidence-omitted`、`legacy-executions-unresolved`、`later-executions`、`usage-incomplete`、`baseline-unknown`） |
+| `limitations` | 受限说明，`code` 为稳定机器码（如 `first-round-unavailable`、`review-partial`、`evidence-omitted`、`legacy-executions-unresolved`、`later-executions`、`usage-incomplete`、`reviews-carried`、`usage-history-unavailable`、`baseline-unknown`） |
 
 ### 评审、模块与发现
 
@@ -109,6 +109,10 @@ Schema：[`contracts/evaluation-report.v1.schema.json`](contracts/evaluation-rep
 
 ### 首轮与计数
 
+每轮全量 QA 的整体结论与工厂 QA 校验器使用同一判定（`reportVerdict`）：有 `failed` 为失败，否则有 `blocked` 为受阻
+（校验器为受阻报告写入的 `passed=false` 不会被当成失败）；每个必测项都通过、标为 `[optional]` 的可选项可以 `not_run` 时才算通过，
+逐项仍如实记录 `not-run`，整体通过不代表可选项执行过；必测项缺失、未执行或报告不一致为 `unknown`。
+
 “首轮 QA 通过”只来自第一次实际全量 QA。Handoff 续跑的产物不含第 1 轮时 `firstFull=unknown` 且 `qa.coverage=partial`；
 只有失败路径复测时不推断全量通过。`firstPassWithoutRepair=yes` 还要求第 1 轮即全量通过且整条链没有工厂修复；
 它不代表 Agent 开发中没有自测试错。`qa.counts.execution` 来自本执行的 `repair-summary.json`，
@@ -119,6 +123,11 @@ Schema：[`contracts/evaluation-report.v1.schema.json`](contracts/evaluation-rep
 复用 `task-usage` 口径：同一 Agent 作业被下游重跑复用只算一次，不相加已含逐调用记录的汇总，
 思考 Token 不再加到输出；后补评审是独立来源 `review-run:*`，不增加业务搭建数。缺失为 `null` 并保留
 `incomplete`，不等同供应商账单，不推算费用。
+
+每次补评只导出它自己这次评审的用量；登记新修订时，从同一份登记快照中的上一修订沿用更早补评的 `review` 执行与
+`review-run:*` 来源（按唯一键去重，Agent 作业用量始终来自用量回执），因此当前修订的 `metrics.usage.totals` 是整个逻辑 run
+的累计且每次真实评审只计一次，并带 `reviews-carried`。上一修订字节缺失或被改动时不沿用，`totals.complete=false`
+并带 `usage-history-unavailable`；不同修订的 `totals` 不能相加。
 
 ## 结果包
 
@@ -300,7 +309,8 @@ Schema：[`contracts/evaluation-batch.v1.schema.json`](contracts/evaluation-batc
 [`batch-in-progress.json`](contracts/examples/batch-in-progress.json)。批次只列同条件样本的可核实事实，不计算全局平均分，不排除失败样本；
 冻结清单记录非密钥 Agent 配置（引擎、版本、模型、思考 / effort、评审模式与超时等，不含任何密钥）及其指纹；
 每次派发（含补偿重派）以及样本执行链仍在进行时的每次推进（每个样本 Run 结束都会请求推进）都记录当时的配置指纹。`samples[].agentConfigFingerprint` 是最近一次记录的指纹；任何一次与冻结时不同的样本记为 `comparable: false`，批次 `summary.comparable=false` 并写入
-`agent-config-drift`。首版只记录与标记漂移，样本仍按运行时仓库变量执行，逐样本报告另记实际引擎与模型。
+`agent-config-drift`。首版只**固定代码与案例并检测 Agent 配置漂移**，不强制冻结配置：样本仍按运行时仓库变量执行，
+逐样本报告另记实际引擎与模型；`comparable=false` 的样本不能用于版本优劣归因。
 
 操作：**Actions → Evaluation batches → Run workflow**：`start`（填 `plan`，可勾选 `dry_run` 只预览冻结结果）、
 `advance`、`cancel`（填 `batch`）、`status`。首版的“一个活动批次”是全局限制；原有 `factory:daily` 预设调度与普通 Issue 搭建策略不变。
@@ -321,5 +331,5 @@ node --test --test-concurrency=1 .github/scripts/tests/*.test.mjs
 `evaluation-delivery.test.mjs` 启动本地 HTTP 接收器验证协议（201/200、断连后重发、429/5xx/超时、4xx、202、伪 JSON、错误回执、
 重定向与过期来源）；它只用于协议验收，不是 Test Manager 的替代服务，也不能证明线上两系统已接通。
 `evaluation-e2e.test.mjs` 不调用模型地走完整链路：冻结计划 → 5 个同案例样本（其中一个两次 Handoff）→ 固定评审夹具 → 结果包 →
-本地接收器 → 重发三次与补跑一次评审，断言仍为 5 个业务样本、重发不新增修订或用量、重评只新增一个独立评审用量来源，
+本地接收器 → 重发三次与连续补跑两次评审，断言仍为 5 个业务样本、重发不新增修订或用量、每次重评只新增一个独立评审用量来源且当前修订累计两次补评（同内容重新导出复用原修订），
 两个样本的相似发现保留为两条独立出现记录。

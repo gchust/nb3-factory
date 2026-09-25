@@ -4,7 +4,7 @@
 import { createHash } from 'node:crypto';
 import { lstatSync, readFileSync, readdirSync } from 'node:fs';
 import path from 'node:path';
-import { parseAcceptanceCriteria } from './acceptance-criteria.mjs';
+import { parseAcceptanceCriteria, reportVerdict } from './acceptance-criteria.mjs';
 import { collectReviewProcess, dimensionsFor, loadBuildReview, moduleRoundResult, readReviewJson,
   resolveReviewIdentity, validateBuildReview } from './build-review.mjs';
 import { isRunKey, resolveTaskIdentity } from './evaluation-identity.mjs';
@@ -133,12 +133,11 @@ function outcomeOf(record, pipeline, qa, pr) {
   return { execution, acceptance, delivery, pullRequest: pr && positive(pr.number) ? { number: pr.number, headSha: shaOrNull(pr.headSha) } : null, detail };
 }
 
-function reportStatus(report) {
+// The same verdict QA's validator reached; an incomplete or invalid report is unknown.
+function reportStatus(report, criteria) {
   if (!report) return 'unknown';
-  const checks = Array.isArray(report.checks) ? report.checks : [];
-  if (checks.some(c => c?.status === 'failed') || report.passed === false) return 'failed';
-  if (checks.some(c => c?.status === 'blocked')) return 'blocked';
-  return report.passed === true && checks.length && checks.every(c => c?.status === 'passed') ? 'passed' : 'unknown';
+  const verdict = reportVerdict(report, criteria);
+  return verdict === 'incomplete' ? 'unknown' : verdict;
 }
 
 function qaOf(root, process, pipeline, repair, metadata, producerKey, limitations) {
@@ -153,7 +152,10 @@ function qaOf(root, process, pipeline, repair, metadata, producerKey, limitation
     const report = round.reports.find(x => x.scope === 'full');
     try { return readReviewJson(root, report.source); } catch { return null; }
   };
-  const describe = (round, basis) => ({ status: reportStatus(read(round)), round: round.round, executionKey: producerKey, basis });
+  // A full round covers every criterion; unparseable criteria leave only all-passed reports passing.
+  let parsed = null;
+  try { parsed = parseAcceptanceCriteria(metadata?.task?.acceptanceCriteria); } catch { /* Reported below. */ }
+  const describe = (round, basis) => ({ status: reportStatus(read(round), parsed), round: round.round, executionKey: producerKey, basis });
   const none = basis => ({ status: 'not-run', round: null, executionKey: null, basis });
   const unknown = basis => ({ status: 'unknown', round: null, executionKey: null, basis });
   let firstFull, finalFull;
@@ -170,8 +172,8 @@ function qaOf(root, process, pipeline, repair, metadata, producerKey, limitation
   if (rounds.length && rounds.every(r => r.scope === 'focused'))
     limitations.push({ code: 'qa-focused-only', detail: '本产物只有失败路径复测，不代表全量业务验收。' });
   let criteria = [];
-  try {
-    criteria = parseAcceptanceCriteria(metadata?.task?.acceptanceCriteria).map(c => {
+  if (parsed) {
+    criteria = parsed.map(c => {
       const status = round => {
         if (round.round == null) return round.status === 'not-run' ? 'not-run' : 'unknown';
         const check = rounds.find(r => r.round === round.round && r.scope === 'full')?.checks.find(x => x.id === c.id);
@@ -179,7 +181,7 @@ function qaOf(root, process, pipeline, repair, metadata, producerKey, limitation
       };
       return { id: c.id, text: c.text.slice(0, 2000), optional: c.optional, firstFull: status(firstFull), finalFull: status(finalFull) };
     });
-  } catch { limitations.push({ code: 'criteria-unparsed', detail: '原始验收要求不可解析，逐项覆盖未知。' }); }
+  } else limitations.push({ code: 'criteria-unparsed', detail: '原始验收要求不可解析，逐项覆盖未知。' });
   const chainRepairs = count(pipeline?.repairAttempts) ? pipeline.repairAttempts : null;
   // “首次实现无修复即通过”还要求第 1 轮就执行并通过全量 QA，且整条链没有工厂修复。
   const firstPassWithoutRepair = firstFull.status === 'unknown' || chainRepairs === null ? 'unknown'
@@ -360,6 +362,48 @@ function usageSource(key, executionKey, usage, scope) {
   };
 }
 
+// Totals over unique sources only; any unmeasured part makes a total null, never zero.
+function usageTotals(sources) {
+  const sum = field => {
+    const parts = sources.flatMap(source => phases.map(phase => source.phases[phase][field]));
+    return sources.length && parts.every(v => v !== null) ? parts.reduce((n, v) => n + v, 0) : null;
+  };
+  return { input: sum('input'), output: sum('output'), cacheRead: sum('cacheRead'), cacheWrite: sum('cacheWrite'), total: sum('total'),
+    complete: sources.length > 0 && sources.every(source => source.complete) };
+}
+
+// A reassessment exports only its own review run, so the current view of a logical
+// run also carries the earlier review runs of the previous registered revision
+// (which carried its own predecessors), each by its unique key. Agent-job usage
+// always comes from the usage ledger, never from an earlier revision. When that
+// revision cannot be read intact, nothing is carried and the totals are incomplete.
+export function carryReviewHistory(draft, { document: prior = null, unavailable = false } = {}) {
+  const usage = draft.metrics.usage;
+  const limit = (code, detail) => { if (!draft.limitations.some(item => item.code === code)) draft.limitations.push({ code, detail }); };
+  if (unavailable) {
+    usage.totals.complete = false;
+    limit('usage-history-unavailable', '上一登记修订的字节缺失或被改动，未能沿用更早补跑评审的执行与用量；累计用量不完整。');
+    limit('usage-incomplete', '部分用量未取得或不完整；缺失值为 null，不按零处理。');
+    return draft;
+  }
+  const sourceKeys = new Set(usage.sources.map(source => source.key));
+  const sources = (prior?.metrics?.usage?.sources ?? []).filter(source => source.key.startsWith('review-run:') && !sourceKeys.has(source.key));
+  const executionKeys = new Set(draft.executions.map(execution => execution.key));
+  const executions = (prior?.executions ?? []).filter(execution => execution.kind === 'review' && !executionKeys.has(execution.key));
+  if (!sources.length && !executions.length) return draft;
+  // Earlier review runs precede this export's own; orders are renumbered in sequence.
+  const own = draft.executions.findIndex(execution => execution.kind === 'review');
+  draft.executions.splice(own < 0 ? draft.executions.length : own, 0, ...executions);
+  draft.executions = draft.executions.map((execution, index) => ({ ...execution, order: index + 1 }));
+  usage.sources.push(...sources);
+  usage.totals = usageTotals(usage.sources);
+  Object.assign(draft.metrics.counts, { executions: draft.executions.length, reviewExecutions: draft.metrics.counts.reviewExecutions + executions.length });
+  // Independent of which revision it was read from, so an identical re-export reuses its revision.
+  limit('reviews-carried', `包含更早补跑评审的执行与用量（${executions.length} 次，按唯一键去重）；其评审内容见各自的登记修订。`);
+  if (!usage.totals.complete) limit('usage-incomplete', '部分用量未取得或不完整；缺失值为 null，不按零处理。');
+  return draft;
+}
+
 function metricsOf(chain, reviews, supplement) {
   const sources = new Map();
   for (const record of chain.records) {
@@ -376,10 +420,6 @@ function metricsOf(chain, reviews, supplement) {
     sources.set(key, usageSource(key, `review-run/${supplement.runId}/attempt/${supplement.attempt}`, usage, '只补跑评审的独立调用；不是业务搭建'));
   }
   const values = [...sources.values()];
-  const sum = field => {
-    const parts = values.flatMap(source => phases.map(phase => source.phases[phase][field]));
-    return values.length && parts.every(v => v !== null) ? parts.reduce((n, v) => n + v, 0) : null;
-  };
   const jobs = new Map();
   for (const record of chain.records) for (const job of record.jobs ?? []) jobs.set(job.id, { ...job, executionKey: `run/${record.runId}/attempt/${record.attempt}` });
   const jobList = [...jobs.values()];
@@ -388,8 +428,7 @@ function metricsOf(chain, reviews, supplement) {
   return {
     usage: {
       sources: values,
-      totals: { input: sum('input'), output: sum('output'), cacheRead: sum('cacheRead'), cacheWrite: sum('cacheWrite'), total: sum('total'),
-        complete: values.length > 0 && values.every(source => source.complete) },
+      totals: usageTotals(values),
       definition: '沿用 task-usage 口径：按唯一来源键（Agent 作业 / 后补评审 Run）去重，不相加已含这些调用的汇总，不把思考 Token 再加到输出；缺失为 null，不等同供应商账单。',
     },
     time: {

@@ -9,8 +9,8 @@ import { fileURLToPath } from 'node:url';
 import { createBundle, verifyBundle } from './evaluation-bundle.mjs';
 import { deliveryConfig, DeliveryConfigError } from './evaluation-target.mjs';
 import { keyDigest } from './evaluation-identity.mjs';
-import { buildEvaluation, finalizeEvaluation, fingerprintEvaluation, documentKeyOf } from './evaluation-report.mjs';
-import { commitRevision, planRevision } from './evaluation-registry.mjs';
+import { buildEvaluation, carryReviewHistory, finalizeEvaluation, fingerprintEvaluation, documentKeyOf } from './evaluation-report.mjs';
+import { commitRevision, latestDocument, planRevision, readHistory } from './evaluation-registry.mjs';
 import { parseBoolean } from './factory-lib.mjs';
 
 const MAX_HTML = 32 * 1024 * 1024;
@@ -62,9 +62,12 @@ export async function prepareRevision(client, { input, output: out, now = new Da
   const draft = json(path.join(input, 'draft.json'));
   const files = loadFiles(input);
   const evidence = files.filter(item => item.role === 'evidence');
-  const fingerprint = fingerprintEvaluation(draft, evidence);
   const key = documentKeyOf(draft);
-  const plan = await planRevision(client, { type: draft.type, key, fingerprint });
+  // The same snapshot decides the carried review history and the revision number.
+  const history = await readHistory(client, { type: draft.type, key });
+  if (draft.type === 'evaluation-report') carryReviewHistory(draft, await latestDocument(client, history, key));
+  const fingerprint = fingerprintEvaluation(draft, evidence);
+  const plan = await planRevision(client, { type: draft.type, key, fingerprint, history });
   let evaluationBytes, document, bundle, reproduced = true;
   if (plan.reused) {
     evaluationBytes = plan.evaluationBytes;

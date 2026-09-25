@@ -91,11 +91,27 @@ export async function commitTree(client, message, build, { attempts = 5, pause =
   throw new Error('Could not update the evaluation registry');
 }
 
+// One consistent read of a subject for planning and for anything derived from its
+// earlier revisions: commitRevision only accepts the next contiguous number, so a
+// committed revision N was always prepared from a snapshot holding 1..N-1.
+export async function readHistory(client, { type, key }) {
+  const { sha } = await ensureBase(client);
+  return { sha, index: sha ? await readSubject(client, type, key, sha) : null };
+}
+
+// The newest registered revision of that snapshot, verified against its index entry.
+export async function latestDocument(client, { sha, index }, key) {
+  const entry = index?.revisions.at(-1);
+  if (!entry) return { document: null, unavailable: false };
+  const bytes = await readBytes(client, `${revisionDir(key, entry.revision)}/evaluation.json`, sha);
+  if (!bytes || sha256(bytes) !== entry.evaluationSha256) return { document: null, unavailable: true };
+  return { document: JSON.parse(bytes.toString('utf8')), unavailable: false };
+}
+
 // Read-only planning: reuse the revision of identical logical content, otherwise
 // propose the next number. commitRevision re-checks it under CAS.
-export async function planRevision(client, { type, key, fingerprint }) {
-  const { sha } = await ensureBase(client);
-  const index = sha ? await readSubject(client, type, key, sha) : null;
+export async function planRevision(client, { type, key, fingerprint, history = null }) {
+  const { sha, index } = history ?? await readHistory(client, { type, key });
   const existing = index?.revisions.find(item => item.fingerprint === fingerprint);
   if (existing) {
     const dir = revisionDir(key, existing.revision);

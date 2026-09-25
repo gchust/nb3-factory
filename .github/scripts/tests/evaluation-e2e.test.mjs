@@ -18,7 +18,7 @@ const plans = validatePlans({ schemaVersion: 1, plans: [{ key: 'repeat', enabled
   cases: [{ key: 'F00', presetIssueNumber: 176, samples: 5 }], execution: { maxConcurrentSamples: 1, maxRepairAttempts: 2, maxActiveSecondsPerSample: 3600, maxContinuations: 3 },
   reviewMode: 'full' }] }, { defaultBranch: 'develop' });
 
-test('5 samples, one with two handoffs, a report resent 3 times and one reassessment stay 5 business samples', async t => {
+test('5 samples, one with two handoffs, a report resent 3 times and two reassessments stay 5 business samples', async t => {
   const client = fakeRepository();
   let now = Date.parse('2026-09-25T02:00:00Z');
   const tick = () => (now += 3_600_000);
@@ -101,19 +101,40 @@ test('5 samples, one with two handoffs, a report resent 3 times and one reassess
   assert.equal(receiver.stored.size, 1);
   assert.equal((await readSubject(client, 'evaluation-report', one.document.run.key, 'gh-pages')).revisions.length, 1);
 
-  // Reassess sample 3 once: new revision and one independent review usage source, still one business build.
+  // Reassess sample 3 twice. Each reassessment exports only its own review run; the current
+  // revision still counts both, once each, next to the single business build.
   const three = registered.get(3);
-  const supplement = writeReview(three.root, 'completed', { issue: three.record.issue, runId: three.record.runId }, 'build-review.supplement.json',
-    { engine: 'pi', model: 'fixture-model', version: '0.86.1', runId: '777', attempt: 1, controlSha: control, replay: true });
-  supplement.supplementalUsage = { input: 40, output: 4, cacheRead: 0, cacheWrite: 0, reasoning: 0, totalTokens: 44, records: 1, incomplete: 0, runId: 777, attempt: 1 };
-  put(three.root, 'build-review.supplement.json', supplement);
+  const original = three.document;
+  const reassess = async (reviewRun, totalTokens) => {
+    const supplement = writeReview(three.root, 'completed', { issue: three.record.issue, runId: three.record.runId }, 'build-review.supplement.json',
+      { engine: 'pi', model: 'fixture-model', version: '0.86.1', runId: String(reviewRun), attempt: 1, controlSha: control, replay: true });
+    supplement.supplementalUsage = { input: totalTokens - 4, output: 4, cacheRead: 0, cacheWrite: 0, reasoning: 0, totalTokens, records: 1, incomplete: 0, runId: reviewRun, attempt: 1 };
+    put(three.root, 'build-review.supplement.json', supplement);
+    await report(3, three.root, three.record, []);
+    return registered.get(3).document;
+  };
+  const first = await reassess(777, 44);
+  assert.equal(first.revision, 2);
+  assert.equal(first.metrics.usage.totals.total, original.metrics.usage.totals.total + 44);
+  const second = await reassess(778, 60);
+  const reviewKeys = document => document.metrics.usage.sources.filter(s => s.key.startsWith('review-run:')).map(s => s.key).sort();
+  assert.equal(second.revision, 3);
+  assert.deepEqual(reviewKeys(second), ['review-run:777:1', 'review-run:778:1'], 'the earlier reassessment is carried, not dropped');
+  assert.equal(second.metrics.usage.totals.total, original.metrics.usage.totals.total + 44 + 60, 'no review is lost or counted twice');
+  assert.equal(second.metrics.usage.totals.complete, true);
+  assert.deepEqual(second.executions.filter(e => e.kind === 'review').map(e => e.runId), [777, 778]);
+  assert.deepEqual(second.executions.map(e => e.order), second.executions.map((_, i) => i + 1));
+  assert.equal(second.metrics.counts.executions, second.executions.length);
+  assert.equal(second.metrics.counts.businessBuilds, 1);
+  assert.ok(second.limitations.some(l => l.code === 'reviews-carried'));
+  // Exporting the same reassessment again reuses r3 byte for byte; earlier revisions keep their bytes.
   await report(3, three.root, three.record, []);
-  const reassessed = registered.get(3).document;
-  assert.equal(reassessed.revision, 2);
-  assert.equal(reassessed.metrics.counts.businessBuilds, 1);
-  assert.equal(reassessed.metrics.usage.sources.filter(s => s.key.startsWith('review-run:')).length, 1);
-  assert.equal(reassessed.executions.filter(e => e.kind === 'review').length, 1);
-  assert.equal((await readSubject(client, 'evaluation-report', reassessed.run.key, 'gh-pages')).revisions.length, 2);
+  assert.equal(registered.get(3).document.revision, 3);
+  assert.equal(registered.get(3).registration.reused, true);
+  const index = await readSubject(client, 'evaluation-report', second.run.key, 'gh-pages');
+  assert.deepEqual(index.revisions.map(r => r.revision), [1, 2, 3]);
+  assert.equal(index.current, 3);
+  const reassessed = second;
 
   // Similar findings from independent samples remain two occurrences with their own sources.
   const occurrences = documents.filter(d => d.run.key !== reassessed.run.key).slice(0, 2)

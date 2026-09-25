@@ -56,6 +56,24 @@ test('identical facts reuse the revision and its original bytes; new facts appen
   assert.equal(JSON.parse(client.file(`${dir}/index.json`)).current, 2);
 });
 
+test('an altered previous revision carries no review history and leaves the cumulative usage incomplete', async t => {
+  const client = fakeGitHub(), root = temporary(t);
+  buildArtifacts(root);
+  const report = reportFor(root, usageRecord());
+  const first = await register(t, client, root, report);
+  const dir = `evaluations/subjects/${keyDigest(JSON.parse(first.bytes).run.key)}`;
+  client.file(`${dir}/r1/evaluation.json`).fill(0x20, 0, 1);
+  const supplement = writeReview(root, 'completed', {}, 'build-review.supplement.json',
+    { engine: 'pi', model: 'm', version: '1', runId: '700', attempt: 1, controlSha: 'd'.repeat(40), replay: true });
+  supplement.supplementalUsage = { input: 1, output: 1, cacheRead: 0, cacheWrite: 0, reasoning: 0, totalTokens: 2, records: 1, incomplete: 0, runId: 700, attempt: 1 };
+  put(root, 'build-review.supplement.json', supplement);
+  const document = JSON.parse((await register(t, client, root, report, { runId: 902 })).bytes);
+  assert.equal(document.revision, 2);
+  assert.equal(document.metrics.usage.totals.complete, false, 'never claims a complete cumulative view');
+  assert.deepEqual(document.limitations.filter(l => ['usage-history-unavailable', 'usage-incomplete'].includes(l.code)).map(l => l.code).sort(),
+    ['usage-history-unavailable', 'usage-incomplete']);
+});
+
 test('a late, older producer report is kept as history but never becomes the current view', async t => {
   const client = fakeGitHub(), first = temporary(t), second = temporary(t);
   buildArtifacts(first, { runId: 100, rounds: [], chainVerifications: 0, outcome: 'handoff', review: 'none' });

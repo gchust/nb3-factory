@@ -28,6 +28,33 @@ test('run keys separate independent samples, incremental /build tasks and batch 
   assert.equal(resolveTaskIdentity({ repository, issue: { number: 7 }, buildCommentId: '55' }).runKey, build.runKey);
 });
 
+test('overall QA is the validator\'s verdict: blocked stays blocked, a skipped [optional] criterion still passes', t => {
+  const optional = 'B01. 创建客户\nB02. [optional] 编辑客户';
+  // [per-check statuses, acceptance criteria, top-level passed as the validator left it, expected verdict]
+  for (const [statuses, criteria, passed, expected] of [
+    [['passed', 'blocked'], null, false, 'blocked'],
+    [['failed', 'blocked'], null, false, 'failed'],
+    [['passed', 'not_run'], optional, true, 'passed'],
+    [['passed', 'not_run'], null, false, 'unknown'],
+    [['passed'], null, false, 'unknown'],
+    [['passed', 'passed'], null, false, 'unknown'],
+  ]) {
+    const root = temporary(t);
+    const failure = expected !== 'passed';
+    const metadata = buildArtifacts(root, { rounds: [{ round: 1, scope: 'full', statuses }], outcome: expected === 'blocked' ? 'blocked' : failure ? 'failed' : 'passed' });
+    if (criteria) put(root, 'task-metadata.json', { ...metadata, task: { ...metadata.task, acceptanceCriteria: criteria } });
+    const file = path.join(root, 'verify-1/browser-acceptance/report.json');
+    put(root, 'verify-1/browser-acceptance/report.json', { ...JSON.parse(readFileSync(file, 'utf8')), passed });
+    const document = finalize(exportOf(root, reportFor(root, usageRecord({ status: failure ? 'failure' : 'delivered' }))).draft);
+    const label = `${statuses.join('+')} → ${expected}`;
+    assert.deepEqual([document.qa.firstFull.status, document.qa.finalFull.status, document.outcome.acceptance], [expected, expected, expected], label);
+    assert.deepEqual(document.qa.rounds[0].checks.map(check => check.status), statuses.map(status => status.replace('_', '-')), `${label}: per-check facts kept`);
+    if (expected === 'blocked') assert.equal(document.outcome.execution, 'blocked');
+    if (criteria) assert.deepEqual(document.qa.criteria.map(c => [c.id, c.optional, c.finalFull]), [['B01', false, 'passed'], ['B02', true, 'not-run']],
+      'passing overall does not claim the optional criterion ran');
+  }
+});
+
 test('first-pass build exports QA, review, usage and baseline from their own sources and matches the contract', t => {
   const root = temporary(t);
   buildArtifacts(root);
