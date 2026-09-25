@@ -141,9 +141,11 @@ jobs:
             --task "$RUNNER_TEMP/usage-task" --html "$RUNNER_TEMP/task-report/report.html" \
             --output "$RUNNER_TEMP/evaluation-export"
 
+      # Also isolated: a failed evaluation upload must not fail this job and skip Pages.
       - name: Save evaluation export for registration
         id: evaluation-export
         if: always() && steps.export.outputs.ready == 'true'
+        continue-on-error: true
         uses: actions/upload-artifact@v4
         with:
           name: factory-evaluation-export-${{ env.SOURCE_RUN_ID }}-${{ github.run_id }}-${{ github.run_attempt }}
@@ -159,7 +161,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
-      actions: read
+      actions: write
       contents: write
     outputs:
       type: ${{ steps.commit.outputs.type }}
@@ -206,20 +208,17 @@ jobs:
         run: |
           node control/.github/scripts/evaluation-archive.mjs commit \
             --input "$RUNNER_TEMP/evaluation-bundle" --artifact-id "${{ steps.bundle.outputs.artifact-id }}"
+      # Fire-and-forget: this workflow's concurrency group is never held by a receiver.
+      - name: Request delivery without waiting
+        if: steps.commit.outputs.queued == 'true'
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPORT_REF: ${{ github.event.repository.default_branch }}
+        run: |
+          gh workflow run deliver-evaluation.yml --repo "$GITHUB_REPOSITORY" --ref "$REPORT_REF" --field mode=scan \
+            || echo '::warning::Delivery request failed; the scheduled scan will send the queued revision.'
 
-  delivery:
-    needs: evaluation
-    if: needs.evaluation.result == 'success' && vars.FACTORY_EVALUATION_DELIVERY == 'true'
-    permissions:
-      actions: read
-      contents: write
-    uses: ./.github/workflows/deliver-evaluation.yml
-    with:
-      mode: auto
-      type: ${{ needs.evaluation.outputs.type }}
-      key: ${{ needs.evaluation.outputs.key }}
-      revision: ${{ needs.evaluation.outputs.revision }}
-    secrets: inherit
 
   pages:
     needs: report

@@ -27,6 +27,7 @@ export const markers = {
   terminal: '<!-- factory-evaluation-sample-terminal-v1:',
 };
 export const TERMINAL_DECISIONS = ['cancelled', 'budget-exhausted'];
+export const RELEASED_STATES = new Set(['passed', 'failed', 'blocked', 'budget-exhausted', 'cancelled', 'unknown']);
 const manifestPattern = /<!-- factory-evaluation-batch-manifest-v1:([a-f0-9]{64}):(\d+):(\d+)\n([A-Za-z0-9+/=]+)\n-->$/;
 const statePattern = /<!-- factory-evaluation-batch-state-v1:([A-Za-z0-9][A-Za-z0-9._-]{0,79}):([1-9]\d*):([a-f0-9]{64})\n([A-Za-z0-9+/=]+)\n-->$/;
 
@@ -126,8 +127,11 @@ export async function resolveSample(client, issueNumber, { issue } = {}) {
       manifest.controlSha !== receipt.controlSha || manifest.applicationBaseSha !== receipt.baseSha || !planned ||
       planned.caseKey !== receipt.caseKey || planned.sampleIndex !== receipt.sampleIndex) throw new Error('Sample receipt does not match its batch manifest');
   const state = readState(batchComments, manifest.batchKey, loaded.hash)?.state;
-  if (state?.samples?.[receipt.sampleKey]?.issue !== issueNumber) throw new Error('Batch state does not assign this Issue to the sample');
-  return { receipt, manifest, manifestHash: loaded.hash, cancelled: state.cancelled === true, comments };
+  const assigned = state?.samples?.[receipt.sampleKey];
+  if (assigned?.issue !== issueNumber) throw new Error('Batch state does not assign this Issue to the sample');
+  // Once the coordinator released the slot, the sample may never run again.
+  return { receipt, manifest, manifestHash: loaded.hash, cancelled: state.cancelled === true,
+    released: RELEASED_STATES.has(assigned.state) ? assigned.state : null, comments };
 }
 
 // One build per sample. Returns false for a duplicate or reordered dispatch;

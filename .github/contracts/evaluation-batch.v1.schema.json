@@ -54,7 +54,7 @@
     "baseline": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["controlSha", "entrySha", "applicationBaseSha", "defaultBranch", "lockfileSha256", "templateVersion", "reviewMode", "budget", "maxConcurrentSamples", "agentEngine"],
+      "required": ["controlSha", "entrySha", "applicationBaseSha", "defaultBranch", "lockfileSha256", "templateVersion", "reviewMode", "budget", "maxConcurrentSamples", "agentEngine", "agentConfig"],
       "properties": {
         "controlSha": { "$ref": "#/$defs/sha" },
         "entrySha": { "$ref": "#/$defs/optionalSha" },
@@ -74,7 +74,22 @@
           }
         },
         "maxConcurrentSamples": { "const": 1 },
-        "agentEngine": { "type": "string", "maxLength": 40 }
+        "agentEngine": { "type": "string", "maxLength": 40 },
+        "agentConfig": {
+          "description": "Non-secret Agent settings in effect when the batch was frozen and their fingerprint; secrets are never included.",
+          "oneOf": [
+            { "type": "null" },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["fingerprint", "values"],
+              "properties": {
+                "fingerprint": { "$ref": "#/$defs/sha256" },
+                "values": { "type": "object", "maxProperties": 40, "propertyNames": { "type": "string", "pattern": "^[A-Z][A-Z0-9_]{1,63}$" }, "additionalProperties": { "type": "string", "maxLength": 200 } }
+              }
+            }
+          ]
+        }
       }
     },
     "cases": {
@@ -104,7 +119,7 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["key", "caseKey", "sampleIndex", "runKey", "issue", "state", "stateSource", "dispatchedAt", "terminalAt", "reason", "report"],
+        "required": ["key", "caseKey", "sampleIndex", "runKey", "issue", "state", "stateSource", "dispatchedAt", "terminalAt", "reason", "agentConfigFingerprint", "comparable", "report"],
         "properties": {
           "key": { "type": "string", "maxLength": 200 },
           "caseKey": { "type": "string", "maxLength": 20 },
@@ -116,6 +131,8 @@
           "dispatchedAt": { "oneOf": [{ "type": "null" }, { "type": "string", "format": "date-time" }] },
           "terminalAt": { "oneOf": [{ "type": "null" }, { "type": "string", "format": "date-time" }] },
           "reason": { "type": ["string", "null"], "maxLength": 500 },
+          "agentConfigFingerprint": { "description": "Agent settings fingerprint observed when this sample was dispatched.", "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/sha256" }] },
+          "comparable": { "description": "false when the sample was dispatched under settings different from the frozen batch; null when not dispatched or unknown.", "type": ["boolean", "null"] },
           "report": {
             "type": "object",
             "additionalProperties": false,
@@ -133,7 +150,7 @@
     "summary": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["planned", "byState", "reports", "acceptance"],
+      "required": ["planned", "byState", "reports", "comparable", "acceptance"],
       "properties": {
         "planned": { "type": "integer", "minimum": 1 },
         "byState": {
@@ -152,6 +169,7 @@
           "required": ["available", "missing"],
           "properties": { "available": { "$ref": "#/$defs/count" }, "missing": { "$ref": "#/$defs/count" } }
         },
+        "comparable": { "description": "true only when every dispatched sample ran under the frozen Agent settings.", "type": "boolean" },
         "acceptance": {
           "type": "object",
           "additionalProperties": false,

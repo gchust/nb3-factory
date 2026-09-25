@@ -66,6 +66,13 @@ try {
     appendGithubOutput(outputPath, 'status', 'cancelled');
     process.exit(0);
   }
+  if (batchSample?.released) {
+    // The serial slot was already given to the next sample; a late run must not overlap it.
+    await client.setIssueStatus(issue, 'agent:failed',
+      `评测样本 \`${batchSample.receipt.sampleKey}\` 已由批次记为 \`${batchSample.released}\` 并释放串行槽位：不再开始或续跑。已发生的执行、补丁与用量保留。`);
+    appendGithubOutput(outputPath, 'status', 'released');
+    process.exit(0);
+  }
   if (batchSample && !continuation && process.env.FACTORY_CONTROL_SHA !== batchSample.receipt.controlSha) {
     throw new TaskInputError('评测样本必须使用批次冻结的控制代码；拒绝以当前默认分支执行。');
   }

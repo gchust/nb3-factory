@@ -232,7 +232,7 @@ test('an invalid case freezes nothing; a manifest-less coordinator can be cancel
   client.state.fail = (method, route, body) => method === 'POST' && route.endsWith('/comments') && body.body.includes('factory-evaluation-batch-manifest-v1');
   const plans = plan();
   await assert.rejects(startBatch(client, { plans, planKey: 'smoke', trigger: 'manual', now: 1, runId: 5, controlSha: control, env: {} }), /Injected/);
-  const key = 'smoke-19700101T000000Z-r5';
+  const key = 'smoke-r5';
   await assert.rejects(startBatch(client, { plans, planKey: 'smoke', trigger: 'manual', now: 2000, runId: 6, controlSha: control, env: {} }), /one active batch/);
   const closed = await cancelBatch(client, key);
   assert.equal(closed.coordinator.state, 'closed');
@@ -275,4 +275,57 @@ test('budget usage is measured from GitHub job records across runs and earlier a
   };
   assert.deepEqual(await sampleUsage(client, 9, { runId: 2, attempt: 2 }), { activeSeconds: 1800, executions: 2 });
   assert.deepEqual(await sampleUsage(client, 9, { runId: 3, attempt: 1 }), { activeSeconds: 2100, executions: 3 });
+});
+
+test('a manual batch is identified by its originating run: any attempt, any time, resumes it without new samples', async () => {
+  const client = fakeRepository();
+  const plans = plan();
+  const first = await startBatch(client, { plans, planKey: 'smoke', trigger: 'manual', now: Date.parse('2026-09-25T02:00:00Z'), runId: 4242, controlSha: control, env: {} });
+  await advanceBatch(client, first.batch, { now: Date.parse('2026-09-25T02:00:00Z') });
+  assert.equal(first.batchKey, 'smoke-r4242');
+  // Re-run attempt ten minutes later (e.g. after an archive failure).
+  const again = await startBatch(client, { plans, planKey: 'smoke', trigger: 'manual', now: Date.parse('2026-09-25T02:10:00Z'), runId: 4242, controlSha: control, env: {} });
+  assert.equal(again.batchKey, first.batchKey);
+  await advanceBatch(client, again.batch, { now: Date.parse('2026-09-25T02:10:00Z') });
+  assert.equal([...client.state.issues.values()].filter(i => names(i).includes('factory:evaluation-batch')).length, 1);
+  assert.equal(client.samples().length, 1);
+  assert.equal(client.state.dispatches.length, 1);
+  await assert.rejects(startBatch(client, { plans, planKey: 'smoke', trigger: 'manual', now: 1, runId: undefined, controlSha: control, env: {} }), /originating run/);
+});
+
+test('a run that is still unfinished keeps the slot; only a long-stalled handoff is released, and then refused', async () => {
+  const client = fakeRepository();
+  await start(client, plan(2));
+  const number = client.samples()[0].number;
+  client.run(number, { id: 6001, status: 'in_progress' });
+  const days = n => Date.parse('2026-09-25T02:00:00Z') + n * 86400_000;
+  let batch = await advanceBatch(client, await current(client), { now: days(3) });
+  const [first] = Object.values(batch.state.samples);
+  assert.equal(first.state, 'running', 'no progress is not termination');
+  assert.match(first.reason, /不释放串行槽位/);
+  assert.equal(client.samples().length, 1);
+  client.state.runs[0].status = 'completed';
+  client.state.jobs.set(6001, [{ name: 'agent', conclusion: 'success', steps: [{ name: 'Dispatch continuation run', conclusion: 'success' }] }]);
+  batch = await advanceBatch(client, await current(client), { now: days(4) });
+  assert.equal(Object.values(batch.state.samples)[0].state, 'unknown');
+  assert.equal(client.samples().length, 2, 'the released slot goes to the next sample');
+  const released = await resolveSample(client, number);
+  assert.equal(released.released, 'unknown', 'a late continuation of the released sample is refused at prepare');
+  assert.equal((await resolveSample(client, client.samples()[1].number)).released, null);
+});
+
+test('Agent settings are fingerprinted at freeze and at each dispatch; drift marks samples as not comparable', async () => {
+  const client = fakeRepository();
+  const env = { CODE_AGENT_ENGINE: 'pi', CODE_AGENT_MODEL: 'model-a', CODE_AGENT_API_KEY: 'secret-never-recorded' };
+  const started = await startBatch(client, { plans: plan(2), planKey: 'smoke', trigger: 'manual', now: 1000, runId: 77, controlSha: control, env });
+  let batch = await advanceBatch(client, started.batch, { now: 1000, env });
+  assert.deepEqual(batch.manifest.agentConfig.values, { CODE_AGENT_ENGINE: 'pi', CODE_AGENT_MODEL: 'model-a' });
+  assert.ok(!JSON.stringify(batch.manifest).includes('secret-never-recorded'));
+  client.run(client.samples()[0].number, { id: 5501 });
+  batch = await advanceBatch(client, batch, { now: 2000, env: { ...env, CODE_AGENT_MODEL: 'model-b' } });
+  const document = batchDocument(batch);
+  assert.deepEqual(document.samples.map(s => s.comparable), [true, false]);
+  assert.equal(document.summary.comparable, false);
+  assert.ok(document.limitations.some(l => l.code === 'agent-config-drift'));
+  assert.deepEqual(validateSchema(loadContract('evaluation-batch.v1'), { ...document, revision: 1, createdAt: '2026-09-25T00:00:00Z' }), []);
 });

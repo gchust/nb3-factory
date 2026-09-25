@@ -2,22 +2,9 @@ name: Deliver Evaluation Results
 
 # Optional: sends already-registered evaluation bundles to one receiver
 # configured by maintainers. It never builds, reviews, runs application code,
-# installs dependencies, starts a browser or reads model credentials.
+# installs dependencies, starts a browser or reads model credentials. It is
+# only dispatched or scheduled, never called, so no other workflow waits on it.
 on:
-  workflow_call:
-    inputs:
-      mode:
-        required: true
-        type: string
-      type:
-        required: false
-        type: string
-      key:
-        required: false
-        type: string
-      revision:
-        required: false
-        type: string
   workflow_dispatch:
     inputs:
       mode:

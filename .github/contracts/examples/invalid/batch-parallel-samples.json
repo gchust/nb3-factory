@@ -17,7 +17,7 @@
     "subjectKey": "owner/factory/batches/nb3-daily-smoke-20260925",
     "planKey": "nb3-daily-smoke",
     "planFingerprint": "694bcb810ec81a668789c169ad9564fef3b285a41a1b342bcec2b661bc323b3f",
-    "manifestSha256": "b21124e232373576d24daa4ff7a8e78ad5601e97c9da0071c4266111fd1b44fb",
+    "manifestSha256": "212f20e3f68e232f678a70234c7fad8fb4a6c9d4f7d3572a0cb4f134e1844d0d",
     "trigger": "schedule",
     "slot": "2026-09-25",
     "coordinatorIssue": 500,
@@ -42,7 +42,16 @@
       "maxContinuations": 2
     },
     "maxConcurrentSamples": 4,
-    "agentEngine": "pi"
+    "agentEngine": "pi",
+    "agentConfig": {
+      "fingerprint": "de5b9f95981fe6c58b86105b5199ec015ef5a78f74561986ff54c7783b499d25",
+      "values": {
+        "CODE_AGENT_ENGINE": "pi",
+        "CODE_AGENT_MODEL": "fixture-model",
+        "CODE_AGENT_THINKING": "high",
+        "FACTORY_REVIEW_THINKING": "medium"
+      }
+    }
   },
   "cases": [
     {
@@ -68,6 +77,8 @@
       "dispatchedAt": "2026-09-25T01:23:00Z",
       "terminalAt": "2026-09-25T02:53:00Z",
       "reason": null,
+      "agentConfigFingerprint": "de5b9f95981fe6c58b86105b5199ec015ef5a78f74561986ff54c7783b499d25",
+      "comparable": true,
       "report": {
         "state": "available",
         "revision": 1,
@@ -86,6 +97,8 @@
       "dispatchedAt": "2026-09-25T02:53:00Z",
       "terminalAt": null,
       "reason": null,
+      "agentConfigFingerprint": "de5b9f95981fe6c58b86105b5199ec015ef5a78f74561986ff54c7783b499d25",
+      "comparable": true,
       "report": {
         "state": "missing",
         "revision": null,
@@ -104,6 +117,8 @@
       "dispatchedAt": null,
       "terminalAt": null,
       "reason": null,
+      "agentConfigFingerprint": null,
+      "comparable": null,
       "report": {
         "state": "missing",
         "revision": null,
@@ -129,6 +144,7 @@
       "available": 1,
       "missing": 2
     },
+    "comparable": true,
     "acceptance": {
       "passed": 1,
       "failed": 0,
@@ -142,7 +158,7 @@
     },
     {
       "code": "agent-config-runtime",
-      "detail": "Agent 引擎与模型取自各样本运行时的仓库变量；批次期间修改变量会使样本不可比，逐样本报告记录实际值。"
+      "detail": "样本按运行时仓库变量执行 Agent；批次只冻结并比对非密钥配置指纹，漂移单独标记，逐样本报告记录实际引擎与模型。"
     },
     {
       "code": "reports-missing",

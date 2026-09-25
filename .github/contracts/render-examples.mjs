@@ -30,8 +30,9 @@ async function batchExample() {
     cases: [{ key: 'F00', presetIssueNumber: 176, samples: 3 }], execution: { maxConcurrentSamples: 1, maxRepairAttempts: 2, maxActiveSecondsPerSample: 3600, maxContinuations: 2 },
     reviewMode: 'inherit' }] }, { defaultBranch: 'develop' });
   let now = Date.parse('2026-09-25T01:23:00Z');
-  const started = await startBatch(client, { plans, planKey: 'nb3-daily-smoke', trigger: 'schedule', now, runId: 1000100, controlSha: control, env: { GITHUB_SHA: control } });
-  let batch = await advanceBatch(client, started.batch, { now });
+  const env = { GITHUB_SHA: control, CODE_AGENT_ENGINE: 'pi', CODE_AGENT_MODEL: 'fixture-model', CODE_AGENT_THINKING: 'high', FACTORY_REVIEW_THINKING: 'medium' };
+  const started = await startBatch(client, { plans, planKey: 'nb3-daily-smoke', trigger: 'schedule', now, runId: 1000100, controlSha: control, env });
+  let batch = await advanceBatch(client, started.batch, { now, env });
   const [first] = client.samples();
   client.run(first.number, { id: 1000201 });
   await commitRevision(client, { document: { type: 'evaluation-report', revision: 1, createdAt: '2026-09-25T02:40:00Z', source: { instance: client.repository },
@@ -39,9 +40,9 @@ async function batchExample() {
     precedence: { producer: { runId: 1000201, attempt: 1, startedAt: '2026-09-25T01:30:00Z' }, reviewState: 'completed', reviewRubric: 2, qaCoverage: 'complete' } },
   evaluationBytes: Buffer.from('{}'), manifestBytes: Buffer.from('{}'), fingerprint: 'a'.repeat(64), bundle: { sha256: 'b'.repeat(64), size: 1 }, location: null,
   now: new Date('2026-09-25T02:40:00Z') });
-  batch = await advanceBatch(client, batch, { now: (now += 5_400_000) });
+  batch = await advanceBatch(client, batch, { now: (now += 5_400_000), env });
   client.run(client.samples()[1].number, { id: 1000202, delivered: false, handoff: true });
-  batch = await advanceBatch(client, batch, { now: (now += 3_600_000) });
+  batch = await advanceBatch(client, batch, { now: (now += 3_600_000), env });
   return finalizeEvaluation(batchDocument(batch, { exporter }), { revision: batch.state.sequence, createdAt }).document;
 }
 

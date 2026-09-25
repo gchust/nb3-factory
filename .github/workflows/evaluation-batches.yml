@@ -77,7 +77,36 @@ jobs:
           SOURCE_RUN: ${{ inputs.source_run }}
           FACTORY_EVALUATION_PLANS_ENABLED: ${{ vars.FACTORY_EVALUATION_PLANS_ENABLED }}
           FACTORY_BUILD_REVIEW: ${{ vars.FACTORY_BUILD_REVIEW }}
+          # Non-secret Agent settings only, fingerprinted to flag configuration drift within a batch.
           CODE_AGENT_ENGINE: ${{ vars.CODE_AGENT_ENGINE }}
+          CODE_AGENT_VERSION: ${{ vars.CODE_AGENT_VERSION }}
+          PI_VERSION: ${{ vars.PI_VERSION }}
+          CODEBUDDY_VERSION: ${{ vars.CODEBUDDY_VERSION }}
+          CLAUDE_CODE_VERSION: ${{ vars.CLAUDE_CODE_VERSION }}
+          CODEX_VERSION: ${{ vars.CODEX_VERSION }}
+          OPENCODE_VERSION: ${{ vars.OPENCODE_VERSION }}
+          CODE_AGENT_MODEL: ${{ vars.CODE_AGENT_MODEL }}
+          PI_MODEL: ${{ vars.PI_MODEL }}
+          CODEBUDDY_MODEL: ${{ vars.CODEBUDDY_MODEL }}
+          CLAUDE_CODE_MODEL: ${{ vars.CLAUDE_CODE_MODEL }}
+          CODEX_MODEL: ${{ vars.CODEX_MODEL }}
+          OPENCODE_MODEL: ${{ vars.OPENCODE_MODEL }}
+          CODE_AGENT_API_TYPE: ${{ vars.CODE_AGENT_API_TYPE }}
+          CODE_AGENT_THINKING: ${{ vars.CODE_AGENT_THINKING }}
+          PI_THINKING: ${{ vars.PI_THINKING }}
+          CODEBUDDY_THINKING: ${{ vars.CODEBUDDY_THINKING }}
+          CLAUDE_CODE_EFFORT: ${{ vars.CLAUDE_CODE_EFFORT }}
+          CLAUDE_CODE_QA_EFFORT: ${{ vars.CLAUDE_CODE_QA_EFFORT }}
+          CODEX_REASONING_EFFORT: ${{ vars.CODEX_REASONING_EFFORT }}
+          CODEX_QA_REASONING_EFFORT: ${{ vars.CODEX_QA_REASONING_EFFORT }}
+          OPENCODE_VARIANT: ${{ vars.OPENCODE_VARIANT }}
+          OPENCODE_QA_VARIANT: ${{ vars.OPENCODE_QA_VARIANT }}
+          FACTORY_QA_THINKING: ${{ vars.FACTORY_QA_THINKING }}
+          FACTORY_REVIEW_THINKING: ${{ vars.FACTORY_REVIEW_THINKING }}
+          FACTORY_BUILD_REVIEW_TIMEOUT_SECONDS: ${{ vars.FACTORY_BUILD_REVIEW_TIMEOUT_SECONDS }}
+          CODE_AGENT_INVOCATION_TIMEOUT_SECONDS: ${{ vars.CODE_AGENT_INVOCATION_TIMEOUT_SECONDS }}
+          CODE_AGENT_IDLE_TIMEOUT_SECONDS: ${{ vars.CODE_AGENT_IDLE_TIMEOUT_SECONDS }}
+          AGENT_BROWSER_VERSION: ${{ vars.AGENT_BROWSER_VERSION }}
         run: |
           export FACTORY_CONTROL_SHA="$(git -C control rev-parse HEAD)"
           node control/.github/scripts/evaluation-batch.mjs "$BATCH_ACTION" --plan "$BATCH_PLAN" --batch "$BATCH_KEY" \
@@ -99,7 +128,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
-      actions: read
+      actions: write
       contents: write
     outputs:
       type: ${{ steps.commit.outputs.type }}
@@ -146,17 +175,13 @@ jobs:
         run: |
           node control/.github/scripts/evaluation-archive.mjs commit \
             --input "$RUNNER_TEMP/batch-bundle" --artifact-id "${{ steps.bundle.outputs.artifact-id }}"
-
-  delivery:
-    needs: evaluation
-    if: needs.evaluation.result == 'success' && vars.FACTORY_EVALUATION_DELIVERY == 'true'
-    permissions:
-      actions: read
-      contents: write
-    uses: ./.github/workflows/deliver-evaluation.yml
-    with:
-      mode: auto
-      type: ${{ needs.evaluation.outputs.type }}
-      key: ${{ needs.evaluation.outputs.key }}
-      revision: ${{ needs.evaluation.outputs.revision }}
-    secrets: inherit
+      # Fire-and-forget: this workflow's concurrency group is never held by a receiver.
+      - name: Request delivery without waiting
+        if: steps.commit.outputs.queued == 'true'
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPORT_REF: ${{ github.event.repository.default_branch }}
+        run: |
+          gh workflow run deliver-evaluation.yml --repo "$GITHUB_REPOSITORY" --ref "$REPORT_REF" --field mode=scan \
+            || echo '::warning::Delivery request failed; the scheduled scan will send the queued revision.'

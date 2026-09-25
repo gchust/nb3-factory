@@ -16,6 +16,9 @@ import { deliveryConfig, DeliveryConfigError } from './evaluation-target.mjs';
 export { AUTH_MODES, deliveryConfig, DeliveryConfigError, targetIdOf } from './evaluation-target.mjs';
 
 export const RETRY = { attempts: 3, timeoutMs: 30_000, maxRetryAfterSeconds: 60, maxTotalAttempts: 24, bundleRetentionDays: 90 };
+export const SCAN_LIMIT = 10;
+// The send job has 30 minutes; stop taking bundles well before, leaving time to save results.
+export const SEND_BUDGET_MS = 20 * 60_000;
 const sha256 = value => createHash('sha256').update(value).digest('hex');
 const positive = value => Number.isSafeInteger(value) && value > 0;
 
@@ -90,6 +93,11 @@ export async function deliverBundle({ zip, subject, config, fetcher = fetch, pau
   return { state: 'pending', attempts: history, receipt: null, reason: history.at(-1).error, bundleSha256 };
 }
 
+class SourceUnavailable extends Error {}
+// Transient GitHub/API/network conditions are retried later; they never mean "expired".
+const transient = error => error instanceof SourceUnavailable || ['TypeError', 'TimeoutError', 'AbortError'].includes(error?.name) ||
+  /\((?:408|429|5\d\d)\)/.test(error?.message ?? '');
+
 async function artifactZip(client, id, fetcher = fetch) {
   const response = await fetcher(`${client.apiUrl}/repos/${client.repository}/actions/artifacts/${id}/zip`, {
     headers: { Authorization: `Bearer ${client.token}`, Accept: 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28' },
@@ -98,14 +106,17 @@ async function artifactZip(client, id, fetcher = fetch) {
   // Follow GitHub's signed storage redirect without forwarding the repository token.
   const location = response.status >= 300 && response.status < 400 ? response.headers.get('location') : null;
   const final = location ? await fetcher(location, { redirect: 'error', signal: AbortSignal.timeout(120_000) }) : response;
-  if (!final.ok) throw new Error(`Artifact download failed (${final.status})`);
+  if ([404, 410].includes(final.status)) return null;
+  if (!final.ok) throw new SourceUnavailable(`Artifact download failed (${final.status})`);
   return Buffer.from(await final.arrayBuffer());
 }
 
 // Find the registered bundle in a retained artifact and verify it byte-for-byte.
+// status: available | missing (gone/expired) | invalid (bytes differ) | unavailable (try again later)
 export async function fetchBundle(client, entry, { preferredArtifactId = null, fetcher } = {}) {
   const locations = [...entry.bundle.locations].reverse();
   const tried = [];
+  let unavailable = false, invalid = false;
   const candidates = [];
   if (positive(preferredArtifactId)) candidates.push({ artifactId: preferredArtifactId });
   candidates.push(...locations);
@@ -120,17 +131,28 @@ export async function fetchBundle(client, entry, { preferredArtifactId = null, f
       if (!artifact || artifact.expired) { tried.push('expired-or-missing'); continue; }
       if (location.artifactName && artifact.name !== location.artifactName) { tried.push('name-mismatch'); continue; }
       if (location.runId && artifact.workflow_run?.id !== location.runId) { tried.push('run-mismatch'); continue; }
-      const wrapper = readZip(await artifactZip(client, artifact.id, fetcher), { allowDeflate: true, maxZip: 70 * 1024 * 1024 });
-      const inner = wrapper.find(item => item.path === 'evaluation-bundle.zip');
-      if (!inner) { tried.push('bundle-missing'); continue; }
-      verifyBundle(inner.data, { sha256: entry.bundle.sha256 });
-      return { zip: inner.data, artifactId: artifact.id };
-    } catch (error) { tried.push(error.message.slice(0, 120)); }
+      const archive = await artifactZip(client, artifact.id, fetcher);
+      if (!archive) { tried.push('expired-or-missing'); continue; }
+      let inner;
+      try {
+        inner = readZip(archive, { allowDeflate: true, maxZip: 70 * 1024 * 1024 }).find(item => item.path === 'evaluation-bundle.zip');
+        if (!inner) throw new Error('bundle missing from artifact');
+        verifyBundle(inner.data, { sha256: entry.bundle.sha256 });
+      } catch (error) { invalid = true; tried.push(`integrity: ${error.message.slice(0, 100)}`); continue; }
+      return { zip: inner.data, artifactId: artifact.id, status: 'available' };
+    } catch (error) {
+      if (!transient(error)) throw error;
+      unavailable = true;
+      tried.push(`unavailable: ${error.message.slice(0, 100)}`);
+    }
   }
-  return { zip: null, reason: `未取得与登记摘要一致的原始结果包（${tried.join('; ') || '无保存位置'}）；不重新运行应用或模型补造历史。` };
+  const detail = tried.join('; ') || '无保存位置';
+  if (unavailable) return { zip: null, status: 'unavailable', reason: `原始结果包暂时无法读取（${detail}）；保持待投递，稍后重试。` };
+  return { zip: null, status: invalid ? 'invalid' : 'missing',
+    reason: `${invalid ? '保存的结果包与登记摘要不符' : '原始结果包已过期或不存在'}（${detail}）；不重新运行应用或模型补造历史。` };
 }
 
-export async function planDeliveries(client, { mode, type, key, revision, artifactId, env, now = new Date(), fetcher, limit = 20 }) {
+export async function planDeliveries(client, { mode, type, key, revision, artifactId, env, now = new Date(), fetcher, limit = SCAN_LIMIT }) {
   const config = deliveryConfig(env, { requireToken: false });
   const items = [];
   const { outbox } = await readOutbox(client);
@@ -143,10 +165,10 @@ export async function planDeliveries(client, { mode, type, key, revision, artifa
     // Automatic runs never resend a stored revision; an explicit replay may.
     if (queued?.state === 'stored' && mode !== 'replay') return;
     const age = now.getTime() - Date.parse(entry.createdAt);
-    const found = age > RETRY.bundleRetentionDays * 86400_000 && !preferred ? { zip: null, reason: '超过结果包保留期限。' }
+    const found = age > RETRY.bundleRetentionDays * 86400_000 && !preferred ? { zip: null, status: 'missing', reason: '超过结果包保留期限。' }
       : await fetchBundle(client, entry, { preferredArtifactId: preferred, fetcher });
     items.push({ id, targetId: config.targetId, type: itemType, key: itemKey, revision: itemRevision, sourceInstance: index.sourceInstance,
-      bundleSha256: entry.bundle.sha256, zip: found.zip, source: found.zip ? 'available' : 'source-expired', reason: found.reason ?? null,
+      bundleSha256: entry.bundle.sha256, zip: found.zip, source: found.status, reason: found.reason ?? null,
       previousAttempts: queued?.attempts ?? 0 });
   };
   if (mode === 'auto' || mode === 'replay') await pick(type, key, Number(revision), Number(artifactId) || null);
@@ -158,29 +180,44 @@ export async function planDeliveries(client, { mode, type, key, revision, artifa
   return { targetId: config.targetId, items };
 }
 
-export async function sendDeliveries(plan, { env, fetcher, pause, allowInsecureLoopback = false }) {
+// Worst case for one bundle: every attempt times out and waits the longest Retry-After.
+export const ITEM_WORST_CASE_MS = RETRY.attempts * RETRY.timeoutMs + (RETRY.attempts - 1) * RETRY.maxRetryAfterSeconds * 1000;
+
+// Stops taking new bundles before the deadline, so results are always saved; untaken
+// items simply stay pending. onResult persists each result as soon as it exists.
+export async function sendDeliveries(plan, { env, fetcher, pause, allowInsecureLoopback = false, deadline = Infinity, now = () => Date.now(), onResult = () => {} }) {
+  const results = [];
+  const record = result => { results.push(result); onResult(result, results); };
+  const at = () => new Date(now()).toISOString();
   let config;
   try { config = deliveryConfig(env, { allowInsecureLoopback }); }
   catch (error) {
     if (!(error instanceof DeliveryConfigError)) throw error;
-    return { configError: error.message, results: plan.items.map(item => ({ ...strip(item), state: 'pending', reason: 'config-error',
-      attempts: [{ at: new Date().toISOString(), httpStatus: null, outcome: 'config-error', error: 'config', durationMs: 0 }], receipt: null })) };
+    for (const item of plan.items) record({ ...strip(item), state: 'pending', reason: 'config-error',
+      attempts: [{ at: at(), httpStatus: null, outcome: 'config-error', error: 'config', durationMs: 0 }], receipt: null });
+    return { configError: error.message, results, deferred: 0 };
   }
   if (config.targetId !== plan.targetId) throw new Error('Delivery target changed between planning and sending');
-  const results = [];
+  let deferred = 0;
   for (const item of plan.items) {
-    if (!item.zip) {
-      results.push({ ...strip(item), state: 'source-expired', attempts: [{ at: new Date().toISOString(), httpStatus: null, outcome: 'source-expired',
-        error: 'source-expired', durationMs: 0 }], receipt: null, reason: item.reason });
+    if (item.source === 'unavailable') {
+      record({ ...strip(item), state: 'pending', attempts: [{ at: at(), httpStatus: null, outcome: 'source-unavailable', error: 'source-unavailable', durationMs: 0 }],
+        receipt: null, reason: item.reason });
       continue;
     }
+    if (!item.zip) {
+      record({ ...strip(item), state: item.source === 'invalid' ? 'source-invalid' : 'source-expired', attempts: [{ at: at(), httpStatus: null,
+        outcome: 'source-expired', error: item.source === 'invalid' ? 'source-invalid' : 'source-expired', durationMs: 0 }], receipt: null, reason: item.reason });
+      continue;
+    }
+    if (now() + ITEM_WORST_CASE_MS > deadline) { deferred++; continue; }
     const outcome = await deliverBundle({ zip: item.zip, subject: { type: item.type, key: item.key, revision: item.revision, sourceInstance: item.sourceInstance },
-      config, fetcher, pause });
+      config, fetcher, pause, now });
     if (outcome.bundleSha256 !== item.bundleSha256) throw new Error('Bundle changed after verification');
     const exhausted = outcome.state === 'pending' && item.previousAttempts + outcome.attempts.length >= RETRY.maxTotalAttempts;
-    results.push({ ...strip(item), ...outcome, ...(exhausted ? { state: 'rejected', reason: 'retry-limit' } : {}) });
+    record({ ...strip(item), ...outcome, ...(exhausted ? { state: 'rejected', reason: 'retry-limit' } : {}) });
   }
-  return { configError: null, results };
+  return { configError: null, results, deferred };
 }
 const strip = ({ zip, source, previousAttempts, sourceInstance, ...item }) => item;
 
@@ -234,8 +271,12 @@ async function main() {
       if (!/^bundles\/\d+\.zip$/.test(item.bundle)) throw new Error('Invalid bundle path in plan');
       return { ...item, zip: readFileSync(path.join(args.plan, item.bundle)) };
     });
-    const { configError, results } = await sendDeliveries(plan, { env: process.env });
-    writeFileSync(args.output, `${JSON.stringify({ version: 1, targetId: plan.targetId, results }, null, 2)}\n`);
+    mkdirSync(path.dirname(args.output), { recursive: true });
+    const save = results => writeFileSync(args.output, `${JSON.stringify({ version: 1, targetId: plan.targetId, results }, null, 2)}\n`);
+    save([]);
+    const { configError, results, deferred } = await sendDeliveries(plan, { env: process.env, deadline: Date.now() + SEND_BUDGET_MS,
+      onResult: (_result, all) => save(all) });
+    if (deferred) console.log(`${deferred} bundle(s) left pending for the next scan to stay within the job budget.`);
     if (process.env.GITHUB_STEP_SUMMARY) appendFileSync(process.env.GITHUB_STEP_SUMMARY, summary(results, configError));
     for (const result of results) console.log(`${result.type} ${keyDigest(result.key).slice(0, 12)} r${result.revision}: ${result.state} (${result.reason ?? 'ok'})`);
     if (configError) { console.error(`::error::Evaluation delivery is enabled but not configured: ${configError}`); process.exitCode = 1; }

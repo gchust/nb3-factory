@@ -221,8 +221,9 @@ X-Evaluation-Bundle-SHA256: <ZIP 的 SHA-256>
 
 ## 投递、重试与补发
 
-`Report Task Usage` 的 `evaluation` 作业在投递开启时把新修订写入 `evaluations/outbox.json`（只含目标哈希、主体、修订、
-包摘要、状态与最近 10 次尝试），随后调用 **Deliver Evaluation Results**：
+`Report Task Usage`（以及批次协调器）的 `evaluation` 作业在投递开启时把新修订写入 `evaluations/outbox.json`（只含目标哈希、主体、修订、
+包摘要、状态与最近 10 次尝试），然后以 `workflow_dispatch` **不等待地**请求一次 **Deliver Evaluation Results** 扫描就结束。
+投递工作流只能被派发或定时触发，不被任何工作流调用，因此慢接收端不会占住报告或批次的串行并发组；请求失败时由定时扫描补发。
 
 ```text
 plan（actions/contents: read）  按登记摘要找回原 Artifact，逐字节校验包 → 待发清单
@@ -238,11 +239,14 @@ record（contents: write）        CAS 写回脱敏回执；stored 为终态，�
 | mode | 用途 |
 | --- | --- |
 | `replay` | 按 `type` + `key` + `revision`（可选原 `artifact_id`）重发该修订的**原始包**；不是 reassess，也不是业务 rerun |
-| `scan` | 重试当前目标的待投递记录（定时每 6 小时也会执行，每次最多 20 条） |
+| `scan` | 重试当前目标的待投递记录（定时每 6 小时也会执行，每次最多 10 条） |
 | `retry-rejected` | 修正配置或接收端后，重新投递被拒绝的记录 |
 | `backfill` | 接收端晚部署时，把所有当前修订排入待投递，批次在前、样本在后 |
 
-原包的 Artifact 过期、被删除或内容与登记摘要不符时标记 `source-expired` 并说明缺什么；**不会为补发重新运行应用或模型来冒充历史结果**。
+读取原包分三类：确认过期 / 不存在记为 `source-expired`，字节与登记摘要不符记为 `source-invalid`，二者都说明缺什么且**不会为补发重新运行应用或模型来冒充历史结果**；
+GitHub 限流、5xx、网络或超时等临时故障保持 `pending`，不计为投递次数，由下次扫描重试。
+`send` 作业有 20 分钟发送预算（作业上限 30 分钟）：按单个包的最坏耗时（3 次 × 30 秒超时 + 2 次最长 60 秒 `Retry-After`）判断，
+来不及发完的包不开始、保持 `pending`；每发完一个包就写入结果文件，作业中断也不丢失已发生的尝试。
 超过 24 次可重试失败的记录转为 `rejected`（`retry-limit`）。GitHub Artifact 有保留期限，删除关联 Run 也可能删除它，
 因此不承诺历史包永久可重放；`evaluation.json` 与清单的原始字节长期保留在 `gh-pages`。
 
@@ -280,14 +284,17 @@ Evaluation batches → start（手动）或每日定时（需开关 + enabled + 
 | 未开始 / 受阻 / 报告缺失 | 仍列在样本全集与统计中；只有每个样本**最后一个 Run 自己的**报告登记后才关闭批次（较早 Handoff 段的报告不算），最多等待 6 小时 |
 | 开批校验 | 先冻结并校验计划、案例与基线，全部通过后才创建协调 Issue；案例号无效、缺锁文件或 SHA 不在默认分支历史时不留下任何记录。推进、查看与取消只依赖已冻结的清单，不因之后修改 `plans.json` 而停摆 |
 | 身份来源 | 样本的 `run.key` 只取 prepare 作业的任务元数据（Agent 无法改写）；只有 Agent 产物副本时，批次样本身份记为 `unresolved`，不归入任何样本 |
-| 两次定时触发同一日 | 批次键 `<计划>-<UTC 日期>`，第二次复用同一批；手动每次都是新批次（键含 Run ID），同一 Run 重跑复用 |
+| 两次定时触发同一日 | 批次键 `<计划>-<UTC 日期>`，第二次复用同一批。手动批次键为 `<计划>-r<发起的 Run ID>`，不含时间：同一 Run 任意尝试、任意时刻重跑都恢复原批次、不新增样本；新的手动试验请新发起一次 Run |
 
 样本状态：`planned / queued / running / passed / failed / blocked / budget-exhausted / cancelled / unknown`；
-`stateSource` 说明来源（样本自己的报告优先，其次是最后一个 Run 的结论）。样本长时间既无活动 Run 又无结论时，
-超过墙钟保护期（预算的 3 倍再加 6 小时）会记为 `unknown` 并释放槽位，执行记录保留。
+`stateSource` 说明来源（样本自己的报告优先，其次是最后一个 Run 的结论）。只要还有未结束的 Run，就不释放串行槽位：超过墙钟保护期
+（预算的 3 倍再加 6 小时）只标记“需要维护者检查或取消该 Run”。只有 Handoff 后长时间没有任何 Run 时，才记为 `unknown` 并释放槽位；
+此后该样本在 prepare 一律被拒绝（`released`），迟到的续跑或重跑不会与下一个样本同时执行。
 Schema：[`contracts/evaluation-batch.v1.schema.json`](contracts/evaluation-batch.v1.schema.json)，示例
 [`batch-in-progress.json`](contracts/examples/batch-in-progress.json)。批次只列同条件样本的可核实事实，不计算全局平均分，不排除失败样本；
-Agent 引擎与模型取自运行时仓库变量，批次期间修改会使样本不可比，逐样本报告记录实际值。
+冻结清单记录非密钥 Agent 配置（引擎、版本、模型、思考 / effort、评审模式与超时等，不含任何密钥）及其指纹；
+每次派发样本时记录当时的配置指纹。与冻结时不同的样本记为 `comparable: false`，批次 `summary.comparable=false` 并写入
+`agent-config-drift`。首版只记录与标记漂移，样本仍按运行时仓库变量执行，逐样本报告另记实际引擎与模型。
 
 操作：**Actions → Evaluation batches → Run workflow**：`start`（填 `plan`，可勾选 `dry_run` 只预览冻结结果）、
 `advance`、`cancel`（填 `batch`）、`status`。首版的“一个活动批次”是全局限制；原有 `factory:daily` 预设调度与普通 Issue 搭建策略不变。

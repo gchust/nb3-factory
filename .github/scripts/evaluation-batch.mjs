@@ -24,6 +24,16 @@ const TERMINAL = new Set(['passed', 'failed', 'blocked', 'budget-exhausted', 'ca
 const ACTIVE_LABELS = new Set(['agent:pending', 'agent:queued', 'agent:running', 'agent:verifying', 'agent:waiting']);
 const WORKFLOW = 'code-agent-task.yml';
 export const REPORT_GRACE_SECONDS = 6 * 3600;
+// Non-secret settings that change how samples are built, tested or reviewed.
+export const AGENT_CONFIG_VARS = ['CODE_AGENT_ENGINE', 'CODE_AGENT_VERSION', 'PI_VERSION', 'CODEBUDDY_VERSION', 'CLAUDE_CODE_VERSION', 'CODEX_VERSION',
+  'OPENCODE_VERSION', 'CODE_AGENT_MODEL', 'PI_MODEL', 'CODEBUDDY_MODEL', 'CLAUDE_CODE_MODEL', 'CODEX_MODEL', 'OPENCODE_MODEL', 'CODE_AGENT_API_TYPE',
+  'CODE_AGENT_THINKING', 'PI_THINKING', 'CODEBUDDY_THINKING', 'CLAUDE_CODE_EFFORT', 'CLAUDE_CODE_QA_EFFORT', 'CODEX_REASONING_EFFORT', 'CODEX_QA_REASONING_EFFORT',
+  'OPENCODE_VARIANT', 'OPENCODE_QA_VARIANT', 'FACTORY_QA_THINKING', 'FACTORY_REVIEW_THINKING', 'FACTORY_BUILD_REVIEW', 'FACTORY_BUILD_REVIEW_TIMEOUT_SECONDS',
+  'CODE_AGENT_INVOCATION_TIMEOUT_SECONDS', 'CODE_AGENT_IDLE_TIMEOUT_SECONDS', 'AGENT_BROWSER_VERSION'];
+export function agentConfig(env) {
+  const values = Object.fromEntries(AGENT_CONFIG_VARS.filter(name => String(env[name] ?? '').trim()).map(name => [name, String(env[name]).trim().slice(0, 200)]));
+  return { fingerprint: sha256(canonicalJson(values)), values };
+}
 const sha256 = value => createHash('sha256').update(value).digest('hex');
 const positive = value => Number.isSafeInteger(value) && value > 0;
 const integer = (value, [min, max]) => Number.isSafeInteger(value) && value >= min && value <= max;
@@ -72,10 +82,11 @@ export function validatePlans(document, { defaultBranch } = {}) {
   });
 }
 
+// Retry identity only: a scheduled slot is its UTC date, a manual start is its
+// originating Run. Re-running any attempt of that Run resumes the same batch.
 export function batchKeyFor(plan, trigger, now, runId) {
-  const stamp = new Date(now).toISOString();
-  const key = trigger === 'schedule' ? `${plan.key}-${stamp.slice(0, 10).replaceAll('-', '')}`
-    : `${plan.key}-${stamp.slice(0, 19).replace(/[-:]/g, '')}Z-r${runId}`;
+  need(trigger === 'schedule' || /^[1-9]\d*$/.test(String(runId ?? '')), 'A manual batch needs its originating run ID');
+  const key = trigger === 'schedule' ? `${plan.key}-${new Date(now).toISOString().slice(0, 10).replaceAll('-', '')}` : `${plan.key}-r${runId}`;
   need(segmentPattern.test(key), 'Invalid batch key');
   return key;
 }
@@ -163,7 +174,7 @@ export async function freezeBatch(client, { plan, batchKey, trigger, now, contro
     applicationBaseSha: controlSha, lockfileSha256: sha256(lock), templateVersion, reviewMode: plan.reviewMode,
     budget: { maxRepairAttempts: plan.execution.maxRepairAttempts, maxActiveSeconds: plan.execution.maxActiveSecondsPerSample,
       maxContinuations: plan.execution.maxContinuations },
-    maxConcurrentSamples: plan.execution.maxConcurrentSamples, agentEngine: env.CODE_AGENT_ENGINE || 'pi', cases, samples,
+    maxConcurrentSamples: plan.execution.maxConcurrentSamples, agentEngine: env.CODE_AGENT_ENGINE || 'pi', agentConfig: agentConfig(env), cases, samples,
   };
 }
 
@@ -294,7 +305,10 @@ export async function observeSample(client, batch, item, spec, now) {
   const runs = await runsFor(client, item.issue, since);
   const wall = manifest.budget.maxActiveSeconds * 3 + 6 * 3600;
   const stale = item.dispatchedAt && now - Date.parse(item.dispatchedAt) > wall * 1000;
-  if (runs.some(run => run.status !== 'completed')) return stale ? { state: 'unknown', reason: '超过墙钟保护期限仍未结束；释放串行槽位，执行记录保留。' } : { state: 'running' };
+  // Unfinished work keeps the slot: "no progress" is not "terminated". Only a
+  // maintainer's cancellation of the Run can end it.
+  if (runs.some(run => run.status !== 'completed'))
+    return { state: 'running', reason: stale ? '超过墙钟保护期限仍有未结束的 Run；不释放串行槽位，需要维护者检查或取消该 Run。' : item.reason ?? null };
   const terminals = readTerminals(await listAll(client, `/issues/${item.issue}/comments`), spec.key);
   // The latest run that did something: a prepare decision, an Agent execution, or a failure.
   // A duplicate or waiting dispatch ends after prepare with success and is ignored.
@@ -310,7 +324,10 @@ export async function observeSample(client, batch, item, spec, now) {
   }
   const outcome = taskOutcome(latest, jobs);
   // Exit 75 is not a terminal state; the slot stays occupied until the chain ends.
-  if (outcome === 'handoff') return stale ? { state: 'unknown', reason: 'Handoff 后长时间没有续跑；释放串行槽位。' } : { state: 'running' };
+  // With no Run active for that long, the sample is released and prepare refuses
+  // any late continuation, so it can never run beside the next sample.
+  if (outcome === 'handoff') return stale ? { state: 'unknown', stateSource: 'run', terminalRunId: latest.id,
+    reason: 'Handoff 后长时间没有续跑；释放串行槽位，迟到的续跑会在 prepare 被拒绝。' } : { state: 'running' };
   const summary = await reportSummary(client, spec.runKey);
   if (summary && summary.producerRunId === latest.id) return { state: fromReport(summary), stateSource: 'report', terminalRunId: latest.id };
   const names = labelNames(issue);
@@ -319,10 +336,17 @@ export async function observeSample(client, batch, item, spec, now) {
   return { state, stateSource: 'run', terminalRunId: latest.id };
 }
 
-export async function advanceBatch(client, batch, { now = Date.now() } = {}) {
+export async function advanceBatch(client, batch, { now = Date.now(), env = null } = {}) {
   const { manifest } = batch;
   const state = structuredClone(batch.state);
   const stamp = iso(now);
+  // The settings in effect when this trigger runs; samples dispatched under other
+  // settings are marked as not directly comparable.
+  const current = env ? agentConfig(env).fingerprint : null;
+  const frozenConfig = manifest.agentConfig?.fingerprint ?? null;
+  if (current && frozenConfig && current !== frozenConfig && state.state === 'active' && !state.agentConfigDrift) {
+    state.agentConfigDrift = { observedAt: stamp, fingerprint: current };
+  }
   // Append a new snapshot only when something actually changed.
   const commit = async () => {
     if (JSON.stringify(state) === JSON.stringify(batch.state)) return;
@@ -342,6 +366,7 @@ export async function advanceBatch(client, batch, { now = Date.now() } = {}) {
           Object.assign(item, { dispatchedAt: stamp, reason: '派发后未出现搭建 Run，已按同一样本重新派发。' });
         }
         item.state = observed.state;
+        if (observed.state === 'running' && observed.reason !== undefined) item.reason = observed.reason;
         if (TERMINAL.has(observed.state)) Object.assign(item, { terminalAt: stamp, stateSource: observed.stateSource ?? 'run',
           terminalRunId: observed.terminalRunId ?? null, reason: observed.reason ?? item.reason });
       }
@@ -362,7 +387,8 @@ export async function advanceBatch(client, batch, { now = Date.now() } = {}) {
     const next = manifest.samples.find(s => state.samples[s.key].state === 'planned');
     if (!state.cancelled && next && active.length < manifest.maxConcurrentSamples) {
       const { issue, comments } = await ensureSample(client, batch, next);
-      Object.assign(state.samples[next.key], { state: 'queued', stateSource: 'coordinator', issue: issue.number, dispatchedAt: stamp });
+      Object.assign(state.samples[next.key], { state: 'queued', stateSource: 'coordinator', issue: issue.number, dispatchedAt: stamp,
+        agentConfigFingerprint: current });
       // Persist the assignment first: the sample pin requires it before prepare runs.
       await commit();
       if (!(await runsFor(client, issue.number, manifest.createdAt)).length) {
@@ -420,20 +446,28 @@ export async function activeBatches(client) {
 // Public, versioned snapshot of the whole planned set. Missing reports stay listed.
 export function batchDocument(batch, { exporter = {} } = {}) {
   const { manifest, state, manifestHash } = batch;
+  const frozenConfig = manifest.agentConfig?.fingerprint ?? null;
   const samples = manifest.samples.map(spec => {
     const item = state.samples[spec.key];
+    const fingerprint = item.agentConfigFingerprint ?? null;
     return { key: spec.key, caseKey: spec.caseKey, sampleIndex: spec.sampleIndex, runKey: spec.runKey, issue: item.issue ?? null,
       state: item.state, stateSource: item.stateSource ?? 'plan', dispatchedAt: item.dispatchedAt ?? null, terminalAt: item.terminalAt ?? null,
-      reason: item.reason ?? null, report: item.report ?? { state: 'missing', revision: null, execution: null, acceptance: null } };
+      reason: item.reason ?? null, agentConfigFingerprint: fingerprint,
+      comparable: !item.issue ? null : fingerprint && frozenConfig ? fingerprint === frozenConfig : null,
+      report: item.report ?? { state: 'missing', revision: null, execution: null, acceptance: null } };
   });
   const byState = Object.fromEntries(SAMPLE_STATES.map(name => [name, samples.filter(s => s.state === name).length]));
   const available = samples.filter(s => s.report.state === 'available').length;
   const limitations = [
     { code: 'no-global-score', detail: '批次只列出同条件样本的可核实事实，不计算 NocoBase 全局平均评分，也不排除失败样本。' },
-    { code: 'agent-config-runtime', detail: 'Agent 引擎与模型取自各样本运行时的仓库变量；批次期间修改变量会使样本不可比，逐样本报告记录实际值。' },
+    { code: 'agent-config-runtime', detail: '样本按运行时仓库变量执行 Agent；批次只冻结并比对非密钥配置指纹，漂移单独标记，逐样本报告记录实际引擎与模型。' },
   ];
   if (available < samples.length) limitations.push({ code: 'reports-missing', detail: `${samples.length - available} 个计划样本尚无报告；它们仍计入样本全集。` });
   if (state.cancelled) limitations.push({ code: 'batch-cancelled', detail: '批次已取消：未开始的样本不再派发，已发生的执行与用量保留。' });
+  const drifted = samples.filter(s => s.comparable === false).length;
+  if (state.agentConfigDrift || drifted) limitations.push({ code: 'agent-config-drift',
+    detail: `批次期间 Agent 配置指纹发生变化${drifted ? `，${drifted} 个样本在不同配置下派发` : ''}；这些结果不能与其他样本直接比较。` });
+  if (!frozenConfig) limitations.push({ code: 'agent-config-unrecorded', detail: '冻结清单没有 Agent 配置指纹，样本之间的配置一致性未知。' });
   return {
     schemaVersion: 1, type: 'evaluation-batch',
     source: { producer: PRODUCER, instance: manifest.repository, project: manifest.repository,
@@ -445,11 +479,13 @@ export function batchDocument(batch, { exporter = {} } = {}) {
     state: state.state, cancelled: state.cancelled === true,
     baseline: { controlSha: manifest.controlSha, entrySha: manifest.entrySha, applicationBaseSha: manifest.applicationBaseSha,
       defaultBranch: manifest.defaultBranch, lockfileSha256: manifest.lockfileSha256, templateVersion: manifest.templateVersion,
-      reviewMode: manifest.reviewMode, budget: manifest.budget, maxConcurrentSamples: manifest.maxConcurrentSamples, agentEngine: manifest.agentEngine },
+      reviewMode: manifest.reviewMode, budget: manifest.budget, maxConcurrentSamples: manifest.maxConcurrentSamples, agentEngine: manifest.agentEngine,
+      agentConfig: manifest.agentConfig ?? null },
     cases: manifest.cases.map(item => ({ key: item.key, presetIssueNumber: item.presetIssueNumber, title: item.title, caseHash: item.caseHash,
       capturedAt: item.capturedAt, commentCount: item.commentCount, buildReviewMode: item.buildReviewMode, samples: item.samples })),
     samples,
     summary: { planned: samples.length, byState, reports: { available, missing: samples.length - available },
+      comparable: !state.agentConfigDrift && !drifted && Boolean(frozenConfig),
       acceptance: { passed: samples.filter(s => s.report.acceptance === 'passed').length, failed: samples.filter(s => s.report.acceptance === 'failed').length,
         other: samples.filter(s => !['passed', 'failed'].includes(s.report.acceptance)).length } },
     limitations,
@@ -496,11 +532,11 @@ async function main() {
         controlSha: env.FACTORY_CONTROL_SHA, env, dryRun: args['dry-run'] === 'true' });
       if (result.status === 'planned') lines.push(`只预览 ${result.batchKey}：${result.manifest.samples.length} 个样本，基线 ${result.manifest.controlSha.slice(0, 12)}；没有写入或派发。`);
       else if (result.status === 'skipped') lines.push(`跳过 ${plan.key}：${result.reason}`);
-      else { const batch = await advanceBatch(client, result.batch); exportBatch(batch); lines.push(summaryTable(batch.manifest, batch.state)); }
+      else { const batch = await advanceBatch(client, result.batch, { env }); exportBatch(batch); lines.push(summaryTable(batch.manifest, batch.state)); }
     }
   } else if (action === 'advance' || action === 'status') {
     for (const batch of await activeBatches(client)) {
-      const next = action === 'advance' ? await advanceBatch(client, batch) : batch;
+      const next = action === 'advance' ? await advanceBatch(client, batch, { env }) : batch;
       exportBatch(next); lines.push(summaryTable(next.manifest, next.state));
     }
     if (!lines.length) lines.push('没有进行中的评测批次。');

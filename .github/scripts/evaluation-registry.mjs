@@ -161,7 +161,7 @@ export async function commitRevision(client, { document, evaluationBytes, manife
 }
 
 export const outboxId = ({ targetId, key, revision, type }) => `${targetId}:${type === 'evaluation-batch' ? 'b' : 'r'}:${keyDigest(key)}:${revision}`;
-const terminal = new Set(['stored', 'conflict', 'rejected', 'source-expired']);
+const terminal = new Set(['stored', 'conflict', 'rejected', 'source-expired', 'source-invalid']);
 export function enqueue(outbox, { targetId, type, key, revision, bundleSha256 }, now = new Date()) {
   if (outbox.version !== 1 || !Array.isArray(outbox.entries)) throw new Error('Invalid delivery outbox; refusing to overwrite');
   if (!/^[a-f0-9]{16}$/.test(targetId ?? '') || !positive(revision)) throw new Error('Invalid delivery target or revision');
@@ -191,7 +191,7 @@ export async function recordDeliveries(client, results, now = new Date()) {
       if (entry.state === 'stored' && result.state !== 'stored') continue; // A stored receipt is final.
       entry.state = result.state;
       // Configuration errors and expired sources are not receiver attempts.
-      entry.attempts += result.attempts.filter(item => !['config-error', 'source-expired'].includes(item.outcome)).length;
+      entry.attempts += result.attempts.filter(item => !['config-error', 'source-expired', 'source-unavailable'].includes(item.outcome)).length;
       entry.history = [...entry.history, ...result.attempts].slice(-10);
       entry.receipt = result.receipt ?? entry.receipt;
       entry.reason = result.reason ?? null;
