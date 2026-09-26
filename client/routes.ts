@@ -1,4 +1,4 @@
-import { Home } from 'lucide-react';
+import { ClipboardList, Home, Laptop } from 'lucide-react';
 import {
   defineAppRoutes,
   defineSettingsRoutes,
@@ -43,6 +43,47 @@ const appRoutes: AppClientRouteContribution = defineAppRoutes([
     componentLoader: () => import('./pages/auth/reset-password.js'),
     name: 'reset-password',
     path: '/reset-password',
+  },
+  {
+    // The equipment ledger; its add, edit and borrow dialogs are child routes that render in this page's Outlet.
+    auth: 'required',
+    authz: 'skip',
+    componentLoader: () => import('./pages/equipment/index.js'),
+    name: 'equipment',
+    navigation: { title: 'navigation.equipment', icon: Laptop },
+    path: '/equipment',
+    children: [
+      {
+        auth: 'required',
+        authz: 'skip',
+        componentLoader: () => import('./pages/equipment/new.js'),
+        name: 'equipment-new',
+        path: 'new',
+      },
+      {
+        auth: 'required',
+        authz: 'skip',
+        componentLoader: () => import('./pages/equipment/edit.js'),
+        name: 'equipment-edit',
+        path: ':equipmentId/edit',
+      },
+      {
+        auth: 'required',
+        authz: 'skip',
+        componentLoader: () => import('./pages/equipment/borrow.js'),
+        name: 'equipment-borrow',
+        path: ':equipmentId/borrow',
+      },
+    ],
+  },
+  {
+    // Borrow and return history, searchable by borrower and filtered by whether the device came back.
+    auth: 'required',
+    authz: 'skip',
+    componentLoader: () => import('./pages/equipment-loans/index.js'),
+    name: 'equipment-loans',
+    navigation: { title: 'navigation.equipmentLoans', icon: ClipboardList },
+    path: '/equipment-loans',
   },
 ]);
 
