@@ -33,7 +33,15 @@ facts 可带 `upstreamCheck`（`version: 1`），记录对 `nocobase/nocobase3` 
 
 ### 跨报告问题汇总
 
-`findings-index.mjs` 读取各 Issue 最新一份报告的 `report.json`，把 v2 独立评审里的框架发现归并成问题，归档时写入 `reports/findings/index.html`（报告目录首页与每份报告侧栏都有入口）。归并规则：问题描述（标题×2、detail、suggestedChange）的 TF-IDF 相似度 ≥ 0.33，或 ≥ 0.15 且与共同框架证据文件的综合分（0.7×文本 + 0.3×文件）≥ 0.28；同一份报告内的两条发现永不合并。每个问题取各次中最高的等级与最具体的类型，列出出现的任务数、最近一次和上游状态，展开可见每次的原标题和报告链接。页面声明可能误合并或漏合并。生成失败只跳过汇总页、保留旧版本，不影响报告发布；本地可运行 `node .github/reports/findings-index.mjs <含 report.json 的目录> <输出.html>`。
+`findings-index.mjs` 读取各 Issue 最新一份报告的 `report.json`，只汇总有效 v2 独立评审的框架、插件、模板和文档发现。报告发布时写入 `reports/findings/index.html` 与带内容指纹的 `input.json`；不再用文字相似度阈值自动合并。
+
+报告归档后，`report-task-usage.yml` 异步触发 [Classify framework findings](../workflows/classify-findings.yml)。独立 Agent 沿用仓库配置的 `CODE_AGENT_ENGINE`、模型及对应凭据，根据[归类提示](../prompts/classify-findings.md)核对根因、触发条件、API/指引位置、行为与证据，产出分组标题、成员 ID 和归类理由。整个输入已归类且内容未变时跳过调用；否则读取当前全部发现和仍适用的旧分组。Agent 先读包含全部描述与诊断的轻量索引，再按候选组读取逐条证据；完整输入与引文始终保留，不为控制上下文而截断原始材料。Agent 归类是意见，仍可能误合并或漏合并，不等于重新评审或复核最新上游。
+
+发布器运行在独立作业中，不持有模型凭据。它从当前归档重新读取报告，校验输入指纹、全部发现恰好出现一次、无未知或重复 ID、同一报告内的发现不合并；过期结果不覆盖新报告。校验不证明语义判断正确。结果保存在 `reports/findings/classification.json`；Agent 输入、提示、调用日志、结果和用量随 Actions Artifact 保留 14 天。失败、超时或校验不通过时，已归类且内容未变的发现保留旧分组，新发现单独显示在“待 Agent 归类”，不以相似度算法兜底，也不阻塞原报告发布。
+
+每组保留各次原始标题、报告链接和归类理由；等级取各次最高值，类型取最具体的分类。展开后的证据表增加 **NocoBase App 版本**，直接取各报告安装后记录的 `baseline.templateVersion`，悬停可见模板包名；缺失时显示“未记录”，不从当前依赖或评审包列表推测。
+
+默认调用上限 600 秒，可通过仓库变量 `FACTORY_FINDINGS_TIMEOUT_SECONDS` 设置为 30–1800 秒；空闲上限为 300 秒且不超过总预算。首次上线可在 Actions 手动执行 **Classify framework findings**，它能读取旧归档；勾选 `force` 可对未变输入重新归类。失败也可在这里重试。分类发布与任务报告部署共用短发布锁，模型执行不占该锁。本地 `node .github/reports/findings-index.mjs <含 report.json 的目录> <输出.html>` 不调用模型，未提供分类记录时显示待归类。
 
 确认边界始终可见：本轮评审基于冻结依赖与指引，confirmed 是评审者的有据判断；首屏清单下方一行“口径”说明最新 NocoBase3 源码是否已复核、对照哪个提交。应用交付成功、业务绕行和原记录“已解决”均不等于上游已修复。没有评测时显示“尚未评估”，不显示零问题。
 

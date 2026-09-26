@@ -1,8 +1,13 @@
+import { Buffer } from 'node:buffer';
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { createHash } from 'node:crypto';
-import { readFileSync } from 'node:fs';
-import { archiveReport, compareReports, notifyReport, pagesUrl, reportManifest, verifyPage } from '../report-pages.mjs';
+import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import { finalizeClassification } from '../../reports/findings-classification.mjs';
+import { prepareClassification } from '../classify-findings.mjs';
+import { archiveFindingsClassification, readFindingsSnapshot, archiveReport, compareReports, notifyReport, pagesUrl, reportManifest, verifyPage } from '../report-pages.mjs';
 const repository='owner/factory';
 const digest=value=>createHash('sha1').update(JSON.stringify(value)).digest('hex');
 function input({issue=146,runId=100,attempt=1,start=1000,qa=true,media=1}={}) {
@@ -161,7 +166,7 @@ test('rubric upgrade preserves exact v1 bytes, permits v2 partial, and rejects a
  assert.equal(late.preserved,true);
  assert.equal(client.files().get(directory+'index.html'),newHtml);
  // Same-rubric partial must still not erase a complete assessment.
- const complete=structuredClone(next); complete.delivery.buildReview.state='completed';
+ const complete=globalThis.structuredClone(next); complete.delivery.buildReview.state='completed';
  complete.reportId += ':complete';
  await archiveReport(client,complete,htmlOf(complete));
  assert.equal((await archiveReport(client,next,newHtml)).preserved,true);
@@ -186,4 +191,147 @@ test('a findings index failure never blocks report publication', async () => {
  assert.match(publication.findingsIndex,/^skipped: 500 upstream unavailable/);
  assert.ok(c.files().has(reportManifest(second).path));
  assert.match(c.files().get('reports/index.html'),/任务 147/);
+});
+
+function reviewedInput(options = {}) {
+  const r = input(options);
+  const facts = JSON.parse(
+    readFileSync(
+      new URL('../../reports/example.facts.json', import.meta.url),
+      'utf8',
+    ),
+  );
+  facts.buildReview = JSON.parse(
+    readFileSync(
+      new URL('../../reports/example.framework-review.json', import.meta.url),
+      'utf8',
+    ),
+  );
+  facts.meta = {
+    ...facts.meta,
+    repository,
+    issue: r.record.issue,
+    runId: String(r.record.runId),
+    attempt: r.record.attempt,
+  };
+  r.delivery = { ...r.delivery, ...facts };
+  return r;
+}
+function decisionFor(input) {
+  return finalizeClassification(
+    {
+      version: 1,
+      inputHash: input.inputHash,
+      groups: [
+        {
+          title: '共同根因',
+          reason: '引用同一入口的相同错误指引',
+          members: input.findings.map((item) => item.id),
+        },
+      ],
+    },
+    input,
+  );
+}
+
+test('publication schedules classification, accepts complete decisions and reuses them without another call', async (t) => {
+  const c = fakeClient(),
+    first = reviewedInput(),
+    second = reviewedInput({ issue: 147, runId: 101, start: 2000 });
+  assert.equal(
+    (await archiveReport(c, first, htmlOf(first))).findingsNeedsClassification,
+    true,
+  );
+  assert.equal(
+    (await archiveReport(c, second, htmlOf(second)))
+      .findingsNeedsClassification,
+    true,
+  );
+  const snapshot = await readFindingsSnapshot(c);
+  const classification = decisionFor(snapshot.input);
+  const beforeHtml = c.files().get(reportManifest(first).path);
+  const published = await archiveFindingsClassification(c, classification);
+  assert.equal(published.updated, true);
+  assert.equal(c.files().get(reportManifest(first).path), beforeHtml);
+  assert.match(c.files().get('reports/findings/index.html'), /2 个任务/);
+  assert.match(c.files().get('reports/findings/index.html'), /Agent 归类依据/);
+  assert.match(
+    c.files().get('reports/findings/index.html'),
+    /NocoBase App 版本/,
+  );
+  assert.deepEqual(
+    JSON.parse(c.files().get('reports/findings/classification.json')),
+    classification,
+  );
+  const sha = c.ref();
+  await archiveFindingsClassification(c, classification);
+  assert.equal(c.ref(), sha);
+  const directory = mkdtempSync(
+    path.join(os.tmpdir(), 'test-findings-prepare-'),
+  );
+  t.after(() => rmSync(directory, { recursive: true, force: true }));
+  assert.equal((await prepareClassification(c, directory)).ready, false);
+  assert.equal(
+    (await prepareClassification(c, directory, { force: true })).ready,
+    true,
+  );
+  assert.equal(
+    (await archiveReport(c, second, htmlOf(second)))
+      .findingsNeedsClassification,
+    false,
+  );
+  assert.match(c.files().get('reports/findings/index.html'), /2 个任务/);
+  const third = reviewedInput({ issue: 148, runId: 102, start: 3000 });
+  assert.equal(
+    (await archiveReport(c, third, htmlOf(third))).findingsNeedsClassification,
+    true,
+  );
+  assert.match(c.files().get('reports/findings/index.html'), /2 个任务/);
+  assert.match(
+    c.files().get('reports/findings/index.html'),
+    /1 条待 Agent 归类/,
+  );
+});
+
+test('stale classification cannot replace findings from a newer report', async () => {
+  const c = fakeClient(),
+    r = reviewedInput();
+  await archiveReport(c, r, htmlOf(r));
+  const old = decisionFor((await readFindingsSnapshot(c)).input);
+  const next = reviewedInput({ runId: 102, start: 2000 });
+  await archiveReport(c, next, htmlOf(next));
+  const sha = c.ref();
+  assert.deepEqual(await archiveFindingsClassification(c, old), {
+    updated: false,
+    reason: 'stale-input',
+  });
+  assert.equal(c.ref(), sha);
+  assert.match(c.files().get('reports/findings/index.html'), /runs\/102\//);
+});
+
+test('publisher rejects invented or missing members without writing Pages', async () => {
+  const c = fakeClient(),
+    r = reviewedInput();
+  await archiveReport(c, r, htmlOf(r));
+  const classification = decisionFor((await readFindingsSnapshot(c)).input);
+  classification.groups[0].members.push('invented');
+  const sha = c.ref();
+  await assert.rejects(
+    archiveFindingsClassification(c, classification),
+    /Unknown finding/,
+  );
+  assert.equal(c.ref(), sha);
+});
+
+test('classification ref conflicts retry against the latest complete site without overwriting reports', async () => {
+  const c = fakeClient(),
+    r = reviewedInput();
+  await archiveReport(c, r, htmlOf(r));
+  const classification = decisionFor((await readFindingsSnapshot(c)).input);
+  c.conflictOnce = true;
+  assert.equal(
+    (await archiveFindingsClassification(c, classification)).updated,
+    true,
+  );
+  assert.equal(c.files().get(reportManifest(r).path), htmlOf(r));
 });
