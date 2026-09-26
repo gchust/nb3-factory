@@ -121,6 +121,7 @@ const zhCN: AppResource = {
   },
   navigation: {
     home: '首页',
+    todos: '待办事项',
     open: '打开导航',
     close: '关闭导航',
     expand: '展开导航',
@@ -146,6 +147,24 @@ const zhCN: AppResource = {
   datePicker: {
     placeholder: '选择日期',
     rangePlaceholder: '选择日期范围',
+  },
+  todos: {
+    title: '待办事项',
+    description: '记录需要完成的事项，完成后勾选。',
+    titleLabel: '待办标题',
+    addPlaceholder: '添加一条待办…',
+    addButton: '添加',
+    validation: {
+      titleRequired: '请先输入标题再添加待办。',
+    },
+    created: '待办已添加。',
+    createFailed: '无法添加待办，请重试。',
+    updateFailed: '无法更新待办，请重试。',
+    loadFailed: '无法加载待办列表，请重试。',
+    emptyTitle: '暂无待办',
+    emptyDescription: '在上方输入框添加第一条待办。',
+    createdAt: '创建于 {{date}}',
+    toggle: '切换“{{title}}”的完成状态',
   },
 };
 
