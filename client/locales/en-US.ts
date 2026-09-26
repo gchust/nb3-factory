@@ -95,6 +95,29 @@ const enUS = {
     description:
       'Describe what you need to your AI Agent, then build pages, data models, and business workflows.',
   },
+  todos: {
+    title: 'To-dos',
+    description:
+      'A simple personal list: add a task, tick it off, and it stays that way when you come back.',
+    listTitle: 'Your list',
+    summary: '{{done}} of {{total}} completed',
+    addLabel: 'New to-do',
+    addPlaceholder: 'What needs doing?',
+    add: 'Add',
+    adding: 'Adding…',
+    titleRequired: 'Enter a title before adding a to-do.',
+    addSuccess: 'To-do added',
+    addFailed: 'Could not add the to-do. Please try again.',
+    toggleFailed: 'Could not update the to-do. Please try again.',
+    loadFailed: 'Could not load your to-dos. Please try again.',
+    forbidden: 'You do not have permission to view this list.',
+    emptyTitle: 'Nothing to do yet',
+    emptyDescription: 'Add your first to-do to get started.',
+    completed: 'Completed',
+    pending: 'To do',
+    markComplete: 'Mark as completed',
+    markIncomplete: 'Mark as not completed',
+  },
 
   appearance: {
     title: 'Appearance',
@@ -130,6 +153,7 @@ const enUS = {
   },
   navigation: {
     home: 'Home',
+    todos: 'To-dos',
     open: 'Open navigation',
     close: 'Close navigation',
     expand: 'Expand navigation',

@@ -1,4 +1,4 @@
-import { Home } from 'lucide-react';
+import { Home, ListTodo } from 'lucide-react';
 import {
   defineAppRoutes,
   defineSettingsRoutes,
@@ -15,6 +15,16 @@ const appRoutes: AppClientRouteContribution = defineAppRoutes([
     name: 'home',
     navigation: { title: 'navigation.home', icon: Home },
     path: '/',
+  },
+  {
+    // A personal to-do list: every signed-in user reaches it and sees the same shared list. `authz: 'skip'` keeps it
+    // out of page authorization, matching the API, which enforces only an authenticated session.
+    auth: 'required',
+    authz: 'skip',
+    componentLoader: () => import('./pages/todos.js'),
+    name: 'todos',
+    navigation: { title: 'navigation.todos', icon: ListTodo },
+    path: '/todos',
   },
   {
     auth: 'guest',
