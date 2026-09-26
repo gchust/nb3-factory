@@ -4,6 +4,8 @@
 
 当前 PR/手动入口的默认源码提交为 `28c7522b3ddb384b05745715e94f7f985d09a67e`，对应官方 `@nocobase/app-template-default@1.0.0-beta.47` 发布标签。已移除 beta.43 默认基线。自选源码也必须使用当前 CLI 契约，旧模板在工厂 overlay 阶段直接拒绝。
 
+源码构建与冒烟统一使用上游 `unreleased:prepare / unreleased:smoke / unreleased:clean`；导出器读取当前 `nocobase-unreleased-*` 会话，不回退到旧 registry 状态。
+
 ## 创建固定源码快照
 
 维护者在带 `factory:manual` 的 Issue 中发送 `/factory-source <40 位上游 SHA>`，或运行 **Verify pinned NocoBase source baseline**，提供精确 `source_sha` 并明确选择 `publish`。PR 检查仅验证，不发布。

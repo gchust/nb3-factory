@@ -124,7 +124,7 @@ export async function exportSnapshot(
   );
   const stateDir = path.join(
     os.tmpdir(),
-    `nocobase-local-registry-${hash(path.resolve(repo)).slice(0, 12)}`,
+    `nocobase-unreleased-${hash(path.resolve(repo)).slice(0, 12)}`,
   );
   const state = readJson(path.join(stateDir, 'state.json'));
   assert.equal(state.repo, path.resolve(repo));

@@ -89,10 +89,10 @@ jobs:
           echo "FACTORY_CREATOR_VERSION=$(node -p 'JSON.parse(require("node:fs").readFileSync("packages/tools/create-app/package.json", "utf8")).version')" >> "$GITHUB_ENV"
       - name: Build and publish only to an isolated loopback registry
         working-directory: source
-        run: pnpm local-registry:prepare
+        run: pnpm unreleased:prepare
       - name: Verify an application made from these exact source packages
         working-directory: source
-        run: pnpm local-registry:verify --template default --dialect sqlite --workdir "$RUNNER_TEMP/source-smoke"
+        run: pnpm unreleased:smoke --template default --dialect sqlite --workdir "$RUNNER_TEMP/source-smoke"
       - name: Install browser fonts
         run: bash control/.github/scripts/install-browser-fonts.sh
       - name: Verify first configuration, idempotence and real browser login
@@ -132,7 +132,7 @@ jobs:
       - name: Remove this run's registry and its credentials
         if: always()
         working-directory: source
-        run: node scripts/local-registry.mjs stop
+        run: pnpm unreleased:clean
 
   portable:
     needs: source-baseline
