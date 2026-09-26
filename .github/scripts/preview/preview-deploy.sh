@@ -261,9 +261,13 @@ run_app_once() {
     "$PREVIEW_RUNTIME_IMAGE" "$@"
 }
 
-# Newer builds apply migrations and seeds as one `app db apply` plan and no
-# longer have `app migrate` and `app seed`; earlier builds only have the pair.
-if run_app_once node ./dist/cli/index.js app db apply --help >/dev/null 2>&1; then
+# The package CLI moved the combined plan from `app db apply` to `db apply`.
+# Probe help only; never retry a failed migration with another command.
+if run_app_once node ./dist/cli/index.js db apply --help >/dev/null 2>&1; then
+  log "applying migrations and seeds"
+  run_app_once node ./dist/cli/index.js db apply >"$PREVIEW_LOG_DIR/pr-${pr}-migrate.log" 2>&1 ||
+    { tail -n 40 "$PREVIEW_LOG_DIR/pr-${pr}-migrate.log" >&2; die "migrations or seeds failed for PR #$pr"; }
+elif run_app_once node ./dist/cli/index.js app db apply --help >/dev/null 2>&1; then
   log "applying migrations and seeds"
   run_app_once node ./dist/cli/index.js app db apply >"$PREVIEW_LOG_DIR/pr-${pr}-migrate.log" 2>&1 ||
     { tail -n 40 "$PREVIEW_LOG_DIR/pr-${pr}-migrate.log" >&2; die "migrations or seeds failed for PR #$pr"; }

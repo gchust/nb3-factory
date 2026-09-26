@@ -176,7 +176,7 @@ jobs:
         working-directory: ${{ runner.temp }}/portable-app
         run: |
           pnpm install --no-frozen-lockfile
-          pnpm skills:sync
+          node "$GITHUB_WORKSPACE/control/.github/scripts/template-cli.mjs" skills:sync .
           node "$GITHUB_WORKSPACE/control/.github/scripts/source-candidate.mjs" describe . "$RUNNER_TEMP/source-candidate" "$RUNNER_TEMP/portable-input/packages.tar.gz"
           pnpm exec prettier --write package.json factory-template.json factory-source.json eslint.config.js README.MD
       - name: Verify the restored source as a normal factory application

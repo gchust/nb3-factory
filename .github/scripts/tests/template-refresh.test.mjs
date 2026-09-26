@@ -201,7 +201,10 @@ test('refresh preserves controls and the generated guide without inheriting old 
       readFileSync(path.join(fresh, 'AGENTS.md')),
       generatedGuide,
     );
-    assert.doesNotMatch(guide, /factory:boundary|Factory boundary|Old upstream/);
+    assert.doesNotMatch(
+      guide,
+      /factory:boundary|Factory boundary|Old upstream/,
+    );
     const manifest = JSON.parse(readFileSync(path.join(fresh, 'package.json')));
     assert.equal(manifest.dependencies['new-framework'], '2.0.0');
     assert.equal(manifest.devDependencies['old-only'], undefined);
@@ -343,7 +346,10 @@ test('refresh leaves app-tools entry points untouched without legacy build utili
       appToolsBuild,
     );
     assert.equal(existsSync(path.join(fresh, 'scripts/utils')), false);
-    assert.equal(existsSync(path.join(fresh, 'skills/factory-performance')), false);
+    assert.equal(
+      existsSync(path.join(fresh, 'skills/factory-performance')),
+      false,
+    );
     assert.equal(existsSync(path.join(fresh, '.agents')), false);
     assert.deepEqual(readFileSync(path.join(fresh, 'AGENTS.md')), guide);
     assert.equal(
@@ -366,6 +372,62 @@ test('refresh leaves app-tools entry points untouched without legacy build utili
   } finally {
     rmSync(root, { recursive: true, force: true });
   }
+});
+
+test('refresh accepts CLI-owned beta.47 builds without inventing local build scripts', (t) => {
+  const root = mkdtempSync(path.join(os.tmpdir(), 'nb3-app-cli-overlay-'));
+  t.after(() => rmSync(root, { recursive: true, force: true }));
+  const { control, fresh } = overlayFixture(root);
+  const manifestPath = path.join(fresh, 'package.json');
+  const app = JSON.parse(readFileSync(manifestPath, 'utf8'));
+  app.nocobase.defaultTemplateVersion = '1.0.0-beta.47';
+  app.dependencies['@nocobase/app-cli'] = '^1.0.0-beta.6';
+  app.scripts.build = 'nocobase build';
+  writeFileSync(manifestPath, JSON.stringify(app));
+  rmSync(path.join(fresh, 'scripts'), { recursive: true });
+  write(control, 'skills/factory-performance/SKILL.md', 'Legacy build hooks\n');
+  const guide = readFileSync(path.join(fresh, 'AGENTS.md'));
+  execFileSync(process.execPath, [
+    path.join(scripts, 'overlay-factory.mjs'),
+    control,
+    fresh,
+    sha,
+  ]);
+  assert.equal(existsSync(path.join(fresh, 'scripts')), false);
+  assert.equal(
+    existsSync(path.join(fresh, 'skills/factory-performance')),
+    false,
+  );
+  assert.deepEqual(readFileSync(path.join(fresh, 'AGENTS.md')), guide);
+  const updated = JSON.parse(readFileSync(manifestPath, 'utf8'));
+  assert.equal(updated.scripts.build, 'nocobase build');
+  assert.equal(updated.dependencies['@nocobase/app-cli'], '^1.0.0-beta.6');
+  assert.deepEqual(
+    JSON.parse(readFileSync(path.join(fresh, 'factory-template.json')))
+      .compatibilityFixes,
+    [],
+  );
+});
+
+test('an app-cli dependency alone does not excuse a missing legacy build', (t) => {
+  const root = mkdtempSync(path.join(os.tmpdir(), 'nb3-missing-build-'));
+  t.after(() => rmSync(root, { recursive: true, force: true }));
+  const { control, fresh } = overlayFixture(root);
+  const manifestPath = path.join(fresh, 'package.json');
+  const app = JSON.parse(readFileSync(manifestPath, 'utf8'));
+  app.dependencies['@nocobase/app-cli'] = '^1.0.0-beta.5';
+  app.scripts.build = 'node scripts/build.mjs';
+  writeFileSync(manifestPath, JSON.stringify(app));
+  rmSync(path.join(fresh, 'scripts'), { recursive: true });
+  assert.throws(
+    () =>
+      execFileSync(
+        process.execPath,
+        [path.join(scripts, 'overlay-factory.mjs'), control, fresh, sha],
+        { stdio: 'pipe' },
+      ),
+    /ENOENT.*scripts\/build\.mjs/,
+  );
 });
 
 test('legacy templates still fail when their build source no longer matches the patch', () => {
@@ -708,7 +770,10 @@ test('refresh workflow has its own queue and isolates generated code from write 
   const publisher = workflow.split('\n  publish:')[1];
   assert.match(workflow.split('\n  publish:')[0], /contents: read/);
   assert.match(workflow, /template-creator.mjs pin control/);
-  assert.match(workflow, /pnpm create "@nocobase\/app@\$FACTORY_CREATOR_VERSION" nb3-factory/);
+  assert.match(
+    workflow,
+    /pnpm create "@nocobase\/app@\$FACTORY_CREATOR_VERSION" nb3-factory/,
+  );
   assert.match(workflow, /template-creator.mjs record/);
   assert.match(workflow, /--template-tag=latest/);
   assert.match(workflow, /scripts\/verify.sh/);
@@ -726,7 +791,9 @@ test('every building job exposes the factory registry to nested dist installs', 
   const jobs = {
     'refresh generate': refresh.split('\n  publish:')[0],
     'task agent': task.split('\n  agent:')[1].split('\n  verify-final:')[0],
-    'task verify-final': task.split('\n  verify-final:')[1].split('\n  publish:')[0],
+    'task verify-final': task
+      .split('\n  verify-final:')[1]
+      .split('\n  publish:')[0],
   };
   for (const [name, job] of Object.entries(jobs)) {
     const expose = job.indexOf('cat control/.npmrc >> ~/.npmrc');
@@ -735,14 +802,15 @@ test('every building job exposes the factory registry to nested dist installs', 
   }
 });
 
-test('factory workflows and implementation guidance use the canonical skills sync command', () => {
+test('factory workflows resolve Skills sync from the selected template', () => {
   for (const file of [
     'workflows/refresh-template.yml',
     'workflows/code-agent-task.yml',
-    'prompts/implement.md',
+    'workflows/replay-build-review.yml',
+    'workflows/source-baseline.yml',
   ]) {
     const source = readFileSync(path.resolve(scripts, '..', file), 'utf8');
-    assert.match(source, /pnpm skills:sync\b/, file);
+    assert.match(source, /template-cli\.mjs"? skills:sync\b/, file);
     assert.doesNotMatch(source, /pnpm plugin:skills:sync\b/, file);
   }
   const workflow = readFileSync(
@@ -750,10 +818,15 @@ test('factory workflows and implementation guidance use the canonical skills syn
     'utf8',
   );
   assert.ok(
-    workflow.indexOf('pnpm skills:sync') >
+    workflow.indexOf('template-cli.mjs skills:sync') >
       workflow.indexOf('pnpm install --no-frozen-lockfile'),
   );
   assert.doesNotMatch(workflow, /prettier[^\n]*\bAGENTS\.md\b/);
+  const prompt = readFileSync(
+    path.resolve(scripts, '../prompts/implement.md'),
+    'utf8',
+  );
+  assert.match(prompt, /按当前模板的 `AGENTS\.md` 再次同步/);
 });
 
 test('beta.38 test adaptation retains behavior assertions and is repeatable', async () => {

@@ -389,7 +389,12 @@ jobs:
         working-directory: workspace
         run: |
           node ../control/.github/scripts/timed-command.mjs install pnpm install --frozen-lockfile
-          node ../control/.github/scripts/timed-command.mjs skills-sync pnpm skills:sync
+          if [[ -f ../control/.github/scripts/template-cli.mjs ]]; then
+            node ../control/.github/scripts/timed-command.mjs skills-sync node ../control/.github/scripts/template-cli.mjs skills:sync .
+          else
+            # Existing tasks may still pin a control commit predating the adapter.
+            node ../control/.github/scripts/timed-command.mjs skills-sync pnpm skills:sync
+          fi
 
       - name: Capture the actual installed package and Skill baseline
         run: |

@@ -10,6 +10,7 @@ import {
 import path from 'node:path';
 import { applyBeta34Compatibility } from './template-beta34-compat.mjs';
 import { adaptTemplateTests } from './adapt-template-tests.mjs';
+import { hasPackageCli } from './template-cli.mjs';
 
 const [controlArg, workspaceArg, controlSha] = process.argv.slice(2);
 if (!controlArg || !workspaceArg || !/^[a-f0-9]{40}$/.test(controlSha ?? '')) {
@@ -88,9 +89,14 @@ app.devDependencies = {
     app.devDependencies?.['@playwright/test'] ||
     factory.devDependencies['@playwright/test'],
 };
-// The official app-tools package owns its build implementation. Do not patch its
-// thin application entry points or carry guidance for legacy inline build hooks.
-const packageOwnedBuild = Boolean(app.devDependencies?.['@nocobase/app-tools']);
+// Official tooling owns these builds: app-tools used thin local wrappers, while
+// newer app-cli templates invoke `nocobase build` without a scripts/ directory.
+// A missing legacy build alone must never disable compatibility validation.
+const packageOwnedBuild = Boolean(
+  app.devDependencies?.['@nocobase/app-tools'] ||
+  app.dependencies?.['@nocobase/app-tools'] ||
+  hasPackageCli(app),
+);
 // This committed factory skill documents our build extension; it is not generated plugin output.
 if (
   !packageOwnedBuild &&
@@ -128,7 +134,7 @@ if (app.nocobase.defaultTemplateVersion === '1.0.0-beta.15') {
 }
 if (packageOwnedBuild) {
   console.log(
-    'Using @nocobase/app-tools; legacy build source patches are not applied.',
+    'Using package-owned NocoBase tooling; legacy build source patches are not applied.',
   );
 } else {
   // Production installation runs in dist and needs the factory scoped registry.
@@ -182,7 +188,8 @@ if (packageOwnedBuild) {
     writeFileSync(
       path.join(workspace, 'scripts/utils/prune-dist-artifacts.mjs'),
       prunePatches.reduce(
-        (source, [, anchor, replacement]) => source.replace(anchor, replacement),
+        (source, [, anchor, replacement]) =>
+          source.replace(anchor, replacement),
         prune,
       ),
     );

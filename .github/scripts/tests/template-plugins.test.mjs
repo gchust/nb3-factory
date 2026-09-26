@@ -88,7 +88,20 @@ function fixture(t, overrides = {}) {
   mkdirSync(bin);
   const metadata = { template: '@nocobase/app-template-default', templateVersion: 'template-version', controlSha: 'a'.repeat(40) };
   writeJson(path.join(app, 'factory-template.json'), metadata);
-  writeJson(path.join(app, 'package.json'), { dependencies: { existing: '^1.0.0' } });
+  const modern = overrides.modern === true;
+  writeJson(path.join(app, 'package.json'), {
+    dependencies: {
+      existing: '^1.0.0',
+      ...(modern ? { '@nocobase/app-cli': '^1.0.0-beta.6' } : {}),
+    },
+    scripts: modern
+      ? { build: 'nocobase build' }
+      : {
+          'plugin:register': 'legacy-register',
+          'plugin:inspect': 'legacy-inspect',
+          'skills:sync': 'legacy-sync',
+        },
+  });
   writeJson(path.join(bin, 'package.json'), { type: 'module' });
   const state = {
     plugins: templatePlugins,
@@ -104,8 +117,16 @@ import { appendFileSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import path from 'node:path';
 const args = process.argv.slice(2);
 const state = JSON.parse(readFileSync(process.env.FAKE_STATE, 'utf8'));
-const command = args[0] === '--silent' ? args[1] : args[0];
+const commandArgs = args[0] === '--silent' ? args.slice(1) : args;
+const modern = commandArgs[0] === 'exec' && commandArgs[1] === 'nocobase';
+const command = modern ? commandArgs.slice(2, 4).join(':') : commandArgs[0];
+const name = commandArgs[modern ? 4 : 1];
 appendFileSync(process.env.FAKE_LOG, JSON.stringify({ args, cwd: process.cwd() }) + '\\n');
+if (command !== 'add' && modern !== Boolean(state.modern)) { console.error('wrong template command style'); process.exit(9); }
+const envelope = (response) => {
+  if (modern) { response.command = response.operation.replaceAll(':', ' '); delete response.operation; }
+  return JSON.stringify(response);
+};
 if (state.fail === command) { console.error('fixture command failed'); process.exit(7); }
 if (state.malformed === command) { console.log('not-json'); process.exit(0); }
 if (command === 'add') {
@@ -118,9 +139,9 @@ if (command === 'add') {
   }
   writeFileSync('package.json', JSON.stringify(app));
 } else if (command === 'plugin:register') {
-  console.log(JSON.stringify({ schemaVersion: 1, operation: command, ok: true, status: state.registerStatus, result: { packageName: args[2] } }));
+  console.log(envelope({ schemaVersion: 1, operation: command, ok: true, status: state.registerStatus, result: { packageName: name } }));
 } else if (command === 'plugin:inspect') {
-  console.log(JSON.stringify(state.inspections[args[2]]));
+  console.log(envelope(state.inspections[name]));
 } else if (command !== 'skills:sync') {
   console.error('unexpected command'); process.exit(8);
 }
@@ -130,11 +151,11 @@ if (command === 'add') {
   const summary = path.join(root, 'summary.md');
   const run = () => spawnSync('bash', ['-ec', `
     "$NODE" "$SCRIPT" install "$APP" "$DIAGNOSTICS"
-    (cd "$APP" && pnpm skills:sync)
+    "$NODE" "$CLI" skills:sync "$APP"
     "$NODE" "$SCRIPT" inspect "$APP" "$DIAGNOSTICS"
   `], {
     encoding: 'utf8',
-    env: { ...process.env, NODE: process.execPath, SCRIPT: script, APP: app, DIAGNOSTICS: diagnostics, PATH: `${bin}${path.delimiter}${process.env.PATH}`, FAKE_STATE: path.join(root, 'state.json'), FAKE_LOG: path.join(root, 'commands.jsonl'), GITHUB_STEP_SUMMARY: summary },
+    env: { ...process.env, NODE: process.execPath, SCRIPT: script, CLI: path.resolve(import.meta.dirname, '../template-cli.mjs'), APP: app, DIAGNOSTICS: diagnostics, PATH: `${bin}${path.delimiter}${process.env.PATH}`, FAKE_STATE: path.join(root, 'state.json'), FAKE_LOG: path.join(root, 'commands.jsonl'), GITHUB_STEP_SUMMARY: summary },
   });
   const calls = () => readFileSync(path.join(root, 'commands.jsonl'), 'utf8').trim().split('\n').map(JSON.parse);
   return { root, app, diagnostics, summary, run, calls, metadata };
@@ -166,6 +187,67 @@ test('already-registered plugins still get a final Skills sync and inspection', 
   const result = f.run();
   assert.equal(result.status, 0, result.stderr);
   assert.equal(f.calls().length, 8);
+});
+
+test('CLI-owned templates install, register, sync and inspect without script aliases', (t) => {
+  const f = fixture(t, { modern: true });
+  const result = f.run();
+  assert.equal(result.status, 0, result.stderr);
+  const calls = f.calls();
+  for (const [index, name] of templatePlugins.entries()) {
+    assert.deepEqual(calls[index + 1].args, [
+      '--silent',
+      'exec',
+      'nocobase',
+      'plugin',
+      'register',
+      name,
+      '--no-install',
+      '--no-skills',
+      '--json',
+    ]);
+    assert.deepEqual(calls[index + 5].args, [
+      '--silent',
+      'exec',
+      'nocobase',
+      'plugin',
+      'inspect',
+      name,
+      '--json',
+    ]);
+  }
+  assert.deepEqual(calls[4].args, ['exec', 'nocobase', 'skills', 'sync']);
+  assert.equal(
+    json(path.join(f.app, 'factory-template.json')).plugins.length,
+    3,
+  );
+});
+
+for (const fail of ['plugin:register', 'skills:sync', 'plugin:inspect']) {
+  test(`CLI-owned ${fail} failure blocks inventory publication`, (t) => {
+    const f = fixture(t, { modern: true, fail });
+    const result = f.run();
+    assert.notEqual(result.status, 0);
+    assert.deepEqual(
+      json(path.join(f.app, 'factory-template.json')),
+      f.metadata,
+    );
+    assert.equal(
+      existsSync(path.join(f.diagnostics, 'template-plugins/inventory.json')),
+      false,
+    );
+  });
+}
+
+test('inspection validates the modern command identity as strictly as the legacy operation', () => {
+  const response = inspection();
+  delete response.operation;
+  response.command = 'plugin inspect';
+  validateInspection(response, packageName);
+  response.command = 'plugin register';
+  assert.throws(() => validateInspection(response, packageName));
+  response.operation = 'plugin:inspect';
+  assert.throws(() => validateInspection(response, packageName));
 });
 
 for (const [name, overrides, count] of [

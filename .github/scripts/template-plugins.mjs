@@ -3,6 +3,7 @@ import { spawnSync } from 'node:child_process';
 import { appendFileSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { templateCommand } from './template-cli.mjs';
 
 // AI Employee is the default-template prerequisite for the two Pro plugins.
 // Keep this explicit: a refresh must not discover and install arbitrary packages.
@@ -13,10 +14,15 @@ export const templatePlugins = [
 ];
 
 function commandResult(response, operation, statuses) {
+  const matchingCommand =
+    response?.command === undefined
+      ? response?.operation === operation
+      : response.operation === undefined &&
+        response.command === operation.replaceAll(':', ' ');
   assert.ok(
     response?.schemaVersion === 1 &&
       response.ok === true &&
-      response.operation === operation &&
+      matchingCommand &&
       statuses.includes(response.status),
     `${operation} did not complete successfully: ${JSON.stringify(response)}`,
   );
@@ -70,6 +76,7 @@ function runTemplatePlugins(mode, appDirectory, diagnosticsDirectory) {
   const diagnostics = path.resolve(diagnosticsDirectory, 'template-plugins');
   const metadataFile = path.join(appRoot, 'factory-template.json');
   const metadata = JSON.parse(readFileSync(metadataFile, 'utf8'));
+  const app = JSON.parse(readFileSync(path.join(appRoot, 'package.json'), 'utf8'));
   assert.equal(metadata.template, '@nocobase/app-template-default');
   mkdirSync(diagnostics, { recursive: true });
 
@@ -94,7 +101,7 @@ function runTemplatePlugins(mode, appDirectory, diagnosticsDirectory) {
     run(['add', ...templatePlugins.map((name) => `${name}@latest`)]);
     for (const packageName of templatePlugins) {
       const response = run(
-        ['--silent', 'plugin:register', packageName, '--no-install', '--no-skills', '--json'],
+        ['--silent', ...templateCommand(app, 'plugin:register'), packageName, '--no-install', '--no-skills', '--json'],
         `${packageName.split('/')[1]}.register.json`,
       );
       const result = commandResult(response, 'plugin:register', ['success', 'success-noop']);
@@ -106,7 +113,7 @@ function runTemplatePlugins(mode, appDirectory, diagnosticsDirectory) {
   const plugins = [];
   for (const packageName of templatePlugins) {
     const response = run(
-      ['--silent', 'plugin:inspect', packageName, '--json'],
+      ['--silent', ...templateCommand(app, 'plugin:inspect'), packageName, '--json'],
       `${packageName.split('/')[1]}.inspect.json`,
     );
     validateInspection(response, packageName);
