@@ -96,6 +96,182 @@ const enUS = {
       'Describe what you need to your AI Agent, then build pages, data models, and business workflows.',
   },
 
+  equipment: {
+    title: 'Equipment',
+    description:
+      'The office equipment ledger: search a device, see who has it, and borrow or return it.',
+    actions: {
+      create: 'New equipment',
+      borrow: 'Borrow',
+      clearFilters: 'Clear filters',
+    },
+    columns: {
+      assetCode: 'Asset code',
+      name: 'Name',
+      category: 'Category',
+      status: 'Status',
+      currentLoan: 'Current loan',
+      notes: 'Notes',
+      createdAt: 'Added',
+    },
+    currentLoan: { due: 'Due {{date}}' },
+    stats: {
+      total: 'Devices',
+      borrowed: 'Borrowed',
+      overdue: 'Overdue',
+    },
+    search: {
+      placeholder: 'Search by code, name or category',
+      label: 'Search equipment',
+    },
+    filter: {
+      label: 'Filter by status',
+      all: 'All',
+      available: 'Available',
+      borrowed: 'Borrowed',
+      overdue: 'Overdue',
+    },
+    status: {
+      available: 'Available',
+      borrowed: 'Borrowed',
+      overdue: 'Overdue',
+    },
+    empty: {
+      title: 'No equipment yet',
+      description: 'Add the first device to start the ledger.',
+      filtered: 'No device matches the current search and filter.',
+    },
+    error: {
+      forbidden: 'You do not have permission to view equipment.',
+      requestFailed: 'Unable to load the equipment. Please try again.',
+      notFound: 'This equipment no longer exists.',
+      validation: 'The server rejected the submitted values.',
+    },
+    create: {
+      title: 'New equipment',
+      success: 'Equipment created.',
+    },
+    edit: { title: 'Edit equipment' },
+    update: { success: 'Equipment updated.' },
+    fields: {
+      assetCode: 'Asset code',
+      name: 'Name',
+      category: 'Category',
+      notes: 'Notes',
+    },
+    form: {
+      description: 'Fields marked with * are required.',
+      assetCodeRequired: 'Asset code is required.',
+      assetCodeTooLong: 'Asset code must be at most {{max}} characters.',
+      assetCodeTaken: 'That asset code is already in use.',
+      assetCodePlaceholder: 'e.g. EQ-2024-001',
+      nameRequired: 'Name is required.',
+      nameTooLong: 'Name must be at most {{max}} characters.',
+      namePlaceholder: 'e.g. Projector',
+      categoryTooLong: 'Category must be at most {{max}} characters.',
+      categoryPlaceholder: 'e.g. Display',
+      notesTooLong: 'Notes must be at most {{max}} characters.',
+      notesPlaceholder: 'Optional notes',
+    },
+  },
+
+  borrow: {
+    create: {
+      title: 'Borrow equipment',
+      description: 'The borrow time is recorded automatically.',
+      success: '{{name}} borrowed.',
+    },
+    error: {
+      requestFailed: 'Unable to load the equipment list. Please try again.',
+      validation: 'The server rejected the submitted values.',
+    },
+    fields: {
+      equipment: 'Equipment',
+      borrower: 'Borrower',
+      purpose: 'Purpose',
+      expectedReturnAt: 'Expected return date',
+    },
+    form: {
+      equipmentRequired: 'Select an available device.',
+      equipmentPlaceholder: 'Select a device',
+      equipmentUnavailable:
+        'This device is no longer available; pick another one.',
+      fixedUnavailable:
+        'This device is currently borrowed. You can still pick another available device.',
+      noEquipmentAvailable: 'No device is available to borrow right now.',
+      borrowerRequired: 'Borrower is required.',
+      borrowerTooLong: 'Borrower must be at most {{max}} characters.',
+      borrowerPlaceholder: 'Who is borrowing it?',
+      purposeTooLong: 'Purpose must be at most {{max}} characters.',
+      purposePlaceholder: 'What will it be used for?',
+      expectedReturnRequired: 'Select the expected return date.',
+      expectedReturnPlaceholder: 'Pick a return date',
+      expectedReturnHint:
+        'The equipment should be returned by the end of that day.',
+      recordedAutomatically: 'Borrow time is recorded automatically.',
+    },
+  },
+
+  borrowRecords: {
+    title: 'Borrow records',
+    description:
+      'Every borrow and return, searchable by borrower and filterable by return state.',
+    actions: {
+      new: 'Borrow equipment',
+      return: 'Return',
+      returned: 'Returned',
+    },
+    columns: {
+      equipment: 'Equipment',
+      borrower: 'Borrower',
+      purpose: 'Purpose',
+      borrowedAt: 'Borrowed at',
+      expectedReturnAt: 'Expected return',
+      returnedAt: 'Returned at',
+      status: 'Status',
+    },
+    stats: {
+      total: 'Records',
+      active: 'Not returned',
+      overdue: 'Overdue',
+    },
+    search: {
+      placeholder: 'Search by borrower or device',
+      label: 'Search borrow records',
+    },
+    filter: {
+      label: 'Filter by return state',
+      all: 'All',
+      active: 'Not returned',
+      returned: 'Returned',
+      overdue: 'Overdue',
+    },
+    status: {
+      borrowed: 'Borrowed',
+      returned: 'Returned',
+      overdue: 'Overdue',
+    },
+    empty: {
+      title: 'No borrow records yet',
+      description: 'Borrow a device to create the first record.',
+      filtered: 'No record matches the current search and filter.',
+    },
+    error: {
+      forbidden: 'You do not have permission to view borrow records.',
+      requestFailed: 'Unable to load the borrow records. Please try again.',
+    },
+    return: {
+      title: 'Return {{name}}?',
+      description:
+        'The record for {{borrower}} keeps its original borrow details and gets a return time.',
+      confirm: 'Confirm return',
+      success: '{{name}} returned.',
+      failed: 'Unable to record the return. Please try again.',
+      notFound: 'This record was already returned.',
+      aria: 'Return {{name}}',
+    },
+  },
+
   appearance: {
     title: 'Appearance',
     mode: 'Color mode',
@@ -113,6 +289,9 @@ const enUS = {
     save: 'Save',
     cancel: 'Cancel',
     confirm: 'Confirm',
+    create: 'Create',
+    edit: 'Edit',
+    saving: 'Saving…',
     language: 'Language',
   },
   notices: {
@@ -136,6 +315,8 @@ const enUS = {
     collapse: 'Collapse navigation',
     label: 'Application navigation',
     breadcrumb: 'Breadcrumb',
+    equipment: 'Equipment',
+    borrowRecords: 'Borrow records',
   },
   dataTable: {
     noResults: 'No results.',
