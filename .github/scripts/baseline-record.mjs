@@ -66,6 +66,7 @@ export function captureBaseline(workspace, { controlSha = null, sourceSha = null
     controlSha: isSha(controlSha) ? controlSha : null, workspaceSha,
     source: sourceSha ? { repository: 'nocobase/nocobase3', sha: sourceSha } : null,
     ...(sourceSnapshot ? { sourceSnapshot } : {}),
+    template: typeof template?.template === 'string' ? template.template : null,
     creatorVersion, templateVersion: template?.templateVersion ?? pkg?.nocobase?.defaultTemplateVersion ?? null,
     lockSha256: files.find(f => f.path === 'pnpm-lock.yaml')?.sha256 ?? null,
     packages, files, omissions };
