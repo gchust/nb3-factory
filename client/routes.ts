@@ -1,4 +1,4 @@
-import { Home } from 'lucide-react';
+import { Home, ListTodo } from 'lucide-react';
 import {
   defineAppRoutes,
   defineSettingsRoutes,
@@ -15,6 +15,16 @@ const appRoutes: AppClientRouteContribution = defineAppRoutes([
     name: 'home',
     navigation: { title: 'navigation.home', icon: Home },
     path: '/',
+  },
+  {
+    // The To-do list is a personal feature every signed-in user owns, so it is taken out of page authorization the
+    // same way the landing page is. No page grant has to exist for it to appear in the menu.
+    auth: 'required',
+    authz: 'skip',
+    componentLoader: () => import('./pages/todos.js'),
+    name: 'todos',
+    navigation: { title: 'navigation.todos', icon: ListTodo },
+    path: '/todos',
   },
   {
     auth: 'guest',

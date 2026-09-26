@@ -130,6 +130,7 @@ const enUS = {
   },
   navigation: {
     home: 'Home',
+    todos: 'To-dos',
     open: 'Open navigation',
     close: 'Close navigation',
     expand: 'Expand navigation',
@@ -155,6 +156,24 @@ const enUS = {
   datePicker: {
     placeholder: 'Pick a date',
     rangePlaceholder: 'Pick a date range',
+  },
+  todos: {
+    title: 'To-dos',
+    description: 'Keep track of what needs doing and check it off when done.',
+    titleLabel: 'To-do title',
+    addPlaceholder: 'Add a to-do…',
+    addButton: 'Add',
+    validation: {
+      titleRequired: 'Enter a title before adding a to-do.',
+    },
+    created: 'To-do added.',
+    createFailed: 'Unable to add the to-do. Please try again.',
+    updateFailed: 'Unable to update the to-do. Please try again.',
+    loadFailed: 'Unable to load your to-dos. Please try again.',
+    emptyTitle: 'No to-dos yet',
+    emptyDescription: 'Add your first to-do with the field above.',
+    createdAt: 'Created {{date}}',
+    toggle: 'Toggle "{{title}}"',
   },
 };
 
