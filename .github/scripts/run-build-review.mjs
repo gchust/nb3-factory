@@ -1,3 +1,4 @@
+import { normalizeAgentEnv } from './agent-configuration.mjs';
 // One bounded, fresh reviewer invocation over a disposable copy of the sealed
 // application. It cannot change the patch that verify-final/publish consume.
 import { execFileSync } from 'node:child_process';
@@ -110,6 +111,7 @@ export function createReviewSnapshot(workspace, artifacts, destination, redact) 
 }
 
 export async function runBuildReview(workspace, artifacts, env = process.env, options = {}) {
+  env = normalizeAgentEnv(env);
   workspace = path.resolve(workspace); artifacts = path.resolve(artifacts);
   const output = path.join(artifacts, 'build-review.json');
   const metadata = readReviewJson(artifacts, 'task-metadata.json');

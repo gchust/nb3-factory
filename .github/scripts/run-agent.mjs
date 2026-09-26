@@ -1,3 +1,4 @@
+import { normalizeAgentEnv } from './agent-configuration.mjs';
 import { readFileSync } from 'node:fs';
 import { beginInvocation } from './agent-invocation-record.mjs';
 import { recordTiming } from './timing.mjs';
@@ -7,17 +8,18 @@ import { createResult, readResult } from './agent-result.mjs';
 import { parseAgentArgs, parseIdleTimeout, parseInvocationTimeout, parseRunDeadline, runAgentInvocation } from './agent-harness.mjs';
 
 const started = Date.now();
-const adapter = resolveAgent();
+const configuredEnv = normalizeAgentEnv(process.env);
+const adapter = resolveAgent(configuredEnv);
 const options = parseAgentArgs(process.argv.slice(2));
 const qa = process.env.FACTORY_AGENT_ROLE === 'qa';
 const phase = process.env.FACTORY_AGENT_ROLE === 'review' ? 'review' : qa
   ? options.log.includes('report-repair') ? 'qa-report-repair' : options.log.includes('browser-focused') ? 'qa-focused' : 'qa'
   : options.log.includes('comment-agent') ? 'reply' : options.log.includes('repair') ? 'repair' : 'implementation';
 process.once('exit', (status) => recordTiming(`agent:${phase}`, started, status));
-const env = engineEnv(process.env, adapter.credentials);
+const env = engineEnv(configuredEnv, adapter.credentials);
 const knownSecrets = [...credentialNames.map((name) => process.env[name]),
   process.env.FACTORY_ADMIN_PASSWORD, process.env.FACTORY_TEST_PASSWORD];
-const capture = beginInvocation({ ...options, engine: adapter.id, phase, secrets: knownSecrets });
+const capture = beginInvocation({ ...options, engine: adapter.id, phase, secrets: knownSecrets, env: configuredEnv });
 let invocationError;
 try {
   const invocation = adapter.createInvocation({ ...options, env });
@@ -30,8 +32,8 @@ try {
     configuredVersion = installed.configuredVersion;
   }
   // Validate before marking an invocation started; invalid settings never spawn the CLI.
-  const invocationTimeoutSeconds = parseInvocationTimeout(process.env.CODE_AGENT_INVOCATION_TIMEOUT_SECONDS, 0);
-  const idleTimeoutSeconds = parseIdleTimeout(process.env.CODE_AGENT_IDLE_TIMEOUT_SECONDS, 600);
+  const invocationTimeoutSeconds = parseInvocationTimeout(configuredEnv.CODE_AGENT_INVOCATION_TIMEOUT_SECONDS, 0);
+  const idleTimeoutSeconds = parseIdleTimeout(configuredEnv.CODE_AGENT_IDLE_TIMEOUT_SECONDS, 600);
   const runDeadlineEpochSeconds = parseRunDeadline(process.env.FACTORY_RUN_DEADLINE_EPOCH_SECONDS);
   capture.start({ ...invocation, actualVersion, configuredVersion });
   await runAgentInvocation({

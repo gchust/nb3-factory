@@ -1,3 +1,4 @@
+import { requiredChecksFor } from './required-checks.mjs';
 import { isSourceBaselineRef, isSharedTaskBase } from './source-baseline-ref.mjs';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
@@ -157,6 +158,8 @@ try {
     task,
     // Stable logical-run identity for exported evaluations; not business input.
     evaluation: {
+      requiredChecks: batchSample ? batchSample.manifest.cases.find(c => c.key === batchSample.receipt.caseKey).requiredChecks ?? []
+        : requiredChecksFor(prepared.preset?.sourceIssueNumber),
       ...taskEvaluationIdentity({
         repository,
         issueNumber: issue.number,

@@ -34,7 +34,7 @@ function validatePreset(issue) {
 
 export async function initializeDailyLabel(client) {
   const name = DAILY_PRESET_LABEL;
-  const description = 'Run this factory:preset automatically every day; remove to stop future runs';
+  const description = 'Select this factory:preset for the legacy manual launcher; daily batches use plans.json';
   const route = `/labels/${encodeURIComponent(name)}`;
   if (await client.request('GET', route, { allow404: true })) return;
   try {

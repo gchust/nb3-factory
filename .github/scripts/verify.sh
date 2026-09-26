@@ -125,3 +125,10 @@ node "$script_dir/timed-command.mjs" browser-smoke node "$script_dir/browser-smo
   --workspace "$workspace" \
   --url "$url" \
   --screenshot "$artifact_dir/browser-smoke.png"
+
+# Independent deterministic checks run against this same fresh final application.
+# No caller-supplied command/module/URL is executed; the trusted registry owns it.
+if [[ -n "${FACTORY_REQUIRED_CHECKS_METADATA:-}" ]]; then
+  node "$script_dir/required-checks.mjs" run "$FACTORY_REQUIRED_CHECKS_METADATA" \
+    "$artifact_dir/../required-checks.json" "$FACTORY_REQUIRED_CHECKS_PATCH"
+fi

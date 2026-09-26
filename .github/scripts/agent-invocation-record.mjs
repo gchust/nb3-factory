@@ -1,3 +1,4 @@
+import { agentConfig } from './agent-configuration.mjs';
 import { fileURLToPath } from 'node:url';
 import { credentialNames } from './agent-adapter.mjs';
 import { scrubHistoryFile, scrubSecrets } from './history-redaction.mjs';
@@ -33,7 +34,7 @@ export function beginInvocation({ log, prompt, workspace, engine, phase, secrets
   const record = {
     version: 1,
     id: `${env.GITHUB_RUN_ID || 'local'}:${env.GITHUB_RUN_ATTEMPT || '1'}:${phase}:${randomUUID()}`,
-    engine, phase, startedAt: new Date().toISOString(), status: 'preparing', invoked: false,
+    engine, phase, configuration: agentConfig({ ...env, CODE_AGENT_ENGINE: engine }), startedAt: new Date().toISOString(), status: 'preparing', invoked: false,
     controlSha: env.FACTORY_CONTROL_SHA || null,
     promptSha256: sha256(text), context,
     boundary: 'Factory prompt, invocation settings and available Skill hashes only; not CLI-internal prompts or proof of Skill usage.',

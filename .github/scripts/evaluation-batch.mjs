@@ -1,3 +1,6 @@
+import { requiredChecksFor, validateRequiredChecks } from './required-checks.mjs';
+import { isSourceBaselineRef } from './source-baseline-ref.mjs';
+import { validateDescriptor } from './source-snapshot.mjs';
 // Repeatable evaluation batches: a trusted plan, one frozen baseline and case
 // capture per batch, a complete planned-sample manifest, and a small serial
 // coordinator that advances on explicit triggers, task completion and a
@@ -24,16 +27,8 @@ const WORKFLOW = 'code-agent-task.yml';
 const REPORT_GRACE_SECONDS = 6 * 3600;
 // A queued sample without any Run after this long is dispatched again (the claim prevents a double build).
 const REDISPATCH_AFTER_MS = 30 * 60_000;
-// Non-secret settings that change how samples are built, tested or reviewed.
-const AGENT_CONFIG_VARS = ['CODE_AGENT_ENGINE', 'CODE_AGENT_VERSION', 'PI_VERSION', 'CODEBUDDY_VERSION', 'CLAUDE_CODE_VERSION', 'CODEX_VERSION',
-  'OPENCODE_VERSION', 'CODE_AGENT_MODEL', 'PI_MODEL', 'CODEBUDDY_MODEL', 'CLAUDE_CODE_MODEL', 'CODEX_MODEL', 'OPENCODE_MODEL', 'CODE_AGENT_API_TYPE',
-  'CODE_AGENT_THINKING', 'PI_THINKING', 'CODEBUDDY_THINKING', 'CLAUDE_CODE_EFFORT', 'CLAUDE_CODE_QA_EFFORT', 'CODEX_REASONING_EFFORT', 'CODEX_QA_REASONING_EFFORT',
-  'OPENCODE_VARIANT', 'OPENCODE_QA_VARIANT', 'FACTORY_QA_THINKING', 'FACTORY_REVIEW_THINKING', 'FACTORY_BUILD_REVIEW', 'FACTORY_BUILD_REVIEW_TIMEOUT_SECONDS',
-  'CODE_AGENT_INVOCATION_TIMEOUT_SECONDS', 'CODE_AGENT_IDLE_TIMEOUT_SECONDS', 'AGENT_BROWSER_VERSION'];
-export function agentConfig(env) {
-  const values = Object.fromEntries(AGENT_CONFIG_VARS.filter(name => String(env[name] ?? '').trim()).map(name => [name, String(env[name]).trim().slice(0, 200)]));
-  return { fingerprint: sha256(canonicalJson(values)), values };
-}
+export { agentConfig } from './agent-configuration.mjs';
+import { agentConfig } from './agent-configuration.mjs';
 const sha256 = value => createHash('sha256').update(value).digest('hex');
 const positive = value => Number.isSafeInteger(value) && value > 0;
 const integer = (value, [min, max]) => Number.isSafeInteger(value) && value >= min && value <= max;
@@ -55,18 +50,18 @@ export function validatePlans(document, { defaultBranch } = {}) {
     keys.add(plan.key);
     need(typeof plan.enabled === 'boolean', `${plan.key}: enabled must be boolean`);
     need(plan.schedule === null || plan.schedule === 'daily', `${plan.key}: schedule must be null or daily`);
-    need(!defaultBranch || plan.baselineRef === defaultBranch, `${plan.key}: v1 batches freeze the default branch (${defaultBranch}); prepared source baselines are not supported`);
+    need(typeof plan.baselineRef === 'string' && (!defaultBranch || plan.baselineRef === defaultBranch || /^[a-f0-9]{40}$/.test(plan.baselineRef) || isSourceBaselineRef(plan.baselineRef)), `${plan.key}: baselineRef must be the default branch, an ancestor SHA, or a published source baseline (${defaultBranch})`);
     need(Array.isArray(plan.cases) && plan.cases.length > 0 && plan.cases.length <= PLAN_LIMITS.cases, `${plan.key}: 1–${PLAN_LIMITS.cases} cases`);
     const caseKeys = new Set();
     let total = 0;
     const cases = plan.cases.map(item => {
-      only(item, ['key', 'presetIssueNumber', 'samples'], `${plan.key} case`);
+      only(item, ['key', 'presetIssueNumber', 'samples', 'requiredChecks'], `${plan.key} case`);
       need(typeof item.key === 'string' && /^[A-Za-z0-9][A-Za-z0-9._-]{0,19}$/.test(item.key) && !caseKeys.has(item.key), `${plan.key}: invalid or duplicate case key`);
       caseKeys.add(item.key);
       need(positive(item.presetIssueNumber), `${plan.key}/${item.key}: presetIssueNumber must be a positive Issue number`);
       need(integer(item.samples, [1, PLAN_LIMITS.samplesPerCase]), `${plan.key}/${item.key}: 1–${PLAN_LIMITS.samplesPerCase} samples`);
       total += item.samples;
-      return { key: item.key, presetIssueNumber: item.presetIssueNumber, samples: item.samples };
+      return { key: item.key, presetIssueNumber: item.presetIssueNumber, samples: item.samples, requiredChecks: validateRequiredChecks(item.requiredChecks) };
     });
     need(total <= PLAN_LIMITS.samplesPerPlan, `${plan.key}: at most ${PLAN_LIMITS.samplesPerPlan} samples per batch`);
     only(plan.execution, ['maxConcurrentSamples', 'maxRepairAttempts', 'maxActiveSecondsPerSample', 'maxContinuations'], `${plan.key} execution`);
@@ -136,13 +131,25 @@ async function saveState(client, batch, state) {
 async function freezeBatch(client, { plan, batchKey, trigger, now, controlSha, env, coordinatorIssue }) {
   const repository = await client.getRepository();
   const defaultBranch = repository.default_branch;
-  need(plan.baselineRef === defaultBranch, `${plan.key}: v1 batches freeze the default branch`);
+  need(plan.baselineRef === defaultBranch || /^[a-f0-9]{40}$/.test(plan.baselineRef) || isSourceBaselineRef(plan.baselineRef), `${plan.key}: baselineRef must be the default branch, an ancestor SHA, or a published source baseline`);
   need(/^[a-f0-9]{40}$/.test(controlSha ?? ''), 'The coordinator control SHA is required');
   await verifyAncestor(client, controlSha, defaultBranch);
-  const lock = await readBytes(client, 'pnpm-lock.yaml', controlSha);
+  const sourceBaseline = isSourceBaselineRef(plan.baselineRef);
+  const applicationBaseRef = sourceBaseline ? plan.baselineRef : defaultBranch;
+  const applicationBaseSha = plan.baselineRef === defaultBranch ? controlSha
+    : sourceBaseline ? (await client.getRef(plan.baselineRef, true))?.object?.sha : plan.baselineRef;
+  need(/^[a-f0-9]{40}$/.test(applicationBaseSha ?? ''), 'Application baseline is missing; refusing to substitute latest');
+  if (sourceBaseline) {
+    const descriptor = JSON.parse((await readBytes(client, 'factory-source.json', applicationBaseSha))?.toString('utf8') ?? 'null');
+    need(descriptor, 'Published source baseline has no descriptor');
+    validateDescriptor(descriptor, client.repository);
+    need(plan.baselineRef === 'factory-baseline/source-' + descriptor.sourceSha.slice(0, 12) + '-' + descriptor.runId + '-' + descriptor.attempt,
+      'Source baseline branch and descriptor disagree');
+  } else await verifyAncestor(client, applicationBaseSha, defaultBranch);
+  const lock = await readBytes(client, 'pnpm-lock.yaml', applicationBaseSha);
   need(lock, 'The frozen baseline has no pnpm-lock.yaml; it is not a usable application baseline');
   let templateVersion = null;
-  try { templateVersion = JSON.parse((await readBytes(client, 'factory-template.json', controlSha))?.toString('utf8') ?? 'null')?.templateVersion ?? null; }
+  try { templateVersion = JSON.parse((await readBytes(client, 'factory-template.json', applicationBaseSha))?.toString('utf8') ?? 'null')?.templateVersion ?? null; }
   catch { /* Optional descriptor. */ }
   const cases = [];
   for (const item of plan.cases) {
@@ -153,7 +160,7 @@ async function freezeBatch(client, { plan, batchKey, trigger, now, controlSha, e
     const buildReviewMode = plan.reviewMode === 'inherit' ? captured ?? (env.FACTORY_BUILD_REVIEW === 'off' ? 'off' : 'full') : plan.reviewMode;
     const snapshot = { source, comments };
     cases.push({ key: item.key, presetIssueNumber: item.presetIssueNumber, title: source.title, samples: item.samples,
-      caseHash: sha256(canonicalJson(snapshot)), capturedAt: iso(now), commentCount: comments.length, buildReviewMode, snapshot });
+      requiredChecks: requiredChecksFor(item.presetIssueNumber, item.requiredChecks), caseHash: sha256(canonicalJson(snapshot)), capturedAt: iso(now), commentCount: comments.length, buildReviewMode, snapshot });
   }
   const samples = plan.cases.flatMap(item => Array.from({ length: item.samples }, (_, index) => {
     const identity = taskEvaluationIdentity({ repository: client.repository, issueNumber: 1, sample: { batchKey, caseKey: item.key, sampleIndex: index + 1 } });
@@ -163,10 +170,14 @@ async function freezeBatch(client, { plan, batchKey, trigger, now, controlSha, e
     version: 1, type: 'evaluation-batch-manifest', repository: client.repository, batchKey, planKey: plan.key,
     planFingerprint: sha256(canonicalJson(plan)), trigger, slot: trigger === 'schedule' ? iso(now).slice(0, 10) : null, createdAt: iso(now),
     coordinatorIssue, defaultBranch, controlSha, entrySha: /^[a-f0-9]{40}$/.test(env.GITHUB_SHA ?? '') ? env.GITHUB_SHA : null,
-    applicationBaseSha: controlSha, lockfileSha256: sha256(lock), templateVersion, reviewMode: plan.reviewMode,
+    applicationBaseRef, applicationBaseSha, lockfileSha256: sha256(lock), templateVersion, reviewMode: plan.reviewMode,
     budget: { maxRepairAttempts: plan.execution.maxRepairAttempts, maxActiveSeconds: plan.execution.maxActiveSecondsPerSample,
       maxContinuations: plan.execution.maxContinuations },
-    maxConcurrentSamples: plan.execution.maxConcurrentSamples, agentEngine: env.CODE_AGENT_ENGINE || 'pi', agentConfig: agentConfig(env), cases, samples,
+    maxConcurrentSamples: plan.execution.maxConcurrentSamples, agentEngine: agentConfig(env).values.CODE_AGENT_ENGINE, agentConfig: agentConfig(env), cases, samples,
+    // Same key permits a controlled A/B on application versions. The application
+    // SHA/lock are deliberately separate. Changed cases/rubric/control are not A/B.
+    comparisonKey: sha256(canonicalJson({ controlSha, cases: cases.map(c => ({ key: c.key, hash: c.caseHash, samples: c.samples, reviewMode: c.buildReviewMode, requiredChecks: c.requiredChecks })),
+      execution: plan.execution, agentConfig: agentConfig(env).fingerprint })),
   };
 }
 
@@ -246,13 +257,13 @@ async function ensureSample(client, batch, spec) {
       body: `评测样本准备中；冻结输入写入完成前不会开始搭建。\n\n${markers.sample(spec.key)}`, labels: [BUILD_LABEL, SAMPLE_LABEL, 'agent:pending'] } });
   }
   const comments = await listAll(client, `/issues/${issue.number}/comments`);
-  const snapshot = { version: 1, issueNumber: issue.number, targetBranch: manifest.defaultBranch, buildReviewMode: frozen.buildReviewMode,
+  const snapshot = { version: 1, issueNumber: issue.number, targetBranch: manifest.applicationBaseRef ?? manifest.defaultBranch, buildReviewMode: frozen.buildReviewMode,
     capturedAt: frozen.capturedAt, source: frozen.snapshot.source, extra: '', comments: frozen.snapshot.comments };
   const { hash } = await writeSnapshot(client, issue.number, snapshot, comments);
   const base = comments.filter(c => isBot(c.user) && (c.body ?? '').startsWith('<!-- factory-task-base-v1:'));
   if (base.some(c => !c.body.includes(`"sha":"${manifest.applicationBaseSha}"`))) throw new Error(`Sample ${spec.key} already pins another application base`);
   if (!base.length) {
-    const receipt = JSON.stringify({ repository: client.repository, issueNumber: issue.number, targetBranch: manifest.defaultBranch, sha: manifest.applicationBaseSha });
+    const receipt = JSON.stringify({ repository: client.repository, issueNumber: issue.number, targetBranch: manifest.applicationBaseRef ?? manifest.defaultBranch, sha: manifest.applicationBaseSha });
     comments.push(await client.addComment(issue.number, `<!-- factory-task-base-v1:${receipt} -->\n\n评测批次 \`${manifest.batchKey}\` 冻结的代码起点：\`${manifest.defaultBranch} @ ${manifest.applicationBaseSha}\`。样本重试与续跑不会跟随默认分支移动。`));
   }
   if (!readSampleReceipt(comments, issue.number)) {
@@ -380,6 +391,7 @@ function applyObservation(item, observed, { stamp, cancelled, fingerprint }) {
 // newest revision unless the result came from a prepare or batch decision.
 function applyReport(item, summary) {
   if (!summary) { item.report = null; return; }
+  item.agentConfiguration = summary.agentConfiguration ?? null;
   item.report = { state: 'available', revision: summary.revision, execution: summary.execution ?? null, acceptance: summary.acceptance ?? null };
   if (['run', 'report'].includes(item.stateSource)) Object.assign(item, { state: fromReport(summary), stateSource: 'report' });
 }
@@ -390,7 +402,7 @@ export async function advanceBatch(client, batch, { now = Date.now(), env = null
   const stamp = iso(now);
   const samples = () => manifest.samples.map(spec => ({ spec, item: state.samples[spec.key] }));
   // The settings in effect for this trigger; drift from the frozen batch is recorded.
-  const fingerprint = env ? agentConfig(env).fingerprint : null;
+  const fingerprint = env && manifest.agentConfig?.values?.CONFIG_SCHEMA_VERSION === '2' ? agentConfig(env).fingerprint : null;
   const frozenConfig = manifest.agentConfig?.fingerprint ?? null;
   if (fingerprint && frozenConfig && fingerprint !== frozenConfig && state.state === 'active' && !state.agentConfigDrift)
     state.agentConfigDrift = { observedAt: stamp, fingerprint };
@@ -490,11 +502,13 @@ export function batchDocument(batch, { exporter = {} } = {}) {
   const frozenConfig = manifest.agentConfig?.fingerprint ?? null;
   const samples = manifest.samples.map(spec => {
     const item = state.samples[spec.key];
-    const observed = item.configObserved ?? [];
+    const observed = [...(item.configObserved ?? []), ...(item.agentConfiguration?.fingerprints ?? [])];
+    const drift = frozenConfig && observed.some(value => value !== frozenConfig);
+    const runtimeKnown = item.agentConfiguration?.complete === true && item.agentConfiguration.fingerprints.length > 0;
     return { key: spec.key, caseKey: spec.caseKey, sampleIndex: spec.sampleIndex, runKey: spec.runKey, issue: item.issue ?? null,
       state: item.state, stateSource: item.stateSource ?? 'plan', dispatchedAt: item.dispatchedAt ?? null, terminalAt: item.terminalAt ?? null,
       reason: item.reason ?? null, agentConfigFingerprint: observed.at(-1) ?? null,
-      comparable: !item.issue || !observed.length || !frozenConfig ? null : observed.every(value => value === frozenConfig),
+      comparable: drift ? false : runtimeKnown && frozenConfig ? true : null,
       // Ended at prepare or by the batch: no build ran, so no report will exist.
       report: item.report ?? { state: FINISHED_STATES.has(item.state) && !expectsReport(item) ? 'not-applicable' : 'missing', revision: null, execution: null, acceptance: null } };
   });
@@ -504,7 +518,7 @@ export function batchDocument(batch, { exporter = {} } = {}) {
   const missing = samples.length - available - notApplicable;
   const limitations = [
     { code: 'no-global-score', detail: '批次只列出同条件样本的可核实事实，不计算 NocoBase 全局平均评分，也不排除失败样本。' },
-    { code: 'agent-config-runtime', detail: '样本按运行时仓库变量执行 Agent；批次只冻结并比对非密钥配置指纹，漂移单独标记，逐样本报告记录实际引擎与模型。' },
+    { code: 'agent-config-runtime', detail: '样本按运行时仓库变量执行 Agent；批次比较实际调用记录中的有效配置；缺失调用记录或秘密端点的公开 provider identity 时，一致性未知。派发时变量相同不能证明实际执行相同。' },
   ];
   if (missing) limitations.push({ code: 'reports-missing', detail: `${missing} 个计划样本尚无其最终执行的报告（未开始、执行中或报告未到达）；它们仍计入样本全集，验收计入“其他”。` });
   if (state.cancelled) limitations.push({ code: 'batch-cancelled', detail: '批次已取消：未开始的样本不再派发，已发生的执行与用量保留。' });
@@ -521,7 +535,7 @@ export function batchDocument(batch, { exporter = {} } = {}) {
       planFingerprint: manifest.planFingerprint, manifestSha256: manifestHash, trigger: manifest.trigger, slot: manifest.slot,
       coordinatorIssue: manifest.coordinatorIssue, frozenAt: manifest.createdAt, sequence: state.sequence },
     state: state.state, cancelled: state.cancelled === true,
-    baseline: { controlSha: manifest.controlSha, entrySha: manifest.entrySha, applicationBaseSha: manifest.applicationBaseSha,
+    baseline: { applicationBaseRef: manifest.applicationBaseRef ?? manifest.defaultBranch, comparisonKey: manifest.comparisonKey ?? null, controlSha: manifest.controlSha, entrySha: manifest.entrySha, applicationBaseSha: manifest.applicationBaseSha,
       defaultBranch: manifest.defaultBranch, lockfileSha256: manifest.lockfileSha256, templateVersion: manifest.templateVersion,
       reviewMode: manifest.reviewMode, budget: manifest.budget, maxConcurrentSamples: manifest.maxConcurrentSamples, agentEngine: manifest.agentEngine,
       agentConfig: manifest.agentConfig ?? null },
@@ -529,7 +543,7 @@ export function batchDocument(batch, { exporter = {} } = {}) {
       capturedAt: item.capturedAt, commentCount: item.commentCount, buildReviewMode: item.buildReviewMode, samples: item.samples })),
     samples,
     summary: { planned: samples.length, byState, reports: { available, missing, notApplicable },
-      comparable: !state.agentConfigDrift && !drifted && Boolean(frozenConfig),
+      comparable: !state.agentConfigDrift && samples.every(s => s.comparable === true),
       acceptance: { passed: samples.filter(s => s.report.acceptance === 'passed').length, failed: samples.filter(s => s.report.acceptance === 'failed').length,
         other: samples.filter(s => !['passed', 'failed'].includes(s.report.acceptance)).length } },
     limitations,
@@ -575,8 +589,8 @@ export async function runCoordinator(client, { action, args = {}, env = {}, expo
   };
   if (action === 'start' || action === 'scheduled') {
     const plans = await readPlans();
-    const selected = action === 'scheduled' ? (env.FACTORY_EVALUATION_PLANS_ENABLED === 'true' ? plans.filter(p => p.enabled && p.schedule === 'daily') : []) : [plans.find(p => p.key === args.plan)];
-    if (action === 'scheduled' && !selected.length) lines.push('没有启用的定时评测计划（需要 FACTORY_EVALUATION_PLANS_ENABLED=true 且计划 enabled + schedule=daily）；未创建任务。');
+    const selected = action === 'scheduled' ? (env.FACTORY_EVALUATION_PLANS_ENABLED !== 'false' ? plans.filter(p => p.enabled && p.schedule === 'daily') : []) : [plans.find(p => p.key === args.plan)];
+    if (action === 'scheduled' && !selected.length) lines.push('没有启用的定时评测计划（计划须 enabled + schedule=daily，FACTORY_EVALUATION_PLANS_ENABLED=false 可暂停）；未创建任务。');
     for (const plan of selected) {
       need(plan, `Unknown evaluation plan ${args.plan}`);
       await isolated({ label: plan.key }, async () => {

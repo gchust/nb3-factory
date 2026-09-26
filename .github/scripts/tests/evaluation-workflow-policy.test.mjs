@@ -98,13 +98,14 @@ test('batch coordination accepts no control SHA, budget, script or URL input and
   assert.match(coordinate, /if: '!cancelled\(\) && steps\.coordinate\.outputs\.export == ''true'''/);
   assert.match(evaluation, /if: "!cancelled\(\) && needs\.coordinate\.outputs\.export != '' && needs\.coordinate\.outputs\.batches != ''"/);
   assert.doesNotMatch(coordinate, /API_KEY|TOKEN: \$\{\{ vars|OAUTH/);
-  assert.match(coordinate, /CODE_AGENT_MODEL: \$\{\{ vars\.CODE_AGENT_MODEL \}\}/);
+  assert.match(coordinate, /FACTORY_AGENT_CONFIG_JSON:.*toJSON\(vars\)/);
   for (const checkout of workflow.split('actions/checkout@v4').slice(1)) {
     assert.match(checkout.slice(0, 300), /ref: \$\{\{ github\.event\.repository\.default_branch \}\}/);
     assert.match(checkout.slice(0, 300), /persist-credentials: false/);
   }
-  // The daily preset label flow stays independent of evaluation plans.
-  assert.doesNotMatch(read('scheduled-preset-tests.yml'), /evaluation/);
+  // One bounded automatic scheduler; labels retain their explicit manual entry.
+  assert.doesNotMatch(read('scheduled-preset-tests.yml'), /^ {2}schedule:/m);
+  assert.match(read('scheduled-preset-tests.yml'), /workflow_dispatch:/);
 });
 
 test('a batch sample run asks the coordinator to advance without passing anything it trusts', () => {

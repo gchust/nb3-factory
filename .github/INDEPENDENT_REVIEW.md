@@ -38,6 +38,8 @@
 
 ## 独立 HTTP 验收
 
+已由 `required-checks.mjs` 接入任务前置门禁与独立终验。预置 #206/#207/#208 的必需检查来自受信任目录；缺夹具时不执行付费搭建。边界和扩展方法见 [评测可靠性](EVALUATION_RELIABILITY.md)。
+
 `integration-checks.mjs api <plan.json> <result.json>` 是不调用模型的独立执行器。
 plan 必须由测试准备提供，并绑定当前被测应用 SHA；浏览器 QA 不能临时造接口或密钥。
 准备器在隔离、一次性数据库中创建两个设备记录和只读集成密钥，通过环境变量注入
@@ -47,11 +49,25 @@ plan 必须由测试准备提供，并绑定当前被测应用 SHA；浏览器 Q
 {
   "version": 1,
   "kind": "api-key",
+  "authentication": "x-api-key",
   "applicationSha": "<40 位实际被测提交，由准备器核验>",
   "baseUrl": "http://127.0.0.1:13000",
-  "read": { "path": "/<本轮实际设备列表接口>", "itemsPath": ["data"], "idField": "id", "expectedIds": ["<准备记录 ID>"] },
-  "write": { "path": "/<本轮实际设备创建接口>", "method": "POST", "body": { "name": "isolated-test" } },
-  "revoke": { "path": "/<本轮实际撤销该测试密钥接口>", "method": "POST", "body": {} }
+  "read": {
+    "path": "/<本轮实际设备列表接口>",
+    "itemsPath": ["data"],
+    "idField": "id",
+    "expectedIds": ["<准备记录 ID>"]
+  },
+  "write": {
+    "path": "/<本轮实际设备创建接口>",
+    "method": "POST",
+    "body": { "name": "isolated-test" }
+  },
+  "revoke": {
+    "path": "/<本轮实际撤销该测试密钥接口>",
+    "method": "POST",
+    "body": {}
+  }
 }
 ```
 

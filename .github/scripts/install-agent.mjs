@@ -1,10 +1,12 @@
+import { normalizeAgentEnv } from './agent-configuration.mjs';
 import { spawnSync } from 'node:child_process';
 import { resolveAgent } from './agent-registry.mjs';
 import { engineEnv, writeJson } from './agent-adapter.mjs';
 
-const adapter = resolveAgent();
+const configuredEnv = normalizeAgentEnv(process.env);
+const adapter = resolveAgent(configuredEnv);
 // Installation is an adapter strategy, not a global assumption about npm.
-const env = engineEnv(process.env, []);
+const env = engineEnv(configuredEnv, []);
 for (const { command, args } of adapter.install(adapter.version)) {
   const result = spawnSync(command, args, { stdio: 'inherit', env });
   if (result.error) throw result.error;

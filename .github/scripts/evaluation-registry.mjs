@@ -129,7 +129,8 @@ export async function planRevision(client, { type, key, fingerprint, history = n
 
 const summaryOf = document => document.type === 'evaluation-report'
   ? { execution: document.outcome.execution, acceptance: document.outcome.acceptance, delivery: document.outcome.delivery,
-    reviewState: document.precedence.reviewState, reviewRubric: document.precedence.reviewRubric }
+    reviewState: document.precedence.reviewState, reviewRubric: document.precedence.reviewRubric,
+    agentConfiguration: document.baseline?.agent?.configuration ?? null, evaluationHealth: document.health?.status ?? null }
   : { state: document.state, samples: document.summary.planned };
 
 export async function commitRevision(client, { document, evaluationBytes, manifestBytes, fingerprint, bundle, location, outbox = null, now = new Date() }) {

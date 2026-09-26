@@ -18,6 +18,9 @@ on:
         required: true
         type: string
 
+env:
+  FACTORY_AGENT_CONFIG_JSON: ${{ toJSON(vars) }}
+
 permissions: {}
 concurrency:
   group: factory-build-review-${{ github.event.comment.id || github.run_id }}

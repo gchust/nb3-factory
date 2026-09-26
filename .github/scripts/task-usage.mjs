@@ -246,6 +246,10 @@ export function selectSource(run, jobs, artifacts, repository) {
           Date.parse(a.created_at) <= Date.parse(prepare.completed_at),
       )
     : [];
+  const finalJob = builds.find(job => job.name === 'verify-final');
+  const finalArtifacts = finalJob ? artifacts.filter(a => a.name === 'factory-final-' + issue && !a.expired &&
+    Date.parse(a.created_at) >= Date.parse(finalJob.started_at) && Date.parse(a.created_at) <= Date.parse(finalJob.completed_at)) : [];
+  if (finalArtifacts.length > 1) throw new Error('Ambiguous final verifier artifact');
   // run-name records the source of a continuation or explicit recovery.
   const previousRunId = Number(/ from ([1-9]\d*)$/.exec(run.display_title ?? '')?.[1]);
   const invoked =
@@ -278,6 +282,7 @@ export function selectSource(run, jobs, artifacts, repository) {
     invoked,
     artifact: artifactsForAgent[0]?.name ?? null,
     artifactId: artifactsForAgent[0]?.id ?? null,
+    finalArtifactId: finalArtifacts[0]?.id ?? null,
     taskArtifactId: taskArtifacts.length === 1 ? taskArtifacts[0].id : null,
     event: run.event,
     previousRunId: positive(previousRunId) ? previousRunId : null,

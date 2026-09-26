@@ -40,6 +40,7 @@ concurrency:
 jobs:
   report:
     outputs:
+      source_ready: ${{ steps.source.outputs.ready }}
       html_ready: ${{ steps.totals.outputs.html_ready }}
       report_artifact: ${{ steps.archive.outputs.artifact-id }}
       evaluation_export: ${{ steps.evaluation-export.outputs.artifact-id }}
@@ -99,6 +100,18 @@ jobs:
           github-token: ${{ github.token }}
           path: ${{ runner.temp }}/usage-task
 
+      # Separate download: Agent artifacts cannot replace final acceptance facts.
+      - name: Download independent final verification results
+        if: steps.source.outputs.ready == 'true' && steps.source.outputs.final_artifact_id != ''
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          artifact-ids: ${{ steps.source.outputs.final_artifact_id }}
+          merge-multiple: true
+          run-id: ${{ env.SOURCE_RUN_ID }}
+          github-token: ${{ github.token }}
+          path: ${{ runner.temp }}/usage-final
+
       - name: Download verified supplemental review
         if: steps.source.outputs.review_artifact != ''
         uses: actions/download-artifact@v4
@@ -138,7 +151,7 @@ jobs:
         run: |
           FACTORY_EXPORTER_SHA="$(git -C control rev-parse HEAD)" node control/.github/scripts/evaluation-archive.mjs export \
             --report "$RUNNER_TEMP/task-report/report.json" --artifacts "$RUNNER_TEMP/usage-evidence" \
-            --task "$RUNNER_TEMP/usage-task" --html "$RUNNER_TEMP/task-report/report.html" \
+            --task "$RUNNER_TEMP/usage-task" --final "$RUNNER_TEMP/usage-final" --html "$RUNNER_TEMP/task-report/report.html" \
             --output "$RUNNER_TEMP/evaluation-export"
 
       # Also isolated: a failed evaluation upload must not fail this job and skip Pages.
@@ -219,6 +232,43 @@ jobs:
           gh workflow run deliver-evaluation.yml --repo "$GITHUB_REPOSITORY" --ref "$REPORT_REF" --field mode=scan \
             || echo '::warning::Delivery request failed; the scheduled scan will send the queued revision.'
 
+
+  # This job may fail while the delivered application and Pages remain available.
+  # It uses only trusted data and never starts a model or executes app code.
+  evaluation-health:
+    needs: [report, evaluation]
+    if: always() && needs.report.outputs.source_ready == 'true' && vars.FACTORY_EVALUATION_EXPORT != 'false'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      actions: read
+      contents: read
+    env:
+      FACTORY_EVALUATION_DELIVERY: ${{ vars.FACTORY_EVALUATION_DELIVERY }}
+      EVALUATION_ENDPOINT: ${{ vars.EVALUATION_ENDPOINT }}
+      EVALUATION_AUTH_MODE: ${{ vars.EVALUATION_AUTH_MODE }}
+      EVALUATION_REVISION: ${{ needs.evaluation.outputs.revision }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          path: control
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24.x
+      - uses: actions/download-artifact@v4
+        if: needs.report.outputs.evaluation_export != ''
+        continue-on-error: true
+        with:
+          artifact-ids: ${{ needs.report.outputs.evaluation_export }}
+          path: ${{ runner.temp }}/evaluation-health
+          merge-multiple: true
+      - name: Check evaluation completeness independently from delivery
+        if: always()
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: node control/.github/scripts/evaluation-health.mjs "$RUNNER_TEMP/evaluation-health/draft.json"
 
   pages:
     needs: report

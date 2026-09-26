@@ -21,6 +21,10 @@ on:
         required: false
         type: string
 
+env:
+  # Parsed through a public-setting allowlist shared with batch fingerprints.
+  FACTORY_AGENT_CONFIG_JSON: ${{ toJSON(vars) }}
+
 permissions: {}
 
 # Retries and cross-run handoffs for one Issue must stay serialized, but
@@ -323,6 +327,24 @@ jobs:
           fi
           echo "phase=$(node control/.github/scripts/pipeline-state.mjs phase "$RUNNER_TEMP/agent-artifacts/pipeline-state.json")" >> "$GITHUB_OUTPUT"
 
+      - name: Check independent evaluation prerequisites before model work
+        env:
+          FACTORY_TEST_API_KEY_PRESENT: ${{ secrets.FACTORY_TEST_API_KEY != '' }}
+          FACTORY_TEST_ADMIN_KEY_PRESENT: ${{ secrets.FACTORY_TEST_ADMIN_KEY != '' }}
+          FACTORY_BUSINESS_MODEL_PRESENT: ${{ vars.FACTORY_BUSINESS_MODEL != '' }}
+          FACTORY_BUSINESS_API_KEY_PRESENT: ${{ secrets.FACTORY_BUSINESS_API_KEY != '' }}
+          FACTORY_BUSINESS_MODEL_ENDPOINT_PRESENT: ${{ vars.FACTORY_BUSINESS_MODEL_ENDPOINT != '' }}
+          FACTORY_TEST_CHANNEL_PRESENT: ${{ vars.FACTORY_TEST_CHANNEL != '' }}
+          FACTORY_TEST_RECEIVER_URL_PRESENT: ${{ vars.FACTORY_TEST_RECEIVER_URL != '' }}
+        run: |
+          if [[ -f control/.github/scripts/required-checks.mjs ]]; then
+            node control/.github/scripts/required-checks.mjs preflight task/task-metadata.json "$RUNNER_TEMP/agent-artifacts/required-checks.preflight.json" || {
+              status=$?
+              node control/.github/scripts/pipeline-state.mjs outcome "$RUNNER_TEMP/agent-artifacts/pipeline-state.json" blocked
+              exit "$status"
+            }
+          fi
+
       # Only batch samples carry a budget; it bounds long calls and leaves archive time.
       - name: Apply the evaluation sample budget
         run: |
@@ -447,6 +469,7 @@ jobs:
         env: &agent-run-env
           CODE_AGENT_ENGINE: ${{ vars.CODE_AGENT_ENGINE }}
           FACTORY_AGENT_INSTALL_RECORD: ${{ runner.temp }}/agent-install.json
+          # Compatibility bridge for older pinned control code (before the shared normalizer).
           # Explicit engine selection; adding a CLI must not fall through to Pi.
           # This mapping is shared by implementation, repair/QA, and comment reply.
           CODE_AGENT_API_ENDPOINT: ${{ (vars.CODE_AGENT_ENGINE == '' || vars.CODE_AGENT_ENGINE == 'pi') && (secrets.CODE_AGENT_API_ENDPOINT || secrets.PI_API_ENDPOINT) || '' }}
@@ -675,6 +698,12 @@ jobs:
           name: factory-agent-${{ needs.prepare.outputs.issue_number }}
           path: agent-artifacts
 
+      - name: Download trusted final verification task
+        uses: actions/download-artifact@v4
+        with:
+          name: factory-task-${{ needs.prepare.outputs.issue_number }}
+          path: final-task
+
       - name: Apply patch to the task branch
         run: |
           node control/.github/scripts/apply-patch.mjs \
@@ -727,6 +756,11 @@ jobs:
             --database "$RUNNER_TEMP/final/database.sqlite"
 
       - name: Independently verify the applied patch
+        env:
+          FACTORY_REQUIRED_CHECKS_METADATA: ${{ github.workspace }}/final-task/task-metadata.json
+          FACTORY_REQUIRED_CHECKS_PATCH: ${{ github.workspace }}/agent-artifacts/agent.patch
+          FACTORY_TEST_API_KEY: ${{ secrets.FACTORY_TEST_API_KEY }}
+          FACTORY_TEST_ADMIN_KEY: ${{ secrets.FACTORY_TEST_ADMIN_KEY }}
         run: |
           set -o pipefail
           control/.github/scripts/verify.sh \
