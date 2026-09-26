@@ -156,7 +156,7 @@ test('fast checks stop expensive work; repair prioritizes failed check without o
   write(
     root,
     'bin/pnpm',
-    '#!/usr/bin/env bash\nprintf "%s\\n" "$*" >> "$COMMAND_LOG"\n[[ "$1" != "${FAIL_CHECK:-}" ]]\n',
+    '#!/usr/bin/env bash\n[[ -z "${FACTORY_TEST_API_KEY:-}${FACTORY_TEST_ADMIN_KEY:-}" ]] || exit 44\nprintf "%s\\n" "$*" >> "$COMMAND_LOG"\n[[ "$1" != "${FAIL_CHECK:-}" ]]\n',
     0o755,
   );
   const env = {
@@ -165,6 +165,8 @@ test('fast checks stop expensive work; repair prioritizes failed check without o
     COMMAND_LOG: commands,
     FACTORY_SKIP_BROWSER: '1',
     FACTORY_RETRY_FAILED_CHECK: '1',
+    FACTORY_TEST_API_KEY: 'isolated-api-test-fixture',
+    FACTORY_TEST_ADMIN_KEY: 'isolated-admin-test-fixture',
     FACTORY_BUILD_TARGET: 'linux-x64',
     FACTORY_BUILD_NODE_VERSION: '24',
   };
@@ -219,7 +221,12 @@ test('only an archiving verification asks its single build for the tarball', (t)
     writeFileSync(commands, '');
     const result = spawnSync(
       'bash',
-      [path.join(scripts, 'verify.sh'), workspace, config, path.join(root, 'artifacts')],
+      [
+        path.join(scripts, 'verify.sh'),
+        workspace,
+        config,
+        path.join(root, 'artifacts'),
+      ],
       {
         env: {
           ...process.env,
@@ -265,7 +272,11 @@ test('QA writer rejects bad evidence before saving and retains real failures', (
   );
   const env = {
     ...process.env,
-    FACTORY_BROWSER_METADATA: write(root, 'metadata.json', JSON.stringify({ task: { acceptanceCriteria: '1. Create' } })),
+    FACTORY_BROWSER_METADATA: write(
+      root,
+      'metadata.json',
+      JSON.stringify({ task: { acceptanceCriteria: '1. Create' } }),
+    ),
     FACTORY_BROWSER_REPORT: report,
     FACTORY_BROWSER_EVIDENCE_DIR: root,
   };

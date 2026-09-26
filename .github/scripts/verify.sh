@@ -6,6 +6,13 @@ if [[ $# -ne 3 ]]; then
   exit 2
 fi
 
+# Only the independent checker receives isolated API credentials. Application
+# tests, builds and the server must not inherit them through this shell.
+required_checks_api_key="${FACTORY_TEST_API_KEY:-}"
+required_checks_admin_key="${FACTORY_TEST_ADMIN_KEY:-}"
+export -n required_checks_api_key required_checks_admin_key
+unset FACTORY_TEST_API_KEY FACTORY_TEST_ADMIN_KEY
+
 workspace="$(realpath "$1")"
 config_file="$(realpath "$2")"
 artifact_dir="$(realpath -m "$3")"
@@ -129,6 +136,8 @@ node "$script_dir/timed-command.mjs" browser-smoke node "$script_dir/browser-smo
 # Independent deterministic checks run against this same fresh final application.
 # No caller-supplied command/module/URL is executed; the trusted registry owns it.
 if [[ -n "${FACTORY_REQUIRED_CHECKS_METADATA:-}" ]]; then
+  FACTORY_TEST_API_KEY="$required_checks_api_key" \
+  FACTORY_TEST_ADMIN_KEY="$required_checks_admin_key" \
   node "$script_dir/required-checks.mjs" run "$FACTORY_REQUIRED_CHECKS_METADATA" \
     "$artifact_dir/../required-checks.json" "$FACTORY_REQUIRED_CHECKS_PATCH"
 fi
