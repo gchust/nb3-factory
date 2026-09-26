@@ -1,0 +1,2183 @@
+{
+  "schemaVersion": 1,
+  "type": "evaluation-report",
+  "source": {
+    "producer": "nb3-factory",
+    "instance": "gchust/nb3-factory",
+    "project": "gchust/nb3-factory",
+    "exporter": {
+      "version": 1,
+      "controlSha": "01e30d2b014746e8341e0c56171ab18e7d26efe8",
+      "runId": 36260067719,
+      "attempt": 1
+    }
+  },
+  "run": {
+    "key": "gchust/nb3-factory/issues/366/initial",
+    "kind": "initial",
+    "identity": "recorded",
+    "batchKey": null,
+    "caseKey": null,
+    "sampleIndex": null,
+    "sampleKey": null,
+    "task": {
+      "repository": "gchust/nb3-factory",
+      "issue": 366,
+      "buildCommentId": null,
+      "title": "设备售后服务与巡检协同系统"
+    },
+    "case": {
+      "source": "preset",
+      "presetIssueNumber": 158,
+      "capturedAt": "2026-09-26T07:45:58Z",
+      "inputHash": "57e1930735b86420bf8e6f9c601263757d747ed945d7cea215b6164796328276",
+      "reviewHash": "25b2c465af00385131ef4dee22e8bd7ad3c7cdcdd3080b40a4fbb13dc846d0ef"
+    }
+  },
+  "revision": 2,
+  "createdAt": "2026-09-26T17:44:30Z",
+  "precedence": {
+    "producer": {
+      "runId": 36242893506,
+      "attempt": 1,
+      "startedAt": "2026-09-26T12:44:53Z"
+    },
+    "executionOrder": 2,
+    "knownLaterExecutions": 0,
+    "chainTerminal": false,
+    "reviewRubric": 0,
+    "reviewState": "not-reviewed",
+    "review": {
+      "kind": null,
+      "at": null,
+      "runId": null,
+      "attempt": null
+    },
+    "qaCoverage": "partial"
+  },
+  "baseline": {
+    "track": "published-template",
+    "application": {
+      "baseRef": "develop",
+      "baseSha": "17ef6d0acc3e27b585aaa880a5d541f1126cdd23",
+      "candidate": {
+        "patchSha256": "0f6ddb3304453bace32d4828df61de37d7f44e92c8a85804eba4c49dc424f623",
+        "headSha": null
+      }
+    },
+    "factory": {
+      "controlSha": "17ef6d0acc3e27b585aaa880a5d541f1126cdd23",
+      "entrySha": "25f772b7b81abde8d8aa4906af91a6efa000b8ba"
+    },
+    "template": {
+      "creatorVersion": "0.1.0-beta.22",
+      "templateVersion": "1.0.0-beta.47"
+    },
+    "dependencies": {
+      "lockfileSha256": "d1006de63184b51223f55abe1ffc0f63fc45852b25efcc59cc38bbc921d06792",
+      "baselineFingerprint": "49553d9f920fb0b81c17cc772887b46fa435e8dd6a19d6604484c54df1937918",
+      "packages": [
+        {
+          "name": "@nocobase/ai-employee",
+          "version": "0.2.0-beta.8"
+        },
+        {
+          "name": "@nocobase/ai-employee-avatars",
+          "version": "1.0.2"
+        },
+        {
+          "name": "@nocobase/app-cli",
+          "version": "1.0.0-beta.6"
+        },
+        {
+          "name": "@nocobase/app-client",
+          "version": "1.0.0-beta.21"
+        },
+        {
+          "name": "@nocobase/app-plugin-ai-employee",
+          "version": "1.0.0-beta.23"
+        },
+        {
+          "name": "@nocobase/app-plugin-ai-knowledge-base",
+          "version": "0.1.0-beta.9"
+        },
+        {
+          "name": "@nocobase/app-plugin-api-keys",
+          "version": "0.1.0-beta.8"
+        },
+        {
+          "name": "@nocobase/app-plugin-authentication",
+          "version": "1.0.0-beta.24"
+        },
+        {
+          "name": "@nocobase/app-plugin-authorization",
+          "version": "0.2.0-beta.20"
+        },
+        {
+          "name": "@nocobase/app-plugin-authz-default-access",
+          "version": "0.1.0-beta.4"
+        },
+        {
+          "name": "@nocobase/app-plugin-authz-restriction-rules",
+          "version": "0.1.0-beta.3"
+        },
+        {
+          "name": "@nocobase/app-plugin-authz-sharing-rules",
+          "version": "0.1.0-beta.4"
+        },
+        {
+          "name": "@nocobase/app-plugin-database-explorer",
+          "version": "0.1.0-beta.6"
+        },
+        {
+          "name": "@nocobase/app-plugin-file",
+          "version": "0.1.0-beta.15"
+        },
+        {
+          "name": "@nocobase/app-plugin-i18n",
+          "version": "0.1.0-beta.9"
+        },
+        {
+          "name": "@nocobase/app-plugin-mail",
+          "version": "0.1.0-beta.0"
+        },
+        {
+          "name": "@nocobase/app-plugin-notification",
+          "version": "0.1.0-beta.17"
+        },
+        {
+          "name": "@nocobase/app-plugin-notification-in-app",
+          "version": "0.2.0-beta.18"
+        },
+        {
+          "name": "@nocobase/app-plugin-notification-providers",
+          "version": "0.2.0-beta.7"
+        },
+        {
+          "name": "@nocobase/app-plugin-scheduler",
+          "version": "0.1.0-beta.9"
+        },
+        {
+          "name": "@nocobase/app-plugin-users",
+          "version": "1.0.0-beta.11"
+        },
+        {
+          "name": "@nocobase/app-plugin-workflow",
+          "version": "1.0.0-beta.28"
+        },
+        {
+          "name": "@nocobase/app-portal-sdk",
+          "version": "1.0.0-beta.3"
+        },
+        {
+          "name": "@nocobase/app-server",
+          "version": "1.0.0-beta.27"
+        },
+        {
+          "name": "@nocobase/app-skills",
+          "version": "0.1.0-beta.16"
+        },
+        {
+          "name": "@nocobase/app-websocket",
+          "version": "0.0.1"
+        },
+        {
+          "name": "@nocobase/authorization",
+          "version": "0.1.0-beta.9"
+        },
+        {
+          "name": "@nocobase/caching",
+          "version": "0.1.0-beta.2"
+        },
+        {
+          "name": "@nocobase/config",
+          "version": "0.1.0-beta.1"
+        },
+        {
+          "name": "@nocobase/cron",
+          "version": "0.1.0"
+        },
+        {
+          "name": "@nocobase/db",
+          "version": "1.0.0-beta.16"
+        },
+        {
+          "name": "@nocobase/db-sqlite",
+          "version": "0.1.0-beta.2"
+        },
+        {
+          "name": "@nocobase/dev-config",
+          "version": "0.1.0-beta.13"
+        },
+        {
+          "name": "@nocobase/drive",
+          "version": "0.1.0-beta.4"
+        },
+        {
+          "name": "@nocobase/i18n",
+          "version": "1.0.0-beta.4"
+        },
+        {
+          "name": "@nocobase/logging",
+          "version": "0.1.0-beta.6"
+        },
+        {
+          "name": "@nocobase/queue",
+          "version": "0.1.0-beta.7"
+        },
+        {
+          "name": "@nocobase/repository-input",
+          "version": "0.1.0-beta.1"
+        },
+        {
+          "name": "@nocobase/service-provider",
+          "version": "0.0.2-beta.1"
+        },
+        {
+          "name": "@nocobase/session",
+          "version": "0.1.0-beta.2"
+        },
+        {
+          "name": "@nocobase/snowflake",
+          "version": "1.0.0-beta.3"
+        }
+      ]
+    },
+    "skills": {
+      "fingerprint": "3d92f7f4cba5dbc8e41bed28e89c00f8986d0e303428fc274117fb1adcc0a546",
+      "files": 107
+    },
+    "sourceSnapshot": null,
+    "inputs": {
+      "taskInputHash": "57e1930735b86420bf8e6f9c601263757d747ed945d7cea215b6164796328276",
+      "pipelineInputHash": "aa7df0545aa1494b06d01938ed34cf05e909b8d67cf662da305b090fd13a8f0c",
+      "reviewHash": "25b2c465af00385131ef4dee22e8bd7ad3c7cdcdd3080b40a4fbb13dc846d0ef",
+      "reviewCriteriaHash": "25b2c465af00385131ef4dee22e8bd7ad3c7cdcdd3080b40a4fbb13dc846d0ef",
+      "prompts": [
+        {
+          "phase": "repair",
+          "path": "agent-repair-4.jsonl.invocation.json",
+          "sha256": "1aaaea7f65e89606565abd0cc03ecb31cdfb774b78436feae660a5f82454c161"
+        },
+        {
+          "phase": "repair",
+          "path": "agent-repair-5.jsonl.invocation.json",
+          "sha256": "9e9027778671253ac40e57c8ce397670d9be4de88a0a1020aded542338ef8b54"
+        },
+        {
+          "phase": "qa",
+          "path": "verify-5/browser-acceptance/agent-browser-acceptance.jsonl.invocation.json",
+          "sha256": "d1e1112c51408d0241d53f8859d10baf8868e26d906ffc7edecbc19b26dc2917"
+        },
+        {
+          "phase": "qa-focused",
+          "path": "verify-5/browser-focused/agent-browser-acceptance.jsonl.invocation.json",
+          "sha256": "c10ec20051689efc2598ebc478dacc2830733bff8b5a74e6df7960a22e383bfa"
+        },
+        {
+          "phase": "qa",
+          "path": "verify-6/browser-acceptance/agent-browser-acceptance.jsonl.invocation.json",
+          "sha256": "d1e1112c51408d0241d53f8859d10baf8868e26d906ffc7edecbc19b26dc2917"
+        },
+        {
+          "phase": "qa-focused",
+          "path": "verify-6/browser-focused/agent-browser-acceptance.jsonl.invocation.json",
+          "sha256": "a91a5aba108da6aeee6c926b08546b2dfdcdd8e7d873763c67e28cddbcd37fcd"
+        }
+      ]
+    },
+    "rubric": null,
+    "agent": {
+      "engine": "pi",
+      "model": "deepseek-v4.1-flash",
+      "version": "0.86.1",
+      "buildReviewMode": "full",
+      "configuration": {
+        "fingerprints": [
+          "13b51ba5c1f88ff0ab747ba3d232f77dfad5a813acbcfc23f91e9a3dd17cc530"
+        ],
+        "complete": false
+      }
+    },
+    "environment": {
+      "browserFixturesSha256": "3b527d18aa2f6d58fdfea5cdd916631ea1ee3425abeba09bb1f961f2128c554b",
+      "browserPreflight": "passed"
+    }
+  },
+  "executions": [
+    {
+      "key": "run/36227767192/attempt/1",
+      "kind": "implementation",
+      "order": 1,
+      "workflow": "code-agent-task",
+      "runId": 36227767192,
+      "attempt": 1,
+      "event": "issues",
+      "previousRunId": null,
+      "conclusion": "handoff",
+      "startedAt": "2026-09-26T07:45:48Z",
+      "endedAt": "2026-09-26T12:44:55Z",
+      "jobSeconds": 17943,
+      "controlSha": "17ef6d0acc3e27b585aaa880a5d541f1126cdd23",
+      "patchSha256": "8338c619b93bedf5555bbc01f342ecbe792630758deb91c0e626c9ec4ec27a32",
+      "source": "usage-receipt"
+    },
+    {
+      "key": "run/36242893506/attempt/1",
+      "kind": "continuation",
+      "order": 2,
+      "workflow": "code-agent-task",
+      "runId": 36242893506,
+      "attempt": 1,
+      "event": "repository_dispatch",
+      "previousRunId": 36227767192,
+      "conclusion": "handoff",
+      "startedAt": "2026-09-26T12:44:53Z",
+      "endedAt": "2026-09-26T17:43:52Z",
+      "jobSeconds": 17918,
+      "controlSha": "17ef6d0acc3e27b585aaa880a5d541f1126cdd23",
+      "patchSha256": "0f6ddb3304453bace32d4828df61de37d7f44e92c8a85804eba4c49dc424f623",
+      "source": "usage-receipt"
+    }
+  ],
+  "outcome": {
+    "execution": "running",
+    "acceptance": "failed",
+    "delivery": "not-published",
+    "pullRequest": null,
+    "detail": "已保存 Handoff，执行链仍在继续；不是终态。"
+  },
+  "qa": {
+    "coverage": "partial",
+    "rounds": [
+      {
+        "round": 5,
+        "executionKey": "run/36242893506/attempt/1",
+        "scope": "full",
+        "passed": false,
+        "source": "verify-5/browser-acceptance/report.json",
+        "checks": [
+          {
+            "id": "B01",
+            "criterion": "以主管、华东工程师、华南工程师、协作工程师、观察员分别登录，验证各自入口及允许/禁止的业务操作；角色切换不保留前一账号的权限。",
+            "status": "passed",
+            "evidence": []
+          },
+          {
+            "id": "B02",
+            "criterion": "新增客户和设备、编辑后刷新，验证值回填与保存；重复设备编号、无效客户设备关联有清晰反馈。",
+            "status": "passed",
+            "evidence": []
+          },
+          {
+            "id": "B03",
+            "criterion": "搜索、区域/状态筛选、分页、详情刷新和返回列表正常，结果不能混入无权访问的记录。",
+            "status": "passed",
+            "evidence": []
+          },
+          {
+            "id": "B04",
+            "criterion": "按草稿、提交、分派、处理、待确认、退回、再次处理、关闭跑通一张工单；验证转派/取消原因和关闭后的限制。",
+            "status": "passed",
+            "evidence": []
+          },
+          {
+            "id": "B05",
+            "criterion": "快速重复提交/关闭同一工单不产生重复业务结果；不能跳过必要状态直接关闭。",
+            "status": "passed",
+            "evidence": []
+          },
+          {
+            "id": "B06",
+            "criterion": "实际上传 PNG、PDF、DOCX、XLSX、PPTX 小型合法文件并保存业务关联；逐格式检查显示的内容而非文件名，刷新后重新预览、下载；损坏或不支持的文件给出失败提示。文件测试样例由测试准备生成或提供，不能把浏览器 QA 自行生成文件当成浏览器操作。",
+            "status": "passed",
+            "evidence": []
+          },
+          {
+            "id": "B07",
+            "criterion": "用无工单访问权的普通用户尝试打开工单及其附件，不能显示内容；观察员看不到内部成本字段且不能编辑。",
+            "status": "passed",
+            "evidence": []
+          },
+          {
+            "id": "B08",
+            "criterion": "默认知识可读范围、指定工单跨区分享、分享撤销、保密限制分别生效；分享不能自动授予原本没有的操作。",
+            "status": "failed",
+            "evidence": []
+          },
+          {
+            "id": "B09",
+            "criterion": "分派后收件人消息中心出现对应持久消息，可跳转、已读/未读、删除；刷新/重新登录后状态正确，其他用户看不到；断开再恢复连接后可补齐消息。",
+            "status": "passed",
+            "evidence": []
+          },
+          {
+            "id": "B10",
+            "criterion": "保存成功、必填校验和一次真实失败都有正确的即时反馈，失败后未保存内容可恢复，不以 toast 冒充站内信。",
+            "status": "passed",
+            "evidence": []
+          },
+          {
+            "id": "B11",
+            "criterion": "从自动受理的执行记录查看步骤与实际工单结果；失败场景保留失败原因，恢复不删除旧记录或重复通知。",
+            "status": "passed",
+            "evidence": []
+          },
+          {
+            "id": "B12",
+            "criterion": "管理员查看巡检/超期计划，使用测试环境提供的短周期或受控触发观察实际执行；执行结束时业务结果一致，重复执行不重复创建当天巡检；停用后不再产生新任务。",
+            "status": "failed",
+            "evidence": []
+          },
+          {
+            "id": "B13",
+            "criterion": "看板数值与当前用户能看到的工单一致，状态变更和筛选后更新；不同岗位不出现越权统计。",
+            "status": "passed",
+            "evidence": []
+          },
+          {
+            "id": "B14",
+            "criterion": "管理员创建、停用、重新启用测试用户并维护岗位；停用后的原会话不可继续使用，其他业务账户不受影响。只读业务管理员可查看数据结构，但不能改表。",
+            "status": "passed",
+            "evidence": []
+          },
+          {
+            "id": "B15",
+            "criterion": "切换中英文，逐页检查导航、字段、弹窗、文件组件、消息及错误反馈；刷新/直接地址访问正常，不能只有中文静态页面。",
+            "status": "passed",
+            "evidence": []
+          },
+          {
+            "id": "B16",
+            "criterion": "服务助手未配置时准确提示且手工流程正常；配置测试模型的扩展轮次才验证真实问答、上下文范围、建议草稿、确认/拒绝和对话恢复。外部通知同理：没有测试服务标为扩展场景未执行，不声称实投成功。\n\nAPI 密钥的 HTTP 调用、服务端越权/幂等、代码边界、安装引导和 Hub 发布属于独立集成/模块评审，不将它们冒充浏览器截图验收。测试角色账号可通过管理员 UI 创建，统一使用本轮测试密码配置；测试准备缺失、基础环境失败与真实业务缺陷分别报告。",
+            "status": "passed",
+            "evidence": []
+          }
+        ]
+      },
+      {
+        "round": 5,
+        "executionKey": "run/36242893506/attempt/1",
+        "scope": "focused",
+        "passed": true,
+        "source": "verify-5/browser-focused/report.json",
+        "checks": [
+          {
+            "id": "B02",
+            "criterion": "新增客户和设备、编辑后刷新，验证值回填与保存；重复设备编号、无效客户设备关联有清晰反馈。",
+            "status": "passed",
+            "evidence": []
+          },
+          {
+            "id": "B15",
+            "criterion": "切换中英文，逐页检查导航、字段、弹窗、文件组件、消息及错误反馈；刷新/直接地址访问正常，不能只有中文静态页面。",
+            "status": "passed",
+            "evidence": []
+          }
+        ]
+      },
+      {
+        "round": 6,
+        "executionKey": "run/36242893506/attempt/1",
+        "scope": "full",
+        "passed": false,
+        "source": "verify-6/browser-acceptance/report.json",
+        "checks": [
+          {
+            "id": "B01",
+            "criterion": "以主管、华东工程师、华南工程师、协作工程师、观察员分别登录，验证各自入口及允许/禁止的业务操作；角色切换不保留前一账号的权限。",
+            "status": "passed",
+            "evidence": [
+              "qa/6/east-engineer-orders-empty.png",
+              "qa/6/order7-assigned-to-east.png",
+              "qa/6/east-engineer-dashboard-updated.png"
+            ]
+          },
+          {
+            "id": "B02",
+            "criterion": "新增客户和设备、编辑后刷新，验证值回填与保存；重复设备编号、无效客户设备关联有清晰反馈。",
+            "status": "passed",
+            "evidence": [
+              "qa/6/device-created-success.png",
+              "qa/6/device-form-validation-recover.png",
+              "qa/6/dispatcher-device-duplicate-code.png"
+            ]
+          },
+          {
+            "id": "B03",
+            "criterion": "搜索、区域/状态筛选、分页、详情刷新和返回列表正常，结果不能混入无权访问的记录。",
+            "status": "failed",
+            "evidence": [
+              "qa/6/supervisor-order-detail-0011.png",
+              "qa/6/supervisor-dashboard.png"
+            ]
+          },
+          {
+            "id": "B04",
+            "criterion": "按草稿、提交、分派、处理、待确认、退回、再次处理、关闭跑通一张工单；验证转派/取消原因和关闭后的限制。",
+            "status": "passed",
+            "evidence": [
+              "qa/6/engineer-order-0016-pending-confirmation.png",
+              "qa/6/order-0016-returned.png",
+              "qa/6/order-0016-closed.png"
+            ]
+          },
+          {
+            "id": "B05",
+            "criterion": "快速重复提交/关闭同一工单不产生重复业务结果；不能跳过必要状态直接关闭。",
+            "status": "passed",
+            "evidence": [
+              "qa/6/b05-single-order-after-double-create.png",
+              "qa/6/order-0016-closed.png"
+            ]
+          },
+          {
+            "id": "B06",
+            "criterion": "实际上传 PNG、PDF、DOCX、XLSX、PPTX 小型合法文件并保存业务关联；逐格式检查显示的内容而非文件名，刷新后重新预览、下载；损坏或不支持的文件给出失败提示。文件测试样例由测试准备生成或提供，不能把浏览器 QA 自行生成文件当成浏览器操作。",
+            "status": "failed",
+            "evidence": [
+              "qa/6/order-19-attachments-uploaded.png",
+              "qa/6/preview-docx-content.png",
+              "qa/6/preview-pptx-content.png",
+              "qa/6/preview-xlsx-unable-to-render.png",
+              "qa/6/upload-corrupt-unsupported-feedback.png"
+            ]
+          },
+          {
+            "id": "B07",
+            "criterion": "用无工单访问权的普通用户尝试打开工单及其附件，不能显示内容；观察员看不到内部成本字段且不能编辑。",
+            "status": "passed",
+            "evidence": [
+              "qa/6/observer-order-0016-no-internal-cost.png",
+              "qa/6/observer-create-denied.png"
+            ]
+          },
+          {
+            "id": "B08",
+            "criterion": "默认知识可读范围、指定工单跨区分享、分享撤销、保密限制分别生效；分享不能自动授予原本没有的操作。",
+            "status": "passed",
+            "evidence": [
+              "qa/6/collaborator-orders-list.png",
+              "qa/6/collaborator-confidential-denied.png",
+              "qa/6/collaborator-orders-after-share.png",
+              "qa/6/collaboration-revoked.png",
+              "qa/6/confidential-order-20-collab-granted.png"
+            ]
+          },
+          {
+            "id": "B09",
+            "criterion": "分派后收件人消息中心出现对应持久消息，可跳转、已读/未读、删除；刷新/重新登录后状态正确，其他用户看不到；断开再恢复连接后可补齐消息。",
+            "status": "passed",
+            "evidence": [
+              "qa/6/supervisor-messages.png",
+              "qa/6/supervisor-messages-persisted.png",
+              "qa/6/b09-offline-recovery-0022.png"
+            ]
+          },
+          {
+            "id": "B10",
+            "criterion": "保存成功、必填校验和一次真实失败都有正确的即时反馈，失败后未保存内容可恢复，不以 toast 冒充站内信。",
+            "status": "passed",
+            "evidence": [
+              "qa/6/device-created-success.png",
+              "qa/6/device-form-validation-recover.png",
+              "qa/6/dispatcher-device-duplicate-code.png"
+            ]
+          },
+          {
+            "id": "B11",
+            "criterion": "从自动受理的执行记录查看步骤与实际工单结果；失败场景保留失败原因，恢复不删除旧记录或重复通知。",
+            "status": "not-run",
+            "evidence": [
+              "qa/6/order-0016-automatic-history.png"
+            ]
+          },
+          {
+            "id": "B12",
+            "criterion": "管理员查看巡检/超期计划，使用测试环境提供的短周期或受控触发观察实际执行；执行结束时业务结果一致，重复执行不重复创建当天巡检；停用后不再产生新任务。",
+            "status": "passed",
+            "evidence": [
+              "qa/6/admin-inspection-schedules.png",
+              "qa/6/admin-inspection-generate-no-duplicate.png",
+              "qa/6/admin-inspection-schedule-paused-reenabled.png"
+            ]
+          },
+          {
+            "id": "B13",
+            "criterion": "看板数值与当前用户能看到的工单一致，状态变更和筛选后更新；不同岗位不出现越权统计。",
+            "status": "failed",
+            "evidence": [
+              "qa/6/b13-dashboard-total-vs-region-mismatch.png",
+              "qa/6/supervisor-dashboard.png",
+              "qa/6/east-engineer-dashboard-updated.png"
+            ]
+          },
+          {
+            "id": "B14",
+            "criterion": "管理员创建、停用、重新启用测试用户并维护岗位；停用后的原会话不可继续使用，其他业务账户不受影响。只读业务管理员可查看数据结构，但不能改表。",
+            "status": "passed",
+            "evidence": [
+              "qa/6/admin-user-disabled.png",
+              "qa/6/admin-user-reenabled.png",
+              "qa/6/b14-disabled-session-invalidated.png",
+              "qa/6/admin-db-explorer-readonly.png",
+              "qa/6/admin-db-explorer-fields.png"
+            ]
+          },
+          {
+            "id": "B15",
+            "criterion": "切换中英文，逐页检查导航、字段、弹窗、文件组件、消息及错误反馈；刷新/直接地址访问正常，不能只有中文静态页面。",
+            "status": "passed",
+            "evidence": [
+              "qa/6/i18n-chinese-nav.png"
+            ]
+          },
+          {
+            "id": "B16",
+            "criterion": "服务助手未配置时准确提示且手工流程正常；配置测试模型的扩展轮次才验证真实问答、上下文范围、建议草稿、确认/拒绝和对话恢复。外部通知同理：没有测试服务标为扩展场景未执行，不声称实投成功。\n\nAPI 密钥的 HTTP 调用、服务端越权/幂等、代码边界、安装引导和 Hub 发布属于独立集成/模块评审，不将它们冒充浏览器截图验收。测试角色账号可通过管理员 UI 创建，统一使用本轮测试密码配置；测试准备缺失、基础环境失败与真实业务缺陷分别报告。",
+            "status": "passed",
+            "evidence": [
+              "qa/6/b16-assistant-unconfigured.png",
+              "qa/6/b16-assistant-retrieval.png"
+            ]
+          }
+        ]
+      },
+      {
+        "round": 6,
+        "executionKey": "run/36242893506/attempt/1",
+        "scope": "focused",
+        "passed": true,
+        "source": "verify-6/browser-focused/report.json",
+        "checks": [
+          {
+            "id": "B08",
+            "criterion": "默认知识可读范围、指定工单跨区分享、分享撤销、保密限制分别生效；分享不能自动授予原本没有的操作。",
+            "status": "passed",
+            "evidence": []
+          },
+          {
+            "id": "B12",
+            "criterion": "管理员查看巡检/超期计划，使用测试环境提供的短周期或受控触发观察实际执行；执行结束时业务结果一致，重复执行不重复创建当天巡检；停用后不再产生新任务。",
+            "status": "passed",
+            "evidence": []
+          }
+        ]
+      }
+    ],
+    "firstFull": {
+      "status": "unknown",
+      "round": null,
+      "executionKey": null,
+      "basis": "第一轮验证位于更早的执行，本产物未包含，不能推断首轮结果。"
+    },
+    "finalFull": {
+      "status": "failed",
+      "round": 6,
+      "executionKey": "run/36242893506/attempt/1",
+      "basis": "本产物中最后一次实际全量 QA。"
+    },
+    "criteria": [
+      {
+        "id": "B01",
+        "text": "以主管、华东工程师、华南工程师、协作工程师、观察员分别登录，验证各自入口及允许/禁止的业务操作；角色切换不保留前一账号的权限。",
+        "optional": false,
+        "firstFull": "unknown",
+        "finalFull": "passed"
+      },
+      {
+        "id": "B02",
+        "text": "新增客户和设备、编辑后刷新，验证值回填与保存；重复设备编号、无效客户设备关联有清晰反馈。",
+        "optional": false,
+        "firstFull": "unknown",
+        "finalFull": "passed"
+      },
+      {
+        "id": "B03",
+        "text": "搜索、区域/状态筛选、分页、详情刷新和返回列表正常，结果不能混入无权访问的记录。",
+        "optional": false,
+        "firstFull": "unknown",
+        "finalFull": "failed"
+      },
+      {
+        "id": "B04",
+        "text": "按草稿、提交、分派、处理、待确认、退回、再次处理、关闭跑通一张工单；验证转派/取消原因和关闭后的限制。",
+        "optional": false,
+        "firstFull": "unknown",
+        "finalFull": "passed"
+      },
+      {
+        "id": "B05",
+        "text": "快速重复提交/关闭同一工单不产生重复业务结果；不能跳过必要状态直接关闭。",
+        "optional": false,
+        "firstFull": "unknown",
+        "finalFull": "passed"
+      },
+      {
+        "id": "B06",
+        "text": "实际上传 PNG、PDF、DOCX、XLSX、PPTX 小型合法文件并保存业务关联；逐格式检查显示的内容而非文件名，刷新后重新预览、下载；损坏或不支持的文件给出失败提示。文件测试样例由测试准备生成或提供，不能把浏览器 QA 自行生成文件当成浏览器操作。",
+        "optional": false,
+        "firstFull": "unknown",
+        "finalFull": "failed"
+      },
+      {
+        "id": "B07",
+        "text": "用无工单访问权的普通用户尝试打开工单及其附件，不能显示内容；观察员看不到内部成本字段且不能编辑。",
+        "optional": false,
+        "firstFull": "unknown",
+        "finalFull": "passed"
+      },
+      {
+        "id": "B08",
+        "text": "默认知识可读范围、指定工单跨区分享、分享撤销、保密限制分别生效；分享不能自动授予原本没有的操作。",
+        "optional": false,
+        "firstFull": "unknown",
+        "finalFull": "passed"
+      },
+      {
+        "id": "B09",
+        "text": "分派后收件人消息中心出现对应持久消息，可跳转、已读/未读、删除；刷新/重新登录后状态正确，其他用户看不到；断开再恢复连接后可补齐消息。",
+        "optional": false,
+        "firstFull": "unknown",
+        "finalFull": "passed"
+      },
+      {
+        "id": "B10",
+        "text": "保存成功、必填校验和一次真实失败都有正确的即时反馈，失败后未保存内容可恢复，不以 toast 冒充站内信。",
+        "optional": false,
+        "firstFull": "unknown",
+        "finalFull": "passed"
+      },
+      {
+        "id": "B11",
+        "text": "从自动受理的执行记录查看步骤与实际工单结果；失败场景保留失败原因，恢复不删除旧记录或重复通知。",
+        "optional": false,
+        "firstFull": "unknown",
+        "finalFull": "not-run"
+      },
+      {
+        "id": "B12",
+        "text": "管理员查看巡检/超期计划，使用测试环境提供的短周期或受控触发观察实际执行；执行结束时业务结果一致，重复执行不重复创建当天巡检；停用后不再产生新任务。",
+        "optional": false,
+        "firstFull": "unknown",
+        "finalFull": "passed"
+      },
+      {
+        "id": "B13",
+        "text": "看板数值与当前用户能看到的工单一致，状态变更和筛选后更新；不同岗位不出现越权统计。",
+        "optional": false,
+        "firstFull": "unknown",
+        "finalFull": "failed"
+      },
+      {
+        "id": "B14",
+        "text": "管理员创建、停用、重新启用测试用户并维护岗位；停用后的原会话不可继续使用，其他业务账户不受影响。只读业务管理员可查看数据结构，但不能改表。",
+        "optional": false,
+        "firstFull": "unknown",
+        "finalFull": "passed"
+      },
+      {
+        "id": "B15",
+        "text": "切换中英文，逐页检查导航、字段、弹窗、文件组件、消息及错误反馈；刷新/直接地址访问正常，不能只有中文静态页面。",
+        "optional": false,
+        "firstFull": "unknown",
+        "finalFull": "passed"
+      },
+      {
+        "id": "B16",
+        "text": "服务助手未配置时准确提示且手工流程正常；配置测试模型的扩展轮次才验证真实问答、上下文范围、建议草稿、确认/拒绝和对话恢复。外部通知同理：没有测试服务标为扩展场景未执行，不声称实投成功。\n\nAPI 密钥的 HTTP 调用、服务端越权/幂等、代码边界、安装引导和 Hub 发布属于独立集成/模块评审，不将它们冒充浏览器截图验收。测试角色账号可通过管理员 UI 创建，统一使用本轮测试密码配置；测试准备缺失、基础环境失败与真实业务缺陷分别报告。",
+        "optional": false,
+        "firstFull": "unknown",
+        "finalFull": "passed"
+      }
+    ],
+    "firstPassWithoutRepair": "unknown",
+    "counts": {
+      "execution": {
+        "verificationAttempts": 2,
+        "repairAttempts": 2,
+        "source": "repair-summary.json（仅本执行）"
+      },
+      "chain": {
+        "verificationAttempts": 6,
+        "repairAttempts": 5,
+        "source": "pipeline-state.json（跨 Handoff 累计检查点，不再相加）"
+      }
+    },
+    "note": "工厂修复次数不等于 Agent 开发中的全部自测和修正；未记录 Agent 内部试错，不宣称开发全程无错误。"
+  },
+  "reviews": [
+    {
+      "key": "review/36242893506.1/v0-3ccc4bb18823",
+      "role": "original",
+      "selected": true,
+      "state": "not-reviewed",
+      "reason": "本轮没有独立评审记录；未评估不代表通过，也不按零分处理。",
+      "rubric": null,
+      "reviewer": null,
+      "producer": {
+        "runId": null,
+        "attempt": null
+      },
+      "basis": {
+        "inputHash": null,
+        "patchSha256": null,
+        "baseSha": null,
+        "lockfileSha256": null,
+        "reviewCriteriaHash": null,
+        "artifactHash": null
+      },
+      "buildReviewMode": null,
+      "summary": null,
+      "progress": null,
+      "modules": [],
+      "findings": [],
+      "ui": null,
+      "limitations": [],
+      "usageSource": null
+    }
+  ],
+  "health": {
+    "status": "incomplete",
+    "qa": "failed",
+    "requiredChecks": {
+      "status": "passed",
+      "results": []
+    },
+    "review": "not-reviewed"
+  },
+  "processNotes": {
+    "state": "present",
+    "source": "retro.json",
+    "author": "implementer",
+    "independent": false,
+    "summary": "Repair round 2 addressed the browser-QA failures observed in verify-2 for the Chinese device after-sales service and inspection application. Fixes: a missing auth guard caused GET /service-engineers 500; the client referenced 371 service.* translation keys that did not exist (new service-en/service-zh locale modules spread into en-US/zh-CN with compile-time parity); collaborator and observer access rules were corrected server- and client-side (an observer now reads the non-confidential register with laborHours/internalCost masked and no write path, including attachment upload/delete); createOne calls now write timestamps so POST /service-customers and /service-devices no longer 500; order transitions write a createdAt so the history no longer errors; uploads validate size/type/signature and surface the real reason; assistant references JSON is parsed; the dashboard gained region/priority filters plus region and engineer distributions; a scheduler-based recurring inspection/order-overdue provider replaced a private cron manager and the weekly plan frequency was corrected; automatic acceptance now records its steps in the order history with retained failures and idempotent retry; a new seed adds the missing regional/collaborator/observer roles, service teams with a workspace-selectable subject type and inheritance, order collaborations (including a confidential one that stays invisible), the order recovery example and in-box messages. All checks (format, lint, three typechecks, 309 tests) pass; db apply and the seed were validated on a fresh database, and a standalone boot confirmed the three schedules sync, team inheritance resolves without a direct role, and the observer/collaborator/coordinator record scopes behave as intended. Repair round 3 addressed the verify-3 browser-QA defects. Group 1: POST /service-devices no longer writes an explicit null into the NOT NULL service_devices.category column when the form leaves Category blank, so the database default applies and the create succeeds; the values assembly was extracted as deviceCreateValues and covered by tests/logic/service-device-create.test.ts. Group 2: every application Select root now passes items so the closed trigger and form dropdowns render translated labels instead of raw stored values (customer id, running status, order priority/source, and the all/__all__ filter sentinels); the missing service.level.basic value was added to SERVICE_LEVELS and both service locale files; and server-side rejections were moved from hard-coded Chinese to request-locale keys via server/services/errors.ts plus typed server/locales en-US/zh-CN, covered by tests/logic/server-error-locale.test.ts. The relevant self-tests (device-create, server-error-locale, locale-coverage, client-routes), Prettier, ESLint and all three typechecks pass. Repair round 4 addressed the verify-4 browser-QA failures around cross-region knowledge sharing and the inspection execution view. Group 1: migration 202609010007 adds the application-owned knowledge_shares table (articleId, teamId, teamName, region, reason, grantedById, grantedByName, active, revokedAt, timestamps, unique articleId+teamId) and an inspection_plans.timezone column; server/routes/knowledge.ts now resolves the caller's service-team memberships (Caller.teamIds), keeps a restricted article to coordinators, its author and explicitly shared teams, exposes GET /knowledge-share-teams, GET/POST /knowledge-articles/:id/shares and POST .../shares/:shareId/revoke, and returns canShare per row; the knowledge page gained a cross-region share dialog with per-team revoke. Group 2: the inspection page shows each plan's timezone and the plan form edits it, and a new 'Schedules & history' tab reads GET /api/schedules and GET /api/schedules/:id/occurrences (enable/disable via POST) so the schedule name, cron, timezone, enable state, next/last run, run counts and each execution's status/reason/start/finish/result are visible. Seed 202609010008 turns the catch",
+    "blockers": [
+      {
+        "id": "notes/run/36242893506/attempt/1/B1",
+        "phase": "format:check",
+        "title": "Prettier rejected 5 newly written server files",
+        "symptom": "pnpm format:check '!.github/**' reported code style issues in server/routes/attachments.ts, server/routes/inspections.ts, server/routes/service-assistant.ts, server/routes/service-orders.ts and server/services/orders.ts.",
+        "rootCause": "The service-system server files were written without Prettier formatting; the per-file format:auto step in verify.sh only formats the files that stage considered changed, so the aggregate format:check later saw unformatted files.",
+        "resolution": "Ran prettier --write on the affected files (and later on the newly touched files) so pnpm format:check '!.github/**' passes.",
+        "cost": null,
+        "status": "resolved"
+      },
+      {
+        "id": "notes/run/36242893506/attempt/1/B2",
+        "phase": "lint",
+        "title": "eslint no-base-to-string across server routes and services",
+        "symptom": "pnpm lint --ignore-pattern '.github/**' failed with about 102 no-base-to-string errors where String(value) or template interpolation was applied to RepositoryRecord field values.",
+        "rootCause": "RepositoryRecord is Record<string, RepositoryMutationScalarValue>; the value union includes objects and arrays, so String() on it can stringify '[object Object]' and eslint forbids it.",
+        "resolution": "Added a single toText(value: unknown): string helper in server/services/text.ts (null/undefined to '', strings as-is, number/bigint/boolean via String(), Date via toString(), otherwise '') and replaced the flagged stringifications across server routes and services. Verified String() on narrowed primitives is lint-safe.",
+        "cost": null,
+        "status": "resolved"
+      },
+      {
+        "id": "notes/run/36242893506/attempt/1/B3",
+        "phase": "lint",
+        "title": "eslint no-unsafe-* after an earlier eslint --fix removed type assertions",
+        "symptom": "eslint server reported no-unsafe-assignment/member-access/call/return errors, concentrated in server/routes/service-assistant.ts.",
+        "rootCause": "An earlier eslint --fix removed type assertions that were actually load-bearing (for example the shape of app.config.get('ai')), leaving values typed as any that then flowed into property access and calls.",
+        "resolution": "Fixed forward rather than re-running --fix: reintroduced a runtime type guard isLlmServicesConfig for the LLM configuration and kept the surrounding values typed, so the assertions are no longer needed. pnpm lint --ignore-pattern '.github/**' passes.",
+        "cost": null,
+        "status": "resolved"
+      },
+      {
+        "id": "notes/run/36242893506/attempt/1/B4",
+        "phase": "lint",
+        "title": "Client lint errors: unused imports, react-refresh export, non-lazy useState",
+        "symptom": "eslint client database reported unused useServiceFormatters/useMemo/ServiceCustomer imports, a react-refresh/only-export-components error in client/pages/service/ui.tsx, and useState(today()) initializers.",
+        "rootCause": "Leftovers from refactoring plus a hook and component exported from the same module, which react-refresh rejects, plus calling a function during render as a useState initial value.",
+        "resolution": "Removed the unused imports; extracted the ServiceFormatters interface and useServiceFormatters hook into client/pages/service/formatters.ts and updated the seven importing pages; made the inspections useState calls lazy (useState(() => today())). eslint client database passes.",
+        "cost": null,
+        "status": "resolved"
+      },
+      {
+        "id": "notes/run/36242893506/attempt/1/B5",
+        "phase": "lint",
+        "title": "Seed lint errors: unbound-method and no-base-to-string",
+        "symptom": "database/main/seeds/202609010003_sample_data.ts failed lint with unbound-method on a destructured repository and no-base-to-string on seed record fields.",
+        "rootCause": "SeedContext.repository is a method, so destructuring it in the run signature detached it from this; and RepositoryRecord field values may be objects, so String(record.name) is unsafe.",
+        "resolution": "Changed the seed to run(context) and use context.repository(name) plus const { query } = context, and added a local text(value: unknown): string helper for the two stringified seed fields.",
+        "cost": null,
+        "status": "resolved"
+      },
+      {
+        "id": "notes/run/36242893506/attempt/1/B6",
+        "phase": "typecheck",
+        "title": "TS2339 from .catch(() => ({})) fallback unions",
+        "symptom": "tsc -p tsconfig.server.json reported Property 'X' does not exist on type 'Record<string, unknown> | {}' in server/routes/inspections.ts, integrations.ts and service-assistant.ts.",
+        "rootCause": "A fetch JSON parse typed as .json<Record<string, unknown>>() chained with .catch(() => ({})) inferred a union with the empty object literal, so member access on the result was not allowed.",
+        "resolution": "Typed the fallback explicitly with .catch((): Record<string, unknown> => ({})) instead of using an as assertion, which would have tripped no-unnecessary-type-assertion. tsc -p tsconfig.server.json --noEmit passes.",
+        "cost": null,
+        "status": "resolved"
+      },
+      {
+        "id": "notes/run/36242893506/attempt/1/B7",
+        "phase": "test",
+        "title": "Source-loaded seeds could not resolve sibling .js specifiers",
+        "symptom": "tests/logic/app-server.test.ts failed: Cannot find module '/workspace/database/seed-data/permission-sets.js' imported from database/main/seeds/202609010002_permission_sets.ts (and the same for '../../../server/roles.js').",
+        "rootCause": "The seed loader imports an application seed as TypeScript source, but Node type stripping does not rewrite a .js specifier to a sibling .ts file. The seeds were not self-contained: one imported database/seed-data/permission-sets.js and the other imported shared role and order-status constants from server/roles.js.",
+        "resolution": "Made both seeds self-contained by spelling the role keys, page ids, settings targets, user actions and order statuses out locally, then deleted database/seed-data/permission-sets.ts and updated the comment in client/routes.ts. This matches the rule that seeds are applied history and must not import a shared constant that keeps evolving.",
+        "cost": null,
+        "status": "resolved"
+      },
+      {
+        "id": "notes/run/36242893506/attempt/1/B8",
+        "phase": "test",
+        "title": "client-routes test pinned only the home page grant",
+        "symptom": "tests/logic/client-routes.test.ts expected page authorizations to equal [{ name: 'home', authorizedAs: null }] but the application now registers eleven signed-in service pages.",
+        "rootCause": "The test deliberately pins the route names that stored page grants record, so adding application pages is a deliberate data change the expected list must reflect.",
+        "resolution": "Updated the expected list to include the eleven service routes, with service-order-new and service-order-detail inheriting the service-orders page grant. The test passes.",
+        "cost": null,
+        "status": "resolved"
+      },
+      {
+        "id": "notes/run/36242893506/attempt/1/B9",
+        "phase": "build",
+        "title": "Server-only package @nocobase/cron declared in devDependencies",
+        "symptom": "pnpm build failed at 'Verify server dependencies': @nocobase/cron is imported by server code but not in the application's dependencies, so dist/package.json would not install it.",
+        "rootCause": "@nocobase/cron was declared in devDependencies although server/providers/inspections.ts imports it at runtime; dist/package.json is generated from dependencies only, so the deployed server would fail to resolve it.",
+        "resolution": "Moved @nocobase/cron from devDependencies to dependencies in package.json and refreshed pnpm-lock.yaml with pnpm install --no-frozen-lockfile. The build now reports all 27 imported packages reach the deployment, and pnpm build completes.",
+        "cost": null,
+        "status": "resolved"
+      },
+      {
+        "id": "notes/run/36242893506/attempt/1/B10",
+        "phase": "browser-QA",
+        "title": "GET /api/service-engineers answered 500 for every caller",
+        "symptom": "The order assignment and collaboration dialogs could not load engineers; the endpoint returned 500 with a TypeError.",
+        "rootCause": "The /service-engineers route shared the order router but had no auth guard, so the auth context was undefined and resolveCaller threw.",
+        "resolution": "Added router.use on /service-engineers with auth.required() and resolve the caller before querying; it now returns engineers across all engineer roles.",
+        "cost": null,
+        "status": "resolved"
+      },
+      {
+        "id": "notes/run/36242893506/attempt/1/B11",
+        "phase": "browser-QA",
+        "title": "Every service.* UI string rendered as a raw translation key",
+        "symptom": "Pages, badges, dialogs and error feedback showed keys such as service.orders.title instead of text; the language-switch check also failed.",
+        "rootCause": "The application referenced 371 static service.* keys plus interpolated families, but no locale file defined any of them.",
+        "resolution": "Added client/locales/service-en.ts and service-zh.ts (flat dotted keys, 377 each) typed as LocaleResource so Chinese is checked against English at compile time, spread both into en-US.ts and zh-CN.ts, and added navigation.*/roles.* titles; a parity script and the locale tests confirm zero missing or extra keys.",
+        "cost": null,
+        "status": "resolved"
+      },
+      {
+        "id": "notes/run/36242893506/attempt/1/B12",
+        "phase": "browser-QA",
+        "title": "Confidential orders were visible to collaborating engineers",
+        "symptom": "A collaborator could open the confidential emergency order and its attachments.",
+        "rootCause": "listVisibleOrders and canSeeOrder admitted any order the caller collaborated on without excluding confidential ones, and canSeeConfidentialOrder ignored the collaboration set.",
+        "resolution": "listVisibleOrders/canSeeOrder now exclude confidential orders from collaborators, and canSeeConfidentialOrder only admits the assignee or a coordinator.",
+        "cost": null,
+        "status": "resolved"
+      },
+      {
+        "id": "notes/run/36242893506/attempt/1/B13",
+        "phase": "browser-QA",
+        "title": "Observer could read internal cost fields and write business data",
+        "symptom": "The observer account saw laborHours/internalCost and could attempt writes.",
+        "rootCause": "No field-level masking or write guard distinguished an observer from an engineer.",
+        "resolution": "Added isObserver/canViewInternalFields/canWriteBusiness to server/services/access.ts, masked laborHours/internalCost on list and detail, rejected writes in POST/PATCH/transition, and hid the fields and action buttons in the order detail.",
+        "cost": null,
+        "status": "resolved"
+      },
+      {
+        "id": "notes/run/36242893506/attempt/1/B14",
+        "phase": "browser-QA",
+        "title": "POST /service-customers and /service-devices returned 500",
+        "symptom": "Creating a customer or device failed with a server error.",
+        "rootCause": "The createOne call sites did not write createdAt/updatedAt, which are NOT NULL on both tables.",
+        "resolution": "Both createOne/updateOne handlers now write timestamps; the same fix was applied to knowledge articles and inspection plans.",
+        "cost": null,
+        "status": "resolved"
+      },
+      {
+        "id": "notes/run/36242893506/attempt/1/B15",
+        "phase": "browser-QA",
+        "title": "Order transition reported an error even though it succeeded",
+        "symptom": "The status changed but the request answered with a 500 and the UI showed a failure toast.",
+        "rootCause": "appendOrderLog inserted a null createdAt into serviceOrderLogs.createdAt, which is NOT NULL.",
+        "resolution": "appendOrderLog writes new Date(); a transition now reports success or failure unambiguously.",
+        "cost": null,
+        "status": "resolved"
+      },
+      {
+        "id": "notes/run/36242893506/attempt/1/B16",
+        "phase": "browser-QA",
+        "title": "Unsupported or corrupt uploads were accepted silently",
+        "symptom": "Uploading an executable or a corrupt image reported success and the preview did nothing.",
+        "rootCause": "The upload handler stored whatever it received and did not report a reason to the client.",
+        "resolution": "Added a 20 MB size limit, an extension plus magic-byte allowlist for the supported document/image types, and user-facing Chinese rejection reasons; the client prefers the server message over a generic key.",
+        "cost": null,
+        "status": "resolved"
+      },
+      {
+        "id": "notes/run/36242893506/attempt/1/B17",
+        "phase": "browser-QA",
+        "title": "Assistant message list crashed on stored references JSON",
+        "symptom": "The assistant conversation page failed when a message had references.",
+        "rootCause": "references is stored as a JSON string but was returned unparsed, so the client treated a string as an array.",
+        "resolution": "Added parseReferences in server/routes/service-assistant.ts and mapped stored references into an array on read.",
+        "cost": null,
+        "status": "resolved"
+      },
+      {
+        "id": "notes/run/36242893506/attempt/1/B18",
+        "phase": "browser-QA",
+        "title": "Dashboard had no region filter and no region/engineer distribution",
+        "symptom": "QA could not filter the dashboard by region and saw no per-region or per-engineer workload.",
+        "rootCause": "/dashboard/summary ignored filters and returned only metric totals.",
+        "resolution": "The summary endpoint now applies region/status/priority and returns regions, byRegion and byEngineer; the page renders the filter controls and the distributions.",
+        "cost": null,
+        "status": "resolved"
+      },
+      {
+        "id": "notes/run/36242893506/attempt/1/B19",
+        "phase": "browser-QA",
+        "title": "Recurring inspection and overdue-order checks were invisible and the weekly plan ran daily",
+        "symptom": "The schedule administration page was empty, no order-overdue check existed, and the weekly inspection route was configured as daily.",
+        "rootCause": "The work ran from a private cron manager the UI could not see, there was no overdue-order task, and the sample plan was seeded with frequency daily.",
+        "resolution": "Replaced the cron manager with Scheduler targets (app.inspection.run, app.order.overdue) and three defineSchedule entries with Asia/Shanghai cron, added server/services/overdue.ts with notifyOverdueOrders, taught generateInspectionTasks to honor daily/weekly/monthly, and corrected the seeded plan frequencies in the new seed.",
+        "cost": null,
+        "status": "resolved"
+      },
+      {
+        "id": "notes/run/36242893506/attempt/1/B20",
+        "phase": "browser-QA",
+        "title": "Automatic acceptance left no execution record",
+        "symptom": "The order detail history showed no automatic-acceptance steps, no failure reason and no recovery record.",
+        "rootCause": "Order creation wrote a single create log and performed no recorded acceptance workflow.",
+        "resolution": "Added server/services/acceptance.ts, called from POST /service-orders and from a coordinator-only POST /service-orders/:id/retry-acceptance: three steps (registration, handling path, notification) are appended to serviceOrderLogs with result or failure reason, retry appends rather than rewrites, and the notice keeps a stable idempotency key so nobody is told twice. The new seed backfills the steps and demonstrates a retained failure followed by recovery on SO-2026-0005.",
+        "cost": null,
+        "status": "resolved"
+      },
+      {
+        "id": "notes/run/36242893506/attempt/1/B21",
+        "phase": "browser-QA",
+        "title": "The message center was empty and the regional/observer roles had no accounts",
+        "symptom": "No in-box messages existed and there was no way to sign in as an east/south engineer, collaborator or observer, nor to demonstrate team-inherited access.",
+        "rootCause": "The first sample seed created only the five original roles and no team infrastructure or messages.",
+        "resolution": "Added migration 202609010005_create_service_teams and server/providers/service-teams.ts registering a service-team authorization subject, plus seed 202609010006_service_repairs.ts creating the four new permission sets, two teams with inherited service-engineer grants and memberships, four demo accounts, in-box messages, corrected plan frequencies and the acceptance history.",
+        "cost": null,
+        "status": "resolved"
+      },
+      {
+        "id": "notes/run/36242893506/attempt/1/B22",
+        "phase": "browser-QA",
+        "title": "Observer saw no orders at all, so read-only masking could not be observed",
+        "symptom": "Logging in as the observer returned an empty order list and every order detail was forbidden, so the criterion that internal fields are hidden and writes refused had no visible record to check.",
+        "rootCause": "listVisibleOrders and canSeeOrder handled coordinator, customer and engineer/collaborator scopes but not an observer, so an observer fell through to the assignee-only branch and matched nothing.",
+        "resolution": "Added an observer branch to listVisibleOrders and canSeeOrder that reads the non-confidential register (confidential orders stay hidden, matching the observer’s field-level restriction) and added a canWriteBusiness guard to the attachment upload/delete helper so an observer cannot write. The visible list and detail still run through maskInternalFields. Verified live: the observer lists 16 non-confidential orders with null internalCost/laborHours while an admin sees the values, cannot open a confidential order (403), cannot upload an attachment (403), and can read attachment metadata.",
+        "cost": null,
+        "status": "resolved"
+      },
+      {
+        "id": "notes/run/36242893506/attempt/1/B23",
+        "phase": "browser-QA",
+        "title": "A service team was not selectable when configuring permissions",
+        "symptom": "The service-team subject carried an inheritance rule but no administration entry, so an administrator could not pick a team when assigning a permission set in the workspace.",
+        "rootCause": "The AuthorizationSubjectType administration.selection contract was not implemented in ServiceTeamsProvider, so the subject resolved for authorization but was invisible to the configuration UI.",
+        "resolution": "Added an administration entry with a localized title and a collection selection (list with search/pagination and resolve) backed by serviceTeams. Verified live through GET /api/authz/inspector/subjects/service-team, which lists both teams with code and region.",
+        "cost": null,
+        "status": "resolved"
+      },
+      {
+        "id": "notes/run/36242893506/attempt/1/B24",
+        "phase": "browser-QA",
+        "title": "No concrete collaborator hand-over existed in the sample data",
+        "symptom": "The collaborator account saw zero records, so \"a collaborator participates only in records explicitly handed over\" and the confidential counter-example had nothing to demonstrate before QA performed a share.",
+        "rootCause": "The original sample seed granted a confidential order to the base engineer, not to the collaborator account created later, and the repair seed added no collaboration rows.",
+        "resolution": "Seed 202609010006_service_repairs now hands over SO-2026-0001 (non-confidential) to the collaborator and, on purpose, also shares the confidential SO-2026-0004 to demonstrate that sharing never reveals it, plus a matching in-box message. Verified on a fresh database and live: the collaborator lists exactly SO-2026-0001, gets 403 on SO-2026-0004, and the direct and team-inherited grants resolve independently (deleting the direct grant left the inherited engineer pages intact).",
+        "cost": null,
+        "status": "resolved"
+      },
+      {
+        "id": "notes/run/36242893506/attempt/1/B25",
+        "phase": "browser-QA",
+        "title": "POST /service-devices returned 500 because a blank category was written as null",
+        "symptom": "Creating a device failed with a server error whenever the Category field was left blank; editing an existing device still worked.",
+        "rootCause": "service_devices.category is NOT NULL with a database default ('通用设备'). The create handler always included a category key, writing null/undefined when the form omitted it, so SQLite rejected the insert with a NOT NULL constraint failure and the database default never applied.",
+        "resolution": "Extracted deviceCreateValues(body, customer) in server/routes/service-data.ts, which sets category only when a non-blank string is supplied and otherwise omits the column so the default applies. Confirmed on a copy of storage/database.sqlite that an explicit NULL insert fails (NOT NULL constraint failed: service_devices.category, exit 19) while omitting the column succeeds with the default; added tests/logic/service-device-create.test.ts for the blank, supplied and required-field cases.",
+        "cost": null,
+        "status": "resolved"
+      },
+      {
+        "id": "notes/run/36242893506/attempt/1/B26",
+        "phase": "browser-QA",
+        "title": "Select controls rendered raw stored values instead of labels",
+        "symptom": "The device form's Customer showed the numeric id and Status showed 'running'; the order form's Priority showed 'normal' and Source 'phone'; the dashboard filters showed 'all'/'__all__'.",
+        "rootCause": "The Base UI Select root renders SelectValue from its items prop. Application Selects passed only children, so the closed trigger fell back to the stored value rather than the translated label.",
+        "resolution": "Added items={[{ value, label }]} to every application Select root (29 across client/pages and client/components/data-table-pagination.tsx), with labels from the service locale; shared option arrays where no name collision and inline arrays inside dialogs where shared consts would collide. A scan of client/pages and client/components reports 29 Select roots and 0 missing items.",
+        "cost": null,
+        "status": "resolved"
+      },
+      {
+        "id": "notes/run/36242893506/attempt/1/B27",
+        "phase": "browser-QA",
+        "title": "Customer 服务等级 showed the raw key service.level.basic",
+        "symptom": "Customer C-1006 rendered the literal key service.level.basic in the 服务等级 column and the customer form dropdown; the other levels rendered normally.",
+        "rootCause": "SERVICE_LEVELS omitted 'basic' while stored/seed data contains it, and neither service locale file defined the key, so t() fell back to the key name.",
+        "resolution": "Added 'basic' to SERVICE_LEVELS in client/pages/service/types.ts and 'service.level.basic' (Basic / 基础) to client/locales/service-en.ts and service-zh.ts; the locale files are typed against each other so the two stay in parity.",
+        "cost": null,
+        "status": "resolved"
+      },
+      {
+        "id": "notes/run/36242893506/attempt/1/B28",
+        "phase": "browser-QA",
+        "title": "Server rejections were hard-coded Chinese, so the English UI showed Chinese",
+        "symptom": "In the English interface a duplicate customer code reported 客户编码已存在。; every other rejected business write had the same problem.",
+        "rootCause": "Business routes returned literal Chinese sentences instead of using the request locale. The client already prefers the server message field, so the Chinese text reached the English page.",
+        "resolution": "Added server/services/errors.ts (errorMessage/badRequest/forbidden/notFound/conflict built on getRequestTranslator from @nocobase/i18n/server), moved all ~31 rejections across the eight business routers behind semantic keys under an errors group, and provided typed server/locales/en-US.ts and zh-CN.ts (canonical English with a compile-checked Chinese shape). Added tests/logic/server-error-locale.test.ts covering language selection, parameter interpolation and the order-status labels used by the transition message.",
+        "cost": null,
+        "status": "resolved"
+      },
+      {
+        "id": "notes/run/36242893506/attempt/1/B29",
+        "phase": "browser-QA",
+        "title": "Seeded service accounts could not sign in on the running build",
+        "symptom": "service.admin@example.com with the seeded password Nb3@2026 returned INVALID_EMAIL_OR_PASSWORD (later 429 Too many requests); only admin@nocobase.com / admin123 worked, so dispatcher-role reproduction through the UI was not possible.",
+        "rootCause": "The running server serves a stale dist build and/or the demo credential was not present in this database's account table; the device-create root cause was therefore confirmed against the schema and a database copy rather than through the live UI.",
+        "resolution": "Confirmed. Verified the Group 1 root cause directly on a copy of storage/database.sqlite. Re-check the demo credential on a fresh database/rebuild when the factory runs QA; the pre-existing server process on port 13000 was left untouched.",
+        "cost": null,
+        "status": "unknown"
+      },
+      {
+        "id": "notes/run/36242893506/attempt/1/B30",
+        "phase": "browser-QA",
+        "title": "Cross-region knowledge sharing absent and the inspection execution view incomplete",
+        "symptom": "DB Explorer showed only orderCollaborations with no knowledge share table or region/recipient fields, so cross-region share and revoke could not be demonstrated; the inspection plans tab had no timezone and the page had no execution history, while task generation returned 'Generated 0 task(s).' and a newly created device produced no task.",
+        "rootCause": "No application-owned share table or route existed, so a restricted article had no per-team grant and Caller carried no team membership; the inspection plan had no timezone column. Separately, seed 202609010006 had set the unrestricted catch-all plan 华东区域通用设备周巡检 to weekly, so a device whose category matched neither of the daily category plans produced no task on non-Monday days.",
+        "resolution": "Added migration 202609010007 (knowledgeShares with region/recipient/grant columns plus inspection_plans.timezone) and seed 202609010008 (catch-all plan renamed to 日巡检 and set daily, plan timezone backfill, page:scheduler.schedules access plus settings:scheduler.schedules read granted to every set reaching the inspection page, one worked ST-SOUTH share with reason, corrected in-app notice). Extended server/services/access.ts to resolve service-team memberships, rewrote server/routes/knowledge.ts with team-scoped visibility and share/revoke endpoints, extracted canReadArticle/groupShares into server/services/knowledge.ts, exported planDueOn, and added the knowledge share dialog plus the inspections timezone field and Schedules & history tab. Covered by tests/logic/knowledge-sharing.test.ts and tests/logic/inspection-schedule.test.ts; all three typechecks, Prettier, ESLint on the touched files and 325 tests pass. Not yet applied to a live database in this session; the next verify run applies migration 007 and seed 008.",
+        "cost": null,
+        "status": "resolved"
+      }
+    ],
+    "improvements": [
+      {
+        "id": "notes/run/36242893506/attempt/1/I1",
+        "category": "verification",
+        "title": "Verify script short-circuits after the first failing stage",
+        "detail": "The reported failure was Prettier formatting on five files, but format:check runs early in .github/scripts/verify.sh, so lint, typecheck, test and build never ran in the failing job. Only after fixing formatting did the real failures surface, which made a one-line-looking repair a five-stage repair.",
+        "suggestedChange": "Run all verification stages and report every failure in one pass (or run a cheap aggregate smoke stage first), so a repair agent sees the whole failure set instead of discovering it one stage at a time.",
+        "mechanizable": true
+      },
+      {
+        "id": "notes/run/36242893506/attempt/1/I2",
+        "category": "scaffolding",
+        "title": "Catch a server-only dependency in devDependencies before the build",
+        "detail": "@nocobase/cron was imported by server/providers/inspections.ts but listed only in devDependencies. Development and typecheck both succeeded; only the build's 'Verify server dependencies' step caught it, because that is when dist/package.json is generated.",
+        "suggestedChange": "Expose the server-dependency check as its own fast lint-like command and run it during development (for example from typecheck or a pre-commit hook), so the mistake is reported at the edit that introduces it rather than at the end of the pipeline.",
+        "mechanizable": true
+      },
+      {
+        "id": "notes/run/36242893506/attempt/1/I3",
+        "category": "documentation",
+        "title": "Seeds must be self-contained and cannot import sibling source modules",
+        "detail": "Both application seeds imported external modules with .js specifiers; the test suite loads seeds as TypeScript source, where Node type stripping does not rewrite .js to a sibling .ts. This is easy to miss because application server code uses the same .js-in-source convention successfully after compilation.",
+        "suggestedChange": "State explicitly in the seeds/migrations guidance that a seed file must not import any application source module (including role or status constants) and must spell shared values out locally, with the source-loaded test failure as the reason.",
+        "mechanizable": false
+      },
+      {
+        "id": "notes/run/36242893506/attempt/1/I4",
+        "category": "verification",
+        "title": "Browser-QA criteria must be re-checked against the built artifact",
+        "detail": "Several verify-2 findings were already stale: OOXML/PDF attachment preview worked live, and order keyword search was present in source and bundle. Re-verifying each finding against the current build before rewriting code avoids repairing behaviour that already works and focuses effort on the real failures.",
+        "suggestedChange": "Before repair, re-run the exact QA action against the current build and record the observed result; treat only reproduced failures as defects.",
+        "mechanizable": false
+      },
+      {
+        "id": "notes/run/36242893506/attempt/1/I5",
+        "category": "i18n",
+        "title": "A large key set is easier to keep parity-checked in its own module",
+        "detail": "377 service.* keys spread into en-US/zh-CN as two LocaleResource-typed modules made English/Chinese parity a compile error and kept the base locale files small.",
+        "suggestedChange": "For a feature with a large string set, keep its keys in a dedicated LocaleResource-typed module and spread them into the base locale, rather than growing the base file.",
+        "mechanizable": false
+      },
+      {
+        "id": "notes/run/36242893506/attempt/1/I6",
+        "category": "workflow",
+        "title": "Source-managed workflows cannot be enabled without an administrator",
+        "detail": "WorkflowService exposes no enable method and materialized source workflows default to enabled:false, so an automatically firing workflow would require an admin API call that a seed or provider cannot legitimately make. The acceptance flow was therefore implemented as ordinary typed code with its own history records.",
+        "suggestedChange": "When a requirement is to record the steps of an automatic process, prefer application-owned typed code plus audit/history rows over a workflow that cannot be enabled at install time.",
+        "mechanizable": false
+      },
+      {
+        "id": "notes/run/36242893506/attempt/1/I7",
+        "category": "authorization",
+        "title": "A record-scope helper must enumerate every job, not just the restrictive ones",
+        "detail": "The collaborator/engineer scope was written before the observer existed, so the observer fell through to the most restrictive branch and silently saw nothing. The masking and write guards were correct but unobservable, which would have read as a broken page.",
+        "suggestedChange": "When a role is added, add it to every scope list (visibility, field masking, and write) and cover each role with a visible positive and negative case, so a missing entry fails a check instead of producing an empty, plausible-looking result.",
+        "mechanizable": false
+      },
+      {
+        "id": "notes/run/36242893506/attempt/1/I8",
+        "category": "authorization",
+        "title": "A registered subject type is not administrable without a selection",
+        "detail": "Inheritance worked end to end with only resolveFor/filterActive, but the permission workspace could not name a team until administration.selection was added. Runtime correctness and administrative usability are separate obligations of the same registration.",
+        "suggestedChange": "Register every application subject type with both the resolution hooks and an administration selection, and verify the subject appears in the inspector options.",
+        "mechanizable": false
+      },
+      {
+        "id": "notes/run/36242893506/attempt/1/I9",
+        "category": "testing",
+        "title": "Cover the values a create writes against each NOT NULL column",
+        "detail": "The device create 500 was a NOT NULL violation caused by writing an explicit null for a field the form left blank, even though the column has a database default. No test exercised the values a create assembles, so the regression was only visible at runtime.",
+        "suggestedChange": "Assemble a handler's insert/update values in an exported pure function and unit test the absent, blank and supplied cases for every NOT NULL/defaulted column, so a missing field is a test failure rather than a 500.",
+        "mechanizable": true
+      },
+      {
+        "id": "notes/run/36242893506/attempt/1/I10",
+        "category": "frontend",
+        "title": "A Select without items silently shows the stored value",
+        "detail": "Base UI's Select renders its closed trigger from the items prop. Omitting it compiles and typechecks, and only shows up at runtime as an id or enum being displayed, which is easy to miss across many forms and filters.",
+        "suggestedChange": "Wrap the Select primitive so items is required (or so SelectValue falls back to a provided label renderer), and add a repository scan or lint rule that fails when an application Select has no items.",
+        "mechanizable": true
+      },
+      {
+        "id": "notes/run/36242893506/attempt/1/I11",
+        "category": "i18n",
+        "title": "Server-produced text bypasses the client locale system",
+        "detail": "Route handlers returned hard-coded Chinese sentences; the client already preferred the server message, so the user's chosen language was ignored for every rejected write, not only the one defect that was reported.",
+        "suggestedChange": "Give the server its own locale resources and a semantic error-key helper by default, and check in tests that a rejection for each language differs from the key and from the other language.",
+        "mechanizable": true
+      }
+    ],
+    "note": "实现者自述，未经独立核验；不是框架评审结论。"
+  },
+  "metrics": {
+    "usage": {
+      "sources": [
+        {
+          "key": "agent-job:108365038935",
+          "executionKey": "run/36227767192/attempt/1",
+          "scope": "一次 Agent 作业内的实现、修复、QA 与同轮评审调用",
+          "phases": {
+            "implementation": {
+              "input": 572136,
+              "output": 232117,
+              "cacheRead": 31777152,
+              "cacheWrite": 0,
+              "total": 32581405
+            },
+            "repair": {
+              "input": 1160835,
+              "output": 415834,
+              "cacheRead": 74963200,
+              "cacheWrite": 0,
+              "total": 76539869
+            },
+            "qa": {
+              "input": 360588,
+              "output": 183576,
+              "cacheRead": 29112960,
+              "cacheWrite": 0,
+              "total": 29657124
+            },
+            "qaFocused": {
+              "input": 276257,
+              "output": 154921,
+              "cacheRead": 37128192,
+              "cacheWrite": 0,
+              "total": 37559370
+            },
+            "qaReport": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0,
+              "total": 0
+            },
+            "review": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0,
+              "total": 0
+            },
+            "compaction": {
+              "input": 1427671,
+              "output": 178136,
+              "cacheRead": 52736,
+              "cacheWrite": 0,
+              "total": 1658543
+            }
+          },
+          "records": 2419,
+          "missing": 2,
+          "incomplete": 0,
+          "complete": false
+        },
+        {
+          "key": "agent-job:108406719497",
+          "executionKey": "run/36242893506/attempt/1",
+          "scope": "一次 Agent 作业内的实现、修复、QA 与同轮评审调用",
+          "phases": {
+            "implementation": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0,
+              "total": 0
+            },
+            "repair": {
+              "input": 588396,
+              "output": 267205,
+              "cacheRead": 40901120,
+              "cacheWrite": 0,
+              "total": 41756721
+            },
+            "qa": {
+              "input": 648584,
+              "output": 394797,
+              "cacheRead": 76605568,
+              "cacheWrite": 0,
+              "total": 77648949
+            },
+            "qaFocused": {
+              "input": 324064,
+              "output": 124520,
+              "cacheRead": 23135616,
+              "cacheWrite": 0,
+              "total": 23584200
+            },
+            "qaReport": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0,
+              "total": 0
+            },
+            "review": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0,
+              "total": 0
+            },
+            "compaction": {
+              "input": 1053095,
+              "output": 102582,
+              "cacheRead": 0,
+              "cacheWrite": 0,
+              "total": 1155677
+            }
+          },
+          "records": 1980,
+          "missing": 0,
+          "incomplete": 1,
+          "complete": false
+        }
+      ],
+      "totals": {
+        "input": 6411626,
+        "output": 2053688,
+        "cacheRead": 313676544,
+        "cacheWrite": 0,
+        "total": 322141858,
+        "complete": false
+      },
+      "definition": "沿用 task-usage 口径：按唯一来源键（Agent 作业 / 后补评审 Run）去重，不相加已含这些调用的汇总，不把思考 Token 再加到输出；缺失为 null，不等同供应商账单。"
+    },
+    "time": {
+      "executionSeconds": 35861,
+      "missingJobTimes": 0,
+      "endToEndSeconds": 35884,
+      "jobs": [
+        {
+          "id": 108364972524,
+          "name": "prepare",
+          "executionKey": "run/36227767192/attempt/1",
+          "seconds": 25
+        },
+        {
+          "id": 108365038935,
+          "name": "agent",
+          "executionKey": "run/36227767192/attempt/1",
+          "seconds": 17918
+        },
+        {
+          "id": 108406675177,
+          "name": "prepare",
+          "executionKey": "run/36242893506/attempt/1",
+          "seconds": 15
+        },
+        {
+          "id": 108406719497,
+          "name": "agent",
+          "executionKey": "run/36242893506/attempt/1",
+          "seconds": 17903
+        }
+      ],
+      "definition": "executionSeconds 为 prepare / agent / verify-final / publish 唯一作业时长之和，不含排队；endToEndSeconds 含排队及续跑间隔。"
+    },
+    "counts": {
+      "businessBuilds": 1,
+      "executions": 2,
+      "reviewExecutions": 0
+    }
+  },
+  "evidence": [
+    {
+      "id": "qa/6/east-engineer-orders-empty.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/6",
+        "localId": "east-engineer-orders-empty.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-6/browser-acceptance/evidence/east-engineer-orders-empty.png",
+      "lines": null,
+      "sha256": "d853b0e08e60f01903e1720652cafa3c248c09cdf2ac6327481305e40d64944a",
+      "observation": "验收项 B01 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-6/browser-acceptance/east-engineer-orders-empty.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/6/order7-assigned-to-east.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/6",
+        "localId": "order7-assigned-to-east.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-6/browser-acceptance/evidence/order7-assigned-to-east.png",
+      "lines": null,
+      "sha256": "5806b87e8781af125ad8e1daef657be4a998e137f8afab22b4f1c7e96e79a9ba",
+      "observation": "验收项 B01 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-6/browser-acceptance/order7-assigned-to-east.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/6/east-engineer-dashboard-updated.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/6",
+        "localId": "east-engineer-dashboard-updated.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-6/browser-acceptance/evidence/east-engineer-dashboard-updated.png",
+      "lines": null,
+      "sha256": "7d5285f9e22323b66ff98e9250053f91ae3da46f060ca515129c048690ea2f2a",
+      "observation": "验收项 B01 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-6/browser-acceptance/east-engineer-dashboard-updated.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/6/device-created-success.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/6",
+        "localId": "device-created-success.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-6/browser-acceptance/evidence/device-created-success.png",
+      "lines": null,
+      "sha256": "67ce9374460873642536691a866cde71217527ebff27b51b56e12301377dfdb6",
+      "observation": "验收项 B02 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-6/browser-acceptance/device-created-success.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/6/device-form-validation-recover.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/6",
+        "localId": "device-form-validation-recover.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-6/browser-acceptance/evidence/device-form-validation-recover.png",
+      "lines": null,
+      "sha256": "67ce9374460873642536691a866cde71217527ebff27b51b56e12301377dfdb6",
+      "observation": "验收项 B02 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-6/browser-acceptance/device-form-validation-recover.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/6/dispatcher-device-duplicate-code.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/6",
+        "localId": "dispatcher-device-duplicate-code.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-6/browser-acceptance/evidence/dispatcher-device-duplicate-code.png",
+      "lines": null,
+      "sha256": "1da1ea578643f494dd89504cd17e51399b0a2581b74678f69c0558984d3db367",
+      "observation": "验收项 B02 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-6/browser-acceptance/dispatcher-device-duplicate-code.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/6/supervisor-order-detail-0011.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/6",
+        "localId": "supervisor-order-detail-0011.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-6/browser-acceptance/evidence/supervisor-order-detail-0011.png",
+      "lines": null,
+      "sha256": "37451ae20531929972eb23d01146d83e2a09680e4374f89674b1333c785e169c",
+      "observation": "验收项 B03 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-6/browser-acceptance/supervisor-order-detail-0011.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/6/supervisor-dashboard.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/6",
+        "localId": "supervisor-dashboard.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-6/browser-acceptance/evidence/supervisor-dashboard.png",
+      "lines": null,
+      "sha256": "efe42c5b7338eb77ab9f8d7b1d6816afb19c4602e171dbd54042bc323b799ddf",
+      "observation": "验收项 B03 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-6/browser-acceptance/supervisor-dashboard.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/6/engineer-order-0016-pending-confirmation.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/6",
+        "localId": "engineer-order-0016-pending-confirmation.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-6/browser-acceptance/evidence/engineer-order-0016-pending-confirmation.png",
+      "lines": null,
+      "sha256": "154bf270aecf8f3263310fc2cf07622f03ece20a86dda6b32451f01853164be5",
+      "observation": "验收项 B04 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-6/browser-acceptance/engineer-order-0016-pending-confirmation.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/6/order-0016-returned.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/6",
+        "localId": "order-0016-returned.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-6/browser-acceptance/evidence/order-0016-returned.png",
+      "lines": null,
+      "sha256": "2e34d25b00fc57779ab087a32bafe8811377166dff2d556141b59e4ea9d7effe",
+      "observation": "验收项 B04 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-6/browser-acceptance/order-0016-returned.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/6/order-0016-closed.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/6",
+        "localId": "order-0016-closed.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-6/browser-acceptance/evidence/order-0016-closed.png",
+      "lines": null,
+      "sha256": "b057b95a00c59517b8efdafd6663d1549d2b60fb78ad0ace85107d579aad45bb",
+      "observation": "验收项 B04 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-6/browser-acceptance/order-0016-closed.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/6/b05-single-order-after-double-create.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/6",
+        "localId": "b05-single-order-after-double-create.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-6/browser-acceptance/evidence/b05-single-order-after-double-create.png",
+      "lines": null,
+      "sha256": "aedd4aec6f7406b62cac52cf54ec94ebaa2fa992858882fc4e7784fdaacc17e8",
+      "observation": "验收项 B05 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-6/browser-acceptance/b05-single-order-after-double-create.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/6/order-19-attachments-uploaded.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/6",
+        "localId": "order-19-attachments-uploaded.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-6/browser-acceptance/evidence/order-19-attachments-uploaded.png",
+      "lines": null,
+      "sha256": "1b42df044087231d5c6ac1fbc2731d51379a7a24fbbb0bf3b8a6184256b32eb1",
+      "observation": "验收项 B06 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-6/browser-acceptance/order-19-attachments-uploaded.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/6/preview-docx-content.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/6",
+        "localId": "preview-docx-content.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-6/browser-acceptance/evidence/preview-docx-content.png",
+      "lines": null,
+      "sha256": "c29c20a079b09f754cecefe29e06675a26b19cce389706ef7d8ac8d2eb83b79b",
+      "observation": "验收项 B06 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-6/browser-acceptance/preview-docx-content.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/6/preview-pptx-content.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/6",
+        "localId": "preview-pptx-content.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-6/browser-acceptance/evidence/preview-pptx-content.png",
+      "lines": null,
+      "sha256": "6dd0976cfe7939a48c3116304272e9710ed2e9e8fe129b4f27b6029c2e42f24e",
+      "observation": "验收项 B06 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-6/browser-acceptance/preview-pptx-content.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/6/preview-xlsx-unable-to-render.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/6",
+        "localId": "preview-xlsx-unable-to-render.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-6/browser-acceptance/evidence/preview-xlsx-unable-to-render.png",
+      "lines": null,
+      "sha256": "6179376f9382146ca947f3585e2ca30f6d26cbfdd5ea09da4a01cfed5c39bd03",
+      "observation": "验收项 B06 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-6/browser-acceptance/preview-xlsx-unable-to-render.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/6/upload-corrupt-unsupported-feedback.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/6",
+        "localId": "upload-corrupt-unsupported-feedback.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-6/browser-acceptance/evidence/upload-corrupt-unsupported-feedback.png",
+      "lines": null,
+      "sha256": "caff6397f6e9957fca2d5fda5ccaac42095adba351cb4a9dcf885bffb94b3120",
+      "observation": "验收项 B06 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-6/browser-acceptance/upload-corrupt-unsupported-feedback.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/6/observer-order-0016-no-internal-cost.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/6",
+        "localId": "observer-order-0016-no-internal-cost.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-6/browser-acceptance/evidence/observer-order-0016-no-internal-cost.png",
+      "lines": null,
+      "sha256": "d300f2c4c029205fd139f3936a1bdbbd1fd9ff44090e3df1e7349d514c3741f9",
+      "observation": "验收项 B07 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-6/browser-acceptance/observer-order-0016-no-internal-cost.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/6/observer-create-denied.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/6",
+        "localId": "observer-create-denied.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-6/browser-acceptance/evidence/observer-create-denied.png",
+      "lines": null,
+      "sha256": "daf7a2fd9f24f496579a5aac5044f451e3c741043df514fa7093e728bbd25afc",
+      "observation": "验收项 B07 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-6/browser-acceptance/observer-create-denied.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/6/collaborator-orders-list.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/6",
+        "localId": "collaborator-orders-list.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-6/browser-acceptance/evidence/collaborator-orders-list.png",
+      "lines": null,
+      "sha256": "d199354dc2b06fbd038aaf6944a531644ca426ad6497c0019862585ea11d0d47",
+      "observation": "验收项 B08 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-6/browser-acceptance/collaborator-orders-list.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/6/collaborator-confidential-denied.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/6",
+        "localId": "collaborator-confidential-denied.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-6/browser-acceptance/evidence/collaborator-confidential-denied.png",
+      "lines": null,
+      "sha256": "62f7f0e7f09ee860037f96627f6f406357d0d08370b1377c0c2048cc908e8fea",
+      "observation": "验收项 B08 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-6/browser-acceptance/collaborator-confidential-denied.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/6/collaborator-orders-after-share.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/6",
+        "localId": "collaborator-orders-after-share.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-6/browser-acceptance/evidence/collaborator-orders-after-share.png",
+      "lines": null,
+      "sha256": "97849b8eefa321826f45bd13ea7a5fb705831d12bc3f1a7b6705b575e8614585",
+      "observation": "验收项 B08 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-6/browser-acceptance/collaborator-orders-after-share.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/6/collaboration-revoked.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/6",
+        "localId": "collaboration-revoked.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-6/browser-acceptance/evidence/collaboration-revoked.png",
+      "lines": null,
+      "sha256": "f9bda9362bcccc3674df86f4fc69f05213151248dcf54333ffee79edd34fa6f4",
+      "observation": "验收项 B08 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-6/browser-acceptance/collaboration-revoked.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/6/confidential-order-20-collab-granted.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/6",
+        "localId": "confidential-order-20-collab-granted.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-6/browser-acceptance/evidence/confidential-order-20-collab-granted.png",
+      "lines": null,
+      "sha256": "2c607191f6e65797e0ca77e7876ac3822b9115061666f1bdd23ed524f53d3973",
+      "observation": "验收项 B08 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-6/browser-acceptance/confidential-order-20-collab-granted.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/6/supervisor-messages.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/6",
+        "localId": "supervisor-messages.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-6/browser-acceptance/evidence/supervisor-messages.png",
+      "lines": null,
+      "sha256": "e02c83bfaf3179757828fb4f70176b1b4897f73ea6887c8adfd1837960090527",
+      "observation": "验收项 B09 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-6/browser-acceptance/supervisor-messages.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/6/supervisor-messages-persisted.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/6",
+        "localId": "supervisor-messages-persisted.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-6/browser-acceptance/evidence/supervisor-messages-persisted.png",
+      "lines": null,
+      "sha256": "18b88f0decb244437045819cbe4a5790a8285f42bdfaf58a2a34597260ef6c24",
+      "observation": "验收项 B09 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-6/browser-acceptance/supervisor-messages-persisted.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/6/b09-offline-recovery-0022.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/6",
+        "localId": "b09-offline-recovery-0022.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-6/browser-acceptance/evidence/b09-offline-recovery-0022.png",
+      "lines": null,
+      "sha256": "905a552883cdef7c772494cee8f0038582dce495a83fdba790c7c85e3b8e4846",
+      "observation": "验收项 B09 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-6/browser-acceptance/b09-offline-recovery-0022.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/6/order-0016-automatic-history.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/6",
+        "localId": "order-0016-automatic-history.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-6/browser-acceptance/evidence/order-0016-automatic-history.png",
+      "lines": null,
+      "sha256": "4c00fcfc99fbbd7d2a7a5db4cb1efafe4128a41c582fb5ce8e6f9999482c1128",
+      "observation": "验收项 B11 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-6/browser-acceptance/order-0016-automatic-history.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/6/admin-inspection-schedules.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/6",
+        "localId": "admin-inspection-schedules.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-6/browser-acceptance/evidence/admin-inspection-schedules.png",
+      "lines": null,
+      "sha256": "0909fb0ae92bac8bfed8a7ba201cb6412cdc4afac7a9fb07c1cea776d2b45077",
+      "observation": "验收项 B12 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-6/browser-acceptance/admin-inspection-schedules.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/6/admin-inspection-generate-no-duplicate.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/6",
+        "localId": "admin-inspection-generate-no-duplicate.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-6/browser-acceptance/evidence/admin-inspection-generate-no-duplicate.png",
+      "lines": null,
+      "sha256": "3f8a00101733a956a4a04db0dfa5d0df3fbdf0868d5a5429e531bd100571e276",
+      "observation": "验收项 B12 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-6/browser-acceptance/admin-inspection-generate-no-duplicate.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/6/admin-inspection-schedule-paused-reenabled.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/6",
+        "localId": "admin-inspection-schedule-paused-reenabled.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-6/browser-acceptance/evidence/admin-inspection-schedule-paused-reenabled.png",
+      "lines": null,
+      "sha256": "0909fb0ae92bac8bfed8a7ba201cb6412cdc4afac7a9fb07c1cea776d2b45077",
+      "observation": "验收项 B12 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-6/browser-acceptance/admin-inspection-schedule-paused-reenabled.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/6/b13-dashboard-total-vs-region-mismatch.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/6",
+        "localId": "b13-dashboard-total-vs-region-mismatch.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-6/browser-acceptance/evidence/b13-dashboard-total-vs-region-mismatch.png",
+      "lines": null,
+      "sha256": "f32d277c7aa54ae28514a81dcaaa125e85bab3ba2086fb61b3a8892af7afe910",
+      "observation": "验收项 B13 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-6/browser-acceptance/b13-dashboard-total-vs-region-mismatch.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/6/admin-user-disabled.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/6",
+        "localId": "admin-user-disabled.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-6/browser-acceptance/evidence/admin-user-disabled.png",
+      "lines": null,
+      "sha256": "c8af462190b8c9bdb40e0bf939f9ed0749b0e12d5afe20e4a2150c835bba0502",
+      "observation": "验收项 B14 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-6/browser-acceptance/admin-user-disabled.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/6/admin-user-reenabled.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/6",
+        "localId": "admin-user-reenabled.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-6/browser-acceptance/evidence/admin-user-reenabled.png",
+      "lines": null,
+      "sha256": "02378a97b25abd928ef4ccf1c4b4201ac836a70082bd6b72a82dd44a52676ade",
+      "observation": "验收项 B14 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-6/browser-acceptance/admin-user-reenabled.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/6/b14-disabled-session-invalidated.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/6",
+        "localId": "b14-disabled-session-invalidated.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-6/browser-acceptance/evidence/b14-disabled-session-invalidated.png",
+      "lines": null,
+      "sha256": "f54b90bd4fd25d1f3194a1e7c1a20895a056a157561c1540c7f3cbffdb243efc",
+      "observation": "验收项 B14 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-6/browser-acceptance/b14-disabled-session-invalidated.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/6/admin-db-explorer-readonly.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/6",
+        "localId": "admin-db-explorer-readonly.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-6/browser-acceptance/evidence/admin-db-explorer-readonly.png",
+      "lines": null,
+      "sha256": "7ef16f91af470ff30a4f8478168314f2ec991490bbc34c5f3dbbc1dd8e9d0cd5",
+      "observation": "验收项 B14 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-6/browser-acceptance/admin-db-explorer-readonly.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/6/admin-db-explorer-fields.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/6",
+        "localId": "admin-db-explorer-fields.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-6/browser-acceptance/evidence/admin-db-explorer-fields.png",
+      "lines": null,
+      "sha256": "4e888183a57e66011553cb028d9070aea35c1cf9fb6f3b854b2bca21e9c8c07a",
+      "observation": "验收项 B14 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-6/browser-acceptance/admin-db-explorer-fields.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/6/i18n-chinese-nav.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/6",
+        "localId": "i18n-chinese-nav.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-6/browser-acceptance/evidence/i18n-chinese-nav.png",
+      "lines": null,
+      "sha256": "baf9179a0a26252a93490cafafc06e56e2021f78295b9aff1b1025b27956650c",
+      "observation": "验收项 B15 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-6/browser-acceptance/i18n-chinese-nav.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/6/b16-assistant-unconfigured.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/6",
+        "localId": "b16-assistant-unconfigured.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-6/browser-acceptance/evidence/b16-assistant-unconfigured.png",
+      "lines": null,
+      "sha256": "2ee625786580d0457d00b00dca06bbc9aae3528f9b84c7863004001999124017",
+      "observation": "验收项 B16 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-6/browser-acceptance/b16-assistant-unconfigured.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/6/b16-assistant-retrieval.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/6",
+        "localId": "b16-assistant-retrieval.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-6/browser-acceptance/evidence/b16-assistant-retrieval.png",
+      "lines": null,
+      "sha256": "bf16d0f3a9598a1cc77952d4a017eb9a5d928e308dfec850e620bd2096d93790",
+      "observation": "验收项 B16 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-6/browser-acceptance/b16-assistant-retrieval.png",
+      "availability": "attached",
+      "note": null
+    }
+  ],
+  "links": [
+    {
+      "rel": "task-issue",
+      "label": "Issue #366",
+      "url": "https://github.com/gchust/nb3-factory/issues/366",
+      "path": null
+    },
+    {
+      "rel": "run",
+      "label": "Run 36227767192 / attempt 1",
+      "url": "https://github.com/gchust/nb3-factory/actions/runs/36227767192/attempts/1",
+      "path": null
+    },
+    {
+      "rel": "run",
+      "label": "Run 36242893506 / attempt 1",
+      "url": "https://github.com/gchust/nb3-factory/actions/runs/36242893506/attempts/1",
+      "path": null
+    },
+    {
+      "rel": "report-archive",
+      "label": "固定版本 HTML 报告（gh-pages 归档路径）",
+      "url": null,
+      "path": "reports/issues/366/runs/36242893506/attempt-1/index.html"
+    }
+  ],
+  "limitations": [
+    {
+      "code": "first-round-unavailable",
+      "detail": "只取得本执行的验证记录；首轮 QA 标为未知，不冒充整个任务首轮通过。"
+    },
+    {
+      "code": "review-not-run",
+      "detail": "本执行没有独立框架评审；未评估不代表通过，也不按零分处理。"
+    },
+    {
+      "code": "usage-incomplete",
+      "detail": "部分用量未取得或不完整；缺失值为 null，不按零处理。"
+    }
+  ]
+}
