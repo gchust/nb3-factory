@@ -7,7 +7,7 @@ import { createHash } from 'node:crypto';
 import { renderBuildReview } from './build-review.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
-const TEMPLATE_VERSION = 7;
+const TEMPLATE_VERSION = 8;
 const escape = (value) => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const fmt = value => Number.isFinite(value) ? value.toLocaleString('en-US') : '未提供';
 const duration = value => Number.isFinite(value) ? `${Math.floor(value/3600)}:${String(Math.floor(value/60)%60).padStart(2,'0')}:${String(value%60).padStart(2,'0')}` : '未提供';
@@ -69,6 +69,13 @@ function validateFacts(f) {
     }
     if(f.usage.coverageNote!==undefined) text(f.usage.coverageNote,'usage.coverageNote');
     if(f.usage.note!==undefined) text(f.usage.note,'usage.note');
+  }
+  if(f.baseline!==undefined && f.baseline!==null) {
+    const b=f.baseline, optional=(v,where)=>{ if(v!==null) text(v,where); };
+    for(const k of ['template','templateVersion','creatorVersion','lockSha256']) optional(b[k],`baseline.${k}`);
+    if(b.source!==null) { text(b.source?.repository,'baseline.source.repository'); if(!/^[a-f\d]{40}$/.test(b.source.sha)) throw new Error('baseline.source.sha 必须是完整 SHA'); }
+    arr(b.packages,'baseline.packages');
+    for(const p of b.packages) { text(p.name,'baseline.package.name'); optional(p.version,'baseline.package.version'); optional(p.reason,'baseline.package.reason'); }
   }
 }
 function validateNotes(n) {
@@ -188,6 +195,20 @@ function renderUsageDetails(usage) {
   return html;
 }
 
+// The recorded baseline of this run, never the current NocoBase3 release.
+function renderBaselineSummary(b) {
+  if(!b) return '<div class="hero-meta" id="baseline-summary"><span>版本基线：本轮未记录，不推断模板或包版本</span></div>';
+  const code=v=>v?`<code>${escape(v)}</code>`:'未记录';
+  const template=b.templateVersion ? (b.template ? `${b.template}@${b.templateVersion}` : b.templateVersion) : null;
+  const source=b.source ? `<span>源码 <code title="${escape(b.source.sha)}">${escape(b.source.repository)}@${escape(b.source.sha.slice(0,12))}</code></span>` : '';
+  return `<div class="hero-meta" id="baseline-summary"><span>应用模板 ${code(template)}</span><span>生成器 ${code(b.creatorVersion && `@nocobase/create-app@${b.creatorVersion}`)}</span>${source}<a class="text-link" href="#baseline" data-expand="baseline">${b.packages.length ? `${b.packages.length} 个 NocoBase 包版本` : 'NocoBase 包版本未记录'} →</a></div>`;
+}
+function renderBaselineDetails(b) {
+  if(!b) return '';
+  const rows=b.packages.map(p=>`<tr><td class="mono">${escape(p.name)}</td><td class="mono">${escape(p.version || `未记录（${p.reason || '原因未提供'}）`)}</td></tr>`).join('');
+  return `<details class="card raw-record" id="baseline"><summary>版本基线 · 本轮实际安装的 NocoBase 包</summary><div class="subsection-body"><p>安装依赖后、Agent 开始前记录，是本轮搭建实际使用的版本；不代表 NocoBase3 当前最新版本。</p>${rows ? `<div class="table-wrap"><table><thead><tr><th>包</th><th>版本</th></tr></thead><tbody>${rows}</tbody></table></div>` : '<p class="muted">未记录包版本。</p>'}<p class="check-source">锁文件 SHA-256：${escape(b.lockSha256 || '未记录')}</p></div></details>`;
+}
+
 async function imageSource(m, base) {
   if(m.path.includes('\\')) throw new Error('媒体路径必须使用 /');
   const path=await realpath(resolve(base,m.path));
@@ -228,7 +249,7 @@ export async function renderHtml(facts, inputNotes, evidenceRoot) {
   const review=renderBuildReview(f.buildReview);
   const processSummary = retro?.blockers.length || retro?.improvements.length
     ? `<p class="report-banner">实现者过程记录：${retro.blockers.length} 个问题、${retro.improvements.length} 条改进建议。属于实现者自述，不计入独立确认的框架问题数。<a class="text-link" href="#process-notes" data-expand="process-notes">查看已记录的问题与建议 →</a></p>` : '';
-  body+=`<section class="section" id="overview"><div class="hero"><div><div class="eyebrow">NocoBase3 improvement report · ${m.issue} / ${escape(m.snapshotDate)}</div><h1>${escape(m.title)}</h1><p>本次搭建为 NocoBase3 的企业级 Vibe Coding 基础设施带来了哪些问题证据与改进方向？</p><div class="hero-actions"><a class="btn primary" href="#problems">查看问题与改进</a><a class="btn" href="#delivery">查看业务交付</a></div></div></div>${review.overviewHtml}${processSummary}</section>`;
+  body+=`<section class="section" id="overview"><div class="hero"><div><div class="eyebrow">NocoBase3 improvement report · ${m.issue} / ${escape(m.snapshotDate)}</div><h1>${escape(m.title)}</h1><p>本次搭建为 NocoBase3 的企业级 Vibe Coding 基础设施带来了哪些问题证据与改进方向？</p><div class="hero-actions"><a class="btn primary" href="#problems">查看问题与改进</a><a class="btn" href="#delivery">查看业务交付</a></div>${renderBaselineSummary(f.baseline)}</div></div>${review.overviewHtml}${processSummary}</section>`;
   body+=renderRetrospective(f,retro,retroWarning,review);
   body+=review.html;
   body+=`<section class="section" id="delivery">${sectionHead('Business delivery context','业务交付与验收背景',tag(statusLabels[f.delivery.status],f.delivery.status==='failed'?'bad':''))}<p class="section-intro">${escape(notes?.summary || f.delivery.qaSummary || '本轮未提供业务说明，请查看状态与已采集证据。')}</p><div class="hero-actions">${links}<a class="btn" href="#acceptance">查看验收依据</a></div><div class="hero-meta"><span>应用交付提交 <code title="${escape(m.headSha)}">${escape(m.headSha ? m.headSha.slice(0,12) : '未取得交付 SHA')}</code></span><span>Run ${escape(m.runId)} / attempt ${m.attempt}</span><span>目标 <code>${escape(m.targetBranch)}</code></span></div>`;
@@ -249,6 +270,7 @@ export async function renderHtml(facts, inputNotes, evidenceRoot) {
   body+=`</div><div class="gallery-foot"><span id="gallery-status">${f.media.length?'截图已经内嵌，可离线查看。':'本轮未提供截图。'}</span><span>录像及未内嵌截图见本轮运行的 Artifact。</span></div>${f.uncovered?.length?`<details class="card raw-record"><summary>未单独截图的界面（${f.uncovered.length}）</summary><div class="subsection-body">${list(f.uncovered)}</div></details>`:''}</section>`;
   body+=`<section class="section" id="execution">${sectionHead('Execution & usage','发生了什么，花了多少')}<div class="split"><div class="card run-panel"><h3>运行记录</h3>${f.runs.map(r=>`<div class="run"><div class="run-content"><div class="run-top"><strong>${escape(r.id)} / attempt ${r.attempt}</strong></div><p>${tag(statusLabels[r.status],r.status==='failed'?'bad':'')}</p><p>${escape(r.detail)}</p></div></div>`).join('')}<div class="ci-fact"><strong>自动检查：${escape(ciLabels[f.delivery.ci])}</strong><p class="check-source">${escape(f.delivery.ciSource||'未提供')}</p></div></div><div class="card usage-card"><div class="eyebrow">已记录 Token · 含缓存</div><div class="usage-big">${fmt(f.usage?.total)}</div>${tag(f.usage?(f.usage.incomplete?'采集可能不完整':'按已采集范围统计'):'用量未提供',f.usage?.incomplete?'warn':'')}<p>${escape(f.usage?.scope||'没有用量数据，不推算为零。')}</p><details class="subsection"><summary>展开用量分项 ⌄</summary><div class="subsection-body">${renderUsageDetails(f.usage)}<p class="check-source">${escape(f.usage?.source||'没有统计来源')}。不等同供应商账单，不推算费用。</p></div></details></div></div></section>`;
   if(f.timings?.length) body+=`<details class="card raw-record"><summary>本轮阶段耗时</summary><div class="subsection-body"><p>嵌套阶段不可相加为总耗时；仅展示已完成的计时。</p><div class="table-wrap"><table><tr><th>阶段</th><th>次数</th><th>时长</th></tr>${f.timings.map(t=>`<tr><td>${escape(t.stage)}</td><td>${fmt(t.calls)}</td><td>${duration(Math.round(t.durationMs/1000))}</td></tr>`).join('')}</table></div></div></details>`;
+  body+=renderBaselineDetails(f.baseline);
   body+=`<footer class="report-footer">Factory report template v${TEMPLATE_VERSION} · ${escape(reportId)}<br>验收逐条保留；问题与改进汇总已有评测与可选过程记录，保留各自来源。此页面是归档展示，不是重新验收。</footer>`;
   const template=await readFile(resolve(HERE,'report.template.html'),'utf8');
   const script=template.match(/<script>([\s\S]*?)<\/script>/)?.[1];

@@ -25,6 +25,20 @@ function optionalJson(root, file, warnings) {
   }
 }
 
+// baseline.json is captured after install and before the Agent runs, so it names
+// what this run was built on. Unrecorded values stay null; nothing is inferred.
+function baselineFacts(raw) {
+  if (!raw || typeof raw !== 'object') return null;
+  const value = v => typeof v === 'string' && v ? v : null;
+  return {
+    template: value(raw.template), templateVersion: value(raw.templateVersion), creatorVersion: value(raw.creatorVersion),
+    source: value(raw.source?.repository) && /^[a-f0-9]{40}$/.test(raw.source?.sha ?? '') ? { repository: raw.source.repository, sha: raw.source.sha } : null,
+    lockSha256: /^[a-f0-9]{64}$/.test(raw.lockSha256 ?? '') ? raw.lockSha256 : null,
+    packages: (Array.isArray(raw.packages) ? raw.packages : []).filter(p => /^@nocobase\/[a-z0-9][a-z0-9._-]*$/.test(p?.name ?? ''))
+      .map(p => ({ name: p.name, version: value(p.version), reason: value(p.version) ? null : value(p.reason) })),
+  };
+}
+
 export function collectDelivery(root, report, issue = {}) {
   const { record, cumulative, records = [record], timings = [] } = report;
   const warnings = [];
@@ -55,6 +69,7 @@ export function collectDelivery(root, report, issue = {}) {
   const notes = prefix ? optionalJson(root, `${prefix}/delivery-notes.json`, warnings) : null;
   const rawRetro = optionalJson(root, 'retro.json', warnings);
   const changes = optionalJson(root, 'change-summary.json', warnings);
+  const baseline = baselineFacts(optionalJson(root, 'baseline.json', warnings));
   const qaChecks = Array.isArray(qa?.checks) ? qa.checks : [];
   const attention = [];
   if (record.status === 'failure') {
@@ -174,7 +189,7 @@ export function collectDelivery(root, report, issue = {}) {
       coverageNote:`用量记录 ${usage.records}；未报告用量 ${usage.missing}；分项不完整 ${usage.incomplete}；缺失作业时间 ${cumulative.missingTimes}。`,
       note:'不把流式增量、上下文长度和思考 Token 重复相加。旧记录未拆分 QA 时保留原有口径；费用：未知。'},
     runs:records.map(r=>({id:String(r.runId),attempt:r.attempt,status:reportStatus(r.status),detail:outcomeLabels[r.status]||'未完成'})),
-    retro,timings,buildReview,
+    retro,timings,buildReview,baseline,
   };
   return {facts,notes,metadata};
 }

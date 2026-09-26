@@ -80,6 +80,20 @@ test('records actual installed version, explicit missing package and safely link
   );
 });
 
+test('records the template name and exact creator version the application was generated from', (t) => {
+  const { root, put } = fixture(t);
+  assert.equal(captureBaseline(root).template, null, 'an unnamed template is not guessed');
+  put('factory-template.json', {
+    template: '@nocobase/app-template-default',
+    templateVersion: '1.0.0-beta.47',
+    creator: '@nocobase/create-app@0.1.0-beta.22',
+  });
+  const record = captureBaseline(root);
+  assert.equal(record.template, '@nocobase/app-template-default');
+  assert.equal(record.templateVersion, '1.0.0-beta.47');
+  assert.equal(record.creatorVersion, '0.1.0-beta.22');
+});
+
 test('frozen same baseline is idempotent, changed Skill or package cannot replace provenance', (t) => {
   const { root, put } = fixture(t);
   const output = path.join(root, 'evidence/baseline.json');

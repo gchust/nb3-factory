@@ -134,3 +134,26 @@ test('provider failure is visible in HTML without an Agent retrospective or raw 
  assert.doesNotMatch(html,/secret-not-for-html/);
  assert.equal(facts.delivery.status,'failed'); assert.equal(facts.checks[0].status,'not-verified');
 });
+test('first screen names the recorded template, creator and installed package versions',async t=>{
+ const {root}=artifacts(t);
+ put(root,'baseline.json',{version:1,kind:'installed-packages',source:null,template:'@nocobase/app-template-default',templateVersion:'1.0.0-beta.47',creatorVersion:'0.1.0-beta.22',
+  lockSha256:'a'.repeat(64),packages:[{name:'@nocobase/app-cli',version:'1.0.0-beta.47',manifestSha256:'b'.repeat(64)},{name:'@nocobase/db',version:null,reason:'not_installed'},{name:'left-pad',version:'1.0.0'}]});
+ const {facts,html}=await makeDeliveryReport(receipt(),root);
+ assert.deepEqual(facts.baseline.packages.map(p=>p.name),['@nocobase/app-cli','@nocobase/db']);
+ const hero=html.slice(html.indexOf('id="overview"'),html.indexOf('</section>',html.indexOf('id="overview"')));
+ for(const phrase of ['<code>@nocobase/app-template-default@1.0.0-beta.47</code>','<code>@nocobase/create-app@0.1.0-beta.22</code>','2 个 NocoBase 包版本']) assert.ok(hero.includes(phrase),phrase);
+ assert.doesNotMatch(hero,/源码 /);
+ for(const phrase of ['id="baseline"','@nocobase/app-cli</td><td class="mono">1.0.0-beta.47','未记录（not_installed）','a'.repeat(64)]) assert.ok(html.includes(phrase),phrase);
+});
+test('source snapshot baseline shows the nocobase3 commit and missing values stay unrecorded',async t=>{
+ const {root}=artifacts(t), sha='c'.repeat(40);
+ put(root,'baseline.json',{version:1,kind:'source-snapshot',source:{repository:'nocobase/nocobase3',sha},templateVersion:'1.0.0-beta.47',creatorVersion:null,packages:[]});
+ const {html}=await makeDeliveryReport(receipt(),root);
+ assert.ok(html.includes(`nocobase/nocobase3@${'c'.repeat(12)}`));
+ assert.ok(html.includes('应用模板 <code>1.0.0-beta.47</code>'),'old baselines without a template name keep only the version');
+ assert.ok(html.includes('生成器 未记录')); assert.ok(html.includes('NocoBase 包版本未记录'));
+});
+test('a run without a recorded baseline says so instead of inferring versions',async t=>{
+ const {root}=artifacts(t); const {facts,html}=await makeDeliveryReport(receipt(),root);
+ assert.equal(facts.baseline,null); assert.match(html,/版本基线：本轮未记录/); assert.doesNotMatch(html,/id="baseline"/);
+});
