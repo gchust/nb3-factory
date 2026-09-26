@@ -91,9 +91,11 @@ describe('app client routes', () => {
     // that requires sign-in adds an entry here, because that is a new grant somebody has to be given.
     const resolved = resolveRoutes();
 
-    // The landing page opted out of page authorization, so it is reachable by every signed-in user.
+    // The landing page opted out of page authorization, so it is reachable by every signed-in user. The
+    // pipeline smoke page does the same, so a new page that requires sign-in adds an entry here.
     expect(pageAuthorizations(resolved.routes)).toEqual([
       { name: 'home', authorizedAs: null },
+      { name: 'pipeline-smoke', authorizedAs: null },
     ]);
   });
 });

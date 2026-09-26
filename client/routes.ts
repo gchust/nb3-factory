@@ -1,4 +1,4 @@
-import { Home } from 'lucide-react';
+import { FlaskConical, Home } from 'lucide-react';
 import {
   defineAppRoutes,
   defineSettingsRoutes,
@@ -15,6 +15,16 @@ const appRoutes: AppClientRouteContribution = defineAppRoutes([
     name: 'home',
     navigation: { title: 'navigation.home', icon: Home },
     path: '/',
+  },
+  {
+    // A deliberately minimal page every signed-in user may open, used to verify the automated build pipeline.
+    // `authz: 'skip'` keeps it out of page authorization so no permission grant is needed to reach it.
+    auth: 'required',
+    authz: 'skip',
+    componentLoader: () => import('./pages/pipeline-smoke.js'),
+    name: 'pipeline-smoke',
+    navigation: { title: 'navigation.pipelineSmoke', icon: FlaskConical },
+    path: '/pipeline-smoke',
   },
   {
     auth: 'guest',
