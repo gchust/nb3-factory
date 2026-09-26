@@ -1,4 +1,3 @@
-import { coverageHealth } from './evaluation-health.mjs';
 import { requiredCheckCoverage } from './required-checks.mjs';
 // Evaluation Report v1: a normalized, versioned public DTO converted from the
 // factory's existing trusted facts. It never calls a model: missing material is
@@ -17,6 +16,18 @@ import { phases } from './task-usage.mjs';
 export const EXPORTER_VERSION = 1;
 export const PRODUCER = 'nb3-factory';
 const RUBRIC_ID = 'nb3-framework';
+
+// Completeness of the measurement, independent from application delivery: a
+// measured failure is complete, missing evidence is not.
+export function coverageHealth({ qa, requiredChecks, review }) {
+  const measured = ['passed', 'failed'];
+  return {
+    status: measured.includes(qa) && measured.includes(requiredChecks.status) &&
+      requiredChecks.results.every((r) => measured.includes(r.status)) &&
+      ['completed', 'disabled'].includes(review) ? 'complete' : 'incomplete',
+    qa, requiredChecks, review,
+  };
+}
 export const LIMITS = { jsonBytes: 4 * 1024 * 1024, fileBytes: 10 * 1024 * 1024, evidenceBytes: 48 * 1024 * 1024, files: 2048 };
 const sha = /^[a-f0-9]{40}$/;
 const sha256Pattern = /^[a-f0-9]{64}$/;
