@@ -1,0 +1,3227 @@
+{
+  "schemaVersion": 1,
+  "type": "evaluation-report",
+  "source": {
+    "producer": "nb3-factory",
+    "instance": "gchust/nb3-factory",
+    "project": "gchust/nb3-factory",
+    "exporter": {
+      "version": 1,
+      "controlSha": "fda3240b4f65451240ec334b3e834d5f1b743735",
+      "runId": 36219297244,
+      "attempt": 1
+    }
+  },
+  "run": {
+    "key": "gchust/nb3-factory/issues/352/initial",
+    "kind": "initial",
+    "identity": "recorded",
+    "batchKey": null,
+    "caseKey": null,
+    "sampleIndex": null,
+    "sampleKey": null,
+    "task": {
+      "repository": "gchust/nb3-factory",
+      "issue": 352,
+      "buildCommentId": null,
+      "title": "办公设备借用与归还管理（完整评测回归）"
+    },
+    "case": null
+  },
+  "revision": 1,
+  "createdAt": "2026-09-26T04:56:33Z",
+  "precedence": {
+    "producer": {
+      "runId": 36215705637,
+      "attempt": 1,
+      "startedAt": "2026-09-26T03:43:59Z"
+    },
+    "executionOrder": 1,
+    "knownLaterExecutions": 0,
+    "chainTerminal": true,
+    "reviewRubric": 2,
+    "reviewState": "completed",
+    "review": {
+      "kind": "build",
+      "at": "2026-09-26T03:43:59Z",
+      "runId": 36215705637,
+      "attempt": 1
+    },
+    "qaCoverage": "complete"
+  },
+  "baseline": {
+    "track": "published-template",
+    "application": {
+      "baseRef": "develop",
+      "baseSha": "fda3240b4f65451240ec334b3e834d5f1b743735",
+      "candidate": {
+        "patchSha256": "fd6c0cd9dece4478850d6a369e0fae2b526e018616fedc77a22c16f96b499f35",
+        "headSha": "ec23790bdce09c6622d86336288d5313c694b68e"
+      }
+    },
+    "factory": {
+      "controlSha": "fda3240b4f65451240ec334b3e834d5f1b743735",
+      "entrySha": "fda3240b4f65451240ec334b3e834d5f1b743735"
+    },
+    "template": {
+      "creatorVersion": "0.1.0-beta.21",
+      "templateVersion": "1.0.0-beta.46"
+    },
+    "dependencies": {
+      "lockfileSha256": "bb68c415b59b0556f145c14a3cad8ddc3f06410abdfaaf5ba04f9f0576d2e538",
+      "baselineFingerprint": "34e79efebd8bb15f51844a76b756e98b906ceaacc796ba32d0f8595556cd41e3",
+      "packages": [
+        {
+          "name": "@nocobase/ai-employee",
+          "version": "0.2.0-beta.8"
+        },
+        {
+          "name": "@nocobase/ai-employee-avatars",
+          "version": "1.0.2"
+        },
+        {
+          "name": "@nocobase/app-cli",
+          "version": "0.1.0-beta.5"
+        },
+        {
+          "name": "@nocobase/app-client",
+          "version": "1.0.0-beta.20"
+        },
+        {
+          "name": "@nocobase/app-plugin-ai-employee",
+          "version": "0.1.0-beta.22"
+        },
+        {
+          "name": "@nocobase/app-plugin-ai-knowledge-base",
+          "version": "0.1.0-beta.9"
+        },
+        {
+          "name": "@nocobase/app-plugin-api-keys",
+          "version": "0.1.0-beta.7"
+        },
+        {
+          "name": "@nocobase/app-plugin-authentication",
+          "version": "1.0.0-beta.23"
+        },
+        {
+          "name": "@nocobase/app-plugin-authorization",
+          "version": "0.2.0-beta.19"
+        },
+        {
+          "name": "@nocobase/app-plugin-authz-default-access",
+          "version": "0.1.0-beta.3"
+        },
+        {
+          "name": "@nocobase/app-plugin-authz-restriction-rules",
+          "version": "0.1.0-beta.2"
+        },
+        {
+          "name": "@nocobase/app-plugin-authz-sharing-rules",
+          "version": "0.1.0-beta.3"
+        },
+        {
+          "name": "@nocobase/app-plugin-database-explorer",
+          "version": "0.1.0-beta.5"
+        },
+        {
+          "name": "@nocobase/app-plugin-file",
+          "version": "0.1.0-beta.15"
+        },
+        {
+          "name": "@nocobase/app-plugin-i18n",
+          "version": "0.1.0-beta.8"
+        },
+        {
+          "name": "@nocobase/app-plugin-mail",
+          "version": "0.1.0-beta.0"
+        },
+        {
+          "name": "@nocobase/app-plugin-notification",
+          "version": "0.1.0-beta.17"
+        },
+        {
+          "name": "@nocobase/app-plugin-notification-in-app",
+          "version": "0.2.0-beta.18"
+        },
+        {
+          "name": "@nocobase/app-plugin-notification-provider",
+          "version": "0.1.0-beta.10"
+        },
+        {
+          "name": "@nocobase/app-plugin-notification-providers",
+          "version": "0.2.0-beta.7"
+        },
+        {
+          "name": "@nocobase/app-plugin-scheduler",
+          "version": "0.1.0-beta.8"
+        },
+        {
+          "name": "@nocobase/app-plugin-users",
+          "version": "0.1.0-beta.10"
+        },
+        {
+          "name": "@nocobase/app-plugin-workflow",
+          "version": "0.1.0-beta.27"
+        },
+        {
+          "name": "@nocobase/app-portal-sdk",
+          "version": "1.0.0-beta.3"
+        },
+        {
+          "name": "@nocobase/app-server",
+          "version": "1.0.0-beta.26"
+        },
+        {
+          "name": "@nocobase/app-skills",
+          "version": "0.1.0-beta.15"
+        },
+        {
+          "name": "@nocobase/app-tools",
+          "version": "0.1.0-beta.5"
+        },
+        {
+          "name": "@nocobase/app-websocket",
+          "version": "0.0.1"
+        },
+        {
+          "name": "@nocobase/authorization",
+          "version": "0.1.0-beta.9"
+        },
+        {
+          "name": "@nocobase/caching",
+          "version": "0.1.0-beta.2"
+        },
+        {
+          "name": "@nocobase/config",
+          "version": "0.1.0-beta.1"
+        },
+        {
+          "name": "@nocobase/cron",
+          "version": "0.1.0"
+        },
+        {
+          "name": "@nocobase/db",
+          "version": "1.0.0-beta.15"
+        },
+        {
+          "name": "@nocobase/db-sqlite",
+          "version": "0.1.0-beta.2"
+        },
+        {
+          "name": "@nocobase/dev-config",
+          "version": "0.1.0-beta.12"
+        },
+        {
+          "name": "@nocobase/drive",
+          "version": "0.1.0-beta.4"
+        },
+        {
+          "name": "@nocobase/i18n",
+          "version": "1.0.0-beta.4"
+        },
+        {
+          "name": "@nocobase/logging",
+          "version": "0.1.0-beta.5"
+        },
+        {
+          "name": "@nocobase/nb3-cli",
+          "version": "1.0.0-beta.11"
+        },
+        {
+          "name": "@nocobase/queue",
+          "version": "0.1.0-beta.7"
+        },
+        {
+          "name": "@nocobase/repository-input",
+          "version": "0.1.0-beta.1"
+        },
+        {
+          "name": "@nocobase/service-provider",
+          "version": "0.0.2-beta.1"
+        },
+        {
+          "name": "@nocobase/session",
+          "version": "0.1.0-beta.2"
+        },
+        {
+          "name": "@nocobase/snowflake",
+          "version": "1.0.0-beta.3"
+        }
+      ]
+    },
+    "skills": {
+      "fingerprint": "64dd2cba2c9214009f91d3a3fbbfb2669a92067b4c3be4a5097fb4a8a355c92d",
+      "files": 105
+    },
+    "sourceSnapshot": null,
+    "inputs": {
+      "taskInputHash": null,
+      "pipelineInputHash": "98577711a23e61f670a16070357e3d02db149a76847566f162042726146c27d4",
+      "reviewHash": null,
+      "reviewCriteriaHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "prompts": [
+        {
+          "phase": "implementation",
+          "path": "agent-implement.jsonl.invocation.json",
+          "sha256": "7d8c93424c68776fd0e8ec47aee7017c5e730171f99d8ebda12c3267013edd1f"
+        },
+        {
+          "phase": "review",
+          "path": "agent-review.jsonl.invocation.json",
+          "sha256": "53738ce397db18cc06c74c0135a24141e3aa0568a601a14a48624bb80d003657"
+        },
+        {
+          "phase": "qa",
+          "path": "verify-1/browser-acceptance/agent-browser-acceptance.jsonl.invocation.json",
+          "sha256": "efa67b942a4c1bd9b74a22de945ec29b7b5fb08eef76b5b68bcfa0253589782a"
+        }
+      ]
+    },
+    "rubric": {
+      "id": "nb3-framework",
+      "version": 2
+    },
+    "agent": {
+      "engine": "pi",
+      "model": "deepseek-v4.1-flash",
+      "version": "0.86.1",
+      "buildReviewMode": "full"
+    },
+    "environment": {
+      "browserFixturesSha256": "3b527d18aa2f6d58fdfea5cdd916631ea1ee3425abeba09bb1f961f2128c554b",
+      "browserPreflight": "passed"
+    }
+  },
+  "executions": [
+    {
+      "key": "run/36215705637/attempt/1",
+      "kind": "implementation",
+      "order": 1,
+      "workflow": "code-agent-task",
+      "runId": 36215705637,
+      "attempt": 1,
+      "event": "issues",
+      "previousRunId": null,
+      "conclusion": "delivered",
+      "startedAt": "2026-09-26T03:43:59Z",
+      "endedAt": "2026-09-26T04:56:00Z",
+      "jobSeconds": 4312,
+      "controlSha": "fda3240b4f65451240ec334b3e834d5f1b743735",
+      "patchSha256": "fd6c0cd9dece4478850d6a369e0fae2b526e018616fedc77a22c16f96b499f35",
+      "source": "usage-receipt"
+    }
+  ],
+  "outcome": {
+    "execution": "completed",
+    "acceptance": "passed",
+    "delivery": "published",
+    "pullRequest": {
+      "number": 354,
+      "headSha": "ec23790bdce09c6622d86336288d5313c694b68e"
+    },
+    "detail": "执行链已终结；业务验收与代码交付分别见 acceptance / delivery。"
+  },
+  "qa": {
+    "coverage": "complete",
+    "rounds": [
+      {
+        "round": 1,
+        "executionKey": "run/36215705637/attempt/1",
+        "scope": "full",
+        "passed": true,
+        "source": "verify-1/browser-acceptance/report.json",
+        "checks": [
+          {
+            "id": "B01",
+            "criterion": "登录后能打开设备台账和借用记录，示例数据中有可借用、正常借出、逾期未还和历史已归还记录；顶部三个数量与明细一致。",
+            "status": "passed",
+            "evidence": [
+              "qa/1/b01-equipment-ledger.png",
+              "qa/1/b01-loan-records.png"
+            ]
+          },
+          {
+            "id": "B02",
+            "criterion": "新增设备后刷新仍存在；修改名称后搜索能找到。重复资产编号或空资产编号、空设备名称不能保存，已有记录不被覆盖。",
+            "status": "passed",
+            "evidence": [
+              "qa/1/b02-empty-validation.png",
+              "qa/1/b02-duplicate-validation.png",
+              "qa/1/b02-edit-prefill.png",
+              "qa/1/b02-search-renamed.png"
+            ]
+          },
+          {
+            "id": "B03",
+            "criterion": "对可借用设备登记一笔借出，借用人、用途和预计归还日期保存正确，台账同步显示借出中，当前借出数增加一。缺少借用人或预计归还日期时不能产生借出记录。",
+            "status": "passed",
+            "evidence": [
+              "qa/1/b03-empty-borrow-validation.png",
+              "qa/1/b03-borrow-form-filled.png",
+              "qa/1/b03-equipment-borrowed.png",
+              "qa/1/b03-loan-record.png"
+            ]
+          },
+          {
+            "id": "B04",
+            "criterion": "对已借出且未归还设备再次尝试登记借出，操作被拒绝，原借用人和借用记录不变，没有生成第二笔未归还记录。",
+            "status": "passed",
+            "evidence": [
+              "qa/1/b04-already-borrowed-rejected.png",
+              "qa/1/b04-loan-records-after.png"
+            ]
+          },
+          {
+            "id": "B05",
+            "criterion": "归还后设备恢复可借用、原记录保留归还时间；再次尝试归还不产生重复记录且不改写原归还时间。该设备随后可再次借出，新旧记录分别保留。",
+            "status": "passed",
+            "evidence": [
+              "qa/1/b05-return-confirm.png",
+              "qa/1/b05-loan-returned.png",
+              "qa/1/b05-reborrow-form.png",
+              "qa/1/b05-two-records.png"
+            ]
+          },
+          {
+            "id": "B06",
+            "criterion": "借用人搜索和未归还／已归还筛选结果正确；示例逾期记录有明显提示。将一台逾期未还设备归还后，逾期数和借出数各减少一，刷新页面后数字和状态仍一致。",
+            "status": "passed",
+            "evidence": [
+              "qa/1/b06-overdue-marked.png",
+              "qa/1/b06-filter-not-returned.png",
+              "qa/1/b06-filter-returned.png",
+              "qa/1/b06-search-borrower.png",
+              "qa/1/b06-after-return-counts.png",
+              "qa/1/b06-after-refresh.png"
+            ]
+          }
+        ]
+      }
+    ],
+    "firstFull": {
+      "status": "passed",
+      "round": 1,
+      "executionKey": "run/36215705637/attempt/1",
+      "basis": "本产物包含第 1 轮起的全部验证，取第一次实际全量 QA。"
+    },
+    "finalFull": {
+      "status": "passed",
+      "round": 1,
+      "executionKey": "run/36215705637/attempt/1",
+      "basis": "最后一次实际全量 QA。"
+    },
+    "criteria": [
+      {
+        "id": "B01",
+        "text": "登录后能打开设备台账和借用记录，示例数据中有可借用、正常借出、逾期未还和历史已归还记录；顶部三个数量与明细一致。",
+        "optional": false,
+        "firstFull": "passed",
+        "finalFull": "passed"
+      },
+      {
+        "id": "B02",
+        "text": "新增设备后刷新仍存在；修改名称后搜索能找到。重复资产编号或空资产编号、空设备名称不能保存，已有记录不被覆盖。",
+        "optional": false,
+        "firstFull": "passed",
+        "finalFull": "passed"
+      },
+      {
+        "id": "B03",
+        "text": "对可借用设备登记一笔借出，借用人、用途和预计归还日期保存正确，台账同步显示借出中，当前借出数增加一。缺少借用人或预计归还日期时不能产生借出记录。",
+        "optional": false,
+        "firstFull": "passed",
+        "finalFull": "passed"
+      },
+      {
+        "id": "B04",
+        "text": "对已借出且未归还设备再次尝试登记借出，操作被拒绝，原借用人和借用记录不变，没有生成第二笔未归还记录。",
+        "optional": false,
+        "firstFull": "passed",
+        "finalFull": "passed"
+      },
+      {
+        "id": "B05",
+        "text": "归还后设备恢复可借用、原记录保留归还时间；再次尝试归还不产生重复记录且不改写原归还时间。该设备随后可再次借出，新旧记录分别保留。",
+        "optional": false,
+        "firstFull": "passed",
+        "finalFull": "passed"
+      },
+      {
+        "id": "B06",
+        "text": "借用人搜索和未归还／已归还筛选结果正确；示例逾期记录有明显提示。将一台逾期未还设备归还后，逾期数和借出数各减少一，刷新页面后数字和状态仍一致。",
+        "optional": false,
+        "firstFull": "passed",
+        "finalFull": "passed"
+      }
+    ],
+    "firstPassWithoutRepair": "yes",
+    "counts": {
+      "execution": {
+        "verificationAttempts": 1,
+        "repairAttempts": 0,
+        "source": "repair-summary.json（仅本执行）"
+      },
+      "chain": {
+        "verificationAttempts": 1,
+        "repairAttempts": 0,
+        "source": "pipeline-state.json（跨 Handoff 累计检查点，不再相加）"
+      }
+    },
+    "note": "工厂修复次数不等于 Agent 开发中的全部自测和修正；未记录 Agent 内部试错，不宣称开发全程无错误。"
+  },
+  "reviews": [
+    {
+      "key": "review/36215705637.1/v2-8605f8b25e02",
+      "role": "original",
+      "selected": true,
+      "state": "completed",
+      "reason": "独立 Agent 评审完成；评分是基于本次证据的意见，不替代业务 QA 或人工评审。",
+      "rubric": {
+        "id": "nb3-framework",
+        "version": 2,
+        "scale": {
+          "min": 0,
+          "max": 100
+        },
+        "businessUiIncluded": false,
+        "dimensions": [
+          {
+            "key": "requirementFit",
+            "label": "需求满足度"
+          },
+          {
+            "key": "usability",
+            "label": "使用便利度"
+          },
+          {
+            "key": "agentFriendliness",
+            "label": "Agent 友好度"
+          },
+          {
+            "key": "design",
+            "label": "设计合理性"
+          },
+          {
+            "key": "reliability",
+            "label": "实现完整性与可靠性"
+          }
+        ]
+      },
+      "reviewer": {
+        "engine": "pi",
+        "model": "deepseek-v4.1-flash",
+        "version": "0.86.1",
+        "runId": 36215705637,
+        "attempt": 1,
+        "controlSha": "fda3240b4f65451240ec334b3e834d5f1b743735",
+        "replay": false
+      },
+      "producer": {
+        "runId": 36215705637,
+        "attempt": 1
+      },
+      "basis": {
+        "inputHash": "8605f8b25e02cc1dd49383e714a6b3eb32c55e3b8d085ae3e2331228cafce0fc",
+        "patchSha256": "fd6c0cd9dece4478850d6a369e0fae2b526e018616fedc77a22c16f96b499f35",
+        "baseSha": "fda3240b4f65451240ec334b3e834d5f1b743735",
+        "lockfileSha256": "bb68c415b59b0556f145c14a3cad8ddc3f06410abdfaaf5ba04f9f0576d2e538",
+        "reviewCriteriaHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "artifactHash": "c155226e45cc31f2655c008a0a9154204950e294767c908ce48bcb2bf528181e"
+      },
+      "buildReviewMode": "full",
+      "summary": "本轮基础框架总体可用：db 的迁移/种子与 Collection Builder、Repository 的过滤与事务、app-server/service-provider 的 provider+路由装配、app-client 的路由与 DataTable 指引，都能让 Agent 按示例完成办公设备借用/归还需求，四个能力单元均给出了非 null 评分。主要未决问题是通用库未公开唯一约束冲突的稳定判定（应用只能按驱动错误串分支），以及指引未说明“需求强制的演示/时间相对数据”应放在哪一层。覆盖限制：实现日志 agent-implement.jsonl 缺失、@nocobase/api-client 未随快照采集、当前模型无法解析 PNG 故未做视觉复核。",
+      "progress": {
+        "complete": true,
+        "pendingModules": []
+      },
+      "modules": [
+        {
+          "key": "review/36215705637.1/v2-8605f8b25e02/M1",
+          "name": "数据库集合、迁移与种子（@nocobase/db + nocobase-db Skill）",
+          "subjectKeys": [
+            "pkg:@nocobase/db",
+            "skill:nocobase-db",
+            "skill:nocobase-app-development"
+          ],
+          "mapping": "resolved",
+          "targets": [
+            {
+              "kind": "library",
+              "name": "@nocobase/db",
+              "subjectKey": "pkg:@nocobase/db",
+              "entrypoints": [
+                "defineMigration / MigrationDefinition",
+                "defineSeed / SeedContext.repository / SeedDefinition",
+                "CollectionDefinitionBuilder: createCollection/string/datetime/unique/foreignKey/index",
+                "DatabaseManager.createMigrator / createSeeder"
+              ],
+              "evidence": [
+                "review/36215705637.1/v2-8605f8b25e02/E1",
+                "review/36215705637.1/v2-8605f8b25e02/E2",
+                "review/36215705637.1/v2-8605f8b25e02/E3",
+                "review/36215705637.1/v2-8605f8b25e02/E4",
+                "review/36215705637.1/v2-8605f8b25e02/E8",
+                "review/36215705637.1/v2-8605f8b25e02/E9",
+                "review/36215705637.1/v2-8605f8b25e02/E10",
+                "review/36215705637.1/v2-8605f8b25e02/E11"
+              ]
+            },
+            {
+              "kind": "guidance",
+              "name": "app/.agents/skills/nocobase-db/SKILL.md",
+              "subjectKey": "skill:nocobase-db",
+              "entrypoints": [
+                "§2 Migrations and seeds",
+                "§3 Builder",
+                "seed 幂等（upsertOne）",
+                "任务默认事务"
+              ],
+              "evidence": [
+                "review/36215705637.1/v2-8605f8b25e02/E5",
+                "review/36215705637.1/v2-8605f8b25e02/E6",
+                "review/36215705637.1/v2-8605f8b25e02/E52"
+              ]
+            },
+            {
+              "kind": "guidance",
+              "name": "app/.agents/skills/nocobase-app-development/references/migrations.md",
+              "subjectKey": "skill:nocobase-app-development",
+              "entrypoints": [
+                "db:apply 的 pending 语义",
+                "种子可复现规则",
+                "verify 清单"
+              ],
+              "evidence": [
+                "review/36215705637.1/v2-8605f8b25e02/E7"
+              ]
+            }
+          ],
+          "scope": "本次涉及的迁移建表、种子安装数据、任务待执行筛选与幂等、任务事务与历史记录。",
+          "limitations": "未覆盖多连接迁移、checksum repair、编译 manifest 等路径；需求强制的演示/时间相对数据在指引中没有明确落点（见 F4）。",
+          "criteria": [],
+          "qa": {
+            "firstFull": "unknown",
+            "finalFull": "unknown"
+          },
+          "requirements": [
+            {
+              "need": "以迁移方式创建 officeEquipment / equipmentLoans 两张表，含唯一约束 assetNo、外键与索引。",
+              "responsibility": "框架提供迁移运行器与 Collection Builder（字段、唯一、外键、索引）及命名约束；应用负责表结构、字段与业务状态语义。",
+              "support": "direct",
+              "recommendedUsage": "defineMigration + builder.createCollection + unique/foreignKey/index，见 nocobase-db SKILL §2/§3。",
+              "actualUsage": "Agent 的迁移文件与 Skill 示例结构一致：createCollection + string/datetime + unique('assetNo') + foreignKey + index(...)。",
+              "gapOwner": "none",
+              "evidence": [
+                "review/36215705637.1/v2-8605f8b25e02/E2",
+                "review/36215705637.1/v2-8605f8b25e02/E4",
+                "review/36215705637.1/v2-8605f8b25e02/E5",
+                "review/36215705637.1/v2-8605f8b25e02/E12",
+                "review/36215705637.1/v2-8605f8b25e02/E13"
+              ]
+            },
+            {
+              "need": "安装即带可借出/正常借出/逾期/已归还的可复现示例数据，且重复运行不产生重复行。",
+              "responsibility": "框架提供 seed 运行器、SeedContext.repository、幂等与事务；应用负责具体数据与稳定业务键。",
+              "support": "composition",
+              "recommendedUsage": "defineSeed + context.repository，按稳定业务值幂等（upsertOne 或先查后写）。",
+              "actualUsage": "Agent 用 defineSeed + 先查 assetNo/(equipment,borrower) 再 updateOne/createOne 实现幂等。",
+              "gapOwner": "none",
+              "evidence": [
+                "review/36215705637.1/v2-8605f8b25e02/E3",
+                "review/36215705637.1/v2-8605f8b25e02/E6",
+                "review/36215705637.1/v2-8605f8b25e02/E8",
+                "review/36215705637.1/v2-8605f8b25e02/E9",
+                "review/36215705637.1/v2-8605f8b25e02/E14",
+                "review/36215705637.1/v2-8605f8b25e02/E15"
+              ]
+            },
+            {
+              "need": "示例数据包含相对当前时间的逾期/正常借出，以便验收直接看到各状态。",
+              "responsibility": "框架应说明时间相关演示数据的归属与写法；应用选择具体数据。",
+              "support": "workaround",
+              "recommendedUsage": "未确认；SKILL §2 只说 seed 是“应用运行所需记录”且“a seed is never sample or demonstration content”，migrations.md 要求种子固定可复现、no current timestamps。",
+              "actualUsage": "Agent 在 seed 内用 new Date() 相对天数生成逾期/正常数据，并写注释说明这一取舍。",
+              "gapOwner": "documentation",
+              "evidence": [
+                "review/36215705637.1/v2-8605f8b25e02/E5",
+                "review/36215705637.1/v2-8605f8b25e02/E7",
+                "review/36215705637.1/v2-8605f8b25e02/E14"
+              ]
+            },
+            {
+              "need": "迁移/种子只执行 pending、失败不半写、可重复 apply。",
+              "responsibility": "框架保证只执行 pending、任务锁、默认事务与历史记录。",
+              "support": "direct",
+              "recommendedUsage": "pnpm db:apply；transaction 默认 true，见 nocobase-db SKILL §2。",
+              "actualUsage": "实现日志缺失，无法确认 Agent 的具体执行过程；仅从应用文件与验收通过推断使用了 db:apply。",
+              "gapOwner": "none",
+              "evidence": [
+                "review/36215705637.1/v2-8605f8b25e02/E8",
+                "review/36215705637.1/v2-8605f8b25e02/E9",
+                "review/36215705637.1/v2-8605f8b25e02/E10",
+                "review/36215705637.1/v2-8605f8b25e02/E11",
+                "review/36215705637.1/v2-8605f8b25e02/E7"
+              ]
+            }
+          ],
+          "scores": {
+            "requirementFit": {
+              "score": 92,
+              "reason": "迁移与种子职责边界清晰，builder 公开了建表所需全部结构操作，应用迁移与 Skill 示例几乎一一对应；种子仓储与事务足以实现幂等安装数据。",
+              "evidence": [
+                "review/36215705637.1/v2-8605f8b25e02/E2",
+                "review/36215705637.1/v2-8605f8b25e02/E4",
+                "review/36215705637.1/v2-8605f8b25e02/E5",
+                "review/36215705637.1/v2-8605f8b25e02/E6"
+              ]
+            },
+            "usability": {
+              "score": 88,
+              "reason": "defineMigration/defineSeed 入口直观，SeedContext.repository 的注释明确“安装数据”语义；扣分点是演示/时间相对数据没有明确落点，需自行取舍。",
+              "evidence": [
+                "review/36215705637.1/v2-8605f8b25e02/E5",
+                "review/36215705637.1/v2-8605f8b25e02/E6",
+                "review/36215705637.1/v2-8605f8b25e02/E3",
+                "review/36215705637.1/v2-8605f8b25e02/E7"
+              ]
+            },
+            "agentFriendliness": {
+              "score": 92,
+              "reason": "nocobase-db SKILL 与 app-development 的 migrations.md 均被注入实现上下文，§2/§3 给出可直接照抄的迁移与种子示例，应用产出与示例高度一致。",
+              "evidence": [
+                "review/36215705637.1/v2-8605f8b25e02/E5",
+                "review/36215705637.1/v2-8605f8b25e02/E6",
+                "review/36215705637.1/v2-8605f8b25e02/E7",
+                "review/36215705637.1/v2-8605f8b25e02/E49",
+                "review/36215705637.1/v2-8605f8b25e02/E50"
+              ]
+            },
+            "design": {
+              "score": 90,
+              "reason": "迁移（结构）与种子（数据）分层、不可变与自包含规则、任务锁与 checksum 历史等抽象边界清楚，公开 API 与类型对应完整。",
+              "evidence": [
+                "review/36215705637.1/v2-8605f8b25e02/E1",
+                "review/36215705637.1/v2-8605f8b25e02/E2",
+                "review/36215705637.1/v2-8605f8b25e02/E3",
+                "review/36215705637.1/v2-8605f8b25e02/E4"
+              ]
+            },
+            "reliability": {
+              "score": 90,
+              "reason": "阅读实现：migrator/seeder 均在任务锁内读取历史、只执行 pending，并把 up/run 与历史写入放进同一事务，兑现了公开的幂等与事务约定。",
+              "evidence": [
+                "review/36215705637.1/v2-8605f8b25e02/E8",
+                "review/36215705637.1/v2-8605f8b25e02/E9",
+                "review/36215705637.1/v2-8605f8b25e02/E10",
+                "review/36215705637.1/v2-8605f8b25e02/E11"
+              ]
+            }
+          }
+        },
+        {
+          "key": "review/36215705637.1/v2-8605f8b25e02/M2",
+          "name": "Repository 数据访问、过滤与事务（@nocobase/db + @nocobase/repository-input）",
+          "subjectKeys": [
+            "pkg:@nocobase/db",
+            "pkg:@nocobase/repository-input",
+            "skill:nocobase-db"
+          ],
+          "mapping": "resolved",
+          "targets": [
+            {
+              "kind": "library",
+              "name": "@nocobase/db",
+              "subjectKey": "pkg:@nocobase/db",
+              "entrypoints": [
+                "Repository.findMany/createOne/updateMany 签名",
+                "CreateManyResult/UpdateManyResult.updatedCount",
+                "DatabaseManager.transaction",
+                "updateMany 非空 scope 校验"
+              ],
+              "evidence": [
+                "review/36215705637.1/v2-8605f8b25e02/E16",
+                "review/36215705637.1/v2-8605f8b25e02/E17",
+                "review/36215705637.1/v2-8605f8b25e02/E18",
+                "review/36215705637.1/v2-8605f8b25e02/E22",
+                "review/36215705637.1/v2-8605f8b25e02/E23",
+                "review/36215705637.1/v2-8605f8b25e02/E24",
+                "review/36215705637.1/v2-8605f8b25e02/E25",
+                "review/36215705637.1/v2-8605f8b25e02/E27"
+              ]
+            },
+            {
+              "kind": "library",
+              "name": "@nocobase/repository-input",
+              "subjectKey": "pkg:@nocobase/repository-input",
+              "entrypoints": [
+                "FilterBuilder.and/or/string/date/number/relation",
+                "FilterShorthand/RepositoryFilter",
+                "StringFilterOperators.includes(mode)",
+                "RepositoryErrorCode/RepositoryError"
+              ],
+              "evidence": [
+                "review/36215705637.1/v2-8605f8b25e02/E19",
+                "review/36215705637.1/v2-8605f8b25e02/E20",
+                "review/36215705637.1/v2-8605f8b25e02/E21",
+                "review/36215705637.1/v2-8605f8b25e02/E26"
+              ]
+            },
+            {
+              "kind": "guidance",
+              "name": "app/.agents/skills/nocobase-db/SKILL.md",
+              "subjectKey": "skill:nocobase-db",
+              "entrypoints": [
+                "§4 Repository and Query",
+                "filter/values/select/sort 接受 builder 或 JSON AST",
+                "updateMany/deleteMany 拒绝空 scope",
+                "Repository 不应用权限"
+              ],
+              "evidence": [
+                "review/36215705637.1/v2-8605f8b25e02/E52"
+              ]
+            }
+          ],
+          "scope": "本次涉及的列表查询（模糊搜索、状态过滤、排序）、借出并发控制、归还幂等与唯一约束冲突识别。",
+          "limitations": "未覆盖聚合/分组、游标分页、关系写入、乐观锁 ifVersion 等路径；未核对 @nocobase/api-client 的远程 Repository。",
+          "criteria": [],
+          "qa": {
+            "firstFull": "unknown",
+            "finalFull": "unknown"
+          },
+          "requirements": [
+            {
+              "need": "按关键词跨 assetNo/name 模糊搜索、按 status 过滤、按 assetNo 排序。",
+              "responsibility": "框架提供 FilterBuilder/SortBuilder、类型与下推；应用定义具体查询条件。",
+              "support": "direct",
+              "recommendedUsage": "filter builder callback（or/and/string/includes）或等价 JSON AST，sort builder。",
+              "actualUsage": "Agent 用 filter.or([...includes(mode insensitive)]), filter.string('status').eq, sort.field('assetNo').asc()。",
+              "gapOwner": "none",
+              "evidence": [
+                "review/36215705637.1/v2-8605f8b25e02/E19",
+                "review/36215705637.1/v2-8605f8b25e02/E20",
+                "review/36215705637.1/v2-8605f8b25e02/E21",
+                "review/36215705637.1/v2-8605f8b25e02/E29",
+                "review/36215705637.1/v2-8605f8b25e02/E52"
+              ]
+            },
+            {
+              "need": "借出在并发下只能有一个请求成功，且状态更新与借出记录处于同一事务。",
+              "responsibility": "框架提供事务、条件 updateMany 与 updatedCount；应用定义状态机与业务错误。",
+              "support": "direct",
+              "recommendedUsage": "database.transaction + 非空 filter 的 updateMany + updatedCount 检查，见 SKILL §4。",
+              "actualUsage": "Agent 在 database.transaction 内 updateMany({id,status:'available'})，updatedCount===0 时抛 NOT_AVAILABLE，再 createOne。",
+              "gapOwner": "none",
+              "evidence": [
+                "review/36215705637.1/v2-8605f8b25e02/E17",
+                "review/36215705637.1/v2-8605f8b25e02/E18",
+                "review/36215705637.1/v2-8605f8b25e02/E22",
+                "review/36215705637.1/v2-8605f8b25e02/E23",
+                "review/36215705637.1/v2-8605f8b25e02/E30",
+                "review/36215705637.1/v2-8605f8b25e02/E52"
+              ]
+            },
+            {
+              "need": "重复 assetNo 被拒绝并返回可识别的业务错误。",
+              "responsibility": "框架应提供稳定的唯一冲突判定或错误码；应用把冲突映射为业务错误。",
+              "support": "workaround",
+              "recommendedUsage": "未确认；公开 RepositoryErrorCode 无唯一冲突码，能识别冲突的 isUniqueConstraintViolation 只存在于 database/internal。",
+              "actualUsage": "Agent 手写 isUniqueViolation，检查 code 23505/SQLITE_CONSTRAINT_UNIQUE 与 message 正则。",
+              "gapOwner": "framework",
+              "evidence": [
+                "review/36215705637.1/v2-8605f8b25e02/E24",
+                "review/36215705637.1/v2-8605f8b25e02/E25",
+                "review/36215705637.1/v2-8605f8b25e02/E26",
+                "review/36215705637.1/v2-8605f8b25e02/E27",
+                "review/36215705637.1/v2-8605f8b25e02/E28"
+              ]
+            },
+            {
+              "need": "归还需幂等：重复归还不得改写 returnedAt，也不得产生新记录。",
+              "responsibility": "框架提供空值过滤与条件更新；应用实现幂等规则。",
+              "support": "direct",
+              "recommendedUsage": "filter.date('returnedAt').empty() + 条件 updateMany + updatedCount 检查。",
+              "actualUsage": "Agent 用 filter.number('id').eq + filter.date('returnedAt').empty() 条件更新，并仅在 updatedCount>0 时恢复设备可用。",
+              "gapOwner": "none",
+              "evidence": [
+                "review/36215705637.1/v2-8605f8b25e02/E21",
+                "review/36215705637.1/v2-8605f8b25e02/E23",
+                "review/36215705637.1/v2-8605f8b25e02/E53",
+                "review/36215705637.1/v2-8605f8b25e02/E52"
+              ]
+            }
+          ],
+          "scores": {
+            "requirementFit": {
+              "score": 92,
+              "reason": "过滤/排序、条件更新、事务与 updatedCount 都在公开 API 内直接满足本次查询与并发/幂等需求，应用实现无能力缺口。",
+              "evidence": [
+                "review/36215705637.1/v2-8605f8b25e02/E19",
+                "review/36215705637.1/v2-8605f8b25e02/E20",
+                "review/36215705637.1/v2-8605f8b25e02/E22",
+                "review/36215705637.1/v2-8605f8b25e02/E23",
+                "review/36215705637.1/v2-8605f8b25e02/E52"
+              ]
+            },
+            "usability": {
+              "score": 84,
+              "reason": "FilterBuilder 与 Repository 方法一致、类型完整，空 scope 会明确报错；扣分在唯一冲突没有公开判定，业务错误映射需自写驱动分支。",
+              "evidence": [
+                "review/36215705637.1/v2-8605f8b25e02/E20",
+                "review/36215705637.1/v2-8605f8b25e02/E22",
+                "review/36215705637.1/v2-8605f8b25e02/E26",
+                "review/36215705637.1/v2-8605f8b25e02/E52"
+              ]
+            },
+            "agentFriendliness": {
+              "score": 88,
+              "reason": "SKILL §4 明确 builder/JSON AST 语义、updateMany 空 scope 与权限默认值，应用查询与断言写法均可在文档中找到依据；唯一冲突判定需自行摸索。",
+              "evidence": [
+                "review/36215705637.1/v2-8605f8b25e02/E19",
+                "review/36215705637.1/v2-8605f8b25e02/E20",
+                "review/36215705637.1/v2-8605f8b25e02/E21",
+                "review/36215705637.1/v2-8605f8b25e02/E52"
+              ]
+            },
+            "design": {
+              "score": 90,
+              "reason": "repository-input 把过滤/排序 AST 与 Repository 分层，返回值显式区分 record 与 updatedCount，错误类型带 code/path/collection 等结构化字段。",
+              "evidence": [
+                "review/36215705637.1/v2-8605f8b25e02/E16",
+                "review/36215705637.1/v2-8605f8b25e02/E17",
+                "review/36215705637.1/v2-8605f8b25e02/E18",
+                "review/36215705637.1/v2-8605f8b25e02/E19"
+              ]
+            },
+            "reliability": {
+              "score": 88,
+              "reason": "阅读实现：normalizeMutationFilter 对空 scope 抛 INVALID_FILTER，updateMany 返回适配器真实 updatedCount，兑现公开约定；唯一冲突只在 upsert 重试中被吸收，普通写入透传驱动错误。",
+              "evidence": [
+                "review/36215705637.1/v2-8605f8b25e02/E22",
+                "review/36215705637.1/v2-8605f8b25e02/E23",
+                "review/36215705637.1/v2-8605f8b25e02/E20"
+              ]
+            }
+          }
+        },
+        {
+          "key": "review/36215705637.1/v2-8605f8b25e02/M3",
+          "name": "Server 应用、服务提供者、路由与鉴权（@nocobase/app-server + @nocobase/service-provider + @nocobase/app-plugin-authentication）",
+          "subjectKeys": [
+            "pkg:@nocobase/app-server",
+            "pkg:@nocobase/service-provider",
+            "pkg:@nocobase/app-plugin-authentication",
+            "skill:nocobase-app-development"
+          ],
+          "mapping": "resolved",
+          "targets": [
+            {
+              "kind": "library",
+              "name": "@nocobase/app-server",
+              "subjectKey": "pkg:@nocobase/app-server",
+              "entrypoints": [
+                "defineApiRoutes/defineRootRoutes",
+                "routerToken/RouterProvider",
+                "Application 路由贡献 scope"
+              ],
+              "evidence": [
+                "review/36215705637.1/v2-8605f8b25e02/E33",
+                "review/36215705637.1/v2-8605f8b25e02/E34"
+              ]
+            },
+            {
+              "kind": "library",
+              "name": "@nocobase/service-provider",
+              "subjectKey": "pkg:@nocobase/service-provider",
+              "entrypoints": [
+                "ServiceProvider 生命周期 register/boot/start/ready/shutdown",
+                "createServiceToken",
+                "ServiceContainer.resolve/singleton/instance"
+              ],
+              "evidence": [
+                "review/36215705637.1/v2-8605f8b25e02/E35",
+                "review/36215705637.1/v2-8605f8b25e02/E36"
+              ]
+            },
+            {
+              "kind": "library",
+              "name": "@nocobase/app-plugin-authentication",
+              "subjectKey": "pkg:@nocobase/app-plugin-authentication",
+              "entrypoints": [
+                "authenticationToken",
+                "Auth.required()/optional() 中间件"
+              ],
+              "evidence": [
+                "review/36215705637.1/v2-8605f8b25e02/E37",
+                "review/36215705637.1/v2-8605f8b25e02/E38"
+              ]
+            },
+            {
+              "kind": "guidance",
+              "name": "app/.agents/skills/nocobase-app-development/references/server-routes.md",
+              "subjectKey": "skill:nocobase-app-development",
+              "entrypoints": [
+                "defineApiRoutes 路径不含 /api 前缀",
+                "每条路由自负鉴权",
+                "auth.required() 拒绝匿名请求"
+              ],
+              "evidence": [
+                "review/36215705637.1/v2-8605f8b25e02/E54",
+                "review/36215705637.1/v2-8605f8b25e02/E55"
+              ]
+            },
+            {
+              "kind": "guidance",
+              "name": "app/.agents/skills/nocobase-app-development/references/services-and-jobs.md",
+              "subjectKey": "skill:nocobase-app-development",
+              "entrypoints": [
+                "provider.register + container.singleton 装配",
+                "token 即身份",
+                "register() 与 boot() 的分工"
+              ],
+              "evidence": [
+                "review/36215705637.1/v2-8605f8b25e02/E56"
+              ]
+            }
+          ],
+          "scope": "本次涉及的服务提供者装配、REST 路由工厂、每路由鉴权与 HTTP 错误映射。",
+          "limitations": "未覆盖 authorization 细粒度权限、后台任务、中间件贡献排序等路径；实现日志缺失，无法确认 Agent 发现 provider/route 入口的过程。",
+          "criteria": [],
+          "qa": {
+            "firstFull": "unknown",
+            "finalFull": "unknown"
+          },
+          "requirements": [
+            {
+              "need": "把设备/借还领域逻辑做成可复用服务，路由只负责 HTTP 映射。",
+              "responsibility": "框架提供服务 provider/token/容器生命周期；应用编写业务逻辑。",
+              "support": "direct",
+              "recommendedUsage": "ServiceProvider.register + container.singleton/instance + createServiceToken，token 为身份。",
+              "actualUsage": "Agent 的 EquipmentProvider.register 解析 databaseManagerToken 并 container.instance(equipmentServiceToken, createEquipmentService(database))。",
+              "gapOwner": "none",
+              "evidence": [
+                "review/36215705637.1/v2-8605f8b25e02/E35",
+                "review/36215705637.1/v2-8605f8b25e02/E36",
+                "review/36215705637.1/v2-8605f8b25e02/E56",
+                "review/36215705637.1/v2-8605f8b25e02/E31"
+              ]
+            },
+            {
+              "need": "暴露 /api 下 REST 端点并对每条路由鉴权。",
+              "responsibility": "框架提供 defineApiRoutes（/api 前缀由运行时添加）与 auth.required 中间件；应用定义路由与状态码。",
+              "support": "direct",
+              "recommendedUsage": "defineApiRoutes 工厂 + app.container.resolve(authenticationToken) + auth.required()。",
+              "actualUsage": "Agent 的 equipmentRoutes = defineApiRoutes((app)=>{... router.get('/equipment', auth.required(), ...)})，代码路径不含 /api 前缀。",
+              "gapOwner": "none",
+              "evidence": [
+                "review/36215705637.1/v2-8605f8b25e02/E33",
+                "review/36215705637.1/v2-8605f8b25e02/E34",
+                "review/36215705637.1/v2-8605f8b25e02/E38",
+                "review/36215705637.1/v2-8605f8b25e02/E55",
+                "review/36215705637.1/v2-8605f8b25e02/E32"
+              ]
+            },
+            {
+              "need": "错误映射为 HTTP 状态与前端提示（404/409/403）。",
+              "responsibility": "框架提供 Hono context.json/status 与 ApiClientError；应用决定状态码并抛领域错误。",
+              "support": "composition",
+              "recommendedUsage": "服务抛领域错误，路由在 Hono 中映射；客户端按 ApiClientError.status 分支。",
+              "actualUsage": "Agent 在路由层捕获并返回状态码，前端按 ApiClientError.status===403 显示无权限提示。",
+              "gapOwner": "none",
+              "evidence": [
+                "review/36215705637.1/v2-8605f8b25e02/E32",
+                "review/36215705637.1/v2-8605f8b25e02/E38",
+                "review/36215705637.1/v2-8605f8b25e02/E46"
+              ]
+            },
+            {
+              "need": "本轮不需要细粒度权限（authorization）。",
+              "responsibility": "框架提供 app-plugin-authorization；需求未要求，属于框架职责之外的使用范围。",
+              "support": "out-of-scope",
+              "recommendedUsage": "未确认；本轮未涉及。",
+              "actualUsage": "未记录。",
+              "gapOwner": "none",
+              "evidence": []
+            }
+          ],
+          "scores": {
+            "requirementFit": {
+              "score": 90,
+              "reason": "provider/token 装配、defineApiRoutes 与 auth.required 直接覆盖本次服务+路由+鉴权需求，应用按公开入口即完成。",
+              "evidence": [
+                "review/36215705637.1/v2-8605f8b25e02/E33",
+                "review/36215705637.1/v2-8605f8b25e02/E34",
+                "review/36215705637.1/v2-8605f8b25e02/E35",
+                "review/36215705637.1/v2-8605f8b25e02/E38",
+                "review/36215705637.1/v2-8605f8b25e02/E55"
+              ]
+            },
+            "usability": {
+              "score": 90,
+              "reason": "入口少而一致：注册 provider、解析 token、在路由工厂内取依赖；server-routes/services-and-jobs 文档给出最小可复制示例。",
+              "evidence": [
+                "review/36215705637.1/v2-8605f8b25e02/E33",
+                "review/36215705637.1/v2-8605f8b25e02/E35",
+                "review/36215705637.1/v2-8605f8b25e02/E36",
+                "review/36215705637.1/v2-8605f8b25e02/E55",
+                "review/36215705637.1/v2-8605f8b25e02/E56"
+              ]
+            },
+            "agentFriendliness": {
+              "score": 92,
+              "reason": "两条 Skill 明确 /api 前缀由运行时添加、每条路由自负鉴权、token 为对象身份等易错点，应用产出与示例一致。",
+              "evidence": [
+                "review/36215705637.1/v2-8605f8b25e02/E33",
+                "review/36215705637.1/v2-8605f8b25e02/E35",
+                "review/36215705637.1/v2-8605f8b25e02/E55",
+                "review/36215705637.1/v2-8605f8b25e02/E56"
+              ]
+            },
+            "design": {
+              "score": 91,
+              "reason": "app-server 把路由作为服务（routerToken/RouterProvider）与路由贡献协议分离，service-provider 容器提供单例缓存、循环依赖检测与失败缓存，边界清晰。",
+              "evidence": [
+                "review/36215705637.1/v2-8605f8b25e02/E33",
+                "review/36215705637.1/v2-8605f8b25e02/E34",
+                "review/36215705637.1/v2-8605f8b25e02/E35",
+                "review/36215705637.1/v2-8605f8b25e02/E36"
+              ]
+            },
+            "reliability": {
+              "score": 88,
+              "reason": "阅读实现：RouterProvider 注册 Hono 实例，ServiceContainer.resolve 兑现单例与循环依赖报错；Auth 中间件由认证实现提供，未逐行阅读但类型与装配一致。",
+              "evidence": [
+                "review/36215705637.1/v2-8605f8b25e02/E34",
+                "review/36215705637.1/v2-8605f8b25e02/E36",
+                "review/36215705637.1/v2-8605f8b25e02/E38"
+              ]
+            }
+          }
+        },
+        {
+          "key": "review/36215705637.1/v2-8605f8b25e02/M4",
+          "name": "客户端路由、API 客户端与列表/表格指引（@nocobase/app-client + 前端 Skill 指引）",
+          "subjectKeys": [
+            "pkg:@nocobase/app-client",
+            "skill:nocobase-app-development"
+          ],
+          "mapping": "resolved",
+          "targets": [
+            {
+              "kind": "library",
+              "name": "@nocobase/app-client",
+              "subjectKey": "pkg:@nocobase/app-client",
+              "entrypoints": [
+                "useApiClient/useService/useClientApplication",
+                "ApiClient/ApiClientError/createApiClient 重导出",
+                "defineAppRoutes/defineSettingsRoutes 与路由 auth/authz",
+                "AppClientRoot"
+              ],
+              "evidence": [
+                "review/36215705637.1/v2-8605f8b25e02/E39",
+                "review/36215705637.1/v2-8605f8b25e02/E40",
+                "review/36215705637.1/v2-8605f8b25e02/E57",
+                "review/36215705637.1/v2-8605f8b25e02/E58"
+              ]
+            },
+            {
+              "kind": "guidance",
+              "name": "app/.agents/skills/nocobase-app-development/references/frontend/references/table.md",
+              "subjectKey": "skill:nocobase-app-development",
+              "entrypoints": [
+                "DataTable props",
+                "已知行为与 showSelectedCount 修法",
+                "完整示例代码"
+              ],
+              "evidence": [
+                "review/36215705637.1/v2-8605f8b25e02/E41",
+                "review/36215705637.1/v2-8605f8b25e02/E42"
+              ]
+            },
+            {
+              "kind": "guidance",
+              "name": "app/.agents/skills/nocobase-app-development/references/frontend/ui-guidelines.md",
+              "subjectKey": "skill:nocobase-app-development",
+              "entrypoints": [
+                "F1–F6 语义 token 等 Must 规则",
+                "规则 ID 与 Must/Should",
+                "共享组件作用域"
+              ],
+              "evidence": [
+                "review/36215705637.1/v2-8605f8b25e02/E59"
+              ]
+            }
+          ],
+          "scope": "本次涉及的客户端路由注册、API 请求封装、DataTable 复用与共享组件改动、UI 基础规则。",
+          "limitations": "未做视觉复核（当前模型无法解析 PNG），不能评价跨页面样式一致性；@nocobase/api-client 未随快照采集，HTTP 传输实现无法核对，可靠性仅覆盖已采集的 app-client 路由/hook 层。",
+          "criteria": [],
+          "qa": {
+            "firstFull": "unknown",
+            "finalFull": "unknown"
+          },
+          "requirements": [
+            {
+              "need": "两个列表页：搜索、状态筛选、表格、行操作与错误提示。",
+              "responsibility": "框架提供 DataTable 模板组件、路由/API 客户端与指引；应用编写页面逻辑。",
+              "support": "direct",
+              "recommendedUsage": "复用 @/components/data-table，搜索/筛选写 URL，按 table.md §5；共享组件只加可选 prop。",
+              "actualUsage": "Agent 复用 DataTable 与 DataTableColumnHeader，按指引补齐 showSelectedCount={false}，两个列表页均使用。",
+              "gapOwner": "none",
+              "evidence": [
+                "review/36215705637.1/v2-8605f8b25e02/E39",
+                "review/36215705637.1/v2-8605f8b25e02/E40",
+                "review/36215705637.1/v2-8605f8b25e02/E41",
+                "review/36215705637.1/v2-8605f8b25e02/E42",
+                "review/36215705637.1/v2-8605f8b25e02/E43",
+                "review/36215705637.1/v2-8605f8b25e02/E44",
+                "review/36215705637.1/v2-8605f8b25e02/E45",
+                "review/36215705637.1/v2-8605f8b25e02/E51"
+              ]
+            },
+            {
+              "need": "路由注册与登录保护。",
+              "responsibility": "框架提供 defineAppRoutes 与 auth/authz 声明；应用声明具体路由。",
+              "support": "direct",
+              "recommendedUsage": "defineAppRoutes([{auth:'required', authz:'skip', componentLoader, path, children}])。",
+              "actualUsage": "Agent 在 routes.ts 注册 equipment 与 equipment-loans，均 auth:'required'。",
+              "gapOwner": "none",
+              "evidence": [
+                "review/36215705637.1/v2-8605f8b25e02/E40",
+                "review/36215705637.1/v2-8605f8b25e02/E48",
+                "review/36215705637.1/v2-8605f8b25e02/E57",
+                "review/36215705637.1/v2-8605f8b25e02/E58"
+              ]
+            },
+            {
+              "need": "客户端请求封装：路径、查询参数、AbortSignal 与错误状态。",
+              "responsibility": "框架提供 ApiClient/ApiClientError 与 useApiClient；应用写具体请求。",
+              "support": "direct",
+              "recommendedUsage": "useApiClient + api.request({path, query, method, json, signal})。",
+              "actualUsage": "Agent 的 api.ts 用 api.request 传 path/query/signal，页面按 ApiClientError.status 分支显示错误。",
+              "gapOwner": "none",
+              "evidence": [
+                "review/36215705637.1/v2-8605f8b25e02/E39",
+                "review/36215705637.1/v2-8605f8b25e02/E40",
+                "review/36215705637.1/v2-8605f8b25e02/E47",
+                "review/36215705637.1/v2-8605f8b25e02/E60",
+                "review/36215705637.1/v2-8605f8b25e02/E46"
+              ]
+            },
+            {
+              "need": "两个页面的风格与交互保持一致。",
+              "responsibility": "框架提供 ui-guidelines 规则与共享组件；应用遵守并只对共享组件做兼容性改动。",
+              "support": "composition",
+              "recommendedUsage": "F1–F6 语义 token、共享组件改动只加可选 prop 且保持默认行为。",
+              "actualUsage": "未能确认像素级一致性：未做视觉复核；仅见应用复用共享组件并按指引加可选 prop。",
+              "gapOwner": "unknown",
+              "evidence": [
+                "review/36215705637.1/v2-8605f8b25e02/E41",
+                "review/36215705637.1/v2-8605f8b25e02/E59",
+                "review/36215705637.1/v2-8605f8b25e02/E43"
+              ]
+            }
+          ],
+          "scores": {
+            "requirementFit": {
+              "score": 90,
+              "reason": "DataTable、路由声明与 ApiClient 类型/错误类型共同覆盖列表页、路由保护与请求需求，应用无需自造表格或请求层。",
+              "evidence": [
+                "review/36215705637.1/v2-8605f8b25e02/E39",
+                "review/36215705637.1/v2-8605f8b25e02/E40",
+                "review/36215705637.1/v2-8605f8b25e02/E41",
+                "review/36215705637.1/v2-8605f8b25e02/E57"
+              ]
+            },
+            "usability": {
+              "score": 88,
+              "reason": "useApiClient/defineAppRoutes 入口直接；table.md 对 props 与已知行为说明充分；ui-guidelines 规则带 ID 便于对照，但页面一致性仍需人工复核。",
+              "evidence": [
+                "review/36215705637.1/v2-8605f8b25e02/E39",
+                "review/36215705637.1/v2-8605f8b25e02/E41",
+                "review/36215705637.1/v2-8605f8b25e02/E42",
+                "review/36215705637.1/v2-8605f8b25e02/E59"
+              ]
+            },
+            "agentFriendliness": {
+              "score": 92,
+              "reason": "table.md 精确点名模板 DataTable 缺 showSelectedCount 及兼容改法，§10 再次提醒列表页传 false；Agent 产出与指引完全一致。",
+              "evidence": [
+                "review/36215705637.1/v2-8605f8b25e02/E41",
+                "review/36215705637.1/v2-8605f8b25e02/E42",
+                "review/36215705637.1/v2-8605f8b25e02/E57",
+                "review/36215705637.1/v2-8605f8b25e02/E49"
+              ]
+            },
+            "design": {
+              "score": 88,
+              "reason": "路由以贡献声明聚合（defineAppRoutes/defineSettingsRoutes）、hooks 通过容器 token 解耦具体客户端实现；ApiClient 由外部包重导出，边界略受削弱。",
+              "evidence": [
+                "review/36215705637.1/v2-8605f8b25e02/E40",
+                "review/36215705637.1/v2-8605f8b25e02/E57",
+                "review/36215705637.1/v2-8605f8b25e02/E58",
+                "review/36215705637.1/v2-8605f8b25e02/E41"
+              ]
+            },
+            "reliability": {
+              "score": 82,
+              "reason": "阅读实现：hooks.js 在 AppClientRoot 外抛错、plugins.js 冻结并递归处理路由树，兑现公开约定；但 HTTP 传输在未采集的 @nocobase/api-client 中，本次可靠性结论只覆盖已采集的 app-client 层。",
+              "evidence": [
+                "review/36215705637.1/v2-8605f8b25e02/E39",
+                "review/36215705637.1/v2-8605f8b25e02/E58",
+                "review/36215705637.1/v2-8605f8b25e02/E41"
+              ]
+            }
+          }
+        }
+      ],
+      "findings": [
+        {
+          "id": "review/36215705637.1/v2-8605f8b25e02/F1",
+          "localId": "F1",
+          "kind": "strength",
+          "owner": "documentation",
+          "severity": "info",
+          "confidence": "confirmed",
+          "confirmedBy": "reviewer",
+          "reviewerStatus": "open",
+          "title": "指引预先点名模板 DataTable 的已知缺口并给出兼容修法，Agent 照做补齐",
+          "detail": "table.md §3 明确写出模板 DataTable 未透传 showSelectedCount，并给出“新增可选 prop 默认 true + 列表页传 false”的具体改法；§10 再次提醒列表页传 showSelectedCount={false}。应用 data-table.tsx 新增该可选 prop（默认 true）并透传给 DataTablePagination，两个列表页均传 false。",
+          "impact": "模板已知缺陷不会让 Agent 反复猜测或另写表格组件；指引既提示问题又限定只加可选 prop，避免影响其他页面。",
+          "suggestedChange": "保持该模式：把模板共享组件的已知缺口在指引中显式列出并给出向后兼容的修改方式。",
+          "claimed": null,
+          "observed": null,
+          "evidence": [
+            "review/36215705637.1/v2-8605f8b25e02/E41",
+            "review/36215705637.1/v2-8605f8b25e02/E42",
+            "review/36215705637.1/v2-8605f8b25e02/E43",
+            "review/36215705637.1/v2-8605f8b25e02/E44",
+            "review/36215705637.1/v2-8605f8b25e02/E51"
+          ],
+          "moduleKeys": [
+            "review/36215705637.1/v2-8605f8b25e02/M4"
+          ],
+          "subjectKeys": [
+            "pkg:@nocobase/app-client",
+            "skill:nocobase-app-development"
+          ]
+        },
+        {
+          "id": "review/36215705637.1/v2-8605f8b25e02/F2",
+          "localId": "F2",
+          "kind": "strength",
+          "owner": "framework",
+          "severity": "info",
+          "confidence": "confirmed",
+          "confirmedBy": "reviewer",
+          "reviewerStatus": "open",
+          "title": "迁移/种子库与 Skill 示例高度一致，应用迁移几乎照示例即可通过",
+          "detail": "db 的公开 API（defineMigration/defineSeed、builder 的 string/datetime/unique/foreignKey/index）与 nocobase-db SKILL §2/§3 示例一一对应；应用两个迁移与示例结构几乎一致，seed 用 SeedContext.repository 先查后写实现幂等。",
+          "impact": "建表与安装数据有稳定入口，减少自行发明 schema 与幂等逻辑，降低校验与返工成本。",
+          "suggestedChange": "可把“时间相对数据也要幂等”的推荐写法补进示例（见 F4）。",
+          "claimed": null,
+          "observed": null,
+          "evidence": [
+            "review/36215705637.1/v2-8605f8b25e02/E1",
+            "review/36215705637.1/v2-8605f8b25e02/E2",
+            "review/36215705637.1/v2-8605f8b25e02/E5",
+            "review/36215705637.1/v2-8605f8b25e02/E6",
+            "review/36215705637.1/v2-8605f8b25e02/E8",
+            "review/36215705637.1/v2-8605f8b25e02/E12",
+            "review/36215705637.1/v2-8605f8b25e02/E13"
+          ],
+          "moduleKeys": [
+            "review/36215705637.1/v2-8605f8b25e02/M1"
+          ],
+          "subjectKeys": [
+            "pkg:@nocobase/db",
+            "skill:nocobase-db",
+            "skill:nocobase-app-development"
+          ]
+        },
+        {
+          "id": "review/36215705637.1/v2-8605f8b25e02/F3",
+          "localId": "F3",
+          "kind": "improvement",
+          "owner": "framework",
+          "severity": "minor",
+          "confidence": "confirmed",
+          "confirmedBy": "reviewer",
+          "reviewerStatus": "open",
+          "title": "通用库未公开唯一约束冲突的稳定判定，应用只能按驱动错误串分支",
+          "detail": "公开 RepositoryErrorCode 没有唯一约束冲突码；能识别 unique 冲突的 isUniqueConstraintViolation 位于 database/internal/，index.js 注释声明 internal 不导出，adapter 只在 upsertOne 的并发重试里使用它，普通 createOne 直接抛出驱动原始错误。应用因此手写 isUniqueViolation，检查 '23505'/'SQLITE_CONSTRAINT_UNIQUE' 与 message 正则。",
+          "impact": "跨方言或驱动升级时业务方需维护驱动错误分支，漏判会把 409 类业务冲突变成 500 或误报。",
+          "suggestedChange": "导出稳定的唯一冲突判定（如 isUniqueConstraintViolation），或在 RepositoryErrorCode 增加冲突码并让 create/update 路径包装抛出。",
+          "claimed": null,
+          "observed": null,
+          "evidence": [
+            "review/36215705637.1/v2-8605f8b25e02/E24",
+            "review/36215705637.1/v2-8605f8b25e02/E25",
+            "review/36215705637.1/v2-8605f8b25e02/E26",
+            "review/36215705637.1/v2-8605f8b25e02/E27",
+            "review/36215705637.1/v2-8605f8b25e02/E28"
+          ],
+          "moduleKeys": [
+            "review/36215705637.1/v2-8605f8b25e02/M2"
+          ],
+          "subjectKeys": [
+            "pkg:@nocobase/db",
+            "pkg:@nocobase/repository-input",
+            "skill:nocobase-db"
+          ]
+        },
+        {
+          "id": "review/36215705637.1/v2-8605f8b25e02/F4",
+          "localId": "F4",
+          "kind": "issue",
+          "owner": "documentation",
+          "severity": "minor",
+          "confidence": "confirmed",
+          "confirmedBy": "reviewer",
+          "reviewerStatus": "open",
+          "title": "指引未说明“需求强制的演示/时间相对数据”应放在哪一层",
+          "detail": "nocobase-db SKILL §2 明确“a seed is never sample or demonstration content”，而本任务要求安装即含逾期等演示数据以支撑验收；migrations.md 又要求种子固定可复现、no current timestamps or random values in identifying fields。指引没有给出“需求强制的演示数据/时间相对数据”的推荐落点与可复现写法，应用只能把相对 new Date() 的演示数据写进 seed 并自行注释取舍。",
+          "impact": "不同 Agent 可能把演示数据放进迁移、生产种子或不写，导致验收状态不稳定，也容易与“种子不可变/可复现”规则产生表面冲突。",
+          "suggestedChange": "在 migrations.md 或 nocobase-db SKILL 增补一节，区分生产安装数据与需求强制的演示数据，明确推荐放置位置与允许的相对时间写法。",
+          "claimed": null,
+          "observed": null,
+          "evidence": [
+            "review/36215705637.1/v2-8605f8b25e02/E5",
+            "review/36215705637.1/v2-8605f8b25e02/E7",
+            "review/36215705637.1/v2-8605f8b25e02/E14"
+          ],
+          "moduleKeys": [
+            "review/36215705637.1/v2-8605f8b25e02/M1"
+          ],
+          "subjectKeys": [
+            "pkg:@nocobase/db",
+            "skill:nocobase-db",
+            "skill:nocobase-app-development"
+          ]
+        }
+      ],
+      "ui": {
+        "status": "not-reviewed",
+        "score": null,
+        "reason": "当前模型无法解析图片，未能实际查看至少两个不同页面/状态的 PNG，故不评价跨页面样式一致性。",
+        "evidence": [],
+        "framework": false
+      },
+      "limitations": [
+        "原始交互历史 partial；不能推断完整试错过程。历史未采集（缺失、超限或指纹不符）：agent-implement.jsonl；调用记录不完整或为旧格式：agent-implement.jsonl",
+        "未做视觉复核：当前模型无法解析 PNG，ui 记为 not-reviewed、score 为 null，不能据此评价跨页面样式一致性。",
+        "实现日志 agent-implement.jsonl 缺失，只能读到注入上下文与调用索引块；无法确认 Agent 的发现过程与首轮是否一次写对，未作此声称。",
+        "@nocobase/api-client 未随快照采集（不在 basis.packages），其 HTTP 传输实现无法核对；模块 D 的可靠性结论只覆盖已采集的 app-client 路由/hook 层。",
+        "未覆盖多连接迁移、checksum repair、编译 manifest、authorization 细粒度权限、后台任务与聚合/关系查询等路径。",
+        "本评审只读冻结快照，未联网核对最新上游；结论仅代表该版本，不能外推全框架表现。",
+        "快照未包含 1 个超出预算、非普通文件或不可读取的文件；未据此确认其实现。"
+      ],
+      "usageSource": null
+    }
+  ],
+  "processNotes": {
+    "state": "absent",
+    "source": null,
+    "author": "implementer",
+    "independent": false,
+    "summary": null,
+    "blockers": [],
+    "improvements": [],
+    "note": "过程笔记可选；缺失不代表没有问题、没有评审或没有改进。"
+  },
+  "metrics": {
+    "usage": {
+      "sources": [
+        {
+          "key": "agent-job:108331184106",
+          "executionKey": "run/36215705637/attempt/1",
+          "scope": "一次 Agent 作业内的实现、修复、QA 与同轮评审调用",
+          "phases": {
+            "implementation": {
+              "input": 597075,
+              "output": 169627,
+              "cacheRead": 27280384,
+              "cacheWrite": 0,
+              "total": 28047086
+            },
+            "repair": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0,
+              "total": 0
+            },
+            "qa": {
+              "input": 36408,
+              "output": 21824,
+              "cacheRead": 2816256,
+              "cacheWrite": 0,
+              "total": 2874488
+            },
+            "qaFocused": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0,
+              "total": 0
+            },
+            "qaReport": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0,
+              "total": 0
+            },
+            "review": {
+              "input": 271612,
+              "output": 64896,
+              "cacheRead": 5847936,
+              "cacheWrite": 0,
+              "total": 6184444
+            },
+            "compaction": {
+              "input": 352839,
+              "output": 63949,
+              "cacheRead": 0,
+              "cacheWrite": 0,
+              "total": 416788
+            }
+          },
+          "records": 571,
+          "missing": 0,
+          "incomplete": 0,
+          "complete": true
+        }
+      ],
+      "totals": {
+        "input": 1257934,
+        "output": 320296,
+        "cacheRead": 35944576,
+        "cacheWrite": 0,
+        "total": 37522806,
+        "complete": true
+      },
+      "definition": "沿用 task-usage 口径：按唯一来源键（Agent 作业 / 后补评审 Run）去重，不相加已含这些调用的汇总，不把思考 Token 再加到输出；缺失为 null，不等同供应商账单。"
+    },
+    "time": {
+      "executionSeconds": 4312,
+      "missingJobTimes": 0,
+      "endToEndSeconds": 4321,
+      "jobs": [
+        {
+          "id": 108331140260,
+          "name": "prepare",
+          "executionKey": "run/36215705637/attempt/1",
+          "seconds": 15
+        },
+        {
+          "id": 108331184106,
+          "name": "agent",
+          "executionKey": "run/36215705637/attempt/1",
+          "seconds": 4032
+        },
+        {
+          "id": 108340758531,
+          "name": "verify-final",
+          "executionKey": "run/36215705637/attempt/1",
+          "seconds": 252
+        },
+        {
+          "id": 108341328835,
+          "name": "publish",
+          "executionKey": "run/36215705637/attempt/1",
+          "seconds": 13
+        }
+      ],
+      "definition": "executionSeconds 为 prepare / agent / verify-final / publish 唯一作业时长之和，不含排队；endToEndSeconds 含排队及续跑间隔。"
+    },
+    "counts": {
+      "businessBuilds": 1,
+      "executions": 1,
+      "reviewExecutions": 1
+    }
+  },
+  "evidence": [
+    {
+      "id": "review/36215705637.1/v2-8605f8b25e02/E1",
+      "origin": {
+        "kind": "review",
+        "key": "review/36215705637.1/v2-8605f8b25e02",
+        "localId": "E1"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/db/dist/src/index.d.ts",
+      "lines": [
+        21,
+        32
+      ],
+      "sha256": "68dd12d55c1e21bf5a8efc369f0ef394d7025908196eb955e2b4a28b151ddfb6",
+      "observation": "公开包 API 导出 defineMigration、defineSeed、createMigrator、createSeeder 及其类型，未见唯一约束判定。",
+      "excerpt": "export { defineMigration } from './migration/define.js';\nexport { loadMigrations, validateMigrations } from './migration/loader.js';\nexport { createMigrator } from './migration/migrator.js';\nexport { TASK_LOCK_EXPIRY_MS, TASK_LOCK_HEARTBEAT_INTERVAL_MS, } from './migration/internal/lock.js';\nexport type { Migrator } from './migration/migrator.js';\nexport type { ChecksumMismatch, ChecksumMismatchPolicy, } from './migration/checksum-history.js';\nexport type { CreateMigratorOptions, DatabaseMigratorOptions, MigrationContext, MigrationHistoryRecord, MigrationDefinition, MigrationRepairOptions, MigrationRepairResult, MigrationRollbackOptions, MigrationRollbackResult, StaleTaskLockTakeover, TaskLockReleaseOptions, TaskLockReleaseResult, TaskLockState, MigrationRunResult, MigrationSource, MigrationTransactionMode, } from './migration/types.js';\nexport { defineSeed } from './seed/define.js';\nexport { loadSeeds, validateSeeds } from './seed/loader.js';\nexport { createSeeder } from './seed/seeder.js';\nexport type { Seeder } from './seed/seeder.js';\nexport type { CreateSeederOptions, DatabaseSeederOptions, SeedContext, SeedDefinition, SeedRepairOptions, SeedRepairResult, SeedRunResult, SeedSource, SeedTransactionMode, } from './seed/types.js';",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36215705637.1/v2-8605f8b25e02/E2",
+      "origin": {
+        "kind": "review",
+        "key": "review/36215705637.1/v2-8605f8b25e02",
+        "localId": "E2"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/db/dist/src/migration/types.d.ts",
+      "lines": [
+        51,
+        60
+      ],
+      "sha256": "a9ffc96c17fe2781585f7967f17e9d477b3bcdc16bdb0e7824f5221616710b38",
+      "observation": "MigrationDefinition 约定 name/transaction/irreversible/shouldRun/up/down。",
+      "excerpt": "/** Named database change loaded and executed by a Migrator. */\nexport interface MigrationDefinition {\n    readonly name: string;\n    readonly transaction?: MigrationTransactionMode;\n    readonly irreversible?: boolean;\n    /** Evaluated for pending migrations under the migration lock. False does not record history. */\n    shouldRun?(context: MigrationContext): boolean | Promise<boolean>;\n    up(context: MigrationContext): Promise<void>;\n    down?(context: MigrationContext): Promise<void>;\n}",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36215705637.1/v2-8605f8b25e02/E3",
+      "origin": {
+        "kind": "review",
+        "key": "review/36215705637.1/v2-8605f8b25e02",
+        "localId": "E3"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/db/dist/src/seed/types.d.ts",
+      "lines": [
+        12,
+        37
+      ],
+      "sha256": "fad688f57d07e53b0ac48dec6ae4ee03e845efff75c19483f85ce48886554f3c",
+      "observation": "SeedContext.repository 注释说明“安装数据”以 Collection 逻辑字段写入；SeedDefinition 只有 name/transaction/run。",
+      "excerpt": "/** Services available while executing a seed definition. */\nexport interface SeedContext {\n    readonly config: DatabaseTaskConfig;\n    readonly container: ServiceResolver;\n    /**\n     * The default tool for installation data, bound to the connection this seed\n     * runs on — the transaction's connection when it runs in one.\n     *\n     * Installation data is written in Collection terms: logical field names,\n     * relations and nested writes, with field encoding and timestamps handled\n     * for the dialect rather than by each seed.\n     */\n    repository<TRecord extends object = RepositoryRecord, TCreate extends object = Partial<TRecord>, TUpdate extends object = Partial<TRecord>>(collection: string): Repository<TRecord, TCreate, TUpdate>;\n    /**\n     * Row-level access for what `repository` cannot express, such as a read\n     * against a physical table that backs no Collection.\n     */\n    readonly query: QueryAdapter;\n    readonly connection: SeedConnection;\n}\n/** Named installation data operation loaded and executed by a Seeder. */\nexport interface SeedDefinition {\n    readonly name: string;\n    readonly transaction?: SeedTransactionMode;\n    run(context: SeedContext): Promise<void>;\n}",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36215705637.1/v2-8605f8b25e02/E4",
+      "origin": {
+        "kind": "review",
+        "key": "review/36215705637.1/v2-8605f8b25e02",
+        "localId": "E4"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/db/dist/src/collection/types.d.ts",
+      "lines": [
+        411,
+        413
+      ],
+      "sha256": "10e28ee4845c4300ddc190b925a57d8be3d1be9c23e43a2c032f9997aabfc19e",
+      "observation": "CollectionDefinitionBuilder 提供 unique/foreignKey/index。",
+      "excerpt": "    unique(fields: string | string[], options?: Omit<UniqueConstraintDefinition, 'type' | 'fields'>): this;\n    foreignKey(fields: string | string[], options: Omit<ForeignKeyConstraintDefinition, 'type' | 'fields'>): this;\n    index(fields: string | string[], options?: Omit<IndexDefinition, 'fields'>): this;",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36215705637.1/v2-8605f8b25e02/E5",
+      "origin": {
+        "kind": "review",
+        "key": "review/36215705637.1/v2-8605f8b25e02",
+        "localId": "E5"
+      },
+      "kind": "skill",
+      "path": "app/.agents/skills/nocobase-db/SKILL.md",
+      "lines": [
+        78,
+        105
+      ],
+      "sha256": "2fdca7c2484a669667b6293878b915a5af0f84cbd3c5e80945a28fe5fbabf7d7",
+      "observation": "§2 说明迁移建结构、seed 插入运行所需记录且“a seed is never sample or demonstration content”，并给出 createCollection/unique/index 的迁移示例。",
+      "excerpt": "## 2. Migrations and seeds\n\nA migration creates structure. A seed inserts the records the application needs in order to run. Neither does the other's job, and a seed is never sample or demonstration content.\n\n```ts\n// database/main/migrations/202609020001_create_orders.ts\nimport { defineMigration, type MigrationDefinition } from '@nocobase/db';\n\nconst migration: MigrationDefinition = defineMigration({\n  name: '202609020001_create_orders',\n\n  async up({ builder }) {\n    await builder.createCollection('orders', (collection) => {\n      collection.increments('id');\n      collection.string('orderNo', { length: 64, nullable: false });\n      collection.string('status', { length: 32, nullable: false });\n      collection.datetime('createdAt', { nullable: false });\n      collection.unique('orderNo');\n      collection.index('status');\n    });\n  },\n\n  async down({ builder }) {\n    await builder.dropCollection('orders');\n  },\n});\n\nexport default migration;",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36215705637.1/v2-8605f8b25e02/E6",
+      "origin": {
+        "kind": "review",
+        "key": "review/36215705637.1/v2-8605f8b25e02",
+        "localId": "E6"
+      },
+      "kind": "skill",
+      "path": "app/.agents/skills/nocobase-db/SKILL.md",
+      "lines": [
+        129,
+        139
+      ],
+      "sha256": "2fdca7c2484a669667b6293878b915a5af0f84cbd3c5e80945a28fe5fbabf7d7",
+      "observation": "迁移/种子绝对规则：自包含、合并后不可变、seed 按稳定业务值幂等（upsertOne）、默认事务。",
+      "excerpt": "The rules are absolute, because these files are history that has already run on other machines:\n\n- **Self-contained.** Spell out every table, field, index, constraint and metadata operation in the file. Never import a Collection definition, model, registry or shared constant that keeps evolving — that silently changes both the behavior and the checksum of something already applied.\n- **Immutable once merged.** Check with `git log -- <file>` if unsure. Before the branch is merged you may correct the file in place; after it, every change is a new, later file. Never hard-code a previous checksum to make an edited migration look untouched. Correcting it in place changes nothing on its own — it is recorded as executed, so a plain apply skips it and the database keeps the schema the old file produced. `pnpm db:redo` rolls the latest batch back and applies it again.\n- **The file name body matches `name`**, and the name is unique across every source in the application.\n- **Declare `irreversible: true`** when there is no real reverse operation, instead of writing a `down()` that quietly does nothing.\n- **A seed is idempotent**, keyed on a stable business value backed by a unique constraint, so a repeated run is a no-op — `upsertOne` is the direct way to express that. A seed context has no `builder` at all, and a seed has no rollback or truncate behavior.\n\nA backfill belongs in the migration that makes it necessary, using `query` from the same context — not in a seed.\n\nBoth run inside a transaction by default. `transaction: false` opts out, and a failure then leaves partial work behind with no history record, so take it only when the operation genuinely cannot run in one.",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36215705637.1/v2-8605f8b25e02/E7",
+      "origin": {
+        "kind": "review",
+        "key": "review/36215705637.1/v2-8605f8b25e02",
+        "localId": "E7"
+      },
+      "kind": "skill",
+      "path": "app/.agents/skills/nocobase-app-development/references/migrations.md",
+      "lines": [
+        7,
+        19
+      ],
+      "sha256": "3754e5ced8a2dc97c212c152168924b90349bce155651d9edfff66f246196004",
+      "observation": "migrations 与 seeds 分工；db:apply 只执行 pending；种子数据须固定可复现、no current timestamps。",
+      "excerpt": "Migrations under `database/main/migrations/` are the application's schema history. Seeds under `database/main/seeds/` insert records the application requires to run. Migrations create structure. Seeds never do.\n\n`database/tsconfig.json` extends the server configuration so editor tooling and ESLint recognize migrations and seeds as Node source. Keep it in place when adding connection directories.\n\n## Running\n\n```bash\npnpm db:apply\n```\n\nThis applies pending migrations and then pending seeds for `database.default`, including registered plugins, ordered by name across all sources. Both halves run only what is pending, so on an already-migrated database it applies seeds alone. The template defaults to `main`. Plugin migrations, seeds and runtime default reads/writes always use this same connection; changing `database.default` changes the application system database.\n\nSeeds are the second half of that run, so the structure a seed writes into must already exist from an earlier migration. Keep seed data fixed and reproducible — no current timestamps or random values in identifying fields — and never let a repeat run silently overwrite data a user has edited.",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36215705637.1/v2-8605f8b25e02/E8",
+      "origin": {
+        "kind": "review",
+        "key": "review/36215705637.1/v2-8605f8b25e02",
+        "localId": "E8"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/db/dist/src/seed/seeder.js",
+      "lines": [
+        29,
+        53
+      ],
+      "sha256": "6bc43829909d8be982f20526973e5742ecf501da3856ccb9898a3a48ebf64a46",
+      "observation": "实现：run() 在 seed 锁内读取历史，过滤出 pending 后逐个执行。",
+      "excerpt": "    async run() {\n        const connection = this.options.database.connection(this.options.connection);\n        const seeds = await loadSeeds(this.options);\n        const seedConnection = createSeedContext(connection, this.options.config, this.options.container).connection;\n        return withSeedLock(seedConnection, {\n            tableName: this.options.lockTableName ?? DEFAULT_SEED_LOCK_TABLE,\n            acquireTimeoutMs: this.options.lockAcquireTimeoutMs,\n            onStaleLock: this.options.onStaleLock,\n        }, async () => {\n            await ensureSeedTable(seedConnection, this.options.tableName ?? DEFAULT_SEED_TABLE);\n            const history = await readSeedHistory(seedConnection, this.options.tableName);\n            const warnings = this.validateAppliedHistory(seeds, history);\n            await upgradeTaskChecksums(seedConnection, this.options.tableName ?? DEFAULT_SEED_TABLE, seeds, history);\n            const appliedNames = new Set(history.map((record) => record.name));\n            const pending = seeds.filter((seed) => !appliedNames.has(seed.name));\n            const skipped = seeds\n                .filter((seed) => appliedNames.has(seed.name))\n                .map((seed) => seed.name);\n            const executed = [];\n            for (const seed of pending) {\n                await this.runSeed(connection, seed);\n                executed.push(seed.name);\n            }\n            return { executed, skipped, warnings };\n        });",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36215705637.1/v2-8605f8b25e02/E9",
+      "origin": {
+        "kind": "review",
+        "key": "review/36215705637.1/v2-8605f8b25e02",
+        "localId": "E9"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/db/dist/src/seed/seeder.js",
+      "lines": [
+        81,
+        107
+      ],
+      "sha256": "6bc43829909d8be982f20526973e5742ecf501da3856ccb9898a3a48ebf64a46",
+      "observation": "实现：runSeed 把 seed.run 与历史记录写入放入同一 connection.transaction。",
+      "excerpt": "    async runSeed(connection, loaded) {\n        const mode = loaded.seed.transaction ?? 'auto';\n        if (mode === false) {\n            const context = createSeedContext(connection, this.options.config, this.options.container);\n            const startedAt = Date.now();\n            await loaded.seed.run(context);\n            await recordSeedCompleted(context.connection, {\n                tableName: this.options.tableName,\n                packageName: loaded.packageName,\n                name: loaded.name,\n                checksum: loaded.checksum,\n                durationMs: Date.now() - startedAt,\n            });\n            return;\n        }\n        await connection.transaction(async (trxConnection) => {\n            const context = createSeedContext(trxConnection, this.options.config, this.options.container);\n            const startedAt = Date.now();\n            await loaded.seed.run(context);\n            await recordSeedCompleted(context.connection, {\n                tableName: this.options.tableName,\n                packageName: loaded.packageName,\n                name: loaded.name,\n                checksum: loaded.checksum,\n                durationMs: Date.now() - startedAt,\n            });\n        });",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36215705637.1/v2-8605f8b25e02/E10",
+      "origin": {
+        "kind": "review",
+        "key": "review/36215705637.1/v2-8605f8b25e02",
+        "localId": "E10"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/db/dist/src/migration/migrator.js",
+      "lines": [
+        34,
+        44
+      ],
+      "sha256": "dfc3035555b8c77ecc334fd12d2d66f119f6345cb222eb9885220fd4ae66deb5",
+      "observation": "实现：runPendingMigrations 在迁移锁内读取历史并过滤 pending。",
+      "excerpt": "        const result = await withMigrationLock(migrationConnection, {\n            tableName: this.options.lockTableName ?? DEFAULT_MIGRATION_LOCK_TABLE,\n            acquireTimeoutMs: this.options.lockAcquireTimeoutMs,\n            onStaleLock: this.options.onStaleLock,\n        }, async () => {\n            await ensureMigrationTable(migrationConnection, this.options.tableName ?? DEFAULT_MIGRATION_TABLE);\n            const history = await readMigrationHistory(migrationConnection, this.options.tableName);\n            const warnings = this.validateAppliedHistory(migrations, history);\n            await upgradeTaskChecksums(migrationConnection, this.options.tableName ?? DEFAULT_MIGRATION_TABLE, migrations, history);\n            const appliedNames = new Set(history.map((record) => record.name));\n            const pending = selectedMigrations.filter((migration) => !appliedNames.has(migration.name));",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36215705637.1/v2-8605f8b25e02/E11",
+      "origin": {
+        "kind": "review",
+        "key": "review/36215705637.1/v2-8605f8b25e02",
+        "localId": "E11"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/db/dist/src/migration/migrator.js",
+      "lines": [
+        190,
+        226
+      ],
+      "sha256": "dfc3035555b8c77ecc334fd12d2d66f119f6345cb222eb9885220fd4ae66deb5",
+      "observation": "实现：runUpMigration 在事务内执行 up 并写入历史记录。",
+      "excerpt": "    async runUpMigration(connection, loaded, batch) {\n        const mode = loaded.migration.transaction ?? 'auto';\n        if (mode === false) {\n            const context = {\n                ...createMigrationContext(connection, this.options.config, this.options.container),\n                parameters: loaded.parameters,\n                configuration: loaded.configuration,\n            };\n            const startedAt = Date.now();\n            await loaded.migration.up(context);\n            await recordMigrationCompleted(context.connection, {\n                tableName: this.options.tableName,\n                packageName: loaded.packageName,\n                name: loaded.name,\n                batch,\n                checksum: loaded.checksum,\n                durationMs: Date.now() - startedAt,\n            });\n            return;\n        }\n        await connection.transaction(async (trxConnection) => {\n            const context = {\n                ...createMigrationContext(trxConnection, this.options.config, this.options.container),\n                parameters: loaded.parameters,\n                configuration: loaded.configuration,\n            };\n            const startedAt = Date.now();\n            await loaded.migration.up(context);\n            await recordMigrationCompleted(context.connection, {\n                tableName: this.options.tableName,\n                packageName: loaded.packageName,\n                name: loaded.name,\n                batch,\n                checksum: loaded.checksum,\n                durationMs: Date.now() - startedAt,\n            });\n        });",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36215705637.1/v2-8605f8b25e02/E12",
+      "origin": {
+        "kind": "review",
+        "key": "review/36215705637.1/v2-8605f8b25e02",
+        "localId": "E12"
+      },
+      "kind": "code",
+      "path": "app/database/main/migrations/202607200001_create_office_equipment.ts",
+      "lines": [
+        11,
+        34
+      ],
+      "sha256": "21842658ee80a6631f5c544fe3bd7db1906bab432b802887139aa1e7b65563f5",
+      "observation": "应用迁移：defineMigration + createCollection + string/datetime + unique('assetNo') + index('status')。",
+      "excerpt": "const migration: MigrationDefinition = defineMigration({\n  name: '202607200001_create_office_equipment',\n\n  async up({ builder }) {\n    await builder.createCollection('officeEquipment', (collection) => {\n      collection.increments('id');\n      collection.string('assetNo', { length: 64, nullable: false });\n      collection.string('name', { length: 128, nullable: false });\n      collection.string('category', {\n        length: 64,\n        nullable: false,\n        defaultValue: '',\n      });\n      collection.text('notes', { nullable: false, defaultValue: '' });\n      collection.string('status', {\n        length: 16,\n        nullable: false,\n        defaultValue: 'available',\n      });\n      collection.datetime('createdAt', { nullable: false });\n      collection.datetime('updatedAt', { nullable: false });\n      collection.unique('assetNo');\n      collection.index('status');\n    });",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36215705637.1/v2-8605f8b25e02/E13",
+      "origin": {
+        "kind": "review",
+        "key": "review/36215705637.1/v2-8605f8b25e02",
+        "localId": "E13"
+      },
+      "kind": "code",
+      "path": "app/database/main/migrations/202607200002_create_equipment_loans.ts",
+      "lines": [
+        14,
+        33
+      ],
+      "sha256": "ee4f27a6b736f4b18721a5ec4e7c4bd3699a3ae5854651fb9e14cdbd48449875",
+      "observation": "应用迁移：foreignKey 关联 officeEquipment，并建 composite index 与 returnedAt/borrower 索引。",
+      "excerpt": "  async up({ builder }) {\n    await builder.createCollection('equipmentLoans', (collection) => {\n      collection.increments('id');\n      collection.integer('equipmentId', { nullable: false });\n      collection.string('borrower', { length: 128, nullable: false });\n      collection.text('purpose', { nullable: false, defaultValue: '' });\n      collection.datetime('borrowedAt', { nullable: false });\n      collection.datetime('expectedReturnAt', { nullable: false });\n      collection.datetime('returnedAt', { nullable: true });\n      collection.datetime('createdAt', { nullable: false });\n      collection.datetime('updatedAt', { nullable: false });\n      collection.foreignKey('equipmentId', {\n        references: { collection: 'officeEquipment', fields: ['id'] },\n        name: 'fk_equipment_loans_equipment',\n        onDelete: 'restrict',\n      });\n      collection.index(['equipmentId', 'returnedAt']);\n      collection.index('returnedAt');\n      collection.index('borrower');\n    });",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36215705637.1/v2-8605f8b25e02/E14",
+      "origin": {
+        "kind": "review",
+        "key": "review/36215705637.1/v2-8605f8b25e02",
+        "localId": "E14"
+      },
+      "kind": "code",
+      "path": "app/database/main/seeds/202607200003_seed_office_equipment_demo.ts",
+      "lines": [
+        7,
+        20
+      ],
+      "sha256": "dac6483848b9212a83b5704e7fe0118119ed34ae3015b55f51d7c205f66f25f7",
+      "observation": "种子注释说明这是演示台账、日期相对运行时刻、按 assetNo 与 (equipment,borrower) 幂等。",
+      "excerpt": "/**\n * Sample ledger for the office equipment borrowing feature.\n *\n * The dataset answers \"what do the two pages need to show?\" — at least one\n * available device, one normally borrowed device, one overdue device and one\n * already returned loan — so both pages have every state visible without the\n * tester having to create records first.\n *\n * Dates are relative to the moment the seed first runs, so the overdue loan is\n * actually overdue and the normal loan is actually in the future whenever the\n * application is installed. The seed is idempotent: equipment is matched by its\n * unique asset number and a loan by `(equipment, borrower)`, so running it twice\n * updates the same rows instead of duplicating them.\n */",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36215705637.1/v2-8605f8b25e02/E15",
+      "origin": {
+        "kind": "review",
+        "key": "review/36215705637.1/v2-8605f8b25e02",
+        "localId": "E15"
+      },
+      "kind": "code",
+      "path": "app/database/main/seeds/202607200003_seed_office_equipment_demo.ts",
+      "lines": [
+        131,
+        157
+      ],
+      "sha256": "dac6483848b9212a83b5704e7fe0118119ed34ae3015b55f51d7c205f66f25f7",
+      "observation": "应用种子：defineSeed + context.repository，先 findOne 再 updateOne/createOne 实现幂等写入。",
+      "excerpt": "const seed: SeedDefinition = defineSeed({\n  name: '202607200003_seed_office_equipment_demo',\n\n  async run(context: SeedContext): Promise<void> {\n    const now = new Date();\n    const equipmentRepository =\n      context.repository<EquipmentRecord>('officeEquipment');\n    const loanRepository = context.repository<LoanRecord>('equipmentLoans');\n    const equipmentIds = new Map<string, number>();\n\n    for (const item of EQUIPMENT) {\n      const existing = await equipmentRepository.findOne({\n        filter: { assetNo: item.assetNo },\n      });\n      if (existing) {\n        equipmentIds.set(item.assetNo, existing.id);\n        await equipmentRepository.updateOne({\n          filter: { id: existing.id },\n          values: { ...item, updatedAt: now },\n        });\n      } else {\n        const created = await equipmentRepository.createOne({\n          values: { ...item, createdAt: now, updatedAt: now },\n        });\n        equipmentIds.set(item.assetNo, created.record.id);\n      }\n    }",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36215705637.1/v2-8605f8b25e02/E16",
+      "origin": {
+        "kind": "review",
+        "key": "review/36215705637.1/v2-8605f8b25e02",
+        "localId": "E16"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/db/dist/src/repository/types.d.ts",
+      "lines": [
+        37,
+        51
+      ],
+      "sha256": "cd611c4d53bc57a8b9681ef0b259b057d441a2660fa38cfd49568bdb7cce8e3d",
+      "observation": "CreateOneOptions/FindOneOptions 使用 RepositoryFilter 类型化 filter。",
+      "excerpt": "export interface CreateOneOptions<TCreate extends object, TRecord extends object = RepositoryRecord> {\n    readonly values: MutationValuesInput<CreateMutationValues<TCreate>>;\n    readonly select?: RepositorySelect<TRecord>;\n    readonly context?: RepositoryContext;\n    /** Server-only policy; omitted or true adds no write restrictions, false denies the mutation. */\n    readonly writePolicy?: boolean | WritePolicyInput;\n}\nexport interface CreateManyOptions<TCreate extends object, TRecord extends object = RepositoryRecord> {\n    readonly values: MutationValuesInput<readonly [ScalarCreateValues<TCreate>, ...ScalarCreateValues<TCreate>[]]>;\n    readonly select?: RepositorySelect<TRecord>;\n    readonly context?: RepositoryContext;\n    readonly writePolicy?: boolean | FieldWritePolicyInput;\n}\nexport interface SingleMutationSelector<TRecord extends object> {\n    readonly filter: RepositoryFilter<TRecord>;",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36215705637.1/v2-8605f8b25e02/E17",
+      "origin": {
+        "kind": "review",
+        "key": "review/36215705637.1/v2-8605f8b25e02",
+        "localId": "E17"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/db/dist/src/repository/types.d.ts",
+      "lines": [
+        102,
+        111
+      ],
+      "sha256": "cd611c4d53bc57a8b9681ef0b259b057d441a2660fa38cfd49568bdb7cce8e3d",
+      "observation": "CreateManyResult/UpdateManyResult 暴露 updatedCount。",
+      "excerpt": "export type CreateManyResult<TResult = never> = [TResult] extends [never] ? {\n    readonly createdCount: number;\n} : {\n    readonly createdCount: number;\n    readonly records: readonly TResult[];\n};\nexport type UpdateManyResult<TResult = never> = [TResult] extends [never] ? {\n    readonly updatedCount: number;\n} : {\n    readonly updatedCount: number;",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36215705637.1/v2-8605f8b25e02/E18",
+      "origin": {
+        "kind": "review",
+        "key": "review/36215705637.1/v2-8605f8b25e02",
+        "localId": "E18"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/db/dist/src/repository/types.d.ts",
+      "lines": [
+        217,
+        242
+      ],
+      "sha256": "cd611c4d53bc57a8b9681ef0b259b057d441a2660fa38cfd49568bdb7cce8e3d",
+      "observation": "createOne 返回 SingleMutationResult，updateMany 返回 UpdateManyResult。",
+      "excerpt": "    createOne<TSelection extends AnySelectBuilder<TRecord>>(options: CreateOneOptions<TCreate, TRecord> & {\n        readonly select: (select: SelectBuilder<TRecord>) => TSelection;\n    }): Promise<SingleMutationResult<SelectedBuilderRecord<TRecord, TSelection>>>;\n    createOne(options: CreateOneOptions<TCreate, TRecord>): Promise<SingleMutationResult<TRecord>>;\n    createMany<TSelection extends AnySelectBuilder<TRecord>>(options: CreateManyOptions<TCreate, TRecord> & {\n        readonly select: (select: SelectBuilder<TRecord>) => TSelection;\n    }): Promise<CreateManyResult<SelectedBuilderRecord<TRecord, TSelection>>>;\n    createMany(options: CreateManyOptions<TCreate, TRecord> & {\n        readonly select: SelectAst;\n    }): Promise<CreateManyResult<TRecord>>;\n    createMany(options: CreateManyOptions<TCreate, TRecord>): Promise<CreateManyResult>;\n    updateOne<TSelection extends AnySelectBuilder<TRecord>>(options: UpdateOneOptions<TUpdate, TRecord> & {\n        readonly select: (select: SelectBuilder<TRecord>) => TSelection;\n    }): Promise<SingleMutationResult<SelectedBuilderRecord<TRecord, TSelection>>>;\n    updateOne(options: UpdateOneOptions<TUpdate, TRecord>): Promise<SingleMutationResult<TRecord>>;\n    upsertOne<TSelection extends AnySelectBuilder<TRecord>>(options: UpsertOneOptions<TCreate, TUpdate, TRecord> & {\n        readonly select: (select: SelectBuilder<TRecord>) => TSelection;\n    }): Promise<SingleMutationResult<SelectedBuilderRecord<TRecord, TSelection>>>;\n    upsertOne(options: UpsertOneOptions<TCreate, TUpdate, TRecord>): Promise<SingleMutationResult<TRecord>>;\n    updateMany<TSelection extends AnySelectBuilder<TRecord>>(options: UpdateManyOptions<TRecord, TUpdate> & {\n        readonly select: (select: SelectBuilder<TRecord>) => TSelection;\n    }): Promise<UpdateManyResult<SelectedBuilderRecord<TRecord, TSelection>>>;\n    updateMany(options: UpdateManyOptions<TRecord, TUpdate> & {\n        readonly select: SelectAst;\n    }): Promise<UpdateManyResult<TRecord>>;\n    updateMany(options: UpdateManyOptions<TRecord, TUpdate>): Promise<UpdateManyResult>;",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36215705637.1/v2-8605f8b25e02/E19",
+      "origin": {
+        "kind": "review",
+        "key": "review/36215705637.1/v2-8605f8b25e02",
+        "localId": "E19"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/repository-input/dist/filter-builder.d.ts",
+      "lines": [
+        2,
+        16
+      ],
+      "sha256": "afee875ee6356adf0b381cbd585cae3f66ff55f125c638d0765cc8e718a776c5",
+      "observation": "DefaultFilterBuilder 提供 and/or/variable/string/text/number/date/time/boolean/json/relation。",
+      "excerpt": "export declare class DefaultFilterBuilder<TRecord extends object = RepositoryRecord> implements FilterBuilder<TRecord> {\n    and(items: readonly FilterNode[]): FilterGroupNode;\n    or(items: readonly FilterNode[]): FilterGroupNode;\n    variable(path: string): FilterVariable;\n    string(path: string | RepositoryPath): StringFilterOperators;\n    text(path: string | RepositoryPath): TextFilterOperators;\n    number(path: string | RepositoryPath): NumberFilterOperators;\n    date(path: string | RepositoryPath): DateFilterOperators;\n    time(path: string | RepositoryPath): TimeFilterOperators;\n    boolean(path: string | RepositoryPath): BooleanFilterOperators;\n    json(path: string | RepositoryPath): JsonFilterOperators;\n    relation<TTarget extends object = RepositoryRecord>(path: string | RepositoryPath): RelationFilterOperators<TTarget>;\n}\nexport declare function getFilterFieldGroup(node: FilterConditionNode): FilterFieldGroup | undefined;\n//# sourceMappingURL=filter-builder.d.ts.map",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36215705637.1/v2-8605f8b25e02/E20",
+      "origin": {
+        "kind": "review",
+        "key": "review/36215705637.1/v2-8605f8b25e02",
+        "localId": "E20"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/repository-input/dist/types.d.ts",
+      "lines": [
+        140,
+        157
+      ],
+      "sha256": "4a0e166927cd7a20930d9fa96522d891c0ac2c3d96b8018dd52a95975af35a19",
+      "observation": "FilterBuilder 方法与 FilterShorthand/RepositoryFilter 定义，对象简写与 builder/JSON AST 均受支持。",
+      "excerpt": "export interface FilterBuilder<_TRecord extends object = RepositoryRecord> {\n    and(items: readonly FilterNode[]): FilterGroupNode;\n    or(items: readonly FilterNode[]): FilterGroupNode;\n    variable(path: string): FilterVariable;\n    string(path: string | RepositoryPath): StringFilterOperators;\n    text(path: string | RepositoryPath): TextFilterOperators;\n    number(path: string | RepositoryPath): NumberFilterOperators;\n    date(path: string | RepositoryPath): DateFilterOperators;\n    time(path: string | RepositoryPath): TimeFilterOperators;\n    boolean(path: string | RepositoryPath): BooleanFilterOperators;\n    json(path: string | RepositoryPath): JsonFilterOperators;\n    relation<TTarget extends object = RepositoryRecord>(path: string | RepositoryPath): RelationFilterOperators<TTarget>;\n}\nexport type FilterShorthandValue = string | number | boolean | null;\nexport type FilterShorthand<TRecord extends object> = Readonly<Partial<{\n    [TKey in keyof TRecord]: FilterShorthandValue;\n}>>;\nexport type RepositoryFilter<TRecord extends object> = FilterShorthand<TRecord> | FilterAst | ((filter: FilterBuilder<TRecord>) => FilterNode);",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36215705637.1/v2-8605f8b25e02/E21",
+      "origin": {
+        "kind": "review",
+        "key": "review/36215705637.1/v2-8605f8b25e02",
+        "localId": "E21"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/repository-input/dist/types.d.ts",
+      "lines": [
+        79,
+        99
+      ],
+      "sha256": "4a0e166927cd7a20930d9fa96522d891c0ac2c3d96b8018dd52a95975af35a19",
+      "observation": "StringFilterOperators.includes 支持 mode: 'insensitive'；DateFilterOperators 继承 empty/notEmpty。",
+      "excerpt": "export interface StringFilterOperators extends EmptyFilterOperators {\n    includes(value: FilterOperand<string>, options?: StringFilterOptions): FilterConditionNode;\n    notIncludes(value: FilterOperand<string>, options?: StringFilterOptions): FilterConditionNode;\n    startsWith(value: FilterOperand<string>, options?: StringFilterOptions): FilterConditionNode;\n    endsWith(value: FilterOperand<string>, options?: StringFilterOptions): FilterConditionNode;\n    eq(value: FilterOperand<string | null>, options?: StringFilterOptions): FilterConditionNode;\n    ne(value: FilterOperand<string | null>, options?: StringFilterOptions): FilterConditionNode;\n}\nexport interface StringFilterOptions {\n    readonly mode?: 'default' | 'insensitive';\n}\nexport type TextFilterOperators = StringFilterOperators;\nexport interface NumberFilterOperators extends EmptyFilterOperators {\n    eq(value: FilterOperand<number | string | null>): FilterConditionNode;\n    ne(value: FilterOperand<number | string | null>): FilterConditionNode;\n    gt(value: FilterOperand<number | string>): FilterConditionNode;\n    gte(value: FilterOperand<number | string>): FilterConditionNode;\n    lt(value: FilterOperand<number | string>): FilterConditionNode;\n    lte(value: FilterOperand<number | string>): FilterConditionNode;\n}\nexport interface DateFilterOperators extends EmptyFilterOperators {",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36215705637.1/v2-8605f8b25e02/E22",
+      "origin": {
+        "kind": "review",
+        "key": "review/36215705637.1/v2-8605f8b25e02",
+        "localId": "E22"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/db/dist/src/repository/repository.js",
+      "lines": [
+        681,
+        706
+      ],
+      "sha256": "31b67e0dcdfd222b6981571d563d9879525a3bf61312ea92a05a269d99c1f311",
+      "observation": "实现：normalizeMutationFilter 对空 scope 抛 INVALID_FILTER“Bulk mutations require a non-empty filter or all: true”。",
+      "excerpt": "    async normalizeMutationFilter(collection, filter, context, all, operation) {\n        if (all) {\n            if (filter !== undefined) {\n                invalid('INVALID_FILTER', 'filter and all are mutually exclusive.', {\n                    collection: collection.name,\n                });\n            }\n            return this.normalizePolicyMutationScope(collection, operation);\n        }\n        const normalized = await this.normalizeFilterWithoutPolicy(collection, filter, context);\n        const scoped = await this.combineMutationPolicyScope(collection, normalized, operation);\n        if (!scoped || scoped.root.items.length === 0) {\n            invalid('INVALID_FILTER', 'Bulk mutations require a non-empty filter or all: true.', { collection: collection.name, path: ['filter'] });\n        }\n        return scoped;\n    }\n    async normalizeSingleMutationFilter(collection, filter, context, operation) {\n        const normalized = await this.normalizeFilterWithoutPolicy(collection, filter, context);\n        const scoped = await this.combineMutationPolicyScope(collection, normalized, operation);\n        if (!scoped || scoped.root.items.length === 0) {\n            invalid('INVALID_FILTER', 'Single mutations require a non-empty filter.', {\n                collection: collection.name,\n                path: ['filter'],\n            });\n        }\n        return scoped;",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36215705637.1/v2-8605f8b25e02/E23",
+      "origin": {
+        "kind": "review",
+        "key": "review/36215705637.1/v2-8605f8b25e02",
+        "localId": "E23"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/db/dist/src/repository/repository.js",
+      "lines": [
+        487,
+        504
+      ],
+      "sha256": "31b67e0dcdfd222b6981571d563d9879525a3bf61312ea92a05a269d99c1f311",
+      "observation": "实现：updateMany 调用适配器并返回真实 updatedCount。",
+      "excerpt": "        const result = await this.options.adapter.updateMany({\n            collection,\n            filter,\n            all: options.all === true,\n            values,\n            fields: selection\n                ? includeExecutionFields(collection, selection.fields)\n                : undefined,\n            select: selection?.select,\n            scopeCheck: await this.scopeCheck(collection, 'update'),\n        });\n        return selection\n            ? {\n                updatedCount: result.count,\n                records: pickManySelections(result.records, selection),\n            }\n            : { updatedCount: result.count };\n    }",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36215705637.1/v2-8605f8b25e02/E24",
+      "origin": {
+        "kind": "review",
+        "key": "review/36215705637.1/v2-8605f8b25e02",
+        "localId": "E24"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/db/dist/src/index.js",
+      "lines": [
+        1,
+        2
+      ],
+      "sha256": "554d5e749ac0205f193699da2d837640a4e8ee382541738f365e2b6280525cdc",
+      "observation": "文件首注释声明“Supported package API. Internal modules are intentionally not re-exported.”，随后只导出受支持 API。",
+      "excerpt": "// Supported package API. Internal modules are intentionally not re-exported.\nexport { CollectionMetadataStoreRequiredError, createDatabaseManager, } from './database/manager.js';",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36215705637.1/v2-8605f8b25e02/E25",
+      "origin": {
+        "kind": "review",
+        "key": "review/36215705637.1/v2-8605f8b25e02",
+        "localId": "E25"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/db/dist/src/database/internal/unique-constraint.js",
+      "lines": [
+        1,
+        23
+      ],
+      "sha256": "1b51c60088f9efe287afb45a5b365b0af534a12261e2bf355454f91ff4fcb143",
+      "observation": "isUniqueConstraintViolation 实现位于 internal，识别 23505/SQLite/MySQL/MSSQL 等错误码。",
+      "excerpt": "export function isUniqueConstraintViolation(error) {\n    const visited = new Set();\n    let current = error;\n    while (current && typeof current === 'object' && !visited.has(current)) {\n        visited.add(current);\n        const record = current;\n        const code = record.code;\n        const number = record.errno ?? record.number ?? record.errorNum;\n        if (record.errCode === -6602 ||\n            code === '23505' ||\n            code === 'ER_DUP_ENTRY' ||\n            code === 'SQLITE_CONSTRAINT' ||\n            code === 'SQLITE_CONSTRAINT_UNIQUE' ||\n            code === 'SQLITE_CONSTRAINT_PRIMARYKEY' ||\n            number === 1 ||\n            number === 1062 ||\n            number === 2601 ||\n            number === 2627) {\n            return true;\n        }\n        current = record.cause ?? record.originalError;\n    }\n    return false;",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36215705637.1/v2-8605f8b25e02/E26",
+      "origin": {
+        "kind": "review",
+        "key": "review/36215705637.1/v2-8605f8b25e02",
+        "localId": "E26"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/repository-input/dist/errors.d.ts",
+      "lines": [
+        1,
+        10
+      ],
+      "sha256": "fac52001db08cf3c77b4c20cb190c2fc5df3c906141db68315e5d15095703eb7",
+      "observation": "RepositoryErrorCode 联合类型与 RepositoryError 字段，未包含唯一约束冲突码。",
+      "excerpt": "export type RepositoryErrorCode = 'COLLECTION_NOT_FOUND' | 'FIELD_NOT_FOUND' | 'FIELD_CAPABILITY_NOT_SUPPORTED' | 'FIELD_NOT_WRITABLE' | 'RELATION_NOT_FOUND' | 'READ_ONLY_COLLECTION' | 'INVALID_AST' | 'INVALID_CONTEXT' | 'INVALID_FILTER' | 'INVALID_PAGINATION' | 'INVALID_SELECT' | 'INVALID_SORT' | 'INVALID_AGGREGATE' | 'INVALID_GROUP_BY' | 'INVALID_DISTINCT' | 'INVALID_STREAM' | 'QUERY_ALREADY_CONSUMED' | 'QUERY_TRANSACTION_COMPLETED' | 'INVALID_MUTATION' | 'INVALID_STORED_VALUE' | 'INVALID_UNIQUE_SELECTOR' | 'VARIABLE_NOT_FOUND' | 'MUTATION_LIMIT_EXCEEDED' | 'RECORD_NOT_FOUND' | 'MULTIPLE_RECORDS_MATCHED' | 'RELATION_TARGET_NOT_FOUND' | 'MULTIPLE_RELATION_TARGETS_MATCHED' | 'RELATION_UPSERT_TARGET_OUTSIDE_SCOPE' | 'VERSION_CONFLICT' | 'INVALID_WRITE_POLICY' | 'INVALID_POLICY' | 'POLICY_REQUIRED' | 'READ_FORBIDDEN' | 'FIELD_READ_FORBIDDEN' | 'RELATION_READ_FORBIDDEN' | 'SCOPE_VIOLATION' | 'RECORD_OUTSIDE_SCOPE' | 'WRITE_FORBIDDEN' | 'FIELD_WRITE_FORBIDDEN' | 'RELATION_WRITE_FORBIDDEN' | 'RELATION_ACTION_NOT_ALLOWED' | 'RELATION_REASSIGNMENT_REQUIRED';\nexport interface RepositoryErrorOptions {\n    readonly path?: readonly (string | number)[];\n    readonly collection?: string;\n    readonly field?: string;\n    readonly relation?: string;\n    readonly retryable?: boolean;\n    readonly details?: Readonly<Record<string, unknown>>;\n    readonly cause?: unknown;\n}",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36215705637.1/v2-8605f8b25e02/E27",
+      "origin": {
+        "kind": "review",
+        "key": "review/36215705637.1/v2-8605f8b25e02",
+        "localId": "E27"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/db/dist/src/repository/internal/knex-execution-adapter.js",
+      "lines": [
+        430,
+        450
+      ],
+      "sha256": "a57f33e8c7d417190865effb1b5fe14801f098df5a78d2afaa97733653b069f0",
+      "observation": "实现：isUniqueConstraintViolation 只用于 upsertOne 并发重试；非 upsert 路径直接 rethrow 原错误。",
+      "excerpt": "    async executeUpsertOne(plan) {\n        const selected = await this.lockByUnique(plan.collection, plan.by);\n        if (selected === 'missing') {\n            try {\n                return await this.inSavepoint((adapter) => adapter.executeCreateOne({\n                    collection: plan.collection,\n                    fields: plan.fields,\n                    values: plan.createValues,\n                    relations: plan.createRelations,\n                    select: plan.select,\n                    scopeCheck: plan.createScopeCheck,\n                    relationScopes: plan.createRelationScopes,\n                }));\n            }\n            catch (error) {\n                if (!isUniqueConstraintViolation(error))\n                    throw error;\n                const concurrent = await this.lockByUnique(plan.collection, plan.by);\n                if (concurrent === 'missing')\n                    throw error;\n            }",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36215705637.1/v2-8605f8b25e02/E28",
+      "origin": {
+        "kind": "review",
+        "key": "review/36215705637.1/v2-8605f8b25e02",
+        "localId": "E28"
+      },
+      "kind": "code",
+      "path": "app/server/providers/equipment-service.ts",
+      "lines": [
+        173,
+        189
+      ],
+      "sha256": "7b42b805881a6ed43de33ece24dc96ebb1f09218408740df2f88aa3f8e380cf7",
+      "observation": "应用手写 isUniqueViolation，按 code 23505/SQLITE_CONSTRAINT_UNIQUE 与 message 正则判定。",
+      "excerpt": "/** Whether a database error came from a unique constraint (SQLite or PostgreSQL). */\nfunction isUniqueViolation(error: unknown): boolean {\n  if (typeof error !== 'object' || error === null) {\n    return false;\n  }\n  const candidate = error as { code?: unknown; message?: unknown };\n  if (\n    candidate.code === '23505' ||\n    candidate.code === 'SQLITE_CONSTRAINT_UNIQUE'\n  ) {\n    return true;\n  }\n  return (\n    typeof candidate.message === 'string' &&\n    /unique constraint|UNIQUE constraint failed/i.test(candidate.message)\n  );\n}",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36215705637.1/v2-8605f8b25e02/E29",
+      "origin": {
+        "kind": "review",
+        "key": "review/36215705637.1/v2-8605f8b25e02",
+        "localId": "E29"
+      },
+      "kind": "code",
+      "path": "app/server/providers/equipment-service.ts",
+      "lines": [
+        262,
+        281
+      ],
+      "sha256": "7b42b805881a6ed43de33ece24dc96ebb1f09218408740df2f88aa3f8e380cf7",
+      "observation": "应用查询：filter.or 组合 assetNo/name 的 insensitive includes，status eq，sort.field('assetNo').asc()。",
+      "excerpt": "    const records = await equipmentRepository.findMany({\n      filter: (filter) => {\n        const conditions = [];\n        if (keyword) {\n          conditions.push(\n            filter.or([\n              filter\n                .string('assetNo')\n                .includes(keyword, { mode: 'insensitive' }),\n              filter.string('name').includes(keyword, { mode: 'insensitive' }),\n            ]),\n          );\n        }\n        if (query.status) {\n          conditions.push(filter.string('status').eq(query.status));\n        }\n        return conditions.length > 0 ? filter.and(conditions) : filter.and([]);\n      },\n      sort: (sort) => sort.field('assetNo').asc(),\n    });",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36215705637.1/v2-8605f8b25e02/E30",
+      "origin": {
+        "kind": "review",
+        "key": "review/36215705637.1/v2-8605f8b25e02",
+        "localId": "E30"
+      },
+      "kind": "code",
+      "path": "app/server/providers/equipment-service.ts",
+      "lines": [
+        509,
+        554
+      ],
+      "sha256": "7b42b805881a6ed43de33ece24dc96ebb1f09218408740df2f88aa3f8e380cf7",
+      "observation": "应用借出：database.transaction 内条件 updateMany 检查 updatedCount，再 createOne 借出记录。",
+      "excerpt": "    const now = new Date();\n    return this.database.transaction(async (connection) => {\n      const equipmentRepository =\n        connection.repository<EquipmentRecord>('officeEquipment');\n      const loanRepository =\n        connection.repository<LoanRecord>('equipmentLoans');\n\n      // Conditional update: only the request that finds the device available\n      // wins, so two people cannot borrow the same device at the same moment.\n      const claimed = await equipmentRepository.updateMany({\n        filter: { id: equipmentId, status: 'available' },\n        values: { status: 'borrowed', updatedAt: now },\n      });\n      if (claimed.updatedCount === 0) {\n        const equipment = await equipmentRepository.findOne({\n          filter: { id: equipmentId },\n        });\n        if (!equipment) {\n          throw new EquipmentError(\n            'EQUIPMENT_NOT_FOUND',\n            'The equipment does not exist',\n          );\n        }\n        throw new EquipmentError(\n          'NOT_AVAILABLE',\n          'The equipment is already borrowed',\n        );\n      }\n\n      const created = await loanRepository.createOne({\n        values: {\n          equipmentId,\n          borrower,\n          purpose: normalizeText(input.purpose),\n          borrowedAt: now,\n          expectedReturnAt: expected,\n          returnedAt: null,\n          createdAt: now,\n          updatedAt: now,\n        },\n      });\n      const equipment = await equipmentRepository.findOne({\n        filter: { id: equipmentId },\n      });\n      return toLoanView(created.record, equipment, now);\n    });",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36215705637.1/v2-8605f8b25e02/E31",
+      "origin": {
+        "kind": "review",
+        "key": "review/36215705637.1/v2-8605f8b25e02",
+        "localId": "E31"
+      },
+      "kind": "code",
+      "path": "app/server/providers/equipment-service.ts",
+      "lines": [
+        660,
+        669
+      ],
+      "sha256": "7b42b805881a6ed43de33ece24dc96ebb1f09218408740df2f88aa3f8e380cf7",
+      "observation": "应用 provider：继承 ServiceProvider，解析 databaseManagerToken 并 instance(equipmentServiceToken, ...)。",
+      "excerpt": "export class EquipmentProvider extends ServiceProvider<Application> {\n  public readonly name: string = 'app/equipment';\n\n  public override register(): void {\n    const database = this.app.container.resolve(databaseManagerToken);\n    this.app.container.instance(\n      equipmentServiceToken,\n      createEquipmentService(database),\n    );\n  }",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36215705637.1/v2-8605f8b25e02/E32",
+      "origin": {
+        "kind": "review",
+        "key": "review/36215705637.1/v2-8605f8b25e02",
+        "localId": "E32"
+      },
+      "kind": "code",
+      "path": "app/server/routes/equipment.ts",
+      "lines": [
+        73,
+        93
+      ],
+      "sha256": "3cae1dbf4a2935895d1ca9198f8f1dc5a6374ef1c051c7f4da906cce320e3abc",
+      "observation": "应用路由：defineApiRoutes 工厂解析 authenticationToken 与服务，router.get('/equipment', auth.required())。",
+      "excerpt": "export const equipmentRoutes = defineApiRoutes<Application>((app) => {\n  const router = new Hono();\n  const auth = app.container.resolve(authenticationToken);\n  const equipmentService: EquipmentService = app.container.resolve(\n    equipmentServiceToken,\n  );\n\n  router.get('/equipment', auth.required(), async (context) => {\n    try {\n      const status = context.req.query('status');\n      const result = await equipmentService.listEquipment({\n        keyword: context.req.query('keyword'),\n        status:\n          status === 'available' || status === 'borrowed' ? status : undefined,\n      });\n      return context.json(result);\n    } catch (error) {\n      return toErrorResponse(context, error);\n    }\n  });\n",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36215705637.1/v2-8605f8b25e02/E33",
+      "origin": {
+        "kind": "review",
+        "key": "review/36215705637.1/v2-8605f8b25e02",
+        "localId": "E33"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/app-server/dist/router/routes.d.ts",
+      "lines": [
+        8,
+        23
+      ],
+      "sha256": "a85b078705c8bdf8ee04dec1a946f39708d1aff68d1581562abe4c20ebabcb74",
+      "observation": "defineApiRoutes 返回 scope 'api' 的路由贡献，defineRootRoutes 返回 'root'。",
+      "excerpt": "export interface AppApiRouteContribution<TApplication> {\n    readonly scope: 'api';\n    readonly createRouter: AppRouterFactory<TApplication>;\n}\nexport interface AppRootRouteContribution<TApplication> {\n    readonly scope: 'root';\n    readonly createRouter: AppRouterFactory<TApplication>;\n}\nexport type AppRouteContribution<TApplication> = AppApiRouteContribution<TApplication> | AppRootRouteContribution<TApplication>;\nexport interface DefineHttpMiddlewareOptions<TApplication> {\n    readonly name: string;\n    readonly register: AppHttpMiddlewareRegister<TApplication>;\n}\nexport declare function defineHttpMiddleware<TApplication>(options: DefineHttpMiddlewareOptions<TApplication>): AppHttpMiddleware<TApplication>;\nexport declare function defineApiRoutes<TApplication>(createRouter: AppRouterFactory<TApplication>): AppApiRouteContribution<TApplication>;\nexport declare function defineRootRoutes<TApplication>(createRouter: AppRouterFactory<TApplication>): AppRootRouteContribution<TApplication>;",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36215705637.1/v2-8605f8b25e02/E34",
+      "origin": {
+        "kind": "review",
+        "key": "review/36215705637.1/v2-8605f8b25e02",
+        "localId": "E34"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/app-server/dist/router/index.js",
+      "lines": [
+        14,
+        20
+      ],
+      "sha256": "c8deb635bb8580f3dee425710387083b79718842bada261a251fdd264e577ecc",
+      "observation": "实现：routerToken 与 RouterProvider 在容器中注册 Hono 实例。",
+      "excerpt": "export const routerToken=[REDACTED]'@nocobase/app/router');\nexport class RouterProvider extends ServiceProvider {\n    name = 'router';\n    register() {\n        this.app.container.instance(routerToken, new Hono());\n    }\n}",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36215705637.1/v2-8605f8b25e02/E35",
+      "origin": {
+        "kind": "review",
+        "key": "review/36215705637.1/v2-8605f8b25e02",
+        "localId": "E35"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/service-provider/dist/provider.d.ts",
+      "lines": [
+        1,
+        18
+      ],
+      "sha256": "764184ad5e2e9cb20d3ea4c790e4acc5dd9f4849464e8220aba40243be60996c",
+      "observation": "ServiceProviderLifecycle 定义 register/boot/start/ready/shutdown。",
+      "excerpt": "export interface ServiceProviderLifecycle {\n    readonly name: string;\n    register(): void;\n    boot(): Promise<void>;\n    start(): Promise<void>;\n    ready(): Promise<void>;\n    shutdown(): Promise<void>;\n}\nexport declare abstract class ServiceProvider<TApplication = unknown> implements ServiceProviderLifecycle {\n    protected readonly app: TApplication;\n    abstract readonly name: string;\n    constructor(app: TApplication);\n    register(): void;\n    boot(): Promise<void>;\n    start(): Promise<void>;\n    ready(): Promise<void>;\n    shutdown(): Promise<void>;\n}",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36215705637.1/v2-8605f8b25e02/E36",
+      "origin": {
+        "kind": "review",
+        "key": "review/36215705637.1/v2-8605f8b25e02",
+        "localId": "E36"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/service-provider/dist/container.js",
+      "lines": [
+        23,
+        56
+      ],
+      "sha256": "69dafbced91dd305a59e368eb04592a9aeecd8052415849babafb879363e07ca",
+      "observation": "实现：resolve 缓存单例、检测循环依赖并缓存失败状态。",
+      "excerpt": "    resolve(token) {\n        const binding = this.bindings.get(token);\n        if (!binding) {\n            throw new Error(`Service \"${token.name}\" is not registered.`);\n        }\n        if (binding.state === 'created') {\n            return binding.instance;\n        }\n        if (binding.state === 'failed') {\n            throw binding.error;\n        }\n        if (binding.state === 'creating') {\n            const cycle = [...this.resolving, token]\n                .map((item) => item.name)\n                .join(' -> ');\n            throw new Error(`Circular service dependency detected: ${cycle}.`);\n        }\n        binding.state = 'creating';\n        this.resolving.push(token);\n        try {\n            const value = binding.factory(this);\n            binding.instance = value;\n            binding.state = 'created';\n            return value;\n        }\n        catch (error) {\n            binding.error = error;\n            binding.state = 'failed';\n            throw error;\n        }\n        finally {\n            this.resolving.pop();\n        }\n    }",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36215705637.1/v2-8605f8b25e02/E37",
+      "origin": {
+        "kind": "review",
+        "key": "review/36215705637.1/v2-8605f8b25e02",
+        "localId": "E37"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/app-plugin-authentication/dist/server/tokens.d.ts",
+      "lines": [
+        1,
+        5
+      ],
+      "sha256": "f8e3a4fbe8a8d4079d17a56828cefe65325ad4fa7724018499f98b472d2d92ac",
+      "observation": "authenticationToken 是 ServiceToken<Auth>。",
+      "excerpt": "import { type ServiceToken } from '@nocobase/service-provider';\nimport type { Auth } from './auth.js';\nimport type { UserAdministrationService } from './user-administration.js';\nexport declare const authenticationToken=[REDACTED] declare const userAdministrationServiceToken=[REDACTED]",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36215705637.1/v2-8605f8b25e02/E38",
+      "origin": {
+        "kind": "review",
+        "key": "review/36215705637.1/v2-8605f8b25e02",
+        "localId": "E38"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/app-plugin-authentication/dist/server/auth.d.ts",
+      "lines": [
+        22,
+        40
+      ],
+      "sha256": "cac0d39d0910ddf845446aac31548dbfef93e0fd2c4133b6754aa8fe2230c112",
+      "observation": "Auth 提供 required/optional 中间件、getSession 与 forConnection。",
+      "excerpt": "export declare class Auth {\n    private readonly auth;\n    private readonly connection;\n    private readonly options;\n    constructor(options: AuthOptions);\n    handler(request: Request): Promise<Response>;\n    getSession(headers: Headers): Promise<AuthSession>;\n    /** Protect writes authenticated by a browser cookie, including routes that skip normal session lookup. */\n    private checkCookieWriteOrigin;\n    /** Returns only a registered plugin's API methods, including the normal hook pipeline. */\n    pluginApi<TPlugin extends BetterAuthPlugin>(pluginId: TPlugin['id']): FilteredAPI<NonNullable<TPlugin['endpoints']>>;\n    /** @internal Used by the Authentication-owned administration service. */\n    administrationContext(): typeof this.auth.$context;\n    /** Binds trusted server operations to a caller-owned connection or transaction. */\n    forConnection(connection: DatabaseConnection): Auth;\n    optional(options?: AuthMiddlewareOptions): MiddlewareHandler<AuthEnv>;\n    required(options?: AuthMiddlewareOptions): MiddlewareHandler<AuthEnv>;\n}\nexport declare function createAuthentication(options: CreateAuthenticationOptions): Auth;",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36215705637.1/v2-8605f8b25e02/E39",
+      "origin": {
+        "kind": "review",
+        "key": "review/36215705637.1/v2-8605f8b25e02",
+        "localId": "E39"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/app-client/dist/hooks.js",
+      "lines": [
+        1,
+        16
+      ],
+      "sha256": "6e63d580cb93a555f719e533e21e5f1f5fe72e94b4be130ba53ce818eecf5d55",
+      "observation": "实现：useClientApplication 在 AppClientRoot 外抛错；useService/useApiClient 从容器解析 token。",
+      "excerpt": "import { useContext } from 'react';\nimport { apiClientToken } from './application.js';\nimport { ClientApplicationContext } from './application-context.js';\nexport function useClientApplication() {\n    const app = useContext(ClientApplicationContext);\n    if (!app) {\n        throw new Error('useClientApplication() must be used inside AppClientRoot.');\n    }\n    return app;\n}\nexport function useService(token) {\n    return useClientApplication().services.resolve(token);\n}\nexport function useApiClient() {\n    return useService(apiClientToken);\n}",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36215705637.1/v2-8605f8b25e02/E40",
+      "origin": {
+        "kind": "review",
+        "key": "review/36215705637.1/v2-8605f8b25e02",
+        "localId": "E40"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/app-client/dist/index.d.ts",
+      "lines": [
+        5,
+        11
+      ],
+      "sha256": "7bd2f9e5c101cbae3594bcc67d7fb1cfa04c7ec97ced1c9c0431a4137d220258",
+      "observation": "app-client 重导出 ApiClient/ApiClientError/createApiClient，并导出 useApiClient/defineAppRoutes。",
+      "excerpt": "export { ApiClientError, buildFindManyOptions, createApiClient, type ApiClient, type ApiJsonRequestOptions, type ApiRequestOptions, type CreateApiClientOptions, type RemoteFindManyOptions, type RemoteFindManyOptionsJson, type RemoteRepository, type RemoteRepositoryQuery, } from '@nocobase/api-client';\nexport { useApiClient, useClientApplication, useService } from './hooks.js';\nexport type { RealtimeClient, RealtimeErrorEvent, RealtimeEvent, RealtimeListener, } from '@nocobase/realtime/client';\nexport { createAppClientConfig, defineAppConfig, defaultAppConfigs, type AppConfigFactory, defineAppClientRenderConfig, normalizeAppClientBasename, type AppClientConfig, type AppClientConfigContext, type AppClientConfigFactory, type AppClientConfigMap, type AppClientConfigPrimitive, type AppClientConfigValue, type AppClientPublicConfig, type AppClientReactProvider, type AppClientRefineConfig, type AppClientRenderConfig, } from './config.js';\nexport type { PublicAppConfig, PublicConfigPath, PublicConfigValue, } from './public-config.js';\nexport { createAppI18nRuntime, readStoredLocale, writeStoredLocale, type AppClientLocaleContribution, type CreateAppI18nRuntimeOptions, } from './i18n.js';\nexport { applyClientRouteComponentOverrides, defineAppRoutes, defineClientPlugin, defineClientPlugins, defineClientReactProviders, defineClientRouteComponentOverrides, defineClientSourceExtension, defineDevRoutes, defineSettingsRoutes, isAppClientDevRouteGroup, isAppClientSettingsRouteGroup, resolveAppClientContributions, } from './plugins.js';",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36215705637.1/v2-8605f8b25e02/E41",
+      "origin": {
+        "kind": "review",
+        "key": "review/36215705637.1/v2-8605f8b25e02",
+        "localId": "E41"
+      },
+      "kind": "skill",
+      "path": "app/.agents/skills/nocobase-app-development/references/frontend/references/table.md",
+      "lines": [
+        32,
+        46
+      ],
+      "sha256": "5134b9f555a14826cbce6c36c995a5e73fe9393b329240aa6ecec64f2b0699f9",
+      "observation": "§3 点名模板 DataTable 无 showSelectedCount，并列出分页选中数、隐藏列、初始排序等已知行为与处理方式。",
+      "excerpt": "The template's `DataTable` has no `showSelectedCount` prop; see the first row of the next section.\n\n## 3. Known DataTable behavior\n\nThe following has been checked against the template's `client/components/data-table.tsx` and `data-table-pagination.tsx`. Know these points before you use it, and handle them as needed in the design and the implementation:\n\n| Behavior                                             | Impact                                                                                               | What to do                                                                                                                                                                                                                                                                                             |\n| ---------------------------------------------------- | ---------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |\n| The pagination bar always shows \"N row(s) selected\"  | A table without row selection still shows \"0 of N row(s) selected.\"                                  | `DataTablePagination` already has a `showSelectedCount` prop, but `DataTable` does not pass it through. Add an optional `showSelectedCount` prop (default `true`) to `DataTable` that passes it through, and have the list page pass `false`. First check whether the application has already added it |\n| The header menu of a sortable column includes \"Hide\" | If the page has no \"Toggle columns\" entry, a hidden column cannot be brought back                    | Write `enableHiding: false` in the column definition, or put `DataTableViewOptions` in `toolbar`                                                                                                                                                                                                       |\n| No initial sorting state                             | The default order can only be the order the endpoint returns, and the header shows no sort direction | Have the endpoint return the default order (guideline T1.8: most recently updated first) and state this in the design; if needed, add an optional `initialSorting` prop to `DataTable`                                                                                                                 |\n| Returns to page 1 when the data changes              | Search, filtering, refreshing and deleting all return to page 1                                      | Usually what you want. To stay on the current page, change `DataTable` (for example, add an `autoResetPageIndex` prop passed through to `useReactTable`) and handle the current page exceeding the page count after a delete                                                                           |\n| Browser-side sorting compares character codes        | Chinese is not sorted by pinyin                                                                      | Offer no sorting on Chinese columns, or write a `sortingFn` in the column definition that compares with `Intl.Collator(locale)` (the example's name column does this)                                                                                                                                  |\n| The page-number text has a fixed width, `w-[100px]`  | The Chinese \"第 1 页，共 100 页\" (\"Page 1 of 100\") wraps onto two lines                              | Change this part of `DataTablePagination` to `min-w-[100px] whitespace-nowrap`. First check whether the application has already changed it                                                                                                                                                             |\n| The built-in `toolbar` container does not wrap       | With several controls in it, it overflows on narrow screens                                          | Put the page's own search and filters outside `DataTable`, using `flex flex-wrap` (as the example does)                                                                                                                                                                                                |",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36215705637.1/v2-8605f8b25e02/E42",
+      "origin": {
+        "kind": "review",
+        "key": "review/36215705637.1/v2-8605f8b25e02",
+        "localId": "E42"
+      },
+      "kind": "skill",
+      "path": "app/.agents/skills/nocobase-app-development/references/frontend/references/table.md",
+      "lines": [
+        146,
+        148
+      ],
+      "sha256": "5134b9f555a14826cbce6c36c995a5e73fe9393b329240aa6ecec64f2b0699f9",
+      "observation": "§10 提醒代码基于模板 DataTable，补齐 showSelectedCount 后列表页传 showSelectedCount={false}。",
+      "excerpt": "## 10. Complete code\n\n`client/pages/projects/index.tsx`. For `types.ts` see the previous section, for `status-badge.tsx` see `i18n.md`, and for `project-delete-dialog.tsx` see `overlay.md`. The code is written against the template's `DataTable`; once the application's `DataTable` has `showSelectedCount` (see section 3), pass `showSelectedCount={false}` on `<DataTable>`.",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36215705637.1/v2-8605f8b25e02/E43",
+      "origin": {
+        "kind": "review",
+        "key": "review/36215705637.1/v2-8605f8b25e02",
+        "localId": "E43"
+      },
+      "kind": "code",
+      "path": "app/client/components/data-table.tsx",
+      "lines": [
+        44,
+        76
+      ],
+      "sha256": "39e09153dc0976e487574fe7698b72c1ae7f111c17f42ea1e39b1c4f2704d1d3",
+      "observation": "应用 DataTable 新增可选 showSelectedCount prop，默认 true。",
+      "excerpt": "  readonly pageSizeOptions?: readonly number[];\n  /** Set to `false` to hide the \"N of M row(s) selected\" line in the footer. */\n  readonly showSelectedCount?: boolean;\n  readonly getRowId?: (\n    row: TData,\n    index: number,\n    parent?: Row<TData>,\n  ) => string;\n  readonly onRowClick?: (row: Row<TData>) => void;\n}\n\n/**\n * A table driven by TanStack Table with client-side sorting, filtering, column\n * visibility, row selection and pagination, composed from the shadcn `Table`\n * primitive the way the shadcn Data Table guide describes.\n *\n * Column definitions decide what each feature does: sort through\n * `DataTableColumnHeader`, filter from the `toolbar` with\n * `table.getColumn(id)?.setFilterValue(...)`, and select rows with a display\n * column that renders a `Checkbox`.\n */\nexport function DataTable<TData, TValue = unknown>({\n  columns,\n  data,\n  className,\n  toolbar,\n  emptyMessage,\n  pagination = true,\n  pageSize = 10,\n  pageSizeOptions,\n  showSelectedCount = true,\n  getRowId,\n  onRowClick,",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36215705637.1/v2-8605f8b25e02/E44",
+      "origin": {
+        "kind": "review",
+        "key": "review/36215705637.1/v2-8605f8b25e02",
+        "localId": "E44"
+      },
+      "kind": "code",
+      "path": "app/client/components/data-table.tsx",
+      "lines": [
+        160,
+        170
+      ],
+      "sha256": "39e09153dc0976e487574fe7698b72c1ae7f111c17f42ea1e39b1c4f2704d1d3",
+      "observation": "应用 DataTable 把 showSelectedCount 透传给 DataTablePagination。",
+      "excerpt": "        </Table>\n      </div>\n      {pagination ? (\n        <DataTablePagination\n          table={table}\n          pageSizeOptions={pageSizeOptions}\n          showSelectedCount={showSelectedCount}\n        />\n      ) : null}\n    </div>\n  );",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36215705637.1/v2-8605f8b25e02/E45",
+      "origin": {
+        "kind": "review",
+        "key": "review/36215705637.1/v2-8605f8b25e02",
+        "localId": "E45"
+      },
+      "kind": "code",
+      "path": "app/client/pages/equipment/index.tsx",
+      "lines": [
+        418,
+        424
+      ],
+      "sha256": "f4a8f3151c3a1638aaa10a77fc811068fa0d21bca5d68bb02d7b81d725f870d3",
+      "observation": "设备列表页 DataTable 传 showSelectedCount={false}。",
+      "excerpt": "  } else {\n    content = (\n      <DataTable\n        columns={columns}\n        data={rows}\n        getRowId={(row) => String(row.id)}\n        showSelectedCount={false}",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36215705637.1/v2-8605f8b25e02/E46",
+      "origin": {
+        "kind": "review",
+        "key": "review/36215705637.1/v2-8605f8b25e02",
+        "localId": "E46"
+      },
+      "kind": "code",
+      "path": "app/client/pages/equipment/index.tsx",
+      "lines": [
+        365,
+        366
+      ],
+      "sha256": "f4a8f3151c3a1638aaa10a77fc811068fa0d21bca5d68bb02d7b81d725f870d3",
+      "observation": "应用按 ApiClientError.status===403 分支显示无权限提示。",
+      "excerpt": "  if (error) {\n    const forbidden = error instanceof ApiClientError && error.status === 403;",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36215705637.1/v2-8605f8b25e02/E47",
+      "origin": {
+        "kind": "review",
+        "key": "review/36215705637.1/v2-8605f8b25e02",
+        "localId": "E47"
+      },
+      "kind": "code",
+      "path": "app/client/pages/equipment/api.ts",
+      "lines": [
+        11,
+        21
+      ],
+      "sha256": "bc2a0d563c23752518c70b0032243e1229b8dcb02d10b98a5b3933119a07a13d",
+      "observation": "应用请求封装：api.request({path:'equipment', query, signal}) 使用 ApiClient 类型。",
+      "excerpt": "/** Reads the ledger, filtered by the page's search box and status filter. */\nexport async function fetchEquipmentList(\n  api: ApiClient,\n  query: EquipmentListQuery,\n  signal?: AbortSignal,\n): Promise<EquipmentListResponse> {\n  return api.request<EquipmentListResponse>({\n    path: 'equipment',\n    query: { keyword: query.keyword, status: query.status },\n    signal,\n  });",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36215705637.1/v2-8605f8b25e02/E48",
+      "origin": {
+        "kind": "review",
+        "key": "review/36215705637.1/v2-8605f8b25e02",
+        "localId": "E48"
+      },
+      "kind": "code",
+      "path": "app/client/routes.ts",
+      "lines": [
+        8,
+        18
+      ],
+      "sha256": "5412d0de8747e685a210abc888d2b54993f296c73e63ae8556e0aa07b25d48ae",
+      "observation": "应用用 defineAppRoutes 注册路由，声明 auth:'required' 与 authz:'skip'。",
+      "excerpt": "const appRoutes: AppClientRouteContribution = defineAppRoutes([\n  {\n    // Every signed-in user reaches the landing page. `authz: 'skip'` takes it out of page authorization entirely, so\n    // no permission change can leave a user signed in with nowhere to land.\n    authz: 'skip',\n    auth: 'required',\n    componentLoader: () => import('./pages/home.js'),\n    name: 'home',\n    navigation: { title: 'navigation.home', icon: Home },\n    path: '/',\n  },",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36215705637.1/v2-8605f8b25e02/E49",
+      "origin": {
+        "kind": "review",
+        "key": "review/36215705637.1/v2-8605f8b25e02",
+        "localId": "E49"
+      },
+      "kind": "log",
+      "path": "artifacts/agent-history/agent-implement.jsonl.invocation.json/part-0001.txt",
+      "lines": [
+        25,
+        30
+      ],
+      "sha256": "83085ef6bdd17505d3837a4216d424df9ae4d9200779a33b56731ef02616d9b9",
+      "observation": "实现调用上下文列出 app-development SKILL.md 与 references（migrations/server-routes/frontend/table 等）。",
+      "excerpt": "      \"path\": \".agents/skills/nocobase-app-development/SKILL.md\",\n      \"sha256\": \"611f1af8a4e60a5560a6bd44626cf8094a06da481b05a054775cf32329ea8861\"\n    },\n    {\n      \"path\": \".agents/skills/nocobase-app-development/references/authorization.md\",\n      \"sha256\": \"cf40a7f1c5fb80b46559e3d46c0e9396fb0264a8eb506e5b95384a4f28edb4b5\"",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36215705637.1/v2-8605f8b25e02/E50",
+      "origin": {
+        "kind": "review",
+        "key": "review/36215705637.1/v2-8605f8b25e02",
+        "localId": "E50"
+      },
+      "kind": "log",
+      "path": "artifacts/agent-history/agent-implement.jsonl.invocation.json/part-0001.txt",
+      "lines": [
+        428,
+        430
+      ],
+      "sha256": "83085ef6bdd17505d3837a4216d424df9ae4d9200779a33b56731ef02616d9b9",
+      "observation": "实现调用上下文包含 .agents/skills/nocobase-db/SKILL.md，说明 DB 指引被注入。",
+      "excerpt": "    {\n      \"path\": \".agents/skills/nocobase-db/SKILL.md\",\n      \"sha256\": \"2fdca7c2484a669667b6293878b915a5af0f84cbd3c5e80945a28fe5fbabf7d7\"",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36215705637.1/v2-8605f8b25e02/E51",
+      "origin": {
+        "kind": "review",
+        "key": "review/36215705637.1/v2-8605f8b25e02",
+        "localId": "E51"
+      },
+      "kind": "code",
+      "path": "app/client/pages/equipment-loans/index.tsx",
+      "lines": [
+        392,
+        396
+      ],
+      "sha256": "0c5f6c3586dc787ef8d40bd5685aa37009a7b62028e953e6a36069e5e77f1e05",
+      "observation": "借还记录列表页同样复用 DataTable 并传 showSelectedCount={false}。",
+      "excerpt": "      <DataTable\n        columns={columns}\n        data={rows}\n        getRowId={(row) => String(row.id)}\n        showSelectedCount={false}",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36215705637.1/v2-8605f8b25e02/E52",
+      "origin": {
+        "kind": "review",
+        "key": "review/36215705637.1/v2-8605f8b25e02",
+        "localId": "E52"
+      },
+      "kind": "skill",
+      "path": "app/.agents/skills/nocobase-db/SKILL.md",
+      "lines": [
+        236,
+        249
+      ],
+      "sha256": "2fdca7c2484a669667b6293878b915a5af0f84cbd3c5e80945a28fe5fbabf7d7",
+      "observation": "§4：filter/values/select/sort 接受 builder 或 JSON AST；updateMany/deleteMany 拒绝空 scope；Repository 不应用权限。",
+      "excerpt": "Resolve the manager once — in a route factory, or as a constructor dependency of a service — not inside every handler. `db.repository()`, `db.query()`, `db.builder()`, `db.collections()` and `db.transaction()` take the connection name as their last argument and use the default connection when it is omitted, so single-connection code never names one.\n\n`filter`, `values`, `select` and `sort` each accept a builder callback or the equivalent serializable JSON AST, and mean the same thing either way. They do not accept a shorthand string array such as `['id', 'name']` or `['-createdAt']`. Field names are Collection logical names, never column names. A write returns a result object — the record is `result.record`, alongside `result.version` and the created relation targets — rather than the record itself. `findMany` is awaited for an array or iterated asynchronously to consume a large result incrementally.\n\nThe methods are `findOne`, `findMany`, `count`, `exists`, `aggregate`, `groupBy`, `createOne`, `createMany`, `updateOne`, `updateMany`, `upsertOne`, `deleteOne` and `deleteMany`; `describeMutation` and `validateMutation` report capabilities and pre-validate input, and `withPolicy` returns a scoped Repository.\n\nBoundaries that are easy to get wrong:\n\n- `findOne` takes the first match; `updateOne` and `deleteOne` require exactly one; `upsertOne` requires a unique equality condition.\n- `updateMany` and `deleteMany` refuse an empty scope. Pass `all: true` only when the task explicitly calls for every row — never to make an error go away.\n- `createMany` and `updateMany` do not accept nested relation writes. `createOne` accepts `create` and `connect` on a relation, not the full set.\n- `disconnect` detaches; `delete` removes the target record. A relation target update or delete stays inside the current parent record's scope.\n- Repository does not apply the application's permissions. A route handler decides what the caller may see and change _before_ anything reaches `filter`, `values` or `select`. `writePolicy` defaults to `true` for an internal Repository and `false` for one reached from an API route, so a route-facing Repository needs an explicit allow list.\n- Do not assume an `id` exists, and do not infer a field's type, primary key or auto-increment from its name.",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36215705637.1/v2-8605f8b25e02/E53",
+      "origin": {
+        "kind": "review",
+        "key": "review/36215705637.1/v2-8605f8b25e02",
+        "localId": "E53"
+      },
+      "kind": "code",
+      "path": "app/server/providers/equipment-service.ts",
+      "lines": [
+        557,
+        594
+      ],
+      "sha256": "7b42b805881a6ed43de33ece24dc96ebb1f09218408740df2f88aa3f8e380cf7",
+      "observation": "应用归还：事务内先查 loan，已归还原样返回；否则条件 updateMany（id eq 且 returnedAt empty）并仅在 updatedCount>0 时恢复设备可用。",
+      "excerpt": "  async returnLoan(loanId: number): Promise<LoanView> {\n    const now = new Date();\n    return this.database.transaction(async (connection) => {\n      const equipmentRepository =\n        connection.repository<EquipmentRecord>('officeEquipment');\n      const loanRepository =\n        connection.repository<LoanRecord>('equipmentLoans');\n\n      const loan = await loanRepository.findOne({ filter: { id: loanId } });\n      if (!loan) {\n        throw new EquipmentError('LOAN_NOT_FOUND', 'The loan does not exist');\n      }\n\n      // Repeated returns are no-ops: the original record and its return time\n      // are kept exactly as they are.\n      if (loan.returnedAt !== null && loan.returnedAt !== undefined) {\n        const equipment = await equipmentRepository.findOne({\n          filter: { id: loan.equipmentId },\n        });\n        return toLoanView(loan, equipment, now);\n      }\n\n      const returned = await loanRepository.updateMany({\n        filter: (filter) =>\n          filter.and([\n            filter.number('id').eq(loanId),\n            filter.date('returnedAt').empty(),\n          ]),\n        values: { returnedAt: now, updatedAt: now },\n      });\n\n      if (returned.updatedCount > 0) {\n        // The device becomes available again only when this was its active loan.\n        await equipmentRepository.updateMany({\n          filter: { id: loan.equipmentId, status: 'borrowed' },\n          values: { status: 'available', updatedAt: now },\n        });\n      }",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36215705637.1/v2-8605f8b25e02/E54",
+      "origin": {
+        "kind": "review",
+        "key": "review/36215705637.1/v2-8605f8b25e02",
+        "localId": "E54"
+      },
+      "kind": "skill",
+      "path": "app/.agents/skills/nocobase-app-development/references/server-routes.md",
+      "lines": [
+        43,
+        49
+      ],
+      "sha256": "cbf30ba33ca0af760a34442e92ac668c0ec8a312423da0690a98f3dfd0099b25",
+      "observation": "文档强调挂载 /api 不等于鉴权，auth.required() 拒绝匿名请求，auth.optional() 仅附加会话。",
+      "excerpt": "## Every route owns its own security\n\n**Mounting under `/api` does not authenticate anything.** `/api` is a location. A route with no `auth.required()` is public regardless of where it mounts.\n\nNever depend on middleware installed by another route, or on the order contributions happen to be registered in. Contribution order changes when a plugin is added, and a route protected only by someone else's middleware silently becomes public.\n\n`auth.required()` rejects anonymous requests with `401`. `auth.optional()` attaches the session when present without rejecting.",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36215705637.1/v2-8605f8b25e02/E55",
+      "origin": {
+        "kind": "review",
+        "key": "review/36215705637.1/v2-8605f8b25e02",
+        "localId": "E55"
+      },
+      "kind": "skill",
+      "path": "app/.agents/skills/nocobase-app-development/references/server-routes.md",
+      "lines": [
+        7,
+        12
+      ],
+      "sha256": "cbf30ba33ca0af760a34442e92ac668c0ec8a312423da0690a98f3dfd0099b25",
+      "observation": "defineApiRoutes 写 /orders 最终为 /api/orders；不得在路径重复 /api 或部署 base path。",
+      "excerpt": "| Function             | Path in code     | Final URL        | For                                              |\n| -------------------- | ---------------- | ---------------- | ------------------------------------------------ |\n| `defineApiRoutes()`  | `/orders`        | `/api/orders`    | Application APIs the browser calls               |\n| `defineRootRoutes()` | `/callbacks/pay` | `/callbacks/pay` | Webhooks, OAuth callbacks, protocol entry points |\n\nDo not repeat `/api` in the path, and never write the deployment base path such as `/main` — both are added by the runtime.",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36215705637.1/v2-8605f8b25e02/E56",
+      "origin": {
+        "kind": "review",
+        "key": "review/36215705637.1/v2-8605f8b25e02",
+        "localId": "E56"
+      },
+      "kind": "skill",
+      "path": "app/.agents/skills/nocobase-app-development/references/services-and-jobs.md",
+      "lines": [
+        26,
+        53
+      ],
+      "sha256": "613fdef9ed49e08978e364bbd5013710b8c60517284713e00b7e9c6b34d75356",
+      "observation": "文档给出 ServiceProvider+createServiceToken 装配示例，强调 token 即身份、singleton 与 instance 的差别、服务不返回 HTTP 状态。",
+      "excerpt": "export const orderServiceToken=[REDACTED] =\n  createServiceToken<OrderService>('app/order-service');\n\nexport default class OrderProvider extends ServiceProvider<Application> {\n  public readonly name: string = 'app/order-provider';\n\n  public override register(): void {\n    this.app.container.singleton(orderServiceToken, () => {\n      const database = this.app.container.resolve(databaseManagerToken);\n      return createOrderService(database);\n    });\n  }\n}\n```\n\nAdd the provider to the array in `server/providers/index.ts` and export its token from there so routes can import it.\n\nResolve it where you need it:\n\n```ts\nconst orders = app.container.resolve(orderServiceToken);\n```\n\n**The token is the identity.** Two `createServiceToken` calls with the same name are two different keys — the container matches by object identity. Always import the token from where it is defined rather than recreating one.\n\n`singleton` builds the service once, on first resolve. Use `instance` for an already-constructed value.\n\nKeep the layers apart: a service should not read a Hono context, return HTTP status codes, or decide retry behavior. It takes its dependencies and returns domain results.",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36215705637.1/v2-8605f8b25e02/E57",
+      "origin": {
+        "kind": "review",
+        "key": "review/36215705637.1/v2-8605f8b25e02",
+        "localId": "E57"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/app-client/dist/plugins.d.ts",
+      "lines": [
+        6,
+        17
+      ],
+      "sha256": "5aae3ec10c8b67be0c4ed242f12b162fcbe3dadf0e9c7ede135e64e6ac1323eb",
+      "observation": "AppClientRouteAuth 为 'required'|'guest'|'optional'，authz 每页必须显式声明。",
+      "excerpt": "export type AppClientRouteAuth = 'required' | 'guest' | 'optional';\n/**\n * Authorization checked before this page loads. Every page declares it: nothing\n * is inferred. `skip` opts out explicitly and does not bypass parent guards.\n */\nexport type AppClientRouteAuthz = 'skip' | {\n    readonly resource: {\n        readonly type: string;\n        readonly id: string;\n    };\n    readonly action: string;\n};",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36215705637.1/v2-8605f8b25e02/E58",
+      "origin": {
+        "kind": "review",
+        "key": "review/36215705637.1/v2-8605f8b25e02",
+        "localId": "E58"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/app-client/dist/plugins.js",
+      "lines": [
+        80,
+        96
+      ],
+      "sha256": "083590228307e75286dc0c0bb3962d864c027e7609824083fea6c5a97ee94a15",
+      "observation": "实现：defineAppRoutes 冻结路由树并递归处理 navigation 与 children。",
+      "excerpt": "export function defineAppRoutes(routes) {\n    return Object.freeze({\n        parent: 'app',\n        routes: freezeNavigationRoutes(routes),\n    });\n}\nfunction freezeNavigationRoutes(routes) {\n    return Object.freeze(routes.map((route) => Object.freeze({\n        ...route,\n        ...(route.navigation\n            ? { navigation: Object.freeze({ ...route.navigation }) }\n            : {}),\n        ...(route.children\n            ? { children: freezeNavigationRoutes(route.children) }\n            : {}),\n    })));\n}",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36215705637.1/v2-8605f8b25e02/E59",
+      "origin": {
+        "kind": "review",
+        "key": "review/36215705637.1/v2-8605f8b25e02",
+        "localId": "E59"
+      },
+      "kind": "skill",
+      "path": "app/.agents/skills/nocobase-app-development/references/frontend/ui-guidelines.md",
+      "lines": [
+        13,
+        39
+      ],
+      "sha256": "deece57c1c908b21c45501c3b399b9babf7804888da581334c835cea1fe9a446",
+      "observation": "F 基础规则：F1 仅用语义色 token、F2 字号、F3 间距、F4 圆角阴影、F5 lucide 图标、F6 明暗主题可读，均标 Must。",
+      "excerpt": "## F Foundations\n\n**F1 [Must] Color uses only semantic tokens**; do not write literal color values:\n\n| Purpose                                    | Use                                                     |\n| ------------------------------------------ | ------------------------------------------------------- |\n| Page background                            | `bg-background`                                         |\n| Cards, panels                              | `bg-card`                                               |\n| Muted areas, secondary backgrounds         | `bg-muted`                                              |\n| Overlays (dialogs, menus)                  | `bg-popover` (built into the components)                |\n| Body text                                  | `text-foreground`                                       |\n| Secondary text, descriptions, placeholders | `text-muted-foreground`                                 |\n| Borders, dividers                          | `border-border`                                         |\n| Primary actions                            | The default button style (`bg-primary`)                 |\n| Destructive                                | `text-destructive`; buttons use `variant='destructive'` |\n\nDo not use literal colors such as `bg-white`, `text-gray-500`, `#1677ff` or `rgb(…)`.\n\n**F2 [Must] Font sizes come from the scale**: PageHeader provides the page title; section titles use `text-base font-medium`; body text, tables and forms use the components' default size (`text-sm`); helper text uses `text-sm text-muted-foreground` or `text-xs`. Do not use arbitrary values such as `text-[13px]`.\n\n**F3 [Must] Spacing comes from the scale**: `gap-6` between sections (PageContainer already provides it); `p-4` or `p-6` padding inside cards; `gap-2` between related controls; FieldGroup's default spacing between form fields. Do not use arbitrary values such as `mt-[7px]`.\n\n**F4 [Must] Radius and shadow use the component defaults**; when you need a custom one, use only utility classes such as `rounded-lg` and `shadow-sm`.\n\n**F5 [Must] All icons come from lucide-react**; the button controls the size of an icon inside it, and a standalone icon uses `size-4`.\n\n**F6 [Must] Everything is clearly readable in both the light and dark themes**. Using only semantic tokens satisfies this automatically; you do not need `dark:` prefixes.",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36215705637.1/v2-8605f8b25e02/E60",
+      "origin": {
+        "kind": "review",
+        "key": "review/36215705637.1/v2-8605f8b25e02",
+        "localId": "E60"
+      },
+      "kind": "code",
+      "path": "app/client/pages/equipment-loans/api.ts",
+      "lines": [
+        10,
+        21
+      ],
+      "sha256": "4d50b09dcb5dcb764421b8e8093c608c75ba65f7c8ae94c10c72d2ea5839690b",
+      "observation": "借还记录页请求封装同样使用 api.request 的 path/query/signal。",
+      "excerpt": "/** Reads loan history, filtered by the page's search box and status filter. */\nexport async function fetchLoans(\n  api: ApiClient,\n  query: LoanListQuery,\n  signal?: AbortSignal,\n): Promise<Loan[]> {\n  return api.request<Loan[]>({\n    path: 'equipment-loans',\n    query: { keyword: query.keyword, status: query.status },\n    signal,\n  });\n}",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "qa/1/b01-equipment-ledger.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/1",
+        "localId": "b01-equipment-ledger.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-1/browser-acceptance/evidence/b01-equipment-ledger.png",
+      "lines": null,
+      "sha256": "9005b2e97c4c6e4122333d4b0794008c1d8b2f68159915fa5523c5690673ef89",
+      "observation": "验收项 B01 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-1/browser-acceptance/b01-equipment-ledger.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/1/b01-loan-records.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/1",
+        "localId": "b01-loan-records.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-1/browser-acceptance/evidence/b01-loan-records.png",
+      "lines": null,
+      "sha256": "67b0a826d6cf46d96f6a391e43f773ebf81d5203d5ce58ee6e6b02d70f99947c",
+      "observation": "验收项 B01 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-1/browser-acceptance/b01-loan-records.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/1/b02-empty-validation.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/1",
+        "localId": "b02-empty-validation.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-1/browser-acceptance/evidence/b02-empty-validation.png",
+      "lines": null,
+      "sha256": "0d9f1a6dee2cec17f3dafb0b2623e9345d5ab3a9c541ac9942274e6afa7e2bc5",
+      "observation": "验收项 B02 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-1/browser-acceptance/b02-empty-validation.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/1/b02-duplicate-validation.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/1",
+        "localId": "b02-duplicate-validation.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-1/browser-acceptance/evidence/b02-duplicate-validation.png",
+      "lines": null,
+      "sha256": "e7b7810f9d42271371d251c5001c60cdf475e66db70cc907ccaa2bc2b084a3c0",
+      "observation": "验收项 B02 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-1/browser-acceptance/b02-duplicate-validation.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/1/b02-edit-prefill.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/1",
+        "localId": "b02-edit-prefill.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-1/browser-acceptance/evidence/b02-edit-prefill.png",
+      "lines": null,
+      "sha256": "b07c872e507153ea460668ec13bc8d2417ee2996fd511ff7aaf7aebf584d93fc",
+      "observation": "验收项 B02 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-1/browser-acceptance/b02-edit-prefill.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/1/b02-search-renamed.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/1",
+        "localId": "b02-search-renamed.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-1/browser-acceptance/evidence/b02-search-renamed.png",
+      "lines": null,
+      "sha256": "c5063e0f4013321c3f2ccfc7415646a85f51ec821d34d8b62a4ff9f9d286b2fa",
+      "observation": "验收项 B02 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-1/browser-acceptance/b02-search-renamed.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/1/b03-empty-borrow-validation.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/1",
+        "localId": "b03-empty-borrow-validation.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-1/browser-acceptance/evidence/b03-empty-borrow-validation.png",
+      "lines": null,
+      "sha256": "68feba18f0063dae26040544d64ae5122bdf19eb12e72681758e90c2f8da127d",
+      "observation": "验收项 B03 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-1/browser-acceptance/b03-empty-borrow-validation.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/1/b03-borrow-form-filled.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/1",
+        "localId": "b03-borrow-form-filled.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-1/browser-acceptance/evidence/b03-borrow-form-filled.png",
+      "lines": null,
+      "sha256": "3f0d125ecc8009966e04b4c354c4af2f24fbf6160a7dcd03018f5e7baf504d73",
+      "observation": "验收项 B03 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-1/browser-acceptance/b03-borrow-form-filled.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/1/b03-equipment-borrowed.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/1",
+        "localId": "b03-equipment-borrowed.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-1/browser-acceptance/evidence/b03-equipment-borrowed.png",
+      "lines": null,
+      "sha256": "6bb7a86a4c48963810929a41b51f0dfa6b7c414fa994dd1f21d0aeda37662d9a",
+      "observation": "验收项 B03 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-1/browser-acceptance/b03-equipment-borrowed.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/1/b03-loan-record.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/1",
+        "localId": "b03-loan-record.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-1/browser-acceptance/evidence/b03-loan-record.png",
+      "lines": null,
+      "sha256": "c55bbf7ab312b7e3a000923cb1a3c9eb25c4ebba525fa12a3399fc54a41f9e0c",
+      "observation": "验收项 B03 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-1/browser-acceptance/b03-loan-record.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/1/b04-already-borrowed-rejected.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/1",
+        "localId": "b04-already-borrowed-rejected.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-1/browser-acceptance/evidence/b04-already-borrowed-rejected.png",
+      "lines": null,
+      "sha256": "c2bd28a819e79a1c33f6c22273a86fce0dcb5cf7282d83a806b2f1b08f1a742e",
+      "observation": "验收项 B04 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-1/browser-acceptance/b04-already-borrowed-rejected.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/1/b04-loan-records-after.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/1",
+        "localId": "b04-loan-records-after.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-1/browser-acceptance/evidence/b04-loan-records-after.png",
+      "lines": null,
+      "sha256": "2144b1ebe6292e58c95cc4a48efd311632a2983c389ca2a9ed99c6dc5ce17089",
+      "observation": "验收项 B04 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-1/browser-acceptance/b04-loan-records-after.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/1/b05-return-confirm.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/1",
+        "localId": "b05-return-confirm.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-1/browser-acceptance/evidence/b05-return-confirm.png",
+      "lines": null,
+      "sha256": "66872cab6e28d41c677ea3e146bf44d9a526e1bfe891772d9872b3a607a0c7fe",
+      "observation": "验收项 B05 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-1/browser-acceptance/b05-return-confirm.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/1/b05-loan-returned.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/1",
+        "localId": "b05-loan-returned.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-1/browser-acceptance/evidence/b05-loan-returned.png",
+      "lines": null,
+      "sha256": "d778e00eec42dcd2ebbb440628e4c828f03d37f637966ae04a167777e637e7dd",
+      "observation": "验收项 B05 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-1/browser-acceptance/b05-loan-returned.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/1/b05-reborrow-form.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/1",
+        "localId": "b05-reborrow-form.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-1/browser-acceptance/evidence/b05-reborrow-form.png",
+      "lines": null,
+      "sha256": "730b0a0b0185a0280702dfc5d74c7eafcb7ff415e190718cf14e2ae350736b8f",
+      "observation": "验收项 B05 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-1/browser-acceptance/b05-reborrow-form.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/1/b05-two-records.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/1",
+        "localId": "b05-two-records.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-1/browser-acceptance/evidence/b05-two-records.png",
+      "lines": null,
+      "sha256": "c6b8d05ea5e50659fe16146383464e6dde78c97dddfb4ded4d89ddeb30fa1064",
+      "observation": "验收项 B05 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-1/browser-acceptance/b05-two-records.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/1/b06-overdue-marked.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/1",
+        "localId": "b06-overdue-marked.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-1/browser-acceptance/evidence/b06-overdue-marked.png",
+      "lines": null,
+      "sha256": "c6b8d05ea5e50659fe16146383464e6dde78c97dddfb4ded4d89ddeb30fa1064",
+      "observation": "验收项 B06 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-1/browser-acceptance/b06-overdue-marked.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/1/b06-filter-not-returned.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/1",
+        "localId": "b06-filter-not-returned.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-1/browser-acceptance/evidence/b06-filter-not-returned.png",
+      "lines": null,
+      "sha256": "c02ce29ebd3f81eaa8cda672045db065cc5638e6e65952220972720f2d1becab",
+      "observation": "验收项 B06 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-1/browser-acceptance/b06-filter-not-returned.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/1/b06-filter-returned.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/1",
+        "localId": "b06-filter-returned.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-1/browser-acceptance/evidence/b06-filter-returned.png",
+      "lines": null,
+      "sha256": "ad62f142ac7444625b417732d46e132fbf32596cc4c7a1ccd7144a1070af7135",
+      "observation": "验收项 B06 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-1/browser-acceptance/b06-filter-returned.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/1/b06-search-borrower.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/1",
+        "localId": "b06-search-borrower.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-1/browser-acceptance/evidence/b06-search-borrower.png",
+      "lines": null,
+      "sha256": "91973e72d2064b58249771f903c9717b609ff9f9cb8eb08b5e790b9e9d56f880",
+      "observation": "验收项 B06 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-1/browser-acceptance/b06-search-borrower.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/1/b06-after-return-counts.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/1",
+        "localId": "b06-after-return-counts.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-1/browser-acceptance/evidence/b06-after-return-counts.png",
+      "lines": null,
+      "sha256": "6a3e97bfe6697a6c3a12a29b7ca0126dee4c584f90e4cc7e3926785e296f969c",
+      "observation": "验收项 B06 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-1/browser-acceptance/b06-after-return-counts.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/1/b06-after-refresh.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/1",
+        "localId": "b06-after-refresh.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-1/browser-acceptance/evidence/b06-after-refresh.png",
+      "lines": null,
+      "sha256": "6a3e97bfe6697a6c3a12a29b7ca0126dee4c584f90e4cc7e3926785e296f969c",
+      "observation": "验收项 B06 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-1/browser-acceptance/b06-after-refresh.png",
+      "availability": "attached",
+      "note": null
+    }
+  ],
+  "links": [
+    {
+      "rel": "task-issue",
+      "label": "Issue #352",
+      "url": "https://github.com/gchust/nb3-factory/issues/352",
+      "path": null
+    },
+    {
+      "rel": "run",
+      "label": "Run 36215705637 / attempt 1",
+      "url": "https://github.com/gchust/nb3-factory/actions/runs/36215705637/attempts/1",
+      "path": null
+    },
+    {
+      "rel": "pull-request",
+      "label": "PR #354",
+      "url": "https://github.com/gchust/nb3-factory/pull/354",
+      "path": null
+    },
+    {
+      "rel": "report-archive",
+      "label": "固定版本 HTML 报告（gh-pages 归档路径）",
+      "url": null,
+      "path": "reports/issues/352/runs/36215705637/attempt-1/index.html"
+    }
+  ],
+  "limitations": []
+}
