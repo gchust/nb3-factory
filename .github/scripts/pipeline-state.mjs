@@ -2,6 +2,7 @@ import { createHash } from 'node:crypto';
 import { appendFileSync, copyFileSync, existsSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
+import { preserveReviewHistory } from './review-history.mjs';
 
 const phases = ['implementation', 'verify', 'repair', 'qa-focused', 'qa-full', 'done'];
 const contextFiles = ['verification.log', 'report.json', 'application.log'];
@@ -130,11 +131,17 @@ export function initialize(file, metadata) {
 }
 
 export function restoreState(source, destination, metadata) {
+  const restoreHistory = () => {
+    try { preserveReviewHistory(source, destination, metadata); }
+    catch { console.error('Review history could not be preserved; pipeline/QA state is unchanged.'); }
+  };
   const file = path.join(destination, 'pipeline-state.json');
   const saved = path.join(source, 'pipeline-state.json');
   if (!existsSync(saved)) {
     console.error('Legacy handoff: no stage checkpoint; rebuilding and running full QA.');
-    return initialize(file, metadata);
+    const state = initialize(file, metadata);
+    restoreHistory();
+    return state;
   }
   const state = readState(saved);
   if (state.inputHash !== inputHash(metadata)) throw new Error('Checkpoint business input has changed.');
@@ -166,6 +173,7 @@ export function restoreState(source, destination, metadata) {
   // Process/browser/DB state is not restored. Full QA always starts clean;
   // a report-only interruption resumes its QA scope, never stale browser state.
   saveState(file, state);
+  restoreHistory();
   return state;
 }
 
