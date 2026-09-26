@@ -3,7 +3,7 @@
 export function scrubSecrets(text) {
   return String(text)
     .replaceAll(/Factory-QA-[A-Za-z0-9-]+/gu, '[REDACTED]')
-    .replaceAll(/((?:[A-Z0-9_]+)?(?:PASSWORD|TOKEN|SECRET|API_KEY|APIKEY))\s*[=:]\s*["']?[^\s"',}]{4,}/giu, '$1=[REDACTED]');
+    .replaceAll(/\b((?:[A-Z0-9_]+)?(?:PASSWORD|TOKEN|SECRET|API_KEY|APIKEY))\s*[=:]\s*["']?[^\s"',}]{4,}/giu, '$1=[REDACTED]');
 }
 
 export function scrubHistoryFile(text, name, redact = value => value) {

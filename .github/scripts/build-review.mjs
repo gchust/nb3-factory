@@ -2,6 +2,7 @@
 import { createHash } from 'node:crypto';
 import { lstatSync, readFileSync, readdirSync } from 'node:fs';
 import path from 'node:path';
+import { historyFingerprint } from './review-history.mjs';
 
 export const rubricVersion = 2;
 const legacyDimensions = {
@@ -263,6 +264,12 @@ export function validateBuildReview(report, identity) {
 // Publication retries can reuse an earlier producer's sealed artifact. Keep that
 // identity intact: a later publication attempt is not a new assessment.
 export function resolveReviewIdentity(root, report, identity) {
+  // Optional for archived reports; new history-backed reviews bind raw inputs
+  // independently of the legacy artifact hash, including supplement adoption.
+  if (report?.basis?.historyHash !== undefined) {
+    need(/^[a-f0-9]{64}$/.test(report.basis.historyHash), 'Invalid review history fingerprint');
+    need(historyFingerprint(root) === report.basis.historyHash, 'Review history fingerprint mismatch');
+  }
   if (!identity) return undefined;
   const basis = report.basis;
   for (const key of ['repository', 'issue', 'runId']) {

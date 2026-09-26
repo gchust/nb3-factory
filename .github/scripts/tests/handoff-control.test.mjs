@@ -163,7 +163,11 @@ test('real Git A -> B -> C keeps the pinned evaluator and pending QA state acros
   const git = (...args) => execFileSync('git', ['-C', repo, ...args], { encoding: 'utf8', stdio: 'pipe' }).trim();
   git('init', '-b', 'develop'); git('config', 'user.name', 'Factory Test'); git('config', 'user.email', 'factory@example.invalid');
   const pinnedState = path.join(repo, 'pipeline-state.mjs');
-  copyFileSync(path.join(scripts, 'pipeline-state.mjs'), pinnedState);
+  // Pin the production dependency graph too: restore must exercise history
+  // preservation from the same control commit, not a mock or the current tree.
+  for (const name of ['pipeline-state.mjs', 'review-history.mjs', 'history-redaction.mjs']) {
+    copyFileSync(path.join(scripts, name), path.join(repo, name));
+  }
   writeFileSync(path.join(repo, 'evaluator'), 'A'); git('add', '.'); git('commit', '-m', 'factory A'); const a = git('rev-parse', 'HEAD');
   writeFileSync(path.join(repo, 'evaluator'), 'B'); git('add', '.'); git('commit', '-m', 'factory B'); const b = git('rev-parse', 'HEAD');
   const meta = path.join(root, 'task.json');

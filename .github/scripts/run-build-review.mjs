@@ -16,6 +16,7 @@ import { scrubSecrets } from './agent-history.mjs';
 import { recordTiming } from './timing.mjs';
 import { beginInvocation } from './agent-invocation-record.mjs';
 import { resolveBuildReviewMode } from './factory-lib.mjs';
+import { captureReviewHistory, historyFingerprint } from './review-history.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const MAX_BYTES = 48 * 1024 * 1024;
@@ -30,7 +31,7 @@ const save = (file, value) => {
   writeFileSync(file, `${JSON.stringify(value, null, 2)}\n`, { mode: 0o600 });
 };
 
-export function createReviewSnapshot(workspace, artifacts, destination) {
+export function createReviewSnapshot(workspace, artifacts, destination, redact) {
   const files = new Map();
   const omitted = [];
   const packages = [];
@@ -102,8 +103,10 @@ export function createReviewSnapshot(workspace, artifacts, destination) {
       walk(root, `packages/@nocobase/${entry}`, true);
     } catch { omitted.push(`packages/@nocobase/${entry}`); }
   }
+  const history = captureReviewHistory(artifacts, destination, redact);
+  for (const file of history.files) files.set(file.path, file);
   return { files: [...files.values()].sort((a, b) => a.path.localeCompare(b.path)), packages,
-    omitted, bytes, process };
+    omitted, bytes: bytes + history.bytes, process, history };
 }
 
 export async function runBuildReview(workspace, artifacts, env = process.env, options = {}) {
@@ -118,7 +121,8 @@ export async function runBuildReview(workspace, artifacts, env = process.env, op
   };
   // Save a non-scored result before any expensive work, including timeout paths.
   let report = { version: 1, state: 'not-reviewed', reason: '独立评审尚未完成；没有评分。', basis, evaluation: null };
-  const redact = buildRedactor(credentialNames.map(name => env[name]).filter(Boolean));
+  const redact = buildRedactor([...credentialNames.map(name => env[name]), env.GITHUB_TOKEN, env.GH_TOKEN,
+    env.FACTORY_ADMIN_PASSWORD, env.FACTORY_TEST_PASSWORD].filter(Boolean));
   const persist = () => save(output, JSON.parse(scrubSecrets(redact(JSON.stringify(report)))));
   persist();
   let snapshot, capture, invocationError;
@@ -137,7 +141,8 @@ export async function runBuildReview(workspace, artifacts, env = process.env, op
     if (!Number.isInteger(requestedIdle) || requestedIdle < 1 || requestedIdle > 1800) throw new Error('FACTORY_BUILD_REVIEW_IDLE_TIMEOUT_SECONDS must be 1–1800 seconds');
     const idleTimeoutSeconds = Math.min(requestedIdle, remaining);
     snapshot = mkdtempSync(path.join(os.tmpdir(), 'factory-build-review-'));
-    const captured = createReviewSnapshot(workspace, artifacts, snapshot);
+    const captured = createReviewSnapshot(workspace, artifacts, snapshot, redact);
+    basis.historyHash = captured.history.fingerprint;
     basis.baseSha = git(workspace, ['rev-parse', 'HEAD']).trim();
     basis.patchHash = digest(readFileSync(path.join(artifacts, 'agent.patch')));
     basis.lockfileHash = captured.files.find(file => file.path === 'app/pnpm-lock.yaml')?.sha256 ?? null;
@@ -161,7 +166,7 @@ export async function runBuildReview(workspace, artifacts, env = process.env, op
     const input = {
       rubricVersion, basis, requirements: metadata.task?.requirements ?? '',
       acceptanceCriteria: metadata.task?.acceptanceCriteria ?? '', reviewCriteria: metadata.task?.reviewCriteria ?? '',
-      process: captured.process, changedFiles: changedFiles.slice(0, 80),
+      history: captured.history.input, process: captured.process, changedFiles: changedFiles.slice(0, 80),
       catalog: { path: 'review-files.json', sha256: catalogHash, count: captured.files.length },
       omittedCount: captured.omitted.length, budgetSeconds: remaining,
     };
@@ -179,10 +184,11 @@ export async function runBuildReview(workspace, artifacts, env = process.env, op
     // The trusted final evaluator still runs independently outside this copy.
     const tools = path.join(snapshot, '.review-tools');
     mkdirSync(tools, { mode: 0o700 });
-    for (const name of ['build-review.mjs', 'check-review-draft.mjs']) {
+    for (const name of ['build-review.mjs', 'check-review-draft.mjs', 'review-history.mjs', 'history-redaction.mjs']) {
       writeFileSync(path.join(tools, name), readFileSync(path.join(HERE, name)), { mode: 0o400 });
     }
-    const prompt = readFileSync(path.join(HERE, '../prompts/build-review.md'), 'utf8').replaceAll('{{INPUT_HASH}}', basis.inputHash).replaceAll('{{BUDGET_SECONDS}}', String(remaining));
+    const prompt = readFileSync(path.join(HERE, '../prompts/build-review.md'), 'utf8').replaceAll('{{INPUT_HASH}}', basis.inputHash).replaceAll('{{BUDGET_SECONDS}}', String(remaining))
+      + '\n\n' + readFileSync(path.join(HERE, '../prompts/build-review-history.md'), 'utf8');
     const promptPath = path.join(snapshot, 'review-prompt.md');
     writeFileSync(promptPath, prompt);
     const adapter = resolveAgent(env);
@@ -225,7 +231,12 @@ export async function runBuildReview(workspace, artifacts, env = process.env, op
       if (interruption) throw new Error(`${interruption}；未取得可发布的模块检查点：${error.message}`);
       throw error;
     }
+    if (historyFingerprint(artifacts) !== basis.historyHash) throw new Error('Reviewer source history changed during assessment');
     report.evaluation = assessed.evaluation;
+    if (captured.history.input.coverage !== 'available') {
+      report.evaluation.limitations.unshift(`原始交互历史 ${captured.history.input.coverage}；不能推断完整试错过程。${captured.history.input.limitations.slice(0, 3).join('；').slice(0, 1600)}`);
+      report.evaluation.limitations = report.evaluation.limitations.slice(0, 30);
+    }
     const partial = assessed.partial;
     report.state = partial ? 'partial' : 'completed';
     report.reason = partial ? `${interruption ?? '尚有未评模块'}；仅展示已保存并通过证据校验的模块，不代表完整评审。` : '独立 Agent 评审完成；评分是基于本次证据的意见，不替代业务 QA 或人工评审。';
