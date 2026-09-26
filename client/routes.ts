@@ -1,4 +1,4 @@
-import { Home } from 'lucide-react';
+import { Home, NotebookPen } from 'lucide-react';
 import {
   defineAppRoutes,
   defineSettingsRoutes,
@@ -15,6 +15,42 @@ const appRoutes: AppClientRouteContribution = defineAppRoutes([
     name: 'home',
     navigation: { title: 'navigation.home', icon: Home },
     path: '/',
+  },
+  {
+    auth: 'required',
+    authz: {
+      resource: { type: 'page', id: 'customer-memos' },
+      action: 'access',
+    },
+    componentLoader: () => import('./pages/customer-memos/index.js'),
+    name: 'customer-memos',
+    navigation: { title: 'navigation.customerMemos', icon: NotebookPen },
+    path: '/customer-memos',
+    // Create and detail are child routes of the list, and edit is a child of detail so its dialog stacks on the
+    // drawer. `authz: 'skip'` adds no check of its own; the list's page check still applies to every one of them.
+    children: [
+      {
+        authz: 'skip',
+        componentLoader: () => import('./pages/customer-memos/new.js'),
+        name: 'customer-memo-new',
+        path: 'new',
+      },
+      {
+        authz: 'skip',
+        componentLoader: () => import('./pages/customer-memos/detail/index.js'),
+        name: 'customer-memo-detail',
+        path: ':memoId',
+        children: [
+          {
+            authz: 'skip',
+            componentLoader: () =>
+              import('./pages/customer-memos/detail/edit.js'),
+            name: 'customer-memo-edit',
+            path: 'edit',
+          },
+        ],
+      },
+    ],
   },
   {
     auth: 'guest',

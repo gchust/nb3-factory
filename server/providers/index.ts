@@ -1,5 +1,9 @@
 import type { ApplicationServiceProviderConstructor } from '@nocobase/app-server/application';
 
-const serviceProviders: readonly ApplicationServiceProviderConstructor[] = [];
+import CustomerMemoProvider from './customer-memos.js';
+
+const serviceProviders: readonly ApplicationServiceProviderConstructor[] = [
+  CustomerMemoProvider,
+];
 
 export default serviceProviders;
