@@ -8,6 +8,7 @@ import { GitHubClient } from './factory-lib.mjs';
 import { digest, readReviewJson, resolveReviewIdentity, reviewArtifactHash, validateBuildReview } from './build-review.mjs';
 import { runBuildReview } from './run-build-review.mjs';
 import { collectUsage } from './task-usage.mjs';
+import { configurationEvidence } from './evaluation-report.mjs';
 
 const positive = n => Number.isSafeInteger(n) && n > 0;
 const sha = s => /^[a-f0-9]{40}$/.test(s ?? '');
@@ -100,6 +101,7 @@ export async function adoptSupplement(root, supplement, publication) {
   const usage = await collectUsage(supplement);
   report.supplementalUsage = { ...usage.phases.review, records: usage.records, incomplete: usage.incomplete,
     runId: source.runId, attempt: source.attempt, reviewedAt: source.reviewedAt ?? null };
+  report.supplementalConfiguration = configurationEvidence(supplement, ['review']);
   // Retain the original failed/timed-out assessment separately, never forge its attempt.
   write(root, 'build-review.supplement.json', report);
 }

@@ -541,3 +541,32 @@ test('all browser runners install fonts before capture, and the real smoke test 
   assert.match(smoke, /CSS.getPlatformFontsForNode/);
   assert.match(smoke, /glyphCount > 0/);
 });
+
+test('final verification evidence is selected only from its own job window', () => {
+  const final = { id: 3, name: 'factory-final-21', created_at: iso(179) };
+  const selected = (extra) =>
+    selectSource(run, jobs, [...artifacts, ...extra], repository);
+  assert.equal(selected([final]).finalArtifactId, 3);
+  assert.equal(
+    selected([{ ...final, created_at: iso(139) }]).finalArtifactId,
+    null,
+  );
+  assert.equal(
+    selected([{ ...final, created_at: iso(181) }]).finalArtifactId,
+    null,
+  );
+  assert.equal(selected([{ ...final, expired: true }]).finalArtifactId, null);
+  assert.throws(
+    () => selected([final, { ...final, id: 4 }]),
+    /Ambiguous final/,
+  );
+  assert.equal(
+    selectSource(
+      { ...run, run_attempt: 2, run_started_at: iso(300) },
+      [jobs[0], jobs[1], job(9, 'verify-final', 310, 350)],
+      [...artifacts, final],
+      repository,
+    ).finalArtifactId,
+    null,
+  );
+});

@@ -74,3 +74,14 @@ test('registration and asynchronous receipts remain distinct and missing is neve
     );
   assert.match(renderHealth(healthSnapshot(document)), /应用交付（独立）/);
 });
+
+test('unknown historical requirements are not complete coverage', () => {
+  assert.equal(
+    coverageHealth({
+      qa: 'passed',
+      review: 'completed',
+      requiredChecks: { status: 'not-run', results: [] },
+    }).status,
+    'incomplete',
+  );
+});

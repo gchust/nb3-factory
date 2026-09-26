@@ -772,3 +772,15 @@ test('batch comparability needs every actual invocation, not matching dispatch v
   item.agentConfiguration.fingerprints.push(agentConfig({ ...env, PI_API_TYPE: 'anthropic-messages' }).fingerprint);
   assert.equal(batchDocument(batch).samples[0].comparable, false);
 });
+
+test('daily plans default to enabled but an explicit false pauses new batches', async () => {
+  const args = { 'dry-run': 'true' };
+  const readPlans = async () => plan(1);
+  const env = { GITHUB_RUN_ID: '9999', FACTORY_CONTROL_SHA: control };
+  const enabled = await runCoordinator(fakeRepository(), { action: 'scheduled', args, env, readPlans });
+  assert.deepEqual(enabled.failures, []);
+  assert.ok(enabled.lines.some(line => line.includes('只预览')));
+  const paused = await runCoordinator(fakeRepository(), { action: 'scheduled', args, env: { ...env, FACTORY_EVALUATION_PLANS_ENABLED: 'false' }, readPlans });
+  assert.deepEqual(paused.failures, []);
+  assert.ok(paused.lines.some(line => line.includes('未创建任务')));
+});

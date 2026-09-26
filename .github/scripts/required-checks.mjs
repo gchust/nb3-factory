@@ -11,7 +11,11 @@ import {
 } from './integration-checks.mjs';
 
 const definitions = {
-  'api-key': { kind: 'api', fixture: 'api-key.json' },
+  'api-key': {
+    kind: 'api',
+    fixture: 'api-key.json',
+    checkIds: ['A01', 'A02', 'A03'],
+  },
   'business-ai': { kind: 'ai', fixture: null },
   'notification-delivery': { kind: 'notification', fixture: null },
 };
@@ -69,6 +73,7 @@ export async function evaluateRequiredChecks({
   fixtureDirectory = path.join(root, 'fixtures'),
   env = {},
   patchSha256 = null,
+  execution = metadata.run,
   fetcher = fetch,
 }) {
   if (!['preflight', 'run'].includes(mode))
@@ -91,61 +96,69 @@ export async function evaluateRequiredChecks({
     const definition = definitions[id];
     const condition = conditionPreflight(definition.kind, conditions);
     let result;
-    const plan = definition.fixture
-      ? readPlan(fixtureDirectory, definition.fixture)
-      : null;
-    if (condition.status !== 'ready')
+    try {
+      const plan = definition.fixture
+        ? readPlan(fixtureDirectory, definition.fixture)
+        : null;
+      if (condition.status !== 'ready')
+        result = {
+          status: 'blocked',
+          reason: '缺少隔离测试条件：' + condition.missing.join('、'),
+          checks: [],
+        };
+      else if (!definition.fixture)
+        result = {
+          status: 'not-run',
+          reason:
+            '只有配置预检，尚无受信任的端到端 evaluator；不能视为验收通过。',
+          checks: [],
+        };
+      else if (!plan)
+        result = {
+          status: 'blocked',
+          reason:
+            '缺少控制代码准备的独立 API 测试计划；不从 Agent 产物猜测接口或密钥。',
+          checks: [],
+        };
+      else if (
+        !sha.test(plan.applicationSha ?? '') ||
+        plan.applicationSha !== metadata.applicationBase?.sha
+      )
+        result = {
+          status: 'blocked',
+          reason: '测试计划与冻结应用基线不一致。',
+          checks: [],
+        };
+      else if (
+        validateApiPlan(plan) &&
+        new URL(plan.baseUrl).origin !==
+          'http://127.0.0.1:' + (env.FACTORY_APP_PORT || '13000')
+      )
+        result = {
+          status: 'blocked',
+          reason: '测试计划未指向本次隔离应用端口。',
+          checks: [],
+        };
+      else if (mode === 'preflight')
+        result = {
+          status: 'ready',
+          reason: '前置条件齐全，尚未执行业务验收。',
+          checks: [],
+        };
+      else if (!sha256.test(patchSha256 ?? ''))
+        result = {
+          status: 'blocked',
+          reason: '缺少已封存补丁的指纹。',
+          checks: [],
+        };
+      else result = await runApiKeyCheck(plan, env, fetcher);
+    } catch {
       result = {
         status: 'blocked',
-        reason: '缺少隔离测试条件：' + condition.missing.join('、'),
+        reason: '受信任测试计划无效或无法读取；未能完成独立检查。',
         checks: [],
       };
-    else if (!definition.fixture)
-      result = {
-        status: 'not-run',
-        reason:
-          '只有配置预检，尚无受信任的端到端 evaluator；不能视为验收通过。',
-        checks: [],
-      };
-    else if (!plan)
-      result = {
-        status: 'blocked',
-        reason:
-          '缺少控制代码准备的独立 API 测试计划；不从 Agent 产物猜测接口或密钥。',
-        checks: [],
-      };
-    else if (
-      !sha.test(plan.applicationSha ?? '') ||
-      plan.applicationSha !== metadata.applicationBase?.sha
-    )
-      result = {
-        status: 'blocked',
-        reason: '测试计划与冻结应用基线不一致。',
-        checks: [],
-      };
-    else if (
-      validateApiPlan(plan) &&
-      new URL(plan.baseUrl).origin !==
-        'http://127.0.0.1:' + (env.FACTORY_APP_PORT || '13000')
-    )
-      result = {
-        status: 'blocked',
-        reason: '测试计划未指向本次隔离应用端口。',
-        checks: [],
-      };
-    else if (mode === 'preflight')
-      result = {
-        status: 'ready',
-        reason: '前置条件齐全，尚未执行业务验收。',
-        checks: [],
-      };
-    else if (!sha256.test(patchSha256 ?? ''))
-      result = {
-        status: 'blocked',
-        reason: '缺少已封存补丁的指纹。',
-        checks: [],
-      };
-    else result = await runApiKeyCheck(plan, env, fetcher);
+    }
     results.push({
       id,
       status: result.status,
@@ -168,8 +181,8 @@ export async function evaluateRequiredChecks({
     status,
     repository: metadata.repository,
     issue: metadata.issue.number,
-    runId: Number(metadata.run?.id) || null,
-    attempt: Number(metadata.run?.attempt) || 1,
+    runId: Number(execution?.id) || null,
+    attempt: Number(execution?.attempt) || 1,
     applicationSha: metadata.applicationBase?.sha ?? null,
     patchSha256,
     required: ids,
@@ -179,33 +192,57 @@ export async function evaluateRequiredChecks({
 
 // Only the separate final-verifier artifact can prove completion. A preflight,
 // old attempt, different patch or Agent-authored report can never turn it green.
-export function requiredCheckCoverage(metadata, finalResult, patchSha256) {
+export function requiredCheckCoverage(
+  metadata,
+  finalResult,
+  patchSha256,
+  execution = metadata?.run,
+) {
   const required = validateRequiredChecks(
     metadata?.evaluation?.requiredChecks ?? [],
   );
   const matches =
+    Boolean(metadata) &&
     finalResult?.version === 1 &&
     finalResult.mode === 'run' &&
     finalResult.repository === metadata.repository &&
     finalResult.issue === metadata.issue?.number &&
-    finalResult.runId === Number(metadata.run?.id) &&
-    finalResult.attempt === Number(metadata.run?.attempt ?? 1) &&
+    finalResult.runId === Number(execution?.id) &&
+    finalResult.attempt === Number(execution?.attempt ?? 1) &&
     finalResult.applicationSha === metadata.applicationBase?.sha &&
     sha256.test(patchSha256 ?? '') &&
     finalResult.patchSha256 === patchSha256 &&
     JSON.stringify(finalResult.required) === JSON.stringify(required) &&
     Array.isArray(finalResult.results) &&
     finalResult.results.length === required.length &&
-    new Set(finalResult.results.map((r) => r.id)).size === required.length;
+    new Set(finalResult.results.map((r) => r?.id)).size === required.length;
   const results = required.map((id) => {
     const result = matches
-      ? finalResult.results.find((r) => r.id === id)
+      ? finalResult.results.find((r) => r?.id === id)
       : null;
-    const status = ['passed', 'failed', 'blocked', 'not-run'].includes(
+    let status = ['passed', 'failed', 'blocked', 'not-run'].includes(
       result?.status,
     )
       ? result.status
       : 'not-run';
+    if (status === 'passed') {
+      const expected = definitions[id].checkIds;
+      const checks = result.checks;
+      // A bare top-level pass is not proof that every required API assertion ran.
+      if (
+        !expected ||
+        !Array.isArray(checks) ||
+        checks.length !== expected.length ||
+        expected.some(
+          (checkId) =>
+            checks.filter(
+              (check) =>
+                check?.checkId === checkId && check.status === 'passed',
+            ).length !== 1,
+        )
+      )
+        status = 'not-run';
+    }
     return { id, status };
   });
   return {
@@ -229,6 +266,12 @@ if (
   const result = await evaluateRequiredChecks({
     metadata,
     mode,
+    // A downstream-only rerun may reuse the prepare artifact from attempt 1.
+    // Bind evidence to the final verifier that actually ran, not that old attempt.
+    execution: {
+      id: process.env.GITHUB_RUN_ID || metadata.run?.id,
+      attempt: process.env.GITHUB_RUN_ATTEMPT || metadata.run?.attempt,
+    },
     env: process.env,
     patchSha256: patchFile ? digest(readFileSync(patchFile)) : null,
   });

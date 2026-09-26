@@ -40,7 +40,7 @@
 
 - 指纹针对有效配置，包括默认值、PI 别名、协议兼容开关、超时、模型、引擎固定版本。
 - 不相关引擎的设置不影响当前引擎；相同别名值与标准变量值产生同一指纹。
-- 每次实际调用保存配置指纹；调用记录随执行回执跨 Handoff 保留。
+- 实现、修复、QA、原评审与补评审的实际调用保存配置指纹；调用记录随执行回执跨 Handoff 保留。
 - 仅派发时变量一致不证明可比较；缺调用记录时 `comparable=null`，不是 `true`。
 - API key 和 Pi 的秘密 endpoint 不打印、不参与哈希。公开 endpoint 变量只记录摘要。
 - 使用 Pi 的秘密 endpoint 时，维护者须设置公开的 `CODE_AGENT_PROVIDER_ID`，例如
@@ -104,7 +104,9 @@ API 计划由控制代码准备，位置固定为 `evaluations/fixtures/api-key.
 接入该案例前，须将隔离准备器与真实 API 合同一并提交；不要将 Agent 生成的 JSON
 复制到可信目录。新 evaluator 应在终验的干净数据库里动态准备夹具。
 
-结果绑定仓库、Issue、Run、attempt、应用 SHA、补丁 SHA-256 和必需 ID 全集。
+结果绑定仓库、Issue、Run、终验实际 attempt、应用 SHA、补丁 SHA-256 和必需 ID 全集。
+仅重跑下游作业时可以复用 prepare 的旧输入，但不能复用旧 attempt 的通过结果；API 通过
+还须有 A01–A03 全部成功的明细，单独一个 passed 字段不构成验收。
 报告仅接受对应 `verify-final` 时间窗的独立产物；Agent 目录中的同名文件、旧运行的
 结果、preflight 的 ready、缺失产物都不能补成通过。
 
@@ -115,3 +117,6 @@ API 计划由控制代码准备，位置固定为 `evaluations/fixtures/api-key.
 - 投递 `pending` 显示 `pending-delivery`，不等于已收到；原投递工作流的重试和回执
   仍是来源。健康检查不等待接收端、不持有模型凭据、不执行应用代码。
 - 新字段是 v1 合同的可选扩展；旧结果仍可读取，不伪造历史缺失证据。
+  历史 metadata 未记录 requiredChecks 或可信 prepare 产物缺失时，覆盖完整性保持未知
+  （not-run），不会根据空列表推断已完整验收。历史浏览器验收口径仍保留。
+- 严格校验 Schema 的接收端须同步接受这些 v1 可选字段后再启用投递；本次未修改或验证真实接收端。

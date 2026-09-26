@@ -10,6 +10,7 @@ export function coverageHealth({ qa, requiredChecks, review }) {
   return {
     status:
       measured.includes(qa) &&
+      measured.includes(requiredChecks.status) &&
       requiredChecks.results.every((r) => measured.includes(r.status)) &&
       ['completed', 'disabled'].includes(review)
         ? 'complete'

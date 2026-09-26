@@ -67,9 +67,11 @@ test('supplement adoption binds producer, immutable source artifact, patch, QA a
   put(supplement, 'build-review.json', report);
   const publication = { repository: 'owner/factory', issue: 224, runId: 100, attempt: 2, artifactId: 42,
     reviewSource: { runId: 200, attempt: 1, artifactId: 84, controlSha: sha, reviewedAt: '2026-09-23T10:04:00.000Z' } };
+  put(supplement, 'agent-review.jsonl.invocation.json', { invoked: true, phase: 'review', configuration: { fingerprint: 'a'.repeat(64), values: { CONFIG_SCHEMA_VERSION: '2', CODE_AGENT_ENGINE: 'codex' } } });
   await adoptSupplement(root, supplement, publication);
   const adopted = JSON.parse(readFileSync(path.join(root, 'build-review.supplement.json')));
   assert.equal(adopted.basis.attempt, 1);
+  assert.deepEqual(adopted.supplementalConfiguration, { complete: true, fingerprints: ['a'.repeat(64)] });
   assert.equal(adopted.supplementalUsage.reviewedAt, '2026-09-23T10:04:00.000Z');
   await assert.rejects(adoptSupplement(root, supplement, { ...publication, artifactId: 99 }));
   put(root, 'agent.patch', 'wrong patch'); await assert.rejects(adoptSupplement(root, supplement, publication));

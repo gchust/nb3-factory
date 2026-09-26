@@ -133,3 +133,79 @@ test('independent results must bind the exact run, attempt, base, patch and comp
   assert.equal(requiredCheckCoverage(metadata, null, patch).status, 'not-run');
   assert.doesNotMatch(JSON.stringify(result), /isolated-test|isolated-admin/);
 });
+
+test('malformed trusted fixtures produce an explicit blocked result without requests', async (t) => {
+  const fixtureDirectory = temporary(t);
+  put(fixtureDirectory, 'api-key.json', '{invalid');
+  let requests = 0;
+  const result = await evaluateRequiredChecks({
+    metadata,
+    fixtureDirectory,
+    mode: 'preflight',
+    env: {
+      FACTORY_TEST_API_KEY_PRESENT: 'true',
+      FACTORY_TEST_ADMIN_KEY_PRESENT: 'true',
+    },
+    fetcher: async () => {
+      requests++;
+    },
+  });
+  assert.equal(result.status, 'blocked');
+  assert.match(result.results[0].reason, /测试计划无效/);
+  assert.equal(requests, 0);
+});
+
+test('passing coverage requires every API assertion, and a rerun records its actual execution', async (t) => {
+  const fixtureDirectory = temporary(t);
+  put(fixtureDirectory, 'api-key.json', plan);
+  const execution = { id: metadata.run.id, attempt: 2 };
+  const result = await evaluateRequiredChecks({
+    metadata,
+    execution,
+    fixtureDirectory,
+    mode: 'run',
+    patchSha256: patch,
+  });
+  assert.equal(result.attempt, 2);
+  const passed = {
+    ...result,
+    status: 'passed',
+    results: [
+      {
+        id: 'api-key',
+        status: 'passed',
+        checks: ['A01', 'A02', 'A03'].map((checkId) => ({
+          checkId,
+          status: 'passed',
+        })),
+      },
+    ],
+  };
+  assert.equal(
+    requiredCheckCoverage(metadata, passed, patch, execution).status,
+    'passed',
+  );
+  for (const checks of [
+    undefined,
+    [],
+    passed.results[0].checks.slice(0, 2),
+    [
+      ...passed.results[0].checks.slice(0, 2),
+      { checkId: 'A03', status: 'failed' },
+    ],
+  ]) {
+    assert.equal(
+      requiredCheckCoverage(
+        metadata,
+        { ...passed, results: [{ id: 'api-key', status: 'passed', checks }] },
+        patch,
+        execution,
+      ).status,
+      'not-run',
+    );
+  }
+  assert.equal(
+    requiredCheckCoverage(metadata, passed, patch).status,
+    'not-run',
+  );
+});

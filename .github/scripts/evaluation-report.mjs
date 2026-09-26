@@ -55,7 +55,7 @@ function fileHash(root, file) {
 
 // Invocation files are factory-observed inputs, not a coordinator's guess about
 // which repository variables were in effect. Retain every invocation in a chain.
-function configurationEvidence(root) {
+export function configurationEvidence(root, acceptedPhases = ['implementation', 'repair', 'qa', 'qa-focused', 'qa-report-repair', 'review']) {
   const fingerprints = new Set();
   let seen = 0, missing = false;
   const walk = (relative = '', depth = 0) => {
@@ -64,10 +64,11 @@ function configurationEvidence(root) {
     for (const entry of entries) {
       const name = path.join(relative, entry.name);
       if (entry.isDirectory() && depth < 2 && /^(?:verify-[1-9]\d*|browser-(?:acceptance|focused))$/.test(entry.name)) walk(name, depth + 1);
+      if (entry.isFile() && /^agent-.*\.jsonl$/.test(entry.name) && !entries.some(other => other.name === entry.name + '.invocation.json')) missing = true;
       if (!entry.isFile() || !entry.name.endsWith('.jsonl.invocation.json')) continue;
       try {
         const record = readReviewJson(root, name);
-        if (!record.invoked || !['implementation', 'repair', 'qa', 'qa-focused', 'qa-report-repair'].includes(record.phase)) continue;
+        if (!record.invoked || !acceptedPhases.includes(record.phase)) continue;
         seen++;
         const config = record.configuration;
         if (config?.values?.CONFIG_SCHEMA_VERSION === '2' && hashOrNull(config.fingerprint)) {
@@ -718,12 +719,17 @@ export function buildEvaluation({ report, root, taskRoot = null, finalRoot = nul
   const pr = object(report.pr) ? report.pr : null;
   baseline.application.candidate.headSha = shaOrNull(pr?.headSha);
   const outcome = outcomeOf(record, pipeline, qa, pr);
-  const requiredChecks = requiredCheckCoverage(trusted ?? metadata, readOptional(finalRoot, 'required-checks.json', limitations), fileHash(root, 'agent.patch'));
+  const requiredChecks = requiredCheckCoverage(trusted ?? metadata, readOptional(finalRoot, 'required-checks.json', limitations), fileHash(root, 'agent.patch'), { id: record.runId, attempt: record.attempt });
+  if (!trusted && requiredChecks.results.length) {
+    requiredChecks.status = 'not-run';
+    requiredChecks.results = requiredChecks.results.map(({ id }) => ({ id, status: 'not-run' }));
+  }
   if (requiredChecks.status !== 'passed') {
     if (outcome.acceptance !== 'failed') outcome.acceptance = requiredChecks.status === 'not-run' ? 'not-run' : requiredChecks.status;
     limitations.push({ code: 'required-checks-incomplete', detail: '必需的独立业务验收未全部通过；浏览器通过或 PR 发布不能代替这些检查。' });
   }
   const configurations = chain.records.filter(r => r.invoked).map(r => validFacts(r.evaluation)?.agentConfiguration);
+  if (supplementUsage) configurations.push(supplementRaw.supplementalConfiguration);
   baseline.agent.configuration = { fingerprints: [...new Set(configurations.flatMap(c => c?.fingerprints ?? []))].sort(),
     complete: configurations.length > 0 && configurations.every(c => c?.complete === true) };
 
@@ -756,7 +762,7 @@ export function buildEvaluation({ report, root, taskRoot = null, finalRoot = nul
       executionOrder: chain.executions.length, knownLaterExecutions: chain.later, chainTerminal: outcome.execution !== 'running',
       reviewRubric: rubric, reviewState: primary?.state ?? 'not-reviewed', review: reviewOrder(primary, supplementUsage, record), qaCoverage: qa.coverage },
     baseline, executions, outcome, qa, reviews,
-    health: coverageHealth({ qa: qa.finalFull.status, requiredChecks, review: baseline.agent.buildReviewMode === 'off' ? 'disabled' : primary?.state ?? 'not-reviewed' }),
+    health: coverageHealth({ qa: qa.finalFull.status, requiredChecks: trusted?.evaluation?.requiredChecks ? requiredChecks : { status: 'not-run', results: requiredChecks.results }, review: baseline.agent.buildReviewMode === 'off' ? 'disabled' : primary?.state ?? 'not-reviewed' }),
     processNotes: notesOf(root, producerKey), metrics,
     evidence: [...evidence.values()], links,
     limitations: dedupeLimitations(limitations),
