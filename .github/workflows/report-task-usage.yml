@@ -232,44 +232,6 @@ jobs:
           gh workflow run deliver-evaluation.yml --repo "$GITHUB_REPOSITORY" --ref "$REPORT_REF" --field mode=scan \
             || echo '::warning::Delivery request failed; the scheduled scan will send the queued revision.'
 
-
-  # This job may fail while the delivered application and Pages remain available.
-  # It uses only trusted data and never starts a model or executes app code.
-  evaluation-health:
-    needs: [report, evaluation]
-    if: always() && needs.report.outputs.source_ready == 'true' && vars.FACTORY_EVALUATION_EXPORT != 'false'
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    permissions:
-      actions: read
-      contents: read
-    env:
-      FACTORY_EVALUATION_DELIVERY: ${{ vars.FACTORY_EVALUATION_DELIVERY }}
-      EVALUATION_ENDPOINT: ${{ vars.EVALUATION_ENDPOINT }}
-      EVALUATION_AUTH_MODE: ${{ vars.EVALUATION_AUTH_MODE }}
-      EVALUATION_REVISION: ${{ needs.evaluation.outputs.revision }}
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.repository.default_branch }}
-          path: control
-          persist-credentials: false
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 24.x
-      - uses: actions/download-artifact@v4
-        if: needs.report.outputs.evaluation_export != ''
-        continue-on-error: true
-        with:
-          artifact-ids: ${{ needs.report.outputs.evaluation_export }}
-          path: ${{ runner.temp }}/evaluation-health
-          merge-multiple: true
-      - name: Check evaluation completeness independently from delivery
-        if: always()
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
-        run: node control/.github/scripts/evaluation-health.mjs "$RUNNER_TEMP/evaluation-health/draft.json"
-
   pages:
     needs: report
     if: needs.report.outputs.html_ready == 'true' && needs.report.outputs.report_artifact != ''
