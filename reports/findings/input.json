@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "inputHash": "eded209b7d32073398c1f8e51818412387c861c7c5d8852ee668b9a12da44c78",
+  "inputHash": "f48d53e946e5a9453fec8eee55b09d64a79306c3cbaa0f17833649a8d008fc50",
   "findings": [
     {
       "id": "224:35881009045:2:F2",
@@ -4946,6 +4946,140 @@
         }
       ],
       "fingerprint": "f7f12b00240c1929556dc03144ec53645500d93c4e3be821b91615443f091aa0"
+    },
+    {
+      "id": "376:36248781387:1:F2",
+      "report": "376:36248781387:1",
+      "issue": 376,
+      "taskTitle": "个人待办清单（Agent 归类与版本列回归，复测 #365）",
+      "appVersion": "1.0.0-beta.47",
+      "appTemplate": "@nocobase/app-template-default",
+      "finding": {
+        "id": "F2",
+        "kind": "improvement",
+        "owner": "documentation",
+        "confidence": "confirmed",
+        "severity": "minor",
+        "status": "open",
+        "title": "种子幂等指引以唯一业务键为前提，缺少无唯一约束时的幂等配方",
+        "detail": "nocobase-db Skill 要求种子以稳定业务值加唯一约束保证重复运行 no-op（E14），migrations 指引也只给固定可复现原则（E16）。当业务模型明确禁止在 title 上建唯一约束时，Agent 只能改用 findOne+createOne，仍满足幂等但不是文档推荐写法。",
+        "impact": "在无可用唯一键的场景下，Agent 需自行推演幂等实现，存在写出重复插入或在并发下不幂等的风险。",
+        "suggestedChange": "在 Skill 种子章节补充“无稳定唯一键时如何表达幂等”的替代模式与取舍说明（如以固定 id 或复合键 upsert）。",
+        "evidence": [
+          "E14",
+          "E16"
+        ],
+        "diagnosis": {
+          "category": "guidance-gap",
+          "trigger": "业务需求禁止在种子唯一区分字段（title）上建唯一约束，但需要种子可重复运行。",
+          "expected": "指引给出无稳定唯一键时仍可表达幂等的推荐写法与取舍。",
+          "actual": "Skill 仅描述 upsertOne 配合唯一约束的配方，缺少替代方案。",
+          "workaround": "Agent 以 findOne+createOne 表达幂等，功能可用但非文档路径。",
+          "acceptance": "Skill 种子章节包含无唯一键场景的幂等写法示例，并说明其并发/覆盖取舍。"
+        }
+      },
+      "targets": [
+        "app/.agents/skills/nocobase-app-development/references/migrations.md",
+        "app/.agents/skills/nocobase-db/SKILL.md"
+      ],
+      "paths": [
+        ".agents/skills/nocobase-app-development/references/migrations.md",
+        ".agents/skills/nocobase-db/SKILL.md"
+      ],
+      "evidence": [
+        {
+          "id": "E14",
+          "kind": "skill",
+          "path": "app/.agents/skills/nocobase-db/SKILL.md",
+          "observation": "指引：给出 defineSeed + repository(...).upsertOne 的幂等示例，并要求种子以稳定业务值加唯一约束保证重复运行 no-op。",
+          "lines": [
+            115,
+            135
+          ],
+          "excerpt": "  async run({ repository }) {\n    await repository('orderStatuses').upsertOne({\n      filter: { code: 'draft' },\n      create: { code: 'draft', title: 'Draft' },\n      update: { title: 'Draft' },\n    });\n  },\n});\n```\n\nApply both with `pnpm nocobase db apply`, adding `--connection <name>` for a non-default connection or `--all` for every managed one.\n\nEach context carries its own tools, and which one to use is not a free choice — see [Repository and Query](#4-repository-and-query). In short: a migration works through `builder` and `query`, and a seed writes through `repository`.\n\nThe rules are absolute, because these files are history that has already run on other machines:\n\n- **Self-contained.** Spell out every table, field, index, constraint and metadata operation in the file. Never import a Collection definition, model, registry or shared constant that keeps evolving — that silently changes both the behavior and the checksum of something already applied.\n- **Immutable once merged.** Check with `git log -- <file>` if unsure. Before the branch is merged you may correct the file in place; after it, every change is a new, later file. Never hard-code a previous checksum to make an edited migration look untouched. Correcting it in place changes nothing on its own — it is recorded as executed, so a plain apply skips it and the database keeps the schema the old file produced. `pnpm nocobase db redo` rolls the latest batch back and applies it again.\n- **The file name body matches `name`**, and the name is unique across every source in the application.\n- **Declare `irreversible: true`** when there is no real reverse operation, instead of writing a `down()` that quietly does nothing.\n- **A seed is idempotent**, keyed on a stable business value backed by a unique constraint, so a repeated run is a no-op — `upsertOne` is the direct way to express that. A seed context has no `builder` at all, and a seed has no rollback or truncate behavior.",
+          "sha256": "f97c07a45a9d49c1d933ddbceeabcc9afe267b1356a2ded1a3da0dd56b54011c"
+        },
+        {
+          "id": "E16",
+          "kind": "skill",
+          "path": "app/.agents/skills/nocobase-app-development/references/migrations.md",
+          "observation": "指引：说明 migrations/seeds 由 db apply 先行后种、只运行 pending，并要求种子内容固定可复现、不覆盖用户已改数据。",
+          "lines": [
+            7,
+            19
+          ],
+          "excerpt": "Migrations under `database/main/migrations/` are the application's schema history. Seeds under `database/main/seeds/` insert records the application requires to run. Migrations create structure. Seeds never do.\n\n`database/tsconfig.json` extends the server configuration so editor tooling and ESLint recognize migrations and seeds as Node source. Keep it in place when adding connection directories.\n\n## Running\n\n```bash\npnpm nocobase db apply\n```\n\nThis applies pending migrations and then pending seeds for `database.default`, including registered plugins, ordered by name across all sources. Both halves run only what is pending, so on an already-migrated database it applies seeds alone. The template defaults to `main`. Plugin migrations, seeds and runtime default reads/writes always use this same connection; changing `database.default` changes the application system database.\n\nSeeds are the second half of that run, so the structure a seed writes into must already exist from an earlier migration. Keep seed data fixed and reproducible — no current timestamps or random values in identifying fields — and never let a repeat run silently overwrite data a user has edited.",
+          "sha256": "327c8870ee555dc8496892821a6fe7ec05762c8a2a7b71213f8d339757f695c6"
+        }
+      ],
+      "fingerprint": "3b7474e2046838d154de35696c270360727bd9a774c3363ab2b77f4c6e41072d"
+    },
+    {
+      "id": "376:36248781387:1:F3",
+      "report": "376:36248781387:1",
+      "issue": 376,
+      "taskTitle": "个人待办清单（Agent 归类与版本列回归，复测 #365）",
+      "appVersion": "1.0.0-beta.47",
+      "appTemplate": "@nocobase/app-template-default",
+      "finding": {
+        "id": "F3",
+        "kind": "improvement",
+        "owner": "documentation",
+        "confidence": "confirmed",
+        "severity": "info",
+        "status": "open",
+        "title": "指引禁止种子承载示例内容，但缺少演示/示例数据的归属",
+        "detail": "nocobase-db Skill 明确 a seed is never sample or demonstration content（E17），而本场景要求预置 3 条虚构示例待办。框架没有说明这类演示数据应放在何处，Agent 只能违背字面规则放进种子。",
+        "impact": "框架对演示数据的边界与落点不明确，Agent 可能误判是否合规或寻找不存在的机制。",
+        "suggestedChange": "在指引中说明演示/示例数据的推荐归属（例如开发用 fixture 或显式标注的 sample seed）及其与生产种子的区别。",
+        "evidence": [
+          "E17",
+          "E16"
+        ],
+        "diagnosis": {
+          "category": "guidance-gap",
+          "trigger": "小流程需求要求预置虚构示例数据，而框架把种子定义为应用运行必需数据。",
+          "expected": "指引说明演示/示例数据的推荐位置与命名，避免与生产种子混淆。",
+          "actual": "指引仅排除示例数据，未给出替代归属。",
+          "workaround": "Agent 将示例数据放入种子文件，功能满足但违反字面规则。",
+          "acceptance": "指引明确演示数据的归属方式，并在示例中体现。"
+        }
+      },
+      "targets": [
+        "app/.agents/skills/nocobase-app-development/references/migrations.md",
+        "app/.agents/skills/nocobase-db/SKILL.md"
+      ],
+      "paths": [
+        ".agents/skills/nocobase-app-development/references/migrations.md",
+        ".agents/skills/nocobase-db/SKILL.md"
+      ],
+      "evidence": [
+        {
+          "id": "E17",
+          "kind": "skill",
+          "path": "app/.agents/skills/nocobase-db/SKILL.md",
+          "observation": "指引：明确写出 a seed is never sample or demonstration content，把示例/演示数据排除在种子用途之外。",
+          "lines": [
+            80,
+            80
+          ],
+          "excerpt": "A migration creates structure. A seed inserts the records the application needs in order to run. Neither does the other's job, and a seed is never sample or demonstration content.",
+          "sha256": "f97c07a45a9d49c1d933ddbceeabcc9afe267b1356a2ded1a3da0dd56b54011c"
+        },
+        {
+          "id": "E16",
+          "kind": "skill",
+          "path": "app/.agents/skills/nocobase-app-development/references/migrations.md",
+          "observation": "指引：说明 migrations/seeds 由 db apply 先行后种、只运行 pending，并要求种子内容固定可复现、不覆盖用户已改数据。",
+          "lines": [
+            7,
+            19
+          ],
+          "excerpt": "Migrations under `database/main/migrations/` are the application's schema history. Seeds under `database/main/seeds/` insert records the application requires to run. Migrations create structure. Seeds never do.\n\n`database/tsconfig.json` extends the server configuration so editor tooling and ESLint recognize migrations and seeds as Node source. Keep it in place when adding connection directories.\n\n## Running\n\n```bash\npnpm nocobase db apply\n```\n\nThis applies pending migrations and then pending seeds for `database.default`, including registered plugins, ordered by name across all sources. Both halves run only what is pending, so on an already-migrated database it applies seeds alone. The template defaults to `main`. Plugin migrations, seeds and runtime default reads/writes always use this same connection; changing `database.default` changes the application system database.\n\nSeeds are the second half of that run, so the structure a seed writes into must already exist from an earlier migration. Keep seed data fixed and reproducible — no current timestamps or random values in identifying fields — and never let a repeat run silently overwrite data a user has edited.",
+          "sha256": "327c8870ee555dc8496892821a6fe7ec05762c8a2a7b71213f8d339757f695c6"
+        }
+      ],
+      "fingerprint": "0f945b54bb3d630460cc31b13c4f34434494d344882a79a1faf410b3abfbc03c"
     }
   ]
 }
