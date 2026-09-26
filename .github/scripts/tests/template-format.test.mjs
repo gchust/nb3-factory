@@ -58,7 +58,7 @@ function fixture(t, { config = false, missing, exitCode = 0 } = {}) {
   writeFileSync(externalConfig, 'external: verification-only\n');
   const log = path.join(root, 'formatter-arguments.json');
   // A strict CLI double: missing explicit paths fail, as Prettier does. It also
-  // rejects extra flags/commands, so config:init or global error suppression
+  // rejects extra flags/commands, so config init or global error suppression
   // cannot make these workflow tests green. This does not test Prettier internals.
   const pnpm = path.join(bin, 'pnpm');
   writeFileSync(

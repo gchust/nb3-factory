@@ -15,7 +15,8 @@ on:
       source_sha:
         description: Exact nocobase/nocobase3 source SHA (not a moving branch)
         required: true
-        default: cde9a8ea11b54dd436f65c9f696cc58f0969a7ee
+        # Published @nocobase/app-template-default@1.0.0-beta.47 release commit.
+        default: 28c7522b3ddb384b05745715e94f7f985d09a67e
         type: string
       publish:
         description: Publish an isolated source baseline branch after both runners pass
@@ -51,7 +52,7 @@ jobs:
       - name: Validate the explicit source pin
         id: pin
         env:
-          REQUESTED_SHA: ${{ inputs.source_sha || 'cde9a8ea11b54dd436f65c9f696cc58f0969a7ee' }}
+          REQUESTED_SHA: ${{ inputs.source_sha || '28c7522b3ddb384b05745715e94f7f985d09a67e' }}
         run: |
           node --input-type=module <<'NODE'
           import assert from 'node:assert/strict';
@@ -83,6 +84,7 @@ jobs:
         working-directory: source
         run: |
           test "$(git rev-parse HEAD)" = "$SOURCE_SHA"
+          node ../control/.github/scripts/assert-current-template.mjs packages/templates/app-template-default
           pnpm install --frozen-lockfile
           echo "FACTORY_CREATOR_VERSION=$(node -p 'JSON.parse(require("node:fs").readFileSync("packages/tools/create-app/package.json", "utf8")).version')" >> "$GITHUB_ENV"
       - name: Build and publish only to an isolated loopback registry

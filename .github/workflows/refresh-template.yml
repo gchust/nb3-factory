@@ -116,7 +116,7 @@ jobs:
         run: |
           cd "$RUNNER_TEMP/template-generation/nb3-factory"
           format_paths=(package.json README.MD eslint.config.js factory-template.json client/plugins.ts server/plugins.ts cli/plugins.ts server/config/index.ts server/config/mail.ts tests/logic vitest.config.ts)
-          # New templates create config.yml through config:init, not create-app.
+          # New templates create config.yml through config init, not create-app.
           # Verification uses an external APP_CONFIG_FILE; do not generate secrets here.
           if [[ -f config.yml ]]; then
             format_paths+=(config.yml)

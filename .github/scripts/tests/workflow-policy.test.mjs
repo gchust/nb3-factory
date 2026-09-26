@@ -40,12 +40,16 @@ test('each engine receives only its own secrets and configuration', () => {
   // Repair/QA, independent review, reply invocation and credential scrub share
   // one selected-engine map. The trusted publishers must not receive it.
   assert.equal((workflow.match(/env: \*agent-run-env/g) ?? []).length, 4);
-  const scrub = workflow.split('- name: Collect comment reply diagnostics')[1]
+  const scrub = workflow
+    .split('- name: Collect comment reply diagnostics')[1]
     .split('- name: Save reply for trusted publisher')[0];
   assert.match(scrub, /if: always\(\)/);
   assert.match(scrub, /env: \*agent-run-env/);
   assert.match(scrub, /agent-invocation-record\.mjs stage-reply/);
-  assert.doesNotMatch(workflow.split('  publish-reply:')[1], /agent-run-env|secrets\./);
+  assert.doesNotMatch(
+    workflow.split('  publish-reply:')[1],
+    /agent-run-env|secrets\./,
+  );
   assert.equal((workflow.match(/env: \*agent-install-env/g) ?? []).length, 1);
   assert.equal(tokens.length, 1);
   assert.equal(codebuddyKeys.length, 1);
@@ -87,10 +91,16 @@ test('each engine receives only its own secrets and configuration', () => {
 
 test('new engines have explicit credential mappings, never a Pi fallback', () => {
   for (const [engine, secret] of [
-    ['claude-code', 'ANTHROPIC_API_KEY'], ['claude-code', 'CLAUDE_CODE_OAUTH_TOKEN'],
-    ['codex', 'CODEX_API_KEY'], ['opencode', 'OPENCODE_API_KEY'],
+    ['claude-code', 'ANTHROPIC_API_KEY'],
+    ['claude-code', 'CLAUDE_CODE_OAUTH_TOKEN'],
+    ['codex', 'CODEX_API_KEY'],
+    ['opencode', 'OPENCODE_API_KEY'],
   ]) {
-    assert.ok(workflow.includes(`vars.CODE_AGENT_ENGINE == '${engine}' && secrets.${secret} || ''`));
+    assert.ok(
+      workflow.includes(
+        `vars.CODE_AGENT_ENGINE == '${engine}' && secrets.${secret} || ''`,
+      ),
+    );
   }
   assert.doesNotMatch(workflow, /CODE_AGENT_ENGINE != 'codebuddy'/);
   assert.doesNotMatch(workflow, /toJSON\(secrets\)|<<:/);
@@ -243,8 +253,5 @@ test('runner-local timing paths are initialized in steps, not job-level env', ()
     workflow,
     /FACTORY_TIMINGS_FILE=\$RUNNER_TEMP\/final-artifacts\/timings\.jsonl/,
   );
-  assert.match(
-    workflow,
-    /FACTORY_DEPENDENCY_CACHE=\$RUNNER_TEMP\/agent-dependency-cache/,
-  );
+  assert.doesNotMatch(workflow, /FACTORY_DEPENDENCY_CACHE/);
 });

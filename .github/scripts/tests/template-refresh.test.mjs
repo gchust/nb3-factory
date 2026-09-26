@@ -589,6 +589,26 @@ test('task and replay reject old baselines before installing application depende
   }
 });
 
+test('source verification rejects retired templates before building source packages', () => {
+  const workflow = readFileSync(
+    path.resolve(scripts, '../workflows/source-baseline.yml'),
+    'utf8',
+  );
+  const guard = workflow.indexOf(
+    'assert-current-template.mjs packages/templates/app-template-default',
+  );
+  assert.ok(
+    guard >= 0 && guard < workflow.indexOf('pnpm install --frozen-lockfile'),
+  );
+  const pins = [
+    ...workflow.matchAll(
+      /(?:default: |REQUESTED_SHA:.*?'|\|\| ')([a-f0-9]{40})/g,
+    ),
+  ].map((match) => match[1]);
+  assert.equal(pins.length, 2);
+  assert.equal(pins[0], pins[1]);
+});
+
 test('factory workflows use only the current package CLI for Skills sync', () => {
   for (const file of [
     'workflows/refresh-template.yml',
