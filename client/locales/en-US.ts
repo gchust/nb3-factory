@@ -111,6 +111,8 @@ const enUS = {
   actions: {
     close: 'Close',
     save: 'Save',
+    saving: 'Saving…',
+    create: 'Create',
     cancel: 'Cancel',
     confirm: 'Confirm',
     language: 'Language',
@@ -130,6 +132,8 @@ const enUS = {
   },
   navigation: {
     home: 'Home',
+    equipment: 'Equipment',
+    equipmentLoans: 'Loan records',
     open: 'Open navigation',
     close: 'Close navigation',
     expand: 'Expand navigation',
@@ -155,6 +159,122 @@ const enUS = {
   datePicker: {
     placeholder: 'Pick a date',
     rangePlaceholder: 'Pick a date range',
+  },
+  equipment: {
+    title: 'Equipment ledger',
+    description:
+      'Every device, who holds it and when it is due back. Add, edit, borrow and return from here.',
+    stats: {
+      total: 'Total devices',
+      borrowed: 'Currently borrowed',
+      overdue: 'Overdue, not returned',
+    },
+    search: {
+      placeholder: 'Search by asset number or name',
+      label: 'Search equipment by asset number or name',
+      borrowerPlaceholder: 'Search by borrower',
+      borrowerLabel: 'Search loan records by borrower',
+    },
+    filters: {
+      status: 'Availability',
+      allStatuses: 'All availability',
+      loanStatus: 'Return status',
+      allLoanStatuses: 'All return statuses',
+      clear: 'Clear filters',
+    },
+    status: {
+      available: 'Available',
+      borrowed: 'Borrowed',
+    },
+    loanStatus: {
+      active: 'Not returned',
+      returned: 'Returned',
+    },
+    overdue: 'Overdue',
+    fields: {
+      assetNo: 'Asset number',
+      name: 'Equipment name',
+      category: 'Category',
+      notes: 'Notes',
+      status: 'Availability',
+      currentBorrower: 'Current borrower',
+      borrower: 'Borrower',
+      purpose: 'Purpose',
+      borrowedAt: 'Borrowed at',
+      expectedReturnAt: 'Expected return',
+      returnedAt: 'Returned at',
+      loanStatus: 'Return status',
+    },
+    actions: {
+      label: 'Actions',
+      edit: 'Edit',
+      borrow: 'Borrow',
+      return: 'Return',
+    },
+    create: {
+      action: 'New equipment',
+      title: 'New equipment',
+      description: 'Register a device in the ledger.',
+    },
+    edit: {
+      title: 'Edit equipment',
+      description: 'Update this device’s details.',
+      missingTitle: 'Equipment not found',
+      missingDescription:
+        'This device no longer exists. It may have been removed on another screen.',
+    },
+    borrow: {
+      title: 'Borrow equipment',
+      description: 'Record who is taking the device and when it is due back.',
+      submitting: 'Borrowing…',
+      success: 'Borrowed',
+      missingTitle: 'Equipment not found',
+      missingDescription:
+        'This device no longer exists, so it cannot be borrowed.',
+      unavailableTitle: 'Already borrowed',
+      unavailableDescription:
+        'This device has not been returned yet. Return it before lending it again.',
+    },
+    return: {
+      title: 'Return equipment',
+      confirm: 'Confirm return',
+      description: 'Return {{name}} borrowed by {{borrower}}?',
+      success: 'Returned',
+    },
+    form: {
+      assetNoRequired: 'Enter an asset number.',
+      nameRequired: 'Enter an equipment name.',
+      borrowerRequired: 'Enter the borrower.',
+      expectedReturnRequired: 'Choose the expected return date.',
+      expectedReturnPlaceholder: 'Pick an expected return date',
+      tooLong: 'Use at most {{max}} characters.',
+      assetNoTaken: 'This asset number is already in use.',
+      created: 'Added {{name}}.',
+      saved: 'Saved {{name}}.',
+    },
+    empty: {
+      title: 'No equipment yet',
+      description:
+        'Add the first device and it will appear here with its availability.',
+      noResults: 'No equipment matches your search.',
+    },
+    loans: {
+      title: 'Loan records',
+      description:
+        'Every borrow, who has the device and whether it has come back.',
+      empty: {
+        title: 'No loan records yet',
+        description:
+          'Borrow a device from the equipment ledger to start a record.',
+        action: 'Go to equipment',
+        noResults: 'No loan records match your search.',
+      },
+    },
+    error: {
+      title: 'Something went wrong',
+      forbidden: 'You do not have permission to do that.',
+      requestFailed: 'The request failed. Please try again.',
+    },
   },
 };
 
