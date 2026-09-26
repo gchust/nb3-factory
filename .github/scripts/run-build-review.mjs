@@ -322,6 +322,8 @@ export async function runBuildReview(
       redact,
     );
     basis.historyHash = captured.history.fingerprint;
+    basis.historyVersion = 2;
+    basis.history = captured.history.input;
     basis.baseSha = git(workspace, ['rev-parse', 'HEAD']).trim();
     basis.patchHash = digest(readFileSync(path.join(artifacts, 'agent.patch')));
     basis.lockfileHash =
@@ -555,7 +557,7 @@ export async function runBuildReview(
     const partial = assessed.partial;
     report.state = partial ? 'partial' : 'completed';
     report.reason = partial
-      ? `${interruption ?? '尚有未评模块'}；仅展示已保存并通过证据校验的模块，不代表完整评审。`
+      ? `${interruption ?? '尚有未评模块或未核对过程'}；仅展示已保存并通过证据校验的模块，不代表完整评审。`
       : '独立 Agent 评审完成；评分是基于本次证据的意见，不替代业务 QA 或人工评审。';
     if (partial) {
       if (report.evaluation.limitations.length === 30)

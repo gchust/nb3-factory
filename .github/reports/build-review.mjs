@@ -62,6 +62,44 @@ function renderFindings(findings, framework) {
   return html;
 }
 
+export function renderHistoryCoverage(report) {
+  const input = report?.basis?.history;
+  if (input?.version !== 2) return '';
+  const checked = report.evaluation?.historyCoverage;
+  const label = {
+    available: '完整纳入已捕获记录',
+    partial: '部分缺失',
+    unavailable: '不可用',
+  };
+  const size = (value) =>
+    Number.isFinite(value)
+      ? (value / 1024 / 1024).toFixed(2) + ' MiB'
+      : '未记录';
+  return (
+    '<article class="card"><h3>原始搭建历史覆盖</h3><p>输入覆盖：' +
+    escape(label[input.coverage] ?? '未知') +
+    ' · 原始记录 ' +
+    escape(size(input.sourceBytes)) +
+    ' · 脱敏后纳入 ' +
+    escape(size(input.capturedBytes)) +
+    '</p><p>原事件引用覆盖：' +
+    escape(
+      checked
+        ? checked.referencedInvocations + '/' + checked.invocations + ' 次调用'
+        : '未完成核对',
+    ) +
+    ' · 显式错误信号核对：' +
+    escape(
+      checked
+        ? checked.assessedErrorSignals + '/' + checked.errorSignals
+        : '未完成核对',
+    ) +
+    '</p><p class="check-source">输入完整、引用覆盖和评审推理是不同维度。文件存在不证明 Agent 阅读过；错误信号不等于框架缺陷，已引用也不证明通读或理解了每一字节。</p>' +
+    list(input.limitations) +
+    '</article>'
+  );
+}
+
 // Return separate presentation slots after one validation; findings are shared
 // only for exact supplementary-note links, never to rewrite source assessments.
 export function renderBuildReview(input) {
@@ -77,6 +115,7 @@ export function renderBuildReview(input) {
   const primary = framework ? ['requirementFit', 'usability', 'agentFriendliness'] : Object.keys(dimensions);
   let html = `<section class="section" id="build-review"><div class="section-head"><div><div class="eyebrow">${framework ? 'NocoBase3 framework assessment' : 'Build assessment'}</div><h2>${framework ? 'NocoBase3 基础框架评测' : review ? '旧口径搭建质量与模块评审' : 'NocoBase3 基础框架评测'}</h2></div>${tag(review ? `独立 Agent 评审 · 口径 v${review.version}` : '未完成独立评审', review ? '' : 'warn')}</div>`;
   html += `<div class="review-disclaimer">${framework ? '评的是库、插件与指引是否满足需求、容易使用、对 Agent 友好。业务代码与 QA 是使用证据，不是评分主体。' : '评分是评审者基于本次覆盖范围的意见，不是客观测量，也不是 NocoBase3 整体评分。'} 未评估不是零分或满分，不计算综合平均分。</div>`;
+  html += renderHistoryCoverage(report);
   if (review && !framework) html += '<div class="report-banner"><strong>旧口径 v1 · 不作为新框架评分</strong><p>历史四项分数保留原含义，包括 Agent 产出质量。不得改名为需求满足度或使用便利度；需要按口径 v2 重新独立评审。</p></div>';
   if (!framework) html += processHtml(report?.process);
   if (report?.basis) html += `<p class="check-source">评审源产物：Run ${escape(report.basis.runId)} / attempt ${escape(report.basis.attempt)}${report.reviewer?.replay ? ` · 后补评审 Run ${escape(report.reviewer.runId)} / attempt ${escape(report.reviewer.attempt)}` : ''}。发布重试不改变评审源产物编号。</p>`;
