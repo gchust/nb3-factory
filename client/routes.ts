@@ -1,4 +1,4 @@
-import { Home } from 'lucide-react';
+import { ClipboardList, Home, MonitorSmartphone } from 'lucide-react';
 import {
   defineAppRoutes,
   defineSettingsRoutes,
@@ -15,6 +15,25 @@ const appRoutes: AppClientRouteContribution = defineAppRoutes([
     name: 'home',
     navigation: { title: 'navigation.home', icon: Home },
     path: '/',
+  },
+  {
+    // Equipment ledger: the device list, its health summary and every entry
+    // point for adding, editing, lending and returning a device.
+    authz: 'skip',
+    auth: 'required',
+    componentLoader: () => import('./pages/equipment/index.js'),
+    name: 'equipment',
+    navigation: { title: 'navigation.equipment', icon: MonitorSmartphone },
+    path: '/equipment',
+  },
+  {
+    // Borrow records, including returned history and overdue markers.
+    authz: 'skip',
+    auth: 'required',
+    componentLoader: () => import('./pages/equipment/loans.js'),
+    name: 'loans',
+    navigation: { title: 'navigation.loans', icon: ClipboardList },
+    path: '/loans',
   },
   {
     auth: 'guest',
