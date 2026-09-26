@@ -69,7 +69,13 @@ owner 为 application/factory/environment 的发现仅作为背景，不混成 N
 - expected / actual：框架应提供的行为或入口，与冻结版本实际实现/日志的差异；建议类明确这是期望能力，不假装违背已有约定。
 - workaround：应用如何绕行、代价或限制；没有记录写“未记录”，不能估算耗时或 Token。应用通过不代表上游修好。
 - acceptance：建议改进后应如何验证，给出能判定通过或失败的行为；这是未来回归标准，不能写成已跑过的测试。
-  detail / impact / suggestedChange 继续保留，具体包、API、指引位置及证据引用必须可追溯。severity 表示本场景观察到的严重程度，不凭空给出全局 P0/P1 排期或声称影响所有企业场景。
+  detail / impact / suggestedChange 继续保留，具体包、API、指引位置及证据引用必须可追溯。severity 按后果定级，不凭空给出全局 P0/P1 排期或声称影响所有企业场景：
+  - critical：阻塞交付，或造成数据丢失、安全问题，且没有合理绕行。
+  - major：按指引或公开 API 正常使用会静默得到错误结果（数据写错、权限失效等），或只能用非公开手段绕行。
+  - minor：能完成，但要多花排查成本或在应用侧绕行。
+  - info：措辞、示例完整度等不影响结果的改进。
+  后果可以是本次观察到的，也可以是照指引行事必然导致的；后者要在 impact 里写清触发条件（例如“先 JSON.stringify 再写入会二次编码”），不能只写“可能出错”。
+  指引写错或彼此矛盾（照做会出错）用 kind=misleading 且 category=guidance-gap，并在 claimed / observed 分别写出原文与实际；只是缺少说明时用 kind=issue 或 improvement。
   本评审只读冻结输入，不能核对最新上游；confirmed 只表示冻结材料支持评审判断。status=resolved 仅在材料证明被归因对象已修复时使用，不能把应用 workaround 当作框架修复。报告发布日、PR 状态和最终 QA 均不能充当上游修复证据。
 
 ## 业务过程与视觉只作证据

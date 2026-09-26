@@ -32,7 +32,7 @@ function artifacts(t,{status='passed',round=2}={}) {
 test('fixed v2 template keeps every action, observation, screenshot, requirement and explicit missing row',async t=>{
  const {root}=artifacts(t); const result=await makeDeliveryReport(receipt(),root);
  assert.equal(result.facts.checks.length,2); assert.equal(result.facts.checks[1].status,'not-verified');
- for(const phrase of ['验收记录','填写真实表单','新记录显示','完整原始验收要求','问题与改进','独立评测的问题与建议','培训列表','factory-template-version','name="factory-report-id"']) assert.ok(result.html.includes(phrase),phrase);
+ for(const phrase of ['验收记录','填写真实表单','新记录显示','完整原始验收要求','问题与改进','独立评测发现','培训列表','factory-template-version','name="factory-report-id"']) assert.ok(result.html.includes(phrase),phrase);
  assert.ok(result.html.includes('data:image/png;base64,'));
  assert.doesNotMatch(result.html,/开发者资料与下一步|https:\/\/[^"\s]+\.js/);
  assert.equal(result.facts.media.length,1);

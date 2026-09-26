@@ -5,6 +5,7 @@ import { setTimeout as sleep } from 'node:timers/promises';
 import { GitHubClient } from './factory-lib.mjs';
 import { outcomeLabels } from './task-outcome.mjs';
 import { text as markdownText } from './visual-report.mjs';
+import { renderFindingsIndex } from '../reports/findings-index.mjs';
 
 const BRANCH = 'gh-pages';
 const ROOT = 'reports';
@@ -54,7 +55,20 @@ function redirectPage(target,id='') {
   return `<!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="factory-report-id" content="${escape(id)}"><meta http-equiv="refresh" content="0;url=${escape(target)}"><title>交付报告</title><a href="${escape(target)}">打开交付报告</a></html>`;
 }
 function indexPage(items) {
-  return `<!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Code Agent · 交付报告</title><style>body{font:15px/1.8 system-ui,sans-serif;background:#fafafa;color:#18181b;margin:0}main{max-width:1040px;margin:auto;padding:48px 24px}h1{font-size:32px}a{color:inherit;text-decoration:none}article{padding:24px;margin:16px 0;background:white;border:1px solid #e4e4e7;border-radius:12px}p,small{color:#71717a}h2{font-size:20px;margin:0}</style><main><small>CODE AGENT / DELIVERY REPORTS</small><h1>搭建交付报告</h1><p>固定模板 · 逐条验收 · 问题与改进 · 执行与用量</p>${items.sort((a,b)=>compareReports(b,a)).map(m=>`<article><a href="issues/${m.issue}/"><small>#${m.issue} · ${escape(outcomeLabels[m.status]||'未完成')}</small><h2>${escape(m.title)}</h2><p>Run ${m.runId} / attempt ${m.attempt} → 查看完整报告</p></a></article>`).join('')}</main></html>`;
+  return `<!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Code Agent · 交付报告</title><style>body{font:15px/1.8 system-ui,sans-serif;background:#fafafa;color:#18181b;margin:0}main{max-width:1040px;margin:auto;padding:48px 24px}h1{font-size:32px}a{color:inherit;text-decoration:none}article{padding:24px;margin:16px 0;background:white;border:1px solid #e4e4e7;border-radius:12px}p,small{color:#71717a}h2{font-size:20px;margin:0}</style><main><small>CODE AGENT / DELIVERY REPORTS</small><h1>搭建交付报告</h1><p>固定模板 · 逐条验收 · 问题与改进 · 执行与用量 · <a href="findings/"><u>跨报告框架问题汇总 →</u></a></p>${items.sort((a,b)=>compareReports(b,a)).map(m=>`<article><a href="issues/${m.issue}/"><small>#${m.issue} · ${escape(outcomeLabels[m.status]||'未完成')}</small><h2>${escape(m.title)}</h2><p>Run ${m.runId} / attempt ${m.attempt} → 查看完整报告</p></a></article>`).join('')}</main></html>`;
+}
+
+// The cross-report findings index is derived from the latest report of every
+// Issue in the registry, so a rerun replaces rather than double counts.
+async function findingsIndexPage(client,registry,sha,current) {
+  const manifests=Object.values(registry.issues);
+  const reports=[];
+  for(let i=0;i<manifests.length;i+=8) {
+    reports.push(...await Promise.all(manifests.slice(i,i+8).map(m=>
+      current && m.reportId===current.reportId ? current
+        : sha ? getJson(client,`${m.path.slice(0,-'index.html'.length)}report.json`,sha) : null)));
+  }
+  return renderFindingsIndex(reports.filter(Boolean));
 }
 
 // Keep the whole site in one dedicated branch. Optimistic ref updates preserve
@@ -100,6 +114,10 @@ export async function archiveReport(client,report,html) {
     }
     files.push([`${ROOT}/manifest.json`,JSON.stringify(registry)],
       [`${ROOT}/index.html`,indexPage(Object.values(registry.issues))]);
+    // A broken index must never block the report itself; the previous one stays.
+    let findingsIndex='updated';
+    try { files.push([`${ROOT}/findings/index.html`,await findingsIndexPage(client,registry,sha,preserve ? null : report)]); }
+    catch(error) { findingsIndex=`skipped: ${error.message}`; }
     if(!sha) files.push(['index.html',redirectPage(`./${ROOT}/`)],['.nojekyll','']);
     const tree=[...retained];
     for(const [file,content] of files) {
@@ -107,12 +125,12 @@ export async function archiveReport(client,report,html) {
       tree.push({path:file,mode:'100644',type:'blob',sha:blob.sha});
     }
     const newTree=await client.request('POST','/git/trees',{body:{...(commit?{base_tree:commit.tree.sha}:{}),tree}});
-    if(commit?.tree.sha===newTree.sha) return {manifest,isLatest,preserved:Boolean(preserve),commitSha:sha};
+    if(commit?.tree.sha===newTree.sha) return {manifest,isLatest,preserved:Boolean(preserve),commitSha:sha,findingsIndex};
     const created=await client.request('POST','/git/commits',{body:{message:`report: issue ${next.issue}, run ${next.runId}, attempt ${next.attempt}`,tree:newTree.sha,parents:sha?[sha]:[]}});
     try {
       if(sha) await client.request('PATCH',`/git/refs/heads/${BRANCH}`,{body:{sha:created.sha,force:false}});
       else await client.createRef(BRANCH,created.sha);
-      return {manifest,isLatest,preserved:Boolean(preserve),commitSha:created.sha};
+      return {manifest,isLatest,preserved:Boolean(preserve),commitSha:created.sha,findingsIndex};
     } catch(error) {
       if(attempt===2 || !/409|422/.test(error.message)) throw error;
     }
@@ -187,6 +205,7 @@ if(process.argv[1] && path.resolve(process.argv[1])===fileURLToPath(import.meta.
     const report=JSON.parse(readFileSync(args.report,'utf8'));
     const publication=await archiveReport(client,report,readFileSync(args.html,'utf8'));
     writeFileSync(args.output,JSON.stringify(publication));
+    if(publication.findingsIndex!=='updated') console.warn(`Findings index ${publication.findingsIndex}`);
     if(process.env.GITHUB_OUTPUT) appendFileSync(process.env.GITHUB_OUTPUT,`commit_sha=${publication.commitSha}\n`);
   } else if(mode==='notify') {
     const result=await notifyReport(client,JSON.parse(readFileSync(args.publication,'utf8')),args['base-url']);

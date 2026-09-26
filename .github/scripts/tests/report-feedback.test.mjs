@@ -128,7 +128,10 @@ test('identical supplementary proposals link to existing findings, but differing
   assert.match(feedback, /开发时的现场现象/);
   assert.match(feedback, /处理结果未提供/);
   assert.match(feedback, /实现者推测/);
-  assert.equal(feedback.split(finding.detail).length - 1, 1);
+  // The upstream issue draft deliberately restates the finding; only the
+  // rendered finding and the supplementary proposals must not repeat it.
+  const withoutDrafts = feedback.replace(/<pre id="issue-draft-[^"]+">[\s\S]*?<\/pre>/g, '');
+  assert.equal(withoutDrafts.split(finding.detail).length - 1, 1);
   assert.match(html, /查看原始复盘数据/);
 });
 
@@ -193,5 +196,5 @@ test('findings, optional prose and source metadata are escaped; provenance is no
   assert.equal(ids.length, new Set(ids).size);
   const links = [...html.matchAll(/href="#(review-(?:finding|evidence)-[^"]+)"/g)].map(match => match[1]);
   for (const id of links) assert.ok(ids.includes(id), `missing target ${id}`);
-  assert.match(html, /factory-template-version" content="8"/);
+  assert.match(html, /factory-template-version" content="9"/);
 });
