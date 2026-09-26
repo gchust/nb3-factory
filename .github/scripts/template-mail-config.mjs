@@ -3,7 +3,7 @@ import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-// plugin:register owns plugin entries, not the application's config composition.
+// plugin register owns plugin entries, not the application's config composition.
 // Use the package's public factory, including on published Mail versions that
 // read config.get('mail') without supplying defaults themselves.
 export function configureTemplateMail(appRoot) {
@@ -23,11 +23,14 @@ export function configureTemplateMail(appRoot) {
   const valueBody = source.split(composition)[1];
   const wired = [
     /^import mail from ['"]\.\/mail\.js['"];$/m.test(source),
-    /^  mail: ReturnType<typeof mail>;$/m.test(typeBody),
-    /^  mail,$/m.test(valueBody),
+    /^ {2}mail: ReturnType<typeof mail>;$/m.test(typeBody),
+    /^ {2}mail,$/m.test(valueBody),
   ];
   if (wired.every(Boolean)) {
-    assert.ok(existsSync(mailFile), 'Mail config is registered but server/config/mail.ts is missing.');
+    assert.ok(
+      existsSync(mailFile),
+      'Mail config is registered but server/config/mail.ts is missing.',
+    );
     return false;
   }
   // This edits a newly generated template, not arbitrary application code. Fail
@@ -50,9 +53,17 @@ export function configureTemplateMail(appRoot) {
   return true;
 }
 
-if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+if (
+  process.argv[1] &&
+  path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)
+) {
   const [appRoot, ...extra] = process.argv.slice(2);
-  assert.ok(appRoot && extra.length === 0, 'Usage: template-mail-config.mjs APP_ROOT');
+  assert.ok(
+    appRoot && extra.length === 0,
+    'Usage: template-mail-config.mjs APP_ROOT',
+  );
   configureTemplateMail(path.resolve(appRoot));
-  console.log('Mail application config factory is registered in server/config/index.ts.');
+  console.log(
+    'Mail application config factory is registered in server/config/index.ts.',
+  );
 }

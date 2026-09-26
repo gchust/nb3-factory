@@ -64,7 +64,7 @@ jobs:
         with:
           node-version: 24.x
 
-      # app-tools installs dist/ as its own pnpm root, which never reads the
+      # The official CLI installs dist/ as its own pnpm root, which never reads the
       # application's .npmrc, and pnpm 11 ignores scoped registries passed in
       # the environment. Only the user-level file reaches that nested install.
       - name: Expose the factory registry to nested pnpm roots
@@ -108,7 +108,7 @@ jobs:
             "$APP_ROOT" "$RUNNER_TEMP/template-diagnostics"
           node control/.github/scripts/template-mail-config.mjs "$APP_ROOT"
           # Re-registration can be a no-op; always sync before inspecting Skills.
-          node control/.github/scripts/template-cli.mjs skills:sync "$APP_ROOT"
+          pnpm --dir "$APP_ROOT" exec nocobase skills sync
           node control/.github/scripts/template-plugins.mjs inspect \
             "$APP_ROOT" "$RUNNER_TEMP/template-diagnostics"
 
@@ -116,11 +116,6 @@ jobs:
         run: |
           cd "$RUNNER_TEMP/template-generation/nb3-factory"
           format_paths=(package.json README.MD eslint.config.js factory-template.json client/plugins.ts server/plugins.ts cli/plugins.ts server/config/index.ts server/config/mail.ts tests/logic vitest.config.ts)
-          # CLI-owned templates have no local build wrapper. Overlay validation
-          # still requires a valid build implementation for legacy templates.
-          if [[ -f scripts/build.mjs ]]; then
-            format_paths+=(scripts/build.mjs)
-          fi
           # New templates create config.yml through config:init, not create-app.
           # Verification uses an external APP_CONFIG_FILE; do not generate secrets here.
           if [[ -f config.yml ]]; then

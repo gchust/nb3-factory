@@ -12,11 +12,6 @@ import {
 import path from 'node:path';
 import os from 'node:os';
 import test from 'node:test';
-import {
-  deploymentCache,
-  preserveDeploymentDependencies,
-} from '../deployment-cache.mjs';
-
 const scripts = path.resolve(import.meta.dirname, '..');
 function fixture(t) {
   const root = mkdtempSync(path.join(os.tmpdir(), 'factory-performance-'));
@@ -50,86 +45,6 @@ test('timing preserves failure exit status and never stores command arguments', 
   assert.equal(record.status, 7);
   assert.ok(record.durationMs >= 0);
   assert.ok(!JSON.stringify(record).includes('secret-argument'));
-});
-
-test('dependency cache restores installed bytes and misses after dependency, tool or target changes', (t) => {
-  const root = fixture(t);
-  const previousPath = process.env.PATH;
-  write(
-    root,
-    'bin/pnpm',
-    '#!/usr/bin/env node\nconsole.log("11.7.0");\n',
-    0o755,
-  );
-  process.env.PATH = `${root}/bin:${previousPath}`;
-  t.after(() => {
-    process.env.PATH = previousPath;
-  });
-  const previous = process.env.FACTORY_DEPENDENCY_CACHE;
-  process.env.FACTORY_DEPENDENCY_CACHE = path.join(root, 'cache');
-  t.after(() => {
-    if (previous === undefined) delete process.env.FACTORY_DEPENDENCY_CACHE;
-    else process.env.FACTORY_DEPENDENCY_CACHE = previous;
-  });
-  write(root, 'dist/package.json', '{"dependencies":{"x":"1"}}');
-  write(root, 'pnpm-lock.yaml', 'lock-v1');
-  write(root, 'dist/node_modules/x/index.js', 'original');
-  const cache = deploymentCache(root, ['--target', 'linux-x64']);
-  assert.equal(cache.restore(), false);
-  write(
-    root,
-    'dist/package.json',
-    '{"dependencies":{"x":"1"},"nocobase":{"buildTarget":{"platform":"linux","arch":"x64"}}}',
-  );
-  cache.save();
-  preserveDeploymentDependencies(root);
-  rmSync(path.join(root, 'dist/node_modules'), {
-    recursive: true,
-    force: true,
-  });
-  write(root, 'dist/package.json', '{"dependencies":{"x":"1"}}');
-  assert.equal(
-    deploymentCache(root, ['--target', 'linux-x64']).restore(),
-    true,
-  );
-  assert.equal(
-    readFileSync(path.join(root, 'dist/node_modules/x/index.js'), 'utf8'),
-    'original',
-  );
-  cache.save();
-  preserveDeploymentDependencies(root);
-  write(root, 'dist/package.json', '{"dependencies":{"x":"1"}}');
-  assert.equal(
-    deploymentCache(root, ['--target', 'linux-arm64']).restore(),
-    false,
-  );
-  for (const [file, value] of [
-    ['pnpm-lock.yaml', 'lock-v2'],
-    ['.npmrc', 'registry=https://example.invalid'],
-    ['scripts/build.mjs', 'changed'],
-    ['dist/vendor/plugin/index.js', 'new implementation'],
-    ['dist/pnpm-workspace.yaml', 'allowBuilds: false'],
-    ['dist/package.json', '{"dependencies":{"x":"2"}}'],
-  ]) {
-    const original = existsSync(path.join(root, file))
-      ? readFileSync(path.join(root, file))
-      : null;
-    write(root, file, value);
-    assert.equal(
-      deploymentCache(root, ['--target', 'linux-x64']).restore(),
-      false,
-      file,
-    );
-    if (original === null) rmSync(path.join(root, file));
-    else write(root, file, original);
-  }
-  // Remove empty directories introduced by the invalidation probes.
-  rmSync(path.join(root, 'scripts'), { recursive: true, force: true });
-  rmSync(path.join(root, 'dist/vendor'), { recursive: true, force: true });
-  assert.equal(
-    deploymentCache(root, ['--target', 'linux-x64']).restore(),
-    true,
-  );
 });
 
 test('fast checks stop expensive work; repair prioritizes failed check without omitting any checks', (t) => {
@@ -196,8 +111,7 @@ test('fast checks stop expensive work; repair prioritizes failed check without o
     'typecheck',
     'test',
     'build --target linux-x64 --node-version 24',
-    'migrate',
-    'seed',
+    'exec nocobase db apply',
   ]);
   assert.equal(
     existsSync(path.join(root, 'artifacts/last-failed-stage')),

@@ -21,7 +21,7 @@ export const LEDGER_LABEL = 'factory:retro-log';
 export const LEDGER_TITLE = '搭建复盘台账';
 
 export const CATEGORIES = {
-  'template-overlay': '模板 overlay / compatibilityFixes',
+  'template-overlay': '模板 overlay / tooling',
   'skills-docs': 'Skill 文档缺失或误导',
   'scaffold-defaults': 'create-app 脚手架默认值',
   verification: '工厂验证脚本误报或漏报',
@@ -410,7 +410,7 @@ async function ensureLedger() {
       '',
       '完整内容（问题与解法、基线优化建议）留在各自 Issue 的「搭建复盘」评论里，',
       '这里只做按时间累积的索引，方便定期把可机械化的修复合并进 NocoBase 3 基线',
-      '（`factory-template.json` 的 compatibilityFixes、模板 overlay 脚本）和',
+      '（`factory-template.json` 的 tooling、模板 overlay 脚本）和',
       '`skills/nocobase-app-development/`。',
     ].join('\n'),
   });

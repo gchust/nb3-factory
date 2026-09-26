@@ -133,12 +133,9 @@ jobs:
       - name: Reconstruct sealed candidate without rebuilding
         run: |
           cd workspace
+          node ../control/.github/scripts/assert-current-template.mjs .
           pnpm install --frozen-lockfile --ignore-scripts
-          if [[ -f ../control/.github/scripts/template-cli.mjs ]]; then
-            node ../control/.github/scripts/template-cli.mjs skills:sync .
-          else
-            pnpm skills:sync
-          fi
+          pnpm exec nocobase skills sync
       - name: Install selected pinned reviewer
         env:
           CODE_AGENT_ENGINE: ${{ vars.CODE_AGENT_ENGINE }}

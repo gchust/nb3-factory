@@ -59,13 +59,13 @@ GitHub 写入失败，都不会让已经通过验收的业务 PR 失败。
 
 `category` 的含义：
 
-| 分类                | 落到哪里                                                           |
-| ------------------- | ------------------------------------------------------------------ |
-| `template-overlay`  | 模板 overlay 脚本、`factory-template.json` 的 `compatibilityFixes` |
-| `skills-docs`       | `skills/nocobase-app-development/` 文档缺失或误导                  |
-| `scaffold-defaults` | `@nocobase/create-app` 脚手架默认值不合适                          |
-| `verification`      | 工厂验证脚本误报或漏报                                             |
-| `tooling`           | 本地命令、依赖或构建                                               |
+| 分类                | 落到哪里                                                |
+| ------------------- | ------------------------------------------------------- |
+| `template-overlay`  | 模板 overlay 脚本、`factory-template.json` 的 `tooling` |
+| `skills-docs`       | `skills/nocobase-app-development/` 文档缺失或误导       |
+| `scaffold-defaults` | `@nocobase/create-app` 脚手架默认值不合适               |
+| `verification`      | 工厂验证脚本误报或漏报                                  |
+| `tooling`           | 本地命令、依赖或构建                                    |
 
 ## 台账
 

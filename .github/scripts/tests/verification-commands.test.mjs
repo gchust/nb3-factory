@@ -52,21 +52,6 @@ const commandsFor = (packageJson, { fail = '', status = 0 } = {}) => {
   }
 };
 
-test('templates with db:apply initialize the database through that one plan', () => {
-  assert.deepEqual(
-    commandsFor({ scripts: { 'db:apply': 'tsx ./cli/index.ts app db apply' } }),
-    ['db:apply'],
-  );
-});
-
-test('earlier baselines keep running migrate and then seed', () => {
-  assert.deepEqual(commandsFor({ scripts: { migrate: 'm', seed: 's' } }), [
-    'migrate',
-    'seed',
-  ]);
-  assert.deepEqual(commandsFor(null), ['migrate', 'seed']);
-});
-
 test('CLI-owned templates apply the database without local script aliases', () => {
   assert.deepEqual(
     commandsFor({

@@ -253,7 +253,6 @@ jobs:
           echo "FACTORY_JOB_STARTED_EPOCH_SECONDS=$(date +%s)" >> "$GITHUB_ENV"
           echo "FACTORY_RUN_DEADLINE_EPOCH_SECONDS=$(($(date +%s) + 18000 - 120))" >> "$GITHUB_ENV"
           echo "FACTORY_TIMINGS_FILE=$RUNNER_TEMP/agent-artifacts/timings.jsonl" >> "$GITHUB_ENV"
-          echo "FACTORY_DEPENDENCY_CACHE=$RUNNER_TEMP/agent-dependency-cache" >> "$GITHUB_ENV"
 
       - name: Check out application base
         uses: actions/checkout@v4
@@ -367,7 +366,7 @@ jobs:
           cache: ${{ hashFiles('workspace/factory-source.json') == '' && 'pnpm' || '' }}
           cache-dependency-path: workspace/pnpm-lock.yaml
 
-      # app-tools installs dist/ as its own pnpm root, which never reads the
+      # The official CLI installs dist/ as its own pnpm root, which never reads the
       # application's .npmrc, and pnpm 11 ignores scoped registries passed in
       # the environment. Only the user-level file reaches that nested install.
       - name: Expose the factory registry to nested pnpm roots
@@ -388,13 +387,9 @@ jobs:
       - name: Install application dependencies
         working-directory: workspace
         run: |
+          node ../control/.github/scripts/assert-current-template.mjs .
           node ../control/.github/scripts/timed-command.mjs install pnpm install --frozen-lockfile
-          if [[ -f ../control/.github/scripts/template-cli.mjs ]]; then
-            node ../control/.github/scripts/timed-command.mjs skills-sync node ../control/.github/scripts/template-cli.mjs skills:sync .
-          else
-            # Existing tasks may still pin a control commit predating the adapter.
-            node ../control/.github/scripts/timed-command.mjs skills-sync pnpm skills:sync
-          fi
+          node ../control/.github/scripts/timed-command.mjs skills-sync pnpm exec nocobase skills sync
 
       - name: Capture the actual installed package and Skill baseline
         run: |
@@ -731,7 +726,7 @@ jobs:
           cache: ${{ hashFiles('workspace/factory-source.json') == '' && 'pnpm' || '' }}
           cache-dependency-path: workspace/pnpm-lock.yaml
 
-      # app-tools installs dist/ as its own pnpm root, which never reads the
+      # The official CLI installs dist/ as its own pnpm root, which never reads the
       # application's .npmrc, and pnpm 11 ignores scoped registries passed in
       # the environment. Only the user-level file reaches that nested install.
       - name: Expose the factory registry to nested pnpm roots

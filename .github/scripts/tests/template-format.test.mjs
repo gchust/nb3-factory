@@ -37,10 +37,7 @@ const requiredTargets = [
   'vitest.config.ts',
 ];
 
-function fixture(
-  t,
-  { config = false, build = false, missing, exitCode = 0 } = {},
-) {
+function fixture(t, { config = false, missing, exitCode = 0 } = {}) {
   const root = mkdtempSync(path.join(os.tmpdir(), 'template format '));
   t.after(() => rmSync(root, { recursive: true, force: true }));
   const app = path.join(root, 'template-generation/nb3-factory');
@@ -56,10 +53,6 @@ function fixture(
     }
   }
   writeFileSync(path.join(app, 'config.example.yml'), 'auth: {}\n');
-  if (build) {
-    mkdirSync(path.join(app, 'scripts'));
-    writeFileSync(path.join(app, 'scripts/build.mjs'), '// build wrapper\n');
-  }
   if (config) writeFileSync(path.join(app, 'config.yml'), 'auth: {}\n');
   const externalConfig = path.join(root, 'template-verification.yml');
   writeFileSync(externalConfig, 'external: verification-only\n');
@@ -123,7 +116,7 @@ test('refresh formats a new template without config.yml or creating runtime secr
   );
 });
 
-test('refresh still formats a config.yml provided by an older template', (t) => {
+test('refresh still formats a an existing config.yml without creating one', (t) => {
   const f = fixture(t, { config: true });
   const result = f.run();
   assert.equal(result.status, 0, result.stderr);
@@ -132,16 +125,6 @@ test('refresh still formats a config.yml provided by an older template', (t) => 
     f.arguments().targets.toSorted(),
     [...requiredTargets, 'config.yml'].toSorted(),
   );
-});
-
-test('refresh still formats a local build wrapper when the template provides one', (t) => {
-  const f = fixture(t, { build: true });
-  const result = f.run();
-  assert.equal(result.status, 0, result.stderr);
-  assert.deepEqual(f.arguments().targets, [
-    ...requiredTargets,
-    'scripts/build.mjs',
-  ]);
 });
 
 for (const missing of requiredTargets) {

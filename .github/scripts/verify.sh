@@ -68,7 +68,7 @@ if [[ -n "${FACTORY_BUILD_TARGET:-}" ]]; then
   build_args+=(--target "$FACTORY_BUILD_TARGET" --node-version "${FACTORY_BUILD_NODE_VERSION:-24}")
 fi
 # The template's own `--tar` archives the dist this one build produced, so the
-# deployable is the verified bytes. Templates since app-tools no longer ship a
+# deployable is the verified bytes. Current CLI templates do not ship a
 # standalone pack script the factory could run after the build instead.
 if [[ "${FACTORY_BUILD_ARCHIVE:-0}" == '1' ]]; then
   build_args+=(--tar)

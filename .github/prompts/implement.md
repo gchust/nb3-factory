@@ -4,7 +4,7 @@
 
 ## 工作约束
 
-- 先阅读 `AGENTS.md` 和相关 Skill；按任务选参考页，不通读整个文档目录。工厂已按模板提供的命令完成 Skill 同步，仅在新增或变更提供 Skill 的依赖后，按当前模板的 `AGENTS.md` 再次同步。
+- 先阅读 `AGENTS.md` 和相关 Skill；按任务选参考页，不通读整个文档目录。工厂仅使用新版 NocoBase 3 CLI，并已完成 Skill 同步；仅在新增或变更提供 Skill 的依赖后，运行 `pnpm exec nocobase skills sync` 再次同步。不要添加旧模板命令或兼容回退。
 - 直接修改应用，不为单个业务创建发布插件。保留已有功能和原生登录；页面使用中英文文案。
 - 数据结构使用 Migration；必要和示例数据使用幂等 Seed，不依赖临时数据库。提供核心业务测试。
 - 只改必要文件；不得修改 `.github/`、`.npmrc`、`.gitmodules`、`config.yml`，不得执行 Git 发布操作、创建分支或 PR、调用 GitHub API；由 Publisher 在独立验证后发布。
@@ -40,7 +40,21 @@
 简述实际修改、执行的相关自测和未解决问题。发现真实卡点时及时把简短复盘写到 `{{RETRO_PATH}}`，不要写到应用源码里：
 
 ```json
-{"version":1,"summary":"","blockers":[{"phase":"implementation","title":"","symptom":"","rootCause":"","resolution":"","status":"open"}],"improvements":[]}
+{
+  "version": 1,
+  "summary": "",
+  "blockers": [
+    {
+      "phase": "implementation",
+      "title": "",
+      "symptom": "",
+      "rootCause": "",
+      "resolution": "",
+      "status": "open"
+    }
+  ],
+  "improvements": []
+}
 ```
 
 blockers 可选 status 为 resolved/open/unknown；不要仅因后来通过验收就推断问题已解决。改进项使用 category/title/detail/suggestedChange/mechanizable，记录实际建议及具体改法。没有卡点可省略；没有可证实的优化建议就保持空数组，不凑数量。不估算 Token 或耗时，不生成统计页面；这些由工厂记录。不要写入凭据或真实业务数据。

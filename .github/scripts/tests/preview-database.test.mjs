@@ -9,16 +9,12 @@ const deploy = readFileSync(
   path.resolve(import.meta.dirname, '../preview/preview-deploy.sh'),
   'utf8',
 );
-const from = deploy.indexOf('# The package CLI moved');
+const from = deploy.indexOf('# Apply the current CLI plan');
 const to = deploy.indexOf('\nlog "starting $name"', from);
 assert.ok(from >= 0 && to > from);
 const migrate = deploy.slice(from, to);
 
-for (const [mode, expected] of [
-  ['cli', ['db apply']],
-  ['script', ['app db apply']],
-  ['legacy', ['app migrate', 'app seed']],
-]) {
+for (const [mode, expected] of [['cli', ['db apply']]]) {
   for (const fail of [false, true]) {
     test(`preview ${mode} database ${fail ? 'failure stops without fallback' : 'uses the published command'}`, (t) => {
       const root = mkdtempSync(path.join(os.tmpdir(), 'preview-db-'));
@@ -32,10 +28,6 @@ log() { :; }
 die() { echo "$*" >&2; exit 1; }
 run_app_once() {
   shift 2
-  case "$*" in
-    'db apply --help') [[ "$MODE" == cli ]]; return ;;
-    'app db apply --help') [[ "$MODE" == script ]]; return ;;
-  esac
   printf '%s\\n' "$*" >> "$COMMAND_LOG"
   [[ "$FAIL" == false ]]
 }
