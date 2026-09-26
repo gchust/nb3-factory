@@ -387,3 +387,9 @@ Navigation groups retain their expanded or collapsed state while the navigation 
 `runtime.paths`, configuration context `paths`, and `app.paths` share one resolved `AppPaths` object. Use `paths.storage('...')`, `paths.database('...')`, or the corresponding directory fields. `AppPathOptions` is input only; application path policies run before the final object is created and configuration is loaded. Standalone entries declare the deployment root in `server/runtime.ts` so the server and CLI share persistent storage outside the compiled code directory.
 
 `server/app.ts` calls `createAppFromRuntime(runtime)` to transfer configuration, paths, mode and Host logging policy and bind `runtime.app`. Keep Provider, middleware and route registration explicit and ordered; `startApplicationInScope` owns startup and shutdown binding.
+
+## Factory review history
+
+Framework reviews prioritize the complete observable implementation, repair and QA histories. Stream and redact large JSONL records without dropping whole files, long events or accepted Handoff ancestors to fit a byte budget. Keep source hashes and reconstructable chunk locations. Deterministic event indexes aid navigation; they never replace raw tool calls and results.
+
+Track input completeness separately from cited process coverage. A Skill inventory/hash is not proof of Skill use. New reviews must cite original events for each invoked phase and explicitly address indexed error signals; incomplete process coverage remains partial. Preserve versioned fingerprint validation for existing reports, and never reuse ancestor QA verdicts or double-count their usage.

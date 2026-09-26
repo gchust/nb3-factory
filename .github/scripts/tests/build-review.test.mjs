@@ -1,3 +1,4 @@
+import { Buffer } from 'node:buffer';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import { chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
@@ -36,8 +37,12 @@ function fixture(t) {
   execFileSync('git', ['-c', 'user.name=Fixture', '-c', 'user.email=fixture@localhost', 'commit', '-qm', 'fixture'], { cwd: workspace });
   put(workspace, 'node_modules/@nocobase/example/package.json', { name: '@nocobase/example', version: '3.0.0-fixture' });
   put(workspace, 'node_modules/@nocobase/example/dist/index.d.ts', 'export declare const customer: number;\n');
-  const metadata = { repository: 'owner/factory', issue: { number: 21 }, task: { requirements: 'Manage customers', reviewCriteria: 'Review used modules independently' } };
+  const metadata = { repository: 'owner/factory', issue: { number: 21 }, run: {id:100,attempt:1}, controlSha:'b'.repeat(40), applicationBase:{sha:execFileSync('git',['rev-parse','HEAD'],{cwd:workspace,encoding:'utf8'}).trim()}, task: { requirements: 'Manage customers', reviewCriteria: 'Review used modules independently' } };
   put(artifacts, 'task-metadata.json', metadata);
+  put(artifacts, 'agent-implement.jsonl', '{"type":"tool_result","content":"Read framework fixture"}\n');
+  put(artifacts, 'agent-implement.jsonl.prompt.md', 'Build fixture');
+  put(artifacts, 'agent-implement.jsonl.invocation.json', {version:1,invoked:true});
+  put(artifacts, 'agent-implement.jsonl.result.json', {status:'completed'});
   put(artifacts, 'agent.patch', 'sealed fixture patch\n');
   put(artifacts, 'repair-summary.json', { verificationAttempts: 2, repairAttempts: 1, finalVerificationAttempt: 2 });
   for (const [round, status] of [[1, 'failed'], [2, 'passed']]) put(artifacts, `verify-${round}/browser-acceptance/report.json`, {
@@ -63,6 +68,10 @@ const review = {version:input.rubricVersion,inputHash:input.basis.inputHash,prog
  scores:{requirementFit:score,usability:score,design:score,reliability:{score:null,reason:'No implementation coverage',evidence:[]},agentFriendliness:score}}],
  findings:[],ui:{status:'not-reviewed',score:null,reason:'No image inspection',evidence:[]},
  evidence:[{id:'E1',kind:'code',path:'app/server/customer.ts',lines:[1,1],observation:'Read actual captured source',excerpt:'MODEL FABRICATION',mediaId:'MODEL FABRICATION'}, {id:'E2',kind:'package',path:'packages/@nocobase/example/dist/index.d.ts',lines:[1,1],observation:'Read framework declaration'}],limitations:[]};
+const history=JSON.parse(fs.readFileSync(input.history.path,'utf8'));
+const original=history.files.find(file=>file.source==='agent-implement.jsonl').chunks[0].path;
+review.evidence.push({id:'E3',kind:'log',path:original,lines:[1,1],observation:'Actual fixture tool event'});
+review.historyReview=[{log:'agent-implement.jsonl',status:'reviewed',reason:'Read original fixture event',evidence:['E3'],errors:[]}];
 if (${JSON.stringify(behavior)} === 'old-rubric') review.version = 1;
 if (${JSON.stringify(behavior)} === 'wrong-hash') review.inputHash = 'c'.repeat(64);
 if (['modify', 'stall-modify'].includes(${JSON.stringify(behavior)})) {fs.chmodSync('app/server/customer.ts',0o600);fs.writeFileSync('app/server/customer.ts','modified');}

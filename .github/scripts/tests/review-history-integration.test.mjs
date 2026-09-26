@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
-import { chmodSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
+import { chmodSync, mkdirSync, mkdtempSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
@@ -62,6 +62,7 @@ for (const entry of index.files) for (const chunk of entry.chunks) assert.ok(!fs
 assert.equal(process.env.FACTORY_ADMIN_PASSWORD, undefined);
 fs.writeFileSync('assessment.json', JSON.stringify({version:2,inputHash:input.basis.inputHash,
   progress:{complete:true,pendingModules:[]},summary:'Fixture tests original evidence; no framework score claimed.',
+  historyReview:[{log:'agent-implement.jsonl',status:'reviewed',reason:'Read original tool event',evidence:['E1'],errors:[]}],
   modules:[],findings:[],limitations:[],ui:{status:'not-reviewed',score:null,reason:'No image review',evidence:[]},
   evidence:[{id:'E1',kind:'log',path:file,lines:[1,1],observation:'Original tool output, not a generated summary'}]}));
 const check = spawnSync(process.execPath, ['.review-tools/check-review-draft.mjs'], {encoding:'utf8'});

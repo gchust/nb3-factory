@@ -45,7 +45,7 @@ export const safeRelative = value => typeof value === 'string' && value.length <
   !value.includes('\\') && !value.includes('\0') && !path.posix.isAbsolute(value) &&
   !value.split('/').some(part => !part || part === '.' || part === '..');
 
-export function readReviewJson(root, relative) {
+export function readReviewJson(root, relative, maximumBytes = 2 * 1024 * 1024) {
   need(safeRelative(relative), 'Invalid review file path');
   // Reject links at every level, not just the leaf.
   let file = root;
@@ -54,7 +54,7 @@ export function readReviewJson(root, relative) {
     need(!lstatSync(file).isSymbolicLink(), 'Review files cannot be symlinks');
   }
   const stat = lstatSync(file);
-  need(stat.isFile() && stat.size <= 2 * 1024 * 1024, 'Review JSON exceeds 2 MiB');
+  need(stat.isFile() && stat.size <= maximumBytes, 'Review JSON exceeds allowed size');
   return JSON.parse(readFileSync(file, 'utf8'));
 }
 function optional(root, file) {
@@ -268,7 +268,7 @@ export function resolveReviewIdentity(root, report, identity) {
   // independently of the legacy artifact hash, including supplement adoption.
   if (report?.basis?.historyHash !== undefined) {
     need(/^[a-f0-9]{64}$/.test(report.basis.historyHash), 'Invalid review history fingerprint');
-    need(historyFingerprint(root) === report.basis.historyHash, 'Review history fingerprint mismatch');
+    need(historyFingerprint(root, report.basis.historyVersion ?? 1) === report.basis.historyHash, 'Review history fingerprint mismatch');
   }
   if (!identity) return undefined;
   const basis = report.basis;
@@ -317,7 +317,7 @@ export function loadBuildReview(root, identity) {
       // A new rubric is a new assessment, not a relabeling of old scores. A
       // valid v2 partial can coexist with a complete v1; never downgrade v2 to v1.
       let originalValid = false;
-      try { validateBuildReview(report, resolveReviewIdentity(root, report, identity)); originalValid = true; } catch {}
+      try { validateBuildReview(report, resolveReviewIdentity(root, report, identity)); originalValid = true; } catch { /* A missing optional original report is handled below. */ }
       const older = originalValid && ['completed', 'partial'].includes(report.state) ? report : null;
       if (['completed', 'partial'].includes(supplement.state) &&
           (!older || supplement.basis.rubricVersion > older.basis.rubricVersion ||

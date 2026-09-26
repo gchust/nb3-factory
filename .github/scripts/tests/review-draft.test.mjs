@@ -70,3 +70,135 @@ test('prompt distinguishes target enums from evidence kinds and uses the supplie
   assert.match(prompt,/node \.review-tools\/check-review-draft\.mjs/);
   assert.match(prompt,/本次已有调用和预算内/);
 });
+
+function withHistory(t) {
+  const f = fixture(t);
+  const log = 'agent-implement.jsonl',
+    file = 'artifacts/agent-history/' + log + '/part-0001.txt';
+  const data =
+    '{"type":"tool_execution_start","args":{"command":"read actual Skill"}}\n{"type":"tool_execution_end","isError":true}\n';
+  f.put(file, data);
+  f.captured.files.push({
+    path: file,
+    kind: 'text',
+    sha256: digest(data),
+    lines: 3,
+    source: { path: log },
+  });
+  f.review.evidence.push(
+    {
+      id: 'E2',
+      kind: 'log',
+      path: file,
+      lines: [1, 1],
+      observation: 'Actual read command',
+    },
+    {
+      id: 'E3',
+      kind: 'log',
+      path: file,
+      lines: [2, 2],
+      observation: 'Actual failed return',
+    },
+  );
+  f.captured.history = {
+    index: {
+      version: 2,
+      coverage: 'available',
+      invocations: [
+        {
+          log,
+          invoked: true,
+          missing: [],
+          errors: [{ path: file, lines: [2, 2], sourceLine: 42 }],
+        },
+      ],
+    },
+  };
+  f.review.historyReview = [
+    {
+      log,
+      status: 'reviewed',
+      reason: 'Read tool calls and diagnosed failure',
+      evidence: ['E2'],
+      errors: [
+        {
+          sourceLine: 42,
+          disposition: 'expected',
+          reason: 'Negative-path fixture',
+          evidence: ['E3'],
+        },
+      ],
+    },
+  ];
+  f.put('assessment.json', f.review);
+  return f;
+}
+
+test('complete process coverage needs raw references and every explicit failure disposition', (t) => {
+  const f = withHistory(t);
+  let result = finalizeAssessment(f.root, f.captured, f.basis, true);
+  assert.equal(result.partial, false);
+  assert.equal(result.evaluation.historyCoverage.assessedErrorSignals, 1);
+  f.review.historyReview[0].errors = [];
+  f.put('assessment.json', f.review);
+  result = finalizeAssessment(f.root, f.captured, f.basis, true);
+  assert.equal(result.partial, true);
+  assert.equal(result.evaluation.historyCoverage.assessedErrorSignals, 0);
+  assert.match(result.evaluation.limitations.join(' '), /过程证据未完成/);
+});
+
+test('metadata inventories and declarations cannot substitute for original invocation events', (t) => {
+  const f = withHistory(t);
+  f.captured.files.find((file) => file.source).source.path =
+    'agent-implement.jsonl.invocation.json';
+  assert.equal(
+    finalizeAssessment(f.root, f.captured, f.basis, true).partial,
+    true,
+  );
+  delete f.review.historyReview;
+  f.put('assessment.json', f.review);
+  assert.equal(
+    finalizeAssessment(f.root, f.captured, f.basis, true).partial,
+    true,
+  );
+});
+
+test('unknown or duplicate failure signals are rejected instead of inventing coverage', (t) => {
+  const f = withHistory(t);
+  f.review.historyReview[0].errors[0].sourceLine = 999;
+  f.put('assessment.json', f.review);
+  assert.throws(
+    () => finalizeAssessment(f.root, f.captured, f.basis, true),
+    /Unknown or duplicate/,
+  );
+});
+
+test('report visibly separates complete input from partial process references', async () => {
+  const { renderHistoryCoverage } =
+    await import('../../reports/build-review.mjs');
+  const html = renderHistoryCoverage({
+    basis: {
+      history: {
+        version: 2,
+        coverage: 'available',
+        sourceBytes: 57 * 1024 * 1024,
+        capturedBytes: 57 * 1024 * 1024,
+        limitations: [],
+      },
+    },
+    evaluation: {
+      historyCoverage: {
+        referencedInvocations: 0,
+        invocations: 2,
+        assessedErrorSignals: 0,
+        errorSignals: 3,
+      },
+    },
+  });
+  assert.match(html, /完整纳入已捕获记录/);
+  assert.match(html, /57.00 MiB/);
+  assert.match(html, /0\/2 次调用/);
+  assert.match(html, /0\/3/);
+  assert.equal(renderHistoryCoverage({ basis: {} }), '');
+});
