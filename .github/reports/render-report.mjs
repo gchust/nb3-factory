@@ -7,7 +7,7 @@ import { createHash } from 'node:crypto';
 import { renderBuildReview } from './build-review.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
-const TEMPLATE_VERSION = 8;
+const TEMPLATE_VERSION = 9;
 const escape = (value) => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const fmt = value => Number.isFinite(value) ? value.toLocaleString('en-US') : '未提供';
 const duration = value => Number.isFinite(value) ? `${Math.floor(value/3600)}:${String(Math.floor(value/60)%60).padStart(2,'0')}:${String(value%60).padStart(2,'0')}` : '未提供';
@@ -136,9 +136,9 @@ function renderAcceptance(f) {
 function renderRetrospective(f, retro, warning, review) {
   const source = retro?.source || '实现者过程记录（原记录未注明运行或阶段来源）';
   let html = `<section class="section" id="problems">${sectionHead('Problems & improvements', '问题与改进')}`;
-  html += '<p class="section-intro">汇总本轮已有材料，不新增分析。过程记录与独立评审分别标明来源；评审发现不等于本轮实际阻塞，也不因业务通过而标为已解决。</p>';
+  html += '<p class="section-intro">每条按等级与类型标注，展开可看触发条件、实际观察、验收标准、证据原文与可直接粘贴的上游 Issue 草稿。评审发现不等于本轮实际阻塞，也不因业务通过而标为已解决。</p>';
   // Preserve the old improvements deep link, without a second top-level section.
-  html += `<h3 class="context-heading" id="improvements">独立评测的问题与建议</h3>${review.feedbackHtml}`;
+  html += `<h3 class="context-heading" id="improvements">独立评测发现</h3>${review.feedbackHtml}`;
   const hasProcessFindings = Boolean(retro?.blockers.length || retro?.improvements.length);
   const processCounts = retro ? ` · ${retro.blockers.length} 个过程问题 / ${retro.improvements.length} 条建议` : '';
   html += `<details class="card raw-record process-notes" id="process-notes"${hasProcessFindings || warning ? ' open' : ''}><summary>实现者过程与运行背景${processCounts} · 不自动归为框架问题</summary><div class="subsection-body"><p class="check-source">本任务已处理只描述应用侧处理结果，不代表 NocoBase3 上游已修复。</p>`;
@@ -235,7 +235,8 @@ export async function renderHtml(facts, inputNotes, evidenceRoot) {
     catch(error) { retroWarning=`复盘格式无效：${error.message}`; }
   }
   const reviewRevision=f.buildReview ? ':review-'+createHash('sha256').update(JSON.stringify(f.buildReview)).digest('hex').slice(0,16) : '';
-  const reportId=`${m.repository}:${m.issue}:${m.runId}:${m.attempt}:${m.headSha}:template-${TEMPLATE_VERSION}${reviewRevision}`;
+  const upstreamRevision=f.upstreamCheck ? ':upstream-'+createHash('sha256').update(JSON.stringify(f.upstreamCheck)).digest('hex').slice(0,16) : '';
+  const reportId=`${m.repository}:${m.issue}:${m.runId}:${m.attempt}:${m.headSha}:template-${TEMPLATE_VERSION}${reviewRevision}${upstreamRevision}`;
   const links=f.links.map(l=>`<a class="btn" rel="noopener noreferrer" target="_blank" href="${escape(url(l.url))}">${escape(l.label)} ↗</a>`).join('');
   const attention=[...f.attention];
   if(f.delivery.status!=='pr-ready') attention.unshift({title:statusLabels[f.delivery.status],detail:'本轮不是完成交付。请查看本轮验收记录和问题记录。'});
@@ -246,10 +247,10 @@ export async function renderHtml(facts, inputNotes, evidenceRoot) {
   if(f.delivery.ci==='failed') attention.unshift({title:'自动检查未通过',detail:f.delivery.ciSource||'查看来源运行记录。'});
   let body=m.sampleNotice?`<div class="report-banner">${escape(m.sampleNotice)}</div>`:'';
   if(notesWarning) body+=`<div class="report-banner">${escape(notesWarning)}</div>`;
-  const review=renderBuildReview(f.buildReview);
+  const review=renderBuildReview(f.buildReview, f.upstreamCheck ?? null);
   const processSummary = retro?.blockers.length || retro?.improvements.length
     ? `<p class="report-banner">实现者过程记录：${retro.blockers.length} 个问题、${retro.improvements.length} 条改进建议。属于实现者自述，不计入独立确认的框架问题数。<a class="text-link" href="#process-notes" data-expand="process-notes">查看已记录的问题与建议 →</a></p>` : '';
-  body+=`<section class="section" id="overview"><div class="hero"><div><div class="eyebrow">NocoBase3 improvement report · ${m.issue} / ${escape(m.snapshotDate)}</div><h1>${escape(m.title)}</h1><p>本次搭建为 NocoBase3 的企业级 Vibe Coding 基础设施带来了哪些问题证据与改进方向？</p><div class="hero-actions"><a class="btn primary" href="#problems">查看问题与改进</a><a class="btn" href="#delivery">查看业务交付</a></div>${renderBaselineSummary(f.baseline)}</div></div>${review.overviewHtml}${processSummary}</section>`;
+  body+=`<section class="section" id="overview"><div class="hero fb-hero"><div><div class="eyebrow">NocoBase3 框架反馈 · Issue #${m.issue} · ${escape(m.snapshotDate.slice(0,10))}</div><h1>${escape(m.title)}</h1>${renderBaselineSummary(f.baseline)}</div></div>${review.overviewHtml}${processSummary}</section>`;
   body+=renderRetrospective(f,retro,retroWarning,review);
   body+=review.html;
   body+=`<section class="section" id="delivery">${sectionHead('Business delivery context','业务交付与验收背景',tag(statusLabels[f.delivery.status],f.delivery.status==='failed'?'bad':''))}<p class="section-intro">${escape(notes?.summary || f.delivery.qaSummary || '本轮未提供业务说明，请查看状态与已采集证据。')}</p><div class="hero-actions">${links}<a class="btn" href="#acceptance">查看验收依据</a></div><div class="hero-meta"><span>应用交付提交 <code title="${escape(m.headSha)}">${escape(m.headSha ? m.headSha.slice(0,12) : '未取得交付 SHA')}</code></span><span>Run ${escape(m.runId)} / attempt ${m.attempt}</span><span>目标 <code>${escape(m.targetBranch)}</code></span></div>`;

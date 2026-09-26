@@ -1,8 +1,4 @@
-import {
-  diagnosisCategories,
-  findingKinds,
-  owners,
-} from '../scripts/build-review.mjs';
+import { shortSha, upstreamEntry, upstreamStatus } from './upstream-check.mjs';
 
 const escape = (value) =>
   String(value ?? '').replace(
@@ -20,13 +16,52 @@ export const severityLabels = {
   minor: '轻微',
   info: '信息',
 };
-export const findingCategory = (finding) =>
-  ['strength', 'improvement'].includes(finding.kind)
-    ? findingKinds[finding.kind]
-    : diagnosisCategories[finding.diagnosis?.category] ||
-      (finding.owner === 'documentation'
-        ? '指引问题'
-        : findingKinds[finding.kind]);
+// Severity is graded by consequence, the same wording the review prompt uses.
+export const severityRubric = {
+  critical: '阻塞交付，或造成数据丢失、安全问题，且没有合理绕行',
+  major: '按指引或公开 API 正常使用会静默得到错误结果，或只能用非公开手段绕行',
+  minor: '能完成，但要多花排查成本或在应用侧绕行',
+  info: '措辞、示例完整度等不影响结果的改进',
+};
+// Display-only taxonomy. The review schema keeps `kind` and
+// `diagnosis.category`; readers get one type axis so "guidance is wrong" and
+// "guidance is missing" no longer hide under the same "improvement" heading.
+export const findingTypes = {
+  'runtime-defect': '实现缺陷',
+  'capability-gap': '能力缺口',
+  'guidance-error': '指引错误',
+  'guidance-gap': '指引缺失',
+  usability: '易用性改进',
+  unclassified: '未分类问题',
+  strength: '做得好的地方',
+};
+export const typeRubric = {
+  'runtime-defect': '实现违背文档或公开约定',
+  'capability-gap': '需求属于框架职责，但缺少能力或公开接入',
+  'guidance-error': '指引、示例或注释写错，或彼此矛盾，照做会出错',
+  'guidance-gap': '指引缺少必要说明或示例，需要读源码或试探',
+  usability: '现有能力可用，但有改进空间',
+  unclassified: '原评审未给出可映射的分类',
+};
+export const findingType = (finding) => {
+  if (finding.kind === 'strength') return 'strength';
+  const category = finding.diagnosis?.category;
+  if (category === 'runtime-defect' || category === 'capability-gap')
+    return category;
+  if (finding.kind === 'misleading') return 'guidance-error';
+  if (category === 'guidance-gap') return 'guidance-gap';
+  if (category === 'usability-improvement' || finding.kind === 'improvement')
+    return 'usability';
+  return finding.owner === 'documentation' ? 'guidance-gap' : 'unclassified';
+};
+// A recheck may regrade; readers sort and triage by the latest judgement while
+// the original stays visible next to it.
+export const effectiveSeverity = (finding, check) =>
+  upstreamEntry(check, finding)?.suggestedSeverity ?? finding.severity;
+export const effectiveType = (finding, check) =>
+  upstreamEntry(check, finding)?.suggestedType ?? findingType(finding);
+export const findingCategory = (finding, check) =>
+  findingTypes[effectiveType(finding, check)];
 export const findingStatus = (status) =>
   ({
     open: '原评审：未解决',
@@ -34,22 +69,83 @@ export const findingStatus = (status) =>
     unknown: '原评审：处理状态未知',
     'not-applicable': '原评审：状态不适用',
   })[status];
-export const orderFindings = (findings) =>
+const severityOrder = Object.keys(severityLabels);
+const typeOrder = Object.keys(findingTypes);
+export const orderFindings = (findings, check) =>
   [...findings].sort(
     (a, b) =>
-      Object.keys(severityLabels).indexOf(a.severity) -
-      Object.keys(severityLabels).indexOf(b.severity),
+      severityOrder.indexOf(effectiveSeverity(a, check)) -
+        severityOrder.indexOf(effectiveSeverity(b, check)) ||
+      typeOrder.indexOf(effectiveType(a, check)) -
+        typeOrder.indexOf(effectiveType(b, check)),
   );
-const tag = (label, kind = '') =>
-  `<span class="tag ${kind}">${escape(label)}</span>`;
-const refs = (ids) =>
-  `<span class="review-refs">${ids.map((id) => `<a href="#review-evidence-${escape(id)}">${escape(id)}</a>`).join(' ')}</span>`;
-const metric = (label, number, note) =>
-  `<div class="card metric"><div class="metric-head">${escape(label)}</div><div class="metric-value">${escape(number)}</div><div class="metric-note">${escape(note)}</div></div>`;
+// Colour carries the two axes readers triage by; the label text is always
+// present so the page still reads in print and for colour-blind readers.
+const sevChip = (severity, extra = '') =>
+  `<span class="sev sev-${escape(severity)}${extra}" title="${escape(severityRubric[severity])}">${escape(severityLabels[severity])}</span>`;
+const typeChipOf = (type, extra = '') =>
+  `<span class="ftype ftype-${type}${extra}" title="${escape(typeRubric[type] ?? '')}"><i aria-hidden="true"></i>${escape(findingTypes[type])}</span>`;
+const regrade = (was, now, label) =>
+  `<span class="regrade" title="${escape(label)}">${was}<span class="regrade-arrow" aria-label="复核建议改为">→</span>${now}</span>`;
+export const severityChip = (finding, check) => {
+  const now = effectiveSeverity(finding, check);
+  if (now === finding.severity) return sevChip(now);
+  return regrade(
+    sevChip(finding.severity, ' is-was'),
+    sevChip(now),
+    `原评审${severityLabels[finding.severity]}，上游复核建议${severityLabels[now]}`,
+  );
+};
+export const typeChip = (finding, check) => {
+  const was = findingType(finding);
+  const now = effectiveType(finding, check);
+  if (now === was) return typeChipOf(now);
+  return regrade(
+    typeChipOf(was, ' is-was'),
+    typeChipOf(now),
+    `原评审${findingTypes[was]}，上游复核建议${findingTypes[now]}`,
+  );
+};
+// Only departures from the default (confirmed, open) earn a badge.
+export const exceptionChips = (finding) =>
+  (finding.confidence === 'suspected'
+    ? '<span class="tag warn">待确认</span>'
+    : '') +
+  (finding.status !== 'open'
+    ? `<span class="tag">${escape(findingStatus(finding.status))}</span>`
+    : '');
+export const upstreamChip = (finding, check) => {
+  const entry = upstreamEntry(check, finding);
+  if (!entry) return '<span class="up up-none">上游未复核</span>';
+  return `<span class="up up-${escape(entry.status)}" title="${escape(`${check.repository} ${check.ref}@${shortSha(check)}，${check.checkedAt}`)}">${escape(upstreamStatus[entry.status])}</span>`;
+};
+export const findingTargets = (review, finding) => [
+  ...new Set(
+    review.modules.flatMap((module) =>
+      // Rubric v1 modules have no targets.
+      (module.targets ?? [])
+        .filter((target) =>
+          target.evidence.some((id) => finding.evidence.includes(id)),
+        )
+        .map((target) => target.name),
+    ),
+  ),
+];
+export function upstreamScope(check, findings) {
+  if (!check)
+    return '<b>最新 NocoBase3 源码未复核</b>，问题可能已在上游修复';
+  const present = findings.filter(
+    (finding) => upstreamEntry(check, finding)?.status === 'present',
+  ).length;
+  const checked = findings.filter((finding) =>
+    upstreamEntry(check, finding),
+  ).length;
+  return `<b>最新上游已复核</b>：${escape(check.checkedAt)} 对照 <code>${escape(check.repository)}</code> ${escape(check.ref)}@${escape(shortSha(check))}，${checked} / ${findings.length} 条已复核、${present} 条仍存在`;
+}
 
-// The caller validates the report first. This is a view of frozen findings, not
-// another assessment, a current-upstream check, or a conversion of v1 scores.
-export function renderFrameworkOverview(report) {
+// The caller validates the report first. This is a triage index of the frozen
+// findings (plus an optional upstream recheck), not another assessment.
+export function renderFrameworkOverview(report, check = null) {
   const review = ['completed', 'partial'].includes(report?.state)
     ? report.evaluation
     : null;
@@ -67,48 +163,28 @@ export function renderFrameworkOverview(report) {
     (finding) => finding.kind !== 'strength',
   );
   const framework = findings.filter(isFrameworkFinding);
-  const issues = framework.filter((finding) => finding.kind !== 'improvement');
-  const confirmed = issues.filter(
-    (finding) => finding.confidence === 'confirmed',
-  );
-  const suspected = issues.filter(
+  const suspected = framework.filter(
     (finding) => finding.confidence === 'suspected',
-  );
-  const suggestions = framework.filter(
-    (finding) => finding.kind === 'improvement',
-  );
+  ).length;
   const unknown = findings.filter((finding) => finding.owner === 'unknown');
   const background = findings.filter((finding) =>
     ['application', 'factory', 'environment'].includes(finding.owner),
   );
-  let html = `<div class="framework-basis">${tag(report.state === 'partial' ? '独立评测部分完成' : '独立评测完成', report.state === 'partial' ? 'warn' : '')}<span>范围：本任务冻结的依赖与指引 · 源 Run ${escape(report.basis.runId)} / attempt ${escape(report.basis.attempt)}</span><a class="text-link" href="#review-basis">查看版本与指纹 →</a></div>`;
-  html += `<div class="metrics framework-metrics">${metric('有证据的问题', confirmed.length, '评审者判断；尚非最新上游确认')}${metric('待确认的问题', suspected.length, '已有线索，仍需核对推断与归因')}${metric('改进建议', suggestions.length, '不直接当作实现缺陷')}${metric('最新源码复核', '未执行', '业务通过、应用绕行均不代表上游已修复')}</div>`;
-  html += `<p class="section-intro">${escape(review.summary)}</p>`;
+  let html = '';
   if (report.state === 'partial')
     html += `<p class="report-banner">仅展示已完成部分；未覆盖项不等于无问题。${escape(report.reason || '')} 待评估：${escape(review.progress.pendingModules.join('、') || '见覆盖限制')}。</p>`;
-  html +=
-    '<p class="check-source">问题数包含原评审标记已解决的记录，不能当作当前未修复总数。以下按原评审严重度排序，不自动推导排期优先级。</p>';
   if (framework.length) {
-    html += '<div class="improvement-index" aria-label="NocoBase3 改进清单">';
-    for (const finding of orderFindings(framework)) {
-      const targets = [
-        ...new Set(
-          review.modules.flatMap((module) =>
-            module.targets
-              .filter((target) =>
-                target.evidence.some((id) => finding.evidence.includes(id)),
-              )
-              .map((target) => target.name),
-          ),
-        ),
-      ];
-      const targetHtml = `<p class="check-source">相关对象：${targets.length ? targets.map((name) => `<code>${escape(name)}</code>`).join(' · ') : '尚未通过引用定位到具体框架对象'}</p>`;
-      html += `<article class="card improvement-index-item"><div class="improvement-index-main"><div class="review-badges">${tag(findingCategory(finding))}${tag(severityLabels[finding.severity], ['critical', 'major'].includes(finding.severity) ? 'warn' : '')}${tag(finding.confidence === 'confirmed' ? '冻结材料有据' : '待确认', finding.confidence === 'suspected' ? 'warn' : '')}</div><h3><a class="text-link" href="#review-finding-${escape(finding.id)}">${escape(finding.id)} · ${escape(finding.title)} →</a></h3><p><strong>影响</strong>${escape(finding.impact)}</p>${targetHtml}<div class="check-source">${escape(owners[finding.owner])} · ${escape(findingStatus(finding.status))}</div></div><div class="improvement-index-action"><span class="eyebrow">建议改动</span><p>${escape(finding.suggestedChange)}</p>${refs(finding.evidence)}</div></article>`;
+    html += `<div class="card fb-table" aria-label="NocoBase3 问题清单"><div class="fb-table-head"><h2>${framework.length} 条 NocoBase3 框架问题</h2><span>${suspected ? `其中 ${suspected} 条待确认 · ` : ''}按等级排序 · 点击查看详情与证据</span></div>`;
+    for (const finding of orderFindings(framework, check)) {
+      const targets = findingTargets(review, finding);
+      html += `<a class="fb-item sev-${escape(effectiveSeverity(finding, check))}" href="#review-finding-${escape(finding.id)}"><span class="fb-chips">${severityChip(finding, check)}${typeChip(finding, check)}</span><span class="fb-item-main"><strong>${escape(finding.id)} · ${escape(finding.title)}</strong><span class="fb-item-impact">${escape(finding.impact)}</span><span class="fb-item-targets">${targets.length ? targets.map((name) => `<code>${escape(name)}</code>`).join('') : '尚未定位到具体框架对象'}</span></span><span class="fb-item-side">${upstreamChip(finding, check)}${exceptionChips(finding)}</span></a>`;
     }
     html += '</div>';
   } else {
     html += `<p class="card report-empty">${report.state === 'partial' ? '已评测部分' : '本轮评测'}未提出归属于 NocoBase3 的问题或建议，不等于整个框架没有问题。</p>`;
   }
-  html += `<p class="check-source">另有 ${unknown.length} 条归因待确认、${background.length} 条业务 / 工厂 / 环境观察，单独保留在<a class="text-link" href="#problems">问题详情</a>，未计入框架问题数。应用交付情况见<a class="text-link" href="#delivery">业务交付</a>。</p>`;
+  if (unknown.length || background.length)
+    html += `<p class="check-source">另有 ${unknown.length} 条归因待确认、${background.length} 条业务 / 工厂 / 环境观察，单独保留在<a class="text-link" href="#problems">问题详情</a>，未计入框架问题数。</p>`;
+  html += `<p class="fb-scope">${upstreamScope(check, framework)} · 评审基于本任务冻结的依赖与指引（源 Run ${escape(report.basis.runId)} / attempt ${escape(report.basis.attempt)}）· 排序不代表排期优先级 · <a class="text-link" href="#review-basis">版本与指纹 →</a></p>`;
   return html;
 }

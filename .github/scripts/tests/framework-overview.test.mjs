@@ -73,7 +73,7 @@ test('per-task improvement overview precedes scores and successful business deli
   assert.deepEqual(value, before);
 });
 
-test('overview counts only framework findings, separates suggestions, and sorts by source severity', async () => {
+test('overview lists only framework findings as triage rows, sorted by severity', async () => {
   const value = facts();
   addFinding(value, {
     title: '冻结源码支持的重要问题',
@@ -98,13 +98,13 @@ test('overview counts only framework findings, separates suggestions, and sorts 
   addFinding(value, { title: '只属于环境的问题', owner: 'environment' });
   const { html } = await render(value);
   const overview = section(html, 'overview');
-  for (const label of ['有证据的问题', '待确认的问题', '改进建议']) {
-    assert.ok(
-      overview.includes(
-        `<div class="metric-head">${label}</div><div class="metric-value">1</div>`,
-      ),
-    );
-  }
+  // One triage row per framework finding; no count cards or distributions.
+  assert.equal((overview.match(/class="fb-item /g) ?? []).length, 3);
+  assert.match(overview, /3 条 NocoBase3 框架问题/);
+  assert.doesNotMatch(overview, /class="metric-value"|fb-summary/);
+  assert.match(overview, /待确认/);
+  assert.match(overview, /原评审：已解决/);
+  assert.doesNotMatch(overview, /class="tag good">[^<]*已解决/);
   assert.ok(
     overview.includes('另有 1 条归因待确认、3 条业务 / 工厂 / 环境观察'),
   );
@@ -115,10 +115,8 @@ test('overview counts only framework findings, separates suggestions, and sorts 
   assert.ok(
     overview.indexOf('冻结源码支持的重要问题') < overview.indexOf('弹窗指引'),
   );
-  assert.ok(
-    overview.includes('最新源码复核</div><div class="metric-value">未执行'),
-  );
-  assert.match(overview, /不自动推导排期优先级/);
+  assert.match(overview, /最新 NocoBase3 源码未复核/);
+  assert.match(overview, /排序不代表排期优先级/);
 });
 
 test('application workaround and resolved review never become verified upstream fixes', async () => {

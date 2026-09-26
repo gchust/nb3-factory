@@ -166,3 +166,24 @@ test('rubric upgrade preserves exact v1 bytes, permits v2 partial, and rejects a
  await archiveReport(client,complete,htmlOf(complete));
  assert.equal((await archiveReport(client,next,newHtml)).preserved,true);
 });
+test('archive writes the cross-report findings index from the latest report of each Issue', async () => {
+ const c=fakeClient();const first=input(),second=input({issue:147,runId:101,start:2000});
+ for(const r of [first,second]) assert.equal((await archiveReport(c,r,htmlOf(r))).findingsIndex,'updated');
+ const files=c.files();
+ assert.match(files.get('reports/findings/index.html'),/框架问题汇总/);
+ assert.match(files.get('reports/findings/index.html'),/来自 2 份已发布报告/);
+ assert.match(files.get('reports/index.html'),/href="findings\/"/);
+});
+test('a findings index failure never blocks report publication', async () => {
+ const c=fakeClient();const first=input(),second=input({issue:147,runId:101,start:2000});
+ await archiveReport(c,first,htmlOf(first));
+ const request=c.request;
+ c.request=async (method,route,options)=>{
+  if(method==='GET'&&route.endsWith('/report.json')) throw new Error('500 upstream unavailable');
+  return request(method,route,options);
+ };
+ const publication=await archiveReport(c,second,htmlOf(second));
+ assert.match(publication.findingsIndex,/^skipped: 500 upstream unavailable/);
+ assert.ok(c.files().has(reportManifest(second).path));
+ assert.match(c.files().get('reports/index.html'),/任务 147/);
+});

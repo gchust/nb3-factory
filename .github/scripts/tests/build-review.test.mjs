@@ -226,7 +226,7 @@ test('shared HTML includes independent scores, unknowns, first failure and posit
   const f = facts(); f.buildReview = example();
   f.buildReview.evaluation.findings[0].title = '<img src=x onerror=alert(1)>';
   const result = await renderHtml(f, null, path.join(here, 'reports'));
-  for (const text of ['模块评审', '做得好的地方', '误导或明显错误', '文档 / API 声称', '实际观察', '未评估', '首轮 QA', '最终轮 QA', '证据与原文']) assert.ok(result.html.includes(text), text);
+  for (const text of ['模块评审', '做得好的地方', '指引错误', '文档 / API 声称', '实际观察', '未评估', '首轮 QA', '最终轮 QA', '证据与原文']) assert.ok(result.html.includes(text), text);
   assert.match(result.html, /&lt;img src=x onerror=alert\(1\)&gt;/);
   assert.doesNotMatch(result.html, /<img src=x/);
   assert.equal(f.checks[0].status, 'failed');

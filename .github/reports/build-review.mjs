@@ -1,5 +1,6 @@
-import { dimensionsFor, findingKinds, moduleRoundResult, owners, supportLabels, targetKinds, validateBuildReview } from '../scripts/build-review.mjs';
-import { findingCategory, findingStatus, isFrameworkFinding, orderFindings, renderFrameworkOverview, severityLabels } from './framework-overview.mjs';
+import { dimensionsFor, moduleRoundResult, owners, supportLabels, targetKinds, validateBuildReview } from '../scripts/build-review.mjs';
+import { effectiveSeverity, exceptionChips, findingCategory, findingStatus, findingTargets, findingTypes, isFrameworkFinding, orderFindings, renderFrameworkOverview, severityChip, severityLabels, severityRubric, typeChip, typeRubric, upstreamChip, upstreamScope } from './framework-overview.mjs';
+import { shortSha, upstreamEntry, upstreamLink, upstreamStatus, validateUpstreamCheck } from './upstream-check.mjs';
 
 const escape = value => String(value ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const tag = (label, kind = '') => `<span class="tag ${kind}">${escape(label)}</span>`;
@@ -34,9 +35,53 @@ function retainedLegacy(report) {
   return `<details class="card raw-record review-legacy"><summary>保留的旧口径 v1 评分 · 不转换为框架得分</summary><div class="subsection-body"><p>历史分数、理由、证据及其原始含义保持不变，不与本次五项框架维度比较或平均。</p><pre>${escape(JSON.stringify(report.legacyReview, null, 2))}</pre></div></details>`;
 }
 
-function renderFindings(findings, framework) {
+const diagnosisLabels = [['trigger', '触发条件'], ['expected', '应有能力 / 行为'], ['actual', '实际观察'], ['workaround', '应用绕行与代价'], ['acceptance', '改进后的验收标准']];
+const evidenceLocation = evidence => `${evidence.path}${evidence.lines ? `:${evidence.lines.join('–')}` : ''}`;
+const upstreamLocation = item => `${item.path}:${item.lines[0]}${item.lines[1] > item.lines[0] ? `–${item.lines[1]}` : ''}`;
+
+// A self-contained Markdown draft a maintainer can paste into an upstream
+// issue. Upstream locations appear only when a recheck supplied them; the
+// frozen evidence is always labelled as the review-time snapshot.
+function issueDraft(finding, report, targets, evidence, check) {
+  const review = report.evaluation;
+  const entry = upstreamEntry(check, finding);
+  const severity = effectiveSeverity(finding, check);
+  const version = name => report.basis.packages?.find(pkg => pkg.name === name)?.version;
+  const lines = [`### [${severityLabels[severity]}][${findingCategory(finding, check)}] ${finding.title}`, ''];
+  if (targets.length) lines.push(`**相关对象**：${targets.map(name => version(name) ? `\`${name}\`（评审时 ${version(name)}）` : `\`${name}\``).join('、')}`, '');
+  lines.push(finding.detail, '');
+  if (finding.kind === 'misleading') lines.push(`**文档 / API 声称**：${finding.claimed}`, '', `**实际观察**：${finding.observed}`, '');
+  lines.push(`**影响**：${finding.impact}`, '');
+  if (entry?.note) lines.push(`**上游复核补充**：${entry.note}`, '');
+  lines.push(`**建议改动**：${finding.suggestedChange}`, '');
+  if (finding.diagnosis) lines.push(`**验收标准**：${finding.diagnosis.acceptance}`, '');
+  if (entry) lines.push(`**相关位置**（${check.repository} ${check.ref}@${shortSha(check)}，${check.checkedAt} 复核：${upstreamStatus[entry.status]}）：`, ...entry.evidence.map(item => `- ${item.label}：${upstreamLink(check, item)}`), '');
+  if (evidence.length) lines.push('**评审时证据（冻结快照）**：', ...evidence.map(item => `- \`${evidenceLocation(item)}\` — ${item.observation}`), '');
+  const regraded = severity !== finding.severity ? `原评审定级${severityLabels[finding.severity]}；` : '';
+  lines.push(`> 来源：nb3-factory 独立搭建评审（口径 v${review.version}，源 Run ${report.basis.runId} / attempt ${report.basis.attempt}）。${regraded}${entry ? `已于 ${check.checkedAt} 对照最新上游复核。` : '尚未复核最新上游源码。'}`);
+  return lines.join('\n');
+}
+
+function evidenceBlock(evidence) {
+  return `<div class="rf-evidence-item"><div class="rf-evidence-path"><code>${escape(evidenceLocation(evidence))}</code>${evidence.id ? `<a class="text-link" href="#review-evidence-${escape(evidence.id)}">${escape(evidence.id)}</a>` : ''}</div><p>${escape(evidence.observation)}</p>${evidence.kind === 'screenshot' ? (evidence.mediaId ? `<button class="btn small" data-open="${escape(evidence.mediaId)}">查看原始截图</button>` : '<p class="check-source">截图未内嵌；请从本轮 Artifact 核对。</p>') : `<pre>${escape(evidence.excerpt)}</pre>`}</div>`;
+}
+
+function upstreamBlock(finding, check) {
+  const entry = upstreamEntry(check, finding);
+  if (!entry) return '';
+  const cards = entry.evidence.map(item => `<figure class="up-code"><figcaption><span>${escape(item.label)}</span><a rel="noopener noreferrer" target="_blank" href="${escape(upstreamLink(check, item))}">${escape(upstreamLocation(item))} ↗</a></figcaption><pre>${escape(item.excerpt)}</pre></figure>`).join('');
+  return `<div class="rf-upstream up-${escape(entry.status)}"><header><strong>最新上游复核</strong>${upstreamChip(finding, check)}<span>${escape(check.repository)} ${escape(check.ref)}@${escape(shortSha(check))} · ${escape(check.checkedAt)}</span></header><p>${escape(entry.summary)}</p>${entry.note ? `<p class="rf-regrade-note">${escape(entry.note)}</p>` : ''}<div class="up-code-grid">${cards}</div></div>`;
+}
+
+export function renderLegend() {
+  const severities = Object.entries(severityRubric).map(([key, text]) => `<li><span class="sev sev-${key}">${severityLabels[key]}</span>${escape(text)}</li>`).join('');
+  const types = Object.entries(typeRubric).filter(([key]) => key !== 'unclassified').map(([key, text]) => `<li><span class="ftype ftype-${key}"><i aria-hidden="true"></i>${findingTypes[key]}</span>${escape(text)}</li>`).join('');
+  return `<details class="rf-legend"><summary>等级与类型怎么定</summary><div class="rf-legend-body"><ul>${severities}</ul><ul>${types}</ul></div></details>`;
+}
+
+function renderFindings(findings, framework, report, check) {
   let html = '';
-  const confidence = { confirmed: '评审者判断 · 冻结材料有据', suspected: '待确认' };
+  const review = report?.evaluation;
   const groups = framework ? [
     { title: 'NocoBase3 库、插件、模板与指引', findings: findings.filter(isFrameworkFinding) },
     { title: '归因待确认 · 不直接扣框架分', findings: findings.filter(f => f.owner === 'unknown') },
@@ -44,19 +89,28 @@ function renderFindings(findings, framework) {
   ] : [{ title: '', findings: findings }];
   for (const group of groups.filter(group => group.findings.length)) {
     if (group.collapsed) html += `<details class="card raw-record"><summary>${group.title}（${group.findings.length}）</summary><div class="subsection-body">`;
-    else if (group.title) html += `<h3 class="review-owner-title">${group.title}</h3>`;
-    for (const [kind, label] of Object.entries(findingKinds)) {
-      const findings = group.findings.filter(finding => finding.kind === kind);
-      if (!findings.length) continue;
-      html += `<div class="review-group"><h3>${label} <span>${findings.length}</span></h3>`;
-      for (const finding of orderFindings(findings)) {
-        const important = kind !== 'strength' && isFrameworkFinding(finding) && ['major', 'critical'].includes(finding.severity);
-        const diagnosis = finding.diagnosis;
-        const diagnosisHtml = diagnosis ? `<dl class="retro-fields diagnosis-fields">${[['trigger', '触发条件'], ['expected', '应有能力 / 行为'], ['actual', '实际观察'], ['workaround', '应用绕行与代价'], ['acceptance', '改进后的验收标准']].map(([key, label]) => `<div><dt>${label}</dt><dd>${escape(diagnosis[key])}</dd></div>`).join('')}</dl>` : framework && kind !== 'strength' ? '<p class="check-source">本条未提供结构化触发条件、绕行与回归标准，请按原文和证据复核，不自动补造。</p>' : '';
-        html += `<details class="card review-finding" id="review-finding-${escape(finding.id)}" ${important ? 'open' : ''}><summary><div><strong>${escape(finding.title)}</strong><div class="review-badges">${tag(owners[finding.owner])}${tag(findingCategory(finding))}${tag(confidence[finding.confidence], finding.confidence === 'suspected' ? 'warn' : '')}${tag(severityLabels[finding.severity], important ? 'bad' : '')}${tag(findingStatus(finding.status))}</div></div><span>⌄</span></summary><div class="subsection-body"><p>${escape(finding.detail)}</p>${kind === 'misleading' ? `<div class="review-contrast"><div><h4>文档 / API 声称</h4><p>${escape(finding.claimed)}</p></div><div><h4>实际观察</h4><p>${escape(finding.observed)}</p></div></div>` : ''}<dl class="retro-fields"><div><dt>实际影响 / 提供的帮助</dt><dd>${escape(finding.impact)}</dd></div><div><dt>建议改法 / 应保留的能力</dt><dd>${escape(finding.suggestedChange)}</dd></div></dl>${diagnosisHtml}${framework && kind !== 'strength' && isFrameworkFinding(finding) ? '<p class="check-source upstream-boundary">最新上游状态：未复核。原评审“已解决”不作为上游修复证明；应用绕行、业务 QA 通过均不关闭框架问题。</p>' : ''}${refs(finding.evidence)}</div></details>`;
-      }
-      html += '</div>';
+    else if (group.title) html += `<h3 class="review-owner-title">${group.title} <span>${group.findings.length}</span></h3>`;
+    html += '<div class="rf-list">';
+    for (const finding of orderFindings(group.findings, check)) {
+      const strength = finding.kind === 'strength';
+      const severity = effectiveSeverity(finding, check);
+      const actionable = framework && !strength && isFrameworkFinding(finding) && review;
+      const important = !strength && isFrameworkFinding(finding) && ['major', 'critical'].includes(severity);
+      const targets = review ? findingTargets(review, finding) : [];
+      const evidence = review ? finding.evidence.map(id => review.evidence.find(item => item.id === id)).filter(Boolean) : [];
+      const chips = strength ? tag('做得好的地方', 'good') : severityChip(finding, check) + typeChip(finding, check) + (actionable ? upstreamChip(finding, check) : '') + exceptionChips(finding);
+      const meta = [owners[finding.owner], ...targets, ...(!strength && finding.status === 'open' ? [findingStatus(finding.status)] : [])].map(escape).join(' · ');
+      const diagnosis = finding.diagnosis;
+      const diagnosisHtml = diagnosis ? `<details class="rf-sub"><summary>诊断 · 触发条件、应有行为、绕行代价与验收标准</summary><div class="rf-sub-body"><dl class="retro-fields diagnosis-fields">${diagnosisLabels.map(([key, label]) => `<div><dt>${label}</dt><dd>${escape(diagnosis[key])}</dd></div>`).join('')}</dl></div></details>` : framework && !strength ? '<p class="check-source">本条未提供结构化触发条件、绕行与回归标准，请按原文和证据复核，不自动补造。</p>' : '';
+      const contrast = finding.kind === 'misleading' ? `<div class="review-contrast"><div><h4>评审时 · 文档 / API 声称</h4><p>${escape(finding.claimed)}</p></div><div><h4>评审时 · 实际观察</h4><p>${escape(finding.observed)}</p></div></div>` : '';
+      // With an upstream recheck on screen, the review-time claim is history:
+      // keep it, but inside the frozen-evidence fold.
+      const rechecked = actionable && upstreamEntry(check, finding);
+      const evidenceHtml = actionable && (evidence.length || rechecked) ? `<details class="rf-sub"><summary>评审时证据 · 冻结快照 ${evidence.length} 条</summary><div class="rf-sub-body">${rechecked ? contrast : ''}${evidence.map(evidenceBlock).join('')}</div></details>` : refs(finding.evidence);
+      const draftHtml = actionable ? `<details class="rf-sub"><summary>上游 Issue 草稿 · Markdown</summary><div class="rf-sub-body"><button class="btn small" type="button" data-copy="issue-draft-${escape(finding.id)}">复制 Markdown</button><pre id="issue-draft-${escape(finding.id)}">${escape(issueDraft(finding, report, targets, evidence, check))}</pre></div></details>` : '';
+      html += `<details class="card review-finding${strength ? ' is-strength' : ` sev-${escape(severity)}`}" id="review-finding-${escape(finding.id)}" ${important ? 'open' : ''}><summary><div class="rf-head"><div class="fb-chips">${chips}</div><strong>${escape(finding.id)} · ${escape(finding.title)}</strong><p class="rf-meta">${meta}</p></div><span class="rf-chevron">⌄</span></summary><div class="subsection-body"><p class="rf-detail">${escape(finding.detail)}</p>${actionable ? upstreamBlock(finding, check) : ''}${rechecked ? '' : contrast}<dl class="retro-fields"><div><dt>${strength ? '提供的帮助' : '实际影响'}</dt><dd>${escape(finding.impact)}</dd></div><div><dt>${strength ? '应保留的能力' : '建议改法'}</dt><dd>${escape(finding.suggestedChange)}</dd></div></dl>${diagnosisHtml}${evidenceHtml}${draftHtml}</div></details>`;
     }
+    html += '</div>';
     if (group.collapsed) html += '</div></details>';
   }
   return html;
@@ -102,18 +156,34 @@ export function renderHistoryCoverage(report) {
 
 // Return separate presentation slots after one validation; findings are shared
 // only for exact supplementary-note links, never to rewrite source assessments.
-export function renderBuildReview(input) {
+const scoreRange = (modules, key) => {
+  const scores = modules.map(module => module.scores[key].score).filter(score => score !== null);
+  if (!scores.length) return '未评估';
+  const [low, high] = [Math.min(...scores), Math.max(...scores)];
+  return low === high ? String(low) : `${low}–${high}`;
+};
+
+export function renderBuildReview(input, upstreamInput = null) {
   let report = input;
   if (['completed', 'partial'].includes(report?.state)) {
     try { validateBuildReview(report); }
     catch { report = { state: 'failed', reason: '评审数据无效，未采用评分；原始验收仍保留。', process: input.process }; }
   }
   const review = ['completed', 'partial'].includes(report?.state) ? report.evaluation : null;
-  const overviewHtml = renderFrameworkOverview(report);
+  // An invalid recheck is dropped with a visible note; it never blocks the report.
+  let check = null, upstreamWarning = '';
+  if (upstreamInput && review?.version === 2) {
+    try { validateUpstreamCheck(upstreamInput, new Set(review.findings.map(finding => finding.id))); check = upstreamInput; }
+    catch (error) { upstreamWarning = `上游复核数据无效，未采用：${error.message}`; }
+  }
+  const overviewHtml = renderFrameworkOverview(report, check);
   const framework = review?.version === 2;
   const dimensions = dimensionsFor(framework ? 2 : 1);
   const primary = framework ? ['requirementFit', 'usability', 'agentFriendliness'] : Object.keys(dimensions);
-  let html = `<section class="section" id="build-review"><div class="section-head"><div><div class="eyebrow">${framework ? 'NocoBase3 framework assessment' : 'Build assessment'}</div><h2>${framework ? 'NocoBase3 基础框架评测' : review ? '旧口径搭建质量与模块评审' : 'NocoBase3 基础框架评测'}</h2></div>${tag(review ? `独立 Agent 评审 · 口径 v${review.version}` : '未完成独立评审', review ? '' : 'warn')}</div>`;
+  let html = `<section class="section" id="build-review"><div class="section-head"><div><div class="eyebrow">${framework ? 'Framework scores · for reference' : 'Build assessment'}</div><h2>${framework ? '框架能力评分' : review ? '旧口径搭建质量与模块评审' : 'NocoBase3 基础框架评测'}</h2></div>${tag(review ? `独立 Agent 评审 · 口径 v${review.version}` : '未完成独立评审', review ? '' : 'warn')}</div>`;
+  // Scores are reviewer opinion over a narrow scope and rarely discriminate
+  // between runs, so v2 shows one line of ranges and folds the matrix away.
+  if (framework) html += `<p class="scores-line"><span>${review.modules.length} 个能力单元</span>${primary.map(key => `<span>${dimensions[key]} <b>${scoreRange(review.modules, key)}</b></span>`).join('')}<em>分数只适用于列出的职责与覆盖范围；问题以「问题总览」为准</em></p><details class="card raw-record scores-fold" id="scores-detail"><summary>展开评分表、五项理由、覆盖与业务验证背景</summary><div class="subsection-body">`;
   html += `<div class="review-disclaimer">${framework ? '评的是库、插件与指引是否满足需求、容易使用、对 Agent 友好。业务代码与 QA 是使用证据，不是评分主体。' : '评分是评审者基于本次覆盖范围的意见，不是客观测量，也不是 NocoBase3 整体评分。'} 未评估不是零分或满分，不计算综合平均分。</div>`;
   html += renderHistoryCoverage(report);
   if (review && !framework) html += '<div class="report-banner"><strong>旧口径 v1 · 不作为新框架评分</strong><p>历史四项分数保留原含义，包括 Agent 产出质量。不得改名为需求满足度或使用便利度；需要按口径 v2 重新独立评审。</p></div>';
@@ -147,15 +217,15 @@ export function renderBuildReview(input) {
   }
   html += '</div>' + retainedLegacy(report);
   if (framework) html += `<details class="card raw-record"><summary>业务验证背景 · 不计入框架评分</summary><div class="subsection-body">${processHtml(report?.process)}</div></details>`;
-  html += `<article class="card review-ui"><header><h3>${framework ? '业务界面观察 · 非框架评分' : '界面样式与交互一致性'}</h3>${value(review.ui.score)}</header><p>${escape(review.ui.reason)}</p>${refs(review.ui.evidence)}<p class="check-source">${review.ui.status === 'reviewed' ? '评审者声明已审阅所引用的图像；请展开证据核对观察，不以文件存在代替人工确认。' : '未执行跨页面图像审阅，不能因使用相同组件库而判为视觉一致。'}</p></article></section>`;
-  html += `<section class="section" id="framework-feedback"><div class="section-head"><div><div class="eyebrow">Infrastructure feedback</div><h2>${framework ? '框架帮助与证据' : '旧口径帮助与证据'}</h2></div></div><p class="section-intro">保留具体基础能力的帮助、覆盖范围与原始证据。“有证据 / 待确认”均为独立评审者判断，不代替人工核验。</p>`;
+  html += `<article class="card review-ui"><header><h3>${framework ? '业务界面观察 · 非框架评分' : '界面样式与交互一致性'}</h3>${value(review.ui.score)}</header><p>${escape(review.ui.reason)}</p>${refs(review.ui.evidence)}<p class="check-source">${review.ui.status === 'reviewed' ? '评审者声明已审阅所引用的图像；请展开证据核对观察，不以文件存在代替人工确认。' : '未执行跨页面图像审阅，不能因使用相同组件库而判为视觉一致。'}</p></article>${framework ? '</div></details>' : ''}</section>`;
+  html += `<section class="section" id="framework-feedback"><div class="section-head"><div><div class="eyebrow">Infrastructure feedback</div><h2>${framework ? '做得好的地方与证据' : '旧口径帮助与证据'}</h2></div></div><p class="section-intro">值得保留的框架能力、评审覆盖范围与全部原始证据。“有证据 / 待确认”均为独立评审者判断，不代替人工核验。</p>`;
   const findings = review.findings.filter(finding => finding.kind !== 'strength');
-  html += renderFindings(review.findings.filter(finding => finding.kind === 'strength'), framework);
+  html += renderFindings(review.findings.filter(finding => finding.kind === 'strength'), framework, report, check);
   html += '<p class="check-source">问题、误导与建议统一收录在<a class="text-link" href="#problems">问题与改进</a>，不在此重复展示。</p>';
   const provenance = `来源：独立评审 · 口径 v${review.version} · 源 Run ${escape(report.basis.runId)} / attempt ${escape(report.basis.attempt)}${report.reviewer?.replay ? ` · 后补评审 Run ${escape(report.reviewer.runId)} / attempt ${escape(report.reviewer.attempt)}` : ''}`;
-  const feedbackHtml = `<p class="check-source">${provenance}</p>${report.state === 'partial' ? `<p class="report-banner">评测仅部分完成；以下仅为已有发现，未覆盖部分不能推断为无问题。${escape(report.reason)}</p>` : ''}${findings.length ? renderFindings(findings, framework) : `<p class="muted">${report.state === 'partial' ? '已完成部分未提出问题或改进建议；其余尚未评测。' : '已完成独立评测，本轮未提出问题或改进建议；不等于不存在问题。'}</p>`}`;
+  const feedbackHtml = `<p class="check-source">${provenance}</p>${upstreamWarning ? `<p class="report-banner">${escape(upstreamWarning)}</p>` : ''}<p class="check-source upstream-boundary">${check ? `${upstreamScope(check, findings.filter(isFrameworkFinding))}。原评审“已解决”不作为上游修复证明。` : '最新上游状态：未复核。原评审“已解决”不作为上游修复证明；应用绕行、业务 QA 通过均不关闭框架问题。'}</p>${findings.length ? renderLegend() : ''}${report.state === 'partial' ? `<p class="report-banner">评测仅部分完成；以下仅为已有发现，未覆盖部分不能推断为无问题。${escape(report.reason)}</p>` : ''}${findings.length ? renderFindings(findings, framework, report, check) : `<p class="muted">${report.state === 'partial' ? '已完成部分未提出问题或改进建议；其余尚未评测。' : '已完成独立评测，本轮未提出问题或改进建议；不等于不存在问题。'}</p>`}`;
   html += `<details class="card raw-record" open><summary>本次评审的覆盖限制</summary><div class="subsection-body">${list(review.limitations)}</div></details>`;
-  html += `<details class="card raw-record" id="review-basis"><summary>评审基线与版本指纹</summary><div class="subsection-body"><p>评审针对已封存候选补丁与当时的依赖；可能在原搭建内或之后单独补跑。与 PR 或 NocoBase3 当前最新提交不是同一概念。评审只读冻结材料，引用运行日志不代表评审者重新复现；此报告未执行最新上游源码复核。</p><pre>${escape(JSON.stringify({ reviewer: report.reviewer, ...report.basis }, null, 2))}</pre></div></details>`;
+  html += `<details class="card raw-record" id="review-basis"><summary>评审基线与版本指纹</summary><div class="subsection-body"><p>评审针对已封存候选补丁与当时的依赖；可能在原搭建内或之后单独补跑。与 PR 或 NocoBase3 当前最新提交不是同一概念。评审只读冻结材料，引用运行日志不代表评审者重新复现。${check ? `最新上游复核另见各问题的“最新上游复核”（${escape(check.repository)}@${escape(check.sha)}）。` : '此报告未执行最新上游源码复核。'}</p><pre>${escape(JSON.stringify({ reviewer: report.reviewer, ...report.basis }, null, 2))}</pre></div></details>`;
   html += '<div class="review-evidence"><h3>证据与原文</h3>';
   for (const evidence of review.evidence) {
     html += `<details class="card raw-record" id="review-evidence-${escape(evidence.id)}"><summary><strong>${escape(evidence.id)}</strong> · ${escape(evidence.path)}${evidence.lines ? `:${evidence.lines.join('–')}` : ''}</summary><div class="subsection-body"><p>${escape(evidence.observation)}</p>${evidence.kind === 'screenshot' ? evidence.mediaId ? `<button class="btn small" data-open="${escape(evidence.mediaId)}">查看原始截图</button>` : '<p class="check-source">截图未内嵌；请从本轮 Artifact 核对，缺图不伪装成已展示。</p>' : `<pre>${escape(evidence.excerpt)}</pre>`}<p class="check-source">原文件 SHA-256：${escape(evidence.sha256)}</p></div></details>`;
