@@ -4,6 +4,7 @@ export default {
   files: ['.github/scripts/**/*.mjs'],
   languageOptions: {
     globals: {
+      AbortSignal: 'readonly',
       console: 'readonly',
       fetch: 'readonly',
       process: 'readonly',

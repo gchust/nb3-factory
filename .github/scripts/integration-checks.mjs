@@ -29,20 +29,27 @@ function endpoint(base, relative) {
   if (url.origin !== origin.origin) throw new Error('API request left isolated application');
   return url;
 }
-export async function runApiKeyCheck(plan, env = process.env, fetcher = fetch) {
+export function validateApiPlan(plan) {
   if (plan.version !== 1 || plan.kind !== 'api-key' || !/^[a-f0-9]{40}$/u.test(plan.applicationSha ?? '') ||
     !plan.read || !plan.write || !plan.revoke || !Array.isArray(plan.read.expectedIds) || !plan.read.expectedIds.length) throw new Error('Invalid source-bound API plan');
   // Resolve all endpoints and payloads before sending any mutation.
   const urls = Object.fromEntries(['read', 'write', 'revoke'].map(k => [k, endpoint(plan.baseUrl, plan[k].path)]));
   if (!['POST', 'PUT', 'PATCH'].includes(plan.write.method) || !['POST', 'DELETE'].includes(plan.revoke.method)) throw new Error('Unsupported prepared mutation');
   if (!Array.isArray(plan.read.itemsPath) || plan.read.itemsPath.some(k => typeof k !== 'string' || ['__proto__', 'prototype', 'constructor'].includes(k))) throw new Error('Explicit itemsPath required');
+  // NocoBase 3 keys use x-api-key; retain legacy Bearer plans explicitly.
+  if (plan.authentication !== undefined && !['bearer', 'x-api-key'].includes(plan.authentication)) throw new Error('Unsupported API key authentication');
+  return urls;
+}
+export async function runApiKeyCheck(plan, env = process.env, fetcher = fetch) {
+  const urls = validateApiPlan(plan);
   const startedAt = Date.now();
   const measured = value => ({ ...value, timing: { startedAt, endedAt: Date.now(), milliseconds: Date.now() - startedAt }, modelUsage: { invoked: false } });
   const preflight = conditionPreflight('api', env);
   if (preflight.status !== 'ready') return measured({ ...preflight, applicationSha: plan.applicationSha, checks: [] });
   const checks = [];
   async function request(url, method, key, body) {
-    const response = await fetcher(url, { method, headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
+    const auth = plan.authentication === 'x-api-key' ? { 'x-api-key': key } : { Authorization: 'Bearer ' + key };
+    const response = await fetcher(url, { method, headers: { ...auth, 'Content-Type': 'application/json' },
       ...(body === undefined ? {} : { body: JSON.stringify(body) }), redirect: 'error', signal: AbortSignal.timeout(15000) });
     const text = await response.text();
     return { status: response.status, text, digest: hash(text) };

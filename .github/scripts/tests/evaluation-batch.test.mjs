@@ -1,3 +1,4 @@
+import { Buffer } from 'node:buffer';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
@@ -29,7 +30,7 @@ const current = async client => (await openBatches(client))[0];
 
 test('plans are bounded, schema-checked and v1 serial; the checked-in plans are valid', () => {
   const plans = validatePlans(plansFile, { defaultBranch: 'develop' });
-  assert.deepEqual(plans.map(p => [p.key, p.enabled, p.cases[0].presetIssueNumber]), [['nb3-daily-smoke', false, 176], ['nb3-customer-memo', false, 155]]);
+  assert.deepEqual(plans.map(p => [p.key, p.enabled, p.cases[0].presetIssueNumber]), [['nb3-daily-smoke', true, 176], ['nb3-customer-memo', false, 155]]);
   const base = structuredClone(plansFile.plans[0]);
   const bad = mutate => { const item = structuredClone(base); mutate(item); return () => validatePlans({ schemaVersion: 1, plans: [item] }, { defaultBranch: 'develop' }); };
   assert.throws(bad(p => { p.execution.maxConcurrentSamples = 2; }), /one complete sample/);
@@ -376,12 +377,13 @@ test('Agent settings are fingerprinted at freeze and at each dispatch; drift mar
   const env = { CODE_AGENT_ENGINE: 'pi', CODE_AGENT_MODEL: 'model-a', CODE_AGENT_API_KEY: 'secret-never-recorded' };
   const started = await startBatch(client, { plans: plan(2), planKey: 'smoke', trigger: 'manual', now: 1000, runId: 77, controlSha: control, env });
   let batch = await advanceBatch(client, started.batch, { now: 1000, env });
-  assert.deepEqual(batch.manifest.agentConfig.values, { CODE_AGENT_ENGINE: 'pi', CODE_AGENT_MODEL: 'model-a' });
+  assert.equal(batch.manifest.agentConfig.values.CODE_AGENT_MODEL, 'model-a');
+  assert.equal(batch.manifest.agentConfig.values.CONFIG_SCHEMA_VERSION, '2');
   assert.ok(!JSON.stringify(batch.manifest).includes('secret-never-recorded'));
   client.run(client.samples()[0].number, { id: 5501 });
   batch = await advanceBatch(client, batch, { now: 2000, env: { ...env, CODE_AGENT_MODEL: 'model-b' } });
   const document = batchDocument(batch);
-  assert.deepEqual(document.samples.map(s => s.comparable), [true, false]);
+  assert.deepEqual(document.samples.map(s => s.comparable), [null, false]);
   assert.equal(document.summary.comparable, false);
   assert.ok(document.limitations.some(l => l.code === 'agent-config-drift'));
   assert.deepEqual(validateSchema(loadContract('evaluation-batch.v1'), { ...document, revision: 1, createdAt: '2026-09-25T00:00:00Z' }), []);
@@ -711,4 +713,74 @@ test('cancelling after a failed first dispatch finishes the batch and frees the 
   const sample = await resolveSample(client, client.samples()[0].number);
   assert.equal(sample.cancelled, true);
   assert.equal(sample.released, 'cancelled');
+});
+
+test('application SHA varies independently of control/cases/config and preserves a comparison key', async () => {
+  const client = fakeRepository(), application = 'a'.repeat(40), calls = [];
+  const request = client.request;
+  client.request = async (method, route, options = {}) => {
+    calls.push([route, options.query?.ref]);
+    if (route.startsWith('/contents/') && options.query?.ref === application)
+      return request(method, route, { ...options, query: { ...options.query, ref: control } });
+    return request(method, route, options);
+  };
+  const freeze = plans => startBatch(client, { plans, planKey: 'smoke', trigger: 'manual', now: 1000, runId: 77, controlSha: control, dryRun: true });
+  const one = (await freeze(plan(1))).manifest;
+  const two = (await freeze(plan(1, { baselineRef: application }))).manifest;
+  assert.equal(two.controlSha, control);
+  assert.equal(two.applicationBaseSha, application);
+  assert.equal(two.applicationBaseRef, 'develop');
+  assert.equal(two.comparisonKey, one.comparisonKey);
+  assert.ok(calls.some(([route, ref]) => route === '/contents/pnpm-lock.yaml' && ref === application));
+  assert.equal(client.samples().length, 0);
+  client.state.compare = 'diverged';
+  await assert.rejects(freeze(plan(1, { baselineRef: application })), /default branch history/);
+});
+
+test('published source baselines use their verified descriptor and fail closed when missing', async () => {
+  const client = fakeRepository(), application = 'a'.repeat(40), source = 'd'.repeat(40);
+  const ref = 'factory-baseline/source-' + source.slice(0, 12) + '-100-1';
+  const tag = 'source-baseline-' + source.slice(0, 12) + '-100-1';
+  const descriptor = { version: 1, repository, sourceSha: source, sha256: 'e'.repeat(64), runId: 100, attempt: 1, tag,
+    url: 'https://github.com/' + repository + '/releases/download/' + tag + '/packages.tar.gz' };
+  client.getRef = async branch => branch === ref ? { object: { sha: application } } : null;
+  const request = client.request;
+  let missing = false;
+  client.request = async (method, route, options = {}) => {
+    if (options.query?.ref === application && route === '/contents/factory-source.json')
+      return missing ? null : { encoding: 'base64', content: Buffer.from(JSON.stringify(descriptor)).toString('base64') };
+    if (route.startsWith('/contents/') && options.query?.ref === application)
+      return request(method, route, { ...options, query: { ref: control } });
+    return request(method, route, options);
+  };
+  const freeze = () => startBatch(client, { plans: plan(1, { baselineRef: ref }), planKey: 'smoke', trigger: 'manual', now: 1000, runId: 77, controlSha: control, dryRun: true });
+  assert.equal((await freeze()).manifest.applicationBaseRef, ref);
+  missing = true;
+  await assert.rejects(freeze(), /no descriptor/);
+  assert.equal(client.samples().length, 0);
+});
+
+test('batch comparability needs every actual invocation, not matching dispatch variables alone', async () => {
+  const client = fakeRepository();
+  const env = { CODE_AGENT_PROVIDER_ID: 'test-provider-v1', PI_MODEL: 'fixture' };
+  const { batch } = await startBatch(client, { plans: plan(1), planKey: 'smoke', trigger: 'manual', runId: 77, controlSha: control, env });
+  await advanceBatch(client, batch, { env });
+  const item = Object.values(batch.state.samples)[0];
+  assert.equal(batchDocument(batch).samples[0].comparable, null);
+  item.agentConfiguration = { complete: true, fingerprints: [agentConfig(env).fingerprint] };
+  assert.equal(batchDocument(batch).summary.comparable, true);
+  item.agentConfiguration.fingerprints.push(agentConfig({ ...env, PI_API_TYPE: 'anthropic-messages' }).fingerprint);
+  assert.equal(batchDocument(batch).samples[0].comparable, false);
+});
+
+test('daily plans default to enabled but an explicit false pauses new batches', async () => {
+  const args = { 'dry-run': 'true' };
+  const readPlans = async () => plan(1);
+  const env = { GITHUB_RUN_ID: '9999', FACTORY_CONTROL_SHA: control };
+  const enabled = await runCoordinator(fakeRepository(), { action: 'scheduled', args, env, readPlans });
+  assert.deepEqual(enabled.failures, []);
+  assert.ok(enabled.lines.some(line => line.includes('只预览')));
+  const paused = await runCoordinator(fakeRepository(), { action: 'scheduled', args, env: { ...env, FACTORY_EVALUATION_PLANS_ENABLED: 'false' }, readPlans });
+  assert.deepEqual(paused.failures, []);
+  assert.ok(paused.lines.some(line => line.includes('未创建任务')));
 });

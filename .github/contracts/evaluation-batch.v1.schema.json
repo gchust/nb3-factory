@@ -57,6 +57,8 @@
       "required": ["controlSha", "entrySha", "applicationBaseSha", "defaultBranch", "lockfileSha256", "templateVersion", "reviewMode", "budget", "maxConcurrentSamples", "agentEngine", "agentConfig"],
       "properties": {
         "controlSha": { "$ref": "#/$defs/sha" },
+        "applicationBaseRef": { "type": "string", "maxLength": 200 },
+        "comparisonKey": { "type": ["string", "null"], "pattern": "^[a-f0-9]{64}$" },
         "entrySha": { "$ref": "#/$defs/optionalSha" },
         "applicationBaseSha": { "$ref": "#/$defs/sha" },
         "defaultBranch": { "type": "string", "maxLength": 120 },

@@ -23,10 +23,10 @@ const regular = file => { try { const stat = lstatSync(file); return stat.isFile
 export const artifactName = (type, key, revision) => `factory-evaluation-${type === 'evaluation-batch' ? 'batch' : 'run'}-${keyDigest(key).slice(0, 20)}-r${revision}`;
 
 // Export only copies files the exporter selected from the trusted artifact tree.
-export function exportDraft({ report, artifacts, task, html, output: out, exporter }) {
+export function exportDraft({ report, artifacts, task, final, html, output: out, exporter }) {
   // A run that stopped before its Agent artifact still exports its receipts and metadata.
   const root = artifacts && existsSync(artifacts) ? artifacts : mkdtempSync(path.join(os.tmpdir(), 'evaluation-empty-'));
-  const { draft, attachments } = buildEvaluation({ report, root, taskRoot: task && existsSync(task) ? task : null, exporter });
+  const { draft, attachments } = buildEvaluation({ report, root, finalRoot: final && existsSync(final) ? final : null, taskRoot: task && existsSync(task) ? task : null, exporter });
   mkdirSync(path.join(out, 'files'), { recursive: true });
   const files = [];
   for (const item of attachments) {
@@ -154,7 +154,7 @@ async function main() {
   const { GitHubClient } = await import('./factory-lib.mjs');
   const client = () => new GitHubClient({ token: process.env.GITHUB_TOKEN, repository: process.env.GITHUB_REPOSITORY, apiUrl: process.env.GITHUB_API_URL });
   if (mode === 'export') {
-    const { draft, files } = exportDraft({ report: json(args.report), artifacts: args.artifacts, task: args.task, html: args.html, output: args.output,
+    const { draft, files } = exportDraft({ report: json(args.report), artifacts: args.artifacts, task: args.task, final: args.final, html: args.html, output: args.output,
       exporter: { controlSha: process.env.FACTORY_EXPORTER_SHA, runId: process.env.GITHUB_RUN_ID, attempt: process.env.GITHUB_RUN_ATTEMPT } });
     output('ready', 'true');
     console.log(`Exported ${documentKeyOf(draft)} (${draft.outcome.execution}/${draft.outcome.acceptance}) with ${files.length} file(s); no model was called.`);

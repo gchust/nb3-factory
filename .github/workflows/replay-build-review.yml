@@ -18,6 +18,9 @@ on:
         required: true
         type: string
 
+env:
+  FACTORY_AGENT_CONFIG_JSON: ${{ toJSON(vars) }}
+
 permissions: {}
 concurrency:
   group: factory-build-review-${{ github.event.comment.id || github.run_id }}
@@ -130,8 +133,9 @@ jobs:
       - name: Reconstruct sealed candidate without rebuilding
         run: |
           cd workspace
+          node ../control/.github/scripts/assert-current-template.mjs .
           pnpm install --frozen-lockfile --ignore-scripts
-          pnpm skills:sync
+          pnpm exec nocobase skills sync
       - name: Install selected pinned reviewer
         env:
           CODE_AGENT_ENGINE: ${{ vars.CODE_AGENT_ENGINE }}

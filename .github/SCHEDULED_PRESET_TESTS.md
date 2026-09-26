@@ -1,83 +1,37 @@
-# 预设搭建测试：每日自动与手动立即执行
+# 自动评测与旧标签手动入口
 
-给想测试的预设 Issue 加上 `factory:daily` 标签，之后每天自动搭建一次。移除标签就退出后续调度。**不需要填写编号、配置仓库变量或每天手动运行 Action。**
+自动每日搭建已迁移到有预算的 **Evaluation batches**。详见
+[评测可靠性与迁移说明](EVALUATION_RELIABILITY.md#每日调度迁移)。
 
-Action：**Preset build tests (daily / manual)**（`scheduled-preset-tests.yml`）。只负责选择案例、创建独立执行 Issue、派发既有搭建工作流，不另写 Agent / QA / 报告流程，不自动合并测试 PR。
+## 每日评测
 
-```text
-预设 Issue：factory:preset + factory:daily
-                    ↓ 每日定时 / Run workflow 手动触发
-              每个案例创建新 Issue
-                    ↓
-      原 prepare 复制正文与人工评论、固定应用基线
-                    ↓
-          Code Agent → QA → PR / HTML 报告
-```
+唯一的自动搭建 cron 在 `evaluation-batches.yml`：UTC 01:23（新加坡/中国时间 09:23）。
+计划来自 `evaluations/plans.json`，默认启动 F00 三样本串行批次。
+`FACTORY_EVALUATION_PLANS_ENABLED=false` 暂停新批次；已启动批次仍会推进。
+预置 Issue 的 `factory:daily` 标签不再自动启动每日任务。
 
-需要同一冻结基线、同一案例快照的多次独立样本、预算与批次结果时，使用 [评测批次](EVALUATION_INTEGRATION.md#固定基线的独立重复评测批次)；
-本页的每日标签调度保持原样，二者互不影响。
+添加或调整每日案例应修改计划、样本数和预算，提交 PR 审查后生效。
+[批次协议](EVALUATION_INTEGRATION.md)说明冻结输入、终态、取消和重试。
 
-## 日常操作
+## 旧标签手动入口
 
-| 预设 Issue 的标签 | 行为 |
-| --- | --- |
-| `factory:preset` | 保存为可重复使用的案例，不参加每日自动测试 |
-| `factory:preset` + `factory:daily` | 每天自动创建独立任务重新搭建 |
-| 移除 `factory:daily` | 下轮不再调度，保留原预设和历史结果；不取消已创建的任务 |
+**Actions → Preset build tests (manual legacy) → Run workflow** 仍读取同时带
+`factory:preset` 和 `factory:daily` 的人工案例（包含已关闭的预置）。
+`dry_run=true` 仅预览；默认创建独立执行 Issue 并显式派发搭建。
+该入口没有 cron，也不修改来源案例、自动合并 PR 或刷新模板。
 
-例如，给流程冒烟 #176 和客户备忘录 #155 同时加上 `factory:daily`，此后每天各执行一次。只希望跑冒烟时，从 #155 移除该标签即可。
-可以在 Issue 右侧添加、移除标签，也可以在 Issues 列表批量修改。标签加在**来源预设 Issue**上，不是执行 Issue 或 PR 上。
-
-合入默认分支后，工作流自动初始化 `factory:daily` 标签，不启动搭建，也不替你选择案例。此后只需用标签维护名单。
-每次定时运行都读取最新标签，包含**已关闭的预设**；没有同时带两个标签的案例时，正常结束，不创建任务、不调用 Agent。
-仅有 `factory:daily` 而没有 `factory:preset` 不会被选中。误标的 PR、机器人案例或 `factory:manual` 任务会被明确报错，不执行，也不阻止其他有效案例。
-案例维护方式见 [预置搭建案例](ISSUE_PRESETS.md)。
-
-## 时间与结果
-
-默认每天 **03:17 UTC（北京时间 11:17）** 自动运行。修改工作流中的 `cron: '17 3 * * *'` 可调整时间。
-GitHub 定时任务只在默认分支执行，可能延迟；工作流需先合入默认分支。加标签本身不会立即搭建；可以等待下一次每日扫描，也可以随时手动触发一轮。
-
-每轮可执行案例都会创建独立 Issue，从既有默认分支基线受理，不复用上次生成的业务代码、旧分支或 PR。
-本 Action **不自动 Refresh 模板、不构建 NocoBase 上游源码、不切换源码基线**；要改变被测版本，使用现有基线更新流程。各任务继续由既有 prepare 记录实际应用 SHA。
-
-Action Summary 展示每个案例的**已派发 / 已有任务 / 因在途任务跳过 / 失败**，并链接到执行 Issue。
-“已派发”不等于测试通过；业务验收结果仍查看对应 Issue、PR 和 HTML 报告。不同案例沿用现有并行机制。
-
-## 避免重复与积压
-
-同一预设的未关闭执行 Issue（包括手工从预设创建的搭建任务）仍带 `agent:pending`、`agent:queued`、`agent:running`、`agent:verifying` 或 `agent:waiting` 时，跳过本轮，避免积压。
-`agent:review` / 失败 / 已关闭的任务不阻止下一轮；**待评审测试 PR 不需要先合并**。
-
-执行 Issue 新建时添加 `factory:build` 和 `agent:pending`，标题使用去掉工厂前缀的业务名称。
-`factory:build` 在状态切换后保留；不再创建或依赖 `factory:test-preset-<编号>` 标签，也不继承 `factory:preset` 或 `factory:daily`。
-来源直接读取 Issue 正文：准备前读取“预置案例”字段；准备后读取正文开头“复制自预置案例 #N”的本仓库链接，与手工从预设创建任务一致。普通需求中的 Issue 引用不作为来源。
-同一调度 Run 重跑通过已有调度回执复用执行 Issue；派发回执保存失败时查询真实搭建 Run，避免重复派发。保留正文来源信息和调度来源评论。已准备任务的来源信息损坏时，扫描明确失败，不猜测来源后继续创建任务。
-历史执行 Issue 无需重写；旧编号标签不参与新版本判断。本改动不批量删除历史标签，避免影响仍使用旧版本代码的运行。
-单个案例出错会保留错误及已有 Issue，继续其他案例，并将调度 Job 标记失败。
-
-正常每日运行无需人工操作。派发失败时可重跑对应调度 Run；取消任务后若残留在途标签，确认没有活动搭建后关闭该执行 Issue，恢复后续自动测试。不要通过合并测试 PR 来解除等待。
-
-只使用内置 `GITHUB_TOKEN`（`contents: read`、`issues: write`、`actions: write`），无需新增 PAT 或模型配置。
-创建 Issue 后显式调用原 `code-agent-task.yml` 的 `workflow_dispatch`，不依赖机器人创建 Issue 自动触发工作流。
-
-## 手动立即执行（同时保留每日定时）
-
-进入 **Actions → Preset build tests (daily / manual) → Run workflow**，选择默认分支 `develop`，直接点击 **Run workflow** 即可。
-默认立即为当前同时带 `factory:preset` + `factory:daily` 的案例派发搭建任务，不用输入编号、不用等定时时间。`dry_run` 默认关闭；只有勾选时才仅预览，不创建任务、不调用 Agent。
-工作流需先合入默认分支，GitHub 才会显示手动运行按钮。Actions 运行名称区分 `manual`（手动搭建）、`daily`（定时搭建）、`preview`（只预览）和 `initialize`（标签初始化）。
-
-**手动执行是额外的一轮，不会关闭、改期或消耗当天的定时任务。** 定时与手动共用同一份标签名单和同一个派发步骤；定时触发始终实际派发，不受上一次手动预览状态影响。
-例如，上午手动跑完后，11:17 的定时扫描仍会重新创建任务。若到点时同一案例还在执行，则该案例按既有规则跳过，不重复堆积，后续每日扫描继续。
-
-调度入口使用同一并发队列，允许多个请求排队，避免手动触发替换正在等待的定时请求；达到 GitHub 队列容量上限时仍可能被取消。它只串行派发，不改变独立案例的并行搭建机制。
+旧入口是普通搭建，不带评测批次的全链预算；正式评测建议使用计划。
+保留同案例在途跳过、同 Run 幂等、标签初始化和失败重试。
+手动额外启动不会消耗批次槽位，因此可能与每日批次并行。
 
 ## 验证
 
+专项覆盖标签选择和幂等、预览、唯一自动调度入口、批次预算与全链续跑：
+
 ```bash
-node --test .github/scripts/tests/scheduled-preset-tests.test.mjs
+node --test .github/scripts/tests/scheduled-preset-tests.test.mjs \
+  .github/scripts/tests/evaluation-batch.test.mjs \
+  .github/scripts/tests/evaluation-workflow-policy.test.mjs
 ```
 
-专项覆盖标签增删、开放和关闭预设、正文来源解析、手工任务在途检测、无编号标签的历史任务兼容、分页、同日手动/定时独立轮次、手动预览不影响定时、在途跳过后继续调度、独立次日任务、来源隔离、重跑恢复、在途去重、标签初始化和工作流触发边界。现有 **Factory regression tests** 自动收集这些测试。
-
-参考：[GitHub 定时事件](https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#schedule)、[工作流触发规则](https://docs.github.com/en/actions/how-tos/write-workflows/choose-when-workflows-run/trigger-a-workflow#triggering-a-workflow-from-a-workflow)。
+不通过启动真实付费搭建验证调度器。

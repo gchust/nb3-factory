@@ -180,7 +180,7 @@ for (const branch of ['', 'develop']) {
     assert.equal(first.metadata.workBranch, 'agent/issue-20');
     assert.equal(first.metadata.targetCreated, false);
     // A stable logical-run key is recorded once and survives retries of the same Issue.
-    assert.deepEqual(first.metadata.evaluation, { version: 1, runKey: `${repository}/issues/20/initial`, kind: 'initial' });
+    assert.deepEqual(first.metadata.evaluation, { version: 1, runKey: `${repository}/issues/20/initial`, kind: 'initial', requiredChecks: [] });
     assert.match(first.output, /status=ready/); // Another Issue already has a develop PR.
     assert.match(first.output, new RegExp(`base_ref=develop\\nbase_sha=${initial}`));
     f.c.refs.set('develop', advanced);

@@ -182,7 +182,7 @@ ZIP 由工厂确定性生成：路径排序、固定时间戳（1980-01-01）、
 | Variable `EVALUATION_AUTH_MODE` | `x-api-key` | 固定枚举 `x-api-key` / `bearer`；不接受自定义头名或模板 |
 | Secret `EVALUATION_TOKEN` | 未设置 | 只进入投递工作流 `send` 作业的一个步骤；不进入实现、QA、评审、导出或任何 Artifact |
 
-| Variable `FACTORY_EVALUATION_PLANS_ENABLED` | 未设置 = 关闭 | 只有 `true` 时每日定时才启动 `enabled` 且 `schedule=daily` 的评测计划；手动启动、推进与取消不受它限制 |
+| Variable `FACTORY_EVALUATION_PLANS_ENABLED` | 未设置 = 启用 | `false` 暂停新每日批次；默认仅运行启用的 F00 三样本核心计划，旧标签 cron 已移除；手动启动、推进与取消不受它限制 |
 
 投递打开但配置不完整时，投递作业失败并列出缺失的配置项名称（不输出值），记录保持待投递；业务结果与归档不受影响。
 仓库里原有的变量没有同义开关，因此新增上述名称。
@@ -224,8 +224,14 @@ X-Evaluation-Bundle-SHA256: <ZIP 的 SHA-256>
 [`receipt.json`](contracts/examples/receipt.json)：
 
 ```json
-{ "receiptId": "receiver-generated-id", "sourceInstance": "owner/factory", "runKey": "owner/factory/issues/146/initial",
-  "revision": 1, "bundleSha256": "<与请求头一致>", "state": "stored" }
+{
+  "receiptId": "receiver-generated-id",
+  "sourceInstance": "owner/factory",
+  "runKey": "owner/factory/issues/146/initial",
+  "revision": 1,
+  "bundleSha256": "<与请求头一致>",
+  "state": "stored"
+}
 ```
 
 批次结果用 `batchKey` 代替 `runKey`。回执必须是 JSON，身份、修订与摘要必须与发送对象一致，否则记为投递失败（`invalid-receipt`），
@@ -277,13 +283,12 @@ GitHub 限流、5xx、网络或超时等临时故障保持 `pending`，不计为
 
 受信任维护者在 [`evaluations/plans.json`](evaluations/plans.json) 定义计划；Issue、评论或派发字段都不能提供计划、控制 SHA、预算、脚本或 URL。
 校验上限：每批最多 10 个案例、每案例 1–10 个样本、每批共 20 个样本；v1 只允许 `maxConcurrentSamples=1`；
-修复上限 0–10 次，单样本主动执行 600–86400 秒，自动续跑 0–10 次；`baselineRef` 必须是默认分支（已发布模板轨道，
-不自动测试上游源码或刷新模板）。`reviewMode` 为 `inherit`（沿用预设的“框架评测”选择，否则 `FACTORY_BUILD_REVIEW`）、`full` 或 `off`；
+修复上限 0–10 次，单样本主动执行 600–86400 秒，自动续跑 0–10 次；`baselineRef` 可为默认分支、默认分支历史中的固定 SHA，或已发布的源码基线分支（不自动构建上游源码或刷新模板）。`reviewMode` 为 `inherit`（沿用预设的“框架评测”选择，否则 `FACTORY_BUILD_REVIEW`）、`full` 或 `off`；
 关闭评审的样本显示“未评审”，不会被当作模块通过。
 
 ```text
-Evaluation batches → start（手动）或每日定时（需开关 + enabled + schedule=daily）
-  → 固定控制 SHA = 应用基线 SHA（默认分支当前提交，须在默认分支历史中）、锁文件哈希、模板版本、评审模式、预算
+Evaluation batches → start（手动）或每日定时（开关不为 false + enabled + schedule=daily）
+  → 分别固定控制 SHA 与应用基线 SHA（可不同），校验受信任来源、锁文件哈希、模板版本、评审模式、预算
   → 一次性捕获每个预置案例的正文与人工评论（caseHash）
   → factory:manual 维护 Issue 上写入分块校验的冻结清单与全部计划样本 → 状态快照
   → 逐个创建样本 Issue：冻结快照副本、代码起点回执、样本回执 → 最后才写入可运行正文 → 显式 workflow_dispatch
@@ -300,8 +305,8 @@ Evaluation batches → start（手动）或每日定时（需开关 + enabled + 
 | 创建 Issue 后客户端中断 | 重试按样本标记找回同一 Issue，补齐缺失的快照 / 回执，不多建样本 |
 | 重复或乱序派发 | 首个 Run 在样本 Issue 上留下认领回执；其他 Run 以 `duplicate` 退出，不再搭建（同一 Run 的重跑尝试与续跑除外）。prepare 与 Agent 作业共用同一道样本闸门，按固定顺序判断：批次已取消 → 样本已释放 → 新派发必须使用冻结控制代码（不符则拒绝，且不占用认领）→ 认领 → 预算 |
 | Handoff（退出 75） | 不是终态，不释放槽位；新的 Run 沿用检查点中的预算，不重置 |
-| 预算 | 每次 prepare 都从 GitHub 自身的作业记录重算整条链已用的 Agent 执行次数与主动执行时间（不含排队，包括续跑、恢复与重跑尝试），超出即以 `budget-exhausted` 结束且不启动 Agent；这些数值写入任务元数据并作为检查点的下限。GitHub 的“Re-run failed jobs”会复用 prepare 的结果，
-因此 Agent 作业在恢复检查点和任何模型调用之前再次核对批次是否取消、样本是否已释放，并重新计量用量；任一不满足即失败退出、不启动模型。检查点中的预算必须与 prepare 记录一致，被删改则拒绝续跑。Agent 作业内：不足以开始下一阶段时以 76 结束，长调用截止时间下调并预留 300 秒归档，达到续跑次数（`maxContinuations` 计算首次之后的全部执行）时不再派发续跑。修复次数来自与 Agent 同一 Runner 的检查点，只能作为工厂内限制，不是安全边界。补丁、检查点、验收记录与用量都保留 |
+| 预算                                                                                                                                                                                                                                                                                                                                                                                                                                                                      | 每次 prepare 都从 GitHub 自身的作业记录重算整条链已用的 Agent 执行次数与主动执行时间（不含排队，包括续跑、恢复与重跑尝试），超出即以 `budget-exhausted` 结束且不启动 Agent；这些数值写入任务元数据并作为检查点的下限。GitHub 的“Re-run failed jobs”会复用 prepare 的结果，                                                                                                                                                                                          |
+| 因此 Agent 作业在恢复检查点和任何模型调用之前再次核对批次是否取消、样本是否已释放，并重新计量用量；任一不满足即失败退出、不启动模型。检查点中的预算必须与 prepare 记录一致，被删改则拒绝续跑。Agent 作业内：不足以开始下一阶段时以 76 结束，长调用截止时间下调并预留 300 秒归档，达到续跑次数（`maxContinuations` 计算首次之后的全部执行）时不再派发续跑。修复次数来自与 Agent 同一 Runner 的检查点，只能作为工厂内限制，不是安全边界。补丁、检查点、验收记录与用量都保留 |
 | 取消 | `cancel` 后不再创建 / 派发样本，未开始的样本记为 `cancelled`；已排队但从未产生实际执行（例如首次派发失败）的样本也直接结束为 `cancelled`，不会为取消再派发一次真实任务；仍有未结束 Run 的样本继续等待其结束；进行中样本的下一次续跑在 prepare 被拒绝并留下终态回执；已发生的执行与用量保留，不关闭或合并任何业务 PR。开批被中断、没有完整清单的协调 Issue 也可用 `cancel` 关闭。样本 Issue 上追加的 `/build` 是普通增量任务（不计入样本预算），批次取消后同样被拒绝 |
 | 推进时机 | 样本 Run 由 `GITHUB_TOKEN` 派发，不产生 `workflow_run`；任务工作流的 `advance-evaluation-batch` 作业在样本 Run 结束时显式请求推进（协调器最多等待该 Run 完成 5 分钟），另有每小时补偿 |
 | 只在 prepare 结束的 Run | 重复派发（agent 被跳过且无终态回执）不作为样本结论；prepare 作出的取消 / 预算耗尽以机器人终态回执记录，受理失败的样本记为 `blocked` |
@@ -321,12 +326,13 @@ Evaluation batches → start（手动）或每日定时（需开关 + enabled + 
 Schema：[`contracts/evaluation-batch.v1.schema.json`](contracts/evaluation-batch.v1.schema.json)，示例
 [`batch-in-progress.json`](contracts/examples/batch-in-progress.json)。批次只列同条件样本的可核实事实，不计算全局平均分，不排除失败样本；
 冻结清单记录非密钥 Agent 配置（引擎、版本、模型、思考 / effort、评审模式与超时等，不含任何密钥）及其指纹；
-每次派发（含补偿重派）以及样本执行链仍在进行时的每次推进（每个样本 Run 结束都会请求推进）都记录当时的配置指纹。`samples[].agentConfigFingerprint` 是最近一次记录的指纹；任何一次与冻结时不同的样本记为 `comparable: false`，批次 `summary.comparable=false` 并写入
-`agent-config-drift`。首版只**固定代码与案例并检测 Agent 配置漂移**，不强制冻结配置：样本仍按运行时仓库变量执行，
-逐样本报告另记实际引擎与模型；`comparable=false` 的样本不能用于版本优劣归因。
+协调器的派发与推进观察用于补充漂移证据，实际调用记录才是判断运行配置一致的必要依据。
+只有完整执行链的实际配置证据齐全、并且全部匹配冻结指纹时，样本才是 comparable=true；
+缺证据时为 null，发现漂移时为 false。旧版本指纹不按新算法误判漂移。批次仍按运行时仓库变量执行，
+没有强制冻结配置；不可比较的样本不能用于版本优劣归因。详见下方可靠性说明。
 
 操作：**Actions → Evaluation batches → Run workflow**：`start`（填 `plan`，可勾选 `dry_run` 只预览冻结结果）、
-`advance`、`cancel`（填 `batch`）、`status`。首版的“一个活动批次”是全局限制；原有 `factory:daily` 预设调度与普通 Issue 搭建策略不变。
+`advance`、`cancel`（填 `batch`）、`status`。“一个活动批次”是全局限制；旧 `factory:daily` 入口仅保留手动启动，自动搭建已迁移到有预算的每日计划。普通 Issue 搭建不占用批次槽位。
 
 ## 验证
 
@@ -346,3 +352,5 @@ node --test --test-concurrency=1 .github/scripts/tests/*.test.mjs
 `evaluation-e2e.test.mjs` 不调用模型地走完整链路：冻结计划 → 5 个同案例样本（其中一个两次 Handoff）→ 固定评审夹具 → 结果包 →
 本地接收器 → 重发三次与连续补跑两次评审，断言仍为 5 个业务样本、重发不新增修订或用量、每次重评只新增一个独立评审用量来源且当前修订累计两次补评（同内容重新导出复用原修订），
 两个样本的相似发现保留为两条独立出现记录。
+
+详见 [有效配置、独立验收、健康状态与扩展步骤](EVALUATION_RELIABILITY.md)。实际调用配置记录是可比较性的必要证据，仅派发变量相同不再返回 `comparable=true`。

@@ -7,6 +7,7 @@
   "additionalProperties": false,
   "required": ["schemaVersion", "type", "source", "run", "revision", "createdAt", "precedence", "baseline", "executions", "outcome", "qa", "reviews", "processNotes", "metrics", "evidence", "links", "limitations"],
   "properties": {
+    "health": {"type": "object", "additionalProperties": false, "required": ["status", "requiredChecks", "review", "qa"], "properties": {"status": {"enum": ["complete", "incomplete"]}, "requiredChecks": {"type": "object", "additionalProperties": false, "required": ["status", "results"], "properties": {"status": {"enum": ["passed", "failed", "blocked", "not-run"]}, "results": {"type": "array", "maxItems": 20, "items": {"type": "object", "additionalProperties": false, "required": ["id", "status"], "properties": {"id": {"type": "string", "pattern": "^[a-z][a-z0-9-]{0,63}$"}, "status": {"enum": ["passed", "failed", "blocked", "not-run"]}}}}}}, "review": {"enum": ["disabled", "completed", "partial", "failed", "not-reviewed"]}, "qa": {"enum": ["passed", "failed", "blocked", "not-run", "unknown"]}}},
     "schemaVersion": { "const": 1 },
     "type": { "const": "evaluation-report" },
     "source": { "$ref": "#/$defs/source" },
@@ -126,6 +127,7 @@
     "limitations": { "$ref": "#/$defs/limitations" }
   },
   "$defs": {
+    "agentConfiguration": {"type": "object", "additionalProperties": false, "required": ["fingerprints", "complete"], "properties": {"fingerprints": {"type": "array", "maxItems": 200, "uniqueItems": true, "items": {"type": "string", "pattern": "^[a-f0-9]{64}$"}}, "complete": {"type": "boolean"}}},
     "positive": { "type": "integer", "minimum": 1 },
     "count": { "type": "integer", "minimum": 0 },
     "optionalCount": { "type": ["integer", "null"], "minimum": 0 },
@@ -272,7 +274,8 @@
             "engine": { "type": ["string", "null"], "maxLength": 80 },
             "model": { "type": ["string", "null"], "maxLength": 200 },
             "version": { "type": ["string", "null"], "maxLength": 80 },
-            "buildReviewMode": { "enum": ["full", "off", null] }
+            "buildReviewMode": { "enum": ["full", "off", null] },
+            "configuration": { "$ref": "#/$defs/agentConfiguration" }
           }
         },
         "environment": {

@@ -11,7 +11,6 @@ import authentication from '@nocobase/app-plugin-authentication/client';
 import authorization from '@nocobase/app-plugin-authorization/client';
 import databaseExplorer from '@nocobase/app-plugin-database-explorer/client';
 import users from '@nocobase/app-plugin-users/client';
-import notificationProvider from '@nocobase/app-plugin-notification-provider/client';
 import notificationInApp from '@nocobase/app-plugin-notification-in-app/client';
 import i18n from '@nocobase/app-plugin-i18n/client';
 import workflow from '@nocobase/app-plugin-workflow/client';
@@ -20,7 +19,6 @@ import scheduler from '@nocobase/app-plugin-scheduler/client';
 import file from '@nocobase/app-plugin-file/client';
 import aiKnowledgeBase from '@nocobase/app-plugin-ai-knowledge-base/client';
 import mail from '@nocobase/app-plugin-mail/client';
-import { withLegacyPluginDevAuthz } from './plugin-dev-authz.js';
 
 // Array order is contribution order. A plugin is enabled by appearing in this
 // list; removing its entry and its import disables it.
@@ -35,7 +33,6 @@ const clientPlugins: AppClientPlugins = defineClientPlugins([
   users({ mount: 'settings', path: '/users' }),
   apiKeys({ path: '/api-keys' }),
   i18n(),
-  notificationProvider({ demo: false }),
   notificationInApp(),
   workflow(),
   notification(),
@@ -45,4 +42,4 @@ const clientPlugins: AppClientPlugins = defineClientPlugins([
   mail(),
 ]);
 
-export default withLegacyPluginDevAuthz(clientPlugins);
+export default clientPlugins;

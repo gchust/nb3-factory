@@ -105,6 +105,7 @@ if (mode === 'select') {
     output('artifact_id', source.artifactId || '');
     output('artifact', source.artifact || '');
     output('task_artifact_id', source.taskArtifactId || '');
+    output('final_artifact_id', source.finalArtifactId || '');
     output('ready', 'true');
   } else console.log('No accepted task artifacts; skipping usage report.');
 } else if (mode === 'publish') {

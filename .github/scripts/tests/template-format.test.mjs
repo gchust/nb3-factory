@@ -19,7 +19,7 @@ const workflow = readFileSync(
 );
 // Execute the actual workflow step, not a second copy of its shell logic.
 const formatStep = workflow.match(
-  /^      - name: Format the generated application and plugin registrations\n        run: \|\n((?:          .*\n|\n)+)/m,
+  /^ {6}- name: Format the generated application and plugin registrations\n {8}run: \|\n((?: {10}.*\n|\n)+)/m,
 )?.[1];
 assert.ok(formatStep, 'Missing refresh formatting step');
 const command = formatStep.replace(/^ {10}/gm, '');
@@ -27,7 +27,6 @@ const requiredTargets = [
   'package.json',
   'README.MD',
   'eslint.config.js',
-  'scripts/build.mjs',
   'factory-template.json',
   'client/plugins.ts',
   'server/plugins.ts',
@@ -59,7 +58,7 @@ function fixture(t, { config = false, missing, exitCode = 0 } = {}) {
   writeFileSync(externalConfig, 'external: verification-only\n');
   const log = path.join(root, 'formatter-arguments.json');
   // A strict CLI double: missing explicit paths fail, as Prettier does. It also
-  // rejects extra flags/commands, so config:init or global error suppression
+  // rejects extra flags/commands, so config init or global error suppression
   // cannot make these workflow tests green. This does not test Prettier internals.
   const pnpm = path.join(bin, 'pnpm');
   writeFileSync(
@@ -107,11 +106,17 @@ test('refresh formats a new template without config.yml or creating runtime secr
   assert.equal(result.status, 0, result.stderr);
   assert.deepEqual(f.arguments(), { cwd: f.app, targets: requiredTargets });
   assert.equal(existsSync(path.join(f.app, 'config.yml')), false);
-  assert.equal(readFileSync(f.externalConfig, 'utf8'), 'external: verification-only\n');
-  assert.equal(readFileSync(path.join(f.app, 'config.example.yml'), 'utf8'), 'auth: {}\n');
+  assert.equal(
+    readFileSync(f.externalConfig, 'utf8'),
+    'external: verification-only\n',
+  );
+  assert.equal(
+    readFileSync(path.join(f.app, 'config.example.yml'), 'utf8'),
+    'auth: {}\n',
+  );
 });
 
-test('refresh still formats a config.yml provided by an older template', (t) => {
+test('refresh still formats a an existing config.yml without creating one', (t) => {
   const f = fixture(t, { config: true });
   const result = f.run();
   assert.equal(result.status, 0, result.stderr);

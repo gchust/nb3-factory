@@ -1,19 +1,16 @@
-name: Preset build tests (daily / manual)
+name: Preset build tests (manual legacy)
 run-name: "Preset tests · ${{ github.event_name == 'schedule' && 'daily' || github.event_name == 'workflow_dispatch' && (inputs.dry_run && 'preview' || 'manual') || 'initialize' }}"
 
 on:
-  schedule:
-    # UTC. Every day, build the presets carrying factory:daily; no manual launch or variable needed.
-    - cron: '17 3 * * *'
   push:
     paths:
       - '.github/workflows/scheduled-preset-tests.yml'
       - '.github/scripts/scheduled-preset-tests.mjs'
-  # Run the same labelled presets immediately, without changing the daily schedule.
+  # Legacy manual entry. Automatic builds now use bounded Evaluation batches.
   workflow_dispatch:
     inputs:
       dry_run:
-        description: '仅预览（可选）；默认立即搭建 factory:daily 案例，不影响每日定时'
+        description: '仅预览（可选）；默认立即搭建 factory:daily 标签案例；无自动定时'
         required: true
         default: false
         type: boolean
@@ -48,7 +45,7 @@ jobs:
         run: node .github/scripts/scheduled-preset-tests.mjs --init-label
 
   launch:
-    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:

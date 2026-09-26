@@ -1,6 +1,10 @@
 # 可追溯源码基线
 
-普通任务仍使用默认分支中的已发布模板；不把它等同于上游最新源码。
+普通任务使用默认分支中已验证的新版 NocoBase 3 模板。源码评测单独固定提交，以便复现；它不随上游分支持续漂移。
+
+当前 PR/手动入口的默认源码提交为 `28c7522b3ddb384b05745715e94f7f985d09a67e`，对应官方 `@nocobase/app-template-default@1.0.0-beta.47` 发布标签。已移除 beta.43 默认基线。自选源码也必须使用当前 CLI 契约，旧模板在工厂 overlay 阶段直接拒绝。
+
+源码构建与冒烟统一使用上游 `unreleased:prepare / unreleased:smoke / unreleased:clean`；导出器读取当前 `nocobase-unreleased-*` 会话，不回退到旧 registry 状态。
 
 ## 创建固定源码快照
 
@@ -33,3 +37,7 @@
 基线记录保存实际模板/生成器版本、已安装包 manifest、依赖锁文件、AGENTS/Skill 哈希与明确来源；没有可靠映射时源码 SHA 保持未知。哈希不证明 Agent 阅读或遵循了 Skill。
 
 没有归档、包校验失败或需要的版本不在快照时明确失败，不重新解析 latest。新版本测试应创建新样本，不能用新的包覆盖旧样本结果。
+
+## 批次 A/B
+
+计划的 `baselineRef` 也接受这里发布的源码基线分支。工厂控制 SHA 与应用 SHA 分别冻结，不能让被测源码替换工厂脚本。比较方法见 [评测可靠性](EVALUATION_RELIABILITY.md#对比两个-v3-版本)。

@@ -16,8 +16,8 @@
     "key": "nb3-daily-smoke-20260925",
     "subjectKey": "owner/factory/batches/nb3-daily-smoke-20260925",
     "planKey": "nb3-daily-smoke",
-    "planFingerprint": "694bcb810ec81a668789c169ad9564fef3b285a41a1b342bcec2b661bc323b3f",
-    "manifestSha256": "212f20e3f68e232f678a70234c7fad8fb4a6c9d4f7d3572a0cb4f134e1844d0d",
+    "planFingerprint": "ba7a82c9ccf167e67467b4238e724230190ed030ef5a3c571ff149229ad8eb92",
+    "manifestSha256": "1f91a5a811ddf709e797e5bb4a29a3398c602e9e789afa7c44870063567f2e0f",
     "trigger": "schedule",
     "slot": "2026-09-25",
     "coordinatorIssue": 500,
@@ -29,6 +29,8 @@
   "state": "active",
   "cancelled": false,
   "baseline": {
+    "applicationBaseRef": "develop",
+    "comparisonKey": "79c655b63a99fa8b41004742d9262e727fcab5ef3332847a939280b5eaddd0ac",
     "controlSha": "cccccccccccccccccccccccccccccccccccccccc",
     "entrySha": "cccccccccccccccccccccccccccccccccccccccc",
     "applicationBaseSha": "cccccccccccccccccccccccccccccccccccccccc",
@@ -44,12 +46,28 @@
     "maxConcurrentSamples": 1,
     "agentEngine": "pi",
     "agentConfig": {
-      "fingerprint": "de5b9f95981fe6c58b86105b5199ec015ef5a78f74561986ff54c7783b499d25",
+      "fingerprint": "855bf14bbcdbcde3be195a5c785c272f10d21c0769a209ca64761018a3044e7d",
       "values": {
+        "AGENT_BROWSER_VERSION": "0.36.0",
+        "AGENT_VERSION": "0.86.1",
+        "CODE_AGENT_API_TYPE": "openai-completions",
+        "CODE_AGENT_AUTH_HEADER": "true",
         "CODE_AGENT_ENGINE": "pi",
+        "CODE_AGENT_IDLE_TIMEOUT_SECONDS": "600",
+        "CODE_AGENT_INVOCATION_TIMEOUT_SECONDS": "0",
         "CODE_AGENT_MODEL": "fixture-model",
+        "CODE_AGENT_MODEL_REASONING": "true",
+        "CODE_AGENT_PROVIDER_ID": "",
+        "CODE_AGENT_SUPPORTS_DEVELOPER_ROLE": "true",
+        "CODE_AGENT_SUPPORTS_REASONING_EFFORT": "true",
         "CODE_AGENT_THINKING": "high",
-        "FACTORY_REVIEW_THINKING": "medium"
+        "CONFIG_SCHEMA_VERSION": "2",
+        "FACTORY_BUILD_REVIEW": "full",
+        "FACTORY_BUILD_REVIEW_IDLE_TIMEOUT_SECONDS": "600",
+        "FACTORY_BUILD_REVIEW_TIMEOUT_SECONDS": "900",
+        "FACTORY_QA_THINKING": "high",
+        "FACTORY_REVIEW_THINKING": "medium",
+        "PROVIDER_ENDPOINT_SHA256": ""
       }
     }
   },
@@ -77,8 +95,8 @@
       "dispatchedAt": "2026-09-25T01:23:00Z",
       "terminalAt": "2026-09-25T02:53:00Z",
       "reason": null,
-      "agentConfigFingerprint": "de5b9f95981fe6c58b86105b5199ec015ef5a78f74561986ff54c7783b499d25",
-      "comparable": true,
+      "agentConfigFingerprint": "855bf14bbcdbcde3be195a5c785c272f10d21c0769a209ca64761018a3044e7d",
+      "comparable": null,
       "report": {
         "state": "available",
         "revision": 1,
@@ -97,8 +115,8 @@
       "dispatchedAt": "2026-09-25T02:53:00Z",
       "terminalAt": null,
       "reason": null,
-      "agentConfigFingerprint": "de5b9f95981fe6c58b86105b5199ec015ef5a78f74561986ff54c7783b499d25",
-      "comparable": true,
+      "agentConfigFingerprint": "855bf14bbcdbcde3be195a5c785c272f10d21c0769a209ca64761018a3044e7d",
+      "comparable": null,
       "report": {
         "state": "missing",
         "revision": null,
@@ -145,7 +163,7 @@
       "missing": 2,
       "notApplicable": 0
     },
-    "comparable": true,
+    "comparable": false,
     "acceptance": {
       "passed": 1,
       "failed": 0,
@@ -159,7 +177,7 @@
     },
     {
       "code": "agent-config-runtime",
-      "detail": "样本按运行时仓库变量执行 Agent；批次只冻结并比对非密钥配置指纹，漂移单独标记，逐样本报告记录实际引擎与模型。"
+      "detail": "样本按运行时仓库变量执行 Agent；批次比较实际调用记录中的有效配置；缺失调用记录或秘密端点的公开 provider identity 时，一致性未知。派发时变量相同不能证明实际执行相同。"
     },
     {
       "code": "reports-missing",

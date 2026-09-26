@@ -6,6 +6,13 @@ if [[ $# -ne 3 ]]; then
   exit 2
 fi
 
+# Only the independent checker receives isolated API credentials. Application
+# tests, builds and the server must not inherit them through this shell.
+required_checks_api_key="${FACTORY_TEST_API_KEY:-}"
+required_checks_admin_key="${FACTORY_TEST_ADMIN_KEY:-}"
+export -n required_checks_api_key required_checks_admin_key
+unset FACTORY_TEST_API_KEY FACTORY_TEST_ADMIN_KEY
+
 workspace="$(realpath "$1")"
 config_file="$(realpath "$2")"
 artifact_dir="$(realpath -m "$3")"
@@ -61,7 +68,7 @@ if [[ -n "${FACTORY_BUILD_TARGET:-}" ]]; then
   build_args+=(--target "$FACTORY_BUILD_TARGET" --node-version "${FACTORY_BUILD_NODE_VERSION:-24}")
 fi
 # The template's own `--tar` archives the dist this one build produced, so the
-# deployable is the verified bytes. Templates since app-tools no longer ship a
+# deployable is the verified bytes. Current CLI templates do not ship a
 # standalone pack script the factory could run after the build instead.
 if [[ "${FACTORY_BUILD_ARCHIVE:-0}" == '1' ]]; then
   build_args+=(--tar)
@@ -125,3 +132,12 @@ node "$script_dir/timed-command.mjs" browser-smoke node "$script_dir/browser-smo
   --workspace "$workspace" \
   --url "$url" \
   --screenshot "$artifact_dir/browser-smoke.png"
+
+# Independent deterministic checks run against this same fresh final application.
+# No caller-supplied command/module/URL is executed; the trusted registry owns it.
+if [[ -n "${FACTORY_REQUIRED_CHECKS_METADATA:-}" ]]; then
+  FACTORY_TEST_API_KEY="$required_checks_api_key" \
+  FACTORY_TEST_ADMIN_KEY="$required_checks_admin_key" \
+  node "$script_dir/required-checks.mjs" run "$FACTORY_REQUIRED_CHECKS_METADATA" \
+    "$artifact_dir/../required-checks.json" "$FACTORY_REQUIRED_CHECKS_PATCH"
+fi

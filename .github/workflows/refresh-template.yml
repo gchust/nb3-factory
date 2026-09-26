@@ -64,7 +64,7 @@ jobs:
         with:
           node-version: 24.x
 
-      # app-tools installs dist/ as its own pnpm root, which never reads the
+      # The official CLI installs dist/ as its own pnpm root, which never reads the
       # application's .npmrc, and pnpm 11 ignores scoped registries passed in
       # the environment. Only the user-level file reaches that nested install.
       - name: Expose the factory registry to nested pnpm roots
@@ -108,15 +108,15 @@ jobs:
             "$APP_ROOT" "$RUNNER_TEMP/template-diagnostics"
           node control/.github/scripts/template-mail-config.mjs "$APP_ROOT"
           # Re-registration can be a no-op; always sync before inspecting Skills.
-          (cd "$APP_ROOT" && pnpm skills:sync)
+          pnpm --dir "$APP_ROOT" exec nocobase skills sync
           node control/.github/scripts/template-plugins.mjs inspect \
             "$APP_ROOT" "$RUNNER_TEMP/template-diagnostics"
 
       - name: Format the generated application and plugin registrations
         run: |
           cd "$RUNNER_TEMP/template-generation/nb3-factory"
-          format_paths=(package.json README.MD eslint.config.js scripts/build.mjs factory-template.json client/plugins.ts server/plugins.ts cli/plugins.ts server/config/index.ts server/config/mail.ts tests/logic vitest.config.ts)
-          # New templates create config.yml through config:init, not create-app.
+          format_paths=(package.json README.MD eslint.config.js factory-template.json client/plugins.ts server/plugins.ts cli/plugins.ts server/config/index.ts server/config/mail.ts tests/logic vitest.config.ts)
+          # New templates create config.yml through config init, not create-app.
           # Verification uses an external APP_CONFIG_FILE; do not generate secrets here.
           if [[ -f config.yml ]]; then
             format_paths+=(config.yml)

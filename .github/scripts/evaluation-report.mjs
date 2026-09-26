@@ -1,3 +1,5 @@
+import { coverageHealth } from './evaluation-health.mjs';
+import { requiredCheckCoverage } from './required-checks.mjs';
 // Evaluation Report v1: a normalized, versioned public DTO converted from the
 // factory's existing trusted facts. It never calls a model: missing material is
 // reported as unknown/partial, and review scores/findings are copied, not redone.
@@ -51,6 +53,37 @@ function fileHash(root, file) {
   } catch { return null; }
 }
 
+// Invocation files are factory-observed inputs, not a coordinator's guess about
+// which repository variables were in effect. Retain every invocation in a chain.
+export function configurationEvidence(root, acceptedPhases = ['implementation', 'repair', 'qa', 'qa-focused', 'qa-report-repair', 'review']) {
+  const fingerprints = new Set();
+  let seen = 0, missing = false;
+  const walk = (relative = '', depth = 0) => {
+    let entries;
+    try { entries = readdirSync(path.join(root, relative), { withFileTypes: true }); } catch { return; }
+    for (const entry of entries) {
+      const name = path.join(relative, entry.name);
+      if (entry.isDirectory() && depth < 2 && /^(?:verify-[1-9]\d*|browser-(?:acceptance|focused))$/.test(entry.name)) walk(name, depth + 1);
+      if (entry.isFile() && /^agent-.*\.jsonl$/.test(entry.name) && !entries.some(other => other.name === entry.name + '.invocation.json')) missing = true;
+      if (!entry.isFile() || !entry.name.endsWith('.jsonl.invocation.json')) continue;
+      try {
+        const record = readReviewJson(root, name);
+        if (!record.invoked || !acceptedPhases.includes(record.phase)) continue;
+        seen++;
+        const config = record.configuration;
+        if (config?.values?.CONFIG_SCHEMA_VERSION === '2' && hashOrNull(config.fingerprint)) {
+          fingerprints.add(config.fingerprint);
+          // Secret endpoints are invisible to the coordinator; explicit provider
+          // identity is the maintainer's versioned assertion, never a secret hash.
+          if (config.values.CODE_AGENT_ENGINE === 'pi' && !config.values.CODE_AGENT_PROVIDER_ID) missing = true;
+        } else missing = true;
+      } catch { missing = true; }
+    }
+  };
+  if (root) walk();
+  return { fingerprints: [...fingerprints].sort(), complete: seen > 0 && !missing };
+}
+
 // Small, trusted facts added to each usage receipt, so a later export can link
 // executions of one logical run without reading expired artifacts.
 export function executionFacts(metadata, root, source, identity = metadata ? resolveTaskIdentity(metadata) : null) {
@@ -60,6 +93,7 @@ export function executionFacts(metadata, root, source, identity = metadata ? res
   const previous = Number(source?.previousRunId);
   return {
     version: 1, runKey: identity.runKey, kind: identity.kind, derivation: identity.derivation,
+    agentConfiguration: configurationEvidence(root),
     controlSha: shaOrNull(metadata?.controlSha), baseSha: shaOrNull(metadata?.applicationBase?.sha),
     inputHash: hashOrNull(state?.inputHash), patchSha256: hashOrNull(state?.patchHash),
     pipelineOutcome: ['running', 'passed', 'failed', 'blocked', 'handoff', 'budget-exhausted'].includes(state?.outcome) ? state.outcome : null,
@@ -572,7 +606,7 @@ function baselineOf(metadata, root, reviews, facts, warnings, reviewPackages) {
   return result;
 }
 
-export function buildEvaluation({ report, root, taskRoot = null, exporter = {} }) {
+export function buildEvaluation({ report, root, taskRoot = null, finalRoot = null, exporter = {} }) {
   if (typeof root !== 'string') throw new Error('An artifact directory is required (use an empty one when nothing was captured)');
   const record = report?.record;
   if (!object(record) || !/^[\w.-]+\/[\w.-]+$/.test(record.repository ?? '') || !positive(record.issue) ||
@@ -685,6 +719,20 @@ export function buildEvaluation({ report, root, taskRoot = null, exporter = {} }
   const pr = object(report.pr) ? report.pr : null;
   baseline.application.candidate.headSha = shaOrNull(pr?.headSha);
   const outcome = outcomeOf(record, pipeline, qa, pr);
+  const requiredChecks = requiredCheckCoverage(trusted ?? metadata, readOptional(finalRoot, 'required-checks.json', limitations), fileHash(root, 'agent.patch'), { id: record.runId, attempt: record.attempt });
+  if (!trusted && requiredChecks.results.length) {
+    requiredChecks.status = 'not-run';
+    requiredChecks.results = requiredChecks.results.map(({ id }) => ({ id, status: 'not-run' }));
+  }
+  if (requiredChecks.status !== 'passed') {
+    if (outcome.acceptance !== 'failed') outcome.acceptance = requiredChecks.status === 'not-run' ? 'not-run' : requiredChecks.status;
+    limitations.push({ code: 'required-checks-incomplete', detail: '必需的独立业务验收未全部通过；浏览器通过或 PR 发布不能代替这些检查。' });
+  }
+  const configurations = chain.records.filter(r => r.invoked).map(r => validFacts(r.evaluation)?.agentConfiguration);
+  if (supplementUsage) configurations.push(supplementRaw.supplementalConfiguration);
+  baseline.agent.configuration = { fingerprints: [...new Set(configurations.flatMap(c => c?.fingerprints ?? []))].sort(),
+    complete: configurations.length > 0 && configurations.every(c => c?.complete === true) };
+
   if (outcome.delivery === 'published' && !outcome.pullRequest) limitations.push({ code: 'pr-unknown', detail: '发布作业已成功，但报告时未取得带交付标记的 PR。' });
   const primary = reviews.find(review => review.selected);
   const rubric = Math.max(0, ...reviews.filter(r => ['completed', 'partial'].includes(r.state)).map(r => r.rubric?.version ?? 0));
@@ -713,7 +761,9 @@ export function buildEvaluation({ report, root, taskRoot = null, exporter = {} }
     precedence: { producer: { runId: record.runId, attempt: record.attempt, startedAt: iso(record.start) },
       executionOrder: chain.executions.length, knownLaterExecutions: chain.later, chainTerminal: outcome.execution !== 'running',
       reviewRubric: rubric, reviewState: primary?.state ?? 'not-reviewed', review: reviewOrder(primary, supplementUsage, record), qaCoverage: qa.coverage },
-    baseline, executions, outcome, qa, reviews, processNotes: notesOf(root, producerKey), metrics,
+    baseline, executions, outcome, qa, reviews,
+    health: coverageHealth({ qa: qa.finalFull.status, requiredChecks: trusted?.evaluation?.requiredChecks ? requiredChecks : { status: 'not-run', results: requiredChecks.results }, review: baseline.agent.buildReviewMode === 'off' ? 'disabled' : primary?.state ?? 'not-reviewed' }),
+    processNotes: notesOf(root, producerKey), metrics,
     evidence: [...evidence.values()], links,
     limitations: dedupeLimitations(limitations),
   };
