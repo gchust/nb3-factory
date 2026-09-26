@@ -1,3 +1,4 @@
+import { Buffer } from 'node:buffer';
 import { appendFileSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -5,7 +6,8 @@ import { setTimeout as sleep } from 'node:timers/promises';
 import { GitHubClient } from './factory-lib.mjs';
 import { outcomeLabels } from './task-outcome.mjs';
 import { text as markdownText } from './visual-report.mjs';
-import { renderFindingsIndex } from '../reports/findings-index.mjs';
+import { collectOccurrences, renderFindingsIndex } from '../reports/findings-index.mjs';
+import { createClassificationInput, projectClassification, validateClassification } from '../reports/findings-classification.mjs';
 
 const BRANCH = 'gh-pages';
 const ROOT = 'reports';
@@ -60,7 +62,7 @@ function indexPage(items) {
 
 // The cross-report findings index is derived from the latest report of every
 // Issue in the registry, so a rerun replaces rather than double counts.
-async function findingsIndexPage(client,registry,sha,current) {
+async function findingsReports(client,registry,sha,current) {
   const manifests=Object.values(registry.issues);
   const reports=[];
   for(let i=0;i<manifests.length;i+=8) {
@@ -68,7 +70,109 @@ async function findingsIndexPage(client,registry,sha,current) {
       current && m.reportId===current.reportId ? current
         : sha ? getJson(client,`${m.path.slice(0,-'index.html'.length)}report.json`,sha) : null)));
   }
-  return renderFindingsIndex(reports.filter(Boolean));
+  return reports.filter(Boolean);
+}
+
+export async function readFindingsSnapshot(client, sha) {
+  sha ??= (await client.getRef(BRANCH, true))?.object?.sha;
+  if (!sha) return null;
+  const registry = await getJson(client, 'reports/manifest.json', sha);
+  if (!registry?.issues) return null;
+  const reports = await findingsReports(client, registry, sha);
+  const input = createClassificationInput(
+    collectOccurrences(reports).occurrences,
+  );
+  let classification = null;
+  try {
+    classification = await getJson(
+      client,
+      'reports/findings/classification.json',
+      sha,
+    );
+  } catch {
+    /* A damaged cache must not prevent a fresh classification. */
+  }
+  return { sha, reports, input, classification };
+}
+
+async function findingsIndexAssets(client, registry, sha, current) {
+  const reports = await findingsReports(client, registry, sha, current);
+  const input = createClassificationInput(
+    collectOccurrences(reports).occurrences,
+  );
+  let classification = null;
+  try {
+    if (sha)
+      classification = await getJson(
+        client,
+        'reports/findings/classification.json',
+        sha,
+      );
+  } catch {
+    /* Invalid classification leaves findings visible and pending. */
+  }
+  const state = projectClassification(input, classification);
+  return {
+    needsClassification: input.findings.length > 0 && !state.current,
+    files: [
+      [
+        'reports/findings/index.html',
+        await renderFindingsIndex(reports, { classification }),
+      ],
+      ['reports/findings/input.json', JSON.stringify(input, null, 2)],
+    ],
+  };
+}
+
+// A fresh publisher validates against the current reports, never the Agent's
+// copy of its input. Stale decisions cannot overwrite a newer publication.
+export async function archiveFindingsClassification(client, classification) {
+  validateClassification(classification);
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const snapshot = await readFindingsSnapshot(client);
+    if (!snapshot || snapshot.input.inputHash !== classification.inputHash)
+      return { updated: false, reason: 'stale-input' };
+    validateClassification(classification, snapshot.input);
+    const html = await renderFindingsIndex(snapshot.reports, {
+      classification,
+    });
+    const commit = await client.request('GET', `/git/commits/${snapshot.sha}`);
+    const files = [
+      ['reports/findings/index.html', html],
+      ['reports/findings/input.json', JSON.stringify(snapshot.input, null, 2)],
+      [
+        'reports/findings/classification.json',
+        JSON.stringify(classification, null, 2),
+      ],
+    ];
+    const tree = [];
+    for (const [file, content] of files) {
+      const blob = await client.request('POST', '/git/blobs', {
+        body: { content, encoding: 'utf-8' },
+      });
+      tree.push({ path: file, mode: '100644', type: 'blob', sha: blob.sha });
+    }
+    const nextTree = await client.request('POST', '/git/trees', {
+      body: { base_tree: commit.tree.sha, tree },
+    });
+    if (nextTree.sha === commit.tree.sha)
+      return { updated: true, commitSha: snapshot.sha };
+    const next = await client.request('POST', '/git/commits', {
+      body: {
+        message: 'report: classify framework findings with Agent',
+        tree: nextTree.sha,
+        parents: [snapshot.sha],
+      },
+    });
+    try {
+      await client.request('PATCH', '/git/refs/heads/gh-pages', {
+        body: { sha: next.sha, force: false },
+      });
+      return { updated: true, commitSha: next.sha };
+    } catch (error) {
+      if (attempt === 2 || !/409|422/.test(error.message)) throw error;
+    }
+  }
 }
 
 // Keep the whole site in one dedicated branch. Optimistic ref updates preserve
@@ -115,8 +219,12 @@ export async function archiveReport(client,report,html) {
     files.push([`${ROOT}/manifest.json`,JSON.stringify(registry)],
       [`${ROOT}/index.html`,indexPage(Object.values(registry.issues))]);
     // A broken index must never block the report itself; the previous one stays.
-    let findingsIndex='updated';
-    try { files.push([`${ROOT}/findings/index.html`,await findingsIndexPage(client,registry,sha,preserve ? null : report)]); }
+    let findingsIndex='updated', findingsNeedsClassification=false;
+    try {
+      const assets=await findingsIndexAssets(client,registry,sha,preserve ? null : report);
+      files.push(...assets.files);
+      findingsNeedsClassification=assets.needsClassification;
+    }
     catch(error) { findingsIndex=`skipped: ${error.message}`; }
     if(!sha) files.push(['index.html',redirectPage(`./${ROOT}/`)],['.nojekyll','']);
     const tree=[...retained];
@@ -125,12 +233,12 @@ export async function archiveReport(client,report,html) {
       tree.push({path:file,mode:'100644',type:'blob',sha:blob.sha});
     }
     const newTree=await client.request('POST','/git/trees',{body:{...(commit?{base_tree:commit.tree.sha}:{}),tree}});
-    if(commit?.tree.sha===newTree.sha) return {manifest,isLatest,preserved:Boolean(preserve),commitSha:sha,findingsIndex};
+    if(commit?.tree.sha===newTree.sha) return {manifest,isLatest,preserved:Boolean(preserve),commitSha:sha,findingsIndex,findingsNeedsClassification};
     const created=await client.request('POST','/git/commits',{body:{message:`report: issue ${next.issue}, run ${next.runId}, attempt ${next.attempt}`,tree:newTree.sha,parents:sha?[sha]:[]}});
     try {
       if(sha) await client.request('PATCH',`/git/refs/heads/${BRANCH}`,{body:{sha:created.sha,force:false}});
       else await client.createRef(BRANCH,created.sha);
-      return {manifest,isLatest,preserved:Boolean(preserve),commitSha:created.sha,findingsIndex};
+      return {manifest,isLatest,preserved:Boolean(preserve),commitSha:created.sha,findingsIndex,findingsNeedsClassification};
     } catch(error) {
       if(attempt===2 || !/409|422/.test(error.message)) throw error;
     }
@@ -150,7 +258,7 @@ export async function verifyPage(url,id,{fetcher=fetch,pause=sleep,attempts=6}={
       // No repository credentials are ever sent to the public site.
       const response=await fetcher(url,{signal:AbortSignal.timeout(15000),cache:'no-store'});
       if(response.ok && (await response.text()).includes(`name="factory-report-id" content="${escape(id)}"`)) return;
-    } catch {}
+    } catch { /* Retry an unavailable Pages response. */ }
     if(n+1<attempts) await pause(5000);
   }
   throw new Error('Pages report is not accessible with the expected source identity yet');
@@ -206,7 +314,7 @@ if(process.argv[1] && path.resolve(process.argv[1])===fileURLToPath(import.meta.
     const publication=await archiveReport(client,report,readFileSync(args.html,'utf8'));
     writeFileSync(args.output,JSON.stringify(publication));
     if(publication.findingsIndex!=='updated') console.warn(`Findings index ${publication.findingsIndex}`);
-    if(process.env.GITHUB_OUTPUT) appendFileSync(process.env.GITHUB_OUTPUT,`commit_sha=${publication.commitSha}\n`);
+    if(process.env.GITHUB_OUTPUT) appendFileSync(process.env.GITHUB_OUTPUT,`commit_sha=${publication.commitSha}\nfindings_pending=${publication.findingsNeedsClassification}\n`);
   } else if(mode==='notify') {
     const result=await notifyReport(client,JSON.parse(readFileSync(args.publication,'utf8')),args['base-url']);
     console.log(`Report verified: ${result.url}; current comment updated: ${result.updated}`);

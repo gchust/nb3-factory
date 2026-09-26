@@ -233,6 +233,8 @@ jobs:
             || echo '::warning::Delivery request failed; the scheduled scan will send the queued revision.'
 
   pages:
+    outputs:
+      findings_pending: ${{ steps.archive.outputs.findings_pending }}
     needs: report
     if: needs.report.outputs.html_ready == 'true' && needs.report.outputs.report_artifact != ''
     runs-on: ubuntu-latest
@@ -303,3 +305,20 @@ jobs:
         run: |
           echo '::warning::Report archived, but Pages is not ready. Set Settings > Pages > Source to GitHub Actions, then rerun the Pages job. No rebuild is needed.'
           echo 'HTML 已归档。首次请将 Settings → Pages → Source 设为 GitHub Actions，然后重跑 Pages 作业；不需要重新搭建。' >> "$GITHUB_STEP_SUMMARY"
+
+  findings:
+    needs: pages
+    if: always() && needs.pages.outputs.findings_pending == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    permissions:
+      actions: write
+    steps:
+      - name: Request Agent classification without delaying report publication
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPORT_REF: ${{ github.event.repository.default_branch }}
+        run: |
+          gh workflow run classify-findings.yml --repo "$GITHUB_REPOSITORY" --ref "$REPORT_REF" \
+            || echo '::warning::Classification request failed. Findings remain visible as pending; rerun Classify framework findings.'
