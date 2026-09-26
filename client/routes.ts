@@ -1,4 +1,4 @@
-import { Home } from 'lucide-react';
+import { FlaskConical, Home } from 'lucide-react';
 import {
   defineAppRoutes,
   defineSettingsRoutes,
@@ -43,6 +43,20 @@ const appRoutes: AppClientRouteContribution = defineAppRoutes([
     componentLoader: () => import('./pages/auth/reset-password.js'),
     name: 'reset-password',
     path: '/reset-password',
+  },
+  {
+    // A signed-in smoke-test page every user may open: `authz: 'skip'` keeps it out of page authorization, so its
+    // only requirement is a session. The counter it shows is component state and is deliberately not persisted.
+    auth: 'required',
+    authz: 'skip',
+    componentLoader: () => import('./pages/pipeline-smoke.js'),
+    name: 'pipeline-smoke',
+    navigation: {
+      title: 'navigation.pipelineSmoke',
+      icon: FlaskConical,
+      order: 10,
+    },
+    path: '/pipeline-smoke',
   },
 ]);
 
