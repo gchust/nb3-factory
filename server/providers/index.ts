@@ -1,5 +1,17 @@
 import type { ApplicationServiceProviderConstructor } from '@nocobase/app-server/application';
 
-const serviceProviders: readonly ApplicationServiceProviderConstructor[] = [];
+import { TodoProvider } from './todo.js';
+
+export {
+  createTodoService,
+  todoServiceToken,
+  TodoProvider,
+  TodoTitleRequiredError,
+} from './todo.js';
+export type { Todo, TodoService } from './todo.js';
+
+const serviceProviders: readonly ApplicationServiceProviderConstructor[] = [
+  TodoProvider,
+];
 
 export default serviceProviders;

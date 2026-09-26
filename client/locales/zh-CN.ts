@@ -88,6 +88,29 @@ const zhCN: AppResource = {
     title: '开始构建你的应用',
     description: '向 AI 助手描述你的需求，逐步构建页面、数据模型和业务流程。',
   },
+  todos: {
+    title: '待办事项',
+    description:
+      '一个简单的个人清单：添加任务、勾选完成，下次回来时状态依然保留。',
+    listTitle: '我的清单',
+    summary: '已完成 {{done}} / {{total}} 项',
+    addLabel: '新建待办',
+    addPlaceholder: '需要做什么？',
+    add: '添加',
+    adding: '正在添加…',
+    titleRequired: '请先填写标题再添加待办。',
+    addSuccess: '已添加待办',
+    addFailed: '添加待办失败，请重试。',
+    toggleFailed: '更新待办失败，请重试。',
+    loadFailed: '加载待办失败，请重试。',
+    forbidden: '你没有查看该清单的权限。',
+    emptyTitle: '还没有待办',
+    emptyDescription: '添加第一条待办开始使用。',
+    completed: '已完成',
+    pending: '待办',
+    markComplete: '标记为已完成',
+    markIncomplete: '标记为未完成',
+  },
 
   appearance: {
     title: '外观',
@@ -121,6 +144,7 @@ const zhCN: AppResource = {
   },
   navigation: {
     home: '首页',
+    todos: '待办事项',
     open: '打开导航',
     close: '关闭导航',
     expand: '展开导航',
