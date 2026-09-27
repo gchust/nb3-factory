@@ -95,7 +95,17 @@ try {
     appendGithubOutput(outputPath, 'build_comment_id', buildCommentId);
     appendGithubOutput(outputPath, 'comment_kind', task.commentKind);
   }
-  if (issue.state !== 'open' && task.commentKind !== 'reply') {
+  // External Issues archive submissions; their open/closed state is not run state.
+  // Only explicit dispatches and their validated recovery/handoff chain opt in.
+  const externalTask = issue.labels?.some((label) =>
+    (typeof label === 'string' ? label : label.name) === 'factory:external',
+  ) && (
+    (process.env.GITHUB_EVENT_NAME === 'workflow_dispatch' &&
+      (event.inputs?.external_run_id || event.inputs?.recovery_run_id)) ||
+    (process.env.GITHUB_EVENT_NAME === 'repository_dispatch' && continuation &&
+      event.client_payload?.previous_run_id)
+  );
+  if (issue.state !== 'open' && task.commentKind !== 'reply' && !externalTask) {
     throw new TaskInputError('只有打开状态的 Issue 才能运行搭建任务。');
   }
   const repositoryInfo = await client.getRepository();
@@ -134,7 +144,9 @@ try {
   if (ownPullRequest && ownPullRequest.base.ref !== task.targetBranch) {
     throw new TaskInputError('现有 PR 的合并目标与任务不一致；请先对齐配置，不自动改写旧 PR。');
   }
-  const blockingPullRequest = !isSharedTaskBase(task.targetBranch, defaultBranch) && openPullRequests.find(
+  // External submissions have separate Issue/work branch/PR identities; an old
+  // submission's unmerged PR must not block another run of the saved task.
+  const blockingPullRequest = !externalTask && !isSharedTaskBase(task.targetBranch, defaultBranch) && openPullRequests.find(
     (pull) =>
       pull.base?.ref === task.targetBranch &&
       pull.head?.repo?.full_name === repository &&

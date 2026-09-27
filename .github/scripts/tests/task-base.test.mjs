@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { execFile } from 'node:child_process';
 import { createServer } from 'node:http';
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { promisify } from 'node:util';
@@ -103,12 +103,13 @@ for (const [name, mutate] of [
 
 // Use the actual prepare and publish CLIs against one stateful HTTP fixture.
 // Git refs, PR query filtering and bot comments behave like the REST API.
-async function integration(t, { branch = '', existingWork = false, legacy = false } = {}) {
+async function integration(t, { branch = '', existingWork = false, legacy = false,
+  state = 'open', labels = [], eventName = 'issues', payload = {} } = {}) {
   const c = fixture();
   if (existingWork) c.refs.set('agent/issue-20', work);
   if (legacy) c.refs.set('issues-20', initial);
   const issues = new Map([[20, {
-    number: 20, title: '[Code Agent] Test', state: 'open', user: { login: 'owner' }, labels: [],
+    number: 20, title: '[Code Agent] Test', state, user: { login: 'owner' }, labels,
     body: `### 目标分支\n${branch}\n### 任务类型\n创建新系统\n### 业务需求\nBuild a real counter\n### 验收要求\nClick increments\n`,
   }]]);
   const pulls = [pull(10)];
@@ -152,17 +153,17 @@ async function integration(t, { branch = '', existingWork = false, legacy = fals
   await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
   const root = mkdtempSync(path.join(os.tmpdir(), 'factory-default-base-'));
   t.after(() => { server.closeAllConnections(); server.close(); rmSync(root, { recursive: true, force: true }); });
-  const env = { ...process.env, GITHUB_TOKEN: 'test-only', GITHUB_REPOSITORY: repository,
+  const env = { ...process.env, GITHUB_TOKEN: 'test-only', GITHUB_REPOSITORY: repository, GITHUB_EVENT_NAME: eventName,
     GITHUB_API_URL: `http://127.0.0.1:${server.address().port}`, GITHUB_RUN_ID: '101', GITHUB_SERVER_URL: 'https://github.com' };
   const run = (script, args) => promisify(execFile)(process.execPath, [path.resolve(import.meta.dirname, '..', script), ...args], { env, timeout: 10000 });
   const metadata = path.join(root, 'task.json');
   const event = path.join(root, 'event.json');
-  writeFileSync(event, JSON.stringify({ issue: { number: 20 }, repository: { owner: { login: 'test' } } }));
+  writeFileSync(event, JSON.stringify({ issue: { number: 20 }, repository: { owner: { login: 'test' } }, ...payload }));
   return { c, calls, pulls, metadata, issues,
     async prepare() {
       const output = path.join(root, 'output'); writeFileSync(output, '');
       await run('prepare-task.mjs', ['--event', event, '--metadata', metadata, '--output', output]);
-      return { metadata: JSON.parse(readFileSync(metadata, 'utf8')), output: readFileSync(output, 'utf8') };
+      return { metadata: existsSync(metadata) ? JSON.parse(readFileSync(metadata, 'utf8')) : null, output: readFileSync(output, 'utf8') };
     },
     async publish() {
       c.refs.set('agent/issue-20', work);
@@ -201,6 +202,52 @@ for (const branch of ['', 'develop']) {
     assert.equal(f.calls.filter((call) => call.route === '/pulls/120' && call.method === 'PATCH').length, 1);
   });
 }
+test('closed external submissions prepare and publish independently of an earlier application PR', async (t) => {
+  const f = await integration(t, { branch: 'apps/external', state: 'closed',
+    labels: [{ name: 'factory:external' }], eventName: 'workflow_dispatch',
+    payload: { inputs: { issue_number: 20, external_run_id: 'request-20' } } });
+  f.pulls[0].base.ref = 'apps/external';
+  const result = await f.prepare();
+  assert.match(result.output, /status=ready/);
+  assert.equal(result.metadata.workBranch, 'agent/issue-20');
+  assert.equal(result.metadata.task.targetBranch, 'apps/external');
+  await f.publish();
+  assert.equal(f.issues.get(20).state, 'closed');
+  assert.equal(f.calls.filter(c => c.route === '/pulls' && c.method === 'POST').length, 1);
+  assert.equal(f.calls.some(c => c.route === '/issues/20' && c.body?.state === 'open'), false);
+});
+
+for (const options of [
+  { labels: [], eventName: 'workflow_dispatch', payload: { inputs: { external_run_id: 'request' } } },
+  { labels: ['factory:external'], eventName: 'workflow_dispatch' },
+  { labels: ['factory:external'], eventName: 'issues' },
+]) {
+  test('closed Issues without both external label and explicit dispatch remain rejected: ' + JSON.stringify(options), async (t) => {
+    const f = await integration(t, { ...options, state: 'closed' });
+    const result = await f.prepare();
+    assert.match(result.output, /status=rejected/);
+    assert.equal(result.metadata, null);
+    assert.equal(f.calls.some(c => c.route === '/git/refs'), false);
+  });
+}
+
+for (const options of [
+  { eventName: 'workflow_dispatch', payload: { inputs: { recovery_run_id: '100' } } },
+  { eventName: 'repository_dispatch', payload: { action: 'code-agent-continue', client_payload: { previous_run_id: 100 } } },
+]) {
+  test('closed external recovery and handoff remain runnable: ' + options.eventName, async (t) => {
+    const f = await integration(t, { ...options, state: 'closed', labels: ['factory:external'] });
+    assert.match((await f.prepare()).output, /status=ready/);
+    assert.equal(f.issues.get(20).state, 'closed');
+  });
+}
+
+test('ordinary custom application tasks still wait for an earlier open PR', async (t) => {
+  const f = await integration(t, { branch: 'apps/external' });
+  f.pulls[0].base.ref = 'apps/external';
+  assert.match((await f.prepare()).output, /status=waiting/);
+});
+
 test('actual prepare preserves a pre-existing legacy task rather than migrating its PR', async (t) => {
   const f = await integration(t, { existingWork: true, legacy: true });
   const result = await f.prepare();
