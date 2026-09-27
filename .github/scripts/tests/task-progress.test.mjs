@@ -234,3 +234,23 @@ test('a read-only question cannot overwrite the business build progress', async 
   assert.equal(await publishProgress(f.api, repository, { runId: 123, attempt: 1 }, now), false);
   assert.equal(f.writes.length, 0);
 });
+
+test('task limits stay visible during diagnosis and after the failed run ends', async () => {
+  const f = fakeApi();
+  const stopped = { ...live, outcome: 'budget-exhausted' };
+  assert.equal(validateSnapshot(stopped, now).outcome, 'budget-exhausted');
+  await publish(f, stopped);
+  assert.match(f.writes.at(-1).body.body, /已停止自动修复，待诊断/);
+  f.setRun({ status: 'completed', conclusion: 'failure' });
+  f.setJobs([
+    { name: 'prepare', conclusion: 'success' },
+    {
+      name: 'agent',
+      status: 'completed',
+      conclusion: 'failure',
+      completed_at: new Date(now).toISOString(),
+    },
+  ]);
+  await publish(f, stopped);
+  assert.match(f.writes.at(-1).body.body, /已停止自动修复，待诊断/);
+});

@@ -55,6 +55,7 @@ const FILE_RULES = [
   { phase: 'verification', pattern: /^verify-final\.log$/u },
   { phase: 'summary', pattern: /^change-summary\.json$/u },
   { phase: 'summary', pattern: /^repair-summary\.json$/u },
+  { phase: 'summary', pattern: /^task-diagnostic\.(?:json|md)$/u },
   { phase: 'summary', pattern: /^handoff\.json$/u },
   { phase: 'summary', pattern: /^(?:task-metadata|baseline)\.json$/u },
   { phase: 'summary', pattern: /^agent\.patch$/u },

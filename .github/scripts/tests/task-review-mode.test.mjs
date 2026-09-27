@@ -100,8 +100,45 @@ test('both Issue forms expose the same safe choice and the pipeline keeps every 
   const form=readFileSync(new URL('../../ISSUE_TEMPLATE/code-agent-task.yml',import.meta.url),'utf8');
   assert.match(form, /label: 框架评测/);
   const workflow=readFileSync(new URL('../../workflows/code-agent-task.yml',import.meta.url),'utf8');
-  assert.match(workflow,/Verify and repair until successful/);
+  assert.match(workflow,/Verify and repair within task limits/);
   assert.match(workflow,/Independently verify the applied patch/);
   assert.match(workflow,/needs\.verify-final\.result == 'success'/);
   assert.doesNotMatch(workflow,/buildReviewMode.*(?:skip|verify)/);
+});
+
+test('a stopped light task attempts read-only diagnosis even when the implementation deadline expired', async (t) => {
+  const root = mkdtempSync(path.join(os.tmpdir(), 'terminal-review-'));
+  t.after(() => rmSync(root, { recursive: true, force: true }));
+  const artifacts = path.join(root, 'artifacts');
+  mkdirSync(artifacts);
+  writeFileSync(
+    path.join(artifacts, 'task-metadata.json'),
+    JSON.stringify({
+      repository: 'o/r',
+      issue: { number: 7 },
+      task: { buildReviewMode: 'off' },
+    }),
+  );
+  writeFileSync(
+    path.join(artifacts, 'task-diagnostic.json'),
+    JSON.stringify({ version: 1, status: 'needs-diagnosis' }),
+  );
+  // A missing application deliberately prevents snapshot/model work. Reaching
+  // that failure proves expired implementation time does not skip diagnosis.
+  const result = await runBuildReview(
+    path.join(root, 'missing-application'),
+    artifacts,
+    {
+      FACTORY_BUILD_REVIEW: 'off',
+      FACTORY_RUN_DEADLINE_EPOCH_SECONDS: '1',
+      FACTORY_JOB_STARTED_EPOCH_SECONDS: String(
+        Math.floor(Date.now() / 1000) - 18_000,
+      ),
+    },
+  );
+  assert.equal(result.execution.buildReviewMode, 'full');
+  assert.equal(result.execution.source, 'task-diagnosis');
+  assert.equal(result.state, 'failed');
+  assert.doesNotMatch(result.reason, /剩余预算不足|明确关闭/);
+  assert.equal(result.evaluation, null);
 });

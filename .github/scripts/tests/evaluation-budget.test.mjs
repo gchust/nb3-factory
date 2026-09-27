@@ -73,7 +73,7 @@ test('repair count and remaining active time stop new phases before they start',
     assert.match(continuationRefusal(state, 2, now), /续跑次数/);
   });
   withEnv({ FACTORY_JOB_STARTED_EPOCH_SECONDS: String(now - 3500) }, () => assert.match(continuationRefusal(state, 1, now), /已用尽/));
-  assert.equal(budgetExhausted({ repairAttempts: 99 }, 'repair'), null, 'no budget, no change');
+  assert.match(budgetExhausted({ repairAttempts: 99 }, 'repair'), /修复次数/, 'ordinary tasks are bounded too');
 });
 
 test('the handoff guard marks budget-exhausted and refuses the continuation; the repair loop exits 76 without a handoff', t => {

@@ -13,6 +13,10 @@ if (command === 'prepare') {
     '--continuation',
   );
   const output = required(args.output, '--output');
+  if (continuation > 1)
+    throw new Error(
+      'Task allows only one five-hour Handoff; stop for diagnosis.',
+    );
   const sha = controlSha(process.env.FACTORY_CONTROL_SHA);
   const payload = {
     schemaVersion: 1,
@@ -38,6 +42,10 @@ if (command === 'prepare') {
     args.continuation ?? '1',
     '--continuation',
   );
+  if (continuation > 1)
+    throw new Error(
+      'Task allows only one five-hour Handoff; stop for diagnosis.',
+    );
   const sha = controlSha(process.env.FACTORY_CONTROL_SHA);
   const token = required(process.env.GITHUB_TOKEN, 'GITHUB_TOKEN');
   const repository = required(

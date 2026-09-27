@@ -393,3 +393,9 @@ Navigation groups retain their expanded or collapsed state while the navigation 
 Framework reviews prioritize the complete observable implementation, repair and QA histories. Stream and redact large JSONL records without dropping whole files, long events or accepted Handoff ancestors to fit a byte budget. Keep source hashes and reconstructable chunk locations. Deterministic event indexes aid navigation; they never replace raw tool calls and results.
 
 Track input completeness separately from cited process coverage. A Skill inventory/hash is not proof of Skill use. New reviews must cite original events for each invoked phase and explicitly address indexed error signals; incomplete process coverage remains partial. Preserve versioned fingerprint validation for existing reports, and never reuse ancestor QA verdicts or double-count their usage.
+
+## Factory task termination
+
+Ordinary tasks and evaluation samples share the ceilings in `.github/scripts/task-policy.mjs`: five repair attempts, three observations of an identical failure per criterion/check, at most one five-hour Handoff, and ten hours of active implementation/repair/QA time. An evaluation plan can only tighten these limits. Pipeline state carries counters, failure fingerprints and elapsed time across handoffs and explicit recoveries; never clear them to get a task through.
+
+A terminal limit saves `task-diagnostic.json` and `task-diagnostic.md`, preserves the patch and raw evidence, and runs at most one additional fifteen-minute read-only diagnosis using the independent reviewer. This cleanup cannot resume repairs, dispatch another continuation, authorize final verification, or publish a business PR. Stopped checkpoints are not recoverable. Attribute framework, Skill, template, application, factory and environment issues from evidence; repeated failures alone are not proof of a NocoBase3 defect. Preserve unknown causes and incomplete diagnoses.

@@ -164,6 +164,8 @@ export function createReviewSnapshot(
     'retro.json',
     'change-summary.json',
     'repair-summary.json',
+    'task-diagnostic.json',
+    'task-diagnostic.md',
   ]) {
     const from = path.join(artifacts, relative);
     if (existsSync(from)) capture(from, `artifacts/${relative}`);
@@ -266,21 +268,27 @@ export async function runBuildReview(
   const persist = () =>
     save(output, JSON.parse(scrubSecrets(redact(JSON.stringify(report)))));
   persist();
+  const diagnosing =
+    existsSync(path.join(artifacts, 'task-diagnostic.json')) &&
+    readReviewJson(artifacts, 'task-diagnostic.json')?.status ===
+      'needs-diagnosis';
   let snapshot, capture, invocationError;
   const started = Date.now();
   try {
     const mode = resolveBuildReviewMode(
       metadata.task,
       env,
-      Boolean(options.source),
+      Boolean(options.source) || diagnosing,
     );
     report.execution = {
       buildReviewMode: mode,
-      source: options.source
-        ? 'reassessment'
-        : metadata.task?.buildReviewMode
-          ? 'task'
-          : 'repository',
+      source: diagnosing
+        ? 'task-diagnosis'
+        : options.source
+          ? 'reassessment'
+          : metadata.task?.buildReviewMode
+            ? 'task'
+            : 'repository',
     };
     if (mode === 'off') {
       report.reason = '本轮已明确关闭独立评审；只展示流水线事实。';
@@ -289,9 +297,19 @@ export async function runBuildReview(
     const requested = Number(env.FACTORY_BUILD_REVIEW_TIMEOUT_SECONDS || 900);
     if (!Number.isInteger(requested) || requested < 30 || requested > 1800)
       throw new Error('Review timeout must be 30–1800 seconds');
-    const deadline = env.FACTORY_RUN_DEADLINE_EPOCH_SECONDS
-      ? Number(env.FACTORY_RUN_DEADLINE_EPOCH_SECONDS)
-      : null;
+    const deadline = diagnosing
+      ? Math.min(
+          Math.ceil(Date.now() / 1000) + 900,
+          Number(
+            env.FACTORY_JOB_STARTED_EPOCH_SECONDS ||
+              Math.ceil(Date.now() / 1000),
+          ) +
+            21_600 -
+            120,
+        )
+      : env.FACTORY_RUN_DEADLINE_EPOCH_SECONDS
+        ? Number(env.FACTORY_RUN_DEADLINE_EPOCH_SECONDS)
+        : null;
     if (deadline !== null && !Number.isSafeInteger(deadline))
       throw new Error('Invalid runner deadline');
     const remaining =
@@ -438,6 +456,9 @@ export async function runBuildReview(
         ...env,
         CODE_AGENT_THINKING: env.FACTORY_REVIEW_THINKING || 'medium',
         FACTORY_AGENT_ROLE: 'review',
+        ...(diagnosing
+          ? { FACTORY_RUN_DEADLINE_EPOCH_SECONDS: String(deadline) }
+          : {}),
       },
       adapter.credentials,
     );

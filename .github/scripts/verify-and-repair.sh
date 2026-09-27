@@ -36,6 +36,14 @@ summary() {
 }
 handoff() {
   trap - EXIT
+  local status=0
+  state handoff || status=$?
+  if [[ "$status" -eq 76 ]]; then
+    summary ',"budgetExhausted":true' 76
+    echo 'Task continuation limit reached; stopping for read-only diagnosis.'
+    exit 76
+  fi
+  if [[ "$status" -ne 75 ]]; then exit "$status"; fi
   summary ',"handoff":true' 75
   echo "Runner budget reached during $phase; requesting handoff."
   exit 75
@@ -43,7 +51,7 @@ handoff() {
 exhausted() {
   trap - EXIT
   summary ',"budgetExhausted":true' 76
-  echo "Evaluation sample budget reached before $1; keeping the sealed facts without another repair or continuation."
+  echo "Task policy or evaluation budget reached before $1; keeping the sealed facts without another repair or continuation."
   exit 76
 }
 budget() {
@@ -145,7 +153,7 @@ while true; do
       echo "Verification passed after ${verification_attempt} attempt(s) and ${repair_attempts} repair(s)."
       break
     fi
-    state capture "$failure_kind" "$repair_log" "$failure_dir/report.json" "$failure_dir/application.log"
+    state capture "$failure_kind" "$repair_log" "$failure_dir/report.json" "$failure_dir/application.log" "$task_metadata"
     phase=repair
   fi
 
