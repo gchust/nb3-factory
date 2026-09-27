@@ -1,0 +1,258 @@
+name: Framework problem fix
+
+# TestManage reads this marker before dispatching: testmanage:problem-fix-v1
+run-name: >-
+  Framework fix · problem #${{ inputs.problem_id }}${{ inputs.external_run_id != '' && format(' · request {0}', inputs.external_run_id) || '' }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      problem_id:
+        description: TestManage problem ID
+        required: true
+        type: string
+      external_run_id:
+        description: TestManage fix run ID (set by TestManage; leave empty for a manual run)
+        required: false
+        type: string
+        default: ''
+      base_ref:
+        description: nocobase/nocobase3 branch to review and fix against
+        required: false
+        type: string
+        default: develop
+
+permissions: {}
+
+# TestManage admits one active fix per problem; this only orders manual runs.
+concurrency:
+  group: framework-fix-problem-${{ inputs.problem_id }}
+  queue: max
+
+env:
+  TESTMANAGE_API_BASE: ${{ vars.TESTMANAGE_API_BASE }}
+  EVALUATION_ENDPOINT: ${{ vars.EVALUATION_ENDPOINT }}
+
+jobs:
+  # Holds only the TestManage key. Claims the problem and freezes its context.
+  claim:
+    if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    outputs:
+      run_id: ${{ steps.claim.outputs.run_id }}
+      problem_id: ${{ steps.claim.outputs.problem_id }}
+      base_ref: ${{ steps.claim.outputs.base_ref }}
+      base_sha: ${{ steps.claim.outputs.base_sha }}
+      branch: ${{ steps.claim.outputs.branch }}
+      control_sha: ${{ steps.pin.outputs.sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          path: control
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24.x
+      - name: Pin trusted control plane
+        id: pin
+        run: echo "sha=$(git -C control rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+      - name: Claim the problem in TestManage and resolve the base commit
+        id: claim
+        env:
+          PROBLEM_ID: ${{ inputs.problem_id }}
+          EXTERNAL_RUN_ID: ${{ inputs.external_run_id }}
+          BASE_REF: ${{ inputs.base_ref }}
+          TESTMANAGE_TOKEN: ${{ secrets.EVALUATION_TOKEN }}
+        run: node control/.github/scripts/framework-fix.mjs claim --output "$RUNNER_TEMP/fix-input"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: framework-fix-input-${{ github.run_id }}
+          path: ${{ runner.temp }}/fix-input
+          retention-days: 14
+          overwrite: true
+
+  # Holds only the Claude Code credential. Everything it produces is data that
+  # the publish job validates; it cannot push, open PRs or write to TestManage.
+  review:
+    needs: claim
+    runs-on: ubuntu-latest
+    timeout-minutes: 150
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.claim.outputs.control_sha }}
+          path: control
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          repository: nocobase/nocobase3
+          ref: ${{ needs.claim.outputs.base_sha }}
+          path: workspace
+          persist-credentials: false
+      - uses: actions/download-artifact@v4
+        with:
+          name: framework-fix-input-${{ github.run_id }}
+          path: ${{ runner.temp }}/fix-input
+      - uses: pnpm/action-setup@v4
+        with:
+          package_json_file: workspace/package.json
+          run_install: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24.x
+      - name: Install nocobase3 dependencies
+        id: dependencies
+        continue-on-error: true
+        working-directory: workspace
+        run: pnpm install --frozen-lockfile
+      - name: Write the review prompt
+        env:
+          DEPENDENCIES: ${{ steps.dependencies.outcome }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/fix-output"
+          node control/.github/scripts/framework-fix.mjs prompt \
+            --claim "$RUNNER_TEMP/fix-input/claim.json" \
+            --verdict "$RUNNER_TEMP/fix-output/verdict.json" \
+            --dependencies "$DEPENDENCIES" \
+            --output "$RUNNER_TEMP/fix-output/prompt.md"
+      - name: Install pinned Claude Code
+        env:
+          CODE_AGENT_ENGINE: claude-code
+          CLAUDE_CODE_VERSION: ${{ vars.CLAUDE_CODE_VERSION }}
+          FACTORY_AGENT_INSTALL_RECORD: ${{ runner.temp }}/agent-install.json
+        run: node control/.github/scripts/install-agent.mjs
+      - name: Re-check and fix the problem with Claude Code
+        id: agent
+        env:
+          CODE_AGENT_ENGINE: claude-code
+          FACTORY_AGENT_INSTALL_RECORD: ${{ runner.temp }}/agent-install.json
+          FACTORY_CONTROL_SHA: ${{ needs.claim.outputs.control_sha }}
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          CLAUDE_CODE_MODEL: ${{ vars.FRAMEWORK_FIX_CLAUDE_MODEL || 'opus' }}
+          CLAUDE_CODE_EFFORT: ${{ vars.FRAMEWORK_FIX_CLAUDE_EFFORT || 'high' }}
+          CODE_AGENT_INVOCATION_TIMEOUT_SECONDS: 7200
+          CODE_AGENT_IDLE_TIMEOUT_SECONDS: 900
+        run: |
+          set +e
+          node control/.github/scripts/run-agent.mjs \
+            --workspace workspace \
+            --prompt "$RUNNER_TEMP/fix-output/prompt.md" \
+            --log "$RUNNER_TEMP/fix-output/agent-fix.jsonl" \
+            --agentDir "$RUNNER_TEMP/claude-code"
+          echo "status=$?" >> "$GITHUB_OUTPUT"
+      - name: Decide what may be published
+        if: always() && steps.agent.outcome != 'skipped'
+        env:
+          BASE_SHA: ${{ needs.claim.outputs.base_sha }}
+          AGENT_STATUS: ${{ steps.agent.outputs.status }}
+        run: |
+          # The Agent was told not to commit. If it did, keep its changes as
+          # working-tree edits against the claimed base.
+          if [[ "$(git -C workspace rev-parse HEAD)" != "$BASE_SHA" ]]; then
+            git -C workspace reset --soft "$BASE_SHA"
+          fi
+          node control/.github/scripts/create-patch.mjs \
+            --workspace workspace \
+            --patch "$RUNNER_TEMP/fix-output/fix.patch" \
+            --summary "$RUNNER_TEMP/fix-output/change-summary.json" \
+            --allow-empty true
+          node control/.github/scripts/framework-fix.mjs decide \
+            --verdict "$RUNNER_TEMP/fix-output/verdict.json" \
+            --changes "$RUNNER_TEMP/fix-output/change-summary.json" \
+            --agent-status "${AGENT_STATUS:-1}" \
+            --output "$RUNNER_TEMP/fix-output/decision.json"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: framework-fix-output-${{ github.run_id }}
+          path: ${{ runner.temp }}/fix-output
+          retention-days: 14
+          overwrite: true
+          if-no-files-found: warn
+
+  # Holds the maintainer's PR token and the TestManage key, and never runs
+  # Agent or repository code: it applies the validated patch to a clean base.
+  publish:
+    needs: [claim, review]
+    if: always() && needs.claim.result == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    env:
+      FIX_RUN_ID: ${{ needs.claim.outputs.run_id }}
+      BRANCH: ${{ needs.claim.outputs.branch }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.claim.outputs.control_sha }}
+          path: control
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24.x
+      - uses: actions/download-artifact@v4
+        with:
+          name: framework-fix-input-${{ github.run_id }}
+          path: fix-input
+      - uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          name: framework-fix-output-${{ github.run_id }}
+          path: fix-output
+      - name: Read the decision
+        id: decision
+        run: |
+          publish=false
+          if [[ -f fix-output/decision.json ]]; then
+            publish=$(node -p 'JSON.parse(require("node:fs").readFileSync("fix-output/decision.json","utf8")).publish === true')
+          fi
+          echo "publish=$publish" >> "$GITHUB_OUTPUT"
+      - uses: actions/checkout@v4
+        if: steps.decision.outputs.publish == 'true'
+        with:
+          repository: nocobase/nocobase3
+          ref: ${{ needs.claim.outputs.base_sha }}
+          path: publish
+          token: ${{ secrets.NOCOBASE3_PR_TOKEN }}
+      - name: Open a draft PR on nocobase/nocobase3
+        id: pr
+        if: steps.decision.outputs.publish == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.NOCOBASE3_PR_TOKEN }}
+        run: |
+          node control/.github/scripts/apply-patch.mjs --workspace publish --patch fix-output/fix.patch --branch "$BRANCH"
+          node control/.github/scripts/framework-fix.mjs identity --workspace publish
+          node control/.github/scripts/framework-fix.mjs commit-message \
+            --decision fix-output/decision.json --claim fix-input/claim.json --output "$RUNNER_TEMP/commit-message.txt"
+          git -C publish -c core.hooksPath=/dev/null commit --no-verify -F "$RUNNER_TEMP/commit-message.txt"
+          # The branch belongs to this TestManage run; a rerun replaces it.
+          existing=$(git -C publish ls-remote origin "refs/heads/$BRANCH" | cut -f1)
+          git -C publish -c core.hooksPath=/dev/null push --no-verify \
+            --force-with-lease="refs/heads/$BRANCH:$existing" origin "HEAD:refs/heads/$BRANCH"
+          node control/.github/scripts/framework-fix.mjs open-pr \
+            --claim fix-input/claim.json --decision fix-output/decision.json --branch "$BRANCH"
+      - name: Report the result to TestManage
+        if: always()
+        env:
+          TESTMANAGE_TOKEN: ${{ secrets.EVALUATION_TOKEN }}
+          REVIEW_RESULT: ${{ needs.review.result }}
+          PR_URL: ${{ steps.pr.outputs.url }}
+          PR_OUTCOME: ${{ steps.pr.outcome }}
+          BASE_SHA: ${{ needs.claim.outputs.base_sha }}
+          PROBLEM_ID: ${{ needs.claim.outputs.problem_id }}
+        run: |
+          node control/.github/scripts/framework-fix.mjs report \
+            --decision fix-output/decision.json \
+            --review-result "$REVIEW_RESULT" \
+            --pull-request-url "$PR_URL" \
+            --publish-outcome "$PR_OUTCOME" \
+            --branch "$BRANCH" \
+            --base-sha "$BASE_SHA" \
+            --problem-id "$PROBLEM_ID"
