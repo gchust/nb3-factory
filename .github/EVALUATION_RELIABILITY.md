@@ -28,7 +28,7 @@
 未设置时启用。`nb3-customer-memo` 保留手动运行。新增重型案例请显式加入计划并给出预算，
 不自动把全部旧标签迁移为每日计划。
 
-旧 `factory:daily` 标签不删除、不修改来源 Issue；`Preset build tests (manual legacy)`
+`factory:daily` 标签不删除、不修改来源 Issue；`Preset build tests`
 保留手动入口，但没有 cron。该入口仍是普通搭建，没有批次的全链预算；需要预算和
 可比较结果时使用计划。它不会占用批次槽位，因此不要同时手动重复压测。
 

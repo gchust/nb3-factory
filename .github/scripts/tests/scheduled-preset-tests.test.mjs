@@ -361,7 +361,7 @@ test('label initialization is idempotent and never selects a case or launches a 
   assert.deepEqual([...state.labels], ['factory:daily']);
   assert.equal(writes(state).length, 1);
   assert.equal(writes(state)[0].route, '/labels');
-  assert.match(writes(state)[0].body.description, /legacy manual launcher/);
+  assert.match(writes(state)[0].body.description, /manual launcher/);
   assert.equal(state.tasks.length, 0);
   assert.equal(dispatches(state).length, 0);
 });
@@ -389,8 +389,10 @@ test('summary escapes table and HTML content', () => {
   assert.match(summary, /&#124;/);
 });
 
-test('legacy workflow remains manual after automatic tests migrate to bounded batches', () => {
+test('preset workflow remains manual after automatic tests migrate to bounded batches', () => {
   const workflow = readFileSync(new URL('../../workflows/scheduled-preset-tests.yml', import.meta.url), 'utf8');
+  assert.match(workflow, /^name: Preset build tests$/m);
+  assert.doesNotMatch(workflow, /legacy/i);
   assert.doesNotMatch(workflow, /cron:/);
   assert.doesNotMatch(workflow, /FACTORY_PRESET_TEST_ISSUES|PRESET_ISSUES|preset_issues|vars\./);
   assert.match(workflow, /if: github.event_name == 'workflow_dispatch'/);
