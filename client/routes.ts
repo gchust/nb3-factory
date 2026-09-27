@@ -1,4 +1,4 @@
-import { Home } from 'lucide-react';
+import { Contact, Home, TrendingUp, Users } from 'lucide-react';
 import {
   defineAppRoutes,
   defineSettingsRoutes,
@@ -43,6 +43,76 @@ const appRoutes: AppClientRouteContribution = defineAppRoutes([
     componentLoader: () => import('./pages/auth/reset-password.js'),
     name: 'reset-password',
     path: '/reset-password',
+  },
+  {
+    // The customer list. Its `new` dialog and `:customerId` detail drawer are children, so they render inside the
+    // list page's `<Outlet />` and keep the list behind them mounted. `authz: 'skip'` matches the landing page: the
+    // task asks for these records to be available to every signed-in user, and the server routes do the same.
+    auth: 'required',
+    authz: 'skip',
+    name: 'customers',
+    path: '/customers',
+    componentLoader: () => import('./pages/customers/index.js'),
+    navigation: { title: 'navigation.customers', icon: Users },
+    children: [
+      {
+        name: 'customer-create',
+        path: 'new',
+        componentLoader: () => import('./pages/customers/new.js'),
+      },
+      {
+        name: 'customer-detail',
+        path: ':customerId',
+        componentLoader: () => import('./pages/customers/detail.js'),
+        children: [
+          {
+            name: 'customer-edit',
+            path: 'edit',
+            componentLoader: () => import('./pages/customers/edit.js'),
+          },
+        ],
+      },
+    ],
+  },
+  {
+    auth: 'required',
+    authz: 'skip',
+    name: 'contacts',
+    path: '/contacts',
+    componentLoader: () => import('./pages/contacts/index.js'),
+    navigation: { title: 'navigation.contacts', icon: Contact },
+    children: [
+      {
+        name: 'contact-create',
+        path: 'new',
+        componentLoader: () => import('./pages/contacts/new.js'),
+      },
+      {
+        name: 'contact-edit',
+        path: ':contactId/edit',
+        componentLoader: () => import('./pages/contacts/edit.js'),
+      },
+    ],
+  },
+  {
+    auth: 'required',
+    authz: 'skip',
+    name: 'opportunities',
+    path: '/opportunities',
+    componentLoader: () => import('./pages/opportunities/index.js'),
+    navigation: { title: 'navigation.opportunities', icon: TrendingUp },
+    children: [
+      {
+        name: 'opportunity-create',
+        path: 'new',
+        componentLoader: () => import('./pages/opportunities/new.js'),
+      },
+      {
+        name: 'opportunity-edit',
+        path: ':opportunityId/edit',
+        componentLoader: () => import('./pages/opportunities/edit.js'),
+      },
+    ],
   },
 ]);
 

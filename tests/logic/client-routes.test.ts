@@ -91,9 +91,20 @@ describe('app client routes', () => {
     // that requires sign-in adds an entry here, because that is a new grant somebody has to be given.
     const resolved = resolveRoutes();
 
-    // The landing page opted out of page authorization, so it is reachable by every signed-in user.
+    // The landing page opted out of page authorization, so it is reachable by every signed-in user. The sales pages opt
+    // out for the same reason: the task makes them available to every signed-in user.
     expect(pageAuthorizations(resolved.routes)).toEqual([
       { name: 'home', authorizedAs: null },
+      { name: 'customers', authorizedAs: null },
+      { name: 'customer-create', authorizedAs: null },
+      { name: 'customer-detail', authorizedAs: null },
+      { name: 'customer-edit', authorizedAs: null },
+      { name: 'contacts', authorizedAs: null },
+      { name: 'contact-create', authorizedAs: null },
+      { name: 'contact-edit', authorizedAs: null },
+      { name: 'opportunities', authorizedAs: null },
+      { name: 'opportunity-create', authorizedAs: null },
+      { name: 'opportunity-edit', authorizedAs: null },
     ]);
   });
 });
