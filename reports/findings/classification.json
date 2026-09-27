@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "inputHash": "bf1c6f2a2c583022623e5ff445da5608e71c3f4244a11036e497e2bd42507621",
+  "inputHash": "128445e12266b37830d3b2d4713f3ce0d0bd46c7497d9db8b5339c7017178307",
   "sources": [
     {
       "id": "224:35881009045:2:F2",
@@ -366,6 +366,21 @@
       "id": "376:36248781387:1:F3",
       "report": "376:36248781387:1",
       "fingerprint": "0f945b54bb3d630460cc31b13c4f34434494d344882a79a1faf410b3abfbc03c"
+    },
+    {
+      "id": "393:36301951360:1:F2",
+      "report": "393:36301951360:1",
+      "fingerprint": "f77956f3d32eafc173fc82cd706589db975764f6841357590ef0dcab3549025c"
+    },
+    {
+      "id": "393:36301951360:1:F3",
+      "report": "393:36301951360:1",
+      "fingerprint": "d9ec5d78c23cde8326d5e039b7bcf4de50b876fbf9ee6fe16a792586ca261d9c"
+    },
+    {
+      "id": "393:36301951360:1:F4",
+      "report": "393:36301951360:1",
+      "fingerprint": "e59e175d4b3aa334604d6a9d6f9e275b23054cae59e55aa4952e6d0ebf04d375"
     }
   ],
   "groups": [
@@ -741,15 +756,36 @@
       "members": [
         "366:36276932178:1:F8"
       ]
+    },
+    {
+      "title": "Filter/Sort builder API 完全未文档化",
+      "reason": "属 nocobase-db SKILL §4 的遗漏型文档缺口：只写 filter/values/select/sort 接受 builder 回调或等价 JSON AST，却未列任何 builder 方法与操作符名。E35 为 SKILL 文本；E22/E23 显示 filter-builder.js 实际暴露 DefaultFilterBuilder 与 DateOperators（on/before/notBefore/between 及 $date* 操作符）；E8 显示应用用 builder.date().notBefore、builder.string().eq、builder.or、sort.field().desc() 完成 C03 筛选排序。三者对应同一能力‘有能力无文档’，修复方向同为补方法清单与操作符对照表。与聚合示例（224:F7/339:F2）、约束选项（373:F3）、README 错误声明（393:F3）的受影响 API 与修复位置不同，单独保留。",
+      "members": [
+        "393:36301951360:1:F2"
+      ]
+    },
+    {
+      "title": "db 包 README 宣称 Repository/Filter/Sort 不可调用，与公开导出相反",
+      "reason": "属错误说明：E24 显示 packages/@nocobase/db/README.zh-CN.md 的“当前边界”把 Repository、Filter Builder、Filter AST、Sort AST 列为未来提案、当前不可调用；E25 显示 dist/src/index.d.ts 实际公开导出 Repository/FilterBuilder/SortBuilder 等；E8 显示应用已用 Repository + builder filter/sort 成功读写。三者构成‘声明与公开导出/实际用法相反’的同一错误指引，修复方向同为改写该边界声明。与同报告 F2 的遗漏型缺口不同（一为缺、一为错），与其它错误说明（writePolicy、Query metadata）的断言对象也不同，单独保留。",
+      "members": [
+        "393:36301951360:1:F3"
+      ]
+    },
+    {
+      "title": "模板 DatePicker 受控值被清空后仍显示旧日期",
+      "reason": "属模板组件缺陷：E19 显示 app/client/components/date-picker.tsx 用 `value ?? internal` 计算显示值，父组件把受控 value 清为 undefined（Clear filters）时会回退到上次内部选择；E41 的 form.md 将该组件描述为受控 `value: Date | undefined`，E42 的 ui-guidelines T1.2 要求筛选控件显示当前值。证据对应‘受控语义被内部状态覆盖’的同一根因，修复方向为受控模式仅用 value。与其它文档/框架/插件缺口根因不同，单独保留。",
+      "members": [
+        "393:36301951360:1:F4"
+      ]
     }
   ],
   "classifier": {
     "engine": "pi",
     "model": "deepseek-v4.1-flash",
     "version": "0.86.1",
-    "runId": "36289340631",
+    "runId": "36304945105",
     "attempt": 1,
-    "controlSha": "5c9147b0d4e5220a495310c7bc0fd9b973ac3156",
-    "completedAt": "2026-09-27T02:46:08.177Z"
+    "controlSha": "00126e4ac70304a552199d52460a5241a2d4571f",
+    "completedAt": "2026-09-27T08:04:36.943Z"
   }
 }
