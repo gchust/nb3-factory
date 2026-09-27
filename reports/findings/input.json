@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "inputHash": "0eaf3844770daf2579c8d7a1ec5a79f3002946384bc57420a7337529807f2080",
+  "inputHash": "3f05f43d1439d123988c926970b4cca0caccb402f1260b25b8b1509ae3cee14c",
   "findings": [
     {
       "id": "408:36329180371:1:F2",
@@ -79,6 +79,256 @@
         }
       ],
       "fingerprint": "f8a4ff2afada4e19ac479be17cffdfd43377763680db5d8ee9da17728e38ecd3"
+    },
+    {
+      "id": "411:36329191920:1:F2",
+      "report": "411:36329191920:1",
+      "issue": 411,
+      "taskTitle": "客户、联系人与商机管理",
+      "appVersion": "1.0.0-beta.47",
+      "appTemplate": "@nocobase/app-template-default",
+      "finding": {
+        "id": "F2",
+        "kind": "improvement",
+        "owner": "template",
+        "severity": "minor",
+        "confidence": "confirmed",
+        "status": "open",
+        "title": "缺少对 useRouteOverlay 作用域误用的静态护栏",
+        "detail": "模板提供的 useRouteOverlay 只在运行时通过 context 为空抛错来防护。页面顶层误用不会在类型检查或既有测试中暴露：repair-2 新增的 route-overlay.test.tsx 只渲染正确地在 provider 内调用 Actions 的用例，不覆盖“页面组件自身调用”的回归。结果是同一错误可以在 5 个文件同时存在并通过 build。",
+        "impact": "错误直到浏览器访问 /new 或 /edit 才以整页 Unable to load page 暴露，且守卫抛错发生在 React 渲染期，用户看到的是通用错误页而非可操作的提示。",
+        "suggestedChange": "在模板中为 useRouteOverlay 增加开发期（非抛错）警告或 ESLint 规则/测试，检测在返回 RouteDialog/RouteDrawer 的组件顶层调用的情况，并在默认模板测试中保留一个反例。",
+        "evidence": [
+          "E22",
+          "E30",
+          "E31",
+          "E33"
+        ],
+        "diagnosis": {
+          "category": "usability-improvement",
+          "trigger": "页面组件（返回 RouteDialog/RouteDrawer 的那一层）直接调用 useRouteOverlay()。",
+          "expected": "约定应能在开发期被静态或测试手段发现，或至少给出可操作的错误提示而不是整页崩溃。",
+          "actual": "仅运行时 context 守卫抛错，整条路由显示 Unable to load page；模板测试只覆盖正确用法，未拦截该回归。",
+          "workaround": "人工按 overlay.md §2.4 检查调用位置并把 useRouteOverlay 下移到 overlay 内部组件。",
+          "acceptance": "新增反例测试或 lint 规则后，页面顶层误用会在 CI 失败，而正确用法保持通过。"
+        }
+      },
+      "targets": [
+        "app/AGENTS.md"
+      ],
+      "paths": [
+        "AGENTS.md"
+      ],
+      "evidence": [
+        {
+          "id": "E22",
+          "kind": "skill",
+          "path": "app/AGENTS.md",
+          "observation": "app/AGENTS.md 第 107 行要求先在 defineAppRoutes 声明子路由与 Outlet 再渲染 RouteDialog/RouteDrawer，并强调 useRouteOverlay 只能在 overlay 的后代组件调用。",
+          "lines": [
+            105,
+            109
+          ],
+          "excerpt": "**Declare navigation on the route.** App, Settings and Dev menus read `navigation: { title: 'navigation.orders' }`; titles resolve in the owning locale namespace. Add the translation in `client/locales/`. Refine resources remain for CRUD and do not add menu entries.\n\nUse recursive groups to organize menus; their path is optional. Pages may also have children, but must manually render `Outlet`. For URL-addressable dialogs and drawers, declare the child in `defineAppRoutes()` in `client/routes.ts`, place the owning page's `Outlet`, then render `RouteDialog` or `RouteDrawer`. Call `useRouteOverlay()` only from a descendant rendered inside the overlay, including its footer, never from the page returning the wrapper. Read `.agents/skills/nocobase-app-development/references/frontend/references/overlay.md` before implementing overlays or close guards.\n\nDeclare `authz` on the first page of every path: `{ resource: { type: 'page', id: 'orders' }, action: 'access' }` for a product page, the page's `settings` item for a settings page, `'unrestricted'` for a page only root may open, or `'skip'`. A nested page that omits it inherits its nearest ancestor page's value, and a child's own value overrides it. A first page that omits it still registers, with a development warning: protected App and settings pages become unrestricted-only, which hides them from everyone but root, while guest, optional and dev pages skip the check. Always declare it rather than relying on that default. Parent guards still apply when a child skips. Menus and loaders read the declared rule; endpoints enforce authorization independently. The page id identifies stored page grants, so changing it requires migrating the grants that reference it.",
+          "sha256": "e1bc6e09a89bb4f2a8655d6ef6347d9d729675cbada4f7dd28bbd664c99d06e4"
+        },
+        {
+          "id": "E30",
+          "kind": "code",
+          "path": "app/client/components/use-route-overlay.ts",
+          "observation": "useRouteOverlay 在 context 为空时抛错 'useRouteOverlay must be used inside RouteDialog or RouteDrawer'，注释要求只在 overlay 内部调用。",
+          "lines": [
+            14,
+            26
+          ],
+          "excerpt": "/**\n * Closes the enclosing `RouteDialog` or `RouteDrawer`. Call it from a component rendered inside the overlay — its\n * body or its footer — never from the page that returns the overlay, which sits outside the provider.\n */\nexport function useRouteOverlay(): RouteOverlayContextValue {\n  const value = useContext(RouteOverlayContext);\n  if (!value) {\n    throw new Error(\n      'useRouteOverlay must be used inside RouteDialog or RouteDrawer',\n    );\n  }\n  return value;\n}",
+          "sha256": "ec648ceb7ed750967e72a712d38acc14a4e5907e1cd127719532bbb280ba4d10"
+        },
+        {
+          "id": "E31",
+          "kind": "code",
+          "path": "app/client/pages/contacts/new.tsx",
+          "observation": "contacts/new.tsx 第 18 行在返回 RouteDialog 的页面组件顶层调用 useRouteOverlay()，正是 overlay.md 的反例。",
+          "lines": [
+            15,
+            51
+          ],
+          "excerpt": "/** Route `/contacts/new`: create a contact in a dialog over the list. */\nexport default function ContactCreatePage(): ReactElement {\n  const { t } = useTranslation();\n  const { close } = useRouteOverlay();\n  const { reload } = useOutletContext<SalesListOutletContext>();\n  const [submitting, setSubmitting] = useState(false);\n\n  return (\n    <RouteDialog\n      title={t('sales.contacts.form.createTitle')}\n      description={t('sales.contacts.form.createDescription')}\n      footer={\n        <>\n          <Button\n            variant='outline'\n            onClick={() => void close()}\n            disabled={submitting}\n          >\n            {t('actions.cancel')}\n          </Button>\n          <Button type='submit' form={FORM_ID} disabled={submitting}>\n            {submitting ? <Spinner data-icon='inline-start' /> : null}\n            {submitting ? t('actions.saving') : t('actions.save')}\n          </Button>\n        </>\n      }\n    >\n      <ContactForm\n        formId={FORM_ID}\n        onSubmittingChange={setSubmitting}\n        onSubmitted={() => {\n          reload();\n          void close();\n        }}\n      />\n    </RouteDialog>\n  );",
+          "sha256": "ef5e483df0bfaf6224e65eb281e08ab85d525ddeeb4fd19a26d4f3c54c511fa9"
+        },
+        {
+          "id": "E33",
+          "kind": "code",
+          "path": "app/tests/logic/route-overlay.test.tsx",
+          "observation": "repair-2 新增的 route-overlay.test.tsx 只在 provider 内渲染 Actions 调用 close，覆盖正确用法，不含页面顶层误用的回归用例。",
+          "lines": [
+            20,
+            27
+          ],
+          "excerpt": "function Actions() {\n  const { close, isClosing } = useRouteOverlay();\n  return (\n    <button disabled={isClosing} onClick={() => void close()}>\n      Cancel\n    </button>\n  );\n}",
+          "sha256": "c390bf90ab0d1912cc7078c93206d44421bb7f7f88af9dbe6d17ef58422c2010"
+        }
+      ],
+      "fingerprint": "dac576965f79f58d7baa342f91755fa520395a1624d1037088ad9b71e9dcfbb9"
+    },
+    {
+      "id": "411:36329191920:1:F5",
+      "report": "411:36329191920:1",
+      "issue": 411,
+      "taskTitle": "客户、联系人与商机管理",
+      "appVersion": "1.0.0-beta.47",
+      "appTemplate": "@nocobase/app-template-default",
+      "finding": {
+        "id": "F5",
+        "kind": "issue",
+        "owner": "template",
+        "severity": "minor",
+        "confidence": "confirmed",
+        "status": "resolved",
+        "title": "模板 AGENTS.md 的双空行导致 verify-1 的 prettier --check 失败（已在 repair-1 修复）",
+        "detail": "verify-1 因 prettier --check 失败（模板 AGENTS.md 在 “Controlled failed-delivery smoke” 段前存在连续空行）。repair-1 期间 Agent 通过读取 factory-template.json / git log AGENTS.md 定位到这是模板产物，并修正了格式；当前冻结的 app/AGENTS.md 已无连续空行（第 403 行前后正常）。",
+        "impact": "该格式化失败与业务无关，却造成一次额外修复轮次；根因在模板/工厂提交而非应用代码。",
+        "suggestedChange": "在 app-template-default 生成或 CI 中运行 prettier --check，避免把格式化缺陷带入每个应用快照。",
+        "evidence": [
+          "E22",
+          "E42"
+        ],
+        "diagnosis": {
+          "category": "guidance-gap",
+          "trigger": "模板生成的 app/AGENTS.md 含连续空行，prettier --check 判定不合格。",
+          "expected": "模板产物本身满足 prettier 格式检查。",
+          "actual": "verify-1 因 AGENTS.md 格式失败，触发 repair-1。",
+          "workaround": "人工修正 AGENTS.md 的空行。",
+          "acceptance": "重新生成模板后 prettier --check 直接通过，无需业务侧修复。"
+        }
+      },
+      "targets": [
+        "app/AGENTS.md"
+      ],
+      "paths": [
+        "AGENTS.md"
+      ],
+      "evidence": [
+        {
+          "id": "E22",
+          "kind": "skill",
+          "path": "app/AGENTS.md",
+          "observation": "app/AGENTS.md 第 107 行要求先在 defineAppRoutes 声明子路由与 Outlet 再渲染 RouteDialog/RouteDrawer，并强调 useRouteOverlay 只能在 overlay 的后代组件调用。",
+          "lines": [
+            105,
+            109
+          ],
+          "excerpt": "**Declare navigation on the route.** App, Settings and Dev menus read `navigation: { title: 'navigation.orders' }`; titles resolve in the owning locale namespace. Add the translation in `client/locales/`. Refine resources remain for CRUD and do not add menu entries.\n\nUse recursive groups to organize menus; their path is optional. Pages may also have children, but must manually render `Outlet`. For URL-addressable dialogs and drawers, declare the child in `defineAppRoutes()` in `client/routes.ts`, place the owning page's `Outlet`, then render `RouteDialog` or `RouteDrawer`. Call `useRouteOverlay()` only from a descendant rendered inside the overlay, including its footer, never from the page returning the wrapper. Read `.agents/skills/nocobase-app-development/references/frontend/references/overlay.md` before implementing overlays or close guards.\n\nDeclare `authz` on the first page of every path: `{ resource: { type: 'page', id: 'orders' }, action: 'access' }` for a product page, the page's `settings` item for a settings page, `'unrestricted'` for a page only root may open, or `'skip'`. A nested page that omits it inherits its nearest ancestor page's value, and a child's own value overrides it. A first page that omits it still registers, with a development warning: protected App and settings pages become unrestricted-only, which hides them from everyone but root, while guest, optional and dev pages skip the check. Always declare it rather than relying on that default. Parent guards still apply when a child skips. Menus and loaders read the declared rule; endpoints enforce authorization independently. The page id identifies stored page grants, so changing it requires migrating the grants that reference it.",
+          "sha256": "e1bc6e09a89bb4f2a8655d6ef6347d9d729675cbada4f7dd28bbd664c99d06e4"
+        },
+        {
+          "id": "E42",
+          "kind": "log",
+          "path": "artifacts/agent-history/agent-repair-1.jsonl/part-0002.txt",
+          "observation": "repair-1 part-0002 第 2110/2114 行：git rev-parse 对不存在分支返回 128，同时输出 AGENTS.md 的 git log 与 factory-template.json。",
+          "lines": [
+            2104,
+            2118
+          ],
+          "excerpt": "{\"type\":\"tool_execution_update\",\"toolCallId\":\"call_00_wNTAXzgYTstbrWdRInQ15887\",\"toolName\":\"bash\",\"args\":{\"command\":\"cd /home/runner/work/nb3-factory/nb3-factory/workspace && cat factory-template.json\",\"timeout\":30},\"partialResult\":{\"content\":[]}}\n{\"type\":\"tool_execution_update\",\"toolCallId\":\"call_01_bIVrDF3hHMiniyYq47yO7065\",\"toolName\":\"bash\",\"args\":{\"command\":\"cd /home/runner/work/nb3-factory/nb3-factory/workspace && git log --all --oneline -- AGENTS.md | head; echo ---; for b in origin/develop develop main; do git rev-parse --verify $b 2>/dev/null && echo \\\"$b exists\\\"; done\",\"timeout\":30},\"partialResult\":{\"content\":[]}}\n{\"type\":\"tool_execution_update\",\"toolCallId\":\"call_00_wNTAXzgYTstbrWdRInQ15887\",\"toolName\":\"bash\",\"args\":{\"command\":\"cd /home/runner/work/nb3-factory/nb3-factory/workspace && cat factory-template.json\",\"timeout\":30},\"partialResult\":{\"content\":[{\"type\":\"text\",\"text\":\"{\\n  \\\"template\\\": \\\"@nocobase/app-template-default\\\",\\n  \\\"templateVersion\\\": \\\"1.0.0-beta.47\\\",\\n  \\\"creator\\\": \\\"@nocobase/create-app@0.1.0-beta.22\\\",\\n  \\\"controlSha\\\": \\\"f6fff9ec84d3bf3776eb37f0edbbc7ccc82af432\\\",\\n  \\\"generatedAt\\\": \\\"2026-09-26T05:07:09.981Z\\\",\\n  \\\"plugins\\\": [\\n    {\\n      \\\"packageName\\\": \\\"@nocobase/app-plugin-ai-employee\\\",\\n      \\\"version\\\": \\\"1.0.0-beta.23\\\",\\n      \\\"registered\\\": true,\\n      \\\"skillsSynchronized\\\": true\\n    },\\n    {\\n      \\\"packageName\\\": \\\"@nocobase/app-plugin-ai-knowledge-base\\\",\\n      \\\"version\\\": \\\"0.1.0-beta.9\\\",\\n      \\\"registered\\\": true,\\n      \\\"skillsSynchronized\\\": true\\n    },\\n    {\\n      \\\"packageName\\\": \\\"@nocobase/app-plugin-mail\\\",\\n      \\\"version\\\": \\\"0.1.0-beta.0\\\",\\n      \\\"registered\\\": true,\\n      \\\"skillsSynchronized\\\": true\\n    }\\n  ],\\n  \\\"tooling\\\": \\\"@nocobase/app-cli\\\",\\n  \\\"verifiedRun\\\": \\\"36219832766\\\"\\n}\\n\"}],\"details\":{}}}\n{\"type\":\"tool_execution_end\",\"toolCallId\":\"call_00_wNTAXzgYTstbrWdRInQ15887\",\"toolName\":\"bash\",\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"{\\n  \\\"template\\\": \\\"@nocobase/app-template-default\\\",\\n  \\\"templateVersion\\\": \\\"1.0.0-beta.47\\\",\\n  \\\"creator\\\": \\\"@nocobase/create-app@0.1.0-beta.22\\\",\\n  \\\"controlSha\\\": \\\"f6fff9ec84d3bf3776eb37f0edbbc7ccc82af432\\\",\\n  \\\"generatedAt\\\": \\\"2026-09-26T05:07:09.981Z\\\",\\n  \\\"plugins\\\": [\\n    {\\n      \\\"packageName\\\": \\\"@nocobase/app-plugin-ai-employee\\\",\\n      \\\"version\\\": \\\"1.0.0-beta.23\\\",\\n      \\\"registered\\\": true,\\n      \\\"skillsSynchronized\\\": true\\n    },\\n    {\\n      \\\"packageName\\\": \\\"@nocobase/app-plugin-ai-knowledge-base\\\",\\n      \\\"version\\\": \\\"0.1.0-beta.9\\\",\\n      \\\"registered\\\": true,\\n      \\\"skillsSynchronized\\\": true\\n    },\\n    {\\n      \\\"packageName\\\": \\\"@nocobase/app-plugin-mail\\\",\\n      \\\"version\\\": \\\"0.1.0-beta.0\\\",\\n      \\\"registered\\\": true,\\n      \\\"skillsSynchronized\\\": true\\n    }\\n  ],\\n  \\\"tooling\\\": \\\"@nocobase/app-cli\\\",\\n  \\\"verifiedRun\\\": \\\"36219832766\\\"\\n}\\n\"}]},\"isError\":false}\n{\"type\":\"tool_execution_update\",\"toolCallId\":\"call_01_bIVrDF3hHMiniyYq47yO7065\",\"toolName\":\"bash\",\"args\":{\"command\":\"cd /home/runner/work/nb3-factory/nb3-factory/workspace && git log --all --oneline -- AGENTS.md | head; echo ---; for b in origin/develop develop main; do git rev-parse --verify $b 2>/dev/null && echo \\\"$b exists\\\"; done\",\"timeout\":30},\"partialResult\":{\"content\":[{\"type\":\"text\",\"text\":\"e318f4e test: add opt-in controlled failed delivery smoke (#404)\\na107fda test: add opt-in controlled failed delivery smoke\\n59491be Publish failed builds and attempt previews (#399)\\nb9d3825 fix: publish failed builds with reports and preview attempts\\n5c9147b fix: bound factory retries and allow one Handoff (#378)\\n6898d8a fix: preserve failure identity and prevent retry budget resets\\nd6cc50a fix: bound factory repairs and handoff continuations\\n08e8f3a Preserve complete build histories during review (#368)\\nee15547 Preserve complete build histories during review\\nb49145a Harden factory evaluation and require current NocoBase 3 templates (#353)\\n\"}],\"details\":{}}}\n{\"type\":\"tool_execution_update\",\"toolCallId\":\"call_01_bIVrDF3hHMiniyYq47yO7065\",\"toolName\":\"bash\",\"args\":{\"command\":\"cd /home/runner/work/nb3-factory/nb3-factory/workspace && git log --all --oneline -- AGENTS.md | head; echo ---; for b in origin/develop develop main; do git rev-parse --verify $b 2>/dev/null && echo \\\"$b exists\\\"; done\",\"timeout\":30},\"partialResult\":{\"content\":[{\"type\":\"text\",\"text\":\"e318f4e test: add opt-in controlled failed delivery smoke (#404)\\na107fda test: add opt-in controlled failed delivery smoke\\n59491be Publish failed builds and attempt previews (#399)\\nb9d3825 fix: publish failed builds with reports and preview attempts\\n5c9147b fix: bound factory retries and allow one Handoff (#378)\\n6898d8a fix: preserve failure identity and prevent retry budget resets\\nd6cc50a fix: bound factory repairs and handoff continuations\\n08e8f3a Preserve complete build histories during review (#368)\\nee15547 Preserve complete build histories during review\\nb49145a Harden factory evaluation and require current NocoBase 3 templates (#353)\\n---\\n4f504529b876b45c6646d8d376d1402ffd0bc5ec\\norigin/develop exists\\n\"}],\"details\":{}}}\n{\"type\":\"tool_execution_end\",\"toolCallId\":\"call_01_bIVrDF3hHMiniyYq47yO7065\",\"toolName\":\"bash\",\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"e318f4e test: add opt-in controlled failed delivery smoke (#404)\\na107fda test: add opt-in controlled failed delivery smoke\\n59491be Publish failed builds and attempt previews (#399)\\nb9d3825 fix: publish failed builds with reports and preview attempts\\n5c9147b fix: bound factory retries and allow one Handoff (#378)\\n6898d8a fix: preserve failure identity and prevent retry budget resets\\nd6cc50a fix: bound factory repairs and handoff continuations\\n08e8f3a Preserve complete build histories during review (#368)\\nee15547 Preserve complete build histories during review\\nb49145a Harden factory evaluation and require current NocoBase 3 templates (#353)\\n---\\n4f504529b876b45c6646d8d376d1402ffd0bc5ec\\norigin/develop exists\\n\\n\\nCommand exited with code 128\"}],\"details\":{}},\"isError\":true}\n{\"type\":\"message_start\",\"message\":{\"role\":\"toolResult\",\"toolCallId\":\"call_00_wNTAXzgYTstbrWdRInQ15887\",\"toolName\":\"bash\",\"content\":[{\"type\":\"text\",\"text\":\"{\\n  \\\"template\\\": \\\"@nocobase/app-template-default\\\",\\n  \\\"templateVersion\\\": \\\"1.0.0-beta.47\\\",\\n  \\\"creator\\\": \\\"@nocobase/create-app@0.1.0-beta.22\\\",\\n  \\\"controlSha\\\": \\\"f6fff9ec84d3bf3776eb37f0edbbc7ccc82af432\\\",\\n  \\\"generatedAt\\\": \\\"2026-09-26T05:07:09.981Z\\\",\\n  \\\"plugins\\\": [\\n    {\\n      \\\"packageName\\\": \\\"@nocobase/app-plugin-ai-employee\\\",\\n      \\\"version\\\": \\\"1.0.0-beta.23\\\",\\n      \\\"registered\\\": true,\\n      \\\"skillsSynchronized\\\": true\\n    },\\n    {\\n      \\\"packageName\\\": \\\"@nocobase/app-plugin-ai-knowledge-base\\\",\\n      \\\"version\\\": \\\"0.1.0-beta.9\\\",\\n      \\\"registered\\\": true,\\n      \\\"skillsSynchronized\\\": true\\n    },\\n    {\\n      \\\"packageName\\\": \\\"@nocobase/app-plugin-mail\\\",\\n      \\\"version\\\": \\\"0.1.0-beta.0\\\",\\n      \\\"registered\\\": true,\\n      \\\"skillsSynchronized\\\": true\\n    }\\n  ],\\n  \\\"tooling\\\": \\\"@nocobase/app-cli\\\",\\n  \\\"verifiedRun\\\": \\\"36219832766\\\"\\n}\\n\"}],\"isError\":false,\"timestamp\":1790524896628}}\n{\"type\":\"message_end\",\"message\":{\"role\":\"toolResult\",\"toolCallId\":\"call_00_wNTAXzgYTstbrWdRInQ15887\",\"toolName\":\"bash\",\"content\":[{\"type\":\"text\",\"text\":\"{\\n  \\\"template\\\": \\\"@nocobase/app-template-default\\\",\\n  \\\"templateVersion\\\": \\\"1.0.0-beta.47\\\",\\n  \\\"creator\\\": \\\"@nocobase/create-app@0.1.0-beta.22\\\",\\n  \\\"controlSha\\\": \\\"f6fff9ec84d3bf3776eb37f0edbbc7ccc82af432\\\",\\n  \\\"generatedAt\\\": \\\"2026-09-26T05:07:09.981Z\\\",\\n  \\\"plugins\\\": [\\n    {\\n      \\\"packageName\\\": \\\"@nocobase/app-plugin-ai-employee\\\",\\n      \\\"version\\\": \\\"1.0.0-beta.23\\\",\\n      \\\"registered\\\": true,\\n      \\\"skillsSynchronized\\\": true\\n    },\\n    {\\n      \\\"packageName\\\": \\\"@nocobase/app-plugin-ai-knowledge-base\\\",\\n      \\\"version\\\": \\\"0.1.0-beta.9\\\",\\n      \\\"registered\\\": true,\\n      \\\"skillsSynchronized\\\": true\\n    },\\n    {\\n      \\\"packageName\\\": \\\"@nocobase/app-plugin-mail\\\",\\n      \\\"version\\\": \\\"0.1.0-beta.0\\\",\\n      \\\"registered\\\": true,\\n      \\\"skillsSynchronized\\\": true\\n    }\\n  ],\\n  \\\"tooling\\\": \\\"@nocobase/app-cli\\\",\\n  \\\"verifiedRun\\\": \\\"36219832766\\\"\\n}\\n\"}],\"isError\":false,\"timestamp\":1790524896628}}\n{\"type\":\"message_start\",\"message\":{\"role\":\"toolResult\",\"toolCallId\":\"call_01_bIVrDF3hHMiniyYq47yO7065\",\"toolName\":\"bash\",\"content\":[{\"type\":\"text\",\"text\":\"e318f4e test: add opt-in controlled failed delivery smoke (#404)\\na107fda test: add opt-in controlled failed delivery smoke\\n59491be Publish failed builds and attempt previews (#399)\\nb9d3825 fix: publish failed builds with reports and preview attempts\\n5c9147b fix: bound factory retries and allow one Handoff (#378)\\n6898d8a fix: preserve failure identity and prevent retry budget resets\\nd6cc50a fix: bound factory repairs and handoff continuations\\n08e8f3a Preserve complete build histories during review (#368)\\nee15547 Preserve complete build histories during review\\nb49145a Harden factory evaluation and require current NocoBase 3 templates (#353)\\n---\\n4f504529b876b45c6646d8d376d1402ffd0bc5ec\\norigin/develop exists\\n\\n\\nCommand exited with code 128\"}],\"details\":{},\"isError\":true,\"timestamp\":1790524896628}}\n{\"type\":\"message_end\",\"message\":{\"role\":\"toolResult\",\"toolCallId\":\"call_01_bIVrDF3hHMiniyYq47yO7065\",\"toolName\":\"bash\",\"content\":[{\"type\":\"text\",\"text\":\"e318f4e test: add opt-in controlled failed delivery smoke (#404)\\na107fda test: add opt-in controlled failed delivery smoke\\n59491be Publish failed builds and attempt previews (#399)\\nb9d3825 fix: publish failed builds with reports and preview attempts\\n5c9147b fix: bound factory retries and allow one Handoff (#378)\\n6898d8a fix: preserve failure identity and prevent retry budget resets\\nd6cc50a fix: bound factory repairs and handoff continuations\\n08e8f3a Preserve complete build histories during review (#368)\\nee15547 Preserve complete build histories during review\\nb49145a Harden factory evaluation and require current NocoBase 3 templates (#353)\\n---\\n4f504529b876b45c6646d8d376d1402ffd0bc5ec\\norigin/develop exists\\n\\n\\nCommand exited with code 128\"}],\"details\":{},\"isError\":true,\"timestamp\":1790524896628}}\n{\"type\":\"turn_end\",\"message\":{\"role\":\"assistant\",\"content\":[{\"type\":\"thinking\",\"thinking\":\"Now the factory-observed format check passes.\\n\\nWait, but the diagnostic command was `prettier . --check '!.github/**'`, yet AGENTS.md is not under .github. So it was checked. Now fixed.\\n\\nBut hold on — is modifying AGENTS.md forbidden? The repair instruction list of factory files doesn't include AGENTS.md. And AGENTS.md explicitly documents factory review history and task termination which are factory content. But the fix is whitespace-only. I'll document it as a template/framework issue in the retro.\\n\\nActually, let me reconsider: maybe the factory's base snapshot of AGENTS.md will be restored/won't be part of the patch if AGENTS.md is treated as a factory control file and filtered out of the diff. If so, the format failure would persist in grading. Hmm. Let me check if there's any info about which files are excluded from the patch. The repo root has `factory-template.json`. Let me look.\\n\\nAlso, `.github/scripts` might define patch exclusions. But I shouldn't over-read factory controls. Let me check `factory-template.json` briefly and maybe the repair pipeline. Actually the instruction says \\\"不得修改工厂控制文件（`.github/`、`.npmrc`、`.gitmodules`、`config.yml`）\\\". If AGENTS.md were a factory control file, it'd be listed. It's not. So editing it is allowed. But there's risk the patch excludes it.\\n\\nHmm, let me think about this differently. Perhaps the real root cause of the format failure that the repair is meant to fix is not AGENTS.md at all. Let me re-examine: the factory report's `<failure feedback>` shows the format check failing on AGENTS.md. This might be a known false failure in the repair pipeline, and the intended repair is elsewhere. But the ",
+          "sha256": "6efc6af77bd761b6e2fa292c8c2eb2bc8de55e1774a4f6efaef69a3cef10dcbb"
+        }
+      ],
+      "fingerprint": "1eb4fc172b5c9a882aa18981a3ba9b0aae38e1f29e2a7176241fa667f06a254a"
+    },
+    {
+      "id": "411:36329191920:1:F6",
+      "report": "411:36329191920:1",
+      "issue": 411,
+      "taskTitle": "客户、联系人与商机管理",
+      "appVersion": "1.0.0-beta.47",
+      "appTemplate": "@nocobase/app-template-default",
+      "finding": {
+        "id": "F6",
+        "kind": "improvement",
+        "owner": "documentation",
+        "severity": "info",
+        "confidence": "confirmed",
+        "status": "open",
+        "title": "Repository 已提供 aggregate/groupBy，指引可补一个“按父记录求合计”的示例",
+        "detail": "SKILL §4 在方法清单中列出 aggregate 与 groupBy，repository.js 也有独立实现（normalizeAggregateInput + validateAggregate + adapter.aggregate/groupBy），但在本需求这类“按 customerId 求金额合计”场景下，Agent 选择 findMany 全量后在 JS 里分组求和。该做法正确（属正常组合），但未用上框架能力，且随数据量增长会退化为全表读取。",
+        "impact": "指引不缺 API，缺的是把 API 映射到常见业务形状的示例；补一句可减少手写聚合与 decimal 归一。",
+        "suggestedChange": "在 nocobase-db SKILL §4 或 database-and-data.md 增加“按外键分组求合计”的 aggregate/groupBy 最小示例，并说明与 JS 聚合的取舍。",
+        "evidence": [
+          "E7",
+          "E8",
+          "E10",
+          "E26"
+        ],
+        "diagnosis": {
+          "category": "guidance-gap",
+          "trigger": "需要跨多行计算按父记录分组的合计。",
+          "expected": "Agent 能直接看到 aggregate/groupBy 的自包含示例并优先在数据库端聚合。",
+          "actual": "方法虽在清单与类型中，但缺少业务化示例，Agent 改用全量 findMany + JS reduce。",
+          "workaround": "用 filter 限定范围并容忍全量读取，或用 repository.aggregate/groupBy 手写聚合。",
+          "acceptance": "新增示例后，同类需求中 Agent 至少能引用一个可直接套用的 aggregate/groupBy 片段。"
+        }
+      },
+      "targets": [
+        "@nocobase/db",
+        "packages/@nocobase/db/skills/nocobase-db/SKILL.md"
+      ],
+      "paths": [
+        ".agents/skills/nocobase-db/SKILL.md",
+        "packages/@nocobase/db/dist/src/repository/repository.js",
+        "packages/@nocobase/db/dist/src/repository/types.d.ts"
+      ],
+      "evidence": [
+        {
+          "id": "E7",
+          "kind": "package",
+          "path": "packages/@nocobase/db/dist/src/repository/types.d.ts",
+          "observation": "Repository 接口声明 findMany/findOne/aggregate/groupBy/createOne/updateOne/withPolicy 等；aggregate/groupBy 同时支持 AggregateBuilder 回调与 AST。",
+          "lines": [
+            184,
+            215
+          ],
+          "excerpt": "export interface Repository<TRecord extends object = RepositoryRecord, TCreate extends object = Partial<TRecord>, TUpdate extends object = Partial<TRecord>> {\n    withPolicy<const TPolicy extends RepositoryPolicy<TRecord>>(policy: TPolicy): ScopedRepository<PolicyRecord<TRecord, TPolicy>, TCreate, TUpdate>;\n    withPolicy<P, const TPolicy extends RepositoryPolicy<TRecord>>(policy: (principal: P) => TPolicy, principal: P): ScopedRepository<PolicyRecord<TRecord, TPolicy>, TCreate, TUpdate>;\n    findMany<TSelection extends AnySelectBuilder<TRecord>>(options: FindManyOptions<TRecord> & {\n        readonly select: (select: SelectBuilder<TRecord>) => TSelection;\n    }): RepositoryQuery<SelectedBuilderRecord<TRecord, TSelection>>;\n    findMany(options?: FindManyOptions<TRecord>): RepositoryQuery<TRecord>;\n    findOne<TSelection extends AnySelectBuilder<TRecord>>(options: FindOneOptions<TRecord> & {\n        readonly select: (select: SelectBuilder<TRecord>) => TSelection;\n    }): Promise<SelectedBuilderRecord<TRecord, TSelection> | undefined>;\n    findOne(options: FindOneOptions<TRecord>): Promise<TRecord | undefined>;\n    count(options?: FilterOnlyOptions<TRecord>): Promise<number>;\n    exists(options?: FilterOnlyOptions<TRecord>): Promise<boolean>;\n    aggregate<TSelection extends AggregateSelection>(options: AggregateOptions<TRecord> & {\n        readonly aggregate: (aggregate: AggregateBuilder<TRecord>) => TSelection;\n    }): Promise<AggregateSelectionResult<TSelection>>;\n    aggregate(options: AggregateOptions<TRecord> & {\n        readonly aggregate: AggregateAst;\n    }): Promise<AggregateResult>;\n    aggregate(options: AggregateOptions<TRecord>): Promise<AggregateResult>;\n    groupBy<const TBy extends readonly [\n        keyof TRecord & string,\n        ...(keyof TRecord & string)[]\n    ], TSelection extends AggregateSelection>(options: GroupByOptions<TRecord, GroupBySelectionResult<TRecord, TBy, TSelection>> & {\n        readonly by: TBy;\n        readonly aggregate: (aggregate: AggregateBuilder<TRecord>) => TSelection;\n    }): Promise<Array<GroupBySelectionResult<TRecord, TBy, TSelection>>>;\n    groupBy(options: GroupByOptions<TRecord> & {\n        readonly aggregate: AggregateAst;\n    }): Promise<GroupByResult[]>;\n    groupBy(options: GroupByOptions<TRecord>): Promise<GroupByResult[]>;\n    describeMutation(options: DescribeMutationOptions): Promise<RepositoryMutationDescription>;",
+          "sha256": "cd611c4d53bc57a8b9681ef0b259b057d441a2660fa38cfd49568bdb7cce8e3d"
+        },
+        {
+          "id": "E8",
+          "kind": "package",
+          "path": "packages/@nocobase/db/dist/src/repository/repository.js",
+          "observation": "repository.js 的 aggregate/groupBy 先 normalizeFilter + validateAggregate 再落 adapter，实现与类型声明一致。",
+          "lines": [
+            132,
+            158
+          ],
+          "excerpt": "    async aggregate(options) {\n        const collection = await this.collection();\n        const policy = this.readContext(collection);\n        const aggregate = normalizeAggregateInput(collection, options.aggregate);\n        validateAggregate(collection, aggregate, policy);\n        const filter = await this.normalizeFilter(collection, options.filter, options.context, policy);\n        return this.options.adapter.aggregate({ collection, aggregate, filter });\n    }\n    async groupBy(options) {\n        const collection = await this.collection();\n        const policy = this.readContext(collection);\n        const by = validateGroupByFields(collection, options.by, policy);\n        const aggregate = normalizeAggregateInput(collection, options.aggregate);\n        validateAggregate(collection, aggregate, policy);\n        const resultCollection = groupByResultCollection(collection, by, aggregate);\n        const filter = await this.normalizeFilter(collection, options.filter, options.context, policy);\n        const having = await normalizeFilterWithRelations(this.options.collections, resultCollection, options.having, options.context);\n        const sort = await validateSortWithRelations(this.options.collections, resultCollection, options.sort, false, UNRESTRICTED_READ);\n        return this.options.adapter.groupBy({\n            collection,\n            by,\n            aggregate,\n            filter,\n            having,\n            sort,\n        });\n    }",
+          "sha256": "31b67e0dcdfd222b6981571d563d9879525a3bf61312ea92a05a269d99c1f311"
+        },
+        {
+          "id": "E10",
+          "kind": "skill",
+          "path": "packages/@nocobase/db/skills/nocobase-db/SKILL.md",
+          "observation": "SKILL §4 用“代码运行位置/工作单元”两张表区分 Repository 与 Query，并明确列出 aggregate/groupBy 方法与 withPolicy 边界。",
+          "lines": [
+            191,
+            249
+          ],
+          "excerpt": "Both tasks take their Repository from the connection the task runs on, which inside a transaction is that transaction's connection, so a failed task discards its writes. That is also why `context.container` is not the application container. Its type is `ServiceResolver`, but at runtime it is a frozen allow list holding one token — `idGeneratorToken` from `@nocobase/app-server/id-generator`, for a task that has to generate an identifier. Every other `resolve` throws, `databaseManagerToken` included: a service taken from there would hold the application's connection rather than the task's, and inside a transaction would write outside it and survive a failure that should have discarded it.\n\n**Is the unit of work a Collection's records, or a result set?** Records of one Collection and the things related to them are Repository's job. A shape that is not any Collection's records — a report joining unrelated tables, a set aggregated then paginated — is Query's.\n\n| The task needs                                       | Use        |\n| ---------------------------------------------------- | ---------- |\n| Reading a relation, or a nested create/update/delete | Repository |\n| Optimistic locking through a `version` field         | Repository |\n| A row scope or write allow list (`withPolicy`)       | Repository |\n| Cursor pagination over a stable sort                 | Repository |\n| Collection-level naming overrides to be honored      | Repository |\n| Dialect-correct JSON and temporal encoding on write  | Repository |\n| A join between tables with no relation between them  | Query      |\n| A subquery, or conditions composed programmatically  | Query      |\n| Paging or limiting a grouped result                  | Query      |\n\nThe costly mistake is rebuilding a relation read as a hand-written join because the join is familiar. That loses the naming mapping, the relation metadata and the write path that goes with it, and it has to be maintained against a schema the Collection definition already describes. If the records belong to a Collection, start from Repository and only drop to Query for the part Repository genuinely cannot express.\n\nThey mix freely inside one transaction — take both from the callback `connection`, as the example in [Transactions](#5-transactions) does.\n\n**Repository** is Collection-aware: it resolves fields and relations from the Collection definition, so relation reads and nested writes are expressed as data instead of assembled by hand.\n\n```ts\nimport { databaseManagerToken } from '@nocobase/db';\n\nconst db = app.container.resolve(databaseManagerToken);\nconst projects = db.repository('projects');\n\nconst project = await projects.findOne({\n  filter: { id },\n  select: (select) =>\n    select\n      .fields('id', 'name')\n      .include('owner', (owner) => owner.fields('name')),\n});\n\nconst result = await projects.createOne({\n  values: {\n    name: 'Apollo',\n    owner: (owner) => owner.connect({ id: ownerId }),\n  },\n  select: (select) => select.fields('id', 'name'),\n});\n```\n\nResolve the manager once — in a route factory, or as a constructor dependency of a service — not inside every handler. `db.repository()`, `db.query()`, `db.builder()`, `db.collections()` and `db.transaction()` take the connection name as their last argument and use the default connection when it is omitted, so single-connection code never names one.\n\n`filter`, `values`, `select` and `sort` each accept a builder callback or the equivalent serializable JSON AST, and mean the same thing either way. They do not accept a shorthand string array such as `['id', 'name']` or `['-createdAt']`. Field names are Collection logical names, never column names. A write returns a result object — the record is `result.record`, alongside `result.version` and the created relation targets — rather than the record itself. `findMany` is awaited for an array or iterated asynchronously to consume a large result incrementally.\n\nThe methods are `findOne`, `findMany`, `count`, `exists`, `aggregate`, `groupBy`, `createOne`, `createMany`, `updateOne`, `updateMany`, `upsertOne`, `deleteOne` and `deleteMany`; `describeMutation` and `validateMutation` report capabilities and pre-validate input, and `withPolicy` returns a scoped Repository.\n\nBoundaries that are easy to get wrong:\n\n- `findOne` takes the first match; `updateOne` and `deleteOne` require exactly one; `upsertOne` requires a unique equality condition.\n- `updateMany` and `deleteMany` refuse an empty scope. Pass `all: true` only when the task explicitly calls for every row — never to make an error go away.\n- `createMany` and `updateMany` do not accept nested relation writes. `createOne` accepts `create` and `connect` on a relation, not the full set.\n- `disconnect` detaches; `delete` removes the target record. A relation target update or delete stays inside the current parent record's scope.\n- Repository does not apply the application's permissions. A route handler decides what the caller may see and change _before_ anything reaches `filter`, `values` or `select`. `writePolicy` defaults to `true` for an internal Repository and `false` for one reached from an API route, so a route-facing Repository needs an explicit allow list.\n- Do not assume an `id` exists, and do not infer a field's type, primary key or auto-increment from its name.",
+          "sha256": "f97c07a45a9d49c1d933ddbceeabcc9afe267b1356a2ded1a3da0dd56b54011c"
+        },
+        {
+          "id": "E26",
+          "kind": "code",
+          "path": "app/server/providers/sales-service.ts",
+          "observation": "getCustomer/summarizeCustomers 用 findMany 拉取全部商机后按 customerId 分组 reduce 求和，并在读取时使用 stage 过滤条件。",
+          "lines": [
+            384,
+            410
+          ],
+          "excerpt": "        contacts().findMany({\n          filter: { customerId: id },\n          sort: (sort) => sort.field('name').asc(),\n        }),\n        opportunities().findMany({\n          filter: { customerId: id },\n          sort: (sort) => sort.field('createdAt').desc(),\n        }),\n      ]);\n\n      const totalAmount = opportunityRows.reduce(\n        (sum, row) => sum + toAmount(row.amount),\n        0,\n      );\n\n      return {\n        ...normalizeCustomer(customer),\n        contacts: contactRows.map((row) =>\n          normalizeContact(row, customer.name),\n        ),\n        opportunities: opportunityRows.map((row) =>\n          normalizeOpportunity(row, customer.name),\n        ),\n        totalAmount,\n      };\n    },\n",
+          "sha256": "14e0fbb3c2dbdede232bd4e650e116e8ade1989be9a0bd5f074e1d4e500f19f1"
+        }
+      ],
+      "fingerprint": "15e91867ecef1133418a42ab6affc4330544219b303251ca2b985a7e04a6578a"
     },
     {
       "id": "416:36329210119:1:F4",
