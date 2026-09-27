@@ -1,16 +1,44 @@
 import { useTranslation } from '@nocobase/i18n/client';
+import { ChevronDownIcon } from 'lucide-react';
 import type { ReactElement } from 'react';
 
+import { PageContainer } from '@/components/page-container';
+import { PageHeader } from '@/components/page-header';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible';
+
+/**
+ * A minimal team announcement: the headline, where it came from, and the extra detail kept behind a section that
+ * starts collapsed so the page opens on the announcement alone.
+ */
 export default function HomePage(): ReactElement {
   const { t } = useTranslation();
+
   return (
-    <section className='mx-auto grid min-h-[calc(100svh-4rem)] w-full max-w-5xl place-items-center px-6 py-10'>
-      <div className='max-w-xl space-y-6 text-center'>
-        <h1 className='font-heading text-3xl font-semibold tracking-tight'>
-          {t('home.title')}
-        </h1>
-        <p className='text-muted-foreground'>{t('home.description')}</p>
-      </div>
-    </section>
+    <PageContainer>
+      <PageHeader title={t('home.title')} description={t('home.description')} />
+      <Card className='max-w-2xl'>
+        <CardContent>
+          <Collapsible>
+            <CollapsibleTrigger
+              render={
+                <Button variant='ghost' className='w-full justify-between' />
+              }
+            >
+              {t('home.notes.title')}
+              <ChevronDownIcon className='transition-transform group-data-panel-open/button:rotate-180' />
+            </CollapsibleTrigger>
+            <CollapsibleContent className='px-3 pt-3 text-sm leading-6 text-muted-foreground'>
+              <p>{t('home.notes.body')}</p>
+            </CollapsibleContent>
+          </Collapsible>
+        </CardContent>
+      </Card>
+    </PageContainer>
   );
 }
