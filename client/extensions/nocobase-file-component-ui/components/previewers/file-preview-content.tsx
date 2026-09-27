@@ -70,13 +70,7 @@ export function FilePreviewContent(
     );
   switch (kind) {
     case 'image':
-      return (
-        <img
-          src={url}
-          alt={file.filename}
-          className='max-h-[70vh] max-w-full object-contain'
-        />
-      );
+      return <ImagePreview file={file} url={url} />;
     case 'pdf':
       return (
         <iframe title={file.filename} src={url} className='h-[70vh] w-full' />
@@ -97,6 +91,49 @@ export function FilePreviewContent(
     default:
       return <DownloadFallback file={file} onDownload={onDownload} />;
   }
+}
+
+/**
+ * A corrupt or mislabelled image never fires a load event, so the default `<img>` silently showed nothing. Reporting the
+ * failure as an alert — rather than only the filename — is what makes the state legible to the user.
+ */
+function ImagePreview(inputProps: {
+  readonly file: FileRecord;
+  readonly url?: string;
+}): ReactElement {
+  const { t } = useTranslation('@nocobase/app-plugin-file');
+  const { file, url } = inputProps;
+  const [failedUrl, setFailedUrl] = useState<string>();
+  // Comparing against the current URL clears the failure when another image is opened,
+  // without resetting state from an effect.
+  const failed = failedUrl !== undefined && failedUrl === url;
+
+  if (failed)
+    return (
+      <div
+        role='alert'
+        className='flex flex-col items-center gap-3 py-8 text-center'
+      >
+        <div className='h-24 w-24'>
+          <FileThumbnail file={file} />
+        </div>
+        <p>
+          {t('files.imageFailed', {
+            defaultValue:
+              'Unable to display this image. The file may be corrupt or not a valid image.',
+          })}
+        </p>
+      </div>
+    );
+
+  return (
+    <img
+      src={url}
+      alt={file.filename}
+      className='max-h-[70vh] max-w-full object-contain'
+      onError={() => setFailedUrl(url)}
+    />
+  );
 }
 
 function MarkdownPreview(inputProps: { readonly text?: string }): ReactElement {

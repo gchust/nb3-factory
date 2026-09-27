@@ -88,6 +88,64 @@ const zhCN: AppResource = {
     title: '开始构建你的应用',
     description: '向 AI 助手描述你的需求，逐步构建页面、数据模型和业务流程。',
   },
+  materials: {
+    title: '项目资料',
+    description: '把每份资料和它的附件放在一起管理。资料仅你本人可见。',
+    view: '查看',
+    backToList: '返回资料列表',
+    create: {
+      action: '新建资料',
+      title: '新建资料',
+      description: '填写标题，并上传属于它的附件。',
+    },
+    detail: {
+      title: '资料详情',
+      description: '可修改标题、预览或下载附件，并移除不再需要的附件。',
+    },
+    form: {
+      title: '标题',
+      titlePlaceholder: '例如：施工现场照片记录',
+      attachments: '附件',
+      attachmentsHint:
+        '可上传图片、文档或其他文件。移除附件只会解除它与本资料的关联。',
+      chooseFiles: '选择文件',
+      noAttachments: '暂无附件。',
+      saving: '正在保存…',
+    },
+    attachments: {
+      preview: '预览',
+      download: '下载',
+      remove: '移除',
+    },
+    columns: {
+      title: '标题',
+      attachments: '附件数',
+      updatedAt: '更新时间',
+      actions: '操作',
+    },
+    empty: {
+      title: '还没有资料',
+      description: '创建第一份资料，把文件一起归到它名下。',
+    },
+    errors: {
+      TITLE_REQUIRED: '标题不能为空。',
+      TITLE_REQUIRED_HINT: '请填写标题后再次保存，已上传的附件会保留。',
+      TITLE_TOO_LONG: '标题过长。',
+      INVALID_FILE_IDS: '所选附件中有一个已不可用。',
+      saveFailed: '保存资料失败，请重试。',
+      uploadFailed: '文件上传失败。',
+      previewFailed: '无法打开该文件。',
+      loadFailed: '无法加载资料',
+      loadFailedHint: '请检查网络连接后重试。',
+      notFound: '未找到资料',
+      notFoundHint: '该资料不存在，或属于其他用户。',
+    },
+    toast: {
+      savedTitle: '资料已保存',
+      savedDescription: '你的修改已存入。',
+      saveFailedTitle: '保存失败',
+    },
+  },
 
   appearance: {
     title: '外观',
@@ -121,6 +179,7 @@ const zhCN: AppResource = {
   },
   navigation: {
     home: '首页',
+    materials: '项目资料',
     open: '打开导航',
     close: '关闭导航',
     expand: '展开导航',
@@ -146,6 +205,15 @@ const zhCN: AppResource = {
   datePicker: {
     placeholder: '选择日期',
     rangePlaceholder: '选择日期范围',
+  },
+  // Reword the File plugin's copy without editing the plugin source. Only the application declares `overrides`, so
+  // the English source locale does not carry the block; the component keeps an English `defaultValue` instead.
+  overrides: {
+    '@nocobase/app-plugin-file': {
+      files: {
+        imageFailed: '无法显示该图片，文件可能已损坏或不是有效的图片。',
+      },
+    },
   },
 };
 

@@ -95,6 +95,69 @@ const enUS = {
     description:
       'Describe what you need to your AI Agent, then build pages, data models, and business workflows.',
   },
+  materials: {
+    title: 'Project materials',
+    description:
+      'Keep every material and its attachments together. Materials are private to you.',
+    view: 'View',
+    backToList: 'Back to materials',
+    create: {
+      action: 'New material',
+      title: 'New material',
+      description: 'Add a title and attach the files that belong to it.',
+    },
+    detail: {
+      title: 'Material details',
+      description:
+        'Update the title, preview or download attachments, and remove the ones you no longer need.',
+    },
+    form: {
+      title: 'Title',
+      titlePlaceholder: 'For example: site progress photos',
+      attachments: 'Attachments',
+      attachmentsHint:
+        'Upload images, documents or other files. Removing an attachment only detaches it from this material.',
+      chooseFiles: 'Choose files',
+      noAttachments: 'No attachments yet.',
+      saving: 'Saving…',
+    },
+    attachments: {
+      preview: 'Preview',
+      download: 'Download',
+      remove: 'Remove',
+    },
+    columns: {
+      title: 'Title',
+      attachments: 'Attachments',
+      updatedAt: 'Updated',
+      actions: 'Actions',
+    },
+    empty: {
+      title: 'No materials yet',
+      description:
+        'Create your first material and attach its files in one place.',
+    },
+    errors: {
+      TITLE_REQUIRED: 'A title is required.',
+      TITLE_REQUIRED_HINT:
+        'Add a title and save again. Your uploaded attachments are kept.',
+      TITLE_TOO_LONG: 'The title is too long.',
+      INVALID_FILE_IDS: 'One of the selected attachments is unavailable.',
+      saveFailed: 'The material could not be saved. Please try again.',
+      uploadFailed: 'The file could not be uploaded.',
+      previewFailed: 'The file could not be opened.',
+      loadFailed: 'Unable to load materials',
+      loadFailedHint: 'Check your connection and try again.',
+      notFound: 'Material not found',
+      notFoundHint:
+        'This material does not exist, or it belongs to another user.',
+    },
+    toast: {
+      savedTitle: 'Material saved',
+      savedDescription: 'Your changes are stored.',
+      saveFailedTitle: 'Save failed',
+    },
+  },
 
   appearance: {
     title: 'Appearance',
@@ -130,6 +193,7 @@ const enUS = {
   },
   navigation: {
     home: 'Home',
+    materials: 'Project materials',
     open: 'Open navigation',
     close: 'Close navigation',
     expand: 'Expand navigation',

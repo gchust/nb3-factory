@@ -19,6 +19,7 @@ import {
   type AppRuntimeContext,
 } from '@nocobase/app-server/runtime';
 import { spaRootRoutes } from '@nocobase/app-server/spa';
+import { createProjectMaterialFileAccessMiddleware } from './middleware/project-materials-file-access.js';
 
 export function createApp(runtime: AppRuntimeContext): Application {
   const app = createAppFromRuntime(runtime);
@@ -34,6 +35,10 @@ export function createApp(runtime: AppRuntimeContext): Application {
   app.addHttpMiddleware(requestLoggingMiddleware);
   app.addHttpMiddleware(sessionHttpMiddleware);
   app.addHttpMiddleware(i18nHttpMiddleware);
+  // Runs before every route, including the file plugin's public byte route,
+  // which is why an application-owned middleware is the only place this can
+  // narrow attachment access to the owner.
+  app.addHttpMiddleware(createProjectMaterialFileAccessMiddleware(app));
   app.addRoutes(healthCheckApiRoutes);
   app.addRuntimeContributions(runtime);
   app.addRoutes(spaRootRoutes);

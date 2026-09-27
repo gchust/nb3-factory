@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 
 import {
@@ -30,12 +30,12 @@ vi.mock('@silurus/ooxml/pptx', () => ({
   },
 }));
 
-function file(ext: string): FileRecord {
+function file(ext: string, mimeType = 'application/octet-stream'): FileRecord {
   return {
     id: 'attachment',
     filename: `attachment.${ext}`,
     ext,
-    mimeType: 'application/octet-stream',
+    mimeType,
     size: 3,
     createdAt: '2026-09-20T00:00:00.000Z',
     updatedAt: '2026-09-20T00:00:00.000Z',
@@ -78,6 +78,21 @@ it.each(['docx', 'xlsx', 'pptx'])(
     expect(viewer.destroy).toHaveBeenCalledOnce();
   },
 );
+
+it('reports a corrupt image instead of only showing its filename', async () => {
+  render(
+    <FilePreviewDialog
+      files={[file('png', 'image/png')]}
+      open
+      onOpenChange={vi.fn()}
+    />,
+  );
+  const image = await screen.findByRole('img', { name: 'attachment.png' });
+  fireEvent.error(image);
+  expect(await screen.findByRole('alert')).toHaveTextContent(
+    /corrupt or not a valid image/i,
+  );
+});
 
 it('shows the denied content response without trying a third-party viewer', async () => {
   vi.stubGlobal(
