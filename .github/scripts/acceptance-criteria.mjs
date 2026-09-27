@@ -47,6 +47,19 @@ export function parseAcceptanceCriteria(text) {
   return parseAcceptance(text).criteria;
 }
 
+// An Issue may omit acceptance criteria: QA then verifies the business
+// requirements themselves. Their list items become separate criteria so reports
+// and focused retests stay per item; the result always parses.
+export function defaultAcceptanceCriteria(requirements) {
+  const note = '未填写验收要求：按业务需求逐项实际操作并验证。';
+  let parsed;
+  try { parsed = parseAcceptance(requirements); } catch {
+    return `${note}\n\nC01. 业务需求中的全部角色、功能、业务规则和质量要求`;
+  }
+  return [note, parsed.preamble, ...parsed.criteria.map((c) =>
+    `${c.id}. ${c.optional ? '[optional] ' : ''}${c.text}`)].filter(Boolean).join('\n\n');
+}
+
 export function acceptanceCriteria(task) {
   const all = parseAcceptanceCriteria(task?.acceptanceCriteria);
   if (task?.qaScope !== 'focused') return all;

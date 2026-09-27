@@ -32,27 +32,21 @@ function fixture(selected = branch) {
   };
   return { source, issue, client, comments };
 }
-test('blank source selection uses the default; explicit verified branch does not inherit the preset source branch', async () => {
-  for (const selection of ['', '_No response_', branch]) {
+test('preset rebuilds start from the default branch and ignore a legacy baseline field and the source branch', async () => {
+  for (const selection of ['', '_No response_', branch, 'unknown']) {
     const f = fixture(selection), result = await preparePresetIssue(f.client, f.issue);
-    assert.equal(result.task.targetBranch, selection === branch ? branch : 'develop');
+    assert.equal(result.task.targetBranch, 'develop');
     assert.equal(f.source.body.includes('\nold\n'), true);
   }
 });
-test('unknown or arbitrary source baseline selection fails without copying or changing input', async () => {
-  for (const selection of ['develop', 'unknown', branch.replace('-123-', '-456-')]) {
-    const f = fixture(selection); await assert.rejects(preparePresetIssue(f.client, f.issue), /测试基线/); assert.equal(f.comments.length, 0);
-  }
-});
-test('captured source branch and source SHA remain fixed after the default and branch advance', async () => {
-  const f = fixture(); const one = await preparePresetIssue(f.client, f.issue);
+test('captured default branch and base SHA remain fixed after the default branch advances', async () => {
+  const f = fixture(''); const one = await preparePresetIssue(f.client, f.issue);
   const original = 'b'.repeat(40);
-  assert.equal(await pinInitialBase(f.client, 2, branch, original), original);
+  assert.equal(await pinInitialBase(f.client, 2, 'develop', original), original);
   f.client.getRepository = async () => ({ default_branch: 'new-default' });
-  f.client.getRef = async () => ({ object: { sha: 'c'.repeat(40) } });
   const two = await preparePresetIssue(f.client, f.issue);
-  assert.equal(two.task.targetBranch, branch); assert.equal(two.preset.inputHash, one.preset.inputHash);
-  assert.equal(await pinInitialBase(f.client, 2, branch, 'c'.repeat(40)), original);
+  assert.equal(two.task.targetBranch, 'develop'); assert.equal(two.preset.inputHash, one.preset.inputHash);
+  assert.equal(await pinInitialBase(f.client, 2, 'develop', 'c'.repeat(40)), original);
 });
 test('only exact source baselines share independent-task behavior and descriptor is protected', () => {
   assert.ok(isSourceBaselineRef(branch)); assert.ok(isSharedTaskBase(branch, 'develop'));

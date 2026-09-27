@@ -1,5 +1,6 @@
 import { appendFileSync } from 'node:fs';
 
+import { defaultAcceptanceCriteria } from './acceptance-criteria.mjs';
 import { isTaskStatus } from './task-compat.mjs';
 
 export const FACTORY_PROVIDER = 'nb3-factory';
@@ -103,13 +104,15 @@ export function parseIssueTask(issue) {
 
   const targetBranch = sections.get(FIELD_NAMES.targetBranch)?.trim();
   const buildReviewMode = parseBuildReviewMode(sections.get('框架评测'));
+  const requirements = required('requirements');
   return {
     ...(buildReviewMode ? { buildReviewMode } : {}),
     // Resolve an omitted branch against the repository, not the Issue number.
     targetBranch: targetBranch ? validateTargetBranch(targetBranch) : null,
     taskType: required('taskType'),
-    requirements: required('requirements'),
-    acceptanceCriteria: required('acceptanceCriteria'),
+    requirements,
+    acceptanceCriteria: sections.get(FIELD_NAMES.acceptanceCriteria)?.trim()
+      || defaultAcceptanceCriteria(requirements),
     sampleData: sections.get(FIELD_NAMES.sampleData)?.trim() || '是',
   };
 }

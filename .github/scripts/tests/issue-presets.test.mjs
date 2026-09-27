@@ -128,6 +128,8 @@ test('ordinary and generated preset forms use build labels without title prefixe
     assert.doesNotMatch(form, /\[Code Agent\]/);
   }
   assert.doesNotMatch(ordinary, /^title:/m, 'ordinary tasks start with an empty title');
+  assert.match(ordinary, /id: acceptance_criteria[\s\S]*?required: false/u, 'acceptance criteria are optional');
+  assert.doesNotMatch(renderPresetForm([fixture().source]), /测试基线|source_baseline/u);
 });
 
 test('preset choices and cloned titles remove old factory metadata and retain the source in the body', async () => {
