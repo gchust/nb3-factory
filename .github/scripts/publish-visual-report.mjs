@@ -94,12 +94,17 @@ if (mode === 'select') {
         runId,
         runUrl,
         runAttempt: run.run_attempt,
+        deliveryStatus: jobs.some(
+          (job) =>
+            job.name === 'publish-failed' && job.conclusion === 'success',
+        )
+          ? 'failed'
+          : 'success',
         artifact,
       }),
     );
     output('ready', 'true');
-  } else
-    console.log('No successful business delivery; skipping visual report.');
+  } else console.log('No published build PR; skipping visual report.');
 } else if (mode === 'prepare') {
   output('ready', 'false');
   const source = JSON.parse(readFileSync(args.source, 'utf8'));
@@ -128,7 +133,10 @@ if (mode === 'select') {
     );
   } else {
     const plan = {
-      ...collectMedia(args.artifacts, args.output),
+      ...collectMedia(args.artifacts, args.output, {
+        failed: source.deliveryStatus === 'failed',
+      }),
+      deliveryStatus: source.deliveryStatus || 'success',
       repository,
       runId,
       runUrl,

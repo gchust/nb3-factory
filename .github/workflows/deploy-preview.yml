@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       run_id:
-        description: Successful Code Agent task run ID (not Issue or PR number)
+        description: Code Agent task run ID with a published build PR (including failed builds)
         required: true
         type: string
       attempt:
@@ -28,7 +28,7 @@ concurrency:
 
 jobs:
   deploy-preview:
-    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    if: github.event_name == 'workflow_dispatch' || contains(fromJSON('["success","failure","timed_out"]'), github.event.workflow_run.conclusion)
     runs-on: ubuntu-latest
     timeout-minutes: 45
     permissions:
@@ -67,7 +67,7 @@ jobs:
         with:
           node-version: 24.x
 
-      - name: Select a successfully delivered task
+      - name: Select a published build with a deployable archive
         id: source
         env:
           GITHUB_TOKEN: ${{ github.token }}

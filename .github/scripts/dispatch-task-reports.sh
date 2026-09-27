@@ -39,8 +39,9 @@ dispatch report-task-usage.yml || failed=1
 dispatch publish-agent-history.yml || failed=1
 # Same reason: a failed run explains the next baseline fix better than a clean one.
 dispatch publish-retro.yml || failed=1
-# A handoff/failure is reportable usage, but never a completed business delivery.
-if [[ "${FACTORY_TASK_DELIVERED:-false}" == 'true' ]]; then
+# Published failed work has evidence and deserves a preview attempt too.
+# Keep the legacy variable for workflows pinned before failed publication.
+if [[ "${FACTORY_TASK_PUBLISHED:-${FACTORY_TASK_DELIVERED:-false}}" == 'true' ]]; then
   dispatch publish-visual-report.yml || failed=1
   # Requested explicitly for the same reason as the media report: a preview is
   # expected to appear after a delivery, and the workflow_run event is not

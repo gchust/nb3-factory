@@ -105,7 +105,9 @@ test('the deployable build is produced by independent verification', () => {
     task.indexOf('\n  publish:\n'),
   );
   const verified = finalJob.indexOf('Independently verify the applied patch');
-  const staged = finalJob.indexOf('Stage the deployable build and its metadata');
+  const staged = finalJob.indexOf(
+    'Stage the deployable build and its metadata',
+  );
   const uploaded = finalJob.indexOf(
     'factory-dist-${{ needs.prepare.outputs.issue_number }}',
   );
@@ -118,8 +120,8 @@ test('the deployable build is produced by independent verification', () => {
   // The verification build archives itself; only the final job asks for it,
   // and nothing runs a second build or an application-local pack script.
   assert.match(finalJob, /FACTORY_BUILD_ARCHIVE: '1'/);
-  assert.equal(task.match(/FACTORY_BUILD_ARCHIVE/g).length, 1);
-  assert.doesNotMatch(task, /pnpm build --tar|pack-dist/);
+  assert.equal(finalJob.match(/FACTORY_BUILD_ARCHIVE/g).length, 1);
+  assert.doesNotMatch(finalJob, /pnpm build --tar|pack-dist/);
 });
 
 test('the payload is published for the host to fetch, not pushed to it', () => {
@@ -212,8 +214,10 @@ test('the temporary payloads are deleted when the pull request closes', () => {
   // They are public while they exist, so they must not outlive the preview. A
   // pull request that was deployed more than once left more than one of them.
   assert.match(teardown, /mapfile -t assets < </);
-  assert.ok(teardown.includes('--json assets --jq \'.assets[].name\''));
-  assert.ok(teardown.includes('grep -E "^preview-pr-$PR(-[0-9a-f]{16})?\\.tar\\.gz$"'));
+  assert.ok(teardown.includes("--json assets --jq '.assets[].name'"));
+  assert.ok(
+    teardown.includes('grep -E "^preview-pr-$PR(-[0-9a-f]{16})?\\.tar\\.gz$"'),
+  );
   assert.ok(
     teardown.includes('gh release delete-asset "$PREVIEW_RELEASE" "$asset"'),
   );

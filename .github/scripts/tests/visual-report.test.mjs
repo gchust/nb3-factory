@@ -79,6 +79,63 @@ const webm = Buffer.concat([
   Buffer.alloc(1200),
 ]);
 const prefix = 'verify-2/browser-acceptance';
+test('failed publication selects evidence without treating it as a successful delivery', () => {
+  const failedJobs = [
+    { name: 'agent', conclusion: 'failure' },
+    { name: 'publish-failed', conclusion: 'success' },
+  ];
+  assert.equal(
+    selectArtifact(
+      { ...run, conclusion: 'failure' },
+      failedJobs,
+      [artifact],
+      repository,
+    ),
+    artifact,
+  );
+  assert.equal(
+    selectArtifact(
+      { ...run, conclusion: 'failure' },
+      [{ name: 'publish-failed', conclusion: 'failure' }],
+      [artifact],
+      repository,
+    ),
+    null,
+  );
+});
+
+test('failed media collects the latest focused round even if the last item passed', (t) => {
+  const f = fixture(t);
+  write(f.artifacts, 'verify-6/browser-focused/report.json', {
+    passed: true,
+    checks: [{ status: 'passed', criterion: 'B06', screenshots: [] }],
+    failures: [],
+  });
+  const plan = collectMedia(f.artifacts, f.output, { failed: true });
+  assert.equal(plan.attempt, 6);
+  const body = renderReport({
+    ...plan,
+    deliveryStatus: 'failed',
+    runId,
+    runAttempt: 1,
+    runUrl,
+    headSha,
+    sourceArtifactUrl: 'fixture',
+  });
+  assert.match(body, /failed/);
+  assert.match(body, /不表示完整验收通过/);
+});
+
+test('early implementation failure publishes an honest report with no fabricated media', (t) => {
+  const f = fixture(t);
+  rmSync(path.join(f.artifacts, 'repair-summary.json'));
+  rmSync(path.join(f.artifacts, 'verify-2'), { recursive: true });
+  const plan = collectMedia(f.artifacts, f.output, { failed: true });
+  assert.equal(plan.attempt, null);
+  assert.deepEqual(plan.media, []);
+  assert.match(plan.warnings.join(' '), /尚无可用浏览器验收记录/);
+});
+
 function fixture(t) {
   const root = mkdtempSync(path.join(os.tmpdir(), 'nb3-visual-'));
   const artifacts = path.join(root, 'artifacts');
@@ -357,8 +414,18 @@ test('report markdown uses local attachments and escapes titles and mentions', (
   assert.match(fallback, /配置 Token/);
 });
 
-async function publisherFixture(t, ghMode, pendingPolls = 0) {
+async function publisherFixture(
+  t,
+  ghMode,
+  pendingPolls = 0,
+  failed = false,
+  noMedia = false,
+) {
   const f = fixture(t);
+  if (noMedia) {
+    rmSync(path.join(f.artifacts, 'verify-2'), { recursive: true });
+    rmSync(path.join(f.artifacts, 'repair-summary.json'));
+  }
   const calls = [];
   const comments = [
     {
@@ -384,10 +451,19 @@ async function publisherFixture(t, ghMode, pendingPolls = 0) {
     )
       result = {
         ...run,
+        conclusion: failed ? 'failure' : 'success',
         event: 'repository_dispatch',
         status: pendingPolls-- > 0 ? 'in_progress' : 'completed',
       };
-    else if (route.endsWith('/jobs')) result = { jobs };
+    else if (route.endsWith('/jobs'))
+      result = {
+        jobs: failed
+          ? [
+              { name: 'agent', conclusion: 'failure' },
+              { name: 'publish-failed', conclusion: 'success' },
+            ]
+          : jobs,
+      };
     else if (route.endsWith('/artifacts')) result = { artifacts: [artifact] };
     else if (route === '/pulls') result = [currentPR];
     else if (route === '/pulls/19') result = currentPR;
@@ -473,6 +549,21 @@ async function publisherFixture(t, ghMode, pendingPolls = 0) {
       currentPR = value;
     },
   };
+}
+
+for (const noMedia of [false, true]) {
+  test(`failed builds publish an honest PR report with missing media=${noMedia}`, async (t) => {
+    const f = await publisherFixture(t, 'success', 0, true, noMedia);
+    await f.invoke('publish');
+    const plan = JSON.parse(
+      readFileSync(path.join(f.output, 'publication.json'), 'utf8'),
+    );
+    assert.equal(plan.deliveryStatus, 'failed');
+    assert.equal(f.comments.length, 2);
+    assert.match(f.comments[1].body, /搭建状态：\*\*failed\*\*/);
+    assert.doesNotMatch(f.comments[1].body, /搭建状态：success/);
+    if (noMedia) assert.match(f.comments[1].body, /尚无可用浏览器验收记录/);
+  });
 }
 
 test('without a media secret, publishes/updates only its own artifact comment', async (t) => {

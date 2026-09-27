@@ -169,7 +169,7 @@ function outcomeOf(record, pipeline, qa, pr) {
   if (pipeline?.outcome === 'budget-exhausted') execution = 'budget-exhausted';
   let acceptance = qa.finalFull.status;
   if (acceptance === 'not-run' && execution === 'running') acceptance = 'unknown';
-  const delivery = status === 'delivered' ? 'published' : ['handoff', 'failure', 'cancelled', 'timed_out', 'success'].includes(status) ? 'not-published' : 'unknown';
+  const delivery = status === 'delivered' || (pr && positive(pr.number)) ? 'published' : ['handoff', 'failure', 'cancelled', 'timed_out', 'success'].includes(status) ? 'not-published' : 'unknown';
   const detail = {
     completed: '执行链已终结；业务验收与代码交付分别见 acceptance / delivery。', running: '已保存 Handoff，执行链仍在继续；不是终态。',
     cancelled: '执行被取消。', 'timed-out': '执行超时。', blocked: '执行因环境或前置条件受阻，不视为业务缺陷。',

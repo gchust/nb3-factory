@@ -72,6 +72,10 @@ export function collectDelivery(root, report, issue = {}) {
   const baseline = baselineFacts(optionalJson(root, 'baseline.json', warnings));
   const qaChecks = Array.isArray(qa?.checks) ? qa.checks : [];
   const attention = [];
+  const diagnostic = record.status === 'failure' ? optionalJson(root, 'task-diagnostic.json', warnings) : null;
+  if (record.status === 'failure' && diagnostic?.reason) {
+    attention.push({ title: '搭建已停止，状态 failed', detail: text(diagnostic.reason), source: 'task-diagnostic.json' });
+  }
   if (record.status === 'failure') {
     try {
       const failure = collectAgentFailure(root);
@@ -174,7 +178,9 @@ export function collectDelivery(root, report, issue = {}) {
       snapshotDate:new Date(record.end).toISOString()},
     delivery:{status:reportStatus(record.status), ci:record.status==='delivered'?'passed':'unknown',
       ciSource:record.status==='delivered'?'流水线已完成最终验证及 PR 发布；不代表人工合并。':'本轮独立最终验证结果未确认。',
-      qaSummary:text(qa?.summary)},
+      qaSummary:record.status === 'failure'
+        ? [text(diagnostic?.reason) || '搭建未完成，当前状态 failed。', qa?.summary ? `最近验收记录（不代表完整交付通过）：${text(qa.summary)}` : '尚无可用的浏览器验收结果。'].join(' ')
+        : text(qa?.summary)},
     links:[{label:'查看需求',url:`https://github.com/${record.repository}/issues/${record.issue}`},{label:'本轮运行与原始产物',url:runUrl}],
     attention,checks,media,uncovered:strings(showcase?.uncovered),
     rawQaReport:qa, rawRetro,
@@ -198,7 +204,7 @@ export async function makeDeliveryReport(report, root, issue, listPulls) {
   const collected = collectDelivery(root, report, issue);
   const {facts,notes,metadata} = collected;
   let pr = null;
-  if (report.record.status === 'delivered' && metadata?.workBranch && listPulls) {
+  if (['delivered', 'failure', 'timed_out'].includes(report.record.status) && metadata?.workBranch && listPulls) {
     try {
       const pulls = await listPulls(metadata.workBranch);
       const source = {repository:report.record.repository,runUrl:`https://github.com/${report.record.repository}/actions/runs/${report.record.runId}`};

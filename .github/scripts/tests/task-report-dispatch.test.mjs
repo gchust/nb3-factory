@@ -141,6 +141,7 @@ function dispatch(
   t,
   {
     delivered = 'true',
+    published,
     failWorkflow = '',
     failCount = '99',
     runId = '123',
@@ -182,6 +183,9 @@ process.exit((args[2] === process.env.TEST_FAIL_WORKFLOW || process.env.TEST_FAI
         SOURCE_ATTEMPT: '2',
         FACTORY_REPORT_REF: 'develop',
         FACTORY_TASK_DELIVERED: delivered,
+        ...(published === undefined
+          ? {}
+          : { FACTORY_TASK_PUBLISHED: published }),
         GH_TOKEN: 'fixture-token',
         GITHUB_STEP_SUMMARY: summary,
         TEST_CALL_LOG: log,
@@ -228,12 +232,26 @@ test('successful delivery dispatches every reporter on the default branch with r
   assert.doesNotMatch(f.result.stdout + f.result.stderr, /fixture-token/);
 });
 
-test('handoffs and failed deliveries keep their history, never premature media', (t) => {
+test('handoffs and unpublished failures keep history without premature media', (t) => {
   const f = dispatch(t, { delivered: 'false' });
   assert.equal(f.result.status, 0);
   assert.deepEqual(
     f.calls.map((args) => args[2]),
-    ['report-task-progress.yml', 'report-task-usage.yml', 'publish-agent-history.yml', 'publish-retro.yml'],
+    [
+      'report-task-progress.yml',
+      'report-task-usage.yml',
+      'publish-agent-history.yml',
+      'publish-retro.yml',
+    ],
+  );
+});
+
+test('failed published builds dispatch their report and attempt preview deployment', (t) => {
+  const f = dispatch(t, { delivered: 'false', published: 'true' });
+  assert.equal(f.result.status, 0);
+  assert.deepEqual(
+    f.calls.slice(-2).map((args) => args[2]),
+    ['publish-visual-report.yml', 'deploy-preview.yml'],
   );
 });
 
@@ -293,9 +311,21 @@ test('report dispatch is an isolated terminal job, not another Agent invocation'
     .split('\n  dispatch-reports:\n')[1]
     ?.split(/\n {2}[a-z][a-z-]*:\n/)[0];
   assert.ok(dispatcher);
-  assert.match(
-    dispatcher,
-    /needs: \[prepare, agent, verify-final, publish, report-failure\]/,
+  assert.deepEqual(
+    dispatcher
+      .match(/needs:\s*\[([^\]]+)\]/)[1]
+      .split(',')
+      .map((value) => value.trim())
+      .filter(Boolean),
+    [
+      'prepare',
+      'agent',
+      'verify-final',
+      'publish',
+      'publish-failed',
+      'preview-build-failed',
+      'report-failure',
+    ],
   );
   assert.match(
     dispatcher,
@@ -305,7 +335,7 @@ test('report dispatch is an isolated terminal job, not another Agent invocation'
   assert.match(dispatcher, /continue-on-error: true/);
   assert.match(
     dispatcher,
-    /FACTORY_TASK_DELIVERED: \$\{\{ needs.publish.result == 'success' \}\}/,
+    /FACTORY_TASK_PUBLISHED: \$\{\{ needs.publish.result == 'success' \|\| needs.publish-failed.result == 'success' \}\}/,
   );
   assert.doesNotMatch(
     dispatcher,

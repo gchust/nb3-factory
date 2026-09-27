@@ -55,6 +55,49 @@ const deliveredJobs = () => [
   { name: 'publish', conclusion: 'success' },
 ];
 
+test('failed published builds can deploy while a packaging failure stays non-deployable', () => {
+  const jobs = [
+    { name: 'agent', conclusion: 'failure' },
+    { name: 'publish-failed', conclusion: 'success' },
+  ];
+  const artifact = { name: 'factory-dist-7', expired: false, id: 22 };
+  assert.equal(
+    selectDistArtifact(
+      run({ conclusion: 'failure' }),
+      jobs,
+      [artifact],
+      'gchust/nb3-factory',
+    ),
+    artifact,
+  );
+  assert.equal(
+    selectDistArtifact(
+      run({ conclusion: 'failure' }),
+      jobs,
+      [],
+      'gchust/nb3-factory',
+    ),
+    null,
+  );
+  assert.equal(
+    selectDistArtifact(
+      run({ conclusion: 'failure' }),
+      [{ name: 'agent', conclusion: 'failure' }],
+      [artifact],
+      'gchust/nb3-factory',
+    ),
+    null,
+  );
+  const body = renderPreviewComment({
+    deliveryStatus: 'failed',
+    url: 'https://example.test',
+    headSha: 'a'.repeat(40),
+    runUrl: 'https://example.test/run',
+  });
+  assert.match(body, /搭建状态：failed/);
+  assert.doesNotMatch(body, /搭建验收通过后的/);
+});
+
 test('a dependency key identifies the installed tree', () => {
   assert.ok(isDepsKey(depsKeyFromEntries(SAMPLE_TREE)));
   assert.equal(

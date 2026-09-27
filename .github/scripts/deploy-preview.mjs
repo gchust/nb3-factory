@@ -105,11 +105,20 @@ if (mode === 'select') {
         runId,
         runUrl,
         runAttempt: run.run_attempt,
+        deliveryStatus: jobs.some(
+          (job) =>
+            job.name === 'publish-failed' && job.conclusion === 'success',
+        )
+          ? 'failed'
+          : 'success',
         artifact,
       }),
     );
     output('ready', 'true');
-  } else console.log('No successful business delivery; skipping the preview.');
+  } else
+    console.log(
+      'No deployable archive for a published build; packaging may have failed. See the task run logs.',
+    );
 } else if (mode === 'prepare') {
   output('ready', 'false');
   const source = JSON.parse(readFileSync(args.source, 'utf8'));
@@ -194,7 +203,7 @@ if (mode === 'select') {
   const note =
     status === 'success'
       ? ''
-      : `本次预览部署或公网访问检查失败，尚未确认地址可用。请查看[部署日志](${deployRunUrl})；这不影响已经通过的搭建验收。`;
+      : `本次预览部署或公网访问检查失败，尚未确认地址可用。请查看[部署日志](${deployRunUrl})；这不改变搭建报告和 PR 中记录的验收状态。`;
   const marker = `${PREVIEW_COMMENT_PREFIX}${runId}:${plan.runAttempt} -->`;
   const existing = (await list(`/issues/${plan.prNumber}/comments`)).find(
     (c) => c.body?.includes(marker) && c.user?.login === 'github-actions[bot]',
@@ -225,7 +234,8 @@ if (mode === 'select') {
     console.warn(
       '::warning::This attempt failed after the address was verified; the published preview is unchanged.',
     );
-  else console.warn('::warning::Preview deployment failed; reported on the PR.');
+  else
+    console.warn('::warning::Preview deployment failed; reported on the PR.');
 } else
   throw new Error(
     'Usage: deploy-preview.mjs <select|prepare|publish> --run-id N ...',

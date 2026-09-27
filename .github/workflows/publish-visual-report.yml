@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       run_id:
-        description: Successful Code Agent task run ID (not Issue or PR number)
+        description: Code Agent task run ID with a published build PR (including failed builds)
         required: true
         type: string
       attempt:
@@ -23,7 +23,7 @@ concurrency:
 
 jobs:
   publish-media:
-    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    if: github.event_name == 'workflow_dispatch' || contains(fromJSON('["success","failure","timed_out"]'), github.event.workflow_run.conclusion)
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
@@ -44,7 +44,7 @@ jobs:
         with:
           node-version: 24.x
 
-      - name: Select a successfully published task
+      - name: Select a published build PR
         id: source
         env:
           GITHUB_TOKEN: ${{ github.token }}
@@ -61,7 +61,7 @@ jobs:
           github-token: ${{ github.token }}
           path: ${{ runner.temp }}/task-evidence
 
-      - name: Collect only the final passing round
+      - name: Collect the passing round or latest failed build evidence
         id: media
         if: steps.source.outputs.ready == 'true'
         env:

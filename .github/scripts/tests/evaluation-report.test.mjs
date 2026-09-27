@@ -107,6 +107,17 @@ test('a first failed full QA is preserved after a repaired final pass', t => {
   assert.equal(document.qa.counts.chain.repairAttempts, 1);
 });
 
+test('a failed published PR records publication separately from failed acceptance', t => {
+  const root = temporary(t);
+  buildArtifacts(root, { rounds: [{ round: 1, scope: 'full', statuses: ['failed', 'passed'] }], outcome: 'failed' });
+  const report = reportFor(root, usageRecord({ status: 'failure' }), [], { number: 150, headSha: 'a'.repeat(40) });
+  const document = finalize(exportOf(root, report).draft);
+  assert.equal(document.outcome.execution, 'completed');
+  assert.equal(document.outcome.acceptance, 'failed');
+  assert.equal(document.outcome.delivery, 'published');
+  assert.equal(document.outcome.pullRequest.number, 150);
+});
+
 test('focused-only QA never becomes full business acceptance', t => {
   const root = temporary(t);
   buildArtifacts(root, { rounds: [{ round: 3, scope: 'focused', statuses: ['passed'] }], chainVerifications: 3, chainRepairs: 2,

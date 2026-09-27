@@ -2,6 +2,18 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import test from 'node:test';
+import { taskOutcome } from '../task-outcome.mjs';
+
+test('publishing a failed PR or preview cannot turn the task into a successful delivery', () => {
+  assert.equal(
+    taskOutcome({ conclusion: 'failure' }, [
+      { name: 'agent', conclusion: 'failure' },
+      { name: 'publish-failed', conclusion: 'success' },
+      { name: 'preview-build-failed', conclusion: 'success' },
+    ]),
+    'failure',
+  );
+});
 
 const workflow = readFileSync(
   path.resolve(
@@ -180,7 +192,7 @@ test('continuation skips initial implementation and restores the previous patch'
   );
 });
 
-test('a failed agent preserves a checkpoint but cannot publish or automatically continue', () => {
+test('a failed agent preserves a checkpoint and can publish failed work without continuing QA', () => {
   const patch = workflow
     .split('- name: Create deterministic patch')[1]
     .split('- name: Prepare runner handoff metadata')[0];
@@ -211,6 +223,31 @@ test('a failed agent preserves a checkpoint but cannot publish or automatically 
     /if: needs\.agent\.result == 'success' && needs\.agent\.outputs\.handoff != 'true'/,
   );
   assert.match(workflow, /if: needs\.verify-final\.result == 'success'/);
+  const failed = workflow
+    .split('  publish-failed:')[1]
+    .split('  preview-build-failed:')[0];
+  assert.match(failed, /always\(\) && !cancelled\(\)/);
+  assert.match(failed, /needs.agent.outputs.patch_available == 'true'/);
+  assert.match(failed, /needs.agent.outputs.handoff != 'true'/);
+  assert.match(
+    failed,
+    /needs.agent.result != 'success' \|\| needs.verify-final.result != 'success'/,
+  );
+  assert.match(failed, /FACTORY_DELIVERY_STATUS: failed/);
+  assert.match(failed, /steps: \*publication-steps/);
+  const preview = workflow
+    .split('  preview-build-failed:')[1]
+    .split('  report-failure:')[0];
+  assert.match(preview, /needs.publish-failed.result == 'success'/);
+  assert.match(preview, /timeout-minutes: 30/);
+  assert.match(
+    preview,
+    /pnpm build --target linux-x64 --node-version 24 --tar/,
+  );
+  assert.doesNotMatch(
+    preview,
+    /secrets\.|verify-and-repair|run-agent|verify\.sh|contents: write/,
+  );
 });
 
 test('comment questions bypass implementation and publish replies through an isolated job', () => {
@@ -219,6 +256,14 @@ test('comment questions bypass implementation and publish replies through an iso
     /if: needs.prepare.outputs.status == 'ready' && needs.prepare.outputs.comment_kind != 'reply'/,
   );
   const reply = workflow.split('  reply:')[1].split('  publish-reply:')[0];
+  assert.match(
+    reply,
+    /needs.publish-failed.result == 'success' && 'failure'/,
+  );
+  assert.match(
+    reply,
+    /needs.publish-failed.result == 'success'\) && needs.prepare.outputs.work_branch/,
+  );
   assert.doesNotMatch(reply, /GITHUB_TOKEN:|issues: write|contents: write/);
   assert.match(reply, /contents: read/);
   assert.match(reply, /persist-credentials: false/);

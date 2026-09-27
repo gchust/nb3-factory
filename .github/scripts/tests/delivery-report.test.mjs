@@ -29,6 +29,31 @@ function artifacts(t,{status='passed',round=2}={}) {
  put(root,`${prefix}/showcase.json`,{pages:[{title:'客户列表',screenshot:'create.png'}],uncovered:['培训列表'],videos:[]});
  return {root,prefix,meta};
 }
+test('budget exhaustion stays failed even when the latest focused check passed', async t => {
+ const {root} = artifacts(t);
+ put(root, 'task-diagnostic.json', { code: 'task-budget', reason: '剩余主动执行时间不足以开始 qa-full' });
+ put(root, 'repair-summary.json', { verificationAttempts: 6, repairAttempts: 4 });
+ put(root, 'verify-6/browser-focused/report.json', { passed: true, authenticated: true, summary: 'B06 通过', checks: [], failures: [] });
+ const {facts} = await makeDeliveryReport(receipt('failure'), root);
+ assert.equal(facts.delivery.status, 'failed');
+ assert.match(facts.delivery.qaSummary, /^剩余主动执行时间不足以开始 qa-full/);
+ assert.match(facts.delivery.qaSummary, /不代表完整交付通过/);
+ assert.match(facts.delivery.qaSummary, /B06 通过/);
+ assert.ok(facts.attention.some(item => item.source === 'task-diagnostic.json'));
+});
+
+test('a failed report links the matching failed PR without becoming delivered', async t => {
+ const {root,meta} = artifacts(t, {status:'failed'});
+ const sha = 'a'.repeat(40);
+ const pr = { number: 150, head: { sha, ref: meta.workBranch, repo: {full_name:repository} }, base: {ref:meta.task.targetBranch},
+  body: `<!-- agent-issue: 146 -->\n<!-- agent-head-sha: ${sha} -->\n<!-- factory-build-status: failed -->\n- [GitHub Actions 运行记录](https://github.com/${repository}/actions/runs/100)` };
+ const result = await makeDeliveryReport(receipt('failure'),root,{},async () => [pr]);
+ assert.equal(result.facts.delivery.status,'failed');
+ assert.equal(result.pr.number,150);
+ assert.equal(result.facts.meta.headSha,sha);
+ assert.ok(result.facts.links.some(link=>link.label==='查看 PR #150'));
+});
+
 test('fixed v2 template keeps every action, observation, screenshot, requirement and explicit missing row',async t=>{
  const {root}=artifacts(t); const result=await makeDeliveryReport(receipt(),root);
  assert.equal(result.facts.checks.length,2); assert.equal(result.facts.checks[1].status,'not-verified');
