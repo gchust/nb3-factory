@@ -77,12 +77,15 @@ export function validateTargetBranch(branch) {
 // The forms offer 执行评测/跳过评测. 默认 (no choice) survives only in older
 // snapshots; 自动/完整/轻量 are retired labels still present in older Issues and presets.
 export const BUILD_REVIEW_LABELS = { auto: '默认', full: '执行评测', off: '跳过评测' };
+// The field is optional. An empty, missing or unrecognized value is "no choice"
+// (null), which inherits a source preset and otherwise resolves to a full review;
+// it never blocks the business task. Rejecting unknown labels stranded #392: a
+// sample written with 跳过评测 ran on a control pinned before that label existed.
 export function parseBuildReviewMode(value) {
   const normalized = String(value ?? '').trim();
-  if (['', '_No response_', 'auto', '默认', '自动'].includes(normalized)) return null;
   if (['full', '执行评测', '完整'].includes(normalized)) return 'full';
   if (['off', '跳过评测', '轻量'].includes(normalized)) return 'off';
-  throw new TaskInputError('框架评测必须为 默认、执行评测 或 跳过评测。跳过评测不影响搭建和业务验收。');
+  return null;
 }
 
 export function resolveBuildReviewMode(task, env, replay = false) {
