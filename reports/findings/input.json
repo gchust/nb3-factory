@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "inputHash": "3f05f43d1439d123988c926970b4cca0caccb402f1260b25b8b1509ae3cee14c",
+  "inputHash": "86c2dc1c740a57d63bd52399c74c2630bdd5280c6bdb6fa6958e3c94d76de5c7",
   "findings": [
     {
       "id": "408:36329180371:1:F2",
@@ -329,6 +329,224 @@
         }
       ],
       "fingerprint": "15e91867ecef1133418a42ab6affc4330544219b303251ca2b985a7e04a6578a"
+    },
+    {
+      "id": "415:36329207021:1:F1",
+      "report": "415:36329207021:1",
+      "issue": 415,
+      "taskTitle": "自动化专项：受理与站内通知",
+      "appVersion": "1.0.0-beta.47",
+      "appTemplate": "@nocobase/app-template-default",
+      "finding": {
+        "id": "F1",
+        "kind": "misleading",
+        "owner": "documentation",
+        "confidence": "confirmed",
+        "severity": "major",
+        "status": "open",
+        "title": "Workflow Skill 对 Run 模块导入解析与 token 导入的描述在生产 Artifact 中不成立",
+        "detail": "dsl-authoring.md 称 Run 模块导入按应用普通运行时规则解析，并要求导入服务 owner 的原始公共 token；但生产运行时把工作流源码复制到 Artifact 目录并以原生 import() 加载，且强制模块只能解析到 artifact root 内。该目录不在 node_modules 下，裸说明符 @nocobase/db 无法解析；服务 token 又是身份对象，无法通过导入原文跨边界复用。",
+        "impact": "按官方指引编写的 Run 模块在开发态通过、部署到生产即失败，且错误发生在首个 Run 节点，后续通知节点完全不执行，接口返回 502。",
+        "suggestedChange": "在 Skill 中明确 Run 模块必须自包含、不得裸导入 node_modules 依赖，并给出跨边界访问应用服务的受支持模式（如字符串键 resolver 转发或运行时依赖注入），与 Artifact 加载实现保持一致。",
+        "claimed": "Run 模块的导入按应用普通运行时依赖规则解析，且应导入服务 owner 的原始公共 token。",
+        "observed": "生产 Artifact 无 node_modules，原生 import() 报 Cannot find package '@nocobase/db'；token 为冻结身份对象，导入原文无法跨 artifact 复用。",
+        "evidence": [
+          "E4",
+          "E5",
+          "E1",
+          "E3",
+          "E6",
+          "E11"
+        ],
+        "diagnosis": {
+          "category": "guidance-gap",
+          "trigger": "在 server/workflows 下用 RunInstruction 编写依赖 @nocobase/db 等包或导入服务 token 的 Run 模块，并以生产模式触发该工作流。",
+          "expected": "按 Skill 指引编写的 Run 模块在生产也能解析依赖并访问应用服务，或在 Skill 中提前给出可行约束。",
+          "actual": "生产 Artifact 以原生 import() 加载隔离副本，裸导入报 Cannot find package；工作流首节点 Error，接口 502。",
+          "workaround": "Run 模块只导入本目录内的本地模块，服务访问改用字符串服务 token，经只读 services resolver 转发到应用服务。",
+          "acceptance": "生产模式下触发工作流，Run 节点成功执行且能通过 resolver 调用数据库与通知服务，接口不返回 502。"
+        }
+      },
+      "targets": [
+        "@nocobase/app-plugin-workflow",
+        "@nocobase/service-provider",
+        "packages/@nocobase/app-plugin-workflow/skills/nocobase-app-plugin-workflow"
+      ],
+      "paths": [
+        ".agents/skills/nocobase-app-plugin-workflow/references/dsl-authoring.md",
+        "packages/@nocobase/app-plugin-workflow/dist/server/instructions/run/instruction.js",
+        "packages/@nocobase/app-plugin-workflow/dist/server/loader/artifact-store.js",
+        "packages/@nocobase/service-provider/dist/token.js"
+      ],
+      "evidence": [
+        {
+          "id": "E4",
+          "kind": "skill",
+          "path": "packages/@nocobase/app-plugin-workflow/skills/nocobase-app-plugin-workflow/references/dsl-authoring.md",
+          "observation": "Skill 明示：“Run modules are compiled by the application's normal server build, so their imports must resolve under that build's ordinary TypeScript and runtime dependency rules.”",
+          "lines": [
+            213,
+            213
+          ],
+          "excerpt": "The comments are intentional integration seams; replace them with application-specific typed service calls. Run modules are compiled by the application's normal server build, so their imports must resolve under that build's ordinary TypeScript and runtime dependency rules.",
+          "sha256": "166cf50d0fdf4c9d99751e2f3fa31dbe0d5f15430cb2ef38d9c7eca2efe70fe0"
+        },
+        {
+          "id": "E5",
+          "kind": "skill",
+          "path": "packages/@nocobase/app-plugin-workflow/skills/nocobase-app-plugin-workflow/references/dsl-authoring.md",
+          "observation": "Skill 要求：services 是只读 has/resolve 解析器，“import each service owner's original public token and do not recreate a same-named token.”",
+          "lines": [
+            386,
+            386
+          ],
+          "excerpt": "The processor leaves the node `PENDING` and yields before executing its module in the background. Completion saves the result and resumes the workflow; downstream nodes run only after completion. This is process-local asynchronous execution, not a durable job or a separate worker thread. The public function receives `args: unknown` and options with exactly `services`, `signal`, and `logger`. `services` is a read-only application service resolver with `has(token)` and `resolve(token)`: import each service owner's original public token and do not recreate a same-named token. The resolver cannot register or replace application services. `signal` is the current Workflow abort signal, and `logger` is already bound to the current Workflow execution context. The function returns/awaits an unknown value, but runtime accepts only JSON-storable results. `undefined` becomes `null`; BigInt, functions, symbols, non-finite numbers, circular values, and class instances fail. A return like `{ status: 'failed' }` is ordinary successful business data. Throw to mark execution error. Scripts cannot choose branches, suspend, resume, or drive the processor state machine.",
+          "sha256": "166cf50d0fdf4c9d99751e2f3fa31dbe0d5f15430cb2ef38d9c7eca2efe70fe0"
+        },
+        {
+          "id": "E1",
+          "kind": "code",
+          "path": "packages/@nocobase/app-plugin-workflow/dist/server/instructions/run/instruction.js",
+          "observation": "loadRunModule 强制 Run 模块经 realpath 解析在 artifact root 之内，然后用原生 import() 加载该文件；bare 说明符按该文件位置解析。",
+          "lines": [
+            284,
+            330
+          ],
+          "excerpt": "async function loadRunModule(workflowResourceRoot, specifier, nodeKey) {\n    if (!workflowResourceRoot) {\n        throw new Error(`Run node \"${nodeKey}\" has no workflow resource root bound to it`);\n    }\n    const target = await resolveWorkflowModule(workflowResourceRoot, specifier);\n    const cached = moduleCache.get(target);\n    if (cached)\n        return cached;\n    const pending = importRunModule(target, specifier);\n    moduleCache.set(target, pending);\n    return pending;\n}\nfunction resolveInsideRoot(root, relativePath, specifier) {\n    const target = path.resolve(root, relativePath);\n    const relative = path.relative(root, target);\n    if (!relative || relative.startsWith('..') || path.isAbsolute(relative)) {\n        throw new Error(`Run module \"${specifier}\" resolves outside its artifact`);\n    }\n    return target;\n}\nasync function resolveWorkflowModule(root, specifier) {\n    const base = resolveInsideRoot(root, specifier, specifier);\n    for (const extension of ['.js', '.mjs', '.ts']) {\n        const target = `${base}${extension}`;\n        try {\n            const realRoot = await fs.realpath(root);\n            const realTarget = await fs.realpath(target);\n            const relative = path.relative(realRoot, realTarget);\n            if (!relative || relative.startsWith('..') || path.isAbsolute(relative)) {\n                throw new Error(`Run module \"${specifier}\" resolves outside its workflow resources`);\n            }\n            return realTarget;\n        }\n        catch (error) {\n            if (error.code !== 'ENOENT')\n                throw error;\n        }\n    }\n    throw new Error(`Run module \"${specifier}\" was not found`);\n}\nasync function importRunModule(target, specifier) {\n    const loaded = (await import(__rewriteRelativeImportExtension(pathToFileURL(target).href)));\n    if (typeof loaded.run !== 'function') {\n        throw new Error(`Run module \"${specifier}\" must export a function named run`);\n    }\n    return { run: loaded.run };\n}",
+          "sha256": "b7333aa5adafc4b28b80258bb532dae8b5bb61cb1db6316a30c0b2de45f38dd9"
+        },
+        {
+          "id": "E3",
+          "kind": "code",
+          "path": "packages/@nocobase/app-plugin-workflow/dist/server/loader/artifact-store.js",
+          "observation": "LocalWorkflowArtifactStore.commit 用 fs.cp 递归复制工作流源码目录到 artifact 目标目录，不注入 node_modules。",
+          "lines": [
+            38,
+            67
+          ],
+          "excerpt": "    async commit(workflowKey, digest, source) {\n        await this.verifyDirectory(source, workflowKey, digest);\n        const destination = this.artifactPath(workflowKey, digest);\n        if (await exists(destination)) {\n            await this.verifyDirectory(destination, workflowKey, digest);\n            return;\n        }\n        await fs.mkdir(path.dirname(destination), { recursive: true });\n        const temporary = `${destination}.tmp-${randomUUID()}`;\n        try {\n            await fs.cp(source, temporary, {\n                recursive: true,\n                errorOnExist: true,\n                force: false,\n            });\n            await this.verifyDirectory(temporary, workflowKey, digest);\n            try {\n                await fs.rename(temporary, destination);\n            }\n            catch (error) {\n                if (error.code !== 'EEXIST' &&\n                    error.code !== 'ENOTEMPTY')\n                    throw error;\n                await this.verifyDirectory(destination, workflowKey, digest);\n            }\n        }\n        finally {\n            await fs.rm(temporary, { recursive: true, force: true });\n        }\n    }",
+          "sha256": "53cf20a9d46989138bdcc5b764aceb94f4c8f64fcd5e0dd99e287aa5e900968d"
+        },
+        {
+          "id": "E6",
+          "kind": "code",
+          "path": "packages/@nocobase/service-provider/dist/token.js",
+          "observation": "createServiceToken 返回 Object.freeze({ name }) 身份对象；同名 token 不相等。",
+          "lines": [
+            1,
+            7
+          ],
+          "excerpt": "const serviceTokenType = Symbol('service-token-type');\nexport function createServiceToken(name) {\n    if (!name.trim()) {\n        throw new Error('Service token name must not be empty.');\n    }\n    return Object.freeze({ name });\n}",
+          "sha256": "07b62d73e4b1b85507b9afb727fff1ca31e5fc52af1e324cad311b361717a8eb"
+        },
+        {
+          "id": "E11",
+          "kind": "qa",
+          "path": "artifacts/verify-2/browser-acceptance/report.json",
+          "observation": "生产浏览器验收失败：Accept 接口 502 SERVICE_REQUEST_WORKFLOW_FAILED，节点 Register acceptance 报 Cannot find package '@nocobase/db'，run 状态 Error，收件箱为空。",
+          "lines": [
+            1,
+            25
+          ],
+          "excerpt": "{\n  \"passed\": false,\n  \"authenticated\": true,\n  \"summary\": \"已用 nocobase 管理员与 Service Assignee 两个账号真实浏览器验收。受理普通/紧急两条请求均返回 502：工作流 'Service request acceptance' 在首个业务节点 'Register acceptance' 报错 Cannot find package '@nocobase/db'，执行记录状态 Error，请求仍为 Pending/Not accepted yet；因此负责人消息中心为空，站内通知未投递，B01-B04 全部不通过。\",\n  \"checks\": [\n    {\n      \"id\": \"B01\",\n      \"criterion\": \"主管受理一条普通请求，执行记录显示已运行，业务记录呈现相应受理结果。\",\n      \"status\": \"failed\",\n      \"actions\": [\n        \"以 nocobase 管理员登录\",\n        \"打开 Service requests 列表，进入普通请求 'Third-floor printer is offline' (/main/service-requests/1)\",\n        \"点击 Accept 提交受理\",\n        \"刷新/重读页面确认结果，检查浏览器网络请求\",\n        \"进入 Settings > Workflow > Execution records，打开运行 #1 并点击 Register acceptance 节点查看错误\"\n      ],\n      \"evidence\": [\n        \"点击 Accept 后 POST /main/api/service-requests/1/accept 返回 502，页面提示 'The acceptance workflow did not finish. Please try again.'\",\n        \"接口响应体：{code:SERVICE_REQUEST_WORKFLOW_FAILED, message: workflow run \\\"1\\\" finished with status -2}\",\n        \"执行记录 #1 'Service request acceptance' 状态为 Error（31 ms，16:50）\",\n        \"节点 'Register acceptance' 报错：Cannot find package '@nocobase/db' imported from .../workflows/service-request-acceptance/.../server/register-acceptance.js\",\n        \"业务记录仍为 Status Pending / Result Not accepted yet，未呈现受理结果\"\n      ],\n      \"screenshots\": [\n        \"B01-normal-before.png\",",
+          "sha256": "b590a5974323a1c490260215f7955a522b1ad518cfdcecba6a3ffbc254ae7bc9"
+        }
+      ],
+      "fingerprint": "8e55b01d3cd05d88566696a9a54a519878588cc8cc3461fade66c6c6ad3cc58f"
+    },
+    {
+      "id": "415:36329207021:1:F2",
+      "report": "415:36329207021:1",
+      "issue": 415,
+      "taskTitle": "自动化专项：受理与站内通知",
+      "appVersion": "1.0.0-beta.47",
+      "appTemplate": "@nocobase/app-template-default",
+      "finding": {
+        "id": "F2",
+        "kind": "issue",
+        "owner": "plugin",
+        "confidence": "confirmed",
+        "severity": "major",
+        "status": "open",
+        "title": "服务令牌的身份语义使其无法跨 Workflow Artifact 边界解析",
+        "detail": "createServiceToken 返回 Object.freeze({name})，容器以该对象身份为 Map 键；createWorkflowRunServices 只是把应用 resolver 原样转发。因此任何在 artifact 内重建或无法导入原文的 token 都无法命中，插件未提供跨 artifact 的受支持解析通道。",
+        "impact": "Run 模块无法按 Skill 推荐方式访问应用服务，只能靠应用侧字符串 token 绕行，增加隐式耦合与踩坑成本。",
+        "suggestedChange": "为 Workflow Run 提供受支持的跨边界服务获取方式，例如按名称解析的注册表、注入所需服务，或在加载时绑定声明。",
+        "evidence": [
+          "E6",
+          "E7",
+          "E8",
+          "E9"
+        ],
+        "diagnosis": {
+          "category": "capability-gap",
+          "trigger": "Run 模块在 artifact 内尝试解析应用服务 token。",
+          "expected": "存在受支持的机制让 Run 模块拿到应用容器中的服务。",
+          "actual": "token 身份跨 artifact 复制失配，导入原文又不可行，解析必然失败。",
+          "workaround": "应用把服务暴露为字符串 token 并注册别名，Run 模块用该字符串经 resolver 解析。",
+          "acceptance": "Run 模块无需导入服务包或重建 token 即可解析到应用服务。"
+        }
+      },
+      "targets": [
+        "@nocobase/app-plugin-workflow",
+        "@nocobase/service-provider"
+      ],
+      "paths": [
+        "packages/@nocobase/app-plugin-workflow/dist/server/engine/run-services.js",
+        "packages/@nocobase/service-provider/dist/container.js",
+        "packages/@nocobase/service-provider/dist/token.js"
+      ],
+      "evidence": [
+        {
+          "id": "E6",
+          "kind": "code",
+          "path": "packages/@nocobase/service-provider/dist/token.js",
+          "observation": "createServiceToken 返回 Object.freeze({ name }) 身份对象；同名 token 不相等。",
+          "lines": [
+            1,
+            7
+          ],
+          "excerpt": "const serviceTokenType = Symbol('service-token-type');\nexport function createServiceToken(name) {\n    if (!name.trim()) {\n        throw new Error('Service token name must not be empty.');\n    }\n    return Object.freeze({ name });\n}",
+          "sha256": "07b62d73e4b1b85507b9afb727fff1ca31e5fc52af1e324cad311b361717a8eb"
+        },
+        {
+          "id": "E7",
+          "kind": "code",
+          "path": "packages/@nocobase/service-provider/dist/container.js",
+          "observation": "ServiceContainer.bindings 是 Map，以 token 对象身份为键做 instance/singleton/has/resolve。",
+          "lines": [
+            1,
+            56
+          ],
+          "excerpt": "export class ServiceContainer {\n    bindings = new Map();\n    resolving = [];\n    instance(token, value) {\n        this.assertAvailable(token);\n        this.bindings.set(token, {\n            factory: () => value,\n            instance: value,\n            state: 'created',\n        });\n    }\n    singleton(token, factory) {\n        this.assertAvailable(token);\n        this.bindings.set(token, {\n            factory,\n            instance: undefined,\n            state: 'pending',\n        });\n    }\n    has(token) {\n        return this.bindings.has(token);\n    }\n    resolve(token) {\n        const binding = this.bindings.get(token);\n        if (!binding) {\n            throw new Error(`Service \"${token.name}\" is not registered.`);\n        }\n        if (binding.state === 'created') {\n            return binding.instance;\n        }\n        if (binding.state === 'failed') {\n            throw binding.error;\n        }\n        if (binding.state === 'creating') {\n            const cycle = [...this.resolving, token]\n                .map((item) => item.name)\n                .join(' -> ');\n            throw new Error(`Circular service dependency detected: ${cycle}.`);\n        }\n        binding.state = 'creating';\n        this.resolving.push(token);\n        try {\n            const value = binding.factory(this);\n            binding.instance = value;\n            binding.state = 'created';\n            return value;\n        }\n        catch (error) {\n            binding.error = error;\n            binding.state = 'failed';\n            throw error;\n        }\n        finally {\n            this.resolving.pop();\n        }\n    }",
+          "sha256": "69dafbced91dd305a59e368eb04592a9aeecd8052415849babafb879363e07ca"
+        },
+        {
+          "id": "E8",
+          "kind": "code",
+          "path": "packages/@nocobase/app-plugin-workflow/dist/server/engine/run-services.js",
+          "observation": "createWorkflowRunServices 返回冻结的 { has, resolve }，直接转发到应用 resolver，未做名称级或 artifact 级适配。",
+          "lines": [
+            1,
+            12
+          ],
+          "excerpt": "/** Hide the mutable application container behind the run-module contract. */\nexport function createWorkflowRunServices(resolver) {\n    const services = {\n        has(token) {\n            return resolver.has(token);\n        },\n        resolve(token) {\n            return resolver.resolve(token);\n        },\n    };\n    return Object.freeze(services);\n}",
+          "sha256": "b15eee4dc06966a91f744abaa04ecc25fc0f2624ab90378cac5de7a14137fe04"
+        },
+        {
+          "id": "E9",
+          "kind": "code",
+          "path": "app/server/workflows/service-request-acceptance/server/contracts.ts",
+          "observation": "修后的 Run 契约为自包含模块，只导入本地类型；用字符串 token serviceRequestWorkflowStepsToken 跨 artifact 边界，注释说明 artifact 可能位于 node_modules 之外。",
+          "lines": [
+            32,
+            64
+          ],
+          "excerpt": "/**\n * The application-owned steps the three Run nodes call.\n *\n * This indirection exists because the Run modules are copied into an isolated\n * Artifact store in production. The store can live outside the application's\n * `node_modules` — a deployment is free to put the private drive on its own\n * volume — so a Run module cannot import `@nocobase/db` or the notification\n * package as a value: the bare specifier would have no resolution path there.\n * This local, dependency-free module is the only thing they import, and they\n * reach the real work through the container token below.\n *\n * The implementation and the matching token live in\n * `server/providers/service-request-service.ts`.\n */\nexport interface ServiceRequestWorkflowSteps {\n  registerAcceptance(\n    input: ServiceRequestAcceptanceInput,\n  ): Promise<ServiceRequestAcceptanceResult>;\n  recordResult(input: ServiceRequestResultInput): Promise<void>;\n  notifyAssignee(input: ServiceRequestAcceptanceInput): Promise<void>;\n}\n\n/**\n * Token the Run modules use to resolve {@link ServiceRequestWorkflowSteps}.\n *\n * It is a plain string on purpose. `createServiceToken` produces an object the\n * container matches by identity, and the Artifact holds its own copy of this\n * module, so two same-named objects would not match. A string compares by\n * value, so the provider's copy and the Artifact's copy resolve the same\n * binding. The provider spells the same string; a logic test keeps them equal.\n */\nexport const serviceRequestWorkflowStepsToken =\n  'service-request/workflow-steps' as unknown as ServiceToken<ServiceRequestWorkflowSteps>;",
+          "sha256": "de52a63de350359a6edf87e37b7430ce7b2ca2beabe1c188bce2f74b168361af"
+        }
+      ],
+      "fingerprint": "4cb9649b5aa684be3ca6076d829b1d29bd7bb4ef97bc033c152888df6d5d88cf"
     },
     {
       "id": "416:36329210119:1:F4",
