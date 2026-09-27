@@ -31,10 +31,8 @@ export function normalizeFailure(value) {
     .normalize('NFKC')
     .replace(/\b\d{4}-\d{2}-\d{2}T[\d:.]+Z\b/gu, '<time>')
     .replace(/\b[\da-f]{8}-[\da-f-]{27,}\b/giu, '<uuid>')
-    .replace(
-      /(?:\/home\/runner\/work|\/tmp|\/private\/tmp)\/[^\s:]+/gu,
-      '<runtime-path>',
-    )
+    .replace(/\/home\/runner\/work\/[^/\s:'"]+\/[^/\s:'"]+\//gu, '<workspace>/')
+    .replace(/\/(?:private\/)?tmp\/[^/\s:'"]+\//gu, '<runtime-path>/')
     .replace(/:\d+:\d+\b/gu, ':<line>:<column>')
     .replace(/\b\d+(?:\.\d+)?\s*(?:ms|milliseconds|seconds)\b/giu, '<duration>')
     .replace(/\s+/gu, ' ')
@@ -56,15 +54,34 @@ export function observedFailures(kind, report, log, metadata, stage = 'build') {
       }))
       .filter((item) => item.symptom);
   }
-  const lines = String(log)
-    .split(/\r?\n/u)
-    .filter(
-      (line) =>
-        /error TS\d+|\berror\b|^\s*(?:FAIL|not ok|×|✖)\s|AssertionError/iu.test(
-          line,
-        ) && !/ELIFECYCLE|Command failed|^\s+at\s/u.test(line),
-    );
-  return [...new Set(lines.map(normalizeFailure).filter(Boolean))]
+  const lines = stripVTControlCharacters(String(log)).split(/\r?\n/u);
+  const diagnostics = [];
+  const wrapper = (line) =>
+    /ELIFECYCLE|Command failed|^\s+at\s|^\s*(?:FAIL|not ok|×|✖)\s/iu.test(
+      line,
+    ) ||
+    /\b(?:build|transform) failed with \d+ errors?:?\s*$/iu.test(line) ||
+    /^\s*(?:error:\s*)?(?:build|compilation) failed[.!:]?\s*$/iu.test(line);
+  for (const [index, line] of lines.entries()) {
+    // Vite's common heading is not a failure identity. Include the following
+    // diagnostic and file, otherwise unrelated missing modules look identical.
+    if (/^\s*error during build:\s*$/iu.test(line)) {
+      const details = [];
+      for (const next of lines.slice(index + 1, index + 7)) {
+        if (/^\s+at\s/u.test(next)) break;
+        if (next.trim() && !wrapper(next)) details.push(next);
+      }
+      if (details.length) diagnostics.push(details.join(' '));
+    } else if (
+      !wrapper(line) &&
+      /error TS\d+|\b(?:[A-Za-z]*Error)(?:\s*\[[^\]]+\])?:\s*\S|\berror\s+\S/iu.test(
+        line,
+      )
+    ) {
+      diagnostics.push(line);
+    }
+  }
+  return [...new Set(diagnostics.map(normalizeFailure).filter(Boolean))]
     .slice(0, 100)
     .map((symptom) => ({ criterion: stage, symptom }));
 }

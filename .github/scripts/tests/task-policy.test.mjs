@@ -1,5 +1,9 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
+import { existsSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
 import test from 'node:test';
 import {
   effectiveBudget,
@@ -8,7 +12,14 @@ import {
   recordFailures,
   TASK_LIMITS,
 } from '../task-policy.mjs';
-import { budgetExhausted, handoffRefusal } from '../pipeline-state.mjs';
+import {
+  budgetExhausted,
+  handoffRefusal,
+  initialize,
+  restoreState,
+  saveState,
+  stopPipeline,
+} from '../pipeline-state.mjs';
 
 const metadata = {
   task: { acceptanceCriteria: 'B02. Save customer\nB04. Save draft' },
@@ -127,6 +138,151 @@ test('build diagnostics count stable compiler failures and ignore generic comman
   );
   assert.equal(failures.length, 1);
   assert.equal(failures[0].criterion, 'typecheck');
+});
+
+test('different Vite errors never share the generic build heading as their fingerprint', () => {
+  const state = {
+    failureKind: 'build',
+    verificationAttempts: 0,
+    repairAttempts: 0,
+  };
+  for (const [index, name] of ['orders', 'invoices', 'customers'].entries()) {
+    state.verificationAttempts = index + 1;
+    state.repairAttempts = index;
+    const log = [
+      'error during build:',
+      'Could not resolve "./' + name + '.js" from "entry.js"',
+      'file: /tmp/run-' + index + '/entry.js',
+      '    at getRollupError (file:///tool.js:10:20)',
+    ].join('\n');
+    const failures = observedFailures('build', null, log, metadata, 'build');
+    assert.equal(failures.length, 1);
+    assert.ok(failures[0].symptom.includes(name + '.js'));
+    assert.equal(recordFailures(state, failures, {}), null);
+  }
+  assert.equal(state.failureHistory.length, 3);
+  assert.deepEqual(
+    observedFailures(
+      'build',
+      null,
+      'error during build:\nELIFECYCLE Command failed',
+      metadata,
+    ),
+    [],
+  );
+});
+
+test('module paths retain file identity while runner directories and coordinates vary', () => {
+  const a = normalizeFailure(
+    "Error: Cannot find module '/tmp/run-a/orders.js'",
+  );
+  assert.equal(
+    a,
+    normalizeFailure(
+      "Error: Cannot find module '/private/tmp/run-b/orders.js'",
+    ),
+  );
+  assert.notEqual(
+    a,
+    normalizeFailure("Error: Cannot find module '/tmp/run-a/invoices.js'"),
+  );
+  assert.equal(
+    normalizeFailure(
+      'Error at /home/runner/work/repo/repo/server/orders.ts:1:2',
+    ),
+    normalizeFailure(
+      'Error at /home/runner/work/other/other/server/orders.ts:5:8',
+    ),
+  );
+  assert.notEqual(
+    normalizeFailure(
+      'Error at /home/runner/work/repo/repo/server/orders.ts:1:2',
+    ),
+    normalizeFailure(
+      'Error at /home/runner/work/repo/repo/server/invoices.ts:1:2',
+    ),
+  );
+});
+
+function withRun(values, callback) {
+  const previous = Object.fromEntries(
+    Object.keys(values).map((key) => [key, process.env[key]]),
+  );
+  Object.assign(process.env, values);
+  try {
+    return callback();
+  } finally {
+    for (const [key, value] of Object.entries(previous)) {
+      if (value === undefined) delete process.env[key];
+      else process.env[key] = value;
+    }
+  }
+}
+
+test('direct GitHub retries cannot initialize fresh counters or replay an older checkpoint', (t) => {
+  const root = mkdtempSync(path.join(os.tmpdir(), 'task-rerun-'));
+  t.after(() => rmSync(root, { recursive: true, force: true }));
+  const source = path.join(root, 'source');
+  const stateFile = path.join(source, 'pipeline-state.json');
+  withRun({ GITHUB_RUN_ID: '100', GITHUB_RUN_ATTEMPT: '1' }, () => {
+    const state = initialize(stateFile, metadata);
+    state.repairAttempts = 5;
+    stopPipeline(stateFile, state, 'repair ceiling reached');
+  });
+  withRun({ GITHUB_RUN_ID: '100', GITHUB_RUN_ATTEMPT: '2' }, () => {
+    assert.throws(
+      () => initialize(path.join(root, 'new', 'pipeline-state.json'), metadata),
+      /GitHub Re-run/,
+    );
+    assert.throws(() => initialize(stateFile, metadata), /GitHub Re-run/);
+    assert.throws(
+      () => restoreState(source, path.join(root, 'restored'), metadata),
+      /GitHub Re-run/,
+    );
+  });
+  assert.equal(existsSync(path.join(root, 'new')), false);
+  assert.equal(existsSync(path.join(root, 'restored')), false);
+});
+
+test('same-run restoration is idempotent and a new recovery Run retains elapsed usage', (t) => {
+  const root = mkdtempSync(path.join(os.tmpdir(), 'task-same-run-'));
+  t.after(() => rmSync(root, { recursive: true, force: true }));
+  const source = path.join(root, 'source');
+  const file = path.join(source, 'pipeline-state.json');
+  withRun(
+    {
+      GITHUB_RUN_ID: '100',
+      GITHUB_RUN_ATTEMPT: '1',
+      FACTORY_TASK_CONTINUATION: '0',
+      FACTORY_JOB_STARTED_EPOCH_SECONDS: String(
+        Math.floor(Date.now() / 1000) - 1000,
+      ),
+    },
+    () => {
+      const state = initialize(file, metadata);
+      state.patchHash = createHash('sha256').update('patch').digest('hex');
+      state.repairAttempts = 2;
+      writeFileSync(path.join(source, 'agent.patch'), 'patch');
+      saveState(file, state);
+      const same = restoreState(source, path.join(root, 'same'), metadata);
+      assert.equal(same.activeSecondsBase, state.activeSecondsBase);
+      assert.equal(same.priorExecutions, state.priorExecutions);
+      withRun(
+        {
+          GITHUB_RUN_ID: '101',
+          FACTORY_JOB_STARTED_EPOCH_SECONDS: String(
+            Math.floor(Date.now() / 1000),
+          ),
+        },
+        () => {
+          const next = restoreState(source, path.join(root, 'next'), metadata);
+          assert.equal(next.activeSecondsBase, state.activeSeconds);
+          assert.equal(next.priorExecutions, state.priorExecutions + 1);
+          assert.equal(next.repairAttempts, 2);
+        },
+      );
+    },
+  );
 });
 
 test('the standalone handoff protocol refuses a second continuation before writing or network access', () => {

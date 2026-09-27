@@ -102,6 +102,15 @@ process.exit(code);
   const codesFile = write(root, 'codes.json', JSON.stringify(codes));
   const repairsFile = write(root, 'repairs.json', JSON.stringify(repairs));
   const trace = path.join(root, 'trace');
+  const runIds = new Map();
+  const runEnv = (name) => {
+    if (!runIds.has(name)) runIds.set(name, String(1000 + runIds.size));
+    return {
+      GITHUB_RUN_ID: runIds.get(name),
+      GITHUB_RUN_ATTEMPT: '1',
+      FACTORY_TASK_CONTINUATION: '0',
+    };
+  };
   function run(name, env = {}) {
     const artifacts = path.join(root, name);
     const result = spawnSync(
@@ -120,6 +129,7 @@ process.exit(code);
         timeout: 15_000,
         env: {
           ...process.env,
+          ...runEnv(name),
           PATH: `${root}/bin:${process.env.PATH}`,
           TRACE: trace,
           CODES: codesFile,
@@ -142,7 +152,17 @@ process.exit(code);
       from.checkpoint,
       path.join(from.artifacts, 'agent.patch'),
     ]);
-    restoreState(from.artifacts, path.join(root, next), task);
+    execFileSync(
+      process.execPath,
+      [
+        path.join(scripts, 'pipeline-state.mjs'),
+        'restore',
+        from.artifacts,
+        path.join(root, next),
+        metadata,
+      ],
+      { env: { ...process.env, ...runEnv(next) }, stdio: 'pipe' },
+    );
   }
   return {
     root,

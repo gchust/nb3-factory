@@ -21,7 +21,7 @@ function withEnv(values, fn) {
 test('the budget is copied once into the checkpoint; handoff and recovery restore it and keep counting active time', t => {
   const root = temporary(t);
   const file = path.join(root, 'a', 'pipeline-state.json');
-  withEnv({ FACTORY_JOB_STARTED_EPOCH_SECONDS: String(Math.floor(Date.now() / 1000) - 1000) }, () => {
+  withEnv({ GITHUB_RUN_ID: '101', GITHUB_RUN_ATTEMPT: '1', FACTORY_JOB_STARTED_EPOCH_SECONDS: String(Math.floor(Date.now() / 1000) - 1000) }, () => {
     const state = initialize(file, metadata());
     assert.deepEqual(state.budget, budget);
     state.patchHash = createHash('sha256').update('').digest('hex');
@@ -32,7 +32,7 @@ test('the budget is copied once into the checkpoint; handoff and recovery restor
   // A continuation cannot change the budget: a different one is refused, not adopted.
   assert.throws(() => restoreState(path.join(root, 'a'), path.join(root, 'x'),
     { ...metadata(), evaluation: { ...metadata().evaluation, budget: { ...budget, maxActiveSeconds: 86_400 } } }), /trusted evaluation sample budget/);
-  const restored = withEnv({ FACTORY_JOB_STARTED_EPOCH_SECONDS: String(Math.floor(Date.now() / 1000) - 500) },
+  const restored = withEnv({ GITHUB_RUN_ID: '102', GITHUB_RUN_ATTEMPT: '1', FACTORY_JOB_STARTED_EPOCH_SECONDS: String(Math.floor(Date.now() / 1000) - 500) },
     () => restoreState(path.join(root, 'a'), path.join(root, 'b'), metadata()));
   assert.equal(restored.budget.maxActiveSeconds, 3600);
   assert.ok(readState(path.join(root, 'b', 'pipeline-state.json')).activeSeconds >= 1500);

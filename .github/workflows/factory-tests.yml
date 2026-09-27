@@ -32,7 +32,9 @@ jobs:
       - name: Run control-plane regression tests
         # Browser acceptance invokes process cleanup that can kill the listener
         # fixture in stale-app-port tests. These suites share the process table.
-        run: node --test --test-concurrency=1 .github/scripts/tests/*.test.mjs
+        # Fixtures own their simulated Run identities, including Handoff and
+        # Re-run tests; the CI attempt must not become the task's attempt.
+        run: env -u GITHUB_RUN_ID -u GITHUB_RUN_ATTEMPT node --test --test-concurrency=1 .github/scripts/tests/*.test.mjs
       - name: Verify deterministic browser fixtures
         run: python3 .github/scripts/tests/browser-fixtures.test.py
       - name: Run preview DNS regression tests

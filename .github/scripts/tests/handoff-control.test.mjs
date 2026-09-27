@@ -173,7 +173,7 @@ test('real Git A -> B -> C preserves the pinned evaluator but refuses another co
   const meta = path.join(root, 'task.json');
   write(root, 'task.json', { issue: { number: 165 }, task: { requirements: 'unchanged', acceptanceCriteria: 'B01. Login\nB06. Preview' } });
   const source = path.join(root, 'checkpoint-1'); mkdirSync(source);
-  const runState = (args) => execFileSync(process.execPath, [pinnedState, ...args], { env: { ...process.env, FACTORY_CONTROL_SHA: a }, stdio: 'pipe' });
+  const runState = (args, runId = '12345') => execFileSync(process.execPath, [pinnedState, ...args], { env: { ...process.env, FACTORY_CONTROL_SHA: a, GITHUB_RUN_ID: runId, GITHUB_RUN_ATTEMPT: '1', FACTORY_TASK_CONTINUATION: '0' }, stdio: 'pipe' });
   const stateFile = path.join(source, 'pipeline-state.json');
   runState(['init', stateFile, meta]);
   runState(['set', stateFile, 'qa-focused', '4', '3', '1800']);
@@ -189,7 +189,7 @@ test('real Git A -> B -> C preserves the pinned evaluator but refuses another co
   git('checkout', '--detach', a);
   assert.equal(readFileSync(path.join(repo, 'evaluator'), 'utf8'), 'A');
   cli('handoff-control.mjs', ['verify', '--event', path.join(root, 'event.json'), '--checkpoint', source], { FACTORY_CONTROL_SHA: a });
-  const restored = path.join(root, 'restored-1'); runState(['restore', source, restored, meta]);
+  const restored = path.join(root, 'restored-1'); runState(['restore', source, restored, meta], '23456');
   const first = JSON.parse(readFileSync(path.join(restored, 'pipeline-state.json'), 'utf8'));
   assert.equal(first.controlSha, a); assert.equal(first.phase, 'qa-focused');
   assert.deepEqual(first.pendingCriteria, ['B06']); assert.equal(first.verificationAttempts, 4); assert.equal(first.repairAttempts, 3);
@@ -200,7 +200,7 @@ test('real Git A -> B -> C preserves the pinned evaluator but refuses another co
   const previousTask = { repository: 'gchust/nb3-factory', issue: { number: 165 }, controlSha: a };
   assert.equal(resolveControlSha(next, c, undefined, previousTask), a); // no second full checkpoint download in prepare
   git('checkout', '--detach', a);
-  assert.throws(() => runState(['handoff', path.join(restored, 'pipeline-state.json')]), error => error.status === 76);
+  assert.throws(() => runState(['handoff', path.join(restored, 'pipeline-state.json')], '23456'), error => error.status === 76);
   const stopped = JSON.parse(readFileSync(path.join(restored, 'pipeline-state.json'), 'utf8'));
   assert.equal(stopped.controlSha, a); assert.equal(stopped.phase, 'qa-focused');
   assert.deepEqual(stopped.pendingCriteria, ['B06']); assert.equal(stopped.repairAttempts, 3);

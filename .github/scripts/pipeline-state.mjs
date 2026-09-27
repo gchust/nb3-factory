@@ -211,7 +211,17 @@ export function saveState(file, state) {
     appendFileSync(process.env.GITHUB_STEP_SUMMARY, `${message}\n\n`);
 }
 
+function requireFreshRunAttempt() {
+  // GitHub retries use fresh runners but do not restore the previous attempt's
+  // checkpoint. Explicit recovery validates and restores it in a new Run.
+  if (Number(process.env.GITHUB_RUN_ATTEMPT || 1) > 1)
+    throw new Error(
+      'GitHub Re-run cannot preserve task repair limits. Use an explicit recovery Run with a matching checkpoint; stopped tasks require a new build after diagnosis.',
+    );
+}
+
 export function initialize(file, metadata) {
+  requireFreshRunAttempt();
   if (existsSync(file)) {
     const state = readState(file);
     if (state.inputHash !== inputHash(metadata))
@@ -237,6 +247,7 @@ export function initialize(file, metadata) {
 }
 
 export function restoreState(source, destination, metadata) {
+  requireFreshRunAttempt();
   const restoreHistory = () => {
     try {
       preserveReviewHistory(source, destination, metadata);
