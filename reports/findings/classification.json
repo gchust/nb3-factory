@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "inputHash": "f48d53e946e5a9453fec8eee55b09d64a79306c3cbaa0f17833649a8d008fc50",
+  "inputHash": "bf1c6f2a2c583022623e5ff445da5608e71c3f4244a11036e497e2bd42507621",
   "sources": [
     {
       "id": "224:35881009045:2:F2",
@@ -308,6 +308,31 @@
       "fingerprint": "c98c336ec9f5dbab3117da9b84247c24bd9a4a4e891749417e787240c3a93d21"
     },
     {
+      "id": "366:36276932178:1:F1",
+      "report": "366:36276932178:1",
+      "fingerprint": "8c2db8e2a62bb3adf35d9493fea49f6c7bc8a94b84293bf2c509865e58cbc2f9"
+    },
+    {
+      "id": "366:36276932178:1:F12",
+      "report": "366:36276932178:1",
+      "fingerprint": "c81a0099d80cc4bf8265208f742627ef27279631af12d463b3a7070fe0fd79f3"
+    },
+    {
+      "id": "366:36276932178:1:F2",
+      "report": "366:36276932178:1",
+      "fingerprint": "e356d75802bb9b3b8b44c4c66d8547a2dda9451ea675a19369e4f37f8b87cc5f"
+    },
+    {
+      "id": "366:36276932178:1:F4",
+      "report": "366:36276932178:1",
+      "fingerprint": "8734406c00939c83afbdbbec140fb0ab652eec01785e0b4fbe0c920a48ea2c0d"
+    },
+    {
+      "id": "366:36276932178:1:F8",
+      "report": "366:36276932178:1",
+      "fingerprint": "d2920165f12070db2f789e79a12fe17d63574f57a66d275037ff443020a3b91f"
+    },
+    {
       "id": "369:36229373182:1:F2",
       "report": "369:36229373182:1",
       "fingerprint": "c7a1a3eb45d3cd0a5e051588a882bb9af7d8dedcc3e380dce032a74d421f9256"
@@ -345,8 +370,8 @@
   ],
   "groups": [
     {
-      "title": "datetime 与 datetimeTz 的时区语义在迁移/数据访问指引中未说明",
-      "reason": "成员 224:35881009045:2:F2 与 292:36083761251:1:F4 指向同一文档缺口：字段清单同时列出 datetime/datetimeTz，却未说明前者是无时区墙钟、后者才保留瞬间。两者证据都落在 temporal.js 的同一实现（datetime 字符串正则不接受 Z、datetimeTz 接受 Z/±HH:MM；datetimeTz 渲染为 ISO 瞬间，datetime 按宿主本地读法），建议也都是在字段清单/迁移示例中补充语义与正反例。",
+      "title": "datetime 与 datetimeTz 的时区语义未在迁移/数据访问指引中说明",
+      "reason": "224:F2 与 292:F4 指向同一文档缺口：字段清单同时列出 datetime/datetimeTz，却未说明前者是无时区墙钟、后者才保留瞬间。证据都落在 temporal.js（datetime 字符串正则不接受 Z、datetimeTz 接受 Z/±HH:MM；datetimeTz 渲染为 ISO 瞬间，datetime 按宿主本地读法），建议同为在字段清单/迁移示例补语义与正反例。",
       "members": [
         "224:35881009045:2:F2",
         "292:36083761251:1:F4"
@@ -354,7 +379,7 @@
     },
     {
       "title": "聚合（sum/count）用法缺少最小示例",
-      "reason": "224:35881009045:2:F7 指出 database-and-data 对聚合只有一句“读 QueryAdapter 类型”的指路，339:36151903756:1:F2 指出 Repository 方法清单列出 aggregate/groupBy 却无示例。证据分别对应 QueryAdapter 表达式工厂（fn.sum 等）与 Repository 聚合方法，根因同为“有方法/类型但无可用示例”，修复方向都是补最小聚合片段。",
+      "reason": "224:F7 指 database-and-data 对聚合只给“读 QueryAdapter 类型”的指路、缺 sum 片段；339:F2 指 SKILL 的 Repository 方法清单列 aggregate/groupBy 却无示例。证据分别对应 QueryAdapter 表达式工厂与 Repository 聚合方法，根因同为“有能力无可用示例”，修复方向都是补最小聚合示例。",
       "members": [
         "224:35881009045:2:F7",
         "339:36151903756:1:F2"
@@ -362,7 +387,7 @@
     },
     {
       "title": "应用 Provider 消费可选插件服务缺少 container.has 容错指引",
-      "reason": "250:35966607785:1:F3 与 300:36083791971:1:F4 都是 services-and-jobs/provider 章节未说明解析插件拥有的可选服务前应先 container.has。证据一侧是 boot() 无条件 resolve authorizationToken 触发 “Service not registered”，另一侧是 container.d.ts 提供 has/resolveIfCreated 但文档未使用；建议同为补充优雅降级说明。",
+      "reason": "250:F3 与 300:F4 都指 services-and-jobs/provider 章节未说明解析插件拥有的可选服务前应先 container.has。证据一侧是 Provider.boot 无条件 resolve authorizationToken 触发 Service not registered，另一侧是 container.d.ts 提供 has/resolveIfCreated 但文档未使用；建议同为补优雅降级说明。",
       "members": [
         "250:35966607785:1:F3",
         "300:36083791971:1:F4"
@@ -370,7 +395,7 @@
     },
     {
       "title": "默认 Registry 图片预览分支缺少解码失败反馈",
-      "reason": "252:35985523766:1:F2、276:35996323858:1:F2 与 298:36083784621:1:F1 都指向 @nocobase/app-plugin-file 的 file-preview-content.tsx：image 分支只渲染裸 <img>，没有 onError 状态。证据一致显示应用只能修改复制来的 Registry 源并加 role=alert 失败提示才能通过验收，属同一组件缺陷。",
+      "reason": "252:F2、276:F2 与 298:F1 都指向 @nocobase/app-plugin-file 的 file-preview-content.tsx：image 分支只渲染裸 <img>，没有 onError 状态。证据一致显示应用只能修改复制来的 Registry 源并加 role=alert 失败提示才能通过验收，属同一组件缺陷。",
       "members": [
         "252:35985523766:1:F2",
         "276:35996323858:1:F2",
@@ -379,7 +404,7 @@
     },
     {
       "title": "File Skill 未提示 raster 图片默认无解码失败反馈",
-      "reason": "252:35985523766:1:F4 与 298:36083784621:1:F3 都指 File Skill 的 Preview/失败章节未点名 image 分支在解码失败时没有内置反馈。证据同为该 Skill 文本与同一组件实现，属同一文档缺口，修复方向为补一句限制/宿主扩源提示。",
+      "reason": "252:F4 与 298:F3 都指 File Skill 的 Preview/失败章节未点名 image 分支在解码失败时没有内置反馈。证据同为该 Skill 文本与同一组件实现，属同一文档缺口，修复方向为补限制/宿主扩源提示。",
       "members": [
         "252:35985523766:1:F4",
         "298:36083784621:1:F3"
@@ -387,24 +412,25 @@
     },
     {
       "title": "Workflow Skill 未说明 artifactDisk 必须位于可解析依赖的代码根",
-      "reason": "253:35966665643:1:F2 与 322:36114924151:1:F3 都指 Workflow Skill（dsl-authoring/README）未记录 artifactDisk 位置约束。证据共同来自 provider 回退 drive.default 的实现、config.d.ts 与 drive.ts/workflow.ts 中“run 模块裸导入需在编译后 server 树内解析”的注释，属同一文档缺口。",
+      "reason": "253:F2 与 322:F3 都指 Workflow Skill（dsl-authoring/README）未记录 artifactDisk 位置约束。证据共同来自 provider 回退 drive.default 的实现、config.d.ts 与 drive.ts/workflow.ts 中“run 模块裸导入需在编译后 server 树内解析”的注释，属同一文档缺口。",
       "members": [
         "253:35966665643:1:F2",
         "322:36114924151:1:F3"
       ]
     },
     {
-      "title": "Workflow 缺少公开的程序化 materialize/激活/同步入口",
-      "reason": "253:35966665643:1:F3、277:35996341913:1:F1 与 299:36095613913:1:F1 都指 internalWorkflowServiceToken（discoverArtifacts/ensureArtifactMaterialized/triggerRevision）未从 ./server 公开，trigger(key) 只查已 current 的定义并对缺失返回 skipped:not-found。证据同为 tokens.d.ts/index.d.ts/service.js 与应用强转公开 token 的绕行，属同一公开契约缺口。",
+      "title": "Workflow 缺少公开的程序化 materialize/激活/启用入口，source workflow 安装后无法自动生效",
+      "reason": "253:F3、277:F1、299:F1 与 366:F12 都指 Workflow 缺少公开或受信任的程序化物化与启用入口：internalWorkflowServiceToken（discoverArtifacts/ensureArtifactMaterialized 等）未从 ./server 导出，trigger(key) 只查 current 定义且对缺失返回 skipped:not-found；F12 进一步显示物化 revision 默认 enabled:false 且服务无供 seed/Provider 调用的启用方法。证据同为 tokens.d.ts/index.d.ts/service.js/source-materializer.js 与应用强转公开 token 的绕行，属同一公开契约缺口，修复方向都是提供受信任的启用途径。",
       "members": [
         "253:35966665643:1:F3",
         "277:35996341913:1:F1",
-        "299:36095613913:1:F1"
+        "299:36095613913:1:F1",
+        "366:36276932178:1:F12"
       ]
     },
     {
       "title": "Workflow 指引未给出应用启动时激活自有 source workflow 的做法",
-      "reason": "277:35996341913:1:F2 与 299:36095613913:1:F2 都指 invocation/dsl 指引未说明 source workflow 如何成为 current 或如何在启动期激活。证据同为 invocation-and-service-api.md 与 dsl-authoring.md 只讲管理侧 enable、未给应用侧路径，并漏记公开 trigger 选项。",
+      "reason": "277:F2 与 299:F2 都指 invocation/dsl 指引未说明 source workflow 如何成为 current 或如何在启动期激活。证据同为 invocation-and-service-api.md 与 dsl-authoring.md 只讲管理侧 enable、未给应用侧路径，并漏记公开 trigger 选项。",
       "members": [
         "277:35996341913:1:F2",
         "299:36095613913:1:F2"
@@ -412,7 +438,7 @@
     },
     {
       "title": "应用开发 Skill 把定时任务指向 @nocobase/cron，未映射 Scheduler",
-      "reason": "254:35966684490:1:F3、278:35996374638:1:F2 与 300:36083791971:1:F2 都指 services-and-jobs 的 scheduled work 段与 SKILL 能力映射表只推 @nocobase/cron，未提需要管理员可见执行记录的 Scheduler。证据同为该段文本与 Scheduler Skill 的用途声明，属同一错误指引。",
+      "reason": "254:F3、278:F2 与 300:F2 都指 services-and-jobs 的 scheduled work 段与 SKILL 能力映射表只推 @nocobase/cron，未提需要管理员可见执行记录的 Scheduler。证据同为该段文本与 Scheduler Skill 的用途声明，属同一错误指引。",
       "members": [
         "254:35966684490:1:F3",
         "278:35996374638:1:F2",
@@ -421,7 +447,7 @@
     },
     {
       "title": "Scheduler 缺少经同一执行记录的“立即执行”入口",
-      "reason": "254:35966684490:1:F4 与 300:36083791971:1:F3 都指 schedules 路由只有 list/occurrences/enable/disable，没有手动触发点。证据同为 routes/index.js 的端点集合，建议同为复用 ScheduleDispatchJob 生成 occurrence，属同一缺口。",
+      "reason": "254:F4 与 300:F3 都指 schedules 路由只有 list/occurrences/enable/disable，没有手动触发点。证据同为 routes/index.js 的端点集合，建议同为复用 ScheduleDispatchJob 生成 occurrence，属同一缺口。",
       "members": [
         "254:35966684490:1:F4",
         "300:36083791971:1:F3"
@@ -429,7 +455,7 @@
     },
     {
       "title": "Scheduler list() 对同一目标重复调用 describe()",
-      "reason": "254:35966684490:1:F5 与 278:35996374638:1:F3 都指 DefaultSchedulerService.list() 在 map 回调内两次异步调用 targets.describe()（同一 type/config）。证据同为 scheduler.js 第 35/39 行；F5 另附的 setEnabled 非事务内容为该发现附带部分，共同根因是重复 describe 的列表开销。",
+      "reason": "254:F5 与 278:F3 都指 DefaultSchedulerService.list() 在 map 回调内两次异步调用 targets.describe()（同一 type/config）。证据同为 scheduler.js 第 35/39 行；F5 另附的 setEnabled 非事务内容为该发现附带部分，共同根因是重复 describe 的列表开销。",
       "members": [
         "254:35966684490:1:F5",
         "278:35996374638:1:F3"
@@ -437,7 +463,7 @@
     },
     {
       "title": "模板共享 DataTable 未透出 showSelectedCount",
-      "reason": "292:36083761251:1:F6 与 295:36083773382:1:F7 都指共享 DataTable 未转发 DataTablePagination 已支持的 showSelectedCount，导致无行选择列表显示“0 of N selected”。证据同为 data-table.tsx/data-table-pagination.tsx 与 table.md，属同一模板缺口。",
+      "reason": "292:F6 与 295:F7 都指共享 DataTable 未转发 DataTablePagination 已支持的 showSelectedCount，导致无行选择列表显示“0 of N selected”。证据同为 data-table.tsx/data-table-pagination.tsx 与 table.md，属同一模板缺口。",
       "members": [
         "292:36083761251:1:F6",
         "295:36083773382:1:F7"
@@ -445,7 +471,7 @@
     },
     {
       "title": "种子示例解构 SeedContext.repository 触发 unbound-method",
-      "reason": "295:36083773382:1:F3 与 365:36225818832:1:F1 都指 nocobase-db SKILL 的种子示例写作 async run({ repository })，而 SeedContext.repository 是绑定到连接的具名方法。证据同为 SKILL 示例、context.js 的 createTaskRepositoryAccessor 与 eslint @typescript-eslint/unbound-method 报错，属同一错误示例。",
+      "reason": "295:F3 与 365:F1 都指 nocobase-db SKILL 的种子示例写作 async run({ repository })，而 SeedContext.repository 是绑定到连接的具名方法。证据同为 SKILL 示例、context.js 的 createTaskRepositoryAccessor 与 eslint @typescript-eslint/unbound-method 报错，属同一错误示例。",
       "members": [
         "295:36083773382:1:F3",
         "365:36225818832:1:F1"
@@ -453,7 +479,7 @@
     },
     {
       "title": "种子阶段 repository/query 默认与无 Collection 安装表写法指引不一致",
-      "reason": "296:36083777325:1:F1、297:36083780549:1:F2 与 301:36095615652:1:F3 都围绕 seed 该用 repository 还是 query：AGENTS.md 指向 query 与 DB Skill/SeedContext 的 repository 默认互相冲突，安装类持久表又缺无 Collection 的写入示例。证据同指向 SeedContext 类型、SKILL 上下文表与官方 seed 使用 query 的现状，属同一数据访问指引缺口。",
+      "reason": "296:F1、297:F2 与 301:F3 都围绕 seed 该用 repository 还是 query：AGENTS.md 指向 query 与 DB Skill/SeedContext 的 repository 默认互相冲突，安装类持久表又缺无 Collection 的写入示例。证据同指向 SeedContext 类型、SKILL 上下文表与官方 seed 使用 query 的现状，属同一数据访问指引缺口。",
       "members": [
         "296:36083777325:1:F1",
         "297:36083780549:1:F2",
@@ -462,7 +488,7 @@
     },
     {
       "title": "nocobase-db Skill 未说明 belongsTo 关系选项",
-      "reason": "295:36083773382:1:F1 与 339:36151903756:1:F1 都指 SKILL §3 只有一句关系列表、缺 belongsTo 选项说明：前者是缺 foreignKey/targetKey/foreignKeyType 导致 db:apply 报错，后者是缺 constraints(true) 导致外键/级联静默缺失。证据同为 compiler/relation-contract/fluent 与 SKILL 文本，属同一 belongsTo 选项文档缺口。",
+      "reason": "295:F1 与 339:F1 都指 SKILL §3 只有一句关系列表、缺 belongsTo 选项说明：前者是缺 foreignKey/targetKey/foreignKeyType 导致 db:apply 报错，后者是缺 constraints(true) 导致外键/级联静默缺失。证据同为 compiler/relation-contract/fluent 与 SKILL 文本，属同一 belongsTo 选项文档缺口。",
       "members": [
         "295:36083773382:1:F1",
         "339:36151903756:1:F1"
@@ -470,7 +496,7 @@
     },
     {
       "title": "“种子不得含示例数据”与必须交付演示数据的落点缺失",
-      "reason": "352:36215705637:1:F4、369:36229373182:1:F3 与 376:36248781387:1:F3 都指 nocobase-db SKILL §2（'a seed is never sample or demonstration content'）与 migrations.md 把 seed 限定为运行必需、固定可复现的记录，但需求强制要求交付演示/示例数据时没有推荐落点、命名或开关约定。证据同为该规则文本、template-variants.md 以及三个实际把示例/相对时间数据写入 seed 的应用实例，属同一指引缺口，修复方向都是补充演示数据归属与可复现写法的约定。",
+      "reason": "352:F4、369:F3 与 376:F3 都指 nocobase-db SKILL §2（'a seed is never sample or demonstration content'）与 migrations.md 把 seed 限定为运行必需、固定可复现的记录，但需求强制要求交付演示/示例数据时没有推荐落点、命名或开关约定。证据同为该规则文本、template-variants.md 以及三个实际把示例/相对时间数据写入 seed 的应用实例，属同一指引缺口。",
       "members": [
         "352:36215705637:1:F4",
         "369:36229373182:1:F3",
@@ -478,169 +504,163 @@
       ]
     },
     {
-      "title": "种子幂等指引以唯一业务键为前提，缺少无唯一约束时的幂等配方",
-      "reason": "376:36248781387:1:F2 指 nocobase-db SKILL 的种子示例只给出 repository(...).upsertOne 配合唯一业务约束的幂等配方，migrations.md 也只给固定可复现原则；当业务禁止在区分字段（title）上建唯一约束时缺少替代幂等写法与取舍说明。该缺口与 datetime 语义、belongsTo 选项、演示数据落点等根因不同，且与同报告 F3 按'同报告不得合并'规则必须分开，故单独保留。",
+      "title": "Registry OOXML 预览缺少有界失败/超时，静默停在 Loading preview...",
+      "reason": "276:F5 与 366:F1 都指 Registry 的 office-open-xml-preview 在 viewer load 前没有有界失败路径：276:F5 证据显示无加载超时、错误只靠 onError 回调，B02 停在 Loading preview...；366:F1 证据显示 docx/pptx 传入 progressiveLayout 且三种格式都未传 workerTimeoutMs，worker 失效时 load() 可能永不 settle。二者证据同为该组件实现与同一 Skill/验收记录，根因同为缺少超时/worker 边界，修复方向都是加有界超时与可见错误态。",
       "members": [
-        "376:36248781387:1:F2"
+        "276:35996323858:1:F5",
+        "366:36276932178:1:F1"
       ]
     },
     {
       "title": "client-api 未说明模板不提供 react-query/QueryClientProvider",
-      "reason": "该发现针对 @nocobase/app-client 公开导出无 react-query、client-api 只讲 request，属模板依赖说明缺口；无跨报告同根因证据，单独保留。",
+      "reason": "属 @nocobase/app-client 公开导出无 react-query、client-api 只讲 request 的模板依赖说明缺口；无跨报告同根因证据，单独保留。",
       "members": [
         "224:35881009045:2:F3"
       ]
     },
     {
       "title": "Seed 动态导入无法把相对 .js 指示符解析回 .ts 源",
-      "reason": "属 @nocobase/db seed 载入器在 Vitest 路径下的解析缺陷；同报告 F2 是 Skill 冲突指引、F3 是 provider 容错，根因不同且同报告不可合并，单独保留。",
+      "reason": "属 @nocobase/db seed 载入器在 Vitest 路径下无法把相对 .js 指示符解析回 .ts 源的框架缺陷；与同报告 F2/F3 及他处根因不同，单独保留。",
       "members": [
         "250:35966607785:1:F1"
       ]
     },
     {
       "title": "两份 Skill 对 seed 是否可导入共享模块给出冲突指引",
-      "reason": "属两份 Skill 之间的冲突/错误指引，与同报告 F1 的载入器解析缺陷根因不同、同报告不可合并，单独保留。",
+      "reason": "属两份 Skill 对 seed 是否可导入共享模块的冲突指引；与同报告 F1 的载入器解析缺陷、F3 的 provider 容错根因不同，单独保留。",
       "members": [
         "250:35966607785:1:F2"
       ]
     },
     {
       "title": "指引示范用 useCan 判断带记录作用域动作的可见性，与实际快照行为矛盾",
-      "reason": "属误导性文档示范；与同报告 F2（框架静默丢弃带策略 grant）根因不同、同报告不可合并，单独保留。",
+      "reason": "属误导性文档示范（用 useCan 判断带记录作用域动作的可见性）；与同报告 F2 的框架静默丢弃 grant、F4 的条件迁移文档根因不同，单独保留。",
       "members": [
         "251:35966623377:1:F1"
       ]
     },
     {
       "title": "权限快照静默丢弃带策略的 grant，且无可诊断信号",
-      "reason": "属框架可诊断性缺陷（resolvePermissions 直接跳过 scoped grant）；与同报告 F1 的文档示范问题和 F4 的迁移文档根因不同，单独保留。",
+      "reason": "属框架可诊断性缺陷（resolvePermissions 直接跳过 scoped grant 且无原因）；与同报告 F1/F4 根因不同，单独保留。",
       "members": [
         "251:35966623377:1:F2"
       ]
     },
     {
       "title": "db Skill 未说明条件迁移能力 shouldRun/hasCollection",
-      "reason": "属迁移能力文档缺口；与同报告其它发现根因不同，且无跨报告同根因证据，单独保留。",
+      "reason": "属迁移能力文档缺口（未说明 shouldRun/hasCollection）；与同报告其它发现根因不同，单独保留。",
       "members": [
         "251:35966623377:1:F4"
       ]
     },
     {
       "title": "让 Registry 组件对损坏 raster 的失败处理成为默认可复用能力",
-      "reason": "与 252:35985523766:1:F2、276:35996323858:1:F2、298:36083784621:1:F1 同根因，但同属报告 252，按“同报告不得合并”规则只能单独保留为改进项。",
+      "reason": "与 252:F2/276:F2/298:F1 同根因（image 分支失败反馈），但同属报告 252，按“同报告不得合并”规则单独保留为改进项。",
       "members": [
         "252:35985523766:1:F6"
       ]
     },
     {
       "title": "Workflow Artifact 盘缺少代码根约束/校验",
-      "reason": "属框架侧缺陷（resolveWorkflowRuntimeConfig/createLocalWorkflowArtifactStore 不校验盘位置可解析宿主依赖），与文档缺口（253:F2、322:F3）的根因和修复位置不同，单独保留。",
+      "reason": "属框架侧缺陷（resolveWorkflowRuntimeConfig/createLocalWorkflowArtifactStore 不校验盘位置可解析宿主依赖），与 253:F2/322:F3 的文档缺口根因和修复位置不同，单独保留。",
       "members": [
         "253:35966665643:1:F1"
       ]
     },
     {
       "title": "会话校验对每个请求都查询一次 user.disabledAt",
-      "reason": "属认证会话解析的额外数据库往返成本；无跨报告同根因证据，单独保留。",
+      "reason": "属认证会话解析对每个请求额外查询 user.disabledAt 的成本；无跨报告同根因证据，单独保留。",
       "members": [
         "275:35996299745:1:F5"
       ]
     },
     {
       "title": "create 动作跳过记录约束，只受字段权限约束",
-      "reason": "属授权器对 action='create' 直接 scope=true 的处理；与同报告 F5 的会话查询及他处写策略/文档发现根因不同，单独保留。",
+      "reason": "属授权器对 action='create' 直接 scope=true 的处理；与同报告 F5 及他处发现根因不同，单独保留。",
       "members": [
         "275:35996299745:1:F6"
       ]
     },
     {
       "title": "nocobase-db Skill 的 Builder 章节未记录批量 createCollections",
-      "reason": "属 Builder 能力文档漏记；与同报告 F2/F5 的图片预览、OOXML 超时根因不同，且无跨报告同根因证据，单独保留。",
+      "reason": "属 Builder 能力文档漏记批量 createCollections；与同报告 F2/F5 根因不同，且无跨报告同根因证据，单独保留。",
       "members": [
         "276:35996323858:1:F3"
       ]
     },
     {
-      "title": "Registry OOXML 预览缺少加载超时",
-      "reason": "属 OOXML 预览无响应时无超时降级，与图片解码失败（252/276/298）根因不同，单独保留。",
-      "members": [
-        "276:35996323858:1:F5"
-      ]
-    },
-    {
       "title": "模板 cli/plugins.ts 未注册 Scheduler CLI",
-      "reason": "属模板 CLI 注册缺口，与 Scheduler 文档/路由入口等发现根因不同，单独保留。",
+      "reason": "属模板 cli/plugins.ts 未注册 Scheduler CLI 的模板缺口；与 Scheduler 文档/路由入口发现根因不同，单独保留。",
       "members": [
         "284:36017771111:1:F3"
       ]
     },
     {
       "title": "流式内容路由强制 attachment + sandbox CSP，与同插件内联预览假设冲突",
-      "reason": "属 stream 访问模式契约缺陷（PDF 预览逃离 SPA）；与同报告 F8 的“新增 inline 契约”根因不同、同报告不可合并，单独保留。",
+      "reason": "属 stream 访问模式契约缺陷（一律 attachment + sandbox CSP，PDF 预览逃离 SPA）；与同报告 F8 的“新增 inline 契约”根因不同，单独保留。",
       "members": [
         "293:36083765404:1:F3"
       ]
     },
     {
       "title": "为可安全内联的类型提供 inline 内容契约",
-      "reason": "属内容访问模式缺失的改进项，与同报告 F3 的具体路由缺陷根因不同，单独保留。",
+      "reason": "属内容访问模式缺失的改进项（为可安全内联类型提供 inline 契约）；与同报告 F3 的具体路由缺陷根因不同，单独保留。",
       "members": [
         "293:36083765404:1:F8"
       ]
     },
     {
       "title": "defineApiRoutes 工厂返回类型擦除 Hono env 泛型",
-      "reason": "属类型定义缺陷；与同报告其它文档/模板发现根因不同，单独保留。",
+      "reason": "属类型定义缺陷（defineApiRoutes 工厂返回类型擦除 Hono env 泛型）；无跨报告同根因证据，单独保留。",
       "members": [
         "295:36083773382:1:F2"
       ]
     },
     {
       "title": "用户创建路径不校验用户名格式，错误延后到登录才暴露",
-      "reason": "属用户创建服务校验缺口；与同报告 F1 的数据访问默认冲突根因不同，单独保留。",
+      "reason": "属用户创建服务校验缺口（不校验用户名格式）；与同报告 F1 的数据访问默认冲突根因不同，单独保留。",
       "members": [
         "296:36083777325:1:F2"
       ]
     },
     {
       "title": "聊天前端以复制式 Registry 交付，应用需内置整棵源码并自行三方合并升级",
-      "reason": "属交付/升级方式问题；无跨报告同根因证据，单独保留。",
+      "reason": "属聊天前端以复制式 Registry 交付、需自行三方合并升级的交付/升级问题；无跨报告同根因证据，单独保留。",
       "members": [
         "302:36083799374:1:F3"
       ]
     },
     {
       "title": "通知级汇总 completed 与投递级 accepted 的措辞可能被误读为最终送达",
-      "reason": "属状态措辞文档问题；与同报告 F4 的 CSRF/origin 问题根因不同，单独保留。",
+      "reason": "属通知状态措辞文档问题（completed/accepted 可能被误读）；与同报告 F4 的 CSRF/origin 问题根因不同，单独保留。",
       "members": [
         "303:36095617049:1:F3"
       ]
     },
     {
       "title": "独立启动的测试环境缺少可信 origin，cookie 认证写请求被 CSRF 拒绝",
-      "reason": "属测试环境配置/文档缺口；与其他测试相关发现根因不同，单独保留。",
+      "reason": "属测试环境配置/文档缺口（独立启动缺少可信 origin 被 CSRF 拒绝）；与同报告 F3 根因不同，单独保留。",
       "members": [
         "303:36095617049:1:F4"
       ]
     },
     {
       "title": "三个记录规则插件重复了设置路由与 Store 骨架",
-      "reason": "属插件间重复实现；无跨报告同根因证据，单独保留。",
+      "reason": "属三个记录规则插件重复实现设置路由与 Store 骨架；无跨报告同根因证据，单独保留。",
       "members": [
         "320:36114915913:1:F3"
       ]
     },
     {
       "title": "Node Run 未持久化 branchKey，分支确认依赖逐节点查看",
-      "reason": "属运行诊断字段缺失；与同报告 F3 的 artifactDisk 文档缺口根因不同，单独保留。",
+      "reason": "属运行诊断字段缺失（Node Run 未持久化 branchKey）；与同报告 F3 的 artifactDisk 文档缺口根因不同，单独保留。",
       "members": [
         "322:36114924151:1:F4"
       ]
     },
     {
       "title": "nocobase-db SKILL 声称路由侧 Repository 的 writePolicy 默认 false，实际默认 true",
-      "reason": "属错误说明（文档与实现相反，路由侧无自动收紧）；与同报告 F2、373:F3 的选项漏记、275:F6 的 create 约束等根因不同，单独保留。",
+      "reason": "属错误说明（Skill 称路由侧 writePolicy 默认 false，实际默认 true 且无路由侧自动收紧）；与同报告 F2 及其它文档缺口根因不同，单独保留。",
       "members": [
         "338:36149979159:1:F1"
       ]
@@ -654,44 +674,72 @@
     },
     {
       "title": "通用库未公开唯一约束冲突的稳定判定",
-      "reason": "属框架未导出稳定错误判定，应用只能按驱动错误串分支；与同报告 F4 的演示数据落点根因不同，单独保留。",
+      "reason": "属通用库未公开唯一约束冲突的稳定判定，应用只能按驱动错误串分支；与同报告 F4 的演示数据落点根因不同，单独保留。",
       "members": [
         "352:36215705637:1:F3"
       ]
     },
     {
       "title": "新页面一律触发 full workflow，缺少与外部流水线验收的消歧",
-      "reason": "属流程文档冲突；与同报告 F1 的种子示例 lint 问题根因不同，单独保留。",
+      "reason": "属流程文档冲突（新页面一律 full workflow 与外部流水线验收消歧）；与同报告 F1 的种子示例 lint 问题根因不同，单独保留。",
       "members": [
         "365:36225818832:1:F2"
       ]
     },
     {
       "title": "Skill/类型注释称 Query 不读取 Collection 元数据，实现却按 Collection 字段类型编解码",
-      "reason": "属错误说明（Query 实际按 Collection 字段对 json/boolean/temporal 编解码）；与同报告 F3、F4 及 373:F3 等文档缺口根因不同，单独保留。",
+      "reason": "属错误说明（Query 实际按 Collection 字段对 json/boolean/temporal 编解码）；与同报告 F3/F4 及 373:F3 等文档缺口根因不同，单独保留。",
       "members": [
         "369:36229373182:1:F2"
       ]
     },
     {
       "title": "testing.md 要求对真实数据库测迁移/种子，却未给出创建库与运行入口",
-      "reason": "属测试指引缺可执行入口；与同报告 F2/F3 根因不同，单独保留。",
+      "reason": "属测试指引缺可执行入口（对真实数据库测迁移/种子却未给创建库与运行入口）；与同报告 F2/F3 根因不同，单独保留。",
       "members": [
         "369:36229373182:1:F4"
       ]
     },
     {
       "title": "nocobase-db Skill 未记录约束/索引选项（尤其 predicate）",
-      "reason": "属 Builder 选项文档漏记，导致错误的可移植性结论与漏用部分唯一索引；与同报告 F4 的时间戳填充说明、338:F1 的 writePolicy 错误说明根因不同，单独保留。",
+      "reason": "属 Builder 选项文档漏记（尤其 predicate 部分唯一索引）；与同报告 F4 的时间戳填充说明、338:F1 的 writePolicy 错误说明根因不同，单独保留。",
       "members": [
         "373:36241013272:1:F3"
       ]
     },
     {
       "title": "文档未说明 createdAt/updatedAt 不会被框架自动填充",
-      "reason": "属时间戳自动填充说明缺失；与 datetime/datetimeTz 语义（224:F2、292:F4）和约束选项漏记根因不同，单独保留。",
+      "reason": "属时间戳自动填充说明缺失（createdAt/updatedAt 不会被框架自动填充）；与 datetime/datetimeTz 语义和约束选项漏记根因不同，单独保留。",
       "members": [
         "373:36241013272:1:F4"
+      ]
+    },
+    {
+      "title": "种子幂等指引以唯一业务键为前提，缺少无唯一约束时的幂等配方",
+      "reason": "属种子幂等指引以唯一业务键为前提、缺少无唯一约束时的幂等配方；与同报告 F3 的演示数据落点根因不同，按同报告不得合并单独保留。",
+      "members": [
+        "376:36248781387:1:F2"
+      ]
+    },
+    {
+      "title": "OOXML 查看器要求可选的 xl/styles.xml，缺失时把合法 XLSX 判为不可渲染",
+      "reason": "属 OOXML 查看器要求可选 xl/styles.xml、缺失时把合法 XLSX 判为不可渲染的运行时缺陷；与同报告 F1 的 worker 边界/超时、F12 的 workflow 启用、F4 的授权 Skill、F8 的 target 示例根因均不同，单独保留。",
+      "members": [
+        "366:36276932178:1:F2"
+      ]
+    },
+    {
+      "title": "授权 Skill 未提醒范围谓词不能复用 root/不受限 bypass",
+      "reason": "属授权 Skill 未提醒范围谓词不能复用 root/不受限 bypass 的文档缺口；与 251:F1 的 useCan 示范、251:F2 的快照丢弃 grant 等根因不同，单独保留。",
+      "members": [
+        "366:36276932178:1:F4"
+      ]
+    },
+    {
+      "title": "自定义 target 的完成上报与 worker 部署约束缺少最小端到端示例",
+      "reason": "属自定义 target 完成上报与 worker 部署约束缺少最小端到端示例的文档缺口；与 Scheduler 立即执行/描述重复/target registry 等发现根因不同，单独保留。",
+      "members": [
+        "366:36276932178:1:F8"
       ]
     }
   ],
@@ -699,9 +747,9 @@
     "engine": "pi",
     "model": "deepseek-v4.1-flash",
     "version": "0.86.1",
-    "runId": "36251866110",
+    "runId": "36289340631",
     "attempt": 1,
-    "controlSha": "01e30d2b014746e8341e0c56171ab18e7d26efe8",
-    "completedAt": "2026-09-26T15:27:30.657Z"
+    "controlSha": "5c9147b0d4e5220a495310c7bc0fd9b973ac3156",
+    "completedAt": "2026-09-27T02:46:08.177Z"
   }
 }
