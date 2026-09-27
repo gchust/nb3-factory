@@ -91,9 +91,29 @@ describe('app client routes', () => {
     // that requires sign-in adds an entry here, because that is a new grant somebody has to be given.
     const resolved = resolveRoutes();
 
-    // The landing page opted out of page authorization, so it is reachable by every signed-in user.
+    // The landing page opted out of page authorization, so it is reachable by every signed-in user. Each service page
+    // carries its own page id, which is what a permission set grants access to; a new service page adds an entry here.
     expect(pageAuthorizations(resolved.routes)).toEqual([
       { name: 'home', authorizedAs: null },
+      { name: 'service-dashboard', authorizedAs: 'service.dashboard' },
+      { name: 'service-tickets', authorizedAs: 'service.tickets' },
+      { name: 'service-ticket-detail', authorizedAs: 'service.tickets.detail' },
+      { name: 'service-customers', authorizedAs: 'service.customers' },
+      {
+        name: 'service-customer-detail',
+        authorizedAs: 'service.customers.detail',
+      },
+      { name: 'service-devices', authorizedAs: 'service.devices' },
+      { name: 'service-device-detail', authorizedAs: 'service.devices.detail' },
+      { name: 'service-knowledge', authorizedAs: 'service.knowledge' },
+      {
+        name: 'service-knowledge-detail',
+        authorizedAs: 'service.knowledge.detail',
+      },
+      { name: 'service-inspections', authorizedAs: 'service.inspections' },
+      { name: 'service-messages', authorizedAs: 'service.messages' },
+      { name: 'service-assistant', authorizedAs: 'service.assistant' },
+      { name: 'service-integration', authorizedAs: 'service.integration' },
     ]);
   });
 });
