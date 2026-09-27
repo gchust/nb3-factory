@@ -1,4 +1,4 @@
-import { Home } from 'lucide-react';
+import { ClipboardList, Home } from 'lucide-react';
 import {
   defineAppRoutes,
   defineSettingsRoutes,
@@ -15,6 +15,30 @@ const appRoutes: AppClientRouteContribution = defineAppRoutes([
     name: 'home',
     navigation: { title: 'navigation.home', icon: Home },
     path: '/',
+  },
+  {
+    // The front-desk register. Any signed-in member of staff may use it, so
+    // it opts out of page authorization rather than inventing a grant.
+    authz: 'skip',
+    auth: 'required',
+    componentLoader: () => import('./pages/visitors/index.js'),
+    name: 'visitors',
+    navigation: { title: 'navigation.visitors', icon: ClipboardList },
+    path: '/visitors',
+    children: [
+      {
+        authz: 'skip',
+        componentLoader: () => import('./pages/visitors/new.js'),
+        name: 'visitors-new',
+        path: 'new',
+      },
+      {
+        authz: 'skip',
+        componentLoader: () => import('./pages/visitors/checkout.js'),
+        name: 'visitors-checkout',
+        path: ':visitorId/checkout',
+      },
+    ],
   },
   {
     auth: 'guest',

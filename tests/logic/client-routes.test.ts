@@ -91,9 +91,13 @@ describe('app client routes', () => {
     // that requires sign-in adds an entry here, because that is a new grant somebody has to be given.
     const resolved = resolveRoutes();
 
-    // The landing page opted out of page authorization, so it is reachable by every signed-in user.
+    // The landing page opted out of page authorization, so it is reachable by every signed-in user. The visitor
+    // register and its two dialogs do the same; the dialogs are child routes because they are pages reached by URL.
     expect(pageAuthorizations(resolved.routes)).toEqual([
       { name: 'home', authorizedAs: null },
+      { name: 'visitors', authorizedAs: null },
+      { name: 'visitors-new', authorizedAs: null },
+      { name: 'visitors-checkout', authorizedAs: null },
     ]);
   });
 });
