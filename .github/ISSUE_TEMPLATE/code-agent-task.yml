@@ -35,11 +35,10 @@ body:
     id: build_review
     attributes:
       label: 框架评测
-      description: 自动沿用仓库默认；轻量只关闭额外框架评分，仍运行搭建、业务验收、独立终验、PR 和归档。
+      description: 搭建、业务验收、独立终验和 PR 始终执行。执行评测时，另一个 Agent 审查本次用到的 NocoBase 库、插件和 Skill，在报告首屏列出框架问题和改进建议，会增加耗时和 Token；跳过评测则报告不含框架结论。
       options:
-        - 自动
-        - 轻量
-        - 完整
+        - 执行评测
+        - 跳过评测
       default: 0
     validations:
       required: true

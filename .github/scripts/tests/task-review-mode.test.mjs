@@ -12,7 +12,7 @@ import { loadBuildReview } from '../build-review.mjs';
 const business = '### 任务类型\n\n创建新系统\n\n### 业务需求\n\nA tiny page\n\n### 验收要求\n\nB01. Click once\n\n### 示例数据\n\n否\n';
 const source = () => ({ number: 17, title: 'An ordinary named source', body: business + '\n### 框架评测\n\n轻量\n', labels: ['factory:preset'],
   user: { login: 'owner', type: 'User' }, html_url: 'https://github.com/owner/repo/issues/17' });
-function fixture(choice = '自动') {
+function fixture(choice = '默认') {
   const state = { source: source(), issue: { number: 50, title: 'Rebuild', body: `### 预置案例\n\n#17\n\n### 框架评测\n\n${choice}\n`,
     user: { login: 'owner', type: 'User' }, html_url: 'https://github.com/owner/repo/issues/50' }, comments: [] };
   const client = {
@@ -30,8 +30,9 @@ function fixture(choice = '自动') {
 }
 
 test('control values are strict, optional, and kept out of business and browser input', () => {
-  for (const value of ['', undefined, '_No response_', 'auto', '自动']) assert.equal(parseBuildReviewMode(value), null);
-  for (const [value, mode] of [['轻量','off'], ['off','off'], ['完整','full'], ['full','full']]) {
+  // 自动/完整/轻量 are retired labels kept for older Issues and presets.
+  for (const value of ['', undefined, '_No response_', 'auto', '默认', '自动']) assert.equal(parseBuildReviewMode(value), null);
+  for (const [value, mode] of [['跳过评测','off'], ['轻量','off'], ['off','off'], ['执行评测','full'], ['完整','full'], ['full','full']]) {
     const task = parseIssueTask({ body: business + `\n### 框架评测\n\n${value}\n` });
     assert.equal(task.buildReviewMode, mode);
     assert.equal(task.requirements, 'A tiny page');
@@ -54,15 +55,15 @@ test('task choice wins without changing global settings; explicit reassessment c
 test('auto inherits any source preset and freezes it across source and visible control-field edits', async () => {
   const f = fixture(); const first = await f.prepare();
   assert.equal(first.task.buildReviewMode, 'off');
-  assert.match(f.state.issue.body, /### 框架评测\n\n轻量/);
+  assert.match(f.state.issue.body, /### 框架评测\n\n跳过评测/);
   f.state.source.body = f.state.source.body.replace('轻量','完整');
-  f.state.issue.body = f.state.issue.body.replace('### 框架评测\n\n轻量', '### 框架评测\n\n完整');
+  f.state.issue.body = f.state.issue.body.replace('### 框架评测\n\n跳过评测', '### 框架评测\n\n执行评测');
   const repeated = await f.prepare();
   assert.equal(repeated.task.buildReviewMode, 'off');
   assert.equal(first.preset.inputHash, repeated.preset.inputHash);
 });
 test('full override changes execution only, not source input or preset business hash', async () => {
-  const light = fixture('轻量'), full = fixture('完整');
+  const light = fixture('跳过评测'), full = fixture('执行评测');
   const a = await light.prepare(), b = await full.prepare();
   assert.equal(a.task.buildReviewMode, 'off'); assert.equal(b.task.buildReviewMode, 'full');
   assert.equal(a.preset.inputHash, b.preset.inputHash);
@@ -96,9 +97,13 @@ test('light runner emits an explicit non-scored report without snapshot work or 
   assert.match(JSON.parse(readFileSync(path.join(artifacts,'build-review.json'),'utf8')).reason,/明确关闭/);
 });
 test('both Issue forms expose the same safe choice and the pipeline keeps every business gate', () => {
-  assert.match(renderPresetForm([source()]), /label: 框架评测/);
   const form=readFileSync(new URL('../../ISSUE_TEMPLATE/code-agent-task.yml',import.meta.url),'utf8');
-  assert.match(form, /label: 框架评测/);
+  for (const text of [renderPresetForm([source()]), form]) {
+    assert.match(text, /label: 框架评测/);
+    assert.match(text, /options:\n        - 执行评测\n        - 跳过评测\n      default: 0/);
+    assert.equal(parseBuildReviewMode('执行评测'), 'full');
+    assert.equal(parseBuildReviewMode('跳过评测'), 'off');
+  }
   const workflow=readFileSync(new URL('../../workflows/code-agent-task.yml',import.meta.url),'utf8');
   assert.match(workflow,/Verify and repair within task limits/);
   assert.match(workflow,/Independently verify the applied patch/);

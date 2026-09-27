@@ -192,7 +192,7 @@ export function renderBuildReview(input, upstreamInput = null) {
   if (report?.state === 'partial') html += `<div class="report-banner"><strong>部分评审 · 尚未全覆盖</strong><p>${escape(report.reason)}</p></div>`;
   if (report?.supplementalUsage) html += `<p class="check-source">本次后补评审用量（独立于原搭建）：${escape(report.supplementalUsage.totalTokens ?? '未提供')} Token（含缓存）；不重复计入原搭建。</p>`;
   if (!review) {
-    const state = report?.execution?.buildReviewMode === 'off' ? '本轮采用轻量模式，未进行独立评测。'
+    const state = report?.execution?.buildReviewMode === 'off' ? '本轮选择跳过框架评测。'
       : report?.state === 'failed' ? '独立评测未完成或结果无效，当前材料不足。'
         : '本轮未进行独立评测，不能据此声称没有问题或建议。';
     return {
