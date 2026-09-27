@@ -9,9 +9,10 @@ on:
   workflow_dispatch:
     inputs:
       issue_number:
-        description: Open Issue number to run again
+        description: Issue number to run (closed external submissions are supported)
         required: true
         type: number
+      # factory:external-closed-v1: explicit external runs use archived Issues.
       external_run_id:
         description: External system request identity for dispatch reconciliation
         required: false
