@@ -173,7 +173,7 @@ Action 在全新目录生成应用、安装并锁定依赖，运行工厂测试�
 
 ## 框架问题复核修复
 
-在 TestManage 的问题详情里点击“交给 Claude Code 复核修复”，或者手动运行 `framework-fix.yml` 并填写问题 ID，都会启动一次 Claude Code 运行。它会在最新的 `nocobase/nocobase3` 源码上独立复核问题；如果确认问题存在，并且可以做小范围修复，工作流会以维护者的 GitHub 账号提交 draft PR。结论和 PR 链接会作为评论回写到 TestManage 问题下；创建了 PR 时，问题状态会从“待确认”改为“修复中”。Agent 只持有 Claude Code 凭据，PR token 和 TestManage 密钥分别只出现在不运行 Agent 的 Job 中。需要的 Secrets 与完整协议见 [docs/framework-fixes.md](docs/framework-fixes.md)。
+在 TestManage 的问题详情里点击“交给 Claude Code 复核修复”，或者手动运行 `framework-fix.yml` 并填写问题 ID，都会启动一次 Claude Code 运行。它会在最新的 `nocobase/nocobase3` 源码上独立复核问题；如果确认问题存在，并且可以做小范围修复，工作流会以维护者的 GitHub 账号提交 draft PR。结论、PR 链接以及这次运行的 Token 用量和耗时会作为评论回写到 TestManage 问题下，也会出现在 Actions 运行摘要和 PR 描述里；创建了 PR 时，问题状态会从“待确认”改为“修复中”。Agent 只持有 Claude Code 凭据，PR token 和 TestManage 密钥分别只出现在不运行 Agent 的 Job 中。需要的 Secrets 与完整协议见 [docs/framework-fixes.md](docs/framework-fixes.md)。
 
 ## 本地检查工厂脚本
 

@@ -131,6 +131,7 @@ jobs:
         id: agent
         env:
           CODE_AGENT_ENGINE: claude-code
+          FACTORY_AGENT_ROLE: framework-fix
           FACTORY_AGENT_INSTALL_RECORD: ${{ runner.temp }}/agent-install.json
           FACTORY_CONTROL_SHA: ${{ needs.claim.outputs.control_sha }}
           CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
@@ -166,6 +167,7 @@ jobs:
             --verdict "$RUNNER_TEMP/fix-output/verdict.json" \
             --changes "$RUNNER_TEMP/fix-output/change-summary.json" \
             --agent-status "${AGENT_STATUS:-1}" \
+            --log "$RUNNER_TEMP/fix-output/agent-fix.jsonl" \
             --output "$RUNNER_TEMP/fix-output/decision.json"
       - uses: actions/upload-artifact@v4
         if: always()
@@ -250,6 +252,7 @@ jobs:
         run: |
           node control/.github/scripts/framework-fix.mjs report \
             --decision fix-output/decision.json \
+            --claim fix-input/claim.json \
             --review-result "$REVIEW_RESULT" \
             --pull-request-url "$PR_URL" \
             --publish-outcome "$PR_OUTCOME" \

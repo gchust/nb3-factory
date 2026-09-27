@@ -29,7 +29,24 @@ Every other outcome is reported without a PR, including a missing or invalid ver
 
 ## Results in TestManage
 
-TestManage stores the verdict on the fix run and appends one comment to the problem: the verdict, the summary, the analysis, the checks Claude Code ran, and links to the PR and the Actions run. When a PR was opened and the problem is still `pending`, TestManage moves it to `fixing`; it changes no other status. Each result is recorded once, so rerunning the publish job does not add another comment. The `publish` job runs even after a review failure or cancellation, which releases the problem's active lock.
+TestManage stores the verdict on the fix run and appends one comment to the problem: the verdict, the summary, the analysis, the checks Claude Code ran, the usage, and links to the PR and the Actions run. When a PR was opened and the problem is still `pending`, TestManage moves it to `fixing`; it changes no other status. Each result is recorded once, so rerunning the publish job does not add another comment. The `publish` job runs even after a review failure or cancellation, which releases the problem's active lock.
+
+## Usage and duration
+
+The harness records the one Claude Code invocation in `agent-fix.jsonl.result.json`. `decide` copies it into `decision.json` as `usage`, for every outcome, including a crash:
+
+- `tokens`: `input`, `output`, `cacheRead`, `cacheWrite`, and their `total`.
+- `durationMs`: the invocation's wall time.
+- `turns` and `costUsd`: as Claude Code reports them. `costUsd` is a list-price estimate, not what a subscription is charged.
+- `complete`: `false` when the result was not recorded in full.
+
+Unknown values stay `null` rather than `0`; without a result file, `usage` is `null`. The usage appears in three places:
+
+- The `publish` job's step summary, with the workflow time since the claim.
+- The draft PR's references, as one English line.
+- The TestManage result, as `usage`. TestManage shows it with the run and in the result comment. A TestManage deployment that predates the field rejects it as invalid input, so the result is then sent again without it.
+
+The invocation runs with `FACTORY_AGENT_ROLE=framework-fix`, so its phase is `framework-fix` rather than an Issue build's `implementation`. The harness then fails an invocation that stalls instead of handing a partial workspace on. This ensures a stalled fix never becomes a PR.
 
 ## Configuration
 

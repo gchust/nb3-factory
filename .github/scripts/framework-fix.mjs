@@ -8,6 +8,7 @@ import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } fr
 import path from 'node:path';
 import { setTimeout as sleep } from 'node:timers/promises';
 import { fileURLToPath } from 'node:url';
+import { readResult } from './agent-result.mjs';
 
 export const FIX_REPOSITORY = 'nocobase/nocobase3';
 export const VERDICTS = ['confirmed', 'already_fixed', 'not_reproducible', 'not_framework', 'needs_info'];
@@ -221,13 +222,101 @@ export function readVerdict(file) {
   }
 }
 
+const TOKEN_KEYS = ['input', 'output', 'cacheRead', 'cacheWrite'];
+const count = (value) => Number.isSafeInteger(value) && value >= 0;
+
+// What the one Claude Code invocation used, from the harness's normalized
+// result rather than the transcript. Unknown values stay null, never zero.
+export function agentUsage(log) {
+  let result;
+  try {
+    result = readResult(log);
+  } catch {
+    return null;
+  }
+  if (!result) return null;
+  const tokens = Object.fromEntries(TOKEN_KEYS.map((key) => {
+    const values = result.measurements.map((m) => m.usage?.[key]);
+    return [key, values.length && values.every(count) ? values.reduce((a, b) => a + b, 0) : null];
+  }));
+  return cleanUsage({
+    engine: result.engine, model: result.model, durationMs: result.endedAt - result.startedAt,
+    turns: result.turns, costUsd: result.costUsd, tokens,
+    complete: result.status === 'completed' && !result.incomplete && result.invalidEvents === 0,
+  });
+}
+
+// Usage travels from the Agent's job to TestManage and a public PR: only
+// bounded numbers and short labels survive, and the total is recomputed.
+export function cleanUsage(raw) {
+  if (!raw || typeof raw !== 'object') return null;
+  const label = (value) => (typeof value === 'string' && /^[\w.:@/-]{1,100}$/.test(value) ? value : null);
+  const tokens = Object.fromEntries(TOKEN_KEYS.map((key) => [key, count(raw.tokens?.[key]) ? raw.tokens[key] : null]));
+  const total = TOKEN_KEYS.reduce((sum, key) => (sum === null || tokens[key] === null ? null : sum + tokens[key]), 0);
+  tokens.total = count(total) ? total : null;
+  const costUsd = Number.isFinite(raw.costUsd) && raw.costUsd >= 0 && raw.costUsd < 1e6 ? Math.round(raw.costUsd * 1e4) / 1e4 : null;
+  return {
+    engine: label(raw.engine),
+    model: label(raw.model),
+    durationMs: count(raw.durationMs) ? raw.durationMs : null,
+    turns: count(raw.turns) ? raw.turns : null,
+    costUsd,
+    tokens,
+    complete: raw.complete === true && tokens.total !== null,
+  };
+}
+
+const grouped = (value) => (value === null ? '?' : value.toLocaleString('en-US'));
+function formatDuration(ms, chinese = false) {
+  const seconds = Math.round(ms / 1000);
+  const [h, m, s] = [Math.floor(seconds / 3600), Math.floor(seconds / 60) % 60, seconds % 60];
+  return chinese
+    ? `${h ? `${h} 小时 ` : ''}${h || m ? `${m} 分 ` : ''}${s} 秒`
+    : `${h ? `${h}h ` : ''}${h || m ? `${m}m ` : ''}${s}s`;
+}
+
+/** One English line for the PR, which follows nocobase3's English-only rule. */
+export function usageLine(usage) {
+  if (!usage) return null;
+  const { tokens } = usage;
+  return [
+    `${tokens.total === null ? 'unknown' : grouped(tokens.total)} tokens (input ${grouped(tokens.input)}, output ${grouped(tokens.output)}, cache write ${grouped(tokens.cacheWrite)}, cache read ${grouped(tokens.cacheRead)})`,
+    usage.durationMs !== null && `session ${formatDuration(usage.durationMs)}`,
+    usage.turns !== null && `${usage.turns} turns`,
+    usage.costUsd !== null && `about $${usage.costUsd.toFixed(2)} at list price`,
+  ].filter(Boolean).join(' · ') + (usage.complete ? '' : ' (incomplete)');
+}
+
+/** The Actions step summary table, in the factory's Chinese. */
+export function usageSummary(usage, workflowMs) {
+  const rows = [];
+  if (count(workflowMs)) rows.push(['工作流耗时（从认领起）', formatDuration(workflowMs, true)]);
+  if (!usage) rows.push(['Claude Code 用量', '未记录']);
+  else {
+    const { tokens } = usage;
+    const session = [usage.durationMs !== null && formatDuration(usage.durationMs, true),
+      usage.turns !== null && `${usage.turns} 轮`, usage.model].filter(Boolean).join(' · ');
+    rows.push(['Claude Code 会话', session || '未知'], ['Token 合计（含缓存）', grouped(tokens.total)],
+      ['输入 / 输出', `${grouped(tokens.input)} / ${grouped(tokens.output)}`],
+      ['缓存写入 / 读取', `${grouped(tokens.cacheWrite)} / ${grouped(tokens.cacheRead)}`]);
+    if (usage.costUsd !== null) rows.push(['按标价估算', `$${usage.costUsd.toFixed(2)}（订阅额度下不是实际扣费）`]);
+    if (!usage.complete) rows.push(['说明', '用量报告不完整，以上只是已报告的部分']);
+  }
+  return `\n### 用量\n\n| 项目 | 数值 |\n| --- | --- |\n${rows.map(([name, value]) => `| ${name} | ${value} |`).join('\n')}\n`;
+}
+
 const failure = (summary, analysis = '') => ({
   version: 1, verdict: 'error', publish: false, summary, analysis, verification: [], pullRequest: null, changedFiles: [],
 });
 
+// Every outcome carries its usage: a crashed review still spent tokens.
+export function decide({ usage = null, ...inputs }) {
+  return { ...judge(inputs), usage: cleanUsage(usage) };
+}
+
 // The workflow, not the Agent, decides what is published: only a confirmed,
 // declared fix with a real diff becomes a PR. Everything else is reported.
-export function decide({ agentStatus, verdict, changedFiles = [] }) {
+function judge({ agentStatus, verdict, changedFiles = [] }) {
   if (agentStatus !== 0) {
     let partial = '';
     try {
@@ -279,6 +368,7 @@ export function pullRequestBody({ decision, snapshot, runUrl, baseSha }) {
     source?.reportUrl && `- Original factory report: ${source.reportUrl}`,
     `- Review run: ${runUrl}`,
     `- Base: \`${baseSha}\``,
+    decision.usage && `- Claude Code usage: ${usageLine(cleanUsage(decision.usage))}`,
   ].filter(Boolean);
   return clip(redact(`${decision.pullRequest.body}
 
@@ -309,6 +399,7 @@ export function resultPayload({ decision, runId, runUrl, pullRequestUrl, branch,
   // most ANALYSIS_LIMIT characters. Clip the prose, not the checks after it.
   const room = Math.max(2000, ANALYSIS_LIMIT - summary.length - 1000);
   const prose = clip(redact(decision.analysis), Math.max(1000, room - verification.length));
+  const usage = cleanUsage(decision.usage);
   return {
     workflowRunId: runId,
     workflowRunUrl: runUrl,
@@ -318,15 +409,27 @@ export function resultPayload({ decision, runId, runUrl, pullRequestUrl, branch,
     pullRequestUrl: pullRequestUrl || null,
     branch: pullRequestUrl ? branch : null,
     baseSha: SHA.test(baseSha ?? '') ? baseSha : null,
+    // TestManage validates strictly, so an unknown usage is left out, not null.
+    ...(usage ? { usage } : {}),
   };
 }
 
 export async function reportResult({ env = process.env, payload, fetchImpl = fetch, delayMs }) {
   assert.ok(UUID.test(String(env.FIX_RUN_ID ?? '')), 'FIX_RUN_ID is required.');
-  return testmanagePost({
+  const post = (body) => testmanagePost({
     base: apiBase(env), token: env.TESTMANAGE_TOKEN, fetchImpl, delayMs,
-    route: `problem-fixes/factory/runs/${env.FIX_RUN_ID}/result`, body: payload,
+    route: `problem-fixes/factory/runs/${env.FIX_RUN_ID}/result`, body,
   });
+  try {
+    return await post(payload);
+  } catch (error) {
+    // A TestManage deployment older than the usage field rejects it as invalid
+    // input. The verdict matters more than its cost, so it is sent without it.
+    if (!payload.usage || !/ failed \(400\)/.test(error.message)) throw error;
+    console.warn('TestManage rejected the result with usage; reporting it without usage.');
+    const { usage: _usage, ...withoutUsage } = payload;
+    return post(withoutUsage);
+  }
 }
 
 async function github(token, method, route, body, fetchImpl = fetch) {
@@ -393,10 +496,11 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   const args = Object.fromEntries(Array.from({ length: argv.length / 2 }, (_, i) => [argv[i * 2].replace(/^--/, ''), argv[i * 2 + 1]]));
   const env = process.env;
   if (mode === 'claim') {
+    const claimedAt = new Date().toISOString();
     const inputs = parseInputs(env);
     const baseSha = resolveBaseSha(inputs.baseRef);
     const claim = await claimProblem({ inputs, env });
-    writeFile(path.join(args.output, 'claim.json'), `${JSON.stringify({ ...claim, inputs, baseSha }, null, 2)}\n`);
+    writeFile(path.join(args.output, 'claim.json'), `${JSON.stringify({ ...claim, inputs, baseSha, claimedAt }, null, 2)}\n`);
     output('run_id', claim.runId);
     output('problem_id', inputs.problemId);
     output('base_ref', inputs.baseRef);
@@ -411,7 +515,8 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
     }));
   } else if (mode === 'decide') {
     const summary = existsSync(args.changes) ? readJson(args.changes) : { files: [] };
-    const decision = decide({ agentStatus: Number(args['agent-status']), verdict: readVerdict(args.verdict), changedFiles: summary.files ?? [] });
+    const decision = decide({ agentStatus: Number(args['agent-status']), verdict: readVerdict(args.verdict),
+      changedFiles: summary.files ?? [], usage: args.log ? agentUsage(args.log) : null });
     writeFile(args.output, `${JSON.stringify(decision, null, 2)}\n`);
     output('publish', decision.publish);
     console.log(`Verdict: ${decision.verdict}; publish: ${decision.publish}.`);
@@ -442,7 +547,8 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
     });
     await reportResult({ env, payload });
     if (env.GITHUB_STEP_SUMMARY) {
-      appendFileSync(env.GITHUB_STEP_SUMMARY, `## TestManage 问题 #${args['problem-id']}\n\n- 结论：\`${payload.verdict}\`\n- ${payload.summary}\n${payload.pullRequestUrl ? `- Draft PR：${payload.pullRequestUrl}\n` : ''}`);
+      const claimedAt = args.claim && existsSync(args.claim) ? Date.parse(readJson(args.claim).claimedAt) : NaN;
+      appendFileSync(env.GITHUB_STEP_SUMMARY, `## TestManage 问题 #${args['problem-id']}\n\n- 结论：\`${payload.verdict}\`\n- ${payload.summary}\n${payload.pullRequestUrl ? `- Draft PR：${payload.pullRequestUrl}\n` : ''}${usageSummary(payload.usage ?? null, Date.now() - claimedAt)}`);
     }
     console.log(`Reported ${payload.verdict} to TestManage.`);
   } else {
