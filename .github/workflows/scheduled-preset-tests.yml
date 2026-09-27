@@ -1,4 +1,4 @@
-name: Preset build tests (manual legacy)
+name: Preset build tests
 run-name: "Preset tests · ${{ github.event_name == 'schedule' && 'daily' || github.event_name == 'workflow_dispatch' && (inputs.dry_run && 'preview' || 'manual') || 'initialize' }}"
 
 on:
@@ -6,7 +6,7 @@ on:
     paths:
       - '.github/workflows/scheduled-preset-tests.yml'
       - '.github/scripts/scheduled-preset-tests.mjs'
-  # Legacy manual entry. Automatic builds now use bounded Evaluation batches.
+  # Manual preset builds. Automatic builds use bounded Evaluation batches.
   workflow_dispatch:
     inputs:
       dry_run:
