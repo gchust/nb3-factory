@@ -4,6 +4,10 @@ import { GitHubClient } from './factory-lib.mjs';
 import { stripTaskTitle } from './task-compat.mjs';
 
 const args = parseArgs(process.argv.slice(2));
+const status = args.status || 'success';
+if (!['success', 'failed'].includes(status))
+  throw new Error('Invalid delivery status');
+const failed = status === 'failed';
 const metadata = JSON.parse(readFileSync(args.metadata, 'utf8'));
 const summary = JSON.parse(readFileSync(args.summary, 'utf8'));
 const client = new GitHubClient({
@@ -18,12 +22,13 @@ const owner = metadata.repository.split('/')[0];
 const runUrl = `${process.env.GITHUB_SERVER_URL}/${metadata.repository}/actions/runs/${process.env.GITHUB_RUN_ID}`;
 const workRef = await client.getRef(metadata.workBranch);
 const titleText = stripTaskTitle(metadata.issue.title);
-const title = `[Code Agent #${metadata.issue.number}] ${titleText}`.slice(
-  0,
-  240,
-);
+const title =
+  `${failed ? '[failed] ' : ''}[Code Agent #${metadata.issue.number}] ${titleText}`.slice(
+    0,
+    240,
+  );
 const changeSummary = summary.reusedExistingWorkBranch
-  ? '- 本次重新验收未产生额外代码修改；沿用当前工作分支和 PR 差异'
+  ? '- 本轮未产生额外代码修改；沿用当前工作分支和 PR 差异'
   : `- 修改文件：${summary.counts.files}（新增 ${summary.counts.added}、修改 ${summary.counts.modified}、删除 ${summary.counts.deleted}、重命名 ${summary.counts.renamed}）`;
 const body = [
   '## 来源',
@@ -44,11 +49,21 @@ const body = [
   '',
   '## 自动验证',
   '',
-  '- TypeScript、测试、Lint、格式与构建：通过',
-  '- 全新 SQLite Migration 与 Seed：通过',
-  '- Agent Browser 登录后逐条业务验收：通过',
-  '- 独立 Job 登录后生产启动检查：通过',
+  `<!-- factory-build-status: ${status} -->`,
+  ...(failed
+    ? [
+        '**搭建状态：failed**。此 PR 保存当前实现供排查，不代表验收通过。',
+        '- 实现、业务验收或独立验证未完成；各检查的结果见报告与运行日志。',
+        '- 停止自动修复和续跑；仍尝试预览打包与部署，部署结果不改变搭建状态。',
+      ]
+    : [
+        '- TypeScript、测试、Lint、格式与构建：通过',
+        '- 全新 SQLite Migration 与 Seed：通过',
+        '- Agent Browser 登录后逐条业务验收：通过',
+        '- 独立 Job 登录后生产启动检查：通过',
+      ]),
   changeSummary,
+  `- [搭建报告](https://${owner}.github.io/${metadata.repository.split('/')[1]}/reports/issues/${metadata.issue.number}/runs/${process.env.GITHUB_RUN_ID}/attempt-${process.env.GITHUB_RUN_ATTEMPT || '1'}/index.html)（报告工作流发布后可用）`,
   `- [GitHub Actions 运行记录](${runUrl})`,
   '',
   '> 此 PR 不会自动合并；请人工检查 Diff 和实际业务效果。',
@@ -106,15 +121,19 @@ if (pull) {
 await client.ensureStatusLabels();
 await client.setIssueStatus(
   issue,
-  'agent:review',
+  failed ? 'agent:failed' : 'agent:review',
   [
-    `实现与独立验证已完成：${pull.html_url}`,
+    failed
+      ? `搭建状态：**failed**。当前实现已保存到 PR：${pull.html_url}`
+      : `实现与独立验证已完成：${pull.html_url}`,
     '',
     `合并前本地预览请检出工作分支：\`git fetch origin && git switch --track origin/${metadata.workBranch}\`。`,
     '',
-    metadata.task.targetBranch === metadata.defaultBranch
-      ? `PR 以 \`${metadata.task.targetBranch}\` 为比较目标；重复搭建测试通常只评审并保留工作分支，不合入干净模板。不会自动合并。`
-      : `请检查后手动合并到 \`${metadata.task.targetBranch}\`。合并后 Issue 会自动关闭。`,
+    failed
+      ? '此 PR 尚未通过交付验收，请先排查失败项；不会自动合并。'
+      : metadata.task.targetBranch === metadata.defaultBranch
+        ? `PR 以 \`${metadata.task.targetBranch}\` 为比较目标；重复搭建测试通常只评审并保留工作分支，不合入干净模板。不会自动合并。`
+        : `请检查后手动合并到 \`${metadata.task.targetBranch}\`。合并后 Issue 会自动关闭。`,
   ].join('\n'),
 );
 

@@ -165,11 +165,11 @@ async function integration(t, { branch = '', existingWork = false, legacy = fals
       await run('prepare-task.mjs', ['--event', event, '--metadata', metadata, '--output', output]);
       return { metadata: existsSync(metadata) ? JSON.parse(readFileSync(metadata, 'utf8')) : null, output: readFileSync(output, 'utf8') };
     },
-    async publish() {
+    async publish(status = 'success') {
       c.refs.set('agent/issue-20', work);
       const summary = path.join(root, 'summary.json');
       writeFileSync(summary, JSON.stringify({ counts: { files: 1, added: 1, modified: 0, deleted: 0, renamed: 0 } }));
-      await run('publish-pr.mjs', ['--metadata', metadata, '--summary', summary]);
+      await run('publish-pr.mjs', ['--metadata', metadata, '--summary', summary, '--status', status]);
     },
   };
 }
@@ -202,6 +202,35 @@ for (const branch of ['', 'develop']) {
     assert.equal(f.calls.filter((call) => call.route === '/pulls/120' && call.method === 'PATCH').length, 1);
   });
 }
+test('failed implementation creates a failed PR and can later update the same PR successfully', async (t) => {
+  const f = await integration(t);
+  await f.prepare();
+  await f.publish('failed');
+  const created = f.calls.find(c => c.route === '/pulls' && c.method === 'POST');
+  assert.match(created.body.title, /^\[failed\]/);
+  assert.match(created.body.body, /factory-build-status: failed/);
+  assert.match(created.body.body, /搭建报告/);
+  assert.doesNotMatch(created.body.body, /构建：通过|业务验收：通过|启动检查：通过/);
+  assert.ok(f.issues.get(20).labels.includes('agent:failed'));
+  await f.publish();
+  assert.equal(f.calls.filter(c => c.route === '/pulls' && c.method === 'POST').length, 1);
+  const updated = f.calls.filter(c => c.route === '/pulls/120' && c.method === 'PATCH').at(-1);
+  assert.doesNotMatch(updated.body.title, /^\[failed\]/);
+  assert.match(updated.body.body, /factory-build-status: success/);
+  assert.ok(f.issues.get(20).labels.includes('agent:review'));
+});
+
+test('a previously successful PR is updated as failed without creating another PR', async (t) => {
+  const f = await integration(t, { existingWork: true });
+  await f.prepare();
+  await f.publish('failed');
+  assert.equal(f.calls.filter(c => c.route === '/pulls' && c.method === 'POST').length, 0);
+  const updated = f.calls.find(c => c.route === '/pulls/120' && c.method === 'PATCH');
+  assert.match(updated.body.title, /^\[failed\]/);
+  assert.match(updated.body.body, /factory-build-status: failed/);
+  assert.ok(f.issues.get(20).labels.includes('agent:failed'));
+});
+
 test('closed external submissions prepare and publish independently of an earlier application PR', async (t) => {
   const f = await integration(t, { branch: 'apps/external', state: 'closed',
     labels: [{ name: 'factory:external' }], eventName: 'workflow_dispatch',

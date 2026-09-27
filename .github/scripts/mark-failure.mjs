@@ -42,7 +42,7 @@ const body = [
   exhausted
     ? '**已停止自动修复，待诊断**。' +
       (state.stopReason?.reason || '已达到任务或评测计划预算。') +
-      '\n\n已保存补丁、验收记录、修复日志与用量，不再修复、续跑或发布业务 PR。' +
+      '\n\n已保存补丁、验收记录、修复日志与用量，不再自动修复或续跑；仍发布失败报告，并在有安全代码差异时创建或更新标记 failed 的搭建 PR，尝试预览打包与部署。' +
       '\n\n累计验证 ' +
       state.verificationAttempts +
       ' 轮、修复 ' +
@@ -57,6 +57,12 @@ const body = [
       : '本次搭建未完成，请根据失败步骤检查运行日志。',
   '',
   `[查看本次运行日志](${runUrl})。`,
+  ...(process.env.FACTORY_PREVIEW_BUILD_RESULT === 'failure'
+    ? [
+        '',
+        '已尝试为失败实现打包预览，但未生成可用部署包；失败报告与搭建 PR 仍保留，详情见 preview-build-failed 作业日志。',
+      ]
+    : []),
   ...(recoverable
     ? [
         '',

@@ -186,9 +186,14 @@ export function selectDistArtifact(run, jobs, artifacts, repository) {
   }
   if (
     run.status !== 'completed' ||
-    run.conclusion !== 'success' ||
-    !['verify-final', 'publish'].every((name) =>
-      jobs.some((job) => job.name === name && job.conclusion === 'success'),
+    !(
+      jobs.some(
+        (job) => job.name === 'publish-failed' && job.conclusion === 'success',
+      ) ||
+      (run.conclusion === 'success' &&
+        ['verify-final', 'publish'].every((name) =>
+          jobs.some((job) => job.name === name && job.conclusion === 'success'),
+        ))
     )
   ) {
     return null;
@@ -196,6 +201,13 @@ export function selectDistArtifact(run, jobs, artifacts, repository) {
   const candidates = artifacts.filter(
     (a) => /^factory-dist-[1-9]\d*$/.test(a.name) && !a.expired,
   );
+  if (
+    candidates.length === 0 &&
+    jobs.some(
+      (job) => job.name === 'publish-failed' && job.conclusion === 'success',
+    )
+  )
+    return null; // Failed packaging has no archive.
   if (candidates.length !== 1)
     throw new Error('Expected one unexpired deployable build artifact');
   return candidates[0];
@@ -220,6 +232,7 @@ export function planFrom({ metadata, pr, source, domain }) {
     runId: source.runId,
     runUrl: source.runUrl,
     runAttempt: source.runAttempt,
+    deliveryStatus: source.deliveryStatus || 'success',
     prNumber: pr.number,
     issue,
     headSha: pr.head.sha,
@@ -244,7 +257,9 @@ export function renderPreviewComment(plan, note = '') {
     ...(note
       ? []
       : [
-          '这是本次搭建验收通过后的真实运行实例，可以登录、可以操作，数据来自一次性种子。',
+          plan.deliveryStatus === 'failed'
+            ? '**搭建状态：failed**。这是失败实现的预览，部署可用不代表业务验收通过；请结合搭建报告排查。'
+            : '这是本次搭建验收通过后的真实运行实例，可以登录、可以操作，数据来自一次性种子。',
         ]),
     '对应 PR 关闭后会自动回收。每次部署使用新的示例数据，前次试用数据与上传文件保留在服务器备份中，不自动迁入新版本。',
     '',

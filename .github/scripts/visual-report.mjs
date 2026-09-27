@@ -6,6 +6,7 @@ import {
   lstatSync,
   mkdirSync,
   openSync,
+  readdirSync,
   readFileSync,
   readSync,
   realpathSync,
@@ -86,9 +87,14 @@ export function selectArtifact(run, jobs, artifacts, repository) {
   }
   if (
     run.status !== 'completed' ||
-    run.conclusion !== 'success' ||
-    !['verify-final', 'publish'].every((name) =>
-      jobs.some((job) => job.name === name && job.conclusion === 'success'),
+    !(
+      jobs.some(
+        (job) => job.name === 'publish-failed' && job.conclusion === 'success',
+      ) ||
+      (run.conclusion === 'success' &&
+        ['verify-final', 'publish'].every((name) =>
+          jobs.some((job) => job.name === name && job.conclusion === 'success'),
+        ))
     )
   ) {
     return null; // In particular, a successful five-hour handoff is not a delivery.
@@ -115,32 +121,78 @@ export function matchesTaskPR(pr, metadata, source) {
   );
 }
 
-export function collectMedia(root, output) {
-  const summary = readJson(root, 'repair-summary.json');
-  const attempt = summary.finalVerificationAttempt ?? summary.verificationAttempts;
-  if (summary.handoff || !Number.isSafeInteger(attempt) || attempt < 1)
-    throw new Error('No completed verification round');
-  const prefix = `verify-${attempt}/browser-acceptance`;
-  const report = readJson(root, `${prefix}/report.json`);
+export function collectMedia(root, output, { failed = false } = {}) {
+  let summary = {};
+  try {
+    summary = readJson(root, 'repair-summary.json');
+  } catch (error) {
+    if (!failed) throw error;
+  }
+  let attempt =
+    summary.finalVerificationAttempt ?? summary.verificationAttempts;
+  let prefix = `verify-${attempt}/browser-acceptance`;
+  let report;
+  if (failed) {
+    const rounds = readdirSync(root)
+      .filter((name) => /^verify-[1-9]\d*$/.test(name))
+      .sort((a, b) => Number(b.slice(7)) - Number(a.slice(7)));
+    for (const round of rounds) {
+      for (const kind of ['browser-acceptance', 'browser-focused']) {
+        try {
+          const candidate = readJson(root, `${round}/${kind}/report.json`);
+          if (!Array.isArray(candidate.checks)) continue;
+          report = candidate;
+          prefix = `${round}/${kind}`;
+          attempt = Number(round.slice(7));
+          break;
+        } catch {
+          /* A failed task may have no browser report yet. */
+        }
+      }
+      if (report) break;
+    }
+    if (!report) {
+      mkdirSync(output, { recursive: true });
+      return {
+        attempt: null,
+        media: [],
+        warnings: [
+          '搭建失败，尚无可用浏览器验收记录；请查看搭建报告和运行日志。',
+        ],
+      };
+    }
+  }
   if (
-    report.passed !== true ||
-    report.authenticated !== true ||
-    !Array.isArray(report.checks) ||
-    !report.checks.length ||
-    report.checks.some((c) => {
-      if (c.status === 'passed') return false;
-      if (c.status !== 'not_run' || !c.reason?.trim()) return true;
-      try {
-        const metadata = readJson(root, 'task-metadata.json');
-        return !identifyCheck(c, acceptanceCriteria(metadata.task)).optional;
-      } catch { return true; }
-    }) ||
-    !Array.isArray(report.failures) ||
-    report.failures.length
+    (!failed && summary.handoff) ||
+    !Number.isSafeInteger(attempt) ||
+    attempt < 1
+  )
+    throw new Error('No completed verification round');
+  report ??= readJson(root, `${prefix}/report.json`);
+  if (
+    !failed &&
+    (report.passed !== true ||
+      report.authenticated !== true ||
+      !Array.isArray(report.checks) ||
+      !report.checks.length ||
+      report.checks.some((c) => {
+        if (c.status === 'passed') return false;
+        if (c.status !== 'not_run' || !c.reason?.trim()) return true;
+        try {
+          const metadata = readJson(root, 'task-metadata.json');
+          return !identifyCheck(c, acceptanceCriteria(metadata.task)).optional;
+        } catch {
+          return true;
+        }
+      }) ||
+      !Array.isArray(report.failures) ||
+      report.failures.length)
   )
     throw new Error('Final browser report has not passed');
 
-  const warnings = [];
+  const warnings = failed
+    ? ['搭建状态为 failed；这里只展示最近保存的验收证据，不表示完整验收通过。']
+    : [];
   let showcase = {};
   try {
     showcase = readJson(root, `${prefix}/showcase.json`);
@@ -287,7 +339,8 @@ export function renderReport(plan, inline = false, reason = '') {
     `<!-- factory-visual-mode:${inline ? 'inline' : 'artifact'} -->`,
     '## 搭建效果与操作录像',
     '',
-    `对应交付提交：${plan.headSha ? `\`${plan.headSha}\`` : '旧运行未记录提交，以源 Artifact 为准'} · 最终浏览器验收轮次：${plan.attempt}`,
+    `搭建状态：${plan.deliveryStatus === 'failed' ? '**failed**（未通过完整交付验收）' : 'success'}`,
+    `对应实现提交：${plan.headSha ? `\`${plan.headSha}\`` : '旧运行未记录提交，以源 Artifact 为准'} · 保存的浏览器验收轮次：${plan.attempt ?? '尚未运行'}`,
     `[搭建运行](${plan.runUrl}) · [完整验收 Artifact](${plan.sourceArtifactUrl})`,
     '',
     '以下是一次性测试数据上的浏览器实拍，不是生成的效果图。',

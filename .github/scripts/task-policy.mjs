@@ -148,7 +148,7 @@ export function diagnostic(state, reason, code) {
       '按失败指纹逐轮读取原始操作、观察及修复日志，说明修复为何未解决问题；缺证据写未确认。',
       '只从已有证据记录最小复现、预期与实际结果；不编造复现成功。',
       '核对冻结版本公共 API、Skill 和应用用法，区分 framework/plugin/documentation/template/application/factory/environment/unknown。',
-      '给出建议修改位置和下一轮回归标准；保持停止状态，不继续修复、验收或发布业务 PR。',
+      '给出建议修改位置和下一轮回归标准；保持停止状态，不继续修复或验收。仍发布 failed 报告和保留代码的搭建 PR，并允许一次尽力而为的预览打包与部署。',
     ],
   };
 }
