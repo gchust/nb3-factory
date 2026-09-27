@@ -55,6 +55,14 @@ test('parseIssueTask normalizes the Issue Form body', () => {
   });
 });
 
+test('parseIssueTask derives acceptance criteria from the business requirements when omitted', () => {
+  const body = validBody.replace('1. 员工可以查看进度\n2. 服务台可以查看逾期', '_No response_');
+  const task = parseIssueTask({ body });
+  assert.match(task.acceptanceCriteria, /^未填写验收要求/u);
+  assert.match(task.acceptanceCriteria, /C01\. 员工可以提交工单。\n\n处理人员可以分派、解决工单。$/u);
+  assert.equal(task.requirements, '员工可以提交工单。\n\n处理人员可以分派、解决工单。');
+});
+
 test('parseIssueTask rejects missing required content', () => {
   assert.throws(
     () =>

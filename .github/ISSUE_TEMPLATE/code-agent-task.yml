@@ -57,13 +57,13 @@ body:
     id: acceptance_criteria
     attributes:
       label: 验收要求
-      description: 仅注入 QA prompt，不注入搭建 prompt。写验收场景、边界和证据要求；产品功能必须同时在业务需求中明确。公开 Issue 不提供保密盲测。
+      description: 选填，留空时 QA 按业务需求逐项验收。仅注入 QA prompt，不注入搭建 prompt。写验收场景、边界和证据要求；产品功能必须同时在业务需求中明确。公开 Issue 不提供保密盲测。
       placeholder: |
         1. 员工可以提交并跟进自己的工单
         2. 服务台可以分派并记录处理过程
         3. 负责人可以查看逾期情况和人员工作量
     validations:
-      required: true
+      required: false
 
   - type: dropdown
     id: sample_data

@@ -53,8 +53,8 @@ fi
   echo "### Verified source baseline"
   echo "Branch: \`$BASELINE_BRANCH\` · application commit: \`$published\`"
   echo "Source: \`$SOURCE_SHA\` · package archive SHA-256: \`$SOURCE_DIGEST\`"
-  echo "Select this branch in a new preset task. Existing tasks and develop were not changed."
+  echo "Use this branch as baselineRef in an evaluation plan. Existing tasks and develop were not changed."
 } >> "$GITHUB_STEP_SUMMARY"
 if [[ -n "${TRACKING_ISSUE:-}" ]]; then
-  gh issue comment "$TRACKING_ISSUE" --repo "$GITHUB_REPOSITORY" --body "源码基线已发布：\`$BASELINE_BRANCH\`（\`$published\`），源码 \`$SOURCE_SHA\`。包快照经过第二个干净 Runner 安装与完整验证；默认 develop 未改变。新建预置任务时可填写此测试基线分支。运行：https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+  gh issue comment "$TRACKING_ISSUE" --repo "$GITHUB_REPOSITORY" --body "源码基线已发布：\`$BASELINE_BRANCH\`（\`$published\`），源码 \`$SOURCE_SHA\`。包快照经过第二个干净 Runner 安装与完整验证；默认 develop 未改变。评测批次计划可在 baselineRef 中使用此分支。运行：https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
 fi

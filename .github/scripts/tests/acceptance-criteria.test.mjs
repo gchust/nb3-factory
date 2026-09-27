@@ -5,7 +5,7 @@ import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, rmSync } from 'nod
 import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
-import { parseAcceptance, parseAcceptanceCriteria, acceptanceCriteria, renderAcceptance, reportVerdict, validateCoverage } from '../acceptance-criteria.mjs';
+import { parseAcceptance, parseAcceptanceCriteria, acceptanceCriteria, defaultAcceptanceCriteria, renderAcceptance, reportVerdict, validateCoverage } from '../acceptance-criteria.mjs';
 import { retestMetadata } from '../qa-retest.mjs';
 
 const scripts = path.resolve(import.meta.dirname, '..');
@@ -36,6 +36,18 @@ test('numeric, bullet, prefixed and multi-line criteria share stable parsing', (
   assert.equal(parseAcceptanceCriteria('first line\nsecond line')[0].text, 'first line\nsecond line');
   assert.throws(() => parseAcceptanceCriteria(''), /empty/u);
   assert.throws(() => parseAcceptanceCriteria('B01. One\nB01. Two'), /duplicate/u);
+});
+
+test('omitted criteria are derived per item from the business requirements and always parse', () => {
+  const listed = parseAcceptance(defaultAcceptanceCriteria('我是服务台负责人：\n1. 员工提交工单\n  - 附带截图\n2. [可选] 服务台分派\nR9. 负责人查看逾期'));
+  assert.match(listed.preamble, /^未填写验收要求[\s\S]*我是服务台负责人：$/u);
+  assert.deepEqual(listed.criteria.map((c) => [c.id, c.optional]), [['C01', false], ['C02', true], ['R9', false]]);
+  assert.match(listed.criteria[0].text, /员工提交工单\n  - 附带截图$/u);
+  const prose = parseAcceptance(defaultAcceptanceCriteria('员工可以提交工单。\n\n服务台可以分派。'));
+  assert.deepEqual(prose.criteria, [{ id: 'C01', text: '员工可以提交工单。\n\n服务台可以分派。', optional: false }]);
+  const invalid = parseAcceptance(defaultAcceptanceCriteria('R1. 提交\nR1. 分派'));
+  assert.equal(invalid.criteria.length, 1);
+  assert.match(invalid.criteria[0].text, /业务需求中的全部/u);
 });
 
 test('code fences are data, not separate acceptance items', () => {

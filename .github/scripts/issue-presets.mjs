@@ -1,4 +1,3 @@
-import { isSourceBaselineRef } from './source-baseline-ref.mjs';
 import { createHash } from 'node:crypto';
 
 import { BUILD_LABEL, extractIssueSections, parseIssueTask, parseBuildReviewMode, TaskInputError, validateTargetBranch } from './factory-lib.mjs';
@@ -165,11 +164,7 @@ async function captureSnapshot(client, issue, number, comments) {
   if (number === issue.number) throw new TaskInputError('不能从当前 Issue 复制自身。');
   const { source, comments: originals } = await readPresetSource(client, number);
   // Validate the business fields but do not inherit the source's old branch.
-  const selected = extractIssueSections(issue.body).get('测试基线分支')?.trim();
-  if (selected && (!isSourceBaselineRef(selected) || !await client.getRef(selected, true))) {
-    throw new TaskInputError('测试基线必须是已发布的 factory-baseline/source- 分支；留空使用默认分支。');
-  }
-  const targetBranch = selected || validateTargetBranch((await client.getRepository()).default_branch);
+  const targetBranch = validateTargetBranch((await client.getRepository()).default_branch);
   const sourceBody = replaceSection(source.body ?? '', '目标分支', targetBranch);
   parseIssueTask({ ...source, body: sourceBody });
   const snapshot = {
@@ -309,13 +304,6 @@ ${options.map((option) => `        - ${JSON.stringify(option)}`).join('\n')}
       default: 0
     validations:
       required: true
-  - type: input
-    id: source_baseline
-    attributes:
-      label: 测试基线分支
-      description: 可选，填写已验证的 factory-baseline/source- 分支；留空使用当前默认分支。不会继承来源案例的分支。
-    validations:
-      required: false
   - type: textarea
     id: additional_requirements
     attributes:
