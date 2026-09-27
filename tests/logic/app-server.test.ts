@@ -738,6 +738,132 @@ describe('app server', () => {
     expect(rejected.status).toBe(401);
   });
 
+  it('lets the document manager maintain documents and keeps the reader read-only', async () => {
+    const app = trackCloseable(
+      await createInstalledStandaloneServer({
+        viteDevUrl: false,
+        env: { APP_PUBLIC_ORIGIN: 'http://localhost' },
+      }),
+    );
+    const baseUrl = `http://localhost${app.application.publicBasePath}`;
+    const signIn = async (username: string, password: string) => {
+      const response = await requestApp(
+        app,
+        `${baseUrl}/api/auth/sign-in/username`,
+        {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ username, password }),
+        },
+      );
+      expect(response.status).toBe(200);
+      return response.headers
+        .getSetCookie()
+        .map((header) => header.split(';')[0])
+        .join('; ');
+    };
+
+    const manager = await signIn('manager.a', 'Library123!');
+    // A write-only composite grant used to yield a Policy whose `read` node was
+    // `false`, and createOne() validates the record it returns through that same
+    // read Policy, so the manager's create was refused with 403.
+    const created = await requestApp(app, `${baseUrl}/api/library/documents`, {
+      method: 'POST',
+      headers: {
+        cookie: manager,
+        'content-type': 'application/json',
+        origin: 'http://localhost',
+      },
+      body: JSON.stringify({
+        title: '集成测试新建资料',
+        body: '由资料员新建',
+        published: false,
+        confidential: false,
+      }),
+    });
+    expect(created.status).toBe(201);
+    const saved = (await created.json()) as { data: { id: string } };
+    expect(saved.data.id).toBeTruthy();
+
+    const managerList = await requestApp(
+      app,
+      `${baseUrl}/api/library/documents`,
+      { headers: { cookie: manager } },
+    );
+    const managerRows = (await managerList.json()) as {
+      data: Array<{ id: string; title: string }>;
+    };
+    const draft = managerRows.data.find(
+      (row) => row.title === '内部资料 D · 草稿方案',
+    );
+    const edited = await requestApp(
+      app,
+      `${baseUrl}/api/library/documents/${draft?.id}`,
+      {
+        method: 'PATCH',
+        headers: {
+          cookie: manager,
+          'content-type': 'application/json',
+          origin: 'http://localhost',
+        },
+        body: JSON.stringify({ body: 'MANAGER-EDIT-OK' }),
+      },
+    );
+    expect(edited.status).toBe(200);
+    const editedBody = (await edited.json()) as { data: { body: string } };
+    expect(editedBody.data.body).toBe('MANAGER-EDIT-OK');
+
+    // Adding read to the create grant must not let a confidential document
+    // escape the reader's confidentiality floor.
+    const secret = await requestApp(app, `${baseUrl}/api/library/documents`, {
+      method: 'POST',
+      headers: {
+        cookie: manager,
+        'content-type': 'application/json',
+        origin: 'http://localhost',
+      },
+      body: JSON.stringify({
+        title: '集成测试保密资料',
+        body: '仅资料员可见',
+        published: true,
+        confidential: true,
+      }),
+    });
+    expect(secret.status).toBe(201);
+
+    const reader = await signIn('reader.b', 'Library123!');
+    const visible = await requestApp(app, `${baseUrl}/api/library/documents`, {
+      headers: { cookie: reader },
+    });
+    expect(visible.status).toBe(200);
+    const rows = (await visible.json()) as {
+      data: Array<{ id: string; title: string }>;
+    };
+    const titles = rows.data.map((row) => row.title);
+    expect(titles).toContain('内部资料 P · 公开须知');
+    expect(titles).not.toContain('内部资料 D · 草稿方案');
+    expect(titles).not.toContain('内部资料 C · 保密纪要');
+    expect(titles).not.toContain('集成测试保密资料');
+
+    const published = rows.data.find(
+      (row) => row.title === '内部资料 P · 公开须知',
+    );
+    const refused = await requestApp(
+      app,
+      `${baseUrl}/api/library/documents/${published?.id}`,
+      {
+        method: 'PATCH',
+        headers: {
+          cookie: reader,
+          'content-type': 'application/json',
+          origin: 'http://localhost',
+        },
+        body: JSON.stringify({ body: '读者尝试篡改' }),
+      },
+    );
+    expect(refused.status).toBe(403);
+  });
+
   it('mounts standalone app-local routes behind the public base path', async () => {
     const app = trackCloseable(
       await createIsolatedStandaloneServer({ viteDevUrl: false }),

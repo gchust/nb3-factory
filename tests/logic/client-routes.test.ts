@@ -92,8 +92,16 @@ describe('app client routes', () => {
     const resolved = resolveRoutes();
 
     // The landing page opted out of page authorization, so it is reachable by every signed-in user.
+    // The document library is a protected page: its route names the page grant an administrator stores.
+    // Its child routes are the create dialog, the detail drawer, and the edit and share dialogs stacked on it.
+    // They inherit sign-in from the list but skip page authorization, so they store no grant of their own.
     expect(pageAuthorizations(resolved.routes)).toEqual([
       { name: 'home', authorizedAs: null },
+      { name: 'library', authorizedAs: 'library.documents' },
+      { name: 'library-document-new', authorizedAs: null },
+      { name: 'library-document', authorizedAs: null },
+      { name: 'library-document-edit', authorizedAs: null },
+      { name: 'library-document-share', authorizedAs: null },
     ]);
   });
 });

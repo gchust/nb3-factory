@@ -1,4 +1,4 @@
-import { Home } from 'lucide-react';
+import { Home, LibraryBig } from 'lucide-react';
 import {
   defineAppRoutes,
   defineSettingsRoutes,
@@ -43,6 +43,45 @@ const appRoutes: AppClientRouteContribution = defineAppRoutes([
     componentLoader: () => import('./pages/auth/reset-password.js'),
     name: 'reset-password',
     path: '/reset-password',
+  },
+  {
+    auth: 'required',
+    authz: {
+      resource: { type: 'page', id: 'library.documents' },
+      action: 'access',
+    },
+    componentLoader: () => import('./pages/library/index.js'),
+    name: 'library',
+    navigation: { title: 'navigation.library', icon: LibraryBig },
+    path: '/library',
+    children: [
+      {
+        authz: 'skip',
+        componentLoader: () => import('./pages/library/new.js'),
+        name: 'library-document-new',
+        path: 'new',
+      },
+      {
+        authz: 'skip',
+        componentLoader: () => import('./pages/library/detail/index.js'),
+        name: 'library-document',
+        path: ':documentId',
+        children: [
+          {
+            authz: 'skip',
+            componentLoader: () => import('./pages/library/detail/edit.js'),
+            name: 'library-document-edit',
+            path: 'edit',
+          },
+          {
+            authz: 'skip',
+            componentLoader: () => import('./pages/library/detail/share.js'),
+            name: 'library-document-share',
+            path: 'share',
+          },
+        ],
+      },
+    ],
   },
 ]);
 
