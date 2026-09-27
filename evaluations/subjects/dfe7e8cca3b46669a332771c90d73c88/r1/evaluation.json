@@ -1,0 +1,874 @@
+{
+  "schemaVersion": 1,
+  "type": "evaluation-report",
+  "source": {
+    "producer": "nb3-factory",
+    "instance": "gchust/nb3-factory",
+    "project": "gchust/nb3-factory",
+    "exporter": {
+      "version": 1,
+      "controlSha": "24c0eb1d2457b48fbc3d369ef8a0e5aafb6295e4",
+      "runId": 36298505204,
+      "attempt": 1
+    }
+  },
+  "run": {
+    "key": "gchust/nb3-factory/issues/381/initial",
+    "kind": "initial",
+    "identity": "recorded",
+    "batchKey": null,
+    "caseKey": null,
+    "sampleIndex": null,
+    "sampleKey": null,
+    "task": {
+      "repository": "gchust/nb3-factory",
+      "issue": 381,
+      "buildCommentId": null,
+      "title": "会议室预约"
+    },
+    "case": null
+  },
+  "revision": 1,
+  "createdAt": "2026-09-27T05:54:03Z",
+  "precedence": {
+    "producer": {
+      "runId": 36293829094,
+      "attempt": 1,
+      "startedAt": "2026-09-27T04:16:27Z"
+    },
+    "executionOrder": 1,
+    "knownLaterExecutions": 0,
+    "chainTerminal": true,
+    "reviewRubric": 0,
+    "reviewState": "not-reviewed",
+    "review": {
+      "kind": null,
+      "at": null,
+      "runId": null,
+      "attempt": null
+    },
+    "qaCoverage": "complete"
+  },
+  "baseline": {
+    "track": "published-template",
+    "application": {
+      "baseRef": "develop",
+      "baseSha": "61e0743abbd5559eea239cd0aecdab45498620c3",
+      "candidate": {
+        "patchSha256": "7d7f87a3b6c548410013775f6c688a8450fa9f31a627e3f4872681b471dd6531",
+        "headSha": "09a9ba847aa2bedbd4920c888ed3d4edfe238186"
+      }
+    },
+    "factory": {
+      "controlSha": "61e0743abbd5559eea239cd0aecdab45498620c3",
+      "entrySha": "61e0743abbd5559eea239cd0aecdab45498620c3"
+    },
+    "template": {
+      "creatorVersion": "0.1.0-beta.22",
+      "templateVersion": "1.0.0-beta.47"
+    },
+    "dependencies": {
+      "lockfileSha256": "7db7024be35da2f6d4d75784a2afd5c398ca647ac58462cf5e58d14276395f99",
+      "baselineFingerprint": "3ddac417d28808b8f629f19c26f54403c552ee0b79a492c0d08646216829cf92",
+      "packages": [
+        {
+          "name": "@nocobase/ai-employee",
+          "version": "0.2.0-beta.8"
+        },
+        {
+          "name": "@nocobase/ai-employee-avatars",
+          "version": "1.0.2"
+        },
+        {
+          "name": "@nocobase/app-cli",
+          "version": "1.0.0-beta.6"
+        },
+        {
+          "name": "@nocobase/app-client",
+          "version": "1.0.0-beta.21"
+        },
+        {
+          "name": "@nocobase/app-plugin-ai-employee",
+          "version": "1.0.0-beta.23"
+        },
+        {
+          "name": "@nocobase/app-plugin-ai-knowledge-base",
+          "version": "0.1.0-beta.9"
+        },
+        {
+          "name": "@nocobase/app-plugin-api-keys",
+          "version": "0.1.0-beta.8"
+        },
+        {
+          "name": "@nocobase/app-plugin-authentication",
+          "version": "1.0.0-beta.24"
+        },
+        {
+          "name": "@nocobase/app-plugin-authorization",
+          "version": "0.2.0-beta.20"
+        },
+        {
+          "name": "@nocobase/app-plugin-authz-default-access",
+          "version": "0.1.0-beta.4"
+        },
+        {
+          "name": "@nocobase/app-plugin-authz-restriction-rules",
+          "version": "0.1.0-beta.3"
+        },
+        {
+          "name": "@nocobase/app-plugin-authz-sharing-rules",
+          "version": "0.1.0-beta.4"
+        },
+        {
+          "name": "@nocobase/app-plugin-database-explorer",
+          "version": "0.1.0-beta.6"
+        },
+        {
+          "name": "@nocobase/app-plugin-file",
+          "version": "0.1.0-beta.15"
+        },
+        {
+          "name": "@nocobase/app-plugin-i18n",
+          "version": "0.1.0-beta.9"
+        },
+        {
+          "name": "@nocobase/app-plugin-mail",
+          "version": "0.1.0-beta.0"
+        },
+        {
+          "name": "@nocobase/app-plugin-notification",
+          "version": "0.1.0-beta.17"
+        },
+        {
+          "name": "@nocobase/app-plugin-notification-in-app",
+          "version": "0.2.0-beta.18"
+        },
+        {
+          "name": "@nocobase/app-plugin-notification-providers",
+          "version": "0.2.0-beta.7"
+        },
+        {
+          "name": "@nocobase/app-plugin-scheduler",
+          "version": "0.1.0-beta.9"
+        },
+        {
+          "name": "@nocobase/app-plugin-users",
+          "version": "1.0.0-beta.11"
+        },
+        {
+          "name": "@nocobase/app-plugin-workflow",
+          "version": "1.0.0-beta.28"
+        },
+        {
+          "name": "@nocobase/app-portal-sdk",
+          "version": "1.0.0-beta.3"
+        },
+        {
+          "name": "@nocobase/app-server",
+          "version": "1.0.0-beta.27"
+        },
+        {
+          "name": "@nocobase/app-skills",
+          "version": "0.1.0-beta.16"
+        },
+        {
+          "name": "@nocobase/app-websocket",
+          "version": "0.0.1"
+        },
+        {
+          "name": "@nocobase/authorization",
+          "version": "0.1.0-beta.9"
+        },
+        {
+          "name": "@nocobase/caching",
+          "version": "0.1.0-beta.2"
+        },
+        {
+          "name": "@nocobase/config",
+          "version": "0.1.0-beta.1"
+        },
+        {
+          "name": "@nocobase/cron",
+          "version": "0.1.0"
+        },
+        {
+          "name": "@nocobase/db",
+          "version": "1.0.0-beta.16"
+        },
+        {
+          "name": "@nocobase/db-sqlite",
+          "version": "0.1.0-beta.2"
+        },
+        {
+          "name": "@nocobase/dev-config",
+          "version": "0.1.0-beta.13"
+        },
+        {
+          "name": "@nocobase/drive",
+          "version": "0.1.0-beta.4"
+        },
+        {
+          "name": "@nocobase/i18n",
+          "version": "1.0.0-beta.4"
+        },
+        {
+          "name": "@nocobase/logging",
+          "version": "0.1.0-beta.6"
+        },
+        {
+          "name": "@nocobase/queue",
+          "version": "0.1.0-beta.7"
+        },
+        {
+          "name": "@nocobase/repository-input",
+          "version": "0.1.0-beta.1"
+        },
+        {
+          "name": "@nocobase/service-provider",
+          "version": "0.0.2-beta.1"
+        },
+        {
+          "name": "@nocobase/session",
+          "version": "0.1.0-beta.2"
+        },
+        {
+          "name": "@nocobase/snowflake",
+          "version": "1.0.0-beta.3"
+        }
+      ]
+    },
+    "skills": {
+      "fingerprint": "5ba7cf1199b8ea4a00cfcc57ba42074d944b292d47edab5f4c7f334e8aac99d2",
+      "files": 107
+    },
+    "sourceSnapshot": null,
+    "inputs": {
+      "taskInputHash": null,
+      "pipelineInputHash": "c45aa45e372cac8e22826f5d97e934fbf7b7a432e5c897a317c74583e8229994",
+      "reviewHash": null,
+      "reviewCriteriaHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "prompts": [
+        {
+          "phase": "implementation",
+          "path": "agent-implement.jsonl.invocation.json",
+          "sha256": "646724d9fb684f57bfc6cd9df3f99de21b8d1bde46d6498aff44ea54e703d40b"
+        },
+        {
+          "phase": "qa",
+          "path": "verify-1/browser-acceptance/agent-browser-acceptance.jsonl.invocation.json",
+          "sha256": "3f2925d6c5a685032c248a4018533f8c182c3e15718f99b917a996a51fb9673b"
+        }
+      ]
+    },
+    "rubric": {
+      "id": "nb3-framework",
+      "version": 2
+    },
+    "agent": {
+      "engine": "pi",
+      "model": "deepseek-v4.1-flash",
+      "version": "0.86.1",
+      "buildReviewMode": "off",
+      "configuration": {
+        "fingerprints": [
+          "13b51ba5c1f88ff0ab747ba3d232f77dfad5a813acbcfc23f91e9a3dd17cc530"
+        ],
+        "complete": false
+      }
+    },
+    "environment": {
+      "browserFixturesSha256": "3b527d18aa2f6d58fdfea5cdd916631ea1ee3425abeba09bb1f961f2128c554b",
+      "browserPreflight": "passed"
+    }
+  },
+  "executions": [
+    {
+      "key": "run/36293829094/attempt/1",
+      "kind": "implementation",
+      "order": 1,
+      "workflow": "code-agent-task",
+      "runId": 36293829094,
+      "attempt": 1,
+      "event": "issues",
+      "previousRunId": null,
+      "conclusion": "delivered",
+      "startedAt": "2026-09-27T04:16:27Z",
+      "endedAt": "2026-09-27T05:53:26Z",
+      "jobSeconds": 5808,
+      "controlSha": "61e0743abbd5559eea239cd0aecdab45498620c3",
+      "patchSha256": "7d7f87a3b6c548410013775f6c688a8450fa9f31a627e3f4872681b471dd6531",
+      "source": "usage-receipt"
+    }
+  ],
+  "outcome": {
+    "execution": "completed",
+    "acceptance": "passed",
+    "delivery": "published",
+    "pullRequest": {
+      "number": 383,
+      "headSha": "09a9ba847aa2bedbd4920c888ed3d4edfe238186"
+    },
+    "detail": "执行链已终结；业务验收与代码交付分别见 acceptance / delivery。"
+  },
+  "qa": {
+    "coverage": "complete",
+    "rounds": [
+      {
+        "round": 1,
+        "executionKey": "run/36293829094/attempt/1",
+        "scope": "full",
+        "passed": true,
+        "source": "verify-1/browser-acceptance/report.json",
+        "checks": [
+          {
+            "id": "C01",
+            "criterion": "管理员可以维护会议室：名称、容量、位置，可以新增、编辑和删除。",
+            "status": "passed",
+            "evidence": [
+              "qa/1/admin-meetingrooms-created.png",
+              "qa/1/admin-meetingroom-edit-prefill.png",
+              "qa/1/admin-meetingroom-delete-confirm.png",
+              "qa/1/admin-meetingrooms-after-delete.png"
+            ]
+          },
+          {
+            "id": "C02",
+            "criterion": "员工可以提交预约：选择会议室，填写会议主题、开始时间和结束时间；结束时间必须晚于开始时间，同一会议室的时间段不能重叠。",
+            "status": "passed",
+            "evidence": [
+              "qa/1/employee-booking-confirmed.png",
+              "qa/1/employee-end-before-start-error.png",
+              "qa/1/booking-overlap-error.png"
+            ]
+          },
+          {
+            "id": "C03",
+            "criterion": "员工只能查看和取消自己的预约；管理员可以查看全部预约。",
+            "status": "passed",
+            "evidence": [
+              "qa/1/employee1-own-bookings-only.png",
+              "qa/1/employee-cancel-confirm.png",
+              "qa/1/employee2-own-bookings-empty.png",
+              "qa/1/employee2-own-booking.png",
+              "qa/1/admin-all-bookings.png",
+              "qa/1/employee-cross-user-overlap-error.png"
+            ]
+          }
+        ]
+      }
+    ],
+    "firstFull": {
+      "status": "passed",
+      "round": 1,
+      "executionKey": "run/36293829094/attempt/1",
+      "basis": "本产物包含第 1 轮起的全部验证，取第一次实际全量 QA。"
+    },
+    "finalFull": {
+      "status": "passed",
+      "round": 1,
+      "executionKey": "run/36293829094/attempt/1",
+      "basis": "最后一次实际全量 QA。"
+    },
+    "criteria": [
+      {
+        "id": "C01",
+        "text": "管理员可以维护会议室：名称、容量、位置，可以新增、编辑和删除。",
+        "optional": false,
+        "firstFull": "passed",
+        "finalFull": "passed"
+      },
+      {
+        "id": "C02",
+        "text": "员工可以提交预约：选择会议室，填写会议主题、开始时间和结束时间；结束时间必须晚于开始时间，同一会议室的时间段不能重叠。",
+        "optional": false,
+        "firstFull": "passed",
+        "finalFull": "passed"
+      },
+      {
+        "id": "C03",
+        "text": "员工只能查看和取消自己的预约；管理员可以查看全部预约。",
+        "optional": false,
+        "firstFull": "passed",
+        "finalFull": "passed"
+      }
+    ],
+    "firstPassWithoutRepair": "yes",
+    "counts": {
+      "execution": {
+        "verificationAttempts": 1,
+        "repairAttempts": 0,
+        "source": "repair-summary.json（仅本执行）"
+      },
+      "chain": {
+        "verificationAttempts": 1,
+        "repairAttempts": 0,
+        "source": "pipeline-state.json（跨 Handoff 累计检查点，不再相加）"
+      }
+    },
+    "note": "工厂修复次数不等于 Agent 开发中的全部自测和修正；未记录 Agent 内部试错，不宣称开发全程无错误。"
+  },
+  "reviews": [
+    {
+      "key": "review/36293829094.1/v2-0714d2993382",
+      "role": "original",
+      "selected": true,
+      "state": "not-reviewed",
+      "reason": "本轮已明确关闭独立评审；只展示流水线事实。",
+      "rubric": {
+        "id": "nb3-framework",
+        "version": 2,
+        "scale": {
+          "min": 0,
+          "max": 100
+        },
+        "businessUiIncluded": false,
+        "dimensions": [
+          {
+            "key": "requirementFit",
+            "label": "需求满足度"
+          },
+          {
+            "key": "usability",
+            "label": "使用便利度"
+          },
+          {
+            "key": "agentFriendliness",
+            "label": "Agent 友好度"
+          },
+          {
+            "key": "design",
+            "label": "设计合理性"
+          },
+          {
+            "key": "reliability",
+            "label": "实现完整性与可靠性"
+          }
+        ]
+      },
+      "reviewer": null,
+      "producer": {
+        "runId": 36293829094,
+        "attempt": 1
+      },
+      "basis": {
+        "inputHash": null,
+        "patchSha256": null,
+        "baseSha": null,
+        "lockfileSha256": null,
+        "reviewCriteriaHash": null,
+        "artifactHash": null
+      },
+      "buildReviewMode": "off",
+      "summary": null,
+      "progress": null,
+      "modules": [],
+      "findings": [],
+      "ui": null,
+      "limitations": [],
+      "usageSource": null
+    }
+  ],
+  "health": {
+    "status": "complete",
+    "qa": "passed",
+    "requiredChecks": {
+      "status": "passed",
+      "results": []
+    },
+    "review": "disabled"
+  },
+  "processNotes": {
+    "state": "absent",
+    "source": null,
+    "author": "implementer",
+    "independent": false,
+    "summary": null,
+    "blockers": [],
+    "improvements": [],
+    "note": "过程笔记可选；缺失不代表没有问题、没有评审或没有改进。"
+  },
+  "metrics": {
+    "usage": {
+      "sources": [
+        {
+          "key": "agent-job:108548899084",
+          "executionKey": "run/36293829094/attempt/1",
+          "scope": "一次 Agent 作业内的实现、修复、QA 与同轮评审调用",
+          "phases": {
+            "implementation": {
+              "input": 810740,
+              "output": 262909,
+              "cacheRead": 44345472,
+              "cacheWrite": 0,
+              "total": 45419121
+            },
+            "repair": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0,
+              "total": 0
+            },
+            "qa": {
+              "input": 52161,
+              "output": 27284,
+              "cacheRead": 4832512,
+              "cacheWrite": 0,
+              "total": 4911957
+            },
+            "qaFocused": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0,
+              "total": 0
+            },
+            "qaReport": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0,
+              "total": 0
+            },
+            "review": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0,
+              "total": 0
+            },
+            "compaction": {
+              "input": 277577,
+              "output": 92247,
+              "cacheRead": 195328,
+              "cacheWrite": 0,
+              "total": 565152
+            }
+          },
+          "records": 700,
+          "missing": 1,
+          "incomplete": 0,
+          "complete": false
+        }
+      ],
+      "totals": {
+        "input": 1140478,
+        "output": 382440,
+        "cacheRead": 49373312,
+        "cacheWrite": 0,
+        "total": 50896230,
+        "complete": false
+      },
+      "definition": "沿用 task-usage 口径：按唯一来源键（Agent 作业 / 后补评审 Run）去重，不相加已含这些调用的汇总，不把思考 Token 再加到输出；缺失为 null，不等同供应商账单。"
+    },
+    "time": {
+      "executionSeconds": 5808,
+      "missingJobTimes": 0,
+      "endToEndSeconds": 5819,
+      "jobs": [
+        {
+          "id": 108548851829,
+          "name": "prepare",
+          "executionKey": "run/36293829094/attempt/1",
+          "seconds": 18
+        },
+        {
+          "id": 108548899084,
+          "name": "agent",
+          "executionKey": "run/36293829094/attempt/1",
+          "seconds": 5511
+        },
+        {
+          "id": 108561058773,
+          "name": "verify-final",
+          "executionKey": "run/36293829094/attempt/1",
+          "seconds": 266
+        },
+        {
+          "id": 108561632213,
+          "name": "publish",
+          "executionKey": "run/36293829094/attempt/1",
+          "seconds": 13
+        }
+      ],
+      "definition": "executionSeconds 为 prepare / agent / verify-final / publish 唯一作业时长之和，不含排队；endToEndSeconds 含排队及续跑间隔。"
+    },
+    "counts": {
+      "businessBuilds": 1,
+      "executions": 1,
+      "reviewExecutions": 0
+    }
+  },
+  "evidence": [
+    {
+      "id": "qa/1/admin-meetingrooms-created.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/1",
+        "localId": "admin-meetingrooms-created.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-1/browser-acceptance/evidence/admin-meetingrooms-created.png",
+      "lines": null,
+      "sha256": "7782f7db7abed4cbf45ca10b1c64d952baf70acb7a538355a0d7a1cfaa66f859",
+      "observation": "验收项 C01 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-1/browser-acceptance/admin-meetingrooms-created.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/1/admin-meetingroom-edit-prefill.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/1",
+        "localId": "admin-meetingroom-edit-prefill.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-1/browser-acceptance/evidence/admin-meetingroom-edit-prefill.png",
+      "lines": null,
+      "sha256": "3f7bfa73dc73520166ed2c0b7807d8aee9ce133a35384e8764fa3d3be780ae71",
+      "observation": "验收项 C01 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-1/browser-acceptance/admin-meetingroom-edit-prefill.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/1/admin-meetingroom-delete-confirm.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/1",
+        "localId": "admin-meetingroom-delete-confirm.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-1/browser-acceptance/evidence/admin-meetingroom-delete-confirm.png",
+      "lines": null,
+      "sha256": "5961d902d8ce1547924816ad647c19da075775345dc4f4c50a004e90fb1c5915",
+      "observation": "验收项 C01 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-1/browser-acceptance/admin-meetingroom-delete-confirm.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/1/admin-meetingrooms-after-delete.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/1",
+        "localId": "admin-meetingrooms-after-delete.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-1/browser-acceptance/evidence/admin-meetingrooms-after-delete.png",
+      "lines": null,
+      "sha256": "bbc8cca0da8e39f6d87799fe40d30aff4c044684fd40f553a2cb00bb745fe632",
+      "observation": "验收项 C01 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-1/browser-acceptance/admin-meetingrooms-after-delete.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/1/employee-booking-confirmed.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/1",
+        "localId": "employee-booking-confirmed.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-1/browser-acceptance/evidence/employee-booking-confirmed.png",
+      "lines": null,
+      "sha256": "25e6e99606c67df0d86d7f7aeef9fa62586300e7c8e2f0d9a86253c222878656",
+      "observation": "验收项 C02 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-1/browser-acceptance/employee-booking-confirmed.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/1/employee-end-before-start-error.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/1",
+        "localId": "employee-end-before-start-error.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-1/browser-acceptance/evidence/employee-end-before-start-error.png",
+      "lines": null,
+      "sha256": "bb5faaa6594958253c1cf8e5789fdc95394a546e606150518883e8600dc0fb94",
+      "observation": "验收项 C02 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-1/browser-acceptance/employee-end-before-start-error.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/1/booking-overlap-error.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/1",
+        "localId": "booking-overlap-error.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-1/browser-acceptance/evidence/booking-overlap-error.png",
+      "lines": null,
+      "sha256": "e31839382ac868c00d12f742c53c140646a450e036f2445f8a00b31b29f33d16",
+      "observation": "验收项 C02 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-1/browser-acceptance/booking-overlap-error.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/1/employee1-own-bookings-only.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/1",
+        "localId": "employee1-own-bookings-only.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-1/browser-acceptance/evidence/employee1-own-bookings-only.png",
+      "lines": null,
+      "sha256": "3c73426a52aa625e2aff7cb17e20bd87b3378496ed6e6435267a94ba8e99ed95",
+      "observation": "验收项 C03 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-1/browser-acceptance/employee1-own-bookings-only.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/1/employee-cancel-confirm.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/1",
+        "localId": "employee-cancel-confirm.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-1/browser-acceptance/evidence/employee-cancel-confirm.png",
+      "lines": null,
+      "sha256": "25fbc89e24936fd279b97033bf0c71823baef8986e9b6fa5298470a4bf1127e0",
+      "observation": "验收项 C03 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-1/browser-acceptance/employee-cancel-confirm.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/1/employee2-own-bookings-empty.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/1",
+        "localId": "employee2-own-bookings-empty.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-1/browser-acceptance/evidence/employee2-own-bookings-empty.png",
+      "lines": null,
+      "sha256": "b21625166bbc6e975cd8f472f36086879ae3ada5a826b1f394c779019a6f732f",
+      "observation": "验收项 C03 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-1/browser-acceptance/employee2-own-bookings-empty.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/1/employee2-own-booking.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/1",
+        "localId": "employee2-own-booking.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-1/browser-acceptance/evidence/employee2-own-booking.png",
+      "lines": null,
+      "sha256": "643412c4ff202142c2af70ca1871210cde0b7f390a7fc1df74d9602fc9edb03f",
+      "observation": "验收项 C03 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-1/browser-acceptance/employee2-own-booking.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/1/admin-all-bookings.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/1",
+        "localId": "admin-all-bookings.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-1/browser-acceptance/evidence/admin-all-bookings.png",
+      "lines": null,
+      "sha256": "6ed2d9429b87fff10842d893a2866a364dfa49a5549cda0d13628a10b4339f80",
+      "observation": "验收项 C03 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-1/browser-acceptance/admin-all-bookings.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/1/employee-cross-user-overlap-error.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/1",
+        "localId": "employee-cross-user-overlap-error.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-1/browser-acceptance/evidence/employee-cross-user-overlap-error.png",
+      "lines": null,
+      "sha256": "093b4842b5b3f3b379c2af2dca7ad2494f251ebcaf1da16851a565df8b95cff7",
+      "observation": "验收项 C03 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-1/browser-acceptance/employee-cross-user-overlap-error.png",
+      "availability": "attached",
+      "note": null
+    }
+  ],
+  "links": [
+    {
+      "rel": "task-issue",
+      "label": "Issue #381",
+      "url": "https://github.com/gchust/nb3-factory/issues/381",
+      "path": null
+    },
+    {
+      "rel": "run",
+      "label": "Run 36293829094 / attempt 1",
+      "url": "https://github.com/gchust/nb3-factory/actions/runs/36293829094/attempts/1",
+      "path": null
+    },
+    {
+      "rel": "pull-request",
+      "label": "PR #383",
+      "url": "https://github.com/gchust/nb3-factory/pull/383",
+      "path": null
+    },
+    {
+      "rel": "report-archive",
+      "label": "固定版本 HTML 报告（gh-pages 归档路径）",
+      "url": null,
+      "path": "reports/issues/381/runs/36293829094/attempt-1/index.html"
+    }
+  ],
+  "limitations": [
+    {
+      "code": "review-not-run",
+      "detail": "本执行没有独立框架评审；未评估不代表通过，也不按零分处理。"
+    },
+    {
+      "code": "usage-incomplete",
+      "detail": "部分用量未取得或不完整；缺失值为 null，不按零处理。"
+    }
+  ]
+}
