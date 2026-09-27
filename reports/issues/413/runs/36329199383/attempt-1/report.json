@@ -1,0 +1,1827 @@
+{
+  "record": {
+    "version": 1,
+    "repository": "gchust/nb3-factory",
+    "issue": 413,
+    "runId": 36329199383,
+    "attempt": 1,
+    "status": "delivered",
+    "start": 1790522439000,
+    "end": 1790534808000,
+    "jobs": [
+      {
+        "id": 108647763784,
+        "name": "prepare",
+        "seconds": 12
+      },
+      {
+        "id": 108647803002,
+        "name": "agent",
+        "seconds": 12102
+      },
+      {
+        "id": 108682785678,
+        "name": "verify-final",
+        "seconds": 226
+      },
+      {
+        "id": 108683457895,
+        "name": "publish",
+        "seconds": 19
+      }
+    ],
+    "agentJobId": 108647803002,
+    "invoked": true,
+    "artifact": "factory-agent-413",
+    "artifactId": 10939416089,
+    "finalArtifactId": 10939106391,
+    "taskArtifactId": 10935291781,
+    "event": "workflow_dispatch",
+    "previousRunId": null,
+    "usage": {
+      "phases": {
+        "implementation": {
+          "input": 600291,
+          "output": 109563,
+          "cacheRead": 21402752,
+          "cacheWrite": 0,
+          "reasoning": 69481,
+          "totalTokens": 22112606
+        },
+        "repair": {
+          "input": 986440,
+          "output": 337396,
+          "cacheRead": 59951616,
+          "cacheWrite": 0,
+          "reasoning": 194784,
+          "totalTokens": 61275452
+        },
+        "qa": {
+          "input": 129342,
+          "output": 86441,
+          "cacheRead": 13087616,
+          "cacheWrite": 0,
+          "reasoning": 48355,
+          "totalTokens": 13303399
+        },
+        "qaFocused": {
+          "input": 47791,
+          "output": 17205,
+          "cacheRead": 2706944,
+          "cacheWrite": 0,
+          "reasoning": 6387,
+          "totalTokens": 2771940
+        },
+        "qaReport": {
+          "input": 0,
+          "output": 0,
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "reasoning": 0,
+          "totalTokens": 0
+        },
+        "review": {
+          "input": 243901,
+          "output": 62027,
+          "cacheRead": 10933376,
+          "cacheWrite": 0,
+          "reasoning": 35097,
+          "totalTokens": 11239304
+        },
+        "compaction": {
+          "input": 744569,
+          "output": 170077,
+          "cacheRead": 180736,
+          "cacheWrite": 0,
+          "reasoning": 38495,
+          "totalTokens": 1095382
+        }
+      },
+      "records": 1588,
+      "missing": 4,
+      "incomplete": 1
+    },
+    "evaluation": {
+      "version": 1,
+      "runKey": "gchust/nb3-factory/issues/413/initial",
+      "kind": "initial",
+      "derivation": "recorded",
+      "agentConfiguration": {
+        "fingerprints": [
+          "13b51ba5c1f88ff0ab747ba3d232f77dfad5a813acbcfc23f91e9a3dd17cc530"
+        ],
+        "complete": false
+      },
+      "controlSha": "4f504529b876b45c6646d8d376d1402ffd0bc5ec",
+      "baseSha": "4f504529b876b45c6646d8d376d1402ffd0bc5ec",
+      "inputHash": "06001c02ce8428081205b9deda99ce4fd0410dee7c865778ce5500a4adac97cd",
+      "patchSha256": "43de990f52a404dbf87caf05b4b5be6465e2c04d5b93fe2acb308067a16e4505",
+      "pipelineOutcome": "passed",
+      "event": "workflow_dispatch",
+      "previousRunId": null
+    }
+  },
+  "cumulative": {
+    "usage": {
+      "phases": {
+        "implementation": {
+          "input": 600291,
+          "output": 109563,
+          "cacheRead": 21402752,
+          "cacheWrite": 0,
+          "reasoning": 69481,
+          "totalTokens": 22112606
+        },
+        "repair": {
+          "input": 986440,
+          "output": 337396,
+          "cacheRead": 59951616,
+          "cacheWrite": 0,
+          "reasoning": 194784,
+          "totalTokens": 61275452
+        },
+        "qa": {
+          "input": 129342,
+          "output": 86441,
+          "cacheRead": 13087616,
+          "cacheWrite": 0,
+          "reasoning": 48355,
+          "totalTokens": 13303399
+        },
+        "qaFocused": {
+          "input": 47791,
+          "output": 17205,
+          "cacheRead": 2706944,
+          "cacheWrite": 0,
+          "reasoning": 6387,
+          "totalTokens": 2771940
+        },
+        "qaReport": {
+          "input": 0,
+          "output": 0,
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "reasoning": 0,
+          "totalTokens": 0
+        },
+        "review": {
+          "input": 243901,
+          "output": 62027,
+          "cacheRead": 10933376,
+          "cacheWrite": 0,
+          "reasoning": 35097,
+          "totalTokens": 11239304
+        },
+        "compaction": {
+          "input": 744569,
+          "output": 170077,
+          "cacheRead": 180736,
+          "cacheWrite": 0,
+          "reasoning": 38495,
+          "totalTokens": 1095382
+        }
+      },
+      "records": 1588,
+      "missing": 4,
+      "incomplete": 1
+    },
+    "total": 111798083,
+    "seconds": 12359,
+    "missingTimes": 0,
+    "elapsed": 12369,
+    "runs": 1,
+    "attempts": 1
+  },
+  "records": [
+    {
+      "version": 1,
+      "repository": "gchust/nb3-factory",
+      "issue": 413,
+      "runId": 36329199383,
+      "attempt": 1,
+      "status": "delivered",
+      "start": 1790522439000,
+      "end": 1790534808000,
+      "jobs": [
+        {
+          "id": 108647763784,
+          "name": "prepare",
+          "seconds": 12
+        },
+        {
+          "id": 108647803002,
+          "name": "agent",
+          "seconds": 12102
+        },
+        {
+          "id": 108682785678,
+          "name": "verify-final",
+          "seconds": 226
+        },
+        {
+          "id": 108683457895,
+          "name": "publish",
+          "seconds": 19
+        }
+      ],
+      "agentJobId": 108647803002,
+      "invoked": true,
+      "artifact": "factory-agent-413",
+      "artifactId": 10939416089,
+      "finalArtifactId": 10939106391,
+      "taskArtifactId": 10935291781,
+      "event": "workflow_dispatch",
+      "previousRunId": null,
+      "usage": {
+        "phases": {
+          "implementation": {
+            "input": 600291,
+            "output": 109563,
+            "cacheRead": 21402752,
+            "cacheWrite": 0,
+            "reasoning": 69481,
+            "totalTokens": 22112606
+          },
+          "repair": {
+            "input": 986440,
+            "output": 337396,
+            "cacheRead": 59951616,
+            "cacheWrite": 0,
+            "reasoning": 194784,
+            "totalTokens": 61275452
+          },
+          "qa": {
+            "input": 129342,
+            "output": 86441,
+            "cacheRead": 13087616,
+            "cacheWrite": 0,
+            "reasoning": 48355,
+            "totalTokens": 13303399
+          },
+          "qaFocused": {
+            "input": 47791,
+            "output": 17205,
+            "cacheRead": 2706944,
+            "cacheWrite": 0,
+            "reasoning": 6387,
+            "totalTokens": 2771940
+          },
+          "qaReport": {
+            "input": 0,
+            "output": 0,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "reasoning": 0,
+            "totalTokens": 0
+          },
+          "review": {
+            "input": 243901,
+            "output": 62027,
+            "cacheRead": 10933376,
+            "cacheWrite": 0,
+            "reasoning": 35097,
+            "totalTokens": 11239304
+          },
+          "compaction": {
+            "input": 744569,
+            "output": 170077,
+            "cacheRead": 180736,
+            "cacheWrite": 0,
+            "reasoning": 38495,
+            "totalTokens": 1095382
+          }
+        },
+        "records": 1588,
+        "missing": 4,
+        "incomplete": 1
+      },
+      "evaluation": {
+        "version": 1,
+        "runKey": "gchust/nb3-factory/issues/413/initial",
+        "kind": "initial",
+        "derivation": "recorded",
+        "agentConfiguration": {
+          "fingerprints": [
+            "13b51ba5c1f88ff0ab747ba3d232f77dfad5a813acbcfc23f91e9a3dd17cc530"
+          ],
+          "complete": false
+        },
+        "controlSha": "4f504529b876b45c6646d8d376d1402ffd0bc5ec",
+        "baseSha": "4f504529b876b45c6646d8d376d1402ffd0bc5ec",
+        "inputHash": "06001c02ce8428081205b9deda99ce4fd0410dee7c865778ce5500a4adac97cd",
+        "patchSha256": "43de990f52a404dbf87caf05b4b5be6465e2c04d5b93fe2acb308067a16e4505",
+        "pipelineOutcome": "passed",
+        "event": "workflow_dispatch",
+        "previousRunId": null
+      }
+    }
+  ],
+  "timings": [
+    {
+      "stage": "agent:repair",
+      "calls": 2,
+      "durationMs": 5863472
+    },
+    {
+      "stage": "agent:implementation",
+      "calls": 1,
+      "durationMs": 2544687
+    },
+    {
+      "stage": "agent:qa",
+      "calls": 2,
+      "durationMs": 1687687
+    },
+    {
+      "stage": "agent:review",
+      "calls": 1,
+      "durationMs": 916410
+    },
+    {
+      "stage": "agent:qa-focused",
+      "calls": 1,
+      "durationMs": 338272
+    },
+    {
+      "stage": "build",
+      "calls": 2,
+      "durationMs": 119540
+    },
+    {
+      "stage": "test",
+      "calls": 2,
+      "durationMs": 89641
+    },
+    {
+      "stage": "lint",
+      "calls": 2,
+      "durationMs": 62239
+    },
+    {
+      "stage": "typecheck",
+      "calls": 2,
+      "durationMs": 31343
+    },
+    {
+      "stage": "db:apply",
+      "calls": 3,
+      "durationMs": 17847
+    },
+    {
+      "stage": "format:check",
+      "calls": 3,
+      "durationMs": 15296
+    },
+    {
+      "stage": "install",
+      "calls": 1,
+      "durationMs": 5349
+    },
+    {
+      "stage": "format:auto",
+      "calls": 3,
+      "durationMs": 3071
+    },
+    {
+      "stage": "skills-sync",
+      "calls": 1,
+      "durationMs": 1098
+    }
+  ],
+  "delivery": {
+    "version": 1,
+    "meta": {
+      "repository": "gchust/nb3-factory",
+      "issue": 413,
+      "runId": "36329199383",
+      "attempt": 1,
+      "headSha": "304454077e919b46b2a2be40fbe2e5421208d163",
+      "targetBranch": "develop",
+      "title": "内部资料阅读与临时共享",
+      "snapshotDate": "2026-09-27T18:46:48.000Z"
+    },
+    "delivery": {
+      "status": "pr-ready",
+      "ci": "passed",
+      "ciSource": "流水线已完成最终验证及 PR 发布；不代表人工合并。",
+      "qaSummary": "以管理员、资料员甲(manager.a)、阅读者乙(reader.b)三个真实身份在浏览器完成 B01–B05：乙只读资料库仅见公开资料P且编辑被服务端拒绝，甲可编辑/新建/删除自己的资料；草稿D临时授权后乙可读但不可编辑、其他草稿C仍不可见，撤销后刷新与重开均无正文；保密C即使开放给乙仍不可见而甲可读；停用乙后其既有会话被强制回登录页，甲账号与资料不受影响。验收结束已恢复乙为启用并撤销C/D临时授权。"
+    },
+    "links": [
+      {
+        "label": "查看 PR #429",
+        "url": "https://github.com/gchust/nb3-factory/pull/429"
+      },
+      {
+        "label": "查看需求",
+        "url": "https://github.com/gchust/nb3-factory/issues/413"
+      },
+      {
+        "label": "本轮运行与原始产物",
+        "url": "https://github.com/gchust/nb3-factory/actions/runs/36329199383/attempts/1"
+      }
+    ],
+    "attention": [],
+    "checks": [
+      {
+        "id": "A1",
+        "title": "乙可以阅读 P 但不能编辑；甲可以维护自己的资料。",
+        "criterion": "乙可以阅读 P 但不能编辑；甲可以维护自己的资料。",
+        "status": "passed",
+        "actions": [
+          "以阅读者乙登录并打开资料库列表，确认仅显示已发布且不保密的资料 P，无 New document 与操作列",
+          "乙打开 P 详情，正文可见，仅有 Close 无编辑按钮",
+          "乙直接打开 P 编辑地址并修改正文后点击 Save 提交",
+          "以资料员甲登录，打开 P 编辑表单检查原值回填，修改正文并保存，再次打开表单确认持久化，随后还原原始正文",
+          "甲在资料库新建一份临时资料并删除，恢复三份样例数据"
+        ],
+        "evidence": [
+          "乙列表仅见 内部资料 P · 公开须知（Published），无 D/C、无 New document、无 Edit/Delete",
+          "乙可读到 P 正文：这是所有成员都可以阅读的公开资料，内容为内部资料库的使用须知。",
+          "乙保存 P 返回 Could not save the document / You do not have permission to change this document.",
+          "甲编辑 P 时标题、正文、Published/Confidential 勾选状态正确回填；保存后详情显示更新正文，还原后恢复原文",
+          "甲新建 QA临时资料-甲维护测试（Owner 资料员甲）成功，删除后列表恢复 C/D/P 三份"
+        ],
+        "screenshots": [
+          "b01-reader-library-list.png",
+          "b01-reader-p-detail.png",
+          "b01-reader-edit-denied.png",
+          "b01-manager-library-list.png",
+          "b01-manager-edit-backfill.png",
+          "b01-manager-edit-saved.png",
+          "b01-manager-library-created.png"
+        ],
+        "evidenceUnavailable": false,
+        "source": "verify-3/browser-acceptance/report.json",
+        "result": "甲新建 QA临时资料-甲维护测试（Owner 资料员甲）成功，删除后列表恢复 C/D/P 三份"
+      },
+      {
+        "id": "A2",
+        "title": "乙原本不能打开 D；管理员开放 D 后，乙能查看 D，但没有获得编辑权限或其他草稿的访问权。",
+        "criterion": "乙原本不能打开 D；管理员开放 D 后，乙能查看 D，但没有获得编辑权限或其他草稿的访问权。",
+        "status": "passed",
+        "actions": [
+          "乙在未授权状态下直接打开 D 详情链接",
+          "管理员在 D 的 Temporary access 弹窗选择阅读者乙并 Grant",
+          "乙再次打开 D 原链接查看正文",
+          "乙打开 D 编辑地址并修改保存",
+          "乙在 D 已授权情况下打开其他草稿 C 的链接"
+        ],
+        "evidence": [
+          "授权前乙打开 D 显示 Document / Not available / This document does not exist, or you no longer have permission to read it.",
+          "管理员 Grant 后提示 Access granted，Temporary access 列表出现 阅读者乙 与 Revoke",
+          "乙打开 D 可读到草稿正文：这是一份尚未公开的草稿方案……",
+          "乙保存 D 返回 Could not save the document / You do not have permission to change this document.",
+          "乙打开 C 仍显示 Not available，未因 D 授权而获得其他草稿访问权"
+        ],
+        "screenshots": [
+          "b02-reader-d-denied.png",
+          "b02-admin-grant-d-selected.png",
+          "b02-admin-granted-list.png",
+          "b02-reader-d-visible.png",
+          "b02-reader-d-edit-denied.png",
+          "b02-reader-other-draft-denied.png"
+        ],
+        "evidenceUnavailable": false,
+        "source": "verify-3/browser-acceptance/report.json",
+        "result": "乙打开 C 仍显示 Not available，未因 D 授权而获得其他草稿访问权"
+      },
+      {
+        "id": "A3",
+        "title": "撤销 D 的开放后，乙刷新详情或再次打开原链接，都看不到正文。",
+        "criterion": "撤销 D 的开放后，乙刷新详情或再次打开原链接，都看不到正文。",
+        "status": "passed",
+        "actions": [
+          "管理员在 D 的 Temporary access 点击 Revoke",
+          "乙重新打开 D 原链接",
+          "乙停留在 D 详情路由并刷新页面"
+        ],
+        "evidence": [
+          "Revoke 后提示 Access revoked，Temporary access 列表显示 No one has temporary access.",
+          "撤销后乙打开 D 显示 Document / Not available，无正文",
+          "乙刷新 D 路由后仍显示 Not available，未复用旧权限或缓存正文"
+        ],
+        "screenshots": [
+          "b03-admin-revoked.png",
+          "b03-reader-reopen-denied.png",
+          "b03-reader-refresh-denied.png"
+        ],
+        "evidenceUnavailable": false,
+        "source": "verify-3/browser-acceptance/report.json",
+        "result": "乙刷新 D 路由后仍显示 Not available，未复用旧权限或缓存正文"
+      },
+      {
+        "id": "A4",
+        "title": "即使给乙开放了 C，乙仍看不到保密内容，甲仍可正常读取。",
+        "criterion": "即使给乙开放了 C，乙仍看不到保密内容，甲仍可正常读取。",
+        "status": "passed",
+        "actions": [
+          "管理员在 C 的 Temporary access 弹窗选择阅读者乙并 Grant",
+          "乙打开 C 详情链接",
+          "资料员甲打开 C 详情"
+        ],
+        "evidence": [
+          "管理员 Grant 后 Temporary access 列表出现 阅读者乙，确认 C 已对乙开放",
+          "即使 C 已授权给乙，乙打开 C 仍显示 Document / Not available，看不到保密正文",
+          "甲可正常读到 C 正文：这是保密级别的会议纪要。即使被临时开放给某位读者，保密内容也不会因此暴露。"
+        ],
+        "screenshots": [
+          "b04-admin-c-granted.png",
+          "b04-reader-c-still-denied.png",
+          "b04-manager-c-readable.png"
+        ],
+        "evidenceUnavailable": false,
+        "source": "verify-3/browser-acceptance/report.json",
+        "result": "甲可正常读到 C 正文：这是保密级别的会议纪要。即使被临时开放给某位读者，保密内容也不会因此暴露。"
+      },
+      {
+        "id": "A5",
+        "title": "停用乙后，乙原有会话无法继续访问；甲的账号和资料不受影响。",
+        "criterion": "停用乙后，乙原有会话无法继续访问；甲的账号和资料不受影响。",
+        "status": "passed",
+        "actions": [
+          "乙保持已登录状态并停留在 P 详情页",
+          "管理员在用户管理对阅读者乙执行 Disable account 并确认",
+          "乙在既有会话刷新 P 详情页",
+          "乙在既有会话直接打开受保护页面 /main/library",
+          "资料员甲重新加载资料库"
+        ],
+        "evidence": [
+          "停用后用户管理显示 阅读者乙 Disabled，资料员甲与 Super Admin 仍 Enabled",
+          "乙刷新原详情页被重定向到 /main/login，无法继续访问",
+          "乙直接访问 /main/library 同样跳转登录页，确认停用使旧会话失效",
+          "甲仍保持登录并看到 C/D/P 三份资料，账号与资料不受影响"
+        ],
+        "screenshots": [
+          "b05-admin-users-before-disable.png",
+          "b05-admin-reader-disabled.png",
+          "b05-reader-session-invalidated.png",
+          "b05-manager-unaffected.png"
+        ],
+        "evidenceUnavailable": false,
+        "source": "verify-3/browser-acceptance/report.json",
+        "result": "甲仍保持登录并看到 C/D/P 三份资料，账号与资料不受影响"
+      }
+    ],
+    "media": [
+      {
+        "id": "b01-manager-library-list.png",
+        "title": "资料库列表（资料员甲可维护）",
+        "path": "verify-3/browser-acceptance/evidence/b01-manager-library-list.png",
+        "category": "业务界面",
+        "featured": true
+      },
+      {
+        "id": "b01-reader-library-list.png",
+        "title": "阅读者乙的只读资料库",
+        "path": "verify-3/browser-acceptance/evidence/b01-reader-library-list.png",
+        "category": "业务界面",
+        "featured": true
+      },
+      {
+        "id": "b01-reader-p-detail.png",
+        "title": "阅读者乙阅读公开资料 P",
+        "path": "verify-3/browser-acceptance/evidence/b01-reader-p-detail.png",
+        "category": "业务界面",
+        "featured": true
+      },
+      {
+        "id": "b01-reader-edit-denied.png",
+        "title": "阅读者乙编辑被拒绝",
+        "path": "verify-3/browser-acceptance/evidence/b01-reader-edit-denied.png",
+        "category": "业务界面",
+        "featured": true
+      },
+      {
+        "id": "b02-admin-grant-d-selected.png",
+        "title": "管理员临时开放草稿 D",
+        "path": "verify-3/browser-acceptance/evidence/b02-admin-grant-d-selected.png",
+        "category": "业务界面",
+        "featured": true
+      },
+      {
+        "id": "b02-reader-d-visible.png",
+        "title": "阅读者乙查看已开放的草稿 D",
+        "path": "verify-3/browser-acceptance/evidence/b02-reader-d-visible.png",
+        "category": "业务界面",
+        "featured": true
+      },
+      {
+        "id": "b03-reader-reopen-denied.png",
+        "title": "撤销后乙重开原链接无正文",
+        "path": "verify-3/browser-acceptance/evidence/b03-reader-reopen-denied.png",
+        "category": "业务界面",
+        "featured": false
+      },
+      {
+        "id": "b04-manager-c-readable.png",
+        "title": "资料员甲仍可读保密资料 C",
+        "path": "verify-3/browser-acceptance/evidence/b04-manager-c-readable.png",
+        "category": "业务界面",
+        "featured": false
+      },
+      {
+        "id": "b05-admin-reader-disabled.png",
+        "title": "停用阅读者乙",
+        "path": "verify-3/browser-acceptance/evidence/b05-admin-reader-disabled.png",
+        "category": "业务界面",
+        "featured": false
+      },
+      {
+        "id": "b05-reader-session-invalidated.png",
+        "title": "停用后乙原有会话被强制登录",
+        "path": "verify-3/browser-acceptance/evidence/b05-reader-session-invalidated.png",
+        "category": "业务界面",
+        "featured": false
+      },
+      {
+        "id": "b01-manager-edit-backfill.png",
+        "title": "b01-manager-edit-backfill.png",
+        "path": "verify-3/browser-acceptance/evidence/b01-manager-edit-backfill.png",
+        "category": "验收 1",
+        "featured": false
+      },
+      {
+        "id": "b01-manager-edit-saved.png",
+        "title": "b01-manager-edit-saved.png",
+        "path": "verify-3/browser-acceptance/evidence/b01-manager-edit-saved.png",
+        "category": "验收 1",
+        "featured": false
+      },
+      {
+        "id": "b01-manager-library-created.png",
+        "title": "b01-manager-library-created.png",
+        "path": "verify-3/browser-acceptance/evidence/b01-manager-library-created.png",
+        "category": "验收 1",
+        "featured": false
+      },
+      {
+        "id": "b02-reader-d-denied.png",
+        "title": "b02-reader-d-denied.png",
+        "path": "verify-3/browser-acceptance/evidence/b02-reader-d-denied.png",
+        "category": "验收 2",
+        "featured": false
+      },
+      {
+        "id": "b02-admin-granted-list.png",
+        "title": "b02-admin-granted-list.png",
+        "path": "verify-3/browser-acceptance/evidence/b02-admin-granted-list.png",
+        "category": "验收 2",
+        "featured": false
+      },
+      {
+        "id": "b02-reader-d-edit-denied.png",
+        "title": "b02-reader-d-edit-denied.png",
+        "path": "verify-3/browser-acceptance/evidence/b02-reader-d-edit-denied.png",
+        "category": "验收 2",
+        "featured": false
+      },
+      {
+        "id": "b02-reader-other-draft-denied.png",
+        "title": "b02-reader-other-draft-denied.png",
+        "path": "verify-3/browser-acceptance/evidence/b02-reader-other-draft-denied.png",
+        "category": "验收 2",
+        "featured": false
+      },
+      {
+        "id": "b03-admin-revoked.png",
+        "title": "b03-admin-revoked.png",
+        "path": "verify-3/browser-acceptance/evidence/b03-admin-revoked.png",
+        "category": "验收 3",
+        "featured": false
+      },
+      {
+        "id": "b03-reader-refresh-denied.png",
+        "title": "b03-reader-refresh-denied.png",
+        "path": "verify-3/browser-acceptance/evidence/b03-reader-refresh-denied.png",
+        "category": "验收 3",
+        "featured": false
+      },
+      {
+        "id": "b04-admin-c-granted.png",
+        "title": "b04-admin-c-granted.png",
+        "path": "verify-3/browser-acceptance/evidence/b04-admin-c-granted.png",
+        "category": "验收 4",
+        "featured": false
+      },
+      {
+        "id": "b04-reader-c-still-denied.png",
+        "title": "b04-reader-c-still-denied.png",
+        "path": "verify-3/browser-acceptance/evidence/b04-reader-c-still-denied.png",
+        "category": "验收 4",
+        "featured": false
+      },
+      {
+        "id": "b05-admin-users-before-disable.png",
+        "title": "b05-admin-users-before-disable.png",
+        "path": "verify-3/browser-acceptance/evidence/b05-admin-users-before-disable.png",
+        "category": "验收 5",
+        "featured": false
+      },
+      {
+        "id": "b05-manager-unaffected.png",
+        "title": "b05-manager-unaffected.png",
+        "path": "verify-3/browser-acceptance/evidence/b05-manager-unaffected.png",
+        "category": "验收 5",
+        "featured": false
+      }
+    ],
+    "uncovered": [],
+    "rawQaReport": {
+      "passed": true,
+      "authenticated": true,
+      "summary": "以管理员、资料员甲(manager.a)、阅读者乙(reader.b)三个真实身份在浏览器完成 B01–B05：乙只读资料库仅见公开资料P且编辑被服务端拒绝，甲可编辑/新建/删除自己的资料；草稿D临时授权后乙可读但不可编辑、其他草稿C仍不可见，撤销后刷新与重开均无正文；保密C即使开放给乙仍不可见而甲可读；停用乙后其既有会话被强制回登录页，甲账号与资料不受影响。验收结束已恢复乙为启用并撤销C/D临时授权。",
+      "checks": [
+        {
+          "id": "B01",
+          "criterion": "乙可以阅读 P 但不能编辑；甲可以维护自己的资料。",
+          "status": "passed",
+          "actions": [
+            "以阅读者乙登录并打开资料库列表，确认仅显示已发布且不保密的资料 P，无 New document 与操作列",
+            "乙打开 P 详情，正文可见，仅有 Close 无编辑按钮",
+            "乙直接打开 P 编辑地址并修改正文后点击 Save 提交",
+            "以资料员甲登录，打开 P 编辑表单检查原值回填，修改正文并保存，再次打开表单确认持久化，随后还原原始正文",
+            "甲在资料库新建一份临时资料并删除，恢复三份样例数据"
+          ],
+          "evidence": [
+            "乙列表仅见 内部资料 P · 公开须知（Published），无 D/C、无 New document、无 Edit/Delete",
+            "乙可读到 P 正文：这是所有成员都可以阅读的公开资料，内容为内部资料库的使用须知。",
+            "乙保存 P 返回 Could not save the document / You do not have permission to change this document.",
+            "甲编辑 P 时标题、正文、Published/Confidential 勾选状态正确回填；保存后详情显示更新正文，还原后恢复原文",
+            "甲新建 QA临时资料-甲维护测试（Owner 资料员甲）成功，删除后列表恢复 C/D/P 三份"
+          ],
+          "screenshots": [
+            "b01-reader-library-list.png",
+            "b01-reader-p-detail.png",
+            "b01-reader-edit-denied.png",
+            "b01-manager-library-list.png",
+            "b01-manager-edit-backfill.png",
+            "b01-manager-edit-saved.png",
+            "b01-manager-library-created.png"
+          ],
+          "recordedAt": 1790533073930
+        },
+        {
+          "id": "B02",
+          "criterion": "乙原本不能打开 D；管理员开放 D 后，乙能查看 D，但没有获得编辑权限或其他草稿的访问权。",
+          "status": "passed",
+          "actions": [
+            "乙在未授权状态下直接打开 D 详情链接",
+            "管理员在 D 的 Temporary access 弹窗选择阅读者乙并 Grant",
+            "乙再次打开 D 原链接查看正文",
+            "乙打开 D 编辑地址并修改保存",
+            "乙在 D 已授权情况下打开其他草稿 C 的链接"
+          ],
+          "evidence": [
+            "授权前乙打开 D 显示 Document / Not available / This document does not exist, or you no longer have permission to read it.",
+            "管理员 Grant 后提示 Access granted，Temporary access 列表出现 阅读者乙 与 Revoke",
+            "乙打开 D 可读到草稿正文：这是一份尚未公开的草稿方案……",
+            "乙保存 D 返回 Could not save the document / You do not have permission to change this document.",
+            "乙打开 C 仍显示 Not available，未因 D 授权而获得其他草稿访问权"
+          ],
+          "screenshots": [
+            "b02-reader-d-denied.png",
+            "b02-admin-grant-d-selected.png",
+            "b02-admin-granted-list.png",
+            "b02-reader-d-visible.png",
+            "b02-reader-d-edit-denied.png",
+            "b02-reader-other-draft-denied.png"
+          ],
+          "recordedAt": 1790533073969
+        },
+        {
+          "id": "B03",
+          "criterion": "撤销 D 的开放后，乙刷新详情或再次打开原链接，都看不到正文。",
+          "status": "passed",
+          "actions": [
+            "管理员在 D 的 Temporary access 点击 Revoke",
+            "乙重新打开 D 原链接",
+            "乙停留在 D 详情路由并刷新页面"
+          ],
+          "evidence": [
+            "Revoke 后提示 Access revoked，Temporary access 列表显示 No one has temporary access.",
+            "撤销后乙打开 D 显示 Document / Not available，无正文",
+            "乙刷新 D 路由后仍显示 Not available，未复用旧权限或缓存正文"
+          ],
+          "screenshots": [
+            "b03-admin-revoked.png",
+            "b03-reader-reopen-denied.png",
+            "b03-reader-refresh-denied.png"
+          ],
+          "recordedAt": 1790533074003
+        },
+        {
+          "id": "B04",
+          "criterion": "即使给乙开放了 C，乙仍看不到保密内容，甲仍可正常读取。",
+          "status": "passed",
+          "actions": [
+            "管理员在 C 的 Temporary access 弹窗选择阅读者乙并 Grant",
+            "乙打开 C 详情链接",
+            "资料员甲打开 C 详情"
+          ],
+          "evidence": [
+            "管理员 Grant 后 Temporary access 列表出现 阅读者乙，确认 C 已对乙开放",
+            "即使 C 已授权给乙，乙打开 C 仍显示 Document / Not available，看不到保密正文",
+            "甲可正常读到 C 正文：这是保密级别的会议纪要。即使被临时开放给某位读者，保密内容也不会因此暴露。"
+          ],
+          "screenshots": [
+            "b04-admin-c-granted.png",
+            "b04-reader-c-still-denied.png",
+            "b04-manager-c-readable.png"
+          ],
+          "recordedAt": 1790533074035
+        },
+        {
+          "id": "B05",
+          "criterion": "停用乙后，乙原有会话无法继续访问；甲的账号和资料不受影响。",
+          "status": "passed",
+          "actions": [
+            "乙保持已登录状态并停留在 P 详情页",
+            "管理员在用户管理对阅读者乙执行 Disable account 并确认",
+            "乙在既有会话刷新 P 详情页",
+            "乙在既有会话直接打开受保护页面 /main/library",
+            "资料员甲重新加载资料库"
+          ],
+          "evidence": [
+            "停用后用户管理显示 阅读者乙 Disabled，资料员甲与 Super Admin 仍 Enabled",
+            "乙刷新原详情页被重定向到 /main/login，无法继续访问",
+            "乙直接访问 /main/library 同样跳转登录页，确认停用使旧会话失效",
+            "甲仍保持登录并看到 C/D/P 三份资料，账号与资料不受影响"
+          ],
+          "screenshots": [
+            "b05-admin-users-before-disable.png",
+            "b05-admin-reader-disabled.png",
+            "b05-reader-session-invalidated.png",
+            "b05-manager-unaffected.png"
+          ],
+          "recordedAt": 1790533074072
+        }
+      ],
+      "failures": []
+    },
+    "rawRetro": {
+      "version": 1,
+      "summary": "实现 issue #413「内部资料阅读与临时共享」：新增 documents 集合与资料库页面，资料员（可维护全部资料）与阅读者（只读已发布非保密资料）两个权限集，按记录的临时共享（内置 sharing rules），保密资料的只读下限（受限规则），并复用内置账号停用能力。资料 P/D/C、账号 A/B 由种子创建。B01–B05 与 R01–R04 在构建产物上对真实服务器逐条实测通过。",
+      "blockers": [
+        {
+          "phase": "implementation",
+          "title": "组合资源在 require() 下永远被拒",
+          "symptom": "资料员甲对 composite library.documents 的 edit 调用 authz.require 返回 403，而 /api/authz/permissions 明明列出了 edit。",
+          "rootCause": "composeComposite 只在每个底层 database 检查都是 permit 时返回 permit；权限集身份连 allRecords 作用域也会得到 conditional（scope:true），所以 require()（只接受 permit）必然拒绝。只有 unrestricted 身份才会 permit。",
+          "resolution": "分享管理回退改为 authorize() 后判断 effect !== 'deny'，与 policyFor 的非 deny 语义一致；限制/共享仍由组合出的 RepositoryPolicy 在数据库层强制。",
+          "cost": "约 40 分钟（含 inspector 决策导出定位）",
+          "status": "resolved"
+        },
+        {
+          "phase": "implementation",
+          "title": "临时共享的 records 选择要求字符串 id，与自增整型主键冲突",
+          "symptom": "GET /api/library/documents/2 返回 400 INVALID_FILTER（integer 字段收到字符串）；而 parseRecordSelection 又只接受字符串 ids。",
+          "rootCause": "框架的记录选择（sharing/restriction 的 selection.ids）强制 `typeof id === 'string'`，且共享展开用字面量 $eq 构造过滤；documents 用 increments 整型主键时，路由参数与选择 id 的类型无法同时满足。",
+          "resolution": "documents 主键改为 collection.uuid('id').primary()，与应用其余集合一致；种子显式生成 randomUUID。",
+          "cost": "约 20 分钟",
+          "status": "resolved"
+        },
+        {
+          "phase": "implementation",
+          "title": "种子相对导入在原生 Node 下解析失败",
+          "symptom": "运行测试/应用时 AppDatabaseTaskError: Cannot find module '.../seed-data/library-permission-sets.js'。",
+          "rootCause": "seeds 由应用服务器用原生 import() 加载（不经 vitest 转换），Node 24 的类型剥离不会把 ./x.js 重写为 ./x.ts。",
+          "resolution": "database/ 下被原生加载的源文件改用 .ts 相对说明符；tsc 的 rewriteRelativeImportExtensions 在 dist 中再写回 .js（已在 dist 中核对）。",
+          "cost": "约 15 分钟",
+          "status": "resolved"
+        },
+        {
+          "phase": "implementation",
+          "title": "defineDatabasePermission 在无操作时立即抛错",
+          "symptom": "导入授权模型时 TypeError: A database permission needs at least one action。",
+          "rootCause": "defineDatabasePermission 会立刻对基础 builder 调用 .build()，在链式追加 read/update 之前就校验并失败。",
+          "resolution": "改用链式基类 new DatabasePermissionBuilder<Row>('documents')，再 .options(...).default(...) 后派生 view/create/edit/delete。",
+          "cost": "约 10 分钟",
+          "status": "resolved"
+        },
+        {
+          "phase": "implementation",
+          "title": "子路由 use('*') 在挂载到 / 时污染无关 API",
+          "symptom": "app-server 测试中未注册的 GET /api/articles 期望 SPA 200，实际被资料库中间件拦截返回 401。",
+          "rootCause": "defineApiRoutes 的返回被应用挂在 /api，子路由若 router.route('/', library) 则 library.use('*', ...) 覆盖整个 /api 前缀。",
+          "resolution": "子路由改为 router.route('/library', library) 并把内部路径去前缀，中间件只作用于 /library/*；provider 的 boot 也以 container.has(authorizationToken) 容忍未加载授权插件的运行时。",
+          "cost": "约 25 分钟",
+          "status": "resolved"
+        },
+        {
+          "phase": "process",
+          "title": "实现阶段零改动却标记 completed，流水线停在 format:check",
+          "symptom": "repair-1 只报告 format:check（AGENTS.md 双空行）失败，业务功能完全未实现；agent-implement 执行约 42 分钟但 git 工作区无任何业务改动。",
+          "rootCause": "实现 Agent 未产出任何文件编辑即结束；空改动没有被当作失败，流水线在进入业务 QA 之前就因脚手架格式回归停下。",
+          "resolution": "本轮直接按 issue #413 完整实现业务功能，并修复 AGENTS.md 的双空行；所有改动均通过 lint/format/typecheck/test/build，并在构建产物上逐条实测 B01–B05。",
+          "cost": "本轮主要实现成本",
+          "status": "resolved"
+        },
+        {
+          "phase": "qa",
+          "title": "资料员新建资料被 403，修复鉴权后又暴露缺失的 createdAt/updatedAt/id",
+          "symptom": "资料员甲（manager.a）能看到新建入口、权限快照含 create，但 POST /main/api/library/documents 返回 403（You do not have permission to change this document.）。按同样请求复现并修掉鉴权后，同一路径先变为 500 NOT NULL constraint failed: documents.created_at，补上时间戳后再报 400 INVALID_UNIQUE_SELECTOR（id 为空），直到路由显式提供 id 与时间戳才返回 201。",
+          "rootCause": "两层原因叠加。1) 组合资源把 create 授权写成只含一个 create 节点，派生出 read=false 的 Policy；而 Repository.createOne 在写完之后仍用同一绑定的读 Policy 校验并回读返回记录，因此写操作在真正执行前就被 READ_FORBIDDEN 拒绝。2) documents 的 createdAt/updatedAt 是 NOT NULL 且没有数据库默认值，id 是 uuid 主键且没有生成器；Repository 不替调用方填充时间戳或 uuid，而路由的 create/update 没有显式提供，所以即便鉴权通过也无法落库。",
+          "resolution": "createPermission 由 documentPermission().create('*') 改为 documentPermission().read('*').create('*')，与 edit/delete 一致——读节点仍受限制规则与共享规则约束，不会越过保密下限；POST 显式写入 id=crypto.randomUUID() 与 createdAt/updatedAt，PATCH 显式刷新 updatedAt。新增 app-server 集成测试覆盖资料员新建 201、编辑 200，以及读者列表过滤与越权 PATCH 403。",
+          "cost": "约 50 分钟",
+          "status": "resolved"
+        }
+      ],
+      "improvements": [
+        {
+          "category": "skills-docs",
+          "title": "记录组合资源 require() 与 conditional 的语义",
+          "detail": "权限集身份下，即使底层作用域是 allRecords，组合决策也是 conditional；authz.require() 只接受 permit，会把合法管理员误判为无权。",
+          "suggestedChange": "在 authorization Skill 的 runtime-api/business-module 参考中说明：组合动作的\"能做\"判断用 authorize() + effect!=='deny'（或 can()），require() 仅适用于 unrestricted 身份，并给出分享管理的示例。",
+          "mechanizable": false
+        },
+        {
+          "category": "skills-docs",
+          "title": "记录记录选择要求字符串 id、推荐 uuid 主键",
+          "detail": "共享/受限规则的 selection.ids 必须是字符串，展开为字面量 $eq；整型自增主键无法同时满足路由参数与选择 id。",
+          "suggestedChange": "在 authorization 的 code-and-seeds 或 db Skill 中提示：需要按记录共享的集合使用 uuid 主键，并说明整数主键会遇到 INVALID_FILTER 与 parseRecordSelection 的双重约束。",
+          "mechanizable": false
+        },
+        {
+          "category": "skills-docs",
+          "title": "明确 seeds 必须使用 .ts 相对说明符",
+          "detail": "应用服务器用原生 import() 加载 seeds，Node 类型剥离不重写扩展名；vitest 内部的 server 源码可用 .js，但 database/ 下被原生加载的文件不行。",
+          "suggestedChange": "在 db/migrations 参考中补充一条：database/<connection> 下被原生加载的模块对兄弟源码使用 .ts 说明符，构建会重写为 .js。",
+          "mechanizable": true
+        },
+        {
+          "category": "skills-docs",
+          "title": "提示 DatabasePermissionBuilder 是唯一可安全链式的基类",
+          "detail": "defineDatabasePermission 立即 build 并校验，未先挂操作会抛 \"needs at least one action\"，容易在导入期炸掉。",
+          "suggestedChange": "在 fluent-registration 参考中给出 new DatabasePermissionBuilder<Row>(collection) 的标准写法，并注明 defineDatabasePermission 的即时构建行为。",
+          "mechanizable": false
+        },
+        {
+          "category": "factory",
+          "title": "将\"零文件改动\"视为实现失败",
+          "detail": "实现 Agent 未做任何编辑却以 completed 结束，导致流水线停在脚手架格式检查，业务验收根本没发生；仅靠 format:check 失败掩盖了功能完全缺失。",
+          "suggestedChange": "在实现/修复阶段结束时校验补丁非空：若业务源码 diff 为空则判定该阶段失败并给出诊断，而不是进入下一个只会检查格式的关卡。",
+          "mechanizable": true
+        },
+        {
+          "category": "skills-docs",
+          "title": "说明写操作授权必须同时包含 read 节点",
+          "detail": "组合资源的 write 授权若只挂 create/update 而没有 read，会生成 read=false 的 Policy；Repository.createOne/updateOne 在返回记录时仍走绑定的读 Policy，于是合法管理员在写之前就被拒。这与“只给写权限”的直觉相反，容易在新建/编辑路径上复现。",
+          "suggestedChange": "在 authorization Skill 中明确：凡是会经 Repository 校验返回记录的写操作，其 DatabasePermissionBuilder 必须 read('*').create/update/delete(...)；只有真正不需要回读的写才可以省 read，并给出组合资源写权限的标准写法。",
+          "mechanizable": false
+        },
+        {
+          "category": "skills-docs",
+          "title": "提示 Repository 不自动填充时间戳与 uuid 主键",
+          "detail": "migration 用 collection.datetime('createdAt').notNull() 且 uuid('id').primary() 时，没有数据库默认值，Repository.createOne 既不生成 uuid 也不写 createdAt/updatedAt，最终以 NOT NULL 或 INVALID_UNIQUE_SELECTOR 失败。框架内的授权存储与知识库仓库都显式写入这些值。",
+          "suggestedChange": "在 db Skill 的写入/迁移参考中提示：需要审计时间戳或非自增主键的集合，写入方要显式提供 id 与 createdAt/updatedAt（或为列加默认值），并说明 Repository 的完整主键选择子要求。",
+          "mechanizable": false
+        },
+        {
+          "category": "testing",
+          "title": "cookie 鉴权的集成测试需要可信 Origin",
+          "detail": "createInstalledStandaloneServer 未配置 publicOrigin 时，认证插件没有 trustedOrigins，带 session cookie 的写请求会先被 INVALID_CSRF_ORIGIN 拒绝，掩盖真正的业务断言。传 env.APP_PUBLIC_ORIGIN 后 baseURL 与可信来源才建立。",
+          "suggestedChange": "在 testing 参考的“启动真实服务器”示例中注明：涉及 cookie 写请求的集成测试要设置 APP_PUBLIC_ORIGIN（或等价 publicOrigin），并让请求 Origin 与之匹配，否则会被 CSRF 拒绝。",
+          "mechanizable": true
+        }
+      ]
+    },
+    "acceptanceRequirements": "B01. 乙可以阅读 P 但不能编辑；甲可以维护自己的资料。\n\nB02. 乙原本不能打开 D；管理员开放 D 后，乙能查看 D，但没有获得编辑权限或其他草稿的访问权。\n\nB03. 撤销 D 的开放后，乙刷新详情或再次打开原链接，都看不到正文。\n\nB04. 即使给乙开放了 C，乙仍看不到保密内容，甲仍可正常读取。\n\nB05. 停用乙后，乙原有会话无法继续访问；甲的账号和资料不受影响。",
+    "changes": {
+      "total": 24,
+      "added": 16,
+      "modified": 8,
+      "deleted": 0
+    },
+    "usage": {
+      "scope": "此 Issue 累计：已采集 1 个 Run / 1 次尝试",
+      "source": "现有 task-usage 模块（按 Agent / job ID 去重）",
+      "total": 111798083,
+      "cacheRead": 108263040,
+      "uncachedInput": 2752334,
+      "output": 782709,
+      "executionSeconds": 12359,
+      "endToEndSeconds": 12369,
+      "incomplete": true,
+      "phases": [
+        {
+          "label": "初始实现",
+          "input": 600291,
+          "output": 109563,
+          "cacheRead": 21402752,
+          "cacheWrite": 0,
+          "total": 22112606
+        },
+        {
+          "label": "应用修复",
+          "input": 986440,
+          "output": 337396,
+          "cacheRead": 59951616,
+          "cacheWrite": 0,
+          "total": 61275452
+        },
+        {
+          "label": "完整业务 QA",
+          "input": 129342,
+          "output": 86441,
+          "cacheRead": 13087616,
+          "cacheWrite": 0,
+          "total": 13303399
+        },
+        {
+          "label": "失败路径复测",
+          "input": 47791,
+          "output": 17205,
+          "cacheRead": 2706944,
+          "cacheWrite": 0,
+          "total": 2771940
+        },
+        {
+          "label": "QA 补报告",
+          "input": 0,
+          "output": 0,
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "total": 0
+        },
+        {
+          "label": "独立搭建评审",
+          "input": 243901,
+          "output": 62027,
+          "cacheRead": 10933376,
+          "cacheWrite": 0,
+          "total": 11239304
+        },
+        {
+          "label": "上下文压缩",
+          "input": 744569,
+          "output": 170077,
+          "cacheRead": 180736,
+          "cacheWrite": 0,
+          "total": 1095382
+        }
+      ],
+      "coverageNote": "用量记录 1588；未报告用量 4；分项不完整 1；缺失作业时间 0。",
+      "note": "不把流式增量、上下文长度和思考 Token 重复相加。旧记录未拆分 QA 时保留原有口径；费用：未知。"
+    },
+    "runs": [
+      {
+        "id": "36329199383",
+        "attempt": 1,
+        "status": "pr-ready",
+        "detail": "已生成/更新业务 PR"
+      }
+    ],
+    "retro": {
+      "version": 1,
+      "summary": "实现 issue #413「内部资料阅读与临时共享」：新增 documents 集合与资料库页面，资料员（可维护全部资料）与阅读者（只读已发布非保密资料）两个权限集，按记录的临时共享（内置 sharing rules），保密资料的只读下限（受限规则），并复用内置账号停用能力。资料 P/D/C、账号 A/B 由种子创建。B01–B05 与 R01–R04 在构建产物上对真实服务器逐条实测通过。",
+      "source": "Agent · retro.json",
+      "blockers": [
+        {
+          "phase": "implementation",
+          "title": "组合资源在 require() 下永远被拒",
+          "symptom": "资料员甲对 composite library.documents 的 edit 调用 authz.require 返回 403，而 /api/authz/permissions 明明列出了 edit。",
+          "rootCause": "composeComposite 只在每个底层 database 检查都是 permit 时返回 permit；权限集身份连 allRecords 作用域也会得到 conditional（scope:true），所以 require()（只接受 permit）必然拒绝。只有 unrestricted 身份才会 permit。",
+          "resolution": "分享管理回退改为 authorize() 后判断 effect !== 'deny'，与 policyFor 的非 deny 语义一致；限制/共享仍由组合出的 RepositoryPolicy 在数据库层强制。",
+          "cost": "约 40 分钟（含 inspector 决策导出定位）",
+          "source": "",
+          "status": "resolved"
+        },
+        {
+          "phase": "implementation",
+          "title": "临时共享的 records 选择要求字符串 id，与自增整型主键冲突",
+          "symptom": "GET /api/library/documents/2 返回 400 INVALID_FILTER（integer 字段收到字符串）；而 parseRecordSelection 又只接受字符串 ids。",
+          "rootCause": "框架的记录选择（sharing/restriction 的 selection.ids）强制 `typeof id === 'string'`，且共享展开用字面量 $eq 构造过滤；documents 用 increments 整型主键时，路由参数与选择 id 的类型无法同时满足。",
+          "resolution": "documents 主键改为 collection.uuid('id').primary()，与应用其余集合一致；种子显式生成 randomUUID。",
+          "cost": "约 20 分钟",
+          "source": "",
+          "status": "resolved"
+        },
+        {
+          "phase": "implementation",
+          "title": "种子相对导入在原生 Node 下解析失败",
+          "symptom": "运行测试/应用时 AppDatabaseTaskError: Cannot find module '.../seed-data/library-permission-sets.js'。",
+          "rootCause": "seeds 由应用服务器用原生 import() 加载（不经 vitest 转换），Node 24 的类型剥离不会把 ./x.js 重写为 ./x.ts。",
+          "resolution": "database/ 下被原生加载的源文件改用 .ts 相对说明符；tsc 的 rewriteRelativeImportExtensions 在 dist 中再写回 .js（已在 dist 中核对）。",
+          "cost": "约 15 分钟",
+          "source": "",
+          "status": "resolved"
+        },
+        {
+          "phase": "implementation",
+          "title": "defineDatabasePermission 在无操作时立即抛错",
+          "symptom": "导入授权模型时 TypeError: A database permission needs at least one action。",
+          "rootCause": "defineDatabasePermission 会立刻对基础 builder 调用 .build()，在链式追加 read/update 之前就校验并失败。",
+          "resolution": "改用链式基类 new DatabasePermissionBuilder<Row>('documents')，再 .options(...).default(...) 后派生 view/create/edit/delete。",
+          "cost": "约 10 分钟",
+          "source": "",
+          "status": "resolved"
+        },
+        {
+          "phase": "implementation",
+          "title": "子路由 use('*') 在挂载到 / 时污染无关 API",
+          "symptom": "app-server 测试中未注册的 GET /api/articles 期望 SPA 200，实际被资料库中间件拦截返回 401。",
+          "rootCause": "defineApiRoutes 的返回被应用挂在 /api，子路由若 router.route('/', library) 则 library.use('*', ...) 覆盖整个 /api 前缀。",
+          "resolution": "子路由改为 router.route('/library', library) 并把内部路径去前缀，中间件只作用于 /library/*；provider 的 boot 也以 container.has(authorizationToken) 容忍未加载授权插件的运行时。",
+          "cost": "约 25 分钟",
+          "source": "",
+          "status": "resolved"
+        },
+        {
+          "phase": "process",
+          "title": "实现阶段零改动却标记 completed，流水线停在 format:check",
+          "symptom": "repair-1 只报告 format:check（AGENTS.md 双空行）失败，业务功能完全未实现；agent-implement 执行约 42 分钟但 git 工作区无任何业务改动。",
+          "rootCause": "实现 Agent 未产出任何文件编辑即结束；空改动没有被当作失败，流水线在进入业务 QA 之前就因脚手架格式回归停下。",
+          "resolution": "本轮直接按 issue #413 完整实现业务功能，并修复 AGENTS.md 的双空行；所有改动均通过 lint/format/typecheck/test/build，并在构建产物上逐条实测 B01–B05。",
+          "cost": "本轮主要实现成本",
+          "source": "",
+          "status": "resolved"
+        },
+        {
+          "phase": "qa",
+          "title": "资料员新建资料被 403，修复鉴权后又暴露缺失的 createdAt/updatedAt/id",
+          "symptom": "资料员甲（manager.a）能看到新建入口、权限快照含 create，但 POST /main/api/library/documents 返回 403（You do not have permission to change this document.）。按同样请求复现并修掉鉴权后，同一路径先变为 500 NOT NULL constraint failed: documents.created_at，补上时间戳后再报 400 INVALID_UNIQUE_SELECTOR（id 为空），直到路由显式提供 id 与时间戳才返回 201。",
+          "rootCause": "两层原因叠加。1) 组合资源把 create 授权写成只含一个 create 节点，派生出 read=false 的 Policy；而 Repository.createOne 在写完之后仍用同一绑定的读 Policy 校验并回读返回记录，因此写操作在真正执行前就被 READ_FORBIDDEN 拒绝。2) documents 的 createdAt/updatedAt 是 NOT NULL 且没有数据库默认值，id 是 uuid 主键且没有生成器；Repository 不替调用方填充时间戳或 uuid，而路由的 create/update 没有显式提供，所以即便鉴权通过也无法落库。",
+          "resolution": "createPermission 由 documentPermission().create('*') 改为 documentPermission().read('*').create('*')，与 edit/delete 一致——读节点仍受限制规则与共享规则约束，不会越过保密下限；POST 显式写入 id=crypto.randomUUID() 与 createdAt/updatedAt，PATCH 显式刷新 updatedAt。新增 app-server 集成测试覆盖资料员新建 201、编辑 200，以及读者列表过滤与越权 PATCH 403。",
+          "cost": "约 50 分钟",
+          "source": "",
+          "status": "resolved"
+        }
+      ],
+      "improvements": [
+        {
+          "category": "skills-docs",
+          "title": "记录组合资源 require() 与 conditional 的语义",
+          "detail": "权限集身份下，即使底层作用域是 allRecords，组合决策也是 conditional；authz.require() 只接受 permit，会把合法管理员误判为无权。",
+          "suggestedChange": "在 authorization Skill 的 runtime-api/business-module 参考中说明：组合动作的\"能做\"判断用 authorize() + effect!=='deny'（或 can()），require() 仅适用于 unrestricted 身份，并给出分享管理的示例。",
+          "source": "",
+          "mechanizable": false
+        },
+        {
+          "category": "skills-docs",
+          "title": "记录记录选择要求字符串 id、推荐 uuid 主键",
+          "detail": "共享/受限规则的 selection.ids 必须是字符串，展开为字面量 $eq；整型自增主键无法同时满足路由参数与选择 id。",
+          "suggestedChange": "在 authorization 的 code-and-seeds 或 db Skill 中提示：需要按记录共享的集合使用 uuid 主键，并说明整数主键会遇到 INVALID_FILTER 与 parseRecordSelection 的双重约束。",
+          "source": "",
+          "mechanizable": false
+        },
+        {
+          "category": "skills-docs",
+          "title": "明确 seeds 必须使用 .ts 相对说明符",
+          "detail": "应用服务器用原生 import() 加载 seeds，Node 类型剥离不重写扩展名；vitest 内部的 server 源码可用 .js，但 database/ 下被原生加载的文件不行。",
+          "suggestedChange": "在 db/migrations 参考中补充一条：database/<connection> 下被原生加载的模块对兄弟源码使用 .ts 说明符，构建会重写为 .js。",
+          "source": "",
+          "mechanizable": true
+        },
+        {
+          "category": "skills-docs",
+          "title": "提示 DatabasePermissionBuilder 是唯一可安全链式的基类",
+          "detail": "defineDatabasePermission 立即 build 并校验，未先挂操作会抛 \"needs at least one action\"，容易在导入期炸掉。",
+          "suggestedChange": "在 fluent-registration 参考中给出 new DatabasePermissionBuilder<Row>(collection) 的标准写法，并注明 defineDatabasePermission 的即时构建行为。",
+          "source": "",
+          "mechanizable": false
+        },
+        {
+          "category": "factory",
+          "title": "将\"零文件改动\"视为实现失败",
+          "detail": "实现 Agent 未做任何编辑却以 completed 结束，导致流水线停在脚手架格式检查，业务验收根本没发生；仅靠 format:check 失败掩盖了功能完全缺失。",
+          "suggestedChange": "在实现/修复阶段结束时校验补丁非空：若业务源码 diff 为空则判定该阶段失败并给出诊断，而不是进入下一个只会检查格式的关卡。",
+          "source": "",
+          "mechanizable": true
+        },
+        {
+          "category": "skills-docs",
+          "title": "说明写操作授权必须同时包含 read 节点",
+          "detail": "组合资源的 write 授权若只挂 create/update 而没有 read，会生成 read=false 的 Policy；Repository.createOne/updateOne 在返回记录时仍走绑定的读 Policy，于是合法管理员在写之前就被拒。这与“只给写权限”的直觉相反，容易在新建/编辑路径上复现。",
+          "suggestedChange": "在 authorization Skill 中明确：凡是会经 Repository 校验返回记录的写操作，其 DatabasePermissionBuilder 必须 read('*').create/update/delete(...)；只有真正不需要回读的写才可以省 read，并给出组合资源写权限的标准写法。",
+          "source": "",
+          "mechanizable": false
+        },
+        {
+          "category": "skills-docs",
+          "title": "提示 Repository 不自动填充时间戳与 uuid 主键",
+          "detail": "migration 用 collection.datetime('createdAt').notNull() 且 uuid('id').primary() 时，没有数据库默认值，Repository.createOne 既不生成 uuid 也不写 createdAt/updatedAt，最终以 NOT NULL 或 INVALID_UNIQUE_SELECTOR 失败。框架内的授权存储与知识库仓库都显式写入这些值。",
+          "suggestedChange": "在 db Skill 的写入/迁移参考中提示：需要审计时间戳或非自增主键的集合，写入方要显式提供 id 与 createdAt/updatedAt（或为列加默认值），并说明 Repository 的完整主键选择子要求。",
+          "source": "",
+          "mechanizable": false
+        },
+        {
+          "category": "testing",
+          "title": "cookie 鉴权的集成测试需要可信 Origin",
+          "detail": "createInstalledStandaloneServer 未配置 publicOrigin 时，认证插件没有 trustedOrigins，带 session cookie 的写请求会先被 INVALID_CSRF_ORIGIN 拒绝，掩盖真正的业务断言。传 env.APP_PUBLIC_ORIGIN 后 baseURL 与可信来源才建立。",
+          "suggestedChange": "在 testing 参考的“启动真实服务器”示例中注明：涉及 cookie 写请求的集成测试要设置 APP_PUBLIC_ORIGIN（或等价 publicOrigin），并让请求 Origin 与之匹配，否则会被 CSRF 拒绝。",
+          "source": "",
+          "mechanizable": true
+        }
+      ]
+    },
+    "timings": [
+      {
+        "stage": "agent:repair",
+        "calls": 2,
+        "durationMs": 5863472
+      },
+      {
+        "stage": "agent:implementation",
+        "calls": 1,
+        "durationMs": 2544687
+      },
+      {
+        "stage": "agent:qa",
+        "calls": 2,
+        "durationMs": 1687687
+      },
+      {
+        "stage": "agent:review",
+        "calls": 1,
+        "durationMs": 916410
+      },
+      {
+        "stage": "agent:qa-focused",
+        "calls": 1,
+        "durationMs": 338272
+      },
+      {
+        "stage": "build",
+        "calls": 2,
+        "durationMs": 119540
+      },
+      {
+        "stage": "test",
+        "calls": 2,
+        "durationMs": 89641
+      },
+      {
+        "stage": "lint",
+        "calls": 2,
+        "durationMs": 62239
+      },
+      {
+        "stage": "typecheck",
+        "calls": 2,
+        "durationMs": 31343
+      },
+      {
+        "stage": "db:apply",
+        "calls": 3,
+        "durationMs": 17847
+      },
+      {
+        "stage": "format:check",
+        "calls": 3,
+        "durationMs": 15296
+      },
+      {
+        "stage": "install",
+        "calls": 1,
+        "durationMs": 5349
+      },
+      {
+        "stage": "format:auto",
+        "calls": 3,
+        "durationMs": 3071
+      },
+      {
+        "stage": "skills-sync",
+        "calls": 1,
+        "durationMs": 1098
+      }
+    ],
+    "buildReview": {
+      "version": 1,
+      "state": "failed",
+      "reason": "独立评审未完成或证据校验失败：评审达到 900 秒调用时限（timed_out）；未取得可发布的模块检查点：No assessed module checkpoint。业务验收结果保持不变。",
+      "basis": {
+        "repository": "gchust/nb3-factory",
+        "issue": 413,
+        "runId": "36329199383",
+        "attempt": 1,
+        "controlSha": "4f504529b876b45c6646d8d376d1402ffd0bc5ec",
+        "rubricVersion": 2,
+        "historyHash": "6cb67a4feb343e9a8b3fe19d6b4b1b6f2613e47bb175f373d83245ef1810a36e",
+        "historyVersion": 2,
+        "history": {
+          "version": 2,
+          "path": "artifacts/agent-history/index.json",
+          "scope": "工厂可观察的本次搭建及已恢复 Handoff 交互；不是 CLI 内部上下文，不代表每个文件已被评审者读取。",
+          "coverage": "available",
+          "invocations": 6,
+          "sourceBytes": 181122721,
+          "capturedBytes": 181107946,
+          "errorSignals": 72,
+          "limitations": []
+        },
+        "baseSha": "4f504529b876b45c6646d8d376d1402ffd0bc5ec",
+        "patchHash": "43de990f52a404dbf87caf05b4b5be6465e2c04d5b93fe2acb308067a16e4505",
+        "lockfileHash": "7db7024be35da2f6d4d75784a2afd5c398ca647ac58462cf5e58d14276395f99",
+        "packages": [
+          {
+            "name": "@nocobase/ai-employee",
+            "version": "0.2.0-beta.8"
+          },
+          {
+            "name": "@nocobase/ai-employee-avatars",
+            "version": "1.0.2"
+          },
+          {
+            "name": "@nocobase/app-cli",
+            "version": "1.0.0-beta.6"
+          },
+          {
+            "name": "@nocobase/app-client",
+            "version": "1.0.0-beta.21"
+          },
+          {
+            "name": "@nocobase/app-plugin-ai-employee",
+            "version": "1.0.0-beta.23"
+          },
+          {
+            "name": "@nocobase/app-plugin-ai-knowledge-base",
+            "version": "0.1.0-beta.9"
+          },
+          {
+            "name": "@nocobase/app-plugin-api-keys",
+            "version": "0.1.0-beta.8"
+          },
+          {
+            "name": "@nocobase/app-plugin-authentication",
+            "version": "1.0.0-beta.24"
+          },
+          {
+            "name": "@nocobase/app-plugin-authorization",
+            "version": "0.2.0-beta.20"
+          },
+          {
+            "name": "@nocobase/app-plugin-authz-default-access",
+            "version": "0.1.0-beta.4"
+          },
+          {
+            "name": "@nocobase/app-plugin-authz-restriction-rules",
+            "version": "0.1.0-beta.3"
+          },
+          {
+            "name": "@nocobase/app-plugin-authz-sharing-rules",
+            "version": "0.1.0-beta.4"
+          },
+          {
+            "name": "@nocobase/app-plugin-database-explorer",
+            "version": "0.1.0-beta.6"
+          },
+          {
+            "name": "@nocobase/app-plugin-file",
+            "version": "0.1.0-beta.15"
+          },
+          {
+            "name": "@nocobase/app-plugin-i18n",
+            "version": "0.1.0-beta.9"
+          },
+          {
+            "name": "@nocobase/app-plugin-mail",
+            "version": "0.1.0-beta.0"
+          },
+          {
+            "name": "@nocobase/app-plugin-notification",
+            "version": "0.1.0-beta.17"
+          },
+          {
+            "name": "@nocobase/app-plugin-notification-in-app",
+            "version": "0.2.0-beta.18"
+          },
+          {
+            "name": "@nocobase/app-plugin-notification-providers",
+            "version": "0.2.0-beta.7"
+          },
+          {
+            "name": "@nocobase/app-plugin-scheduler",
+            "version": "0.1.0-beta.9"
+          },
+          {
+            "name": "@nocobase/app-plugin-users",
+            "version": "1.0.0-beta.11"
+          },
+          {
+            "name": "@nocobase/app-plugin-workflow",
+            "version": "1.0.0-beta.28"
+          },
+          {
+            "name": "@nocobase/app-portal-sdk",
+            "version": "1.0.0-beta.3"
+          },
+          {
+            "name": "@nocobase/app-server",
+            "version": "1.0.0-beta.27"
+          },
+          {
+            "name": "@nocobase/app-skills",
+            "version": "0.1.0-beta.16"
+          },
+          {
+            "name": "@nocobase/app-websocket",
+            "version": "0.0.1"
+          },
+          {
+            "name": "@nocobase/authorization",
+            "version": "0.1.0-beta.9"
+          },
+          {
+            "name": "@nocobase/caching",
+            "version": "0.1.0-beta.2"
+          },
+          {
+            "name": "@nocobase/config",
+            "version": "0.1.0-beta.1"
+          },
+          {
+            "name": "@nocobase/cron",
+            "version": "0.1.0"
+          },
+          {
+            "name": "@nocobase/db",
+            "version": "1.0.0-beta.16"
+          },
+          {
+            "name": "@nocobase/db-sqlite",
+            "version": "0.1.0-beta.2"
+          },
+          {
+            "name": "@nocobase/dev-config",
+            "version": "0.1.0-beta.13"
+          },
+          {
+            "name": "@nocobase/drive",
+            "version": "0.1.0-beta.4"
+          },
+          {
+            "name": "@nocobase/i18n",
+            "version": "1.0.0-beta.4"
+          },
+          {
+            "name": "@nocobase/logging",
+            "version": "0.1.0-beta.6"
+          },
+          {
+            "name": "@nocobase/queue",
+            "version": "0.1.0-beta.7"
+          },
+          {
+            "name": "@nocobase/repository-input",
+            "version": "0.1.0-beta.1"
+          },
+          {
+            "name": "@nocobase/service-provider",
+            "version": "0.0.2-beta.1"
+          },
+          {
+            "name": "@nocobase/session",
+            "version": "0.1.0-beta.2"
+          },
+          {
+            "name": "@nocobase/snowflake",
+            "version": "1.0.0-beta.3"
+          }
+        ],
+        "reviewCriteriaHash": "77e73add9f752d139aebf1398ebd9582ab6bdd69b0780507d25a4d68ca0a8100",
+        "artifactHash": "449f92bb18d9e2fdba31bcca7ed182e5875cceec39ba4d5bcdbdd774417e44aa",
+        "inputHash": "feceee9540187377b565944504eb6497e4b4a92c9693156262d4d427c3a534c2"
+      },
+      "evaluation": null,
+      "execution": {
+        "buildReviewMode": "full",
+        "source": "repository"
+      },
+      "reviewer": {
+        "engine": "pi",
+        "model": "deepseek-v4.1-flash",
+        "version": "0.86.1",
+        "runId": "36329199383",
+        "attempt": 1,
+        "controlSha": "4f504529b876b45c6646d8d376d1402ffd0bc5ec",
+        "replay": false
+      },
+      "process": {
+        "verificationAttempts": 3,
+        "repairAttempts": 2,
+        "finalRound": 3,
+        "rounds": [
+          {
+            "round": 2,
+            "reports": [
+              {
+                "scope": "full",
+                "source": "verify-2/browser-acceptance/report.json",
+                "passed": false,
+                "checks": [
+                  {
+                    "id": "B01",
+                    "criterion": "乙可以阅读 P 但不能编辑；甲可以维护自己的资料。",
+                    "status": "failed",
+                    "reason": ""
+                  },
+                  {
+                    "id": "B02",
+                    "criterion": "乙原本不能打开 D；管理员开放 D 后，乙能查看 D，但没有获得编辑权限或其他草稿的访问权。",
+                    "status": "passed",
+                    "reason": ""
+                  },
+                  {
+                    "id": "B03",
+                    "criterion": "撤销 D 的开放后，乙刷新详情或再次打开原链接，都看不到正文。",
+                    "status": "passed",
+                    "reason": ""
+                  },
+                  {
+                    "id": "B04",
+                    "criterion": "即使给乙开放了 C，乙仍看不到保密内容，甲仍可正常读取。",
+                    "status": "passed",
+                    "reason": ""
+                  },
+                  {
+                    "id": "B05",
+                    "criterion": "停用乙后，乙原有会话无法继续访问；甲的账号和资料不受影响。",
+                    "status": "passed",
+                    "reason": ""
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "round": 3,
+            "reports": [
+              {
+                "scope": "full",
+                "source": "verify-3/browser-acceptance/report.json",
+                "passed": true,
+                "checks": [
+                  {
+                    "id": "B01",
+                    "criterion": "乙可以阅读 P 但不能编辑；甲可以维护自己的资料。",
+                    "status": "passed",
+                    "reason": ""
+                  },
+                  {
+                    "id": "B02",
+                    "criterion": "乙原本不能打开 D；管理员开放 D 后，乙能查看 D，但没有获得编辑权限或其他草稿的访问权。",
+                    "status": "passed",
+                    "reason": ""
+                  },
+                  {
+                    "id": "B03",
+                    "criterion": "撤销 D 的开放后，乙刷新详情或再次打开原链接，都看不到正文。",
+                    "status": "passed",
+                    "reason": ""
+                  },
+                  {
+                    "id": "B04",
+                    "criterion": "即使给乙开放了 C，乙仍看不到保密内容，甲仍可正常读取。",
+                    "status": "passed",
+                    "reason": ""
+                  },
+                  {
+                    "id": "B05",
+                    "criterion": "停用乙后，乙原有会话无法继续访问；甲的账号和资料不受影响。",
+                    "status": "passed",
+                    "reason": ""
+                  }
+                ]
+              },
+              {
+                "scope": "focused",
+                "source": "verify-3/browser-focused/report.json",
+                "passed": true,
+                "checks": [
+                  {
+                    "id": "B01",
+                    "criterion": "乙可以阅读 P 但不能编辑；甲可以维护自己的资料。",
+                    "status": "passed",
+                    "reason": ""
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "warnings": [],
+        "scope": "仅本 Run 已归档记录；工厂修复轮次不等于 Agent 开发中全部试错次数。缺少 verify-1 时不能声称任务首轮通过。"
+      }
+    },
+    "baseline": {
+      "template": "@nocobase/app-template-default",
+      "templateVersion": "1.0.0-beta.47",
+      "creatorVersion": "0.1.0-beta.22",
+      "source": null,
+      "lockSha256": "7db7024be35da2f6d4d75784a2afd5c398ca647ac58462cf5e58d14276395f99",
+      "packages": [
+        {
+          "name": "@nocobase/ai-employee",
+          "version": "0.2.0-beta.8",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/ai-employee-avatars",
+          "version": "1.0.2",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/app-cli",
+          "version": "1.0.0-beta.6",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/app-client",
+          "version": "1.0.0-beta.21",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/app-plugin-ai-employee",
+          "version": "1.0.0-beta.23",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/app-plugin-ai-knowledge-base",
+          "version": "0.1.0-beta.9",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/app-plugin-api-keys",
+          "version": "0.1.0-beta.8",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/app-plugin-authentication",
+          "version": "1.0.0-beta.24",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/app-plugin-authorization",
+          "version": "0.2.0-beta.20",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/app-plugin-authz-default-access",
+          "version": "0.1.0-beta.4",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/app-plugin-authz-restriction-rules",
+          "version": "0.1.0-beta.3",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/app-plugin-authz-sharing-rules",
+          "version": "0.1.0-beta.4",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/app-plugin-database-explorer",
+          "version": "0.1.0-beta.6",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/app-plugin-file",
+          "version": "0.1.0-beta.15",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/app-plugin-i18n",
+          "version": "0.1.0-beta.9",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/app-plugin-mail",
+          "version": "0.1.0-beta.0",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/app-plugin-notification",
+          "version": "0.1.0-beta.17",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/app-plugin-notification-in-app",
+          "version": "0.2.0-beta.18",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/app-plugin-notification-providers",
+          "version": "0.2.0-beta.7",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/app-plugin-scheduler",
+          "version": "0.1.0-beta.9",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/app-plugin-users",
+          "version": "1.0.0-beta.11",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/app-plugin-workflow",
+          "version": "1.0.0-beta.28",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/app-portal-sdk",
+          "version": "1.0.0-beta.3",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/app-server",
+          "version": "1.0.0-beta.27",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/app-skills",
+          "version": "0.1.0-beta.16",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/app-websocket",
+          "version": "0.0.1",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/authorization",
+          "version": "0.1.0-beta.9",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/caching",
+          "version": "0.1.0-beta.2",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/config",
+          "version": "0.1.0-beta.1",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/cron",
+          "version": "0.1.0",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/db",
+          "version": "1.0.0-beta.16",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/db-sqlite",
+          "version": "0.1.0-beta.2",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/dev-config",
+          "version": "0.1.0-beta.13",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/drive",
+          "version": "0.1.0-beta.4",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/i18n",
+          "version": "1.0.0-beta.4",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/logging",
+          "version": "0.1.0-beta.6",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/queue",
+          "version": "0.1.0-beta.7",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/repository-input",
+          "version": "0.1.0-beta.1",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/service-provider",
+          "version": "0.0.2-beta.1",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/session",
+          "version": "0.1.0-beta.2",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/snowflake",
+          "version": "1.0.0-beta.3",
+          "reason": null
+        }
+      ]
+    }
+  },
+  "pr": {
+    "number": 429,
+    "headSha": "304454077e919b46b2a2be40fbe2e5421208d163"
+  },
+  "reportId": "gchust/nb3-factory:413:36329199383:1:304454077e919b46b2a2be40fbe2e5421208d163:template-9:review-f86cfeef0ed858e5"
+}
