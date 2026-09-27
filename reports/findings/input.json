@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "inputHash": "f48d53e946e5a9453fec8eee55b09d64a79306c3cbaa0f17833649a8d008fc50",
+  "inputHash": "bf1c6f2a2c583022623e5ff445da5608e71c3f4244a11036e497e2bd42507621",
   "findings": [
     {
       "id": "224:35881009045:2:F2",
@@ -4408,6 +4408,339 @@
         }
       ],
       "fingerprint": "c98c336ec9f5dbab3117da9b84247c24bd9a4a4e891749417e787240c3a93d21"
+    },
+    {
+      "id": "366:36276932178:1:F1",
+      "report": "366:36276932178:1",
+      "issue": 366,
+      "taskTitle": "设备售后服务与巡检协同系统",
+      "appVersion": "1.0.0-beta.47",
+      "appTemplate": "@nocobase/app-template-default",
+      "finding": {
+        "id": "F1",
+        "kind": "issue",
+        "owner": "plugin",
+        "severity": "major",
+        "confidence": "confirmed",
+        "status": "open",
+        "title": "Registry OOXML 预览对第三方 worker 失效没有边界，且 docx/pptx 使用 progressiveLayout",
+        "detail": "packages/@nocobase/app-plugin-file/registry/component-ui/components/previewers/office-open-xml-preview.tsx 为 docx 与 pptx 传入 progressiveLayout: true（xlsx 不传），且三种格式都未向 @silurus/ooxml 传 workerTimeoutMs。该库在 module blob Worker 中解析，worker 启动失败时只 revoke object URL 并吞掉错误，因此 load() 可能永不 settle；宿主不可见/未布局时 progressiveLayout 也会推迟布局。用户只看到 Loading preview...，没有失败原因或下载回退。",
+        "impact": "使用该 registry recipe 的应用必须复制组件并自行加固，否则预览可能永久加载，浏览器验收只能记 blocked 或 failed。",
+        "suggestedChange": "registry 组件默认关闭 progressiveLayout（或提供显式选项），传入有界的 workerTimeoutMs，并在 worker 失败时进入可见错误态且保留下载回退；建议附带一次用新 viewer 的重试。",
+        "evidence": [
+          "E1",
+          "E4"
+        ],
+        "diagnosis": {
+          "category": "runtime-defect",
+          "trigger": "在全局 Worker 被包装/限制或宿主隐藏的浏览器中打开 DOCX/PPTX 预览",
+          "expected": "预览在有界时间内渲染，或进入带原因的失败态并保留下载",
+          "actual": "worker 消息丢失后 load() 永不 settle，界面长期停留在 Loading preview...",
+          "workaround": "把 registry 源码 materialize 进应用，移除 progressiveLayout、传入 workerTimeoutMs、增加 30s 看门狗与一次重试",
+          "acceptance": "registry office-open-xml-preview 向查看器传入 worker timeout，成功路径清除看门狗；浏览器用例渲染 fixture 并在超过该超时后仍保留内容"
+        }
+      },
+      "targets": [
+        "@nocobase/app-plugin-file",
+        "packages/@nocobase/app-plugin-file/skills/nocobase-app-plugin-file"
+      ],
+      "paths": [
+        ".agents/skills/nocobase-app-plugin-file/SKILL.md",
+        "packages/@nocobase/app-plugin-file/registry/component-ui/components/previewers/office-open-xml-preview.tsx"
+      ],
+      "evidence": [
+        {
+          "id": "E1",
+          "kind": "code",
+          "path": "packages/@nocobase/app-plugin-file/registry/component-ui/components/previewers/office-open-xml-preview.tsx",
+          "observation": "Registry OOXML 查看器为 docx 与 pptx 传入 progressiveLayout: true，xlsx 不传；三种格式都未传 workerTimeoutMs，worker 失效时无有界失败路径。",
+          "lines": [
+            148,
+            176
+          ],
+          "excerpt": "  const commonOptions = {\n    mode: 'main' as const,\n    useGoogleFonts: false,\n    onError,\n  };\n  switch (format) {\n    case 'docx': {\n      const { DocxScrollViewer } = await import('@silurus/ooxml/docx');\n      return new DocxScrollViewer(host, {\n        ...commonOptions,\n        enableTextSelection: true,\n        gap: 16,\n        progressiveLayout: true,\n      });\n    }\n    case 'pptx': {\n      const { PptxScrollViewer } = await import('@silurus/ooxml/pptx');\n      return new PptxScrollViewer(host, {\n        ...commonOptions,\n        enableTextSelection: true,\n        gap: 16,\n        progressiveLayout: true,\n      });\n    }\n    case 'xlsx': {\n      const { XlsxViewer } = await import('@silurus/ooxml/xlsx');\n      return new XlsxViewer(host, {\n        ...commonOptions,\n        showZoomSlider: true,",
+          "sha256": "b32b48615f0400191ba28d427f9070fa69c74282829aba2087746563350d28c8"
+        },
+        {
+          "id": "E4",
+          "kind": "skill",
+          "path": "packages/@nocobase/app-plugin-file/skills/nocobase-app-plugin-file/SKILL.md",
+          "observation": "Skill 说明 DOCX/XLSX/PPTX 本地渲染、同源凭据限制、Bearer-only 内容的适配方式，以及 OOXML/PDF/text 取数凭据规则。",
+          "lines": [
+            233,
+            239
+          ],
+          "excerpt": "Preview supports safe raster images, PDF via a fetched blob, text/Markdown and audio/video. HTML/SVG/XML previews and unsafe URL schemes are rejected. DOCX, XLSX and PPTX use lazily loaded `@silurus/ooxml` viewers to render locally from `FileRecord.contentUrl`; their content is not sent to a third-party preview service. Legacy DOC/XLS/PPT and OpenDocument formats use Office Online, which requires an internet-accessible absolute URL and cannot use the App session.\n\nOOXML, PDF and text fetches use same-origin credentials. An App-owned content route protected by same-origin session cookies can therefore serve restricted previews, provided it checks the caller's record access. Cross-origin fetches omit credentials and require CORS; an external cookie-protected URL is not supported by this default path. The Repository API client's Bearer token is not automatically attached to content fetches.\n\nFor Bearer-only content authorization, adapt the installed Registry source in the App. Add an authenticated content loader to the OOXML fetch path and `PreviewBody`'s PDF/text fetches, and adapt download and media/image paths as needed. Resolve authentication through the App's supported client/session services and send credentials only to the trusted content endpoint. Do not put tokens in `contentUrl`. If the adapter creates blob URLs, keep an App-owned trusted URL set, pass it to the relevant `resolveSafeFileUrl` calls, and revoke URLs when replaced or unmounted. Merely assigning a `blob:` URL to `FileRecord.contentUrl` is insufficient: the default components reject untrusted blob URLs.\n\nOOXML request or rendering failure displays an error and, when downloads are enabled, a download action. `download={false}` removes that action. This is not a second preview service or a guarantee that downloading the same inaccessible URL will succeed.",
+          "sha256": "3fab337bc1a1412ba9affb4cd5ec2e79e76abe1f9b1803b7f2ebe4e293f188f5"
+        }
+      ],
+      "fingerprint": "8c2db8e2a62bb3adf35d9493fea49f6c7bc8a94b84293bf2c509865e58cbc2f9"
+    },
+    {
+      "id": "366:36276932178:1:F12",
+      "report": "366:36276932178:1",
+      "issue": 366,
+      "taskTitle": "设备售后服务与巡检协同系统",
+      "appVersion": "1.0.0-beta.47",
+      "appTemplate": "@nocobase/app-template-default",
+      "finding": {
+        "id": "F12",
+        "kind": "improvement",
+        "owner": "plugin",
+        "severity": "major",
+        "confidence": "confirmed",
+        "status": "open",
+        "title": "source-managed Workflow 物化后默认停用且缺少安装期启用途径",
+        "detail": "materializeWorkflowSource 创建 revision 时写 enabled: false；activateWorkflowSource 只继承上一个 current revision 的 enabled。Workflow 服务暴露 trigger 与管理 API，但没有可供 seed 或 Provider 正当调用的启用方法，安装期启用只能由管理员调用管理 API。因此需要在安装后即可被业务事件触发的 source workflow 无法仅靠源码与 seed 生效。",
+        "impact": "应用若把自动流程写成 source workflow，安装后默认不触发，只能改用 typed code 绕过，损失流程可视化与节点历史。",
+        "suggestedChange": "提供一个受信任的 provisioning 路径（例如 seed/sync 阶段的启用选项），让安装期可声明初始启用状态，同时保留管理员后续启停。",
+        "evidence": [
+          "E28",
+          "E32"
+        ],
+        "diagnosis": {
+          "category": "capability-gap",
+          "trigger": "用 source workflow 表达安装后即应被业务事件自动触发的流程",
+          "expected": "seed/sync 后 revision 处于可触发状态，或存在受信任的启用途径",
+          "actual": "物化 revision 为 enabled:false，服务无启用方法，需管理员手工启用",
+          "workaround": "改用 typed code + 审计表实现自动受理，放弃 Workflow 的节点历史",
+          "acceptance": "安装/种子流程能声明初始启用状态且 trigger 返回 accepted，重复安装不覆盖管理员后续的启停配置"
+        }
+      },
+      "targets": [
+        "@nocobase/app-plugin-workflow",
+        "packages/@nocobase/app-plugin-workflow/skills/nocobase-app-plugin-workflow"
+      ],
+      "paths": [
+        ".agents/skills/nocobase-app-plugin-workflow/references/invocation-and-service-api.md",
+        "packages/@nocobase/app-plugin-workflow/dist/server/loader/source-materializer.js"
+      ],
+      "evidence": [
+        {
+          "id": "E28",
+          "kind": "code",
+          "path": "packages/@nocobase/app-plugin-workflow/dist/server/loader/source-materializer.js",
+          "observation": "物化 source workflow 时写入 enabled: false；activate 时只继承上一个 current revision 的 enabled，并在切换前清除历史 enabled。",
+          "lines": [
+            25,
+            80
+          ],
+          "excerpt": "            hash: loaded.hash,\n            version: nextVersion(revisions),\n            title: loaded.ir.title,\n            description: loaded.ir.description ?? null,\n            options: serializeJson(loaded.ir.options ?? {}),\n            inputSchema: serializeJson(loaded.ir.inputSchema),\n            parametersSchema: serializeJson(parametersSchema),\n            parameterValues: serializeJson(inheritedInputValues),\n            enabled: false,\n            current: null,\n        },\n        select: (select) => select.fields('id'),\n    });\n    const workflowId = asId(created.record.id);\n    // Written as a non-empty tuple because that is the shape `createMany` takes;\n    // it refuses an empty batch rather than silently doing nothing.\n    const [firstNode, ...otherNodes] = loaded.ir.nodes.map((node) => ({\n        workflowId: asIdFilter(workflowId),\n        key: node.key,\n        title: node.title ?? null,\n        description: node.description ?? null,\n        type: node.type,\n        config: serializeJson(node.config),\n        options: serializeJson(node.options ?? {}),\n        upstreamKey: node.upstreamKey,\n        downstreamKey: node.downstreamKey,\n        branchKey: node.branchKey,\n    }));\n    if (firstNode) {\n        await store.nodes.createMany({ values: [firstNode, ...otherNodes] });\n    }\n    return { action: 'created', workflowId };\n}\nexport async function activateWorkflowSource(store, workflowId) {\n    const selected = await store.workflows.findOne({\n        filter: { id: asIdFilter(workflowId) },\n        select: (select) => select.fields('key'),\n    });\n    if (!selected)\n        throw new Error(`Workflow ${String(workflowId)} was not found.`);\n    const key = String(selected.key);\n    const previous = await store.workflows.findOne({\n        filter: { key, current: true },\n        select: (select) => select.fields('enabled'),\n    });\n    const inheritedEnabled = previous ? Boolean(previous.enabled) : false;\n    // A workflow key can have at most one enabled revision, and it must be current.\n    // Clear stale state before selecting the new current revision so historical\n    // rows cannot remain enabled after activation.\n    await store.workflows.updateMany({\n        filter: { key },\n        values: { current: null, enabled: false },\n    });\n    await store.workflows.updateMany({\n        filter: { id: asIdFilter(workflowId) },\n        values: { current: true, enabled: inheritedEnabled },",
+          "sha256": "02aa15c73edca530e3d8db2c1736ddb65f1f1c23e688b026b791e205c74ca246"
+        },
+        {
+          "id": "E32",
+          "kind": "skill",
+          "path": "packages/@nocobase/app-plugin-workflow/skills/nocobase-app-plugin-workflow/references/invocation-and-service-api.md",
+          "observation": "invocation 文档说明业务事件经 workflowRuntime.trigger 传入 workflow key 并得到 accepted/skipped，刻意没有通用公开的 POST /workflows/:key/trigger。",
+          "lines": [
+            17,
+            24
+          ],
+          "excerpt": "| Business/domain event starts a workflow                 | `workflowRuntime.trigger(key, input, options?)` | workflow key              | `accepted`/`skipped` receipt; accepted execution is asynchronous |\n| Authorized administrator manually executes a definition | authenticated management HTTP API               | definition id             | persisted run list item                                          |\n| Manage/inspect workflows and runs                       | authenticated management HTTP API               | mostly definition/run ids | typed view/list/detail                                           |\n| Browser/admin client                                    | authenticated `/api` routes                     | definition/run ids        | `{ data }` or paged response                                     |\n\nThere is intentionally no generic public `POST /workflows/:key/trigger`. A cron, webhook, route, or domain module authenticates and validates its own event, constructs the declared input, then calls the internal service.\n\n## Find a workflow to trigger",
+          "sha256": "060af3cef9c4826b1c514dce7e8da18783c3090ff8e4efe05ea1a21e182da674"
+        }
+      ],
+      "fingerprint": "c81a0099d80cc4bf8265208f742627ef27279631af12d463b3a7070fe0fd79f3"
+    },
+    {
+      "id": "366:36276932178:1:F2",
+      "report": "366:36276932178:1",
+      "issue": 366,
+      "taskTitle": "设备售后服务与巡检协同系统",
+      "appVersion": "1.0.0-beta.47",
+      "appTemplate": "@nocobase/app-template-default",
+      "finding": {
+        "id": "F2",
+        "kind": "issue",
+        "owner": "plugin",
+        "severity": "minor",
+        "confidence": "confirmed",
+        "status": "open",
+        "title": "OOXML 查看器要求可选的 xl/styles.xml，缺失时把合法 XLSX 判为不可渲染",
+        "detail": "OOXML 规范允许省略 xl/styles.xml，但 @silurus/ooxml 在缺失该部件时抛 entry not found: xl/styles.xml，Registry 组件把整个包当作不可读。File Skill 的 OOXML 小节只讲本地渲染与同源凭据，没有提示查看器比规范更严格，也没有稀疏包 fixture。",
+        "impact": "合法但精简的 XLSX 被当作损坏文件，错误信息指向用户文件而非查看器限制，应用需自行补齐样式部件。",
+        "suggestedChange": "在 Skill 增加可选部件提醒，registry 在交给查看器前补齐缺失的可选部件（或选择容忍缺失的查看器），并保留一个稀疏包 fixture 作为回归样例。",
+        "evidence": [
+          "E4",
+          "E3"
+        ],
+        "diagnosis": {
+          "category": "runtime-defect",
+          "trigger": "预览一个包含 xl/workbook.xml 但省略 xl/styles.xml 的合法 XLSX",
+          "expected": "XLSX 正常渲染",
+          "actual": "查看器抛 entry not found: xl/styles.xml，界面显示无法渲染",
+          "workaround": "应用复制 registry 源码，在 load 前用 lib/ooxml-normalize.ts 补齐最小 styles 部件与关系",
+          "acceptance": "registry 或 Skill 提供一个缺失 xl/styles.xml 的 fixture，并断言其可渲染或给出明确的查看器限制说明"
+        }
+      },
+      "targets": [
+        "@nocobase/app-plugin-file",
+        "packages/@nocobase/app-plugin-file/skills/nocobase-app-plugin-file"
+      ],
+      "paths": [
+        ".agents/skills/nocobase-app-plugin-file/SKILL.md",
+        "packages/@nocobase/app-plugin-file/registry/component-ui/lib/file-preview.ts"
+      ],
+      "evidence": [
+        {
+          "id": "E4",
+          "kind": "skill",
+          "path": "packages/@nocobase/app-plugin-file/skills/nocobase-app-plugin-file/SKILL.md",
+          "observation": "Skill 说明 DOCX/XLSX/PPTX 本地渲染、同源凭据限制、Bearer-only 内容的适配方式，以及 OOXML/PDF/text 取数凭据规则。",
+          "lines": [
+            233,
+            239
+          ],
+          "excerpt": "Preview supports safe raster images, PDF via a fetched blob, text/Markdown and audio/video. HTML/SVG/XML previews and unsafe URL schemes are rejected. DOCX, XLSX and PPTX use lazily loaded `@silurus/ooxml` viewers to render locally from `FileRecord.contentUrl`; their content is not sent to a third-party preview service. Legacy DOC/XLS/PPT and OpenDocument formats use Office Online, which requires an internet-accessible absolute URL and cannot use the App session.\n\nOOXML, PDF and text fetches use same-origin credentials. An App-owned content route protected by same-origin session cookies can therefore serve restricted previews, provided it checks the caller's record access. Cross-origin fetches omit credentials and require CORS; an external cookie-protected URL is not supported by this default path. The Repository API client's Bearer token is not automatically attached to content fetches.\n\nFor Bearer-only content authorization, adapt the installed Registry source in the App. Add an authenticated content loader to the OOXML fetch path and `PreviewBody`'s PDF/text fetches, and adapt download and media/image paths as needed. Resolve authentication through the App's supported client/session services and send credentials only to the trusted content endpoint. Do not put tokens in `contentUrl`. If the adapter creates blob URLs, keep an App-owned trusted URL set, pass it to the relevant `resolveSafeFileUrl` calls, and revoke URLs when replaced or unmounted. Merely assigning a `blob:` URL to `FileRecord.contentUrl` is insufficient: the default components reject untrusted blob URLs.\n\nOOXML request or rendering failure displays an error and, when downloads are enabled, a download action. `download={false}` removes that action. This is not a second preview service or a guarantee that downloading the same inaccessible URL will succeed.",
+          "sha256": "3fab337bc1a1412ba9affb4cd5ec2e79e76abe1f9b1803b7f2ebe4e293f188f5"
+        },
+        {
+          "id": "E3",
+          "kind": "code",
+          "path": "packages/@nocobase/app-plugin-file/registry/component-ui/lib/file-preview.ts",
+          "observation": "resolveFilePreviewKind 按 MIME/扩展名把文件分为 image/pdf/audio/video/text/markdown/ooxml/office/unsupported，并显式屏蔽 HTML/SVG/XML 等活动内容。",
+          "lines": [
+            111,
+            140
+          ],
+          "excerpt": "export function resolveFilePreviewKind(file: FileRecord): FilePreviewKind {\n  const mimeType = file.mimeType.split(';', 1)[0]?.trim().toLowerCase() ?? '';\n  const extension = fileExtension(file.filename);\n  if (\n    ACTIVE_MIME_TYPES.has(mimeType) ||\n    mimeType.endsWith('+xml') ||\n    ACTIVE_EXTENSIONS.has(extension)\n  ) {\n    return 'unsupported';\n  }\n  if (mimeType === 'text/markdown' || extension === '.md') return 'markdown';\n  if (resolveOfficeOpenXmlFormat(file)) return 'ooxml';\n  if (OFFICE_MIME_TYPES.has(mimeType) || OFFICE_EXTENSIONS.has(extension)) {\n    return 'office';\n  }\n  if (isSafeImagePreview(file)) return 'image';\n  if (mimeType === 'application/pdf' || extension === '.pdf') return 'pdf';\n  if (mimeType.startsWith('audio/')) return 'audio';\n  if (mimeType.startsWith('video/')) return 'video';\n  if (\n    mimeType.startsWith('text/') ||\n    mimeType === 'application/json' ||\n    extension === '.json'\n  ) {\n    return 'text';\n  }\n  return 'unsupported';\n}\n\nexport function resolveOfficeEmbedUrl(value: string): string | undefined {",
+          "sha256": "4bb84baf6dfc6a5dc344db66adbc20960ab76b010898ff30f060c2c817809ed0"
+        }
+      ],
+      "fingerprint": "e356d75802bb9b3b8b44c4c66d8547a2dda9451ea675a19369e4f37f8b87cc5f"
+    },
+    {
+      "id": "366:36276932178:1:F4",
+      "report": "366:36276932178:1",
+      "issue": 366,
+      "taskTitle": "设备售后服务与巡检协同系统",
+      "appVersion": "1.0.0-beta.47",
+      "appTemplate": "@nocobase/app-template-default",
+      "finding": {
+        "id": "F4",
+        "kind": "improvement",
+        "owner": "documentation",
+        "severity": "minor",
+        "confidence": "confirmed",
+        "status": "open",
+        "title": "授权 Skill 未提醒范围谓词不能复用 root/不受限 bypass",
+        "detail": "Skill 反复说明 unrestricted identity 跳过所有规则，也说明岗位与范围分离，但没有点明应用常见的 hasRole helper 若用于 isCustomer/isObserver 等限制谓词，会让 root 同时满足每个受限岗位。该缺陷使 root 的客户/设备/工单列表变空，且看板因先判断 coordinator 而掩盖了问题。",
+        "impact": "缺少显式提醒时，Agent 容易在范围谓词里复用带 root bypass 的角色判断，产生看似权限正确、实则空列表的结果。",
+        "suggestedChange": "在 references/business-module.md 或主 SKILL.md 增加一条：区分能做该操作与属于该主体，限制/范围谓词只检查显式角色，并为 root 编写正反单测。",
+        "evidence": [
+          "E8",
+          "E9"
+        ],
+        "diagnosis": {
+          "category": "guidance-gap",
+          "trigger": "应用把带 root bypass 的 hasRole 复用到 isCustomer/isObserver 等记录范围谓词",
+          "expected": "Skill 明确区分授权谓词与主体谓词，避免 root 命中受限岗位",
+          "actual": "Skill 未提醒，应用因此让 root 成为所有受限主体并清空三个列表",
+          "workaround": "新增 hasExplicitRole 只检查显式 roles，供 isCustomer/isIntegrator/isObserver 使用",
+          "acceptance": "Skill 增加该条提醒；应用为每个范围谓词补 root 单测，断言 root 不被判定为受限主体"
+        }
+      },
+      "targets": [
+        "packages/@nocobase/app-plugin-authorization/skills/nocobase-app-plugin-authorization"
+      ],
+      "paths": [
+        ".agents/skills/nocobase-app-plugin-authorization/SKILL.md"
+      ],
+      "evidence": [
+        {
+          "id": "E8",
+          "kind": "skill",
+          "path": "packages/@nocobase/app-plugin-authorization/skills/nocobase-app-plugin-authorization/SKILL.md",
+          "observation": "Skill 描述注册语义：未注册 collection 对所有人拒绝、composite 只组合其列出的授权、字段与关系操作代码拥有、关系写不继承目标集合约束。",
+          "lines": [
+            65,
+            72
+          ],
+          "excerpt": "- Register collections explicitly with `authz.database.collections.add({ name, title, actions? })`. Metadata comes from the database; registration grants nothing. Unregistered collections are denied even to unrestricted users.\n- `settings`, `composite` and `database.collection` are catalog types: a check on an unregistered item or action is denied with `RESOURCE_ACTION_NOT_SUPPORTED`. `page`, `user`, `notification` and Hub types are record types that declare actions only; their grants use `id: '*'` for every record.\n- A composite action composes exactly the grants it lists, never another composite. A data scope targets the one collection its grant actions name, whose type must declare `recordAccess` (`database.collection` does). Grant page access separately; a page grant never authorizes a server endpoint.\n- `can` is for feature visibility. `require` needs an unconditional permit and rejects conditional decisions. Business endpoints use `authorize`, reject denial or missing policies, and consume `conditions.database` without resolving collection grants again.\n- For simple business CRUD, keep the Repository route definition and bind each method to its composite action with `authz.database.authorizeRepository`. Multi-scope actions and workflow transitions need custom handlers. `authz.database.policyFor` folds collection grants; without its third argument it does not respect a business-action boundary.\n- Scope every read and write in the workflow, including parent lookups. Keep multi-record writes transactional and include expected business state in mutation predicates. Authorization does not validate a quote's amount or its workflow transition.\n- Fields and relation operations are code-owned. The permission workspace configures pages, business actions, their data scopes and settings items; do not build a second raw-field permission editor.\n- Relation writes do not inherit the target collection's standalone constraints. Declare target record access and join-table fields explicitly; keep foreign-key fields from bypassing association controls.",
+          "sha256": "98475be31cc496d5f02d42bc3e0cd71a149de0bcae94bcc1a4afea485fb73357"
+        },
+        {
+          "id": "E9",
+          "kind": "skill",
+          "path": "packages/@nocobase/app-plugin-authorization/skills/nocobase-app-plugin-authorization/SKILL.md",
+          "observation": "Skill 要求用岗位表达权限集、用记录范围表达归属，并明确一人可同时持有直接岗位与继承团队岗位、撤销一个来源应保留另一个。",
+          "lines": [
+            29,
+            33
+          ],
+          "excerpt": "Before writing grants, turn the requirement into a matrix: actor/job, page, business action, allowed records, readable/writable fields, relation operations and exceptions. Identify who administers assignments separately from who uses the business feature. Ask only about missing decisions that affect access; record concrete assumptions and continue independent modeling work.\n\nUse jobs as permission sets, such as sales engineer or delivery specialist. Ownership, region and assigned projects are record scopes, not extra role names. A person may hold a direct job plus an inherited team job. Define whether revoking one source should preserve the other. Describe each exception as a business fact: a delegated quote, a confidential project, or an active delivery team.\n\nThe sales example separates quote preparation from regional submission responsibility: an engineer can edit their own out-of-region draft but cannot submit it unless the parent project is also accessible. This is a useful model for multi-table operations; copy the responsibility boundary, not its fixture IDs, demo accounts or reset endpoint.",
+          "sha256": "98475be31cc496d5f02d42bc3e0cd71a149de0bcae94bcc1a4afea485fb73357"
+        }
+      ],
+      "fingerprint": "8734406c00939c83afbdbbec140fb0ab652eec01785e0b4fbe0c920a48ea2c0d"
+    },
+    {
+      "id": "366:36276932178:1:F8",
+      "report": "366:36276932178:1",
+      "issue": 366,
+      "taskTitle": "设备售后服务与巡检协同系统",
+      "appVersion": "1.0.0-beta.47",
+      "appTemplate": "@nocobase/app-template-default",
+      "finding": {
+        "id": "F8",
+        "kind": "improvement",
+        "owner": "documentation",
+        "severity": "minor",
+        "confidence": "confirmed",
+        "status": "open",
+        "title": "自定义 target 的完成上报与 worker 部署约束缺少最小端到端示例",
+        "detail": "Scheduler 只运行 schedule worker，登记 accepted 后必须由业务 worker 通过 registerTarget 返回的 handle 调用 reportCompletion，否则 reconcile 只能 inspect。references/targets.md 已解释该契约，但注册时机、handle 传递与队列连接是常见失败点，示例偏片段化。",
+        "impact": "Agent 容易只完成 dispatch 就认为任务完成，或在 Job 中错误假设 this.app，导致终态长期未上报。",
+        "suggestedChange": "补一个可运行的最小 target + Queue Job 端到端示例与检查清单，覆盖 handle 传递、inspect 回退、worker 连接与终态上报。",
+        "evidence": [
+          "E19",
+          "E17"
+        ],
+        "diagnosis": {
+          "category": "usability-improvement",
+          "trigger": "注册需要异步完成的应用 target 并放入队列执行",
+          "expected": "Skill 给出可照抄的完整链路与部署检查点",
+          "actual": "现有示例分散，handle 传递与 worker 连接需读者自行拼接",
+          "workaround": "按 references/targets.md 的分段说明自行组装，并把 handle 保存在 Provider 上",
+          "acceptance": "Skill 提供最小端到端示例，读者照抄即可看到 occurrence 从 waiting 到真实终态"
+        }
+      },
+      "targets": [
+        "@nocobase/app-plugin-scheduler",
+        "packages/@nocobase/app-plugin-scheduler/skills/nocobase-app-plugin-scheduler"
+      ],
+      "paths": [
+        ".agents/skills/nocobase-app-plugin-scheduler/references/targets.md",
+        "packages/@nocobase/app-plugin-scheduler/dist/server/schedules/registry.js"
+      ],
+      "evidence": [
+        {
+          "id": "E19",
+          "kind": "skill",
+          "path": "packages/@nocobase/app-plugin-scheduler/skills/nocobase-app-plugin-scheduler/references/targets.md",
+          "observation": "references 要求检查 dispatch→业务 worker→终态通知→持久恢复全链路，reportCompletion 只在真实终态调用，inspect 恢复同一执行且不得重写历史。",
+          "lines": [
+            80,
+            100
+          ],
+          "excerpt": "Review the complete execution chain: dispatch → business worker consumption → terminal notification → persisted-state recovery. Scheduler runs its `schedule` worker only; the actual business worker must also be running on the selected connection/queue. Reconciliation observes execution state and cannot consume or execute the business Job.\n\nIn addition to dispatch and consumption, an asynchronous target needs all of the following:\n\n1. **Terminal notification:** `registerTarget()` returns a handle; call `handle.reportCompletion(occurrenceId, reference, completion)` after actual success or exhausted retries. A failed attempt that will retry is not terminal failure. The handle only completes occurrences its own target started, so keep it on the Provider rather than re-deriving it. Queue Jobs are constructed through the application queue provider's Job factory, which supplies shared infrastructure such as database and logger rather than the application container; pass the handle through an explicit factory or service you own and do not assume a Job has `this.app`.\n2. **Recovery queries:** implement `inspect(reference)` on the target and query persisted execution state. Reconciliation routes by the target type the occurrence recorded when it started, so a definition later retargeted elsewhere still inspects through the target that began the run.\n3. **Reliable references:** notifications and inspection use the same `{ type, id }`, recoverable across processes. Do not use an in-process Map as the authoritative terminal state. Other execution systems use their own stable, non-conflicting reference types.\n\nQueue Job success does not automatically mark Scheduler success. Returning `accepted` alone is incomplete. A notification can be lost or arrive before acceptance is persisted; inspection compensates for these cases. Nothing observes a Queue Job for you.\n\n## Historical Occurrences After Retargeting\n\nChanging a definition's target affects later executions; it does not transfer ownership of an existing occurrence. For example, if a definition changes from `app.export` to `workflow` while an export is waiting, that occurrence still belongs to `app.export`.\n\nA valid completion requires all three conditions together:\n\n1. Use the handle registered for the original target type recorded on the occurrence, not the new definition target's handle. Keep the original target integration available while its executions remain outstanding; a process restart can register that same type again.\n2. Supply the original occurrenceId and its accepted reference, matching both `reference.type` and `reference.id`. Knowing the occurrenceId or original target type alone is insufficient. An ownership or reference mismatch is rejected with `REFERENCE_MISMATCH`.\n3. Report the real executor's terminal outcome, after success or final failure rather than an attempt that will retry. A duplicate report of the same terminal status is idempotent; a conflicting terminal status is rejected with `COMPLETION_CONFLICT`.\n\nIf notification arrives before the accepted reference is persisted, it can return without completing the occurrence. Verify persisted history and let `inspect()` recover the original execution's state. Recovery routes through the occurrence's recorded target type and reference; do not launch replacement work or rewrite history to make a callback match.",
+          "sha256": "dd51761ab3df0edc2a7fb2bc96083e44c83257edcc240dc451c5bc5622ec8158"
+        },
+        {
+          "id": "E17",
+          "kind": "code",
+          "path": "packages/@nocobase/app-plugin-scheduler/dist/server/schedules/registry.js",
+          "observation": "target registry 的 inspect 在 target 未提供 observer 时返回 state unknown/reason observer-unavailable，而不是假定成功。",
+          "lines": [
+            35,
+            47
+          ],
+          "excerpt": "                reason: validation.reason ?? 'invalid-config',\n            };\n        return target.start(config, context);\n    }\n    inspect(targetType, reference) {\n        const target = this.get(targetType);\n        return target?.inspect\n            ? target.inspect(reference)\n            : Promise.resolve({ state: 'unknown', reason: 'observer-unavailable' });\n    }\n    referenceHref(targetType, reference) {\n        return this.get(targetType)?.referenceHref?.(reference);\n    }",
+          "sha256": "a908b07aa1cc2de224b0a4f9cfc77422064fdcb6d25abb33cb931c31923f07b4"
+        }
+      ],
+      "fingerprint": "d2920165f12070db2f789e79a12fe17d63574f57a66d275037ff443020a3b91f"
     },
     {
       "id": "369:36229373182:1:F2",
