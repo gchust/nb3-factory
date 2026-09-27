@@ -1,11 +1,21 @@
 {
   "version": 1,
-  "inputHash": "0336880b84e909e639e15ee0cbf74a22037f8713026ceddbd8bd4d48127ec3ad",
+  "inputHash": "d9ddc7b9444bb94a0dce66adea8a2fd46ca304c15fd6c4cbab35960cc2f39c17",
   "sources": [
     {
       "id": "408:36329180371:1:F2",
       "report": "408:36329180371:1",
       "fingerprint": "f8a4ff2afada4e19ac479be17cffdfd43377763680db5d8ee9da17728e38ecd3"
+    },
+    {
+      "id": "409:36329183962:1:F1",
+      "report": "409:36329183962:1",
+      "fingerprint": "1386fc2bb6f4fb89f7a7401a4f78cfce4584ac1fb3a6cb596d342874a1cda334"
+    },
+    {
+      "id": "409:36329183962:1:F2",
+      "report": "409:36329183962:1",
+      "fingerprint": "54f628ffab1b49e54a168a54b2600777c7bff2830c670d3f746c936ff1598b1c"
     },
     {
       "id": "411:36329191920:1:F2",
@@ -61,70 +71,84 @@
   "groups": [
     {
       "title": "示例/演示数据缺少正式承载路径，与 seed 的定位相冲突",
-      "reason": "408:F2 的 E20 显示 nocobase-db Skill 规定 seed 只插入运行所需记录并明确“a seed is never sample or demonstration content”，同时推荐“唯一约束 + upsertOne”；E30 显示对应迁移只为 customerName 建普通索引；E31 显示示例数据被迫写入 seed，用 exists + createOne 且未落到唯一约束。三者指向同一缺口——文档未给出首装/演示数据的正式承载路径，也未明确示例数据的幂等键要求，故单独保留。",
+      "reason": "408:F2 的 E20 显示 nocobase-db Skill 规定 seed 只插入运行所需记录并明确“a seed is never sample or demonstration content”，同时推荐唯一约束 + upsertOne；E30 显示应用迁移只为 customerName 建普通索引；E31 显示示例数据被迫写入 seed，用 exists + createOne 且未落到唯一约束。三条证据指向同一文档缺口——框架未给出首装/演示数据的正式承载路径，也未明确示例数据的幂等键要求。该根因在同批证据中没有其他发现共享，故单独保留。",
       "members": [
         "408:36329180371:1:F2"
       ]
     },
     {
+      "title": "站内信 Skill 禁止导入 store 实现，但包公开导出 store 与 token，直接调用会绕过收件人校验",
+      "reason": "409:F1 的 E20 显示 inbox-integration.md 禁止从应用代码导入 store 实现/内部路径，并说明数据库 Provider 写入前做 recipientExists 校验；E23 显示 DatabaseInAppStore.deliver 只做重复 deliveryId 幂等、不校验 userId；E24 显示 recipientExists 只存在于 Provider.send；E25 显示 Provider 注册与学生 store token 注入。四条证据共同指向同一指引缺口——文档约束与包 /server 公开导出面自相矛盾。该根因无其他发现共享，故单独保留。",
+      "members": [
+        "409:36329183962:1:F1"
+      ]
+    },
+    {
+      "title": "文件内容路由默认公开，每个应用都必须自行加鉴权",
+      "reason": "409:F2 的 E12 显示 file SKILL 说明 accessPath 内容路由是公开例外，需应用对 <accessPath>/* 与各动作自加鉴权并避免 use('*')；E13 显示 defineFileRepositoryApiRoutes 注释明确为“Public first-version routes. Authentication and authorization are application-owned.”。两条证据指向插件默认安全姿态这一根因（默认公开、把授权责任外推给应用），修复方向是给 API 增加受保护模式，而非补文档说明已有中间件入口。该根因与 414:F1 的文档缺口不同，且无其他发现共享，故单独保留。",
+      "members": [
+        "409:36329183962:1:F2"
+      ]
+    },
+    {
       "title": "缺少对 useRouteOverlay 作用域误用的开发期静态/测试护栏",
-      "reason": "411:F2 的 E22 记录 app/AGENTS.md 要求 useRouteOverlay 只能在 overlay 后代组件调用；E30 显示守卫仅在运行期 context 为空时抛错；E31 显示 contacts/new.tsx 在返回 RouteDialog 的页面组件顶层误用；E33 显示新增测试只覆盖正确用法。四条证据共同指向模板缺少开发期静态/测试护栏这一可用性缺口，与同报告 F5/F6 的模板格式、聚合示例等根因不同，且同报告内禁止合并，故单独保留。",
+      "reason": "411:F2 的 E22 显示 app/AGENTS.md 要求 useRouteOverlay 只能在 overlay 后代组件调用；E30 显示守卫仅在运行期 context 为空时抛错；E31 显示 contacts/new.tsx 在返回 RouteDialog 的页面组件顶层误用；E33 显示新增测试只覆盖正确用法、不含反例。四条证据共同指向模板缺少开发期静态/测试护栏这一可用性缺口。该根因无其他发现共享，故单独保留。",
       "members": [
         "411:36329191920:1:F2"
       ]
     },
     {
       "title": "Repository 已提供 aggregate/groupBy，指引缺少按父记录求合计示例",
-      "reason": "411:F6 的 E7 与 E8 显示 repository 已声明并实现 aggregate/groupBy，E10 显示 SKILL §4 仅在方法清单中列出而未给业务化示例，E26 显示应用改用 findMany 全量拉取后按 customerId 分组 reduce 求和。四者指向同一指引缺口——缺少可直接套用的“按外键分组求合计”示例，与同报告其他发现根因不同，故单独保留。",
+      "reason": "411:F6 的 E7 与 E8 显示 repository 已声明并实现 aggregate/groupBy；E10 显示 SKILL §4 仅在方法清单中列出而未给业务化示例；E26 显示应用改用 findMany 全量拉取后按 customerId 分组 reduce 求和。四者指向同一指引缺口——缺少可直接套用的“按外键分组求合计”示例，与同报告其他发现根因不同，且无其他发现共享，故单独保留。",
       "members": [
         "411:36329191920:1:F6"
       ]
     },
     {
       "title": "保护插件生成的公开内容路由所需中间件机制未写入 Skill",
-      "reason": "414:F1 的 E21 显示 file SKILL 要求在各贡献自有路径注册鉴权、禁止 router.use('*')，却未给出可先于贡献路由注册的前置中间件 API；E23 显示 authentication 参考示例只覆盖应用自建 defineApiRoutes，无法套用到插件 root-scope 内容路由；E19 与 E17 显示 addHttpMiddleware/defineHttpMiddleware 是公开装配入口且先于 route contribution 注册；E31、E32 显示 Agent 只能 grep dist 类型声明自行摸索。五条证据指向同一文档缺口，与同报告 F2 的 Registry 运行期失败根因不同，故单独保留。",
+      "reason": "414:F1 的 E21 显示 file SKILL 要求在各贡献自有路径注册鉴权、禁止贡献 router 的 router.use('*')，却未给出可先于贡献路由注册的前置中间件 API；E23 显示 authentication 参考示例只覆盖应用自建 defineApiRoutes，无法套用到插件 root-scope 内容路由；E19 与 E17 显示 addHttpMiddleware/defineHttpMiddleware 是公开装配入口且先于 route contribution 注册；E31、E32 显示 Agent 只能 grep dist 类型声明自行摸索。证据共同指向同一文档缺口（已有机制未写入 Skill），与 409:F2 的插件默认公开根因和 414:F2 的 Registry 运行期失败根因均不同，故单独保留。",
       "members": [
         "414:36329202870:1:F1"
       ]
     },
     {
       "title": "Registry 默认图片预览/缩略图不呈现损坏图片的失败",
-      "reason": "414:F2 的 E26 显示 FilePreviewContent 图片分支只渲染无 onError 的 <img>，虽有统一 role=alert 错误分支；E28 显示 FileThumbnail 同样无 onError，损坏图片不会回退类型图标；E22 显示 SKILL 要求失败请求/非法文档给出错误呈现。三者指向同一默认组件失败呈现缺口（usability-improvement），与同报告 F1 的文档指引缺口不同，故单独保留。",
+      "reason": "414:F2 的 E26 显示 FilePreviewContent 图片分支仅返回无 onError 的 <img>，而组件已有统一 role=alert 的 error 呈现；E28 显示 FileThumbnail 同样无 onError，损坏图片不会回退类型图标；E22 显示 SKILL 要求失败请求/非法文档给出错误呈现。三者指向同一默认组件失败呈现缺口（usability-improvement），与 414:F1 的文档指引缺口不同，且无其他发现共享，故单独保留。",
       "members": [
         "414:36329202870:1:F2"
       ]
     },
     {
       "title": "Workflow Skill 对 Run 模块导入解析与 token 导入的描述在生产 Artifact 中不成立",
-      "reason": "415:F1 的 E4/E5 显示 dsl-authoring.md 称 Run 模块按应用普通运行时依赖规则解析、且要求导入服务 owner 的原始公共 token；E1 显示 loadRunModule 用原生 import() 且强制解析在 artifact root 内；E3 显示 artifact 仅复制源码不注入 node_modules；E6 显示 token 为身份对象；E11 显示生产验收因 Cannot find package '@nocobase/db' 返回 502。五条证据共同指向 Skill 的错误指引（guidance-gap），与同报告 F2 的插件能力缺口根因不同，且同报告内禁止合并，故单独保留。",
+      "reason": "415:F1 的 E4/E5 显示 dsl-authoring.md 称 Run 模块按应用普通运行时依赖规则解析、且要求导入服务 owner 的原始公共 token；E1 显示 loadRunModule 用原生 import() 且强制解析在 artifact root 内；E3 显示 artifact 仅复制源码不注入 node_modules；E6 显示 token 为身份对象；E11 显示生产验收因 Cannot find package '@nocobase/db' 返回 502。五条证据共同指向 Skill 的错误指引（misleading/guidance-gap），与同报告 F2 的插件能力缺口根因不同，且同报告内两条禁止合并，故单独保留。",
       "members": [
         "415:36329207021:1:F1"
       ]
     },
     {
       "title": "服务令牌的身份语义使其无法跨 Workflow Artifact 边界解析",
-      "reason": "415:F2 的 E6 显示 createServiceToken 返回 Object.freeze({name}) 且同名 token 不相等；E7 显示容器以 token 对象身份为 Map 键；E8 显示 createWorkflowRunServices 只是原样转发应用 resolver；E9 显示修后改用字符串 token 绕行。四者共同指向插件缺少跨 artifact 的受支持服务解析通道（capability-gap），与同报告 F1 的文档错误指引根因不同，且同报告内禁止合并，故单独保留。",
+      "reason": "415:F2 的 E6 显示 createServiceToken 返回 Object.freeze({name})，同名 token 不相等；E7 显示容器以 token 对象身份为 Map 键；E8 显示 createWorkflowRunServices 只是原样转发应用 resolver，未做名称级或 artifact 级适配；E9 显示修后改用字符串 token 绕行。四者共同指向插件缺少跨 artifact 的受支持服务解析通道（capability-gap），与同报告 F1 的文档错误指引根因不同，且同报告内两条禁止合并，故单独保留。",
       "members": [
         "415:36329207021:1:F2"
       ]
     },
     {
       "title": "Scheduler occurrence 历史接口最多返回 100 条且无分页参数",
-      "reason": "416:F4 的 E10（operations.md）明确 GET /api/schedules/:id/occurrences 至多返回最近 100 条且无分页参数，构成高频计划历史被静默截断的插件能力缺口。该缺口与同报告 F5 的入口可发现性、F6 的模板格式漂移根因不同，且同报告内两条发现禁止合并，故单独保留。",
+      "reason": "416:F4 的 E10（operations.md）明确 GET /api/schedules/:id/occurrences 至多返回最近 100 条且无分页参数，构成高频计划历史被静默截断的插件能力缺口。该缺口与同报告 F5 的入口可发现性、F6 的模板格式漂移根因不同，且同报告内两条禁止合并，故单独保留。",
       "members": [
         "416:36329210119:1:F4"
       ]
     },
     {
       "title": "Scheduler 设置页入口嵌套在 Automation 分组下，Agent/无障碍快照中较难发现",
-      "reason": "416:F5 的 E33 浏览器验收记录显示 QA 只能通过 DOM 中文本为空的链接发现 /main/settings/schedules，属于入口可发现性/无障碍可观测性问题。其证据与根因与同报告 F4 的 API 分页能力缺口、F6 的模板格式问题不同，且同报告内禁止合并；该发现 confidence 为 suspected、targets 为空，也不足以归入其他根因，故单独保留。",
+      "reason": "416:F5 的 E33 浏览器验收记录显示 QA 只能通过 DOM 中文本为空的链接发现 /main/settings/schedules，属于入口可发现性/无障碍可观测性问题。该发现 confidence 为 suspected、targets 为空，无法与其他根因对应；与同报告 F4 的 API 分页能力缺口、F6 的模板格式问题不同，且同报告内两条禁止合并，故单独保留。",
       "members": [
         "416:36329210119:1:F5"
       ]
     },
     {
       "title": "应用模板 AGENTS.md 存在多余空行，导致仓库 prettier/format:check 失败",
-      "reason": "411:F5 的 E42 显示 repair-1 通过 factory-template.json 与 git log 定位 AGENTS.md 为模板产物，并确认 prettier 输出在第 403 行多一空行、verify-1 因此失败；416:F6 的 E34 显示修复轮对 AGENTS.md 运行 prettier 得到同样 “403d402 < ” 的多余空行，且 package.json 的 format:check 为全仓库 prettier . --check，确认是模板预存的格式化漂移。两条发现来自不同报告（411、416），同为 owner=template、同一文件 app/AGENTS.md 的同一根因，修复方向一致，故合并。合并仅表示共同根因，不代表新版仍普遍存在缺陷或旧问题必然已修复；411:F5 状态为 resolved、416:F6 为 unknown。",
+      "reason": "411:F5 的 E42 显示 repair-1 通过 factory-template.json 与 git log 定位 AGENTS.md 为模板产物，并确认 prettier 因第 403 行多余空行使 verify-1 失败；416:F6 的 E34 显示修复轮对 AGENTS.md 运行 prettier 得到同样“403d402 <”的多余空行，且 package.json 的 format:check 为全仓库 prettier . --check，确认是模板预存的格式化漂移。两条发现来自不同报告（411、416），同为 owner=template、同一文件 app/AGENTS.md 的同一根因，修复方向一致（在模板生成或 CI 阶段格式化），故合并。合并仅表示共同根因，不代表新版仍普遍存在缺陷或旧问题必然已修复；411:F5 状态为 resolved、416:F6 为 unknown。",
       "members": [
         "411:36329191920:1:F5",
         "416:36329210119:1:F6"
@@ -135,9 +159,9 @@
     "engine": "pi",
     "model": "deepseek-v4.1-flash",
     "version": "0.86.1",
-    "runId": "36340414191",
+    "runId": "36341126591",
     "attempt": 1,
     "controlSha": "66e5c5081dac60b6b235bbfc5caebce49dde72d6",
-    "completedAt": "2026-09-27T18:23:43.059Z"
+    "completedAt": "2026-09-27T18:35:22.510Z"
   }
 }
