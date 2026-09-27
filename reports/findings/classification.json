@@ -1,19 +1,55 @@
 {
   "version": 1,
-  "inputHash": "5d2c32d580a1c50c903eb895ca318c3eb10e40d2fc042894723b173a2a72a343",
+  "inputHash": "0eaf3844770daf2579c8d7a1ec5a79f3002946384bc57420a7337529807f2080",
   "sources": [
     {
       "id": "408:36329180371:1:F2",
       "report": "408:36329180371:1",
       "fingerprint": "f8a4ff2afada4e19ac479be17cffdfd43377763680db5d8ee9da17728e38ecd3"
+    },
+    {
+      "id": "416:36329210119:1:F4",
+      "report": "416:36329210119:1",
+      "fingerprint": "4325d7debd32e49d58f87b4d33f6c8210a2bf70de9ca3774e9b562668fcf69fa"
+    },
+    {
+      "id": "416:36329210119:1:F5",
+      "report": "416:36329210119:1",
+      "fingerprint": "e77fa8aebfd159a5edd0136ac0c943715fd61ff0378c5688c6880d033327e791"
+    },
+    {
+      "id": "416:36329210119:1:F6",
+      "report": "416:36329210119:1",
+      "fingerprint": "4ff0e440a3292c4f5afb73dc62fae0bef870cb63feae3853889b488babe2ae2e"
     }
   ],
   "groups": [
     {
       "title": "示例/演示数据缺少正式承载路径，与 seed 的定位相冲突",
-      "reason": "本次输入仅含一条发现，且其证据自洽：E20 表明 nocobase-db Skill 规定 seed 只承载运行所需记录且“a seed is never sample or demonstration content”，并推荐以唯一约束 + upsertOne 保证幂等；E30 显示对应迁移只为 customerName 建普通索引；E31 显示示例数据被迫写入 seed，并用 exists + createOne 而非唯一约束 + upsertOne。三者共同指向同一缺口——文档未给出首装/演示数据的正式路径，且未就示例数据明确幂等键要求。无其他同报告或跨报告成员可归并，故单独保留。",
+      "reason": "E20 表明 nocobase-db Skill 规定 seed 只承载运行所需记录且“A seed is never sample or demonstration content”，并推荐唯一约束 + upsertOne 保证幂等；E30 显示对应迁移只为 customerName 建普通索引；E31 显示示例数据被迫写入 seed，并用 exists + createOne 而非唯一约束 + upsertOne。三者共同指向同一缺口——文档未给出首装/演示数据的正式路径，也未就示例数据明确幂等键要求。其余发现均无对应证据或相同根因，且无同报告成员可归并，故单独保留。",
       "members": [
         "408:36329180371:1:F2"
+      ]
+    },
+    {
+      "title": "Scheduler occurrence 历史接口最多返回 100 条且无分页参数",
+      "reason": "E10（operations.md）明确 GET /api/schedules/:id/occurrences 至多返回最近 100 条且无分页参数，构成高频计划历史被静默截断的能力缺口。这是 Scheduler 接口能力问题，与同报告 F5 的入口可发现性、F6 的模板格式漂移根因不同，且同一报告内两条发现禁止合并，故单独保留。",
+      "members": [
+        "416:36329210119:1:F4"
+      ]
+    },
+    {
+      "title": "Scheduler 设置页入口嵌套在 Automation 分组下，Agent/无障碍快照中较难发现",
+      "reason": "E33 浏览器验收记录显示 QA 只能通过 DOM 中文本为空的链接发现 /main/settings/schedules，属于入口可发现性/无障碍可观测性问题（confidence=suspected）。其证据与根因均与 F4 的 API 分页能力缺口、F6 的模板格式问题不同，且同一报告内禁止合并，故单独保留。",
+      "members": [
+        "416:36329210119:1:F5"
+      ]
+    },
+    {
+      "title": "应用模板中的 AGENTS.md 与仓库自身 format:check 不一致",
+      "reason": "E34 修复轮日志显示 AGENTS.md 存在多余空行（diff 403d402），导致全新应用的 prettier format:check 失败，属于应用模板自带的格式化漂移，与前三条指引缺口、API 能力、导航可发现性均无共同根因。无其他发现的证据指向该文件或该根因，且同一报告内禁止合并，故单独保留。",
+      "members": [
+        "416:36329210119:1:F6"
       ]
     }
   ],
@@ -21,9 +57,9 @@
     "engine": "pi",
     "model": "deepseek-v4.1-flash",
     "version": "0.86.1",
-    "runId": "36332220957",
+    "runId": "36332749827",
     "attempt": 1,
     "controlSha": "66e5c5081dac60b6b235bbfc5caebce49dde72d6",
-    "completedAt": "2026-09-27T16:10:43.204Z"
+    "completedAt": "2026-09-27T16:19:19.211Z"
   }
 }
