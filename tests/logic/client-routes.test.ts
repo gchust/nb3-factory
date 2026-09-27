@@ -88,12 +88,14 @@ describe('app client routes', () => {
   it('pins the route names page grants are stored against', () => {
     // A route's `name` is the identifier a stored page grant records. Renaming one is a data change that has to
     // migrate the grants that name it, not a refactor — so changing this list deliberately is the point. A new page
-    // that requires sign-in adds an entry here, because that is a new grant somebody has to be given.
+    // that requires sign-in adds an entry here; `authorizedAs` is the page id a grant would name, or `null` when the
+    // page opted out of page authorization.
     const resolved = resolveRoutes();
 
-    // The landing page opted out of page authorization, so it is reachable by every signed-in user.
+    // Both pages opted out of page authorization, so both are reachable by every signed-in user.
     expect(pageAuthorizations(resolved.routes)).toEqual([
       { name: 'home', authorizedAs: null },
+      { name: 'todos', authorizedAs: null },
     ]);
   });
 });
