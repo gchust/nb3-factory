@@ -1,5 +1,84 @@
 {
   "version": 1,
-  "inputHash": "b6e0bb87bd5035885d74e6e0a9345b7baad41e7ecfd1a03f366f11483213bd6e",
-  "findings": []
+  "inputHash": "5d2c32d580a1c50c903eb895ca318c3eb10e40d2fc042894723b173a2a72a343",
+  "findings": [
+    {
+      "id": "408:36329180371:1:F2",
+      "report": "408:36329180371:1",
+      "issue": 408,
+      "taskTitle": "基础数据系统：客户备忘录",
+      "appVersion": "1.0.0-beta.47",
+      "appTemplate": "@nocobase/app-template-default",
+      "finding": {
+        "id": "F2",
+        "kind": "improvement",
+        "owner": "documentation",
+        "confidence": "confirmed",
+        "severity": "info",
+        "status": "open",
+        "title": "示例/演示数据缺少正式承载路径，与 seed 的定位相冲突",
+        "detail": "nocobase-db Skill 明确“A seed is never sample or demonstration content”，migrations.md 也只承认 migrations/seeds 两条结构初始化路径。但任务要求“创建 3 条虚构示例记录”且“业务记录使用真实数据库与本轮框架的结构初始化约定”。Agent 只能把示例数据写进 seed，并把 customerName 当作幂等键；然而该迁移对 customerName 只建普通索引，seed 用的是 exists + createOne 而非文档推荐的“唯一约束 + upsertOne”，在并发或唯一性语义上都弱于指引。",
+        "impact": "演示/首次安装数据没有官方约定，Agent 会自造做法；同一份指引在“种子不得放示例数据”与“必须展示持久化示例数据”之间留下空白。",
+        "suggestedChange": "在数据库文档/Skill 中补充示例或首次安装数据的推荐路径；或在 seed 章节说明“首装示例数据是合法例外”，并统一建议以唯一约束 + upsertOne 保证幂等。",
+        "diagnosis": {
+          "category": "guidance-gap",
+          "trigger": "任务要求写入 3 条虚构示例记录，并要求使用真实数据库与本轮框架的结构初始化约定",
+          "expected": "文档给出示例/演示数据的正式承载方式，或明确 seed 可用于首装示例数据并说明幂等键要求",
+          "actual": "Skill 明确 seed 不承载示例数据，模板又只有 migrations/seeds 两条路径，导致示例数据只能塞进 seed 且未落到唯一约束 + upsertOne",
+          "workaround": "把示例数据写入 seed，以 customerName 做 exists 判断后 createOne，迁移仅建普通索引",
+          "acceptance": "文档新增示例数据路径或 seed 例外说明，并在该说明中要求幂等键有唯一约束、优先用 upsertOne"
+        },
+        "evidence": [
+          "E20",
+          "E30",
+          "E31"
+        ]
+      },
+      "targets": [
+        "app/.agents/skills/nocobase-db/SKILL.md"
+      ],
+      "paths": [
+        ".agents/skills/nocobase-db/SKILL.md"
+      ],
+      "evidence": [
+        {
+          "id": "E20",
+          "kind": "skill",
+          "path": "app/.agents/skills/nocobase-db/SKILL.md",
+          "observation": "Skill 说明迁移建结构、seed 只插入运行所需记录且“a seed is never sample or demonstration content”，并给出 defineMigration/defineSeed 示例与幂等约束。",
+          "lines": [
+            80,
+            135
+          ],
+          "excerpt": "A migration creates structure. A seed inserts the records the application needs in order to run. Neither does the other's job, and a seed is never sample or demonstration content.\n\n```ts\n// database/main/migrations/202609020001_create_orders.ts\nimport { defineMigration, type MigrationDefinition } from '@nocobase/db';\n\nconst migration: MigrationDefinition = defineMigration({\n  name: '202609020001_create_orders',\n\n  async up({ builder }) {\n    await builder.createCollection('orders', (collection) => {\n      collection.increments('id');\n      collection.string('orderNo', { length: 64, nullable: false });\n      collection.string('status', { length: 32, nullable: false });\n      collection.datetime('createdAt', { nullable: false });\n      collection.unique('orderNo');\n      collection.index('status');\n    });\n  },\n\n  async down({ builder }) {\n    await builder.dropCollection('orders');\n  },\n});\n\nexport default migration;\n```\n\n```ts\n// database/main/seeds/202609030002_default_order_statuses.ts\nimport { defineSeed } from '@nocobase/db';\n\nexport default defineSeed({\n  name: '202609030002_default_order_statuses',\n\n  async run({ repository }) {\n    await repository('orderStatuses').upsertOne({\n      filter: { code: 'draft' },\n      create: { code: 'draft', title: 'Draft' },\n      update: { title: 'Draft' },\n    });\n  },\n});\n```\n\nApply both with `pnpm nocobase db apply`, adding `--connection <name>` for a non-default connection or `--all` for every managed one.\n\nEach context carries its own tools, and which one to use is not a free choice — see [Repository and Query](#4-repository-and-query). In short: a migration works through `builder` and `query`, and a seed writes through `repository`.\n\nThe rules are absolute, because these files are history that has already run on other machines:\n\n- **Self-contained.** Spell out every table, field, index, constraint and metadata operation in the file. Never import a Collection definition, model, registry or shared constant that keeps evolving — that silently changes both the behavior and the checksum of something already applied.\n- **Immutable once merged.** Check with `git log -- <file>` if unsure. Before the branch is merged you may correct the file in place; after it, every change is a new, later file. Never hard-code a previous checksum to make an edited migration look untouched. Correcting it in place changes nothing on its own — it is recorded as executed, so a plain apply skips it and the database keeps the schema the old file produced. `pnpm nocobase db redo` rolls the latest batch back and applies it again.\n- **The file name body matches `name`**, and the name is unique across every source in the application.\n- **Declare `irreversible: true`** when there is no real reverse operation, instead of writing a `down()` that quietly does nothing.\n- **A seed is idempotent**, keyed on a stable business value backed by a unique constraint, so a repeated run is a no-op — `upsertOne` is the direct way to express that. A seed context has no `builder` at all, and a seed has no rollback or truncate behavior.",
+          "sha256": "f97c07a45a9d49c1d933ddbceeabcc9afe267b1356a2ded1a3da0dd56b54011c"
+        },
+        {
+          "id": "E30",
+          "kind": "code",
+          "path": "app/database/main/migrations/202609270001_create_customer_memos.ts",
+          "observation": "应用迁移用 defineMigration + builder.createCollection 声明客户名称(length200,notnull)、备注(text,null)、createdAt(notnull) 及索引，down 用 dropCollection(ifExists)。",
+          "lines": [
+            1,
+            27
+          ],
+          "excerpt": "import { defineMigration } from '@nocobase/db';\n\n/**\n * The single business table of the app: one memo per customer name plus an\n * optional note and the moment it was recorded.\n *\n * Self-contained on purpose. The migration spells out every column, index and\n * nullability so an already-applied run keeps meaning the same thing after the\n * application evolves around it.\n */\nexport default defineMigration({\n  name: '202609270001_create_customer_memos',\n  async up({ builder }) {\n    await builder.createCollection('customerMemos', (collection) => {\n      collection.increments('id');\n      collection.string('customerName', { length: 200, nullable: false });\n      collection.text('note', { nullable: true });\n      collection.datetime('createdAt', { nullable: false });\n      collection.index('customerName');\n      collection.index('createdAt');\n    });\n  },\n  async down({ builder }) {\n    await builder.dropCollection('customerMemos', { ifExists: true });\n  },\n});\n",
+          "sha256": "296c9d92fd3d16e1d9492ff312f7057fd39818b04822f759dc00d1ea8dc141cf"
+        },
+        {
+          "id": "E31",
+          "kind": "code",
+          "path": "app/database/main/seeds/202609270002_customer_memos_sample.ts",
+          "observation": "应用 seed 用 defineSeed + context.repository，以 customerName 为键 exists 后 createOne，写入 3 条固定时间戳的虚构记录。",
+          "lines": [
+            1,
+            47
+          ],
+          "excerpt": "import { defineSeed } from '@nocobase/db';\n\ninterface CustomerMemoSample {\n  readonly customerName: string;\n  readonly note: string | null;\n  readonly createdAt: string;\n}\n\n/**\n * Fictional starting data. The seed is keyed by customer name and skips a name\n * that is already present, so re-running it neither duplicates the samples nor\n * overwrites a memo someone edited. Timestamps are fixed rather than generated\n * so the seed produces the same rows on every installation.\n */\nconst sampleMemos: readonly CustomerMemoSample[] = [\n  {\n    customerName: '星河智能科技有限公司',\n    note: '年度软件授权已续约，关注第二季度上线的数据看板。',\n    createdAt: '2026-08-12T02:30:00.000Z',\n  },\n  {\n    customerName: '青禾食品有限公司',\n    note: '对账周期从月结改为周结，财务联系人王敏。',\n    createdAt: '2026-08-20T06:05:00.000Z',\n  },\n  {\n    customerName: '远山物流股份有限公司',\n    note: '计划新增两个仓库，需要重新评估接口对接排期。',\n    createdAt: '2026-09-01T09:40:00.000Z',\n  },\n];\n\nexport default defineSeed({\n  name: '202609270002_customer_memos_sample',\n  async run(context) {\n    const memos = context.repository<CustomerMemoSample>('customerMemos');\n    for (const memo of sampleMemos) {\n      const exists = await memos.exists({\n        filter: { customerName: memo.customerName },\n      });\n      if (!exists) {\n        await memos.createOne({ values: memo });\n      }\n    }\n  },\n});\n",
+          "sha256": "0758cb7b00fe4b6bd3b610377a4f405b260661c4c6c0d7edcdc64fd1310ac588"
+        }
+      ],
+      "fingerprint": "f8a4ff2afada4e19ac479be17cffdfd43377763680db5d8ee9da17728e38ecd3"
+    }
+  ]
 }
