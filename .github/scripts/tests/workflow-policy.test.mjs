@@ -198,7 +198,7 @@ test('a failed agent preserves a checkpoint and can publish failed work without 
     .split('- name: Prepare runner handoff metadata')[0];
   assert.match(
     patch,
-    /failure\(\) && \(steps\.implementation\.outcome == 'failure' \|\| steps\.verify\.outcome == 'failure'\)/,
+    /failure\(\) && \(steps\.implementation\.outcome == 'failure' \|\| steps\.verify\.outcome == 'failure' \|\| steps\.failure_smoke\.outcome == 'failure'\)/,
   );
   assert.match(patch, /id: patch/);
   const allowEmpty = patch.split('ALLOW_EMPTY_PATCH:')[1].split('\n')[0];
@@ -256,10 +256,7 @@ test('comment questions bypass implementation and publish replies through an iso
     /if: needs.prepare.outputs.status == 'ready' && needs.prepare.outputs.comment_kind != 'reply'/,
   );
   const reply = workflow.split('  reply:')[1].split('  publish-reply:')[0];
-  assert.match(
-    reply,
-    /needs.publish-failed.result == 'success' && 'failure'/,
-  );
+  assert.match(reply, /needs.publish-failed.result == 'success' && 'failure'/);
   assert.match(
     reply,
     /needs.publish-failed.result == 'success'\) && needs.prepare.outputs.work_branch/,
