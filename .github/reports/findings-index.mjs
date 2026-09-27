@@ -193,7 +193,7 @@ function clusterRow(cluster, index) {
 
 export async function renderFindingsIndex(
   reports,
-  { generatedAt, classification = null } = {},
+  { generatedAt, classification = null, baseline = null } = {},
 ) {
   const { occurrences, skipped } = collectOccurrences(reports);
   const input = createClassificationInput(occurrences);
@@ -210,7 +210,7 @@ export async function renderFindingsIndex(
       .map((item) => item.date)
       .sort()
       .at(-1) ??
-    '';
+    (baseline ? new Date(baseline.since).toISOString().slice(0, 10) : '');
   const template = await readFile(
     resolve(HERE, 'report.template.html'),
     'utf8',
@@ -219,10 +219,17 @@ export async function renderFindingsIndex(
   if (!style) throw new Error('模板缺少样式');
   const list = (items, offset) =>
     items.map((cluster, i) => clusterRow(cluster, offset + i)).join('');
-  const body = `<main class="fx-main"><header class="fx-head"><div class="eyebrow">NocoBase3 框架反馈 · 跨报告汇总 · <a class="text-link" href="../index.html">全部报告 →</a></div><h1>框架问题汇总</h1><p class="fb-scope">来自 ${reports.length} 份已发布报告，其中 ${reviewed} 份有可用的 v2 独立评审${skipped.length ? `（另有 ${skipped.length} 份评审数据不符合当前格式，未纳入）` : ''} · ${occurrences.length} 条框架发现展示为 <b>${clusters.length} 个分组</b>（${pending.length} 条待 Agent 归类） · 截至 ${escape(date)}</p><p class="fb-scope">由 Agent 对照根因、触发条件、实际行为与证据归类，可能误合并或漏合并；同一份报告内的两条发现不会合并。未归类的新发现单独保留，内容未变的发现沿用已有分组。每组保留原始报告与归类依据。等级取各次中最高的一次（有上游复核时按复核建议）。版本列来自搭建报告记录的 NocoBase App 模板版本，未记录时不推测。</p></header>
-<section class="fx-section"><h2>反复出现 <span>${repeated.length} 个问题 · 出现在 2 个及以上任务</span></h2><div class="fx-list">${list(repeated, 0) || '<p class="card report-empty">暂无跨任务重复出现的问题。</p>'}</div></section>
+  // Runs started before a reset stay archived but are not counted here.
+  const restart = baseline
+    ? `<p class="fb-scope">自 <b>${escape(new Date(baseline.since).toISOString().slice(0, 16).replace('T', ' '))} UTC</b> 起重新记录：只汇总此后开始的搭建；此前的 ${baseline.excluded} 份报告仍可在全部报告中查看，不计入本页。</p>`
+    : '';
+  const sections = clusters.length
+    ? `<section class="fx-section"><h2>反复出现 <span>${repeated.length} 个问题 · 出现在 2 个及以上任务</span></h2><div class="fx-list">${list(repeated, 0) || '<p class="card report-empty">暂无跨任务重复出现的问题。</p>'}</div></section>
 <section class="fx-section"><h2>已归类 · 只出现一次 <span>${single.length} 个问题</span></h2><div class="fx-list">${list(single, repeated.length)}</div></section>
-<section class="fx-section"><h2>待 Agent 归类 <span>${pending.length} 条发现 · 暂不合并</span></h2><div class="fx-list">${list(pending, repeated.length + single.length) || '<p class="card report-empty">所有发现均已归类。</p>'}</div></section>
+<section class="fx-section"><h2>待 Agent 归类 <span>${pending.length} 条发现 · 暂不合并</span></h2><div class="fx-list">${list(pending, repeated.length + single.length) || '<p class="card report-empty">所有发现均已归类。</p>'}</div></section>`
+    : `<section class="fx-section"><p class="card report-empty">${baseline ? '重新记录后尚无框架发现；新报告发布后会出现在这里。' : '暂无框架发现。'}</p></section>`;
+  const body = `<main class="fx-main"><header class="fx-head"><div class="eyebrow">NocoBase3 框架反馈 · 跨报告汇总 · <a class="text-link" href="../index.html">全部报告 →</a></div><h1>框架问题汇总</h1><p class="fb-scope">来自 ${reports.length} 份已发布报告，其中 ${reviewed} 份有可用的 v2 独立评审${skipped.length ? `（另有 ${skipped.length} 份评审数据不符合当前格式，未纳入）` : ''} · ${occurrences.length} 条框架发现展示为 <b>${clusters.length} 个分组</b>（${pending.length} 条待 Agent 归类） · 截至 ${escape(date)}</p>${restart}<p class="fb-scope">由 Agent 对照根因、触发条件、实际行为与证据归类，可能误合并或漏合并；同一份报告内的两条发现不会合并。未归类的新发现单独保留，内容未变的发现沿用已有分组。每组保留原始报告与归类依据。等级取各次中最高的一次（有上游复核时按复核建议）。版本列来自搭建报告记录的 NocoBase App 模板版本，未记录时不推测。</p></header>
+${sections}
 <footer class="report-footer">生成自已归档的 report.json 与 Agent 归类记录；归类不重新评审原问题，也不代表 NocoBase3 当前最新状态。未复核上游的问题可能已被修复。</footer></main>`;
   const css = `${style}
 .fx-main{max-width:1180px;margin:0 auto;padding:48px 32px 60px}.fx-head h1{font-size:clamp(24px,2.6vw,32px);letter-spacing:-.6px;margin:10px 0 6px}

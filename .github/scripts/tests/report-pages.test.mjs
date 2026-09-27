@@ -7,7 +7,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { finalizeClassification } from '../../reports/findings-classification.mjs';
 import { prepareClassification } from '../classify-findings.mjs';
-import { archiveFindingsClassification, readFindingsSnapshot, archiveReport, compareReports, notifyReport, pagesUrl, reportManifest, verifyPage } from '../report-pages.mjs';
+import { archiveFindingsClassification, readFindingsSnapshot, archiveReport, compareReports, notifyReport, pagesUrl, reportManifest, resetFindingsIndex, verifyPage } from '../report-pages.mjs';
 const repository='owner/factory';
 const digest=value=>createHash('sha1').update(JSON.stringify(value)).digest('hex');
 function input({issue=146,runId=100,attempt=1,start=1000,qa=true,media=1}={}) {
@@ -29,7 +29,7 @@ function fakeClient() {
    }
    if(method==='POST'&&route==='/git/blobs'){const sha=digest(body.content);blobs.set(sha,body.content);return {sha};}
    if(method==='POST'&&route==='/git/trees'){
-    const tree=new Map(trees.get(body.base_tree)); for(const e of body.tree)tree.set(e.path,e.sha);
+    const tree=new Map(trees.get(body.base_tree)); for(const e of body.tree){if(e.sha===null){assert.ok(tree.has(e.path));tree.delete(e.path);}else tree.set(e.path,e.sha);}
     const sha=digest([...tree].sort());trees.set(sha,tree);return {sha};
    }
    if(method==='POST'&&route==='/git/commits'){
@@ -334,4 +334,137 @@ test('classification ref conflicts retry against the latest complete site withou
     true,
   );
   assert.equal(c.files().get(reportManifest(r).path), htmlOf(r));
+});
+
+test('a findings reset counts only later runs and keeps every archived report', async (t) => {
+  const c = fakeClient(),
+    first = reviewedInput(),
+    second = reviewedInput({ issue: 147, runId: 101, start: 2000 });
+  await archiveReport(c, first, htmlOf(first));
+  await archiveReport(c, second, htmlOf(second));
+  await archiveFindingsClassification(
+    c,
+    decisionFor((await readFindingsSnapshot(c)).input),
+  );
+  assert.ok(c.files().has('reports/findings/classification.json'));
+  const before = c.files();
+
+  const reset = await resetFindingsIndex(c, { now: 2500, runId: 77 });
+  assert.equal(reset.commitSha, c.ref());
+  assert.equal(reset.excluded, 2);
+  const files = c.files();
+  assert.deepEqual(JSON.parse(files.get('reports/findings/baseline.json')), {
+    version: 1,
+    since: 2500,
+    resetAt: '1970-01-01T00:00:02.500Z',
+    runId: '77',
+  });
+  assert.equal(files.has('reports/findings/classification.json'), false);
+  assert.match(files.get('reports/findings/index.html'), /来自 0 份已发布报告/);
+  assert.match(files.get('reports/findings/index.html'), /此前的 2 份报告/);
+  assert.deepEqual(
+    JSON.parse(files.get('reports/findings/input.json')).findings,
+    [],
+  );
+  for (const [file, content] of before)
+    if (!file.startsWith('reports/findings/'))
+      assert.equal(files.get(file), content, file);
+
+  const directory = mkdtempSync(path.join(os.tmpdir(), 'test-findings-reset-'));
+  t.after(() => rmSync(directory, { recursive: true, force: true }));
+  assert.deepEqual(await prepareClassification(c, directory), {
+    ready: false,
+    reason: 'no-findings',
+  });
+  // Republishing an earlier run (a replayed review) stays out of the index.
+  assert.equal(
+    (await archiveReport(c, second, htmlOf(second)))
+      .findingsNeedsClassification,
+    false,
+  );
+  const rerun = reviewedInput({ issue: 146, runId: 102, start: 3000 });
+  assert.equal(
+    (await archiveReport(c, rerun, htmlOf(rerun))).findingsNeedsClassification,
+    true,
+  );
+  const index = c.files().get('reports/findings/index.html');
+  assert.match(index, /来自 1 份已发布报告/);
+  assert.match(index, /此前的 1 份报告/);
+  assert.match(index, /runs\/102\//);
+  assert.doesNotMatch(index, /runs\/101\//);
+  const snapshot = await readFindingsSnapshot(c);
+  assert.deepEqual(snapshot.baseline, { since: 2500, excluded: 1 });
+  assert.ok(
+    snapshot.input.findings.every((item) => item.id.startsWith('146:102:1')),
+  );
+  assert.equal(
+    (await archiveFindingsClassification(c, decisionFor(snapshot.input)))
+      .updated,
+    true,
+  );
+  assert.match(c.files().get('reports/findings/index.html'), /此前的 1 份报告/);
+});
+
+test('a findings reset retries a concurrent publication and needs a published site', async () => {
+  await assert.rejects(
+    resetFindingsIndex(fakeClient()),
+    /No published report site/,
+  );
+  const c = fakeClient(),
+    r = reviewedInput();
+  await archiveReport(c, r, htmlOf(r));
+  c.conflictOnce = true;
+  await resetFindingsIndex(c, { now: 5000 });
+  assert.equal(
+    JSON.parse(c.files().get('reports/findings/baseline.json')).since,
+    5000,
+  );
+  assert.equal(c.files().get(reportManifest(r).path), htmlOf(r));
+});
+
+test('a damaged findings baseline skips only the index, never the report', async () => {
+  const c = fakeClient(),
+    first = reviewedInput(),
+    second = reviewedInput({ issue: 147, runId: 101, start: 2000 });
+  await archiveReport(c, first, htmlOf(first));
+  await resetFindingsIndex(c, { now: 1500 });
+  const request = c.request;
+  c.request = async (method, route, options) => {
+    const value = await request(method, route, options);
+    return route.endsWith('/findings/baseline.json') && value
+      ? {
+          ...value,
+          content: Buffer.from(
+            JSON.stringify({ version: 1, since: 'soon' }),
+          ).toString('base64'),
+        }
+      : value;
+  };
+  const before = c.files().get('reports/findings/index.html');
+  const publication = await archiveReport(c, second, htmlOf(second));
+  assert.match(
+    publication.findingsIndex,
+    /^skipped: Invalid findings baseline/,
+  );
+  assert.ok(c.files().has(reportManifest(second).path));
+  assert.equal(c.files().get('reports/findings/index.html'), before);
+  await assert.rejects(readFindingsSnapshot(c), /Invalid findings baseline/);
+});
+
+test('the findings reset runs only from the default branch with an explicit confirmation and no model access', () => {
+  const workflow = readFileSync(
+    new URL('../../workflows/reset-findings.yml', import.meta.url),
+    'utf8',
+  );
+  assert.match(workflow, /workflow_dispatch:/);
+  assert.match(
+    workflow,
+    /if: github\.ref == format\('refs\/heads\/\{0\}', github\.event\.repository\.default_branch\) && inputs\.confirm == 'RESET'/,
+  );
+  assert.match(workflow, /permissions: \{\}/);
+  assert.match(workflow, /group: factory-task-usage/);
+  assert.match(workflow, /report-pages\.mjs reset-findings/);
+  assert.match(workflow, /ref: \$\{\{ steps\.reset\.outputs\.commit_sha \}\}/);
+  assert.match(workflow, /actions\/deploy-pages@v4/);
+  assert.doesNotMatch(workflow, /secrets\.|install-agent/);
 });

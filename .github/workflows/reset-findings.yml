@@ -1,0 +1,55 @@
+name: Reset framework findings
+
+# Starts the cross-report framework findings index over. Runs that started
+# before the reset keep their archived reports but are no longer counted.
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: Type RESET to count only builds that start from now on (published reports stay unchanged)
+        required: true
+        type: string
+
+permissions: {}
+
+jobs:
+  reset:
+    if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch) && inputs.confirm == 'RESET'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    # Serializes with report and classification publication on gh-pages.
+    concurrency:
+      group: factory-task-usage
+      queue: max
+    permissions:
+      contents: write
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          path: control
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24.x
+      - name: Move the findings baseline to now
+        id: reset
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: node control/.github/scripts/report-pages.mjs reset-findings
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.reset.outputs.commit_sha }}
+          path: report-site
+          persist-credentials: false
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: report-site
+      - uses: actions/deploy-pages@v4
+        id: deployment
