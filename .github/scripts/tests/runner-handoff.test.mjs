@@ -144,20 +144,23 @@ test('handoff metadata records the continuation run source', () => {
         '--run-id',
         '12345',
         '--continuation',
-        '2',
+        '1',
         '--phase',
         'agent',
         '--output',
         output,
       ],
-      { stdio: 'pipe', env: { ...process.env, FACTORY_CONTROL_SHA: 'a'.repeat(40) } },
+      {
+        stdio: 'pipe',
+        env: { ...process.env, FACTORY_CONTROL_SHA: 'a'.repeat(40) },
+      },
     );
     assert.deepEqual(JSON.parse(readFileSync(output, 'utf8')), {
       schemaVersion: 1,
       controlSha: 'a'.repeat(40),
       issueNumber: 6,
       previousRunId: 12345,
-      continuation: 2,
+      continuation: 1,
       phase: 'agent',
       reason: 'runner-budget',
     });

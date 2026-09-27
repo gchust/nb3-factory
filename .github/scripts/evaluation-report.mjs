@@ -173,7 +173,7 @@ function outcomeOf(record, pipeline, qa, pr) {
   const detail = {
     completed: '执行链已终结；业务验收与代码交付分别见 acceptance / delivery。', running: '已保存 Handoff，执行链仍在继续；不是终态。',
     cancelled: '执行被取消。', 'timed-out': '执行超时。', blocked: '执行因环境或前置条件受阻，不视为业务缺陷。',
-    'budget-exhausted': '达到受信任评测计划的预算，已保存补丁与事实，不再自动修复或续跑。', unknown: '执行状态未确认。',
+    'budget-exhausted': '达到任务停止条件或更严格的评测计划预算，已保存补丁与事实，进入只读诊断，不再自动修复或续跑。', unknown: '执行状态未确认。',
   }[execution];
   return { execution, acceptance, delivery, pullRequest: pr && positive(pr.number) ? { number: pr.number, headSha: shaOrNull(pr.headSha) } : null, detail };
 }

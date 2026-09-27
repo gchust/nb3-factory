@@ -21,7 +21,7 @@ function withEnv(values, fn) {
 test('the budget is copied once into the checkpoint; handoff and recovery restore it and keep counting active time', t => {
   const root = temporary(t);
   const file = path.join(root, 'a', 'pipeline-state.json');
-  withEnv({ FACTORY_JOB_STARTED_EPOCH_SECONDS: String(Math.floor(Date.now() / 1000) - 1000) }, () => {
+  withEnv({ GITHUB_RUN_ID: '101', GITHUB_RUN_ATTEMPT: '1', FACTORY_JOB_STARTED_EPOCH_SECONDS: String(Math.floor(Date.now() / 1000) - 1000) }, () => {
     const state = initialize(file, metadata());
     assert.deepEqual(state.budget, budget);
     state.patchHash = createHash('sha256').update('').digest('hex');
@@ -32,7 +32,7 @@ test('the budget is copied once into the checkpoint; handoff and recovery restor
   // A continuation cannot change the budget: a different one is refused, not adopted.
   assert.throws(() => restoreState(path.join(root, 'a'), path.join(root, 'x'),
     { ...metadata(), evaluation: { ...metadata().evaluation, budget: { ...budget, maxActiveSeconds: 86_400 } } }), /trusted evaluation sample budget/);
-  const restored = withEnv({ FACTORY_JOB_STARTED_EPOCH_SECONDS: String(Math.floor(Date.now() / 1000) - 500) },
+  const restored = withEnv({ GITHUB_RUN_ID: '102', GITHUB_RUN_ATTEMPT: '1', FACTORY_JOB_STARTED_EPOCH_SECONDS: String(Math.floor(Date.now() / 1000) - 500) },
     () => restoreState(path.join(root, 'a'), path.join(root, 'b'), metadata()));
   assert.equal(restored.budget.maxActiveSeconds, 3600);
   assert.ok(readState(path.join(root, 'b', 'pipeline-state.json')).activeSeconds >= 1500);
@@ -73,7 +73,7 @@ test('repair count and remaining active time stop new phases before they start',
     assert.match(continuationRefusal(state, 2, now), /续跑次数/);
   });
   withEnv({ FACTORY_JOB_STARTED_EPOCH_SECONDS: String(now - 3500) }, () => assert.match(continuationRefusal(state, 1, now), /已用尽/));
-  assert.equal(budgetExhausted({ repairAttempts: 99 }, 'repair'), null, 'no budget, no change');
+  assert.match(budgetExhausted({ repairAttempts: 99 }, 'repair'), /修复次数/, 'ordinary tasks are bounded too');
 });
 
 test('the handoff guard marks budget-exhausted and refuses the continuation; the repair loop exits 76 without a handoff', t => {

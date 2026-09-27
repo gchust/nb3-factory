@@ -15,7 +15,7 @@ const phases = {
   'qa-focused': '失败项定向复测', 'qa-full': '完整业务验收',
   done: '业务验收结束，等待独立终验与发布',
 };
-const outcomes = ['running', 'passed', 'failed', 'blocked', 'handoff'];
+const outcomes = ['running', 'passed', 'failed', 'blocked', 'handoff', 'budget-exhausted'];
 const statuses = ['passed', 'failed', 'blocked', 'not_run'];
 const count = (n) => Number.isSafeInteger(n) && n >= 0;
 const positive = (n) => count(n) && n > 0;
@@ -201,7 +201,8 @@ export async function publishProgress(api, repository, { runId, attempt, live },
       (!live || (completed && prior.snapshot.sampledAt > live.sampledAt)))
     live = validateSnapshot(prior.snapshot, now);
   const activeJob = jobs.find((j) => ['verify-final', 'publish'].includes(j.name) && j.status === 'in_progress');
-  const label = completed ? (outcomeLabels[outcome] ?? '运行已结束，结果未确认')
+  const label = live?.outcome === 'budget-exhausted' && outcome !== 'delivered' ? '已停止自动修复，待诊断'
+    : completed ? (outcomeLabels[outcome] ?? '运行已结束，结果未确认')
     : activeJob ? (activeJob.name === 'verify-final' ? '独立终验进行中' : '发布业务 PR 进行中')
     : live?.outcome === 'handoff' ? '检查点已记录，续跑派发待确认'
     : live?.outcome === 'blocked' ? '阶段受阻，等待本 Run 收尾'

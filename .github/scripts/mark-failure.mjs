@@ -27,23 +27,49 @@ if (root) {
     metadata = readJson(root, 'task-metadata.json');
   } catch (error) {
     // A missing/corrupt diagnostic must not prevent the original failure notice.
-    console.warn(`Failure diagnostics unavailable (${error.code || error.name}).`);
+    console.warn(
+      `Failure diagnostics unavailable (${error.code || error.name}).`,
+    );
   }
 }
-const recoverable = process.env.FACTORY_CHECKPOINT_AVAILABLE === 'true' &&
-  ['failed', 'blocked'].includes(state?.outcome) && state.phase !== 'done';
+const recoverable =
+  process.env.FACTORY_CHECKPOINT_AVAILABLE === 'true' &&
+  ['failed', 'blocked'].includes(state?.outcome) &&
+  !state.stopReason &&
+  state.phase !== 'done';
 const exhausted = state?.outcome === 'budget-exhausted';
 const body = [
-  exhausted ? '**已达到评测计划预算**。已保存补丁、验收记录与用量，不再启动新的修复或自动续跑；这不是业务缺陷结论。'
-    : failure ? `**${failure.title}**。${failure.detail}` : '本次搭建未完成，请根据失败步骤检查运行日志。',
-  '', `[查看本次运行日志](${runUrl})。`,
-  ...(recoverable ? ['', `已保存恢复检查点；服务或配置修复后，在 Code Agent NocoBase Task 的 Run workflow 中填写 issue_number=${issueNumber}、recovery_run_id=${process.env.GITHUB_RUN_ID}，继续已有工作。`,
-    ...(metadata?.applicationBase ? [] : ['旧版检查点还需填写 recovery_base_sha（原应用基线提交），不能使用工厂 Run 的 head_sha 代替猜测。'])] : []),
-  '', '模型请求重试与业务修复分开统计；恢复后仍须通过独立验收与最终验证。',
+  exhausted
+    ? '**已停止自动修复，待诊断**。' +
+      (state.stopReason?.reason || '已达到任务或评测计划预算。') +
+      '\n\n已保存补丁、验收记录、修复日志与用量，不再修复、续跑或发布业务 PR。' +
+      '\n\n累计验证 ' +
+      state.verificationAttempts +
+      ' 轮、修复 ' +
+      state.repairAttempts +
+      ' 轮。' +
+      '\n\n下载本 Run 的 factory-agent-' +
+      issueNumber +
+      ' Artifact，查看 task-diagnostic.md / task-diagnostic.json 中的失败轮次和证据位置；独立只读归因见 build-review.json。' +
+      '\n\n重复失败不能直接证明 NocoBase3 有缺陷；需要区分框架、Skill、模板、应用、工厂和环境，证据不足标记 unknown。诊断后修正原因，再显式发起新任务。'
+    : failure
+      ? `**${failure.title}**。${failure.detail}`
+      : '本次搭建未完成，请根据失败步骤检查运行日志。',
+  '',
+  `[查看本次运行日志](${runUrl})。`,
+  ...(recoverable
+    ? [
+        '',
+        `已保存恢复检查点；服务或配置修复后，在 Code Agent NocoBase Task 的 Run workflow 中填写 issue_number=${issueNumber}、recovery_run_id=${process.env.GITHUB_RUN_ID}，继续已有工作。`,
+        ...(metadata?.applicationBase
+          ? []
+          : [
+              '旧版检查点还需填写 recovery_base_sha（原应用基线提交），不能使用工厂 Run 的 head_sha 代替猜测。',
+            ]),
+      ]
+    : []),
+  '',
+  '模型请求重试与业务修复分开统计；恢复后仍须通过独立验收与最终验证。',
 ].join('\n');
 await client.ensureStatusLabels();
-await client.setIssueStatus(
-  issue,
-  'agent:failed',
-  body,
-);
+await client.setIssueStatus(issue, 'agent:failed', body);

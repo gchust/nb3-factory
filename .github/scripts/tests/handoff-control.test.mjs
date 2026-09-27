@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { execFileSync, spawn } from 'node:child_process';
 import { once } from 'node:events';
-import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
 import { createServer } from 'node:http';
 import os from 'node:os';
 import path from 'node:path';
@@ -15,7 +15,7 @@ const event = (extra = {}) => ({ repository: { full_name: 'gchust/nb3-factory' }
   issue_number: 165, previous_run_id: 12345, continuation: 2, ...extra,
 } });
 function directory(t) {
-  const root = mkdtempSync(path.join(os.tmpdir(), 'factory-control-pin-'));
+  const root = realpathSync(mkdtempSync(path.join(os.tmpdir(), 'factory-control-pin-')));
   t.after(() => rmSync(root, { recursive: true, force: true }));
   return root;
 }
@@ -53,13 +53,13 @@ test('an explicit invalid pin never silently falls back to develop or the checkp
   }
 });
 
-test('legacy requests adopt the actual pipeline SHA and immediately gain pinned dispatch metadata', (t) => {
+test('legacy requests retain their actual pipeline SHA but cannot dispatch beyond the new limit', (t) => {
   const root = directory(t); checkpoint(root);
   assert.equal(resolveControlSha(event(), B, root), A);
   assert.equal(verifyControlSha(event(), A, root), A);
   const file = path.join(root, 'next.json');
-  cli('handoff.mjs', ['prepare', '--issue', '165', '--run-id', '23456', '--continuation', '3', '--output', file]);
-  assert.equal(JSON.parse(readFileSync(file, 'utf8')).controlSha, A);
+  assert.throws(() => cli('handoff.mjs', ['prepare', '--issue', '165', '--run-id', '23456', '--continuation', '3', '--output', file]), /only one five-hour Handoff/);
+  assert.equal(existsSync(file), false);
 });
 
 test('new pins are bound to the source task artifact before executing prepare code', (t) => {
@@ -141,7 +141,7 @@ test('dispatch carries the pinned SHA, source run, continuation and build commen
   });
   server.listen(0, '127.0.0.1'); await once(server, 'listening');
   t.after(() => { server.closeAllConnections(); server.close(); });
-  const child = spawn(process.execPath, [path.join(scripts, 'handoff.mjs'), 'dispatch', '--issue', '165', '--previous-run-id', '23456', '--continuation', '3'], {
+  const child = spawn(process.execPath, [path.join(scripts, 'handoff.mjs'), 'dispatch', '--issue', '165', '--previous-run-id', '23456', '--continuation', '1'], {
     env: { ...process.env, FACTORY_CONTROL_SHA: A, GITHUB_SHA: B, GITHUB_REPOSITORY: 'gchust/nb3-factory', GITHUB_TOKEN: 'test-only', BUILD_COMMENT_ID: '56789', GITHUB_API_URL: `http://127.0.0.1:${server.address().port}` },
     stdio: ['ignore', 'pipe', 'pipe'],
   });
@@ -153,19 +153,19 @@ test('dispatch carries the pinned SHA, source run, continuation and build commen
   assert.equal(code, 0, stderr);
   assert.deepEqual(received, { method: 'POST', url: '/repos/gchust/nb3-factory/dispatches', body: {
     event_type: 'code-agent-continue', client_payload: {
-      issue_number: 165, control_sha: A, build_comment_id: 56789, previous_run_id: 23456, continuation: 3,
+      issue_number: 165, control_sha: A, build_comment_id: 56789, previous_run_id: 23456, continuation: 1,
     },
   } });
 });
 
-test('real Git A -> B -> C keeps the pinned evaluator and pending QA state across two continuations', (t) => {
+test('real Git A -> B -> C preserves the pinned evaluator but refuses another continuation', (t) => {
   const root = directory(t); const repo = path.join(root, 'repo'); mkdirSync(repo);
   const git = (...args) => execFileSync('git', ['-C', repo, ...args], { encoding: 'utf8', stdio: 'pipe' }).trim();
   git('init', '-b', 'develop'); git('config', 'user.name', 'Factory Test'); git('config', 'user.email', 'factory@example.invalid');
   const pinnedState = path.join(repo, 'pipeline-state.mjs');
   // Pin the production dependency graph too: restore must exercise history
   // preservation from the same control commit, not a mock or the current tree.
-  for (const name of ['pipeline-state.mjs', 'review-history.mjs', 'history-redaction.mjs']) {
+  for (const name of ['pipeline-state.mjs', 'task-policy.mjs', 'acceptance-criteria.mjs', 'review-history.mjs', 'history-redaction.mjs']) {
     copyFileSync(path.join(scripts, name), path.join(repo, name));
   }
   writeFileSync(path.join(repo, 'evaluator'), 'A'); git('add', '.'); git('commit', '-m', 'factory A'); const a = git('rev-parse', 'HEAD');
@@ -173,7 +173,7 @@ test('real Git A -> B -> C keeps the pinned evaluator and pending QA state acros
   const meta = path.join(root, 'task.json');
   write(root, 'task.json', { issue: { number: 165 }, task: { requirements: 'unchanged', acceptanceCriteria: 'B01. Login\nB06. Preview' } });
   const source = path.join(root, 'checkpoint-1'); mkdirSync(source);
-  const runState = (args) => execFileSync(process.execPath, [pinnedState, ...args], { env: { ...process.env, FACTORY_CONTROL_SHA: a }, stdio: 'pipe' });
+  const runState = (args, runId = '12345') => execFileSync(process.execPath, [pinnedState, ...args], { env: { ...process.env, FACTORY_CONTROL_SHA: a, GITHUB_RUN_ID: runId, GITHUB_RUN_ATTEMPT: '1', FACTORY_TASK_CONTINUATION: '0' }, stdio: 'pipe' });
   const stateFile = path.join(source, 'pipeline-state.json');
   runState(['init', stateFile, meta]);
   runState(['set', stateFile, 'qa-focused', '4', '3', '1800']);
@@ -189,24 +189,22 @@ test('real Git A -> B -> C keeps the pinned evaluator and pending QA state acros
   git('checkout', '--detach', a);
   assert.equal(readFileSync(path.join(repo, 'evaluator'), 'utf8'), 'A');
   cli('handoff-control.mjs', ['verify', '--event', path.join(root, 'event.json'), '--checkpoint', source], { FACTORY_CONTROL_SHA: a });
-  const restored = path.join(root, 'restored-1'); runState(['restore', source, restored, meta]);
+  const restored = path.join(root, 'restored-1'); runState(['restore', source, restored, meta], '23456');
   const first = JSON.parse(readFileSync(path.join(restored, 'pipeline-state.json'), 'utf8'));
   assert.equal(first.controlSha, a); assert.equal(first.phase, 'qa-focused');
   assert.deepEqual(first.pendingCriteria, ['B06']); assert.equal(first.verificationAttempts, 4); assert.equal(first.repairAttempts, 3);
   copyFileSync(path.join(source, 'agent.patch'), path.join(restored, 'agent.patch'));
-  cli('handoff.mjs', ['prepare', '--issue', '165', '--run-id', '23456', '--continuation', '3', '--phase', 'qa-focused', '--output', path.join(restored, 'handoff.json')], { FACTORY_CONTROL_SHA: a });
+  assert.throws(() => cli('handoff.mjs', ['prepare', '--issue', '165', '--run-id', '23456', '--continuation', '3', '--phase', 'qa-focused', '--output', path.join(restored, 'handoff.json')], { FACTORY_CONTROL_SHA: a }), /only one five-hour Handoff/);
   git('checkout', 'develop'); writeFileSync(path.join(repo, 'evaluator'), 'C'); git('add', '.'); git('commit', '-m', 'factory C'); const c = git('rev-parse', 'HEAD');
   const next = event({ control_sha: a, previous_run_id: 23456, continuation: 3 });
   const previousTask = { repository: 'gchust/nb3-factory', issue: { number: 165 }, controlSha: a };
   assert.equal(resolveControlSha(next, c, undefined, previousTask), a); // no second full checkpoint download in prepare
-  assert.equal(verifyControlSha(next, a, restored), a);
   git('checkout', '--detach', a);
-  const destination = path.join(root, 'restored-2'); runState(['restore', restored, destination, meta]);
-  const second = JSON.parse(readFileSync(path.join(destination, 'pipeline-state.json'), 'utf8'));
-  assert.equal(second.phase, 'qa-focused'); assert.deepEqual(second.pendingCriteria, ['B06']);
-  assert.equal(second.verificationAttempts, 4); assert.equal(second.repairAttempts, 3);
-  // Deliberately selecting a different evaluator must not silently reset QA.
-  assert.throws(() => verifyControlSha(next, c, restored), /version change/);
+  assert.throws(() => runState(['handoff', path.join(restored, 'pipeline-state.json')], '23456'), error => error.status === 76);
+  const stopped = JSON.parse(readFileSync(path.join(restored, 'pipeline-state.json'), 'utf8'));
+  assert.equal(stopped.controlSha, a); assert.equal(stopped.phase, 'qa-focused');
+  assert.deepEqual(stopped.pendingCriteria, ['B06']); assert.equal(stopped.repairAttempts, 3);
+  assert.equal(stopped.stopReason.code, 'handoff-limit');
 });
 
 test('workflow resolves before task code, verifies before applying a patch and uses bootstrap only for handoff', () => {

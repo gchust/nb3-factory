@@ -39,7 +39,7 @@ export function validateRecovery({ event, run, task, checkpointTask, state, patc
   }
   const sha = controlSha(task.controlSha);
   if (state.controlSha !== sha || state.inputHash !== inputHash(task) ||
-      !['failed', 'blocked'].includes(state.outcome) || state.phase === 'done' ||
+      !['failed', 'blocked'].includes(state.outcome) || state.stopReason || state.phase === 'done' ||
       state.patchHash !== hash(patch)) {
     throw new Error('Recovery checkpoint has a different factory SHA, input, patch or non-recoverable phase.');
   }

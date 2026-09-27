@@ -1,6 +1,6 @@
 // Evidence-backed build assessment. Scores are reviewer opinions, never QA verdicts.
 import { createHash } from 'node:crypto';
-import { lstatSync, readFileSync, readdirSync } from 'node:fs';
+import { existsSync, lstatSync, readFileSync, readdirSync } from 'node:fs';
 import path from 'node:path';
 import { historyFingerprint } from './review-history.mjs';
 
@@ -298,6 +298,7 @@ export function resolveReviewIdentity(root, report, identity) {
 export function reviewArtifactHash(root) {
   const process = collectReviewProcess(root);
   const files = ['task-metadata.json', 'agent.patch', 'repair-summary.json', 'retro.json',
+    ...['task-diagnostic.json', 'task-diagnostic.md'].filter(file => existsSync(path.join(root, file))),
     ...process.rounds.flatMap(round => round.reports.map(report => report.source))].sort();
   return digest(JSON.stringify(files.map(file => {
     try { return [file, digest(readFileSync(path.join(root, file)))]; }

@@ -5,7 +5,7 @@ import { chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, realpathSy
 import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
-import { collectReviewProcess, digest, loadBuildReview, moduleRoundResult, validateBuildReview, validateEvaluation } from '../build-review.mjs';
+import { collectReviewProcess, digest, loadBuildReview, moduleRoundResult, reviewArtifactHash, validateBuildReview, validateEvaluation } from '../build-review.mjs';
 import { createReviewSnapshot, materializeEvidence, runBuildReview } from '../run-build-review.mjs';
 import { aggregate, collectUsage, emptyUsage, validateRecord } from '../task-usage.mjs';
 import { makeDeliveryReport } from '../delivery-report.mjs';
@@ -146,6 +146,24 @@ test('path and line references are checked against captured files; excerpts are 
   assert.equal(resolved.evidence[0].mediaId, undefined);
   review.evidence[0].lines = [1, 999]; assert.throws(() => validateEvaluation(review, review.inputHash, captured.files), /line/);
   review.evidence[0].path = 'app/../secret'; assert.throws(() => validateEvaluation(review, review.inputHash, captured.files), /path/);
+});
+test('terminal diagnostics are captured, archived and invalidate only reports that include them', t => {
+  const f = fixture(t);
+  const originalHash = reviewArtifactHash(f.artifacts);
+  put(f.artifacts, 'task-diagnostic.json', { status: 'needs-diagnosis', code: 'repeated-failure' });
+  put(f.artifacts, 'task-diagnostic.md', 'Repeated failure; root cause unknown.');
+  const diagnosticHash = reviewArtifactHash(f.artifacts);
+  assert.notEqual(diagnosticHash, originalHash);
+  const captured = createReviewSnapshot(f.workspace, f.artifacts, f.snapshot);
+  const packed = packHistory({ artifacts: f.artifacts, output: path.join(f.root, 'history'), issue: 21, runId: 100, attempt: 1 });
+  for (const name of ['task-diagnostic.json', 'task-diagnostic.md']) {
+    assert.ok(captured.files.some(file => file.path === 'artifacts/' + name));
+    assert.ok(packed.manifest.files.some(file => file.name === name));
+  }
+  put(f.artifacts, 'task-diagnostic.md', 'Updated diagnostic evidence.');
+  assert.notEqual(reviewArtifactHash(f.artifacts), diagnosticHash);
+  for (const name of ['task-diagnostic.json', 'task-diagnostic.md']) rmSync(path.join(f.artifacts, name));
+  assert.equal(reviewArtifactHash(f.artifacts), originalHash, 'old reports retain their original hash when no dossier exists');
 });
 test('process retains original failure; focused QA and a resumed Run cannot stand in for first/full QA', t => {
   const f = fixture(t), module = { criteria: ['B01'] };

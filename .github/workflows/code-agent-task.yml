@@ -68,6 +68,8 @@ jobs:
             /.github/scripts/handoff-control.mjs
             /.github/scripts/handoff-recovery.mjs
             /.github/scripts/pipeline-state.mjs
+            /.github/scripts/task-policy.mjs
+            /.github/scripts/acceptance-criteria.mjs
             /.github/scripts/review-history.mjs
             /.github/scripts/history-redaction.mjs
             /.github/scripts/evaluation-sample.mjs
@@ -203,6 +205,7 @@ jobs:
     needs: prepare
     env:
       FACTORY_CONTROL_SHA: ${{ needs.prepare.outputs.control_sha }}
+      FACTORY_TASK_CONTINUATION: ${{ github.event.client_payload.continuation || '0' }}
       FACTORY_QA_THINKING: ${{ vars.FACTORY_QA_THINKING }}
       FACTORY_BUILD_REVIEW: ${{ vars.FACTORY_BUILD_REVIEW || 'full' }}
       FACTORY_REVIEW_THINKING: ${{ vars.FACTORY_REVIEW_THINKING || 'medium' }}
@@ -213,7 +216,7 @@ jobs:
     runs-on: ubuntu-latest
     # GitHub-hosted runners allow at most six hours per job. The factory uses
     # five hours as a soft runner budget, then checkpoints and continues in a
-    # new run. Repair attempts remain unlimited across those runs.
+    # new run at most once. Task-wide repair/failure counters survive Handoff.
     timeout-minutes: 360
     permissions:
       actions: read
@@ -244,6 +247,8 @@ jobs:
             /.github/scripts/handoff-control.mjs
             /.github/scripts/handoff-recovery.mjs
             /.github/scripts/pipeline-state.mjs
+            /.github/scripts/task-policy.mjs
+            /.github/scripts/acceptance-criteria.mjs
             /.github/scripts/review-history.mjs
             /.github/scripts/history-redaction.mjs
           persist-credentials: false
@@ -344,8 +349,8 @@ jobs:
             }
           fi
 
-      # Only batch samples carry a budget; it bounds long calls and leaves archive time.
-      - name: Apply the evaluation sample budget
+      # Every task is bounded; a batch plan can tighten the factory ceilings.
+      - name: Apply the task and evaluation budgets
         run: |
           if [[ -f control/.github/scripts/evaluation-budget.mjs ]]; then
             node control/.github/scripts/evaluation-budget.mjs deadline "$RUNNER_TEMP/agent-artifacts/pipeline-state.json" >> "$GITHUB_ENV"
@@ -507,19 +512,31 @@ jobs:
         run: |
           node control/.github/scripts/pipeline-state.mjs set "$RUNNER_TEMP/agent-artifacts/pipeline-state.json" implementation
           set +e
-          node control/.github/scripts/run-agent.mjs \
-            --workspace workspace \
-            --prompt "$RUNNER_TEMP/implement.md" \
-            --log "$RUNNER_TEMP/agent-artifacts/agent-implement.jsonl" \
-            --agentDir "$RUNNER_TEMP/code-agent"
+          node control/.github/scripts/pipeline-state.mjs budget "$RUNNER_TEMP/agent-artifacts/pipeline-state.json" implementation
           status=$?
+          if [[ "$status" -eq 0 ]]; then
+            node control/.github/scripts/run-agent.mjs \
+              --workspace workspace \
+              --prompt "$RUNNER_TEMP/implement.md" \
+              --log "$RUNNER_TEMP/agent-artifacts/agent-implement.jsonl" \
+              --agentDir "$RUNNER_TEMP/code-agent"
+            status=$?
+          fi
+          if [[ "$status" -eq 75 ]]; then
+            if [[ -f control/.github/scripts/task-policy.mjs ]]; then
+              node control/.github/scripts/pipeline-state.mjs handoff "$RUNNER_TEMP/agent-artifacts/pipeline-state.json"
+              status=$?
+            else
+              # Older tasks keep their pinned control API; bootstrap still bounds dispatch.
+              node control/.github/scripts/pipeline-state.mjs outcome "$RUNNER_TEMP/agent-artifacts/pipeline-state.json" handoff
+            fi
+          fi
           set -e
           if [[ "$status" -eq 75 ]]; then
-            node control/.github/scripts/pipeline-state.mjs outcome "$RUNNER_TEMP/agent-artifacts/pipeline-state.json" handoff
             echo "handoff=true" >> "$GITHUB_OUTPUT"
             exit 0
           fi
-          if [[ "$status" -ne 0 ]]; then
+          if [[ "$status" -ne 0 && "$status" -ne 76 ]]; then
             node control/.github/scripts/pipeline-state.mjs outcome "$RUNNER_TEMP/agent-artifacts/pipeline-state.json" failed
           fi
           if [[ "$status" -eq 0 ]]; then
@@ -527,7 +544,7 @@ jobs:
           fi
           exit "$status"
 
-      - name: Verify and repair until successful
+      - name: Verify and repair within task limits
         id: verify
         if: steps.implementation.outputs.handoff != 'true'
         env: *agent-run-env

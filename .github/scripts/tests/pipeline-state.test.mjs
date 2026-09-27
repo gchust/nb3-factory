@@ -88,10 +88,10 @@ const fs=require('node:fs'),path=require('node:path');
 const [control,workspace,metadata,config,artifact]=process.argv.slice(2);
 const m=JSON.parse(fs.readFileSync(metadata));const list=JSON.parse(fs.readFileSync(process.env.CODES));
 if(!list.length) throw new Error('unexpected extra QA');
-const code=list.shift();fs.writeFileSync(process.env.CODES,JSON.stringify(list));
+const entry=list.shift();const code=typeof entry==='object'?entry.status:entry;fs.writeFileSync(process.env.CODES,JSON.stringify(list));
 fs.appendFileSync(process.env.TRACE,(m.task.qaScope||'full')+':'+(m.task.qaCriteriaIds||[]).join(',')+'\\n');
 fs.mkdirSync(artifact,{recursive:true});
-const checks=(m.task.qaCriteriaIds||['B01','B06','B16']).map(id=>({id,criterion:id,status:code===10&&id==='B06'?'failed':'passed',actions:['real action'],evidence:['real observation'],screenshots:[]}));
+const checks=(m.task.qaCriteriaIds||['B01','B06','B16']).map(id=>({id,criterion:id,status:code===10&&id==='B06'?'failed':'passed',actions:['real action'],evidence:[typeof entry==='object'?entry.evidence:'real observation'],screenshots:[]}));
 fs.writeFileSync(path.join(artifact,'report.json'),JSON.stringify({checks}));
 process.exit(code);
 `,
@@ -102,6 +102,15 @@ process.exit(code);
   const codesFile = write(root, 'codes.json', JSON.stringify(codes));
   const repairsFile = write(root, 'repairs.json', JSON.stringify(repairs));
   const trace = path.join(root, 'trace');
+  const runIds = new Map();
+  const runEnv = (name) => {
+    if (!runIds.has(name)) runIds.set(name, String(1000 + runIds.size));
+    return {
+      GITHUB_RUN_ID: runIds.get(name),
+      GITHUB_RUN_ATTEMPT: '1',
+      FACTORY_TASK_CONTINUATION: '0',
+    };
+  };
   function run(name, env = {}) {
     const artifacts = path.join(root, name);
     const result = spawnSync(
@@ -120,6 +129,7 @@ process.exit(code);
         timeout: 15_000,
         env: {
           ...process.env,
+          ...runEnv(name),
           PATH: `${root}/bin:${process.env.PATH}`,
           TRACE: trace,
           CODES: codesFile,
@@ -142,7 +152,17 @@ process.exit(code);
       from.checkpoint,
       path.join(from.artifacts, 'agent.patch'),
     ]);
-    restoreState(from.artifacts, path.join(root, next), task);
+    execFileSync(
+      process.execPath,
+      [
+        path.join(scripts, 'pipeline-state.mjs'),
+        'restore',
+        from.artifacts,
+        path.join(root, next),
+        metadata,
+      ],
+      { env: { ...process.env, ...runEnv(next) }, stdio: 'pipe' },
+    );
   }
   return {
     root,
@@ -318,4 +338,72 @@ test('phase start estimates never exceed a fresh five-hour runner budget', () =>
     false,
   );
   assert.equal(canStart({}, 'repair', undefined), true);
+});
+
+test('the third identical failure stops before a third repair and preserves a diagnostic dossier', (t) => {
+  const h = harness(t, [10, 10, 10]);
+  const result = h.run('one');
+  assert.equal(result.status, 76, result.stderr);
+  assert.equal(h.events().filter((e) => e === 'repair').length, 2);
+  const state = readState(result.checkpoint);
+  assert.equal(state.outcome, 'budget-exhausted');
+  assert.equal(state.stopReason.code, 'repeated-failure');
+  assert.equal(state.failureHistory[0].occurrences.length, 3);
+  const report = JSON.parse(
+    readFileSync(path.join(result.artifacts, 'task-diagnostic.json')),
+  );
+  assert.equal(report.rootCause.owner, 'unknown');
+  assert.equal(report.failures[0].criterion, 'B06');
+  assert.ok(
+    readFileSync(
+      path.join(result.artifacts, 'task-diagnostic.md'),
+      'utf8',
+    ).includes('只读'),
+  );
+  assert.throws(() => h.restore(result, 'two'), /stopped for diagnosis/);
+});
+
+test('different failure reasons share the task-wide five-repair limit', (t) => {
+  const h = harness(
+    t,
+    Array.from({ length: 6 }, (_, i) => ({
+      status: 10,
+      evidence: 'different field ' + i,
+    })),
+  );
+  const result = h.run('one');
+  assert.equal(result.status, 76, result.stderr);
+  assert.equal(h.events().filter((e) => e === 'repair').length, 5);
+  assert.equal(readState(result.checkpoint).failureHistory.length, 6);
+  assert.match(readState(result.checkpoint).stopReason.reason, /修复次数/);
+});
+
+test('failure counts survive Handoff and stop the resumed task on the third observation', (t) => {
+  const h = harness(t, [10, 10, 75, 10]);
+  const first = h.run('one');
+  assert.equal(first.status, 75, first.stderr);
+  h.restore(first, 'two');
+  const second = h.run('two');
+  assert.equal(second.status, 76, second.stderr);
+  assert.equal(
+    readState(second.checkpoint).failureHistory[0].occurrences.length,
+    3,
+  );
+  assert.equal(h.events().filter((e) => e === 'repair').length, 2);
+});
+
+test('a second runner timeout terminates instead of requesting a second Handoff', (t) => {
+  const h = harness(t, [75, 75]);
+  const first = h.run('one');
+  assert.equal(first.status, 75, first.stderr);
+  h.restore(first, 'two');
+  const second = h.run('two');
+  assert.equal(second.status, 76, second.stderr);
+  const state = readState(second.checkpoint);
+  assert.equal(state.stopReason.code, 'handoff-limit');
+  const summary = JSON.parse(
+    readFileSync(path.join(second.artifacts, 'repair-summary.json')),
+  );
+  assert.equal(summary.handoff, undefined);
+  assert.equal(summary.budgetExhausted, true);
 });
