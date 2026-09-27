@@ -1,5 +1,5 @@
 name: Code Agent NocoBase Task
-run-name: "Factory issue #${{ github.event.issue.number || github.event.client_payload.issue_number || inputs.issue_number }} build ${{ github.event.client_payload.build_comment_id || '0' }} from ${{ github.event.client_payload.previous_run_id || inputs.recovery_run_id || '0' }}"
+run-name: "Factory issue #${{ github.event.issue.number || github.event.client_payload.issue_number || inputs.issue_number }} build ${{ github.event.client_payload.build_comment_id || '0' }} from ${{ github.event.client_payload.previous_run_id || inputs.recovery_run_id || '0' }}${{ inputs.external_run_id && format(' request {0}', inputs.external_run_id) || '' }}"
 
 on:
   issues:
@@ -12,6 +12,10 @@ on:
         description: Open Issue number to run again
         required: true
         type: number
+      external_run_id:
+        description: External system request identity for dispatch reconciliation
+        required: false
+        type: string
       recovery_run_id:
         description: Recover a failed run's saved work (blank starts a normal build)
         required: false
@@ -35,6 +39,9 @@ concurrency:
 
 jobs:
   prepare:
+    # External task managers save an Issue snapshot, then explicitly dispatch.
+    # Read the event's labels so a later Issue update cannot create a second run.
+    if: github.event_name != 'issues' || !contains(github.event.issue.labels.*.name, 'factory:external')
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
