@@ -95,6 +95,66 @@ const enUS = {
     description:
       'Describe what you need to your AI Agent, then build pages, data models, and business workflows.',
   },
+  customerMemos: {
+    title: 'Customer memos',
+    description:
+      'Keep a short note for each customer. Search by name to find one quickly.',
+    searchPlaceholder: 'Search by customer name',
+    empty: 'No customer memos yet. Add the first one.',
+    emptySearch: 'No customer memo matches this name.',
+    saving: 'Saving…',
+    note: {
+      empty: 'No note',
+    },
+    columns: {
+      customerName: 'Customer name',
+      note: 'Note',
+      createdAt: 'Created',
+    },
+    fields: {
+      customerName: 'Customer name',
+      note: 'Note',
+    },
+    actions: {
+      label: 'Actions',
+      view: 'View',
+      edit: 'Edit',
+      delete: 'Delete',
+    },
+    form: {
+      nameRequired: 'Please enter a customer name.',
+      nameTooLong: 'Customer name must be {{max}} characters or fewer.',
+      noteTooLong: 'Note must be {{max}} characters or fewer.',
+    },
+    create: {
+      button: 'New memo',
+      title: 'New customer memo',
+      description: 'Record a customer and a short note about them.',
+      success: 'Customer memo created.',
+    },
+    edit: {
+      title: 'Edit customer memo',
+      description: 'Update the customer name or the note.',
+      success: 'Customer memo updated.',
+      notFound: 'This memo no longer exists.',
+    },
+    detail: {
+      createdAt: 'Created {{time}}',
+    },
+    delete: {
+      title: 'Delete this customer memo?',
+      description:
+        'The memo for {{name}} will be permanently removed. This cannot be undone.',
+      deleting: 'Deleting…',
+      success: 'Deleted the memo for {{name}}.',
+      failed: 'Could not delete the memo. Please try again.',
+    },
+    error: {
+      loadFailed: 'Could not load customer memos.',
+      unauthorized: 'Please sign in again to view customer memos.',
+      requestFailed: 'Could not save the memo. Please try again.',
+    },
+  },
 
   appearance: {
     title: 'Appearance',
@@ -130,6 +190,7 @@ const enUS = {
   },
   navigation: {
     home: 'Home',
+    customerMemos: 'Customer memos',
     open: 'Open navigation',
     close: 'Close navigation',
     expand: 'Expand navigation',

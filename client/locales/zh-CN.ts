@@ -88,6 +88,64 @@ const zhCN: AppResource = {
     title: '开始构建你的应用',
     description: '向 AI 助手描述你的需求，逐步构建页面、数据模型和业务流程。',
   },
+  customerMemos: {
+    title: '客户备忘录',
+    description: '为每位客户记录一条简短备注，可按客户名称搜索。',
+    searchPlaceholder: '按客户名称搜索',
+    empty: '暂无客户备忘录，先添加第一条。',
+    emptySearch: '没有匹配该名称的客户备忘录。',
+    saving: '正在保存…',
+    note: {
+      empty: '暂无备注',
+    },
+    columns: {
+      customerName: '客户名称',
+      note: '备注',
+      createdAt: '创建时间',
+    },
+    fields: {
+      customerName: '客户名称',
+      note: '备注',
+    },
+    actions: {
+      label: '操作',
+      view: '查看',
+      edit: '编辑',
+      delete: '删除',
+    },
+    form: {
+      nameRequired: '请输入客户名称。',
+      nameTooLong: '客户名称不能超过 {{max}} 个字符。',
+      noteTooLong: '备注不能超过 {{max}} 个字符。',
+    },
+    create: {
+      button: '新建备忘录',
+      title: '新建客户备忘录',
+      description: '记录客户名称和一条简短备注。',
+      success: '客户备忘录已创建。',
+    },
+    edit: {
+      title: '编辑客户备忘录',
+      description: '修改客户名称或备注。',
+      success: '客户备忘录已更新。',
+      notFound: '该备忘录已不存在。',
+    },
+    detail: {
+      createdAt: '创建于 {{time}}',
+    },
+    delete: {
+      title: '确认删除这条客户备忘录？',
+      description: '{{name}} 的备忘录将被永久删除，此操作无法撤销。',
+      deleting: '正在删除…',
+      success: '已删除 {{name}} 的备忘录。',
+      failed: '删除失败，请重试。',
+    },
+    error: {
+      loadFailed: '无法加载客户备忘录。',
+      unauthorized: '登录状态已失效，请重新登录后查看客户备忘录。',
+      requestFailed: '保存失败，请重试。',
+    },
+  },
 
   appearance: {
     title: '外观',
@@ -121,6 +179,7 @@ const zhCN: AppResource = {
   },
   navigation: {
     home: '首页',
+    customerMemos: '客户备忘录',
     open: '打开导航',
     close: '关闭导航',
     expand: '展开导航',

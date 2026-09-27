@@ -1,4 +1,4 @@
-import { Home } from 'lucide-react';
+import { Home, NotebookPen } from 'lucide-react';
 import {
   defineAppRoutes,
   defineSettingsRoutes,
@@ -15,6 +15,21 @@ const appRoutes: AppClientRouteContribution = defineAppRoutes([
     name: 'home',
     navigation: { title: 'navigation.home', icon: Home },
     path: '/',
+  },
+  {
+    // The application's one business page. Its pages are intentionally outside
+    // page authorization: this is an internal tool where every signed-in user
+    // has the same access, and the app declares no permission roles. The
+    // endpoints still require a session of their own.
+    authz: 'skip',
+    auth: 'required',
+    componentLoader: () => import('./pages/customer-memos/index.js'),
+    name: 'customer-memos',
+    navigation: {
+      title: 'navigation.customerMemos',
+      icon: NotebookPen,
+    },
+    path: '/customer-memos',
   },
   {
     auth: 'guest',
