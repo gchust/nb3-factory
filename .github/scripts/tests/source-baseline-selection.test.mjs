@@ -66,9 +66,17 @@ test('baseline records actual creator and source descriptor without guessing sou
   assert.throws(() => captureBaseline(root, { sourceSha: 'b'.repeat(40) }), /conflicts/);
   assert.throws(() => exactCreatorVersion('latest')); assert.throws(() => exactCreatorVersion('1.0.0\nINJECT=1'));
 });
-test('both clean runners restore the selected snapshot before installing and do not change final archive gates', () => {
+test('all three clean runners restore the selected snapshot before installing and preserve final archive gates', () => {
   const workflow = readFileSync(new URL('../../workflows/code-agent-task.yml', import.meta.url), 'utf8');
-  assert.equal((workflow.match(/source-snapshot.mjs restore workspace/g) ?? []).length, 2);
+  assert.equal((workflow.match(/source-snapshot.mjs restore workspace/g) ?? []).length, 3);
+  for (const [name, next] of [['agent', 'verify-final'], ['verify-final', 'publish'], ['preview-build-failed', 'report-failure']]) {
+    const job = workflow.split(`  ${name}:
+`)[1].split(`  ${next}:
+`)[0];
+    const restore = job.indexOf('source-snapshot.mjs restore workspace');
+    assert.ok(restore >= 0, `${name} restores its pinned source baseline`);
+    assert.ok(job.indexOf('pnpm install --frozen-lockfile') > restore, `${name} restores before installing`);
+  }
   assert.match(workflow, /Capture the actual installed package and Skill baseline/);
   assert.match(workflow, /FACTORY_BUILD_ARCHIVE: '1'/);
   assert.doesNotMatch(workflow, /scripts\/utils\/pack-dist.mjs/);

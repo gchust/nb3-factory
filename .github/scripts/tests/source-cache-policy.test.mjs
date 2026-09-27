@@ -5,7 +5,7 @@ import test from 'node:test';
 const workflow = readFileSync(new URL('../../workflows/code-agent-task.yml', import.meta.url), 'utf8');
 const cacheInput = "${{ hashFiles('workspace/factory-source.json') == '' && 'pnpm' || '' }}";
 
-for (const [name, next] of [['agent', 'verify-final'], ['verify-final', 'publish']]) {
+for (const [name, next] of [['agent', 'verify-final'], ['verify-final', 'publish'], ['preview-build-failed', 'report-failure']]) {
   test(`${name}: local source packages never enter setup-node shared cache`, () => {
     const job = workflow.split(`  ${name}:\n`)[1].split(`  ${next}:\n`)[0];
     const setup = job.indexOf('uses: actions/setup-node@v4');
@@ -24,7 +24,7 @@ test('cache expression keeps ordinary installs cached and isolates any source de
   // Evaluate the exact checked-in boolean expression with an injected hashFiles.
   // Only this literal expression is supported by this regression, not arbitrary YAML code.
   const matches = [...workflow.matchAll(/^\s+cache: (.+)$/gm)].map(match => match[1]);
-  assert.deepEqual(matches, [cacheInput, cacheInput]);
+  assert.deepEqual(matches, [cacheInput, cacheInput, cacheInput]);
   const evaluate = new Function('hashFiles', `return (${cacheInput.slice(3, -2)});`);
   for (const hash of ['', 'a'.repeat(64)]) {
     assert.equal(evaluate(file => { assert.equal(file, 'workspace/factory-source.json'); return hash; }), hash ? '' : 'pnpm');
