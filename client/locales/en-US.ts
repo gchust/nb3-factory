@@ -130,6 +130,8 @@ const enUS = {
   },
   navigation: {
     home: 'Home',
+    serviceRequests: 'Service requests',
+    messages: 'Messages',
     open: 'Open navigation',
     close: 'Close navigation',
     expand: 'Expand navigation',
@@ -155,6 +157,58 @@ const enUS = {
   datePicker: {
     placeholder: 'Pick a date',
     rangePlaceholder: 'Pick a date range',
+  },
+  serviceRequest: {
+    title: 'Service requests',
+    description:
+      'Create a request, choose who is responsible for it, and accept it to run the acceptance workflow.',
+    newRequest: 'New request',
+    newRequestDescription:
+      'Create a service request and choose the assignee who will handle it.',
+    requestTitle: 'Title',
+    requestTitlePlaceholder: 'What needs to be handled?',
+    urgent: 'Urgent',
+    urgentHint: 'An urgent request produces an urgent acceptance result.',
+    assignee: 'Assignee',
+    assigneePlaceholder: 'Choose an assignee',
+    create: 'Create',
+    creating: 'Creating…',
+    createFailed: 'Could not create the service request.',
+    loadFailed: 'Could not load service requests.',
+    retry: 'Retry',
+    empty: 'No service requests yet.',
+    columns: {
+      title: 'Title',
+      priority: 'Priority',
+      assignee: 'Assignee',
+      status: 'Status',
+      result: 'Result',
+      createdAt: 'Created',
+    },
+    priority: { normal: 'Normal', urgent: 'Urgent' },
+    status: { pending: 'Pending', accepted: 'Accepted' },
+    result: {
+      normal: 'Normal accepted',
+      urgent: 'Urgent accepted',
+      none: 'Not accepted yet',
+    },
+    detail: {
+      title: 'Service request',
+      description:
+        'Accept this request to run the acceptance workflow and record its result.',
+      detailsTitle: 'Request details',
+      stepsHint:
+        'The acceptance steps and final result are recorded in the workflow execution records.',
+      loadFailed: 'Could not load this service request.',
+      notFound: 'This service request does not exist.',
+      back: 'Back to service requests',
+      accept: 'Accept',
+      accepting: 'Accepting…',
+      acceptFailed: 'The acceptance workflow did not finish. Please try again.',
+      workflowUnavailable:
+        'The acceptance workflow is not enabled, so the request was not accepted.',
+      acceptedAt: 'Accepted at',
+    },
   },
 };
 

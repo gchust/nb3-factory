@@ -1011,6 +1011,220 @@ describe('app server', () => {
       error: 'Not found',
     });
   });
+
+  it('runs the service request acceptance workflow into the assignee inbox', async () => {
+    interface ServiceRequestView {
+      id: number;
+      title: string;
+      urgent: boolean;
+      assigneeId: string;
+      status: string;
+      result: string | null;
+    }
+    interface InboxItemView {
+      id: string;
+      title?: string;
+      body: string;
+      readAt?: string;
+      target?: { type: string; path?: string };
+    }
+    interface WorkflowRunView {
+      id: string;
+      workflowKey: string;
+    }
+    interface NodeRunView {
+      nodeKey: string;
+    }
+
+    const app = trackCloseable(
+      await createInstalledStandaloneServer({
+        viteDevUrl: false,
+        // Better Auth trusts the configured public origin for cookie-authenticated
+        // writes; without it every mutating application request is refused as a
+        // cross-site write.
+        env: { APP_PUBLIC_ORIGIN: 'http://localhost' },
+      }),
+    );
+    const baseUrl = `http://localhost${app.application.publicBasePath}`;
+    // Better Auth refuses a cookie-authenticated write without a trusted Origin.
+    const origin = new URL(baseUrl).origin;
+    const jsonHeaders = { 'content-type': 'application/json' };
+    const signIn = async (
+      username: string,
+      password: string,
+    ): Promise<string> => {
+      const response = await requestApp(
+        app,
+        `${baseUrl}/api/auth/sign-in/username`,
+        {
+          method: 'POST',
+          headers: jsonHeaders,
+          body: JSON.stringify({ username, password }),
+        },
+      );
+      expect(response.status).toBe(200);
+      return response.headers
+        .getSetCookie()
+        .map((header) => header.split(';')[0])
+        .join('; ');
+    };
+
+    // The application route owns its authentication rather than inheriting it.
+    const anonymous = await requestApp(app, `${baseUrl}/api/service-requests`);
+    expect(anonymous.status).toBe(401);
+
+    const supervisor = await signIn('nocobase', 'admin123');
+    const listResponse = await requestApp(
+      app,
+      `${baseUrl}/api/service-requests`,
+      { headers: { cookie: supervisor } },
+    );
+    expect(listResponse.status).toBe(200);
+    const list = (await listResponse.json()) as { data: ServiceRequestView[] };
+    expect(list.data).toHaveLength(2);
+    const normal = list.data.find((request) => !request.urgent);
+    const urgent = list.data.find((request) => request.urgent);
+    expect(normal).toBeDefined();
+    expect(urgent).toBeDefined();
+
+    const accept = async (id: number): Promise<ServiceRequestView> => {
+      const response = await requestApp(
+        app,
+        `${baseUrl}/api/service-requests/${String(id)}/accept`,
+        { method: 'POST', headers: { cookie: supervisor, origin } },
+      );
+      expect(response.status).toBe(200);
+      const body = (await response.json()) as {
+        data: { runId: string; request: ServiceRequestView };
+      };
+      // The endpoint answers only after the workflow run has finished, so the
+      // acceptance status and the derived result are already persisted.
+      expect(body.data.runId).toBeTruthy();
+      return body.data.request;
+    };
+    await expect(accept(normal?.id ?? 0)).resolves.toMatchObject({
+      id: normal?.id,
+      status: 'accepted',
+      result: 'normal',
+    });
+    await expect(accept(urgent?.id ?? 0)).resolves.toMatchObject({
+      id: urgent?.id,
+      status: 'accepted',
+      result: 'urgent',
+    });
+
+    const readRequest = async (id: number): Promise<ServiceRequestView> => {
+      const response = await requestApp(
+        app,
+        `${baseUrl}/api/service-requests/${String(id)}`,
+        { headers: { cookie: supervisor } },
+      );
+      expect(response.status).toBe(200);
+      return ((await response.json()) as { data: ServiceRequestView }).data;
+    };
+    await expect(readRequest(normal?.id ?? 0)).resolves.toMatchObject({
+      status: 'accepted',
+      result: 'normal',
+    });
+    await expect(readRequest(urgent?.id ?? 0)).resolves.toMatchObject({
+      status: 'accepted',
+      result: 'urgent',
+    });
+
+    // The workflow's own execution records expose the steps and final result.
+    const runsResponse = await requestApp(
+      app,
+      `${baseUrl}/api/workflow-runs?workflowKey=service-request-acceptance`,
+      { headers: { cookie: supervisor } },
+    );
+    expect(runsResponse.status).toBe(200);
+    const runs = (await runsResponse.json()) as { data: WorkflowRunView[] };
+    expect(runs.data).toHaveLength(2);
+    expect(
+      runs.data.every(
+        (run) => run.workflowKey === 'service-request-acceptance',
+      ),
+    ).toBe(true);
+    const nodeRunsResponse = await requestApp(
+      app,
+      `${baseUrl}/api/workflow-runs/${runs.data[0]?.id ?? ''}/node-runs`,
+      { headers: { cookie: supervisor } },
+    );
+    expect(nodeRunsResponse.status).toBe(200);
+    const nodeRuns = (await nodeRunsResponse.json()) as {
+      data: NodeRunView[];
+    };
+    const nodeKeys = nodeRuns.data.map((node) => node.nodeKey);
+    expect(nodeKeys).toEqual(
+      expect.arrayContaining([
+        'registerAcceptance',
+        'evaluateUrgency',
+        'notifyAssignee',
+      ]),
+    );
+    expect(
+      nodeKeys.includes('recordUrgentResult') ||
+        nodeKeys.includes('recordNormalResult'),
+    ).toBe(true);
+
+    // The assignee reads the persistent in-app message, not a toast or a list
+    // held in memory, and it links back to the request.
+    const assignee = await signIn('assignee', 'assignee123');
+    const inboxResponse = await requestApp(
+      app,
+      `${baseUrl}/api/notifications/in-app`,
+      { headers: { cookie: assignee } },
+    );
+    expect(inboxResponse.status).toBe(200);
+    const inbox = (await inboxResponse.json()) as { data: InboxItemView[] };
+    expect(inbox.data).toHaveLength(2);
+    const item = inbox.data.find(
+      (entry) =>
+        entry.target?.path === `/service-requests/${String(normal?.id ?? 0)}`,
+    );
+    expect(item).toBeDefined();
+    expect(item?.body).toContain(normal?.title ?? '');
+    expect(item?.readAt).toBeUndefined();
+
+    const csrfResponse = await requestApp(
+      app,
+      `${baseUrl}/api/notifications/in-app/csrf`,
+      { headers: { cookie: assignee } },
+    );
+    const csrf = ((await csrfResponse.json()) as { token: string }).token;
+    // The in-app write compares the header with its own double-submit cookie,
+    // so the request has to carry both the session and the CSRF cookie.
+    const csrfCookie = csrfResponse.headers
+      .getSetCookie()
+      .map((header) => header.split(';')[0])
+      .join('; ');
+    const markRead = await requestApp(
+      app,
+      `${baseUrl}/api/notifications/in-app/${item?.id ?? ''}`,
+      {
+        method: 'POST',
+        headers: {
+          cookie: `${assignee}; ${csrfCookie}`,
+          origin,
+          ...jsonHeaders,
+          'x-csrf-token': csrf,
+        },
+        body: JSON.stringify({ action: 'read' }),
+      },
+    );
+    expect(markRead.status).toBe(200);
+
+    // Marking read persists; it is server state rather than a client-side flag.
+    const reread = await requestApp(
+      app,
+      `${baseUrl}/api/notifications/in-app`,
+      { headers: { cookie: assignee } },
+    );
+    const rereadBody = (await reread.json()) as { data: InboxItemView[] };
+    expect(
+      rereadBody.data.find((entry) => entry.id === item?.id)?.readAt,
+    ).toBeTruthy();
+  });
 });
 
 async function startStandaloneTestServer(

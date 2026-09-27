@@ -91,9 +91,13 @@ describe('app client routes', () => {
     // that requires sign-in adds an entry here, because that is a new grant somebody has to be given.
     const resolved = resolveRoutes();
 
-    // The landing page opted out of page authorization, so it is reachable by every signed-in user.
+    // The landing page opted out of page authorization, so it is reachable by every signed-in user. The
+    // service-request pages do the same: this small build test defines no per-role page grant.
     expect(pageAuthorizations(resolved.routes)).toEqual([
       { name: 'home', authorizedAs: null },
+      { name: 'service-requests', authorizedAs: null },
+      { name: 'service-request-detail', authorizedAs: null },
+      { name: 'messages', authorizedAs: null },
     ]);
   });
 });
