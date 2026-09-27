@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "inputHash": "86c2dc1c740a57d63bd52399c74c2630bdd5280c6bdb6fa6958e3c94d76de5c7",
+  "inputHash": "0336880b84e909e639e15ee0cbf74a22037f8713026ceddbd8bd4d48127ec3ad",
   "findings": [
     {
       "id": "408:36329180371:1:F2",
@@ -329,6 +329,209 @@
         }
       ],
       "fingerprint": "15e91867ecef1133418a42ab6affc4330544219b303251ca2b985a7e04a6578a"
+    },
+    {
+      "id": "414:36329202870:1:F1",
+      "report": "414:36329202870:1",
+      "issue": 414,
+      "taskTitle": "项目资料与私有附件",
+      "appVersion": "1.0.0-beta.47",
+      "appTemplate": "@nocobase/app-template-default",
+      "finding": {
+        "id": "F1",
+        "kind": "improvement",
+        "owner": "documentation",
+        "severity": "minor",
+        "confidence": "confirmed",
+        "status": "open",
+        "title": "保护插件生成的公开内容路由所需中间件机制未写入 Skill",
+        "detail": "@nocobase/app-plugin-file 的内容字节路由是公开设计（routes.d.ts 标注为 deliberate exception），SKILL.md 只要求“在挂载前为各贡献的路径注册应用鉴权”，但不说明用什么 API 先于贡献路由注册。protecting-routes.md 的示例覆盖应用自建 defineApiRoutes，无法套用到插件生成的 root-scope 贡献。实际可用的 defineHttpMiddleware/Application.addHttpMiddleware 只出现在 @nocobase/app-server 的 dist 类型声明中，Skill/README 均未提及。",
+        "impact": "任何“私有附件/受控下载”场景都要重新发现该 API；照 SKILL 字面只能考虑 contribution router 内的 router.use，而 SKILL 又禁止 router.use('*')，容易误配或保护失效。",
+        "suggestedChange": "在 nocobase-app-plugin-file SKILL 或 app-plugin-authentication 的 server-routes 参考中补一节：用 app.addHttpMiddleware(defineHttpMiddleware({ name, register(router) { router.use(accessPath + '/*', auth.required()) } }))，并说明 http middleware 先于 route contribution 注册（application/index.js registerRoutes）。",
+        "evidence": [
+          "E21",
+          "E23",
+          "E19",
+          "E17",
+          "E31",
+          "E32"
+        ],
+        "diagnosis": {
+          "category": "guidance-gap",
+          "trigger": "使用 defineFileRepositoryApiRoutes 生成内容路由后，需要仅对 <accessPath>/* 注册应用鉴权；按 file SKILL 找不到机制。",
+          "expected": "Skill 给出保护插件生成内容路由的公开装配入口与示例。",
+          "actual": "Skill 仅要求 before mounting it；唯一可用入口 addHttpMiddleware/defineHttpMiddleware 只存在于 dist 类型声明，Agent 需 grep 发现。",
+          "workaround": "应用用 app.addHttpMiddleware 注册 owner 校验，代价是自行摸索 API 并承担全局中间件作用域风险。",
+          "acceptance": "仅按 Skill 即可写出保护 defineFileRepositoryApiRoutes 内容路径的中间件；回归断言匿名 401、非属主 404、属主 200。"
+        }
+      },
+      "targets": [
+        "@nocobase/app-server",
+        "app/.agents/skills/nocobase-app-plugin-authentication",
+        "app/.agents/skills/nocobase-app-plugin-file"
+      ],
+      "paths": [
+        ".agents/skills/nocobase-app-plugin-authentication/references/protecting-routes.md",
+        ".agents/skills/nocobase-app-plugin-file/SKILL.md",
+        "packages/@nocobase/app-server/dist/application/index.d.ts",
+        "packages/@nocobase/app-server/dist/application/index.js"
+      ],
+      "evidence": [
+        {
+          "id": "E21",
+          "kind": "skill",
+          "path": "app/.agents/skills/nocobase-app-plugin-file/SKILL.md",
+          "observation": "SKILL 说明上传 Policy 派生、contentUrl 规则，并声明内容路由是公开例外；要求在各贡献自有路径注册应用鉴权、禁止 contribution router 的 router.use('*')，但未给出前置中间件的具体 API。",
+          "lines": [
+            118,
+            126
+          ],
+          "excerpt": "Only declared POST `/api/<name>:<action>` operations are exposed. Ordinary actions are `findMany/findOne/count/exists/aggregate/groupBy/createOne/updateOne/deleteOne`. There are no createMany/updateMany/deleteMany HTTP actions.\n\n`policy` is required and governs every action of the exposure, uploads included. It is a Repository Policy: `read`, `create`, `update` and `delete`, each `true`, `false`, or a rule node. A node that is `false` refuses that operation; a node with no `fields` accepts no caller-supplied field, which is what a metadata `createOne` needs before it will accept anything. Pass a function of the principal — `policy: (principal) => ({ ... })` — together with a `principal(context)` resolver to scope rows to the caller; without a principal the request is refused with 403.\n\nAn upload supplies no caller fields, so it binds a Policy derived from this one: the `create` scope and defaults are inherited and the field allowlist is replaced by the file columns. `create: false` therefore forbids uploading as well as creating metadata, and a `create.defaults` of `{ ownerId }` is stamped onto uploaded rows — which is what keeps an uploaded file inside the same scope `findMany` reads. The content route under `accessPath` is the exception: it is public and this Policy does not reach it.\n\nContent is GET `<accessPath>/<uuid>.<ext>` outside `/api`, omitting the dot when extensionless. Stream returns full bytes as an attachment; redirect returns a public storage URL or a five-minute signed URL. A disk without URL support requires stream mode; there is no automatic fallback.\n\nThese are public routes. For restricted files, register App-owned authentication and authorization on the paths each contribution owns before mounting it — `/<name>:<action>` per exposed API action, `<accessPath>/*` for content. Never `router.use('*', ...)` in a contribution router: contributions share the mounted router, so it also guards the SPA and every contribution mounted after yours. Check the operation and record/parent-record access; a login page, private disk, Client filter or Policy field allowlist is not authentication. Add scoped middleware and principal-based Policy to the generated routes first. If an existing contract needs an adapter, extend that module using the public Server manager and retain its authorization checks; missing built-in authentication alone is not a reason to replace the routes. Never trust browser-supplied ownership.",
+          "sha256": "3fab337bc1a1412ba9affb4cd5ec2e79e76abe1f9b1803b7f2ebe4e293f188f5"
+        },
+        {
+          "id": "E23",
+          "kind": "skill",
+          "path": "app/.agents/skills/nocobase-app-plugin-authentication/references/protecting-routes.md",
+          "observation": "该参考示范在应用自建 defineApiRoutes 内 routes.use('/orders/*', auth.required())，未覆盖插件生成的 root-scope 内容路由如何前置鉴权。",
+          "lines": [
+            1,
+            25
+          ],
+          "excerpt": "# Protecting routes\n\nEvery server route decides its own authentication. Resolve the `Auth` instance\nfrom the container and put `auth.required()` in front of the routes that need\na signed-in caller.\n\n```ts\nimport {\n  authenticationToken,\n  type AuthEnv,\n} from '@nocobase/app-plugin-authentication';\nimport type { Application } from '@nocobase/app-server/application';\nimport {\n  defineApiRoutes,\n  type AppApiRouteContribution,\n} from '@nocobase/app-server/router';\nimport { Hono } from 'hono';\n\nexport const apiRoutes: AppApiRouteContribution<Application> = defineApiRoutes(\n  (app) => {\n    const auth = app.container.resolve(authenticationToken);\n    const routes = new Hono<AuthEnv>();\n\n    routes.use('/orders/*', auth.required());\n    routes.get('/orders', (context) => {",
+          "sha256": "835bdc520d0b737b037e1fa657c04453194bcda96700d013ff1e249c4ab31bbd"
+        },
+        {
+          "id": "E19",
+          "kind": "code",
+          "path": "packages/@nocobase/app-server/dist/application/index.d.ts",
+          "observation": "Application 公开 addRoutes 与 addHttpMiddleware 两个装配入口，是保护插件路由的公开 API。",
+          "lines": [
+            68,
+            74
+          ],
+          "excerpt": "    addServerPlugins(serverPlugins: ResolvedAppServerPlugins): void;\n    addRuntimeContributions(runtime: ApplicationRuntimeContributions<TConfig>): void;\n    addApplicationLocales(load: AppServerPluginLocalesLoader): void;\n    addRoutes(routes: AppRouteContribution<Application<TConfig>>): void;\n    addHttpMiddleware(middleware: AppHttpMiddleware<Application<TConfig>>): void;\n    registerProviders(): void;\n    start(): Promise<void>;",
+          "sha256": "cc4453473485c436b209667da0ddff40875f544783d1243c33e59a38aee376ff"
+        },
+        {
+          "id": "E17",
+          "kind": "code",
+          "path": "packages/@nocobase/app-server/dist/application/index.js",
+          "observation": "registerRoutes 先遍历 httpMiddleware 调 register(this.router, this)，再挂载 route contributions；这解释了应用侧 middleware 为何能先于插件根路由。",
+          "lines": [
+            194,
+            206
+          ],
+          "excerpt": "    async registerRoutes() {\n        if (this.routesRegistered) {\n            return;\n        }\n        for (const middleware of this.httpMiddleware) {\n            await middleware.register(this.router, this);\n        }\n        for (const routes of this.routes) {\n            const router = await routes.createRouter(this);\n            this.router.route(routes.scope === 'api' ? '/api' : '/', router);\n        }\n        this.routesRegistered = true;\n    }",
+          "sha256": "98e0a7f93ab7107addcf1c4516d1fd8234c51f6f8078b2bccc905e006153130a"
+        },
+        {
+          "id": "E31",
+          "kind": "log",
+          "path": "artifacts/agent-history/agent-repair-2.jsonl/part-0008.txt",
+          "observation": "repair-2 用 grep 在 @nocobase/app-server/dist 中搜索 addHttpMiddleware/defineHttpMiddleware，说明保护内容路由的入口未被 Skill 直接给出。",
+          "lines": [
+            1254,
+            1262
+          ],
+          "excerpt": "{\"type\":\"message_update\",\"usage\":{\"input\":687,\"output\":135,\"cacheRead\":43520,\"cacheWrite\":0,\"reasoning\":28,\"totalTokens\":44342,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"assistantMessageEvent\":{\"type\":\"thinking_end\",\"contentIndex\":0,\"content\":\"Now let me find the middleware API in app-server. `addHttpMiddleware`, `defineHttpMiddleware`. Let me locate the type definitions.\"}}\n{\"type\":\"message_update\",\"usage\":{\"input\":687,\"output\":135,\"cacheRead\":43520,\"cacheWrite\":0,\"reasoning\":28,\"totalTokens\":44342,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"assistantMessageEvent\":{\"type\":\"toolcall_end\",\"contentIndex\":1,\"toolCall\":{\"type\":\"toolCall\",\"id\":\"call_00_mH9rVs2uLrLg8L0QJ01m8724\",\"name\":\"bash\",\"arguments\":{\"command\":\"cd /home/runner/work/nb3-factory/nb3-factory/workspace && grep -rn \\\"addHttpMiddleware\\\\|defineHttpMiddleware\\\\|HttpMiddleware\\\" node_modules/@nocobase/app-server/dist --include=*.d.ts | head -30\",\"timeout\":60}}}}\n{\"type\":\"message_end\",\"message\":{\"role\":\"assistant\",\"content\":[{\"type\":\"thinking\",\"thinking\":\"Now let me find the middleware API in app-server. `addHttpMiddleware`, `defineHttpMiddleware`. Let me locate the type definitions.\",\"thinkingSignature\":\"[{\\\"format\\\":\\\"unknown\\\",\\\"index\\\":0,\\\"text\\\":\\\"Now let me find the middleware API in app-server. `addHttpMiddleware`, `defineHttpMiddleware`. Let me locate the type definitions.\\\",\\\"type\\\":\\\"reasoning.text\\\"}]\"},{\"type\":\"toolCall\",\"id\":\"call_00_mH9rVs2uLrLg8L0QJ01m8724\",\"name\":\"bash\",\"arguments\":{\"command\":\"cd /home/runner/work/nb3-factory/nb3-factory/workspace && grep -rn \\\"addHttpMiddleware\\\\|defineHttpMiddleware\\\\|HttpMiddleware\\\" node_modules/@nocobase/app-server/dist --include=*.d.ts | head -30\",\"timeout\":60}}],\"api\":\"openai-completions\",\"provider\":\"nb3-factory\",\"model\":\"deepseek-v4.1-flash\",\"usage\":{\"input\":687,\"output\":135,\"cacheRead\":43520,\"cacheWrite\":0,\"reasoning\":28,\"totalTokens\":44342,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"stopReason\":\"toolUse\",\"timestamp\":1790526118874,\"responseId\":\"gen_01M3HTRS0FC68N97DCND55YDGR\",\"rawStopReason\":\"tool_calls\"}}\n{\"type\":\"tool_execution_start\",\"toolCallId\":\"call_00_mH9rVs2uLrLg8L0QJ01m8724\",\"toolName\":\"bash\",\"args\":{\"command\":\"cd /home/runner/work/nb3-factory/nb3-factory/workspace && grep -rn \\\"addHttpMiddleware\\\\|defineHttpMiddleware\\\\|HttpMiddleware\\\" node_modules/@nocobase/app-server/dist --include=*.d.ts | head -30\",\"timeout\":60}}\n{\"type\":\"tool_execution_update\",\"toolCallId\":\"call_00_mH9rVs2uLrLg8L0QJ01m8724\",\"toolName\":\"bash\",\"args\":{\"command\":\"cd /home/runner/work/nb3-factory/nb3-factory/workspace && grep -rn \\\"addHttpMiddleware\\\\|defineHttpMiddleware\\\\|HttpMiddleware\\\" node_modules/@nocobase/app-server/dist --include=*.d.ts | head -30\",\"timeout\":60},\"partialResult\":{\"content\":[]}}\n{\"type\":\"tool_execution_update\",\"toolCallId\":\"call_00_mH9rVs2uLrLg8L0QJ01m8724\",\"toolName\":\"bash\",\"args\":{\"command\":\"cd /home/runner/work/nb3-factory/nb3-factory/workspace && grep -rn \\\"addHttpMiddleware\\\\|defineHttpMiddleware\\\\|HttpMiddleware\\\" node_modules/@nocobase/app-server/dist --include=*.d.ts | head -30\",\"timeout\":60},\"partialResult\":{\"content\":[{\"type\":\"text\",\"text\":\"node_modules/@nocobase/app-server/dist/i18n/index.d.ts:4:import { type AppHttpMiddleware } from '../router/index.js';\\nnode_modules/@nocobase/app-server/dist/i18n/index.d.ts:36:export declare const i18nHttpMiddleware: AppHttpMiddleware<I18nProviderApplication>;\\nnode_modules/@nocobase/app-server/dist/router/routes.d.ts:3:export type AppHttpMiddlewareRegister<TApplication> = (router: Hono, app: TApplication) => void | Promise<void>;\\nnode_modules/@nocobase/app-server/dist/router/routes.d.ts:4:export interface AppHttpMiddleware<TApplication> {\\nnode_modules/@nocobase/app-server/dist/router/routes.d.ts:6:    readonly register: AppHttpMiddlewareRegister<TApplication>;\\nnode_modules/@nocobase/app-server/dist/router/routes.d.ts:17:export interface DefineHttpMiddlewareOptions<TApplication> {\\nnode_modules/@nocobase/app-server/dist/router/routes.d.ts:19:    readonly register: AppHttpMiddlewareRegister<TApplication>;\\nnode_modules/@nocobase/app-server/dist/router/routes.d.ts:21:export declare function defineHttpMiddleware<TApplication>(options: DefineHttpMiddlewareOptions<TApplication>): AppHttpMiddleware<TApplication>;\\nnode_modules/@nocobase/app-server/dist/application/index.d.ts:5:import { type AppHttpMiddleware, type AppRouteContribution } from '../router/index.js';\\nnode_modules/@nocobase/app-server/dist/application/index.d.ts:72:    addHttpMiddleware(middleware: AppHttpMiddleware<Application<TConfig>>): void;\\nnode_modules/@nocobase/app-server/dist/logging/middleware.d.ts:4:import { type AppHttpMiddleware } from '../router/index.js';\\nnode_modules/@nocobase/app-server/dist/logging/middleware.d.ts:12:export declare const requestLoggingMiddleware: AppHttpMiddleware<AppPluginApplication>;\\nnode_modules/@nocobase/app-server/dist/session/provider.d.ts:4:import { type AppHttpMiddleware } from '../router/index.js';\\nnode_modules/@nocobase/app-server/dist/session/provider.d.ts:13:export declare const sessionHttpMiddleware: AppHttpMiddleware<AppPluginApplication>;\\n\"}],\"details\":{}}}\n{\"type\":\"tool_execution_end\",\"toolCallId\":\"call_00_mH9rVs2uLrLg8L0QJ01m8724\",\"toolName\":\"bash\",\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"node_modules/@nocobase/app-server/dist/i18n/index.d.ts:4:import { type AppHttpMiddleware } from '../router/index.js';\\nnode_modules/@nocobase/app-server/dist/i18n/index.d.ts:36:export declare const i18nHttpMiddleware: AppHttpMiddleware<I18nProviderApplication>;\\nnode_modules/@nocobase/app-server/dist/router/routes.d.ts:3:export type AppHttpMiddlewareRegister<TApplication> = (router: Hono, app: TApplication) => void | Promise<void>;\\nnode_modules/@nocobase/app-server/dist/router/routes.d.ts:4:export interface AppHttpMiddleware<TApplication> {\\nnode_modules/@nocobase/app-server/dist/router/routes.d.ts:6:    readonly register: AppHttpMiddlewareRegister<TApplication>;\\nnode_modules/@nocobase/app-server/dist/router/routes.d.ts:17:export interface DefineHttpMiddlewareOptions<TApplication> {\\nnode_modules/@nocobase/app-server/dist/router/routes.d.ts:19:    readonly register: AppHttpMiddlewareRegister<TApplication>;\\nnode_modules/@nocobase/app-server/dist/router/routes.d.ts:21:export declare function defineHttpMiddleware<TApplication>(options: DefineHttpMiddlewareOptions<TApplication>): AppHttpMiddleware<TApplication>;\\nnode_modules/@nocobase/app-server/dist/application/index.d.ts:5:import { type AppHttpMiddleware, type AppRouteContribution } from '../router/index.js';\\nnode_modules/@nocobase/app-server/dist/application/index.d.ts:72:    addHttpMiddleware(middleware: AppHttpMiddleware<Application<TConfig>>): void;\\nnode_modules/@nocobase/app-server/dist/logging/middleware.d.ts:4:import { type AppHttpMiddleware } from '../router/index.js';\\nnode_modules/@nocobase/app-server/dist/logging/middleware.d.ts:12:export declare const requestLoggingMiddleware: AppHttpMiddleware<AppPluginApplication>;\\nnode_modules/@nocobase/app-server/dist/session/provider.d.ts:4:import { type AppHttpMiddleware } from '../router/index.js';\\nnode_modules/@nocobase/app-server/dist/session/provider.d.ts:13:export declare const sessionHttpMiddleware: AppHttpMiddleware<AppPluginApplication>;\\n\"}]},\"isError\":false}\n{\"type\":\"message_start\",\"message\":{\"role\":\"toolResult\",\"toolCallId\":\"call_00_mH9rVs2uLrLg8L0QJ01m8724\",\"toolName\":\"bash\",\"content\":[{\"type\":\"text\",\"text\":\"node_modules/@nocobase/app-server/dist/i18n/index.d.ts:4:import { type AppHttpMiddleware } from '../router/index.js';\\nnode_modules/@nocobase/app-server/dist/i18n/index.d.ts:36:export declare const i18nHttpMiddleware: AppHttpMiddleware<I18nProviderApplication>;\\nnode_modules/@nocobase/app-server/dist/router/routes.d.ts:3:export type AppHttpMiddlewareRegister<TApplication> = (router: Hono, app: TApplication) => void | Promise<void>;\\nnode_modules/@nocobase/app-server/dist/router/routes.d.ts:4:export interface AppHttpMiddleware<TApplication> {\\nnode_modules/@nocobase/app-server/dist/router/routes.d.ts:6:    readonly register: AppHttpMiddlewareRegister<TApplication>;\\nnode_modules/@nocobase/app-server/dist/router/routes.d.ts:17:export interface DefineHttpMiddlewareOptions<TApplication> {\\nnode_modules/@nocobase/app-server/dist/router/routes.d.ts:19:    readonly register: AppHttpMiddlewareRegister<TApplication>;\\nnode_modules/@nocobase/app-server/dist/router/routes.d.ts:21:export declare function defineHttpMiddleware<TApplication>(options: DefineHttpMiddlewareOptions<TApplication>): AppHttpMiddleware<TApplication>;\\nnode_modules/@nocobase/app-server/dist/application/index.d.ts:5:import { type AppHttpMiddleware, type AppRouteContribution } from '../router/index.js';\\nnode_modules/@nocobase/app-server/dist/application/index.d.ts:72:    addHttpMiddleware(middleware: AppHttpMiddleware<Application<TConfig>>): void;\\nnode_modules/@nocobase/app-server/dist/logging/middleware.d.ts:4:import { type AppHttpMiddleware } from '../router/index.js';\\nnode_modules/@nocobase/app-server/dist/logging/middleware.d.ts:12:export declare const requestLoggingMiddleware: AppHttpMiddleware<AppPluginApplication>;\\nnode_modules/@nocobase/app-server/dist/session/provider.d.ts:4:import { type AppHttpMiddleware } from '../router/index.js';\\nnode_modules/@nocobase/app-server/dist/session/provider.d.ts:13:export declare const sessionHttpMiddleware: AppHttpMiddleware<AppPluginApplication>;\\n\"}],\"isError\":false,\"timestamp\":1790526122581}}\n{\"type\":\"message_end\",\"message\":{\"role\":\"toolResult\",\"toolCallId\":\"call_00_mH9rVs2uLrLg8L0QJ01m8724\",\"toolName\":\"bash\",\"content\":[{\"type\":\"text\",\"text\":\"node_modules/@nocobase/app-server/dist/i18n/index.d.ts:4:import { type AppHttpMiddleware } from '../router/index.js';\\nnode_modules/@nocobase/app-server/dist/i18n/index.d.ts:36:export declare const i18nHttpMiddleware: AppHttpMiddleware<I18nProviderApplication>;\\nnode_modules/@nocobase/app-server/dist/router/routes.d.ts:3:export type AppHttpMiddlewareRegister<TApplication> = (router: Hono, app: TApplication) => void | Promise<void>;\\nnode_modules/@nocobase/app-server/dist/router/routes.d.ts:4:export interface AppHttpMiddleware<TApplication> {\\nnode_modules/@nocobase/app-server/dist/router/routes.d.ts:6:    readonly register: AppHttpMiddlewareRegister<TApplication>;\\nnode_modules/@nocobase/app-server/dist/router/routes.d.ts:17:export interface DefineHttpMiddlewareOptions<TApplication> {\\nnode_modules/@nocobase/app-server/dist/router/routes.d.ts:19:    readonly register: AppHttpMiddlewareRegister<TApplication>;\\nnode_modules/@nocobase/app-server/dist/router/routes.d.ts:21:export declare function defineHttpMiddleware<TApplication>(options: DefineHttpMiddlewareOptions<TApplication>): AppHttpMiddleware<TApplication>;\\nnode_modules/@nocobase/app-server/dist/application/index.d.ts:5:import { type AppHttpMiddleware, type AppRouteContribution } from '../router/index.js';\\nnode_modules/@nocobase/app-server/dist/application/index.d.ts:72:    addHttpMiddleware(middleware: AppHttpMiddleware<Application<TConfig>>): void;\\nnode_modules/@nocobase/app-server/dist/logging/middleware.d.ts:4:import { type AppHttpMiddleware } from '../router/index.js';\\nnode_modules/@nocobase/app-server/dist/logging/middleware.d.ts:12:export declare const requestLoggingMiddleware: AppHttpMiddleware<AppPluginApplication>;\\nnode_modules/@nocobase/app-server/dist/session/provider.d.ts:4:import { type AppHttpMiddleware } from '../router/index.js';\\nnode_modules/@nocobase/app-server/dist/session/provider.d.ts:13:export declare const sessionHttpMiddleware: AppHttpMiddleware<AppPluginApplication>;\\n\"}],\"isError\":false,\"timestamp\":1790526122581}}",
+          "sha256": "2232d9c329c67cce1f85db2235a7116c8d3ba71fdbe9e793733a54a9f8f8aa8f"
+        },
+        {
+          "id": "E32",
+          "kind": "log",
+          "path": "artifacts/agent-history/agent-repair-2.jsonl/part-0024.txt",
+          "observation": "repair-2 进一步 cat router/routes.d.ts 确认 defineHttpMiddleware，印证 Agent 从类型声明反推装配方式。",
+          "lines": [
+            1620,
+            1626
+          ],
+          "excerpt": "{\"type\":\"message_update\",\"usage\":{\"input\":1147,\"output\":229,\"cacheRead\":103168,\"cacheWrite\":0,\"reasoning\":102,\"totalTokens\":104544,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"assistantMessageEvent\":{\"type\":\"thinking_end\",\"contentIndex\":0,\"content\":\"`request` returns the parsed payload (`{ data: ... }`) and throws `ApiClientError` with `.message` and `.code`. Good.\\n\\nNow, the app-server's `defineApiRoutes` and how to return JSON: the file plugin uses `c.json(...)`. My routes use Hono context `c`. `defineApiRoutes((app) => new Hono())`.\\n\\nLet me check `defineApiRoutes` d.ts for the exact types and whether route contributions need `scope`.\"}}\n{\"type\":\"message_update\",\"usage\":{\"input\":1147,\"output\":229,\"cacheRead\":103168,\"cacheWrite\":0,\"reasoning\":102,\"totalTokens\":104544,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"assistantMessageEvent\":{\"type\":\"toolcall_end\",\"contentIndex\":1,\"toolCall\":{\"type\":\"toolCall\",\"id\":\"call_00_oxamtS1keGRZwDrrGYsz7920\",\"name\":\"bash\",\"arguments\":{\"command\":\"cd /home/runner/work/nb3-factory/nb3-factory/workspace && cat node_modules/@nocobase/app-server/dist/router/routes.d.ts && echo \\\"=== http middleware ===\\\" && grep -rn \\\"defineHttpMiddleware\\\\|AppHttpMiddleware\\\" node_modules/@nocobase/app-server/dist/**/*.d.ts | head -20\",\"timeout\":60}}}}\n{\"type\":\"message_end\",\"message\":{\"role\":\"assistant\",\"content\":[{\"type\":\"thinking\",\"thinking\":\"`request` returns the parsed payload (`{ data: ... }`) and throws `ApiClientError` with `.message` and `.code`. Good.\\n\\nNow, the app-server's `defineApiRoutes` and how to return JSON: the file plugin uses `c.json(...)`. My routes use Hono context `c`. `defineApiRoutes((app) => new Hono())`.\\n\\nLet me check `defineApiRoutes` d.ts for the exact types and whether route contributions need `scope`.\",\"thinkingSignature\":\"[{\\\"format\\\":\\\"unknown\\\",\\\"index\\\":0,\\\"text\\\":\\\"`request` returns the parsed payload (`{ data: ... }`) and throws `ApiClientError` with `.message` and `.code`. Good.\\\\n\\\\nNow, the app-server's `defineApiRoutes` and how to return JSON: the file plugin uses `c.json(...)`. My routes use Hono context `c`. `defineApiRoutes((app) => new Hono())`.\\\\n\\\\nLet me check `defineApiRoutes` d.ts for the exact types and whether route contributions need `scope`.\\\",\\\"type\\\":\\\"reasoning.text\\\"}]\"},{\"type\":\"toolCall\",\"id\":\"call_00_oxamtS1keGRZwDrrGYsz7920\",\"name\":\"bash\",\"arguments\":{\"command\":\"cd /home/runner/work/nb3-factory/nb3-factory/workspace && cat node_modules/@nocobase/app-server/dist/router/routes.d.ts && echo \\\"=== http middleware ===\\\" && grep -rn \\\"defineHttpMiddleware\\\\|AppHttpMiddleware\\\" node_modules/@nocobase/app-server/dist/**/*.d.ts | head -20\",\"timeout\":60}}],\"api\":\"openai-completions\",\"provider\":\"nb3-factory\",\"model\":\"deepseek-v4.1-flash\",\"usage\":{\"input\":1147,\"output\":229,\"cacheRead\":103168,\"cacheWrite\":0,\"reasoning\":102,\"totalTokens\":104544,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"stopReason\":\"toolUse\",\"timestamp\":1790526914991,\"responseId\":\"gen_01M3HVH2VE2KM6YTQ795QBQM2A\",\"rawStopReason\":\"tool_calls\"}}\n{\"type\":\"tool_execution_start\",\"toolCallId\":\"call_00_oxamtS1keGRZwDrrGYsz7920\",\"toolName\":\"bash\",\"args\":{\"command\":\"cd /home/runner/work/nb3-factory/nb3-factory/workspace && cat node_modules/@nocobase/app-server/dist/router/routes.d.ts && echo \\\"=== http middleware ===\\\" && grep -rn \\\"defineHttpMiddleware\\\\|AppHttpMiddleware\\\" node_modules/@nocobase/app-server/dist/**/*.d.ts | head -20\",\"timeout\":60}}\n{\"type\":\"tool_execution_update\",\"toolCallId\":\"call_00_oxamtS1keGRZwDrrGYsz7920\",\"toolName\":\"bash\",\"args\":{\"command\":\"cd /home/runner/work/nb3-factory/nb3-factory/workspace && cat node_modules/@nocobase/app-server/dist/router/routes.d.ts && echo \\\"=== http middleware ===\\\" && grep -rn \\\"defineHttpMiddleware\\\\|AppHttpMiddleware\\\" node_modules/@nocobase/app-server/dist/**/*.d.ts | head -20\",\"timeout\":60},\"partialResult\":{\"content\":[]}}\n{\"type\":\"tool_execution_update\",\"toolCallId\":\"call_00_oxamtS1keGRZwDrrGYsz7920\",\"toolName\":\"bash\",\"args\":{\"command\":\"cd /home/runner/work/nb3-factory/nb3-factory/workspace && cat node_modules/@nocobase/app-server/dist/router/routes.d.ts && echo \\\"=== http middleware ===\\\" && grep -rn \\\"defineHttpMiddleware\\\\|AppHttpMiddleware\\\" node_modules/@nocobase/app-server/dist/**/*.d.ts | head -20\",\"timeout\":60},\"partialResult\":{\"content\":[{\"type\":\"text\",\"text\":\"import type { Hono } from 'hono';\\nexport type AppRouterFactory<TApplication> = (app: TApplication) => Hono | Promise<Hono>;\\nexport type AppHttpMiddlewareRegister<TApplication> = (router: Hono, app: TApplication) => void | Promise<void>;\\nexport interface AppHttpMiddleware<TApplication> {\\n    readonly name: string;\\n    readonly register: AppHttpMiddlewareRegister<TApplication>;\\n}\\nexport interface AppApiRouteContribution<TApplication> {\\n    readonly scope: 'api';\\n    readonly createRouter: AppRouterFactory<TApplication>;\\n}\\nexport interface AppRootRouteContribution<TApplication> {\\n    readonly scope: 'root';\\n    readonly createRouter: AppRouterFactory<TApplication>;\\n}\\nexport type AppRouteContribution<TApplication> = AppApiRouteContribution<TApplication> | AppRootRouteContribution<TApplication>;\\nexport interface DefineHttpMiddlewareOptions<TApplication> {\\n    readonly name: string;\\n    readonly register: AppHttpMiddlewareRegister<TApplication>;\\n}\\nexport declare function defineHttpMiddleware<TApplication>(options: DefineHttpMiddlewareOptions<TApplication>): AppHttpMiddleware<TApplication>;\\nexport declare function defineApiRoutes<TApplication>(createRouter: AppRouterFactory<TApplication>): AppApiRouteContribution<TApplication>;\\nexport declare function defineRootRoutes<TApplication>(createRouter: AppRouterFactory<TApplication>): AppRootRouteContribution<TApplication>;\\n//# sourceMappingURL=routes.d.ts.map\"}],\"details\":{}}}\n{\"type\":\"tool_execution_update\",\"toolCallId\":\"call_00_oxamtS1keGRZwDrrGYsz7920\",\"toolName\":\"bash\",\"args\":{\"command\":\"cd /home/runner/work/nb3-factory/nb3-factory/workspace && cat node_modules/@nocobase/app-server/dist/router/routes.d.ts && echo \\\"=== http middleware ===\\\" && grep -rn \\\"defineHttpMiddleware\\\\|AppHttpMiddleware\\\" node_modules/@nocobase/app-server/dist/**/*.d.ts | head -20\",\"timeout\":60},\"partialResult\":{\"content\":[{\"type\":\"text\",\"text\":\"import type { Hono } from 'hono';\\nexport type AppRouterFactory<TApplication> = (app: TApplication) => Hono | Promise<Hono>;\\nexport type AppHttpMiddlewareRegister<TApplication> = (router: Hono, app: TApplication) => void | Promise<void>;\\nexport interface AppHttpMiddleware<TApplication> {\\n    readonly name: string;\\n    readonly register: AppHttpMiddlewareRegister<TApplication>;\\n}\\nexport interface AppApiRouteContribution<TApplication> {\\n    readonly scope: 'api';\\n    readonly createRouter: AppRouterFactory<TApplication>;\\n}\\nexport interface AppRootRouteContribution<TApplication> {\\n    readonly scope: 'root';\\n    readonly createRouter: AppRouterFactory<TApplication>;\\n}\\nexport type AppRouteContribution<TApplication> = AppApiRouteContribution<TApplication> | AppRootRouteContribution<TApplication>;\\nexport interface DefineHttpMiddlewareOptions<TApplication> {\\n    readonly name: string;\\n    readonly register: AppHttpMiddlewareRegister<TApplication>;\\n}\\nexport declare function defineHttpMiddleware<TApplication>(options: DefineHttpMiddlewareOptions<TApplication>): AppHttpMiddleware<TApplication>;\\nexport declare function defineApiRoutes<TApplication>(createRouter: AppRouterFactory<TApplication>): AppApiRouteContribution<TApplication>;\\nexport declare function defineRootRoutes<TApplication>(createRouter: AppRouterFactory<TApplication>): AppRootRouteContribution<TApplication>;\\n//# sourceMappingURL=routes.d.ts.map=== http middleware ===\\nnode_modules/@nocobase/app-server/dist/application/index.d.ts:5:import { type AppHttpMiddleware, type AppRouteContribution } from '../router/index.js';\\nnode_modules/@nocobase/app-server/dist/application/index.d.ts:72:    addHttpMiddleware(middleware: AppHttpMiddleware<Application<TConfig>>): void;\\nnode_modules/@nocobase/app-server/dist/i18n/index.d.ts:4:import { type AppHttpMiddleware } from '../router/index.js';\\nnode_modules/@nocobase/app-server/dist/i18n/index.d.ts:36:export declare const i18nHttpMiddleware: AppHttpMiddleware<I18nProviderApplication>;\\nnode_modules/@nocobase/app-server/dist/logging/middleware.d.ts:4:import { type AppHttpMiddleware } from '../router/index.js';\\nnode_modules/@nocobase/app-server/dist/logging/middleware.d.ts:12:export declare const requestLoggingMiddleware: AppHttpMiddleware<AppPluginApplication>;\\nnode_modules/@nocobase/app-server/dist/router/routes.d.ts:3:export type AppHttpMiddlewareRegister<TApplication> = (router: Hono, app: TApplication) => void | Promise<void>;\\nnode_modules/@nocobase/app-server/dist/router/routes.d.ts:4:export interface AppHttpMiddleware<TApplication> {\\nnode_modules/@nocobase/app-server/dist/router/routes.d.ts:6:    readonly register: AppHttpMiddlewareRegister<TApplication>;\\nnode_modules/@nocobase/app-server/dist/router/routes.d.ts:19:    readonly register: AppHttpMiddlewareRegister<TApplication>;\\nnode_modules/@nocobase/app-server/dist/router/routes.d.ts:21:export declare function defineHttpMiddleware<TApplication>(options: DefineHttpMiddlewareOptions<TApplication>): AppHttpMiddleware<TApplication>;\\nnode_modules/@nocobase/app-server/dist/session/provider.d.ts:4:import { type AppHttpMiddleware } from '../router/index.js';\\nnode_modules/@nocobase/app-server/dist/session/provider.d.ts:13:export declare const sessionHttpMiddleware: AppHttpMiddleware<AppPluginApplication>;\\n\"}],\"details\":{}}}",
+          "sha256": "231dd9fa12e55d26c3d980ea047092503c7f9592c12deb3e84d971c68f37732b"
+        }
+      ],
+      "fingerprint": "821b4891bf6e5a893c67d06d13df405dea4880630153a4cc9fd5743ce56502bf"
+    },
+    {
+      "id": "414:36329202870:1:F2",
+      "report": "414:36329202870:1",
+      "issue": 414,
+      "taskTitle": "项目资料与私有附件",
+      "appVersion": "1.0.0-beta.47",
+      "appTemplate": "@nocobase/app-template-default",
+      "finding": {
+        "id": "F2",
+        "kind": "improvement",
+        "owner": "plugin",
+        "severity": "minor",
+        "confidence": "confirmed",
+        "status": "open",
+        "title": "Registry 默认图片预览/缩略图不呈现损坏图片的失败",
+        "detail": "registry 的 FilePreviewContent 图片分支只渲染 <img>（无 onError），FileThumbnail 同样无 onError；损坏/伪装的 PNG 不会触发加载事件，用户看到空白或浏览器破图。SKILL 要求失败请求与非法文档给出错误呈现，且允许扩展 app-owned Registry 源码。",
+        "impact": "要满足 B06，应用必须在 app-owned 副本额外实现 onError + role=alert；默认组件对“文件损坏”这一常见失败没有可读反馈。",
+        "suggestedChange": "在 Registry 的图片分支与 FileThumbnail 加入 onError，回退到类型图标并显示可翻译的失败信息（可复用现有 error/role=alert 模式）。",
+        "evidence": [
+          "E26",
+          "E28",
+          "E22"
+        ],
+        "diagnosis": {
+          "category": "usability-improvement",
+          "trigger": "打开一个扩展名/MIME 为图片但字节损坏的文件。",
+          "expected": "按 Skill 的失败呈现要求，显示明确的图片加载失败信息与回退图标。",
+          "actual": "默认图片分支与缩略图均无 onError，损坏图片静默显示空白/破图。",
+          "workaround": "应用扩展 app-owned Registry 副本，加入 onError 状态与 role=alert，才通过 B06。",
+          "acceptance": "默认组件打开损坏 PNG 时出现 role=alert 的失败文案与类型图标，而非空白图。"
+        }
+      },
+      "targets": [
+        "@nocobase/app-plugin-file",
+        "app/.agents/skills/nocobase-app-plugin-file"
+      ],
+      "paths": [
+        ".agents/skills/nocobase-app-plugin-file/SKILL.md",
+        "packages/@nocobase/app-plugin-file/registry/component-ui/components/file-thumbnail.tsx",
+        "packages/@nocobase/app-plugin-file/registry/component-ui/components/previewers/file-preview-content.tsx"
+      ],
+      "evidence": [
+        {
+          "id": "E26",
+          "kind": "code",
+          "path": "packages/@nocobase/app-plugin-file/registry/component-ui/components/previewers/file-preview-content.tsx",
+          "observation": "FilePreviewContent 按 kind 分派；图片分支仅返回 <img>，无 onError；存在统一 error prop 的 role=alert 呈现。",
+          "lines": [
+            30,
+            80
+          ],
+          "excerpt": "export function FilePreviewContent(\n  inputProps: FilePreviewContentProps,\n): ReactElement {\n  const { t } = useTranslation('@nocobase/app-plugin-file');\n  const { file, kind, url, text, error, onDownload } = inputProps;\n\n  const format =\n    kind === 'ooxml' ? resolveOfficeOpenXmlFormat(file) : undefined;\n  if (format) {\n    return (\n      <OfficeOpenXmlPreview\n        key={`${file.id}:${format}:${url ?? ''}:${error ?? ''}`}\n        file={file}\n        format={format}\n        url={url}\n        error={error}\n        onDownload={onDownload}\n      />\n    );\n  }\n\n  if (kind === 'office') {\n    return (\n      <OfficePreview\n        file={file}\n        url={url}\n        error={error}\n        onDownload={onDownload}\n      />\n    );\n  }\n  if (error)\n    return (\n      <div role='alert'>{t(messageKey(error), { defaultValue: error })}</div>\n    );\n  if (!url && kind !== 'unsupported')\n    return (\n      <div role='status'>\n        {t('files.loadingPreview', { defaultValue: 'Loading preview...' })}\n      </div>\n    );\n  switch (kind) {\n    case 'image':\n      return (\n        <img\n          src={url}\n          alt={file.filename}\n          className='max-h-[70vh] max-w-full object-contain'\n        />\n      );\n    case 'pdf':",
+          "sha256": "f30abbadc57a0f0ed28cdb68d4ced7bba9a6e3a4c3d59d3b6fc49f89d9497144"
+        },
+        {
+          "id": "E28",
+          "kind": "code",
+          "path": "packages/@nocobase/app-plugin-file/registry/component-ui/components/file-thumbnail.tsx",
+          "observation": "FileThumbnail 在无安全图片 URL 时回退类型图标，但 <img> 无 onError，损坏图片不会回退。",
+          "lines": [
+            43,
+            58
+          ],
+          "excerpt": "export function FileThumbnail({\n  file,\n  url,\n  alt = file.filename,\n}: FileThumbnailProps): ReactElement {\n  const imageUrl = resolveSafeFileUrl(\n    url ?? (isSafeImagePreview(file) ? (file.contentUrl ?? '') : ''),\n  );\n  return imageUrl ? (\n    <img\n      data-slot='file-thumbnail'\n      src={imageUrl}\n      alt={alt}\n      className='h-full w-full object-cover'\n    />\n  ) : (",
+          "sha256": "1fe474070e897ac53aaf4031837244cb138d7754db2911eadb6987b2a5a48aaa"
+        },
+        {
+          "id": "E22",
+          "kind": "skill",
+          "path": "app/.agents/skills/nocobase-app-plugin-file/SKILL.md",
+          "observation": "SKILL 描述 Registry 预览：DOCX/XLSX/PPTX 用本地 @silurus/ooxml；失败请求/非法文档需给出错误呈现；Bearer-only 需扩展 app-owned Registry 源码。",
+          "lines": [
+            229,
+            245
+          ],
+          "excerpt": "FileUploadField takes a repository and controlled value/onChange; onStatusChange reports idle/uploading/error so forms can prevent incomplete submissions. Accept/maxSize/maxFiles are UI checks. removeOnDelete calls deleteOne, deleting metadata only; otherwise removal unlinks the selection. Read-only FileList, FileThumbnail, FilePreviewField and FilePreviewDialog use contentUrl without a repository prop. Import UI types from the installed recipe. Supply translated labels and adapt App-owned source as needed.\n\n### Preview and content access\n\nPreview supports safe raster images, PDF via a fetched blob, text/Markdown and audio/video. HTML/SVG/XML previews and unsafe URL schemes are rejected. DOCX, XLSX and PPTX use lazily loaded `@silurus/ooxml` viewers to render locally from `FileRecord.contentUrl`; their content is not sent to a third-party preview service. Legacy DOC/XLS/PPT and OpenDocument formats use Office Online, which requires an internet-accessible absolute URL and cannot use the App session.\n\nOOXML, PDF and text fetches use same-origin credentials. An App-owned content route protected by same-origin session cookies can therefore serve restricted previews, provided it checks the caller's record access. Cross-origin fetches omit credentials and require CORS; an external cookie-protected URL is not supported by this default path. The Repository API client's Bearer token is not automatically attached to content fetches.\n\nFor Bearer-only content authorization, adapt the installed Registry source in the App. Add an authenticated content loader to the OOXML fetch path and `PreviewBody`'s PDF/text fetches, and adapt download and media/image paths as needed. Resolve authentication through the App's supported client/session services and send credentials only to the trusted content endpoint. Do not put tokens in `contentUrl`. If the adapter creates blob URLs, keep an App-owned trusted URL set, pass it to the relevant `resolveSafeFileUrl` calls, and revoke URLs when replaced or unmounted. Merely assigning a `blob:` URL to `FileRecord.contentUrl` is insufficient: the default components reject untrusted blob URLs.\n\nOOXML request or rendering failure displays an error and, when downloads are enabled, a download action. `download={false}` removes that action. This is not a second preview service or a guarantee that downloading the same inaccessible URL will succeed.\n\n## Verify and handle failures\n\nVerify upload → query → contentUrl → identical downloaded bytes, including batch upload, resource aliases and host prefixes. After materialization run the consuming App's typecheck/build and exercise upload, cancel/retry, remove, download and preview. Restricted files need anonymous, forbidden-user and permitted-user tests against both API and content routes. Inspectors check registration only.\n\nFor preview integration or changes, verify each of DOCX/XLSX/PPTX with real files in development and a served production build. Check relative same-origin URLs, an authorized and unauthorized session, cross-origin CORS success/failure, failed requests and invalid documents, and `download={false}`. Close or switch files while loading and after a failure: pending requests must abort, viewers must be destroyed, and the next file must render without stale state. Unit mocks and a successful build do not establish document rendering fidelity.",
+          "sha256": "3fab337bc1a1412ba9affb4cd5ec2e79e76abe1f9b1803b7f2ebe4e293f188f5"
+        }
+      ],
+      "fingerprint": "0af8270db60bd3fefa1161d0b1e68c58bdc3e94bdfcaaf564ea1b047d07bb59e"
     },
     {
       "id": "415:36329207021:1:F1",
