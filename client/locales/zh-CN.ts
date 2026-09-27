@@ -104,6 +104,8 @@ const zhCN: AppResource = {
   actions: {
     close: '关闭',
     save: '保存',
+    create: '创建',
+    saving: '保存中…',
     cancel: '取消',
     confirm: '确认',
     language: '语言',
@@ -121,6 +123,7 @@ const zhCN: AppResource = {
   },
   navigation: {
     home: '首页',
+    itRequests: 'IT 报修',
     open: '打开导航',
     close: '关闭导航',
     expand: '展开导航',
@@ -146,6 +149,104 @@ const zhCN: AppResource = {
   datePicker: {
     placeholder: '选择日期',
     rangePlaceholder: '选择日期范围',
+  },
+  it: {
+    title: 'IT 报修',
+    description: '提交报修申请，并跟踪处理进度。',
+    search: {
+      placeholder: '按标题搜索',
+      label: '搜索报修',
+    },
+    filters: {
+      status: '状态',
+      category: '分类',
+      allStatuses: '全部状态',
+      allCategories: '全部分类',
+      clear: '清除筛选',
+    },
+    status: {
+      pending: '待处理',
+      processing: '处理中',
+      completed: '已完成',
+    },
+    category: {
+      computer: '电脑',
+      account: '账号',
+      other: '其他',
+    },
+    fields: {
+      title: '标题',
+      category: '分类',
+      status: '状态',
+      submitter: '提交人',
+      handler: '处理人',
+      createdAt: '提交时间',
+      startedAt: '开始处理',
+      completedAt: '完成时间',
+      description: '问题描述',
+      resolution: '处理结果',
+    },
+    create: {
+      action: '新建报修',
+      title: '新建报修',
+      description: '请描述问题，方便 IT 处理。',
+      success: '报修已创建。',
+    },
+    form: {
+      titleRequired: '请输入标题。',
+      titleTooLong: '标题不能超过 {{max}} 个字符。',
+      descriptionPlaceholder: '可选：发生了什么、错误信息以及出现时间。',
+      descriptionTooLong: '问题描述不能超过 {{max}} 个字符。',
+      resolutionRequired: '完成前请填写处理结果。',
+      resolutionTooLong: '处理结果不能超过 {{max}} 个字符。',
+      resolutionPlaceholder: '请说明处理方式和结果。',
+    },
+    detail: {
+      title: '报修详情',
+      start: '开始处理',
+      complete: '完成',
+      completeTitle: '完成报修',
+      completeDescription: '完成前请记录处理结果。',
+      startSuccess: '已开始处理。',
+      completeSuccess: '报修已完成。',
+    },
+    empty: {
+      title: '暂无报修',
+      description: '需要维修或协助时，提交一条报修。',
+      noResults: '没有符合筛选条件的报修。',
+    },
+    cap: {
+      notice: '仅显示前 {{count}} 条报修，请使用搜索或筛选缩小范围。',
+    },
+    error: {
+      title: '无法加载报修',
+      requestFailed: '请求未能完成，请重试。',
+      forbidden: '你没有执行此操作的权限。',
+      notFound: '该报修不存在，或你无权访问。',
+      invalidTransition: '该报修状态已变化，操作未执行。',
+    },
+    set: {
+      employee: 'IT 员工',
+      handler: 'IT 处理人',
+    },
+    resource: {
+      title: 'IT 报修',
+      tickets: '报修单',
+    },
+    action: {
+      view: '查看报修',
+      create: '提交报修',
+      handle: '处理报修',
+    },
+    collection: {
+      tickets: '报修单',
+    },
+    record: {
+      submittedByMe: '我提交的报修',
+    },
+    section: {
+      title: 'IT 支持',
+    },
   },
 };
 

@@ -93,6 +93,7 @@ import { createServer as createEmbeddedServer } from '../../server/embedded.ts';
 import { createStandaloneRuntimeScope } from '@nocobase/app-server/node';
 import appRuntime from '../../server/runtime.ts';
 import serverPlugins from '../../server/plugins.ts';
+import { DEMO_PASSWORD } from '../../database/main/seeds/202610010020_it_demo_accounts.ts';
 import {
   createStandaloneServer,
   type StandaloneServer,
@@ -736,6 +737,156 @@ describe('app server', () => {
       headers: { 'x-api-key': key.key },
     });
     expect(rejected.status).toBe(401);
+  });
+
+  it('scopes IT tickets to their submitter and lets a handler resolve them', async () => {
+    interface TicketPerson {
+      readonly id: string;
+      readonly name: string;
+    }
+    interface Ticket {
+      readonly id: number;
+      readonly status: string;
+      readonly resolution: string | null;
+      readonly submitter: TicketPerson | null;
+      readonly handler: TicketPerson | null;
+    }
+
+    const app = trackCloseable(
+      await createInstalledStandaloneServer({
+        viteDevUrl: false,
+        // A cookie-authenticated write is rejected unless the request origin is
+        // trusted, and the app trusts its configured public origin. Production
+        // always sets one (`APP_PUBLIC_ORIGIN`); a browser sends the matching
+        // `Origin` header on a same-origin write.
+        env: { APP_PUBLIC_ORIGIN: 'http://localhost' },
+      }),
+    );
+    const baseUrl = `http://localhost${app.application.publicBasePath}`;
+
+    const signIn = async (username: string): Promise<string> => {
+      const response = await requestApp(
+        app,
+        `${baseUrl}/api/auth/sign-in/username`,
+        {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ username, password: DEMO_PASSWORD }),
+        },
+      );
+      expect(response.status).toBe(200);
+      return response.headers
+        .getSetCookie()
+        .map((header) => header.split(';')[0])
+        .join('; ');
+    };
+    const readTicket = async (id: number, cookie: string) => {
+      const response = await requestApp(
+        app,
+        `${baseUrl}/api/it/tickets/${id}`,
+        {
+          headers: { cookie },
+        },
+      );
+      return response;
+    };
+    const transition = (
+      id: number,
+      cookie: string,
+      body: Record<string, unknown>,
+    ) =>
+      requestApp(app, `${baseUrl}/api/it/tickets/${id}`, {
+        method: 'PATCH',
+        headers: {
+          cookie,
+          'content-type': 'application/json',
+          origin: 'http://localhost',
+        },
+        body: JSON.stringify(body),
+      });
+
+    const employeeCookie = await signIn('zhangwei');
+    const employeeList = await requestApp(app, `${baseUrl}/api/it/tickets`, {
+      headers: { cookie: employeeCookie },
+    });
+    expect(employeeList.status).toBe(200);
+    const employeeTickets = ((await employeeList.json()) as { data: Ticket[] })
+      .data;
+    // Their own two tickets; `liuyang`'s ticket 2 is not in the result set.
+    expect(employeeTickets.map((ticket) => ticket.id).sort()).toEqual([1, 3]);
+    expect(
+      employeeTickets.every((ticket) => ticket.submitter?.name === 'Zhang Wei'),
+    ).toBe(true);
+
+    // A direct link to somebody else's ticket is a not-found, not a leak.
+    const foreign = await readTicket(2, employeeCookie);
+    expect(foreign.status).toBe(404);
+
+    // An employee holds no `handle` grant, so a transition is forbidden.
+    const employeeStart = await transition(1, employeeCookie, {
+      action: 'start',
+    });
+    expect(employeeStart.status).toBe(403);
+
+    const handlerCookie = await signIn('chenhao');
+    const handlerList = await requestApp(app, `${baseUrl}/api/it/tickets`, {
+      headers: { cookie: handlerCookie },
+    });
+    expect(handlerList.status).toBe(200);
+    const allTickets = ((await handlerList.json()) as { data: Ticket[] }).data;
+    expect(allTickets.map((ticket) => ticket.id).sort()).toEqual([1, 2, 3]);
+
+    const started = await transition(1, handlerCookie, { action: 'start' });
+    expect(started.status).toBe(200);
+    expect(((await started.json()) as { data: Ticket }).data).toMatchObject({
+      status: 'processing',
+      handler: { name: 'Chen Hao' },
+    });
+
+    // Completing requires a resolution note, and the note is kept.
+    const missingResolution = await transition(1, handlerCookie, {
+      action: 'complete',
+    });
+    expect(missingResolution.status).toBe(400);
+
+    const completed = await transition(1, handlerCookie, {
+      action: 'complete',
+      resolution: 'Replaced the power adapter and confirmed boot.',
+    });
+    expect(completed.status).toBe(200);
+    const completedTicket = ((await completed.json()) as { data: Ticket }).data;
+    expect(completedTicket.status).toBe('completed');
+    expect(completedTicket.resolution).toBe(
+      'Replaced the power adapter and confirmed boot.',
+    );
+
+    // A completed ticket is terminal, so it cannot be completed again.
+    const reCompleted = await transition(1, handlerCookie, {
+      action: 'complete',
+      resolution: 'A second note that must be rejected.',
+    });
+    expect(reCompleted.status).toBe(409);
+
+    const created = await requestApp(app, `${baseUrl}/api/it/tickets`, {
+      method: 'POST',
+      headers: {
+        cookie: employeeCookie,
+        'content-type': 'application/json',
+        origin: 'http://localhost',
+      },
+      body: JSON.stringify({
+        title: 'Monitor flickers intermittently',
+        category: 'other',
+        description: 'The second display flickers during video calls.',
+      }),
+    });
+    expect(created.status).toBe(201);
+    const createdTicket = ((await created.json()) as { data: Ticket }).data;
+    expect(createdTicket).toMatchObject({
+      status: 'pending',
+      submitter: { name: 'Zhang Wei' },
+      handler: null,
+    });
   });
 
   it('mounts standalone app-local routes behind the public base path', async () => {

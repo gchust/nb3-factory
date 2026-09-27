@@ -92,8 +92,13 @@ describe('app client routes', () => {
     const resolved = resolveRoutes();
 
     // The landing page opted out of page authorization, so it is reachable by every signed-in user.
+    // The IT request list owns a page grant; its create and detail overlays skip the check and
+    // inherit the list's guard.
     expect(pageAuthorizations(resolved.routes)).toEqual([
       { name: 'home', authorizedAs: null },
+      { name: 'it-requests', authorizedAs: 'it.requests' },
+      { name: 'it-request-new', authorizedAs: null },
+      { name: 'it-request-detail', authorizedAs: null },
     ]);
   });
 });

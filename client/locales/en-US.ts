@@ -111,6 +111,8 @@ const enUS = {
   actions: {
     close: 'Close',
     save: 'Save',
+    create: 'Create',
+    saving: 'Saving…',
     cancel: 'Cancel',
     confirm: 'Confirm',
     language: 'Language',
@@ -130,6 +132,7 @@ const enUS = {
   },
   navigation: {
     home: 'Home',
+    itRequests: 'IT requests',
     open: 'Open navigation',
     close: 'Close navigation',
     expand: 'Expand navigation',
@@ -155,6 +158,109 @@ const enUS = {
   datePicker: {
     placeholder: 'Pick a date',
     rangePlaceholder: 'Pick a date range',
+  },
+  it: {
+    title: 'IT requests',
+    description: 'Submit a repair request and follow how it is handled.',
+    search: {
+      placeholder: 'Search by title',
+      label: 'Search requests',
+    },
+    filters: {
+      status: 'Status',
+      category: 'Category',
+      allStatuses: 'All statuses',
+      allCategories: 'All categories',
+      clear: 'Clear filters',
+    },
+    status: {
+      pending: 'Pending',
+      processing: 'In progress',
+      completed: 'Completed',
+    },
+    category: {
+      computer: 'Computer',
+      account: 'Account',
+      other: 'Other',
+    },
+    fields: {
+      title: 'Title',
+      category: 'Category',
+      status: 'Status',
+      submitter: 'Submitted by',
+      handler: 'Handler',
+      createdAt: 'Submitted at',
+      startedAt: 'Started at',
+      completedAt: 'Completed at',
+      description: 'Description',
+      resolution: 'Resolution',
+    },
+    create: {
+      action: 'New request',
+      title: 'New request',
+      description: 'Describe the problem so IT can help.',
+      success: 'Request created.',
+    },
+    form: {
+      titleRequired: 'Enter a title.',
+      titleTooLong: 'A title can have at most {{max}} characters.',
+      descriptionPlaceholder:
+        'Optional: what happened, any error message, and when it started.',
+      descriptionTooLong: 'A description can have at most {{max}} characters.',
+      resolutionRequired: 'Enter the resolution before completing.',
+      resolutionTooLong: 'A resolution can have at most {{max}} characters.',
+      resolutionPlaceholder: 'What was done to resolve the request?',
+    },
+    detail: {
+      title: 'Request',
+      start: 'Start',
+      complete: 'Complete',
+      completeTitle: 'Complete request',
+      completeDescription: 'Record the resolution before completing.',
+      startSuccess: 'Request started.',
+      completeSuccess: 'Request completed.',
+    },
+    empty: {
+      title: 'No requests yet',
+      description: 'Submit a request when something needs fixing.',
+      noResults: 'No requests match your filters.',
+    },
+    cap: {
+      notice:
+        'Only the first {{count}} requests are shown. Use search or filters to narrow the list.',
+    },
+    error: {
+      title: 'Unable to load requests',
+      requestFailed: 'The request could not be completed. Please try again.',
+      forbidden: 'You do not have permission to do this.',
+      notFound: 'This request does not exist or you do not have access to it.',
+      invalidTransition:
+        'This request has already moved on, so the action was not applied.',
+    },
+    // Wording for the permission sets and the composite resource behind them,
+    // shown in the authorization administration pages.
+    set: {
+      employee: 'IT employee',
+      handler: 'IT handler',
+    },
+    resource: {
+      title: 'IT requests',
+      tickets: 'Tickets',
+    },
+    action: {
+      view: 'View requests',
+      create: 'Submit requests',
+      handle: 'Handle requests',
+    },
+    collection: {
+      tickets: 'IT tickets',
+    },
+    record: {
+      submittedByMe: 'Requests I submitted',
+    },
+    section: {
+      title: 'IT support',
+    },
   },
 };
 
