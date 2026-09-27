@@ -55,3 +55,11 @@ test('stalled independent reviewer retains diagnostics but cannot publish a part
   const record = JSON.parse(readFileSync(`${log}.result.json`, 'utf8'));
   assert.equal(record.status, 'stalled'); assert.equal(record.phase, 'review');
 });
+
+test('stalled framework fix fails so a partial patch is never published', t => {
+  const { log, result } = run(t, 'framework-fix', { FACTORY_AGENT_ROLE: 'framework-fix' });
+  assert.equal(result.status, 1, result.stderr);
+  const record = JSON.parse(readFileSync(`${log}.result.json`, 'utf8'));
+  assert.equal(record.status, 'stalled'); assert.equal(record.phase, 'framework-fix');
+  assert.match(result.stderr, /\[timing\] agent:framework-fix:/);
+});

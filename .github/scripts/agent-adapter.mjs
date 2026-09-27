@@ -77,6 +77,9 @@ export function resultEvent(event) {
   return {
     complete: true,
     failure: failed ? (event.errors?.join('; ') || event.result || 'Agent reported a failed result') : null,
+    // Engine-reported: a list-price estimate and the model turn count, not a bill.
+    costUsd: event.total_cost_usd,
+    turns: event.num_turns,
     measurements: [{ id: 'invocation', usage: usage && {
       input: usage.input_tokens,
       output: usage.output_tokens,

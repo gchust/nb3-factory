@@ -15,8 +15,12 @@ export function createResult(identity) {
   let complete = false;
   let invalidEvents = 0;
   let incomplete = false;
+  let costUsd;
+  let turns;
   return {
     observe(parsed, line) {
+      if (Number.isFinite(parsed.costUsd) && parsed.costUsd >= 0) costUsd = parsed.costUsd;
+      if (count(parsed.turns)) turns = parsed.turns;
       if (Number.isSafeInteger(parsed.retryAttempt) && parsed.retryAttempt > 0) {
         // Native retry notifications have no unique ID. Identical payloads can
         // describe separate outages; do not collapse them by error text/hash.
@@ -39,7 +43,7 @@ export function createResult(identity) {
     malformed() { invalidEvents++; },
     save(log, { status, exitCode, error }, redact) {
       const result = { version: 1, ...identity, startedAt, endedAt: Date.now(),
-        status, exitCode, terminalEvent: complete, invalidEvents, incomplete,
+        status, exitCode, terminalEvent: complete, invalidEvents, incomplete, costUsd, turns,
         error: error ? redact(String(error)) : undefined,
         retryAttempts: identity.engine === 'pi' ? retryAttempts : undefined,
         failure: status === 'failed' ? classifyAgentFailure(error) : undefined,

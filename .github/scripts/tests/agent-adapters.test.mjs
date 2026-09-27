@@ -132,6 +132,22 @@ test('normalized usage replaces raw parsing, deduplicates results and keeps cach
   }
 });
 
+test('Claude-style results keep the engine-reported cost and turns, never invented ones', (t) => {
+  const f = fixture(t);
+  for (const id of ['claude-code', 'codebuddy']) {
+    const adapter = resolveAgent({ CODE_AGENT_ENGINE: id });
+    const result = createResult({ engine: id, completion: 'event' });
+    result.observe(adapter.parseEvent({ type: 'result', subtype: 'success', total_cost_usd: 1.25, num_turns: 3, usage: nativeUsage }), '{}');
+    result.save(f.log, { status: 'completed', exitCode: 0 }, (text) => text);
+    assert.deepEqual([readResult(f.log).costUsd, readResult(f.log).turns], [1.25, 3], id);
+
+    const invalid = createResult({ engine: id, completion: 'event' });
+    invalid.observe(adapter.parseEvent({ type: 'result', subtype: 'success', total_cost_usd: -1, num_turns: 1.5, usage: nativeUsage }), '{}');
+    invalid.save(f.log, { status: 'completed', exitCode: 0 }, (text) => text);
+    assert.equal('costUsd' in readResult(f.log) || 'turns' in readResult(f.log), false, id);
+  }
+});
+
 test('OpenCode tool steps do not finish a run; subagent usage is explicitly incomplete', () => {
   const adapter = resolveAgent({ CODE_AGENT_ENGINE: 'opencode' });
   assert.equal(adapter.parseEvent(events.opencode[0]).complete, undefined);
