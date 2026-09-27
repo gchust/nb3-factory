@@ -1,11 +1,26 @@
 {
   "version": 1,
-  "inputHash": "0eaf3844770daf2579c8d7a1ec5a79f3002946384bc57420a7337529807f2080",
+  "inputHash": "3f05f43d1439d123988c926970b4cca0caccb402f1260b25b8b1509ae3cee14c",
   "sources": [
     {
       "id": "408:36329180371:1:F2",
       "report": "408:36329180371:1",
       "fingerprint": "f8a4ff2afada4e19ac479be17cffdfd43377763680db5d8ee9da17728e38ecd3"
+    },
+    {
+      "id": "411:36329191920:1:F2",
+      "report": "411:36329191920:1",
+      "fingerprint": "dac576965f79f58d7baa342f91755fa520395a1624d1037088ad9b71e9dcfbb9"
+    },
+    {
+      "id": "411:36329191920:1:F5",
+      "report": "411:36329191920:1",
+      "fingerprint": "1eb4fc172b5c9a882aa18981a3ba9b0aae38e1f29e2a7176241fa667f06a254a"
+    },
+    {
+      "id": "411:36329191920:1:F6",
+      "report": "411:36329191920:1",
+      "fingerprint": "15e91867ecef1133418a42ab6affc4330544219b303251ca2b985a7e04a6578a"
     },
     {
       "id": "416:36329210119:1:F4",
@@ -25,10 +40,24 @@
   ],
   "groups": [
     {
-      "title": "示例/演示数据缺少正式承载路径，与 seed 的定位相冲突",
-      "reason": "E20 表明 nocobase-db Skill 规定 seed 只承载运行所需记录且“A seed is never sample or demonstration content”，并推荐唯一约束 + upsertOne 保证幂等；E30 显示对应迁移只为 customerName 建普通索引；E31 显示示例数据被迫写入 seed，并用 exists + createOne 而非唯一约束 + upsertOne。三者共同指向同一缺口——文档未给出首装/演示数据的正式路径，也未就示例数据明确幂等键要求。其余发现均无对应证据或相同根因，且无同报告成员可归并，故单独保留。",
+      "title": "示例/演示数据缺少正式承载路径，与 seed 定位相冲突",
+      "reason": "E20 表明 nocobase-db Skill 规定 seed 只承载运行所需记录且“a seed is never sample or demonstration content”，并推荐唯一约束 + upsertOne 保证幂等；E30 显示对应迁移只为 customerName 建普通索引；E31 显示示例数据被迫写入 seed 并用 exists + createOne 而非唯一约束 + upsertOne。三者共同指向同一缺口——文档未给出首装/演示数据的正式承载路径，也未就示例数据明确幂等键要求。无其他发现的证据指向该根因，故单独保留。",
       "members": [
         "408:36329180371:1:F2"
+      ]
+    },
+    {
+      "title": "缺少对 useRouteOverlay 作用域误用的静态护栏",
+      "reason": "E22 记录 app/AGENTS.md 要求 useRouteOverlay 只能在 overlay 后代组件调用；E30 显示守卫仅在运行期 context 为空时抛错、不覆盖页面顶层误用；E31 显示 contacts/new.tsx 在返回 RouteDialog 的页面组件顶层误用；E33 显示新增测试只覆盖正确用法，未拦截该回归。四条证据共同指向模板缺少开发期静态/测试护栏这一可用性缺口，与 seed 承载、分组聚合、调度接口及格式漂移等根因均不同，故单独保留。",
+      "members": [
+        "411:36329191920:1:F2"
+      ]
+    },
+    {
+      "title": "Repository 已提供 aggregate/groupBy，指引缺少按父记录求合计示例",
+      "reason": "E7 与 E8 显示 repository 已声明并实现 aggregate/groupBy，E10 显示 SKILL §4 仅在方法清单中列出而未给业务化示例，E26 显示应用改用 findMany 全量拉取后按 customerId 分组 reduce 求和。四者共同指向同一指引缺口——缺少可直接套用的“按外键分组求合计”示例，与 seed 承载、overlay 护栏、调度接口等根因不同，故单独保留。",
+      "members": [
+        "411:36329191920:1:F6"
       ]
     },
     {
@@ -40,15 +69,16 @@
     },
     {
       "title": "Scheduler 设置页入口嵌套在 Automation 分组下，Agent/无障碍快照中较难发现",
-      "reason": "E33 浏览器验收记录显示 QA 只能通过 DOM 中文本为空的链接发现 /main/settings/schedules，属于入口可发现性/无障碍可观测性问题（confidence=suspected）。其证据与根因均与 F4 的 API 分页能力缺口、F6 的模板格式问题不同，且同一报告内禁止合并，故单独保留。",
+      "reason": "E33 浏览器验收记录显示 QA 只能通过 DOM 中文本为空的链接发现 /main/settings/schedules，属于入口可发现性/无障碍可观测性问题。其证据与根因与 F4 的 API 分页能力缺口、F6 的模板格式问题不同，且同一报告内禁止合并，故单独保留。",
       "members": [
         "416:36329210119:1:F5"
       ]
     },
     {
-      "title": "应用模板中的 AGENTS.md 与仓库自身 format:check 不一致",
-      "reason": "E34 修复轮日志显示 AGENTS.md 存在多余空行（diff 403d402），导致全新应用的 prettier format:check 失败，属于应用模板自带的格式化漂移，与前三条指引缺口、API 能力、导航可发现性均无共同根因。无其他发现的证据指向该文件或该根因，且同一报告内禁止合并，故单独保留。",
+      "title": "应用模板 AGENTS.md 存在多余空行，导致仓库 prettier format:check 失败",
+      "reason": "411:F5 的 E22/E42 与 416:F6 的 E34 指向同一根因：模板产物 app/AGENTS.md 在 “Controlled failed-delivery smoke” 段前多出一个空行（prettier diff 403d402），使全新应用/仓库的 prettier format:check 失败并消耗一次与业务无关的修复轮。两条发现来自不同报告（411 与 416）、同为 owner=template 的同一文件同一格式漂移，故合并。其中 411:F5 已在本轮 repair 修正、416:F6 状态仍为 unknown，合并仅表示共同根因，不代表新版仍普遍存在缺陷或旧问题必然已修复。",
       "members": [
+        "411:36329191920:1:F5",
         "416:36329210119:1:F6"
       ]
     }
@@ -57,9 +87,9 @@
     "engine": "pi",
     "model": "deepseek-v4.1-flash",
     "version": "0.86.1",
-    "runId": "36332749827",
+    "runId": "36333504475",
     "attempt": 1,
     "controlSha": "66e5c5081dac60b6b235bbfc5caebce49dde72d6",
-    "completedAt": "2026-09-27T16:19:19.211Z"
+    "completedAt": "2026-09-27T16:31:41.765Z"
   }
 }
