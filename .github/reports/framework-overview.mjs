@@ -153,7 +153,7 @@ export function renderFrameworkOverview(report, check = null) {
     const state = review
       ? '旧口径报告，尚无 v2 框架评测。'
       : report?.execution?.buildReviewMode === 'off'
-        ? '本轮采用轻量模式，未进行独立评测。'
+        ? '本轮选择跳过框架评测。'
         : report?.state === 'failed'
           ? '独立评测未完成或结果无效，当前材料不足。'
           : '本轮未进行独立评测。';

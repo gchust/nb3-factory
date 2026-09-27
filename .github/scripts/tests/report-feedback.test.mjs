@@ -80,7 +80,7 @@ test('lightweight, missing, failed, completed-empty and partial feedback have di
   assert.doesNotMatch(section(html, 'problems'), /已完成独立评测，本轮未提出/);
   value.buildReview = { state: 'not-reviewed', execution: { buildReviewMode: 'off' }, evaluation: null };
   ({ html } = await render(value));
-  assert.match(section(html, 'problems'), /轻量模式，未进行独立评测/);
+  assert.match(section(html, 'problems'), /本轮选择跳过框架评测/);
   value.buildReview = { state: 'failed', reason: 'timeout', evaluation: null };
   ({ html } = await render(value));
   assert.match(section(html, 'problems'), /未完成或结果无效/);
