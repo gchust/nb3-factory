@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "inputHash": "bf1c6f2a2c583022623e5ff445da5608e71c3f4244a11036e497e2bd42507621",
+  "inputHash": "128445e12266b37830d3b2d4713f3ce0d0bd46c7497d9db8b5339c7017178307",
   "findings": [
     {
       "id": "224:35881009045:2:F2",
@@ -5413,6 +5413,273 @@
         }
       ],
       "fingerprint": "0f945b54bb3d630460cc31b13c4f34434494d344882a79a1faf410b3abfbc03c"
+    },
+    {
+      "id": "393:36301951360:1:F2",
+      "report": "393:36301951360:1",
+      "issue": 393,
+      "taskTitle": "访客登记",
+      "appVersion": "1.0.0-beta.47",
+      "appTemplate": "@nocobase/app-template-default",
+      "finding": {
+        "id": "F2",
+        "kind": "improvement",
+        "owner": "documentation",
+        "confidence": "confirmed",
+        "severity": "minor",
+        "status": "open",
+        "title": "Filter/Sort builder API 完全未文档化",
+        "detail": "nocobase-db/SKILL.md §4 只写“filter/values/select/sort 接受 builder 回调或等价 JSON AST”，却未列出任何 builder 方法（builder.date().notBefore()、builder.string().eq()、builder.or()、sort.field().desc() 等）或 JSON 操作符名。全仓 skills 正则检索 notBefore/builder.date/builder.string/FilterBuilder 只命中业务代码本身。",
+        "impact": "实现 C03 日期/员工/状态筛选与排序时，agent 必须逆向 node_modules 类型声明（对应 E2/E3/E4 的探索失败），放慢实现且易猜错路径。",
+        "suggestedChange": "在 SKILL §4 增补 builder 方法清单与操作符对照表（含 $dateBefore/$dateNotBefore/$dateBetween/$empty/$notEmpty），并给出筛选+排序的最小示例。",
+        "evidence": [
+          "E35",
+          "E22",
+          "E23",
+          "E8"
+        ],
+        "diagnosis": {
+          "category": "guidance-gap",
+          "trigger": "需要按到达时间区间、未离开状态与关键字筛选并排序访客列表（C03）。",
+          "expected": "指引直接列出 Repository filter/sort builder 的方法或 JSON 操作符。",
+          "actual": "仅一句“接受 builder 回调或等价 JSON AST”，没有任何方法名或操作符名。",
+          "workaround": "阅读 node_modules/@nocobase/repository-input 的类型声明推断方法；本应用最终写出正确的 builder 调用。",
+          "acceptance": "指引包含 builder 方法清单与操作符对照，且能照抄出一个筛选+排序示例。"
+        }
+      },
+      "targets": [
+        "@nocobase/repository-input",
+        "app/.agents/skills/nocobase-db/SKILL.md"
+      ],
+      "paths": [
+        ".agents/skills/nocobase-db/SKILL.md",
+        "packages/@nocobase/repository-input/dist/filter-builder.js"
+      ],
+      "evidence": [
+        {
+          "id": "E35",
+          "kind": "skill",
+          "path": "app/.agents/skills/nocobase-db/SKILL.md",
+          "observation": "SKILL §4 说 filter/values/select/sort 接受 builder 回调或等价 JSON AST，但通篇未列出任何 builder 方法或操作符名（唯一提及在此）。",
+          "lines": [
+            236,
+            248
+          ],
+          "excerpt": "Resolve the manager once — in a route factory, or as a constructor dependency of a service — not inside every handler. `db.repository()`, `db.query()`, `db.builder()`, `db.collections()` and `db.transaction()` take the connection name as their last argument and use the default connection when it is omitted, so single-connection code never names one.\n\n`filter`, `values`, `select` and `sort` each accept a builder callback or the equivalent serializable JSON AST, and mean the same thing either way. They do not accept a shorthand string array such as `['id', 'name']` or `['-createdAt']`. Field names are Collection logical names, never column names. A write returns a result object — the record is `result.record`, alongside `result.version` and the created relation targets — rather than the record itself. `findMany` is awaited for an array or iterated asynchronously to consume a large result incrementally.\n\nThe methods are `findOne`, `findMany`, `count`, `exists`, `aggregate`, `groupBy`, `createOne`, `createMany`, `updateOne`, `updateMany`, `upsertOne`, `deleteOne` and `deleteMany`; `describeMutation` and `validateMutation` report capabilities and pre-validate input, and `withPolicy` returns a scoped Repository.\n\nBoundaries that are easy to get wrong:\n\n- `findOne` takes the first match; `updateOne` and `deleteOne` require exactly one; `upsertOne` requires a unique equality condition.\n- `updateMany` and `deleteMany` refuse an empty scope. Pass `all: true` only when the task explicitly calls for every row — never to make an error go away.\n- `createMany` and `updateMany` do not accept nested relation writes. `createOne` accepts `create` and `connect` on a relation, not the full set.\n- `disconnect` detaches; `delete` removes the target record. A relation target update or delete stays inside the current parent record's scope.\n- Repository does not apply the application's permissions. A route handler decides what the caller may see and change _before_ anything reaches `filter`, `values` or `select`. `writePolicy` defaults to `true` for an internal Repository and `false` for one reached from an API route, so a route-facing Repository needs an explicit allow list.",
+          "sha256": "f97c07a45a9d49c1d933ddbceeabcc9afe267b1356a2ded1a3da0dd56b54011c"
+        },
+        {
+          "id": "E22",
+          "kind": "package",
+          "path": "packages/@nocobase/repository-input/dist/filter-builder.js",
+          "observation": "DefaultFilterBuilder 暴露 and/or/variable/string/text/number/date/time/boolean/json/relation，date() 返回 DateOperators。",
+          "lines": [
+            12,
+            35
+          ],
+          "excerpt": "    string(path) {\n        return new StringOperators(normalizePath(path), 'string');\n    }\n    text(path) {\n        return new StringOperators(normalizePath(path), 'text');\n    }\n    number(path) {\n        return new NumberOperators(normalizePath(path), 'number');\n    }\n    date(path) {\n        return new DateOperators(normalizePath(path), 'date');\n    }\n    time(path) {\n        return new TimeOperators(normalizePath(path), 'time');\n    }\n    boolean(path) {\n        return new BooleanOperators(normalizePath(path), 'boolean');\n    }\n    json(path) {\n        return new JsonOperators(normalizePath(path));\n    }\n    relation(path) {\n        return new RelationOperators(normalizePath(path));\n    }",
+          "sha256": "6234f15e70188871c0606e4640a5bc7798791e2f48ea1d350e23785ed544df11"
+        },
+        {
+          "id": "E23",
+          "kind": "package",
+          "path": "packages/@nocobase/repository-input/dist/filter-builder.js",
+          "observation": "DateOperators 提供 on/notOn/before/after/notBefore/notAfter/between，映射到 $date* 操作符。",
+          "lines": [
+            143,
+            165
+          ],
+          "excerpt": "class DateOperators extends BaseOperators {\n    on(value) {\n        return dateCondition(this.path, this.group, '$dateOn', value);\n    }\n    notOn(value) {\n        return dateCondition(this.path, this.group, '$dateNotOn', value);\n    }\n    before(value) {\n        return dateCondition(this.path, this.group, '$dateBefore', value);\n    }\n    after(value) {\n        return dateCondition(this.path, this.group, '$dateAfter', value);\n    }\n    notBefore(value) {\n        return dateCondition(this.path, this.group, '$dateNotBefore', value);\n    }\n    notAfter(value) {\n        return dateCondition(this.path, this.group, '$dateNotAfter', value);\n    }\n    between(value) {\n        return condition(this.path, this.group, '$dateBetween', value.map(normalizeDateOperand));\n    }\n}",
+          "sha256": "6234f15e70188871c0606e4640a5bc7798791e2f48ea1d350e23785ed544df11"
+        },
+        {
+          "id": "E8",
+          "kind": "code",
+          "path": "app/server/providers/visitor-service.ts",
+          "observation": "VisitorService.list 用 database.repository(\"visitors\").findMany，filter 回调里 builder.date(\"arrivedAt\").notBefore/before、builder.string(\"employeeName\").eq、builder.date(\"departedAt\").empty/notEmpty、builder.or([...])，sort 用 sort.field(\"arrivedAt\").desc()。",
+          "lines": [
+            155,
+            208
+          ],
+          "excerpt": "export class VisitorService {\n  constructor(private readonly database: DatabaseManager) {}\n\n  async list(filter: VisitorListFilter = {}): Promise<Visitor[]> {\n    const repository = this.database.repository<VisitorRow>('visitors');\n    const search = filter.search?.trim();\n    const hasFilter = Boolean(\n      filter.from ||\n      filter.to ||\n      filter.employeeName ||\n      filter.status ||\n      search,\n    );\n\n    const rows = await repository.findMany({\n      ...(hasFilter\n        ? {\n            filter: (builder) => {\n              const conditions = [];\n              if (filter.from) {\n                conditions.push(\n                  builder.date('arrivedAt').notBefore(filter.from),\n                );\n              }\n              if (filter.to) {\n                conditions.push(builder.date('arrivedAt').before(filter.to));\n              }\n              if (filter.employeeName) {\n                conditions.push(\n                  builder.string('employeeName').eq(filter.employeeName),\n                );\n              }\n              if (filter.status === 'onSite') {\n                conditions.push(builder.date('departedAt').empty());\n              } else if (filter.status === 'left') {\n                conditions.push(builder.date('departedAt').notEmpty());\n              }\n              if (search) {\n                conditions.push(\n                  builder.or([\n                    builder.string('name').includes(search),\n                    builder.string('phone').includes(search),\n                    builder.string('employeeName').includes(search),\n                  ]),\n                );\n              }\n              return builder.and(conditions);\n            },\n          }\n        : {}),\n      sort: (sort) => [sort.field('arrivedAt').desc()],\n    });\n\n    return rows.map(toVisitor);",
+          "sha256": "304e9c593aa657cc604bf383159bdfb8bb6b6256bd1d1af8c25293c97385928d"
+        }
+      ],
+      "fingerprint": "f77956f3d32eafc173fc82cd706589db975764f6841357590ef0dcab3549025c"
+    },
+    {
+      "id": "393:36301951360:1:F3",
+      "report": "393:36301951360:1",
+      "issue": 393,
+      "taskTitle": "访客登记",
+      "appVersion": "1.0.0-beta.47",
+      "appTemplate": "@nocobase/app-template-default",
+      "finding": {
+        "id": "F3",
+        "kind": "misleading",
+        "owner": "documentation",
+        "confidence": "confirmed",
+        "severity": "minor",
+        "status": "open",
+        "title": "db 包 README 宣称 Repository/Filter/Sort 不可调用，与公开导出相反",
+        "detail": "packages/@nocobase/db/README.zh-CN.md 的“当前边界”写“Repository、Select AST、Filter Builder、Filter AST 和 Sort AST 是未来提案，当前不可调用”，同段前文还称“数据读写通过 Query 完成”。但该包的公开类型入口 dist/src/index.d.ts 实际导出 Repository、FilterBuilder、FilterAst、SortBuilder、SortAst、DateFilterOperators 等，且应用与验收均在用 Repository + filter/sort builder 读写。",
+        "impact": "读者若相信 README 会放弃 Repository/filter 而改走 Query，或认为该能力不可用，直接误导技术选型。",
+        "suggestedChange": "删除或改写“未来提案/当前不可调用”，把 Repository、Filter/Sort builder 与 AST 列为已支持能力，并说明 Query 的适用边界。",
+        "evidence": [
+          "E24",
+          "E25",
+          "E8"
+        ],
+        "claimed": "Repository、Select AST、Filter Builder、Filter AST 和 Sort AST 是未来提案，当前不可调用。",
+        "observed": "db 的公开类型入口真实导出 Repository/FilterBuilder/FilterAst/SortBuilder/SortAst 等，应用成功用 Repository + builder filter/sort 完成 C01–C03。",
+        "diagnosis": {
+          "category": "guidance-gap",
+          "trigger": "读者阅读 @nocobase/db README 判断可用 API。",
+          "expected": "README 与 dist 公开导出及实际能力一致。",
+          "actual": "README 称这些 API 是未来提案、不可调用。",
+          "workaround": "以 dist/src/index.d.ts 与 skills 示例为准，忽略 README 该段。",
+          "acceptance": "README 不再声明这些 API 不可调用，并列明其已支持。"
+        }
+      },
+      "targets": [
+        "@nocobase/db"
+      ],
+      "paths": [
+        "packages/@nocobase/db/README.zh-CN.md",
+        "packages/@nocobase/db/dist/src/index.d.ts"
+      ],
+      "evidence": [
+        {
+          "id": "E24",
+          "kind": "package",
+          "path": "packages/@nocobase/db/README.zh-CN.md",
+          "observation": "db 包中文 README 在“当前边界”写：Repository、Select AST、Filter Builder、Filter AST、Sort AST 是未来提案、当前不可调用。",
+          "lines": [
+            98,
+            101
+          ],
+          "excerpt": "## 当前边界\n\n- Repository、Select AST、Filter Builder、Filter AST 和 Sort AST 是未来提案，当前不可调用。\n- QueryAdapter 是数据库层查询接口，不读取 Collection Metadata。",
+          "sha256": "adfa91efc5bb783c18cd5008b60a06aae8ab11e74db56867c7929e56d8e45668"
+        },
+        {
+          "id": "E25",
+          "kind": "package",
+          "path": "packages/@nocobase/db/dist/src/index.d.ts",
+          "observation": "db 的公开类型入口实际导出 Repository、FilterBuilder、FilterAst、SortBuilder、SortAst、DateFilterOperators、EmptyFilterOperators 等（与 README 说法相反）。",
+          "lines": [
+            60,
+            60
+          ],
+          "excerpt": "export type { AggregateAst, AggregateBuilder, AggregateExpression, AggregateFunction, AggregateNode, AggregateOptions, AggregateResult, AggregateSelection, AggregateSelectionResult, BooleanFilterOperators, NumericMutationOperand, NumericMutationOperandInput, MutationVariable, MutationLiteral, MutationValueInput, MutationValuesInput, ScalarCreateValues, ValuesBuilder, NumericMutationOperation, NumericMutationJsonInput, NumericMutationBuilder, NumericMutationInput, ScalarUpdateValues, DynamicUpdateMutationInput, ConnectTarget, CreateManyOptions, CreateManyResult, CreateMutationValues, CreateOneOptions, CreateRelationFieldMutationBuilder, CreateRelationFieldMutationInput, CreateRelationFieldMutationJsonInput, CreateTarget, CreatedTargetReference, DateFilterOperators, DeleteManyOptions, DeleteManyResult, DeleteOneOptions, DeleteOneResult, DescribeMutationOptions, EmptyFilterOperators, FilterAst, FilterBuilder, FilterConditionNode, FilterFieldGroup, FilterGroupNode, FilterLiteral, FilterNode, FilterOnlyOptions, FilterOperator, FilterOperand, FilterRelationNode, FilterScalar, FilterShorthand, FilterShorthandValue, FilterValue, FilterVariable, FindManyOptions, FindOneOptions, GroupByOptions, GroupByResult, GroupBySelectionResult, JsonFilterOperators, MutationScope, MutationValidationError, MutationValidationResult, NestedCreateOptions, NonEmptyRepositorySort, NonEmptySortAst, NumberFilterOperators, RelationClearNode, RelationCreateValues, RelationCreateValuesInput, RelationDeleteInput, RelationDeleteInputList, RelationDeleteTarget, RelationFilterOperators, RelationMutationAst, RelationMutationNode, RelationModifyNode, RelationPatchNode, RelationReplaceNode, RelationSetNode, RelationTargetSelector, RelationTargetSelectorInput, RelationUpdateInput, RelationUpdateInputList, RelationUpdateTarget, RelationUpdateValues, RelationUpsertInput, RelationUpsertInputList, RelationUpsertTarget, Repository, RepositoryAggregateNumeric, RepositoryContext, RepositoryCursor, RepositoryCursorDirection, RepositoryFilter, RepositoryMutationDescription, RepositoryMutationScalarValue, RepositoryPath, RepositoryReadOptions, RepositoryQuery, RepositoryRecord, RepositoryRelationMutationDescription, RepositorySelect, RepositorySort, RepositoryUniqueFieldSetDescription, PolicyRecord, RepositoryOperations, ScopedRepository, RelationSelectBuilder, RelationConnectInput, RelationCreateInput, RelationSelectBranchNode, RelationSelectResultNode, RelationSelectionExpression, RelationCombineResult, SelectAst, SelectBuilder, SelectIncludeNode, SelectNode, SingleMutationResult, SingleMutationSelector, SortAggregateBuilder, SortAggregateNode, SortAst, SortBuilder, SortDirection, SortExpression, SortFieldBuilder, SortFieldNode, SortNullsPosition, SortNullsBuilder, SortNode, SortRelationBuilder, StringFilterOperators, StringFilterOptions, TextFilterOperators, TimeFilterOperators, UniqueSelector, UpdateManyOptions, UpdateManyResult, UpdateMutationValues, UpdateOneOptions, UpsertOneOptions, UpdateRelationFieldMutationBuilder, UpdateRelationFieldMutationInput, UpdateRelationFieldMutationJsonInput, ValidateMutationOptions, } from './repository/types.js';",
+          "sha256": "818346a6a4f9eff91641fe40d5539f490123a98fd09142aab807811e027ee6b1"
+        },
+        {
+          "id": "E8",
+          "kind": "code",
+          "path": "app/server/providers/visitor-service.ts",
+          "observation": "VisitorService.list 用 database.repository(\"visitors\").findMany，filter 回调里 builder.date(\"arrivedAt\").notBefore/before、builder.string(\"employeeName\").eq、builder.date(\"departedAt\").empty/notEmpty、builder.or([...])，sort 用 sort.field(\"arrivedAt\").desc()。",
+          "lines": [
+            155,
+            208
+          ],
+          "excerpt": "export class VisitorService {\n  constructor(private readonly database: DatabaseManager) {}\n\n  async list(filter: VisitorListFilter = {}): Promise<Visitor[]> {\n    const repository = this.database.repository<VisitorRow>('visitors');\n    const search = filter.search?.trim();\n    const hasFilter = Boolean(\n      filter.from ||\n      filter.to ||\n      filter.employeeName ||\n      filter.status ||\n      search,\n    );\n\n    const rows = await repository.findMany({\n      ...(hasFilter\n        ? {\n            filter: (builder) => {\n              const conditions = [];\n              if (filter.from) {\n                conditions.push(\n                  builder.date('arrivedAt').notBefore(filter.from),\n                );\n              }\n              if (filter.to) {\n                conditions.push(builder.date('arrivedAt').before(filter.to));\n              }\n              if (filter.employeeName) {\n                conditions.push(\n                  builder.string('employeeName').eq(filter.employeeName),\n                );\n              }\n              if (filter.status === 'onSite') {\n                conditions.push(builder.date('departedAt').empty());\n              } else if (filter.status === 'left') {\n                conditions.push(builder.date('departedAt').notEmpty());\n              }\n              if (search) {\n                conditions.push(\n                  builder.or([\n                    builder.string('name').includes(search),\n                    builder.string('phone').includes(search),\n                    builder.string('employeeName').includes(search),\n                  ]),\n                );\n              }\n              return builder.and(conditions);\n            },\n          }\n        : {}),\n      sort: (sort) => [sort.field('arrivedAt').desc()],\n    });\n\n    return rows.map(toVisitor);",
+          "sha256": "304e9c593aa657cc604bf383159bdfb8bb6b6256bd1d1af8c25293c97385928d"
+        }
+      ],
+      "fingerprint": "d9ec5d78c23cde8326d5e039b7bcf4de50b876fbf9ee6fe16a792586ca261d9c"
+    },
+    {
+      "id": "393:36301951360:1:F4",
+      "report": "393:36301951360:1",
+      "issue": 393,
+      "taskTitle": "访客登记",
+      "appVersion": "1.0.0-beta.47",
+      "appTemplate": "@nocobase/app-template-default",
+      "finding": {
+        "id": "F4",
+        "kind": "issue",
+        "owner": "template",
+        "confidence": "confirmed",
+        "severity": "minor",
+        "status": "open",
+        "title": "DatePicker 受控值被清空后仍显示旧日期，违反“筛选控件显示当前值”",
+        "detail": "app/client/components/date-picker.tsx 用 `const selected = value ?? internal` 计算显示值。父组件以受控 `value` 传入后，一旦把值清为 undefined（点击 Clear filters），组件会回退到上次选择的内部状态 internal，于是触发按钮继续显示旧日期；form.md 却把该组件描述为受控 `value: Date | undefined`。",
+        "impact": "清除日期筛选后，控件显示的日期与实际生效的筛选（URL 参数已移除、结果已恢复全量）不一致，误导用户以为筛选仍生效。QA 记录中也观察到该“stale label”。",
+        "suggestedChange": "区分受控与不受控：受控模式下仅用 value（如 `const selected = value !== undefined ? value : internal` 或显式受控标记），使清空后显示 placeholder。",
+        "evidence": [
+          "E19",
+          "E41",
+          "E42",
+          "E5"
+        ],
+        "diagnosis": {
+          "category": "runtime-defect",
+          "trigger": "先选择日期筛选，再点击“Clear filters”。",
+          "expected": "DatePicker 触发按钮显示 placeholder（如“Any date”）。",
+          "actual": "触发按钮继续显示上次选择的日期，而列表已恢复全部记录。",
+          "workaround": "刷新页面或重新选择；筛选本身已按 URL 参数清除，结果正确。",
+          "acceptance": "清除筛选后 DatePicker 立即显示 placeholder，且与生效筛选一致。"
+        }
+      },
+      "targets": [
+        "app/.agents/skills/nocobase-app-development/references/frontend/references/form.md",
+        "app/.agents/skills/nocobase-app-development/references/frontend/ui-guidelines.md"
+      ],
+      "paths": [
+        ".agents/skills/nocobase-app-development/references/frontend/references/form.md",
+        ".agents/skills/nocobase-app-development/references/frontend/ui-guidelines.md"
+      ],
+      "evidence": [
+        {
+          "id": "E19",
+          "kind": "code",
+          "path": "app/client/components/date-picker.tsx",
+          "observation": "DatePicker 用 `const selected = value ?? internal`：受控传入 undefined 时会回退到上次内部选择，导致清除筛选后触发按钮仍显示旧日期。",
+          "lines": [
+            57,
+            66
+          ],
+          "excerpt": "  const { t } = useTranslation();\n  const [open, setOpen] = useState(false);\n  const [internal, setInternal] = useState<Date | undefined>(defaultValue);\n  const selected = value ?? internal;\n\n  const handleSelect = (date: Date | undefined): void => {\n    setInternal(date);\n    onChange?.(date);\n    if (closeOnSelect) setOpen(false);\n  };",
+          "sha256": "fec7c4a030206b7cf5584fb4e47467570e426c679de377e3c63cabddc17e22ad"
+        },
+        {
+          "id": "E41",
+          "kind": "skill",
+          "path": "app/.agents/skills/nocobase-app-development/references/frontend/references/form.md",
+          "observation": "form.md 说明日期控件用 @/components/date-picker（value: Date | undefined, onChange(date)），并提醒先读源码确认受控属性。",
+          "lines": [
+            735,
+            745
+          ],
+          "excerpt": "### Other controls\n\n- `client/components/ui/` also has `Combobox`, `NativeSelect`, `Slider`, `InputOTP`, `ToggleGroup` and more; for dates, use `DatePicker` from `@/components/date-picker` (`value: Date | undefined`, `onChange(date)`; it accepts neither `ref` nor `aria-invalid`). Before wiring a component into `Controller`, read its source to confirm the controlled prop and the callback arguments: Base UI components often use different prop names from the Radix versions.\n- When a component you need is not in `client/components/ui/`, add it with `pnpm exec shadcn add <name>`; do not write it by hand.\n\n## Validation timing, array fields and resetting\n\n### Validation timing\n\n`useForm`'s `mode` decides when fields are validated before the first submission:\n",
+          "sha256": "592976d3f8cce2b5f3e363717ae93c0c6d15685259ac9f3c7f4e88e7eae9384a"
+        },
+        {
+          "id": "E42",
+          "kind": "skill",
+          "path": "app/.agents/skills/nocobase-app-development/references/frontend/ui-guidelines.md",
+          "observation": "ui-guidelines T1.2 要求筛选控件显示当前值，并在有筛选时显示 Clear filters；T1.4 要求状态用 Badge 文本，不能只靠颜色。",
+          "lines": [
+            57,
+            70
+          ],
+          "excerpt": "### T1 List page: browse, find and manage one kind of record\n\nStructure, top to bottom: PageHeader (primary action \"New X\") → toolbar (search box and filters on the left, secondary actions on the right) → table → pagination.\n\n- **T1.1 [Must]** The search box has a placeholder that says which fields it searches, for example \"Search by name or email\".\n- **T1.2 [Must]** Filter controls show their current value; while a search or filter is applied, show \"Clear filters\".\n- **T1.3 [Must]** The first column is the record's name or number; when there is a detail view, clicking it opens the detail view.\n- **T1.4 [Must]** Enumerated values such as status and type are shown as text in a Badge; color is only an aid, and values must never be distinguished by color alone.\n- **T1.5 [Must]** Row actions go in a \"More\" menu at the end of the row (a ⋯ icon button); the most common one may be shown directly in the row. Delete goes last in the menu, in the destructive style, separated from the other items by a divider.\n- **T1.6 [Must]** Dates and times are formatted for the current language; numbers and amounts are right-aligned, with thousands separators.\n- **T1.7 [Should]** Search and filter conditions are written to the URL, so they survive a refresh and going back.\n- **T1.8 [Should]** Sortable columns show their sort state in the header; the default order is by last update time, newest first.\n- **T1.9 [Must]** A list page must have a design for all four states S1–S4.\n- **T1.10 [Must]** When the endpoint caps the number of results and does not return a total, show a notice when the results reach the cap (\"Only the first N records are shown. Use search or filters to narrow the results.\"); records beyond the cap must not silently disappear.",
+          "sha256": "deece57c1c908b21c45501c3b399b9babf7804888da581334c835cea1fe9a446"
+        },
+        {
+          "id": "E5",
+          "kind": "log",
+          "path": "artifacts/agent-history/verify-1/browser-acceptance/agent-browser-acceptance.jsonl/part-0006.txt",
+          "observation": "浏览器验收 finish 结果：3 项检查全部通过（C01/C02/C03）并产出 9 张截图；该调用未记录任何 error 事件。",
+          "lines": [
+            2954,
+            2957
+          ],
+          "excerpt": "{\"type\":\"message_update\",\"usage\":{\"input\":213,\"output\":563,\"cacheRead\":57344,\"cacheWrite\":0,\"reasoning\":109,\"totalTokens\":58120,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"assistantMessageEvent\":{\"type\":\"thinking_end\",\"contentIndex\":0,\"content\":\"Everything is done. Let me provide a concise final report to the user.\\n\\nWait — I should double-check whether the finish tool expects exit code 0 and whether there are any lingering issues. The tool said \\\"Agent Browser acceptance passed with 3 check(s) and 9 screenshot(s).\\\" Good.\\n\\nOne thing: the instruction says full acceptance should produce delivery-notes.json in the same directory as the report. Done.\\n\\nI should also confirm the report tool didn't require a particular ID ordering. Fine.\\n\\nLet me give the final summary.\"}}\n{\"type\":\"message_update\",\"usage\":{\"input\":213,\"output\":563,\"cacheRead\":57344,\"cacheWrite\":0,\"reasoning\":109,\"totalTokens\":58120,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"assistantMessageEvent\":{\"type\":\"text_end\",\"contentIndex\":1,\"content\":\"验收完成。\\n\\n## 结论\\n以真实浏览器（Chrome，admin/前台身份）在 `http://127.0.0.1:13000/main/` 完成 Issue #393「访客登记」全量验收，**3/3 项通过**，无业务失败。\\n\\n## 验收结果\\n\\n| 项 | 状态 | 关键证据 |\\n|---|---|---|\\n| C01 登记访客 + 手机号 11 位 | passed | 10 位号 `1234567890` 被拒并提示 *Enter an 11-digit phone number.*；11 位 `13800138000` 成功，列表首行出现「验收访客甲 / 王芳 / 业务洽谈 / Sep 27, 2026 7:35 AM / On site」 |\\n| C02 登记离开时间不早于到访 | passed | 对「赵敏」(到访 7:00 AM) 设 1:00 AM 离开 → 报错 *Departure cannot be earlier than arrival.* 不提交；改 8:00 AM → 成功，状态变为 *Left Jan 14, 2026, 8:00 AM* |\\n| C03 按日期/被访员工筛选 + 识别未离开 | passed | 员工筛选 David Lee 仅剩 2 条；日期筛选 Jan 15 排除 Jan 14 与 Sep 27 记录；日期+员工组合准确；状态列 On site/Left 区分，On site 筛选只显示未离开者 |\\n\\n## 交付物\\n- 报告：`$FACTORY_BROWSER_REPORT`（passed=true，authenticated=true，failures=[]）\\n- 证据：9 张 PNG + 录屏 `acceptance-admin.webm`（`$FACTORY_BROWSER_EVIDENCE_DIR`）\\n- 展示素材：`$FACTORY_BROWSER_SHOWCASE`\\n- 交付说明：同报告目录 `delivery-notes.json`\\n\\n控制台无错误、无 page error、无意外 4xx/5xx。\"}}\n{\"type\":\"message_end\",\"message\":{\"role\":\"assistant\",\"content\":[{\"type\":\"thinking\",\"thinking\":\"Everything is done. Let me provide a concise final report to the user.\\n\\nWait — I should double-check whether the finish tool expects exit code 0 and whether there are any lingering issues. The tool said \\\"Agent Browser acceptance passed with 3 check(s) and 9 screenshot(s).\\\" Good.\\n\\nOne thing: the instruction says full acceptance should produce delivery-notes.json in the same directory as the report. Done.\\n\\nI should also confirm the report tool didn't require a particular ID ordering. Fine.\\n\\nLet me give the final summary.\",\"thinkingSignature\":\"[{\\\"format\\\":\\\"unknown\\\",\\\"index\\\":0,\\\"text\\\":\\\"Everything is done. Let me provide a concise final report to the user.\\\\n\\\\nWait — I should double-check whether the finish tool expects exit code 0 and whether there are any lingering issues. The tool said \\\\\\\"Agent Browser acceptance passed with 3 check(s) and 9 screenshot(s).\\\\\\\" Good.\\\\n\\\\nOne thing: the instruction says full acceptance should produce delivery-notes.json in the same directory as the report. Done.\\\\n\\\\nI should also confirm the report tool didn't require a particular ID ordering. Fine.\\\\n\\\\nLet me give the final summary.\\\",\\\"type\\\":\\\"reasoning.text\\\"}]\"},{\"type\":\"text\",\"text\":\"验收完成。\\n\\n## 结论\\n以真实浏览器（Chrome，admin/前台身份）在 `http://127.0.0.1:13000/main/` 完成 Issue #393「访客登记」全量验收，**3/3 项通过**，无业务失败。\\n\\n## 验收结果\\n\\n| 项 | 状态 | 关键证据 |\\n|---|---|---|\\n| C01 登记访客 + 手机号 11 位 | passed | 10 位号 `1234567890` 被拒并提示 *Enter an 11-digit phone number.*；11 位 `13800138000` 成功，列表首行出现「验收访客甲 / 王芳 / 业务洽谈 / Sep 27, 2026 7:35 AM / On site」 |\\n| C02 登记离开时间不早于到访 | passed | 对「赵敏」(到访 7:00 AM) 设 1:00 AM 离开 → 报错 *Departure cannot be earlier than arrival.* 不提交；改 8:00 AM → 成功，状态变为 *Left Jan 14, 2026, 8:00 AM* |\\n| C03 按日期/被访员工筛选 + 识别未离开 | passed | 员工筛选 David Lee 仅剩 2 条；日期筛选 Jan 15 排除 Jan 14 与 Sep 27 记录；日期+员工组合准确；状态列 On site/Left 区分，On site 筛选只显示未离开者 |\\n\\n## 交付物\\n- 报告：`$FACTORY_BROWSER_REPORT`（passed=true，authenticated=true，failures=[]）\\n- 证据：9 张 PNG + 录屏 `acceptance-admin.webm`（`$FACTORY_BROWSER_EVIDENCE_DIR`）\\n- 展示素材：`$FACTORY_BROWSER_SHOWCASE`\\n- 交付说明：同报告目录 `delivery-notes.json`\\n\\n控制台无错误、无 page error、无意外 4xx/5xx。\"}],\"api\":\"openai-completions\",\"provider\":\"nb3-factory\",\"model\":\"deepseek-v4.1-flash\",\"usage\":{\"input\":213,\"output\":563,\"cacheRead\":57344,\"cacheWrite\":0,\"reasoning\":109,\"totalTokens\":58120,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"stopReason\":\"stop\",\"timestamp\":1790494907110,\"responseId\":\"gen_01M3GX08THCFE0MYGXTJS0BW0Y\",\"rawStopReason\":\"stop\"}}\n{\"type\":\"turn_end\",\"message\":{\"role\":\"assistant\",\"content\":[{\"type\":\"thinking\",\"thinking\":\"Everything is done. Let me provide a concise final report to the user.\\n\\nWait — I should double-check whether the finish tool expects exit code 0 and whether there are any lingering issues. The tool said \\\"Agent Browser acceptance passed with 3 check(s) and 9 screenshot(s).\\\" Good.\\n\\nOne thing: the instruction says full acceptance should produce delivery-notes.json in the same directory as the report. Done.\\n\\nI should also confirm the report tool didn't require a particular ID ordering. Fine.\\n\\nLet me give the final summary.\",\"thinkingSignature\":\"[{\\\"format\\\":\\\"unknown\\\",\\\"index\\\":0,\\\"text\\\":\\\"Everything is done. Let me provide a concise final report to the user.\\\\n\\\\nWait — I should double-check whether the finish tool expects exit code 0 and whether there are any lingering issues. The tool said \\\\\\\"Agent Browser acceptance passed with 3 check(s) and 9 screenshot(s).\\\\\\\" Good.\\\\n\\\\nOne thing: the instruction says full acceptance should produce delivery-notes.json in the same directory as the report. Done.\\\\n\\\\nI should also confirm the report tool didn't require a particular ID ordering. Fine.\\\\n\\\\nLet me give the final summary.\\\",\\\"type\\\":\\\"reasoning.text\\\"}]\"},{\"type\":\"text\",\"text\":\"验收完成。\\n\\n## 结论\\n以真实浏览器（Chrome，admin/前台身份）在 `http://127.0.0.1:13000/main/` 完成 Issue #393「访客登记」全量验收，**3/3 项通过**，无业务失败。\\n\\n## 验收结果\\n\\n| 项 | 状态 | 关键证据 |\\n|---|---|---|\\n| C01 登记访客 + 手机号 11 位 | passed | 10 位号 `1234567890` 被拒并提示 *Enter an 11-digit phone number.*；11 位 `13800138000` 成功，列表首行出现「验收访客甲 / 王芳 / 业务洽谈 / Sep 27, 2026 7:35 AM / On site」 |\\n| C02 登记离开时间不早于到访 | passed | 对「赵敏」(到访 7:00 AM) 设 1:00 AM 离开 → 报错 *Departure cannot be earlier than arrival.* 不提交；改 8:00 AM → 成功，状态变为 *Left Jan 14, 2026, 8:00 AM* |\\n| C03 按日期/被访员工筛选 + 识别未离开 | passed | 员工筛选 David Lee 仅剩 2 条；日期筛选 Jan 15 排除 Jan 14 与 Sep 27 记录；日期+员工组合准确；状态列 On site/Left 区分，On site 筛选只显示未离开者 |\\n\\n## 交付物\\n- 报告：`$FACTORY_BROWSER_REPORT`（passed=true，authenticated=true，failures=[]）\\n- 证据：9 张 PNG + 录屏 `acceptance-admin.webm`（`$FACTORY_BROWSER_EVIDENCE_DIR`）\\n- 展示素材：`$FACTORY_BROWSER_SHOWCASE`\\n- 交付说明：同报告目录 `delivery-notes.json`\\n\\n控制台无错误、无 page error、无意外 4xx/5xx。\"}],\"api\":\"openai-completions\",\"provider\":\"nb3-factory\",\"model\":\"deepseek-v4.1-flash\",\"usage\":{\"input\":213,\"output\":563,\"cacheRead\":57344,\"cacheWrite\":0,\"reasoning\":109,\"totalTokens\":58120,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"stopReason\":\"stop\",\"timestamp\":1790494907110,\"responseId\":\"gen_01M3GX08THCFE0MYGXTJS0BW0Y\",\"rawStopReason\":\"stop\"},\"toolResults\":[]}",
+          "sha256": "d791bb15e8ba963cd5505d834e7f0bf293a8f512c7ca7dcf09549af256531d23"
+        }
+      ],
+      "fingerprint": "e59e175d4b3aa334604d6a9d6f9e275b23054cae59e55aa4952e6d0ebf04d375"
     }
   ]
 }
