@@ -1,0 +1,2233 @@
+{
+  "schemaVersion": 1,
+  "type": "evaluation-report",
+  "source": {
+    "producer": "nb3-factory",
+    "instance": "gchust/nb3-factory",
+    "project": "gchust/nb3-factory",
+    "exporter": {
+      "version": 1,
+      "controlSha": "831890afa5184fc2539fc2320ce7db964bbb28a9",
+      "runId": 36311639280,
+      "attempt": 1
+    }
+  },
+  "run": {
+    "key": "gchust/nb3-factory/issues/379/initial",
+    "kind": "initial",
+    "identity": "recorded",
+    "batchKey": null,
+    "caseKey": null,
+    "sampleIndex": null,
+    "sampleKey": null,
+    "task": {
+      "repository": "gchust/nb3-factory",
+      "issue": 379,
+      "buildCommentId": null,
+      "title": "设备售后服务与巡检协同系统"
+    },
+    "case": {
+      "source": "preset",
+      "presetIssueNumber": 158,
+      "capturedAt": "2026-09-27T00:35:20Z",
+      "inputHash": "57e1930735b86420bf8e6f9c601263757d747ed945d7cea215b6164796328276",
+      "reviewHash": "25b2c465af00385131ef4dee22e8bd7ad3c7cdcdd3080b40a4fbb13dc846d0ef"
+    }
+  },
+  "revision": 2,
+  "createdAt": "2026-09-27T10:10:10Z",
+  "precedence": {
+    "producer": {
+      "runId": 36297599507,
+      "attempt": 1,
+      "startedAt": "2026-09-27T05:34:37Z"
+    },
+    "executionOrder": 2,
+    "knownLaterExecutions": 0,
+    "chainTerminal": true,
+    "reviewRubric": 2,
+    "reviewState": "partial",
+    "review": {
+      "kind": "build",
+      "at": "2026-09-27T05:34:37Z",
+      "runId": 36297599507,
+      "attempt": 1
+    },
+    "qaCoverage": "partial"
+  },
+  "baseline": {
+    "track": "published-template",
+    "application": {
+      "baseRef": "develop",
+      "baseSha": "5c9147b0d4e5220a495310c7bc0fd9b973ac3156",
+      "candidate": {
+        "patchSha256": "7d6c1c35fd0ca78ece57d35a8ac5d4f024418db9fb8013f8870bf7c3d40df6ad",
+        "headSha": null
+      }
+    },
+    "factory": {
+      "controlSha": "5c9147b0d4e5220a495310c7bc0fd9b973ac3156",
+      "entrySha": "24c0eb1d2457b48fbc3d369ef8a0e5aafb6295e4"
+    },
+    "template": {
+      "creatorVersion": "0.1.0-beta.22",
+      "templateVersion": "1.0.0-beta.47"
+    },
+    "dependencies": {
+      "lockfileSha256": "7db7024be35da2f6d4d75784a2afd5c398ca647ac58462cf5e58d14276395f99",
+      "baselineFingerprint": "22a583cd33564977f784b62cc2b49ed3642094e766cf591c287da370829073da",
+      "packages": [
+        {
+          "name": "@nocobase/ai-employee",
+          "version": "0.2.0-beta.8"
+        },
+        {
+          "name": "@nocobase/ai-employee-avatars",
+          "version": "1.0.2"
+        },
+        {
+          "name": "@nocobase/app-cli",
+          "version": "1.0.0-beta.6"
+        },
+        {
+          "name": "@nocobase/app-client",
+          "version": "1.0.0-beta.21"
+        },
+        {
+          "name": "@nocobase/app-plugin-ai-employee",
+          "version": "1.0.0-beta.23"
+        },
+        {
+          "name": "@nocobase/app-plugin-ai-knowledge-base",
+          "version": "0.1.0-beta.9"
+        },
+        {
+          "name": "@nocobase/app-plugin-api-keys",
+          "version": "0.1.0-beta.8"
+        },
+        {
+          "name": "@nocobase/app-plugin-authentication",
+          "version": "1.0.0-beta.24"
+        },
+        {
+          "name": "@nocobase/app-plugin-authorization",
+          "version": "0.2.0-beta.20"
+        },
+        {
+          "name": "@nocobase/app-plugin-authz-default-access",
+          "version": "0.1.0-beta.4"
+        },
+        {
+          "name": "@nocobase/app-plugin-authz-restriction-rules",
+          "version": "0.1.0-beta.3"
+        },
+        {
+          "name": "@nocobase/app-plugin-authz-sharing-rules",
+          "version": "0.1.0-beta.4"
+        },
+        {
+          "name": "@nocobase/app-plugin-database-explorer",
+          "version": "0.1.0-beta.6"
+        },
+        {
+          "name": "@nocobase/app-plugin-file",
+          "version": "0.1.0-beta.15"
+        },
+        {
+          "name": "@nocobase/app-plugin-i18n",
+          "version": "0.1.0-beta.9"
+        },
+        {
+          "name": "@nocobase/app-plugin-mail",
+          "version": "0.1.0-beta.0"
+        },
+        {
+          "name": "@nocobase/app-plugin-notification",
+          "version": "0.1.0-beta.17"
+        },
+        {
+          "name": "@nocobase/app-plugin-notification-in-app",
+          "version": "0.2.0-beta.18"
+        },
+        {
+          "name": "@nocobase/app-plugin-notification-providers",
+          "version": "0.2.0-beta.7"
+        },
+        {
+          "name": "@nocobase/app-plugin-scheduler",
+          "version": "0.1.0-beta.9"
+        },
+        {
+          "name": "@nocobase/app-plugin-users",
+          "version": "1.0.0-beta.11"
+        },
+        {
+          "name": "@nocobase/app-plugin-workflow",
+          "version": "1.0.0-beta.28"
+        },
+        {
+          "name": "@nocobase/app-portal-sdk",
+          "version": "1.0.0-beta.3"
+        },
+        {
+          "name": "@nocobase/app-server",
+          "version": "1.0.0-beta.27"
+        },
+        {
+          "name": "@nocobase/app-skills",
+          "version": "0.1.0-beta.16"
+        },
+        {
+          "name": "@nocobase/app-websocket",
+          "version": "0.0.1"
+        },
+        {
+          "name": "@nocobase/authorization",
+          "version": "0.1.0-beta.9"
+        },
+        {
+          "name": "@nocobase/caching",
+          "version": "0.1.0-beta.2"
+        },
+        {
+          "name": "@nocobase/config",
+          "version": "0.1.0-beta.1"
+        },
+        {
+          "name": "@nocobase/cron",
+          "version": "0.1.0"
+        },
+        {
+          "name": "@nocobase/db",
+          "version": "1.0.0-beta.16"
+        },
+        {
+          "name": "@nocobase/db-sqlite",
+          "version": "0.1.0-beta.2"
+        },
+        {
+          "name": "@nocobase/dev-config",
+          "version": "0.1.0-beta.13"
+        },
+        {
+          "name": "@nocobase/drive",
+          "version": "0.1.0-beta.4"
+        },
+        {
+          "name": "@nocobase/i18n",
+          "version": "1.0.0-beta.4"
+        },
+        {
+          "name": "@nocobase/logging",
+          "version": "0.1.0-beta.6"
+        },
+        {
+          "name": "@nocobase/queue",
+          "version": "0.1.0-beta.7"
+        },
+        {
+          "name": "@nocobase/repository-input",
+          "version": "0.1.0-beta.1"
+        },
+        {
+          "name": "@nocobase/service-provider",
+          "version": "0.0.2-beta.1"
+        },
+        {
+          "name": "@nocobase/session",
+          "version": "0.1.0-beta.2"
+        },
+        {
+          "name": "@nocobase/snowflake",
+          "version": "1.0.0-beta.3"
+        }
+      ]
+    },
+    "skills": {
+      "fingerprint": "5ba7cf1199b8ea4a00cfcc57ba42074d944b292d47edab5f4c7f334e8aac99d2",
+      "files": 107
+    },
+    "sourceSnapshot": null,
+    "inputs": {
+      "taskInputHash": "57e1930735b86420bf8e6f9c601263757d747ed945d7cea215b6164796328276",
+      "pipelineInputHash": "b5b10cab8d561208eec5a7f71192ece6a5fd47e7c93db10ee0a90c2bb8fe64a8",
+      "reviewHash": "25b2c465af00385131ef4dee22e8bd7ad3c7cdcdd3080b40a4fbb13dc846d0ef",
+      "reviewCriteriaHash": "25b2c465af00385131ef4dee22e8bd7ad3c7cdcdd3080b40a4fbb13dc846d0ef",
+      "prompts": [
+        {
+          "phase": "repair",
+          "path": "agent-repair-2.jsonl.invocation.json",
+          "sha256": "807de2467b5c6e2d0e7fac66c148ebbac65735ef6f9ede9d1804d9337ee43736"
+        },
+        {
+          "phase": "repair",
+          "path": "agent-repair-3.jsonl.invocation.json",
+          "sha256": "6ed212215f1e9162ffc8f3cb7ee8c7f63a94fad646defa1176a03e83267e0dee"
+        },
+        {
+          "phase": "repair",
+          "path": "agent-repair-4.jsonl.invocation.json",
+          "sha256": "1c2ce90d3bf56ea95270c42bbdf97518c2516082aff6dc1ce56d7d795aadd150"
+        },
+        {
+          "phase": "review",
+          "path": "agent-review.jsonl.invocation.json",
+          "sha256": "342e6242d33922777dcff0ec056fdc405966daa3f5ac14c0b21cd963f9e2ce96"
+        },
+        {
+          "phase": "qa-focused",
+          "path": "verify-3/browser-focused/agent-browser-acceptance.jsonl.invocation.json",
+          "sha256": "e3fe28492c0ef62f6c84c8ee9142c985e4ce5a7ad3c3077361e7bc88a415366f"
+        },
+        {
+          "phase": "qa-focused",
+          "path": "verify-4/browser-focused/agent-browser-acceptance.jsonl.invocation.json",
+          "sha256": "5d8e970f5ba3b99011256fd7355c1efd72be42dce8508f362cb0d2960d5ac232"
+        },
+        {
+          "phase": "qa-focused",
+          "path": "verify-5/browser-focused/agent-browser-acceptance.jsonl.invocation.json",
+          "sha256": "36553349c3dfee18d030a58fb32f009538a3ec3d1467f279b67bf7273eb2eb90"
+        },
+        {
+          "phase": "qa-focused",
+          "path": "verify-6/browser-focused/agent-browser-acceptance.jsonl.invocation.json",
+          "sha256": "6d28ed783d1c8cdc21e7e50508fc9c644e3b16fc0caf732abcd56696c30c8ff2"
+        }
+      ]
+    },
+    "rubric": {
+      "id": "nb3-framework",
+      "version": 2
+    },
+    "agent": {
+      "engine": "pi",
+      "model": "deepseek-v4.1-flash",
+      "version": "0.86.1",
+      "buildReviewMode": "full",
+      "configuration": {
+        "fingerprints": [
+          "13b51ba5c1f88ff0ab747ba3d232f77dfad5a813acbcfc23f91e9a3dd17cc530"
+        ],
+        "complete": false
+      }
+    },
+    "environment": {
+      "browserFixturesSha256": "3b527d18aa2f6d58fdfea5cdd916631ea1ee3425abeba09bb1f961f2128c554b",
+      "browserPreflight": "passed"
+    }
+  },
+  "executions": [
+    {
+      "key": "run/36282941663/attempt/1",
+      "kind": "implementation",
+      "order": 1,
+      "workflow": "code-agent-task",
+      "runId": 36282941663,
+      "attempt": 1,
+      "event": "issues",
+      "previousRunId": null,
+      "conclusion": "handoff",
+      "startedAt": "2026-09-27T00:35:11Z",
+      "endedAt": "2026-09-27T05:34:38Z",
+      "jobSeconds": 17925,
+      "controlSha": "5c9147b0d4e5220a495310c7bc0fd9b973ac3156",
+      "patchSha256": "5d102181cd73fffc5d0d4bda52254690a05049c5f2d180f9ef6c499dd92cbccd",
+      "source": "usage-receipt"
+    },
+    {
+      "key": "run/36297599507/attempt/1",
+      "kind": "continuation",
+      "order": 2,
+      "workflow": "code-agent-task",
+      "runId": 36297599507,
+      "attempt": 1,
+      "event": "repository_dispatch",
+      "previousRunId": 36282941663,
+      "conclusion": "budget-exhausted",
+      "startedAt": "2026-09-27T05:34:37Z",
+      "endedAt": "2026-09-27T10:09:16Z",
+      "jobSeconds": 16460,
+      "controlSha": "5c9147b0d4e5220a495310c7bc0fd9b973ac3156",
+      "patchSha256": "7d6c1c35fd0ca78ece57d35a8ac5d4f024418db9fb8013f8870bf7c3d40df6ad",
+      "source": "usage-receipt"
+    }
+  ],
+  "outcome": {
+    "execution": "budget-exhausted",
+    "acceptance": "unknown",
+    "delivery": "not-published",
+    "pullRequest": null,
+    "detail": "达到任务停止条件或更严格的评测计划预算，已保存补丁与事实，进入只读诊断，不再自动修复或续跑。"
+  },
+  "qa": {
+    "coverage": "partial",
+    "rounds": [
+      {
+        "round": 3,
+        "executionKey": "run/36297599507/attempt/1",
+        "scope": "focused",
+        "passed": false,
+        "source": "verify-3/browser-focused/report.json",
+        "checks": [
+          {
+            "id": "B02",
+            "criterion": "新增客户和设备、编辑后刷新，验证值回填与保存；重复设备编号、无效客户设备关联有清晰反馈。",
+            "status": "passed",
+            "evidence": []
+          },
+          {
+            "id": "B04",
+            "criterion": "按草稿、提交、分派、处理、待确认、退回、再次处理、关闭跑通一张工单；验证转派/取消原因和关闭后的限制。",
+            "status": "passed",
+            "evidence": []
+          },
+          {
+            "id": "B06",
+            "criterion": "实际上传 PNG、PDF、DOCX、XLSX、PPTX 小型合法文件并保存业务关联；逐格式检查显示的内容而非文件名，刷新后重新预览、下载；损坏或不支持的文件给出失败提示。文件测试样例由测试准备生成或提供，不能把浏览器 QA 自行生成文件当成浏览器操作。",
+            "status": "failed",
+            "evidence": []
+          },
+          {
+            "id": "B07",
+            "criterion": "用无工单访问权的普通用户尝试打开工单及其附件，不能显示内容；观察员看不到内部成本字段且不能编辑。",
+            "status": "failed",
+            "evidence": []
+          },
+          {
+            "id": "B09",
+            "criterion": "分派后收件人消息中心出现对应持久消息，可跳转、已读/未读、删除；刷新/重新登录后状态正确，其他用户看不到；断开再恢复连接后可补齐消息。",
+            "status": "failed",
+            "evidence": []
+          },
+          {
+            "id": "B11",
+            "criterion": "从自动受理的执行记录查看步骤与实际工单结果；失败场景保留失败原因，恢复不删除旧记录或重复通知。",
+            "status": "passed",
+            "evidence": []
+          },
+          {
+            "id": "B15",
+            "criterion": "切换中英文，逐页检查导航、字段、弹窗、文件组件、消息及错误反馈；刷新/直接地址访问正常，不能只有中文静态页面。",
+            "status": "failed",
+            "evidence": []
+          }
+        ]
+      },
+      {
+        "round": 4,
+        "executionKey": "run/36297599507/attempt/1",
+        "scope": "focused",
+        "passed": false,
+        "source": "verify-4/browser-focused/report.json",
+        "checks": [
+          {
+            "id": "B06",
+            "criterion": "实际上传 PNG、PDF、DOCX、XLSX、PPTX 小型合法文件并保存业务关联；逐格式检查显示的内容而非文件名，刷新后重新预览、下载；损坏或不支持的文件给出失败提示。文件测试样例由测试准备生成或提供，不能把浏览器 QA 自行生成文件当成浏览器操作。",
+            "status": "failed",
+            "evidence": []
+          },
+          {
+            "id": "B07",
+            "criterion": "用无工单访问权的普通用户尝试打开工单及其附件，不能显示内容；观察员看不到内部成本字段且不能编辑。",
+            "status": "passed",
+            "evidence": []
+          },
+          {
+            "id": "B09",
+            "criterion": "分派后收件人消息中心出现对应持久消息，可跳转、已读/未读、删除；刷新/重新登录后状态正确，其他用户看不到；断开再恢复连接后可补齐消息。",
+            "status": "passed",
+            "evidence": []
+          },
+          {
+            "id": "B15",
+            "criterion": "切换中英文，逐页检查导航、字段、弹窗、文件组件、消息及错误反馈；刷新/直接地址访问正常，不能只有中文静态页面。",
+            "status": "failed",
+            "evidence": []
+          }
+        ]
+      },
+      {
+        "round": 5,
+        "executionKey": "run/36297599507/attempt/1",
+        "scope": "focused",
+        "passed": false,
+        "source": "verify-5/browser-focused/report.json",
+        "checks": [
+          {
+            "id": "B06",
+            "criterion": "实际上传 PNG、PDF、DOCX、XLSX、PPTX 小型合法文件并保存业务关联；逐格式检查显示的内容而非文件名，刷新后重新预览、下载；损坏或不支持的文件给出失败提示。文件测试样例由测试准备生成或提供，不能把浏览器 QA 自行生成文件当成浏览器操作。",
+            "status": "failed",
+            "evidence": []
+          },
+          {
+            "id": "B15",
+            "criterion": "切换中英文，逐页检查导航、字段、弹窗、文件组件、消息及错误反馈；刷新/直接地址访问正常，不能只有中文静态页面。",
+            "status": "passed",
+            "evidence": []
+          }
+        ]
+      },
+      {
+        "round": 6,
+        "executionKey": "run/36297599507/attempt/1",
+        "scope": "focused",
+        "passed": true,
+        "source": "verify-6/browser-focused/report.json",
+        "checks": [
+          {
+            "id": "B06",
+            "criterion": "实际上传 PNG、PDF、DOCX、XLSX、PPTX 小型合法文件并保存业务关联；逐格式检查显示的内容而非文件名，刷新后重新预览、下载；损坏或不支持的文件给出失败提示。文件测试样例由测试准备生成或提供，不能把浏览器 QA 自行生成文件当成浏览器操作。",
+            "status": "passed",
+            "evidence": []
+          }
+        ]
+      }
+    ],
+    "firstFull": {
+      "status": "unknown",
+      "round": null,
+      "executionKey": null,
+      "basis": "第一轮验证位于更早的执行，本产物未包含，不能推断首轮结果。"
+    },
+    "finalFull": {
+      "status": "unknown",
+      "round": null,
+      "executionKey": null,
+      "basis": "本产物没有全量 QA，更早执行的结果未取得。"
+    },
+    "criteria": [
+      {
+        "id": "B01",
+        "text": "以主管、华东工程师、华南工程师、协作工程师、观察员分别登录，验证各自入口及允许/禁止的业务操作；角色切换不保留前一账号的权限。",
+        "optional": false,
+        "firstFull": "unknown",
+        "finalFull": "unknown"
+      },
+      {
+        "id": "B02",
+        "text": "新增客户和设备、编辑后刷新，验证值回填与保存；重复设备编号、无效客户设备关联有清晰反馈。",
+        "optional": false,
+        "firstFull": "unknown",
+        "finalFull": "unknown"
+      },
+      {
+        "id": "B03",
+        "text": "搜索、区域/状态筛选、分页、详情刷新和返回列表正常，结果不能混入无权访问的记录。",
+        "optional": false,
+        "firstFull": "unknown",
+        "finalFull": "unknown"
+      },
+      {
+        "id": "B04",
+        "text": "按草稿、提交、分派、处理、待确认、退回、再次处理、关闭跑通一张工单；验证转派/取消原因和关闭后的限制。",
+        "optional": false,
+        "firstFull": "unknown",
+        "finalFull": "unknown"
+      },
+      {
+        "id": "B05",
+        "text": "快速重复提交/关闭同一工单不产生重复业务结果；不能跳过必要状态直接关闭。",
+        "optional": false,
+        "firstFull": "unknown",
+        "finalFull": "unknown"
+      },
+      {
+        "id": "B06",
+        "text": "实际上传 PNG、PDF、DOCX、XLSX、PPTX 小型合法文件并保存业务关联；逐格式检查显示的内容而非文件名，刷新后重新预览、下载；损坏或不支持的文件给出失败提示。文件测试样例由测试准备生成或提供，不能把浏览器 QA 自行生成文件当成浏览器操作。",
+        "optional": false,
+        "firstFull": "unknown",
+        "finalFull": "unknown"
+      },
+      {
+        "id": "B07",
+        "text": "用无工单访问权的普通用户尝试打开工单及其附件，不能显示内容；观察员看不到内部成本字段且不能编辑。",
+        "optional": false,
+        "firstFull": "unknown",
+        "finalFull": "unknown"
+      },
+      {
+        "id": "B08",
+        "text": "默认知识可读范围、指定工单跨区分享、分享撤销、保密限制分别生效；分享不能自动授予原本没有的操作。",
+        "optional": false,
+        "firstFull": "unknown",
+        "finalFull": "unknown"
+      },
+      {
+        "id": "B09",
+        "text": "分派后收件人消息中心出现对应持久消息，可跳转、已读/未读、删除；刷新/重新登录后状态正确，其他用户看不到；断开再恢复连接后可补齐消息。",
+        "optional": false,
+        "firstFull": "unknown",
+        "finalFull": "unknown"
+      },
+      {
+        "id": "B10",
+        "text": "保存成功、必填校验和一次真实失败都有正确的即时反馈，失败后未保存内容可恢复，不以 toast 冒充站内信。",
+        "optional": false,
+        "firstFull": "unknown",
+        "finalFull": "unknown"
+      },
+      {
+        "id": "B11",
+        "text": "从自动受理的执行记录查看步骤与实际工单结果；失败场景保留失败原因，恢复不删除旧记录或重复通知。",
+        "optional": false,
+        "firstFull": "unknown",
+        "finalFull": "unknown"
+      },
+      {
+        "id": "B12",
+        "text": "管理员查看巡检/超期计划，使用测试环境提供的短周期或受控触发观察实际执行；执行结束时业务结果一致，重复执行不重复创建当天巡检；停用后不再产生新任务。",
+        "optional": false,
+        "firstFull": "unknown",
+        "finalFull": "unknown"
+      },
+      {
+        "id": "B13",
+        "text": "看板数值与当前用户能看到的工单一致，状态变更和筛选后更新；不同岗位不出现越权统计。",
+        "optional": false,
+        "firstFull": "unknown",
+        "finalFull": "unknown"
+      },
+      {
+        "id": "B14",
+        "text": "管理员创建、停用、重新启用测试用户并维护岗位；停用后的原会话不可继续使用，其他业务账户不受影响。只读业务管理员可查看数据结构，但不能改表。",
+        "optional": false,
+        "firstFull": "unknown",
+        "finalFull": "unknown"
+      },
+      {
+        "id": "B15",
+        "text": "切换中英文，逐页检查导航、字段、弹窗、文件组件、消息及错误反馈；刷新/直接地址访问正常，不能只有中文静态页面。",
+        "optional": false,
+        "firstFull": "unknown",
+        "finalFull": "unknown"
+      },
+      {
+        "id": "B16",
+        "text": "服务助手未配置时准确提示且手工流程正常；配置测试模型的扩展轮次才验证真实问答、上下文范围、建议草稿、确认/拒绝和对话恢复。外部通知同理：没有测试服务标为扩展场景未执行，不声称实投成功。\n\nAPI 密钥的 HTTP 调用、服务端越权/幂等、代码边界、安装引导和 Hub 发布属于独立集成/模块评审，不将它们冒充浏览器截图验收。测试角色账号可通过管理员 UI 创建，统一使用本轮测试密码配置；测试准备缺失、基础环境失败与真实业务缺陷分别报告。",
+        "optional": false,
+        "firstFull": "unknown",
+        "finalFull": "unknown"
+      }
+    ],
+    "firstPassWithoutRepair": "unknown",
+    "counts": {
+      "execution": {
+        "verificationAttempts": 4,
+        "repairAttempts": 3,
+        "source": "repair-summary.json（仅本执行）"
+      },
+      "chain": {
+        "verificationAttempts": 6,
+        "repairAttempts": 4,
+        "source": "pipeline-state.json（跨 Handoff 累计检查点，不再相加）"
+      }
+    },
+    "note": "工厂修复次数不等于 Agent 开发中的全部自测和修正；未记录 Agent 内部试错，不宣称开发全程无错误。"
+  },
+  "reviews": [
+    {
+      "key": "review/36297599507.1/v2-6e72dc270ebc",
+      "role": "original",
+      "selected": true,
+      "state": "partial",
+      "reason": "尚有未评模块或未核对过程；仅展示已保存并通过证据校验的模块，不代表完整评审。",
+      "rubric": {
+        "id": "nb3-framework",
+        "version": 2,
+        "scale": {
+          "min": 0,
+          "max": 100
+        },
+        "businessUiIncluded": false,
+        "dimensions": [
+          {
+            "key": "requirementFit",
+            "label": "需求满足度"
+          },
+          {
+            "key": "usability",
+            "label": "使用便利度"
+          },
+          {
+            "key": "agentFriendliness",
+            "label": "Agent 友好度"
+          },
+          {
+            "key": "design",
+            "label": "设计合理性"
+          },
+          {
+            "key": "reliability",
+            "label": "实现完整性与可靠性"
+          }
+        ]
+      },
+      "reviewer": {
+        "engine": "pi",
+        "model": "deepseek-v4.1-flash",
+        "version": "0.86.1",
+        "runId": 36297599507,
+        "attempt": 1,
+        "controlSha": "5c9147b0d4e5220a495310c7bc0fd9b973ac3156",
+        "replay": false
+      },
+      "producer": {
+        "runId": 36297599507,
+        "attempt": 1
+      },
+      "basis": {
+        "inputHash": "6e72dc270ebc5e9d6e02d65d09be7471cab7b0e154a7d96022568b7eca43d0c8",
+        "patchSha256": "7d6c1c35fd0ca78ece57d35a8ac5d4f024418db9fb8013f8870bf7c3d40df6ad",
+        "baseSha": "5c9147b0d4e5220a495310c7bc0fd9b973ac3156",
+        "lockfileSha256": "04da37f9a04ef25b411b258292cd7a131b1a4b5502422188f6dc4cacbf9ea341",
+        "reviewCriteriaHash": "25b2c465af00385131ef4dee22e8bd7ad3c7cdcdd3080b40a4fbb13dc846d0ef",
+        "artifactHash": "8f829693eb68b4bd75627c12f7d9350623ed0adeba6576ab6415f79f27178496"
+      },
+      "buildReviewMode": "full",
+      "summary": "本次搭建在第 6 轮验证达到 B06 通过后因主动执行预算耗尽而停止（task-diagnostic：status=needs-diagnosis，code=task-budget，activeSeconds=33931，verificationAttempts=6，repairAttempts=4），并非存在未修复的框架缺陷被中止。诊断中最有价值的框架结论是附件 PDF 预览：@nocobase/app-plugin-file 的 Registry 组件把 PDF 内容 fetch 成 blob 再放进 <iframe>（file-preview-dialog.tsx 183–212、file-preview-content.tsx 80–83），在 Chrome 下会劫持顶层导航到 about:blank 并丢失登录态，连续第 3–5 轮 QA 复现；其 SKILL 第 233 行恰好把“PDF via a fetched blob”写成推荐实现，第 245 行验证清单又只覆盖 DOCX/XLSX/PPTX，构成明确的指引缺陷。Agent 最终在第 4 轮修复时复制 Registry 源码，改用 pdfjs-dist 把 PDF 渲染到 canvas 才通过。i18n、授权两个能力单元整体可用；i18n 的缺口在于第三方 OOXML 查看器硬编码英文控件且 SKILL 无提示。",
+      "progress": {
+        "complete": false,
+        "pendingModules": [
+          "in-app 通知与实时失效",
+          "数据库浏览器与只读数据视图",
+          "调度任务与运营看板"
+        ]
+      },
+      "modules": [
+        {
+          "key": "review/36297599507.1/v2-6e72dc270ebc/M1",
+          "name": "附件上传与多格式在应用内预览",
+          "subjectKeys": [
+            "pkg:@nocobase/app-plugin-file",
+            "guide:@nocobase/app-plugin-file/skills/nocobase-app-plugin-file"
+          ],
+          "mapping": "resolved",
+          "targets": [
+            {
+              "kind": "library",
+              "name": "@nocobase/app-plugin-file",
+              "subjectKey": "pkg:@nocobase/app-plugin-file",
+              "entrypoints": [
+                "FileRepository 服务与同源内容路由",
+                "Registry component-ui FilePreviewDialog / FilePreviewContent",
+                "resolveFilePreviewKind / resolveSafeFileUrl"
+              ],
+              "evidence": [
+                "review/36297599507.1/v2-6e72dc270ebc/E1",
+                "review/36297599507.1/v2-6e72dc270ebc/E2",
+                "review/36297599507.1/v2-6e72dc270ebc/E7"
+              ]
+            },
+            {
+              "kind": "guidance",
+              "name": "packages/@nocobase/app-plugin-file/skills/nocobase-app-plugin-file/SKILL.md",
+              "subjectKey": "guide:@nocobase/app-plugin-file/skills/nocobase-app-plugin-file",
+              "entrypoints": [
+                "PDF via a fetched blob（第 233 行）",
+                "DOCX/XLSX/PPTX 使用 @silurus/ooxml 本地查看",
+                "预览集成验证清单（第 245 行）"
+              ],
+              "evidence": [
+                "review/36297599507.1/v2-6e72dc270ebc/E3",
+                "review/36297599507.1/v2-6e72dc270ebc/E4",
+                "review/36297599507.1/v2-6e72dc270ebc/E5",
+                "review/36297599507.1/v2-6e72dc270ebc/E6"
+              ]
+            }
+          ],
+          "scope": "工单/客户资料附件：上传校验、PNG/PDF/DOCX/XLSX/PPTX 应用内预览、同源凭据内容访问、下载与真实失败提示。",
+          "limitations": "未阅读 @silurus/ooxml 源码，也未在本机运行应用；结论基于 Registry/SKILL 源码与归档 QA 报告。",
+          "criteria": [
+            "B06"
+          ],
+          "qa": {
+            "firstFull": "unknown",
+            "finalFull": "unknown"
+          },
+          "requirements": [
+            {
+              "need": "PNG/JPEG、PDF、DOCX、XLSX、PPTX 都要能在应用内查看真实内容，而不是文件名或下载按钮。",
+              "responsibility": "file 插件 Registry component-ui 内置预览组件与格式判定。",
+              "support": "workaround",
+              "recommendedUsage": "Registry 组件按 resolveFilePreviewKind 分派：图片/PDF/text/audio/video 走内置组件，DOCX/XLSX/PPTX 走本地 @silurus/ooxml。",
+              "actualUsage": "DOCX/XLSX/PPTX 与图片正常；PDF 走 Registry 的 blob+iframe 路径会 about:blank 并丢会话，App 复制 Registry 源码改用 pdfjs-dist canvas 渲染后才通过。",
+              "gapOwner": "plugin",
+              "evidence": [
+                "review/36297599507.1/v2-6e72dc270ebc/E1",
+                "review/36297599507.1/v2-6e72dc270ebc/E2",
+                "review/36297599507.1/v2-6e72dc270ebc/E3",
+                "review/36297599507.1/v2-6e72dc270ebc/E14",
+                "review/36297599507.1/v2-6e72dc270ebc/E16",
+                "review/36297599507.1/v2-6e72dc270ebc/E17"
+              ]
+            },
+            {
+              "need": "无权访问工单的人不能靠附件地址取内容；内容访问使用同源会话凭据。",
+              "responsibility": "file skill 的内容访问规则与 App 自有内容路由。",
+              "support": "direct",
+              "recommendedUsage": "用受同源会话保护、并校验调用者记录访问权限的 App 内容路由。",
+              "actualUsage": "skill 第 235 行明确默认组件同源凭据、跨域省略、Bearer 不自动附带；App 按此实现并通过越权检查。",
+              "gapOwner": "none",
+              "evidence": [
+                "review/36297599507.1/v2-6e72dc270ebc/E6"
+              ]
+            },
+            {
+              "need": "格式不支持或文件损坏时提示真实原因，不把失败假装成预览成功。",
+              "responsibility": "file 插件的上传校验与 skill 的失败语义。",
+              "support": "direct",
+              "recommendedUsage": "返回真实失败信息并保持附件列表不变。",
+              "actualUsage": "corrupt.png 与 unsupported.exe 均给出明确失败提示且未写入附件，第 6 轮 QA 复核。",
+              "gapOwner": "none",
+              "evidence": [
+                "review/36297599507.1/v2-6e72dc270ebc/E4",
+                "review/36297599507.1/v2-6e72dc270ebc/E17"
+              ]
+            },
+            {
+              "need": "刷新详情后附件关联与预览仍然有效。",
+              "responsibility": "file 插件 Registry 组件与 App 的附件关联。",
+              "support": "direct",
+              "recommendedUsage": "预览从持久化的 contentUrl 重建，不依赖内存态。",
+              "actualUsage": "第 6 轮 QA 整页刷新后五种格式仍可预览，业务关联保持。",
+              "gapOwner": "none",
+              "evidence": [
+                "review/36297599507.1/v2-6e72dc270ebc/E17"
+              ]
+            }
+          ],
+          "scores": {
+            "requirementFit": {
+              "score": 66,
+              "reason": "五类常用格式中图片与 DOCX/XLSX/PPTX 由 Registry 直接可用，但 PDF 默认路径会导航到 about:blank 并导致会话失效，App 必须以 pdfjs canvas 绕行；任务要求的 PDF 应用内预览并非开箱即得。",
+              "evidence": [
+                "review/36297599507.1/v2-6e72dc270ebc/E1",
+                "review/36297599507.1/v2-6e72dc270ebc/E2",
+                "review/36297599507.1/v2-6e72dc270ebc/E3",
+                "review/36297599507.1/v2-6e72dc270ebc/E16"
+              ]
+            },
+            "usability": {
+              "score": 70,
+              "reason": "上传校验、OOXML 本地渲染、同源凭据与失败提示都可用；但点开 PDF 会直接毁掉当前会话，是明显的可用性事故。",
+              "evidence": [
+                "review/36297599507.1/v2-6e72dc270ebc/E1",
+                "review/36297599507.1/v2-6e72dc270ebc/E14",
+                "review/36297599507.1/v2-6e72dc270ebc/E17"
+              ]
+            },
+            "agentFriendliness": {
+              "score": 54,
+              "reason": "SKILL 第 233 行把“PDF via a fetched blob”列为推荐实现，正是触发该缺陷的写法；第 245 行验证清单只覆盖 DOCX/XLSX/PPTX，缺少任何会暴露 PDF 会话风险的自检项。",
+              "evidence": [
+                "review/36297599507.1/v2-6e72dc270ebc/E3",
+                "review/36297599507.1/v2-6e72dc270ebc/E4"
+              ]
+            },
+            "design": {
+              "score": 72,
+              "reason": "Registry 组件与格式判定结构清晰、OOXML 本地渲染设计合理；但把 PDF 取回 blob 再塞进 iframe，与 content 路由按附件下载的语义相冲突。",
+              "evidence": [
+                "review/36297599507.1/v2-6e72dc270ebc/E1",
+                "review/36297599507.1/v2-6e72dc270ebc/E2",
+                "review/36297599507.1/v2-6e72dc270ebc/E5"
+              ]
+            },
+            "reliability": {
+              "score": 52,
+              "reason": "Registry 实现是真实缺陷：blob URL 在 iframe 中影响顶层导航与会话恢复，第 3–5 轮 QA 连续复现 about:blank+登出，直到第 4 轮修复复制源码并用 canvas 替换才通过。",
+              "evidence": [
+                "review/36297599507.1/v2-6e72dc270ebc/E1",
+                "review/36297599507.1/v2-6e72dc270ebc/E2",
+                "review/36297599507.1/v2-6e72dc270ebc/E14",
+                "review/36297599507.1/v2-6e72dc270ebc/E16",
+                "review/36297599507.1/v2-6e72dc270ebc/E17"
+              ]
+            }
+          }
+        },
+        {
+          "key": "review/36297599507.1/v2-6e72dc270ebc/M2",
+          "name": "界面文案本地化与运行时 i18n",
+          "subjectKeys": [
+            "pkg:@nocobase/app-plugin-i18n",
+            "guide:@nocobase/app-plugin-i18n/skills/nocobase-app-plugin-i18n"
+          ],
+          "mapping": "resolved",
+          "targets": [
+            {
+              "kind": "library",
+              "name": "@nocobase/app-plugin-i18n",
+              "subjectKey": "pkg:@nocobase/app-plugin-i18n",
+              "entrypoints": [
+                "useTranslation（@nocobase/i18n/client）",
+                "APP_NS 哨兵",
+                "LocaleResource 类型约束"
+              ],
+              "evidence": [
+                "review/36297599507.1/v2-6e72dc270ebc/E8",
+                "review/36297599507.1/v2-6e72dc270ebc/E9"
+              ]
+            },
+            {
+              "kind": "guidance",
+              "name": "packages/@nocobase/app-plugin-i18n/skills/nocobase-app-plugin-i18n/SKILL.md",
+              "subjectKey": "guide:@nocobase/app-plugin-i18n/skills/nocobase-app-plugin-i18n",
+              "entrypoints": [
+                "namespace = 包名",
+                "翻译键命名规则",
+                "注册早于语言的文案传 key+namespace"
+              ],
+              "evidence": [
+                "review/36297599507.1/v2-6e72dc270ebc/E8",
+                "review/36297599507.1/v2-6e72dc270ebc/E9",
+                "review/36297599507.1/v2-6e72dc270ebc/E10"
+              ]
+            }
+          ],
+          "scope": "导航、表单、错误提示、通知与文件组件的界面文案中英切换，以及 locale 资源与键命名。",
+          "limitations": "未评估 i18n 运行时在语言切换竞态与资源加载失败时的行为。",
+          "criteria": [
+            "B15"
+          ],
+          "qa": {
+            "firstFull": "unknown",
+            "finalFull": "unknown"
+          },
+          "requirements": [
+            {
+              "need": "业务界面中英文可切换，包含导航/表单/错误提示/通知/文件组件。",
+              "responsibility": "i18n 插件与 skill 的 locale/命名空间机制。",
+              "support": "workaround",
+              "recommendedUsage": "在 client/locales 维护资源，用 useTranslation 渲染并保持命名空间正确。",
+              "actualUsage": "App 用 client/locales 加为 @silurus/ooxml 编写 xlsx-localization 观察器实现；第 5 轮 B15 通过。",
+              "gapOwner": "documentation",
+              "evidence": [
+                "review/36297599507.1/v2-6e72dc270ebc/E8",
+                "review/36297599507.1/v2-6e72dc270ebc/E10",
+                "review/36297599507.1/v2-6e72dc270ebc/E11",
+                "review/36297599507.1/v2-6e72dc270ebc/E18"
+              ]
+            },
+            {
+              "need": "翻译键语义化、可稳定演进，不写整句英文当键。",
+              "responsibility": "i18n skill 的键命名规则。",
+              "support": "direct",
+              "recommendedUsage": "使用 lowerCamelCase 语义键，按功能分组，避免整句或 camelCase 化句子。",
+              "actualUsage": "App 的 locale 资源与 skill 示例一致，skill 给出的正反例清晰可执行。",
+              "gapOwner": "none",
+              "evidence": [
+                "review/36297599507.1/v2-6e72dc270ebc/E9"
+              ]
+            },
+            {
+              "need": "语言切换后已注册文案不失效，注册早于语言的文案也能翻译。",
+              "responsibility": "i18n skill 与运行时命名空间规则。",
+              "support": "direct",
+              "recommendedUsage": "注册时传 key+namespace，由渲染时翻译；插件读应用文案用 APP_NS。",
+              "actualUsage": "skill 第 116–120 行给出该规则与示例。",
+              "gapOwner": "none",
+              "evidence": [
+                "review/36297599507.1/v2-6e72dc270ebc/E10"
+              ]
+            }
+          ],
+          "scores": {
+            "requirementFit": {
+              "score": 80,
+              "reason": "App 最终实现中英切换（含错误反馈与文件组件），但第三方 OOXML 查看器没有 locale 选项，SKILL 未提示，只能自建 DOM 观察器绕行。",
+              "evidence": [
+                "review/36297599507.1/v2-6e72dc270ebc/E8",
+                "review/36297599507.1/v2-6e72dc270ebc/E11",
+                "review/36297599507.1/v2-6e72dc270ebc/E18"
+              ]
+            },
+            "usability": {
+              "score": 76,
+              "reason": "useTranslation 与命名空间规则表述清楚、示例可直接照做；文件组件因依赖库限制而需要额外工作。",
+              "evidence": [
+                "review/36297599507.1/v2-6e72dc270ebc/E8",
+                "review/36297599507.1/v2-6e72dc270ebc/E9"
+              ]
+            },
+            "agentFriendliness": {
+              "score": 66,
+              "reason": "skill 覆盖键命名与命名空间，但未提及“第三方查看器控件为硬编码英文、无 locale 选项”这一类常见接入缺口，Agent 只能自行发现。",
+              "evidence": [
+                "review/36297599507.1/v2-6e72dc270ebc/E8",
+                "review/36297599507.1/v2-6e72dc270ebc/E11",
+                "review/36297599507.1/v2-6e72dc270ebc/E18"
+              ]
+            },
+            "design": {
+              "score": 82,
+              "reason": "命名空间等于包名、类型从 en-US 派生以把拼写错误变成编译错误，设计合理。",
+              "evidence": [
+                "review/36297599507.1/v2-6e72dc270ebc/E9"
+              ]
+            },
+            "reliability": {
+              "score": null,
+              "reason": "本次只核对指引与 App 绕行实现，未阅读 @nocobase/app-plugin-i18n 运行时源码，不能评价其实现可靠性。",
+              "evidence": []
+            }
+          }
+        },
+        {
+          "key": "review/36297599507.1/v2-6e72dc270ebc/M3",
+          "name": "服务端授权、记录范围与字段可见性",
+          "subjectKeys": [
+            "pkg:@nocobase/app-plugin-authorization",
+            "guide:@nocobase/app-plugin-authorization/skills/nocobase-app-plugin-authorization"
+          ],
+          "mapping": "resolved",
+          "targets": [
+            {
+              "kind": "library",
+              "name": "@nocobase/app-plugin-authorization",
+              "subjectKey": "pkg:@nocobase/app-plugin-authorization",
+              "entrypoints": [
+                "defineDatabasePermission / defineCompositeResource",
+                "authz.database.authorizeRepository",
+                "authz.middleware"
+              ],
+              "evidence": []
+            },
+            {
+              "kind": "guidance",
+              "name": "packages/@nocobase/app-plugin-authorization/skills/nocobase-app-plugin-authorization/SKILL.md",
+              "subjectKey": "guide:@nocobase/app-plugin-authorization/skills/nocobase-app-plugin-authorization",
+              "entrypoints": [
+                "责任矩阵到权限配置",
+                "实现顺序（schema→permission→composite→enforcement）",
+                "执行与拒绝语义"
+              ],
+              "evidence": [
+                "review/36297599507.1/v2-6e72dc270ebc/E12",
+                "review/36297599507.1/v2-6e72dc270ebc/E13"
+              ]
+            }
+          ],
+          "scope": "岗位与团队继承、记录范围、保密工单、字段可见性及服务端强制。",
+          "limitations": "未验证授权中间件在并发、事务与跨集合策略下的具体实现。",
+          "criteria": [
+            "B07"
+          ],
+          "qa": {
+            "firstFull": "unknown",
+            "finalFull": "unknown"
+          },
+          "requirements": [
+            {
+              "need": "观察员不得查看工时等内部字段且不可写；保密工单对协作岗位始终不可见；无工单权限者打不开记录。",
+              "responsibility": "authorization 插件与 skill 的字段级权限、recordAccess 与 composite action。",
+              "support": "composition",
+              "recommendedUsage": "显式声明字段/关系能力，用 recordAccess 与 composite action 表达业务边界，并在服务端强制。",
+              "actualUsage": "第 4 轮 B07 通过：观察员看不到内部成本/结单摘要且不可写，无权限用户无法打开记录。",
+              "gapOwner": "none",
+              "evidence": [
+                "review/36297599507.1/v2-6e72dc270ebc/E12",
+                "review/36297599507.1/v2-6e72dc270ebc/E13",
+                "review/36297599507.1/v2-6e72dc270ebc/E15"
+              ]
+            },
+            {
+              "need": "一人可同时持有直接岗位与团队继承岗位；撤销团队成员不误删其仍有效的直接岗位。",
+              "responsibility": "skill 的权限集与继承来源设计。",
+              "support": "direct",
+              "recommendedUsage": "岗位即权限集，团队继承是额外来源；明确撤销一个来源是否保留另一个。",
+              "actualUsage": "skill 第 31 行给出该规则；App 的 seeds 据此建模。",
+              "gapOwner": "none",
+              "evidence": [
+                "review/36297599507.1/v2-6e72dc270ebc/E12"
+              ]
+            },
+            {
+              "need": "简单 CRUD 复用 Repository 路由并绑定 composite action；工作流/多范围用自定义 handler 并只 authorize 一次。",
+              "responsibility": "skill 的 Repository 路由集成规则。",
+              "support": "direct",
+              "recommendedUsage": "authz.database.authorizeRepository 映射方法到 composite action；复杂场景用 authz.middleware() + withPolicy()。",
+              "actualUsage": "skill 第 58 行完整给出推荐路径与边界。",
+              "gapOwner": "none",
+              "evidence": [
+                "review/36297599507.1/v2-6e72dc270ebc/E13"
+              ]
+            }
+          ],
+          "scores": {
+            "requirementFit": {
+              "score": 84,
+              "reason": "skill 把业务责任→权限模型→配置→验真的链路讲得完整，QA 复核 B07 通过。",
+              "evidence": [
+                "review/36297599507.1/v2-6e72dc270ebc/E12",
+                "review/36297599507.1/v2-6e72dc270ebc/E13",
+                "review/36297599507.1/v2-6e72dc270ebc/E15"
+              ]
+            },
+            "usability": {
+              "score": 78,
+              "reason": "fluent 声明与执行顺序清晰，但完整实现需要阅读多份 references，上手成本偏高。",
+              "evidence": [
+                "review/36297599507.1/v2-6e72dc270ebc/E12",
+                "review/36297599507.1/v2-6e72dc270ebc/E13"
+              ]
+            },
+            "agentFriendliness": {
+              "score": 80,
+              "reason": "skill 明确列出未注册 collection 默认拒绝、catalog 与 record 类型差异、can/require/authorize 区别等易错点。",
+              "evidence": [
+                "review/36297599507.1/v2-6e72dc270ebc/E13"
+              ]
+            },
+            "design": {
+              "score": 84,
+              "reason": "代码定义模型、seeds 初始化可后台编辑的配置，职责边界清晰。",
+              "evidence": [
+                "review/36297599507.1/v2-6e72dc270ebc/E12",
+                "review/36297599507.1/v2-6e72dc270ebc/E13"
+              ]
+            },
+            "reliability": {
+              "score": null,
+              "reason": "本次仅核对指引文本与 QA 结果，未阅读 @nocobase/app-plugin-authorization 的服务端实现，不能评价其可靠性。",
+              "evidence": []
+            }
+          }
+        }
+      ],
+      "findings": [
+        {
+          "id": "review/36297599507.1/v2-6e72dc270ebc/F1",
+          "localId": "F1",
+          "kind": "issue",
+          "owner": "plugin",
+          "severity": "critical",
+          "confidence": "confirmed",
+          "confirmedBy": "reviewer",
+          "reviewerStatus": "open",
+          "title": "Registry PDF 预览用 blob+iframe，触发顶层导航 about:blank 并丢失登录态",
+          "detail": "file-preview-dialog.tsx 第 184–211 行在 kind==='pdf' 时 fetch contentUrl 生成 blob URL，再由 file-preview-content.tsx 第 80–83 行放进 <iframe src={url}>。该写法在 Chrome 下会劫持顶层页面导航，导致当前标签页变成 about:blank，随后访问业务路由被重定向到 /main/login。第 3、4、5 轮 QA 连续复现同一现象。",
+          "impact": "任务明确要求 PDF 在应用内预览；默认 Registry 路径直接不可用，且会破坏整个会话，属于最严重的框架级附件缺陷。",
+          "suggestedChange": "Registry 默认 PDF 预览改用 pdfjs-dist 渲染到 canvas（或使用不会改变顶层导航的嵌入方式），不要用 fetch+blob+iframe；同时在 SKILL 增加 PDF 的会话保持自检项。",
+          "claimed": null,
+          "observed": null,
+          "evidence": [
+            "review/36297599507.1/v2-6e72dc270ebc/E1",
+            "review/36297599507.1/v2-6e72dc270ebc/E2",
+            "review/36297599507.1/v2-6e72dc270ebc/E14",
+            "review/36297599507.1/v2-6e72dc270ebc/E15",
+            "review/36297599507.1/v2-6e72dc270ebc/E16",
+            "review/36297599507.1/v2-6e72dc270ebc/E17",
+            "review/36297599507.1/v2-6e72dc270ebc/E28"
+          ],
+          "moduleKeys": [
+            "review/36297599507.1/v2-6e72dc270ebc/M1"
+          ],
+          "subjectKeys": [
+            "pkg:@nocobase/app-plugin-file",
+            "guide:@nocobase/app-plugin-file/skills/nocobase-app-plugin-file"
+          ]
+        },
+        {
+          "id": "review/36297599507.1/v2-6e72dc270ebc/F2",
+          "localId": "F2",
+          "kind": "misleading",
+          "owner": "documentation",
+          "severity": "major",
+          "confidence": "confirmed",
+          "confirmedBy": "reviewer",
+          "reviewerStatus": "open",
+          "title": "file SKILL 把“PDF via a fetched blob”写成推荐实现，且验证清单遗漏 PDF",
+          "detail": "SKILL 第 233 行明确写“Preview supports ... PDF via a fetched blob”，与 Registry 中引发缺陷的实现一致；第 245 行的预览集成验证清单只要求验证 DOCX/XLSX/PPTX 与请求生命周期，完全没有要求验证 PDF。",
+          "impact": "Agent 会照着 skill 复现已损坏的 PDF 实现，并且自检时不会覆盖 PDF，导致缺陷跨越 3 个验证轮次。",
+          "suggestedChange": "修正 skill 的 PDF 描述为 canvas/安全嵌入方案，并在验证清单与示例中加入 PDF 的会话保持与 about:blank 回归检查。",
+          "claimed": "skill 第 233 行称 PDF 通过 fetched blob 提供受支持预览。",
+          "observed": "该 blob+iframe 路径正是第 3–5 轮 about:blank+掉登录态的根因，skill 未提示任何风险。",
+          "evidence": [
+            "review/36297599507.1/v2-6e72dc270ebc/E3",
+            "review/36297599507.1/v2-6e72dc270ebc/E4",
+            "review/36297599507.1/v2-6e72dc270ebc/E14",
+            "review/36297599507.1/v2-6e72dc270ebc/E16"
+          ],
+          "moduleKeys": [
+            "review/36297599507.1/v2-6e72dc270ebc/M1"
+          ],
+          "subjectKeys": [
+            "pkg:@nocobase/app-plugin-file",
+            "guide:@nocobase/app-plugin-file/skills/nocobase-app-plugin-file"
+          ]
+        },
+        {
+          "id": "review/36297599507.1/v2-6e72dc270ebc/F3",
+          "localId": "F3",
+          "kind": "issue",
+          "owner": "documentation",
+          "severity": "minor",
+          "confidence": "suspected",
+          "confirmedBy": null,
+          "reviewerStatus": "open",
+          "title": "OOXML 查看器硬编码英文控件，file SKILL 未提示本地化缺口",
+          "detail": "Registry office-open-xml-preview.tsx 虽然使用了 useTranslation，但底层 @silurus/ooxml 的 XLSX 查看器不接受 labels/locale 选项，缩放与工作表标签按钮在 title 与 aria-label 中固定为 “Zoom out/Zoom in/Scroll tabs left/Scroll tabs right”。App 只能新增 lib/xlsx-localization.ts，用 MutationObserver 在挂载后重写这些属性。file SKILL 只说明用该查看器本地渲染，未提示这一本地化缺口。",
+          "impact": "文件组件的中英切换需要额外、脆弱的 DOM 观察器绕行；若未发现，B15 会失败。",
+          "suggestedChange": "在 file SKILL 说明该查看器的本地化限制与可行绕行，或为查看器提供可注入的标签/语言配置。",
+          "claimed": null,
+          "observed": null,
+          "evidence": [
+            "review/36297599507.1/v2-6e72dc270ebc/E5",
+            "review/36297599507.1/v2-6e72dc270ebc/E11",
+            "review/36297599507.1/v2-6e72dc270ebc/E18"
+          ],
+          "moduleKeys": [
+            "review/36297599507.1/v2-6e72dc270ebc/M1"
+          ],
+          "subjectKeys": [
+            "pkg:@nocobase/app-plugin-file",
+            "guide:@nocobase/app-plugin-file/skills/nocobase-app-plugin-file"
+          ]
+        },
+        {
+          "id": "review/36297599507.1/v2-6e72dc270ebc/F4",
+          "localId": "F4",
+          "kind": "strength",
+          "owner": "plugin",
+          "severity": "minor",
+          "confidence": "confirmed",
+          "confirmedBy": "reviewer",
+          "reviewerStatus": "open",
+          "title": "OOXML 本地渲染与上传校验工作正常",
+          "detail": "DOCX/XLSX/PPTX 由 @silurus/ooxml 在应用内本地渲染（不依赖第三方网站），第 6 轮 QA 确认渲染出真实文本与画布；损坏文件与不支持格式均给出真实失败提示且不写入附件。",
+          "impact": "在非 Office 场景下提供了可用的自托管预览与可靠的上传校验。",
+          "suggestedChange": "保持该本地渲染路径，补齐上述 PDF 与会话相关的缺口即可。",
+          "claimed": null,
+          "observed": null,
+          "evidence": [
+            "review/36297599507.1/v2-6e72dc270ebc/E5",
+            "review/36297599507.1/v2-6e72dc270ebc/E17"
+          ],
+          "moduleKeys": [
+            "review/36297599507.1/v2-6e72dc270ebc/M1"
+          ],
+          "subjectKeys": [
+            "pkg:@nocobase/app-plugin-file",
+            "guide:@nocobase/app-plugin-file/skills/nocobase-app-plugin-file"
+          ]
+        },
+        {
+          "id": "review/36297599507.1/v2-6e72dc270ebc/F5",
+          "localId": "F5",
+          "kind": "improvement",
+          "owner": "factory",
+          "severity": "info",
+          "confidence": "confirmed",
+          "confirmedBy": "reviewer",
+          "reviewerStatus": "open",
+          "title": "停止原因为预算耗尽而非未修复缺陷，B06/B15 已在后续轮次通过",
+          "detail": "task-diagnostic 的 code 为 task-budget，activeSeconds=33931、verificationAttempts=6、repairAttempts=4；B07/B09 在第 4 轮通过，B15 在第 5 轮通过，B06 在第 6 轮通过。停止时没有仍失败的业务标准被误判为通过。",
+          "impact": "评审应把停止归因于预算，而不是把 B06/B07/B09/B15 当作未解决的框架缺陷。",
+          "suggestedChange": "在预算接近上限前预留一次完整验收；对修复轮后新增的通过项记录最终状态，避免把“预算停止”误读为“验证失败”。",
+          "claimed": null,
+          "observed": null,
+          "evidence": [
+            "review/36297599507.1/v2-6e72dc270ebc/E14",
+            "review/36297599507.1/v2-6e72dc270ebc/E15",
+            "review/36297599507.1/v2-6e72dc270ebc/E16",
+            "review/36297599507.1/v2-6e72dc270ebc/E17",
+            "review/36297599507.1/v2-6e72dc270ebc/E19"
+          ],
+          "moduleKeys": [],
+          "subjectKeys": []
+        }
+      ],
+      "ui": {
+        "status": "not-reviewed",
+        "score": null,
+        "reason": "评审者未直接检视截图，仅依据归档 QA 报告与源码；按规则不宣称完成跨页 UI 评估。",
+        "evidence": [],
+        "framework": false
+      },
+      "limitations": [
+        "870 秒预算内未完成全部能力单元：in-app 通知/实时失效、数据库浏览器、调度与运营看板等未展开，相关结论不推断无问题。",
+        "historyReview 仅对 verify-3、verify-5、verify-2 做了逐错误处置；其余调用标为 not-reviewed，未覆盖过程不推断无问题。",
+        "未运行应用、未安装依赖、未访问网络、未修改任何输入；所有结论基于冻结源码与归档 QA 报告的只读分析。",
+        "未在 Chrome 以外的浏览器、也未用真实大文件验证 PDF/XLSX 渲染与会话行为。",
+        "模块分数是评审者对框架源码与 skill 的判断，不是 QA 通过/失败的复述。",
+        "搭建过程证据未完成：原始调用 3/11；显式错误信号 16/158。未覆盖过程不推断无问题。",
+        "快照未包含 4 个超出预算、非普通文件或不可读取的文件；未据此确认其实现。",
+        "尚有未评模块或未核对过程；仅展示已保存并通过证据校验的模块，不代表完整评审。"
+      ],
+      "usageSource": null
+    }
+  ],
+  "health": {
+    "status": "incomplete",
+    "qa": "unknown",
+    "requiredChecks": {
+      "status": "passed",
+      "results": []
+    },
+    "review": "partial"
+  },
+  "processNotes": {
+    "state": "present",
+    "source": "retro.json",
+    "author": "implementer",
+    "independent": false,
+    "summary": "Repaired the equipment after-sales service and inspection application. Duplicate equipment codes now return a 409 business conflict instead of a raw SQLite unique-index error, and customer/equipment/ticket selects render names rather than raw ids. The ticket workflow captures handling hours in the completion dialog, return puts a ticket back in progress instead of the assignment queue, system-generated records no longer store untranslated English content, and manual ticket submission records a visible intake trace (register, route, notify). Notification titles are stored as translation keys and rendered in the recipient's language, and messages can be deleted. Ticket attachments are no longer enumerable by a user without access to the ticket, uploads are validated by extension and magic bytes, and attachment content URLs carry the application base path so preview and download work. A second verification round fixed four observed business defects: PDF and XLSX attachment previews (an octet-stream PDF Blob was retyped for the browser viewer, and a valid workbook missing the optional xl/styles.xml part is normalized before the OOXML viewer), an authorization leak that let a read-only observer read handling hours and the closure summary and call the return action, the messages inbox now refetching on reconnect, and server business errors rendered in the request's language (Chinese) instead of English. A third verification round addressed two more observed defects: the PDF attachment preview could navigate the tab to about:blank (the PDF branch began validating %PDF- magic bytes and retyping the Blob), and the XLSX viewer's hardcoded English zoom and tab controls are now localized to the interface language. The PDF fix was insufficient: the running build already contained it and the tab still left the application. A fourth round removed the browser's PDF viewer from the flow entirely. Because that viewer, handed a blob: document in a frame, could claim the top-level navigation and leave the tab on about:blank, the preview now validates the %PDF- magic bytes and renders the pages itself onto canvases with pdf.js, so the document never leaves the dialog.",
+    "blockers": [
+      {
+        "id": "notes/run/36297599507/attempt/1/B1",
+        "phase": "verification",
+        "title": "Cookie-authenticated API writes fail with INVALID_CSRF_ORIGIN in standards test harness",
+        "symptom": "POST requests authenticated by a session cookie (for example POST /api/service/tickets/:id/submit and POST /api/service/integrations/keys) returned 403 {\"code\":\"INVALID_CSRF_ORIGIN\"} while the same GET requests and the Better Auth sign-in POST succeeded.",
+        "rootCause": "auth.required() calls checkCookieWriteOrigin(), which rejects a cookie-bearing write unless its Origin/Referer is a Better Auth trusted origin. Those origins derive from the authentication provider's baseURL, which it reads from the app config value app.publicOrigin. In the test harness that value was never set, so the trusted-origin set was empty. The tests had also passed a publicOrigin option to createInstalledStandaloneServer, but that option is not part of StandaloneServerOptions and was silently ignored.",
+        "resolution": "Set env APP_PUBLIC_ORIGIN (the documented env of server/config/app.ts publicOrigin) on the installed test server and send a matching Origin: http://localhost header on every cookie-authenticated write in tests/logic/app-server.test.ts. All four service operations API tests then pass.",
+        "cost": null,
+        "status": "resolved"
+      },
+      {
+        "id": "notes/run/36297599507/attempt/1/B2",
+        "phase": "verification",
+        "title": "PDF attachment stored as application/octet-stream previews as an empty frame",
+        "symptom": "Opening a PDF attachment whose upload carried no media type (stored and served as application/octet-stream) showed an empty preview frame instead of the document, while a PDF stored as application/pdf previewed normally in the same ticket.",
+        "rootCause": "The client fetched the content URL into a Blob and kept the response Content-Type (application/octet-stream), then passed that Blob to URL.createObjectURL. The browser built-in PDF viewer renders only a blob whose type is application/pdf, so it produced a blank frame. The attachment content route echoes the stored media type, and an upload without a media type is stored as application/octet-stream.",
+        "resolution": "The file-component extension PDF preview branch now retypes the fetched Blob to application/pdf before creating the object URL unless it is already application/pdf (client/extensions/nocobase-file-component-ui/components/file-preview-dialog.tsx). Verified with Playwright against a rebuilt app: the octet-stream PDF now yields a blob: iframe whose document Chrome renders, and a component test asserts the created Blob type is application/pdf.",
+        "cost": null,
+        "status": "resolved"
+      },
+      {
+        "id": "notes/run/36297599507/attempt/1/B3",
+        "phase": "verification",
+        "title": "XLSX preview refuses a valid workbook that omits the optional xl/styles.xml part",
+        "symptom": "A minimal xlsx fixture (a valid OOXML workbook that Excel opens) failed with 'Unable to render this Office Open XML file.', while a workbook written by a full generator previewed normally.",
+        "rootCause": "@silurus/ooxml's XlsxViewer requires the xl/styles.xml part. ECMA-376 leaves that part optional, so a hand-built workbook that omits it is refused even though its content is intact. Reproduced by generating a minimal xlsx with only the required parts (it failed) and by adding an xl/styles.xml that was neither declared in [Content_Types].xml nor referenced from the workbook relationships (it rendered), proving the part's mere presence is the gate rather than its content or declarations.",
+        "resolution": "The OOXML preview now checks for xl/styles.xml with a filtered unzip before handing an xlsx to the viewer and, only when the part is absent, adds a minimal styles part and re-zips the archive (fflate added as a client devDependency); a workbook that already has the part is passed through byte-for-byte. Verified with Playwright against a rebuilt app: the previously failing fixture now renders a canvas with no error, and component tests cover both the injected and the pass-through case.",
+        "cost": null,
+        "status": "resolved"
+      },
+      {
+        "id": "notes/run/36297599507/attempt/1/B4",
+        "phase": "verification",
+        "title": "Read-only observer could read internal handling fields and invoke the return action",
+        "symptom": "A service observer (no viewInternal, no return capability) saw 'Hours spent' and the closure/handling summary on a ticket, received the handling summary from GET /tickets/:id/records, and a direct POST /tickets/:id/return answered 200.",
+        "rootCause": "listRecords only nulled content for a record kind 'internal', a kind no transition writes; the handling summary and hours are stored on the 'handle' record and were returned unchanged. toTicketView exposed closeSummary unconditionally, and returnTicket performed no capability check, so the state change relied only on the UI hiding it.",
+        "resolution": "listRecords now resolves canViewInternal once and hides content for the handle/internal record kinds and nulls hours for a reader without viewInternal, so both the ticket view and the direct records route obey it; toTicketView hides closeSummary unless internalVisible; returnTicket begins with access.require(tickets, 'return'). A new app-server test asserts the observer receives null hours, null handling content and null closeSummary and a 403 when calling return.",
+        "cost": null,
+        "status": "resolved"
+      },
+      {
+        "id": "notes/run/36297599507/attempt/1/B5",
+        "phase": "verification",
+        "title": "Messages inbox never refetches when the browser comes back online",
+        "symptom": "A message written while the browser was offline (or the tab was hidden) did not appear until a manual reload; the inbox never refetched on reconnect.",
+        "rootCause": "The inbox loaded once through useAsyncData and registered no listener for connection or visibility recovery, so nothing re-ran the fetch after the browser regained connectivity.",
+        "resolution": "client/pages/service/messages.tsx registers window 'online' and document 'visibilitychange' (when visible) listeners that reload the inbox, removing them on unmount and re-binding when the loader identity changes. Verified with Playwright against a rebuilt app: dispatching an online event produced a second GET /notifications/in-app.",
+        "cost": null,
+        "status": "resolved"
+      },
+      {
+        "id": "notes/run/36297599507/attempt/1/B6",
+        "phase": "verification",
+        "title": "Server business errors stayed English in a Chinese interface",
+        "symptom": "Domain errors surfaced as English sentences inside a Chinese UI, for example '保存失败 The equipment code EQ-QA-B02-01 already exists.' and '附件上传失败。 Unsupported file type: .exe'.",
+        "rootCause": "Server error messages were plain English strings with no translation lookup; the client renders error.message directly, and the application server locale files existed but were empty, so even a correct lookup would have found no resource.",
+        "resolution": "DomainError now carries an optional key and params; server/routes/helpers.ts translates the key (defaulting to the English message) through getRequestTranslator with literal-key separators and uses it in the {error, code} body, and the integration content route uses the same serializer. server/locales/en-US.ts and zh-CN.ts map all 70 messages, with explicit key+params at the six sites that interpolate a value. Verified with a zh-CN request returning 设备编码 … 已存在。 beside the unchanged CONFLICT code, and an en-US request returning the English sentence.",
+        "cost": null,
+        "status": "resolved"
+      },
+      {
+        "id": "notes/run/36297599507/attempt/1/B7",
+        "phase": "verification",
+        "title": "PDF attachment preview navigated the tab to about:blank instead of rendering",
+        "symptom": "In the ticket attachment preview, moving to the PDF file lost the ticket page: the tab ended at about:blank and the next visit to /main/service/tickets/:id redirected to /main/login. The other formats (PNG, DOCX, XLSX, PPTX) previewed in place, and upload/download and corrupt-file handling otherwise passed.",
+        "rootCause": "The client handed the document to Chrome's built-in PDF viewer as a blob: URL inside an iframe. In the acceptance engine that viewer, given a blob document in a frame, could take over the top-level navigation: the tab left the application for about:blank and the page was torn down, after which the in-memory session was gone and the next visit to /main/service/tickets/:id redirected to /main/login. The application log confirmed the content route answered 200 with the correct 593-byte PDF immediately before the navigation, so the fetch, the response headers and the stored media type were not at fault, and the earlier %PDF- byte-retyping fix was already present in the running build. A bare about:blank navigation does not by itself end the session (navigating a fresh session to about:blank and back preserved it), so the logout was a consequence of the tab or renderer teardown, not of the preview request. Sandboxing the iframe was rejected because this engine renders no PDF inside a sandboxed frame, which blanked the preview.",
+        "resolution": "The PDF preview no longer uses the browser plugin or a blob: URL. A new client/extensions/nocobase-file-component-ui/components/previewers/pdf-preview.tsx fetches the bytes with the same origin-aware credentials, validates them with the %PDF- magic-byte check (isPdfContent) before any viewer is created, then loads them with pdfjs-dist (imported dynamically; its worker is emitted by Vite as an asset and resolved through the runtime base path) and draws each page onto a canvas inside the dialog, capped at 30 pages with a localized notice (files.pdfPageLimit). PreviewBody in file-preview-dialog.tsx no longer creates an object URL, and FilePreviewContent's pdf branch no longer renders an iframe. pdfjs-dist 5.6.205 was added as a client devDependency. Verified against the rebuilt application with a fresh browser session signed in through the UI: clicking Preview: sample.pdf, and reaching sample.pdf through the preview dialog's Next file, kept the top URL on /main/service/tickets/6, created no iframe, fetched the emitted pdf.worker asset, rendered a canvas whose pixel analysis shows the document text, kept the session valid across a reload, and produced no console error; PNG, DOCX, XLSX and PPTX previews still render. Unit tests assert the canvas rendering, that no object URL or iframe is created, the non-PDF rejection, and the page-cap notice.",
+        "cost": null,
+        "status": "resolved"
+      },
+      {
+        "id": "notes/run/36297599507/attempt/1/B8",
+        "phase": "verification",
+        "title": "XLSX preview controls stayed in English in a Chinese interface",
+        "symptom": "With the interface in Chinese, the XLSX viewer's zoom and tab-scroll buttons still exposed English accessible names and title tooltips (Zoom out, Zoom in, Zoom, Scroll tabs left, Scroll tabs right), and the spreadsheet region label stayed English.",
+        "rootCause": "@silurus/ooxml renders its spreadsheet chrome with hardcoded English strings and exposes no locale or labels option, so those strings never pass through the application's i18n; the file plugin's namespace does not translate them either.",
+        "resolution": "After the viewer loads, the preview localizes its DOM in place (client/extensions/nocobase-file-component-ui/lib/xlsx-localization.ts): it sets title and aria-label on the tab-nav buttons and the zoom slider group, and the region label, using useTranslation('@nocobase/app-plugin-file') so the wording resolves through the application fallback namespace, and watches the viewer with a MutationObserver so controls created later are localized too. Keys files.xlsxZoom / xlsxZoomIn / xlsxZoomOut / xlsxScrollTabsLeft / xlsxScrollTabsRight / xlsxViewport were added to client/locales/en-US.ts and zh-CN.ts. Verified in a rebuilt app in a Chinese session: the controls read 缩小, 缩放, 放大, 向左滚动工作表标签, 向右滚动工作表标签 and the Chinese region label in both aria-label and title, while the English session still shows English.",
+        "cost": null,
+        "status": "resolved"
+      }
+    ],
+    "improvements": [
+      {
+        "id": "notes/run/36297599507/attempt/1/I1",
+        "category": "framework",
+        "title": "Standalone test-harness publicOrigin option is silently ignored",
+        "detail": "tests/logic/app-server.test.ts declares a publicOrigin option on its test server options and forwards it to createStandaloneServer, but the underlying StandaloneServerOptions/CreateStandaloneScopeOptions do not define publicOrigin, so it never reaches app config. The only working way to set the application public origin for an installed server is the APP_PUBLIC_ORIGIN environment override, which is non-obvious and makes cookie-write CSRF checks fail with a 403 that does not point at the missing origin.",
+        "suggestedChange": "Either honour a publicOrigin option in the standalone server options, or have the test harness write app.publicOrigin into the runtime test config (or reject the unknown option) so a cookie-authenticated write test does not need to know about the APP_PUBLIC_ORIGIN indirection.",
+        "mechanizable": true
+      },
+      {
+        "id": "notes/run/36297599507/attempt/1/I2",
+        "category": "framework",
+        "title": "In-app notification items have no locale, so a server-produced title cannot be translated at write time",
+        "detail": "The in-app notification table stores a single title per recipient with no locale column, and the i18n plugin keeps the active locale only in the session. A notification produced by a server service therefore cannot be written in the recipient's language. The workaround stores the stable translation key (for example service.notifications.needsAssignment) as the title and translates it in the client at read time, which leaves any already-persisted human-readable title untranslated.",
+        "suggestedChange": "Let a notification be produced from a translation key plus arguments and resolve it against the recipient's locale at read time (or store the recipient locale with the item), so services never have to encode the localization convention in their title strings.",
+        "mechanizable": true
+      },
+      {
+        "id": "notes/run/36297599507/attempt/1/I3",
+        "category": "framework",
+        "title": "Base UI Select silently renders the raw value when Root has no items map",
+        "detail": "The application's Select wraps @base-ui/react/select, whose Value renders the raw selected value unless Root receives an items prop that maps values to labels. A Select composed with only SelectItem children therefore shows an id or code instead of the label, with no warning at build or runtime. This is how customer and equipment filters displayed raw ids.",
+        "suggestedChange": "Document the items requirement for Base UI Select in the UI workflow reference, or add a development warning when a Select has SelectItem children but no items map, so the missing labels surface before review.",
+        "mechanizable": true
+      },
+      {
+        "id": "notes/run/36297599507/attempt/1/I4",
+        "category": "template",
+        "title": "File preview relies on the browser's built-in PDF viewer for attachments",
+        "detail": "The file-component registry item previews a PDF by embedding the browser's PDF viewer in an iframe over a blob: URL. In the acceptance engine that viewer, given a blob document in a frame, could claim the top-level navigation and leave the application on about:blank, tearing down the page; the application has no way to detect or prevent it, and sandboxing the frame is not a fix because the engine renders no PDF inside a sandboxed frame. The shipped component also had no test that exercised a real PDF, so the failure was invisible until an upload.",
+        "suggestedChange": "Render PDF pages without the browser plugin — for example by shipping a canvas-based viewer (pdf.js) as the default PDF preview — or at least document the plugin dependency and constrain the frame so a viewer failure cannot escape the page; add a fixture test that opens a real PDF.",
+        "mechanizable": true
+      },
+      {
+        "id": "notes/run/36297599507/attempt/1/I5",
+        "category": "framework",
+        "title": "@silurus/ooxml rejects a workbook missing the optional xl/styles.xml part",
+        "detail": "The XLSX viewer treats the styles part as required, while ECMA-376 marks it optional and the part is absent from many minimally generated workbooks that Excel opens. The failure is reported only as the generic \"Unable to render this Office Open XML file.\", so the missing part is not discoverable from the error.",
+        "suggestedChange": "Have the viewer tolerate a missing styles part (or accept a default styles sheet), or include the missing part name and stage in the error so an application can repair the file. A conformance fixture without xl/styles.xml belongs in the package tests.",
+        "mechanizable": true
+      },
+      {
+        "id": "notes/run/36297599507/attempt/1/I6",
+        "category": "framework",
+        "title": "Business domain errors have no built-in translation path",
+        "detail": "Server services throw DomainError subclasses whose message is a user-visible English sentence. The route serializer emitted that message verbatim, and the application server locale files were empty templates, so a translated UI still showed English business errors and the only fix was to add key/params plumbing and hand-map every message.",
+        "suggestedChange": "Give the domain-error base class an optional i18n key and arguments by default, translate in the shared response serializer, and ship the application server locale scaffolding with a documented convention (or a check that every thrown business message has a locale entry) so localization does not require each application to build the mechanism.",
+        "mechanizable": true
+      },
+      {
+        "id": "notes/run/36297599507/attempt/1/I7",
+        "category": "framework",
+        "title": "Declared capabilities and endpoint guards can drift without a failing test",
+        "detail": "A permission set declares actions such as tickets.return, but enforcement lives in a separate access.require call inside each service function; one transition (returnTicket) omitted it, so an observer could call the endpoint even though the role never had the capability. Nothing tied the declared capability list to the endpoints that should enforce it.",
+        "suggestedChange": "Derive or test endpoint guards from the declared capability set, so adding a capability or a transition without its access.require fails a test instead of silently expanding access; a matrix test that calls each mutating route as a role lacking its capability and expects 403 would catch this class.",
+        "mechanizable": true
+      },
+      {
+        "id": "notes/run/36297599507/attempt/1/I8",
+        "category": "framework",
+        "title": "Bundled XLSX viewer hardcodes English chrome with no localization option",
+        "detail": "@silurus/ooxml's XlsxViewerOptions exposes imageResources, cellScale, resizable, showScrollbars, the zoom range and callbacks, but no locale, labels or messages option. Its zoom and tab-scroll controls and its spreadsheet region label are literal English strings, so an application cannot translate them through the shared i18n runtime and has to mutate the viewer's DOM after load.",
+        "suggestedChange": "Add a labels/locale option (or accept translated strings) to XlsxViewerOptions so the chrome and the region label come from the application's translator instead of being hardcoded.",
+        "mechanizable": true
+      }
+    ],
+    "note": "实现者自述，未经独立核验；不是框架评审结论。"
+  },
+  "metrics": {
+    "usage": {
+      "sources": [
+        {
+          "key": "agent-job:108518234589",
+          "executionKey": "run/36282941663/attempt/1",
+          "scope": "一次 Agent 作业内的实现、修复、QA 与同轮评审调用",
+          "phases": {
+            "implementation": {
+              "input": 1223784,
+              "output": 460278,
+              "cacheRead": 78765568,
+              "cacheWrite": 0,
+              "total": 80449630
+            },
+            "repair": {
+              "input": 312072,
+              "output": 94768,
+              "cacheRead": 21708544,
+              "cacheWrite": 0,
+              "total": 22115384
+            },
+            "qa": {
+              "input": 281970,
+              "output": 182930,
+              "cacheRead": 31230720,
+              "cacheWrite": 0,
+              "total": 31695620
+            },
+            "qaFocused": {
+              "input": 390436,
+              "output": 265532,
+              "cacheRead": 32653952,
+              "cacheWrite": 0,
+              "total": 33309920
+            },
+            "qaReport": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0,
+              "total": 0
+            },
+            "review": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0,
+              "total": 0
+            },
+            "compaction": {
+              "input": 1513864,
+              "output": 211698,
+              "cacheRead": 35712,
+              "cacheWrite": 0,
+              "total": 1761274
+            }
+          },
+          "records": 2274,
+          "missing": 1,
+          "incomplete": 1,
+          "complete": false
+        },
+        {
+          "key": "agent-job:108559290777",
+          "executionKey": "run/36297599507/attempt/1",
+          "scope": "一次 Agent 作业内的实现、修复、QA 与同轮评审调用",
+          "phases": {
+            "implementation": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0,
+              "total": 0
+            },
+            "repair": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0,
+              "total": 0
+            },
+            "qa": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0,
+              "total": 0
+            },
+            "qaFocused": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0,
+              "total": 0
+            },
+            "qaReport": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0,
+              "total": 0
+            },
+            "review": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0,
+              "total": 0
+            },
+            "compaction": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0,
+              "total": 0
+            }
+          },
+          "records": 0,
+          "missing": 0,
+          "incomplete": 0,
+          "complete": true
+        }
+      ],
+      "totals": {
+        "input": 3722126,
+        "output": 1215206,
+        "cacheRead": 164394496,
+        "cacheWrite": 0,
+        "total": 169331828,
+        "complete": false
+      },
+      "definition": "沿用 task-usage 口径：按唯一来源键（Agent 作业 / 后补评审 Run）去重，不相加已含这些调用的汇总，不把思考 Token 再加到输出；缺失为 null，不等同供应商账单。"
+    },
+    "time": {
+      "executionSeconds": 34385,
+      "missingJobTimes": 0,
+      "endToEndSeconds": 34445,
+      "jobs": [
+        {
+          "id": 108518158554,
+          "name": "prepare",
+          "executionKey": "run/36282941663/attempt/1",
+          "seconds": 28
+        },
+        {
+          "id": 108518234589,
+          "name": "agent",
+          "executionKey": "run/36282941663/attempt/1",
+          "seconds": 17897
+        },
+        {
+          "id": 108559255995,
+          "name": "prepare",
+          "executionKey": "run/36297599507/attempt/1",
+          "seconds": 13
+        },
+        {
+          "id": 108559290777,
+          "name": "agent",
+          "executionKey": "run/36297599507/attempt/1",
+          "seconds": 16447
+        }
+      ],
+      "definition": "executionSeconds 为 prepare / agent / verify-final / publish 唯一作业时长之和，不含排队；endToEndSeconds 含排队及续跑间隔。"
+    },
+    "counts": {
+      "businessBuilds": 1,
+      "executions": 2,
+      "reviewExecutions": 1
+    }
+  },
+  "evidence": [
+    {
+      "id": "review/36297599507.1/v2-6e72dc270ebc/E1",
+      "origin": {
+        "kind": "review",
+        "key": "review/36297599507.1/v2-6e72dc270ebc",
+        "localId": "E1"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/app-plugin-file/registry/component-ui/components/file-preview-dialog.tsx",
+      "lines": [
+        183,
+        212
+      ],
+      "sha256": "27e2a6a5877540278c4340524c877374f1274e542db9a86103cc68049d01a0a0",
+      "observation": "PDF 预览在 effect 中 fetch contentUrl 生成 blob URL（第 196 行 URL.createObjectURL），再作为 url 传给预览内容。",
+      "excerpt": "  // The content route downloads PDFs as attachments; a local blob can be embedded.\n  useEffect(() => {\n    if (!sourceUrl || kind !== 'pdf') return undefined;\n    const controller = new AbortController();\n    let objectUrl: string | undefined;\n    void fetch(sourceUrl, {\n      credentials: fileUrlCredentials(sourceUrl),\n      signal: controller.signal,\n    })\n      .then(async (response) => {\n        if (!response.ok) throw new Error('Unable to load the PDF preview.');\n        const blob = await response.blob();\n        if (controller.signal.aborted) return;\n        objectUrl = URL.createObjectURL(blob);\n        setBlobUrl(objectUrl);\n      })\n      .catch((cause: unknown) => {\n        if (!controller.signal.aborted)\n          setError(\n            cause instanceof Error\n              ? cause.message\n              : 'Unable to load the PDF preview.',\n          );\n      });\n    return () => {\n      controller.abort();\n      if (objectUrl) URL.revokeObjectURL(objectUrl);\n    };\n  }, [sourceUrl, kind]);\n  const url = kind === 'pdf' ? blobUrl : sourceUrl;",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36297599507.1/v2-6e72dc270ebc/E2",
+      "origin": {
+        "kind": "review",
+        "key": "review/36297599507.1/v2-6e72dc270ebc",
+        "localId": "E2"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/app-plugin-file/registry/component-ui/components/previewers/file-preview-content.tsx",
+      "lines": [
+        80,
+        83
+      ],
+      "sha256": "f30abbadc57a0f0ed28cdb68d4ced7bba9a6e3a4c3d59d3b6fc49f89d9497144",
+      "observation": "case 'pdf' 直接把 url 放进 <iframe title={file.filename} src={url}>，即 blob URL 成为 iframe 内容。",
+      "excerpt": "    case 'pdf':\n      return (\n        <iframe title={file.filename} src={url} className='h-[70vh] w-full' />\n      );",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36297599507.1/v2-6e72dc270ebc/E3",
+      "origin": {
+        "kind": "review",
+        "key": "review/36297599507.1/v2-6e72dc270ebc",
+        "localId": "E3"
+      },
+      "kind": "skill",
+      "path": "packages/@nocobase/app-plugin-file/skills/nocobase-app-plugin-file/SKILL.md",
+      "lines": [
+        233,
+        233
+      ],
+      "sha256": "3fab337bc1a1412ba9affb4cd5ec2e79e76abe1f9b1803b7f2ebe4e293f188f5",
+      "observation": "SKILL 明确把“PDF via a fetched blob”列为受支持的预览实现。",
+      "excerpt": "Preview supports safe raster images, PDF via a fetched blob, text/Markdown and audio/video. HTML/SVG/XML previews and unsafe URL schemes are rejected. DOCX, XLSX and PPTX use lazily loaded `@silurus/ooxml` viewers to render locally from `FileRecord.contentUrl`; their content is not sent to a third-party preview service. Legacy DOC/XLS/PPT and OpenDocument formats use Office Online, which requires an internet-accessible absolute URL and cannot use the App session.",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36297599507.1/v2-6e72dc270ebc/E4",
+      "origin": {
+        "kind": "review",
+        "key": "review/36297599507.1/v2-6e72dc270ebc",
+        "localId": "E4"
+      },
+      "kind": "skill",
+      "path": "packages/@nocobase/app-plugin-file/skills/nocobase-app-plugin-file/SKILL.md",
+      "lines": [
+        245,
+        245
+      ],
+      "sha256": "3fab337bc1a1412ba9affb4cd5ec2e79e76abe1f9b1803b7f2ebe4e293f188f5",
+      "observation": "预览集成验证清单只点名 DOCX/XLSX/PPTX 与请求生命周期，未要求验证 PDF。",
+      "excerpt": "For preview integration or changes, verify each of DOCX/XLSX/PPTX with real files in development and a served production build. Check relative same-origin URLs, an authorized and unauthorized session, cross-origin CORS success/failure, failed requests and invalid documents, and `download={false}`. Close or switch files while loading and after a failure: pending requests must abort, viewers must be destroyed, and the next file must render without stale state. Unit mocks and a successful build do not establish document rendering fidelity.",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36297599507.1/v2-6e72dc270ebc/E5",
+      "origin": {
+        "kind": "review",
+        "key": "review/36297599507.1/v2-6e72dc270ebc",
+        "localId": "E5"
+      },
+      "kind": "skill",
+      "path": "packages/@nocobase/app-plugin-file/skills/nocobase-app-plugin-file/SKILL.md",
+      "lines": [
+        18,
+        19
+      ],
+      "sha256": "3fab337bc1a1412ba9affb4cd5ec2e79e76abe1f9b1803b7f2ebe4e293f188f5",
+      "observation": "SKILL 表格说明 DOCX/XLSX/PPTX 使用本地 @silurus/ooxml 查看器，图片/PDF/text 等使用内置预览组件。",
+      "excerpt": "| DOCX / XLSX / PPTX                                   | Local `@silurus/ooxml` viewer     | Same-origin session credentials; no public URL or third-party service required |\n| Raster image / PDF / text / Markdown / audio / video | Built-in preview components       | See the content access rules below                                             |",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36297599507.1/v2-6e72dc270ebc/E6",
+      "origin": {
+        "kind": "review",
+        "key": "review/36297599507.1/v2-6e72dc270ebc",
+        "localId": "E6"
+      },
+      "kind": "skill",
+      "path": "packages/@nocobase/app-plugin-file/skills/nocobase-app-plugin-file/SKILL.md",
+      "lines": [
+        235,
+        235
+      ],
+      "sha256": "3fab337bc1a1412ba9affb4cd5ec2e79e76abe1f9b1803b7f2ebe4e293f188f5",
+      "observation": "SKILL 说明 OOXML/PDF/text fetch 使用同源凭据，跨域省略凭据，Bearer token 不会自动附带。",
+      "excerpt": "OOXML, PDF and text fetches use same-origin credentials. An App-owned content route protected by same-origin session cookies can therefore serve restricted previews, provided it checks the caller's record access. Cross-origin fetches omit credentials and require CORS; an external cookie-protected URL is not supported by this default path. The Repository API client's Bearer token is not automatically attached to content fetches.",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36297599507.1/v2-6e72dc270ebc/E7",
+      "origin": {
+        "kind": "review",
+        "key": "review/36297599507.1/v2-6e72dc270ebc",
+        "localId": "E7"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/app-plugin-file/registry/component-ui/components/previewers/office-open-xml-preview.tsx",
+      "lines": [
+        1,
+        1
+      ],
+      "sha256": "b32b48615f0400191ba28d427f9070fa69c74282829aba2087746563350d28c8",
+      "observation": "Registry OOXML 预览组件从 @nocobase/i18n/client 引入 useTranslation，说明组件尝试走 i18n。",
+      "excerpt": "import { useTranslation } from '@nocobase/i18n/client';",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36297599507.1/v2-6e72dc270ebc/E8",
+      "origin": {
+        "kind": "review",
+        "key": "review/36297599507.1/v2-6e72dc270ebc",
+        "localId": "E8"
+      },
+      "kind": "skill",
+      "path": "packages/@nocobase/app-plugin-i18n/skills/nocobase-app-plugin-i18n/SKILL.md",
+      "lines": [
+        47,
+        47
+      ],
+      "sha256": "667bf1b87455ecbad4b9de07c9b333861787feafa116e298d869afb1bc4cd219",
+      "observation": "SKILL 要求用 @nocobase/i18n/client 的 useTranslation，并以 t('actions.save') 形式渲染。",
+      "excerpt": "4. Render it with `useTranslation` from `@nocobase/i18n/client`.",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36297599507.1/v2-6e72dc270ebc/E9",
+      "origin": {
+        "kind": "review",
+        "key": "review/36297599507.1/v2-6e72dc270ebc",
+        "localId": "E9"
+      },
+      "kind": "skill",
+      "path": "packages/@nocobase/app-plugin-i18n/skills/nocobase-app-plugin-i18n/SKILL.md",
+      "lines": [
+        58,
+        60
+      ],
+      "sha256": "667bf1b87455ecbad4b9de07c9b333861787feafa116e298d869afb1bc4cd219",
+      "observation": "SKILL 给出翻译键命名规则与正反例，强调不要用整句英文当键。",
+      "excerpt": "## Naming translation keys\n\nUse short semantic keys that describe the purpose of the text and stay valid when its wording changes. Use lower camelCase within each segment and dots for useful feature or context groups, such as `files.uploadFailed` or `demo.pageDescription`. A small namespace may use `title` directly. Do not use complete English sentences as keys or merely convert a sentence into camelCase.",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36297599507.1/v2-6e72dc270ebc/E10",
+      "origin": {
+        "kind": "review",
+        "key": "review/36297599507.1/v2-6e72dc270ebc",
+        "localId": "E10"
+      },
+      "kind": "skill",
+      "path": "packages/@nocobase/app-plugin-i18n/skills/nocobase-app-plugin-i18n/SKILL.md",
+      "lines": [
+        28,
+        30
+      ],
+      "sha256": "667bf1b87455ecbad4b9de07c9b333861787feafa116e298d869afb1bc4cd219",
+      "observation": "SKILL 的 Non-Goals 说明不要自建语言选择器、不要引入 i18n 机制、不要使用已退休的 Portal i18n。",
+      "excerpt": "- Do not build a language picker. `useAppLocale()` exists; `app-template-default` already renders one in `client/shell/language-switcher.tsx`.\n- Do not add i18n machinery to an application. The plugin is registered by default and the runtime is wired in `createAppRuntime`.\n- Do not use `@nocobase/app-portal-sdk/i18n`. It is the retired Portal runtime with its own i18next instance; mixing the two leaves each holding half the resources.",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36297599507.1/v2-6e72dc270ebc/E11",
+      "origin": {
+        "kind": "review",
+        "key": "review/36297599507.1/v2-6e72dc270ebc",
+        "localId": "E11"
+      },
+      "kind": "code",
+      "path": "app/client/extensions/nocobase-file-component-ui/lib/xlsx-localization.ts",
+      "lines": [
+        1,
+        8
+      ],
+      "sha256": "253e75131e077cd8c9354e928c4dd1129392292cdb655fecb113026132a398fb",
+      "observation": "App 绕行实现注释说明 @silurus/ooxml XLSX 查看器不接受 labels 或 locale 选项，硬编码英文 title/aria-label，只能挂载后重写。",
+      "excerpt": "/**\n * Localizes the hard-coded English controls of the `@silurus/ooxml` XLSX viewer.\n *\n * The viewer takes no labels or locale option, and its zoom and worksheet-tab\n * controls ship the literal English strings \"Zoom\", \"Zoom out\", \"Zoom in\",\n * \"Scroll tabs left\" and \"Scroll tabs right\" in both `title` (the tooltip a\n * sighted user sees) and `aria-label` (the name a screen reader announces).\n * Rewriting those after the viewer mounts is the only seam the package offers.",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36297599507.1/v2-6e72dc270ebc/E12",
+      "origin": {
+        "kind": "review",
+        "key": "review/36297599507.1/v2-6e72dc270ebc",
+        "localId": "E12"
+      },
+      "kind": "skill",
+      "path": "packages/@nocobase/app-plugin-authorization/skills/nocobase-app-plugin-authorization/SKILL.md",
+      "lines": [
+        56,
+        58
+      ],
+      "sha256": "98475be31cc496d5f02d42bc3e0cd71a149de0bcae94bcc1a4afea485fb73357",
+      "observation": "SKILL 规定实现顺序：defineDatabasePermission、defineCompositeResource、collections.add/compositeResources.define/recordAccess.define，以及 authorizeRepository 或 authz.middleware。",
+      "excerpt": "2. Declare reusable collection permissions with `defineDatabasePermission`; compose user-facing business operations as composite resources with `defineCompositeResource` from `@nocobase/authorization/core`. Explicitly name fields, relation capabilities and every collection a workflow touches.\n3. In the owning provider's `boot`, opt collections in with `authz.database.collections.add`, register composites with `authz.compositeResources.define`, record access with `authz.recordAccess.define` and settings items with `authz.settings.add`. Then add a workspace subsection with `authz.ui.sections.add({ name, title, parent })` and list each composite or settings item in it with `authz.ui.place(reference, { section, group? })` (the permission workspace lists sections and subsections on the left and the selected subsection's resources, under optional `authz.ui.groups`, on the right; an unplaced composite or settings item goes under its default section's Other with a startup warning, and a misplaced one fails a development start). Pages are not registered on the server: the client route tree lists them. Release subject registrations at shutdown.\n4. Protect every server route with authentication. For a simple single-scope Repository operation, keep `defineRepositoryApiRoutes` and add `authz.database.authorizeRepository` to map methods to composite actions; it reuses or initializes the request's authorization context. For workflows, persisted-state checks, multiple data scopes or custom responses, install `authz.middleware()`, call `c.get('authz').authorize()` once and bind every returned collection policy with `repository.withPolicy()`. Follow [Repository route integration](references/repository-routes.md).",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36297599507.1/v2-6e72dc270ebc/E13",
+      "origin": {
+        "kind": "review",
+        "key": "review/36297599507.1/v2-6e72dc270ebc",
+        "localId": "E13"
+      },
+      "kind": "skill",
+      "path": "packages/@nocobase/app-plugin-authorization/skills/nocobase-app-plugin-authorization/SKILL.md",
+      "lines": [
+        66,
+        68
+      ],
+      "sha256": "98475be31cc496d5f02d42bc3e0cd71a149de0bcae94bcc1a4afea485fb73357",
+      "observation": "SKILL 明确未注册 collection 默认拒绝、catalog 与 record 类型差异，以及 can/require/authorize 的使用边界。",
+      "excerpt": "- `settings`, `composite` and `database.collection` are catalog types: a check on an unregistered item or action is denied with `RESOURCE_ACTION_NOT_SUPPORTED`. `page`, `user`, `notification` and Hub types are record types that declare actions only; their grants use `id: '*'` for every record.\n- A composite action composes exactly the grants it lists, never another composite. A data scope targets the one collection its grant actions name, whose type must declare `recordAccess` (`database.collection` does). Grant page access separately; a page grant never authorizes a server endpoint.\n- `can` is for feature visibility. `require` needs an unconditional permit and rejects conditional decisions. Business endpoints use `authorize`, reject denial or missing policies, and consume `conditions.database` without resolving collection grants again.",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36297599507.1/v2-6e72dc270ebc/E14",
+      "origin": {
+        "kind": "review",
+        "key": "review/36297599507.1/v2-6e72dc270ebc",
+        "localId": "E14"
+      },
+      "kind": "qa",
+      "path": "artifacts/verify-3/browser-focused/report.json",
+      "lines": [
+        63,
+        63
+      ],
+      "sha256": "368a8f665d21d7ae0a756ab30c8a38a1c535a84fb4b6c544e43f1acc48775356",
+      "observation": "第 3 轮 QA 记录：PDF 预览点击/翻页后当前标签页跳转 about:blank，随后访问工单被重定向 /main/login，登录态失效。",
+      "excerpt": "        \"PDF 预览：点击/翻页到 sample.pdf 后当前标签页跳转到 about:blank，工单页丢失；随后直接访问工单被重定向到 /main/login，登录态失效——PDF 预览不可用且会拖垮会话（与上轮同一缺陷）。\",",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36297599507.1/v2-6e72dc270ebc/E15",
+      "origin": {
+        "kind": "review",
+        "key": "review/36297599507.1/v2-6e72dc270ebc",
+        "localId": "E15"
+      },
+      "kind": "qa",
+      "path": "artifacts/verify-4/browser-focused/report.json",
+      "lines": [
+        15,
+        15
+      ],
+      "sha256": "53b4031644517f938254f46db5353724dea16c97ba080327f9e14f574a0bd930",
+      "observation": "第 4 轮 QA 记录：PDF 预览跳 about:blank 并导致登出；同轮 B07 通过，观察员不可见内部字段且无权限用户打不开工单。",
+      "excerpt": "        \"PDF 预览：在预览弹窗点“下一个文件”到 sample.pdf，当前标签页跳转到 about:blank，工单页与会话丢失；随后访问 /main/service/tickets/6 被重定向 /main/login，需重新登录。\",",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36297599507.1/v2-6e72dc270ebc/E16",
+      "origin": {
+        "kind": "review",
+        "key": "review/36297599507.1/v2-6e72dc270ebc",
+        "localId": "E16"
+      },
+      "kind": "qa",
+      "path": "artifacts/verify-5/browser-focused/report.json",
+      "lines": [
+        20,
+        20
+      ],
+      "sha256": "91931676f8df3612ca5dc1322a3acd3746a5ce82919f16642182f7f5c571dea0",
+      "observation": "第 5 轮 QA 记录：PDF 直接点击或经 Next file 进入都跳 about:blank 并清空页面，随后被重定向登录，属真实业务失败。",
+      "excerpt": "        \"PDF 预览（失败）：点击 Preview: sample.pdf，当前标签页跳转 about:blank 并清空页面；随后直接地址打开 /main/service/tickets/6 被重定向到 /main/login，登录会话失效。经预览弹窗“Next file”进入 sample.pdf 时同样 about:blank + 登出。\"",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36297599507.1/v2-6e72dc270ebc/E17",
+      "origin": {
+        "kind": "review",
+        "key": "review/36297599507.1/v2-6e72dc270ebc",
+        "localId": "E17"
+      },
+      "kind": "qa",
+      "path": "artifacts/verify-6/browser-focused/report.json",
+      "lines": [
+        13,
+        13
+      ],
+      "sha256": "d2dc7ac139d9f975175fe84a6c59989b0e727bc6546614fbaa92b637c2dd90ac",
+      "observation": "第 6 轮 QA 记录：五种格式均渲染真实内容（PDF 为 canvas 文本），上传校验对损坏/不支持格式给出真实失败提示，下载字节哈希与夹具一致。",
+      "excerpt": "        \"刷新后逐格式点击预览按钮并检查渲染出的真实内容：PNG 对话框内 <img> naturalWidth/Height=32x32，画布取中心像素为蓝色 [40,110,190]（对应 '蓝色正方形'）；PDF 渲染出 870x1125 canvas，非白像素 3331（真实文本排版）；DOCX 渲染节点 [data-office-open-xml-format=docx] 文本为 'Factory DOCX sample'；XLSX 渲染出 870x413 canvas，非白像素 37963，工作表标签为 'Sample'；PPTX 渲染节点 [data-office-open-xml-format=pptx] 文本为 'Factory PPTX sample'。以上均为实际内容渲染，而非仅显示文件名。\",",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36297599507.1/v2-6e72dc270ebc/E18",
+      "origin": {
+        "kind": "review",
+        "key": "review/36297599507.1/v2-6e72dc270ebc",
+        "localId": "E18"
+      },
+      "kind": "qa",
+      "path": "artifacts/verify-5/browser-focused/report.json",
+      "lines": [
+        4,
+        4
+      ],
+      "sha256": "91931676f8df3612ca5dc1322a3acd3746a5ce82919f16642182f7f5c571dea0",
+      "observation": "第 5 轮 QA 摘要：B15 通过，XLSX 缩放/滚动标签的英文残留已被修复为中文。",
+      "excerpt": "  \"summary\": \"聚焦复测 B06、B15。B15 通过：中英文切换、逐页导航/字段/弹窗/文件组件/消息/错误反馈、刷新与直接地址访问均正常；上一轮 XLSX 缩放/滚动标签的英文残留已修复为中文，消息条目也正确翻译。B06 仍失败：PNG 按像素、DOCX/PPTX 按文本、XLSX 按 canvas 均显示真实内容，刷新后重预览与业务关联保持，下载锚点字节哈希与夹具一致，损坏/不支持格式有明确失败提示；但 PDF 预览（直接点击或经预览弹窗 Next file 切到 PDF）会使当前标签页跳转 about:blank 并导致会话登出，PDF 内容完全无法查看。下载落盘动作因 agent-browser download 工具两次超时未能完成，已用页面内字节哈希核对下载内容，属浏览器自动化工具限制而非业务缺陷。\",",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36297599507.1/v2-6e72dc270ebc/E19",
+      "origin": {
+        "kind": "review",
+        "key": "review/36297599507.1/v2-6e72dc270ebc",
+        "localId": "E19"
+      },
+      "kind": "log",
+      "path": "artifacts/task-diagnostic.json",
+      "lines": [
+        3,
+        4
+      ],
+      "sha256": "b46eef4cc0b2100912ed41075c3961596d60d3a0341fda75a502bbb707fe128a",
+      "observation": "诊断状态 needs-diagnosis、code 为 task-budget，说明停止原因是主动执行预算不足，而非确认的框架缺陷。",
+      "excerpt": "  \"status\": \"needs-diagnosis\",\n  \"code\": \"task-budget\",",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36297599507.1/v2-6e72dc270ebc/E20",
+      "origin": {
+        "kind": "review",
+        "key": "review/36297599507.1/v2-6e72dc270ebc",
+        "localId": "E20"
+      },
+      "kind": "log",
+      "path": "artifacts/agent-history/verify-3/browser-focused/agent-browser-acceptance.jsonl/part-0015.txt",
+      "lines": [
+        2223,
+        2225
+      ],
+      "sha256": "4a54ec339d7653842eb0809457402a97023846966410d4bc68bca299aaed864c",
+      "observation": "agent-browser 读取工单页文本的工具结果回显（内容为 \"closed\"），属正常探针返回，被计为错误信号。",
+      "excerpt": "{\"type\":\"tool_execution_end\",\"toolCallId\":\"call_00_rQYoNiAp6GsnK6WlzAdr0386\",\"toolName\":\"bash\",\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"--- AGENT_BROWSER_PAGE_CONTENT nonce=8e49a485bb68a29a2bfa224dd1da7487 origin=http://127.0.0.1:13000/main/service/tickets ---\\n\\\"closed\\\"\\n--- END_AGENT_BROWSER_PAGE_CONTENT nonce=8e49a485bb68a29a2bfa224dd1da7487 ---\\n  - button \\\"Collapse navigation\\\" [ref=e3]\\n  - button \\\"Appearance\\\" [expanded=false, ref=e5]\\n  - button \\\"Open account menu\\\" [expanded=false, ref=e6]\\n  - button \\\"Upload files\\\" [ref=e20]\\n--- file inputs ---\\n--- AGENT_BROWSER_PAGE_CONTENT nonce=cdd32dfab7a6596341bdc5e75cf512fa origin=http://127.0.0.1:13000/main/service/tickets/8 ---\\n\\\"[{\\\\\\\"name\\\\\\\":\\\\\\\"\\\\\\\",\\\\\\\"accept\\\\\\\":\\\\\\\"\\\\\\\",\\\\\\\"id\\\\\\\":\\\\\\\"\\\\\\\"}]\\\"\\n--- END_AGENT_BROWSER_PAGE_CONTENT nonce=cdd32dfab7a6596341bdc5e75cf512fa ---\\nls: cannot access '': No such file or directory\\n\\n\\nCommand exited with code 2\"}],\"details\":{}},\"isError\":true}\n{\"type\":\"message_start\",\"message\":{\"role\":\"toolResult\",\"toolCallId\":\"call_00_rQYoNiAp6GsnK6WlzAdr0386\",\"toolName\":\"bash\",\"content\":[{\"type\":\"text\",\"text\":\"--- AGENT_BROWSER_PAGE_CONTENT nonce=8e49a485bb68a29a2bfa224dd1da7487 origin=http://127.0.0.1:13000/main/service/tickets ---\\n\\\"closed\\\"\\n--- END_AGENT_BROWSER_PAGE_CONTENT nonce=8e49a485bb68a29a2bfa224dd1da7487 ---\\n  - button \\\"Collapse navigation\\\" [ref=e3]\\n  - button \\\"Appearance\\\" [expanded=false, ref=e5]\\n  - button \\\"Open account menu\\\" [expanded=false, ref=e6]\\n  - button \\\"Upload files\\\" [ref=e20]\\n--- file inputs ---\\n--- AGENT_BROWSER_PAGE_CONTENT nonce=cdd32dfab7a6596341bdc5e75cf512fa origin=http://127.0.0.1:13000/main/service/tickets/8 ---\\n\\\"[{\\\\\\\"name\\\\\\\":\\\\\\\"\\\\\\\",\\\\\\\"accept\\\\\\\":\\\\\\\"\\\\\\\",\\\\\\\"id\\\\\\\":\\\\\\\"\\\\\\\"}]\\\"\\n--- END_AGENT_BROWSER_PAGE_CONTENT nonce=cdd32dfab7a6596341bdc5e75cf512fa ---\\nls: cannot access '': No such file or directory\\n\\n\\nCommand exited with code 2\"}],\"details\":{},\"isError\":true,\"timestamp\":1790488724006}}\n{\"type\":\"message_end\",\"message\":{\"role\":\"toolResult\",\"toolCallId\":\"call_00_rQYoNiAp6GsnK6WlzAdr0386\",\"toolName\":\"bash\",\"content\":[{\"type\":\"text\",\"text\":\"--- AGENT_BROWSER_PAGE_CONTENT nonce=8e49a485bb68a29a2bfa224dd1da7487 origin=http://127.0.0.1:13000/main/service/tickets ---\\n\\\"closed\\\"\\n--- END_AGENT_BROWSER_PAGE_CONTENT nonce=8e49a485bb68a29a2bfa224dd1da7487 ---\\n  - button \\\"Collapse navigation\\\" [ref=e3]\\n  - button \\\"Appearance\\\" [expanded=false, ref=e5]\\n  - button \\\"Open account menu\\\" [expanded=false, ref=e6]\\n  - button \\\"Upload files\\\" [ref=e20]\\n--- file inputs ---\\n--- AGENT_BROWSER_PAGE_CONTENT nonce=cdd32dfab7a6596341bdc5e75cf512fa origin=http://127.0.0.1:13000/main/service/tickets/8 ---\\n\\\"[{\\\\\\\"name\\\\\\\":\\\\\\\"\\\\\\\",\\\\\\\"accept\\\\\\\":\\\\\\\"\\\\\\\",\\\\\\\"id\\\\\\\":\\\\\\\"\\\\\\\"}]\\\"\\n--- END_AGENT_BROWSER_PAGE_CONTENT nonce=cdd32dfab7a6596341bdc5e75cf512fa ---\\nls: cannot access '': No such file or directory\\n\\n\\nCommand exited with code 2\"}],\"details\":{},\"isError\":true,\"timestamp\":1790488724006}}",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36297599507.1/v2-6e72dc270ebc/E21",
+      "origin": {
+        "kind": "review",
+        "key": "review/36297599507.1/v2-6e72dc270ebc",
+        "localId": "E21"
+      },
+      "kind": "log",
+      "path": "artifacts/agent-history/verify-3/browser-focused/agent-browser-acceptance.jsonl/part-0016.txt",
+      "lines": [
+        290,
+        292
+      ],
+      "sha256": "cba4e0df5f8d5e8bc296d050435a19d2d8c7fb3e8f34642396eddb5cb72a98ef",
+      "observation": "grep 无匹配时 bash 以 exit code 1 结束且无输出，属探针正常返回。",
+      "excerpt": "{\"type\":\"tool_execution_end\",\"toolCallId\":\"call_00_MTXfTzjkEMRGfRicA9Xn7084\",\"toolName\":\"bash\",\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"(no output)\\n\\nCommand exited with code 1\"}],\"details\":{}},\"isError\":true}\n{\"type\":\"message_start\",\"message\":{\"role\":\"toolResult\",\"toolCallId\":\"call_00_MTXfTzjkEMRGfRicA9Xn7084\",\"toolName\":\"bash\",\"content\":[{\"type\":\"text\",\"text\":\"(no output)\\n\\nCommand exited with code 1\"}],\"details\":{},\"isError\":true,\"timestamp\":1790488766387}}\n{\"type\":\"message_end\",\"message\":{\"role\":\"toolResult\",\"toolCallId\":\"call_00_MTXfTzjkEMRGfRicA9Xn7084\",\"toolName\":\"bash\",\"content\":[{\"type\":\"text\",\"text\":\"(no output)\\n\\nCommand exited with code 1\"}],\"details\":{},\"isError\":true,\"timestamp\":1790488766387}}",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36297599507.1/v2-6e72dc270ebc/E22",
+      "origin": {
+        "kind": "review",
+        "key": "review/36297599507.1/v2-6e72dc270ebc",
+        "localId": "E22"
+      },
+      "kind": "log",
+      "path": "artifacts/agent-history/verify-3/browser-focused/agent-browser-acceptance.jsonl/part-0016.txt",
+      "lines": [
+        1302,
+        1304
+      ],
+      "sha256": "cba4e0df5f8d5e8bc296d050435a19d2d8c7fb3e8f34642396eddb5cb72a98ef",
+      "observation": "agent-browser 元素操作超时（Operation timed out），属浏览器自动化工具限制与页面加载竞争。",
+      "excerpt": "{\"type\":\"tool_execution_end\",\"toolCallId\":\"call_00_Uo6EM15HcayqqnODJKS19267\",\"toolName\":\"bash\",\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"✗ Operation timed out. The page may still be loading or the element may not exist.\\n\\n\\nCommand exited with code 2\"}],\"details\":{}},\"isError\":true}\n{\"type\":\"message_start\",\"message\":{\"role\":\"toolResult\",\"toolCallId\":\"call_00_Uo6EM15HcayqqnODJKS19267\",\"toolName\":\"bash\",\"content\":[{\"type\":\"text\",\"text\":\"✗ Operation timed out. The page may still be loading or the element may not exist.\\n\\n\\nCommand exited with code 2\"}],\"details\":{},\"isError\":true,\"timestamp\":1790488810227}}\n{\"type\":\"message_end\",\"message\":{\"role\":\"toolResult\",\"toolCallId\":\"call_00_Uo6EM15HcayqqnODJKS19267\",\"toolName\":\"bash\",\"content\":[{\"type\":\"text\",\"text\":\"✗ Operation timed out. The page may still be loading or the element may not exist.\\n\\n\\nCommand exited with code 2\"}],\"details\":{},\"isError\":true,\"timestamp\":1790488810227}}",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36297599507.1/v2-6e72dc270ebc/E23",
+      "origin": {
+        "kind": "review",
+        "key": "review/36297599507.1/v2-6e72dc270ebc",
+        "localId": "E23"
+      },
+      "kind": "log",
+      "path": "artifacts/agent-history/verify-3/browser-focused/agent-browser-acceptance.jsonl/part-0018.txt",
+      "lines": [
+        3411,
+        3413
+      ],
+      "sha256": "1816cfbca81d26230486a3eeb3be574b26e8b0a6382b431a7381d96c807229cd",
+      "observation": "QA 内联脚本对非数组调用 list.map 抛 TypeError，属脚本自身缺陷，随后修正。",
+      "excerpt": "{\"type\":\"tool_execution_end\",\"toolCallId\":\"call_00_IiB7JrHNzpJJmFYkdIO52461\",\"toolName\":\"bash\",\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"✗ Evaluation error: TypeError: list.map is not a function\\n    at <anonymous>:1:187\\n\\n\\nCommand exited with code 1\"}],\"details\":{}},\"isError\":true}\n{\"type\":\"message_start\",\"message\":{\"role\":\"toolResult\",\"toolCallId\":\"call_00_IiB7JrHNzpJJmFYkdIO52461\",\"toolName\":\"bash\",\"content\":[{\"type\":\"text\",\"text\":\"✗ Evaluation error: TypeError: list.map is not a function\\n    at <anonymous>:1:187\\n\\n\\nCommand exited with code 1\"}],\"details\":{},\"isError\":true,\"timestamp\":1790489058386}}\n{\"type\":\"message_end\",\"message\":{\"role\":\"toolResult\",\"toolCallId\":\"call_00_IiB7JrHNzpJJmFYkdIO52461\",\"toolName\":\"bash\",\"content\":[{\"type\":\"text\",\"text\":\"✗ Evaluation error: TypeError: list.map is not a function\\n    at <anonymous>:1:187\\n\\n\\nCommand exited with code 1\"}],\"details\":{},\"isError\":true,\"timestamp\":1790489058386}}",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36297599507.1/v2-6e72dc270ebc/E24",
+      "origin": {
+        "kind": "review",
+        "key": "review/36297599507.1/v2-6e72dc270ebc",
+        "localId": "E24"
+      },
+      "kind": "log",
+      "path": "artifacts/agent-history/verify-5/browser-focused/agent-browser-acceptance.jsonl/part-0001.txt",
+      "lines": [
+        376,
+        378
+      ],
+      "sha256": "b19e032132df36aa40eb913ad0d18daac93a3d4f02fbd3346eeef9ed7d4facc6",
+      "observation": "列出 evidence 目录的探针输出（total 8 等），非业务错误。",
+      "excerpt": "{\"type\":\"tool_execution_end\",\"toolCallId\":\"call_00_LoXKkH5ff7bJC7Ywb4CQ7772\",\"toolName\":\"bash\",\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"=== evidence dir ===\\ntotal 8\\ndrwxr-xr-x 2 runner runner 4096 Sep 27 08:13 .\\ndrwxr-xr-x 3 runner runner 4096 Sep 27 08:13 ..\\n=== report ===\\n\\n=== recording state ===\\n\\n[Showing lines 202-208 of 208 (50.0KB limit). Full output: /tmp/pi-bash-eafa98d49c7dc3e9.log]\\n\\nCommand exited with code 2\"}],\"details\":{}},\"isError\":true}\n{\"type\":\"message_start\",\"message\":{\"role\":\"toolResult\",\"toolCallId\":\"call_00_LoXKkH5ff7bJC7Ywb4CQ7772\",\"toolName\":\"bash\",\"content\":[{\"type\":\"text\",\"text\":\"=== evidence dir ===\\ntotal 8\\ndrwxr-xr-x 2 runner runner 4096 Sep 27 08:13 .\\ndrwxr-xr-x 3 runner runner 4096 Sep 27 08:13 ..\\n=== report ===\\n\\n=== recording state ===\\n\\n[Showing lines 202-208 of 208 (50.0KB limit). Full output: /tmp/pi-bash-eafa98d49c7dc3e9.log]\\n\\nCommand exited with code 2\"}],\"details\":{},\"isError\":true,\"timestamp\":1790496799142}}\n{\"type\":\"message_end\",\"message\":{\"role\":\"toolResult\",\"toolCallId\":\"call_00_LoXKkH5ff7bJC7Ywb4CQ7772\",\"toolName\":\"bash\",\"content\":[{\"type\":\"text\",\"text\":\"=== evidence dir ===\\ntotal 8\\ndrwxr-xr-x 2 runner runner 4096 Sep 27 08:13 .\\ndrwxr-xr-x 3 runner runner 4096 Sep 27 08:13 ..\\n=== report ===\\n\\n=== recording state ===\\n\\n[Showing lines 202-208 of 208 (50.0KB limit). Full output: /tmp/pi-bash-eafa98d49c7dc3e9.log]\\n\\nCommand exited with code 2\"}],\"details\":{},\"isError\":true,\"timestamp\":1790496799142}}",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36297599507.1/v2-6e72dc270ebc/E25",
+      "origin": {
+        "kind": "review",
+        "key": "review/36297599507.1/v2-6e72dc270ebc",
+        "localId": "E25"
+      },
+      "kind": "log",
+      "path": "artifacts/agent-history/verify-5/browser-focused/agent-browser-acceptance.jsonl/part-0001.txt",
+      "lines": [
+        668,
+        674
+      ],
+      "sha256": "b19e032132df36aa40eb913ad0d18daac93a3d4f02fbd3346eeef9ed7d4facc6",
+      "observation": "读取夹具 manifest 与目录列表的工具批次回显，非业务错误。",
+      "excerpt": "{\"type\":\"tool_execution_end\",\"toolCallId\":\"call_02_Lzvtd9nEOzKP7jelB5eg4552\",\"toolName\":\"bash\",\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"total 8\\ndrwxr-xr-x 2 runner runner 4096 Sep 27 08:13 .\\ndrwxr-xr-x 3 runner runner 4096 Sep 27 08:13 ..\\n=== report ===\\n=== recording state ===\\n\\n[Showing lines 3-7 of 7 (50.0KB limit). Full output: /tmp/pi-bash-71a4c33fe9f770a0.log]\\n\\nCommand exited with code 1\"}],\"details\":{}},\"isError\":true}\n{\"type\":\"message_start\",\"message\":{\"role\":\"toolResult\",\"toolCallId\":\"call_00_TJ7zwcrQpsSKB1WjFLkv8716\",\"toolName\":\"bash\",\"content\":[{\"type\":\"text\",\"text\":\"=== manifest ===\\n{\\n  \\\"version\\\": 1,\\n  \\\"files\\\": [\\n    {\\n      \\\"name\\\": \\\"sample.png\\\",\\n      \\\"sha256\\\": \\\"eafcdecc1468f7b18a15a7d22c494ab7e14a435f0560798ad463efc5e14f3490\\\",\\n      \\\"bytes\\\": 99,\\n      \\\"expected\\\": \\\"A solid blue square\\\",\\n      \\\"valid\\\": true\\n    },\\n    {\\n      \\\"name\\\": \\\"sample.pdf\\\",\\n      \\\"sha256\\\": \\\"6cb99aa93ea5607509fc676bf82e835728a7c44aa9f584a0974600765c0f8fc3\\\",\\n      \\\"bytes\\\": 593,\\n      \\\"expected\\\": \\\"Factory PDF sample\\\",\\n      \\\"valid\\\": true\\n    },\\n    {\\n      \\\"name\\\": \\\"sample.docx\\\",\\n      \\\"sha256\\\": \\\"06408d7e3a01fd82bc32240dbd035d6366ac701f50c1a90f12eb49f47288cd6e\\\",\\n      \\\"bytes\\\": 975,\\n      \\\"expected\\\": \\\"Factory DOCX sample\\\",\\n      \\\"valid\\\": true\\n    },\\n    {\\n      \\\"name\\\": \\\"sample.xlsx\\\",\\n      \\\"sha256\\\": \\\"aebb2e45d35551150c56edd7bf7e09e46cc1423a6a99e3545c593c946f179b4e\\\",\\n      \\\"bytes\\\": 1584,\\n      \\\"expected\\\": \\\"Factory XLSX sample; A2 = 42\\\",\\n      \\\"valid\\\": true\\n    },\\n    {\\n      \\\"name\\\": \\\"sample.pptx\\\",\\n      \\\"sha256\\\": \\\"304a16d1c38e3b7fde3accdaff511811be3200227e314c6996c7e741fe8d71cc\\\",\\n      \\\"bytes\\\": 4596,\\n      \\\"expected\\\": \\\"Factory PPTX sample\\\",\\n      \\\"valid\\\": true\\n    },\\n    {\\n      \\\"name\\\": \\\"corrupt.png\\\",\\n      \\\"sha256\\\": \\\"c0a8f73507b5744996bd972ead0802596faf1056aae7621513202dd2bafca349\\\",\\n      \\\"bytes\\\": 28,\\n      \\\"expected\\\": \\\"Explicit failure feedback\\\",\\n      \\\"valid\\\": false\\n    },\\n    {\\n      \\\"name\\\": \\\"unsupported.exe\\\",\\n      \\\"sha256\\\": \\\"4d9361da79887a53afa6bd342b1dc062b1d4e60c67c9371a22c2cb805a739f97\\\",\\n      \\\"bytes\\\": 43,\\n      \\\"expected\\\": \\\"Explicit unsupported-format feedback\\\",\\n      \\\"valid\\\": false\\n    }\\n  ]\\n}\\n\"}],\"isError\":false,\"timestamp\":1790496802556}}\n{\"type\":\"message_end\",\"message\":{\"role\":\"toolResult\",\"toolCallId\":\"call_00_TJ7zwcrQpsSKB1WjFLkv8716\",\"toolName\":\"bash\",\"content\":[{\"type\":\"text\",\"text\":\"=== manifest ===\\n{\\n  \\\"version\\\": 1,\\n  \\\"files\\\": [\\n    {\\n      \\\"name\\\": \\\"sample.png\\\",\\n      \\\"sha256\\\": \\\"eafcdecc1468f7b18a15a7d22c494ab7e14a435f0560798ad463efc5e14f3490\\\",\\n      \\\"bytes\\\": 99,\\n      \\\"expected\\\": \\\"A solid blue square\\\",\\n      \\\"valid\\\": true\\n    },\\n    {\\n      \\\"name\\\": \\\"sample.pdf\\\",\\n      \\\"sha256\\\": \\\"6cb99aa93ea5607509fc676bf82e835728a7c44aa9f584a0974600765c0f8fc3\\\",\\n      \\\"bytes\\\": 593,\\n      \\\"expected\\\": \\\"Factory PDF sample\\\",\\n      \\\"valid\\\": true\\n    },\\n    {\\n      \\\"name\\\": \\\"sample.docx\\\",\\n      \\\"sha256\\\": \\\"06408d7e3a01fd82bc32240dbd035d6366ac701f50c1a90f12eb49f47288cd6e\\\",\\n      \\\"bytes\\\": 975,\\n      \\\"expected\\\": \\\"Factory DOCX sample\\\",\\n      \\\"valid\\\": true\\n    },\\n    {\\n      \\\"name\\\": \\\"sample.xlsx\\\",\\n      \\\"sha256\\\": \\\"aebb2e45d35551150c56edd7bf7e09e46cc1423a6a99e3545c593c946f179b4e\\\",\\n      \\\"bytes\\\": 1584,\\n      \\\"expected\\\": \\\"Factory XLSX sample; A2 = 42\\\",\\n      \\\"valid\\\": true\\n    },\\n    {\\n      \\\"name\\\": \\\"sample.pptx\\\",\\n      \\\"sha256\\\": \\\"304a16d1c38e3b7fde3accdaff511811be3200227e314c6996c7e741fe8d71cc\\\",\\n      \\\"bytes\\\": 4596,\\n      \\\"expected\\\": \\\"Factory PPTX sample\\\",\\n      \\\"valid\\\": true\\n    },\\n    {\\n      \\\"name\\\": \\\"corrupt.png\\\",\\n      \\\"sha256\\\": \\\"c0a8f73507b5744996bd972ead0802596faf1056aae7621513202dd2bafca349\\\",\\n      \\\"bytes\\\": 28,\\n      \\\"expected\\\": \\\"Explicit failure feedback\\\",\\n      \\\"valid\\\": false\\n    },\\n    {\\n      \\\"name\\\": \\\"unsupported.exe\\\",\\n      \\\"sha256\\\": \\\"4d9361da79887a53afa6bd342b1dc062b1d4e60c67c9371a22c2cb805a739f97\\\",\\n      \\\"bytes\\\": 43,\\n      \\\"expected\\\": \\\"Explicit unsupported-format feedback\\\",\\n      \\\"valid\\\": false\\n    }\\n  ]\\n}\\n\"}],\"isError\":false,\"timestamp\":1790496802556}}\n{\"type\":\"message_start\",\"message\":{\"role\":\"toolResult\",\"toolCallId\":\"call_01_jTopnLtYC2iKkQ6LZhGj2027\",\"toolName\":\"bash\",\"content\":[{\"type\":\"text\",\"text\":\"=== manifest dir ===\\ntotal 44\\ndrwxr-xr-x 2 runner runner 4096 Sep 27 05:36 .\\ndrwxr-xr-x 3 runner runner 4096 Sep 27 05:36 ..\\n-rw-r--r-- 1 runner runner   28 Sep 27 05:36 corrupt.png\\n-rw-r--r-- 1 runner runner 1519 Sep 27 05:36 manifest.json\\n-rw-r--r-- 1 runner runner  975 Sep 27 05:36 sample.docx\\n-rw-r--r-- 1 runner runner  593 Sep 27 05:36 sample.pdf\\n-rw-r--r-- 1 runner runner   99 Sep 27 05:36 sample.png\\n-rw-r--r-- 1 runner runner 4596 Sep 27 05:36 sample.pptx\\n-rw-r--r-- 1 runner runner 1584 Sep 27 05:36 sample.xlsx\\n-rw-r--r-- 1 runner runner   43 Sep 27 05:36 unsupported.exe\\n=== preflight ===\\n{\\n  \\\"version\\\": 1,\\n  \\\"basic\\\": true,\\n  \\\"capabilities\\\": {\\n    \\\"classicWorker\\\": true,\\n    \\\"moduleWorker\\\": true,\\n    \\\"moduleBlobWorker\\\": true,\\n    \\\"moduleWorkerRequest\\\": true,\\n    \\\"moduleBlobWorkerRequest\\\": true,\\n    \\\"pdfViewerEnabled\\\": true,\\n    \\\"workerNetworkLeak\\\": false\\n  },\\n  \\\"errors\\\": [],\\n  \\\"commands\\\": [\\n    {\\n      \\\"stage\\\": \\\"version\\\",\\n      \\\"command\\\": \\\"agent-browser\\\",\\n      \\\"args\\\": [\\n        \\\"--version\\\"\\n      ],\\n      \\\"timeoutMs\\\": 20000,\\n      \\\"code\\\": 0,\\n      \\\"durationMs\\\": 6\\n    },\\n    {\\n      \\\"stage\\\": \\\"chrome-version\\\",\\n      \\\"command\\\": \\\"/usr/bin/google-chrome\\\",\\n      \\\"args\\\": [\\n        \\\"--version\\\"\\n      ],\\n      \\\"timeoutMs\\\": 20000,\\n      \\\"code\\\": 0,\\n      \\\"durationMs\\\": 1733\\n    },\\n    {\\n      \\\"stage\\\": \\\"startup\\\",\\n      \\\"command\\\": \\\"agent-browser\\\",\\n      \\\"args\\\": [\\n        \\\"open\\\"\\n      ],\\n      \\\"timeoutMs\\\": 105000,\\n      \\\"code\\\": 0,\\n      \\\"durationMs\\\": 5741\\n    },\\n    {\\n      \\\"stage\\\": \\\"ready\\\",\\n      \\\"command\\\": \\\"agent-browser\\\",\\n      \\\"args\\\": [\\n        \\\"get\\\",\\n        \\\"url\\\"\\n      ],\\n      \\\"timeoutMs\\\": 20000,\\n      \\\"code\\\": 0,\\n      \\\"durationMs\\\": 40\\n    },\\n    {\\n      \\\"stage\\\": \\\"navigation\\\",\\n      \\\"command\\\": \\\"agent-browser\\\",\\n      \\\"args\\\": [\\n        \\\"open\\\",\\n        \\\"http://127.0.0.1:35187/\\\"\\n      ],\\n      \\\"timeoutMs\\\": 20000,\\n      \\\"code\\\": 0,\\n      \\\"durationMs\\\": 211\\n    },\\n    {\\n      \\\"stage\\\": \\\"snapshot\\\",\\n      \\\"command\\\": \\\"agent-browser\\\",\\n      \\\"args\\\": [\\n        \\\"snapshot\\\",\\n        \\\"-i\\\"\\n      ],\\n      \\\"timeoutMs\\\": 20000,\\n      \\\"code\\\": 0,\\n      \\\"durationMs\\\": 176\\n    },\\n    {\\n      \\\"stage\\\": \\\"upload\\\",\\n      \\\"command\\\": \\\"agent-browser\\\",\\n      \\\"args\\\": [\\n        \\\"upload\\\",\\n        \\\"#file\\\",\\n        \\\"/home/runner/work/_temp/agent-artifacts/browser-environment/preflight-input.txt\\\"\\n      ],\\n      \\\"timeoutMs\\\": 20000,\\n      \\\"code\\\": 0,\\n      \\\"durationMs\\\": 55\\n    },\\n    {\\n      \\\"stage\\\": \\\"interaction\\\",\\n      \\\"command\\\": \\\"agent-browser\\\",\\n      \\\"args\\\": [\\n        \\\"click\\\",\\n        \\\"#action\\\"\\n      ],\\n      \\\"timeoutMs\\\": 20000,\\n      \\\"code\\\": 0,\\n      \\\"durationMs\\\": 56\\n    },\\n    {\\n      \\\"stage\\\": \\\"download\\\",\\n      \\\"command\\\": \\\"agent-browser\\\",\\n      \\\"args\\\": [\\n        \\\"download\\\",\\n        \\\"#download\\\",\\n        \\\"/home/runner/work/_temp/agent-artifacts/browser-environment/preflight-download.txt\\\"\\n      ],\\n      \\\"timeoutMs\\\": 20000,\\n      \\\"code\\\": 0,\\n      \\\"durationMs\\\": 53\\n    },\\n    {\\n      \\\"stage\\\": \\\"cleanup\\\",\\n      \\\"command\\\": \\\"agent-browser\\\",\\n      \\\"args\\\": [\\n        \\\"close\\\"\\n      ],\\n      \\\"timeoutMs\\\": 5000,\\n      \\\"code\\\": 0,\\n      \\\"durationMs\\\": 163\\n    }\\n  ],\\n  \\\"browserVersion\\\": \\\"agent-browser 0.36.0\\\",\\n  \\\"chromeVersion\\\": \\\"Google Chrome 153.0.8010.52\\\",\\n  \\\"download\\\": true,\\n  \\\"durationMs\\\": 8542\\n}\\n\"}],\"isError\":false,\"timestamp\":1790496802556}}\n{\"type\":\"message_end\",\"message\":{\"role\":\"toolResult\",\"toolCallId\":\"call_01_jTopnLtYC2iKkQ6LZhGj2027\",\"toolName\":\"bash\",\"content\":[{\"type\":\"text\",\"text\":\"=== manifest dir ===\\ntotal 44\\ndrwxr-xr-x 2 runner runner 4096 Sep 27 05:36 .\\ndrwxr-xr-x 3 runner runner 4096 Sep 27 05:36 ..\\n-rw-r--r-- 1 runner runner   28 Sep 27 05:36 corrupt.png\\n-rw-r--r-- 1 runner runner 1519 Sep 27 05:36 manifest.json\\n-rw-r--r-- 1 runner runner  975 Sep 27 05:36 sample.docx\\n-rw-r--r-- 1 runner runner  593 Sep 27 05:36 sample.pdf\\n-rw-r--r-- 1 runner runner   99 Sep 27 05:36 sample.png\\n-rw-r--r-- 1 runner runner 4596 Sep 27 05:36 sample.pptx\\n-rw-r--r-- 1 runner runner 1584 Sep 27 05:36 sample.xlsx\\n-rw-r--r-- 1 runner runner   43 Sep 27 05:36 unsupported.exe\\n=== preflight ===\\n{\\n  \\\"version\\\": 1,\\n  \\\"basic\\\": true,\\n  \\\"capabilities\\\": {\\n    \\\"classicWorker\\\": true,\\n    \\\"moduleWorker\\\": true,\\n    \\\"moduleBlobWorker\\\": true,\\n    \\\"moduleWorkerRequest\\\": true,\\n    \\\"moduleBlobWorkerRequest\\\": true,\\n    \\\"pdfViewerEnabled\\\": true,\\n    \\\"workerNetworkLeak\\\": false\\n  },\\n  \\\"errors\\\": [],\\n  \\\"commands\\\": [\\n    {\\n      \\\"stage\\\": \\\"version\\\",\\n      \\\"command\\\": \\\"agent-browser\\\",\\n      \\\"args\\\": [\\n        \\\"--version\\\"\\n      ],\\n      \\\"timeoutMs\\\": 20000,\\n      \\\"code\\\": 0,\\n      \\\"durationMs\\\": 6\\n    },\\n    {\\n      \\\"stage\\\": \\\"chrome-version\\\",\\n      \\\"command\\\": \\\"/usr/bin/google-chrome\\\",\\n      \\\"args\\\": [\\n        \\\"--version\\\"\\n      ],\\n      \\\"timeoutMs\\\": 20000,\\n      \\\"code\\\": 0,\\n      \\\"durationMs\\\": 1733\\n    },\\n    {\\n      \\\"stage\\\": \\\"startup\\\",\\n      \\\"command\\\": \\\"agent-browser\\\",\\n      \\\"args\\\": [\\n        \\\"open\\\"\\n      ],\\n      \\\"timeoutMs\\\": 105000,\\n      \\\"code\\\": 0,\\n      \\\"durationMs\\\": 5741\\n    },\\n    {\\n      \\\"stage\\\": \\\"ready\\\",\\n      \\\"command\\\": \\\"agent-browser\\\",\\n      \\\"args\\\": [\\n        \\\"get\\\",\\n        \\\"url\\\"\\n      ],\\n      \\\"timeoutMs\\\": 20000,\\n      \\\"code\\\": 0,\\n      \\\"durationMs\\\": 40\\n    },\\n    {\\n      \\\"stage\\\": \\\"navigation\\\",\\n      \\\"command\\\": \\\"agent-browser\\\",\\n      \\\"args\\\": [\\n        \\\"open\\\",\\n        \\\"http://127.0.0.1:35187/\\\"\\n      ],\\n      \\\"timeoutMs\\\": 20000,\\n      \\\"code\\\": 0,\\n      \\\"durationMs\\\": 211\\n    },\\n    {\\n      \\\"stage\\\": \\\"snapshot\\\",\\n      \\\"command\\\": \\\"agent-browser\\\",\\n      \\\"args\\\": [\\n        \\\"snapshot\\\",\\n        \\\"-i\\\"\\n      ],\\n      \\\"timeoutMs\\\": 20000,\\n      \\\"code\\\": 0,\\n      \\\"durationMs\\\": 176\\n    },\\n    {\\n      \\\"stage\\\": \\\"upload\\\",\\n      \\\"command\\\": \\\"agent-browser\\\",\\n      \\\"args\\\": [\\n        \\\"upload\\\",\\n        \\\"#file\\\",\\n        \\\"/home/runner/work/_temp/agent-artifacts/browser-environment/preflight-input.txt\\\"\\n      ],\\n      \\\"timeoutMs\\\": 20000,\\n      \\\"code\\\": 0,\\n      \\\"durationMs\\\": 55\\n    },\\n    {\\n      \\\"stage\\\": \\\"interaction\\\",\\n      \\\"command\\\": \\\"agent-browser\\\",\\n      \\\"args\\\": [\\n        \\\"click\\\",\\n        \\\"#action\\\"\\n      ],\\n      \\\"timeoutMs\\\": 20000,\\n      \\\"code\\\": 0,\\n      \\\"durationMs\\\": 56\\n    },\\n    {\\n      \\\"stage\\\": \\\"download\\\",\\n      \\\"command\\\": \\\"agent-browser\\\",\\n      \\\"args\\\": [\\n        \\\"download\\\",\\n        \\\"#download\\\",\\n        \\\"/home/runner/work/_temp/agent-artifacts/browser-environment/preflight-download.txt\\\"\\n      ],\\n      \\\"timeoutMs\\\": 20000,\\n      \\\"code\\\": 0,\\n      \\\"durationMs\\\": 53\\n    },\\n    {\\n      \\\"stage\\\": \\\"cleanup\\\",\\n      \\\"command\\\": \\\"agent-browser\\\",\\n      \\\"args\\\": [\\n        \\\"close\\\"\\n      ],\\n      \\\"timeoutMs\\\": 5000,\\n      \\\"code\\\": 0,\\n      \\\"durationMs\\\": 163\\n    }\\n  ],\\n  \\\"browserVersion\\\": \\\"agent-browser 0.36.0\\\",\\n  \\\"chromeVersion\\\": \\\"Google Chrome 153.0.8010.52\\\",\\n  \\\"download\\\": true,\\n  \\\"durationMs\\\": 8542\\n}\\n\"}],\"isError\":false,\"timestamp\":1790496802556}}\n{\"type\":\"message_start\",\"message\":{\"role\":\"toolResult\",\"toolCallId\":\"call_02_Lzvtd9nEOzKP7jelB5eg4552\",\"toolName\":\"bash\",\"content\":[{\"type\":\"text\",\"text\":\"total 8\\ndrwxr-xr-x 2 runner runner 4096 Sep 27 ",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36297599507.1/v2-6e72dc270ebc/E26",
+      "origin": {
+        "kind": "review",
+        "key": "review/36297599507.1/v2-6e72dc270ebc",
+        "localId": "E26"
+      },
+      "kind": "log",
+      "path": "artifacts/agent-history/verify-5/browser-focused/agent-browser-acceptance.jsonl/part-0005.txt",
+      "lines": [
+        3435,
+        3437
+      ],
+      "sha256": "cf439a25ec3e0561f59425afd3d2f90c7426b416ff1f78e36956f3a9b362ab57",
+      "observation": "agent-browser download 超时并伴随 ls 缺失，属浏览器自动化下载工具限制；QA 已改用页内字节哈希核对下载内容。",
+      "excerpt": "{\"type\":\"tool_execution_end\",\"toolCallId\":\"call_00_vVdgjbslbp44U2vHGPyl0351\",\"toolName\":\"bash\",\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"--- END_AGENT_BROWSER_PAGE_CONTENT nonce=96d975ca9d1beddbe84fa761e32d4b6e ---\\n✗ Operation timed out. The page may still be loading or the element may not exist.\\nexit=0\\nls: cannot access '/tmp/qa-download.docx': No such file or directory\\n\\n\\nCommand exited with code 1\"}],\"details\":{}},\"isError\":true}\n{\"type\":\"message_start\",\"message\":{\"role\":\"toolResult\",\"toolCallId\":\"call_00_vVdgjbslbp44U2vHGPyl0351\",\"toolName\":\"bash\",\"content\":[{\"type\":\"text\",\"text\":\"--- END_AGENT_BROWSER_PAGE_CONTENT nonce=96d975ca9d1beddbe84fa761e32d4b6e ---\\n✗ Operation timed out. The page may still be loading or the element may not exist.\\nexit=0\\nls: cannot access '/tmp/qa-download.docx': No such file or directory\\n\\n\\nCommand exited with code 1\"}],\"details\":{},\"isError\":true,\"timestamp\":1790497158408}}\n{\"type\":\"message_end\",\"message\":{\"role\":\"toolResult\",\"toolCallId\":\"call_00_vVdgjbslbp44U2vHGPyl0351\",\"toolName\":\"bash\",\"content\":[{\"type\":\"text\",\"text\":\"--- END_AGENT_BROWSER_PAGE_CONTENT nonce=96d975ca9d1beddbe84fa761e32d4b6e ---\\n✗ Operation timed out. The page may still be loading or the element may not exist.\\nexit=0\\nls: cannot access '/tmp/qa-download.docx': No such file or directory\\n\\n\\nCommand exited with code 1\"}],\"details\":{},\"isError\":true,\"timestamp\":1790497158408}}",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36297599507.1/v2-6e72dc270ebc/E27",
+      "origin": {
+        "kind": "review",
+        "key": "review/36297599507.1/v2-6e72dc270ebc",
+        "localId": "E27"
+      },
+      "kind": "log",
+      "path": "artifacts/agent-history/review-history/run-36282941663-attempt-1/verify-2/browser-focused/agent-browser-acceptance.jsonl/part-0042.txt",
+      "lines": [
+        2302,
+        2304
+      ],
+      "sha256": "9ef100a89e9ebc98195da1d87b5c333e97936fdd1c006360781e2ddc775d3f15",
+      "observation": "上一 Run 第 2 轮读取消息页的文本结果回显（NOW msgs=5 unread=5），属正常探针返回。",
+      "excerpt": "{\"type\":\"tool_execution_end\",\"toolCallId\":\"call_00_WDiVS3l6dFExy906IO8U4293\",\"toolName\":\"bash\",\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"--- AGENT_BROWSER_PAGE_CONTENT nonce=a9dfaa7ab194390615c42ca1f0beab78 origin=http://127.0.0.1:13000/main/service/messages ---\\n\\\"NOW msgs=5 unread=5\\\"\\n--- END_AGENT_BROWSER_PAGE_CONTENT nonce=a9dfaa7ab194390615c42ca1f0beab78 ---\\n--- tickets list ---\\n<anonymous_script>:1\\n<!doctype html>\\n^\\n\\nSyntaxError: Unexpected token '<', \\\"<!doctype \\\"... is not valid JSON\\n    at JSON.parse (<anonymous>)\\n    at Socket.<anonymous> ([eval]:1:70)\\n    at Socket.emit (node:events:526:24)\\n    at endReadableNT (node:internal/streams/readable:1764:12)\\n    at process.processTicksAndRejections (node:internal/process/task_queues:90:21)\\n\\nNode.js v24.21.0\\n\\n\\nCommand exited with code 1\"}],\"details\":{}},\"isError\":true}\n{\"type\":\"message_start\",\"message\":{\"role\":\"toolResult\",\"toolCallId\":\"call_00_WDiVS3l6dFExy906IO8U4293\",\"toolName\":\"bash\",\"content\":[{\"type\":\"text\",\"text\":\"--- AGENT_BROWSER_PAGE_CONTENT nonce=a9dfaa7ab194390615c42ca1f0beab78 origin=http://127.0.0.1:13000/main/service/messages ---\\n\\\"NOW msgs=5 unread=5\\\"\\n--- END_AGENT_BROWSER_PAGE_CONTENT nonce=a9dfaa7ab194390615c42ca1f0beab78 ---\\n--- tickets list ---\\n<anonymous_script>:1\\n<!doctype html>\\n^\\n\\nSyntaxError: Unexpected token '<', \\\"<!doctype \\\"... is not valid JSON\\n    at JSON.parse (<anonymous>)\\n    at Socket.<anonymous> ([eval]:1:70)\\n    at Socket.emit (node:events:526:24)\\n    at endReadableNT (node:internal/streams/readable:1764:12)\\n    at process.processTicksAndRejections (node:internal/process/task_queues:90:21)\\n\\nNode.js v24.21.0\\n\\n\\nCommand exited with code 1\"}],\"details\":{},\"isError\":true,\"timestamp\":1790485412243}}\n{\"type\":\"message_end\",\"message\":{\"role\":\"toolResult\",\"toolCallId\":\"call_00_WDiVS3l6dFExy906IO8U4293\",\"toolName\":\"bash\",\"content\":[{\"type\":\"text\",\"text\":\"--- AGENT_BROWSER_PAGE_CONTENT nonce=a9dfaa7ab194390615c42ca1f0beab78 origin=http://127.0.0.1:13000/main/service/messages ---\\n\\\"NOW msgs=5 unread=5\\\"\\n--- END_AGENT_BROWSER_PAGE_CONTENT nonce=a9dfaa7ab194390615c42ca1f0beab78 ---\\n--- tickets list ---\\n<anonymous_script>:1\\n<!doctype html>\\n^\\n\\nSyntaxError: Unexpected token '<', \\\"<!doctype \\\"... is not valid JSON\\n    at JSON.parse (<anonymous>)\\n    at Socket.<anonymous> ([eval]:1:70)\\n    at Socket.emit (node:events:526:24)\\n    at endReadableNT (node:internal/streams/readable:1764:12)\\n    at process.processTicksAndRejections (node:internal/process/task_queues:90:21)\\n\\nNode.js v24.21.0\\n\\n\\nCommand exited with code 1\"}],\"details\":{},\"isError\":true,\"timestamp\":1790485412243}}",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36297599507.1/v2-6e72dc270ebc/E28",
+      "origin": {
+        "kind": "review",
+        "key": "review/36297599507.1/v2-6e72dc270ebc",
+        "localId": "E28"
+      },
+      "kind": "log",
+      "path": "artifacts/agent-history/agent-repair-4.jsonl/part-0001.txt",
+      "lines": [
+        234,
+        237
+      ],
+      "sha256": "918d925c7e3c195f1c2dd44b0f981ce003b56a783003c4aeed26875b0f01f94b",
+      "observation": "第 4 轮修复调用中 Agent 明确识别缺陷为“PDF 预览导致 about:blank 并登出”，随后改为 canvas 渲染。",
+      "excerpt": "{\"type\":\"message_update\",\"usage\":{\"input\":3129,\"output\":286,\"cacheRead\":15104,\"cacheWrite\":0,\"reasoning\":61,\"totalTokens\":18519,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"assistantMessageEvent\":{\"type\":\"thinking_end\",\"contentIndex\":0,\"content\":\"Let me start by understanding the task. This is a repair task for a NocoBase 3 application. The defect is about PDF preview causing the tab to navigate to about:blank and logging the user out. Let me investigate the relevant source code.\\n\\nLet me first look at the attachment preview component.\"}}\n{\"type\":\"message_update\",\"usage\":{\"input\":3129,\"output\":286,\"cacheRead\":15104,\"cacheWrite\":0,\"reasoning\":61,\"totalTokens\":18519,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"assistantMessageEvent\":{\"type\":\"toolcall_end\",\"contentIndex\":1,\"toolCall\":{\"type\":\"toolCall\",\"id\":\"call_00_AgHbIAr9kb6eikNALDqB0925\",\"name\":\"bash\",\"arguments\":{\"command\":\"cd /home/runner/work/nb3-factory/nb3-factory/workspace && rg -l \\\"Preview:\\\" client/ --type tsx --type ts 2>/dev/null | head -50; echo \\\"---\\\"; rg -rl \\\"preview\\\" client/ -g '*.tsx' -g '*.ts' | head -50\",\"timeout\":60}}}}\n{\"type\":\"message_update\",\"usage\":{\"input\":3129,\"output\":286,\"cacheRead\":15104,\"cacheWrite\":0,\"reasoning\":61,\"totalTokens\":18519,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"assistantMessageEvent\":{\"type\":\"toolcall_end\",\"contentIndex\":2,\"toolCall\":{\"type\":\"toolCall\",\"id\":\"call_01_T5eaIaPMIOXDGirluYmm4312\",\"name\":\"bash\",\"arguments\":{\"command\":\"cd /home/runner/work/nb3-factory/nb3-factory/workspace && git status --short | head -40; echo \\\"---branch---\\\"; git branch --show-current; echo \\\"---log---\\\"; git log --oneline -8\",\"timeout\":60}}}}\n{\"type\":\"message_end\",\"message\":{\"role\":\"assistant\",\"content\":[{\"type\":\"thinking\",\"thinking\":\"Let me start by understanding the task. This is a repair task for a NocoBase 3 application. The defect is about PDF preview causing the tab to navigate to about:blank and logging the user out. Let me investigate the relevant source code.\\n\\nLet me first look at the attachment preview component.\",\"thinkingSignature\":\"[{\\\"format\\\":\\\"unknown\\\",\\\"index\\\":0,\\\"text\\\":\\\"Let me start by understanding the task. This is a repair task for a NocoBase 3 application. The defect is about PDF preview causing the tab to navigate to about:blank and logging the user out. Let me investigate the relevant source code.\\\\n\\\\nLet me first look at the attachment preview component.\\\",\\\"type\\\":\\\"reasoning.text\\\"}]\"},{\"type\":\"toolCall\",\"id\":\"call_00_AgHbIAr9kb6eikNALDqB0925\",\"name\":\"bash\",\"arguments\":{\"command\":\"cd /home/runner/work/nb3-factory/nb3-factory/workspace && rg -l \\\"Preview:\\\" client/ --type tsx --type ts 2>/dev/null | head -50; echo \\\"---\\\"; rg -rl \\\"preview\\\" client/ -g '*.tsx' -g '*.ts' | head -50\",\"timeout\":60}},{\"type\":\"toolCall\",\"id\":\"call_01_T5eaIaPMIOXDGirluYmm4312\",\"name\":\"bash\",\"arguments\":{\"command\":\"cd /home/runner/work/nb3-factory/nb3-factory/workspace && git status --short | head -40; echo \\\"---branch---\\\"; git branch --show-current; echo \\\"---log---\\\"; git log --oneline -8\",\"timeout\":60}}],\"api\":\"openai-completions\",\"provider\":\"nb3-factory\",\"model\":\"deepseek-v4.1-flash\",\"usage\":{\"input\":3129,\"output\":286,\"cacheRead\":15104,\"cacheWrite\":0,\"reasoning\":61,\"totalTokens\":18519,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"stopReason\":\"toolUse\",\"timestamp\":1790497867212,\"responseId\":\"gen_01M3GZTK53288FJPT0XBJW2JP5\",\"rawStopReason\":\"tool_calls\"}}",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    }
+  ],
+  "links": [
+    {
+      "rel": "task-issue",
+      "label": "Issue #379",
+      "url": "https://github.com/gchust/nb3-factory/issues/379",
+      "path": null
+    },
+    {
+      "rel": "run",
+      "label": "Run 36282941663 / attempt 1",
+      "url": "https://github.com/gchust/nb3-factory/actions/runs/36282941663/attempts/1",
+      "path": null
+    },
+    {
+      "rel": "run",
+      "label": "Run 36297599507 / attempt 1",
+      "url": "https://github.com/gchust/nb3-factory/actions/runs/36297599507/attempts/1",
+      "path": null
+    },
+    {
+      "rel": "report-archive",
+      "label": "固定版本 HTML 报告（gh-pages 归档路径）",
+      "url": null,
+      "path": "reports/issues/379/runs/36297599507/attempt-1/index.html"
+    }
+  ],
+  "limitations": [
+    {
+      "code": "first-round-unavailable",
+      "detail": "只取得本执行的验证记录；首轮 QA 标为未知，不冒充整个任务首轮通过。"
+    },
+    {
+      "code": "qa-focused-only",
+      "detail": "本产物只有失败路径复测，不代表全量业务验收。"
+    },
+    {
+      "code": "review-partial",
+      "detail": "独立框架评审只完成部分模块，未覆盖项不推断通过。"
+    },
+    {
+      "code": "usage-incomplete",
+      "detail": "部分用量未取得或不完整；缺失值为 null，不按零处理。"
+    }
+  ]
+}
