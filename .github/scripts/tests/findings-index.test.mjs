@@ -237,3 +237,21 @@ test('classification prose and version cells are escaped', async () => {
   assert.match(html, /&lt;img src=x&gt;/);
   assert.doesNotMatch(html, /<script|<img src=x/);
 });
+
+test('a reset baseline states when recording restarted and what it leaves out', async () => {
+  const since = Date.parse('2026-09-27T08:30:00.000Z');
+  const empty = await renderFindingsIndex([], {
+    baseline: { since, excluded: 70 },
+  });
+  assert.match(empty, /自 <b>2026-09-27 08:30 UTC<\/b> 起重新记录/);
+  assert.match(empty, /此前的 70 份报告/);
+  assert.match(empty, /重新记录后尚无框架发现/);
+  assert.match(empty, /截至 2026-09-27/);
+  assert.doesNotMatch(empty, /反复出现/);
+  const html = await renderFindingsIndex([report(1)], {
+    baseline: { since, excluded: 3 },
+  });
+  assert.match(html, /此前的 3 份报告/);
+  assert.match(html, /待 Agent 归类 <span>/);
+  assert.doesNotMatch(await renderFindingsIndex([]), /重新记录/);
+});

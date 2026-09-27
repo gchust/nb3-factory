@@ -60,10 +60,41 @@ function indexPage(items) {
   return `<!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Code Agent · 交付报告</title><style>body{font:15px/1.8 system-ui,sans-serif;background:#fafafa;color:#18181b;margin:0}main{max-width:1040px;margin:auto;padding:48px 24px}h1{font-size:32px}a{color:inherit;text-decoration:none}article{padding:24px;margin:16px 0;background:white;border:1px solid #e4e4e7;border-radius:12px}p,small{color:#71717a}h2{font-size:20px;margin:0}</style><main><small>CODE AGENT / DELIVERY REPORTS</small><h1>搭建交付报告</h1><p>固定模板 · 逐条验收 · 问题与改进 · 执行与用量 · <a href="findings/"><u>跨报告框架问题汇总 →</u></a></p>${items.sort((a,b)=>compareReports(b,a)).map(m=>`<article><a href="issues/${m.issue}/"><small>#${m.issue} · ${escape(outcomeLabels[m.status]||'未完成')}</small><h2>${escape(m.title)}</h2><p>Run ${m.runId} / attempt ${m.attempt} → 查看完整报告</p></a></article>`).join('')}</main></html>`;
 }
 
+const FINDINGS_INDEX = 'reports/findings/index.html';
+const FINDINGS_INPUT = 'reports/findings/input.json';
+const FINDINGS_CLASSIFICATION = 'reports/findings/classification.json';
+const FINDINGS_BASELINE = 'reports/findings/baseline.json';
+
+// A reset moves only the start line of the cross-report index: runs that
+// started earlier stay archived with their own findings but leave the index.
+async function readFindingsBaseline(client, sha) {
+  const baseline = sha ? await getJson(client, FINDINGS_BASELINE, sha) : null;
+  if (
+    baseline &&
+    (baseline.version !== 1 ||
+      !Number.isSafeInteger(baseline.since) ||
+      baseline.since <= 0)
+  )
+    throw new Error('Invalid findings baseline');
+  return baseline;
+}
+function findingsScope(registry, baseline) {
+  const all = Object.values(registry.issues);
+  const manifests = baseline
+    ? all.filter((m) => m.start >= baseline.since)
+    : all;
+  return {
+    manifests,
+    baseline: baseline && {
+      since: baseline.since,
+      excluded: all.length - manifests.length,
+    },
+  };
+}
+
 // The cross-report findings index is derived from the latest report of every
 // Issue in the registry, so a rerun replaces rather than double counts.
-async function findingsReports(client,registry,sha,current) {
-  const manifests=Object.values(registry.issues);
+async function findingsReports(client,manifests,sha,current) {
   const reports=[];
   for(let i=0;i<manifests.length;i+=8) {
     reports.push(...await Promise.all(manifests.slice(i,i+8).map(m=>
@@ -78,36 +109,36 @@ export async function readFindingsSnapshot(client, sha) {
   if (!sha) return null;
   const registry = await getJson(client, 'reports/manifest.json', sha);
   if (!registry?.issues) return null;
-  const reports = await findingsReports(client, registry, sha);
+  const scope = findingsScope(
+    registry,
+    await readFindingsBaseline(client, sha),
+  );
+  const reports = await findingsReports(client, scope.manifests, sha);
   const input = createClassificationInput(
     collectOccurrences(reports).occurrences,
   );
   let classification = null;
   try {
-    classification = await getJson(
-      client,
-      'reports/findings/classification.json',
-      sha,
-    );
+    classification = await getJson(client, FINDINGS_CLASSIFICATION, sha);
   } catch {
     /* A damaged cache must not prevent a fresh classification. */
   }
-  return { sha, reports, input, classification };
+  return { sha, reports, input, classification, baseline: scope.baseline };
 }
 
 async function findingsIndexAssets(client, registry, sha, current) {
-  const reports = await findingsReports(client, registry, sha, current);
+  const scope = findingsScope(
+    registry,
+    await readFindingsBaseline(client, sha),
+  );
+  const reports = await findingsReports(client, scope.manifests, sha, current);
   const input = createClassificationInput(
     collectOccurrences(reports).occurrences,
   );
   let classification = null;
   try {
     if (sha)
-      classification = await getJson(
-        client,
-        'reports/findings/classification.json',
-        sha,
-      );
+      classification = await getJson(client, FINDINGS_CLASSIFICATION, sha);
   } catch {
     /* Invalid classification leaves findings visible and pending. */
   }
@@ -116,12 +147,47 @@ async function findingsIndexAssets(client, registry, sha, current) {
     needsClassification: input.findings.length > 0 && !state.current,
     files: [
       [
-        'reports/findings/index.html',
-        await renderFindingsIndex(reports, { classification }),
+        FINDINGS_INDEX,
+        await renderFindingsIndex(reports, {
+          classification,
+          baseline: scope.baseline,
+        }),
       ],
-      ['reports/findings/input.json', JSON.stringify(input, null, 2)],
+      [FINDINGS_INPUT, JSON.stringify(input, null, 2)],
     ],
   };
+}
+
+// Commit findings files on top of the given site commit; a null content
+// removes the path. A concurrent publication surfaces as a ref conflict.
+async function commitFindings(client, sha, files, message) {
+  const commit = await client.request('GET', `/git/commits/${sha}`);
+  const tree = [];
+  for (const [file, content] of files) {
+    const blob =
+      content === null
+        ? null
+        : await client.request('POST', '/git/blobs', {
+            body: { content, encoding: 'utf-8' },
+          });
+    tree.push({
+      path: file,
+      mode: '100644',
+      type: 'blob',
+      sha: blob?.sha ?? null,
+    });
+  }
+  const nextTree = await client.request('POST', '/git/trees', {
+    body: { base_tree: commit.tree.sha, tree },
+  });
+  if (nextTree.sha === commit.tree.sha) return sha;
+  const next = await client.request('POST', '/git/commits', {
+    body: { message, tree: nextTree.sha, parents: [sha] },
+  });
+  await client.request('PATCH', `/git/refs/heads/${BRANCH}`, {
+    body: { sha: next.sha, force: false },
+  });
+  return next.sha;
 }
 
 // A fresh publisher validates against the current reports, never the Agent's
@@ -135,40 +201,73 @@ export async function archiveFindingsClassification(client, classification) {
     validateClassification(classification, snapshot.input);
     const html = await renderFindingsIndex(snapshot.reports, {
       classification,
+      baseline: snapshot.baseline,
     });
-    const commit = await client.request('GET', `/git/commits/${snapshot.sha}`);
     const files = [
-      ['reports/findings/index.html', html],
-      ['reports/findings/input.json', JSON.stringify(snapshot.input, null, 2)],
-      [
-        'reports/findings/classification.json',
-        JSON.stringify(classification, null, 2),
-      ],
+      [FINDINGS_INDEX, html],
+      [FINDINGS_INPUT, JSON.stringify(snapshot.input, null, 2)],
+      [FINDINGS_CLASSIFICATION, JSON.stringify(classification, null, 2)],
     ];
-    const tree = [];
-    for (const [file, content] of files) {
-      const blob = await client.request('POST', '/git/blobs', {
-        body: { content, encoding: 'utf-8' },
-      });
-      tree.push({ path: file, mode: '100644', type: 'blob', sha: blob.sha });
-    }
-    const nextTree = await client.request('POST', '/git/trees', {
-      body: { base_tree: commit.tree.sha, tree },
-    });
-    if (nextTree.sha === commit.tree.sha)
-      return { updated: true, commitSha: snapshot.sha };
-    const next = await client.request('POST', '/git/commits', {
-      body: {
-        message: 'report: classify framework findings with Agent',
-        tree: nextTree.sha,
-        parents: [snapshot.sha],
-      },
-    });
     try {
-      await client.request('PATCH', '/git/refs/heads/gh-pages', {
-        body: { sha: next.sha, force: false },
-      });
-      return { updated: true, commitSha: next.sha };
+      const commitSha = await commitFindings(
+        client,
+        snapshot.sha,
+        files,
+        'report: classify framework findings with Agent',
+      );
+      return { updated: true, commitSha };
+    } catch (error) {
+      if (attempt === 2 || !/409|422/.test(error.message)) throw error;
+    }
+  }
+}
+
+// Start the cross-report index over with runs that begin from now on. Reports,
+// their own findings sections and the site's Git history stay untouched.
+export async function resetFindingsIndex(
+  client,
+  { now = Date.now(), runId = '' } = {},
+) {
+  const baseline = {
+    version: 1,
+    since: now,
+    resetAt: new Date(now).toISOString(),
+    runId: String(runId),
+  };
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const sha = (await client.getRef(BRANCH, true))?.object?.sha;
+    const registry = sha
+      ? await getJson(client, 'reports/manifest.json', sha)
+      : null;
+    if (!registry?.issues) throw new Error('No published report site to reset');
+    const scope = findingsScope(registry, baseline);
+    const reports = await findingsReports(client, scope.manifests, sha);
+    const input = createClassificationInput(
+      collectOccurrences(reports).occurrences,
+    );
+    const files = [
+      [
+        FINDINGS_INDEX,
+        await renderFindingsIndex(reports, { baseline: scope.baseline }),
+      ],
+      [FINDINGS_INPUT, JSON.stringify(input, null, 2)],
+      [FINDINGS_BASELINE, JSON.stringify(baseline, null, 2)],
+    ];
+    // Earlier groups describe findings that are no longer in scope.
+    const classified = await client.request(
+      'GET',
+      `/contents/${FINDINGS_CLASSIFICATION}`,
+      { query: { ref: sha }, allow404: true },
+    );
+    if (classified) files.push([FINDINGS_CLASSIFICATION, null]);
+    try {
+      const commitSha = await commitFindings(
+        client,
+        sha,
+        files,
+        'report: reset framework findings index',
+      );
+      return { commitSha, baseline, excluded: scope.baseline.excluded };
     } catch (error) {
       if (attempt === 2 || !/409|422/.test(error.message)) throw error;
     }
@@ -319,5 +418,9 @@ if(process.argv[1] && path.resolve(process.argv[1])===fileURLToPath(import.meta.
     const result=await notifyReport(client,JSON.parse(readFileSync(args.publication,'utf8')),args['base-url']);
     console.log(`Report verified: ${result.url}; current comment updated: ${result.updated}`);
     if(process.env.GITHUB_STEP_SUMMARY) appendFileSync(process.env.GITHUB_STEP_SUMMARY,`\n[查看已验证的 HTML 报告](${result.url})\n`);
-  } else throw new Error('Usage: report-pages.mjs <archive|notify> --name value ...');
+  } else if(mode==='reset-findings') {
+    const result=await resetFindingsIndex(client,{runId:process.env.GITHUB_RUN_ID||''});
+    console.log(`Findings index restarts at ${result.baseline.resetAt}; ${result.excluded} earlier reports left out`);
+    if(process.env.GITHUB_OUTPUT) appendFileSync(process.env.GITHUB_OUTPUT,`commit_sha=${result.commitSha}\n`);
+  } else throw new Error('Usage: report-pages.mjs <archive|notify|reset-findings> --name value ...');
 }
