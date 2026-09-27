@@ -296,13 +296,13 @@ ${options.map((option) => `        - ${JSON.stringify(option)}`).join('\n')}
     id: build_review
     attributes:
       label: 框架评测
-      description: 搭建、业务验收、独立终验和 PR 始终执行。执行评测时，另一个 Agent 审查本次用到的 NocoBase 库、插件和 Skill，在报告首屏列出框架问题和改进建议，会增加耗时和 Token；跳过评测则报告不含框架结论。本次选择优先于来源预设。
+      description: 选填，不选时沿用来源预设，预设也未指定时执行评测。搭建、业务验收、独立终验和 PR 始终执行。执行评测时，另一个 Agent 审查本次用到的 NocoBase 库、插件和 Skill，在报告首屏列出框架问题和改进建议，会增加耗时和 Token；跳过评测则报告不含框架结论。本次选择优先于来源预设。
       options:
         - 执行评测
         - 跳过评测
       default: 0
     validations:
-      required: true
+      required: false
   - type: textarea
     id: additional_requirements
     attributes:

@@ -29,9 +29,9 @@ function fixture(choice = '默认') {
   return { state, client, prepare: () => preparePresetIssue(client, structuredClone(state.issue)) };
 }
 
-test('control values are strict, optional, and kept out of business and browser input', () => {
-  // 自动/完整/轻量 are retired labels kept for older Issues and presets.
-  for (const value of ['', undefined, '_No response_', 'auto', '默认', '自动']) assert.equal(parseBuildReviewMode(value), null);
+test('control values are optional, never block a task, and stay out of business and browser input', () => {
+  // 自动/完整/轻量 are retired labels kept for older Issues and presets; anything unrecognized is no choice.
+  for (const value of ['', undefined, '_No response_', 'auto', '默认', '自动', 'skip-everything', '随便']) assert.equal(parseBuildReviewMode(value), null);
   for (const [value, mode] of [['跳过评测','off'], ['轻量','off'], ['off','off'], ['执行评测','full'], ['完整','full'], ['full','full']]) {
     const task = parseIssueTask({ body: business + `\n### 框架评测\n\n${value}\n` });
     assert.equal(task.buildReviewMode, mode);
@@ -39,7 +39,9 @@ test('control values are strict, optional, and kept out of business and browser 
     assert.equal(task.acceptanceCriteria, 'B01. Click once');
   }
   assert.equal(Object.hasOwn(parseIssueTask({body:business}), 'buildReviewMode'), false);
-  assert.throws(() => parseBuildReviewMode('skip-everything'), /框架评测/);
+  const unknown = parseIssueTask({ body: business + '\n### 框架评测\n\nskip-everything\n' });
+  assert.equal(Object.hasOwn(unknown, 'buildReviewMode'), false);
+  assert.equal(resolveBuildReviewMode(unknown, {}), 'full');
 });
 test('task choice wins without changing global settings; explicit reassessment can review a light task', () => {
   const env = { FACTORY_BUILD_REVIEW: 'full' };
@@ -71,9 +73,16 @@ test('full override changes execution only, not source input or preset business 
   assert.equal(a.task.requirements, b.task.requirements);
   assert.equal(a.task.acceptanceCriteria, b.task.acceptanceCriteria);
 });
-test('unknown choice is rejected before writing a snapshot or runnable issue', async () => {
-  const f = fixture('anything'); await assert.rejects(f.prepare(), /框架评测/);
-  assert.equal(f.state.comments.length, 0); assert.match(f.state.issue.body, /### 预置案例/);
+test('an unknown or empty rebuild choice inherits the source preset instead of rejecting the task', async () => {
+  for (const choice of ['anything', '_No response_']) {
+    const f = fixture(choice); const prepared = await f.prepare();
+    assert.equal(prepared.task.buildReviewMode, 'off');
+    assert.match(f.state.issue.body, /### 框架评测\n\n跳过评测/);
+  }
+  const f = fixture('anything'); f.state.source.body = business;
+  const prepared = await f.prepare();
+  assert.equal(Object.hasOwn(prepared.task, 'buildReviewMode'), false);
+  assert.equal(resolveBuildReviewMode(prepared.task, {}), 'full');
 });
 test('checkpoints distinguish explicit task choices but preserve old hashes without the field', () => {
   const metadata = {issue:{number:50},task:parseIssueTask({body:business})};
@@ -100,7 +109,7 @@ test('both Issue forms expose the same safe choice and the pipeline keeps every 
   const form=readFileSync(new URL('../../ISSUE_TEMPLATE/code-agent-task.yml',import.meta.url),'utf8');
   for (const text of [renderPresetForm([source()]), form]) {
     assert.match(text, /label: 框架评测/);
-    assert.match(text, /options:\n        - 执行评测\n        - 跳过评测\n      default: 0/);
+    assert.match(text, /options:\n        - 执行评测\n        - 跳过评测\n      default: 0\n    validations:\n      required: false/);
     assert.equal(parseBuildReviewMode('执行评测'), 'full');
     assert.equal(parseBuildReviewMode('跳过评测'), 'off');
   }
