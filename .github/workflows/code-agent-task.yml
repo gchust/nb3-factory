@@ -17,6 +17,11 @@ on:
         description: External system request identity for dispatch reconciliation
         required: false
         type: string
+      failure_smoke:
+        description: Maintainer-only controlled failure using the pinned counter fixture (no model or QA)
+        required: false
+        default: false
+        type: boolean
       recovery_run_id:
         description: Recover a failed run's saved work (blank starts a normal build)
         required: false
@@ -152,6 +157,12 @@ jobs:
           ref: ${{ steps.baseline.outputs.sha }}
           path: control
           persist-credentials: false
+
+      - name: Validate explicit failure smoke request
+        if: inputs.failure_smoke == true
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: node control/.github/scripts/failure-smoke.mjs validate
 
       - name: Resolve Issue and target branch
         id: prepare
@@ -426,6 +437,7 @@ jobs:
         run: node bootstrap/.github/scripts/handoff-recovery.mjs context --checkpoint handoff --prompt "$RUNNER_TEMP/implement.md"
 
       - name: Install pinned Code Agent
+        if: inputs.failure_smoke != true
         env: &agent-install-env
           CODE_AGENT_ENGINE: ${{ vars.CODE_AGENT_ENGINE }}
           CODE_AGENT_VERSION: ${{ vars.CODE_AGENT_VERSION }}
@@ -438,6 +450,7 @@ jobs:
         run: node control/.github/scripts/install-agent.mjs
 
       - name: Install pinned Agent Browser
+        if: inputs.failure_smoke != true
         env:
           AGENT_BROWSER_VERSION: ${{ vars.AGENT_BROWSER_VERSION || '0.36.0' }}
         run: |
@@ -445,6 +458,7 @@ jobs:
           agent-browser --version
 
       - name: Install optional video encoder
+        if: inputs.failure_smoke != true
         continue-on-error: true
         timeout-minutes: 5
         run: |
@@ -454,6 +468,7 @@ jobs:
           fi
 
       - name: Prepare and validate browser environment
+        if: inputs.failure_smoke != true
         run: |
           mkdir -p "$RUNNER_TEMP/agent-artifacts/browser-environment"
           export AGENT_BROWSER_EXECUTABLE_PATH="$(command -v google-chrome || command -v google-chrome-stable || command -v chromium || true)"
@@ -464,6 +479,7 @@ jobs:
           echo "FACTORY_BROWSER_FIXTURES_MANIFEST=$RUNNER_TEMP/agent-artifacts/browser-environment/fixtures/manifest.json" >> "$GITHUB_ENV"
 
       - name: Start live progress observer
+        if: inputs.failure_smoke != true
         continue-on-error: true
         env:
           # The observer starts before model credentials exist. It can dispatch
@@ -477,9 +493,10 @@ jobs:
       - name: Run Code Agent implementation
         id: implementation
         if: >-
+          inputs.failure_smoke != true && (
           ((needs.prepare.outputs.base_ref != needs.prepare.outputs.work_branch || needs.prepare.outputs.build_comment_id != '') &&
           !(github.event_name == 'repository_dispatch' && github.event.action == 'code-agent-continue') && inputs.recovery_run_id == '') ||
-          steps.resume.outputs.phase == 'implementation'
+          steps.resume.outputs.phase == 'implementation')
         env: &agent-run-env
           CODE_AGENT_ENGINE: ${{ vars.CODE_AGENT_ENGINE }}
           FACTORY_AGENT_INSTALL_RECORD: ${{ runner.temp }}/agent-install.json
@@ -555,7 +572,7 @@ jobs:
 
       - name: Verify and repair within task limits
         id: verify
-        if: steps.implementation.outputs.handoff != 'true'
+        if: inputs.failure_smoke != true && steps.implementation.outputs.handoff != 'true'
         env: *agent-run-env
         run: |
           set +e
@@ -574,11 +591,16 @@ jobs:
           fi
           exit "$status"
 
+      - name: Inject disclosed failure before business QA
+        id: failure_smoke
+        if: inputs.failure_smoke == true
+        run: node control/.github/scripts/failure-smoke.mjs inject workspace "$RUNNER_TEMP/agent-artifacts" "${{ needs.prepare.outputs.work_branch }}"
+
       - name: Create deterministic patch
         id: patch
         if: >-
           success() ||
-          failure() && (steps.implementation.outcome == 'failure' || steps.verify.outcome == 'failure') ||
+          failure() && (steps.implementation.outcome == 'failure' || steps.verify.outcome == 'failure' || steps.failure_smoke.outcome == 'failure') ||
           steps.implementation.outputs.handoff == 'true' ||
           steps.verify.outputs.handoff == 'true'
         env:
@@ -595,7 +617,7 @@ jobs:
         # The patch is already sealed. A failed assessment never starts repair
         # or changes the independent final verification / publication verdict.
         if: >-
-          !cancelled() && steps.patch.outcome == 'success' &&
+          !cancelled() && inputs.failure_smoke != true && steps.patch.outcome == 'success' &&
           steps.implementation.outputs.handoff != 'true' && steps.verify.outputs.handoff != 'true'
         continue-on-error: true
         # The runner accepts at most 30 minutes and saves a validated partial
