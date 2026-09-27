@@ -1,4 +1,4 @@
-import { Home } from 'lucide-react';
+import { CalendarClock, DoorOpen, Home } from 'lucide-react';
 import {
   defineAppRoutes,
   defineSettingsRoutes,
@@ -43,6 +43,26 @@ const appRoutes: AppClientRouteContribution = defineAppRoutes([
     componentLoader: () => import('./pages/auth/reset-password.js'),
     name: 'reset-password',
     path: '/reset-password',
+  },
+  {
+    // Every signed-in employee may book a room. The server scopes the list to
+    // the owner's rows, so the page itself needs no permission check.
+    auth: 'required',
+    authz: 'skip',
+    componentLoader: () => import('./pages/meeting/bookings.js'),
+    name: 'meeting-bookings',
+    navigation: { title: 'meeting.navigation.bookings', icon: CalendarClock },
+    path: '/meeting-bookings',
+  },
+  {
+    // Maintaining rooms is an administrator's job. `unrestricted` hides the
+    // page from everyone but root; the server enforces the same rule.
+    auth: 'required',
+    authz: 'unrestricted',
+    componentLoader: () => import('./pages/meeting/rooms.js'),
+    name: 'meeting-rooms',
+    navigation: { title: 'meeting.navigation.rooms', icon: DoorOpen },
+    path: '/meeting-rooms',
   },
 ]);
 
