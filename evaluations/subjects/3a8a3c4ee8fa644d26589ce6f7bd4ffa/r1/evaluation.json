@@ -1,0 +1,3019 @@
+{
+  "schemaVersion": 1,
+  "type": "evaluation-report",
+  "source": {
+    "producer": "nb3-factory",
+    "instance": "gchust/nb3-factory",
+    "project": "gchust/nb3-factory",
+    "exporter": {
+      "version": 1,
+      "controlSha": "66e5c5081dac60b6b235bbfc5caebce49dde72d6",
+      "runId": 36337693874,
+      "attempt": 1
+    }
+  },
+  "run": {
+    "key": "gchust/nb3-factory/issues/415/initial",
+    "kind": "initial",
+    "identity": "recorded",
+    "batchKey": null,
+    "caseKey": null,
+    "sampleIndex": null,
+    "sampleKey": null,
+    "task": {
+      "repository": "gchust/nb3-factory",
+      "issue": 415,
+      "buildCommentId": null,
+      "title": "自动化专项：受理与站内通知"
+    },
+    "case": {
+      "source": "preset",
+      "presetIssueNumber": 204,
+      "capturedAt": "2026-09-27T15:20:54Z",
+      "inputHash": "a89c39e3840f97c63c03f46bee2c72f8646c892a5c3f5db24a2c92ca4da14c15",
+      "reviewHash": "625d7eb6e37f57613f7ac787c4b3024c94fb36d31dd9548b64fcdcd341debd1d"
+    }
+  },
+  "revision": 1,
+  "createdAt": "2026-09-27T17:39:00Z",
+  "precedence": {
+    "producer": {
+      "runId": 36329207021,
+      "attempt": 1,
+      "startedAt": "2026-09-27T15:20:45Z"
+    },
+    "executionOrder": 1,
+    "knownLaterExecutions": 0,
+    "chainTerminal": true,
+    "reviewRubric": 2,
+    "reviewState": "completed",
+    "review": {
+      "kind": "build",
+      "at": "2026-09-27T15:20:45Z",
+      "runId": 36329207021,
+      "attempt": 1
+    },
+    "qaCoverage": "partial"
+  },
+  "baseline": {
+    "track": "published-template",
+    "application": {
+      "baseRef": "develop",
+      "baseSha": "4f504529b876b45c6646d8d376d1402ffd0bc5ec",
+      "candidate": {
+        "patchSha256": "f7dac106af1eaecbe1d6a77b9afb95639770783316f9588d3672458353e57d1c",
+        "headSha": "31b81e817362ecd06a513922d47c73d5f930a8cd"
+      }
+    },
+    "factory": {
+      "controlSha": "4f504529b876b45c6646d8d376d1402ffd0bc5ec",
+      "entrySha": "4f504529b876b45c6646d8d376d1402ffd0bc5ec"
+    },
+    "template": {
+      "creatorVersion": "0.1.0-beta.22",
+      "templateVersion": "1.0.0-beta.47"
+    },
+    "dependencies": {
+      "lockfileSha256": "7db7024be35da2f6d4d75784a2afd5c398ca647ac58462cf5e58d14276395f99",
+      "baselineFingerprint": "3f947a64431b4db7857de97af26c142d374f876cd4eb727562142505523c62e5",
+      "packages": [
+        {
+          "name": "@nocobase/ai-employee",
+          "version": "0.2.0-beta.8"
+        },
+        {
+          "name": "@nocobase/ai-employee-avatars",
+          "version": "1.0.2"
+        },
+        {
+          "name": "@nocobase/app-cli",
+          "version": "1.0.0-beta.6"
+        },
+        {
+          "name": "@nocobase/app-client",
+          "version": "1.0.0-beta.21"
+        },
+        {
+          "name": "@nocobase/app-plugin-ai-employee",
+          "version": "1.0.0-beta.23"
+        },
+        {
+          "name": "@nocobase/app-plugin-ai-knowledge-base",
+          "version": "0.1.0-beta.9"
+        },
+        {
+          "name": "@nocobase/app-plugin-api-keys",
+          "version": "0.1.0-beta.8"
+        },
+        {
+          "name": "@nocobase/app-plugin-authentication",
+          "version": "1.0.0-beta.24"
+        },
+        {
+          "name": "@nocobase/app-plugin-authorization",
+          "version": "0.2.0-beta.20"
+        },
+        {
+          "name": "@nocobase/app-plugin-authz-default-access",
+          "version": "0.1.0-beta.4"
+        },
+        {
+          "name": "@nocobase/app-plugin-authz-restriction-rules",
+          "version": "0.1.0-beta.3"
+        },
+        {
+          "name": "@nocobase/app-plugin-authz-sharing-rules",
+          "version": "0.1.0-beta.4"
+        },
+        {
+          "name": "@nocobase/app-plugin-database-explorer",
+          "version": "0.1.0-beta.6"
+        },
+        {
+          "name": "@nocobase/app-plugin-file",
+          "version": "0.1.0-beta.15"
+        },
+        {
+          "name": "@nocobase/app-plugin-i18n",
+          "version": "0.1.0-beta.9"
+        },
+        {
+          "name": "@nocobase/app-plugin-mail",
+          "version": "0.1.0-beta.0"
+        },
+        {
+          "name": "@nocobase/app-plugin-notification",
+          "version": "0.1.0-beta.17"
+        },
+        {
+          "name": "@nocobase/app-plugin-notification-in-app",
+          "version": "0.2.0-beta.18"
+        },
+        {
+          "name": "@nocobase/app-plugin-notification-providers",
+          "version": "0.2.0-beta.7"
+        },
+        {
+          "name": "@nocobase/app-plugin-scheduler",
+          "version": "0.1.0-beta.9"
+        },
+        {
+          "name": "@nocobase/app-plugin-users",
+          "version": "1.0.0-beta.11"
+        },
+        {
+          "name": "@nocobase/app-plugin-workflow",
+          "version": "1.0.0-beta.28"
+        },
+        {
+          "name": "@nocobase/app-portal-sdk",
+          "version": "1.0.0-beta.3"
+        },
+        {
+          "name": "@nocobase/app-server",
+          "version": "1.0.0-beta.27"
+        },
+        {
+          "name": "@nocobase/app-skills",
+          "version": "0.1.0-beta.16"
+        },
+        {
+          "name": "@nocobase/app-websocket",
+          "version": "0.0.1"
+        },
+        {
+          "name": "@nocobase/authorization",
+          "version": "0.1.0-beta.9"
+        },
+        {
+          "name": "@nocobase/caching",
+          "version": "0.1.0-beta.2"
+        },
+        {
+          "name": "@nocobase/config",
+          "version": "0.1.0-beta.1"
+        },
+        {
+          "name": "@nocobase/cron",
+          "version": "0.1.0"
+        },
+        {
+          "name": "@nocobase/db",
+          "version": "1.0.0-beta.16"
+        },
+        {
+          "name": "@nocobase/db-sqlite",
+          "version": "0.1.0-beta.2"
+        },
+        {
+          "name": "@nocobase/dev-config",
+          "version": "0.1.0-beta.13"
+        },
+        {
+          "name": "@nocobase/drive",
+          "version": "0.1.0-beta.4"
+        },
+        {
+          "name": "@nocobase/i18n",
+          "version": "1.0.0-beta.4"
+        },
+        {
+          "name": "@nocobase/logging",
+          "version": "0.1.0-beta.6"
+        },
+        {
+          "name": "@nocobase/queue",
+          "version": "0.1.0-beta.7"
+        },
+        {
+          "name": "@nocobase/repository-input",
+          "version": "0.1.0-beta.1"
+        },
+        {
+          "name": "@nocobase/service-provider",
+          "version": "0.0.2-beta.1"
+        },
+        {
+          "name": "@nocobase/session",
+          "version": "0.1.0-beta.2"
+        },
+        {
+          "name": "@nocobase/snowflake",
+          "version": "1.0.0-beta.3"
+        }
+      ]
+    },
+    "skills": {
+      "fingerprint": "e72040a4bc7b2cc5a2b7cf308872852ba8e33bfee4c58ca5117eea7c95de2e2f",
+      "files": 107
+    },
+    "sourceSnapshot": null,
+    "inputs": {
+      "taskInputHash": "a89c39e3840f97c63c03f46bee2c72f8646c892a5c3f5db24a2c92ca4da14c15",
+      "pipelineInputHash": "eade1d08f71944971152e3ebcf0c0d3d970f7c98254d0efdae514fd9029bb0a3",
+      "reviewHash": "625d7eb6e37f57613f7ac787c4b3024c94fb36d31dd9548b64fcdcd341debd1d",
+      "reviewCriteriaHash": "625d7eb6e37f57613f7ac787c4b3024c94fb36d31dd9548b64fcdcd341debd1d",
+      "prompts": [
+        {
+          "phase": "implementation",
+          "path": "agent-implement.jsonl.invocation.json",
+          "sha256": "c3dbc3395f3a101b09e896c930f27897949a9e112cc911bf3b0f7b2f609e37cb"
+        },
+        {
+          "phase": "repair",
+          "path": "agent-repair-1.jsonl.invocation.json",
+          "sha256": "fb48c01842895cbe02ddd4757822be1a75033a0608864b203ee3da4ef590c1ca"
+        },
+        {
+          "phase": "repair",
+          "path": "agent-repair-2.jsonl.invocation.json",
+          "sha256": "eef12ff6577442b3dd3a89eb1666e3f579768dbc9184386881023c9e8e4f4c40"
+        },
+        {
+          "phase": "review",
+          "path": "agent-review.jsonl.invocation.json",
+          "sha256": "b81adf1ca42007f671986216ae05aeff1bd9f0996d127b356a20feaf9b7bb461"
+        },
+        {
+          "phase": "qa",
+          "path": "verify-2/browser-acceptance/agent-browser-acceptance.jsonl.invocation.json",
+          "sha256": "2f9f9163daa08217f88840d02d71e011a18d4c1428d3d512fff6c4c57828af34"
+        },
+        {
+          "phase": "qa",
+          "path": "verify-3/browser-acceptance/agent-browser-acceptance.jsonl.invocation.json",
+          "sha256": "2f9f9163daa08217f88840d02d71e011a18d4c1428d3d512fff6c4c57828af34"
+        }
+      ]
+    },
+    "rubric": {
+      "id": "nb3-framework",
+      "version": 2
+    },
+    "agent": {
+      "engine": "pi",
+      "model": "deepseek-v4.1-flash",
+      "version": "0.86.1",
+      "buildReviewMode": "full",
+      "configuration": {
+        "fingerprints": [
+          "13b51ba5c1f88ff0ab747ba3d232f77dfad5a813acbcfc23f91e9a3dd17cc530"
+        ],
+        "complete": false
+      }
+    },
+    "environment": {
+      "browserFixturesSha256": "3b527d18aa2f6d58fdfea5cdd916631ea1ee3425abeba09bb1f961f2128c554b",
+      "browserPreflight": "passed"
+    }
+  },
+  "executions": [
+    {
+      "key": "run/36329207021/attempt/1",
+      "kind": "implementation",
+      "order": 1,
+      "workflow": "code-agent-task",
+      "runId": 36329207021,
+      "attempt": 1,
+      "event": "workflow_dispatch",
+      "previousRunId": null,
+      "conclusion": "delivered",
+      "startedAt": "2026-09-27T15:20:45Z",
+      "endedAt": "2026-09-27T17:38:21Z",
+      "jobSeconds": 8243,
+      "controlSha": "4f504529b876b45c6646d8d376d1402ffd0bc5ec",
+      "patchSha256": "f7dac106af1eaecbe1d6a77b9afb95639770783316f9588d3672458353e57d1c",
+      "source": "usage-receipt"
+    }
+  ],
+  "outcome": {
+    "execution": "completed",
+    "acceptance": "passed",
+    "delivery": "published",
+    "pullRequest": {
+      "number": 426,
+      "headSha": "31b81e817362ecd06a513922d47c73d5f930a8cd"
+    },
+    "detail": "执行链已终结；业务验收与代码交付分别见 acceptance / delivery。"
+  },
+  "qa": {
+    "coverage": "partial",
+    "rounds": [
+      {
+        "round": 2,
+        "executionKey": "run/36329207021/attempt/1",
+        "scope": "full",
+        "passed": false,
+        "source": "verify-2/browser-acceptance/report.json",
+        "checks": [
+          {
+            "id": "B01",
+            "criterion": "主管受理一条普通请求，执行记录显示已运行，业务记录呈现相应受理结果。",
+            "status": "failed",
+            "evidence": []
+          },
+          {
+            "id": "B02",
+            "criterion": "负责人收到对应站内消息，点击能打开正确请求；标记已读后刷新仍为已读。",
+            "status": "failed",
+            "evidence": []
+          },
+          {
+            "id": "B03",
+            "criterion": "受理一条紧急请求，能从执行和业务结果确认走了紧急分支；不只验证触发按钮提示。",
+            "status": "failed",
+            "evidence": []
+          },
+          {
+            "id": "B04",
+            "criterion": "非收件人看不到这两条个人消息；不扩展断线重连或所有消息操作矩阵。\n\n无法实际完成时如实记录 failed、blocked 或 not_run，不以源码检查代替浏览器通过。",
+            "status": "failed",
+            "evidence": []
+          }
+        ]
+      },
+      {
+        "round": 3,
+        "executionKey": "run/36329207021/attempt/1",
+        "scope": "full",
+        "passed": true,
+        "source": "verify-3/browser-acceptance/report.json",
+        "checks": [
+          {
+            "id": "B01",
+            "criterion": "主管受理一条普通请求，执行记录显示已运行，业务记录呈现相应受理结果。",
+            "status": "passed",
+            "evidence": [
+              "qa/3/service-requests-list.png",
+              "qa/3/request-normal-before.png",
+              "qa/3/request-normal-accepted.png",
+              "qa/3/workflow-runs-normal.png",
+              "qa/3/run-normal-register.png",
+              "qa/3/run-normal-evaluate.png",
+              "qa/3/run-normal-record-result.png",
+              "qa/3/run-normal-urgent-notexecuted.png"
+            ]
+          },
+          {
+            "id": "B02",
+            "criterion": "负责人收到对应站内消息，点击能打开正确请求；标记已读后刷新仍为已读。",
+            "status": "passed",
+            "evidence": [
+              "qa/3/assignee-messages-unread.png",
+              "qa/3/assignee-opened-request.png",
+              "qa/3/assignee-message-marked-read.png",
+              "qa/3/assignee-read-after-refresh.png",
+              "qa/3/assignee-opened-urgent-request.png"
+            ]
+          },
+          {
+            "id": "B03",
+            "criterion": "受理一条紧急请求，能从执行和业务结果确认走了紧急分支；不只验证触发按钮提示。",
+            "status": "passed",
+            "evidence": [
+              "qa/3/request-urgent-before.png",
+              "qa/3/request-urgent-accepted.png",
+              "qa/3/workflow-runs-urgent.png",
+              "qa/3/run-urgent-register.png",
+              "qa/3/run-urgent-evaluate.png",
+              "qa/3/run-urgent-record-result.png",
+              "qa/3/run-urgent-normal-notexecuted.png",
+              "qa/3/run-urgent-notify.png"
+            ]
+          },
+          {
+            "id": "B04",
+            "criterion": "非收件人看不到这两条个人消息；不扩展断线重连或所有消息操作矩阵。\n\n无法实际完成时如实记录 failed、blocked 或 not_run，不以源码检查代替浏览器通过。",
+            "status": "passed",
+            "evidence": [
+              "qa/3/admin-messages-empty.png"
+            ]
+          }
+        ]
+      }
+    ],
+    "firstFull": {
+      "status": "unknown",
+      "round": null,
+      "executionKey": null,
+      "basis": "第一轮验证位于更早的执行，本产物未包含，不能推断首轮结果。"
+    },
+    "finalFull": {
+      "status": "passed",
+      "round": 3,
+      "executionKey": "run/36329207021/attempt/1",
+      "basis": "本产物中最后一次实际全量 QA。"
+    },
+    "criteria": [
+      {
+        "id": "B01",
+        "text": "主管受理一条普通请求，执行记录显示已运行，业务记录呈现相应受理结果。",
+        "optional": false,
+        "firstFull": "unknown",
+        "finalFull": "passed"
+      },
+      {
+        "id": "B02",
+        "text": "负责人收到对应站内消息，点击能打开正确请求；标记已读后刷新仍为已读。",
+        "optional": false,
+        "firstFull": "unknown",
+        "finalFull": "passed"
+      },
+      {
+        "id": "B03",
+        "text": "受理一条紧急请求，能从执行和业务结果确认走了紧急分支；不只验证触发按钮提示。",
+        "optional": false,
+        "firstFull": "unknown",
+        "finalFull": "passed"
+      },
+      {
+        "id": "B04",
+        "text": "非收件人看不到这两条个人消息；不扩展断线重连或所有消息操作矩阵。\n\n无法实际完成时如实记录 failed、blocked 或 not_run，不以源码检查代替浏览器通过。",
+        "optional": false,
+        "firstFull": "unknown",
+        "finalFull": "passed"
+      }
+    ],
+    "firstPassWithoutRepair": "unknown",
+    "counts": {
+      "execution": {
+        "verificationAttempts": 3,
+        "repairAttempts": 2,
+        "source": "repair-summary.json（仅本执行）"
+      },
+      "chain": {
+        "verificationAttempts": 3,
+        "repairAttempts": 2,
+        "source": "pipeline-state.json（跨 Handoff 累计检查点，不再相加）"
+      }
+    },
+    "note": "工厂修复次数不等于 Agent 开发中的全部自测和修正；未记录 Agent 内部试错，不宣称开发全程无错误。"
+  },
+  "reviews": [
+    {
+      "key": "review/36329207021.1/v2-ab35ff781b94",
+      "role": "original",
+      "selected": true,
+      "state": "completed",
+      "reason": "独立 Agent 评审完成；评分是基于本次证据的意见，不替代业务 QA 或人工评审。",
+      "rubric": {
+        "id": "nb3-framework",
+        "version": 2,
+        "scale": {
+          "min": 0,
+          "max": 100
+        },
+        "businessUiIncluded": false,
+        "dimensions": [
+          {
+            "key": "requirementFit",
+            "label": "需求满足度"
+          },
+          {
+            "key": "usability",
+            "label": "使用便利度"
+          },
+          {
+            "key": "agentFriendliness",
+            "label": "Agent 友好度"
+          },
+          {
+            "key": "design",
+            "label": "设计合理性"
+          },
+          {
+            "key": "reliability",
+            "label": "实现完整性与可靠性"
+          }
+        ]
+      },
+      "reviewer": {
+        "engine": "pi",
+        "model": "deepseek-v4.1-flash",
+        "version": "0.86.1",
+        "runId": 36329207021,
+        "attempt": 1,
+        "controlSha": "4f504529b876b45c6646d8d376d1402ffd0bc5ec",
+        "replay": false
+      },
+      "producer": {
+        "runId": 36329207021,
+        "attempt": 1
+      },
+      "basis": {
+        "inputHash": "ab35ff781b9495fd6c88a35e018243d098d49e323d619e69022fb5ec57a9656c",
+        "patchSha256": "f7dac106af1eaecbe1d6a77b9afb95639770783316f9588d3672458353e57d1c",
+        "baseSha": "4f504529b876b45c6646d8d376d1402ffd0bc5ec",
+        "lockfileSha256": "7db7024be35da2f6d4d75784a2afd5c398ca647ac58462cf5e58d14276395f99",
+        "reviewCriteriaHash": "625d7eb6e37f57613f7ac787c4b3024c94fb36d31dd9548b64fcdcd341debd1d",
+        "artifactHash": "3a91f42a5d4354f1a7c548b600c0ef80f2b629a48ae5b6ec4cc7390e176fc0ab"
+      },
+      "buildReviewMode": "full",
+      "summary": "本 Run 的生产独有 Workflow 失败可在框架侧定位：@nocobase/app-plugin-workflow 在生产把工作流源码复制到隔离 Artifact 并以原生 import() 加载，artifact 不含 node_modules 且禁止解析到 root 之外；而其附带 Skill 却声称 Run 模块导入按普通运行时规则解析，并推荐导入服务 owner 的原始公共 token。结果依赖 @nocobase/db 的 Run 模块在生产报 Cannot find package，工作流首节点 Error、接口 502（verify-2 观测），开发态因从源码包加载而不暴露。服务 token 是冻结身份对象，无法跨 artifact 导入复用，插件也未提供受支持通道；应用只能改用字符串 token 经只读 resolver 绕行（verify-3 通过）。因此归因为 Workflow 插件的指引缺口/能力缺口，而非业务代码或 NocoBase3 内核缺陷；其余模块（通知、数据库、路由/客户端组装）按官方入口装配正常。",
+      "progress": {
+        "complete": true,
+        "pendingModules": []
+      },
+      "modules": [
+        {
+          "key": "review/36329207021.1/v2-ab35ff781b94/M1",
+          "name": "Workflow 运行模块与 Artifact 隔离",
+          "subjectKeys": [
+            "pkg:@nocobase/app-plugin-workflow",
+            "guide:@nocobase/app-plugin-workflow/skills/nocobase-app-plugin-workflow"
+          ],
+          "mapping": "resolved",
+          "targets": [
+            {
+              "kind": "plugin",
+              "name": "@nocobase/app-plugin-workflow",
+              "subjectKey": "pkg:@nocobase/app-plugin-workflow",
+              "entrypoints": [
+                "defineWorkflow",
+                "RunInstruction.create",
+                "ConditionInstruction.create",
+                "WorkflowService",
+                "loadRunModule"
+              ],
+              "evidence": [
+                "review/36329207021.1/v2-ab35ff781b94/E1",
+                "review/36329207021.1/v2-ab35ff781b94/E2",
+                "review/36329207021.1/v2-ab35ff781b94/E3"
+              ]
+            },
+            {
+              "kind": "guidance",
+              "name": "packages/@nocobase/app-plugin-workflow/skills/nocobase-app-plugin-workflow",
+              "subjectKey": "guide:@nocobase/app-plugin-workflow/skills/nocobase-app-plugin-workflow",
+              "entrypoints": [
+                "references/dsl-authoring.md §Run modules",
+                "references/dsl-authoring.md §执行与服务解析"
+              ],
+              "evidence": [
+                "review/36329207021.1/v2-ab35ff781b94/E4",
+                "review/36329207021.1/v2-ab35ff781b94/E5"
+              ]
+            }
+          ],
+          "scope": "生产环境下 Workflow Run 模块的加载、隔离边界与访问应用服务的方式。",
+          "limitations": "仅评估 app-plugin-workflow 的生产加载路径；导入失败由 verify-2 观测，本轮未独立复现。",
+          "criteria": [
+            "B01",
+            "B02",
+            "B03",
+            "B04"
+          ],
+          "qa": {
+            "firstFull": "unknown",
+            "finalFull": "passed"
+          },
+          "requirements": [
+            {
+              "need": "定义可执行的多节点业务工作流并按事件触发。",
+              "responsibility": "插件提供 defineWorkflow/RunInstruction/ConditionInstruction 生成 AST，WorkflowService 负责校验、落库、入队与触发。",
+              "support": "direct",
+              "recommendedUsage": "在 server/workflows/<key> 下用 defineWorkflow 声明节点，RunInstruction.config.module 指向本工作流目录内实现文件。",
+              "actualUsage": "app 用 defineWorkflow + RunInstruction/ConditionInstruction 声明受理流程，accept() 经 workflowServiceToken.trigger 触发并轮询 run 状态。",
+              "gapOwner": "none",
+              "evidence": [
+                "review/36329207021.1/v2-ab35ff781b94/E1",
+                "review/36329207021.1/v2-ab35ff781b94/E2",
+                "review/36329207021.1/v2-ab35ff781b94/E26"
+              ]
+            },
+            {
+              "need": "Run 模块在隔离 Artifact 中加载时仍能访问数据库与通知服务。",
+              "responsibility": "instruction.js 用原生 import() 加载 artifact 内文件并注入只读 services resolver；artifact 只是工作流源码目录的副本。",
+              "support": "workaround",
+              "recommendedUsage": "Skill 声称 Run 模块导入按应用普通运行时规则解析，并要求导入服务 owner 的原始公共 token。",
+              "actualUsage": "app 的 Run 模块依赖 @nocobase/db，生产 artifact 无 node_modules，原生 import 报 Cannot find package，工作流首节点 Error；开发态因从源码包加载而未暴露。",
+              "gapOwner": "plugin",
+              "evidence": [
+                "review/36329207021.1/v2-ab35ff781b94/E3",
+                "review/36329207021.1/v2-ab35ff781b94/E4",
+                "review/36329207021.1/v2-ab35ff781b94/E5",
+                "review/36329207021.1/v2-ab35ff781b94/E11",
+                "review/36329207021.1/v2-ab35ff781b94/E9"
+              ]
+            }
+          ],
+          "scores": {
+            "requirementFit": {
+              "score": 82,
+              "reason": "工作流声明与触发链路完整，受理/分支/通知节点均可用；但 Run 模块访问服务在生产默认不可用，需求只能靠应用侧绕行满足。",
+              "evidence": [
+                "review/36329207021.1/v2-ab35ff781b94/E1",
+                "review/36329207021.1/v2-ab35ff781b94/E2"
+              ]
+            },
+            "usability": {
+              "score": 55,
+              "reason": "Skill 未提示生产 artifact 隔离，且推荐的 token 导入方式在 artifact 边界内无法解析，开发者必须自行发现字符串 token 方案。",
+              "evidence": [
+                "review/36329207021.1/v2-ab35ff781b94/E4",
+                "review/36329207021.1/v2-ab35ff781b94/E5"
+              ]
+            },
+            "agentFriendliness": {
+              "score": 52,
+              "reason": "实现 Agent 已阅读 Skill 并显式担心相对导入逃逸，却因 Skill 明示导入走普通规则而未察觉裸说明符同样失败，指引反而误导。",
+              "evidence": [
+                "review/36329207021.1/v2-ab35ff781b94/E4",
+                "review/36329207021.1/v2-ab35ff781b94/E5"
+              ]
+            },
+            "design": {
+              "score": 80,
+              "reason": "隔离 artifact 与冻结只读 resolver 的边界清晰、可确定性复现，设计意图合理；欠缺的是通往应用服务的受支持通道。",
+              "evidence": [
+                "review/36329207021.1/v2-ab35ff781b94/E1",
+                "review/36329207021.1/v2-ab35ff781b94/E3"
+              ]
+            },
+            "reliability": {
+              "score": 72,
+              "reason": "加载、解析与物化路径实现完整且校验严格；但默认生产路径会使常见 Run 模块运行时失败，可靠性受未声明约束限制。",
+              "evidence": [
+                "review/36329207021.1/v2-ab35ff781b94/E1",
+                "review/36329207021.1/v2-ab35ff781b94/E2",
+                "review/36329207021.1/v2-ab35ff781b94/E3"
+              ]
+            }
+          }
+        },
+        {
+          "key": "review/36329207021.1/v2-ab35ff781b94/M2",
+          "name": "服务令牌与服务解析",
+          "subjectKeys": [
+            "pkg:@nocobase/service-provider",
+            "pkg:@nocobase/app-plugin-workflow"
+          ],
+          "mapping": "resolved",
+          "targets": [
+            {
+              "kind": "library",
+              "name": "@nocobase/service-provider",
+              "subjectKey": "pkg:@nocobase/service-provider",
+              "entrypoints": [
+                "createServiceToken",
+                "ServiceContainer.singleton",
+                "ServiceContainer.has",
+                "ServiceContainer.resolve"
+              ],
+              "evidence": [
+                "review/36329207021.1/v2-ab35ff781b94/E6",
+                "review/36329207021.1/v2-ab35ff781b94/E7"
+              ]
+            },
+            {
+              "kind": "plugin",
+              "name": "@nocobase/app-plugin-workflow",
+              "subjectKey": "pkg:@nocobase/app-plugin-workflow",
+              "entrypoints": [
+                "createWorkflowRunServices"
+              ],
+              "evidence": [
+                "review/36329207021.1/v2-ab35ff781b94/E8"
+              ]
+            }
+          ],
+          "scope": "应用服务令牌的定义、容器注册解析，以及 Run 模块跨 Artifact 解析服务的能力边界。",
+          "limitations": "只分析 token 身份语义与 resolver 包装，未覆盖 registry/provider 的完整生命周期。",
+          "criteria": [
+            "B01",
+            "B02",
+            "B03",
+            "B04"
+          ],
+          "qa": {
+            "firstFull": "unknown",
+            "finalFull": "passed"
+          },
+          "requirements": [
+            {
+              "need": "把应用服务注册到容器以便按令牌解析。",
+              "responsibility": "ServiceContainer 以 token 对象身份为 Map 键承载 instance/singleton 绑定。",
+              "support": "direct",
+              "recommendedUsage": "在 ServiceProvider.register 中 container.singleton(serviceToken, resolver => new Service(resolver))。",
+              "actualUsage": "app 的 ServiceRequestServiceProvider 注册 serviceRequestServiceToken 及 workflowSteps 别名。",
+              "gapOwner": "none",
+              "evidence": [
+                "review/36329207021.1/v2-ab35ff781b94/E7",
+                "review/36329207021.1/v2-ab35ff781b94/E9"
+              ]
+            },
+            {
+              "need": "Run 模块跨 Artifact 边界解析应用服务。",
+              "responsibility": "服务令牌是 Object.freeze({name}) 身份对象，跨包复制会产生不同引用，容器按身份查表必然失配。",
+              "support": "workaround",
+              "recommendedUsage": "Skill 要求导入服务 owner 的原始公共 token，不要重建同名 token。",
+              "actualUsage": "artifact 内无法导入该包；应用改用字符串 token（值相等）经 workflowSteps resolver 转发，绕过身份限制。",
+              "gapOwner": "plugin",
+              "evidence": [
+                "review/36329207021.1/v2-ab35ff781b94/E6",
+                "review/36329207021.1/v2-ab35ff781b94/E8",
+                "review/36329207021.1/v2-ab35ff781b94/E9"
+              ]
+            }
+          ],
+          "scores": {
+            "requirementFit": {
+              "score": 70,
+              "reason": "应用服务注册与解析在进程内完整可用；跨 artifact 场景缺少受支持通道，只能靠字符串 token 值相等绕行。",
+              "evidence": [
+                "review/36329207021.1/v2-ab35ff781b94/E7"
+              ]
+            },
+            "usability": {
+              "score": 50,
+              "reason": "身份 token 的语义对不熟悉实现的开发者不直观，跨边界失配时错误信息只显示 token 名，难以定位。",
+              "evidence": [
+                "review/36329207021.1/v2-ab35ff781b94/E6"
+              ]
+            },
+            "agentFriendliness": {
+              "score": 48,
+              "reason": "Skill 推荐“导入原始 token”，但该做法在 artifact 内根本不可行，Agent 需自行推导字符串方案。",
+              "evidence": [
+                "review/36329207021.1/v2-ab35ff781b94/E6",
+                "review/36329207021.1/v2-ab35ff781b94/E8"
+              ]
+            },
+            "design": {
+              "score": 62,
+              "reason": "容器与只读 resolver 的接口简洁；但 token 身份语义与 Workflow 隔离边界组合后产生未覆盖的解析缺口。",
+              "evidence": [
+                "review/36329207021.1/v2-ab35ff781b94/E6",
+                "review/36329207021.1/v2-ab35ff781b94/E7"
+              ]
+            },
+            "reliability": {
+              "score": 78,
+              "reason": "令牌与容器实现稳定、无外部依赖；缺口在于缺少名称级解析或绑定注入以跨越 artifact 边界。",
+              "evidence": [
+                "review/36329207021.1/v2-ab35ff781b94/E6",
+                "review/36329207021.1/v2-ab35ff781b94/E7",
+                "review/36329207021.1/v2-ab35ff781b94/E8"
+              ]
+            }
+          }
+        },
+        {
+          "key": "review/36329207021.1/v2-ab35ff781b94/M3",
+          "name": "持久站内通知与收件箱",
+          "subjectKeys": [
+            "pkg:@nocobase/app-plugin-notification",
+            "pkg:@nocobase/app-plugin-notification-in-app",
+            "guide:@nocobase/app-plugin-notification/skills/nocobase-app-plugin-notification",
+            "guide:@nocobase/app-plugin-notification-in-app/skills/nocobase-app-plugin-notification-in-app"
+          ],
+          "mapping": "resolved",
+          "targets": [
+            {
+              "kind": "plugin",
+              "name": "@nocobase/app-plugin-notification",
+              "subjectKey": "pkg:@nocobase/app-plugin-notification",
+              "entrypoints": [
+                "notificationServiceToken",
+                "NotificationService.send"
+              ],
+              "evidence": [
+                "review/36329207021.1/v2-ab35ff781b94/E13",
+                "review/36329207021.1/v2-ab35ff781b94/E14"
+              ]
+            },
+            {
+              "kind": "plugin",
+              "name": "@nocobase/app-plugin-notification-in-app",
+              "subjectKey": "pkg:@nocobase/app-plugin-notification-in-app",
+              "entrypoints": [
+                "NotificationInAppInbox",
+                "NotificationInAppProvider",
+                "routes"
+              ],
+              "evidence": [
+                "review/36329207021.1/v2-ab35ff781b94/E15",
+                "review/36329207021.1/v2-ab35ff781b94/E16"
+              ]
+            },
+            {
+              "kind": "guidance",
+              "name": "packages/@nocobase/app-plugin-notification/skills/nocobase-app-plugin-notification",
+              "subjectKey": "guide:@nocobase/app-plugin-notification/skills/nocobase-app-plugin-notification",
+              "entrypoints": [
+                "references/sending-notifications.md"
+              ],
+              "evidence": [
+                "review/36329207021.1/v2-ab35ff781b94/E17"
+              ]
+            },
+            {
+              "kind": "guidance",
+              "name": "packages/@nocobase/app-plugin-notification-in-app/skills/nocobase-app-plugin-notification-in-app",
+              "subjectKey": "guide:@nocobase/app-plugin-notification-in-app/skills/nocobase-app-plugin-notification-in-app",
+              "entrypoints": [
+                "SKILL.md",
+                "references/inbox-integration.md"
+              ],
+              "evidence": [
+                "review/36329207021.1/v2-ab35ff781b94/E18"
+              ]
+            }
+          ],
+          "scope": "服务端发送持久站内通知，以及客户端收件箱的读取与已读行为。",
+          "limitations": "未评估外部 Provider（邮件/IM）与实时重连，仅覆盖站内 inbox 路径。",
+          "criteria": [
+            "B01",
+            "B02",
+            "B03",
+            "B04"
+          ],
+          "qa": {
+            "firstFull": "unknown",
+            "finalFull": "passed"
+          },
+          "requirements": [
+            {
+              "need": "向指定用户投递持久且可幂等的站内消息。",
+              "responsibility": "NotificationService.send 校验 idempotencyKey/source/messages(Channel→消息) 并展开收件人。",
+              "support": "direct",
+              "recommendedUsage": "resolve notificationServiceToken 后 send({idempotencyKey, source, messages:{inbox:{to,title,body,target:{type:'route',path}}}})。",
+              "actualUsage": "app 的 notifyAssignee 用 service-request-accepted:<id> 幂等键发送 inbox 消息，target 指向请求详情。",
+              "gapOwner": "none",
+              "evidence": [
+                "review/36329207021.1/v2-ab35ff781b94/E14",
+                "review/36329207021.1/v2-ab35ff781b94/E17"
+              ]
+            },
+            {
+              "need": "客户端展示收件箱并维护持久已读状态，且仅收件人可见。",
+              "responsibility": "in-app 客户端提供 Provider/Inbox 组件与 HTTP 路由，HTTP 状态为权威。",
+              "support": "direct",
+              "recommendedUsage": "挂载 Provider/Inbox 与 routes，用 useApiClient 读写，标记已读后刷新保留。",
+              "actualUsage": "app 消息页使用 NotificationInAppInbox/Provider；verify-3 验证已读持久且非收件人为空。",
+              "gapOwner": "none",
+              "evidence": [
+                "review/36329207021.1/v2-ab35ff781b94/E15",
+                "review/36329207021.1/v2-ab35ff781b94/E16",
+                "review/36329207021.1/v2-ab35ff781b94/E18"
+              ]
+            }
+          ],
+          "scores": {
+            "requirementFit": {
+              "score": 90,
+              "reason": "发送契约、幂等、路由目标与客户端收件箱行为齐备，浏览器验收直接确认消息投递与已读持久。",
+              "evidence": [
+                "review/36329207021.1/v2-ab35ff781b94/E14",
+                "review/36329207021.1/v2-ab35ff781b94/E17"
+              ]
+            },
+            "usability": {
+              "score": 86,
+              "reason": "Skill 给出可直接套用的调用样例，Channel 名与消息字段语义清楚。",
+              "evidence": [
+                "review/36329207021.1/v2-ab35ff781b94/E17",
+                "review/36329207021.1/v2-ab35ff781b94/E18"
+              ]
+            },
+            "agentFriendliness": {
+              "score": 85,
+              "reason": "Skill 明确了 HTTP 权威、路由 basename 与用户过滤等易错点，Agent 可据此实现。",
+              "evidence": [
+                "review/36329207021.1/v2-ab35ff781b94/E17",
+                "review/36329207021.1/v2-ab35ff781b94/E18"
+              ]
+            },
+            "design": {
+              "score": 86,
+              "reason": "发送、幂等日志与投递记录分层清晰，in-app 组件以 Provider/Inbox 组合，边界合理。",
+              "evidence": [
+                "review/36329207021.1/v2-ab35ff781b94/E13",
+                "review/36329207021.1/v2-ab35ff781b94/E15",
+                "review/36329207021.1/v2-ab35ff781b94/E16"
+              ]
+            },
+            "reliability": {
+              "score": 86,
+              "reason": "发送前校验完整，幂等键与 source 防止重复投递，客户端已读由服务端持久化。",
+              "evidence": [
+                "review/36329207021.1/v2-ab35ff781b94/E14",
+                "review/36329207021.1/v2-ab35ff781b94/E15",
+                "review/36329207021.1/v2-ab35ff781b94/E16"
+              ]
+            }
+          }
+        },
+        {
+          "key": "review/36329207021.1/v2-ab35ff781b94/M4",
+          "name": "数据库迁移、种子与仓储",
+          "subjectKeys": [
+            "pkg:@nocobase/db",
+            "guide:@nocobase/db/skills/nocobase-db"
+          ],
+          "mapping": "resolved",
+          "targets": [
+            {
+              "kind": "library",
+              "name": "@nocobase/db",
+              "subjectKey": "pkg:@nocobase/db",
+              "entrypoints": [
+                "defineMigration",
+                "defineSeed",
+                "databaseManagerToken",
+                "builder.createCollection"
+              ],
+              "evidence": [
+                "review/36329207021.1/v2-ab35ff781b94/E19",
+                "review/36329207021.1/v2-ab35ff781b94/E20",
+                "review/36329207021.1/v2-ab35ff781b94/E22"
+              ]
+            },
+            {
+              "kind": "guidance",
+              "name": "packages/@nocobase/db/skills/nocobase-db",
+              "subjectKey": "guide:@nocobase/db/skills/nocobase-db",
+              "entrypoints": [
+                "SKILL.md §migrations/seeds",
+                "SKILL.md §Repository and Query"
+              ],
+              "evidence": [
+                "review/36329207021.1/v2-ab35ff781b94/E21"
+              ]
+            }
+          ],
+          "scope": "业务表结构迁移、安装种子数据以及运行期仓储读写。",
+          "limitations": "未覆盖多数据源、事务与 schema inspector 的高级场景。",
+          "criteria": [
+            "B01",
+            "B02",
+            "B03",
+            "B04"
+          ],
+          "qa": {
+            "firstFull": "unknown",
+            "finalFull": "passed"
+          },
+          "requirements": [
+            {
+              "need": "声明式创建或变更业务集合。",
+              "responsibility": "defineMigration + context.builder.createCollection。",
+              "support": "direct",
+              "recommendedUsage": "database/main/migrations/*.ts 用 defineMigration，up 里 builder.createCollection(name, cb)，down 里 dropCollection。",
+              "actualUsage": "app 的迁移用 defineMigration + builder.createCollection 建 serviceRequests、索引与 down。",
+              "gapOwner": "none",
+              "evidence": [
+                "review/36329207021.1/v2-ab35ff781b94/E19",
+                "review/36329207021.1/v2-ab35ff781b94/E20",
+                "review/36329207021.1/v2-ab35ff781b94/E21",
+                "review/36329207021.1/v2-ab35ff781b94/E29"
+              ]
+            },
+            {
+              "need": "写入安装种子数据。",
+              "responsibility": "defineSeed + context.repository upsert。",
+              "support": "direct",
+              "recommendedUsage": "database/main/seeds/*.ts 用 defineSeed，run({repository}) 做 upsert 或写入安装数据。",
+              "actualUsage": "app 的种子用 defineSeed 写入演示数据，并复用 better-auth/crypto 的 hashPassword。",
+              "gapOwner": "none",
+              "evidence": [
+                "review/36329207021.1/v2-ab35ff781b94/E19",
+                "review/36329207021.1/v2-ab35ff781b94/E22",
+                "review/36329207021.1/v2-ab35ff781b94/E21",
+                "review/36329207021.1/v2-ab35ff781b94/E30"
+              ]
+            }
+          ],
+          "scores": {
+            "requirementFit": {
+              "score": 92,
+              "reason": "迁移、种子、集合声明与仓储出口完整，应用按 Skill 写法即可建表并写安装数据。",
+              "evidence": [
+                "review/36329207021.1/v2-ab35ff781b94/E19",
+                "review/36329207021.1/v2-ab35ff781b94/E21"
+              ]
+            },
+            "usability": {
+              "score": 88,
+              "reason": "Skill 对 migration/seed 的工具选择（builder/query/repository）有明确且可执行的规则与样例。",
+              "evidence": [
+                "review/36329207021.1/v2-ab35ff781b94/E21"
+              ]
+            },
+            "agentFriendliness": {
+              "score": 86,
+              "reason": "入口集中、命名一致，Skill 明确指出各上下文可用的工具，减少误用。",
+              "evidence": [
+                "review/36329207021.1/v2-ab35ff781b94/E21"
+              ]
+            },
+            "design": {
+              "score": 88,
+              "reason": "定义函数与 loader/migrator/seeder 分层，公共出口只暴露支持 API，职责清晰。",
+              "evidence": [
+                "review/36329207021.1/v2-ab35ff781b94/E19",
+                "review/36329207021.1/v2-ab35ff781b94/E20",
+                "review/36329207021.1/v2-ab35ff781b94/E22"
+              ]
+            },
+            "reliability": {
+              "score": 88,
+              "reason": "迁移/种子定义为纯标记并交给 loader 校验，幂等 upsert 与事务规则由框架承载。",
+              "evidence": [
+                "review/36329207021.1/v2-ab35ff781b94/E19",
+                "review/36329207021.1/v2-ab35ff781b94/E20",
+                "review/36329207021.1/v2-ab35ff781b94/E22"
+              ]
+            }
+          }
+        },
+        {
+          "key": "review/36329207021.1/v2-ab35ff781b94/M5",
+          "name": "HTTP 路由与客户端页面组装",
+          "subjectKeys": [
+            "pkg:@nocobase/app-server",
+            "pkg:@nocobase/app-client",
+            "skill:nocobase-app-development"
+          ],
+          "mapping": "resolved",
+          "targets": [
+            {
+              "kind": "library",
+              "name": "@nocobase/app-server",
+              "subjectKey": "pkg:@nocobase/app-server",
+              "entrypoints": [
+                "defineApiRoutes",
+                "defineRootRoutes",
+                "defineHttpMiddleware"
+              ],
+              "evidence": [
+                "review/36329207021.1/v2-ab35ff781b94/E23"
+              ]
+            },
+            {
+              "kind": "library",
+              "name": "@nocobase/app-client",
+              "subjectKey": "pkg:@nocobase/app-client",
+              "entrypoints": [
+                "defineAppRoutes",
+                "defineSettingsRoutes"
+              ],
+              "evidence": [
+                "review/36329207021.1/v2-ab35ff781b94/E24"
+              ]
+            },
+            {
+              "kind": "guidance",
+              "name": "app/.agents/skills/nocobase-app-development",
+              "subjectKey": "skill:nocobase-app-development",
+              "entrypoints": [
+                "SKILL.md §business code places"
+              ],
+              "evidence": [
+                "review/36329207021.1/v2-ab35ff781b94/E25"
+              ]
+            }
+          ],
+          "scope": "服务端 REST 路由声明与鉴权，以及客户端页面与导航路由注册。",
+          "limitations": "未覆盖鉴权/授权中间件的完整策略与 Dev Route 的生产裁剪细节。",
+          "criteria": [
+            "B01",
+            "B02",
+            "B03",
+            "B04"
+          ],
+          "qa": {
+            "firstFull": "unknown",
+            "finalFull": "passed"
+          },
+          "requirements": [
+            {
+              "need": "暴露受鉴权的业务 HTTP 接口。",
+              "responsibility": "defineApiRoutes 注册 api scope 路由，应用负责装配鉴权中间件。",
+              "support": "direct",
+              "recommendedUsage": "server/routes 用 defineApiRoutes(createRouter)，并在子路由统一安装 auth.required()。",
+              "actualUsage": "app 用 defineApiRoutes + Hono + authenticationToken/auth.required() 暴露服务请求接口。",
+              "gapOwner": "none",
+              "evidence": [
+                "review/36329207021.1/v2-ab35ff781b94/E23",
+                "review/36329207021.1/v2-ab35ff781b94/E28"
+              ]
+            },
+            {
+              "need": "注册客户端页面与侧边导航。",
+              "responsibility": "defineAppRoutes/defineSettingsRoutes 冻结路由声明，供路由与设置导航消费。",
+              "support": "direct",
+              "recommendedUsage": "client/routes.ts 用 defineAppRoutes 声明 path/componentLoader/navigation/auth/authz。",
+              "actualUsage": "app 用 defineAppRoutes 声明 service-requests 列表与详情页，并声明 navigation。",
+              "gapOwner": "none",
+              "evidence": [
+                "review/36329207021.1/v2-ab35ff781b94/E24",
+                "review/36329207021.1/v2-ab35ff781b94/E25",
+                "review/36329207021.1/v2-ab35ff781b94/E27"
+              ]
+            }
+          ],
+          "scores": {
+            "requirementFit": {
+              "score": 90,
+              "reason": "服务端路由贡献与客户端路由声明均为官方机制，应用按两种入口即完成页面与接口装配。",
+              "evidence": [
+                "review/36329207021.1/v2-ab35ff781b94/E23",
+                "review/36329207021.1/v2-ab35ff781b94/E24"
+              ]
+            },
+            "usability": {
+              "score": 84,
+              "reason": "Skill 明确业务代码归属位置，路由贡献对象形状简单、冻结防误改。",
+              "evidence": [
+                "review/36329207021.1/v2-ab35ff781b94/E25"
+              ]
+            },
+            "agentFriendliness": {
+              "score": 82,
+              "reason": "入口命名直接、类型完备，Skill 指出的目录约定减少了试错。",
+              "evidence": [
+                "review/36329207021.1/v2-ab35ff781b94/E25"
+              ]
+            },
+            "design": {
+              "score": 86,
+              "reason": "路由以冻结贡献对象声明并按 scope/parent 装配，鉴权与授权分离，边界清楚。",
+              "evidence": [
+                "review/36329207021.1/v2-ab35ff781b94/E23",
+                "review/36329207021.1/v2-ab35ff781b94/E24"
+              ]
+            },
+            "reliability": {
+              "score": 84,
+              "reason": "定义函数冻结返回、无副作用，装配由应用生命周期统一处理。",
+              "evidence": [
+                "review/36329207021.1/v2-ab35ff781b94/E23",
+                "review/36329207021.1/v2-ab35ff781b94/E24"
+              ]
+            }
+          }
+        }
+      ],
+      "findings": [
+        {
+          "id": "review/36329207021.1/v2-ab35ff781b94/F1",
+          "localId": "F1",
+          "kind": "misleading",
+          "owner": "documentation",
+          "severity": "major",
+          "confidence": "confirmed",
+          "confirmedBy": "reviewer",
+          "reviewerStatus": "open",
+          "title": "Workflow Skill 对 Run 模块导入解析与 token 导入的描述在生产 Artifact 中不成立",
+          "detail": "dsl-authoring.md 称 Run 模块导入按应用普通运行时规则解析，并要求导入服务 owner 的原始公共 token；但生产运行时把工作流源码复制到 Artifact 目录并以原生 import() 加载，且强制模块只能解析到 artifact root 内。该目录不在 node_modules 下，裸说明符 @nocobase/db 无法解析；服务 token 又是身份对象，无法通过导入原文跨边界复用。",
+          "impact": "按官方指引编写的 Run 模块在开发态通过、部署到生产即失败，且错误发生在首个 Run 节点，后续通知节点完全不执行，接口返回 502。",
+          "suggestedChange": "在 Skill 中明确 Run 模块必须自包含、不得裸导入 node_modules 依赖，并给出跨边界访问应用服务的受支持模式（如字符串键 resolver 转发或运行时依赖注入），与 Artifact 加载实现保持一致。",
+          "claimed": "Run 模块的导入按应用普通运行时依赖规则解析，且应导入服务 owner 的原始公共 token。",
+          "observed": "生产 Artifact 无 node_modules，原生 import() 报 Cannot find package '@nocobase/db'；token 为冻结身份对象，导入原文无法跨 artifact 复用。",
+          "evidence": [
+            "review/36329207021.1/v2-ab35ff781b94/E4",
+            "review/36329207021.1/v2-ab35ff781b94/E5",
+            "review/36329207021.1/v2-ab35ff781b94/E1",
+            "review/36329207021.1/v2-ab35ff781b94/E3",
+            "review/36329207021.1/v2-ab35ff781b94/E6",
+            "review/36329207021.1/v2-ab35ff781b94/E11"
+          ],
+          "moduleKeys": [
+            "review/36329207021.1/v2-ab35ff781b94/M1",
+            "review/36329207021.1/v2-ab35ff781b94/M2"
+          ],
+          "subjectKeys": [
+            "pkg:@nocobase/app-plugin-workflow",
+            "guide:@nocobase/app-plugin-workflow/skills/nocobase-app-plugin-workflow",
+            "pkg:@nocobase/service-provider"
+          ]
+        },
+        {
+          "id": "review/36329207021.1/v2-ab35ff781b94/F2",
+          "localId": "F2",
+          "kind": "issue",
+          "owner": "plugin",
+          "severity": "major",
+          "confidence": "confirmed",
+          "confirmedBy": "reviewer",
+          "reviewerStatus": "open",
+          "title": "服务令牌的身份语义使其无法跨 Workflow Artifact 边界解析",
+          "detail": "createServiceToken 返回 Object.freeze({name})，容器以该对象身份为 Map 键；createWorkflowRunServices 只是把应用 resolver 原样转发。因此任何在 artifact 内重建或无法导入原文的 token 都无法命中，插件未提供跨 artifact 的受支持解析通道。",
+          "impact": "Run 模块无法按 Skill 推荐方式访问应用服务，只能靠应用侧字符串 token 绕行，增加隐式耦合与踩坑成本。",
+          "suggestedChange": "为 Workflow Run 提供受支持的跨边界服务获取方式，例如按名称解析的注册表、注入所需服务，或在加载时绑定声明。",
+          "claimed": null,
+          "observed": null,
+          "evidence": [
+            "review/36329207021.1/v2-ab35ff781b94/E6",
+            "review/36329207021.1/v2-ab35ff781b94/E7",
+            "review/36329207021.1/v2-ab35ff781b94/E8",
+            "review/36329207021.1/v2-ab35ff781b94/E9"
+          ],
+          "moduleKeys": [
+            "review/36329207021.1/v2-ab35ff781b94/M2"
+          ],
+          "subjectKeys": [
+            "pkg:@nocobase/service-provider",
+            "pkg:@nocobase/app-plugin-workflow"
+          ]
+        },
+        {
+          "id": "review/36329207021.1/v2-ab35ff781b94/F3",
+          "localId": "F3",
+          "kind": "strength",
+          "owner": "framework",
+          "severity": "info",
+          "confidence": "confirmed",
+          "confirmedBy": "reviewer",
+          "reviewerStatus": "open",
+          "title": "Run 服务解析器与 Artifact 加载边界设计清晰",
+          "detail": "createWorkflowRunServices 冻结只读 has/resolve，instruction.js 强制 Run 模块解析在 artifact root 内，加载路径确定、可审计，隔离意图明确。",
+          "impact": "为运行模块提供稳定、可预测的加载与依赖边界，是修复指引缺口的良好基础。",
+          "suggestedChange": "保留该边界，同时补齐跨边界服务访问的受支持模式与文档。",
+          "claimed": null,
+          "observed": null,
+          "evidence": [
+            "review/36329207021.1/v2-ab35ff781b94/E8",
+            "review/36329207021.1/v2-ab35ff781b94/E1"
+          ],
+          "moduleKeys": [
+            "review/36329207021.1/v2-ab35ff781b94/M1",
+            "review/36329207021.1/v2-ab35ff781b94/M2"
+          ],
+          "subjectKeys": [
+            "pkg:@nocobase/app-plugin-workflow",
+            "guide:@nocobase/app-plugin-workflow/skills/nocobase-app-plugin-workflow",
+            "pkg:@nocobase/service-provider"
+          ]
+        }
+      ],
+      "ui": {
+        "status": "reviewed",
+        "score": 88,
+        "reason": "verify-3 浏览器验收显示受理结果、紧急分支节点、站内消息跳转与已读持久、非收件人隔离均符合预期，界面与消息语义清晰。",
+        "evidence": [
+          "review/36329207021.1/v2-ab35ff781b94/E49",
+          "review/36329207021.1/v2-ab35ff781b94/E50",
+          "review/36329207021.1/v2-ab35ff781b94/E51",
+          "review/36329207021.1/v2-ab35ff781b94/E52"
+        ],
+        "framework": false
+      },
+      "limitations": [
+        "只做只读评审，未运行应用、未安装依赖、未修复代码；框架结论来自冻结源码、Skill 文本与已归档 QA/日志。",
+        "生产 Artifact 导入失败由 verify-2 浏览器验收直接观测；本轮未独立复现，也未在修复后重跑生产。",
+        "Run 模块导入问题跨插件、文档与应用侧绕行，按证据归因为指引/能力缺口，不排除其它产品决策。",
+        "应用业务实现（ServiceRequestService、页面）不计入框架评分，仅作为实际用法证据。",
+        "实现轮错误信号多为环境与工具摩擦；未覆盖的过程不推断无问题。",
+        "快照未包含 2 个超出预算、非普通文件或不可读取的文件；未据此确认其实现。"
+      ],
+      "usageSource": null
+    }
+  ],
+  "health": {
+    "status": "complete",
+    "qa": "passed",
+    "requiredChecks": {
+      "status": "passed",
+      "results": []
+    },
+    "review": "completed"
+  },
+  "processNotes": {
+    "state": "present",
+    "source": "retro.json",
+    "author": "implementer",
+    "independent": false,
+    "summary": "Repair round 2: production-only 502 on service-request acceptance. `POST /api/service-requests/{1,2}/accept` returned SERVICE_REQUEST_WORKFLOW_FAILED (run status -2) because the Workflow engine materializes a revision's Run modules into an isolated Artifact store, and the three Run modules imported `@nocobase/db` (and `@nocobase/app-plugin-notification/server`) as values. In production the store lives on the configured private drive outside the application's `node_modules`, so the bare specifier `@nocobase/db` could not resolve and the `Register acceptance` node errored, which stopped `Notify assignee` and left the assignee inbox empty. The run modules are now dependency-free: they import only a local `contracts.ts` (a `readRequestId` helper plus a plain-string service token), and the database/notification work moved into `ServiceRequestService` in `server/providers/service-request-service.ts`, registered under the same string token. A `vitest` logic test guards token equality and forbids bare value imports in the Run modules. Verified by importing the built Artifact from `/tmp` (outside `node_modules`): it resolves and calls the step service, while a bare-import module fails there with the original error shape. The dev-path server integration test still passes (29/29). Prior records are preserved below: Repair round 1: the single observed failure was the format gate. A stray double blank line committed in AGENTS.md (template/factory content between the 'Factory task termination' and '## Controlled failed-delivery smoke' sections) made `prettier . --check '!.github/**'` exit 1. Removed the extra blank line with `prettier --write`; the gate now passes. Prior implementation record (Issue #415 simplified service-request app verifying Workflow + persistent in-app notification collaboration) is preserved below: serviceRequests table via migration, idempotent seed with assignee account and two demo requests, source-managed acceptance workflow (register -> branch on urgency -> record result -> send persistent in-app message), a service + HTTP routes that wait for the workflow run to terminate, and three client pages (list/create, detail/accept, message center). Existing Notification/In-App channel and Workflow engine are reused; no custom message table, toast, or in-memory list.",
+    "blockers": [
+      {
+        "id": "notes/run/36329207021/attempt/1/B1",
+        "phase": "verify",
+        "title": "format:check failed on AGENTS.md",
+        "symptom": "`pnpm format:check` (`prettier . --check '!.github/**'`) exited 1 with `[warn] AGENTS.md` / 'Code style issues found'. Every feature file reported '(unchanged)' and format:auto had exited 0, so only AGENTS.md was unformatted.",
+        "rootCause": "AGENTS.md committed at control SHA 4f50452 contains two consecutive blank lines between the 'Factory task termination' paragraph ending 'Preserve unknown causes and incomplete diagnoses.' and the '## Controlled failed-delivery smoke' heading. Prettier collapses consecutive blank lines to one. The defect is in template/factory-managed prose, not in the feature work, which is why no application change triggered it.",
+        "resolution": "Ran `pnpm exec prettier AGENTS.md --write`, which removed exactly one blank line (1 deletion, no content change). Re-ran the factory's exact command and it reports 'All matched files use Prettier code style!'. No factory control file (.github/, .npmrc, .gitmodules, config.yml) was touched and no validation was weakened.",
+        "cost": null,
+        "status": "resolved"
+      },
+      {
+        "id": "notes/run/36329207021/attempt/1/B2",
+        "phase": "implementation",
+        "title": "Workflow auto-enablement has no public non-HTTP API",
+        "symptom": "The source-managed acceptance workflow was registered but not enabled, so firing it would not run under the application's Workflow engine.",
+        "rootCause": "The Workflow plugin exposes enabling only through its management (settings) repository/HTTP layer; there is no public server-only enable contract for a source-managed workflow.",
+        "resolution": "The service-request provider emulates the management enable by updating the workflow record through the repository (updateMany on workflows), so the workflow is active once the server starts. Verified by the server-side integration test executing the real engine.",
+        "cost": null,
+        "status": "resolved"
+      },
+      {
+        "id": "notes/run/36329207021/attempt/1/B3",
+        "phase": "implementation",
+        "title": "Detail page cannot deep-link to a specific workflow run",
+        "symptom": "The intended 'view execution record / steps and final result' link to a single run could not be offered from the detail page.",
+        "rootCause": "/settings/workflow/runs is a settings page guarded by settings:workflow manage (root only), so non-root supervisors and assignees cannot open it, and the task defines no per-role page grant for it.",
+        "resolution": "The detail page shows the final result and a localized hint that the step-by-step execution records live in the existing Workflow runs UI, instead of linking to a page the target roles cannot open. Accepted as a scope limitation of this small build; not a blocker to the requested collaboration flow.",
+        "cost": null,
+        "status": "open"
+      },
+      {
+        "id": "notes/run/36329207021/attempt/1/B4",
+        "phase": "implementation",
+        "title": "New pages use authz:'skip' because no per-role page grant is defined",
+        "symptom": "The list, detail, and message-center routes could not be restricted to a product/settings page grant.",
+        "rootCause": "The task specifies only two test accounts and one assignee opening a request from an inbox message; it defines no page permissions, and the assignee must reach the detail page from the message center.",
+        "resolution": "Routes declare authz:'skip' while still requiring an authenticated session (auth:'required') and enforcing authorization on the server routes. Accepted for this verification-only build; a production system would add page grants and switch the routes to a page authz rule.",
+        "cost": null,
+        "status": "open"
+      },
+      {
+        "id": "notes/run/36329207021/attempt/1/B5",
+        "phase": "verify",
+        "title": "Production acceptance run fails: Run module cannot resolve @nocobase/db",
+        "symptom": "Clicking Accept made `POST /main/api/service-requests/{1,2}/accept` return 502 with `SERVICE_REQUEST_WORKFLOW_FAILED` / `workflow run \"N\" finished with status -2`. Workflow execution records showed the `Register acceptance` node erroring: `Cannot find package '@nocobase/db' imported from .../workflows/service-request-acceptance/<hash>/server/register-acceptance.js`. The `Notify assignee` node never ran, so no in-app messages existed and the assignee's Messages center was empty.",
+        "rootCause": "The workflow Run modules imported application packages as values (`import { databaseManagerToken } from '@nocobase/db'`; notify-assignee also `@nocobase/app-plugin-notification/server`). In production the Workflow engine copies the revision's Run modules into an isolated Artifact store rooted at the configured `artifactDisk` (the private `drive` disk). The factory's generated runtime config points that private disk at an external verification directory outside the application's `node_modules`, so Node had no resolution path for those bare specifiers from the materialized Artifact (`LocalWorkflowArtifactStore`). The existing server integration test runs with `production: false`, where the workflow loads from the source package and `@nocobase/db` resolves, so it never exercised this path.",
+        "resolution": "Made the Run modules self-contained. Added `server/workflows/service-request-acceptance/server/contracts.ts`, a dependency-free module that exports a `readRequestId` helper, the `ServiceRequestWorkflowSteps` interface, and a plain-string token (`'service-request/workflow-steps'`) — a string rather than a `createServiceToken` object because the Artifact holds its own module copy and identity would not match. Moved the database and notification work into `ServiceRequestService` (`server/providers/service-request-service.ts`), which now implements the interface and is registered under the string token by the existing provider. The Run modules import only `./contracts.ts`. Added `tests/logic/service-request-workflow.test.ts`, which asserts the contract and provider tokens are equal and statically rejects bare value imports in the Run modules. Verified the built Artifact imported from `/tmp` (no `node_modules`) resolves and calls the step service, and that a bare `@nocobase/db` import fails there with the original `ERR_MODULE_NOT_FOUND` shape. `pnpm exec tsc -p tsconfig.server.json --noEmit`, root `tsc --noEmit`, eslint and prettier on the changed files, the new test, and the full `tests/logic/app-server.test.ts` (29/29) all pass.",
+        "cost": "One repair round: investigation of the artifact store and drive config, server tsc + workflow artifact build, an isolated Artifact import check, and targeted typecheck/lint/format/tests.",
+        "status": "resolved"
+      }
+    ],
+    "improvements": [
+      {
+        "id": "notes/run/36329207021/attempt/1/I1",
+        "category": "factory",
+        "title": "Format gate should run on template/factory-owned docs before publishing a control SHA",
+        "detail": "The control SHA delivered to this task (4f50452) already contained the double blank line in AGENTS.md, so the verification format gate failed even though the implementation left every application file formatted. A format violation in framework-managed prose is indistinguishable, in the failure output, from one introduced by the application agent, and it consumed a repair attempt.",
+        "suggestedChange": "Run `prettier . --check` (or at least `prettier AGENTS.md`/`README.MD`/docs) as part of the factory's own pre-publish checks for the template/control files, or whitelist framework-managed markdown from the application format gate so a template-authored formatting defect does not fail the application's verification.",
+        "mechanizable": true
+      }
+    ],
+    "note": "实现者自述，未经独立核验；不是框架评审结论。"
+  },
+  "metrics": {
+    "usage": {
+      "sources": [
+        {
+          "key": "agent-job:108647824405",
+          "executionKey": "run/36329207021/attempt/1",
+          "scope": "一次 Agent 作业内的实现、修复、QA 与同轮评审调用",
+          "phases": {
+            "implementation": {
+              "input": 975613,
+              "output": 274624,
+              "cacheRead": 53037440,
+              "cacheWrite": 0,
+              "total": 54287677
+            },
+            "repair": {
+              "input": 126657,
+              "output": 90868,
+              "cacheRead": 9677184,
+              "cacheWrite": 0,
+              "total": 9894709
+            },
+            "qa": {
+              "input": 86838,
+              "output": 48527,
+              "cacheRead": 5444224,
+              "cacheWrite": 0,
+              "total": 5579589
+            },
+            "qaFocused": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0,
+              "total": 0
+            },
+            "qaReport": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0,
+              "total": 0
+            },
+            "review": {
+              "input": 236476,
+              "output": 60464,
+              "cacheRead": 5131648,
+              "cacheWrite": 0,
+              "total": 5428588
+            },
+            "compaction": {
+              "input": 512627,
+              "output": 109781,
+              "cacheRead": 144384,
+              "cacheWrite": 0,
+              "total": 766792
+            }
+          },
+          "records": 1113,
+          "missing": 1,
+          "incomplete": 0,
+          "complete": false
+        }
+      ],
+      "totals": {
+        "input": 1938211,
+        "output": 584264,
+        "cacheRead": 73434880,
+        "cacheWrite": 0,
+        "total": 75957355,
+        "complete": false
+      },
+      "definition": "沿用 task-usage 口径：按唯一来源键（Agent 作业 / 后补评审 Run）去重，不相加已含这些调用的汇总，不把思考 Token 再加到输出；缺失为 null，不等同供应商账单。"
+    },
+    "time": {
+      "executionSeconds": 8243,
+      "missingJobTimes": 0,
+      "endToEndSeconds": 8256,
+      "jobs": [
+        {
+          "id": 108647783221,
+          "name": "prepare",
+          "executionKey": "run/36329207021/attempt/1",
+          "seconds": 12
+        },
+        {
+          "id": 108647824405,
+          "name": "agent",
+          "executionKey": "run/36329207021/attempt/1",
+          "seconds": 7972
+        },
+        {
+          "id": 108670803178,
+          "name": "verify-final",
+          "executionKey": "run/36329207021/attempt/1",
+          "seconds": 241
+        },
+        {
+          "id": 108671508132,
+          "name": "publish",
+          "executionKey": "run/36329207021/attempt/1",
+          "seconds": 18
+        }
+      ],
+      "definition": "executionSeconds 为 prepare / agent / verify-final / publish 唯一作业时长之和，不含排队；endToEndSeconds 含排队及续跑间隔。"
+    },
+    "counts": {
+      "businessBuilds": 1,
+      "executions": 1,
+      "reviewExecutions": 1
+    }
+  },
+  "evidence": [
+    {
+      "id": "review/36329207021.1/v2-ab35ff781b94/E1",
+      "origin": {
+        "kind": "review",
+        "key": "review/36329207021.1/v2-ab35ff781b94",
+        "localId": "E1"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/app-plugin-workflow/dist/server/instructions/run/instruction.js",
+      "lines": [
+        284,
+        330
+      ],
+      "sha256": "b7333aa5adafc4b28b80258bb532dae8b5bb61cb1db6316a30c0b2de45f38dd9",
+      "observation": "loadRunModule 强制 Run 模块经 realpath 解析在 artifact root 之内，然后用原生 import() 加载该文件；bare 说明符按该文件位置解析。",
+      "excerpt": "async function loadRunModule(workflowResourceRoot, specifier, nodeKey) {\n    if (!workflowResourceRoot) {\n        throw new Error(`Run node \"${nodeKey}\" has no workflow resource root bound to it`);\n    }\n    const target = await resolveWorkflowModule(workflowResourceRoot, specifier);\n    const cached = moduleCache.get(target);\n    if (cached)\n        return cached;\n    const pending = importRunModule(target, specifier);\n    moduleCache.set(target, pending);\n    return pending;\n}\nfunction resolveInsideRoot(root, relativePath, specifier) {\n    const target = path.resolve(root, relativePath);\n    const relative = path.relative(root, target);\n    if (!relative || relative.startsWith('..') || path.isAbsolute(relative)) {\n        throw new Error(`Run module \"${specifier}\" resolves outside its artifact`);\n    }\n    return target;\n}\nasync function resolveWorkflowModule(root, specifier) {\n    const base = resolveInsideRoot(root, specifier, specifier);\n    for (const extension of ['.js', '.mjs', '.ts']) {\n        const target = `${base}${extension}`;\n        try {\n            const realRoot = await fs.realpath(root);\n            const realTarget = await fs.realpath(target);\n            const relative = path.relative(realRoot, realTarget);\n            if (!relative || relative.startsWith('..') || path.isAbsolute(relative)) {\n                throw new Error(`Run module \"${specifier}\" resolves outside its workflow resources`);\n            }\n            return realTarget;\n        }\n        catch (error) {\n            if (error.code !== 'ENOENT')\n                throw error;\n        }\n    }\n    throw new Error(`Run module \"${specifier}\" was not found`);\n}\nasync function importRunModule(target, specifier) {\n    const loaded = (await import(__rewriteRelativeImportExtension(pathToFileURL(target).href)));\n    if (typeof loaded.run !== 'function') {\n        throw new Error(`Run module \"${specifier}\" must export a function named run`);\n    }\n    return { run: loaded.run };\n}",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36329207021.1/v2-ab35ff781b94/E2",
+      "origin": {
+        "kind": "review",
+        "key": "review/36329207021.1/v2-ab35ff781b94",
+        "localId": "E2"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/app-plugin-workflow/dist/server/service.js",
+      "lines": [
+        9,
+        40
+      ],
+      "sha256": "1a11e956a61a6cbfc7d28c98642dbeb17752826e671cbeb94fe268b49320372b",
+      "observation": "WorkflowService 仅在 !production 且存在 sourceRoot 时才设置 developmentResourceRoot；生产态 store 根指向 artifactDisk.location，services 由 createWorkflowRunServices(options.services) 包装。",
+      "excerpt": "export class WorkflowService {\n    database;\n    store;\n    /** Set in development only, where run modules load from the source package. */\n    developmentResourceRoot;\n    engine;\n    loader;\n    initializationPromise;\n    constructor(options) {\n        this.database = options.database;\n        this.developmentResourceRoot =\n            !options.production && options.sourceRoot\n                ? options.sourceRoot\n                : undefined;\n        this.store = new LocalWorkflowArtifactStore({\n            storeRoot: options.artifactDisk.location,\n        });\n        this.engine = new WorkflowEngine({\n            logger: options.logger,\n            database: options.database,\n            queue: options.queue,\n            ...(options.queueName === undefined\n                ? {}\n                : { queueName: options.queueName }),\n            ...(options.terminalObserver === undefined\n                ? {}\n                : { terminalObserver: options.terminalObserver }),\n            services: createWorkflowRunServices(options.services),\n            artifactStore: this.store,\n            ...(this.developmentResourceRoot === undefined\n                ? {}\n                : { developmentResourceRoot: this.developmentResourceRoot }),",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36329207021.1/v2-ab35ff781b94/E3",
+      "origin": {
+        "kind": "review",
+        "key": "review/36329207021.1/v2-ab35ff781b94",
+        "localId": "E3"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/app-plugin-workflow/dist/server/loader/artifact-store.js",
+      "lines": [
+        38,
+        67
+      ],
+      "sha256": "53cf20a9d46989138bdcc5b764aceb94f4c8f64fcd5e0dd99e287aa5e900968d",
+      "observation": "LocalWorkflowArtifactStore.commit 用 fs.cp 递归复制工作流源码目录到 artifact 目标目录，不注入 node_modules。",
+      "excerpt": "    async commit(workflowKey, digest, source) {\n        await this.verifyDirectory(source, workflowKey, digest);\n        const destination = this.artifactPath(workflowKey, digest);\n        if (await exists(destination)) {\n            await this.verifyDirectory(destination, workflowKey, digest);\n            return;\n        }\n        await fs.mkdir(path.dirname(destination), { recursive: true });\n        const temporary = `${destination}.tmp-${randomUUID()}`;\n        try {\n            await fs.cp(source, temporary, {\n                recursive: true,\n                errorOnExist: true,\n                force: false,\n            });\n            await this.verifyDirectory(temporary, workflowKey, digest);\n            try {\n                await fs.rename(temporary, destination);\n            }\n            catch (error) {\n                if (error.code !== 'EEXIST' &&\n                    error.code !== 'ENOTEMPTY')\n                    throw error;\n                await this.verifyDirectory(destination, workflowKey, digest);\n            }\n        }\n        finally {\n            await fs.rm(temporary, { recursive: true, force: true });\n        }\n    }",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36329207021.1/v2-ab35ff781b94/E4",
+      "origin": {
+        "kind": "review",
+        "key": "review/36329207021.1/v2-ab35ff781b94",
+        "localId": "E4"
+      },
+      "kind": "skill",
+      "path": "packages/@nocobase/app-plugin-workflow/skills/nocobase-app-plugin-workflow/references/dsl-authoring.md",
+      "lines": [
+        213,
+        213
+      ],
+      "sha256": "166cf50d0fdf4c9d99751e2f3fa31dbe0d5f15430cb2ef38d9c7eca2efe70fe0",
+      "observation": "Skill 明示：“Run modules are compiled by the application's normal server build, so their imports must resolve under that build's ordinary TypeScript and runtime dependency rules.”",
+      "excerpt": "The comments are intentional integration seams; replace them with application-specific typed service calls. Run modules are compiled by the application's normal server build, so their imports must resolve under that build's ordinary TypeScript and runtime dependency rules.",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36329207021.1/v2-ab35ff781b94/E5",
+      "origin": {
+        "kind": "review",
+        "key": "review/36329207021.1/v2-ab35ff781b94",
+        "localId": "E5"
+      },
+      "kind": "skill",
+      "path": "packages/@nocobase/app-plugin-workflow/skills/nocobase-app-plugin-workflow/references/dsl-authoring.md",
+      "lines": [
+        386,
+        386
+      ],
+      "sha256": "166cf50d0fdf4c9d99751e2f3fa31dbe0d5f15430cb2ef38d9c7eca2efe70fe0",
+      "observation": "Skill 要求：services 是只读 has/resolve 解析器，“import each service owner's original public token and do not recreate a same-named token.”",
+      "excerpt": "The processor leaves the node `PENDING` and yields before executing its module in the background. Completion saves the result and resumes the workflow; downstream nodes run only after completion. This is process-local asynchronous execution, not a durable job or a separate worker thread. The public function receives `args: unknown` and options with exactly `services`, `signal`, and `logger`. `services` is a read-only application service resolver with `has(token)` and `resolve(token)`: import each service owner's original public token and do not recreate a same-named token. The resolver cannot register or replace application services. `signal` is the current Workflow abort signal, and `logger` is already bound to the current Workflow execution context. The function returns/awaits an unknown value, but runtime accepts only JSON-storable results. `undefined` becomes `null`; BigInt, functions, symbols, non-finite numbers, circular values, and class instances fail. A return like `{ status: 'failed' }` is ordinary successful business data. Throw to mark execution error. Scripts cannot choose branches, suspend, resume, or drive the processor state machine.",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36329207021.1/v2-ab35ff781b94/E6",
+      "origin": {
+        "kind": "review",
+        "key": "review/36329207021.1/v2-ab35ff781b94",
+        "localId": "E6"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/service-provider/dist/token.js",
+      "lines": [
+        1,
+        7
+      ],
+      "sha256": "07b62d73e4b1b85507b9afb727fff1ca31e5fc52af1e324cad311b361717a8eb",
+      "observation": "createServiceToken 返回 Object.freeze({ name }) 身份对象；同名 token 不相等。",
+      "excerpt": "const serviceTokenType = Symbol('service-token-type');\nexport function createServiceToken(name) {\n    if (!name.trim()) {\n        throw new Error('Service token name must not be empty.');\n    }\n    return Object.freeze({ name });\n}",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36329207021.1/v2-ab35ff781b94/E7",
+      "origin": {
+        "kind": "review",
+        "key": "review/36329207021.1/v2-ab35ff781b94",
+        "localId": "E7"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/service-provider/dist/container.js",
+      "lines": [
+        1,
+        56
+      ],
+      "sha256": "69dafbced91dd305a59e368eb04592a9aeecd8052415849babafb879363e07ca",
+      "observation": "ServiceContainer.bindings 是 Map，以 token 对象身份为键做 instance/singleton/has/resolve。",
+      "excerpt": "export class ServiceContainer {\n    bindings = new Map();\n    resolving = [];\n    instance(token, value) {\n        this.assertAvailable(token);\n        this.bindings.set(token, {\n            factory: () => value,\n            instance: value,\n            state: 'created',\n        });\n    }\n    singleton(token, factory) {\n        this.assertAvailable(token);\n        this.bindings.set(token, {\n            factory,\n            instance: undefined,\n            state: 'pending',\n        });\n    }\n    has(token) {\n        return this.bindings.has(token);\n    }\n    resolve(token) {\n        const binding = this.bindings.get(token);\n        if (!binding) {\n            throw new Error(`Service \"${token.name}\" is not registered.`);\n        }\n        if (binding.state === 'created') {\n            return binding.instance;\n        }\n        if (binding.state === 'failed') {\n            throw binding.error;\n        }\n        if (binding.state === 'creating') {\n            const cycle = [...this.resolving, token]\n                .map((item) => item.name)\n                .join(' -> ');\n            throw new Error(`Circular service dependency detected: ${cycle}.`);\n        }\n        binding.state = 'creating';\n        this.resolving.push(token);\n        try {\n            const value = binding.factory(this);\n            binding.instance = value;\n            binding.state = 'created';\n            return value;\n        }\n        catch (error) {\n            binding.error = error;\n            binding.state = 'failed';\n            throw error;\n        }\n        finally {\n            this.resolving.pop();\n        }\n    }",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36329207021.1/v2-ab35ff781b94/E8",
+      "origin": {
+        "kind": "review",
+        "key": "review/36329207021.1/v2-ab35ff781b94",
+        "localId": "E8"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/app-plugin-workflow/dist/server/engine/run-services.js",
+      "lines": [
+        1,
+        12
+      ],
+      "sha256": "b15eee4dc06966a91f744abaa04ecc25fc0f2624ab90378cac5de7a14137fe04",
+      "observation": "createWorkflowRunServices 返回冻结的 { has, resolve }，直接转发到应用 resolver，未做名称级或 artifact 级适配。",
+      "excerpt": "/** Hide the mutable application container behind the run-module contract. */\nexport function createWorkflowRunServices(resolver) {\n    const services = {\n        has(token) {\n            return resolver.has(token);\n        },\n        resolve(token) {\n            return resolver.resolve(token);\n        },\n    };\n    return Object.freeze(services);\n}",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36329207021.1/v2-ab35ff781b94/E9",
+      "origin": {
+        "kind": "review",
+        "key": "review/36329207021.1/v2-ab35ff781b94",
+        "localId": "E9"
+      },
+      "kind": "code",
+      "path": "app/server/workflows/service-request-acceptance/server/contracts.ts",
+      "lines": [
+        32,
+        64
+      ],
+      "sha256": "de52a63de350359a6edf87e37b7430ce7b2ca2beabe1c188bce2f74b168361af",
+      "observation": "修后的 Run 契约为自包含模块，只导入本地类型；用字符串 token serviceRequestWorkflowStepsToken 跨 artifact 边界，注释说明 artifact 可能位于 node_modules 之外。",
+      "excerpt": "/**\n * The application-owned steps the three Run nodes call.\n *\n * This indirection exists because the Run modules are copied into an isolated\n * Artifact store in production. The store can live outside the application's\n * `node_modules` — a deployment is free to put the private drive on its own\n * volume — so a Run module cannot import `@nocobase/db` or the notification\n * package as a value: the bare specifier would have no resolution path there.\n * This local, dependency-free module is the only thing they import, and they\n * reach the real work through the container token below.\n *\n * The implementation and the matching token live in\n * `server/providers/service-request-service.ts`.\n */\nexport interface ServiceRequestWorkflowSteps {\n  registerAcceptance(\n    input: ServiceRequestAcceptanceInput,\n  ): Promise<ServiceRequestAcceptanceResult>;\n  recordResult(input: ServiceRequestResultInput): Promise<void>;\n  notifyAssignee(input: ServiceRequestAcceptanceInput): Promise<void>;\n}\n\n/**\n * Token the Run modules use to resolve {@link ServiceRequestWorkflowSteps}.\n *\n * It is a plain string on purpose. `createServiceToken` produces an object the\n * container matches by identity, and the Artifact holds its own copy of this\n * module, so two same-named objects would not match. A string compares by\n * value, so the provider's copy and the Artifact's copy resolve the same\n * binding. The provider spells the same string; a logic test keeps them equal.\n */\nexport const serviceRequestWorkflowStepsToken=[REDACTED]' as unknown as ServiceToken<ServiceRequestWorkflowSteps>;",
+      "excerptRedacted": true,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36329207021.1/v2-ab35ff781b94/E10",
+      "origin": {
+        "kind": "review",
+        "key": "review/36329207021.1/v2-ab35ff781b94",
+        "localId": "E10"
+      },
+      "kind": "code",
+      "path": "app/server/workflows/service-request-acceptance/server/notify-assignee.ts",
+      "lines": [
+        1,
+        27
+      ],
+      "sha256": "66fe6ab4bf8db3cae6f6bc48301515a6282876c15f20ceb2b53a5693b4a13a94",
+      "observation": "Run 模块仅导入本地 contracts 并调用注入 service，不导入通知包本身。",
+      "excerpt": "import type {\n  WorkflowRunFunction,\n  WorkflowRunJsonValue,\n} from '@nocobase/app-plugin-workflow';\nimport {\n  readRequestId,\n  serviceRequestWorkflowStepsToken,\n} from './contracts.ts';\n\n/**\n * Ask the application to send one persistent in-app message to the request\n * assignee. The message text and the idempotency key live in the step service,\n * because this module is copied into an isolated Artifact store in production\n * and cannot import the notification package from there; see `./contracts.ts`.\n */\nexport const run: WorkflowRunFunction = async (\n  rawArgs,\n  options,\n): Promise<WorkflowRunJsonValue> => {\n  options.signal.throwIfAborted();\n  const requestId = readRequestId(rawArgs);\n  const steps = options.services.resolve(serviceRequestWorkflowStepsToken);\n  await steps.notifyAssignee({ requestId });\n  options.logger.info('Service request assignee notified', { requestId });\n  return null;\n};\n",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36329207021.1/v2-ab35ff781b94/E11",
+      "origin": {
+        "kind": "review",
+        "key": "review/36329207021.1/v2-ab35ff781b94",
+        "localId": "E11"
+      },
+      "kind": "qa",
+      "path": "artifacts/verify-2/browser-acceptance/report.json",
+      "lines": [
+        1,
+        25
+      ],
+      "sha256": "b590a5974323a1c490260215f7955a522b1ad518cfdcecba6a3ffbc254ae7bc9",
+      "observation": "生产浏览器验收失败：Accept 接口 502 SERVICE_REQUEST_WORKFLOW_FAILED，节点 Register acceptance 报 Cannot find package '@nocobase/db'，run 状态 Error，收件箱为空。",
+      "excerpt": "{\n  \"passed\": false,\n  \"authenticated\": true,\n  \"summary\": \"已用 nocobase 管理员与 Service Assignee 两个账号真实浏览器验收。受理普通/紧急两条请求均返回 502：工作流 'Service request acceptance' 在首个业务节点 'Register acceptance' 报错 Cannot find package '@nocobase/db'，执行记录状态 Error，请求仍为 Pending/Not accepted yet；因此负责人消息中心为空，站内通知未投递，B01-B04 全部不通过。\",\n  \"checks\": [\n    {\n      \"id\": \"B01\",\n      \"criterion\": \"主管受理一条普通请求，执行记录显示已运行，业务记录呈现相应受理结果。\",\n      \"status\": \"failed\",\n      \"actions\": [\n        \"以 nocobase 管理员登录\",\n        \"打开 Service requests 列表，进入普通请求 'Third-floor printer is offline' (/main/service-requests/1)\",\n        \"点击 Accept 提交受理\",\n        \"刷新/重读页面确认结果，检查浏览器网络请求\",\n        \"进入 Settings > Workflow > Execution records，打开运行 #1 并点击 Register acceptance 节点查看错误\"\n      ],\n      \"evidence\": [\n        \"点击 Accept 后 POST /main/api/service-requests/1/accept 返回 502，页面提示 'The acceptance workflow did not finish. Please try again.'\",\n        \"接口响应体：{code:SERVICE_REQUEST_WORKFLOW_FAILED, message: workflow run \\\"1\\\" finished with status -2}\",\n        \"执行记录 #1 'Service request acceptance' 状态为 Error（31 ms，16:50）\",\n        \"节点 'Register acceptance' 报错：Cannot find package '@nocobase/db' imported from .../workflows/service-request-acceptance/.../server/register-acceptance.js\",\n        \"业务记录仍为 Status Pending / Result Not accepted yet，未呈现受理结果\"\n      ],\n      \"screenshots\": [\n        \"B01-normal-before.png\",",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36329207021.1/v2-ab35ff781b94/E12",
+      "origin": {
+        "kind": "review",
+        "key": "review/36329207021.1/v2-ab35ff781b94",
+        "localId": "E12"
+      },
+      "kind": "qa",
+      "path": "artifacts/verify-3/browser-acceptance/report.json",
+      "lines": [
+        1,
+        10
+      ],
+      "sha256": "0985e81ee1d8e8cde2a16f2d71716d6b527c93786a44b3b8dbc27b1498b4d7db",
+      "observation": "最终浏览器验收 passed=true，B01–B04 全部 passed。",
+      "excerpt": "{\n  \"passed\": true,\n  \"authenticated\": true,\n  \"summary\": \"以浏览器实际操作验证 B01-B04：管理员受理普通/紧急请求后，Workflow 执行记录显示 Resolved 且对应分支节点结果正确，业务记录分别呈现 Normal accepted / Urgent accepted；负责人消息中心收到两条持久站内消息，Open 跳转到正确请求，标记已读刷新后保留；非收件人管理员消息中心为空。\",\n  \"checks\": [\n    {\n      \"id\": \"B01\",\n      \"criterion\": \"主管受理一条普通请求，执行记录显示已运行，业务记录呈现相应受理结果。\",\n      \"status\": \"passed\",\n      \"actions\": [",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36329207021.1/v2-ab35ff781b94/E13",
+      "origin": {
+        "kind": "review",
+        "key": "review/36329207021.1/v2-ab35ff781b94",
+        "localId": "E13"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/app-plugin-notification/dist/server/tokens.js",
+      "lines": [
+        1,
+        4
+      ],
+      "sha256": "dac2552c0158387ab7784427e91138339aeab1d5552daf9780df697d7d75148e",
+      "observation": "notificationServiceToken 由 createServiceToken 创建并作为公共解析入口。",
+      "excerpt": "import { createServiceToken, } from '@nocobase/service-provider';\nexport const notificationServiceToken=[REDACTED]'@nocobase/app-plugin-notification/service');\nexport const notificationExtensionRegistryToken=[REDACTED]'@nocobase/app-plugin-notification/extension-registry');\n//# sourceMappingURL=tokens.js.map",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36329207021.1/v2-ab35ff781b94/E14",
+      "origin": {
+        "kind": "review",
+        "key": "review/36329207021.1/v2-ab35ff781b94",
+        "localId": "E14"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/app-plugin-notification/dist/server/manager.js",
+      "lines": [
+        187,
+        228
+      ],
+      "sha256": "8ceaca1b734db599fe58e8d868edfd7af373f2ea0be3f10aa1b1a78534e8edda",
+      "observation": "NotificationManager.send 校验 idempotencyKey、source 形状与 messages（Channel→消息）映射，并展开收件人。",
+      "excerpt": "    async send(input) {\n        this.activate();\n        validateNotificationIdempotencyKey(input.idempotencyKey);\n        if (input.source !== undefined &&\n            (!input.source ||\n                typeof input.source.type !== 'string' ||\n                !input.source.type.trim() ||\n                (input.source.referenceId !== undefined &&\n                    typeof input.source.referenceId !== 'string')))\n            throw new Error('Notification source requires a type and an optional string referenceId.');\n        if (!input.messages ||\n            typeof input.messages !== 'object' ||\n            Array.isArray(input.messages))\n            throw new Error('Notification messages must be a Channel-to-message map.');\n        for (const key of [\n            'to',\n            'channels',\n            'content',\n            'routing',\n            'channelOverrides',\n        ])\n            if (key in input)\n                throw new Error(`Unsupported notification send property \"${key}\".`);\n        const channels = Object.keys(input.messages);\n        if (channels.length === 0)\n            throw new Error('At least one notification message is required.');\n        const message = {};\n        const expandedRecipients = [];\n        for (const channel of channels) {\n            await this.ensureRuntime(channel);\n            const validated = this.channelManager.validateMessage(channel, input.messages[channel]);\n            message[channel] = validated.message;\n            const [provider] = this.channelManager.providerIdentities(channel);\n            for (const recipient of validated.recipients)\n                expandedRecipients.push({\n                    channels: [{ channel, provider, recipient }],\n                });\n        }\n        const requestFingerprint = notificationRequestFingerprint({\n            ...input,\n            messages: message,\n        });",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36329207021.1/v2-ab35ff781b94/E15",
+      "origin": {
+        "kind": "review",
+        "key": "review/36329207021.1/v2-ab35ff781b94",
+        "localId": "E15"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/app-plugin-notification-in-app/dist/client/components/notification-in-app-inbox.js",
+      "lines": [
+        16,
+        40
+      ],
+      "sha256": "cc9857befc4c70b67fabf577835e3586ddd7848d34d99a5074e15b3a705a93cc",
+      "observation": "NotificationInAppInbox 组件从 runtime 读取未读计数并按 unreadOnly 拉取收件箱。",
+      "excerpt": "export function NotificationInAppInbox() {\n    const appClient = useApiClient();\n    const { t } = useTranslation(IN_APP_NOTIFICATION_CLIENT_NAMESPACE);\n    const inboxRuntime = useNotificationInAppRuntime();\n    const { revision, unreadCount } = inboxRuntime;\n    const [unreadOnly, setUnreadOnly] = useState(false);\n    const [items, setItems] = useState([]);\n    const [nextCursor, setNextCursor] = useState();\n    const [loading, setLoading] = useState(true);\n    const [loadingMore, setLoadingMore] = useState(false);\n    const [error, setError] = useState();\n    const sentinelRef = useRef(null);\n    const nextPageRequestRef = useRef(null);\n    useEffect(() => {\n        nextPageRequestRef.current?.abort();\n        nextPageRequestRef.current = null;\n        const controller = new AbortController();\n        void Promise.resolve()\n            .then(() => {\n            if (controller.signal.aborted)\n                return;\n            setLoadingMore(false);\n            setLoading(true);\n            setNextCursor(undefined);\n            return fetchInbox(appClient, { unreadOnly }, controller.signal);",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36329207021.1/v2-ab35ff781b94/E16",
+      "origin": {
+        "kind": "review",
+        "key": "review/36329207021.1/v2-ab35ff781b94",
+        "localId": "E16"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/app-plugin-notification-in-app/dist/client/components/notification-in-app-provider.js",
+      "lines": [
+        1,
+        26
+      ],
+      "sha256": "fe1f87953cfef98b8e8db6d77350914236ac24da7b2963852a9ae4d7df9e21aa",
+      "observation": "NotificationInAppProvider 为客户端收件箱提供运行时上下文。",
+      "excerpt": "import { jsx as _jsx } from \"react/jsx-runtime\";\nimport { useApiClient, realtimeClientToken, useService, } from '@nocobase/app-client';\nimport { useCallback, useEffect, useMemo, useState, } from 'react';\nimport { fetchUnreadCount } from '../api.js';\nimport { NotificationInAppRuntimeContext, } from '../notification-in-app-runtime.js';\nimport { subscribeToInboxInvalidations } from '../subscription.js';\nexport function NotificationInAppProvider({ children, }) {\n    const appClient = useApiClient();\n    const realtime = useService(realtimeClientToken);\n    const [unreadCount, setUnreadCount] = useState(0);\n    const [revision, setRevision] = useState(0);\n    const refresh = useCallback(() => setRevision((value) => value + 1), []);\n    useEffect(() => {\n        const controller = new AbortController();\n        fetchUnreadCount(appClient, controller.signal)\n            .then(setUnreadCount)\n            .catch(() => undefined);\n        return () => controller.abort();\n    }, [appClient, revision]);\n    useEffect(() => {\n        return subscribeToInboxInvalidations(realtime, window, refresh);\n    }, [realtime, refresh]);\n    const value = useMemo(() => ({ unreadCount, revision, refresh }), [refresh, revision, unreadCount]);\n    return (_jsx(NotificationInAppRuntimeContext.Provider, { value: value, children: children }));\n}\n//# sourceMappingURL=notification-in-app-provider.js.map",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36329207021.1/v2-ab35ff781b94/E17",
+      "origin": {
+        "kind": "review",
+        "key": "review/36329207021.1/v2-ab35ff781b94",
+        "localId": "E17"
+      },
+      "kind": "skill",
+      "path": "packages/@nocobase/app-plugin-notification/skills/nocobase-app-plugin-notification/references/sending-notifications.md",
+      "lines": [
+        1,
+        30
+      ],
+      "sha256": "cbf38795119676b258492b45c0423bfee709fc1dbd5314b1bd521b8efefc2a56",
+      "observation": "Skill 给出 notificationServiceToken.send 的标准调用：idempotencyKey、source、messages 中 inbox 频道含 to/title/body/target。",
+      "excerpt": "# Sending Notifications\n\nResolve `notificationServiceToken` from the shared application container. Select configured Channel names through `messages`; each value is the complete message for its Provider.\n\n```ts\nconst notification = app.container.resolve(notificationServiceToken);\nawait notification.send({\n  idempotencyKey: 'approval-123',\n  source: { type: 'approval', referenceId: '123' },\n  messages: {\n    'system-email': {\n      to: ['customer@example.com', 'reviewer@example.com'],\n      subject: 'Approval result',\n      html: '<p>Approved</p>',\n    },\n    'ops-feishu': {\n      text: 'Approved',\n      target: { type: 'url', url: 'https://example.com/main/approvals/123' },\n    },\n    inbox: {\n      to: '123',\n      title: 'Approval result',\n      body: 'Approved',\n      target: { type: 'route', path: '/approvals/123' },\n    },\n  },\n});\n```\n\nEmail requires a native email address or a non-empty readonly array of addresses, a subject, and text or HTML. Each address receives a separate email and retries independently. In-app messages require application user IDs in the same string/array shape, title, and body; final delivery checks that each user still exists. Webhook messages forbid `to`. The service does not resolve application users into email addresses or phone numbers and never defaults to the current user.",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36329207021.1/v2-ab35ff781b94/E18",
+      "origin": {
+        "kind": "review",
+        "key": "review/36329207021.1/v2-ab35ff781b94",
+        "localId": "E18"
+      },
+      "kind": "skill",
+      "path": "packages/@nocobase/app-plugin-notification-in-app/skills/nocobase-app-plugin-notification-in-app/SKILL.md",
+      "lines": [
+        56,
+        78
+      ],
+      "sha256": "f361771cc2a7722df2747f724865e37dc6fb6efa2d9f513a22e783701fc6a707",
+      "observation": "in-app Skill 要求 HTTP 状态权威、用 useApiClient 读写收件箱、保留服务端按用户过滤，不得用客户端传入的用户覆盖。",
+      "excerpt": "1. Read [Inbox Integration Contract](references/inbox-integration.md) for package requirements, public surfaces, and runtime semantics.\n2. Inspect the target application's Server plugin list, Client composition, authentication setup, `api.baseURL`, `api.realtimeURL`, and installed package versions.\n3. Register `@nocobase/app-plugin-notification` before `@nocobase/app-plugin-notification-in-app/server` when the application needs the `in-app` Channel contribution.\n4. Register `@nocobase/app-plugin-notification-in-app/client` in the Client composition root. In a development build, verify the page at `/dev/notification-in-app` relative to the App base path.\n5. In React components and custom Hooks, use `useApiClient()` from `@nocobase/app-client` for inbox reads and mutations, and `useService(realtimeClientToken)` for subscriptions. Outside React, resolve the corresponding tokens from the application's services or receive the clients explicitly. Do not reconstruct `/api` from the browser location or Portal base.\n6. Keep HTTP state authoritative. On a validated `inbox.changed` event, realtime connection open, or window focus, trigger a bounded HTTP refetch.\n7. Use the public `@nocobase/app-plugin-notification-in-app/realtime` entry for shared topic or event types; do not import Server internals.\n8. Test allowed and denied users, CSRF-protected mutations, pagination, custom API hosts, realtime invalidation, reconnect recovery, and Dev Route registration.\n9. Run lint, typecheck, tests, and build for the plugin and affected application.\n\n# Reference Loading Map\n\n| Reference                                                     | Use When                                                                            | Notes                                               |\n| ------------------------------------------------------------- | ----------------------------------------------------------------------------------- | --------------------------------------------------- |\n| [Inbox Integration Contract](references/inbox-integration.md) | integrating, customizing, verifying, or diagnosing the inbox                        | Required packages, routes, events, ownership, tests |\n| [Plugin README](../../README.md)                              | confirming Server registration, route behavior, pagination, CSRF, or user isolation | Package-level public contract                       |\n\n# Safety Gate\n\n- Inbox mutations affect a real user's durable notification state. Confirm the target user/session before mutation testing outside an isolated test application.\n- Never log session cookies, CSRF tokens, notification bodies, or recipient identifiers.\n- Use authenticated routes and preserve the Server's per-user filters; do not add a client-supplied user override.\n- A realtime event is only an invalidation signal. Never render its payload as authoritative inbox content.",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36329207021.1/v2-ab35ff781b94/E19",
+      "origin": {
+        "kind": "review",
+        "key": "review/36329207021.1/v2-ab35ff781b94",
+        "localId": "E19"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/db/dist/src/index.js",
+      "lines": [
+        1,
+        16
+      ],
+      "sha256": "a1f9de81612f4c1e2b0f1a02ad0d016f825f1022ae75fc8233b42504e9558658",
+      "observation": "@nocobase/db 公共出口导出 defineMigration、defineSeed、createDatabaseManager、databaseManagerToken 等。",
+      "excerpt": "// Supported package API. Internal modules are intentionally not re-exported.\nexport { CollectionMetadataStoreRequiredError, createDatabaseManager, } from './database/manager.js';\nexport { upsertPhysicalRow } from './database/upsert-physical-row.js';\nexport { databaseManagerToken } from './database/token.js';\nexport { resolveDatabaseDriver } from './database/resolve-driver.js';\nexport { defineDatabase } from './database/config.js';\nexport { SchemaManagementNotAllowedError } from './database/schema-management.js';\nexport { CollectionRelationValidationError } from './collection/registry/relation-validator.js';\nexport { CollectionResolutionError } from './collection/resolver/errors.js';\nexport { COLLECTION_ARTIFACT_FILE_NAMES, COLLECTION_ARTIFACT_FORMAT_VERSION, COLLECTION_ARTIFACT_MANIFEST_FILE_NAME, assertCollectionArtifactDirectoryNames, CollectionArtifactNameError, findCollectionArtifactNameConflicts, serializeCollectionArtifact, serializeCollectionArtifactManifest, validateCollectionArtifactDirectoryName, } from './collection/artifact/index.js';\nexport { defineMigration } from './migration/define.js';\nexport { loadMigrations, validateMigrations } from './migration/loader.js';\nexport { createMigrator } from './migration/migrator.js';\nexport { isTaskLockBusyError, TASK_LOCK_EXPIRY_MS, TASK_LOCK_HEARTBEAT_INTERVAL_MS, TaskLockBusyError, } from './migration/internal/lock.js';\nexport { defineSeed } from './seed/define.js';\nexport { loadSeeds, validateSeeds } from './seed/loader.js';",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36329207021.1/v2-ab35ff781b94/E20",
+      "origin": {
+        "kind": "review",
+        "key": "review/36329207021.1/v2-ab35ff781b94",
+        "localId": "E20"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/db/dist/src/migration/define.js",
+      "lines": [
+        1,
+        5
+      ],
+      "sha256": "eba0dce586442525677889388044224f67d2dbf5da1e88e5846a0b9fa34e5059",
+      "observation": "defineMigration 标记并返回迁移定义供 loader 发现。",
+      "excerpt": "import { markMigrationDefinition } from './internal/marker.js';\n/** Marks and returns a migration definition for discovery by the migration loader. */\nexport function defineMigration(definition) {\n    return markMigrationDefinition(definition);\n}",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36329207021.1/v2-ab35ff781b94/E21",
+      "origin": {
+        "kind": "review",
+        "key": "review/36329207021.1/v2-ab35ff781b94",
+        "localId": "E21"
+      },
+      "kind": "skill",
+      "path": "packages/@nocobase/db/skills/nocobase-db/SKILL.md",
+      "lines": [
+        84,
+        127
+      ],
+      "sha256": "f97c07a45a9d49c1d933ddbceeabcc9afe267b1356a2ded1a3da0dd56b54011c",
+      "observation": "Skill 给出 defineMigration+builder.createCollection 建表与 defineSeed+repository.upsertOne 写种子的标准写法。",
+      "excerpt": "import { defineMigration, type MigrationDefinition } from '@nocobase/db';\n\nconst migration: MigrationDefinition = defineMigration({\n  name: '202609020001_create_orders',\n\n  async up({ builder }) {\n    await builder.createCollection('orders', (collection) => {\n      collection.increments('id');\n      collection.string('orderNo', { length: 64, nullable: false });\n      collection.string('status', { length: 32, nullable: false });\n      collection.datetime('createdAt', { nullable: false });\n      collection.unique('orderNo');\n      collection.index('status');\n    });\n  },\n\n  async down({ builder }) {\n    await builder.dropCollection('orders');\n  },\n});\n\nexport default migration;\n```\n\n```ts\n// database/main/seeds/202609030002_default_order_statuses.ts\nimport { defineSeed } from '@nocobase/db';\n\nexport default defineSeed({\n  name: '202609030002_default_order_statuses',\n\n  async run({ repository }) {\n    await repository('orderStatuses').upsertOne({\n      filter: { code: 'draft' },\n      create: { code: 'draft', title: 'Draft' },\n      update: { title: 'Draft' },\n    });\n  },\n});\n```\n\nApply both with `pnpm nocobase db apply`, adding `--connection <name>` for a non-default connection or `--all` for every managed one.\n\nEach context carries its own tools, and which one to use is not a free choice — see [Repository and Query](#4-repository-and-query). In short: a migration works through `builder` and `query`, and a seed writes through `repository`.",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36329207021.1/v2-ab35ff781b94/E22",
+      "origin": {
+        "kind": "review",
+        "key": "review/36329207021.1/v2-ab35ff781b94",
+        "localId": "E22"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/db/dist/src/seed/define.js",
+      "lines": [
+        1,
+        6
+      ],
+      "sha256": "b0361ee2f3bb53ef45e9e67d6607d92fc98b6461a71bafb638499cc17347e142",
+      "observation": "defineSeed 标记并返回种子定义供 loader 发现。",
+      "excerpt": "import { markSeedDefinition } from './internal/marker.js';\n/** Marks and returns a seed definition for discovery by the seed loader. */\nexport function defineSeed(definition) {\n    return markSeedDefinition(definition);\n}\n",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36329207021.1/v2-ab35ff781b94/E23",
+      "origin": {
+        "kind": "review",
+        "key": "review/36329207021.1/v2-ab35ff781b94",
+        "localId": "E23"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/app-server/dist/router/routes.js",
+      "lines": [
+        1,
+        19
+      ],
+      "sha256": "4a5a2d50c819c2cb33a51a1a65681e16c31ced82001d689f239da855035ec617",
+      "observation": "defineApiRoutes/defineRootRoutes/defineHttpMiddleware 返回冻结的路由贡献对象（scope/createRouter）。",
+      "excerpt": "export function defineHttpMiddleware(options) {\n    return Object.freeze({\n        name: options.name,\n        register: options.register,\n    });\n}\nexport function defineApiRoutes(createRouter) {\n    return Object.freeze({\n        scope: 'api',\n        createRouter,\n    });\n}\nexport function defineRootRoutes(createRouter) {\n    return Object.freeze({\n        scope: 'root',\n        createRouter,\n    });\n}\n//# sourceMappingURL=routes.js.map",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36329207021.1/v2-ab35ff781b94/E24",
+      "origin": {
+        "kind": "review",
+        "key": "review/36329207021.1/v2-ab35ff781b94",
+        "localId": "E24"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/app-client/dist/plugins.js",
+      "lines": [
+        80,
+        102
+      ],
+      "sha256": "75f0f45db675008b5ed9dc35a1996325cb7b11031a0e113f7c19e22ce2090d5a",
+      "observation": "defineAppRoutes/defineSettingsRoutes 冻结路由声明并分别挂到 app/settings 父级。",
+      "excerpt": "export function defineAppRoutes(routes) {\n    return Object.freeze({\n        parent: 'app',\n        routes: freezeNavigationRoutes(routes),\n    });\n}\nfunction freezeNavigationRoutes(routes) {\n    return Object.freeze(routes.map((route) => Object.freeze({\n        ...route,\n        ...(route.navigation\n            ? { navigation: Object.freeze({ ...route.navigation }) }\n            : {}),\n        ...(route.children\n            ? { children: freezeNavigationRoutes(route.children) }\n            : {}),\n    })));\n}\nexport function defineSettingsRoutes(routes) {\n    return Object.freeze({\n        parent: 'settings',\n        routes: freezeNavigationRoutes(routes),\n    });\n}",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36329207021.1/v2-ab35ff781b94/E25",
+      "origin": {
+        "kind": "review",
+        "key": "review/36329207021.1/v2-ab35ff781b94",
+        "localId": "E25"
+      },
+      "kind": "skill",
+      "path": "app/.agents/skills/nocobase-app-development/SKILL.md",
+      "lines": [
+        118,
+        124
+      ],
+      "sha256": "aa8bddf31a871e94009665fd867cccae5a789895b7b88a7cfcc2d3d7467125a2",
+      "observation": "应用开发 Skill 指定业务代码归属：client/routes.ts、client/pages/、server/routes/、server/providers/、database/main/migrations|seeds、tests。",
+      "excerpt": "Business code belongs in a small, stable set of places:\n\n```text\nclient/routes.ts, client/pages/, client/components/, client/locales/,\nclient/service-provider.ts, server/routes/, server/providers/,\ndatabase/main/migrations/, database/main/seeds/, tests/\n```",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36329207021.1/v2-ab35ff781b94/E26",
+      "origin": {
+        "kind": "review",
+        "key": "review/36329207021.1/v2-ab35ff781b94",
+        "localId": "E26"
+      },
+      "kind": "code",
+      "path": "app/server/workflows/service-request-acceptance/workflow.ts",
+      "lines": [
+        28,
+        49
+      ],
+      "sha256": "6a5feaf4391989e86d0e4e7de37275e6e6c3b33084a05a04ae2ac0000da6de2d",
+      "observation": "应用用 defineWorkflow + RunInstruction/ConditionInstruction 声明受理、分支与通知节点。",
+      "excerpt": "  nodes: [\n    RunInstruction.create({\n      key: 'registerAcceptance',\n      title: 'Register acceptance',\n      description:\n        'Read the request by its id and mark it accepted, recording the acceptance time and returning the assignee, title and urgent flag that the later steps consume.',\n      config: {\n        module: './server/register-acceptance',\n        args: { requestId: '{{$input.requestId}}' },\n      },\n      result: {\n        type: 'object',\n        required: ['requestId', 'assigneeId', 'urgent', 'title'],\n        properties: {\n          requestId: { type: 'string' },\n          assigneeId: { type: 'string' },\n          urgent: { type: 'boolean' },\n          title: { type: 'string' },\n        },\n        additionalProperties: false,\n      },\n    }),",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36329207021.1/v2-ab35ff781b94/E27",
+      "origin": {
+        "kind": "review",
+        "key": "review/36329207021.1/v2-ab35ff781b94",
+        "localId": "E27"
+      },
+      "kind": "code",
+      "path": "app/client/routes.ts",
+      "lines": [
+        8,
+        31
+      ],
+      "sha256": "5017ce73ab12248ae74009a8a376df7ad396dbfc28b297f0033943416ea2721f",
+      "observation": "应用用 defineAppRoutes 声明 service-requests 列表与详情页（auth required、navigation、componentLoader）。",
+      "excerpt": "const appRoutes: AppClientRouteContribution = defineAppRoutes([\n  {\n    // Every signed-in user reaches the landing page. `authz: 'skip'` takes it out of page authorization entirely, so\n    // no permission change can leave a user signed in with nowhere to land.\n    authz: 'skip',\n    auth: 'required',\n    componentLoader: () => import('./pages/home.js'),\n    name: 'home',\n    navigation: { title: 'navigation.home', icon: Home },\n    path: '/',\n  },\n  // The service-request flow is a small build test with two accounts: a\n  // supervisor creates and accepts requests, and the assignee opens the\n  // request from the in-app message. No per-role page grant is defined, so\n  // these pages declare `authz: 'skip'` for any signed-in user rather than a\n  // page id that the assignee would need a grant for.\n  {\n    auth: 'required',\n    authz: 'skip',\n    componentLoader: () => import('./pages/service-requests/index.js'),\n    name: 'service-requests',\n    navigation: { title: 'navigation.serviceRequests', icon: ClipboardList },\n    path: '/service-requests',\n  },",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36329207021.1/v2-ab35ff781b94/E28",
+      "origin": {
+        "kind": "review",
+        "key": "review/36329207021.1/v2-ab35ff781b94",
+        "localId": "E28"
+      },
+      "kind": "code",
+      "path": "app/server/routes/service-requests.ts",
+      "lines": [
+        38,
+        45
+      ],
+      "sha256": "8bc89a3771601a2c6410c8f0aaad6a2fac8e11c91170417d8b25a7ac3fd8f596",
+      "observation": "应用用 defineApiRoutes 暴露服务请求接口，并由子路由统一安装 auth.required()。",
+      "excerpt": "/**\n * Application-owned HTTP surface for service requests. It owns its security:\n * an isolated sub-router mounted at the request prefix installs\n * `auth.required()` on every path it owns, and the workflow's own effects run\n * behind the acceptance endpoint.\n */\nexport const apiRoutes: AppApiRouteContribution<Application> = defineApiRoutes(\n  (app) => {",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36329207021.1/v2-ab35ff781b94/E29",
+      "origin": {
+        "kind": "review",
+        "key": "review/36329207021.1/v2-ab35ff781b94",
+        "localId": "E29"
+      },
+      "kind": "code",
+      "path": "app/database/main/migrations/202609250001_create_service_requests.ts",
+      "lines": [
+        1,
+        35
+      ],
+      "sha256": "c7f3eb5e2759f6363e477db5ea4c716b6a054d65f8128c8e71eb44618238019d",
+      "observation": "应用迁移用 defineMigration + builder.createCollection 建 serviceRequests 及索引，并在 down 中删除。",
+      "excerpt": "import { defineMigration } from '@nocobase/db';\n\n/**\n * The single business table for the simplified service-request flow.\n *\n * `assigneeId` stores a `user.id` (a string in the authentication schema). The\n * field deliberately carries no relation: the acceptance workflow reads and\n * writes by identity, and the demo does not need relation traversal.\n */\nexport default defineMigration({\n  name: '202609250001_create_service_requests',\n  async up({ builder }) {\n    await builder.createCollection('serviceRequests', (collection) => {\n      collection.increments('id');\n      collection.string('title', { length: 256 }).notNull();\n      collection.boolean('urgent').notNull().defaultTo(false);\n      collection.string('assigneeId', { length: 64 }).notNull();\n      collection\n        .string('status', { length: 32 })\n        .notNull()\n        .defaultTo('pending');\n      // `normal` or `urgent` once the acceptance workflow has run; null while\n      // the request is still pending.\n      collection.string('result', { length: 32 }).nullable();\n      collection.datetime('acceptedAt').nullable();\n      collection.datetime('createdAt').notNull();\n      collection.index('status', { name: 'idx_service_requests_status' });\n      collection.index('assigneeId', { name: 'idx_service_requests_assignee' });\n    });\n  },\n  async down({ builder }) {\n    await builder.dropCollection('serviceRequests');\n  },\n});\n",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36329207021.1/v2-ab35ff781b94/E30",
+      "origin": {
+        "kind": "review",
+        "key": "review/36329207021.1/v2-ab35ff781b94",
+        "localId": "E30"
+      },
+      "kind": "code",
+      "path": "app/database/main/seeds/202609250002_service_request_demo_data.ts",
+      "lines": [
+        1,
+        40
+      ],
+      "sha256": "117f99cf84d331aa19860e69c5846eb6e771906f66dc647723538e20051b4693",
+      "observation": "应用种子用 defineSeed 写入演示数据，并复用 better-auth/crypto 的 hashPassword。",
+      "excerpt": "import { defineSeed } from '@nocobase/db';\nimport { hashPassword } from 'better-auth/crypto';\n\n/**\n * Deterministic demo data for the simplified service-request flow:\n * one assignee account, and two requests (one normal, one urgent).\n *\n * The seed is idempotent by stable business identifiers — the username and the\n * request titles — so re-running it never duplicates rows and never overwrites\n * data a user has since edited. It never uses a timestamp or random value as an\n * identifier. `createdAt` is the only non-deterministic value, and it only\n * affects a row the seed is inserting for the first time.\n */\n\nconst ASSIGNEE_USER_ID = 'service-request-assignee';\nconst ASSIGNEE_ACCOUNT_ID = 'service-request-assignee-account';\nconst ASSIGNEE = {\n  username: 'assignee',\n  email: 'assignee@nocobase.com',\n  name: 'Service Assignee',\n  password=[REDACTED]',\n} as const;\n\nconst DEMO_REQUESTS: readonly {\n  readonly title: string;\n  readonly urgent: boolean;\n}[] = [\n  { title: 'Third-floor printer is offline', urgent: false },\n  { title: 'Customer cannot sign in to the portal', urgent: true },\n];\n\ninterface ServiceRequestRecord {\n  id: number;\n  title: string;\n  urgent: boolean;\n  assigneeId: string;\n  status: string;\n  result: string | null;\n  acceptedAt: Date | null;\n  createdAt: Date;",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36329207021.1/v2-ab35ff781b94/E31",
+      "origin": {
+        "kind": "review",
+        "key": "review/36329207021.1/v2-ab35ff781b94",
+        "localId": "E31"
+      },
+      "kind": "code",
+      "path": "app/client/pages/service-requests/messages.tsx",
+      "lines": [
+        1,
+        24
+      ],
+      "sha256": "53814d11f6f5635e247cc6de3b0942b27e5da816751749af603304eb137315f9",
+      "observation": "应用消息页使用 NotificationInAppInbox/NotificationInAppProvider 渲染收件箱。",
+      "excerpt": "import {\n  NotificationInAppInbox,\n  NotificationInAppProvider,\n} from '@nocobase/app-plugin-notification-in-app/client';\nimport type { ReactElement } from 'react';\n\nimport { PageContainer } from '@/components/page-container';\n\n/**\n * The message center. It renders the in-app plugin's own inbox — the same\n * durable messages the acceptance workflow writes through the Notification\n * service — so an assignee reads them, opens the linked request, and the read\n * state is the plugin's persisted state rather than anything this page keeps.\n */\nexport default function MessagesPage(): ReactElement {\n  return (\n    <PageContainer>\n      <NotificationInAppProvider>\n        <NotificationInAppInbox />\n      </NotificationInAppProvider>\n    </PageContainer>\n  );\n}\n",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36329207021.1/v2-ab35ff781b94/E32",
+      "origin": {
+        "kind": "review",
+        "key": "review/36329207021.1/v2-ab35ff781b94",
+        "localId": "E32"
+      },
+      "kind": "log",
+      "path": "artifacts/agent-history/agent-implement.jsonl/part-0001.txt",
+      "lines": [
+        1,
+        2
+      ],
+      "sha256": "7c994f8a3c1e57c3a384f2c662218b15ec046cf4d01d0f76156b53fa3be9a1e9",
+      "observation": "agent-implement 会话起始分片，作为该调用的引用锚点。",
+      "excerpt": "{\"type\":\"session\",\"version\":3,\"id\":\"01a0e375-8d79-75e1-8be7-8748061b5f62\",\"timestamp\":\"2026-09-27T15:22:07.098Z\",\"cwd\":\"/home/runner/work/nb3-factory/nb3-factory/workspace\"}\n{\"type\":\"agent_start\"}",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36329207021.1/v2-ab35ff781b94/E33",
+      "origin": {
+        "kind": "review",
+        "key": "review/36329207021.1/v2-ab35ff781b94",
+        "localId": "E33"
+      },
+      "kind": "log",
+      "path": "artifacts/agent-history/agent-implement.jsonl/part-0008.txt",
+      "lines": [
+        1365,
+        1367
+      ],
+      "sha256": "007859c5c6ba060ccf43d4f60f836cc2e733ab1541858797ea3e83bd0ee50e1e",
+      "observation": "错误信号 17454/17456：grep/ls 探索 artifact-store/loader 的命令以退出码 1 结束。",
+      "excerpt": "{\"type\":\"tool_execution_end\",\"toolCallId\":\"call_00_HRv3Hf3sx9NFMi0l60hX1000\",\"toolName\":\"bash\",\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"node_modules/@nocobase/app-plugin-workflow/dist/server/loader/artifact-store.js:95:            for (const entry of await fs.readdir(current, { withFileTypes: true })) {\\nnode_modules/@nocobase/app-plugin-workflow/dist/server/loader/loader.js:26:    async ensureMaterialized(digest) {\\nnode_modules/@nocobase/app-plugin-workflow/dist/server/loader/loader.js:53:                filter: { key: artifact.key, current: true },\\nnode_modules/@nocobase/app-plugin-workflow/dist/server/loader/source-materializer.js:58:export async function activateWorkflowSource(store, workflowId) {\\nnode_modules/@nocobase/app-plugin-workflow/dist/server/loader/source-materializer.js:67:        filter: { key, current: true },\\nnode_modules/@nocobase/app-plugin-workflow/dist/server/loader/source-materializer.js:80:        values: { current: true, enabled: inheritedEnabled },\\nnode_modules/@nocobase/app-plugin-workflow/dist/server/loader/synchronizer.js:5:import { activateWorkflowSource, materializeWorkflowSource, } from './source-materializer.js';\\nnode_modules/@nocobase/app-plugin-workflow/dist/server/loader/synchronizer.js:27:        await this.options.database.transaction((connection) => activateWorkflowSource(workflowStoreOf(connection), workflowId), this.options.connectionName);\\nnode_modules/@nocobase/app-plugin-workflow/dist/server/loader/synchronizer.js:123:            for (const entry of await fs.readdir(current, { withFileTypes: true })) {\\n=== activate source ===\\n\\n\\nCommand exited with code 1\"}],\"details\":{}},\"isError\":true}\n{\"type\":\"message_start\",\"message\":{\"role\":\"toolResult\",\"toolCallId\":\"call_00_HRv3Hf3sx9NFMi0l60hX1000\",\"toolName\":\"bash\",\"content\":[{\"type\":\"text\",\"text\":\"node_modules/@nocobase/app-plugin-workflow/dist/server/loader/artifact-store.js:95:            for (const entry of await fs.readdir(current, { withFileTypes: true })) {\\nnode_modules/@nocobase/app-plugin-workflow/dist/server/loader/loader.js:26:    async ensureMaterialized(digest) {\\nnode_modules/@nocobase/app-plugin-workflow/dist/server/loader/loader.js:53:                filter: { key: artifact.key, current: true },\\nnode_modules/@nocobase/app-plugin-workflow/dist/server/loader/source-materializer.js:58:export async function activateWorkflowSource(store, workflowId) {\\nnode_modules/@nocobase/app-plugin-workflow/dist/server/loader/source-materializer.js:67:        filter: { key, current: true },\\nnode_modules/@nocobase/app-plugin-workflow/dist/server/loader/source-materializer.js:80:        values: { current: true, enabled: inheritedEnabled },\\nnode_modules/@nocobase/app-plugin-workflow/dist/server/loader/synchronizer.js:5:import { activateWorkflowSource, materializeWorkflowSource, } from './source-materializer.js';\\nnode_modules/@nocobase/app-plugin-workflow/dist/server/loader/synchronizer.js:27:        await this.options.database.transaction((connection) => activateWorkflowSource(workflowStoreOf(connection), workflowId), this.options.connectionName);\\nnode_modules/@nocobase/app-plugin-workflow/dist/server/loader/synchronizer.js:123:            for (const entry of await fs.readdir(current, { withFileTypes: true })) {\\n=== activate source ===\\n\\n\\nCommand exited with code 1\"}],\"details\":{},\"isError\":true,\"timestamp\":1790522820433}}\n{\"type\":\"message_end\",\"message\":{\"role\":\"toolResult\",\"toolCallId\":\"call_00_HRv3Hf3sx9NFMi0l60hX1000\",\"toolName\":\"bash\",\"content\":[{\"type\":\"text\",\"text\":\"node_modules/@nocobase/app-plugin-workflow/dist/server/loader/artifact-store.js:95:            for (const entry of await fs.readdir(current, { withFileTypes: true })) {\\nnode_modules/@nocobase/app-plugin-workflow/dist/server/loader/loader.js:26:    async ensureMaterialized(digest) {\\nnode_modules/@nocobase/app-plugin-workflow/dist/server/loader/loader.js:53:                filter: { key: artifact.key, current: true },\\nnode_modules/@nocobase/app-plugin-workflow/dist/server/loader/source-materializer.js:58:export async function activateWorkflowSource(store, workflowId) {\\nnode_modules/@nocobase/app-plugin-workflow/dist/server/loader/source-materializer.js:67:        filter: { key, current: true },\\nnode_modules/@nocobase/app-plugin-workflow/dist/server/loader/source-materializer.js:80:        values: { current: true, enabled: inheritedEnabled },\\nnode_modules/@nocobase/app-plugin-workflow/dist/server/loader/synchronizer.js:5:import { activateWorkflowSource, materializeWorkflowSource, } from './source-materializer.js';\\nnode_modules/@nocobase/app-plugin-workflow/dist/server/loader/synchronizer.js:27:        await this.options.database.transaction((connection) => activateWorkflowSource(workflowStoreOf(connection), workflowId), this.options.connectionName);\\nnode_modules/@nocobase/app-plugin-workflow/dist/server/loader/synchronizer.js:123:            for (const entry of await fs.readdir(current, { withFileTypes: true })) {\\n=== activate source ===\\n\\n\\nCommand exited with code 1\"}],\"details\":{},\"isError\":true,\"timestamp\":1790522820433}}",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36329207021.1/v2-ab35ff781b94/E34",
+      "origin": {
+        "kind": "review",
+        "key": "review/36329207021.1/v2-ab35ff781b94",
+        "localId": "E34"
+      },
+      "kind": "log",
+      "path": "artifacts/agent-history/agent-implement.jsonl/part-0012.txt",
+      "lines": [
+        2295,
+        2297
+      ],
+      "sha256": "e546460047d1c72c5575993e24d1c5ac200e7e4d2dceb8d01a38123033b3a541",
+      "observation": "错误信号 31653/31655：查找 @nocobase/api-client/dist 不存在。",
+      "excerpt": "{\"type\":\"tool_execution_end\",\"toolCallId\":\"call_00_eViDsBhTSuEddGjkLKR94969\",\"toolName\":\"bash\",\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"find: ‘node_modules/@nocobase/api-client/dist’: No such file or directory\\n===\\n=== client.d.ts ===\\n\\n\\nCommand exited with code 1\"}],\"details\":{}},\"isError\":true}\n{\"type\":\"message_start\",\"message\":{\"role\":\"toolResult\",\"toolCallId\":\"call_00_eViDsBhTSuEddGjkLKR94969\",\"toolName\":\"bash\",\"content\":[{\"type\":\"text\",\"text\":\"find: ‘node_modules/@nocobase/api-client/dist’: No such file or directory\\n===\\n=== client.d.ts ===\\n\\n\\nCommand exited with code 1\"}],\"details\":{},\"isError\":true,\"timestamp\":1790523093232}}\n{\"type\":\"message_end\",\"message\":{\"role\":\"toolResult\",\"toolCallId\":\"call_00_eViDsBhTSuEddGjkLKR94969\",\"toolName\":\"bash\",\"content\":[{\"type\":\"text\",\"text\":\"find: ‘node_modules/@nocobase/api-client/dist’: No such file or directory\\n===\\n=== client.d.ts ===\\n\\n\\nCommand exited with code 1\"}],\"details\":{},\"isError\":true,\"timestamp\":1790523093232}}",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36329207021.1/v2-ab35ff781b94/E35",
+      "origin": {
+        "kind": "review",
+        "key": "review/36329207021.1/v2-ab35ff781b94",
+        "localId": "E35"
+      },
+      "kind": "log",
+      "path": "artifacts/agent-history/agent-implement.jsonl/part-0024.txt",
+      "lines": [
+        168,
+        170
+      ],
+      "sha256": "e07372bc15e98eb4f0f4a90575c8299ef964b3fa3e811d67c0b7c2ab2d96b239",
+      "observation": "错误信号 64931/64933：列目录并 grep 引擎加载相关符号，命令未命中。",
+      "excerpt": "{\"type\":\"tool_execution_end\",\"toolCallId\":\"call_00_CIA9iF06qU7QPz0Imh9v0273\",\"toolName\":\"bash\",\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"constants.d.ts\\nconstants.d.ts.map\\nconstants.js\\nconstants.js.map\\ndispatcher.d.ts\\ndispatcher.d.ts.map\\ndispatcher.js\\ndispatcher.js.map\\nengine.d.ts\\nengine.d.ts.map\\nengine.js\\nengine.js.map\\nfinalize-run.d.ts\\nfinalize-run.d.ts.map\\nfinalize-run.js\\nfinalize-run.js.map\\nindex.d.ts\\nindex.d.ts.map\\nindex.js\\nindex.js.map\\ninspector.d.ts\\ninspector.d.ts.map\\ninspector.js\\ninspector.js.map\\ninvocation.d.ts\\ninvocation.d.ts.map\\ninvocation.js\\ninvocation.js.map\\nlogger.d.ts\\nlogger.d.ts.map\\nlogger.js\\nlogger.js.map\\nnode-results.d.ts\\nnode-results.d.ts.map\\nnode-results.js\\nnode-results.js.map\\nparameters.d.ts\\nparameters.d.ts.map\\nparameters.js\\nparameters.js.map\\nprocessor.d.ts\\nprocessor.d.ts.map\\nprocessor.js\\nprocessor.js.map\\nrun-services.d.ts\\nrun-services.d.ts.map\\nrun-services.js\\nrun-services.js.map\\ntimeout-reaper.d.ts\\ntimeout-reaper.d.ts.map\\ntimeout-reaper.js\\ntimeout-reaper.js.map\\ntypes.d.ts\\ntypes.d.ts.map\\ntypes.js\\ntypes.js.map\\nutils.d.ts\\nutils.d.ts.map\\nutils.js\\nutils.js.map\\nvalue-resolver.d.ts\\nvalue-resolver.d.ts.map\\nvalue-resolver.js\\nvalue-resolver.js.map\\n=== processor ===\\n\\n\\nCommand exited with code 1\"}],\"details\":{}},\"isError\":true}\n{\"type\":\"message_start\",\"message\":{\"role\":\"toolResult\",\"toolCallId\":\"call_00_CIA9iF06qU7QPz0Imh9v0273\",\"toolName\":\"bash\",\"content\":[{\"type\":\"text\",\"text\":\"constants.d.ts\\nconstants.d.ts.map\\nconstants.js\\nconstants.js.map\\ndispatcher.d.ts\\ndispatcher.d.ts.map\\ndispatcher.js\\ndispatcher.js.map\\nengine.d.ts\\nengine.d.ts.map\\nengine.js\\nengine.js.map\\nfinalize-run.d.ts\\nfinalize-run.d.ts.map\\nfinalize-run.js\\nfinalize-run.js.map\\nindex.d.ts\\nindex.d.ts.map\\nindex.js\\nindex.js.map\\ninspector.d.ts\\ninspector.d.ts.map\\ninspector.js\\ninspector.js.map\\ninvocation.d.ts\\ninvocation.d.ts.map\\ninvocation.js\\ninvocation.js.map\\nlogger.d.ts\\nlogger.d.ts.map\\nlogger.js\\nlogger.js.map\\nnode-results.d.ts\\nnode-results.d.ts.map\\nnode-results.js\\nnode-results.js.map\\nparameters.d.ts\\nparameters.d.ts.map\\nparameters.js\\nparameters.js.map\\nprocessor.d.ts\\nprocessor.d.ts.map\\nprocessor.js\\nprocessor.js.map\\nrun-services.d.ts\\nrun-services.d.ts.map\\nrun-services.js\\nrun-services.js.map\\ntimeout-reaper.d.ts\\ntimeout-reaper.d.ts.map\\ntimeout-reaper.js\\ntimeout-reaper.js.map\\ntypes.d.ts\\ntypes.d.ts.map\\ntypes.js\\ntypes.js.map\\nutils.d.ts\\nutils.d.ts.map\\nutils.js\\nutils.js.map\\nvalue-resolver.d.ts\\nvalue-resolver.d.ts.map\\nvalue-resolver.js\\nvalue-resolver.js.map\\n=== processor ===\\n\\n\\nCommand exited with code 1\"}],\"details\":{},\"isError\":true,\"timestamp\":1790523843001}}\n{\"type\":\"message_end\",\"message\":{\"role\":\"toolResult\",\"toolCallId\":\"call_00_CIA9iF06qU7QPz0Imh9v0273\",\"toolName\":\"bash\",\"content\":[{\"type\":\"text\",\"text\":\"constants.d.ts\\nconstants.d.ts.map\\nconstants.js\\nconstants.js.map\\ndispatcher.d.ts\\ndispatcher.d.ts.map\\ndispatcher.js\\ndispatcher.js.map\\nengine.d.ts\\nengine.d.ts.map\\nengine.js\\nengine.js.map\\nfinalize-run.d.ts\\nfinalize-run.d.ts.map\\nfinalize-run.js\\nfinalize-run.js.map\\nindex.d.ts\\nindex.d.ts.map\\nindex.js\\nindex.js.map\\ninspector.d.ts\\ninspector.d.ts.map\\ninspector.js\\ninspector.js.map\\ninvocation.d.ts\\ninvocation.d.ts.map\\ninvocation.js\\ninvocation.js.map\\nlogger.d.ts\\nlogger.d.ts.map\\nlogger.js\\nlogger.js.map\\nnode-results.d.ts\\nnode-results.d.ts.map\\nnode-results.js\\nnode-results.js.map\\nparameters.d.ts\\nparameters.d.ts.map\\nparameters.js\\nparameters.js.map\\nprocessor.d.ts\\nprocessor.d.ts.map\\nprocessor.js\\nprocessor.js.map\\nrun-services.d.ts\\nrun-services.d.ts.map\\nrun-services.js\\nrun-services.js.map\\ntimeout-reaper.d.ts\\ntimeout-reaper.d.ts.map\\ntimeout-reaper.js\\ntimeout-reaper.js.map\\ntypes.d.ts\\ntypes.d.ts.map\\ntypes.js\\ntypes.js.map\\nutils.d.ts\\nutils.d.ts.map\\nutils.js\\nutils.js.map\\nvalue-resolver.d.ts\\nvalue-resolver.d.ts.map\\nvalue-resolver.js\\nvalue-resolver.js.map\\n=== processor ===\\n\\n\\nCommand exited with code 1\"}],\"details\":{},\"isError\":true,\"timestamp\":1790523843001}}",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36329207021.1/v2-ab35ff781b94/E36",
+      "origin": {
+        "kind": "review",
+        "key": "review/36329207021.1/v2-ab35ff781b94",
+        "localId": "E36"
+      },
+      "kind": "log",
+      "path": "artifacts/agent-history/agent-implement.jsonl/part-0027.txt",
+      "lines": [
+        1451,
+        1453
+      ],
+      "sha256": "bf1d37d28ea5578ca5da6435e78ca4e2f463dcd335fecb211a99911e18e55ba2",
+      "observation": "错误信号 76226/76228：find tests 与 ls e2e 探索命令退出码非零。",
+      "excerpt": "{\"type\":\"tool_execution_end\",\"toolCallId\":\"call_00_EVdeYBn11UshpjpnSEmH3012\",\"toolName\":\"bash\",\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"tests/logic/app-server.test.ts\\ntests/logic/asset-url.test.ts\\ntests/logic/client-plugin-registry.test.ts\\ntests/logic/client-routes.test.ts\\ntests/logic/client-runtime.test.ts\\ntests/logic/config.test.ts\\ntests/logic/dev-client-watch.test.ts\\ntests/logic/dev-routes-production-build.test.ts\\ntests/logic/lifecycle.test.ts\\ntests/logic/locale-coverage.test.ts\\ntests/logic/plugin-commands.test.ts\\ntests/logic/plugin-page-authz.test.ts\\ntests/logic/route-navigation.test.ts\\ntests/logic/tailwind-sources.test.ts\\ntests/logic/template-package-name.test.ts\\ntests/logic/theme-preferences.test.ts\\ntests/logic/theme-tokens.test.ts\\n=== e2e ===\\n\\n\\nCommand exited with code 2\"}],\"details\":{}},\"isError\":true}\n{\"type\":\"message_start\",\"message\":{\"role\":\"toolResult\",\"toolCallId\":\"call_00_EVdeYBn11UshpjpnSEmH3012\",\"toolName\":\"bash\",\"content\":[{\"type\":\"text\",\"text\":\"tests/logic/app-server.test.ts\\ntests/logic/asset-url.test.ts\\ntests/logic/client-plugin-registry.test.ts\\ntests/logic/client-routes.test.ts\\ntests/logic/client-runtime.test.ts\\ntests/logic/config.test.ts\\ntests/logic/dev-client-watch.test.ts\\ntests/logic/dev-routes-production-build.test.ts\\ntests/logic/lifecycle.test.ts\\ntests/logic/locale-coverage.test.ts\\ntests/logic/plugin-commands.test.ts\\ntests/logic/plugin-page-authz.test.ts\\ntests/logic/route-navigation.test.ts\\ntests/logic/tailwind-sources.test.ts\\ntests/logic/template-package-name.test.ts\\ntests/logic/theme-preferences.test.ts\\ntests/logic/theme-tokens.test.ts\\n=== e2e ===\\n\\n\\nCommand exited with code 2\"}],\"details\":{},\"isError\":true,\"timestamp\":1790524063066}}\n{\"type\":\"message_end\",\"message\":{\"role\":\"toolResult\",\"toolCallId\":\"call_00_EVdeYBn11UshpjpnSEmH3012\",\"toolName\":\"bash\",\"content\":[{\"type\":\"text\",\"text\":\"tests/logic/app-server.test.ts\\ntests/logic/asset-url.test.ts\\ntests/logic/client-plugin-registry.test.ts\\ntests/logic/client-routes.test.ts\\ntests/logic/client-runtime.test.ts\\ntests/logic/config.test.ts\\ntests/logic/dev-client-watch.test.ts\\ntests/logic/dev-routes-production-build.test.ts\\ntests/logic/lifecycle.test.ts\\ntests/logic/locale-coverage.test.ts\\ntests/logic/plugin-commands.test.ts\\ntests/logic/plugin-page-authz.test.ts\\ntests/logic/route-navigation.test.ts\\ntests/logic/tailwind-sources.test.ts\\ntests/logic/template-package-name.test.ts\\ntests/logic/theme-preferences.test.ts\\ntests/logic/theme-tokens.test.ts\\n=== e2e ===\\n\\n\\nCommand exited with code 2\"}],\"details\":{},\"isError\":true,\"timestamp\":1790524063066}}",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36329207021.1/v2-ab35ff781b94/E37",
+      "origin": {
+        "kind": "review",
+        "key": "review/36329207021.1/v2-ab35ff781b94",
+        "localId": "E37"
+      },
+      "kind": "log",
+      "path": "artifacts/agent-history/agent-implement.jsonl/part-0044.txt",
+      "lines": [
+        1421,
+        1423
+      ],
+      "sha256": "56b3a8e90bf4a004f2c1d047af133340bf0e54c426ddfbe8202e00d6a2ef0cb8",
+      "observation": "错误信号 132605/132607：require('better-sqlite3') 在 workspace 根不可解析。",
+      "excerpt": "{\"type\":\"tool_execution_end\",\"toolCallId\":\"call_00_BrHUF7ZyL5icDLlN7ckH1611\",\"toolName\":\"bash\",\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"node:internal/modules/cjs/loader:1568\\n  throw err;\\n  ^\\n\\nError: Cannot find module 'better-sqlite3'\\nRequire stack:\\n- /home/runner/work/nb3-factory/nb3-factory/workspace/[eval]\\n    at Module._resolveFilename (node:internal/modules/cjs/loader:1564:15)\\n    at wrapResolveFilename (node:internal/modules/cjs/loader:1118:27)\\n    at defaultResolveImplForCJSLoading (node:internal/modules/cjs/loader:1142:10)\\n    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1169:12)\\n    at Module._load (node:internal/modules/cjs/loader:1341:5)\\n    at wrapModuleLoad (node:internal/modules/cjs/loader:261:19)\\n    at Module.require (node:internal/modules/cjs/loader:1674:12)\\n    at require (node:internal/modules/helpers:157:16)\\n    at [eval]:2:18\\n    at runScriptInThisContext (node:internal/vm:219:10) {\\n  code: 'MODULE_NOT_FOUND',\\n  requireStack: [ '/home/runner/work/nb3-factory/nb3-factory/workspace/[eval]' ]\\n}\\n\\nNode.js v24.21.0\\n\\n\\nCommand exited with code 1\"}],\"details\":{}},\"isError\":true}\n{\"type\":\"message_start\",\"message\":{\"role\":\"toolResult\",\"toolCallId\":\"call_00_BrHUF7ZyL5icDLlN7ckH1611\",\"toolName\":\"bash\",\"content\":[{\"type\":\"text\",\"text\":\"node:internal/modules/cjs/loader:1568\\n  throw err;\\n  ^\\n\\nError: Cannot find module 'better-sqlite3'\\nRequire stack:\\n- /home/runner/work/nb3-factory/nb3-factory/workspace/[eval]\\n    at Module._resolveFilename (node:internal/modules/cjs/loader:1564:15)\\n    at wrapResolveFilename (node:internal/modules/cjs/loader:1118:27)\\n    at defaultResolveImplForCJSLoading (node:internal/modules/cjs/loader:1142:10)\\n    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1169:12)\\n    at Module._load (node:internal/modules/cjs/loader:1341:5)\\n    at wrapModuleLoad (node:internal/modules/cjs/loader:261:19)\\n    at Module.require (node:internal/modules/cjs/loader:1674:12)\\n    at require (node:internal/modules/helpers:157:16)\\n    at [eval]:2:18\\n    at runScriptInThisContext (node:internal/vm:219:10) {\\n  code: 'MODULE_NOT_FOUND',\\n  requireStack: [ '/home/runner/work/nb3-factory/nb3-factory/workspace/[eval]' ]\\n}\\n\\nNode.js v24.21.0\\n\\n\\nCommand exited with code 1\"}],\"details\":{},\"isError\":true,\"timestamp\":1790525082973}}\n{\"type\":\"message_end\",\"message\":{\"role\":\"toolResult\",\"toolCallId\":\"call_00_BrHUF7ZyL5icDLlN7ckH1611\",\"toolName\":\"bash\",\"content\":[{\"type\":\"text\",\"text\":\"node:internal/modules/cjs/loader:1568\\n  throw err;\\n  ^\\n\\nError: Cannot find module 'better-sqlite3'\\nRequire stack:\\n- /home/runner/work/nb3-factory/nb3-factory/workspace/[eval]\\n    at Module._resolveFilename (node:internal/modules/cjs/loader:1564:15)\\n    at wrapResolveFilename (node:internal/modules/cjs/loader:1118:27)\\n    at defaultResolveImplForCJSLoading (node:internal/modules/cjs/loader:1142:10)\\n    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1169:12)\\n    at Module._load (node:internal/modules/cjs/loader:1341:5)\\n    at wrapModuleLoad (node:internal/modules/cjs/loader:261:19)\\n    at Module.require (node:internal/modules/cjs/loader:1674:12)\\n    at require (node:internal/modules/helpers:157:16)\\n    at [eval]:2:18\\n    at runScriptInThisContext (node:internal/vm:219:10) {\\n  code: 'MODULE_NOT_FOUND',\\n  requireStack: [ '/home/runner/work/nb3-factory/nb3-factory/workspace/[eval]' ]\\n}\\n\\nNode.js v24.21.0\\n\\n\\nCommand exited with code 1\"}],\"details\":{},\"isError\":true,\"timestamp\":1790525082973}}",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36329207021.1/v2-ab35ff781b94/E38",
+      "origin": {
+        "kind": "review",
+        "key": "review/36329207021.1/v2-ab35ff781b94",
+        "localId": "E38"
+      },
+      "kind": "log",
+      "path": "artifacts/agent-history/agent-implement.jsonl/part-0044.txt",
+      "lines": [
+        1635,
+        1637
+      ],
+      "sha256": "56b3a8e90bf4a004f2c1d047af133340bf0e54c426ddfbe8202e00d6a2ef0cb8",
+      "observation": "错误信号 132819/132821：createRequire(require.resolve('@nocobase/db')) 触发 ERR_PACKAGE_PATH_NOT_EXPORTED。",
+      "excerpt": "{\"type\":\"tool_execution_end\",\"toolCallId\":\"call_00_ET_JrDOqa2t8ENOWNsFDZ6w7786\",\"toolName\":\"bash\",\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"node:internal/modules/cjs/loader:761\\n      throw e;\\n      ^\\n\\nError [ERR_PACKAGE_PATH_NOT_EXPORTED]: No \\\"exports\\\" main defined in /home/runner/work/nb3-factory/nb3-factory/workspace/node_modules/@nocobase/db/package.json\\n    at exportsNotFound (node:internal/modules/esm/resolve:315:10)\\n    at packageExportsResolve (node:internal/modules/esm/resolve:606:13)\\n    at resolveExports (node:internal/modules/cjs/loader:754:36)\\n    at Module._findPath (node:internal/modules/cjs/loader:821:31)\\n    at Module._resolveFilename (node:internal/modules/cjs/loader:1557:27)\\n    at wrapResolveFilename (node:internal/modules/cjs/loader:1118:27)\\n    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1169:12)\\n    at require.resolve (node:internal/modules/helpers:175:31)\\n    at [eval]:3:35\\n    at runScriptInThisContext (node:internal/vm:219:10) {\\n  code: 'ERR_PACKAGE_PATH_NOT_EXPORTED'\\n}\\n\\nNode.js v24.21.0\\n\\n\\nCommand exited with code 1\"}],\"details\":{}},\"isError\":true}\n{\"type\":\"message_start\",\"message\":{\"role\":\"toolResult\",\"toolCallId\":\"call_00_ET_JrDOqa2t8ENOWNsFDZ6w7786\",\"toolName\":\"bash\",\"content\":[{\"type\":\"text\",\"text\":\"node:internal/modules/cjs/loader:761\\n      throw e;\\n      ^\\n\\nError [ERR_PACKAGE_PATH_NOT_EXPORTED]: No \\\"exports\\\" main defined in /home/runner/work/nb3-factory/nb3-factory/workspace/node_modules/@nocobase/db/package.json\\n    at exportsNotFound (node:internal/modules/esm/resolve:315:10)\\n    at packageExportsResolve (node:internal/modules/esm/resolve:606:13)\\n    at resolveExports (node:internal/modules/cjs/loader:754:36)\\n    at Module._findPath (node:internal/modules/cjs/loader:821:31)\\n    at Module._resolveFilename (node:internal/modules/cjs/loader:1557:27)\\n    at wrapResolveFilename (node:internal/modules/cjs/loader:1118:27)\\n    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1169:12)\\n    at require.resolve (node:internal/modules/helpers:175:31)\\n    at [eval]:3:35\\n    at runScriptInThisContext (node:internal/vm:219:10) {\\n  code: 'ERR_PACKAGE_PATH_NOT_EXPORTED'\\n}\\n\\nNode.js v24.21.0\\n\\n\\nCommand exited with code 1\"}],\"details\":{},\"isError\":true,\"timestamp\":1790525087002}}\n{\"type\":\"message_end\",\"message\":{\"role\":\"toolResult\",\"toolCallId\":\"call_00_ET_JrDOqa2t8ENOWNsFDZ6w7786\",\"toolName\":\"bash\",\"content\":[{\"type\":\"text\",\"text\":\"node:internal/modules/cjs/loader:761\\n      throw e;\\n      ^\\n\\nError [ERR_PACKAGE_PATH_NOT_EXPORTED]: No \\\"exports\\\" main defined in /home/runner/work/nb3-factory/nb3-factory/workspace/node_modules/@nocobase/db/package.json\\n    at exportsNotFound (node:internal/modules/esm/resolve:315:10)\\n    at packageExportsResolve (node:internal/modules/esm/resolve:606:13)\\n    at resolveExports (node:internal/modules/cjs/loader:754:36)\\n    at Module._findPath (node:internal/modules/cjs/loader:821:31)\\n    at Module._resolveFilename (node:internal/modules/cjs/loader:1557:27)\\n    at wrapResolveFilename (node:internal/modules/cjs/loader:1118:27)\\n    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1169:12)\\n    at require.resolve (node:internal/modules/helpers:175:31)\\n    at [eval]:3:35\\n    at runScriptInThisContext (node:internal/vm:219:10) {\\n  code: 'ERR_PACKAGE_PATH_NOT_EXPORTED'\\n}\\n\\nNode.js v24.21.0\\n\\n\\nCommand exited with code 1\"}],\"details\":{},\"isError\":true,\"timestamp\":1790525087002}}",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36329207021.1/v2-ab35ff781b94/E39",
+      "origin": {
+        "kind": "review",
+        "key": "review/36329207021.1/v2-ab35ff781b94",
+        "localId": "E39"
+      },
+      "kind": "log",
+      "path": "artifacts/agent-history/agent-implement.jsonl/part-0044.txt",
+      "lines": [
+        1884,
+        1886
+      ],
+      "sha256": "56b3a8e90bf4a004f2c1d047af133340bf0e54c426ddfbe8202e00d6a2ef0cb8",
+      "observation": "错误信号 133068/133070：原始 sqlite 查询使用 camelCase 列名 assigneeId，与物理列不符。",
+      "excerpt": "{\"type\":\"tool_execution_end\",\"toolCallId\":\"call_00_T5jXMQD2bIjSrhqn5Jum3734\",\"toolName\":\"bash\",\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"/usr/bin/sqlite3\\nTraceback (most recent call last):\\n  File \\\"<stdin>\\\", line 4, in <module>\\nsqlite3.OperationalError: no such column: assigneeId\\n\\n\\nCommand exited with code 1\"}],\"details\":{}},\"isError\":true}\n{\"type\":\"message_start\",\"message\":{\"role\":\"toolResult\",\"toolCallId\":\"call_00_T5jXMQD2bIjSrhqn5Jum3734\",\"toolName\":\"bash\",\"content\":[{\"type\":\"text\",\"text\":\"/usr/bin/sqlite3\\nTraceback (most recent call last):\\n  File \\\"<stdin>\\\", line 4, in <module>\\nsqlite3.OperationalError: no such column: assigneeId\\n\\n\\nCommand exited with code 1\"}],\"details\":{},\"isError\":true,\"timestamp\":1790525091482}}\n{\"type\":\"message_end\",\"message\":{\"role\":\"toolResult\",\"toolCallId\":\"call_00_T5jXMQD2bIjSrhqn5Jum3734\",\"toolName\":\"bash\",\"content\":[{\"type\":\"text\",\"text\":\"/usr/bin/sqlite3\\nTraceback (most recent call last):\\n  File \\\"<stdin>\\\", line 4, in <module>\\nsqlite3.OperationalError: no such column: assigneeId\\n\\n\\nCommand exited with code 1\"}],\"details\":{},\"isError\":true,\"timestamp\":1790525091482}}",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36329207021.1/v2-ab35ff781b94/E40",
+      "origin": {
+        "kind": "review",
+        "key": "review/36329207021.1/v2-ab35ff781b94",
+        "localId": "E40"
+      },
+      "kind": "log",
+      "path": "artifacts/agent-history/agent-implement.jsonl/part-0044.txt",
+      "lines": [
+        2262,
+        2264
+      ],
+      "sha256": "56b3a8e90bf4a004f2c1d047af133340bf0e54c426ddfbe8202e00d6a2ef0cb8",
+      "observation": "错误信号 133446/133448：sqlite3 巡检命令退出码非零。",
+      "excerpt": "{\"type\":\"tool_execution_end\",\"toolCallId\":\"call_00_65dj8FslJTYiqU5bmZ1k7378\",\"toolName\":\"bash\",\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"id  title                                  urgent  assignee_id               status   result  accepted_at\\n--  -------------------------------------  ------  ------------------------  -------  ------  -----------\\n1   Third-floor printer is offline         0       service-request-assignee  pending                     \\n2   Customer cannot sign in to the portal  1       service-request-assignee  pending                     \\n--- user ---\\nid                        name              username  email                \\n------------------------  ----------------  --------  ---------------------\\nservice-request-assignee  Service Assignee  assignee  assignee@nocobase.com\\n--- workflows ---\\n--- account ---\\nError: in prepare, no such column: accountId\\n  select id,accountId,providerId,userId from account where userId='service-reque\\n            ^--- error here\\n\\n\\nCommand exited with code 1\"}],\"details\":{}},\"isError\":true}\n{\"type\":\"message_start\",\"message\":{\"role\":\"toolResult\",\"toolCallId\":\"call_00_65dj8FslJTYiqU5bmZ1k7378\",\"toolName\":\"bash\",\"content\":[{\"type\":\"text\",\"text\":\"id  title                                  urgent  assignee_id               status   result  accepted_at\\n--  -------------------------------------  ------  ------------------------  -------  ------  -----------\\n1   Third-floor printer is offline         0       service-request-assignee  pending                     \\n2   Customer cannot sign in to the portal  1       service-request-assignee  pending                     \\n--- user ---\\nid                        name              username  email                \\n------------------------  ----------------  --------  ---------------------\\nservice-request-assignee  Service Assignee  assignee  assignee@nocobase.com\\n--- workflows ---\\n--- account ---\\nError: in prepare, no such column: accountId\\n  select id,accountId,providerId,userId from account where userId='service-reque\\n            ^--- error here\\n\\n\\nCommand exited with code 1\"}],\"details\":{},\"isError\":true,\"timestamp\":1790525096090}}\n{\"type\":\"message_end\",\"message\":{\"role\":\"toolResult\",\"toolCallId\":\"call_00_65dj8FslJTYiqU5bmZ1k7378\",\"toolName\":\"bash\",\"content\":[{\"type\":\"text\",\"text\":\"id  title                                  urgent  assignee_id               status   result  accepted_at\\n--  -------------------------------------  ------  ------------------------  -------  ------  -----------\\n1   Third-floor printer is offline         0       service-request-assignee  pending                     \\n2   Customer cannot sign in to the portal  1       service-request-assignee  pending                     \\n--- user ---\\nid                        name              username  email                \\n------------------------  ----------------  --------  ---------------------\\nservice-request-assignee  Service Assignee  assignee  assignee@nocobase.com\\n--- workflows ---\\n--- account ---\\nError: in prepare, no such column: accountId\\n  select id,accountId,providerId,userId from account where userId='service-reque\\n            ^--- error here\\n\\n\\nCommand exited with code 1\"}],\"details\":{},\"isError\":true,\"timestamp\":1790525096090}}",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36329207021.1/v2-ab35ff781b94/E41",
+      "origin": {
+        "kind": "review",
+        "key": "review/36329207021.1/v2-ab35ff781b94",
+        "localId": "E41"
+      },
+      "kind": "log",
+      "path": "artifacts/agent-history/agent-implement.jsonl/part-0052.txt",
+      "lines": [
+        1020,
+        1022
+      ],
+      "sha256": "acccc5b6feb3520029b4e4c6f1e76aaec431c3e6933c2104f06aec50c05363a0",
+      "observation": "错误信号 158574/158576：edit 工具报同一文本多处匹配需消歧。",
+      "excerpt": "{\"type\":\"tool_execution_end\",\"toolCallId\":\"call_00_vBEQ2mQuWHuSONMKpTLe8602\",\"toolName\":\"edit\",\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"Found 2 occurrences of the text in /home/runner/work/nb3-factory/nb3-factory/workspace/tests/logic/app-server.test.ts. The text must be unique. Please provide more context to make it unique.\"}],\"details\":{}},\"isError\":true}\n{\"type\":\"message_start\",\"message\":{\"role\":\"toolResult\",\"toolCallId\":\"call_00_vBEQ2mQuWHuSONMKpTLe8602\",\"toolName\":\"edit\",\"content\":[{\"type\":\"text\",\"text\":\"Found 2 occurrences of the text in /home/runner/work/nb3-factory/nb3-factory/workspace/tests/logic/app-server.test.ts. The text must be unique. Please provide more context to make it unique.\"}],\"details\":{},\"isError\":true,\"timestamp\":1790525549178}}\n{\"type\":\"message_end\",\"message\":{\"role\":\"toolResult\",\"toolCallId\":\"call_00_vBEQ2mQuWHuSONMKpTLe8602\",\"toolName\":\"edit\",\"content\":[{\"type\":\"text\",\"text\":\"Found 2 occurrences of the text in /home/runner/work/nb3-factory/nb3-factory/workspace/tests/logic/app-server.test.ts. The text must be unique. Please provide more context to make it unique.\"}],\"details\":{},\"isError\":true,\"timestamp\":1790525549178}}",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36329207021.1/v2-ab35ff781b94/E42",
+      "origin": {
+        "kind": "review",
+        "key": "review/36329207021.1/v2-ab35ff781b94",
+        "localId": "E42"
+      },
+      "kind": "log",
+      "path": "artifacts/agent-history/agent-implement.jsonl/part-0068.txt",
+      "lines": [
+        1530,
+        1532
+      ],
+      "sha256": "01d409010d51704f1dcbeefa6baff07e17e26ba8b49eaf5bbc3c96b16db4f4ce",
+      "observation": "错误信号 214568/214570：cat 配置并巡检 sqlite 的命令退出码非零。",
+      "excerpt": "{\"type\":\"tool_execution_end\",\"toolCallId\":\"call_00_U9nvDVbl0bMuNhi8elDk4963\",\"toolName\":\"bash\",\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"import { defaultAccess } from '@nocobase/app-plugin-authz-default-access/server';\\nimport { sharingRules } from '@nocobase/app-plugin-authz-sharing-rules/server';\\nimport { restrictionRules } from '@nocobase/app-plugin-authz-restriction-rules/server';\\nimport {\\n  defineAppConfig,\\n  type AppConfigFactory,\\n} from '@nocobase/app-server/config';\\nimport { type AuthorizationConfig } from '@nocobase/app-plugin-authorization/server';\\n\\n// Permission sets, database, pages, settings, composites and workspace placement are built in.\\nconst authorization: AppConfigFactory<AuthorizationConfig> = defineAppConfig(\\n  (_runtime) => ({\\n    permissionSets: { rootSet: 'root', defaultSet: 'member' },\\n    plugins: [defaultAccess(), sharingRules(), restrictionRules()],\\n  }),\\n);\\n\\nexport default authorization;\\n=== db roles ===\\n=== user roles ===\\n5d209b25-c455-442d-b3e5-65d96a946538|Super Admin|nocobase|admin@nocobase.com|1||2026-09-27T16:04:30.050|2026-09-27T16:04:30.050|||\\nservice-request-assignee|Service Assignee|assignee|assignee@nocobase.com|1||2026-09-27T16:04:30.148|2026-09-27T16:04:30.148|||\\n\\n\\nCommand exited with code 1\"}],\"details\":{}},\"isError\":true}\n{\"type\":\"message_start\",\"message\":{\"role\":\"toolResult\",\"toolCallId\":\"call_00_U9nvDVbl0bMuNhi8elDk4963\",\"toolName\":\"bash\",\"content\":[{\"type\":\"text\",\"text\":\"import { defaultAccess } from '@nocobase/app-plugin-authz-default-access/server';\\nimport { sharingRules } from '@nocobase/app-plugin-authz-sharing-rules/server';\\nimport { restrictionRules } from '@nocobase/app-plugin-authz-restriction-rules/server';\\nimport {\\n  defineAppConfig,\\n  type AppConfigFactory,\\n} from '@nocobase/app-server/config';\\nimport { type AuthorizationConfig } from '@nocobase/app-plugin-authorization/server';\\n\\n// Permission sets, database, pages, settings, composites and workspace placement are built in.\\nconst authorization: AppConfigFactory<AuthorizationConfig> = defineAppConfig(\\n  (_runtime) => ({\\n    permissionSets: { rootSet: 'root', defaultSet: 'member' },\\n    plugins: [defaultAccess(), sharingRules(), restrictionRules()],\\n  }),\\n);\\n\\nexport default authorization;\\n=== db roles ===\\n=== user roles ===\\n5d209b25-c455-442d-b3e5-65d96a946538|Super Admin|nocobase|admin@nocobase.com|1||2026-09-27T16:04:30.050|2026-09-27T16:04:30.050|||\\nservice-request-assignee|Service Assignee|assignee|assignee@nocobase.com|1||2026-09-27T16:04:30.148|2026-09-27T16:04:30.148|||\\n\\n\\nCommand exited with code 1\"}],\"details\":{},\"isError\":true,\"timestamp\":1790526733954}}\n{\"type\":\"message_end\",\"message\":{\"role\":\"toolResult\",\"toolCallId\":\"call_00_U9nvDVbl0bMuNhi8elDk4963\",\"toolName\":\"bash\",\"content\":[{\"type\":\"text\",\"text\":\"import { defaultAccess } from '@nocobase/app-plugin-authz-default-access/server';\\nimport { sharingRules } from '@nocobase/app-plugin-authz-sharing-rules/server';\\nimport { restrictionRules } from '@nocobase/app-plugin-authz-restriction-rules/server';\\nimport {\\n  defineAppConfig,\\n  type AppConfigFactory,\\n} from '@nocobase/app-server/config';\\nimport { type AuthorizationConfig } from '@nocobase/app-plugin-authorization/server';\\n\\n// Permission sets, database, pages, settings, composites and workspace placement are built in.\\nconst authorization: AppConfigFactory<AuthorizationConfig> = defineAppConfig(\\n  (_runtime) => ({\\n    permissionSets: { rootSet: 'root', defaultSet: 'member' },\\n    plugins: [defaultAccess(), sharingRules(), restrictionRules()],\\n  }),\\n);\\n\\nexport default authorization;\\n=== db roles ===\\n=== user roles ===\\n5d209b25-c455-442d-b3e5-65d96a946538|Super Admin|nocobase|admin@nocobase.com|1||2026-09-27T16:04:30.050|2026-09-27T16:04:30.050|||\\nservice-request-assignee|Service Assignee|assignee|assignee@nocobase.com|1||2026-09-27T16:04:30.148|2026-09-27T16:04:30.148|||\\n\\n\\nCommand exited with code 1\"}],\"details\":{},\"isError\":true,\"timestamp\":1790526733954}}",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36329207021.1/v2-ab35ff781b94/E43",
+      "origin": {
+        "kind": "review",
+        "key": "review/36329207021.1/v2-ab35ff781b94",
+        "localId": "E43"
+      },
+      "kind": "log",
+      "path": "artifacts/agent-history/agent-repair-1.jsonl/part-0001.txt",
+      "lines": [
+        1,
+        2
+      ],
+      "sha256": "4c67b790231da7e7f1a8f1f1ffa5524c6ec8b82f684937a3965aecf5d5c5e56e",
+      "observation": "agent-repair-1 会话起始分片；该轮仅处理格式门禁，无错误信号。",
+      "excerpt": "{\"type\":\"session\",\"version\":3,\"id\":\"01a0e3c2-26e1-776b-ace5-5bcd43e3ec3c\",\"timestamp\":\"2026-09-27T16:45:47.105Z\",\"cwd\":\"/home/runner/work/nb3-factory/nb3-factory/workspace\"}\n{\"type\":\"agent_start\"}",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36329207021.1/v2-ab35ff781b94/E44",
+      "origin": {
+        "kind": "review",
+        "key": "review/36329207021.1/v2-ab35ff781b94",
+        "localId": "E44"
+      },
+      "kind": "log",
+      "path": "artifacts/agent-history/agent-repair-2.jsonl/part-0001.txt",
+      "lines": [
+        1,
+        2
+      ],
+      "sha256": "7955132cda57f0091cb309e3bc12f92e9a472dd8ac55bfe888c1b246d53af582",
+      "observation": "agent-repair-2 会话起始分片。",
+      "excerpt": "{\"type\":\"session\",\"version\":3,\"id\":\"01a0e3cb-c05d-732d-9aee-de75509f2945\",\"timestamp\":\"2026-09-27T16:56:16.222Z\",\"cwd\":\"/home/runner/work/nb3-factory/nb3-factory/workspace\"}\n{\"type\":\"agent_start\"}",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36329207021.1/v2-ab35ff781b94/E45",
+      "origin": {
+        "kind": "review",
+        "key": "review/36329207021.1/v2-ab35ff781b94",
+        "localId": "E45"
+      },
+      "kind": "log",
+      "path": "artifacts/agent-history/agent-repair-2.jsonl/part-0002.txt",
+      "lines": [
+        998,
+        1000
+      ],
+      "sha256": "8c475677978ebd350dd8a0f0cf44e4a438856650b6f796f3cf0e698c22d5b195",
+      "observation": "错误信号 3277/3279：find / 扫描全盘查找 run 模块超时 60s。",
+      "excerpt": "{\"type\":\"tool_execution_end\",\"toolCallId\":\"call_00_2zN9svvsPPO9nBQeibkp4136\",\"toolName\":\"bash\",\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"Command timed out after 60 seconds\"}],\"details\":{}},\"isError\":true}\n{\"type\":\"message_start\",\"message\":{\"role\":\"toolResult\",\"toolCallId\":\"call_00_2zN9svvsPPO9nBQeibkp4136\",\"toolName\":\"bash\",\"content\":[{\"type\":\"text\",\"text\":\"Command timed out after 60 seconds\"}],\"details\":{},\"isError\":true,\"timestamp\":1790528280563}}\n{\"type\":\"message_end\",\"message\":{\"role\":\"toolResult\",\"toolCallId\":\"call_00_2zN9svvsPPO9nBQeibkp4136\",\"toolName\":\"bash\",\"content\":[{\"type\":\"text\",\"text\":\"Command timed out after 60 seconds\"}],\"details\":{},\"isError\":true,\"timestamp\":1790528280563}}",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36329207021.1/v2-ab35ff781b94/E46",
+      "origin": {
+        "kind": "review",
+        "key": "review/36329207021.1/v2-ab35ff781b94",
+        "localId": "E46"
+      },
+      "kind": "log",
+      "path": "artifacts/agent-history/verify-2/browser-acceptance/agent-browser-acceptance.jsonl/part-0001.txt",
+      "lines": [
+        1,
+        2
+      ],
+      "sha256": "32e0630d362348227fc9049942ad768d29f910b4c9221fb8485890d4b8bc9b70",
+      "observation": "verify-2 浏览器验收会话起始分片。",
+      "excerpt": "{\"type\":\"session\",\"version\":3,\"id\":\"01a0e3c5-d0f0-7010-87ae-5923f0d59bc2\",\"timestamp\":\"2026-09-27T16:49:47.249Z\",\"cwd\":\"/home/runner/work/_temp/repair-state/verify-2/browser-acceptance/browser-agent-workspace\"}\n{\"type\":\"agent_start\"}",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36329207021.1/v2-ab35ff781b94/E47",
+      "origin": {
+        "kind": "review",
+        "key": "review/36329207021.1/v2-ab35ff781b94",
+        "localId": "E47"
+      },
+      "kind": "log",
+      "path": "artifacts/agent-history/verify-2/browser-acceptance/agent-browser-acceptance.jsonl/part-0001.txt",
+      "lines": [
+        494,
+        506
+      ],
+      "sha256": "32e0630d362348227fc9049942ad768d29f910b4c9221fb8485890d4b8bc9b70",
+      "observation": "错误信号 498/502：准备阶段读取证据/录制目录不存在导致命令 isError。",
+      "excerpt": "{\"type\":\"tool_execution_update\",\"toolCallId\":\"call_01_B0KCg3knot1vesMEzDJN5308\",\"toolName\":\"bash\",\"args\":{\"command\":\"ls -la \\\"$FACTORY_BROWSER_EVIDENCE_DIR\\\" 2>&1; echo \\\"---recording state---\\\"; ls -la \\\"$FACTORY_BROWSER_RECORDING_STATE\\\" 2>&1; cat \\\"$FACTORY_BROWSER_RECORDING_STATE\\\" 2>&1; echo \\\"---showcase---\\\"; ls -la \\\"$FACTORY_BROWSER_SHOWCASE\\\" 2>&1\",\"timeout\":30},\"partialResult\":{\"content\":[{\"type\":\"text\",\"text\":\"total 8\\ndrwxr-xr-x 2 runner runner 4096 Sep 27 16:49 .\\ndrwxr-xr-x 3 runner runner 4096 Sep 27 16:49 ..\\n\"}],\"details\":{}}}\n{\"type\":\"tool_execution_update\",\"toolCallId\":\"call_00_eTNDj9y7AlmvBrS5bIma0856\",\"toolName\":\"bash\",\"args\":{\"command\":\"agent-browser skills get core 2>&1 | head -200\",\"timeout\":60},\"partialResult\":{\"content\":[{\"type\":\"text\",\"text\":\"---\\nname: core\\ndescription: Core agent-browser usage guide. Read this before running any agent-browser commands. Covers the snapshot-and-ref workflow, navigating pages, interacting with elements (click, fill, type, select), extracting text and data, taking screenshots, managing tabs, handling forms and auth, waiting for content, running multiple browser sessions in parallel, and troubleshooting common failures. Use when the user asks to interact with a website, fill a form, click something, extract data, take a screenshot, log into a site, test a web app, or automate any browser task.\\nallowed-tools: Bash(agent-browser:*), Bash(npx agent-browser:*)\\n---\\n\\n# agent-browser core\\n\\nFast browser automation CLI for AI agents. Chrome/Chromium via CDP, no Playwright or Puppeteer dependency. Accessibility-tree snapshots with compact `@eN` refs let agents interact with pages in ~200-400 tokens instead of parsing raw HTML.\\n\\nMost normal web tasks (navigate, read, click, fill, extract, screenshot) are covered here. Load a specialized skill when the task falls outside browser web pages — see [When to load another skill](#when-to-load-another-skill).\\n\\n## The core loop\\n\\n```bash\\nagent-browser open <url>        # 1. Open a page\\nagent-browser snapshot -i       # 2. See what's on it (interactive elements only)\\nagent-browser click @e3         # 3. Act on refs from the snapshot\\nagent-browser snapshot -i       # 4. Re-snapshot after any page change\\n```\\n\\nRefs (`@e1`, `@e2`, ...) are assigned fresh on every snapshot. They become **stale the moment the page changes** — after clicks that navigate, form submits, dynamic re-renders, dialog opens. Always re-snapshot before your next ref interaction.\\n\\n## Always use your own session\\n\\nBefore your first command, set a named session for the whole task:\\n\\n```bash\\nexport AGENT_BROWSER_SESSION=\\\"$(agent-browser session id --scope worktree --prefix task)\\\"\\n```\\n\\nThe default (unnamed) session is a single shared browser: it is shared with every other agent on the machine and it persists across conversations, so working in it can hijack another agent's page mid-task or navigate away from something the human left open. Every example below assumes a named session is active. See [Run multiple browsers in parallel](#run-multiple-browsers-in-parallel) and `references/session-management.md`.\\n\\n## Quickstart\\n\\n```bash\\n# Install once\\nnpm i -g agent-browser && agent-browser install\\n\\n# Linux hosts can install required browser libraries too\\nagent-browser install --with-deps\\n\\n# Take a screenshot of a page\\nagent-browser open https://example.com\\nagent-browser screenshot home.png\\nagent-browser close\\n\\n# Search, click a result, and capture it\\nagent-browser open https://duckduckgo.com\\nagent-browser snapshot -i                      # find the search box ref\\nagent-browser fill @e1 \\\"agent-browser cli\\\"\\nagent-browser press Enter\\nagent-browser wait --load networkidle\\nagent-browser snapshot -i                      # refs now reflect results\\nagent-browser click @e5                        # click a result\\nagent-browser screenshot result.png\\n```\\n\\nThe browser stays running across commands so these feel like a single session. By default, an inactive daemon saves configured restore state, closes its headless browser, and exits after one hour; the next command starts it again. Without `--restore` or another restore key, shutdown discards transient browser state and open tabs. Dashboard mouse, keyboard, and touch input count as activity. Headed browsers, Safari and iOS WebDriver sessions, and user-attached browsers are exempt from the default; provider-owned cloud browsers are not. Use `--idle-timeout <time>` or `AGENT_BROWSER_IDLE_TIMEOUT_MS` to tune the timeout, and use `0` to disable it. Still run `agent-browser close` (or `close --all`) when you're done.\\n\\n## MCP integration\\n\\nFor tools that support Model Context Protocol servers, start the stdio server:\\n\\n```bash\\nagent-browser mcp\\nagent-browser mcp --tools all\\nagent-browser mcp --tools core,network,react\\n```\\n\\nConfigure the MCP client to launch `agent-browser` with `[\\\"mcp\\\"]`. The server defaults to MCP protocol 2025-11-25 and accepts older supported client protocol versions during initialization. The default tools profile is `core`, which keeps MCP context small for everyday browser automation. Use `--tools all` for the full typed CLI parity surface, or combine profiles with commas, such as `--tools core,network,react`. Profiles are `core`, `network`, `state`, `debug`, `tabs`, `react`, `mobile`, and `all`; the `debug` profile includes accessibility audits, plugin registry, and command.run tools. Each tool accepts typed arguments plus `extraArgs` for advanced CLI flags and exact CLI parity. The common `allowedDomains` array maps to `--allowed-domains` and activates the same WebRTC containment and launch-mode restrictions, while `idleTimeout` maps to `--idle-timeout`. Tool discovery is paginated and includes read-only/open-world annotations so modern MCP clients can load the large typed surface incrementally. Use the tool `session` argument or `AGENT_BROWSER_SESSION` to isolate browser sessions.\\n\\n## eve agent integration\\n\\nFor eve agents, mount the `@agent-browser/eve` extension instead of hand-writing browser tools. It adds namespaced tools such as `browser__navigate`, `browser__snapshot`, `browser__click`, `browser__fill`, `browser__find`, and `browser__screenshot`, all backed by agent-browser running inside the eve sandbox. The sandbox bootstrap helpers (`installAgentBrowser`, `agentBrowserRevalidationKey`) ship with the same package under `@agent-browser/eve/sandbox`, so `agent/sandbox.ts` needs no extra dependency.\\n\\n## Reading a page\\n\\n```bash\\nagent-browser snapshot                    # full tree (verbose)\\nagent-browser snapshot -i                 # interactive elements only (preferred)\\nagent-browser snapshot -i -u              # include href urls on links\\nagent-browser snapshot -i -c              # compact (no empty structural nodes)\\nagent-browser snapshot -i -d 3            # cap depth at 3 levels\\nagent-browser snapshot -s \\\"#main\\\"         # scope to a CSS selector\\nagent-browser snapshot -i --json          # machine-readable output\\n```\\n\\nSnapshot output looks like:\\n\\n```\\nPage: Example - Log in\\nURL: https://example.com/login\\n\\n@e1 [heading] \\\"Log in\\\"\\n@e2 [form]\\n  @e3 [input type=\\\"email\\\"] placeholder=\\\"Email\\\"\\n  @e4 [input type=\\\"password\\\"] placeholder=\\\"Password\\\"\\n  @e5 [button type=\\\"submit\\\"] \\\"Continue\\\"\\n  @e6 [link] \\\"Forgot password?\\\"\\n```\\n\\nFor unstructured reading (no refs needed):\\n\\n```bash\\nagent-browser read                         # read rendered active-tab DOM\\nagent-browser read https://docs.example.com/guide  # docs-friendly fetch, prefers markdown\\nagent-browser read https://docs.example.com/guide --filter auth  # one matching section\\nagent-browser read https://docs.example.com/guide --outline  # compact page headings\\nagent-browser read https://docs.example.com --llms index --filter auth  # compact llms.txt discovery\\nagent-browser get text @e1                # visible text of an element\\nagent-browser get html @e1                # innerHTML\\nagent-browser get attr @e1 href           # any attribute\\nagent-browser get value @e1               # input value\\nagent-browser get title                   # page title\\nagent-browser get url                     # current URL\\nagent-browser get count \\\".item\\\"           # count matching elements\\n```\\n\\nUse `read [url]` when you need to consume documentation or other text pages rather than interact with a rendered UI. Omit the URL to read the rendered DOM of the active tab in the current browser session, including browser auth state and client-side updates. Explicit URL reads send `Accept: text/markdown`, try the same URL with `.md` appended when the first response is not markdown, walk ancestor paths toward `/` to find the nearest `llms.txt` for a matching docs link, print markdown/plain text when available, and fall back to readable text extracted from HTML without launching Chrome. Add `--filter <text>` to narrow a page to matching heading sections, `--outline` for compact headings on one page, `--llms index` for a compact nearest-ancestor `llms.txt` link list, and `--llms full` only when you explicitly need `llms-full.txt`. With `--llms` or `--require-md`, omitting the URL uses the active tab URL because those modes depend on HTTP resources. With `--llms` or `--outline`, `--filter <text>` narrows links, sections, or headings. Add `--require-md` when you specifically want to verify markdown negotiation, `--raw` when you need the response body unchanged, and `--json` when you need metadata such as `source` and `contentType`. Global safeguards such as `--allowed-domains`, `--content-boundaries`, and `--max-output` also apply to read fetches and output.\\n\\nFor sessions that handle sensitive data, use `--allowed-domains` to restrict navigations and page-initiated network traffic. Supported Chromium sessions also disable `RTCPeerConnection` while the allowlist is active so WebRTC STUN, TURN, and related DNS traffic cannot bypass the HTTP filter. Dedicated and shared workers are guarded with a bootstrap wrapper; if a page CSP forbids that wrapper, the worker fails closed rather than running without the allowlist guard. Pre-existing CDP sessions, auto-connect, Chrome profiles, direct-page provider plugins, agent-browser restore or state-file replay, raw Chrome args that select profiles, restore sessions, or open startup pages, iOS, and Safari reject this option because agent-browser cannot install equivalent containment before page scripts run. This is browser-level containment, not an operating-system firewall; see [Trust boundaries](references/trust-boundaries.md) for deployment guidance.\\n\\n## Interacting\\n\\n```bash\\nagent-browser click @e1                   # click\\nagent-browser click @e1 --new-tab         # open link in new tab instead of navigating\\nagent-browser dblclick @e1                # double-click\\nagent-browser hover @e1                   # hover\\nagent-browser focus @e1                   # focus (useful before keyboard input)\\nagent-browser fill @e2 \\\"hello\\\"            # clear then type\\nagent-browser type @e2 \\\" world\\\"           # type without clearing\\nagent-browser press Enter                 # press a key at current focus\\nagent-browser press Control+a             # key combination\\nagent-browser check @e3                   # check checkbox\\nagent-browser uncheck @e3                 # uncheck\\nagent-browser select @e4 \\\"option-value\\\"   # select dropdown option\\nagent-browser select @e4 \\\"a\\\" \\\"b\\\"          # select multiple\\nagent-browser upload @e5 file1.pdf        # upload file(s)\\nagent-browser scroll down 500             # scroll page (up/down/left/right)\\nagent-browser scrollintoview @e1          # scroll element into view\\nagent-browser drag @e1 @e2                # drag and drop\\n```\\n\\n### When refs don't work or you don't want to snapshot\\n\\nUse semantic locators:\\n\\n```bash\\nagent-browser find role button click --name \\\"Submit\\\"\\nagent-browser find role heading text --name \\\"Skills\\\"     # ",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36329207021.1/v2-ab35ff781b94/E48",
+      "origin": {
+        "kind": "review",
+        "key": "review/36329207021.1/v2-ab35ff781b94",
+        "localId": "E48"
+      },
+      "kind": "log",
+      "path": "artifacts/agent-history/verify-3/browser-acceptance/agent-browser-acceptance.jsonl/part-0001.txt",
+      "lines": [
+        1,
+        2
+      ],
+      "sha256": "df2f5f8e741fd0bf88c0d7d1b074b22c4239bba2bebf37ad2d4b9fde5f424767",
+      "observation": "verify-3 浏览器验收会话起始分片；该轮无错误信号。",
+      "excerpt": "{\"type\":\"session\",\"version\":3,\"id\":\"01a0e3dd-db94-71f6-93bb-5d9e9034f71a\",\"timestamp\":\"2026-09-27T17:16:02.836Z\",\"cwd\":\"/home/runner/work/_temp/repair-state/verify-3/browser-acceptance/browser-agent-workspace\"}\n{\"type\":\"agent_start\"}",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36329207021.1/v2-ab35ff781b94/E49",
+      "origin": {
+        "kind": "review",
+        "key": "review/36329207021.1/v2-ab35ff781b94",
+        "localId": "E49"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-3/browser-acceptance/evidence/assignee-messages-unread.png",
+      "lines": null,
+      "sha256": "812d2e7d4bbde2ad68ae6f29d1a557b80a095a11cccc23f49da12ec36adce73e",
+      "observation": "负责人收件箱显示两条未读站内消息。",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-3/browser-acceptance/assignee-messages-unread.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "review/36329207021.1/v2-ab35ff781b94/E50",
+      "origin": {
+        "kind": "review",
+        "key": "review/36329207021.1/v2-ab35ff781b94",
+        "localId": "E50"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-3/browser-acceptance/evidence/request-normal-accepted.png",
+      "lines": null,
+      "sha256": "17fffd110ce59292835ce85fee8181be5e4b18dc00675ef43c4f0e74661857ae",
+      "observation": "普通请求受理后 Status Accepted / Result Normal accepted。",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-3/browser-acceptance/request-normal-accepted.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "review/36329207021.1/v2-ab35ff781b94/E51",
+      "origin": {
+        "kind": "review",
+        "key": "review/36329207021.1/v2-ab35ff781b94",
+        "localId": "E51"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-3/browser-acceptance/evidence/run-urgent-notify.png",
+      "lines": null,
+      "sha256": "682f4ccd874f0063cd5159d492e822a1127b0916165f6031eb69f9237773b5ca",
+      "observation": "紧急分支执行到 Notify assignee 节点成功。",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-3/browser-acceptance/run-urgent-notify.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "review/36329207021.1/v2-ab35ff781b94/E52",
+      "origin": {
+        "kind": "review",
+        "key": "review/36329207021.1/v2-ab35ff781b94",
+        "localId": "E52"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-3/browser-acceptance/evidence/admin-messages-empty.png",
+      "lines": null,
+      "sha256": "50b7bac31311b16dfdcd1f88d88bc11c4b9137f3f3eadb693216a601170f6987",
+      "observation": "非收件人管理员消息中心为空（按用户隔离）。",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-3/browser-acceptance/admin-messages-empty.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/3/service-requests-list.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/3",
+        "localId": "service-requests-list.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-3/browser-acceptance/evidence/service-requests-list.png",
+      "lines": null,
+      "sha256": "72f3075b7f2d505eb9c0810289fee56e2f6ecc93a34d98c17d34e5bc657cc830",
+      "observation": "验收项 B01 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-3/browser-acceptance/service-requests-list.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/3/request-normal-before.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/3",
+        "localId": "request-normal-before.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-3/browser-acceptance/evidence/request-normal-before.png",
+      "lines": null,
+      "sha256": "6e59b5a2027fd0af8eb7c83ba07538040c26e590611d386bfc82f7dd87c7f941",
+      "observation": "验收项 B01 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-3/browser-acceptance/request-normal-before.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/3/request-normal-accepted.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/3",
+        "localId": "request-normal-accepted.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-3/browser-acceptance/evidence/request-normal-accepted.png",
+      "lines": null,
+      "sha256": "17fffd110ce59292835ce85fee8181be5e4b18dc00675ef43c4f0e74661857ae",
+      "observation": "验收项 B01 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-3/browser-acceptance/request-normal-accepted.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/3/workflow-runs-normal.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/3",
+        "localId": "workflow-runs-normal.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-3/browser-acceptance/evidence/workflow-runs-normal.png",
+      "lines": null,
+      "sha256": "f648ab89e69ea21b4108388f74bf2f9e622134fc9a3639d5acd410838870f9c9",
+      "observation": "验收项 B01 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-3/browser-acceptance/workflow-runs-normal.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/3/run-normal-register.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/3",
+        "localId": "run-normal-register.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-3/browser-acceptance/evidence/run-normal-register.png",
+      "lines": null,
+      "sha256": "6998f5274fa930797e21c16d8ba9b8438f7c1a1f26e7cced210d6bf34d6e8804",
+      "observation": "验收项 B01 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-3/browser-acceptance/run-normal-register.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/3/run-normal-evaluate.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/3",
+        "localId": "run-normal-evaluate.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-3/browser-acceptance/evidence/run-normal-evaluate.png",
+      "lines": null,
+      "sha256": "a98389646f2e3a61b4a7ef87afbef7ace563fb9b34d08c44218eb9c01f6aa791",
+      "observation": "验收项 B01 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-3/browser-acceptance/run-normal-evaluate.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/3/run-normal-record-result.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/3",
+        "localId": "run-normal-record-result.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-3/browser-acceptance/evidence/run-normal-record-result.png",
+      "lines": null,
+      "sha256": "05c0433f40bd535102318143dca87433e88016044672aa880f02b2157e610306",
+      "observation": "验收项 B01 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-3/browser-acceptance/run-normal-record-result.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/3/run-normal-urgent-notexecuted.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/3",
+        "localId": "run-normal-urgent-notexecuted.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-3/browser-acceptance/evidence/run-normal-urgent-notexecuted.png",
+      "lines": null,
+      "sha256": "86b4e42686d3fa94b18711dd01e59f8f2324592021ce58588fd833aaf8f55c35",
+      "observation": "验收项 B01 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-3/browser-acceptance/run-normal-urgent-notexecuted.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/3/assignee-messages-unread.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/3",
+        "localId": "assignee-messages-unread.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-3/browser-acceptance/evidence/assignee-messages-unread.png",
+      "lines": null,
+      "sha256": "812d2e7d4bbde2ad68ae6f29d1a557b80a095a11cccc23f49da12ec36adce73e",
+      "observation": "验收项 B02 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-3/browser-acceptance/assignee-messages-unread.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/3/assignee-opened-request.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/3",
+        "localId": "assignee-opened-request.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-3/browser-acceptance/evidence/assignee-opened-request.png",
+      "lines": null,
+      "sha256": "cb36c13230cf0c500b0ed3319a9eb323f7fa7b0f11f0344d8ee60173a080dc17",
+      "observation": "验收项 B02 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-3/browser-acceptance/assignee-opened-request.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/3/assignee-message-marked-read.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/3",
+        "localId": "assignee-message-marked-read.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-3/browser-acceptance/evidence/assignee-message-marked-read.png",
+      "lines": null,
+      "sha256": "785366fc7829f850755a905e7dd29e2739bd0d75144b2ca14a86d8aa7119f949",
+      "observation": "验收项 B02 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-3/browser-acceptance/assignee-message-marked-read.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/3/assignee-read-after-refresh.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/3",
+        "localId": "assignee-read-after-refresh.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-3/browser-acceptance/evidence/assignee-read-after-refresh.png",
+      "lines": null,
+      "sha256": "a880525b703d76e6bda5945ad5bbf548cec5b95bb8d10b3e6bd32fc805f36b72",
+      "observation": "验收项 B02 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-3/browser-acceptance/assignee-read-after-refresh.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/3/assignee-opened-urgent-request.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/3",
+        "localId": "assignee-opened-urgent-request.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-3/browser-acceptance/evidence/assignee-opened-urgent-request.png",
+      "lines": null,
+      "sha256": "1321a35afc4f09d505b1d3a788c82ead4ac762956bcafb196f267805819e7d1e",
+      "observation": "验收项 B02 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-3/browser-acceptance/assignee-opened-urgent-request.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/3/request-urgent-before.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/3",
+        "localId": "request-urgent-before.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-3/browser-acceptance/evidence/request-urgent-before.png",
+      "lines": null,
+      "sha256": "a536fee8f15bf0365a4ce3922ec34adea9f64934ef4f3e07e7f4db6e8064d872",
+      "observation": "验收项 B03 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-3/browser-acceptance/request-urgent-before.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/3/request-urgent-accepted.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/3",
+        "localId": "request-urgent-accepted.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-3/browser-acceptance/evidence/request-urgent-accepted.png",
+      "lines": null,
+      "sha256": "e35fe96ec2f57cf118f1299b7955c858f60055c712def96c2ef468810b31590a",
+      "observation": "验收项 B03 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-3/browser-acceptance/request-urgent-accepted.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/3/workflow-runs-urgent.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/3",
+        "localId": "workflow-runs-urgent.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-3/browser-acceptance/evidence/workflow-runs-urgent.png",
+      "lines": null,
+      "sha256": "2a4253d4791de56c52569e6e969ffd706d2d45570526a73c24f189d21ee4ecb8",
+      "observation": "验收项 B03 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-3/browser-acceptance/workflow-runs-urgent.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/3/run-urgent-register.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/3",
+        "localId": "run-urgent-register.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-3/browser-acceptance/evidence/run-urgent-register.png",
+      "lines": null,
+      "sha256": "157b5b88af2a75093fee0a20f8748733c580c8bd3af1a8d38354ec521c67a502",
+      "observation": "验收项 B03 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-3/browser-acceptance/run-urgent-register.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/3/run-urgent-evaluate.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/3",
+        "localId": "run-urgent-evaluate.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-3/browser-acceptance/evidence/run-urgent-evaluate.png",
+      "lines": null,
+      "sha256": "258082f7348fa264dc263c2ba2aa9defc0a524ed0d202489af7749b93c8e3137",
+      "observation": "验收项 B03 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-3/browser-acceptance/run-urgent-evaluate.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/3/run-urgent-record-result.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/3",
+        "localId": "run-urgent-record-result.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-3/browser-acceptance/evidence/run-urgent-record-result.png",
+      "lines": null,
+      "sha256": "39bcbf52c87654b58abb69182a508e7291d7510ef5ceb8713a0b562f1d3cffa0",
+      "observation": "验收项 B03 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-3/browser-acceptance/run-urgent-record-result.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/3/run-urgent-normal-notexecuted.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/3",
+        "localId": "run-urgent-normal-notexecuted.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-3/browser-acceptance/evidence/run-urgent-normal-notexecuted.png",
+      "lines": null,
+      "sha256": "ef162aec690e61ff43070f7f2e883cc1569ce7793e77e2f2b491a5d25f203019",
+      "observation": "验收项 B03 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-3/browser-acceptance/run-urgent-normal-notexecuted.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/3/run-urgent-notify.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/3",
+        "localId": "run-urgent-notify.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-3/browser-acceptance/evidence/run-urgent-notify.png",
+      "lines": null,
+      "sha256": "682f4ccd874f0063cd5159d492e822a1127b0916165f6031eb69f9237773b5ca",
+      "observation": "验收项 B03 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-3/browser-acceptance/run-urgent-notify.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/3/admin-messages-empty.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/3",
+        "localId": "admin-messages-empty.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-3/browser-acceptance/evidence/admin-messages-empty.png",
+      "lines": null,
+      "sha256": "50b7bac31311b16dfdcd1f88d88bc11c4b9137f3f3eadb693216a601170f6987",
+      "observation": "验收项 B04 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-3/browser-acceptance/admin-messages-empty.png",
+      "availability": "attached",
+      "note": null
+    }
+  ],
+  "links": [
+    {
+      "rel": "task-issue",
+      "label": "Issue #415",
+      "url": "https://github.com/gchust/nb3-factory/issues/415",
+      "path": null
+    },
+    {
+      "rel": "run",
+      "label": "Run 36329207021 / attempt 1",
+      "url": "https://github.com/gchust/nb3-factory/actions/runs/36329207021/attempts/1",
+      "path": null
+    },
+    {
+      "rel": "pull-request",
+      "label": "PR #426",
+      "url": "https://github.com/gchust/nb3-factory/pull/426",
+      "path": null
+    },
+    {
+      "rel": "report-archive",
+      "label": "固定版本 HTML 报告（gh-pages 归档路径）",
+      "url": null,
+      "path": "reports/issues/415/runs/36329207021/attempt-1/index.html"
+    }
+  ],
+  "limitations": [
+    {
+      "code": "first-round-unavailable",
+      "detail": "只取得本执行的验证记录；首轮 QA 标为未知，不冒充整个任务首轮通过。"
+    },
+    {
+      "code": "usage-incomplete",
+      "detail": "部分用量未取得或不完整；缺失值为 null，不按零处理。"
+    }
+  ]
+}
