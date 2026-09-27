@@ -1,4 +1,4 @@
-import { Home } from 'lucide-react';
+import { Activity, Home } from 'lucide-react';
 import {
   defineAppRoutes,
   defineSettingsRoutes,
@@ -15,6 +15,16 @@ const appRoutes: AppClientRouteContribution = defineAppRoutes([
     name: 'home',
     navigation: { title: 'navigation.home', icon: Home },
     path: '/',
+  },
+  {
+    // Smoke page for the build pipeline. `authz: 'skip'` keeps it reachable by every signed-in user without a
+    // stored page grant, which is what "accessible after signing in" means here and avoids seeding permissions.
+    authz: 'skip',
+    auth: 'required',
+    componentLoader: () => import('./pages/pipeline-smoke.js'),
+    name: 'pipeline-smoke',
+    navigation: { title: 'navigation.pipelineSmoke', icon: Activity },
+    path: '/pipeline-smoke',
   },
   {
     auth: 'guest',
