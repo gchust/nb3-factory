@@ -8,11 +8,23 @@ Pi 适配器显式配置原生请求级重试：最多 6 次，退避等待为 5
 
 配置依据：固定版本 [Pi 0.86.1 settings / Retry](https://github.com/earendil-works/pi/blob/v0.86.1/packages/coding-agent/docs/settings.md#retry)。其他引擎沿用各自原生重试策略，不冒充支持 Pi 参数。
 
+## 延时重跑
+
+引擎原生重试只覆盖它认识的错误：Pi 0.86.1 不重试 `upstream stream closed before [DONE]`，而且原生重试总共只等约三分钟。因此一次 Agent 调用最终仍以可重试的模型服务错误（provider_unavailable、rate_limited、network_error）结束时，Factory 等待 1 分钟后在同一工作区用同一提示词重跑；再失败则等待 5 分钟重跑一次；第三次仍失败才按原来的方式失败。实现、修复、浏览器验收、评论回复、框架修复和独立评审都适用，所有引擎相同。认证、额度和 Agent 自身错误、超时、idle watchdog、Runner 预算交接不重跑。
+
+等待时间计入调用时限和 Runner 截止时间：如果等待结束时已超过任一上限，就不再重跑，直接失败。延时重跑在一次调用内部完成，不计入任务的修复轮数，也不改变任务终止上限。
+
+重跑追加写入同一个 `agent*.jsonl`，两次之间写一行 `{"type":"factory_model_retry","retry":1,"of":2,"delaySeconds":60,"category":"network_error"}`；失败那次的事件和用量不会被覆盖，历史归档、用量统计与评审索引照常读取。`FACTORY_MODEL_RETRY_DELAYS_SECONDS` 可改写等待秒数（逗号分隔，最多 5 个，每个 0–3600），`none` 关闭延时重跑；未设置时为 `60,300`。
+
 `agent*.jsonl.result.json` 保留最终状态，并增加：
 
 ```json
 {
   "retryAttempts": 6,
+  "factoryRetries": [
+    { "delaySeconds": 60, "category": "provider_unavailable" },
+    { "delaySeconds": 300, "category": "provider_unavailable" }
+  ],
   "failure": {
     "category": "provider_unavailable",
     "retryable": true
@@ -20,11 +32,13 @@ Pi 适配器显式配置原生请求级重试：最多 6 次，退避等待为 5
 }
 ```
 
-`retryAttempts` 是当前 Pi invocation 中已观察到的原生重试事件总数，不是业务修复轮数；其他未报告该信息的引擎不填零。成功恢复后的 invocation 不保留最终失败分类。缺少旧版计数时，报告显示“未采集”。
+`retryAttempts` 是当前 Pi invocation 中已观察到的原生重试事件总数（包括各次重跑），不是业务修复轮数；其他未报告该信息的引擎不填零。`factoryRetries` 只在发生延时重跑时出现。成功恢复后的 invocation 不保留最终失败分类。缺少旧版计数时，报告显示“未采集”。
 
-分类包括 provider_unavailable、rate_limited、network_error、auth_configuration、quota_exhausted、agent_failure。只解释 Agent 协议中的最终调用错误，不扫描业务工具输出给任务定性。`503 auth_unavailable` 表示服务链路当前没有可用认证资源，不能据此断言调用者的 API Key 配错。`retryable` 是排查与恢复提示，不触发无限重跑。
+分类包括 provider_unavailable、rate_limited、network_error、auth_configuration、quota_exhausted、agent_failure。只解释 Agent 协议中的最终调用错误，不扫描业务工具输出给任务定性。`503 auth_unavailable` 表示服务链路当前没有可用认证资源，不能据此断言调用者的 API Key 配错。`retryable` 只决定上述有限次数的延时重跑与恢复提示，不触发无限重跑。
 
-失败 Issue 评论与 HTML 报告直接使用脚本采集的诊断，不依赖 Agent 写出 `retro.json`；公开摘要不复制原始 provider 错误正文。
+响应流在结束标记前被关闭（如 `upstream stream closed before [DONE]`）归为 network_error。
+
+失败 Issue 评论与 HTML 报告直接使用脚本采集的诊断，不依赖 Agent 写出 `retro.json`；公开摘要不复制原始 provider 错误正文。诊断取搭建流水线中最后一次调用（实现、修复、验收），并写明停在第几轮；搭建停止后才运行的独立评审、框架修复和评论回复不参与判断，它们成功也不会掩盖使搭建停止的失败。报告摘要和交付评论的第一行先写这一停止原因，再写最近的验收记录。
 
 ## 从已有改动继续
 

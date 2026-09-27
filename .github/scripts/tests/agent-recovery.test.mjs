@@ -13,6 +13,7 @@ import { initialize, restoreState, saveState } from '../pipeline-state.mjs';
 import { classifyAgentFailure, collectAgentFailure } from '../agent-failure.mjs';
 import { createResult } from '../agent-result.mjs';
 import { parseEvent } from '../agents/pi.mjs';
+import { parseRetryDelays } from '../agent-harness.mjs';
 
 const scripts = path.resolve(import.meta.dirname, '..');
 const A = 'a'.repeat(40), B = 'b'.repeat(40);
@@ -49,10 +50,11 @@ test('503 auth_unavailable is a provider outage, not a caller API-key error', ()
   assert.equal(classifyAgentFailure('429 insufficient_quota').retryable, false);
   assert.equal(classifyAgentFailure('429 too many requests').category, 'rate_limited');
   assert.equal(classifyAgentFailure('ECONNRESET').category, 'network_error');
+  assert.deepEqual(classifyAgentFailure('upstream stream closed before [DONE]'), { category: 'network_error', retryable: true });
   assert.equal(classifyAgentFailure('TypeScript failed at file.ts:503').category, 'agent_failure');
 });
 
-function fakePi(t, body) {
+function fakePi(t, body, extraEnv = {}) {
   const root = directory(t), bin = path.join(root, 'bin'), workspace = path.join(root, 'workspace');
   mkdirSync(bin); mkdirSync(workspace); write(root, 'prompt.md', 'Implement only the task.');
   writeFileSync(path.join(bin, 'pi'), `#!/usr/bin/env node\n${body}\n`, { mode: 0o755 });
@@ -61,7 +63,8 @@ function fakePi(t, body) {
     '--workspace', workspace, '--prompt', path.join(root, 'prompt.md'), '--log', log, '--agentDir', path.join(root, 'config')],
     { encoding: 'utf8', timeout: 12_000, env: { ...process.env, PATH: `${bin}:${process.env.PATH}`,
       CODE_AGENT_ENGINE: 'pi', CODE_AGENT_API_ENDPOINT: 'https://secret-host.invalid/v1', CODE_AGENT_API_KEY: 'do-not-publish-secret',
-      CODE_AGENT_MODEL: 'test-model', CODE_AGENT_IDLE_TIMEOUT_SECONDS: '10', FACTORY_RUN_DEADLINE_EPOCH_SECONDS: '' } });
+      CODE_AGENT_MODEL: 'test-model', CODE_AGENT_IDLE_TIMEOUT_SECONDS: '10', FACTORY_RUN_DEADLINE_EPOCH_SECONDS: '',
+      FACTORY_MODEL_RETRY_DELAYS_SECONDS: 'none', ...extraEnv } });
   return { root, workspace, result, normalized: JSON.parse(readFileSync(`${log}.result.json`, 'utf8')) };
 }
 const emit = `const emit = value => console.log(JSON.stringify(value));
@@ -103,9 +106,67 @@ test('exhausted retries fail even with CLI exit zero and keep the partial worksp
 });
 
 test('permanent auth errors stop without a factory-level rerun', t => {
-  const f = fakePi(t, `console.log(JSON.stringify({type:'message_end', message:{role:'assistant',stopReason:'error',errorMessage:'401: invalid_api_key'}}));`);
+  const f = fakePi(t, `require('node:fs').appendFileSync('runs', 'x');
+    console.log(JSON.stringify({type:'message_end', message:{role:'assistant',stopReason:'error',errorMessage:'401: invalid_api_key'}}));`,
+  { FACTORY_MODEL_RETRY_DELAYS_SECONDS: '0,0' });
   assert.equal(f.result.status, 1); assert.equal(f.normalized.retryAttempts, 0);
   assert.deepEqual(f.normalized.failure, { category: 'auth_configuration', retryable: false });
+  assert.equal(readFileSync(path.join(f.workspace, 'runs'), 'utf8'), 'x');
+  assert.equal(f.normalized.factoryRetries, undefined);
+});
+
+// Each run fails with a stream drop until the Nth run, which completes.
+const flakyStream = (succeedOnRun) => `const fs = require('node:fs');
+  const run = (fs.existsSync('runs') ? fs.readFileSync('runs', 'utf8').length : 0) + 1;
+  fs.appendFileSync('runs', 'x'); fs.appendFileSync('work.txt', 'run ' + run + ';');
+  const usage = { input: 10, output: 1, cacheRead: 0, cacheWrite: 0, totalTokens: 11 };
+  // Like Pi, every response carries its own id, so separate calls never dedupe.
+  const message = run >= ${succeedOnRun} ? { role: 'assistant', stopReason: 'stop', usage, responseId: 'r' + run }
+    : { role: 'assistant', stopReason: 'error', errorMessage: 'upstream stream closed before [DONE]', usage, responseId: 'r' + run };
+  console.log(JSON.stringify({ type: 'agent_start' }));
+  console.log(JSON.stringify({ type: 'message_end', message }));
+  console.log(JSON.stringify({ type: 'agent_end', messages: [message] }));`;
+
+test('a stream drop is rerun after a delay on the same workspace and keeps every attempt', t => {
+  const f = fakePi(t, flakyStream(2), { FACTORY_MODEL_RETRY_DELAYS_SECONDS: '0,0' });
+  assert.equal(f.result.status, 0, f.result.stderr);
+  assert.equal(f.normalized.status, 'completed'); assert.equal(f.normalized.failure, undefined);
+  assert.deepEqual(f.normalized.factoryRetries, [{ delaySeconds: 0, category: 'network_error' }]);
+  assert.equal(f.normalized.measurements.length, 2, 'the failed attempt still counts toward usage');
+  assert.equal(readFileSync(path.join(f.workspace, 'work.txt'), 'utf8'), 'run 1;run 2;');
+  const events = readFileSync(path.join(f.root, 'artifacts/agent-implement.jsonl'), 'utf8').trim().split('\n').map(line => JSON.parse(line));
+  assert.deepEqual(events.map(e => e.type), ['agent_start', 'message_end', 'agent_end', 'factory_model_retry', 'agent_start', 'message_end', 'agent_end']);
+  assert.deepEqual(events[3], { type: 'factory_model_retry', retry: 1, of: 2, delaySeconds: 0, category: 'network_error' });
+  assert.match(f.result.stderr, /rerunning the invocation in 0 seconds \(factory retry 1\/2\)/);
+});
+
+test('a stream drop that outlasts both delayed reruns fails and says so in the report', t => {
+  const f = fakePi(t, flakyStream(4), { FACTORY_MODEL_RETRY_DELAYS_SECONDS: '0,0' });
+  assert.equal(f.result.status, 1);
+  assert.equal(readFileSync(path.join(f.workspace, 'runs'), 'utf8'), 'xxx');
+  assert.equal(f.normalized.status, 'failed'); assert.equal(f.normalized.factoryRetries.length, 2);
+  assert.equal(f.normalized.measurements.length, 3);
+  const failure = collectAgentFailure(path.join(f.root, 'artifacts'));
+  assert.equal(failure.factoryRetries, 2);
+  assert.match(failure.detail, /模型请求重试次数：0；分别等待 0 秒、0 秒后重跑 2 次仍失败。/);
+});
+
+test('no delayed rerun starts when it would pass the run deadline', t => {
+  const started = Date.now();
+  const f = fakePi(t, flakyStream(2), { FACTORY_MODEL_RETRY_DELAYS_SECONDS: '60',
+    FACTORY_RUN_DEADLINE_EPOCH_SECONDS: String(Math.floor(Date.now() / 1000) + 30) });
+  assert.equal(f.result.status, 1);
+  assert.ok(Date.now() - started < 10_000, 'must not wait for a retry it cannot make');
+  assert.equal(readFileSync(path.join(f.workspace, 'runs'), 'utf8'), 'x');
+  assert.equal(f.normalized.factoryRetries, undefined);
+});
+
+test('delayed reruns default to one and five minutes and reject malformed schedules', () => {
+  assert.deepEqual(parseRetryDelays(undefined), [60, 300]);
+  assert.deepEqual(parseRetryDelays(''), [60, 300]);
+  assert.deepEqual(parseRetryDelays('none'), []);
+  assert.deepEqual(parseRetryDelays('5, 30'), [5, 30]);
+  for (const value of ['-1', '1.5', 'abc', '3601', '1,2,3,4,5,6']) assert.throws(() => parseRetryDelays(value), /FACTORY_MODEL_RETRY_DELAYS_SECONDS/);
 });
 
 test('a later successful invocation prevents stale provider failure attribution', t => {
@@ -113,6 +174,18 @@ test('a later successful invocation prevents stale provider failure attribution'
   write(root, 'agent-implement.jsonl.result.json', { version: 1, status: 'failed', endedAt: 100, error: '503: outage' });
   write(root, 'agent-repair-1.jsonl.result.json', { version: 1, status: 'completed', endedAt: 200 });
   assert.equal(collectAgentFailure(root), null);
+});
+
+test('a review that runs after the build stopped does not hide the failure that stopped it', t => {
+  const root = directory(t);
+  write(root, 'agent-repair-1.jsonl.result.json', { version: 1, status: 'completed', phase: 'repair', endedAt: 100 });
+  write(root, 'verify-2/browser-acceptance/agent-browser-acceptance.jsonl.result.json', { version: 1, status: 'completed', phase: 'qa', endedAt: 200 });
+  write(root, 'agent-repair-2.jsonl.result.json', { version: 1, status: 'failed', phase: 'repair', endedAt: 300, retryAttempts: 0, error: 'upstream stream closed before [DONE]' });
+  write(root, 'agent-review.jsonl.result.json', { version: 1, status: 'completed', phase: 'review', endedAt: 400 });
+  const failure = collectAgentFailure(root);
+  assert.equal(failure.source, 'agent-repair-2.jsonl.result.json');
+  assert.equal(failure.category, 'network_error');
+  assert.match(failure.detail, /^第 2 轮修复阶段中断；模型请求重试次数：0。/);
 });
 
 test('failed artifacts without handoff.json become a valid pinned handoff without changing source state', t => {

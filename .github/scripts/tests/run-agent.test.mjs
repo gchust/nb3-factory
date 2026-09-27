@@ -604,6 +604,8 @@ for (const scenario of [
             CODE_AGENT_API_KEY: 'secret-test-key',
             CODE_AGENT_MODEL: 'deepseek-v4.1-flash',
             CODE_AGENT_THINKING: 'high',
+            // Outcome parsing only; delayed reruns are covered in agent-recovery.
+            FACTORY_MODEL_RETRY_DELAYS_SECONDS: 'none',
           },
         },
       );
