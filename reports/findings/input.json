@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "inputHash": "0336880b84e909e639e15ee0cbf74a22037f8713026ceddbd8bd4d48127ec3ad",
+  "inputHash": "d9ddc7b9444bb94a0dce66adea8a2fd46ca304c15fd6c4cbab35960cc2f39c17",
   "findings": [
     {
       "id": "408:36329180371:1:F2",
@@ -79,6 +79,168 @@
         }
       ],
       "fingerprint": "f8a4ff2afada4e19ac479be17cffdfd43377763680db5d8ee9da17728e38ecd3"
+    },
+    {
+      "id": "409:36329183962:1:F1",
+      "report": "409:36329183962:1",
+      "issue": 409,
+      "taskTitle": "设备售后服务与巡检协同系统",
+      "appVersion": "1.0.0-beta.47",
+      "appTemplate": "@nocobase/app-template-default",
+      "finding": {
+        "id": "F1",
+        "kind": "issue",
+        "owner": "documentation",
+        "confidence": "confirmed",
+        "severity": "minor",
+        "status": "open",
+        "title": "站内信 Skill 禁止导入 store 实现，但包公开导出 store 与 token，直接调用会绕过收件人校验",
+        "detail": "inbox-integration.md 第 23 行要求“不要从应用代码导入 store 实现或内部路径”，并说明数据库 Provider 在写入前通过 recipientExists 校验收件人。但 app-plugin-notification-in-app 的 /server 入口 `export * from './store.js'` 与 `./tokens.js`，因此 inAppNotificationStoreToken 与 DatabaseInAppStore 是公开导出。DatabaseInAppStore.deliver 只做重复 deliveryId 的幂等返回，本身不校验 userId 是否存在；recipientExists 校验只存在于 providers/in-app-notification.js 注册的内置 Provider send 路径。Agent 因此在应用代码中 resolve inAppNotificationStoreToken 并直接 deliver，绕过了收件人存在性校验与 Provider 的重试/失败分类。",
+        "impact": "应用可能向不存在或已停用的用户写入站内信并触发 inbox.changed 实时事件；同时 Delivery/Attempt 诊断链路被旁路。指引与导出面自相矛盾，会反复诱导 Agent 使用非推荐的内部实现。",
+        "suggestedChange": "二者取一：要么在 /server 入口停止导出 store 实现类与 store token（仅保留 Provider/definitions），并在 Skill 中给出受支持的编程式发送入口；要么在 Skill 中承认该 token 为受支持契约并明确它不执行 recipientExists，要求调用方自行校验。",
+        "evidence": [
+          "E20",
+          "E23",
+          "E24",
+          "E25"
+        ],
+        "diagnosis": {
+          "category": "guidance-gap",
+          "trigger": "应用需要以编程方式写入收件箱消息（例如自动受理成功后的持久消息）",
+          "expected": "按 Skill 使用 in-app 渠道/Provider 发送，写入前由 recipientExists 校验收件人并取得幂等/失败分类",
+          "actual": "包 /server 导出 store 与 token，Agent 可直接 store.deliver 写入，跳过 recipientExists 与 Provider 失败分类",
+          "workaround": "应用改用 notificationServiceToken 的 inbox 渠道发送，或在直接调用前自行查询用户是否存在",
+          "acceptance": "Skill 指引与 /server 导出面一致：要么不导出 store 实现，要么文档声明其契约与校验责任"
+        }
+      },
+      "targets": [
+        "@nocobase/app-plugin-notification-in-app",
+        "app/.agents/skills/nocobase-app-plugin-notification-in-app/references/inbox-integration.md"
+      ],
+      "paths": [
+        ".agents/skills/nocobase-app-plugin-notification-in-app/references/inbox-integration.md",
+        "packages/@nocobase/app-plugin-notification-in-app/dist/server/definition.js",
+        "packages/@nocobase/app-plugin-notification-in-app/dist/server/providers/in-app-notification.js",
+        "packages/@nocobase/app-plugin-notification-in-app/dist/server/store.js"
+      ],
+      "evidence": [
+        {
+          "id": "E20",
+          "kind": "skill",
+          "path": "app/.agents/skills/nocobase-app-plugin-notification-in-app/references/inbox-integration.md",
+          "observation": "Public surfaces、禁止从应用代码导入 store 实现/内部路径，以及数据库 Provider 写入前 recipientExists 校验。",
+          "lines": [
+            12,
+            35
+          ],
+          "excerpt": "## Public surfaces\n\nThe package root and `/server` export the Server plugin and supported Server contracts. Browser or shared code imports only the topic and event types from:\n\n```ts\nimport {\n  IN_APP_NOTIFICATION_REALTIME_TOPIC,\n  type InAppNotificationRealtimeEvent,\n} from '@nocobase/app-plugin-notification-in-app/realtime';\n```\n\nDo not import `server/realtime`, store implementations, or other internal implementation paths from application code.\n\nThe package's Client plugin contributes this development-only App-relative route:\n\n```text\n/dev/notification-in-app\n```\n\nRegister `@nocobase/app-plugin-notification-in-app/client` in the application Client composition root. The page mounts `NotificationInAppProvider` locally and cleans up its realtime and focus listeners when navigation leaves the page. The Dev Route and its exclusive dependencies are absent from production builds.\n\n## Final delivery validation\n\nThe database Provider checks the recipient through Authentication’s user administration service immediately before writing the inbox item. A missing user returns a non-retryable `recipient` failure and creates no inbox item or realtime event. A lookup failure remains a retryable storage failure. Custom hosts calling `createDatabaseProviderDefinition` must supply `recipientExists(userId)` backed by their authoritative user directory; do not use a permissive fallback.",
+          "sha256": "fc935413849fcf895cb9eaae6e8597a063ea0059307dc4ab617d5702da3ed409"
+        },
+        {
+          "id": "E23",
+          "kind": "code",
+          "path": "packages/@nocobase/app-plugin-notification-in-app/dist/server/store.js",
+          "observation": "DatabaseInAppStore.deliver 写入 notificationInAppItems，重复 deliveryId 时返回既有项；本身不校验 userId 是否存在。",
+          "lines": [
+            76,
+            107
+          ],
+          "excerpt": "    async deliver(input) {\n        const item = {\n            id: randomUUID(),\n            deliveryId: input.deliveryId,\n            notificationId: input.notificationId,\n            userId: input.userId,\n            title: input.message.title,\n            body: input.message.body,\n            target: validateNotificationTarget(input.message.target),\n            createdAt: input.createdAt,\n            updatedAt: input.createdAt,\n        };\n        try {\n            await this.database\n                .query()\n                .insertInto('notificationInAppItems')\n                .values(toRow(item))\n                .execute();\n        }\n        catch (error) {\n            const existing = await this.database\n                .query()\n                .selectFrom('notificationInAppItems')\n                .selectAll()\n                .where('deliveryId', '=', input.deliveryId)\n                .executeTakeFirst();\n            if (existing)\n                return fromRow(existing);\n            throw error;\n        }\n        return item;\n    }",
+          "sha256": "13c0bcf80f68b9db1ac91a2befc3169331d134ce3fba1aeaf0f09cf8551ff7de"
+        },
+        {
+          "id": "E24",
+          "kind": "code",
+          "path": "packages/@nocobase/app-plugin-notification-in-app/dist/server/definition.js",
+          "observation": "内置 in-app Provider.send 先 recipientExists 校验（缺失返回不可重试 recipient 失败），再进行 store.deliver。",
+          "lines": [
+            131,
+            151
+          ],
+          "excerpt": "                async send({ message }) {\n                    try {\n                        if (!(await options.recipientExists(message.recipient.userId))) {\n                            return {\n                                status: 'failed',\n                                disposition: 'never',\n                                error: {\n                                    code: 'IN_APP_NOTIFICATION_RECIPIENT_NOT_FOUND',\n                                    category: 'recipient',\n                                    message: 'In-app notification recipient does not exist.',\n                                },\n                            };\n                        }\n                        await store.deliver({\n                            deliveryId: message.deliveryId,\n                            notificationId: message.notificationId,\n                            userId: message.recipient.userId,\n                            message: message.content,\n                            createdAt: await context.now(),\n                        });\n                        return { status: 'accepted' };",
+          "sha256": "45093fc2de92a6dc14826b8fa11d30f9c2f279ffc1e8ded723f698dcf66b6805"
+        },
+        {
+          "id": "E25",
+          "kind": "code",
+          "path": "packages/@nocobase/app-plugin-notification-in-app/dist/server/providers/in-app-notification.js",
+          "observation": "boot() 注册 in-app 渠道与数据库 Provider，并注入用户管理服务的 recipientExists；store token 解析为 realtime 包装。",
+          "lines": [
+            27,
+            40
+          ],
+          "excerpt": "    async boot() {\n        const { container } = this.app;\n        if (!container.has(notificationExtensionRegistryToken))\n            return;\n        const registry = container.resolve(notificationExtensionRegistryToken);\n        const store = container.resolve(inAppNotificationStoreToken);\n        const users = container.resolve(userAdministrationServiceToken);\n        registry.registerChannel(createInAppChannelDefinition()).registerProvider(createDatabaseProviderDefinition({\n            store,\n            async recipientExists(userId) {\n                return Boolean(await users.get(userId));\n            },\n        }));\n    }",
+          "sha256": "ca2a3954be5be0a6ab2cbd8052422b50ecffd93d24f99524cd732b050b9d61ad"
+        }
+      ],
+      "fingerprint": "1386fc2bb6f4fb89f7a7401a4f78cfce4584ac1fb3a6cb596d342874a1cda334"
+    },
+    {
+      "id": "409:36329183962:1:F2",
+      "report": "409:36329183962:1",
+      "issue": 409,
+      "taskTitle": "设备售后服务与巡检协同系统",
+      "appVersion": "1.0.0-beta.47",
+      "appTemplate": "@nocobase/app-template-default",
+      "finding": {
+        "id": "F2",
+        "kind": "improvement",
+        "owner": "plugin",
+        "confidence": "confirmed",
+        "severity": "info",
+        "status": "open",
+        "title": "文件内容路由默认公开，每个应用都必须自行加鉴权",
+        "detail": "app-plugin-file 以“公开首版路由”实现 defineFileRepositoryApiRoutes，routes.js 注释写明“Authentication and authorization are application-owned”，Skill 第 122/126 行也说明 accessPath 下的内容路由是公开异常，需应用对 <accessPath>/* 与各 <name>:<action> 自行注册认证鉴权。这要求每个需要私有附件的应用都重复实现一层受保护内容路由。",
+        "impact": "默认把安全责任外推给应用；若应用遗漏，附件地址可被越权访问。本次应用已正确自建受保护路由，但这属于易错的高风险默认。",
+        "suggestedChange": "为 defineFileRepositoryApiRoutes 增加显式的受保护模式（例如内置 auth.required()+可选记录级 policy 的顺序挂载），或让 accessPath 内容路由默认要求已注册的认证中间件，仅在显式声明 public 时才公开。",
+        "evidence": [
+          "E12",
+          "E13"
+        ],
+        "diagnosis": {
+          "category": "usability-improvement",
+          "trigger": "应用需要私有附件（工单照片/维修报告）并直接用 defineFileRepositoryApiRoutes 挂载",
+          "expected": "默认即受认证保护，或只需声明策略即可获得受限内容",
+          "actual": "默认公开，必须在贡献路径上自行实现认证与记录级授权",
+          "workaround": "应用改为自建受 auth.required() 保护的内容路由，accessPath 仅作占位（本次已如此）",
+          "acceptance": "存在显式受保护模式或 public 需显式选择，Skill 主流程以受保护为默认"
+        }
+      },
+      "targets": [
+        "@nocobase/app-plugin-file",
+        "app/.agents/skills/nocobase-app-plugin-file/SKILL.md"
+      ],
+      "paths": [
+        ".agents/skills/nocobase-app-plugin-file/SKILL.md",
+        "packages/@nocobase/app-plugin-file/dist/server/routes.js"
+      ],
+      "evidence": [
+        {
+          "id": "E12",
+          "kind": "skill",
+          "path": "app/.agents/skills/nocobase-app-plugin-file/SKILL.md",
+          "observation": "accessPath/Policy 规则；“内容路由公开、Policy 不覆盖”，受限文件须由应用对 <accessPath>/* 与各动作自加认证授权，避免 use('*')。",
+          "lines": [
+            116,
+            126
+          ],
+          "excerpt": "`name` is the Client resource; `collection` defaults to name, `connection` to the database default, and `accessPath` to `/uploads/<name>`. Disk is required. Content paths contain static alphanumeric, underscore or hyphen segments, start with `/`, and have no trailing slash.\n\nOnly declared POST `/api/<name>:<action>` operations are exposed. Ordinary actions are `findMany/findOne/count/exists/aggregate/groupBy/createOne/updateOne/deleteOne`. There are no createMany/updateMany/deleteMany HTTP actions.\n\n`policy` is required and governs every action of the exposure, uploads included. It is a Repository Policy: `read`, `create`, `update` and `delete`, each `true`, `false`, or a rule node. A node that is `false` refuses that operation; a node with no `fields` accepts no caller-supplied field, which is what a metadata `createOne` needs before it will accept anything. Pass a function of the principal — `policy: (principal) => ({ ... })` — together with a `principal(context)` resolver to scope rows to the caller; without a principal the request is refused with 403.\n\nAn upload supplies no caller fields, so it binds a Policy derived from this one: the `create` scope and defaults are inherited and the field allowlist is replaced by the file columns. `create: false` therefore forbids uploading as well as creating metadata, and a `create.defaults` of `{ ownerId }` is stamped onto uploaded rows — which is what keeps an uploaded file inside the same scope `findMany` reads. The content route under `accessPath` is the exception: it is public and this Policy does not reach it.\n\nContent is GET `<accessPath>/<uuid>.<ext>` outside `/api`, omitting the dot when extensionless. Stream returns full bytes as an attachment; redirect returns a public storage URL or a five-minute signed URL. A disk without URL support requires stream mode; there is no automatic fallback.\n\nThese are public routes. For restricted files, register App-owned authentication and authorization on the paths each contribution owns before mounting it — `/<name>:<action>` per exposed API action, `<accessPath>/*` for content. Never `router.use('*', ...)` in a contribution router: contributions share the mounted router, so it also guards the SPA and every contribution mounted after yours. Check the operation and record/parent-record access; a login page, private disk, Client filter or Policy field allowlist is not authentication. Add scoped middleware and principal-based Policy to the generated routes first. If an existing contract needs an adapter, extend that module using the public Server manager and retain its authorization checks; missing built-in authentication alone is not a reason to replace the routes. Never trust browser-supplied ownership.",
+          "sha256": "3fab337bc1a1412ba9affb4cd5ec2e79e76abe1f9b1803b7f2ebe4e293f188f5"
+        },
+        {
+          "id": "E13",
+          "kind": "code",
+          "path": "packages/@nocobase/app-plugin-file/dist/server/routes.js",
+          "observation": "defineFileRepositoryApiRoutes 明确为“公开首版路由，认证授权归应用”，含 accessPath 冲突检测与 upload 配置校验。",
+          "lines": [
+            26,
+            58
+          ],
+          "excerpt": "/** Public first-version routes. Authentication and authorization are application-owned. */\nexport function defineFileRepositoryApiRoutes(options) {\n    const paths = [];\n    const entries = options.repositories.map((entry) => {\n        const accessPath = normalizeAccessPath(entry.accessPath ?? `/uploads/${entry.name}`);\n        if (paths.some((path) => path === accessPath ||\n            path.startsWith(`${accessPath}/`) ||\n            accessPath.startsWith(`${path}/`)))\n            throw new Error(`Conflicting file accessPath: ${accessPath}`);\n        paths.push(accessPath);\n        if (!entry.disk)\n            throw new Error('File repository disk is required.');\n        if (entry.accessMode !== undefined &&\n            !['stream', 'redirect'].includes(entry.accessMode))\n            throw new Error('Invalid file accessMode.');\n        const { uploadOne, uploadMany, ...actions } = entry.actions;\n        for (const upload of [uploadOne, uploadMany]) {\n            if (upload === undefined)\n                continue;\n            if (!upload ||\n                typeof upload !== 'object' ||\n                Object.keys(upload).some((key) => key !== 'maxSize'))\n                throw new Error('Invalid upload action configuration.');\n            if (upload.maxSize !== undefined &&\n                (!Number.isSafeInteger(upload.maxSize) || upload.maxSize <= 0))\n                throw new Error('maxSize must be a positive safe integer.');\n        }\n        return { ...entry, accessPath, actions, uploadOne, uploadMany };\n    });\n    const crud = defineRepositoryApiRoutes({\n        principal: options.principal,\n        repositories: entries.map(({ name, collection, connection, policy, actions }) => ({\n            name,",
+          "sha256": "6982c2d56153fe60426c48783c0653f4224691075e1c95a3d6e39f7405a46025"
+        }
+      ],
+      "fingerprint": "54f628ffab1b49e54a168a54b2600777c7bff2830c670d3f746c936ff1598b1c"
     },
     {
       "id": "411:36329191920:1:F2",
