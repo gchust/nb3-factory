@@ -96,7 +96,7 @@ export function DataTablePagination<TData>({
             </SelectContent>
           </Select>
         </div>
-        <div className='flex w-[100px] items-center justify-center text-sm font-medium'>
+        <div className='flex min-w-[100px] items-center justify-center text-sm font-medium whitespace-nowrap'>
           {t('dataTable.pageOf', {
             defaultValue: 'Page {{page}} of {{pageCount}}',
             page: pageIndex + 1,

@@ -1,4 +1,4 @@
-import { Home } from 'lucide-react';
+import { Home, NotebookPen } from 'lucide-react';
 import {
   defineAppRoutes,
   defineSettingsRoutes,
@@ -43,6 +43,34 @@ const appRoutes: AppClientRouteContribution = defineAppRoutes([
     componentLoader: () => import('./pages/auth/reset-password.js'),
     name: 'reset-password',
     path: '/reset-password',
+  },
+  {
+    // The customer memo list. Every signed-in user reaches it; the CRUD children are reachable only through this page.
+    auth: 'required',
+    authz: 'skip',
+    componentLoader: () => import('./pages/memos/index.js'),
+    name: 'memos',
+    navigation: { title: 'navigation.memos', icon: NotebookPen },
+    path: '/memos',
+    children: [
+      {
+        componentLoader: () => import('./pages/memos/new.js'),
+        name: 'memo-new',
+        path: 'new',
+      },
+      {
+        componentLoader: () => import('./pages/memos/detail/index.js'),
+        name: 'memo-detail',
+        path: ':memoId',
+        children: [
+          {
+            componentLoader: () => import('./pages/memos/detail/edit.js'),
+            name: 'memo-edit',
+            path: 'edit',
+          },
+        ],
+      },
+    ],
   },
 ]);
 

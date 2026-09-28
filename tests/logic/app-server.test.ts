@@ -738,6 +738,84 @@ describe('app server', () => {
     expect(rejected.status).toBe(401);
   });
 
+  it('serves customer memos to a signed-in session over the real application', async () => {
+    const app = trackCloseable(
+      await createInstalledStandaloneServer({
+        viteDevUrl: false,
+        env: { APP_PUBLIC_ORIGIN: 'http://localhost' },
+      }),
+    );
+    const baseUrl = `http://localhost${app.application.publicBasePath}`;
+    const origin = 'http://localhost';
+
+    const anonymous = await requestApp(app, `${baseUrl}/api/customer-memos`);
+    expect(anonymous.status).toBe(401);
+
+    const signIn = await requestApp(
+      app,
+      `${baseUrl}/api/auth/sign-in/username`,
+      {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ username: 'nocobase', password: 'admin123' }),
+      },
+    );
+    expect(signIn.status).toBe(200);
+    const cookie = signIn.headers
+      .getSetCookie()
+      .map((header) => header.split(';')[0])
+      .join('; ');
+
+    // The application seed supplied the sample records.
+    const seeded = await requestApp(app, `${baseUrl}/api/customer-memos`, {
+      headers: { cookie },
+    });
+    expect(seeded.status).toBe(200);
+    const seededBody = (await seeded.json()) as { data: { name: string }[] };
+    expect(seededBody.data).toHaveLength(3);
+
+    const created = await requestApp(app, `${baseUrl}/api/customer-memos`, {
+      method: 'POST',
+      headers: {
+        cookie,
+        origin,
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({ name: 'Contoso Ltd', note: 'Follow up Friday' }),
+    });
+    expect(created.status).toBe(201);
+    const createdBody = (await created.json()) as {
+      data: { id: number; name: string };
+    };
+    expect(createdBody.data.name).toBe('Contoso Ltd');
+
+    const searched = await requestApp(
+      app,
+      `${baseUrl}/api/customer-memos?search=contoso`,
+      { headers: { cookie } },
+    );
+    const searchedBody = (await searched.json()) as {
+      data: { name: string }[];
+    };
+    expect(searchedBody.data.map((memo) => memo.name)).toEqual(['Contoso Ltd']);
+
+    const removed = await requestApp(
+      app,
+      `${baseUrl}/api/customer-memos/${createdBody.data.id}`,
+      { method: 'DELETE', headers: { cookie, origin } },
+    );
+    expect(removed.status).toBe(204);
+
+    const afterDelete = await requestApp(
+      app,
+      `${baseUrl}/api/customer-memos?search=contoso`,
+      { headers: { cookie } },
+    );
+    expect(
+      ((await afterDelete.json()) as { data: unknown[] }).data,
+    ).toHaveLength(0);
+  });
+
   it('mounts standalone app-local routes behind the public base path', async () => {
     const app = trackCloseable(
       await createIsolatedStandaloneServer({ viteDevUrl: false }),

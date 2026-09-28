@@ -111,6 +111,7 @@ const enUS = {
   actions: {
     close: 'Close',
     save: 'Save',
+    saving: 'Saving…',
     cancel: 'Cancel',
     confirm: 'Confirm',
     language: 'Language',
@@ -130,6 +131,7 @@ const enUS = {
   },
   navigation: {
     home: 'Home',
+    memos: 'Customer memos',
     open: 'Open navigation',
     close: 'Close navigation',
     expand: 'Expand navigation',
@@ -155,6 +157,77 @@ const enUS = {
   datePicker: {
     placeholder: 'Pick a date',
     rangePlaceholder: 'Pick a date range',
+  },
+  memos: {
+    title: 'Customer memos',
+    description:
+      'Keep a short record of each customer conversation and look it up later.',
+    fields: {
+      name: 'Customer name',
+      note: 'Note',
+      createdAt: 'Created',
+    },
+    create: {
+      action: 'New memo',
+      title: 'New customer memo',
+      description: 'Record a customer and a short note about them.',
+      success: 'Memo for "{{name}}" was created.',
+    },
+    edit: {
+      title: 'Edit memo for "{{name}}"',
+      description: 'Update the customer name or the note.',
+      success: 'Memo for "{{name}}" was updated.',
+    },
+    delete: {
+      title: 'Delete memo for "{{name}}"?',
+      description: 'This permanently deletes the memo and cannot be undone.',
+      confirm: 'Delete',
+      success: 'Memo for "{{name}}" was deleted.',
+      notFound: 'The memo for "{{name}}" was already deleted.',
+    },
+    search: {
+      placeholder: 'Search by customer name',
+      label: 'Search customer memos by name',
+    },
+    filters: {
+      clear: 'Clear search',
+    },
+    form: {
+      namePlaceholder: 'e.g. Northwind Traders',
+      nameRequired: 'Enter a customer name.',
+      nameTooLong: 'The customer name must be at most {{max}} characters.',
+      notePlaceholder: 'What is worth remembering?',
+      noteHint: 'Optional, up to {{max}} characters.',
+      noteTooLong: 'The note must be at most {{max}} characters.',
+    },
+    empty: {
+      title: 'No customer memos yet',
+      description:
+        'Create the first memo to start keeping a record of your customers.',
+      noResults: 'No memos match this customer name.',
+    },
+    error: {
+      title: 'Unable to load customer memos',
+      forbidden: 'You do not have permission to view these customer memos.',
+      requestFailed:
+        'Something went wrong while loading customer memos. Please try again.',
+    },
+    actions: {
+      label: 'Actions',
+      more: 'Actions for {{name}}',
+      view: 'View',
+      edit: 'Edit',
+      delete: 'Delete',
+    },
+    detail: {
+      title: 'Customer memo',
+      noNote: 'No note',
+      backToList: 'Back to list',
+      notFound: {
+        title: 'Memo not found',
+        description: 'This memo was deleted or does not exist.',
+      },
+    },
   },
 };
 

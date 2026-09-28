@@ -91,9 +91,14 @@ describe('app client routes', () => {
     // that requires sign-in adds an entry here, because that is a new grant somebody has to be given.
     const resolved = resolveRoutes();
 
-    // The landing page opted out of page authorization, so it is reachable by every signed-in user.
+    // The landing page opted out of page authorization, so it is reachable by every signed-in user. The customer memo
+    // pages do the same: any signed-in user may keep their own notes, so none of them stores a page grant.
     expect(pageAuthorizations(resolved.routes)).toEqual([
       { name: 'home', authorizedAs: null },
+      { name: 'memos', authorizedAs: null },
+      { name: 'memo-new', authorizedAs: null },
+      { name: 'memo-detail', authorizedAs: null },
+      { name: 'memo-edit', authorizedAs: null },
     ]);
   });
 });
