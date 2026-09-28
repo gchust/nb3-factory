@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "inputHash": "7ec9fa5750977a4712c1d3acb261fb99c78c5a24319cf08431f63193934b7ca6",
+  "inputHash": "1bda914c9879cf6fb305b86dd843e4e8c40af68bbfa9cf58eace07968d6b4a33",
   "sources": [
     {
       "id": "408:36329180371:1:F2",
@@ -46,6 +46,26 @@
       "id": "412:36329195524:1:F3",
       "report": "412:36329195524:1",
       "fingerprint": "03ecedb181132056eb38e4679c1503ca7ee487852dcd0c91c7d54446d236a1e0"
+    },
+    {
+      "id": "413:36329199383:1:F1",
+      "report": "413:36329199383:1",
+      "fingerprint": "71818342095d6c6aad2f6f540dc17464b14cd53b7a922e3337f1d3f3920dbc10"
+    },
+    {
+      "id": "413:36329199383:1:F2",
+      "report": "413:36329199383:1",
+      "fingerprint": "b881e8be8ad3ef6dbcee1300ddab094e89cf194b23ccb8f8a45595b206902804"
+    },
+    {
+      "id": "413:36329199383:1:F3",
+      "report": "413:36329199383:1",
+      "fingerprint": "95dc5f5c0621ed90f18716a239138fa2a1db68bd71583d080b7cd4e08e185071"
+    },
+    {
+      "id": "413:36329199383:1:F4",
+      "report": "413:36329199383:1",
+      "fingerprint": "ad5b438a8feecc18978ff9a707b59a49cbf6e609f957f291370a7ea4ccec768a"
     },
     {
       "id": "414:36329202870:1:F1",
@@ -113,6 +133,14 @@
       ]
     },
     {
+      "title": "应用模板 AGENTS.md 存在多余空行，导致仓库 prettier/format:check 失败",
+      "reason": "411:F5 的 E42 显示 repair-1 通过 factory-template.json 与 git log 定位 AGENTS.md 为模板产物，并确认 prettier 因多余空行使 verify-1 失败；416:F6 的 E34 显示修复轮对 AGENTS.md 运行 prettier 得到同样“403d402 <”的多余空行，且 package.json 的 format:check 为全仓库 prettier . --check。两条发现来自不同报告（411、416），同为 owner=template、同一文件 app/AGENTS.md 的同一根因，修复方向一致（在模板生成/提交或 CI 阶段格式化），故合并。合并仅表示共同根因，不代表新版仍普遍存在缺陷或旧问题必然已修复（411:F5 状态 resolved、416:F6 为 unknown）。",
+      "members": [
+        "411:36329191920:1:F5",
+        "416:36329210119:1:F6"
+      ]
+    },
+    {
       "title": "Repository 已提供 aggregate/groupBy，指引缺少按父记录求合计示例",
       "reason": "411:F6 的 E7 与 E8 显示 repository 已声明并实现 aggregate/groupBy；E10 显示 SKILL §4 仅在方法清单中列出而未给业务化示例；E26 显示应用改用 findMany 全量拉取后按 customerId 分组 reduce 求和。四者指向同一指引缺口——缺少可直接套用的“按外键分组求合计”示例，与同报告其他发现根因不同，且无其他发现共享，故单独保留。",
       "members": [
@@ -120,10 +148,11 @@
       ]
     },
     {
-      "title": "授权 Skill 要求把权限集拆分到 database/seed-data 并在 seed 中 import，实际在原生 ESM 任务加载下失败",
-      "reason": "412:F1 的 E22/E23 显示 code-and-seeds.md 指示把权限集值放到 database/seed-data/permission-sets.ts，并在 seed 中以相对路径 import '../../seed-data/permission-sets.js'；E9 显示 importTaskDefinition 只重写入口 URL 的相对扩展名，嵌套说明符由原生 ESM 解析而不落到 .ts；E37 显示最终 seed 只能自包含内联。证据共同指向该指引与加载器实际行为不符的错误说明（misleading/guidance-gap）。该发现与同报告 412:F3 虽同属该加载器根因，但来自同一 report，规则禁止合并，故单独保留。",
+      "title": "seed / seed-data 示例的 .js 相对导入在原生 ESM 加载下不可用，指引与加载器实际行为不符",
+      "reason": "412:F1 的 E22/E23 显示 code-and-seeds.md 要求把权限集值拆到 database/seed-data/permission-sets.ts，并在 seed 中示例 import '../../server/sales-resources.js' 与 '../../seed-data/permission-sets.js'；E9 显示 importTaskDefinition 只重写入口 URL 的相对扩展名，嵌套相对 .js 由原生 ESM 解析而落不到 .ts；E37 显示应用最终只能内联自包含。413:F3 的 E11/E12 指向同一 code-and-seeds.md 的同一两条 .js 相对说明符示例，E22 显示 migrations.md 未说明 database/ 下原生加载所需的说明符规则，E39 显示 retro 记录同样的 Cannot find module 与改用 .ts 的修复。两条发现来自不同报告（412、413），共同指向同一条错误指引——database/ 下被原生加载的 seed/seed-data 对兄弟源码使用 .js 说明符而失败，修复方向一致（修正 code-and-seeds/migrations 示例与规则）。故合并。412:F3 虽源自同一加载器限制，但与本组 412:F1 属同一报告，规则禁止合并，故 412:F3 单独保留。",
       "members": [
-        "412:36329195524:1:F1"
+        "412:36329195524:1:F1",
+        "413:36329199383:1:F3"
       ]
     },
     {
@@ -138,6 +167,27 @@
       "reason": "412:F3 的 E9 显示 importTaskDefinition 只对入口 file URL 调用 __rewriteRelativeImportExtension 后 import()，模块内部相对说明符保持原样；E37 显示应用 seed 只能内联自包含。两者指向同一框架能力缺口（加载器不支持嵌套相对 TS 导入）。该发现与同报告 412:F1 同根，但来自同一 report，规则禁止合并，故单独保留。",
       "members": [
         "412:36329195524:1:F3"
+      ]
+    },
+    {
+      "title": "写操作授权未声明 read 节点会被 Repository 在读策略上拒绝，文档未写成规则",
+      "reason": "413:F1 的 E4 显示 composeDatabasePolicies 以 read:false 为初值，只声明 create 的复合动作派生出 read=false 的 Policy；E16 显示 Repository.createOne 落库前用绑定读策略调 validateSelect；E17 显示 resolveReadNode 在 read===false 时抛 READ_FORBIDDEN；E9 显示 Skill 示例恰好天然带 read 却未把该前提写成规则；E31、E36、E38 显示应用的 403 现象与 read('*')+动作的修复，E41 给出文档建议。证据共同指向同一文档缺口。同报告 413:F4 同处新建路径但根因是字段填充责任，属不同缺口且同为 413，禁止合并；该 read 节点规则也无其他报告共享，故单独保留。",
+      "members": [
+        "413:36329199383:1:F1"
+      ]
+    },
+    {
+      "title": "records selection 只接受字符串 id，文档未提示需要 uuid 主键",
+      "reason": "413:F2 的 E1 显示 parseRecordSelection 要求 records.ids 每项为非空 string，否则抛 Invalid record selection；E6 显示 idsScope 把每个 id 展开为字面量 $eq，故 id 类型须与列一致；E18 显示 fluent 的 increments 是唯一自增、uuid 不注入生成器；E20 显示 db Skill 迁移范例用 increments('id')；E48 显示 sharing 示例只用字符串 id 且不说明约束；E40 记录 retro 建议推荐 uuid 主键。上述证据共同指向“records selection 的字符串 id 要求与 uuid 主键建议未写入文档”这一缺口，无其他报告共享，故单独保留。",
+      "members": [
+        "413:36329199383:1:F2"
+      ]
+    },
+    {
+      "title": "文档未说明 Repository 不生成 uuid 主键与 createdAt/updatedAt",
+      "reason": "413:F4 的 E18 显示 datetime/uuid fluent 只透传选项、不注入默认值或生成器；E19 显示 uuid/string 值必须为 string，Repository 不替调用方生成；E16 显示 createOne 的写入流程；E20 显示 db Skill 迁移范例用 datetime('createdAt',{nullable:false}) 且无默认值；E32 显示应用最终显式写 id=crypto.randomUUID() 与 createdAt/updatedAt；E42 记录 retro 的同类建议。证据共同指向“字段填充责任归属未写入 Skill”这一文档缺口。它与同报告 413:F1 的 read 节点规则、413:F2 的 records selection 约束是不同缺口，且 413 内禁止合并，故单独保留。",
+      "members": [
+        "413:36329199383:1:F4"
       ]
     },
     {
@@ -181,23 +231,15 @@
       "members": [
         "416:36329210119:1:F5"
       ]
-    },
-    {
-      "title": "应用模板 AGENTS.md 存在多余空行，导致仓库 prettier/format:check 失败",
-      "reason": "411:F5 的 E42 显示 repair-1 通过 factory-template.json 与 git log 定位 AGENTS.md 为模板产物，并确认 prettier 因第 403 行多余空行使 verify-1 失败；416:F6 的 E34 显示修复轮对 AGENTS.md 运行 prettier 得到同样“403d402 <”的多余空行，且 package.json 的 format:check 为全仓库 prettier . --check。两条发现来自不同报告（411、416），同为 owner=template、同一文件 app/AGENTS.md 的同一根因，修复方向一致（在模板生成/提交或 CI 阶段格式化），故合并。合并仅表示共同根因，不代表新版仍普遍存在缺陷或旧问题必然已修复（411:F5 状态 resolved、416:F6 为 unknown）。",
-      "members": [
-        "411:36329191920:1:F5",
-        "416:36329210119:1:F6"
-      ]
     }
   ],
   "classifier": {
     "engine": "pi",
     "model": "deepseek-v4.1-flash",
     "version": "0.86.1",
-    "runId": "36365387932",
+    "runId": "36365650203",
     "attempt": 1,
     "controlSha": "417bb50ca8a370a57b28264d34a04a647d217d99",
-    "completedAt": "2026-09-28T01:18:27.615Z"
+    "completedAt": "2026-09-28T01:23:02.776Z"
   }
 }
