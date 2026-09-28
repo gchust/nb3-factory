@@ -84,6 +84,12 @@ test('the factory format check runs what build verification runs, with the pinne
     'docs/**',
     'README.MD',
     'factory-template.json',
+    '.npmrc',
+    '.gitignore',
+    '.prettierignore',
+    'eslint.config.js',
+    'package.json',
+    'pnpm-lock.yaml',
   ])
     assert.ok(workflow.includes(`'${file}'`), file);
 });
