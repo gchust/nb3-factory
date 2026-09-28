@@ -53,6 +53,8 @@ function fixture(t) {
   delete env.FACTORY_RUN_DEADLINE_EPOCH_SECONDS; delete env.FACTORY_AGENT_INSTALL_RECORD;
   delete env.FACTORY_BUILD_REVIEW_IDLE_TIMEOUT_SECONDS; delete env.FACTORY_BUILD_REVIEW_TIMEOUT_SECONDS;
   env.FACTORY_MODEL_RETRY_DELAYS_SECONDS = '0,0';
+  // Outside the snapshot, whose root is reset before every call.
+  env.MOCK_CALLS_FILE = path.join(root, 'mock-calls');
   return { root, workspace, artifacts, snapshot, source, metadata, env };
 }
 function installMock(f, behavior = 'success') {
@@ -61,9 +63,9 @@ function installMock(f, behavior = 'success') {
 const fs = require('node:fs');
 const input = JSON.parse(fs.readFileSync('review-input.json', 'utf8'));
 if (process.env.FACTORY_AGENT_ROLE !== 'review' || process.env.GITHUB_TOKEN || process.env.FACTORY_ADMIN_PASSWORD) process.exit(7);
-// Reruns share the snapshot, so a counter there tells the calls apart.
-const calls = (fs.existsSync('mock-calls') ? fs.readFileSync('mock-calls', 'utf8').length : 0) + 1;
-fs.appendFileSync('mock-calls', 'x');
+// Counts the calls of one review, so reruns can behave differently.
+const calls = (fs.existsSync(process.env.MOCK_CALLS_FILE) ? fs.readFileSync(process.env.MOCK_CALLS_FILE, 'utf8').length : 0) + 1;
+fs.appendFileSync(process.env.MOCK_CALLS_FILE, 'x');
 const prompt = fs.readFileSync(process.argv.at(-1).slice(1), 'utf8');
 console.log(JSON.stringify({type:'mock_call',calls,retry:prompt.includes('## 重试说明'),budget:Number(/硬上限 (\\d+) 秒/.exec(prompt)?.[1]),
   validatorError:prompt.includes('Evidence lines outside captured file'),kept:prompt.includes('曾保存并通过校验')}));
@@ -78,9 +80,15 @@ if (behavior === 'alter-scaffold') {
     fs.chmodSync('AGENTS.md', 0o600); fs.writeFileSync('AGENTS.md', 'tampered');
     fs.chmodSync('.review-tools/check-review-draft.mjs', 0o600); fs.writeFileSync('.review-tools/check-review-draft.mjs', 'tampered');
     fs.chmodSync('.review-tools', 0o500);
+    // Instructions an engine would also read, and the uncatalogued input files.
+    fs.writeFileSync('.review-agent/AGENTS.md', 'tampered'); fs.writeFileSync('AGENTS.override.md', 'tampered');
+    fs.writeFileSync('review-input.json', JSON.stringify({ ...input, requirements: 'tampered' }));
+    fs.mkdirSync('scratch/stuck', { recursive: true }); fs.writeFileSync('scratch/stuck/note', 'x'); fs.chmodSync('scratch/stuck', 0o500);
     process.exit(17);
   }
-  const altered = [fs.readFileSync('AGENTS.md', 'utf8'), fs.readFileSync('.review-tools/check-review-draft.mjs', 'utf8')].some(text => text.includes('tampered'));
+  const altered = [fs.readFileSync('AGENTS.md', 'utf8'), fs.readFileSync('.review-tools/check-review-draft.mjs', 'utf8'),
+    fs.readFileSync('review-input.json', 'utf8')].some(text => text.includes('tampered')) ||
+    ['.review-agent/AGENTS.md', 'AGENTS.override.md', 'scratch'].some(name => fs.existsSync(name));
   behavior = altered ? 'crash' : 'success';
 }
 const score = {score:73,reason:'Fixture framework contract and usage',evidence:['E2','E1']};
@@ -120,6 +128,10 @@ if (behavior.startsWith('stall')) {
 } else if (behavior === 'long-error') {
   // A proxy error page: no status code, so it is an Agent failure, not a service error.
   console.log(JSON.stringify({type:'message_end',message:{role:'assistant',stopReason:'error',errorMessage:'Invalid upstream response <html>' + 'x'.repeat(3000)}}));
+  console.log(JSON.stringify({type:'agent_end'}));
+} else if (behavior === 'api-400') {
+  // How Claude Code and CodeBuddy word a rejected request.
+  console.log(JSON.stringify({type:'message_end',message:{role:'assistant',stopReason:'error',errorMessage:'API Error: 400 {"type":"invalid_request_error"}'}}));
   console.log(JSON.stringify({type:'agent_end'}));
 } else if (behavior === 'model-404') {
   console.log(JSON.stringify({type:'message_end',message:{role:'assistant',stopReason:'error',errorMessage:'404 model not found'}}));
@@ -484,7 +496,7 @@ test('a long error in a later call cannot push the kept checkpoint past the limi
   validateBuildReview(report);
 });
 
-test('a rerun gets its instructions and checker back even after a call altered them', async t => {
+test('a rerun starts from a clean snapshot root even after a call altered or locked it', async t => {
   const f = fixture(t); installMock(f, 'alter-scaffold');
   const report = await runBuildReview(f.workspace, f.artifacts, f.env);
   assert.equal(report.state, 'completed', report.reason);
@@ -492,7 +504,8 @@ test('a rerun gets its instructions and checker back even after a call altered t
 });
 
 for (const [behavior, why] of [['modify-invalid', 'an edited input taints the snapshot even behind a rejected draft'],
-  ['model-404', 'a rejected request fails the same way again']]) test(`no rerun when ${why}`, async t => {
+  ['model-404', 'a rejected request fails the same way again'],
+  ['api-400', 'an engine reports a rejected request as an API error']]) test(`no rerun when ${why}`, async t => {
   const f = fixture(t); installMock(f, behavior);
   const started = Date.now();
   f.env.FACTORY_MODEL_RETRY_DELAYS_SECONDS = '60,300';

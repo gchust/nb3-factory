@@ -84,6 +84,20 @@ const save = (file, value) => {
   mkdirSync(path.dirname(file), { recursive: true });
   writeFileSync(file, `${JSON.stringify(value, null, 2)}\n`, { mode: 0o600 });
 };
+// A reviewer may leave read-only directories behind; open them and retry.
+function forceRemove(target) {
+  const open = (entry) => {
+    if (!lstatSync(entry, { throwIfNoEntry: false })?.isDirectory()) return;
+    chmodSync(entry, 0o700);
+    for (const name of readdirSync(entry)) open(path.join(entry, name));
+  };
+  try {
+    rmSync(target, { recursive: true, force: true });
+  } catch {
+    open(target);
+    rmSync(target, { recursive: true, force: true });
+  }
+}
 
 export function createReviewSnapshot(
   workspace,
@@ -453,13 +467,21 @@ export async function runBuildReview(
     save(path.join(artifacts, 'build-review-input.json'), input);
     const tools = path.join(snapshot, '.review-tools');
     const promptPath = path.join(snapshot, 'review-prompt.md');
-    // Written again before every call, replacing rather than following what a
-    // failed call left: its instructions or checker must not reach the next one.
+    // Only the hash-checked captured inputs and the draft carry over between
+    // calls. Everything else is removed or written again, never followed: a
+    // failed call's instructions, engine home, checker or input files must not
+    // reach the next one. The adapter recreates its engine home (.review-agent).
+    const carried = new Set([
+      'app',
+      'artifacts',
+      'packages',
+      'assessment.json',
+    ]);
     const prepareCall = (prompt) => {
-      if (existsSync(tools) && lstatSync(tools).isDirectory())
-        chmodSync(tools, 0o700);
-      for (const name of [tools, path.join(snapshot, 'AGENTS.md'), promptPath])
-        rmSync(name, { recursive: true, force: true });
+      for (const name of readdirSync(snapshot))
+        if (!carried.has(name)) forceRemove(path.join(snapshot, name));
+      save(path.join(snapshot, 'review-files.json'), captured.files);
+      save(path.join(snapshot, 'review-input.json'), input);
       // The snapshot root has no application instructions or reused agent session.
       writeFileSync(
         path.join(snapshot, 'AGENTS.md'),
@@ -626,7 +648,7 @@ export async function runBuildReview(
         (call?.status !== 'timed_out' &&
           call?.status !== 'handoff' &&
           (!call?.failure || call.failure.category === 'agent_failure') &&
-          !/(?:^|\b(?:HTTP(?: status)?|status(?:Code)?|code)\s*[:=]?\s*)4\d{2}\b|\bENOENT\b/i.test(
+          !/(?:^|\b(?:HTTP(?: status)?|status(?:Code)?|code|API Error)\s*[:=]?\s*)4(?!08|99)\d{2}\b|\bENOENT\b/i.test(
             call?.error ?? '',
           ));
       if (!finished && !interruption)
@@ -707,7 +729,14 @@ export async function runBuildReview(
         current = createReviewInvocation();
       } catch (error) {
         // Setting up a rerun cannot discard what an earlier call saved.
-        outcome = { attempt: retry + 1, error, retryable: false };
+        outcome = {
+          attempt: retry,
+          error: new Error(
+            `第 ${retry + 1} 次评审调用未能启动：${error.message}`,
+            { cause: error },
+          ),
+          retryable: false,
+        };
         break;
       }
       outcome = await review(current, budget, retry + 1);
@@ -767,7 +796,13 @@ export async function runBuildReview(
     capture?.finish(invocationError);
     persist();
     recordTiming('agent:review', started, report.state === 'failed' ? 1 : 0);
-    if (snapshot) rmSync(snapshot, { recursive: true, force: true });
+    try {
+      if (snapshot) forceRemove(snapshot);
+    } catch (error) {
+      process.stderr.write(
+        `Could not remove the review snapshot ${snapshot}: ${error.message}\n`,
+      );
+    }
   }
   return report;
 }
