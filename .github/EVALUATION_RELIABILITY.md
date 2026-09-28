@@ -79,8 +79,8 @@
 1. 在 `required-checks.mjs` 注册固定 ID 和执行器；输入不接受命令、任意模块或任意网络目标。
 2. 准备隔离数据库、账号、可重复记录和测试凭据，定义真实成功与受控失败条件。
 3. 在评测计划的案例中增加 `requiredChecks`。`evaluations/checks.json` 只绑定不需要仓库级外部凭据或夹具的检查；
-   #206、#207、#208 这类普通预设不在这里绑定外部 evaluator，先搭建功能，见 AGENTS.md 的 Ordinary preset
-   evaluation scope。计划可以增加检查，不能移除预置已经要求的检查。
+   #206、#207、#208 这类普通预设不在这里绑定外部 evaluator，先搭建功能，见 `.github/AGENTS.md` 的 Ordinary
+   preset evaluation scope。计划可以增加检查，不能移除预置已经要求的检查。
 4. 为前置条件缺失、功能失败、成功、旧 attempt、旧补丁、结果缺失分别加测试。
 5. 先用计划 `dry_run` 查看冻结输入，再运行小样本；确认报告与 `evaluation.json.health` 后纳入每日计划。
 

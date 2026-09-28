@@ -8,6 +8,7 @@ import {
 } from 'node:fs';
 import path from 'node:path';
 import { assertCurrentTemplate } from './assert-current-template.mjs';
+import { guidanceHashes } from './template-guidance.mjs';
 
 const [controlArg, workspaceArg, controlSha] = process.argv.slice(2);
 if (!controlArg || !workspaceArg || !/^[a-f0-9]{40}$/.test(controlSha ?? '')) {
@@ -67,12 +68,22 @@ rmSync(path.join(workspace, '.github'), { recursive: true, force: true });
 cpSync(path.join(control, '.github'), path.join(workspace, '.github'), {
   recursive: true,
 });
+// Factory documents live in docs/, which the template does not ship; refuse to
+// merge them into a template that starts shipping its own.
+if (existsSync(path.join(workspace, 'docs')))
+  throw new Error(
+    'The template now ships docs/; move the factory documents before refreshing.',
+  );
+if (existsSync(path.join(control, 'docs')))
+  cpSync(path.join(control, 'docs'), path.join(workspace, 'docs'), {
+    recursive: true,
+  });
 cpSync(path.join(control, '.npmrc'), path.join(workspace, '.npmrc'));
 writeFileSync(path.join(workspace, 'README.MD'), readme);
 writeFileSync(path.join(workspace, 'eslint.config.js'), factoryEslint);
-// Keep the generated AGENTS.md and .agents tree untouched. Factory task rules
-// live in .github/prompts and factory development rules in .github/AGENTS.md;
-// skills sync uses only the newly installed packages.
+// Keep the generated AGENTS.md, CLAUDE.md and .agents tree untouched. Factory
+// task rules live in .github/prompts and maintainer guidance in
+// .github/AGENTS.md; skills sync uses only the newly installed packages.
 // Generated skills and root configuration belong to the refresh baseline.
 const ignorePath = path.join(workspace, '.gitignore');
 const ignore = read(workspace, '.gitignore');
@@ -104,6 +115,8 @@ writeFileSync(
       controlSha,
       tooling: '@nocobase/app-cli',
       generatedAt: new Date().toISOString(),
+      // Factory CI compares the working tree with these (template-guidance.mjs).
+      guidance: guidanceHashes(workspace),
     },
     null,
     2,

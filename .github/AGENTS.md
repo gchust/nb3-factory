@@ -1,8 +1,12 @@
-# Factory control plane
+# Factory Control Plane Guidelines
 
-Everything under `.github/` is the factory: workflows, scripts, prompts and their guidance. It is copied over each refreshed baseline unchanged, so rules for developing the factory belong in this file or the documents beside it.
+This file guides agents that change the factory itself: everything under `.github/`, the factory documents in `docs/`, the factory section of `README.MD`, and how the application template is refreshed. Everything under `.github/` is copied over each refreshed baseline unchanged, so rules for developing the factory belong in this file or the documents beside it. Build tasks do not read it; their guidance is the application's own `AGENTS.md` and `.github/prompts/`.
 
-The root `AGENTS.md` and `CLAUDE.md` are the NocoBase3 application template's. A template refresh replaces them with the newly generated copies, every build task starts from them, and build reviews attribute what they say to NocoBase3. Never add factory rules there: they would be lost on the next refresh, and a defect in them would be reported to TestManage3 as a NocoBase3 template problem.
+## Template-owned application files
+
+The application root is regenerated from `@nocobase/app-template-default` on every template refresh. `refresh-template.yml` and `source-baseline.yml` both apply the factory through `.github/scripts/overlay-factory.mjs`. The root `AGENTS.md` and `CLAUDE.md` are the template's own guidance and stay byte-identical to what it generated. A refresh replaces them, so factory text added there is lost. Every build task also runs `format:check` over the whole application, so a formatting slip there costs each task a repair round, and build reviews attribute what these files say to NocoBase3: a factory defect in them reaches TestManage3 as a template problem. `factory-template.json` records their hashes, and `.github/scripts/tests/template-guidance.test.mjs` fails when they differ. Put factory guidance in this file instead.
+
+The factory owns these application-root files: `docs/`, which the overlay carries over and which a template may not ship itself; the section of `README.MD` between its `factory:readme` markers; `.npmrc`; and the overlay's changes to `eslint.config.js`, `.gitignore`, `package.json` and `factory-template.json`. Factory regression tests run the same `format:check` over the application root as build verification, through `.github/scripts/check-application-format.mjs`, whenever one of these files, the template guidance or the lockfile changes; keep them Prettier-clean.
 
 ## Factory review history
 
