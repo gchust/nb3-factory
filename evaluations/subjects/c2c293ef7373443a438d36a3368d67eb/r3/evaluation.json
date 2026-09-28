@@ -1,0 +1,187 @@
+{
+  "schemaVersion": 1,
+  "type": "evaluation-batch",
+  "source": {
+    "producer": "nb3-factory",
+    "instance": "gchust/nb3-factory",
+    "project": "gchust/nb3-factory",
+    "exporter": {
+      "version": 1,
+      "controlSha": "7b1ba5ceba1bcdbbd9102b04a10b35610d830e7a",
+      "runId": 36391977542,
+      "attempt": 1
+    }
+  },
+  "batch": {
+    "key": "nb3-daily-smoke-20260928",
+    "subjectKey": "gchust/nb3-factory/batches/nb3-daily-smoke-20260928",
+    "planKey": "nb3-daily-smoke",
+    "planFingerprint": "ba7a82c9ccf167e67467b4238e724230190ed030ef5a3c571ff149229ad8eb92",
+    "manifestSha256": "d3c9fdadd1f3dd457619f42b7ea06ba7aea1654a4a0598568039733dba60d95c",
+    "trigger": "schedule",
+    "slot": "2026-09-28",
+    "coordinatorIssue": 444,
+    "frozenAt": "2026-09-28T07:03:50Z",
+    "sequence": 4
+  },
+  "revision": 3,
+  "createdAt": "2026-09-28T07:30:48Z",
+  "state": "active",
+  "cancelled": false,
+  "baseline": {
+    "applicationBaseRef": "develop",
+    "comparisonKey": "64a6548325ddddc95a06c281127572cf5d7ebc5713c108a72fab6f04184ec13c",
+    "controlSha": "b5104ac905c30e205f2efd91f20dbdb4ce1c77be",
+    "entrySha": "b5104ac905c30e205f2efd91f20dbdb4ce1c77be",
+    "applicationBaseSha": "b5104ac905c30e205f2efd91f20dbdb4ce1c77be",
+    "defaultBranch": "develop",
+    "lockfileSha256": "7db7024be35da2f6d4d75784a2afd5c398ca647ac58462cf5e58d14276395f99",
+    "templateVersion": "1.0.0-beta.47",
+    "reviewMode": "inherit",
+    "budget": {
+      "maxRepairAttempts": 2,
+      "maxActiveSeconds": 3600,
+      "maxContinuations": 2
+    },
+    "maxConcurrentSamples": 1,
+    "agentEngine": "pi",
+    "agentConfig": {
+      "fingerprint": "2f5401c2837d7dae1f1f014540b983521db478e49b3e29c61dbb26be0a75e3bf",
+      "values": {
+        "AGENT_BROWSER_VERSION": "0.36.0",
+        "AGENT_VERSION": "0.86.1",
+        "CODE_AGENT_API_TYPE": "openai-completions",
+        "CODE_AGENT_AUTH_HEADER": "true",
+        "CODE_AGENT_ENGINE": "pi",
+        "CODE_AGENT_IDLE_TIMEOUT_SECONDS": "600",
+        "CODE_AGENT_INVOCATION_TIMEOUT_SECONDS": "0",
+        "CODE_AGENT_MODEL": "deepseek-v4.1-flash",
+        "CODE_AGENT_MODEL_REASONING": "true",
+        "CODE_AGENT_PROVIDER_ID": "",
+        "CODE_AGENT_SUPPORTS_DEVELOPER_ROLE": "false",
+        "CODE_AGENT_SUPPORTS_REASONING_EFFORT": "true",
+        "CODE_AGENT_THINKING": "high",
+        "CONFIG_SCHEMA_VERSION": "2",
+        "FACTORY_BUILD_REVIEW": "full",
+        "FACTORY_BUILD_REVIEW_IDLE_TIMEOUT_SECONDS": "600",
+        "FACTORY_BUILD_REVIEW_TIMEOUT_SECONDS": "3600",
+        "FACTORY_QA_THINKING": "high",
+        "FACTORY_REVIEW_THINKING": "medium",
+        "PROVIDER_ENDPOINT_SHA256": ""
+      }
+    }
+  },
+  "cases": [
+    {
+      "key": "F00",
+      "presetIssueNumber": 176,
+      "title": "[预置][F00] 流程冒烟：单页计数器",
+      "caseHash": "5e6fe7bc1c32172b01efd0aa8ec6ee887c087c065000a3a2534d9319d0e098a7",
+      "capturedAt": "2026-09-28T07:03:50Z",
+      "commentCount": 1,
+      "buildReviewMode": "off",
+      "samples": 3
+    }
+  ],
+  "samples": [
+    {
+      "key": "nb3-daily-smoke-20260928/F00/1",
+      "caseKey": "F00",
+      "sampleIndex": 1,
+      "runKey": "gchust/nb3-factory/batches/nb3-daily-smoke-20260928/F00/1",
+      "issue": 445,
+      "state": "passed",
+      "stateSource": "report",
+      "dispatchedAt": "2026-09-28T07:03:55Z",
+      "terminalAt": "2026-09-28T07:16:44Z",
+      "reason": null,
+      "agentConfigFingerprint": "2f5401c2837d7dae1f1f014540b983521db478e49b3e29c61dbb26be0a75e3bf",
+      "comparable": null,
+      "report": {
+        "state": "available",
+        "revision": 1,
+        "execution": "completed",
+        "acceptance": "passed"
+      }
+    },
+    {
+      "key": "nb3-daily-smoke-20260928/F00/2",
+      "caseKey": "F00",
+      "sampleIndex": 2,
+      "runKey": "gchust/nb3-factory/batches/nb3-daily-smoke-20260928/F00/2",
+      "issue": 447,
+      "state": "passed",
+      "stateSource": "run",
+      "dispatchedAt": "2026-09-28T07:16:44Z",
+      "terminalAt": "2026-09-28T07:30:28Z",
+      "reason": null,
+      "agentConfigFingerprint": "2f5401c2837d7dae1f1f014540b983521db478e49b3e29c61dbb26be0a75e3bf",
+      "comparable": null,
+      "report": {
+        "state": "missing",
+        "revision": null,
+        "execution": null,
+        "acceptance": null
+      }
+    },
+    {
+      "key": "nb3-daily-smoke-20260928/F00/3",
+      "caseKey": "F00",
+      "sampleIndex": 3,
+      "runKey": "gchust/nb3-factory/batches/nb3-daily-smoke-20260928/F00/3",
+      "issue": 449,
+      "state": "queued",
+      "stateSource": "coordinator",
+      "dispatchedAt": "2026-09-28T07:30:28Z",
+      "terminalAt": null,
+      "reason": null,
+      "agentConfigFingerprint": "2f5401c2837d7dae1f1f014540b983521db478e49b3e29c61dbb26be0a75e3bf",
+      "comparable": null,
+      "report": {
+        "state": "missing",
+        "revision": null,
+        "execution": null,
+        "acceptance": null
+      }
+    }
+  ],
+  "summary": {
+    "planned": 3,
+    "byState": {
+      "planned": 0,
+      "queued": 1,
+      "running": 0,
+      "passed": 2,
+      "failed": 0,
+      "blocked": 0,
+      "budget-exhausted": 0,
+      "cancelled": 0,
+      "unknown": 0
+    },
+    "reports": {
+      "available": 1,
+      "missing": 2,
+      "notApplicable": 0
+    },
+    "comparable": false,
+    "acceptance": {
+      "passed": 1,
+      "failed": 0,
+      "other": 2
+    }
+  },
+  "limitations": [
+    {
+      "code": "no-global-score",
+      "detail": "批次只列出同条件样本的可核实事实，不计算 NocoBase 全局平均评分，也不排除失败样本。"
+    },
+    {
+      "code": "agent-config-runtime",
+      "detail": "样本按运行时仓库变量执行 Agent；批次比较实际调用记录中的有效配置；缺失调用记录或秘密端点的公开 provider identity 时，一致性未知。派发时变量相同不能证明实际执行相同。"
+    },
+    {
+      "code": "reports-missing",
+      "detail": "2 个计划样本尚无其最终执行的报告（未开始、执行中或报告未到达）；它们仍计入样本全集，验收计入“其他”。"
+    }
+  ]
+}
