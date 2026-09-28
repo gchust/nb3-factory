@@ -1,4 +1,4 @@
-import { Home } from 'lucide-react';
+import { FolderOpen, Home } from 'lucide-react';
 import {
   defineAppRoutes,
   defineSettingsRoutes,
@@ -15,6 +15,16 @@ const appRoutes: AppClientRouteContribution = defineAppRoutes([
     name: 'home',
     navigation: { title: 'navigation.home', icon: Home },
     path: '/',
+  },
+  {
+    // Materials belong to the signed-in user who created them: every signed-in user reaches the page, and the
+    // server scopes each request by owner, so there is no page grant to give. See `server/routes/materials.ts`.
+    authz: 'skip',
+    auth: 'required',
+    componentLoader: () => import('./pages/materials/index.js'),
+    name: 'materials',
+    navigation: { title: 'navigation.materials', icon: FolderOpen },
+    path: '/materials',
   },
   {
     auth: 'guest',

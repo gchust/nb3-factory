@@ -1,10 +1,17 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from '@testing-library/react';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 
 import {
   FilePreviewDialog,
   type FileRecord,
 } from '../../client/extensions/nocobase-file-component-ui/index';
+import { buildDocx } from '../fixtures/docx';
 
 const viewer = vi.hoisted(() => ({
   load: vi.fn<(data: ArrayBuffer) => Promise<void>>(),
@@ -47,7 +54,10 @@ beforeEach(() => {
   viewer.load.mockReset().mockResolvedValue(undefined);
   viewer.destroy.mockReset();
 });
-afterEach(() => vi.unstubAllGlobals());
+afterEach(() => {
+  vi.useRealTimers();
+  vi.unstubAllGlobals();
+});
 
 it.each(['docx', 'xlsx', 'pptx'])(
   'preinstalled preview fetches private %s content for the local viewer',
@@ -79,6 +89,23 @@ it.each(['docx', 'xlsx', 'pptx'])(
   },
 );
 
+it('reports a damaged image instead of leaving its filename as the preview', async () => {
+  render(
+    <FilePreviewDialog
+      files={[{ ...file('png'), mimeType: 'image/png' }]}
+      open
+      onOpenChange={vi.fn()}
+    />,
+  );
+  // A PNG that decodes to nothing fires `error` on the img; the filename alone must not look like a success.
+  const image = await screen.findByRole('img', { name: 'attachment.png' });
+  fireEvent.error(image);
+  expect(
+    await screen.findByText('Unable to load the file preview.'),
+  ).toBeInTheDocument();
+  expect(viewer.load).not.toHaveBeenCalled();
+});
+
 it('shows the denied content response without trying a third-party viewer', async () => {
   vi.stubGlobal(
     'fetch',
@@ -98,4 +125,59 @@ it('shows the denied content response without trying a third-party viewer', asyn
   expect(viewer.load).not.toHaveBeenCalled();
   expect(document.querySelector('iframe')).toBeNull();
   expect(screen.queryByRole('button', { name: /Download/ })).toBeNull();
+});
+
+// The vendor viewer parses in a module worker. A worker that starts and then goes silent leaves
+// `load()` pending forever, which is the hang this suite guards: the dialog must not sit on its
+// loading state and must not let the filename count as a preview. The viewer also transfers the
+// DOCX to that worker, detaching the caller's buffer, so the fallback has to read its own copy.
+it('shows the document text when the DOCX viewer never settles', async () => {
+  vi.useFakeTimers();
+  vi.stubGlobal(
+    'fetch',
+    vi
+      .fn<typeof fetch>()
+      // Stored rather than deflated so the fallback resolves on microtasks, without depending on
+      // the native `DecompressionStream` finishing before fake timers advance.
+      .mockResolvedValue(new Response(buildDocx('Factory DOCX sample', 0))),
+  );
+  viewer.load.mockImplementation((data) => {
+    // Reproduce the worker transfer: the received ArrayBuffer is detached here.
+    structuredClone(data, { transfer: [data] });
+    return new Promise<void>(() => {});
+  });
+
+  render(
+    <FilePreviewDialog files={[file('docx')]} open onOpenChange={vi.fn()} />,
+  );
+  await act(async () => {
+    await vi.advanceTimersByTimeAsync(20_000);
+  });
+
+  expect(screen.getByText('Factory DOCX sample')).toBeInTheDocument();
+  expect(document.querySelector('[data-office-open-xml-text]')).not.toBeNull();
+  expect(viewer.destroy).toHaveBeenCalled();
+});
+
+it('explains a DOCX that cannot be read as text instead of loading forever', async () => {
+  vi.useFakeTimers();
+  vi.stubGlobal(
+    'fetch',
+    vi
+      .fn<typeof fetch>()
+      .mockResolvedValue(new Response(new Uint8Array([1, 2, 3]))),
+  );
+  viewer.load.mockReturnValue(new Promise<void>(() => {}));
+
+  render(
+    <FilePreviewDialog files={[file('docx')]} open onOpenChange={vi.fn()} />,
+  );
+  await act(async () => {
+    await vi.advanceTimersByTimeAsync(20_000);
+  });
+
+  expect(screen.getByRole('alert')).toHaveTextContent(
+    'Unable to render this Office Open XML file.',
+  );
+  expect(screen.queryByText('Loading preview...')).not.toBeInTheDocument();
 });

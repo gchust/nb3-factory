@@ -88,6 +88,58 @@ const zhCN: AppResource = {
     title: '开始构建你的应用',
     description: '向 AI 助手描述你的需求，逐步构建页面、数据模型和业务流程。',
   },
+  materials: {
+    title: '项目资料',
+    description: '将每个项目的照片和文档集中保存在一处。',
+    new: '新建资料',
+    createTitle: '新建资料',
+    createDescription: '为资料填写标题，然后上传照片和文档。',
+    detailTitle: '资料详情',
+    detailDescription: '查看、下载或移除该资料的附件。',
+    titleLabel: '标题',
+    titlePlaceholder: '例如：产品发布资料',
+    attachments: '附件',
+    attachmentsHint: 'PNG 图片和 DOCX 文档，单个文件不超过 5 MB。',
+    addAttachments: '添加附件',
+    chooseFiles: '选择文件',
+    noAttachments: '暂无附件。',
+    unsavedChanges: '有未保存的修改。',
+    save: '保存修改',
+    saving: '正在保存…',
+    create: '创建',
+    creating: '正在创建…',
+    open: '打开',
+    remove: '移除',
+    preview: '预览',
+    download: '下载',
+    delete: '删除',
+    deleteTitle: '删除该资料？',
+    deleteDescription: '资料将被删除，其附件会被解除关联。此操作无法撤销。',
+    deleteConfirm: '删除',
+    columns: {
+      title: '标题',
+      attachments: '附件',
+      updated: '更新时间',
+      actions: '操作',
+    },
+    emptyTitle: '暂无资料',
+    emptyDescription: '创建一条资料，并上传它的照片和文档。',
+    fileCount: '{{count}} 个文件',
+    errors: {
+      titleRequired: '保存前请填写标题。',
+      corruptImage: '该图片文件已损坏，无法显示。',
+      uploadRejected: '上传失败',
+      loadFailed: '无法加载资料。',
+      saveFailed: '无法保存资料。',
+      deleteFailed: '无法删除资料。',
+      notFound: '该资料已不存在。',
+    },
+    notices: {
+      created: '资料已创建',
+      saved: '资料已保存',
+      deleted: '资料已删除',
+    },
+  },
 
   appearance: {
     title: '外观',
@@ -121,6 +173,7 @@ const zhCN: AppResource = {
   },
   navigation: {
     home: '首页',
+    materials: '资料',
     open: '打开导航',
     close: '关闭导航',
     expand: '展开导航',
@@ -146,6 +199,11 @@ const zhCN: AppResource = {
   datePicker: {
     placeholder: '选择日期',
     rangePlaceholder: '选择日期范围',
+  },
+  overrides: {
+    '@nocobase/app-plugin-file': {
+      'files.ooxmlTextFallback': '正在以文本形式显示文档，无法加载富预览。',
+    },
   },
 };
 
