@@ -95,6 +95,42 @@ const enUS = {
     description:
       'Describe what you need to your AI Agent, then build pages, data models, and business workflows.',
   },
+  devices: {
+    title: 'Devices',
+    description: 'The devices this application tracks.',
+    code: 'Number',
+    name: 'Name',
+    actions: 'Actions',
+    create: 'New device',
+    createTitle: 'New device',
+    editTitle: 'Edit device',
+    edit: 'Edit',
+    delete: 'Delete',
+    deleteTitle: 'Delete device',
+    deleteDescription:
+      'Device {{code}} will be deleted. This cannot be undone.',
+    formDescription: 'A device is a number and a name.',
+    save: 'Save',
+    cancel: 'Cancel',
+    created: 'Device created',
+    updated: 'Device updated',
+    deleted: 'Device deleted',
+    saveFailed: 'Could not save the device',
+    deleteFailed: 'Could not delete the device',
+    duplicateCode: 'A device with this number already exists.',
+    unknownError: 'The request failed. Please try again.',
+    loadFailed: 'Could not load the devices.',
+    loading: 'Loading devices…',
+    empty: 'No devices yet.',
+  },
+  authorization: {
+    devices: {
+      section: 'Devices',
+      collection: 'Device list',
+      scope: 'Device records',
+      integrationSet: 'External device reader',
+    },
+  },
 
   appearance: {
     title: 'Appearance',
@@ -130,6 +166,7 @@ const enUS = {
   },
   navigation: {
     home: 'Home',
+    devices: 'Devices',
     open: 'Open navigation',
     close: 'Close navigation',
     expand: 'Expand navigation',

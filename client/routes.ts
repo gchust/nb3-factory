@@ -1,4 +1,4 @@
-import { Home } from 'lucide-react';
+import { HardDrive, Home } from 'lucide-react';
 import {
   defineAppRoutes,
   defineSettingsRoutes,
@@ -15,6 +15,16 @@ const appRoutes: AppClientRouteContribution = defineAppRoutes([
     name: 'home',
     navigation: { title: 'navigation.home', icon: Home },
     path: '/',
+  },
+  {
+    // The device list is a business page: it needs the `devices` page grant, which an administrator hands out
+    // together with the matching `devices` data permission.
+    auth: 'required',
+    authz: { resource: { type: 'page', id: 'devices' }, action: 'access' },
+    componentLoader: () => import('./pages/devices.js'),
+    name: 'devices',
+    navigation: { title: 'navigation.devices', icon: HardDrive },
+    path: '/devices',
   },
   {
     auth: 'guest',
