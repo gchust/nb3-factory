@@ -181,6 +181,7 @@ jobs:
           pnpm exec nocobase skills sync
           node "$GITHUB_WORKSPACE/control/.github/scripts/source-candidate.mjs" describe . "$RUNNER_TEMP/source-candidate" "$RUNNER_TEMP/portable-input/packages.tar.gz"
           pnpm exec prettier --write package.json factory-template.json factory-source.json eslint.config.js README.MD
+          node "$GITHUB_WORKSPACE/control/.github/scripts/template-guidance.mjs" check .
       - name: Verify the restored source as a normal factory application
         run: |
           bash control/.github/scripts/install-browser-fonts.sh

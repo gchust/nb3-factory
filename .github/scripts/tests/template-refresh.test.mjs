@@ -14,6 +14,9 @@ import path from 'node:path';
 import test from 'node:test';
 
 const scripts = path.resolve(import.meta.dirname, '..');
+const { guidanceDrift, guidanceHashes } = await import(
+  path.join(scripts, 'template-guidance.mjs')
+);
 const sha = 'a'.repeat(40);
 
 test('the checked-in issue baseline uses the current CLI without old wrappers', () => {
@@ -93,6 +96,7 @@ function overlayFixture(root) {
   write(control, '.npmrc', '@nocobase:registry=https://npm.nocobase.ai/\n');
   write(control, '.agents/skills/custom/SKILL.md', 'custom guidance');
   write(control, 'client/old-business.ts', 'must not survive refresh');
+  write(control, 'docs/factory-guide.md', '# Factory guide\n');
   write(
     control,
     'README.MD',
@@ -195,6 +199,15 @@ test('refresh preserves controls and the generated guide without inheriting old 
     );
     assert.equal(metadata.templateVersion, '2.0.0');
     assert.equal(metadata.controlSha, sha);
+    // The generated guide's hash lets factory CI refuse later edits to it.
+    assert.deepEqual(metadata.guidance, guidanceHashes(fresh));
+    assert.deepEqual(Object.keys(metadata.guidance), ['AGENTS.md']);
+    assert.deepEqual(guidanceDrift(fresh), []);
+    // Factory documents survive a refresh; the template ships no docs/.
+    assert.equal(
+      readFileSync(path.join(fresh, 'docs/factory-guide.md'), 'utf8'),
+      '# Factory guide\n',
+    );
     // Preserve generated ignore rules; newly synchronized skills remain versioned.
     assert.ok(
       readFileSync(path.join(fresh, '.gitignore'), 'utf8').startsWith(
@@ -216,6 +229,23 @@ test('refresh preserves controls and the generated guide without inheriting old 
     );
     assert.match(files, /client\/fresh\.ts/);
     assert.doesNotMatch(files, /\.agents\//);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('overlay refuses a template that starts shipping its own docs/', () => {
+  const root = mkdtempSync(path.join(os.tmpdir(), 'nb3-template-docs-'));
+  try {
+    const { control, fresh } = overlayFixture(root);
+    write(fresh, 'docs/upstream.md', '# Upstream doc\n');
+    const result = spawnSync(
+      process.execPath,
+      [path.join(scripts, 'overlay-factory.mjs'), control, fresh, sha],
+      { encoding: 'utf8' },
+    );
+    assert.notEqual(result.status, 0);
+    assert.match(result.stderr, /template now ships docs\//);
   } finally {
     rmSync(root, { recursive: true, force: true });
   }

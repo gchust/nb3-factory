@@ -1,11 +1,29 @@
 name: Factory regression tests
 
+# The factory also guards what it owns at the application root, and the
+# template-owned guidance there that it must never edit (.github/AGENTS.md).
 on:
   pull_request:
-    paths: ['.github/**']
+    paths:
+      [
+        '.github/**',
+        'AGENTS.md',
+        'CLAUDE.md',
+        'docs/**',
+        'README.MD',
+        'factory-template.json',
+      ]
   push:
     branches: [develop]
-    paths: ['.github/**']
+    paths:
+      [
+        '.github/**',
+        'AGENTS.md',
+        'CLAUDE.md',
+        'docs/**',
+        'README.MD',
+        'factory-template.json',
+      ]
   workflow_dispatch:
 
 permissions:
@@ -13,6 +31,9 @@ permissions:
 
 jobs:
   factory-tests:
+    # Build task PRs change the application, including its guidance, and are
+    # verified by the task itself; they never land on develop.
+    if: github.event_name != 'pull_request' || !(startsWith(github.head_ref, 'agent/issue-') || startsWith(github.head_ref, 'pi/issue-'))
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -48,7 +69,28 @@ jobs:
           path: ${{ runner.temp }}/report.example.html
           retention-days: 14
 
+  application-format:
+    # Build task PRs change the application, including its guidance, and are
+    # verified by the task itself; they never land on develop.
+    if: github.event_name != 'pull_request' || !(startsWith(github.head_ref, 'agent/issue-') || startsWith(github.head_ref, 'pi/issue-'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24.x
+      - name: Check the application root as build verification formats it
+        # Build tasks run this check over the whole application; a badly
+        # formatted file here fails the first round of every task.
+        run: node .github/scripts/check-application-format.mjs .
+
   browser-preflight:
+    # Build task PRs change the application, including its guidance, and are
+    # verified by the task itself; they never land on develop.
+    if: github.event_name != 'pull_request' || !(startsWith(github.head_ref, 'agent/issue-') || startsWith(github.head_ref, 'pi/issue-'))
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
