@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "inputHash": "82ea93223277d5252c23e61aa7fb6a7d8d51660ef48b726148c957f0a6e89501",
+  "inputHash": "c546d52395cab9421a6b31f8d6dac2115dd9f0d6463ad9a78183d28d1f207d33",
   "findings": [
     {
       "id": "460:36434284393:1:F2",
@@ -575,6 +575,232 @@
         }
       ],
       "fingerprint": "f08cd373f9b748885532a0d6dc306dd0c0077914c2936a0f91670d3ec7f93e35"
+    },
+    {
+      "id": "462:36434301919:1:F2",
+      "report": "462:36434301919:1",
+      "issue": 462,
+      "taskTitle": "内部资料阅读与临时共享",
+      "appVersion": "1.0.0-beta.50",
+      "appTemplate": "@nocobase/app-template-default",
+      "finding": {
+        "id": "F2",
+        "kind": "improvement",
+        "owner": "plugin",
+        "confidence": "confirmed",
+        "severity": "minor",
+        "status": "open",
+        "title": "记录访问 AND 组合子 allScopes 已在包内实现但未从公开入口导出",
+        "detail": "@nocobase/app-plugin-authorization 的 dist/server/database/scope.d.ts 声明了 noRowsScope、allScopes、idsScope，authorizer.js 内部也用 allScopes/anyScope 组合 expand 与 restrict 约束；但 dist/server/index.d.ts 的 ./database/scope.js 导出列表只有 anyScope、condition、scopeAst。应用因此在 app/server/library-record-access.ts 第 39–57 行自写 everyScope() 来获得 AND 语义。",
+        "impact": "使用者在写记录访问过滤器时无法直接组合多个 DatabaseScope 的 AND；只能手工拼 {kind:'group',logic:'and'} 或按 scope.d.ts 注释把成员集合逐个展开为 $eq，增加重复代码与语义偏差风险。",
+        "suggestedChange": "从 @nocobase/app-plugin-authorization/server 与 anyScope 一并导出 allScopes、noRowsScope、idsScope，并在 fluent-registration 中说明组合子语义。",
+        "evidence": [
+          "E2",
+          "E3",
+          "E31",
+          "E54"
+        ],
+        "diagnosis": {
+          "category": "capability-gap",
+          "trigger": "在 defineRecordAccess 的 resolver 中需要 AND 组合多个 DatabaseScope（例如 confidentiality 为假，且 published 为真或 id 命中共享）时。",
+          "expected": "公开的 @nocobase/app-plugin-authorization/server 导出一个与 anyScope 对称的 AND 组合子（allScopes），供 resolver 直接使用。",
+          "actual": "allScopes 在 dist/server/database/scope.d.ts 声明并被 authorizer.js 使用，但 dist/server/index.d.ts 的 ./database/scope.js 导出列表只有 anyScope、condition、scopeAst。",
+          "workaround": "应用在 app/server/library-record-access.ts 第 39–57 行自写 everyScope()，复刻 false 传播、true 丢弃与单项解包规则。",
+          "acceptance": "从 @nocobase/app-plugin-authorization/server 能 import allScopes（或等价 AND 组合子）；用它生成 resolver 返回值时 assertDatabaseScope 与数据库查询均接受 {kind:'group',logic:'and',items:[...]}。"
+        }
+      },
+      "targets": [
+        "@nocobase/app-plugin-authorization"
+      ],
+      "paths": [
+        "packages/@nocobase/app-plugin-authorization/dist/server/database/scope.d.ts",
+        "packages/@nocobase/app-plugin-authorization/dist/server/index.d.ts"
+      ],
+      "evidence": [
+        {
+          "id": "E2",
+          "kind": "code",
+          "path": "packages/@nocobase/app-plugin-authorization/dist/server/database/scope.d.ts",
+          "observation": "DatabaseScope 与组合子：condition(field, operator: FilterOperator, value?)、noRowsScope、anyScope、allScopes、idsScope；注释说明成员集合因 FilterOperator 无 $in 而逐条 $eq。",
+          "lines": [
+            12,
+            30
+          ],
+          "excerpt": "/**\n * Conditions are built literally rather than through `FilterBuilder`, which\n * picks `string()` or `number()` from a field's type. The Collection registry\n * records field names only.\n */\nexport declare function condition(field: string, operator: FilterOperator, value?: FilterLiteral): FilterNode;\n/**\n * A scope that matches no row, for a permitted action whose scope resolved to\n * `false`. A value cannot be both empty and not empty, in any dialect.\n */\nexport declare function noRowsScope(primaryKey: string): FilterNode;\nexport declare function anyScope(scopes: readonly DatabaseScope[]): DatabaseScope;\nexport declare function allScopes(scopes: readonly DatabaseScope[]): DatabaseScope;\n/**\n * Membership expands to one `$eq` per identifier because `FilterOperator` has\n * no `$in` — `$includes` is a substring test. A negated list would expand the\n * same way, as an `and` of `$ne`. Both collapse once db grows the operator.\n */\nexport declare function idsScope(field: string, ids: readonly string[]): DatabaseScope;",
+          "sha256": "18ed73fc9a722badeae687284be1a99407f0b454e8e0dfba6e46d943c4048881"
+        },
+        {
+          "id": "E3",
+          "kind": "code",
+          "path": "packages/@nocobase/app-plugin-authorization/dist/server/index.d.ts",
+          "observation": "公开入口只从 ./database/scope.js 导出 anyScope、condition、scopeAst、DatabaseScope，未导出 allScopes / noRowsScope / idsScope。",
+          "lines": [
+            14,
+            16
+          ],
+          "excerpt": "export { recordAccess, type CustomFilterParams, type RecordOwnerParams, } from './database/record-access.js';\nexport { anyScope, condition, scopeAst, type DatabaseScope, } from './database/scope.js';\nexport type { AuthorizationCollection, DatabaseAuthorizationConditions, DatabaseAuthorizationParams, } from './database/model.js';",
+          "sha256": "b5abb679265052d760021b2a2c9143a50b887568a56df6ab5957d0a595b1eb9b"
+        },
+        {
+          "id": "E31",
+          "kind": "code",
+          "path": "app/server/library-record-access.ts",
+          "observation": "应用自写 everyScope()：注释说明 'The server package exports anyScope but not its AND counterpart'，并复刻 false 传播、true 丢弃、单项解包规则。",
+          "lines": [
+            39,
+            57
+          ],
+          "excerpt": " * The server package exports `anyScope` but not its AND counterpart, so the\n * conjunction is assembled here with the same collapse rules: a `false` child\n * selects nothing, `true` children drop out, and one survivor is returned\n * unwrapped rather than nested in a single-item group.\n */\nfunction everyScope(scopes: readonly DatabaseScope[]): DatabaseScope {\n  if (scopes.includes(false)) {\n    return false;\n  }\n  const nodes = scopes.filter(\n    (scope): scope is FilterNode => typeof scope !== 'boolean',\n  );\n  if (nodes.length === 0) {\n    return true;\n  }\n  return nodes.length === 1\n    ? nodes[0]\n    : { kind: 'group', logic: 'and', items: nodes };\n}",
+          "sha256": "ced1ec5fc06d635eb611e9dfc71d1318a2828039b6baea4fdf1b6566ec7857a3"
+        },
+        {
+          "id": "E54",
+          "kind": "log",
+          "path": "artifacts/agent-history/agent-implement.jsonl/part-0016.txt",
+          "observation": "cat .../authorization/dist/index.js 列出 export *；该输出与随后的思考确认 idsScope/allScopes 未从公开入口导出（见 F2），命令行本身成功。",
+          "lines": [
+            1459,
+            1461
+          ],
+          "excerpt": "{\"type\":\"tool_execution_end\",\"toolCallId\":\"call_00_MYtoruwdbMmpus8pRtEj1438\",\"toolName\":\"bash\",\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"export * from './core/index.js';\\nexport * from './plugins/permission-sets/index.js';\\nexport * from './plugins/default-access/index.js';\\nexport * from './plugins/sharing-rules/index.js';\\nexport * from './plugins/restriction-rules/index.js';\\n//# sourceMappingURL=index.d.ts.map===package exports===\\nnode:internal/modules/cjs/loader:1568\\n  throw err;\\n  ^\\n\\nError: Cannot find module 'node_modules/.pnpm/@nocobase+authorization@0.1.0-beta.10_@nocobase+db@1.0.0-beta.16_better-sqlite3@13.0.3_pg@8.23.0_/node_modules/@nocobase/authorization/package.json'\\nRequire stack:\\n- /home/runner/work/nb3-factory/nb3-factory/workspace/[eval]\\n    at Module._resolveFilename (node:internal/modules/cjs/loader:1564:15)\\n    at wrapResolveFilename (node:internal/modules/cjs/loader:1118:27)\\n    at defaultResolveImplForCJSLoading (node:internal/modules/cjs/loader:1142:10)\\n    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1169:12)\\n    at Module._load (node:internal/modules/cjs/loader:1341:5)\\n    at wrapModuleLoad (node:internal/modules/cjs/loader:261:19)\\n    at Module.require (node:internal/modules/cjs/loader:1674:12)\\n    at require (node:internal/modules/helpers:157:16)\\n    at [eval]:1:9\\n    at runScriptInThisContext (node:internal/vm:219:10) {\\n  code: 'MODULE_NOT_FOUND',\\n  requireStack: [ '/home/runner/work/nb3-factory/nb3-factory/workspace/[eval]' ]\\n}\\n\\nNode.js v24.21.0\\n\\n\\nCommand exited with code 1\"}],\"details\":{}},\"isError\":true}\n{\"type\":\"message_start\",\"message\":{\"role\":\"toolResult\",\"toolCallId\":\"call_00_MYtoruwdbMmpus8pRtEj1438\",\"toolName\":\"bash\",\"content\":[{\"type\":\"text\",\"text\":\"export * from './core/index.js';\\nexport * from './plugins/permission-sets/index.js';\\nexport * from './plugins/default-access/index.js';\\nexport * from './plugins/sharing-rules/index.js';\\nexport * from './plugins/restriction-rules/index.js';\\n//# sourceMappingURL=index.d.ts.map===package exports===\\nnode:internal/modules/cjs/loader:1568\\n  throw err;\\n  ^\\n\\nError: Cannot find module 'node_modules/.pnpm/@nocobase+authorization@0.1.0-beta.10_@nocobase+db@1.0.0-beta.16_better-sqlite3@13.0.3_pg@8.23.0_/node_modules/@nocobase/authorization/package.json'\\nRequire stack:\\n- /home/runner/work/nb3-factory/nb3-factory/workspace/[eval]\\n    at Module._resolveFilename (node:internal/modules/cjs/loader:1564:15)\\n    at wrapResolveFilename (node:internal/modules/cjs/loader:1118:27)\\n    at defaultResolveImplForCJSLoading (node:internal/modules/cjs/loader:1142:10)\\n    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1169:12)\\n    at Module._load (node:internal/modules/cjs/loader:1341:5)\\n    at wrapModuleLoad (node:internal/modules/cjs/loader:261:19)\\n    at Module.require (node:internal/modules/cjs/loader:1674:12)\\n    at require (node:internal/modules/helpers:157:16)\\n    at [eval]:1:9\\n    at runScriptInThisContext (node:internal/vm:219:10) {\\n  code: 'MODULE_NOT_FOUND',\\n  requireStack: [ '/home/runner/work/nb3-factory/nb3-factory/workspace/[eval]' ]\\n}\\n\\nNode.js v24.21.0\\n\\n\\nCommand exited with code 1\"}],\"details\":{},\"isError\":true,\"timestamp\":1790605480886}}\n{\"type\":\"message_end\",\"message\":{\"role\":\"toolResult\",\"toolCallId\":\"call_00_MYtoruwdbMmpus8pRtEj1438\",\"toolName\":\"bash\",\"content\":[{\"type\":\"text\",\"text\":\"export * from './core/index.js';\\nexport * from './plugins/permission-sets/index.js';\\nexport * from './plugins/default-access/index.js';\\nexport * from './plugins/sharing-rules/index.js';\\nexport * from './plugins/restriction-rules/index.js';\\n//# sourceMappingURL=index.d.ts.map===package exports===\\nnode:internal/modules/cjs/loader:1568\\n  throw err;\\n  ^\\n\\nError: Cannot find module 'node_modules/.pnpm/@nocobase+authorization@0.1.0-beta.10_@nocobase+db@1.0.0-beta.16_better-sqlite3@13.0.3_pg@8.23.0_/node_modules/@nocobase/authorization/package.json'\\nRequire stack:\\n- /home/runner/work/nb3-factory/nb3-factory/workspace/[eval]\\n    at Module._resolveFilename (node:internal/modules/cjs/loader:1564:15)\\n    at wrapResolveFilename (node:internal/modules/cjs/loader:1118:27)\\n    at defaultResolveImplForCJSLoading (node:internal/modules/cjs/loader:1142:10)\\n    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1169:12)\\n    at Module._load (node:internal/modules/cjs/loader:1341:5)\\n    at wrapModuleLoad (node:internal/modules/cjs/loader:261:19)\\n    at Module.require (node:internal/modules/cjs/loader:1674:12)\\n    at require (node:internal/modules/helpers:157:16)\\n    at [eval]:1:9\\n    at runScriptInThisContext (node:internal/vm:219:10) {\\n  code: 'MODULE_NOT_FOUND',\\n  requireStack: [ '/home/runner/work/nb3-factory/nb3-factory/workspace/[eval]' ]\\n}\\n\\nNode.js v24.21.0\\n\\n\\nCommand exited with code 1\"}],\"details\":{},\"isError\":true,\"timestamp\":1790605480886}}",
+          "sha256": "1db52c052b97fdc9b7491d9db99bf552542776fdeb11a416f015e74326be31db"
+        }
+      ],
+      "fingerprint": "8b0d994acb69af18af23303cabd836bcfd25efffeba553e571aa92c103e20da1"
+    },
+    {
+      "id": "462:36434301919:1:F3",
+      "report": "462:36434301919:1",
+      "issue": 462,
+      "taskTitle": "内部资料阅读与临时共享",
+      "appVersion": "1.0.0-beta.50",
+      "appTemplate": "@nocobase/app-template-default",
+      "finding": {
+        "id": "F3",
+        "kind": "improvement",
+        "owner": "plugin",
+        "confidence": "confirmed",
+        "severity": "minor",
+        "status": "open",
+        "title": "condition() 不按字段类型收窄运算符，布尔字段误用 $eq 只在查询期报错",
+        "detail": "scope.d.ts 的 condition(field, operator: FilterOperator, value?) 接受整个扁平 FilterOperator 联合（同时含 $eq 与 $isTruly/$isFalsy），注释也说明条件按字面构造、Collection 注册表只记录字段名；repository-input 的 BooleanFilterOperators 只提供 isTrue()/isFalse()，但 types.d.ts 的 FilterConditionNode.operator 仍用整个 FilterOperator。真正的类型匹配由 @nocobase/db 的 OPERATORS_BY_TYPE 在查询期完成（boolean 仅 $isTruly/$isFalsy/$empty/$notEmpty），不匹配抛 FIELD_CAPABILITY_NOT_SUPPORTED。",
+        "impact": "类型检查通过的过滤器仍可能在首次查询（含浏览器验收路径）才失败；typed buildFilter 可避免，但两套入口并存时容易误用。",
+        "suggestedChange": "让 condition() 的 operator 依据已知字段类型收窄，或提供 booleanScope(field, value) 之类类型化辅助；或在装配/授权阶段就按集合注册类型拒绝不匹配运算符并给出同一诊断。",
+        "evidence": [
+          "E2",
+          "E20",
+          "E21",
+          "E22",
+          "E23",
+          "E24",
+          "E70"
+        ],
+        "diagnosis": {
+          "category": "usability-improvement",
+          "trigger": "在 record access resolver 中返回 condition('confidential','$eq',false) 这类字段类型与运算符不匹配的条件时。",
+          "expected": "装配或授权阶段即阻止/拒绝 $eq 用于 boolean，或类型化 API 使其不可表达。",
+          "actual": "condition/FilterOperator 接受 $eq；错误延迟到数据库查询期，以 FIELD_CAPABILITY_NOT_SUPPORTED 抛出（repository.js 第 1043–1047 行）。",
+          "workaround": "应用改用 $isFalsy，或改用 typed buildFilter((f)=>f.boolean('confidential').isFalse())。",
+          "acceptance": "对 boolean 字段使用 $eq 时在装配或授权阶段即返回可定位错误，或在类型层不可表达；错误信息仍指出字段与运算符。"
+        }
+      },
+      "targets": [
+        "@nocobase/app-plugin-authorization",
+        "@nocobase/db",
+        "@nocobase/repository-input"
+      ],
+      "paths": [
+        "packages/@nocobase/app-plugin-authorization/dist/server/database/scope.d.ts",
+        "packages/@nocobase/db/dist/src/repository/repository.js",
+        "packages/@nocobase/repository-input/dist/types.d.ts"
+      ],
+      "evidence": [
+        {
+          "id": "E2",
+          "kind": "code",
+          "path": "packages/@nocobase/app-plugin-authorization/dist/server/database/scope.d.ts",
+          "observation": "DatabaseScope 与组合子：condition(field, operator: FilterOperator, value?)、noRowsScope、anyScope、allScopes、idsScope；注释说明成员集合因 FilterOperator 无 $in 而逐条 $eq。",
+          "lines": [
+            12,
+            30
+          ],
+          "excerpt": "/**\n * Conditions are built literally rather than through `FilterBuilder`, which\n * picks `string()` or `number()` from a field's type. The Collection registry\n * records field names only.\n */\nexport declare function condition(field: string, operator: FilterOperator, value?: FilterLiteral): FilterNode;\n/**\n * A scope that matches no row, for a permitted action whose scope resolved to\n * `false`. A value cannot be both empty and not empty, in any dialect.\n */\nexport declare function noRowsScope(primaryKey: string): FilterNode;\nexport declare function anyScope(scopes: readonly DatabaseScope[]): DatabaseScope;\nexport declare function allScopes(scopes: readonly DatabaseScope[]): DatabaseScope;\n/**\n * Membership expands to one `$eq` per identifier because `FilterOperator` has\n * no `$in` — `$includes` is a substring test. A negated list would expand the\n * same way, as an `and` of `$ne`. Both collapse once db grows the operator.\n */\nexport declare function idsScope(field: string, ids: readonly string[]): DatabaseScope;",
+          "sha256": "18ed73fc9a722badeae687284be1a99407f0b454e8e0dfba6e46d943c4048881"
+        },
+        {
+          "id": "E20",
+          "kind": "code",
+          "path": "packages/@nocobase/repository-input/dist/types.d.ts",
+          "observation": "FilterOperator 是扁平联合（同时含 $eq 与 $isTruly/$isFalsy），FilterConditionNode.operator 即该联合，不做字段类型收窄。",
+          "lines": [
+            45,
+            59
+          ],
+          "excerpt": "export type FilterValue = FilterLiteral | FilterVariable | readonly (FilterLiteral | FilterVariable)[];\nexport type FilterOperator = '$jsonEq' | '$jsonNe' | '$jsonHas' | '$jsonHasSome' | '$jsonHasEvery' | '$jsonEmpty' | '$jsonNotEmpty' | '$jsonDbNull' | '$jsonNull' | '$jsonAnyNull' | '$includes' | '$notIncludes' | '$startsWith' | '$endsWith' | '$eq' | '$ne' | '$gt' | '$gte' | '$lt' | '$lte' | '$empty' | '$notEmpty' | '$dateOn' | '$dateNotOn' | '$dateBefore' | '$dateAfter' | '$dateNotBefore' | '$dateNotAfter' | '$dateBetween' | '$isTruly' | '$isFalsy';\nexport interface FilterGroupNode {\n    readonly kind: 'group';\n    readonly logic: 'and' | 'or';\n    readonly items: readonly FilterNode[];\n}\nexport interface FilterConditionNode {\n    readonly kind: 'condition';\n    readonly path: RepositoryPath;\n    readonly operator: FilterOperator;\n    readonly value?: FilterValue;\n    readonly mode?: 'default' | 'insensitive';\n    readonly jsonPath?: readonly (string | number)[];\n}",
+          "sha256": "4a0e166927cd7a20930d9fa96522d891c0ac2c3d96b8018dd52a95975af35a19"
+        },
+        {
+          "id": "E21",
+          "kind": "code",
+          "path": "packages/@nocobase/repository-input/dist/types.d.ts",
+          "observation": "BooleanFilterOperators 只提供 isTrue()/isFalse()，没有 eq()。",
+          "lines": [
+            115,
+            117
+          ],
+          "excerpt": "export interface BooleanFilterOperators extends EmptyFilterOperators {\n    isTrue(): FilterConditionNode;\n    isFalse(): FilterConditionNode;",
+          "sha256": "4a0e166927cd7a20930d9fa96522d891c0ac2c3d96b8018dd52a95975af35a19"
+        },
+        {
+          "id": "E22",
+          "kind": "code",
+          "path": "packages/@nocobase/db/dist/src/repository/repository.js",
+          "observation": "OPERATORS_BY_TYPE：boolean 仅允许 $isTruly/$isFalsy/$empty/$notEmpty。",
+          "lines": [
+            816,
+            818
+          ],
+          "excerpt": "    time: ['$eq', '$ne', '$empty', '$notEmpty'],\n    boolean: ['$isTruly', '$isFalsy', '$empty', '$notEmpty'],\n};",
+          "sha256": "31b67e0dcdfd222b6981571d563d9879525a3bf61312ea92a05a269d99c1f311"
+        },
+        {
+          "id": "E23",
+          "kind": "code",
+          "path": "packages/@nocobase/db/dist/src/repository/repository.js",
+          "observation": "布尔过滤简写把值映射为 $isTruly/$isFalsy（null 映射 $empty），并拒绝非布尔值。",
+          "lines": [
+            940,
+            957
+          ],
+          "excerpt": "        invalid('FIELD_CAPABILITY_NOT_SUPPORTED', `Filter shorthand is not supported for Field \"${name}\" of type \"${field.type}\".`, { collection: collection.name, field: name, path });\n    }\n    if (value === undefined) {\n        invalid('INVALID_FILTER', `Filter shorthand value for Field \"${name}\" must not be undefined.`, { collection: collection.name, field: name, path });\n    }\n    if (field.type === 'boolean') {\n        if (value === null) {\n            return { kind: 'condition', path: [name], operator: '$empty' };\n        }\n        if (typeof value !== 'boolean') {\n            invalid('INVALID_FILTER', `Filter value is invalid for Field \"${name}\" of type \"boolean\".`, { collection: collection.name, field: name, path });\n        }\n        return {\n            kind: 'condition',\n            path: [name],\n            operator: value ? '$isTruly' : '$isFalsy',\n        };\n    }",
+          "sha256": "31b67e0dcdfd222b6981571d563d9879525a3bf61312ea92a05a269d99c1f311"
+        },
+        {
+          "id": "E24",
+          "kind": "code",
+          "path": "packages/@nocobase/db/dist/src/repository/repository.js",
+          "observation": "validateFilterNode：运算符不在 OPERATORS_BY_TYPE[field.type] 时抛 FIELD_CAPABILITY_NOT_SUPPORTED，path 指向 operator。",
+          "lines": [
+            1043,
+            1049
+          ],
+          "excerpt": "    if (!OPERATORS_BY_TYPE[field.type]?.includes(node.operator)) {\n        invalid('FIELD_CAPABILITY_NOT_SUPPORTED', `Operator \"${node.operator}\" is not supported for Field \"${field.name}\" of type \"${field.type}\".`, {\n            collection: collection.name,\n            field: field.name,\n            path: [...path, 'operator'],\n        });\n    }",
+          "sha256": "31b67e0dcdfd222b6981571d563d9879525a3bf61312ea92a05a269d99c1f311"
+        },
+        {
+          "id": "E70",
+          "kind": "log",
+          "path": "artifacts/agent-history/agent-implement.jsonl/part-0091.txt",
+          "observation": "运行期暴露 RepositoryError ... Operator \"$eq\" is not supported for Field \"confidential\" of type \"boolean\"（code FIELD_CAPABILITY_NOT_SUPPORTED）；Agent 随后改用 $isFalsy。",
+          "lines": [
+            1415,
+            1415
+          ],
+          "excerpt": "{\"type\":\"turn_end\",\"message\":{\"role\":\"assistant\",\"content\":[{\"type\":\"thinking\",\"thinking\":\"Good progress: seeds now load. Now the failures are permissions-related. Let me see the full output from the beginning to understand which 6 failed and 4 passed. Let me rerun capturing more, or look at the test file and the server logs. The 500 errors suggest the authorization middleware throws for reader (perhaps no permission set assigned, or the composite resource not registered, or the record access filter fails). The 403 for maintainer edit suggests the maintainer's grant doesn't allow edit.\\n\\nLet me get the full test output including the first failures and any server error logs. Let me run with `--reporter=verbose` and capture head too.\",\"thinkingSignature\":\"[{\\\"format\\\":\\\"unknown\\\",\\\"index\\\":0,\\\"text\\\":\\\"Good progress: seeds now load. Now the failures are permissions-related. Let me see the full output from the beginning to understand which 6 failed and 4 passed. Let me rerun capturing more, or look at the test file and the server logs. The 500 errors suggest the authorization middleware throws for reader (perhaps no permission set assigned, or the composite resource not registered, or the record access filter fails). The 403 for maintainer edit suggests the maintainer's grant doesn't allow edit.\\\\n\\\\nLet me get the full test output including the first failures and any server error logs. Let me run with `--reporter=verbose` and capture head too.\\\",\\\"type\\\":\\\"reasoning.text\\\"}]\"},{\"type\":\"toolCall\",\"id\":\"call_00_QDfoiNAD4t8vsd78LZLK2116\",\"name\":\"bash\",\"arguments\":{\"command\":\"cd /home/runner/work/nb3-factory/nb3-factory/workspace && npx vitest run tests/logic/library.test.ts 2>&1 | sed -n '1,120p'\",\"timeout\":900}}],\"api\":\"openai-completions\",\"provider\":\"nb3-factory\",\"model\":\"deepseek-v4.1-flash\",\"usage\":{\"input\":1415,\"output\":233,\"cacheRead\":90240,\"cacheWrite\":0,\"reasoning\":135,\"totalTokens\":91888,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"stopReason\":\"toolUse\",\"timestamp\":1790610848425,\"responseId\":\"gen_01M3MBJGYYCQ6X32T9XN8AXGEZ\",\"rawStopReason\":\"tool_calls\"},\"toolResults\":[{\"role\":\"toolResult\",\"toolCallId\":\"call_00_QDfoiNAD4t8vsd78LZLK2116\",\"toolName\":\"bash\",\"content\":[{\"type\":\"text\",\"text\":\"\\n RUN  v4.1.11 /home/runner/work/nb3-factory/nb3-factory/workspace\\n\\nSourcemap for \\\"/home/runner/work/nb3-factory/nb3-factory/workspace/node_modules/.pnpm/@nocobase+dev-config@0.1.0-beta.14_9132438c6efa0fc004a10a1a75a7ed99/node_modules/@nocobase/dev-config/dist/vitest/react-setup.js\\\" points to missing source files\\n15:54:17.093 INFO [main/ai-employee] AI resources loaded employees=1 tools=19 skills=3 mcpServers=0 llmServices=0\\n15:54:17.106 WARN [main/auth] [better-auth] Base URL is not set. Set the baseURL option or BETTER_AUTH_URL env, or use a dynamic baseURL with allowedHosts for multi-host setups. Without it the origin is derived from the incoming request, and callbacks and redirects may not work correctly.\\n15:54:17.170 WARN [main/request] GET /api/library/documents 401 completed 11ms requestId=\\\"470e3e26-a42e-4767-8d61-db2a1b0b61b2\\\" req={\\\"method\\\":\\\"GET\\\",\\\"path\\\":\\\"/api/library/documents\\\",\\\"route\\\":\\\"/api/library/*\\\",\\\"params\\\":{},\\\"query\\\":{},\\\"headers\\\":{}} res={\\\"status\\\":401}\\n15:54:17.270 INFO [main/request] POST /api/auth/sign-in/username 200 completed 98ms\\n15:54:17.292 INFO [main/request] GET /api/library/documents 200 completed 22ms\\n15:54:17.364 INFO [main/request] POST /api/auth/sign-in/username 200 completed 70ms\\n15:54:17.374 ERROR [main/request] GET /api/library/documents 500 failed 9ms requestId=\\\"7b5b8ef5-bc1c-4731-8184-a0d1f698b655\\\" req={\\\"method\\\":\\\"GET\\\",\\\"path\\\":\\\"/api/library/documents\\\",\\\"route\\\":\\\"/api/library/documents\\\",\\\"params\\\":{},\\\"query\\\":{},\\\"headers\\\":{}} res={\\\"status\\\":500}\\n{\\n  \\\"type\\\": \\\"RepositoryError\\\",\\n  \\\"message\\\": \\\"Operator \\\\\\\"$eq\\\\\\\" is not supported for Field \\\\\\\"confidential\\\\\\\" of type \\\\\\\"boolean\\\\\\\".\\\",\\n  \\\"stack\\\": \\\"RepositoryError: Operator \\\\\\\"$eq\\\\\\\" is not supported for Field \\\\\\\"confidential\\\\\\\" of type \\\\\\\"boolean\\\\\\\".\\\\n    at invalid (file:///home/runner/work/nb3-factory/nb3-factory/workspace/node_modules/.pnpm/@nocobase+db@1.0.0-beta.16_better-sqlite3@13.0.3_pg@8.23.0/node_modules/@nocobase/db/dist/src/repository/internal/guards.js:10:11)\\\\n    at validateFilterNode (file:///home/runner/work/nb3-factory/nb3-factory/workspace/node_modules/.pnpm/@nocobase+db@1.0.0-beta.16_better-sqlite3@13.0.3_pg@8.23.0/node_modules/@nocobase/db/dist/src/repository/repository.js:1044:9)\\\\n    at file:///home/runner/work/nb3-factory/nb3-factory/workspace/node_modules/.pnpm/@nocobase+db@1.0.0-beta.16_better-sqlite3@13.0.3_pg@8.23.0/node_modules/@nocobase/db/dist/src/repository/repository.js:1004:49\\\\n    at Array.map (<anonymous>)\\\\n    at validateFilterGroup (file:///home/runner/work/nb3-factory/nb3-factory/workspace/node_modules/.pnpm/@nocobase+db@1.0.0-beta.16_better-sqlite3@13.0.3_pg@8.23.0/node_modules/@nocobase/db/dist/src/repository/repository.js:1004:28)\\\\n    at normalizeScalarFilter (file:///home/runner/work/nb3-factory/nb3-factory/workspace/node_modules/.pnpm/@nocobase+db@1.0.0-beta.16_better-sqlite3@13.0.3_pg@8.23.0/node_modules/@nocobase/db/dist/src/repository/repository.js:897:18)\\\\n    at normalizeFilterWithRelations (file:///home/runner/work/nb3-factory/nb3-factory/workspace/node_modules/.pnpm/@nocobase+db@1.0.0-beta.16_better-sqlite3@13.0.3_pg@8.23.0/node_modules/@nocobase/db/dist/src/repository/repository.js:1605:24)\\\\n    at DefaultRepository.applyReadPolicy (file:///home/runner/work/nb3-factory/nb3-factory/workspace/node_modules/.pnpm/@nocobase+db@1.0.0-beta.16_better-sqlite3@13.0.3_pg@8.23.0/node_modules/@nocobase/db/dist/src/repository/repository.js:664:21)\\\\n    at DefaultRepository.normalizeFilter (file:///home/runner/work/nb3-factory/nb3-factory/workspace/node_modules/.pnpm/@nocobase+db@1.0.0-beta.16_better-sqlite3@13.0.3_pg@8.23.0/node_modules/@nocobase/db/dist/src/repository/repository.js:647:21)\\\\n    at DefaultRepository.prepareRead (file:///home/runner/work/nb3-factory/nb3-factory/workspace/node_modules/.pnpm/@nocobase+db@1.0.0-beta.16_better-sqlite3@13.0.3_pg@8.23.0/node_modules/@nocobase/db/dist/src/repository/repository.js:70:24)\\\"\\n}\\nstderr | tests/logic/library.test.ts > library access > opens published, non-confidential documents to the reader only\\nRepositoryError: Operator \\\"$eq\\\" is not supported for Field \\\"confidential\\\" of type \\\"boolean\\\".\\n    at invalid (file:///home/runner/work/nb3-factory/nb3-factory/workspace/node_modules/.pnpm/@nocobase+db@1.0.0-beta.16_better-sqlite3@13.0.3_pg@8.23.0/node_modules/@nocobase/db/dist/src/repository/internal/guards.js:10:11)\\n    at validateFilterNode (file:///home/runner/work/nb3-factory/nb3-factory/workspace/node_modules/.pnpm/@nocobase+db@1.0.0-beta.16_better-sqlite3@13.0.3_pg@8.23.0/node_modules/@nocobase/db/dist/src/repository/repository.js:1044:9)\\n    at file:///home/runner/work/nb3-factory/nb3-factory/workspace/node_modules/.pnpm/@nocobase+db@1.0.0-beta.16_better-sqlite3@13.0.3_pg@8.23.0/node_modules/@nocobase/db/dist/src/repository/repository.js:1004:49\\n    at Array.map (<anonymous>)\\n    at validateFilterGroup (file:///home/runner/work/nb3-factory/nb3-factory/workspace/node_modules/.pnpm/@nocobase+db@1.0.0-beta.16_better-sqlite3@13.0.3_pg@8.23.0/node_modules/@nocobase/db/dist/src/repository/repository.js:1004:28)\\n    at normalizeScalarFilter (file:///home/runner/work/nb3-factory/nb3-factory/workspace/node_modules/.pnpm/@nocobase+db@1.0.0-beta.16_better-sqlite3@13.0.3_pg@8.23.0/node_modules/@nocobase/db/dist/src/repository/repository.js:897:18)\\n    at normalizeFilterWithRelations (file:///home/runner/work/nb3-factory/nb3-factory/workspace/node_modules/.pnpm/@nocobase+db@1.0.0-beta.16_better-sqlite3@13.0.3_pg@8.23.0/node_modules/@nocobase/db/dist/src/repository/repository.js:1605:24)\\n    at DefaultRepository.applyReadPolicy (file:///home/runner/work/nb3-factory/nb3-factory/workspace/node_modules/.pnpm/@nocobase+db@1.0.0-beta.16_better-sqlite3@13.0.3_pg@8.23.0/node_modules/@nocobase/db/dist/src/repository/repository.js:664:21)\\n    at DefaultRepository.normalizeFilter (file:///home/runner/work/nb3-factory/nb3-factory/workspace/node_modules/.pnpm/@nocobase+db@1.0.0-beta.16_better-sqlite3@13.0.3_pg@8.23.0/node_modules/@nocobase/db/dist/src/repository/repository.js:647:21)\\n    at DefaultRepository.prepareRead (file:///home/runner/work/nb3-factory/nb3-factory/workspace/node_modules/.pnpm/@nocobase+db@1.0.0-beta.16_better-sqlite3@13.0.3_pg@8.23.0/node_modules/@nocobase/db/dist/src/repository/repository.js:70:24) {\\n  code: 'FIELD_CAPABILITY_NOT_SUPPORTED',\\n  retryable: false,\\n  path: [ 'root', 'items', 0, 'operator' ],\\n  collection: 'documents',\\n  field: 'confidential',\\n  relation: undefined,\\n  details: undefined,\\n  [cause]: undefined\\n}\\n\\n15:54:17.451 INFO [main/request] POST /api/auth/sign-in/username 200 completed 72ms\\n15:54:17.459 ERROR [main/request] GET /api/library/documents/library-doc-draft 500 failed 8ms requestId=\\\"05149f30-da77-43e3-8e8c-5d7682a7db87\\\" req={\\\"method\\\":\\\"GET\\\",\\\"path\\\":\\\"/api/library/documents/library-doc-draft\\\",\\\"route\\\":\\\"/api/library/documents/:documentId\\\",\\\"params\\\":{\\\"documentId\\\":\\\"library-doc-draft\\\"},\\\"query\\\":{},\\\"headers\\\":{}} res={\\\"status\\\":500}\\n{\\n  \\\"type\\\": \\\"RepositoryError\\\",\\n  \\\"message\\\": \\\"Operator \\\\\\\"$eq\\\\\\\" is not supported for Field \\\\\\\"confidential\\\\\\\" of type \\\\\\\"boolean\\\\\\\".\\\",\\n  \\\"stack\\\": \\\"RepositoryError: Operator \\\\\\\"$eq\\\\\\\" is not supported for Field \\\\\\\"confidential\\\\\\\" of type \\\\\\\"boolean\\\\\\\".\\\\n    at invalid (file:///home/runner/work/nb3-factory/nb3-factory/workspace/node_modules/.pnpm/@nocobase+db@1.0.0-beta.16_better-sqlite3@13.0.3_pg@8.23.0/node_modules/@nocobase/db/dist/src/repository/internal/guards.js:10:11)\\\\n    at validateFilterNode (file:///home/runner/work/nb3-factory/nb3-factory/workspace/node_modules/.pnpm/@nocobase+db@1.0.0-beta.16_better-sqlite3@13.0.3_pg@8.23.0/node_modules/@nocobase/db/dist/src/repository/repository.js:1044:9)\\\\n    at file:///home/runner/work/nb3-factory/nb3-factory/workspace/node_modules/.pnpm/@nocobase+db@1.0.0-beta.16_better-sqlite3@13.0.3_pg@8.23.0/node_modules/@nocobase/db/dist/src/repository/repository.js:1004:49\\\\n    at Array.map (<anonymous>)\\\\n    at validateFilterGroup (file:///home/runner/work/nb3-factory/nb3-factory/workspace/node_modules/.pnpm/@nocobase+db@1.0.0-beta.16_better-sqlite3@13.0.3_pg@8.23.0/node_modules/@nocobase/db/dist/src/repository/repository.js:1004:28)\\\\n    at normalizeScalarFilter (file:///home/runner/work/nb3-factory/nb3-factory/workspace/node_modules/.pnpm/@nocobase+db@1.0.0-beta.16_better-sqlite3@13.0.3_pg@8.23.0/node_modules/@nocobase/db/dist/src/repository/repository.js:897:18)\\\\n    at normalizeFilterWithRelations (file:///home/runner/work/nb3-factory/nb3-factory/workspace/node_modules/.pnpm/@nocobase+db@1.0.0-beta.16_better-sqlite3@13.0.3_pg@8.23.0/node_modules/@nocobase/db/dist/src/repository/repository.js:1605:24)\\\\n    at DefaultRepository.applyReadPolicy (file:///home/runner/work/nb3-factory/nb3-factory/workspace/node_modules/.pnpm/@nocobase+db@1.0.0-beta.16_better-sqlite3@13.0.3_pg@8.23.0/node_modules/@nocobase/db/dist/src/repository/repository.js:664:21)\\\\n    at DefaultRepository.findOne (file:///home/runner/work/nb3-factory/nb3-factory/workspace/node_modules/.pnpm/@nocobase+db@1.0.0-beta.16_better-sqlite3@13.0.3_pg@8.23.0/node_modules/@nocobase/db/dist/src/repository/repository.js:107:24)\\\\n    at LibraryService.findDocument (/home/runner/work/nb3-factory/nb3-factory/workspace/server/library-service.ts:128:20)\\\"\\n}\\n15:54:17.529 INFO [main/request] POST /api/auth/sign-in/username 200 completed 69ms\\n15:54:17.536 ERROR [main/request] GET /api/library/documents/library-doc-confidential 500 failed 6ms requestId=\\\"78411056-5a8f-400c-be3e-380cf017fa47\\\" req={\\\"method\\\":\\\"GET\\\",\\\"path\\\":\\\"/api/library/documents/library-doc-confidential\\\",\\\"route\\\":\\\"/api/lib",
+          "sha256": "78e1d79905f9dd19ac4b9b0f7d82dcd4bc250e6e61f454730a505c25b6e4d346"
+        }
+      ],
+      "fingerprint": "a9c58ac25ffea72c97fd03ba6d0e47545be166d7cfaa6c1b77b3bc6e0a59bd4f"
     }
   ]
 }
