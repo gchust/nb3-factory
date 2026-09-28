@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "inputHash": "b9eff8c3e8e45ceb9b335fcd9f37005b9a4b06bc7255acd9c99279533ebb278d",
+  "inputHash": "82ea93223277d5252c23e61aa7fb6a7d8d51660ef48b726148c957f0a6e89501",
   "sources": [
     {
       "id": "460:36434284393:1:F2",
@@ -21,35 +21,59 @@
       "id": "460:36434284393:1:F6",
       "report": "460:36434284393:1",
       "fingerprint": "5ff165a8dabf72c58c867c9dcebb05134806d2370e8a92f501d6991b2f07abb6"
+    },
+    {
+      "id": "461:36434293992:1:F4",
+      "report": "461:36434293992:1",
+      "fingerprint": "a21f6ee2d809ab84b41e084f9d113e832dd73e78d5cfb95be8f67413a5ea3947"
+    },
+    {
+      "id": "461:36434293992:1:F6",
+      "report": "461:36434293992:1",
+      "fingerprint": "f08cd373f9b748885532a0d6dc306dd0c0077914c2936a0f91670d3ec7f93e35"
     }
   ],
   "groups": [
     {
       "title": "nocobase-db Skill 未说明演示/样例数据的规范落点与无唯一约束时的幂等写法",
-      "reason": "单独保留。证据 E30/E31 显示 Skill 只定义“运行所需数据的种子”，并明确种子绝不是样例或演示内容、要求唯一约束 + upsertOne；E72 显示应用把演示数据写入正式 seeds 目录并自造 findOne/createOne 的 ensure 幂等逻辑，说明缺口是“演示数据落点 + 无唯一约束幂等策略”的文档缺失，属 documentation 的 guidance-gap。与其他三条的根因（CSRF 来源校验、空 filter 约束、聚合示例）不同，且同一报告内的发现按规则不得合并，故单列。",
+      "reason": "单独保留。E30/E31 显示 Skill 只定义“运行所需数据的种子”，并明确种子绝不是样例/演示内容、要求唯一约束 + upsertOne；E24 表明 defineSeed 只是 markSeedDefinition 的薄封装；E72 显示应用把演示数据写入正式 seeds 目录，并自造 findOne/createOne 的 ensure 幂等逻辑代替 upsertOne。共同根因是“演示数据落点 + 无唯一约束时的幂等策略”这一文档缺口，与其他发现的根因均不同，且与本报告其他发现不得合并，故单列。",
       "members": [
         "460:36434284393:1:F2"
       ]
     },
     {
       "title": "受保护路由参考缺少 cookie 写请求的 CSRF/信任来源校验说明",
-      "reason": "单独保留。证据 E50 显示 auth.checkCookieWriteOrigin 对携带 cookie 的写请求校验 Origin/Referer 并在不匹配时返回 403 INVALID_CSRF_ORIGIN；E55 表明该要求只写在认证 Skill 的 Deployment 段，而 E54 的 protecting-routes.md 全篇无 CSRF/trustedOrigins/publicOrigin 字样，E78 显示应用未配置来源，E12 记录 Agent 反复触发后以 BETTER_AUTH_URL 绕行。根因是受保护路由参考的指引缺口，且同报告发现不得合并，故单列。",
+      "reason": "单独保留。E50 显示 checkCookieWriteOrigin 对携带 cookie 的写请求校验 Origin/Referer，失败返回 403 INVALID_CSRF_ORIGIN；E55 表明该要求只写在认证 Skill 的部署参考，而 E54 的 protecting-routes.md 通篇无 CSRF/trustedOrigins/publicOrigin/Origin 字样；E78 显示应用未配置 publicOrigin/trustedOrigins；E12 记录 Agent 反复触发后以 BETTER_AUTH_URL 绕行。根因是受保护路由参考的指引缺口，与其他发现不同，且与本报告其他发现不得合并，故单列。",
       "members": [
         "460:36434284393:1:F3"
       ]
     },
     {
       "title": "nocobase-db Skill 未对称说明 findOne 与单条 mutation 的空 filter 约束",
-      "reason": "单独保留。证据 E26/E28 显示 findOne 在无 filter 且无 sort 时抛 INVALID_FILTER，upsertOne 等单条 mutation 对空 filter 同样报错；E33 的 Skill 只对 updateMany/deleteMany 的空 scope 作了说明，E74 显示应用在 loadRows 中特判并注释“空 filter 会被拒绝”来规避。缺口是单条读/写空 filter 约束的文档不对称，属 usability-improvement，与其他发现根因不同，且同报告发现不得合并，故单列。",
+      "reason": "单独保留。E26/E28 显示 findOne 在无 filter 且无 sort 时抛 INVALID_FILTER，upsertOne 等单条 mutation 对空 filter 同样报错；E33 的 Skill 只对 updateMany/deleteMany 的空 scope 作了说明；E74 显示应用在 loadRows 中特判并注释“空 filter 会被拒绝”。根因是单条读/写空 filter 约束的文档不对称，与其他发现不同，且与本报告其他发现不得合并，故单列。",
       "members": [
         "460:36434284393:1:F4"
       ]
     },
     {
       "title": "nocobase-db Skill 示例未突出 aggregate/groupBy 的数据库侧合计用法",
-      "reason": "单独保留。证据 E27 显示 Repository 已实现 aggregate/groupBy（含 filter/having/sort），E33 的方法清单也列出二者，但示例只覆盖关系读取与嵌套写；E75 显示应用改用 findMany + JS reduce 做金额合计（按 customerId 过滤保证隔离）。这是“示例未引导数据库侧聚合”的可用性改进，与其他发现根因不同，且同报告发现不得合并，故单列。",
+      "reason": "单独保留。E27 显示 Repository 已实现 aggregate/groupBy（含 filter/having/sort）；E33 的方法清单也列出二者，但示例只覆盖关系读取与嵌套写；E75 显示应用改用 findMany + JS reduce 做金额合计。根因是示例未引导数据库侧聚合，与其他发现不同，且与本报告其他发现不得合并，故单列。",
       "members": [
         "460:36434284393:1:F6"
+      ]
+    },
+    {
+      "title": "指引/示例引用未发布的 src 路径，导致无效路径探测",
+      "reason": "单独保留。E45/E49/E62/E65 均为 Agent 按指引/示例给出的源码路径（database/record-access.d.ts、permission-sets/index.d.ts、container.ts 等）读取已安装依赖，而包只发布 dist，相关命令连续失败并以退出码 2 结束。根因是文档/示例给出了与实际发布结构不符的错误路径（错误说明），与同一报告 F6 的发布策略根因不同，且同一报告内两条发现禁止合并，故单列。",
+      "members": [
+        "461:36434293992:1:F4"
+      ]
+    },
+    {
+      "title": "dist-only 发布使源码级排障与契约确认困难",
+      "reason": "单独保留。E45/E48/E54/E55/E62/E65 显示包只发布编译后的 dist 与 sourcemap，源文件缺失、部分 .d.ts 路径与源码目录不同、sourcemap 未内联 sourcesContent（读取触发 KeyError），Agent 只能从编译产物反推实现。根因在框架包的发布/分发策略未提供源码或稳定 dist 结构索引，并非指引写错路径；虽与同报告 461:F4 共用部分证据，但同一报告内两条发现禁止合并，故单列。",
+      "members": [
+        "461:36434293992:1:F6"
       ]
     }
   ],
@@ -57,9 +81,9 @@
     "engine": "pi",
     "model": "deepseek-v4.1-flash",
     "version": "0.86.1",
-    "runId": "36446202924",
+    "runId": "36448904292",
     "attempt": 1,
     "controlSha": "b2a65efc97b0935b42cc0eb38552be9ae7972d53",
-    "completedAt": "2026-09-28T15:48:12.240Z"
+    "completedAt": "2026-09-28T16:10:19.041Z"
   }
 }
