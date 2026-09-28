@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "inputHash": "ba2d47aef5cb29a2ee643386a691e64d2950e59565b37dc5624343c764c2afd5",
+  "inputHash": "d0f1037a2ccff207ac7f716fb548c400f817a245af478d51286ac8d7fa6d62df",
   "sources": [
     {
       "id": "408:36329180371:1:F2",
@@ -103,6 +103,16 @@
       "fingerprint": "4ff0e440a3292c4f5afb73dc62fae0bef870cb63feae3853889b488babe2ae2e"
     },
     {
+      "id": "418:36376190523:1:F3",
+      "report": "418:36376190523:1",
+      "fingerprint": "83e24b733424d0810f5ae64b6ef5a7dbeba831903344414756845d195f68f1c2"
+    },
+    {
+      "id": "418:36376190523:1:F4",
+      "report": "418:36376190523:1",
+      "fingerprint": "522e14f39990d4e09f1e756df2c70cc0922ea16a2a7b908ab92b6508cf033968"
+    },
+    {
       "id": "419:36376192996:1:F4",
       "report": "419:36376192996:1",
       "fingerprint": "fb6798fd1e370f0cca4494086b1e1aabbbbe775c38612ee0585c235b62217503"
@@ -126,18 +136,19 @@
   "groups": [
     {
       "title": "种子不得承载样例数据，但示例/演示数据缺少正式承载路径",
-      "reason": "408:F2 的 E20 显示 nocobase-db SKILL 明确“a seed is never sample or demonstration content”，E30 显示应用迁移只对 customerName 建普通索引，E31 显示示例数据被迫写入 seed 并用 exists+createOne（未落到唯一约束+upsertOne）；431:F2 的 E19 引用同一条种子职责规定，E26 显示应用侧 migrations 参考也未给样例数据归属，E32 显示应用只能把“Sample data for the sales team”写入 seed 且用 findOne+createOne。两条发现来自不同报告（408、431），共同指向同一指引缺口：种子被否定承载样例，却没有为示例/首装数据提供替代路径，导致应用自造非幂等写法；修复方向一致（给出正式承载路径或声明例外并要求唯一约束+upsertOne）。合并只表示共同根因，不据此推断版本间回归。",
+      "reason": "408:F2 的 E20/E30/E31 显示 nocobase-db SKILL 明确“a seed is never sample or demonstration content”，应用迁移只对 customerName 建普通索引，示例数据被迫写入 seed 且用 exists+createOne（未落到唯一约束+upsertOne）；431:F2 的 E19/E26/E32 引用同一条种子职责规定，应用侧 migrations 参考也未给样例数据归属，只能把“Sample data for the sales team”写入 seed 并用 findOne+createOne。两条来自不同报告（408、431），共同指向同一指引缺口：种子被否定承载样例，却没有为示例/首装数据提供替代路径，修复方向一致（给出正式承载路径或声明例外并要求唯一约束+upsertOne）。合并只表示共同根因，不据此推断版本间回归。",
       "members": [
         "408:36329180371:1:F2",
         "431:36360863566:1:F2"
       ]
     },
     {
-      "title": "应用模板 app/AGENTS.md 存在多余空行，导致仓库 prettier/format:check 失败",
-      "reason": "411:F5 的 E42 显示 repair-1 通过 git log 与 factory-template.json 定位 AGENTS.md 为模板产物，并确认多余空行使 prettier --check 失败；416:F6 的 E34 显示修复轮对 AGENTS.md 运行 prettier，得到同类格式化漂移；419:F4 的 E37 显示 git show e318f4e 在 app/AGENTS.md 的 ## Controlled failed-delivery smoke 前新增两个空行，E38 显示 repair-1 用 edit 把两个空行改回一个，E40 确认该段落为模板提交引入。三条来自不同报告（411、416、419），同为 owner=template、同一文件 app/AGENTS.md 的同一根因，修复方向一致（在模板源头修正并让模板 CI 对 app/AGENTS.md 运行 prettier --check）。合并仅表示共同根因，不据此认定新版仍有缺陷或旧问题必然已修复（411:F5 为 resolved、416:F6 与 419:F4 状态不同）。",
+      "title": "应用模板 app/AGENTS.md 存在多余空行，导致 prettier/format:check 失败",
+      "reason": "411:F5 的 E42 显示 repair-1 通过 git log 与 factory-template.json 定位 AGENTS.md 为模板产物，并确认多余空行使 prettier --check 失败；416:F6 的 E34 显示修复轮对 AGENTS.md 运行 prettier，得到同一文件的既有格式化漂移；418:F4 的 E31/E43/E59 显示基线原稿在 Factory task termination 与 Controlled failed-delivery smoke 之间多一个空行，retro 将 rootCause 指向模板提交 e318f4e，prettier --write 后 diff 输出 403d402；419:F4 的 E37/E38/E40 用 git show e318f4e 确认该提交在 ## Controlled failed-delivery smoke 前新增两个空行，修复轮用 edit 改回一个空行。四条来自不同报告（411、416、418、419），同为 owner=template、同一文件 app/AGENTS.md 的同一根因（模板提交 e318f4e 引入多余空行），修复方向一致（在模板源头修正并让模板 CI 对 app/AGENTS.md 运行 prettier --check）。合并仅表示共同根因，不据此认定新版仍有缺陷或旧问题必然已修复（411:F5 为 resolved，416:F6 与 418:F4/419:F4 状态不同）。",
       "members": [
         "411:36329191920:1:F5",
         "416:36329210119:1:F6",
+        "418:36376190523:1:F4",
         "419:36376192996:1:F4"
       ]
     },
@@ -255,6 +266,13 @@
       ]
     },
     {
+      "title": "员工级 skillSettings.enabledTools 缺少文档化的注册期写入路径",
+      "reason": "418:F3 的 E6 显示公开 AIEmployeeManager 接口只有 getEmployee/registerEmployee/upsertEmployee 等，没有接收 skillSettings 的注册方法；E23/E24 显示 server-runs 示例只调用 registerEmployee，capabilities.md 又把 enabledTools/skillSettings 归为 AI settings 管理并禁止写入 definition；E33 显示应用只能自行 getEmployee+upsertEmployee 收窄 enabledTools；E1 显示 upsertEmployee 的合并语义。该发现属 ai-employee 插件“注册期写入路径未文档化”这一独立指引缺口，无任何其他报告的发现涉及该插件或该 API，故单独保留。",
+      "members": [
+        "418:36376190523:1:F3"
+      ]
+    },
+    {
       "title": "测试发送入口默认暴露所有带 test 定义的启用渠道，缺少服务端 test-only 约束",
       "reason": "该发现的 E6 显示 registry.testTargets 遍历 config.channels，只跳过 enabled===false、要求 Provider 有 test 定义，即暴露所有带测试定义的启用渠道；E4 显示 manager.resolveTestTarget/sendTest 仅依据 listTestTargets，无业务/测试渠道路径区分；E10 记录三个测试端点仅靠认证/测试头/权限区分；E29 显示隔离依赖应用侧 test- 前缀与客户端过滤。四条共同指向“测试发送入口缺少服务端 test-only 白名单/标记”这一插件能力缺口，与 409:F1 的站内信 store 导出绕过校验、409:F2 的文件内容路由默认公开等根因（不同插件、不同 API 与修复方向）均不同，且无其他报告共享，故单独保留。",
       "members": [
@@ -273,9 +291,9 @@
     "engine": "pi",
     "model": "deepseek-v4.1-flash",
     "version": "0.86.1",
-    "runId": "36381310250",
+    "runId": "36383119828",
     "attempt": 1,
     "controlSha": "ad1f8060916f30ee2908d1c8fc6d8ed16d4ba6ef",
-    "completedAt": "2026-09-28T05:19:35.894Z"
+    "completedAt": "2026-09-28T05:44:50.372Z"
   }
 }
