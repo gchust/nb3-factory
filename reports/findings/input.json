@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "inputHash": "d0f1037a2ccff207ac7f716fb548c400f817a245af478d51286ac8d7fa6d62df",
+  "inputHash": "318a06f2da1d0ab96e14a9ee9722c4a22ab37f81d577a787bd7ee5d4f388a668",
   "findings": [
     {
       "id": "408:36329180371:1:F2",
@@ -1803,6 +1803,257 @@
         }
       ],
       "fingerprint": "4ff0e440a3292c4f5afb73dc62fae0bef870cb63feae3853889b488babe2ae2e"
+    },
+    {
+      "id": "417:36376187583:1:F3",
+      "report": "417:36376187583:1",
+      "issue": 417,
+      "taskTitle": "API 与结构查看：设备清单",
+      "appVersion": "1.0.0-beta.47",
+      "appTemplate": "@nocobase/app-template-default",
+      "finding": {
+        "id": "F3",
+        "kind": "improvement",
+        "owner": "documentation",
+        "confidence": "confirmed",
+        "severity": "minor",
+        "status": "open",
+        "title": "写授权需带 read 字段才能在响应中读回写入行的要求未被指引说明",
+        "detail": "repository.js 的 createOne 在写入后调用 validateSelect(..., readContext(collection)) 读回写入行；若组合资源的 create/update 授权只给 create/update 字段而不含 read，写操作会因读回校验失败。授权 Skill（runtime-api.md）只说明“read 字段管输出、create/update 管输入”，未点明写授权必须包含 read 字段。",
+        "impact": "按指引建模写权限的开发者可能得到写入被拒的困惑，只能通过源码或报错反推，增加试错。",
+        "suggestedChange": "在 app/.agents/skills/nocobase-app-plugin-authorization/references/runtime-api.md 与 code-and-seeds.md 中明确：create/update 授权应同时授予返回行所需的 read 字段，并给出示例。",
+        "evidence": [
+          "E8",
+          "E10",
+          "E26"
+        ],
+        "diagnosis": {
+          "category": "guidance-gap",
+          "trigger": "组合资源的 create 或 update 动作授予字段但不授予 read，然后通过 createOne/updateOne 返回写入行。",
+          "expected": "指引说明写授权需包含读回写入行所需的 read 字段，或框架在文档中给出默认包含关系。",
+          "actual": "Skill 未说明；createOne 按 readContext 校验 select，缺少 read 时拒绝写操作。应用通过为 create/edit 追加 read(\"*\") 绕行。",
+          "workaround": "应用在 devices-resources.ts 为 create/edit 授权同时加 read(\"*\")，并在注释中记录原因。",
+          "acceptance": "补文档并加回归用例：仅写字段的授权执行 create 会被拒绝，加入 read 字段后成功返回写入行。"
+        }
+      },
+      "targets": [
+        "@nocobase/db",
+        "app/.agents/skills/nocobase-app-plugin-authorization/references/runtime-api.md"
+      ],
+      "paths": [
+        ".agents/skills/nocobase-app-plugin-authorization/references/runtime-api.md",
+        "packages/@nocobase/db/dist/src/repository/repository.js"
+      ],
+      "evidence": [
+        {
+          "id": "E8",
+          "kind": "skill",
+          "path": "app/.agents/skills/nocobase-app-plugin-authorization/references/runtime-api.md",
+          "observation": "runtime-api 参考给出 authorize→conditions.database[collection]→repository.withPolicy() 的服务端执行模式与 policyFor 折叠写法。",
+          "lines": [
+            112,
+            146
+          ],
+          "excerpt": "## Enforce the operation on the server\n\nEvery route installs authentication and `authz.middleware()`. For a business action, authorize once and bind every resulting collection policy before executing queries. Validate input and business transitions separately.\n\n```ts\nrouter.use('*', authentication.required(), authz.middleware());\nrouter.get('/quotes', async (c) => {\n  const decision = await c.get('authz').authorize({\n    resource: { type: 'composite', id: 'sales.quotes' },\n    action: 'view',\n  });\n  const policy = decision.conditions?.database?.quotes;\n  if (decision.effect === 'deny' || !policy)\n    return c.json({ code: 'FORBIDDEN' }, 403);\n  const records = await database\n    .repository('quotes')\n    .withPolicy(policy)\n    .findMany();\n  return c.json({ data: records });\n});\n```\n\nA composite decision's `conditions` are `{ type: 'composite', checks, database }`: one `RepositoryPolicy` per composed collection, built from that action's grants only, and `checks` with the underlying decisions. A denied collection check yields a policy that reaches no records rather than denying the whole feature. For `submit`, use both `conditions.database.quotes` and `.projects` inside the same transaction, check the quote's actual parent project through the project policy and include the expected state in the update predicate. Do not replace these policies with `authz.database.policyFor` without an operation: another action's grants could then widen access. `require` rejects conditional decisions; `can` does not enforce rows.\n\nFor a collection-oriented endpoint, fold the four CRUD decisions into one policy:\n\n```ts\nconst policy = await authz.database.policyFor('quotes', c.get('authz'));\nconst repository = database.repository('quotes').withPolicy(policy);\nawait repository.updateOne({ filter: { id }, values: input });\n```\n\nThe optional third argument `{ resource: 'sales.quotes', action: 'submit' }` restricts `policyFor` to one business action's branch. Prefer the single business decision when the operation spans several collections. Policies deny absent operations, constrain records in SQL and allow only granted fields and relations. Out-of-scope rows can surface as `RECORD_NOT_FOUND`; map repository errors consistently without leaking hidden records.\n\nFor generated Repository APIs, keep the `defineRepositoryApiRoutes` declaration and install `authz.database.authorizeRepository({ repository, resource: quotes.reference(), actions: { findMany: 'view', updateOne: 'edit' } })` after authentication. It binds each endpoint to one composite action and narrows its existing policy. See [Repository integration](repository-routes.md) for validation, responses and limits.",
+          "sha256": "42fc6afc6226a56de0c5e5e3a842eac24f76a43781bd381fe4bea764d9cd6746"
+        },
+        {
+          "id": "E10",
+          "kind": "code",
+          "path": "packages/@nocobase/db/dist/src/repository/repository.js",
+          "observation": "createOne 写入后调用 validateSelect(..., readContext(collection)) 读回写入行；写策略不含 read 时会在该处拒绝。",
+          "lines": [
+            266,
+            298
+          ],
+          "excerpt": "    async createOne(options) {\n        const policyInput = options.writePolicy === undefined ? true : options.writePolicy;\n        assertWriteEnabled(policyInput);\n        const writePolicy = policyInput === true ? true : normalizeWritePolicy(policyInput, 'create');\n        const collection = await this.collection();\n        assertWritableCollection(collection);\n        // Before the payload is looked at: a Policy that forbids this operation\n        // refuses the call outright, so an empty or malformed body is reported as\n        // forbidden rather than as invalid input. The caller learns nothing about\n        // the shape of a write they may not perform.\n        resolveWriteShapeNode(this.options.policy, 'create', collection);\n        await validateWritePolicyMetadata(this.options.collections, collection, writePolicy);\n        const createValues = applyCreateDefaults(this.options.policy, evaluateValues(options.values));\n        const mutation = await normalizeModelMutation(this.options.collections, collection, createValues.values, 'createOne', 1, { nodes: 0, clientKeys: new Set(), context: options.context });\n        this.assertPolicyMutationFields(collection, mutation, 'create', ['values'], createValues.protectedFields);\n        assertMutationWritePolicy(mutation, writePolicy, ['values'], [], 'create', collection.name);\n        const selection = await this.validateSelect(collection, options.select, options.context, this.readContext(collection));\n        const requestedFields = selection.fields;\n        const executionFields = includeExecutionFields(collection, requestedFields);\n        const result = await this.options.adapter.createOne({\n            collection,\n            fields: executionFields,\n            values: mutation.values,\n            relations: mutation.relations,\n            select: selection.select,\n            scopeCheck: await this.scopeCheck(collection, 'create'),\n            relationScopes: await this.writeRelationScopes(collection, 'create'),\n        });\n        return {\n            record: pickSelection(result.record, requestedFields, selection.select),\n            createdTargets: result.createdTargets,\n            version: result.version,\n        };",
+          "sha256": "31b67e0dcdfd222b6981571d563d9879525a3bf61312ea92a05a269d99c1f311"
+        },
+        {
+          "id": "E26",
+          "kind": "code",
+          "path": "app/server/devices-resources.ts",
+          "observation": "定义 composite resource 与 database permission；注释说明写授权需带 read，因为 createOne/updateOne 会读回写入行。",
+          "lines": [
+            1,
+            87
+          ],
+          "excerpt": "import { defineCompositeResource } from '@nocobase/authorization/core';\nimport {\n  defineDatabasePermission,\n  recordAccess,\n} from '@nocobase/app-plugin-authorization/server';\n\n/** The application locale namespace, matching `packageName` in `client/runtime.ts`. */\nexport const APPLICATION_NAMESPACE = 'nb3-factory';\n\n/** One device as the API and the page see it: the two business fields and the primary key. */\nexport type Device = {\n  id: number;\n  code: string;\n  name: string;\n};\n\n/** A persisted title resolved from the application locale namespace instead of a fixed string. */\nexport function applicationTitle(key: string): { key: string; ns: string } {\n  return { key, ns: APPLICATION_NAMESPACE };\n}\n\nexport const devicesCollectionTitle = applicationTitle(\n  'authorization.devices.collection',\n);\nexport const devicesDataScopeTitle = applicationTitle(\n  'authorization.devices.scope',\n);\nexport const devicesSectionTitle = applicationTitle(\n  'authorization.devices.section',\n);\nexport const devicesIntegrationSetTitle = applicationTitle(\n  'authorization.devices.integrationSet',\n);\n\n/**\n * One database permission per operation. Binding a permission to a composite data scope binds every operation it\n * declares, so the read permission carries only `read`: a `view` grant can never widen into a write. A create or\n * update permission carries `read` as well because `createOne`/`updateOne` read the written row back to return it,\n * and a write-only policy would refuse that internal read.\n */\nexport const deviceRead = defineDatabasePermission<Device, 'allRecords'>(\n  (permission) =>\n    permission\n      .collection<Device>('devices')\n      .title(devicesDataScopeTitle)\n      .options(recordAccess.allRecords)\n      .default(recordAccess.allRecords)\n      .read('*'),\n);\n\nexport const deviceCreate = defineDatabasePermission((permission) =>\n  permission\n    .collection<Device>('devices')\n    .title(devicesDataScopeTitle)\n    .read('*')\n    .create('*'),\n);\n\nexport const deviceUpdate = defineDatabasePermission((permission) =>\n  permission\n    .collection<Device>('devices')\n    .title(devicesDataScopeTitle)\n    .read('*')\n    .update('*'),\n);\n\nexport const deviceDelete = defineDatabasePermission((permission) =>\n  permission\n    .collection<Device>('devices')\n    .title(devicesDataScopeTitle)\n    .delete(),\n);\n\n/**\n * The business resource an external caller checks and an administrator grants. Its four actions map one to one onto\n * the four operations above, so read-only access is expressed by granting `view` alone.\n */\nexport const devices = defineCompositeResource('devices', (resource) =>\n  resource\n    .title(devicesCollectionTitle)\n    .action('view', (action) => action.grant('devices', deviceRead))\n    .action('create', (action) => action.grant('devices', deviceCreate))\n    .action('edit', (action) => action.grant('devices', deviceUpdate))\n    .action('delete', (action) => action.grant('devices', deviceDelete)),\n);\n\nexport const devicesReference = devices.reference();",
+          "sha256": "bb381a30ab1128be2dc742fbc46dee4eddd56fa8c3aa48c607e8e81a33e98859"
+        }
+      ],
+      "fingerprint": "c72ee413b15d3b8c19f9d9a486185ec932421cc4af142cbb898ec475c591ac9c"
+    },
+    {
+      "id": "417:36376187583:1:F4",
+      "report": "417:36376187583:1",
+      "issue": 417,
+      "taskTitle": "API 与结构查看：设备清单",
+      "appVersion": "1.0.0-beta.47",
+      "appTemplate": "@nocobase/app-template-default",
+      "finding": {
+        "id": "F4",
+        "kind": "issue",
+        "owner": "template",
+        "confidence": "confirmed",
+        "severity": "minor",
+        "status": "resolved",
+        "title": "模板自带的 AGENTS.md 未通过 pnpm format:check，阻断验证流程",
+        "detail": "任务基线的 AGENTS.md 在 “## Controlled failed-delivery smoke” 前有两个连续空行，Prettier 报错并使 format:check 以 exit 1 结束，而 format:auto 只格式化改动过的文件，未修改的模板文件不会自动修复。",
+        "impact": "全新生成的应用在未编辑该文件前无法通过仓库要求的格式检查，验证会在 lint/typecheck/test 之前停下。",
+        "suggestedChange": "发布模板前对模板仓库（含 AGENTS.md）执行一次格式化，或把 AGENTS.md 纳入发布前格式检查。",
+        "evidence": [
+          "E21",
+          "E33",
+          "E34"
+        ],
+        "diagnosis": {
+          "category": "usability-improvement",
+          "trigger": "对基于模板生成的应用运行 pnpm format:check。",
+          "expected": "模板自带文件满足仓库格式规则，format:check 通过。",
+          "actual": "AGENTS.md 双空行导致 Prettier 失败并 exit 1，验证流程中断。",
+          "workaround": "修复轮删除 AGENTS.md 中重复空行后 format:check 通过。",
+          "acceptance": "对未修改的模板运行 pnpm format:check 直接通过。"
+        }
+      },
+      "targets": [
+        "app/AGENTS.md"
+      ],
+      "paths": [
+        "AGENTS.md"
+      ],
+      "evidence": [
+        {
+          "id": "E21",
+          "kind": "skill",
+          "path": "app/AGENTS.md",
+          "observation": "模板指引声明应用职责边界、默认模板范围、加载开发技能以及迁移/数据库参考路由。",
+          "lines": [
+            1,
+            17
+          ],
+          "excerpt": "# Application Development Guidelines\n\nThis is a NocoBase 3 application. Do not apply globally installed NocoBase 2 Skills. You are building the application itself — its pages, its API, its database tables. Everything under this directory is application-owned source code that you may edit directly.\n\nDo not create a plugin to add a feature. Plugins are separately published packages for capabilities shared across several applications; building one for this application's own feature adds a package boundary, a version, and a release process to work that belongs in `client/` and `server/`. Create one only when the user explicitly asks for a reusable published package.\n\n## Default template scope\n\nDefault is the clean application starting point. It registers product capabilities but no `app-plugin-*-example` plugins, example pages, application sample services, or sample APIs. Keep runnable demonstrations in `app-template-examples`. Application-owned server routes start empty; the only built-in application provider exposes Authorization Permission Sets as direct roles in the Users page. The only application page is a localized homepage.\n\n`database/main/` contains required permission initialization only; application-owned business migrations and seeds start empty. Do not add article history, demo seeds, or compatibility copies from Examples to this template. Existing installations retain their own executed migration sources when upgrading; see the [upgrade migration rules](.agents/skills/nocobase-app-upgrade/references/edge-cases.md#migrations).\n\n## Load the development skills\n\n`pnpm install` runs `pnpm nocobase skills sync` through the application's `postinstall` hook. If `.agents/skills/nocobase-app-development/` is missing, install dependencies from the application root; if install scripts were disabled or synchronized Skills are stale, run `pnpm nocobase skills sync` explicitly.\n\n`.agents/skills/nocobase-app-development/` holds the detailed guidance behind this file. Read its `SKILL.md` first — it routes to the reference that matches your task instead of making you read everything:",
+          "sha256": "e1bc6e09a89bb4f2a8655d6ef6347d9d729675cbada4f7dd28bbd664c99d06e4"
+        },
+        {
+          "id": "E33",
+          "kind": "log",
+          "path": "artifacts/verify-1.log",
+          "observation": "format:check 报 AGENTS.md 未通过 Prettier 并以 exit 1 结束。",
+          "lines": [
+            18,
+            23
+          ],
+          "excerpt": "$ prettier . --check '!.github/**'\nChecking formatting...\n[\u001b[33mwarn\u001b[39m] AGENTS.md\n[\u001b[33mwarn\u001b[39m] Code style issues found in the above file. Run Prettier with --write to fix.\n[ELIFECYCLE] Command failed with exit code 1.\n[timing] format:check: 4.72s (exit 1)",
+          "sha256": "caa7fee6f419c65a6d6ecc3daa9f997e7a3674f442eb8c1b70f11c3f8a592314"
+        },
+        {
+          "id": "E34",
+          "kind": "qa",
+          "path": "artifacts/retro.json",
+          "observation": "修复轮记录两个 blocker：模板 AGENTS.md 格式化、DevicesProvider 零插件启动崩溃，均 resolved。",
+          "lines": [
+            1,
+            39
+          ],
+          "excerpt": "{\n  \"version\": 1,\n  \"summary\": \"Repair round 1: the device-list feature was complete but verification stopped at format:check on the template's own AGENTS.md; running the remaining checks afterwards exposed one scaffold-test failure caused by the new authorization-backed DevicesProvider.\",\n  \"blockers\": [\n    {\n      \"phase\": \"verify/format:check\",\n      \"title\": \"AGENTS.md fails Prettier on an untouched template file\",\n      \"symptom\": \"format:check reported AGENTS.md and exited 1, before lint, typecheck and tests could run.\",\n      \"rootCause\": \"AGENTS.md in the task base carries two consecutive blank lines before '## Controlled failed-delivery smoke'. format:auto only formats changed files, so the unmodified template file stayed non-conforming while the full-workspace check inspected it.\",\n      \"resolution\": \"Removed the duplicate blank line in AGENTS.md. pnpm format:check '!.github/**' now passes.\",\n      \"status\": \"resolved\"\n    },\n    {\n      \"phase\": \"verify/test\",\n      \"title\": \"DevicesProvider boot crashed without the authorization plugin\",\n      \"symptom\": \"tests/logic/app-server.test.ts > 'registers application-owned providers and routes from the runtime' failed with Service \\\"@nocobase/app/authorization\\\" is not registered at server/providers/devices.ts:22.\",\n      \"rootCause\": \"DevicesProvider.boot() resolved authorizationToken unconditionally, but that scaffold test assembles a runtime with zero plugins (so no authorization service) while still booting every application service provider.\",\n      \"resolution\": \"Guarded boot() with this.app.container.has(authorizationToken) and returned early when absent, matching the authorization provider's own has() pattern; registration still runs when the plugin is present.\",\n      \"status\": \"resolved\"\n    }\n  ],\n  \"improvements\": [\n    {\n      \"category\": \"template\",\n      \"title\": \"Ship a Prettier-clean AGENTS.md\",\n      \"detail\": \"The base template's AGENTS.md had a double blank line that fails the application's own pnpm format:check, so a freshly generated app cannot pass its required checks until the file is edited.\",\n      \"suggestedChange\": \"Run pnpm format on the template repository (including AGENTS.md) before publishing the template, or add AGENTS.md to the pre-publish format check.\",\n      \"mechanizable\": true\n    },\n    {\n      \"category\": \"test\",\n      \"title\": \"Scaffold runtime test builds app providers with zero plugins\",\n      \"detail\": \"app-server.test.ts boots every application service provider with plugins: [] . Any application provider that legitimately resolves a plugin-owned service token in boot() throws there, even though the same provider is correct in the real runtime that registers the plugin.\",\n      \"suggestedChange\": \"Either include the required plugins in that scaffold runtime, or document that application providers must guard plugin-owned tokens with container.has() before resolving, as the authorization provider does.\",\n      \"mechanizable\": false\n    }\n  ]\n}\n",
+          "sha256": "f3f50df4d591bae5baa434dd1a130d13d05b6e9961ff9c59966cfc7974abd876"
+        }
+      ],
+      "fingerprint": "87e6c294d0a475e729c538fc922891f66726b06032efcba4b0e6ff9b24ae68da"
+    },
+    {
+      "id": "417:36376187583:1:F5",
+      "report": "417:36376187583:1",
+      "issue": 417,
+      "taskTitle": "API 与结构查看：设备清单",
+      "appVersion": "1.0.0-beta.47",
+      "appTemplate": "@nocobase/app-template-default",
+      "finding": {
+        "id": "F5",
+        "kind": "issue",
+        "owner": "template",
+        "confidence": "confirmed",
+        "severity": "minor",
+        "status": "resolved",
+        "title": "脚手架测试以零插件运行时启动应用 provider，未文档化 provider 需守卫可选插件 token",
+        "detail": "app-server.test.ts 在 plugins: [] 下注册并启动所有应用 service provider；应用 provider 若在 boot() 中无条件 resolve 插件提供的 token（如 authorizationToken）会抛 “Service ... is not registered”。框架 providerRegistry 本身先 bootAll 再 registerRoutes，行为一致，问题在于模板测试的零插件场景与相应说明缺失。",
+        "impact": "按直觉编写、在真实运行时正确的 provider 会在模板测试中崩溃，增加定位成本。",
+        "suggestedChange": "在模板测试中纳入所需插件，或在 AGENTS.md/开发 Skill 中说明应用 provider 必须用 container.has(token) 守卫插件提供的可选服务。",
+        "evidence": [
+          "E18",
+          "E21",
+          "E27",
+          "E34"
+        ],
+        "diagnosis": {
+          "category": "guidance-gap",
+          "trigger": "在应用 service provider 的 boot() 中无条件 resolve 插件提供的服务 token，然后运行模板自带 app-server.test.ts（零插件）。",
+          "expected": "测试或文档说明 provider 需容忍插件缺失，用 container.has() 守卫后再 resolve。",
+          "actual": "模板未提示；DevicesProvider.boot() 无条件 resolve authorizationToken，测试报 “Service \"@nocobase/app/authorization\" is not registered”。",
+          "workaround": "修复轮用 this.app.container.has(authorizationToken) 守卫 boot()，缺失时提前返回。",
+          "acceptance": "在 plugins: [] 的脚手架测试下启动全部应用 provider 不再抛未注册服务错误。"
+        }
+      },
+      "targets": [
+        "@nocobase/app-server",
+        "app/AGENTS.md"
+      ],
+      "paths": [
+        "AGENTS.md",
+        "packages/@nocobase/app-server/dist/application/index.js"
+      ],
+      "evidence": [
+        {
+          "id": "E18",
+          "kind": "code",
+          "path": "packages/@nocobase/app-server/dist/application/index.js",
+          "observation": "startServiceProviders 依次 validateConfig/registerProviders/bootAll 再 registerRoutes/startAll/readyAll，注册顺序固定。",
+          "lines": [
+            147,
+            168
+          ],
+          "excerpt": "    async startServiceProviders() {\n        await this.validateConfig();\n        this.registerProviders();\n        await this.registerLocales();\n        await this.providerRegistry.bootAll();\n        await this.registerRoutes();\n        await this.providerRegistry.startAll();\n        await this.providerRegistry.readyAll();\n    }\n    /**\n     * Refuses to start on a configuration that breaks a rule its sections declare. It runs here rather than when the\n     * runtime is resolved, so commands that only read the configuration, such as `config init` and `config check`, still\n     * load it and can report what is wrong.\n     */\n    async validateConfig() {\n        const issues = (await this.config.validate?.()) ?? [];\n        if (issues.some((issue) => issue.level === 'error')) {\n            throw new AppConfigInvalidError(issues);\n        }\n    }\n    /**\n     * Registers each plugin's locale loaders against its package name and brings the runtime up.",
+          "sha256": "98e0a7f93ab7107addcf1c4516d1fd8234c51f6f8078b2bccc905e006153130a"
+        },
+        {
+          "id": "E21",
+          "kind": "skill",
+          "path": "app/AGENTS.md",
+          "observation": "模板指引声明应用职责边界、默认模板范围、加载开发技能以及迁移/数据库参考路由。",
+          "lines": [
+            1,
+            17
+          ],
+          "excerpt": "# Application Development Guidelines\n\nThis is a NocoBase 3 application. Do not apply globally installed NocoBase 2 Skills. You are building the application itself — its pages, its API, its database tables. Everything under this directory is application-owned source code that you may edit directly.\n\nDo not create a plugin to add a feature. Plugins are separately published packages for capabilities shared across several applications; building one for this application's own feature adds a package boundary, a version, and a release process to work that belongs in `client/` and `server/`. Create one only when the user explicitly asks for a reusable published package.\n\n## Default template scope\n\nDefault is the clean application starting point. It registers product capabilities but no `app-plugin-*-example` plugins, example pages, application sample services, or sample APIs. Keep runnable demonstrations in `app-template-examples`. Application-owned server routes start empty; the only built-in application provider exposes Authorization Permission Sets as direct roles in the Users page. The only application page is a localized homepage.\n\n`database/main/` contains required permission initialization only; application-owned business migrations and seeds start empty. Do not add article history, demo seeds, or compatibility copies from Examples to this template. Existing installations retain their own executed migration sources when upgrading; see the [upgrade migration rules](.agents/skills/nocobase-app-upgrade/references/edge-cases.md#migrations).\n\n## Load the development skills\n\n`pnpm install` runs `pnpm nocobase skills sync` through the application's `postinstall` hook. If `.agents/skills/nocobase-app-development/` is missing, install dependencies from the application root; if install scripts were disabled or synchronized Skills are stale, run `pnpm nocobase skills sync` explicitly.\n\n`.agents/skills/nocobase-app-development/` holds the detailed guidance behind this file. Read its `SKILL.md` first — it routes to the reference that matches your task instead of making you read everything:",
+          "sha256": "e1bc6e09a89bb4f2a8655d6ef6347d9d729675cbada4f7dd28bbd664c99d06e4"
+        },
+        {
+          "id": "E27",
+          "kind": "code",
+          "path": "app/server/providers/devices.ts",
+          "observation": "DevicesProvider.boot 先用 container.has(authorizationToken) 守卫，再注册集合/组合资源/设置项。",
+          "lines": [
+            1,
+            42
+          ],
+          "excerpt": "import { authorizationToken } from '@nocobase/app-plugin-authorization/server';\nimport type { Application } from '@nocobase/app-server/application';\nimport { ServiceProvider } from '@nocobase/service-provider';\n\nimport {\n  devices,\n  devicesCollectionTitle,\n  devicesSectionTitle,\n} from '../devices-resources.js';\n\n/**\n * Registers the device list with the shared authorization instance: the Collection the database permissions read,\n * the composite resource the API and the page check, and where it appears in the authorization workspace.\n *\n * Runs in `boot()` because the authorization instance is created lazily on the first `authorizationToken` resolve,\n * and registration must happen after the plugin's own registrations.\n */\nexport class DevicesProvider extends ServiceProvider<Application> {\n  public readonly name = '@nocobase/nb3-factory/devices';\n\n  public override async boot(): Promise<void> {\n    // The authorization plugin owns the service. An application assembled without it\n    // (for example a scaffold test with no plugins) still boots its own providers;\n    // there is nothing to register against, so leave the container untouched.\n    if (!this.app.container.has(authorizationToken)) return;\n    const authz = this.app.container.resolve(authorizationToken);\n\n    authz.database.collections.add({\n      name: 'devices',\n      title: devicesCollectionTitle,\n    });\n\n    const reference = authz.compositeResources.define(devices);\n\n    authz.ui.sections.add({\n      name: 'devices',\n      title: devicesSectionTitle,\n      parent: 'business',\n    });\n    authz.ui.place(reference, { section: 'devices' });\n  }\n}",
+          "sha256": "404a7b26cf8bc370c5eeaa6599fb92885bb8ed4009f161c47672e9092e8f21e3"
+        },
+        {
+          "id": "E34",
+          "kind": "qa",
+          "path": "artifacts/retro.json",
+          "observation": "修复轮记录两个 blocker：模板 AGENTS.md 格式化、DevicesProvider 零插件启动崩溃，均 resolved。",
+          "lines": [
+            1,
+            39
+          ],
+          "excerpt": "{\n  \"version\": 1,\n  \"summary\": \"Repair round 1: the device-list feature was complete but verification stopped at format:check on the template's own AGENTS.md; running the remaining checks afterwards exposed one scaffold-test failure caused by the new authorization-backed DevicesProvider.\",\n  \"blockers\": [\n    {\n      \"phase\": \"verify/format:check\",\n      \"title\": \"AGENTS.md fails Prettier on an untouched template file\",\n      \"symptom\": \"format:check reported AGENTS.md and exited 1, before lint, typecheck and tests could run.\",\n      \"rootCause\": \"AGENTS.md in the task base carries two consecutive blank lines before '## Controlled failed-delivery smoke'. format:auto only formats changed files, so the unmodified template file stayed non-conforming while the full-workspace check inspected it.\",\n      \"resolution\": \"Removed the duplicate blank line in AGENTS.md. pnpm format:check '!.github/**' now passes.\",\n      \"status\": \"resolved\"\n    },\n    {\n      \"phase\": \"verify/test\",\n      \"title\": \"DevicesProvider boot crashed without the authorization plugin\",\n      \"symptom\": \"tests/logic/app-server.test.ts > 'registers application-owned providers and routes from the runtime' failed with Service \\\"@nocobase/app/authorization\\\" is not registered at server/providers/devices.ts:22.\",\n      \"rootCause\": \"DevicesProvider.boot() resolved authorizationToken unconditionally, but that scaffold test assembles a runtime with zero plugins (so no authorization service) while still booting every application service provider.\",\n      \"resolution\": \"Guarded boot() with this.app.container.has(authorizationToken) and returned early when absent, matching the authorization provider's own has() pattern; registration still runs when the plugin is present.\",\n      \"status\": \"resolved\"\n    }\n  ],\n  \"improvements\": [\n    {\n      \"category\": \"template\",\n      \"title\": \"Ship a Prettier-clean AGENTS.md\",\n      \"detail\": \"The base template's AGENTS.md had a double blank line that fails the application's own pnpm format:check, so a freshly generated app cannot pass its required checks until the file is edited.\",\n      \"suggestedChange\": \"Run pnpm format on the template repository (including AGENTS.md) before publishing the template, or add AGENTS.md to the pre-publish format check.\",\n      \"mechanizable\": true\n    },\n    {\n      \"category\": \"test\",\n      \"title\": \"Scaffold runtime test builds app providers with zero plugins\",\n      \"detail\": \"app-server.test.ts boots every application service provider with plugins: [] . Any application provider that legitimately resolves a plugin-owned service token in boot() throws there, even though the same provider is correct in the real runtime that registers the plugin.\",\n      \"suggestedChange\": \"Either include the required plugins in that scaffold runtime, or document that application providers must guard plugin-owned tokens with container.has() before resolving, as the authorization provider does.\",\n      \"mechanizable\": false\n    }\n  ]\n}\n",
+          "sha256": "f3f50df4d591bae5baa434dd1a130d13d05b6e9961ff9c59966cfc7974abd876"
+        }
+      ],
+      "fingerprint": "cfc35b33224373af1fe1346a6f73187a8e9a82cfbbcf701aac54488fc326e290"
     },
     {
       "id": "418:36376190523:1:F3",
