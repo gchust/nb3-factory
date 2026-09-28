@@ -1,5 +1,380 @@
 {
   "version": 1,
-  "inputHash": "b6e0bb87bd5035885d74e6e0a9345b7baad41e7ecfd1a03f366f11483213bd6e",
-  "findings": []
+  "inputHash": "b9eff8c3e8e45ceb9b335fcd9f37005b9a4b06bc7255acd9c99279533ebb278d",
+  "findings": [
+    {
+      "id": "460:36434284393:1:F2",
+      "report": "460:36434284393:1",
+      "issue": 460,
+      "taskTitle": "客户、联系人与商机管理",
+      "appVersion": "1.0.0-beta.50",
+      "appTemplate": "@nocobase/app-template-default",
+      "finding": {
+        "id": "F2",
+        "kind": "issue",
+        "owner": "documentation",
+        "confidence": "confirmed",
+        "severity": "minor",
+        "status": "open",
+        "title": "nocobase-db Skill 声明“种子绝不是样例或演示内容”，却未说明演示数据应放在哪里",
+        "detail": "SKILL.md 第 80 行明确 a seed is never sample or demonstration content，第 135 行要求种子以唯一约束 + upsertOne 幂等。本案需要固定演示数据，但 Skill 未给出替代落点；Agent 只能把演示数据放进 database/main/seeds/ 并手写 ensure(findOne/createOne) 代替 upsertOne，因为演示行没有唯一约束。",
+        "impact": "Agent 在明确禁止的路径上实现需求，只能自行发明幂等方式，产出偏离规范且可复制性差。",
+        "suggestedChange": "在 nocobase-db Skill 的 §2 增补“样例/演示数据的推荐位置（如开发用 seed 变体、fixtures 或应用级初始化脚本）”，并说明无唯一约束时的幂等写法。",
+        "diagnosis": {
+          "category": "guidance-gap",
+          "trigger": "任务要求固定演示数据（2 客户/3 联系人/3 商机），而 Skill 只描述运行所需数据的种子。",
+          "expected": "Skill 给出演示数据的规范落点与幂等策略，Agent 依规范实现。",
+          "actual": "Agent 把演示数据写入正式 seeds 目录并自造 ensure 幂等逻辑。",
+          "workaround": "以 findOne + createOne 的 ensure 辅助函数替代 upsertOne，并在注释中说明。",
+          "acceptance": "演示数据可重复 apply 且不重复插入，且不违反种子≠样例数据的原则。"
+        },
+        "evidence": [
+          "E30",
+          "E31",
+          "E24",
+          "E72"
+        ]
+      },
+      "targets": [
+        "@nocobase/db",
+        "app/.agents/skills/nocobase-db/SKILL.md"
+      ],
+      "paths": [
+        ".agents/skills/nocobase-db/SKILL.md",
+        "packages/@nocobase/db/dist/src/seed/define.js"
+      ],
+      "evidence": [
+        {
+          "id": "E30",
+          "kind": "skill",
+          "path": "app/.agents/skills/nocobase-db/SKILL.md",
+          "observation": "§2 明确迁移=结构、种子=运行所需数据，并给出 defineMigration + createCollection 与 defineSeed 的完整示例。",
+          "lines": [
+            78,
+            107
+          ],
+          "excerpt": "## 2. Migrations and seeds\n\nA migration creates structure. A seed inserts the records the application needs in order to run. Neither does the other's job, and a seed is never sample or demonstration content.\n\n```ts\n// database/main/migrations/202609020001_create_orders.ts\nimport { defineMigration, type MigrationDefinition } from '@nocobase/db';\n\nconst migration: MigrationDefinition = defineMigration({\n  name: '202609020001_create_orders',\n\n  async up({ builder }) {\n    await builder.createCollection('orders', (collection) => {\n      collection.increments('id');\n      collection.string('orderNo', { length: 64, nullable: false });\n      collection.string('status', { length: 32, nullable: false });\n      collection.datetime('createdAt', { nullable: false });\n      collection.unique('orderNo');\n      collection.index('status');\n    });\n  },\n\n  async down({ builder }) {\n    await builder.dropCollection('orders');\n  },\n});\n\nexport default migration;\n```\n",
+          "sha256": "f97c07a45a9d49c1d933ddbceeabcc9afe267b1356a2ded1a3da0dd56b54011c"
+        },
+        {
+          "id": "E31",
+          "kind": "skill",
+          "path": "app/.agents/skills/nocobase-db/SKILL.md",
+          "observation": "`pnpm nocobase db apply` 应用迁移与种子；种子必须 keyed on 稳定业务值并 backed by 唯一约束、用 upsertOne 保持幂等。",
+          "lines": [
+            125,
+            135
+          ],
+          "excerpt": "Apply both with `pnpm nocobase db apply`, adding `--connection <name>` for a non-default connection or `--all` for every managed one.\n\nEach context carries its own tools, and which one to use is not a free choice — see [Repository and Query](#4-repository-and-query). In short: a migration works through `builder` and `query`, and a seed writes through `repository`.\n\nThe rules are absolute, because these files are history that has already run on other machines:\n\n- **Self-contained.** Spell out every table, field, index, constraint and metadata operation in the file. Never import a Collection definition, model, registry or shared constant that keeps evolving — that silently changes both the behavior and the checksum of something already applied.\n- **Immutable once merged.** Check with `git log -- <file>` if unsure. Before the branch is merged you may correct the file in place; after it, every change is a new, later file. Never hard-code a previous checksum to make an edited migration look untouched. Correcting it in place changes nothing on its own — it is recorded as executed, so a plain apply skips it and the database keeps the schema the old file produced. `pnpm nocobase db redo` rolls the latest batch back and applies it again.\n- **The file name body matches `name`**, and the name is unique across every source in the application.\n- **Declare `irreversible: true`** when there is no real reverse operation, instead of writing a `down()` that quietly does nothing.\n- **A seed is idempotent**, keyed on a stable business value backed by a unique constraint, so a repeated run is a no-op — `upsertOne` is the direct way to express that. A seed context has no `builder` at all, and a seed has no rollback or truncate behavior.",
+          "sha256": "f97c07a45a9d49c1d933ddbceeabcc9afe267b1356a2ded1a3da0dd56b54011c"
+        },
+        {
+          "id": "E24",
+          "kind": "code",
+          "path": "packages/@nocobase/db/dist/src/seed/define.js",
+          "observation": "`defineSeed` 是种子定义的薄封装（markSeedDefinition）。",
+          "lines": [
+            1,
+            6
+          ],
+          "excerpt": "import { markSeedDefinition } from './internal/marker.js';\n/** Marks and returns a seed definition for discovery by the seed loader. */\nexport function defineSeed(definition) {\n    return markSeedDefinition(definition);\n}\n",
+          "sha256": "b0361ee2f3bb53ef45e9e67d6607d92fc98b6461a71bafb638499cc17347e142"
+        },
+        {
+          "id": "E72",
+          "kind": "code",
+          "path": "app/database/main/seeds/202609280010_sales_demo_data.ts",
+          "observation": "演示数据种子的自述注释与手写 ensure(findOne + createOne)，代替 upsertOne；通过 context.repository 写库。",
+          "lines": [
+            1,
+            44
+          ],
+          "excerpt": "import { defineSeed } from '@nocobase/db';\n\n/**\n * First-run demonstration data for the sales team: two customers, three\n * contacts and three opportunities. The seed looks each record up by its\n * stable business key before inserting, so re-running it changes nothing.\n */\nconst SEEDED_AT = '2026-01-05T09:00:00.000Z';\n\ninterface MinimalRepository {\n  findOne(options: {\n    filter: Record<string, unknown>;\n  }): Promise<Record<string, unknown> | undefined>;\n  createOne(options: {\n    values: Record<string, unknown>;\n  }): Promise<{ record: Record<string, unknown> }>;\n}\n\nasync function ensure(\n  repository: MinimalRepository,\n  filter: Record<string, unknown>,\n  values: Record<string, unknown>,\n): Promise<Record<string, unknown>> {\n  const existing = await repository.findOne({ filter });\n  if (existing) {\n    return existing;\n  }\n  const created = await repository.createOne({ values });\n  return created.record;\n}\n\nexport default defineSeed({\n  name: '202609280010_sales_demo_data',\n\n  async run(context) {\n    // `context.repository` is a method of the seed context; calling it through a\n    // wrapper keeps the receiver bound and satisfies `unbound-method`.\n    const repository = (collection: string) => context.repository(collection);\n    const customers = repository('customers') as unknown as MinimalRepository;\n    const contacts = repository('contacts') as unknown as MinimalRepository;\n    const opportunities = repository(\n      'opportunities',\n    ) as unknown as MinimalRepository;\n",
+          "sha256": "a0743ec1525f1ae639d0d77593c03a0078cf77889b4b82d6e4b649579283bdca"
+        }
+      ],
+      "fingerprint": "af6d1d0a694e97555ec3fecc47ef6c99f9d0e8ef6c9e7d5b1bbdbd124e4e0fe1"
+    },
+    {
+      "id": "460:36434284393:1:F3",
+      "report": "460:36434284393:1",
+      "issue": 460,
+      "taskTitle": "客户、联系人与商机管理",
+      "appVersion": "1.0.0-beta.50",
+      "appTemplate": "@nocobase/app-template-default",
+      "finding": {
+        "id": "F3",
+        "kind": "issue",
+        "owner": "documentation",
+        "confidence": "confirmed",
+        "severity": "minor",
+        "status": "open",
+        "title": "CSRF / 信任来源要求只写在认证 Skill 的部署参考，受保护路由参考完全未提",
+        "detail": "auth.checkCookieWriteOrigin 对携带 cookie 的写请求校验 Origin/Referer，失败返回 403 INVALID_CSRF_ORIGIN。该要求在 user-lifecycle-and-deployment.md 的 Deployment 段有说明（app.publicOrigin + auth.trustedOrigins），但 SKILL.md 的任务路径表把“在 API 路由保护/读取会话”只指向 protecting-routes.md，而该参考与 server-routes.md 均无 CSRF/trustedOrigins/publicOrigin 任何字样。Agent 因此未在 server/config/auth.ts 配置来源，调试中 28 次触发 INVALID_CSRF_ORIGIN，最终以 BETTER_AUTH_URL 环境变量绕行。",
+        "impact": "按 Skill 指引走的实现者会在浏览器写请求上遭遇 fail-closed 403，且指引层面的线索缺失会显著增加调试成本与错误配置（环境变量替代 app.publicOrigin）。",
+        "suggestedChange": "在 protecting-routes.md（及 app-development 的 server-routes.md）加入一段“cookie 写请求需要来源校验”，链接到部署段的 app.publicOrigin/trustedOrigins 说明；并在 SKILL.md 任务路径表对涉及写请求的任务补充该参考。",
+        "diagnosis": {
+          "category": "guidance-gap",
+          "trigger": "受会话保护的 POST/PATCH 写请求在浏览器/HTTP 客户端上被 403 INVALID_CSRF_ORIGIN 拒绝，但路由参考没有相关约束。",
+          "expected": "路由保护参考说明写请求的来源校验与配置项，或至少在任务路径中指向部署参考。",
+          "actual": "只有部署参考提到 CSRF，路由参考零提及；Agent 反复试错并用 BETTER_AUTH_URL 绕行。",
+          "workaround": "设置 BETTER_AUTH_URL=http://127.0.0.1:<port>/<basePath> 让写请求通过。",
+          "acceptance": "按路由参考实现后，浏览器写请求无需额外环境变量即可通过来源校验，或参考显式指向配置项。"
+        },
+        "evidence": [
+          "E50",
+          "E54",
+          "E55",
+          "E78",
+          "E12"
+        ]
+      },
+      "targets": [
+        "@nocobase/app-plugin-authentication",
+        "app/.agents/skills/nocobase-app-plugin-authentication/references/protecting-routes.md",
+        "app/.agents/skills/nocobase-app-plugin-authentication/references/user-lifecycle-and-deployment.md"
+      ],
+      "paths": [
+        ".agents/skills/nocobase-app-plugin-authentication/references/protecting-routes.md",
+        ".agents/skills/nocobase-app-plugin-authentication/references/user-lifecycle-and-deployment.md",
+        "packages/@nocobase/app-plugin-authentication/dist/server/auth.js"
+      ],
+      "evidence": [
+        {
+          "id": "E50",
+          "kind": "code",
+          "path": "packages/@nocobase/app-plugin-authentication/dist/server/auth.js",
+          "observation": "Auth.getSession 复查 disabledAt；checkCookieWriteOrigin 对携带 cookie 的写请求校验 Origin/Referer，失败返回 403 INVALID_CSRF_ORIGIN。",
+          "lines": [
+            105,
+            158
+          ],
+          "excerpt": "    handler(request) {\n        return this.auth.handler(request);\n    }\n    async getSession(headers) {\n        const session = await this.auth.api.getSession({ headers });\n        if (!session)\n            return null;\n        const user = await this.connection.query\n            .selectFrom('user')\n            .select(['id', 'disabledAt'])\n            .where('id', '=', session.user.id)\n            .executeTakeFirst();\n        if (!user || user.disabledAt != null)\n            return null;\n        return session;\n    }\n    /** Protect writes authenticated by a browser cookie, including routes that skip normal session lookup. */\n    async checkCookieWriteOrigin(context) {\n        if (['GET', 'HEAD', 'OPTIONS'].includes(context.req.method))\n            return;\n        // A credential header is not proof that it was used: an invalid API key may fall back to a valid cookie.\n        // Cookie-free API key requests have no ambient browser credential to forge.\n        if (!context.req.header('cookie'))\n            return;\n        const authContext = await this.auth.$context;\n        const origin = context.req.header('origin');\n        const inferredBaseURL = origin === 'null' &&\n            context.req.header('sec-fetch-site') === 'same-origin'\n            ? getBaseURL(undefined, authContext.options.basePath, context.req.raw, false, authContext.options.advanced?.trustedProxyHeaders)\n            : undefined;\n        const source = (inferredBaseURL ? getOrigin(inferredBaseURL) : undefined) ??\n            origin ??\n            context.req.header('referer');\n        if (!source || source === 'null') {\n            return context.json({ code: 'INVALID_CSRF_ORIGIN' }, 403);\n        }\n        // Better Auth also accepts per-request trusted origins. Its static context contains the\n        // configured base URL, static origins, plugin origins, and BETTER_AUTH_TRUSTED_ORIGINS.\n        const configuredOrigins = authContext.options.trustedOrigins;\n        const mergedOrigins = typeof configuredOrigins === 'function'\n            ? await configuredOrigins(context.req.raw)\n            : (configuredOrigins ?? []);\n        const requestAuthContext = Object.create(authContext);\n        requestAuthContext.trustedOrigins = [\n            ...authContext.trustedOrigins,\n            ...mergedOrigins.filter((origin) => typeof origin === 'string' && Boolean(origin)),\n        ];\n        const trustedByAuth = requestAuthContext.isTrustedOrigin(source, {\n            allowRelativePaths: false,\n        });\n        if (!trustedByAuth) {\n            return context.json({ code: 'INVALID_CSRF_ORIGIN' }, 403);\n        }\n    }",
+          "sha256": "39be057de8227c5aef3eb57a2a15b04bfa0aa8922c60be23e8618d31659c9c48"
+        },
+        {
+          "id": "E54",
+          "kind": "skill",
+          "path": "app/.agents/skills/nocobase-app-plugin-authentication/references/protecting-routes.md",
+          "observation": "受保护路由参考全文：auth.required/optional、getSession 与 disabledAt、与 authorization 组合。通篇未出现 CSRF / trustedOrigins / publicOrigin / Origin。",
+          "lines": [
+            1,
+            68
+          ],
+          "excerpt": "# Protecting routes\n\nEvery server route decides its own authentication. Resolve the `Auth` instance\nfrom the container and put `auth.required()` in front of the routes that need\na signed-in caller.\n\n```ts\nimport {\n  authenticationToken,\n  type AuthEnv,\n} from '@nocobase/app-plugin-authentication';\nimport type { Application } from '@nocobase/app-server/application';\nimport {\n  defineApiRoutes,\n  type AppApiRouteContribution,\n} from '@nocobase/app-server/router';\nimport { Hono } from 'hono';\n\nexport const apiRoutes: AppApiRouteContribution<Application> = defineApiRoutes(\n  (app) => {\n    const auth = app.container.resolve(authenticationToken);\n    const routes = new Hono<AuthEnv>();\n\n    routes.use('/orders/*', auth.required());\n    routes.get('/orders', (context) => {\n      const { user, session } = context.get('auth')!;\n      return context.json({ userId: user.id, expiresAt: session.expiresAt });\n    });\n\n    return routes;\n  },\n);\n```\n\nFollow the application's own route conventions for where this file lives and\nhow it is registered; the application Skill's server-routes reference covers\nthat. This reference covers what the plugin adds.\n\n## The two middlewares\n\n- `auth.required()` rejects an anonymous request with `401` and the body\n  `{ code: 'UNAUTHORIZED', message: 'Authentication required' }`. On success\n  `context.get('auth')` is `{ user, session }`.\n- `auth.optional()` sets `context.get('auth')` to the session or `null` and\n  never rejects. Use it for a route whose response differs for a signed-in\n  caller but is still public.\n\nBoth accept `{ skip: (context) => boolean }` to exempt specific requests, for\nexample a health probe inside an otherwise protected prefix. A skipped request\nhas no `auth` variable at all; read it only after checking.\n\n`AuthEnv` is `{ Variables: { auth: AuthSession } }`. Type the router with it so\n`context.get('auth')` compiles. `AuthSession` is `{ user, session } | null`;\n`user` carries `id`, `name`, `email`, `emailVerified`, `username`, `image`,\n`disabledAt`, `createdAt`, `updatedAt`, plus any `user.additionalFields` the\napplication configured.\n\n## What a session means\n\n`auth.getSession(headers)` is what both middlewares call. It asks Better Auth\nfor the cookie's session and then re-reads the user row: a user that no longer\nexists or has `disabledAt` set yields `null` even though the cookie is still\nvalid. That is why disabling an account takes effect immediately for HTTP.\n\nUse `getSession` directly when you have a `Request` but no Hono context, for\nexample in a WebSocket upgrade or a job that validates a caller-supplied\nrequest. Do not call Better Auth's `api.getSession` yourself; it skips the\ndisabled check.",
+          "sha256": "835bdc520d0b737b037e1fa657c04453194bcda96700d013ff1e249c4ab31bbd"
+        },
+        {
+          "id": "E55",
+          "kind": "skill",
+          "path": "app/.agents/skills/nocobase-app-plugin-authentication/references/user-lifecycle-and-deployment.md",
+          "observation": "部署段：auth.secret 来自 AUTH_SECRET；app.publicOrigin 为浏览器可见地址；cookie 写请求要求 Origin/Referer 匹配 base origin 或 trustedOrigins，否则 INVALID_CSRF_ORIGIN。",
+          "lines": [
+            100,
+            116
+          ],
+          "excerpt": "## Deployment\n\n**Secret.** `auth.secret` comes from `AUTH_SECRET` or the deployment\nconfiguration file, is at least 32 characters, is identical on every\ninstance, and never appears in source or in a browser build. Without one the\napplication refuses to start; a standalone start names `pnpm nocobase config init`,\nwhich generates it. The plugin never invents a secret: one made up at boot changes on\nevery restart and silently invalidates every session.\n\n**Public origin.** Set `app.publicOrigin` to the HTTPS address the browser\nsees. Better Auth derives its base URL and callback URLs from it and from the\napplication's public base path; a container-internal address breaks OAuth\ncallbacks and cookie attributes. The reverse proxy must forward host,\nprotocol, and cookies.\n\n**Business request CSRF.** `Auth.required()` and `Auth.optional()` reject cookie-bearing writes unless `Origin` (or, when absent, `Referer`) matches Better Auth's configured base origin or a trusted origin. Configure `app.publicOrigin` for deployed applications and add separate frontend origins through `auth.trustedOrigins`; without a trusted origin, browser writes fail closed with `INVALID_CSRF_ORIGIN`. Cookie-free API key requests can proceed after authentication. A credential header does not exempt a request carrying cookies, including routes that skip session lookup.\n",
+          "sha256": "f8b0c5cdd615fcb6ac7ffb9bfc8f4b42f5fd3422c6e8613d517f87ee60e91fbe"
+        },
+        {
+          "id": "E78",
+          "kind": "code",
+          "path": "app/server/config/auth.ts",
+          "observation": "应用 auth 配置只启用 username/apiKey/emailAndPassword/session，未设置 publicOrigin 或 trustedOrigins。",
+          "lines": [
+            1,
+            18
+          ],
+          "excerpt": "import type { AppConfigFactory } from '@nocobase/app-server/config';\nimport { apiKey } from '@nocobase/app-plugin-api-keys/server';\nimport {\n  defineAuthConfig,\n  type AuthConfig,\n} from '@nocobase/app-plugin-authentication/server';\nimport { username } from 'better-auth/plugins';\n\nconst auth: AppConfigFactory<AuthConfig> = defineAuthConfig({\n  defaults: {\n    plugins: [username({ displayUsername: false }), apiKey()],\n    emailAndPassword: { enabled: true, autoSignIn: false },\n    session: { storeSessionInDatabase: true },\n  },\n});\n\nexport default auth;\n",
+          "sha256": "f9fae46c4ecd67b3ebd17fb77f6e9d4d95b1157191d200b50500ce7161e44d3f"
+        },
+        {
+          "id": "E12",
+          "kind": "log",
+          "path": "artifacts/agent-history/agent-implement.jsonl/part-0041.txt",
+          "observation": "用 `BETTER_AUTH_URL=http://127.0.0.1:13100/main pnpm start` 重启并 sleep，命令以 exit 143（SIGTERM）结束；这是 Agent 绕过 CSRF 的现场，日志中此前 28 次出现 INVALID_CSRF_ORIGIN。",
+          "lines": [
+            1924,
+            1928
+          ],
+          "excerpt": "{\"type\":\"tool_execution_update\",\"toolCallId\":\"call_00_GTx9ra7OZaZUJnSlbamc2424\",\"toolName\":\"bash\",\"args\":{\"command\":\"pkill -f \\\"dist/server/standalone\\\" 2>/dev/null; pkill -f \\\"nocobase start\\\" 2>/dev/null; sleep 2; cd /home/runner/work/nb3-factory/nb3-factory/workspace && (APP_SERVER_PORT=13100 AUTH_SECRET=[REDACTED] BETTER_AUTH_URL=http://127.0.0.1:13100/main pnpm start > /tmp/sales-start.log 2>&1 &) ; sleep 28; tail -5 /tmp/sales-start.log\",\"timeout\":120},\"partialResult\":{\"content\":[]}}\n{\"type\":\"tool_execution_end\",\"toolCallId\":\"call_00_GTx9ra7OZaZUJnSlbamc2424\",\"toolName\":\"bash\",\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"(no output)\\n\\nCommand exited with code 143\"}],\"details\":{}},\"isError\":true}\n{\"type\":\"message_start\",\"message\":{\"role\":\"toolResult\",\"toolCallId\":\"call_00_GTx9ra7OZaZUJnSlbamc2424\",\"toolName\":\"bash\",\"content\":[{\"type\":\"text\",\"text\":\"(no output)\\n\\nCommand exited with code 143\"}],\"details\":{},\"isError\":true,\"timestamp\":1790607504934}}\n{\"type\":\"message_end\",\"message\":{\"role\":\"toolResult\",\"toolCallId\":\"call_00_GTx9ra7OZaZUJnSlbamc2424\",\"toolName\":\"bash\",\"content\":[{\"type\":\"text\",\"text\":\"(no output)\\n\\nCommand exited with code 143\"}],\"details\":{},\"isError\":true,\"timestamp\":1790607504934}}\n{\"type\":\"turn_end\",\"message\":{\"role\":\"assistant\",\"content\":[{\"type\":\"thinking\",\"thinking\":\"The runtime derives baseURL from env. Let me look at how app-server boots auth with baseURL. Actually, `auth.secret` was required, so there's config resolution. Let me just set `AUTH_URL` or `BETTER_AUTH_URL`. Considering the code comment: \\\"Better Auth also accepts per-request trusted origins... configured base URL, static origins, plugin origins, or BETTER_AUTH_TRUSTED_ORIGINS\\\". So I can set `BETTER_AUTH_TRUSTED_ORIGINS=http://127.0.0.1:13100`. Let me restart with that.\\n\\nActually more simply: set `APP_PUBLIC_ORIGIN=http://127.0.0.1:13100` (production uses that) and/or `BETTER_AUTH_URL`. Let me try `BETTER_AUTH_URL=http://127.0.0.1:13100/main`.\\n\\nLet me kill the running server first.\",\"thinkingSignature\":\"[{\\\"format\\\":\\\"unknown\\\",\\\"index\\\":0,\\\"text\\\":\\\"The runtime derives baseURL from env. Let me look at how app-server boots auth with baseURL. Actually, `auth.secret` was required, so there's config resolution. Let me just set `AUTH_URL` or `BETTER_AUTH_URL`. Considering the code comment: \\\\\\\"Better Auth also accepts per-request trusted origins... configured base URL, static origins, plugin origins, or BETTER_AUTH_TRUSTED_ORIGINS\\\\\\\". So I can set `BETTER_AUTH_TRUSTED_ORIGINS=http://127.0.0.1:13100`. Let me restart with that.\\\\n\\\\nActually more simply: set `APP_PUBLIC_ORIGIN=http://127.0.0.1:13100` (production uses that) and/or `BETTER_AUTH_URL`. Let me try `BETTER_AUTH_URL=http://127.0.0.1:13100/main`.\\\\n\\\\nLet me kill the running server first.\\\",\\\"type\\\":\\\"reasoning.text\\\"}]\"},{\"type\":\"toolCall\",\"id\":\"call_00_GTx9ra7OZaZUJnSlbamc2424\",\"name\":\"bash\",\"arguments\":{\"command\":\"pkill -f \\\"dist/server/standalone\\\" 2>/dev/null; pkill -f \\\"nocobase start\\\" 2>/dev/null; sleep 2; cd /home/runner/work/nb3-factory/nb3-factory/workspace && (APP_SERVER_PORT=13100 AUTH_SECRET=[REDACTED] BETTER_AUTH_URL=http://127.0.0.1:13100/main pnpm start > /tmp/sales-start.log 2>&1 &) ; sleep 28; tail -5 /tmp/sales-start.log\",\"timeout\":120}}],\"api\":\"openai-completions\",\"provider\":\"nb3-factory\",\"model\":\"deepseek-v4.1-flash\",\"usage\":{\"input\":1418,\"output\":384,\"cacheRead\":79872,\"cacheWrite\":0,\"reasoning\":200,\"totalTokens\":81674,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"stopReason\":\"toolUse\",\"timestamp\":1790607500010,\"responseId\":\"gen_01M3M8CAX7G7DM96EY4JJS3A7Q\",\"rawStopReason\":\"tool_calls\"},\"toolResults\":[{\"role\":\"toolResult\",\"toolCallId\":\"call_00_GTx9ra7OZaZUJnSlbamc2424\",\"toolName\":\"bash\",\"content\":[{\"type\":\"text\",\"text\":\"(no output)\\n\\nCommand exited with code 143\"}],\"details\":{},\"isError\":true,\"timestamp\":1790607504934}]}",
+          "sha256": "f0bc24747b40590aacffc537197738dfeadb498b226789c11f6f2ffd44aee02c"
+        }
+      ],
+      "fingerprint": "361e1adafea1a9ddbb969a24b3040025c66753ed2bc553a3fd9891bdc2ce644d"
+    },
+    {
+      "id": "460:36434284393:1:F4",
+      "report": "460:36434284393:1",
+      "issue": 460,
+      "taskTitle": "客户、联系人与商机管理",
+      "appVersion": "1.0.0-beta.50",
+      "appTemplate": "@nocobase/app-template-default",
+      "finding": {
+        "id": "F4",
+        "kind": "improvement",
+        "owner": "framework",
+        "confidence": "confirmed",
+        "severity": "minor",
+        "status": "open",
+        "title": "Repository 对空 filter 的 INVALID_FILTER 只能在运行期发现，Skill 未对称说明",
+        "detail": "repository.js 中 findOne 在无 filter 且无 sort 时抛 'findOne() requires filter or non-empty sort.'，upsertOne 等单条 mutation 对空 filter 抛 'Single mutations require a non-empty filter.'。Skill 第 244–245 行说明了 updateMany/deleteMany 拒绝空 scope，但未对 findOne/单条 mutation 的同类约束做对称提示，尤其是无过滤读取场景。",
+        "impact": "调用方容易在“无条件列表/单条查询”路径上传入 {} 并在运行期失败，需靠错误信息与源码反推。",
+        "suggestedChange": "在 Skill 的易错边界中对称列出一节：单条读/写要求非空 filter，无过滤读取应省略 filter 或使用 sort/分页；或让 Repository 提前给出可读提示。",
+        "diagnosis": {
+          "category": "usability-improvement",
+          "trigger": "需要无过滤返回全部的列表读取，直觉上会传 filter: {}。",
+          "expected": "文档或预校验显式提示空 filter 不被接受及其替代写法。",
+          "actual": "运行时抛 INVALID_FILTER，Agent 在 loadRows 中特判并加注释。",
+          "workaround": "当条件为空时省略 filter 键，仅保留 sort。",
+          "acceptance": "Skill 或 API 提示覆盖 findOne/单条 mutation 的空 filter 约束。"
+        },
+        "evidence": [
+          "E26",
+          "E28",
+          "E33",
+          "E74"
+        ]
+      },
+      "targets": [
+        "@nocobase/db",
+        "app/.agents/skills/nocobase-db/SKILL.md"
+      ],
+      "paths": [
+        ".agents/skills/nocobase-db/SKILL.md",
+        "packages/@nocobase/db/dist/src/repository/repository.js"
+      ],
+      "evidence": [
+        {
+          "id": "E26",
+          "kind": "code",
+          "path": "packages/@nocobase/db/dist/src/repository/repository.js",
+          "observation": "findMany/prepareRead/findOne 实现；findOne 在无 filter 且无 sort 时抛 INVALID_FILTER 'findOne() requires filter or non-empty sort.'。",
+          "lines": [
+            62,
+            115
+          ],
+          "excerpt": "    findMany(options = {}) {\n        return new DefaultRepositoryQuery(() => this.executeMany(snapshotQueryInput(options)), () => this.executeStream(snapshotQueryInput(options))[Symbol.asyncIterator]());\n    }\n    async prepareRead(options) {\n        this.options.adapter.assertReadable();\n        const collection = await this.collection();\n        const policy = this.readContext(collection);\n        const selection = await this.validateSelect(collection, options.select, options.context, policy);\n        const filter = await this.normalizeFilter(collection, options.filter, options.context, policy);\n        const sort = await this.validateSort(collection, options.sort, false, policy);\n        validatePagination(options.limit, options.offset, sort, options.cursor);\n        validateCursorDirection(options.direction, options.cursor);\n        const distinct = validateDistinct(collection, options.distinct, sort, policy);\n        const cursor = validateCursor(collection, options.cursor, sort, options.sort !== undefined);\n        return {\n            collection,\n            fields: selection.fields,\n            select: selection.select,\n            filter,\n            sort,\n            distinct,\n            cursor,\n            direction: options.direction,\n            limit: options.limit,\n            offset: options.offset,\n        };\n    }\n    async executeMany(options) {\n        return (await this.options.adapter.findMany(await this.prepareRead(options)));\n    }\n    async *executeStream(options) {\n        for await (const record of this.options.adapter.stream(await this.prepareRead(options))) {\n            yield record;\n        }\n    }\n    async findOne(options) {\n        const collection = await this.collection();\n        const policy = this.readContext(collection);\n        const selection = await this.validateSelect(collection, options.select, options.context, policy);\n        const callerFilter = await this.normalizeFilterWithoutPolicy(collection, options.filter, options.context);\n        if (!callerFilter && options.sort === undefined) {\n            invalid('INVALID_FILTER', 'findOne() requires filter or non-empty sort.', {\n                collection: collection.name,\n            });\n        }\n        const filter = await this.applyReadPolicy(collection, callerFilter, policy);\n        const sort = await this.validateSort(collection, options.sort, !callerFilter, policy);\n        return (await this.options.adapter.findOne({\n            collection,\n            fields: selection.fields,\n            select: selection.select,\n            filter,\n            sort,\n            limit: 1,",
+          "sha256": "31b67e0dcdfd222b6981571d563d9879525a3bf61312ea92a05a269d99c1f311"
+        },
+        {
+          "id": "E28",
+          "kind": "code",
+          "path": "packages/@nocobase/db/dist/src/repository/repository.js",
+          "observation": "upsertOne 对空 filter 抛 INVALID_FILTER 'Single mutations require a non-empty filter.'。",
+          "lines": [
+            393,
+            415
+          ],
+          "excerpt": "    async upsertOne(options) {\n        const policyInput = options.writePolicy === undefined ? true : options.writePolicy;\n        assertWriteEnabled(policyInput);\n        const writePolicy = policyInput === true ? true : buildUpsertWritePolicy(policyInput);\n        const collection = await this.collection();\n        assertWritableCollection(collection);\n        if (writePolicy !== true) {\n            await validateWritePolicyMetadata(this.options.collections, collection, writePolicy.create, ['writePolicy', 'create']);\n            await validateWritePolicyMetadata(this.options.collections, collection, writePolicy.update, ['writePolicy', 'update']);\n        }\n        // The Policy scope is deliberately kept out of this filter. An upsert\n        // locates its target by a unique key, and a scope merged in would leave a\n        // filter that is no longer one key, breaking the uniqueness judgement\n        // outright. Whether the caller may touch the target is asked separately,\n        // of the record that is actually there: see `updateScopeCheck`.\n        const filter = await this.normalizeFilterWithoutPolicy(collection, options.filter, options.context);\n        if (!filter || filter.root.items.length === 0) {\n            invalid('INVALID_FILTER', 'Single mutations require a non-empty filter.', {\n                collection: collection.name,\n                path: ['filter'],\n            });\n        }\n        const by = uniqueSelectorFromFilter(collection, filter, ['filter']);",
+          "sha256": "31b67e0dcdfd222b6981571d563d9879525a3bf61312ea92a05a269d99c1f311"
+        },
+        {
+          "id": "E33",
+          "kind": "skill",
+          "path": "app/.agents/skills/nocobase-db/SKILL.md",
+          "observation": "Repository 示例（databaseManagerToken / db.repository）、方法清单（含 aggregate/groupBy）与易错边界（空 scope、逻辑名 vs 物理列名）。",
+          "lines": [
+            211,
+            249
+          ],
+          "excerpt": "**Repository** is Collection-aware: it resolves fields and relations from the Collection definition, so relation reads and nested writes are expressed as data instead of assembled by hand.\n\n```ts\nimport { databaseManagerToken } from '@nocobase/db';\n\nconst db = app.container.resolve(databaseManagerToken);\nconst projects = db.repository('projects');\n\nconst project = await projects.findOne({\n  filter: { id },\n  select: (select) =>\n    select\n      .fields('id', 'name')\n      .include('owner', (owner) => owner.fields('name')),\n});\n\nconst result = await projects.createOne({\n  values: {\n    name: 'Apollo',\n    owner: (owner) => owner.connect({ id: ownerId }),\n  },\n  select: (select) => select.fields('id', 'name'),\n});\n```\n\nResolve the manager once — in a route factory, or as a constructor dependency of a service — not inside every handler. `db.repository()`, `db.query()`, `db.builder()`, `db.collections()` and `db.transaction()` take the connection name as their last argument and use the default connection when it is omitted, so single-connection code never names one.\n\n`filter`, `values`, `select` and `sort` each accept a builder callback or the equivalent serializable JSON AST, and mean the same thing either way. They do not accept a shorthand string array such as `['id', 'name']` or `['-createdAt']`. Field names are Collection logical names, never column names. A write returns a result object — the record is `result.record`, alongside `result.version` and the created relation targets — rather than the record itself. `findMany` is awaited for an array or iterated asynchronously to consume a large result incrementally.\n\nThe methods are `findOne`, `findMany`, `count`, `exists`, `aggregate`, `groupBy`, `createOne`, `createMany`, `updateOne`, `updateMany`, `upsertOne`, `deleteOne` and `deleteMany`; `describeMutation` and `validateMutation` report capabilities and pre-validate input, and `withPolicy` returns a scoped Repository.\n\nBoundaries that are easy to get wrong:\n\n- `findOne` takes the first match; `updateOne` and `deleteOne` require exactly one; `upsertOne` requires a unique equality condition.\n- `updateMany` and `deleteMany` refuse an empty scope. Pass `all: true` only when the task explicitly calls for every row — never to make an error go away.\n- `createMany` and `updateMany` do not accept nested relation writes. `createOne` accepts `create` and `connect` on a relation, not the full set.\n- `disconnect` detaches; `delete` removes the target record. A relation target update or delete stays inside the current parent record's scope.\n- Repository does not apply the application's permissions. A route handler decides what the caller may see and change _before_ anything reaches `filter`, `values` or `select`. `writePolicy` defaults to `true` for an internal Repository and `false` for one reached from an API route, so a route-facing Repository needs an explicit allow list.\n- Do not assume an `id` exists, and do not infer a field's type, primary key or auto-increment from its name.",
+          "sha256": "f97c07a45a9d49c1d933ddbceeabcc9afe267b1356a2ded1a3da0dd56b54011c"
+        },
+        {
+          "id": "E74",
+          "kind": "code",
+          "path": "app/server/providers/sales-service.ts",
+          "observation": "loadRows 明确注释“空 filter 对象会被 repository 拒绝”，并在无过滤时省略 filter 键。",
+          "lines": [
+            286,
+            302
+          ],
+          "excerpt": "  /**\n   * Read a collection in id order, applying a filter only when there is one.\n   * An empty filter object is rejected by the repository, so the no-filter case\n   * must omit the key rather than pass `{}`.\n   */\n  private async loadRows(\n    collection: string,\n    conditions: Record<string, string | number | boolean | null>,\n  ): Promise<Record<string, unknown>[]> {\n    const repository = this.repository(collection);\n    return Object.keys(conditions).length === 0\n      ? await repository.findMany({ sort: (sort) => sort.field('id').asc() })\n      : await repository.findMany({\n          filter: conditions,\n          sort: (sort) => sort.field('id').asc(),\n        });\n  }",
+          "sha256": "709a10c96d3eb0d3723da485b53f084c7f3988d0add3f1a509ac0689a2c777d2"
+        }
+      ],
+      "fingerprint": "b3a74743b4eb45e7dd941449f06d6e9d6105c0aafb2dcbb82fcb56afd2a49d12"
+    },
+    {
+      "id": "460:36434284393:1:F6",
+      "report": "460:36434284393:1",
+      "issue": 460,
+      "taskTitle": "客户、联系人与商机管理",
+      "appVersion": "1.0.0-beta.50",
+      "appTemplate": "@nocobase/app-template-default",
+      "finding": {
+        "id": "F6",
+        "kind": "improvement",
+        "owner": "framework",
+        "confidence": "confirmed",
+        "severity": "minor",
+        "status": "open",
+        "title": "Repository 提供数据库侧聚合，但示例未在合计场景中突出 aggregate/groupBy",
+        "detail": "repository.js 实现了 aggregate/groupBy（含 filter/having/sort），Skill 的方法清单也列出它们，但示例集中展示关系读取与嵌套写，没有“按父记录求金额合计”的示范。Agent 选择了 findMany + JS reduce，按 customerId 过滤保证隔离，结果正确但随数据量增长会退化。",
+        "impact": "常见聚合需求容易被实现为应用层全量计算，丧失数据库侧聚合的可伸缩性与一致性。",
+        "suggestedChange": "在 nocobase-db Skill 的 Repository 示例旁增加一个“按外键分组的合计”片段（aggregate 或 groupBy），并说明何时选 Query 的 grouped paging。",
+        "diagnosis": {
+          "category": "usability-improvement",
+          "trigger": "客户详情需要展示其商机金额合计。",
+          "expected": "示例指向 aggregate/groupBy 完成数据库侧合计。",
+          "actual": "应用用 JS reduce 对 findMany 结果求和。",
+          "workaround": "按 customerId 过滤后应用层求和，结果正确。",
+          "acceptance": "Skill 示例覆盖分组/条件合计，Agent 可直接照抄数据库侧聚合。"
+        },
+        "evidence": [
+          "E27",
+          "E33",
+          "E75"
+        ]
+      },
+      "targets": [
+        "@nocobase/db",
+        "app/.agents/skills/nocobase-db/SKILL.md"
+      ],
+      "paths": [
+        ".agents/skills/nocobase-db/SKILL.md",
+        "packages/@nocobase/db/dist/src/repository/repository.js"
+      ],
+      "evidence": [
+        {
+          "id": "E27",
+          "kind": "code",
+          "path": "packages/@nocobase/db/dist/src/repository/repository.js",
+          "observation": "Repository.aggregate 与 groupBy 提供数据库侧聚合（含 filter/having/sort）。",
+          "lines": [
+            132,
+            160
+          ],
+          "excerpt": "    async aggregate(options) {\n        const collection = await this.collection();\n        const policy = this.readContext(collection);\n        const aggregate = normalizeAggregateInput(collection, options.aggregate);\n        validateAggregate(collection, aggregate, policy);\n        const filter = await this.normalizeFilter(collection, options.filter, options.context, policy);\n        return this.options.adapter.aggregate({ collection, aggregate, filter });\n    }\n    async groupBy(options) {\n        const collection = await this.collection();\n        const policy = this.readContext(collection);\n        const by = validateGroupByFields(collection, options.by, policy);\n        const aggregate = normalizeAggregateInput(collection, options.aggregate);\n        validateAggregate(collection, aggregate, policy);\n        const resultCollection = groupByResultCollection(collection, by, aggregate);\n        const filter = await this.normalizeFilter(collection, options.filter, options.context, policy);\n        const having = await normalizeFilterWithRelations(this.options.collections, resultCollection, options.having, options.context);\n        const sort = await validateSortWithRelations(this.options.collections, resultCollection, options.sort, false, UNRESTRICTED_READ);\n        return this.options.adapter.groupBy({\n            collection,\n            by,\n            aggregate,\n            filter,\n            having,\n            sort,\n        });\n    }\n    async describeMutation(options) {\n        const collection = await this.collection();",
+          "sha256": "31b67e0dcdfd222b6981571d563d9879525a3bf61312ea92a05a269d99c1f311"
+        },
+        {
+          "id": "E33",
+          "kind": "skill",
+          "path": "app/.agents/skills/nocobase-db/SKILL.md",
+          "observation": "Repository 示例（databaseManagerToken / db.repository）、方法清单（含 aggregate/groupBy）与易错边界（空 scope、逻辑名 vs 物理列名）。",
+          "lines": [
+            211,
+            249
+          ],
+          "excerpt": "**Repository** is Collection-aware: it resolves fields and relations from the Collection definition, so relation reads and nested writes are expressed as data instead of assembled by hand.\n\n```ts\nimport { databaseManagerToken } from '@nocobase/db';\n\nconst db = app.container.resolve(databaseManagerToken);\nconst projects = db.repository('projects');\n\nconst project = await projects.findOne({\n  filter: { id },\n  select: (select) =>\n    select\n      .fields('id', 'name')\n      .include('owner', (owner) => owner.fields('name')),\n});\n\nconst result = await projects.createOne({\n  values: {\n    name: 'Apollo',\n    owner: (owner) => owner.connect({ id: ownerId }),\n  },\n  select: (select) => select.fields('id', 'name'),\n});\n```\n\nResolve the manager once — in a route factory, or as a constructor dependency of a service — not inside every handler. `db.repository()`, `db.query()`, `db.builder()`, `db.collections()` and `db.transaction()` take the connection name as their last argument and use the default connection when it is omitted, so single-connection code never names one.\n\n`filter`, `values`, `select` and `sort` each accept a builder callback or the equivalent serializable JSON AST, and mean the same thing either way. They do not accept a shorthand string array such as `['id', 'name']` or `['-createdAt']`. Field names are Collection logical names, never column names. A write returns a result object — the record is `result.record`, alongside `result.version` and the created relation targets — rather than the record itself. `findMany` is awaited for an array or iterated asynchronously to consume a large result incrementally.\n\nThe methods are `findOne`, `findMany`, `count`, `exists`, `aggregate`, `groupBy`, `createOne`, `createMany`, `updateOne`, `updateMany`, `upsertOne`, `deleteOne` and `deleteMany`; `describeMutation` and `validateMutation` report capabilities and pre-validate input, and `withPolicy` returns a scoped Repository.\n\nBoundaries that are easy to get wrong:\n\n- `findOne` takes the first match; `updateOne` and `deleteOne` require exactly one; `upsertOne` requires a unique equality condition.\n- `updateMany` and `deleteMany` refuse an empty scope. Pass `all: true` only when the task explicitly calls for every row — never to make an error go away.\n- `createMany` and `updateMany` do not accept nested relation writes. `createOne` accepts `create` and `connect` on a relation, not the full set.\n- `disconnect` detaches; `delete` removes the target record. A relation target update or delete stays inside the current parent record's scope.\n- Repository does not apply the application's permissions. A route handler decides what the caller may see and change _before_ anything reaches `filter`, `values` or `select`. `writePolicy` defaults to `true` for an internal Repository and `false` for one reached from an API route, so a route-facing Repository needs an explicit allow list.\n- Do not assume an `id` exists, and do not infer a field's type, primary key or auto-increment from its name.",
+          "sha256": "f97c07a45a9d49c1d933ddbceeabcc9afe267b1356a2ded1a3da0dd56b54011c"
+        },
+        {
+          "id": "E75",
+          "kind": "code",
+          "path": "app/server/providers/sales-service.ts",
+          "observation": "totalOpportunityAmount 用 JS reduce 对机会金额求和，并按 customerId 过滤保证客户隔离。",
+          "lines": [
+            100,
+            140
+          ],
+          "excerpt": " * amounts can never enter the total.\n */\nexport function totalOpportunityAmount(\n  opportunities: readonly OpportunityRecord[],\n): number {\n  const total = opportunities.reduce(\n    (sum, opportunity) => sum + opportunity.amount,\n    0,\n  );\n  return Math.round(total * 100) / 100;\n}\n\nexport class SalesService {\n  constructor(private readonly store: SalesStore) {}\n\n  listCustomers(): Promise<CustomerRecord[]> {\n    return this.store.listCustomers();\n  }\n\n  getCustomer(id: number): Promise<CustomerRecord | undefined> {\n    return this.store.getCustomer(id);\n  }\n\n  async getCustomerDetail(id: number): Promise<CustomerDetail | undefined> {\n    const customer = await this.store.getCustomer(id);\n    if (!customer) {\n      return undefined;\n    }\n    const [contacts, opportunities] = await Promise.all([\n      this.store.listContacts({ customerId: id }),\n      this.store.listOpportunities({ customerId: id }),\n    ]);\n    return {\n      ...customer,\n      contacts,\n      opportunities,\n      totalOpportunityAmount: totalOpportunityAmount(opportunities),\n    };\n  }\n\n  createCustomer(input: CustomerInput): Promise<CustomerRecord> {",
+          "sha256": "709a10c96d3eb0d3723da485b53f084c7f3988d0add3f1a509ac0689a2c777d2"
+        }
+      ],
+      "fingerprint": "5ff165a8dabf72c58c867c9dcebb05134806d2370e8a92f501d6991b2f07abb6"
+    }
+  ]
 }
