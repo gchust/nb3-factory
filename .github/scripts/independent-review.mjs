@@ -13,15 +13,7 @@ const sha = s => /^[a-f0-9]{40}$/u.test(s ?? '');
 const digest = s => createHash('sha256').update(s).digest('hex');
 const states = new Set(['passed', 'failed', 'blocked', 'not_run', 'not_applicable', 'unknown']);
 const causes = new Set(['agent_deviation', 'skill_gap', 'skill_stale', 'plugin_defect', 'template_or_registry_drift', 'factory_defect', 'environment_or_provider', 'unknown']);
-export function parseReviewRequest(event, inputs = {}) {
-  if (event.comment) {
-    const owner = event.repository?.owner?.login;
-    if (event.comment.user?.login !== owner || event.issue?.pull_request ||
-      !event.issue?.labels?.some(l => (typeof l === 'string' ? l : l.name) === 'factory:manual')) return null;
-    const m = /^\/factory-review ([1-9]\d*) ([1-9]\d*)(?: ([1-9]\d*))?\s*$/u.exec(event.comment.body ?? '');
-    if (!m) return null;
-    return { issue: Number(m[1]), runId: Number(m[2]), attempt: Number(m[3] ?? 1), requestIssue: event.issue.number };
-  }
+export function parseReviewRequest(inputs = {}) {
   const value = { issue: Number(inputs.issue), runId: Number(inputs.run), attempt: Number(inputs.attempt ?? 1) };
   if (!Object.values(value).every(positive)) throw new Error('Explicit Issue/run/attempt required');
   return value;
@@ -172,9 +164,7 @@ async function main() {
   const [mode, ...argv] = process.argv.slice(2);
   const args = Object.fromEntries(Array.from({ length: argv.length / 2 }, (_, i) => [argv[i * 2].replace(/^--/u, ''), argv[i * 2 + 1]]));
   if (mode === 'select') {
-    const request = parseReviewRequest(read(process.env.GITHUB_EVENT_PATH), args);
-    if (!request) return;
-    if (![request.issue, request.runId, request.attempt].every(positive)) throw new Error('Invalid review request');
+    const request = parseReviewRequest(args);
     const run = await api('GET', `/actions/runs/${request.runId}/attempts/${request.attempt}`);
     const source = selectHistorySource(run, await all(`/actions/runs/${request.runId}/attempts/${request.attempt}/jobs`, 'jobs'),
       await all(`/actions/runs/${request.runId}/artifacts`, 'artifacts'), process.env.GITHUB_REPOSITORY);

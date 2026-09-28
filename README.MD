@@ -114,7 +114,7 @@ pnpm dev
 
 已有配置不会因改名失效：Workflow 优先读取 `CODE_AGENT_*`，尚未设置时兼容对应的旧 `PI_*` Secrets/Variables。GitHub 不能读回 Secret 的明文，因此本次不会假装已重命名远端 Secret；可以在设置中重新录入新名称，再移除旧配置。
 
-已有 `pi/issue-N` 分支和 PR 保持不动，避免破坏未合并交付；重跑继续使用原工作分支。旧 `pi:*` 标签、PR 来源标记及 `pi-task` 唤醒事件仍可识别，状态更新后换成 `agent:*`。历史任务请在 **Code Agent NocoBase Task** 中通过 Issue 编号重跑，不要重跑旧 Workflow 的历史运行。
+旧 `pi/issue-N` 分支和 PR 已全部合并清理，PR 关闭与预览回收只处理 `agent/issue-N`，`pi-task` 唤醒事件也已停用。旧 `pi:*` 标签和 PR 来源标记仍可识别，状态更新后换成 `agent:*`。历史任务请在 **Code Agent NocoBase Task** 中通过 Issue 编号重跑，不要重跑旧 Workflow 的历史运行。
 
 PR 关闭后仅运行默认分支的控制脚本来关闭 Issue 和唤醒队列，不检出或执行 PR 代码。这使用 GitHub 的 [`pull_request_target` 受信任控制流程](https://docs.github.com/en/actions/reference/security/securely-using-pull_request_target)，保证较旧应用分支也能处理新命名的任务。
 

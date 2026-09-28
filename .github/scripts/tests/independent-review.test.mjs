@@ -28,13 +28,11 @@ function fixture(t) {
   return { root, report, validate: r => validateReview(r, binding(), path.join(root, 'app'), path.join(root, 'evidence')) };
 }
 
-test('only owner commands on manual Issues can trigger independent review', () => {
-  const event = { repository: { owner: { login: 'owner' } }, issue: { number: 211, labels: ['factory:manual'] }, comment: { user: { login: 'owner' }, body: '/factory-review 2 123 1' } };
-  assert.equal(parseReviewRequest(event).issue, 2);
-  assert.equal(parseReviewRequest({ ...event, comment: { ...event.comment, user: { login: 'other' } } }), null);
-  assert.equal(parseReviewRequest({ ...event, issue: { ...event.issue, labels: [] } }), null);
-  assert.equal(parseReviewRequest({ ...event, issue: { ...event.issue, pull_request: {} } }), null);
-  assert.equal(parseReviewRequest({ ...event, comment: { ...event.comment, body: 'quoted /factory-review 2 123' } }), null);
+test('independent review needs an explicit Issue, run and attempt', () => {
+  assert.deepEqual(parseReviewRequest({ issue: '2', run: '123', attempt: '1' }), { issue: 2, runId: 123, attempt: 1 });
+  assert.equal(parseReviewRequest({ issue: '2', run: '123' }).attempt, 1);
+  assert.throws(() => parseReviewRequest({ issue: '2', attempt: '1' }), /Explicit/);
+  assert.throws(() => parseReviewRequest({ issue: '0', run: '123', attempt: '1' }), /Explicit/);
 });
 
 test('review binds exact delivery and frozen rubric; moved PR and absent rubric fail', () => {

@@ -9,12 +9,14 @@ const artifact={id:88,name:'factory-build-review-200-2',created_at:'2026-01-01T0
 const select=(r=run,j=[job],a=[artifact])=>selectReplayHistory(r,j,a,repository,request);
 const binding={repository,issue:12,runId:100,attempt:1,publicationAttempt:2,baseSha:'a'.repeat(40),patchHash:'b'.repeat(64)};
 const original={id:100,path:'.github/workflows/code-agent-task.yml',head_repository:{full_name:repository},display_title:'Factory issue #12 build 0 from 0'};
-test('only an owner command on a manual Issue requests an old review archive',()=>{
-  const e={repository:{owner:{login:'owner'}},issue:{labels:[{name:'factory:manual'}]},comment:{user:{login:'owner'},body:'/factory-review-history 200 2'}};
-  assert.deepEqual(historyRequest(e,{}),request);
-  assert.equal(historyRequest({...e,comment:{...e.comment,user:{login:'someone'}}},{}),null);
-  assert.equal(historyRequest({...e,issue:{labels:[]}},{}),null);
+test('an archive request names the completed replay run, explicitly or from its completion event',()=>{
+  assert.deepEqual(historyRequest({},{SOURCE_RUN_ID:'200',SOURCE_ATTEMPT:'2'}),request);
   assert.deepEqual(historyRequest({workflow_run:{id:200,run_attempt:2}},{}),request);
+});
+test('dispatched and legacy comment replays are archivable; other events are not',()=>{
+  assert.equal(select({...run,event:'workflow_dispatch'}).runId,200);
+  assert.equal(select().runId,200);
+  assert.throws(()=>select({...run,event:'push'}));
 });
 test('archive uses the replay run for usage and keeps original publication provenance separate',()=>{
   const source=bindReplayHistory(select(),binding,original);

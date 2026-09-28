@@ -8,8 +8,6 @@ on:
       - '.github/scripts/restore-source-dist.mjs'
       - '.github/scripts/baseline-record.mjs'
       - '.github/scripts/publish-source-baseline.sh'
-  issue_comment:
-    types: [created]
   workflow_dispatch:
     inputs:
       source_sha:
@@ -27,11 +25,7 @@ permissions: {}
 
 jobs:
   source-baseline:
-    if: >-
-      github.event_name == 'pull_request' ||
-      (github.actor == github.repository_owner &&
-       (github.event_name == 'workflow_dispatch' ||
-        (!github.event.issue.pull_request && startsWith(github.event.comment.body, '/factory-source '))))
+    if: github.event_name == 'pull_request' || github.actor == github.repository_owner
     runs-on: ubuntu-latest
     timeout-minutes: 90
     permissions:
@@ -56,15 +50,9 @@ jobs:
         run: |
           node --input-type=module <<'NODE'
           import assert from 'node:assert/strict';
-          import {readFileSync,appendFileSync} from 'node:fs';
+          import {appendFileSync} from 'node:fs';
           import {execFileSync} from 'node:child_process';
-          const event=JSON.parse(readFileSync(process.env.GITHUB_EVENT_PATH));
-          let sha=process.env.REQUESTED_SHA;
-          if(process.env.GITHUB_EVENT_NAME==='issue_comment') {
-            assert.ok(event.issue.labels.some(l=>l.name==='factory:manual'));
-            const match=/^\/factory-source ([a-f0-9]{40})\s*$/u.exec(event.comment.body);
-            assert.ok(match,'Expected /factory-source <exact SHA>'); sha=match[1];
-          }
+          const sha=process.env.REQUESTED_SHA;
           assert.match(sha,/^[a-f0-9]{40}$/u);
           const control=execFileSync('git',['-C','control','rev-parse','HEAD'],{encoding:'utf8'}).trim();
           appendFileSync(process.env.GITHUB_ENV,`SOURCE_SHA=${sha}\nFACTORY_CONTROL_SHA=${control}\n`);
@@ -208,9 +196,7 @@ jobs:
 
   publish:
     needs: [source-baseline, portable]
-    if: >-
-      github.actor == github.repository_owner &&
-      ((github.event_name == 'workflow_dispatch' && inputs.publish) || github.event_name == 'issue_comment')
+    if: github.actor == github.repository_owner && github.event_name == 'workflow_dispatch' && inputs.publish
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
@@ -219,7 +205,7 @@ jobs:
       actions: read
     env:
       FACTORY_CONTROL_SHA: ${{ needs.source-baseline.outputs.control_sha }}
-      TRACKING_ISSUE: ${{ github.event.issue.number || '210' }}
+      TRACKING_ISSUE: '210'
     steps:
       - uses: actions/checkout@v4
         with:

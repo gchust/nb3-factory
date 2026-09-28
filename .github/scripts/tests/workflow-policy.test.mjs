@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import test from 'node:test';
 import { taskOutcome } from '../task-outcome.mjs';
@@ -127,7 +127,7 @@ test('different Issues run concurrently while one Issue stays serialized', () =>
   assert.match(workflow, /queue: max/);
 });
 
-test('PR completion uses only trusted control-plane code for both branch generations', () => {
+test('PR completion uses only trusted control-plane code for agent task branches', () => {
   const completion = readFileSync(
     path.resolve(
       import.meta.dirname,
@@ -141,8 +141,20 @@ test('PR completion uses only trusted control-plane code for both branch generat
   assert.match(completion, /pull_request_target:\n\s+types: \[closed\]/);
   assert.match(completion, /github\.event\.repository\.default_branch/);
   assert.match(completion, /'agent\/issue-'/);
-  assert.match(completion, /'pi\/issue-'/);
+  assert.doesNotMatch(completion, /'pi\/issue-'/);
   assert.doesNotMatch(completion, /pnpm|npm|pull_request\.head\.sha|secrets\./);
+});
+
+test('only the comment build queue listens to Issue comments', () => {
+  // Every other workflow triggered on each comment only to skip it; maintainer
+  // entry points are workflow_dispatch.
+  const directory = path.resolve(import.meta.dirname, '..', '..', 'workflows');
+  const listeners = readdirSync(directory).filter((name) =>
+    /^\s{2}issue_comment:/m.test(
+      readFileSync(path.join(directory, name), 'utf8'),
+    ),
+  );
+  assert.deepEqual(listeners, ['comment-build-queue.yml']);
 });
 
 test('implementation and repair default to unlimited invocations and max thinking', () => {

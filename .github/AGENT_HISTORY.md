@@ -90,11 +90,6 @@ node --test --test-concurrency=1 .github/scripts/tests/*.test.mjs
 
 `Reassess Build Quality` 的独立补跑完成后，由 `Publish Build Review History` 归档到
 原执行 Issue。归档按新的评审 run/attempt 计量，原搭建/发布 attempt 仅作为来源保存；
-只读取已有产物，不再调用模型、不重搭应用。维护者可在 `factory:manual` Issue 补发：
-
-```text
-/factory-review-history <评审补跑 Run ID> <attempt>
-```
-
-此命令不是原业务搭建 Run ID。旧 Artifact 未包含的 Prompt/调用信息不可补造；原产物
-已过期时明确失败。发布失败不会改写业务通过状态，已有有效历史链接继续保留。
+只读取已有产物，不再调用模型、不重搭应用。仓库 owner 可在 Actions 手动运行
+**Publish Build Review History** 补发，填写评审补跑的 Run ID 和 attempt，不是原业务搭建
+Run ID。旧 Artifact 未包含的 Prompt/调用信息不可补造；原产物已过期时明确失败。发布失败不会改写业务通过状态，已有有效历史链接继续保留。

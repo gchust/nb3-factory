@@ -15,14 +15,7 @@ const sha = s => /^[a-f0-9]{40}$/.test(s ?? '');
 const write = (root, file, data) => { mkdirSync(root, { recursive: true }); writeFileSync(path.join(root, file), JSON.stringify(data, null, 2) + '\n'); };
 const out = (name, value) => process.env.GITHUB_OUTPUT && appendFileSync(process.env.GITHUB_OUTPUT, `${name}=${value}\n`);
 
-export function parseReplayRequest(event, inputs) {
-  if (event.comment) {
-    if (event.comment.user?.login !== event.repository?.owner?.login || event.issue?.pull_request ||
-        !event.issue?.labels?.some(label => (typeof label === 'string' ? label : label.name) === 'factory:manual')) return null;
-    const match = /^\/factory-build-review ([1-9]\d*) ([1-9]\d*) ([1-9]\d*)\s*$/.exec(event.comment.body ?? '');
-    if (!match) return null;
-    inputs = { issue: match[1], run: match[2], attempt: match[3] };
-  }
+export function parseReplayRequest(inputs = {}) {
   const result = { issue: Number(inputs.issue), runId: Number(inputs.run), attempt: Number(inputs.attempt) };
   assert.ok(Object.values(result).every(positive), 'Explicit Issue, task run and publication attempt required');
   return result;
@@ -129,9 +122,7 @@ async function main() {
   const client = new GitHubClient({ repository: process.env.GITHUB_REPOSITORY, token: process.env.GITHUB_TOKEN });
   if (mode === 'select') {
     out('ready', 'false');
-    const event = JSON.parse(readFileSync(process.env.GITHUB_EVENT_PATH, 'utf8'));
-    const request = parseReplayRequest(event, args);
-    if (!request) return;
+    const request = parseReplayRequest(args);
     const selected = await selectReplay(client, request);
     write(args.output, 'selected.json', selected);
     out('source_run', selected.runId); out('artifact', selected.artifact.id); out('ready', 'true');
