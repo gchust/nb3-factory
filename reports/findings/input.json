@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "inputHash": "a3c6e94d987f15d15e4700d71c851a7d62049b4d4ae718ceadec69f18567ba0f",
+  "inputHash": "0b79db93132fb6825ee5b44c0de36bfa5d88b09d386cc11a1e244b2af12e51f8",
   "findings": [
     {
       "id": "460:36434284393:1:F2",
@@ -1092,6 +1092,258 @@
         }
       ],
       "fingerprint": "9743ae3435d0ed8667a7fc42fa80e734271799dbffab547d40ecad271db97fac"
+    },
+    {
+      "id": "464:36470549639:1:F3",
+      "report": "464:36470549639:1",
+      "issue": 464,
+      "taskTitle": "内部资料只读问答助手",
+      "appVersion": "1.0.0-beta.50",
+      "appTemplate": "@nocobase/app-template-default",
+      "finding": {
+        "id": "F3",
+        "kind": "issue",
+        "owner": "framework",
+        "severity": "minor",
+        "confidence": "confirmed",
+        "status": "open",
+        "title": "basePath 下未命中的 API GET 回落到 SPA index.html，缺失接口被伪装成 200",
+        "detail": "spa/routes.js 用 router.get(`${basePath}/*`) 提供兜底；未注册的 /main/api/materials 因此返回 200 text/html 而非 404 JSON，掩盖了接口根本不存在。",
+        "impact": "按公开 API 正常访问一个未注册接口会得到“成功”的 HTML，排错成本大，本次 QA 与 Agent 都被该现象干扰。",
+        "suggestedChange": "在 API 前缀（如 /api）命中时不进入 SPA 兜底，返回 404 JSON 并带可诊断信息。",
+        "diagnosis": {
+          "category": "usability-improvement",
+          "trigger": "访问 basePath 下未注册的 /api/... GET（本次为 /main/api/materials）。",
+          "expected": "返回 404 JSON（或明确的未注册路由错误）。",
+          "actual": "返回 200 index.html（SPA 兜底），请求看似成功。",
+          "workaround": "只能靠 Database Explorer/直接查库判断接口是否存在。",
+          "acceptance": "未注册 GET /<base>/api/<x> 返回 404 且 content-type 为 JSON。"
+        },
+        "evidence": [
+          "E17",
+          "E7"
+        ]
+      },
+      "targets": [
+        "@nocobase/app-server"
+      ],
+      "paths": [
+        "packages/@nocobase/app-server/dist/router/repository-routes.d.ts",
+        "packages/@nocobase/app-server/dist/spa/routes.js"
+      ],
+      "evidence": [
+        {
+          "id": "E17",
+          "kind": "code",
+          "path": "packages/@nocobase/app-server/dist/spa/routes.js",
+          "observation": "spa/routes.js 用 router.get(`${basePath}/*`) 提供 SPA 兜底：在 basePath 下未命中的 GET 会返回 index.html，而不是 404；这是未注册 /api 路径返回 200 HTML 的机制。",
+          "lines": [
+            6,
+            33
+          ],
+          "excerpt": "export function registerSpaRoutes(router, options) {\n    const basePath = normalizeBasePath(options.basePath);\n    const handler = options.handler;\n    if (handler) {\n        router.all(basePath || '/', (context) => serveSpaHandler(context.req.raw, options));\n        router.all(`${basePath}/*`, (context) => serveSpaHandler(context.req.raw, options));\n        return;\n    }\n    const rootDir = path.dirname(options.indexPath);\n    const assetsRoutePath = joinBasePath(basePath, options.assetsPath ?? '/assets');\n    router.all(assetsRoutePath, (context) => serveSpaAsset(context.req.raw, {\n        rootDir,\n        basePath,\n    }));\n    router.all(`${assetsRoutePath}/*`, (context) => serveSpaAsset(context.req.raw, {\n        rootDir,\n        basePath,\n    }));\n    router.get(basePath || '/', () => serveSpaIndex(options.indexPath, {\n        clientConfig: options.clientConfig,\n        publicConfig: resolvePublicConfig(options),\n        publicBasePath: options.publicBasePath,\n    }));\n    router.get(`${basePath}/*`, () => serveSpaIndex(options.indexPath, {\n        clientConfig: options.clientConfig,\n        publicConfig: resolvePublicConfig(options),\n        publicBasePath: options.publicBasePath,\n    }));",
+          "sha256": "48b4d885b00e1d79b34f1a1fee33b05187eaa3c564591c6021e8ec8804e20f48"
+        },
+        {
+          "id": "E7",
+          "kind": "code",
+          "path": "packages/@nocobase/app-server/dist/router/repository-routes.d.ts",
+          "observation": "RepositoryApiExposure 是显式装配：name/collection/connection 与必填 policy（第35-45行），actions 决定暴露哪些端点；未注册的集合或 action 不会被自动 REST 暴露。",
+          "lines": [
+            27,
+            52
+          ],
+          "excerpt": "export interface RepositoryApiExposure<P = unknown> {\n    /** The name passed to api.repository(name). */\n    readonly name: string;\n    /** Logical Collection name; defaults to name. */\n    readonly collection?: string;\n    /** Database connection name; defaults to the application's default connection. */\n    readonly connection?: string;\n    /**\n     * The Policy every action of this exposure runs under. Required: an exposure\n     * without one would accept anything, and a missing declaration is the one\n     * mistake that reads exactly like a deliberate one.\n     *\n     * A function receives the principal resolved for the request, which is what\n     * lets a scope name the caller. It is server-owned either way — a request\n     * body naming `policy` or `scope` is refused, because the per-action\n     * allowlist below enumerates what an action reads from the body and neither\n     * is on it.\n     */\n    readonly policy: RepositoryPolicy | ((principal: P) => RepositoryPolicy);\n    readonly actions: RepositoryApiActions;\n}\nexport interface DefineRepositoryApiRoutesOptions<P = unknown> {\n    readonly repositories: readonly RepositoryApiExposure<P>[];\n    /**\n     * Resolve the principal a Policy function receives. Required as soon as one\n     * exposure declares a Policy function, and never called otherwise.",
+          "sha256": "fd84695fba40fa2d32fbf42ecf465e53fe7ae668bab40ecd3d3e3b74fc026442"
+        }
+      ],
+      "fingerprint": "3ad49a8969d3a1c672734b6a824140155d980c259c859e0c83bb4fcbaf58d826"
+    },
+    {
+      "id": "464:36470549639:1:F4",
+      "report": "464:36470549639:1",
+      "issue": 464,
+      "taskTitle": "内部资料只读问答助手",
+      "appVersion": "1.0.0-beta.50",
+      "appTemplate": "@nocobase/app-template-default",
+      "finding": {
+        "id": "F4",
+        "kind": "issue",
+        "owner": "plugin",
+        "severity": "major",
+        "confidence": "confirmed",
+        "status": "open",
+        "title": "AI LLM 密钥 .env 占位符仅在 pnpm dev 展开，pnpm start 下变为空串",
+        "detail": "SKILL 明确列为已知缺陷：config.yml 的 ${NAME} 在 pnpm start 下不合并应用 .env，占位符变空导致 provider 认证失败。",
+        "impact": "按 Skill 用 .env 存密钥并以生产模式启动必然认证失败；本次以 start 模式验收，llmServices=0，问答链路无法评估。",
+        "suggestedChange": "让 pnpm start 也合并应用 .env，或在密钥缺失时给出显式配置错误而非静默空串。",
+        "diagnosis": {
+          "category": "runtime-defect",
+          "trigger": "config.yml 使用 ${NAME} 且以 pnpm start/nocobase start 运行。",
+          "expected": "占位符从应用 .env 展开为真实密钥。",
+          "actual": "占位符解析为空串，provider 报认证失败（SKILL 记录的开放缺陷）。",
+          "workaround": "在部署环境设真实变量或把值写入 config.yml。",
+          "acceptance": "start 模式下 ${NAME} 正确展开且 provider 不报认证失败。"
+        },
+        "evidence": [
+          "E15"
+        ]
+      },
+      "targets": [
+        "app/.agents/skills/nocobase-app-plugin-ai-employee/SKILL.md"
+      ],
+      "paths": [
+        ".agents/skills/nocobase-app-plugin-ai-employee/SKILL.md"
+      ],
+      "evidence": [
+        {
+          "id": "E15",
+          "kind": "skill",
+          "path": "app/.agents/skills/nocobase-app-plugin-ai-employee/SKILL.md",
+          "observation": "AI employee Skill 列出前置条件（plugins 注册、config.yml 至少一个 llmServices、两段式资源 id <connection>.<collection>）并明确记录已知缺陷：.env 仅在 pnpm dev 展开，pnpm start 下占位符变为空串导致认证失败。",
+          "lines": [
+            32,
+            45
+          ],
+          "excerpt": "## Prerequisites\n\n1. `@nocobase/app-plugin-ai-employee` is registered in `server/plugins.ts` and `client/plugins.ts`. Those two files are the registration; `package.json#nocobase` carries template metadata and no plugin list, so do not look for one there or add one.\n2. `config.yml` declares at least one usable `ai.llmServices` entry. Nothing works without it, its models must be real, and where its key lives is the user's choice among three places — see [capabilities.md § LLM services](references/capabilities.md#llm-services-configyml) and [§ Where the key lives](references/capabilities.md#where-the-key-lives).\n3. Frontend work needs `client/extensions/nocobase-ai/index.ts` to exist. If it does not, install the Registry item first — see [chat-surfaces.md § Install the extension](references/chat-surfaces.md#install-the-extension).\n4. Chat attachments need a storage disk decided deliberately — see [capabilities.md § Attachment storage](references/capabilities.md#attachment-storage-configyml).\n5. Business data the assistant should read is already authorized, and its authorization resource id is two-part — `<connection>.<collection>`. The built-in data tools skip a bare `orders`, and what they skip disappears in silence: discovery returns no data sources at all, not one missing table, so the symptom points at the database configuration rather than the grant. Authorization itself belongs to the `nocobase-app-plugin-authorization` Skill; what this plugin requires of it is in [capabilities.md § What the data tools can see](references/capabilities.md#what-the-data-tools-can-see).\n6. The AI employee page reports results through `useToaster()` from `@nocobase/app-client`, so the App needs the `@nocobase/app-client` that exports it and registers a toaster service, as the templates do: `client/lib/toaster.ts` from the template, and `this.app.container.instance(toasterToken, createToaster())` in the `register()` of `client/service-provider.ts`, with the `Toaster` component mounted in `client/react-providers.ts`. Without the registration nothing throws, but its toasts are only logged to the browser console. Update `@nocobase/app-client` together with this plugin; the `nocobase-app-upgrade` Skill's `references/edge-cases.md` (\"Notifications and the application toaster\") has the full steps.\n\n## Known gaps in this version\n\nOne thing does not yet work the way it should. It is an open defect rather than intended behaviour, and a fix is planned; it cannot be fixed from the App in the meantime, so work around it until the release that closes it. If you are reading this from a newer version of the plugin, check whether it still applies before designing around it.\n\n- **`.env` works only under `pnpm dev`.** `${NAME}` in `ai.llmServices` and `ai.mcpServers` expands from `process.env`. `pnpm dev` passes a merged environment to the server process, so it works; `pnpm start` loads the built server in-process and the application's `.env` is not merged into `process.env`, so the placeholder becomes an empty string and the provider reports an authentication failure. Until that is fixed, `.env` is the last of the three places a key can live, and a deployment sets a real environment variable or writes the value into its own `config.yml`.",
+          "sha256": "85eae46ed472aee0862e604f9daa0e21b3641105347e212cf08e1752e2ef7f5c"
+        }
+      ],
+      "fingerprint": "359984eba9a9abfbae4f51b7e10cff8e1e8f1c4973f035c80eb40d84b16664ef"
+    },
+    {
+      "id": "464:36470549639:1:F5",
+      "report": "464:36470549639:1",
+      "issue": 464,
+      "taskTitle": "内部资料只读问答助手",
+      "appVersion": "1.0.0-beta.50",
+      "appTemplate": "@nocobase/app-template-default",
+      "finding": {
+        "id": "F5",
+        "kind": "issue",
+        "owner": "plugin",
+        "severity": "minor",
+        "confidence": "confirmed",
+        "status": "open",
+        "title": "数据工具对未授权/非两段式资源 id 静默跳过，症状指向数据库配置",
+        "detail": "SKILL 说明内置数据工具跳过裸集合名（如 materials），且 discovery 返回空数据源而非提示缺哪个授权，误导排查方向。",
+        "impact": "应用按常识用裸集合名时会得到“无数据源”的迷惑结果，增加大量排查成本。",
+        "suggestedChange": "在授权缺失时输出可诊断警告（指出期望的 <connection>.<collection>），而非完全静默。",
+        "diagnosis": {
+          "category": "usability-improvement",
+          "trigger": "助手数据工具遇到未按 <connection>.<collection> 注册的集合。",
+          "expected": "返回“该集合未授权/资源 id 不规范”的可诊断提示。",
+          "actual": "该表从 discovery 结果中消失且无任何告警（SKILL 原文）。",
+          "workaround": "按 Skill 改为两段式资源 id 并重新授权。",
+          "acceptance": "未授权集合被访问时产生明确警告而非静默缺失。"
+        },
+        "evidence": [
+          "E15"
+        ]
+      },
+      "targets": [
+        "app/.agents/skills/nocobase-app-plugin-ai-employee/SKILL.md"
+      ],
+      "paths": [
+        ".agents/skills/nocobase-app-plugin-ai-employee/SKILL.md"
+      ],
+      "evidence": [
+        {
+          "id": "E15",
+          "kind": "skill",
+          "path": "app/.agents/skills/nocobase-app-plugin-ai-employee/SKILL.md",
+          "observation": "AI employee Skill 列出前置条件（plugins 注册、config.yml 至少一个 llmServices、两段式资源 id <connection>.<collection>）并明确记录已知缺陷：.env 仅在 pnpm dev 展开，pnpm start 下占位符变为空串导致认证失败。",
+          "lines": [
+            32,
+            45
+          ],
+          "excerpt": "## Prerequisites\n\n1. `@nocobase/app-plugin-ai-employee` is registered in `server/plugins.ts` and `client/plugins.ts`. Those two files are the registration; `package.json#nocobase` carries template metadata and no plugin list, so do not look for one there or add one.\n2. `config.yml` declares at least one usable `ai.llmServices` entry. Nothing works without it, its models must be real, and where its key lives is the user's choice among three places — see [capabilities.md § LLM services](references/capabilities.md#llm-services-configyml) and [§ Where the key lives](references/capabilities.md#where-the-key-lives).\n3. Frontend work needs `client/extensions/nocobase-ai/index.ts` to exist. If it does not, install the Registry item first — see [chat-surfaces.md § Install the extension](references/chat-surfaces.md#install-the-extension).\n4. Chat attachments need a storage disk decided deliberately — see [capabilities.md § Attachment storage](references/capabilities.md#attachment-storage-configyml).\n5. Business data the assistant should read is already authorized, and its authorization resource id is two-part — `<connection>.<collection>`. The built-in data tools skip a bare `orders`, and what they skip disappears in silence: discovery returns no data sources at all, not one missing table, so the symptom points at the database configuration rather than the grant. Authorization itself belongs to the `nocobase-app-plugin-authorization` Skill; what this plugin requires of it is in [capabilities.md § What the data tools can see](references/capabilities.md#what-the-data-tools-can-see).\n6. The AI employee page reports results through `useToaster()` from `@nocobase/app-client`, so the App needs the `@nocobase/app-client` that exports it and registers a toaster service, as the templates do: `client/lib/toaster.ts` from the template, and `this.app.container.instance(toasterToken, createToaster())` in the `register()` of `client/service-provider.ts`, with the `Toaster` component mounted in `client/react-providers.ts`. Without the registration nothing throws, but its toasts are only logged to the browser console. Update `@nocobase/app-client` together with this plugin; the `nocobase-app-upgrade` Skill's `references/edge-cases.md` (\"Notifications and the application toaster\") has the full steps.\n\n## Known gaps in this version\n\nOne thing does not yet work the way it should. It is an open defect rather than intended behaviour, and a fix is planned; it cannot be fixed from the App in the meantime, so work around it until the release that closes it. If you are reading this from a newer version of the plugin, check whether it still applies before designing around it.\n\n- **`.env` works only under `pnpm dev`.** `${NAME}` in `ai.llmServices` and `ai.mcpServers` expands from `process.env`. `pnpm dev` passes a merged environment to the server process, so it works; `pnpm start` loads the built server in-process and the application's `.env` is not merged into `process.env`, so the placeholder becomes an empty string and the provider reports an authentication failure. Until that is fixed, `.env` is the last of the three places a key can live, and a deployment sets a real environment variable or writes the value into its own `config.yml`.",
+          "sha256": "85eae46ed472aee0862e604f9daa0e21b3641105347e212cf08e1752e2ef7f5c"
+        }
+      ],
+      "fingerprint": "ed928b3c3c647969cd30aa0563cd53f869eb39691f9be3f6231530ac5e7b9408"
+    },
+    {
+      "id": "464:36470549639:1:F6",
+      "report": "464:36470549639:1",
+      "issue": 464,
+      "taskTitle": "内部资料只读问答助手",
+      "appVersion": "1.0.0-beta.50",
+      "appTemplate": "@nocobase/app-template-default",
+      "finding": {
+        "id": "F6",
+        "kind": "improvement",
+        "owner": "documentation",
+        "severity": "minor",
+        "confidence": "suspected",
+        "status": "unknown",
+        "title": "“数据接口+页面”跨包端到端示例缺失，接入链条分散",
+        "detail": "server-routes.md 与授权 Skill 分别讲路由与授权，app-client page.md 讲页面，但缺一个把三者串起来的端到端清单；本次 Agent 在 500+ 次探索中始终未拼出完整链路。",
+        "impact": "按文档逐段阅读仍需自行统合四个装配点，易漏“注册集合”或“追加路由”，且 SPA 兜底掩盖遗漏。",
+        "suggestedChange": "提供一个“自定义集合→Repository 只读接口→页面展示→按角色拒绝”的最小可运行样例，并在各 Skill 交叉链接。",
+        "diagnosis": {
+          "category": "guidance-gap",
+          "trigger": "Agent 需同时接入迁移、接口、授权与页面。",
+          "expected": "一份跨包端到端清单或样例，明确指出四个装配点及验证方式。",
+          "actual": "指引分片存在、各自完整，但无统一端到端路径；未记录 Agent 是否读到全部片段。",
+          "workaround": "未记录。",
+          "acceptance": "按新样例的步骤可在一个新集合上端到端跑通接口与页面。"
+        },
+        "evidence": [
+          "E6",
+          "E9",
+          "E12"
+        ]
+      },
+      "targets": [
+        "app/.agents/skills/nocobase-app-development/references/frontend/references/page.md",
+        "app/.agents/skills/nocobase-app-development/references/server-routes.md",
+        "app/.agents/skills/nocobase-app-plugin-authorization/references/repository-routes.md"
+      ],
+      "paths": [
+        ".agents/skills/nocobase-app-development/references/frontend/references/page.md",
+        ".agents/skills/nocobase-app-development/references/server-routes.md",
+        ".agents/skills/nocobase-app-plugin-authorization/references/repository-routes.md"
+      ],
+      "evidence": [
+        {
+          "id": "E6",
+          "kind": "skill",
+          "path": "app/.agents/skills/nocobase-app-development/references/server-routes.md",
+          "observation": "指引要求先用 authz.database.collections.add 显式注册集合、用 policyFor/withPolicy 绑定策略，并保留 defineRepositoryApiRoutes 的静态 policy/actions。",
+          "lines": [
+            88,
+            112
+          ],
+          "excerpt": "### Enforce record, field and relation policies\n\nRead [application permission development](authorization.md) and the installed `nocobase-app-plugin-authorization` Skill before building data access. Register each governed collection explicitly in the owning provider with `authz.database.collections.add({ name, title, actions? })`; the database supplies field/relation metadata. Unregistered collections are denied even to unrestricted users.\n\nFor ordinary collection CRUD, resolve and bind the policy:\n\n```ts\nconst policy = await authz.database.policyFor(\n  'customers',\n  context.get('authz'),\n);\nif (policy.read === false) return context.json({ code: 'FORBIDDEN' }, 403);\nconst customers = database.repository('customers').withPolicy(policy);\nreturn context.json({ data: await customers.findMany() });\n```\n\nFor a business operation, call the request context's `authorize({ resource: { type: 'composite', id }, action })` once, reject denied or missing policies, and bind each table's `decision.conditions.database[collection]` policy. Do not replace it with aggregate collection authorization: grants from another business operation could widen the result. `require` rejects conditional decisions; `can` reports feature visibility rather than access to a specific record.\n\nBound repositories enforce rows, fields and relations together. Keep multi-table writes transactional and business-state predicates in the update. Map out-of-scope `RECORD_NOT_FOUND` errors consistently without exposing hidden records. Never fetch unrestricted rows and filter them in the browser.\n\n### Repository API endpoints\n\nKeep `defineRepositoryApiRoutes` and its static policies. For business authorization, follow the installed authorization Skill’s `references/repository-routes.md`: `authz.database.authorizeRepository({ repository, resource, actions })` binds Repository methods to typed business actions and narrows the existing policy through middleware. Authenticate first and cover every action of the protected exposure. Use the shortcut when one Repository operation and one data scope complete the action with standard input/output; independent type/length validation can remain middleware. Persisted-state checks, side effects, multiple scopes and enriched responses require custom handlers: project title/notes editing fits the shortcut, while draft quote editing, quote submission and order delivery do not. One resource can use both styles for different actions. Do not substitute collection-aggregated grants for a business-action decision.\n\nStatic endpoint policies only narrow user grants. Read/write relation capabilities must be explicitly granted; a relation in the static shape does not create permission. Use the authorization Skill's `references/business-module.md` for the full workflow and `references/fluent-registration.md` for field/relation declarations. The installable authorization example demonstrates quote submission and delivery responsibilities.",
+          "sha256": "cbf30ba33ca0af760a34442e92ac668c0ec8a312423da0690a98f3dfd0099b25"
+        },
+        {
+          "id": "E9",
+          "kind": "skill",
+          "path": "app/.agents/skills/nocobase-app-plugin-authorization/references/repository-routes.md",
+          "observation": "授权 Skill 说明 authorizeRepository({repository,resource,actions}) 为简单单集合业务操作绑定动作，并保持 defineRepositoryApiRoutes 的静态 policy 与 actions 不变。",
+          "lines": [
+            1,
+            5
+          ],
+          "excerpt": "# Bind generated Repository routes to composite actions\n\nUse `authz.database.authorizeRepository({ repository, resource, actions })` for simple single-collection business operations. Keep `defineRepositoryApiRoutes({ repositories })`, its static `policy`, and its enabled `actions` unchanged. The authorization middleware adds a request constraint; the router intersects it with the static policy or principal-derived policy before executing. It does not grant fields missing from either policy.\n\n`repository` is the exposure name, `resource` is a typed composite reference, and `actions` maps Repository methods to declared composite action names. No additional collection CRUD grant is required. Register the collections and composite in the provider first, then configure business grants and scopes through seed/backend. The middleware itself registers and assigns nothing. A method with no mapping, or a decision without exactly that collection's policy, answers `403 { code: 'FORBIDDEN' }`.",
+          "sha256": "bdb67c8822b219af85d0277238183d11a20f9fe4b458295cbaec4fe8f687046c"
+        },
+        {
+          "id": "E12",
+          "kind": "skill",
+          "path": "app/.agents/skills/nocobase-app-development/references/frontend/references/page.md",
+          "observation": "page.md 指引明确：页面是 client/pages 下的 React 组件，路由与菜单在 client/routes.ts 的 defineAppRoutes([...]) 追加，并给出 orders/product-form/team-settings 参考页。",
+          "lines": [
+            3,
+            9
+          ],
+          "excerpt": "A page is a React component under `client/pages/`; routes and menus are declared in `client/routes.ts`. For child pages, tabs and navigation groups, see `child-routes.md`; for dialogs and drawers, see `overlay.md`.\n\nBefore writing a new page, use \"Read the reference pages first\" in `styling.md` to find the closest example: start a list page from `examples/orders`, record editing from `examples/product-form`, and a settings page from `examples/team-settings`. Follow its structure in your own page; do not import files from `client/pages/reference/`, and do not add routes for them (`tests/logic/client-routes.test.ts` checks this).\n\n## 1. Declare the route\n\nAppend an entry to the end of the existing `defineAppRoutes([...])` array in `client/routes.ts`. Leave the existing routes (home, sign-in pages) as they are, and do not overwrite the whole file. Add the icon to the existing `lucide-react` import at the top of the file:",
+          "sha256": "bc9009ebd56592efc8d97b4c5568f18f9227eadb1d031fb39b72f12e912c95b9"
+        }
+      ],
+      "fingerprint": "d8fd516d5accd3aee86e7eb3c9e662c261c1ae46190fdcfcc097b3cc4d6119d1"
     }
   ]
 }
