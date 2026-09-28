@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "inputHash": "0b79db93132fb6825ee5b44c0de36bfa5d88b09d386cc11a1e244b2af12e51f8",
+  "inputHash": "ccc283410e3854cf633d150ed3ac6c0b24b226651d010208927a8dcef1b4de8e",
   "sources": [
     {
       "id": "460:36434284393:1:F2",
@@ -76,33 +76,43 @@
       "id": "464:36470549639:1:F6",
       "report": "464:36470549639:1",
       "fingerprint": "d8fd516d5accd3aee86e7eb3c9e662c261c1ae46190fdcfcc097b3cc4d6119d1"
+    },
+    {
+      "id": "466:36473812582:1:F3",
+      "report": "466:36473812582:1",
+      "fingerprint": "c44e8d4f02cc7029a4f205d91f4a701a1b23995dac1ab179a9214280f797eccd"
+    },
+    {
+      "id": "466:36473812582:1:F4",
+      "report": "466:36473812582:1",
+      "fingerprint": "07e691038c99fd2c5de4b04d76758f9edb34255bf86f99127ae1b9bbca0aa9f5"
     }
   ],
   "groups": [
     {
       "title": "nocobase-db Skill 未说明演示/样例数据的规范落点与无唯一约束时的幂等写法",
-      "reason": "单独保留。E30/E31 显示 nocobase-db SKILL.md 只把种子定义为“运行所需数据”，并明确种子绝不是样例/演示内容、要求以唯一约束 + upsertOne 保持幂等；E24 表明 defineSeed 只是 markSeedDefinition 的薄封装；E72 显示应用把演示数据写入正式 seeds 目录并自写手写 ensure(findOne + createOne) 代替 upsertOne。共同根因是“演示数据落点 + 无唯一约束时的幂等策略”这一文档缺口（缺说明）。它与同报告 460:F3 的 CSRF 指引缺口、460:F4 的空 filter 约束、460:F6 的聚合示例缺口在触发条件、受影响指引位置与修复方向上均不同，且同一报告内两条发现禁止合并，故单列。",
+      "reason": "单独保留。E30/E31 显示 nocobase-db SKILL.md 只把种子定义为“运行所需数据”，明确种子绝不是样例/演示内容，并要求唯一约束 + upsertOne 幂等；E24 显示 defineSeed 只是 markSeedDefinition 的薄封装；E72 显示应用把演示数据写入正式 seeds 目录并自写 ensure(findOne + createOne) 代替 upsertOne。共同根因是“演示数据落点 + 无唯一约束时的幂等策略”这一文档缺口（缺说明）。同报告 460 的 F3（CSRF 指引）、F4（空 filter 约束）、F6（聚合示例）在触发条件、受影响指引位置与修复方向上均不同，且同一报告内两条发现禁止合并，故单列。",
       "members": [
         "460:36434284393:1:F2"
       ]
     },
     {
       "title": "受保护路由参考缺少 cookie 写请求的 CSRF/信任来源校验说明",
-      "reason": "单独保留。E50 显示 checkCookieWriteOrigin 对携带 cookie 的写请求校验 Origin/Referer，失败返回 403 INVALID_CSRF_ORIGIN；E55 表明该要求只写在认证 Skill 的部署参考（app.publicOrigin + auth.trustedOrigins），而 E54 的 protecting-routes.md 通篇无 CSRF/trustedOrigins/publicOrigin/Origin 字样；E78 显示应用未配置 publicOrigin/trustedOrigins；E12 记录 Agent 反复触发后以 BETTER_AUTH_URL 绕行。根因是受保护路由参考的指引缺口（缺说明），与同报告其他发现在触发条件、受影响 API/指引位置和修复方向上均不同，且同一报告内禁止合并，故单列。",
+      "reason": "单独保留。E50 显示 checkCookieWriteOrigin 对携带 cookie 的写请求校验 Origin/Referer，失败返回 403 INVALID_CSRF_ORIGIN；E55 表明该要求只写在认证 Skill 的部署参考（app.publicOrigin + auth.trustedOrigins），而 E54 的 protecting-routes.md 通篇无 CSRF/trustedOrigins/publicOrigin/Origin 字样；E78 显示应用未配置 publicOrigin/trustedOrigins；E12 记录 Agent 反复触发后以 BETTER_AUTH_URL 绕行。根因是受保护路由参考的指引缺口（缺说明），与同报告 F2/F4/F6 的根因和修复位置不同，且同一报告内禁止合并，故单列。",
       "members": [
         "460:36434284393:1:F3"
       ]
     },
     {
       "title": "nocobase-db Skill 未对称说明 findOne 与单条 mutation 的空 filter 约束",
-      "reason": "单独保留。E26/E28 显示 findOne 在无 filter 且无 sort 时抛 INVALID_FILTER，upsertOne 等单条 mutation 对空 filter 同样报错；E33 的 Skill 只对 updateMany/deleteMany 的空 scope 作了说明；E74 显示应用在 loadRows 中特判并注释“空 filter 会被拒绝”。根因是单条读/写空 filter 约束的文档不对称（缺说明）。它与 462:F3 的运算符按字段类型收窄问题虽同处 @nocobase/db 的 repository.js，但属于同一文件中的不同根因，必须分开；与同报告其他发现亦不同，且同一报告内禁止合并，故单列。",
+      "reason": "单独保留。E26/E28 显示 findOne 在无 filter 且无 sort 时抛 INVALID_FILTER，upsertOne 等单条 mutation 对空 filter 同样报错；E33 的 Skill 只对 updateMany/deleteMany 的空 scope 作了说明；E74 显示应用在 loadRows 中特判并注释“空 filter 会被拒绝”。根因是单条读/写空 filter 约束的文档不对称（缺说明）。它与 462:F3 的运算符按字段类型收窄虽同处 @nocobase/db 的 repository.js，但属于同一文件中的不同根因，必须分开；与同报告其他发现亦不同，且同一报告内禁止合并，故单列。",
       "members": [
         "460:36434284393:1:F4"
       ]
     },
     {
       "title": "nocobase-db Skill 示例未突出 aggregate/groupBy 的数据库侧合计用法",
-      "reason": "单独保留。E27 显示 Repository 已实现 aggregate/groupBy（含 filter/having/sort）；E33 的方法清单也列出二者，但示例只覆盖关系读取与嵌套写，没有“按父记录求金额合计”的示范；E75 显示应用改用 findMany + JS reduce 做金额合计。根因是示例未引导数据库侧聚合这一可用性改进，与同报告其他发现的根因不同，且同一报告内禁止合并，故单列。",
+      "reason": "单独保留。E27 显示 Repository 已实现 aggregate/groupBy（含 filter/having/sort）；E33 的方法清单也列出二者，但示例只覆盖关系读取与嵌套写，没有“按父记录求金额合计”的示范；E75 显示应用改用 findMany + JS reduce 做金额合计。根因是示例未引导数据库侧聚合这一可用性改进（缺示例），与同报告其他发现的根因不同，且同一报告内禁止合并，故单列。",
       "members": [
         "460:36434284393:1:F6"
       ]
@@ -116,14 +126,14 @@
     },
     {
       "title": "dist-only 发布使源码级排障与契约确认困难",
-      "reason": "单独保留。E45/E48/E54/E55/E62/E65 显示包只发布编译后的 dist 与 sourcemap：源文件缺失、部分 .d.ts 路径与源码目录不同、sourcemap 未内联 sourcesContent（读取触发 KeyError），Agent 只能从编译产物反推实现。根因在框架包的发布/分发策略未提供源码或稳定 dist 结构索引，属于框架可用性改进，并非指引写错路径；它与 461:F4 的“错误路径”根因不同，也与 462:F2 的“缺少公开导出”根因不同，且同一报告内禁止合并，故单列。",
+      "reason": "单独保留。E45/E48/E54/E55/E62/E65 显示包只发布编译后的 dist 与 sourcemap：源文件缺失、部分 .d.ts 路径与源码目录不同、sourcemap 未内联 sourcesContent（读取触发 KeyError），Agent 只能从编译产物反推实现。根因在框架包的发布/分发策略未提供源码或稳定 dist 结构索引，属于框架可用性改进，并非指引写错路径；它与 461:F4 的“错误路径”根因不同，也与 462:F2、463:F3 的“缺少公开导出”根因不同，且同一报告内禁止合并，故单列。",
       "members": [
         "461:36434293992:1:F6"
       ]
     },
     {
       "title": "记录访问 AND 组合子 allScopes 已在包内实现但未从公开入口导出",
-      "reason": "单独保留。E2 的 scope.d.ts 声明并实现 allScopes，authorizer.js 内部依赖它组合 expand/restrict 约束；E3 显示公开入口 index.d.ts 只导出 anyScope、condition、scopeAst、DatabaseScope，未导出 allScopes/noRowsScope/idsScope；E31 显示应用在 library-record-access.ts 自写 everyScope() 复刻 AND 语义；E54 记录公开入口探测。根因是能力已在 @nocobase/app-plugin-authorization 包内实现却未从公开入口导出（capability-gap），修复方向是补充导出。它与 462:F3 的类型收窄问题以及 461 两条发布/路径问题均不同；与 463:F3 虽同为“内部符号未公开导出”，但分属不同插件与不同 API（allScopes vs FILE_COLUMNS）、触发条件与要修改的入口文件均不同，无证据支持同一缺口，按“不猜测”原则不合并，且同一报告内禁止合并，故单列。",
+      "reason": "单独保留。E2 的 scope.d.ts 声明并实现 allScopes，authorizer.js 内部依赖它组合 expand/restrict 约束；E3 显示公开入口 index.d.ts 只导出 anyScope、condition、scopeAst、DatabaseScope，未导出 allScopes/noRowsScope/idsScope；E31 显示应用在 library-record-access.ts 自写 everyScope() 复刻 AND 语义；E54 记录公开入口探测。根因是能力已在 @nocobase/app-plugin-authorization 包内实现却未从公开入口导出（capability-gap），修复方向是补充导出。它与 462:F3 的类型收窄问题、461 两条发布/路径问题均不同；与 463:F3 虽同为“内部符号未公开导出”，但分属不同插件与不同 API（allScopes vs FILE_COLUMNS）、触发条件与要修改的入口文件均不同，无证据支持同一缺口，按“不猜测”原则不合并，且同一报告内禁止合并，故单列。",
       "members": [
         "462:36434301919:1:F2"
       ]
@@ -183,15 +193,29 @@
       "members": [
         "464:36470549639:1:F6"
       ]
+    },
+    {
+      "title": "Scheduler 没有公开的受控立即执行入口，应用被迫直接操作 Queue 计划投影",
+      "reason": "单独保留。E10 显示 schedulerServiceToken 公开方法只有 defineSchedule/registerTarget/list/listOccurrences/setEnabled，没有立即执行/触发方法；E11 显示路由只有 list/occurrences/enable/disable；E14 的 Skill 明确 Cron 没有管理 API、只能启停且警告不要改动 Queue 计划投影；E2 显示应用为实现“立即执行”改用 @nocobase/queue 的 Schedule.list + schedule.trigger()，正是被劝阻的投影路径。根因是 Scheduler 插件缺少公开的受控立即执行能力（capability-gap），修复方向是新增公开 run/trigger 方法及路由。它与同报告 466:F4 的“指引缺少立即执行说明”是不同根因（缺能力 vs 缺说明），且同一报告内两条发现禁止合并；与 462:F2/463:F3 的“内部符号未导出”也分属不同插件、不同 API（新增执行入口 vs 补充导出）与不同修复方向，按“不猜测”原则不合并，故单列。",
+      "members": [
+        "466:36473812582:1:F3"
+      ]
+    },
+    {
+      "title": "Scheduler 指引只说开发期用短 Cron，缺少面向管理员的受控立即执行说明",
+      "reason": "单独保留。E14 显示 SKILL.md 只说明不能编辑 Cron、只能启停；E16 的 operations.md 对受控执行只建议开发期使用短 Cron 间隔观察；E30 记录 verify-7 中 POST .../schedules/.../run 返回 404，但启停与巡检结果均正常。根因是 Scheduler 指引缺少“如何提供并鉴权受控立即执行”的说明（guidance-gap，info），修复方向是在 operations.md 增补应用层受控立即执行示例与幂等/权限注意点。它与同报告 466:F3 的“缺少公开 API”属于不同根因（缺说明 vs 缺能力），且同一报告内两条发现禁止合并，故单列。",
+      "members": [
+        "466:36473812582:1:F4"
+      ]
     }
   ],
   "classifier": {
     "engine": "pi",
     "model": "deepseek-v4.1-flash",
     "version": "0.86.1",
-    "runId": "36472285774",
+    "runId": "36494894453",
     "attempt": 1,
     "controlSha": "b2a65efc97b0935b42cc0eb38552be9ae7972d53",
-    "completedAt": "2026-09-28T19:28:25.011Z"
+    "completedAt": "2026-09-28T22:54:20.720Z"
   }
 }
