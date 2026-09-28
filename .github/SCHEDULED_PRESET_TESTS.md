@@ -1,39 +1,35 @@
-# 自动评测与预置案例手动搭建
+# 每日与手动预置案例搭建
 
-自动每日搭建已迁移到有预算的 **Evaluation batches**。详见
-[评测可靠性与迁移说明](EVALUATION_RELIABILITY.md#每日调度迁移)。
+唯一的每日预置搭建入口是 **Preset build tests**（`scheduled-preset-tests.yml`）。
+每天 UTC 19:00，即新加坡/中国时间次日 03:00，自动扫描同时带
+`factory:preset` 和 `factory:daily` 的人工案例，包含已关闭的预置。
+GitHub 定时执行可能排队延迟，03:00 是计划触发时间。
 
-## 每日评测
+## 选择案例与手动运行
 
-唯一的自动搭建 cron 在 `evaluation-batches.yml`：UTC 01:23（新加坡/中国时间 09:23）。
-计划来自 `evaluations/plans.json`，默认启动 F00 三样本串行批次。
-`FACTORY_EVALUATION_PLANS_ENABLED=false` 暂停新批次；已启动批次仍会推进。
-预置 Issue 的 `factory:daily` 标签不再自动启动每日任务。
+添加 `factory:daily` 纳入下一次扫描；移除该标签停止后续选取，不取消已启动任务。
+每个选中的案例创建一个独立执行 Issue，并显式派发搭建；同案例在途时跳过。
+保留同 Run 重试幂等，新的手动或每日 Run 属于新一轮。
 
-添加或调整每日案例应修改计划、样本数和预算，提交 PR 审查后生效。
-[批次协议](EVALUATION_INTEGRATION.md)说明冻结输入、终态、取消和重试。
+**Actions → Preset build tests → Run workflow** 可以随时手动启动。
+`dry_run=true` 只预览，不创建执行 Issue 或派发；定时运行始终执行真实搭建。
+手动与定时入口共用启动队列和在途检查，手动预览不会改变下次定时运行。
 
-## 预置案例手动搭建
+## 旧批次入口退役
 
-**Actions → Preset build tests → Run workflow** 仍读取同时带
-`factory:preset` 和 `factory:daily` 的人工案例（包含已关闭的预置）。
-`dry_run=true` 仅预览；默认创建独立执行 Issue 并显式派发搭建。
-该入口没有 cron，也不修改来源案例、自动合并 PR 或刷新模板。
-
-该入口是普通搭建，不带评测批次的全链预算；正式评测建议使用计划。
-保留同案例在途跳过、同 Run 幂等、标签初始化和失败重试。
-手动额外启动不会消耗批次槽位，因此可能与每日批次并行。
+`Evaluation batches` 工作流已移除，任务完成后的批次推进调用也已移除。
+旧 `evaluations/plans.json` 不再驱动定时任务，`FACTORY_EVALUATION_PLANS_ENABLED`
+不控制当前入口。保留历史批次协议、脚本和报告以读取历史结果。
+当前入口使用普通任务的现有预算与质量检查，不使用旧计划的三样本串行批次。
 
 ## 验证
 
-专项覆盖标签选择和幂等、预览、唯一自动调度入口、批次预算与全链续跑：
-
 ```bash
 node --test .github/scripts/tests/scheduled-preset-tests.test.mjs \
-  .github/scripts/tests/evaluation-batch.test.mjs \
   .github/scripts/tests/evaluation-workflow-policy.test.mjs
 ```
 
+覆盖标签选择、在途跳过、重试幂等、预览、UTC 时区及退役入口。
 不通过启动真实付费搭建验证调度器。
 
 ## 一次性入口清理

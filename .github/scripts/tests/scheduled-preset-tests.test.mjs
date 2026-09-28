@@ -361,7 +361,7 @@ test('label initialization is idempotent and never selects a case or launches a 
   assert.deepEqual([...state.labels], ['factory:daily']);
   assert.equal(writes(state).length, 1);
   assert.equal(writes(state)[0].route, '/labels');
-  assert.match(writes(state)[0].body.description, /manual launcher/);
+  assert.match(writes(state)[0].body.description, /daily at 03:00 UTC\+8.*manual preset launcher/);
   assert.equal(state.tasks.length, 0);
   assert.equal(dispatches(state).length, 0);
 });
@@ -389,16 +389,16 @@ test('summary escapes table and HTML content', () => {
   assert.match(summary, /&#124;/);
 });
 
-test('preset workflow remains manual after automatic tests migrate to bounded batches', () => {
+test('preset workflow runs manually and daily at 03:00 UTC+8', () => {
   const workflow = readFileSync(new URL('../../workflows/scheduled-preset-tests.yml', import.meta.url), 'utf8');
   assert.match(workflow, /^name: Preset build tests$/m);
   assert.doesNotMatch(workflow, /legacy/i);
-  assert.doesNotMatch(workflow, /cron:/);
+  assert.deepEqual([...workflow.matchAll(/cron: '([^']+)'/g)].map(match => match[1]), ['0 19 * * *']);
   assert.doesNotMatch(workflow, /FACTORY_PRESET_TEST_ISSUES|PRESET_ISSUES|preset_issues|vars\./);
-  assert.match(workflow, /if: github.event_name == 'workflow_dispatch'/);
+  assert.match(workflow, /if: github.event_name == 'workflow_dispatch' \|\| github.event_name == 'schedule'/);
   assert.match(workflow, /workflow_dispatch:\s+inputs:\s+dry_run:[\s\S]*?default: false\s+type: boolean/);
   assert.match(workflow, /concurrency:\s+group: factory-scheduled-preset-tests\s+cancel-in-progress: false\s+queue: max/);
-  assert.doesNotMatch(workflow, /^ {2}schedule:/m);
+  assert.match(workflow, /^ {2}schedule:/m);
   assert.match(workflow, /^  workflow_dispatch:/m);
   assert.match(workflow, /run-name:.*'daily'.*'preview'.*'manual'/);
   assert.equal((workflow.match(/run: node \.github\/scripts\/scheduled-preset-tests\.mjs$/gm) ?? []).length, 1);

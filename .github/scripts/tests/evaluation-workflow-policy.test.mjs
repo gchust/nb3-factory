@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import test from 'node:test';
 
@@ -41,7 +41,7 @@ test('evaluation export is a data-only, non-blocking step after the existing usa
 test('optional delivery keeps the receiver token in read-only steps and never builds or reviews', () => {
   // No workflow waits on delivery: registration only dispatches it, so a slow
   // receiver never holds the reporter's or coordinator's concurrency group.
-  for (const name of ['report-task-usage.yml', 'evaluation-batches.yml']) {
+  for (const name of ['report-task-usage.yml']) {
     const text = read(name);
     assert.doesNotMatch(text, /uses: \.\/\.github\/workflows\/deliver-evaluation\.yml/, name);
     const { evaluation } = jobs(text);
@@ -92,42 +92,10 @@ test('task preparation records the entry workflow separately from the pinned con
   assert.match(record, /FACTORY_ENTRY_SHA: \$\{\{ github\.sha \}\}/);
 });
 
-test('batch coordination accepts no control SHA, budget, script or URL input and never builds itself', () => {
-  const workflow = read('evaluation-batches.yml');
-  const inputs = workflow.split('workflow_dispatch:\n    inputs:\n')[1].split('\n  schedule:')[0];
-  assert.deepEqual([...inputs.matchAll(/^ {6}([a-z_]+):$/gm)].map(m => m[1]), ['action', 'plan', 'batch', 'dry_run', 'source_run']);
-  const { coordinate, evaluation } = jobs(workflow);
-  assert.match(coordinate, /actions: write\n {6}contents: read\n {6}issues: write/);
-  assert.doesNotMatch(coordinate, /secrets\.|contents: write|pnpm install|agent-browser|run-agent|download-artifact/);
-  assert.match(coordinate, /FACTORY_EVALUATION_PLANS_ENABLED: \$\{\{ vars\.FACTORY_EVALUATION_PLANS_ENABLED \}\}/);
-  assert.match(coordinate, /export FACTORY_CONTROL_SHA="\$\(git -C control rev-parse HEAD\)"/);
-  assert.match(workflow, /github\.event\.workflow_run\.head_repository\.full_name == github\.repository/);
-  assert.match(workflow, /group: factory-evaluation-batch\n {2}queue: max/);
-  assert.match(evaluation, /contents: write/);
-  assert.doesNotMatch(evaluation, /secrets\./);
-  // Each open batch is exported to its own directory and registered in its own matrix job.
-  assert.match(coordinate, /batches: \$\{\{ steps\.coordinate\.outputs\.batches \}\}/);
-  assert.match(evaluation, /fail-fast: false/);
-  assert.match(evaluation, /batch: \$\{\{ fromJSON\(needs\.coordinate\.outputs\.batches\) \}\}/);
-  assert.match(evaluation, /--input "\$RUNNER_TEMP\/batch-export\/\$BATCH_KEY"/);
-  // A batch that failed to coordinate fails the step, but the others' exports still archive.
-  assert.match(coordinate, /if: '!cancelled\(\) && steps\.coordinate\.outputs\.export == ''true'''/);
-  assert.match(evaluation, /if: "!cancelled\(\) && needs\.coordinate\.outputs\.export != '' && needs\.coordinate\.outputs\.batches != ''"/);
-  assert.doesNotMatch(coordinate, /API_KEY|TOKEN: \$\{\{ vars|OAUTH/);
-  assert.match(coordinate, /FACTORY_AGENT_CONFIG_JSON:.*toJSON\(vars\)/);
-  for (const checkout of workflow.split('actions/checkout@v4').slice(1)) {
-    assert.match(checkout.slice(0, 300), /ref: \$\{\{ github\.event\.repository\.default_branch \}\}/);
-    assert.match(checkout.slice(0, 300), /persist-credentials: false/);
-  }
-  // One bounded automatic scheduler; labels retain their explicit manual entry.
-  assert.doesNotMatch(read('scheduled-preset-tests.yml'), /^ {2}schedule:/m);
+test('retired batch workflow has no task completion dispatch', () => {
+  assert.equal(existsSync(path.join(workflows, 'evaluation-batches.yml')), false);
+  const task = read('code-agent-task.yml');
+  assert.doesNotMatch(task, /advance-evaluation-batch|gh workflow run evaluation-batches/);
   assert.match(read('scheduled-preset-tests.yml'), /workflow_dispatch:/);
-});
-
-test('a batch sample run asks the coordinator to advance without passing anything it trusts', () => {
-  const { 'advance-evaluation-batch': advance } = jobs(read('code-agent-task.yml'));
-  assert.match(advance, /if: always\(\) && needs\.prepare\.outputs\.evaluation_sample == 'true'/);
-  assert.match(advance, /permissions:\n {6}actions: write\n/);
-  assert.match(advance, /--field action=advance --field "source_run=\$SOURCE_RUN_ID"/);
-  assert.doesNotMatch(advance, /secrets\.|checkout/);
+  assert.match(read('scheduled-preset-tests.yml'), /cron: '0 19 \* \* \*'/);
 });

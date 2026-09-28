@@ -6,11 +6,13 @@ on:
     paths:
       - '.github/workflows/scheduled-preset-tests.yml'
       - '.github/scripts/scheduled-preset-tests.mjs'
-  # Manual preset builds. Automatic builds use bounded Evaluation batches.
+  # GitHub cron uses UTC: 19:00 is 03:00 the next day in UTC+8.
+  schedule:
+    - cron: '0 19 * * *'
   workflow_dispatch:
     inputs:
       dry_run:
-        description: '仅预览（可选）；默认立即搭建 factory:daily 标签案例；无自动定时'
+        description: '仅预览（可选）；默认立即搭建 factory:daily 标签案例；每日 UTC+8 03:00 自动搭建'
         required: true
         default: false
         type: boolean
@@ -45,7 +47,7 @@ jobs:
         run: node .github/scripts/scheduled-preset-tests.mjs --init-label
 
   launch:
-    if: github.event_name == 'workflow_dispatch'
+    if: github.event_name == 'workflow_dispatch' || github.event_name == 'schedule'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
