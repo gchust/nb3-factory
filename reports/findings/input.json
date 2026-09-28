@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "inputHash": "318a06f2da1d0ab96e14a9ee9722c4a22ab37f81d577a787bd7ee5d4f388a668",
+  "inputHash": "2865ff4cdc6b408f7c177c326310fd6b7894cc52e95711ef50f49bae640d8d51",
   "findings": [
     {
       "id": "408:36329180371:1:F2",
@@ -2586,6 +2586,185 @@
         }
       ],
       "fingerprint": "3276e0bc600363843138eadf22be7f66340184fe0e9257a3ad7c247fb140f1fe"
+    },
+    {
+      "id": "443:36388741454:1:F5",
+      "report": "443:36388741454:1",
+      "issue": 443,
+      "taskTitle": "基础数据系统：客户备忘录",
+      "appVersion": "1.0.0-beta.47",
+      "appTemplate": "@nocobase/app-template-default",
+      "finding": {
+        "id": "F5",
+        "kind": "improvement",
+        "owner": "documentation",
+        "severity": "minor",
+        "confidence": "confirmed",
+        "status": "open",
+        "title": "cookie 写入的 CSRF/Origin 前提未写入通用路由与测试指引",
+        "detail": "认证插件实现要求带 cookie 的写请求携带可信 Origin/Referer，否则 403 INVALID_CSRF_ORIGIN。该要求仅写在 app-plugin-authentication 的部署参考（第 115 行），而 server-routes.md 与 testing.md 均未提示，实现日志显示 Agent 多轮调试后从源码还原。",
+        "impact": "按通用路由/测试指引实现的集成测试或脚本会在 cookie 写入时得到 403，排查成本明显；浏览器场景不受影响（浏览器自带 Origin）。",
+        "suggestedChange": "在 server-routes.md 或 testing.md 增加一小节：cookie 会话的写请求必须带 Origin/Referer，集成测试需发送 Origin 或配置 app.publicOrigin/trustedOrigins，并交叉引用认证插件的部署参考。",
+        "evidence": [
+          "E21",
+          "E22",
+          "E23",
+          "E24"
+        ],
+        "diagnosis": {
+          "category": "guidance-gap",
+          "trigger": "集成测试或脚本以 cookie 会话发起 POST/PATCH/DELETE 且未携带 Origin/Referer，且未配置 app.publicOrigin/trustedOrigins",
+          "expected": "server-routes.md 或 testing.md 提示 cookie 写入的可信 Origin 前提并给出测试配置方式",
+          "actual": "服务器按设计返回 403 INVALID_CSRF_ORIGIN；只有 app-plugin-authentication/references/user-lifecycle-and-deployment.md:115 记录该要求，通用路由与测试指引未提及",
+          "workaround": "测试为写请求发送 origin:'http://localhost'，并在启动应用时设置 APP_PUBLIC_ORIGIN='http://localhost'",
+          "acceptance": "按新增指引配置的集成测试在 cookie 会话下完成写请求并通过，且无需阅读认证插件参考即可定位 Origin 前提"
+        }
+      },
+      "targets": [
+        "@nocobase/app-plugin-authentication",
+        "app/.agents/skills/nocobase-app-development/references/server-routes.md",
+        "app/.agents/skills/nocobase-app-development/references/services-and-jobs.md",
+        "app/.agents/skills/nocobase-app-plugin-authentication/references/user-lifecycle-and-deployment.md"
+      ],
+      "paths": [
+        ".agents/skills/nocobase-app-development/references/server-routes.md",
+        ".agents/skills/nocobase-app-development/references/services-and-jobs.md",
+        ".agents/skills/nocobase-app-plugin-authentication/references/user-lifecycle-and-deployment.md",
+        "packages/@nocobase/app-plugin-authentication/dist/server/auth.js"
+      ],
+      "evidence": [
+        {
+          "id": "E21",
+          "kind": "code",
+          "path": "packages/@nocobase/app-plugin-authentication/dist/server/auth.js",
+          "observation": "checkCookieWriteOrigin 对带 cookie 的写请求校验 Origin/Referer 与 trustedOrigins，缺失/不可信来源返回 403 INVALID_CSRF_ORIGIN；required()/optional() 会先调用它。",
+          "lines": [
+            121,
+            158
+          ],
+          "excerpt": "    /** Protect writes authenticated by a browser cookie, including routes that skip normal session lookup. */\n    async checkCookieWriteOrigin(context) {\n        if (['GET', 'HEAD', 'OPTIONS'].includes(context.req.method))\n            return;\n        // A credential header is not proof that it was used: an invalid API key may fall back to a valid cookie.\n        // Cookie-free API key requests have no ambient browser credential to forge.\n        if (!context.req.header('cookie'))\n            return;\n        const authContext = await this.auth.$context;\n        const origin = context.req.header('origin');\n        const inferredBaseURL = origin === 'null' &&\n            context.req.header('sec-fetch-site') === 'same-origin'\n            ? getBaseURL(undefined, authContext.options.basePath, context.req.raw, false, authContext.options.advanced?.trustedProxyHeaders)\n            : undefined;\n        const source = (inferredBaseURL ? getOrigin(inferredBaseURL) : undefined) ??\n            origin ??\n            context.req.header('referer');\n        if (!source || source === 'null') {\n            return context.json({ code: 'INVALID_CSRF_ORIGIN' }, 403);\n        }\n        // Better Auth also accepts per-request trusted origins. Its static context contains the\n        // configured base URL, static origins, plugin origins, and BETTER_AUTH_TRUSTED_ORIGINS.\n        const configuredOrigins = authContext.options.trustedOrigins;\n        const mergedOrigins = typeof configuredOrigins === 'function'\n            ? await configuredOrigins(context.req.raw)\n            : (configuredOrigins ?? []);\n        const requestAuthContext = Object.create(authContext);\n        requestAuthContext.trustedOrigins = [\n            ...authContext.trustedOrigins,\n            ...mergedOrigins.filter((origin) => typeof origin === 'string' && Boolean(origin)),\n        ];\n        const trustedByAuth = requestAuthContext.isTrustedOrigin(source, {\n            allowRelativePaths: false,\n        });\n        if (!trustedByAuth) {\n            return context.json({ code: 'INVALID_CSRF_ORIGIN' }, 403);\n        }\n    }",
+          "sha256": "39be057de8227c5aef3eb57a2a15b04bfa0aa8922c60be23e8618d31659c9c48"
+        },
+        {
+          "id": "E22",
+          "kind": "skill",
+          "path": "app/.agents/skills/nocobase-app-development/references/server-routes.md",
+          "observation": "路由指引覆盖 RECORD_NOT_FOUND 映射与 scope 中间件；本页未提及 cookie 写入的 CSRF/Origin 前提。",
+          "lines": [
+            104,
+            115
+          ],
+          "excerpt": "For a business operation, call the request context's `authorize({ resource: { type: 'composite', id }, action })` once, reject denied or missing policies, and bind each table's `decision.conditions.database[collection]` policy. Do not replace it with aggregate collection authorization: grants from another business operation could widen the result. `require` rejects conditional decisions; `can` reports feature visibility rather than access to a specific record.\n\nBound repositories enforce rows, fields and relations together. Keep multi-table writes transactional and business-state predicates in the update. Map out-of-scope `RECORD_NOT_FOUND` errors consistently without exposing hidden records. Never fetch unrestricted rows and filter them in the browser.\n\n### Repository API endpoints\n\nKeep `defineRepositoryApiRoutes` and its static policies. For business authorization, follow the installed authorization Skill’s `references/repository-routes.md`: `authz.database.authorizeRepository({ repository, resource, actions })` binds Repository methods to typed business actions and narrows the existing policy through middleware. Authenticate first and cover every action of the protected exposure. Use the shortcut when one Repository operation and one data scope complete the action with standard input/output; independent type/length validation can remain middleware. Persisted-state checks, side effects, multiple scopes and enriched responses require custom handlers: project title/notes editing fits the shortcut, while draft quote editing, quote submission and order delivery do not. One resource can use both styles for different actions. Do not substitute collection-aggregated grants for a business-action decision.\n\nStatic endpoint policies only narrow user grants. Read/write relation capabilities must be explicitly granted; a relation in the static shape does not create permission. Use the authorization Skill's `references/business-module.md` for the full workflow and `references/fluent-registration.md` for field/relation declarations. The installable authorization example demonstrates quote submission and delivery responsibilities.\n\n## Scope middleware to paths you own\n",
+          "sha256": "cbf30ba33ca0af760a34442e92ac668c0ec8a312423da0690a98f3dfd0099b25"
+        },
+        {
+          "id": "E23",
+          "kind": "skill",
+          "path": "app/.agents/skills/nocobase-app-development/references/services-and-jobs.md",
+          "observation": "服务/provider/token 的推荐装配（createServiceToken+ServiceProvider.container.singleton）与分层要求，与本次实现逐条对应。",
+          "lines": [
+            7,
+            53
+          ],
+          "excerpt": "Put domain logic in a service under `server/providers/` once more than one route needs it, or once it is worth testing on its own. A route that only reads and returns a list may query directly.\n\nA service is registered by a provider under a token, so anything in the application can resolve it without importing the implementation:\n\n```ts\n// server/providers/orders.ts\nimport type { Application } from '@nocobase/app-server/application';\nimport { databaseManagerToken } from '@nocobase/db';\nimport {\n  createServiceToken,\n  ServiceProvider,\n  type ServiceToken,\n} from '@nocobase/service-provider';\n\nexport interface OrderService {\n  list(): Promise<Order[]>;\n  create(input: CreateOrderInput): Promise<Order>;\n}\n\nexport const orderServiceToken=[REDACTED] =\n  createServiceToken<OrderService>('app/order-service');\n\nexport default class OrderProvider extends ServiceProvider<Application> {\n  public readonly name: string = 'app/order-provider';\n\n  public override register(): void {\n    this.app.container.singleton(orderServiceToken, () => {\n      const database = this.app.container.resolve(databaseManagerToken);\n      return createOrderService(database);\n    });\n  }\n}\n```\n\nAdd the provider to the array in `server/providers/index.ts` and export its token from there so routes can import it.\n\nResolve it where you need it:\n\n```ts\nconst orders = app.container.resolve(orderServiceToken);\n```\n\n**The token is the identity.** Two `createServiceToken` calls with the same name are two different keys — the container matches by object identity. Always import the token from where it is defined rather than recreating one.\n\n`singleton` builds the service once, on first resolve. Use `instance` for an already-constructed value.\n\nKeep the layers apart: a service should not read a Hono context, return HTTP status codes, or decide retry behavior. It takes its dependencies and returns domain results.",
+          "sha256": "615d7fb1fa87eae848a31a6185e5318b06f8675714e8e97336a9b6993d57d63f"
+        },
+        {
+          "id": "E24",
+          "kind": "skill",
+          "path": "app/.agents/skills/nocobase-app-plugin-authentication/references/user-lifecycle-and-deployment.md",
+          "observation": "Business request CSRF：required/optional 拒绝无可信 Origin 的 cookie 写入；需配置 app.publicOrigin/trustedOrigins。",
+          "lines": [
+            115,
+            115
+          ],
+          "excerpt": "**Business request CSRF.** `Auth.required()` and `Auth.optional()` reject cookie-bearing writes unless `Origin` (or, when absent, `Referer`) matches Better Auth's configured base origin or a trusted origin. Configure `app.publicOrigin` for deployed applications and add separate frontend origins through `auth.trustedOrigins`; without a trusted origin, browser writes fail closed with `INVALID_CSRF_ORIGIN`. Cookie-free API key requests can proceed after authentication. A credential header does not exempt a request carrying cookies, including routes that skip session lookup.",
+          "sha256": "f8b0c5cdd615fcb6ac7ffb9bfc8f4b42f5fd3422c6e8613d517f87ee60e91fbe"
+        }
+      ],
+      "fingerprint": "e952bb10effbf6072c1689dd48dfd2ad78a683dda7622e5496d883a347eb0749"
+    },
+    {
+      "id": "443:36388741454:1:F7",
+      "report": "443:36388741454:1",
+      "issue": 443,
+      "taskTitle": "基础数据系统：客户备忘录",
+      "appVersion": "1.0.0-beta.47",
+      "appTemplate": "@nocobase/app-template-default",
+      "finding": {
+        "id": "F7",
+        "kind": "improvement",
+        "owner": "documentation",
+        "severity": "info",
+        "confidence": "confirmed",
+        "status": "open",
+        "title": "db Skill 的 Repository 章节未提及可映射的错误类型",
+        "detail": "RepositoryError 与 RepositoryErrorCode（含 RECORD_NOT_FOUND）是 db 包公开导出，路由需要用它们把未命中唯一记录映射为非泄露的 404。server-routes.md 第 106 行提到映射 RECORD_NOT_FOUND，但 nocobase-db Skill 的 Repository 边界清单（第 240-249 行）未列出该错误面，Agent 需读源码确认符号来源。",
+        "impact": "Agent 在实现错误映射时多一次源码检索；不影响正确性但增加发现成本。",
+        "suggestedChange": "在 nocobase-db Skill 的 Repository 边界小节补充 RepositoryError/RepositoryErrorCode 说明，并指向 server-routes.md 的映射约定。",
+        "evidence": [
+          "E5",
+          "E12",
+          "E22"
+        ],
+        "diagnosis": {
+          "category": "guidance-gap",
+          "trigger": "实现 updateOne/deleteOne 的未命中分支并需要把错误映射为 404",
+          "expected": "db Skill 在 Repository 章节列出 RepositoryError 与 RECORD_NOT_FOUND 等错误码及其在路由中的映射位置",
+          "actual": "错误面只在源码导出与 server-routes.md 的映射句子中出现，db Skill 未提及",
+          "workaround": "Agent 从 @nocobase/db 源码/类型确认 RepositoryErrorCode 后使用",
+          "acceptance": "仅阅读 db Skill 与 server-routes.md 即可写出正确映射，无需再读 db 包源码"
+        }
+      },
+      "targets": [
+        "@nocobase/db",
+        "app/.agents/skills/nocobase-app-development/references/server-routes.md",
+        "app/.agents/skills/nocobase-db/SKILL.md"
+      ],
+      "paths": [
+        ".agents/skills/nocobase-app-development/references/server-routes.md",
+        ".agents/skills/nocobase-db/SKILL.md",
+        "packages/@nocobase/db/dist/src/index.d.ts"
+      ],
+      "evidence": [
+        {
+          "id": "E5",
+          "kind": "code",
+          "path": "packages/@nocobase/db/dist/src/index.d.ts",
+          "observation": "RepositoryError 从 @nocobase/db 导出，同时导出 RepositoryErrorCode 与 RepositoryErrorOptions 类型。",
+          "lines": [
+            56,
+            61
+          ],
+          "excerpt": "export { UnsupportedCapabilityError } from './schema/capabilities.js';\nexport { RepositoryError } from './repository/errors.js';\nexport type { JsonResultForm, JsonValue } from './json.js';\nexport { isTemporalType, normalizeTemporalValue, } from './repository/temporal.js';\nexport type { AggregateAst, AggregateBuilder, AggregateExpression, AggregateFunction, AggregateNode, AggregateOptions, AggregateResult, AggregateSelection, AggregateSelectionResult, BooleanFilterOperators, NumericMutationOperand, NumericMutationOperandInput, MutationVariable, MutationLiteral, MutationValueInput, MutationValuesInput, ScalarCreateValues, ValuesBuilder, NumericMutationOperation, NumericMutationJsonInput, NumericMutationBuilder, NumericMutationInput, ScalarUpdateValues, DynamicUpdateMutationInput, ConnectTarget, CreateManyOptions, CreateManyResult, CreateMutationValues, CreateOneOptions, CreateRelationFieldMutationBuilder, CreateRelationFieldMutationInput, CreateRelationFieldMutationJsonInput, CreateTarget, CreatedTargetReference, DateFilterOperators, DeleteManyOptions, DeleteManyResult, DeleteOneOptions, DeleteOneResult, DescribeMutationOptions, EmptyFilterOperators, FilterAst, FilterBuilder, FilterConditionNode, FilterFieldGroup, FilterGroupNode, FilterLiteral, FilterNode, FilterOnlyOptions, FilterOperator, FilterOperand, FilterRelationNode, FilterScalar, FilterShorthand, FilterShorthandValue, FilterValue, FilterVariable, FindManyOptions, FindOneOptions, GroupByOptions, GroupByResult, GroupBySelectionResult, JsonFilterOperators, MutationScope, MutationValidationError, MutationValidationResult, NestedCreateOptions, NonEmptyRepositorySort, NonEmptySortAst, NumberFilterOperators, RelationClearNode, RelationCreateValues, RelationCreateValuesInput, RelationDeleteInput, RelationDeleteInputList, RelationDeleteTarget, RelationFilterOperators, RelationMutationAst, RelationMutationNode, RelationModifyNode, RelationPatchNode, RelationReplaceNode, RelationSetNode, RelationTargetSelector, RelationTargetSelectorInput, RelationUpdateInput, RelationUpdateInputList, RelationUpdateTarget, RelationUpdateValues, RelationUpsertInput, RelationUpsertInputList, RelationUpsertTarget, Repository, RepositoryAggregateNumeric, RepositoryContext, RepositoryCursor, RepositoryCursorDirection, RepositoryFilter, RepositoryMutationDescription, RepositoryMutationScalarValue, RepositoryPath, RepositoryReadOptions, RepositoryQuery, RepositoryRecord, RepositoryRelationMutationDescription, RepositorySelect, RepositorySort, RepositoryUniqueFieldSetDescription, PolicyRecord, RepositoryOperations, ScopedRepository, RelationSelectBuilder, RelationConnectInput, RelationCreateInput, RelationSelectBranchNode, RelationSelectResultNode, RelationSelectionExpression, RelationCombineResult, SelectAst, SelectBuilder, SelectIncludeNode, SelectNode, SingleMutationResult, SingleMutationSelector, SortAggregateBuilder, SortAggregateNode, SortAst, SortBuilder, SortDirection, SortExpression, SortFieldBuilder, SortFieldNode, SortNullsPosition, SortNullsBuilder, SortNode, SortRelationBuilder, StringFilterOperators, StringFilterOptions, TextFilterOperators, TimeFilterOperators, UniqueSelector, UpdateManyOptions, UpdateManyResult, UpdateMutationValues, UpdateOneOptions, UpsertOneOptions, UpdateRelationFieldMutationBuilder, UpdateRelationFieldMutationInput, UpdateRelationFieldMutationJsonInput, ValidateMutationOptions, } from './repository/types.js';\nexport type { RepositoryErrorCode, RepositoryErrorOptions, } from './repository/errors.js';",
+          "sha256": "818346a6a4f9eff91641fe40d5539f490123a98fd09142aab807811e027ee6b1"
+        },
+        {
+          "id": "E12",
+          "kind": "skill",
+          "path": "app/.agents/skills/nocobase-db/SKILL.md",
+          "observation": "Repository/Query 分层、方法清单与边界；此段未出现 RepositoryError 或 RECORD_NOT_FOUND 的映射说明。",
+          "lines": [
+            172,
+            251
+          ],
+          "excerpt": "## 4. Repository and Query\n\nTwo layers over the same tables. The choice is not stylistic, and two questions settle almost every case.\n\n**Where does the code run?** Runtime code under `server/` reaches both through the manager. A migration and a seed reach both through their own context — as `context.repository(name)`, a method on the context rather than on the minimal task `connection` — but with opposite defaults, and those defaults are the rule rather than a hint:\n\n| Context   | Tools                            | Default for data |\n| --------- | -------------------------------- | ---------------- |\n| Migration | `builder`, `query`, `repository` | `query`          |\n| Seed      | `repository`, `query`            | `repository`     |\n\nA migration changes structure, so `builder` and `query` are its tools and `repository` is reserved for the writes `query` would get wrong: cross-dialect field encoding and decoding, Collection-level naming overrides, and relation writes including the junction rows behind a `belongsToMany`. **Anything `query` expresses correctly stays on `query`.** A seed changes no structure and writes installation data in Collection terms, so `repository` is its normal tool and `query` covers what that cannot express, such as reading a physical table backing no Collection.\n\nThis does not loosen the self-contained rule. `repository(name)` resolves the Collection from the database itself — the metadata a previous `builder` operation wrote — which is why it is available at all; importing or iterating the application's own collection definitions from a migration stays forbidden. But a migration using it is betting on a shape it did not declare in its own body, so three constraints follow:\n\n- Say in a comment why `query` was not enough. Nothing static can check this, and the comment is what separates a considered use from a reflex.\n- Do not use it in `down`. By the time a rollback runs, the Collection has moved past what `up` left behind, possibly several migrations past.\n- Do not use it to walk a table. Selecting every row and updating each one through a Repository is the shape to avoid; a set-based `query` statement is both correct and bounded.\n\nBoth tasks take their Repository from the connection the task runs on, which inside a transaction is that transaction's connection, so a failed task discards its writes. That is also why `context.container` is not the application container. Its type is `ServiceResolver`, but at runtime it is a frozen allow list holding one token — `idGeneratorToken` from `@nocobase/app-server/id-generator`, for a task that has to generate an identifier. Every other `resolve` throws, `databaseManagerToken` included: a service taken from there would hold the application's connection rather than the task's, and inside a transaction would write outside it and survive a failure that should have discarded it.\n\n**Is the unit of work a Collection's records, or a result set?** Records of one Collection and the things related to them are Repository's job. A shape that is not any Collection's records — a report joining unrelated tables, a set aggregated then paginated — is Query's.\n\n| The task needs                                       | Use        |\n| ---------------------------------------------------- | ---------- |\n| Reading a relation, or a nested create/update/delete | Repository |\n| Optimistic locking through a `version` field         | Repository |\n| A row scope or write allow list (`withPolicy`)       | Repository |\n| Cursor pagination over a stable sort                 | Repository |\n| Collection-level naming overrides to be honored      | Repository |\n| Dialect-correct JSON and temporal encoding on write  | Repository |\n| A join between tables with no relation between them  | Query      |\n| A subquery, or conditions composed programmatically  | Query      |\n| Paging or limiting a grouped result                  | Query      |\n\nThe costly mistake is rebuilding a relation read as a hand-written join because the join is familiar. That loses the naming mapping, the relation metadata and the write path that goes with it, and it has to be maintained against a schema the Collection definition already describes. If the records belong to a Collection, start from Repository and only drop to Query for the part Repository genuinely cannot express.\n\nThey mix freely inside one transaction — take both from the callback `connection`, as the example in [Transactions](#5-transactions) does.\n\n**Repository** is Collection-aware: it resolves fields and relations from the Collection definition, so relation reads and nested writes are expressed as data instead of assembled by hand.\n\n```ts\nimport { databaseManagerToken } from '@nocobase/db';\n\nconst db = app.container.resolve(databaseManagerToken);\nconst projects = db.repository('projects');\n\nconst project = await projects.findOne({\n  filter: { id },\n  select: (select) =>\n    select\n      .fields('id', 'name')\n      .include('owner', (owner) => owner.fields('name')),\n});\n\nconst result = await projects.createOne({\n  values: {\n    name: 'Apollo',\n    owner: (owner) => owner.connect({ id: ownerId }),\n  },\n  select: (select) => select.fields('id', 'name'),\n});\n```\n\nResolve the manager once — in a route factory, or as a constructor dependency of a service — not inside every handler. `db.repository()`, `db.query()`, `db.builder()`, `db.collections()` and `db.transaction()` take the connection name as their last argument and use the default connection when it is omitted, so single-connection code never names one.\n\n`filter`, `values`, `select` and `sort` each accept a builder callback or the equivalent serializable JSON AST, and mean the same thing either way. They do not accept a shorthand string array such as `['id', 'name']` or `['-createdAt']`. Field names are Collection logical names, never column names. A write returns a result object — the record is `result.record`, alongside `result.version` and the created relation targets — rather than the record itself. `findMany` is awaited for an array or iterated asynchronously to consume a large result incrementally.\n\nThe methods are `findOne`, `findMany`, `count`, `exists`, `aggregate`, `groupBy`, `createOne`, `createMany`, `updateOne`, `updateMany`, `upsertOne`, `deleteOne` and `deleteMany`; `describeMutation` and `validateMutation` report capabilities and pre-validate input, and `withPolicy` returns a scoped Repository.\n\nBoundaries that are easy to get wrong:\n\n- `findOne` takes the first match; `updateOne` and `deleteOne` require exactly one; `upsertOne` requires a unique equality condition.\n- `updateMany` and `deleteMany` refuse an empty scope. Pass `all: true` only when the task explicitly calls for every row — never to make an error go away.\n- `createMany` and `updateMany` do not accept nested relation writes. `createOne` accepts `create` and `connect` on a relation, not the full set.\n- `disconnect` detaches; `delete` removes the target record. A relation target update or delete stays inside the current parent record's scope.\n- Repository does not apply the application's permissions. A route handler decides what the caller may see and change _before_ anything reaches `filter`, `values` or `select`. `writePolicy` defaults to `true` for an internal Repository and `false` for one reached from an API route, so a route-facing Repository needs an explicit allow list.\n- Do not assume an `id` exists, and do not infer a field's type, primary key or auto-increment from its name.\n\n**Query** knows tables and columns, not Collections: it does not read Collection metadata, does not honor Collection-level naming overrides, applies no policy or optimistic locking, and performs no relation-aware CRUD.",
+          "sha256": "f97c07a45a9d49c1d933ddbceeabcc9afe267b1356a2ded1a3da0dd56b54011c"
+        },
+        {
+          "id": "E22",
+          "kind": "skill",
+          "path": "app/.agents/skills/nocobase-app-development/references/server-routes.md",
+          "observation": "路由指引覆盖 RECORD_NOT_FOUND 映射与 scope 中间件；本页未提及 cookie 写入的 CSRF/Origin 前提。",
+          "lines": [
+            104,
+            115
+          ],
+          "excerpt": "For a business operation, call the request context's `authorize({ resource: { type: 'composite', id }, action })` once, reject denied or missing policies, and bind each table's `decision.conditions.database[collection]` policy. Do not replace it with aggregate collection authorization: grants from another business operation could widen the result. `require` rejects conditional decisions; `can` reports feature visibility rather than access to a specific record.\n\nBound repositories enforce rows, fields and relations together. Keep multi-table writes transactional and business-state predicates in the update. Map out-of-scope `RECORD_NOT_FOUND` errors consistently without exposing hidden records. Never fetch unrestricted rows and filter them in the browser.\n\n### Repository API endpoints\n\nKeep `defineRepositoryApiRoutes` and its static policies. For business authorization, follow the installed authorization Skill’s `references/repository-routes.md`: `authz.database.authorizeRepository({ repository, resource, actions })` binds Repository methods to typed business actions and narrows the existing policy through middleware. Authenticate first and cover every action of the protected exposure. Use the shortcut when one Repository operation and one data scope complete the action with standard input/output; independent type/length validation can remain middleware. Persisted-state checks, side effects, multiple scopes and enriched responses require custom handlers: project title/notes editing fits the shortcut, while draft quote editing, quote submission and order delivery do not. One resource can use both styles for different actions. Do not substitute collection-aggregated grants for a business-action decision.\n\nStatic endpoint policies only narrow user grants. Read/write relation capabilities must be explicitly granted; a relation in the static shape does not create permission. Use the authorization Skill's `references/business-module.md` for the full workflow and `references/fluent-registration.md` for field/relation declarations. The installable authorization example demonstrates quote submission and delivery responsibilities.\n\n## Scope middleware to paths you own\n",
+          "sha256": "cbf30ba33ca0af760a34442e92ac668c0ec8a312423da0690a98f3dfd0099b25"
+        }
+      ],
+      "fingerprint": "a0acc0f5ce909175400c177e431a6f9622dadc18553d72b823aec6c55ddec3a4"
     }
   ]
 }
