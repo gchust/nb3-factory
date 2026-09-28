@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "inputHash": "016996b121eb92947f724cf44c9295a79b37dc011c61eb8471ffd4cdb0879265",
+  "inputHash": "ba2d47aef5cb29a2ee643386a691e64d2950e59565b37dc5624343c764c2afd5",
   "sources": [
     {
       "id": "408:36329180371:1:F2",
@@ -103,6 +103,16 @@
       "fingerprint": "4ff0e440a3292c4f5afb73dc62fae0bef870cb63feae3853889b488babe2ae2e"
     },
     {
+      "id": "419:36376192996:1:F4",
+      "report": "419:36376192996:1",
+      "fingerprint": "fb6798fd1e370f0cca4494086b1e1aabbbbe775c38612ee0585c235b62217503"
+    },
+    {
+      "id": "419:36376192996:1:F5",
+      "report": "419:36376192996:1",
+      "fingerprint": "148cdafb4a701cbb5c0f1deb4cf40006457fe4d2e33131bb679684a1c1fa24ca"
+    },
+    {
       "id": "431:36360863566:1:F1",
       "report": "431:36360863566:1",
       "fingerprint": "708a87c7fe806c7805fd98a0e2be992c47281a92d32f5ff7550f74a79f5b2cf3"
@@ -123,11 +133,12 @@
       ]
     },
     {
-      "title": "应用模板 AGENTS.md 存在多余空行，导致仓库 prettier/format:check 失败",
-      "reason": "411:F5 的 E42 显示 repair-1 通过 git log 与 factory-template.json 定位 AGENTS.md 为模板产物，并确认多余空行使 prettier --check 失败；416:F6 的 E34 显示修复轮对 AGENTS.md 运行 prettier，得到同类格式化漂移。两条来自不同报告（411、416），同为 owner=template、同一文件 AGENTS.md 的同一根因，修复方向一致（在模板生成/提交或 CI 阶段格式化）。合并仅表示共同根因，不据此认定新版仍有缺陷或旧问题必然已修复（411:F5 为 resolved、416:F6 为 unknown）。",
+      "title": "应用模板 app/AGENTS.md 存在多余空行，导致仓库 prettier/format:check 失败",
+      "reason": "411:F5 的 E42 显示 repair-1 通过 git log 与 factory-template.json 定位 AGENTS.md 为模板产物，并确认多余空行使 prettier --check 失败；416:F6 的 E34 显示修复轮对 AGENTS.md 运行 prettier，得到同类格式化漂移；419:F4 的 E37 显示 git show e318f4e 在 app/AGENTS.md 的 ## Controlled failed-delivery smoke 前新增两个空行，E38 显示 repair-1 用 edit 把两个空行改回一个，E40 确认该段落为模板提交引入。三条来自不同报告（411、416、419），同为 owner=template、同一文件 app/AGENTS.md 的同一根因，修复方向一致（在模板源头修正并让模板 CI 对 app/AGENTS.md 运行 prettier --check）。合并仅表示共同根因，不据此认定新版仍有缺陷或旧问题必然已修复（411:F5 为 resolved、416:F6 与 419:F4 状态不同）。",
       "members": [
         "411:36329191920:1:F5",
-        "416:36329210119:1:F6"
+        "416:36329210119:1:F6",
+        "419:36376192996:1:F4"
       ]
     },
     {
@@ -147,7 +158,7 @@
     },
     {
       "title": "文件内容路由默认公开，每个应用都必须自行加鉴权",
-      "reason": "该发现的 E12 显示 file SKILL 说明 accessPath 内容路由为公开例外、需应用自加认证授权，E13 显示 defineFileRepositoryApiRoutes 注释为“Public first-version routes. Authentication and authorization are application-owned.”。两条指向插件默认安全姿态这一根因，修复方向是给 API 增加受保护模式；与 414:F1 的“已有中间件入口未写入 Skill”属不同缺口，同报告 409:F1 又属站内信导出面问题，根因均不同，故单独保留。",
+      "reason": "该发现的 E12 显示 file SKILL 说明 accessPath 内容路由为公开例外、需应用自加认证授权，E13 显示 defineFileRepositoryApiRoutes 注释为“Public first-version routes. Authentication and authorization are application-owned.”。两条指向插件默认安全姿态这一框架根因，修复方向是给 API 增加受保护模式；与 414:F1 的“已有中间件入口未写入 Skill”属不同缺口（后者根因在文档缺说明，修复方向是补文档），同报告 409:F1 又属站内信导出面问题，根因均不同，故单独保留。",
       "members": [
         "409:36329183962:1:F2"
       ]
@@ -175,7 +186,7 @@
     },
     {
       "title": "seed 任务加载器仅重写入口的相对扩展名，嵌套相对 .ts 导入不可用",
-      "reason": "该发现的 E9 显示 importTaskDefinition 只对入口 file URL 调用 __rewriteRelativeImportExtension 后 import()，模块内部相对说明符保持原样，E37 显示应用 seed 只能内联自包含。两者指向框架加载器不支持嵌套相对 TS 导入这一能力缺口，修复在框架侧（或明确硬约束）；它与 412:F1 同根但来自同一 report，规则禁止合并，且与 413:F3 的文档示例 .js 说明符属不同根因，故单独保留。",
+      "reason": "该发现的 E9 显示 importTaskDefinition 只对入口 file URL 调用 __rewriteRelativeImportExtension 后 import()，模块内部相对说明符保持原样，E37 显示应用 seed 只能内联自包含。两者指向框架加载器不支持嵌套相对 TS 导入这一能力缺口，修复在框架侧（或明确硬约束）；它与 412:F1 同根但来自同一 report，规则禁止合并，且与 413:F3 的文档示例 .js 说明符属不同根因（框架能力 vs 错误指引），故单独保留。",
       "members": [
         "412:36329195524:1:F3"
       ]
@@ -244,6 +255,13 @@
       ]
     },
     {
+      "title": "测试发送入口默认暴露所有带 test 定义的启用渠道，缺少服务端 test-only 约束",
+      "reason": "该发现的 E6 显示 registry.testTargets 遍历 config.channels，只跳过 enabled===false、要求 Provider 有 test 定义，即暴露所有带测试定义的启用渠道；E4 显示 manager.resolveTestTarget/sendTest 仅依据 listTestTargets，无业务/测试渠道路径区分；E10 记录三个测试端点仅靠认证/测试头/权限区分；E29 显示隔离依赖应用侧 test- 前缀与客户端过滤。四条共同指向“测试发送入口缺少服务端 test-only 白名单/标记”这一插件能力缺口，与 409:F1 的站内信 store 导出绕过校验、409:F2 的文件内容路由默认公开等根因（不同插件、不同 API 与修复方向）均不同，且无其他报告共享，故单独保留。",
+      "members": [
+        "419:36376192996:1:F5"
+      ]
+    },
+    {
       "title": "nocobase-db §3 字段构造器清单漏列 enum",
       "reason": "该发现的 E1 显示 FieldType 联合类型包含 'enum'，E2 显示 fluent builder 有 enum(name, options)（values 为 readonly string[]），E21 显示 SKILL §3 字段构造器清单逐项列出却漏掉 enum。三者共同指向“清单漏列 enum”这一文档缺口，与 431:F2 的样例数据归属、408:F2 的种子定位冲突等根因不同，且无其他报告共享，故单独保留。",
       "members": [
@@ -255,9 +273,9 @@
     "engine": "pi",
     "model": "deepseek-v4.1-flash",
     "version": "0.86.1",
-    "runId": "36366193664",
+    "runId": "36381310250",
     "attempt": 1,
-    "controlSha": "417bb50ca8a370a57b28264d34a04a647d217d99",
-    "completedAt": "2026-09-28T01:31:42.310Z"
+    "controlSha": "ad1f8060916f30ee2908d1c8fc6d8ed16d4ba6ef",
+    "completedAt": "2026-09-28T05:19:35.894Z"
   }
 }
