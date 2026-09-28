@@ -234,14 +234,35 @@ test('later closes file every unarchived finding under the closed day and never 
   assert.equal(day.count, 2);
   assert.equal(day.late, 1);
   assert.equal(second.ledger.pending.length, 3);
+  // Closing the same day again, say after its digest was sent, adds nothing: a
+  // finding that appeared since waits for the next day as a late entry.
+  const arrived = [
+    ...occurrences,
+    ...occurrencesOf([report(104, '2026-09-27T15:50:00.000Z')]),
+  ];
   const again = planDailyArchive({
-    occurrences,
+    occurrences: arrived,
     ledger: second.ledger,
     day: '2026-09-27',
     now: new Date('2026-09-28T02:00:00Z'),
     featureOf,
   });
   assert.equal(again.added.length, 0);
+  assert.deepEqual(again.ledger, second.ledger);
+  const next = planDailyArchive({
+    occurrences: arrived,
+    ledger: again.ledger,
+    day: '2026-09-28',
+    now: new Date('2026-09-29T01:07:00Z'),
+    featureOf,
+  });
+  assert.deepEqual(
+    next.added.map(({ date, entries }) => [
+      date,
+      entries.map((e) => [e.issue, e.runDay]),
+    ]),
+    [['2026-09-28', [[104, '2026-09-27']]]],
+  );
   assert.throws(
     () =>
       planDailyArchive({
@@ -252,15 +273,63 @@ test('later closes file every unarchived finding under the closed day and never 
       }),
     /already closed/,
   );
-  assert.throws(
-    () =>
-      planDailyArchive({
-        occurrences,
-        day: '2026-09-29',
-        now: new Date('2026-09-28T02:00:00Z'),
-        featureOf,
-      }),
-    /not started/,
+  // Today has not ended, so it cannot be closed, even before 04:17.
+  for (const day of ['2026-09-28', '2026-09-29'])
+    assert.throws(
+      () =>
+        planDailyArchive({
+          occurrences,
+          ledger: second.ledger,
+          day,
+          now: new Date('2026-09-27T18:00:00Z'),
+          featureOf,
+        }),
+      /not ended/,
+    );
+});
+
+test('a skipped day is filled in from each run end date and queued with the closed day', () => {
+  const first = planDailyArchive({
+    occurrences: occurrencesOf([report(101, '2026-09-25T02:00:00.000Z')]),
+    day: '2026-09-25',
+    now: new Date('2026-09-26T01:07:00Z'),
+    featureOf,
+  });
+  // The run that should have closed 2026-09-26 never happened.
+  const plan = planDailyArchive({
+    occurrences: occurrencesOf([
+      report(101, '2026-09-25T02:00:00.000Z'),
+      report(102, '2026-09-26T02:00:00.000Z'),
+      report(103, '2026-09-27T02:00:00.000Z'),
+      // Published after its day was closed: late, so it joins the closed day.
+      report(104, '2026-09-24T02:00:00.000Z'),
+    ]),
+    ledger: first.ledger,
+    day: '2026-09-27',
+    now: new Date('2026-09-28T01:07:00Z'),
+    featureOf,
+  });
+  assert.deepEqual(
+    plan.added.map(({ date, entries }) => [
+      date,
+      entries.map((e) => e.issue).sort(),
+    ]),
+    [
+      ['2026-09-26', [102]],
+      ['2026-09-27', [103, 104]],
+    ],
+  );
+  assert.deepEqual(
+    plan.ledger.days.map((day) => [day.date, day.count, day.late]),
+    [
+      ['2026-09-27', 2, 1],
+      ['2026-09-26', 1, 0],
+      ['2026-09-25', 1, 0],
+    ],
+  );
+  assert.deepEqual(
+    [...new Set(plan.ledger.pending.map((item) => item.date))],
+    ['2026-09-25', '2026-09-26', '2026-09-27'],
   );
 });
 
@@ -677,8 +746,8 @@ test('the workflow gives Feishu credentials only to the send step', () => {
     .filter((line) => !/^\s*#/.test(line))
     .join('\n');
   assert.match(workflow, /^permissions: \{\}$/m);
-  // 04:00 Asia/Shanghai.
-  assert.match(workflow, /cron: '0 20 \* \* \*'/);
+  // 04:17 Asia/Shanghai.
+  assert.match(workflow, /cron: '17 20 \* \* \*'/);
   assert.match(workflow, /group: factory-task-usage/);
   const [before, send] = workflow.split(
     '- name: Send pending digests to Feishu',
@@ -702,8 +771,10 @@ test('the workflow gives Feishu credentials only to the send step', () => {
     send,
     /FEISHU_WEBHOOK_SECRET: \$\{\{ secrets\.FEISHU_WEBHOOK_SECRET \}\}/,
   );
+  // The runner prints each step's env in the public log and masks only secrets.
   assert.match(
     send,
-    /FEISHU_PROBLEM_OWNERS: \$\{\{ vars\.FEISHU_PROBLEM_OWNERS \}\}/,
+    /FEISHU_PROBLEM_OWNERS: \$\{\{ secrets\.FEISHU_PROBLEM_OWNERS \}\}/,
   );
+  assert.doesNotMatch(workflow, /vars\.FEISHU_/);
 });

@@ -47,7 +47,7 @@ facts 可带 `upstreamCheck`（`version: 1`），记录对 `nocobase/nocobase3` 
 
 ### 按日期归档与飞书日报
 
-[Daily framework findings](../workflows/daily-findings.yml) 每天 04:00（Asia/Shanghai）结束前一天：把汇总范围内尚未归档、运行在当天结束前完成的发现写入 `reports/findings/daily/<日期>.json` 与 `<日期>.html`，并更新 `daily/index.html` 与记录已归档键和待发送日报的 `daily/index.json`。之后出现的发现（如对旧运行的重新评审）归入下一个结束的日期并标为补录；首次运行按各运行的结束日期补建历史，只发送当天的日报。`findings-daily.mjs` 负责计划与渲染，不访问网络；`scripts/daily-findings.mjs` 负责读写 gh-pages 和发送飞书消息。功能点沿用 `problem-feature-rules.json` 的规则，不调用 Agent；无法唯一确定的列在“未归入功能点”并注明涉及的功能点。页面是公开的，只写功能点，不写负责人。飞书日报在变量 `FACTORY_FEISHU_DIGEST` 为 `true` 前不排队也不发送。配置与发送规则见 [docs/daily-findings.md](../../docs/daily-findings.md)。
+[Daily framework findings](../workflows/daily-findings.yml) 每天 04:17（Asia/Shanghai）结束前一天：把汇总范围内尚未归档、运行在当天结束前完成的发现写入 `reports/findings/daily/<日期>.json` 与 `<日期>.html`，并更新 `daily/index.html` 与记录已归档键和待发送日报的 `daily/index.json`。发现归入其运行结束的日期；该日期已结束时（如对旧运行的重新评审），归入下一个结束的日期并标为补录。已结束的日期不再追加，再次运行不会改动它。首次运行按各运行的结束日期补建历史，只发送当天的日报；漏跑的日期由下一次运行同样补建并一起发送。`findings-daily.mjs` 负责计划与渲染，不访问网络；`scripts/daily-findings.mjs` 负责读写 gh-pages 和发送飞书消息。功能点沿用 `problem-feature-rules.json` 的规则，不调用 Agent；无法唯一确定的列在“未归入功能点”并注明涉及的功能点。页面是公开的，只写功能点，不写负责人。飞书日报在变量 `FACTORY_FEISHU_DIGEST` 为 `true` 前不排队也不发送。配置与发送规则见 [docs/daily-findings.md](../../docs/daily-findings.md)。
 
 确认边界始终可见：本轮评审基于冻结依赖与指引，confirmed 是评审者的有据判断；首屏清单下方一行“口径”说明最新 NocoBase3 源码是否已复核、对照哪个提交。应用交付成功、业务绕行和原记录“已解决”均不等于上游已修复。没有评测时显示“尚未评估”，不显示零问题。
 

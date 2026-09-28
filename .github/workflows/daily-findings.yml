@@ -3,13 +3,14 @@ name: Daily framework findings
 # Closes one Asia/Shanghai day of NocoBase3 framework findings into
 # reports/findings/daily/ on gh-pages. With FACTORY_FEISHU_DIGEST=true it also
 # sends that day's digest to a Feishu group bot, mentioning each feature point's
-# owners from FEISHU_PROBLEM_OWNERS; the digest is off until then. Only the send
-# step receives the webhook and its signing secret. It never runs application
-# code or calls a model.
+# owners from the FEISHU_PROBLEM_OWNERS secret; the digest is off until then.
+# Only the send step receives the webhook, its signing secret and the owners. It
+# never runs application code or calls a model.
 on:
   schedule:
-    # 04:00 Asia/Shanghai closes the previous day.
-    - cron: '0 20 * * *'
+    # 04:17 Asia/Shanghai closes the previous day. Off the hour, when GitHub
+    # delays or drops the fewest scheduled runs.
+    - cron: '17 20 * * *'
   workflow_dispatch:
     inputs:
       date:
@@ -80,5 +81,7 @@ jobs:
           REPORT_BASE_URL: ${{ steps.deployment.outputs.page_url }}
           FEISHU_WEBHOOK_URL: ${{ secrets.FEISHU_WEBHOOK_URL }}
           FEISHU_WEBHOOK_SECRET: ${{ secrets.FEISHU_WEBHOOK_SECRET }}
-          FEISHU_PROBLEM_OWNERS: ${{ vars.FEISHU_PROBLEM_OWNERS }}
+          # A secret, not a variable: the runner prints each step's env in the
+          # public log and masks only secrets.
+          FEISHU_PROBLEM_OWNERS: ${{ secrets.FEISHU_PROBLEM_OWNERS }}
         run: node control/.github/scripts/daily-findings.mjs notify --base-url "$REPORT_BASE_URL"

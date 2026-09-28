@@ -158,9 +158,13 @@ const tally = (entries) => {
   return severities;
 };
 
-// Plans closing `day`. The first archive rebuilds history by each run's own end
-// date and only queues the closed day's digest; afterwards every finding not yet
-// archived whose run ended by `day` belongs to `day`, late replays included.
+// Plans closing `day`, which must have ended. Each finding is archived once. One
+// whose run ended after the last closed day goes into its run's own day, so the
+// first archive rebuilds history and a skipped day is filled in; one whose run
+// ended on a day already closed is late and goes into `day`. Closing the last
+// closed day again adds nothing, so a day's page and digest never grow after it
+// is closed. The first archive queues only `day`'s digest; later ones queue
+// every day they add.
 export function planDailyArchive({
   occurrences,
   clusters = [],
@@ -171,7 +175,7 @@ export function planDailyArchive({
   featureOf,
 }) {
   assert(DAY.test(day ?? ''), 'Day must be YYYY-MM-DD');
-  assert(day <= dayOf(now), 'Cannot close a day that has not started');
+  assert(day < dayOf(now), 'Cannot close a day that has not ended');
   assert(
     !ledger || day >= ledger.closedThrough,
     `Days up to ${ledger?.closedThrough} are already closed`,
@@ -183,7 +187,8 @@ export function planDailyArchive({
     for (const item of cluster.items)
       clusterOf.set(occurrenceId(item), cluster);
   const added = new Map();
-  for (const item of occurrences) {
+  const open = !ledger || day > ledger.closedThrough;
+  for (const item of open ? occurrences : []) {
     const entry = dailyEntry(item, clusterOf.get(occurrenceId(item)), {
       archivedAt,
       featureOf,
@@ -191,7 +196,8 @@ export function planDailyArchive({
     // A run that ended after the closed day waits for its own day.
     if (entry.runDay > day || known.has(entry.key)) continue;
     known.add(entry.key);
-    const date = ledger ? day : entry.runDay;
+    const date =
+      !ledger || entry.runDay > ledger.closedThrough ? entry.runDay : day;
     added.set(date, [...(added.get(date) ?? []), entry]);
   }
   const days = new Map((ledger?.days ?? []).map((item) => [item.date, item]));
@@ -211,20 +217,20 @@ export function planDailyArchive({
     });
   }
   const cutoff = shiftDay(day, -PENDING_DAYS);
-  const previous = ledger?.pending ?? [];
-  const pending = [
-    ...previous.filter((item) => item.date > cutoff),
-    ...(notify ? (added.get(day) ?? []) : []).map((entry) => ({
-      date: day,
-      key: entry.key,
-    })),
-  ];
+  const queued = notify
+    ? [...added].flatMap(([date, entries]) =>
+        ledger || date === day
+          ? entries.map((entry) => ({ date, key: entry.key }))
+          : [],
+      )
+    : [];
+  const candidates = [...(ledger?.pending ?? []), ...queued];
+  const pending = candidates.filter((item) => item.date > cutoff);
   return {
     added: [...added]
       .map(([date, entries]) => ({ date, entries }))
       .sort((a, b) => a.date.localeCompare(b.date)),
-    dropped:
-      previous.length - previous.filter((item) => item.date > cutoff).length,
+    dropped: candidates.length - pending.length,
     ledger: {
       version: 1,
       timeZone: TIME_ZONE,

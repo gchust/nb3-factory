@@ -1,9 +1,10 @@
 #!/usr/bin/env node
 // Closes one Asia/Shanghai day of NocoBase3 framework findings into the gh-pages
 // archive, then sends that day's digest to a Feishu group, mentioning the owners
-// of each feature point. The archive is public, so owners live in a repository
-// variable and are never written to it or to the (public) Actions log. Only the
-// `notify` step receives the webhook and its signing secret. No model calls.
+// of each feature point. The archive and the Actions log are public, so owners
+// live in a repository secret, which the runner masks, and are never written to
+// either. Only the `notify` step receives the webhook, its signing secret and the
+// owners. No model calls.
 import { Buffer } from 'node:buffer';
 import { createHmac } from 'node:crypto';
 import { appendFileSync } from 'node:fs';
