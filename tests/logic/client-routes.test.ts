@@ -91,9 +91,27 @@ describe('app client routes', () => {
     // that requires sign-in adds an entry here, because that is a new grant somebody has to be given.
     const resolved = resolveRoutes();
 
-    // The landing page opted out of page authorization, so it is reachable by every signed-in user.
+    // The landing page opted out of page authorization, so it is reachable by every signed-in user. Each service page
+    // declares the page id its grant is stored against; the work-order detail page intentionally reuses the list's id,
+    // because reading one work order is the same grant as reading the list.
     expect(pageAuthorizations(resolved.routes)).toEqual([
       { name: 'home', authorizedAs: null },
+      { name: 'service-dashboard', authorizedAs: 'service.dashboard' },
+      { name: 'service-work-orders', authorizedAs: 'service.workOrders' },
+      {
+        name: 'service-work-order-detail',
+        authorizedAs: 'service.workOrders',
+      },
+      { name: 'service-inspections', authorizedAs: 'service.inspections' },
+      { name: 'service-customers', authorizedAs: 'service.customers' },
+      { name: 'service-devices', authorizedAs: 'service.devices' },
+      { name: 'service-knowledge', authorizedAs: 'service.knowledge' },
+      { name: 'service-manuals', authorizedAs: 'service.manuals' },
+      { name: 'service-assistant', authorizedAs: 'service.assistant' },
+      { name: 'service-integration', authorizedAs: 'service.integration' },
+      // The personal inbox needs no page grant: it is scoped to the signed-in
+      // actor rather than to a permission set.
+      { name: 'service-messages', authorizedAs: null },
     ]);
   });
 });
