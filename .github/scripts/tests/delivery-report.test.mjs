@@ -159,6 +159,16 @@ test('provider failure is visible in HTML without an Agent retrospective or raw 
  assert.doesNotMatch(html,/secret-not-for-html/);
  assert.equal(facts.delivery.status,'failed'); assert.equal(facts.checks[0].status,'not-verified');
 });
+test('a model stream drop in a repair round leads the summary even after a later review and failed QA', async t => {
+ const {root}=artifacts(t,{status:'failed'});
+ put(root,'agent-repair-2.jsonl.result.json',{version:1,status:'failed',phase:'repair',endedAt:300,retryAttempts:0,error:'upstream stream closed before [DONE]'});
+ put(root,'agent-review.jsonl.result.json',{version:1,status:'completed',phase:'review',endedAt:400});
+ const {facts,html}=await makeDeliveryReport(receipt('failure'),root);
+ assert.match(facts.delivery.qaSummary,/^搭建停止：模型请求连接失败、中断或超时。第 2 轮修复阶段中断；模型请求重试次数：0。/);
+ assert.match(facts.delivery.qaSummary,/最近验收记录（不代表完整交付通过）：实际结果/);
+ assert.equal(facts.attention.find(a=>a.source==='agent-repair-2.jsonl.result.json')?.title,'模型请求连接失败、中断或超时');
+ assert.match(html,/第 2 轮修复阶段中断/);
+});
 test('first screen names the recorded template, creator and installed package versions',async t=>{
  const {root}=artifacts(t);
  put(root,'baseline.json',{version:1,kind:'installed-packages',source:null,template:'@nocobase/app-template-default',templateVersion:'1.0.0-beta.47',creatorVersion:'0.1.0-beta.22',

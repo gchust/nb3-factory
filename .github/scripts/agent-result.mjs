@@ -12,6 +12,7 @@ export function createResult(identity) {
   const startedAt = Date.now();
   const measurements = new Map();
   let retryAttempts = 0;
+  const factoryRetries = [];
   let complete = false;
   let invalidEvents = 0;
   let incomplete = false;
@@ -41,11 +42,14 @@ export function createResult(identity) {
       }
     },
     malformed() { invalidEvents++; },
+    // A factory rerun after a model-service failure; the next save covers every attempt.
+    retried({ delaySeconds, category }) { factoryRetries.push({ delaySeconds, category }); },
     save(log, { status, exitCode, error }, redact) {
       const result = { version: 1, ...identity, startedAt, endedAt: Date.now(),
         status, exitCode, terminalEvent: complete, invalidEvents, incomplete, costUsd, turns,
         error: error ? redact(String(error)) : undefined,
         retryAttempts: identity.engine === 'pi' ? retryAttempts : undefined,
+        factoryRetries: factoryRetries.length ? [...factoryRetries] : undefined,
         failure: status === 'failed' ? classifyAgentFailure(error) : undefined,
         measurements: [...measurements.values()] };
       writeJson(`${log}.result.json`, JSON.parse(redact(JSON.stringify(result))));

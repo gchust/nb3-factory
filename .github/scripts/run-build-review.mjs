@@ -32,7 +32,7 @@ export {
 } from './check-review-draft.mjs';
 import { resolveAgent } from './agent-registry.mjs';
 import { credentialNames, engineEnv } from './agent-adapter.mjs';
-import { buildRedactor, runAgentInvocation } from './agent-harness.mjs';
+import { buildRedactor, parseRetryDelays, runAgentInvocation } from './agent-harness.mjs';
 import { createResult, readResult } from './agent-result.mjs';
 import { scrubSecrets } from './agent-history.mjs';
 import { recordTiming } from './timing.mjs';
@@ -528,6 +528,7 @@ export async function runBuildReview(
         }),
         invocationTimeoutSeconds: remaining,
         idleTimeoutSeconds,
+        retryDelaysSeconds: parseRetryDelays(env.FACTORY_MODEL_RETRY_DELAYS_SECONDS),
       });
     } catch (error) {
       invocationError = error;

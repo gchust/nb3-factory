@@ -5,7 +5,7 @@ import { recordTiming } from './timing.mjs';
 import { resolveAgent } from './agent-registry.mjs';
 import { credentialNames, engineEnv } from './agent-adapter.mjs';
 import { createResult, readResult } from './agent-result.mjs';
-import { parseAgentArgs, parseIdleTimeout, parseInvocationTimeout, parseRunDeadline, runAgentInvocation } from './agent-harness.mjs';
+import { parseAgentArgs, parseIdleTimeout, parseInvocationTimeout, parseRetryDelays, parseRunDeadline, runAgentInvocation } from './agent-harness.mjs';
 
 const started = Date.now();
 const configuredEnv = normalizeAgentEnv(process.env);
@@ -37,6 +37,7 @@ try {
   const invocationTimeoutSeconds = parseInvocationTimeout(configuredEnv.CODE_AGENT_INVOCATION_TIMEOUT_SECONDS, 0);
   const idleTimeoutSeconds = parseIdleTimeout(configuredEnv.CODE_AGENT_IDLE_TIMEOUT_SECONDS, 600);
   const runDeadlineEpochSeconds = parseRunDeadline(process.env.FACTORY_RUN_DEADLINE_EPOCH_SECONDS);
+  const retryDelaysSeconds = parseRetryDelays(process.env.FACTORY_MODEL_RETRY_DELAYS_SECONDS);
   capture.start({ ...invocation, actualVersion, configuredVersion });
   await runAgentInvocation({
     ...invocation,
@@ -46,7 +47,7 @@ try {
       model: invocation.model, completion: adapter.completion ?? 'event', phase, role: qa ? 'qa' : completing.includes(phase) ? phase : 'implementation' }),
     secrets: [...(invocation.secrets ?? []), ...credentialNames.map((name) => process.env[name]),
       process.env.FACTORY_ADMIN_PASSWORD, process.env.FACTORY_TEST_PASSWORD],
-    invocationTimeoutSeconds, idleTimeoutSeconds, runDeadlineEpochSeconds,
+    invocationTimeoutSeconds, idleTimeoutSeconds, runDeadlineEpochSeconds, retryDelaysSeconds,
   });
   // Implementation can yield a partial workspace to verification. A reply, review
   // or framework fix has no such verifier: a stalled invocation must not publish

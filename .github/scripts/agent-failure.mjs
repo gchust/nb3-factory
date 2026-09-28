@@ -9,9 +9,12 @@ const categories = {
   quota_exhausted: ['模型服务额度不足', false],
   provider_unavailable: ['模型服务暂不可用', true],
   rate_limited: ['模型服务限流', true],
-  network_error: ['模型请求连接失败或超时', true],
+  network_error: ['模型请求连接失败、中断或超时', true],
   agent_failure: ['Agent 执行失败，原因需查看日志', false],
 };
+// Invocations that judge or answer about a build after it stopped. Their outcome
+// is reported by their own workflow and never explains why the build ended.
+const outsideBuild = ['reply', 'review', 'framework-fix'];
 export function classifyAgentFailure(error) {
   const text = String(error ?? '');
   const status = Number(text.match(/(?:^|\b(?:HTTP(?: status)?|status(?:Code)?|code)\s*[:=]?\s*)([45]\d{2})\b/i)?.[1]);
@@ -20,7 +23,7 @@ export function classifyAgentFailure(error) {
   else if ([500, 502, 503, 504, 529].includes(status) || /auth_unavailable|overloaded_error|service unavailable/i.test(text)) category = 'provider_unavailable';
   else if ([401, 403].includes(status) || /invalid[_ ]api[_ ]key|authentication_error|permission_denied/i.test(text)) category = 'auth_configuration';
   else if (status === 429 || /rate[_ ]limit/i.test(text)) category = 'rate_limited';
-  else if (/ECONNRESET|ECONNREFUSED|ETIMEDOUT|EAI_AGAIN|fetch failed|connection error|request timed out/i.test(text)) category = 'network_error';
+  else if (/ECONNRESET|ECONNREFUSED|ETIMEDOUT|EAI_AGAIN|fetch failed|connection error|request timed out|stream (?:was )?closed|before \[DONE\]|premature close/i.test(text)) category = 'network_error';
   return { category, retryable: categories[category][1] };
 }
 
@@ -35,7 +38,7 @@ export function collectAgentFailure(root) {
       if (entry.isDirectory() && depth < 4 && /^(?:verify-\d+|browser-acceptance|browser-focused)$/.test(entry.name)) walk(name, depth + 1);
       else if (entry.isFile() && /^agent.*\.jsonl\.result\.json$/.test(entry.name)) {
         const result = readJson(root, name);
-        if (result?.version === 1 && Number.isFinite(result.endedAt)) candidates.push({ result, source: name });
+        if (result?.version === 1 && Number.isFinite(result.endedAt) && !outsideBuild.includes(result.phase)) candidates.push({ result, source: name });
       }
     }
   };
@@ -45,9 +48,15 @@ export function collectAgentFailure(root) {
   const failure = classifyAgentFailure(latest.result.error);
   const attempts = latest.result.retryAttempts;
   const phase = ({ implementation: '实现', repair: '修复', qa: '独立验收', 'qa-focused': '定向验收', 'qa-report-repair': '验收报告' })[latest.result.phase] || 'Agent';
+  // agent-repair-N.jsonl and verify-N/... name the round the build stopped in.
+  const round = Number(latest.source.match(/(?:repair|verify)-([1-9]\d*)/)?.[1]);
+  const delays = (Array.isArray(latest.result.factoryRetries) ? latest.result.factoryRetries : [])
+    .map(retry => retry?.delaySeconds).filter(delay => Number.isSafeInteger(delay) && delay >= 0)
+    .map(delay => delay % 60 === 0 && delay ? `${delay / 60} 分钟` : `${delay} 秒`);
   return { ...failure, phase, source: latest.source,
     retryAttempts: Number.isSafeInteger(attempts) && attempts >= 0 ? attempts : null,
+    factoryRetries: delays.length,
     title: categories[failure.category][0],
-    detail: `${phase}阶段中断；模型请求重试次数：${Number.isSafeInteger(attempts) && attempts >= 0 ? attempts : '未采集'}。${failure.retryable ? '服务恢复后可尝试从保存的工作继续；不代表业务验证通过。' : '请先检查配置或运行日志；不自动重跑整个搭建。'}`,
+    detail: `${round ? `第 ${round} 轮` : ''}${phase}阶段中断；模型请求重试次数：${Number.isSafeInteger(attempts) && attempts >= 0 ? attempts : '未采集'}${delays.length ? `；分别等待 ${delays.join('、')}后重跑 ${delays.length} 次仍失败` : ''}。${failure.retryable ? '服务恢复后可尝试从保存的工作继续；不代表业务验证通过。' : '请先检查配置或运行日志；不自动重跑整个搭建。'}`,
   };
 }

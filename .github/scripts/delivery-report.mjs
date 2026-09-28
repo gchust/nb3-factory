@@ -76,10 +76,11 @@ export function collectDelivery(root, report, issue = {}) {
   if (record.status === 'failure' && diagnostic?.reason) {
     attention.push({ title: '搭建已停止，状态 failed', detail: text(diagnostic.reason), source: 'task-diagnostic.json' });
   }
+  let agentFailure = null;
   if (record.status === 'failure') {
     try {
-      const failure = collectAgentFailure(root);
-      if (failure) attention.push({ title: failure.title, detail: failure.detail, source: failure.source });
+      agentFailure = collectAgentFailure(root);
+      if (agentFailure) attention.push({ title: agentFailure.title, detail: agentFailure.detail, source: agentFailure.source });
     } catch { warnings.push('Agent 失败诊断无法读取，具体原因请查看本轮运行日志。'); }
   }
   const media = [];
@@ -179,7 +180,7 @@ export function collectDelivery(root, report, issue = {}) {
     delivery:{status:reportStatus(record.status), ci:record.status==='delivered'?'passed':'unknown',
       ciSource:record.status==='delivered'?'流水线已完成最终验证及 PR 发布；不代表人工合并。':'本轮独立最终验证结果未确认。',
       qaSummary:record.status === 'failure'
-        ? [text(diagnostic?.reason) || '搭建未完成，当前状态 failed。', qa?.summary ? `最近验收记录（不代表完整交付通过）：${text(qa.summary)}` : '尚无可用的浏览器验收结果。'].join(' ')
+        ? [text(diagnostic?.reason) || (agentFailure ? `搭建停止：${agentFailure.title}。${agentFailure.detail}` : '搭建未完成，当前状态 failed。'), qa?.summary ? `最近验收记录（不代表完整交付通过）：${text(qa.summary)}` : '尚无可用的浏览器验收结果。'].join(' ')
         : text(qa?.summary)},
     links:[{label:'查看需求',url:`https://github.com/${record.repository}/issues/${record.issue}`},{label:'本轮运行与原始产物',url:runUrl}],
     attention,checks,media,uncovered:strings(showcase?.uncovered),

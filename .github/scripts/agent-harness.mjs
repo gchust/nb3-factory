@@ -5,6 +5,7 @@
 // specifics never leak into another adapter's security behavior.
 import { spawn } from 'node:child_process';
 import {
+  appendFileSync,
   createWriteStream,
   mkdirSync,
   readFileSync,
@@ -13,9 +14,16 @@ import {
 import path from 'node:path';
 import { finished } from 'node:stream/promises';
 import { clearTimeout, setTimeout } from 'node:timers';
+import { setTimeout as sleep } from 'node:timers/promises';
+import { classifyAgentFailure } from './agent-failure.mjs';
 
 const COMPLETION_GRACE_MILLISECONDS = 3_000;
 const FORCE_KILL_DELAY_MILLISECONDS = 5_000;
+// An engine retries a failed model request only for errors it recognizes, and
+// only for about three minutes. When an invocation still ends on a retryable
+// model-service error, the factory reruns it on the same workspace after each
+// of these delays; a longer outage fails the invocation as before.
+export const MODEL_RETRY_DELAYS_SECONDS = Object.freeze([60, 300]);
 
 export function parseAgentArgs(argv) {
   const parsed = {};
@@ -72,6 +80,18 @@ export function parseRunDeadline(value) {
   return parsed;
 }
 
+export function parseRetryDelays(value) {
+  if (value == null || value.trim() === '') return MODEL_RETRY_DELAYS_SECONDS;
+  if (value.trim() === 'none') return [];
+  const delays = value.split(',').map((item) => Number(item.trim()));
+  if (delays.length > 5 || delays.some((delay) => !Number.isInteger(delay) || delay < 0 || delay > 3_600)) {
+    throw new Error(
+      'FACTORY_MODEL_RETRY_DELAYS_SECONDS must be "none" or up to 5 comma-separated integers from 0 to 3600.',
+    );
+  }
+  return delays;
+}
+
 export function buildRedactor(secrets) {
   const known = secrets.filter(Boolean);
   return (text) =>
@@ -86,8 +106,41 @@ export function buildRedactor(secrets) {
  * open after a finished turn would otherwise hold the runner until its budget
  * expires. `formatConsoleLine` filters the Actions log; it never affects the
  * JSONL artifact, which keeps every line for usage accounting and history.
+ *
+ * A retryable model-service failure reruns the invocation after each of
+ * `retryDelaysSeconds`. Reruns append to the same transcript and result, with a
+ * `factory_model_retry` line between attempts, so a failed attempt's events and
+ * usage are never overwritten. Waiting counts against the invocation timeout and
+ * the run deadline: a retry that would not start before either is not made.
  */
 export async function runAgentInvocation({
+  retryDelaysSeconds = MODEL_RETRY_DELAYS_SECONDS,
+  wait = sleep,
+  ...options
+}) {
+  const { label, log, result, invocationTimeoutSeconds = 0, runDeadlineEpochSeconds = null } = options;
+  const started = Date.now();
+  const timeoutAt = invocationTimeoutSeconds > 0 ? started + invocationTimeoutSeconds * 1_000 : null;
+  for (let retry = 0; ; retry++) {
+    const attempt = await runAttempt({ ...options, append: retry > 0,
+      invocationTimeoutSeconds: timeoutAt ? Math.max(1, Math.ceil((timeoutAt - Date.now()) / 1_000)) : 0 });
+    if (!attempt.error) return;
+    const delaySeconds = retryDelaysSeconds[retry];
+    const failure = attempt.modelFailure === undefined ? null : classifyAgentFailure(attempt.modelFailure);
+    const resumeAt = Date.now() + (delaySeconds ?? 0) * 1_000;
+    if (!failure?.retryable || delaySeconds === undefined || (timeoutAt && resumeAt >= timeoutAt) ||
+        (runDeadlineEpochSeconds != null && resumeAt >= runDeadlineEpochSeconds * 1_000)) throw attempt.error;
+    const notice = { type: 'factory_model_retry', retry: retry + 1, of: retryDelaysSeconds.length,
+      delaySeconds, category: failure.category };
+    appendFileSync(log, `${JSON.stringify(notice)}\n`);
+    result?.retried?.(notice);
+    process.stderr.write(`${label} model request failed (${failure.category}); rerunning the invocation in ${delaySeconds} seconds (factory retry ${retry + 1}/${retryDelaysSeconds.length}).\n`);
+    await wait(delaySeconds * 1_000);
+  }
+}
+
+async function runAttempt({
+  append = false,
   label,
   command,
   args,
@@ -116,7 +169,7 @@ export async function runAgentInvocation({
     stdio: [standardInput === undefined ? 'ignore' : 'pipe', 'pipe', 'pipe'],
   });
 
-  const stream = createWriteStream(log, { flags: 'w', mode: 0o600 });
+  const stream = createWriteStream(log, { flags: append ? 'a' : 'w', mode: 0o600 });
   let stdoutBuffer = '';
   let eventFailure;
   let timedOut = false;
@@ -221,21 +274,23 @@ export async function runAgentInvocation({
     : !completionTermination && exitCode !== 0 ? 'failed' : 'completed';
   result?.save(log, { status, exitCode,
     error: invocationError?.message ?? eventFailure }, redact);
-  if (invocationError) throw invocationError;
+  if (invocationError) return { error: invocationError };
 
   if (handoffRequested) {
     process.exitCode = 75;
   } else if (timedOut) {
-    throw new Error(
+    return { error: new Error(
       `${label} invocation timed out after ${invocationTimeoutSeconds} seconds.`,
-    );
+    ) };
   } else if (eventFailure) {
-    throw new Error(
+    // Only the engine's own final model error may justify a rerun.
+    return { modelFailure: eventFailure, error: new Error(
       `${label} model invocation failed: ${redact(eventFailure)}`,
-    );
+    ) };
   } else if (!completionTermination && !stalled && exitCode !== 0) {
-    throw new Error(`${label} exited with code ${exitCode}.`);
+    return { error: new Error(`${label} exited with code ${exitCode}.`) };
   }
+  return {};
 
   function recordActivity() {
     if (idleTimeoutSeconds <= 0 || stalled) return;
