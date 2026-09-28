@@ -38,7 +38,7 @@ test('evaluation export is a data-only, non-blocking step after the existing usa
   }
 });
 
-test('optional delivery keeps the receiver token in one read-only step and never builds or reviews', () => {
+test('optional delivery keeps the receiver token in read-only steps and never builds or reviews', () => {
   // No workflow waits on delivery: registration only dispatches it, so a slow
   // receiver never holds the reporter's or coordinator's concurrency group.
   for (const name of ['report-task-usage.yml', 'evaluation-batches.yml']) {
@@ -55,10 +55,26 @@ test('optional delivery keeps the receiver token in one read-only step and never
   const workflow = read('deliver-evaluation.yml');
   assert.doesNotMatch(workflow, /workflow_call:/);
   const all = jobs(workflow);
-  assert.equal((workflow.match(/secrets\.EVALUATION_TOKEN/g) ?? []).length, 1);
+  assert.equal((workflow.match(/secrets\.EVALUATION_TOKEN/g) ?? []).length, 2);
   assert.match(all.send, /secrets\.EVALUATION_TOKEN/);
   assert.match(all.send, /permissions:\n {6}contents: read\n {4}steps:/);
   for (const name of ['plan', 'record', 'backfill']) assert.doesNotMatch(all[name], /EVALUATION_TOKEN|secrets\./, name);
+  // Classification reads the receiver's feature points with the token, then lets the
+  // Agent see model credentials only in a later step; neither step can write the repository.
+  assert.match(all.classify, /permissions:\n {6}contents: read\n {4}steps:/);
+  assert.doesNotMatch(all.classify, /contents: write|actions: write/);
+  const steps = all.classify.split(/\n {6}- /);
+  const taxonomy = steps.find(step => step.includes('problem-classification.mjs taxonomy'));
+  const agent = steps.find(step => step.includes('problem-classification.mjs run'));
+  assert.match(taxonomy, /secrets\.EVALUATION_TOKEN/);
+  assert.doesNotMatch(taxonomy.replace('secrets.EVALUATION_TOKEN', ''), /secrets\./);
+  assert.doesNotMatch(agent, /EVALUATION_TOKEN|GITHUB_TOKEN|github\.token/);
+  for (const step of steps.filter(step => step !== agent)) assert.doesNotMatch(step.replace('secrets.EVALUATION_TOKEN', ''), /secrets\./);
+  for (const engine of ['codebuddy', 'claude-code', 'codex', 'opencode']) assert.ok(agent.includes(`vars.CODE_AGENT_ENGINE == '${engine}'`), engine);
+  assert.match(all.classify, /vars\.EVALUATION_DELIVERY_FORMAT == 'testmanage3-links-v1'/);
+  assert.match(all.send, /needs: \[plan, classify\]/);
+  assert.match(all.send, /if: always\(\) && !cancelled\(\) && needs\.plan\.result == 'success'/);
+  assert.match(all.send, /continue-on-error: true\n {8}with:\n {10}name: factory-problem-classification-/);
   assert.match(all.record, /contents: write/);
   assert.doesNotMatch(workflow, /pnpm install|agent-browser|run-agent|run-build-review|code-agent-task\.yml|replay-build-review/);
   assert.match(workflow, /group: factory-evaluation-delivery\n {2}queue: max/);

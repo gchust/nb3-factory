@@ -2,8 +2,12 @@ name: Deliver Evaluation Results
 
 # Optional: sends already-registered evaluation bundles to one receiver
 # configured by maintainers. It never builds, reviews, runs application code,
-# installs dependencies, starts a browser or reads model credentials. It is
-# only dispatched or scheduled, never called, so no other workflow waits on it.
+# installs dependencies or starts a browser. Before sending TestManage3 links,
+# the classify job reads the receiver's feature points (the only other step
+# with the receiver token) and may ask the selected Agent, with no repository
+# write access and no receiver token, to place problems the subject rules
+# cannot. Its failure only leaves problems unclassified. It is only dispatched
+# or scheduled, never called, so no other workflow waits on it.
 on:
   workflow_dispatch:
     inputs:
@@ -107,8 +111,107 @@ jobs:
           if-no-files-found: error
           retention-days: 3
 
-  send:
+  # Assigns feature points before sending; delivery never waits on its success.
+  classify:
     needs: plan
+    if: always() && !cancelled() && needs.plan.result == 'success' && needs.plan.outputs.count != '0' && vars.EVALUATION_DELIVERY_FORMAT == 'testmanage3-links-v1'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          path: control
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24.x
+      - uses: actions/download-artifact@v4
+        with:
+          name: factory-evaluation-delivery-plan-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/delivery-plan
+      # Read-only request; the token is not present in any later step.
+      - name: Read the receiver's feature points
+        id: taxonomy
+        continue-on-error: true
+        env:
+          EVALUATION_ENDPOINT: ${{ vars.EVALUATION_ENDPOINT }}
+          EVALUATION_AUTH_MODE: ${{ vars.EVALUATION_AUTH_MODE }}
+          EVALUATION_TOKEN: ${{ secrets.EVALUATION_TOKEN }}
+        run: node control/.github/scripts/problem-classification.mjs taxonomy --output "$RUNNER_TEMP/feature-points.json"
+      - name: Classify problems by subject rules
+        id: rules
+        if: steps.taxonomy.outcome == 'success'
+        run: |
+          node control/.github/scripts/problem-classification.mjs prepare --plan "$RUNNER_TEMP/delivery-plan" \
+            --taxonomy "$RUNNER_TEMP/feature-points.json" --output "$RUNNER_TEMP/problem-classification"
+      - name: Install selected pinned classifier
+        id: install
+        if: steps.rules.outputs.needs_model == 'true'
+        continue-on-error: true
+        env:
+          CODE_AGENT_ENGINE: ${{ vars.CODE_AGENT_ENGINE }}
+          CODE_AGENT_VERSION: ${{ vars.CODE_AGENT_VERSION }}
+          PI_VERSION: ${{ vars.PI_VERSION }}
+          CODEBUDDY_VERSION: ${{ vars.CODEBUDDY_VERSION }}
+          CLAUDE_CODE_VERSION: ${{ vars.CLAUDE_CODE_VERSION }}
+          CODEX_VERSION: ${{ vars.CODEX_VERSION }}
+          OPENCODE_VERSION: ${{ vars.OPENCODE_VERSION }}
+          FACTORY_AGENT_INSTALL_RECORD: ${{ runner.temp }}/agent-install.json
+        run: node control/.github/scripts/install-agent.mjs
+      - name: Classify remaining problems with the selected Agent
+        if: steps.install.outcome == 'success'
+        env:
+          CODE_AGENT_ENGINE: ${{ vars.CODE_AGENT_ENGINE }}
+          FACTORY_AGENT_INSTALL_RECORD: ${{ runner.temp }}/agent-install.json
+          # Same explicit engine mapping as findings classification.
+          CODE_AGENT_API_ENDPOINT: ${{ (vars.CODE_AGENT_ENGINE == '' || vars.CODE_AGENT_ENGINE == 'pi') && (secrets.CODE_AGENT_API_ENDPOINT || secrets.PI_API_ENDPOINT) || '' }}
+          CODE_AGENT_API_KEY: ${{ (vars.CODE_AGENT_ENGINE == '' || vars.CODE_AGENT_ENGINE == 'pi') && (secrets.CODE_AGENT_API_KEY || secrets.PI_API_KEY) || '' }}
+          CODEBUDDY_AUTH_TOKEN: ${{ vars.CODE_AGENT_ENGINE == 'codebuddy' && secrets.CODEBUDDY_AUTH_TOKEN || '' }}
+          CODEBUDDY_API_KEY: ${{ vars.CODE_AGENT_ENGINE == 'codebuddy' && secrets.CODEBUDDY_API_KEY || '' }}
+          CODEBUDDY_MODEL: ${{ vars.CODE_AGENT_ENGINE == 'codebuddy' && vars.CODEBUDDY_MODEL || '' }}
+          CODEBUDDY_THINKING: ${{ vars.CODEBUDDY_THINKING || 'max' }}
+          CODEBUDDY_BASE_URL: ${{ vars.CODE_AGENT_ENGINE == 'codebuddy' && vars.CODEBUDDY_BASE_URL || '' }}
+          CODEBUDDY_INTERNET_ENVIRONMENT: ${{ vars.CODE_AGENT_ENGINE == 'codebuddy' && vars.CODEBUDDY_INTERNET_ENVIRONMENT || '' }}
+          CODE_AGENT_API_TYPE: ${{ vars.CODE_AGENT_API_TYPE || vars.PI_API_TYPE || 'openai-completions' }}
+          CODE_AGENT_MODEL: ${{ vars.CODE_AGENT_MODEL || vars.PI_MODEL }}
+          CODE_AGENT_THINKING: ${{ vars.CODE_AGENT_THINKING || vars.PI_THINKING || 'max' }}
+          CODE_AGENT_AUTH_HEADER: ${{ vars.CODE_AGENT_AUTH_HEADER || vars.PI_AUTH_HEADER || 'true' }}
+          CODE_AGENT_SUPPORTS_DEVELOPER_ROLE: ${{ vars.CODE_AGENT_SUPPORTS_DEVELOPER_ROLE || vars.PI_SUPPORTS_DEVELOPER_ROLE }}
+          CODE_AGENT_SUPPORTS_REASONING_EFFORT: ${{ vars.CODE_AGENT_SUPPORTS_REASONING_EFFORT || vars.PI_SUPPORTS_REASONING_EFFORT || 'true' }}
+          FACTORY_PROBLEM_CLASSIFICATION_TIMEOUT_SECONDS: ${{ vars.FACTORY_PROBLEM_CLASSIFICATION_TIMEOUT_SECONDS || '300' }}
+          ANTHROPIC_API_KEY: ${{ vars.CODE_AGENT_ENGINE == 'claude-code' && secrets.ANTHROPIC_API_KEY || '' }}
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ vars.CODE_AGENT_ENGINE == 'claude-code' && secrets.CLAUDE_CODE_OAUTH_TOKEN || '' }}
+          ANTHROPIC_BASE_URL: ${{ vars.CODE_AGENT_ENGINE == 'claude-code' && vars.ANTHROPIC_BASE_URL || '' }}
+          CLAUDE_CODE_MODEL: ${{ vars.CLAUDE_CODE_MODEL }}
+          CLAUDE_CODE_EFFORT: ${{ vars.CLAUDE_CODE_EFFORT }}
+          CLAUDE_CODE_QA_EFFORT: ${{ vars.CLAUDE_CODE_QA_EFFORT }}
+          CODEX_API_KEY: ${{ vars.CODE_AGENT_ENGINE == 'codex' && secrets.CODEX_API_KEY || '' }}
+          CODEX_MODEL: ${{ vars.CODEX_MODEL }}
+          CODEX_BASE_URL: ${{ vars.CODE_AGENT_ENGINE == 'codex' && vars.CODEX_BASE_URL || '' }}
+          CODEX_REASONING_EFFORT: ${{ vars.CODEX_REASONING_EFFORT }}
+          CODEX_QA_REASONING_EFFORT: ${{ vars.CODEX_QA_REASONING_EFFORT }}
+          OPENCODE_API_KEY: ${{ vars.CODE_AGENT_ENGINE == 'opencode' && secrets.OPENCODE_API_KEY || '' }}
+          OPENCODE_MODEL: ${{ vars.OPENCODE_MODEL }}
+          OPENCODE_BASE_URL: ${{ vars.CODE_AGENT_ENGINE == 'opencode' && vars.OPENCODE_BASE_URL || '' }}
+          OPENCODE_VARIANT: ${{ vars.OPENCODE_VARIANT }}
+          OPENCODE_QA_VARIANT: ${{ vars.OPENCODE_QA_VARIANT }}
+          CODE_AGENT_IDLE_TIMEOUT_SECONDS: ${{ vars.CODE_AGENT_IDLE_TIMEOUT_SECONDS }}
+          FACTORY_AGENT_ROLE: review
+          FACTORY_REVIEW_THINKING: ${{ vars.FACTORY_REVIEW_THINKING || 'medium' }}
+        run: node control/.github/scripts/problem-classification.mjs run --input "$RUNNER_TEMP/problem-classification"
+      - uses: actions/upload-artifact@v4
+        if: always() && steps.rules.outcome == 'success'
+        with:
+          name: factory-problem-classification-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/problem-classification
+          if-no-files-found: warn
+          retention-days: 14
+
+  send:
+    needs: [plan, classify]
     # Replay/scan skip backfill; explicitly override inherited skipped-job status.
     if: always() && !cancelled() && needs.plan.result == 'success' && needs.plan.outputs.count != '0'
     runs-on: ubuntu-latest
@@ -128,7 +231,14 @@ jobs:
         with:
           name: factory-evaluation-delivery-plan-${{ github.run_id }}-${{ github.run_attempt }}
           path: ${{ runner.temp }}/delivery-plan
-      # The only step that sees the receiver token. It has no repository write access.
+      # Missing or invalid decisions only mean problems arrive unclassified.
+      - uses: actions/download-artifact@v4
+        if: needs.classify.result == 'success' || needs.classify.result == 'failure'
+        continue-on-error: true
+        with:
+          name: factory-problem-classification-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/problem-classification
+      # The only step that sends to the receiver. It has no repository write access.
       - name: Submit factory problems and complete reports with bounded retries
         env:
           EVALUATION_ENDPOINT: ${{ vars.EVALUATION_ENDPOINT }}
@@ -138,7 +248,8 @@ jobs:
           EVALUATION_TIMEOUT_SECONDS: ${{ vars.EVALUATION_TIMEOUT_SECONDS || '180' }}
         run: |
           node control/.github/scripts/evaluation-delivery.mjs send \
-            --plan "$RUNNER_TEMP/delivery-plan" --output "$RUNNER_TEMP/delivery-results/results.json"
+            --plan "$RUNNER_TEMP/delivery-plan" --output "$RUNNER_TEMP/delivery-results/results.json" \
+            --classification "$RUNNER_TEMP/problem-classification/classification.json"
       - uses: actions/upload-artifact@v4
         if: always()
         with:

@@ -7,6 +7,7 @@ import { commitPrepared, exportDraft, prepareRevision } from '../evaluation-arch
 import { writeZip } from '../evaluation-bundle.mjs';
 import { deliverBundle, deliveryConfig, DeliveryConfigError, ITEM_WORST_CASE_MS, planDeliveries, SCAN_LIMIT, SEND_BUDGET_MS, sendDeliveries, targetIdOf } from '../evaluation-delivery.mjs';
 import { readOutbox, recordDeliveries } from '../evaluation-registry.mjs';
+import { problemSubmission } from '../problem-submission.mjs';
 import { buildArtifacts, fakeGitHub, reportFor, startReceiver, temporary, usageRecord } from './evaluation-fixtures.mjs';
 
 const exporter = { controlSha: 'e'.repeat(40), runId: 900, attempt: 1 };
@@ -262,6 +263,29 @@ test('link mode submits JSON metadata and selected problems without ZIP, HTML or
   assert.deepEqual(timeouts, [180000]);
   assert.equal(deliveryConfig({ EVALUATION_ENDPOINT: 'https://r.example/import', EVALUATION_TOKEN: 't', EVALUATION_TIMEOUT_SECONDS: '240' }).timeoutMs, 240000);
   for (const timeout of ['0', 'NaN', '301', '29', '30.5']) assert.throws(() => deliveryConfig({ EVALUATION_ENDPOINT: 'https://r.example/import', EVALUATION_TOKEN: 't', EVALUATION_TIMEOUT_SECONDS: timeout }), /EVALUATION_TIMEOUT_SECONDS/);
+});
+
+test('link mode sends each item\'s feature point decisions with the same bytes on every attempt', async t => {
+  const { zip, subject, document, registration } = await registered(t);
+  const [problem] = problemSubmission(document).problems;
+  const decision = { featurePointId: 47, method: 'rule', reason: 'pkg:@nocobase/db → 应用搭建/数据库' };
+  const env = { EVALUATION_ENDPOINT: 'https://receiver.example/import', EVALUATION_TOKEN: 'test-only', EVALUATION_DELIVERY_FORMAT: 'testmanage3-links-v1' };
+  const targetId = targetIdOf(env.EVALUATION_ENDPOINT);
+  const item = { ...subject, targetId, id: 'classified', zip, source: 'available', previousAttempts: 0, bundleSha256: registration.bundleSha256 };
+  const bodies = [];
+  const fetcher = async (_url, options) => {
+    bodies.push(options.body);
+    if (bodies.length === 1) return new Response('busy', { status: 503 });
+    return new Response(JSON.stringify({ receiptId: 'r', sourceInstance: subject.sourceInstance, runKey: subject.key, revision: subject.revision, bundleSha256: registration.bundleSha256, state: 'stored' }), { status: 201 });
+  };
+  const sent = await sendDeliveries({ targetId, items: [item] }, { env, fetcher, pause: noPause, classifications: new Map([['classified', { [problem.key]: decision }]]) });
+  assert.equal(sent.results[0].state, 'stored');
+  assert.equal(bodies.length, 2);
+  assert.ok(bodies[0].equals(bodies[1]));
+  assert.deepEqual(JSON.parse(bodies[1].toString('utf8')).problems[0].classification, decision);
+  bodies.length = 0;
+  await sendDeliveries({ targetId, items: [{ ...item, id: 'other' }] }, { env, fetcher, pause: noPause, classifications: new Map([['classified', { [problem.key]: decision }]]) });
+  assert.equal('classification' in JSON.parse(bodies[1].toString('utf8')).problems[0], false);
 });
 
 test('custom timeout is included in the pre-delivery budget check', async t => {
