@@ -5,7 +5,7 @@ The factory owns deciding which QA/review findings are problems. TestManage3 rec
 Repository settings:
 
 - `FACTORY_EVALUATION_DELIVERY=true`
-- `EVALUATION_ENDPOINT=https://test3.nfvd.net/main/api/evaluations/import`
+- `EVALUATION_ENDPOINT=https://nb3.nocobase.com/tm3/api/evaluations/import`
 - `EVALUATION_AUTH_MODE=x-api-key`
 - `EVALUATION_DELIVERY_FORMAT=testmanage3-links-v1`
 - `EVALUATION_TIMEOUT_SECONDS=180` (optional; integer 30–300 seconds per attempt).
