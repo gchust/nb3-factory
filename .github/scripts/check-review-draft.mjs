@@ -5,13 +5,17 @@ import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { digest, readReviewJson, validateEvaluation } from './build-review.mjs';
 
-export function materializeEvidence(review, snapshot, catalog) {
-  // Any edit to a reviewed input invalidates the assessment, not the delivery.
+// Any edit to a reviewed input invalidates the assessment, not the delivery.
+export function assertCapturedInputs(snapshot, catalog) {
   for (const file of catalog) {
     const target = path.join(snapshot, file.path);
     if (!existsSync(target) || lstatSync(target).isSymbolicLink() || digest(readFileSync(target)) !== file.sha256)
       throw new Error(`Reviewer changed captured input: ${file.path}`);
   }
+}
+
+export function materializeEvidence(review, snapshot, catalog) {
+  assertCapturedInputs(snapshot, catalog);
   return {
     ...review,
     evidence: review.evidence.map(evidence => {

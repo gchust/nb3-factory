@@ -70,7 +70,7 @@ GitHub Repository Variables：
 | 变量                                   | 默认值   | 含义                                                               |
 | -------------------------------------- | -------- | ------------------------------------------------------------------ |
 | `FACTORY_BUILD_REVIEW`                 | `full`   | `full` 调用独立评审；`off` 只保留过程事实，适合纯流水线 smoke 测试 |
-| `FACTORY_BUILD_REVIEW_TIMEOUT_SECONDS` | `3600`   | 整次评审上限（含重试和等待），30–3600 秒；同时受 Runner 剩余预算限制 |
+| `FACTORY_BUILD_REVIEW_TIMEOUT_SECONDS` | `3600`   | 整次评审上限（从构建快照起算，含重试和等待），30–3600 秒；同时受 Runner 剩余预算限制 |
 | `FACTORY_BUILD_REVIEW_IDLE_TIMEOUT_SECONDS` | `600` | 连续无 stdout/stderr 输出的上限，1–1800 秒；不超过本次调用预算，独立于实现和 QA 的空闲配置 |
 | `FACTORY_REVIEW_THINKING`              | `medium` | Pi 评审的思考档位；不改变实现或 QA 配置，其他引擎仍使用其原有参数  |
 
@@ -81,15 +81,15 @@ GitHub Repository Variables：
 ### 模型出错时重试
 
 模型服务错误（provider_unavailable、rate_limited、network_error）由调用内部的延时重跑处理，见 [RECOVERY.md](RECOVERY.md#延时重跑)。
-评审调用因其他模型侧原因没有产出可发布结果时，在同一快照上最多再调用 2 次，重试次数与等待沿用 `FACTORY_MODEL_RETRY_DELAYS_SECONDS`（默认 `60,300`，`none` 关闭）：
+评审调用因其他模型侧原因没有产出完整结果时，在同一快照上重试。重试次数与等待沿用 `FACTORY_MODEL_RETRY_DELAYS_SECONDS`：表中有几项就最多重试几次，默认 `60,300` 即最多再调用 2 次，`none` 关闭：
 
 - 连续无输出（`stalled`）、进程崩溃或缺少正常结束事件：按该表等待 1 分钟、5 分钟后重试。
 - 模型已正常结束但草稿未通过校验，或没有保存任何模块：立即重试，并在提示词中写明上一次的校验错误。
 
-以下情况不重试：用尽评审时限（`timed_out`）、认证或额度错误、已由调用内部重跑过的模型服务错误、评审修改了被评材料、源历史在评审期间变化、终止诊断。
-每次重试都是新会话，只沿用快照里的 `assessment.json` 草稿；剩余时间不足 5 分钟时不再重试。
-所有调用共用一个评审时限、一个 `agent-review.jsonl` 和一个结果文件，两次调用之间写一行 `{"type":"factory_review_retry",...}`，记录原因和本次预算，用量照常累计。
-重试失败不会覆盖较早调用已保存并通过校验的检查点，这时仍以 `partial` 发布；`build-review.json` 的 `execution.reviewCalls` 记录实际调用次数。
+以下情况不重试：用尽评审时限（`timed_out`）、认证或额度错误、已由调用内部重跑过的模型服务错误、被拒绝的请求（4xx）或找不到引擎、评审修改了被评材料、源历史在评审期间变化、终止诊断。
+每次重试都是新会话，只沿用快照里的 `assessment.json` 草稿；`AGENTS.md`、`.review-tools/` 和提示词在每次调用前重新写入，上一次调用改动过的指令或检查器不会带到下一次。剩余时间不足 5 分钟时不再重试。
+所有调用共用一个评审时限、一个 `agent-review.jsonl` 和一个结果文件，两次调用之间写一行 `{"type":"factory_review_retry",...}`，记录原因、本次预算和追加到提示词末尾的重试说明（`note`），用量与费用按调用累计。
+重试继承上一次留下的草稿；重试本身被中断时，继承并通过完整引用与哈希校验的草稿算作这次重试的检查点。重试失败，或只保存了更少的模块，都不会替换较早调用已保存并通过校验的检查点，这时仍以 `partial` 发布；`build-review.json` 的 `execution.reviewCalls` 记录实际调用次数。
 老用量回执没有该阶段时按没有调用兼容，不补造历史费用。费用仍未知，不等同供应商账单。
 
 评审增加一次有上限的 Agent 调用，且位于上传 Artifact 前，因此会增加本轮交付等待时间。

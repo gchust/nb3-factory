@@ -18,6 +18,11 @@ export function createResult(identity) {
   let incomplete = false;
   let costUsd;
   let turns;
+  // Engine totals of earlier attempts; each rerun reports its own from zero.
+  let attempt = 0;
+  let earlierCostUsd;
+  let earlierTurns;
+  const plus = (a, b) => (a === undefined && b === undefined ? undefined : (a ?? 0) + (b ?? 0));
   return {
     observe(parsed, line) {
       if (Number.isFinite(parsed.costUsd) && parsed.costUsd >= 0) costUsd = parsed.costUsd;
@@ -31,7 +36,8 @@ export function createResult(identity) {
       if (parsed.active) complete = false;
       if (parsed.complete) complete = true;
       for (const measurement of parsed.measurements ?? []) {
-        const id = measurement.id ?? createHash('sha256').update(line).digest('hex');
+        // Engines reuse fixed ids ('invocation', 'turn') in every attempt.
+        const id = `${attempt}:${measurement.id ?? createHash('sha256').update(line).digest('hex')}`;
         const usage = measurement.usage;
         // Keep valid counters only; record malformed values as incomplete instead
         // of trusting arbitrary objects copied from model/tool output.
@@ -44,12 +50,18 @@ export function createResult(identity) {
     malformed() { invalidEvents++; },
     // Each rerun of an invocation must reach its own terminal event; usage,
     // native retries and malformed counts keep accumulating across attempts.
-    restart() { complete = false; },
+    restart() {
+      complete = false;
+      earlierCostUsd = plus(earlierCostUsd, costUsd);
+      earlierTurns = plus(earlierTurns, turns);
+      costUsd = undefined; turns = undefined; attempt++;
+    },
     // A factory rerun after a model-service failure; the next save covers every attempt.
     retried({ delaySeconds, category }) { factoryRetries.push({ delaySeconds, category }); },
     save(log, { status, exitCode, error }, redact) {
       const result = { version: 1, ...identity, startedAt, endedAt: Date.now(),
-        status, exitCode, terminalEvent: complete, invalidEvents, incomplete, costUsd, turns,
+        status, exitCode, terminalEvent: complete, invalidEvents, incomplete,
+        costUsd: plus(earlierCostUsd, costUsd), turns: plus(earlierTurns, turns),
         error: error ? redact(String(error)) : undefined,
         retryAttempts: identity.engine === 'pi' ? retryAttempts : undefined,
         factoryRetries: factoryRetries.length ? [...factoryRetries] : undefined,
