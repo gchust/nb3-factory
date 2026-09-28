@@ -1,0 +1,922 @@
+{
+  "record": {
+    "version": 1,
+    "repository": "gchust/nb3-factory",
+    "issue": 455,
+    "runId": 36401085763,
+    "attempt": 1,
+    "status": "delivered",
+    "start": 1790586202000,
+    "end": 1790586889000,
+    "jobs": [
+      {
+        "id": 108858854926,
+        "name": "prepare",
+        "seconds": 14
+      },
+      {
+        "id": 108858948498,
+        "name": "agent",
+        "seconds": 409
+      },
+      {
+        "id": 108861191881,
+        "name": "verify-final",
+        "seconds": 234
+      },
+      {
+        "id": 108862529707,
+        "name": "publish",
+        "seconds": 19
+      }
+    ],
+    "agentJobId": 108858948498,
+    "invoked": true,
+    "artifact": "factory-agent-455",
+    "artifactId": 10960817226,
+    "finalArtifactId": 10960399366,
+    "taskArtifactId": 10960820983,
+    "event": "issues",
+    "previousRunId": null,
+    "usage": {
+      "phases": {
+        "implementation": {
+          "input": 31527,
+          "output": 9839,
+          "cacheRead": 769664,
+          "cacheWrite": 0,
+          "reasoning": 4587,
+          "totalTokens": 811030
+        },
+        "repair": {
+          "input": 0,
+          "output": 0,
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "reasoning": 0,
+          "totalTokens": 0
+        },
+        "qa": {
+          "input": 14122,
+          "output": 4449,
+          "cacheRead": 267392,
+          "cacheWrite": 0,
+          "reasoning": 1220,
+          "totalTokens": 285963
+        },
+        "qaFocused": {
+          "input": 0,
+          "output": 0,
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "reasoning": 0,
+          "totalTokens": 0
+        },
+        "qaReport": {
+          "input": 0,
+          "output": 0,
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "reasoning": 0,
+          "totalTokens": 0
+        },
+        "review": {
+          "input": 0,
+          "output": 0,
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "reasoning": 0,
+          "totalTokens": 0
+        },
+        "compaction": {
+          "input": 0,
+          "output": 0,
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "reasoning": 0,
+          "totalTokens": 0
+        }
+      },
+      "records": 38,
+      "missing": 0,
+      "incomplete": 0
+    },
+    "evaluation": {
+      "version": 1,
+      "runKey": "gchust/nb3-factory/issues/455/initial",
+      "kind": "initial",
+      "derivation": "recorded",
+      "agentConfiguration": {
+        "fingerprints": [
+          "2f5401c2837d7dae1f1f014540b983521db478e49b3e29c61dbb26be0a75e3bf"
+        ],
+        "complete": false
+      },
+      "controlSha": "bed870a6a4b79ce47614ab85a83834b730f3e7c7",
+      "baseSha": "bed870a6a4b79ce47614ab85a83834b730f3e7c7",
+      "inputHash": "fd842938c37738098d21f2e9abad4a62969ea775577b441125b7893bb18d2220",
+      "patchSha256": "fdc9e9229be24fb3cbacfc3ae42dc9a72a6a9e5cbb72c2ac9dad9e07359ed34f",
+      "pipelineOutcome": "passed",
+      "event": "issues",
+      "previousRunId": null
+    }
+  },
+  "cumulative": {
+    "usage": {
+      "phases": {
+        "implementation": {
+          "input": 31527,
+          "output": 9839,
+          "cacheRead": 769664,
+          "cacheWrite": 0,
+          "reasoning": 4587,
+          "totalTokens": 811030
+        },
+        "repair": {
+          "input": 0,
+          "output": 0,
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "reasoning": 0,
+          "totalTokens": 0
+        },
+        "qa": {
+          "input": 14122,
+          "output": 4449,
+          "cacheRead": 267392,
+          "cacheWrite": 0,
+          "reasoning": 1220,
+          "totalTokens": 285963
+        },
+        "qaFocused": {
+          "input": 0,
+          "output": 0,
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "reasoning": 0,
+          "totalTokens": 0
+        },
+        "qaReport": {
+          "input": 0,
+          "output": 0,
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "reasoning": 0,
+          "totalTokens": 0
+        },
+        "review": {
+          "input": 0,
+          "output": 0,
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "reasoning": 0,
+          "totalTokens": 0
+        },
+        "compaction": {
+          "input": 0,
+          "output": 0,
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "reasoning": 0,
+          "totalTokens": 0
+        }
+      },
+      "records": 38,
+      "missing": 0,
+      "incomplete": 0
+    },
+    "total": 1096993,
+    "seconds": 676,
+    "missingTimes": 0,
+    "elapsed": 687,
+    "runs": 1,
+    "attempts": 1
+  },
+  "records": [
+    {
+      "version": 1,
+      "repository": "gchust/nb3-factory",
+      "issue": 455,
+      "runId": 36401085763,
+      "attempt": 1,
+      "status": "delivered",
+      "start": 1790586202000,
+      "end": 1790586889000,
+      "jobs": [
+        {
+          "id": 108858854926,
+          "name": "prepare",
+          "seconds": 14
+        },
+        {
+          "id": 108858948498,
+          "name": "agent",
+          "seconds": 409
+        },
+        {
+          "id": 108861191881,
+          "name": "verify-final",
+          "seconds": 234
+        },
+        {
+          "id": 108862529707,
+          "name": "publish",
+          "seconds": 19
+        }
+      ],
+      "agentJobId": 108858948498,
+      "invoked": true,
+      "artifact": "factory-agent-455",
+      "artifactId": 10960817226,
+      "finalArtifactId": 10960399366,
+      "taskArtifactId": 10960820983,
+      "event": "issues",
+      "previousRunId": null,
+      "usage": {
+        "phases": {
+          "implementation": {
+            "input": 31527,
+            "output": 9839,
+            "cacheRead": 769664,
+            "cacheWrite": 0,
+            "reasoning": 4587,
+            "totalTokens": 811030
+          },
+          "repair": {
+            "input": 0,
+            "output": 0,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "reasoning": 0,
+            "totalTokens": 0
+          },
+          "qa": {
+            "input": 14122,
+            "output": 4449,
+            "cacheRead": 267392,
+            "cacheWrite": 0,
+            "reasoning": 1220,
+            "totalTokens": 285963
+          },
+          "qaFocused": {
+            "input": 0,
+            "output": 0,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "reasoning": 0,
+            "totalTokens": 0
+          },
+          "qaReport": {
+            "input": 0,
+            "output": 0,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "reasoning": 0,
+            "totalTokens": 0
+          },
+          "review": {
+            "input": 0,
+            "output": 0,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "reasoning": 0,
+            "totalTokens": 0
+          },
+          "compaction": {
+            "input": 0,
+            "output": 0,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "reasoning": 0,
+            "totalTokens": 0
+          }
+        },
+        "records": 38,
+        "missing": 0,
+        "incomplete": 0
+      },
+      "evaluation": {
+        "version": 1,
+        "runKey": "gchust/nb3-factory/issues/455/initial",
+        "kind": "initial",
+        "derivation": "recorded",
+        "agentConfiguration": {
+          "fingerprints": [
+            "2f5401c2837d7dae1f1f014540b983521db478e49b3e29c61dbb26be0a75e3bf"
+          ],
+          "complete": false
+        },
+        "controlSha": "bed870a6a4b79ce47614ab85a83834b730f3e7c7",
+        "baseSha": "bed870a6a4b79ce47614ab85a83834b730f3e7c7",
+        "inputHash": "fd842938c37738098d21f2e9abad4a62969ea775577b441125b7893bb18d2220",
+        "patchSha256": "fdc9e9229be24fb3cbacfc3ae42dc9a72a6a9e5cbb72c2ac9dad9e07359ed34f",
+        "pipelineOutcome": "passed",
+        "event": "issues",
+        "previousRunId": null
+      }
+    }
+  ],
+  "timings": [
+    {
+      "stage": "agent:implementation",
+      "calls": 1,
+      "durationMs": 108501
+    },
+    {
+      "stage": "agent:qa",
+      "calls": 1,
+      "durationMs": 83244
+    },
+    {
+      "stage": "build",
+      "calls": 1,
+      "durationMs": 51781
+    },
+    {
+      "stage": "test",
+      "calls": 1,
+      "durationMs": 36539
+    },
+    {
+      "stage": "lint",
+      "calls": 1,
+      "durationMs": 25097
+    },
+    {
+      "stage": "install",
+      "calls": 1,
+      "durationMs": 17221
+    },
+    {
+      "stage": "typecheck",
+      "calls": 1,
+      "durationMs": 12450
+    },
+    {
+      "stage": "db:apply",
+      "calls": 1,
+      "durationMs": 4762
+    },
+    {
+      "stage": "format:check",
+      "calls": 1,
+      "durationMs": 3975
+    },
+    {
+      "stage": "skills-sync",
+      "calls": 1,
+      "durationMs": 1089
+    },
+    {
+      "stage": "format:auto",
+      "calls": 1,
+      "durationMs": 626
+    },
+    {
+      "stage": "agent:review",
+      "calls": 1,
+      "durationMs": 0
+    }
+  ],
+  "delivery": {
+    "version": 1,
+    "meta": {
+      "repository": "gchust/nb3-factory",
+      "issue": 455,
+      "runId": "36401085763",
+      "attempt": 1,
+      "headSha": "888a31c184323551919f385f8417c32a933d8b18",
+      "targetBranch": "develop",
+      "title": "流程冒烟：单页计数器",
+      "snapshotDate": "2026-09-28T09:14:49.000Z"
+    },
+    "delivery": {
+      "status": "pr-ready",
+      "ci": "passed",
+      "ciSource": "流水线已完成最终验证及 PR 发布；不代表人工合并。",
+      "qaSummary": "以已有管理员测试账号登录后，从顶部导航进入 Pipeline Smoke 页面，确认标题 “Pipeline Smoke”、说明 “Used to verify the automated build pipeline.” 与初始值 0；点击 “+1” 后计数变为 1，刷新后归零。页面无错误，无控制台异常。B01 通过。"
+    },
+    "links": [
+      {
+        "label": "查看 PR #456",
+        "url": "https://github.com/gchust/nb3-factory/pull/456"
+      },
+      {
+        "label": "查看需求",
+        "url": "https://github.com/gchust/nb3-factory/issues/455"
+      },
+      {
+        "label": "本轮运行与原始产物",
+        "url": "https://github.com/gchust/nb3-factory/actions/runs/36401085763/attempts/1"
+      }
+    ],
+    "attention": [],
+    "checks": [
+      {
+        "id": "A1",
+        "title": "使用已有测试账号登录，从导航打开页面，确认标题、说明、初始值 0；点击“+1”后变为 1，保存一张点击后的截图。\n\n无法实际完成时如实记录 failed、blocked 或 not_run，不以静态源码检查代替浏览器通过。",
+        "criterion": "使用已有测试账号登录，从导航打开页面，确认标题、说明、初始值 0；点击“+1”后变为 1，保存一张点击后的截图。\n\n无法实际完成时如实记录 failed、blocked 或 not_run，不以静态源码检查代替浏览器通过。",
+        "status": "passed",
+        "actions": [
+          "访问 $FACTORY_BROWSER_URL，使用已有管理员测试账号 nocobase 登录，离开登录页进入 /main 业务界面",
+          "点击顶部导航栏中的 “Pipeline Smoke” 链接，真实跳转到 http://127.0.0.1:13000/main/pipeline-smoke",
+          "读取页面内容确认标题 “Pipeline Smoke”、说明 “Used to verify the automated build pipeline.”、初始计数值 Count 0 与 “+1” 按钮",
+          "点击 “+1” 按钮，重新读取页面确认计数值变为 Count 1",
+          "刷新页面后确认计数回到 Count 0（计数仅存在于当前页面内存）",
+          "检查页面错误与控制台：errors 与 console 均无内容"
+        ],
+        "evidence": [
+          "登录后业务界面导航栏存在 “Pipeline Smoke” 入口，点击后 URL 为 /main/pipeline-smoke",
+          "页面标题为 “Pipeline Smoke”，说明为 “Used to verify the automated build pipeline.”",
+          "初始读取内容为 “Count0+1”，即初始值 0",
+          "点击 +1 后读取内容为 “Count1+1”，即计数值为 1",
+          "刷新后读取内容为 “Count0+1”，计数归零，符合页面内存计数的要求",
+          "无页面错误、无未处理异常、无 4xx/5xx 或 Something went wrong"
+        ],
+        "screenshots": [
+          "b01-initial-count0.png",
+          "b01-after-click-count1.png"
+        ],
+        "evidenceUnavailable": false,
+        "source": "verify-1/browser-acceptance/report.json",
+        "result": "无页面错误、无未处理异常、无 4xx/5xx 或 Something went wrong"
+      }
+    ],
+    "media": [
+      {
+        "id": "b01-initial-count0.png",
+        "title": "Pipeline Smoke 页面初始值 0",
+        "path": "verify-1/browser-acceptance/evidence/b01-initial-count0.png",
+        "category": "业务界面",
+        "featured": true
+      },
+      {
+        "id": "b01-after-click-count1.png",
+        "title": "点击 +1 后计数变为 1",
+        "path": "verify-1/browser-acceptance/evidence/b01-after-click-count1.png",
+        "category": "业务界面",
+        "featured": true
+      }
+    ],
+    "uncovered": [],
+    "rawQaReport": {
+      "passed": true,
+      "authenticated": true,
+      "summary": "以已有管理员测试账号登录后，从顶部导航进入 Pipeline Smoke 页面，确认标题 “Pipeline Smoke”、说明 “Used to verify the automated build pipeline.” 与初始值 0；点击 “+1” 后计数变为 1，刷新后归零。页面无错误，无控制台异常。B01 通过。",
+      "checks": [
+        {
+          "id": "B01",
+          "criterion": "使用已有测试账号登录，从导航打开页面，确认标题、说明、初始值 0；点击“+1”后变为 1，保存一张点击后的截图。\n\n无法实际完成时如实记录 failed、blocked 或 not_run，不以静态源码检查代替浏览器通过。",
+          "status": "passed",
+          "actions": [
+            "访问 $FACTORY_BROWSER_URL，使用已有管理员测试账号 nocobase 登录，离开登录页进入 /main 业务界面",
+            "点击顶部导航栏中的 “Pipeline Smoke” 链接，真实跳转到 http://127.0.0.1:13000/main/pipeline-smoke",
+            "读取页面内容确认标题 “Pipeline Smoke”、说明 “Used to verify the automated build pipeline.”、初始计数值 Count 0 与 “+1” 按钮",
+            "点击 “+1” 按钮，重新读取页面确认计数值变为 Count 1",
+            "刷新页面后确认计数回到 Count 0（计数仅存在于当前页面内存）",
+            "检查页面错误与控制台：errors 与 console 均无内容"
+          ],
+          "evidence": [
+            "登录后业务界面导航栏存在 “Pipeline Smoke” 入口，点击后 URL 为 /main/pipeline-smoke",
+            "页面标题为 “Pipeline Smoke”，说明为 “Used to verify the automated build pipeline.”",
+            "初始读取内容为 “Count0+1”，即初始值 0",
+            "点击 +1 后读取内容为 “Count1+1”，即计数值为 1",
+            "刷新后读取内容为 “Count0+1”，计数归零，符合页面内存计数的要求",
+            "无页面错误、无未处理异常、无 4xx/5xx 或 Something went wrong"
+          ],
+          "screenshots": [
+            "b01-initial-count0.png",
+            "b01-after-click-count1.png"
+          ],
+          "recordedAt": 1790586604243
+        }
+      ],
+      "failures": []
+    },
+    "rawRetro": {
+      "version": 1,
+      "summary": "Added a signed-in Pipeline Smoke page with a minimal in-memory counter, a navigation entry, and English/Chinese wording; updated the route-grant test and added a component test. No blockers encountered.",
+      "blockers": [],
+      "improvements": []
+    },
+    "acceptanceRequirements": "B01. 使用已有测试账号登录，从导航打开页面，确认标题、说明、初始值 0；点击“+1”后变为 1，保存一张点击后的截图。\n\n无法实际完成时如实记录 failed、blocked 或 not_run，不以静态源码检查代替浏览器通过。",
+    "changes": {
+      "total": 6,
+      "added": 2,
+      "modified": 4,
+      "deleted": 0
+    },
+    "usage": {
+      "scope": "此 Issue 累计：已采集 1 个 Run / 1 次尝试",
+      "source": "现有 task-usage 模块（按 Agent / job ID 去重）",
+      "total": 1096993,
+      "cacheRead": 1037056,
+      "uncachedInput": 45649,
+      "output": 14288,
+      "executionSeconds": 676,
+      "endToEndSeconds": 687,
+      "incomplete": false,
+      "phases": [
+        {
+          "label": "初始实现",
+          "input": 31527,
+          "output": 9839,
+          "cacheRead": 769664,
+          "cacheWrite": 0,
+          "total": 811030
+        },
+        {
+          "label": "应用修复",
+          "input": 0,
+          "output": 0,
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "total": 0
+        },
+        {
+          "label": "完整业务 QA",
+          "input": 14122,
+          "output": 4449,
+          "cacheRead": 267392,
+          "cacheWrite": 0,
+          "total": 285963
+        },
+        {
+          "label": "失败路径复测",
+          "input": 0,
+          "output": 0,
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "total": 0
+        },
+        {
+          "label": "QA 补报告",
+          "input": 0,
+          "output": 0,
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "total": 0
+        },
+        {
+          "label": "独立搭建评审",
+          "input": 0,
+          "output": 0,
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "total": 0
+        },
+        {
+          "label": "上下文压缩",
+          "input": 0,
+          "output": 0,
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "total": 0
+        }
+      ],
+      "coverageNote": "用量记录 38；未报告用量 0；分项不完整 0；缺失作业时间 0。",
+      "note": "不把流式增量、上下文长度和思考 Token 重复相加。旧记录未拆分 QA 时保留原有口径；费用：未知。"
+    },
+    "runs": [
+      {
+        "id": "36401085763",
+        "attempt": 1,
+        "status": "pr-ready",
+        "detail": "已生成/更新业务 PR"
+      }
+    ],
+    "retro": {
+      "version": 1,
+      "summary": "Added a signed-in Pipeline Smoke page with a minimal in-memory counter, a navigation entry, and English/Chinese wording; updated the route-grant test and added a component test. No blockers encountered.",
+      "source": "Agent · retro.json",
+      "blockers": [],
+      "improvements": []
+    },
+    "timings": [
+      {
+        "stage": "agent:implementation",
+        "calls": 1,
+        "durationMs": 108501
+      },
+      {
+        "stage": "agent:qa",
+        "calls": 1,
+        "durationMs": 83244
+      },
+      {
+        "stage": "build",
+        "calls": 1,
+        "durationMs": 51781
+      },
+      {
+        "stage": "test",
+        "calls": 1,
+        "durationMs": 36539
+      },
+      {
+        "stage": "lint",
+        "calls": 1,
+        "durationMs": 25097
+      },
+      {
+        "stage": "install",
+        "calls": 1,
+        "durationMs": 17221
+      },
+      {
+        "stage": "typecheck",
+        "calls": 1,
+        "durationMs": 12450
+      },
+      {
+        "stage": "db:apply",
+        "calls": 1,
+        "durationMs": 4762
+      },
+      {
+        "stage": "format:check",
+        "calls": 1,
+        "durationMs": 3975
+      },
+      {
+        "stage": "skills-sync",
+        "calls": 1,
+        "durationMs": 1089
+      },
+      {
+        "stage": "format:auto",
+        "calls": 1,
+        "durationMs": 626
+      },
+      {
+        "stage": "agent:review",
+        "calls": 1,
+        "durationMs": 0
+      }
+    ],
+    "buildReview": {
+      "version": 1,
+      "state": "not-reviewed",
+      "reason": "本轮已明确关闭独立评审；只展示流水线事实。",
+      "basis": {
+        "repository": "gchust/nb3-factory",
+        "issue": 455,
+        "runId": "36401085763",
+        "attempt": 1,
+        "controlSha": "bed870a6a4b79ce47614ab85a83834b730f3e7c7",
+        "rubricVersion": 2
+      },
+      "evaluation": null,
+      "execution": {
+        "buildReviewMode": "off",
+        "source": "task"
+      },
+      "process": {
+        "verificationAttempts": 1,
+        "repairAttempts": 0,
+        "finalRound": 1,
+        "rounds": [
+          {
+            "round": 1,
+            "reports": [
+              {
+                "scope": "full",
+                "source": "verify-1/browser-acceptance/report.json",
+                "passed": true,
+                "checks": [
+                  {
+                    "id": "B01",
+                    "criterion": "使用已有测试账号登录，从导航打开页面，确认标题、说明、初始值 0；点击“+1”后变为 1，保存一张点击后的截图。\n\n无法实际完成时如实记录 failed、blocked 或 not_run，不以静态源码检查代替浏览器通过。",
+                    "status": "passed",
+                    "reason": ""
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "warnings": [],
+        "scope": "仅本 Run 已归档记录；工厂修复轮次不等于 Agent 开发中全部试错次数。缺少 verify-1 时不能声称任务首轮通过。"
+      }
+    },
+    "baseline": {
+      "template": "@nocobase/app-template-default",
+      "templateVersion": "1.0.0-beta.49",
+      "creatorVersion": "0.1.0-beta.23",
+      "source": null,
+      "lockSha256": "3f7505b37b2ced486efedc5db6c3e1197d56d3a503791d4f2166a35a92e19778",
+      "packages": [
+        {
+          "name": "@nocobase/ai-employee",
+          "version": "0.2.0-beta.8",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/ai-employee-avatars",
+          "version": "1.0.2",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/app-cli",
+          "version": "1.0.0-beta.8",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/app-client",
+          "version": "1.0.0-beta.22",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/app-plugin-ai-employee",
+          "version": "1.0.0-beta.25",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/app-plugin-ai-knowledge-base",
+          "version": "0.1.0-beta.9",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/app-plugin-api-keys",
+          "version": "0.1.0-beta.8",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/app-plugin-authentication",
+          "version": "1.0.0-beta.24",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/app-plugin-authorization",
+          "version": "0.2.0-beta.21",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/app-plugin-authz-default-access",
+          "version": "0.1.0-beta.5",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/app-plugin-authz-restriction-rules",
+          "version": "0.1.0-beta.4",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/app-plugin-authz-sharing-rules",
+          "version": "0.1.0-beta.5",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/app-plugin-database-explorer",
+          "version": "0.1.0-beta.6",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/app-plugin-file",
+          "version": "0.1.0-beta.16",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/app-plugin-i18n",
+          "version": "0.1.0-beta.10",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/app-plugin-mail",
+          "version": "0.1.0-beta.0",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/app-plugin-notification",
+          "version": "0.1.0-beta.17",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/app-plugin-notification-in-app",
+          "version": "0.2.0-beta.18",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/app-plugin-notification-providers",
+          "version": "0.2.0-beta.7",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/app-plugin-scheduler",
+          "version": "0.1.0-beta.9",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/app-plugin-template-print",
+          "version": "0.0.2-beta.0",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/app-plugin-users",
+          "version": "1.0.0-beta.11",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/app-plugin-workflow",
+          "version": "1.0.0-beta.28",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/app-server",
+          "version": "1.0.0-beta.29",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/app-skills",
+          "version": "0.1.0-beta.18",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/app-websocket",
+          "version": "0.0.1",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/authorization",
+          "version": "0.1.0-beta.10",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/caching",
+          "version": "0.1.0-beta.2",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/config",
+          "version": "0.1.0-beta.1",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/cron",
+          "version": "0.1.0",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/db",
+          "version": "1.0.0-beta.16",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/db-sqlite",
+          "version": "0.1.0-beta.3",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/dev-config",
+          "version": "0.1.0-beta.14",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/drive",
+          "version": "0.1.0-beta.4",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/i18n",
+          "version": "1.0.0-beta.4",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/logging",
+          "version": "0.1.0-beta.6",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/queue",
+          "version": "0.1.0-beta.7",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/repository-input",
+          "version": "0.1.0-beta.1",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/service-provider",
+          "version": "0.0.2-beta.1",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/session",
+          "version": "0.1.0-beta.2",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/snowflake",
+          "version": "1.0.0-beta.3",
+          "reason": null
+        }
+      ]
+    }
+  },
+  "pr": {
+    "number": 456,
+    "headSha": "888a31c184323551919f385f8417c32a933d8b18"
+  },
+  "reportId": "gchust/nb3-factory:455:36401085763:1:888a31c184323551919f385f8417c32a933d8b18:template-9:review-a708bce9982500b9"
+}
