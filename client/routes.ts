@@ -1,4 +1,4 @@
-import { Home } from 'lucide-react';
+import { Home, Wrench } from 'lucide-react';
 import {
   defineAppRoutes,
   defineSettingsRoutes,
@@ -43,6 +43,45 @@ const appRoutes: AppClientRouteContribution = defineAppRoutes([
     componentLoader: () => import('./pages/auth/reset-password.js'),
     name: 'reset-password',
     path: '/reset-password',
+  },
+  {
+    // Employees see only their own tickets and processors see all of them; the resource check
+    // (`it.tickets`) is what the `it-employee` and `it-processor` permission sets grant.
+    auth: 'required',
+    authz: { resource: { type: 'page', id: 'it.tickets' }, action: 'access' },
+    componentLoader: () => import('./pages/it-support/index.js'),
+    name: 'it-support',
+    navigation: { title: 'navigation.itSupport', icon: Wrench },
+    path: '/it-support',
+    children: [
+      {
+        // Create is a child route presented as a dialog, so the list behind it stays mounted.
+        auth: 'required',
+        authz: 'skip',
+        componentLoader: () => import('./pages/it-support/create.js'),
+        name: 'it-support-create',
+        path: 'new',
+      },
+      {
+        // A record detail is URL-addressable and presented as a drawer; an employee who opens
+        // somebody else's link gets the same "not found" state as a deleted ticket.
+        auth: 'required',
+        authz: 'skip',
+        componentLoader: () => import('./pages/it-support/detail.js'),
+        name: 'it-support-detail',
+        path: ':ticketId',
+        children: [
+          {
+            // Processing note before completion: a short form, so a dialog stacked on the drawer.
+            auth: 'required',
+            authz: 'skip',
+            componentLoader: () => import('./pages/it-support/complete.js'),
+            name: 'it-support-complete',
+            path: 'complete',
+          },
+        ],
+      },
+    ],
   },
 ]);
 
