@@ -165,7 +165,6 @@ async function main() {
   const args = Object.fromEntries(Array.from({ length: argv.length / 2 }, (_, i) => [argv[i * 2].replace(/^--/u, ''), argv[i * 2 + 1]]));
   if (mode === 'select') {
     const request = parseReviewRequest(args);
-    if (![request.issue, request.runId, request.attempt].every(positive)) throw new Error('Invalid review request');
     const run = await api('GET', `/actions/runs/${request.runId}/attempts/${request.attempt}`);
     const source = selectHistorySource(run, await all(`/actions/runs/${request.runId}/attempts/${request.attempt}/jobs`, 'jobs'),
       await all(`/actions/runs/${request.runId}/artifacts`, 'artifacts'), process.env.GITHUB_REPOSITORY);

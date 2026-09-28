@@ -8,7 +8,7 @@
 
 ## 创建固定源码快照
 
-维护者运行 **Verify pinned NocoBase source baseline**，提供精确 `source_sha` 并明确选择 `publish`。PR 检查仅验证，不发布。
+仓库 owner 运行 **Verify pinned NocoBase source baseline**，提供精确 `source_sha` 并明确选择 `publish`。PR 检查仅验证，不发布。
 
 ```text
 固定 NocoBase SHA → 构建包 / 临时 registry → 创建并验证默认应用

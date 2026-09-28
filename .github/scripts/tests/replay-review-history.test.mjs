@@ -13,6 +13,11 @@ test('an archive request names the completed replay run, explicitly or from its 
   assert.deepEqual(historyRequest({},{SOURCE_RUN_ID:'200',SOURCE_ATTEMPT:'2'}),request);
   assert.deepEqual(historyRequest({workflow_run:{id:200,run_attempt:2}},{}),request);
 });
+test('dispatched and legacy comment replays are archivable; other events are not',()=>{
+  assert.equal(select({...run,event:'workflow_dispatch'}).runId,200);
+  assert.equal(select().runId,200);
+  assert.throws(()=>select({...run,event:'push'}));
+});
 test('archive uses the replay run for usage and keeps original publication provenance separate',()=>{
   const source=bindReplayHistory(select(),binding,original);
   assert.equal(source.runId,200);assert.equal(source.issue,12);assert.equal(source.artifacts[0].id,88);

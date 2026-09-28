@@ -4,8 +4,8 @@
 
 由仓库 owner 在 Actions 手动运行 **Independent code and Skill review**，提供执行 Issue 号、
 已交付的搭建 Run ID 和 attempt。原 `/factory-review` 评论命令已停用；不会从每个 F00/S01
-自动调用模型。复用当前选择的 Code Agent 执行器，
-但使用独立调用、独立上下文、只读任务及独立计量，不宣称换了另一模型提供商。
+自动调用模型。复用当前选择的 Code Agent 执行器，但使用独立调用、独立上下文、只读任务及
+独立计量，不宣称换了另一模型提供商。
 
 ```text
 固定来源 Run/attempt 的 task + agent + final 产物

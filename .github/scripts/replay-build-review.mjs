@@ -15,7 +15,7 @@ const sha = s => /^[a-f0-9]{40}$/.test(s ?? '');
 const write = (root, file, data) => { mkdirSync(root, { recursive: true }); writeFileSync(path.join(root, file), JSON.stringify(data, null, 2) + '\n'); };
 const out = (name, value) => process.env.GITHUB_OUTPUT && appendFileSync(process.env.GITHUB_OUTPUT, `${name}=${value}\n`);
 
-export function parseReplayRequest(inputs) {
+export function parseReplayRequest(inputs = {}) {
   const result = { issue: Number(inputs.issue), runId: Number(inputs.run), attempt: Number(inputs.attempt) };
   assert.ok(Object.values(result).every(positive), 'Explicit Issue, task run and publication attempt required');
   return result;
