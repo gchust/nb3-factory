@@ -26,10 +26,11 @@ const plan = {
   write: { path: '/api/fixtures', method: 'POST', body: {} },
   revoke: { path: '/api/revoke', method: 'POST', body: {} },
 };
-test('trusted presets declare their required checks; unknown evaluators cannot execute commands', () => {
-  assert.deepEqual(requiredChecksFor(206), ['api-key']);
-  assert.deepEqual(requiredChecksFor(207), ['business-ai']);
-  assert.deepEqual(requiredChecksFor(208), ['notification-delivery']);
+test('ordinary presets have no implicit gates; explicit evaluators remain validated', () => {
+  assert.deepEqual(requiredChecksFor(206), []);
+  assert.deepEqual(requiredChecksFor(207), []);
+  assert.deepEqual(requiredChecksFor(208), []);
+  assert.deepEqual(requiredChecksFor(206, ['api-key']), ['api-key']);
   assert.deepEqual(requiredChecksFor(176), []);
   assert.throws(() => validateRequiredChecks(['../../evil']), /Unknown/);
   assert.throws(
@@ -208,4 +209,23 @@ test('passing coverage requires every API assertion, and a rerun records its act
     requiredCheckCoverage(metadata, passed, patch).status,
     'not-run',
   );
+});
+
+test('ordinary module presets start without external secrets or fixtures', async () => {
+  for (const preset of [206, 207, 208]) {
+    const result = await evaluateRequiredChecks({
+      metadata: {
+        ...metadata,
+        evaluation: { requiredChecks: requiredChecksFor(preset) },
+      },
+      mode: 'preflight',
+      env: {},
+      fetcher: async () => {
+        throw new Error('Unexpected evaluator request');
+      },
+    });
+    assert.equal(result.status, 'ready');
+    assert.deepEqual(result.required, []);
+    assert.deepEqual(result.results, []);
+  }
 });
