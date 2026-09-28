@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "inputHash": "016996b121eb92947f724cf44c9295a79b37dc011c61eb8471ffd4cdb0879265",
+  "inputHash": "ba2d47aef5cb29a2ee643386a691e64d2950e59565b37dc5624343c764c2afd5",
   "findings": [
     {
       "id": "408:36329180371:1:F2",
@@ -1803,6 +1803,191 @@
         }
       ],
       "fingerprint": "4ff0e440a3292c4f5afb73dc62fae0bef870cb63feae3853889b488babe2ae2e"
+    },
+    {
+      "id": "419:36376192996:1:F4",
+      "report": "419:36376192996:1",
+      "issue": 419,
+      "taskTitle": "一条外部测试通知",
+      "appVersion": "1.0.0-beta.47",
+      "appTemplate": "@nocobase/app-template-default",
+      "finding": {
+        "id": "F4",
+        "kind": "issue",
+        "owner": "template",
+        "confidence": "confirmed",
+        "severity": "minor",
+        "status": "open",
+        "title": "模板提交 e318f4e 在 app/AGENTS.md 引入多余空行，使 format:check 失败并消耗一次修复",
+        "detail": "框架提交 e318f4e（test: add opt-in controlled failed delivery smoke #404）在 app/AGENTS.md 的 ## Controlled failed-delivery smoke 前新增了两个空行；prettier . --check '!.github/**' 因此标记 AGENTS.md，verify-1 的 format:check 以 exit 1 结束，修复轮随后只做删除一个空行的空白修改。",
+        "impact": "从模板生成的干净应用无法通过其自身的 format:check，把与业务无关的格式问题变成必须消耗修复预算的失败，并让 Agent 面对“能否修改框架指引文件”的不确定。",
+        "suggestedChange": "在模板源头修正 e318f4e 引入的空行，并让模板 CI 对 app/AGENTS.md 运行 prettier --check，避免把格式缺陷带进每个新应用。",
+        "diagnosis": {
+          "category": "runtime-defect",
+          "trigger": "在干净模板上运行仓库自带的 pnpm format:check（prettier . --check '!.github/**'）。",
+          "expected": "模板自带的 app/AGENTS.md 通过仓库自身的 Prettier 校验，新应用无需修改框架指引即可通过 format:check。",
+          "actual": "app/AGENTS.md 被 prettier 标记为格式错误，format:check 以 exit 1 结束；修复轮删除多余空行后才通过。",
+          "workaround": "应用修复轮直接在 app/AGENTS.md 删除 e318f4e 增加的一个空行；这是对应用副本的空白修改，上游模板提交未变。",
+          "acceptance": "从模板生成的干净应用在未修改 app/AGENTS.md 的情况下通过 pnpm format:check。"
+        },
+        "evidence": [
+          "E32",
+          "E37",
+          "E38",
+          "E40"
+        ]
+      },
+      "targets": [
+        "app/AGENTS.md"
+      ],
+      "paths": [
+        "AGENTS.md"
+      ],
+      "evidence": [
+        {
+          "id": "E32",
+          "kind": "code",
+          "path": "app/tests/logic/app-server.test.ts",
+          "observation": "端到端测试向 test-inbox 发送后等待 status=completed 且 delivery 为 accepted，再向 test-failure 发送并等待 failed，断言 lastError 的 code/message 匹配 ENOTFOUND 或 EAI_AGAIN 或 notification-test.invalid。",
+          "lines": [
+            860,
+            919
+          ],
+          "excerpt": "          channel: 'test-inbox',\n          values: {\n            recipient: userId,\n            title: 'Notification test',\n            body: 'Controlled normal delivery.',\n          },\n        }),\n      },\n    );\n    expect(normal.status).toBe(202);\n    const normalBody = (await normal.json()) as {\n      data: { notificationId: string };\n    };\n    const normalStatus = await waitForNotificationTestStatus(\n      app,\n      baseUrl,\n      apiHeaders,\n      normalBody.data.notificationId,\n      (status) => status === 'completed',\n    );\n    expect(normalStatus.deliveries[0].delivery.status).toBe('accepted');\n\n    const failing = await requestApp(\n      app,\n      `${baseUrl}/api/notifications/test/send`,\n      {\n        method: 'POST',\n        headers: {\n          ...apiHeaders,\n          'content-type': 'application/json',\n          'x-nocobase-notification-test': '1',\n        },\n        body: JSON.stringify({\n          channel: 'test-failure',\n          values: {\n            recipient: 'notification-test@example.invalid',\n            subject: 'Notification test',\n            text: 'Controlled failure.',\n          },\n        }),\n      },\n    );\n    expect(failing.status).toBe(202);\n    const failingBody = (await failing.json()) as {\n      data: { notificationId: string };\n    };\n    const failureStatus = await waitForNotificationTestStatus(\n      app,\n      baseUrl,\n      apiHeaders,\n      failingBody.data.notificationId,\n      (status) => status === 'failed',\n    );\n    const failure = failureStatus.deliveries[0];\n    expect(failure.delivery.status).toBe('failed');\n    // The provider's reason survives into the log instead of being replaced by\n    // a generic error message.\n    expect(\n      `${failure.delivery.lastError?.code} ${failure.delivery.lastError?.message}`,\n    ).toMatch(/ENOTFOUND|EAI_AGAIN|notification-test\\.invalid/);",
+          "sha256": "44112e802b987fa3d37b4abc3843e7696dcaf711403c1848545efb6332db5389"
+        },
+        {
+          "id": "E37",
+          "kind": "log",
+          "path": "artifacts/agent-history/agent-repair-1.jsonl/part-0001.txt",
+          "observation": "修复轮读取 .prettierignore 并运行 git show e318f4e -- AGENTS.md，输出显示该提交在 ## Controlled failed-delivery smoke 前新增了两个空行。",
+          "lines": [
+            1645,
+            1650
+          ],
+          "excerpt": "{\"type\":\"message_end\",\"message\":{\"role\":\"assistant\",\"content\":[{\"type\":\"thinking\",\"thinking\":\"There's a double blank line at line 403-404 (between \\\"Preserve unknown causes and incomplete diagnoses.\\\" and \\\"## Controlled failed-delivery smoke\\\"). Prettier wants single blank line. So remove one blank line.\\n\\nBut wait — is AGENTS.md a factory control file? The task says don't modify factory control files listed: `.github/`, `.npmrc`, `.gitmodules`, `config.yml`. AGENTS.md isn't listed. But AGENTS.md content is the project instructions... It was committed in e318f4e. The formatting check fails on it. This is likely an intentional trap: the previous implementation agent may have edited AGENTS.md? No, git status shows it unchanged. Hmm, actually it's tracked and clean. So the committed file itself fails prettier. That means the previous commit e318f4e introduced the double blank line and the format check now fails.\\n\\nWait, but the failure feedback in the prompt focuses on this. Actually the failure feedback shows a format check that fails on AGENTS.md. The repair task is to fix observed failures. The simplest fix: remove the extra blank line.\\n\\nBut hold on — AGENTS.md is the project instructions file. Is editing it allowed? The rule says \\\"Update this file in the same change, so the guidance describes the application as it actually is.\\\" So editing AGENTS.md is allowed. But this is formatting only.\\n\\nHowever, I should be careful: maybe the real issue is that the format check should exclude AGENTS.md? No, AGENTS.md is not in `.prettierignore`. Let me check `.prettierignore`.\\n\\nActually let's think about whether this is the actual task-created file. The git status shows the feature files modified but AGENTS.md unchanged. The format check runs on the whole repo, and AGENTS.md fails. So the failure is pre-existing in the base commit? Let me verify by checking git show of AGENTS.md at HEAD to see if it has the double blank line.\\n\\nActually `git status` clean for AGENTS.md means working tree == HEAD. So the committed version has the double blank line. That's weird for a repo that passes format. Unless the previous repair/implementation changed it and committed? No, the implementation changes aren't committed (git status shows modified/untracked). \\n\\nHmm, wait. This is the repair environment. The workspace contains the agent's patch applied but uncommitted. AGENTS.md wasn't touched. So the base commit e318f4e has AGENTS.md failing prettier. Let me check git show HEAD:AGENTS.md around line 403.\\n\\nActually `git status` says AGENTS.md unchanged, so HEAD version = working version. Let me check if the file at HEAD fails prettier by examining git show.\\n\\nLet me check whether the \\\"framework\\\" commit e318f4e is the one that added the double newline. Let me look at the diff.\",\"thinkingSignature\":\"[{\\\"format\\\":\\\"unknown\\\",\\\"index\\\":0,\\\"text\\\":\\\"There's a double blank line at line 403-404 (between \\\\\\\"Preserve unknown causes and incomplete diagnoses.\\\\\\\" and \\\\\\\"## Controlled failed-delivery smoke\\\\\\\"). Prettier wants single blank line. So remove one blank line.\\\\n\\\\nBut wait — is AGENTS.md a factory control file? The task says don't modify factory control files listed: `.github/`, `.npmrc`, `.gitmodules`, `config.yml`. AGENTS.md isn't listed. But AGENTS.md content is the project instructions... It was committed in e318f4e. The formatting check fails on it. This is likely an intentional trap: the previous implementation agent may have edited AGENTS.md? No, git status shows it unchanged. Hmm, actually it's tracked and clean. So the committed file itself fails prettier. That means the previous commit e318f4e introduced the double blank line and the format check now fails.\\\\n\\\\nWait, but the failure feedback in the prompt focuses on this. Actually the failure feedback shows a format check that fails on AGENTS.md. The repair task is to fix observed failures. The simplest fix: remove the extra blank line.\\\\n\\\\nBut hold on — AGENTS.md is the project instructions file. Is editing it allowed? The rule says \\\\\\\"Update this file in the same change, so the guidance describes the application as it actually is.\\\\\\\" So editing AGENTS.md is allowed. But this is formatting only.\\\\n\\\\nHowever, I should be careful: maybe the real issue is that the format check should exclude AGENTS.md? No, AGENTS.md is not in `.prettierignore`. Let me check `.prettierignore`.\\\\n\\\\nActually let's think about whether this is the actual task-created file. The git status shows the feature files modified but AGENTS.md unchanged. The format check runs on the whole repo, and AGENTS.md fails. So the failure is pre-existing in the base commit? Let me verify by checking git show of AGENTS.md at HEAD to see if it has the double blank line.\\\\n\\\\nActually `git status` clean for AGENTS.md means working tree == HEAD. So the committed version has the double blank line. That's weird for a repo that passes format. Unless the previous repair/implementation changed it and committed? No, the implementation changes aren't committed (git status shows modified/untracked). \\\\n\\\\nHmm, wait. This is the repair environment. The workspace contains the agent's patch applied but uncommitted. AGENTS.md wasn't touched. So the base commit e318f4e has AGENTS.md failing prettier. Let me check git show HEAD:AGENTS.md around line 403.\\\\n\\\\nActually `git status` says AGENTS.md unchanged, so HEAD version = working version. Let me check if the file at HEAD fails prettier by examining git show.\\\\n\\\\nLet me check whether the \\\\\\\"framework\\\\\\\" commit e318f4e is the one that added the double newline. Let me look at the diff.\\\",\\\"type\\\":\\\"reasoning.text\\\"}]\"},{\"type\":\"toolCall\",\"id\":\"call_00_0W9rn4XZZhKTsO5EqwsR6349\",\"name\":\"bash\",\"arguments\":{\"command\":\"cd /home/runner/work/nb3-factory/nb3-factory/workspace && cat .prettierignore && echo \\\"=== git show e318f4e AGENTS diff ===\\\" && git show e318f4e -- AGENTS.md | head -60\",\"timeout\":60}}],\"api\":\"openai-completions\",\"provider\":\"nb3-factory\",\"model\":\"deepseek-v4.1-flash\",\"usage\":{\"input\":573,\"output\":716,\"cacheRead\":18688,\"cacheWrite\":0,\"reasoning\":605,\"totalTokens\":19977,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"stopReason\":\"toolUse\",\"timestamp\":1790570250885,\"responseId\":\"gen_01M3K4VJ4Y5TB3590PVRSP1G1R\",\"rawStopReason\":\"tool_calls\"}}\n{\"type\":\"tool_execution_start\",\"toolCallId\":\"call_00_0W9rn4XZZhKTsO5EqwsR6349\",\"toolName\":\"bash\",\"args\":{\"command\":\"cd /home/runner/work/nb3-factory/nb3-factory/workspace && cat .prettierignore && echo \\\"=== git show e318f4e AGENTS diff ===\\\" && git show e318f4e -- AGENTS.md | head -60\",\"timeout\":60}}\n{\"type\":\"tool_execution_update\",\"toolCallId\":\"call_00_0W9rn4XZZhKTsO5EqwsR6349\",\"toolName\":\"bash\",\"args\":{\"command\":\"cd /home/runner/work/nb3-factory/nb3-factory/workspace && cat .prettierignore && echo \\\"=== git show e318f4e AGENTS diff ===\\\" && git show e318f4e -- AGENTS.md | head -60\",\"timeout\":60},\"partialResult\":{\"content\":[]}}\n{\"type\":\"tool_execution_update\",\"toolCallId\":\"call_00_0W9rn4XZZhKTsO5EqwsR6349\",\"toolName\":\"bash\",\"args\":{\"command\":\"cd /home/runner/work/nb3-factory/nb3-factory/workspace && cat .prettierignore && echo \\\"=== git show e318f4e AGENTS diff ===\\\" && git show e318f4e -- AGENTS.md | head -60\",\"timeout\":60},\"partialResult\":{\"content\":[{\"type\":\"text\",\"text\":\"client-old/\\nregistry/\\n\\n# Generated by the package manager, and reformatting it would produce a file pnpm did not write.\\n# A generated application has none of the directories above but does have this one, which is why\\n# this file ships in the package: without it `pnpm format:check` fails on a freshly created app.\\npnpm-lock.yaml\\n\\n# Generated by `pnpm nocobase collections generate`: one JSON artifact per Collection plus a `_manifest.json`, written through\\n# a stable serializer so that `pnpm nocobase collections generate --check` can regenerate them and compare byte for byte.\\n# Prettier collapses their short arrays and objects onto single lines, which makes that check report the artifacts as\\n# out of date when nothing about the schema changed.\\ndatabase/*/collections/\\n\\n# Synchronized by `pnpm nocobase skills sync` from the installed NocoBase packages: `.agents/skills/` is copied from them and\\n# `.claude/skills/` holds symbolic links into it. They are upstream prose, replaced wholesale on the next sync, so\\n# formatting them rewrites files this application does not own and the change disappears anyway. `.gitignore` lists\\n# both, but a `--ignore-path` run replaces `.gitignore` rather than adding to it, so they are named here as well.\\n.agents/\\n.claude/skills/\\n\"}],\"details\":{}}}\n{\"type\":\"tool_execution_update\",\"toolCallId\":\"call_00_0W9rn4XZZhKTsO5EqwsR6349\",\"toolName\":\"bash\",\"args\":{\"command\":\"cd /home/runner/work/nb3-factory/nb3-factory/workspace && cat .prettierignore && echo \\\"=== git show e318f4e AGENTS diff ===\\\" && git show e318f4e -- AGENTS.md | head -60\",\"timeout\":60},\"partialResult\":{\"content\":[{\"type\":\"text\",\"text\":\"client-old/\\nregistry/\\n\\n# Generated by the package manager, and reformatting it would produce a file pnpm did not write.\\n# A generated application has none of the directories above but does have this one, which is why\\n# this file ships in the package: without it `pnpm format:check` fails on a freshly created app.\\npnpm-lock.yaml\\n\\n# Generated by `pnpm nocobase collections generate`: one JSON artifact per Collection plus a `_manifest.json`, written through\\n# a stable serializer so that `pnpm nocobase collections generate --check` can regenerate them and compare byte for byte.\\n# Prettier collapses their short arrays and objects onto single lines, which makes that check report the artifacts as\\n# out of date when nothing about the schema changed.\\ndatabase/*/collections/\\n\\n# Synchronized by `pnpm nocobase skills sync` from the installed NocoBase packages: `.agents/skills/` is copied from them and\\n# `.claude/skills/` holds symbolic links into it. They are upstream prose, replaced wholesale on the next sync, so\\n# formatting them rewrites files this application does not own and the change disappears anyway. `.gitignore` lists\\n# both, but a `--ignore-path` run replaces `.gitignore` rather than adding to it, so they are named here as well.\\n.agents/\\n.claude/skills/\\n=== git show e318f4e AGENTS diff ===\\ncommit e318f4e66339ec98863385f8068b5d8bba09ed52\\nAuthor: gchust <gchust@qq.com>\\nDate:   Sun Sep 27 23:01:39 2026 +0800\\n\\n    test: add opt-in controlled failed delivery smoke (#404)\\n\\ndiff --git a/AGENTS.md b/AGENTS.md\\nindex 5d4975c..1cd3d1b 100644\\n--- a/AGENTS.md\\n+++ b/AGENTS.md\\n@@ -399,3 +399,8 @@ Track input completeness separately from cited process coverage. A Skill invento\\n Ordinary tasks and evaluation samples share the ceilings in `.github/scripts/task-policy.mjs`: five repair attempts, three observations of an identical failure per criterion/check, at most one five-hour Handoff, and ten hours of active implementation/repair/QA time. An evaluation plan can only tighten these limits. Pipeline state carries counters, failure fingerprints and elapsed time across handoffs and explicit recoveries; never clear them to get a task through.\\n \\n A terminal limit saves `task-diagnostic.json` and `task-diagnostic.md`, preserves the patch and raw evidence, and runs at most one additional fifteen-minute read-only diagnosis using the independent reviewer. This cleanup cannot resume repairs, dispatch another continuation, or authorize final verification. Failed tasks still publish reports and create or update a build PR marked failed when a safe code diff exists. They may attempt preview packaging and deployment once without restarting repair or QA; preview failure does not block the report or PR or change the failed task status. Missing patches or empty diffs must be reported explicitly rather than fabricating a PR. Stopped checkpoints are not recoverable. Reject direct GitHub Re-run attempts for implementation/repair: they start fresh runners w",
+          "sha256": "1fa13f73fe0c793e448dc2cfe7679ecdde10be270a927c4b41d8427d01a8a53a"
+        },
+        {
+          "id": "E38",
+          "kind": "log",
+          "path": "artifacts/agent-history/agent-repair-1.jsonl/part-0002.txt",
+          "observation": "修复轮用 edit 把 oldText 中 Preserve unknown causes... 后的两个空行改为一个空行，编辑成功并返回 diff。",
+          "lines": [
+            1603,
+            1604
+          ],
+          "excerpt": "{\"type\":\"tool_execution_start\",\"toolCallId\":\"call_00_BscOhc4NUnlbabA9GGSh8614\",\"toolName\":\"edit\",\"args\":{\"edits\":[{\"newText\":\"Preserve unknown causes and incomplete diagnoses.\\n\\n## Controlled failed-delivery smoke\",\"oldText\":\"Preserve unknown causes and incomplete diagnoses.\\n\\n\\n## Controlled failed-delivery smoke\"}],\"path\":\"/home/runner/work/nb3-factory/nb3-factory/workspace/AGENTS.md\"}}\n{\"type\":\"tool_execution_end\",\"toolCallId\":\"call_00_BscOhc4NUnlbabA9GGSh8614\",\"toolName\":\"edit\",\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"Successfully replaced 1 block(s) in /home/runner/work/nb3-factory/nb3-factory/workspace/AGENTS.md.\"}],\"details\":{\"diff\":\"     ...\\n 399 Ordinary tasks and evaluation samples share the ceilings in `.github/scripts/task-policy.mjs`: five repair attempts, three observations of an identical failure per criterion/check, at most one five-hour Handoff, and ten hours of active implementation/repair/QA time. An evaluation plan can only tighten these limits. Pipeline state carries counters, failure fingerprints and elapsed time across handoffs and explicit recoveries; never clear them to get a task through.\\n 400 \\n 401 A terminal limit saves `task-diagnostic.json` and `task-diagnostic.md`, preserves the patch and raw evidence, and runs at most one additional fifteen-minute read-only diagnosis using the independent reviewer. This cleanup cannot resume repairs, dispatch another continuation, or authorize final verification. Failed tasks still publish reports and create or update a build PR marked failed when a safe code diff exists. They may attempt preview packaging and deployment once without restarting repair or QA; preview failure does not block the report or PR or change the failed task status. Missing patches or empty diffs must be reported explicitly rather than fabricating a PR. Stopped checkpoints are not recoverable. Reject direct GitHub Re-run attempts for implementation/repair: they start fresh runners without restoring the previous attempt. Use explicit checkpoint recovery in a new Run for recoverable failures. Attribute framework, Skill, template, application, factory and environment issues from evidence; repeated failures alone are not proof of a NocoBase3 defect. Preserve unknown causes and incomplete diagnoses.\\n 402 \\n-403 \\n 404 ## Controlled failed-delivery smoke\\n 405 \\n 406 The task workflow's opt-in failure_smoke dispatch input exercises failed publication without model calls or business QA. It requires a fresh, open Issue carrying factory:external, factory:failure-smoke, and the <!-- factory-failure-smoke:v1 --> disclosure. Do not use recovery or GitHub Re-run for this mode. The pinned code-only fixture comes from Issue #400 / PR #401; it carries its source SHA and patch digest and never copies earlier QA verdicts or screenshots. The agent job deliberately fails before QA; the existing failed PR, report, packaging and deployment jobs must handle it unchanged. Do not merge its application PR or describe successful preview deployment as successful business acceptance.\",\"patch\":\"--- /home/runner/work/nb3-factory/nb3-factory/workspace/AGENTS.md\\n+++ /home/runner/work/nb3-factory/nb3-factory/workspace/AGENTS.md\\n@@ -399,8 +399,7 @@\\n Ordinary tasks and evaluation samples share the ceilings in `.github/scripts/task-policy.mjs`: five repair attempts, three observations of an identical failure per criterion/check, at most one five-hour Handoff, and ten hours of active implementation/repair/QA time. An evaluation plan can only tighten these limits. Pipeline state carries counters, failure fingerprints and elapsed time across handoffs and explicit recoveries; never clear them to get a task through.\\n \\n A terminal limit saves `task-diagnostic.json` and `task-diagnostic.md`, preserves the patch and raw evidence, and runs at most one additional fifteen-minute read-only diagnosis using the independent reviewer. This cleanup cannot resume repairs, dispatch another continuation, or authorize final verification. Failed tasks still publish reports and create or update a build PR marked failed when a safe code diff exists. They may attempt preview packaging and deployment once without restarting repair or QA; preview failure does not block the report or PR or change the failed task status. Missing patches or empty diffs must be reported explicitly rather than fabricating a PR. Stopped checkpoints are not recoverable. Reject direct GitHub Re-run attempts for implementation/repair: they start fresh runners without restoring the previous attempt. Use explicit checkpoint recovery in a new Run for recoverable failures. Attribute framework, Skill, template, application, factory and environment issues from evidence; repeated failures alone are not proof of a NocoBase3 defect. Preserve unknown causes and incomplete diagnoses.\\n \\n-\\n ## Controlled failed-delivery smoke\\n \\n The task workflow's opt-in failure_smoke dispatch input exercises failed publication without model calls or business QA. It requires a fresh, open Issue carrying factory:external, factory:failure-smoke, and the <!-- factory-failure-smoke:v1 --> disclosure. Do not use recovery or GitHub Re-run for this mode. The pinned code-only fixture comes from Issue #400 / PR #401; it carries its source SHA and patch digest and never copies earlier QA verdicts or screenshots. The agent job deliberately fails before QA; the existing failed PR, report, packaging and deployment jobs must handle it unchanged. Do not merge its application PR or describe successful preview deployment as successful business acceptance.\\n\",\"firstChangedLine\":403}},\"isError\":false}",
+          "sha256": "0cdea9e877dd01493d595c36eb7ce52772b2b4eca548c6cb7dec42e71613815b"
+        },
+        {
+          "id": "E40",
+          "kind": "skill",
+          "path": "app/AGENTS.md",
+          "observation": "应用指引中的 Factory task termination 与 Controlled failed-delivery smoke 段落；后者正是模板提交 e318f4e 引入、随后被修复轮删除多余空行的段落。",
+          "lines": [
+            399,
+            405
+          ],
+          "excerpt": "Ordinary tasks and evaluation samples share the ceilings in `.github/scripts/task-policy.mjs`: five repair attempts, three observations of an identical failure per criterion/check, at most one five-hour Handoff, and ten hours of active implementation/repair/QA time. An evaluation plan can only tighten these limits. Pipeline state carries counters, failure fingerprints and elapsed time across handoffs and explicit recoveries; never clear them to get a task through.\n\nA terminal limit saves `task-diagnostic.json` and `task-diagnostic.md`, preserves the patch and raw evidence, and runs at most one additional fifteen-minute read-only diagnosis using the independent reviewer. This cleanup cannot resume repairs, dispatch another continuation, or authorize final verification. Failed tasks still publish reports and create or update a build PR marked failed when a safe code diff exists. They may attempt preview packaging and deployment once without restarting repair or QA; preview failure does not block the report or PR or change the failed task status. Missing patches or empty diffs must be reported explicitly rather than fabricating a PR. Stopped checkpoints are not recoverable. Reject direct GitHub Re-run attempts for implementation/repair: they start fresh runners without restoring the previous attempt. Use explicit checkpoint recovery in a new Run for recoverable failures. Attribute framework, Skill, template, application, factory and environment issues from evidence; repeated failures alone are not proof of a NocoBase3 defect. Preserve unknown causes and incomplete diagnoses.\n\n## Controlled failed-delivery smoke\n\nThe task workflow's opt-in failure_smoke dispatch input exercises failed publication without model calls or business QA. It requires a fresh, open Issue carrying factory:external, factory:failure-smoke, and the <!-- factory-failure-smoke:v1 --> disclosure. Do not use recovery or GitHub Re-run for this mode. The pinned code-only fixture comes from Issue #400 / PR #401; it carries its source SHA and patch digest and never copies earlier QA verdicts or screenshots. The agent job deliberately fails before QA; the existing failed PR, report, packaging and deployment jobs must handle it unchanged. Do not merge its application PR or describe successful preview deployment as successful business acceptance.",
+          "sha256": "e1bc6e09a89bb4f2a8655d6ef6347d9d729675cbada4f7dd28bbd664c99d06e4"
+        }
+      ],
+      "fingerprint": "fb6798fd1e370f0cca4494086b1e1aabbbbe775c38612ee0585c235b62217503"
+    },
+    {
+      "id": "419:36376192996:1:F5",
+      "report": "419:36376192996:1",
+      "issue": 419,
+      "taskTitle": "一条外部测试通知",
+      "appVersion": "1.0.0-beta.47",
+      "appTemplate": "@nocobase/app-template-default",
+      "finding": {
+        "id": "F5",
+        "kind": "improvement",
+        "owner": "plugin",
+        "confidence": "confirmed",
+        "severity": "info",
+        "status": "open",
+        "title": "测试发送入口默认暴露所有带 test 定义的启用渠道，缺少服务端 test-only 约束",
+        "detail": "registry.testTargets 返回任何 enabled 且其 Provider messageType 定义了 test 的渠道，manager.resolveTestTarget 只校验渠道名在 listTestTargets 内；服务端没有把渠道标记为 test-only 的开关，也未在服务端强制排除业务渠道。本次隔离靠应用给渠道加 test- 前缀并在客户端 isTestChannel 过滤，服务端 /test/send 仍接受任何已列出的渠道。",
+        "impact": "拥有 notification:test send 权限的调用者可在带 test 定义的业务渠道上发起真实外部发送，隔离强度取决于应用自觉而非框架保证。",
+        "suggestedChange": "为渠道或测试面增加 test-only 标记或白名单（例如配置里显式声明 testTargets，或渠道上的 test 开关），并在 resolveTestTarget 中拒绝未标记渠道；或在 Skill 中明确要求应用在服务端强制隔离。",
+        "diagnosis": {
+          "category": "usability-improvement",
+          "trigger": "应用配置一个同时带测试定义的业务渠道后，GET /api/notifications/test/targets 会把它列为目标，POST /api/notifications/test/send 也会接受该渠道名。",
+          "expected": "框架提供一种服务端手段把真实业务渠道排除在测试入口之外（白名单或 test-only 标记）。",
+          "actual": "testTargets 与 resolveTestTarget 只看渠道是否 enabled 且 Provider 是否有 test 定义，没有业务/测试渠道区分；隔离完全由应用层前缀约定与客户端过滤实现。",
+          "workaround": "应用把测试渠道统一加 test- 前缀，并在客户端 isTestChannel 过滤；这是应用侧命名约定，服务端不受约束。",
+          "acceptance": "未声明为 test-only 的渠道被 POST /api/notifications/test/send 拒绝且不产生真实发送，或 Skill 明确记录该限制由应用负责。"
+        },
+        "evidence": [
+          "E4",
+          "E6",
+          "E10",
+          "E29"
+        ]
+      },
+      "targets": [
+        "@nocobase/app-plugin-notification",
+        "app/.agents/skills/nocobase-app-plugin-notification"
+      ],
+      "paths": [
+        ".agents/skills/nocobase-app-plugin-notification/references/integration-and-configuration.md",
+        "packages/@nocobase/app-plugin-notification/dist/server/manager.js",
+        "packages/@nocobase/app-plugin-notification/dist/server/registry.js"
+      ],
+      "evidence": [
+        {
+          "id": "E4",
+          "kind": "code",
+          "path": "packages/@nocobase/app-plugin-notification/dist/server/manager.js",
+          "observation": "listTestTargets 收集测试目标；sendTest 用 notification-test:<uuid> 幂等键与 source type=notification-test、referenceId=actor.userId 发送；getTestStatus 只匹配 sourceType 与 sourceReferenceId 等于当前用户的记录。",
+          "lines": [
+            81,
+            107
+          ],
+          "excerpt": "    listTestTargets() {\n        return this.registry.testTargets(this.options.config);\n    }\n    async sendTest(request, actor) {\n        const target = this.resolveTestTarget(request);\n        const channelConfig = this.options.config.channels[request.channel];\n        const provider = this.registry.provider(channelConfig.provider);\n        const definition = provider && this.registry.channel(provider.messageType);\n        if (!definition?.test)\n            throw new Error('Notification test target is unavailable.');\n        const message = definition.test.toSendInput({\n            actor,\n            values: request.values,\n            channelConfig,\n        });\n        return this.send({\n            idempotencyKey: `notification-test:${randomUUID()}`,\n            messages: {\n                [target.channel.name]: message,\n            },\n            source: { type: 'notification-test', referenceId: actor.userId },\n        });\n    }\n    async getTestStatus(notificationId, actor) {\n        const details = await this.logs.get(notificationId);\n        return details?.log.sourceType === 'notification-test' &&\n            details.log.sourceReferenceId === actor.userId",
+          "sha256": "8ceaca1b734db599fe58e8d868edfd7af373f2ea0be3f10aa1b1a78534e8edda"
+        },
+        {
+          "id": "E6",
+          "kind": "code",
+          "path": "packages/@nocobase/app-plugin-notification/dist/server/registry.js",
+          "observation": "testTargets 遍历 config.channels，跳过 enabled===false，要求 Provider 存在且其 messageType 渠道定义了 test，随后只暴露渠道名、Provider 标识与安全字段元数据。",
+          "lines": [
+            27,
+            45
+          ],
+          "excerpt": "    testTargets(config) {\n        return Object.entries(config.channels).flatMap(([name, channelConfig]) => {\n            if (channelConfig.enabled === false)\n                return [];\n            const provider = this.provider(channelConfig.provider);\n            const channel = provider && this.channel(provider.messageType);\n            if (!channel?.test || !provider)\n                return [];\n            return [\n                {\n                    channel: { name, type: provider.messageType, label: name },\n                    provider: {\n                        type: provider.type,\n                        label: provider.label ?? provider.type,\n                    },\n                    fields: channel.test.fields,\n                },\n            ];\n        });",
+          "sha256": "f92a8f0089c2f3612cb8c72462cdac41e6f9c5897c9a182ed9d463615309be8f"
+        },
+        {
+          "id": "E10",
+          "kind": "skill",
+          "path": "app/.agents/skills/nocobase-app-plugin-notification/references/integration-and-configuration.md",
+          "observation": "文档列出三个测试端点及其认证/测试头/权限差异，说明目标是注册定义与已启用实例的交集、只暴露安全元数据、每次测试都产生持久日志且状态仅创建者可见，并提示生产测试是真实对外发送。",
+          "lines": [
+            49,
+            55
+          ],
+          "excerpt": "## Notification test surface\n\nThe core package exposes `GET /api/notifications/test/targets`, `POST /api/notifications/test/send`, and `GET /api/notifications/test/:id/status`. All three require authentication and `x-nocobase-notification-test: 1`; only `POST /send` requires the `notification:test` `send` permission. Logs remain separately protected by `page:notification.logs` `access`.\n\nTargets are the intersection of registered definitions and enabled configured instances. Their public descriptors contain only Channel names, Provider identifiers, labels, and safe form-field metadata. Configuration, Webhook URLs, API keys, and secrets stay on the server. Channel definitions convert test fields into the same normal `send()` inputs; each test creates persistent logs, and status is visible only to its creating user.\n\nA production test is a real external send and requires explicit scope, the recipient or recipientless mode, Channel, permission, and follow-up verification.",
+          "sha256": "8d414c6fc183e5f3e6088429ae9a1d74f9c1cace1a4b2d1ed9b91206b3d87e7a"
+        },
+        {
+          "id": "E29",
+          "kind": "code",
+          "path": "app/client/pages/notification-test/index.tsx",
+          "observation": "测试页面通过 useTranslation/useApiClient/useAuthentication 获取依赖，加载目标后调用 available.filter(isTestChannel) 只保留 test- 前缀渠道，再据此发送。",
+          "lines": [
+            48,
+            69
+          ],
+          "excerpt": "export default function NotificationTestPage(): ReactElement {\n  const { t } = useTranslation();\n  const api = useApiClient();\n  const { session } = useAuthentication();\n  const currentUserId = session?.user?.id ?? '';\n  const currentUserName =\n    session?.user?.name ?? session?.user?.email ?? currentUserId;\n\n  const [targets, setTargets] = useState<readonly NotificationTestTarget[]>();\n  const [loadError, setLoadError] = useState<string>();\n  const [selectedName, setSelectedName] = useState<string>();\n  const [sending, setSending] = useState(false);\n  const [result, setResult] = useState<NotificationTestSendResult>();\n  const [sendError, setSendError] = useState<string>();\n\n  useEffect(() => {\n    let active = true;\n    void (async () => {\n      try {\n        const available = await listTestTargets(api);\n        if (!active) return;\n        setTargets(available.filter(isTestChannel));",
+          "sha256": "eed602567df50bcf64de14a4b01933bc8f9e64b05b4d83407a2a3385977cdc5f"
+        }
+      ],
+      "fingerprint": "148cdafb4a701cbb5c0f1deb4cf40006457fe4d2e33131bb679684a1c1fa24ca"
     },
     {
       "id": "431:36360863566:1:F1",

@@ -1,0 +1,2496 @@
+{
+  "record": {
+    "version": 1,
+    "repository": "gchust/nb3-factory",
+    "issue": 419,
+    "runId": 36376192996,
+    "attempt": 1,
+    "status": "delivered",
+    "start": 1790568285000,
+    "end": 1790572549000,
+    "jobs": [
+      {
+        "id": 108782416111,
+        "name": "prepare",
+        "seconds": 14
+      },
+      {
+        "id": 108782468423,
+        "name": "agent",
+        "seconds": 4028
+      },
+      {
+        "id": 108796202082,
+        "name": "verify-final",
+        "seconds": 196
+      },
+      {
+        "id": 108796910573,
+        "name": "publish",
+        "seconds": 17
+      }
+    ],
+    "agentJobId": 108782468423,
+    "invoked": true,
+    "artifact": "factory-agent-419",
+    "artifactId": 10952219568,
+    "finalArtifactId": 10952373451,
+    "taskArtifactId": 10950704126,
+    "event": "issues",
+    "previousRunId": null,
+    "usage": {
+      "phases": {
+        "implementation": {
+          "input": 321011,
+          "output": 123382,
+          "cacheRead": 19580672,
+          "cacheWrite": 0,
+          "reasoning": 74577,
+          "totalTokens": 20025065
+        },
+        "repair": {
+          "input": 28974,
+          "output": 20196,
+          "cacheRead": 1314560,
+          "cacheWrite": 0,
+          "reasoning": 14463,
+          "totalTokens": 1363730
+        },
+        "qa": {
+          "input": 69468,
+          "output": 41799,
+          "cacheRead": 4228352,
+          "cacheWrite": 0,
+          "reasoning": 27704,
+          "totalTokens": 4339619
+        },
+        "qaFocused": {
+          "input": 0,
+          "output": 0,
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "reasoning": 0,
+          "totalTokens": 0
+        },
+        "qaReport": {
+          "input": 0,
+          "output": 0,
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "reasoning": 0,
+          "totalTokens": 0
+        },
+        "review": {
+          "input": 358920,
+          "output": 77119,
+          "cacheRead": 7899008,
+          "cacheWrite": 0,
+          "reasoning": 42388,
+          "totalTokens": 8335047
+        },
+        "compaction": {
+          "input": 305492,
+          "output": 40212,
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "reasoning": 13327,
+          "totalTokens": 345704
+        }
+      },
+      "records": 524,
+      "missing": 0,
+      "incomplete": 0
+    },
+    "evaluation": {
+      "version": 1,
+      "runKey": "gchust/nb3-factory/issues/419/initial",
+      "kind": "initial",
+      "derivation": "recorded",
+      "agentConfiguration": {
+        "fingerprints": [
+          "2f5401c2837d7dae1f1f014540b983521db478e49b3e29c61dbb26be0a75e3bf"
+        ],
+        "complete": false
+      },
+      "controlSha": "39d471578a9d58d4d3cd2f08831cd3526f0f25a7",
+      "baseSha": "4f504529b876b45c6646d8d376d1402ffd0bc5ec",
+      "inputHash": "aa9c521a00d3d3113b1fb9a59301b2d5756ed56e2cfd19032f64b900b3fc4d02",
+      "patchSha256": "c5bbdd0daa18c2d252bfbc4a05d3e13911fb89ba46511b6d185477b6343ae012",
+      "pipelineOutcome": "passed",
+      "event": "issues",
+      "previousRunId": null
+    }
+  },
+  "cumulative": {
+    "usage": {
+      "phases": {
+        "implementation": {
+          "input": 321011,
+          "output": 123382,
+          "cacheRead": 19580672,
+          "cacheWrite": 0,
+          "reasoning": 74577,
+          "totalTokens": 20025065
+        },
+        "repair": {
+          "input": 28974,
+          "output": 20196,
+          "cacheRead": 1314560,
+          "cacheWrite": 0,
+          "reasoning": 14463,
+          "totalTokens": 1363730
+        },
+        "qa": {
+          "input": 69468,
+          "output": 41799,
+          "cacheRead": 4228352,
+          "cacheWrite": 0,
+          "reasoning": 27704,
+          "totalTokens": 4339619
+        },
+        "qaFocused": {
+          "input": 0,
+          "output": 0,
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "reasoning": 0,
+          "totalTokens": 0
+        },
+        "qaReport": {
+          "input": 0,
+          "output": 0,
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "reasoning": 0,
+          "totalTokens": 0
+        },
+        "review": {
+          "input": 358920,
+          "output": 77119,
+          "cacheRead": 7899008,
+          "cacheWrite": 0,
+          "reasoning": 42388,
+          "totalTokens": 8335047
+        },
+        "compaction": {
+          "input": 305492,
+          "output": 40212,
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "reasoning": 13327,
+          "totalTokens": 345704
+        }
+      },
+      "records": 524,
+      "missing": 0,
+      "incomplete": 0
+    },
+    "total": 34409165,
+    "seconds": 4278,
+    "missingTimes": 0,
+    "elapsed": 50090,
+    "runs": 2,
+    "attempts": 2
+  },
+  "records": [
+    {
+      "version": 1,
+      "repository": "gchust/nb3-factory",
+      "issue": 419,
+      "runId": 36329219658,
+      "attempt": 1,
+      "status": "failure",
+      "start": 1790522459000,
+      "end": 1790522488000,
+      "jobs": [
+        {
+          "id": 108647819442,
+          "name": "prepare",
+          "seconds": 13
+        },
+        {
+          "id": 108647862963,
+          "name": "agent",
+          "seconds": 10
+        }
+      ],
+      "agentJobId": 108647862963,
+      "invoked": false,
+      "artifact": "factory-agent-419",
+      "artifactId": 10934564457,
+      "finalArtifactId": null,
+      "taskArtifactId": 10935595326,
+      "event": "workflow_dispatch",
+      "previousRunId": null,
+      "usage": {
+        "phases": {
+          "implementation": {
+            "input": 0,
+            "output": 0,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "reasoning": 0,
+            "totalTokens": 0
+          },
+          "repair": {
+            "input": 0,
+            "output": 0,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "reasoning": 0,
+            "totalTokens": 0
+          },
+          "qa": {
+            "input": 0,
+            "output": 0,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "reasoning": 0,
+            "totalTokens": 0
+          },
+          "qaFocused": {
+            "input": 0,
+            "output": 0,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "reasoning": 0,
+            "totalTokens": 0
+          },
+          "qaReport": {
+            "input": 0,
+            "output": 0,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "reasoning": 0,
+            "totalTokens": 0
+          },
+          "review": {
+            "input": 0,
+            "output": 0,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "reasoning": 0,
+            "totalTokens": 0
+          },
+          "compaction": {
+            "input": 0,
+            "output": 0,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "reasoning": 0,
+            "totalTokens": 0
+          }
+        },
+        "records": 0,
+        "missing": 0,
+        "incomplete": 0
+      },
+      "evaluation": {
+        "version": 1,
+        "runKey": "gchust/nb3-factory/issues/419/initial",
+        "kind": "initial",
+        "derivation": "recorded",
+        "agentConfiguration": {
+          "fingerprints": [],
+          "complete": false
+        },
+        "controlSha": "4f504529b876b45c6646d8d376d1402ffd0bc5ec",
+        "baseSha": "4f504529b876b45c6646d8d376d1402ffd0bc5ec",
+        "inputHash": "aa9c521a00d3d3113b1fb9a59301b2d5756ed56e2cfd19032f64b900b3fc4d02",
+        "patchSha256": null,
+        "pipelineOutcome": "blocked",
+        "event": "workflow_dispatch",
+        "previousRunId": null
+      }
+    },
+    {
+      "version": 1,
+      "repository": "gchust/nb3-factory",
+      "issue": 419,
+      "runId": 36376192996,
+      "attempt": 1,
+      "status": "delivered",
+      "start": 1790568285000,
+      "end": 1790572549000,
+      "jobs": [
+        {
+          "id": 108782416111,
+          "name": "prepare",
+          "seconds": 14
+        },
+        {
+          "id": 108782468423,
+          "name": "agent",
+          "seconds": 4028
+        },
+        {
+          "id": 108796202082,
+          "name": "verify-final",
+          "seconds": 196
+        },
+        {
+          "id": 108796910573,
+          "name": "publish",
+          "seconds": 17
+        }
+      ],
+      "agentJobId": 108782468423,
+      "invoked": true,
+      "artifact": "factory-agent-419",
+      "artifactId": 10952219568,
+      "finalArtifactId": 10952373451,
+      "taskArtifactId": 10950704126,
+      "event": "issues",
+      "previousRunId": null,
+      "usage": {
+        "phases": {
+          "implementation": {
+            "input": 321011,
+            "output": 123382,
+            "cacheRead": 19580672,
+            "cacheWrite": 0,
+            "reasoning": 74577,
+            "totalTokens": 20025065
+          },
+          "repair": {
+            "input": 28974,
+            "output": 20196,
+            "cacheRead": 1314560,
+            "cacheWrite": 0,
+            "reasoning": 14463,
+            "totalTokens": 1363730
+          },
+          "qa": {
+            "input": 69468,
+            "output": 41799,
+            "cacheRead": 4228352,
+            "cacheWrite": 0,
+            "reasoning": 27704,
+            "totalTokens": 4339619
+          },
+          "qaFocused": {
+            "input": 0,
+            "output": 0,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "reasoning": 0,
+            "totalTokens": 0
+          },
+          "qaReport": {
+            "input": 0,
+            "output": 0,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "reasoning": 0,
+            "totalTokens": 0
+          },
+          "review": {
+            "input": 358920,
+            "output": 77119,
+            "cacheRead": 7899008,
+            "cacheWrite": 0,
+            "reasoning": 42388,
+            "totalTokens": 8335047
+          },
+          "compaction": {
+            "input": 305492,
+            "output": 40212,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "reasoning": 13327,
+            "totalTokens": 345704
+          }
+        },
+        "records": 524,
+        "missing": 0,
+        "incomplete": 0
+      },
+      "evaluation": {
+        "version": 1,
+        "runKey": "gchust/nb3-factory/issues/419/initial",
+        "kind": "initial",
+        "derivation": "recorded",
+        "agentConfiguration": {
+          "fingerprints": [
+            "2f5401c2837d7dae1f1f014540b983521db478e49b3e29c61dbb26be0a75e3bf"
+          ],
+          "complete": false
+        },
+        "controlSha": "39d471578a9d58d4d3cd2f08831cd3526f0f25a7",
+        "baseSha": "4f504529b876b45c6646d8d376d1402ffd0bc5ec",
+        "inputHash": "aa9c521a00d3d3113b1fb9a59301b2d5756ed56e2cfd19032f64b900b3fc4d02",
+        "patchSha256": "c5bbdd0daa18c2d252bfbc4a05d3e13911fb89ba46511b6d185477b6343ae012",
+        "pipelineOutcome": "passed",
+        "event": "issues",
+        "previousRunId": null
+      }
+    }
+  ],
+  "timings": [
+    {
+      "stage": "agent:implementation",
+      "calls": 1,
+      "durationMs": 1855887
+    },
+    {
+      "stage": "agent:review",
+      "calls": 1,
+      "durationMs": 920984
+    },
+    {
+      "stage": "agent:qa",
+      "calls": 1,
+      "durationMs": 541026
+    },
+    {
+      "stage": "agent:repair",
+      "calls": 1,
+      "durationMs": 275688
+    },
+    {
+      "stage": "build",
+      "calls": 1,
+      "durationMs": 60442
+    },
+    {
+      "stage": "test",
+      "calls": 1,
+      "durationMs": 44029
+    },
+    {
+      "stage": "lint",
+      "calls": 1,
+      "durationMs": 29761
+    },
+    {
+      "stage": "typecheck",
+      "calls": 1,
+      "durationMs": 15074
+    },
+    {
+      "stage": "format:check",
+      "calls": 2,
+      "durationMs": 9573
+    },
+    {
+      "stage": "db:apply",
+      "calls": 1,
+      "durationMs": 5711
+    },
+    {
+      "stage": "install",
+      "calls": 1,
+      "durationMs": 4796
+    },
+    {
+      "stage": "format:auto",
+      "calls": 2,
+      "durationMs": 2233
+    },
+    {
+      "stage": "skills-sync",
+      "calls": 1,
+      "durationMs": 1073
+    }
+  ],
+  "delivery": {
+    "version": 1,
+    "meta": {
+      "repository": "gchust/nb3-factory",
+      "issue": 419,
+      "runId": "36376192996",
+      "attempt": 1,
+      "headSha": "c87aa88b63c0c00ee02589c7bc9e8732523218e4",
+      "targetBranch": "develop",
+      "title": "一条外部测试通知",
+      "snapshotDate": "2026-09-28T05:15:49.000Z"
+    },
+    "delivery": {
+      "status": "pr-ready",
+      "ci": "passed",
+      "ciSource": "流水线已完成最终验证及 PR 发布；不代表人工合并。",
+      "qaSummary": "管理员登录后经 Settings > Notification test 选择单一已配置渠道发送测试通知。test-inbox·Built-in 的通知记录为 completed/accepted，且登录用户收件箱 durable 条目（deliveryId 9da97dbe）与该记录一致，属实收；test-failure·SMTP 记录为 failed 并保留 getaddrinfo ENOTFOUND 失败原因。B01、B02 均通过。"
+    },
+    "links": [
+      {
+        "label": "查看 PR #438",
+        "url": "https://github.com/gchust/nb3-factory/pull/438"
+      },
+      {
+        "label": "查看需求",
+        "url": "https://github.com/gchust/nb3-factory/issues/419"
+      },
+      {
+        "label": "本轮运行与原始产物",
+        "url": "https://github.com/gchust/nb3-factory/actions/runs/36376192996/attempts/1"
+      }
+    ],
+    "attention": [],
+    "checks": [
+      {
+        "id": "A1",
+        "title": "向指定测试接收端发送一次，通知最终记录与实际接收结果一致；排队或已受理不等于已送达。测试收件端若没有浏览器入口，则接收证据由独立测试步骤提供，浏览器结果不能单独证明外部送达。",
+        "criterion": "向指定测试接收端发送一次，通知最终记录与实际接收结果一致；排队或已受理不等于已送达。测试收件端若没有浏览器入口，则接收证据由独立测试步骤提供，浏览器结果不能单独证明外部送达。",
+        "status": "passed",
+        "actions": [
+          "以 nocobase/admin123 登录后进入 Settings > Notification test 页面，确认两个单选项 test-inbox · Built-in（目标 Super Admin 登录用户收件箱）与 test-failure · SMTP，且默认选中 test-inbox。",
+          "保持选中 test-inbox，点击 Send test notification 提交一次。",
+          "读取即时反馈弹窗：Notification e85a10e2-e895-4184-98b6-8c4259e21845 was accepted (completed)。",
+          "打开 View notification logs，展开该通知，读取 Source=notification-test、Notification ID=e85a10e2-…、Status=completed、Deliveries=1，交付明细 Channel=test-inbox、Provider=Built-in、Status=accepted、Attempts=1、#1 Built-in accepted。",
+          "用浏览器当前已认证会话访问应用内收件箱 durable API /main/api/notifications/in-app 与 /unread-count，核对实际接收结果。"
+        ],
+        "evidence": [
+          "最终记录与真实接收一致：收件箱项 id=267f8a1d-…，其 deliveryId=9da97dbe-f790-47b3-85c7-84d596060a3f 与诊断记录中该交付的 delivery id 完全一致，notificationId=e85a10e2-… 也与诊断记录一致。",
+          "收件箱项 userId=1b0c7164-7361-4d22-b091-df2b05ca3f19，与 get-session 返回的当前登录用户 id 相同，证明发往指定测试收件端（登录用户收件箱）而非他人。",
+          "收件箱标题 NocoBase notification test、正文 This is a test notification from NocoBase.，unread-count=1，为真实持久化的收件箱条目。",
+          "交付状态为 in-app Provider 的终态 accepted/notification completed；按 Skill 定义 accepted 仅表示 Provider 受理，因此另以 durable 收件箱条目作为独立接收证据，未仅凭 accepted 判定送达。",
+          "验证过程中页面无 Something went wrong、无空白页、无未处理异常；errors 命令无页面错误输出。",
+          "接收端无生产浏览器页面（插件 Dev Route /main/dev/notification-in-app 在构建中重定向回 /main），故接收证据取自应用自身已认证的 durable 收件箱 API。"
+        ],
+        "screenshots": [
+          "b01-notification-test-page.png",
+          "b01-send-inbox-result.png",
+          "b01-logs-completed.png",
+          "b01-logs-delivery-expanded.png",
+          "b01-inbox-api-received-item.png"
+        ],
+        "evidenceUnavailable": false,
+        "source": "verify-2/browser-acceptance/report.json",
+        "result": "接收端无生产浏览器页面（插件 Dev Route /main/dev/notification-in-app 在构建中重定向回 /main），故接收证据取自应用自身已认证的 durable 收件箱 API。"
+      },
+      {
+        "id": "A2",
+        "title": "使用测试环境提供的可控失败条件，诊断记录显示实际失败；不把未配置渠道标成发送成功。\n\n无法实际完成时如实记录 failed、blocked 或 not_run，不以源码检查代替浏览器通过。",
+        "criterion": "使用测试环境提供的可控失败条件，诊断记录显示实际失败；不把未配置渠道标成发送成功。\n\n无法实际完成时如实记录 failed、blocked 或 not_run，不以源码检查代替浏览器通过。",
+        "status": "passed",
+        "actions": [
+          "在 Settings > Notification test 页面选中 test-failure · SMTP（页面注明该渠道被有意配置为失败，目标 notification-test@example.invalid）。",
+          "点击 Send test notification 提交一次。",
+          "读取即时反馈弹窗：Notification 24cb9fb7-d6df-4538-8711-4a5a08e0e669 was accepted (failed)。",
+          "打开 View notification logs，展开该通知，读取交付明细与失败原因。"
+        ],
+        "evidence": [
+          "通知 24cb9fb7-… 在诊断页记录为 Status=failed，Deliveries=1，页头显示 Need attention=1。",
+          "交付明细：Channel=test-failure、Provider=SMTP、Status=failed、Attempts=1。",
+          "失败原因被保留并显示：Attempt #1 SMTP getaddrinfo ENOTFOUND notification-test.invalid failed（DNS 解析失败）。",
+          "受控失败渠道未被标记为发送成功；诊断记录如实显示实际失败，未把未配置/失败渠道写成成功。"
+        ],
+        "screenshots": [
+          "b02-selected-failure-channel.png",
+          "b02-send-failure-result.png",
+          "b02-failure-log-expanded.png"
+        ],
+        "evidenceUnavailable": false,
+        "source": "verify-2/browser-acceptance/report.json",
+        "result": "受控失败渠道未被标记为发送成功；诊断记录如实显示实际失败，未把未配置/失败渠道写成成功。"
+      }
+    ],
+    "media": [
+      {
+        "id": "b01-notification-test-page.png",
+        "title": "发送测试通知入口（单选已配置渠道）",
+        "path": "verify-2/browser-acceptance/evidence/b01-notification-test-page.png",
+        "category": "业务界面",
+        "featured": true
+      },
+      {
+        "id": "b01-logs-delivery-expanded.png",
+        "title": "通知诊断记录：正常投递的最终状态",
+        "path": "verify-2/browser-acceptance/evidence/b01-logs-delivery-expanded.png",
+        "category": "业务界面",
+        "featured": true
+      },
+      {
+        "id": "b01-inbox-api-received-item.png",
+        "title": "测试收件箱实际接收条目（deliveryId 对应）",
+        "path": "verify-2/browser-acceptance/evidence/b01-inbox-api-received-item.png",
+        "category": "业务界面",
+        "featured": true
+      },
+      {
+        "id": "b02-failure-log-expanded.png",
+        "title": "通知诊断记录：可控失败与失败原因",
+        "path": "verify-2/browser-acceptance/evidence/b02-failure-log-expanded.png",
+        "category": "业务界面",
+        "featured": true
+      },
+      {
+        "id": "b01-send-inbox-result.png",
+        "title": "b01-send-inbox-result.png",
+        "path": "verify-2/browser-acceptance/evidence/b01-send-inbox-result.png",
+        "category": "验收 1",
+        "featured": true
+      },
+      {
+        "id": "b01-logs-completed.png",
+        "title": "b01-logs-completed.png",
+        "path": "verify-2/browser-acceptance/evidence/b01-logs-completed.png",
+        "category": "验收 1",
+        "featured": true
+      },
+      {
+        "id": "b02-selected-failure-channel.png",
+        "title": "b02-selected-failure-channel.png",
+        "path": "verify-2/browser-acceptance/evidence/b02-selected-failure-channel.png",
+        "category": "验收 2",
+        "featured": false
+      },
+      {
+        "id": "b02-send-failure-result.png",
+        "title": "b02-send-failure-result.png",
+        "path": "verify-2/browser-acceptance/evidence/b02-send-failure-result.png",
+        "category": "验收 2",
+        "featured": false
+      }
+    ],
+    "uncovered": [],
+    "rawQaReport": {
+      "passed": true,
+      "authenticated": true,
+      "summary": "管理员登录后经 Settings > Notification test 选择单一已配置渠道发送测试通知。test-inbox·Built-in 的通知记录为 completed/accepted，且登录用户收件箱 durable 条目（deliveryId 9da97dbe）与该记录一致，属实收；test-failure·SMTP 记录为 failed 并保留 getaddrinfo ENOTFOUND 失败原因。B01、B02 均通过。",
+      "checks": [
+        {
+          "id": "B01",
+          "criterion": "向指定测试接收端发送一次，通知最终记录与实际接收结果一致；排队或已受理不等于已送达。测试收件端若没有浏览器入口，则接收证据由独立测试步骤提供，浏览器结果不能单独证明外部送达。",
+          "status": "passed",
+          "actions": [
+            "以 nocobase/admin123 登录后进入 Settings > Notification test 页面，确认两个单选项 test-inbox · Built-in（目标 Super Admin 登录用户收件箱）与 test-failure · SMTP，且默认选中 test-inbox。",
+            "保持选中 test-inbox，点击 Send test notification 提交一次。",
+            "读取即时反馈弹窗：Notification e85a10e2-e895-4184-98b6-8c4259e21845 was accepted (completed)。",
+            "打开 View notification logs，展开该通知，读取 Source=notification-test、Notification ID=e85a10e2-…、Status=completed、Deliveries=1，交付明细 Channel=test-inbox、Provider=Built-in、Status=accepted、Attempts=1、#1 Built-in accepted。",
+            "用浏览器当前已认证会话访问应用内收件箱 durable API /main/api/notifications/in-app 与 /unread-count，核对实际接收结果。"
+          ],
+          "evidence": [
+            "最终记录与真实接收一致：收件箱项 id=267f8a1d-…，其 deliveryId=9da97dbe-f790-47b3-85c7-84d596060a3f 与诊断记录中该交付的 delivery id 完全一致，notificationId=e85a10e2-… 也与诊断记录一致。",
+            "收件箱项 userId=1b0c7164-7361-4d22-b091-df2b05ca3f19，与 get-session 返回的当前登录用户 id 相同，证明发往指定测试收件端（登录用户收件箱）而非他人。",
+            "收件箱标题 NocoBase notification test、正文 This is a test notification from NocoBase.，unread-count=1，为真实持久化的收件箱条目。",
+            "交付状态为 in-app Provider 的终态 accepted/notification completed；按 Skill 定义 accepted 仅表示 Provider 受理，因此另以 durable 收件箱条目作为独立接收证据，未仅凭 accepted 判定送达。",
+            "验证过程中页面无 Something went wrong、无空白页、无未处理异常；errors 命令无页面错误输出。",
+            "接收端无生产浏览器页面（插件 Dev Route /main/dev/notification-in-app 在构建中重定向回 /main），故接收证据取自应用自身已认证的 durable 收件箱 API。"
+          ],
+          "screenshots": [
+            "b01-notification-test-page.png",
+            "b01-send-inbox-result.png",
+            "b01-logs-completed.png",
+            "b01-logs-delivery-expanded.png",
+            "b01-inbox-api-received-item.png"
+          ],
+          "recordedAt": 1790571124169
+        },
+        {
+          "id": "B02",
+          "criterion": "使用测试环境提供的可控失败条件，诊断记录显示实际失败；不把未配置渠道标成发送成功。\n\n无法实际完成时如实记录 failed、blocked 或 not_run，不以源码检查代替浏览器通过。",
+          "status": "passed",
+          "actions": [
+            "在 Settings > Notification test 页面选中 test-failure · SMTP（页面注明该渠道被有意配置为失败，目标 notification-test@example.invalid）。",
+            "点击 Send test notification 提交一次。",
+            "读取即时反馈弹窗：Notification 24cb9fb7-d6df-4538-8711-4a5a08e0e669 was accepted (failed)。",
+            "打开 View notification logs，展开该通知，读取交付明细与失败原因。"
+          ],
+          "evidence": [
+            "通知 24cb9fb7-… 在诊断页记录为 Status=failed，Deliveries=1，页头显示 Need attention=1。",
+            "交付明细：Channel=test-failure、Provider=SMTP、Status=failed、Attempts=1。",
+            "失败原因被保留并显示：Attempt #1 SMTP getaddrinfo ENOTFOUND notification-test.invalid failed（DNS 解析失败）。",
+            "受控失败渠道未被标记为发送成功；诊断记录如实显示实际失败，未把未配置/失败渠道写成成功。"
+          ],
+          "screenshots": [
+            "b02-selected-failure-channel.png",
+            "b02-send-failure-result.png",
+            "b02-failure-log-expanded.png"
+          ],
+          "recordedAt": 1790571128724
+        }
+      ],
+      "failures": []
+    },
+    "rawRetro": {
+      "version": 1,
+      "summary": "Repaired the notification-test task's only observed failure: the repository-wide Prettier check failed on the template's AGENTS.md, which aborted the quality pipeline before typecheck/test/build. Removed the extra blank line introduced by framework commit e318f4e and re-verified the feature's scoped tests.",
+      "blockers": [
+        {
+          "phase": "verification",
+          "title": "format:check fails on the template's own AGENTS.md",
+          "symptom": "`pnpm format:check` (`prettier . --check '!.github/**'`) reported `[warn] AGENTS.md` and exited 1. Because `check` is `lint && format:check && typecheck && test && build`, and `format:auto` (format-changes.mjs) only formats files the agent's patch changed, the untouched AGENTS.md was never normalized, so the pipeline aborted before typecheck/test/build ever ran.",
+          "rootCause": "Framework/template commit e318f4e appended the 'Controlled failed-delivery smoke' section to AGENTS.md with two blank lines before the `##` heading; Prettier allows only one. AGENTS.md is a generated template file the factory overlay deliberately leaves untouched, and it was not part of the application patch, so no automatic formatting step corrected it.",
+          "resolution": "Removed the single extra blank line in AGENTS.md (whitespace-only). Verified with `npx prettier . --check '!.github/**'` (all matched files formatted) and re-ran the feature's scoped tests: `tests/logic/notification-test-target.test.ts`, `tests/logic/config.test.ts` (10 passed) and the `app-server.test.ts` case 'delivers a notification test to an isolated inbox and records a controlled failure' (passed, including normal in-app delivery and recorded controlled SMTP failure).",
+          "status": "resolved"
+        }
+      ],
+      "improvements": [
+        {
+          "category": "factory",
+          "title": "Format the generated AGENTS.md in the refresh baseline",
+          "detail": "The refresh overlay intentionally keeps the generated AGENTS.md untouched, so a formatting defect committed upstream to that file survives into every generated application and fails the repository-wide `format:check` on inspection. `format-changes.mjs` cannot repair it because the file is not part of the agent's patch.",
+          "suggestedChange": "Normalize the template's AGENTS.md (run Prettier over it) as part of the template refresh, or include it in the files `format-changes.mjs` is allowed to rewrite on a repair retry.",
+          "mechanizable": true
+        }
+      ]
+    },
+    "acceptanceRequirements": "B01. 向指定测试接收端发送一次，通知最终记录与实际接收结果一致；排队或已受理不等于已送达。测试收件端若没有浏览器入口，则接收证据由独立测试步骤提供，浏览器结果不能单独证明外部送达。\n\nB02. 使用测试环境提供的可控失败条件，诊断记录显示实际失败；不把未配置渠道标成发送成功。\n\n无法实际完成时如实记录 failed、blocked 或 not_run，不以源码检查代替浏览器通过。",
+    "changes": {
+      "total": 11,
+      "added": 4,
+      "modified": 7,
+      "deleted": 0
+    },
+    "usage": {
+      "scope": "此 Issue 累计：已采集 2 个 Run / 2 次尝试",
+      "source": "现有 task-usage 模块（按 Agent / job ID 去重）",
+      "total": 34409165,
+      "cacheRead": 33022592,
+      "uncachedInput": 1083865,
+      "output": 302708,
+      "executionSeconds": 4278,
+      "endToEndSeconds": 50090,
+      "incomplete": false,
+      "phases": [
+        {
+          "label": "初始实现",
+          "input": 321011,
+          "output": 123382,
+          "cacheRead": 19580672,
+          "cacheWrite": 0,
+          "total": 20025065
+        },
+        {
+          "label": "应用修复",
+          "input": 28974,
+          "output": 20196,
+          "cacheRead": 1314560,
+          "cacheWrite": 0,
+          "total": 1363730
+        },
+        {
+          "label": "完整业务 QA",
+          "input": 69468,
+          "output": 41799,
+          "cacheRead": 4228352,
+          "cacheWrite": 0,
+          "total": 4339619
+        },
+        {
+          "label": "失败路径复测",
+          "input": 0,
+          "output": 0,
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "total": 0
+        },
+        {
+          "label": "QA 补报告",
+          "input": 0,
+          "output": 0,
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "total": 0
+        },
+        {
+          "label": "独立搭建评审",
+          "input": 358920,
+          "output": 77119,
+          "cacheRead": 7899008,
+          "cacheWrite": 0,
+          "total": 8335047
+        },
+        {
+          "label": "上下文压缩",
+          "input": 305492,
+          "output": 40212,
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "total": 345704
+        }
+      ],
+      "coverageNote": "用量记录 524；未报告用量 0；分项不完整 0；缺失作业时间 0。",
+      "note": "不把流式增量、上下文长度和思考 Token 重复相加。旧记录未拆分 QA 时保留原有口径；费用：未知。"
+    },
+    "runs": [
+      {
+        "id": "36329219658",
+        "attempt": 1,
+        "status": "failed",
+        "detail": "失败"
+      },
+      {
+        "id": "36376192996",
+        "attempt": 1,
+        "status": "pr-ready",
+        "detail": "已生成/更新业务 PR"
+      }
+    ],
+    "retro": {
+      "version": 1,
+      "summary": "Repaired the notification-test task's only observed failure: the repository-wide Prettier check failed on the template's AGENTS.md, which aborted the quality pipeline before typecheck/test/build. Removed the extra blank line introduced by framework commit e318f4e and re-verified the feature's scoped tests.",
+      "source": "Agent · retro.json",
+      "blockers": [
+        {
+          "phase": "verification",
+          "title": "format:check fails on the template's own AGENTS.md",
+          "symptom": "`pnpm format:check` (`prettier . --check '!.github/**'`) reported `[warn] AGENTS.md` and exited 1. Because `check` is `lint && format:check && typecheck && test && build`, and `format:auto` (format-changes.mjs) only formats files the agent's patch changed, the untouched AGENTS.md was never normalized, so the pipeline aborted before typecheck/test/build ever ran.",
+          "rootCause": "Framework/template commit e318f4e appended the 'Controlled failed-delivery smoke' section to AGENTS.md with two blank lines before the `##` heading; Prettier allows only one. AGENTS.md is a generated template file the factory overlay deliberately leaves untouched, and it was not part of the application patch, so no automatic formatting step corrected it.",
+          "resolution": "Removed the single extra blank line in AGENTS.md (whitespace-only). Verified with `npx prettier . --check '!.github/**'` (all matched files formatted) and re-ran the feature's scoped tests: `tests/logic/notification-test-target.test.ts`, `tests/logic/config.test.ts` (10 passed) and the `app-server.test.ts` case 'delivers a notification test to an isolated inbox and records a controlled failure' (passed, including normal in-app delivery and recorded controlled SMTP failure).",
+          "cost": "",
+          "source": "",
+          "status": "resolved"
+        }
+      ],
+      "improvements": [
+        {
+          "category": "factory",
+          "title": "Format the generated AGENTS.md in the refresh baseline",
+          "detail": "The refresh overlay intentionally keeps the generated AGENTS.md untouched, so a formatting defect committed upstream to that file survives into every generated application and fails the repository-wide `format:check` on inspection. `format-changes.mjs` cannot repair it because the file is not part of the agent's patch.",
+          "suggestedChange": "Normalize the template's AGENTS.md (run Prettier over it) as part of the template refresh, or include it in the files `format-changes.mjs` is allowed to rewrite on a repair retry.",
+          "source": "",
+          "mechanizable": true
+        }
+      ]
+    },
+    "timings": [
+      {
+        "stage": "agent:implementation",
+        "calls": 1,
+        "durationMs": 1855887
+      },
+      {
+        "stage": "agent:review",
+        "calls": 1,
+        "durationMs": 920984
+      },
+      {
+        "stage": "agent:qa",
+        "calls": 1,
+        "durationMs": 541026
+      },
+      {
+        "stage": "agent:repair",
+        "calls": 1,
+        "durationMs": 275688
+      },
+      {
+        "stage": "build",
+        "calls": 1,
+        "durationMs": 60442
+      },
+      {
+        "stage": "test",
+        "calls": 1,
+        "durationMs": 44029
+      },
+      {
+        "stage": "lint",
+        "calls": 1,
+        "durationMs": 29761
+      },
+      {
+        "stage": "typecheck",
+        "calls": 1,
+        "durationMs": 15074
+      },
+      {
+        "stage": "format:check",
+        "calls": 2,
+        "durationMs": 9573
+      },
+      {
+        "stage": "db:apply",
+        "calls": 1,
+        "durationMs": 5711
+      },
+      {
+        "stage": "install",
+        "calls": 1,
+        "durationMs": 4796
+      },
+      {
+        "stage": "format:auto",
+        "calls": 2,
+        "durationMs": 2233
+      },
+      {
+        "stage": "skills-sync",
+        "calls": 1,
+        "durationMs": 1073
+      }
+    ],
+    "buildReview": {
+      "version": 1,
+      "state": "completed",
+      "reason": "独立 Agent 评审完成；评分是基于本次证据的意见，不替代业务 QA 或人工评审。",
+      "basis": {
+        "repository": "gchust/nb3-factory",
+        "issue": 419,
+        "runId": "36376192996",
+        "attempt": 1,
+        "controlSha": "39d471578a9d58d4d3cd2f08831cd3526f0f25a7",
+        "rubricVersion": 2,
+        "historyHash": "a416fec45d05d9c99ce94f4fa6274b57fe07a03437f808487cfb6c878364f11f",
+        "historyVersion": 2,
+        "history": {
+          "version": 2,
+          "path": "artifacts/agent-history/index.json",
+          "scope": "工厂可观察的本次搭建及已恢复 Handoff 交互；不是 CLI 内部上下文，不代表每个文件已被评审者读取。",
+          "coverage": "available",
+          "invocations": 3,
+          "sourceBytes": 58059874,
+          "capturedBytes": 58056089,
+          "errorSignals": 2,
+          "limitations": []
+        },
+        "baseSha": "4f504529b876b45c6646d8d376d1402ffd0bc5ec",
+        "patchHash": "c5bbdd0daa18c2d252bfbc4a05d3e13911fb89ba46511b6d185477b6343ae012",
+        "lockfileHash": "7db7024be35da2f6d4d75784a2afd5c398ca647ac58462cf5e58d14276395f99",
+        "packages": [
+          {
+            "name": "@nocobase/ai-employee",
+            "version": "0.2.0-beta.8"
+          },
+          {
+            "name": "@nocobase/ai-employee-avatars",
+            "version": "1.0.2"
+          },
+          {
+            "name": "@nocobase/app-cli",
+            "version": "1.0.0-beta.6"
+          },
+          {
+            "name": "@nocobase/app-client",
+            "version": "1.0.0-beta.21"
+          },
+          {
+            "name": "@nocobase/app-plugin-ai-employee",
+            "version": "1.0.0-beta.23"
+          },
+          {
+            "name": "@nocobase/app-plugin-ai-knowledge-base",
+            "version": "0.1.0-beta.9"
+          },
+          {
+            "name": "@nocobase/app-plugin-api-keys",
+            "version": "0.1.0-beta.8"
+          },
+          {
+            "name": "@nocobase/app-plugin-authentication",
+            "version": "1.0.0-beta.24"
+          },
+          {
+            "name": "@nocobase/app-plugin-authorization",
+            "version": "0.2.0-beta.20"
+          },
+          {
+            "name": "@nocobase/app-plugin-authz-default-access",
+            "version": "0.1.0-beta.4"
+          },
+          {
+            "name": "@nocobase/app-plugin-authz-restriction-rules",
+            "version": "0.1.0-beta.3"
+          },
+          {
+            "name": "@nocobase/app-plugin-authz-sharing-rules",
+            "version": "0.1.0-beta.4"
+          },
+          {
+            "name": "@nocobase/app-plugin-database-explorer",
+            "version": "0.1.0-beta.6"
+          },
+          {
+            "name": "@nocobase/app-plugin-file",
+            "version": "0.1.0-beta.15"
+          },
+          {
+            "name": "@nocobase/app-plugin-i18n",
+            "version": "0.1.0-beta.9"
+          },
+          {
+            "name": "@nocobase/app-plugin-mail",
+            "version": "0.1.0-beta.0"
+          },
+          {
+            "name": "@nocobase/app-plugin-notification",
+            "version": "0.1.0-beta.17"
+          },
+          {
+            "name": "@nocobase/app-plugin-notification-in-app",
+            "version": "0.2.0-beta.18"
+          },
+          {
+            "name": "@nocobase/app-plugin-notification-providers",
+            "version": "0.2.0-beta.7"
+          },
+          {
+            "name": "@nocobase/app-plugin-scheduler",
+            "version": "0.1.0-beta.9"
+          },
+          {
+            "name": "@nocobase/app-plugin-users",
+            "version": "1.0.0-beta.11"
+          },
+          {
+            "name": "@nocobase/app-plugin-workflow",
+            "version": "1.0.0-beta.28"
+          },
+          {
+            "name": "@nocobase/app-portal-sdk",
+            "version": "1.0.0-beta.3"
+          },
+          {
+            "name": "@nocobase/app-server",
+            "version": "1.0.0-beta.27"
+          },
+          {
+            "name": "@nocobase/app-skills",
+            "version": "0.1.0-beta.16"
+          },
+          {
+            "name": "@nocobase/app-websocket",
+            "version": "0.0.1"
+          },
+          {
+            "name": "@nocobase/authorization",
+            "version": "0.1.0-beta.9"
+          },
+          {
+            "name": "@nocobase/caching",
+            "version": "0.1.0-beta.2"
+          },
+          {
+            "name": "@nocobase/config",
+            "version": "0.1.0-beta.1"
+          },
+          {
+            "name": "@nocobase/cron",
+            "version": "0.1.0"
+          },
+          {
+            "name": "@nocobase/db",
+            "version": "1.0.0-beta.16"
+          },
+          {
+            "name": "@nocobase/db-sqlite",
+            "version": "0.1.0-beta.2"
+          },
+          {
+            "name": "@nocobase/dev-config",
+            "version": "0.1.0-beta.13"
+          },
+          {
+            "name": "@nocobase/drive",
+            "version": "0.1.0-beta.4"
+          },
+          {
+            "name": "@nocobase/i18n",
+            "version": "1.0.0-beta.4"
+          },
+          {
+            "name": "@nocobase/logging",
+            "version": "0.1.0-beta.6"
+          },
+          {
+            "name": "@nocobase/queue",
+            "version": "0.1.0-beta.7"
+          },
+          {
+            "name": "@nocobase/repository-input",
+            "version": "0.1.0-beta.1"
+          },
+          {
+            "name": "@nocobase/service-provider",
+            "version": "0.0.2-beta.1"
+          },
+          {
+            "name": "@nocobase/session",
+            "version": "0.1.0-beta.2"
+          },
+          {
+            "name": "@nocobase/snowflake",
+            "version": "1.0.0-beta.3"
+          }
+        ],
+        "reviewCriteriaHash": "b394865b73629fd637fc868afba94f9ac0705552cf7003b8b1657f8ebd4647be",
+        "artifactHash": "9b7aa064cf99b75d8e9997ddebafaadc801d4cf4ef1d5f908e77958a30c6855f",
+        "inputHash": "8869475d85c9fb4d0f63d0e530538a76d5d43adedf57faef1270c14362608188"
+      },
+      "evaluation": {
+        "version": 2,
+        "inputHash": "8869475d85c9fb4d0f63d0e530538a76d5d43adedf57faef1270c14362608188",
+        "summary": "本轮评审把该通知测试应用的框架支撑拆为三个能力单元：通知插件的测试发送接口与投递状态语义、Provider 与 Skill 的受控失败及持久化收件箱、以及应用客户端与开发指引。总体判断：框架提供了带鉴权与幂等的测试发送链路、把 accepted 与最终送达明确区分的投递模型，以及会保留真实失败原因的 SMTP 与 in-app Provider，B01/B02 均有独立 QA 轮次通过。主要框架侧问题是模板提交 e318f4e 在 app/AGENTS.md 引入 Prettier 违规、导致 format:check 失败并消耗唯一一次修复；另有测试入口缺少服务端 test-only 约束的改进建议。",
+        "modules": [
+          {
+            "name": "M1 通知插件：测试发送接口与投递状态语义",
+            "scope": "评估 @nocobase/app-plugin-notification 提供的通知测试发送 HTTP 契约、目标发现、用户隔离的投递状态查询与 Settings 通知日志页，以及其 Skill 对 accepted/retrying/failed/unknown 语义的说明。",
+            "limitations": "评审为只读：未运行该插件或任何测试；结论基于冻结快照的 dist 实现与 Skill 文本。测试入口的渠道隔离是否足够由 M2/F5 继续评估。",
+            "criteria": [
+              "B01",
+              "B02"
+            ],
+            "targets": [
+              {
+                "kind": "library",
+                "name": "@nocobase/app-plugin-notification",
+                "entrypoints": [
+                  "GET /api/notifications/test/targets",
+                  "POST /api/notifications/test/send",
+                  "GET /api/notifications/test/:id/status",
+                  "notificationServiceToken send()",
+                  "Settings > Notifications > Logs (page:notification.logs)"
+                ],
+                "evidence": [
+                  "E1",
+                  "E2",
+                  "E3",
+                  "E4",
+                  "E5",
+                  "E6",
+                  "E7",
+                  "E8"
+                ]
+              },
+              {
+                "kind": "guidance",
+                "name": "app/.agents/skills/nocobase-app-plugin-notification",
+                "entrypoints": [
+                  "SKILL.md",
+                  "references/integration-and-configuration.md#Notification test surface",
+                  "references/notification-concepts.md",
+                  "references/delivery-diagnostics.md"
+                ],
+                "evidence": [
+                  "E9",
+                  "E10",
+                  "E11",
+                  "E12"
+                ]
+              }
+            ],
+            "requirements": [
+              {
+                "need": "提供一个最小的测试发送入口，把一次测试通知发往明确隔离的测试收件端（不触达真实客户或真实群组）。",
+                "responsibility": "框架提供测试发送 HTTP 契约与目标描述符：GET /test/targets 暴露安全字段元数据，POST /test/send 走与正常发送相同的 send() 输入，请求体由严格 schema 校验；应用负责选择隔离渠道并钉住收件人。",
+                "recommendedUsage": "使用已认证会话并携带 x-nocobase-notification-test: 1 调用三个测试端点，POST /send 额外需要 notification:test send 权限；只提供目标要求的字段，凭据留在服务端（E9/E10）。",
+                "actualUsage": "app 的 api.ts 以固定测试头调用 targets/send，页面把收件人钉为当前登录用户或保留的 .invalid 邮箱；测试目标由 app/server/config/notification.ts 中的 test-inbox 与 test-failure 定义。",
+                "support": "direct",
+                "gapOwner": "none",
+                "evidence": [
+                  "E2",
+                  "E3",
+                  "E4",
+                  "E10",
+                  "E29",
+                  "E31"
+                ]
+              },
+              {
+                "need": "在既有的通知日志页查看最终投递状态，复用 Notification 与其 Provider，而不是另写发送通道。",
+                "responsibility": "框架自带 Settings > Notifications > Logs 页面，由 page:notification.logs access 授权，并暴露 Notification/Delivery/Attempt 的诊断数据。",
+                "recommendedUsage": "注册核心通知插件后，从测试页面链接到既有日志页；用 status 与 deliveries/attempts 读取最终结果，而不是把发送返回值当作送达（E10/E12）。",
+                "actualUsage": "测试页面链接到 /settings/notifications/logs；QA 在该页展开通知，读到 Source、Status 与 Deliveries/Attempts 明细，并另行核对收件箱实际接收。",
+                "support": "direct",
+                "gapOwner": "none",
+                "evidence": [
+                  "E8",
+                  "E2",
+                  "E12",
+                  "E34"
+                ]
+              },
+              {
+                "need": "区分 queued/accepted 与最终送达，失败时保留真实原因，未配置渠道不能被标成成功。",
+                "responsibility": "框架在 Notification/Delivery/Attempt 三层上定义 accepted（Provider 已受理）、retrying、failed、unknown 语义，并把每条 Delivery 独立处理；idempotencyKey 冲突会被拒绝，重复键返回 deduplicated 快照。",
+                "recommendedUsage": "把 accepted 视为未最终送达，用 logs 的 Delivery/Attempt 终态或独立收件端证据确认；unknown 不得直接重试（E11/E12）。",
+                "actualUsage": "B01 中 in-app 记录由 accepted 推进到 completed，并通过 durable 收件箱项 deliveryId 与诊断记录交叉核对；B02 中 SMTP 记录为 failed 且保留 ENOTFOUND 原因。",
+                "support": "direct",
+                "gapOwner": "none",
+                "evidence": [
+                  "E5",
+                  "E7",
+                  "E11",
+                  "E12",
+                  "E34",
+                  "E35"
+                ]
+              }
+            ],
+            "scores": {
+              "requirementFit": {
+                "score": 88,
+                "reason": "测试发送入口、用户隔离的状态查询、严格请求校验与既有日志页共同直接满足本次需求；仅因渠道隔离留给应用侧而没有服务端 test-only 约束扣少量分。",
+                "evidence": [
+                  "E2",
+                  "E4",
+                  "E8",
+                  "E10",
+                  "E34"
+                ]
+              },
+              "usability": {
+                "score": 85,
+                "reason": "三个端点语义清晰、错误码可读，Skill 明确写出认证、测试头与权限要求；代价是调用者必须先知道专用测试头才能用同一套 API。",
+                "evidence": [
+                  "E3",
+                  "E9",
+                  "E10",
+                  "E29",
+                  "E31"
+                ]
+              },
+              "agentFriendliness": {
+                "score": 88,
+                "reason": "Skill 与参考文档按概念到发送到诊断给出阅读顺序，并显式说明 accepted 不等于已读、unknown 的处置与失败保留要求，与该 Agent 实际引用一致。",
+                "evidence": [
+                  "E9",
+                  "E10",
+                  "E11",
+                  "E12"
+                ]
+              },
+              "design": {
+                "score": 88,
+                "reason": "注册表、管理器与渠道管理器分层清晰：请求契约独立、目标描述符只暴露安全字段、发号入幂等键、每条 Delivery 独立并保留租约/超时/重试生命周期。",
+                "evidence": [
+                  "E3",
+                  "E4",
+                  "E5",
+                  "E6",
+                  "E7"
+                ]
+              },
+              "reliability": {
+                "score": 90,
+                "reason": "实现层同时具备认证与授权中间件、测试头门禁、notification:test send 权限、幂等键冲突拒绝，以及把 submission_unknown 归为 unknown、仅在 same_provider 且未耗尽尝试时才重试的终态处理。",
+                "evidence": [
+                  "E1",
+                  "E7",
+                  "E5"
+                ]
+              }
+            }
+          },
+          {
+            "name": "M2 Provider 与 Skill：SMTP 受控失败与 in-app 持久化收件箱",
+            "scope": "评估 @nocobase/app-plugin-notification-providers 的 SMTP 失败分类、@nocobase/app-plugin-notification-in-app 的持久化收件箱 Provider，以及 in-app Skill 对持久化与用户隔离的约束。",
+            "limitations": "未实际发起网络发送；SMTP 结论基于分类实现与 QA 记录的 ENOTFOUND 观测，未验证真实可达服务器上的成功路径。",
+            "criteria": [
+              "B01",
+              "B02"
+            ],
+            "targets": [
+              {
+                "kind": "library",
+                "name": "@nocobase/app-plugin-notification-providers",
+                "entrypoints": [
+                  "createSmtpProviderDefinition (type smtp)",
+                  "email Channel definition test fields + toSendInput",
+                  "classifySmtpTransportFailure / smtpDisposition"
+                ],
+                "evidence": [
+                  "E13",
+                  "E14",
+                  "E15"
+                ]
+              },
+              {
+                "kind": "library",
+                "name": "@nocobase/app-plugin-notification-in-app",
+                "entrypoints": [
+                  "createInAppChannelDefinition (type in-app, test fields)",
+                  "createDatabaseProviderDefinition recipientExists + store.deliver"
+                ],
+                "evidence": [
+                  "E16",
+                  "E17"
+                ]
+              },
+              {
+                "kind": "guidance",
+                "name": "app/.agents/skills/nocobase-app-plugin-notification-in-app",
+                "entrypoints": [
+                  "SKILL.md",
+                  "references/inbox-integration.md#Final delivery validation"
+                ],
+                "evidence": [
+                  "E18",
+                  "E19"
+                ]
+              }
+            ],
+            "requirements": [
+              {
+                "need": "提供一个确定的、可离线的可控失败条件，并在诊断中保留真实失败原因，不把失败或未配置渠道标成成功。",
+                "responsibility": "SMTP Provider 把 sendMail 异常映射为 category/code/disposition 并保留原始错误码与信息；默认 maxAttempts=1 时 pre_submission 的 same_provider 失败落终态 failed。",
+                "recommendedUsage": "用保留域名或不可达主机配置一个测试渠道，读 deliveries[].lastError 而不是只看 HTTP 202（E13/E14）。",
+                "actualUsage": "app 用 test-failure 指向 notification-test.invalid；QA 记录 Status=failed、Attempts=1 与 ENOTFOUND 原因，未标成功。",
+                "support": "direct",
+                "gapOwner": "none",
+                "evidence": [
+                  "E13",
+                  "E14",
+                  "E31",
+                  "E32",
+                  "E35"
+                ]
+              },
+              {
+                "need": "让正常测试真正到达一个与真实客户/分组隔离的收件端，以便把已受理与已送达分开。",
+                "responsibility": "in-app Provider 在写入 inbox 前通过 recipientExists 校验收件用户，写入持久收件项并返回 accepted；缺失用户返回不可重试的 recipient 失败且不写记录。",
+                "recommendedUsage": "注册 in-app 渠道，把测试收件人钉为当前登录用户，用 durable 收件箱 API 读取条目并与 deliveryId 交叉核对（E18/E19）。",
+                "actualUsage": "test-inbox 使用 in-app Provider；B01 经 durable inbox API 读到收件项并匹配 deliveryId 9da97dbe。",
+                "support": "direct",
+                "gapOwner": "none",
+                "evidence": [
+                  "E16",
+                  "E17",
+                  "E18",
+                  "E19",
+                  "E32",
+                  "E34"
+                ]
+              }
+            ],
+            "scores": {
+              "requirementFit": {
+                "score": 88,
+                "reason": "SMTP 分类给出确定且保留原因的失败，in-app Provider 给出持久、用户隔离的真实接收，两者直接覆盖正常与受控失败两条需求。",
+                "evidence": [
+                  "E13",
+                  "E14",
+                  "E16",
+                  "E17",
+                  "E31",
+                  "E32"
+                ]
+              },
+              "usability": {
+                "score": 84,
+                "reason": "Provider 配置与测试字段由定义自动生成，收件人校验错误信息清晰；但测试字段与错误分类的对应关系主要靠读实现，调用者需自行推断。",
+                "evidence": [
+                  "E13",
+                  "E14",
+                  "E15",
+                  "E16"
+                ]
+              },
+              "agentFriendliness": {
+                "score": 82,
+                "reason": "in-app Skill 明确持久化与非目标，但 SMTP 的 ENOTFOUND/EAI_AGAIN 到 pre_submission 的具体映射未在 Skill 中给出，Agent 需读实现才能预判受控失败结果。",
+                "evidence": [
+                  "E13",
+                  "E14",
+                  "E18",
+                  "E19"
+                ]
+              },
+              "design": {
+                "score": 87,
+                "reason": "两个 Provider 都声明 idempotency 能力并返回带 category/disposition 的结构化结果；in-app 在写库前做收件人存在性校验，失败不留半成品记录。",
+                "evidence": [
+                  "E13",
+                  "E15",
+                  "E16",
+                  "E17"
+                ]
+              },
+              "reliability": {
+                "score": 90,
+                "reason": "失败分类区分 pre_submission 与 submission_unknown，重试归属绑定原 Provider；in-app 的缺失收件人不可重试、存储失败可重试，避免把未知状态当作成功。",
+                "evidence": [
+                  "E13",
+                  "E14",
+                  "E17"
+                ]
+              }
+            }
+          },
+          {
+            "name": "M3 应用客户端与开发指引",
+            "scope": "评估 @nocobase/app-client 的应用作用域客户端/服务钩子、@nocobase/app-plugin-authentication 的会话上下文、@nocobase/i18n 的翻译钩子，以及 app/AGENTS.md 与 nocobase-app-development Skill 对路由、前端 workflow 与在应用内构建功能的指引。",
+            "limitations": "仅做只读代码与指引核对，未运行类型检查或构建；对指引的评估以 Agent 实际引用过的文件为准，未穷举全部 Skill 内容。",
+            "criteria": [
+              "B01"
+            ],
+            "targets": [
+              {
+                "kind": "library",
+                "name": "@nocobase/app-client",
+                "entrypoints": [
+                  "useApiClient()",
+                  "useService / useClientApplication",
+                  "createApiClient / ApiClientError re-export",
+                  "defineSettingsRoutes"
+                ],
+                "evidence": [
+                  "E20",
+                  "E21",
+                  "E22"
+                ]
+              },
+              {
+                "kind": "library",
+                "name": "@nocobase/app-plugin-authentication",
+                "entrypoints": [
+                  "useAuthentication() session",
+                  "AuthenticationProvider"
+                ],
+                "evidence": [
+                  "E23"
+                ]
+              },
+              {
+                "kind": "library",
+                "name": "@nocobase/i18n",
+                "entrypoints": [
+                  "useTranslation()"
+                ],
+                "evidence": [
+                  "E24"
+                ]
+              },
+              {
+                "kind": "guidance",
+                "name": "app/AGENTS.md",
+                "entrypoints": [
+                  "Settings/Dev route guidance",
+                  "Read a plugin's Skill before building what it already does"
+                ],
+                "evidence": [
+                  "E25",
+                  "E26",
+                  "E40"
+                ]
+              },
+              {
+                "kind": "guidance",
+                "name": "app/.agents/skills/nocobase-app-development",
+                "entrypoints": [
+                  "SKILL.md",
+                  "references/frontend/ui-workflow.md"
+                ],
+                "evidence": [
+                  "E27",
+                  "E28"
+                ]
+              }
+            ],
+            "requirements": [
+              {
+                "need": "把测试入口挂到应用的 settings 导航，并在页面内使用应用作用域客户端与会话，而不是自造 HTTP 客户端。",
+                "responsibility": "app-client 提供 useApiClient/useService 与 defineSettingsRoutes 路由贡献，authentication 插件提供会话上下文，i18n 提供翻译钩子。",
+                "recommendedUsage": "用 defineSettingsRoutes 声明 /settings 页面，用 useApiClient 调用相对路径，用 useAuthentication 读取当前用户（E25）。",
+                "actualUsage": "页面用 useApiClient/useAuthentication/useTranslation，经 defineSettingsRoutes 暴露 Notification test 入口并链接到通知日志页。",
+                "support": "composition",
+                "gapOwner": "none",
+                "evidence": [
+                  "E20",
+                  "E21",
+                  "E22",
+                  "E23",
+                  "E25",
+                  "E29"
+                ]
+              },
+              {
+                "need": "保持小改、不重新设计，并把应用自己的功能建在 app 内而非新建插件包。",
+                "responsibility": "开发 Skill 与前端 workflow 规定在应用内构建功能、不生成插件包，并给出 settings/dev 路由边界与静态检查要求。",
+                "recommendedUsage": "按 ui-workflow 选择 quick/full workflow，遵循 app/AGENTS.md 的路由与 i18n 约定（E26/E27/E28）。",
+                "actualUsage": "app 只改 client/、server/config、locales 与 tests，未新增 packages/plugins，改动集中在 11 个应用文件。",
+                "support": "composition",
+                "gapOwner": "none",
+                "evidence": [
+                  "E25",
+                  "E26",
+                  "E27",
+                  "E28"
+                ]
+              }
+            ],
+            "scores": {
+              "requirementFit": {
+                "score": 85,
+                "reason": "应用作用域客户端、会话钩子与 settings 路由贡献足以在不重写基础设施的前提下完成测试入口；分数略低是因为页面正确性仍依赖 Agent 自行组合多个钩子。",
+                "evidence": [
+                  "E21",
+                  "E22",
+                  "E23",
+                  "E25",
+                  "E29",
+                  "E30"
+                ]
+              },
+              "usability": {
+                "score": 85,
+                "reason": "useApiClient 直接返回可注入的 ApiClient，useAuthentication 暴露 session，useTranslation 支持默认值；三者在同一页面内组合自然。",
+                "evidence": [
+                  "E21",
+                  "E23",
+                  "E24",
+                  "E25"
+                ]
+              },
+              "agentFriendliness": {
+                "score": 78,
+                "reason": "AGENTS.md 与 ui-workflow 给出清晰的路由边界与 workflow 选择；但框架提交 e318f4e 使这份关键指引文件自身格式违规，Agent 需额外判断是否可修改指引文件才能通过检查，影响指引的可信度。",
+                "evidence": [
+                  "E25",
+                  "E26",
+                  "E27",
+                  "E28",
+                  "E40"
+                ]
+              },
+              "design": {
+                "score": 84,
+                "reason": "钩子与路由贡献以 token/服务解析解耦，session 与 API 客户端分离，settings/dev 路由区分构建边界与权限边界，组合方式一致。",
+                "evidence": [
+                  "E21",
+                  "E22",
+                  "E23",
+                  "E27"
+                ]
+              },
+              "reliability": {
+                "score": 82,
+                "reason": "hooks.js 在缺少 ClientApplicationContext 时抛错而非静默返回 undefined，i18n 在无 runtime 时返回声明的默认值；这些防御降低了页面在错误组合下静默失败的概率。",
+                "evidence": [
+                  "E21",
+                  "E24"
+                ]
+              }
+            }
+          }
+        ],
+        "findings": [
+          {
+            "id": "F1",
+            "kind": "strength",
+            "owner": "plugin",
+            "confidence": "confirmed",
+            "severity": "info",
+            "status": "not-applicable",
+            "title": "通知测试发送入口自带鉴权、测试头与权限门禁，并持久化可由创建者查询的记录",
+            "detail": "测试路由对全部端点要求认证并强制 x-nocobase-notification-test: 1，POST /send 另需 notification:test send 权限；sendTest 用绑定创建者 userId 的 notification-test source 记录，getTestStatus 只返回同一 sourceReferenceId 的通知。",
+            "impact": "应用无需自行搭建测试发送入口即可获得隔离、可审计且按用户可见的测试链路，降低把测试消息误发到业务通道或泄露他人记录的风险。",
+            "suggestedChange": "保持该契约；如需扩大使用范围，优先补充文档而非弱化门禁。",
+            "evidence": [
+              "E1",
+              "E2",
+              "E4",
+              "E9"
+            ]
+          },
+          {
+            "id": "F2",
+            "kind": "strength",
+            "owner": "plugin",
+            "confidence": "confirmed",
+            "severity": "info",
+            "status": "not-applicable",
+            "title": "投递模型明确区分受理与最终送达，并保留 unknown 与重试归属语义",
+            "detail": "Skill 把 Notification/Delivery/Attempt 分层，说明 accepted 只代表 Provider 受理，retrying 记录 nextRunAt，failed 为终态可手动重试，unknown 必须先用外部证据核实；实现侧 channel-manager 将 submission_unknown 记为 unknown，仅在 same_provider 且未耗尽 maxAttempts 时重试，否则落终态 failed。",
+            "impact": "正好支撑“accepted 不等于已送达”这一验收要点，并使受控失败不会破坏真实原因。",
+            "suggestedChange": "无。",
+            "evidence": [
+              "E5",
+              "E6",
+              "E7",
+              "E11",
+              "E12"
+            ]
+          },
+          {
+            "id": "F3",
+            "kind": "strength",
+            "owner": "plugin",
+            "confidence": "confirmed",
+            "severity": "info",
+            "status": "not-applicable",
+            "title": "in-app 持久化收件箱与 SMTP 失败分类分别提供真实的接收与失败证据",
+            "detail": "in-app Provider 在写入前用 recipientExists 校验收件用户，缺失用户返回不可重试的 recipient 失败且不写记录；SMTP Provider 把 sendMail 异常映射为 category/code/disposition，ENOTFOUND/EAI_AGAIN 归为 pre_submission（same_provider），默认 maxAttempts=1 时落终态 failed 并保留原始错误码与信息。",
+            "impact": "使 B01 能拿到独立的接收证据、B02 能拿到真实失败原因，而不是依赖 HTTP 受理值或通用错误文案。",
+            "suggestedChange": "无。",
+            "evidence": [
+              "E13",
+              "E14",
+              "E16",
+              "E17",
+              "E18",
+              "E19"
+            ]
+          },
+          {
+            "id": "F4",
+            "kind": "issue",
+            "owner": "template",
+            "confidence": "confirmed",
+            "severity": "minor",
+            "status": "open",
+            "title": "模板提交 e318f4e 在 app/AGENTS.md 引入多余空行，使 format:check 失败并消耗一次修复",
+            "detail": "框架提交 e318f4e（test: add opt-in controlled failed delivery smoke #404）在 app/AGENTS.md 的 ## Controlled failed-delivery smoke 前新增了两个空行；prettier . --check '!.github/**' 因此标记 AGENTS.md，verify-1 的 format:check 以 exit 1 结束，修复轮随后只做删除一个空行的空白修改。",
+            "impact": "从模板生成的干净应用无法通过其自身的 format:check，把与业务无关的格式问题变成必须消耗修复预算的失败，并让 Agent 面对“能否修改框架指引文件”的不确定。",
+            "suggestedChange": "在模板源头修正 e318f4e 引入的空行，并让模板 CI 对 app/AGENTS.md 运行 prettier --check，避免把格式缺陷带进每个新应用。",
+            "diagnosis": {
+              "category": "runtime-defect",
+              "trigger": "在干净模板上运行仓库自带的 pnpm format:check（prettier . --check '!.github/**'）。",
+              "expected": "模板自带的 app/AGENTS.md 通过仓库自身的 Prettier 校验，新应用无需修改框架指引即可通过 format:check。",
+              "actual": "app/AGENTS.md 被 prettier 标记为格式错误，format:check 以 exit 1 结束；修复轮删除多余空行后才通过。",
+              "workaround": "应用修复轮直接在 app/AGENTS.md 删除 e318f4e 增加的一个空行；这是对应用副本的空白修改，上游模板提交未变。",
+              "acceptance": "从模板生成的干净应用在未修改 app/AGENTS.md 的情况下通过 pnpm format:check。"
+            },
+            "evidence": [
+              "E32",
+              "E37",
+              "E38",
+              "E40"
+            ]
+          },
+          {
+            "id": "F5",
+            "kind": "improvement",
+            "owner": "plugin",
+            "confidence": "confirmed",
+            "severity": "info",
+            "status": "open",
+            "title": "测试发送入口默认暴露所有带 test 定义的启用渠道，缺少服务端 test-only 约束",
+            "detail": "registry.testTargets 返回任何 enabled 且其 Provider messageType 定义了 test 的渠道，manager.resolveTestTarget 只校验渠道名在 listTestTargets 内；服务端没有把渠道标记为 test-only 的开关，也未在服务端强制排除业务渠道。本次隔离靠应用给渠道加 test- 前缀并在客户端 isTestChannel 过滤，服务端 /test/send 仍接受任何已列出的渠道。",
+            "impact": "拥有 notification:test send 权限的调用者可在带 test 定义的业务渠道上发起真实外部发送，隔离强度取决于应用自觉而非框架保证。",
+            "suggestedChange": "为渠道或测试面增加 test-only 标记或白名单（例如配置里显式声明 testTargets，或渠道上的 test 开关），并在 resolveTestTarget 中拒绝未标记渠道；或在 Skill 中明确要求应用在服务端强制隔离。",
+            "diagnosis": {
+              "category": "usability-improvement",
+              "trigger": "应用配置一个同时带测试定义的业务渠道后，GET /api/notifications/test/targets 会把它列为目标，POST /api/notifications/test/send 也会接受该渠道名。",
+              "expected": "框架提供一种服务端手段把真实业务渠道排除在测试入口之外（白名单或 test-only 标记）。",
+              "actual": "testTargets 与 resolveTestTarget 只看渠道是否 enabled 且 Provider 是否有 test 定义，没有业务/测试渠道区分；隔离完全由应用层前缀约定与客户端过滤实现。",
+              "workaround": "应用把测试渠道统一加 test- 前缀，并在客户端 isTestChannel 过滤；这是应用侧命名约定，服务端不受约束。",
+              "acceptance": "未声明为 test-only 的渠道被 POST /api/notifications/test/send 拒绝且不产生真实发送，或 Skill 明确记录该限制由应用负责。"
+            },
+            "evidence": [
+              "E4",
+              "E6",
+              "E10",
+              "E29"
+            ]
+          }
+        ],
+        "ui": {
+          "status": "not-reviewed",
+          "score": null,
+          "reason": "评审模型无法渲染 PNG，未能实际查看至少两个不同页面/状态的截图，因此不做跨页面视觉一致性评价；快照中存在 9 张验收截图但未做视觉判读。",
+          "evidence": []
+        },
+        "evidence": [
+          {
+            "id": "E1",
+            "kind": "code",
+            "path": "packages/@nocobase/app-plugin-notification/dist/server/routes/index.js",
+            "observation": "测试路由挂载认证与授权中间件，并要求 x-nocobase-notification-test 头等于 1，否则返回 403 NOTIFICATION_TEST_HEADER_REQUIRED；POST /send 额外要求 notification:test send。",
+            "lines": [
+              44,
+              58
+            ],
+            "excerpt": "    tests.use('*', auth.required(), authorization.middleware());\n    tests.use('*', async (context, next) => {\n        if (context.req.header(TEST_HEADER) !== '1') {\n            throw notificationTestError('NOTIFICATION_TEST_HEADER_REQUIRED', 'errors.testHeaderRequired', { status: 403 });\n        }\n        await next();\n    });\n    tests.use('/send', async (context, next) => {\n        const allowed = await context.get('authz').can({\n            resource: { type: 'notification', id: 'test' },\n            action: 'send',\n        });\n        if (!allowed) {\n            throw notificationTestError('NOTIFICATION_TEST_FORBIDDEN', 'errors.testForbidden', { status: 403 });\n        }",
+            "sha256": "284521427ce8c4716e1e89b5a89bc6b7640f23eb6849de77650beef6e6838e87"
+          },
+          {
+            "id": "E2",
+            "kind": "code",
+            "path": "packages/@nocobase/app-plugin-notification/dist/server/routes/index.js",
+            "observation": "GET /targets 返回本地化目标，POST /send 读取并校验请求后调用 notification.sendTest(request,{userId}) 返回 202，GET /:id/status 通过 getTestStatus(id,{userId}) 返回状态，未找到为 404。",
+            "lines": [
+              61,
+              96
+            ],
+            "excerpt": "    tests.get('/targets', (context) => {\n        const t = getRequestTranslator(context);\n        return context.json({\n            data: notification\n                .listTestTargets()\n                .map((target) => localizeTestTarget(target, t)),\n        });\n    });\n    tests.post('/send', async (context) => {\n        const request = await readTestRequest(context.req.raw);\n        if (!request) {\n            throw notificationTestError('NOTIFICATION_TEST_INVALID_REQUEST', 'errors.testInvalidRequest');\n        }\n        try {\n            const result = await notification.sendTest(request, {\n                userId: context.get('auth').user.id,\n            });\n            return context.json({ data: result }, 202);\n        }\n        catch (error) {\n            if (isAppI18nError(error))\n                throw error;\n            throw notificationTestError('NOTIFICATION_TEST_FAILED', 'errors.testFailed', { cause: error });\n        }\n    });\n    tests.get('/:id/status', async (context) => {\n        const details = await notification.getTestStatus(context.req.param('id'), {\n            userId: context.get('auth').user.id,\n        });\n        if (!details) {\n            throw notificationTestError('NOTIFICATION_TEST_NOT_FOUND', 'errors.testNotFound', { status: 404 });\n        }\n        return context.json({ data: details });\n    });\n    router.route('/notifications', logs);\n    router.route('/notifications/test', tests);",
+            "sha256": "284521427ce8c4716e1e89b5a89bc6b7640f23eb6849de77650beef6e6838e87"
+          },
+          {
+            "id": "E3",
+            "kind": "code",
+            "path": "packages/@nocobase/app-plugin-notification/dist/server/test-contract.js",
+            "observation": "TypeBox 请求 schema 仅允许 channel 字符串与 values 字符串映射，且 additionalProperties:false，配合类型守卫收窄请求。",
+            "lines": [
+              3,
+              9
+            ],
+            "excerpt": "const notificationTestSendRequestSchema = Type.Object({\n    channel: Type.String({ minLength: 1 }),\n    values: Type.Record(Type.String(), Type.String()),\n}, { additionalProperties: false });\nexport function isNotificationTestSendRequest(value) {\n    return Value.Check(notificationTestSendRequestSchema, value);\n}",
+            "sha256": "3d7253b2fbe1b8ec7c7647a4a248171333530717cd0a40062124e4102dadd7d7"
+          },
+          {
+            "id": "E4",
+            "kind": "code",
+            "path": "packages/@nocobase/app-plugin-notification/dist/server/manager.js",
+            "observation": "listTestTargets 收集测试目标；sendTest 用 notification-test:<uuid> 幂等键与 source type=notification-test、referenceId=actor.userId 发送；getTestStatus 只匹配 sourceType 与 sourceReferenceId 等于当前用户的记录。",
+            "lines": [
+              81,
+              107
+            ],
+            "excerpt": "    listTestTargets() {\n        return this.registry.testTargets(this.options.config);\n    }\n    async sendTest(request, actor) {\n        const target = this.resolveTestTarget(request);\n        const channelConfig = this.options.config.channels[request.channel];\n        const provider = this.registry.provider(channelConfig.provider);\n        const definition = provider && this.registry.channel(provider.messageType);\n        if (!definition?.test)\n            throw new Error('Notification test target is unavailable.');\n        const message = definition.test.toSendInput({\n            actor,\n            values: request.values,\n            channelConfig,\n        });\n        return this.send({\n            idempotencyKey: `notification-test:${randomUUID()}`,\n            messages: {\n                [target.channel.name]: message,\n            },\n            source: { type: 'notification-test', referenceId: actor.userId },\n        });\n    }\n    async getTestStatus(notificationId, actor) {\n        const details = await this.logs.get(notificationId);\n        return details?.log.sourceType === 'notification-test' &&\n            details.log.sourceReferenceId === actor.userId",
+            "sha256": "8ceaca1b734db599fe58e8d868edfd7af373f2ea0be3f10aa1b1a78534e8edda"
+          },
+          {
+            "id": "E5",
+            "kind": "code",
+            "path": "packages/@nocobase/app-plugin-notification/dist/server/manager.js",
+            "observation": "存在相同 idempotencyKey 时先比对指纹，不一致抛 NotificationIdempotencyConflictError，一致则返回 deduplicated:true 的既有快照。",
+            "lines": [
+              229,
+              242
+            ],
+            "excerpt": "        const existing = await this.store.getLogByIdempotencyKey(input.idempotencyKey);\n        if (existing) {\n            if (existing.requestFingerprint !== requestFingerprint) {\n                throw new NotificationIdempotencyConflictError(input.idempotencyKey);\n            }\n            const existingDeliveries = await this.store.listDeliveries(existing.id);\n            await Promise.all(existingDeliveries\n                .filter((delivery) => delivery.status === 'pending')\n                .map(async (delivery) => this.dispatch(delivery.id)));\n            const snapshot = await this.statusSnapshot(existing);\n            return {\n                notificationId: snapshot.notificationId,\n                idempotencyKey: input.idempotencyKey,\n                deduplicated: true,",
+            "sha256": "8ceaca1b734db599fe58e8d868edfd7af373f2ea0be3f10aa1b1a78534e8edda"
+          },
+          {
+            "id": "E6",
+            "kind": "code",
+            "path": "packages/@nocobase/app-plugin-notification/dist/server/registry.js",
+            "observation": "testTargets 遍历 config.channels，跳过 enabled===false，要求 Provider 存在且其 messageType 渠道定义了 test，随后只暴露渠道名、Provider 标识与安全字段元数据。",
+            "lines": [
+              27,
+              45
+            ],
+            "excerpt": "    testTargets(config) {\n        return Object.entries(config.channels).flatMap(([name, channelConfig]) => {\n            if (channelConfig.enabled === false)\n                return [];\n            const provider = this.provider(channelConfig.provider);\n            const channel = provider && this.channel(provider.messageType);\n            if (!channel?.test || !provider)\n                return [];\n            return [\n                {\n                    channel: { name, type: provider.messageType, label: name },\n                    provider: {\n                        type: provider.type,\n                        label: provider.label ?? provider.type,\n                    },\n                    fields: channel.test.fields,\n                },\n            ];\n        });",
+            "sha256": "f92a8f0089c2f3612cb8c72462cdac41e6f9c5897c9a182ed9d463615309be8f"
+          },
+          {
+            "id": "E7",
+            "kind": "code",
+            "path": "packages/@nocobase/app-plugin-notification/dist/server/channel-manager.js",
+            "observation": "Provider 返回 submission_unknown 时 Delivery 记为 unknown；失败且 disposition 为 same_provider 时在未耗尽 maxAttempts 前记为 retrying 并给出 retryAt，否则记为终态 failed 并保留 error。",
+            "lines": [
+              178,
+              198
+            ],
+            "excerpt": "        if (result.status === 'submission_unknown') {\n            return this.finishAttemptAndDelivery({\n                ...attempt,\n                status: 'unknown',\n                finishedAt,\n                error: result.error,\n            }, current, 'unknown', result.error);\n        }\n        const failedAttempt = {\n            ...attempt,\n            status: 'failed',\n            finishedAt,\n            error: result.error,\n        };\n        if (result.disposition === 'same_provider') {\n            if (current.attemptCount < this.maxAttempts) {\n                const retryAt = new Date(Date.parse(finishedAt) + this.retryDelay(result.retryAfterMs)).toISOString();\n                return this.finishAttemptAndDelivery(failedAttempt, current, 'retrying', result.error, retryAt);\n            }\n        }\n        return this.finishAttemptAndDelivery(failedAttempt, current, 'failed', result.error);",
+            "sha256": "d16921a280e4e398a36a3de9c72bdfd9b40fcaed79db63c3182104bef1cb75d1"
+          },
+          {
+            "id": "E8",
+            "kind": "code",
+            "path": "packages/@nocobase/app-plugin-notification/dist/client/routes.js",
+            "observation": "插件通过 defineSettingsRoutes 暴露 Notifications 分组与其下 /logs 子路由，authz 绑定 page:notification.logs 的 access，并懒加载通知日志页组件。",
+            "lines": [
+              1,
+              25
+            ],
+            "excerpt": "import { defineSettingsRoutes, } from '@nocobase/app-client/plugins';\nimport { BellRing, FileClock } from 'lucide-react';\nexport const NOTIFICATION_LOGS_RESOURCE = 'notification.logs';\nconst routes = defineSettingsRoutes([\n    {\n        name: 'notifications',\n        path: '/notifications',\n        navigation: { title: 'nav.notifications', icon: BellRing },\n        breadcrumb: { title: 'nav.notifications' },\n        children: [\n            {\n                name: 'logs',\n                path: '/logs',\n                navigation: { title: 'nav.logs', icon: FileClock },\n                breadcrumb: { title: 'nav.logs' },\n                authz: {\n                    resource: { type: 'page', id: NOTIFICATION_LOGS_RESOURCE },\n                    action: 'access',\n                },\n                componentLoader: () => import('./pages/notification-logs-page.js'),\n            },\n        ],\n    },\n]);\nexport default routes;",
+            "sha256": "b7f0e9a882bfebe189bb75aa41568b3fa6750ece82d06382224e74559fd90d73"
+          },
+          {
+            "id": "E9",
+            "kind": "skill",
+            "path": "app/.agents/skills/nocobase-app-plugin-notification/SKILL.md",
+            "observation": "Skill 给出概念到集成与测试 API 到发送到诊断的阅读顺序，并说明测试 API 需要认证与测试头、提交另需 notification:test send，且测试是真实发送。",
+            "lines": [
+              19,
+              26
+            ],
+            "excerpt": "1. Read [Notification concepts](references/notification-concepts.md) for package ownership and delivery status semantics.\n2. For plugin registration, configuration, migrations, or test APIs, read [Integration and configuration](references/integration-and-configuration.md). Configure a Channel name mapped to one flat Provider configuration.\n3. For sending or typed consumers, read [Sending notifications](references/sending-notifications.md). Resolve `notificationServiceToken`; construct complete messages keyed by Channel name and use native recipient addresses. Validate the intended external effect before sending.\n4. For failures and retries, read [Delivery diagnostics](references/delivery-diagnostics.md). Preserve Notification, Delivery, Attempt, and retry-audit history; distinguish accepted submission from final delivery.\n5. For custom transports, read [Channel and Provider extensions](references/channel-and-provider-extensions.md). Register globally unique Provider definitions through `notificationExtensionRegistryToken` and retain the queue/lease/retry lifecycle.\n6. Verify changed packages and consumers with lint, typecheck, tests, and build. Cover atomic validation, independent delivery, recipient rules, and retries bound to original identities.\n\nThe test API requires authentication and its test header; submission additionally requires `notification:test` `send`. A test notification is a real send. Select only the Channel and provide the fields required by its message type. Credentials stay on the server.",
+            "sha256": "ae1f658ee83dfb738d505c8e3264da7bd3c9cd0b515c43a28a842aa553b8a500"
+          },
+          {
+            "id": "E10",
+            "kind": "skill",
+            "path": "app/.agents/skills/nocobase-app-plugin-notification/references/integration-and-configuration.md",
+            "observation": "文档列出三个测试端点及其认证/测试头/权限差异，说明目标是注册定义与已启用实例的交集、只暴露安全元数据、每次测试都产生持久日志且状态仅创建者可见，并提示生产测试是真实对外发送。",
+            "lines": [
+              49,
+              55
+            ],
+            "excerpt": "## Notification test surface\n\nThe core package exposes `GET /api/notifications/test/targets`, `POST /api/notifications/test/send`, and `GET /api/notifications/test/:id/status`. All three require authentication and `x-nocobase-notification-test: 1`; only `POST /send` requires the `notification:test` `send` permission. Logs remain separately protected by `page:notification.logs` `access`.\n\nTargets are the intersection of registered definitions and enabled configured instances. Their public descriptors contain only Channel names, Provider identifiers, labels, and safe form-field metadata. Configuration, Webhook URLs, API keys, and secrets stay on the server. Channel definitions convert test fields into the same normal `send()` inputs; each test creates persistent logs, and status is visible only to its creating user.\n\nA production test is a real external send and requires explicit scope, the recipient or recipientless mode, Channel, permission, and follow-up verification.",
+            "sha256": "8d414c6fc183e5f3e6088429ae9a1d74f9c1cace1a4b2d1ed9b91206b3d87e7a"
+          },
+          {
+            "id": "E11",
+            "kind": "skill",
+            "path": "app/.agents/skills/nocobase-app-plugin-notification/references/notification-concepts.md",
+            "observation": "文档定义 Notification/Delivery/Attempt 分层，说明 accepted 仅代表 Provider 受理、retrying/failed/unknown 的含义与重试绑定原始渠道与 Provider 标识。",
+            "lines": [
+              5,
+              7
+            ],
+            "excerpt": "A Notification is one logical send identified by `idempotencyKey`. Each Channel and native recipient produces an independent Delivery. Each Provider submission creates an Attempt. All entries in `messages` execute; one failed delivery does not stop the others. The runtime preserves queues, timeouts, leases, automatic retries, manual retry audits, status queries, and realtime inbox invalidations.\n\n`accepted` means the Provider accepted the submission, not that the recipient read it. Known transient failures can schedule a same-Provider retry. `retrying` means the next attempt is scheduled and `nextRunAt` records its earliest execution time. `failed` is a terminal known failure that may be manually retried. `unknown` means submission may have succeeded and must be checked with external Provider evidence before a new logical send. A retry remains bound to the original Channel name and Provider identifier. Removing, disabling, or changing that Provider prevents rerouting.",
+            "sha256": "5453377edd50acb9703f61ed581274558b8fe8b9939d9e88a29234e93f605468"
+          },
+          {
+            "id": "E12",
+            "kind": "skill",
+            "path": "app/.agents/skills/nocobase-app-plugin-notification/references/delivery-diagnostics.md",
+            "observation": "诊断文档说明尝试耗尽后成为终态 failed 且不自动切换到其它 Provider，unknown 时不得直接重试，应借助 Provider 消息 id、外部面板与目标收件证据判断是否提交。",
+            "lines": [
+              36,
+              44
+            ],
+            "excerpt": "A Provider can request same-Provider retry. Once the configured attempt limit is exhausted, the Delivery becomes terminal failed. The runtime does not fail over to another Provider.\n\n### Partial\n\nTreat every Delivery independently. Identify exactly which recipient/Channel/Provider combinations were accepted and which failed. A new send for only failed combinations is a new Notification and requires duplicate-risk review.\n\n### Unknown\n\nDo not retry an unknown Delivery directly. Use Provider message id when available, external Provider dashboards, target inbox/group evidence, and timestamps to determine whether submission happened. If proof remains unavailable, report an indeterminate external effect. If evidence confirms that no message was submitted, create a new logical Notification with the original business idempotency policy.",
+            "sha256": "5d358691f9a6364f3f27fa6380c28a5ebcfa184d557063fd57138c8111e173c2"
+          },
+          {
+            "id": "E13",
+            "kind": "code",
+            "path": "packages/@nocobase/app-plugin-notification-providers/dist/server/email/providers/smtp.js",
+            "observation": "smtp Provider 的 send 在 sendMail 成功时返回 accepted 与 providerMessageId，失败时按 classifySmtpTransportFailure 区分 submission_unknown 与 failed，并保留 category/code/message 与 disposition。",
+            "lines": [
+              23,
+              61
+            ],
+            "excerpt": "                async send({ message }) {\n                    try {\n                        const info = await transporter.sendMail({\n                            from: message.content.from ?? config.from,\n                            to: message.to,\n                            subject: message.content.subject,\n                            text: message.content.text,\n                            html: message.content.html,\n                            replyTo: message.content.replyTo ?? config.replyTo,\n                        });\n                        return {\n                            status: 'accepted',\n                            providerMessageId: info.messageId,\n                        };\n                    }\n                    catch (error) {\n                        const transportFailure = classifySmtpTransportFailure(error);\n                        if (transportFailure === 'submission_unknown') {\n                            return {\n                                status: 'submission_unknown',\n                                error: {\n                                    category: providerErrorCode(error) === 'ETIMEDOUT'\n                                        ? 'timeout'\n                                        : 'network',\n                                    code: providerErrorCode(error),\n                                    message: sanitizeProviderErrorMessage(error, 'SMTP transport failed.'),\n                                },\n                            };\n                        }\n                        return {\n                            status: 'failed',\n                            error: {\n                                category: smtpErrorCategory(error),\n                                code: providerErrorCode(error),\n                                message: sanitizeProviderErrorMessage(error, 'SMTP delivery failed.'),\n                            },\n                            disposition: smtpDisposition(error, transportFailure),\n                        };\n                    }",
+            "sha256": "c5d143f7511573168509c4cdd38da8681d2a27f62cf541c4e09aff74d7e17a1b"
+          },
+          {
+            "id": "E14",
+            "kind": "code",
+            "path": "packages/@nocobase/app-plugin-notification-providers/dist/server/email/providers/smtp.js",
+            "observation": "SMTP 传输错误码集合包含 ENOTFOUND 与 EAI_AGAIN，其中可安全重试集合把它们归为 pre_submission，其余传输失败归为 submission_unknown；pre_submission 在 smtpDisposition 中返回 same_provider。",
+            "lines": [
+              117,
+              140
+            ],
+            "excerpt": "const SMTP_TRANSPORT_ERROR_CODES = new Set([\n    'ETIMEDOUT',\n    'ECONNRESET',\n    'EPIPE',\n    'ECONNREFUSED',\n    'ENOTFOUND',\n    'EAI_AGAIN',\n    'ESOCKET',\n    'ECONNECTION',\n]);\nconst SMTP_SAFE_RETRY_CODES = new Set([\n    'ECONNREFUSED',\n    'ENOTFOUND',\n    'EAI_AGAIN',\n]);\nfunction classifySmtpTransportFailure(error) {\n    if (smtpResponseCode(error) !== undefined)\n        return undefined;\n    const code = providerErrorCode(error);\n    if (!code || !SMTP_TRANSPORT_ERROR_CODES.has(code))\n        return undefined;\n    return SMTP_SAFE_RETRY_CODES.has(code)\n        ? 'pre_submission'\n        : 'submission_unknown';",
+            "sha256": "c5d143f7511573168509c4cdd38da8681d2a27f62cf541c4e09aff74d7e17a1b"
+          },
+          {
+            "id": "E15",
+            "kind": "code",
+            "path": "packages/@nocobase/app-plugin-notification-providers/dist/server/email/channel.js",
+            "observation": "email Channel 的 toSendInput 校验 recipient 必须为合法邮箱，否则抛错，并只把 recipient/subject/text/html 映射为发送输入。",
+            "lines": [
+              38,
+              48
+            ],
+            "excerpt": "            toSendInput({ values }) {\n                const address = values.recipient?.trim();\n                if (!address || !isEmail(address)) {\n                    throw new Error('Recipient must be a valid email address.');\n                }\n                return {\n                    to: address,\n                    subject: values.subject?.trim(),\n                    text: values.text?.trim(),\n                    ...(values.html?.trim() ? { html: values.html.trim() } : {}),\n                };",
+            "sha256": "19b9126e8da0f161cf9e553f8d5bbb5d448fb935feb670aa97c37d0fc8a49544"
+          },
+          {
+            "id": "E16",
+            "kind": "code",
+            "path": "packages/@nocobase/app-plugin-notification-in-app/dist/server/definition.js",
+            "observation": "in-app Channel 定义 type 为 in-app，测试字段包含必填 recipient 用户 ID 与标题/正文/路由/URL，toSendInput 校验目标并把 recipient 规范化为 to。",
+            "lines": [
+              5,
+              66
+            ],
+            "excerpt": "        type: 'in-app',\n        test: {\n            label: inAppNotificationText('test.channels.inApp', 'In-app'),\n            fields: [\n                {\n                    name: 'recipient',\n                    label: inAppNotificationText('test.fields.recipientUserId', 'Recipient user ID'),\n                    type: 'text',\n                    required: true,\n                    placeholder: inAppNotificationText('test.placeholders.currentUser', 'Application user ID'),\n                    maxLength: 255,\n                },\n                {\n                    name: 'title',\n                    label: inAppNotificationText('test.fields.title', 'Title'),\n                    type: 'text',\n                    required: true,\n                    defaultValue: inAppNotificationText('test.defaults.title', 'NocoBase notification test'),\n                    maxLength: 200,\n                },\n                {\n                    name: 'body',\n                    label: inAppNotificationText('test.fields.message', 'Message'),\n                    type: 'textarea',\n                    required: true,\n                    defaultValue: inAppNotificationText('test.defaults.body', 'This is a test notification from NocoBase.'),\n                    maxLength: 2000,\n                },\n                {\n                    name: 'route',\n                    label: inAppNotificationText('test.fields.route', 'Internal route (without deployment prefix)'),\n                    type: 'text',\n                    maxLength: 2000,\n                },\n                {\n                    name: 'url',\n                    label: inAppNotificationText('test.fields.url', 'Full HTTP(S) URL'),\n                    type: 'text',\n                    maxLength: 2000,\n                },\n            ],\n            toSendInput({ values }) {\n                const title = values.title?.trim();\n                const body = values.body?.trim();\n                if (!title || !body)\n                    throw new Error('Title and Message are required.');\n                const route = values.route?.trim();\n                const url = values.url?.trim();\n                if (route && url)\n                    throw new Error('Choose either an internal route or a full URL.');\n                const target = validateNotificationTarget(route\n                    ? { type: 'route', path: route }\n                    : url\n                        ? { type: 'url', url }\n                        : undefined);\n                return {\n                    to: values.recipient?.trim(),\n                    title,\n                    body,\n                    ...(target ? { target } : {}),\n                };\n            },",
+            "sha256": "45093fc2de92a6dc14826b8fa11d30f9c2f279ffc1e8ded723f698dcf66b6805"
+          },
+          {
+            "id": "E17",
+            "kind": "code",
+            "path": "packages/@nocobase/app-plugin-notification-in-app/dist/server/definition.js",
+            "observation": "in-app Provider 在写入前调用 recipientExists，缺失用户返回 failed/disposition never 的 recipient 错误且不写记录；成功则 store.deliver 持久化收件项并返回 accepted。",
+            "lines": [
+              133,
+              151
+            ],
+            "excerpt": "                        if (!(await options.recipientExists(message.recipient.userId))) {\n                            return {\n                                status: 'failed',\n                                disposition: 'never',\n                                error: {\n                                    code: 'IN_APP_NOTIFICATION_RECIPIENT_NOT_FOUND',\n                                    category: 'recipient',\n                                    message: 'In-app notification recipient does not exist.',\n                                },\n                            };\n                        }\n                        await store.deliver({\n                            deliveryId: message.deliveryId,\n                            notificationId: message.notificationId,\n                            userId: message.recipient.userId,\n                            message: message.content,\n                            createdAt: await context.now(),\n                        });\n                        return { status: 'accepted' };",
+            "sha256": "45093fc2de92a6dc14826b8fa11d30f9c2f279ffc1e8ded723f698dcf66b6805"
+          },
+          {
+            "id": "E18",
+            "kind": "skill",
+            "path": "app/.agents/skills/nocobase-app-plugin-notification-in-app/SKILL.md",
+            "observation": "in-app Skill 的非目标明确要求不得用瞬态浏览器 toast 替代持久通知、不得直接编辑 inbox 表，也不得把开发路由当作生产收件箱页面。",
+            "lines": [
+              27,
+              31
+            ],
+            "excerpt": "# Non-Goals\n\n- Do not replace durable notifications with transient browser toasts.\n- Do not edit inbox tables directly or publish forged realtime events as notification state.\n- Do not expose the Dev Route as a production inbox page.",
+            "sha256": "f361771cc2a7722df2747f724865e37dc6fb6efa2d9f513a22e783701fc6a707"
+          },
+          {
+            "id": "E19",
+            "kind": "skill",
+            "path": "app/.agents/skills/nocobase-app-plugin-notification-in-app/references/inbox-integration.md",
+            "observation": "inbox 集成文档说明数据库 Provider 在写收件项前经 Authentication 用户服务校验收件人，缺失用户返回不可重试失败且不产生收件项或实时事件，查询失败保留为可重试的存储失败。",
+            "lines": [
+              33,
+              35
+            ],
+            "excerpt": "## Final delivery validation\n\nThe database Provider checks the recipient through Authentication’s user administration service immediately before writing the inbox item. A missing user returns a non-retryable `recipient` failure and creates no inbox item or realtime event. A lookup failure remains a retryable storage failure. Custom hosts calling `createDatabaseProviderDefinition` must supply `recipientExists(userId)` backed by their authoritative user directory; do not use a permissive fallback.",
+            "sha256": "fc935413849fcf895cb9eaae6e8597a063ea0059307dc4ab617d5702da3ed409"
+          },
+          {
+            "id": "E20",
+            "kind": "code",
+            "path": "packages/@nocobase/app-client/dist/hooks.d.ts",
+            "observation": "app-client 声明 useClientApplication、useService 与 useApiClient，后者返回应用作用域的 ApiClient。",
+            "lines": [
+              1,
+              6
+            ],
+            "excerpt": "import type { ServiceToken } from '@nocobase/service-provider';\nimport type { ApiClient } from '@nocobase/api-client';\nimport { type ClientApplication } from './application.js';\nexport declare function useClientApplication(): ClientApplication;\nexport declare function useService<T>(token=[REDACTED] T;\nexport declare function useApiClient(): ApiClient;",
+            "sha256": "498a051e52462ba74b517faa3fc349e5b0c85f3d340ec8267f5cc045747d8edc"
+          },
+          {
+            "id": "E21",
+            "kind": "code",
+            "path": "packages/@nocobase/app-client/dist/hooks.js",
+            "observation": "hooks 实现中 useClientApplication 在缺少 ClientApplicationContext 时抛错，useService 从应用服务容器解析 token，useApiClient 解析 apiClientToken。",
+            "lines": [
+              11,
+              16
+            ],
+            "excerpt": "export function useService(token) {\n    return useClientApplication().services.resolve(token);\n}\nexport function useApiClient() {\n    return useService(apiClientToken);\n}",
+            "sha256": "6e63d580cb93a555f719e533e21e5f1f5fe72e94b4be130ba53ce818eecf5d55"
+          },
+          {
+            "id": "E22",
+            "kind": "code",
+            "path": "packages/@nocobase/app-client/dist/index.d.ts",
+            "observation": "app-client 入口重新导出 ApiClientError 与 ApiClient 类型，并导出 useApiClient/useClientApplication/useService。",
+            "lines": [
+              5,
+              6
+            ],
+            "excerpt": "export { ApiClientError, buildFindManyOptions, createApiClient, type ApiClient, type ApiJsonRequestOptions, type ApiRequestOptions, type CreateApiClientOptions, type RemoteFindManyOptions, type RemoteFindManyOptionsJson, type RemoteRepository, type RemoteRepositoryQuery, } from '@nocobase/api-client';\nexport { useApiClient, useClientApplication, useService } from './hooks.js';",
+            "sha256": "7bd2f9e5c101cbae3594bcc67d7fb1cfa04c7ec97ced1c9c0431a4137d220258"
+          },
+          {
+            "id": "E23",
+            "kind": "code",
+            "path": "packages/@nocobase/app-plugin-authentication/dist/client/auth-provider.d.ts",
+            "observation": "认证客户端上下文提供 client、session、isPending、refresh，并导出 useAuthentication 返回该上下文值。",
+            "lines": [
+              3,
+              10
+            ],
+            "excerpt": "export interface AuthenticationContextValue {\n    readonly client: AuthClient;\n    readonly session: AuthClient['$Infer']['Session'] | null;\n    readonly isPending: boolean;\n    readonly refresh: () => Promise<void>;\n}\nexport declare function AuthenticationProvider({ children, }: PropsWithChildren): ReactElement;\nexport declare function useAuthentication(): AuthenticationContextValue;",
+            "sha256": "04fd38ba85e799b00ad8e834a6674024b78dcdfe46cb46e0937f016e3c4b4a7f"
+          },
+          {
+            "id": "E24",
+            "kind": "code",
+            "path": "packages/@nocobase/i18n/dist/client/context.d.ts",
+            "observation": "useTranslation 在命名空间内翻译；文档说明无 runtime 时返回键声明的默认值，因此必须传 defaultValue 才能保持可读。",
+            "lines": [
+              42,
+              49
+            ],
+            "excerpt": "/**\n * Translates within the namespace in scope, or the one named.\n *\n * Works without a runtime mounted — a focused test, or a host that has not set i18n up — where it returns each key's\n * declared default instead of warning. Callers therefore have to pass `defaultValue` for a string that must stay\n * readable in that case; `t('a.b')` on its own would render as its key.\n */\nexport declare function useTranslation<KPrefix = undefined>(ns?: Namespace | readonly Namespace[], options?: UseTranslationOptions<KPrefix>): UseTranslationResponse<never, KPrefix>;",
+            "sha256": "bab7bb7ea16e092b17c898a6028e01f2f796d5350d92dd7c96eff909de40af44"
+          },
+          {
+            "id": "E25",
+            "kind": "skill",
+            "path": "app/AGENTS.md",
+            "observation": "应用指引说明 auth 只控制浏览器导航、管理页用 defineSettingsRoutes 挂到 /settings、开发页用 defineDevRoutes 且后者是构建边界而非权限边界，并要求在路由上声明导航与翻译命名空间。",
+            "lines": [
+              100,
+              107
+            ],
+            "excerpt": "\n`auth` controls browser navigation only: `required` for signed-in pages, `guest` for sign-in and registration, `optional` for pages that work either way. It is not server security. An endpoint the page calls enforces its own authentication independently.\n\nUse `defineSettingsRoutes()` for administrative pages, which mount under `/settings`, and `defineDevRoutes()` for development-only pages, which mount under `/dev` and are absent from a production build. Do not repeat `/settings` or `/dev` in the path. `defineDevRoutes()` is a build boundary, not a permission boundary: a page that must be restricted in production is a settings route with `authz`, enforced by the server.\n\n**Declare navigation on the route.** App, Settings and Dev menus read `navigation: { title: 'navigation.orders' }`; titles resolve in the owning locale namespace. Add the translation in `client/locales/`. Refine resources remain for CRUD and do not add menu entries.\n\nUse recursive groups to organize menus; their path is optional. Pages may also have children, but must manually render `Outlet`. For URL-addressable dialogs and drawers, declare the child in `defineAppRoutes()` in `client/routes.ts`, place the owning page's `Outlet`, then render `RouteDialog` or `RouteDrawer`. Call `useRouteOverlay()` only from a descendant rendered inside the overlay, including its footer, never from the page returning the wrapper. Read `.agents/skills/nocobase-app-development/references/frontend/references/overlay.md` before implementing overlays or close guards.",
+            "sha256": "e1bc6e09a89bb4f2a8655d6ef6347d9d729675cbada4f7dd28bbd664c99d06e4"
+          },
+          {
+            "id": "E26",
+            "kind": "skill",
+            "path": "app/AGENTS.md",
+            "observation": "指引要求实现功能前先检查已安装并注册的插件是否已覆盖需求，并给出按需求阅读对应 @nocobase 插件 Skill 的对照表。",
+            "lines": [
+              258,
+              262
+            ],
+            "excerpt": "### Read a plugin's Skill before building what it already does\n\n**You are not starting from scratch.** This application ships with NocoBase packages that already solve whole categories of requirement, and packages may publish a Skill explaining how to use them. `pnpm nocobase skills sync` copies Skills from direct `@nocobase/*` dependencies and registered plugins into `.agents/skills/`. Before implementing a feature, check whether an installed and registered plugin already covers it:\n\n| The requirement sounds like                                                                       | Read the Skill for                    |",
+            "sha256": "e1bc6e09a89bb4f2a8655d6ef6347d9d729675cbada4f7dd28bbd664c99d06e4"
+          },
+          {
+            "id": "E27",
+            "kind": "skill",
+            "path": "app/.agents/skills/nocobase-app-development/SKILL.md",
+            "observation": "开发 Skill 的核心规则要求在应用内构建功能，不要运行插件生成器、创建 packages/plugins/ 目录或为应用自身功能写 defineServerPlugin 声明。",
+            "lines": [
+              36,
+              38
+            ],
+            "excerpt": "## The one rule that decides most tasks\n\nBuild the feature in the application. Do not run a plugin generator, create a `packages/plugins/` directory, or write a `defineServerPlugin()` declaration for this application's own feature. Create a plugin only when the user explicitly asks for an independently published, reusable package.",
+            "sha256": "aa8bddf31a871e94009665fd867cccae5a789895b7b88a7cfcc2d3d7467125a2"
+          },
+          {
+            "id": "E28",
+            "kind": "skill",
+            "path": "app/.agents/skills/nocobase-app-development/references/frontend/ui-workflow.md",
+            "observation": "前端 workflow 区分 full 与 quick workflow，规定各自的阅读材料与静态检查命令，并明确 quick change 不写设计文件、不做浏览器测试或启动评审子代理。",
+            "lines": [
+              1,
+              20
+            ],
+            "excerpt": "# Frontend development workflow\n\nThis is the entry point for the application's frontend work: read it before writing or changing anything under `client/` — pages, components, styles or copy. It covers only which workflow to follow, what to do at each step, and what counts as done. It says which changes take the full workflow (write a design file and review it once, then run one independent acceptance review after development), which can be a quick change (edit directly and run static checks only), and which parts of `ui-guidelines.md` and `frontend-dev.md` to read at each step. What the interface should look like is in `ui-guidelines.md`; how to write the code is in `frontend-dev.md`. Paths in this document are relative to its own directory: `ui-guidelines.md` and `frontend-dev.md` sit beside it, the topic references are under `references/`, and the record templates are under `templates/`.\n\n## Choosing a workflow\n\nDecide before you start, and say in one sentence in your reply which workflow you are following and why.\n\n| Workflow      | When it applies                                                                                                                                                                                                                                               |\n| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |\n| Full workflow | Any one of: a new page; a new complete interaction (a create/edit flow, a detail drawer, a multi-step operation); a change to the page structure or main interactions; one change that touches the UI of several pages; the user asks to see the design first |\n| Quick change  | None of the above applies. For example: changing copy; adjusting styling details; adding a button, a column, a form field or a filter to an existing page; fixing a UI bug; a refactor that changes neither appearance nor behavior                           |\n\nWhen unsure, explain the difference in one sentence (the full workflow adds a design, a design review and an independent acceptance review) and let the user choose.\n\n## Quick change\n\n1. Read `frontend-dev.md` and the references under `references/` related to the change. When the change affects how the interface looks or behaves, also read the relevant guidelines in `ui-guidelines.md`, and at minimum check the relevant items of the \"Review checklist\" at its end.\n2. Follow how the page is already written: keep components, spacing and copy style consistent with what surrounds the change.\n3. Run static checks on the changed files only: `pnpm exec tsc -p tsconfig.json --noEmit`, `pnpm exec eslint --max-warnings 0 <files>`, `pnpm exec prettier --check <files>`.",
+            "sha256": "d40a33ce81291f751d7ec9f28aa4bf9f0565442b5a4a40f7a9848db1ea33c3e0"
+          },
+          {
+            "id": "E29",
+            "kind": "code",
+            "path": "app/client/pages/notification-test/index.tsx",
+            "observation": "测试页面通过 useTranslation/useApiClient/useAuthentication 获取依赖，加载目标后调用 available.filter(isTestChannel) 只保留 test- 前缀渠道，再据此发送。",
+            "lines": [
+              48,
+              69
+            ],
+            "excerpt": "export default function NotificationTestPage(): ReactElement {\n  const { t } = useTranslation();\n  const api = useApiClient();\n  const { session } = useAuthentication();\n  const currentUserId = session?.user?.id ?? '';\n  const currentUserName =\n    session?.user?.name ?? session?.user?.email ?? currentUserId;\n\n  const [targets, setTargets] = useState<readonly NotificationTestTarget[]>();\n  const [loadError, setLoadError] = useState<string>();\n  const [selectedName, setSelectedName] = useState<string>();\n  const [sending, setSending] = useState(false);\n  const [result, setResult] = useState<NotificationTestSendResult>();\n  const [sendError, setSendError] = useState<string>();\n\n  useEffect(() => {\n    let active = true;\n    void (async () => {\n      try {\n        const available = await listTestTargets(api);\n        if (!active) return;\n        setTargets(available.filter(isTestChannel));",
+            "sha256": "eed602567df50bcf64de14a4b01933bc8f9e64b05b4d83407a2a3385977cdc5f"
+          },
+          {
+            "id": "E30",
+            "kind": "code",
+            "path": "app/client/pages/notification-test/api.ts",
+            "observation": "应用 API 封装说明测试端点必须携带 x-nocobase-notification-test 头且仍有会话与 notification:test send 权限，并据此调用 targets/send。",
+            "lines": [
+              8,
+              41
+            ],
+            "excerpt": "/**\n * The notification test endpoints refuse a request without this header, so only an explicit test entry can reach\n * them. The header is not authentication; the routes still require a session and the `notification:test send`\n * permission.\n */\nconst TEST_HEADER = { 'x-nocobase-notification-test': '1' } as const;\n\n/** List the channels the application offers for a test, with their fields. */\nexport async function listTestTargets(\n  api: ApiClient,\n): Promise<readonly NotificationTestTarget[]> {\n  const response = await api.request<{ data: NotificationTestTarget[] }>({\n    path: 'notifications/test/targets',\n    headers: TEST_HEADER,\n  });\n  return response.data;\n}\n\n/** Ask the application to send one test notification on a single channel. */\nexport async function sendTestNotification(\n  api: ApiClient,\n  request: {\n    readonly channel: string;\n    readonly values: Readonly<Record<string, string>>;\n  },\n): Promise<NotificationTestSendResult> {\n  const response = await api.request<{ data: NotificationTestSendResult }>({\n    path: 'notifications/test/send',\n    method: 'POST',\n    headers: TEST_HEADER,\n    json: request,\n  });\n  return response.data;\n}",
+            "sha256": "614d5966b40fa9648f0013dd9f66644c56e00af09862011f69b3b5e9712d88a7"
+          },
+          {
+            "id": "E31",
+            "kind": "code",
+            "path": "app/server/config/notification.ts",
+            "observation": "应用配置声明 test-inbox 使用 in-app Provider、test-failure 使用指向 notification-test.invalid 的 SMTP Provider，并注明保留 test- 前缀以便测试入口只提供该前缀渠道。",
+            "lines": [
+              19,
+              33
+            ],
+            "excerpt": "const notification: AppConfigFactory<NotificationConfig> = defineAppConfig(\n  (_runtime) => ({\n    channels: {\n      'test-inbox': { provider: 'in-app' },\n      'test-failure': defineSmtpProviderConfig({\n        host: 'notification-test.invalid',\n        port: 25,\n        secure: false,\n        from: 'notification-test@example.invalid',\n      }),\n    },\n  }),\n);\n\nexport default notification;",
+            "sha256": "154170d70c1e45986405d7363898036e3a8f0ac1bd3c3d58d5dd129ee7b1000b"
+          },
+          {
+            "id": "E32",
+            "kind": "code",
+            "path": "app/tests/logic/app-server.test.ts",
+            "observation": "端到端测试向 test-inbox 发送后等待 status=completed 且 delivery 为 accepted，再向 test-failure 发送并等待 failed，断言 lastError 的 code/message 匹配 ENOTFOUND 或 EAI_AGAIN 或 notification-test.invalid。",
+            "lines": [
+              860,
+              919
+            ],
+            "excerpt": "          channel: 'test-inbox',\n          values: {\n            recipient: userId,\n            title: 'Notification test',\n            body: 'Controlled normal delivery.',\n          },\n        }),\n      },\n    );\n    expect(normal.status).toBe(202);\n    const normalBody = (await normal.json()) as {\n      data: { notificationId: string };\n    };\n    const normalStatus = await waitForNotificationTestStatus(\n      app,\n      baseUrl,\n      apiHeaders,\n      normalBody.data.notificationId,\n      (status) => status === 'completed',\n    );\n    expect(normalStatus.deliveries[0].delivery.status).toBe('accepted');\n\n    const failing = await requestApp(\n      app,\n      `${baseUrl}/api/notifications/test/send`,\n      {\n        method: 'POST',\n        headers: {\n          ...apiHeaders,\n          'content-type': 'application/json',\n          'x-nocobase-notification-test': '1',\n        },\n        body: JSON.stringify({\n          channel: 'test-failure',\n          values: {\n            recipient: 'notification-test@example.invalid',\n            subject: 'Notification test',\n            text: 'Controlled failure.',\n          },\n        }),\n      },\n    );\n    expect(failing.status).toBe(202);\n    const failingBody = (await failing.json()) as {\n      data: { notificationId: string };\n    };\n    const failureStatus = await waitForNotificationTestStatus(\n      app,\n      baseUrl,\n      apiHeaders,\n      failingBody.data.notificationId,\n      (status) => status === 'failed',\n    );\n    const failure = failureStatus.deliveries[0];\n    expect(failure.delivery.status).toBe('failed');\n    // The provider's reason survives into the log instead of being replaced by\n    // a generic error message.\n    expect(\n      `${failure.delivery.lastError?.code} ${failure.delivery.lastError?.message}`,\n    ).toMatch(/ENOTFOUND|EAI_AGAIN|notification-test\\.invalid/);",
+            "sha256": "44112e802b987fa3d37b4abc3843e7696dcaf711403c1848545efb6332db5389"
+          },
+          {
+            "id": "E33",
+            "kind": "log",
+            "path": "artifacts/verify-1.log",
+            "observation": "verify-1 运行 prettier . --check '!.github/**'，警告 AGENTS.md 代码风格问题，命令以 exit code 1 结束，format:check 计时以 exit 1 记录。",
+            "lines": [
+              12,
+              17
+            ],
+            "excerpt": "$ prettier . --check '!.github/**'\nChecking formatting...\n[\u001b[33mwarn\u001b[39m] AGENTS.md\n[\u001b[33mwarn\u001b[39m] Code style issues found in the above file. Run Prettier with --write to fix.\n[ELIFECYCLE] Command failed with exit code 1.\n[timing] format:check: 4.84s (exit 1)",
+            "sha256": "af475b2dbe47a8cb8297727c14404c2b9b9c7bcee19f9ab4bf31482f77ae0708"
+          },
+          {
+            "id": "E34",
+            "kind": "qa",
+            "path": "artifacts/verify-2/browser-acceptance/report.json",
+            "observation": "第二轮完整验收的 B01 检查记录为 passed，标准为向指定测试接收端发送一次且最终记录与实际接收一致。",
+            "lines": [
+              5,
+              9
+            ],
+            "excerpt": "  \"checks\": [\n    {\n      \"id\": \"B01\",\n      \"criterion\": \"向指定测试接收端发送一次，通知最终记录与实际接收结果一致；排队或已受理不等于已送达。测试收件端若没有浏览器入口，则接收证据由独立测试步骤提供，浏览器结果不能单独证明外部送达。\",\n      \"status\": \"passed\",",
+            "sha256": "ee00dd13cf98c47d3d2d8160dc08435ce6374cfb4cfcff9891fce70442a372f8"
+          },
+          {
+            "id": "E35",
+            "kind": "qa",
+            "path": "artifacts/verify-2/browser-acceptance/report.json",
+            "observation": "第二轮完整验收的 B02 检查记录为 passed，标准为使用可控失败条件且诊断显示真实失败、不把未配置渠道标成成功。",
+            "lines": [
+              34,
+              37
+            ],
+            "excerpt": "    {\n      \"id\": \"B02\",\n      \"criterion\": \"使用测试环境提供的可控失败条件，诊断记录显示实际失败；不把未配置渠道标成发送成功。\\n\\n无法实际完成时如实记录 failed、blocked 或 not_run，不以源码检查代替浏览器通过。\",\n      \"status\": \"passed\",",
+            "sha256": "ee00dd13cf98c47d3d2d8160dc08435ce6374cfb4cfcff9891fce70442a372f8"
+          },
+          {
+            "id": "E36",
+            "kind": "log",
+            "path": "artifacts/agent-history/agent-implement.jsonl/part-0023.txt",
+            "observation": "实现轮在此处执行 bash 探测 .env 与 config.yml 是否存在，结果为空并返回 Command exited with code 1，两次 isError 信号（tool_execution_end 与其 message_end）均由该命令产生。",
+            "lines": [
+              1530,
+              1540
+            ],
+            "excerpt": "{\"type\":\"tool_execution_update\",\"toolCallId\":\"call_00_U5jpnJ1DMRiKQrbCy8Hd6375\",\"toolName\":\"bash\",\"args\":{\"command\":\"cd /home/runner/work/nb3-factory/nb3-factory/workspace && ls -la | grep -E \\\"\\\\.env|config.yml|storage\\\" ; echo \\\"=== .env ===\\\"; cat .env 2>/dev/null | head -40; echo \\\"=== config.yml ===\\\"; head -40 config.yml 2>/dev/null\",\"timeout\":30},\"partialResult\":{\"content\":[]}}\n{\"type\":\"tool_execution_update\",\"toolCallId\":\"call_00_U5jpnJ1DMRiKQrbCy8Hd6375\",\"toolName\":\"bash\",\"args\":{\"command\":\"cd /home/runner/work/nb3-factory/nb3-factory/workspace && ls -la | grep -E \\\"\\\\.env|config.yml|storage\\\" ; echo \\\"=== .env ===\\\"; cat .env 2>/dev/null | head -40; echo \\\"=== config.yml ===\\\"; head -40 config.yml 2>/dev/null\",\"timeout\":30},\"partialResult\":{\"content\":[{\"type\":\"text\",\"text\":\"=== .env ===\\n\"}],\"details\":{}}}\n{\"type\":\"tool_execution_update\",\"toolCallId\":\"call_00_U5jpnJ1DMRiKQrbCy8Hd6375\",\"toolName\":\"bash\",\"args\":{\"command\":\"cd /home/runner/work/nb3-factory/nb3-factory/workspace && ls -la | grep -E \\\"\\\\.env|config.yml|storage\\\" ; echo \\\"=== .env ===\\\"; cat .env 2>/dev/null | head -40; echo \\\"=== config.yml ===\\\"; head -40 config.yml 2>/dev/null\",\"timeout\":30},\"partialResult\":{\"content\":[{\"type\":\"text\",\"text\":\"=== .env ===\\n=== config.yml ===\\n\"}],\"details\":{}}}\n{\"type\":\"tool_execution_end\",\"toolCallId\":\"call_00_U5jpnJ1DMRiKQrbCy8Hd6375\",\"toolName\":\"bash\",\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"=== .env ===\\n=== config.yml ===\\n\\n\\nCommand exited with code 1\"}],\"details\":{}},\"isError\":true}\n{\"type\":\"message_start\",\"message\":{\"role\":\"toolResult\",\"toolCallId\":\"call_00_U5jpnJ1DMRiKQrbCy8Hd6375\",\"toolName\":\"bash\",\"content\":[{\"type\":\"text\",\"text\":\"=== .env ===\\n=== config.yml ===\\n\\n\\nCommand exited with code 1\"}],\"details\":{},\"isError\":true,\"timestamp\":1790569299714}}\n{\"type\":\"message_end\",\"message\":{\"role\":\"toolResult\",\"toolCallId\":\"call_00_U5jpnJ1DMRiKQrbCy8Hd6375\",\"toolName\":\"bash\",\"content\":[{\"type\":\"text\",\"text\":\"=== .env ===\\n=== config.yml ===\\n\\n\\nCommand exited with code 1\"}],\"details\":{},\"isError\":true,\"timestamp\":1790569299714}}\n{\"type\":\"turn_end\",\"message\":{\"role\":\"assistant\",\"content\":[{\"type\":\"thinking\",\"thinking\":\"This test is huge and complex. Writing a full end-to-end notification test there is a lot of work and risk. The task says \\\"提供核心业务测试\\\" (provide core business tests). I've provided config and destination-rule unit tests. That's arguably sufficient for a \\\"small setup test\\\" (小型配置测试). \\n\\nBut let me consider whether I can verify the runtime end-to-end in a lighter way: start the dev server and curl the endpoints. The factory environment likely can run `pnpm dev`. Let me try to boot the server and hit `/api/notifications/test/targets` unauthenticated (expect 401), then maybe login as admin and call it. That's real verification. Let me check if there's an existing `config.yml` and `.env` in the workspace, and whether a DB is initialized.\\n\\nActually, the QA will do browser acceptance. My verification should at least confirm:\\n1. Server boots with the new notification channels (no validation error).\\n2. `GET /api/notifications/test/targets` returns our two channels (authenticated).\\n3. `POST /api/notifications/test/send` for `test-failure` produces a failed delivery with a preserved reason.\\n\\nItems 2-3 are the real business behavior and would be strong evidence. Let me attempt to boot the app.\\n\\nFirst, check `.env`, `config.yml`, and whether `pnpm dev` can run. Let me look.\",\"thinkingSignature\":\"[{\\\"format\\\":\\\"unknown\\\",\\\"index\\\":0,\\\"text\\\":\\\"This test is huge and complex. Writing a full end-to-end notification test there is a lot of work and risk. The task says \\\\\\\"提供核心业务测试\\\\\\\" (provide core business tests). I've provided config and destination-rule unit tests. That's arguably sufficient for a \\\\\\\"small setup test\\\\\\\" (小型配置测试). \\\\n\\\\nBut let me consider whether I can verify the runtime end-to-end in a lighter way: start the dev server and curl the endpoints. The factory environment likely can run `pnpm dev`. Let me try to boot the server and hit `/api/notifications/test/targets` unauthenticated (expect 401), then maybe login as admin and call it. That's real verification. Let me check if there's an existing `config.yml` and `.env` in the workspace, and whether a DB is initialized.\\\\n\\\\nActually, the QA will do browser acceptance. My verification should at least confirm:\\\\n1. Server boots with the new notification channels (no validation error).\\\\n2. `GET /api/notifications/test/targets` returns our two channels (authenticated).\\\\n3. `POST /api/notifications/test/send` for `test-failure` produces a failed delivery with a preserved reason.\\\\n\\\\nItems 2-3 are the real business behavior and would be strong evidence. Let me attempt to boot the app.\\\\n\\\\nFirst, check `.env`, `config.yml`, and whether `pnpm dev` can run. Let me look.\\\",\\\"type\\\":\\\"reasoning.text\\\"}]\"},{\"type\":\"toolCall\",\"id\":\"call_00_U5jpnJ1DMRiKQrbCy8Hd6375\",\"name\":\"bash\",\"arguments\":{\"command\":\"cd /home/runner/work/nb3-factory/nb3-factory/workspace && ls -la | grep -E \\\"\\\\.env|config.yml|storage\\\" ; echo \\\"=== .env ===\\\"; cat .env 2>/dev/null | head -40; echo \\\"=== config.yml ===\\\"; head -40 config.yml 2>/dev/null\",\"timeout\":30}}],\"api\":\"openai-completions\",\"provider\":\"nb3-factory\",\"model\":\"deepseek-v4.1-flash\",\"usage\":{\"input\":964,\"output\":430,\"cacheRead\":93696,\"cacheWrite\":0,\"reasoning\":301,\"totalTokens\":95090,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"stopReason\":\"toolUse\",\"timestamp\":1790569294172,\"responseId\":\"gen_01M3K3YCBQ5FFHXNFW2RGGF4J3\",\"rawStopReason\":\"tool_calls\"},\"toolResults\":[{\"role\":\"toolResult\",\"toolCallId\":\"call_00_U5jpnJ1DMRiKQrbCy8Hd6375\",\"toolName\":\"bash\",\"content\":[{\"type\":\"text\",\"text\":\"=== .env ===\\n=== config.yml ===\\n\\n\\nCommand exited with code 1\"}],\"details\":{},\"isError\":true,\"timestamp\":1790569299714}]}\n{\"type\":\"turn_start\"}\n{\"type\":\"message_start\",\"message\":{\"role\":\"assistant\",\"content\":[],\"api\":\"openai-completions\",\"provider\":\"nb3-factory\",\"model\":\"deepseek-v4.1-flash\",\"usage\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":0,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"stopReason\":\"pending\",\"timestamp\":1790569299718,\"responseId\":\"gen_01M3K3YJ0ZYPAPSWDSZ6FVTZS2\"}}\n{\"type\":\"message_update\",\"usage\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":0,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"assistantMessageEvent\":{\"type\":\"thinking_start\",\"contentIndex\":0}}\n{\"type\":\"message_update\",\"usage\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":0,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"assistantMessageEvent\":{\"type\":\"thinking_delta\",\"contentIndex\":0,\"delta\":\"No\"}}",
+            "sha256": "cff792da53c7bf9fd54db986c8be594bc982399157d2f635c1dc1654744a60a4"
+          },
+          {
+            "id": "E37",
+            "kind": "log",
+            "path": "artifacts/agent-history/agent-repair-1.jsonl/part-0001.txt",
+            "observation": "修复轮读取 .prettierignore 并运行 git show e318f4e -- AGENTS.md，输出显示该提交在 ## Controlled failed-delivery smoke 前新增了两个空行。",
+            "lines": [
+              1645,
+              1650
+            ],
+            "excerpt": "{\"type\":\"message_end\",\"message\":{\"role\":\"assistant\",\"content\":[{\"type\":\"thinking\",\"thinking\":\"There's a double blank line at line 403-404 (between \\\"Preserve unknown causes and incomplete diagnoses.\\\" and \\\"## Controlled failed-delivery smoke\\\"). Prettier wants single blank line. So remove one blank line.\\n\\nBut wait — is AGENTS.md a factory control file? The task says don't modify factory control files listed: `.github/`, `.npmrc`, `.gitmodules`, `config.yml`. AGENTS.md isn't listed. But AGENTS.md content is the project instructions... It was committed in e318f4e. The formatting check fails on it. This is likely an intentional trap: the previous implementation agent may have edited AGENTS.md? No, git status shows it unchanged. Hmm, actually it's tracked and clean. So the committed file itself fails prettier. That means the previous commit e318f4e introduced the double blank line and the format check now fails.\\n\\nWait, but the failure feedback in the prompt focuses on this. Actually the failure feedback shows a format check that fails on AGENTS.md. The repair task is to fix observed failures. The simplest fix: remove the extra blank line.\\n\\nBut hold on — AGENTS.md is the project instructions file. Is editing it allowed? The rule says \\\"Update this file in the same change, so the guidance describes the application as it actually is.\\\" So editing AGENTS.md is allowed. But this is formatting only.\\n\\nHowever, I should be careful: maybe the real issue is that the format check should exclude AGENTS.md? No, AGENTS.md is not in `.prettierignore`. Let me check `.prettierignore`.\\n\\nActually let's think about whether this is the actual task-created file. The git status shows the feature files modified but AGENTS.md unchanged. The format check runs on the whole repo, and AGENTS.md fails. So the failure is pre-existing in the base commit? Let me verify by checking git show of AGENTS.md at HEAD to see if it has the double blank line.\\n\\nActually `git status` clean for AGENTS.md means working tree == HEAD. So the committed version has the double blank line. That's weird for a repo that passes format. Unless the previous repair/implementation changed it and committed? No, the implementation changes aren't committed (git status shows modified/untracked). \\n\\nHmm, wait. This is the repair environment. The workspace contains the agent's patch applied but uncommitted. AGENTS.md wasn't touched. So the base commit e318f4e has AGENTS.md failing prettier. Let me check git show HEAD:AGENTS.md around line 403.\\n\\nActually `git status` says AGENTS.md unchanged, so HEAD version = working version. Let me check if the file at HEAD fails prettier by examining git show.\\n\\nLet me check whether the \\\"framework\\\" commit e318f4e is the one that added the double newline. Let me look at the diff.\",\"thinkingSignature\":\"[{\\\"format\\\":\\\"unknown\\\",\\\"index\\\":0,\\\"text\\\":\\\"There's a double blank line at line 403-404 (between \\\\\\\"Preserve unknown causes and incomplete diagnoses.\\\\\\\" and \\\\\\\"## Controlled failed-delivery smoke\\\\\\\"). Prettier wants single blank line. So remove one blank line.\\\\n\\\\nBut wait — is AGENTS.md a factory control file? The task says don't modify factory control files listed: `.github/`, `.npmrc`, `.gitmodules`, `config.yml`. AGENTS.md isn't listed. But AGENTS.md content is the project instructions... It was committed in e318f4e. The formatting check fails on it. This is likely an intentional trap: the previous implementation agent may have edited AGENTS.md? No, git status shows it unchanged. Hmm, actually it's tracked and clean. So the committed file itself fails prettier. That means the previous commit e318f4e introduced the double blank line and the format check now fails.\\\\n\\\\nWait, but the failure feedback in the prompt focuses on this. Actually the failure feedback shows a format check that fails on AGENTS.md. The repair task is to fix observed failures. The simplest fix: remove the extra blank line.\\\\n\\\\nBut hold on — AGENTS.md is the project instructions file. Is editing it allowed? The rule says \\\\\\\"Update this file in the same change, so the guidance describes the application as it actually is.\\\\\\\" So editing AGENTS.md is allowed. But this is formatting only.\\\\n\\\\nHowever, I should be careful: maybe the real issue is that the format check should exclude AGENTS.md? No, AGENTS.md is not in `.prettierignore`. Let me check `.prettierignore`.\\\\n\\\\nActually let's think about whether this is the actual task-created file. The git status shows the feature files modified but AGENTS.md unchanged. The format check runs on the whole repo, and AGENTS.md fails. So the failure is pre-existing in the base commit? Let me verify by checking git show of AGENTS.md at HEAD to see if it has the double blank line.\\\\n\\\\nActually `git status` clean for AGENTS.md means working tree == HEAD. So the committed version has the double blank line. That's weird for a repo that passes format. Unless the previous repair/implementation changed it and committed? No, the implementation changes aren't committed (git status shows modified/untracked). \\\\n\\\\nHmm, wait. This is the repair environment. The workspace contains the agent's patch applied but uncommitted. AGENTS.md wasn't touched. So the base commit e318f4e has AGENTS.md failing prettier. Let me check git show HEAD:AGENTS.md around line 403.\\\\n\\\\nActually `git status` says AGENTS.md unchanged, so HEAD version = working version. Let me check if the file at HEAD fails prettier by examining git show.\\\\n\\\\nLet me check whether the \\\\\\\"framework\\\\\\\" commit e318f4e is the one that added the double newline. Let me look at the diff.\\\",\\\"type\\\":\\\"reasoning.text\\\"}]\"},{\"type\":\"toolCall\",\"id\":\"call_00_0W9rn4XZZhKTsO5EqwsR6349\",\"name\":\"bash\",\"arguments\":{\"command\":\"cd /home/runner/work/nb3-factory/nb3-factory/workspace && cat .prettierignore && echo \\\"=== git show e318f4e AGENTS diff ===\\\" && git show e318f4e -- AGENTS.md | head -60\",\"timeout\":60}}],\"api\":\"openai-completions\",\"provider\":\"nb3-factory\",\"model\":\"deepseek-v4.1-flash\",\"usage\":{\"input\":573,\"output\":716,\"cacheRead\":18688,\"cacheWrite\":0,\"reasoning\":605,\"totalTokens\":19977,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"stopReason\":\"toolUse\",\"timestamp\":1790570250885,\"responseId\":\"gen_01M3K4VJ4Y5TB3590PVRSP1G1R\",\"rawStopReason\":\"tool_calls\"}}\n{\"type\":\"tool_execution_start\",\"toolCallId\":\"call_00_0W9rn4XZZhKTsO5EqwsR6349\",\"toolName\":\"bash\",\"args\":{\"command\":\"cd /home/runner/work/nb3-factory/nb3-factory/workspace && cat .prettierignore && echo \\\"=== git show e318f4e AGENTS diff ===\\\" && git show e318f4e -- AGENTS.md | head -60\",\"timeout\":60}}\n{\"type\":\"tool_execution_update\",\"toolCallId\":\"call_00_0W9rn4XZZhKTsO5EqwsR6349\",\"toolName\":\"bash\",\"args\":{\"command\":\"cd /home/runner/work/nb3-factory/nb3-factory/workspace && cat .prettierignore && echo \\\"=== git show e318f4e AGENTS diff ===\\\" && git show e318f4e -- AGENTS.md | head -60\",\"timeout\":60},\"partialResult\":{\"content\":[]}}\n{\"type\":\"tool_execution_update\",\"toolCallId\":\"call_00_0W9rn4XZZhKTsO5EqwsR6349\",\"toolName\":\"bash\",\"args\":{\"command\":\"cd /home/runner/work/nb3-factory/nb3-factory/workspace && cat .prettierignore && echo \\\"=== git show e318f4e AGENTS diff ===\\\" && git show e318f4e -- AGENTS.md | head -60\",\"timeout\":60},\"partialResult\":{\"content\":[{\"type\":\"text\",\"text\":\"client-old/\\nregistry/\\n\\n# Generated by the package manager, and reformatting it would produce a file pnpm did not write.\\n# A generated application has none of the directories above but does have this one, which is why\\n# this file ships in the package: without it `pnpm format:check` fails on a freshly created app.\\npnpm-lock.yaml\\n\\n# Generated by `pnpm nocobase collections generate`: one JSON artifact per Collection plus a `_manifest.json`, written through\\n# a stable serializer so that `pnpm nocobase collections generate --check` can regenerate them and compare byte for byte.\\n# Prettier collapses their short arrays and objects onto single lines, which makes that check report the artifacts as\\n# out of date when nothing about the schema changed.\\ndatabase/*/collections/\\n\\n# Synchronized by `pnpm nocobase skills sync` from the installed NocoBase packages: `.agents/skills/` is copied from them and\\n# `.claude/skills/` holds symbolic links into it. They are upstream prose, replaced wholesale on the next sync, so\\n# formatting them rewrites files this application does not own and the change disappears anyway. `.gitignore` lists\\n# both, but a `--ignore-path` run replaces `.gitignore` rather than adding to it, so they are named here as well.\\n.agents/\\n.claude/skills/\\n\"}],\"details\":{}}}\n{\"type\":\"tool_execution_update\",\"toolCallId\":\"call_00_0W9rn4XZZhKTsO5EqwsR6349\",\"toolName\":\"bash\",\"args\":{\"command\":\"cd /home/runner/work/nb3-factory/nb3-factory/workspace && cat .prettierignore && echo \\\"=== git show e318f4e AGENTS diff ===\\\" && git show e318f4e -- AGENTS.md | head -60\",\"timeout\":60},\"partialResult\":{\"content\":[{\"type\":\"text\",\"text\":\"client-old/\\nregistry/\\n\\n# Generated by the package manager, and reformatting it would produce a file pnpm did not write.\\n# A generated application has none of the directories above but does have this one, which is why\\n# this file ships in the package: without it `pnpm format:check` fails on a freshly created app.\\npnpm-lock.yaml\\n\\n# Generated by `pnpm nocobase collections generate`: one JSON artifact per Collection plus a `_manifest.json`, written through\\n# a stable serializer so that `pnpm nocobase collections generate --check` can regenerate them and compare byte for byte.\\n# Prettier collapses their short arrays and objects onto single lines, which makes that check report the artifacts as\\n# out of date when nothing about the schema changed.\\ndatabase/*/collections/\\n\\n# Synchronized by `pnpm nocobase skills sync` from the installed NocoBase packages: `.agents/skills/` is copied from them and\\n# `.claude/skills/` holds symbolic links into it. They are upstream prose, replaced wholesale on the next sync, so\\n# formatting them rewrites files this application does not own and the change disappears anyway. `.gitignore` lists\\n# both, but a `--ignore-path` run replaces `.gitignore` rather than adding to it, so they are named here as well.\\n.agents/\\n.claude/skills/\\n=== git show e318f4e AGENTS diff ===\\ncommit e318f4e66339ec98863385f8068b5d8bba09ed52\\nAuthor: gchust <gchust@qq.com>\\nDate:   Sun Sep 27 23:01:39 2026 +0800\\n\\n    test: add opt-in controlled failed delivery smoke (#404)\\n\\ndiff --git a/AGENTS.md b/AGENTS.md\\nindex 5d4975c..1cd3d1b 100644\\n--- a/AGENTS.md\\n+++ b/AGENTS.md\\n@@ -399,3 +399,8 @@ Track input completeness separately from cited process coverage. A Skill invento\\n Ordinary tasks and evaluation samples share the ceilings in `.github/scripts/task-policy.mjs`: five repair attempts, three observations of an identical failure per criterion/check, at most one five-hour Handoff, and ten hours of active implementation/repair/QA time. An evaluation plan can only tighten these limits. Pipeline state carries counters, failure fingerprints and elapsed time across handoffs and explicit recoveries; never clear them to get a task through.\\n \\n A terminal limit saves `task-diagnostic.json` and `task-diagnostic.md`, preserves the patch and raw evidence, and runs at most one additional fifteen-minute read-only diagnosis using the independent reviewer. This cleanup cannot resume repairs, dispatch another continuation, or authorize final verification. Failed tasks still publish reports and create or update a build PR marked failed when a safe code diff exists. They may attempt preview packaging and deployment once without restarting repair or QA; preview failure does not block the report or PR or change the failed task status. Missing patches or empty diffs must be reported explicitly rather than fabricating a PR. Stopped checkpoints are not recoverable. Reject direct GitHub Re-run attempts for implementation/repair: they start fresh runners w",
+            "sha256": "1fa13f73fe0c793e448dc2cfe7679ecdde10be270a927c4b41d8427d01a8a53a"
+          },
+          {
+            "id": "E38",
+            "kind": "log",
+            "path": "artifacts/agent-history/agent-repair-1.jsonl/part-0002.txt",
+            "observation": "修复轮用 edit 把 oldText 中 Preserve unknown causes... 后的两个空行改为一个空行，编辑成功并返回 diff。",
+            "lines": [
+              1603,
+              1604
+            ],
+            "excerpt": "{\"type\":\"tool_execution_start\",\"toolCallId\":\"call_00_BscOhc4NUnlbabA9GGSh8614\",\"toolName\":\"edit\",\"args\":{\"edits\":[{\"newText\":\"Preserve unknown causes and incomplete diagnoses.\\n\\n## Controlled failed-delivery smoke\",\"oldText\":\"Preserve unknown causes and incomplete diagnoses.\\n\\n\\n## Controlled failed-delivery smoke\"}],\"path\":\"/home/runner/work/nb3-factory/nb3-factory/workspace/AGENTS.md\"}}\n{\"type\":\"tool_execution_end\",\"toolCallId\":\"call_00_BscOhc4NUnlbabA9GGSh8614\",\"toolName\":\"edit\",\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"Successfully replaced 1 block(s) in /home/runner/work/nb3-factory/nb3-factory/workspace/AGENTS.md.\"}],\"details\":{\"diff\":\"     ...\\n 399 Ordinary tasks and evaluation samples share the ceilings in `.github/scripts/task-policy.mjs`: five repair attempts, three observations of an identical failure per criterion/check, at most one five-hour Handoff, and ten hours of active implementation/repair/QA time. An evaluation plan can only tighten these limits. Pipeline state carries counters, failure fingerprints and elapsed time across handoffs and explicit recoveries; never clear them to get a task through.\\n 400 \\n 401 A terminal limit saves `task-diagnostic.json` and `task-diagnostic.md`, preserves the patch and raw evidence, and runs at most one additional fifteen-minute read-only diagnosis using the independent reviewer. This cleanup cannot resume repairs, dispatch another continuation, or authorize final verification. Failed tasks still publish reports and create or update a build PR marked failed when a safe code diff exists. They may attempt preview packaging and deployment once without restarting repair or QA; preview failure does not block the report or PR or change the failed task status. Missing patches or empty diffs must be reported explicitly rather than fabricating a PR. Stopped checkpoints are not recoverable. Reject direct GitHub Re-run attempts for implementation/repair: they start fresh runners without restoring the previous attempt. Use explicit checkpoint recovery in a new Run for recoverable failures. Attribute framework, Skill, template, application, factory and environment issues from evidence; repeated failures alone are not proof of a NocoBase3 defect. Preserve unknown causes and incomplete diagnoses.\\n 402 \\n-403 \\n 404 ## Controlled failed-delivery smoke\\n 405 \\n 406 The task workflow's opt-in failure_smoke dispatch input exercises failed publication without model calls or business QA. It requires a fresh, open Issue carrying factory:external, factory:failure-smoke, and the <!-- factory-failure-smoke:v1 --> disclosure. Do not use recovery or GitHub Re-run for this mode. The pinned code-only fixture comes from Issue #400 / PR #401; it carries its source SHA and patch digest and never copies earlier QA verdicts or screenshots. The agent job deliberately fails before QA; the existing failed PR, report, packaging and deployment jobs must handle it unchanged. Do not merge its application PR or describe successful preview deployment as successful business acceptance.\",\"patch\":\"--- /home/runner/work/nb3-factory/nb3-factory/workspace/AGENTS.md\\n+++ /home/runner/work/nb3-factory/nb3-factory/workspace/AGENTS.md\\n@@ -399,8 +399,7 @@\\n Ordinary tasks and evaluation samples share the ceilings in `.github/scripts/task-policy.mjs`: five repair attempts, three observations of an identical failure per criterion/check, at most one five-hour Handoff, and ten hours of active implementation/repair/QA time. An evaluation plan can only tighten these limits. Pipeline state carries counters, failure fingerprints and elapsed time across handoffs and explicit recoveries; never clear them to get a task through.\\n \\n A terminal limit saves `task-diagnostic.json` and `task-diagnostic.md`, preserves the patch and raw evidence, and runs at most one additional fifteen-minute read-only diagnosis using the independent reviewer. This cleanup cannot resume repairs, dispatch another continuation, or authorize final verification. Failed tasks still publish reports and create or update a build PR marked failed when a safe code diff exists. They may attempt preview packaging and deployment once without restarting repair or QA; preview failure does not block the report or PR or change the failed task status. Missing patches or empty diffs must be reported explicitly rather than fabricating a PR. Stopped checkpoints are not recoverable. Reject direct GitHub Re-run attempts for implementation/repair: they start fresh runners without restoring the previous attempt. Use explicit checkpoint recovery in a new Run for recoverable failures. Attribute framework, Skill, template, application, factory and environment issues from evidence; repeated failures alone are not proof of a NocoBase3 defect. Preserve unknown causes and incomplete diagnoses.\\n \\n-\\n ## Controlled failed-delivery smoke\\n \\n The task workflow's opt-in failure_smoke dispatch input exercises failed publication without model calls or business QA. It requires a fresh, open Issue carrying factory:external, factory:failure-smoke, and the <!-- factory-failure-smoke:v1 --> disclosure. Do not use recovery or GitHub Re-run for this mode. The pinned code-only fixture comes from Issue #400 / PR #401; it carries its source SHA and patch digest and never copies earlier QA verdicts or screenshots. The agent job deliberately fails before QA; the existing failed PR, report, packaging and deployment jobs must handle it unchanged. Do not merge its application PR or describe successful preview deployment as successful business acceptance.\\n\",\"firstChangedLine\":403}},\"isError\":false}",
+            "sha256": "0cdea9e877dd01493d595c36eb7ce52772b2b4eca548c6cb7dec42e71613815b"
+          },
+          {
+            "id": "E39",
+            "kind": "log",
+            "path": "artifacts/agent-history/verify-2/browser-acceptance/agent-browser-acceptance.jsonl/part-0012.txt",
+            "observation": "验收轮结束事件说明浏览器验收已完成且通过，与 report.json 中 B01/B02 passed 一致。",
+            "lines": [
+              2877,
+              2879
+            ],
+            "excerpt": "{\"type\":\"message_update\",\"usage\":{\"input\":797,\"output\":746,\"cacheRead\":106240,\"cacheWrite\":0,\"reasoning\":231,\"totalTokens\":107783,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"assistantMessageEvent\":{\"type\":\"text_end\",\"contentIndex\":1,\"content\":\"Browser acceptance complete. Final result: **passed** (exit 0).\\n\\n## What I verified\\n\\n**Environment:** NocoBase app at `$FACTORY_BROWSER_URL`, logged in as `nocobase` (Super Admin). Started the acceptance video after login, no page/console errors observed.\\n\\n**B01 — Send once to the designated test receiver, record matches actual receipt**\\n- Page `Settings > Notification test` offers two single-select channels; `test-inbox · Built-in` targets the signed-in user's inbox.\\n- Sent once → feedback: `Notification e85a10e2-… was accepted (completed)`.\\n- Diagnostics page (`/settings/notifications/logs`): notification `completed`, delivery `Channel=test-inbox, Provider=Built-in, Status=accepted, Attempts=1`.\\n- Actual receive evidence via the app's authenticated durable inbox API `/main/api/notifications/in-app`: item `267f8a1d-…` with **`deliveryId=9da97dbe…` and `notificationId=e85a10e2…` matching the record exactly**, `userId` = current session user, `unread-count=1`.\\n- Per the notification Skill, `accepted` only means Provider-accepted, so I did **not** rely on it alone — the inbox item is the independent receipt proof. The receiver has no production inbox UI (dev route redirects away), hence the API evidence.\\n\\n**B02 — Controlled failure shows a real failure**\\n- Selected `test-failure · SMTP` → feedback `accepted (failed)`.\\n- Diagnostics: `Status=failed`, `Channel=test-failure`, `Provider=SMTP`, `Attempts=1`, reason preserved: `getaddrinfo ENOTFOUND notification-test.invalid`, `Need attention=1`. The failing channel was **not** marked as sent.\\n\\n## Artifacts\\n- Report: `$FACTORY_BROWSER_REPORT` — `passed=true, authenticated=true`, 2 checks, 8 valid PNGs, no failures.\\n- Evidence in `$FACTORY_BROWSER_EVIDENCE_DIR` (b01/b02 screenshots).\\n- Showcase `showcase.json` + delivery notes `delivery-notes.json` written; recording `acceptance-admin.webm` saved (stop emitted an optional-recording warning, but the file is a valid 2MB WebM).\"}}\n{\"type\":\"message_end\",\"message\":{\"role\":\"assistant\",\"content\":[{\"type\":\"thinking\",\"thinking\":\"Everything is in place. The acceptance passed with exit 0.\\n\\nLet me provide a concise final summary to the user.\\n\\nOne more consideration: the recording stop warned \\\"optional browser recording failed\\\". The showcase includes the webm. Should I mark it in `uncovered`? The file exists (valid WebM). But the stop failure suggests it may be incomplete. The instruction says \\\"缺失素材写入 uncovered，不声称全覆盖\\\". The video isn't missing. I'll leave it. Media issues don't affect business conclusions.\\n\\nAlso, I should maybe close the browser session? The instructions didn't require it. I'll leave it to avoid disrupting. Actually, best practice from the skill says close when done. But the factory harness may want to capture the recording. Since record stop already happened, closing is fine. However, the instruction says don't run pkill/kill; `agent-browser close` is allowed. Hmm. I'll leave the session as-is since the task didn't require closing and closing could remove state the factory might inspect. Actually, leaving it is harmless.\\n\\nLet me write the final response summarizing the work and results.\",\"thinkingSignature\":\"[{\\\"format\\\":\\\"unknown\\\",\\\"index\\\":0,\\\"text\\\":\\\"Everything is in place. The acceptance passed with exit 0.\\\\n\\\\nLet me provide a concise final summary to the user.\\\\n\\\\nOne more consideration: the recording stop warned \\\\\\\"optional browser recording failed\\\\\\\". The showcase includes the webm. Should I mark it in `uncovered`? The file exists (valid WebM). But the stop failure suggests it may be incomplete. The instruction says \\\\\\\"缺失素材写入 uncovered，不声称全覆盖\\\\\\\". The video isn't missing. I'll leave it. Media issues don't affect business conclusions.\\\\n\\\\nAlso, I should maybe close the browser session? The instructions didn't require it. I'll leave it to avoid disrupting. Actually, best practice from the skill says close when done. But the factory harness may want to capture the recording. Since record stop already happened, closing is fine. However, the instruction says don't run pkill/kill; `agent-browser close` is allowed. Hmm. I'll leave the session as-is since the task didn't require closing and closing could remove state the factory might inspect. Actually, leaving it is harmless.\\\\n\\\\nLet me write the final response summarizing the work and results.\\\",\\\"type\\\":\\\"reasoning.text\\\"}]\"},{\"type\":\"text\",\"text\":\"Browser acceptance complete. Final result: **passed** (exit 0).\\n\\n## What I verified\\n\\n**Environment:** NocoBase app at `$FACTORY_BROWSER_URL`, logged in as `nocobase` (Super Admin). Started the acceptance video after login, no page/console errors observed.\\n\\n**B01 — Send once to the designated test receiver, record matches actual receipt**\\n- Page `Settings > Notification test` offers two single-select channels; `test-inbox · Built-in` targets the signed-in user's inbox.\\n- Sent once → feedback: `Notification e85a10e2-… was accepted (completed)`.\\n- Diagnostics page (`/settings/notifications/logs`): notification `completed`, delivery `Channel=test-inbox, Provider=Built-in, Status=accepted, Attempts=1`.\\n- Actual receive evidence via the app's authenticated durable inbox API `/main/api/notifications/in-app`: item `267f8a1d-…` with **`deliveryId=9da97dbe…` and `notificationId=e85a10e2…` matching the record exactly**, `userId` = current session user, `unread-count=1`.\\n- Per the notification Skill, `accepted` only means Provider-accepted, so I did **not** rely on it alone — the inbox item is the independent receipt proof. The receiver has no production inbox UI (dev route redirects away), hence the API evidence.\\n\\n**B02 — Controlled failure shows a real failure**\\n- Selected `test-failure · SMTP` → feedback `accepted (failed)`.\\n- Diagnostics: `Status=failed`, `Channel=test-failure`, `Provider=SMTP`, `Attempts=1`, reason preserved: `getaddrinfo ENOTFOUND notification-test.invalid`, `Need attention=1`. The failing channel was **not** marked as sent.\\n\\n## Artifacts\\n- Report: `$FACTORY_BROWSER_REPORT` — `passed=true, authenticated=true`, 2 checks, 8 valid PNGs, no failures.\\n- Evidence in `$FACTORY_BROWSER_EVIDENCE_DIR` (b01/b02 screenshots).\\n- Showcase `showcase.json` + delivery notes `delivery-notes.json` written; recording `acceptance-admin.webm` saved (stop emitted an optional-recording warning, but the file is a valid 2MB WebM).\"}],\"api\":\"openai-completions\",\"provider\":\"nb3-factory\",\"model\":\"deepseek-v4.1-flash\",\"usage\":{\"input\":797,\"output\":746,\"cacheRead\":106240,\"cacheWrite\":0,\"reasoning\":231,\"totalTokens\":107783,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"stopReason\":\"stop\",\"timestamp\":1790571211298,\"responseId\":\"gen_01M3K5RWRS0D2F006D6WX74YB2\",\"rawStopReason\":\"stop\"}}\n{\"type\":\"turn_end\",\"message\":{\"role\":\"assistant\",\"content\":[{\"type\":\"thinking\",\"thinking\":\"Everything is in place. The acceptance passed with exit 0.\\n\\nLet me provide a concise final summary to the user.\\n\\nOne more consideration: the recording stop warned \\\"optional browser recording failed\\\". The showcase includes the webm. Should I mark it in `uncovered`? The file exists (valid WebM). But the stop failure suggests it may be incomplete. The instruction says \\\"缺失素材写入 uncovered，不声称全覆盖\\\". The video isn't missing. I'll leave it. Media issues don't affect business conclusions.\\n\\nAlso, I should maybe close the browser session? The instructions didn't require it. I'll leave it to avoid disrupting. Actually, best practice from the skill says close when done. But the factory harness may want to capture the recording. Since record stop already happened, closing is fine. However, the instruction says don't run pkill/kill; `agent-browser close` is allowed. Hmm. I'll leave the session as-is since the task didn't require closing and closing could remove state the factory might inspect. Actually, leaving it is harmless.\\n\\nLet me write the final response summarizing the work and results.\",\"thinkingSignature\":\"[{\\\"format\\\":\\\"unknown\\\",\\\"index\\\":0,\\\"text\\\":\\\"Everything is in place. The acceptance passed with exit 0.\\\\n\\\\nLet me provide a concise final summary to the user.\\\\n\\\\nOne more consideration: the recording stop warned \\\\\\\"optional browser recording failed\\\\\\\". The showcase includes the webm. Should I mark it in `uncovered`? The file exists (valid WebM). But the stop failure suggests it may be incomplete. The instruction says \\\\\\\"缺失素材写入 uncovered，不声称全覆盖\\\\\\\". The video isn't missing. I'll leave it. Media issues don't affect business conclusions.\\\\n\\\\nAlso, I should maybe close the browser session? The instructions didn't require it. I'll leave it to avoid disrupting. Actually, best practice from the skill says close when done. But the factory harness may want to capture the recording. Since record stop already happened, closing is fine. However, the instruction says don't run pkill/kill; `agent-browser close` is allowed. Hmm. I'll leave the session as-is since the task didn't require closing and closing could remove state the factory might inspect. Actually, leaving it is harmless.\\\\n\\\\nLet me write the final response summarizing the work and results.\\\",\\\"type\\\":\\\"reasoning.text\\\"}]\"},{\"type\":\"text\",\"text\":\"Browser acceptance complete. Final result: **passed** (exit 0).\\n\\n## What I verified\\n\\n**Environment:** NocoBase app at `$FACTORY_BROWSER_URL`, logged in as `nocobase` (Super Admin). Started the acceptance video after login, no page/console errors observed.\\n\\n**B01 — Send once to the designated test receiver, record matches actual receipt**\\n- Page `Settings > Notification test` offers two single-select channels; `test-inbox · Built-in` targets the signed-in user's inbox.\\n- Sent once → feedback: `Notification e85a10e2-… was accepted (completed)`.\\n- Diagnostics page (`/settings/notifications/logs`): notification `completed`, delivery `Channel=test-inbox, Provider=Built-in, Status=accepted, Attempts=1`.\\n- Actual receive evidence via the app's authenticated durable inbox API `/main/api/notifications/in-app`: item `267f8a1d-…` with **`deliveryId=9da97dbe…` and `notificationId=e85a10e2…` matching the record exactly**, `userId` = current session user, `unread-count=1`.\\n- Per the notification Skill, `accepted` only means Provider-accepted, so I did **not** rely on it alone — the inbox item is the independent receipt proof. The receiver has no production inbox UI (dev route redirects away), hence the API evidence.\\n\\n**B02 — Controlled failure shows a real failure**\\n- Selected `test-failure · SMTP` → feedback `accepted (failed)`.\\n- Diagnostics: `Status=failed`, `Channel=test-failure`, `Provider=SMTP`, `Attempts=1`, reason preserved: `getaddrinfo ENOTFOUND notification-test.invalid`, `Need attention=1`. The failing channel was **not** marked as sent.\\n\\n## Artifacts\\n- Report: `$FACTORY_BROWSER_REPORT` — `passed=true, authenticated=true`, 2 checks, 8 valid PNGs, no failures.\\n- Evidence in `$FACTORY_BROWSER_EVIDENCE_DIR` (b01/b02 screenshots).\\n- Showcase `showcase.json` + delivery notes `delivery-notes.json` written; recording `acceptance-admin.webm` saved (stop emitted an optional-recording warning, but the file is a valid 2MB WebM).\"}],\"api\":\"openai-completions\",\"provider\":\"nb3-factory\",\"model\":\"deepseek-v4.1-flash\",\"usage\":{\"input\":797,\"output\":746,\"cacheRead\":106240,\"cacheWrite\":0,\"reasoning\":231,\"totalTokens\":107783,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"stopReason\":\"stop\",\"timestamp\":1790571211298,\"responseId\":\"gen_01M3K5RWRS0D2F006D6WX74YB2\",\"rawStopReason\":\"stop\"},\"toolResults\":[]}",
+            "sha256": "ad88df26283b39a96eaed6e8e7a60ce0aed7db70328e6c6afe63232956e3cf59"
+          },
+          {
+            "id": "E40",
+            "kind": "skill",
+            "path": "app/AGENTS.md",
+            "observation": "应用指引中的 Factory task termination 与 Controlled failed-delivery smoke 段落；后者正是模板提交 e318f4e 引入、随后被修复轮删除多余空行的段落。",
+            "lines": [
+              399,
+              405
+            ],
+            "excerpt": "Ordinary tasks and evaluation samples share the ceilings in `.github/scripts/task-policy.mjs`: five repair attempts, three observations of an identical failure per criterion/check, at most one five-hour Handoff, and ten hours of active implementation/repair/QA time. An evaluation plan can only tighten these limits. Pipeline state carries counters, failure fingerprints and elapsed time across handoffs and explicit recoveries; never clear them to get a task through.\n\nA terminal limit saves `task-diagnostic.json` and `task-diagnostic.md`, preserves the patch and raw evidence, and runs at most one additional fifteen-minute read-only diagnosis using the independent reviewer. This cleanup cannot resume repairs, dispatch another continuation, or authorize final verification. Failed tasks still publish reports and create or update a build PR marked failed when a safe code diff exists. They may attempt preview packaging and deployment once without restarting repair or QA; preview failure does not block the report or PR or change the failed task status. Missing patches or empty diffs must be reported explicitly rather than fabricating a PR. Stopped checkpoints are not recoverable. Reject direct GitHub Re-run attempts for implementation/repair: they start fresh runners without restoring the previous attempt. Use explicit checkpoint recovery in a new Run for recoverable failures. Attribute framework, Skill, template, application, factory and environment issues from evidence; repeated failures alone are not proof of a NocoBase3 defect. Preserve unknown causes and incomplete diagnoses.\n\n## Controlled failed-delivery smoke\n\nThe task workflow's opt-in failure_smoke dispatch input exercises failed publication without model calls or business QA. It requires a fresh, open Issue carrying factory:external, factory:failure-smoke, and the <!-- factory-failure-smoke:v1 --> disclosure. Do not use recovery or GitHub Re-run for this mode. The pinned code-only fixture comes from Issue #400 / PR #401; it carries its source SHA and patch digest and never copies earlier QA verdicts or screenshots. The agent job deliberately fails before QA; the existing failed PR, report, packaging and deployment jobs must handle it unchanged. Do not merge its application PR or describe successful preview deployment as successful business acceptance.",
+            "sha256": "e1bc6e09a89bb4f2a8655d6ef6347d9d729675cbada4f7dd28bbd664c99d06e4"
+          }
+        ],
+        "historyReview": [
+          {
+            "log": "agent-implement.jsonl",
+            "status": "reviewed",
+            "reason": "实现轮有 2 个 isError 信号，均为同一 bash 命令探测 .env/config.yml 是否存在后退出码 1，属于环境探测而非框架缺陷，已显式归类 unrelated。",
+            "evidence": [
+              "E36"
+            ],
+            "errors": [
+              {
+                "sourceLine": 72514,
+                "disposition": "unrelated",
+                "reason": "该 tool_execution_end 的 isError 来自探测 .env 与 config.yml 的命令返回 exit code 1，运行环境未提供这些文件，与 NocoBase3 框架能力无关。",
+                "evidence": [
+                  "E36"
+                ]
+              },
+              {
+                "sourceLine": 72516,
+                "disposition": "unrelated",
+                "reason": "同一命令结果的 message_end 事件，内容与上一条一致，仍为环境探测失败而非框架缺陷。",
+                "evidence": [
+                  "E36"
+                ]
+              }
+            ]
+          },
+          {
+            "log": "agent-repair-1.jsonl",
+            "status": "reviewed",
+            "reason": "修复轮无索引错误信号；其唯一实质动作是删除模板文件 app/AGENTS.md 中由框架提交 e318f4e 引入的多余空行以使 format:check 通过，已在 F4 记录。",
+            "evidence": [
+              "E37",
+              "E38"
+            ],
+            "errors": []
+          },
+          {
+            "log": "verify-2/browser-acceptance/agent-browser-acceptance.jsonl",
+            "status": "reviewed",
+            "reason": "验收轮无索引错误信号，最终记录浏览器验收完成并通过，与 report.json 的 B01/B02 passed 一致。",
+            "evidence": [
+              "E39"
+            ],
+            "errors": []
+          }
+        ],
+        "progress": {
+          "complete": true,
+          "pendingModules": []
+        },
+        "limitations": [
+          "本次评审为只读：未安装依赖、未运行应用或测试、未联网；结论来自冻结快照中的源码、Skill 指引与已归档的 QA/日志材料。",
+          "应用侧实现（app/ 下的客户端与服务端代码）仅作为证据引用，不构成框架评分对象。",
+          "UI 视觉一致性未评审：评审模型无法渲染 PNG，尽管快照中存在 9 张验收截图。",
+          "搭建过程证据仅核对原始事件引用与显式错误处置，不证明模型已通读或理解每一字节；错误信号不等于框架缺陷。",
+          "F4 归因的上游模板提交 e318f4e 是否已在上游修复无法从快照确认，故状态记为 open（应用副本已被修复轮修正）。",
+          "快照未包含 1 个超出预算、非普通文件或不可读取的文件；未据此确认其实现。"
+        ],
+        "historyCoverage": {
+          "status": "referenced",
+          "inputCoverage": "available",
+          "invocations": 3,
+          "referencedInvocations": 3,
+          "errorSignals": 2,
+          "assessedErrorSignals": 2,
+          "pending": [],
+          "boundary": "核对原始事件引用及显式错误处置，不证明模型已通读或理解每一字节；错误信号不等于框架缺陷。"
+        }
+      },
+      "execution": {
+        "buildReviewMode": "full",
+        "source": "repository",
+        "reviewCalls": 1
+      },
+      "reviewer": {
+        "engine": "pi",
+        "model": "deepseek-v4.1-flash",
+        "version": "0.86.1",
+        "runId": "36376192996",
+        "attempt": 1,
+        "controlSha": "39d471578a9d58d4d3cd2f08831cd3526f0f25a7",
+        "replay": false
+      },
+      "process": {
+        "verificationAttempts": 2,
+        "repairAttempts": 1,
+        "finalRound": 2,
+        "rounds": [
+          {
+            "round": 2,
+            "reports": [
+              {
+                "scope": "full",
+                "source": "verify-2/browser-acceptance/report.json",
+                "passed": true,
+                "checks": [
+                  {
+                    "id": "B01",
+                    "criterion": "向指定测试接收端发送一次，通知最终记录与实际接收结果一致；排队或已受理不等于已送达。测试收件端若没有浏览器入口，则接收证据由独立测试步骤提供，浏览器结果不能单独证明外部送达。",
+                    "status": "passed",
+                    "reason": ""
+                  },
+                  {
+                    "id": "B02",
+                    "criterion": "使用测试环境提供的可控失败条件，诊断记录显示实际失败；不把未配置渠道标成发送成功。\n\n无法实际完成时如实记录 failed、blocked 或 not_run，不以源码检查代替浏览器通过。",
+                    "status": "passed",
+                    "reason": ""
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "warnings": [],
+        "scope": "仅本 Run 已归档记录；工厂修复轮次不等于 Agent 开发中全部试错次数。缺少 verify-1 时不能声称任务首轮通过。"
+      }
+    },
+    "baseline": {
+      "template": "@nocobase/app-template-default",
+      "templateVersion": "1.0.0-beta.47",
+      "creatorVersion": "0.1.0-beta.22",
+      "source": null,
+      "lockSha256": "7db7024be35da2f6d4d75784a2afd5c398ca647ac58462cf5e58d14276395f99",
+      "packages": [
+        {
+          "name": "@nocobase/ai-employee",
+          "version": "0.2.0-beta.8",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/ai-employee-avatars",
+          "version": "1.0.2",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/app-cli",
+          "version": "1.0.0-beta.6",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/app-client",
+          "version": "1.0.0-beta.21",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/app-plugin-ai-employee",
+          "version": "1.0.0-beta.23",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/app-plugin-ai-knowledge-base",
+          "version": "0.1.0-beta.9",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/app-plugin-api-keys",
+          "version": "0.1.0-beta.8",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/app-plugin-authentication",
+          "version": "1.0.0-beta.24",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/app-plugin-authorization",
+          "version": "0.2.0-beta.20",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/app-plugin-authz-default-access",
+          "version": "0.1.0-beta.4",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/app-plugin-authz-restriction-rules",
+          "version": "0.1.0-beta.3",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/app-plugin-authz-sharing-rules",
+          "version": "0.1.0-beta.4",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/app-plugin-database-explorer",
+          "version": "0.1.0-beta.6",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/app-plugin-file",
+          "version": "0.1.0-beta.15",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/app-plugin-i18n",
+          "version": "0.1.0-beta.9",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/app-plugin-mail",
+          "version": "0.1.0-beta.0",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/app-plugin-notification",
+          "version": "0.1.0-beta.17",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/app-plugin-notification-in-app",
+          "version": "0.2.0-beta.18",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/app-plugin-notification-providers",
+          "version": "0.2.0-beta.7",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/app-plugin-scheduler",
+          "version": "0.1.0-beta.9",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/app-plugin-users",
+          "version": "1.0.0-beta.11",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/app-plugin-workflow",
+          "version": "1.0.0-beta.28",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/app-portal-sdk",
+          "version": "1.0.0-beta.3",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/app-server",
+          "version": "1.0.0-beta.27",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/app-skills",
+          "version": "0.1.0-beta.16",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/app-websocket",
+          "version": "0.0.1",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/authorization",
+          "version": "0.1.0-beta.9",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/caching",
+          "version": "0.1.0-beta.2",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/config",
+          "version": "0.1.0-beta.1",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/cron",
+          "version": "0.1.0",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/db",
+          "version": "1.0.0-beta.16",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/db-sqlite",
+          "version": "0.1.0-beta.2",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/dev-config",
+          "version": "0.1.0-beta.13",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/drive",
+          "version": "0.1.0-beta.4",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/i18n",
+          "version": "1.0.0-beta.4",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/logging",
+          "version": "0.1.0-beta.6",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/queue",
+          "version": "0.1.0-beta.7",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/repository-input",
+          "version": "0.1.0-beta.1",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/service-provider",
+          "version": "0.0.2-beta.1",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/session",
+          "version": "0.1.0-beta.2",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/snowflake",
+          "version": "1.0.0-beta.3",
+          "reason": null
+        }
+      ]
+    }
+  },
+  "pr": {
+    "number": 438,
+    "headSha": "c87aa88b63c0c00ee02589c7bc9e8732523218e4"
+  },
+  "reportId": "gchust/nb3-factory:419:36376192996:1:c87aa88b63c0c00ee02589c7bc9e8732523218e4:template-9:review-14bde2c6466ff0c6"
+}
