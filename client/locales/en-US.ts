@@ -95,6 +95,53 @@ const enUS = {
     description:
       'Describe what you need to your AI Agent, then build pages, data models, and business workflows.',
   },
+  materials: {
+    title: 'Materials',
+    description:
+      'Read the company materials you have access to. Only the materials you are allowed to view are listed.',
+    descriptionManager:
+      'Read and edit company materials. As a materials manager you also see manager-only materials.',
+    audience: {
+      all: 'All colleagues',
+      manager: 'Managers only',
+    },
+    slugLabel: 'Reference',
+    edit: 'Edit',
+    editTitle: 'Edit material',
+    editDescription:
+      'The change is visible to everyone who may read this material, and to their next question.',
+    form: {
+      title: 'Title',
+      body: 'Body',
+    },
+    saving: 'Saving…',
+    saveSuccess: 'Material updated',
+    saveFailed: 'Unable to save the material. Please try again.',
+    loadFailed: 'Unable to load materials',
+    loadFailedDescription:
+      'The materials could not be loaded. Check your connection and try again.',
+    retry: 'Retry',
+    empty: 'No materials',
+    emptyDescription: 'There are no materials you can read yet.',
+    askAssistant: 'Ask the assistant',
+    managerScopeNotice:
+      'You are a materials manager: every material is listed, and manager-only materials are marked.',
+    colleagueScopeNotice:
+      'Only the materials you are allowed to view are listed. Anything not shown here is not available to you.',
+  },
+  assistant: {
+    title: 'Materials assistant',
+    description:
+      'Ask about company materials. Answers are grounded in the materials you may read and cite their source.',
+    placeholder: 'Ask about a rule, a contact number or an internal process…',
+    manualLink: 'Read the materials',
+    unavailableTitle: 'The AI service is not available',
+    unavailableDescription:
+      'No AI service is configured for this application, so the assistant cannot answer questions right now. No pre-written answers are shown in its place.',
+    unavailableManualHint: 'You can still read the materials directly.',
+  },
+  'permissionSets.materials.manager': 'Materials manager',
+  'permissionSets.materials.colleague': 'Colleague (materials)',
 
   appearance: {
     title: 'Appearance',
@@ -130,6 +177,8 @@ const enUS = {
   },
   navigation: {
     home: 'Home',
+    materials: 'Materials',
+    assistant: 'Materials assistant',
     open: 'Open navigation',
     close: 'Close navigation',
     expand: 'Expand navigation',

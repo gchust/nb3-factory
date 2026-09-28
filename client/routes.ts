@@ -1,4 +1,4 @@
-import { Home } from 'lucide-react';
+import { BookOpen, Bot, Home } from 'lucide-react';
 import {
   defineAppRoutes,
   defineSettingsRoutes,
@@ -15,6 +15,24 @@ const appRoutes: AppClientRouteContribution = defineAppRoutes([
     name: 'home',
     navigation: { title: 'navigation.home', icon: Home },
     path: '/',
+  },
+  {
+    // Materials and the assistant are available to every signed-in user: who may read which material is decided per
+    // record by the API and by the assistant's search tool, not by which pages a role can open.
+    auth: 'required',
+    authz: 'skip',
+    componentLoader: () => import('./pages/materials/index.js'),
+    name: 'materials',
+    navigation: { title: 'navigation.materials', icon: BookOpen },
+    path: '/materials',
+  },
+  {
+    auth: 'required',
+    authz: 'skip',
+    componentLoader: () => import('./pages/materials-assistant/index.js'),
+    name: 'materials-assistant',
+    navigation: { title: 'navigation.assistant', icon: Bot },
+    path: '/assistant',
   },
   {
     auth: 'guest',

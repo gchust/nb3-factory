@@ -88,6 +88,51 @@ const zhCN: AppResource = {
     title: '开始构建你的应用',
     description: '向 AI 助手描述你的需求，逐步构建页面、数据模型和业务流程。',
   },
+  materials: {
+    title: '公司资料',
+    description: '查看你有权查看的公司资料。这里只列出你被允许查看的资料。',
+    descriptionManager:
+      '查看和修改公司资料。作为资料管理员，你还能看到仅管理员可见的资料。',
+    audience: {
+      all: '全部同事',
+      manager: '仅管理员',
+    },
+    slugLabel: '资料标识',
+    edit: '编辑',
+    editTitle: '编辑资料',
+    editDescription:
+      '修改后，所有有权查看该资料的人以及他们之后提出的问题都会看到新内容。',
+    form: {
+      title: '标题',
+      body: '正文',
+    },
+    saving: '正在保存…',
+    saveSuccess: '资料已更新',
+    saveFailed: '保存资料失败，请重试。',
+    loadFailed: '加载资料失败',
+    loadFailedDescription: '无法加载资料，请检查网络后重试。',
+    retry: '重试',
+    empty: '暂无资料',
+    emptyDescription: '目前没有你可以查看的资料。',
+    askAssistant: '问资料助手',
+    managerScopeNotice:
+      '你是资料管理员：这里列出全部资料，其中仅管理员可见的资料已标注。',
+    colleagueScopeNotice:
+      '这里只列出你有权查看的资料。没有出现在这里的资料，你也无法通过助手得到答案。',
+  },
+  assistant: {
+    title: '资料助手',
+    description:
+      '向资料助手提问公司资料中的内容，回答只依据你有权查看的资料，并注明来源。',
+    placeholder: '例如：蓝鹭设备的报修电话是多少？',
+    manualLink: '直接查看资料',
+    unavailableTitle: 'AI 服务当前不可用',
+    unavailableDescription:
+      '本应用尚未配置可用的 AI 服务，资料助手暂时无法回答问题。这里不会用预先写好的回复冒充回答。',
+    unavailableManualHint: '你仍然可以直接查看资料。',
+  },
+  'permissionSets.materials.manager': '资料管理员',
+  'permissionSets.materials.colleague': '普通同事（资料）',
 
   appearance: {
     title: '外观',
@@ -121,6 +166,8 @@ const zhCN: AppResource = {
   },
   navigation: {
     home: '首页',
+    materials: '公司资料',
+    assistant: '资料助手',
     open: '打开导航',
     close: '关闭导航',
     expand: '展开导航',

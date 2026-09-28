@@ -19,6 +19,10 @@ import {
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import appRuntime from '../../server/runtime.ts';
+import {
+  BUSINESS_LLM_SERVICE_NAME,
+  type ApplicationAIConfig,
+} from '../../server/config/ai.ts';
 
 const templateRootDir = fileURLToPath(new URL('../..', import.meta.url));
 
@@ -121,5 +125,56 @@ describe('application config', () => {
     await runtime.config.reload();
     expect(runtime.config.get('server.port')).toBe(13000);
     expect(runtime.config.get('server.startLog')).toBe(true);
+  });
+
+  it('configures no AI service until the test service environment is present', async () => {
+    const runtime = await resolveStandaloneAppRuntime(appRuntime, {
+      rootDir: templateRootDir,
+      configPath,
+      env: { AUTH_SECRET: 'test-auth-secret-at-least-32-characters' },
+    });
+
+    // Without a model the assistant page reports the service as unavailable,
+    // which is the honest state — it must not invent answers instead.
+    expect(runtime.config.get<ApplicationAIConfig>('ai')!.llmServices).toEqual(
+      [],
+    );
+  });
+
+  it('builds one OpenAI-compatible service from the test service environment', async () => {
+    const runtime = await resolveStandaloneAppRuntime(appRuntime, {
+      rootDir: templateRootDir,
+      configPath,
+      env: {
+        AUTH_SECRET: 'test-auth-secret-at-least-32-characters',
+        FACTORY_BUSINESS_MODEL: 'test-model',
+        FACTORY_BUSINESS_API_KEY: 'test-api-key',
+        FACTORY_BUSINESS_MODEL_ENDPOINT:
+          'https://ai.example.com/v1/chat/completions/',
+      },
+    });
+
+    const ai = runtime.config.get<ApplicationAIConfig>('ai')!;
+    expect(ai.businessService).toEqual({
+      model: 'test-model',
+      apiKey: 'test-api-key',
+      endpoint: 'https://ai.example.com/v1/chat/completions/',
+    });
+    expect(ai.llmServices).toEqual([
+      {
+        name: BUSINESS_LLM_SERVICE_NAME,
+        title: 'Factory test AI service',
+        provider: 'openai-completions',
+        enabled: true,
+        // The provider appends its own path, so the completion suffix the
+        // gateway URL carries is dropped from the stored base URL.
+        options: {
+          apiKey: 'test-api-key',
+          baseURL: 'https://ai.example.com/v1',
+        },
+        enabledModels: [{ label: 'test-model', value: 'test-model' }],
+        overrideEnabledModels: true,
+      },
+    ]);
   });
 });

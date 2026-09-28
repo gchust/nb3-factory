@@ -554,6 +554,33 @@ Two settings decide where the application is reachable:
 
 Configuration is resolved from the file, environment variables, and defaults in that order of precedence.
 
+## Materials assistant
+
+The application ships a read-only materials Q&A assistant. Colleagues ask it questions instead of reading every document; it answers only from the materials the asker is allowed to view, names the material it used, and links back to the materials page so the answer can be checked by hand. It cannot edit materials, create tasks, or send messages, and it does not search the web or accept attachments.
+
+Role is decided per record, not per page. Three sample materials are seeded:
+
+| Slug                             | Audience      |
+| -------------------------------- | ------------- |
+| `blue-heron-repair-hotline`      | everyone      |
+| `blue-heron-inspection-interval` | everyone      |
+| `classified-project-codename`    | managers only |
+
+Two isolated sample accounts are seeded, both with the password `Materials123`:
+
+- `materials.manager` — holds the `materials-manager` Permission Set. Reads and edits every material, including the managers-only one.
+- `materials.colleague` — holds the `materials-colleague` Permission Set. Reads the two shared materials and cannot edit anything.
+
+A material that is invisible on the materials page is invisible to the assistant as well: both the page and the assistant's search tool go through `MaterialsService`, so the visibility rule has one definition. Managers assign the two Permission Sets from the Users page.
+
+The assistant needs an OpenAI-compatible test AI service. It reads three environment variables and configures itself when they are present; with no model it starts normally and the assistant page says the service is unavailable and points at the materials page, rather than showing pre-written answers:
+
+- `FACTORY_BUSINESS_MODEL` — the model name, and the switch that enables the service.
+- `FACTORY_BUSINESS_API_KEY` — the API key for that service. It is never sent to the browser.
+- `FACTORY_BUSINESS_MODEL_ENDPOINT` — the service base URL, e.g. `https://ai.example.com/v1`. Defaults to the provider's own endpoint.
+
+Only use a test service and fictional materials; do not point these at a customer's data.
+
 ## Testing
 
 Tests live in `tests/`, never beside the source they cover. Put logic and integration tests under `tests/logic/` and component tests under `tests/components/`. Tests needing a real server, real authentication, or a real database belong in `e2e/`.
