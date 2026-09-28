@@ -71,7 +71,8 @@ cpSync(path.join(control, '.npmrc'), path.join(workspace, '.npmrc'));
 writeFileSync(path.join(workspace, 'README.MD'), readme);
 writeFileSync(path.join(workspace, 'eslint.config.js'), factoryEslint);
 // Keep the generated AGENTS.md and .agents tree untouched. Factory task rules
-// live in .github/prompts; skills sync uses only the newly installed packages.
+// live in .github/prompts and factory development rules in .github/AGENTS.md;
+// skills sync uses only the newly installed packages.
 // Generated skills and root configuration belong to the refresh baseline.
 const ignorePath = path.join(workspace, '.gitignore');
 const ignore = read(workspace, '.gitignore');
