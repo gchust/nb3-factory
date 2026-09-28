@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "inputHash": "ba2d47aef5cb29a2ee643386a691e64d2950e59565b37dc5624343c764c2afd5",
+  "inputHash": "d0f1037a2ccff207ac7f716fb548c400f817a245af478d51286ac8d7fa6d62df",
   "findings": [
     {
       "id": "408:36329180371:1:F2",
@@ -1803,6 +1803,192 @@
         }
       ],
       "fingerprint": "4ff0e440a3292c4f5afb73dc62fae0bef870cb63feae3853889b488babe2ae2e"
+    },
+    {
+      "id": "418:36376190523:1:F3",
+      "report": "418:36376190523:1",
+      "issue": 418,
+      "taskTitle": "内部资料只读问答助手",
+      "appVersion": "1.0.0-beta.47",
+      "appTemplate": "@nocobase/app-template-default",
+      "finding": {
+        "id": "F3",
+        "kind": "improvement",
+        "owner": "documentation",
+        "severity": "minor",
+        "confidence": "confirmed",
+        "status": "open",
+        "title": "员工级 skillSettings.enabledTools 缺少文档化的注册期写入路径",
+        "detail": "capabilities.md 把 enabledTools/skillSettings 归为“administered in AI settings”并规定 Do not put them in the definition，server-runs.md 的注册示例只调用 registerEmployee(orderDesk)，而公开的 AIEmployeeManager 接口没有任何接收 skillSettings 的方法。需要把只读边界固化在代码里的应用，只能自行发现 getEmployee+upsertEmployee 并理解其合并语义（本案例即如此）。",
+        "impact": "Agent 为达到一个明确需求（代码保证只读）需要摸索未文档化的组合，增加了出错与误解“管理员可在 UI 放宽边界”的风险。",
+        "suggestedChange": "在 server-runs.md 增加一节“在注册期设置员工级工具选择”，说明用 getEmployee+upsertEmployee 写 enabledTools 及其与管理员覆盖的关系；或在 AIEmployeeManager 上提供带 sourceSettings/skillSettings 的公开注册参数。",
+        "diagnosis": {
+          "category": "guidance-gap",
+          "trigger": "应用需要在代码中声明员工只能使用一个只读工具，并按 server-runs.md 的注册流程接入。",
+          "expected": "指引给出一个受支持的注册期 API 或明确说明用 getEmployee+upsertEmployee 写 enabledTools 的推荐写法。",
+          "actual": "指引只把该字段指向 AI 设置，公开接口也没有相应参数，Agent 必须自行推断组合方式。",
+          "workaround": "应用通过 getEmployee 读取当前记录后再 upsertEmployee 写入 skillSettings.enabledTools 达成目标。",
+          "acceptance": "server-runs.md 给出可复制示例，且示例在重启后仍保持 allowlist；Skill 的自动校验或人工评审能发现该缺项。"
+        },
+        "evidence": [
+          "E6",
+          "E23",
+          "E24",
+          "E33",
+          "E1"
+        ]
+      },
+      "targets": [
+        "@nocobase/ai-employee",
+        "app/.agents/skills/nocobase-app-plugin-ai-employee"
+      ],
+      "paths": [
+        ".agents/skills/nocobase-app-plugin-ai-employee/references/capabilities.md",
+        ".agents/skills/nocobase-app-plugin-ai-employee/references/server-runs.md",
+        "packages/@nocobase/ai-employee/dist/manager/ai-employee/default.js",
+        "packages/@nocobase/ai-employee/dist/manager/ai-employee/types.d.ts"
+      ],
+      "evidence": [
+        {
+          "id": "E6",
+          "kind": "code",
+          "path": "packages/@nocobase/ai-employee/dist/manager/ai-employee/types.d.ts",
+          "observation": "公开的 AIEmployeeManager 接口只有 getEmployee/listEmployees/registerEmployee/switchRepository/upsertEmployee/deleteEmployee，没有任何接收 skillSettings 的注册方法。",
+          "lines": [
+            37,
+            44
+          ],
+          "excerpt": "export interface AIEmployeeManager {\n    getEmployee(username: string): Promise<AIEmployeeEntity | undefined>;\n    listEmployees(filter?: AIEmployeeFilter): Promise<AIEmployeeEntity[]>;\n    registerEmployee(options: AIEmployeeOptions): Promise<void>;\n    switchRepository(repository: AIEmployeeRepository): Promise<void>;\n    upsertEmployee(entry: AIEmployeeEntity): Promise<AIEmployeeEntity>;\n    deleteEmployee(username: string): Promise<void>;\n}",
+          "sha256": "aafa63f27504df799d3137efb79845778afb3246bd46025bda9d77d7610fc5bb"
+        },
+        {
+          "id": "E23",
+          "kind": "skill",
+          "path": "app/.agents/skills/nocobase-app-plugin-ai-employee/references/server-runs.md",
+          "observation": "指引明确 App 不创建 AIManager，而是子类 AIResourceRegistrar 聚合员工/工具，并在 App ServiceProvider.boot 中解析 aiManagerToken 调用 registerAIResources；示例只调用 registerEmployee(orderDesk)。",
+          "lines": [
+            21,
+            58
+          ],
+          "excerpt": "The App does not create an `AIManager`. The plugin already made one; the App hands it resources. Do not call `createAIManager()` for ordinary App work.\n\n**1. Aggregate with static imports** in `server/ai/index.ts`, subclassing the public `AIResourceRegistrar`:\n\n```ts\nimport { AIResourceRegistrar } from '@nocobase/app-plugin-ai-employee/server';\nimport type { AIEmployeeManager, ToolsManager } from '@nocobase/ai-employee';\nimport orderDesk from './employees/order-desk/index.js';\nimport createOrder from './tools/create-order.js';\n\nexport default class AppAIResources extends AIResourceRegistrar {\n  protected override async registerAIEmployees(\n    manager: AIEmployeeManager,\n  ): Promise<void> {\n    await manager.registerEmployee(orderDesk);\n  }\n\n  protected override async registerTools(manager: ToolsManager): Promise<void> {\n    await manager.registerTools(createOrder);\n  }\n}\n```\n\n**2. Call it from an App `ServiceProvider.boot()`**, resolving the original `aiManagerToken`:\n\n```ts\nimport type { Application } from '@nocobase/app-server/application';\nimport { aiManagerToken } from '@nocobase/app-plugin-ai-employee/server';\nimport { ServiceProvider } from '@nocobase/service-provider';\nimport AppAIResources from '../ai/index.js';\n\nexport default class AIResourcesProvider extends ServiceProvider<Application> {\n  public readonly name = 'app/ai-resources';\n\n  public override async boot(): Promise<void> {\n    const ai = this.app.container.resolve(aiManagerToken);\n    await new AppAIResources({ source: 'application' }).registerAIResources(ai);\n  }",
+          "sha256": "e1ac6c94358b466a04ec7977507d3782ef050794dc1c07cb90bee40e7676e1bf"
+        },
+        {
+          "id": "E24",
+          "kind": "skill",
+          "path": "app/.agents/skills/nocobase-app-plugin-ai-employee/references/capabilities.md",
+          "observation": "指引说明 tools[].name 必须与注册工具名精确一致；持久化员工记录携带 enabled/builtIn/skillSettings 等，those are administered in AI settings、Do not put them in the definition。",
+          "lines": [
+            76,
+            80
+          ],
+          "excerpt": "`autoCall` is narrower than it reads, and in one case it does the opposite of what it sounds like. The runtime consults it only for `CUSTOM` tools; for `SPECIFIED` and `GENERAL` it is ignored entirely and automatic calling follows `defaultPermission === 'ALLOW'`. On a `CUSTOM` tool listed here, `autoCall` replaces `defaultPermission` altogether: `autoCall: true` makes the call automatic, overriding an `ASK` default rather than respecting it, and leaving `autoCall` out makes it ask, even when the tool declares `ALLOW`. So a `CUSTOM` tool listed in `tools` states `autoCall` either way. A value the definition sets is also written to the employee record the first time the employee is registered, and a stored `true` or `false` wins over whatever the definition says afterwards — once one is stored, changing `autoCall` in code does not change a deployed employee; the administrator changes it in AI settings.\n\n`skills` and `tools` are the employee's declared capability set, but listing a tool is not always enough to reach it: a tool named by any registered Skill stays behind that Skill until the conversation loads it. Read [How Skills and Tools relate](#how-skills-and-tools-relate) before deciding which of the two lists a capability belongs in — the choice is not cosmetic, and the failure mode is a tool that never activates and never complains.\n\nThe persisted employee record carries more than the definition does — `enabled`, `builtIn`, `deprecated`, `about`, `defaultPrompt`, `skillSettings`, `knowledgeBase`, model settings. Those are administered in AI settings. Do not put them in the definition.",
+          "sha256": "08cac59daba34f8aa8db2a68def3ec15f7bf2cc665d546b7607a169e75254ad3"
+        },
+        {
+          "id": "E33",
+          "kind": "code",
+          "path": "app/server/ai/index.ts",
+          "observation": "应用 AppAIResources 继承 AIResourceRegistrar（source: nb3-factory），注册一个工具并逐个 registerEmployee，再 getEmployee + upsertEmployee 把 skillSettings.enabledTools 收窄为 [search-materials]、enabledSkills 置空。",
+          "lines": [
+            24,
+            55
+          ],
+          "excerpt": "export class AppAIResources extends AIResourceRegistrar {\n  constructor(options: AIResourceRegistrarOptions = {}) {\n    super({ source: 'nb3-factory', ...options });\n  }\n\n  protected async registerTools(toolsManager: ToolsManager): Promise<void> {\n    for (const tool of tools) {\n      await toolsManager.registerTools(tool);\n    }\n  }\n\n  protected async registerAIEmployees(\n    employeeManager: AIEmployeeManager,\n  ): Promise<void> {\n    for (const employee of employees) {\n      await employeeManager.registerEmployee(employee);\n\n      const current = await employeeManager.getEmployee(employee.username);\n      if (!current) {\n        continue;\n      }\n\n      await employeeManager.upsertEmployee({\n        ...current,\n        skillSettings: {\n          ...current.skillSettings,\n          enabledSkills: [],\n          enabledTools: [SEARCH_MATERIALS_TOOL],\n        },\n      });\n    }\n  }",
+          "sha256": "80c93b2b01524aea86e731d0a687a7d579ad10995cdc9e60ed52f00176c9cc9f"
+        },
+        {
+          "id": "E1",
+          "kind": "code",
+          "path": "packages/@nocobase/ai-employee/dist/manager/ai-employee/default.js",
+          "observation": "AIEmployeeManager 的实现：registerEmployee 委托 registerEmployeeInRepository；upsertEmployee 校验 skillSettings.enabledSkills/enabledTools 必须是字符串数组或 null 并去重；registerEmployeeInRepository 用 stored current.skillSettings[key] 覆盖 sourceSettings，注释说明注册只刷新旧数组、绝不覆盖管理员覆盖值。",
+          "lines": [
+            32,
+            94
+          ],
+          "excerpt": "    async registerEmployee(options) {\n        await this.registerEmployeeInRepository(this.repository, options);\n    }\n    async switchRepository(repository) {\n        if (repository === this.repository)\n            return;\n        const employees = await this.repository.find({\n            sort: ['sort', 'username'],\n        });\n        for (const employee of employees) {\n            await this.registerEmployeeInRepository(repository, this.toEmployeeOptions(employee), employee.skillSettings);\n        }\n        this.repository = repository;\n    }\n    async upsertEmployee(entry) {\n        const current = await this.repository.findOne({\n            filter: { username: entry.username },\n        });\n        const values = {\n            ...entry,\n            skillSettings: { ...entry.skillSettings },\n        };\n        for (const key of ['enabledSkills', 'enabledTools']) {\n            const selection = entry.skillSettings[key] === undefined\n                ? current?.skillSettings?.[key]\n                : entry.skillSettings[key];\n            if (selection != null &&\n                (!Array.isArray(selection) ||\n                    !selection.every((name) => typeof name === 'string' && name.trim().length > 0))) {\n                throw new TypeError(`skillSettings.${key} must be an array of non-empty strings or null`);\n            }\n            if (selection !== undefined) {\n                values.skillSettings[key] =\n                    selection === null ? null : [...new Set(selection)];\n            }\n        }\n        if (current) {\n            await this.repository.update({\n                filter: { username: entry.username },\n                values,\n            });\n            return { ...current, ...values };\n        }\n        return this.repository.create({ values });\n    }\n    async deleteEmployee(username) {\n        await this.repository.destroy({ filter: { username } });\n    }\n    async registerEmployeeInRepository(repository, options, sourceSettings) {\n        const current = (await repository.findOne({\n            filter: { username: options.username },\n        })) ?? undefined;\n        const value = this.toBuiltInEmployee(options, current);\n        // Registration refreshes legacy arrays, never an administrator's override.\n        for (const key of ['enabledSkills', 'enabledTools']) {\n            const selection = current?.skillSettings?.[key] !== undefined\n                ? current.skillSettings[key]\n                : sourceSettings?.[key];\n            if (selection !== undefined) {\n                value.skillSettings[key] =\n                    selection === null ? null : [...new Set(selection)];\n            }\n        }",
+          "sha256": "0083929220c5eff3c0a2016f8434a789b8633e8d42adebcbe99969456ce9d450"
+        }
+      ],
+      "fingerprint": "83e24b733424d0810f5ae64b6ef5a7dbeba831903344414756845d195f68f1c2"
+    },
+    {
+      "id": "418:36376190523:1:F4",
+      "report": "418:36376190523:1",
+      "issue": 418,
+      "taskTitle": "内部资料只读问答助手",
+      "appVersion": "1.0.0-beta.47",
+      "appTemplate": "@nocobase/app-template-default",
+      "finding": {
+        "id": "F4",
+        "kind": "issue",
+        "owner": "template",
+        "severity": "minor",
+        "confidence": "confirmed",
+        "status": "open",
+        "title": "生成的基线 AGENTS.md 曾违反自身 Prettier 检查，迫使一次修复轮",
+        "detail": "修复轮原始日志显示 AGENTS.md 在 403 行前多一个空行，prettier 将其删除后 diff 输出 403d402 <；retro 把 rootCause 归到模板提交 e318f4e，并标注 category=template、mechanizable=true。冻结快照中的 AGENTS.md 已被修复为单空行，但修复只作用于这个生成的应用，模板侧根因没有被本次材料证明已消除。",
+        "impact": "每个在该基线生成的应用都会在 format:check 上失败一次，消耗一次修复轮并降低对“基线本身可运行/可检查”的预期。",
+        "suggestedChange": "在模板仓库运行 Prettier 修正 AGENTS.md 源文件，并为模板自身加格式检查，避免生成基线再次继承。",
+        "diagnosis": {
+          "category": "usability-improvement",
+          "trigger": "在一个由模板生成的新应用上运行 prettier . --check。",
+          "expected": "模板自带的 AGENTS.md 应通过该模板自己的格式检查。",
+          "actual": "AGENTS.md 标题前存在多余空行，prettier 报 [warn] AGENTS.md 并以 exit 1 失败。",
+          "workaround": "Agent 对应用副本运行 prettier --write 去掉空行（逐应用修复，不改模板）。",
+          "acceptance": "模板仓库的 AGENTS.md 在 prettier --check 下通过，且有检查防止再次引入。"
+        },
+        "evidence": [
+          "E31",
+          "E43",
+          "E59"
+        ]
+      },
+      "targets": [
+        "app/AGENTS.md"
+      ],
+      "paths": [
+        "AGENTS.md"
+      ],
+      "evidence": [
+        {
+          "id": "E31",
+          "kind": "skill",
+          "path": "app/AGENTS.md",
+          "observation": "冻结基线中的两个标题（Factory task termination 与 Controlled failed-delivery smoke）之间只有一行空行，文件当前符合 Prettier；修复轮日志证明基线原稿此处多一行空行。",
+          "lines": [
+            397,
+            403
+          ],
+          "excerpt": "## Factory task termination\n\nOrdinary tasks and evaluation samples share the ceilings in `.github/scripts/task-policy.mjs`: five repair attempts, three observations of an identical failure per criterion/check, at most one five-hour Handoff, and ten hours of active implementation/repair/QA time. An evaluation plan can only tighten these limits. Pipeline state carries counters, failure fingerprints and elapsed time across handoffs and explicit recoveries; never clear them to get a task through.\n\nA terminal limit saves `task-diagnostic.json` and `task-diagnostic.md`, preserves the patch and raw evidence, and runs at most one additional fifteen-minute read-only diagnosis using the independent reviewer. This cleanup cannot resume repairs, dispatch another continuation, or authorize final verification. Failed tasks still publish reports and create or update a build PR marked failed when a safe code diff exists. They may attempt preview packaging and deployment once without restarting repair or QA; preview failure does not block the report or PR or change the failed task status. Missing patches or empty diffs must be reported explicitly rather than fabricating a PR. Stopped checkpoints are not recoverable. Reject direct GitHub Re-run attempts for implementation/repair: they start fresh runners without restoring the previous attempt. Use explicit checkpoint recovery in a new Run for recoverable failures. Attribute framework, Skill, template, application, factory and environment issues from evidence; repeated failures alone are not proof of a NocoBase3 defect. Preserve unknown causes and incomplete diagnoses.\n\n## Controlled failed-delivery smoke",
+          "sha256": "e1bc6e09a89bb4f2a8655d6ef6347d9d729675cbada4f7dd28bbd664c99d06e4"
+        },
+        {
+          "id": "E43",
+          "kind": "qa",
+          "path": "artifacts/retro.json",
+          "observation": "retro 记录唯一 blocker 是 template 提供的 AGENTS.md 两个连续空行导致工厂 format:check 失败，rootCause 指向模板提交 e318f4e，resolution 是运行 Prettier 删除多余空行；improvements 归因 category=template 且 mechanizable=true。",
+          "lines": [
+            3,
+            22
+          ],
+          "excerpt": "  \"summary\": \"Repair round 1: the only observed failure was the factory format:check failing on AGENTS.md. The application feature code (materials + read-only assistant) was already formatted, linted and passing its focused test; the stray blank line in the template-shipped AGENTS.md was the sole blocker.\",\n  \"blockers\": [\n    {\n      \"phase\": \"format:check\",\n      \"title\": \"Prettier rejects AGENTS.md shipped with the task template\",\n      \"symptom\": \"`prettier . --check '!.github/**'` exits 1 with `[warn] AGENTS.md` even though the task changed no file under AGENTS.md and `format:auto` exited 0.\",\n      \"rootCause\": \"AGENTS.md in the generated application baseline contains two consecutive blank lines between the \\\"Factory task termination\\\" paragraph and the \\\"## Controlled failed-delivery smoke\\\" heading. Prettier collapses this to one blank line. The blank line was introduced by the base-branch template commit e318f4e (\\\"test: add opt-in controlled failed delivery smoke (#404)\\\"), which added the section with an extra newline, so any task on this baseline would fail format:check regardless of its own changes.\",\n      \"resolution\": \"Removed the extra blank line in AGENTS.md by running Prettier on the file. The factory command `prettier . --check '!.github/**'` now reports all matched files conform. No verification was weakened: .prettierignore and the ignored .github tree are unchanged.\",\n      \"status\": \"resolved\"\n    }\n  ],\n  \"improvements\": [\n    {\n      \"category\": \"template\",\n      \"title\": \"Template AGENTS.md shipped with a Prettier violation\",\n      \"detail\": \"Commit e318f4e appended the controlled failed-delivery smoke section to AGENTS.md with two blank lines before its heading, which fails the template's own format:check on every freshly generated application until an agent edits AGENTS.md. The template's committed AGENTS.md should be Prettier-clean so generated baselines do not inherit this failure.\",\n      \"suggestedChange\": \"Run Prettier on the template AGENTS.md before committing template section changes (or add a formatting check on the template itself), and fix the source template so the extra blank line is removed at the template level rather than per generated application.\",\n      \"mechanizable\": true\n    }\n  ]",
+          "sha256": "a10f174a43048d557f37b6a717ea597837c141d204f946ca1ecb7b87e5059a98"
+        },
+        {
+          "id": "E59",
+          "kind": "log",
+          "path": "artifacts/agent-history/agent-repair-1.jsonl/part-0001.txt",
+          "observation": "原始事件：`git show HEAD:AGENTS.md | prettier --check` exit 0，而 `prettier AGENTS.md --write` 后 `diff` 输出 403d402 <（删除一个空行）并 exit 1，证明基线 AGENTS.md 在 403 行前多一个空行。",
+          "lines": [
+            858,
+            868
+          ],
+          "excerpt": "{\"type\":\"tool_execution_update\",\"toolCallId\":\"call_00_8SvwM4h3VTD0KIhXrpLI7602\",\"toolName\":\"bash\",\"args\":{\"command\":\"cd /home/runner/work/nb3-factory/nb3-factory/workspace && git show HEAD:AGENTS.md | pnpm exec prettier --stdin-filepath AGENTS.md --check 2>&1 | head; echo \\\"exit=$?\\\"\",\"timeout\":120},\"partialResult\":{\"content\":[{\"type\":\"text\",\"text\":\"(stdin)\\n\"}],\"details\":{}}}\n{\"type\":\"tool_execution_update\",\"toolCallId\":\"call_00_8SvwM4h3VTD0KIhXrpLI7602\",\"toolName\":\"bash\",\"args\":{\"command\":\"cd /home/runner/work/nb3-factory/nb3-factory/workspace && git show HEAD:AGENTS.md | pnpm exec prettier --stdin-filepath AGENTS.md --check 2>&1 | head; echo \\\"exit=$?\\\"\",\"timeout\":120},\"partialResult\":{\"content\":[{\"type\":\"text\",\"text\":\"(stdin)\\nexit=0\\n\"}],\"details\":{}}}\n{\"type\":\"tool_execution_end\",\"toolCallId\":\"call_00_8SvwM4h3VTD0KIhXrpLI7602\",\"toolName\":\"bash\",\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"(stdin)\\nexit=0\\n\"}]},\"isError\":false}\n{\"type\":\"tool_execution_update\",\"toolCallId\":\"call_01_8GNU8zjXLydsCWlJY1ci1909\",\"toolName\":\"bash\",\"args\":{\"command\":\"cd /home/runner/work/nb3-factory/nb3-factory/workspace && cp AGENTS.md /tmp/agents_orig.md && pnpm exec prettier AGENTS.md --write >/dev/null 2>&1 && diff /tmp/agents_orig.md AGENTS.md\",\"timeout\":120},\"partialResult\":{\"content\":[{\"type\":\"text\",\"text\":\"403d402\\n< \\n\"}],\"details\":{}}}\n{\"type\":\"tool_execution_end\",\"toolCallId\":\"call_01_8GNU8zjXLydsCWlJY1ci1909\",\"toolName\":\"bash\",\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"403d402\\n< \\n\\n\\nCommand exited with code 1\"}],\"details\":{}},\"isError\":true}\n{\"type\":\"message_start\",\"message\":{\"role\":\"toolResult\",\"toolCallId\":\"call_00_8SvwM4h3VTD0KIhXrpLI7602\",\"toolName\":\"bash\",\"content\":[{\"type\":\"text\",\"text\":\"(stdin)\\nexit=0\\n\"}],\"isError\":false,\"timestamp\":1790572295864}}\n{\"type\":\"message_end\",\"message\":{\"role\":\"toolResult\",\"toolCallId\":\"call_00_8SvwM4h3VTD0KIhXrpLI7602\",\"toolName\":\"bash\",\"content\":[{\"type\":\"text\",\"text\":\"(stdin)\\nexit=0\\n\"}],\"isError\":false,\"timestamp\":1790572295864}}\n{\"type\":\"message_start\",\"message\":{\"role\":\"toolResult\",\"toolCallId\":\"call_01_8GNU8zjXLydsCWlJY1ci1909\",\"toolName\":\"bash\",\"content\":[{\"type\":\"text\",\"text\":\"403d402\\n< \\n\\n\\nCommand exited with code 1\"}],\"details\":{},\"isError\":true,\"timestamp\":1790572295864}}\n{\"type\":\"message_end\",\"message\":{\"role\":\"toolResult\",\"toolCallId\":\"call_01_8GNU8zjXLydsCWlJY1ci1909\",\"toolName\":\"bash\",\"content\":[{\"type\":\"text\",\"text\":\"403d402\\n< \\n\\n\\nCommand exited with code 1\"}],\"details\":{},\"isError\":true,\"timestamp\":1790572295864}}\n{\"type\":\"turn_end\",\"message\":{\"role\":\"assistant\",\"content\":[{\"type\":\"thinking\",\"thinking\":\"AGENTS.md is tracked and unchanged from HEAD, yet prettier complains. That's odd — surely CI was passing before. Wait, maybe the format check is run on the working tree, and AGENTS.md was modified by the factory to inject project instructions? Let me check `git diff HEAD -- AGENTS.md` — it was empty. Hmm.\\n\\nWait, maybe the file mtime changed but content same. Let's check prettier on the HEAD version.\\n\\nActually, maybe AGENTS.md is generated at task time by the factory (injected), and git status doesn't mark it because... no, if content differs it'd show. Unless the working tree AGENTS.md is what's committed in HEAD. So HEAD already fails prettier? That seems weird for a passing main branch. Let me check with git show.\",\"thinkingSignature\":\"[{\\\"format\\\":\\\"unknown\\\",\\\"index\\\":0,\\\"text\\\":\\\"AGENTS.md is tracked and unchanged from HEAD, yet prettier complains. That's odd — surely CI was passing before. Wait, maybe the format check is run on the working tree, and AGENTS.md was modified by the factory to inject project instructions? Let me check `git diff HEAD -- AGENTS.md` — it was empty. Hmm.\\\\n\\\\nWait, maybe the file mtime changed but content same. Let's check prettier on the HEAD version.\\\\n\\\\nActually, maybe AGENTS.md is generated at task time by the factory (injected), and git status doesn't mark it because... no, if content differs it'd show. Unless the working tree AGENTS.md is what's committed in HEAD. So HEAD already fails prettier? That seems weird for a passing main branch. Let me check with git show.\\\",\\\"type\\\":\\\"reasoning.text\\\"}]\"},{\"type\":\"toolCall\",\"id\":\"call_00_8SvwM4h3VTD0KIhXrpLI7602\",\"name\":\"bash\",\"arguments\":{\"command\":\"cd /home/runner/work/nb3-factory/nb3-factory/workspace && git show HEAD:AGENTS.md | pnpm exec prettier --stdin-filepath AGENTS.md --check 2>&1 | head; echo \\\"exit=$?\\\"\",\"timeout\":120}},{\"type\":\"toolCall\",\"id\":\"call_01_8GNU8zjXLydsCWlJY1ci1909\",\"name\":\"bash\",\"arguments\":{\"command\":\"cd /home/runner/work/nb3-factory/nb3-factory/workspace && cp AGENTS.md /tmp/agents_orig.md && pnpm exec prettier AGENTS.md --write >/dev/null 2>&1 && diff /tmp/agents_orig.md AGENTS.md\",\"timeout\":120}}],\"api\":\"openai-completions\",\"provider\":\"nb3-factory\",\"model\":\"deepseek-v4.1-flash\",\"usage\":{\"input\":441,\"output\":380,\"cacheRead\":21760,\"cacheWrite\":0,\"reasoning\":167,\"totalTokens\":22581,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"stopReason\":\"toolUse\",\"timestamp\":1790572290807,\"responseId\":\"gen_01M3K6ST91W15K4R8BWXC8T8BT\",\"rawStopReason\":\"tool_calls\"},\"toolResults\":[{\"role\":\"toolResult\",\"toolCallId\":\"call_00_8SvwM4h3VTD0KIhXrpLI7602\",\"toolName\":\"bash\",\"content\":[{\"type\":\"text\",\"text\":\"(stdin)\\nexit=0\\n\"}],\"isError\":false,\"timestamp\":1790572295864},{\"role\":\"toolResult\",\"toolCallId\":\"call_01_8GNU8zjXLydsCWlJY1ci1909\",\"toolName\":\"bash\",\"content\":[{\"type\":\"text\",\"text\":\"403d402\\n< \\n\\n\\nCommand exited with code 1\"}],\"details\":{},\"isError\":true,\"timestamp\":1790572295864}]}\n{\"type\":\"turn_start\"}",
+          "sha256": "38dcb5f83270b70ed54dcb228422fb234dc1d205c7c7def87a18f42f539e5b94"
+        }
+      ],
+      "fingerprint": "522e14f39990d4e09f1e756df2c70cc0922ea16a2a7b908ab92b6508cf033968"
     },
     {
       "id": "419:36376192996:1:F4",
