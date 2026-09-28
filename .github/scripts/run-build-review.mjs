@@ -1,9 +1,12 @@
 import { Buffer } from 'node:buffer';
 import { normalizeAgentEnv } from './agent-configuration.mjs';
-// One bounded, fresh reviewer invocation over a disposable copy of the sealed
-// application. It cannot change the patch that verify-final/publish consume.
+// One bounded review over a disposable copy of the sealed application, rerun
+// on the same copy when a call fails. It cannot change the patch that
+// verify-final/publish consume.
 import { execFileSync } from 'node:child_process';
 import {
+  appendFileSync,
+  chmodSync,
   existsSync,
   lstatSync,
   mkdirSync,
@@ -16,6 +19,7 @@ import {
 } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { setTimeout as sleep } from 'node:timers/promises';
 import { fileURLToPath } from 'node:url';
 import {
   collectReviewProcess,
@@ -25,7 +29,10 @@ import {
   safeRelative,
   reviewArtifactHash,
 } from './build-review.mjs';
-import { finalizeAssessment } from './check-review-draft.mjs';
+import {
+  assertCapturedInputs,
+  finalizeAssessment,
+} from './check-review-draft.mjs';
 export {
   finalizeAssessment,
   materializeEvidence,
@@ -41,6 +48,13 @@ import { resolveBuildReviewMode } from './factory-lib.mjs';
 import { captureReviewHistory, historyFingerprint } from './review-history.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
+// Default and maximum budget of one review, including its reruns.
+export const REVIEW_TIMEOUT_SECONDS = 3600;
+// A rerun that could not even re-read its draft and save a module is not made.
+const MIN_RETRY_SECONDS = 300;
+// Keeps a call's error readable in a limitation, which is capped at 2000.
+const brief = (message) =>
+  message.length > 400 ? `${message.slice(0, 400)}…` : message;
 const MAX_BYTES = 48 * 1024 * 1024;
 const MAX_FILE = 1024 * 1024;
 const blocked = (relative) =>
@@ -70,6 +84,20 @@ const save = (file, value) => {
   mkdirSync(path.dirname(file), { recursive: true });
   writeFileSync(file, `${JSON.stringify(value, null, 2)}\n`, { mode: 0o600 });
 };
+// A reviewer may leave read-only directories behind; open them and retry.
+function forceRemove(target) {
+  const open = (entry) => {
+    if (!lstatSync(entry, { throwIfNoEntry: false })?.isDirectory()) return;
+    chmodSync(entry, 0o700);
+    for (const name of readdirSync(entry)) open(path.join(entry, name));
+  };
+  try {
+    rmSync(target, { recursive: true, force: true });
+  } catch {
+    open(target);
+    rmSync(target, { recursive: true, force: true });
+  }
+}
 
 export function createReviewSnapshot(
   workspace,
@@ -294,9 +322,19 @@ export async function runBuildReview(
       report.reason = '本轮已明确关闭独立评审；只展示流水线事实。';
       return report;
     }
-    const requested = Number(env.FACTORY_BUILD_REVIEW_TIMEOUT_SECONDS || 900);
-    if (!Number.isInteger(requested) || requested < 30 || requested > 1800)
-      throw new Error('Review timeout must be 30–1800 seconds');
+    // One budget for the whole review, retries included. A stop-condition
+    // diagnosis stays within its own fifteen minutes below.
+    const requested = Number(
+      env.FACTORY_BUILD_REVIEW_TIMEOUT_SECONDS || REVIEW_TIMEOUT_SECONDS,
+    );
+    if (
+      !Number.isInteger(requested) ||
+      requested < 30 ||
+      requested > REVIEW_TIMEOUT_SECONDS
+    )
+      throw new Error(
+        `Review timeout must be 30–${REVIEW_TIMEOUT_SECONDS} seconds`,
+      );
     const deadline = diagnosing
       ? Math.min(
           Math.ceil(Date.now() / 1000) + 900,
@@ -332,6 +370,10 @@ export async function runBuildReview(
         'FACTORY_BUILD_REVIEW_IDLE_TIMEOUT_SECONDS must be 1–1800 seconds',
       );
     const idleTimeoutSeconds = Math.min(requestedIdle, remaining);
+    // The budget also covers building the snapshot, so the review never runs
+    // past the runner deadline or the Actions step allowance.
+    const endsAt = Date.now() + remaining * 1_000;
+    const secondsLeft = () => Math.floor((endsAt - Date.now()) / 1_000);
     snapshot = mkdtempSync(path.join(os.tmpdir(), 'factory-build-review-'));
     const captured = createReviewSnapshot(
       workspace,
@@ -381,6 +423,11 @@ export async function runBuildReview(
           .map((line) => `app/${line.slice(6)}`),
       ),
     ].filter((file) => captured.files.some((item) => item.path === file));
+    const firstBudget = secondsLeft();
+    if (firstBudget < 30) {
+      report.reason = 'Runner 剩余预算不足，未额外调用评审模型。';
+      return report;
+    }
     const input = {
       rubricVersion,
       basis,
@@ -396,7 +443,7 @@ export async function runBuildReview(
         count: captured.files.length,
       },
       omittedCount: captured.omitted.length,
-      budgetSeconds: remaining,
+      budgetSeconds: firstBudget,
     };
     basis.inputHash = digest(JSON.stringify(input));
     save(path.join(snapshot, 'review-input.json'), input);
@@ -418,38 +465,55 @@ export async function runBuildReview(
     });
     // Persist the compact input/provenance, not the entire package catalog in the prompt.
     save(path.join(artifacts, 'build-review-input.json'), input);
-    // The snapshot root has no application instructions or reused agent session.
-    writeFileSync(
-      path.join(snapshot, 'AGENTS.md'),
-      'Read-only assessment. Follow review-prompt.md. Do not build, repair, install, publish, or run application code. Update assessment.json atomically via assessment.tmp.json.\n',
-    );
-    // A local, model-free check gives feedback before the same invocation ends.
-    // The trusted final evaluator still runs independently outside this copy.
     const tools = path.join(snapshot, '.review-tools');
-    mkdirSync(tools, { mode: 0o700 });
-    for (const name of [
-      'build-review.mjs',
-      'check-review-draft.mjs',
-      'review-history.mjs',
-      'history-redaction.mjs',
-    ]) {
+    const promptPath = path.join(snapshot, 'review-prompt.md');
+    // Only the hash-checked captured inputs and the draft carry over between
+    // calls. Everything else is removed or written again, never followed: a
+    // failed call's instructions, engine home, checker or input files must not
+    // reach the next one. The adapter recreates its engine home (.review-agent).
+    const carried = new Set([
+      'app',
+      'artifacts',
+      'packages',
+      'assessment.json',
+    ]);
+    const prepareCall = (prompt) => {
+      for (const name of readdirSync(snapshot))
+        if (!carried.has(name)) forceRemove(path.join(snapshot, name));
+      save(path.join(snapshot, 'review-files.json'), captured.files);
+      save(path.join(snapshot, 'review-input.json'), input);
+      // The snapshot root has no application instructions or reused agent session.
       writeFileSync(
-        path.join(tools, name),
-        readFileSync(path.join(HERE, name)),
-        { mode: 0o400 },
+        path.join(snapshot, 'AGENTS.md'),
+        'Read-only assessment. Follow review-prompt.md. Do not build, repair, install, publish, or run application code. Update assessment.json atomically via assessment.tmp.json.\n',
       );
-    }
-    const prompt =
+      // A local, model-free check gives feedback before the same invocation ends.
+      // The trusted final evaluator still runs independently outside this copy.
+      mkdirSync(tools, { mode: 0o700 });
+      for (const name of [
+        'build-review.mjs',
+        'check-review-draft.mjs',
+        'review-history.mjs',
+        'history-redaction.mjs',
+      ]) {
+        writeFileSync(
+          path.join(tools, name),
+          readFileSync(path.join(HERE, name)),
+          { mode: 0o400 },
+        );
+      }
+      writeFileSync(promptPath, prompt);
+    };
+    const renderPrompt = (budgetSeconds) =>
       readFileSync(path.join(HERE, '../prompts/build-review.md'), 'utf8')
         .replaceAll('{{INPUT_HASH}}', basis.inputHash)
-        .replaceAll('{{BUDGET_SECONDS}}', String(remaining)) +
+        .replaceAll('{{BUDGET_SECONDS}}', String(budgetSeconds)) +
       '\n\n' +
       readFileSync(
         path.join(HERE, '../prompts/build-review-history.md'),
         'utf8',
       );
-    const promptPath = path.join(snapshot, 'review-prompt.md');
-    writeFileSync(promptPath, prompt);
+    prepareCall(renderPrompt(firstBudget));
     const adapter = resolveAgent(env);
     const agentEnv = engineEnv(
       {
@@ -480,13 +544,16 @@ export async function runBuildReview(
       env,
       contextFiles: ['review-input.json', 'review-files.json'],
     });
-    const invocation = adapter.createInvocation({
-      workspace: snapshot,
-      prompt: promptPath,
-      log,
-      agentDir: path.join(snapshot, '.review-agent'),
-      env: agentEnv,
-    });
+    // Stdin-driven engines read the prompt here, so each rerun creates its own.
+    const createReviewInvocation = () =>
+      adapter.createInvocation({
+        workspace: snapshot,
+        prompt: promptPath,
+        log,
+        agentDir: path.join(snapshot, '.review-agent'),
+        env: agentEnv,
+      });
+    const invocation = createReviewInvocation();
     let actualVersion = null,
       configuredVersion = adapter.version;
     if (env.FACTORY_AGENT_INSTALL_RECORD) {
@@ -508,62 +575,191 @@ export async function runBuildReview(
       replay: Boolean(options.source),
     };
     capture.start({ ...invocation, actualVersion, configuredVersion });
-    try {
-      await runAgentInvocation({
-        ...invocation,
-        log,
-        parseEvent: adapter.parseEvent,
-        secrets: [
-          ...(invocation.secrets ?? []),
-          ...credentialNames.map((name) => env[name]),
-        ],
-        result: createResult({
-          engine: adapter.id,
-          model: invocation.model,
-          configuredVersion,
-          actualVersion,
-          completion: adapter.completion ?? 'event',
-          phase: 'review',
-          role: 'review',
-        }),
-        invocationTimeoutSeconds: remaining,
-        idleTimeoutSeconds,
-        retryDelaysSeconds: parseRetryDelays(env.FACTORY_MODEL_RETRY_DELAYS_SECONDS),
-      });
-    } catch (error) {
-      invocationError = error;
-    }
-    const result = readResult(log);
-    const finished =
-      result?.status === 'completed' &&
-      (result.completion === 'exit' || result.terminalEvent);
-    // Both watchdogs may interrupt a valid checkpoint. Auth/protocol/crash
-    // failures still cannot promote leftover JSON into an assessment.
-    const interruption =
-      result?.status === 'stalled'
-        ? `评审连续 ${idleTimeoutSeconds} 秒没有 stdout/stderr 输出（stalled）`
-        : result?.status === 'timed_out'
-          ? `评审达到 ${remaining} 秒调用时限（timed_out）`
-          : null;
-    if (interruption) invocationError ??= new Error(interruption);
-    if (!finished && !interruption)
-      throw (
-        invocationError ??
-        new Error(
-          `Reviewer invocation did not complete (status: ${result?.status ?? 'missing'}, exit code: ${result?.exitCode ?? 'unknown'})`,
-        )
+    // One result for every call, so usage and the transcript cover all of them.
+    const result = createResult({
+      engine: adapter.id,
+      model: invocation.model,
+      configuredVersion,
+      actualVersion,
+      completion: adapter.completion ?? 'event',
+      phase: 'review',
+      role: 'review',
+    });
+    // runAgentInvocation already reruns a call that ends on a model-service
+    // error. The same schedule bounds reruns of a review that still has no
+    // publishable assessment for another model-side reason. A stop-condition
+    // diagnosis stays a single bounded call.
+    const modelRetryDelays = parseRetryDelays(
+      env.FACTORY_MODEL_RETRY_DELAYS_SECONDS,
+    );
+    const retryDelays = diagnosing ? [] : modelRetryDelays;
+    // Deterministic or tampered failures end the review; see BUILD_REVIEW.md.
+    const tainted = () => {
+      try {
+        assertCapturedInputs(snapshot, captured.files);
+        return false;
+      } catch {
+        return true;
+      }
+    };
+    const review = async (current, budget, attempt) => {
+      let error;
+      try {
+        await runAgentInvocation({
+          ...current,
+          log,
+          append: attempt > 1,
+          parseEvent: adapter.parseEvent,
+          secrets: [
+            ...(current.secrets ?? []),
+            ...credentialNames.map((name) => env[name]),
+          ],
+          result,
+          invocationTimeoutSeconds: budget,
+          idleTimeoutSeconds: Math.min(idleTimeoutSeconds, budget),
+          retryDelaysSeconds: modelRetryDelays,
+        });
+      } catch (caught) {
+        error = caught;
+      }
+      let call;
+      try {
+        call = readResult(log);
+      } catch (caught) {
+        return { attempt, error: caught, retryable: false };
+      }
+      const finished =
+        call?.status === 'completed' &&
+        (call.completion === 'exit' || call.terminalEvent);
+      // Both watchdogs may interrupt a valid checkpoint. Auth/protocol/crash
+      // failures still cannot promote leftover JSON into an assessment.
+      const interruption =
+        call?.status === 'stalled'
+          ? `评审连续 ${Math.min(idleTimeoutSeconds, budget)} 秒没有 stdout/stderr 输出（stalled）`
+          : call?.status === 'timed_out'
+            ? `评审达到 ${budget} 秒调用时限（timed_out）`
+            : null;
+      if (interruption) error ??= new Error(interruption);
+      // A spent budget, a configuration error, a model-service error the
+      // harness has already rerun, a rejected request or a missing engine is
+      // final; a stall, a crash or a protocol error is not.
+      const retryable =
+        call?.status === 'stalled' ||
+        (call?.status !== 'timed_out' &&
+          call?.status !== 'handoff' &&
+          (!call?.failure || call.failure.category === 'agent_failure') &&
+          !/(?:^|\b(?:HTTP(?: status)?|status(?:Code)?|code|API Error)\s*[:=]?\s*)4(?!08|99)\d{2}\b|\bENOENT\b/i.test(
+            call?.error ?? '',
+          ));
+      if (!finished && !interruption)
+        return {
+          attempt,
+          error:
+            error ??
+            new Error(
+              `Reviewer invocation did not complete (status: ${call?.status ?? 'missing'}, exit code: ${call?.exitCode ?? 'unknown'})`,
+            ),
+          retryable: retryable && !tainted(),
+          wait: true,
+        };
+      try {
+        return {
+          attempt,
+          error,
+          interruption,
+          assessed: finalizeAssessment(snapshot, captured, basis, finished),
+          // A stalled call keeps its checkpoint; a rerun may still finish it.
+          retryable: call.status === 'stalled',
+          wait: true,
+        };
+      } catch (caught) {
+        return {
+          attempt,
+          error: interruption
+            ? new Error(
+                `${interruption}；未取得可发布的模块检查点：${caught.message}`,
+                { cause: caught },
+              )
+            : caught,
+          // The validator's message is enough to correct a rejected draft; an
+          // edited reviewed input taints the snapshot for every later call.
+          retryable: retryable && !tainted(),
+          wait: Boolean(interruption),
+        };
+      }
+    };
+    const modules = (outcome) => outcome.assessed.evaluation.modules.length;
+    let outcome = await review(invocation, firstBudget, 1);
+    let saved = outcome.assessed ? outcome : null;
+    for (;;) {
+      const retry = outcome.attempt;
+      const delaySeconds = outcome.wait ? retryDelays[retry - 1] : 0;
+      const budget = secondsLeft() - (delaySeconds ?? 0);
+      if (
+        !outcome.retryable ||
+        retry > retryDelays.length ||
+        budget < MIN_RETRY_SECONDS
+      )
+        break;
+      const reason = brief(
+        redact(String(outcome.error?.message ?? outcome.interruption)),
       );
-    let assessed;
-    try {
-      assessed = finalizeAssessment(snapshot, captured, basis, finished);
-    } catch (error) {
-      if (interruption)
-        throw new Error(
-          `${interruption}；未取得可发布的模块检查点：${error.message}`,
-          { cause: error },
-        );
-      throw error;
+      // The rerun is a new session on the same snapshot: its saved draft is
+      // what carries the earlier work over.
+      const note =
+        `## 重试说明（第 ${retry + 1} 次评审调用，最多 ${retryDelays.length + 1} 次）\n\n` +
+        `上一次评审调用${outcome.assessed ? '中断' : '没有产出可发布的结果'}：${reason}\n` +
+        '这是新会话，不保留上一次的对话；快照、`review-input.json` 与 `assessment.json` 草稿原样保留，inputHash 不变。\n' +
+        (saved
+          ? `第 ${saved.attempt} 次调用曾保存并通过校验 ${modules(saved)} 个模块；以当前草稿的检查结果为准。\n`
+          : '') +
+        '先运行 `node .review-tools/check-review-draft.mjs` 查看草稿：保留已通过校验的模块，按检查输出修正问题，再按 progress.pendingModules 继续未评模块。\n' +
+        `不要从头重读已评模块的材料。本次硬上限 ${budget} 秒，以此为准（review-input.json 的 budgetSeconds 是第一次调用的预算）；每完成一个模块立即原子保存并检查；其余规则不变。\n`;
+      appendFileSync(
+        log,
+        `${JSON.stringify({ type: 'factory_review_retry', retry, of: retryDelays.length, delaySeconds, budgetSeconds: budget, reason, note })}\n`,
+      );
+      process.stderr.write(
+        `Build review call ${retry} ended without a complete assessment; rerunning it in ${delaySeconds} seconds (review retry ${retry}/${retryDelays.length}).\n`,
+      );
+      await sleep(delaySeconds * 1_000);
+      let current;
+      try {
+        prepareCall(`${renderPrompt(budget)}\n\n${note}`);
+        current = createReviewInvocation();
+      } catch (error) {
+        // Setting up a rerun cannot discard what an earlier call saved.
+        outcome = {
+          attempt: retry,
+          error: new Error(
+            `第 ${retry + 1} 次评审调用未能启动：${error.message}`,
+            { cause: error },
+          ),
+          retryable: false,
+        };
+        break;
+      }
+      outcome = await review(current, budget, retry + 1);
+      // A shorter checkpoint never replaces a richer one from an earlier call.
+      if (
+        outcome.assessed &&
+        (!saved ||
+          !outcome.assessed.partial ||
+          modules(outcome) >= modules(saved))
+      )
+        saved = outcome;
     }
+    report.execution.reviewCalls = outcome.attempt;
+    invocationError = outcome.error;
+    const calls = outcome.attempt > 1 ? `共 ${outcome.attempt} 次评审调用` : '';
+    if (!saved)
+      throw calls
+        ? new Error(
+            `${calls}均未取得可发布的结果，最后一次：${brief(outcome.error.message)}`,
+            { cause: outcome.error },
+          )
+        : outcome.error;
+    const { assessed, interruption } = saved;
     if (historyFingerprint(artifacts) !== basis.historyHash)
       throw new Error('Reviewer source history changed during assessment');
     report.evaluation = assessed.evaluation;
@@ -578,9 +774,14 @@ export async function runBuildReview(
     }
     const partial = assessed.partial;
     report.state = partial ? 'partial' : 'completed';
+    // A later call that failed never replaces an earlier validated checkpoint.
+    const later =
+      saved !== outcome
+        ? `；采用第 ${saved.attempt} 次调用保存的检查点（最后一次调用：${brief(outcome.error?.message ?? '保存的模块更少')}）`
+        : '';
     report.reason = partial
-      ? `${interruption ?? '尚有未评模块或未核对过程'}；仅展示已保存并通过证据校验的模块，不代表完整评审。`
-      : '独立 Agent 评审完成；评分是基于本次证据的意见，不替代业务 QA 或人工评审。';
+      ? `${interruption ?? '尚有未评模块或未核对过程'}${calls ? `（${calls}）` : ''}${later}；仅展示已保存并通过证据校验的模块，不代表完整评审。`
+      : `独立 Agent 评审完成${calls ? `（${calls}）` : ''}；评分是基于本次证据的意见，不替代业务 QA 或人工评审。`;
     if (partial) {
       if (report.evaluation.limitations.length === 30)
         report.evaluation.limitations.pop();
@@ -595,7 +796,13 @@ export async function runBuildReview(
     capture?.finish(invocationError);
     persist();
     recordTiming('agent:review', started, report.state === 'failed' ? 1 : 0);
-    if (snapshot) rmSync(snapshot, { recursive: true, force: true });
+    try {
+      if (snapshot) forceRemove(snapshot);
+    } catch (error) {
+      process.stderr.write(
+        `Could not remove the review snapshot ${snapshot}: ${error.message}\n`,
+      );
+    }
   }
   return report;
 }

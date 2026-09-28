@@ -253,7 +253,7 @@ test('default example and runner use v2; only explicit legacy preview uses v1', 
   );
   assert.match(
     runner,
-    /import \{ finalizeAssessment \} from '\.\/check-review-draft\.mjs'/,
+    /import \{[^}]*\bfinalizeAssessment\b[^}]*\} from '\.\/check-review-draft\.mjs'/,
   );
   const checker = readFileSync(
     new URL('../check-review-draft.mjs', import.meta.url),

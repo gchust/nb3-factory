@@ -51,7 +51,10 @@ function fixture(t) {
   const env = { ...process.env, GITHUB_RUN_ID: '100', GITHUB_RUN_ATTEMPT: '1', FACTORY_CONTROL_SHA: 'b'.repeat(40), FACTORY_BUILD_REVIEW: 'full',
     CODE_AGENT_ENGINE: 'pi', CODE_AGENT_API_KEY: 'private-review-fixture-key', CODE_AGENT_API_ENDPOINT: 'https://fixture.invalid/v1', CODE_AGENT_MODEL: 'fixture-model' };
   delete env.FACTORY_RUN_DEADLINE_EPOCH_SECONDS; delete env.FACTORY_AGENT_INSTALL_RECORD;
-  delete env.FACTORY_BUILD_REVIEW_IDLE_TIMEOUT_SECONDS;
+  delete env.FACTORY_BUILD_REVIEW_IDLE_TIMEOUT_SECONDS; delete env.FACTORY_BUILD_REVIEW_TIMEOUT_SECONDS;
+  env.FACTORY_MODEL_RETRY_DELAYS_SECONDS = '0,0';
+  // Outside the snapshot, whose root is reset before every call.
+  env.MOCK_CALLS_FILE = path.join(root, 'mock-calls');
   return { root, workspace, artifacts, snapshot, source, metadata, env };
 }
 function installMock(f, behavior = 'success') {
@@ -60,6 +63,34 @@ function installMock(f, behavior = 'success') {
 const fs = require('node:fs');
 const input = JSON.parse(fs.readFileSync('review-input.json', 'utf8'));
 if (process.env.FACTORY_AGENT_ROLE !== 'review' || process.env.GITHUB_TOKEN || process.env.FACTORY_ADMIN_PASSWORD) process.exit(7);
+// Counts the calls of one review, so reruns can behave differently.
+const calls = (fs.existsSync(process.env.MOCK_CALLS_FILE) ? fs.readFileSync(process.env.MOCK_CALLS_FILE, 'utf8').length : 0) + 1;
+fs.appendFileSync(process.env.MOCK_CALLS_FILE, 'x');
+const prompt = fs.readFileSync(process.argv.at(-1).slice(1), 'utf8');
+console.log(JSON.stringify({type:'mock_call',calls,retry:prompt.includes('## 重试说明'),budget:Number(/硬上限 (\\d+) 秒/.exec(prompt)?.[1]),
+  validatorError:prompt.includes('Evidence lines outside captured file'),kept:prompt.includes('曾保存并通过校验')}));
+let behavior = ${JSON.stringify(behavior)};
+if (behavior === 'stall-then-success') behavior = calls === 1 ? 'stall-empty' : 'success';
+if (behavior === 'stall-then-crash') behavior = calls === 1 ? 'stall' : 'crash';
+if (behavior === 'invalid-then-fixed') behavior = calls === 1 || !prompt.includes('Evidence lines outside captured file') ? 'invalid-draft' : 'success';
+if (behavior === 'stall-then-shrink') behavior = calls === 1 ? 'stall-two-modules' : 'stall';
+if (behavior === 'stall-then-long-error') behavior = calls === 1 ? 'stall' : 'long-error';
+if (behavior === 'alter-scaffold') {
+  if (calls === 1) {
+    fs.chmodSync('AGENTS.md', 0o600); fs.writeFileSync('AGENTS.md', 'tampered');
+    fs.chmodSync('.review-tools/check-review-draft.mjs', 0o600); fs.writeFileSync('.review-tools/check-review-draft.mjs', 'tampered');
+    fs.chmodSync('.review-tools', 0o500);
+    // Instructions an engine would also read, and the uncatalogued input files.
+    fs.writeFileSync('.review-agent/AGENTS.md', 'tampered'); fs.writeFileSync('AGENTS.override.md', 'tampered');
+    fs.writeFileSync('review-input.json', JSON.stringify({ ...input, requirements: 'tampered' }));
+    fs.mkdirSync('scratch/stuck', { recursive: true }); fs.writeFileSync('scratch/stuck/note', 'x'); fs.chmodSync('scratch/stuck', 0o500);
+    process.exit(17);
+  }
+  const altered = [fs.readFileSync('AGENTS.md', 'utf8'), fs.readFileSync('.review-tools/check-review-draft.mjs', 'utf8'),
+    fs.readFileSync('review-input.json', 'utf8')].some(text => text.includes('tampered')) ||
+    ['.review-agent/AGENTS.md', 'AGENTS.override.md', 'scratch'].some(name => fs.existsSync(name));
+  behavior = altered ? 'crash' : 'success';
+}
 const score = {score:73,reason:'Fixture framework contract and usage',evidence:['E2','E1']};
 const review = {version:input.rubricVersion,inputHash:input.basis.inputHash,progress:{complete:true,pendingModules:[]},summary:'Fixture-only review',
  modules:[{name:'Data access',scope:'Customer creation',limitations:'No concurrency coverage',criteria:['B01'],
@@ -72,11 +103,13 @@ const history=JSON.parse(fs.readFileSync(input.history.path,'utf8'));
 const original=history.files.find(file=>file.source==='agent-implement.jsonl').chunks[0].path;
 review.evidence.push({id:'E3',kind:'log',path:original,lines:[1,1],observation:'Actual fixture tool event'});
 review.historyReview=[{log:'agent-implement.jsonl',status:'reviewed',reason:'Read original fixture event',evidence:['E3'],errors:[]}];
-if (${JSON.stringify(behavior)} === 'old-rubric') review.version = 1;
-if (${JSON.stringify(behavior)} === 'wrong-hash') review.inputHash = 'c'.repeat(64);
-if (['modify', 'stall-modify'].includes(${JSON.stringify(behavior)})) {fs.chmodSync('app/server/customer.ts',0o600);fs.writeFileSync('app/server/customer.ts','modified');}
-if (${JSON.stringify(behavior)} !== 'stall-empty') fs.writeFileSync('assessment.json', ['malformed', 'stall-malformed'].includes(${JSON.stringify(behavior)}) ? '{oops' : JSON.stringify(review));
-if (${JSON.stringify(behavior)} === 'check-draft') {
+if (behavior === 'old-rubric') review.version = 1;
+if (behavior === 'wrong-hash') review.inputHash = 'c'.repeat(64);
+if (['invalid-draft', 'modify-invalid'].includes(behavior)) review.evidence[0].lines = [1, 99];
+if (behavior === 'stall-two-modules') review.modules.push({ ...review.modules[0], name: 'Data access, second unit' });
+if (['modify', 'stall-modify', 'modify-invalid'].includes(behavior)) {fs.chmodSync('app/server/customer.ts',0o600);fs.writeFileSync('app/server/customer.ts','modified');}
+if (behavior !== 'stall-empty') fs.writeFileSync('assessment.json', ['malformed', 'stall-malformed'].includes(behavior) ? '{oops' : JSON.stringify(review));
+if (behavior === 'check-draft') {
   const {spawnSync} = require('node:child_process');
   review.modules[0].targets[0].kind='skill';
   fs.writeFileSync('assessment.json',JSON.stringify(review));
@@ -86,17 +119,28 @@ if (${JSON.stringify(behavior)} === 'check-draft') {
   fs.writeFileSync('assessment.json',JSON.stringify(review));
   const valid=check();if(valid.status!==0 || !JSON.parse(valid.stdout).valid)process.exit(9);
 }
-if (${JSON.stringify(behavior)}.startsWith('stall')) {
+if (behavior.startsWith('stall')) {
   console.log(JSON.stringify({type:'turn_start'}));
   setInterval(() => {}, 1000);
-} else if (${JSON.stringify(behavior)} === 'auth-error') {
+} else if (behavior === 'auth-error') {
   console.log(JSON.stringify({type:'message_end',message:{role:'assistant',stopReason:'error',errorMessage:'401: invalid_api_key'}}));
   console.log(JSON.stringify({type:'agent_end'}));
-} else if (${JSON.stringify(behavior)} === 'crash') {
+} else if (behavior === 'long-error') {
+  // A proxy error page: no status code, so it is an Agent failure, not a service error.
+  console.log(JSON.stringify({type:'message_end',message:{role:'assistant',stopReason:'error',errorMessage:'Invalid upstream response <html>' + 'x'.repeat(3000)}}));
+  console.log(JSON.stringify({type:'agent_end'}));
+} else if (behavior === 'api-400') {
+  // How Claude Code and CodeBuddy word a rejected request.
+  console.log(JSON.stringify({type:'message_end',message:{role:'assistant',stopReason:'error',errorMessage:'API Error: 400 {"type":"invalid_request_error"}'}}));
+  console.log(JSON.stringify({type:'agent_end'}));
+} else if (behavior === 'model-404') {
+  console.log(JSON.stringify({type:'message_end',message:{role:'assistant',stopReason:'error',errorMessage:'404 model not found'}}));
+  console.log(JSON.stringify({type:'agent_end'}));
+} else if (behavior === 'crash') {
   process.exit(17);
 } else {
   console.log(JSON.stringify({type:'message_end',message:{role:'assistant',stopReason:'stop',usage:{input:100,output:20,cacheRead:5,cacheWrite:0,totalTokens:125}}}));
-  if (${JSON.stringify(behavior)} !== 'no-terminal') console.log(JSON.stringify({type:'agent_end'}));
+  if (behavior !== 'no-terminal') console.log(JSON.stringify({type:'agent_end'}));
 }
 `);
   chmodSync(path.join(bin, 'pi'), 0o755);
@@ -221,9 +265,12 @@ for (const behavior of ['wrong-hash', 'modify', 'malformed', 'old-rubric']) test
   const f = fixture(t); installMock(f, behavior);
   const result = await runBuildReview(f.workspace, f.artifacts, f.env);
   assert.equal(result.state, 'failed'); assert.equal(result.evaluation, null);
+  // An edited reviewed input taints the snapshot; a rejected draft is rerun.
+  assert.equal(result.execution.reviewCalls, behavior === 'modify' ? 1 : 3);
   assert.equal(readFileSync(f.source, 'utf8'), 'export const customer = 1;\n');
   assert.equal(readFileSync(path.join(f.artifacts, 'agent.patch'), 'utf8'), 'sealed fixture patch\n');
-  assert.equal((await collectUsage(f.artifacts)).phases.review.totalTokens, 125);
+  // Every call's usage counts, even when calls print identical lines.
+  assert.equal((await collectUsage(f.artifacts)).phases.review.totalTokens, 125 * result.execution.reviewCalls);
 });
 test('disabled and exhausted-budget runs do not invoke any CLI or invent scores', async t => {
   for (const setting of [{ FACTORY_BUILD_REVIEW: 'off' }, { FACTORY_RUN_DEADLINE_EPOCH_SECONDS: String(Math.floor(Date.now() / 1000) + 10) }]) {
@@ -294,7 +341,8 @@ test('compact entry is fingerprinted and excludes full catalog; replay preserves
   const original = await runBuildReview(f.workspace, f.artifacts, f.env);
   const input = readReviewJsonForTest(f.artifacts, 'build-review-input.json');
   assert.equal(input.files, undefined); assert.equal(input.catalog.path, 'review-files.json');
-  assert.ok(input.catalog.count > 0); assert.equal(input.budgetSeconds, 900);
+  assert.ok(input.catalog.count > 0);
+  assert.ok(input.budgetSeconds <= 3600 && input.budgetSeconds > 3500, 'the budget counts from before the snapshot');
   const source = { ...original.basis };
   const replay = await runBuildReview(f.workspace, f.artifacts, { ...f.env, GITHUB_RUN_ID: '200', GITHUB_RUN_ATTEMPT: '1' }, { source });
   assert.equal(replay.state, 'completed', replay.reason);
@@ -364,8 +412,121 @@ for (const behavior of ['auth-error', 'crash', 'no-terminal']) {
     assert.equal(report.state, 'failed');
     assert.equal(report.evaluation, null);
     if (behavior === 'no-terminal') assert.match(report.reason, /status: completed, exit code: 0/);
+    // A configuration error is final; a crash or a missing end event is rerun.
+    assert.equal(report.execution.reviewCalls, behavior === 'auth-error' ? 1 : 3);
   });
 }
+
+const reviewEvents = (f) => readFileSync(path.join(f.artifacts, 'agent-review.jsonl'), 'utf8')
+  .trim().split('\n').map(line => JSON.parse(line));
+
+test('a stalled review is rerun on the same snapshot and completes there', async t => {
+  const f = fixture(t); installMock(f, 'stall-then-success');
+  f.env.FACTORY_BUILD_REVIEW_IDLE_TIMEOUT_SECONDS = '3';
+  const report = await runBuildReview(f.workspace, f.artifacts, f.env);
+  assert.equal(report.state, 'completed', report.reason);
+  assert.equal(report.execution.reviewCalls, 2);
+  assert.match(report.reason, /共 2 次评审调用/);
+  validateBuildReview(report);
+  const events = reviewEvents(f);
+  const calls = events.filter(event => event.type === 'mock_call');
+  assert.deepEqual(calls.map(event => [event.calls, event.retry]), [[1, false], [2, true]]);
+  assert.ok(calls[0].budget <= 3600 && calls[0].budget > 3500);
+  assert.ok(calls[1].budget < calls[0].budget && calls[1].budget > 3500, 'the rerun gets what is left of one budget');
+  const retry = events.find(event => event.type === 'factory_review_retry');
+  assert.deepEqual([retry.retry, retry.of, retry.delaySeconds], [1, 2, 0]);
+  assert.match(retry.reason, /stalled/);
+  assert.equal(readReviewJsonForTest(f.artifacts, 'agent-review.jsonl.result.json').status, 'completed');
+  assert.equal(readReviewJsonForTest(f.artifacts, 'agent-review.jsonl.invocation.json').status, 'finished');
+});
+
+test('a rejected draft is rerun at once with the validator error in its prompt', async t => {
+  const f = fixture(t); installMock(f, 'invalid-then-fixed');
+  f.env.FACTORY_MODEL_RETRY_DELAYS_SECONDS = '60,300';
+  const started = Date.now();
+  const report = await runBuildReview(f.workspace, f.artifacts, f.env);
+  assert.ok(Date.now() - started < 30_000, 'a draft rerun does not wait for the delay schedule');
+  assert.equal(report.state, 'completed', report.reason);
+  assert.equal(report.execution.reviewCalls, 2);
+  const calls = reviewEvents(f).filter(event => event.type === 'mock_call');
+  assert.deepEqual(calls.map(event => event.validatorError), [false, true]);
+});
+
+test('a draft that stays invalid fails after two reruns and says how many calls were made', async t => {
+  const f = fixture(t); installMock(f, 'invalid-draft');
+  const report = await runBuildReview(f.workspace, f.artifacts, f.env);
+  assert.equal(report.state, 'failed'); assert.equal(report.evaluation, null);
+  assert.equal(report.execution.reviewCalls, 3);
+  assert.match(report.reason, /共 3 次评审调用均未取得可发布的结果，最后一次：Evidence lines outside captured file/);
+  assert.equal(reviewEvents(f).filter(event => event.type === 'factory_review_retry').length, 2);
+});
+
+test('a later failed call never replaces an earlier validated checkpoint', async t => {
+  const f = fixture(t); installMock(f, 'stall-then-crash');
+  f.env.FACTORY_BUILD_REVIEW_IDLE_TIMEOUT_SECONDS = '3';
+  const report = await runBuildReview(f.workspace, f.artifacts, f.env);
+  assert.equal(report.state, 'partial', report.reason);
+  assert.equal(report.execution.reviewCalls, 3);
+  assert.match(report.reason, /连续 3 秒.*stalled.*采用第 1 次调用保存的检查点.*exited with code 17/);
+  assert.equal(report.evaluation.modules[0].scores.design.score, 73);
+  validateBuildReview(report);
+  const calls = reviewEvents(f).filter(event => event.type === 'mock_call');
+  assert.deepEqual(calls.map(event => event.kept), [false, true, true], 'reruns are told what is already saved');
+});
+
+test('a rerun that saves fewer modules does not replace a richer checkpoint', async t => {
+  const f = fixture(t); installMock(f, 'stall-then-shrink');
+  f.env.FACTORY_BUILD_REVIEW_IDLE_TIMEOUT_SECONDS = '3';
+  const report = await runBuildReview(f.workspace, f.artifacts, f.env);
+  assert.equal(report.state, 'partial', report.reason);
+  assert.equal(report.execution.reviewCalls, 3);
+  assert.equal(report.evaluation.modules.length, 2);
+  assert.match(report.reason, /采用第 1 次调用保存的检查点/);
+  validateBuildReview(report);
+});
+
+test('a long error in a later call cannot push the kept checkpoint past the limitation cap', async t => {
+  const f = fixture(t); installMock(f, 'stall-then-long-error');
+  f.env.FACTORY_BUILD_REVIEW_IDLE_TIMEOUT_SECONDS = '3';
+  const report = await runBuildReview(f.workspace, f.artifacts, f.env);
+  assert.equal(report.state, 'partial', report.reason);
+  assert.equal(report.execution.reviewCalls, 3);
+  assert.match(report.reason, /Invalid upstream response/);
+  for (const limitation of report.evaluation.limitations) assert.ok(limitation.length <= 2000);
+  validateBuildReview(report);
+});
+
+test('a rerun starts from a clean snapshot root even after a call altered or locked it', async t => {
+  const f = fixture(t); installMock(f, 'alter-scaffold');
+  const report = await runBuildReview(f.workspace, f.artifacts, f.env);
+  assert.equal(report.state, 'completed', report.reason);
+  assert.equal(report.execution.reviewCalls, 2);
+});
+
+for (const [behavior, why] of [['modify-invalid', 'an edited input taints the snapshot even behind a rejected draft'],
+  ['model-404', 'a rejected request fails the same way again'],
+  ['api-400', 'an engine reports a rejected request as an API error']]) test(`no rerun when ${why}`, async t => {
+  const f = fixture(t); installMock(f, behavior);
+  const started = Date.now();
+  f.env.FACTORY_MODEL_RETRY_DELAYS_SECONDS = '60,300';
+  const report = await runBuildReview(f.workspace, f.artifacts, f.env);
+  assert.equal(report.state, 'failed');
+  assert.equal(report.execution.reviewCalls, 1);
+  assert.ok(Date.now() - started < 30_000);
+});
+
+test('reruns are off for a stop-condition diagnosis and when the schedule is none', async t => {
+  for (const [setup, name] of [[f => {
+    put(f.artifacts, 'task-diagnostic.json', { status: 'needs-diagnosis', code: 'repeated-failure' });
+    put(f.artifacts, 'task-diagnostic.md', 'Repeated failure; root cause unknown.');
+  }, 'diagnosis'], [f => { f.env.FACTORY_MODEL_RETRY_DELAYS_SECONDS = 'none'; }, 'none']]) {
+    const f = fixture(t); installMock(f, 'crash'); setup(f);
+    const report = await runBuildReview(f.workspace, f.artifacts, f.env);
+    assert.equal(report.state, 'failed', name);
+    assert.equal(report.execution.reviewCalls, 1, name);
+    assert.equal(reviewEvents(f).filter(event => event.type === 'mock_call').length, 1, name);
+  }
+});
 
 test('invalid review idle timeout fails before a model invocation', async t => {
   const f = fixture(t); installMock(f);

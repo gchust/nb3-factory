@@ -68,7 +68,7 @@ export function normalizeAgentEnv(source = process.env) {
   fallback('CODEBUDDY_THINKING', '', 'max');
   fallback('FACTORY_REVIEW_THINKING', '', 'medium');
   fallback('FACTORY_BUILD_REVIEW', '', 'full');
-  fallback('FACTORY_BUILD_REVIEW_TIMEOUT_SECONDS', '', '900');
+  fallback('FACTORY_BUILD_REVIEW_TIMEOUT_SECONDS', '', '3600');
   fallback('FACTORY_BUILD_REVIEW_IDLE_TIMEOUT_SECONDS', '', '600');
   fallback('AGENT_BROWSER_VERSION', '', '0.36.0');
   return env;

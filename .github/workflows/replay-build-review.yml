@@ -91,7 +91,8 @@ jobs:
     needs: prepare
     if: needs.prepare.outputs.ready == 'true'
     runs-on: ubuntu-latest
-    timeout-minutes: 40
+    # Reconstruction and reviewer installation, then at most 60 minutes of review.
+    timeout-minutes: 90
     permissions:
       contents: read
     outputs:
@@ -167,7 +168,7 @@ jobs:
           CODE_AGENT_AUTH_HEADER: ${{ vars.CODE_AGENT_AUTH_HEADER || vars.PI_AUTH_HEADER || 'true' }}
           CODE_AGENT_SUPPORTS_DEVELOPER_ROLE: ${{ vars.CODE_AGENT_SUPPORTS_DEVELOPER_ROLE || vars.PI_SUPPORTS_DEVELOPER_ROLE }}
           CODE_AGENT_SUPPORTS_REASONING_EFFORT: ${{ vars.CODE_AGENT_SUPPORTS_REASONING_EFFORT || vars.PI_SUPPORTS_REASONING_EFFORT || 'true' }}
-          FACTORY_BUILD_REVIEW_TIMEOUT_SECONDS: ${{ vars.FACTORY_BUILD_REVIEW_TIMEOUT_SECONDS || '900' }}
+          FACTORY_BUILD_REVIEW_TIMEOUT_SECONDS: ${{ vars.FACTORY_BUILD_REVIEW_TIMEOUT_SECONDS || '3600' }}
           FACTORY_BUILD_REVIEW_IDLE_TIMEOUT_SECONDS: ${{ vars.FACTORY_BUILD_REVIEW_IDLE_TIMEOUT_SECONDS || '600' }}
           ANTHROPIC_API_KEY: ${{ vars.CODE_AGENT_ENGINE == 'claude-code' && secrets.ANTHROPIC_API_KEY || '' }}
           CLAUDE_CODE_OAUTH_TOKEN: ${{ vars.CODE_AGENT_ENGINE == 'claude-code' && secrets.CLAUDE_CODE_OAUTH_TOKEN || '' }}
