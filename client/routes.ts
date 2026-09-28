@@ -1,4 +1,4 @@
-import { Home } from 'lucide-react';
+import { FlaskConical, Home } from 'lucide-react';
 import {
   defineAppRoutes,
   defineSettingsRoutes,
@@ -46,7 +46,25 @@ const appRoutes: AppClientRouteContribution = defineAppRoutes([
   },
 ]);
 
-const settingsRoutes: AppClientRouteContribution = defineSettingsRoutes([]);
+const settingsRoutes: AppClientRouteContribution = defineSettingsRoutes([
+  {
+    // A top-level settings entry. It stays a root entry rather than appending to the notification plugin's own group
+    // so this contribution resolves on its own; the page still links to that group's logs page. The test destination
+    // and one-channel selection are pinned by the page, and the endpoints it calls enforce their own session and
+    // `notification:test send` permission independently.
+    authz: {
+      resource: { type: 'page', id: 'notification.test' },
+      action: 'access',
+    },
+    componentLoader: () => import('./pages/notification-test/index.js'),
+    name: 'notification-test',
+    navigation: {
+      title: 'navigation.notificationTest',
+      icon: FlaskConical,
+    },
+    path: '/notification-test',
+  },
+]);
 
 const routes: readonly AppClientRouteContribution[] = [
   appRoutes,

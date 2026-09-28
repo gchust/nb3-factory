@@ -136,6 +136,32 @@ const enUS = {
     collapse: 'Collapse navigation',
     label: 'Application navigation',
     breadcrumb: 'Breadcrumb',
+    notificationTest: 'Notification test',
+  },
+  notificationTest: {
+    title: 'Notification test',
+    description:
+      'Send one test notification to an isolated test destination and confirm its final delivery status in the notification logs.',
+    channelsTitle: 'Test channels',
+    channelsDescription:
+      'Each channel sends to its own isolated destination. Only one channel is used per test.',
+    channelLabel: '{{channel}} · {{provider}}',
+    destination: 'Destination: {{destination}}',
+    destinationUser: '{{name}} (signed-in user inbox)',
+    isolatedHint: 'An isolated test inbox — never a customer or a real group.',
+    failureHint:
+      'This channel is configured to fail on purpose so the recorded failure reason can be verified.',
+    send: 'Send test notification',
+    sending: 'Sending…',
+    acceptedTitle: 'Test notification accepted',
+    accepted:
+      'Notification {{id}} was accepted ({{status}}). Its final delivery status is recorded in the notification logs.',
+    failedTitle: 'Unable to send the test notification',
+    viewLogs: 'View notification logs',
+    loading: 'Loading test channels…',
+    loadFailedTitle: 'Unable to load the test channels',
+    emptyTitle: 'No test channel is configured',
+    empty: 'No channel with the test- prefix is available.',
   },
   dataTable: {
     noResults: 'No results.',

@@ -127,6 +127,31 @@ const zhCN: AppResource = {
     collapse: '收起导航',
     label: '应用导航',
     breadcrumb: '面包屑',
+    notificationTest: '通知测试',
+  },
+  notificationTest: {
+    title: '通知测试',
+    description:
+      '向隔离的测试目标发送一条测试通知，并在通知日志中查看最终投递状态。',
+    channelsTitle: '测试渠道',
+    channelsDescription:
+      '每个渠道发送到各自的隔离目标，每次测试只使用一个渠道。',
+    channelLabel: '{{channel}} · {{provider}}',
+    destination: '目标：{{destination}}',
+    destinationUser: '{{name}}（当前登录用户的收件箱）',
+    isolatedHint: '隔离的测试收件箱——绝不会发送给客户或真实群组。',
+    failureHint: '该渠道被配置为故意失败，便于核对记录的失败原因。',
+    send: '发送测试通知',
+    sending: '发送中…',
+    acceptedTitle: '测试通知已受理',
+    accepted:
+      '通知 {{id}} 已受理（{{status}}）。最终投递状态记录在通知日志中。',
+    failedTitle: '无法发送测试通知',
+    viewLogs: '查看通知日志',
+    loading: '正在加载测试渠道…',
+    loadFailedTitle: '无法加载测试渠道',
+    emptyTitle: '未配置测试渠道',
+    empty: '没有可用的 test- 前缀渠道。',
   },
   dataTable: {
     noResults: '暂无数据。',

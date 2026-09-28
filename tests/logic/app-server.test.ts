@@ -137,6 +137,53 @@ function requestApp(
   return app.fetch(request);
 }
 
+interface NotificationTestStatus {
+  log: { status: string };
+  deliveries: Array<{
+    delivery: {
+      status: string;
+      lastError?: { code?: string; category?: string; message?: string };
+    };
+    attempts: Array<{ errorMessage?: string }>;
+  }>;
+}
+
+async function waitForNotificationTestStatus(
+  app: FetchableResource,
+  baseUrl: string,
+  authHeaders: Record<string, string>,
+  notificationId: string,
+  isSettled: (status: string) => boolean,
+  timeoutMs = 10_000,
+): Promise<NotificationTestStatus> {
+  const deadline = Date.now() + timeoutMs;
+  let last: NotificationTestStatus | undefined;
+
+  while (Date.now() < deadline) {
+    const response = await requestApp(
+      app,
+      `${baseUrl}/api/notifications/test/${notificationId}/status`,
+      {
+        headers: {
+          ...authHeaders,
+          'x-nocobase-notification-test': '1',
+        },
+      },
+    );
+    expect(response.status).toBe(200);
+    last = ((await response.json()) as { data: NotificationTestStatus }).data;
+    if (isSettled(last.log.status)) {
+      return last;
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, 100));
+  }
+
+  throw new Error(
+    `Notification ${notificationId} did not settle; last status ${last?.log.status ?? 'unknown'}.`,
+  );
+}
+
 afterEach(async () => {
   vi.unstubAllEnvs();
   await Promise.all(apps.splice(0).map((app) => app.close()));
@@ -736,6 +783,140 @@ describe('app server', () => {
       headers: { 'x-api-key': key.key },
     });
     expect(rejected.status).toBe(401);
+  });
+
+  it('delivers a notification test to an isolated inbox and records a controlled failure', async () => {
+    const app = trackCloseable(
+      await createInstalledStandaloneServer({ viteDevUrl: false }),
+    );
+    const baseUrl = `http://localhost${app.application.publicBasePath}`;
+
+    const signIn = await requestApp(
+      app,
+      `${baseUrl}/api/auth/sign-in/username`,
+      {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ username: 'nocobase', password: 'admin123' }),
+      },
+    );
+    expect(signIn.status).toBe(200);
+    const cookie = signIn.headers
+      .getSetCookie()
+      .map((header) => header.split(';')[0])
+      .join('; ');
+
+    const users = await requestApp(app, `${baseUrl}/api/users`, {
+      headers: { cookie },
+    });
+    expect(users.status).toBe(200);
+    const userId = (
+      (await users.json()) as { data: { items: Array<{ id: string }> } }
+    ).data.items[0].id;
+
+    // A cookie-free API key keeps the request out of the browser CSRF path and
+    // represents how an operator script calls the same test entry.
+    const createdKey = await requestApp(
+      app,
+      `${baseUrl}/api/auth/api-key/create`,
+      {
+        method: 'POST',
+        headers: { cookie, 'content-type': 'application/json' },
+        body: JSON.stringify({ name: 'notification-test' }),
+      },
+    );
+    expect(createdKey.status).toBe(200);
+    const key = (await createdKey.json()) as { id: string; key: string };
+    const apiHeaders = { 'x-api-key': key.key };
+
+    // Only the application's dedicated test channels are offered, so the entry
+    // never reaches a configured business channel or a real recipient.
+    const targets = await requestApp(
+      app,
+      `${baseUrl}/api/notifications/test/targets`,
+      { headers: { ...apiHeaders, 'x-nocobase-notification-test': '1' } },
+    );
+    expect(targets.status).toBe(200);
+    const channelNames = (
+      (await targets.json()) as {
+        data: Array<{ channel: { name: string } }>;
+      }
+    ).data.map((target) => target.channel.name);
+    expect(channelNames).toEqual(
+      expect.arrayContaining(['test-inbox', 'test-failure']),
+    );
+
+    const normal = await requestApp(
+      app,
+      `${baseUrl}/api/notifications/test/send`,
+      {
+        method: 'POST',
+        headers: {
+          ...apiHeaders,
+          'content-type': 'application/json',
+          'x-nocobase-notification-test': '1',
+        },
+        body: JSON.stringify({
+          channel: 'test-inbox',
+          values: {
+            recipient: userId,
+            title: 'Notification test',
+            body: 'Controlled normal delivery.',
+          },
+        }),
+      },
+    );
+    expect(normal.status).toBe(202);
+    const normalBody = (await normal.json()) as {
+      data: { notificationId: string };
+    };
+    const normalStatus = await waitForNotificationTestStatus(
+      app,
+      baseUrl,
+      apiHeaders,
+      normalBody.data.notificationId,
+      (status) => status === 'completed',
+    );
+    expect(normalStatus.deliveries[0].delivery.status).toBe('accepted');
+
+    const failing = await requestApp(
+      app,
+      `${baseUrl}/api/notifications/test/send`,
+      {
+        method: 'POST',
+        headers: {
+          ...apiHeaders,
+          'content-type': 'application/json',
+          'x-nocobase-notification-test': '1',
+        },
+        body: JSON.stringify({
+          channel: 'test-failure',
+          values: {
+            recipient: 'notification-test@example.invalid',
+            subject: 'Notification test',
+            text: 'Controlled failure.',
+          },
+        }),
+      },
+    );
+    expect(failing.status).toBe(202);
+    const failingBody = (await failing.json()) as {
+      data: { notificationId: string };
+    };
+    const failureStatus = await waitForNotificationTestStatus(
+      app,
+      baseUrl,
+      apiHeaders,
+      failingBody.data.notificationId,
+      (status) => status === 'failed',
+    );
+    const failure = failureStatus.deliveries[0];
+    expect(failure.delivery.status).toBe('failed');
+    // The provider's reason survives into the log instead of being replaced by
+    // a generic error message.
+    expect(
+      `${failure.delivery.lastError?.code} ${failure.delivery.lastError?.message}`,
+    ).toMatch(/ENOTFOUND|EAI_AGAIN|notification-test\.invalid/);
   });
 
   it('mounts standalone app-local routes behind the public base path', async () => {

@@ -6,6 +6,7 @@ import os from 'node:os';
 import path from 'node:path';
 
 import type { AuthorizationConfig } from '@nocobase/app-plugin-authorization/server';
+import type { NotificationConfig } from '@nocobase/app-plugin-notification/server';
 import { type AppIdentityConfig } from '@nocobase/app-server/config';
 import { type AppDatabaseConfig } from '@nocobase/app-server/database';
 import { resolveStandaloneAppRuntime } from '@nocobase/app-server/node';
@@ -83,6 +84,27 @@ describe('application config', () => {
     expect(runtime.config.get<AppSessionConfigInput>('session')!.default).toBe(
       'memory',
     );
+  });
+
+  it('configures isolated channels for the notification test entry', async () => {
+    const runtime = await resolveStandaloneAppRuntime(appRuntime, {
+      rootDir: templateRootDir,
+      configPath,
+      env: { AUTH_SECRET: 'test-auth-secret-at-least-32-characters' },
+    });
+
+    const notification =
+      runtime.config.get<NotificationConfig>('notification')!;
+    // One channel that records a normal delivery and one that fails on purpose, so the entry can show both outcomes
+    // from the existing logs page without any real channel being reconfigured.
+    expect(notification.channels['test-inbox']).toEqual({
+      provider: 'in-app',
+    });
+    expect(notification.channels['test-failure']).toMatchObject({
+      provider: 'smtp',
+      host: 'notification-test.invalid',
+      port: 25,
+    });
   });
 
   it('reloads a file-backed configuration explicitly', async () => {
