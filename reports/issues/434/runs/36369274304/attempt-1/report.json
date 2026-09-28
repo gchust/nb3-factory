@@ -1,0 +1,963 @@
+{
+  "record": {
+    "version": 1,
+    "repository": "gchust/nb3-factory",
+    "issue": 434,
+    "runId": 36369274304,
+    "attempt": 1,
+    "status": "delivered",
+    "start": 1790561864000,
+    "end": 1790562765000,
+    "jobs": [
+      {
+        "id": 108761927068,
+        "name": "prepare",
+        "seconds": 13
+      },
+      {
+        "id": 108761972406,
+        "name": "agent",
+        "seconds": 643
+      },
+      {
+        "id": 108764031696,
+        "name": "verify-final",
+        "seconds": 222
+      },
+      {
+        "id": 108764769827,
+        "name": "publish",
+        "seconds": 13
+      }
+    ],
+    "agentJobId": 108761972406,
+    "invoked": true,
+    "artifact": "factory-agent-434",
+    "artifactId": 10948164835,
+    "finalArtifactId": 10948783696,
+    "taskArtifactId": 10948890840,
+    "event": "workflow_dispatch",
+    "previousRunId": null,
+    "usage": {
+      "phases": {
+        "implementation": {
+          "input": 39778,
+          "output": 16247,
+          "cacheRead": 1315968,
+          "cacheWrite": 0,
+          "reasoning": 9436,
+          "totalTokens": 1371993
+        },
+        "repair": {
+          "input": 0,
+          "output": 0,
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "reasoning": 0,
+          "totalTokens": 0
+        },
+        "qa": {
+          "input": 16002,
+          "output": 7692,
+          "cacheRead": 452864,
+          "cacheWrite": 0,
+          "reasoning": 2491,
+          "totalTokens": 476558
+        },
+        "qaFocused": {
+          "input": 0,
+          "output": 0,
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "reasoning": 0,
+          "totalTokens": 0
+        },
+        "qaReport": {
+          "input": 0,
+          "output": 0,
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "reasoning": 0,
+          "totalTokens": 0
+        },
+        "review": {
+          "input": 0,
+          "output": 0,
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "reasoning": 0,
+          "totalTokens": 0
+        },
+        "compaction": {
+          "input": 0,
+          "output": 0,
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "reasoning": 0,
+          "totalTokens": 0
+        }
+      },
+      "records": 55,
+      "missing": 0,
+      "incomplete": 0
+    },
+    "evaluation": {
+      "version": 1,
+      "runKey": "gchust/nb3-factory/issues/434/initial",
+      "kind": "initial",
+      "derivation": "recorded",
+      "agentConfiguration": {
+        "fingerprints": [
+          "2f5401c2837d7dae1f1f014540b983521db478e49b3e29c61dbb26be0a75e3bf"
+        ],
+        "complete": false
+      },
+      "controlSha": "417bb50ca8a370a57b28264d34a04a647d217d99",
+      "baseSha": "24c0eb1d2457b48fbc3d369ef8a0e5aafb6295e4",
+      "inputHash": "6f6926524926d0b626ade46bb686d79090148bbef76a1f60a2896b7d6dde7531",
+      "patchSha256": "0c23be34643c82598e3caabcb22a12ecee193dff1dfa782cec1e843b539814ea",
+      "pipelineOutcome": "passed",
+      "event": "workflow_dispatch",
+      "previousRunId": null
+    }
+  },
+  "cumulative": {
+    "usage": {
+      "phases": {
+        "implementation": {
+          "input": 39778,
+          "output": 16247,
+          "cacheRead": 1315968,
+          "cacheWrite": 0,
+          "reasoning": 9436,
+          "totalTokens": 1371993
+        },
+        "repair": {
+          "input": 0,
+          "output": 0,
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "reasoning": 0,
+          "totalTokens": 0
+        },
+        "qa": {
+          "input": 16002,
+          "output": 7692,
+          "cacheRead": 452864,
+          "cacheWrite": 0,
+          "reasoning": 2491,
+          "totalTokens": 476558
+        },
+        "qaFocused": {
+          "input": 0,
+          "output": 0,
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "reasoning": 0,
+          "totalTokens": 0
+        },
+        "qaReport": {
+          "input": 0,
+          "output": 0,
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "reasoning": 0,
+          "totalTokens": 0
+        },
+        "review": {
+          "input": 0,
+          "output": 0,
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "reasoning": 0,
+          "totalTokens": 0
+        },
+        "compaction": {
+          "input": 0,
+          "output": 0,
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "reasoning": 0,
+          "totalTokens": 0
+        }
+      },
+      "records": 55,
+      "missing": 0,
+      "incomplete": 0
+    },
+    "total": 1848551,
+    "seconds": 891,
+    "missingTimes": 0,
+    "elapsed": 901,
+    "runs": 1,
+    "attempts": 1
+  },
+  "records": [
+    {
+      "version": 1,
+      "repository": "gchust/nb3-factory",
+      "issue": 434,
+      "runId": 36369274304,
+      "attempt": 1,
+      "status": "delivered",
+      "start": 1790561864000,
+      "end": 1790562765000,
+      "jobs": [
+        {
+          "id": 108761927068,
+          "name": "prepare",
+          "seconds": 13
+        },
+        {
+          "id": 108761972406,
+          "name": "agent",
+          "seconds": 643
+        },
+        {
+          "id": 108764031696,
+          "name": "verify-final",
+          "seconds": 222
+        },
+        {
+          "id": 108764769827,
+          "name": "publish",
+          "seconds": 13
+        }
+      ],
+      "agentJobId": 108761972406,
+      "invoked": true,
+      "artifact": "factory-agent-434",
+      "artifactId": 10948164835,
+      "finalArtifactId": 10948783696,
+      "taskArtifactId": 10948890840,
+      "event": "workflow_dispatch",
+      "previousRunId": null,
+      "usage": {
+        "phases": {
+          "implementation": {
+            "input": 39778,
+            "output": 16247,
+            "cacheRead": 1315968,
+            "cacheWrite": 0,
+            "reasoning": 9436,
+            "totalTokens": 1371993
+          },
+          "repair": {
+            "input": 0,
+            "output": 0,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "reasoning": 0,
+            "totalTokens": 0
+          },
+          "qa": {
+            "input": 16002,
+            "output": 7692,
+            "cacheRead": 452864,
+            "cacheWrite": 0,
+            "reasoning": 2491,
+            "totalTokens": 476558
+          },
+          "qaFocused": {
+            "input": 0,
+            "output": 0,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "reasoning": 0,
+            "totalTokens": 0
+          },
+          "qaReport": {
+            "input": 0,
+            "output": 0,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "reasoning": 0,
+            "totalTokens": 0
+          },
+          "review": {
+            "input": 0,
+            "output": 0,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "reasoning": 0,
+            "totalTokens": 0
+          },
+          "compaction": {
+            "input": 0,
+            "output": 0,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "reasoning": 0,
+            "totalTokens": 0
+          }
+        },
+        "records": 55,
+        "missing": 0,
+        "incomplete": 0
+      },
+      "evaluation": {
+        "version": 1,
+        "runKey": "gchust/nb3-factory/issues/434/initial",
+        "kind": "initial",
+        "derivation": "recorded",
+        "agentConfiguration": {
+          "fingerprints": [
+            "2f5401c2837d7dae1f1f014540b983521db478e49b3e29c61dbb26be0a75e3bf"
+          ],
+          "complete": false
+        },
+        "controlSha": "417bb50ca8a370a57b28264d34a04a647d217d99",
+        "baseSha": "24c0eb1d2457b48fbc3d369ef8a0e5aafb6295e4",
+        "inputHash": "6f6926524926d0b626ade46bb686d79090148bbef76a1f60a2896b7d6dde7531",
+        "patchSha256": "0c23be34643c82598e3caabcb22a12ecee193dff1dfa782cec1e843b539814ea",
+        "pipelineOutcome": "passed",
+        "event": "workflow_dispatch",
+        "previousRunId": null
+      }
+    }
+  ],
+  "timings": [
+    {
+      "stage": "agent:implementation",
+      "calls": 1,
+      "durationMs": 282786
+    },
+    {
+      "stage": "agent:qa",
+      "calls": 1,
+      "durationMs": 125079
+    },
+    {
+      "stage": "build",
+      "calls": 1,
+      "durationMs": 60139
+    },
+    {
+      "stage": "test",
+      "calls": 1,
+      "durationMs": 45257
+    },
+    {
+      "stage": "lint",
+      "calls": 1,
+      "durationMs": 29385
+    },
+    {
+      "stage": "typecheck",
+      "calls": 1,
+      "durationMs": 14860
+    },
+    {
+      "stage": "db:apply",
+      "calls": 1,
+      "durationMs": 5681
+    },
+    {
+      "stage": "install",
+      "calls": 1,
+      "durationMs": 5061
+    },
+    {
+      "stage": "format:check",
+      "calls": 1,
+      "durationMs": 4760
+    },
+    {
+      "stage": "skills-sync",
+      "calls": 1,
+      "durationMs": 1180
+    },
+    {
+      "stage": "format:auto",
+      "calls": 1,
+      "durationMs": 727
+    },
+    {
+      "stage": "agent:review",
+      "calls": 1,
+      "durationMs": 1
+    }
+  ],
+  "delivery": {
+    "version": 1,
+    "meta": {
+      "repository": "gchust/nb3-factory",
+      "issue": 434,
+      "runId": "36369274304",
+      "attempt": 1,
+      "headSha": "92b263cdc7dfba54cc4c7d59c9c5cac01148c1dd",
+      "targetBranch": "apps/tm-e91bf52c-2b6f-4123-bd82-49e40b9ef0e8",
+      "title": "搭建任务闭环验收 — 公告首页",
+      "snapshotDate": "2026-09-28T02:32:45.000Z"
+    },
+    "delivery": {
+      "status": "pr-ready",
+      "ci": "passed",
+      "ciSource": "流水线已完成最终验证及 PR 发布；不代表人工合并。",
+      "qaSummary": "C01 通过：管理员登录后主页中英文均正常显示标题“搭建链路验证/Build Pipeline Verification”与说明“需求来自 TestManage3/Requested by TestManage3”；“说明/Notes”区块默认收起，展开后中英文分别显示“评论追加的需求已包含在本次搭建中”及对应英文文案，再次点击可收起；重载后仍默认收起，控制台无错误。"
+    },
+    "links": [
+      {
+        "label": "查看 PR #435",
+        "url": "https://github.com/gchust/nb3-factory/pull/435"
+      },
+      {
+        "label": "查看需求",
+        "url": "https://github.com/gchust/nb3-factory/issues/434"
+      },
+      {
+        "label": "本轮运行与原始产物",
+        "url": "https://github.com/gchust/nb3-factory/actions/runs/36369274304/attempts/1"
+      }
+    ],
+    "attention": [],
+    "checks": [
+      {
+        "id": "A1",
+        "title": "登录后能看到“搭建链路验证”和“需求来自 TestManage3”；说明区块默认收起，点击展开后显示追加评论中指定的文本，再次点击可以收起；中文和英文均可正常显示。",
+        "criterion": "登录后能看到“搭建链路验证”和“需求来自 TestManage3”；说明区块默认收起，点击展开后显示追加评论中指定的文本，再次点击可以收起；中文和英文均可正常显示。",
+        "status": "passed",
+        "actions": [
+          "以 nocobase/admin123 登录 http://127.0.0.1:13000/main/，进入业务主页",
+          "英文界面下读取页面文本，确认标题与说明",
+          "点击 Notes 按钮展开，读取展开文本",
+          "再次点击 Notes 按钮收起，确认文本消失",
+          "通过账户菜单将语言切换为中文，读取中文页面文本",
+          "点击“说明”按钮展开，读取中文展开文本",
+          "再次点击“说明”按钮收起，确认文本消失",
+          "重新加载 /main/ 页面，确认说明区块仍为默认收起状态",
+          "检查控制台与页面错误"
+        ],
+        "evidence": [
+          "英文界面显示标题 “Build Pipeline Verification” 与说明 “Requested by TestManage3”",
+          "英文 Notes 默认 expanded=false；点击后 expanded=true 并显示 “The requirements added in the comments are included in this build.”；再次点击 expanded=false 且文本消失",
+          "中文界面显示标题 “搭建链路验证” 与说明 “需求来自 TestManage3”",
+          "中文“说明”默认 expanded=false；点击后展开显示 “评论追加的需求已包含在本次搭建中”；再次点击收起，文本消失",
+          "页面重新加载后“说明”仍为 expanded=false，默认收起",
+          "控制台与页面错误为空，无 Something went wrong/空白页/异常 4xx/5xx"
+        ],
+        "screenshots": [
+          "criterion-1-home-en.png",
+          "criterion-1-notes-expanded-en.png",
+          "criterion-1-home-zh.png",
+          "criterion-1-notes-expanded-zh.png"
+        ],
+        "evidenceUnavailable": false,
+        "source": "verify-1/browser-acceptance/report.json",
+        "result": "控制台与页面错误为空，无 Something went wrong/空白页/异常 4xx/5xx"
+      }
+    ],
+    "media": [
+      {
+        "id": "criterion-1-home-zh.png",
+        "title": "公告首页（中文）",
+        "path": "verify-1/browser-acceptance/evidence/criterion-1-home-zh.png",
+        "category": "业务界面",
+        "featured": true
+      },
+      {
+        "id": "criterion-1-notes-expanded-zh.png",
+        "title": "说明区块展开（中文）",
+        "path": "verify-1/browser-acceptance/evidence/criterion-1-notes-expanded-zh.png",
+        "category": "业务界面",
+        "featured": true
+      },
+      {
+        "id": "criterion-1-home-en.png",
+        "title": "公告首页（英文）",
+        "path": "verify-1/browser-acceptance/evidence/criterion-1-home-en.png",
+        "category": "业务界面",
+        "featured": true
+      },
+      {
+        "id": "criterion-1-notes-expanded-en.png",
+        "title": "说明区块展开（英文）",
+        "path": "verify-1/browser-acceptance/evidence/criterion-1-notes-expanded-en.png",
+        "category": "业务界面",
+        "featured": true
+      }
+    ],
+    "uncovered": [],
+    "rawQaReport": {
+      "passed": true,
+      "authenticated": true,
+      "summary": "C01 通过：管理员登录后主页中英文均正常显示标题“搭建链路验证/Build Pipeline Verification”与说明“需求来自 TestManage3/Requested by TestManage3”；“说明/Notes”区块默认收起，展开后中英文分别显示“评论追加的需求已包含在本次搭建中”及对应英文文案，再次点击可收起；重载后仍默认收起，控制台无错误。",
+      "checks": [
+        {
+          "id": "C01",
+          "criterion": "登录后能看到“搭建链路验证”和“需求来自 TestManage3”；说明区块默认收起，点击展开后显示追加评论中指定的文本，再次点击可以收起；中文和英文均可正常显示。",
+          "status": "passed",
+          "actions": [
+            "以 nocobase/admin123 登录 http://127.0.0.1:13000/main/，进入业务主页",
+            "英文界面下读取页面文本，确认标题与说明",
+            "点击 Notes 按钮展开，读取展开文本",
+            "再次点击 Notes 按钮收起，确认文本消失",
+            "通过账户菜单将语言切换为中文，读取中文页面文本",
+            "点击“说明”按钮展开，读取中文展开文本",
+            "再次点击“说明”按钮收起，确认文本消失",
+            "重新加载 /main/ 页面，确认说明区块仍为默认收起状态",
+            "检查控制台与页面错误"
+          ],
+          "evidence": [
+            "英文界面显示标题 “Build Pipeline Verification” 与说明 “Requested by TestManage3”",
+            "英文 Notes 默认 expanded=false；点击后 expanded=true 并显示 “The requirements added in the comments are included in this build.”；再次点击 expanded=false 且文本消失",
+            "中文界面显示标题 “搭建链路验证” 与说明 “需求来自 TestManage3”",
+            "中文“说明”默认 expanded=false；点击后展开显示 “评论追加的需求已包含在本次搭建中”；再次点击收起，文本消失",
+            "页面重新加载后“说明”仍为 expanded=false，默认收起",
+            "控制台与页面错误为空，无 Something went wrong/空白页/异常 4xx/5xx"
+          ],
+          "screenshots": [
+            "criterion-1-home-en.png",
+            "criterion-1-notes-expanded-en.png",
+            "criterion-1-home-zh.png",
+            "criterion-1-notes-expanded-zh.png"
+          ],
+          "recordedAt": 1790562499056
+        }
+      ],
+      "failures": []
+    },
+    "rawRetro": {
+      "version": 1,
+      "summary": "Implemented the team announcement home page: updated client/pages/home.tsx with the title/description and a Base UI Collapsible 说明 block that is collapsed by default, and added matching en-US/zh-CN translations plus a component test covering collapsed default, expand/collapse, and Chinese localization.",
+      "blockers": [],
+      "improvements": [
+        {
+          "category": "task-specification",
+          "title": "Chinese-only literals without a stated default locale",
+          "detail": "The requirement names the visible strings only in Chinese (搭建链路验证 / 需求来自 TestManage3 / 说明 / 评论追加的需求已包含在本次搭建中) while also asking for Chinese and English copy. The application defaults to en-US, so a verifier looking only at the initial render sees the English wording and cannot confirm the literal Chinese strings without switching language.",
+          "suggestedChange": "State the intended default locale in the requirement, or have verification check both locales (switch to zh-CN and re-read the page) instead of asserting the Chinese literals on the default render.",
+          "mechanizable": true
+        }
+      ]
+    },
+    "acceptanceRequirements": "登录后能看到“搭建链路验证”和“需求来自 TestManage3”；说明区块默认收起，点击展开后显示追加评论中指定的文本，再次点击可以收起；中文和英文均可正常显示。",
+    "changes": {
+      "total": 4,
+      "added": 1,
+      "modified": 3,
+      "deleted": 0
+    },
+    "usage": {
+      "scope": "此 Issue 累计：已采集 1 个 Run / 1 次尝试",
+      "source": "现有 task-usage 模块（按 Agent / job ID 去重）",
+      "total": 1848551,
+      "cacheRead": 1768832,
+      "uncachedInput": 55780,
+      "output": 23939,
+      "executionSeconds": 891,
+      "endToEndSeconds": 901,
+      "incomplete": false,
+      "phases": [
+        {
+          "label": "初始实现",
+          "input": 39778,
+          "output": 16247,
+          "cacheRead": 1315968,
+          "cacheWrite": 0,
+          "total": 1371993
+        },
+        {
+          "label": "应用修复",
+          "input": 0,
+          "output": 0,
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "total": 0
+        },
+        {
+          "label": "完整业务 QA",
+          "input": 16002,
+          "output": 7692,
+          "cacheRead": 452864,
+          "cacheWrite": 0,
+          "total": 476558
+        },
+        {
+          "label": "失败路径复测",
+          "input": 0,
+          "output": 0,
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "total": 0
+        },
+        {
+          "label": "QA 补报告",
+          "input": 0,
+          "output": 0,
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "total": 0
+        },
+        {
+          "label": "独立搭建评审",
+          "input": 0,
+          "output": 0,
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "total": 0
+        },
+        {
+          "label": "上下文压缩",
+          "input": 0,
+          "output": 0,
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "total": 0
+        }
+      ],
+      "coverageNote": "用量记录 55；未报告用量 0；分项不完整 0；缺失作业时间 0。",
+      "note": "不把流式增量、上下文长度和思考 Token 重复相加。旧记录未拆分 QA 时保留原有口径；费用：未知。"
+    },
+    "runs": [
+      {
+        "id": "36369274304",
+        "attempt": 1,
+        "status": "pr-ready",
+        "detail": "已生成/更新业务 PR"
+      }
+    ],
+    "retro": {
+      "version": 1,
+      "summary": "Implemented the team announcement home page: updated client/pages/home.tsx with the title/description and a Base UI Collapsible 说明 block that is collapsed by default, and added matching en-US/zh-CN translations plus a component test covering collapsed default, expand/collapse, and Chinese localization.",
+      "source": "Agent · retro.json",
+      "blockers": [],
+      "improvements": [
+        {
+          "category": "task-specification",
+          "title": "Chinese-only literals without a stated default locale",
+          "detail": "The requirement names the visible strings only in Chinese (搭建链路验证 / 需求来自 TestManage3 / 说明 / 评论追加的需求已包含在本次搭建中) while also asking for Chinese and English copy. The application defaults to en-US, so a verifier looking only at the initial render sees the English wording and cannot confirm the literal Chinese strings without switching language.",
+          "suggestedChange": "State the intended default locale in the requirement, or have verification check both locales (switch to zh-CN and re-read the page) instead of asserting the Chinese literals on the default render.",
+          "source": "",
+          "mechanizable": true
+        }
+      ]
+    },
+    "timings": [
+      {
+        "stage": "agent:implementation",
+        "calls": 1,
+        "durationMs": 282786
+      },
+      {
+        "stage": "agent:qa",
+        "calls": 1,
+        "durationMs": 125079
+      },
+      {
+        "stage": "build",
+        "calls": 1,
+        "durationMs": 60139
+      },
+      {
+        "stage": "test",
+        "calls": 1,
+        "durationMs": 45257
+      },
+      {
+        "stage": "lint",
+        "calls": 1,
+        "durationMs": 29385
+      },
+      {
+        "stage": "typecheck",
+        "calls": 1,
+        "durationMs": 14860
+      },
+      {
+        "stage": "db:apply",
+        "calls": 1,
+        "durationMs": 5681
+      },
+      {
+        "stage": "install",
+        "calls": 1,
+        "durationMs": 5061
+      },
+      {
+        "stage": "format:check",
+        "calls": 1,
+        "durationMs": 4760
+      },
+      {
+        "stage": "skills-sync",
+        "calls": 1,
+        "durationMs": 1180
+      },
+      {
+        "stage": "format:auto",
+        "calls": 1,
+        "durationMs": 727
+      },
+      {
+        "stage": "agent:review",
+        "calls": 1,
+        "durationMs": 1
+      }
+    ],
+    "buildReview": {
+      "version": 1,
+      "state": "not-reviewed",
+      "reason": "本轮已明确关闭独立评审；只展示流水线事实。",
+      "basis": {
+        "repository": "gchust/nb3-factory",
+        "issue": 434,
+        "runId": "36369274304",
+        "attempt": 1,
+        "controlSha": "417bb50ca8a370a57b28264d34a04a647d217d99",
+        "rubricVersion": 2
+      },
+      "evaluation": null,
+      "execution": {
+        "buildReviewMode": "off",
+        "source": "task"
+      },
+      "process": {
+        "verificationAttempts": 1,
+        "repairAttempts": 0,
+        "finalRound": 1,
+        "rounds": [
+          {
+            "round": 1,
+            "reports": [
+              {
+                "scope": "full",
+                "source": "verify-1/browser-acceptance/report.json",
+                "passed": true,
+                "checks": [
+                  {
+                    "id": "C01",
+                    "criterion": "登录后能看到“搭建链路验证”和“需求来自 TestManage3”；说明区块默认收起，点击展开后显示追加评论中指定的文本，再次点击可以收起；中文和英文均可正常显示。",
+                    "status": "passed",
+                    "reason": ""
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "warnings": [],
+        "scope": "仅本 Run 已归档记录；工厂修复轮次不等于 Agent 开发中全部试错次数。缺少 verify-1 时不能声称任务首轮通过。"
+      }
+    },
+    "baseline": {
+      "template": "@nocobase/app-template-default",
+      "templateVersion": "1.0.0-beta.47",
+      "creatorVersion": "0.1.0-beta.22",
+      "source": null,
+      "lockSha256": "7db7024be35da2f6d4d75784a2afd5c398ca647ac58462cf5e58d14276395f99",
+      "packages": [
+        {
+          "name": "@nocobase/ai-employee",
+          "version": "0.2.0-beta.8",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/ai-employee-avatars",
+          "version": "1.0.2",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/app-cli",
+          "version": "1.0.0-beta.6",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/app-client",
+          "version": "1.0.0-beta.21",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/app-plugin-ai-employee",
+          "version": "1.0.0-beta.23",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/app-plugin-ai-knowledge-base",
+          "version": "0.1.0-beta.9",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/app-plugin-api-keys",
+          "version": "0.1.0-beta.8",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/app-plugin-authentication",
+          "version": "1.0.0-beta.24",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/app-plugin-authorization",
+          "version": "0.2.0-beta.20",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/app-plugin-authz-default-access",
+          "version": "0.1.0-beta.4",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/app-plugin-authz-restriction-rules",
+          "version": "0.1.0-beta.3",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/app-plugin-authz-sharing-rules",
+          "version": "0.1.0-beta.4",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/app-plugin-database-explorer",
+          "version": "0.1.0-beta.6",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/app-plugin-file",
+          "version": "0.1.0-beta.15",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/app-plugin-i18n",
+          "version": "0.1.0-beta.9",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/app-plugin-mail",
+          "version": "0.1.0-beta.0",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/app-plugin-notification",
+          "version": "0.1.0-beta.17",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/app-plugin-notification-in-app",
+          "version": "0.2.0-beta.18",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/app-plugin-notification-providers",
+          "version": "0.2.0-beta.7",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/app-plugin-scheduler",
+          "version": "0.1.0-beta.9",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/app-plugin-users",
+          "version": "1.0.0-beta.11",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/app-plugin-workflow",
+          "version": "1.0.0-beta.28",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/app-portal-sdk",
+          "version": "1.0.0-beta.3",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/app-server",
+          "version": "1.0.0-beta.27",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/app-skills",
+          "version": "0.1.0-beta.16",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/app-websocket",
+          "version": "0.0.1",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/authorization",
+          "version": "0.1.0-beta.9",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/caching",
+          "version": "0.1.0-beta.2",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/config",
+          "version": "0.1.0-beta.1",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/cron",
+          "version": "0.1.0",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/db",
+          "version": "1.0.0-beta.16",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/db-sqlite",
+          "version": "0.1.0-beta.2",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/dev-config",
+          "version": "0.1.0-beta.13",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/drive",
+          "version": "0.1.0-beta.4",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/i18n",
+          "version": "1.0.0-beta.4",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/logging",
+          "version": "0.1.0-beta.6",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/queue",
+          "version": "0.1.0-beta.7",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/repository-input",
+          "version": "0.1.0-beta.1",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/service-provider",
+          "version": "0.0.2-beta.1",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/session",
+          "version": "0.1.0-beta.2",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/snowflake",
+          "version": "1.0.0-beta.3",
+          "reason": null
+        }
+      ]
+    }
+  },
+  "pr": {
+    "number": 435,
+    "headSha": "92b263cdc7dfba54cc4c7d59c9c5cac01148c1dd"
+  },
+  "reportId": "gchust/nb3-factory:434:36369274304:1:92b263cdc7dfba54cc4c7d59c9c5cac01148c1dd:template-9:review-e7a068c7cd3e614f"
+}
