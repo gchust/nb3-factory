@@ -1,0 +1,148 @@
+{
+  "version": 1,
+  "noFeatureOwners": ["factory", "environment"],
+  "noFeatureReason": "工厂流程或运行环境问题，不归入功能点",
+  "generic": [
+    "skill:nocobase-app-development",
+    "skill:nocobase-app-upgrade",
+    "skill:nocobase-deployment",
+    "guide:app/AGENTS.md",
+    "pkg:@nocobase/app-server",
+    "pkg:@nocobase/app-client",
+    "pkg:@nocobase/app-host",
+    "pkg:@nocobase/app-cli",
+    "pkg:@nocobase/app-skills",
+    "pkg:@nocobase/app-template-default",
+    "pkg:@nocobase/config",
+    "pkg:@nocobase/service-provider",
+    "pkg:@nocobase/ui-library"
+  ],
+  "rules": [
+    {
+      "featurePoint": "应用搭建/数据库",
+      "subjects": [
+        "pkg:@nocobase/db",
+        "pkg:@nocobase/db-*",
+        "pkg:@nocobase/repository-input",
+        "pkg:@nocobase/app-plugin-database-explorer",
+        "skill:nocobase-db",
+        "skill:nocobase-db-*",
+        "guide:@nocobase/db/*",
+        "guide:@nocobase/db-*",
+        "guide:@nocobase/repository-input/*"
+      ]
+    },
+    {
+      "featurePoint": "应用测试/测试 kit",
+      "subjects": ["pkg:@nocobase/db-testkit", "guide:@nocobase/db-testkit/*"]
+    },
+    {
+      "featurePoint": "应用搭建/认证",
+      "subjects": [
+        "pkg:@nocobase/app-plugin-authentication",
+        "pkg:@nocobase/app-plugin-api-keys",
+        "skill:nocobase-app-plugin-authentication",
+        "skill:nocobase-app-plugin-api-keys",
+        "guide:@nocobase/app-plugin-authentication/*",
+        "guide:@nocobase/app-plugin-api-keys/*"
+      ]
+    },
+    {
+      "featurePoint": "应用搭建/授权",
+      "subjects": [
+        "pkg:@nocobase/authorization",
+        "pkg:@nocobase/app-plugin-authorization",
+        "pkg:@nocobase/app-plugin-authz-*",
+        "skill:nocobase-app-plugin-authorization",
+        "skill:nocobase-app-plugin-authz-*",
+        "guide:@nocobase/authorization/*",
+        "guide:@nocobase/app-plugin-authorization/*",
+        "guide:@nocobase/app-plugin-authz-*"
+      ]
+    },
+    {
+      "featurePoint": "应用搭建/文件",
+      "subjects": [
+        "pkg:@nocobase/app-plugin-file",
+        "pkg:@nocobase/drive",
+        "skill:nocobase-app-plugin-file",
+        "guide:@nocobase/app-plugin-file/*",
+        "guide:@nocobase/drive/*"
+      ]
+    },
+    {
+      "featurePoint": "应用搭建/AI 员工",
+      "subjects": [
+        "pkg:@nocobase/app-plugin-ai-employee",
+        "pkg:@nocobase/ai-employee",
+        "skill:nocobase-app-plugin-ai-employee",
+        "guide:@nocobase/app-plugin-ai-employee/*",
+        "guide:@nocobase/ai-employee/*"
+      ]
+    },
+    {
+      "featurePoint": "应用搭建/知识库",
+      "subjects": [
+        "pkg:@nocobase/app-plugin-ai-knowledge-base",
+        "skill:nocobase-app-plugin-ai-knowledge-base",
+        "guide:@nocobase/app-plugin-ai-knowledge-base/*"
+      ]
+    },
+    {
+      "featurePoint": "应用搭建/多语言",
+      "subjects": [
+        "pkg:@nocobase/app-plugin-i18n",
+        "pkg:@nocobase/app-i18n",
+        "pkg:@nocobase/i18n",
+        "skill:nocobase-app-plugin-i18n",
+        "guide:@nocobase/app-plugin-i18n/*",
+        "guide:@nocobase/i18n/*"
+      ]
+    },
+    {
+      "featurePoint": "应用搭建/日志",
+      "subjects": ["pkg:@nocobase/logging", "guide:@nocobase/logging/*"]
+    },
+    {
+      "featurePoint": "应用搭建/工作流",
+      "subjects": [
+        "pkg:@nocobase/app-plugin-workflow",
+        "skill:nocobase-app-plugin-workflow",
+        "guide:@nocobase/app-plugin-workflow/*"
+      ]
+    },
+    {
+      "featurePoint": "应用搭建/通知",
+      "subjects": [
+        "pkg:@nocobase/app-plugin-notification",
+        "pkg:@nocobase/app-plugin-notification-*",
+        "skill:nocobase-app-plugin-notification",
+        "skill:nocobase-app-plugin-notification-*",
+        "guide:@nocobase/app-plugin-notification/*",
+        "guide:@nocobase/app-plugin-notification-*"
+      ]
+    },
+    {
+      "featurePoint": "应用搭建/队列",
+      "subjects": ["pkg:@nocobase/queue", "guide:@nocobase/queue/*"]
+    },
+    {
+      "featurePoint": "应用搭建/定时任务",
+      "subjects": [
+        "pkg:@nocobase/app-plugin-scheduler",
+        "pkg:@nocobase/cron",
+        "skill:nocobase-app-plugin-scheduler",
+        "guide:@nocobase/app-plugin-scheduler/*",
+        "guide:@nocobase/cron/*"
+      ]
+    },
+    {
+      "featurePoint": "应用搭建/审计",
+      "subjects": [
+        "pkg:@nocobase/app-plugin-audit",
+        "skill:nocobase-app-plugin-audit",
+        "guide:@nocobase/app-plugin-audit/*"
+      ]
+    }
+  ]
+}

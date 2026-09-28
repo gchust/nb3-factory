@@ -1,9 +1,10 @@
 // Optional delivery of registered evaluation bundles to one maintainer-configured
 // receiver that implements the Evaluation Import v1 protocol. Delivery never
 // triggers a build, review or model call, and its failures never change business
-// results. Receipts keep only sanitized metadata (target hash, status, category).
+// results. Feature point decisions come from the workflow's separate classify job.
+// Receipts keep only sanitized metadata (target hash, status, category).
 import { createHash } from 'node:crypto';
-import { appendFileSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { setTimeout as sleep } from 'node:timers/promises';
@@ -13,7 +14,7 @@ import { commitTree, enqueue, outboxId, readIndex, readOutbox, readRegistryJson,
 import { assertSchema, loadContract } from './json-schema.mjs';
 import { deliveryConfig, DeliveryConfigError } from './evaluation-target.mjs';
 import { problemSubmission } from './problem-submission.mjs';
-import { reportLinkSubmission } from './report-link-submission.mjs';
+import { classificationsByItem, reportLinkSubmission } from './report-link-submission.mjs';
 
 export { deliveryConfig, DeliveryConfigError, targetIdOf } from './evaluation-target.mjs';
 
@@ -65,12 +66,12 @@ function multipart(zip, format) {
 }
 
 // Bounded retry of one bundle: the same bytes and idempotency key on every attempt.
-export async function deliverBundle({ zip, subject, config, fetcher = fetch, pause = sleep, now = () => Date.now(), attempts = RETRY.attempts, timeoutMs = config.timeoutMs ?? RETRY.timeoutMs }) {
+export async function deliverBundle({ zip, subject, config, classification = {}, fetcher = fetch, pause = sleep, now = () => Date.now(), attempts = RETRY.attempts, timeoutMs = config.timeoutMs ?? RETRY.timeoutMs }) {
   const bundleSha256 = sha256(zip);
   const expected = { ...subject, bundleSha256 };
   const linked = config.format === 'testmanage3-links-v1';
   const { boundary, body } = linked
-    ? { body: Buffer.from(JSON.stringify(reportLinkSubmission(JSON.parse(readZip(zip).find(file => file.path === 'evaluation.json').data.toString('utf8'))))) }
+    ? { body: Buffer.from(JSON.stringify(reportLinkSubmission(JSON.parse(readZip(zip).find(file => file.path === 'evaluation.json').data.toString('utf8')), classification))) }
     : multipart(zip, config.format);
   if (linked && body.length > 4 * 1024 * 1024) throw new Error('Report metadata exceeds 4 MiB');
   const headers = {
@@ -206,7 +207,7 @@ export const ITEM_WORST_CASE_MS = RETRY.attempts * RETRY.timeoutMs + (RETRY.atte
 
 // Stops taking new bundles before the deadline, so results are always saved; untaken
 // items simply stay pending. onResult persists each result as soon as it exists.
-export async function sendDeliveries(plan, { env, fetcher, pause, allowInsecureLoopback = false, deadline = Infinity, now = () => Date.now(), onResult = () => {} }) {
+export async function sendDeliveries(plan, { env, fetcher, pause, allowInsecureLoopback = false, deadline = Infinity, now = () => Date.now(), onResult = () => {}, classifications = new Map() }) {
   const results = [];
   const record = result => { results.push(result); onResult(result, results); };
   const at = () => new Date(now()).toISOString();
@@ -234,7 +235,7 @@ export async function sendDeliveries(plan, { env, fetcher, pause, allowInsecureL
     const worstCaseMs = RETRY.attempts * config.timeoutMs + (RETRY.attempts - 1) * RETRY.maxRetryAfterSeconds * 1000;
     if (now() + worstCaseMs > deadline) { deferred++; continue; }
     const outcome = await deliverBundle({ zip: item.zip, subject: { type: item.type, key: item.key, revision: item.revision, sourceInstance: item.sourceInstance },
-      config, fetcher, pause, now });
+      config, classification: classifications.get(item.id) ?? {}, fetcher, pause, now });
     if (outcome.bundleSha256 !== item.bundleSha256) throw new Error('Bundle changed after verification');
     const exhausted = outcome.state === 'pending' && item.previousAttempts + outcome.attempts.length >= RETRY.maxTotalAttempts;
     record({ ...strip(item), ...outcome, ...(exhausted ? { state: 'rejected', reason: 'retry-limit' } : {}) });
@@ -296,8 +297,14 @@ async function main() {
     mkdirSync(path.dirname(args.output), { recursive: true });
     const save = results => writeFileSync(args.output, `${JSON.stringify({ version: 1, targetId: plan.targetId, results }, null, 2)}\n`);
     save([]);
+    // Classification is optional: without a valid file problems are sent unclassified, as before.
+    let classifications = new Map();
+    if (args.classification && existsSync(args.classification)) {
+      try { classifications = classificationsByItem(JSON.parse(readFileSync(args.classification, 'utf8'))); }
+      catch (error) { console.log(`::warning::Problem classification ignored: ${error.message}`); }
+    }
     const { configError, results, deferred } = await sendDeliveries(plan, { env: process.env, deadline: Date.now() + SEND_BUDGET_MS,
-      onResult: (_result, all) => save(all) });
+      onResult: (_result, all) => save(all), classifications });
     if (deferred) console.log(`${deferred} bundle(s) left pending for the next scan to stay within the job budget.`);
     if (process.env.GITHUB_STEP_SUMMARY) appendFileSync(process.env.GITHUB_STEP_SUMMARY, summary(results, configError));
     for (const result of results) console.log(`${result.type} ${keyDigest(result.key).slice(0, 12)} r${result.revision}: ${result.state} (${result.reason ?? 'ok'})`);
