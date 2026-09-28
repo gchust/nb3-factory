@@ -1,0 +1,65 @@
+{
+  "version": 1,
+  "inputHash": "b9eff8c3e8e45ceb9b335fcd9f37005b9a4b06bc7255acd9c99279533ebb278d",
+  "sources": [
+    {
+      "id": "460:36434284393:1:F2",
+      "report": "460:36434284393:1",
+      "fingerprint": "af6d1d0a694e97555ec3fecc47ef6c99f9d0e8ef6c9e7d5b1bbdbd124e4e0fe1"
+    },
+    {
+      "id": "460:36434284393:1:F3",
+      "report": "460:36434284393:1",
+      "fingerprint": "361e1adafea1a9ddbb969a24b3040025c66753ed2bc553a3fd9891bdc2ce644d"
+    },
+    {
+      "id": "460:36434284393:1:F4",
+      "report": "460:36434284393:1",
+      "fingerprint": "b3a74743b4eb45e7dd941449f06d6e9d6105c0aafb2dcbb82fcb56afd2a49d12"
+    },
+    {
+      "id": "460:36434284393:1:F6",
+      "report": "460:36434284393:1",
+      "fingerprint": "5ff165a8dabf72c58c867c9dcebb05134806d2370e8a92f501d6991b2f07abb6"
+    }
+  ],
+  "groups": [
+    {
+      "title": "nocobase-db Skill 未说明演示/样例数据的规范落点与无唯一约束时的幂等写法",
+      "reason": "单独保留。证据 E30/E31 显示 Skill 只定义“运行所需数据的种子”，并明确种子绝不是样例或演示内容、要求唯一约束 + upsertOne；E72 显示应用把演示数据写入正式 seeds 目录并自造 findOne/createOne 的 ensure 幂等逻辑，说明缺口是“演示数据落点 + 无唯一约束幂等策略”的文档缺失，属 documentation 的 guidance-gap。与其他三条的根因（CSRF 来源校验、空 filter 约束、聚合示例）不同，且同一报告内的发现按规则不得合并，故单列。",
+      "members": [
+        "460:36434284393:1:F2"
+      ]
+    },
+    {
+      "title": "受保护路由参考缺少 cookie 写请求的 CSRF/信任来源校验说明",
+      "reason": "单独保留。证据 E50 显示 auth.checkCookieWriteOrigin 对携带 cookie 的写请求校验 Origin/Referer 并在不匹配时返回 403 INVALID_CSRF_ORIGIN；E55 表明该要求只写在认证 Skill 的 Deployment 段，而 E54 的 protecting-routes.md 全篇无 CSRF/trustedOrigins/publicOrigin 字样，E78 显示应用未配置来源，E12 记录 Agent 反复触发后以 BETTER_AUTH_URL 绕行。根因是受保护路由参考的指引缺口，且同报告发现不得合并，故单列。",
+      "members": [
+        "460:36434284393:1:F3"
+      ]
+    },
+    {
+      "title": "nocobase-db Skill 未对称说明 findOne 与单条 mutation 的空 filter 约束",
+      "reason": "单独保留。证据 E26/E28 显示 findOne 在无 filter 且无 sort 时抛 INVALID_FILTER，upsertOne 等单条 mutation 对空 filter 同样报错；E33 的 Skill 只对 updateMany/deleteMany 的空 scope 作了说明，E74 显示应用在 loadRows 中特判并注释“空 filter 会被拒绝”来规避。缺口是单条读/写空 filter 约束的文档不对称，属 usability-improvement，与其他发现根因不同，且同报告发现不得合并，故单列。",
+      "members": [
+        "460:36434284393:1:F4"
+      ]
+    },
+    {
+      "title": "nocobase-db Skill 示例未突出 aggregate/groupBy 的数据库侧合计用法",
+      "reason": "单独保留。证据 E27 显示 Repository 已实现 aggregate/groupBy（含 filter/having/sort），E33 的方法清单也列出二者，但示例只覆盖关系读取与嵌套写；E75 显示应用改用 findMany + JS reduce 做金额合计（按 customerId 过滤保证隔离）。这是“示例未引导数据库侧聚合”的可用性改进，与其他发现根因不同，且同报告发现不得合并，故单列。",
+      "members": [
+        "460:36434284393:1:F6"
+      ]
+    }
+  ],
+  "classifier": {
+    "engine": "pi",
+    "model": "deepseek-v4.1-flash",
+    "version": "0.86.1",
+    "runId": "36446202924",
+    "attempt": 1,
+    "controlSha": "b2a65efc97b0935b42cc0eb38552be9ae7972d53",
+    "completedAt": "2026-09-28T15:48:12.240Z"
+  }
+}
