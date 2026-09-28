@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "inputHash": "d0f1037a2ccff207ac7f716fb548c400f817a245af478d51286ac8d7fa6d62df",
+  "inputHash": "318a06f2da1d0ab96e14a9ee9722c4a22ab37f81d577a787bd7ee5d4f388a668",
   "sources": [
     {
       "id": "408:36329180371:1:F2",
@@ -103,6 +103,21 @@
       "fingerprint": "4ff0e440a3292c4f5afb73dc62fae0bef870cb63feae3853889b488babe2ae2e"
     },
     {
+      "id": "417:36376187583:1:F3",
+      "report": "417:36376187583:1",
+      "fingerprint": "c72ee413b15d3b8c19f9d9a486185ec932421cc4af142cbb898ec475c591ac9c"
+    },
+    {
+      "id": "417:36376187583:1:F4",
+      "report": "417:36376187583:1",
+      "fingerprint": "87e6c294d0a475e729c538fc922891f66726b06032efcba4b0e6ff9b24ae68da"
+    },
+    {
+      "id": "417:36376187583:1:F5",
+      "report": "417:36376187583:1",
+      "fingerprint": "cfc35b33224373af1fe1346a6f73187a8e9a82cfbbcf701aac54488fc326e290"
+    },
+    {
       "id": "418:36376190523:1:F3",
       "report": "418:36376190523:1",
       "fingerprint": "83e24b733424d0810f5ae64b6ef5a7dbeba831903344414756845d195f68f1c2"
@@ -136,7 +151,7 @@
   "groups": [
     {
       "title": "种子不得承载样例数据，但示例/演示数据缺少正式承载路径",
-      "reason": "408:F2 的 E20/E30/E31 显示 nocobase-db SKILL 明确“a seed is never sample or demonstration content”，应用迁移只对 customerName 建普通索引，示例数据被迫写入 seed 且用 exists+createOne（未落到唯一约束+upsertOne）；431:F2 的 E19/E26/E32 引用同一条种子职责规定，应用侧 migrations 参考也未给样例数据归属，只能把“Sample data for the sales team”写入 seed 并用 findOne+createOne。两条来自不同报告（408、431），共同指向同一指引缺口：种子被否定承载样例，却没有为示例/首装数据提供替代路径，修复方向一致（给出正式承载路径或声明例外并要求唯一约束+upsertOne）。合并只表示共同根因，不据此推断版本间回归。",
+      "reason": "408:F2 的 E20/E30/E31 显示 nocobase-db SKILL 明确“a seed is never sample or demonstration content”，应用迁移只对 customerName 建普通索引，示例数据被迫写入 seed 且用 exists+createOne（未落到唯一约束+upsertOne）；431:F2 的 E19/E26/E32 引用同一条种子职责规定，应用侧 migrations 参考也未给样例数据归属，只能把“Sample data for the sales team”写入 seed 并用 findOne+createOne。两条来自不同报告（408、431），共同指向同一指引缺口：种子被否定承载样例，却没有为示例/首装数据提供替代路径，修复方向一致（给出正式承载路径或声明例外并要求唯一约束+upsertOne）。",
       "members": [
         "408:36329180371:1:F2",
         "431:36360863566:1:F2"
@@ -144,10 +159,11 @@
     },
     {
       "title": "应用模板 app/AGENTS.md 存在多余空行，导致 prettier/format:check 失败",
-      "reason": "411:F5 的 E42 显示 repair-1 通过 git log 与 factory-template.json 定位 AGENTS.md 为模板产物，并确认多余空行使 prettier --check 失败；416:F6 的 E34 显示修复轮对 AGENTS.md 运行 prettier，得到同一文件的既有格式化漂移；418:F4 的 E31/E43/E59 显示基线原稿在 Factory task termination 与 Controlled failed-delivery smoke 之间多一个空行，retro 将 rootCause 指向模板提交 e318f4e，prettier --write 后 diff 输出 403d402；419:F4 的 E37/E38/E40 用 git show e318f4e 确认该提交在 ## Controlled failed-delivery smoke 前新增两个空行，修复轮用 edit 改回一个空行。四条来自不同报告（411、416、418、419），同为 owner=template、同一文件 app/AGENTS.md 的同一根因（模板提交 e318f4e 引入多余空行），修复方向一致（在模板源头修正并让模板 CI 对 app/AGENTS.md 运行 prettier --check）。合并仅表示共同根因，不据此认定新版仍有缺陷或旧问题必然已修复（411:F5 为 resolved，416:F6 与 418:F4/419:F4 状态不同）。",
+      "reason": "411:F5 的 E42 显示 repair-1 通过 git log 与 factory-template.json 定位 AGENTS.md 为模板产物，并确认多余空行使 prettier --check 失败；416:F6 的 E34 显示修复轮对 AGENTS.md 运行 prettier，得到同一文件的既有格式化漂移；417:F4 的 E33/E34 显示 verify-1 的 format:check 报 AGENTS.md 未过 Prettier，retro 把 rootCause 指向 ## Controlled failed-delivery smoke 前的两个连续空行；418:F4 的 E31/E43/E59 显示基线在 Factory task termination 与 Controlled failed-delivery smoke 之间多一个空行，rootCause 指向模板提交 e318f4e，prettier --write 后 diff 输出 403d402；419:F4 的 E37/E38/E40 用 git show e318f4e 确认该提交新增两个空行，修复轮用 edit 改回一个空行。五条来自不同报告（411、416、417、418、419），同为 owner=template、同一文件 app/AGENTS.md 的同一根因（模板提交 e318f4e 引入多余空行），修复方向一致（在模板源头修正并让模板 CI 对 app/AGENTS.md 运行 prettier --check）。合并仅表示共同根因，不据此认定新版仍有缺陷或旧问题必然已修复。",
       "members": [
         "411:36329191920:1:F5",
         "416:36329210119:1:F6",
+        "417:36376187583:1:F4",
         "418:36376190523:1:F4",
         "419:36376192996:1:F4"
       ]
@@ -169,7 +185,7 @@
     },
     {
       "title": "文件内容路由默认公开，每个应用都必须自行加鉴权",
-      "reason": "该发现的 E12 显示 file SKILL 说明 accessPath 内容路由为公开例外、需应用自加认证授权，E13 显示 defineFileRepositoryApiRoutes 注释为“Public first-version routes. Authentication and authorization are application-owned.”。两条指向插件默认安全姿态这一框架根因，修复方向是给 API 增加受保护模式；与 414:F1 的“已有中间件入口未写入 Skill”属不同缺口（后者根因在文档缺说明，修复方向是补文档），同报告 409:F1 又属站内信导出面问题，根因均不同，故单独保留。",
+      "reason": "该发现的 E12 显示 file SKILL 说明 accessPath 内容路由为公开例外、需应用自加认证授权，E13 显示 defineFileRepositoryApiRoutes 注释为“Public first-version routes. Authentication and authorization are application-owned.”。两条指向插件默认安全姿态这一框架根因，修复方向是给 API 增加受保护模式；与 414:F1 的“已有中间件入口未写入 Skill”（根因在文档缺说明）属不同缺口，同报告 409:F1 又属站内信导出面问题，根因均不同，故单独保留。",
       "members": [
         "409:36329183962:1:F2"
       ]
@@ -203,10 +219,11 @@
       ]
     },
     {
-      "title": "写操作授权未声明 read 节点会被 Repository 在读策略上拒绝，文档未写成规则",
-      "reason": "该发现的 E4 显示 composeDatabasePolicies 以 read:false 为初值，只声明 create 的复合动作派生 read=false，E16 显示 createOne 落库前用绑定读策略调 validateSelect，E17 显示 resolveReadNode 在 read===false 时抛 READ_FORBIDDEN，E9 显示 Skill 示例恰好天然带 read 却未写成规则，E31/E36/E38/E41 显示应用 403 现象与 read('*')+动作的修复。证据共同指向“写动作授权必须含 read”这一文档缺口，与同报告 413:F2/F4 的约束不同，且无其他报告共享，故单独保留。",
+      "title": "写授权必须包含 read 节点/字段，Repository 经读策略校验并回读写入行，文档未写成规则",
+      "reason": "413:F1 的 E4 显示 composeDatabasePolicies 以 read:false 为初值、只声明 create 的复合动作派生 read=false 的 Policy，E16 显示 createOne 落库前用绑定读策略调 validateSelect，E17 显示 resolveReadNode 在 read===false 时抛 READ_FORBIDDEN，E9 显示 Skill 示例天然带 read 却未写成规则，E36/E38/E41 显示应用 403 现象与 read('*')+动作的修复；417:F3 的 E8 显示 runtime-api.md 只说明 read 字段管输出、create/update 管输入，E10 显示同一 createOne 写入后调用 validateSelect(..., readContext(collection)) 读回写入行，E26 显示应用在 devices-resources.ts 注释记录写授权需带 read 的原因。两条来自不同报告（413、417），共同指向同一根因：写动作授权必须包含 read 节点/字段，否则 Repository 经读策略校验并回读写入行时拒绝；修复方向一致（在 authorization Skill 明确该规则并给示例）。",
       "members": [
-        "413:36329199383:1:F1"
+        "413:36329199383:1:F1",
+        "417:36376187583:1:F3"
       ]
     },
     {
@@ -285,15 +302,22 @@
       "members": [
         "431:36360863566:1:F1"
       ]
+    },
+    {
+      "title": "脚手架测试以零插件运行时启动应用 provider，未文档化 provider 需守卫可选插件 token",
+      "reason": "该发现的 E18 显示 startServiceProviders 的固定注册顺序，E27 显示 DevicesProvider.boot 需用 container.has(authorizationToken) 守卫可选插件 token，E34 显示修复轮把 provider 零插件启动崩溃列为 blocker，E21 显示模板 AGENTS.md 未文档化该守卫要求。证据共同指向“模板/指引未说明 provider 需守卫可选插件 token”这一独立指引缺口；与 412:F2 的迁移 Collection 门控（builder.hasCollection）、415:F2 的服务令牌身份语义在 API 与修复方向上均不同，故单独保留。",
+      "members": [
+        "417:36376187583:1:F5"
+      ]
     }
   ],
   "classifier": {
     "engine": "pi",
     "model": "deepseek-v4.1-flash",
     "version": "0.86.1",
-    "runId": "36383119828",
+    "runId": "36383462720",
     "attempt": 1,
     "controlSha": "ad1f8060916f30ee2908d1c8fc6d8ed16d4ba6ef",
-    "completedAt": "2026-09-28T05:44:50.372Z"
+    "completedAt": "2026-09-28T05:49:50.101Z"
   }
 }
