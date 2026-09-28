@@ -91,9 +91,13 @@ const enUS = {
       'No enabled plugin contributes a dev page you have access to.',
   },
   home: {
-    title: 'Start building your application',
-    description:
-      'Describe what you need to your AI Agent, then build pages, data models, and business workflows.',
+    title: 'Build Pipeline Verification',
+    description: 'Requested by TestManage3',
+    notes: {
+      title: 'Notes',
+      content:
+        'The requirements added in the comments are included in this build.',
+    },
   },
 
   appearance: {

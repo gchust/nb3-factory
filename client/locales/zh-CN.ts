@@ -85,8 +85,12 @@ const zhCN: AppResource = {
     emptyDescription: '没有已启用的插件提供你有权访问的开发页面。',
   },
   home: {
-    title: '开始构建你的应用',
-    description: '向 AI 助手描述你的需求，逐步构建页面、数据模型和业务流程。',
+    title: '搭建链路验证',
+    description: '需求来自 TestManage3',
+    notes: {
+      title: '说明',
+      content: '评论追加的需求已包含在本次搭建中',
+    },
   },
 
   appearance: {
