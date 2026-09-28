@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "inputHash": "c546d52395cab9421a6b31f8d6dac2115dd9f0d6463ad9a78183d28d1f207d33",
+  "inputHash": "a3c6e94d987f15d15e4700d71c851a7d62049b4d4ae718ceadec69f18567ba0f",
   "findings": [
     {
       "id": "460:36434284393:1:F2",
@@ -801,6 +801,297 @@
         }
       ],
       "fingerprint": "a9c58ac25ffea72c97fd03ba6d0e47545be166d7cfaa6c1b77b3bc6e0a59bd4f"
+    },
+    {
+      "id": "463:36434310207:1:F1",
+      "report": "463:36434310207:1",
+      "issue": 463,
+      "taskTitle": "项目资料与私有附件",
+      "appVersion": "1.0.0-beta.50",
+      "appTemplate": "@nocobase/app-template-default",
+      "finding": {
+        "id": "F1",
+        "kind": "issue",
+        "title": "Registry OOXML 预览未设超时/看门狗：worker 不收敛时永久停在 Loading，合法 DOCX 无法呈现正文",
+        "owner": "plugin",
+        "severity": "major",
+        "confidence": "confirmed",
+        "status": "open",
+        "detail": "registry/component-ui 的 OfficeOpenXmlPreview 只 await viewer.load(data)，既无调用方超时，也未向 createOfficeOpenXmlViewer 传入 @silurus/ooxml 的 workerTimeoutMs；onError 仅覆盖抛出的错误，覆盖不到 worker 挂起。本案例对一份合法 DOCX（975B、sha 校验通过、资源 200、console 静默）渲染超过 2 分钟仍未出现正文，是 verify-2/verify-3 失败与最终 acceptance 只能显示文本回退的直接原因。",
+        "impact": "B02（在应用内看到 DOCX 正文）是本案例唯一持续失败的验收项：合法文档预览不可靠，用户体验为无界\"加载中\"，且无错误提示、无下载回退，只能由应用侧逐文件兜底。",
+        "suggestedChange": "在 OfficeOpenXmlPreview 中默认启用 @silurus/ooxml 的 workerTimeoutMs（或自带 load 超时），超时/失败时渲染明确错误提示与下载回退，并补充一个\"worker 不收敛\"路径的组件测试。",
+        "evidence": [
+          "E69",
+          "E70",
+          "E84",
+          "E85",
+          "E91",
+          "E92",
+          "E93"
+        ],
+        "aspects": [
+          "reliability",
+          "requirementFit",
+          "design",
+          "agentFriendliness"
+        ],
+        "diagnosis": {
+          "category": "runtime-defect",
+          "trigger": "对 @silurus/ooxml 本地 worker 渲染一份本应可渲染的 .docx（组件默认选项）时，worker 未在合理时间内回传，viewer.load() 的 promise 既不 resolve 也不 reject。",
+          "expected": "预览组件应在库自带看门狗或自身超时到期后给出明确失败态（错误提示 + 下载回退），或在可渲染时确定性呈现正文。",
+          "actual": "无任何超时或回退，界面永久停在 \"Loading preview...\"，合法 DOCX 正文不可靠呈现；B02 在 4 轮验证中两度失败，最终通过依赖应用侧文本回退。",
+          "workaround": "应用在 createOfficeOpenXmlViewer 传入 workerTimeoutMs，并用 15s 调用方计时器兜底，超时后自行把 DOCX 转成文本预览。",
+          "acceptance": "Registry 组件默认启用 worker 看门狗（或在 catch/超时后渲染明确失败提示与下载动作），对同一份合法 .docx 连续多次刷新均能稳定呈现正文或明确失败，不再出现无界 Loading。"
+        }
+      },
+      "targets": [
+        "@nocobase/app-plugin-file"
+      ],
+      "paths": [
+        "packages/@nocobase/app-plugin-file/registry/component-ui/components/previewers/office-open-xml-preview.tsx"
+      ],
+      "evidence": [
+        {
+          "id": "E69",
+          "kind": "code",
+          "path": "packages/@nocobase/app-plugin-file/registry/component-ui/components/previewers/office-open-xml-preview.tsx",
+          "observation": "基线 OOXML 预览：仅 await viewer.load(data)，无超时/看门狗；onError 只处理抛出的错误，不含挂起。",
+          "lines": [
+            56,
+            80
+          ],
+          "excerpt": "    void (async () => {\n      const data = await fetchOfficeOpenXml(url, controller.signal, t);\n      if (!active) return;\n      const createdViewer = await createOfficeOpenXmlViewer(\n        format,\n        host,\n        reportViewerError,\n      );\n      if (!active) {\n        createdViewer.destroy();\n        return;\n      }\n      viewer = createdViewer;\n      await viewer.load(data);\n      if (active) setLoaded(true);\n    })().catch(reportViewerError);\n\n    return () => {\n      active = false;\n      controller.abort();\n      viewer?.destroy();\n    };\n  }, [error, format, t, url]);\n\n  const resolvedError = error ?? viewerError;",
+          "sha256": "b32b48615f0400191ba28d427f9070fa69c74282829aba2087746563350d28c8"
+        },
+        {
+          "id": "E70",
+          "kind": "code",
+          "path": "packages/@nocobase/app-plugin-file/registry/component-ui/components/previewers/office-open-xml-preview.tsx",
+          "observation": "createOfficeOpenXmlViewer 的 docx 选项仅含 mode/enableTextSelection/gap/progressiveLayout，未传 @silurus/ooxml 的 workerTimeoutMs。",
+          "lines": [
+            143,
+            178
+          ],
+          "excerpt": "async function createOfficeOpenXmlViewer(\n  format: OfficeOpenXmlFormat,\n  host: HTMLElement,\n  onError: (error: Error) => void,\n): Promise<OfficeOpenXmlViewer> {\n  const commonOptions = {\n    mode: 'main' as const,\n    useGoogleFonts: false,\n    onError,\n  };\n  switch (format) {\n    case 'docx': {\n      const { DocxScrollViewer } = await import('@silurus/ooxml/docx');\n      return new DocxScrollViewer(host, {\n        ...commonOptions,\n        enableTextSelection: true,\n        gap: 16,\n        progressiveLayout: true,\n      });\n    }\n    case 'pptx': {\n      const { PptxScrollViewer } = await import('@silurus/ooxml/pptx');\n      return new PptxScrollViewer(host, {\n        ...commonOptions,\n        enableTextSelection: true,\n        gap: 16,\n        progressiveLayout: true,\n      });\n    }\n    case 'xlsx': {\n      const { XlsxViewer } = await import('@silurus/ooxml/xlsx');\n      return new XlsxViewer(host, {\n        ...commonOptions,\n        showZoomSlider: true,\n      });\n    }",
+          "sha256": "b32b48615f0400191ba28d427f9070fa69c74282829aba2087746563350d28c8"
+        },
+        {
+          "id": "E84",
+          "kind": "code",
+          "path": "app/client/extensions/nocobase-file-component-ui/components/previewers/office-open-xml-preview.tsx",
+          "observation": "应用改动说明：库自带 workerTimeoutMs 看门狗为第一道防线，另加 15s 调用方 backstop，并据此实现 DOCX 文本回退。",
+          "lines": [
+            14,
+            30
+          ],
+          "excerpt": "}\n\n/**\n * The rich viewer parses inside a module worker. A worker that starts but never publishes layout\n * progress leaves `load()` pending forever — neither the promise nor the viewer's `onError`\n * settles — so without a bound the dialog would sit on \"Loading preview...\" indefinitely. The\n * library's own watchdog (`workerTimeoutMs`) is the first guard; this timer is the backstop that\n * covers a worker which never reaches the watchdog.\n */\nconst OFFICE_OPEN_XML_TIMEOUT_MS = 15_000;\n\nexport interface OfficeOpenXmlPreviewProps {\n  readonly file: FileRecord;\n  readonly format: OfficeOpenXmlFormat;\n  readonly url?: string;\n  readonly error?: string;\n  readonly onDownload?: () => void;",
+          "sha256": "afae85cda79ae21bfc1b12da24969ff11116fe2542a2ffd08a480cf575ce3fd8"
+        },
+        {
+          "id": "E85",
+          "kind": "code",
+          "path": "app/client/extensions/nocobase-file-component-ui/components/previewers/office-open-xml-preview.tsx",
+          "observation": "应用在 createOfficeOpenXmlViewer 中传入 workerTimeoutMs: OFFICE_OPEN_XML_TIMEOUT_MS（基线未传）。",
+          "lines": [
+            243,
+            262
+          ],
+          "excerpt": "async function createOfficeOpenXmlViewer(\n  format: OfficeOpenXmlFormat,\n  host: HTMLElement,\n  onError: (error: Error) => void,\n): Promise<OfficeOpenXmlViewer> {\n  const commonOptions = {\n    mode: 'main' as const,\n    useGoogleFonts: false,\n    onError,\n    workerTimeoutMs: OFFICE_OPEN_XML_TIMEOUT_MS,\n  };\n  switch (format) {\n    case 'docx': {\n      const { DocxScrollViewer } = await import('@silurus/ooxml/docx');\n      return new DocxScrollViewer(host, {\n        ...commonOptions,\n        enableTextSelection: true,\n        gap: 16,\n        progressiveLayout: true,\n      });",
+          "sha256": "afae85cda79ae21bfc1b12da24969ff11116fe2542a2ffd08a480cf575ce3fd8"
+        },
+        {
+          "id": "E91",
+          "kind": "qa",
+          "path": "artifacts/verify-2/browser-acceptance/report.json",
+          "observation": "verify-2 B02 证据：合法 sample.docx 保存后点击预览长期停在 \"Loading preview...\"，等待超 2 分钟正文 \"Factory DOCX sample\" 从未出现，资源 200 且无 console 错误。",
+          "lines": [
+            36,
+            38
+          ],
+          "excerpt": "        \"资料保存成功：列表出现 QA-B02 DOCX Material 1 file(s)，详情列出 sample.docx (application/vnd.openxmlformats-officedocument.wordprocessingml.document)\",\n        \"点击预览后界面长期停留在 'Loading preview...'，等待超过 2 分钟仍未出现正文，文档文本 'Factory DOCX sample' 从未出现\",\n        \"资源记录显示 /main/uploads/materials/79c37a04-7f10-4ddf-9415-6c861db41228.docx 返回 200，/main/assets/docx-DC6svY1o.js 返回 200，但预览未完成；控制台与页面均无错误输出\",",
+          "sha256": "7fab7fb1028af9cc87103ce1cbdc77d82a18b37f27610319c253128c0755952e"
+        },
+        {
+          "id": "E92",
+          "kind": "qa",
+          "path": "artifacts/verify-4/browser-focused/report.json",
+          "observation": "verify-4 focused B02 通过：预览层 DOM data-office-open-xml-format=\"docx\" 可见正文 \"Factory DOCX sample\"，附件 GET 200、无业务 4xx/5xx。",
+          "lines": [
+            20,
+            22
+          ],
+          "excerpt": "        \"详情弹窗提供 Preview: sample.docx 按钮，点击后出现预览层\",\n        \"预览层实际渲染 DOCX 正文：DOM 节点 data-office-open-xml-format=\\\"docx\\\"，可见文本为“Factory DOCX sample”，元素 870x443、display block、visibility visible、opacity 1\",\n        \"网络请求 GET /main/uploads/materials/<id>.docx 返回 200；无业务 4xx/5xx；console 0 条错误\"",
+          "sha256": "645ea35ed0614b51ce4dd1b8e0b4cd9b2659e930140ff2f662da46e73c6e5a2a"
+        },
+        {
+          "id": "E93",
+          "kind": "qa",
+          "path": "artifacts/verify-4/browser-acceptance/report.json",
+          "observation": "verify-4 acceptance B02 通过证据：预览弹窗状态 \"Showing the document text. The rich preview could not be loaded.\"，以正文文本 \"Factory DOCX sample\" 满足需求，即依赖应用侧文本回退。",
+          "lines": [
+            59,
+            61
+          ],
+          "excerpt": "        \"刷新后该资料仍显示 1 file(s)，DOCX 关联保留\",\n        \"预览弹窗状态为『Showing the document text. The rich preview could not be loaded.』，并在弹窗内渲染出文档正文文本『Factory DOCX sample』，与样例预期内容一致，不是只有文件名或下载按钮\"\n      ],",
+          "sha256": "3b75b09c08dcd13039a527b975114dce82ea75b9d96ec66533df2361bf5608f3"
+        }
+      ],
+      "fingerprint": "450a9b8ad15c621627f8cac3905d5233f573d56e1f98a37aec5152fb53aff076"
+    },
+    {
+      "id": "463:36434310207:1:F2",
+      "report": "463:36434310207:1",
+      "issue": 463,
+      "taskTitle": "项目资料与私有附件",
+      "appVersion": "1.0.0-beta.50",
+      "appTemplate": "@nocobase/app-template-default",
+      "finding": {
+        "id": "F2",
+        "kind": "issue",
+        "title": "Registry 图片预览缺少解码失败态：损坏 PNG 只显示浏览器破图占位，无失败提示",
+        "owner": "plugin",
+        "severity": "minor",
+        "confidence": "confirmed",
+        "status": "open",
+        "detail": "file-preview-content.tsx 的 image 分支是裸 <img src={url} alt>，没有 onError，也没有失败/回退分支（只有 default 分支回退 DownloadFallback）。因此文件已保存但内容不可解码时，预览区只是浏览器破图图标。B06 通过应用自建 ImagePreview（onError→失败文案+下载回退）实现。",
+        "impact": "B06（损坏图片给出明确失败提示）需应用自建才能通过；框架默认下用户看到的是无信息的破图占位，无法区分\"文件损坏\"与\"网络失败\"。",
+        "suggestedChange": "为 image 预览的 <img> 增加 onError 处理，失败时渲染明确失败提示与下载回退，与 default 分支一致。",
+        "evidence": [
+          "E71",
+          "E73",
+          "E86"
+        ],
+        "aspects": [
+          "requirementFit",
+          "usability",
+          "design"
+        ],
+        "diagnosis": {
+          "category": "capability-gap",
+          "trigger": "附件已入库但字节无法作为图片解码（如损坏 PNG），用户打开预览。",
+          "expected": "预览给出明确失败提示（并可回退为下载），而不是无信息的破图占位。",
+          "actual": "基线 image 分支没有 onError/失败态，界面无提示；需应用自行包裹图片组件。",
+          "workaround": "应用新增 ImagePreview，onError 后渲染 \"Unable to load the file preview.\" 与 DownloadFallback。",
+          "acceptance": "Registry 图片预览在 <img> 加载失败时渲染明确失败提示与下载回退，无需每个应用重复实现。"
+        }
+      },
+      "targets": [
+        "@nocobase/app-plugin-file",
+        "app/.agents/skills/nocobase-app-plugin-file"
+      ],
+      "paths": [
+        ".agents/skills/nocobase-app-plugin-file/SKILL.md",
+        "packages/@nocobase/app-plugin-file/registry/component-ui/components/previewers/file-preview-content.tsx"
+      ],
+      "evidence": [
+        {
+          "id": "E71",
+          "kind": "code",
+          "path": "packages/@nocobase/app-plugin-file/registry/component-ui/components/previewers/file-preview-content.tsx",
+          "observation": "基线 image 分支直接渲染裸 <img src={url} alt>，无 onError/失败态；default 分支才回退 DownloadFallback。",
+          "lines": [
+            71,
+            99
+          ],
+          "excerpt": "  switch (kind) {\n    case 'image':\n      return (\n        <img\n          src={url}\n          alt={file.filename}\n          className='max-h-[70vh] max-w-full object-contain'\n        />\n      );\n    case 'pdf':\n      return (\n        <iframe title={file.filename} src={url} className='h-[70vh] w-full' />\n      );\n    case 'audio':\n      return <audio controls src={url} className='w-full' />;\n    case 'video':\n      return <video controls src={url} className='max-h-[70vh] max-w-full' />;\n    case 'markdown':\n      return <MarkdownPreview text={text} />;\n    case 'text':\n      return (\n        <pre className='max-h-[70vh] overflow-auto whitespace-pre-wrap rounded-md bg-muted p-3 text-sm'>\n          {text ??\n            t('files.loadingPreview', { defaultValue: 'Loading preview...' })}\n        </pre>\n      );\n    default:\n      return <DownloadFallback file={file} onDownload={onDownload} />;\n  }",
+          "sha256": "f30abbadc57a0f0ed28cdb68d4ced7bba9a6e3a4c3d59d3b6fc49f89d9497144"
+        },
+        {
+          "id": "E73",
+          "kind": "skill",
+          "path": "app/.agents/skills/nocobase-app-plugin-file/SKILL.md",
+          "observation": "Skill Preview and content access：DOCX/XLSX/PPTX 用 @silurus/ooxml 本地渲染、失败显示错误与下载动作，并要求用真实文件验证渲染、失败与切换。",
+          "lines": [
+            231,
+            245
+          ],
+          "excerpt": "### Preview and content access\n\nPreview supports safe raster images, PDF via a fetched blob, text/Markdown and audio/video. HTML/SVG/XML previews and unsafe URL schemes are rejected. DOCX, XLSX and PPTX use lazily loaded `@silurus/ooxml` viewers to render locally from `FileRecord.contentUrl`; their content is not sent to a third-party preview service. Legacy DOC/XLS/PPT and OpenDocument formats use Office Online, which requires an internet-accessible absolute URL and cannot use the App session.\n\nOOXML, PDF and text fetches use same-origin credentials. An App-owned content route protected by same-origin session cookies can therefore serve restricted previews, provided it checks the caller's record access. Cross-origin fetches omit credentials and require CORS; an external cookie-protected URL is not supported by this default path. The Repository API client's Bearer token is not automatically attached to content fetches.\n\nFor Bearer-only content authorization, adapt the installed Registry source in the App. Add an authenticated content loader to the OOXML fetch path and `PreviewBody`'s PDF/text fetches, and adapt download and media/image paths as needed. Resolve authentication through the App's supported client/session services and send credentials only to the trusted content endpoint. Do not put tokens in `contentUrl`. If the adapter creates blob URLs, keep an App-owned trusted URL set, pass it to the relevant `resolveSafeFileUrl` calls, and revoke URLs when replaced or unmounted. Merely assigning a `blob:` URL to `FileRecord.contentUrl` is insufficient: the default components reject untrusted blob URLs.\n\nOOXML request or rendering failure displays an error and, when downloads are enabled, a download action. `download={false}` removes that action. This is not a second preview service or a guarantee that downloading the same inaccessible URL will succeed.\n\n## Verify and handle failures\n\nVerify upload → query → contentUrl → identical downloaded bytes, including batch upload, resource aliases and host prefixes. After materialization run the consuming App's typecheck/build and exercise upload, cancel/retry, remove, download and preview. Restricted files need anonymous, forbidden-user and permitted-user tests against both API and content routes. Inspectors check registration only.\n\nFor preview integration or changes, verify each of DOCX/XLSX/PPTX with real files in development and a served production build. Check relative same-origin URLs, an authorized and unauthorized session, cross-origin CORS success/failure, failed requests and invalid documents, and `download={false}`. Close or switch files while loading and after a failure: pending requests must abort, viewers must be destroyed, and the next file must render without stale state. Unit mocks and a successful build do not establish document rendering fidelity.",
+          "sha256": "06b464d71554a3ae12819918f98a84f44c65c2b70e7fbfcffd17e992e57aed22"
+        },
+        {
+          "id": "E86",
+          "kind": "code",
+          "path": "app/client/extensions/nocobase-file-component-ui/components/previewers/file-preview-content.tsx",
+          "observation": "应用新增 ImagePreview：onError 置 failed 后渲染带 \"Unable to load the file preview.\" 的 DownloadFallback。",
+          "lines": [
+            108,
+            130
+          ],
+          "excerpt": "        {t('files.loadingPreview', { defaultValue: 'Loading preview...' })}\n      </div>\n    );\n  if (failed)\n    // A damaged image decodes to nothing, and an `img` that fails silently would leave the filename looking like a\n    // successful preview. Say so and offer the file itself instead.\n    return (\n      <DownloadFallback\n        file={file}\n        message={t('files.previewFailed', {\n          defaultValue: 'Unable to load the file preview.',\n        })}\n        onDownload={onDownload}\n      />\n    );\n  return (\n    <img\n      src={url}\n      alt={file.filename}\n      className='max-h-[70vh] max-w-full object-contain'\n      onError={() => setFailed(true)}\n    />\n  );",
+          "sha256": "d47e0f51704f2004e0322fe8b75c9ada795ca9f5753c8854959fc9c325b60b7b"
+        }
+      ],
+      "fingerprint": "88dd69a2e5841776d42e10bd138009f38dbacae572174b73ea71b0893ed486ff"
+    },
+    {
+      "id": "463:36434310207:1:F3",
+      "report": "463:36434310207:1",
+      "issue": 463,
+      "taskTitle": "项目资料与私有附件",
+      "appVersion": "1.0.0-beta.50",
+      "appTemplate": "@nocobase/app-template-default",
+      "finding": {
+        "id": "F3",
+        "kind": "improvement",
+        "title": "FILE_COLUMNS 未从 @nocobase/app-plugin-file/server 公开导出，应用被迫复制列契约",
+        "owner": "plugin",
+        "severity": "minor",
+        "confidence": "confirmed",
+        "status": "open",
+        "detail": "服务端入口只导出 default/serverFileRepositoryManagerToken/ServerFileRepositoryManager/FileRepositoryError/defineFileRepositoryApiRoutes，FILE_COLUMNS 仅存在于内部 repository.js。自建 attachment collection 的应用必须手抄九列契约并自行保证与迁移同步，容易漂移。",
+        "impact": "增加应用装配成本与长期漂移风险；应用只能以注释提醒\"列清单需与迁移保持一致\"，缺少编译期保护。",
+        "suggestedChange": "从 @nocobase/app-plugin-file/server 公开导出 FILE_COLUMNS（或提供依据它建列的辅助），使应用无需复制硬编码列契约。",
+        "evidence": [
+          "E67",
+          "E83"
+        ],
+        "aspects": [
+          "usability",
+          "agentFriendliness",
+          "design"
+        ],
+        "diagnosis": {
+          "category": "usability-improvement",
+          "trigger": "应用按文档自建与文件仓库兼容的 collection，需要文件列契约以建表和做查询。",
+          "expected": "从服务端入口导入官方列契约（FILE_COLUMNS）或等价的建表辅助，而不必复制。",
+          "actual": "入口未导出，应用在 materials.ts 复制九列并注明需与迁移保持同步。",
+          "workaround": "应用复制列清单，并在代码注释里提示与迁移人工对齐。",
+          "acceptance": "FILE_COLUMNS（或导出建列/建表的辅助）从服务端公开入口可导入，应用不再复制硬编码列清单。"
+        }
+      },
+      "targets": [
+        "@nocobase/app-plugin-file"
+      ],
+      "paths": [
+        "packages/@nocobase/app-plugin-file/dist/server/repository.js"
+      ],
+      "evidence": [
+        {
+          "id": "E67",
+          "kind": "code",
+          "path": "packages/@nocobase/app-plugin-file/dist/server/repository.js",
+          "observation": "FILE_COLUMNS 九列契约与 uploadPolicy(base)：继承 create 的 scope/defaults、替换字段白名单为 FILE_COLUMNS、read scope=true、update/delete=false。",
+          "lines": [
+            7,
+            60
+          ],
+          "excerpt": "export const FILE_COLUMNS = [\n    'id',\n    'disk',\n    'key',\n    'filename',\n    'ext',\n    'mimeType',\n    'size',\n    'createdAt',\n    'updatedAt',\n];\n/**\n * The Policy the upload path binds, derived from the exposure's own.\n *\n * It is derived rather than used as it stands because an upload supplies no\n * caller fields at all — `store()` composes every value — so a field allowlist\n * has nothing to constrain here and the plugin substitutes its own columns.\n * What is inherited is exactly the two dimensions that do not describe caller\n * input: which rows this principal may produce (`scope`), and what the server\n * stamps onto them (`defaults`). A `create` that is `false` stays `false`, so\n * an exposure that forbids creating rows forbids uploading them too.\n *\n * This is the only place a Policy is widened, and the reason is specific to\n * this path. It licenses nothing elsewhere.\n */\nexport function uploadPolicy(base) {\n    const create = base.create === true || base.create === false\n        ? base.create\n        : {\n            scope: base.create.scope,\n            defaults: base.create.defaults,\n            fields: FILE_COLUMNS,\n            relations: {},\n        };\n    // `read` serves this path's own returning record and the public byte route,\n    // both of which need every column. `update` and `delete` never run here.\n    return {\n        create,\n        read: { scope: true, fields: FILE_COLUMNS, relations: {} },\n        update: false,\n        delete: false,\n    };\n}\nexport class FileRepositoryError extends Error {\n    code;\n    constructor(code, message, options) {\n        super(message, options);\n        this.code = code;\n        this.name = 'FileRepositoryError';\n    }\n}\nexport function normalizeAccessPath(value) {\n    if (!/^\\/(?:[a-zA-Z0-9_-]+\\/)*[a-zA-Z0-9_-]+$/.test(value))\n        throw new Error('accessPath must be an absolute application path with literal segments and no trailing slash.');",
+          "sha256": "3e3a1d1f33208ae8e7038c8afa89149195897db3679edbad860a379e80ce8fb1"
+        },
+        {
+          "id": "E83",
+          "kind": "code",
+          "path": "app/server/routes/materials.ts",
+          "observation": "应用因 @nocobase/app-plugin-file/server 未导出 FILE_COLUMNS，只能把九列契约复制到 materials.ts 并注释需与迁移同步。",
+          "lines": [
+            28,
+            45
+          ],
+          "excerpt": "\n/**\n * The file columns the plugin's Repository contract knows. It is not re-exported by\n * `@nocobase/app-plugin-file/server`, and `material_files` was migrated with exactly these columns, so the list is\n * spelled out here and kept in step with the migration that created the table.\n */\nconst FILE_COLUMNS = [\n  'id',\n  'disk',\n  'key',\n  'filename',\n  'ext',\n  'mimeType',\n  'size',\n  'createdAt',\n  'updatedAt',\n] as const;\n",
+          "sha256": "bc3e5e8a8c6447f2e36cb763b4c792e2e5096e48a185f1ba2e6d1a9f1b3fa1b1"
+        }
+      ],
+      "fingerprint": "9743ae3435d0ed8667a7fc42fa80e734271799dbffab547d40ecad271db97fac"
     }
   ]
 }
