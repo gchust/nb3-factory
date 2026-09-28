@@ -10,13 +10,6 @@ const positive = n => Number.isSafeInteger(n) && n > 0;
 const write = (file, value) => { mkdirSync(path.dirname(file), { recursive: true }); writeFileSync(file, JSON.stringify(value, null, 2)); };
 const out = (key, value) => process.env.GITHUB_OUTPUT && appendFileSync(process.env.GITHUB_OUTPUT, `${key}=${value}\n`);
 export function historyRequest(event, env) {
-  if (event.comment) {
-    if (event.comment.user?.login !== event.repository?.owner?.login || event.issue?.pull_request ||
-        !event.issue?.labels?.some(l => (typeof l === 'string' ? l : l.name) === 'factory:manual')) return null;
-    const match = /^\/factory-review-history ([1-9]\d*) ([1-9]\d*)\s*$/u.exec(event.comment.body ?? '');
-    if (!match) return null;
-    return { runId: Number(match[1]), attempt: Number(match[2]) };
-  }
   return { runId: Number(env.SOURCE_RUN_ID || event.workflow_run?.id),
     attempt: Number(env.SOURCE_ATTEMPT || event.workflow_run?.run_attempt) };
 }
@@ -25,6 +18,7 @@ export function selectReplayHistory(run, jobs, artifacts, repository, request) {
   assert.equal(run.id, request.runId); assert.equal(run.run_attempt, request.attempt);
   assert.equal(run.path, '.github/workflows/replay-build-review.yml');
   assert.equal(run.status, 'completed'); assert.equal(run.head_repository?.full_name, repository);
+  // Replays requested by the retired /factory-build-review comment stay archivable.
   assert.ok(['workflow_dispatch', 'issue_comment'].includes(run.event));
   const job = jobs.find(j => j.name === 'review' && j.started_at && j.conclusion !== 'skipped');
   if (!job) return null;
@@ -64,7 +58,6 @@ async function main() {
   const client = new GitHubClient({ repository, token: process.env.GITHUB_TOKEN });
   if (mode === 'select') {
     const request = historyRequest(JSON.parse(readFileSync(process.env.GITHUB_EVENT_PATH)), process.env);
-    if (!request) return;
     assert.ok(positive(request.runId) && positive(request.attempt));
     const run = await client.request('GET', `/actions/runs/${request.runId}/attempts/${request.attempt}`);
     const source = selectReplayHistory(run,

@@ -1,8 +1,6 @@
 name: Independent code and Skill review
 
 on:
-  issue_comment:
-    types: [created]
   workflow_dispatch:
     inputs:
       issue:
@@ -20,15 +18,12 @@ on:
 
 permissions: {}
 concurrency:
-  group: factory-independent-review-${{ github.event.comment.id || github.run_id }}
+  group: factory-independent-review-${{ github.run_id }}
   cancel-in-progress: false
 
 jobs:
   prepare:
-    if: >-
-      github.actor == github.repository_owner &&
-      (github.event_name == 'workflow_dispatch' ||
-       (!github.event.issue.pull_request && startsWith(github.event.comment.body, '/factory-review ')))
+    if: github.actor == github.repository_owner
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:

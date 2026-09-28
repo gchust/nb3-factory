@@ -1,8 +1,6 @@
 name: Reassess Build Quality
 
 on:
-  issue_comment:
-    types: [created]
   workflow_dispatch:
     inputs:
       issue:
@@ -23,15 +21,12 @@ env:
 
 permissions: {}
 concurrency:
-  group: factory-build-review-${{ github.event.comment.id || github.run_id }}
+  group: factory-build-review-${{ github.run_id }}
   cancel-in-progress: false
 
 jobs:
   prepare:
-    if: >-
-      github.actor == github.repository_owner &&
-      (github.event_name == 'workflow_dispatch' ||
-       (!github.event.issue.pull_request && startsWith(github.event.comment.body, '/factory-build-review ')))
+    if: github.actor == github.repository_owner
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:

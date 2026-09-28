@@ -12,8 +12,7 @@ jobs:
   complete:
     if: >-
       github.event.pull_request.head.repo.full_name == github.repository &&
-      (startsWith(github.event.pull_request.head.ref, 'agent/issue-') ||
-       startsWith(github.event.pull_request.head.ref, 'pi/issue-'))
+      startsWith(github.event.pull_request.head.ref, 'agent/issue-')
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:

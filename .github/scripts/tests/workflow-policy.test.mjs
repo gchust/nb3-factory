@@ -141,7 +141,7 @@ test('PR completion uses only trusted control-plane code for both branch generat
   assert.match(completion, /pull_request_target:\n\s+types: \[closed\]/);
   assert.match(completion, /github\.event\.repository\.default_branch/);
   assert.match(completion, /'agent\/issue-'/);
-  assert.match(completion, /'pi\/issue-'/);
+  assert.doesNotMatch(completion, /'pi\/issue-'/);
   assert.doesNotMatch(completion, /pnpm|npm|pull_request\.head\.sha|secrets\./);
 });
 

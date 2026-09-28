@@ -45,7 +45,7 @@ jobs:
   factory-tests:
     # Build task PRs change the application, including its guidance, and are
     # verified by the task itself; they never land on develop.
-    if: github.event_name != 'pull_request' || !(startsWith(github.head_ref, 'agent/issue-') || startsWith(github.head_ref, 'pi/issue-'))
+    if: github.event_name != 'pull_request' || !startsWith(github.head_ref, 'agent/issue-')
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -84,7 +84,7 @@ jobs:
   application-format:
     # Build task PRs change the application, including its guidance, and are
     # verified by the task itself; they never land on develop.
-    if: github.event_name != 'pull_request' || !(startsWith(github.head_ref, 'agent/issue-') || startsWith(github.head_ref, 'pi/issue-'))
+    if: github.event_name != 'pull_request' || !startsWith(github.head_ref, 'agent/issue-')
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -102,7 +102,7 @@ jobs:
   browser-preflight:
     # Build task PRs change the application, including its guidance, and are
     # verified by the task itself; they never land on develop.
-    if: github.event_name != 'pull_request' || !(startsWith(github.head_ref, 'agent/issue-') || startsWith(github.head_ref, 'pi/issue-'))
+    if: github.event_name != 'pull_request' || !startsWith(github.head_ref, 'agent/issue-')
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:

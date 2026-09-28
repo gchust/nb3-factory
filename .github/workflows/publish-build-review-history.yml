@@ -4,8 +4,6 @@ on:
   workflow_run:
     workflows: [Reassess Build Quality]
     types: [completed]
-  issue_comment:
-    types: [created]
   workflow_dispatch:
     inputs:
       run_id:
@@ -26,11 +24,7 @@ concurrency:
 
 jobs:
   publish:
-    if: >-
-      github.event_name == 'workflow_run' ||
-      (github.actor == github.repository_owner &&
-       (github.event_name == 'workflow_dispatch' ||
-        (!github.event.issue.pull_request && startsWith(github.event.comment.body, '/factory-review-history '))))
+    if: github.event_name == 'workflow_run' || github.actor == github.repository_owner
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:

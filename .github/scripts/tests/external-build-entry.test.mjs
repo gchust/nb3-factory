@@ -10,5 +10,5 @@ test('external tasks use explicit dispatch and retain a reconcilable request ide
   // Ordinary Issue and existing repository-dispatch triggers remain available.
   assert.match(workflow, /factory:external-closed-v1/);
   assert.match(workflow, /types: \[opened, reopened\]/);
-  assert.match(workflow, /types: \[code-agent-task, code-agent-continue, pi-task\]/);
+  assert.match(workflow, /types: \[code-agent-task, code-agent-continue\]\n/);
 });

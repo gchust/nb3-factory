@@ -36,7 +36,7 @@ node --test .github/scripts/tests/scheduled-preset-tests.test.mjs \
 
 不通过启动真实付费搭建验证调度器。
 
-## Issue 专用一次性入口清理
+## 一次性入口清理
 
 2026-09-27 已停用以下 GitHub Actions 注册项。它们只服务于固定 Issue 的一次性操作，
 工作流文件已不在默认分支中，但 GitHub 仍将历史注册项标记为 active；因此通过
@@ -48,6 +48,23 @@ Actions API 停用，保留历史运行、日志和产物。
 | Issue 182 recovery validation          | Issue #182              | `364742981` |
 | Restore retained M02 candidate once    | Issue #252              | `365940211` |
 | Resume three saved factory checkpoints | Issues #299、#301、#303 | `366665276` |
+
+2026-09-28 以同样方式停用以下注册项。它们是一次性补丁、预发验证或专项测试入口，
+工作流文件已不在任何分支中，不会再被触发。
+
+| Workflow                               | Workflow ID |
+| -------------------------------------- | ----------- |
+| Apply default PR base patch            | `364928325` |
+| Apply per-Issue concurrency fix        | `351500927` |
+| Validate framework-first rubric source | `365683880` |
+| Validate review repair source          | `365615157` |
+| Materialize tested review draft check  | `365955643` |
+| Report Integration Check               | `363331064` |
+| Pi PR Completed                        | `349805615` |
+| Test continuation reports              | `352792800` |
+| Test task usage and Chinese fonts      | `352225418` |
+| Test visual evidence                   | `352086254` |
+| Verify protected path fix              | `351900114` |
 
 通用的搭建、队列协调、评审、报告和源码基线验证入口继续保留。
 清理不删除 Issue、任务分支或历史证据。

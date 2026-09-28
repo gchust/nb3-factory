@@ -14,12 +14,10 @@ const jobs = [{ name: 'agent', conclusion: 'success', started_at: '2026-09-23T10
 const patch = 'retained patch';
 const origin = () => bindReplay(selected, metadata, null, Buffer.from(patch), jobs);
 
-test('review-only command is exact, owner-authorized and excluded from business issues', () => {
-  const event = { repository: { owner: { login: 'owner' } }, issue: { labels: [{ name: 'factory:manual' }] }, comment: { user: { login: 'owner' }, body: '/factory-build-review 224 100 2' } };
-  assert.deepEqual(parseReplayRequest(event, {}), { issue: 224, runId: 100, attempt: 2 });
-  assert.equal(parseReplayRequest({ ...event, issue: { labels: [] } }, {}), null);
-  assert.equal(parseReplayRequest({ ...event, comment: { ...event.comment, body: '/factory-build-review 224 100 2\nextra' } }, {}), null);
-  assert.equal(parseReplayRequest({ ...event, comment: { ...event.comment, user: { login: 'other' } } }, {}), null);
+test('review-only replay needs an explicit Issue, task run and publication attempt', () => {
+  assert.deepEqual(parseReplayRequest({ issue: '224', run: '100', attempt: '2' }), { issue: 224, runId: 100, attempt: 2 });
+  assert.throws(() => parseReplayRequest({ issue: '224', run: '100' }), /Explicit/);
+  assert.throws(() => parseReplayRequest({ issue: '224', run: '0', attempt: '2' }), /Explicit/);
 });
 
 test('publication attempt differs from artifact producer; source identity is not rewritten', () => {
