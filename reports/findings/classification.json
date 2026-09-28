@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "inputHash": "318a06f2da1d0ab96e14a9ee9722c4a22ab37f81d577a787bd7ee5d4f388a668",
+  "inputHash": "2865ff4cdc6b408f7c177c326310fd6b7894cc52e95711ef50f49bae640d8d51",
   "sources": [
     {
       "id": "408:36329180371:1:F2",
@@ -146,6 +146,16 @@
       "id": "431:36360863566:1:F2",
       "report": "431:36360863566:1",
       "fingerprint": "3276e0bc600363843138eadf22be7f66340184fe0e9257a3ad7c247fb140f1fe"
+    },
+    {
+      "id": "443:36388741454:1:F5",
+      "report": "443:36388741454:1",
+      "fingerprint": "e952bb10effbf6072c1689dd48dfd2ad78a683dda7622e5496d883a347eb0749"
+    },
+    {
+      "id": "443:36388741454:1:F7",
+      "report": "443:36388741454:1",
+      "fingerprint": "a0acc0f5ce909175400c177e431a6f9622dadc18553d72b823aec6c55ddec3a4"
     }
   ],
   "groups": [
@@ -309,15 +319,29 @@
       "members": [
         "417:36376187583:1:F5"
       ]
+    },
+    {
+      "title": "cookie 会话写请求的 CSRF/Origin 前提未写入通用路由与测试指引",
+      "reason": "该发现 E21 显示 checkCookieWriteOrigin 对带 cookie 的写请求校验 Origin/Referer 与 trustedOrigins，缺失或不可信来源返回 403 INVALID_CSRF_ORIGIN（required/optional 均先调用该检查）；E24 显示该要求只写在 app-plugin-authentication 的 user-lifecycle-and-deployment.md；E22（server-routes.md）与 E23（services-and-jobs.md）显示通用路由/服务指引均未提及该前提。四者共同指向同一条文档缺口——cookie 写入必须携带可信 Origin/Referer 的前提未进入通用路由与测试指引，修复方向一致（在 server-routes/testing 指引补充并交叉引用认证插件参考）。无其他报告的发现涉及同一 API 或同一前提，故单独保留。",
+      "members": [
+        "443:36388741454:1:F5"
+      ]
+    },
+    {
+      "title": "db Skill 的 Repository 章节未列出 RepositoryError/RECORD_NOT_FOUND 等可映射错误类型",
+      "reason": "该发现 E5 显示 @nocobase/db 公开导出 RepositoryError、RepositoryErrorCode 与 RepositoryErrorOptions；E12 显示 nocobase-db SKILL 的 Repository/Query 分层与方法清单中未出现这些错误面；E22 显示 server-routes.md 只在映射句子里提到 RECORD_NOT_FOUND。三者共同指向同一文档缺口——db Skill 未列出可映射的错误类型，修复方向一致（在 Repository 边界补充错误面并指向路由映射约定）。无其他报告的发现共享该错误类型缺口，故单独保留。",
+      "members": [
+        "443:36388741454:1:F7"
+      ]
     }
   ],
   "classifier": {
     "engine": "pi",
     "model": "deepseek-v4.1-flash",
     "version": "0.86.1",
-    "runId": "36383462720",
+    "runId": "36394078438",
     "attempt": 1,
-    "controlSha": "ad1f8060916f30ee2908d1c8fc6d8ed16d4ba6ef",
-    "completedAt": "2026-09-28T05:49:50.101Z"
+    "controlSha": "8b2047b647b5611051d377cc5d442d54549c15cc",
+    "completedAt": "2026-09-28T07:54:10.440Z"
   }
 }
