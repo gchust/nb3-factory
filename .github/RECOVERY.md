@@ -14,6 +14,8 @@ Pi 适配器显式配置原生请求级重试：最多 6 次，退避等待为 5
 
 等待时间计入调用时限和 Runner 截止时间：如果等待结束时已超过任一上限，就不再重跑，直接失败。延时重跑在一次调用内部完成，不计入任务的修复轮数，也不改变任务终止上限。
 
+独立评审另外按同一重跑表重试整次评审调用，覆盖 idle watchdog、进程崩溃和未通过校验的评审草稿；已在调用内部重跑过的模型服务错误不再重复重试。规则见 [BUILD_REVIEW.md](BUILD_REVIEW.md#模型出错时重试)。
+
 重跑追加写入同一个 `agent*.jsonl`，两次之间写一行 `{"type":"factory_model_retry","retry":1,"of":2,"delaySeconds":60,"category":"network_error"}`；失败那次的事件和用量不会被覆盖，历史归档、用量统计与评审索引照常读取。`FACTORY_MODEL_RETRY_DELAYS_SECONDS` 可改写等待秒数（逗号分隔，最多 5 个，每个 0–3600），`none` 关闭延时重跑；未设置时为 `60,300`。
 
 `agent*.jsonl.result.json` 保留最终状态，并增加：

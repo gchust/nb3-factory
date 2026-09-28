@@ -151,6 +151,19 @@ test('a stream drop that outlasts both delayed reruns fails and says so in the r
   assert.match(failure.detail, /模型请求重试次数：0；分别等待 0 秒、0 秒后重跑 2 次仍失败。/);
 });
 
+test('a rerun must reach its own terminal event, not reuse the failed attempt\'s', t => {
+  const f = fakePi(t, `const fs = require('node:fs');
+    const run = (fs.existsSync('runs') ? fs.readFileSync('runs', 'utf8').length : 0) + 1;
+    fs.appendFileSync('runs', 'x');
+    const message = { role: 'assistant', stopReason: 'error', errorMessage: 'upstream stream closed before [DONE]' };
+    if (run === 1) {
+      console.log(JSON.stringify({ type: 'message_end', message }));
+      console.log(JSON.stringify({ type: 'agent_end', messages: [message] }));
+    }`, { FACTORY_MODEL_RETRY_DELAYS_SECONDS: '0' });
+  assert.equal(readFileSync(path.join(f.workspace, 'runs'), 'utf8'), 'xx');
+  assert.equal(f.normalized.terminalEvent, false);
+});
+
 test('no delayed rerun starts when it would pass the run deadline', t => {
   const started = Date.now();
   const f = fakePi(t, flakyStream(2), { FACTORY_MODEL_RETRY_DELAYS_SECONDS: '60',

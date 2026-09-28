@@ -112,17 +112,19 @@ export function buildRedactor(secrets) {
  * `factory_model_retry` line between attempts, so a failed attempt's events and
  * usage are never overwritten. Waiting counts against the invocation timeout and
  * the run deadline: a retry that would not start before either is not made.
+ * `append` continues a transcript an earlier invocation of the same caller wrote.
  */
 export async function runAgentInvocation({
   retryDelaysSeconds = MODEL_RETRY_DELAYS_SECONDS,
   wait = sleep,
+  append = false,
   ...options
 }) {
   const { label, log, result, invocationTimeoutSeconds = 0, runDeadlineEpochSeconds = null } = options;
   const started = Date.now();
   const timeoutAt = invocationTimeoutSeconds > 0 ? started + invocationTimeoutSeconds * 1_000 : null;
   for (let retry = 0; ; retry++) {
-    const attempt = await runAttempt({ ...options, append: retry > 0,
+    const attempt = await runAttempt({ ...options, append: append || retry > 0,
       invocationTimeoutSeconds: timeoutAt ? Math.max(1, Math.ceil((timeoutAt - Date.now()) / 1_000)) : 0 });
     if (!attempt.error) return;
     const delaySeconds = retryDelaysSeconds[retry];
@@ -161,6 +163,7 @@ async function runAttempt({
 }) {
   const redact = buildRedactor(secrets);
   mkdirSync(path.dirname(log), { recursive: true });
+  result?.restart?.();
 
   const child = spawn(command, args, {
     cwd,

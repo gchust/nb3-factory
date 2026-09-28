@@ -42,6 +42,9 @@ export function createResult(identity) {
       }
     },
     malformed() { invalidEvents++; },
+    // Each rerun of an invocation must reach its own terminal event; usage,
+    // native retries and malformed counts keep accumulating across attempts.
+    restart() { complete = false; },
     // A factory rerun after a model-service failure; the next save covers every attempt.
     retried({ delaySeconds, category }) { factoryRetries.push({ delaySeconds, category }); },
     save(log, { status, exitCode, error }, redact) {
