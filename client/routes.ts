@@ -1,4 +1,4 @@
-import { Home } from 'lucide-react';
+import { Briefcase, Contact, Home, Target, Users } from 'lucide-react';
 import {
   defineAppRoutes,
   defineSettingsRoutes,
@@ -15,6 +15,39 @@ const appRoutes: AppClientRouteContribution = defineAppRoutes([
     name: 'home',
     navigation: { title: 'navigation.home', icon: Home },
     path: '/',
+  },
+  {
+    // The CRM pages all opt out of page authorization: this application serves a single sales team, so every signed-in
+    // user works with the same customers, contacts and opportunities.
+    auth: 'required',
+    children: [
+      {
+        auth: 'required',
+        authz: 'skip',
+        componentLoader: () => import('./pages/customers/index.js'),
+        name: 'customers',
+        navigation: { title: 'navigation.customers', icon: Users },
+        path: '/customers',
+      },
+      {
+        auth: 'required',
+        authz: 'skip',
+        componentLoader: () => import('./pages/contacts/index.js'),
+        name: 'contacts',
+        navigation: { title: 'navigation.contacts', icon: Contact },
+        path: '/contacts',
+      },
+      {
+        auth: 'required',
+        authz: 'skip',
+        componentLoader: () => import('./pages/opportunities/index.js'),
+        name: 'opportunities',
+        navigation: { title: 'navigation.opportunities', icon: Target },
+        path: '/opportunities',
+      },
+    ],
+    name: 'crm',
+    navigation: { title: 'navigation.crm', icon: Briefcase },
   },
   {
     auth: 'guest',
