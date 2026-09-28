@@ -1,6 +1,6 @@
 # Factory Control Plane Guidelines
 
-This file guides agents that change the factory itself: everything under `.github/`, the factory documents in `docs/`, the factory section of `README.MD`, and how the application template is refreshed. Build tasks do not read it; their guidance is the application's own `AGENTS.md` and `.github/prompts/`.
+This file guides agents that change the factory itself: everything under `.github/`, the factory documents in `docs/`, the factory section of `README.MD`, and how the application template is refreshed. Everything under `.github/` is copied over each refreshed baseline unchanged, so rules for developing the factory belong in this file or the documents beside it. Build tasks do not read it; their guidance is the application's own `AGENTS.md` and `.github/prompts/`.
 
 ## Template-owned application files
 
@@ -27,3 +27,7 @@ The task workflow's opt-in failure_smoke dispatch input exercises failed publica
 ## Ordinary preset evaluation scope
 
 Presets #206, #207 and #208 are ordinary application build tasks. Do not bind them implicitly to external evaluators in .github/evaluations/checks.json or require repository-level test credentials before implementation. Build the requested functionality first; after startup, prepare isolated local accounts and API keys through supported application APIs. Missing business AI or notification services block only the corresponding acceptance criteria and never imply those criteria passed. Keep normal factory quality checks and report incomplete business verification honestly. Explicit evaluation batches may declare required independent checks in their trusted manifests. The catalog is read whenever a run is prepared: runs that already executed keep their archived metadata and reports, while a new run of an existing #206–#208 task, #417–#419 included, starts without these gates.
+
+## Problems delivered to TestManage3
+
+TestManage3 receives NocoBase3 problems only: open findings owned by `framework`, `plugin`, `template` or `documentation`, the same set the framework findings page counts. Application, factory, environment and unknown-owner findings, and failed QA criteria without a review finding, stay in the factory report. See `docs/testmanage3-problems.md`.

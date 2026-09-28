@@ -3,7 +3,7 @@ import test from 'node:test';
 import { problemSubmission } from '../problem-submission.mjs';
 
 function report() {
-  const finding = { id: 'review/1/F1', title: 'Missing validation', kind: 'issue', owner: 'application', reviewerStatus: 'open', detail: 'Invalid input is accepted.', impact: 'Incorrect records.', suggestedChange: 'Validate the input.', subjectKeys: ['pkg:validation'] };
+  const finding = { id: 'review/1/F1', title: 'Missing validation', kind: 'issue', owner: 'documentation', reviewerStatus: 'open', detail: 'Invalid input is accepted.', impact: 'Incorrect records.', suggestedChange: 'Validate the input.', subjectKeys: ['pkg:validation'] };
   return { type: 'evaluation-report', source: { instance: 'owner/repo' }, run: { key: 'owner/repo/issues/1/initial' }, reviews: [{ selected: true, findings: [finding] }], qa: { criteria: [] } };
 }
 test('factory submits open findings with descriptions and stable reassessment identities', () => {
@@ -22,10 +22,19 @@ test('strengths, resolved findings, and unselected reviews are not new problems'
   r.reviews.push({ selected: false, findings: [original] });
   assert.deepEqual(problemSubmission(r), { version: 1, problems: [] });
 });
-test('QA-only tasks submit final failures but never unknown, blocked, or repaired checks', () => {
-  const r = report(); r.reviews = [];
-  r.qa.criteria = ['failed', 'unknown', 'blocked', 'passed', 'not-run'].map((status, i) => ({ id: String(i), text: 'Check ' + i, finalFull: status }));
-  const result = problemSubmission(r);
-  assert.equal(result.problems.length, 1); assert.equal(result.problems[0].qaCriterionId, '0');
+test('only NocoBase3-owned findings are submitted', () => {
+  const r = report(), original = r.reviews[0].findings[0];
+  r.reviews[0].findings = ['framework', 'plugin', 'template', 'documentation', 'application', 'factory', 'environment', 'unknown']
+    .map((owner, i) => ({ ...original, id: `review/1/F${i + 1}`, owner, title: `Problem ${owner}` }));
+  assert.deepEqual(problemSubmission(r).problems.map(problem => problem.title),
+    ['Problem framework', 'Problem plugin', 'Problem template', 'Problem documentation']);
+});
+test('failed QA criteria no finding attributes to NocoBase3 are never submitted', () => {
+  const r = report();
+  r.qa.criteria = [{ id: 'B1', text: 'Check 1', finalFull: 'failed' }];
+  r.reviews[0].findings[0].owner = 'application';
+  assert.deepEqual(problemSubmission(r), { version: 1, problems: [] });
+  r.reviews = [];
+  assert.deepEqual(problemSubmission(r), { version: 1, problems: [] });
   assert.deepEqual(problemSubmission({ type: 'evaluation-batch' }), { version: 1, problems: [] });
 });

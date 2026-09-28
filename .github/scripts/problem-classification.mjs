@@ -62,9 +62,7 @@ export function loadRules(file = RULES_FILE) {
   assert(
     rules?.version === 1 &&
       Array.isArray(rules.rules) &&
-      Array.isArray(rules.generic) &&
-      Array.isArray(rules.noFeatureOwners) &&
-      text(rules.noFeatureReason, 1000),
+      Array.isArray(rules.generic),
     'Invalid problem feature rules',
   );
   for (const rule of rules.rules)
@@ -149,22 +147,40 @@ export function featureIndex(taxonomy) {
 export function classificationInputs(document) {
   if (document?.type !== 'evaluation-report') return [];
   const findings = new Map(),
-    modules = new Map();
+    modules = new Map(),
+    targets = [];
   for (const review of document.reviews.filter((item) => item.selected)) {
-    for (const module of review.modules ?? [])
+    for (const module of review.modules ?? []) {
       modules.set(module.key, module.name);
+      targets.push(...(module.targets ?? []));
+    }
     for (const finding of review.findings) findings.set(finding.id, finding);
   }
-  const criteria = new Map(document.qa.criteria.map((item) => [item.id, item]));
   return problemSubmission(document).problems.map((problem) => {
     const sources = problem.findingIds
       .map((id) => findings.get(id))
       .filter(Boolean);
+    // A problem's subjectKeys span every target of each module it shares evidence
+    // with; classify it only by the targets its own evidence cites, so a finding
+    // about app/AGENTS.md is not placed by an unrelated plugin in the same module.
+    const subjectKeys = [
+      ...new Set(
+        sources.flatMap((finding) =>
+          targets
+            .filter(
+              (target) =>
+                target.subjectKey &&
+                target.evidence.some((id) => finding.evidence.includes(id)),
+            )
+            .map((target) => target.subjectKey),
+        ),
+      ),
+    ].sort();
     return {
       key: problem.key,
       title: problem.title,
       description: clip(problem.description, 4000),
-      subjectKeys: problem.subjectKeys,
+      subjectKeys,
       owners: [...new Set(sources.map((finding) => finding.owner))].sort(),
       kinds: [...new Set(sources.map((finding) => finding.kind))].sort(),
       modules: [
@@ -176,10 +192,6 @@ export function classificationInputs(document) {
           ),
         ),
       ],
-      qaCriterion:
-        problem.qaCriterionId === undefined
-          ? null
-          : (criteria.get(problem.qaCriterionId)?.text ?? problem.title),
       taskTitle: document.run.task.title,
     };
   });
@@ -187,17 +199,6 @@ export function classificationInputs(document) {
 
 // Returns a decision, or the feature points a model should weigh.
 export function ruleClassify(input, rules, index) {
-  if (
-    input.owners.length &&
-    input.owners.every((owner) => rules.noFeatureOwners.includes(owner))
-  )
-    return {
-      decision: {
-        featurePointId: null,
-        method: 'rule',
-        reason: rules.noFeatureReason,
-      },
-    };
   const generic = rules.generic;
   const specific = input.subjectKeys.filter(
     (subject) => !generic.some((pattern) => matches(pattern, subject)),

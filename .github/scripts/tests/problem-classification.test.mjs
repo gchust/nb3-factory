@@ -92,7 +92,6 @@ const input = (subjectKeys, owners = ['documentation']) => ({
   owners,
   kinds: ['issue'],
   modules: [],
-  qaCriterion: null,
   taskTitle: '任务',
 });
 
@@ -216,7 +215,7 @@ test('rules place single-feature subjects and leave mixed, generic-only or unkno
     ).candidates.length,
     2,
   );
-  // #232 and #241 only name general guidance; QA criteria name nothing.
+  // #232, #241 and #265 only cite general guidance.
   assert.deepEqual(
     ruleClassify(
       input(['skill:nocobase-app-development', 'guide:app/AGENTS.md']),
@@ -243,23 +242,9 @@ test('rules place single-feature subjects and leave mixed, generic-only or unkno
   );
 });
 
-test('factory process and environment problems are kept out of feature points by rule', () => {
-  for (const owners of [
-    ['factory'],
-    ['environment'],
-    ['environment', 'factory'],
-  ])
-    assert.deepEqual(ruleClassify(input([], owners), rules, index).decision, {
-      featurePointId: null,
-      method: 'rule',
-      reason: rules.noFeatureReason,
-    });
-  assert.deepEqual(
-    ruleClassify(input([], ['factory', 'application']), rules, index),
-    { candidates: [] },
-  );
-});
-
+// Each subject is one module target with its own evidence; a finding cites the
+// evidence of its subjects unless a case says otherwise.
+const evidenceOf = (subject) => `review/1/E:${subject}`;
 const finding = (localId, subjectKeys, edit = {}) => ({
   id: `review/1/${localId}`,
   title: `问题 ${localId}`,
@@ -270,6 +255,7 @@ const finding = (localId, subjectKeys, edit = {}) => ({
   impact: '影响',
   suggestedChange: '建议',
   subjectKeys,
+  evidence: subjectKeys.map(evidenceOf),
   moduleKeys: ['review/1/M1'],
   ...edit,
 });
@@ -280,22 +266,48 @@ const documentFor = (runKey, findings, criteria = []) => ({
   reviews: [
     {
       selected: true,
-      modules: [{ key: 'review/1/M1', name: '数据建模' }],
+      modules: [
+        {
+          key: 'review/1/M1',
+          name: '数据建模',
+          targets: [...new Set(findings.flatMap((f) => f.subjectKeys))].map(
+            (subjectKey) => ({
+              subjectKey,
+              evidence: [evidenceOf(subjectKey)],
+            }),
+          ),
+        },
+      ],
       findings,
     },
   ],
   qa: { criteria },
 });
+// TestManage3 #265: module M5 reviewed server assembly, routes and authentication
+// together, so the finding inherited the authentication plugin although its only
+// subject evidence was app/AGENTS.md.
+const assembly = [
+  'pkg:@nocobase/service-provider',
+  'pkg:@nocobase/app-server',
+  'pkg:@nocobase/app-plugin-authentication',
+  'skill:nocobase-app-development',
+  'guide:app/AGENTS.md',
+];
+const formatting = finding('F3', assembly, {
+  owner: 'template',
+  title: '生成的基线 AGENTS.md 违反自身 Prettier 检查',
+  evidence: [evidenceOf('guide:app/AGENTS.md'), 'review/1/E:retro'],
+});
 
-test('inputs carry the submitted problem keys with owners, modules and QA criterion text', () => {
+test('inputs carry the submitted problem keys with owners and modules', () => {
   const document = documentFor('owner/repo/issues/1/initial', [
     finding('F1', ['pkg:@nocobase/db']),
   ]);
   const [item] = classificationInputs(document);
   assert.equal(item.key, problemSubmission(document).problems[0].key);
   assert.deepEqual(
-    [item.owners, item.kinds, item.modules, item.taskTitle, item.qaCriterion],
-    [['documentation'], ['issue'], ['数据建模'], '客户管理', null],
+    [item.owners, item.kinds, item.modules, item.taskTitle],
+    [['documentation'], ['issue'], ['数据建模'], '客户管理'],
   );
   const qa = documentFor(
     'owner/repo/issues/2/initial',
@@ -303,11 +315,43 @@ test('inputs carry the submitted problem keys with owners, modules and QA criter
     [{ id: 'B1', text: '切换中英文后逐页检查', finalFull: 'failed' }],
   );
   qa.reviews = [];
-  assert.deepEqual(
-    classificationInputs(qa).map((value) => [value.qaCriterion, value.owners]),
-    [['切换中英文后逐页检查', []]],
-  );
+  assert.deepEqual(classificationInputs(qa), []);
   assert.deepEqual(classificationInputs({ type: 'evaluation-batch' }), []);
+});
+
+test('only the targets a finding cites decide its subjects', () => {
+  const document = documentFor('owner/repo/issues/5/initial', [formatting]);
+  const [item] = classificationInputs(document);
+  // The delivered problem keeps the module subjects its key was built from.
+  assert.deepEqual(
+    problemSubmission(document).problems[0].subjectKeys,
+    [...assembly].sort(),
+  );
+  assert.deepEqual(item.subjectKeys, ['guide:app/AGENTS.md']);
+  assert.deepEqual(ruleClassify(item, rules, index), { candidates: [] });
+  const auth = finding('F1', assembly, {
+    evidence: [
+      evidenceOf('pkg:@nocobase/app-plugin-authentication'),
+      evidenceOf('guide:app/AGENTS.md'),
+    ],
+  });
+  const [placed] = classificationInputs(
+    documentFor('owner/repo/issues/6/initial', [auth]),
+  );
+  assert.equal(
+    ruleClassify(placed, rules, index).decision.featurePointId,
+    id('应用搭建/认证'),
+  );
+});
+
+test('non-NocoBase3 findings never reach classification', () => {
+  const document = documentFor(
+    'owner/repo/issues/7/initial',
+    ['factory', 'environment', 'application', 'unknown'].map((owner, i) =>
+      finding(`F${i + 1}`, ['pkg:@nocobase/db'], { owner }),
+    ),
+  );
+  assert.deepEqual(classificationInputs(document), []);
 });
 
 function planFixture(t, documents) {
@@ -340,10 +384,14 @@ const mixed = documentFor('owner/repo/issues/3/initial', [
     'pkg:@nocobase/db',
     'pkg:@nocobase/app-plugin-authentication',
   ]),
-  finding('F3', [], { owner: 'factory', title: '修复轮次中断' }),
+  formatting,
   finding('F4', [], {
     owner: 'template',
     title: 'DatePicker 清空后仍显示旧值',
+  }),
+  finding('F5', ['pkg:@nocobase/db'], {
+    owner: 'factory',
+    title: '修复轮次中断',
   }),
 ]);
 
@@ -361,10 +409,17 @@ test('rule decisions are ready for every item; one pending entry covers repeated
   );
   const decided = Object.values(classification.items[0].problems);
   assert.deepEqual(
-    decided.map((value) => value.featurePointId).sort(),
-    [47, null].sort(),
+    decided.map((value) => value.featurePointId),
+    [47],
   );
-  assert.equal(pending.problems.length, 2);
+  assert.equal(pending.problems.length, 3);
+  const agentsGuide = pending.problems.find(
+    (problem) => problem.title === formatting.title,
+  );
+  assert.deepEqual(
+    [agentsGuide.subjectKeys, agentsGuide.candidates],
+    [['guide:app/AGENTS.md'], []],
+  );
   assert.ok(
     pending.problems.every(
       (problem) => problem.items.join() === 'item-0,item-2',
@@ -530,7 +585,7 @@ test('the Agent places only what rules left, and its reasons are redacted before
       .filter((value) => value.method === 'model')
       .map((value) => value.featurePointId)
       .sort(),
-    [47, null].sort(),
+    [47, null, null].sort(),
   );
   assert.doesNotMatch(
     JSON.stringify(fixture.read('classification.json')),
