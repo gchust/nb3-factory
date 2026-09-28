@@ -171,6 +171,10 @@ Action 在全新目录生成应用、安装并锁定依赖，运行工厂测试�
 
 完整策略由新任务固定的控制代码执行；已启动的旧任务不会被自动取消，其实现与验收仍使用固定版本。后续运行使用新版本的交接入口时，同样会拒绝第二次 Handoff；旧控制版本未实现的逐轮指纹和独立终止诊断不会追溯补造。
 
+## 每日框架问题与飞书日报
+
+`daily-findings.yml` 每天 04:00（Asia/Shanghai）把前一天新出现的框架、插件、模板和文档发现归档到 Pages 的 `reports/findings/daily/`，每天一页，按 TestManage3 功能点分组；问题汇总页顶部有“按日期归档”入口。飞书日报默认关闭：配置仓库 Secrets `FEISHU_WEBHOOK_URL`、`FEISHU_WEBHOOK_SECRET`、变量 `FEISHU_PROBLEM_OWNERS`（功能点到 Open ID 的映射），并把变量 `FACTORY_FEISHU_DIGEST` 设为 `true` 后，归档完成时会把当天的清单发到飞书群机器人，并 @ 各功能点的负责人，页面与飞书消息是同一批问题。开启前只归档、不发送。仓库和 Actions 日志是公开的，所以负责人映射只放在变量里，不写入页面或日志。细节见 [docs/daily-findings.md](docs/daily-findings.md)。
+
 ## 框架问题复核修复
 
 在 TestManage 的问题详情里点击“交给 Claude Code 复核修复”，或者手动运行 `framework-fix.yml` 并填写问题 ID，都会启动一次 Claude Code 运行。它会在最新的 `nocobase/nocobase3` 源码上独立复核问题；如果确认问题存在，并且可以做小范围修复，工作流会以维护者的 GitHub 账号提交 draft PR。结论、PR 链接以及这次运行的 Token 用量和耗时会作为评论回写到 TestManage 问题下，也会出现在 Actions 运行摘要和 PR 描述里；创建了 PR 时，问题状态会从“待确认”改为“修复中”。Agent 只持有 Claude Code 凭据，PR token 和 TestManage 密钥分别只出现在不运行 Agent 的 Job 中。需要的 Secrets 与完整协议见 [docs/framework-fixes.md](docs/framework-fixes.md)。

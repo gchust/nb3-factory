@@ -45,6 +45,10 @@ facts 可带 `upstreamCheck`（`version: 1`），记录对 `nocobase/nocobase3` 
 
 需要重新开始统计时（例如框架升级后旧发现已不再适用），在 Actions 手动执行 [Reset framework findings](../workflows/reset-findings.yml)，`confirm` 填 `RESET`。它把当前时间写入 `reports/findings/baseline.json`，此后汇总只纳入运行开始时间不早于该时刻的报告：重置后新开始的搭建与重跑计入，重置时仍在进行的搭建和对旧运行的重新评审不计入。旧的归类记录随之移除；已发布的报告、各报告自己的问题清单和 gh-pages 历史都不改动。页面顶部注明重新记录的起点和未计入的报告数。基线文件损坏时汇总页保留上一版，报告照常发布。再次执行会把起点移到新的时间。
 
+### 按日期归档与飞书日报
+
+[Daily framework findings](../workflows/daily-findings.yml) 每天 04:00（Asia/Shanghai）结束前一天：把汇总范围内尚未归档、运行在当天结束前完成的发现写入 `reports/findings/daily/<日期>.json` 与 `<日期>.html`，并更新 `daily/index.html` 与记录已归档键和待发送日报的 `daily/index.json`。之后出现的发现（如对旧运行的重新评审）归入下一个结束的日期并标为补录；首次运行按各运行的结束日期补建历史，只发送当天的日报。`findings-daily.mjs` 负责计划与渲染，不访问网络；`scripts/daily-findings.mjs` 负责读写 gh-pages 和发送飞书消息。功能点沿用 `problem-feature-rules.json` 的规则，不调用 Agent；无法唯一确定的列在“未归入功能点”并注明涉及的功能点。页面是公开的，只写功能点，不写负责人。飞书日报在变量 `FACTORY_FEISHU_DIGEST` 为 `true` 前不排队也不发送。配置与发送规则见 [docs/daily-findings.md](../../docs/daily-findings.md)。
+
 确认边界始终可见：本轮评审基于冻结依赖与指引，confirmed 是评审者的有据判断；首屏清单下方一行“口径”说明最新 NocoBase3 源码是否已复核、对照哪个提交。应用交付成功、业务绕行和原记录“已解决”均不等于上游已修复。没有评测时显示“尚未评估”，不显示零问题。
 
 新评审给非 strength 发现补充 diagnosis：问题类型、触发条件、应有行为、实际观察、应用绕行与代价、改进后的验收标准。历史报告缺字段时保留原文、明确未提供，不推断或追填。问题详情先展示独立评测，再保留实现者过程和运行背景。有过程问题或建议时默认展开，并在首屏和折叠标题显示各自数量；过程记录格式无效时展开警告和原始记录。独立评测失败、缺失或关闭时也不会隐藏已有发现，过程记录数量不混入已独立确认的框架问题数。

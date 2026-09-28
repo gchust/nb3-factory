@@ -1,0 +1,84 @@
+name: Daily framework findings
+
+# Closes one Asia/Shanghai day of NocoBase3 framework findings into
+# reports/findings/daily/ on gh-pages. With FACTORY_FEISHU_DIGEST=true it also
+# sends that day's digest to a Feishu group bot, mentioning each feature point's
+# owners from FEISHU_PROBLEM_OWNERS; the digest is off until then. Only the send
+# step receives the webhook and its signing secret. It never runs application
+# code or calls a model.
+on:
+  schedule:
+    # 04:00 Asia/Shanghai closes the previous day.
+    - cron: '0 20 * * *'
+  workflow_dispatch:
+    inputs:
+      date:
+        description: Day to close (YYYY-MM-DD, Asia/Shanghai); empty closes yesterday
+        required: false
+        type: string
+      notify:
+        description: Send the Feishu digest (only while FACTORY_FEISHU_DIGEST is true; off only archives the day)
+        type: boolean
+        default: true
+
+permissions: {}
+
+jobs:
+  daily:
+    if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    # Serializes with report and classification publication on gh-pages.
+    concurrency:
+      group: factory-task-usage
+      queue: max
+    permissions:
+      contents: write
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          path: control
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24.x
+      - name: Archive the day's framework findings
+        id: archive
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          DAILY_DATE: ${{ inputs.date }}
+          # Queues a digest only when one will be sent; the secret itself stays out.
+          DAILY_NOTIFY: ${{ vars.FACTORY_FEISHU_DIGEST == 'true' && (github.event_name == 'schedule' || inputs.notify) && secrets.FEISHU_WEBHOOK_URL != '' }}
+        run: |
+          node control/.github/scripts/daily-findings.mjs archive \
+            --date "$DAILY_DATE" --notify "$DAILY_NOTIFY"
+      - uses: actions/checkout@v4
+        if: steps.archive.outputs.changed == 'true'
+        with:
+          ref: ${{ steps.archive.outputs.commit_sha }}
+          path: report-site
+          persist-credentials: false
+      - uses: actions/configure-pages@v5
+        if: steps.archive.outputs.changed == 'true'
+      - uses: actions/upload-pages-artifact@v4
+        if: steps.archive.outputs.changed == 'true'
+        with:
+          path: report-site
+      - uses: actions/deploy-pages@v4
+        if: steps.archive.outputs.changed == 'true'
+        id: deployment
+      - name: Send pending digests to Feishu
+        if: vars.FACTORY_FEISHU_DIGEST == 'true' && steps.archive.outputs.pending != '0' && (github.event_name == 'schedule' || inputs.notify)
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          REPORT_BASE_URL: ${{ steps.deployment.outputs.page_url }}
+          FEISHU_WEBHOOK_URL: ${{ secrets.FEISHU_WEBHOOK_URL }}
+          FEISHU_WEBHOOK_SECRET: ${{ secrets.FEISHU_WEBHOOK_SECRET }}
+          FEISHU_PROBLEM_OWNERS: ${{ vars.FEISHU_PROBLEM_OWNERS }}
+        run: node control/.github/scripts/daily-findings.mjs notify --base-url "$REPORT_BASE_URL"
