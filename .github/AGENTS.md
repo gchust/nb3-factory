@@ -31,3 +31,7 @@ Presets #206, #207 and #208 are ordinary application build tasks. Do not bind th
 ## Problems delivered to TestManage3
 
 TestManage3 receives NocoBase3 problems only: open findings owned by `framework`, `plugin`, `template` or `documentation`, the same set the framework findings page counts. Application, factory, environment and unknown-owner findings, and failed QA criteria without a review finding, stay in the factory report. See `docs/testmanage3-problems.md`.
+
+## Daily findings digest
+
+`daily-findings.yml` archives each Asia/Shanghai day of framework findings under `reports/findings/daily/` and, once `FACTORY_FEISHU_DIGEST` is `true`, sends the same set to Feishu. Keep the day page and the digest one set: closing a day archives each finding once, a closed day never changes, and a finding that appears after its day was closed goes into the next closed day, never back into a sent one. The repository, its Pages and its Actions logs are public, so the owner mapping (`FEISHU_PROBLEM_OWNERS`) stays a repository secret that no page, JSON file or log line may contain, and only the send step receives it and the Feishu webhook and secret. Never pass it as a variable: the runner prints each step's env in the log and masks only secrets. Finding text stays in rich-text text and link nodes so it cannot add a mention. See `docs/daily-findings.md`.

@@ -197,6 +197,23 @@ export function classificationInputs(document) {
   });
 }
 
+// Feature point paths ("dimension/feature") the subject rules alone give,
+// without the receiver's list; the daily findings digest routes mentions by
+// them. `featurePoint` is set only when every specific subject agrees.
+export function ruleFeaturePaths(subjectKeys, rules) {
+  const hits = subjectKeys
+    .filter(
+      (subject) => !rules.generic.some((pattern) => matches(pattern, subject)),
+    )
+    .map((subject) => bestRule(rules.rules, subject)?.featurePoint ?? null);
+  const candidates = [...new Set(hits.filter(Boolean))].sort();
+  return {
+    featurePoint:
+      candidates.length === 1 && !hits.includes(null) ? candidates[0] : null,
+    candidates,
+  };
+}
+
 // Returns a decision, or the feature points a model should weigh.
 export function ruleClassify(input, rules, index) {
   const generic = rules.generic;

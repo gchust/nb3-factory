@@ -9,7 +9,7 @@ import { text as markdownText } from './visual-report.mjs';
 import { collectOccurrences, renderFindingsIndex } from '../reports/findings-index.mjs';
 import { createClassificationInput, projectClassification, validateClassification } from '../reports/findings-classification.mjs';
 
-const BRANCH = 'gh-pages';
+export const BRANCH = 'gh-pages';
 const ROOT = 'reports';
 const escape = value => String(value ?? '').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 export const orderOf = item => [item.start,item.runId,item.attempt];
@@ -47,7 +47,7 @@ function degraded(next,old) {
     return Number(next.quality[k]??0)<Number((k==='reviewComplete' ? old.quality.reviewComplete ?? old.quality.review : old.quality[k])??0);
   });
 }
-async function getJson(client,file,ref) {
+export async function getJson(client,file,ref) {
   const value=await client.request('GET',`/contents/${file}`,{query:{ref},allow404:true});
   if(!value) return null;
   if(value.encoding!=='base64') throw new Error('Invalid Pages manifest encoding');
@@ -160,7 +160,7 @@ async function findingsIndexAssets(client, registry, sha, current) {
 
 // Commit findings files on top of the given site commit; a null content
 // removes the path. A concurrent publication surfaces as a ref conflict.
-async function commitFindings(client, sha, files, message) {
+export async function commitFindings(client, sha, files, message) {
   const commit = await client.request('GET', `/git/commits/${sha}`);
   const tree = [];
   for (const [file, content] of files) {
