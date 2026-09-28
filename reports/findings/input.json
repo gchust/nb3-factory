@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "inputHash": "0b79db93132fb6825ee5b44c0de36bfa5d88b09d386cc11a1e244b2af12e51f8",
+  "inputHash": "ccc283410e3854cf633d150ed3ac6c0b24b226651d010208927a8dcef1b4de8e",
   "findings": [
     {
       "id": "460:36434284393:1:F2",
@@ -1344,6 +1344,193 @@
         }
       ],
       "fingerprint": "d8fd516d5accd3aee86e7eb3c9e662c261c1ae46190fdcfcc097b3cc4d6119d1"
+    },
+    {
+      "id": "466:36473812582:1:F3",
+      "report": "466:36473812582:1",
+      "issue": 466,
+      "taskTitle": "设备售后服务与巡检协同系统（综合业务案例）",
+      "appVersion": "1.0.0-beta.50",
+      "appTemplate": "@nocobase/app-template-default",
+      "finding": {
+        "id": "F3",
+        "kind": "issue",
+        "owner": "plugin",
+        "title": "Scheduler 没有公开的受控立即执行入口，应用被迫直接操作 Queue 计划投影",
+        "detail": "公开服务只有 defineSchedule/registerTarget/list/listOccurrences/setEnabled (E10)，路由只有 list/occurrences/enable/disable (E11)；Skill 明确 Cron 没有管理 API 且警告不要改动 Queue 计划投影 (E14)，开发期建议短 Cron (E16)。应用为实现 B08 的“立即执行”改用 @nocobase/queue 的 Schedule.list + schedule.trigger() (E2)。",
+        "impact": "当需求包含管理员可见的立即执行时，接入者要么等待短 Cron，要么使用被 Skill 明确劝阻的投影路径，两者都不理想。",
+        "suggestedChange": "在 schedulerServiceToken 增加公开的 run/trigger（按计划经调度派发并写 occurrence），并暴露 POST /api/schedules/:scheduleId/run；同时更新 Skill 说明该路径。",
+        "evidence": [
+          "E10",
+          "E11",
+          "E14",
+          "E16",
+          "E2"
+        ],
+        "severity": "minor",
+        "confidence": "confirmed",
+        "status": "open",
+        "diagnosis": {
+          "category": "capability-gap",
+          "trigger": "需要立即执行一个已定义计划并留下执行记录",
+          "expected": "公开 API/HTTP 触发经同一调度链并记录 occurrence",
+          "actual": "无公开入口，只能操作 Queue 计划投影",
+          "workaround": "应用用 @nocobase/queue 的 Schedule.trigger，或退化为短 Cron 等待",
+          "acceptance": "调用公开 run 接口后计划详情出现新的 occurrence 且 runCount+1，且不触碰内部投影"
+        }
+      },
+      "targets": [
+        "@nocobase/app-plugin-scheduler",
+        "app/.agents/skills/nocobase-app-plugin-scheduler"
+      ],
+      "paths": [
+        ".agents/skills/nocobase-app-plugin-scheduler/SKILL.md",
+        ".agents/skills/nocobase-app-plugin-scheduler/references/operations.md",
+        "packages/@nocobase/app-plugin-scheduler/dist/server/routes/index.js",
+        "packages/@nocobase/app-plugin-scheduler/dist/server/services/scheduler.d.ts"
+      ],
+      "evidence": [
+        {
+          "id": "E10",
+          "kind": "package",
+          "path": "packages/@nocobase/app-plugin-scheduler/dist/server/services/scheduler.d.ts",
+          "observation": "schedulerServiceToken 公开 defineSchedule/registerTarget/list/listOccurrences/setEnabled，没有立即执行/触发方法。",
+          "lines": [
+            16,
+            31
+          ],
+          "excerpt": "export declare class DefaultSchedulerService implements SchedulerService {\n    private readonly store;\n    private readonly occurrences;\n    private readonly targets;\n    private readonly manifest;\n    constructor(store: ScheduleStore, occurrences: ScheduleOccurrenceStore, targets: ScheduleTargetRegistry);\n    defineSchedule(definition: ScheduleDefinition): void;\n    registerTarget<TConfig extends JsonObject>(target: ScheduleTargetType<TConfig>): ScheduleTargetHandle;\n    list(): Promise<readonly ScheduleListItem[]>;\n    listOccurrences(scheduleId: string): Promise<readonly ScheduleOccurrenceView[]>;\n    sync(finalize?: boolean): Promise<void>;\n    setEnabled(id: string, enabled: boolean): Promise<ScheduleListItem>;\n    /** Observes occurrences whose target completed without notifying us. */\n    reconcileOccurrences(): Promise<number>;\n}\nexport declare const schedulerServiceToken=[REDACTED]",
+          "sha256": "68a7a2e52db6e5dd0e4e27ca2db03e9be6b6bbf1b164511b5f40020560571d8a"
+        },
+        {
+          "id": "E11",
+          "kind": "code",
+          "path": "packages/@nocobase/app-plugin-scheduler/dist/server/routes/index.js",
+          "observation": "Scheduler 路由实现只提供 GET list、GET occurrences、POST enable/disable，均挂认证与授权中间件。",
+          "lines": [
+            23,
+            32
+          ],
+          "excerpt": "    schedules.get('/', async (context) => context.json({ data: await scheduler.list() }));\n    schedules.get('/:id/occurrences', async (context) => context.json({\n        data: await scheduler.listOccurrences(context.req.param('id')),\n    }));\n    schedules.post('/:id/enable', async (context) => context.json({\n        data: await scheduler.setEnabled(context.req.param('id'), true),\n    }));\n    schedules.post('/:id/disable', async (context) => context.json({\n        data: await scheduler.setEnabled(context.req.param('id'), false),\n    }));",
+          "sha256": "5923dd0ae2631da0ece7477ddd9ddf2d598010fcc69e2322c70d35e99f0efd2b"
+        },
+        {
+          "id": "E14",
+          "kind": "skill",
+          "path": "app/.agents/skills/nocobase-app-plugin-scheduler/SKILL.md",
+          "observation": "Skill 说明 Cron 没有管理 API、只能启停，并明确不要改动 Queue 计划投影。",
+          "lines": [
+            48,
+            48
+          ],
+          "excerpt": "Schedules are defined in code. There is no management API for creating or editing Cron definitions, but the UI and API support enabling and disabling tasks. Do not modify `schedule_definitions`, `schedule_occurrences`, or the Queue driver's schedule projection directly, or replace the infrastructure `ScheduleDispatchJob`.",
+          "sha256": "ff15880abf17327c0613e38fb53820031a9db904882c4a65b7d3211cfa223215"
+        },
+        {
+          "id": "E16",
+          "kind": "skill",
+          "path": "app/.agents/skills/nocobase-app-plugin-scheduler/references/operations.md",
+          "observation": "operations.md 对受控执行只建议开发期使用短 Cron 间隔观察。",
+          "lines": [
+            59,
+            59
+          ],
+          "excerpt": "- In development, use a short Cron interval to observe an execution: a short target produces its business result and succeeds; asynchronous Queue Jobs or Workflows wait first and eventually reflect the real outcome.",
+          "sha256": "a5cb7a6042ea3d28e21d66c078180d3885f467a8762a2872bcfadf9e3fb98f26"
+        },
+        {
+          "id": "E2",
+          "kind": "code",
+          "path": "app/server/providers/service-domain.ts",
+          "observation": "应用 runServiceSchedule 通过 @nocobase/queue 的 Schedule.list 取出计划投影，再用 schedule.trigger(override) 派发，正是 Scheduler Skill 警告不要直接触碰的 Queue 计划投影。",
+          "lines": [
+            1500,
+            1552
+          ],
+          "excerpt": "      connection = undefined;\n    }\n    if (!connection) {\n      throw new ServiceDomainError(\n        'SCHEDULE_UNAVAILABLE',\n        '计划调度器尚未就绪，无法执行。',\n        503,\n      );\n    }\n    const adapter = QueueManager.use(connection);\n    const schedules = await Schedule.list({}, { adapter: () => adapter });\n    const schedule = schedules.find((candidate) => {\n      const payload = candidate.payload as\n        { readonly target?: { readonly type?: unknown } } | undefined;\n      return payload?.target?.type === target;\n    });\n    if (!schedule) {\n      throw new ServiceDomainError(\n        'SCHEDULE_NOT_FOUND',\n        '未找到对应的计划，无法执行。',\n        503,\n      );\n    }\n    if (schedule.status !== 'active') {\n      throw new ServiceDomainError(\n        'SCHEDULE_DISABLED',\n        '该计划已停用，不会产生新的执行结果。',\n        409,\n      );\n    }\n\n    const payload = schedule.payload as\n      | {\n          readonly target?: {\n            readonly type?: unknown;\n            readonly config?: Record<string, unknown>;\n          };\n        }\n      | undefined;\n    // A controlled run may name the day it runs for, which the target reads from\n    // its config; without one the target uses the Shanghai day it fires in.\n    const override =\n      config.date && payload?.target\n        ? {\n            ...payload,\n            target: {\n              ...payload.target,\n              config: { ...payload.target.config, date: config.date },\n            },\n          }\n        : undefined;\n\n    await schedule.trigger(override);",
+          "sha256": "35f55a11e8fb0cf1ea3b50e16e5ffd20266842f3257e28f9ccba65e75cf989eb"
+        }
+      ],
+      "fingerprint": "c44e8d4f02cc7029a4f205d91f4a701a1b23995dac1ab179a9214280f797eccd"
+    },
+    {
+      "id": "466:36473812582:1:F4",
+      "report": "466:36473812582:1",
+      "issue": 466,
+      "taskTitle": "设备售后服务与巡检协同系统（综合业务案例）",
+      "appVersion": "1.0.0-beta.50",
+      "appTemplate": "@nocobase/app-template-default",
+      "finding": {
+        "id": "F4",
+        "kind": "issue",
+        "owner": "documentation",
+        "title": "Scheduler 指引只说开发期用短 Cron，缺少面向管理员的受控立即执行说明",
+        "detail": "operations.md 仅建议开发期用短 Cron 观察执行 (E16)，SKILL 只说不能编辑 Cron (E14)；需求 B08 要求“受控的立即执行或短周期测试方式”，指引未说明如何提供或限制立即执行入口。",
+        "impact": "接入者可从指引推断“只能短 Cron”，与实际想要的立即执行按钮产生落差，容易自行探索非公开路径。",
+        "suggestedChange": "在 operations.md 增补一节：如何在应用层提供受控立即执行、如何鉴权、如何避免与 Cron 并发产生重复。",
+        "evidence": [
+          "E14",
+          "E16",
+          "E30"
+        ],
+        "severity": "info",
+        "confidence": "confirmed",
+        "status": "open",
+        "diagnosis": {
+          "category": "guidance-gap",
+          "trigger": "应用需要为管理员提供受控的立即执行",
+          "expected": "指引给出被支持的立即执行做法",
+          "actual": "只有开发期短 Cron 建议，未提及立即执行入口",
+          "workaround": "应用自行使用 Queue 投影",
+          "acceptance": "指引包含可照做的立即执行示例，并写明权限与幂等注意点"
+        }
+      },
+      "targets": [
+        "app/.agents/skills/nocobase-app-plugin-scheduler"
+      ],
+      "paths": [
+        ".agents/skills/nocobase-app-plugin-scheduler/SKILL.md",
+        ".agents/skills/nocobase-app-plugin-scheduler/references/operations.md"
+      ],
+      "evidence": [
+        {
+          "id": "E14",
+          "kind": "skill",
+          "path": "app/.agents/skills/nocobase-app-plugin-scheduler/SKILL.md",
+          "observation": "Skill 说明 Cron 没有管理 API、只能启停，并明确不要改动 Queue 计划投影。",
+          "lines": [
+            48,
+            48
+          ],
+          "excerpt": "Schedules are defined in code. There is no management API for creating or editing Cron definitions, but the UI and API support enabling and disabling tasks. Do not modify `schedule_definitions`, `schedule_occurrences`, or the Queue driver's schedule projection directly, or replace the infrastructure `ScheduleDispatchJob`.",
+          "sha256": "ff15880abf17327c0613e38fb53820031a9db904882c4a65b7d3211cfa223215"
+        },
+        {
+          "id": "E16",
+          "kind": "skill",
+          "path": "app/.agents/skills/nocobase-app-plugin-scheduler/references/operations.md",
+          "observation": "operations.md 对受控执行只建议开发期使用短 Cron 间隔观察。",
+          "lines": [
+            59,
+            59
+          ],
+          "excerpt": "- In development, use a short Cron interval to observe an execution: a short target produces its business result and succeeds; asynchronous Queue Jobs or Workflows wait first and eventually reflect the real outcome.",
+          "sha256": "a5cb7a6042ea3d28e21d66c078180d3885f467a8762a2872bcfadf9e3fb98f26"
+        },
+        {
+          "id": "E30",
+          "kind": "qa",
+          "path": "artifacts/verify-7/browser-focused/report.json",
+          "observation": "verify-7 的 B08 证据：POST .../api/service/schedules/service.daily-inspections/run 返回 404，但启停、禁用后无新结果、巡检完成与刷新均正常。",
+          "lines": [
+            19,
+            24
+          ],
+          "excerpt": "        \"Service dashboard 的 Run now（Daily inspection generation）发出 POST /main/api/service/schedules/service.daily-inspections/run 返回 404，页面弹出“未知的计划。”，Last run/Completed runs 不变，未生成巡检任务（受控执行失败）\",\n        \"Service dashboard 的 Run now（Overdue work order reminder）发出 POST /main/api/service/schedules/service.overdue-reminders/run 返回 404，页面弹出“未知的计划。”，Completed runs 不变\",\n        \"Inspections 的 Generate today's tasks（计划启用时）同样 POST .../service.daily-inspections/run 返回 404 并弹出“未知的计划。”，列表与执行记录无新增\",\n        \"计划启停可保存：关闭后 POST /api/schedules/<id>/disable 200，刷新后仍为未启用；再次启用后刷新仍为启用\",\n        \"计划停用后 Generate today's tasks 不再发出 POST，提示“This task is stopped. A stopped task produces no new results. Enable it before running it again.”，无新结果\",\n        \"巡检完成可用：NX200-A-0002 填写结果后状态 Completed，刷新后结果与状态仍保留\"",
+          "sha256": "bc6852b6e93f29e375cf093035a66023aa4e036085ab2a6ab01dc4327d79b8d6"
+        }
+      ],
+      "fingerprint": "07e691038c99fd2c5de4b04d76758f9edb34255bf86f99127ae1b9bbca0aa9f5"
     }
   ]
 }
