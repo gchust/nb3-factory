@@ -66,6 +66,7 @@ misleading：必须对照 claimed（原说明）与 observed（实际实现/行�
 Agent 用错 API 时，先核查文档是否写清前提、示例是否完整、类型或错误提示能否定位，不能仅凭错误次数判定框架有缺陷。
 实现者自述 rootCause 只是线索，未独立核对用 suspected；应用绕过修复不等于上游缺陷 resolved。
 owner 为 application/factory/environment 的发现仅作为背景，不混成 NocoBase3 缺陷；unknown 留作待确认归因。
+工厂在 NocoBase3 模板之上叠加的内容归 owner=factory：`app/factory-template.json`、README.MD 的 `factory:readme` 标记段、eslint.config.js 引入的 factory-eslint、package.json 的 `factory:*` 脚本，以及快照不含的 `.github` 工作流、脚本、提示词和工厂规则。实现者或 retro 说的“模板”“基线”通常指工厂搭建基线；只有能引用 `@nocobase/app-template-default` 生成的内容（根 AGENTS.md、CLAUDE.md、client/、server/ 等脚手架）证明问题出在 NocoBase3 模板时才用 template。根因提交在工厂仓库不能单独决定归属，要看它改的是哪部分内容。
 旧 task.reviewCriteria 可提供额外检查点，但业务代码约束不能被强行升级为框架职责或改回旧评分字段。
 
 每条非 strength 发现补充 diagnosis，方便维护者复核与安排改进：
