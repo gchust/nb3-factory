@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "inputHash": "1bda914c9879cf6fb305b86dd843e4e8c40af68bbfa9cf58eace07968d6b4a33",
+  "inputHash": "016996b121eb92947f724cf44c9295a79b37dc011c61eb8471ffd4cdb0879265",
   "findings": [
     {
       "id": "408:36329180371:1:F2",
@@ -1803,6 +1803,167 @@
         }
       ],
       "fingerprint": "4ff0e440a3292c4f5afb73dc62fae0bef870cb63feae3853889b488babe2ae2e"
+    },
+    {
+      "id": "431:36360863566:1:F1",
+      "report": "431:36360863566:1",
+      "issue": 431,
+      "taskTitle": "客户、联系人与商机管理",
+      "appVersion": "1.0.0-beta.47",
+      "appTemplate": "@nocobase/app-template-default",
+      "finding": {
+        "id": "F1",
+        "kind": "improvement",
+        "owner": "documentation",
+        "severity": "minor",
+        "confidence": "confirmed",
+        "status": "open",
+        "title": "nocobase-db §3 字段构造器清单漏列 enum",
+        "detail": "SKILL.md 用一行把字段构造器逐项列成清单（increments…native），但漏掉 enum；而 FieldType 联合类型与 fluent builder 都提供 enum，应用也确实用 collection.enum('stage') 定义了商机阶段。清单被写得像穷举，容易让 Agent 误以为枚举不可用或需绕行。",
+        "impact": "使用者可能放弃原生枚举字段，转而用字符串+应用校验或 native 类型，削弱数据库层约束与迁移守卫。",
+        "suggestedChange": "在 SKILL.md §3 字段构造器清单中补上 enum，并注明其 values 为只读字符串数组及变更枚举成员需显式迁移。",
+        "evidence": [
+          "E1",
+          "E2",
+          "E21"
+        ],
+        "diagnosis": {
+          "category": "guidance-gap",
+          "trigger": "Agent 需要为商机阶段定义受限取值字段并查阅 nocobase-db §3 字段构造器清单。",
+          "expected": "清单应包含可用的 enum 构造器或明确说明其不在清单内。",
+          "actual": "清单未列 enum，Agent 只能从类型定义与 fluent builder 推断其存在。",
+          "workaround": "Agent 直接使用 collection.enum，由类型与实现兜底。",
+          "acceptance": "SKILL.md §3 出现 enum 一行，并说明 values 与迁移约束。"
+        }
+      },
+      "targets": [
+        "@nocobase/db",
+        "packages/@nocobase/db/skills/nocobase-db"
+      ],
+      "paths": [
+        ".agents/skills/nocobase-db/SKILL.md",
+        "packages/@nocobase/db/dist/src/collection/fluent/index.d.ts",
+        "packages/@nocobase/db/dist/src/collection/types.d.ts"
+      ],
+      "evidence": [
+        {
+          "id": "E1",
+          "kind": "package",
+          "path": "packages/@nocobase/db/dist/src/collection/types.d.ts",
+          "observation": "FieldType 联合类型第 2 行包含 'enum'，与字符串/数值类型并列；第 1 行为接口头部，说明字段类型由类型系统显式枚举。",
+          "lines": [
+            1,
+            2
+          ],
+          "excerpt": "export type CollectionKind = 'table' | 'view' | 'materializedView';\nexport type FieldType = 'increments' | 'integer' | 'bigInt' | 'string' | 'char' | 'enum' | 'text' | 'boolean' | 'decimal' | 'float' | 'double' | 'date' | 'time' | 'datetime' | 'datetimeTz' | 'json' | 'blob' | 'uuid' | 'native' | 'belongsTo' | 'hasOne' | 'hasMany' | 'belongsToMany' | string;",
+          "sha256": "10e28ee4845c4300ddc190b925a57d8be3d1be9c23e43a2c032f9997aabfc19e"
+        },
+        {
+          "id": "E2",
+          "kind": "package",
+          "path": "packages/@nocobase/db/dist/src/collection/fluent/index.d.ts",
+          "observation": "集合构造器的 enum(name, options) 声明：values 为 readonly string[]，另有 nullable/defaultValue 等选项，证明枚举字段有公开 builder。",
+          "lines": [
+            17,
+            19
+          ],
+          "excerpt": "    enum(name: string, options: Partial<FieldDefinition> & {\n        values: readonly string[];\n    }): FieldDefinitionBuilder;",
+          "sha256": "d89ac3bfe1bce32d32021fb22182d9263d680871412cb4f101991500340ba175"
+        },
+        {
+          "id": "E21",
+          "kind": "skill",
+          "path": "packages/@nocobase/db/skills/nocobase-db/SKILL.md",
+          "observation": "字段构造器清单逐项列出 increments/integer/bigInt/string/char/text/boolean/decimal/float/double/date/time/datetime/datetimeTz/json/blob/uuid/native，未列出 enum。",
+          "lines": [
+            162,
+            162
+          ],
+          "excerpt": "Field builders are `increments`, `integer`, `bigInt`, `string`, `char`, `text`, `boolean`, `decimal`, `float`, `double`, `date`, `time`, `datetime`, `datetimeTz`, `json`, `blob`, `uuid`, and `native` for a dialect-specific type. Options include `nullable`, `length`, `defaultValue`, `precision` and `scale`; the equivalent chained form (`.notNull()`, `.defaultTo()`, `.unique()`) is also available — pick one style and keep the file consistent.",
+          "sha256": "f97c07a45a9d49c1d933ddbceeabcc9afe267b1356a2ded1a3da0dd56b54011c"
+        }
+      ],
+      "fingerprint": "708a87c7fe806c7805fd98a0e2be992c47281a92d32f5ff7550f74a79f5b2cf3"
+    },
+    {
+      "id": "431:36360863566:1:F2",
+      "report": "431:36360863566:1",
+      "issue": 431,
+      "taskTitle": "客户、联系人与商机管理",
+      "appVersion": "1.0.0-beta.47",
+      "appTemplate": "@nocobase/app-template-default",
+      "finding": {
+        "id": "F2",
+        "kind": "issue",
+        "owner": "documentation",
+        "severity": "minor",
+        "confidence": "confirmed",
+        "status": "open",
+        "title": "种子'绝非样例内容'与'准备样例数据'需求冲突且无替代归属",
+        "detail": "nocobase-db §2 明确 a seed is never sample or demonstration content，但本次任务显式要求准备 2 个客户/3 个联系人/3 条商机作为样例数据；nocobase-db 与应用开发 Skill 都未给出样例/演示数据的推荐承载位置，应用只能把 'Sample data' 写进种子文件。",
+        "impact": "使用者在'需要可演示数据'的场景下无法判断应放种子、迁移还是其它机制，通常会违反指引放入种子，长期使种子承担双重角色。",
+        "suggestedChange": "在 nocobase-db 或应用开发 Skill 中为样例/演示数据指定明确归属（例如独立 development fixture/二次运行脚本），并说明它与运行所需种子的区别。",
+        "evidence": [
+          "E19",
+          "E26",
+          "E32"
+        ],
+        "diagnosis": {
+          "category": "guidance-gap",
+          "trigger": "任务要求内置样例数据，Agent 按 Skill 查找到种子的职责说明。",
+          "expected": "指引应给出样例数据的合法承载位置或明确允许在受控条件下放入种子。",
+          "actual": "指引只否定种子承载样例，未提供替代方案。",
+          "workaround": "应用把样例数据放入种子文件并注释为 sample data。",
+          "acceptance": "指引中出现样例/演示数据归属的明确条目，且不与'种子只写运行所需数据'矛盾。"
+        }
+      },
+      "targets": [
+        "app/.agents/skills/nocobase-app-development/references/migrations.md",
+        "packages/@nocobase/db/skills/nocobase-db"
+      ],
+      "paths": [
+        ".agents/skills/nocobase-app-development/references/migrations.md",
+        ".agents/skills/nocobase-db/SKILL.md"
+      ],
+      "evidence": [
+        {
+          "id": "E19",
+          "kind": "skill",
+          "path": "packages/@nocobase/db/skills/nocobase-db/SKILL.md",
+          "observation": "指引原文：迁移创建结构、种子写入运行所需记录，二者不代劳；'a seed is never sample or demonstration content'。",
+          "lines": [
+            80,
+            80
+          ],
+          "excerpt": "A migration creates structure. A seed inserts the records the application needs in order to run. Neither does the other's job, and a seed is never sample or demonstration content.",
+          "sha256": "f97c07a45a9d49c1d933ddbceeabcc9afe267b1356a2ded1a3da0dd56b54011c"
+        },
+        {
+          "id": "E26",
+          "kind": "skill",
+          "path": "app/.agents/skills/nocobase-app-development/references/migrations.md",
+          "observation": "应用侧 migrations 参考：把迁移形状路由到 nocobase-db SKILL §2-3，说明种子在迁移后运行、保持固定、可重复执行，并给出目录与连接规则。",
+          "lines": [
+            5,
+            19
+          ],
+          "excerpt": "How to write the files themselves — the migration and seed shape, the immutability and self-containment rules, the Collection Builder, and which of `builder`, `query` and `repository` a task context should reach for — belongs to the package that owns them. Read `.agents/skills/nocobase-db/SKILL.md` sections 2 and 3 before writing one, and run `pnpm nocobase skills sync` if that file is missing.\n\nMigrations under `database/main/migrations/` are the application's schema history. Seeds under `database/main/seeds/` insert records the application requires to run. Migrations create structure. Seeds never do.\n\n`database/tsconfig.json` extends the server configuration so editor tooling and ESLint recognize migrations and seeds as Node source. Keep it in place when adding connection directories.\n\n## Running\n\n```bash\npnpm nocobase db apply\n```\n\nThis applies pending migrations and then pending seeds for `database.default`, including registered plugins, ordered by name across all sources. Both halves run only what is pending, so on an already-migrated database it applies seeds alone. The template defaults to `main`. Plugin migrations, seeds and runtime default reads/writes always use this same connection; changing `database.default` changes the application system database.\n\nSeeds are the second half of that run, so the structure a seed writes into must already exist from an earlier migration. Keep seed data fixed and reproducible — no current timestamps or random values in identifying fields — and never let a repeat run silently overwrite data a user has edited.",
+          "sha256": "327c8870ee555dc8496892821a6fe7ec05762c8a2a7b71213f8d339757f695c6"
+        },
+        {
+          "id": "E32",
+          "kind": "code",
+          "path": "app/database/main/seeds/20260928020000_seed_crm_sample_data.ts",
+          "observation": "应用种子注释 'Sample data for the sales team'，以 findOne+createOne（按 name/customerId 查找）写入样例，未声明唯一约束也未用 upsertOne。",
+          "lines": [
+            31,
+            49
+          ],
+          "excerpt": "/**\n * Sample data for the sales team: two customers, three contacts, three\n * opportunities.\n *\n * Every insert is guarded by a lookup on the stable business key (the name,\n * scoped to its customer for the child tables). A repeated run therefore finds\n * each row already present and writes nothing, and a row the team has edited is\n * left alone — a seed installs a starting point, it does not own the data\n * afterwards.\n */\nconst seed: SeedDefinition = defineSeed({\n  name: '20260928020000_seed_crm_sample_data',\n  async run(context) {\n    const customers: Repository<CustomerRow> =\n      context.repository<CustomerRow>('customers');\n    const contacts: Repository<ContactRow> =\n      context.repository<ContactRow>('contacts');\n    const opportunities: Repository<OpportunityRow> =\n      context.repository<OpportunityRow>('opportunities');",
+          "sha256": "6166291f8d344da4a5bbbab222230eccaf1ca655edf32599b9de3e8fb8f47bb8"
+        }
+      ],
+      "fingerprint": "3276e0bc600363843138eadf22be7f66340184fe0e9257a3ad7c247fb140f1fe"
     }
   ]
 }
