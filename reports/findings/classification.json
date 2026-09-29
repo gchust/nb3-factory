@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "inputHash": "7f9ddf9fbbd0bb800acc190eebed26e039b02170f1e5802d0ed53e531632c8b2",
+  "inputHash": "b76b5c40bdf6433bafd48965c2baa64d6cd7e2eece877b0d706da7df4fdef3f8",
   "sources": [
     {
       "id": "460:36434284393:1:F2",
@@ -118,6 +118,26 @@
       "fingerprint": "6ef074db9fe80a81f401b6a1e43188078c947909c6c3fb17f402fa7638ff84b0"
     },
     {
+      "id": "475:36498925234:1:F2",
+      "report": "475:36498925234:1",
+      "fingerprint": "f07fdfbd75e3d36c4ac5ebe90b1badfca2af4dab45b1c91c37cd410ca48e0e83"
+    },
+    {
+      "id": "475:36498925234:1:F3",
+      "report": "475:36498925234:1",
+      "fingerprint": "31ff94d7bf9f55646465bb527afaa5794904a6019e332cdff9cbc426cd42d0fc"
+    },
+    {
+      "id": "475:36498925234:1:F4",
+      "report": "475:36498925234:1",
+      "fingerprint": "b8abb547412b81ed5bd5e7e7e24209401ff4e85d49b2e996cf75e98271a06dcb"
+    },
+    {
+      "id": "475:36498925234:1:F5",
+      "report": "475:36498925234:1",
+      "fingerprint": "5ab82f67d822ec93b6a3229a464b1295b5adc08a29181ae8881c082fbcc26826"
+    },
+    {
       "id": "476:36498929142:1:F1",
       "report": "476:36498929142:1",
       "fingerprint": "d035bb99dddc28d9131b518af148a2acc6a3df984eec89c7a76e7f13dc8ef507"
@@ -161,6 +181,14 @@
       "members": [
         "463:36434310207:1:F2",
         "476:36498929142:1:F1"
+      ]
+    },
+    {
+      "title": "授权 Skill 种子示例使用 .js 相对导入，源码模式种子加载失败",
+      "reason": "跨报告合并。474:F1 的 E20/E21 显示 code-and-seeds.md 的两个示例把可移植声明与 seed-data 模块按 ../../server/sales-resources.js、../../seed-data/permission-sets.js 的 .js 相对路径导入；E22 显示 @nocobase/db 的 importTaskDefinition 只对任务文件自身 URL 调用 __rewriteRelativeImportExtension 后原生 import，不重写其传递导入；E12 记录源码模式下 Cannot find module '.../database/seed-data/it-tickets.js'（ERR_MODULE_NOT_FOUND）导致种子与启动测试失败，E57/E58 记录改为 .ts 说明符后经 tsc emit 重写通过。475:F2 的 E6 为同一示例 .js 说明符的直接证据，E13 为同一 task-loader 的实现，E18 记录 permission-sets.js ERR_MODULE_NOT_FOUND 且 3 个 app-server 测试失败，E19 显示冻结种子改用 ../../seed-data/permission-sets.ts。两者触发条件、期望、实际行为、受影响指引位置（code-and-seeds.md）与修复方向（改用 .ts 或说明源码模式限制）完全一致，属同一错误指引，故合并。",
+      "members": [
+        "474:36498921009:1:F1",
+        "475:36498925234:1:F2"
       ]
     },
     {
@@ -283,13 +311,6 @@
       ]
     },
     {
-      "title": "授权 Skill 的种子示例用 .js 相对导入，源码模式加载种子会失败",
-      "reason": "单独保留。E20/E21 显示 code-and-seeds.md 的两个示例用 ../../server/sales-resources.js、../../seed-data/permission-sets.js 等 .js 相对说明符；E22 显示 @nocobase/db 任务加载器只重写任务文件自身 URL、不重写其传递导入；E12 记录源码模式下 Cannot find module '.../database/seed-data/it-tickets.js'（ERR_MODULE_NOT_FOUND）导致种子整体失败，E57/E58 记录改为 .ts 说明符后通过 tsc emit 重写。根因是该 Skill 示例在种子链上使用 .js 相对说明符造成的误导（错误指引，owner=documentation，major）。它与 460:F2 的“演示数据落点/幂等”缺说明根因不同，也与 461:F4/473:F5 的包布局探测不同；与同报告 474:F2 根因不同且同报告禁止合并，故单列。",
-      "members": [
-        "474:36498921009:1:F1"
-      ]
-    },
-    {
       "title": "db 包中文 README 称 Repository/Select AST 等“当前不可调用”，与 Skill 和运行时不符",
       "reason": "单独保留。E23 显示 packages/@nocobase/db/README.zh-CN.md 的“当前边界”把 Repository、Select AST、Filter Builder、Filter AST、Sort AST 断言为未来提案、当前不可调用，并把验证指南链接到不存在的 docs/zh-CN/agent/verification.md；E24 的 nocobase-db SKILL 以表格规定 Repository 负责关系读取、withPolicy 行范围/写白名单、乐观锁、游标分页与方言编码。根因是该中文 README 的过时/错误说明与当前导出、Skill 用法不一致（错误说明，owner=documentation）。按“缺说明与错误说明区分”，它与 461:F4/473:F5 的包布局缺失说明、473:F1/473:F2 的示例/类型缺失说明均不同；与同报告 474:F1 根因不同且同报告禁止合并，故单列。",
       "members": [
@@ -297,7 +318,28 @@
       ]
     },
     {
-      "title": "授权 scope 与 Repository 集合命名口径不一致，记录范围查询以不透明 500 暴露",
+      "title": "records 选择只接受字符串 id，整数主键定向共享 500",
+      "reason": "单独保留。E1 显示 parseRecordSelection 只接受非空字符串 id 的 records 选择，other 选择被拒绝；E14 显示 @nocobase/db 仓储过滤器在 integer 字段收到字符串值时抛 INVALID_FILTER；E15 的 nocobase-db SKILL 迁移示例用 collection.increments('id') 整数自增主键；E25 的 retro 记录“整数主键定向共享 500”这一已解决 blocker；E129 记录 selection.records([\"2\"]) 的现场。根因是 records 选择入口与仓储过滤器对整数主键的类型/归一化不一致（usability-improvement），修复方向是在指引中明确只接受字符串 id 并建议字符串主键，或框架侧安全转换/返回 4xx。它与 462:F3 的 condition() 运算符类型收窄、477:F1 的 scope 集合命名口径不一致分属不同 API、不同触发条件与不同根因，不猜测合并；同报告禁止合并，故单列。",
+      "members": [
+        "475:36498925234:1:F3"
+      ]
+    },
+    {
+      "title": "应用 provider 未守卫可选插件 token，最小运行时启动崩溃",
+      "reason": "单独保留。E26 显示 ServiceContainer.resolve 对未注册 token 抛 Service \"...\" is not registered，并提供 has 用于可选性判断；E28 的 services-and-jobs 示例在 register 中直接解析 token 并注册单例，未说明可选插件 token 的守卫；E29 显示 LibraryProvider.boot 解析未注册的 authorizationToken 导致 app-server 测试失败；E17 说明任务运行器只允许 idGeneratorToken。根因是应用 provider 示例缺少对插件提供 token 的先 has() 守卫说明（guidance-gap），修复方向是先 container.has() 再 resolve 或明确容错。它与 475:F5 的账号用户名长度校验缺口、475:F3 的整数主键选择缺口根因不同；同报告禁止合并，故单列。",
+      "members": [
+        "475:36498925234:1:F4"
+      ]
+    },
+    {
+      "title": "演示账号用户名需满足认证最小长度，创建阶段无校验提示",
+      "reason": "单独保留。E23 显示认证 SKILL 规定用户名 3–30 个字符且小写存储；E24 显示演示账号种子直接 INSERT user/account 行绕过 Better Auth 校验；E25 的 retro 记录“用户名过短 422”已解决 blocker。根因是账号/种子参考缺少创建期用户名长度校验说明（guidance-gap），修复方向是给出用户名长度约束与创建期校验或受校验的账号创建服务示例。它与 460:F2 的演示数据落点/幂等缺口、475:F4 的 provider token 守卫缺口根因不同；同报告禁止合并，故单列。",
+      "members": [
+        "475:36498925234:1:F5"
+      ]
+    },
+    {
+      "title": "授权 scope 与默认连接 Repository 的集合命名口径不一致，记录范围查询以不透明 500 暴露",
       "reason": "单独保留。E57 显示 scopeAst 把 resolver 结果封装成带 collection 名的 FilterAst，E58 显示 Authorizer 直接以 resourceId（可为限定名 main.materials）生成 scopeAst；E61 显示 @nocobase/db 的 normalizeScalarFilter 要求 ast.collection 必须等于 Repository 绑定的 collection.name（逻辑名 materials），否则抛 INVALID_FILTER；E60 显示 collectionResolver 接受两段式限定名并把 name 回写为限定名；E40 记录按限定名定义 scope 时同事列表与详情返回 HTTP 500，E72 的应用注释印证 Repository 与 scope 必须统一到逻辑名。共同根因是授权侧与数据层对同一集合存在两套命名口径（框架可用性缺陷，owner=plugin），修复方向是让 scope 使用与 Repository 一致的逻辑集合名，或在 db 校验失败时给出可定位的命名不一致错误。它与同报告 477:F3 的“指引缺少命名一致性约束”分属能力/可用性缺陷与文档缺口两种根因，且同报告禁止合并，故单列。",
       "members": [
         "477:36498932902:1:F1"
@@ -315,9 +357,9 @@
     "engine": "pi",
     "model": "deepseek-v4.1-flash",
     "version": "0.86.1",
-    "runId": "36512573332",
+    "runId": "36516900521",
     "attempt": 1,
     "controlSha": "ebb18e53b85c2f75cecd9dd399bd33abf586f048",
-    "completedAt": "2026-09-29T02:27:32.746Z"
+    "completedAt": "2026-09-29T03:25:15.143Z"
   }
 }
