@@ -8,6 +8,18 @@ import { outcomeLabels } from './task-outcome.mjs';
 import { text as markdownText } from './visual-report.mjs';
 import { collectOccurrences, renderFindingsIndex } from '../reports/findings-index.mjs';
 import { createClassificationInput, projectClassification, validateClassification } from '../reports/findings-classification.mjs';
+import { LEDGER as DAILY_LEDGER, INDEX_PAGE as DAILY_INDEX, renderDailyIndex, validateLedger } from '../reports/findings-daily.mjs';
+
+async function dailyIndexAssets(client, sha, reports) {
+  // Preview updates never close a day or change its immutable digest ledger.
+  try {
+    const ledger = validateLedger(sha ? await getJson(client, DAILY_LEDGER, sha) : null);
+    return [[DAILY_INDEX, await renderDailyIndex(ledger, collectOccurrences(reports))]];
+  } catch {
+    // A damaged daily ledger must not block the original report publication.
+    return [];
+  }
+}
 
 export const BRANCH = 'gh-pages';
 const ROOT = 'reports';
@@ -154,6 +166,7 @@ async function findingsIndexAssets(client, registry, sha, current) {
         }),
       ],
       [FINDINGS_INPUT, JSON.stringify(input, null, 2)],
+      ...await dailyIndexAssets(client, sha, reports),
     ],
   };
 }
@@ -207,6 +220,7 @@ export async function archiveFindingsClassification(client, classification) {
       [FINDINGS_INDEX, html],
       [FINDINGS_INPUT, JSON.stringify(snapshot.input, null, 2)],
       [FINDINGS_CLASSIFICATION, JSON.stringify(classification, null, 2)],
+      ...await dailyIndexAssets(client, snapshot.sha, snapshot.reports),
     ];
     try {
       const commitSha = await commitFindings(
@@ -252,6 +266,7 @@ export async function resetFindingsIndex(
       ],
       [FINDINGS_INPUT, JSON.stringify(input, null, 2)],
       [FINDINGS_BASELINE, JSON.stringify(baseline, null, 2)],
+      ...await dailyIndexAssets(client, sha, reports),
     ];
     // Earlier groups describe findings that are no longer in scope.
     const classified = await client.request(

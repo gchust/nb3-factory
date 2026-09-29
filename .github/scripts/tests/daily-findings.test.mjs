@@ -603,6 +603,10 @@ test('a scheduled close archives to gh-pages, sends the digest once and forgets 
   client.conflictOnce = true;
   const now = new Date('2026-09-28T01:07:00Z');
   const archived = await archiveDay(client, { now, rules });
+  assert.match(
+    client.file('reports/findings/daily/index.html'),
+    /已归档 3 条 · 待归档 1 条/,
+  );
   assert.deepEqual(
     {
       day: archived.day,
@@ -721,6 +725,50 @@ test('day and index pages escape finding text and link each report', async () =>
   });
   assert.match(index, /href="2026-09-27.html"/);
   assert.doesNotMatch(index, /2026-09-26.html/);
+});
+
+test('daily preview shows current and late findings without mutating closed days', async () => {
+  const archived = report(101, '2026-09-27T02:00:00.000Z');
+  const plan = planDailyArchive({
+    occurrences: occurrencesOf([archived]),
+    day: '2026-09-27',
+    now: new Date('2026-09-28T01:07:00Z'),
+    notify: false,
+  });
+  const before = JSON.stringify(plan.ledger);
+  const occurrences = occurrencesOf([
+    archived,
+    report(102, '2026-09-27T03:00:00.000Z'),
+    report(103, '2026-09-27T16:30:00.000Z', (findings) => {
+      findings[1].title = '<script>unsafe</script>';
+    }),
+  ]);
+  const html = await renderDailyIndex(plan.ledger, {
+    occurrences: [...occurrences, ...occurrences],
+  });
+  assert.match(html, /已归档 1 条 · 待归档 2 条/);
+  assert.match(html, /2026-09-28 · 1 条 · 待归档/);
+  assert.match(html, /2026-09-27 · 1 条 · 将补录到后续归档日/);
+  assert.match(html, /04:17/);
+  assert.match(html, /&lt;script&gt;unsafe/);
+  assert.doesNotMatch(html, /<script>/);
+  assert.doesNotMatch(html, /issues\/101\/runs/);
+  assert.match(
+    html,
+    /issues\/103\/runs\/9103\/attempt-1\/index.html#review-finding-F2/,
+  );
+  assert.equal(JSON.stringify(plan.ledger), before);
+});
+
+test('daily preview exists before the first archive and explains empty states', async () => {
+  const html = await renderDailyIndex(null, {
+    occurrences: occurrencesOf([report(101, '2026-09-28T02:00:00.000Z')]),
+  });
+  assert.match(html, /尚未完成首次日归档/);
+  assert.match(html, /已归档 0 条 · 待归档 1 条/);
+  assert.match(html, /首次日归档会补建历史日期/);
+  const empty = await renderDailyIndex(null);
+  assert.match(empty, /没有待归档发现/);
 });
 
 test('occurrences carry the stable subjects their own evidence cites', async () => {

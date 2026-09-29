@@ -12,7 +12,7 @@ Each finding is placed in a TestManage3 feature point by the subject rules in `.
 
 Pages:
 
-- `reports/findings/daily/index.html` lists the archived days with their counts.
+- `reports/findings/daily/index.html` lists archived days and a separate pending preview grouped by run-end date in Asia/Shanghai. Report publication, classification publication, findings reset and daily closing refresh this preview. It exists even before the first daily close, links directly to each original finding, and explains the 04:17 schedule and possible Actions delays. Already archived keys are excluded; late findings are labelled for a future close. The preview does not modify closed days, queue messages or imply a digest was sent.
 - `reports/findings/daily/<date>.html` lists one day by feature point, linking each finding to its report.
 - `reports/findings/daily/<date>.json` and `index.json` hold the archived entries and the record of archived keys and unsent digests.
 

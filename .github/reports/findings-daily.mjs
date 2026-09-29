@@ -354,16 +354,40 @@ ${sections || '<section class="fd-section"><p class="card report-empty">这一�
   return page(`${document.date} 框架问题`, body);
 }
 
-export async function renderDailyIndex(ledger) {
-  const days = ledger.days.filter((day) => day.count > 0);
+export async function renderDailyIndex(ledger, { occurrences = [] } = {}) {
+  const days = (ledger?.days ?? []).filter((day) => day.count > 0);
+  const known = new Set(ledger?.keys ?? []);
+  const pending = new Map();
+  const seen = new Set();
+  for (const item of occurrences) {
+    const key = entryKey(item);
+    if (known.has(key) || seen.has(key)) continue;
+    seen.add(key);
+    const date = dayOf(item.endedAt);
+    pending.set(date, [...(pending.get(date) ?? []), item]);
+  }
+  const pendingRows = [...pending]
+    .sort(([a], [b]) => b.localeCompare(a))
+    .map(([date, items]) => {
+      const late = ledger && date <= ledger.closedThrough;
+      const links = items
+        .map(
+          (item) =>
+            `<li><a class="text-link" href="../../issues/${item.issue}/runs/${item.runId}/attempt-${item.attempt}/index.html#review-finding-${escape(item.finding.id)}">${escape(item.finding.title)}</a> <span class="fd-note">#${item.issue} · ${escape(item.taskTitle)}</span></li>`,
+        )
+        .join('');
+      return `<details class="card fd-body" open><summary>${escape(date)} · ${items.length} 条${late ? ' · 将补录到后续归档日' : ' · 待归档'}</summary><ul>${links}</ul></details>`;
+    })
+    .join('');
   const rows = days
     .map(
       (day) =>
         `<a class="card fd-day" href="${escape(day.date)}.html"><strong class="mono">${escape(day.date)}</strong><span class="fb-scope">${escape(severityLine(day.severities ?? {}))}${day.late ? ` · 补录 ${day.late} 条` : ''}</span><span class="fd-count">${day.count} 条</span></a>`,
     )
     .join('');
-  const body = `<main class="fd-main"><header class="fd-head"><div class="eyebrow">NocoBase3 框架反馈 · <a class="text-link" href="../">问题汇总 →</a> · <a class="text-link" href="../../index.html">全部报告 →</a></div><h1>框架问题 · 按日期归档</h1><p class="fb-scope">每天（${TIME_ZONE}）收录此前尚未归档的框架发现，截至 ${escape(ledger.closedThrough)}。自 ${escape(ledger.startedAt.slice(0, 10))} 起逐日归档，更早的发现按各自运行的结束日期补建。</p></header>
-<section class="fd-section"><div class="fd-list">${rows || '<p class="card report-empty">暂无归档的框架发现。</p>'}</div></section>
+  const body = `<main class="fd-main"><header class="fd-head"><div class="eyebrow">NocoBase3 框架反馈 · <a class="text-link" href="../">问题汇总 →</a> · <a class="text-link" href="../../index.html">全部报告 →</a></div><h1>框架问题 · 按日期归档</h1><p class="fb-scope">${ledger ? `已归档至 ${escape(ledger.closedThrough)}；自 ${escape(dayOf(ledger.startedAt))} 起逐日归档。` : '尚未完成首次日归档。'}已归档 ${days.reduce((sum, day) => sum + day.count, 0)} 条 · 待归档 ${seen.size} 条。</p><p class="fb-scope">按运行结束日期（${TIME_ZONE}，UTC+8）分组。每天计划于 04:17 归档前一天，GitHub Actions 可能延迟；当天发现需等次日归档。待归档清单随报告发布更新，可直接打开原报告，不代表已发送飞书日报。</p></header>
+<section class="fd-section"><h2>待归档 <span>${seen.size} 条</span></h2><div class="fd-list">${pendingRows || '<p class="card report-empty">当前已发布报告中没有待归档发现；这不代表正在运行的任务没有问题。可在问题汇总查看已发布发现。</p>'}</div></section>
+<section class="fd-section"><h2>已归档日期</h2><div class="fd-list">${rows || '<p class="card report-empty">尚无已归档日期。首次日归档会补建历史日期；最新发现见上方待归档清单。</p>'}</div></section>
 <footer class="report-footer">开启飞书日报时，每一天的清单与当天发送的日报一致；没有新发现的日子不列出。</footer></main>`;
   return page('框架问题 · 按日期归档', body);
 }

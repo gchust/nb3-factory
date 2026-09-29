@@ -172,12 +172,15 @@ test('rubric upgrade preserves exact v1 bytes, permits v2 partial, and rejects a
  assert.equal((await archiveReport(client,next,newHtml)).preserved,true);
 });
 test('archive writes the cross-report findings index from the latest report of each Issue', async () => {
- const c=fakeClient();const first=input(),second=input({issue:147,runId:101,start:2000});
+ const c=fakeClient();const first=reviewedInput(),second=reviewedInput({issue:147,runId:101,start:2000});
  for(const r of [first,second]) assert.equal((await archiveReport(c,r,htmlOf(r))).findingsIndex,'updated');
  const files=c.files();
  assert.match(files.get('reports/findings/index.html'),/框架问题汇总/);
  assert.match(files.get('reports/findings/index.html'),/来自 2 份已发布报告/);
  assert.match(files.get('reports/index.html'),/href="findings\/"/);
+ assert.match(files.get('reports/findings/daily/index.html'),/尚未完成首次日归档/);
+ assert.match(files.get('reports/findings/daily/index.html'),/待归档 2 条/);
+ assert.equal(files.has('reports/findings/daily/index.json'),false);
 });
 test('a findings index failure never blocks report publication', async () => {
  const c=fakeClient();const first=input(),second=input({issue:147,runId:101,start:2000});
@@ -360,6 +363,7 @@ test('a findings reset counts only later runs and keeps every archived report', 
     runId: '77',
   });
   assert.equal(files.has('reports/findings/classification.json'), false);
+  assert.match(files.get('reports/findings/daily/index.html'), /待归档 0 条/);
   assert.match(files.get('reports/findings/index.html'), /来自 0 份已发布报告/);
   assert.match(files.get('reports/findings/index.html'), /此前的 2 份报告/);
   assert.deepEqual(

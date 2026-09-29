@@ -79,7 +79,7 @@ export async function archiveDay(
     }
     files.push(
       [LEDGER, JSON.stringify(plan.ledger, null, 2)],
-      [INDEX_PAGE, await renderDailyIndex(plan.ledger)],
+      [INDEX_PAGE, await renderDailyIndex(plan.ledger, { occurrences })],
     );
     try {
       const commitSha = await commitFindings(
