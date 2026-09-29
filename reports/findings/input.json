@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "inputHash": "7af343d8d64dee0e0b12ebebf89f8676f9bcb49b6c6f24583d64852f6abb2b19",
+  "inputHash": "dab6ad1fc265dbe6c8644d780354428e34537ab7ff6757b506fc67f4163af3a9",
   "findings": [
     {
       "id": "460:36434284393:1:F2",
@@ -2132,6 +2132,150 @@
         }
       ],
       "fingerprint": "6ef074db9fe80a81f401b6a1e43188078c947909c6c3fb17f402fa7638ff84b0"
+    },
+    {
+      "id": "476:36498929142:1:F1",
+      "report": "476:36498929142:1",
+      "issue": 476,
+      "taskTitle": "项目资料与私有附件",
+      "appVersion": "1.0.0-beta.50",
+      "appTemplate": "@nocobase/app-template-default",
+      "finding": {
+        "id": "F1",
+        "kind": "improvement",
+        "owner": "plugin",
+        "severity": "minor",
+        "confidence": "confirmed",
+        "status": "open",
+        "title": "Registry 图片预览缺少失败提示，损坏 PNG 只显示破图标",
+        "detail": "registry/component-ui 的 file-preview-content.tsx 在 image 分支只返回 <img src alt>，没有 onError 或失败态；其他格式（PDF fetch 失败、Office/OOXML）都有回退或错误上报。应用必须复制并修改安装源码新增 ImagePreview 才有 B06 的明确提示。",
+        "impact": "照指引直接复用预览组件时，损坏或伪装的图片在预览对话框里表现为无说明的破图标或空白，用户以为页面出错；要达到验收需要在应用侧 fork 安装源码。",
+        "suggestedChange": "在 Registry 的 image 分支内置 ImagePreview：onError（或 url 缺失）时切到 DownloadFallback 并给出可本地化失败文案，与 PDF/Office 分支的错误模型一致。",
+        "evidence": [
+          "E9",
+          "E38",
+          "E45"
+        ],
+        "diagnosis": {
+          "category": "usability-improvement",
+          "trigger": "在 FilePreviewDialog 中打开 content-type 为 image/png 但字节不可解码（如 28 字节非 PNG）的文件。",
+          "expected": "预览区给出明确的图片失败文案并保留下载入口，与 PDF/Office 分支一致。",
+          "actual": "registry 的 image 分支只渲染裸 <img>，浏览器显示破图标，无文案、无回退。",
+          "workaround": "应用把 Registry 源码复制进 client/extensions 并新增 ImagePreview+onError→DownloadFallback，才满足 B06。",
+          "acceptance": "直接复用 Registry 预览组件打开损坏 PNG，对话框显示失败文案与下载按钮，且不出现无说明破图标。"
+        }
+      },
+      "targets": [
+        "@nocobase/app-plugin-file"
+      ],
+      "paths": [
+        "packages/@nocobase/app-plugin-file/registry/component-ui/components/previewers/file-preview-content.tsx"
+      ],
+      "evidence": [
+        {
+          "id": "E9",
+          "kind": "code",
+          "path": "packages/@nocobase/app-plugin-file/registry/component-ui/components/previewers/file-preview-content.tsx",
+          "observation": "格式分支中 image 情况直接返回 <img src alt>，没有 onError 或失败回退，是 F1 的直接证据。",
+          "lines": [
+            71,
+            79
+          ],
+          "excerpt": "  switch (kind) {\n    case 'image':\n      return (\n        <img\n          src={url}\n          alt={file.filename}\n          className='max-h-[70vh] max-w-full object-contain'\n        />\n      );",
+          "sha256": "f30abbadc57a0f0ed28cdb68d4ced7bba9a6e3a4c3d59d3b6fc49f89d9497144"
+        },
+        {
+          "id": "E38",
+          "kind": "code",
+          "path": "app/client/extensions/nocobase-file-component-ui/components/previewers/file-preview-content.tsx",
+          "observation": "应用修改后的安装源码新增 ImagePreview：失败或 url 缺失时显示 files.imageFailed 文案与下载回退，png 分支改用它。",
+          "lines": [
+            96,
+            131
+          ],
+          "excerpt": "/**\n * A PNG is shown by the browser itself, so the only failure the dialog can see\n * is the image event: a truncated or mislabelled file leaves a broken icon with\n * no explanation when this is a bare `<img>`. Naming the failure — and offering\n * the bytes — is the difference between a corrupt upload being understood and\n * looking like a page defect.\n */\nfunction ImagePreview(inputProps: {\n  readonly file: FileRecord;\n  readonly url?: string;\n  readonly onDownload?: () => void;\n}): ReactElement {\n  const { t } = useTranslation('@nocobase/app-plugin-file');\n  const { file, url, onDownload } = inputProps;\n  const [failed, setFailed] = useState(false);\n  if (failed || !url) {\n    return (\n      <DownloadFallback\n        file={file}\n        message={t('files.imageFailed', {\n          defaultValue:\n            'This image could not be displayed. It may be corrupted or in an unsupported format.',\n        })}\n        onDownload={onDownload}\n      />\n    );\n  }\n  return (\n    <img\n      src={url}\n      alt={file.filename}\n      className='max-h-[70vh] max-w-full object-contain'\n      onError={() => setFailed(true)}\n    />\n  );\n}",
+          "sha256": "48d522eb42122a08c78f0772989c190c58c255a1535f1114beb535fa3b6f4c37"
+        },
+        {
+          "id": "E45",
+          "kind": "qa",
+          "path": "artifacts/verify-1/browser-acceptance/report.json",
+          "observation": "B06 记录损坏 PNG 预览显示 'This image could not be displayed...' 并提供下载与关闭。",
+          "lines": [
+            122,
+            142
+          ],
+          "excerpt": "      \"criterion\": \"使用损坏 PNG，上传或预览实际发现问题时给出明确失败提示；上传已拒绝时不必继续预览。\",\n      \"status\": \"passed\",\n      \"actions\": [\n        \"以甲登录，新建资料 '损坏文件-验收E'，上传损坏 PNG corrupt.png（28 字节，内容非 PNG）后保存\",\n        \"打开详情并点击 Preview: corrupt.png\",\n        \"读取预览对话框文本，确认给出明确失败提示\"\n      ],\n      \"evidence\": [\n        \"b06-corrupt-upload.png 显示损坏 PNG 已选入表单\",\n        \"b06-corrupt-preview.png 显示预览明确提示 'This image could not be displayed. It may be corrupted or in an unsupported format.'\",\n        \"预览同时提供 Download file 与 Close，未把仅显示文件名当成预览成功\"\n      ],\n      \"screenshots\": [\n        \"b06-corrupt-upload.png\",\n        \"b06-corrupt-preview.png\"\n      ],\n      \"recordedAt\": 1790646444816\n    }\n  ],\n  \"failures\": []\n}",
+          "sha256": "df2a14bc78f8278363fa6fb5a18727471d527ccd77fe221e3e2d1a1db530085c"
+        }
+      ],
+      "fingerprint": "d035bb99dddc28d9131b518af148a2acc6a3df984eec89c7a76e7f13dc8ef507"
+    },
+    {
+      "id": "476:36498929142:1:F2",
+      "report": "476:36498929142:1",
+      "issue": 476,
+      "taskTitle": "项目资料与私有附件",
+      "appVersion": "1.0.0-beta.50",
+      "appTemplate": "@nocobase/app-template-default",
+      "finding": {
+        "id": "F2",
+        "kind": "improvement",
+        "owner": "plugin",
+        "severity": "minor",
+        "confidence": "suspected",
+        "status": "open",
+        "title": "OOXML 预览加载没有超时/中止预算，可能长期停在 Loading",
+        "detail": "registry office-open-xml-preview.tsx 的加载 effect 只在卸载/切换时 abort+destroy，并在 commonOptions.onError 上报错误；与 Office Online 分支的 OFFICE_PREVIEW_TIMEOUT_MS=15000 不同，OOXML 分支没有加载超时。若第三方 viewer.load 永不 settle 且不触发 onError，就会一直显示 Loading preview。",
+        "impact": "网络或第三方解析器挂起时，用户看不到失败也无法下载回退。本次 B02 的“一直 Loading”由工厂 worker 兼容脚本未加载导致，不能据此断言该缺陷必现，故标为 suspected。",
+        "suggestedChange": "为该 effect 增加与 Office Online 一致的超时（或对 viewer.load 施加 reject/timeout），超时后 destroy viewer 并显示失败+下载回退。",
+        "evidence": [
+          "E10",
+          "E11"
+        ],
+        "diagnosis": {
+          "category": "usability-improvement",
+          "trigger": "安装 OOXML viewer 后 viewer.load/createOfficeOpenXmlViewer 长时间不 resolve 且不触发 onError（本次未在冻结材料中复现）。",
+          "expected": "有加载超时/中止预算，超时进入失败回退并提供下载。",
+          "actual": "effect 仅在卸载或切换时 abort+destroy，没有超时；OFFICE_PREVIEW_TIMEOUT_MS 只用于 Office Online iframe 分支。",
+          "workaround": "未记录应用侧为此改动；本次 B02 通过依赖工厂 worker 兼容脚本。",
+          "acceptance": "让 viewer.load 永不 settle，若干秒后预览显示失败回退与下载按钮，而不是持续 Loading preview。"
+        }
+      },
+      "targets": [
+        "@nocobase/app-plugin-file"
+      ],
+      "paths": [
+        "packages/@nocobase/app-plugin-file/registry/component-ui/components/previewers/file-preview-content.tsx",
+        "packages/@nocobase/app-plugin-file/registry/component-ui/components/previewers/office-open-xml-preview.tsx"
+      ],
+      "evidence": [
+        {
+          "id": "E10",
+          "kind": "code",
+          "path": "packages/@nocobase/app-plugin-file/registry/component-ui/components/previewers/file-preview-content.tsx",
+          "observation": "Office Online 分支使用 OFFICE_PREVIEW_TIMEOUT_MS=15000 的定时器在超时后报告失败；该超时只覆盖此分支。",
+          "lines": [
+            144,
+            158
+          ],
+          "excerpt": "  useEffect(() => {\n    const iframe = iframeRef.current;\n    if (!iframe || !embedUrl) return undefined;\n    const handleError = () => setFailed(true);\n    iframe.addEventListener('error', handleError);\n    return () => iframe.removeEventListener('error', handleError);\n  }, [embedUrl]);\n  useEffect(() => {\n    if (!embedUrl || loaded) return undefined;\n    const timeout = window.setTimeout(\n      () => setFailed(true),\n      OFFICE_PREVIEW_TIMEOUT_MS,\n    );\n    return () => window.clearTimeout(timeout);\n  }, [embedUrl, loaded]);",
+          "sha256": "f30abbadc57a0f0ed28cdb68d4ced7bba9a6e3a4c3d59d3b6fc49f89d9497144"
+        },
+        {
+          "id": "E11",
+          "kind": "code",
+          "path": "packages/@nocobase/app-plugin-file/registry/component-ui/components/previewers/office-open-xml-preview.tsx",
+          "observation": "OOXML 加载 effect 绑定 AbortController、将 commonOptions.onError 接到 reportViewerError，并在卸载时 destroy；没有加载超时。",
+          "lines": [
+            30,
+            75
+          ],
+          "excerpt": "  const { t } = useTranslation('@nocobase/app-plugin-file');\n  const hostRef = useRef<HTMLDivElement>(null);\n  const [loaded, setLoaded] = useState(false);\n  const [viewerError, setViewerError] = useState<string>();\n\n  useEffect(() => {\n    const host = hostRef.current;\n    if (!host || !url || error) return undefined;\n\n    let active = true;\n    let viewer: OfficeOpenXmlViewer | undefined;\n    const controller = new AbortController();\n    const reportViewerError = (cause: unknown): void => {\n      if (!active || isAbortError(cause)) return;\n      const failedViewer = viewer;\n      viewer = undefined;\n      failedViewer?.destroy();\n      setViewerError(\n        cause instanceof OfficeOpenXmlRequestError\n          ? cause.message\n          : t('files.ooxmlLoadFailed', {\n              defaultValue: 'Unable to render this Office Open XML file.',\n            }),\n      );\n    };\n\n    void (async () => {\n      const data = await fetchOfficeOpenXml(url, controller.signal, t);\n      if (!active) return;\n      const createdViewer = await createOfficeOpenXmlViewer(\n        format,\n        host,\n        reportViewerError,\n      );\n      if (!active) {\n        createdViewer.destroy();\n        return;\n      }\n      viewer = createdViewer;\n      await viewer.load(data);\n      if (active) setLoaded(true);\n    })().catch(reportViewerError);\n\n    return () => {\n      active = false;\n      controller.abort();",
+          "sha256": "b32b48615f0400191ba28d427f9070fa69c74282829aba2087746563350d28c8"
+        }
+      ],
+      "fingerprint": "183237d05ffd205880b0198c6aac1a9055f70531dcaa34ffe43a0105e1276c03"
     }
   ]
 }
