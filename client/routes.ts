@@ -1,4 +1,4 @@
-import { Home } from 'lucide-react';
+import { Contact, Home } from 'lucide-react';
 import {
   defineAppRoutes,
   defineSettingsRoutes,
@@ -43,6 +43,30 @@ const appRoutes: AppClientRouteContribution = defineAppRoutes([
     componentLoader: () => import('./pages/auth/reset-password.js'),
     name: 'reset-password',
     path: '/reset-password',
+  },
+  {
+    // Every signed-in user reaches the address book. `authz: 'skip'` keeps it out of page authorization, because the
+    // issue puts permission differentiation out of scope.
+    authz: 'skip',
+    auth: 'required',
+    componentLoader: () => import('./pages/contacts/index.js'),
+    name: 'contacts',
+    navigation: { title: 'navigation.contacts', icon: Contact },
+    path: '/contacts',
+    // Both dialogs are children of the list, so they mount over it and refresh it through <Outlet context>. They
+    // inherit `auth: 'required'` and `authz: 'skip'` from this page, and register no page grant of their own.
+    children: [
+      {
+        componentLoader: () => import('./pages/contacts/new.js'),
+        name: 'contacts-new',
+        path: 'new',
+      },
+      {
+        componentLoader: () => import('./pages/contacts/edit.js'),
+        name: 'contacts-edit',
+        path: ':contactId/edit',
+      },
+    ],
   },
 ]);
 
