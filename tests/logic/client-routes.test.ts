@@ -94,6 +94,16 @@ describe('app client routes', () => {
     // The landing page opted out of page authorization, so it is reachable by every signed-in user.
     expect(pageAuthorizations(resolved.routes)).toEqual([
       { name: 'home', authorizedAs: null },
+      { name: 'customers', authorizedAs: null },
+      { name: 'customer-new', authorizedAs: null },
+      { name: 'customer-detail', authorizedAs: null },
+      { name: 'customer-edit', authorizedAs: null },
+      { name: 'contacts', authorizedAs: null },
+      { name: 'contact-new', authorizedAs: null },
+      { name: 'contact-edit', authorizedAs: null },
+      { name: 'opportunities', authorizedAs: null },
+      { name: 'opportunity-new', authorizedAs: null },
+      { name: 'opportunity-edit', authorizedAs: null },
     ]);
   });
 });
