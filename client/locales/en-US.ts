@@ -96,6 +96,118 @@ const enUS = {
       'Describe what you need to your AI Agent, then build pages, data models, and business workflows.',
   },
 
+  itTickets: {
+    title: 'IT repairs',
+    description:
+      'Report a computer or account problem and follow how it is being handled.',
+    columns: {
+      title: 'Title',
+      category: 'Category',
+      status: 'Status',
+      owner: 'Submitted by',
+      handler: 'Handled by',
+      createdAt: 'Submitted at',
+    },
+    status: {
+      all: 'All',
+      pending: 'Pending',
+      in_progress: 'In progress',
+      completed: 'Completed',
+    },
+    category: {
+      computer: 'Computer',
+      account: 'Account',
+      other: 'Other',
+    },
+    fields: {
+      title: 'Title',
+      category: 'Category',
+      description: 'Problem description',
+      status: 'Status',
+      owner: 'Submitted by',
+      handler: 'Handled by',
+      createdAt: 'Submitted at',
+      startedAt: 'Started at',
+      completedAt: 'Completed at',
+      resolution: 'Handling note',
+    },
+    search: {
+      label: 'Search tickets',
+      placeholder: 'Search by title',
+    },
+    empty: {
+      title: 'No tickets yet',
+      description: 'Tickets you submit appear here.',
+      noResults: 'No ticket matches the current filter.',
+    },
+    create: {
+      action: 'New ticket',
+      title: 'Report a problem',
+      description: 'Describe the problem so the IT handler can act on it.',
+      titlePlaceholder: 'A short summary of the problem',
+      categoryPlaceholder: 'Choose a category',
+      descriptionPlaceholder:
+        'What happened, and what you were doing when it happened',
+      descriptionHint:
+        'The more precise the description, the faster the problem can be handled.',
+      submit: 'Submit',
+      success: 'Your ticket has been submitted.',
+    },
+    start: {
+      action: 'Start handling',
+      success: 'You are now handling this ticket.',
+    },
+    complete: {
+      action: 'Complete',
+      title: 'Complete this ticket',
+      description:
+        'Record how the problem was handled. A completed ticket can no longer be changed.',
+      resolutionPlaceholder: 'What was done to resolve the problem',
+      resolutionHint: 'Employees can read this note in the ticket detail.',
+      submit: 'Complete',
+      success: 'The ticket has been completed.',
+    },
+    detail: {
+      title: 'Ticket detail',
+    },
+    validation: {
+      titleRequired: 'Enter a title.',
+      categoryRequired: 'Choose a category.',
+      descriptionRequired: 'Describe the problem.',
+      resolutionRequired: 'Enter a handling note.',
+    },
+    error: {
+      forbidden: 'You do not have permission for this action.',
+      notFound: 'This ticket does not exist, or you may not view it.',
+      requestFailed: 'The request failed. Please try again.',
+    },
+    collection: {
+      title: 'IT tickets',
+    },
+    resource: {
+      title: 'IT repairs',
+    },
+    action: {
+      view: 'View tickets',
+      create: 'Submit a ticket',
+      start: 'Start handling',
+      complete: 'Complete a ticket',
+    },
+    permission: {
+      read: 'View tickets',
+      create: 'Submit a ticket',
+      start: 'Start handling',
+      complete: 'Complete a ticket',
+    },
+    permissionSet: {
+      employee: 'IT employee',
+      handler: 'IT handler',
+    },
+    section: {
+      title: 'IT repairs',
+    },
+  },
+
   appearance: {
     title: 'Appearance',
     mode: 'Color mode',
@@ -130,6 +242,7 @@ const enUS = {
   },
   navigation: {
     home: 'Home',
+    itTickets: 'IT repairs',
     open: 'Open navigation',
     close: 'Close navigation',
     expand: 'Expand navigation',

@@ -89,6 +89,114 @@ const zhCN: AppResource = {
     description: '向 AI 助手描述你的需求，逐步构建页面、数据模型和业务流程。',
   },
 
+  itTickets: {
+    title: 'IT 报修',
+    description: '提交电脑或账号问题，并跟踪处理进展。',
+    columns: {
+      title: '标题',
+      category: '类别',
+      status: '状态',
+      owner: '提交人',
+      handler: '处理人',
+      createdAt: '提交时间',
+    },
+    status: {
+      all: '全部',
+      pending: '待处理',
+      in_progress: '处理中',
+      completed: '已完成',
+    },
+    category: {
+      computer: '电脑',
+      account: '账号',
+      other: '其他',
+    },
+    fields: {
+      title: '标题',
+      category: '类别',
+      description: '问题描述',
+      status: '状态',
+      owner: '提交人',
+      handler: '处理人',
+      createdAt: '提交时间',
+      startedAt: '开始处理时间',
+      completedAt: '完成时间',
+      resolution: '处理说明',
+    },
+    search: {
+      label: '搜索工单',
+      placeholder: '按标题搜索',
+    },
+    empty: {
+      title: '暂无工单',
+      description: '你提交的工单会显示在这里。',
+      noResults: '没有符合当前筛选条件的工单。',
+    },
+    create: {
+      action: '新建工单',
+      title: '提交报修',
+      description: '请描述问题，以便 IT 处理人安排处理。',
+      titlePlaceholder: '简要概括问题',
+      categoryPlaceholder: '选择类别',
+      descriptionPlaceholder: '发生了什么，当时你在做什么',
+      descriptionHint: '描述越具体，问题处理得越快。',
+      submit: '提交',
+      success: '工单已提交。',
+    },
+    start: {
+      action: '开始处理',
+      success: '你已开始处理该工单。',
+    },
+    complete: {
+      action: '完成处理',
+      title: '完成处理',
+      description: '请填写处理说明。完成后工单不可再修改。',
+      resolutionPlaceholder: '你做了哪些处理',
+      resolutionHint: '员工可以在工单详情中看到这段说明。',
+      submit: '完成',
+      success: '工单已完成。',
+    },
+    detail: {
+      title: '工单详情',
+    },
+    validation: {
+      titleRequired: '请填写标题。',
+      categoryRequired: '请选择类别。',
+      descriptionRequired: '请描述问题。',
+      resolutionRequired: '请填写处理说明。',
+    },
+    error: {
+      forbidden: '你没有执行该操作的权限。',
+      notFound: '该工单不存在，或你无权查看。',
+      requestFailed: '请求失败，请重试。',
+    },
+    collection: {
+      title: 'IT 工单',
+    },
+    resource: {
+      title: 'IT 报修',
+    },
+    action: {
+      view: '查看工单',
+      create: '提交工单',
+      start: '开始处理',
+      complete: '完成工单',
+    },
+    permission: {
+      read: '查看工单',
+      create: '提交工单',
+      start: '开始处理',
+      complete: '完成工单',
+    },
+    permissionSet: {
+      employee: 'IT 员工',
+      handler: 'IT 处理人',
+    },
+    section: {
+      title: 'IT 报修',
+    },
+  },
+
   appearance: {
     title: '外观',
     mode: '颜色模式',
@@ -121,6 +229,7 @@ const zhCN: AppResource = {
   },
   navigation: {
     home: '首页',
+    itTickets: 'IT 报修',
     open: '打开导航',
     close: '关闭导航',
     expand: '展开导航',
