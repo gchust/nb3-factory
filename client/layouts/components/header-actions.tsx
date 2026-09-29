@@ -10,6 +10,7 @@ import {
 } from '@/components/ui/tooltip';
 
 import { ThemeSettings } from '../../theme/index.js';
+import { MessageBell } from './message-bell.js';
 import { UserMenu } from './user-menu.js';
 
 const ACTION_LINK_CLASS =
@@ -60,6 +61,7 @@ export function HeaderActions({
             </TooltipContent>
           </Tooltip>
         ) : null}
+        <MessageBell />
         <ThemeSettings />
         <UserMenu />
       </div>
