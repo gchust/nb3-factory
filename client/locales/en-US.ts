@@ -130,12 +130,83 @@ const enUS = {
   },
   navigation: {
     home: 'Home',
+    contacts: 'Address book',
     open: 'Open navigation',
     close: 'Close navigation',
     expand: 'Expand navigation',
     collapse: 'Collapse navigation',
     label: 'Application navigation',
     breadcrumb: 'Breadcrumb',
+  },
+  contacts: {
+    title: 'Address book',
+    description: 'Keep everyone in the team reachable in one place.',
+    create: {
+      title: 'New contact',
+      action: 'New contact',
+      success: 'Contact {{name}} created.',
+    },
+    edit: {
+      title: 'Edit contact',
+      action: 'Save',
+      success: 'Contact {{name}} updated.',
+    },
+    search: {
+      placeholder: 'Search by name',
+      label: 'Search contacts by name',
+    },
+    filters: {
+      department: 'Department',
+      allDepartments: 'All departments',
+      clear: 'Clear filters',
+    },
+    columns: {
+      name: 'Name',
+      department: 'Department',
+      phone: 'Phone',
+      actions: 'Actions',
+    },
+    department: {
+      rd: 'R&D',
+      sales: 'Sales',
+      admin: 'Administration',
+    },
+    empty: {
+      title: 'No contacts yet',
+      description: 'Add the first contact to start building the address book.',
+      noResults: 'No contacts match the current filters.',
+    },
+    error: {
+      title: 'Unable to load contacts',
+      requestFailed: 'Something went wrong. Please try again.',
+      invalid: 'Some details are not valid. Check the form and try again.',
+      notFound: 'This contact no longer exists.',
+    },
+    actions: {
+      more: 'Actions for {{name}}',
+      edit: 'Edit',
+      delete: 'Delete',
+    },
+    form: {
+      name: 'Name',
+      nameRequired: 'Enter a name.',
+      nameTooLong: 'The name must be at most {{max}} characters.',
+      department: 'Department',
+      departmentRequired: 'Choose a department.',
+      phone: 'Phone',
+      phoneInvalid: 'Enter an 11-digit phone number.',
+      notes: 'Notes',
+      notesTooLong: 'The notes must be at most {{max}} characters.',
+      saving: 'Saving…',
+    },
+    delete: {
+      title: 'Delete {{name}}?',
+      description:
+        'The contact will be removed permanently. This cannot be undone.',
+      confirm: 'Delete',
+      success: 'Contact {{name}} deleted.',
+      notFound: 'Contact {{name}} was already deleted.',
+    },
   },
   dataTable: {
     noResults: 'No results.',

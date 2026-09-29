@@ -91,9 +91,13 @@ describe('app client routes', () => {
     // that requires sign-in adds an entry here, because that is a new grant somebody has to be given.
     const resolved = resolveRoutes();
 
-    // The landing page opted out of page authorization, so it is reachable by every signed-in user.
+    // The landing page and the address book opted out of page authorization, so a signed-in user reaches both. The
+    // create and edit dialogs are pages too, and they inherit the address book's `skip`, so they register no grant.
     expect(pageAuthorizations(resolved.routes)).toEqual([
       { name: 'home', authorizedAs: null },
+      { name: 'contacts', authorizedAs: null },
+      { name: 'contacts-new', authorizedAs: null },
+      { name: 'contacts-edit', authorizedAs: null },
     ]);
   });
 });
