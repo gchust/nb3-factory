@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "inputHash": "dab6ad1fc265dbe6c8644d780354428e34537ab7ff6757b506fc67f4163af3a9",
+  "inputHash": "7f9ddf9fbbd0bb800acc190eebed26e039b02170f1e5802d0ed53e531632c8b2",
   "sources": [
     {
       "id": "460:36434284393:1:F2",
@@ -126,6 +126,16 @@
       "id": "476:36498929142:1:F2",
       "report": "476:36498929142:1",
       "fingerprint": "183237d05ffd205880b0198c6aac1a9055f70531dcaa34ffe43a0105e1276c03"
+    },
+    {
+      "id": "477:36498932902:1:F1",
+      "report": "477:36498932902:1",
+      "fingerprint": "0547b398d3e2c49777e4fd0e101347a52b94c657ebaa8f04cd1b46b067ddb6c2"
+    },
+    {
+      "id": "477:36498932902:1:F3",
+      "report": "477:36498932902:1",
+      "fingerprint": "c3c0e6ae9960a1391249e5fad8e047b6d39cfe599310d8c2b26e3ed149926594"
     }
   ],
   "groups": [
@@ -285,15 +295,29 @@
       "members": [
         "474:36498921009:1:F2"
       ]
+    },
+    {
+      "title": "授权 scope 与 Repository 集合命名口径不一致，记录范围查询以不透明 500 暴露",
+      "reason": "单独保留。E57 显示 scopeAst 把 resolver 结果封装成带 collection 名的 FilterAst，E58 显示 Authorizer 直接以 resourceId（可为限定名 main.materials）生成 scopeAst；E61 显示 @nocobase/db 的 normalizeScalarFilter 要求 ast.collection 必须等于 Repository 绑定的 collection.name（逻辑名 materials），否则抛 INVALID_FILTER；E60 显示 collectionResolver 接受两段式限定名并把 name 回写为限定名；E40 记录按限定名定义 scope 时同事列表与详情返回 HTTP 500，E72 的应用注释印证 Repository 与 scope 必须统一到逻辑名。共同根因是授权侧与数据层对同一集合存在两套命名口径（框架可用性缺陷，owner=plugin），修复方向是让 scope 使用与 Repository 一致的逻辑集合名，或在 db 校验失败时给出可定位的命名不一致错误。它与同报告 477:F3 的“指引缺少命名一致性约束”分属能力/可用性缺陷与文档缺口两种根因，且同报告禁止合并，故单列。",
+      "members": [
+        "477:36498932902:1:F1"
+      ]
+    },
+    {
+      "title": "授权指引未显式约束 scope 集合名与 Repository 逻辑名一致",
+      "reason": "单独保留。E62 的 fluent-registration.md 只说明 defineRecordAccess 与 .collections/.params/.resolver 的用法，E63 的 repository-routes.md 只提醒适配器当前仅支持默认连接，二者均未约束 scope/filter 的 collection 必须与 Repository 绑定的逻辑集合名一致；E57 显示 scopeAst 会把传入的集合名原样写入 FilterAst，使限定名 main.materials 与逻辑名 materials 的不一致在运行期才以 500 暴露。共同根因是授权指引缺少集合命名一致性约束（缺说明，owner=documentation），修复方向是在 fluent-registration.md 或 repository-routes.md 增补该约束并给出正确/错误示例。它与同报告 477:F1 的框架命名口径不一致属不同根因，且同报告禁止合并，故单列。",
+      "members": [
+        "477:36498932902:1:F3"
+      ]
     }
   ],
   "classifier": {
     "engine": "pi",
     "model": "deepseek-v4.1-flash",
     "version": "0.86.1",
-    "runId": "36511403807",
+    "runId": "36512573332",
     "attempt": 1,
     "controlSha": "ebb18e53b85c2f75cecd9dd399bd33abf586f048",
-    "completedAt": "2026-09-29T02:12:43.761Z"
+    "completedAt": "2026-09-29T02:27:32.746Z"
   }
 }
