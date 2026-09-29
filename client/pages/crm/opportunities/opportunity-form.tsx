@@ -1,0 +1,285 @@
+import { zodResolver } from '@hookform/resolvers/zod';
+import { ApiClientError, useApiClient, useToaster } from '@nocobase/app-client';
+import { useTranslation } from '@nocobase/i18n/client';
+import { AlertCircleIcon } from 'lucide-react';
+import { type ReactElement, useMemo } from 'react';
+import { Controller, useForm } from 'react-hook-form';
+import { z } from 'zod';
+
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import {
+  Field,
+  FieldError,
+  FieldGroup,
+  FieldLabel,
+} from '@/components/ui/field';
+import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+
+import { createOpportunity, updateOpportunity } from '../api.js';
+import {
+  OPPORTUNITY_STAGES,
+  type Customer,
+  type Opportunity,
+} from '../types.js';
+
+export interface OpportunityFormProps {
+  /** When editing, the latest record, just loaded; omit it when creating. */
+  readonly opportunity?: Opportunity;
+  /** Every customer, for the required "customer" select. */
+  readonly customers: readonly Customer[];
+  /** The `<form>` id. A submit button outside the form links to it with `form={formId}`. */
+  readonly formId: string;
+  /** Called after a successful save with the record the endpoint returned. The form has already shown the success message. */
+  readonly onSubmitted: (opportunity: Opportunity) => void;
+  /** Receives `true` when submission starts and `false` when it ends; on success, `false` precedes `onSubmitted`. */
+  readonly onSubmittingChange?: (submitting: boolean) => void;
+  /** When editing, the endpoint returned 404: the record no longer exists. */
+  readonly onNotFound?: () => void;
+}
+
+export function OpportunityForm({
+  opportunity,
+  customers,
+  formId,
+  onSubmitted,
+  onSubmittingChange,
+  onNotFound,
+}: OpportunityFormProps): ReactElement {
+  const { t } = useTranslation();
+  const api = useApiClient();
+  const toaster = useToaster();
+
+  const schema = useMemo(
+    () =>
+      z.object({
+        name: z
+          .string()
+          .trim()
+          .min(1, t('crm.opportunities.form.nameRequired'))
+          .max(255, t('crm.common.tooLong', { max: 255 })),
+        customerId: z
+          .string()
+          .min(1, t('crm.opportunities.form.customerRequired')),
+        // Kept as text so the input stays a string; a negative sign has no match, so the amount can never go below zero.
+        amount: z
+          .string()
+          .trim()
+          .refine(
+            (value) => value === '' || /^\d+(\.\d+)?$/u.test(value),
+            t('crm.opportunities.form.amountInvalid'),
+          ),
+        stage: z.enum(OPPORTUNITY_STAGES),
+      }),
+    [t],
+  );
+
+  const form = useForm({
+    resolver: zodResolver(schema),
+    mode: 'onTouched',
+    defaultValues: {
+      name: opportunity?.name ?? '',
+      customerId: opportunity ? String(opportunity.customerId) : '',
+      amount: String(opportunity?.amount ?? 0),
+      stage: opportunity?.stage ?? 'nurturing',
+    },
+  });
+
+  const customerItems = useMemo(
+    () =>
+      customers.map((customer) => ({
+        value: String(customer.id),
+        label: customer.name,
+      })),
+    [customers],
+  );
+
+  const stageItems = useMemo(
+    () =>
+      OPPORTUNITY_STAGES.map((value) => ({
+        value,
+        label: t(`crm.opportunities.stage.${value}`),
+      })),
+    [t],
+  );
+
+  const onSubmit = form.handleSubmit(async (values) => {
+    const json = {
+      name: values.name,
+      customerId: Number(values.customerId),
+      amount: values.amount === '' ? 0 : Number(values.amount),
+      stage: values.stage,
+    };
+    let saved: Opportunity;
+    onSubmittingChange?.(true);
+    try {
+      saved = opportunity
+        ? await updateOpportunity(api, opportunity.id, json)
+        : await createOpportunity(api, json);
+    } catch (error: unknown) {
+      const apiError = error instanceof ApiClientError ? error : undefined;
+      if (opportunity && apiError?.status === 404) {
+        onNotFound?.();
+      } else {
+        form.setError('root', {
+          message:
+            apiError?.status === 403
+              ? t('crm.common.forbidden')
+              : t('crm.common.loadFailed'),
+        });
+      }
+      return;
+    } finally {
+      onSubmittingChange?.(false);
+    }
+    toaster.show({
+      type: 'success',
+      title: opportunity
+        ? t('crm.opportunities.updated', { name: saved.name })
+        : t('crm.opportunities.created', { name: saved.name }),
+    });
+    onSubmitted(saved);
+  });
+
+  const rootError = form.formState.errors.root?.message;
+
+  return (
+    <form id={formId} noValidate onSubmit={(event) => void onSubmit(event)}>
+      <FieldGroup>
+        {rootError ? (
+          <Alert variant='destructive'>
+            <AlertCircleIcon />
+            <AlertDescription>{rootError}</AlertDescription>
+          </Alert>
+        ) : null}
+        <Controller
+          control={form.control}
+          name='name'
+          render={({ field, fieldState }) => (
+            <Field data-invalid={fieldState.invalid}>
+              <FieldLabel htmlFor={`${formId}-name`}>
+                {t('crm.opportunities.form.name')}
+                <span aria-hidden='true' className='text-destructive'>
+                  *
+                </span>
+              </FieldLabel>
+              <Input
+                {...field}
+                id={`${formId}-name`}
+                autoComplete='off'
+                aria-required='true'
+                aria-invalid={fieldState.invalid}
+              />
+              <FieldError errors={[fieldState.error]} />
+            </Field>
+          )}
+        />
+        <Controller
+          control={form.control}
+          name='customerId'
+          render={({ field, fieldState }) => (
+            <Field data-invalid={fieldState.invalid}>
+              <FieldLabel htmlFor={`${formId}-customer`}>
+                {t('crm.opportunities.form.customer')}
+                <span aria-hidden='true' className='text-destructive'>
+                  *
+                </span>
+              </FieldLabel>
+              <Select
+                items={customerItems}
+                value={field.value}
+                onValueChange={(value) => {
+                  if (value) field.onChange(value);
+                }}
+              >
+                <SelectTrigger
+                  ref={field.ref}
+                  id={`${formId}-customer`}
+                  className='w-full'
+                  aria-required='true'
+                  aria-invalid={fieldState.invalid}
+                  onBlur={field.onBlur}
+                >
+                  <SelectValue
+                    placeholder={t(
+                      'crm.opportunities.form.customerPlaceholder',
+                    )}
+                  />
+                </SelectTrigger>
+                <SelectContent>
+                  {customerItems.map((item) => (
+                    <SelectItem key={item.value} value={item.value}>
+                      {item.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FieldError errors={[fieldState.error]} />
+            </Field>
+          )}
+        />
+        <Controller
+          control={form.control}
+          name='amount'
+          render={({ field, fieldState }) => (
+            <Field data-invalid={fieldState.invalid}>
+              <FieldLabel htmlFor={`${formId}-amount`}>
+                {t('crm.opportunities.form.amount')}
+              </FieldLabel>
+              <Input
+                {...field}
+                id={`${formId}-amount`}
+                inputMode='decimal'
+                autoComplete='off'
+                aria-invalid={fieldState.invalid}
+              />
+              <FieldError errors={[fieldState.error]} />
+            </Field>
+          )}
+        />
+        <Controller
+          control={form.control}
+          name='stage'
+          render={({ field, fieldState }) => (
+            <Field data-invalid={fieldState.invalid}>
+              <FieldLabel htmlFor={`${formId}-stage`}>
+                {t('crm.opportunities.form.stage')}
+              </FieldLabel>
+              <Select
+                items={stageItems}
+                value={field.value}
+                onValueChange={(value) => {
+                  if (value) field.onChange(value);
+                }}
+              >
+                <SelectTrigger
+                  ref={field.ref}
+                  id={`${formId}-stage`}
+                  className='w-full'
+                  aria-invalid={fieldState.invalid}
+                  onBlur={field.onBlur}
+                >
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {stageItems.map((item) => (
+                    <SelectItem key={item.value} value={item.value}>
+                      {item.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FieldError errors={[fieldState.error]} />
+            </Field>
+          )}
+        />
+      </FieldGroup>
+    </form>
+  );
+}

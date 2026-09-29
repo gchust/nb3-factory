@@ -1,4 +1,4 @@
-import { Home } from 'lucide-react';
+import { Building2, Home, Target, UsersRound } from 'lucide-react';
 import {
   defineAppRoutes,
   defineSettingsRoutes,
@@ -15,6 +15,86 @@ const appRoutes: AppClientRouteContribution = defineAppRoutes([
     name: 'home',
     navigation: { title: 'navigation.home', icon: Home },
     path: '/',
+  },
+  {
+    auth: 'required',
+    authz: 'skip',
+    componentLoader: () => import('./pages/crm/customers/index.js'),
+    name: 'customers',
+    navigation: { title: 'navigation.customers', icon: Building2 },
+    path: '/customers',
+    children: [
+      {
+        // /customers/new: the create dialog. The static segment outranks :customerId.
+        authz: 'skip',
+        componentLoader: () => import('./pages/crm/customers/new.js'),
+        name: 'customer-new',
+        path: 'new',
+      },
+      {
+        // /customers/:customerId: the detail drawer.
+        authz: 'skip',
+        componentLoader: () => import('./pages/crm/customers/detail/index.js'),
+        name: 'customer-detail',
+        path: ':customerId',
+        children: [
+          {
+            // /customers/:customerId/edit: the edit dialog, stacked on the detail drawer.
+            authz: 'skip',
+            componentLoader: () =>
+              import('./pages/crm/customers/detail/edit.js'),
+            name: 'customer-edit',
+            path: 'edit',
+          },
+        ],
+      },
+    ],
+  },
+  {
+    auth: 'required',
+    authz: 'skip',
+    componentLoader: () => import('./pages/crm/contacts/index.js'),
+    name: 'contacts',
+    navigation: { title: 'navigation.contacts', icon: UsersRound },
+    path: '/contacts',
+    children: [
+      {
+        authz: 'skip',
+        componentLoader: () => import('./pages/crm/contacts/new.js'),
+        name: 'contact-new',
+        path: 'new',
+      },
+      {
+        // /contacts/:contactId/edit: the edit dialog.
+        authz: 'skip',
+        componentLoader: () => import('./pages/crm/contacts/edit.js'),
+        name: 'contact-edit',
+        path: ':contactId/edit',
+      },
+    ],
+  },
+  {
+    auth: 'required',
+    authz: 'skip',
+    componentLoader: () => import('./pages/crm/opportunities/index.js'),
+    name: 'opportunities',
+    navigation: { title: 'navigation.opportunities', icon: Target },
+    path: '/opportunities',
+    children: [
+      {
+        authz: 'skip',
+        componentLoader: () => import('./pages/crm/opportunities/new.js'),
+        name: 'opportunity-new',
+        path: 'new',
+      },
+      {
+        // /opportunities/:opportunityId/edit: the edit dialog.
+        authz: 'skip',
+        componentLoader: () => import('./pages/crm/opportunities/edit.js'),
+        name: 'opportunity-edit',
+        path: ':opportunityId/edit',
+      },
+    ],
   },
   {
     auth: 'guest',
