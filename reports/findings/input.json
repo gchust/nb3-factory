@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "inputHash": "b76b5c40bdf6433bafd48965c2baa64d6cd7e2eece877b0d706da7df4fdef3f8",
+  "inputHash": "b1a2ec244219ad5cd423e62d2aaf6c021be30b2e2b248a7173835a5573677024",
   "findings": [
     {
       "id": "460:36434284393:1:F2",
@@ -2854,6 +2854,359 @@
         }
       ],
       "fingerprint": "c3c0e6ae9960a1391249e5fad8e047b6d39cfe599310d8c2b26e3ed149926594"
+    },
+    {
+      "id": "478:36522310216:1:F1",
+      "report": "478:36522310216:1",
+      "issue": 478,
+      "taskTitle": "设备售后服务与巡检协同系统（综合业务案例）",
+      "appVersion": "1.0.0-beta.50",
+      "appTemplate": "@nocobase/app-template-default",
+      "finding": {
+        "id": "F1",
+        "kind": "issue",
+        "owner": "plugin",
+        "severity": "major",
+        "confidence": "confirmed",
+        "status": "open",
+        "title": "AI 知识库插件客户端在应用挂载路径下请求错误 API 基址，Settings 页 404",
+        "detail": "@nocobase/app-plugin-ai-knowledge-base 的默认服务由 @nocobase/app-portal-sdk/client 的 nocobaseClient 构造（E5），而 @nocobase/app-client 以服务端渲染的 app.basePath 为唯一基址来源（E1）。应用挂载在 /main 时，插件页请求 /api/ai/aiKnowledgeBase:list 返回 404，而 /main/api/... 正常（E7）。",
+        "impact": "知识库维护/上传页面在应用自己的挂载路径下不可用，B11 主场景无法完成；相似 portal-sdk 插件都可能受影响。",
+        "suggestedChange": "让插件客户端复用 @nocobase/app-client 的 resolveAppUrl()（或在 portal-sdk 客户端读取同一运行时配置），并在基址不可解析时显式报错而非回退到 127.0.0.1/api。",
+        "evidence": [
+          "E5",
+          "E1",
+          "E7",
+          "E3"
+        ],
+        "diagnosis": {
+          "category": "runtime-defect",
+          "trigger": "应用挂载在非根路径（/main），打开 Settings>Knowledge bases。",
+          "expected": "插件 Settings 页使用应用同一 API 基址，列表请求命中 /main/api 并渲染。",
+          "actual": "页面请求 /api/ai/aiKnowledgeBase:list 得到 404，显示 Unable to load this view。",
+          "workaround": "应用在客户端入口首个 import 用 api-base-compat.ts 回填 window.NOCOBASE_API_URL/APP_BASE_PATH（E6），但该修复晚于最终验收、未复验。",
+          "acceptance": "在挂载于 /main 的部署中打开 Settings>Knowledge bases，网络面板应只见 /main/api/ai/aiKnowledgeBase:list 且知识库列表可加载。"
+        }
+      },
+      "targets": [
+        "@nocobase/app-client",
+        "@nocobase/app-plugin-ai-knowledge-base",
+        "app/.agents/skills/nocobase-app-plugin-ai-knowledge-base"
+      ],
+      "paths": [
+        ".agents/skills/nocobase-app-plugin-ai-knowledge-base/references/http-api.md",
+        "packages/@nocobase/app-client/dist/client.js",
+        "packages/@nocobase/app-plugin-ai-knowledge-base/dist/client/providers/service/index.js"
+      ],
+      "evidence": [
+        {
+          "id": "E5",
+          "kind": "code",
+          "path": "packages/@nocobase/app-plugin-ai-knowledge-base/dist/client/providers/service/index.js",
+          "observation": "插件的默认知识库服务 createKnowledgeBaseService(nocobaseClient)，nocobaseClient 来自 @nocobase/app-portal-sdk/client，在模块求值时绑定。",
+          "lines": [
+            1,
+            5
+          ],
+          "excerpt": "import { nocobaseClient } from '@nocobase/app-portal-sdk/client';\nimport { createKnowledgeBaseService } from './knowledge-base-factory.js';\nexport { createKnowledgeBaseService } from './knowledge-base-factory.js';\n/** The default Knowledge base workspace integration for compatible user-side Knowledge Base actions. */\nexport const knowledgeBaseService = createKnowledgeBaseService(nocobaseClient);",
+          "sha256": "b4930d041a822be5ea33dd6c26ed7b8f4cabbd217834f51f400d3ac4e64f988c"
+        },
+        {
+          "id": "E1",
+          "kind": "code",
+          "path": "packages/@nocobase/app-client/dist/client.js",
+          "observation": "app-client 说明挂载路径唯一来源是服务端渲染的 app.basePath，并导出 resolveAppBase()/resolveAppUrl(path)；未由应用服务器提供的页面直接抛错，不猜测路径。",
+          "lines": [
+            2,
+            26
+          ],
+          "excerpt": "/**\n * The path the application is mounted at, always with a leading and a trailing slash: `/main/` for an application\n * served from `/main`, and `/` for one served from the origin root.\n *\n * The server decides the mount path at run time and publishes it as `app.basePath` in the client configuration it\n * renders into the page. That is the only source: a page without it was not served by the application server, and\n * resolving URLs against a guess would send requests to the wrong application.\n */\nexport function resolveAppBase() {\n    if (typeof document === 'undefined') {\n        return '/';\n    }\n    const trimmed = readConfiguredBasePath().replace(/^\\/+|\\/+$/gu, '');\n    return trimmed ? `/${trimmed}/` : '/';\n}\nexport function resolveAppUrl(path = '/') {\n    if (typeof window === 'undefined') {\n        return path;\n    }\n    if (/^[a-z][a-z\\d+.-]*:/i.test(path)) {\n        return path;\n    }\n    const url = new URL(path.replace(/^\\/+/, ''), `${window.location.origin}${resolveAppBase()}`);\n    return `${url.pathname}${url.search}${url.hash}`;\n}",
+          "sha256": "89fe808d300d6ed5b742ed4a7e4c54451f3f1b03c9c2907039bcafcb37f4aaf8"
+        },
+        {
+          "id": "E7",
+          "kind": "qa",
+          "path": "artifacts/verify-5/browser-acceptance/report.json",
+          "observation": "最终全量验收 B11 失败：Settings>Knowledge bases 报 404，页面请求 /api/ai/aiKnowledgeBase:list 而 /main/api/... 为 200，知识库为 0，主管无上传入口。",
+          "lines": [
+            274,
+            284
+          ],
+          "excerpt": "      \"id\": \"B11\",\n      \"criterion\": \"主管上传两份手册，页面显示真实处理状态，普通工程师不能修改库内容。条件可用时，助手能回答一条有依据问题并提供引用，对资料外问题说明不足，对无权工单拒绝泄漏；更新手册后新对话依据新内容。缺外部条件时分别报告接入完成度与真实检索/回答未验证。\",\n      \"status\": \"failed\",\n      \"actions\": [\n        \"管理员打开 Settings > Knowledge bases\",\n        \"管理员与主管打开 Knowledge > Device manuals\",\n        \"检查 Service Assistant AI 员工的 Knowledge Base 设置\",\n        \"工程师 Alpha 与管理员分别调用服务助手提问并比对引用\"\n      ],\n      \"evidence\": [\n        \"未满足：Settings > Knowledge bases 页面报错 Unable to load this view / NocoBase request failed (404)，Retry 无效；页面实际请求 /api/ai/aiKnowledgeBase:list（404），而 /main/api/ai/aiKnowledgeBase:list 返回 200 且 count=0；其他 AI 页面（LLM services/AI Employees）请求 /main/api 正常，说明该页在本应用 /main 挂载下不可用\",",
+          "sha256": "18740e15dc80c332610742b49c5a9e6c181a37d1b9a3b3ba9a2b6284639967da"
+        },
+        {
+          "id": "E3",
+          "kind": "skill",
+          "path": "app/.agents/skills/nocobase-app-plugin-ai-knowledge-base/references/http-api.md",
+          "observation": "AI KB 指引把 HTTP 基址写为 /v2/api，并给出 nocobaseClient.action(\"aiKnowledgeBase\",\"list\",...) 示例；未提及非根挂载时的基址解析前提。",
+          "lines": [
+            11,
+            37
+          ],
+          "excerpt": "## Common contract\n\nBase path: `/v2/api`. Route action URLs use `/<resource>:<action>`. All actions require authentication headers/cookies accepted by the App Authentication service. Missing user ID returns 401:\n\n```json\n{ \"errors\": [{ \"message\": \"Authentication required\" }] }\n```\n\nSuccess envelopes are `{\"data\": value}`. List helpers return:\n\n```json\n{ \"data\": { \"data\": [], \"meta\": { \"count\": 0, \"page\": 1, \"pageSize\": 20 } } }\n```\n\nErrors use `{\"errors\":[{\"message\":\"...\"}]}`. A thrown `status` is used; otherwise a message containing “not found” maps to 404 and other failures map to 500.\n\nPagination query: `page` default 1/min 1; `pageSize` default 20/min 1/max 200; `paginate=false` disables limit/offset. Lists are sorted by `-createdAt`; caller `sort` is ignored. ID readers accept `name`, `name[]`, repeated values, and comma-separated values.\n\nUse an authenticated action client when possible:\n\n```ts\nawait nocobaseClient.action('aiKnowledgeBase', 'list', {\n  method: 'GET',\n  query: { page: 1, pageSize: 20 },\n  unwrap: 'none',\n});\n```",
+          "sha256": "df02de4589601e5d5fe64fff5c3df0640ef8bb4bf040a9a86ecd0b03c5f47058"
+        }
+      ],
+      "fingerprint": "d027ebb0acc12c34945dc9118d690f13ccde56b88b9daa504b72f8a83bbcf774"
+    },
+    {
+      "id": "478:36522310216:1:F2",
+      "report": "478:36522310216:1",
+      "issue": 478,
+      "taskTitle": "设备售后服务与巡检协同系统（综合业务案例）",
+      "appVersion": "1.0.0-beta.50",
+      "appTemplate": "@nocobase/app-template-default",
+      "finding": {
+        "id": "F2",
+        "kind": "misleading",
+        "owner": "documentation",
+        "severity": "minor",
+        "confidence": "confirmed",
+        "status": "open",
+        "title": "AI 知识库指引的 /v2/api 基址示例在非根挂载下会误导",
+        "detail": "指引把 HTTP 基址写成 /v2/api，并给出 nocobaseClient.action(...) 示例（E3），但未说明该客户端在浏览器中从 window.NOCOBASE_API_URL 读基址、未设置时回退 http://127.0.0.1:13000/api。",
+        "claimed": "直接调用 /v2/api 兼容动作或使用 nocobaseClient.action 即可接入。",
+        "observed": "在 /main 挂载下按示例使用默认 nocobaseClient 会请求 /api 并 404（E7）；需应用自行设置 window.NOCOBASE_API_URL 才能正确。",
+        "impact": "Agent 照指引实现后得到 404，误以为服务端缺失或需改写页面。",
+        "suggestedChange": "在 http-api/client-integration 中写明基址由应用运行时决定、portal-sdk 客户端读取 window.NOCOBASE_API_URL 的前提，并给出非根挂载的处理或诊断方法。",
+        "evidence": [
+          "E3",
+          "E4",
+          "E7"
+        ]
+      },
+      "targets": [
+        "app/.agents/skills/nocobase-app-plugin-ai-knowledge-base"
+      ],
+      "paths": [
+        ".agents/skills/nocobase-app-plugin-ai-knowledge-base/references/client-integration.md",
+        ".agents/skills/nocobase-app-plugin-ai-knowledge-base/references/http-api.md"
+      ],
+      "evidence": [
+        {
+          "id": "E3",
+          "kind": "skill",
+          "path": "app/.agents/skills/nocobase-app-plugin-ai-knowledge-base/references/http-api.md",
+          "observation": "AI KB 指引把 HTTP 基址写为 /v2/api，并给出 nocobaseClient.action(\"aiKnowledgeBase\",\"list\",...) 示例；未提及非根挂载时的基址解析前提。",
+          "lines": [
+            11,
+            37
+          ],
+          "excerpt": "## Common contract\n\nBase path: `/v2/api`. Route action URLs use `/<resource>:<action>`. All actions require authentication headers/cookies accepted by the App Authentication service. Missing user ID returns 401:\n\n```json\n{ \"errors\": [{ \"message\": \"Authentication required\" }] }\n```\n\nSuccess envelopes are `{\"data\": value}`. List helpers return:\n\n```json\n{ \"data\": { \"data\": [], \"meta\": { \"count\": 0, \"page\": 1, \"pageSize\": 20 } } }\n```\n\nErrors use `{\"errors\":[{\"message\":\"...\"}]}`. A thrown `status` is used; otherwise a message containing “not found” maps to 404 and other failures map to 500.\n\nPagination query: `page` default 1/min 1; `pageSize` default 20/min 1/max 200; `paginate=false` disables limit/offset. Lists are sorted by `-createdAt`; caller `sort` is ignored. ID readers accept `name`, `name[]`, repeated values, and comma-separated values.\n\nUse an authenticated action client when possible:\n\n```ts\nawait nocobaseClient.action('aiKnowledgeBase', 'list', {\n  method: 'GET',\n  query: { page: 1, pageSize: 20 },\n  unwrap: 'none',\n});\n```",
+          "sha256": "df02de4589601e5d5fe64fff5c3df0640ef8bb4bf040a9a86ecd0b03c5f47058"
+        },
+        {
+          "id": "E4",
+          "kind": "skill",
+          "path": "app/.agents/skills/nocobase-app-plugin-ai-knowledge-base/references/client-integration.md",
+          "observation": "指引说明默认适配器使用 App portal SDK 的 nocobaseClient 发送 resource/action 请求，并称其是用户侧动作适配器；未说明该客户端读取 window.NOCOBASE_API_URL。",
+          "lines": [
+            16,
+            25
+          ],
+          "excerpt": "import { knowledgeBaseService } from '@nocobase/app-plugin-ai-knowledge-base/client';\n\nconst page = await knowledgeBaseService.listKnowledgeBases({\n  mode: 'server',\n  page: 1,\n  pageSize: 20,\n});\n```\n\nThe adapter uses the App portal SDK's `nocobaseClient`, sends resource/action requests, keeps response unwrapping disabled, validates response fields, and normalizes envelopes. It is a user-side action adapter, not an administrator authorization layer.",
+          "sha256": "8c48b9d15d2046e732d59b15a1d255af91b74209e29445d49ec81191a852d920"
+        },
+        {
+          "id": "E7",
+          "kind": "qa",
+          "path": "artifacts/verify-5/browser-acceptance/report.json",
+          "observation": "最终全量验收 B11 失败：Settings>Knowledge bases 报 404，页面请求 /api/ai/aiKnowledgeBase:list 而 /main/api/... 为 200，知识库为 0，主管无上传入口。",
+          "lines": [
+            274,
+            284
+          ],
+          "excerpt": "      \"id\": \"B11\",\n      \"criterion\": \"主管上传两份手册，页面显示真实处理状态，普通工程师不能修改库内容。条件可用时，助手能回答一条有依据问题并提供引用，对资料外问题说明不足，对无权工单拒绝泄漏；更新手册后新对话依据新内容。缺外部条件时分别报告接入完成度与真实检索/回答未验证。\",\n      \"status\": \"failed\",\n      \"actions\": [\n        \"管理员打开 Settings > Knowledge bases\",\n        \"管理员与主管打开 Knowledge > Device manuals\",\n        \"检查 Service Assistant AI 员工的 Knowledge Base 设置\",\n        \"工程师 Alpha 与管理员分别调用服务助手提问并比对引用\"\n      ],\n      \"evidence\": [\n        \"未满足：Settings > Knowledge bases 页面报错 Unable to load this view / NocoBase request failed (404)，Retry 无效；页面实际请求 /api/ai/aiKnowledgeBase:list（404），而 /main/api/ai/aiKnowledgeBase:list 返回 200 且 count=0；其他 AI 页面（LLM services/AI Employees）请求 /main/api 正常，说明该页在本应用 /main 挂载下不可用\",",
+          "sha256": "18740e15dc80c332610742b49c5a9e6c181a37d1b9a3b3ba9a2b6284639967da"
+        }
+      ],
+      "fingerprint": "159d5af176d75e05078a26566e7fe7f422adc60a34cc4f378847a1dc48d9ae10"
+    },
+    {
+      "id": "478:36522310216:1:F3",
+      "report": "478:36522310216:1",
+      "issue": 478,
+      "taskTitle": "设备售后服务与巡检协同系统（综合业务案例）",
+      "appVersion": "1.0.0-beta.50",
+      "appTemplate": "@nocobase/app-template-default",
+      "finding": {
+        "id": "F3",
+        "kind": "issue",
+        "owner": "plugin",
+        "severity": "minor",
+        "confidence": "confirmed",
+        "status": "open",
+        "title": "Scheduler 无公开的“立即执行”入口，受控测试只能绕到底层 Queue",
+        "detail": "Scheduler 管理路由只有 list/occurrences/enable/disable（E13），公共令牌只有 defineSchedule/registerTarget（E14）；指引也确认没有管理 API（E15）。应用为满足“受控立即执行”只能调用 @nocobase/queue 的 Schedule.find().trigger()（E16）。",
+        "impact": "第 4 轮 B08 因手工触发未记入 Scheduler 执行记录而失败（E17）；后续实现需深入框架内部 API，易出现“业务完成但执行记录为空”。",
+        "suggestedChange": "提供受支持的立即执行路由或 service 方法（校验 enabled/active 并写入同一 occurrence），或在 Skill 中记录 Queue Schedule.trigger() 的受控做法与幂等要求。",
+        "evidence": [
+          "E13",
+          "E14",
+          "E15",
+          "E16",
+          "E17"
+        ],
+        "diagnosis": {
+          "category": "capability-gap",
+          "trigger": "需求要求提供受控的立即执行/短周期测试并走同一 Scheduler 执行记录。",
+          "expected": "插件提供受支持的立即执行入口，或明确文档化底层触发方式并保证写入执行记录。",
+          "actual": "公开面没有立即执行方法；应用直接使用 Queue 的 Schedule.trigger()，早期版本未走目标导致执行记录为 0。",
+          "workaround": "应用自建 SchedulerRunService，用 Schedule.find(id).trigger() 后轮询 occurrences（E16）。",
+          "acceptance": "对任一计划调用官方立即执行入口后，计划详情 Trigger count 增加且出现 Succeeded occurrence，重复执行不重复生成业务结果。"
+        }
+      },
+      "targets": [
+        "@nocobase/app-plugin-scheduler",
+        "app/.agents/skills/nocobase-app-plugin-scheduler"
+      ],
+      "paths": [
+        ".agents/skills/nocobase-app-plugin-scheduler/references/operations.md",
+        "packages/@nocobase/app-plugin-scheduler/dist/server/routes/index.js",
+        "packages/@nocobase/app-plugin-scheduler/dist/server/services/scheduler.js"
+      ],
+      "evidence": [
+        {
+          "id": "E13",
+          "kind": "code",
+          "path": "packages/@nocobase/app-plugin-scheduler/dist/server/routes/index.js",
+          "observation": "Scheduler 管理路由仅 GET /schedules、GET /:id/occurrences、POST /:id/enable、/:id/disable，没有“立即执行/run now”路由。",
+          "lines": [
+            23,
+            32
+          ],
+          "excerpt": "    schedules.get('/', async (context) => context.json({ data: await scheduler.list() }));\n    schedules.get('/:id/occurrences', async (context) => context.json({\n        data: await scheduler.listOccurrences(context.req.param('id')),\n    }));\n    schedules.post('/:id/enable', async (context) => context.json({\n        data: await scheduler.setEnabled(context.req.param('id'), true),\n    }));\n    schedules.post('/:id/disable', async (context) => context.json({\n        data: await scheduler.setEnabled(context.req.param('id'), false),\n    }));",
+          "sha256": "5923dd0ae2631da0ece7477ddd9ddf2d598010fcc69e2322c70d35e99f0efd2b"
+        },
+        {
+          "id": "E14",
+          "kind": "code",
+          "path": "packages/@nocobase/app-plugin-scheduler/dist/server/services/scheduler.js",
+          "observation": "公开服务令牌只暴露 defineSchedule() 与 registerTarget()，后者返回带 reportCompletion 的句柄；无按计划立即触发的方法。",
+          "lines": [
+            13,
+            24
+          ],
+          "excerpt": "    defineSchedule(definition) {\n        this.manifest.push(Object.freeze({ definition: buildScheduleDefinition(definition) }));\n    }\n    registerTarget(target) {\n        this.targets.register(target);\n        const { type } = target;\n        return {\n            type,\n            reportCompletion: (occurrenceId, reference, completion) => this.occurrences.complete(occurrenceId, reference, completion, type),\n        };\n    }\n    async list() {",
+          "sha256": "4fba6168c5c732acb45e9716e2a818a9bde3fcbe5584a91d79033eb4a2227b10"
+        },
+        {
+          "id": "E15",
+          "kind": "skill",
+          "path": "app/.agents/skills/nocobase-app-plugin-scheduler/references/operations.md",
+          "observation": "指引列出管理路由与 schedulerServiceToken 的公共方法；明确“没有创建/编辑 Cron 的管理 API”，未记录立即执行的受支持入口。",
+          "lines": [
+            9,
+            36
+          ],
+          "excerpt": "## Management Entry Points\n\nThe list page is `/settings/schedules`; details are at `/settings/schedules/:scheduleId`. Definitions are maintained in source. The UI supports viewing and enabling/disabling tasks, with no API for creating or editing Cron definitions.\n\nAll routes below require authentication and authorization for `{ resource: { type: 'page', id: 'scheduler.schedules' }, action: 'access' }`. Enabling/disabling currently uses the same permission, not a separate update action.\n\n| Method and path                      | Response / effect                                                                                             |\n| ------------------------------------ | ------------------------------------------------------------------------------------------------------------- |\n| `GET /api/schedules`                 | `{ data: ScheduleListItem[] }`                                                                                |\n| `GET /api/schedules/:id/occurrences` | `{ data: ScheduleOccurrenceView[] }`; currently at most the latest 100 records, with no pagination parameters |\n| `POST /api/schedules/:id/enable`     | `{ data: ScheduleListItem }`; enables the task, no request body                                               |\n| `POST /api/schedules/:id/disable`    | `{ data: ScheduleListItem }`; pauses the task, no request body                                                |\n\nUse the id returned by list for `:id`, not the definition key or workflowKey. Enabling/disabling affects future scheduling; it does not cancel already dispatched Queue Jobs or workflows.\n\n`schedulerServiceToken` from `@nocobase/app-plugin-scheduler/server/tokens` is the plugin's one public service, and it is a contribution surface rather than an administration one:\n\n```ts\nregisterTarget<TConfig extends JsonObject>(\n  target: ScheduleTargetType<TConfig>,\n): ScheduleTargetHandle;\n\ndefineSchedule(definition: ScheduleDefinition): void;\n```\n\nThe returned handle carries `reportCompletion(occurrenceId, reference, completion)`, and completes only occurrences its own target started. `defineSchedule` has no return value; it validates and stores the definition in the in-memory manifest consumed by the next sync.\n\nReading and changing schedules — list, occurrences, enable and disable — is reachable through the HTTP API above, and synchronization through `pnpm nocobase scheduler sync`. Neither is exposed as a resolvable service: the store, the target registry and the job dispatch table are private to the plugin, so an application cannot bypass the authorization its Routes enforce by resolving them from the container.",
+          "sha256": "a5cb7a6042ea3d28e21d66c078180d3885f467a8762a2872bcfadf9e3fb98f26"
+        },
+        {
+          "id": "E16",
+          "kind": "code",
+          "path": "app/server/services/scheduler-run-service.ts",
+          "observation": "应用被迫使用底层 @nocobase/queue 的 Schedule.find(id,{adapter}).trigger() 实现“Run daily jobs now”，绕过 Scheduler 的公开令牌面。",
+          "lines": [
+            180,
+            190
+          ],
+          "excerpt": "  private async dispatch(scheduleIds: readonly string[]): Promise<void> {\n    const adapter = this.scheduleAdapter();\n    await Promise.all(\n      scheduleIds.map(async (scheduleId) => {\n        const schedule = await Schedule.find(scheduleId, { adapter });\n        if (schedule) {\n          await schedule.trigger();\n        }\n      }),\n    );\n  }",
+          "sha256": "afc02eb67e1ce554def21f258fae3ed8ec4f73ed195d88db2d28ffbde31d51dc"
+        },
+        {
+          "id": "E17",
+          "kind": "qa",
+          "path": "artifacts/verify-4/browser-focused/report.json",
+          "observation": "第 4 轮 B08 失败：受控立即执行后计划详情仍为 Trigger count 0 / No triggers have started.，/api/schedules 的 runCount/completedCount 为 0，手工触发未记入 Scheduler 执行记录。",
+          "lines": [
+            111,
+            127
+          ],
+          "excerpt": "      \"id\": \"B08\",\n      \"status\": \"failed\",\n      \"actions\": [\n        \"Logged in as admin and opened 巡检/Inspections at /main/service/inspections; noted the initial row (DEV-AQ-001, 2026-09-29, Pending) before running jobs.\",\n        \"Clicked the supervisor/admin control 'Run daily jobs now'; network POST /main/api/service/inspections/run-daily returned 200 and the list gained the due DEV-AQ-003 row (plus a DEV-AQ-002 row in later runs).\",\n        \"Clicked 'Run daily jobs now' again and confirmed idempotency: rows did not duplicate.\",\n        \"Opened the schedule 'Daily device inspection generation' (service.inspection-generation) and read its detail panel: 'Trigger count 0' and 'Execution records: No triggers have started.' - persisted after waiting and after a reload.\",\n        \"Verified via /main/api/schedules that both plans (service-inspection-daily, service-overdue-daily) report runCount 0 and completedCount 0 while enabled=true, and /schedules/:id/occurrences returned an empty array.\",\n        \"Verified enable/disable persistence via /main/api/schedules/:id/{enable,disable}.\",\n        \"Disabled-device rule: set DEV-AQ-002 due (nextInspectionDate=2026-09-29) and enabled=false, ran daily jobs -> no new inspection row; re-enabled it, ran jobs -> a DEV-AQ-002 row was generated and its nextInspectionDate advanced to 2026-12-28; ran again -> no duplicate.\",\n        \"Disabled-schedule rule: disabled the inspection-generation plan with a due+enabled device, ran daily jobs -> no new result; re-enabled the plan, ran jobs -> the row appeared (deduplicated).\",\n        \"Overdue reminder: confirmed Engineer Beta received 'Overdue ticket TK-20260901-0003 ... is still pending_processing.'; confirmed a closed ticket (due 2026-09-22, assigned Alpha) produced no reminder.\",\n        \"Logged in as Engineer Alpha, completed inspection DEV-AQ-001 (POST /api/service/inspections/1/complete 200, note 'QA B08: checked, all normal.'), reloaded and confirmed the completed result persisted.\",\n        \"Confirmed the 'Run daily jobs now' control is intended for supervisors/admins: Engineer Alpha can see/click it but the call POST /api/service/inspections/run-daily returns 403.\"\n      ],\n      \"evidence\": [\n        \"FAILURE: controlled immediate execution does not go through the same Scheduler target/execution record. After POST /api/service/inspections/run-daily (200) the plan detail still shows 'Trigger count 0' and 'Execution records: No triggers have started.', and /api/schedules reports runCount 0 / completedCount 0 for both plans - so the manual trigger is not registered as the Scheduler execution the requirement asks for.\",",
+          "sha256": "d08a099ff5e7fbc115a9a090231659de94477264bcb467a4e1a783bb632e7dac"
+        }
+      ],
+      "fingerprint": "bf1a6471e88559467d58ff711a95b371954e1e4a4ff77f8cf364a49e48d34dbf"
+    },
+    {
+      "id": "478:36522310216:1:F4",
+      "report": "478:36522310216:1",
+      "issue": 478,
+      "taskTitle": "设备售后服务与巡检协同系统（综合业务案例）",
+      "appVersion": "1.0.0-beta.50",
+      "appTemplate": "@nocobase/app-template-default",
+      "finding": {
+        "id": "F4",
+        "kind": "improvement",
+        "owner": "plugin",
+        "severity": "minor",
+        "confidence": "suspected",
+        "status": "open",
+        "title": "OOXML 预览缺少渲染超时/强制失败降级，可能长期停在 Loading",
+        "detail": "Registry OOXML 预览在没有 url 时只显示 Loading preview...（E8）；DOCX viewer 通过动态 import @silurus/ooxml 创建（E9），若渲染器未回调或解析超时，界面不会进入错误/下载回退。第 4 轮观察到的正是长时间停留 Loading（E12）。",
+        "impact": "用户与 QA 无法区分“仍在解析”与“已失败”，与需求要求的“损坏文件真实失败反馈”相冲突。",
+        "suggestedChange": "为 viewer 加载/渲染增加超时与失败回退（进入 OfficeOpenXmlDownloadFallback），并暴露可诊断的错误状态。",
+        "evidence": [
+          "E8",
+          "E9",
+          "E12"
+        ],
+        "diagnosis": {
+          "category": "usability-improvement",
+          "trigger": "DOCX 在无头浏览器或较慢环境下渲染耗时超过预期。",
+          "expected": "超过合理时限后显示失败提示与下载回退，而不是无限 Loading。",
+          "actual": "组件没有独立超时，渲染器不回调时保持 Loading preview...。",
+          "workaround": "无——第 5 轮依赖 headed 浏览器在 4s 内渲染成功。",
+          "acceptance": "注入一个永不完成/极慢的 OOXML 渲染器，预览应在超时后显示错误与下载按钮，且可切换到下一个文件。"
+        }
+      },
+      "targets": [
+        "@nocobase/app-plugin-file"
+      ],
+      "paths": [
+        "packages/@nocobase/app-plugin-file/registry/component-ui/components/previewers/office-open-xml-preview.tsx"
+      ],
+      "evidence": [
+        {
+          "id": "E8",
+          "kind": "code",
+          "path": "packages/@nocobase/app-plugin-file/registry/component-ui/components/previewers/office-open-xml-preview.tsx",
+          "observation": "registry OOXML 预览：无 url 时只渲染 Loading preview... 状态；已加载时挂载 data-office-open-xml-format 宿主元素，无独立渲染超时或强制失败降级。",
+          "lines": [
+            90,
+            114
+          ],
+          "excerpt": "  if (!url) {\n    return (\n      <div role='status'>\n        {t('files.loadingPreview', { defaultValue: 'Loading preview...' })}\n      </div>\n    );\n  }\n\n  return (\n    <div className='relative h-[70vh] min-h-0 w-full overflow-hidden bg-muted/30'>\n      {!loaded ? (\n        <div\n          role='status'\n          className='absolute inset-0 z-10 flex items-center justify-center bg-background'\n        >\n          {t('files.loadingPreview', { defaultValue: 'Loading preview...' })}\n        </div>\n      ) : null}\n      <div\n        ref={hostRef}\n        className='h-full min-h-0 w-full overflow-hidden'\n        data-office-open-xml-format={format}\n      />\n    </div>\n  );",
+          "sha256": "b32b48615f0400191ba28d427f9070fa69c74282829aba2087746563350d28c8"
+        },
+        {
+          "id": "E9",
+          "kind": "code",
+          "path": "packages/@nocobase/app-plugin-file/registry/component-ui/components/previewers/office-open-xml-preview.tsx",
+          "observation": "DOCX/XLSX/PPTX 通过动态 import @silurus/ooxml 的本地 viewer 渲染，使用同源凭据 fetch，不依赖第三方预览服务。",
+          "lines": [
+            143,
+            180
+          ],
+          "excerpt": "async function createOfficeOpenXmlViewer(\n  format: OfficeOpenXmlFormat,\n  host: HTMLElement,\n  onError: (error: Error) => void,\n): Promise<OfficeOpenXmlViewer> {\n  const commonOptions = {\n    mode: 'main' as const,\n    useGoogleFonts: false,\n    onError,\n  };\n  switch (format) {\n    case 'docx': {\n      const { DocxScrollViewer } = await import('@silurus/ooxml/docx');\n      return new DocxScrollViewer(host, {\n        ...commonOptions,\n        enableTextSelection: true,\n        gap: 16,\n        progressiveLayout: true,\n      });\n    }\n    case 'pptx': {\n      const { PptxScrollViewer } = await import('@silurus/ooxml/pptx');\n      return new PptxScrollViewer(host, {\n        ...commonOptions,\n        enableTextSelection: true,\n        gap: 16,\n        progressiveLayout: true,\n      });\n    }\n    case 'xlsx': {\n      const { XlsxViewer } = await import('@silurus/ooxml/xlsx');\n      return new XlsxViewer(host, {\n        ...commonOptions,\n        showZoomSlider: true,\n      });\n    }\n  }\n}",
+          "sha256": "b32b48615f0400191ba28d427f9070fa69c74282829aba2087746563350d28c8"
+        },
+        {
+          "id": "E12",
+          "kind": "qa",
+          "path": "artifacts/verify-4/browser-focused/report.json",
+          "observation": "第 4 轮 B06 失败：DOCX 预览停在 Loading preview...，data-office-open-xml-format 容器为空、无 canvas/img，等待约 25s 仍不渲染。",
+          "lines": [
+            41,
+            55
+          ],
+          "excerpt": "      \"id\": \"B06\",\n      \"status\": \"failed\",\n      \"actions\": [\n        \"Opened ticket #1 as Engineer Alpha and used 维修附件/Repair attachments -> Upload.\",\n        \"Uploaded sample.png with attachment kind 'Photo'; the attachment appeared in the list and preview rendered the real image.\",\n        \"Uploaded sample.docx (kind 'Report' after the default 'Photo' kind returned HTTP 400); the attachment row appeared with preview/download actions.\",\n        \"Clicked preview on the DOCX attachment; the preview container stayed on 'Loading preview...' and never rendered the document.\",\n        \"Waited ~25 s and re-snapshotted the DOCX preview container: data-office-open-xml-format=docx element had no canvas/img and only empty nodes (html length 284); no console errors.\",\n        \"Confirmed the DOCX content itself was fetched (GET /main/api/service/tickets/1/attachments/3/content -> 200; chunk /main/assets/docx-BIb4fJRp.js -> 200), so the failure is in rendering the preview, not retrieving the file.\",\n        \"Uploaded corrupt.png; app showed the real error alert 'The file could not be uploaded.' and kept the selection; reloaded and confirmed the bad file was not persisted; removed it.\",\n        \"Uploaded a document/photo attachment, reloaded, confirmed it persisted, then removed it and confirmed removal persisted.\",\n        \"Logged in as Factory QA and tried to open ticket #1 and its attachment content/URL; both were denied.\"\n      ],\n      \"evidence\": [\n        \"FAILURE: DOCX preview never renders. The preview panel remains on 'Loading preview...' with an empty data-office-open-xml-format container (no canvas/img), reproduced after re-upload and after ~25 s wait; file retrieval returns 200, so this is a real rendering defect for the document-preview requirement.\",",
+          "sha256": "d08a099ff5e7fbc115a9a090231659de94477264bcb467a4e1a783bb632e7dac"
+        }
+      ],
+      "fingerprint": "176cbda0c20d1842c98589c2870a51f954083a7a81947a1851b3a80f8759b74e"
     }
   ]
 }
