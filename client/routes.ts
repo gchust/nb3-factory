@@ -1,4 +1,4 @@
-import { Home } from 'lucide-react';
+import { Contact, Home, Target, Users } from 'lucide-react';
 import {
   defineAppRoutes,
   defineSettingsRoutes,
@@ -43,6 +43,89 @@ const appRoutes: AppClientRouteContribution = defineAppRoutes([
     componentLoader: () => import('./pages/auth/reset-password.js'),
     name: 'reset-password',
     path: '/reset-password',
+  },
+  {
+    // CRM is an application feature, not a plugin: the pages, endpoints and tables all live in this application.
+    auth: 'required',
+    authz: 'skip',
+    componentLoader: () => import('./pages/crm/customers/index.js'),
+    name: 'customers',
+    navigation: { title: 'navigation.customers', icon: Users },
+    path: '/customers',
+    children: [
+      {
+        auth: 'required',
+        authz: 'skip',
+        componentLoader: () => import('./pages/crm/customers/new.js'),
+        name: 'customer-new',
+        path: 'new',
+      },
+      {
+        auth: 'required',
+        authz: 'skip',
+        componentLoader: () => import('./pages/crm/customers/detail/index.js'),
+        name: 'customer-detail',
+        path: ':customerId',
+        children: [
+          {
+            auth: 'required',
+            authz: 'skip',
+            componentLoader: () =>
+              import('./pages/crm/customers/detail/edit.js'),
+            name: 'customer-edit',
+            path: 'edit',
+          },
+        ],
+      },
+    ],
+  },
+  {
+    auth: 'required',
+    authz: 'skip',
+    componentLoader: () => import('./pages/crm/contacts/index.js'),
+    name: 'contacts',
+    navigation: { title: 'navigation.contacts', icon: Contact },
+    path: '/contacts',
+    children: [
+      {
+        auth: 'required',
+        authz: 'skip',
+        componentLoader: () => import('./pages/crm/contacts/new.js'),
+        name: 'contact-new',
+        path: 'new',
+      },
+      {
+        auth: 'required',
+        authz: 'skip',
+        componentLoader: () => import('./pages/crm/contacts/edit.js'),
+        name: 'contact-edit',
+        path: ':contactId',
+      },
+    ],
+  },
+  {
+    auth: 'required',
+    authz: 'skip',
+    componentLoader: () => import('./pages/crm/opportunities/index.js'),
+    name: 'opportunities',
+    navigation: { title: 'navigation.opportunities', icon: Target },
+    path: '/opportunities',
+    children: [
+      {
+        auth: 'required',
+        authz: 'skip',
+        componentLoader: () => import('./pages/crm/opportunities/new.js'),
+        name: 'opportunity-new',
+        path: 'new',
+      },
+      {
+        auth: 'required',
+        authz: 'skip',
+        componentLoader: () => import('./pages/crm/opportunities/edit.js'),
+        name: 'opportunity-edit',
+        path: ':opportunityId',
+      },
+    ],
   },
 ]);
 

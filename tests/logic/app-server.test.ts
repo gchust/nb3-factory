@@ -1006,6 +1006,327 @@ describe('app server', () => {
   });
 });
 
+interface JsonCustomer {
+  readonly id: number;
+  readonly name: string;
+  readonly industry: string | null;
+}
+
+interface JsonContact {
+  readonly id: number;
+  readonly name: string;
+  readonly customerId: number;
+  readonly customerName: string | null;
+}
+
+interface JsonOpportunity {
+  readonly id: number;
+  readonly name: string;
+  readonly customerId: number;
+  readonly amount: number;
+  readonly stage: string;
+}
+
+interface JsonCustomerDetail extends JsonCustomer {
+  readonly contacts: readonly JsonContact[];
+  readonly opportunities: readonly JsonOpportunity[];
+  readonly opportunityTotal: number;
+}
+
+async function readJson<T>(response: Response): Promise<T> {
+  return (await response.json()) as T;
+}
+
+/**
+ * End-to-end coverage of the CRM feature against a real SQLite database:
+ * the migration creates the tables, the seed fills them, the HTTP routes
+ * enforce authentication, and the service keeps each customer's aggregate
+ * limited to its own opportunities.
+ */
+describe('CRM application', () => {
+  function baseUrlOf(app: StandaloneServer): string {
+    return `http://localhost${app.application.publicBasePath}`;
+  }
+
+  async function startCrmApp(): Promise<StandaloneServer> {
+    return trackCloseable(
+      await createInstalledStandaloneServer({
+        viteDevUrl: false,
+        // The authentication plugin rejects cookie-authenticated writes whose
+        // Origin is not the app's public origin, so the test origin is declared
+        // explicitly rather than left to be inferred from the request.
+        env: { APP_PUBLIC_ORIGIN: 'http://localhost' },
+      }),
+    );
+  }
+
+  async function signInCookie(app: StandaloneServer): Promise<string> {
+    const response = await requestApp(
+      app,
+      `${baseUrlOf(app)}/api/auth/sign-in/username`,
+      {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ username: 'nocobase', password: 'admin123' }),
+      },
+    );
+    expect(response.status).toBe(200);
+
+    return response.headers
+      .getSetCookie()
+      .map((header) => header.split(';')[0])
+      .join('; ');
+  }
+
+  async function authed(
+    app: StandaloneServer,
+    cookie: string,
+    path: string,
+    init?: RequestInit,
+  ): Promise<Response> {
+    const origin = 'http://localhost';
+    return requestApp(app, `${baseUrlOf(app)}/api${path}`, {
+      ...init,
+      headers: {
+        cookie,
+        origin,
+        ...(init?.body ? { 'content-type': 'application/json' } : {}),
+        ...init?.headers,
+      },
+    });
+  }
+
+  async function listCustomers(
+    app: StandaloneServer,
+    cookie: string,
+  ): Promise<readonly JsonCustomer[]> {
+    const response = await authed(app, cookie, '/customers');
+    expect(response.status).toBe(200);
+    return (await readJson<{ data: readonly JsonCustomer[] }>(response)).data;
+  }
+
+  async function customerDetail(
+    app: StandaloneServer,
+    cookie: string,
+    id: number,
+  ): Promise<JsonCustomerDetail> {
+    const response = await authed(app, cookie, `/customers/${id}`);
+    expect(response.status).toBe(200);
+    return (await readJson<{ data: JsonCustomerDetail }>(response)).data;
+  }
+
+  it('requires a signed-in session for every CRM collection', async () => {
+    const app = await startCrmApp();
+
+    for (const path of ['/customers', '/contacts', '/opportunities']) {
+      const response = await requestApp(app, `${baseUrlOf(app)}/api${path}`);
+      expect(response.status).toBe(401);
+    }
+  });
+
+  it('seeds two customers and keeps each aggregate limited to its own records', async () => {
+    const app = await startCrmApp();
+    const cookie = await signInCookie(app);
+
+    const customers = await listCustomers(app, cookie);
+    expect(customers).toHaveLength(2);
+
+    const aurora = customers.find((item) => item.name === 'Aurora Robotics');
+    const harborview = customers.find(
+      (item) => item.name === 'Harborview Logistics',
+    );
+    expect(aurora).toBeDefined();
+    expect(harborview).toBeDefined();
+
+    const auroraDetail = await customerDetail(app, cookie, aurora!.id);
+    expect(new Set(auroraDetail.contacts.map((item) => item.name))).toEqual(
+      new Set(['Mia Chen', 'Daniel Park']),
+    );
+    expect(
+      new Set(auroraDetail.opportunities.map((item) => item.name)),
+    ).toEqual(new Set(['Production line retrofit', 'Annual service retainer']));
+    expect(auroraDetail.opportunityTotal).toBe(600000);
+
+    const harborviewDetail = await customerDetail(app, cookie, harborview!.id);
+    expect(harborviewDetail.contacts).toHaveLength(1);
+    expect(harborviewDetail.opportunities).toHaveLength(1);
+    expect(harborviewDetail.opportunities[0]?.customerId).toBe(harborview!.id);
+    expect(harborviewDetail.opportunityTotal).toBe(265000);
+  });
+
+  it('recomputes the aggregate when an amount changes and never mixes customers', async () => {
+    const app = await startCrmApp();
+    const cookie = await signInCookie(app);
+    const customers = await listCustomers(app, cookie);
+    const aurora = customers.find((item) => item.name === 'Aurora Robotics')!;
+    const harborview = customers.find(
+      (item) => item.name === 'Harborview Logistics',
+    )!;
+
+    const detail = await customerDetail(app, cookie, aurora.id);
+    const retrofit = detail.opportunities.find(
+      (item) => item.name === 'Production line retrofit',
+    )!;
+
+    const updated = await authed(app, cookie, `/opportunities/${retrofit.id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({
+        name: retrofit.name,
+        customerId: retrofit.customerId,
+        amount: 500000,
+        stage: 'following',
+      }),
+    });
+    expect(updated.status).toBe(200);
+    await expect(updated.json()).resolves.toMatchObject({
+      data: { id: retrofit.id, amount: 500000 },
+    });
+
+    expect(
+      (await customerDetail(app, cookie, aurora.id)).opportunityTotal,
+    ).toBe(620000);
+    expect(
+      (await customerDetail(app, cookie, harborview.id)).opportunityTotal,
+    ).toBe(265000);
+  });
+
+  it('creates an opportunity for one customer without changing the other', async () => {
+    const app = await startCrmApp();
+    const cookie = await signInCookie(app);
+    const customers = await listCustomers(app, cookie);
+    const aurora = customers.find((item) => item.name === 'Aurora Robotics')!;
+    const harborview = customers.find(
+      (item) => item.name === 'Harborview Logistics',
+    )!;
+
+    const created = await authed(app, cookie, '/opportunities', {
+      method: 'POST',
+      body: JSON.stringify({
+        name: 'Spare parts contract',
+        customerId: aurora.id,
+        amount: 30000,
+        stage: 'following',
+      }),
+    });
+    expect(created.status).toBe(201);
+    const body = await readJson<{ data: JsonOpportunity }>(created);
+    expect(body.data.customerId).toBe(aurora.id);
+
+    expect(
+      (await customerDetail(app, cookie, aurora.id)).opportunityTotal,
+    ).toBe(630000);
+    expect(
+      (await customerDetail(app, cookie, harborview.id)).opportunityTotal,
+    ).toBe(265000);
+  });
+
+  it('filters the opportunity list by stage', async () => {
+    const app = await startCrmApp();
+    const cookie = await signInCookie(app);
+
+    const won = await authed(app, cookie, '/opportunities?stage=won');
+    expect(won.status).toBe(200);
+    const wonData = await readJson<{ data: readonly JsonOpportunity[] }>(won);
+    expect(wonData.data).toHaveLength(1);
+    expect(wonData.data.every((item) => item.stage === 'won')).toBe(true);
+
+    const following = await authed(
+      app,
+      cookie,
+      '/opportunities?stage=following',
+    );
+    const followingData = await readJson<{
+      data: readonly JsonOpportunity[];
+    }>(following);
+    expect(followingData.data).toHaveLength(2);
+    expect(followingData.data.every((item) => item.stage === 'following')).toBe(
+      true,
+    );
+  });
+
+  it('persists a created customer across a new sign-in', async () => {
+    const app = await startCrmApp();
+    const firstCookie = await signInCookie(app);
+
+    const created = await authed(app, firstCookie, '/customers', {
+      method: 'POST',
+      body: JSON.stringify({ name: 'Northwind Traders' }),
+    });
+    expect(created.status).toBe(201);
+    const createdCustomer = await readJson<{ data: JsonCustomer }>(created);
+
+    const secondCookie = await signInCookie(app);
+    const customers = await listCustomers(app, secondCookie);
+    expect(customers.some((item) => item.id === createdCustomer.data.id)).toBe(
+      true,
+    );
+  });
+
+  it('rejects invalid input and reports missing records', async () => {
+    const app = await startCrmApp();
+    const cookie = await signInCookie(app);
+
+    const blankName = await authed(app, cookie, '/customers', {
+      method: 'POST',
+      body: JSON.stringify({ name: '   ' }),
+    });
+    expect(blankName.status).toBe(422);
+    await expect(blankName.json()).resolves.toMatchObject({
+      code: 'VALIDATION',
+      field: 'name',
+    });
+    const negativeAmount = await authed(app, cookie, '/opportunities', {
+      method: 'POST',
+      body: JSON.stringify({
+        name: 'Negative deal',
+        customerId: 1,
+        amount: -1,
+        stage: 'following',
+      }),
+    });
+    expect(negativeAmount.status).toBe(422);
+    await expect(negativeAmount.json()).resolves.toMatchObject({
+      code: 'VALIDATION',
+      field: 'amount',
+    });
+
+    const badStage = await authed(app, cookie, '/opportunities', {
+      method: 'POST',
+      body: JSON.stringify({
+        name: 'Unknown stage',
+        customerId: 1,
+        amount: 100,
+        stage: 'maybe',
+      }),
+    });
+    expect(badStage.status).toBe(422);
+    await expect(badStage.json()).resolves.toMatchObject({
+      code: 'VALIDATION',
+      field: 'stage',
+    });
+
+    const missingCustomer = await authed(app, cookie, '/customers/999999');
+    expect(missingCustomer.status).toBe(404);
+    await expect(missingCustomer.json()).resolves.toMatchObject({
+      code: 'NOT_FOUND',
+    });
+
+    const unknownOwner = await authed(app, cookie, '/opportunities', {
+      method: 'POST',
+      body: JSON.stringify({
+        name: 'Orphan deal',
+        customerId: 999999,
+        amount: 100,
+        stage: 'following',
+      }),
+    });
+    expect(unknownOwner.status).toBe(404);
+    await expect(unknownOwner.json()).resolves.toMatchObject({
+      code: 'NOT_FOUND',
+    });
+  });
+});
+
 async function startStandaloneTestServer(
   app: StandaloneServer,
 ): Promise<string> {
