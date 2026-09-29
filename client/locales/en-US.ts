@@ -130,6 +130,9 @@ const enUS = {
   },
   navigation: {
     home: 'Home',
+    materials: 'Internal materials',
+    materialsAdmin: 'Materials management',
+    materialsAssistant: 'Materials assistant',
     open: 'Open navigation',
     close: 'Close navigation',
     expand: 'Expand navigation',
@@ -155,6 +158,57 @@ const enUS = {
   datePicker: {
     placeholder: 'Pick a date',
     rangePlaceholder: 'Pick a date range',
+  },
+  materials: {
+    title: 'Internal materials',
+    description:
+      'Internal reference materials for the service team. Only content you are authorized to read is shown.',
+    assistantLink: 'Open materials assistant',
+    loading: 'Loading materials…',
+    loadFailed: 'Unable to load materials.',
+    retry: 'Retry',
+    empty: 'No materials yet.',
+    admin: {
+      title: 'Materials management',
+      description:
+        'Maintain internal materials. The assistant answers from what is saved here, so an edit takes effect on the next question.',
+      new: 'New material',
+      edit: 'Edit',
+      editTitle: 'Edit material',
+      createTitle: 'New material',
+      formDescription:
+        'Title and body only. Saving updates what the assistant can cite.',
+      titleLabel: 'Title',
+      contentLabel: 'Body',
+      save: 'Save',
+      saving: 'Saving…',
+      cancel: 'Cancel',
+      delete: 'Delete',
+      deleteConfirmTitle: 'Delete this material?',
+      deleteConfirmDescription:
+        'This cannot be undone, and the assistant will stop citing it.',
+      saved: 'Material saved',
+      deleted: 'Material deleted',
+      saveFailed: 'Unable to save the material.',
+      deleteFailed: 'Unable to delete the material.',
+      confidential: 'Supervisor only',
+    },
+    assistant: {
+      title: 'Materials assistant',
+      description:
+        'Answers from the internal materials you are authorized to read, and cites the material it used.',
+      loading: 'Loading AI configuration…',
+      configurationFailed: 'Unable to load the AI configuration.',
+      configurationHint:
+        'Check the connection, the employee permissions, and the AI settings, then reload the page.',
+      noEmployee: 'The materials assistant is not available to this account.',
+      modelHint:
+        'Configure and enable a model in AI settings, then reload the page. You can still read materials manually.',
+      noModel: 'No AI model is configured, so the assistant cannot answer yet.',
+      placeholder: 'Ask about the internal materials…',
+      disclaimer:
+        'Answers are based only on the internal materials you are authorized to read.',
+    },
   },
 };
 

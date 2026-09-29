@@ -1,5 +1,11 @@
 import type { ApplicationServiceProviderConstructor } from '@nocobase/app-server/application';
 
-const serviceProviders: readonly ApplicationServiceProviderConstructor[] = [];
+import AIResourcesProvider from './ai-resources.js';
+import MaterialsProvider from './materials.js';
+
+const serviceProviders: readonly ApplicationServiceProviderConstructor[] = [
+  MaterialsProvider,
+  AIResourcesProvider,
+];
 
 export default serviceProviders;
