@@ -88,6 +88,70 @@ const zhCN: AppResource = {
     title: '开始构建你的应用',
     description: '向 AI 助手描述你的需求，逐步构建页面、数据模型和业务流程。',
   },
+  todos: {
+    title: '待办事项',
+    description: '创建、跟踪并完成你的个人待办。',
+    create: {
+      action: '新建待办',
+      title: '新建待办',
+      success: '待办“{{title}}”已创建。',
+    },
+    edit: {
+      title: '编辑待办',
+      success: '待办“{{title}}”已保存。',
+    },
+    delete: {
+      title: '删除“{{title}}”？',
+      description: '该待办将被永久删除，此操作无法撤销。',
+      action: '删除',
+      success: '待办“{{title}}”已删除。',
+      notFound: '待办“{{title}}”已被删除。',
+    },
+    form: {
+      description: '填写待办标题，如有需要可补充备注。',
+      titleRequired: '请填写标题。',
+      titleTooLong: '标题不能超过 {{max}} 个字符。',
+      notesTooLong: '备注不能超过 {{max}} 个字符。',
+    },
+    fields: {
+      title: '标题',
+      notes: '备注',
+      status: '状态',
+      createdAt: '创建时间',
+    },
+    status: {
+      active: '未完成',
+      completed: '已完成',
+    },
+    filters: {
+      status: '按状态筛选',
+      allStatuses: '全部状态',
+      clear: '清除筛选',
+    },
+    toggle: {
+      completed: '“{{title}}”已标记为已完成。',
+      active: '“{{title}}”已标记为未完成。',
+    },
+    actions: {
+      label: '操作',
+      more: '“{{title}}”的更多操作',
+      edit: '编辑',
+      delete: '删除',
+      markComplete: '标记为已完成',
+      markIncomplete: '标记为未完成',
+    },
+    empty: {
+      title: '暂无待办',
+      description: '创建第一条待办以开始使用。',
+      noResults: '没有符合条件的待办',
+    },
+    error: {
+      title: '无法加载待办',
+      forbidden: '你没有查看这些待办的权限。',
+      requestFailed: '请求失败，请重试。',
+      notFound: '该待办已不存在。',
+    },
+  },
 
   appearance: {
     title: '外观',
@@ -106,6 +170,8 @@ const zhCN: AppResource = {
     save: '保存',
     cancel: '取消',
     confirm: '确认',
+    create: '创建',
+    saving: '正在保存…',
     language: '语言',
   },
   notices: {
@@ -121,6 +187,7 @@ const zhCN: AppResource = {
   },
   navigation: {
     home: '首页',
+    todos: '待办事项',
     open: '打开导航',
     close: '关闭导航',
     expand: '展开导航',

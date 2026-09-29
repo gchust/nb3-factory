@@ -1,4 +1,4 @@
-import { Home } from 'lucide-react';
+import { Home, ListTodo } from 'lucide-react';
 import {
   defineAppRoutes,
   defineSettingsRoutes,
@@ -15,6 +15,33 @@ const appRoutes: AppClientRouteContribution = defineAppRoutes([
     name: 'home',
     navigation: { title: 'navigation.home', icon: Home },
     path: '/',
+  },
+  {
+    // A personal list every signed-in user reaches. `authz: 'skip'` keeps it out of page authorization; this feature
+    // deliberately has no per-user permission differentiation.
+    authz: 'skip',
+    auth: 'required',
+    componentLoader: () => import('./pages/todos/index.js'),
+    name: 'todos',
+    navigation: { title: 'navigation.todos', icon: ListTodo },
+    path: '/todos',
+    children: [
+      {
+        // Create and edit are child routes, so the dialog has a URL and the browser Back button closes it.
+        name: 'todos-new',
+        path: 'new',
+        auth: 'required',
+        authz: 'skip',
+        componentLoader: () => import('./pages/todos/new.js'),
+      },
+      {
+        name: 'todos-edit',
+        path: ':todoId/edit',
+        auth: 'required',
+        authz: 'skip',
+        componentLoader: () => import('./pages/todos/edit.js'),
+      },
+    ],
   },
   {
     auth: 'guest',

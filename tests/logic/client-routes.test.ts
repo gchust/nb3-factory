@@ -91,9 +91,13 @@ describe('app client routes', () => {
     // that requires sign-in adds an entry here, because that is a new grant somebody has to be given.
     const resolved = resolveRoutes();
 
-    // The landing page opted out of page authorization, so it is reachable by every signed-in user.
+    // The landing page opted out of page authorization, so it is reachable by every signed-in user; the personal todo
+    // list and its create/edit overlays do too.
     expect(pageAuthorizations(resolved.routes)).toEqual([
       { name: 'home', authorizedAs: null },
+      { name: 'todos', authorizedAs: null },
+      { name: 'todos-new', authorizedAs: null },
+      { name: 'todos-edit', authorizedAs: null },
     ]);
   });
 });

@@ -95,6 +95,71 @@ const enUS = {
     description:
       'Describe what you need to your AI Agent, then build pages, data models, and business workflows.',
   },
+  todos: {
+    title: 'Todos',
+    description: 'Create, track and complete your personal to-dos.',
+    create: {
+      action: 'New todo',
+      title: 'New todo',
+      success: 'Todo “{{title}}” created.',
+    },
+    edit: {
+      title: 'Edit todo',
+      success: 'Todo “{{title}}” saved.',
+    },
+    delete: {
+      title: 'Delete “{{title}}”?',
+      description:
+        'This todo will be permanently deleted. This cannot be undone.',
+      action: 'Delete',
+      success: 'Todo “{{title}}” deleted.',
+      notFound: 'Todo “{{title}}” was already deleted.',
+    },
+    form: {
+      description: 'Give the todo a title and, if useful, some notes.',
+      titleRequired: 'A title is required.',
+      titleTooLong: 'The title must be at most {{max}} characters.',
+      notesTooLong: 'The notes must be at most {{max}} characters.',
+    },
+    fields: {
+      title: 'Title',
+      notes: 'Notes',
+      status: 'Status',
+      createdAt: 'Created',
+    },
+    status: {
+      active: 'Not completed',
+      completed: 'Completed',
+    },
+    filters: {
+      status: 'Filter by status',
+      allStatuses: 'All statuses',
+      clear: 'Clear filters',
+    },
+    toggle: {
+      completed: '“{{title}}” marked as completed.',
+      active: '“{{title}}” marked as not completed.',
+    },
+    actions: {
+      label: 'Actions',
+      more: 'More actions for “{{title}}”',
+      edit: 'Edit',
+      delete: 'Delete',
+      markComplete: 'Mark as completed',
+      markIncomplete: 'Mark as not completed',
+    },
+    empty: {
+      title: 'No todos yet',
+      description: 'Create your first todo to get started.',
+      noResults: 'No matching todos',
+    },
+    error: {
+      title: 'Unable to load todos',
+      forbidden: 'You do not have permission to view these todos.',
+      requestFailed: 'The request failed. Please try again.',
+      notFound: 'This todo no longer exists.',
+    },
+  },
 
   appearance: {
     title: 'Appearance',
@@ -113,6 +178,8 @@ const enUS = {
     save: 'Save',
     cancel: 'Cancel',
     confirm: 'Confirm',
+    create: 'Create',
+    saving: 'Saving…',
     language: 'Language',
   },
   notices: {
@@ -130,6 +197,7 @@ const enUS = {
   },
   navigation: {
     home: 'Home',
+    todos: 'Todos',
     open: 'Open navigation',
     close: 'Close navigation',
     expand: 'Expand navigation',
