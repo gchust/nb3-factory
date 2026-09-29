@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "inputHash": "7f9ddf9fbbd0bb800acc190eebed26e039b02170f1e5802d0ed53e531632c8b2",
+  "inputHash": "b76b5c40bdf6433bafd48965c2baa64d6cd7e2eece877b0d706da7df4fdef3f8",
   "findings": [
     {
       "id": "460:36434284393:1:F2",
@@ -2132,6 +2132,381 @@
         }
       ],
       "fingerprint": "6ef074db9fe80a81f401b6a1e43188078c947909c6c3fb17f402fa7638ff84b0"
+    },
+    {
+      "id": "475:36498925234:1:F2",
+      "report": "475:36498925234:1",
+      "issue": 475,
+      "taskTitle": "内部资料阅读与临时共享",
+      "appVersion": "1.0.0-beta.50",
+      "appTemplate": "@nocobase/app-template-default",
+      "finding": {
+        "id": "F2",
+        "kind": "misleading",
+        "owner": "documentation",
+        "confidence": "confirmed",
+        "severity": "major",
+        "status": "open",
+        "title": "种子相对导入示例使用 .js，与 @nocobase/db 原生源文件加载器矛盾",
+        "claimed": "references/code-and-seeds.md 示例 `import { engineer } from '../../seed-data/permission-sets.js'`，同页另称应导入 `.ts`，暗示照做即可运行。",
+        "observed": "冻结种子使用 `'../../seed-data/permission-sets.ts'`；@nocobase/db 的 importTaskDefinition 直接原生 import 源文件，找不到 .js 时抛 ERR_MODULE_NOT_FOUND，verify-3 中 3 个 app-server 测试全部失败。",
+        "detail": "示例的相对说明符与同一份文档的散文说明以及框架加载器行为三者不一致。",
+        "impact": "Agent 按指引写出必然失败的种子，消耗一轮修复并使安装流程中断。",
+        "suggestedChange": "把示例改为 `.ts`（或说明运行器对源文件的解析规则），并同步排查其余 `.js` 相对导入示例（如 permission-sets.ts 内对 server/… 的导入）。",
+        "evidence": [
+          "E6",
+          "E13",
+          "E18",
+          "E19"
+        ],
+        "diagnosis": {
+          "category": "guidance-gap",
+          "trigger": "按 code-and-seeds.md 写 seed 相对导入 .js",
+          "expected": "种子加载成功",
+          "actual": "ERR_MODULE_NOT_FOUND，3 个 app-server 测试失败",
+          "workaround": "改为 .ts 相对说明符",
+          "acceptance": "seed 与 app-server 测试通过"
+        }
+      },
+      "targets": [
+        "@nocobase/db",
+        "app/.agents/skills/nocobase-app-plugin-authorization"
+      ],
+      "paths": [
+        ".agents/skills/nocobase-app-plugin-authorization/references/code-and-seeds.md",
+        "packages/@nocobase/db/dist/src/migration/internal/task-loader.js"
+      ],
+      "evidence": [
+        {
+          "id": "E6",
+          "kind": "skill",
+          "path": "app/.agents/skills/nocobase-app-plugin-authorization/references/code-and-seeds.md",
+          "observation": "种子示例 import { engineer } from '../../seed-data/permission-sets.js' 使用 .js 相对说明符。",
+          "lines": [
+            66,
+            69
+          ],
+          "excerpt": "```ts\nimport { defineSeed } from '@nocobase/db';\nimport { encodeAuthorizationTitle } from '@nocobase/authorization/core';\nimport { engineer } from '../../seed-data/permission-sets.js';",
+          "sha256": "6815f18c10d1043383aac7d605c8195aed12a7ee34729aade698746f92eebe1c"
+        },
+        {
+          "id": "E13",
+          "kind": "code",
+          "path": "packages/@nocobase/db/dist/src/migration/internal/task-loader.js",
+          "observation": "importTaskDefinition 用原生 import 加载源文件；isTaskFile 按扩展名挑选任务文件。",
+          "lines": [
+            47,
+            62
+          ],
+          "excerpt": "export function isTaskFile(fileName, extensions) {\n    if (fileName.startsWith('.') || fileName.endsWith('.d.ts')) {\n        return false;\n    }\n    return extensions.has(extname(fileName));\n}\nexport function taskNameFromFileName(fileName) {\n    return basename(fileName, extname(fileName));\n}\n/** The mtime query keeps a re-read after an edit from serving a cached module. */\nexport async function importTaskDefinition(filePath, mtimeMs) {\n    const url = pathToFileURL(filePath);\n    url.searchParams.set('mtime', String(Math.trunc(mtimeMs)));\n    const module = await import(__rewriteRelativeImportExtension(url.href));\n    return module.default;\n}",
+          "sha256": "4f27b0ccdcd61d466752932a2fac4068ec33efe948aa40a22187fdadc5b438a3"
+        },
+        {
+          "id": "E18",
+          "kind": "log",
+          "path": "artifacts/verify-3.log",
+          "observation": "种子加载 permission-sets.js 报 ERR_MODULE_NOT_FOUND，3 个 app-server 测试失败。",
+          "lines": [
+            743,
+            765
+          ],
+          "excerpt": "\u001b[31m\u001b[1mAppDatabaseTaskError\u001b[22m: Database seeds failed for connection \"main\": Cannot find module '/home/runner/work/nb3-factory/nb3-factory/workspace/database/seed-data/permission-sets.js' imported from /home/runner/work/nb3-factory/nb3-factory/workspace/database/main/seeds/202609290002_library_permission_sets.ts\u001b[39m\n\u001b[90m \u001b[2m❯\u001b[22m executeAppDatabasePlan node_modules/.pnpm/@nocobase+app-server@1.0.0-beta.29_@nocobase+caching@0.1.0-beta.2_@nocobase+db-sqlite@0_0a3970571c532147283aa9cfa818f27c/node_modules/@nocobase/app-server/src/database/tasks.ts:\u001b[2m224:12\u001b[22m\u001b[39m\n\u001b[90m \u001b[2m❯\u001b[22m DatabaseProvider.boot node_modules/.pnpm/@nocobase+app-server@1.0.0-beta.29_@nocobase+caching@0.1.0-beta.2_@nocobase+db-sqlite@0_0a3970571c532147283aa9cfa818f27c/node_modules/@nocobase/app-server/src/database/provider.ts:\u001b[2m79:19\u001b[22m\u001b[39m\n\u001b[90m \u001b[2m❯\u001b[22m ServiceProviderRegistry.runPhase node_modules/.pnpm/@nocobase+service-provider@0.0.2-beta.1/node_modules/@nocobase/service-provider/src/registry.ts:\u001b[2m96:8\u001b[22m\u001b[39m\n\u001b[90m \u001b[2m❯\u001b[22m ServiceProviderRegistry.bootAll node_modules/.pnpm/@nocobase+service-provider@0.0.2-beta.1/node_modules/@nocobase/service-provider/src/registry.ts:\u001b[2m63:4\u001b[22m\u001b[39m\n\u001b[90m \u001b[2m❯\u001b[22m Application.startServiceProviders node_modules/.pnpm/@nocobase+app-server@1.0.0-beta.29_@nocobase+caching@0.1.0-beta.2_@nocobase+db-sqlite@0_0a3970571c532147283aa9cfa818f27c/node_modules/@nocobase/app-server/src/application/index.ts:\u001b[2m261:4\u001b[22m\u001b[39m\n\u001b[90m \u001b[2m❯\u001b[22m startApplicationInScope node_modules/.pnpm/@nocobase+app-server@1.0.0-beta.29_@nocobase+caching@0.1.0-beta.2_@nocobase+db-sqlite@0_0a3970571c532147283aa9cfa818f27c/node_modules/@nocobase/app-server/src/runtime/application.ts:\u001b[2m15:2\u001b[22m\u001b[39m\n\u001b[90m \u001b[2m❯\u001b[22m createStandaloneServer node_modules/.pnpm/@nocobase+app-server@1.0.0-beta.29_@nocobase+caching@0.1.0-beta.2_@nocobase+db-sqlite@0_0a3970571c532147283aa9cfa818f27c/node_modules/@nocobase/app-server/src/node/runtime.ts:\u001b[2m89:24\u001b[22m\u001b[39m\n\u001b[36m \u001b[2m❯\u001b[22m tests/logic/app-server.test.ts:\u001b[2m652:7\u001b[22m\u001b[39m\n    \u001b[90m650|\u001b[39m     \u001b[34mwriteFileSync\u001b[39m(path\u001b[33m.\u001b[39m\u001b[34mjoin\u001b[39m(clientDir\u001b[33m,\u001b[39m \u001b[32m'index.html'\u001b[39m)\u001b[33m,\u001b[39m spaContent)\u001b[33m;\u001b[39m\n    \u001b[90m651|\u001b[39m     \u001b[35mconst\u001b[39m app \u001b[33m=\u001b[39m \u001b[34mtrackCloseable\u001b[39m(\n    \u001b[90m652|\u001b[39m       \u001b[35mawait\u001b[39m \u001b[34mcreateInstalledStandaloneServer\u001b[39m({\n    \u001b[90m   |\u001b[39m       \u001b[31m^\u001b[39m\n    \u001b[90m653|\u001b[39m         viteDevUrl\u001b[33m:\u001b[39m \u001b[35mfalse\u001b[39m\u001b[33m,\u001b[39m\n    \u001b[90m654|\u001b[39m         env\u001b[33m:\u001b[39m { \u001b[33mAPP_CONFIG_FILE\u001b[39m\u001b[33m:\u001b[39m \u001b[32m'config.example.yml'\u001b[39m }\u001b[33m,\u001b[39m\n\n\u001b[31m\u001b[1mCaused by: Error\u001b[22m: Cannot find module '/home/runner/work/nb3-factory/nb3-factory/workspace/database/seed-data/permission-sets.js' imported from /home/runner/work/nb3-factory/nb3-factory/workspace/database/main/seeds/202609290002_library_permission_sets.ts\u001b[39m\n\u001b[31m\u001b[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯\u001b[22m\u001b[39m\n\u001b[31m\u001b[1mSerialized Error:\u001b[22m\u001b[39m \u001b[90m{ code: 'ERR_MODULE_NOT_FOUND', url: 'file:///home/runner/work/nb3-factory/nb3-factory/workspace/database/seed-data/permission-sets.js' }\u001b[39m\n\u001b[31m\u001b[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯\u001b[22m\u001b[39m\n\n\u001b[41m\u001b[1m FAIL \u001b[22m\u001b[49m tests/logic/app-server.test.ts\u001b[2m > \u001b[22mapp server\u001b[2m > \u001b[22mserves Users and API Keys with the application authentication and permissions\n\u001b[31m\u001b[1mAppDatabaseTaskError\u001b[22m: Database seeds failed for connection \"main\": Cannot find module '/home/runner/work/nb3-factory/nb3-factory/workspace/database/seed-data/permission-sets.js' imported from /home/runner/work/nb3-factory/nb3-factory/workspace/database/main/seeds/202609290002_library_permission_sets.ts\u001b[39m",
+          "sha256": "d352ecbab0d55ba10719a2bf0b2275e76fbc60fe44ce8f995c210ba27db7a003"
+        },
+        {
+          "id": "E19",
+          "kind": "code",
+          "path": "app/database/main/seeds/202609290002_library_permission_sets.ts",
+          "observation": "冻结种子使用 '../../seed-data/permission-sets.ts' 相对说明符，与共享示例的 .js 相反。",
+          "lines": [
+            1,
+            3
+          ],
+          "excerpt": "import { defineSeed } from '@nocobase/db';\nimport { encodeAuthorizationTitle } from '@nocobase/authorization/core';\nimport { librarian, reader } from '../../seed-data/permission-sets.ts';",
+          "sha256": "5bbe5d939dc8f038c115d60aec453577749e281b57aebb1c6616626d2233ec8b"
+        }
+      ],
+      "fingerprint": "f07fdfbd75e3d36c4ac5ebe90b1badfca2af4dab45b1c91c37cd410ca48e0e83"
+    },
+    {
+      "id": "475:36498925234:1:F3",
+      "report": "475:36498925234:1",
+      "issue": 475,
+      "taskTitle": "内部资料阅读与临时共享",
+      "appVersion": "1.0.0-beta.50",
+      "appTemplate": "@nocobase/app-template-default",
+      "finding": {
+        "id": "F3",
+        "kind": "improvement",
+        "owner": "plugin",
+        "confidence": "confirmed",
+        "severity": "minor",
+        "status": "resolved",
+        "title": "records 选择只接受字符串 id，整数主键定向共享 500",
+        "detail": "parseRecordSelection 要求所有 id 为非空字符串；仓储过滤器不会把字符串 id 转成 integer，materials 用 increments 整数主键时 `id in (\"2\")` 触发 INVALID_FILTER 并 500。",
+        "impact": "管理员按 UI 选择单条记录共享会失败；须改集合主键类型才能使用定向共享。",
+        "suggestedChange": "在 authorization/sharing Skill 中明确 records 选择只接受字符串 id 并建议业务集合用字符串 uuid 主键；框架侧可考虑对可安全转换的整数 id 做归一化，或在路由层返回 4xx 而非 500。",
+        "evidence": [
+          "E1",
+          "E14",
+          "E15",
+          "E25",
+          "E129"
+        ],
+        "diagnosis": {
+          "category": "usability-improvement",
+          "trigger": "整数自增主键集合上使用 selection.records([id])",
+          "expected": "共享创建成功",
+          "actual": "RepositoryError: Filter value is invalid for Field \"id\" of type \"integer\"（500）",
+          "workaround": "主键改 string uuid",
+          "acceptance": "定向共享/撤销/限制均通过"
+        }
+      },
+      "targets": [
+        "@nocobase/authorization",
+        "@nocobase/db",
+        "app/.agents/skills/nocobase-db"
+      ],
+      "paths": [
+        ".agents/skills/nocobase-db/SKILL.md",
+        "packages/@nocobase/authorization/dist/core/selection.js",
+        "packages/@nocobase/db/dist/src/repository/repository.js"
+      ],
+      "evidence": [
+        {
+          "id": "E1",
+          "kind": "code",
+          "path": "packages/@nocobase/authorization/dist/core/selection.js",
+          "observation": "parseRecordSelection 只接受非空字符串 id 的 records 选择；other 选择被拒绝。",
+          "lines": [
+            9,
+            24
+          ],
+          "excerpt": "export function parseRecordSelection(value) {\n    if (typeof value === 'object' && value !== null && !Array.isArray(value)) {\n        const type = Reflect.get(value, 'type');\n        if (type === 'all')\n            return selection.all();\n        const ids = Reflect.get(value, 'ids');\n        if (type === 'records' &&\n            Array.isArray(ids) &&\n            ids.every((id) => typeof id === 'string' && id !== ''))\n            return selection.records(ids);\n        const key = Reflect.get(value, 'key');\n        if (type === 'recordAccess' && typeof key === 'string' && key)\n            return selection.recordAccess(key, Reflect.get(value, 'params'));\n    }\n    throw new TypeError('Invalid record selection');\n}",
+          "sha256": "1a4f0b0f5a61e724c856f23703dadb6fa2cb8d245c2669d4f3f36f1cc4e66088"
+        },
+        {
+          "id": "E14",
+          "kind": "code",
+          "path": "packages/@nocobase/db/dist/src/repository/repository.js",
+          "observation": "过滤器值类型不符时抛 INVALID_FILTER，例如 integer 字段收到字符串。",
+          "lines": [
+            1150,
+            1160
+          ],
+          "excerpt": "            case 'datetimeTz':\n                return ((value === null && ['$eq', '$ne'].includes(operator)) ||\n                    validDateLiteral(field.type, value));\n            default:\n                return false;\n        }\n    })();\n    if (!valid) {\n        invalid('INVALID_FILTER', `Filter value is invalid for Field \"${field.name}\" of type \"${field.type}\".`, { field: field.name, path: [...path, 'value'] });\n    }\n}",
+          "sha256": "31b67e0dcdfd222b6981571d563d9879525a3bf61312ea92a05a269d99c1f311"
+        },
+        {
+          "id": "E15",
+          "kind": "skill",
+          "path": "app/.agents/skills/nocobase-db/SKILL.md",
+          "observation": "迁移示例 collection.increments('id') 使用整数自增主键。",
+          "lines": [
+            86,
+            96
+          ],
+          "excerpt": "const migration: MigrationDefinition = defineMigration({\n  name: '202609020001_create_orders',\n\n  async up({ builder }) {\n    await builder.createCollection('orders', (collection) => {\n      collection.increments('id');\n      collection.string('orderNo', { length: 64, nullable: false });\n      collection.string('status', { length: 32, nullable: false });\n      collection.datetime('createdAt', { nullable: false });\n      collection.unique('orderNo');\n      collection.index('status');",
+          "sha256": "f97c07a45a9d49c1d933ddbceeabcc9afe267b1356a2ded1a3da0dd56b54011c"
+        },
+        {
+          "id": "E25",
+          "kind": "qa",
+          "path": "artifacts/retro.json",
+          "observation": "retro 记录两个已解决 blocker：用户名过短 422 与整数主键定向共享 500。",
+          "lines": [
+            1,
+            1
+          ],
+          "excerpt": "{\"version\":1,\"summary\":\"从空模板补齐内部资料库业务：materials 集合迁移与仅 3 条种子文档、资料员/阅读者两个权限集、发布/保密记录访问与阅读者限制规则、materials HTTP 接口与客户端页面，管理员共享 API 与临时授权。已在全新 SQLite 上跑通迁移与全部种子，并用真实登录账号端到端验证：甲可写自己的文档，乙只读已发布且非保密文档，机密文档对乙封锁，甲的机密权限不受影响，管理员共享后可撤销且乙刷新即失效，停用乙后其在线会话立即 401。同时修复了两处导致验收失败的真实缺陷（用户名过短、整数主键记录共享 500），并让负责人列显示账号名而非 UUID。 修复本轮验证回归：应用种子相对导入改用 .ts 以适配原生种子加载，LibraryProvider 对缺失的授权服务做存在性判断。\",\"blockers\":[{\"phase\":\"运行时验证\",\"title\":\"演示账号用户名过短，Better Auth 拒绝登录\",\"symptom\":\"阅读者账号 `yi`（2 个字符）凭用户名登录返回 422 {\\\"message\\\":\\\"Username is too short\\\",\\\"code\\\":\\\"USERNAME_TOO_SHORT\\\"}；仅邮箱登录可用，导致按账号清单以用户名登录的验收失败。\",\"rootCause\":\"@nocobase/app-plugin-authentication 默认注册 Better Auth username 插件，其 minUsernameLength 默认值为 3；种子里的 `yi` 不满足，服务端在注册的用户名策略处直接拒绝。\",\"resolution\":\"把演示阅读者账号重命名为 `yier`，并同步修改账号种子、权限集分配种子、限制规则种子中的用户名与邮箱引用；`jia` 为 3 字符本就合法。重新登录验证 200。\",\"source\":\"server console + 种子文件\",\"status\":\"resolved\"},{\"phase\":\"授权共享\",\"title\":\"对单条记录共享时后端 500（记录选择要求字符串主键）\",\"symptom\":\"通过 /api/authz/sharing-rules 用 {type:'records', ids:[\\\"<id>\\\"]} 定向共享一条文档时，请求返回 500 Internal Server Error，日志为 RepositoryError: Filter value is invalid for Field \\\"id\\\" of type \\\"integer\\\"。\",\"rootCause\":\"记录选择的 ids 在授权层被强制要求为字符串；而 materials 使用 increments 整数自增主键，仓库过滤真实类型为 integer，id in (\\\"2\\\") 触发类型校验失败。\",\"resolution\":\"按 NocoBase 约定把 materials 主键改成字符串 uuid（string('id',{length:36}).primary()），种子与创建接口用 crypto.randomUUID() 生成 id，服务端 id 校验与客户端类型同步为 string。重新验证定向共享、撤销、机密封锁均正常。\",\"source\":\"server error log + 迁移/种子/路由\",\"status\":\"resolved\"},{\"phase\":\"数据库种子\",\"title\":\"应用种子从原生加载的 TS 里相对导入 .js 模块失败\",\"symptom\":\"app-server 测试启动全新 Default 时 Database seeds failed for connection \\\"main\\\": Cannot find module \\\".../database/seed-data/permission-sets.js\\\" imported from \\\".../database/main/seeds/202609290002_library_permission_sets.ts\\\"，3 个用例失败。\",\"rootCause\":\"@nocobase/db 的种子/迁移加载器用原生 Node import() 直接执行源码 .ts；Node 24 的类型剥离不会把相对说明符里的 .js 解析到同名 .ts，deploy/tsx 之外没有这个回退，所以 server 源码里惯用的 .js 后缀在种子链路失效。\",\"resolution\":\"把 database/ 下相对的 .js 导入改为 .ts（database/main/seeds/202609290002、202609290003 与 database/seed-data/permission-sets）。tsconfig.server.json 已启用 allowImportingTsExtensions + rewriteRelativeImportExtensions，tsc 编译时把 .ts 重写成 .js，已用 scoped emit 验证产物 import 指向 .js。\",\"source\":\"app-server.test.ts 失败堆栈\",\"status\":\"resolved\"},{\"phase\":\"服务提供者\",\"title\":\"应用 provider 无条件解析插件 token，隔离运行时测试启动崩溃\",\"symptom\":\"app server > registers application-owned providers and routes from the runtime 失败：Error: Service \\\"@nocobase/app/authorization\\\" is not registered，位置 server/providers/library.ts:26 boot()。\",\"rootCause\":\"LibraryProvider 作为应用级 service provider 注册进 server/providers/index.ts，boot() 里无条件 resolve authorizationToken；该测试用空插件列表组装 runtime，授权插件（及其 AuthorizationProvider）不存在，于是 boot 抛错。\",\"resolution\":\"boot() 先 container.has(authorizationToken) 判断，缺失时直接返回；真实应用始终注册授权插件，模型照常注册，隔离测试则跳过而不是让启动失败。\",\"source\":\"app-server.test.ts 失败堆栈\",\"status\":\"resolved\"}],\"improvements\":[{\"category\":\"文档\",\"title\":\"授权记录选择强制字符串 id 未在 Skill 中说明\",\"detail\":\"@nocobase/authorization 的 parseRecordSelection 要求 type:'records' 的 ids 全部为非空字符串，且 app-plugin-authorization 的仓储过滤不会把字符串 id 转成整数；但授权 Skill 的分享规则与仓储路由参考没有提示这一点，也没有说明整数自增主键会在定向共享时 500。\",\"suggestedChange\":\"在 nocobase-app-plugin-authorization 的 sharing-rules/repository-routes 参考中加入一节：records 选择只接受字符串 id；新建业务集合默认用字符串 uuid 主键并给出迁移与 createOne 生成 id 的示例。\",\"source\":\"authz 运行时错误\",\"mechanizable\":false},{\"category\":\"模板/种子\",\"title\":\"演示账号用户名需满足 Better Auth 最小长度\",\"detail\":\"Better Auth username 插件默认 minUsernameLength=3，种子或文档若使用 1-2 个字符的演示用户名，会在登录时以 USERNAME_TOO_SHORT 失败，而创建阶段不会有任何提示。\",\"suggestedChange\":\"在账号创建/演示账号相关参考中明确最小用户名长度，或让种子工具在写入前校验长度并按工厂约束报错。\",\"source\":\"登录失败 422\",\"mechanizable\":true},{\"category\":\"前端规范\",\"title\":\"加载数据的 effect 触发 react-hooks/set-state-in-effect\",\"detail\":\"在 useEffect 中直接调用一个会同步 setState 的 load() 函数会命中 eslint 的 react-hooks/set-state-in-effect 错误；本仓库模板页多用 mock 数据，没有现成的加载模式可借鉴。\",\"suggestedChange\":\"在应用开发的前端参考里给出一个符合该规则的请求模式：effect 内使用 api.request(...).then/.catch 回调设置状态并带 active 取消标志，而不是在 effect 中调用同步 setState 的函数。\",\"source\":\"eslint --max-warnings 0\",\"mechanizable\":false},{\"category\":\"模板/数据库\",\"title\":\"原生加载的种子/迁移需用 .ts 后缀导入应用源码\",\"detail\":\"pnpm dev 经 tsx 运行会回退 .js→.ts，但 app-server 的 standalone 测试与 @nocobase/db 加载器用原生 Node import() 执行源码，不会回退；文档中的 seed-data 示例统一写 .js，照抄后测试才在 3 个用例上暴露 ERR_MODULE_NOT_FOUND。\",\"suggestedChange\":\"在 nocobase-db / app-plugin-authorization 的 code-and-seeds 参考中说明：跨文件导入应用源码时在源文件写 .ts 后缀，依赖 allowImportingTsExtensions + rewriteRelativeImportExtensions 由 tsc 产出 .js；或让测试运行器为动态种子加载注册 tsx 解析器。\",\"source\":\"ERR_MODULE_NOT_FOUND\",\"mechanizable\":true}]}",
+          "sha256": "3c013e339c286baa3c2ef5b3d9adeef2e2fbe6e5b44daea52fb6c1e9c535620c"
+        },
+        {
+          "id": "E129",
+          "kind": "log",
+          "path": "artifacts/agent-history/agent-repair-2.jsonl/part-0037.txt",
+          "observation": "原始日志错误信号分诊（agent-repair-2.jsonl）：201 {\"data\":{\"key\":\"share-draft-to-yier\",\"resource\":{\"type\":\"composite\",\"id\":\"library.materials\"},\"actions\":[{\"action\":\"view\",\"scopeKey\":\"materials\",\"selection\":{\"type\":\"records\",\"ids\":[\"2\"]}}],\"title\":\"临时共享草稿\",\"subjects",
+          "lines": [
+            2347,
+            2349
+          ],
+          "excerpt": "{\"type\":\"tool_execution_end\",\"toolCallId\":\"call_00_KLEyiFJIwBbxqfVczd6v8818\",\"toolName\":\"bash\",\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"201\\n{\\\"data\\\":{\\\"key\\\":\\\"share-draft-to-yier\\\",\\\"resource\\\":{\\\"type\\\":\\\"composite\\\",\\\"id\\\":\\\"library.materials\\\"},\\\"actions\\\":[{\\\"action\\\":\\\"view\\\",\\\"scopeKey\\\":\\\"materials\\\",\\\"selection\\\":{\\\"type\\\":\\\"records\\\",\\\"ids\\\":[\\\"2\\\"]}}],\\\"title\\\":\\\"临时共享草稿\\\",\\\"subjects\\\":[{\\\"type\\\":\\\"user\\\",\\\"id\\\":\\\"675cfb22-301e-4033-b430-fcf8e9c400a4\\\"}]}}\\n=== yier list after share:\\nTraceback (most recent call last):\\n  File \\\"<string>\\\", line 1, in <module>\\n  File \\\"/usr/lib/python3.12/json/__init__.py\\\", line 293, in load\\n    return loads(fp.read(),\\n           ^^^^^^^^^^^^^^^^\\n  File \\\"/usr/lib/python3.12/json/__init__.py\\\", line 346, in loads\\n    return _default_decoder.decode(s)\\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^\\n  File \\\"/usr/lib/python3.12/json/decoder.py\\\", line 337, in decode\\n    obj, end = self.raw_decode(s, idx=_w(s, 0).end())\\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\\n  File \\\"/usr/lib/python3.12/json/decoder.py\\\", line 355, in raw_decode\\n    raise JSONDecodeError(\\\"Expecting value\\\", s, err.value) from None\\njson.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char 0)\\n\\n\\nCommand exited with code 1\"}],\"details\":{}},\"isError\":true}\n{\"type\":\"message_start\",\"message\":{\"role\":\"toolResult\",\"toolCallId\":\"call_00_KLEyiFJIwBbxqfVczd6v8818\",\"toolName\":\"bash\",\"content\":[{\"type\":\"text\",\"text\":\"201\\n{\\\"data\\\":{\\\"key\\\":\\\"share-draft-to-yier\\\",\\\"resource\\\":{\\\"type\\\":\\\"composite\\\",\\\"id\\\":\\\"library.materials\\\"},\\\"actions\\\":[{\\\"action\\\":\\\"view\\\",\\\"scopeKey\\\":\\\"materials\\\",\\\"selection\\\":{\\\"type\\\":\\\"records\\\",\\\"ids\\\":[\\\"2\\\"]}}],\\\"title\\\":\\\"临时共享草稿\\\",\\\"subjects\\\":[{\\\"type\\\":\\\"user\\\",\\\"id\\\":\\\"675cfb22-301e-4033-b430-fcf8e9c400a4\\\"}]}}\\n=== yier list after share:\\nTraceback (most recent call last):\\n  File \\\"<string>\\\", line 1, in <module>\\n  File \\\"/usr/lib/python3.12/json/__init__.py\\\", line 293, in load\\n    return loads(fp.read(),\\n           ^^^^^^^^^^^^^^^^\\n  File \\\"/usr/lib/python3.12/json/__init__.py\\\", line 346, in loads\\n    return _default_decoder.decode(s)\\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^\\n  File \\\"/usr/lib/python3.12/json/decoder.py\\\", line 337, in decode\\n    obj, end = self.raw_decode(s, idx=_w(s, 0).end())\\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\\n  File \\\"/usr/lib/python3.12/json/decoder.py\\\", line 355, in raw_decode\\n    raise JSONDecodeError(\\\"Expecting value\\\", s, err.value) from None\\njson.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char 0)\\n\\n\\nCommand exited with code 1\"}],\"details\":{},\"isError\":true,\"timestamp\":1790648482227}}\n{\"type\":\"message_end\",\"message\":{\"role\":\"toolResult\",\"toolCallId\":\"call_00_KLEyiFJIwBbxqfVczd6v8818\",\"toolName\":\"bash\",\"content\":[{\"type\":\"text\",\"text\":\"201\\n{\\\"data\\\":{\\\"key\\\":\\\"share-draft-to-yier\\\",\\\"resource\\\":{\\\"type\\\":\\\"composite\\\",\\\"id\\\":\\\"library.materials\\\"},\\\"actions\\\":[{\\\"action\\\":\\\"view\\\",\\\"scopeKey\\\":\\\"materials\\\",\\\"selection\\\":{\\\"type\\\":\\\"records\\\",\\\"ids\\\":[\\\"2\\\"]}}],\\\"title\\\":\\\"临时共享草稿\\\",\\\"subjects\\\":[{\\\"type\\\":\\\"user\\\",\\\"id\\\":\\\"675cfb22-301e-4033-b430-fcf8e9c400a4\\\"}]}}\\n=== yier list after share:\\nTraceback (most recent call last):\\n  File \\\"<string>\\\", line 1, in <module>\\n  File \\\"/usr/lib/python3.12/json/__init__.py\\\", line 293, in load\\n    return loads(fp.read(),\\n           ^^^^^^^^^^^^^^^^\\n  File \\\"/usr/lib/python3.12/json/__init__.py\\\", line 346, in loads\\n    return _default_decoder.decode(s)\\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^\\n  File \\\"/usr/lib/python3.12/json/decoder.py\\\", line 337, in decode\\n    obj, end = self.raw_decode(s, idx=_w(s, 0).end())\\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\\n  File \\\"/usr/lib/python3.12/json/decoder.py\\\", line 355, in raw_decode\\n    raise JSONDecodeError(\\\"Expecting value\\\", s, err.value) from None\\njson.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char 0)\\n\\n\\nCommand exited with code 1\"}],\"details\":{},\"isError\":true,\"timestamp\":1790648482227}}",
+          "sha256": "5f19116846d3fec3ca91af8011cfaab4ed9c8c07efb0bc5ae2faf893e20bcbb5"
+        }
+      ],
+      "fingerprint": "31ff94d7bf9f55646465bb527afaa5794904a6019e332cdff9cbc426cd42d0fc"
+    },
+    {
+      "id": "475:36498925234:1:F4",
+      "report": "475:36498925234:1",
+      "issue": 475,
+      "taskTitle": "内部资料阅读与临时共享",
+      "appVersion": "1.0.0-beta.50",
+      "appTemplate": "@nocobase/app-template-default",
+      "finding": {
+        "id": "F4",
+        "kind": "improvement",
+        "owner": "documentation",
+        "confidence": "confirmed",
+        "severity": "minor",
+        "status": "resolved",
+        "title": "应用 provider 未守卫可选插件 token，最小运行时启动崩溃",
+        "detail": "services-and-jobs 示例在 register 中直接 resolve(databaseManagerToken)；authorizationToken 由插件提供，未装配该插件时 ServiceContainer.resolve 抛 is not registered，app-server 逻辑测试在 LibraryProvider.boot 失败。",
+        "impact": "应用 provider 无法在未装配授权插件的最小运行时启动，测试红灯。",
+        "suggestedChange": "在应用开发指引中说明：对插件提供的可选 token 先 container.has() 守卫再 resolve；或明确此类 provider 必须容错。",
+        "evidence": [
+          "E26",
+          "E28",
+          "E29",
+          "E17"
+        ],
+        "diagnosis": {
+          "category": "guidance-gap",
+          "trigger": "运行时不装配授权插件但 boot 解析授权 token",
+          "expected": "provider 启动并跳过可选能力",
+          "actual": "Service \"@nocobase/app/authorization\" is not registered",
+          "workaround": "if (!container.has(token)) return",
+          "acceptance": "app-server provider 测试通过"
+        }
+      },
+      "targets": [
+        "@nocobase/service-provider",
+        "app/.agents/skills/nocobase-app-development"
+      ],
+      "paths": [
+        ".agents/skills/nocobase-app-development/references/migrations.md",
+        ".agents/skills/nocobase-app-development/references/services-and-jobs.md",
+        "packages/@nocobase/service-provider/dist/container.js"
+      ],
+      "evidence": [
+        {
+          "id": "E26",
+          "kind": "code",
+          "path": "packages/@nocobase/service-provider/dist/container.js",
+          "observation": "resolve 在 token 未注册时抛 Service \"...\" is not registered；has 用于可选性判断。",
+          "lines": [
+            20,
+            27
+          ],
+          "excerpt": "    has(token) {\n        return this.bindings.has(token);\n    }\n    resolve(token) {\n        const binding = this.bindings.get(token);\n        if (!binding) {\n            throw new Error(`Service \"${token.name}\" is not registered.`);\n        }",
+          "sha256": "69dafbced91dd305a59e368eb04592a9aeecd8052415849babafb879363e07ca"
+        },
+        {
+          "id": "E28",
+          "kind": "skill",
+          "path": "app/.agents/skills/nocobase-app-development/references/services-and-jobs.md",
+          "observation": "provider register 中解析 token 并注册单例；把 provider 加进 providers/index。",
+          "lines": [
+            29,
+            43
+          ],
+          "excerpt": "export default class OrderProvider extends ServiceProvider<Application> {\n  public readonly name: string = 'app/order-provider';\n\n  public override register(): void {\n    this.app.container.singleton(orderServiceToken, () => {\n      const database = this.app.container.resolve(databaseManagerToken);\n      return createOrderService(database);\n    });\n  }\n}\n```\n\nAdd the provider to the array in `server/providers/index.ts` and export its token from there so routes can import it.\n\nResolve it where you need it:",
+          "sha256": "615d7fb1fa87eae848a31a6185e5318b06f8675714e8e97336a9b6993d57d63f"
+        },
+        {
+          "id": "E29",
+          "kind": "log",
+          "path": "artifacts/verify-3.log",
+          "observation": "LibraryProvider.boot 解析未注册的 authorizationToken，app-server 测试报 Service not registered。",
+          "lines": [
+            793,
+            793
+          ],
+          "excerpt": "::error file=/home/runner/work/nb3-factory/nb3-factory/workspace/server/providers/library.ts,title=tests/logic/app-server.test.ts > app server > registers application-owned providers and routes from the runtime,line=26,column=38::Error: Service \"@nocobase/app/authorization\" is not registered.%0A ❯ ServiceContainer.resolve node_modules/.pnpm/@nocobase+service-provider@0.0.2-beta.1/node_modules/@nocobase/service-provider/src/container.ts:50:12%0A ❯ LibraryProvider.boot server/providers/library.ts:26:38%0A ❯ node_modules/.pnpm/@nocobase+service-provider@0.0.2-beta.1/node_modules/@nocobase/service-provider/src/registry.ts:63:68%0A ❯ ServiceProviderRegistry.runPhase node_modules/.pnpm/@nocobase+service-provider@0.0.2-beta.1/node_modules/@nocobase/service-provider/src/registry.ts:96:14%0A ❯ ServiceProviderRegistry.bootAll node_modules/.pnpm/@nocobase+service-provider@0.0.2-beta.1/node_modules/@nocobase/service-provider/src/registry.ts:63:4%0A ❯ Application.startServiceProviders node_modules/.pnpm/@nocobase+app-server@1.0.0-beta.29_@nocobase+caching@0.1.0-beta.2_@nocobase+db-sqlite@0_0a3970571c532147283aa9cfa818f27c/node_modules/@nocobase/app-server/src/application/index.ts:261:4%0A ❯ tests/logic/app-server.test.ts:362:5%0A%0A",
+          "sha256": "d352ecbab0d55ba10719a2bf0b2275e76fbc60fe44ce8f995c210ba27db7a003"
+        },
+        {
+          "id": "E17",
+          "kind": "skill",
+          "path": "app/.agents/skills/nocobase-app-development/references/migrations.md",
+          "observation": "任务运行器只允许 idGeneratorToken；服务须在 provider 注册后即可用，不依赖 boot/start。",
+          "lines": [
+            136,
+            138
+          ],
+          "excerpt": "## Resolving services\n\nMigration callbacks and seed `run` also receive `container`, a `ServiceResolver` exposing `has(token)`, `resolve(token)`, and `resolveIfCreated(token)`. Application task runners wrap the application container with a token-identity allowlist; only `idGeneratorToken` from `@nocobase/app-server/id-generator` is currently allowed. Use `container.resolve(idGeneratorToken).generateString()` for string IDs or `.generate()` for numeric IDs. Disallowed tokens return false from `has` and throw from both resolution methods. The wrapper reuses application singleton instances and exposes no registration methods. Startup and CLI share the application factory in `server/app.ts`, which registers `IdGeneratorProvider`; CLI database commands call the application factory discovered from `rootDir/server/app.ts` (or `.js` in compiled applications), register its providers without booting or starting them, and use its database manager and migration contributions. They dispose the application and runtime scope after execution, including failure and cancellation. Keep the factory free of startup side effects; CLI does not call `app.start()` or trigger autoRun. Services must therefore be usable after provider registration; do not depend on later boot/start hooks. Direct application and database runners accept a `container` option. Without a source container, an allowed token returns false from `has`, undefined from `resolveIfCreated`, and a missing-service error from `resolve`. Standalone `@nocobase/db` runners accept an owner-supplied resolver; the application allowlist is enforced by `app-server`, including direct `createAppMigrator` and `createAppSeeder` calls.",
+          "sha256": "327c8870ee555dc8496892821a6fe7ec05762c8a2a7b71213f8d339757f695c6"
+        }
+      ],
+      "fingerprint": "b8abb547412b81ed5bd5e7e7e24209401ff4e85d49b2e996cf75e98271a06dcb"
+    },
+    {
+      "id": "475:36498925234:1:F5",
+      "report": "475:36498925234:1",
+      "issue": 475,
+      "taskTitle": "内部资料阅读与临时共享",
+      "appVersion": "1.0.0-beta.50",
+      "appTemplate": "@nocobase/app-template-default",
+      "finding": {
+        "id": "F5",
+        "kind": "improvement",
+        "owner": "documentation",
+        "confidence": "confirmed",
+        "severity": "minor",
+        "status": "resolved",
+        "title": "演示账号用户名需满足认证最小长度，创建阶段无校验提示",
+        "detail": "认证 Skill 说明用户名 3–30；种子直接 INSERT user 绕过 Better Auth 校验，yi(2) 直到登录才 422 USERNAME_TOO_SHORT。",
+        "impact": "演示账号无法登录，首轮验收失败。",
+        "suggestedChange": "在账号/种子相关参考中给出用户名长度约束与创建期校验，或提供受校验的账号创建服务示例。",
+        "evidence": [
+          "E23",
+          "E24",
+          "E25"
+        ],
+        "diagnosis": {
+          "category": "guidance-gap",
+          "trigger": "种子写入 2 字符用户名",
+          "expected": "创建即报错或文档明确警告",
+          "actual": "登录返回 422 USERNAME_TOO_SHORT",
+          "workaround": "改名为 yier",
+          "acceptance": "用户名登录 200"
+        }
+      },
+      "targets": [
+        "app/.agents/skills/nocobase-app-plugin-authentication"
+      ],
+      "paths": [
+        ".agents/skills/nocobase-app-plugin-authentication/SKILL.md"
+      ],
+      "evidence": [
+        {
+          "id": "E23",
+          "kind": "skill",
+          "path": "app/.agents/skills/nocobase-app-plugin-authentication/SKILL.md",
+          "observation": "用户名 3–30 个字母/数字/下划线/点，邮箱合法，均小写存储。",
+          "lines": [
+            140,
+            140
+          ],
+          "excerpt": "Before the first seed run, set `users.initialAdmin.username`, `users.initialAdmin.email` and `users.initialAdmin.password` in application configuration to customize the bootstrap account. Omitting the entire node preserves `nocobase` / `admin@nocobase.com` / `admin123`; an explicit node requires a nonempty password and defaults the username to `nocobase` and the email to `admin@nocobase.com`. Usernames contain 3–30 letters, digits, underscores or dots, emails must be valid addresses, and both are stored lowercase. Initialization only runs when the user table is empty, hashes the password and grants the newly created account root permission through the authorization plugin. After initialization, configuration changes do not reset accounts or rerun the recorded seeds. The root permission seed selects the administrator by the same configured username. Use the user administration service for subsequent account changes. Do not edit historical seeds or add a competing administrator seed.",
+          "sha256": "a6f9b77f7992abe85dab3da3938e47061f68ee14b2b88c5412535c1fc66204a3"
+        },
+        {
+          "id": "E24",
+          "kind": "code",
+          "path": "app/database/main/seeds/202609290001_library_accounts.ts",
+          "observation": "演示账号直接插入 user/account 行；注释说明用户名至少 3 字符。",
+          "lines": [
+            12,
+            17
+          ],
+          "excerpt": "const DEMO_PASSWORD=[REDACTED]';\n\nconst ACCOUNTS = [\n  { username: 'jia', name: '资料员甲', email: 'jia@example.com' },\n  { username: 'yier', name: '阅读者乙', email: 'yier@example.com' },\n] as const;",
+          "sha256": "b0f7007952104d817a6996200a4b6bd97c0a393e89029c6d3a614f3d99a2a7da"
+        },
+        {
+          "id": "E25",
+          "kind": "qa",
+          "path": "artifacts/retro.json",
+          "observation": "retro 记录两个已解决 blocker：用户名过短 422 与整数主键定向共享 500。",
+          "lines": [
+            1,
+            1
+          ],
+          "excerpt": "{\"version\":1,\"summary\":\"从空模板补齐内部资料库业务：materials 集合迁移与仅 3 条种子文档、资料员/阅读者两个权限集、发布/保密记录访问与阅读者限制规则、materials HTTP 接口与客户端页面，管理员共享 API 与临时授权。已在全新 SQLite 上跑通迁移与全部种子，并用真实登录账号端到端验证：甲可写自己的文档，乙只读已发布且非保密文档，机密文档对乙封锁，甲的机密权限不受影响，管理员共享后可撤销且乙刷新即失效，停用乙后其在线会话立即 401。同时修复了两处导致验收失败的真实缺陷（用户名过短、整数主键记录共享 500），并让负责人列显示账号名而非 UUID。 修复本轮验证回归：应用种子相对导入改用 .ts 以适配原生种子加载，LibraryProvider 对缺失的授权服务做存在性判断。\",\"blockers\":[{\"phase\":\"运行时验证\",\"title\":\"演示账号用户名过短，Better Auth 拒绝登录\",\"symptom\":\"阅读者账号 `yi`（2 个字符）凭用户名登录返回 422 {\\\"message\\\":\\\"Username is too short\\\",\\\"code\\\":\\\"USERNAME_TOO_SHORT\\\"}；仅邮箱登录可用，导致按账号清单以用户名登录的验收失败。\",\"rootCause\":\"@nocobase/app-plugin-authentication 默认注册 Better Auth username 插件，其 minUsernameLength 默认值为 3；种子里的 `yi` 不满足，服务端在注册的用户名策略处直接拒绝。\",\"resolution\":\"把演示阅读者账号重命名为 `yier`，并同步修改账号种子、权限集分配种子、限制规则种子中的用户名与邮箱引用；`jia` 为 3 字符本就合法。重新登录验证 200。\",\"source\":\"server console + 种子文件\",\"status\":\"resolved\"},{\"phase\":\"授权共享\",\"title\":\"对单条记录共享时后端 500（记录选择要求字符串主键）\",\"symptom\":\"通过 /api/authz/sharing-rules 用 {type:'records', ids:[\\\"<id>\\\"]} 定向共享一条文档时，请求返回 500 Internal Server Error，日志为 RepositoryError: Filter value is invalid for Field \\\"id\\\" of type \\\"integer\\\"。\",\"rootCause\":\"记录选择的 ids 在授权层被强制要求为字符串；而 materials 使用 increments 整数自增主键，仓库过滤真实类型为 integer，id in (\\\"2\\\") 触发类型校验失败。\",\"resolution\":\"按 NocoBase 约定把 materials 主键改成字符串 uuid（string('id',{length:36}).primary()），种子与创建接口用 crypto.randomUUID() 生成 id，服务端 id 校验与客户端类型同步为 string。重新验证定向共享、撤销、机密封锁均正常。\",\"source\":\"server error log + 迁移/种子/路由\",\"status\":\"resolved\"},{\"phase\":\"数据库种子\",\"title\":\"应用种子从原生加载的 TS 里相对导入 .js 模块失败\",\"symptom\":\"app-server 测试启动全新 Default 时 Database seeds failed for connection \\\"main\\\": Cannot find module \\\".../database/seed-data/permission-sets.js\\\" imported from \\\".../database/main/seeds/202609290002_library_permission_sets.ts\\\"，3 个用例失败。\",\"rootCause\":\"@nocobase/db 的种子/迁移加载器用原生 Node import() 直接执行源码 .ts；Node 24 的类型剥离不会把相对说明符里的 .js 解析到同名 .ts，deploy/tsx 之外没有这个回退，所以 server 源码里惯用的 .js 后缀在种子链路失效。\",\"resolution\":\"把 database/ 下相对的 .js 导入改为 .ts（database/main/seeds/202609290002、202609290003 与 database/seed-data/permission-sets）。tsconfig.server.json 已启用 allowImportingTsExtensions + rewriteRelativeImportExtensions，tsc 编译时把 .ts 重写成 .js，已用 scoped emit 验证产物 import 指向 .js。\",\"source\":\"app-server.test.ts 失败堆栈\",\"status\":\"resolved\"},{\"phase\":\"服务提供者\",\"title\":\"应用 provider 无条件解析插件 token，隔离运行时测试启动崩溃\",\"symptom\":\"app server > registers application-owned providers and routes from the runtime 失败：Error: Service \\\"@nocobase/app/authorization\\\" is not registered，位置 server/providers/library.ts:26 boot()。\",\"rootCause\":\"LibraryProvider 作为应用级 service provider 注册进 server/providers/index.ts，boot() 里无条件 resolve authorizationToken；该测试用空插件列表组装 runtime，授权插件（及其 AuthorizationProvider）不存在，于是 boot 抛错。\",\"resolution\":\"boot() 先 container.has(authorizationToken) 判断，缺失时直接返回；真实应用始终注册授权插件，模型照常注册，隔离测试则跳过而不是让启动失败。\",\"source\":\"app-server.test.ts 失败堆栈\",\"status\":\"resolved\"}],\"improvements\":[{\"category\":\"文档\",\"title\":\"授权记录选择强制字符串 id 未在 Skill 中说明\",\"detail\":\"@nocobase/authorization 的 parseRecordSelection 要求 type:'records' 的 ids 全部为非空字符串，且 app-plugin-authorization 的仓储过滤不会把字符串 id 转成整数；但授权 Skill 的分享规则与仓储路由参考没有提示这一点，也没有说明整数自增主键会在定向共享时 500。\",\"suggestedChange\":\"在 nocobase-app-plugin-authorization 的 sharing-rules/repository-routes 参考中加入一节：records 选择只接受字符串 id；新建业务集合默认用字符串 uuid 主键并给出迁移与 createOne 生成 id 的示例。\",\"source\":\"authz 运行时错误\",\"mechanizable\":false},{\"category\":\"模板/种子\",\"title\":\"演示账号用户名需满足 Better Auth 最小长度\",\"detail\":\"Better Auth username 插件默认 minUsernameLength=3，种子或文档若使用 1-2 个字符的演示用户名，会在登录时以 USERNAME_TOO_SHORT 失败，而创建阶段不会有任何提示。\",\"suggestedChange\":\"在账号创建/演示账号相关参考中明确最小用户名长度，或让种子工具在写入前校验长度并按工厂约束报错。\",\"source\":\"登录失败 422\",\"mechanizable\":true},{\"category\":\"前端规范\",\"title\":\"加载数据的 effect 触发 react-hooks/set-state-in-effect\",\"detail\":\"在 useEffect 中直接调用一个会同步 setState 的 load() 函数会命中 eslint 的 react-hooks/set-state-in-effect 错误；本仓库模板页多用 mock 数据，没有现成的加载模式可借鉴。\",\"suggestedChange\":\"在应用开发的前端参考里给出一个符合该规则的请求模式：effect 内使用 api.request(...).then/.catch 回调设置状态并带 active 取消标志，而不是在 effect 中调用同步 setState 的函数。\",\"source\":\"eslint --max-warnings 0\",\"mechanizable\":false},{\"category\":\"模板/数据库\",\"title\":\"原生加载的种子/迁移需用 .ts 后缀导入应用源码\",\"detail\":\"pnpm dev 经 tsx 运行会回退 .js→.ts，但 app-server 的 standalone 测试与 @nocobase/db 加载器用原生 Node import() 执行源码，不会回退；文档中的 seed-data 示例统一写 .js，照抄后测试才在 3 个用例上暴露 ERR_MODULE_NOT_FOUND。\",\"suggestedChange\":\"在 nocobase-db / app-plugin-authorization 的 code-and-seeds 参考中说明：跨文件导入应用源码时在源文件写 .ts 后缀，依赖 allowImportingTsExtensions + rewriteRelativeImportExtensions 由 tsc 产出 .js；或让测试运行器为动态种子加载注册 tsx 解析器。\",\"source\":\"ERR_MODULE_NOT_FOUND\",\"mechanizable\":true}]}",
+          "sha256": "3c013e339c286baa3c2ef5b3d9adeef2e2fbe6e5b44daea52fb6c1e9c535620c"
+        }
+      ],
+      "fingerprint": "5ab82f67d822ec93b6a3229a464b1295b5adc08a29181ae8881c082fbcc26826"
     },
     {
       "id": "476:36498929142:1:F1",
