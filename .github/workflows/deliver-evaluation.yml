@@ -140,13 +140,17 @@ jobs:
           EVALUATION_ENDPOINT: ${{ vars.EVALUATION_ENDPOINT }}
           EVALUATION_AUTH_MODE: ${{ vars.EVALUATION_AUTH_MODE }}
           EVALUATION_TOKEN: ${{ secrets.EVALUATION_TOKEN }}
-        run: node control/.github/scripts/problem-classification.mjs taxonomy --output "$RUNNER_TEMP/feature-points.json"
+        # Also lists the delivered tasks' problems, so a reworded recurrence can be judged.
+        run: |
+          node control/.github/scripts/problem-classification.mjs taxonomy --output "$RUNNER_TEMP/feature-points.json" \
+            --plan "$RUNNER_TEMP/delivery-plan" --task-problems "$RUNNER_TEMP/task-problems.json"
       - name: Classify problems by subject rules
         id: rules
         if: steps.taxonomy.outcome == 'success'
         run: |
           node control/.github/scripts/problem-classification.mjs prepare --plan "$RUNNER_TEMP/delivery-plan" \
-            --taxonomy "$RUNNER_TEMP/feature-points.json" --output "$RUNNER_TEMP/problem-classification"
+            --taxonomy "$RUNNER_TEMP/feature-points.json" --task-problems "$RUNNER_TEMP/task-problems.json" \
+            --output "$RUNNER_TEMP/problem-classification"
       - name: Install selected pinned classifier
         id: install
         if: steps.rules.outputs.needs_model == 'true'

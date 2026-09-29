@@ -1,10 +1,13 @@
 // Assigns each problem about to be delivered to one of the receiver's feature
 // points before it is sent. Subject rules decide first; the selected Agent only
-// sees problems the rules cannot place. Decisions never block delivery.
+// sees problems the rules cannot place. The same Agent call judges whether a
+// problem is one its task already reported in other words, among the task's
+// problems the receiver lists. Decisions never block delivery.
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import {
   appendFileSync,
+  existsSync,
   lstatSync,
   mkdirSync,
   mkdtempSync,
@@ -20,7 +23,9 @@ import { deliveryConfig } from './evaluation-target.mjs';
 import { problemSubmission } from './problem-submission.mjs';
 import {
   classificationsByItem,
+  duplicatesByItem,
   validProblemClassification,
+  validProblemDuplicate,
 } from './report-link-submission.mjs';
 import { resolveAgent } from './agent-registry.mjs';
 import { normalizeAgentEnv } from './agent-configuration.mjs';
@@ -178,6 +183,8 @@ export function classificationInputs(document) {
     ].sort();
     return {
       key: problem.key,
+      taskKey: problem.taskKey,
+      fingerprint: problem.fingerprint,
       title: problem.title,
       description: clip(problem.description, 4000),
       subjectKeys,
@@ -241,8 +248,8 @@ export function ruleClassify(input, rules, index) {
   return { candidates: [...hits.keys()].sort((a, b) => a - b) };
 }
 
-export async function fetchTaxonomy(env, { fetcher = fetch } = {}) {
-  const config = deliveryConfig(env);
+// A read-only receiver resource beside the import endpoint, with the same source key.
+function receiverGet(config, resource, fetcher, query = []) {
   const url = new URL(config.endpoint);
   assert(
     /\/evaluations\/import$/.test(url.pathname),
@@ -250,9 +257,10 @@ export async function fetchTaxonomy(env, { fetcher = fetch } = {}) {
   );
   url.pathname = url.pathname.replace(
     /\/evaluations\/import$/,
-    '/evaluations/feature-points',
+    `/evaluations/${resource}`,
   );
-  const response = await fetcher(url.href, {
+  for (const [name, value] of query) url.searchParams.append(name, value);
+  return fetcher(url.href, {
     method: 'GET',
     redirect: 'manual',
     signal: AbortSignal.timeout(30_000),
@@ -264,6 +272,14 @@ export async function fetchTaxonomy(env, { fetcher = fetch } = {}) {
         : { 'x-api-key': config.token }),
     },
   });
+}
+
+export async function fetchTaxonomy(env, { fetcher = fetch } = {}) {
+  const response = await receiverGet(
+    deliveryConfig(env),
+    'feature-points',
+    fetcher,
+  );
   assert.equal(
     response.status,
     200,
@@ -274,38 +290,155 @@ export async function fetchTaxonomy(env, { fetcher = fetch } = {}) {
   return validateTaxonomy(JSON.parse(body));
 }
 
-// Rule decisions for every delivered problem, plus the rest for the model.
-export function prepareProblemClassification({
-  plan,
-  planDirectory,
-  taxonomy,
-  rules = loadRules(),
-}) {
+const TASK_KEY = /^[A-Za-z0-9][A-Za-z0-9._-]{0,79}$/;
+const TASKS_PER_REQUEST = 50;
+
+export function validateTaskProblems(value) {
+  assert(
+    value?.version === 1 &&
+      Array.isArray(value.problems) &&
+      value.problems.length <= 5000,
+    'Invalid task problem list',
+  );
+  const ids = new Set();
+  return {
+    version: 1,
+    problems: value.problems.map((item) => {
+      assert(
+        item &&
+          Number.isSafeInteger(item.id) &&
+          item.id > 0 &&
+          !ids.has(item.id) &&
+          TASK_KEY.test(item.taskKey ?? '') &&
+          text(item.title, 2000) &&
+          typeof item.description === 'string' &&
+          text(item.status, 32) &&
+          Array.isArray(item.fingerprints) &&
+          item.fingerprints.every((value) => /^[a-f0-9]{64}$/.test(value)),
+        'Invalid task problem',
+      );
+      ids.add(item.id);
+      return {
+        id: item.id,
+        taskKey: item.taskKey,
+        title: item.title,
+        description: clip(item.description, 2000),
+        status: item.status,
+        fingerprints: item.fingerprints,
+      };
+    }),
+  };
+}
+
+// The evaluation documents a delivery plan will send.
+function planDocuments(plan, planDirectory) {
   assert(
     plan?.version === 1 && Array.isArray(plan.items),
     'Invalid delivery plan',
   );
+  return plan.items
+    .filter((item) => item.bundle && item.type === 'evaluation-report')
+    .map((item) => {
+      assert(
+        /^bundles\/\d+\.zip$/.test(item.bundle),
+        'Invalid bundle path in plan',
+      );
+      return {
+        item,
+        document: JSON.parse(
+          readZip(readFileSync(path.join(planDirectory, item.bundle)))
+            .find((file) => file.path === 'evaluation.json')
+            .data.toString('utf8'),
+        ),
+      };
+    });
+}
+
+// The problems each delivered task already has in the receiver.
+export async function fetchTaskProblems(
+  env,
+  { plan, planDirectory, fetcher = fetch },
+) {
+  const tasks = [
+    ...new Set(
+      planDocuments(plan, planDirectory).flatMap(({ document }) =>
+        classificationInputs(document).map((input) => input.taskKey),
+      ),
+    ),
+  ].sort();
+  const config = deliveryConfig(env),
+    problems = [];
+  for (let i = 0; i < tasks.length; i += TASKS_PER_REQUEST) {
+    const response = await receiverGet(
+      config,
+      'task-problems',
+      fetcher,
+      tasks.slice(i, i + TASKS_PER_REQUEST).map((task) => ['task', task]),
+    );
+    assert.equal(
+      response.status,
+      200,
+      `Task problem request failed (${response.status})`,
+    );
+    const body = await response.text();
+    assert(body.length <= 4 * 1024 * 1024, 'Task problem list exceeds 4 MiB');
+    problems.push(...validateTaskProblems(JSON.parse(body)).problems);
+  }
+  return validateTaskProblems({ version: 1, problems });
+}
+
+// Rule decisions for every delivered problem, plus the rest for the model.
+// A problem whose fingerprint the receiver already knows merges there without a
+// judgement; otherwise the model compares it with the task's listed problems.
+export function prepareProblemClassification({
+  plan,
+  planDirectory,
+  taxonomy,
+  taskProblems = null,
+  rules = loadRules(),
+}) {
   const index = featureIndex(taxonomy);
+  const known = new Map();
+  for (const problem of taskProblems?.problems ?? [])
+    known.set(problem.taskKey, [...(known.get(problem.taskKey) ?? []), problem]);
   const pending = new Map(),
+    duplicates = new Map(),
     items = [];
-  for (const item of plan.items) {
-    if (!item.bundle || item.type !== 'evaluation-report') continue;
-    assert(
-      /^bundles\/\d+\.zip$/.test(item.bundle),
-      'Invalid bundle path in plan',
-    );
-    const document = JSON.parse(
-      readZip(readFileSync(path.join(planDirectory, item.bundle)))
-        .find((file) => file.path === 'evaluation.json')
-        .data.toString('utf8'),
-    );
+  for (const { item, document } of planDocuments(plan, planDirectory)) {
     const problems = {};
     for (const input of classificationInputs(document)) {
+      const candidates = known.get(input.taskKey) ?? [];
+      if (
+        candidates.length &&
+        !candidates.some((problem) =>
+          problem.fingerprints.includes(input.fingerprint),
+        )
+      ) {
+        const entry = duplicates.get(input.key) ?? {
+          key: input.key,
+          title: input.title,
+          description: input.description,
+          subjectKeys: input.subjectKeys,
+          taskTitle: input.taskTitle,
+          candidates: candidates.map(({ id, title, description, status }) => ({
+            id,
+            title,
+            description,
+            status,
+          })),
+          items: [],
+        };
+        entry.items.push(item.id);
+        duplicates.set(input.key, entry);
+      }
       const result = ruleClassify(input, rules, index);
       if (result.decision) problems[input.key] = result.decision;
       else {
+        // The task identity decides which problems are compared, not the feature point.
+        const { taskKey: _taskKey, fingerprint: _fingerprint, ...context } =
+          input;
         const entry = pending.get(input.key) ?? {
-          ...input,
+          ...context,
           candidates: result.candidates,
           items: [],
         };
@@ -313,7 +446,7 @@ export function prepareProblemClassification({
         pending.set(input.key, entry);
       }
     }
-    items.push({ id: item.id, problems });
+    items.push({ id: item.id, problems, duplicates: {} });
   }
   const taxonomySha256 = sha256(JSON.stringify(taxonomy));
   return {
@@ -323,6 +456,7 @@ export function prepareProblemClassification({
       taxonomySha256,
       features: index.features,
       problems: [...pending.values()],
+      duplicates: [...duplicates.values()],
     },
   };
 }
@@ -332,12 +466,12 @@ export function validateDecisions(draft, pending) {
   const wanted = new Set(pending.problems.map((item) => item.key));
   assert(
     draft?.version === 1 &&
-      Array.isArray(draft.decisions) &&
-      draft.decisions.length === wanted.size,
+      Array.isArray(draft.decisions ?? (wanted.size ? null : [])) &&
+      (draft.decisions ?? []).length === wanted.size,
     'Classifier must decide every problem exactly once',
   );
   const decisions = new Map();
-  for (const item of draft.decisions) {
+  for (const item of draft.decisions ?? []) {
     assert(
       item &&
         wanted.has(item.key) &&
@@ -359,12 +493,58 @@ export function validateDecisions(draft, pending) {
   return decisions;
 }
 
-export function mergeDecisions(classification, pending, decisions) {
+// Each judged problem either names one of its own candidates or none, with a reason.
+export function validateDuplicates(draft, pending) {
+  const wanted = new Map(
+    (pending.duplicates ?? []).map((item) => [
+      item.key,
+      new Set(item.candidates.map((candidate) => candidate.id)),
+    ]),
+  );
+  const list = draft?.duplicates ?? (wanted.size ? null : []);
+  assert(
+    Array.isArray(list) && list.length === wanted.size,
+    'Classifier must judge every possible duplicate exactly once',
+  );
+  const decisions = new Map();
+  for (const item of list) {
+    assert(
+      item &&
+        wanted.has(item.key) &&
+        !decisions.has(item.key) &&
+        (item.problemId === null || wanted.get(item.key).has(item.problemId)),
+      `Invalid duplicate judgement: ${String(item?.key)}`,
+    );
+    const decision = {
+      problemId: item.problemId,
+      reason: typeof item.reason === 'string' ? item.reason.trim() : '',
+    };
+    assert(
+      validProblemDuplicate(decision),
+      `Invalid duplicate reason: ${item.key}`,
+    );
+    decisions.set(item.key, decision);
+  }
+  return decisions;
+}
+
+export function mergeDecisions(
+  classification,
+  pending,
+  decisions,
+  duplicates = new Map(),
+) {
   const items = new Map(classification.items.map((item) => [item.id, item]));
   for (const problem of pending.problems)
     for (const id of problem.items)
       items.get(id).problems[problem.key] = decisions.get(problem.key);
+  for (const problem of pending.duplicates ?? [])
+    for (const id of problem.items)
+      (items.get(id).duplicates ??= {})[problem.key] = duplicates.get(
+        problem.key,
+      );
   classificationsByItem(classification);
+  duplicatesByItem(classification);
   return classification;
 }
 
@@ -387,7 +567,9 @@ export async function runModelClassification(directory, options = {}) {
     'Invalid pending classification input',
   );
   classificationsByItem(classification);
-  if (!pending.problems.length) return classification;
+  const duplicates = pending.duplicates ?? [];
+  assert(Array.isArray(duplicates), 'Invalid pending duplicate input');
+  if (!pending.problems.length && !duplicates.length) return classification;
   const adapter = options.adapter ?? resolveAgent(env);
   const invoke = options.invoke ?? runAgentInvocation;
   const snapshot = mkdtempSync(path.join(os.tmpdir(), 'factory-problems-'));
@@ -408,6 +590,14 @@ export async function runModelClassification(directory, options = {}) {
         ),
       },
       { file: 'features.json', value: pending.features },
+      {
+        file: 'duplicates.json',
+        value: duplicates.map((problem) =>
+          Object.fromEntries(
+            Object.entries(problem).filter(([key]) => key !== 'items'),
+          ),
+        ),
+      },
     ];
     for (const source of sourceFiles)
       write(path.join(snapshot, source.file), source.value);
@@ -466,7 +656,7 @@ export async function runModelClassification(directory, options = {}) {
       phase: 'problem-classification',
       secrets,
       env,
-      contextFiles: ['problems.json', 'features.json'],
+      contextFiles: ['problems.json', 'features.json', 'duplicates.json'],
     });
     capture.start({ ...invocation, actualVersion, configuredVersion });
     await invoke({
@@ -508,6 +698,7 @@ export async function runModelClassification(directory, options = {}) {
       classification,
       pending,
       validateDecisions(sanitized, pending),
+      validateDuplicates(sanitized, pending),
     );
     merged.model = {
       state: 'completed',
@@ -550,11 +741,32 @@ if (
   if (mode === 'taxonomy') {
     write(args.output, await fetchTaxonomy(process.env));
     console.log('Feature point list saved');
+    // Duplicate judgement is optional: without the list every problem is sent as new.
+    if (args['task-problems']) {
+      try {
+        const taskProblems = await fetchTaskProblems(process.env, {
+          plan: readJson(path.join(args.plan, 'plan.json')),
+          planDirectory: args.plan,
+        });
+        write(args['task-problems'], taskProblems);
+        console.log(
+          `${taskProblems.problems.length} problem(s) of the delivered tasks listed`,
+        );
+      } catch (error) {
+        console.log(
+          `::warning::Task problems unavailable; problems are not checked for rewording: ${error.message}`,
+        );
+      }
+    }
   } else if (mode === 'prepare') {
     const { classification, pending } = prepareProblemClassification({
       plan: readJson(path.join(args.plan, 'plan.json')),
       planDirectory: args.plan,
       taxonomy: validateTaxonomy(readJson(args.taxonomy)),
+      taskProblems:
+        args['task-problems'] && existsSync(args['task-problems'])
+          ? validateTaskProblems(readJson(args['task-problems']))
+          : null,
     });
     write(path.join(args.output, 'classification.json'), classification);
     write(path.join(args.output, 'pending.json'), pending);
@@ -562,9 +774,12 @@ if (
       (sum, item) => sum + Object.keys(item.problems).length,
       0,
     );
-    output('needs_model', pending.problems.length > 0);
+    output(
+      'needs_model',
+      pending.problems.length > 0 || pending.duplicates.length > 0,
+    );
     console.log(
-      `${decided} problem(s) classified by rules; ${pending.problems.length} left for the Agent.`,
+      `${decided} problem(s) classified by rules; ${pending.problems.length} left for the Agent; ${pending.duplicates.length} to check against their task's problems.`,
     );
   } else if (mode === 'run') {
     try {

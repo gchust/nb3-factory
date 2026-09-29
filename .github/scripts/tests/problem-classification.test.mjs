@@ -22,9 +22,12 @@ import {
   runModelClassification,
   validateDecisions,
   validateTaxonomy,
+  fetchTaskProblems,
+  validateDuplicates,
 } from '../problem-classification.mjs';
 import {
   classificationsByItem,
+  duplicatesByItem,
   reportLinkSubmission,
 } from '../report-link-submission.mjs';
 
@@ -262,7 +265,7 @@ const finding = (localId, subjectKeys, edit = {}) => ({
 const documentFor = (runKey, findings, criteria = []) => ({
   type: 'evaluation-report',
   source: { instance: 'owner/repo' },
-  run: { key: runKey, task: { title: '客户管理' } },
+  run: { key: runKey, task: { title: '客户管理', issue: Number(runKey.split('/')[3]) } },
   reviews: [
     {
       selected: true,
@@ -489,13 +492,14 @@ test('model decisions must cover every pending problem once with a listed featur
     assert.throws(() => validateDecisions(draft, pending));
 });
 
-async function modelFixture(t, edit) {
-  const { root, plan } = planFixture(t, [mixed]);
+async function modelFixture(t, edit, { documents = [mixed], taskProblems = null } = {}) {
+  const { root, plan } = planFixture(t, documents);
   const directory = path.join(root, 'classification');
   const { classification, pending } = prepareProblemClassification({
     plan,
     planDirectory: root,
     taxonomy: taxonomyFor(),
+    taskProblems,
     rules,
   });
   mkdirSync(directory);
@@ -532,12 +536,22 @@ async function modelFixture(t, edit) {
       readFileSync(path.join(args.cwd, 'problems.json'), 'utf8'),
     );
     assert.ok(problems.every((problem) => !('items' in problem)));
+    const duplicates = JSON.parse(
+      readFileSync(path.join(args.cwd, 'duplicates.json'), 'utf8'),
+    );
+    assert.ok(duplicates.every((problem) => !('items' in problem)));
     const draft = {
       version: 1,
       decisions: problems.map((problem) => ({
         key: problem.key,
         featurePointId: problem.candidates[0] ?? null,
         reason: `依据 fixture-secret ${problem.title}`,
+      })),
+      // The first problem is judged a duplicate of the task's first problem.
+      duplicates: duplicates.map((problem, i) => ({
+        key: problem.key,
+        problemId: i === 0 ? problem.candidates[0].id : null,
+        reason: `判重 fixture-secret ${problem.title}`,
       })),
     };
     args.result.observe({ complete: true }, '{}');
@@ -762,5 +776,146 @@ test('link submissions attach decisions to matching problems only', () => {
         { id: 'a', problems: {} },
       ],
     }),
+  );
+});
+
+const known = (id, taskKey, fingerprints = []) => ({
+  id,
+  taskKey,
+  title: `已有问题 ${id}`,
+  description: '已有描述',
+  status: 'pending',
+  fingerprints,
+});
+
+test('problems are checked against their own task unless the receiver already knows their wording', (t) => {
+  const { root, plan } = planFixture(t, [mixed, null, mixed]);
+  const [first, ...rest] = problemSubmission(mixed).problems;
+  assert.equal(first.taskKey, 'issue-3');
+  const { classification, pending } = prepareProblemClassification({
+    plan,
+    planDirectory: root,
+    taxonomy: taxonomyFor(),
+    taskProblems: {
+      version: 1,
+      problems: [
+        known(11, 'issue-3', [first.fingerprint]),
+        known(12, 'issue-3'),
+        known(13, 'preset-9'),
+      ],
+    },
+    rules,
+  });
+  assert.deepEqual(
+    pending.duplicates.map((item) => item.key),
+    rest.map((problem) => problem.key),
+  );
+  for (const item of pending.duplicates) {
+    assert.deepEqual(
+      item.candidates.map((candidate) => candidate.id),
+      [11, 12],
+    );
+    assert.deepEqual(Object.keys(item.candidates[0]).sort(), ['description', 'id', 'status', 'title']);
+    assert.equal(item.items.join(), 'item-0,item-2');
+  }
+  // The feature point classifier sees no task identity.
+  assert.ok(pending.problems.every((item) => !('taskKey' in item) && !('fingerprint' in item)));
+  assert.deepEqual(duplicatesByItem(classification), new Map([['item-0', {}], ['item-2', {}]]));
+  const none = prepareProblemClassification({ plan, planDirectory: root, taxonomy: taxonomyFor(), rules });
+  assert.deepEqual(none.pending.duplicates, []);
+});
+
+test('duplicate judgements must name one of the problem\'s own candidates or none, once each', () => {
+  const pending = {
+    duplicates: [
+      { key: 'a'.repeat(64), candidates: [{ id: 11 }, { id: 12 }] },
+      { key: 'b'.repeat(64), candidates: [{ id: 13 }] },
+    ],
+  };
+  const judge = (duplicates) => validateDuplicates({ version: 1, duplicates }, pending);
+  const good = [
+    { key: 'a'.repeat(64), problemId: 12, reason: '同一缺陷' },
+    { key: 'b'.repeat(64), problemId: null, reason: '不同缺陷' },
+  ];
+  assert.deepEqual(judge(good).get('a'.repeat(64)), { problemId: 12, reason: '同一缺陷' });
+  for (const bad of [
+    good.slice(1),
+    [good[0], good[0]],
+    [{ ...good[0], problemId: 13 }, good[1]],
+    [{ ...good[0], reason: ' ' }, good[1]],
+    [good[0], { ...good[1], key: 'c'.repeat(64) }],
+  ])
+    assert.throws(() => judge(bad));
+  assert.throws(() => validateDuplicates({ version: 1 }, pending));
+  assert.equal(validateDuplicates({ version: 1 }, { duplicates: [] }).size, 0);
+});
+
+test('the Agent judges rewording in the same call, and only duplicates found are sent', async (t) => {
+  const taskProblems = { version: 1, problems: [known(11, 'issue-3'), known(12, 'issue-3')] };
+  const fixture = await modelFixture(t, undefined, { taskProblems });
+  const result = await fixture.run();
+  const judged = Object.entries(result.items[0].duplicates);
+  assert.equal(judged.length, 4);
+  assert.deepEqual(judged.map(([, value]) => value.problemId), [11, null, null, null]);
+  assert.doesNotMatch(JSON.stringify(fixture.read('classification.json')), /fixture-secret/);
+  const sent = duplicatesByItem(fixture.read('classification.json')).get('item-0');
+  assert.deepEqual(Object.keys(sent), [judged[0][0]]);
+  const document = { ...mixed, links: [{ rel: 'report-archive', path: 'reports/3/index.html' }] };
+  const payload = reportLinkSubmission(document, {}, sent);
+  assert.deepEqual(
+    payload.problems.map((problem) => problem.duplicateOf?.problemId ?? null),
+    [11, null, null, null],
+  );
+});
+
+test('the Agent runs for possible duplicates even when rules place every problem', async (t) => {
+  const document = documentFor('owner/repo/issues/4/initial', [finding('F1', ['pkg:@nocobase/db'])]);
+  const fixture = await modelFixture(t, undefined, {
+    documents: [document],
+    taskProblems: { version: 1, problems: [known(21, 'issue-4')] },
+  });
+  const result = await fixture.run();
+  assert.equal(fixture.calls(), 1);
+  assert.equal(Object.values(result.items[0].problems)[0].method, 'rule');
+  assert.equal(Object.values(result.items[0].duplicates)[0].problemId, 21);
+});
+
+test('an Agent failure sends no duplicate judgement', async (t) => {
+  const fixture = await modelFixture(t, () => { throw new Error('provider failed'); }, {
+    taskProblems: { version: 1, problems: [known(11, 'issue-3')] },
+  });
+  await assert.rejects(fixture.run());
+  const saved = fixture.read('classification.json');
+  assert.deepEqual([...duplicatesByItem(saved).values()], [{}]);
+});
+
+test('the delivered tasks\' problems are read beside the import endpoint in bounded requests', async (t) => {
+  const documents = Array.from({ length: 51 }, (_, i) =>
+    documentFor(`owner/repo/issues/${i + 1}/initial`, [finding('F1', ['pkg:@nocobase/db'])]));
+  const { root, plan } = planFixture(t, documents);
+  const seen = [];
+  const fetcher = async (url, options) => {
+    seen.push({ url: new URL(url), options });
+    const tasks = new URL(url).searchParams.getAll('task');
+    return new Response(JSON.stringify({ version: 1, problems: tasks.slice(0, 1).map((task, i) => ({ ...known(seen.length * 100 + i, task), extra: 1 })) }), { status: 200 });
+  };
+  const env = { EVALUATION_ENDPOINT: 'https://test3.example/main/api/evaluations/import', EVALUATION_TOKEN: 'receiver-key' };
+  const result = await fetchTaskProblems(env, { plan, planDirectory: root, fetcher });
+  assert.deepEqual(seen.map(({ url }) => url.pathname), ['/main/api/evaluations/task-problems', '/main/api/evaluations/task-problems']);
+  assert.deepEqual(seen.map(({ url }) => url.searchParams.getAll('task').length), [50, 1]);
+  assert.equal(seen[0].options.headers['x-api-key'], 'receiver-key');
+  assert.equal(seen[0].options.redirect, 'manual');
+  assert.equal(result.problems.length, 2);
+  assert.equal(result.problems[0].extra, undefined);
+  await assert.rejects(
+    fetchTaskProblems(env, { plan, planDirectory: root, fetcher: async () => new Response('', { status: 404 }) }),
+    /404/,
+  );
+  await assert.rejects(
+    fetchTaskProblems(env, {
+      plan, planDirectory: root,
+      fetcher: async () => new Response(JSON.stringify({ version: 1, problems: [{ ...known(1, '../x') }] }), { status: 200 }),
+    }),
+    /Invalid task problem/,
   );
 });
