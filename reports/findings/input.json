@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "inputHash": "ccc283410e3854cf633d150ed3ac6c0b24b226651d010208927a8dcef1b4de8e",
+  "inputHash": "e4d8c07dc2e926817a5407365618b93fd49c5d3f110090f1ecf8dac01feff54a",
   "findings": [
     {
       "id": "460:36434284393:1:F2",
@@ -1531,6 +1531,417 @@
         }
       ],
       "fingerprint": "07e691038c99fd2c5de4b04d76758f9edb34255bf86f99127ae1b9bbca0aa9f5"
+    },
+    {
+      "id": "473:36498916248:1:F1",
+      "report": "473:36498916248:1",
+      "issue": 473,
+      "taskTitle": "客户、联系人与商机管理",
+      "appVersion": "1.0.0-beta.50",
+      "appTemplate": "@nocobase/app-template-default",
+      "finding": {
+        "id": "F1",
+        "kind": "issue",
+        "owner": "documentation",
+        "confidence": "confirmed",
+        "severity": "minor",
+        "status": "resolved",
+        "title": "nocobase-db SKILL 的 foreignKey 示例未给出 onDelete 合法取值（仅小写枚举）",
+        "detail": "SKILL 的 Builder 示例只演示 name 与 references，未列出 onDelete，也未说明 ReferentialAction 只接受小写取值。应用中按 SQL 习惯写成 'CASCADE' 触发 TS2820，报错信息不指向文档，需自行翻类型声明才能确认必须小写。",
+        "impact": "agent 在每一次新增外键时都可能重复试错，浪费一轮编译；大写写法在部分方言下可能被运行时静默接受，留下跨方言不一致风险。",
+        "suggestedChange": "在 .agents/skills/nocobase-db/SKILL.md 的 foreignKey 示例中加入 onDelete: 'cascade'，并在正文注明合法取值只能是小写枚举（cascade/restrict/set null/set default/no action）。",
+        "evidence": [
+          "E2",
+          "E4",
+          "E10",
+          "E41"
+        ],
+        "diagnosis": {
+          "category": "guidance-gap",
+          "trigger": "迁移里为外键写 onDelete: 'CASCADE' 这类 SQL 风格大写取值。",
+          "expected": "SKILL 示例或正文给出 onDelete 字段及其小写枚举取值，使一次编译即可通过。",
+          "actual": "示例只有 name/references，类型层仅接受小写 ReferentialAction，编译报 TS2820。",
+          "workaround": "翻查 @nocobase/db 的类型声明后改为 onDelete: 'cascade'。",
+          "acceptance": "按 SKILL 示例新写一条外键无需试错即可通过 tsc，且文档明确列出全部合法取值。"
+        }
+      },
+      "targets": [
+        "@nocobase/db",
+        "app/.agents/skills/nocobase-db/SKILL.md"
+      ],
+      "paths": [
+        ".agents/skills/nocobase-db/SKILL.md",
+        "packages/@nocobase/db/dist/src/collection/fluent/index.js",
+        "packages/@nocobase/db/dist/src/collection/types.d.ts"
+      ],
+      "evidence": [
+        {
+          "id": "E2",
+          "kind": "package",
+          "path": "packages/@nocobase/db/dist/src/collection/types.d.ts",
+          "observation": "RelationFieldDefinition 把 onDelete/onUpdate 收窄为 ReferentialAction，说明 builder 层只接受小写动作名。",
+          "lines": [
+            56,
+            62
+          ],
+          "excerpt": "    foreignKey?: string;\n    foreignKeyType?: FieldType;\n    otherKey?: string;\n    through?: string;\n    constraints?: boolean;\n    onDelete?: ReferentialAction;\n    onUpdate?: ReferentialAction;",
+          "sha256": "10e28ee4845c4300ddc190b925a57d8be3d1be9c23e43a2c032f9997aabfc19e"
+        },
+        {
+          "id": "E4",
+          "kind": "package",
+          "path": "packages/@nocobase/db/dist/src/collection/fluent/index.js",
+          "observation": "fluent builder 的 foreignKey 把 options 原样 push 进 constraints，运行时不做大小写归一，因此类型层的小写约束就是最终约束。",
+          "lines": [
+            139,
+            160
+          ],
+          "excerpt": "    foreignKey(fields, options) {\n        this.definition.constraints?.push({\n            type: 'foreignKey',\n            fields: array(fields),\n            ...options,\n        });\n        return this;\n    }\n    index(fields, options = {}) {\n        this.definition.indexes?.push({ fields: array(fields), ...options });\n        return this;\n    }\n    toDefinition() {\n        return pruneEmpty({\n            ...this.definition,\n            fields: this.definition.fields?.map((field) => ({ ...field })),\n            indexes: this.definition.indexes?.map((index) => ({ ...index })),\n            constraints: this.definition.constraints?.map((constraint) => ({\n                ...constraint,\n            })),\n            optimisticLock: this.definition.optimisticLock\n                ? { ...this.definition.optimisticLock }",
+          "sha256": "1736d3fbe360adc70d70bc2d493e2671e705431f1278fa75d8f2df3fabf4af17"
+        },
+        {
+          "id": "E10",
+          "kind": "skill",
+          "path": "app/.agents/skills/nocobase-db/SKILL.md",
+          "observation": "Builder 示例只出现 foreignKey 的 name/references，没有 onDelete，也未提及其小写枚举取值。",
+          "lines": [
+            143,
+            166
+          ],
+          "excerpt": "## 3. Builder\n\n`builder` is the schema API, and a migration is where it belongs. Runtime code has `db.builder()` available and should not use it: schema that changes outside the migration history is schema nothing can reproduce.\n\n`createCollection(name, callback)` takes a callback, not a field array:\n\n```ts\nawait builder.createCollection('orderItems', (collection) => {\n  collection.increments('id');\n  collection.integer('orderId', { nullable: false });\n  collection.integer('quantity', { nullable: false, defaultValue: 1 });\n  collection.foreignKey('orderId', {\n    references: { collection: 'orders', fields: ['id'] },\n    name: 'fk_order_items_order',\n  });\n  collection.index(['orderId', 'quantity']);\n});\n```\n\nField builders are `increments`, `integer`, `bigInt`, `string`, `char`, `text`, `boolean`, `decimal`, `float`, `double`, `date`, `time`, `datetime`, `datetimeTz`, `json`, `blob`, `uuid`, and `native` for a dialect-specific type. Options include `nullable`, `length`, `defaultValue`, `precision` and `scale`; the equivalent chained form (`.notNull()`, `.defaultTo()`, `.unique()`) is also available — pick one style and keep the file consistent.\n\nRelations are `belongsTo`, `hasOne`, `hasMany` and `belongsToMany`. Constraints and indexes are `primary`, `unique`, `foreignKey` and `index`, each taking one field name or an array.\n\nChange an existing table with explicit alter, rename and drop operations in a safe dependency order. Do not drop and recreate — that destroys data and is not what `down()` should undo.",
+          "sha256": "f97c07a45a9d49c1d933ddbceeabcc9afe267b1356a2ded1a3da0dd56b54011c"
+        },
+        {
+          "id": "E41",
+          "kind": "qa",
+          "path": "artifacts/retro.json",
+          "observation": "retro 记录三个 blocker 及根因：foreignKey onDelete 只收小写、SQLite decimal 运行时类型不定、详情页 effect 内 setState 被 lint 拦截，均已 resolved。",
+          "lines": [
+            1,
+            47
+          ],
+          "excerpt": "{\n  \"version\": 1,\n  \"summary\": \"CRM 三张表、服务、API、列表/详情/表单页面、示例数据和核心测试一次建成，验证阶段收敛到类型与 lint 的小修正，主要时间花在把服务层金额与 PostgreSQL/SQLite 差异对齐以及按仓库规范补齐路由与授权测试。\",\n  \"blockers\": [\n    {\n      \"phase\": \"implementation\",\n      \"title\": \"foreignKey 的 onDelete 只接受小写取值\",\n      \"symptom\": \"pnpm exec tsc -p tsconfig.server.json 报 TS2820：Type '\\\"CASCADE\\\"' is not assignable to type 'ReferentialAction | undefined'。\",\n      \"rootCause\": \"nocobase-db SKILL 的 foreignKey 示例只给出 references 和 name，未列出 onDelete 的合法取值；直觉写成 SQL 大写 'CASCADE'，而 builder 要求小写。\",\n      \"resolution\": \"把两处 onDelete 改为 'cascade'。\",\n      \"status\": \"resolved\"\n    },\n    {\n      \"phase\": \"implementation\",\n      \"title\": \"SQLite 下 decimal 列运行时既可能是 number 也可能是 string\",\n      \"symptom\": \"服务层把查询行里的 amount 标成 unknown 后，传给 repository 过滤条件触发 TS2769：Type 'unknown' is not assignable to type 'FilterShorthandValue | undefined'。\",\n      \"rootCause\": \"decimal 在 SQLite 落成 real affinity，driver 对数值的返回表示不固定；仓库文档未提示这一点。\",\n      \"resolution\": \"行的 amount 类型收窄为 number | string，并在 service 内统一 normalize 到分后再参与计算与过滤。\",\n      \"status\": \"resolved\"\n    },\n    {\n      \"phase\": \"verify\",\n      \"title\": \"详情页在 effect 里同步 setState 被 lint 拦截\",\n      \"symptom\": \"eslint react-hooks/set-state-in-effect 报错：Calling setState synchronously within an effect can trigger cascading renders。\",\n      \"rootCause\": \"为了实现 404 时切换为永久 not-found 提示，在 useEffect 里 setGone(true)，而不是把状态从查询结果派生。\",\n      \"resolution\": \"改为 notFound = goneOnSave || status === 404 直接派生，effect 只在 404 时 reload 列表，不再同步 setState。\",\n      \"status\": \"resolved\"\n    }\n  ],\n  \"improvements\": [\n    {\n      \"category\": \"skills-docs\",\n      \"title\": \"nocobase-db SKILL 补上 foreignKey 的 onDelete 合法取值与大小写\",\n      \"detail\": \"SKILL 的 foreignKey 示例只演示 references 和 name，未说明 onDelete；实际类型 ReferentialAction 只接受小写 'cascade' | 'restrict' | 'set null' | 'set default' | 'no action'，写成 SQL 风格大写会直接编译失败，且报错信息不指向文档。\",\n      \"suggestedChange\": \"在 .agents/skills/nocobase-db/SKILL.md 的 foreignKey 示例中加一行 onDelete: 'cascade'，并在正文注明取值必须小写及其枚举；如有对应中文/英文镜像同步更新。\",\n      \"mechanizable\": true\n    },\n    {\n      \"category\": \"skills-docs\",\n      \"title\": \"说明 decimal 在不同方言下的运行时返回类型\",\n      \"detail\": \"在 SQLite 上 decimal(14,2) 物理为 real，driver 可能返回 number 或 string；服务层若把金额行类型写成具体 number 或 unknown，会在过滤/算术处出现与文档无关的类型错误或静默的字符串拼接。\",\n      \"suggestedChange\": \"在 .agents/skills/nocobase-app-development/references/database-and-data.md 或 nocobase-db SKILL 的字段说明里补一句：decimal 运行时代码应先 normalize（Number 后再按业务精度取整），不要假定固定 JS 类型，并给出按分取整的示例。\",\n      \"mechanizable\": true\n    }\n  ]\n}\n",
+          "sha256": "d22759955c663d38beb61878772c167c63acf345c8207f64d66f558542a19d9e"
+        }
+      ],
+      "fingerprint": "f7d532af1afaf4e667af82675fc9920f914035aa112ccd3fec4ae77d59262bdb"
+    },
+    {
+      "id": "473:36498916248:1:F2",
+      "report": "473:36498916248:1",
+      "issue": 473,
+      "taskTitle": "客户、联系人与商机管理",
+      "appVersion": "1.0.0-beta.50",
+      "appTemplate": "@nocobase/app-template-default",
+      "finding": {
+        "id": "F2",
+        "kind": "issue",
+        "owner": "documentation",
+        "confidence": "confirmed",
+        "severity": "minor",
+        "status": "resolved",
+        "title": "decimal 列在不同方言下的运行时返回类型未文档化",
+        "detail": "@nocobase/db 的解码器把 decimal 一律转成字符串，而 @nocobase/db-sqlite 把 decimal/numeric 落成带精度修饰的类型；文档未提示「读出的金额可能是 number 也可能是 string」。服务层若把行值标为具体 number 或 unknown，会在过滤/算术处出现与业务无关的类型错误或静默字符串拼接。",
+        "impact": "金额这类关键数值字段容易出现类型错误或错误计算（字符串拼接、比较失效），而这些错误与业务逻辑无关，排查成本高。",
+        "suggestedChange": "在 nocobase-db SKILL 的字段说明或 database-and-data.md 补一句：decimal 运行时代码必须先 normalize（优先按业务精度转成整数分），不要假定固定 JS 类型，并给出按分取整的示例。",
+        "evidence": [
+          "E5",
+          "E6",
+          "E7",
+          "E19",
+          "E41"
+        ],
+        "diagnosis": {
+          "category": "guidance-gap",
+          "trigger": "服务层把 decimal 行值声明为 number 或 unknown 并直接参与过滤/算术。",
+          "expected": "文档说明 decimal 可能返回 number 或 string，并给出统一 normalize 的推荐做法。",
+          "actual": "文档未提示方言差异，出现 TS2769 及潜在的字符串拼接风险。",
+          "workaround": "把行值收窄为 number|string，并用 normalizeAmount 统一转分。",
+          "acceptance": "文档给出 decimal 运行时类型说明与 normalize 示例，新服务层写法不再在类型检查上卡住。"
+        }
+      },
+      "targets": [
+        "@nocobase/db",
+        "@nocobase/db-sqlite"
+      ],
+      "paths": [
+        "packages/@nocobase/db-sqlite/dist/src/inspectors/sqlite.js",
+        "packages/@nocobase/db/dist/src/numeric/decimal.js",
+        "packages/@nocobase/db/dist/src/repository/internal/row-decoder.js"
+      ],
+      "evidence": [
+        {
+          "id": "E5",
+          "kind": "package",
+          "path": "packages/@nocobase/db/dist/src/numeric/decimal.js",
+          "observation": "decimalString 接受 null/string/number/bigint 并原样或转字符串保留，抛出类型错误以外不做四舍五入，是 decimal 规范化基础。",
+          "lines": [
+            1,
+            12
+          ],
+          "excerpt": "/** Preserve the database's decimal representation without rounding or reformatting. */\nexport function decimalString(value) {\n    if (value == null)\n        return null;\n    if (typeof value === 'string')\n        return value;\n    if (typeof value === 'number' || typeof value === 'bigint')\n        return String(value);\n    throw new TypeError('Expected a decimal string or numeric value.');\n}\n/** Decimal text utilities: never round through a JavaScript number. */\nexport function decimalParts(value) {",
+          "sha256": "d7a3936126725964f36d48fda2bc8c685e8703b0b099049bf7d1c84153e879db"
+        },
+        {
+          "id": "E6",
+          "kind": "package",
+          "path": "packages/@nocobase/db/dist/src/repository/internal/row-decoder.js",
+          "observation": "行解码表把 decimal 字段统一经 decimalString 解码，float/double 才转 Number，因此 decimal 读出是字符串。",
+          "lines": [
+            19,
+            45
+          ],
+          "excerpt": "const scalarDecoders = new Map([\n    ['boolean', decodeBooleanValue],\n    ['integer', decodeIntegerValue],\n    ['increments', decodeIntegerValue],\n    ['bigInt', decodeIntegerValue],\n    ['decimal', (_field, value) => decimalString(value)],\n    ['float', (_field, value) => (value === null ? null : Number(value))],\n    ['double', (_field, value) => (value === null ? null : Number(value))],\n    [\n        'enum',\n        (field, value) => normalizeEnumValue(field, value, 'INVALID_STORED_VALUE', [\n            'select',\n            field.name,\n        ]),\n    ],\n    [\n        'char',\n        (field, value) => normalizeCharValue(field, value, 'INVALID_STORED_VALUE', [\n            'select',\n            field.name,\n        ]),\n    ],\n    ['date', decodeTemporal],\n    ['time', decodeTemporal],\n    ['datetime', decodeTemporal],\n    ['datetimeTz', decodeTemporal],\n]);",
+          "sha256": "15ecab5cf8e0339dae5fa898056efe84f2e3669e51573aab212bc178528af442"
+        },
+        {
+          "id": "E7",
+          "kind": "package",
+          "path": "packages/@nocobase/db-sqlite/dist/src/inspectors/sqlite.js",
+          "observation": "parseSqliteTypeModifiers 对 decimal/numeric 解析出 precision/scale，说明 SQLite 侧 decimal 是带修饰的数值类型，运行时表示不固定。",
+          "lines": [
+            355,
+            367
+          ],
+          "excerpt": "}\nfunction parseSqliteTypeModifiers(nativeType) {\n    const match = nativeType.match(/\\((\\d+)(?:\\s*,\\s*(\\d+))?\\)/);\n    if (!match) {\n        return {};\n    }\n    const first = Number(match[1]);\n    const second = match[2] === undefined ? undefined : Number(match[2]);\n    if (/^(decimal|numeric)/i.test(nativeType)) {\n        return { precision: first, scale: second };\n    }\n    return { length: first };\n}",
+          "sha256": "466df35caa0dd0de4332db225085b9ef3e7bc8e91b64f6c5ec51b54ae4c70f98"
+        },
+        {
+          "id": "E19",
+          "kind": "code",
+          "path": "app/server/providers/crm.ts",
+          "observation": "注释点明 SQLite 可能把 decimal 当字符串返回，normalizeAmount 接受 number|string 并统一转分。",
+          "lines": [
+            136,
+            152
+          ],
+          "excerpt": "  name: string;\n  customerId: number;\n  /** SQLite may hand a decimal back as a string; `normalizeAmount` accepts either. */\n  amount: number | string;\n  stage: OpportunityStage;\n  createdAt: string;\n  updatedAt: string;\n}\n\nexport type CustomerIdLookup = (id: number) => Promise<boolean>;\n\nexport function normalizeAmount(value: unknown): number {\n  const amount = typeof value === 'number' ? value : Number(value);\n  if (!Number.isFinite(amount)) {\n    return Number.NaN;\n  }\n  return Math.round(amount * 100) / 100;",
+          "sha256": "4246c2f64e9d04c4e10f17547c2decf1a386be8b4abe1462661512b1125ffa29"
+        },
+        {
+          "id": "E41",
+          "kind": "qa",
+          "path": "artifacts/retro.json",
+          "observation": "retro 记录三个 blocker 及根因：foreignKey onDelete 只收小写、SQLite decimal 运行时类型不定、详情页 effect 内 setState 被 lint 拦截，均已 resolved。",
+          "lines": [
+            1,
+            47
+          ],
+          "excerpt": "{\n  \"version\": 1,\n  \"summary\": \"CRM 三张表、服务、API、列表/详情/表单页面、示例数据和核心测试一次建成，验证阶段收敛到类型与 lint 的小修正，主要时间花在把服务层金额与 PostgreSQL/SQLite 差异对齐以及按仓库规范补齐路由与授权测试。\",\n  \"blockers\": [\n    {\n      \"phase\": \"implementation\",\n      \"title\": \"foreignKey 的 onDelete 只接受小写取值\",\n      \"symptom\": \"pnpm exec tsc -p tsconfig.server.json 报 TS2820：Type '\\\"CASCADE\\\"' is not assignable to type 'ReferentialAction | undefined'。\",\n      \"rootCause\": \"nocobase-db SKILL 的 foreignKey 示例只给出 references 和 name，未列出 onDelete 的合法取值；直觉写成 SQL 大写 'CASCADE'，而 builder 要求小写。\",\n      \"resolution\": \"把两处 onDelete 改为 'cascade'。\",\n      \"status\": \"resolved\"\n    },\n    {\n      \"phase\": \"implementation\",\n      \"title\": \"SQLite 下 decimal 列运行时既可能是 number 也可能是 string\",\n      \"symptom\": \"服务层把查询行里的 amount 标成 unknown 后，传给 repository 过滤条件触发 TS2769：Type 'unknown' is not assignable to type 'FilterShorthandValue | undefined'。\",\n      \"rootCause\": \"decimal 在 SQLite 落成 real affinity，driver 对数值的返回表示不固定；仓库文档未提示这一点。\",\n      \"resolution\": \"行的 amount 类型收窄为 number | string，并在 service 内统一 normalize 到分后再参与计算与过滤。\",\n      \"status\": \"resolved\"\n    },\n    {\n      \"phase\": \"verify\",\n      \"title\": \"详情页在 effect 里同步 setState 被 lint 拦截\",\n      \"symptom\": \"eslint react-hooks/set-state-in-effect 报错：Calling setState synchronously within an effect can trigger cascading renders。\",\n      \"rootCause\": \"为了实现 404 时切换为永久 not-found 提示，在 useEffect 里 setGone(true)，而不是把状态从查询结果派生。\",\n      \"resolution\": \"改为 notFound = goneOnSave || status === 404 直接派生，effect 只在 404 时 reload 列表，不再同步 setState。\",\n      \"status\": \"resolved\"\n    }\n  ],\n  \"improvements\": [\n    {\n      \"category\": \"skills-docs\",\n      \"title\": \"nocobase-db SKILL 补上 foreignKey 的 onDelete 合法取值与大小写\",\n      \"detail\": \"SKILL 的 foreignKey 示例只演示 references 和 name，未说明 onDelete；实际类型 ReferentialAction 只接受小写 'cascade' | 'restrict' | 'set null' | 'set default' | 'no action'，写成 SQL 风格大写会直接编译失败，且报错信息不指向文档。\",\n      \"suggestedChange\": \"在 .agents/skills/nocobase-db/SKILL.md 的 foreignKey 示例中加一行 onDelete: 'cascade'，并在正文注明取值必须小写及其枚举；如有对应中文/英文镜像同步更新。\",\n      \"mechanizable\": true\n    },\n    {\n      \"category\": \"skills-docs\",\n      \"title\": \"说明 decimal 在不同方言下的运行时返回类型\",\n      \"detail\": \"在 SQLite 上 decimal(14,2) 物理为 real，driver 可能返回 number 或 string；服务层若把金额行类型写成具体 number 或 unknown，会在过滤/算术处出现与文档无关的类型错误或静默的字符串拼接。\",\n      \"suggestedChange\": \"在 .agents/skills/nocobase-app-development/references/database-and-data.md 或 nocobase-db SKILL 的字段说明里补一句：decimal 运行时代码应先 normalize（Number 后再按业务精度取整），不要假定固定 JS 类型，并给出按分取整的示例。\",\n      \"mechanizable\": true\n    }\n  ]\n}\n",
+          "sha256": "d22759955c663d38beb61878772c167c63acf345c8207f64d66f558542a19d9e"
+        }
+      ],
+      "fingerprint": "00d0ec5140bc198d62d2bd4b5c2231a55a936a5dd93f2f0596021a1418191a02"
+    },
+    {
+      "id": "473:36498916248:1:F5",
+      "report": "473:36498916248:1",
+      "issue": 473,
+      "taskTitle": "客户、联系人与商机管理",
+      "appVersion": "1.0.0-beta.50",
+      "appTemplate": "@nocobase/app-template-default",
+      "finding": {
+        "id": "F5",
+        "kind": "improvement",
+        "owner": "documentation",
+        "confidence": "confirmed",
+        "severity": "minor",
+        "status": "open",
+        "title": "指引未说明 @nocobase/* 包的公开入口与物理布局，agent 多次探测内部路径",
+        "detail": "nocobase-db SKILL 的 Where the code lives 只列应用目录，未说明框架包的类型入口（例如 @nocobase/db 的声明实际位于 dist/src 下而非 dist/index.d.ts）。历史日志中 agent 对不存在的 dist 内部文件执行 sed/head，出现 5 组非零退出（TS2820 之外的另一类探索成本）。",
+        "impact": "agent 在定位包内实现时反复试错，浪费工具调用；也可能诱导其依赖非公开的 dist 内部路径而非稳定导出。",
+        "suggestedChange": "在相关 SKILL 增补一节「包入口」，列出 @nocobase/db / db-sqlite / repository-input / app-server / app-client 的公开导出与声明位置；并提示优先使用公开导出而非 dist 内部路径。",
+        "evidence": [
+          "E9",
+          "E10",
+          "E43",
+          "E44",
+          "E45",
+          "E46",
+          "E47"
+        ],
+        "diagnosis": {
+          "category": "guidance-gap",
+          "trigger": "agent 需要查看某个 @nocobase/* 包的实现或类型细节。",
+          "expected": "指引给出公开入口/声明位置，说明应优先使用公开导出。",
+          "actual": "指引只描述应用目录布局，agent 对不存在的 dist 路径探测失败。",
+          "workaround": "列举 dist 目录与 package.json 推断入口后再读取。",
+          "acceptance": "指引补充包入口说明后，探测失败显著减少，且示例只使用公开导出。"
+        }
+      },
+      "targets": [
+        "app/.agents/skills/nocobase-db/SKILL.md"
+      ],
+      "paths": [
+        ".agents/skills/nocobase-db/SKILL.md"
+      ],
+      "evidence": [
+        {
+          "id": "E9",
+          "kind": "skill",
+          "path": "app/.agents/skills/nocobase-db/SKILL.md",
+          "observation": "SKILL 说明 migrations 与 seeds 的目录、不可变与自包含规则，是写数据库任务文件的权威指引。",
+          "lines": [
+            78,
+            140
+          ],
+          "excerpt": "## 2. Migrations and seeds\n\nA migration creates structure. A seed inserts the records the application needs in order to run. Neither does the other's job, and a seed is never sample or demonstration content.\n\n```ts\n// database/main/migrations/202609020001_create_orders.ts\nimport { defineMigration, type MigrationDefinition } from '@nocobase/db';\n\nconst migration: MigrationDefinition = defineMigration({\n  name: '202609020001_create_orders',\n\n  async up({ builder }) {\n    await builder.createCollection('orders', (collection) => {\n      collection.increments('id');\n      collection.string('orderNo', { length: 64, nullable: false });\n      collection.string('status', { length: 32, nullable: false });\n      collection.datetime('createdAt', { nullable: false });\n      collection.unique('orderNo');\n      collection.index('status');\n    });\n  },\n\n  async down({ builder }) {\n    await builder.dropCollection('orders');\n  },\n});\n\nexport default migration;\n```\n\n```ts\n// database/main/seeds/202609030002_default_order_statuses.ts\nimport { defineSeed } from '@nocobase/db';\n\nexport default defineSeed({\n  name: '202609030002_default_order_statuses',\n\n  async run({ repository }) {\n    await repository('orderStatuses').upsertOne({\n      filter: { code: 'draft' },\n      create: { code: 'draft', title: 'Draft' },\n      update: { title: 'Draft' },\n    });\n  },\n});\n```\n\nApply both with `pnpm nocobase db apply`, adding `--connection <name>` for a non-default connection or `--all` for every managed one.\n\nEach context carries its own tools, and which one to use is not a free choice — see [Repository and Query](#4-repository-and-query). In short: a migration works through `builder` and `query`, and a seed writes through `repository`.\n\nThe rules are absolute, because these files are history that has already run on other machines:\n\n- **Self-contained.** Spell out every table, field, index, constraint and metadata operation in the file. Never import a Collection definition, model, registry or shared constant that keeps evolving — that silently changes both the behavior and the checksum of something already applied.\n- **Immutable once merged.** Check with `git log -- <file>` if unsure. Before the branch is merged you may correct the file in place; after it, every change is a new, later file. Never hard-code a previous checksum to make an edited migration look untouched. Correcting it in place changes nothing on its own — it is recorded as executed, so a plain apply skips it and the database keeps the schema the old file produced. `pnpm nocobase db redo` rolls the latest batch back and applies it again.\n- **The file name body matches `name`**, and the name is unique across every source in the application.\n- **Declare `irreversible: true`** when there is no real reverse operation, instead of writing a `down()` that quietly does nothing.\n- **A seed is idempotent**, keyed on a stable business value backed by a unique constraint, so a repeated run is a no-op — `upsertOne` is the direct way to express that. A seed context has no `builder` at all, and a seed has no rollback or truncate behavior.\n\nA backfill belongs in the migration that makes it necessary, using `query` from the same context — not in a seed.\n\nBoth run inside a transaction by default. `transaction: false` opts out, and a failure then leaves partial work behind with no history record, so take it only when the operation genuinely cannot run in one.\n",
+          "sha256": "f97c07a45a9d49c1d933ddbceeabcc9afe267b1356a2ded1a3da0dd56b54011c"
+        },
+        {
+          "id": "E10",
+          "kind": "skill",
+          "path": "app/.agents/skills/nocobase-db/SKILL.md",
+          "observation": "Builder 示例只出现 foreignKey 的 name/references，没有 onDelete，也未提及其小写枚举取值。",
+          "lines": [
+            143,
+            166
+          ],
+          "excerpt": "## 3. Builder\n\n`builder` is the schema API, and a migration is where it belongs. Runtime code has `db.builder()` available and should not use it: schema that changes outside the migration history is schema nothing can reproduce.\n\n`createCollection(name, callback)` takes a callback, not a field array:\n\n```ts\nawait builder.createCollection('orderItems', (collection) => {\n  collection.increments('id');\n  collection.integer('orderId', { nullable: false });\n  collection.integer('quantity', { nullable: false, defaultValue: 1 });\n  collection.foreignKey('orderId', {\n    references: { collection: 'orders', fields: ['id'] },\n    name: 'fk_order_items_order',\n  });\n  collection.index(['orderId', 'quantity']);\n});\n```\n\nField builders are `increments`, `integer`, `bigInt`, `string`, `char`, `text`, `boolean`, `decimal`, `float`, `double`, `date`, `time`, `datetime`, `datetimeTz`, `json`, `blob`, `uuid`, and `native` for a dialect-specific type. Options include `nullable`, `length`, `defaultValue`, `precision` and `scale`; the equivalent chained form (`.notNull()`, `.defaultTo()`, `.unique()`) is also available — pick one style and keep the file consistent.\n\nRelations are `belongsTo`, `hasOne`, `hasMany` and `belongsToMany`. Constraints and indexes are `primary`, `unique`, `foreignKey` and `index`, each taking one field name or an array.\n\nChange an existing table with explicit alter, rename and drop operations in a safe dependency order. Do not drop and recreate — that destroys data and is not what `down()` should undo.",
+          "sha256": "f97c07a45a9d49c1d933ddbceeabcc9afe267b1356a2ded1a3da0dd56b54011c"
+        },
+        {
+          "id": "E43",
+          "kind": "log",
+          "path": "artifacts/agent-history/agent-implement.jsonl/part-0006.txt",
+          "observation": "工具调用尝试 sed 读取 repository-input 的 dist/internal/sort-builder.d.ts，因路径不存在报错退出，属包内布局探测失败。",
+          "lines": [
+            833,
+            840
+          ],
+          "excerpt": "{\"type\":\"tool_execution_start\",\"toolCallId\":\"call_adujq9pl\",\"toolName\":\"bash\",\"args\":{\"command\":\"cd /home/runner/work/nb3-factory/nb3-factory/workspace && D=$(readlink -f node_modules/@nocobase/repository-input) && sed -n '1,120p' \\\"$D/dist/internal/sort-builder.d.ts\\\" && echo \\\"=== select-builder ===\\\" && sed -n '1,120p' \\\"$D/dist/internal/select-builder.d.ts\\\"\",\"timeout\":60}}\n{\"type\":\"tool_execution_update\",\"toolCallId\":\"call_adujq9pl\",\"toolName\":\"bash\",\"args\":{\"command\":\"cd /home/runner/work/nb3-factory/nb3-factory/workspace && D=$(readlink -f node_modules/@nocobase/repository-input) && sed -n '1,120p' \\\"$D/dist/internal/sort-builder.d.ts\\\" && echo \\\"=== select-builder ===\\\" && sed -n '1,120p' \\\"$D/dist/internal/select-builder.d.ts\\\"\",\"timeout\":60},\"partialResult\":{\"content\":[]}}\n{\"type\":\"tool_execution_update\",\"toolCallId\":\"call_adujq9pl\",\"toolName\":\"bash\",\"args\":{\"command\":\"cd /home/runner/work/nb3-factory/nb3-factory/workspace && D=$(readlink -f node_modules/@nocobase/repository-input) && sed -n '1,120p' \\\"$D/dist/internal/sort-builder.d.ts\\\" && echo \\\"=== select-builder ===\\\" && sed -n '1,120p' \\\"$D/dist/internal/select-builder.d.ts\\\"\",\"timeout\":60},\"partialResult\":{\"content\":[{\"type\":\"text\",\"text\":\"sed: can't read /home/runner/work/nb3-factory/nb3-factory/workspace/node_modules/.pnpm/@nocobase+repository-input@0.1.0-beta.1/node_modules/@nocobase/repository-input/dist/internal/sort-builder.d.ts: No such file or directory\\n\"}],\"details\":{}}}\n{\"type\":\"tool_execution_end\",\"toolCallId\":\"call_adujq9pl\",\"toolName\":\"bash\",\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"sed: can't read /home/runner/work/nb3-factory/nb3-factory/workspace/node_modules/.pnpm/@nocobase+repository-input@0.1.0-beta.1/node_modules/@nocobase/repository-input/dist/internal/sort-builder.d.ts: No such file or directory\\n\\n\\nCommand exited with code 2\"}],\"details\":{}},\"isError\":true}\n{\"type\":\"message_start\",\"message\":{\"role\":\"toolResult\",\"toolCallId\":\"call_adujq9pl\",\"toolName\":\"bash\",\"content\":[{\"type\":\"text\",\"text\":\"sed: can't read /home/runner/work/nb3-factory/nb3-factory/workspace/node_modules/.pnpm/@nocobase+repository-input@0.1.0-beta.1/node_modules/@nocobase/repository-input/dist/internal/sort-builder.d.ts: No such file or directory\\n\\n\\nCommand exited with code 2\"}],\"details\":{},\"isError\":true,\"timestamp\":1790638876982}}\n{\"type\":\"message_end\",\"message\":{\"role\":\"toolResult\",\"toolCallId\":\"call_adujq9pl\",\"toolName\":\"bash\",\"content\":[{\"type\":\"text\",\"text\":\"sed: can't read /home/runner/work/nb3-factory/nb3-factory/workspace/node_modules/.pnpm/@nocobase+repository-input@0.1.0-beta.1/node_modules/@nocobase/repository-input/dist/internal/sort-builder.d.ts: No such file or directory\\n\\n\\nCommand exited with code 2\"}],\"details\":{},\"isError\":true,\"timestamp\":1790638876982}}\n{\"type\":\"turn_end\",\"message\":{\"role\":\"assistant\",\"content\":[{\"type\":\"thinking\",\"thinking\":\"`RepositoryQuery` is PromiseLike, so `await repo.findMany(...)` gives `TRecord[]`. Good.\\n\\nNow `sort` builder — let's check repository-input sort-builder.\",\"thinkingSignature\":\"reasoning\"},{\"type\":\"toolCall\",\"id\":\"call_adujq9pl\",\"name\":\"bash\",\"arguments\":{\"command\":\"cd /home/runner/work/nb3-factory/nb3-factory/workspace && D=$(readlink -f node_modules/@nocobase/repository-input) && sed -n '1,120p' \\\"$D/dist/internal/sort-builder.d.ts\\\" && echo \\\"=== select-builder ===\\\" && sed -n '1,120p' \\\"$D/dist/internal/select-builder.d.ts\\\"\",\"timeout\":60}}],\"api\":\"openai-completions\",\"provider\":\"nb3-factory\",\"model\":\"deepseek-v4.1-flash\",\"usage\":{\"input\":2285,\"output\":180,\"cacheRead\":73600,\"cacheWrite\":0,\"reasoning\":0,\"totalTokens\":76065,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"stopReason\":\"toolUse\",\"timestamp\":1790638873832,\"responseId\":\"chatcmpl-713\",\"rawStopReason\":\"tool_calls\"},\"toolResults\":[{\"role\":\"toolResult\",\"toolCallId\":\"call_adujq9pl\",\"toolName\":\"bash\",\"content\":[{\"type\":\"text\",\"text\":\"sed: can't read /home/runner/work/nb3-factory/nb3-factory/workspace/node_modules/.pnpm/@nocobase+repository-input@0.1.0-beta.1/node_modules/@nocobase/repository-input/dist/internal/sort-builder.d.ts: No such file or directory\\n\\n\\nCommand exited with code 2\"}],\"details\":{},\"isError\":true,\"timestamp\":1790638876982}]}\n{\"type\":\"turn_start\"}",
+          "sha256": "f2c1e0ed2aba079665be7b87a45a8b625d230d51ffdad262afa06f0a3822ca58"
+        },
+        {
+          "id": "E44",
+          "kind": "log",
+          "path": "artifacts/agent-history/agent-implement.jsonl/part-0011.txt",
+          "observation": "探测 @nocobase/db-sqlite 的 ls/package.json/src，命令本身成功返回列表，isError 只是探索噪声。",
+          "lines": [
+            968,
+            976
+          ],
+          "excerpt": "{\"type\":\"tool_execution_update\",\"toolCallId\":\"call_00_ET_rtDiD18RCZkimNch21SN8985\",\"toolName\":\"bash\",\"args\":{\"command\":\"cd /home/runner/work/nb3-factory/nb3-factory/workspace && D=$(readlink -f node_modules/@nocobase/db-sqlite) && ls \\\"$D\\\" && cat \\\"$D/package.json\\\" | head -40 && echo \\\"=== src ===\\\" && ls \\\"$D/src\\\"\",\"timeout\":60},\"partialResult\":{\"content\":[]}}\n{\"type\":\"tool_execution_update\",\"toolCallId\":\"call_00_ET_rtDiD18RCZkimNch21SN8985\",\"toolName\":\"bash\",\"args\":{\"command\":\"cd /home/runner/work/nb3-factory/nb3-factory/workspace && D=$(readlink -f node_modules/@nocobase/db-sqlite) && ls \\\"$D\\\" && cat \\\"$D/package.json\\\" | head -40 && echo \\\"=== src ===\\\" && ls \\\"$D/src\\\"\",\"timeout\":60},\"partialResult\":{\"content\":[{\"type\":\"text\",\"text\":\"README.md\\ndist\\nnode_modules\\npackage.json\\n\"}],\"details\":{}}}\n{\"type\":\"tool_execution_update\",\"toolCallId\":\"call_00_ET_rtDiD18RCZkimNch21SN8985\",\"toolName\":\"bash\",\"args\":{\"command\":\"cd /home/runner/work/nb3-factory/nb3-factory/workspace && D=$(readlink -f node_modules/@nocobase/db-sqlite) && ls \\\"$D\\\" && cat \\\"$D/package.json\\\" | head -40 && echo \\\"=== src ===\\\" && ls \\\"$D/src\\\"\",\"timeout\":60},\"partialResult\":{\"content\":[{\"type\":\"text\",\"text\":\"README.md\\ndist\\nnode_modules\\npackage.json\\n{\\n  \\\"name\\\": \\\"@nocobase/db-sqlite\\\",\\n  \\\"version\\\": \\\"0.1.0-beta.3\\\",\\n  \\\"description\\\": \\\"Sqlite dialect for @nocobase/db.\\\",\\n  \\\"type\\\": \\\"module\\\",\\n  \\\"prettier\\\": \\\"@nocobase/dev-config/prettier\\\",\\n  \\\"main\\\": \\\"dist/src/index.js\\\",\\n  \\\"types\\\": \\\"dist/src/index.d.ts\\\",\\n  \\\"exports\\\": {\\n    \\\".\\\": {\\n      \\\"types\\\": \\\"./dist/src/index.d.ts\\\",\\n      \\\"import\\\": \\\"./dist/src/index.js\\\"\\n    }\\n  },\\n  \\\"files\\\": [\\n    \\\"dist\\\",\\n    \\\"README.md\\\"\\n  ],\\n  \\\"publishConfig\\\": {\\n    \\\"access\\\": \\\"public\\\"\\n  },\\n  \\\"peerDependencies\\\": {\\n    \\\"@nocobase/db\\\": \\\"^1.0.0-beta.16\\\"\\n  },\\n  \\\"devDependencies\\\": {\\n    \\\"@types/node\\\": \\\"^24.0.0\\\",\\n    \\\"eslint\\\": \\\"^10.0.0\\\",\\n    \\\"knex\\\": \\\"^3.1.0\\\",\\n    \\\"tsx\\\": \\\"^4.21.0\\\",\\n    \\\"typescript\\\": \\\"^6.0.3\\\",\\n    \\\"vitest\\\": \\\"^4.1.10\\\",\\n    \\\"@nocobase/db\\\": \\\"1.0.0-beta.16\\\",\\n    \\\"@nocobase/dev-config\\\": \\\"0.1.0-beta.13\\\",\\n    \\\"@nocobase/db-testkit\\\": \\\"0.0.2-beta.1\\\"\\n  },\\n  \\\"dependencies\\\": {\\n    \\\"better-sqlite3\\\": \\\"^13.0.3\\\",\\n    \\\"knex\\\": \\\"^3.1.0\\\"\\n  },\\n  \\\"scripts\\\": {\\n=== src ===\\nls: cannot access '/home/runner/work/nb3-factory/nb3-factory/workspace/node_modules/.pnpm/@nocobase+db-sqlite@0.1.0-beta.3_@nocobase+db@1.0.0-beta.16_better-sqlite3@13.0.3_pg@8.23.0__pg@8.23.0/node_modules/@nocobase/db-sqlite/src': No such file or directory\\n\"}],\"details\":{}}}\n{\"type\":\"tool_execution_end\",\"toolCallId\":\"call_00_ET_rtDiD18RCZkimNch21SN8985\",\"toolName\":\"bash\",\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"README.md\\ndist\\nnode_modules\\npackage.json\\n{\\n  \\\"name\\\": \\\"@nocobase/db-sqlite\\\",\\n  \\\"version\\\": \\\"0.1.0-beta.3\\\",\\n  \\\"description\\\": \\\"Sqlite dialect for @nocobase/db.\\\",\\n  \\\"type\\\": \\\"module\\\",\\n  \\\"prettier\\\": \\\"@nocobase/dev-config/prettier\\\",\\n  \\\"main\\\": \\\"dist/src/index.js\\\",\\n  \\\"types\\\": \\\"dist/src/index.d.ts\\\",\\n  \\\"exports\\\": {\\n    \\\".\\\": {\\n      \\\"types\\\": \\\"./dist/src/index.d.ts\\\",\\n      \\\"import\\\": \\\"./dist/src/index.js\\\"\\n    }\\n  },\\n  \\\"files\\\": [\\n    \\\"dist\\\",\\n    \\\"README.md\\\"\\n  ],\\n  \\\"publishConfig\\\": {\\n    \\\"access\\\": \\\"public\\\"\\n  },\\n  \\\"peerDependencies\\\": {\\n    \\\"@nocobase/db\\\": \\\"^1.0.0-beta.16\\\"\\n  },\\n  \\\"devDependencies\\\": {\\n    \\\"@types/node\\\": \\\"^24.0.0\\\",\\n    \\\"eslint\\\": \\\"^10.0.0\\\",\\n    \\\"knex\\\": \\\"^3.1.0\\\",\\n    \\\"tsx\\\": \\\"^4.21.0\\\",\\n    \\\"typescript\\\": \\\"^6.0.3\\\",\\n    \\\"vitest\\\": \\\"^4.1.10\\\",\\n    \\\"@nocobase/db\\\": \\\"1.0.0-beta.16\\\",\\n    \\\"@nocobase/dev-config\\\": \\\"0.1.0-beta.13\\\",\\n    \\\"@nocobase/db-testkit\\\": \\\"0.0.2-beta.1\\\"\\n  },\\n  \\\"dependencies\\\": {\\n    \\\"better-sqlite3\\\": \\\"^13.0.3\\\",\\n    \\\"knex\\\": \\\"^3.1.0\\\"\\n  },\\n  \\\"scripts\\\": {\\n=== src ===\\nls: cannot access '/home/runner/work/nb3-factory/nb3-factory/workspace/node_modules/.pnpm/@nocobase+db-sqlite@0.1.0-beta.3_@nocobase+db@1.0.0-beta.16_better-sqlite3@13.0.3_pg@8.23.0__pg@8.23.0/node_modules/@nocobase/db-sqlite/src': No such file or directory\\n\\n\\nCommand exited with code 2\"}],\"details\":{}},\"isError\":true}\n{\"type\":\"message_start\",\"message\":{\"role\":\"toolResult\",\"toolCallId\":\"call_00_ET_rtDiD18RCZkimNch21SN8985\",\"toolName\":\"bash\",\"content\":[{\"type\":\"text\",\"text\":\"README.md\\ndist\\nnode_modules\\npackage.json\\n{\\n  \\\"name\\\": \\\"@nocobase/db-sqlite\\\",\\n  \\\"version\\\": \\\"0.1.0-beta.3\\\",\\n  \\\"description\\\": \\\"Sqlite dialect for @nocobase/db.\\\",\\n  \\\"type\\\": \\\"module\\\",\\n  \\\"prettier\\\": \\\"@nocobase/dev-config/prettier\\\",\\n  \\\"main\\\": \\\"dist/src/index.js\\\",\\n  \\\"types\\\": \\\"dist/src/index.d.ts\\\",\\n  \\\"exports\\\": {\\n    \\\".\\\": {\\n      \\\"types\\\": \\\"./dist/src/index.d.ts\\\",\\n      \\\"import\\\": \\\"./dist/src/index.js\\\"\\n    }\\n  },\\n  \\\"files\\\": [\\n    \\\"dist\\\",\\n    \\\"README.md\\\"\\n  ],\\n  \\\"publishConfig\\\": {\\n    \\\"access\\\": \\\"public\\\"\\n  },\\n  \\\"peerDependencies\\\": {\\n    \\\"@nocobase/db\\\": \\\"^1.0.0-beta.16\\\"\\n  },\\n  \\\"devDependencies\\\": {\\n    \\\"@types/node\\\": \\\"^24.0.0\\\",\\n    \\\"eslint\\\": \\\"^10.0.0\\\",\\n    \\\"knex\\\": \\\"^3.1.0\\\",\\n    \\\"tsx\\\": \\\"^4.21.0\\\",\\n    \\\"typescript\\\": \\\"^6.0.3\\\",\\n    \\\"vitest\\\": \\\"^4.1.10\\\",\\n    \\\"@nocobase/db\\\": \\\"1.0.0-beta.16\\\",\\n    \\\"@nocobase/dev-config\\\": \\\"0.1.0-beta.13\\\",\\n    \\\"@nocobase/db-testkit\\\": \\\"0.0.2-beta.1\\\"\\n  },\\n  \\\"dependencies\\\": {\\n    \\\"better-sqlite3\\\": \\\"^13.0.3\\\",\\n    \\\"knex\\\": \\\"^3.1.0\\\"\\n  },\\n  \\\"scripts\\\": {\\n=== src ===\\nls: cannot access '/home/runner/work/nb3-factory/nb3-factory/workspace/node_modules/.pnpm/@nocobase+db-sqlite@0.1.0-beta.3_@nocobase+db@1.0.0-beta.16_better-sqlite3@13.0.3_pg@8.23.0__pg@8.23.0/node_modules/@nocobase/db-sqlite/src': No such file or directory\\n\\n\\nCommand exited with code 2\"}],\"details\":{},\"isError\":true,\"timestamp\":1790639116229}}\n{\"type\":\"message_end\",\"message\":{\"role\":\"toolResult\",\"toolCallId\":\"call_00_ET_rtDiD18RCZkimNch21SN8985\",\"toolName\":\"bash\",\"content\":[{\"type\":\"text\",\"text\":\"README.md\\ndist\\nnode_modules\\npackage.json\\n{\\n  \\\"name\\\": \\\"@nocobase/db-sqlite\\\",\\n  \\\"version\\\": \\\"0.1.0-beta.3\\\",\\n  \\\"description\\\": \\\"Sqlite dialect for @nocobase/db.\\\",\\n  \\\"type\\\": \\\"module\\\",\\n  \\\"prettier\\\": \\\"@nocobase/dev-config/prettier\\\",\\n  \\\"main\\\": \\\"dist/src/index.js\\\",\\n  \\\"types\\\": \\\"dist/src/index.d.ts\\\",\\n  \\\"exports\\\": {\\n    \\\".\\\": {\\n      \\\"types\\\": \\\"./dist/src/index.d.ts\\\",\\n      \\\"import\\\": \\\"./dist/src/index.js\\\"\\n    }\\n  },\\n  \\\"files\\\": [\\n    \\\"dist\\\",\\n    \\\"README.md\\\"\\n  ],\\n  \\\"publishConfig\\\": {\\n    \\\"access\\\": \\\"public\\\"\\n  },\\n  \\\"peerDependencies\\\": {\\n    \\\"@nocobase/db\\\": \\\"^1.0.0-beta.16\\\"\\n  },\\n  \\\"devDependencies\\\": {\\n    \\\"@types/node\\\": \\\"^24.0.0\\\",\\n    \\\"eslint\\\": \\\"^10.0.0\\\",\\n    \\\"knex\\\": \\\"^3.1.0\\\",\\n    \\\"tsx\\\": \\\"^4.21.0\\\",\\n    \\\"typescript\\\": \\\"^6.0.3\\\",\\n    \\\"vitest\\\": \\\"^4.1.10\\\",\\n    \\\"@nocobase/db\\\": \\\"1.0.0-beta.16\\\",\\n    \\\"@nocobase/dev-config\\\": \\\"0.1.0-beta.13\\\",\\n    \\\"@nocobase/db-testkit\\\": \\\"0.0.2-beta.1\\\"\\n  },\\n  \\\"dependencies\\\": {\\n    \\\"better-sqlite3\\\": \\\"^13.0.3\\\",\\n    \\\"knex\\\": \\\"^3.1.0\\\"\\n  },\\n  \\\"scripts\\\": {\\n=== src ===\\nls: cannot access '/home/runner/work/nb3-factory/nb3-factory/workspace/node_modules/.pnpm/@nocobase+db-sqlite@0.1.0-beta.3_@nocobase+db@1.0.0-beta.16_better-sqlite3@13.0.3_pg@8.23.0__pg@8.23.0/node_modules/@nocobase/db-sqlite/src': No such file or directory\\n\\n\\nCommand exited with code 2\"}],\"details\":{},\"isError\":true,\"timestamp\":1790639116229}}\n{\"type\":\"turn_end\",\"message\":{\"role\":\"assistant\",\"content\":[{\"type\":\"toolCall\",\"id\":\"call_00_ET_rtDiD18RCZkimNch21SN8985\",\"name\":\"bash\",\"arguments\":{\"command\":\"cd /home/runner/work/nb3-factory/nb3-factory/workspace && D=$(readlink -f node_modules/@nocobase/db-sqlite) && ls \\\"$D\\\" && cat \\\"$D/package.json\\\" | head -40 && echo \\\"=== src ===\\\" && ls \\\"$D/src\\\"\",\"timeout\":60}}],\"api\":\"openai-completions\",\"provider\":\"nb3-factory\",\"model\":\"deepseek-v4.1-flash\",\"usage\":{\"input\":209,\"output\":121,\"cacheRead\":79104,\"cacheWrite\":0,\"reasoning\":0,\"totalTokens\":79434,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"stopReason\":\"toolUse\",\"timestamp\":1790639112423,\"responseId\":\"gen_01M3N6H26EVENZW0ZZ9V1H98TD\",\"rawStopReason\":\"tool_calls\"},\"toolResults\":[{\"role\":\"toolResult\",\"toolCallId\":\"call_00_ET_rtDiD18RCZkimNch21SN8985\",\"toolName\":\"bash\",\"content\":[{\"type\":\"text\",\"text\":\"README.md\\ndist\\nnode_modules\\npackage.json\\n{\\n  \\\"name\\\": \\\"@nocobase/db-sqlite\\\",\\n  \\\"version\\\": \\\"0.1.0-beta.3\\\",\\n  \\\"description\\\": \\\"Sqlite dialect for @nocobase/db.\\\",\\n  \\\"type\\\": \\\"module\\\",\\n  \\\"prettier\\\": \\\"@nocobase/dev-config/prettier\\\",\\n  \\\"main\\\": \\\"dist/src/index.js\\\",\\n  \\\"types\\\": \\\"dist/src/index.d.ts\\\",\\n  \\\"exports\\\": {\\n    \\\".\\\": {\\n      \\\"types\\\": \\\"./dist/src/index.d.ts\\\",\\n      \\\"import\\\": \\\"./dist/src/index.js\\\"\\n    }\\n  },\\n  \\\"files\\\": [\\n    \\\"dist\\\",\\n    \\\"README.md\\\"\\n  ],\\n  \\\"publishConfig\\\": {\\n    \\\"access\\\": \\\"public\\\"\\n  },\\n  \\\"peerDependencies\\\": {\\n    \\\"@nocobase/db\\\": \\\"^1.0.0-beta.16\\\"\\n  },\\n  \\\"devDependencies\\\": {\\n    \\\"@types/node\\\": \\\"^24.0.0\\\",\\n    \\\"eslint\\\": \\\"^10.0.0\\\",\\n    \\\"knex\\\": \\\"^3.1.0\\\",\\n    \\\"tsx\\\": \\\"^4.21.0\\\",\\n    \\\"typescript\\\": \\\"^6.0.3\\\",\\n    \\\"vitest\\\": \\\"^4.1.10\\\",\\n    \\\"@nocobase/db\\\": \\\"1.0.0-beta.16\\\",\\n    \\\"@nocobase/dev-config\\\": \\\"0.1.0-beta.13\\\",\\n    \\\"@nocobase/db-testkit\\\": \\\"0.0.2-beta.1\\\"\\n  },\\n  \\\"dependencies\\\": {\\n    \\\"better-sqlite3\\\": \\\"^13.0.3\\\",\\n    \\\"knex\\\": \\\"^3.1.0\\\"\\n  },\\n  \\\"scripts\\\": {\\n=== src ===\\nls: cannot access '/home/runner/work/nb3-factory/nb3-factory/workspace/node_modules/.pnpm/@nocobase+db-sqlite@0.1.0-beta.3_@nocobase+db@1.0.0-beta.16_better-sqlite3@13.0.3_pg@8.23.0__pg@8.23.0/node_modules/@nocobase/db-sqlite/src': No such file or directory\\n\\n\\nCommand exited with code 2\"}],\"details\":{},\"isError\":true,\"timestamp\":1790639116229}]}\n{\"type\":\"turn_start\"}\n{\"type\":\"message_start\",\"message\":{\"role\":\"assistant\",\"content\":[],\"api\":\"openai-completions\",\"provider\":\"nb3-factory\",\"model\":\"deepseek-v4.1-flash\",\"usage\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":0,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"stopReason\":\"pending\",\"timestamp\":1790639116231,\"responseId\":\"gen_01M3N6H5SN9A2XVDXW0R1X3PQ9\"}}",
+          "sha256": "b1b270713c771cc3567b8ba48df25483a02d29c93485ba9ba7328fabc71556d2"
+        },
+        {
+          "id": "E45",
+          "kind": "log",
+          "path": "artifacts/agent-history/agent-implement.jsonl/part-0015.txt",
+          "observation": "head 读取 @nocobase/db/dist/index.d.ts 失败（文件不存在），用于查找 databaseManagerToken 的导出路径。",
+          "lines": [
+            644,
+            652
+          ],
+          "excerpt": "{\"type\":\"tool_execution_update\",\"toolCallId\":\"call_00_Jo687zZHHes821O7WQP50247\",\"toolName\":\"bash\",\"args\":{\"command\":\"cd /home/runner/work/nb3-factory/nb3-factory/workspace && grep -rn \\\"databaseManagerToken\\\" node_modules/@nocobase/db/dist/index.d.ts node_modules/@nocobase/db/dist/*.d.ts 2>/dev/null | head && echo \\\"--- db index ---\\\" && head -20 node_modules/@nocobase/db/dist/index.d.ts && echo \\\"--- search all ---\\\" && grep -rln \\\"databaseManagerToken\\\" node_modules/@nocobase/db/dist | head\",\"timeout\":60},\"partialResult\":{\"content\":[]}}\n{\"type\":\"tool_execution_update\",\"toolCallId\":\"call_00_Jo687zZHHes821O7WQP50247\",\"toolName\":\"bash\",\"args\":{\"command\":\"cd /home/runner/work/nb3-factory/nb3-factory/workspace && grep -rn \\\"databaseManagerToken\\\" node_modules/@nocobase/db/dist/index.d.ts node_modules/@nocobase/db/dist/*.d.ts 2>/dev/null | head && echo \\\"--- db index ---\\\" && head -20 node_modules/@nocobase/db/dist/index.d.ts && echo \\\"--- search all ---\\\" && grep -rln \\\"databaseManagerToken\\\" node_modules/@nocobase/db/dist | head\",\"timeout\":60},\"partialResult\":{\"content\":[{\"type\":\"text\",\"text\":\"--- db index ---\\n\"}],\"details\":{}}}\n{\"type\":\"tool_execution_update\",\"toolCallId\":\"call_00_Jo687zZHHes821O7WQP50247\",\"toolName\":\"bash\",\"args\":{\"command\":\"cd /home/runner/work/nb3-factory/nb3-factory/workspace && grep -rn \\\"databaseManagerToken\\\" node_modules/@nocobase/db/dist/index.d.ts node_modules/@nocobase/db/dist/*.d.ts 2>/dev/null | head && echo \\\"--- db index ---\\\" && head -20 node_modules/@nocobase/db/dist/index.d.ts && echo \\\"--- search all ---\\\" && grep -rln \\\"databaseManagerToken\\\" node_modules/@nocobase/db/dist | head\",\"timeout\":60},\"partialResult\":{\"content\":[{\"type\":\"text\",\"text\":\"--- db index ---\\nhead: cannot open 'node_modules/@nocobase/db/dist/index.d.ts' for reading: No such file or directory\\n\"}],\"details\":{}}}\n{\"type\":\"tool_execution_end\",\"toolCallId\":\"call_00_Jo687zZHHes821O7WQP50247\",\"toolName\":\"bash\",\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"--- db index ---\\nhead: cannot open 'node_modules/@nocobase/db/dist/index.d.ts' for reading: No such file or directory\\n\\n\\nCommand exited with code 1\"}],\"details\":{}},\"isError\":true}\n{\"type\":\"message_start\",\"message\":{\"role\":\"toolResult\",\"toolCallId\":\"call_00_Jo687zZHHes821O7WQP50247\",\"toolName\":\"bash\",\"content\":[{\"type\":\"text\",\"text\":\"--- db index ---\\nhead: cannot open 'node_modules/@nocobase/db/dist/index.d.ts' for reading: No such file or directory\\n\\n\\nCommand exited with code 1\"}],\"details\":{},\"isError\":true,\"timestamp\":1790639276212}}\n{\"type\":\"message_end\",\"message\":{\"role\":\"toolResult\",\"toolCallId\":\"call_00_Jo687zZHHes821O7WQP50247\",\"toolName\":\"bash\",\"content\":[{\"type\":\"text\",\"text\":\"--- db index ---\\nhead: cannot open 'node_modules/@nocobase/db/dist/index.d.ts' for reading: No such file or directory\\n\\n\\nCommand exited with code 1\"}],\"details\":{},\"isError\":true,\"timestamp\":1790639276212}}\n{\"type\":\"turn_end\",\"message\":{\"role\":\"assistant\",\"content\":[{\"type\":\"thinking\",\"thinking\":\"`databaseManagerToken` wasn't found in `@nocobase/db/dist/index.d.ts`? Let me search where it's exported.\",\"thinkingSignature\":\"[{\\\"format\\\":\\\"unknown\\\",\\\"index\\\":0,\\\"text\\\":\\\"`databaseManagerToken` wasn't found in `@nocobase/db/dist/index.d.ts`? Let me search where it's exported.\\\",\\\"type\\\":\\\"reasoning.text\\\"}]\"},{\"type\":\"toolCall\",\"id\":\"call_00_Jo687zZHHes821O7WQP50247\",\"name\":\"bash\",\"arguments\":{\"command\":\"cd /home/runner/work/nb3-factory/nb3-factory/workspace && grep -rn \\\"databaseManagerToken\\\" node_modules/@nocobase/db/dist/index.d.ts node_modules/@nocobase/db/dist/*.d.ts 2>/dev/null | head && echo \\\"--- db index ---\\\" && head -20 node_modules/@nocobase/db/dist/index.d.ts && echo \\\"--- search all ---\\\" && grep -rln \\\"databaseManagerToken\\\" node_modules/@nocobase/db/dist | head\",\"timeout\":60}}],\"api\":\"openai-completions\",\"provider\":\"nb3-factory\",\"model\":\"deepseek-v4.1-flash\",\"usage\":{\"input\":1401,\"output\":196,\"cacheRead\":45440,\"cacheWrite\":0,\"reasoning\":30,\"totalTokens\":47037,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"stopReason\":\"toolUse\",\"timestamp\":1790639272775,\"responseId\":\"gen_01M3N6NYHJN448QM2510WFEE2E\",\"rawStopReason\":\"tool_calls\"},\"toolResults\":[{\"role\":\"toolResult\",\"toolCallId\":\"call_00_Jo687zZHHes821O7WQP50247\",\"toolName\":\"bash\",\"content\":[{\"type\":\"text\",\"text\":\"--- db index ---\\nhead: cannot open 'node_modules/@nocobase/db/dist/index.d.ts' for reading: No such file or directory\\n\\n\\nCommand exited with code 1\"}],\"details\":{},\"isError\":true,\"timestamp\":1790639276212}]}\n{\"type\":\"turn_start\"}\n{\"type\":\"message_start\",\"message\":{\"role\":\"assistant\",\"content\":[],\"api\":\"openai-completions\",\"provider\":\"nb3-factory\",\"model\":\"deepseek-v4.1-flash\",\"usage\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":0,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"stopReason\":\"pending\",\"timestamp\":1790639276214,\"responseId\":\"gen_01M3N6P1SZ54EVMH33G40XPMWB\"}}",
+          "sha256": "62f849e352fc71db871640ce9509d3211aa93116d9fb866f4ad266d255f08a86"
+        },
+        {
+          "id": "E46",
+          "kind": "log",
+          "path": "artifacts/agent-history/agent-implement.jsonl/part-0033.txt",
+          "observation": "find @nocobase/app-server/dist 下 database 相关声明成功返回，随后据结果推断装配入口。",
+          "lines": [
+            450,
+            458
+          ],
+          "excerpt": "{\"type\":\"tool_execution_update\",\"toolCallId\":\"call_00_COH3ba2qKlgz4WeLES1Q9076\",\"toolName\":\"bash\",\"args\":{\"command\":\"cd /home/runner/work/nb3-factory/nb3-factory/workspace && find node_modules/@nocobase/app-server/dist -name \\\"*.d.ts\\\" -path \\\"*database*\\\" | head; echo \\\"---\\\"; cat node_modules/@nocobase/app-server/dist/src/database/index.d.ts 2>/dev/null\",\"timeout\":60},\"partialResult\":{\"content\":[]}}\n{\"type\":\"tool_execution_update\",\"toolCallId\":\"call_00_COH3ba2qKlgz4WeLES1Q9076\",\"toolName\":\"bash\",\"args\":{\"command\":\"cd /home/runner/work/nb3-factory/nb3-factory/workspace && find node_modules/@nocobase/app-server/dist -name \\\"*.d.ts\\\" -path \\\"*database*\\\" | head; echo \\\"---\\\"; cat node_modules/@nocobase/app-server/dist/src/database/index.d.ts 2>/dev/null\",\"timeout\":60},\"partialResult\":{\"content\":[{\"type\":\"text\",\"text\":\"node_modules/@nocobase/app-server/dist/database/define-app-database-config.d.ts\\nnode_modules/@nocobase/app-server/dist/database/collections-directory.d.ts\\nnode_modules/@nocobase/app-server/dist/database/storage.d.ts\\nnode_modules/@nocobase/app-server/dist/database/index.d.ts\\nnode_modules/@nocobase/app-server/dist/database/task-config.d.ts\\nnode_modules/@nocobase/app-server/dist/database/ownership.d.ts\\nnode_modules/@nocobase/app-server/dist/database/manager.d.ts\\nnode_modules/@nocobase/app-server/dist/database/collections-doctor.d.ts\\nnode_modules/@nocobase/app-server/dist/database/plan.d.ts\\nnode_modules/@nocobase/app-server/dist/database/types.d.ts\\n\"}],\"details\":{}}}\n{\"type\":\"tool_execution_update\",\"toolCallId\":\"call_00_COH3ba2qKlgz4WeLES1Q9076\",\"toolName\":\"bash\",\"args\":{\"command\":\"cd /home/runner/work/nb3-factory/nb3-factory/workspace && find node_modules/@nocobase/app-server/dist -name \\\"*.d.ts\\\" -path \\\"*database*\\\" | head; echo \\\"---\\\"; cat node_modules/@nocobase/app-server/dist/src/database/index.d.ts 2>/dev/null\",\"timeout\":60},\"partialResult\":{\"content\":[{\"type\":\"text\",\"text\":\"node_modules/@nocobase/app-server/dist/database/define-app-database-config.d.ts\\nnode_modules/@nocobase/app-server/dist/database/collections-directory.d.ts\\nnode_modules/@nocobase/app-server/dist/database/storage.d.ts\\nnode_modules/@nocobase/app-server/dist/database/index.d.ts\\nnode_modules/@nocobase/app-server/dist/database/task-config.d.ts\\nnode_modules/@nocobase/app-server/dist/database/ownership.d.ts\\nnode_modules/@nocobase/app-server/dist/database/manager.d.ts\\nnode_modules/@nocobase/app-server/dist/database/collections-doctor.d.ts\\nnode_modules/@nocobase/app-server/dist/database/plan.d.ts\\nnode_modules/@nocobase/app-server/dist/database/types.d.ts\\n---\\n\"}],\"details\":{}}}\n{\"type\":\"tool_execution_end\",\"toolCallId\":\"call_00_COH3ba2qKlgz4WeLES1Q9076\",\"toolName\":\"bash\",\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"node_modules/@nocobase/app-server/dist/database/define-app-database-config.d.ts\\nnode_modules/@nocobase/app-server/dist/database/collections-directory.d.ts\\nnode_modules/@nocobase/app-server/dist/database/storage.d.ts\\nnode_modules/@nocobase/app-server/dist/database/index.d.ts\\nnode_modules/@nocobase/app-server/dist/database/task-config.d.ts\\nnode_modules/@nocobase/app-server/dist/database/ownership.d.ts\\nnode_modules/@nocobase/app-server/dist/database/manager.d.ts\\nnode_modules/@nocobase/app-server/dist/database/collections-doctor.d.ts\\nnode_modules/@nocobase/app-server/dist/database/plan.d.ts\\nnode_modules/@nocobase/app-server/dist/database/types.d.ts\\n---\\n\\n\\nCommand exited with code 1\"}],\"details\":{}},\"isError\":true}\n{\"type\":\"message_start\",\"message\":{\"role\":\"toolResult\",\"toolCallId\":\"call_00_COH3ba2qKlgz4WeLES1Q9076\",\"toolName\":\"bash\",\"content\":[{\"type\":\"text\",\"text\":\"node_modules/@nocobase/app-server/dist/database/define-app-database-config.d.ts\\nnode_modules/@nocobase/app-server/dist/database/collections-directory.d.ts\\nnode_modules/@nocobase/app-server/dist/database/storage.d.ts\\nnode_modules/@nocobase/app-server/dist/database/index.d.ts\\nnode_modules/@nocobase/app-server/dist/database/task-config.d.ts\\nnode_modules/@nocobase/app-server/dist/database/ownership.d.ts\\nnode_modules/@nocobase/app-server/dist/database/manager.d.ts\\nnode_modules/@nocobase/app-server/dist/database/collections-doctor.d.ts\\nnode_modules/@nocobase/app-server/dist/database/plan.d.ts\\nnode_modules/@nocobase/app-server/dist/database/types.d.ts\\n---\\n\\n\\nCommand exited with code 1\"}],\"details\":{},\"isError\":true,\"timestamp\":1790639966116}}\n{\"type\":\"message_end\",\"message\":{\"role\":\"toolResult\",\"toolCallId\":\"call_00_COH3ba2qKlgz4WeLES1Q9076\",\"toolName\":\"bash\",\"content\":[{\"type\":\"text\",\"text\":\"node_modules/@nocobase/app-server/dist/database/define-app-database-config.d.ts\\nnode_modules/@nocobase/app-server/dist/database/collections-directory.d.ts\\nnode_modules/@nocobase/app-server/dist/database/storage.d.ts\\nnode_modules/@nocobase/app-server/dist/database/index.d.ts\\nnode_modules/@nocobase/app-server/dist/database/task-config.d.ts\\nnode_modules/@nocobase/app-server/dist/database/ownership.d.ts\\nnode_modules/@nocobase/app-server/dist/database/manager.d.ts\\nnode_modules/@nocobase/app-server/dist/database/collections-doctor.d.ts\\nnode_modules/@nocobase/app-server/dist/database/plan.d.ts\\nnode_modules/@nocobase/app-server/dist/database/types.d.ts\\n---\\n\\n\\nCommand exited with code 1\"}],\"details\":{},\"isError\":true,\"timestamp\":1790639966116}}\n{\"type\":\"turn_end\",\"message\":{\"role\":\"assistant\",\"content\":[{\"type\":\"thinking\",\"thinking\":\"So I can do:\\n\\n```ts\\nimport { createDatabaseManager } from '@nocobase/db';\\nimport sqlite from '@nocobase/db-sqlite';\\n\\nconst manager = createDatabaseManager({\\n  default: 'main',\\n  connections: {\\n    main: { dialect: 'sqlite', filename, schemaManagement: 'managed' },\\n  },\\n  drivers: { sqlite },\\n});\\n```\\n\\nWait `drivers: Record<string, DatabaseDriverRegistration>` keyed by dialect. And the connection type is inferred from drivers. Actually `createDatabaseManager<TConnection>(config: ExtensibleDatabaseConfig<TConnection>)`. With `drivers` present it may need the right shape. Let me check SqliteConnectionConfig to see requirements like `schemaManagement`.\\n\\nActually the config example includes `schemaManagement: 'managed'`. In `@nocobase/app-server/database` defineAppDatabaseConfig resolves drivers from official packages. For the test I can maybe use that helper too. Let's check `@nocobase/app-server/database` exports. But simpler: use `sqlite` factory from `@nocobase/db-sqlite` as the connection itself:\\n\\n`sqlite({ filename, schemaManagement: 'managed' })` returns `SqliteConnection` with `dialect` and `databaseDriver`. Hmm that's a different API — the `drivers` map.\\n\\nLet me look at how db-sqlite tests or app-server tests create real dbs. Let me search node_modules for tests maybe. Alternatively, look at how `@nocobase/app-server/database` works and whether there's an async helper. Let me read `defineAppDatabaseConfig`.\",\"thinkingSignature\":\"[{\\\"format\\\":\\\"unknown\\\",\\\"index\\\":0,\\\"text\\\":\\\"So I can do:\\\\n\\\\n```ts\\\\nimport { createDatabaseManager } from '@nocobase/db';\\\\nimport sqlite from '@nocobase/db-sqlite';\\\\n\\\\nconst manager = createDatabaseManager({\\\\n  default: 'main',\\\\n  connections: {\\\\n    main: { dialect: 'sqlite', filename, schemaManagement: 'managed' },\\\\n  },\\\\n  drivers: { sqlite },\\\\n});\\\\n```\\\\n\\\\nWait `drivers: Record<string, DatabaseDriverRegistration>` keyed by dialect. And the connection type is inferred from drivers. Actually `createDatabaseManager<TConnection>(config: ExtensibleDatabaseConfig<TConnection>)`. With `drivers` present it may need the right shape. Let me check SqliteConnectionConfig to see requirements like `schemaManagement`.\\\\n\\\\nActually the config example includes `schemaManagement: 'managed'`. In `@nocobase/app-server/database` defineAppDatabaseConfig resolves drivers from official packages. For the test I can maybe use that helper too. Let's check `@nocobase/app-server/database` exports. But simpler: use `sqlite` factory from `@nocobase/db-sqlite` as the connection itself:\\\\n\\\\n`sqlite({ filename, schemaManagement: 'managed' })` returns `SqliteConnection` with `dialect` and `databaseDriver`. Hmm that's a different API — the `drivers` map.\\\\n\\\\nLet me look at how db-sqlite tests or app-server tests create real dbs. Let me search node_modules for tests maybe. Alternatively, look at how `@nocobase/app-server/database` works and whether there's an async helper. Let me read `defineAppDatabaseConfig`.\\\",\\\"type\\\":\\\"reasoning.text\\\"}]\"},{\"type\":\"toolCall\",\"id\":\"call_00_COH3ba2qKlgz4WeLES1Q9076\",\"name\":\"bash\",\"arguments\":{\"command\":\"cd /home/runner/work/nb3-factory/nb3-factory/workspace && find node_modules/@nocobase/app-server/dist -name \\\"*.d.ts\\\" -path \\\"*database*\\\" | head; echo \\\"---\\\"; cat node_modules/@nocobase/app-server/dist/src/database/index.d.ts 2>/dev/null\",\"timeout\":60}}],\"api\":\"openai-completions\",\"provider\":\"nb3-factory\",\"model\":\"deepseek-v4.1-flash\",\"usage\":{\"input\":248,\"output\":471,\"cacheRead\":62336,\"cacheWrite\":0,\"reasoning\":347,\"totalTokens\":63055,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"stopReason\":\"toolUse\",\"timestamp\":1790639960383,\"responseId\":\"gen_01M3N7AY3AGMSHNPMA4PT70K98\",\"rawStopReason\":\"tool_calls\"},\"toolResults\":[{\"role\":\"toolResult\",\"toolCallId\":\"call_00_COH3ba2qKlgz4WeLES1Q9076\",\"toolName\":\"bash\",\"content\":[{\"type\":\"text\",\"text\":\"node_modules/@nocobase/app-server/dist/database/define-app-database-config.d.ts\\nnode_modules/@nocobase/app-server/dist/database/collections-directory.d.ts\\nnode_modules/@nocobase/app-server/dist/database/storage.d.ts\\nnode_modules/@nocobase/app-server/dist/database/index.d.ts\\nnode_modules/@nocobase/app-server/dist/database/task-config.d.ts\\nnode_modules/@nocobase/app-server/dist/database/ownership.d.ts\\nnode_modules/@nocobase/app-server/dist/database/manager.d.ts\\nnode_modules/@nocobase/app-server/dist/database/collections-doctor.d.ts\\nnode_modules/@nocobase/app-server/dist/database/plan.d.ts\\nnode_modules/@nocobase/app-server/dist/database/types.d.ts\\n---\\n\\n\\nCommand exited with code 1\"}],\"details\":{},\"isError\":true,\"timestamp\":1790639966116}]}\n{\"type\":\"turn_start\"}\n{\"type\":\"message_start\",\"message\":{\"role\":\"assistant\",\"content\":[],\"api\":\"openai-completions\",\"provider\":\"nb3-factory\",\"model\":\"deepseek-v4.1-flash\",\"usage\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":0,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"stopReason\":\"pending\",\"timestamp\":1790639966119,\"responseId\":\"gen_01M3N7B3PGPBGZ6R4ZH13ZFXPK\"}}",
+          "sha256": "4d82c5e059e93479c697ab79458766cf2315ca99536b56cddb3fec95239463e7"
+        },
+        {
+          "id": "E47",
+          "kind": "log",
+          "path": "artifacts/agent-history/agent-implement.jsonl/part-0039.txt",
+          "observation": "ls 工作区根目录成功，用于确认 config.yml/storage 等运行产物是否存在，属环境探查。",
+          "lines": [
+            1152,
+            1160
+          ],
+          "excerpt": "{\"type\":\"tool_execution_update\",\"toolCallId\":\"call_00_ErF13q7w9lEa93u6GTyl6024\",\"toolName\":\"bash\",\"args\":{\"command\":\"cd /home/runner/work/nb3-factory/nb3-factory/workspace && ls -la | head -30 && echo \\\"--- config.yml? ---\\\" && ls config.yml 2>&1 && echo \\\"--- storage ---\\\" && ls storage 2>&1 | head\",\"timeout\":60},\"partialResult\":{\"content\":[]}}\n{\"type\":\"tool_execution_update\",\"toolCallId\":\"call_00_ErF13q7w9lEa93u6GTyl6024\",\"toolName\":\"bash\",\"args\":{\"command\":\"cd /home/runner/work/nb3-factory/nb3-factory/workspace && ls -la | head -30 && echo \\\"--- config.yml? ---\\\" && ls config.yml 2>&1 && echo \\\"--- storage ---\\\" && ls storage 2>&1 | head\",\"timeout\":60},\"partialResult\":{\"content\":[{\"type\":\"text\",\"text\":\"total 876\\ndrwxr-xr-x 15 runner runner   4096 Sep 29 00:03 .\\ndrwxr-xr-x  6 runner runner   4096 Sep 28 23:37 ..\\ndrwxr-xr-x  3 runner runner   4096 Sep 28 23:37 .agents\\ndrwxr-xr-x  3 runner runner   4096 Sep 28 23:37 .claude\\ndrwxr-xr-x  7 runner runner   4096 Sep 28 23:38 .git\\ndrwxr-xr-x  9 runner runner   4096 Sep 28 23:37 .github\\n-rw-r--r--  1 runner runner    459 Sep 28 23:37 .gitignore\\n-rw-r--r--  1 runner runner     44 Sep 28 23:37 .npmrc\\n-rw-r--r--  1 runner runner   1271 Sep 28 23:37 .prettierignore\\n-rw-r--r--  1 runner runner  52467 Sep 28 23:37 AGENTS.md\\n-rw-r--r--  1 runner runner   1476 Sep 28 23:37 CLAUDE.md\\n-rw-r--r--  1 runner runner   7197 Sep 28 23:37 Dockerfile\\n-rw-r--r--  1 runner runner   1581 Sep 28 23:37 Dockerfile.dockerignore\\n-rw-r--r--  1 runner runner  58451 Sep 28 23:37 README.MD\\ndrwxr-xr-x  2 runner runner   4096 Sep 28 23:37 cli\\ndrwxr-xr-x 12 runner runner   4096 Sep 28 23:37 client\\n-rw-r--r--  1 runner runner    578 Sep 28 23:37 components.json\\n-rw-r--r--  1 runner runner   3978 Sep 28 23:37 config.example.yml\\ndrwxr-xr-x  3 runner runner   4096 Sep 28 23:37 database\\ndrwxr-xr-x  2 runner runner   4096 Sep 28 23:37 docs\\n-rw-r--r--  1 runner runner   1382 Sep 28 23:37 ecosystem.config.js\\n-rw-r--r--  1 runner runner    467 Sep 28 23:37 eslint.config.js\\n-rw-r--r--  1 runner runner    974 Sep 28 23:37 factory-template.json\\n-rw-r--r--  1 runner runner   2739 Sep 28 23:37 index.html\\ndrwxr-xr-x 24 runner runner   4096 Sep 28 23:56 node_modules\\n-rw-r--r--  1 runner runner   6605 Sep 28 23:37 package.json\\n-rw-r--r--  1 runner runner    212 Sep 28 23:37 playwright.config.ts\\n-rw-r--r--  1 runner runner 626150 Sep 28 23:37 pnpm-lock.yaml\\n-rw-r--r--  1 runner runner   2171 Sep 28 23:37 pnpm-workspace.yaml\\n\"}],\"details\":{}}}\n{\"type\":\"tool_execution_update\",\"toolCallId\":\"call_00_ErF13q7w9lEa93u6GTyl6024\",\"toolName\":\"bash\",\"args\":{\"command\":\"cd /home/runner/work/nb3-factory/nb3-factory/workspace && ls -la | head -30 && echo \\\"--- config.yml? ---\\\" && ls config.yml 2>&1 && echo \\\"--- storage ---\\\" && ls storage 2>&1 | head\",\"timeout\":60},\"partialResult\":{\"content\":[{\"type\":\"text\",\"text\":\"total 876\\ndrwxr-xr-x 15 runner runner   4096 Sep 29 00:03 .\\ndrwxr-xr-x  6 runner runner   4096 Sep 28 23:37 ..\\ndrwxr-xr-x  3 runner runner   4096 Sep 28 23:37 .agents\\ndrwxr-xr-x  3 runner runner   4096 Sep 28 23:37 .claude\\ndrwxr-xr-x  7 runner runner   4096 Sep 28 23:38 .git\\ndrwxr-xr-x  9 runner runner   4096 Sep 28 23:37 .github\\n-rw-r--r--  1 runner runner    459 Sep 28 23:37 .gitignore\\n-rw-r--r--  1 runner runner     44 Sep 28 23:37 .npmrc\\n-rw-r--r--  1 runner runner   1271 Sep 28 23:37 .prettierignore\\n-rw-r--r--  1 runner runner  52467 Sep 28 23:37 AGENTS.md\\n-rw-r--r--  1 runner runner   1476 Sep 28 23:37 CLAUDE.md\\n-rw-r--r--  1 runner runner   7197 Sep 28 23:37 Dockerfile\\n-rw-r--r--  1 runner runner   1581 Sep 28 23:37 Dockerfile.dockerignore\\n-rw-r--r--  1 runner runner  58451 Sep 28 23:37 README.MD\\ndrwxr-xr-x  2 runner runner   4096 Sep 28 23:37 cli\\ndrwxr-xr-x 12 runner runner   4096 Sep 28 23:37 client\\n-rw-r--r--  1 runner runner    578 Sep 28 23:37 components.json\\n-rw-r--r--  1 runner runner   3978 Sep 28 23:37 config.example.yml\\ndrwxr-xr-x  3 runner runner   4096 Sep 28 23:37 database\\ndrwxr-xr-x  2 runner runner   4096 Sep 28 23:37 docs\\n-rw-r--r--  1 runner runner   1382 Sep 28 23:37 ecosystem.config.js\\n-rw-r--r--  1 runner runner    467 Sep 28 23:37 eslint.config.js\\n-rw-r--r--  1 runner runner    974 Sep 28 23:37 factory-template.json\\n-rw-r--r--  1 runner runner   2739 Sep 28 23:37 index.html\\ndrwxr-xr-x 24 runner runner   4096 Sep 28 23:56 node_modules\\n-rw-r--r--  1 runner runner   6605 Sep 28 23:37 package.json\\n-rw-r--r--  1 runner runner    212 Sep 28 23:37 playwright.config.ts\\n-rw-r--r--  1 runner runner 626150 Sep 28 23:37 pnpm-lock.yaml\\n-rw-r--r--  1 runner runner   2171 Sep 28 23:37 pnpm-workspace.yaml\\n--- config.yml? ---\\nls: cannot access 'config.yml': No such file or directory\\n\"}],\"details\":{}}}\n{\"type\":\"tool_execution_end\",\"toolCallId\":\"call_00_ErF13q7w9lEa93u6GTyl6024\",\"toolName\":\"bash\",\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"total 876\\ndrwxr-xr-x 15 runner runner   4096 Sep 29 00:03 .\\ndrwxr-xr-x  6 runner runner   4096 Sep 28 23:37 ..\\ndrwxr-xr-x  3 runner runner   4096 Sep 28 23:37 .agents\\ndrwxr-xr-x  3 runner runner   4096 Sep 28 23:37 .claude\\ndrwxr-xr-x  7 runner runner   4096 Sep 28 23:38 .git\\ndrwxr-xr-x  9 runner runner   4096 Sep 28 23:37 .github\\n-rw-r--r--  1 runner runner    459 Sep 28 23:37 .gitignore\\n-rw-r--r--  1 runner runner     44 Sep 28 23:37 .npmrc\\n-rw-r--r--  1 runner runner   1271 Sep 28 23:37 .prettierignore\\n-rw-r--r--  1 runner runner  52467 Sep 28 23:37 AGENTS.md\\n-rw-r--r--  1 runner runner   1476 Sep 28 23:37 CLAUDE.md\\n-rw-r--r--  1 runner runner   7197 Sep 28 23:37 Dockerfile\\n-rw-r--r--  1 runner runner   1581 Sep 28 23:37 Dockerfile.dockerignore\\n-rw-r--r--  1 runner runner  58451 Sep 28 23:37 README.MD\\ndrwxr-xr-x  2 runner runner   4096 Sep 28 23:37 cli\\ndrwxr-xr-x 12 runner runner   4096 Sep 28 23:37 client\\n-rw-r--r--  1 runner runner    578 Sep 28 23:37 components.json\\n-rw-r--r--  1 runner runner   3978 Sep 28 23:37 config.example.yml\\ndrwxr-xr-x  3 runner runner   4096 Sep 28 23:37 database\\ndrwxr-xr-x  2 runner runner   4096 Sep 28 23:37 docs\\n-rw-r--r--  1 runner runner   1382 Sep 28 23:37 ecosystem.config.js\\n-rw-r--r--  1 runner runner    467 Sep 28 23:37 eslint.config.js\\n-rw-r--r--  1 runner runner    974 Sep 28 23:37 factory-template.json\\n-rw-r--r--  1 runner runner   2739 Sep 28 23:37 index.html\\ndrwxr-xr-x 24 runner runner   4096 Sep 28 23:56 node_modules\\n-rw-r--r--  1 runner runner   6605 Sep 28 23:37 package.json\\n-rw-r--r--  1 runner runner    212 Sep 28 23:37 playwright.config.ts\\n-rw-r--r--  1 runner runner 626150 Sep 28 23:37 pnpm-lock.yaml\\n-rw-r--r--  1 runner runner   2171 Sep 28 23:37 pnpm-workspace.yaml\\n--- config.yml? ---\\nls: cannot access 'config.yml': No such file or directory\\n\\n\\nCommand exited with code 2\"}],\"details\":{}},\"isError\":true}\n{\"type\":\"message_start\",\"message\":{\"role\":\"toolResult\",\"toolCallId\":\"call_00_ErF13q7w9lEa93u6GTyl6024\",\"toolName\":\"bash\",\"content\":[{\"type\":\"text\",\"text\":\"total 876\\ndrwxr-xr-x 15 runner runner   4096 Sep 29 00:03 .\\ndrwxr-xr-x  6 runner runner   4096 Sep 28 23:37 ..\\ndrwxr-xr-x  3 runner runner   4096 Sep 28 23:37 .agents\\ndrwxr-xr-x  3 runner runner   4096 Sep 28 23:37 .claude\\ndrwxr-xr-x  7 runner runner   4096 Sep 28 23:38 .git\\ndrwxr-xr-x  9 runner runner   4096 Sep 28 23:37 .github\\n-rw-r--r--  1 runner runner    459 Sep 28 23:37 .gitignore\\n-rw-r--r--  1 runner runner     44 Sep 28 23:37 .npmrc\\n-rw-r--r--  1 runner runner   1271 Sep 28 23:37 .prettierignore\\n-rw-r--r--  1 runner runner  52467 Sep 28 23:37 AGENTS.md\\n-rw-r--r--  1 runner runner   1476 Sep 28 23:37 CLAUDE.md\\n-rw-r--r--  1 runner runner   7197 Sep 28 23:37 Dockerfile\\n-rw-r--r--  1 runner runner   1581 Sep 28 23:37 Dockerfile.dockerignore\\n-rw-r--r--  1 runner runner  58451 Sep 28 23:37 README.MD\\ndrwxr-xr-x  2 runner runner   4096 Sep 28 23:37 cli\\ndrwxr-xr-x 12 runner runner   4096 Sep 28 23:37 client\\n-rw-r--r--  1 runner runner    578 Sep 28 23:37 components.json\\n-rw-r--r--  1 runner runner   3978 Sep 28 23:37 config.example.yml\\ndrwxr-xr-x  3 runner runner   4096 Sep 28 23:37 database\\ndrwxr-xr-x  2 runner runner   4096 Sep 28 23:37 docs\\n-rw-r--r--  1 runner runner   1382 Sep 28 23:37 ecosystem.config.js\\n-rw-r--r--  1 runner runner    467 Sep 28 23:37 eslint.config.js\\n-rw-r--r--  1 runner runner    974 Sep 28 23:37 factory-template.json\\n-rw-r--r--  1 runner runner   2739 Sep 28 23:37 index.html\\ndrwxr-xr-x 24 runner runner   4096 Sep 28 23:56 node_modules\\n-rw-r--r--  1 runner runner   6605 Sep 28 23:37 package.json\\n-rw-r--r--  1 runner runner    212 Sep 28 23:37 playwright.config.ts\\n-rw-r--r--  1 runner runner 626150 Sep 28 23:37 pnpm-lock.yaml\\n-rw-r--r--  1 runner runner   2171 Sep 28 23:37 pnpm-workspace.yaml\\n--- config.yml? ---\\nls: cannot access 'config.yml': No such file or directory\\n\\n\\nCommand exited with code 2\"}],\"details\":{},\"isError\":true,\"timestamp\":1790640406240}}\n{\"type\":\"message_end\",\"message\":{\"role\":\"toolResult\",\"toolCallId\":\"call_00_ErF13q7w9lEa93u6GTyl6024\",\"toolName\":\"bash\",\"content\":[{\"type\":\"text\",\"text\":\"total 876\\ndrwxr-xr-x 15 runner runner   4096 Sep 29 00:03 .\\ndrwxr-xr-x  6 runner runner   4096 Sep 28 23:37 ..\\ndrwxr-xr-x  3 runner runner   4096 Sep 28 23:37 .agents\\ndrwxr-xr-x  3 runner runner   4096 Sep 28 23:37 .claude\\ndrwxr-xr-x  7 runner runner   4096 Sep 28 23:38 .git\\ndrwxr-xr-x  9 runner runner   4096 Sep 28 23:37 .github\\n-rw-r--r--  1 runner runner    459 Sep 28 23:37 .gitignore\\n-rw-r--r--  1 runner runner     44 Sep 28 23:37 .npmrc\\n-rw-r--r--  1 runner runner   1271 Sep 28 23:37 .prettierignore\\n-rw-r--r--  1 runner runner  52467 Sep 28 23:37 AGENTS.md\\n-rw-r--r--  1 runner runner   1476 Sep 28 23:37 CLAUDE.md\\n-rw-r--r--  1 runner runner   7197 Sep 28 23:37 Dockerfile\\n-rw-r--r--  1 runner runner   1581 Sep 28 23:37 Dockerfile.dockerignore\\n-rw-r--r--  1 runner runner  58451 Sep 28 23:37 README.MD\\ndrwxr-xr-x  2 runner runner   4096 Sep 28 23:37 cli\\ndrwxr-xr-x 12 runner runner   4096 Sep 28 23:37 client\\n-rw-r--r--  1 runner runner    578 Sep 28 23:37 components.json\\n-rw-r--r--  1 runner runner   3978 Sep 28 23:37 config.example.yml\\ndrwxr-xr-x  3 runner runner   4096 Sep 28 23:37 database\\ndrwxr-xr-x  2 runner runner   4096 Sep 28 23:37 docs\\n-rw-r--r--  1 runner runner   1382 Sep 28 23:37 ecosystem.config.js\\n-rw-r--r--  1 runner runner    467 Sep 28 23:37 eslint.config.js\\n-rw-r--r--  1 runner runner    974 Sep 28 23:37 factory-template.json\\n-rw-r--r--  1 runner runner   2739 Sep 28 23:37 index.html\\ndrwxr-xr-x 24 runner runner   4096 Sep 28 23:56 node_modules\\n-rw-r--r--  1 runner runner   6605 Sep 28 23:37 package.json\\n-rw-r--r--  1 runner runner    212 Sep 28 23:37 playwright.config.ts\\n-rw-r--r--  1 runner runner 626150 Sep 28 23:37 pnpm-lock.yaml\\n-rw-r--r--  1 runner runner   2171 Sep 28 23:37 pnpm-workspace.yaml\\n--- config.yml? ---\\nls: cannot access 'config.yml': No such file or directory\\n\\n\\nCommand exited with code 2\"}],\"details\":{},\"isError\":true,\"timestamp\":1790640406240}}\n{\"type\":\"turn_end\",\"message\":{\"role\":\"assistant\",\"content\":[{\"type\":\"thinking\",\"thinking\":\"Now the migration and seed naming and `database/main/migrations`, seeds. The build generates manifests. There's a `collections generate` artifact directory that's gitignored — `database/main/collections/` doesn't exist yet. That's fine (gitignored, generated by db apply/dev). But `pnpm nocobase collections generate --check` would fail if run. Since it's gitignored and not part of verification requirements, and there's no config.yml, running db commands would fail anyway. Let me check if we can run `pnpm nocobase db apply` — no config.yml and no storage. The task says verify if possible. Let me check whether `config init` is needed. But AGENTS says don't modify config.yml. `config init` would create it. Creating config.yml is allowed? The constraint says \\\"不得修改 config.yml\\\" (must not modify config.yml). Creating one might be considered modifying. The template has no config.yml. Tes",
+          "sha256": "57408b15077f5f28ac81c799d5d44e3433c1fd05d6bda595b816282a2bde3730"
+        }
+      ],
+      "fingerprint": "cdd112fb0221a684085dca72fdaaa2d991dd2b6983fd1749e092f648be9c0d0c"
+    },
+    {
+      "id": "473:36498916248:1:F6",
+      "report": "473:36498916248:1",
+      "issue": 473,
+      "taskTitle": "客户、联系人与商机管理",
+      "appVersion": "1.0.0-beta.50",
+      "appTemplate": "@nocobase/app-template-default",
+      "finding": {
+        "id": "F6",
+        "kind": "improvement",
+        "owner": "framework",
+        "confidence": "confirmed",
+        "severity": "minor",
+        "status": "open",
+        "title": "客户端缺少共享的数据加载 hook，应用需自行实现 loading/错误/取消",
+        "detail": "app-client 只提供 useApiClient/useService，明确不管理请求状态；api.md 也写明「没有共享的数据加载 hook，请在组件内自行实现」。结果每个应用都要重复实现 loading、失败重试、请求取消与 404/403 派生，本轮 CRM 即自研了 useResource。",
+        "impact": "重复样板代码增加落地成本与不一致风险（取消、竞态、错误映射各处不同），也提升 lint/effect 相关踩坑概率（本轮详情页曾因 effect 内同步 setState 被 lint 拦截）。",
+        "suggestedChange": "在 @nocobase/app-client 提供一个可选的请求状态 hook（如 useResource/useRequest）或至少提供官方推荐的实现片段与取消/竞态说明；保持 useApiClient 不变以兼容现有代码。",
+        "evidence": [
+          "E31",
+          "E33",
+          "E51"
+        ],
+        "diagnosis": {
+          "category": "usability-improvement",
+          "trigger": "页面需要加载单条记录或列表并处理失败/重试。",
+          "expected": "框架提供统一的请求状态 hook，处理 loading/error/reload/取消。",
+          "actual": "仅暴露 api client，应用逐页自研 useResource。",
+          "workaround": "应用自建 useResource 并复用（本轮已实现）。",
+          "acceptance": "提供官方 hook 或等价推荐实现后，新页面无需再手写请求状态样板。"
+        }
+      },
+      "targets": [
+        "@nocobase/app-client",
+        "app/.agents/skills/nocobase-app-development/references/frontend/references/api.md"
+      ],
+      "paths": [
+        ".agents/skills/nocobase-app-development/references/frontend/references/api.md",
+        "packages/@nocobase/app-client/dist/hooks.js"
+      ],
+      "evidence": [
+        {
+          "id": "E31",
+          "kind": "package",
+          "path": "packages/@nocobase/app-client/dist/hooks.js",
+          "observation": "app-client 导出 useClientApplication/useService/useApiClient 等 hooks，仅负责取 client，不提供请求状态管理。",
+          "lines": [
+            1,
+            16
+          ],
+          "excerpt": "import { useContext } from 'react';\nimport { apiClientToken } from './application.js';\nimport { ClientApplicationContext } from './application-context.js';\nexport function useClientApplication() {\n    const app = useContext(ClientApplicationContext);\n    if (!app) {\n        throw new Error('useClientApplication() must be used inside AppClientRoot.');\n    }\n    return app;\n}\nexport function useService(token) {\n    return useClientApplication().services.resolve(token);\n}\nexport function useApiClient() {\n    return useService(apiClientToken);\n}",
+          "sha256": "6e63d580cb93a555f719e533e21e5f1f5fe72e94b4be130ba53ce818eecf5d55"
+        },
+        {
+          "id": "E33",
+          "kind": "skill",
+          "path": "app/.agents/skills/nocobase-app-development/references/frontend/references/api.md",
+          "observation": "api.md 明确「没有共享的数据加载 hook」，要求在组件内用 useApiClient + useEffect + AbortController 自行处理 loading/retry/404/403。",
+          "lines": [
+            252,
+            256
+          ],
+          "excerpt": "## Loading data in a component\n\nThere is no shared data-loading hook; write it directly in the component: `useApiClient()` + `useEffect` + `AbortController`. The component below loads a project by id and displays it, covering loading, retry after failure, record not found, no permission and empty values (`client/pages/projects/project-summary.tsx`):\n\n```tsx",
+          "sha256": "2846064ee4ac14ad6375ad62b3d2d6c20e5b16418c8f21d8e2f1aac8ea6fa1f5"
+        },
+        {
+          "id": "E51",
+          "kind": "code",
+          "path": "app/client/pages/crm/hooks.ts",
+          "observation": "应用自建 useResource 处理 loading/error/reload 与 AbortController 取消，说明框架未提供统一的数据加载 hook。",
+          "lines": [
+            21,
+            70
+          ],
+          "excerpt": "type ResourceLoader<T> = (api: ApiClient, signal: AbortSignal) => Promise<T>;\n\nexport interface ResourceState<T> {\n  /** `true` while the first load or a reload is in flight; already-loaded data stays available. */\n  readonly loading: boolean;\n  readonly data: T | undefined;\n  readonly error: unknown;\n  /** Re-runs the request. Stable, so it can be passed through `<Outlet context>`. */\n  readonly reload: () => void;\n}\n\n/**\n * Loads one CRM resource into component state, cancelling the request when the\n * key changes or the component unmounts. `requestKey` must change whenever\n * `load` would return different data: it is what tells an in-flight reload\n * apart from the response of the previous one.\n */\nfunction useResource<T>(\n  requestKey: string,\n  load: ResourceLoader<T>,\n): ResourceState<T> {\n  const api = useApiClient();\n  const [reloadCount, setReloadCount] = useState(0);\n  const key = `${requestKey}:${reloadCount}`;\n  const [result, setResult] = useState<{\n    readonly key: string;\n    readonly data?: T;\n    readonly error?: unknown;\n  }>();\n\n  useEffect(() => {\n    const controller = new AbortController();\n    load(api, controller.signal).then(\n      (data) => {\n        if (!controller.signal.aborted) {\n          setResult({ key, data });\n        }\n      },\n      (error: unknown) => {\n        if (!controller.signal.aborted) {\n          setResult({ key, error });\n        }\n      },\n    );\n    return () => controller.abort();\n  }, [api, key, load]);\n\n  const reload = useCallback(() => setReloadCount((count) => count + 1), []);\n\n  return {",
+          "sha256": "626903144ffc291c76ba597ea0ff6ae2e8b6d0e82d8ba71df1a853b4005b97f9"
+        }
+      ],
+      "fingerprint": "52d761646db476dc2c88d6ef4cbcc1e19fe5c0de08605cd5bb7ef997c5fab451"
     }
   ]
 }
