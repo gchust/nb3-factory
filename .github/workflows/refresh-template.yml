@@ -18,13 +18,22 @@ on:
 permissions: {}
 
 # Serialize template refresh runs independently from application tasks.
+# Publishing refuses a develop that moved during generation, so preset syncs
+# (sync-issue-presets.yml, which commits to develop) share this queue. Pull
+# request checks never publish and get a queue per PR, so a stack of PR pushes
+# cannot hold a publish back. (queue: max cannot be combined with
+# cancel-in-progress, so superseded PR runs still finish.)
 concurrency:
-  group: template-refresh-global
+  group: ${{ github.event_name == 'pull_request' && format('template-refresh-pr-{0}', github.event.pull_request.number) || 'template-refresh-global' }}
   queue: max
 
 jobs:
   generate:
-    if: github.actor == github.repository_owner && (github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository))
+    # Publishing is owner-only. A same-repository PR check holds no secrets and
+    # only read permission, and must not be skipped (a skipped check passes).
+    if: >-
+      (github.event_name == 'workflow_dispatch' && github.actor == github.repository_owner) ||
+      (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository)
     runs-on: ubuntu-latest
     timeout-minutes: 120
     permissions:
@@ -43,7 +52,7 @@ jobs:
           fi
 
       - name: Check out current factory control plane
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           # PRs verify their merge commit; manual publication still checks out develop.
           ref: ${{ github.event_name == 'pull_request' && github.sha || 'develop' }}
@@ -55,12 +64,12 @@ jobs:
         working-directory: control
         run: echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
 
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4.3.0
         with:
           version: 11.7.0
           run_install: false
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 24.x
 
@@ -164,7 +173,7 @@ jobs:
           echo "Fresh template verified. Dry run: ${{ github.event_name == 'pull_request' || inputs.dry_run }}" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Save the verified baseline
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: verified-template
           path: ${{ runner.temp }}/template-artifact/template.bundle
@@ -173,7 +182,7 @@ jobs:
 
       - name: Save verification logs and browser screenshot
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: template-diagnostics
           path: ${{ runner.temp }}/template-diagnostics
@@ -189,13 +198,13 @@ jobs:
       contents: write
     steps:
       - name: Check out the recorded control commit
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           ref: ${{ needs.generate.outputs.base_sha }}
           path: control
           fetch-depth: 0
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           name: verified-template
           path: template-artifact

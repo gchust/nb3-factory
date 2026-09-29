@@ -5,7 +5,9 @@ import { createHash } from 'node:crypto';
 import { resolveAgent } from './agent-registry.mjs';
 import { parseBoolean } from './factory-lib.mjs';
 
-const names = [
+// Workflows pass exactly these repository variables as FACTORY_AGENT_CONFIG_JSON;
+// tests/agent-configuration.test.mjs keeps each workflow's list in sync.
+export const AGENT_SETTING_NAMES = [
   'CODE_AGENT_ENGINE CODE_AGENT_VERSION PI_VERSION CODEBUDDY_VERSION CLAUDE_CODE_VERSION CODEX_VERSION OPENCODE_VERSION',
   'CODE_AGENT_MODEL PI_MODEL CODEBUDDY_MODEL CLAUDE_CODE_MODEL CODEX_MODEL OPENCODE_MODEL',
   'CODE_AGENT_API_TYPE PI_API_TYPE CODE_AGENT_THINKING PI_THINKING CODEBUDDY_THINKING',
@@ -19,6 +21,7 @@ const names = [
 ]
   .join(' ')
   .split(/\s+/);
+const names = AGENT_SETTING_NAMES;
 const hash = (value) => createHash('sha256').update(value).digest('hex');
 const supplied = (value) => typeof value === 'string' && value.trim() !== '';
 

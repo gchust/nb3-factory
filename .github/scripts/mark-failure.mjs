@@ -38,8 +38,13 @@ const recoverable =
   !state.stopReason &&
   state.phase !== 'done';
 const exhausted = state?.outcome === 'budget-exhausted';
+// A cancelled run still leaves agent:running, so it is marked here too, but
+// it must not read like a build failure.
+const cancelled = process.env.FACTORY_RUN_CANCELLED === 'true';
 const body = [
-  exhausted
+  cancelled
+    ? '**本次运行已取消**，未完成搭建；这不是搭建失败结论。需要继续时请重新发起任务。'
+    : exhausted
     ? '**已停止自动修复，待诊断**。' +
       (state.stopReason?.reason || '已达到任务或评测计划预算。') +
       '\n\n已保存补丁、验收记录、修复日志与用量，不再自动修复或续跑；仍发布失败报告，并在有安全代码差异时创建或更新标记 failed 的搭建 PR，尝试预览打包与部署。' +

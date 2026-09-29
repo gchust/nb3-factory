@@ -325,6 +325,8 @@ test('report dispatch is an isolated terminal job, not another Agent invocation'
       'publish-failed',
       'preview-build-failed',
       'report-failure',
+      'reply',
+      'publish-reply',
     ],
   );
   assert.match(
@@ -364,4 +366,46 @@ test('report dispatch is an isolated terminal job, not another Agent invocation'
     );
     assert.match(workflow, /--attempt "\$SOURCE_ATTEMPT"/);
   }
+});
+
+test('workflow_run copies of dispatched reports skip once the task requested them', () => {
+  const read = (name) =>
+    readFileSync(path.resolve(import.meta.dirname, '../../workflows', name), 'utf8');
+  const gate = read('report-dispatch-gate.yml');
+  const task = read('code-agent-task.yml');
+  // The gate recognizes the task's dispatch step by name.
+  const step = /select\(\.name == "([^"]+)" and \.conclusion == "success"\)/.exec(gate)[1];
+  assert.match(task, new RegExp(`\\n  dispatch-reports:\\n[\\s\\S]*?- name: ${step.replace(/[()]/g, '\\$&')}\\n`));
+  assert.match(gate, /select\(\.name == "dispatch-reports"\)/);
+  assert.match(gate, /actions: read/);
+  for (const [name, job] of [
+    ['deploy-preview.yml', 'deploy-preview'],
+    ['publish-agent-history.yml', 'publish'],
+    ['publish-visual-report.yml', 'publish-media'],
+    ['publish-retro.yml', 'publish-retro'],
+    ['report-task-progress.yml', 'report'],
+    ['report-task-usage.yml', 'report'],
+  ]) {
+    const workflow = read(name);
+    assert.match(
+      workflow,
+      /\n  dispatch-gate:\n    if: github.event_name == 'workflow_run'\n    uses: \.\/\.github\/workflows\/report-dispatch-gate\.yml\n/,
+      name,
+    );
+    const body = workflow.split(`\n  ${job}:\n`)[1].split(/\n {2}[a-z][a-z-]*:\n/)[0];
+    assert.match(body, /needs: dispatch-gate/, name);
+    // Fails open: a skipped or failed gate never suppresses the report.
+    assert.match(body, /if: >-\n\s+!cancelled\(\) && needs\.dispatch-gate\.outputs\.covered != 'true'/, name);
+  }
+});
+
+test('live progress updates queue per source run, not globally', () => {
+  const workflow = readFileSync(
+    path.resolve(import.meta.dirname, '../../workflows/report-task-progress.yml'),
+    'utf8',
+  );
+  assert.match(
+    workflow,
+    /group: factory-live-progress-\$\{\{ github\.event\.client_payload\.snapshot\.runId \|\| inputs\.run_id \|\| github\.event\.workflow_run\.id \}\}\n\s+queue: max/,
+  );
 });

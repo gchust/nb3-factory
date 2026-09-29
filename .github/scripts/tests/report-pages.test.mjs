@@ -130,7 +130,7 @@ test('human comments and hidden usage receipts are not edited by report publicat
 });
 test('automatic deployment uses complete site, explicit Pages action and verified link output',()=>{
  const workflow=readFileSync(new URL('../../workflows/report-task-usage.yml',import.meta.url),'utf8');
- for(const s of ['queue: max','pages: write','id-token: write','contents: write','actions/upload-pages-artifact@v4','actions/deploy-pages@v4','report-pages.mjs notify','steps.archive.outputs.commit_sha','steps.deployment.outputs.page_url'])assert.ok(workflow.includes(s),s);
+ for(const s of ['queue: max','pages: write','id-token: write','contents: write','actions/upload-pages-artifact@','actions/deploy-pages@','report-pages.mjs notify','steps.archive.outputs.commit_sha','steps.deployment.outputs.page_url'])assert.ok(workflow.includes(s),s);
  assert.doesNotMatch(workflow,/secrets\.|npm install|run-agent/);
  assert.ok(workflow.indexOf('Archive report')<workflow.indexOf('Configure existing Pages'));
 });
@@ -469,6 +469,6 @@ test('the findings reset runs only from the default branch with an explicit conf
   assert.match(workflow, /group: factory-task-usage/);
   assert.match(workflow, /report-pages\.mjs reset-findings/);
   assert.match(workflow, /ref: \$\{\{ steps\.reset\.outputs\.commit_sha \}\}/);
-  assert.match(workflow, /actions\/deploy-pages@v4/);
+  assert.match(workflow, /actions\/deploy-pages@[0-9a-f]{40} # v4\./);
   assert.doesNotMatch(workflow, /secrets\.|install-agent/);
 });

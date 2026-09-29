@@ -17,9 +17,12 @@ on:
         type: string
 
 permissions: {}
+# One review per Issue at a time: publishing updates the Issue's single review
+# comment and replaces its history asset, so parallel runs would overwrite each
+# other. (A run_id group never serialized anything.)
 concurrency:
-  group: factory-independent-review-${{ github.run_id }}
-  cancel-in-progress: false
+  group: factory-independent-review-${{ inputs.issue }}
+  queue: max
 
 jobs:
   prepare:
@@ -35,12 +38,12 @@ jobs:
       issue: ${{ steps.bind.outputs.issue }}
       control_sha: ${{ steps.pin.outputs.sha }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           ref: ${{ github.event.repository.default_branch }}
           path: control
           persist-credentials: false
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 24.x
       - name: Pin trusted evaluator
@@ -57,7 +60,7 @@ jobs:
           SOURCE_ATTEMPT: ${{ inputs.attempt || '1' }}
         run: |
           node control/.github/scripts/independent-review.mjs select --issue "$SOURCE_ISSUE" --run "$SOURCE_RUN" --attempt "$SOURCE_ATTEMPT" --output input
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         if: steps.select.outputs.ready == 'true'
         with:
           artifact-ids: ${{ steps.select.outputs.task }}
@@ -65,7 +68,7 @@ jobs:
           run-id: ${{ steps.select.outputs.source_run }}
           github-token: ${{ github.token }}
           path: input/task
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         if: steps.select.outputs.ready == 'true'
         with:
           artifact-ids: ${{ steps.select.outputs.agent }}
@@ -73,7 +76,7 @@ jobs:
           run-id: ${{ steps.select.outputs.source_run }}
           github-token: ${{ github.token }}
           path: input/agent
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         if: steps.select.outputs.ready == 'true'
         with:
           artifact-ids: ${{ steps.select.outputs.final }}
@@ -87,7 +90,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: node control/.github/scripts/independent-review.mjs bind --input input
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         if: always() && steps.select.outputs.ready == 'true'
         with:
           name: factory-review-input-${{ github.run_id }}-${{ github.run_attempt }}
@@ -103,20 +106,20 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           ref: ${{ needs.prepare.outputs.control_sha }}
           path: control
           persist-credentials: false
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           ref: ${{ needs.prepare.outputs.sha }}
           path: workspace
           persist-credentials: false
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 24.x
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           name: factory-review-input-${{ github.run_id }}-${{ github.run_attempt }}
           path: input
@@ -177,7 +180,7 @@ jobs:
         run: |
           node control/.github/scripts/run-agent.mjs --workspace workspace --prompt "$RUNNER_TEMP/review/review-prompt.md" --log "$RUNNER_TEMP/review/agent-review.jsonl" --agentDir "$RUNNER_TEMP/reviewer"
           test -z "$(git -C workspace status --porcelain --untracked-files=all)"
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         if: always()
         with:
           name: factory-independent-review-${{ github.run_id }}-${{ github.run_attempt }}
@@ -196,24 +199,24 @@ jobs:
     steps:
       # A fresh job revalidates model-produced JSON against the original input.
       # No model credential, application install, or application script runs here.
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           ref: ${{ needs.prepare.outputs.control_sha }}
           path: control
           persist-credentials: false
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           ref: ${{ needs.prepare.outputs.sha }}
           path: workspace
           persist-credentials: false
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 24.x
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           name: factory-review-input-${{ github.run_id }}-${{ github.run_attempt }}
           path: input
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         continue-on-error: true
         with:
           name: factory-independent-review-${{ github.run_id }}-${{ github.run_attempt }}
@@ -247,7 +250,7 @@ jobs:
           VALIDATION_STATUS: ${{ steps.validation.outcome }}
           REVIEW_ARCHIVE_URL: ${{ steps.release.outputs.url }}
         run: node control/.github/scripts/independent-review.mjs publish --input input --output review --status "$VALIDATION_STATUS"
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         if: always()
         with:
           name: factory-validated-review-${{ github.run_id }}-${{ github.run_attempt }}

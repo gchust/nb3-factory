@@ -34,7 +34,7 @@ test('evaluation export is a data-only, non-blocking step after the existing usa
   assert.match(evaluation, /^ {4}needs: report$/m);
   assert.doesNotMatch(pages, /evaluation/);
   for (const block of Object.values(jobs(workflow))) {
-    for (const checkout of block.split('actions/checkout@v4').slice(1)) assert.match(checkout.slice(0, 300), /persist-credentials: false/);
+    for (const checkout of block.split('actions/checkout@').slice(1)) assert.match(checkout.slice(0, 300), /persist-credentials: false/);
   }
 });
 
@@ -79,7 +79,7 @@ test('optional delivery keeps the receiver token in read-only steps and never bu
   assert.doesNotMatch(workflow, /pnpm install|agent-browser|run-agent|run-build-review|code-agent-task\.yml|replay-build-review/);
   assert.match(workflow, /group: factory-evaluation-delivery\n {2}queue: max/);
   assert.match(workflow, /schedule:/);
-  for (const checkout of workflow.split('actions/checkout@v4').slice(1)) {
+  for (const checkout of workflow.split('actions/checkout@').slice(1)) {
     assert.match(checkout.slice(0, 300), /persist-credentials: false/);
     assert.match(checkout.slice(0, 300), /ref: \$\{\{ github\.event\.repository\.default_branch \}\}/);
   }

@@ -432,7 +432,7 @@ test('long prior Agent replies are bounded context, never promoted to business r
   const human = { login: 'user', type: 'User' };
   const comments = [];
   for (let id = 1; id <= 5; id++) {
-    comments.push({ id, user: human, body: `/build\nUSER_CONSTRAINT_${id}` });
+    comments.push({ id, user: human, author_association: 'OWNER', body: `/build\nUSER_CONSTRAINT_${id}` });
     comments.push({
       id: 100 + id,
       user: bot,
@@ -444,7 +444,7 @@ test('long prior Agent replies are bounded context, never promoted to business r
       body: `AGENT_NOTE_${id} ${'x'.repeat(4000)}<!-- factory-comment-reply:${id} -->`,
     });
   }
-  comments.push({ id: 99, user: human, body: '/build\nCURRENT_REQUEST' });
+  comments.push({ id: 99, user: human, author_association: 'OWNER', body: '/build\nCURRENT_REQUEST' });
   comments.push({
     id: 199,
     user: bot,

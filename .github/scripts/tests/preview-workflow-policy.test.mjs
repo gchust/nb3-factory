@@ -338,3 +338,17 @@ test('preview connection is checked and public HTTPS gates the success report', 
   );
   assert.match(deploy, /--status "\$\{\{ steps.public.outcome == 'success'/);
 });
+
+test('teardown shares the deploy queue and never hides its own failure', () => {
+  // A deploy queued before the close must finish before teardown removes it.
+  const group = (workflow) => /^concurrency:\n\s+group: (\S+)/m.exec(workflow)?.[1];
+  assert.equal(group(teardown), 'factory-preview-deploy');
+  assert.equal(group(teardown), group(deploy));
+  assert.doesNotMatch(teardown.split('steps:')[0], /^\s{4}continue-on-error: true/m);
+  // A deploy that starts after the close must not bring the preview back.
+  const script = readFileSync(
+    path.resolve(import.meta.dirname, '..', 'deploy-preview.mjs'),
+    'utf8',
+  );
+  assert.equal((script.match(/pr\.state !== 'open'/g) ?? []).length, 2);
+});

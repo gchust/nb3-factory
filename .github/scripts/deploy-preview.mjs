@@ -158,6 +158,12 @@ if (mode === 'select') {
     );
     process.exit(0);
   }
+  // Teardown only runs when a PR closes. A preview deployed after that (a
+  // queued deploy, or a replay of an old run) would never be reclaimed.
+  if (pr.state !== 'open') {
+    console.log(`PR #${pr.number} is ${pr.state}; not deploying a preview nothing would reclaim.`);
+    process.exit(0);
+  }
 
   const plan = { ...planFrom({ metadata, pr, source, domain }), depsKey: key };
   writeFileSync(path.join(args.output, 'deploy.json'), JSON.stringify(plan));
@@ -192,6 +198,10 @@ if (mode === 'select') {
     : plan.runUrl;
 
   const pr = await api('GET', `/pulls/${plan.prNumber}`);
+  if (pr.state !== 'open') {
+    console.log(`PR #${plan.prNumber} closed during deployment; teardown owns it now.`);
+    process.exit(0);
+  }
   if (
     !pr.body?.includes(`- [GitHub Actions 运行记录](${runUrl})`) ||
     (plan.headSha && pr.head?.sha !== plan.headSha)

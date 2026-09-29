@@ -53,12 +53,12 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           ref: ${{ github.event.repository.default_branch }}
           path: control
           persist-credentials: false
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 24.x
       - name: Queue every current revision, batches first
@@ -79,12 +79,12 @@ jobs:
     outputs:
       count: ${{ steps.plan.outputs.count }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           ref: ${{ github.event.repository.default_branch }}
           path: control
           persist-credentials: false
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 24.x
       # Verifies artifact identity and the registered bundle SHA-256; the receiver token is not present here.
@@ -103,7 +103,7 @@ jobs:
           node control/.github/scripts/evaluation-delivery.mjs plan --mode "$DELIVERY_MODE" \
             --type "$SUBJECT_TYPE" --key "$SUBJECT_KEY" --revision "$SUBJECT_REVISION" \
             --artifact-id "$ARTIFACT_ID" --output "$RUNNER_TEMP/delivery-plan"
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         if: steps.plan.outputs.count != '0'
         with:
           name: factory-evaluation-delivery-plan-${{ github.run_id }}-${{ github.run_attempt }}
@@ -120,15 +120,15 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           ref: ${{ github.event.repository.default_branch }}
           path: control
           persist-credentials: false
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 24.x
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           name: factory-evaluation-delivery-plan-${{ github.run_id }}-${{ github.run_attempt }}
           path: ${{ runner.temp }}/delivery-plan
@@ -202,7 +202,7 @@ jobs:
           FACTORY_AGENT_ROLE: review
           FACTORY_REVIEW_THINKING: ${{ vars.FACTORY_REVIEW_THINKING || 'medium' }}
         run: node control/.github/scripts/problem-classification.mjs run --input "$RUNNER_TEMP/problem-classification"
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         if: always() && steps.rules.outcome == 'success'
         with:
           name: factory-problem-classification-${{ github.run_id }}-${{ github.run_attempt }}
@@ -219,20 +219,20 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           ref: ${{ github.event.repository.default_branch }}
           path: control
           persist-credentials: false
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 24.x
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           name: factory-evaluation-delivery-plan-${{ github.run_id }}-${{ github.run_attempt }}
           path: ${{ runner.temp }}/delivery-plan
       # Missing or invalid decisions only mean problems arrive unclassified.
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         if: needs.classify.result == 'success' || needs.classify.result == 'failure'
         continue-on-error: true
         with:
@@ -250,7 +250,7 @@ jobs:
           node control/.github/scripts/evaluation-delivery.mjs send \
             --plan "$RUNNER_TEMP/delivery-plan" --output "$RUNNER_TEMP/delivery-results/results.json" \
             --classification "$RUNNER_TEMP/problem-classification/classification.json"
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         if: always()
         with:
           name: factory-evaluation-delivery-results-${{ github.run_id }}-${{ github.run_attempt }}
@@ -266,15 +266,15 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           ref: ${{ github.event.repository.default_branch }}
           path: control
           persist-credentials: false
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 24.x
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         id: results
         continue-on-error: true
         with:

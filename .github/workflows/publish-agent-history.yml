@@ -22,7 +22,17 @@ concurrency:
   queue: max
 
 jobs:
+  # The task usually requested this run itself; see report-dispatch-gate.yml.
+  dispatch-gate:
+    if: github.event_name == 'workflow_run'
+    uses: ./.github/workflows/report-dispatch-gate.yml
+    permissions:
+      actions: read
+
   publish:
+    needs: dispatch-gate
+    if: >-
+      !cancelled() && needs.dispatch-gate.outputs.covered != 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
@@ -34,12 +44,12 @@ jobs:
       SOURCE_ATTEMPT: ${{ inputs.attempt || github.event.workflow_run.run_attempt }}
     steps:
       # Artifact content is data, never application code to execute.
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           ref: ${{ github.event.repository.default_branch }}
           path: control
           persist-credentials: false
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 24.x
 
@@ -58,7 +68,7 @@ jobs:
         id: task
         if: steps.source.outputs.task != ''
         continue-on-error: true
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           artifact-ids: ${{ steps.source.outputs.task }}
           merge-multiple: true
@@ -69,7 +79,7 @@ jobs:
         id: agent
         if: steps.source.outputs.agent != ''
         continue-on-error: true
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           artifact-ids: ${{ steps.source.outputs.agent }}
           merge-multiple: true
@@ -80,7 +90,7 @@ jobs:
         id: final
         if: steps.source.outputs.final != ''
         continue-on-error: true
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           artifact-ids: ${{ steps.source.outputs.final }}
           merge-multiple: true
@@ -91,7 +101,7 @@ jobs:
         id: reply
         if: steps.source.outputs.reply != ''
         continue-on-error: true
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           artifact-ids: ${{ steps.source.outputs.reply }}
           merge-multiple: true

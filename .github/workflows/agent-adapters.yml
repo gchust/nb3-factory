@@ -7,12 +7,18 @@ on:
       - '.github/scripts/agent-*.mjs'
       - '.github/scripts/install-agent.mjs'
       - '.github/scripts/run-agent.mjs'
-      - '.github/scripts/tests/codex-agent*.mjs'
+      - '.github/scripts/tests/codex-agent.integration.mjs'
       - '.github/workflows/agent-adapters.yml'
   workflow_dispatch:
 
 permissions:
   contents: read
+
+# A new push to a pull request supersedes its earlier checks; develop pushes and
+# manual runs always finish.
+concurrency:
+  group: agent-adapters-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   cli-smoke:
@@ -25,10 +31,10 @@ jobs:
     env:
       CODE_AGENT_ENGINE: ${{ matrix.engine }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           persist-credentials: false
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 24.x
       - name: Install and verify the pinned CLI

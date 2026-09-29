@@ -15,6 +15,7 @@ export const VERDICTS = ['confirmed', 'already_fixed', 'not_reproducible', 'not_
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 const SHA = /^[0-9a-f]{40}$/;
 const PULL_URL = /^https:\/\/github\.com\/nocobase\/nocobase3\/pull\/[1-9]\d*$/;
+const TRUSTED_BASE_REFS = [/^develop$/, /^main$/, /^release\/[A-Za-z0-9._-]+$/, /^release-beta\/[A-Za-z0-9._-]+$/];
 const SUMMARY_LIMIT = 2000;
 const ANALYSIS_LIMIT = 20000;
 
@@ -27,6 +28,12 @@ export function parseInputs(env = process.env) {
   if (!/^[A-Za-z0-9][A-Za-z0-9._/-]{0,99}$/.test(baseRef) || baseRef.includes('..')
     || baseRef.endsWith('/') || baseRef.endsWith('.lock') || baseRef.includes('//')) {
     throw new Error('base_ref must be a plain branch name.');
+  }
+  // The review job runs the checked-out nocobase3 code (install scripts, tests,
+  // builds) beside the Claude credential, so only long-lived branches that
+  // maintainers control may be reviewed. Anyone can push a feature branch.
+  if (!TRUSTED_BASE_REFS.some((pattern) => pattern.test(baseRef))) {
+    throw new Error('base_ref must be develop, main, release/* or release-beta/*.');
   }
   return { problemId: Number(problemId), externalRunId: externalRunId || null, baseRef };
 }

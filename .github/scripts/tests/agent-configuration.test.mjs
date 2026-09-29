@@ -105,3 +105,25 @@ test('credentials and secret endpoints are neither printed nor hashed', () => {
     agentConfig({ CODE_AGENT_PROVIDER_ID: 'provider-v2' }).fingerprint,
   );
 });
+
+test('workflows pass only the allowlisted Agent settings, never every repository variable', async () => {
+  const { readdirSync, readFileSync } = await import('node:fs');
+  const { AGENT_SETTING_NAMES } = await import('../agent-configuration.mjs');
+  const directory = new URL('../../workflows/', import.meta.url);
+  const workflows = readdirSync(directory).filter((name) => name.endsWith('.yml'));
+  let checked = 0;
+  for (const name of workflows) {
+    const source = readFileSync(new URL(name, directory), 'utf8');
+    assert.doesNotMatch(source, /toJSON\(vars\)/, name);
+    const value = /^  FACTORY_AGENT_CONFIG_JSON: >-\n((?:    .*\n)+)/m.exec(source)?.[1];
+    if (!value) {
+      assert.doesNotMatch(source, /FACTORY_AGENT_CONFIG_JSON/, name);
+      continue;
+    }
+    checked++;
+    // Render the expressions the way Actions does for unset variables.
+    const rendered = value.replace(/\$\{\{ toJSON\(vars\.([A-Z0-9_]+)\) \}\}/g, '""');
+    assert.deepEqual(Object.keys(JSON.parse(rendered)), AGENT_SETTING_NAMES, name);
+  }
+  assert.ok(checked >= 2);
+});

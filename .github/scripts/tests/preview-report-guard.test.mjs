@@ -31,7 +31,7 @@ const VERIFIED = [
 // to the pull request comment is the whole of its job, so that is what is read
 // back: a second attempt at the same build is the case that misled a reviewer
 // (PR #159, 2026-09-21).
-function publish({ status, existing }) {
+function publish({ status, existing, state = 'open' }) {
   const root = mkdtempSync(path.join(os.tmpdir(), 'preview-report-'));
   try {
     const output = path.join(root, 'plan');
@@ -53,6 +53,7 @@ function publish({ status, existing }) {
       `import { appendFileSync } from 'node:fs';
 const comments = ${JSON.stringify(existing)};
 const pull = ${JSON.stringify({
+  state,
   body: `- [GitHub Actions 运行记录](${RUN_URL})`,
   head: { sha: SHA },
 })};
@@ -160,4 +161,11 @@ test('a verified report is republished over itself, not posted twice', () => {
   assert.equal(writes.length, 1);
   assert.equal(writes[0].method, 'PATCH');
   assert.equal(writes[0].route, '/issues/comments/777');
+});
+
+test('a PR closed during deployment gets no preview report', () => {
+  for (const status of ['success', 'failed']) {
+    const { writes } = publish({ status, existing: [], state: 'closed' });
+    assert.equal(writes.length, 0);
+  }
 });

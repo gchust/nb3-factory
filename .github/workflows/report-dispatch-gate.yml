@@ -1,0 +1,52 @@
+name: Report dispatch gate
+
+# Each task report is requested twice: the task's dispatch-reports job
+# dispatches it explicitly (the only path for bot-started continuations), and
+# GitHub also raises workflow_run when the task completes. When the explicit
+# request went out, the workflow_run copy would only repeat the same work: wait
+# for the run, download its artifacts, and for previews upload the ~744 MB
+# payload again, while holding a global queue. Callers run this only for
+# workflow_run events and skip their work when it reports `covered`.
+#
+# It fails open: an API error or an older run without that step leaves
+# `covered` empty, and the caller does the work as before.
+
+on:
+  workflow_call:
+    outputs:
+      covered:
+        description: "'true' when the source run's dispatch-reports step already requested every report"
+        value: ${{ jobs.check.outputs.covered }}
+
+permissions: {}
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    permissions:
+      actions: read
+    outputs:
+      covered: ${{ steps.check.outputs.covered }}
+    steps:
+      - name: Check whether the task already dispatched its reports
+        id: check
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_ID: ${{ github.event.workflow_run.id }}
+          ATTEMPT: ${{ github.event.workflow_run.run_attempt }}
+        run: |
+          set -euo pipefail
+          covered=false
+          if [[ "$RUN_ID" =~ ^[1-9][0-9]*$ && "$ATTEMPT" =~ ^[1-9][0-9]*$ ]]; then
+            # The step name is the contract with code-agent-task.yml.
+            if found="$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$RUN_ID/attempts/$ATTEMPT/jobs?per_page=100" \
+              --jq '[.jobs[] | select(.name == "dispatch-reports") | .steps[]? |
+                select(.name == "Explicitly request task reports (including continuations)" and .conclusion == "success")] | length')"; then
+              [[ "$found" =~ ^[1-9] ]] && covered=true
+            else
+              echo "::warning::Could not read the source run's jobs; doing the work here."
+            fi
+          fi
+          echo "covered=$covered" >> "$GITHUB_OUTPUT"
+          echo "Reports already dispatched by run $RUN_ID attempt $ATTEMPT: $covered"

@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
 import {
   GitHubClient,
+  isTrustedAuthor,
   parseIssueTask,
   TaskInputError,
 } from './factory-lib.mjs';
@@ -246,6 +247,19 @@ export async function coordinate(client, issueNumber, admissionId = Infinity) {
   // prevents two initial executions even after an ambiguous dispatch failure.
   await dispatch(client, issueNumber, next.id);
 }
+// A task may run for up to about ten hours across one handoff; three days
+// leaves room for a sweep outage without scanning the whole history.
+export const SWEEP_WINDOW_MS = 3 * 24 * 60 * 60 * 1000;
+export async function sweepIssues(client, now = Date.now()) {
+  const since = new Date(now - SWEEP_WINDOW_MS).toISOString();
+  const [open, recent] = await Promise.all([
+    listAll(client, '/issues', { state: 'open' }),
+    listAll(client, '/issues', { state: 'closed', since }),
+  ]);
+  const byNumber = new Map();
+  for (const issue of [...open, ...recent]) byNumber.set(issue.number, issue);
+  return [...byNumber.values()];
+}
 async function dispatch(client, issueNumber, id) {
   await client.request('POST', '/dispatches', {
     body: {
@@ -261,7 +275,8 @@ export async function main(event, client) {
       !['created', 'edited'].includes(event.action) ||
       event.issue?.pull_request ||
       !event.comment.user?.login ||
-      event.comment.user?.type === 'Bot'
+      event.comment.user?.type === 'Bot' ||
+      !isTrustedAuthor(event.comment)
     )
       return;
     if (!event.comment.body?.trim() && event.action !== 'edited') return;
@@ -280,7 +295,10 @@ export async function main(event, client) {
     return;
   }
   // Sweep also catches legacy run titles and recovers missed completion events.
-  const issues = await listAll(client, '/issues', { state: 'all' });
+  // Only open Issues and Issues touched recently can hold an unfinished
+  // receipt: saving a receipt, a claim or a reply updates the Issue. Listing
+  // every Issue ever opened made each sweep cost two API calls per Issue.
+  const issues = await sweepIssues(client);
   const errors = [];
   for (const issue of issues) {
     if (!issue.pull_request)

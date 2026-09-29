@@ -1,6 +1,6 @@
 // Queue receipts live in trusted bot comments, independently of runner/artifact
 // retention. Only the serialized queue workflow may mutate these receipts.
-import { parseIssueTask, TaskInputError } from './factory-lib.mjs';
+import { isTrustedAuthor, parseIssueTask, TaskInputError } from './factory-lib.mjs';
 
 const marker = '<!-- factory-build-v1\n';
 export const runTitle = /^Factory issue #(\d+) build (\d+)(?:\s|$)/;
@@ -97,7 +97,12 @@ export async function saveReceipt(client, issueNumber, receipt) {
 // are display hints, including for receipts written by the older snapshot code.
 export function sourceComment(client, issueNumber, comments, id) {
   const comment = comments.find((item) => item.id === Number(id));
-  if (!comment || !comment.user?.login || comment.user?.type === 'Bot') {
+  if (
+    !comment ||
+    !comment.user?.login ||
+    comment.user?.type === 'Bot' ||
+    !isTrustedAuthor(comment)
+  ) {
     throw new TaskInputError('原评论已删除或作者不再符合执行条件。');
   }
   const buildPrompt = parseBuild(comment.body);
@@ -196,6 +201,7 @@ export async function admitComments(client, issue, comments, receipts) {
       !comment.body?.trim() ||
       !comment.user?.login ||
       comment.user?.type === 'Bot' ||
+      !isTrustedAuthor(comment) ||
       receipts.some((item) => item.id === comment.id)
     )
       continue;
