@@ -1,0 +1,148 @@
+{
+  "version": 1,
+  "date": "2026-09-28",
+  "timeZone": "Asia/Shanghai",
+  "entries": [
+    {
+      "key": "b4963d826feaeda1b31c0da0",
+      "id": "460:36434284393:1:F2",
+      "issue": 460,
+      "runId": 36434284393,
+      "attempt": 1,
+      "findingId": "F2",
+      "runDay": "2026-09-28",
+      "archivedAt": "2026-09-29T00:21:35.860Z",
+      "title": "nocobase-db Skill 声明“种子绝不是样例或演示内容”，却未说明演示数据应放在哪里",
+      "summary": "SKILL.md 第 80 行明确 a seed is never sample or demonstration content，第 135 行要求种子以唯一约束 + upsertOne 幂等。本案需要固定演示数据，但 Skill 未给出替代落点；Agent 只能把演示数据放进 database/main/seeds/ 并手写 ensure(findOne/createOne) 代替 upsertOne，因为演示行没有唯一约束。",
+      "severity": "minor",
+      "type": "guidance-gap",
+      "owner": "documentation",
+      "targets": [
+        "@nocobase/db",
+        "app/.agents/skills/nocobase-db/SKILL.md"
+      ],
+      "subjectKeys": [
+        "pkg:@nocobase/db",
+        "skill:nocobase-db"
+      ],
+      "featurePoint": "应用搭建/数据库",
+      "candidates": [
+        "应用搭建/数据库"
+      ],
+      "taskTitle": "客户、联系人与商机管理",
+      "appVersion": "1.0.0-beta.50",
+      "group": {
+        "title": "nocobase-db Skill 未说明演示/样例数据的规范落点与无唯一约束时的幂等写法",
+        "issues": 1,
+        "first": "2026-09-28"
+      },
+      "report": "reports/issues/460/runs/36434284393/attempt-1/index.html#review-finding-F2"
+    },
+    {
+      "key": "4f93e7af07d4bef14e74dd86",
+      "id": "460:36434284393:1:F3",
+      "issue": 460,
+      "runId": 36434284393,
+      "attempt": 1,
+      "findingId": "F3",
+      "runDay": "2026-09-28",
+      "archivedAt": "2026-09-29T00:21:35.860Z",
+      "title": "CSRF / 信任来源要求只写在认证 Skill 的部署参考，受保护路由参考完全未提",
+      "summary": "auth.checkCookieWriteOrigin 对携带 cookie 的写请求校验 Origin/Referer，失败返回 403 INVALID_CSRF_ORIGIN。该要求在 user-lifecycle-and-deployment.md 的 Deployment 段有说明（app.publicOrigin + auth.trustedOrigins），但 SKILL.md 的任务路径表把“在 API 路由保护/读取会话”只指向 protecting-routes.md，而该参考与 server-routes.md 均无 CSRF/trustedOrigins/publicOrigin 任何字样。Agent 因此未在 server/config/auth.ts 配置来源，调试中 28 次触发 INVALID_CSRF_ORIGIN，最终以 BETTER_AUTH_URL 环境变量绕行。",
+      "severity": "minor",
+      "type": "guidance-gap",
+      "owner": "documentation",
+      "targets": [
+        "@nocobase/app-plugin-authentication",
+        "app/.agents/skills/nocobase-app-plugin-authentication/references/protecting-routes.md",
+        "app/.agents/skills/nocobase-app-plugin-authentication/references/user-lifecycle-and-deployment.md"
+      ],
+      "subjectKeys": [
+        "pkg:@nocobase/app-plugin-authentication",
+        "skill:nocobase-app-plugin-authentication"
+      ],
+      "featurePoint": "应用搭建/认证",
+      "candidates": [
+        "应用搭建/认证"
+      ],
+      "taskTitle": "客户、联系人与商机管理",
+      "appVersion": "1.0.0-beta.50",
+      "group": {
+        "title": "受保护路由参考缺少 cookie 写请求的 CSRF/信任来源校验说明",
+        "issues": 1,
+        "first": "2026-09-28"
+      },
+      "report": "reports/issues/460/runs/36434284393/attempt-1/index.html#review-finding-F3"
+    },
+    {
+      "key": "2770abbff5674ac37e6991da",
+      "id": "460:36434284393:1:F4",
+      "issue": 460,
+      "runId": 36434284393,
+      "attempt": 1,
+      "findingId": "F4",
+      "runDay": "2026-09-28",
+      "archivedAt": "2026-09-29T00:21:35.860Z",
+      "title": "Repository 对空 filter 的 INVALID_FILTER 只能在运行期发现，Skill 未对称说明",
+      "summary": "repository.js 中 findOne 在无 filter 且无 sort 时抛 'findOne() requires filter or non-empty sort.'，upsertOne 等单条 mutation 对空 filter 抛 'Single mutations require a non-empty filter.'。Skill 第 244–245 行说明了 updateMany/deleteMany 拒绝空 scope，但未对 findOne/单条 mutation 的同类约束做对称提示，尤其是无过滤读取场景。",
+      "severity": "minor",
+      "type": "usability",
+      "owner": "framework",
+      "targets": [
+        "@nocobase/db",
+        "app/.agents/skills/nocobase-db/SKILL.md"
+      ],
+      "subjectKeys": [
+        "pkg:@nocobase/db",
+        "skill:nocobase-db"
+      ],
+      "featurePoint": "应用搭建/数据库",
+      "candidates": [
+        "应用搭建/数据库"
+      ],
+      "taskTitle": "客户、联系人与商机管理",
+      "appVersion": "1.0.0-beta.50",
+      "group": {
+        "title": "nocobase-db Skill 未对称说明 findOne 与单条 mutation 的空 filter 约束",
+        "issues": 1,
+        "first": "2026-09-28"
+      },
+      "report": "reports/issues/460/runs/36434284393/attempt-1/index.html#review-finding-F4"
+    },
+    {
+      "key": "82973ecd57641290db6bf295",
+      "id": "460:36434284393:1:F6",
+      "issue": 460,
+      "runId": 36434284393,
+      "attempt": 1,
+      "findingId": "F6",
+      "runDay": "2026-09-28",
+      "archivedAt": "2026-09-29T00:21:35.860Z",
+      "title": "Repository 提供数据库侧聚合，但示例未在合计场景中突出 aggregate/groupBy",
+      "summary": "repository.js 实现了 aggregate/groupBy（含 filter/having/sort），Skill 的方法清单也列出它们，但示例集中展示关系读取与嵌套写，没有“按父记录求金额合计”的示范。Agent 选择了 findMany + JS reduce，按 customerId 过滤保证隔离，结果正确但随数据量增长会退化。",
+      "severity": "minor",
+      "type": "usability",
+      "owner": "framework",
+      "targets": [
+        "@nocobase/db",
+        "app/.agents/skills/nocobase-db/SKILL.md"
+      ],
+      "subjectKeys": [
+        "pkg:@nocobase/db",
+        "skill:nocobase-db"
+      ],
+      "featurePoint": "应用搭建/数据库",
+      "candidates": [
+        "应用搭建/数据库"
+      ],
+      "taskTitle": "客户、联系人与商机管理",
+      "appVersion": "1.0.0-beta.50",
+      "group": {
+        "title": "nocobase-db Skill 示例未突出 aggregate/groupBy 的数据库侧合计用法",
+        "issues": 1,
+        "first": "2026-09-28"
+      },
+      "report": "reports/issues/460/runs/36434284393/attempt-1/index.html#review-finding-F6"
+    }
+  ]
+}
