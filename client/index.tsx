@@ -1,3 +1,6 @@
+// Must be the first import: it republishes the mount path to the v2 Portal
+// runtime before any plugin loads the Portal SDK. See the module for why.
+import './api-base-compat.js';
 import { createApp } from './app.js';
 import {
   AppClientRoot,

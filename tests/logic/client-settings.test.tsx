@@ -5,8 +5,10 @@ import type {
   AppClientSettingIcon,
 } from '@nocobase/app-client/plugins';
 import {
+  apiClientToken,
   ClientApplicationContext,
   type ClientApplication,
+  realtimeClientToken,
 } from '@nocobase/app-client';
 import {
   AuthenticationProvider,
@@ -710,6 +712,14 @@ function renderWithAuthentication(
   const registered = new Map<unknown, unknown>([
     [authenticationClientToken, authClient],
     [authorizationClientToken, authorizationClient],
+    [apiClientToken, { request: vi.fn().mockResolvedValue({ count: 0 }) }],
+    [
+      realtimeClientToken,
+      {
+        onOpen: vi.fn(() => () => {}),
+        subscribe: vi.fn(() => () => {}),
+      },
+    ],
   ]);
   const app = {
     runtime: { settingsRouteTree },
