@@ -568,8 +568,17 @@ test('refresh workflow has its own queue and isolates generated code from write 
     'utf8',
   );
   const group = /group: ([^\n]+)/.exec(workflow)[1];
-  assert.equal(group, 'template-refresh-global');
-  assert.ok(!task.includes(`group: ${group}`));
+  assert.match(group, /'template-refresh-global' \}\}$/);
+  assert.match(group, /format\('template-refresh-pr-\{0\}', github\.event\.pull_request\.number\)/);
+  assert.ok(!task.includes('template-refresh-global'));
+  // Preset syncs commit to develop, so they queue behind a running refresh.
+  const sync = readFileSync(
+    path.resolve(scripts, '..', 'workflows/sync-issue-presets.yml'),
+    'utf8',
+  );
+  assert.match(sync, /group: template-refresh-global\n\s+queue: max/);
+  // Pull request checks are never skipped for non-owners; publishing still is.
+  assert.match(workflow, /\(github\.event_name == 'workflow_dispatch' && github\.actor == github\.repository_owner\) \|\|/);
   const publisher = workflow.split('\n  publish:')[1];
   assert.match(workflow.split('\n  publish:')[0], /contents: read/);
   assert.match(workflow, /template-creator.mjs pin control/);

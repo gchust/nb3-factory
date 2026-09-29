@@ -8,7 +8,7 @@ const cacheInput = "${{ hashFiles('workspace/factory-source.json') == '' && 'pnp
 for (const [name, next] of [['agent', 'verify-final'], ['verify-final', 'publish'], ['preview-build-failed', 'report-failure']]) {
   test(`${name}: local source packages never enter setup-node shared cache`, () => {
     const job = workflow.split(`  ${name}:\n`)[1].split(`  ${next}:\n`)[0];
-    const setup = job.indexOf('uses: actions/setup-node@v4');
+    const setup = job.indexOf('uses: actions/setup-node@');
     assert.ok(setup > job.indexOf('path: workspace'), 'Source descriptor is checked out first');
     const block = job.slice(setup, job.indexOf('\n      - name:', setup));
     assert.ok(block.includes(`cache: ${cacheInput}`));

@@ -6,8 +6,11 @@ on:
 
 permissions: {}
 
+# Shares the deploy workflow's queue. A deploy for this PR queued before the
+# close finishes first and is then removed here; one queued after it sees the
+# closed PR and skips. Separate groups let a late deploy outlive its teardown.
 concurrency:
-  group: factory-preview-teardown-${{ github.event.pull_request.number }}
+  group: factory-preview-deploy
   queue: max
 
 jobs:
@@ -21,7 +24,8 @@ jobs:
       startsWith(github.event.pull_request.head.ref, 'agent/issue-')
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    continue-on-error: true
+    # No continue-on-error: a failed teardown leaves a public preview running,
+    # and a green run would hide that nothing reclaims it.
     permissions:
       # Write, to delete the temporary payload asset this pull request published.
       contents: write
@@ -31,7 +35,7 @@ jobs:
       PREVIEW_RELEASE: factory-previews
       PREVIEW_ENABLED: ${{ secrets.FACTORY_PREVIEW_SSH_KEY != '' && secrets.FACTORY_TAILSCALE_OAUTH_CLIENT_ID != '' }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           ref: ${{ github.event.repository.default_branch }}
           path: control
@@ -44,7 +48,7 @@ jobs:
 
       - name: Join the tailnet
         if: env.PREVIEW_ENABLED == 'true'
-        uses: tailscale/github-action@v3
+        uses: tailscale/github-action@6cae46e2d796f265265cfcf628b72a32b4d7cade # v3.3.0
         with:
           oauth-client-id: ${{ secrets.FACTORY_TAILSCALE_OAUTH_CLIENT_ID }}
           oauth-secret: ${{ secrets.FACTORY_TAILSCALE_OAUTH_CLIENT_SECRET }}

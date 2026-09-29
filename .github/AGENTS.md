@@ -8,6 +8,10 @@ The application root is regenerated from `@nocobase/app-template-default` on eve
 
 The factory owns these application-root files: `docs/`, which the overlay carries over and which a template may not ship itself; the section of `README.MD` between its `factory:readme` markers; `.npmrc`; and the overlay's changes to `eslint.config.js`, `.gitignore`, `package.json` and `factory-template.json`. Factory regression tests run the same `format:check` over the application root as build verification, through `.github/scripts/check-application-format.mjs`, whenever one of these files, the template guidance or the lockfile changes; keep them Prettier-clean.
 
+## Who can start a model run
+
+The repository and its Actions logs are public. An Issue starts a build, and a comment starts a build or question round, only when its author's `author_association` is `OWNER`, `MEMBER` or `COLLABORATOR` (`isTrustedAuthor` in `.github/scripts/factory-lib.mjs`, and the `prepare` and queue job conditions). Other authors' Issues and comments are ignored, never queued, and never replayed into a later prompt as history. Maintainers can still run any Issue through `workflow_dispatch`. Workflows pass Agent settings as the allowlisted `FACTORY_AGENT_CONFIG_JSON` built from `AGENT_SETTING_NAMES`, never the whole `vars` context, and pin every action to a commit SHA.
+
 ## Factory review history
 
 Framework reviews prioritize the complete observable implementation, repair and QA histories. Stream and redact large JSONL records without dropping whole files, long events or accepted Handoff ancestors to fit a byte budget. Keep source hashes and reconstructable chunk locations. Deterministic event indexes aid navigation; they never replace raw tool calls and results.

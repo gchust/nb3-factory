@@ -32,8 +32,58 @@ on:
         type: string
 
 env:
-  # Parsed through a public-setting allowlist shared with batch fingerprints.
-  FACTORY_AGENT_CONFIG_JSON: ${{ toJSON(vars) }}
+  # Only the public Agent settings agent-configuration.mjs reads. Never pass
+  # the whole vars context: each step prints its env in the public log, so
+  # every repository variable would reach every step, model runs included.
+  FACTORY_AGENT_CONFIG_JSON: >-
+    {
+    "CODE_AGENT_ENGINE": ${{ toJSON(vars.CODE_AGENT_ENGINE) }},
+    "CODE_AGENT_VERSION": ${{ toJSON(vars.CODE_AGENT_VERSION) }},
+    "PI_VERSION": ${{ toJSON(vars.PI_VERSION) }},
+    "CODEBUDDY_VERSION": ${{ toJSON(vars.CODEBUDDY_VERSION) }},
+    "CLAUDE_CODE_VERSION": ${{ toJSON(vars.CLAUDE_CODE_VERSION) }},
+    "CODEX_VERSION": ${{ toJSON(vars.CODEX_VERSION) }},
+    "OPENCODE_VERSION": ${{ toJSON(vars.OPENCODE_VERSION) }},
+    "CODE_AGENT_MODEL": ${{ toJSON(vars.CODE_AGENT_MODEL) }},
+    "PI_MODEL": ${{ toJSON(vars.PI_MODEL) }},
+    "CODEBUDDY_MODEL": ${{ toJSON(vars.CODEBUDDY_MODEL) }},
+    "CLAUDE_CODE_MODEL": ${{ toJSON(vars.CLAUDE_CODE_MODEL) }},
+    "CODEX_MODEL": ${{ toJSON(vars.CODEX_MODEL) }},
+    "OPENCODE_MODEL": ${{ toJSON(vars.OPENCODE_MODEL) }},
+    "CODE_AGENT_API_TYPE": ${{ toJSON(vars.CODE_AGENT_API_TYPE) }},
+    "PI_API_TYPE": ${{ toJSON(vars.PI_API_TYPE) }},
+    "CODE_AGENT_THINKING": ${{ toJSON(vars.CODE_AGENT_THINKING) }},
+    "PI_THINKING": ${{ toJSON(vars.PI_THINKING) }},
+    "CODEBUDDY_THINKING": ${{ toJSON(vars.CODEBUDDY_THINKING) }},
+    "CODE_AGENT_AUTH_HEADER": ${{ toJSON(vars.CODE_AGENT_AUTH_HEADER) }},
+    "PI_AUTH_HEADER": ${{ toJSON(vars.PI_AUTH_HEADER) }},
+    "CODE_AGENT_SUPPORTS_DEVELOPER_ROLE": ${{ toJSON(vars.CODE_AGENT_SUPPORTS_DEVELOPER_ROLE) }},
+    "PI_SUPPORTS_DEVELOPER_ROLE": ${{ toJSON(vars.PI_SUPPORTS_DEVELOPER_ROLE) }},
+    "CODE_AGENT_SUPPORTS_REASONING_EFFORT": ${{ toJSON(vars.CODE_AGENT_SUPPORTS_REASONING_EFFORT) }},
+    "PI_SUPPORTS_REASONING_EFFORT": ${{ toJSON(vars.PI_SUPPORTS_REASONING_EFFORT) }},
+    "CODE_AGENT_MODEL_REASONING": ${{ toJSON(vars.CODE_AGENT_MODEL_REASONING) }},
+    "CODE_AGENT_INVOCATION_TIMEOUT_SECONDS": ${{ toJSON(vars.CODE_AGENT_INVOCATION_TIMEOUT_SECONDS) }},
+    "PI_INVOCATION_TIMEOUT_SECONDS": ${{ toJSON(vars.PI_INVOCATION_TIMEOUT_SECONDS) }},
+    "CODE_AGENT_IDLE_TIMEOUT_SECONDS": ${{ toJSON(vars.CODE_AGENT_IDLE_TIMEOUT_SECONDS) }},
+    "CLAUDE_CODE_EFFORT": ${{ toJSON(vars.CLAUDE_CODE_EFFORT) }},
+    "CLAUDE_CODE_QA_EFFORT": ${{ toJSON(vars.CLAUDE_CODE_QA_EFFORT) }},
+    "CODEX_REASONING_EFFORT": ${{ toJSON(vars.CODEX_REASONING_EFFORT) }},
+    "CODEX_QA_REASONING_EFFORT": ${{ toJSON(vars.CODEX_QA_REASONING_EFFORT) }},
+    "OPENCODE_VARIANT": ${{ toJSON(vars.OPENCODE_VARIANT) }},
+    "OPENCODE_QA_VARIANT": ${{ toJSON(vars.OPENCODE_QA_VARIANT) }},
+    "CODEBUDDY_BASE_URL": ${{ toJSON(vars.CODEBUDDY_BASE_URL) }},
+    "CODEBUDDY_INTERNET_ENVIRONMENT": ${{ toJSON(vars.CODEBUDDY_INTERNET_ENVIRONMENT) }},
+    "ANTHROPIC_BASE_URL": ${{ toJSON(vars.ANTHROPIC_BASE_URL) }},
+    "CODEX_BASE_URL": ${{ toJSON(vars.CODEX_BASE_URL) }},
+    "OPENCODE_BASE_URL": ${{ toJSON(vars.OPENCODE_BASE_URL) }},
+    "CODE_AGENT_PROVIDER_ID": ${{ toJSON(vars.CODE_AGENT_PROVIDER_ID) }},
+    "FACTORY_QA_THINKING": ${{ toJSON(vars.FACTORY_QA_THINKING) }},
+    "FACTORY_REVIEW_THINKING": ${{ toJSON(vars.FACTORY_REVIEW_THINKING) }},
+    "FACTORY_BUILD_REVIEW": ${{ toJSON(vars.FACTORY_BUILD_REVIEW) }},
+    "FACTORY_BUILD_REVIEW_TIMEOUT_SECONDS": ${{ toJSON(vars.FACTORY_BUILD_REVIEW_TIMEOUT_SECONDS) }},
+    "FACTORY_BUILD_REVIEW_IDLE_TIMEOUT_SECONDS": ${{ toJSON(vars.FACTORY_BUILD_REVIEW_IDLE_TIMEOUT_SECONDS) }},
+    "AGENT_BROWSER_VERSION": ${{ toJSON(vars.AGENT_BROWSER_VERSION) }}
+    }
 
 permissions: {}
 
@@ -47,7 +97,12 @@ jobs:
   prepare:
     # External task managers save an Issue snapshot, then explicitly dispatch.
     # Read the event's labels so a later Issue update cannot create a second run.
-    if: github.event_name != 'issues' || !contains(github.event.issue.labels.*.name, 'factory:external')
+    # The repository is public: an Issue only starts a model run when its author
+    # has repository access. Maintainers can still dispatch any Issue manually.
+    if: >-
+      github.event_name != 'issues' ||
+      (!contains(github.event.issue.labels.*.name, 'factory:external') &&
+       contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.issue.author_association))
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
@@ -71,7 +126,7 @@ jobs:
       # repository_dispatch loads the entry workflow from the default branch.
       # Only this small handoff protocol follows that revision; task code is pinned.
       - name: Check out handoff bootstrap
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           ref: ${{ github.sha }}
           path: bootstrap
@@ -90,7 +145,7 @@ jobs:
 
       - name: Download source task control pin
         if: (github.event_name == 'repository_dispatch' && github.event.action == 'code-agent-continue') || inputs.recovery_run_id != ''
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           name: factory-task-${{ inputs.recovery_run_id != '' && inputs.issue_number || github.event.client_payload.issue_number }}
           path: previous-task
@@ -102,7 +157,7 @@ jobs:
       # This one-time fallback adopts pre-pin tasks.
       - name: Download legacy handoff control metadata
         if: github.event_name == 'repository_dispatch' && github.event.action == 'code-agent-continue' && !github.event.client_payload.control_sha
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           name: factory-handoff-${{ github.event.client_payload.issue_number }}
           path: legacy-handoff
@@ -111,7 +166,7 @@ jobs:
 
       - name: Download failed-run checkpoint
         if: inputs.recovery_run_id != ''
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           name: factory-handoff-${{ inputs.issue_number }}
           path: recovery
@@ -152,7 +207,7 @@ jobs:
             --output "$GITHUB_OUTPUT"
 
       - name: Check out factory control plane
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           ref: ${{ steps.baseline.outputs.sha }}
           path: control
@@ -187,7 +242,7 @@ jobs:
 
       - name: Save normalized recovery checkpoint
         if: inputs.recovery_run_id != '' && steps.prepare.outputs.status == 'ready'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: factory-recovery-${{ steps.prepare.outputs.issue_number }}
           path: recovery
@@ -207,7 +262,7 @@ jobs:
 
       - name: Save normalized task metadata
         if: steps.prepare.outputs.status == 'ready'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: factory-task-${{ steps.prepare.outputs.issue_number }}
           path: ${{ runner.temp }}/task-metadata.json
@@ -248,7 +303,7 @@ jobs:
       patch_available: ${{ steps.patch.outcome == 'success' }}
     steps:
       - name: Check out factory control plane
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           ref: ${{ needs.prepare.outputs.control_sha }}
           path: control
@@ -257,7 +312,7 @@ jobs:
       # Keep the handoff protocol available even when the pinned task scripts
       # predate control_sha propagation. Never use this checkout for task code.
       - name: Check out handoff bootstrap
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           ref: ${{ github.sha }}
           path: bootstrap
@@ -280,7 +335,7 @@ jobs:
           echo "FACTORY_TIMINGS_FILE=$RUNNER_TEMP/agent-artifacts/timings.jsonl" >> "$GITHUB_ENV"
 
       - name: Check out application base
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           ref: ${{ needs.prepare.outputs.base_sha }}
           path: workspace
@@ -289,7 +344,7 @@ jobs:
 
       - name: Download handoff checkpoint
         if: github.event_name == 'repository_dispatch' && github.event.action == 'code-agent-continue'
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           name: factory-handoff-${{ needs.prepare.outputs.issue_number }}
           path: handoff
@@ -298,7 +353,7 @@ jobs:
 
       - name: Download normalized recovery checkpoint
         if: inputs.recovery_run_id != ''
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           name: factory-recovery-${{ needs.prepare.outputs.issue_number }}
           path: handoff
@@ -323,7 +378,7 @@ jobs:
           fi
 
       - name: Download normalized task
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           name: factory-task-${{ needs.prepare.outputs.issue_number }}
           path: task
@@ -377,13 +432,13 @@ jobs:
           fi
 
       - name: Set up pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4.3.0
         with:
           version: 11.7.0
           run_install: false
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 24.x
           # Source tarballs use an isolated local store, not the shared registry cache.
@@ -633,7 +688,13 @@ jobs:
         env:
           CURRENT_CONTINUATION: ${{ inputs.recovery_run_id != '' && '1' || github.event.client_payload.continuation || '0' }}
         run: |
-          next_continuation=$((CURRENT_CONTINUATION + 1))
+          # Bash arithmetic evaluates command substitutions, and this value comes
+          # from the dispatch payload: accept digits only.
+          if [[ ! "$CURRENT_CONTINUATION" =~ ^[0-9]{1,3}$ ]]; then
+            echo "::error::Invalid continuation counter in the dispatch payload." >&2
+            exit 1
+          fi
+          next_continuation=$((10#$CURRENT_CONTINUATION + 1))
           # A spent evaluation budget ends the chain here: the checkpoint is kept, no continuation is sent.
           if [[ -f control/.github/scripts/evaluation-budget.mjs ]] && \
             ! node control/.github/scripts/evaluation-budget.mjs handoff "$RUNNER_TEMP/agent-artifacts/pipeline-state.json" "$next_continuation"; then
@@ -664,7 +725,7 @@ jobs:
 
       - name: Upload Code Agent patch and diagnostics
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: factory-agent-${{ needs.prepare.outputs.issue_number }}
           path: ${{ runner.temp }}/agent-artifacts
@@ -676,7 +737,7 @@ jobs:
         # Preserve a recovery checkpoint on failure, without treating it as
         # successful verification or automatically retrying a broken runner.
         if: always() && steps.patch.outcome == 'success' && (steps.handoff.outcome == 'success' || failure())
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: factory-handoff-${{ needs.prepare.outputs.issue_number }}
           path: ${{ runner.temp }}/agent-artifacts
@@ -684,6 +745,7 @@ jobs:
           retention-days: 14
 
       - name: Dispatch continuation run
+        id: dispatch
         if: steps.handoff.outcome == 'success'
         env:
           GITHUB_TOKEN: ${{ github.token }}
@@ -697,10 +759,20 @@ jobs:
       - name: Record agent outcome
         id: outcome
         if: always()
+        # A handoff only counts once its checkpoint is saved and the successor
+        # was dispatched. Otherwise no continuation exists, so this run must
+        # still report its failure and publish what it has.
+        env:
+          HANDOFF_OUTCOME: ${{ steps.handoff.outcome }}
+          CHECKPOINT_OUTCOME: ${{ steps.checkpoint.outcome }}
+          DISPATCH_OUTCOME: ${{ steps.dispatch.outcome }}
         run: |
-          if [[ "${{ steps.handoff.outcome }}" == "success" ]]; then
+          if [[ "$HANDOFF_OUTCOME" == "success" && "$CHECKPOINT_OUTCOME" == "success" && "$DISPATCH_OUTCOME" == "success" ]]; then
             echo "handoff=true" >> "$GITHUB_OUTPUT"
           else
+            if [[ "$HANDOFF_OUTCOME" == "success" ]]; then
+              echo "::error::Handoff was prepared but its checkpoint upload ($CHECKPOINT_OUTCOME) or continuation dispatch ($DISPATCH_OUTCOME) did not succeed; reporting this run as failed."
+            fi
             echo "handoff=false" >> "$GITHUB_OUTPUT"
           fi
 
@@ -726,14 +798,14 @@ jobs:
         run: echo "FACTORY_TIMINGS_FILE=$RUNNER_TEMP/final-artifacts/timings.jsonl" >> "$GITHUB_ENV"
 
       - name: Check out factory control plane
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           ref: ${{ needs.prepare.outputs.control_sha }}
           path: control
           persist-credentials: false
 
       - name: Check out fresh application base
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           ref: ${{ needs.prepare.outputs.base_sha }}
           path: workspace
@@ -741,13 +813,13 @@ jobs:
           persist-credentials: false
 
       - name: Download Code Agent patch and diagnostics
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           name: factory-agent-${{ needs.prepare.outputs.issue_number }}
           path: agent-artifacts
 
       - name: Download trusted final verification task
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           name: factory-task-${{ needs.prepare.outputs.issue_number }}
           path: final-task
@@ -760,13 +832,13 @@ jobs:
             --branch "${{ needs.prepare.outputs.work_branch }}"
 
       - name: Set up pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4.3.0
         with:
           version: 11.7.0
           run_install: false
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 24.x
           # Source tarballs use an isolated local store, not the shared registry cache.
@@ -829,7 +901,7 @@ jobs:
           cp agent-artifacts/task-metadata.json "$RUNNER_TEMP/deployable/task-metadata.json"
 
       - name: Upload the deployable build
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: factory-dist-${{ needs.prepare.outputs.issue_number }}
           path: ${{ runner.temp }}/deployable
@@ -850,7 +922,7 @@ jobs:
 
       - name: Upload final verification diagnostics
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: factory-final-${{ needs.prepare.outputs.issue_number }}
           path: ${{ runner.temp }}/final-artifacts
@@ -870,21 +942,21 @@ jobs:
       FACTORY_DELIVERY_STATUS: success
     steps: &publication-steps
       - name: Check out factory control plane
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           ref: ${{ needs.prepare.outputs.control_sha }}
           path: control
           persist-credentials: false
 
       - name: Check out fresh application base
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           ref: ${{ needs.prepare.outputs.base_sha }}
           path: workspace
           fetch-depth: 0
 
       - name: Download preserved Code Agent patch and metadata
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           name: factory-agent-${{ needs.prepare.outputs.issue_number }}
           path: agent-artifacts
@@ -962,14 +1034,14 @@ jobs:
         run: echo "FACTORY_TIMINGS_FILE=$RUNNER_TEMP/final-artifacts/timings.jsonl" >> "$GITHUB_ENV"
 
       - name: Check out factory control plane
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           ref: ${{ needs.prepare.outputs.control_sha }}
           path: control
           persist-credentials: false
 
       - name: Check out fresh application base
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           ref: ${{ needs.prepare.outputs.base_sha }}
           path: workspace
@@ -977,7 +1049,7 @@ jobs:
           persist-credentials: false
 
       - name: Download Code Agent patch and diagnostics
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           name: factory-agent-${{ needs.prepare.outputs.issue_number }}
           path: agent-artifacts
@@ -990,13 +1062,13 @@ jobs:
             --branch "${{ needs.prepare.outputs.work_branch }}"
 
       - name: Set up pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4.3.0
         with:
           version: 11.7.0
           run_install: false
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 24.x
           # Source tarballs use an isolated local store, not the shared registry cache.
@@ -1051,7 +1123,7 @@ jobs:
           cp agent-artifacts/task-metadata.json "$RUNNER_TEMP/deployable/task-metadata.json"
 
       - name: Upload the deployable build
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: factory-dist-${{ needs.prepare.outputs.issue_number }}
           overwrite: true
@@ -1073,7 +1145,7 @@ jobs:
 
       - name: Upload failed preview packaging diagnostics
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: factory-preview-build-${{ needs.prepare.outputs.issue_number }}
           path: ${{ runner.temp }}/final-artifacts
@@ -1106,14 +1178,14 @@ jobs:
       issues: write
     steps:
       - name: Check out factory control plane
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           ref: ${{ needs.prepare.outputs.control_sha }}
           path: control
           persist-credentials: false
 
       - name: Download failure diagnostics
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         continue-on-error: true
         with:
           name: factory-agent-${{ needs.prepare.outputs.issue_number }}
@@ -1124,9 +1196,15 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
           FACTORY_CHECKPOINT_AVAILABLE: ${{ needs.agent.outputs.checkpoint_available }}
           FACTORY_PREVIEW_BUILD_RESULT: ${{ needs.preview-build-failed.result }}
+          # This job deliberately runs on cancellation (always()) so the Issue
+          # leaves agent:running; the notice says it was cancelled. cancelled()
+          # is not available in env, and a cancelled run cancels its jobs.
+          FACTORY_RUN_CANCELLED: ${{ contains(needs.*.result, 'cancelled') }}
         run: node control/.github/scripts/mark-failure.mjs "${{ needs.prepare.outputs.issue_number }}" failure-artifacts
 
   dispatch-reports:
+    # The dispatched report runs wait only a few minutes for this run to
+    # complete, so dispatch after the comment reply jobs have finished too.
     needs:
       [
         prepare,
@@ -1136,6 +1214,8 @@ jobs:
         publish-failed,
         preview-build-failed,
         report-failure,
+        reply,
+        publish-reply,
       ]
     if: always() && needs.prepare.outputs.status == 'ready' && needs.prepare.outputs.comment_kind != 'reply'
     runs-on: ubuntu-latest
@@ -1146,7 +1226,7 @@ jobs:
       actions: write
     steps:
       # Isolated from application execution and from all model/media secrets.
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           ref: ${{ needs.prepare.outputs.control_sha }}
           path: control
@@ -1174,20 +1254,20 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           ref: ${{ needs.prepare.outputs.control_sha }}
           path: control
           persist-credentials: false
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           ref: ${{ (needs.publish.result == 'success' || needs.publish-failed.result == 'success') && needs.prepare.outputs.work_branch || needs.prepare.outputs.base_sha }}
           path: workspace
           persist-credentials: false
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 24.x
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           name: factory-task-${{ needs.prepare.outputs.issue_number }}
           path: task
@@ -1213,7 +1293,7 @@ jobs:
 
       - name: Save reply for trusted publisher
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: factory-comment-reply-${{ needs.prepare.outputs.build_comment_id }}
           path: ${{ runner.temp }}/comment-artifacts
@@ -1229,18 +1309,18 @@ jobs:
       contents: read
       issues: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           ref: ${{ needs.prepare.outputs.control_sha }}
           persist-credentials: false
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 24.x
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           name: factory-task-${{ needs.prepare.outputs.issue_number }}
           path: task
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           name: factory-comment-reply-${{ needs.prepare.outputs.build_comment_id }}
           path: reply
@@ -1249,9 +1329,11 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
         run: node .github/scripts/comment-reply.mjs publish task/task-metadata.json reply
 
+  # Question rounds skip dispatch-reports, so they request their history here.
+  # A /build round's history is already requested by dispatch-reports.
   dispatch-reply-history:
     needs: [prepare, reply, publish-reply]
-    if: always() && needs.prepare.outputs.status == 'ready' && needs.prepare.outputs.build_comment_id != ''
+    if: always() && needs.prepare.outputs.status == 'ready' && needs.prepare.outputs.build_comment_id != '' && needs.prepare.outputs.comment_kind == 'reply'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:

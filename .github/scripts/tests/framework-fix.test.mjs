@@ -34,7 +34,9 @@ const usage = {
 test('inputs accept a problem, an optional TestManage run and a plain base branch', () => {
   assert.deepEqual(parseInputs({ PROBLEM_ID: '42', EXTERNAL_RUN_ID: RUN.toUpperCase(), BASE_REF: '' }), { problemId: 42, externalRunId: RUN, baseRef: 'develop' });
   assert.deepEqual(parseInputs({ PROBLEM_ID: '1', EXTERNAL_RUN_ID: '', BASE_REF: 'release/3.0' }), { problemId: 1, externalRunId: null, baseRef: 'release/3.0' });
-  for (const bad of [{ PROBLEM_ID: '0' }, { PROBLEM_ID: '1;rm' }, { PROBLEM_ID: '1', EXTERNAL_RUN_ID: 'x' }, { PROBLEM_ID: '1', BASE_REF: '../main' }, { PROBLEM_ID: '1', BASE_REF: 'a..b' }, { PROBLEM_ID: '1', BASE_REF: '-x' }]) {
+  assert.equal(parseInputs({ PROBLEM_ID: '1', BASE_REF: 'main' }).baseRef, 'main');
+  assert.equal(parseInputs({ PROBLEM_ID: '1', BASE_REF: 'release-beta/2026-08-26.1' }).baseRef, 'release-beta/2026-08-26.1');
+  for (const bad of [{ PROBLEM_ID: '0' }, { PROBLEM_ID: '1;rm' }, { PROBLEM_ID: '1', EXTERNAL_RUN_ID: 'x' }, { PROBLEM_ID: '1', BASE_REF: '../main' }, { PROBLEM_ID: '1', BASE_REF: 'a..b' }, { PROBLEM_ID: '1', BASE_REF: '-x' }, { PROBLEM_ID: '1', BASE_REF: 'feat-cli' }, { PROBLEM_ID: '1', BASE_REF: 'codex/fix-dev-route-loading' }, { PROBLEM_ID: '1', BASE_REF: 'release/3.0/evil' }]) {
     assert.throws(() => parseInputs(bad));
   }
   assert.equal(workBranch(42, RUN), 'fix/testmanage-problem-42-0f8b3c2e');

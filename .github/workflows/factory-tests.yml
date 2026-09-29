@@ -41,6 +41,12 @@ on:
 permissions:
   contents: read
 
+# A new push to a pull request supersedes its earlier checks; develop pushes and
+# manual runs always finish.
+concurrency:
+  group: factory-tests-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   factory-tests:
     # Build task PRs change the application, including its guidance, and are
@@ -49,17 +55,17 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           persist-credentials: false
       - name: Archive the tested control-plane source
         run: tar -czf "$RUNNER_TEMP/factory-control-source.tar.gz" .github
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: factory-control-source
           path: ${{ runner.temp }}/factory-control-source.tar.gz
           retention-days: 3
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 24.x
       - name: Run control-plane regression tests
@@ -75,7 +81,7 @@ jobs:
       - name: Render the shared report review example
         run: |
           node .github/reports/render-review-example.mjs "$RUNNER_TEMP/report.example.html"
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: factory-report-example
           path: ${{ runner.temp }}/report.example.html
@@ -88,10 +94,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           persist-credentials: false
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 24.x
       - name: Check the application root as build verification formats it
@@ -106,10 +112,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           persist-credentials: false
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 24.x
       - name: Install the pinned QA browser tool
@@ -129,7 +135,7 @@ jobs:
           assert.equal(c.workerNetworkLeak,false,'Worker guard must not leak a forbidden request');
           NODE
           done
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         if: always()
         with:
           name: factory-browser-preflight

@@ -230,6 +230,15 @@ test('a failed agent preserves a checkpoint and can publish failed work without 
     .split('- name: Dispatch continuation run')[1]
     .split('- name: Record agent outcome')[0];
   assert.match(dispatch, /if: steps\.handoff\.outcome == 'success'/);
+  assert.match(dispatch, /id: dispatch/);
+  // A lost checkpoint or dispatch is a failed run, not a silent handoff.
+  const outcome = workflow
+    .split('- name: Record agent outcome')[1]
+    .split('- name: ')[0];
+  assert.match(
+    outcome,
+    /"\$HANDOFF_OUTCOME" == "success" && "\$CHECKPOINT_OUTCOME" == "success" && "\$DISPATCH_OUTCOME" == "success"/,
+  );
   assert.match(
     workflow,
     /if: needs\.agent\.result == 'success' && needs\.agent\.outputs\.handoff != 'true'/,
@@ -308,4 +317,15 @@ test('runner-local timing paths are initialized in steps, not job-level env', ()
     /FACTORY_TIMINGS_FILE=\$RUNNER_TEMP\/final-artifacts\/timings\.jsonl/,
   );
   assert.doesNotMatch(workflow, /FACTORY_DEPENDENCY_CACHE/);
+});
+
+test('every remote action is pinned to a full commit SHA with its version noted', () => {
+  const directory = new URL('../../workflows/', import.meta.url);
+  for (const name of readdirSync(directory).filter((file) => file.endsWith('.yml'))) {
+    const source = readFileSync(new URL(name, directory), 'utf8');
+    for (const [, reference] of source.matchAll(/^\s*(?:-\s+)?uses:\s+(\S+.*)$/gm)) {
+      if (reference.startsWith('./')) continue;
+      assert.match(reference, /^[\w.-]+\/[\w./-]+@[0-9a-f]{40} # v\d+\.\d+\.\d+$/, `${name}: ${reference}`);
+    }
+  }
 });

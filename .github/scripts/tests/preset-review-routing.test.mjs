@@ -16,8 +16,8 @@ function fixture(review = `${marker}\nREVIEW_SENTINEL: inspect private implement
   const source = { number: 1, state: 'closed', title: '客户管理', body: sourceBody, user: human, labels: [{ name: 'factory:preset' }], html_url: 'https://github.com/owner/repo/issues/1' };
   const issue = { number: 2, state: 'open', title: '重搭', body: '### 预置案例\n\n#1 - 客户管理\n\n### 本次补充要求\n\n增加筛选', user: human, labels: [] };
   const comments = new Map([[1, [
-    { id: 10, user: human, body: '/build\n新增搜索', html_url: `${source.html_url}#issuecomment-10` },
-    ...(review == null ? [] : [{ id: 11, user: human, body: review }]),
+    { id: 10, user: human, author_association: 'OWNER', body: '/build\n新增搜索', html_url: `${source.html_url}#issuecomment-10` },
+    ...(review == null ? [] : [{ id: 11, user: human, author_association: 'OWNER', body: review }]),
     { id: 12, user: bot, body: 'BOT_OUTPUT_SENTINEL' },
   ]], [2, []]]);
   const client = {
@@ -125,7 +125,7 @@ test('actual implementation builder and browser template never render reviewer s
 test('later /build keeps reviewer input separate from business history', async () => {
   const f = fixture();
   const first = await preparePresetIssue(f.client, f.issue);
-  f.comments.get(2).push({ id: 500, user: human, body: '/build\n追加排序' });
+  f.comments.get(2).push({ id: 500, user: human, author_association: 'OWNER', body: '/build\n追加排序' });
   f.comments.get(2).push({ id: 501, user: bot, body: receiptBody({ id: 500, kind: 'build', status: 'dispatched', excerpt: '追加排序' }) });
   const task = await resolveBuildTask(f.client, first.issue, 500, first.task);
   assert.equal(task.reviewCriteria, first.task.reviewCriteria);

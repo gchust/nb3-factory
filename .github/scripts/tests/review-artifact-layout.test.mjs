@@ -4,7 +4,7 @@ import test from 'node:test';
 
 test('each exact-ID review input is extracted flat within its own role directory', () => {
   const workflow = readFileSync(new URL('../../workflows/independent-review.yml', import.meta.url), 'utf8');
-  const downloads = workflow.split('      - uses: actions/download-artifact@v4').slice(1);
+  const downloads = workflow.split('      - uses: actions/download-artifact@').slice(1);
   const byId = downloads.filter(block => block.split('      - ')[0].includes('artifact-ids:'));
   assert.equal(byId.length, 3);
   for (const role of ['task', 'agent', 'final']) {

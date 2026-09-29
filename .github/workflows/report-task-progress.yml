@@ -19,14 +19,26 @@ on:
 
 permissions: {}
 
-# Serialize short comment updates, not business runs. The publisher additionally
-# rejects late snapshots from an older run/attempt or an already completed run.
+# Serialize comment updates per source run: its snapshots and its final report
+# stay in order, while other tasks' updates no longer queue behind them. Every
+# trigger carries the source run ID. The publisher additionally rejects late
+# snapshots from an older run/attempt or an already completed run.
 concurrency:
-  group: factory-live-progress
+  group: factory-live-progress-${{ github.event.client_payload.snapshot.runId || inputs.run_id || github.event.workflow_run.id }}
   queue: max
 
 jobs:
+  # The task usually requested this run itself; see report-dispatch-gate.yml.
+  dispatch-gate:
+    if: github.event_name == 'workflow_run'
+    uses: ./.github/workflows/report-dispatch-gate.yml
+    permissions:
+      actions: read
+
   report:
+    needs: dispatch-gate
+    if: >-
+      !cancelled() && needs.dispatch-gate.outputs.covered != 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 3
     permissions:
@@ -34,11 +46,11 @@ jobs:
       contents: read
       issues: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           ref: ${{ github.event.repository.default_branch }}
           persist-credentials: false
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 24.x
       - name: Update the task's single progress comment

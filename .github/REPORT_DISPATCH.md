@@ -14,7 +14,7 @@
 媒体还会拒绝已被新 attempt 替代的结果；用量统计仍可补采旧 attempt。
 这只是报告等候收尾的预算，不限制 Code Agent 的正常工作时长。
 
-原有 `workflow_run` 保留为补充入口；来源 Run/attempt 的并发组和评论标记负责去重。
+原有 `workflow_run` 保留为补充入口，但先经过 `report-dispatch-gate.yml`：来源 Run 的 `dispatch-reports` 调度步骤已成功时直接跳过，不再重复等待、下载和上传预览包；读取失败或旧 Run 没有该步骤时照常执行。来源 Run/attempt 的并发组和评论标记负责其余去重。显式调度出的报告若失败，按下文手动补发。
 用量继续按 Agent/job ID 去重，短统计工作流串行回写，业务搭建仍可并发。
 如果人工强制取消导致收尾 Job 无法执行，可以使用独立报告的手动入口补发。
 

@@ -5,7 +5,7 @@
 ## Starting a run
 
 - From TestManage: open a problem and choose **交给 Claude Code 复核修复**. TestManage records a fix run, then dispatches the workflow with `problem_id` and `external_run_id`.
-- Manually: run the workflow from the Actions page, or run `gh workflow run framework-fix.yml -f problem_id=<id>`. Leave `external_run_id` empty. TestManage then registers the run when the workflow claims the problem. `base_ref` defaults to `develop`.
+- Manually: run the workflow from the Actions page, or run `gh workflow run framework-fix.yml -f problem_id=<id>`. Leave `external_run_id` empty. TestManage then registers the run when the workflow claims the problem. `base_ref` defaults to `develop` and must be `develop`, `main`, `release/*` or `release-beta/*`: the review job runs that branch's code beside the Claude credential, so feature branches are refused.
 
 TestManage admits one active fix per problem. A manual run for a problem that already has an active fix fails at the claim.
 

@@ -33,6 +33,13 @@ const TARGET_BRANCH_RE = /^[A-Za-z0-9_][A-Za-z0-9._/-]*$/;
 
 export class TaskInputError extends Error {}
 
+// The repository and its Actions logs are public. Only people with repository
+// access may start a model run from an Issue or comment; everyone else is ignored.
+export const TRUSTED_AUTHOR_ASSOCIATIONS = ['OWNER', 'MEMBER', 'COLLABORATOR'];
+export function isTrustedAuthor(entity) {
+  return TRUSTED_AUTHOR_ASSOCIATIONS.includes(entity?.author_association);
+}
+
 export function extractIssueSections(body = '') {
   const sections = new Map();
   const heading = /^###\s+(.+?)\s*$\r?\n([\s\S]*?)(?=^###\s+|(?![\s\S]))/gm;

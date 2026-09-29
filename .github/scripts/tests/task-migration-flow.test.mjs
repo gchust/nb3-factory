@@ -226,6 +226,7 @@ for (const kind of ['build', 'reply']) {
             {
               id: 21,
               user: { login: 'gchust', type: 'User' },
+              author_association: 'OWNER',
               body: `${kind === 'build' ? '/build\n' : ''}Add supplier ratings`,
             },
             {

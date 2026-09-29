@@ -48,8 +48,8 @@ function fixture(issueNumber = 20) {
   const issue = { number: issueNumber, title: '重搭', body: selection, user: human,
     labels: [{ name: 'agent:pending' }], state: 'open', html_url: `https://github.com/test/factory/issues/${issueNumber}` };
   const originals = [
-    { id: 102, user: { login: 'reviewer', type: 'User' }, body: '/build\n增加转派，必须填写原因。' },
-    { id: 100, user: human, body: '附件：![截图](https://example.com/image.png)\n```js\nhello()\n```' },
+    { id: 102, user: { login: 'reviewer', type: 'User' }, author_association: 'COLLABORATOR', body: '/build\n增加转派，必须填写原因。' },
+    { id: 100, user: human, author_association: 'OWNER', body: '附件：![截图](https://example.com/image.png)\n```js\nhello()\n```' },
     { id: 101, user: bot, body: 'BOT_REPORT: all checks passed' },
     { id: 103, user: { login: 'other[bot]', type: 'User' }, body: 'BOT_STATUS' },
   ].map((comment) => ({ ...comment, created_at: '2026-09-20T12:00:00Z',
@@ -302,7 +302,7 @@ test('failed final Issue update resumes without recopying', async () => {
 test('large Unicode comments are copied and snapshotted without truncation', async () => {
   const c = fixture();
   const original = '🚀中文'.repeat(14000);
-  c.originals.splice(0, c.originals.length, { id: 100, user: human, body: original });
+  c.originals.splice(0, c.originals.length, { id: 100, user: human, author_association: 'OWNER', body: original });
   const result = await preparePresetIssue(c, c.issue);
   assert.ok(snapshots(c).length > 1);
   assert.ok(copies(c).length > 1);
@@ -362,7 +362,7 @@ test('preset Issue is skipped by direct and scheduled comment reconciliation', a
 test('later human /build retains the preset inputs before the new instruction', async () => {
   const c = fixture();
   const prepared = await preparePresetIssue(c, c.issue);
-  c.comments.push({ id: 3000, user: human, body: '/build\n增加仪表盘' });
+  c.comments.push({ id: 3000, user: human, author_association: 'OWNER', body: '/build\n增加仪表盘' });
   c.comments.push({ id: 3001, user: bot, body: receiptBody({ id: 3000, kind: 'build', status: 'dispatched', url: 'comment-link' }) });
   const result = await resolveBuildTask(c, c.issue, 3000, prepared.task);
   assert.match(result.requirements, /增加转派/);

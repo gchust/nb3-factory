@@ -17,7 +17,7 @@ on:
         type: string
         default: ''
       base_ref:
-        description: nocobase/nocobase3 branch to review and fix against
+        description: nocobase/nocobase3 branch to review and fix against (develop, main, release/* or release-beta/*)
         required: false
         type: string
         default: develop
@@ -49,12 +49,12 @@ jobs:
       branch: ${{ steps.claim.outputs.branch }}
       control_sha: ${{ steps.pin.outputs.sha }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           ref: ${{ github.event.repository.default_branch }}
           path: control
           persist-credentials: false
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 24.x
       - name: Pin trusted control plane
@@ -68,7 +68,7 @@ jobs:
           BASE_REF: ${{ inputs.base_ref }}
           TESTMANAGE_TOKEN: ${{ secrets.EVALUATION_TOKEN }}
         run: node control/.github/scripts/framework-fix.mjs claim --output "$RUNNER_TEMP/fix-input"
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: framework-fix-input-${{ github.run_id }}
           path: ${{ runner.temp }}/fix-input
@@ -84,26 +84,26 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           ref: ${{ needs.claim.outputs.control_sha }}
           path: control
           persist-credentials: false
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           repository: nocobase/nocobase3
           ref: ${{ needs.claim.outputs.base_sha }}
           path: workspace
           persist-credentials: false
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           name: framework-fix-input-${{ github.run_id }}
           path: ${{ runner.temp }}/fix-input
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4.3.0
         with:
           package_json_file: workspace/package.json
           run_install: false
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 24.x
       - name: Install nocobase3 dependencies
@@ -169,7 +169,7 @@ jobs:
             --agent-status "${AGENT_STATUS:-1}" \
             --log "$RUNNER_TEMP/fix-output/agent-fix.jsonl" \
             --output "$RUNNER_TEMP/fix-output/decision.json"
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         if: always()
         with:
           name: framework-fix-output-${{ github.run_id }}
@@ -191,19 +191,19 @@ jobs:
       FIX_RUN_ID: ${{ needs.claim.outputs.run_id }}
       BRANCH: ${{ needs.claim.outputs.branch }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           ref: ${{ needs.claim.outputs.control_sha }}
           path: control
           persist-credentials: false
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 24.x
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           name: framework-fix-input-${{ github.run_id }}
           path: fix-input
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         continue-on-error: true
         with:
           name: framework-fix-output-${{ github.run_id }}
@@ -216,7 +216,7 @@ jobs:
             publish=$(node -p 'JSON.parse(require("node:fs").readFileSync("fix-output/decision.json","utf8")).publish === true')
           fi
           echo "publish=$publish" >> "$GITHUB_OUTPUT"
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         if: steps.decision.outputs.publish == 'true'
         with:
           repository: nocobase/nocobase3

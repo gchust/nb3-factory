@@ -9,7 +9,10 @@ test('PR template verification is read-only, tests the merge commit, and cannot 
   const { runInNewContext } = await import('node:vm');
   const workflow = readFileSync(path.resolve(import.meta.dirname, '../../workflows/refresh-template.yml'), 'utf8');
   const [generator, publisher] = workflow.split('\n  publish:');
-  const generateIf = generator.match(/  generate:\n    if: (.+)/)[1];
+  const generateIf = generator
+    .match(/  generate:\n(?:    #.*\n)*    if: >-\n((?:      .+\n)+)/)[1]
+    .replace(/\s+/g, ' ')
+    .trim();
   const publishIf = publisher.match(/    if: \$\{\{ (.+) \}\}/)[1];
   const checkoutRef = generator.match(/          ref: \$\{\{ (.+) \}\}/)[1];
   const evaluate = (expression, event, actor, sameRepository, dryRun = false) =>
@@ -23,7 +26,8 @@ test('PR template verification is read-only, tests the merge commit, and cannot 
     });
   for (const [event, actor, sameRepo, dryRun, generate, publish] of [
     ['pull_request', 'owner', true, false, true, false],
-    ['pull_request', 'other', true, false, false, false],
+    // A same-repository PR check runs for any author (a skipped check passes).
+    ['pull_request', 'other', true, false, true, false],
     ['pull_request', 'owner', false, false, false, false],
     ['workflow_dispatch', 'owner', true, false, true, true],
     ['workflow_dispatch', 'owner', true, true, true, false],

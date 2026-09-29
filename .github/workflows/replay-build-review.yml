@@ -17,12 +17,65 @@ on:
         type: string
 
 env:
-  FACTORY_AGENT_CONFIG_JSON: ${{ toJSON(vars) }}
+  # Only the public Agent settings agent-configuration.mjs reads. Never pass
+  # the whole vars context: each step prints its env in the public log, so
+  # every repository variable would reach every step, model runs included.
+  FACTORY_AGENT_CONFIG_JSON: >-
+    {
+    "CODE_AGENT_ENGINE": ${{ toJSON(vars.CODE_AGENT_ENGINE) }},
+    "CODE_AGENT_VERSION": ${{ toJSON(vars.CODE_AGENT_VERSION) }},
+    "PI_VERSION": ${{ toJSON(vars.PI_VERSION) }},
+    "CODEBUDDY_VERSION": ${{ toJSON(vars.CODEBUDDY_VERSION) }},
+    "CLAUDE_CODE_VERSION": ${{ toJSON(vars.CLAUDE_CODE_VERSION) }},
+    "CODEX_VERSION": ${{ toJSON(vars.CODEX_VERSION) }},
+    "OPENCODE_VERSION": ${{ toJSON(vars.OPENCODE_VERSION) }},
+    "CODE_AGENT_MODEL": ${{ toJSON(vars.CODE_AGENT_MODEL) }},
+    "PI_MODEL": ${{ toJSON(vars.PI_MODEL) }},
+    "CODEBUDDY_MODEL": ${{ toJSON(vars.CODEBUDDY_MODEL) }},
+    "CLAUDE_CODE_MODEL": ${{ toJSON(vars.CLAUDE_CODE_MODEL) }},
+    "CODEX_MODEL": ${{ toJSON(vars.CODEX_MODEL) }},
+    "OPENCODE_MODEL": ${{ toJSON(vars.OPENCODE_MODEL) }},
+    "CODE_AGENT_API_TYPE": ${{ toJSON(vars.CODE_AGENT_API_TYPE) }},
+    "PI_API_TYPE": ${{ toJSON(vars.PI_API_TYPE) }},
+    "CODE_AGENT_THINKING": ${{ toJSON(vars.CODE_AGENT_THINKING) }},
+    "PI_THINKING": ${{ toJSON(vars.PI_THINKING) }},
+    "CODEBUDDY_THINKING": ${{ toJSON(vars.CODEBUDDY_THINKING) }},
+    "CODE_AGENT_AUTH_HEADER": ${{ toJSON(vars.CODE_AGENT_AUTH_HEADER) }},
+    "PI_AUTH_HEADER": ${{ toJSON(vars.PI_AUTH_HEADER) }},
+    "CODE_AGENT_SUPPORTS_DEVELOPER_ROLE": ${{ toJSON(vars.CODE_AGENT_SUPPORTS_DEVELOPER_ROLE) }},
+    "PI_SUPPORTS_DEVELOPER_ROLE": ${{ toJSON(vars.PI_SUPPORTS_DEVELOPER_ROLE) }},
+    "CODE_AGENT_SUPPORTS_REASONING_EFFORT": ${{ toJSON(vars.CODE_AGENT_SUPPORTS_REASONING_EFFORT) }},
+    "PI_SUPPORTS_REASONING_EFFORT": ${{ toJSON(vars.PI_SUPPORTS_REASONING_EFFORT) }},
+    "CODE_AGENT_MODEL_REASONING": ${{ toJSON(vars.CODE_AGENT_MODEL_REASONING) }},
+    "CODE_AGENT_INVOCATION_TIMEOUT_SECONDS": ${{ toJSON(vars.CODE_AGENT_INVOCATION_TIMEOUT_SECONDS) }},
+    "PI_INVOCATION_TIMEOUT_SECONDS": ${{ toJSON(vars.PI_INVOCATION_TIMEOUT_SECONDS) }},
+    "CODE_AGENT_IDLE_TIMEOUT_SECONDS": ${{ toJSON(vars.CODE_AGENT_IDLE_TIMEOUT_SECONDS) }},
+    "CLAUDE_CODE_EFFORT": ${{ toJSON(vars.CLAUDE_CODE_EFFORT) }},
+    "CLAUDE_CODE_QA_EFFORT": ${{ toJSON(vars.CLAUDE_CODE_QA_EFFORT) }},
+    "CODEX_REASONING_EFFORT": ${{ toJSON(vars.CODEX_REASONING_EFFORT) }},
+    "CODEX_QA_REASONING_EFFORT": ${{ toJSON(vars.CODEX_QA_REASONING_EFFORT) }},
+    "OPENCODE_VARIANT": ${{ toJSON(vars.OPENCODE_VARIANT) }},
+    "OPENCODE_QA_VARIANT": ${{ toJSON(vars.OPENCODE_QA_VARIANT) }},
+    "CODEBUDDY_BASE_URL": ${{ toJSON(vars.CODEBUDDY_BASE_URL) }},
+    "CODEBUDDY_INTERNET_ENVIRONMENT": ${{ toJSON(vars.CODEBUDDY_INTERNET_ENVIRONMENT) }},
+    "ANTHROPIC_BASE_URL": ${{ toJSON(vars.ANTHROPIC_BASE_URL) }},
+    "CODEX_BASE_URL": ${{ toJSON(vars.CODEX_BASE_URL) }},
+    "OPENCODE_BASE_URL": ${{ toJSON(vars.OPENCODE_BASE_URL) }},
+    "CODE_AGENT_PROVIDER_ID": ${{ toJSON(vars.CODE_AGENT_PROVIDER_ID) }},
+    "FACTORY_QA_THINKING": ${{ toJSON(vars.FACTORY_QA_THINKING) }},
+    "FACTORY_REVIEW_THINKING": ${{ toJSON(vars.FACTORY_REVIEW_THINKING) }},
+    "FACTORY_BUILD_REVIEW": ${{ toJSON(vars.FACTORY_BUILD_REVIEW) }},
+    "FACTORY_BUILD_REVIEW_TIMEOUT_SECONDS": ${{ toJSON(vars.FACTORY_BUILD_REVIEW_TIMEOUT_SECONDS) }},
+    "FACTORY_BUILD_REVIEW_IDLE_TIMEOUT_SECONDS": ${{ toJSON(vars.FACTORY_BUILD_REVIEW_IDLE_TIMEOUT_SECONDS) }},
+    "AGENT_BROWSER_VERSION": ${{ toJSON(vars.AGENT_BROWSER_VERSION) }}
+    }
 
 permissions: {}
+# One reassessment per Issue at a time, so two replays cannot overwrite each
+# other's published review. (A run_id group never serialized anything.)
 concurrency:
-  group: factory-build-review-${{ github.run_id }}
-  cancel-in-progress: false
+  group: factory-build-review-issue-${{ inputs.issue }}
+  queue: max
 
 jobs:
   prepare:
@@ -39,12 +92,12 @@ jobs:
       attempt: ${{ steps.bind.outputs.attempt }}
       control_sha: ${{ steps.pin.outputs.sha }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           ref: ${{ github.sha }}
           path: control
           persist-credentials: false
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 24.x
       - name: Pin evaluator
@@ -60,7 +113,7 @@ jobs:
         run: |
           node control/.github/scripts/replay-build-review.mjs select \
             --issue "$SOURCE_ISSUE" --run "$SOURCE_RUN" --attempt "$SOURCE_ATTEMPT" --output input
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         if: steps.select.outputs.ready == 'true'
         with:
           artifact-ids: ${{ steps.select.outputs.artifact }}
@@ -74,7 +127,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: node control/.github/scripts/replay-build-review.mjs bind --input input
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         if: steps.bind.outcome == 'success'
         with:
           name: factory-build-review-input-${{ github.run_id }}-${{ github.run_attempt }}
@@ -93,25 +146,25 @@ jobs:
     outputs:
       artifact_id: ${{ steps.export.outputs.artifact-id }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           ref: ${{ needs.prepare.outputs.control_sha }}
           path: control
           persist-credentials: false
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           ref: ${{ needs.prepare.outputs.base_sha }}
           path: workspace
           persist-credentials: false
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           name: factory-build-review-input-${{ github.run_id }}-${{ github.run_attempt }}
           path: input
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4.3.0
         with:
           version: 11.7.0
           run_install: false
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 24.x
       - name: Apply the sealed candidate
@@ -192,7 +245,7 @@ jobs:
       - name: Stop the reviewer source registry
         if: always()
         run: node control/.github/scripts/source-snapshot.mjs stop
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         id: export
         if: always()
         with:

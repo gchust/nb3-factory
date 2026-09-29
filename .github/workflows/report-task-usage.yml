@@ -38,7 +38,17 @@ concurrency:
   queue: max
 
 jobs:
+  # The task usually requested this run itself; see report-dispatch-gate.yml.
+  dispatch-gate:
+    if: github.event_name == 'workflow_run'
+    uses: ./.github/workflows/report-dispatch-gate.yml
+    permissions:
+      actions: read
+
   report:
+    needs: dispatch-gate
+    if: >-
+      !cancelled() && needs.dispatch-gate.outputs.covered != 'true'
     outputs:
       source_ready: ${{ steps.source.outputs.ready }}
       html_ready: ${{ steps.totals.outputs.html_ready }}
@@ -58,12 +68,12 @@ jobs:
       SOURCE_ATTEMPT: ${{ inputs.attempt || github.event.workflow_run.run_attempt }}
     steps:
       # Run only trusted control code, never application code from an artifact.
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           ref: ${{ github.event.repository.default_branch }}
           path: control
           persist-credentials: false
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 24.x
 
@@ -80,7 +90,7 @@ jobs:
       - name: Download usage evidence when available
         if: steps.source.outputs.ready == 'true' && steps.source.outputs.artifact != ''
         continue-on-error: true
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           artifact-ids: ${{ steps.source.outputs.artifact_id }}
           merge-multiple: true
@@ -92,7 +102,7 @@ jobs:
       - name: Download normalized task metadata when available
         if: steps.source.outputs.ready == 'true' && steps.source.outputs.task_artifact_id != ''
         continue-on-error: true
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           artifact-ids: ${{ steps.source.outputs.task_artifact_id }}
           merge-multiple: true
@@ -104,7 +114,7 @@ jobs:
       - name: Download independent final verification results
         if: steps.source.outputs.ready == 'true' && steps.source.outputs.final_artifact_id != ''
         continue-on-error: true
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           artifact-ids: ${{ steps.source.outputs.final_artifact_id }}
           merge-multiple: true
@@ -114,7 +124,7 @@ jobs:
 
       - name: Download verified supplemental review
         if: steps.source.outputs.review_artifact != ''
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           artifact-ids: ${{ steps.source.outputs.review_artifact }}
           merge-multiple: true
@@ -135,7 +145,7 @@ jobs:
       - name: Save HTML and numeric usage report
         id: archive
         if: always() && steps.source.outputs.ready == 'true'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: factory-usage-${{ env.SOURCE_RUN_ID }}-${{ github.run_id }}-${{ github.run_attempt }}
           path: ${{ runner.temp }}/task-report
@@ -159,7 +169,7 @@ jobs:
         id: evaluation-export
         if: always() && steps.export.outputs.ready == 'true'
         continue-on-error: true
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: factory-evaluation-export-${{ env.SOURCE_RUN_ID }}-${{ github.run_id }}-${{ github.run_attempt }}
           path: ${{ runner.temp }}/evaluation-export
@@ -185,15 +195,15 @@ jobs:
       EVALUATION_ENDPOINT: ${{ vars.EVALUATION_ENDPOINT }}
       EVALUATION_AUTH_MODE: ${{ vars.EVALUATION_AUTH_MODE }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           ref: ${{ github.event.repository.default_branch }}
           path: control
           persist-credentials: false
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 24.x
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           artifact-ids: ${{ needs.report.outputs.evaluation_export }}
           path: ${{ runner.temp }}/evaluation-export
@@ -208,7 +218,7 @@ jobs:
       - name: Keep the exact bundle bytes for replay
         id: bundle
         if: steps.prepare.outputs.upload == 'true'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: ${{ steps.prepare.outputs.artifact_name }}
           path: ${{ runner.temp }}/evaluation-bundle/evaluation-bundle.zip
@@ -250,15 +260,15 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           ref: ${{ github.event.repository.default_branch }}
           path: control
           persist-credentials: false
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 24.x
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           artifact-ids: ${{ needs.report.outputs.report_artifact }}
           path: ${{ runner.temp }}/delivery-report
@@ -273,7 +283,7 @@ jobs:
             --html "$RUNNER_TEMP/delivery-report/report.html" \
             --output "$RUNNER_TEMP/report-publication.json"
       # Archive before configuring Pages: first-time setup failures lose no reports.
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           ref: ${{ steps.archive.outputs.commit_sha }}
           path: report-site
@@ -281,16 +291,16 @@ jobs:
       - name: Configure existing Pages site
         id: pages
         continue-on-error: true
-        uses: actions/configure-pages@v5
+        uses: actions/configure-pages@983d7736d9b0ae728b81ab479565c72886d7745b # v5.0.0
       - name: Upload the complete archived site
         if: steps.pages.outcome == 'success'
-        uses: actions/upload-pages-artifact@v4
+        uses: actions/upload-pages-artifact@7b1f4a764d45c48632c6b24a0339c27f5614fb0b # v4.0.0
         with:
           path: report-site
       - name: Deploy report site
         if: steps.pages.outcome == 'success'
         id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e # v4.0.5
       - name: Verify HTML and update Issue and PR links
         if: steps.deployment.outcome == 'success'
         env:
