@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "inputHash": "b1a2ec244219ad5cd423e62d2aaf6c021be30b2e2b248a7173835a5573677024",
+  "inputHash": "c227f4bda1a5aa8c23d571575b191701f3ab21b702723d1cc98fc115c423834e",
   "findings": [
     {
       "id": "460:36434284393:1:F2",
@@ -3207,6 +3207,245 @@
         }
       ],
       "fingerprint": "176cbda0c20d1842c98589c2870a51f954083a7a81947a1851b3a80f8759b74e"
+    },
+    {
+      "id": "490:36575632059:1:F1",
+      "report": "490:36575632059:1",
+      "issue": 490,
+      "taskTitle": "简单通讯录（构建流程冒烟测试 2）",
+      "appVersion": "1.0.0-beta.50",
+      "appTemplate": "@nocobase/app-template-default",
+      "finding": {
+        "id": "F1",
+        "kind": "issue",
+        "owner": "framework",
+        "confidence": "confirmed",
+        "severity": "minor",
+        "status": "open",
+        "title": "未匹配的 /api/* GET 回落到 SPA 首页，掩盖 API 404",
+        "detail": "registerRoutes() 把 scope=api 的路由挂到 /api、root 路由挂到 /，而 registerSpaRoutes() 在最后注册 router.get(`${basePath}/*`) 返回 index.html。因此任何未被 API 路由匹配的 GET（如尚未定义 GET /:contactId 时的 /api/contacts/1）得到 200 text/html，而不是 JSON 404。",
+        "impact": "客户端或 Agent 会把不存在的 API 路径当成成功页面，错误被静默吞掉；本次 Agent 先观察到 index.html 才补出显式详情路由，增加了排查成本。",
+        "suggestedChange": "在 SPA 兜底前排除已注册的 API 前缀，或对未匹配的 /api/* 注册返回 JSON 404（带 code）的兜底；保持前端页面路由仍返回 index.html。",
+        "evidence": [
+          "E7",
+          "E8",
+          "E26"
+        ],
+        "diagnosis": {
+          "category": "capability-gap",
+          "trigger": "对任意没有匹配 API 路由的路径执行 GET，例如 /api/contacts/1 在未定义 GET /:contactId 时。",
+          "expected": "返回 content-type: application/json 的 4xx（如 404，带错误码），以便调用方区分缺失资源。",
+          "actual": "命中 SPA catch-all，返回 200 与 index.html。",
+          "workaround": "应用显式定义每一个具体路由（如 GET /:contactId），让请求先被 API 子路由匹配；未定义路径仍会被掩盖。",
+          "acceptance": "对未匹配的 /api/* GET 断言 404 且 content-type 为 application/json；对前端页面路由断言仍返回 index.html。"
+        }
+      },
+      "targets": [
+        "@nocobase/app-server"
+      ],
+      "paths": [
+        "packages/@nocobase/app-server/dist/application/index.js",
+        "packages/@nocobase/app-server/dist/spa/routes.js"
+      ],
+      "evidence": [
+        {
+          "id": "E7",
+          "kind": "code",
+          "path": "packages/@nocobase/app-server/dist/application/index.js",
+          "observation": "registerRoutes() 对 scope==='api' 的路由挂到 '/api'，其余挂到 '/'，并用 routesRegistered 守卫一次性注册。",
+          "lines": [
+            194,
+            205
+          ],
+          "excerpt": "    async registerRoutes() {\n        if (this.routesRegistered) {\n            return;\n        }\n        for (const middleware of this.httpMiddleware) {\n            await middleware.register(this.router, this);\n        }\n        for (const routes of this.routes) {\n            const router = await routes.createRouter(this);\n            this.router.route(routes.scope === 'api' ? '/api' : '/', router);\n        }\n        this.routesRegistered = true;",
+          "sha256": "98e0a7f93ab7107addcf1c4516d1fd8234c51f6f8078b2bccc905e006153130a"
+        },
+        {
+          "id": "E8",
+          "kind": "code",
+          "path": "packages/@nocobase/app-server/dist/spa/routes.js",
+          "observation": "registerSpaRoutes() 末尾注册 router.get(`${basePath}/*`) 返回 SPA index，作为所有未匹配 GET 的兜底。",
+          "lines": [
+            24,
+            33
+          ],
+          "excerpt": "    router.get(basePath || '/', () => serveSpaIndex(options.indexPath, {\n        clientConfig: options.clientConfig,\n        publicConfig: resolvePublicConfig(options),\n        publicBasePath: options.publicBasePath,\n    }));\n    router.get(`${basePath}/*`, () => serveSpaIndex(options.indexPath, {\n        clientConfig: options.clientConfig,\n        publicConfig: resolvePublicConfig(options),\n        publicBasePath: options.publicBasePath,\n    }));",
+          "sha256": "48b4d885b00e1d79b34f1a1fee33b05187eaa3c564591c6021e8ec8804e20f48"
+        },
+        {
+          "id": "E26",
+          "kind": "code",
+          "path": "app/server/routes/contacts.ts",
+          "observation": "应用用 defineApiRoutes() 建 Hono 子路由，并在 contactsRouter 上 use('*', auth.required())。",
+          "lines": [
+            28,
+            35
+          ],
+          "excerpt": "export const apiRoutes: AppApiRouteContribution<Application> = defineApiRoutes(\n  (app) => {\n    const router = new Hono();\n    const auth = app.container.resolve(authenticationToken);\n    const contacts = app.container.resolve(contactServiceToken);\n\n    const contactsRouter = new Hono();\n    contactsRouter.use('*', auth.required());",
+          "sha256": "7c76f2288618f0042bd44df89547e19fac2e50b465b4d00d98ec76ef3e22b9ab"
+        }
+      ],
+      "fingerprint": "48cf727ecd72f7f1f04e96b386ede1d03644b2e4acfd35a2562d25fd6b8fa7db"
+    },
+    {
+      "id": "490:36575632059:1:F2",
+      "report": "490:36575632059:1",
+      "issue": 490,
+      "taskTitle": "简单通讯录（构建流程冒烟测试 2）",
+      "appVersion": "1.0.0-beta.50",
+      "appTemplate": "@nocobase/app-template-default",
+      "finding": {
+        "id": "F2",
+        "kind": "improvement",
+        "owner": "documentation",
+        "confidence": "confirmed",
+        "severity": "minor",
+        "status": "open",
+        "title": "路由/认证测试指引未在写请求处提示 Origin/CSRF 前提",
+        "detail": "server-routes.md 的“Every route owns its own security”只说明 auth.required() 的 401；protecting-routes.md 的集成测试配方说 sign up 后复用 set-cookie，但示例只演示 GET。cookie 写请求还需 Origin/Referer 命中 trusted origin 的要求只写在 user-lifecycle-and-deployment.md，未在这两处交叉引用或以代码示例体现。",
+        "impact": "按 server-routes.md 写出带 cookie 的写接口后，首次调用会得到 403 INVALID_CSRF_ORIGIN；本次 Agent 因此多轮调试并读 dist 源码才定位。",
+        "suggestedChange": "在 server-routes.md 的认证小节加一行 CSRF 交叉引用，并在 protecting-routes.md 的集成测试示例中加入 Origin 头或 auth.trustedOrigins 设置。",
+        "evidence": [
+          "E19",
+          "E22",
+          "E23",
+          "E44"
+        ],
+        "diagnosis": {
+          "category": "guidance-gap",
+          "trigger": "用 auth.required() 保护一个 POST/PATCH/DELETE 路由，然后用浏览器 cookie 调用且不带 Origin。",
+          "expected": "指引在演示带 cookie 的写请求认证时说明需要匹配 Origin 或配置 trusted origin。",
+          "actual": "server-routes.md 与 protecting-routes.md 均未提及；要求只在 user-lifecycle-and-deployment.md（及根 AGENTS.md）出现。",
+          "workaround": "应用设置 APP_PUBLIC_ORIGIN 并让写请求携带匹配 Origin；Agent 从 auth.js 的 checkCookieWriteOrigin 反推。",
+          "acceptance": "仅按 server-routes.md + protecting-routes.md 的示例实现并测试一个 cookie 写路由，能得到 200/401 而非 403 INVALID_CSRF_ORIGIN。"
+        }
+      },
+      "targets": [
+        "app/.agents/skills/nocobase-app-development/references/server-routes.md",
+        "app/.agents/skills/nocobase-app-plugin-authentication/references/protecting-routes.md",
+        "app/.agents/skills/nocobase-app-plugin-authentication/references/user-lifecycle-and-deployment.md"
+      ],
+      "paths": [
+        ".agents/skills/nocobase-app-development/references/server-routes.md",
+        ".agents/skills/nocobase-app-plugin-authentication/references/protecting-routes.md",
+        ".agents/skills/nocobase-app-plugin-authentication/references/user-lifecycle-and-deployment.md"
+      ],
+      "evidence": [
+        {
+          "id": "E19",
+          "kind": "skill",
+          "path": "app/.agents/skills/nocobase-app-development/references/server-routes.md",
+          "observation": "“Every route owns its own security”：挂在 /api 不等于鉴权，给出 auth.required()/optional() 示例与 401 语义。",
+          "lines": [
+            43,
+            68
+          ],
+          "excerpt": "## Every route owns its own security\n\n**Mounting under `/api` does not authenticate anything.** `/api` is a location. A route with no `auth.required()` is public regardless of where it mounts.\n\nNever depend on middleware installed by another route, or on the order contributions happen to be registered in. Contribution order changes when a plugin is added, and a route protected only by someone else's middleware silently becomes public.\n\n`auth.required()` rejects anonymous requests with `401`. `auth.optional()` attaches the session when present without rejecting.\n\n## Authorization, when identity is not enough\n\nAuthentication answers who is calling. Authorization answers whether they may perform this action. Sensitive operations need both:\n\n```ts\nimport {\n  authorizationToken,\n  type AuthorizationEnv,\n} from '@nocobase/app-plugin-authorization';\n\nexport const orderAdminRoutes: AppApiRouteContribution<Application> =\n  defineApiRoutes((app) => {\n    const router = new Hono();\n    const routes = new Hono<AuthorizationEnv>();\n    const auth = app.container.resolve(authenticationToken);\n    const authorization = app.container.resolve(authorizationToken);\n\n    routes.use('*', auth.required(), authorization.middleware());",
+          "sha256": "cbf30ba33ca0af760a34442e92ac668c0ec8a312423da0690a98f3dfd0099b25"
+        },
+        {
+          "id": "E22",
+          "kind": "skill",
+          "path": "app/.agents/skills/nocobase-app-plugin-authentication/references/user-lifecycle-and-deployment.md",
+          "observation": "部署章节说明 publicOrigin 与写请求 CSRF：cookie 写请求的 Origin/Referer 必须命中 trusted origin，否则 403 INVALID_CSRF_ORIGIN。",
+          "lines": [
+            109,
+            115
+          ],
+          "excerpt": "**Public origin.** Set `app.publicOrigin` to the HTTPS address the browser\nsees. Better Auth derives its base URL and callback URLs from it and from the\napplication's public base path; a container-internal address breaks OAuth\ncallbacks and cookie attributes. The reverse proxy must forward host,\nprotocol, and cookies.\n\n**Business request CSRF.** `Auth.required()` and `Auth.optional()` reject cookie-bearing writes unless `Origin` (or, when absent, `Referer`) matches Better Auth's configured base origin or a trusted origin. Configure `app.publicOrigin` for deployed applications and add separate frontend origins through `auth.trustedOrigins`; without a trusted origin, browser writes fail closed with `INVALID_CSRF_ORIGIN`. Cookie-free API key requests can proceed after authentication. A credential header does not exempt a request carrying cookies, including routes that skip session lookup.",
+          "sha256": "f8b0c5cdd615fcb6ac7ffb9bfc8f4b42f5fd3422c6e8613d517f87ee60e91fbe"
+        },
+        {
+          "id": "E23",
+          "kind": "skill",
+          "path": "app/.agents/skills/nocobase-app-plugin-authentication/references/protecting-routes.md",
+          "observation": "“Testing a protected route”集成测试配方：sign up 后复用 set-cookie，但只演示 GET，未提示后续写请求还需 Origin/trusted origin。",
+          "lines": [
+            111,
+            131
+          ],
+          "excerpt": "## Testing a protected route\n\nRoute tests should not sign in through Better Auth. Register a stub under\n`authenticationToken` whose `required()` and `optional()` set the session you\nwant, then assert both the anonymous and the authenticated response:\n\n```ts\nconst container = new ServiceContainer();\ncontainer.instance(authenticationToken, testAuth);\n\nconst router = await apiRoutes.createRouter({ /* ... */ container });\n\nexpect((await router.request('/orders')).status).toBe(401);\n```\n\nThe application Skill's testing reference shows the full `createRouter` call\nand a `testAuth` shape. For an integration test that exercises the real\nplugin, build an `Auth` with `createAuthentication({ connection, secret })`\nagainst a test database, sign up through `auth.handler()` with a\n`POST /api/auth/sign-up/email` request, and reuse the returned `set-cookie`\nheader on later requests. The plugin's own integration tests do exactly this.",
+          "sha256": "835bdc520d0b737b037e1fa657c04453194bcda96700d013ff1e249c4ab31bbd"
+        },
+        {
+          "id": "E44",
+          "kind": "log",
+          "path": "artifacts/agent-history/agent-implement.jsonl/part-0025.txt",
+          "observation": "Agent 在 part-0025 读到 auth.js 后自行定位：checkCookieWriteOrigin 在带 cookie 的写请求缺少 Origin/Referer 时返回 403 INVALID_CSRF_ORIGIN。",
+          "lines": [
+            1855,
+            1861
+          ],
+          "excerpt": "{\"type\":\"message_update\",\"usage\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":0,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"assistantMessageEvent\":{\"type\":\"toolcall_delta\",\"contentIndex\":1,\"delta\":\": \"}}\n{\"type\":\"message_update\",\"usage\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":0,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"assistantMessageEvent\":{\"type\":\"toolcall_delta\",\"contentIndex\":1,\"delta\":\"60\"}}\n{\"type\":\"message_update\",\"usage\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":0,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"assistantMessageEvent\":{\"type\":\"toolcall_delta\",\"contentIndex\":1,\"delta\":\"}\"}}\n{\"type\":\"message_update\",\"usage\":{\"input\":1343,\"output\":300,\"cacheRead\":99328,\"cacheWrite\":0,\"reasoning\":204,\"totalTokens\":100971,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"assistantMessageEvent\":{\"type\":\"thinking_end\",\"contentIndex\":0,\"content\":\"There it is: `checkCookieWriteOrigin` → 403 `INVALID_CSRF_ORIGIN` when a cookie is present and the request has no Origin/Referer. So our POST/PATCH/DELETE need an `Origin` header matching the app origin.\\n\\nThe app-server test's `POST /api/auth/api-key/create` succeeded... maybe because that route runs before `sessionHttpMiddleware`? Or because `checkCookieWriteOrigin` is only applied to app routes via middleware, and the better-auth handler handles it differently. Anyway.\\n\\nThe fix for our test: add `Origin` header. To what value? The trusted origin. In tests, the base URL is `http://localhost${publicBasePath}`. The inferred base URL from config; `getOrigin` must match. In `checkCookieWriteOrigin`, `source = origin ?? referer`, and then later it verifies source against `trustedOrigins` or baseURL. Let me read the rest.\"}}\n{\"type\":\"message_update\",\"usage\":{\"input\":1343,\"output\":300,\"cacheRead\":99328,\"cacheWrite\":0,\"reasoning\":204,\"totalTokens\":100971,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"assistantMessageEvent\":{\"type\":\"toolcall_end\",\"contentIndex\":1,\"toolCall\":{\"type\":\"toolCall\",\"id\":\"call_00_xIIlLwtgBR3GakYyraAo7241\",\"name\":\"bash\",\"arguments\":{\"command\":\"cd /home/runner/work/nb3-factory/nb3-factory/workspace && sed -n '140,210p' node_modules/@nocobase/app-plugin-authentication/dist/server/auth.js\",\"timeout\":60}}}}\n{\"type\":\"message_end\",\"message\":{\"role\":\"assistant\",\"content\":[{\"type\":\"thinking\",\"thinking\":\"There it is: `checkCookieWriteOrigin` → 403 `INVALID_CSRF_ORIGIN` when a cookie is present and the request has no Origin/Referer. So our POST/PATCH/DELETE need an `Origin` header matching the app origin.\\n\\nThe app-server test's `POST /api/auth/api-key/create` succeeded... maybe because that route runs before `sessionHttpMiddleware`? Or because `checkCookieWriteOrigin` is only applied to app routes via middleware, and the better-auth handler handles it differently. Anyway.\\n\\nThe fix for our test: add `Origin` header. To what value? The trusted origin. In tests, the base URL is `http://localhost${publicBasePath}`. The inferred base URL from config; `getOrigin` must match. In `checkCookieWriteOrigin`, `source = origin ?? referer`, and then later it verifies source against `trustedOrigins` or baseURL. Let me read the rest.\",\"thinkingSignature\":\"[{\\\"format\\\":\\\"unknown\\\",\\\"index\\\":0,\\\"text\\\":\\\"There it is: `checkCookieWriteOrigin` → 403 `INVALID_CSRF_ORIGIN` when a cookie is present and the request has no Origin/Referer. So our POST/PATCH/DELETE need an `Origin` header matching the app origin.\\\\n\\\\nThe app-server test's `POST /api/auth/api-key/create` succeeded... maybe because that route runs before `sessionHttpMiddleware`? Or because `checkCookieWriteOrigin` is only applied to app routes via middleware, and the better-auth handler handles it differently. Anyway.\\\\n\\\\nThe fix for our test: add `Origin` header. To what value? The trusted origin. In tests, the base URL is `http://localhost${publicBasePath}`. The inferred base URL from config; `getOrigin` must match. In `checkCookieWriteOrigin`, `source = origin ?? referer`, and then later it verifies source against `trustedOrigins` or baseURL. Let me read the rest.\\\",\\\"type\\\":\\\"reasoning.text\\\"}]\"},{\"type\":\"toolCall\",\"id\":\"call_00_xIIlLwtgBR3GakYyraAo7241\",\"name\":\"bash\",\"arguments\":{\"command\":\"cd /home/runner/work/nb3-factory/nb3-factory/workspace && sed -n '140,210p' node_modules/@nocobase/app-plugin-authentication/dist/server/auth.js\",\"timeout\":60}}],\"api\":\"openai-completions\",\"provider\":\"nb3-factory\",\"model\":\"deepseek-v4.1-flash\",\"usage\":{\"input\":1343,\"output\":300,\"cacheRead\":99328,\"cacheWrite\":0,\"reasoning\":204,\"totalTokens\":100971,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"stopReason\":\"toolUse\",\"timestamp\":1790689838101,\"responseId\":\"gen_01M3PPX2YDEPZ0JJGFRQ4T3EAT\",\"rawStopReason\":\"tool_calls\"}}\n{\"type\":\"tool_execution_start\",\"toolCallId\":\"call_00_xIIlLwtgBR3GakYyraAo7241\",\"toolName\":\"bash\",\"args\":{\"command\":\"cd /home/runner/work/nb3-factory/nb3-factory/workspace && sed -n '140,210p' node_modules/@nocobase/app-plugin-authentication/dist/server/auth.js\",\"timeout\":60}}",
+          "sha256": "e8723abbd3000bb73524bd43db1caf1c489d9d75dfca8d4b4c225fd1a69af470"
+        }
+      ],
+      "fingerprint": "8e3071d2647b2a021b52160e04cab70be1f3b10255d866c1a458bc97a10cb3c7"
+    },
+    {
+      "id": "490:36575632059:1:F5",
+      "report": "490:36575632059:1",
+      "issue": 490,
+      "taskTitle": "简单通讯录（构建流程冒烟测试 2）",
+      "appVersion": "1.0.0-beta.50",
+      "appTemplate": "@nocobase/app-template-default",
+      "finding": {
+        "id": "F5",
+        "kind": "improvement",
+        "owner": "documentation",
+        "confidence": "confirmed",
+        "severity": "info",
+        "status": "open",
+        "title": "nocobase-db Skill 的 seed 语义与示例数据需求存在落差",
+        "detail": "nocobase-db/SKILL.md 明确“a seed is never sample or demonstration content”，并要求以唯一业务值 upsertOne 保证幂等；contacts 表没有唯一列，Agent 只能用 count()>0 守卫 + createOne 循环，并把 5 条示例联系人放进 seed。",
+        "impact": "按 Skill 字面要求，业务无法用 seed 承载演示/样例数据；Agent 只能偏离建议的幂等写法，或把示例数据放到未记录的脚本中。",
+        "suggestedChange": "在 seed 章节承认非唯一键时的幂等写法，并说明示例/演示数据的推荐落点（dev fixture/独立脚本），与必需初始化数据区分。",
+        "evidence": [
+          "E17",
+          "E27"
+        ],
+        "diagnosis": {
+          "category": "guidance-gap",
+          "trigger": "为没有唯一业务键的集合编写初始化或示例数据。",
+          "expected": "指引区分必需初始化数据与示例数据，并给出唯一键/非唯一键两套幂等范式。",
+          "actual": "指引只承认唯一键 upsertOne 的幂等，并禁止示例数据。",
+          "workaround": "应用以 count()>0 守卫替代 upsertOne。",
+          "acceptance": "按指引能在不违反 seed 语义的前提下写入示例记录，并有两种幂等写法的可运行示例。"
+        }
+      },
+      "targets": [
+        "app/.agents/skills/nocobase-db/SKILL.md"
+      ],
+      "paths": [
+        ".agents/skills/nocobase-db/SKILL.md"
+      ],
+      "evidence": [
+        {
+          "id": "E17",
+          "kind": "skill",
+          "path": "app/.agents/skills/nocobase-db/SKILL.md",
+          "observation": "迁移与 seed 章节：seed 不是示例内容，且以唯一业务值 upsertOne 保证幂等，seed context 无 builder。",
+          "lines": [
+            78,
+            137
+          ],
+          "excerpt": "## 2. Migrations and seeds\n\nA migration creates structure. A seed inserts the records the application needs in order to run. Neither does the other's job, and a seed is never sample or demonstration content.\n\n```ts\n// database/main/migrations/202609020001_create_orders.ts\nimport { defineMigration, type MigrationDefinition } from '@nocobase/db';\n\nconst migration: MigrationDefinition = defineMigration({\n  name: '202609020001_create_orders',\n\n  async up({ builder }) {\n    await builder.createCollection('orders', (collection) => {\n      collection.increments('id');\n      collection.string('orderNo', { length: 64, nullable: false });\n      collection.string('status', { length: 32, nullable: false });\n      collection.datetime('createdAt', { nullable: false });\n      collection.unique('orderNo');\n      collection.index('status');\n    });\n  },\n\n  async down({ builder }) {\n    await builder.dropCollection('orders');\n  },\n});\n\nexport default migration;\n```\n\n```ts\n// database/main/seeds/202609030002_default_order_statuses.ts\nimport { defineSeed } from '@nocobase/db';\n\nexport default defineSeed({\n  name: '202609030002_default_order_statuses',\n\n  async run({ repository }) {\n    await repository('orderStatuses').upsertOne({\n      filter: { code: 'draft' },\n      create: { code: 'draft', title: 'Draft' },\n      update: { title: 'Draft' },\n    });\n  },\n});\n```\n\nApply both with `pnpm nocobase db apply`, adding `--connection <name>` for a non-default connection or `--all` for every managed one.\n\nEach context carries its own tools, and which one to use is not a free choice — see [Repository and Query](#4-repository-and-query). In short: a migration works through `builder` and `query`, and a seed writes through `repository`.\n\nThe rules are absolute, because these files are history that has already run on other machines:\n\n- **Self-contained.** Spell out every table, field, index, constraint and metadata operation in the file. Never import a Collection definition, model, registry or shared constant that keeps evolving — that silently changes both the behavior and the checksum of something already applied.\n- **Immutable once merged.** Check with `git log -- <file>` if unsure. Before the branch is merged you may correct the file in place; after it, every change is a new, later file. Never hard-code a previous checksum to make an edited migration look untouched. Correcting it in place changes nothing on its own — it is recorded as executed, so a plain apply skips it and the database keeps the schema the old file produced. `pnpm nocobase db redo` rolls the latest batch back and applies it again.\n- **The file name body matches `name`**, and the name is unique across every source in the application.\n- **Declare `irreversible: true`** when there is no real reverse operation, instead of writing a `down()` that quietly does nothing.\n- **A seed is idempotent**, keyed on a stable business value backed by a unique constraint, so a repeated run is a no-op — `upsertOne` is the direct way to express that. A seed context has no `builder` at all, and a seed has no rollback or truncate behavior.\n\nA backfill belongs in the migration that makes it necessary, using `query` from the same context — not in a seed.",
+          "sha256": "f97c07a45a9d49c1d933ddbceeabcc9afe267b1356a2ded1a3da0dd56b54011c"
+        },
+        {
+          "id": "E27",
+          "kind": "code",
+          "path": "app/database/main/seeds/202609020002_sample_contacts.ts",
+          "observation": "seed 用 count()>0 守卫 + createOne 循环写入 5 条示例联系人，而不是按唯一业务键 upsertOne。",
+          "lines": [
+            50,
+            59
+          ],
+          "excerpt": "const seed: SeedDefinition = defineSeed({\n  name: '202609020002_sample_contacts',\n  async run(context) {\n    const contacts = context.repository<SampleContact>('contacts');\n    if ((await contacts.count()) > 0) return;\n    for (const contact of SAMPLE_CONTACTS) {\n      await contacts.createOne({ values: contact });\n    }\n  },\n});",
+          "sha256": "0cdc1a101c007e3e5c131ac2388cb646ba45e9a45497a5c7f6de6f45285e3b38"
+        }
+      ],
+      "fingerprint": "6ea4ef5ee8378d522f9f715a51a8a1acfa812210d220d0ceec4a391110450efc"
     }
   ]
 }
