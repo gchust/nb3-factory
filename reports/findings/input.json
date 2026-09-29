@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "inputHash": "dab6ad1fc265dbe6c8644d780354428e34537ab7ff6757b506fc67f4163af3a9",
+  "inputHash": "7f9ddf9fbbd0bb800acc190eebed26e039b02170f1e5802d0ed53e531632c8b2",
   "findings": [
     {
       "id": "460:36434284393:1:F2",
@@ -2276,6 +2276,209 @@
         }
       ],
       "fingerprint": "183237d05ffd205880b0198c6aac1a9055f70531dcaa34ffe43a0105e1276c03"
+    },
+    {
+      "id": "477:36498932902:1:F1",
+      "report": "477:36498932902:1",
+      "issue": 477,
+      "taskTitle": "内部资料只读问答助手",
+      "appVersion": "1.0.0-beta.50",
+      "appTemplate": "@nocobase/app-template-default",
+      "finding": {
+        "id": "F1",
+        "kind": "issue",
+        "owner": "plugin",
+        "severity": "minor",
+        "confidence": "confirmed",
+        "status": "open",
+        "title": "授权 scope 与默认连接 Repository 的集合命名口径不一致，记录范围查询以不透明 500 暴露",
+        "detail": "应用按多连接寻址用限定名 main.materials 定义记录范围时，授权侧 collectionResolver 接受该限定名，Authorizer 以 resourceId 生成 scopeAst，Scope AST 的 collection 记为 main.materials；而默认连接上绑定的 Repository 逻辑名为 materials，normalizeScalarFilter 要求 ast.collection === collection.name，遂抛 INVALID_FILTER，HTTP 层呈现为 500。授权侧与数据层对同一集合存在两套命名口径。",
+        "impact": "按指引/仓库使用限定名的实现会得到一个无定位信息的 500；本应用改用逻辑名 materials 绕过，但框架侧未修复，后续使用限定名仍会踩坑。",
+        "suggestedChange": "让授权侧 scope 使用与 Repository 一致的逻辑集合名，或在 db 校验失败时给出包含命名不一致的明确错误；并在指引中写明 scope 与 Repository 必须共用逻辑集合名。",
+        "evidence": [
+          "E57",
+          "E58",
+          "E61",
+          "E60",
+          "E40",
+          "E72"
+        ],
+        "diagnosis": {
+          "category": "usability-improvement",
+          "trigger": "记录范围 scope 的集合名（main.materials）与默认连接 Repository 的集合名（materials）不一致",
+          "expected": "授权与数据层接受同一集合标识并返回正确结果，或给出可操作的错误说明",
+          "actual": "normalizeScalarFilter 抛 INVALID_FILTER，HTTP 层呈现为不透明 500",
+          "workaround": "把 scope 与 Repository 统一到逻辑名 materials（应用已如此处理）",
+          "acceptance": "普通同事列表按范围返回 A/B 且不出现 500；命名不一致时错误信息可直接定位"
+        }
+      },
+      "targets": [
+        "@nocobase/app-plugin-authorization",
+        "@nocobase/db"
+      ],
+      "paths": [
+        "packages/@nocobase/app-plugin-authorization/dist/server/database/authorizer.js",
+        "packages/@nocobase/app-plugin-authorization/dist/server/database/collections.js",
+        "packages/@nocobase/app-plugin-authorization/dist/server/database/scope.js",
+        "packages/@nocobase/db/dist/src/repository/repository.js"
+      ],
+      "evidence": [
+        {
+          "id": "E57",
+          "kind": "code",
+          "path": "packages/@nocobase/app-plugin-authorization/dist/server/database/scope.js",
+          "observation": "scopeAst 将 resolver 结果封装为带 collection 名的 FilterAst。",
+          "lines": [
+            49,
+            60
+          ],
+          "excerpt": "export function scopeAst(collection, scope) {\n    return {\n        kind: 'filter',\n        version: 1,\n        collection,\n        root: scope.kind === 'group' ? scope : group('and', [scope]),\n    };\n}\nfunction group(logic, items) {\n    return { kind: 'group', logic, items };\n}\nconst operators = new Set([",
+          "sha256": "990edf1b0422f4e8e2c869546a4d4be9710b5e652bcf7170105a436f80ea2b34"
+        },
+        {
+          "id": "E58",
+          "kind": "code",
+          "path": "packages/@nocobase/app-plugin-authorization/dist/server/database/authorizer.js",
+          "observation": "Authorizer 用 resourceId 生成 scopeAst(resourceId, scope)，conditions.collection = resourceId。",
+          "lines": [
+            138,
+            152
+          ],
+          "excerpt": "            const conditions = {\n                type: 'database',\n                collection: resourceId,\n                action: request.action,\n                scope: scope === true ? true : scopeAst(resourceId, scope),\n                fields: resolveActionFields(request.action, fields, resource),\n                relations,\n                fieldAccess: fields,\n                allFields: request.action === 'delete' ||\n                    ((request.action === 'read' ||\n                        fields.input === '*' ||\n                        resolveActionFields(request.action, { input: '*', output: '*' }, resource).every((field) => fields.input.includes(field))) &&\n                        (fields.output === '*' ||\n                            resource.fields.every((field) => fields.output.includes(field)))),\n            };",
+          "sha256": "b0de936d696378936a0ad88984858caf031f670f624b542daf0d0a3f69f06fbb"
+        },
+        {
+          "id": "E61",
+          "kind": "code",
+          "path": "packages/@nocobase/db/dist/src/repository/repository.js",
+          "observation": "normalizeScalarFilter 要求 FilterAst.collection 必须等于 Repository 绑定的 collection.name，否则抛 INVALID_FILTER。",
+          "lines": [
+            869,
+            896
+          ],
+          "excerpt": "function normalizeScalarFilter(collection, input, context) {\n    if (input === undefined)\n        return undefined;\n    let ast;\n    if (typeof input === 'function') {\n        ast = wrapFilter(input(new DefaultFilterBuilder()), collection.name);\n    }\n    else {\n        if (!isPlainRecord(input)) {\n            invalid('INVALID_FILTER', 'Expected a Repository Filter input.', {\n                collection: collection.name,\n                path: ['filter'],\n            });\n        }\n        ast = isFilterAstInput(collection, input)\n            ? input\n            : filterShorthandToAst(collection, input);\n    }\n    if (ast.kind !== 'filter' ||\n        ast.version !== 1 ||\n        ast.root?.kind !== 'group') {\n        invalid('INVALID_FILTER', 'Expected a Repository Filter AST version 1.', {\n            collection: collection.name,\n        });\n    }\n    if (ast.collection !== undefined && ast.collection !== collection.name) {\n        invalid('INVALID_FILTER', `Filter Collection \"${ast.collection}\" does not match \"${collection.name}\".`, { collection: collection.name, path: ['collection'] });\n    }",
+          "sha256": "31b67e0dcdfd222b6981571d563d9879525a3bf61312ea92a05a269d99c1f311"
+        },
+        {
+          "id": "E60",
+          "kind": "code",
+          "path": "packages/@nocobase/app-plugin-authorization/dist/server/database/collections.js",
+          "observation": "collectionResolver 支持两段式 connection.collection，并把 name 回写为限定名。",
+          "lines": [
+            11,
+            33
+          ],
+          "excerpt": "export function collectionResolver(connection, database) {\n    return async (name) => {\n        const parts = name.split('.');\n        if (!database || parts.length !== 2)\n            return describeCollection(connection, name);\n        const [source, collection] = parts;\n        const resolved = await describeCollection(database.connection(source), collection);\n        return (resolved && {\n            ...resolved,\n            name,\n            relations: Object.fromEntries(Object.entries(resolved.relations ?? {}).map(([key, relation]) => [\n                key,\n                {\n                    ...relation,\n                    target: `${source}.${relation.target}`,\n                    ...(relation.through\n                        ? { through: `${source}.${relation.through}` }\n                        : {}),\n                },\n            ])),\n        });\n    };\n}",
+          "sha256": "df2f4d43c43a1bd16ce09d9b974c112d099cd20d082bcef3a801a73ad95d20a4"
+        },
+        {
+          "id": "E40",
+          "kind": "log",
+          "path": "artifacts/agent-history/agent-repair-1.jsonl/part-0063.txt",
+          "observation": "搭建/修复调用 part-0063.txt 第 2188-2190 行的原始事件；处置为 finding。该事件直接支撑 F1（记录范围集合名不一致）。",
+          "lines": [
+            2188,
+            2190
+          ],
+          "excerpt": "{\"type\":\"tool_execution_end\",\"toolCallId\":\"call_00_NUSi8uhEF6Eqrpc8sjHv2117\",\"toolName\":\"bash\",\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"READY: http://127.0.0.1:13001/main/ (origin http://127.0.0.1:13001/main)\\n--- anon GET list:\\nHTTP 401 {\\\"code\\\":\\\"UNAUTHORIZED\\\",\\\"message\\\":\\\"Authentication required\\\"}\\n--- signin colleague: 200\\n--- colleague list:\\nInternal Server Error\\nHTTP 500\\n--- colleague GET /3:\\nHTTP 500 Internal Server Error\\n--- colleague POST:\\nHTTP 403 {\\\"code\\\":\\\"FORBIDDEN\\\",\\\"message\\\":\\\"The current identity may not create materials\\\"}\\n--- colleague PATCH /1:\\nHTTP 403 {\\\"code\\\":\\\"FORBIDDEN\\\",\\\"message\\\":\\\"The current identity may not update materials\\\"}\\n--- colleague DELETE /1:\\nHTTP 403 {\\\"code\\\":\\\"FORBIDDEN\\\",\\\"message\\\":\\\"The current identity may not delete materials\\\"}\\n--- signin supervisor: 200\\n--- supervisor list:\\n{\\\"data\\\":[{\\\"id\\\":1,\\\"title\\\":\\\"报修联系方式\\\",\\\"content\\\":\\\"蓝鹭设备报修电话为 400-000-7316\\\",\\\"createdAt\\\":\\\"2026-09-29T01:25:01.934Z\\\",\\\"updatedAt\\\":\\\"2026-09-29T01:25:01.934Z\\\"},{\\\"id\\\":2,\\\"title\\\":\\\"巡检周期\\\",\\\"content\\\":\\\"蓝鹭设备常规巡检间隔为 45 天\\\",\\\"createdAt\\\":\\\"2026-09-29T01:25:01.934Z\\\",\\\"updatedAt\\\":\\\"2026-09-29T01:25:01.934Z\\\"},{\\\"id\\\":3,\\\"title\\\":\\\"保密项目内部代号\\\",\\\"content\\\":\\\"保密项目的内部代号为墨竹 729\\\",\\\"createdAt\\\":\\\"2026-09-29T01:25:01.934Z\\\",\\\"updatedAt\\\":\\\"2026-09-29T01:25:01.934Z\\\"}]}\\nHTTP 200\\n--- supervisor GET /3:\\nHTTP 200 {\\\"data\\\":{\\\"id\\\":3,\\\"title\\\":\\\"保密项目内部代号\\\",\\\"content\\\":\\\"保密项目的内部代号为墨竹 729\\\",\\\"createdAt\\\":\\\"2026-09-29T01:25:01.934Z\\\",\\\"updatedAt\\\":\\\"2026-09-29T01:25:01.934Z\\\"}}\\n--- supervisor PATCH /1:\\nHTTP 200 {\\\"data\\\":{\\\"id\\\":1,\\\"title\\\":\\\"报修联系方式\\\",\\\"content\\\":\\\"蓝鹭设备报修电话为 400-000-7316\\\",\\\"confidential\\\":false,\\\"createdAt\\\":\\\"2026-09-29T01:25:01.934Z\\\",\\\"updatedAt\\\":\\\"2026-09-29T01:31:39.734Z\\\"}}\\n--- supervisor POST:\\nHTTP 201 {\\\"data\\\":{\\\"id\\\":4,\\\"title\\\":\\\"临时测试\\\",\\\"content\\\":\\\"临时内容\\\",\\\"confidential\\\":false,\\\"createdAt\\\":\\\"2026-09-29T01:31:39.756Z\\\",\\\"updatedAt\\\":\\\"2026-09-29T01:31:39.756Z\\\"}}\\n--- created id=4; supervisor DELETE it:\\nHTTP 204 \\n\\n\\nCommand exited with code 143\"}],\"details\":{}},\"isError\":true}\n{\"type\":\"message_start\",\"message\":{\"role\":\"toolResult\",\"toolCallId\":\"call_00_NUSi8uhEF6Eqrpc8sjHv2117\",\"toolName\":\"bash\",\"content\":[{\"type\":\"text\",\"text\":\"READY: http://127.0.0.1:13001/main/ (origin http://127.0.0.1:13001/main)\\n--- anon GET list:\\nHTTP 401 {\\\"code\\\":\\\"UNAUTHORIZED\\\",\\\"message\\\":\\\"Authentication required\\\"}\\n--- signin colleague: 200\\n--- colleague list:\\nInternal Server Error\\nHTTP 500\\n--- colleague GET /3:\\nHTTP 500 Internal Server Error\\n--- colleague POST:\\nHTTP 403 {\\\"code\\\":\\\"FORBIDDEN\\\",\\\"message\\\":\\\"The current identity may not create materials\\\"}\\n--- colleague PATCH /1:\\nHTTP 403 {\\\"code\\\":\\\"FORBIDDEN\\\",\\\"message\\\":\\\"The current identity may not update materials\\\"}\\n--- colleague DELETE /1:\\nHTTP 403 {\\\"code\\\":\\\"FORBIDDEN\\\",\\\"message\\\":\\\"The current identity may not delete materials\\\"}\\n--- signin supervisor: 200\\n--- supervisor list:\\n{\\\"data\\\":[{\\\"id\\\":1,\\\"title\\\":\\\"报修联系方式\\\",\\\"content\\\":\\\"蓝鹭设备报修电话为 400-000-7316\\\",\\\"createdAt\\\":\\\"2026-09-29T01:25:01.934Z\\\",\\\"updatedAt\\\":\\\"2026-09-29T01:25:01.934Z\\\"},{\\\"id\\\":2,\\\"title\\\":\\\"巡检周期\\\",\\\"content\\\":\\\"蓝鹭设备常规巡检间隔为 45 天\\\",\\\"createdAt\\\":\\\"2026-09-29T01:25:01.934Z\\\",\\\"updatedAt\\\":\\\"2026-09-29T01:25:01.934Z\\\"},{\\\"id\\\":3,\\\"title\\\":\\\"保密项目内部代号\\\",\\\"content\\\":\\\"保密项目的内部代号为墨竹 729\\\",\\\"createdAt\\\":\\\"2026-09-29T01:25:01.934Z\\\",\\\"updatedAt\\\":\\\"2026-09-29T01:25:01.934Z\\\"}]}\\nHTTP 200\\n--- supervisor GET /3:\\nHTTP 200 {\\\"data\\\":{\\\"id\\\":3,\\\"title\\\":\\\"保密项目内部代号\\\",\\\"content\\\":\\\"保密项目的内部代号为墨竹 729\\\",\\\"createdAt\\\":\\\"2026-09-29T01:25:01.934Z\\\",\\\"updatedAt\\\":\\\"2026-09-29T01:25:01.934Z\\\"}}\\n--- supervisor PATCH /1:\\nHTTP 200 {\\\"data\\\":{\\\"id\\\":1,\\\"title\\\":\\\"报修联系方式\\\",\\\"content\\\":\\\"蓝鹭设备报修电话为 400-000-7316\\\",\\\"confidential\\\":false,\\\"createdAt\\\":\\\"2026-09-29T01:25:01.934Z\\\",\\\"updatedAt\\\":\\\"2026-09-29T01:31:39.734Z\\\"}}\\n--- supervisor POST:\\nHTTP 201 {\\\"data\\\":{\\\"id\\\":4,\\\"title\\\":\\\"临时测试\\\",\\\"content\\\":\\\"临时内容\\\",\\\"confidential\\\":false,\\\"createdAt\\\":\\\"2026-09-29T01:31:39.756Z\\\",\\\"updatedAt\\\":\\\"2026-09-29T01:31:39.756Z\\\"}}\\n--- created id=4; supervisor DELETE it:\\nHTTP 204 \\n\\n\\nCommand exited with code 143\"}],\"details\":{},\"isError\":true,\"timestamp\":1790645499824}}\n{\"type\":\"message_end\",\"message\":{\"role\":\"toolResult\",\"toolCallId\":\"call_00_NUSi8uhEF6Eqrpc8sjHv2117\",\"toolName\":\"bash\",\"content\":[{\"type\":\"text\",\"text\":\"READY: http://127.0.0.1:13001/main/ (origin http://127.0.0.1:13001/main)\\n--- anon GET list:\\nHTTP 401 {\\\"code\\\":\\\"UNAUTHORIZED\\\",\\\"message\\\":\\\"Authentication required\\\"}\\n--- signin colleague: 200\\n--- colleague list:\\nInternal Server Error\\nHTTP 500\\n--- colleague GET /3:\\nHTTP 500 Internal Server Error\\n--- colleague POST:\\nHTTP 403 {\\\"code\\\":\\\"FORBIDDEN\\\",\\\"message\\\":\\\"The current identity may not create materials\\\"}\\n--- colleague PATCH /1:\\nHTTP 403 {\\\"code\\\":\\\"FORBIDDEN\\\",\\\"message\\\":\\\"The current identity may not update materials\\\"}\\n--- colleague DELETE /1:\\nHTTP 403 {\\\"code\\\":\\\"FORBIDDEN\\\",\\\"message\\\":\\\"The current identity may not delete materials\\\"}\\n--- signin supervisor: 200\\n--- supervisor list:\\n{\\\"data\\\":[{\\\"id\\\":1,\\\"title\\\":\\\"报修联系方式\\\",\\\"content\\\":\\\"蓝鹭设备报修电话为 400-000-7316\\\",\\\"createdAt\\\":\\\"2026-09-29T01:25:01.934Z\\\",\\\"updatedAt\\\":\\\"2026-09-29T01:25:01.934Z\\\"},{\\\"id\\\":2,\\\"title\\\":\\\"巡检周期\\\",\\\"content\\\":\\\"蓝鹭设备常规巡检间隔为 45 天\\\",\\\"createdAt\\\":\\\"2026-09-29T01:25:01.934Z\\\",\\\"updatedAt\\\":\\\"2026-09-29T01:25:01.934Z\\\"},{\\\"id\\\":3,\\\"title\\\":\\\"保密项目内部代号\\\",\\\"content\\\":\\\"保密项目的内部代号为墨竹 729\\\",\\\"createdAt\\\":\\\"2026-09-29T01:25:01.934Z\\\",\\\"updatedAt\\\":\\\"2026-09-29T01:25:01.934Z\\\"}]}\\nHTTP 200\\n--- supervisor GET /3:\\nHTTP 200 {\\\"data\\\":{\\\"id\\\":3,\\\"title\\\":\\\"保密项目内部代号\\\",\\\"content\\\":\\\"保密项目的内部代号为墨竹 729\\\",\\\"createdAt\\\":\\\"2026-09-29T01:25:01.934Z\\\",\\\"updatedAt\\\":\\\"2026-09-29T01:25:01.934Z\\\"}}\\n--- supervisor PATCH /1:\\nHTTP 200 {\\\"data\\\":{\\\"id\\\":1,\\\"title\\\":\\\"报修联系方式\\\",\\\"content\\\":\\\"蓝鹭设备报修电话为 400-000-7316\\\",\\\"confidential\\\":false,\\\"createdAt\\\":\\\"2026-09-29T01:25:01.934Z\\\",\\\"updatedAt\\\":\\\"2026-09-29T01:31:39.734Z\\\"}}\\n--- supervisor POST:\\nHTTP 201 {\\\"data\\\":{\\\"id\\\":4,\\\"title\\\":\\\"临时测试\\\",\\\"content\\\":\\\"临时内容\\\",\\\"confidential\\\":false,\\\"createdAt\\\":\\\"2026-09-29T01:31:39.756Z\\\",\\\"updatedAt\\\":\\\"2026-09-29T01:31:39.756Z\\\"}}\\n--- created id=4; supervisor DELETE it:\\nHTTP 204 \\n\\n\\nCommand exited with code 143\"}],\"details\":{},\"isError\":true,\"timestamp\":1790645499824}}",
+          "sha256": "8f4b1ad7cc2b9a91817dc5222db7c75dbf6ae1c67d1dc5f7c98c5422e7388aed"
+        },
+        {
+          "id": "E72",
+          "kind": "code",
+          "path": "app/server/materials/constants.ts",
+          "observation": "应用注释记录 main.materials 与 materials 的命名差异，并把 Repository 与 scope 统一到逻辑名。",
+          "lines": [
+            1,
+            13
+          ],
+          "excerpt": "/** Physical connection name of the materials table. */\nexport const DATABASE_CONNECTION = 'main';\n/**\n * Logical collection name, as `db` and the Authorization database plugin know\n * it. The two-part `main.materials` form is only an addressing convenience for\n * multi-connection resolvers; the Repository and the read-policy scope must\n * agree on this logical name or the scope's filter is rejected.\n */\nexport const MATERIALS_COLLECTION = 'materials';\n/** Qualified id, for code that must name the connection explicitly. */\nexport const MATERIALS_COLLECTION_ID = `${DATABASE_CONNECTION}.${MATERIALS_COLLECTION}`;\n\n/** Read fields returned by the API and exposed to the assistant. */",
+          "sha256": "6dc47bf0519ed39c9ba8f87e22b7209305e907548208233d0ffd54266e3c4bd4"
+        }
+      ],
+      "fingerprint": "0547b398d3e2c49777e4fd0e101347a52b94c657ebaa8f04cd1b46b067ddb6c2"
+    },
+    {
+      "id": "477:36498932902:1:F3",
+      "report": "477:36498932902:1",
+      "issue": 477,
+      "taskTitle": "内部资料只读问答助手",
+      "appVersion": "1.0.0-beta.50",
+      "appTemplate": "@nocobase/app-template-default",
+      "finding": {
+        "id": "F3",
+        "kind": "improvement",
+        "owner": "documentation",
+        "severity": "minor",
+        "confidence": "confirmed",
+        "status": "open",
+        "title": "授权指引未显式约束 scope 集合名与 Repository 逻辑名一致",
+        "detail": "fluent-registration.md 与 repository-routes.md 说明了 defineRecordAccess 的 resolver 与适配器限制，但未提示 scope/filter 的 collection 必须与 Repository 绑定的逻辑集合名一致；使用限定名会得到不透明失败。",
+        "impact": "Agent 阅读指引后仍可能写出限定名 scope，触发 F1 的 500 而非可理解的错误。",
+        "suggestedChange": "在 fluent-registration.md 或 repository-routes.md 增加一句集合命名一致性约束，并给出正确/错误示例。",
+        "evidence": [
+          "E62",
+          "E63",
+          "E57"
+        ],
+        "diagnosis": {
+          "category": "guidance-gap",
+          "trigger": "读写 scope/过滤器时使用 connection.collection 限定名",
+          "expected": "指引明确 scope 与 Repository 需共用逻辑集合名",
+          "actual": "缺少该约束，只能靠运行时 500 反推",
+          "workaround": "以逻辑名 materials 注册 scope",
+          "acceptance": "指引包含该约束与示例，照做不会触发 INVALID_FILTER"
+        }
+      },
+      "targets": [
+        "@nocobase/app-plugin-authorization",
+        "app/.agents/skills/nocobase-app-plugin-authorization/references/fluent-registration.md",
+        "app/.agents/skills/nocobase-app-plugin-authorization/references/repository-routes.md"
+      ],
+      "paths": [
+        ".agents/skills/nocobase-app-plugin-authorization/references/fluent-registration.md",
+        ".agents/skills/nocobase-app-plugin-authorization/references/repository-routes.md",
+        "packages/@nocobase/app-plugin-authorization/dist/server/database/scope.js"
+      ],
+      "evidence": [
+        {
+          "id": "E62",
+          "kind": "skill",
+          "path": "app/.agents/skills/nocobase-app-plugin-authorization/references/fluent-registration.md",
+          "observation": "指引说明 defineRecordAccess 与 .collections/.params/.resolver 的用法，但未约束限定名与逻辑名的一致性。",
+          "lines": [
+            13,
+            13
+          ],
+          "excerpt": "Define record access with `defineRecordAccess(key, configure)` from `@nocobase/authorization/core`, then register it with `authz.recordAccess.define(access)`. Use `.collections(...names)` for applicability (`'*'` for every collection), `.params<P>(schema)` for typed parameters and `.resolver(fn)` for evaluation. The resolver receives `{ principal, collection, action, params }` and no database objects; it returns `true`, `false`, a filter built with `condition(...)` from `@nocobase/app-plugin-authorization/server`, or a `FilterAst` built with `buildFilter` from `@nocobase/repository-input`, which the database adapter validates and compiles. Grants and rules never store resolver functions: `.options(...)`, `.default(...)`, relation `.recordAccess(...)` and `selection.recordAccess(key, params?)` store keys. Use stable keys because grants and rules persist them.",
+          "sha256": "92c9dba991f9a5039b401949ae01d8eb801f428f17e0e6441ec473886569ba8c"
+        },
+        {
+          "id": "E63",
+          "kind": "skill",
+          "path": "app/.agents/skills/nocobase-app-plugin-authorization/references/repository-routes.md",
+          "observation": "指引指出数据库适配器目前只支持默认连接，但未提醒 scope 必须使用逻辑集合名。",
+          "lines": [
+            171,
+            171
+          ],
+          "excerpt": "- One composite can be bound to several Repository exposures through separate middleware instances. Each mapping is checked at the action level. An exposure's actual collection and database connection must match the request constraint; this adapter currently supports the default connection only.",
+          "sha256": "bdb67c8822b219af85d0277238183d11a20f9fe4b458295cbaec4fe8f687046c"
+        },
+        {
+          "id": "E57",
+          "kind": "code",
+          "path": "packages/@nocobase/app-plugin-authorization/dist/server/database/scope.js",
+          "observation": "scopeAst 将 resolver 结果封装为带 collection 名的 FilterAst。",
+          "lines": [
+            49,
+            60
+          ],
+          "excerpt": "export function scopeAst(collection, scope) {\n    return {\n        kind: 'filter',\n        version: 1,\n        collection,\n        root: scope.kind === 'group' ? scope : group('and', [scope]),\n    };\n}\nfunction group(logic, items) {\n    return { kind: 'group', logic, items };\n}\nconst operators = new Set([",
+          "sha256": "990edf1b0422f4e8e2c869546a4d4be9710b5e652bcf7170105a436f80ea2b34"
+        }
+      ],
+      "fingerprint": "c3c0e6ae9960a1391249e5fad8e047b6d39cfe599310d8c2b26e3ed149926594"
     }
   ]
 }
