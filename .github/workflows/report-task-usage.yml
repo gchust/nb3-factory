@@ -180,7 +180,11 @@ jobs:
   # receiver never loses the archived evaluation, and vice versa.
   evaluation:
     needs: report
-    if: needs.report.outputs.evaluation_export != ''
+    # report needs dispatch-gate, which is skipped outside workflow_run; the
+    # implicit success() would then skip this job too, so check report itself.
+    if: >-
+      !cancelled() && needs.report.result == 'success' &&
+      needs.report.outputs.evaluation_export != ''
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
@@ -246,7 +250,11 @@ jobs:
     outputs:
       findings_pending: ${{ steps.archive.outputs.findings_pending }}
     needs: report
-    if: needs.report.outputs.html_ready == 'true' && needs.report.outputs.report_artifact != ''
+    # report needs dispatch-gate, which is skipped outside workflow_run; the
+    # implicit success() would then skip publication too.
+    if: >-
+      !cancelled() && needs.report.result == 'success' &&
+      needs.report.outputs.html_ready == 'true' && needs.report.outputs.report_artifact != ''
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:

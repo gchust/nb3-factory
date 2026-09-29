@@ -5,6 +5,7 @@ import {
   existsSync,
   mkdirSync,
   mkdtempSync,
+  readdirSync,
   readFileSync,
   rmSync,
   writeFileSync,
@@ -408,4 +409,34 @@ test('live progress updates queue per source run, not globally', () => {
     workflow,
     /group: factory-live-progress-\$\{\{ github\.event\.client_payload\.snapshot\.runId \|\| inputs\.run_id \|\| github\.event\.workflow_run\.id \}\}\n\s+queue: max/,
   );
+});
+
+test('jobs downstream of the dispatch gate never inherit its skip', () => {
+  // dispatch-gate is skipped outside workflow_run. A downstream job without a
+  // status function uses success(), which a skipped ancestor fails, so it would
+  // silently skip on every dispatched report (report-task-usage pages and
+  // evaluation did, 2026-09-29).
+  const directory = path.resolve(import.meta.dirname, '../../workflows');
+  let checked = 0;
+  for (const name of readdirSync(directory).filter((file) => file.endsWith('.yml'))) {
+    const workflow = readFileSync(path.join(directory, name), 'utf8');
+    if (!workflow.includes('\n  dispatch-gate:\n')) continue;
+    const jobs = new Map();
+    for (const [, id, body] of workflow
+      .split(/^jobs:\n/m)[1]
+      .matchAll(/^ {2}([a-z][a-z-]*):\n((?: {4}.*\n|\s*\n)*)/gm)) {
+      const needs = /^ {4}needs: (?:\[([^\]]+)\]|(\S+))/m.exec(body);
+      jobs.set(id, {
+        needs: needs ? (needs[1] ?? needs[2]).split(',').map((value) => value.trim()) : [],
+        condition: /^ {4}if: (?:>-\n((?: {6}.*\n)+)|(.*))/m.exec(body)?.slice(1).join('') ?? '',
+      });
+    }
+    const gated = (id) => jobs.get(id)?.needs.some((need) => need === 'dispatch-gate' || gated(need));
+    for (const [id, job] of jobs) {
+      if (id === 'dispatch-gate' || !gated(id)) continue;
+      checked++;
+      assert.match(job.condition, /!cancelled\(\)|always\(\)/, `${name}: ${id}`);
+    }
+  }
+  assert.ok(checked >= 9);
 });
