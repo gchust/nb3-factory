@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "inputHash": "e4d8c07dc2e926817a5407365618b93fd49c5d3f110090f1ecf8dac01feff54a",
+  "inputHash": "7af343d8d64dee0e0b12ebebf89f8676f9bcb49b6c6f24583d64852f6abb2b19",
   "findings": [
     {
       "id": "460:36434284393:1:F2",
@@ -1942,6 +1942,196 @@
         }
       ],
       "fingerprint": "52d761646db476dc2c88d6ef4cbcc1e19fe5c0de08605cd5bb7ef997c5fab451"
+    },
+    {
+      "id": "474:36498921009:1:F1",
+      "report": "474:36498921009:1",
+      "issue": 474,
+      "taskTitle": "员工 IT 报修与处理",
+      "appVersion": "1.0.0-beta.50",
+      "appTemplate": "@nocobase/app-template-default",
+      "finding": {
+        "id": "F1",
+        "kind": "misleading",
+        "owner": "documentation",
+        "confidence": "confirmed",
+        "severity": "major",
+        "status": "open",
+        "title": "授权 Skill 的种子示例用 `.js` 相对导入，源码模式加载种子会失败",
+        "detail": "code-and-seeds.md 的两个示例把可复用声明与 seed-data 模块按 `.js` 相对路径导入（`../../server/sales-resources.js`、`../../seed-data/permission-sets.js`），读者会照抄到数据库种子链上。",
+        "impact": "在源码/测试模式下，@nocobase/db 通过原生 Node 类型擦除直接 import `.ts` 任务文件，只对任务文件自身 URL 做 `.js`→`.ts` 重写，不重写其传递导入；种子链上的 `.js` 说明符解析失败，导致应用启动与种子测试失败。",
+        "suggestedChange": "在 Skill 的代码/种子示例中使用 `.ts` 相对说明符（tsc emit 会经 rewriteRelativeImportExtensions 改写为 `.js`），或在文档中显式说明源码模式对传递导入的解析限制。",
+        "claimed": "示例以 `.js` 相对路径导入可移植声明与种子数据模块，暗示该写法在种子/迁移加载链中可用。",
+        "observed": "源码模式下任务加载器只重写任务文件自身 URL，传递导入不会被重写；`Cannot find module '.../database/seed-data/it-tickets.js'` 使种子与依赖它的启动测试失败，最终需把种子链改为 `.ts` 说明符。",
+        "diagnosis": {
+          "category": "guidance-gap",
+          "trigger": "按 code-and-seeds.md 的示例，在 seed-data 与 database/main/seeds 之间使用 `.js` 相对说明符。",
+          "expected": "种子在源码模式与编译模式下都能解析同一条导入链。",
+          "actual": "源码模式仅重写顶层任务文件 URL，传递导入的 `.js` 解析失败并抛出 ERR_MODULE_NOT_FOUND，种子整体失败。",
+          "workaround": "把种子可达导入链改为 `.ts` 说明符；tsc emit 时再改写为 `.js`。",
+          "acceptance": "Skill 示例与说明改用 `.ts`（或说明源码模式限制）后，按示例编写的种子在源码与编译两种模式下都能加载。"
+        },
+        "evidence": [
+          "E20",
+          "E21",
+          "E22",
+          "E12",
+          "E57",
+          "E58"
+        ]
+      },
+      "targets": [
+        "@nocobase/db",
+        "app/.agents/skills/nocobase-app-plugin-authorization"
+      ],
+      "paths": [
+        ".agents/skills/nocobase-app-plugin-authorization/references/code-and-seeds.md",
+        "packages/@nocobase/db/dist/src/migration/internal/task-loader.js"
+      ],
+      "evidence": [
+        {
+          "id": "E20",
+          "kind": "skill",
+          "path": "app/.agents/skills/nocobase-app-plugin-authorization/references/code-and-seeds.md",
+          "observation": "示例用 `../../server/sales-resources.js` 相对导入可移植声明。",
+          "lines": [
+            38,
+            41
+          ],
+          "excerpt": "```ts\nimport { definePermissionSet } from '@nocobase/authorization/permission-sets';\nimport { quotes } from '../../server/sales-resources.js';\n",
+          "sha256": "6815f18c10d1043383aac7d605c8195aed12a7ee34729aade698746f92eebe1c"
+        },
+        {
+          "id": "E21",
+          "kind": "skill",
+          "path": "app/.agents/skills/nocobase-app-plugin-authorization/references/code-and-seeds.md",
+          "observation": "示例用 `../../seed-data/permission-sets.js` 相对导入种子数据模块。",
+          "lines": [
+            67,
+            70
+          ],
+          "excerpt": "import { defineSeed } from '@nocobase/db';\nimport { encodeAuthorizationTitle } from '@nocobase/authorization/core';\nimport { engineer } from '../../seed-data/permission-sets.js';\n",
+          "sha256": "6815f18c10d1043383aac7d605c8195aed12a7ee34729aade698746f92eebe1c"
+        },
+        {
+          "id": "E22",
+          "kind": "package",
+          "path": "packages/@nocobase/db/dist/src/migration/internal/task-loader.js",
+          "observation": "DEFAULT_TASK_EXTENSIONS 含 .ts；importTaskDefinition 只对任务文件自身 URL 调用 __rewriteRelativeImportExtension 后 import()，不重写其传递导入。",
+          "lines": [
+            1,
+            61
+          ],
+          "excerpt": "var __rewriteRelativeImportExtension = (this && this.__rewriteRelativeImportExtension) || function (path, preserveJsx) {\n    if (typeof path === \"string\" && /^\\.\\.?\\//.test(path)) {\n        return path.replace(/\\.(tsx)$|((?:\\.d)?)((?:\\.[^./]+?)?)\\.([cm]?)ts$/i, function (m, tsx, d, ext, cm) {\n            return tsx ? preserveJsx ? \".jsx\" : \".js\" : d && (!ext || !cm) ? m : (d + ext + \".\" + cm.toLowerCase() + \"js\");\n        });\n    }\n    return path;\n};\nimport { readdir } from 'node:fs/promises';\nimport { basename, extname } from 'node:path';\nimport { pathToFileURL } from 'node:url';\nexport const DEFAULT_TASK_EXTENSIONS = ['.js', '.mjs', '.cjs', '.ts'];\nexport const DEFAULT_TASK_PACKAGE_NAME = 'app';\n/** A directory and a source array are two ways to say the same thing. */\nexport function assertTaskSourceForm(kind, options) {\n    if (options.directory !== undefined && options.sources !== undefined) {\n        throw new Error(`${kind} options cannot define both directory and sources.`);\n    }\n    if (options.directory === undefined && options.sources === undefined) {\n        throw new Error(`${kind} options must define directory or sources.`);\n    }\n}\nexport function validateTaskDirectory(kind, directory) {\n    if (!isNonEmptyString(directory)) {\n        throw new Error(`${kind} directory must be a non-empty string.`);\n    }\n    return directory;\n}\nexport function validateTaskPackageName(kind, packageName) {\n    if (!isNonEmptyString(packageName)) {\n        throw new Error(`${kind} packageName must be a non-empty string.`);\n    }\n    return packageName;\n}\n/** A source that does not exist holds no tasks; it is not an error. */\nexport async function readTaskDirectory(directory) {\n    try {\n        return await readdir(directory, { withFileTypes: true });\n    }\n    catch (error) {\n        if (isNodeError(error) && error.code === 'ENOENT') {\n            return [];\n        }\n        throw error;\n    }\n}\nexport function isTaskFile(fileName, extensions) {\n    if (fileName.startsWith('.') || fileName.endsWith('.d.ts')) {\n        return false;\n    }\n    return extensions.has(extname(fileName));\n}\nexport function taskNameFromFileName(fileName) {\n    return basename(fileName, extname(fileName));\n}\n/** The mtime query keeps a re-read after an edit from serving a cached module. */\nexport async function importTaskDefinition(filePath, mtimeMs) {\n    const url = pathToFileURL(filePath);\n    url.searchParams.set('mtime', String(Math.trunc(mtimeMs)));\n    const module = await import(__rewriteRelativeImportExtension(url.href));\n    return module.default;",
+          "sha256": "4f27b0ccdcd61d466752932a2fac4068ec33efe948aa40a22187fdadc5b438a3"
+        },
+        {
+          "id": "E12",
+          "kind": "log",
+          "path": "artifacts/agent-history/agent-implement.jsonl/part-0046.txt",
+          "observation": "种子执行失败的完整测试输出：AppDatabaseTaskError: Database seeds failed ... Cannot find module '.../database/seed-data/it-tickets.js' imported from .../database/main/seeds/202609300002_it_tickets_demo_users.ts（ERR_MODULE_NOT_FOUND）。",
+          "lines": [
+            1885,
+            1887
+          ],
+          "excerpt": "{\"type\":\"tool_execution_end\",\"toolCallId\":\"call_vvfce5k8\",\"toolName\":\"bash\",\"result\":{\"content\":[{\"type\":\"text\",\"text\":\" ❯ tests/logic/app-server.test.ts:362:5\\n\\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯\\n\\n FAIL  tests/logic/app-server.test.ts > app server > starts a fresh Default without example tables or APIs\\nAppDatabaseTaskError: Database seeds failed for connection \\\"main\\\": Cannot find module '/home/runner/work/nb3-factory/nb3-factory/workspace/database/seed-data/it-tickets.js' imported from /home/runner/work/nb3-factory/nb3-factory/workspace/database/main/seeds/202609300002_it_tickets_demo_users.ts\\n ❯ executeAppDatabasePlan node_modules/.pnpm/@nocobase+app-server@1.0.0-beta.29_@nocobase+caching@0.1.0-beta.2_@nocobase+db-sqlite@0_0a3970571c532147283aa9cfa818f27c/node_modules/@nocobase/app-server/src/database/tasks.ts:224:12\\n ❯ DatabaseProvider.boot node_modules/.pnpm/@nocobase+app-server@1.0.0-beta.29_@nocobase+caching@0.1.0-beta.2_@nocobase+db-sqlite@0_0a3970571c532147283aa9cfa818f27c/node_modules/@nocobase/app-server/src/database/provider.ts:79:19\\n ❯ ServiceProviderRegistry.runPhase node_modules/.pnpm/@nocobase+service-provider@0.0.2-beta.1/node_modules/@nocobase/service-provider/src/registry.ts:96:8\\n ❯ ServiceProviderRegistry.bootAll node_modules/.pnpm/@nocobase+service-provider@0.0.2-beta.1/node_modules/@nocobase/service-provider/src/registry.ts:63:4\\n ❯ Application.startServiceProviders node_modules/.pnpm/@nocobase+app-server@1.0.0-beta.29_@nocobase+caching@0.1.0-beta.2_@nocobase+db-sqlite@0_0a3970571c532147283aa9cfa818f27c/node_modules/@nocobase/app-server/src/application/index.ts:261:4\\n ❯ startApplicationInScope node_modules/.pnpm/@nocobase+app-server@1.0.0-beta.29_@nocobase+caching@0.1.0-beta.2_@nocobase+db-sqlite@0_0a3970571c532147283aa9cfa818f27c/node_modules/@nocobase/app-server/src/runtime/application.ts:15:2\\n ❯ createStandaloneServer node_modules/.pnpm/@nocobase+app-server@1.0.0-beta.29_@nocobase+caching@0.1.0-beta.2_@nocobase+db-sqlite@0_0a3970571c532147283aa9cfa818f27c/node_modules/@nocobase/app-server/src/node/runtime.ts:89:24\\n ❯ tests/logic/app-server.test.ts:652:7\\n    650|     writeFileSync(path.join(clientDir, 'index.html'), spaContent);\\n    651|     const app = trackCloseable(\\n    652|       await createInstalledStandaloneServer({\\n       |       ^\\n    653|         viteDevUrl: false,\\n    654|         env: { APP_CONFIG_FILE: 'config.example.yml' },\\n\\nCaused by: Error: Cannot find module '/home/runner/work/nb3-factory/nb3-factory/workspace/database/seed-data/it-tickets.js' imported from /home/runner/work/nb3-factory/nb3-factory/workspace/database/main/seeds/202609300002_it_tickets_demo_users.ts\\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯\\nSerialized Error: { code: 'ERR_MODULE_NOT_FOUND', url: 'file:///home/runner/work/nb3-factory/nb3-factory/workspace/database/seed-data/it-tickets.js' }\\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯\\n\\n FAIL  tests/logic/app-server.test.ts > app server > serves Users and API Keys with the application authentication and permissions\\nAppDatabaseTaskError: Database seeds failed for connection \\\"main\\\": Cannot find module '/home/runner/work/nb3-factory/nb3-factory/workspace/database/seed-data/it-tickets.js' imported from /home/runner/work/nb3-factory/nb3-factory/workspace/database/main/seeds/202609300002_it_tickets_demo_users.ts\\n ❯ executeAppDatabasePlan node_modules/.pnpm/@nocobase+app-server@1.0.0-beta.29_@nocobase+caching@0.1.0-beta.2_@nocobase+db-sqlite@0_0a3970571c532147283aa9cfa818f27c/node_modules/@nocobase/app-server/src/database/tasks.ts:224:12\\n ❯ DatabaseProvider.boot node_modules/.pnpm/@nocobase+app-server@1.0.0-beta.29_@nocobase+caching@0.1.0-beta.2_@nocobase+db-sqlite@0_0a3970571c532147283aa9cfa818f27c/node_modules/@nocobase/app-server/src/database/provider.ts:79:19\\n ❯ ServiceProviderRegistry.runPhase node_modules/.pnpm/@nocobase+service-provider@0.0.2-beta.1/node_modules/@nocobase/service-provider/src/registry.ts:96:8\\n ❯ ServiceProviderRegistry.bootAll node_modules/.pnpm/@nocobase+service-provider@0.0.2-beta.1/node_modules/@nocobase/service-provider/src/registry.ts:63:4\\n ❯ Application.startServiceProviders node_modules/.pnpm/@nocobase+app-server@1.0.0-beta.29_@nocobase+caching@0.1.0-beta.2_@nocobase+db-sqlite@0_0a3970571c532147283aa9cfa818f27c/node_modules/@nocobase/app-server/src/application/index.ts:261:4\\n ❯ startApplicationInScope node_modules/.pnpm/@nocobase+app-server@1.0.0-beta.29_@nocobase+caching@0.1.0-beta.2_@nocobase+db-sqlite@0_0a3970571c532147283aa9cfa818f27c/node_modules/@nocobase/app-server/src/runtime/application.ts:15:2\\n ❯ createStandaloneServer node_modules/.pnpm/@nocobase+app-server@1.0.0-beta.29_@nocobase+caching@0.1.0-beta.2_@nocobase+db-sqlite@0_0a3970571c532147283aa9cfa818f27c/node_modules/@nocobase/app-server/src/node/runtime.ts:89:24\\n ❯ tests/logic/app-server.test.ts:677:7\\n    675|   it('serves Users and API Keys with the application authentication an…\\n    676|     const app = trackCloseable(\\n    677|       await createInstalledStandaloneServer({ viteDevUrl: false }),\\n       |       ^\\n    678|     );\\n    679|     const baseUrl = `http://localhost${app.application.publicBasePath}…\\n\\nCaused by: Error: Cannot find module '/home/runner/work/nb3-factory/nb3-factory/workspace/database/seed-data/it-tickets.js' imported from /home/runner/work/nb3-factory/nb3-factory/workspace/database/main/seeds/202609300002_it_tickets_demo_users.ts\\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯\\nSerialized Error: { code: 'ERR_MODULE_NOT_FOUND', url: 'file:///home/runner/work/nb3-factory/nb3-factory/workspace/database/seed-data/it-tickets.js' }\\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯\\n\\n\\n Test Files  1 failed | 43 passed (44)\\n      Tests  3 failed | 338 passed (341)\\n   Start at  00:19:18\\n   Duration  28.13s (transform 3.52s, setup 4.87s, import 15.76s, tests 43.17s, environment 13.42s)\\n\\n\\n::error file=/home/runner/work/nb3-factory/nb3-factory/workspace/server/it-tickets/provider.ts,title=tests/logic/app-server.test.ts > app server > registers application-owned providers and routes from the runtime,line=41,column=38::Error: Service \\\"@nocobase/app/authorization\\\" is not registered.%0A ❯ ServiceContainer.resolve node_modules/.pnpm/@nocobase+service-provider@0.0.2-beta.1/node_modules/@nocobase/service-provider/src/container.ts:50:12%0A ❯ ItTicketsProvider.boot server/it-tickets/provider.ts:41:38%0A ❯ node_modules/.pnpm/@nocobase+service-provider@0.0.2-beta.1/node_modules/@nocobase/service-provider/src/registry.ts:63:68%0A ❯ ServiceProviderRegistry.runPhase node_modules/.pnpm/@nocobase+service-provider@0.0.2-beta.1/node_modules/@nocobase/service-provider/src/registry.ts:96:14%0A ❯ ServiceProviderRegistry.bootAll node_modules/.pnpm/@nocobase+service-provider@0.0.2-beta.1/node_modules/@nocobase/service-provider/src/registry.ts:63:4%0A ❯ Application.startServiceProviders node_modules/.pnpm/@nocobase+app-server@1.0.0-beta.29_@nocobase+caching@0.1.0-beta.2_@nocobase+db-sqlite@0_0a3970571c532147283aa9cfa818f27c/node_modules/@nocobase/app-server/src/application/index.ts:261:4%0A ❯ tests/logic/app-server.test.ts:362:5%0A%0A\\n\\n::error file=/home/runner/work/nb3-factory/nb3-factory/workspace/tests/logic/app-server.test.ts,title=tests/logic/app-server.test.ts > app server > starts a fresh Default without example tables or APIs,line=652,column=7::AppDatabaseTaskError: Database seeds failed for connection \\\"main\\\": Cannot find module '/home/runner/work/nb3-factory/nb3-factory/workspace/database/seed-data/it-tickets.js' imported from /home/runner/work/nb3-factory/nb3-factory/workspace/database/main/seeds/202609300002_it_tickets_demo_users.ts%0A ❯ executeAppDatabasePlan node_modules/.pnpm/@nocobase+app-server@1.0.0-beta.29_@nocobase+caching@0.1.0-beta.2_@nocobase+db-sqlite@0_0a3970571c532147283aa9cfa818f27c/node_modules/@nocobase/app-server/src/database/tasks.ts:224:12%0A ❯ DatabaseProvider.boot node_modules/.pnpm/@nocobase+app-server@1.0.0-beta.29_@nocobase+caching@0.1.0-beta.2_@nocobase+db-sqlite@0_0a3970571c532147283aa9cfa818f27c/node_modules/@nocobase/app-server/src/database/provider.ts:79:19%0A ❯ ServiceProviderRegistry.runPhase node_modules/.pnpm/@nocobase+service-provider@0.0.2-beta.1/node_modules/@nocobase/service-provider/src/registry.ts:96:8%0A ❯ ServiceProviderRegistry.bootAll node_modules/.pnpm/@nocobase+service-provider@0.0.2-beta.1/node_modules/@nocobase/service-provider/src/registry.ts:63:4%0A ❯ Application.startServiceProviders node_modules/.pnpm/@nocobase+app-server@1.0.0-beta.29_@nocobase+caching@0.1.0-beta.2_@nocobase+db-sqlite@0_0a3970571c532147283aa9cfa818f27c/node_modules/@nocobase/app-server/src/application/index.ts:261:4%0A ❯ startApplicationInScope node_modules/.pnpm/@nocobase+app-server@1.0.0-beta.29_@nocobase+caching@0.1.0-beta.2_@nocobase+db-sqlite@0_0a3970571c532147283aa9cfa818f27c/node_modules/@nocobase/app-server/src/runtime/application.ts:15:2%0A ❯ createStandaloneServer node_modules/.pnpm/@nocobase+app-server@1.0.0-beta.29_@nocobase+caching@0.1.0-beta.2_@nocobase+db-sqlite@0_0a3970571c532147283aa9cfa818f27c/node_modules/@nocobase/app-server/src/node/runtime.ts:89:24%0A ❯ tests/logic/app-server.test.ts:652:7%0A%0A⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯%0ASerialized Error: { result: { ok: false, status: 'failed', results: [ { connection: 'main', kind: 'migrations', status: 'completed', batch: 1, executed: [ '202608190001_create_notification_tables', '202608190002_create_notification_in_app_items', '202608200001_create_authentication_tables', '202608200001_create_workflow_collections', '202608210001_create_permission_set_tables', '202608210002_create_default_access_rules', '202608210003_create_sharing_rules', '202608210004_create_restriction_rules', '202608260001_create_ai_knowledge_base', '202608260002_create_ai_employee', '202608310001_replace_ai_file_storage_id_with_disk', '202609010000_queue_create_tables_9c3af111c9ce8050a524af798b2461a773e6746fc75dfa7a5fd437e41cefb24d', '202609010001_remove_recommended_llm_models', '202609010001_replace_knowledge_base_storage_id_with_disk', '202609020001_inline_knowledge_base_vector_config', '202609020001_scheduler_create_definitions', '202609030001_create_mail_tables', '202609050001_create_ai_knowledge_base_manifests', '202609080001_add_user_disabled_at', '202609080001_create_notification_idempotency', '202609090001_add_workflow_run_source', '202609110001_workflow_instant_columns', '202609130001_notification_instant_columns', '202609150001_create_api_key_table', '202609170002_add_user_deletion_record', '202609180001_notification_in_app_instant_columns', '202609200001_backfill_mail_conversations', '202609200001_notification_channel_names', '202609200002_notification_in_app_target', '202609200003_notification_single_provider', '202609210001_normalize_mail_folders', '202609230001_add_ai_mcp_tool_permissions', '202609300001_create_it_tickets' ], skipped: [], warnings: [] }, { connection: 'main', kind: 'seeds', status: 'failed', error: 'Cannot find module \\\\'/home/runner/work/nb3-factory/nb3-factory/workspace/database/seed-data/it-tickets.js\\\\' imported from /home/runner/work/nb3-factory/nb3-factory/workspace/database/main/seeds/202609300002_it_tickets_demo_users.ts' } ] } }%0ACaused by: Caused by: Error: Cannot find module '/home/runner/work/nb3-factory/nb3-factory/workspace/database/seed-data/it-tickets.js' imported from /home/runner/work/nb3-factory/nb3-factory/workspace/database/main/seeds/202609300002_it_tickets_demo_users.ts%0A⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯%0ASerialized Error: { code: 'ERR_MODULE_NOT_FOUND', url: 'file:///home/runner/work/nb3-factory/nb3-factory/workspace/database/seed-data/it-tickets.js' }%0A\\n\\n::error file=/home/runner/work/nb3-factory/nb3-factory/workspace/tests/logic/app-server.test.ts,title=tests/logic/app-server.test.ts > app server > serves Users and API Keys with the application authentication and permissions,line=677,column=7::AppDatabaseTaskError: Database seeds failed for connection \\\"main\\\": Cannot find module '/home/runner/work/nb3-factory/nb3-factory/wor",
+          "sha256": "fb1fa69e74b46232e5182b6e82f2f6a7c95ff2612cd779a671aeb516aebd7dac"
+        },
+        {
+          "id": "E57",
+          "kind": "qa",
+          "path": "artifacts/retro.json",
+          "observation": "四条经验：根挂载路由不用 use('*')；CSRF Origin；源模式种子需 .ts 说明符；可选插件缺失时干净降级。",
+          "lines": [
+            9,
+            13
+          ],
+          "excerpt": "  \"lessons\": [\n    \"A route contribution mounted at the application root must not use router.use('*', ...): the wildcard applies to every other contribution's paths. Auth middleware is attached per route instead.\",\n    \"The authentication plugin's global CSRF origin guard rejects cookie-bearing POSTs with no Origin/Referer; an HTTP integration test must send a trusted Origin.\",\n    \"Seeds loaded by @nocobase/db in source mode go through native Node type stripping, which does not rewrite .js to .ts. The seed-reachable import chain must use .ts specifiers; tsc rewrites them to .js on emit via rewriteRelativeImportExtensions.\",\n    \"An app provider that integrates an optional plugin should skip cleanly when the plugin is absent, so provider-only assemblies (a template test) still boot.\"",
+          "sha256": "21f32bdd72039a5853293987710d8c6fc9dfb5dd3ab3a0e5b4291f285852bf26"
+        },
+        {
+          "id": "E58",
+          "kind": "qa",
+          "path": "artifacts/retro.json",
+          "observation": "检查全通过：scoped/full vitest 45 文件 353 用例、tsc、eslint --max-warnings 0、prettier、tsc emit 说明符重写确认。",
+          "lines": [
+            15,
+            21
+          ],
+          "excerpt": "  \"checks\": {\n    \"scoped_vitest_it_feature\": \"passed\",\n    \"full_vitest\": \"45 files / 353 tests passed\",\n    \"tsc_client_node_server\": \"passed\",\n    \"eslint_changed_files\": \"passed (--max-warnings 0)\",\n    \"prettier_check\": \"passed\",\n    \"server_tsc_emit_inspection\": \"confirmed .ts relative specifiers rewritten to .js\"",
+          "sha256": "21f32bdd72039a5853293987710d8c6fc9dfb5dd3ab3a0e5b4291f285852bf26"
+        }
+      ],
+      "fingerprint": "d2726cc43e26d515786f77ef0001d2dbe368cb40ce90b0ec06288b6f1255a06b"
+    },
+    {
+      "id": "474:36498921009:1:F2",
+      "report": "474:36498921009:1",
+      "issue": 474,
+      "taskTitle": "员工 IT 报修与处理",
+      "appVersion": "1.0.0-beta.50",
+      "appTemplate": "@nocobase/app-template-default",
+      "finding": {
+        "id": "F2",
+        "kind": "misleading",
+        "owner": "documentation",
+        "confidence": "confirmed",
+        "severity": "minor",
+        "status": "open",
+        "title": "db 包中文 README 称 Repository/Select AST 等“当前不可调用”，与 Skill 和运行时不符",
+        "detail": "packages/@nocobase/db/README.zh-CN.md 的“当前边界”称 Repository、Select AST、Filter Builder、Filter AST 和 Sort AST 是未来提案、当前不可调用，并把验证指南链接到不存在的 docs/zh-CN/agent/verification.md。",
+        "impact": "读者可能据此回避实际已导出并被 Skill 与授权插件依赖的 Repository/withPolicy 能力，改用更底层或自造查询，增加出错概率。",
+        "suggestedChange": "更新中文 README 的边界与链接，使其与 nocobase-db SKILL 及运行时导出一致，或标注为过时并指向有效文档。",
+        "claimed": "Repository、Select AST、Filter Builder、Filter AST、Sort AST 当前不可调用。",
+        "observed": "nocobase-db SKILL 以表格明确规定 Repository 负责关系读取、withPolicy、乐观锁、游标分页与方言编码；app-plugin-authorization 依赖 withPolicy，IT 实现也实际使用。",
+        "diagnosis": {
+          "category": "guidance-gap",
+          "trigger": "阅读 db 包中文 README 的“当前边界”一节。",
+          "expected": "文档边界与当前导出/Skill 用法一致，链接可达。",
+          "actual": "README 断言核心能力不可调用，且链接到不存在的验证指南。",
+          "workaround": "以 Skill 与运行时导出为准，忽略 README 的过时表述。",
+          "acceptance": "中文 README 的边界描述与 Skill/导出对齐，链接有效。"
+        },
+        "evidence": [
+          "E23",
+          "E24"
+        ]
+      },
+      "targets": [
+        "@nocobase/db",
+        "packages/@nocobase/db/skills/nocobase-db/SKILL.md"
+      ],
+      "paths": [
+        ".agents/skills/nocobase-db/SKILL.md",
+        "packages/@nocobase/db/README.zh-CN.md"
+      ],
+      "evidence": [
+        {
+          "id": "E23",
+          "kind": "package",
+          "path": "packages/@nocobase/db/README.zh-CN.md",
+          "observation": "中文 README 的“当前边界”称 Repository、Select AST、Filter Builder、Filter AST、Sort AST 是未来提案、当前不可调用，且链接指向不存在的 docs/zh-CN/agent/verification.md。",
+          "lines": [
+            96,
+            102
+          ],
+          "excerpt": "完整验证和多方言选择见[验证指南](./docs/zh-CN/agent/verification.md)。\n\n## 当前边界\n\n- Repository、Select AST、Filter Builder、Filter AST 和 Sort AST 是未来提案，当前不可调用。\n- QueryAdapter 是数据库层查询接口，不读取 Collection Metadata。\n- `connection.client()` 是底层 adapter 逃生口，不是常规数据库入口。",
+          "sha256": "adfa91efc5bb783c18cd5008b60a06aae8ab11e74db56867c7929e56d8e45668"
+        },
+        {
+          "id": "E24",
+          "kind": "skill",
+          "path": "packages/@nocobase/db/skills/nocobase-db/SKILL.md",
+          "observation": "以表格说明 Repository 负责关系读取、withPolicy 行范围/写白名单、乐观锁、游标分页、方言编码；Query 负责无关系 join、子查询、分组分页。",
+          "lines": [
+            193,
+            209
+          ],
+          "excerpt": "**Is the unit of work a Collection's records, or a result set?** Records of one Collection and the things related to them are Repository's job. A shape that is not any Collection's records — a report joining unrelated tables, a set aggregated then paginated — is Query's.\n\n| The task needs                                       | Use        |\n| ---------------------------------------------------- | ---------- |\n| Reading a relation, or a nested create/update/delete | Repository |\n| Optimistic locking through a `version` field         | Repository |\n| A row scope or write allow list (`withPolicy`)       | Repository |\n| Cursor pagination over a stable sort                 | Repository |\n| Collection-level naming overrides to be honored      | Repository |\n| Dialect-correct JSON and temporal encoding on write  | Repository |\n| A join between tables with no relation between them  | Query      |\n| A subquery, or conditions composed programmatically  | Query      |\n| Paging or limiting a grouped result                  | Query      |\n\nThe costly mistake is rebuilding a relation read as a hand-written join because the join is familiar. That loses the naming mapping, the relation metadata and the write path that goes with it, and it has to be maintained against a schema the Collection definition already describes. If the records belong to a Collection, start from Repository and only drop to Query for the part Repository genuinely cannot express.\n\nThey mix freely inside one transaction — take both from the callback `connection`, as the example in [Transactions](#5-transactions) does.",
+          "sha256": "f97c07a45a9d49c1d933ddbceeabcc9afe267b1356a2ded1a3da0dd56b54011c"
+        }
+      ],
+      "fingerprint": "6ef074db9fe80a81f401b6a1e43188078c947909c6c3fb17f402fa7638ff84b0"
     }
   ]
 }
