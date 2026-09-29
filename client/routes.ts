@@ -1,4 +1,4 @@
-import { Home } from 'lucide-react';
+import { FolderLock, Home } from 'lucide-react';
 import {
   defineAppRoutes,
   defineSettingsRoutes,
@@ -15,6 +15,16 @@ const appRoutes: AppClientRouteContribution = defineAppRoutes([
     name: 'home',
     navigation: { title: 'navigation.home', icon: Home },
     path: '/',
+  },
+  {
+    // Project documents are private to their owner. The page is open to every signed-in user by design — each one
+    // sees only their own records — so it opts out of page authorization and the server scopes the data instead.
+    auth: 'required',
+    authz: 'skip',
+    componentLoader: () => import('./pages/project-documents/index.js'),
+    name: 'project-documents',
+    navigation: { title: 'navigation.projectDocuments', icon: FolderLock },
+    path: '/project-documents',
   },
   {
     auth: 'guest',
