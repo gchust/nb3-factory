@@ -95,6 +95,66 @@ const enUS = {
     description:
       'Describe what you need to your AI Agent, then build pages, data models, and business workflows.',
   },
+  library: {
+    navigation: 'Document library',
+    title: 'Document library',
+    pageDescription:
+      'Maintain your documents and read the published, non-confidential ones shared with you.',
+    new: 'New document',
+    createTitle: 'New document',
+    editTitle: 'Edit document',
+    body: 'Body',
+    noBody: 'This document has no body yet.',
+    empty: 'No documents to show.',
+    published: 'Published',
+    draft: 'Draft',
+    confidential: 'Confidential',
+    publishedHint:
+      'Published documents are visible to readers with viewing permission.',
+    confidentialHint: 'Confidential documents stay private even when shared.',
+    deleteTitle: 'Delete document',
+    deleteDescription: 'Delete “{{title}}”? This cannot be undone.',
+    column: {
+      title: 'Title',
+      owner: 'Owner',
+      published: 'State',
+      confidential: 'Confidential',
+      createdAt: 'Created',
+      updatedAt: 'Updated',
+      actions: 'Actions',
+    },
+    action: {
+      view: 'View',
+      create: 'Create',
+      edit: 'Edit',
+      delete: 'Delete',
+    },
+    error: {
+      loadFailed: 'Unable to load documents.',
+      titleRequired: 'A title is required.',
+      saveFailed: 'Unable to save the document.',
+      deleteFailed: 'Unable to delete the document.',
+    },
+    toast: {
+      created: 'Document created.',
+      updated: 'Document updated.',
+      deleted: 'Document deleted.',
+    },
+    materials: 'Documents',
+    materialsDescription:
+      'A publishable, optionally confidential document in the library.',
+    recordAccess: {
+      published: 'Published, non-confidential',
+      nonConfidential: 'Non-confidential',
+    },
+    role: {
+      librarian: 'Librarian',
+      reader: 'Reader',
+    },
+    restriction: {
+      confidential: 'Non-confidential documents only',
+    },
+  },
 
   appearance: {
     title: 'Appearance',
@@ -111,6 +171,7 @@ const enUS = {
   actions: {
     close: 'Close',
     save: 'Save',
+    saving: 'Saving…',
     cancel: 'Cancel',
     confirm: 'Confirm',
     language: 'Language',
