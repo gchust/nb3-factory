@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "inputHash": "8b955302ad9d1fc124cb129b982c963a8040d25ef3d069cc4c9e4cd53cd766ef",
+  "inputHash": "a95544f7289dbde00c8add37eb3c43d8c7f6f1ca0716fa9e6cd1ad05a15a3d0f",
   "sources": [
     {
       "id": "460:36434284393:1:F2",
@@ -211,6 +211,21 @@
       "id": "494:36641592184:1:F3",
       "report": "494:36641592184:1",
       "fingerprint": "73ee734ea13ec5aed760b3b13600973f0017dcb1a77b777d493351b28451caaf"
+    },
+    {
+      "id": "495:36641597342:1:F2",
+      "report": "495:36641597342:1",
+      "fingerprint": "d9b56867181aa68f102deee125a38f61dd81794410a7fb27bf507e81a5e8dffd"
+    },
+    {
+      "id": "495:36641597342:1:F3",
+      "report": "495:36641597342:1",
+      "fingerprint": "f98ece15e5c187d4a201c5d197d952cbb4a09867771541a10b58f1f7050117d8"
+    },
+    {
+      "id": "495:36641597342:1:F6",
+      "report": "495:36641597342:1",
+      "fingerprint": "06fd7f915b20218141c70797a89edd8ed50ead02fb38d4d129f5cd414838a752"
     }
   ],
   "groups": [
@@ -435,15 +450,36 @@
       "members": [
         "494:36641592184:1:F2"
       ]
+    },
+    {
+      "title": "AppRouterFactory 返回未参数化 Hono，贡献边界无法声明类型化环境",
+      "reason": "单独保留。E64 显示 AppRouterFactory<TApplication> 的返回类型是未参数化的 Hono（BlankEnv），未暴露环境类型参数；E82 的 TS2345 记录 Hono<AuthEnv> 无法作为该工厂返回值，E69 的官方 server-routes 示例只能外层再包一个普通 Hono 挂载。该缺口是框架类型定义本身，属能力缺口；与同报告 F6（认证 Skill 示例直接返回类型化 Hono，属错误指引）根因与修复方向不同，且同报告发现禁止合并，故单独保留。",
+      "members": [
+        "495:36641597342:1:F2"
+      ]
+    },
+    {
+      "title": "nocobase-db Skill 说明 filter 契约但缺少组合过滤示例，Agent 误用字符串数组",
+      "reason": "单独保留。E71 显示 SKILL 已声明 filter 接受 builder 回调或等价 JSON AST、明确不接受字符串数组，但只给出等值示例；E82 的 TS2769（string[] 不能赋给 FilterShorthandValue）与 E77 应用改用 filter.and([...]) 构成缺少组合过滤示例导致误用的直接证据。根因是文档缺少组合过滤示例，与同报告 F2（路由返回类型）及既有空 filter 约束、aggregate/groupBy 示例等缺口均不同，故单独保留。",
+      "members": [
+        "495:36641597342:1:F3"
+      ]
+    },
+    {
+      "title": "认证 Skill 的路由示例直接返回 Hono<AuthEnv>，无法通过类型检查",
+      "reason": "单独保留。E68 显示认证 Skill 的路由示例在 defineApiRoutes 回调内直接返回 new Hono<AuthEnv>()；E64 的 AppRouterFactory 返回未参数化 Hono（BlankEnv）与 E82 的 TS2345 证明该示例无法编译，E69 显示正确写法需外层普通 Hono 加 router.route() 挂载。根因是文档给出的示例是错误指引；与同报告 F2（框架类型定义未暴露环境参数）分属文档与框架两个缺口，且同报告发现禁止合并，故单独保留。",
+      "members": [
+        "495:36641597342:1:F6"
+      ]
     }
   ],
   "classifier": {
     "engine": "pi",
     "model": "deepseek-v4.1-flash",
     "version": "0.86.1",
-    "runId": "36650382362",
+    "runId": "36659799105",
     "attempt": 1,
     "controlSha": "0f72d9b81f981f10501c5ac0ee0e7d786f1f4698",
-    "completedAt": "2026-09-30T00:28:35.020Z"
+    "completedAt": "2026-09-30T02:28:17.768Z"
   }
 }
