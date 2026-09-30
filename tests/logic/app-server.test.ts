@@ -83,6 +83,7 @@ import {
   type AppServerPlugin,
   type ResolvedAppServerPlugins,
 } from '@nocobase/app-server/plugins';
+import { aiManagerToken } from '@nocobase/app-plugin-ai-employee/server';
 import authenticationServerPlugin from '@nocobase/app-plugin-authentication/server';
 import authorizationServerPlugin from '@nocobase/app-plugin-authorization/server';
 
@@ -90,6 +91,7 @@ import { createServer as createEmbeddedServer } from '../../server/embedded.ts';
 import { createStandaloneRuntimeScope } from '@nocobase/app-server/node';
 import appRuntime from '../../server/runtime.ts';
 import serverPlugins from '../../server/plugins.ts';
+import { materialsLookupToken } from '../../server/materials-service.ts';
 import {
   createStandaloneServer,
   type StandaloneServer,
@@ -727,6 +729,214 @@ describe('app server', () => {
       headers: { 'x-api-key': key.key },
     });
     expect(rejected.status).toBe(401);
+  });
+
+  it('keeps confidential materials out of a colleague list and reach', async () => {
+    const app = trackCloseable(
+      await createInstalledStandaloneServer({ viteDevUrl: false }),
+    );
+    const baseUrl = `http://localhost${app.application.publicBasePath}`;
+
+    const signIn = async (
+      username: string,
+      password: string,
+    ): Promise<string> => {
+      const response = await requestApp(
+        app,
+        `${baseUrl}/api/auth/sign-in/username`,
+        {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ username, password }),
+        },
+      );
+      expect(response.status).toBe(200);
+      return response.headers
+        .getSetCookie()
+        .map((header) => header.split(';')[0])
+        .join('; ');
+    };
+
+    // Anonymous callers never reach the collection.
+    const anonymous = await requestApp(app, `${baseUrl}/api/materials`);
+    expect(anonymous.status).toBe(401);
+
+    const supervisorCookie = await signIn('supervisor', 'supervisor123');
+    const supervisorList = await requestApp(app, `${baseUrl}/api/materials`, {
+      headers: { cookie: supervisorCookie },
+    });
+    expect(supervisorList.status).toBe(200);
+    const supervisorPayload = (await supervisorList.json()) as {
+      data: {
+        id: number;
+        title: string;
+        body: string;
+        confidential: boolean;
+      }[];
+      meta: { canManage: boolean };
+    };
+    expect(supervisorPayload.meta.canManage).toBe(true);
+    expect(supervisorPayload.data).toHaveLength(3);
+    const confidential = supervisorPayload.data.find(
+      (material) => material.confidential,
+    );
+    expect(confidential?.body).toContain('墨竹 729');
+
+    const colleagueCookie = await signIn('colleague', 'colleague123');
+    const colleagueList = await requestApp(app, `${baseUrl}/api/materials`, {
+      headers: { cookie: colleagueCookie },
+    });
+    expect(colleagueList.status).toBe(200);
+    const colleaguePayload = (await colleagueList.json()) as {
+      data: { id: number; title: string; confidential: boolean }[];
+      meta: { canManage: boolean };
+    };
+    expect(colleaguePayload.meta.canManage).toBe(false);
+    expect(colleaguePayload.data).toHaveLength(2);
+    expect(
+      colleaguePayload.data.some((material) => material.confidential),
+    ).toBe(false);
+    expect(
+      colleaguePayload.data.some(
+        (material) => material.id === confidential?.id,
+      ),
+    ).toBe(false);
+
+    // A direct fetch by id cannot reach the record the list hides.
+    const direct = await requestApp(
+      app,
+      `${baseUrl}/api/materials/${confidential?.id}`,
+      { headers: { cookie: colleagueCookie } },
+    );
+    expect(direct.status).toBe(404);
+
+    const colleagueWrite = await requestApp(app, `${baseUrl}/api/materials`, {
+      method: 'POST',
+      headers: {
+        cookie: colleagueCookie,
+        'content-type': 'application/json',
+        origin: 'http://localhost',
+      },
+      body: JSON.stringify({ title: 'sneaky', body: 'not allowed' }),
+    });
+    expect(colleagueWrite.status).toBe(403);
+
+    // The supervisor owns the list: create, edit, then remove.
+    const created = await requestApp(app, `${baseUrl}/api/materials`, {
+      method: 'POST',
+      headers: {
+        cookie: supervisorCookie,
+        'content-type': 'application/json',
+        origin: 'http://localhost',
+      },
+      body: JSON.stringify({ title: '临时资料', body: '仅用于验证。' }),
+    });
+    expect(created.status).toBe(201);
+    const createdPayload = (await created.json()) as {
+      data: { id: number; title: string };
+    };
+
+    const updated = await requestApp(
+      app,
+      `${baseUrl}/api/materials/${createdPayload.data.id}`,
+      {
+        method: 'PATCH',
+        headers: {
+          cookie: supervisorCookie,
+          'content-type': 'application/json',
+          origin: 'http://localhost',
+        },
+        body: JSON.stringify({ title: '临时资料（更新）', body: '已更新。' }),
+      },
+    );
+    expect(updated.status).toBe(200);
+    await expect(updated.json()).resolves.toMatchObject({
+      data: { title: '临时资料（更新）' },
+    });
+
+    // An edit is visible on the next read, which is what a re-ask answers from.
+    const afterUpdate = await requestApp(app, `${baseUrl}/api/materials`, {
+      headers: { cookie: supervisorCookie },
+    });
+    const afterUpdatePayload = (await afterUpdate.json()) as {
+      data: { id: number; title: string }[];
+    };
+    expect(
+      afterUpdatePayload.data.find(
+        (material) => material.id === createdPayload.data.id,
+      )?.title,
+    ).toBe('临时资料（更新）');
+
+    const colleagueDelete = await requestApp(
+      app,
+      `${baseUrl}/api/materials/${createdPayload.data.id}`,
+      {
+        method: 'DELETE',
+        headers: { cookie: colleagueCookie, origin: 'http://localhost' },
+      },
+    );
+    expect(colleagueDelete.status).toBe(403);
+
+    const removed = await requestApp(
+      app,
+      `${baseUrl}/api/materials/${createdPayload.data.id}`,
+      {
+        method: 'DELETE',
+        headers: { cookie: supervisorCookie, origin: 'http://localhost' },
+      },
+    );
+    expect(removed.status).toBe(200);
+  });
+
+  it('registers a read-only assistant employee and scopes its read tool by user', async () => {
+    const app = trackCloseable(
+      await createInstalledStandaloneServer({ viteDevUrl: false }),
+    );
+    const { container } = app.application;
+
+    // R01: the App registered a named employee and its read tool with the
+    // manager the AI plugin built — not the built-in general agent.
+    expect(container.has(aiManagerToken)).toBe(true);
+    const ai = container.resolve(aiManagerToken);
+    const employee = await ai.employeeManager.getEmployee('materials-desk');
+    expect(employee?.username).toBe('materials-desk');
+    expect(employee?.defaultPrompt).toContain('materials-lookup');
+
+    const tool = await ai.toolsManager.getTools('materials-lookup');
+    expect(tool?.definition.name).toBe('materials-lookup');
+    expect(tool?.scope).toBe('SPECIFIED');
+    expect(tool?.execution).toBe('backend');
+
+    // R02: the tool reads through the same permission model the page uses, so
+    // a colleague's call cannot reach the confidential material — no matter
+    // how the question is phrased.
+    const materials = container.resolve(materialsLookupToken);
+    const supervisorId = '11111111-1111-4111-8111-111111111111';
+    const colleagueId = '22222222-2222-4222-8222-222222222222';
+
+    const supervisor = await materials.list({ id: supervisorId });
+    expect(supervisor).toHaveLength(3);
+    expect(
+      supervisor.some(
+        (material) =>
+          material.confidential && material.body.includes('墨竹 729'),
+      ),
+    ).toBe(true);
+
+    const colleague = await materials.list({ id: colleagueId });
+    expect(colleague).toHaveLength(2);
+    expect(colleague.some((material) => material.confidential)).toBe(false);
+    expect(
+      colleague.some((material) => material.body.includes('墨竹 729')),
+    ).toBe(false);
+
+    // The text filter runs after the policy, so a targeted search is empty too.
+    await expect(materials.list({ id: colleagueId }, '墨竹')).resolves.toEqual(
+      [],
+    );
+
+    // An unknown actor is denied rather than served.
+    await expect(materials.list({ id: 'no-such-user' })).resolves.toEqual([]);
   });
 
   it('mounts standalone app-local routes behind the public base path', async () => {
@@ -1506,6 +1716,7 @@ function writeRuntimeTestConfig(
   writeFileSync(
     file,
     JSON.stringify({
+      app: { publicOrigin: 'http://localhost' },
       auth: { secret: 'test-auth-secret-at-least-32-characters' },
       database: {
         default: 'main',

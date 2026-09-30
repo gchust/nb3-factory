@@ -95,6 +95,67 @@ const enUS = {
     description:
       'Describe what you need to your AI Agent, then build pages, data models, and business workflows.',
   },
+  materials: {
+    title: 'Materials',
+    description:
+      'The internal reference material available to you. The assistant answers only from these records.',
+    new: 'New material',
+    loading: 'Loading materials…',
+    errorTitle: 'Materials could not be loaded',
+    loadFailed: 'Something went wrong while loading the materials.',
+    forbidden: 'You do not have permission to read these materials.',
+    manageHint:
+      'You can read every material, including the confidential ones, and edit the list.',
+    readOnlyHint:
+      'You can read the public materials. Confidential records stay hidden.',
+    emptyTitle: 'No materials yet',
+    emptyManage:
+      'Add the first material so the assistant has something to answer from.',
+    emptyReadOnly: 'No material has been shared with you yet.',
+    public: 'Public',
+    confidential: 'Confidential',
+    confidentialHint:
+      'Restricted: only readers with access to confidential material can see this.',
+    created: 'Material created.',
+    updated: 'Material saved.',
+    deleted: 'Material deleted.',
+    actionFailed: 'The change could not be saved.',
+    focused: 'Opened from a citation. The material is highlighted below.',
+    focusedMissing:
+      'The cited material is not in the list you can read. It may be restricted or removed.',
+    form: {
+      createTitle: 'New material',
+      editTitle: 'Edit material',
+      description:
+        'A material is a title and a body. The assistant cites the title when it answers from it.',
+      title: 'Title',
+      body: 'Body',
+      incomplete: 'A title and a body are both required.',
+      saving: 'Saving…',
+    },
+    delete: {
+      title: 'Delete this material?',
+      description:
+        'This removes “{{title}}” for everyone. The assistant will no longer answer from it.',
+      deleting: 'Deleting…',
+    },
+  },
+  assistant: {
+    title: 'Materials assistant',
+    description:
+      'Ask a question and the assistant answers from the materials you are allowed to read, naming the material it used.',
+    loading: 'Loading the assistant',
+    loadingHint: 'Checking which AI employees and models are available to you.',
+    unavailableTitle: 'The assistant is unavailable',
+    loadFailed:
+      'The AI configuration could not be loaded. Reload the page to try again.',
+    noEmployee: 'You do not have access to an AI employee.',
+    notConfiguredTitle: 'No AI model is configured',
+    notConfiguredDescription:
+      'This environment has no AI service configured, so the assistant cannot answer questions.',
+    notConfiguredHint:
+      'You can still read the materials page. Ask an administrator to configure a model to enable the assistant.',
+  },
 
   appearance: {
     title: 'Appearance',
@@ -113,6 +174,8 @@ const enUS = {
     save: 'Save',
     cancel: 'Cancel',
     confirm: 'Confirm',
+    edit: 'Edit',
+    delete: 'Delete',
     language: 'Language',
   },
   notices: {
@@ -130,6 +193,8 @@ const enUS = {
   },
   navigation: {
     home: 'Home',
+    materials: 'Materials',
+    assistant: 'Materials assistant',
     open: 'Open navigation',
     close: 'Close navigation',
     expand: 'Expand navigation',
