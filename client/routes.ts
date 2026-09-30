@@ -1,4 +1,4 @@
-import { Home } from 'lucide-react';
+import { Bot, Home, Library } from 'lucide-react';
 import {
   defineAppRoutes,
   defineSettingsRoutes,
@@ -15,6 +15,25 @@ const appRoutes: AppClientRouteContribution = defineAppRoutes([
     name: 'home',
     navigation: { title: 'navigation.home', icon: Home },
     path: '/',
+  },
+  {
+    auth: 'required',
+    authz: { resource: { type: 'page', id: 'materials' }, action: 'access' },
+    componentLoader: () => import('./pages/materials/index.js'),
+    name: 'materials',
+    navigation: { title: 'navigation.materials', icon: Library },
+    path: '/materials',
+  },
+  {
+    auth: 'required',
+    authz: {
+      resource: { type: 'page', id: 'materials.assistant' },
+      action: 'access',
+    },
+    componentLoader: () => import('./pages/assistant/index.js'),
+    name: 'assistant',
+    navigation: { title: 'navigation.assistant', icon: Bot },
+    path: '/assistant',
   },
   {
     auth: 'guest',
