@@ -729,6 +729,151 @@ describe('app server', () => {
     expect(rejected.status).toBe(401);
   });
 
+  it('enforces the IT support ticket permission sets end to end', async () => {
+    const app = trackCloseable(
+      await createInstalledStandaloneServer({
+        viteDevUrl: false,
+        // A cookie-authenticated write is refused unless its Origin is trusted,
+        // and the embedded server otherwise has no configured public origin.
+        env: { APP_PUBLIC_ORIGIN: 'http://localhost' },
+      }),
+    );
+    const baseUrl = `http://localhost${app.application.publicBasePath}`;
+
+    const signIn = async (username: string): Promise<string> => {
+      const response = await requestApp(
+        app,
+        `${baseUrl}/api/auth/sign-in/username`,
+        {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ username, password: 'Demo12345!' }),
+        },
+      );
+      expect(response.status).toBe(200);
+      return response.headers
+        .getSetCookie()
+        .map((header) => header.split(';')[0])
+        .join('; ');
+    };
+    const post = (url: string, cookie: string, body: unknown) =>
+      requestApp(app, url, {
+        method: 'POST',
+        headers: {
+          cookie,
+          origin: 'http://localhost',
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify(body),
+      });
+    const list = async (cookie: string) => {
+      const response = await requestApp(app, `${baseUrl}/api/tickets`, {
+        headers: { cookie },
+      });
+      expect(response.status).toBe(200);
+      return (await response.json()) as {
+        data: Array<{ id: number; title: string; status: string }>;
+      };
+    };
+
+    const employeeOne = await signIn('employee.one');
+    const employeeTwo = await signIn('employee.two');
+    const handler = await signIn('handler.one');
+
+    expect((await requestApp(app, `${baseUrl}/api/tickets`)).status).toBe(401);
+
+    const employeeOneTickets = await list(employeeOne);
+    const employeeTwoTickets = await list(employeeTwo);
+    const otherTicket = employeeTwoTickets.data.find(
+      (ticket) => ticket.title === '无法登录内部报销系统',
+    );
+    expect(otherTicket).toBeDefined();
+    expect(
+      employeeOneTickets.data.some((ticket) => ticket.id === otherTicket?.id),
+    ).toBe(false);
+
+    // A direct link to another employee's ticket is not found, not forbidden.
+    const direct = await requestApp(
+      app,
+      `${baseUrl}/api/tickets/${otherTicket?.id}`,
+      { headers: { cookie: employeeOne } },
+    );
+    expect(direct.status).toBe(404);
+
+    // Submitting lands as pending, owned by the signed-in user, and reads back
+    // through the submission permission (not only through the view grant).
+    const created = await post(`${baseUrl}/api/tickets`, employeeOne, {
+      title: '键盘按键失灵',
+      category: 'computer',
+      description: '空格键没有反应',
+    });
+    expect(created.status).toBe(201);
+    const createdBody = (await created.json()) as {
+      data: { id: number; status: string; submitterName: string };
+    };
+    expect(createdBody.data.status).toBe('pending');
+    expect(createdBody.data.submitterName).toBe('Employee One');
+
+    // An employee can never start or resolve a ticket.
+    expect(
+      (
+        await post(
+          `${baseUrl}/api/tickets/${createdBody.data.id}/start`,
+          employeeOne,
+          {},
+        )
+      ).status,
+    ).toBe(403);
+    expect(
+      (
+        await post(
+          `${baseUrl}/api/tickets/${createdBody.data.id}/complete`,
+          employeeOne,
+          { resolution: 'done' },
+        )
+      ).status,
+    ).toBe(403);
+
+    // A handler reaches every ticket and drives the lifecycle.
+    const handlerList = await list(handler);
+    expect(handlerList.data.map((ticket) => ticket.id)).toContain(
+      createdBody.data.id,
+    );
+
+    const started = await post(
+      `${baseUrl}/api/tickets/${createdBody.data.id}/start`,
+      handler,
+      {},
+    );
+    expect(started.status).toBe(200);
+    expect(
+      ((await started.json()) as { data: { status: string } }).data.status,
+    ).toBe('in_progress');
+
+    const completed = await post(
+      `${baseUrl}/api/tickets/${createdBody.data.id}/complete`,
+      handler,
+      { resolution: '已更换键盘，功能恢复。' },
+    );
+    expect(completed.status).toBe(200);
+    const completedBody = (await completed.json()) as {
+      data: { status: string; resolution: string };
+    };
+    expect(completedBody.data.status).toBe('completed');
+    expect(completedBody.data.resolution).toBe('已更换键盘，功能恢复。');
+
+    // A completed ticket is immutable: no second transition.
+    expect(
+      (
+        await post(
+          `${baseUrl}/api/tickets/${createdBody.data.id}/complete`,
+          handler,
+          { resolution: 'again' },
+        )
+      ).status,
+    ).toBe(409);
+  });
+
   it('mounts standalone app-local routes behind the public base path', async () => {
     const app = trackCloseable(
       await createIsolatedStandaloneServer({ viteDevUrl: false }),

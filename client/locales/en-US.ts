@@ -130,6 +130,7 @@ const enUS = {
   },
   navigation: {
     home: 'Home',
+    tickets: 'IT support tickets',
     open: 'Open navigation',
     close: 'Close navigation',
     expand: 'Expand navigation',
@@ -155,6 +156,89 @@ const enUS = {
   datePicker: {
     placeholder: 'Pick a date',
     rangePlaceholder: 'Pick a date range',
+  },
+  tickets: {
+    title: 'IT support tickets',
+    description:
+      'Submit a repair or account request, and follow how it is handled.',
+    columns: {
+      title: 'Title',
+      category: 'Category',
+      status: 'Status',
+      submitter: 'Submitted by',
+      handler: 'Handled by',
+      updatedAt: 'Last updated',
+    },
+    filters: {
+      all: 'All statuses',
+      status: 'Filter by status',
+    },
+    status: {
+      pending: 'Pending',
+      in_progress: 'In progress',
+      completed: 'Completed',
+    },
+    category: {
+      computer: 'Computer',
+      account: 'Account',
+      other: 'Other',
+    },
+    fields: {
+      title: 'Title',
+      category: 'Category',
+      status: 'Status',
+      description: 'Description',
+      submitter: 'Submitted by',
+      handler: 'Handled by',
+      resolution: 'Resolution',
+      createdAt: 'Submitted at',
+      handledAt: 'Completed at',
+    },
+    create: {
+      action: 'Submit ticket',
+      title: 'Submit a ticket',
+      description:
+        'Describe the problem. Your ticket starts as Pending and an IT handler will pick it up.',
+      submitting: 'Submitting…',
+      success: 'Ticket submitted.',
+    },
+    form: {
+      titleRequired: 'Enter a title.',
+      titleTooLong: 'Use at most {{max}} characters.',
+      categoryRequired: 'Choose a category.',
+      descriptionTooLong: 'Use at most {{max}} characters.',
+    },
+    empty: {
+      title: 'No tickets yet',
+      description:
+        'When you submit a repair or account request, it appears here with its status.',
+    },
+    noResults: 'No tickets match this filter.',
+    detail: {
+      title: 'Ticket',
+    },
+    start: {
+      action: 'Start handling',
+      pending: 'Starting…',
+      success: 'Ticket is now in progress.',
+    },
+    resolve: {
+      action: 'Mark completed',
+      submitting: 'Completing…',
+      description:
+        'Explain what you did so the submitter knows the outcome. A completed ticket cannot be changed.',
+      resolutionRequired: 'Describe how the ticket was resolved.',
+      resolutionTooLong: 'Use at most {{max}} characters.',
+      success: 'Ticket completed.',
+    },
+    error: {
+      title: 'Unable to load tickets',
+      forbidden: 'You do not have permission to perform this action.',
+      requestFailed: 'The request failed. Please try again.',
+      notFound: 'This ticket does not exist or you do not have access to it.',
+      stateConflict:
+        'This ticket has already moved on. Reload the page and try again.',
+    },
   },
 };
 
