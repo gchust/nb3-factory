@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "inputHash": "a95544f7289dbde00c8add37eb3c43d8c7f6f1ca0716fa9e6cd1ad05a15a3d0f",
+  "inputHash": "eb930573873a7ba6e0816c888f9362d2285a0b283ebd7bec32cc3162bd205232",
   "findings": [
     {
       "id": "460:36434284393:1:F2",
@@ -4175,6 +4175,332 @@
         }
       ],
       "fingerprint": "06fd7f915b20218141c70797a89edd8ed50ead02fb38d4d129f5cd414838a752"
+    },
+    {
+      "id": "496:36641602107:1:F1",
+      "report": "496:36641602107:1",
+      "issue": 496,
+      "taskTitle": "内部资料只读问答助手",
+      "appVersion": "1.0.0-beta.50",
+      "appTemplate": "@nocobase/app-template-default",
+      "finding": {
+        "id": "F1",
+        "kind": "misleading",
+        "owner": "documentation",
+        "confidence": "confirmed",
+        "severity": "major",
+        "status": "open",
+        "title": "授权 Skill 的种子示例用 .js 说明符导入 .ts 文件，与同段文字自相矛盾并导致安装种子失败",
+        "detail": "code-and-seeds.md 的示例写 import { engineer } from '../../seed-data/permission-sets.js'，而同一段结尾说明该文件是 database/seed-data/permission-sets.ts。迁移/种子由 task-loader 以原生 import 加载，__rewriteRelativeImportExtension 只把源码中的 .ts/.tsx 说明符改写为 .js，并不存在把 .js 说明符解析回 .ts 的机制，因此照抄示例会在安装时抛 ERR_MODULE_NOT_FOUND。",
+        "claimed": "指引把 .js 说明符作为可复制的种子写法，并同时称目标文件是 .ts。",
+        "observed": "迁移/种子任务加载器（task-loader.js）仅改写 .ts→.js，无反向解析；应用最初照抄该示例，安装报 “Cannot find module .../database/seed-data/permission-sets.js”，改为 .ts 后才通过。",
+        "impact": "Agent 按官方示例生成的安装种子在 Node 原生 TS 运行时会直接启动失败，且错误信息指向示例本身，排查成本高。",
+        "suggestedChange": "把示例统一改为 .ts 说明符（与第 97 行文字一致），并补一句说明源码用 .ts、构建时会被 TypeScript 改写为 .js。",
+        "evidence": [
+          "E11",
+          "E15"
+        ],
+        "diagnosis": {
+          "category": "guidance-gap",
+          "trigger": "按 code-and-seeds.md 第 69 行示例编写安装种子，导入同一 Skill 文档称为 .ts 的 seed-data 文件",
+          "expected": "种子能被安装流程加载并执行",
+          "actual": "原生 import 解析 .js 失败，安装中断于 ERR_MODULE_NOT_FOUND",
+          "workaround": "把相对导入说明符改成 .ts，构建阶段由 TS 改回 .js",
+          "acceptance": "安装种子在无 dist 的情况下成功执行，且构建产物仍使用 .js 说明符"
+        }
+      },
+      "targets": [
+        "@nocobase/db",
+        "app/.agents/skills/nocobase-app-plugin-authorization"
+      ],
+      "paths": [
+        ".agents/skills/nocobase-app-plugin-authorization/references/code-and-seeds.md",
+        "packages/@nocobase/db/dist/src/migration/internal/task-loader.js"
+      ],
+      "evidence": [
+        {
+          "id": "E11",
+          "kind": "skill",
+          "path": "app/.agents/skills/nocobase-app-plugin-authorization/references/code-and-seeds.md",
+          "observation": "code-and-seeds.md 的种子示例 import { engineer } from '../../seed-data/permission-sets.js'（第 69 行）指向一个 .ts 文件，而同一段结尾（第 97 行）又称该文件为 database/seed-data/permission-sets.ts，存在自相矛盾的模块扩展名。",
+          "lines": [
+            60,
+            97
+          ],
+          "excerpt": "## A normal App seed has a database context\n\n`defineSeed` from `@nocobase/db` receives `{ query, connection }`. `connection` is a restricted `SeedConnection`, not a complete runtime `DatabaseConnection`; the seed has no application container. Do not cast it to construct an App authorization service or assume `authorizationToken` can be resolved there.\n\nFor initial installation, a seed may write the documented persistence rows below after the owning plugins' migrations. Keep this adapter confined to installation data, use fluent values as its input, and test against the installed schema. Runtime routes must use the services instead. Keep one seed-data module per table.\n\n```ts\nimport { defineSeed } from '@nocobase/db';\nimport { encodeAuthorizationTitle } from '@nocobase/authorization/core';\nimport { engineer } from '../../seed-data/permission-sets.js';\n\nexport default defineSeed({\n  name: '202609190001_sales_jobs',\n  transaction: true,\n  async run({ query }) {\n    const existing = await query\n      .selectFrom('authorizationPermissionSets')\n      .select('id')\n      .where('key', '=', engineer.key)\n      .executeTakeFirst();\n    if (existing) return; // Preserve an administrator's existing definition.\n    const now = new Date();\n    await query\n      .insertInto('authorizationPermissionSets')\n      .values({\n        id: engineer.key,\n        key: engineer.key,\n        title: encodeAuthorizationTitle(engineer.title),\n        grants: JSON.stringify(engineer.grants),\n        createdAt: now,\n        updatedAt: now,\n      })\n      .execute();\n  },\n});\n```\n\nThis seed lives in `database/main/seeds/202609190001_sales_jobs.ts` and imports `database/seed-data/permission-sets.ts`. Adapt the path to the App's configured seed directory; the seed name matches the filename. Ensure schema migrations for authorization and business collections have run, and explicitly order prerequisite installation data. Use the App's existing migration/seed commands. Do not run this code in a migration: migrations must describe fixed schema history and cannot import live business declarations.",
+          "sha256": "6815f18c10d1043383aac7d605c8195aed12a7ee34729aade698746f92eebe1c"
+        },
+        {
+          "id": "E15",
+          "kind": "code",
+          "path": "packages/@nocobase/db/dist/src/migration/internal/task-loader.js",
+          "observation": "task-loader.js 顶部 __rewriteRelativeImportExtension 仅把源文件里的 .ts/.tsx 说明符改写为 .js，DEFAULT_TASK_EXTENSIONS 亦仅列出迁移/种子可发现的扩展名；并无把 .js 说明符反向解析到 .ts 源码的机制。",
+          "lines": [
+            1,
+            12
+          ],
+          "excerpt": "var __rewriteRelativeImportExtension = (this && this.__rewriteRelativeImportExtension) || function (path, preserveJsx) {\n    if (typeof path === \"string\" && /^\\.\\.?\\//.test(path)) {\n        return path.replace(/\\.(tsx)$|((?:\\.d)?)((?:\\.[^./]+?)?)\\.([cm]?)ts$/i, function (m, tsx, d, ext, cm) {\n            return tsx ? preserveJsx ? \".jsx\" : \".js\" : d && (!ext || !cm) ? m : (d + ext + \".\" + cm.toLowerCase() + \"js\");\n        });\n    }\n    return path;\n};\nimport { readdir } from 'node:fs/promises';\nimport { basename, extname } from 'node:path';\nimport { pathToFileURL } from 'node:url';\nexport const DEFAULT_TASK_EXTENSIONS = ['.js', '.mjs', '.cjs', '.ts'];",
+          "sha256": "4f27b0ccdcd61d466752932a2fac4068ec33efe948aa40a22187fdadc5b438a3"
+        }
+      ],
+      "fingerprint": "885c76165e01e458bb898e2a802e21a5af7fe59b35b0a0ea628155a456dccc25"
+    },
+    {
+      "id": "496:36641602107:1:F2",
+      "report": "496:36641602107:1",
+      "issue": 496,
+      "taskTitle": "内部资料只读问答助手",
+      "appVersion": "1.0.0-beta.50",
+      "appTemplate": "@nocobase/app-template-default",
+      "finding": {
+        "id": "F2",
+        "kind": "misleading",
+        "owner": "documentation",
+        "confidence": "confirmed",
+        "severity": "major",
+        "status": "open",
+        "title": "授权 Skill 示例使用顶层 router.use('*') 与另一份 Skill 的泄漏警告冲突，实测污染其他 API 路由",
+        "detail": "runtime-api.md 展示 router.use('*', authentication.required(), authz.middleware())，repository-routes.md 第 168 行也称 \"*\" 在“孤立、自有”的路由器中是合适的；但 server-routes.md 明确警告顶层通配中间件会泄漏到之后挂载的贡献路由。当业务路由器被挂到 /api 时，use('*') 实际作用于 /api/*，导致无关路由（如 /api/articles）也需要该认证而返回 401。",
+        "claimed": "指引把 router.use('*') 当作服务端强制认证/授权的标准写法，并暗示在自有路由器中安全。",
+        "observed": "server-routes.md 警告顶层 router.use('*') 会泄漏到后续挂载的贡献；应用照抄后 GET /api/articles 返回 401，改为 /materials 前缀后才恢复。",
+        "impact": "Agent 采用官方示例即可让整个 /api 命名空间被错误拦截，影响面超出业务模块，且与另一份 Skill 的明确警告相互矛盾。",
+        "suggestedChange": "把 runtime-api.md 与 repository-routes.md 的示例统一为显式前缀或挂载在自有前缀下的独立子路由器，并交叉引用 server-routes.md 的“Scope middleware to paths you own”。",
+        "evidence": [
+          "E10",
+          "E22",
+          "E54",
+          "E12"
+        ],
+        "diagnosis": {
+          "category": "guidance-gap",
+          "trigger": "按 runtime-api.md 第 117 行在业务 API 路由器上安装 router.use('*', authentication.required(), authz.middleware())",
+          "expected": "只有业务路径需要认证，其他 /api 贡献保持原有可访问性",
+          "actual": "通配中间件作用于整个 /api 前缀，/api/articles 返回 401",
+          "workaround": "把中间件限定到 /materials 与 /materials/*",
+          "acceptance": "业务路径需要认证，其余 /api 路由不受影响，且指引示例不再使用顶层通配"
+        }
+      },
+      "targets": [
+        "app/.agents/skills/nocobase-app-development",
+        "app/.agents/skills/nocobase-app-plugin-authorization"
+      ],
+      "paths": [
+        ".agents/skills/nocobase-app-development/references/server-routes.md",
+        ".agents/skills/nocobase-app-plugin-authorization/references/repository-routes.md",
+        ".agents/skills/nocobase-app-plugin-authorization/references/runtime-api.md"
+      ],
+      "evidence": [
+        {
+          "id": "E10",
+          "kind": "skill",
+          "path": "app/.agents/skills/nocobase-app-plugin-authorization/references/runtime-api.md",
+          "observation": "runtime-api.md 说明集合/复合资源“In the owning provider's boot method”注册，并在同页示例中使用 router.use('*', authentication.required(), authz.middleware()) 作为服务端强制授权写法。",
+          "lines": [
+            98,
+            118
+          ],
+          "excerpt": "// In the owning provider's boot method:\nauthz.database.collections.add({ name: 'quotes', title: 'Quotes' });\nauthz.database.collections.add({ name: 'projects', title: 'Projects' });\nconst reference = authz.compositeResources.define(quotes);\nauthz.ui.sections.add({ name: 'sales', title: 'Sales', parent: 'business' });\nauthz.ui.place(reference, { section: 'sales' });\n```\n\nEvery collection a business action touches must be registered, including for unrestricted users. Registration carries `name`, `title`, optional `description` and `actions` (default `read`, `create`, `update`, `delete`); field, primary-key and relation metadata comes from the database. Re-adding a collection with the same actions is a no-op, even with a different title or description: the first registration is kept and startup logs a warning. Different actions throw. Pages are not registered here: the client route that declares `authz: { resource: { type: 'page', id: 'sales.quotes' }, action: 'access' }` is what lists the page in the workspace.\n\n`.grant(key, permission, { title? })` binds a collection permission to a data scope named `key`. Read fields govern output; create and update fields govern input. Use explicit lists, `'*'` or `.allFields()`; delete has no fields. Include fields written by the server, such as timestamps. `.options(...recordAccessReferences)` limits the record access a grant may choose; `.default(reference)` sets the value used when a grant chooses nothing. Omitting options offers every registered record access that applies to the collection.\n\nUse [code versus seeds](code-and-seeds.md) for the engineer permission set and its assignments, and [record access](business-module.md#3-register-record-access) for the preparer and region selections. Page access and business actions are independent; registration alone grants neither.\n\n## Enforce the operation on the server\n\nEvery route installs authentication and `authz.middleware()`. For a business action, authorize once and bind every resulting collection policy before executing queries. Validate input and business transitions separately.\n\n```ts\nrouter.use('*', authentication.required(), authz.middleware());\nrouter.get('/quotes', async (c) => {",
+          "sha256": "013defbacbd27708e6c7717f980346f6b2a01be49b7910a5b57c0efca257ed30"
+        },
+        {
+          "id": "E22",
+          "kind": "skill",
+          "path": "app/.agents/skills/nocobase-app-development/references/server-routes.md",
+          "observation": "server-routes.md 明确警告“A router.use('*', ...) on the top-level router leaks into contributions mounted later”，并把中间件限定到自有路径或独立子路由器。",
+          "lines": [
+            110,
+            120
+          ],
+          "excerpt": "Keep `defineRepositoryApiRoutes` and its static policies. For business authorization, follow the installed authorization Skill’s `references/repository-routes.md`: `authz.database.authorizeRepository({ repository, resource, actions })` binds Repository methods to typed business actions and narrows the existing policy through middleware. Authenticate first and cover every action of the protected exposure. Use the shortcut when one Repository operation and one data scope complete the action with standard input/output; independent type/length validation can remain middleware. Persisted-state checks, side effects, multiple scopes and enriched responses require custom handlers: project title/notes editing fits the shortcut, while draft quote editing, quote submission and order delivery do not. One resource can use both styles for different actions. Do not substitute collection-aggregated grants for a business-action decision.\n\nStatic endpoint policies only narrow user grants. Read/write relation capabilities must be explicitly granted; a relation in the static shape does not create permission. Use the authorization Skill's `references/business-module.md` for the full workflow and `references/fluent-registration.md` for field/relation declarations. The installable authorization example demonstrates quote submission and delivery responsibilities.\n\n## Scope middleware to paths you own\n\nUse the explicit path, or an isolated sub-router mounted at your prefix as above. A `router.use('*', ...)` on the top-level router leaks into contributions mounted later and is the way an unrelated endpoint accidentally becomes protected — or, worse, the way yours accidentally is not.\n\n## Deliberately public routes\n\nA third-party webhook cannot present a login session, so it is public by design. Public still requires a security boundary:",
+          "sha256": "cbf30ba33ca0af760a34442e92ac668c0ec8a312423da0690a98f3dfd0099b25"
+        },
+        {
+          "id": "E54",
+          "kind": "skill",
+          "path": "app/.agents/skills/nocobase-app-plugin-authorization/references/repository-routes.md",
+          "observation": "repository-routes.md 的“Enforcement and limits”称 “Using '*' is appropriate inside an isolated, owned router: the middleware ignores other repository names”，与 server-routes.md 对顶层 router.use('*') 泄漏的警告形成对照。",
+          "lines": [
+            166,
+            172
+          ],
+          "excerpt": "## Enforcement and limits\n\n- Mount the middleware on every action of the named exposure. Using `'*'` is appropriate inside an isolated, owned router: the middleware ignores other repository names. A method of its repository with no mapping is denied, including methods added to the generated route later.\n- The middleware reuses the request's existing authorization context or initializes one. Authentication is still the owning route's responsibility.\n- Each bound action must declare exactly one data scope, compose grants on that collection only and contain the mapped CRUD operation. Multi-collection or same-collection multi-scope actions are rejected at integration time. Resource registration must precede router creation.\n- One composite can be bound to several Repository exposures through separate middleware instances. Each mapping is checked at the action level. An exposure's actual collection and database connection must match the request constraint; this adapter currently supports the default connection only.\n- Keep actions requiring workflow state, cross-record relationships, or side effects in custom handlers. Single-scope authorization does not prove that an operation needs no business validation. Quote editing/submission and delivery remain custom in the sales workflow.",
+          "sha256": "bdb67c8822b219af85d0277238183d11a20f9fe4b458295cbaec4fe8f687046c"
+        },
+        {
+          "id": "E12",
+          "kind": "skill",
+          "path": "app/.agents/skills/nocobase-app-plugin-authorization/references/repository-routes.md",
+          "observation": "repository-routes.md 的示例声明 view 用 read 字段、edit 用“read plus update”字段，是文档中少数提示写权限需同时声明 read 字段的地方。",
+          "lines": [
+            43,
+            49
+          ],
+          "excerpt": "      .action('edit', (action) =>\n        action.grant('projects', projectData.update(['title', 'notes'])),\n      ),\n);\n```\n\nThe project resource declares `view` with project read fields and `edit` with read plus update of `title` and `notes`, both under one `projects` scope. The following route module imports that application-owned declaration. The route factory owns authentication and the body limit; register its exported contribution in the App's server routes.",
+          "sha256": "bdb67c8822b219af85d0277238183d11a20f9fe4b458295cbaec4fe8f687046c"
+        }
+      ],
+      "fingerprint": "0db9fee819d4f50ad02b34000efd9945e2b26d58c9f81bb6e1b33f8eb40b082a"
+    },
+    {
+      "id": "496:36641602107:1:F3",
+      "report": "496:36641602107:1",
+      "issue": 496,
+      "taskTitle": "内部资料只读问答助手",
+      "appVersion": "1.0.0-beta.50",
+      "appTemplate": "@nocobase/app-template-default",
+      "finding": {
+        "id": "F3",
+        "kind": "issue",
+        "owner": "documentation",
+        "confidence": "confirmed",
+        "severity": "minor",
+        "status": "open",
+        "title": "写权限未声明 read 字段会在回读时抛 READ_FORBIDDEN，指引未在端到端流程中强调",
+        "detail": "composeDatabasePolicies 以 read:false 为初值，只对显式授予的动作置 true；repository.createOne 写入后以绑定读策略回读返回字段。因此一个只有 create/update 而无 read 字段的权限会在写入成功前后抛 READ_FORBIDDEN。repository-routes.md 有“read plus update”提示，但 runtime-api.md 的“Enforce the operation on the server”流程只提醒包含服务端写入字段，未说明写权限必须同时声明读字段。",
+        "impact": "Agent 按自定义端点流程配置写权限时，create/update 会以难以定位的 READ_FORBIDDEN 失败，虽然数据本身并未越权。",
+        "suggestedChange": "在 runtime-api.md 的动作/字段说明处补充：create/update 权限无法读取自身结果时会因策略回读失败，需同时声明所需 read 字段。",
+        "evidence": [
+          "E10",
+          "E14"
+        ],
+        "diagnosis": {
+          "category": "guidance-gap",
+          "trigger": "为写权限仅声明 create/update 字段并执行 createOne/updateOne",
+          "expected": "写入成功并返回所声明的返回字段",
+          "actual": "写后回读触发 READ_FORBIDDEN，请求失败",
+          "workaround": "在写权限中补充 .read([...]) 所需字段",
+          "acceptance": "带写权限的角色可成功创建/更新并按策略回读"
+        }
+      },
+      "targets": [
+        "@nocobase/db",
+        "app/.agents/skills/nocobase-app-plugin-authorization"
+      ],
+      "paths": [
+        ".agents/skills/nocobase-app-plugin-authorization/references/runtime-api.md",
+        "packages/@nocobase/db/dist/src/repository/repository.js"
+      ],
+      "evidence": [
+        {
+          "id": "E10",
+          "kind": "skill",
+          "path": "app/.agents/skills/nocobase-app-plugin-authorization/references/runtime-api.md",
+          "observation": "runtime-api.md 说明集合/复合资源“In the owning provider's boot method”注册，并在同页示例中使用 router.use('*', authentication.required(), authz.middleware()) 作为服务端强制授权写法。",
+          "lines": [
+            98,
+            118
+          ],
+          "excerpt": "// In the owning provider's boot method:\nauthz.database.collections.add({ name: 'quotes', title: 'Quotes' });\nauthz.database.collections.add({ name: 'projects', title: 'Projects' });\nconst reference = authz.compositeResources.define(quotes);\nauthz.ui.sections.add({ name: 'sales', title: 'Sales', parent: 'business' });\nauthz.ui.place(reference, { section: 'sales' });\n```\n\nEvery collection a business action touches must be registered, including for unrestricted users. Registration carries `name`, `title`, optional `description` and `actions` (default `read`, `create`, `update`, `delete`); field, primary-key and relation metadata comes from the database. Re-adding a collection with the same actions is a no-op, even with a different title or description: the first registration is kept and startup logs a warning. Different actions throw. Pages are not registered here: the client route that declares `authz: { resource: { type: 'page', id: 'sales.quotes' }, action: 'access' }` is what lists the page in the workspace.\n\n`.grant(key, permission, { title? })` binds a collection permission to a data scope named `key`. Read fields govern output; create and update fields govern input. Use explicit lists, `'*'` or `.allFields()`; delete has no fields. Include fields written by the server, such as timestamps. `.options(...recordAccessReferences)` limits the record access a grant may choose; `.default(reference)` sets the value used when a grant chooses nothing. Omitting options offers every registered record access that applies to the collection.\n\nUse [code versus seeds](code-and-seeds.md) for the engineer permission set and its assignments, and [record access](business-module.md#3-register-record-access) for the preparer and region selections. Page access and business actions are independent; registration alone grants neither.\n\n## Enforce the operation on the server\n\nEvery route installs authentication and `authz.middleware()`. For a business action, authorize once and bind every resulting collection policy before executing queries. Validate input and business transitions separately.\n\n```ts\nrouter.use('*', authentication.required(), authz.middleware());\nrouter.get('/quotes', async (c) => {",
+          "sha256": "013defbacbd27708e6c7717f980346f6b2a01be49b7910a5b57c0efca257ed30"
+        },
+        {
+          "id": "E14",
+          "kind": "code",
+          "path": "packages/@nocobase/db/dist/src/repository/repository.js",
+          "observation": "repository.createOne 在写入后以 validateSelect(..., this.readContext(collection)) 回读返回字段，因此写入成功与否受绑定的读策略约束。",
+          "lines": [
+            266,
+            298
+          ],
+          "excerpt": "    async createOne(options) {\n        const policyInput = options.writePolicy === undefined ? true : options.writePolicy;\n        assertWriteEnabled(policyInput);\n        const writePolicy = policyInput === true ? true : normalizeWritePolicy(policyInput, 'create');\n        const collection = await this.collection();\n        assertWritableCollection(collection);\n        // Before the payload is looked at: a Policy that forbids this operation\n        // refuses the call outright, so an empty or malformed body is reported as\n        // forbidden rather than as invalid input. The caller learns nothing about\n        // the shape of a write they may not perform.\n        resolveWriteShapeNode(this.options.policy, 'create', collection);\n        await validateWritePolicyMetadata(this.options.collections, collection, writePolicy);\n        const createValues = applyCreateDefaults(this.options.policy, evaluateValues(options.values));\n        const mutation = await normalizeModelMutation(this.options.collections, collection, createValues.values, 'createOne', 1, { nodes: 0, clientKeys: new Set(), context: options.context });\n        this.assertPolicyMutationFields(collection, mutation, 'create', ['values'], createValues.protectedFields);\n        assertMutationWritePolicy(mutation, writePolicy, ['values'], [], 'create', collection.name);\n        const selection = await this.validateSelect(collection, options.select, options.context, this.readContext(collection));\n        const requestedFields = selection.fields;\n        const executionFields = includeExecutionFields(collection, requestedFields);\n        const result = await this.options.adapter.createOne({\n            collection,\n            fields: executionFields,\n            values: mutation.values,\n            relations: mutation.relations,\n            select: selection.select,\n            scopeCheck: await this.scopeCheck(collection, 'create'),\n            relationScopes: await this.writeRelationScopes(collection, 'create'),\n        });\n        return {\n            record: pickSelection(result.record, requestedFields, selection.select),\n            createdTargets: result.createdTargets,\n            version: result.version,\n        };",
+          "sha256": "31b67e0dcdfd222b6981571d563d9879525a3bf61312ea92a05a269d99c1f311"
+        }
+      ],
+      "fingerprint": "dfc8a9d2569ce8d076a89ad77c7309f06c60bbf2281c112c50c5e10c28a0320f"
+    },
+    {
+      "id": "496:36641602107:1:F4",
+      "report": "496:36641602107:1",
+      "issue": 496,
+      "taskTitle": "内部资料只读问答助手",
+      "appVersion": "1.0.0-beta.50",
+      "appTemplate": "@nocobase/app-template-default",
+      "finding": {
+        "id": "F4",
+        "kind": "issue",
+        "owner": "documentation",
+        "confidence": "confirmed",
+        "severity": "minor",
+        "status": "open",
+        "title": "数据库 Skill 的迁移示例声明非空 createdAt 却在 createOne 示例中省略该字段",
+        "detail": "nocobase-db SKILL 的迁移示例使用 collection.datetime('createdAt', { nullable: false }) 且无默认值，而同一 Skill 的 createOne 示例只写 name/owner。db 层没有全局审计时间戳自动填充：只有 SeedContext.repository 文档承诺处理时间戳，普通 repository 写入需要调用方提供。照抄两段示例会得到 NOT NULL constraint failed: createdAt。",
+        "impact": "Agent 会写出在真实插入时因非空时间列无默认值而失败的表与种子/写入代码，违反直观的约定优于配置预期。",
+        "suggestedChange": "在迁移与写示例处说明审计时间列的来源：要么在迁移中给出默认值，要么在写入时显式传入，并明确普通 repository 不做自动时间戳填充。",
+        "evidence": [
+          "E17",
+          "E18",
+          "E16",
+          "E14"
+        ],
+        "diagnosis": {
+          "category": "guidance-gap",
+          "trigger": "按 SKILL 迁移示例建立非空 createdAt 列，并按 createOne 示例不传时间戳",
+          "expected": "插入成功或文档明确要求显式时间戳",
+          "actual": "NOT NULL constraint failed: createdAt",
+          "workaround": "为列加默认值或在 values 中传入 createdAt/updatedAt",
+          "acceptance": "示例可直接运行，且文档说明时间戳填充范围"
+        }
+      },
+      "targets": [
+        "@nocobase/db",
+        "app/.agents/skills/nocobase-db"
+      ],
+      "paths": [
+        ".agents/skills/nocobase-db/SKILL.md",
+        "packages/@nocobase/db/dist/src/repository/repository.js",
+        "packages/@nocobase/db/dist/src/seed/types.d.ts"
+      ],
+      "evidence": [
+        {
+          "id": "E17",
+          "kind": "skill",
+          "path": "app/.agents/skills/nocobase-db/SKILL.md",
+          "observation": "nocobase-db SKILL 的迁移示例 collection.datetime('createdAt', { nullable: false }) 未给默认值，即数据库列本身不会自动填充创建时间。",
+          "lines": [
+            89,
+            97
+          ],
+          "excerpt": "  async up({ builder }) {\n    await builder.createCollection('orders', (collection) => {\n      collection.increments('id');\n      collection.string('orderNo', { length: 64, nullable: false });\n      collection.string('status', { length: 32, nullable: false });\n      collection.datetime('createdAt', { nullable: false });\n      collection.unique('orderNo');\n      collection.index('status');\n    });",
+          "sha256": "f97c07a45a9d49c1d933ddbceeabcc9afe267b1356a2ded1a3da0dd56b54011c"
+        },
+        {
+          "id": "E18",
+          "kind": "skill",
+          "path": "app/.agents/skills/nocobase-db/SKILL.md",
+          "observation": "同一 SKILL 的 createOne 示例仅写 name/owner，未写 createdAt/updatedAt，文档未说明这些非空时间戳由谁补齐。",
+          "lines": [
+            225,
+            233
+          ],
+          "excerpt": "});\n\nconst result = await projects.createOne({\n  values: {\n    name: 'Apollo',\n    owner: (owner) => owner.connect({ id: ownerId }),\n  },\n  select: (select) => select.fields('id', 'name'),\n});",
+          "sha256": "f97c07a45a9d49c1d933ddbceeabcc9afe267b1356a2ded1a3da0dd56b54011c"
+        },
+        {
+          "id": "E16",
+          "kind": "code",
+          "path": "packages/@nocobase/db/dist/src/seed/types.d.ts",
+          "observation": "SeedContext 文档称安装数据通过 repository 以集合字段写入，“field encoding and timestamps handled for the dialect rather than by each seed”，此时间戳承诺仅针对 seed repository 通道。",
+          "lines": [
+            13,
+            24
+          ],
+          "excerpt": "export interface SeedContext {\n    readonly config: DatabaseTaskConfig;\n    readonly container: ServiceResolver;\n    /**\n     * The default tool for installation data, bound to the connection this seed\n     * runs on — the transaction's connection when it runs in one.\n     *\n     * Installation data is written in Collection terms: logical field names,\n     * relations and nested writes, with field encoding and timestamps handled\n     * for the dialect rather than by each seed.\n     */\n    repository<TRecord extends object = RepositoryRecord, TCreate extends object = Partial<TRecord>, TUpdate extends object = Partial<TRecord>>(collection: string): Repository<TRecord, TCreate, TUpdate>;",
+          "sha256": "fad688f57d07e53b0ac48dec6ae4ee03e845efff75c19483f85ce48886554f3c"
+        },
+        {
+          "id": "E14",
+          "kind": "code",
+          "path": "packages/@nocobase/db/dist/src/repository/repository.js",
+          "observation": "repository.createOne 在写入后以 validateSelect(..., this.readContext(collection)) 回读返回字段，因此写入成功与否受绑定的读策略约束。",
+          "lines": [
+            266,
+            298
+          ],
+          "excerpt": "    async createOne(options) {\n        const policyInput = options.writePolicy === undefined ? true : options.writePolicy;\n        assertWriteEnabled(policyInput);\n        const writePolicy = policyInput === true ? true : normalizeWritePolicy(policyInput, 'create');\n        const collection = await this.collection();\n        assertWritableCollection(collection);\n        // Before the payload is looked at: a Policy that forbids this operation\n        // refuses the call outright, so an empty or malformed body is reported as\n        // forbidden rather than as invalid input. The caller learns nothing about\n        // the shape of a write they may not perform.\n        resolveWriteShapeNode(this.options.policy, 'create', collection);\n        await validateWritePolicyMetadata(this.options.collections, collection, writePolicy);\n        const createValues = applyCreateDefaults(this.options.policy, evaluateValues(options.values));\n        const mutation = await normalizeModelMutation(this.options.collections, collection, createValues.values, 'createOne', 1, { nodes: 0, clientKeys: new Set(), context: options.context });\n        this.assertPolicyMutationFields(collection, mutation, 'create', ['values'], createValues.protectedFields);\n        assertMutationWritePolicy(mutation, writePolicy, ['values'], [], 'create', collection.name);\n        const selection = await this.validateSelect(collection, options.select, options.context, this.readContext(collection));\n        const requestedFields = selection.fields;\n        const executionFields = includeExecutionFields(collection, requestedFields);\n        const result = await this.options.adapter.createOne({\n            collection,\n            fields: executionFields,\n            values: mutation.values,\n            relations: mutation.relations,\n            select: selection.select,\n            scopeCheck: await this.scopeCheck(collection, 'create'),\n            relationScopes: await this.writeRelationScopes(collection, 'create'),\n        });\n        return {\n            record: pickSelection(result.record, requestedFields, selection.select),\n            createdTargets: result.createdTargets,\n            version: result.version,\n        };",
+          "sha256": "31b67e0dcdfd222b6981571d563d9879525a3bf61312ea92a05a269d99c1f311"
+        }
+      ],
+      "fingerprint": "d0d00a2f84ae402c3afdf30cdadf55544be0442f505efccac7663160ee75b102"
     }
   ]
 }
