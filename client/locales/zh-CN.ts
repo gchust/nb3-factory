@@ -121,6 +121,7 @@ const zhCN: AppResource = {
   },
   navigation: {
     home: '首页',
+    tickets: 'IT 报修工单',
     open: '打开导航',
     close: '关闭导航',
     expand: '展开导航',
@@ -146,6 +147,85 @@ const zhCN: AppResource = {
   datePicker: {
     placeholder: '选择日期',
     rangePlaceholder: '选择日期范围',
+  },
+  tickets: {
+    title: 'IT 报修工单',
+    description: '提交报修或账号申请，并跟踪处理进度。',
+    columns: {
+      title: '标题',
+      category: '分类',
+      status: '状态',
+      submitter: '提交人',
+      handler: '处理人',
+      updatedAt: '最近更新',
+    },
+    filters: {
+      all: '全部状态',
+      status: '按状态筛选',
+    },
+    status: {
+      pending: '待处理',
+      in_progress: '处理中',
+      completed: '已完成',
+    },
+    category: {
+      computer: '电脑',
+      account: '账号',
+      other: '其他',
+    },
+    fields: {
+      title: '标题',
+      category: '分类',
+      status: '状态',
+      description: '问题描述',
+      submitter: '提交人',
+      handler: '处理人',
+      resolution: '处理结果',
+      createdAt: '提交时间',
+      handledAt: '完成时间',
+    },
+    create: {
+      action: '提交工单',
+      title: '提交工单',
+      description:
+        '请描述遇到的问题。工单提交后为“待处理”，IT 处理人会接单处理。',
+      submitting: '正在提交…',
+      success: '工单已提交。',
+    },
+    form: {
+      titleRequired: '请输入标题。',
+      titleTooLong: '最多 {{max}} 个字符。',
+      categoryRequired: '请选择分类。',
+      descriptionTooLong: '最多 {{max}} 个字符。',
+    },
+    empty: {
+      title: '暂无工单',
+      description: '提交报修或账号申请后，工单会显示在这里，并带有处理状态。',
+    },
+    noResults: '没有符合该筛选条件的工单。',
+    detail: {
+      title: '工单',
+    },
+    start: {
+      action: '开始处理',
+      pending: '正在开始…',
+      success: '工单已开始处理。',
+    },
+    resolve: {
+      action: '标记为已完成',
+      submitting: '正在完成…',
+      description: '请说明处理过程，方便提交人了解结果。已完成工单不能修改。',
+      resolutionRequired: '请填写处理结果。',
+      resolutionTooLong: '最多 {{max}} 个字符。',
+      success: '工单已完成。',
+    },
+    error: {
+      title: '无法加载工单',
+      forbidden: '你没有执行此操作的权限。',
+      requestFailed: '请求失败，请重试。',
+      notFound: '该工单不存在，或你无权访问。',
+      stateConflict: '该工单状态已变更，请刷新页面后重试。',
+    },
   },
 };
 
