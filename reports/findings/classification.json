@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "inputHash": "a95544f7289dbde00c8add37eb3c43d8c7f6f1ca0716fa9e6cd1ad05a15a3d0f",
+  "inputHash": "eb930573873a7ba6e0816c888f9362d2285a0b283ebd7bec32cc3162bd205232",
   "sources": [
     {
       "id": "460:36434284393:1:F2",
@@ -226,6 +226,26 @@
       "id": "495:36641597342:1:F6",
       "report": "495:36641597342:1",
       "fingerprint": "06fd7f915b20218141c70797a89edd8ed50ead02fb38d4d129f5cd414838a752"
+    },
+    {
+      "id": "496:36641602107:1:F1",
+      "report": "496:36641602107:1",
+      "fingerprint": "885c76165e01e458bb898e2a802e21a5af7fe59b35b0a0ea628155a456dccc25"
+    },
+    {
+      "id": "496:36641602107:1:F2",
+      "report": "496:36641602107:1",
+      "fingerprint": "0db9fee819d4f50ad02b34000efd9945e2b26d58c9f81bb6e1b33f8eb40b082a"
+    },
+    {
+      "id": "496:36641602107:1:F3",
+      "report": "496:36641602107:1",
+      "fingerprint": "dfc8a9d2569ce8d076a89ad77c7309f06c60bbf2281c112c50c5e10c28a0320f"
+    },
+    {
+      "id": "496:36641602107:1:F4",
+      "report": "496:36641602107:1",
+      "fingerprint": "d0d00a2f84ae402c3afdf30cdadf55544be0442f505efccac7663160ee75b102"
     }
   ],
   "groups": [
@@ -256,10 +276,11 @@
     },
     {
       "title": "授权 Skill 种子示例使用 .js 相对导入，源码模式种子加载失败",
-      "reason": "跨报告合并。474:F1 的 E20/E21 显示 code-and-seeds.md 两个示例把可移植声明与 seed-data 模块按 .js 相对路径导入，E22 显示 task-loader 只对任务文件自身 URL 重写后原生 import、不重写传递导入，E12 记录 ERR_MODULE_NOT_FOUND；475:F2 的 E6 为同一示例 .js 说明符证据，E13 为同一 task-loader 实现，E18 记录 permission-sets.js ERR_MODULE_NOT_FOUND 且 3 个 app-server 测试失败，E19 显示冻结种子改用 .ts。触发条件、期望、实际、受影响指引位置与修复方向完全一致，属同一错误指引，故合并。",
+      "reason": "跨报告合并。474:F1 的 E20/E21 显示 code-and-seeds.md 两个示例把可移植声明与 seed-data 模块按 .js 相对路径导入，E22 显示 task-loader 只对任务文件自身 URL 重写后原生 import、不重写传递导入，E12 记录 ERR_MODULE_NOT_FOUND；475:F2 的 E6 为同一示例 .js 说明符证据，E13 为同一 task-loader 实现，E18 记录 permission-sets.js ERR_MODULE_NOT_FOUND 且 3 个 app-server 测试失败，E19 显示冻结种子改用 .ts；496:F1 的 E11 为同一 code-and-seeds.md 示例 import { engineer } from '../../seed-data/permission-sets.js'（同文档第 97 行又称该文件为 .ts），E15 为同一 task-loader.js 只把 .ts/.tsx 改写为 .js、无反向解析机制，应用照抄后安装报 Cannot find module。触发条件（按示例用 .js 相对说明符导入种子数据模块）、期望（种子在源码/安装模式下可加载）、实际（ERR_MODULE_NOT_FOUND）与修复方向（示例统一改为 .ts 并说明构建改写）完全一致，属同一错误指引，故合并。",
       "members": [
         "474:36498921009:1:F1",
-        "475:36498925234:1:F2"
+        "475:36498925234:1:F2",
+        "496:36641602107:1:F1"
       ]
     },
     {
@@ -471,15 +492,36 @@
       "members": [
         "495:36641597342:1:F6"
       ]
+    },
+    {
+      "title": "授权 Skill 示例在业务路由器上使用顶层 router.use('*')，与另一份 Skill 的泄漏警告冲突并污染其他 API 路由",
+      "reason": "单独保留。496:F2 的 E10 显示 runtime-api.md 的“Enforce the operation on the server”示例把 router.use('*', authentication.required(), authz.middleware()) 作为服务端强制授权写法；E22 显示 app-development 的 server-routes.md 明确警告顶层 router.use('*') 会泄漏到之后挂载的贡献路由；E54 显示 repository-routes.md 又称 \"*\" 在孤立自有路由器中合适；E12 为该参考中少数提示写权限需同时声明 read 字段之处。触发条件（业务路由器挂到 /api 时按示例安装顶层通配中间件）、期望（仅业务路径需认证，其他 /api 贡献不受影响）、实际（/api/articles 等无关路由返回 401）与修复方向（改用显式前缀/独立子路由器并交叉引用 server-routes.md）构成一条独立错误指引缺口，与同报告的种子 .js 导入、READ_FORBIDDEN 回读、非空 createdAt 示例缺口根因均不同，且同报告发现禁止合并，故单独保留。",
+      "members": [
+        "496:36641602107:1:F2"
+      ]
+    },
+    {
+      "title": "写权限未声明 read 字段时写后回读抛 READ_FORBIDDEN，端到端流程指引未强调",
+      "reason": "单独保留。496:F3 的 E14 显示 repository.createOne 在写入后以 validateSelect(..., this.readContext(collection)) 回读返回字段，因此写权限必须能读取自身结果；E10 显示 runtime-api.md 的端到端流程只提醒包含服务端写入字段，未说明 create/update 权限还需同时声明所需 read 字段（该提示仅出现在 repository-routes.md 的“read plus update”示例）。触发条件（为写权限仅声明 create/update 字段并执行 createOne/updateOne）、期望（写入成功并按策略回读）、实际（READ_FORBIDDEN 失败）与修复方向（在 runtime-api.md 补充需同时声明 read 字段）构成一条独立指引缺口，与 router.use('*') 泄漏等同报告发现根因不同，故单独保留。",
+      "members": [
+        "496:36641602107:1:F3"
+      ]
+    },
+    {
+      "title": "nocobase-db Skill 迁移示例声明非空 createdAt，但 createOne 示例省略该字段且未说明时间戳来源",
+      "reason": "单独保留。496:F4 的 E17 显示 SKILL 的迁移示例 collection.datetime('createdAt', { nullable: false }) 未给默认值，E18 显示同一 SKILL 的 createOne 示例只写 name/owner、未传 createdAt/updatedAt，E16 显示时间戳自动填充的承诺仅针对 seed repository 通道，E14 显示普通 repository.createOne 的写入/回读路径。照抄两段示例会得到 NOT NULL constraint failed: createdAt。触发条件（按迁移示例建非空 createdAt 列并按 createOne 示例不传时间戳）、期望（插入成功或文档明确要求显式时间戳）、实际（NOT NULL 失败）与修复方向（示例给出默认值或显式传入并说明填充范围）构成一条独立文档缺口，与同报告其他发现及 473:F1 的 onDelete 取值缺口根因不同，故单独保留。",
+      "members": [
+        "496:36641602107:1:F4"
+      ]
     }
   ],
   "classifier": {
     "engine": "pi",
     "model": "deepseek-v4.1-flash",
     "version": "0.86.1",
-    "runId": "36659799105",
+    "runId": "36662809204",
     "attempt": 1,
     "controlSha": "0f72d9b81f981f10501c5ac0ee0e7d786f1f4698",
-    "completedAt": "2026-09-30T02:28:17.768Z"
+    "completedAt": "2026-09-30T03:06:51.366Z"
   }
 }
