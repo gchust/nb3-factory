@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "inputHash": "eb930573873a7ba6e0816c888f9362d2285a0b283ebd7bec32cc3162bd205232",
+  "inputHash": "d71d5ff280d2bffb208b01c875d4821f5a5b32d17f6cf54dfbe76e249634e2e8",
   "findings": [
     {
       "id": "460:36434284393:1:F2",
@@ -3592,6 +3592,321 @@
         }
       ],
       "fingerprint": "27ad20f95b0e6bf6d905a543e7cdd19893bb4f04e3fa58e4d36fb3df204e3a18"
+    },
+    {
+      "id": "493:36641586376:1:F1",
+      "report": "493:36641586376:1",
+      "issue": 493,
+      "taskTitle": "员工 IT 报修与处理",
+      "appVersion": "1.0.0-beta.50",
+      "appTemplate": "@nocobase/app-template-default",
+      "finding": {
+        "id": "F1",
+        "kind": "issue",
+        "owner": "documentation",
+        "confidence": "confirmed",
+        "severity": "major",
+        "status": "open",
+        "title": "授权指引未说明 createOne 会回读新记录，create-only 授权导致提交接口 500",
+        "detail": "fluent-registration.md 把 read 描述为输出字段、create/update 描述输入字段；business-module.md 与 authorization.md 的端点流程也只讲“授予动作”。三处均未说明 Repository.createOne 在插入后会以读策略校验并回读返回字段。照指引只写 .create(...) 而不写 .read(...) 时，composeDatabasePolicies 对该动作给出 read:false，resolveReadNode 抛 READ_FORBIDDEN，表现为提交 500，且错误发生在写入之后，容易误判为业务校验或鉴权问题。",
+        "impact": "Agent 按官方指引实现时，最自然的 create-only 授权会在真实提交时 500，需运行期排错才能定位，增加返工与不确定性（本任务即因此阻塞并按此修复）。",
+        "suggestedChange": "在 business-module.md、fluent-registration.md 与 authorization.md 明确：授予 create 时通常需同时授予被返回字段的 read，并由 record scope 限定可回读的行；给出 create+read 的最小示例。",
+        "evidence": [
+          "E14",
+          "E29",
+          "E28",
+          "E4",
+          "E33"
+        ],
+        "diagnosis": {
+          "category": "guidance-gap",
+          "trigger": "按指引仅声明 defineDatabasePermission(...).create([...])（或员工 create 未同时授予 read）",
+          "expected": "提交新记录成功并返回记录；或指引明确要求补 read",
+          "actual": "插入后回读触发 READ_FORBIDDEN，POST /tickets 返回 500",
+          "workaround": "在同一权限上追加 .read(READ_FIELDS)，并为 create 动作绑定限定范围的 record scope（应用最终做法）",
+          "acceptance": "新库上按指引只写 create 可复现 500；补 read 后提交成功且只能回读本人记录"
+        }
+      },
+      "targets": [
+        "@nocobase/app-plugin-authorization",
+        "@nocobase/db",
+        "app/.agents/skills/nocobase-app-plugin-authorization/references/business-module.md",
+        "app/.agents/skills/nocobase-app-plugin-authorization/references/fluent-registration.md"
+      ],
+      "paths": [
+        ".agents/skills/nocobase-app-plugin-authorization/references/business-module.md",
+        ".agents/skills/nocobase-app-plugin-authorization/references/fluent-registration.md",
+        "packages/@nocobase/app-plugin-authorization/README.md",
+        "packages/@nocobase/db/dist/src/repository/repository.js"
+      ],
+      "evidence": [
+        {
+          "id": "E14",
+          "kind": "package",
+          "path": "packages/@nocobase/app-plugin-authorization/README.md",
+          "observation": "README 称 “Create reads no record scope, so a create grant is unaffected.”，未提及 createOne 仍需 read。",
+          "lines": [
+            348,
+            348
+          ],
+          "excerpt": "A policy is `false` only when nothing grants the action, and a Repository refuses to run under it. When a grant exists but its data scope selects no records, such as a record access that answers `false` for a user in no department, the decision stays conditional with the `EMPTY_RECORD_ACCESS` reason and a scope that matches no rows: reads return an empty result, and updates and deletes affect nothing. A grant whose data scopes configure no selection at all is still denied with `NO_RECORD_ACCESS`. Create reads no record scope, so a create grant is unaffected.",
+          "sha256": "06ce8a8d55d23b3cf8f7d480ab374fd1e5b0e6d8e0388bd0e68b326f99e239ff"
+        },
+        {
+          "id": "E29",
+          "kind": "skill",
+          "path": "app/.agents/skills/nocobase-app-plugin-authorization/references/fluent-registration.md",
+          "observation": "fluent-registration 指引：“read describes output fields, while create and update describe input fields”，未提 create 需 read。",
+          "lines": [
+            11,
+            11
+          ],
+          "excerpt": "`read` describes output fields, while `create` and `update` describe input fields. `delete()` takes no fields. Use `'*'` or `.allFields()` explicitly for all fields. `.options(...recordAccessReferences)` limits the record access a grant may choose and keeps the option names typed on the resource reference; `.default(reference)` sets the value used when a grant chooses nothing. The references must apply to the selected collection. Omitting options offers every registered record access that applies.",
+          "sha256": "92c9dba991f9a5039b401949ae01d8eb801f428f17e0e6441ec473886569ba8c"
+        },
+        {
+          "id": "E28",
+          "kind": "skill",
+          "path": "app/.agents/skills/nocobase-app-plugin-authorization/references/business-module.md",
+          "observation": "业务模块指引称内置 recordsIOwn 对应列默认 ownerId、“configurable with params.field”，并建议复用内置项。",
+          "lines": [
+            109,
+            109
+          ],
+          "excerpt": "Reuse the built-in `recordAccess.recordsIOwn` and `recordAccess.recordsICreated` when the collection has the corresponding column (default `ownerId` and `createdById`, configurable with `params.field`), `recordAccess.customFilter` for a fixed filter and `recordAccess.allRecords` for everything. Use custom record access when ownership follows a parent. Do not assume an id from a team subject is a user id; user-dependent resolvers must check the principal type.",
+          "sha256": "a53ec8e8f7f656d4c4d053e918ac035fed0377dc7d33f87ba8724b6fc7c680bf"
+        },
+        {
+          "id": "E4",
+          "kind": "code",
+          "path": "packages/@nocobase/db/dist/src/repository/repository.js",
+          "observation": "Repository.createOne 在插入前用 this.readContext(collection) 调 validateSelect，并以 scopeCheck 约束；即创建路径包含读校验。",
+          "lines": [
+            266,
+            292
+          ],
+          "excerpt": "    async createOne(options) {\n        const policyInput = options.writePolicy === undefined ? true : options.writePolicy;\n        assertWriteEnabled(policyInput);\n        const writePolicy = policyInput === true ? true : normalizeWritePolicy(policyInput, 'create');\n        const collection = await this.collection();\n        assertWritableCollection(collection);\n        // Before the payload is looked at: a Policy that forbids this operation\n        // refuses the call outright, so an empty or malformed body is reported as\n        // forbidden rather than as invalid input. The caller learns nothing about\n        // the shape of a write they may not perform.\n        resolveWriteShapeNode(this.options.policy, 'create', collection);\n        await validateWritePolicyMetadata(this.options.collections, collection, writePolicy);\n        const createValues = applyCreateDefaults(this.options.policy, evaluateValues(options.values));\n        const mutation = await normalizeModelMutation(this.options.collections, collection, createValues.values, 'createOne', 1, { nodes: 0, clientKeys: new Set(), context: options.context });\n        this.assertPolicyMutationFields(collection, mutation, 'create', ['values'], createValues.protectedFields);\n        assertMutationWritePolicy(mutation, writePolicy, ['values'], [], 'create', collection.name);\n        const selection = await this.validateSelect(collection, options.select, options.context, this.readContext(collection));\n        const requestedFields = selection.fields;\n        const executionFields = includeExecutionFields(collection, requestedFields);\n        const result = await this.options.adapter.createOne({\n            collection,\n            fields: executionFields,\n            values: mutation.values,\n            relations: mutation.relations,\n            select: selection.select,\n            scopeCheck: await this.scopeCheck(collection, 'create'),\n            relationScopes: await this.writeRelationScopes(collection, 'create'),",
+          "sha256": "31b67e0dcdfd222b6981571d563d9879525a3bf61312ea92a05a269d99c1f311"
+        },
+        {
+          "id": "E33",
+          "kind": "code",
+          "path": "app/server/tickets/resources.ts",
+          "observation": "应用 ticketCreate 注释记录 “createOne reads the inserted record back, so submission also needs the read side”，并实际追加 .read(READ_FIELDS)。",
+          "lines": [
+            83,
+            92
+          ],
+          "excerpt": "export const ticketCreate = defineDatabasePermission((p) =>\n  p\n    .collection<Ticket>('tickets')\n    .title('Ticket submission')\n    // `createOne` reads the inserted record back, so submission also needs the\n    // read side of the columns it returns. The action's record scope decides\n    // which rows that read reaches; it is the submitter's own for an employee.\n    .read([...READ_FIELDS])\n    .create([...CREATE_FIELDS]),\n);",
+          "sha256": "88157d1d84f6237b5a91efbb6d861c31049cdd1c0fda56cbcc031920702dbc0d"
+        }
+      ],
+      "fingerprint": "677e1e856966e7b4c8a7abe19bd8daae63d70543dfc1773e6c6ea4a3bed08504"
+    },
+    {
+      "id": "493:36641586376:1:F2",
+      "report": "493:36641586376:1",
+      "issue": 493,
+      "taskTitle": "员工 IT 报修与处理",
+      "appVersion": "1.0.0-beta.50",
+      "appTemplate": "@nocobase/app-template-default",
+      "finding": {
+        "id": "F2",
+        "kind": "misleading",
+        "owner": "documentation",
+        "confidence": "confirmed",
+        "severity": "minor",
+        "status": "open",
+        "title": "内置 recordsIOwn 的文档暗示可用 params.field 适配任意归属列，实际要求列名恰为 ownerId",
+        "detail": "business-module.md 建议复用内置 recordsIOwn 并称对应列默认 ownerId、“configurable with params.field”。但实现把 requiredFields:['ownerId'] 写死在定义上，options.js 以 databaseRecordAccessApplicable 过滤，集合不含 ownerId 时该内置项根本不会出现在可选数据范围里，params.field 无从生效。工单表归属列名为 submitterId，只能自定义 record access。",
+        "claimed": "business-module.md 称内置 record access 默认按 ownerId/createdById 判断，且 configurable with params.field。",
+        "observed": "record-access.js 第 25 行 requiredFields:['ownerId']、第 27 行 condition(params?.field ?? 'ownerId', ...)；options.js 第 179 行以 databaseRecordAccessApplicable(definition, collectionFields) 过滤后，缺 ownerId 的集合不会列出该内置项。",
+        "impact": "照文档用 params.field 适配 submitterId 会失败，需改走自定义 record access，增加理解与实现成本。",
+        "suggestedChange": "文档注明内置 recordsIOwn/recordsICreated 仅适用于具有 ownerId/createdById 列的集合，并给出按其他归属列自定义 record access（含 principal 类型判断）的最小示例。",
+        "evidence": [
+          "E10",
+          "E13",
+          "E28",
+          "E9",
+          "E34"
+        ],
+        "diagnosis": {
+          "category": "guidance-gap",
+          "trigger": "集合归属列命名为 submitterId，按文档选择 recordsIOwn 并期望 params.field 生效",
+          "expected": "内置项可用于该集合并按指定列判断归属",
+          "actual": "该集合的数据范围选项中不出现 recordsIOwn，params.field 无法生效",
+          "workaround": "自定义 defineRecordAccess('it.ownsTickets')，resolver 用 submitterId 与 principal 类型判断",
+          "acceptance": "文档给出列名约束，且示例能让读者按非 ownerId 列写出可用的自定义数据范围"
+        }
+      },
+      "targets": [
+        "@nocobase/app-plugin-authorization",
+        "@nocobase/authorization",
+        "app/.agents/skills/nocobase-app-plugin-authorization/references/business-module.md"
+      ],
+      "paths": [
+        ".agents/skills/nocobase-app-plugin-authorization/references/business-module.md",
+        "packages/@nocobase/app-plugin-authorization/dist/server/database/record-access.js",
+        "packages/@nocobase/app-plugin-authorization/dist/server/options.js",
+        "packages/@nocobase/authorization/dist/core/record-access.js"
+      ],
+      "evidence": [
+        {
+          "id": "E10",
+          "kind": "code",
+          "path": "packages/@nocobase/app-plugin-authorization/dist/server/database/record-access.js",
+          "observation": "内置 recordsIOwn 把 requiredFields 固定为 ownerId，resolver 用 params?.field ?? ownerId；databaseRecordAccessApplicable 用 requiredFields 过滤不适用集合。",
+          "lines": [
+            23,
+            60
+          ],
+          "excerpt": "        key: 'recordsIOwn',\n        collections: ['*'],\n        requiredFields: ['ownerId'],\n        title: title('options.recordAccessPolicies.recordsIOwn'),\n        resolve: ({ principal, params }) => condition(params?.field ?? 'ownerId', '$eq', userId(principal)),\n    },\n    {\n        key: 'recordsICreated',\n        collections: ['*'],\n        requiredFields: ['createdById'],\n        title: title('options.recordAccessPolicies.recordsICreated'),\n        resolve: ({ principal, params }) => condition(params?.field ?? 'createdById', '$eq', userId(principal)),\n    },\n    {\n        key: 'customFilter',\n        collections: ['*'],\n        title: title('options.recordAccessPolicies.customFilter'),\n        description: title('options.recordAccessPolicies.customFilterHint'),\n        paramsSchema: { type: 'filter-node' },\n        resolve: ({ params }) => {\n            if (!params || typeof params !== 'object' || !('filter' in params))\n                throw new Error('Custom Filter requires filter params');\n            return params.filter;\n        },\n    },\n];\n/** References to the built-in record access, for type-safe options and grants. */\nexport const recordAccess = {\n    allRecords: { key: 'allRecords', collections: ['*'] },\n    recordsIOwn: { key: 'recordsIOwn', collections: ['*'] },\n    recordsICreated: { key: 'recordsICreated', collections: ['*'] },\n    customFilter: { key: 'customFilter', collections: ['*'] },\n};\nexport function databaseRecordAccessApplicable(definition, fields) {\n    const required = Reflect.get(definition, 'requiredFields');\n    return (required === undefined ||\n        (Array.isArray(required) &&\n            required.every((field) => typeof field === 'string' && fields.includes(field))));",
+          "sha256": "15feef2694fdf265c3bddeba06d221e4c08fbf7045d700c5acfd1fd9d319d20f"
+        },
+        {
+          "id": "E13",
+          "kind": "code",
+          "path": "packages/@nocobase/app-plugin-authorization/dist/server/options.js",
+          "observation": "数据范围选项列表用 databaseRecordAccessApplicable(definition, collectionFields) 过滤，列不满足 requiredFields 的内置 record access 不会被提供。",
+          "lines": [
+            171,
+            186
+          ],
+          "excerpt": "            const collectionFields = fields.get(collection) ?? [];\n            return {\n                key: scope.key,\n                title: title(scope.title, scope.key),\n                collection,\n                fields: collectionFields,\n                recordAccess: host.recordAccess\n                    .listFor(collection)\n                    .filter((definition) => databaseRecordAccessApplicable(definition, collectionFields))\n                    .filter((definition) => !scope.options || scope.options.includes(definition.key))\n                    .map((definition) => definition.key),\n                ...(scope.defaultValue === undefined\n                    ? {}\n                    : { defaultValue: scope.defaultValue }),\n            };\n        });",
+          "sha256": "9481c65f7bb02960aab606cc8ccea399122a041c6a78667febacb8e3a366a084"
+        },
+        {
+          "id": "E28",
+          "kind": "skill",
+          "path": "app/.agents/skills/nocobase-app-plugin-authorization/references/business-module.md",
+          "observation": "业务模块指引称内置 recordsIOwn 对应列默认 ownerId、“configurable with params.field”，并建议复用内置项。",
+          "lines": [
+            109,
+            109
+          ],
+          "excerpt": "Reuse the built-in `recordAccess.recordsIOwn` and `recordAccess.recordsICreated` when the collection has the corresponding column (default `ownerId` and `createdById`, configurable with `params.field`), `recordAccess.customFilter` for a fixed filter and `recordAccess.allRecords` for everything. Use custom record access when ownership follows a parent. Do not assume an id from a team subject is a user id; user-dependent resolvers must check the principal type.",
+          "sha256": "a53ec8e8f7f656d4c4d053e918ac035fed0377dc7d33f87ba8724b6fc7c680bf"
+        },
+        {
+          "id": "E9",
+          "kind": "code",
+          "path": "packages/@nocobase/authorization/dist/core/record-access.js",
+          "observation": "defineRecordAccess/RecordAccessBuilder 提供 collections+resolver 的自定义数据范围，builder 无 requiredFields 设置器（内置项才带该元数据）。",
+          "lines": [
+            23,
+            52
+          ],
+          "excerpt": "    resolver(resolve) {\n        return new RecordAccessBuilder(this.metadata, resolve);\n    }\n    build() {\n        const resolve = this.resolveFn;\n        if (!resolve)\n            throw new TypeError('Record access requires a resolver');\n        return validateDefinition({ ...structuredClone(this.metadata), resolve });\n    }\n    reference() {\n        const { key, collections } = this.build();\n        return { key, collections: [...collections] };\n    }\n}\n/** Builds a definition; `authz.recordAccess.define` registers it. */\nexport function defineRecordAccess(key, configure) {\n    if (!key)\n        throw new TypeError('A record access key is required');\n    return configure(new RecordAccessBuilder({ key, collections: [] }));\n}\nfunction validateDefinition(definition) {\n    if (!definition.key)\n        throw new TypeError('A record access key is required');\n    if (typeof definition.resolve !== 'function')\n        throw new TypeError('Record access requires a resolver');\n    if (!definition.collections.length ||\n        definition.collections.some((name) => typeof name !== 'string' || !name))\n        throw new TypeError('Record access requires collections');\n    return definition;\n}",
+          "sha256": "0860a6a02c4d21ff876c805b19d2887e379f0e7cff0c006eb0db88f54d0352b0"
+        },
+        {
+          "id": "E34",
+          "kind": "code",
+          "path": "app/server/tickets/resources.ts",
+          "observation": "应用因内置 recordsIOwn 要求 ownerId，自定义 it.ownsTickets：submitterId==principal.id，非 user principal 返回 false。",
+          "lines": [
+            110,
+            132
+          ],
+          "excerpt": "/**\n * `it.ownsTickets` — the submitter sees their own tickets.\n *\n * The built-in `recordsIOwn` requires an `ownerId` column, and this table names\n * its owner `submitterId`, so the selection is declared here rather than by\n * parameterising the built-in. A non-user principal is answered with `false`\n * (nothing), never with every record.\n */\nexport const ticketOwnership = defineRecordAccess('it.ownsTickets', (access) =>\n  access\n    .title('Submitted by me')\n    .collections('tickets')\n    .resolver(({ principal }) =>\n      principal.type === 'user'\n        ? condition('submitterId', '$eq', principal.id)\n        : false,\n    ),\n);\n\n/**\n * The composite business operation. One data scope key, `tickets`, is bound to\n * the single collection every action writes; each action grants only the\n * fields and the operation that action needs.",
+          "sha256": "88157d1d84f6237b5a91efbb6d861c31049cdd1c0fda56cbcc031920702dbc0d"
+        }
+      ],
+      "fingerprint": "4267dadb3e646ad4432f321fa9e4e285c4042cae5e679e24aa32ba93d57dc70d"
+    },
+    {
+      "id": "493:36641586376:1:F4",
+      "report": "493:36641586376:1",
+      "issue": 493,
+      "taskTitle": "员工 IT 报修与处理",
+      "appVersion": "1.0.0-beta.50",
+      "appTemplate": "@nocobase/app-template-default",
+      "finding": {
+        "id": "F4",
+        "kind": "improvement",
+        "owner": "documentation",
+        "confidence": "confirmed",
+        "severity": "minor",
+        "status": "open",
+        "title": "create 回读权限不足时缺少指向性指引与诊断",
+        "detail": "当动作为 create 而未授予 read 时，resolveReadNode 抛出通用 READ_FORBIDDEN，最终映射为 500，错误未提示“create 需要 read”，排错成本高。可在写入路径捕获该情形并给出更明确的错误码/消息，同时在指引中显式说明该约束。",
+        "impact": "减少运行期定位成本；属易用性改进，不影响正确性。",
+        "suggestedChange": "在授权 Skill 中补充 create 与回读的约束说明与示例；框架侧可在 createOne 读校验失败且写策略允许 create 时抛出带修复提示的错误（如 CREATE_REQUIRES_READ）。",
+        "evidence": [
+          "E11",
+          "E14",
+          "E29",
+          "E43"
+        ],
+        "diagnosis": {
+          "category": "guidance-gap",
+          "trigger": "仅授予 create 的权限执行 createOne",
+          "expected": "返回可定位的诊断或文档显式说明",
+          "actual": "READ_FORBIDDEN→500，无 create/read 修复提示",
+          "workaround": "人工推断并补 read",
+          "acceptance": "该场景下错误消息或指引包含 create 需 read 的修复指引"
+        }
+      },
+      "targets": [
+        "@nocobase/app-plugin-authorization",
+        "app/.agents/skills/nocobase-app-plugin-authorization/references/fluent-registration.md"
+      ],
+      "paths": [
+        ".agents/skills/nocobase-app-plugin-authorization/references/fluent-registration.md",
+        "packages/@nocobase/app-plugin-authorization/README.md",
+        "packages/@nocobase/app-plugin-authorization/dist/server/database/api.js"
+      ],
+      "evidence": [
+        {
+          "id": "E11",
+          "kind": "code",
+          "path": "packages/@nocobase/app-plugin-authorization/dist/server/database/api.js",
+          "observation": "composeDatabasePolicies 对每个集合先置 read/create/update/delete=false，仅在对应动作被授予时才改写。",
+          "lines": [
+            37,
+            52
+          ],
+          "excerpt": "export function composeDatabasePolicies(checks) {\n    const policies = Object.create(null);\n    for (const check of checks) {\n        if (check.resource.type !== 'database.collection')\n            continue;\n        const policy = (policies[check.resource.id] ??= {\n            read: false,\n            create: false,\n            update: false,\n            delete: false,\n        });\n        switch (check.action) {\n            case 'read':\n                policy.read = foldDecision('read', check.decision);\n                break;\n            case 'create':",
+          "sha256": "5daa2fd75ef07e2e0b91361977447e274e8fdb64acb55ff933382ed8cd9e689f"
+        },
+        {
+          "id": "E14",
+          "kind": "package",
+          "path": "packages/@nocobase/app-plugin-authorization/README.md",
+          "observation": "README 称 “Create reads no record scope, so a create grant is unaffected.”，未提及 createOne 仍需 read。",
+          "lines": [
+            348,
+            348
+          ],
+          "excerpt": "A policy is `false` only when nothing grants the action, and a Repository refuses to run under it. When a grant exists but its data scope selects no records, such as a record access that answers `false` for a user in no department, the decision stays conditional with the `EMPTY_RECORD_ACCESS` reason and a scope that matches no rows: reads return an empty result, and updates and deletes affect nothing. A grant whose data scopes configure no selection at all is still denied with `NO_RECORD_ACCESS`. Create reads no record scope, so a create grant is unaffected.",
+          "sha256": "06ce8a8d55d23b3cf8f7d480ab374fd1e5b0e6d8e0388bd0e68b326f99e239ff"
+        },
+        {
+          "id": "E29",
+          "kind": "skill",
+          "path": "app/.agents/skills/nocobase-app-plugin-authorization/references/fluent-registration.md",
+          "observation": "fluent-registration 指引：“read describes output fields, while create and update describe input fields”，未提 create 需 read。",
+          "lines": [
+            11,
+            11
+          ],
+          "excerpt": "`read` describes output fields, while `create` and `update` describe input fields. `delete()` takes no fields. Use `'*'` or `.allFields()` explicitly for all fields. `.options(...recordAccessReferences)` limits the record access a grant may choose and keeps the option names typed on the resource reference; `.default(reference)` sets the value used when a grant chooses nothing. The references must apply to the selected collection. Omitting options offers every registered record access that applies.",
+          "sha256": "92c9dba991f9a5039b401949ae01d8eb801f428f17e0e6441ec473886569ba8c"
+        },
+        {
+          "id": "E43",
+          "kind": "qa",
+          "path": "artifacts/retro.json",
+          "observation": "自述阻塞：create 只授权导致 POST 500，根因为 createOne 回读需 read；改进项含“create 与回读权限关系未在指引说明”与“内置 recordsIOwn 依赖 ownerId 列”。",
+          "lines": [
+            4,
+            30
+          ],
+          "excerpt": "  \"blockers\": [\n    {\n      \"phase\": \"repair\",\n      \"title\": \"已认证用户 POST /tickets 返回 500（提交工单失败）\",\n      \"symptom\": \"员工登录后提交工单，接口 500；同一权限下 GET 列表与详情正常。\",\n      \"rootCause\": \"createOne 插入后会回读新记录，回读需要 read 权限；ticketCreate 只授予了 .create(...)，且员工 create 动作的 record scope 未限定，回读时权限不足。\",\n      \"resolution\": \"让 ticketCreate 同时授予 .read(READ_FIELDS)，并把员工权限集中 create 动作的 record scope 设为 it.ownsTickets，使回读只能命中本人的工单。补充了端到端集成测试覆盖该路径。\",\n      \"cost\": \"约一次运行期排错 + 一次数据库重建验证\",\n      \"status\": \"resolved\"\n    }\n  ],\n  \"improvements\": [\n    {\n      \"category\": \"skills-docs\",\n      \"title\": \"defineDatabasePermission 的 create 与回读权限关系未在指引中说明\",\n      \"detail\": \"Repository.createOne 会回读插入记录，因此仅有 .create() 的权限会在提交时报 500，而错误发生在写入之后，容易误判为业务校验或鉴权问题。\",\n      \"suggestedChange\": \"在 authorization 相关 Skill 中明确：授予 create 时通常需要同时授予被返回字段的 read，并说明 record scope 会决定此次回读能命中的行。\",\n      \"mechanizable\": true\n    },\n    {\n      \"category\": \"skills-docs\",\n      \"title\": \"内置 recordsIOwn 依赖 ownerId 列命名\",\n      \"detail\": \"工单表用 submitterId 表示归属，无法直接复用 recordsIOwn，需要自行 defineRecordAccess 并处理非 user principal 返回 false。\",\n      \"suggestedChange\": \"在 record access 文档中提示该内置项对列名的要求，并给出按主键列自定义归属（含 principal 类型判断）的最小示例。\",\n      \"mechanizable\": true\n    }\n  ]",
+          "sha256": "3d3594538ae4fb465aab15848259473c2a65fb50a1600a4d29b917c466f37050"
+        }
+      ],
+      "fingerprint": "6cc41f57858c0227595d0078f708934044db079efd527ac3bd05a23ec602d308"
     },
     {
       "id": "494:36641592184:1:F1",
