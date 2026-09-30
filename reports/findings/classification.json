@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "inputHash": "eb930573873a7ba6e0816c888f9362d2285a0b283ebd7bec32cc3162bd205232",
+  "inputHash": "d71d5ff280d2bffb208b01c875d4821f5a5b32d17f6cf54dfbe76e249634e2e8",
   "sources": [
     {
       "id": "460:36434284393:1:F2",
@@ -196,6 +196,21 @@
       "id": "492:36641581542:1:F1",
       "report": "492:36641581542:1",
       "fingerprint": "27ad20f95b0e6bf6d905a543e7cdd19893bb4f04e3fa58e4d36fb3df204e3a18"
+    },
+    {
+      "id": "493:36641586376:1:F1",
+      "report": "493:36641586376:1",
+      "fingerprint": "677e1e856966e7b4c8a7abe19bd8daae63d70543dfc1773e6c6ea4a3bed08504"
+    },
+    {
+      "id": "493:36641586376:1:F2",
+      "report": "493:36641586376:1",
+      "fingerprint": "4267dadb3e646ad4432f321fa9e4e285c4042cae5e679e24aa32ba93d57dc70d"
+    },
+    {
+      "id": "493:36641586376:1:F4",
+      "report": "493:36641586376:1",
+      "fingerprint": "6cc41f57858c0227595d0078f708934044db079efd527ac3bd05a23ec602d308"
     },
     {
       "id": "494:36641592184:1:F1",
@@ -501,9 +516,10 @@
       ]
     },
     {
-      "title": "写权限未声明 read 字段时写后回读抛 READ_FORBIDDEN，端到端流程指引未强调",
-      "reason": "单独保留。496:F3 的 E14 显示 repository.createOne 在写入后以 validateSelect(..., this.readContext(collection)) 回读返回字段，因此写权限必须能读取自身结果；E10 显示 runtime-api.md 的端到端流程只提醒包含服务端写入字段，未说明 create/update 权限还需同时声明所需 read 字段（该提示仅出现在 repository-routes.md 的“read plus update”示例）。触发条件（为写权限仅声明 create/update 字段并执行 createOne/updateOne）、期望（写入成功并按策略回读）、实际（READ_FORBIDDEN 失败）与修复方向（在 runtime-api.md 补充需同时声明 read 字段）构成一条独立指引缺口，与 router.use('*') 泄漏等同报告发现根因不同，故单独保留。",
+      "title": "createOne 写后回读使 create/update 授权必须同时授予 read，授权指引未说明",
+      "reason": "跨报告合并（同报告不得再合入）。493:F1 的 E4 显示 Repository.createOne 在插入前以 this.readContext(collection) 调 validateSelect，E14/E29/E28 显示授权 README 称 create 不读记录范围、fluent-registration.md 只说 read 是输出字段而未提 create 需 read，E33 显示应用被迫追加 .read(READ_FIELDS)；496:F3 的 E14 引用同一 repository.js createOne 的 validateSelect(..., this.readContext(collection)) 回读代码（sha256 同为 31b67e0d…），E10 显示 runtime-api.md 端到端流程同样未强调写权限需声明 read 字段。两者触发条件（仅授予 create/update 而未授予 read）、期望（成功写入并按策略回读，或指引明确要求补 read）、实际（写后回读 READ_FORBIDDEN／500）与修复方向（在授权指引中说明 create 需 read 并给最小示例）一致，属同一错误指引缺口，故合并。",
       "members": [
+        "493:36641586376:1:F1",
         "496:36641602107:1:F3"
       ]
     },
@@ -513,15 +529,29 @@
       "members": [
         "496:36641602107:1:F4"
       ]
+    },
+    {
+      "title": "内置 recordsIOwn 文档暗示 params.field 可适配任意归属列，实际要求列名恰为 ownerId",
+      "reason": "单独保留。E10 显示 record-access.js 把 requiredFields 固定为 ownerId/createdById 且 resolver 用 params?.field ?? 'ownerId'，E13 显示 options.js 以 databaseRecordAccessApplicable 过滤，缺 ownerId 的集合根本不会列出该内置项，E28 显示 business-module.md 却称可 configurable with params.field，E34 显示应用工单表用 submitterId 只能自定义 it.ownsTickets。根因是内置 record access 的列名约束与文档暗示不符，属独立的错误说明／指引缺口；与 493:F1（createOne 回读需 read）根因不同，且 493:F1/F4 同报告不可合并且本条与 493:F1 同报告，故单独保留。",
+      "members": [
+        "493:36641586376:1:F2"
+      ]
+    },
+    {
+      "title": "create 回读权限不足时缺少指向性指引与诊断（READ_FORBIDDEN 未提示 create 需 read）",
+      "reason": "单独保留。E11 显示 composeDatabasePolicies 对每集合初始 read=false、仅有对应授权动作才置 true，E14 引用 repository.createOne 的写后回读路径，E29 显示 fluent-registration.md 未说明 create 需 read，E43 为 retro 记录的同一阻塞。其根因与 493:F1／496:F3 相同，但 493:F1 与本条同属报告 493，按“同一份报告中的两条发现禁止合并”的规则不能并入同一组，故从“缺少可定位诊断/错误码”的改进视角单独保留。",
+      "members": [
+        "493:36641586376:1:F4"
+      ]
     }
   ],
   "classifier": {
     "engine": "pi",
     "model": "deepseek-v4.1-flash",
     "version": "0.86.1",
-    "runId": "36662809204",
+    "runId": "36663749982",
     "attempt": 1,
     "controlSha": "0f72d9b81f981f10501c5ac0ee0e7d786f1f4698",
-    "completedAt": "2026-09-30T03:06:51.366Z"
+    "completedAt": "2026-09-30T03:20:21.558Z"
   }
 }
