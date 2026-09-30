@@ -1,4 +1,4 @@
-import { Home } from 'lucide-react';
+import { BookOpen, Home } from 'lucide-react';
 import {
   defineAppRoutes,
   defineSettingsRoutes,
@@ -15,6 +15,20 @@ const appRoutes: AppClientRouteContribution = defineAppRoutes([
     name: 'home',
     navigation: { title: 'navigation.home', icon: Home },
     path: '/',
+  },
+  {
+    // Reading and maintaining the internal document library. Access is a page
+    // grant; the record scope and the write allowlist are enforced by the
+    // server, so this declaration only decides whether the menu entry appears.
+    auth: 'required',
+    authz: {
+      resource: { type: 'page', id: 'library.documents' },
+      action: 'access',
+    },
+    componentLoader: () => import('./pages/library/index.js'),
+    name: 'library',
+    navigation: { title: 'library.title', icon: BookOpen },
+    path: '/library',
   },
   {
     auth: 'guest',
