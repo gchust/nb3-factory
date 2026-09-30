@@ -10,6 +10,7 @@ import {
 } from '@/components/ui/tooltip';
 
 import { ThemeSettings } from '../../theme/index.js';
+import { InboxEntry } from './inbox-entry.js';
 import { UserMenu } from './user-menu.js';
 
 const ACTION_LINK_CLASS =
@@ -61,6 +62,7 @@ export function HeaderActions({
           </Tooltip>
         ) : null}
         <ThemeSettings />
+        <InboxEntry />
         <UserMenu />
       </div>
     </TooltipProvider>

@@ -94,6 +94,24 @@ describe('app client routes', () => {
     // The landing page opted out of page authorization, so it is reachable by every signed-in user.
     expect(pageAuthorizations(resolved.routes)).toEqual([
       { name: 'home', authorizedAs: null },
+      { name: 'service-dashboard', authorizedAs: 'service.dashboard' },
+      { name: 'service-customers', authorizedAs: 'service.customers' },
+      { name: 'service-devices', authorizedAs: 'service.devices' },
+      { name: 'service-tickets', authorizedAs: 'service.tickets' },
+      // The create dialog and the detail drawer render inside the list page's check, so they declare none of
+      // their own. A `null` here means "the parent already decided", not "everyone" — the parent's page grant is
+      // what a stored permission references.
+      { name: 'service-ticket-new', authorizedAs: null },
+      { name: 'service-ticket-detail', authorizedAs: null },
+      { name: 'service-inspections', authorizedAs: 'service.inspections' },
+      { name: 'service-inspection-new', authorizedAs: null },
+      { name: 'service-inspection-detail', authorizedAs: null },
+      { name: 'service-knowledge', authorizedAs: 'service.knowledge' },
+      { name: 'service-manuals', authorizedAs: 'service.manuals' },
+      // The message centre is a personal surface open to every signed-in user,
+      // so it opts out of page authorization the same way the landing page does.
+      { name: 'service-notifications', authorizedAs: null },
+      { name: 'service-assistant', authorizedAs: 'service.assistant' },
     ]);
   });
 });
