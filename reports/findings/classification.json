@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "inputHash": "a9a1fc6dfa541fe8c938a3b2b9dceadf3d7719055196123fbe5c5971227a2472",
+  "inputHash": "8b955302ad9d1fc124cb129b982c963a8040d25ef3d069cc4c9e4cd53cd766ef",
   "sources": [
     {
       "id": "460:36434284393:1:F2",
@@ -196,6 +196,21 @@
       "id": "492:36641581542:1:F1",
       "report": "492:36641581542:1",
       "fingerprint": "27ad20f95b0e6bf6d905a543e7cdd19893bb4f04e3fa58e4d36fb3df204e3a18"
+    },
+    {
+      "id": "494:36641592184:1:F1",
+      "report": "494:36641592184:1",
+      "fingerprint": "717fbb8d6eea2f08068d48e8fa843d16a5873d6cb3bed29e3fc4734559a2def6"
+    },
+    {
+      "id": "494:36641592184:1:F2",
+      "report": "494:36641592184:1",
+      "fingerprint": "40e443c978002b9b462527202603f9c57a397a1ba7da6f1d57c8c37099bad89f"
+    },
+    {
+      "id": "494:36641592184:1:F3",
+      "report": "494:36641592184:1",
+      "fingerprint": "73ee734ea13ec5aed760b3b13600973f0017dcb1a77b777d493351b28451caaf"
     }
   ],
   "groups": [
@@ -287,10 +302,11 @@
       ]
     },
     {
-      "title": "记录访问 AND 组合子 allScopes 已在包内实现但未从公开入口导出",
-      "reason": "单独保留。E2/E3 显示 allScopes/noRowsScope/idsScope 已在 scope.d.ts 实现，但 index.d.ts 只导出 anyScope/condition/scopeAst，E31 显示应用自写 everyScope；属该包特定的缺失导出。与 463:F3 的 FILE_COLUMNS 是不同包、不同符号的独立导出缺口，不构成同一根因，故单独保留。",
+      "title": "记录访问 AND 组合子 allScopes/idsScope 已在包内实现但未从公开入口导出",
+      "reason": "跨报告合并。462:F2 的 E2/E3 显示 allScopes/noRowsScope/idsScope 已在 app-plugin-authorization 的 scope.d.ts 实现，authorizer.js 内部也使用 allScopes/anyScope，但 index.d.ts 只导出 anyScope/condition/scopeAst，E31 显示应用自写 everyScope；494:F3 的 E3/E6 为同一 scope.js 与同一 index.d.ts 导出清单证据，E29 显示应用在 app/server/library/scope.ts 复制 allScopes。触发条件（应用需对多个 DatabaseScope 做 AND 折叠）、期望（从该包服务端入口导入 allScopes 等组合子）与实际（未导出、应用复制实现）一致，属同一导出缺口；与 463:F3 的 FILE_COLUMNS（不同包、不同符号）根因不同，故分开。",
       "members": [
-        "462:36434301919:1:F2"
+        "462:36434301919:1:F2",
+        "494:36641592184:1:F3"
       ]
     },
     {
@@ -364,10 +380,11 @@
       ]
     },
     {
-      "title": "records 选择只接受字符串 id，整数主键定向共享 500",
-      "reason": "单独保留。E1 显示 parseRecordSelection 只接受非空字符串 id，E14 显示字符串 id 用于 integer 字段抛 INVALID_FILTER，E15/E129 显示 increments 主键集合触发 500，E25 记录已解决；根因在选择器/主键类型，区别于 477:F1 的集合命名口径不一致，故单独保留。",
+      "title": "selection.records 只接受字符串 id，整数自增主键无法按记录授权（定向共享 500）",
+      "reason": "跨报告合并。475:F3 的 E1/E14/E15/E129 显示 parseRecordSelection 只接受非空字符串 id，字符串 id 用于 integer 主键时被 Repository 过滤器校验以 INVALID_FILTER 拒绝、increments 主键集合触发 500，E25 记录以字符串 uuid 主键绕过；494:F1 的 E1/E49 显示选择器与 RecordSelection 类型只接受非空字符串 id，E7 显示 integer/increments 只接受 number、string 会被 INVALID_FILTER 拒绝，E30 显示 documents 为 increments 主键，E29 显示应用只能改用自造 recordAccess 携带数字 id。触发条件（对整数自增主键使用 selection.records）、期望（规则可写入并按该记录 id 精确授权/限制）与实际（写入 TypeError 或查询期 500）一致，属同一选择器/主键类型根因；区别于 477:F1 的集合命名口径不一致，故与该发现分开。",
       "members": [
-        "475:36498925234:1:F3"
+        "475:36498925234:1:F3",
+        "494:36641592184:1:F1"
       ]
     },
     {
@@ -411,15 +428,22 @@
       "members": [
         "478:36522310216:1:F2"
       ]
+    },
+    {
+      "title": "共享/限制/默认访问 Skill 推荐 records selection 却只给字符串主键示例，未提示主键类型限制",
+      "reason": "单独保留。494:F2 的 E13/E14 显示 sharing-rules Skill 明确推荐 “Use explicit records for one handover” 并以 selection.records(['quote-7'])、selection.records(['project-3']) 演示单条共享，restriction/default-access Skill 也把 records(ids) 列为可用选择；E1/E49 显示 parseRecordSelection 与 RecordSelection 只接受非空字符串 id，E7 显示字符串 id 用于 integer 主键会在查询期被 INVALID_FILTER 拒绝，三个 Skill 均未提示该限制。这是推荐路径与实现能力不一致的指引缺口（缺失/误导性说明），与同报告 494:F1 的框架选择器根因不同，且同一报告两条发现禁止合并，故单独保留。",
+      "members": [
+        "494:36641592184:1:F2"
+      ]
     }
   ],
   "classifier": {
     "engine": "pi",
     "model": "deepseek-v4.1-flash",
     "version": "0.86.1",
-    "runId": "36647888065",
+    "runId": "36650382362",
     "attempt": 1,
     "controlSha": "0f72d9b81f981f10501c5ac0ee0e7d786f1f4698",
-    "completedAt": "2026-09-29T23:59:30.143Z"
+    "completedAt": "2026-09-30T00:28:35.020Z"
   }
 }
