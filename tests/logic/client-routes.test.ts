@@ -91,9 +91,12 @@ describe('app client routes', () => {
     // that requires sign-in adds an entry here, because that is a new grant somebody has to be given.
     const resolved = resolveRoutes();
 
-    // The landing page opted out of page authorization, so it is reachable by every signed-in user.
+    // The landing page and the materials page opted out of page authorization, so they are reachable by every signed-in
+    // user. `materials` is private through the data it returns — every query is scoped to the caller — not through a
+    // page grant, which is why it also carries no stored grant.
     expect(pageAuthorizations(resolved.routes)).toEqual([
       { name: 'home', authorizedAs: null },
+      { name: 'materials', authorizedAs: null },
     ]);
   });
 });
