@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "inputHash": "8b955302ad9d1fc124cb129b982c963a8040d25ef3d069cc4c9e4cd53cd766ef",
+  "inputHash": "a95544f7289dbde00c8add37eb3c43d8c7f6f1ca0716fa9e6cd1ad05a15a3d0f",
   "findings": [
     {
       "id": "460:36434284393:1:F2",
@@ -3910,6 +3910,271 @@
         }
       ],
       "fingerprint": "73ee734ea13ec5aed760b3b13600973f0017dcb1a77b777d493351b28451caaf"
+    },
+    {
+      "id": "495:36641597342:1:F2",
+      "report": "495:36641597342:1",
+      "issue": 495,
+      "taskTitle": "项目资料与私有附件",
+      "appVersion": "1.0.0-beta.50",
+      "appTemplate": "@nocobase/app-template-default",
+      "finding": {
+        "id": "F2",
+        "kind": "improvement",
+        "owner": "framework",
+        "confidence": "confirmed",
+        "severity": "minor",
+        "status": "open",
+        "title": "AppRouterFactory 返回未参数化 Hono，类型化环境无法在贡献边界声明",
+        "detail": "`AppRouterFactory<TApplication>` 的返回类型是 `Hono | Promise<Hono>`，即 BlankEnv；使用 `Hono<AuthEnv>` 的处理器不能直接作为工厂返回值，必须再包一层普通 Hono。repair-1 因此在 attachments.ts、material-content.ts、materials.ts 三处命中 TS2345。",
+        "impact": "每个需要读取 context.get('auth') 的应用贡献都要写同样的包装样板，且错误信息指向 Hono 内部 handler 逆变，定位成本高。",
+        "suggestedChange": "把工厂返回类型放宽为 `Hono<any> | Promise<Hono<any>>` 或引入环境泛型参数，使贡献可声明自己的 Hono env。",
+        "diagnosis": {
+          "category": "capability-gap",
+          "trigger": "在 defineApiRoutes 中直接返回 `new Hono<AuthEnv>()`。",
+          "expected": "类型化子路由可作为路由贡献工厂的返回值。",
+          "actual": "TS2345：Hono<AuthEnv> 不能赋给 Hono<BlankEnv>，需外层再包一个普通 Hono。",
+          "workaround": "外层 `new Hono()`，内层 `new Hono<AuthEnv>()` 用 `router.route()` 挂载。",
+          "acceptance": "一个 usage（无 type assertion、无包装样板）通过全量 tsc，且 context.get('auth') 仍具类型。"
+        },
+        "evidence": [
+          "E64",
+          "E69",
+          "E82",
+          "E74"
+        ]
+      },
+      "targets": [
+        "@nocobase/app-server"
+      ],
+      "paths": [
+        ".agents/skills/nocobase-app-development/references/server-routes.md",
+        "packages/@nocobase/app-server/dist/router/routes.d.ts"
+      ],
+      "evidence": [
+        {
+          "id": "E64",
+          "kind": "code",
+          "path": "packages/@nocobase/app-server/dist/router/routes.d.ts",
+          "observation": "`AppRouterFactory<TApplication> = (app) => Hono | Promise<Hono>`：返回类型是未参数化的 Hono（BlankEnv），未暴露环境类型参数。",
+          "lines": [
+            1,
+            2
+          ],
+          "excerpt": "import type { Hono } from 'hono';\nexport type AppRouterFactory<TApplication> = (app: TApplication) => Hono | Promise<Hono>;",
+          "sha256": "a85b078705c8bdf8ee04dec1a946f39708d1aff68d1581562abe4c20ebabcb74"
+        },
+        {
+          "id": "E69",
+          "kind": "skill",
+          "path": "app/.agents/skills/nocobase-app-development/references/server-routes.md",
+          "observation": "app-development 服务端路由参考：外层 new Hono()，内层 new Hono<AuthorizationEnv>() 用 router.route 挂载到子路径——这是类型正确的 documented 组合。",
+          "lines": [
+            55,
+            85
+          ],
+          "excerpt": "```ts\nimport {\n  authorizationToken,\n  type AuthorizationEnv,\n} from '@nocobase/app-plugin-authorization';\n\nexport const orderAdminRoutes: AppApiRouteContribution<Application> =\n  defineApiRoutes((app) => {\n    const router = new Hono();\n    const routes = new Hono<AuthorizationEnv>();\n    const auth = app.container.resolve(authenticationToken);\n    const authorization = app.container.resolve(authorizationToken);\n\n    routes.use('*', auth.required(), authorization.middleware());\n    routes.get('/', async (context) => {\n      const allowed = await context.get('authz').can({\n        resource: { type: 'settings', id: 'orders-admin' },\n        action: 'read',\n      });\n      if (!allowed) {\n        return context.json({ error: 'Not allowed.' }, 403);\n      }\n\n      return context.json({ data: await listOrders() });\n    });\n\n    router.route('/orders-admin', routes);\n    return router;\n  });\n```\n",
+          "sha256": "cbf30ba33ca0af760a34442e92ac668c0ec8a312423da0690a98f3dfd0099b25"
+        },
+        {
+          "id": "E82",
+          "kind": "log",
+          "path": "artifacts/verify-2.log",
+          "observation": "repair-1 后全量 typecheck 失败（exit 2）：materials.ts(217,26) TS2769（string[] 作为 filter）、attachments.ts(68,7) TS2353（uploadOne 位置）、attachments.ts(73,32) TS2345（Hono<AuthEnv> 返回不匹配 AppRouterFactory）。",
+          "lines": [
+            15,
+            24
+          ],
+          "excerpt": "$ tsc --noEmit && tsc -p tsconfig.node.json --noEmit && tsc -p tsconfig.server.json --noEmit\nserver/providers/materials.ts(217,26): error TS2769: No overload matches this call.\n  Overload 1 of 2, '(options: FindManyOptions<MaterialAttachmentRecord> & { readonly select: (select: SelectBuilder<MaterialAttachmentRecord, never, false, false, Record<...>>) => AnySelectBuilder<...>; }): RepositoryQuery<...>', gave the following error.\n    Type 'string[]' is not assignable to type 'FilterShorthandValue | undefined'.\n  Overload 2 of 2, '(options?: FindManyOptions<MaterialAttachmentRecord> | undefined): RepositoryQuery<MaterialAttachmentRecord>', gave the following error.\n    Type 'string[]' is not assignable to type 'FilterShorthandValue | undefined'.\nserver/routes/attachments.ts(68,7): error TS2353: Object literal may only specify known properties, and 'uploadOne' does not exist in type 'FileRepositoryApiExposure<Principal>'.\nserver/routes/attachments.ts(73,32): error TS2345: Argument of type '(app: Application) => Promise<Hono<AuthEnv, BlankSchema, \"/\">>' is not assignable to parameter of type 'AppRouterFactory<Application<AppConfigAccessor>>'.\n  Type 'Promise<Hono<AuthEnv, BlankSchema, \"/\">>' is not assignable to type 'Hono<BlankEnv, BlankSchema, \"/\"> | Promise<Hono<BlankEnv, BlankSchema, \"/\">>'.\n    Type 'Promise<Hono<AuthEnv, BlankSchema, \"/\">>' is not assignable to type 'Promise<Hono<BlankEnv, BlankSchema, \"/\">>'.",
+          "sha256": "9e1377251cf64ca5d04ffe121c7cdc30f521da403e18e691139c4134343e0d1e"
+        },
+        {
+          "id": "E74",
+          "kind": "code",
+          "path": "app/server/routes/attachments.ts",
+          "observation": "应用装配：owner scope + create defaults 的 RepositoryPolicy，`actions:{uploadOne:{maxSize}}`，仅在 `materialAttachments:uploadOne` 上挂 auth.required()，把带类型子路由挂进普通 Hono。",
+          "lines": [
+            44,
+            86
+          ],
+          "excerpt": "/** Every row this principal may read or produce belongs to them, and every upload is stamped with their id. */\nconst policy = (principal: Principal): RepositoryPolicy => ({\n  read: { scope: { ownerId: principal.id }, fields: [...FILE_COLUMNS] },\n  create: {\n    scope: { ownerId: principal.id },\n    defaults: { ownerId: principal.id },\n  },\n  update: false,\n  delete: false,\n});\n\nconst [pluginApiRoute] = defineFileRepositoryApiRoutes<Principal>({\n  principal: (context) => {\n    const session = (context as Context<AuthEnv>).get('auth');\n    return session ? { id: session.user.id } : null!;\n  },\n  repositories: [\n    {\n      name: NAME,\n      collection: NAME,\n      disk: 'local',\n      accessPath: ACCESS_PATH,\n      policy,\n      actions: { uploadOne: { maxSize: 20 * 1024 * 1024 } },\n    },\n  ],\n});\n\nexport default defineApiRoutes(async (app: Application) => {\n  const router = new Hono<AuthEnv>();\n  const auth = app.container.resolve(authenticationToken);\n\n  // Scoped to the exact action path this application exposes: no wildcard, so nothing the plugin may add later is\n  // authenticated by accident, and no other contribution's path is affected.\n  router.use(`/${NAME}:uploadOne`, auth.required());\n  router.route('/', await pluginApiRoute.createRouter(app));\n\n  // `defineApiRoutes` returns a plain `Hono`; the typed router is mounted into one so the\n  // handlers keep their `AuthEnv` context (`context.get('auth')`) without widening it away.\n  const root = new Hono();\n  root.route('/', router);\n  return root;\n});",
+          "sha256": "c21223ad94f1e3b3e8bf63a4dd3a323f5b5055586ff7fbf5400a99407f0f2ca6"
+        }
+      ],
+      "fingerprint": "d9b56867181aa68f102deee125a38f61dd81794410a7fb27bf507e81a5e8dffd"
+    },
+    {
+      "id": "495:36641597342:1:F3",
+      "report": "495:36641597342:1",
+      "issue": 495,
+      "taskTitle": "项目资料与私有附件",
+      "appVersion": "1.0.0-beta.50",
+      "appTemplate": "@nocobase/app-template-default",
+      "finding": {
+        "id": "F3",
+        "kind": "improvement",
+        "owner": "documentation",
+        "confidence": "confirmed",
+        "severity": "minor",
+        "status": "open",
+        "title": "nocobase-db Skill 说明了 filter 契约但缺少组合过滤示例",
+        "detail": "Skill 写明 filter/values/select/sort 接受 builder 回调或 JSON AST、不接受简写字符串数组，但示例只有等值 JSON AST；and/or/in 与 string().eq 的完整写法未给出，Agent 在处理 id 集合时先写了字符串数组并在 typecheck 命中 TS2769。",
+        "impact": "复杂归属校验需要额外阅读 dist 类型或试错，增加了首轮 typecheck 失败与返工。",
+        "suggestedChange": "在 filter 章节各补一个 builder 回调示例（and/or、string().eq、in）与等价 JSON AST 示例。",
+        "diagnosis": {
+          "category": "guidance-gap",
+          "trigger": "按 Skill 的 filter 段落实现“owner 匹配且 id 在集合内”的过滤。",
+          "expected": "Skill 直接给出组合过滤的回调与 JSON AST 两种写法。",
+          "actual": "只有等值示例，Agent 误用字符串数组，tsc 报 FilterShorthandValue 错误。",
+          "workaround": "阅读 @nocobase/db dist 类型，改用 `filter.and([...])` 组合。",
+          "acceptance": "仅凭 Skill 即可写出 and/or/string().eq/in 过滤且一次通过 tsc。"
+        },
+        "evidence": [
+          "E71",
+          "E77",
+          "E82"
+        ]
+      },
+      "targets": [
+        "app/.agents/skills/nocobase-db/SKILL.md"
+      ],
+      "paths": [
+        ".agents/skills/nocobase-db/SKILL.md"
+      ],
+      "evidence": [
+        {
+          "id": "E71",
+          "kind": "skill",
+          "path": "app/.agents/skills/nocobase-db/SKILL.md",
+          "observation": "db Skill：filter/values/select/sort 接受 builder 回调或等价 JSON AST，明确不接受简写字符串数组；Repository 自身不应用权限，需在进入 filter 前决定可见性。",
+          "lines": [
+            238,
+            248
+          ],
+          "excerpt": "`filter`, `values`, `select` and `sort` each accept a builder callback or the equivalent serializable JSON AST, and mean the same thing either way. They do not accept a shorthand string array such as `['id', 'name']` or `['-createdAt']`. Field names are Collection logical names, never column names. A write returns a result object — the record is `result.record`, alongside `result.version` and the created relation targets — rather than the record itself. `findMany` is awaited for an array or iterated asynchronously to consume a large result incrementally.\n\nThe methods are `findOne`, `findMany`, `count`, `exists`, `aggregate`, `groupBy`, `createOne`, `createMany`, `updateOne`, `updateMany`, `upsertOne`, `deleteOne` and `deleteMany`; `describeMutation` and `validateMutation` report capabilities and pre-validate input, and `withPolicy` returns a scoped Repository.\n\nBoundaries that are easy to get wrong:\n\n- `findOne` takes the first match; `updateOne` and `deleteOne` require exactly one; `upsertOne` requires a unique equality condition.\n- `updateMany` and `deleteMany` refuse an empty scope. Pass `all: true` only when the task explicitly calls for every row — never to make an error go away.\n- `createMany` and `updateMany` do not accept nested relation writes. `createOne` accepts `create` and `connect` on a relation, not the full set.\n- `disconnect` detaches; `delete` removes the target record. A relation target update or delete stays inside the current parent record's scope.\n- Repository does not apply the application's permissions. A route handler decides what the caller may see and change _before_ anything reaches `filter`, `values` or `select`. `writePolicy` defaults to `true` for an internal Repository and `false` for one reached from an API route, so a route-facing Repository needs an explicit allow list.",
+          "sha256": "f97c07a45a9d49c1d933ddbceeabcc9afe267b1356a2ded1a3da0dd56b54011c"
+        },
+        {
+          "id": "E77",
+          "kind": "code",
+          "path": "app/server/providers/materials.ts",
+          "observation": "应用使用 FilterBuilder 组合：`filter.and([string().eq, or([...])])` 校验附件归属与存在性。",
+          "lines": [
+            208,
+            238
+          ],
+          "excerpt": "  /** An attachment the caller may link: it exists, belongs to them, and is one of the accepted types. */\n  private async resolveAttachmentIds(\n    ownerId: string,\n    attachmentIds: readonly string[],\n  ): Promise<string[]> {\n    const unique = [...new Set(attachmentIds.filter(Boolean))];\n    if (!unique.length) return [];\n\n    const found = await this.attachments.findMany({\n      filter: (filter) =>\n        filter.and([\n          filter.string('ownerId').eq(ownerId),\n          filter.or(unique.map((id) => filter.string('id').eq(id))),\n        ]),\n    });\n    if (found.length !== unique.length) {\n      throw new MaterialsError(\n        'ATTACHMENT_NOT_FOUND',\n        'One of the selected attachments is missing or belongs to someone else.',\n      );\n    }\n    for (const attachment of found) {\n      if (!MATERIAL_ATTACHMENT_EXTENSIONS.includes(attachment.ext)) {\n        throw new MaterialsError(\n          'ATTACHMENT_TYPE_NOT_ALLOWED',\n          `Only ${MATERIAL_ATTACHMENT_EXTENSIONS.join(', ')} attachments are allowed.`,\n        );\n      }\n    }\n    return unique;\n  }",
+          "sha256": "f2750c647c6442891897f42424ed54a31bfec4d2df33a021da7be92528041325"
+        },
+        {
+          "id": "E82",
+          "kind": "log",
+          "path": "artifacts/verify-2.log",
+          "observation": "repair-1 后全量 typecheck 失败（exit 2）：materials.ts(217,26) TS2769（string[] 作为 filter）、attachments.ts(68,7) TS2353（uploadOne 位置）、attachments.ts(73,32) TS2345（Hono<AuthEnv> 返回不匹配 AppRouterFactory）。",
+          "lines": [
+            15,
+            24
+          ],
+          "excerpt": "$ tsc --noEmit && tsc -p tsconfig.node.json --noEmit && tsc -p tsconfig.server.json --noEmit\nserver/providers/materials.ts(217,26): error TS2769: No overload matches this call.\n  Overload 1 of 2, '(options: FindManyOptions<MaterialAttachmentRecord> & { readonly select: (select: SelectBuilder<MaterialAttachmentRecord, never, false, false, Record<...>>) => AnySelectBuilder<...>; }): RepositoryQuery<...>', gave the following error.\n    Type 'string[]' is not assignable to type 'FilterShorthandValue | undefined'.\n  Overload 2 of 2, '(options?: FindManyOptions<MaterialAttachmentRecord> | undefined): RepositoryQuery<MaterialAttachmentRecord>', gave the following error.\n    Type 'string[]' is not assignable to type 'FilterShorthandValue | undefined'.\nserver/routes/attachments.ts(68,7): error TS2353: Object literal may only specify known properties, and 'uploadOne' does not exist in type 'FileRepositoryApiExposure<Principal>'.\nserver/routes/attachments.ts(73,32): error TS2345: Argument of type '(app: Application) => Promise<Hono<AuthEnv, BlankSchema, \"/\">>' is not assignable to parameter of type 'AppRouterFactory<Application<AppConfigAccessor>>'.\n  Type 'Promise<Hono<AuthEnv, BlankSchema, \"/\">>' is not assignable to type 'Hono<BlankEnv, BlankSchema, \"/\"> | Promise<Hono<BlankEnv, BlankSchema, \"/\">>'.\n    Type 'Promise<Hono<AuthEnv, BlankSchema, \"/\">>' is not assignable to type 'Promise<Hono<BlankEnv, BlankSchema, \"/\">>'.",
+          "sha256": "9e1377251cf64ca5d04ffe121c7cdc30f521da403e18e691139c4134343e0d1e"
+        }
+      ],
+      "fingerprint": "f98ece15e5c187d4a201c5d197d952cbb4a09867771541a10b58f1f7050117d8"
+    },
+    {
+      "id": "495:36641597342:1:F6",
+      "report": "495:36641597342:1",
+      "issue": 495,
+      "taskTitle": "项目资料与私有附件",
+      "appVersion": "1.0.0-beta.50",
+      "appTemplate": "@nocobase/app-template-default",
+      "finding": {
+        "id": "F6",
+        "kind": "misleading",
+        "owner": "documentation",
+        "confidence": "confirmed",
+        "severity": "major",
+        "status": "open",
+        "title": "认证 Skill 的路由示例无法通过类型检查",
+        "claimed": "protecting-routes.md 的示例声明 `AppApiRouteContribution<Application>`，在 defineApiRoutes 回调里直接从 `new Hono<AuthEnv>()` 返回类型化子路由，读者会认为这是可用模式。",
+        "observed": "defineApiRoutes 的工厂类型是 `AppRouterFactory`，返回未参数化的 `Hono`；工程按该示例实现后 tsc 报 TS2345。同一仓库的 app-development `server-routes.md` 给出的外层普通 Hono + `router.route()` 挂载写法才是类型正确的。",
+        "detail": "两条 Skill 指引互相矛盾：认证 Skill 展示“直接返回 typed Hono”，服务端路由参考展示“typed 子路由必须再包一层”。Agent 更可能先读到前者，从而在三处路由重复犯错。",
+        "impact": "制作成本增加与错误定位困难：错误信息落在 Hono 泛型内部，非框架作者不易判断是自身写法还是示例问题。",
+        "suggestedChange": "把 protecting-routes.md 示例改为外层 `new Hono()`、内层 `new Hono<AuthEnv>()` 并用 `router.route()` 挂载，或先修好框架类型后统一示例。",
+        "diagnosis": {
+          "category": "guidance-gap",
+          "trigger": "按认证 Skill 的路由示例，在 defineApiRoutes 回调中直接返回 `new Hono<AuthEnv>()`。",
+          "expected": "示例可原样编译，并展示 auth.required 与受保护子路由的正确装配。",
+          "actual": "tsc 报 TS2345（Hono<AuthEnv> 不能赋给 AppRouterFactory 的 Hono<BlankEnv>），需额外外包一层普通 Hono 才能通过。",
+          "workaround": "放弃示例写法，改用 app-development `server-routes.md` 的外层普通 Hono + `router.route()` 挂载。",
+          "acceptance": "同一示例在仓库内通过全量 tsc，且与 server-routes.md 的写法不再矛盾。"
+        },
+        "evidence": [
+          "E68",
+          "E64",
+          "E69",
+          "E82"
+        ]
+      },
+      "targets": [
+        "@nocobase/app-server"
+      ],
+      "paths": [
+        ".agents/skills/nocobase-app-development/references/server-routes.md",
+        ".agents/skills/nocobase-app-plugin-authentication/references/protecting-routes.md",
+        "packages/@nocobase/app-server/dist/router/routes.d.ts"
+      ],
+      "evidence": [
+        {
+          "id": "E68",
+          "kind": "skill",
+          "path": "packages/@nocobase/app-plugin-authentication/skills/nocobase-app-plugin-authentication/references/protecting-routes.md",
+          "observation": "认证 Skill 的路由示例：`defineApiRoutes((app) => {... return routes; })`，其中 `routes = new Hono<AuthEnv>()` 被直接返回；该文件与 app/.agents 下副本逐字节一致。",
+          "lines": [
+            19,
+            32
+          ],
+          "excerpt": "export const apiRoutes: AppApiRouteContribution<Application> = defineApiRoutes(\n  (app) => {\n    const auth = app.container.resolve(authenticationToken);\n    const routes = new Hono<AuthEnv>();\n\n    routes.use('/orders/*', auth.required());\n    routes.get('/orders', (context) => {\n      const { user, session } = context.get('auth')!;\n      return context.json({ userId: user.id, expiresAt: session.expiresAt });\n    });\n\n    return routes;\n  },\n);",
+          "sha256": "835bdc520d0b737b037e1fa657c04453194bcda96700d013ff1e249c4ab31bbd"
+        },
+        {
+          "id": "E64",
+          "kind": "code",
+          "path": "packages/@nocobase/app-server/dist/router/routes.d.ts",
+          "observation": "`AppRouterFactory<TApplication> = (app) => Hono | Promise<Hono>`：返回类型是未参数化的 Hono（BlankEnv），未暴露环境类型参数。",
+          "lines": [
+            1,
+            2
+          ],
+          "excerpt": "import type { Hono } from 'hono';\nexport type AppRouterFactory<TApplication> = (app: TApplication) => Hono | Promise<Hono>;",
+          "sha256": "a85b078705c8bdf8ee04dec1a946f39708d1aff68d1581562abe4c20ebabcb74"
+        },
+        {
+          "id": "E69",
+          "kind": "skill",
+          "path": "app/.agents/skills/nocobase-app-development/references/server-routes.md",
+          "observation": "app-development 服务端路由参考：外层 new Hono()，内层 new Hono<AuthorizationEnv>() 用 router.route 挂载到子路径——这是类型正确的 documented 组合。",
+          "lines": [
+            55,
+            85
+          ],
+          "excerpt": "```ts\nimport {\n  authorizationToken,\n  type AuthorizationEnv,\n} from '@nocobase/app-plugin-authorization';\n\nexport const orderAdminRoutes: AppApiRouteContribution<Application> =\n  defineApiRoutes((app) => {\n    const router = new Hono();\n    const routes = new Hono<AuthorizationEnv>();\n    const auth = app.container.resolve(authenticationToken);\n    const authorization = app.container.resolve(authorizationToken);\n\n    routes.use('*', auth.required(), authorization.middleware());\n    routes.get('/', async (context) => {\n      const allowed = await context.get('authz').can({\n        resource: { type: 'settings', id: 'orders-admin' },\n        action: 'read',\n      });\n      if (!allowed) {\n        return context.json({ error: 'Not allowed.' }, 403);\n      }\n\n      return context.json({ data: await listOrders() });\n    });\n\n    router.route('/orders-admin', routes);\n    return router;\n  });\n```\n",
+          "sha256": "cbf30ba33ca0af760a34442e92ac668c0ec8a312423da0690a98f3dfd0099b25"
+        },
+        {
+          "id": "E82",
+          "kind": "log",
+          "path": "artifacts/verify-2.log",
+          "observation": "repair-1 后全量 typecheck 失败（exit 2）：materials.ts(217,26) TS2769（string[] 作为 filter）、attachments.ts(68,7) TS2353（uploadOne 位置）、attachments.ts(73,32) TS2345（Hono<AuthEnv> 返回不匹配 AppRouterFactory）。",
+          "lines": [
+            15,
+            24
+          ],
+          "excerpt": "$ tsc --noEmit && tsc -p tsconfig.node.json --noEmit && tsc -p tsconfig.server.json --noEmit\nserver/providers/materials.ts(217,26): error TS2769: No overload matches this call.\n  Overload 1 of 2, '(options: FindManyOptions<MaterialAttachmentRecord> & { readonly select: (select: SelectBuilder<MaterialAttachmentRecord, never, false, false, Record<...>>) => AnySelectBuilder<...>; }): RepositoryQuery<...>', gave the following error.\n    Type 'string[]' is not assignable to type 'FilterShorthandValue | undefined'.\n  Overload 2 of 2, '(options?: FindManyOptions<MaterialAttachmentRecord> | undefined): RepositoryQuery<MaterialAttachmentRecord>', gave the following error.\n    Type 'string[]' is not assignable to type 'FilterShorthandValue | undefined'.\nserver/routes/attachments.ts(68,7): error TS2353: Object literal may only specify known properties, and 'uploadOne' does not exist in type 'FileRepositoryApiExposure<Principal>'.\nserver/routes/attachments.ts(73,32): error TS2345: Argument of type '(app: Application) => Promise<Hono<AuthEnv, BlankSchema, \"/\">>' is not assignable to parameter of type 'AppRouterFactory<Application<AppConfigAccessor>>'.\n  Type 'Promise<Hono<AuthEnv, BlankSchema, \"/\">>' is not assignable to type 'Hono<BlankEnv, BlankSchema, \"/\"> | Promise<Hono<BlankEnv, BlankSchema, \"/\">>'.\n    Type 'Promise<Hono<AuthEnv, BlankSchema, \"/\">>' is not assignable to type 'Promise<Hono<BlankEnv, BlankSchema, \"/\">>'.",
+          "sha256": "9e1377251cf64ca5d04ffe121c7cdc30f521da403e18e691139c4134343e0d1e"
+        }
+      ],
+      "fingerprint": "06fd7f915b20218141c70797a89edd8ed50ead02fb38d4d129f5cd414838a752"
     }
   ]
 }
