@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 
 import {
@@ -98,4 +98,22 @@ it('shows the denied content response without trying a third-party viewer', asyn
   expect(viewer.load).not.toHaveBeenCalled();
   expect(document.querySelector('iframe')).toBeNull();
   expect(screen.queryByRole('button', { name: /Download/ })).toBeNull();
+});
+
+it('explains a corrupt image instead of presenting the filename as a preview', async () => {
+  const imageFile: FileRecord = { ...file('png'), mimeType: 'image/png' };
+  render(<FilePreviewDialog files={[imageFile]} open onOpenChange={vi.fn()} />);
+
+  const image = await screen.findByRole('img', { name: 'attachment.png' });
+  fireEvent.error(image);
+
+  const alert = await screen.findByRole('alert');
+  // The explanation is its own message, not the attachment's name.
+  expect(alert.textContent?.trim()).not.toBe('');
+  expect(alert).not.toHaveTextContent('attachment.png');
+  expect(screen.queryByRole('img')).toBeNull();
+  // Downloading the damaged file is still worth offering.
+  expect(
+    await screen.findByRole('button', { name: /Download file/ }),
+  ).toBeInTheDocument();
 });

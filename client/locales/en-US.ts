@@ -111,6 +111,7 @@ const enUS = {
   actions: {
     close: 'Close',
     save: 'Save',
+    saving: 'Saving…',
     cancel: 'Cancel',
     confirm: 'Confirm',
     language: 'Language',
@@ -130,12 +131,56 @@ const enUS = {
   },
   navigation: {
     home: 'Home',
+    materials: 'Materials',
     open: 'Open navigation',
     close: 'Close navigation',
     expand: 'Expand navigation',
     collapse: 'Collapse navigation',
     label: 'Application navigation',
     breadcrumb: 'Breadcrumb',
+  },
+  materials: {
+    title: 'Project materials',
+    description:
+      'Upload and keep the photos and documents for this project. Only you can see them.',
+    newAction: 'New material',
+    createTitle: 'New material',
+    editTitle: 'Edit material',
+    formDescription:
+      'Give the material a title, then add PNG photos or DOCX documents.',
+    titleLabel: 'Title',
+    titlePlaceholder: 'For example: Site survey photos',
+    titleRequired: 'A title is required.',
+    attachmentsLabel: 'Attachments (PNG or DOCX)',
+    saveFailed: 'The material could not be saved.',
+    uploadFailed: 'The attachment could not be uploaded.',
+    waitForUpload: 'Wait for the upload to finish before saving.',
+    created: 'Material created.',
+    updated: 'Material updated.',
+    deleted: 'Material deleted.',
+    deleteFailed: 'The material could not be deleted.',
+    deleting: 'Deleting…',
+    loadFailedTitle: 'Materials could not be loaded',
+    loadFailedDescription:
+      'Check your connection and try again. Nothing you saved was removed.',
+    retry: 'Try again',
+    emptyTitle: 'No materials yet',
+    emptyDescription:
+      'Upload a PNG photo or a DOCX document and give it a title.',
+    attachmentCount: 'Attachments: {{count}}',
+    viewAction: 'View',
+    editAction: 'Edit',
+    deleteAction: 'Delete',
+    deleteTitle: 'Delete this material?',
+    deleteDescription:
+      '“{{title}}” and its attachment links will be removed. The uploaded files themselves stay in the file library.',
+    savedAt: 'Saved {{date}}',
+    noAttachments: 'This material has no attachments yet.',
+    preview: 'Preview',
+    download: 'Download',
+    attachmentBrokenTitle: 'This image cannot be displayed',
+    attachmentBrokenDescription:
+      'The file is saved, but its content is damaged or not a readable PNG, so it cannot be previewed. Download it to inspect it.',
   },
   dataTable: {
     noResults: 'No results.',
@@ -155,6 +200,13 @@ const enUS = {
   datePicker: {
     placeholder: 'Pick a date',
     rangePlaceholder: 'Pick a date range',
+  },
+  overrides: {
+    '@nocobase/app-plugin-file': {
+      'files.imageFailed': 'This image cannot be displayed',
+      'files.imageFailedDescription':
+        'The file is saved, but it is damaged or not a readable image, so it cannot be previewed. Download it to inspect it.',
+    },
   },
 };
 

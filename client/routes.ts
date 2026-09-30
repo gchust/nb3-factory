@@ -1,4 +1,4 @@
-import { Home } from 'lucide-react';
+import { Home, Images } from 'lucide-react';
 import {
   defineAppRoutes,
   defineSettingsRoutes,
@@ -15,6 +15,16 @@ const appRoutes: AppClientRouteContribution = defineAppRoutes([
     name: 'home',
     navigation: { title: 'navigation.home', icon: Home },
     path: '/',
+  },
+  {
+    // The materials feature belongs to whoever is signed in: the page is private because every API call the page
+    // makes is scoped to the caller, not because a permission grant gates the route. `authz: 'skip'` keeps it that way.
+    auth: 'required',
+    authz: 'skip',
+    componentLoader: () => import('./pages/materials/index.js'),
+    name: 'materials',
+    navigation: { title: 'navigation.materials', icon: Images },
+    path: '/materials',
   },
   {
     auth: 'guest',

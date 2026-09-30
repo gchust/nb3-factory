@@ -729,6 +729,203 @@ describe('app server', () => {
     expect(rejected.status).toBe(401);
   });
 
+  it('keeps materials and their attachment bytes private to their owner', async () => {
+    const app = trackCloseable(
+      await createInstalledStandaloneServer({
+        viteDevUrl: false,
+        env: { APP_PUBLIC_ORIGIN: 'http://localhost' },
+      }),
+    );
+    const baseUrl = `http://localhost${app.application.publicBasePath}`;
+    // Cookie-authenticated writes are CSRF-checked against the request origin, so a browser-like Origin is sent.
+    const writeHeaders = (cookie: string): Record<string, string> => ({
+      cookie,
+      origin: 'http://localhost',
+      'content-type': 'application/json',
+    });
+    const signIn = async (
+      username: string,
+      password: string,
+    ): Promise<string> => {
+      const response = await requestApp(
+        app,
+        `${baseUrl}/api/auth/sign-in/username`,
+        {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ username, password }),
+        },
+      );
+      expect(response.status).toBe(200);
+      return response.headers
+        .getSetCookie()
+        .map((header) => header.split(';')[0])
+        .join('; ');
+    };
+
+    // Signed-out callers may neither list materials nor read an attachment's bytes.
+    expect((await requestApp(app, `${baseUrl}/api/materials`)).status).toBe(
+      401,
+    );
+    expect(
+      (
+        await requestApp(
+          app,
+          `${baseUrl}/uploads/materials/00000000-0000-4000-8000-000000000000.png`,
+        )
+      ).status,
+    ).toBe(401);
+
+    const adminCookie = await signIn('nocobase', 'admin123');
+    const listed = await requestApp(app, `${baseUrl}/api/materials`, {
+      headers: { cookie: adminCookie },
+    });
+    expect(listed.status).toBe(200);
+    const seeded = (
+      (await listed.json()) as {
+        data: Array<{ id: number; title: string; attachments: unknown[] }>;
+      }
+    ).data;
+    // The seed leaves two fictional materials for the administrator.
+    expect(seeded.map((material) => material.title)).toEqual(
+      expect.arrayContaining([
+        'Site survey photos (sample)',
+        'Signed delivery note (sample)',
+      ]),
+    );
+
+    // A title is required.
+    const missingTitle = await requestApp(app, `${baseUrl}/api/materials`, {
+      method: 'POST',
+      headers: writeHeaders(adminCookie),
+      body: JSON.stringify({ title: '   ', attachmentIds: [] }),
+    });
+    expect(missingTitle.status).toBe(400);
+
+    // The administrator uploads a PNG through the File Repository action.
+    const png = Buffer.from(
+      'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==',
+      'base64',
+    );
+    const uploadForm = new FormData();
+    uploadForm.append(
+      'file',
+      new File([new Uint8Array(png)], 'survey.png', { type: 'image/png' }),
+    );
+    const uploaded = await requestApp(
+      app,
+      `${baseUrl}/api/materialAttachments:uploadOne`,
+      {
+        method: 'POST',
+        headers: {
+          cookie: adminCookie,
+          origin: 'http://localhost',
+        },
+        body: uploadForm,
+      },
+    );
+    expect(uploaded.status).toBe(200);
+    const attachment = (
+      (await uploaded.json()) as {
+        data: { record: { id: string; ext: string } };
+      }
+    ).data.record;
+    expect(attachment.ext).toBe('png');
+
+    const created = await requestApp(app, `${baseUrl}/api/materials`, {
+      method: 'POST',
+      headers: writeHeaders(adminCookie),
+      body: JSON.stringify({
+        title: 'Survey with an attachment',
+        attachmentIds: [attachment.id],
+      }),
+    });
+    expect(created.status).toBe(201);
+    const adminMaterial = (
+      (await created.json()) as {
+        data: { id: number; attachments: Array<{ contentUrl: string }> };
+      }
+    ).data;
+    expect(adminMaterial.attachments).toHaveLength(1);
+    expect(adminMaterial.attachments[0]!.contentUrl).toBe(
+      `${app.application.publicBasePath}/uploads/materials/${attachment.id}.png`,
+    );
+
+    // A second, isolated account.
+    const unique = `${Date.now()}${Math.floor(Math.random() * 10_000)}`;
+    const member = `materials${unique}`;
+    const registered = await requestApp(
+      app,
+      `${baseUrl}/api/auth/sign-up/email`,
+      {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          email: `${member}@example.com`,
+          password: 'Materials123!',
+          name: member,
+          username: member,
+        }),
+      },
+    );
+    expect([200, 201]).toContain(registered.status);
+    const memberCookie = await signIn(member, 'Materials123!');
+
+    const memberList = await requestApp(app, `${baseUrl}/api/materials`, {
+      headers: { cookie: memberCookie },
+    });
+    expect(memberList.status).toBe(200);
+    await expect(memberList.json()).resolves.toEqual({ data: [] });
+
+    // The colleague cannot read, update, delete or download the administrator's material.
+    const { id, contentUrl } = {
+      id: adminMaterial.id,
+      contentUrl: adminMaterial.attachments[0]!.contentUrl,
+    };
+    expect(
+      (
+        await requestApp(app, `${baseUrl}/api/materials/${id}`, {
+          headers: { cookie: memberCookie },
+        })
+      ).status,
+    ).toBe(404);
+    expect(
+      (
+        await requestApp(app, `${baseUrl}/api/materials/${id}`, {
+          method: 'PATCH',
+          headers: writeHeaders(memberCookie),
+          body: JSON.stringify({ title: 'Taken over', attachmentIds: [] }),
+        })
+      ).status,
+    ).toBe(404);
+    expect(
+      (
+        await requestApp(app, `${baseUrl}/api/materials/${id}`, {
+          method: 'DELETE',
+          headers: {
+            cookie: memberCookie,
+            origin: 'http://localhost',
+          },
+        })
+      ).status,
+    ).toBe(404);
+    expect(
+      (
+        await requestApp(app, `http://localhost${contentUrl}`, {
+          headers: { cookie: memberCookie },
+        })
+      ).status,
+    ).toBe(404);
+
+    // The owner can download their own bytes.
+    const bytes = await requestApp(app, `http://localhost${contentUrl}`, {
+      headers: { cookie: adminCookie },
+    });
+    expect(bytes.status).toBe(200);
+    expect(bytes.headers.get('content-type')).toBe('image/png');
+    expect(bytes.headers.get('content-disposition')).toContain('attachment');
+  });
+
   it('mounts standalone app-local routes behind the public base path', async () => {
     const app = trackCloseable(
       await createIsolatedStandaloneServer({ viteDevUrl: false }),
