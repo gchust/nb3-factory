@@ -1,7 +1,9 @@
 import {
+  apiClientToken,
   ClientApplicationContext,
   type ClientApplication,
   createAppClientConfig,
+  realtimeClientToken,
 } from '@nocobase/app-client';
 import type { AppClientRegisteredRoute } from '@nocobase/app-client/plugins';
 import { I18nRuntime } from '@nocobase/i18n';
@@ -62,9 +64,28 @@ async function setup(children: ReactNode, path = '/') {
   });
   runtime.registerApplicationNamespace('test-app', locales);
   await runtime.init('en-US');
+  // The shell header mounts the in-app notification bell, which reads the API
+  // and realtime clients from the application's service container.
+  const registered = new Map<unknown, unknown>([
+    [apiClientToken, { request: vi.fn().mockResolvedValue({ count: 0 }) }],
+    [
+      realtimeClientToken,
+      {
+        onOpen: vi.fn(() => () => {}),
+        subscribe: vi.fn(() => () => {}),
+      },
+    ],
+  ]);
   const app = {
     config: createAppClientConfig({ rawConfig: {} }),
     runtime: { settingsRouteTree: [route] },
+    services: {
+      has: (token: unknown) => registered.has(token),
+      resolve: (token: unknown) => {
+        if (registered.has(token)) return registered.get(token);
+        throw new Error(`Unexpected service token: ${String(token)}`);
+      },
+    },
   } as unknown as ClientApplication;
   render(
     <I18nProvider runtime={runtime}>

@@ -12,6 +12,15 @@ interface OfficeOpenXmlViewer {
   destroy(): void;
 }
 
+/**
+ * Upper bound on a single `viewer.load()` call. The viewer's own layout
+ * watchdog does not cover every code path, and a stalled parse can leave
+ * `load()` pending with no `onError` callback, so the dialog cannot rely on
+ * `load()` ever settling. A bounded wait turns an unrenderable document into
+ * the download fallback instead of an endless "Loading preview...".
+ */
+const OOXML_LOAD_TIMEOUT_MS = 20_000;
+
 export interface OfficeOpenXmlPreviewProps {
   readonly file: FileRecord;
   readonly format: OfficeOpenXmlFormat;
@@ -47,9 +56,14 @@ export function OfficeOpenXmlPreview({
       setViewerError(
         cause instanceof OfficeOpenXmlRequestError
           ? cause.message
-          : t('files.ooxmlLoadFailed', {
-              defaultValue: 'Unable to render this Office Open XML file.',
-            }),
+          : cause instanceof OfficeOpenXmlTimeoutError
+            ? t('files.ooxmlLoadTimeout', {
+                defaultValue:
+                  'This document took too long to render. Download it instead.',
+              })
+            : t('files.ooxmlLoadFailed', {
+                defaultValue: 'Unable to render this Office Open XML file.',
+              }),
       );
     };
 
@@ -66,7 +80,11 @@ export function OfficeOpenXmlPreview({
         return;
       }
       viewer = createdViewer;
-      await viewer.load(data);
+      await withLoadTimeout(
+        createdViewer.load(data),
+        OOXML_LOAD_TIMEOUT_MS,
+        controller.signal,
+      );
       if (active) setLoaded(true);
     })().catch(reportViewerError);
 
@@ -115,6 +133,37 @@ export function OfficeOpenXmlPreview({
 }
 
 class OfficeOpenXmlRequestError extends Error {}
+class OfficeOpenXmlTimeoutError extends Error {}
+
+/**
+ * Race `load()` against a fixed budget. The pending load is not cancelled here
+ * (the caller aborts and destroys the viewer on unmount); this only guarantees
+ * the dialog never waits on it forever.
+ */
+async function withLoadTimeout(
+  load: Promise<void>,
+  timeoutMs: number,
+  signal: AbortSignal,
+): Promise<void> {
+  let timer: number | undefined;
+  const timeout = new Promise<never>((_resolve, reject) => {
+    timer = window.setTimeout(() => {
+      reject(new OfficeOpenXmlTimeoutError('ooxml-load-timeout'));
+    }, timeoutMs);
+  });
+  const aborted = new Promise<never>((_resolve, reject) => {
+    signal.addEventListener(
+      'abort',
+      () => reject(new DOMException('Aborted', 'AbortError')),
+      { once: true },
+    );
+  });
+  try {
+    await Promise.race([load, timeout, aborted]);
+  } finally {
+    if (timer !== undefined) window.clearTimeout(timer);
+  }
+}
 
 async function fetchOfficeOpenXml(
   url: string,
@@ -153,11 +202,14 @@ async function createOfficeOpenXmlViewer(
   switch (format) {
     case 'docx': {
       const { DocxScrollViewer } = await import('@silurus/ooxml/docx');
+      // Kept out of progressive mode on purpose: the progressive path streams
+      // a partial layout and can defer the completion signal, which is the
+      // one shape that leaves the preview waiting; the regular path resolves
+      // once layout is complete and still renders the same content.
       return new DocxScrollViewer(host, {
         ...commonOptions,
         enableTextSelection: true,
         gap: 16,
-        progressiveLayout: true,
       });
     }
     case 'pptx': {
@@ -166,7 +218,6 @@ async function createOfficeOpenXmlViewer(
         ...commonOptions,
         enableTextSelection: true,
         gap: 16,
-        progressiveLayout: true,
       });
     }
     case 'xlsx': {

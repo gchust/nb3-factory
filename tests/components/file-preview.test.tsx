@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 
 import {
@@ -47,7 +47,10 @@ beforeEach(() => {
   viewer.load.mockReset().mockResolvedValue(undefined);
   viewer.destroy.mockReset();
 });
-afterEach(() => vi.unstubAllGlobals());
+afterEach(() => {
+  vi.useRealTimers();
+  vi.unstubAllGlobals();
+});
 
 it.each(['docx', 'xlsx', 'pptx'])(
   'preinstalled preview fetches private %s content for the local viewer',
@@ -98,4 +101,32 @@ it('shows the denied content response without trying a third-party viewer', asyn
   expect(viewer.load).not.toHaveBeenCalled();
   expect(document.querySelector('iframe')).toBeNull();
   expect(screen.queryByRole('button', { name: /Download/ })).toBeNull();
+});
+
+it('leaves the loading state when the document viewer stalls', async () => {
+  vi.useFakeTimers();
+  vi.stubGlobal(
+    'fetch',
+    vi
+      .fn<typeof fetch>()
+      .mockResolvedValue(new Response(new Uint8Array([1, 2, 3]))),
+  );
+  // A viewer whose parse never resolves is what the bounded load wait exists
+  // for: the dialog must surface a real failure instead of spinning forever.
+  viewer.load.mockReset().mockReturnValue(new Promise<void>(() => {}));
+  render(
+    <FilePreviewDialog files={[file('docx')]} open onOpenChange={vi.fn()} />,
+  );
+
+  await act(async () => {
+    await vi.advanceTimersByTimeAsync(0);
+  });
+  expect(screen.getByRole('status')).toHaveTextContent('Loading preview');
+
+  await act(async () => {
+    await vi.advanceTimersByTimeAsync(20_000);
+  });
+
+  expect(viewer.destroy).toHaveBeenCalled();
+  expect(screen.getByRole('alert')).toHaveTextContent(/took too long/i);
 });

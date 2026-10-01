@@ -6,6 +6,12 @@ import { fileURLToPath } from 'node:url';
 
 import { describe, expect, it } from 'vitest';
 
+import {
+  resolveAppClientContributions,
+  type AppClientRegisteredRoute,
+} from '@nocobase/app-client/plugins';
+import { API_KEYS_PAGE_ACCESS } from '@nocobase/app-plugin-api-keys/client';
+
 import clientPlugins from '../../client/plugins.js';
 
 const appRoot = fileURLToPath(new URL('../..', import.meta.url));
@@ -55,9 +61,48 @@ describe('client plugin registry consistency', () => {
     }
   });
 
+  it('keeps the API key plugin identity while serving the application page', async () => {
+    const resolved = resolveAppClientContributions(
+      clientPlugins.plugins.map((plugin) => ({
+        packageName: plugin.packageName,
+        source: 'plugin' as const,
+        routes: plugin.routes,
+      })),
+    );
+    const apiKeys = findRoute(resolved.settingsRouteTree, 'api-keys');
+
+    // The wrap replaces only the browser component; the plugin still owns the
+    // Settings path, page grant and navigation entry.
+    expect(apiKeys).toMatchObject({
+      name: 'api-keys',
+      path: '/settings/api-keys',
+      authz: API_KEYS_PAGE_ACCESS,
+      packageName: '@nocobase/app-plugin-api-keys',
+    });
+    expect(apiKeys?.navigation?.title).toBeTruthy();
+    expect(apiKeys?.componentLoader).toBeTypeOf('function');
+
+    const loaded = await apiKeys?.componentLoader?.();
+    const applicationPage =
+      await import('../../client/pages/service/api-keys/index.js');
+    expect(loaded?.default).toBe(applicationPage.default);
+  });
+
   it('registers no package twice', () => {
     expect(new Set(registeredClientPackages).size).toBe(
       registeredClientPackages.length,
     );
   });
 });
+
+function findRoute(
+  routes: readonly AppClientRegisteredRoute[],
+  name: string,
+): AppClientRegisteredRoute | undefined {
+  for (const route of routes) {
+    if (route.name === name) return route;
+    const nested = findRoute(route.children ?? [], name);
+    if (nested) return nested;
+  }
+  return undefined;
+}

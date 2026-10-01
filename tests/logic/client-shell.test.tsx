@@ -3,6 +3,7 @@ import {
   ClientApplicationContext,
   type ClientApplication,
   createAppClientConfig,
+  realtimeClientToken,
 } from '@nocobase/app-client';
 import type { AppClientRegisteredRoute } from '@nocobase/app-client/plugins';
 import {
@@ -268,6 +269,13 @@ function renderApplication(
     [apiClientToken, apiClient],
     [authenticationClientToken, authClient],
     [authorizationClientToken, authorizationClient],
+    [
+      realtimeClientToken,
+      {
+        onOpen: vi.fn(() => () => {}),
+        subscribe: vi.fn(() => () => {}),
+      },
+    ],
   ]);
   const app = {
     config: createAppClientConfig({ rawConfig: {} }),
