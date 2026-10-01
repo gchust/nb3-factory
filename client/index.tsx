@@ -1,3 +1,7 @@
+// Must come before any import that reaches the deprecated
+// `@nocobase/app-portal-sdk` (used by the AI Knowledge Base plugin), which
+// resolves its API URL from a global at module load. See the module for detail.
+import './portal-env.js';
 import { createApp } from './app.js';
 import {
   AppClientRoot,
