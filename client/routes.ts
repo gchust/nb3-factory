@@ -1,4 +1,4 @@
-import { Home } from 'lucide-react';
+import { FolderOpen, Home } from 'lucide-react';
 import {
   defineAppRoutes,
   defineSettingsRoutes,
@@ -15,6 +15,18 @@ const appRoutes: AppClientRouteContribution = defineAppRoutes([
     name: 'home',
     navigation: { title: 'navigation.home', icon: Home },
     path: '/',
+  },
+  {
+    // Project materials are private per contributor. Page authorization cannot express that: the rule is
+    // about the rows one user owns, not about reaching the page, and the server enforces it. `'skip'`
+    // therefore keeps the page out of the grant system, and every material and attachment request is
+    // scoped to the session's user id by the application's own routes.
+    auth: 'required',
+    authz: 'skip',
+    componentLoader: () => import('./pages/materials/index.js'),
+    name: 'projectMaterials',
+    navigation: { title: 'navigation.materials', icon: FolderOpen },
+    path: '/materials',
   },
   {
     auth: 'guest',

@@ -88,6 +88,59 @@ const zhCN: AppResource = {
     title: '开始构建你的应用',
     description: '向 AI 助手描述你的需求，逐步构建页面、数据模型和业务流程。',
   },
+  materials: {
+    title: '项目资料',
+    description: '存放你自己的现场照片和文档。每份资料及其附件都只对你可见。',
+    create: {
+      action: '新建资料',
+      title: '新建资料',
+      description: '填写资料标题，并添加属于它的照片或文档。',
+      submitting: '正在保存…',
+    },
+    field: {
+      title: '标题',
+      titlePlaceholder: '例如：1号楼基础施工照片',
+      attachments: '附件',
+    },
+    fileTypesHint: '仅支持 PNG 图片和 DOCX 文档，单个不超过 20 MB。',
+    uploadingHint: '正在等待上传完成。',
+    titleRequired: '标题不能为空。',
+    created: '资料已创建。',
+    saved: '修改已保存。',
+    deleted: '资料已删除。',
+    open: '查看',
+    deleteLabel: '删除',
+    retry: '重试',
+    attachmentCount: '{{count}} 个附件',
+    updatedAt: '更新于 {{date}}',
+    empty: {
+      title: '还没有资料',
+      description: '创建第一份资料，并添加它的照片或文档。',
+    },
+    detail: {
+      title: '资料详情',
+      description: '预览、下载、添加或移除附件，然后保存修改。',
+      attachments: '附件',
+      noAttachments: '暂无附件。',
+      removeHint: '保存后，被移除的附件将不再属于这份资料。',
+      addAttachments: '添加附件',
+      save: '保存修改',
+      saving: '正在保存…',
+    },
+    delete: {
+      title: '删除这份资料？',
+      description:
+        '“{{title}}”将被删除。其附件会保留在你的文件中，但不再属于这份资料。',
+      confirm: '删除',
+    },
+    error: {
+      loadFailed: '无法加载你的资料。',
+      deleteFailed: '无法删除该资料。',
+      notFound: '该资料已不存在。',
+      validation: '资料保存失败，请检查标题和附件。',
+      generic: '出了点问题，请重试。',
+    },
+  },
 
   appearance: {
     title: '外观',
@@ -121,6 +174,7 @@ const zhCN: AppResource = {
   },
   navigation: {
     home: '首页',
+    materials: '项目资料',
     open: '打开导航',
     close: '关闭导航',
     expand: '展开导航',
@@ -149,4 +203,11 @@ const zhCN: AppResource = {
   },
 };
 
-export default zhCN;
+export default {
+  ...zhCN,
+  overrides: {
+    '@nocobase/app-plugin-file': {
+      'files.imageLoadFailed': '该图片无法显示，文件可能已损坏或暂时不可预览。',
+    },
+  },
+};

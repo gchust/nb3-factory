@@ -70,13 +70,7 @@ export function FilePreviewContent(
     );
   switch (kind) {
     case 'image':
-      return (
-        <img
-          src={url}
-          alt={file.filename}
-          className='max-h-[70vh] max-w-full object-contain'
-        />
-      );
+      return <ImagePreview file={file} url={url} onDownload={onDownload} />;
     case 'pdf':
       return (
         <iframe title={file.filename} src={url} className='h-[70vh] w-full' />
@@ -97,6 +91,41 @@ export function FilePreviewContent(
     default:
       return <DownloadFallback file={file} onDownload={onDownload} />;
   }
+}
+
+function ImagePreview(inputProps: {
+  readonly file: FileRecord;
+  readonly url?: string;
+  readonly onDownload?: () => void;
+}): ReactElement {
+  const { t } = useTranslation('@nocobase/app-plugin-file');
+  const { file, url, onDownload } = inputProps;
+
+  // A PNG whose bytes are damaged (or whose content request failed) must be reported as such. Without this the dialog
+  // shows a broken image and the filename alone reads as a successful preview. Remembering the URL that failed —
+  // rather than clearing a flag in an effect — retries automatically when the dialog points somewhere else.
+  const [failedUrl, setFailedUrl] = useState<string>();
+  if (failedUrl !== undefined && failedUrl === url)
+    return (
+      <div role='alert'>
+        <DownloadFallback
+          file={file}
+          message={t('files.imageLoadFailed', {
+            defaultValue:
+              'This image could not be displayed. It may be corrupted or temporarily unavailable.',
+          })}
+          onDownload={onDownload}
+        />
+      </div>
+    );
+  return (
+    <img
+      src={url}
+      alt={file.filename}
+      className='max-h-[70vh] max-w-full object-contain'
+      onError={() => setFailedUrl(url)}
+    />
+  );
 }
 
 function MarkdownPreview(inputProps: { readonly text?: string }): ReactElement {
