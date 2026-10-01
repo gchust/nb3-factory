@@ -130,6 +130,7 @@ const enUS = {
   },
   navigation: {
     home: 'Home',
+    library: 'Document library',
     open: 'Open navigation',
     close: 'Close navigation',
     expand: 'Expand navigation',
@@ -151,6 +152,114 @@ const enUS = {
     previousPage: 'Go to previous page',
     nextPage: 'Go to next page',
     lastPage: 'Go to last page',
+  },
+  library: {
+    title: 'Document library',
+    description:
+      'Published, non-confidential documents are open to every colleague with library access. Drafts and confidential documents stay with their owner, unless an administrator opens one specific document.',
+    new: 'New document',
+    empty: 'No documents to show.',
+    owner: { none: '—' },
+    status: { published: 'Published', draft: 'Draft' },
+    confidential: { yes: 'Confidential', no: 'Internal' },
+    table: {
+      title: 'Title',
+      owner: 'Owner',
+      status: 'Status',
+      confidential: 'Confidentiality',
+      updatedAt: 'Updated',
+    },
+    error: {
+      title: 'Unable to load documents',
+      description: 'The request failed. Try again.',
+    },
+    submit: { error: 'Unable to save the document.' },
+    create: {
+      title: 'New document',
+      description: 'Create a document you own. Only you can edit it.',
+      success: 'Document created.',
+    },
+    edit: {
+      title: 'Edit document',
+      description:
+        'Change the document. Only its owner and administrators can do this.',
+      success: 'Document saved.',
+    },
+    delete: {
+      title: 'Delete this document?',
+      description:
+        '“{{title}}” will be removed for everyone. This cannot be undone.',
+      confirm: 'Delete',
+      deleting: 'Deleting…',
+      success: 'Document deleted.',
+    },
+    detail: {
+      title: 'Document',
+      description:
+        'Reading does not grant editing: only the owner and administrators may change a document.',
+      owner: 'Owner',
+      createdAt: 'Created',
+      updatedAt: 'Updated',
+      bodyEmpty: 'This document has no body text.',
+      edit: 'Edit',
+      delete: 'Delete',
+      back: 'Back to the list',
+      notFound: {
+        title: 'This document is not available',
+        description:
+          'It may be a draft, it may be confidential, or a temporary share may have ended.',
+      },
+    },
+    form: {
+      title: 'Title',
+      titlePlaceholder: 'A short, recognizable title',
+      body: 'Body',
+      bodyPlaceholder: 'Write the document here.',
+      published: 'Published',
+      publishedHint:
+        'Published, non-confidential documents are readable by every colleague with library access.',
+      confidential: 'Confidential',
+      confidentialHint:
+        'Confidential documents stay with their owner and administrators, even when published or shared.',
+      saving: 'Saving…',
+    },
+    shares: {
+      title: 'Temporary access',
+      description:
+        'Open this specific document to one colleague. Revoking it takes effect on their next refresh.',
+      empty: 'No temporary access yet.',
+      account: 'Account',
+      selectPlaceholder: 'Choose an account',
+      grant: 'Open access',
+      revoke: 'Revoke access',
+      unknownAccount: 'Unknown account',
+      error: 'Unable to update temporary access.',
+      loadError: 'Unable to load temporary access.',
+    },
+    // Titles the authorization backend shows for this feature's grants, record
+    // access and permission sets. They share the app namespace, so root's
+    // management screens read them in whichever language is selected.
+    collections: {
+      documents: 'Documents',
+      documentShares: 'Temporary access',
+    },
+    permissions: {
+      documentRead: 'Read documents',
+      documentCreate: 'Create documents',
+      documentUpdate: 'Edit documents',
+      documentDelete: 'Delete documents',
+      documentShare: 'Manage temporary access',
+    },
+    composites: {
+      documents: 'Documents',
+      shares: 'Temporary access',
+    },
+    sections: { library: 'Document library' },
+    recordAccess: { readerVisible: 'Published or temporarily shared' },
+    permissionSets: {
+      maintainer: 'Document maintainer',
+      reader: 'Document reader',
+    },
   },
   datePicker: {
     placeholder: 'Pick a date',
