@@ -95,6 +95,61 @@ const enUS = {
     description:
       'Describe what you need to your AI Agent, then build pages, data models, and business workflows.',
   },
+  projectDocuments: {
+    title: 'Project documents',
+    description:
+      'Keep your own documents and their attachments. Only you can see them.',
+    new: 'New document',
+    createTitle: 'New document',
+    editTitle: 'Edit document',
+    formDescription:
+      'Give the document a title, then attach its PNG photos or DOCX files.',
+    field: {
+      title: 'Title',
+      titlePlaceholder: 'e.g. Site survey photos',
+      titleDescription: 'Required. Up to 255 characters.',
+      attachments: 'Attachments',
+      attachmentsDescription:
+        'PNG and DOCX only. An uploaded file stays attached until you save or remove it.',
+    },
+    saving: 'Saving…',
+    saved: 'Document saved',
+    deleted: 'Document deleted',
+    loadFailed: 'Unable to load your documents',
+    saveFailed: 'Unable to save the document',
+    uploadFailed: 'Unable to upload the file',
+    deleteFailed: 'Unable to delete the document',
+    noAttachments: 'No attachments',
+    attachmentCount: '{{count}} file(s)',
+    column: {
+      title: 'Title',
+      attachments: 'Attachments',
+      updatedAt: 'Updated',
+      actions: 'Actions',
+    },
+    actions: {
+      open: 'Open actions',
+      view: 'View details',
+      edit: 'Edit',
+      delete: 'Delete',
+    },
+    empty: {
+      title: 'No documents yet',
+      description: 'Create a document to attach its first file.',
+    },
+    detail: {
+      created: 'Created {{date}}',
+    },
+    deleteConfirm: {
+      title: 'Delete this document?',
+      description:
+        '“{{title}}” and the attachments it references will be removed. This cannot be undone.',
+    },
+    error: {
+      titleRequired: 'A title is required.',
+      unknown: 'Please try again.',
+    },
+  },
 
   appearance: {
     title: 'Appearance',
@@ -130,6 +185,7 @@ const enUS = {
   },
   navigation: {
     home: 'Home',
+    projectDocuments: 'Project documents',
     open: 'Open navigation',
     close: 'Close navigation',
     expand: 'Expand navigation',

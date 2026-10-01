@@ -88,6 +88,58 @@ const zhCN: AppResource = {
     title: '开始构建你的应用',
     description: '向 AI 助手描述你的需求，逐步构建页面、数据模型和业务流程。',
   },
+  projectDocuments: {
+    title: '项目资料',
+    description: '维护属于自己的资料及其附件，只有你本人可以看到。',
+    new: '新建资料',
+    createTitle: '新建资料',
+    editTitle: '编辑资料',
+    formDescription: '先填写资料标题，再上传 PNG 照片或 DOCX 文档。',
+    field: {
+      title: '标题',
+      titlePlaceholder: '例如：现场勘察照片',
+      titleDescription: '必填，最多 255 个字符。',
+      attachments: '附件',
+      attachmentsDescription:
+        '仅支持 PNG 和 DOCX。已上传的文件会一直保留，直到保存或移除。',
+    },
+    saving: '正在保存…',
+    saved: '资料已保存',
+    deleted: '资料已删除',
+    loadFailed: '无法加载你的资料',
+    saveFailed: '无法保存资料',
+    uploadFailed: '无法上传文件',
+    deleteFailed: '无法删除资料',
+    noAttachments: '暂无附件',
+    attachmentCount: '{{count}} 个文件',
+    column: {
+      title: '标题',
+      attachments: '附件',
+      updatedAt: '更新时间',
+      actions: '操作',
+    },
+    actions: {
+      open: '打开操作菜单',
+      view: '查看详情',
+      edit: '编辑',
+      delete: '删除',
+    },
+    empty: {
+      title: '还没有资料',
+      description: '新建一份资料，为它添加第一个附件。',
+    },
+    detail: {
+      created: '创建于 {{date}}',
+    },
+    deleteConfirm: {
+      title: '确定删除这份资料？',
+      description: '“{{title}}”及其引用的附件将被移除，且无法恢复。',
+    },
+    error: {
+      titleRequired: '请填写标题。',
+      unknown: '请重试。',
+    },
+  },
 
   appearance: {
     title: '外观',
@@ -121,6 +173,7 @@ const zhCN: AppResource = {
   },
   navigation: {
     home: '首页',
+    projectDocuments: '项目资料',
     open: '打开导航',
     close: '关闭导航',
     expand: '展开导航',
@@ -146,6 +199,11 @@ const zhCN: AppResource = {
   datePicker: {
     placeholder: '选择日期',
     rangePlaceholder: '选择日期范围',
+  },
+  overrides: {
+    '@nocobase/app-plugin-file': {
+      'files.imageFailed': '无法显示该图片，文件可能已损坏或格式不受支持。',
+    },
   },
 };
 
