@@ -1,0 +1,1498 @@
+{
+  "record": {
+    "version": 1,
+    "repository": "gchust/nb3-factory",
+    "issue": 508,
+    "runId": 36787401343,
+    "attempt": 1,
+    "status": "failure",
+    "start": 1790808339000,
+    "end": 1790820987000,
+    "jobs": [
+      {
+        "id": 110132001530,
+        "name": "prepare",
+        "seconds": 17
+      },
+      {
+        "id": 110132101103,
+        "name": "agent",
+        "seconds": 12624
+      }
+    ],
+    "agentJobId": 110132101103,
+    "invoked": true,
+    "artifact": "factory-agent-508",
+    "artifactId": 11137666561,
+    "finalArtifactId": null,
+    "taskArtifactId": 11129723398,
+    "event": "workflow_dispatch",
+    "previousRunId": null,
+    "usage": {
+      "phases": {
+        "implementation": {
+          "input": 1724227,
+          "output": 164669,
+          "cacheRead": 36551040,
+          "cacheWrite": 0,
+          "reasoning": 62719,
+          "totalTokens": 38439936
+        },
+        "repair": {
+          "input": 2467741,
+          "output": 397656,
+          "cacheRead": 59922688,
+          "cacheWrite": 0,
+          "reasoning": 167552,
+          "totalTokens": 62788085
+        },
+        "qa": {
+          "input": 315612,
+          "output": 95276,
+          "cacheRead": 9422080,
+          "cacheWrite": 0,
+          "reasoning": 44623,
+          "totalTokens": 9832968
+        },
+        "qaFocused": {
+          "input": 242984,
+          "output": 57256,
+          "cacheRead": 5838848,
+          "cacheWrite": 0,
+          "reasoning": 21338,
+          "totalTokens": 6139088
+        },
+        "qaReport": {
+          "input": 0,
+          "output": 0,
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "reasoning": 0,
+          "totalTokens": 0
+        },
+        "review": {
+          "input": 948109,
+          "output": 92736,
+          "cacheRead": 10196224,
+          "cacheWrite": 0,
+          "reasoning": 38856,
+          "totalTokens": 11237069
+        },
+        "compaction": {
+          "input": 1177850,
+          "output": 227582,
+          "cacheRead": 71680,
+          "cacheWrite": 0,
+          "reasoning": 25234,
+          "totalTokens": 1477112
+        }
+      },
+      "records": 1863,
+      "missing": 4,
+      "incomplete": 0
+    },
+    "evaluation": {
+      "version": 1,
+      "runKey": "gchust/nb3-factory/issues/508/initial",
+      "kind": "initial",
+      "derivation": "recorded",
+      "agentConfiguration": {
+        "fingerprints": [
+          "2f5401c2837d7dae1f1f014540b983521db478e49b3e29c61dbb26be0a75e3bf"
+        ],
+        "complete": false
+      },
+      "controlSha": "0f72d9b81f981f10501c5ac0ee0e7d786f1f4698",
+      "baseSha": "0f72d9b81f981f10501c5ac0ee0e7d786f1f4698",
+      "inputHash": "70ec33ec64bed8ee3efbc856a7ffabf9efe787270d9795ac31a8a64970ff856b",
+      "patchSha256": "0869439764425e49b7a6c228e85963836d9fe2cb203e8b0619bc083c0b2984e2",
+      "pipelineOutcome": "blocked",
+      "event": "workflow_dispatch",
+      "previousRunId": null
+    }
+  },
+  "cumulative": {
+    "usage": {
+      "phases": {
+        "implementation": {
+          "input": 1724227,
+          "output": 164669,
+          "cacheRead": 36551040,
+          "cacheWrite": 0,
+          "reasoning": 62719,
+          "totalTokens": 38439936
+        },
+        "repair": {
+          "input": 2467741,
+          "output": 397656,
+          "cacheRead": 59922688,
+          "cacheWrite": 0,
+          "reasoning": 167552,
+          "totalTokens": 62788085
+        },
+        "qa": {
+          "input": 315612,
+          "output": 95276,
+          "cacheRead": 9422080,
+          "cacheWrite": 0,
+          "reasoning": 44623,
+          "totalTokens": 9832968
+        },
+        "qaFocused": {
+          "input": 242984,
+          "output": 57256,
+          "cacheRead": 5838848,
+          "cacheWrite": 0,
+          "reasoning": 21338,
+          "totalTokens": 6139088
+        },
+        "qaReport": {
+          "input": 0,
+          "output": 0,
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "reasoning": 0,
+          "totalTokens": 0
+        },
+        "review": {
+          "input": 948109,
+          "output": 92736,
+          "cacheRead": 10196224,
+          "cacheWrite": 0,
+          "reasoning": 38856,
+          "totalTokens": 11237069
+        },
+        "compaction": {
+          "input": 1177850,
+          "output": 227582,
+          "cacheRead": 71680,
+          "cacheWrite": 0,
+          "reasoning": 25234,
+          "totalTokens": 1477112
+        }
+      },
+      "records": 1863,
+      "missing": 4,
+      "incomplete": 0
+    },
+    "total": 129914258,
+    "seconds": 12641,
+    "missingTimes": 0,
+    "elapsed": 12648,
+    "runs": 1,
+    "attempts": 1
+  },
+  "records": [
+    {
+      "version": 1,
+      "repository": "gchust/nb3-factory",
+      "issue": 508,
+      "runId": 36787401343,
+      "attempt": 1,
+      "status": "failure",
+      "start": 1790808339000,
+      "end": 1790820987000,
+      "jobs": [
+        {
+          "id": 110132001530,
+          "name": "prepare",
+          "seconds": 17
+        },
+        {
+          "id": 110132101103,
+          "name": "agent",
+          "seconds": 12624
+        }
+      ],
+      "agentJobId": 110132101103,
+      "invoked": true,
+      "artifact": "factory-agent-508",
+      "artifactId": 11137666561,
+      "finalArtifactId": null,
+      "taskArtifactId": 11129723398,
+      "event": "workflow_dispatch",
+      "previousRunId": null,
+      "usage": {
+        "phases": {
+          "implementation": {
+            "input": 1724227,
+            "output": 164669,
+            "cacheRead": 36551040,
+            "cacheWrite": 0,
+            "reasoning": 62719,
+            "totalTokens": 38439936
+          },
+          "repair": {
+            "input": 2467741,
+            "output": 397656,
+            "cacheRead": 59922688,
+            "cacheWrite": 0,
+            "reasoning": 167552,
+            "totalTokens": 62788085
+          },
+          "qa": {
+            "input": 315612,
+            "output": 95276,
+            "cacheRead": 9422080,
+            "cacheWrite": 0,
+            "reasoning": 44623,
+            "totalTokens": 9832968
+          },
+          "qaFocused": {
+            "input": 242984,
+            "output": 57256,
+            "cacheRead": 5838848,
+            "cacheWrite": 0,
+            "reasoning": 21338,
+            "totalTokens": 6139088
+          },
+          "qaReport": {
+            "input": 0,
+            "output": 0,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "reasoning": 0,
+            "totalTokens": 0
+          },
+          "review": {
+            "input": 948109,
+            "output": 92736,
+            "cacheRead": 10196224,
+            "cacheWrite": 0,
+            "reasoning": 38856,
+            "totalTokens": 11237069
+          },
+          "compaction": {
+            "input": 1177850,
+            "output": 227582,
+            "cacheRead": 71680,
+            "cacheWrite": 0,
+            "reasoning": 25234,
+            "totalTokens": 1477112
+          }
+        },
+        "records": 1863,
+        "missing": 4,
+        "incomplete": 0
+      },
+      "evaluation": {
+        "version": 1,
+        "runKey": "gchust/nb3-factory/issues/508/initial",
+        "kind": "initial",
+        "derivation": "recorded",
+        "agentConfiguration": {
+          "fingerprints": [
+            "2f5401c2837d7dae1f1f014540b983521db478e49b3e29c61dbb26be0a75e3bf"
+          ],
+          "complete": false
+        },
+        "controlSha": "0f72d9b81f981f10501c5ac0ee0e7d786f1f4698",
+        "baseSha": "0f72d9b81f981f10501c5ac0ee0e7d786f1f4698",
+        "inputHash": "70ec33ec64bed8ee3efbc856a7ffabf9efe787270d9795ac31a8a64970ff856b",
+        "patchSha256": "0869439764425e49b7a6c228e85963836d9fe2cb203e8b0619bc083c0b2984e2",
+        "pipelineOutcome": "blocked",
+        "event": "workflow_dispatch",
+        "previousRunId": null
+      }
+    }
+  ],
+  "timings": [
+    {
+      "stage": "agent:repair",
+      "calls": 3,
+      "durationMs": 5339397
+    },
+    {
+      "stage": "agent:implementation",
+      "calls": 1,
+      "durationMs": 3484738
+    },
+    {
+      "stage": "agent:qa",
+      "calls": 2,
+      "durationMs": 1354587
+    },
+    {
+      "stage": "agent:qa-focused",
+      "calls": 2,
+      "durationMs": 716585
+    },
+    {
+      "stage": "build",
+      "calls": 3,
+      "durationMs": 198162
+    },
+    {
+      "stage": "test",
+      "calls": 4,
+      "durationMs": 189078
+    },
+    {
+      "stage": "lint",
+      "calls": 4,
+      "durationMs": 147854
+    },
+    {
+      "stage": "typecheck",
+      "calls": 4,
+      "durationMs": 68070
+    },
+    {
+      "stage": "db:apply",
+      "calls": 4,
+      "durationMs": 24533
+    },
+    {
+      "stage": "format:check",
+      "calls": 4,
+      "durationMs": 24087
+    },
+    {
+      "stage": "format:auto",
+      "calls": 4,
+      "durationMs": 9009
+    },
+    {
+      "stage": "install",
+      "calls": 1,
+      "durationMs": 5535
+    },
+    {
+      "stage": "skills-sync",
+      "calls": 1,
+      "durationMs": 1187
+    }
+  ],
+  "delivery": {
+    "version": 1,
+    "meta": {
+      "repository": "gchust/nb3-factory",
+      "issue": 508,
+      "runId": "36787401343",
+      "attempt": 1,
+      "headSha": "9852e52d12f8727e891fda8fb49a4f94ac6af337",
+      "targetBranch": "develop",
+      "title": "内部资料只读问答助手",
+      "snapshotDate": "2026-10-01T02:16:27.000Z"
+    },
+    "delivery": {
+      "status": "failed",
+      "ci": "unknown",
+      "ciSource": "本轮独立最终验证结果未确认。",
+      "qaSummary": "搭建未完成，当前状态 failed。 最近验收记录（不代表完整交付通过）：已通过浏览器以管理员、主管、普通同事三种身份完成 B00：三条资料可维护且刷新持久化，普通同事仅见 A/B，C 的页面与直接读取接口均被拒，未配置模型时助手显示明确未配置状态且资料页可用。B01–B05 因未配置独立业务测试模型逐项 blocked；B06 因测试环境未提供受控的服务不可用条件记 not_run。"
+    },
+    "links": [
+      {
+        "label": "查看 PR #513",
+        "url": "https://github.com/gchust/nb3-factory/pull/513"
+      },
+      {
+        "label": "查看需求",
+        "url": "https://github.com/gchust/nb3-factory/issues/508"
+      },
+      {
+        "label": "本轮运行与原始产物",
+        "url": "https://github.com/gchust/nb3-factory/actions/runs/36787401343/attempts/1"
+      }
+    ],
+    "attention": [
+      {
+        "checkId": "A7",
+        "title": "验收证据不完整或未内嵌",
+        "detail": "保留 Agent 原始结论；缺少的截图或操作记录不视为已验证，原始引用见下方数据。",
+        "source": "verify-4/browser-acceptance/report.json"
+      },
+      {
+        "title": "验收失败记录",
+        "detail": "B01–B05 blocked：测试环境未配置独立业务测试模型（LLM services 显示 No LLM services configured），无法进行真实模型问答、引用打开、会话恢复与资料更新回答验证",
+        "source": "verify-4/browser-acceptance/report.json"
+      },
+      {
+        "title": "验收失败记录",
+        "detail": "B06 not_run：测试环境未提供受控的 AI 服务不可用条件（preflight 仅含浏览器能力，无服务故障注入）",
+        "source": "verify-4/browser-acceptance/report.json"
+      },
+      {
+        "title": "报告资料说明",
+        "detail": "本轮浏览器报告未通过。"
+      }
+    ],
+    "checks": [
+      {
+        "id": "A1",
+        "title": "不依赖 AI 服务即可验收：主管维护三条资料，普通同事只能阅读 A/B，C 的页面及直接读取接口均拒绝普通同事访问；刷新后资料仍保存。未配置模型时助手显示明确未配置状态，资料页仍可用。\n\n以下 B01–B05 在独立业务测试模型配置可用后执行；缺模型时逐项记 blocked，继续完成资料、权限、助手接入和未配置状态的搭建，不用固定回复替代真实调用。",
+        "criterion": "不依赖 AI 服务即可验收：主管维护三条资料，普通同事只能阅读 A/B，C 的页面及直接读取接口均拒绝普通同事访问；刷新后资料仍保存。未配置模型时助手显示明确未配置状态，资料页仍可用。\n\n以下 B01–B05 在独立业务测试模型配置可用后执行；缺模型时逐项记 blocked，继续完成资料、权限、助手接入和未配置状态的搭建，不用固定回复替代真实调用。",
+        "status": "passed",
+        "actions": [
+          "用管理员 nocobase 登录，打开 Materials 列表确认 A/B/C 三条资料",
+          "打开资料 A 编辑表单确认标题/正文原值回填后修改正文并保存，重新加载确认持久化，再改回原值保存",
+          "在设置 LLM services 确认 No LLM services configured，并打开 Material assistant 查看未配置状态",
+          "退出后以普通同事 colleague 登录并完整重新加载，打开 Materials 页只显示 A/B；直接访问 /main/materials?id=3",
+          "以同事身份请求 GET /main/api/materials 与 GET /main/api/materials/3",
+          "刷新同事 Materials 页确认 A/B 仍在",
+          "退出后以主管 supervisor 登录，Materials 页可见 A/B/C，编辑资料 C 修改正文并保存，重新加载确认持久化后再改回原值"
+        ],
+        "evidence": [
+          "管理员与主管的 Materials 列表均显示三条资料，C 标注 Supervisor only",
+          "资料 A 编辑表单原值回填为 蓝鹭设备报修电话为 400-000-7316。；保存后刷新仍为新值，随后已还原",
+          "LLM services 页显示 No LLM services configured.；助手页显示 No model service is configured...",
+          "同事 Materials 列表仅有 蓝鹭设备报修电话 与 蓝鹭设备常规巡检间隔，无 C",
+          "同事 /main/materials?id=3 显示 Material unavailable / This material is not available to you",
+          "同事 GET /main/api/materials 返回 200 且只有 A/B（canManage:false）；GET /main/api/materials/3 返回 404 {\"code\":\"NOT_FOUND\"}",
+          "同事刷新 Materials 页后 A/B 仍在；管理员与主管的保存修改刷新后仍在，最终三条资料正文已还原为原始样例"
+        ],
+        "screenshots": [
+          "admin-materials-list.png",
+          "admin-material-a-edit-prefill.png",
+          "admin-material-a-edited-saved.png",
+          "llm-services-none.png",
+          "assistant-unconfigured.png",
+          "colleague-materials-list-ab-only.png",
+          "colleague-material-c-unavailable.png",
+          "supervisor-materials-all-three.png",
+          "supervisor-material-c-edit-prefill.png",
+          "supervisor-material-c-edited-persisted.png"
+        ],
+        "evidenceUnavailable": false,
+        "source": "verify-4/browser-acceptance/report.json",
+        "result": "同事刷新 Materials 页后 A/B 仍在；管理员与主管的保存修改刷新后仍在，最终三条资料正文已还原为原始样例"
+      },
+      {
+        "id": "A2",
+        "title": "普通同事询问报修电话，回答与资料 A 一致，能从引用打开有权阅读的原资料。",
+        "criterion": "普通同事询问报修电话，回答与资料 A 一致，能从引用打开有权阅读的原资料。",
+        "status": "not-verified",
+        "actions": [
+          "以普通同事 colleague 登录，打开 Material assistant 查看状态",
+          "打开设置 LLM services 确认无任何可用模型",
+          "在助手输入报修电话问题并提交，观察到未配置状态下的降级回答，但未验证真实模型调用"
+        ],
+        "evidence": [
+          "Material assistant 显示 No model service is configured, so the assistant is answering directly from the materials.",
+          "LLM services 显示 No LLM services configured.",
+          "未配置模型，无法验证真实模型回答与引用链接打开"
+        ],
+        "screenshots": [
+          "colleague-assistant-unconfigured.png",
+          "llm-services-none.png"
+        ],
+        "evidenceUnavailable": false,
+        "source": "verify-4/browser-acceptance/report.json",
+        "result": "环境受阻：独立业务测试模型未配置：设置 LLM services 显示 No LLM services configured，助手处于未配置状态，无法进行真实模型调用，因此无法验证真实回答与引用打开。"
+      },
+      {
+        "id": "A3",
+        "title": "普通同事询问保密项目代号，回答、引用和错误提示均不包含资料 C 的保密内容；也不能通过引用链接打开 C。",
+        "criterion": "普通同事询问保密项目代号，回答、引用和错误提示均不包含资料 C 的保密内容；也不能通过引用链接打开 C。",
+        "status": "not-verified",
+        "actions": [
+          "以普通同事 colleague 登录打开 Material assistant",
+          "询问 保密项目的内部代号是什么？并观察回答是否含 C 内容",
+          "以同事身份请求 GET /main/api/materials/3 验证直接读取被拒"
+        ],
+        "evidence": [
+          "同事得到的降级回答为 The materials do not cover that. Please read the materials on the Materials page, or ask a supervisor.",
+          "回答与错误提示中未出现 墨竹 729 或资料 C 正文",
+          "同事 GET /main/api/materials/3 返回 404 {\"code\":\"NOT_FOUND\"}，无法打开 C"
+        ],
+        "screenshots": [
+          "colleague-assistant-c-question.png",
+          "colleague-material-c-unavailable.png"
+        ],
+        "evidenceUnavailable": false,
+        "source": "verify-4/browser-acceptance/report.json",
+        "result": "环境受阻：独立业务测试模型未配置，无法验证真实模型回答是否泄露 C。已做权限侧观察：同事询问该问题得到未覆盖提示，未出现墨竹 729，且直接读取接口被拒。"
+      },
+      {
+        "id": "A4",
+        "title": "刷新页面，刚才的对话仍能恢复并继续提问。",
+        "criterion": "刷新页面，刚才的对话仍能恢复并继续提问。",
+        "status": "not-verified",
+        "actions": [
+          "以普通同事 colleague 在 Material assistant 提交问题",
+          "刷新 /main/assistant 并观察此前对话是否恢复、是否可继续输入"
+        ],
+        "evidence": [
+          "刷新后仍显示此前的问题与未覆盖回答，输入框可继续使用（未配置模型下的降级观察，不代表真实模型会话）"
+        ],
+        "screenshots": [
+          "colleague-assistant-refresh-restored.png"
+        ],
+        "evidenceUnavailable": false,
+        "source": "verify-4/browser-acceptance/report.json",
+        "result": "环境受阻：独立业务测试模型未配置，无法验证真实 AI 会话恢复与继续提问；降级模式下刷新后对话记录可见，但不构成真实模型链路验证。"
+      },
+      {
+        "id": "A5",
+        "title": "主管将资料 B 的巡检间隔改为 60 天，普通同事在新对话里重新询问，依据更新后的资料回答 60 天，而非旧的 45 天。",
+        "criterion": "主管将资料 B 的巡检间隔改为 60 天，普通同事在新对话里重新询问，依据更新后的资料回答 60 天，而非旧的 45 天。",
+        "status": "not-verified",
+        "actions": [
+          "以主管 supervisor 打开资料 B 的编辑表单，检查原值回填",
+          "确认助手处于未配置状态，无法进行真实模型问答，因此未执行 45→60 修改与回答验证"
+        ],
+        "evidence": [
+          "资料 B 编辑表单原值回填为 蓝鹭设备常规巡检间隔为 45 天。",
+          "LLM services 未配置模型，无法验证更新后回答"
+        ],
+        "screenshots": [
+          "supervisor-material-b-edit-prefill-45.png"
+        ],
+        "evidenceUnavailable": false,
+        "source": "verify-4/browser-acceptance/report.json",
+        "result": "环境受阻：独立业务测试模型未配置，无法验证主管修改后同事重新提问是否依据新资料回答。本轮仅确认资料 B 的编辑表单回填原值 45 天，未提交修改。"
+      },
+      {
+        "id": "A6",
+        "title": "询问资料中没有的“设备免费更换年限”，助手说明缺少依据，不编造年限。",
+        "criterion": "询问资料中没有的“设备免费更换年限”，助手说明缺少依据，不编造年限。",
+        "status": "not-verified",
+        "actions": [
+          "确认 LLM services 无模型且助手处于未配置状态",
+          "未发起真实模型问答以验证无依据问题回答"
+        ],
+        "evidence": [
+          "LLM services 显示 No LLM services configured.",
+          "助手显示 No model service is configured..."
+        ],
+        "screenshots": [
+          "assistant-unconfigured.png",
+          "llm-services-none.png"
+        ],
+        "evidenceUnavailable": false,
+        "source": "verify-4/browser-acceptance/report.json",
+        "result": "环境受阻：独立业务测试模型未配置，无法验证真实模型对无依据问题的回答；未用固定回复替代真实调用。"
+      },
+      {
+        "id": "A7",
+        "title": "在测试环境提供的服务不可用条件下，界面显示真实不可用状态，手工资料页仍可打开；没有该测试条件时单独记录未执行。",
+        "criterion": "在测试环境提供的服务不可用条件下，界面显示真实不可用状态，手工资料页仍可打开；没有该测试条件时单独记录未执行。",
+        "status": "not-verified",
+        "actions": [
+          "读取 preflight 确认无服务不可用注入能力",
+          "观察未配置模型时界面显示真实不可用状态且手工 Materials 页可用，作为 B00 证据"
+        ],
+        "evidence": [
+          "preflight capabilities 仅含 worker/pdf 等浏览器能力，无 AI 服务故障条件",
+          "助手显示 No model service is configured...，Materials 页正常可用"
+        ],
+        "screenshots": [],
+        "evidenceUnavailable": true,
+        "source": "verify-4/browser-acceptance/report.json",
+        "result": "测试环境未提供受控的 AI 服务不可用条件（preflight 仅列出浏览器能力，无服务故障注入，应用也未配置任何 LLM 服务），按验收要求单独记录未执行。"
+      }
+    ],
+    "media": [
+      {
+        "id": "supervisor-materials-all-three.png",
+        "title": "主管资料列表（A/B/C）",
+        "path": "verify-4/browser-acceptance/evidence/supervisor-materials-all-three.png",
+        "category": "业务界面",
+        "featured": true
+      },
+      {
+        "id": "supervisor-material-c-edit-prefill.png",
+        "title": "主管编辑资料原值回填",
+        "path": "verify-4/browser-acceptance/evidence/supervisor-material-c-edit-prefill.png",
+        "category": "业务界面",
+        "featured": true
+      },
+      {
+        "id": "colleague-materials-list-ab-only.png",
+        "title": "普通同事仅见 A/B",
+        "path": "verify-4/browser-acceptance/evidence/colleague-materials-list-ab-only.png",
+        "category": "业务界面",
+        "featured": true
+      },
+      {
+        "id": "colleague-material-c-unavailable.png",
+        "title": "普通同事访问保密资料被拒",
+        "path": "verify-4/browser-acceptance/evidence/colleague-material-c-unavailable.png",
+        "category": "业务界面",
+        "featured": true
+      },
+      {
+        "id": "assistant-unconfigured.png",
+        "title": "助手未配置模型状态",
+        "path": "verify-4/browser-acceptance/evidence/assistant-unconfigured.png",
+        "category": "业务界面",
+        "featured": true
+      },
+      {
+        "id": "llm-services-none.png",
+        "title": "LLM 服务未配置",
+        "path": "verify-4/browser-acceptance/evidence/llm-services-none.png",
+        "category": "业务界面",
+        "featured": true
+      },
+      {
+        "id": "admin-materials-list.png",
+        "title": "admin-materials-list.png",
+        "path": "verify-4/browser-acceptance/evidence/admin-materials-list.png",
+        "category": "验收 1",
+        "featured": false
+      },
+      {
+        "id": "admin-material-a-edit-prefill.png",
+        "title": "admin-material-a-edit-prefill.png",
+        "path": "verify-4/browser-acceptance/evidence/admin-material-a-edit-prefill.png",
+        "category": "验收 1",
+        "featured": false
+      },
+      {
+        "id": "admin-material-a-edited-saved.png",
+        "title": "admin-material-a-edited-saved.png",
+        "path": "verify-4/browser-acceptance/evidence/admin-material-a-edited-saved.png",
+        "category": "验收 1",
+        "featured": false
+      },
+      {
+        "id": "supervisor-material-c-edited-persisted.png",
+        "title": "supervisor-material-c-edited-persisted.png",
+        "path": "verify-4/browser-acceptance/evidence/supervisor-material-c-edited-persisted.png",
+        "category": "验收 1",
+        "featured": false
+      },
+      {
+        "id": "colleague-assistant-unconfigured.png",
+        "title": "colleague-assistant-unconfigured.png",
+        "path": "verify-4/browser-acceptance/evidence/colleague-assistant-unconfigured.png",
+        "category": "验收 2",
+        "featured": false
+      },
+      {
+        "id": "colleague-assistant-c-question.png",
+        "title": "colleague-assistant-c-question.png",
+        "path": "verify-4/browser-acceptance/evidence/colleague-assistant-c-question.png",
+        "category": "验收 3",
+        "featured": false
+      },
+      {
+        "id": "colleague-assistant-refresh-restored.png",
+        "title": "colleague-assistant-refresh-restored.png",
+        "path": "verify-4/browser-acceptance/evidence/colleague-assistant-refresh-restored.png",
+        "category": "验收 4",
+        "featured": false
+      },
+      {
+        "id": "supervisor-material-b-edit-prefill-45.png",
+        "title": "supervisor-material-b-edit-prefill-45.png",
+        "path": "verify-4/browser-acceptance/evidence/supervisor-material-b-edit-prefill-45.png",
+        "category": "验收 5",
+        "featured": false
+      }
+    ],
+    "uncovered": [
+      "真实模型问答、引用打开、会话恢复与 45→60 更新回答因未配置独立业务测试模型未覆盖"
+    ],
+    "rawQaReport": {
+      "passed": false,
+      "authenticated": true,
+      "summary": "已通过浏览器以管理员、主管、普通同事三种身份完成 B00：三条资料可维护且刷新持久化，普通同事仅见 A/B，C 的页面与直接读取接口均被拒，未配置模型时助手显示明确未配置状态且资料页可用。B01–B05 因未配置独立业务测试模型逐项 blocked；B06 因测试环境未提供受控的服务不可用条件记 not_run。",
+      "checks": [
+        {
+          "id": "B00",
+          "criterion": "不依赖 AI 服务即可验收：主管维护三条资料，普通同事只能阅读 A/B，C 的页面及直接读取接口均拒绝普通同事访问；刷新后资料仍保存。未配置模型时助手显示明确未配置状态，资料页仍可用。\n\n以下 B01–B05 在独立业务测试模型配置可用后执行；缺模型时逐项记 blocked，继续完成资料、权限、助手接入和未配置状态的搭建，不用固定回复替代真实调用。",
+          "status": "passed",
+          "actions": [
+            "用管理员 nocobase 登录，打开 Materials 列表确认 A/B/C 三条资料",
+            "打开资料 A 编辑表单确认标题/正文原值回填后修改正文并保存，重新加载确认持久化，再改回原值保存",
+            "在设置 LLM services 确认 No LLM services configured，并打开 Material assistant 查看未配置状态",
+            "退出后以普通同事 colleague 登录并完整重新加载，打开 Materials 页只显示 A/B；直接访问 /main/materials?id=3",
+            "以同事身份请求 GET /main/api/materials 与 GET /main/api/materials/3",
+            "刷新同事 Materials 页确认 A/B 仍在",
+            "退出后以主管 supervisor 登录，Materials 页可见 A/B/C，编辑资料 C 修改正文并保存，重新加载确认持久化后再改回原值"
+          ],
+          "evidence": [
+            "管理员与主管的 Materials 列表均显示三条资料，C 标注 Supervisor only",
+            "资料 A 编辑表单原值回填为 蓝鹭设备报修电话为 400-000-7316。；保存后刷新仍为新值，随后已还原",
+            "LLM services 页显示 No LLM services configured.；助手页显示 No model service is configured...",
+            "同事 Materials 列表仅有 蓝鹭设备报修电话 与 蓝鹭设备常规巡检间隔，无 C",
+            "同事 /main/materials?id=3 显示 Material unavailable / This material is not available to you",
+            "同事 GET /main/api/materials 返回 200 且只有 A/B（canManage:false）；GET /main/api/materials/3 返回 404 {\"code\":\"NOT_FOUND\"}",
+            "同事刷新 Materials 页后 A/B 仍在；管理员与主管的保存修改刷新后仍在，最终三条资料正文已还原为原始样例"
+          ],
+          "screenshots": [
+            "admin-materials-list.png",
+            "admin-material-a-edit-prefill.png",
+            "admin-material-a-edited-saved.png",
+            "llm-services-none.png",
+            "assistant-unconfigured.png",
+            "colleague-materials-list-ab-only.png",
+            "colleague-material-c-unavailable.png",
+            "supervisor-materials-all-three.png",
+            "supervisor-material-c-edit-prefill.png",
+            "supervisor-material-c-edited-persisted.png"
+          ],
+          "recordedAt": 1790819916922
+        },
+        {
+          "id": "B01",
+          "criterion": "普通同事询问报修电话，回答与资料 A 一致，能从引用打开有权阅读的原资料。",
+          "status": "blocked",
+          "reason": "独立业务测试模型未配置：设置 LLM services 显示 No LLM services configured，助手处于未配置状态，无法进行真实模型调用，因此无法验证真实回答与引用打开。",
+          "actions": [
+            "以普通同事 colleague 登录，打开 Material assistant 查看状态",
+            "打开设置 LLM services 确认无任何可用模型",
+            "在助手输入报修电话问题并提交，观察到未配置状态下的降级回答，但未验证真实模型调用"
+          ],
+          "evidence": [
+            "Material assistant 显示 No model service is configured, so the assistant is answering directly from the materials.",
+            "LLM services 显示 No LLM services configured.",
+            "未配置模型，无法验证真实模型回答与引用链接打开"
+          ],
+          "screenshots": [
+            "colleague-assistant-unconfigured.png",
+            "llm-services-none.png"
+          ],
+          "recordedAt": 1790819916959
+        },
+        {
+          "id": "B02",
+          "criterion": "普通同事询问保密项目代号，回答、引用和错误提示均不包含资料 C 的保密内容；也不能通过引用链接打开 C。",
+          "status": "blocked",
+          "reason": "独立业务测试模型未配置，无法验证真实模型回答是否泄露 C。已做权限侧观察：同事询问该问题得到未覆盖提示，未出现墨竹 729，且直接读取接口被拒。",
+          "actions": [
+            "以普通同事 colleague 登录打开 Material assistant",
+            "询问 保密项目的内部代号是什么？并观察回答是否含 C 内容",
+            "以同事身份请求 GET /main/api/materials/3 验证直接读取被拒"
+          ],
+          "evidence": [
+            "同事得到的降级回答为 The materials do not cover that. Please read the materials on the Materials page, or ask a supervisor.",
+            "回答与错误提示中未出现 墨竹 729 或资料 C 正文",
+            "同事 GET /main/api/materials/3 返回 404 {\"code\":\"NOT_FOUND\"}，无法打开 C"
+          ],
+          "screenshots": [
+            "colleague-assistant-c-question.png",
+            "colleague-material-c-unavailable.png"
+          ],
+          "recordedAt": 1790819916996
+        },
+        {
+          "id": "B03",
+          "criterion": "刷新页面，刚才的对话仍能恢复并继续提问。",
+          "status": "blocked",
+          "reason": "独立业务测试模型未配置，无法验证真实 AI 会话恢复与继续提问；降级模式下刷新后对话记录可见，但不构成真实模型链路验证。",
+          "actions": [
+            "以普通同事 colleague 在 Material assistant 提交问题",
+            "刷新 /main/assistant 并观察此前对话是否恢复、是否可继续输入"
+          ],
+          "evidence": [
+            "刷新后仍显示此前的问题与未覆盖回答，输入框可继续使用（未配置模型下的降级观察，不代表真实模型会话）"
+          ],
+          "screenshots": [
+            "colleague-assistant-refresh-restored.png"
+          ],
+          "recordedAt": 1790819917033
+        },
+        {
+          "id": "B04",
+          "criterion": "主管将资料 B 的巡检间隔改为 60 天，普通同事在新对话里重新询问，依据更新后的资料回答 60 天，而非旧的 45 天。",
+          "status": "blocked",
+          "reason": "独立业务测试模型未配置，无法验证主管修改后同事重新提问是否依据新资料回答。本轮仅确认资料 B 的编辑表单回填原值 45 天，未提交修改。",
+          "actions": [
+            "以主管 supervisor 打开资料 B 的编辑表单，检查原值回填",
+            "确认助手处于未配置状态，无法进行真实模型问答，因此未执行 45→60 修改与回答验证"
+          ],
+          "evidence": [
+            "资料 B 编辑表单原值回填为 蓝鹭设备常规巡检间隔为 45 天。",
+            "LLM services 未配置模型，无法验证更新后回答"
+          ],
+          "screenshots": [
+            "supervisor-material-b-edit-prefill-45.png"
+          ],
+          "recordedAt": 1790819917068
+        },
+        {
+          "id": "B05",
+          "criterion": "询问资料中没有的“设备免费更换年限”，助手说明缺少依据，不编造年限。",
+          "status": "blocked",
+          "reason": "独立业务测试模型未配置，无法验证真实模型对无依据问题的回答；未用固定回复替代真实调用。",
+          "actions": [
+            "确认 LLM services 无模型且助手处于未配置状态",
+            "未发起真实模型问答以验证无依据问题回答"
+          ],
+          "evidence": [
+            "LLM services 显示 No LLM services configured.",
+            "助手显示 No model service is configured..."
+          ],
+          "screenshots": [
+            "assistant-unconfigured.png",
+            "llm-services-none.png"
+          ],
+          "recordedAt": 1790819917106
+        },
+        {
+          "id": "B06",
+          "criterion": "在测试环境提供的服务不可用条件下，界面显示真实不可用状态，手工资料页仍可打开；没有该测试条件时单独记录未执行。",
+          "status": "not_run",
+          "reason": "测试环境未提供受控的 AI 服务不可用条件（preflight 仅列出浏览器能力，无服务故障注入，应用也未配置任何 LLM 服务），按验收要求单独记录未执行。",
+          "actions": [
+            "读取 preflight 确认无服务不可用注入能力",
+            "观察未配置模型时界面显示真实不可用状态且手工 Materials 页可用，作为 B00 证据"
+          ],
+          "evidence": [
+            "preflight capabilities 仅含 worker/pdf 等浏览器能力，无 AI 服务故障条件",
+            "助手显示 No model service is configured...，Materials 页正常可用"
+          ],
+          "screenshots": [],
+          "recordedAt": 1790819917142
+        }
+      ],
+      "failures": [
+        "B01–B05 blocked：测试环境未配置独立业务测试模型（LLM services 显示 No LLM services configured），无法进行真实模型问答、引用打开、会话恢复与资料更新回答验证",
+        "B06 not_run：测试环境未提供受控的 AI 服务不可用条件（preflight 仅含浏览器能力，无服务故障注入）"
+      ]
+    },
+    "rawRetro": {
+      "version": 1,
+      "summary": "Browser criterion B00 failed because the requested business feature was never implemented: the application shipped as the untouched default template (placeholder home, no material collection, one built-in admin account, only Atlas in AI Employees). Implemented the read-only 资料助手 end to end: materials + assistantMessages migrations; server-enforced record visibility through the Authorization composite model; a grounded, citation-carrying assistant service that works with or without an AI model service; Hono routes; 资料库 and 资料助手 pages with navigation, a business landing page and bilingual copy; and seeded three fictional materials, two permission sets and two isolated test accounts, all idempotently. Verified against a real SQLite database, including the confidentiality boundary (a colleague cannot read the supervisor-only material on the page or through the assistant), transcript persistence across refresh, and the supervisor-edit/colleague-re-ask flow. Two runtime defects found by the smoke test were fixed before finishing. A later repair round fixed three failing app-server tests caused by the materials provider and the seed-data import.",
+      "blockers": [],
+      "improvements": [
+        {
+          "phase": "build",
+          "title": "Business feature never implemented (Browser criterion B00)",
+          "status": "resolved",
+          "symptom": "Browser QA saw the default template: the home page said 'Start building your application', the navigation had only Home, Database Explorer had no material collection, User management had only the nocobase Super Admin, AI Employees showed only the built-in Atlas, and LLM services read 'No LLM services configured'.",
+          "rootCause": "There was no application-owned schema, seed, route, service, or page for the requested 资料助手 feature. The working tree was the untouched template and the two earlier agents ran out of context before making changes.",
+          "resolution": "Added the materials and assistantMessages migrations; a materials service and provider that register the Authorization composite, a visibility-filtered record access, and the permission workspace placement; Hono API routes for listing, reading, editing, asking and transcript management; client pages for 资料库 and 资料助手 with navigation entries, a business landing page and locale strings; and idempotent seeds for the three fictional materials, the supervisor/colleague permission sets and the two isolated test accounts."
+        },
+        {
+          "phase": "build",
+          "title": "Authorization policy filter collection mismatch (HTTP 500 on every restricted read)",
+          "status": "resolved",
+          "symptom": "A colleague's GET /api/materials, GET /api/materials/:id and POST /api/assistant/ask returned HTTP 500 with RepositoryError: Filter Collection \"main.materials\" does not match \"materials\".",
+          "rootCause": "The Authorization resource was registered under the connection-qualified name main.materials, so the generated read-scope filter AST was tagged with collection main.materials, while the repository was opened for the physical collection materials; the read-policy normalization rejects a filter whose collection differs from the repository's.",
+          "resolution": "Registered the collection, its database permissions and its record access under the unqualified name materials and set MATERIALS_COLLECTION to materials, so policyFor and withPolicy agree."
+        },
+        {
+          "phase": "build",
+          "title": "Supervisor edit returned HTTP 500 (updatedAt missing from the update grant)",
+          "status": "resolved",
+          "symptom": "A supervisor's PATCH /api/materials/1 returned HTTP 500 with RepositoryError: Writing field \"updatedAt\" is not allowed.",
+          "rootCause": "The manage permission's update field list named only title, body and visibility, but the repository writes updatedAt automatically on every update and the write-policy check refuses any field the grant does not allow.",
+          "resolution": "Included updatedAt in the manage grant's update field list, matching the documented rule to list fields the server writes."
+        },
+        {
+          "phase": "build",
+          "title": "Assistant cited loosely related materials for a specific question",
+          "status": "resolved",
+          "symptom": "Asking for the repair phone number cited both the repair-phone material and the unrelated inspection-interval material, because both share the 蓝鹭设备 prefix.",
+          "rootCause": "selectMatches kept every material scoring at or above a fixed 0.2 threshold, with no relative cutoff against the strongest match.",
+          "resolution": "Kept only matches scoring at least 60% of the best match (still floored at 0.2, still capped at 3), so a specific question cites the material that actually answers it."
+        },
+        {
+          "phase": "repair",
+          "title": "MaterialsProvider resolved authorizationToken in register()",
+          "status": "resolved",
+          "symptom": "tests/logic/app-server.test.ts > 'registers application-owned providers and routes from the runtime' failed with Service \"@nocobase/app/authorization\" is not registered, thrown from server/providers/materials.ts:20:38 during Application.registerProviders.",
+          "rootCause": "MaterialsProvider.register() unconditionally resolved authorizationToken to call registerMaterialsResources(). The real application registers the Authorization plugin (which binds that token) before application providers, but the isolated runtime case in the test passes defineServerPlugins([]), so no plugin provides the token and resolving it throws.",
+          "resolution": "MaterialsProvider now only binds its service token in register(); the Authorization composite, database permissions and UI placement are registered in boot(), guarded by container.has(authorizationToken). boot() still runs after every provider's register() and before any provider's start(), so the Authorization provider's startup scan of stored Permission Sets already sees the materials composite, while a runtime without Authorization simply skips it."
+        },
+        {
+          "phase": "repair",
+          "title": "Seed-data module not loadable when seeds run from source",
+          "status": "resolved",
+          "symptom": "tests/logic/app-server.test.ts > 'starts a fresh Default without example tables or APIs' and > 'serves Users and API Keys...' failed because database seeds failed: Cannot find module '.../workspace/database/seed-data/permission-sets.js' imported from database/main/seeds/202610010102_seed_material_permission_sets.ts (ERR_MODULE_NOT_FOUND).",
+          "rootCause": "The seed imported database/seed-data/permission-sets.js, and seed-data imported server/materials/resources.js. @nocobase/db loads a seed by dynamic import() outside the bundler, so the imported graph is resolved by native Node, which does not map a relative .js specifier onto its .ts source. tsx handles the mapping in normal development, and tsc rewrites the specifier for dist, so the failure appeared only where the source graph runs under native Node (the standalone app-server tests).",
+          "resolution": "Made the seed task graph source-loadable by using .ts specifiers along the only cross-directory chain (seed -> database/seed-data/permission-sets.ts -> server/materials/resources.ts -> server/materials/record-access.ts). tsconfig's rewriteRelativeImportExtensions converts those back to .js when pnpm build emits dist, so the shipped server keeps the same relative layout and the seeds stay derived from the live materials resource reference instead of duplicating grant literals."
+        }
+      ]
+    },
+    "acceptanceRequirements": "B00. 不依赖 AI 服务即可验收：主管维护三条资料，普通同事只能阅读 A/B，C 的页面及直接读取接口均拒绝普通同事访问；刷新后资料仍保存。未配置模型时助手显示明确未配置状态，资料页仍可用。\n\n以下 B01–B05 在独立业务测试模型配置可用后执行；缺模型时逐项记 blocked，继续完成资料、权限、助手接入和未配置状态的搭建，不用固定回复替代真实调用。\n\nB01. 普通同事询问报修电话，回答与资料 A 一致，能从引用打开有权阅读的原资料。\n\nB02. 普通同事询问保密项目代号，回答、引用和错误提示均不包含资料 C 的保密内容；也不能通过引用链接打开 C。\n\nB03. 刷新页面，刚才的对话仍能恢复并继续提问。\n\nB04. 主管将资料 B 的巡检间隔改为 60 天，普通同事在新对话里重新询问，依据更新后的资料回答 60 天，而非旧的 45 天。\n\nB05. 询问资料中没有的“设备免费更换年限”，助手说明缺少依据，不编造年限。\n\nB06. 在测试环境提供的服务不可用条件下，界面显示真实不可用状态，手工资料页仍可打开；没有该测试条件时单独记录未执行。",
+    "changes": {
+      "total": 23,
+      "added": 14,
+      "modified": 9,
+      "deleted": 0
+    },
+    "usage": {
+      "scope": "此 Issue 累计：已采集 1 个 Run / 1 次尝试",
+      "source": "现有 task-usage 模块（按 Agent / job ID 去重）",
+      "total": 129914258,
+      "cacheRead": 122002560,
+      "uncachedInput": 6876523,
+      "output": 1035175,
+      "executionSeconds": 12641,
+      "endToEndSeconds": 12648,
+      "incomplete": true,
+      "phases": [
+        {
+          "label": "初始实现",
+          "input": 1724227,
+          "output": 164669,
+          "cacheRead": 36551040,
+          "cacheWrite": 0,
+          "total": 38439936
+        },
+        {
+          "label": "应用修复",
+          "input": 2467741,
+          "output": 397656,
+          "cacheRead": 59922688,
+          "cacheWrite": 0,
+          "total": 62788085
+        },
+        {
+          "label": "完整业务 QA",
+          "input": 315612,
+          "output": 95276,
+          "cacheRead": 9422080,
+          "cacheWrite": 0,
+          "total": 9832968
+        },
+        {
+          "label": "失败路径复测",
+          "input": 242984,
+          "output": 57256,
+          "cacheRead": 5838848,
+          "cacheWrite": 0,
+          "total": 6139088
+        },
+        {
+          "label": "QA 补报告",
+          "input": 0,
+          "output": 0,
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "total": 0
+        },
+        {
+          "label": "独立搭建评审",
+          "input": 948109,
+          "output": 92736,
+          "cacheRead": 10196224,
+          "cacheWrite": 0,
+          "total": 11237069
+        },
+        {
+          "label": "上下文压缩",
+          "input": 1177850,
+          "output": 227582,
+          "cacheRead": 71680,
+          "cacheWrite": 0,
+          "total": 1477112
+        }
+      ],
+      "coverageNote": "用量记录 1863；未报告用量 4；分项不完整 0；缺失作业时间 0。",
+      "note": "不把流式增量、上下文长度和思考 Token 重复相加。旧记录未拆分 QA 时保留原有口径；费用：未知。"
+    },
+    "runs": [
+      {
+        "id": "36787401343",
+        "attempt": 1,
+        "status": "failed",
+        "detail": "失败"
+      }
+    ],
+    "retro": {
+      "version": 1,
+      "summary": "Browser criterion B00 failed because the requested business feature was never implemented: the application shipped as the untouched default template (placeholder home, no material collection, one built-in admin account, only Atlas in AI Employees). Implemented the read-only 资料助手 end to end: materials + assistantMessages migrations; server-enforced record visibility through the Authorization composite model; a grounded, citation-carrying assistant service that works with or without an AI model service; Hono routes; 资料库 and 资料助手 pages with navigation, a business landing page and bilingual copy; and seeded three fictional materials, two permission sets and two isolated test accounts, all idempotently. Verified against a real SQLite database, including the confidentiality boundary (a colleague cannot read the supervisor-only material on the page or through the assistant), transcript persistence across refresh, and the supervisor-edit/colleague-re-ask flow. Two runtime defects found by the smoke test were fixed before finishing. A later repair round fixed three failing app-server tests caused by the materials provider and the seed-data import.",
+      "source": "Agent · retro.json",
+      "blockers": [],
+      "improvements": [
+        {
+          "category": "",
+          "title": "Business feature never implemented (Browser criterion B00)",
+          "detail": "",
+          "suggestedChange": "",
+          "source": "",
+          "mechanizable": false
+        },
+        {
+          "category": "",
+          "title": "Authorization policy filter collection mismatch (HTTP 500 on every restricted read)",
+          "detail": "",
+          "suggestedChange": "",
+          "source": "",
+          "mechanizable": false
+        },
+        {
+          "category": "",
+          "title": "Supervisor edit returned HTTP 500 (updatedAt missing from the update grant)",
+          "detail": "",
+          "suggestedChange": "",
+          "source": "",
+          "mechanizable": false
+        },
+        {
+          "category": "",
+          "title": "Assistant cited loosely related materials for a specific question",
+          "detail": "",
+          "suggestedChange": "",
+          "source": "",
+          "mechanizable": false
+        },
+        {
+          "category": "",
+          "title": "MaterialsProvider resolved authorizationToken in register()",
+          "detail": "",
+          "suggestedChange": "",
+          "source": "",
+          "mechanizable": false
+        },
+        {
+          "category": "",
+          "title": "Seed-data module not loadable when seeds run from source",
+          "detail": "",
+          "suggestedChange": "",
+          "source": "",
+          "mechanizable": false
+        }
+      ]
+    },
+    "timings": [
+      {
+        "stage": "agent:repair",
+        "calls": 3,
+        "durationMs": 5339397
+      },
+      {
+        "stage": "agent:implementation",
+        "calls": 1,
+        "durationMs": 3484738
+      },
+      {
+        "stage": "agent:qa",
+        "calls": 2,
+        "durationMs": 1354587
+      },
+      {
+        "stage": "agent:qa-focused",
+        "calls": 2,
+        "durationMs": 716585
+      },
+      {
+        "stage": "build",
+        "calls": 3,
+        "durationMs": 198162
+      },
+      {
+        "stage": "test",
+        "calls": 4,
+        "durationMs": 189078
+      },
+      {
+        "stage": "lint",
+        "calls": 4,
+        "durationMs": 147854
+      },
+      {
+        "stage": "typecheck",
+        "calls": 4,
+        "durationMs": 68070
+      },
+      {
+        "stage": "db:apply",
+        "calls": 4,
+        "durationMs": 24533
+      },
+      {
+        "stage": "format:check",
+        "calls": 4,
+        "durationMs": 24087
+      },
+      {
+        "stage": "format:auto",
+        "calls": 4,
+        "durationMs": 9009
+      },
+      {
+        "stage": "install",
+        "calls": 1,
+        "durationMs": 5535
+      },
+      {
+        "stage": "skills-sync",
+        "calls": 1,
+        "durationMs": 1187
+      }
+    ],
+    "buildReview": {
+      "version": 1,
+      "state": "not-reviewed",
+      "reason": "独立评审尚未完成；没有评分。",
+      "basis": {
+        "repository": "gchust/nb3-factory",
+        "issue": 508,
+        "runId": "36787401343",
+        "attempt": 1,
+        "controlSha": "0f72d9b81f981f10501c5ac0ee0e7d786f1f4698",
+        "rubricVersion": 2
+      },
+      "evaluation": null,
+      "process": {
+        "verificationAttempts": 4,
+        "repairAttempts": 3,
+        "finalRound": 4,
+        "rounds": [
+          {
+            "round": 1,
+            "reports": [
+              {
+                "scope": "full",
+                "source": "verify-1/browser-acceptance/report.json",
+                "passed": false,
+                "checks": [
+                  {
+                    "id": "B00",
+                    "criterion": "不依赖 AI 服务即可验收：主管维护三条资料，普通同事只能阅读 A/B，C 的页面及直接读取接口均拒绝普通同事访问；刷新后资料仍保存。未配置模型时助手显示明确未配置状态，资料页仍可用。\n\n以下 B01–B05 在独立业务测试模型配置可用后执行；缺模型时逐项记 blocked，继续完成资料、权限、助手接入和未配置状态的搭建，不用固定回复替代真实调用。",
+                    "status": "failed",
+                    "reason": ""
+                  },
+                  {
+                    "id": "B01",
+                    "criterion": "普通同事询问报修电话，回答与资料 A 一致，能从引用打开有权阅读的原资料。",
+                    "status": "blocked",
+                    "reason": "缺少独立业务测试模型：LLM services 显示 No LLM services configured，无法发起真实 AI 问答；同时应用内不存在资料助手 AI 员工与 A/B/C 资料，前置数据与功能也未搭建"
+                  },
+                  {
+                    "id": "B02",
+                    "criterion": "普通同事询问保密项目代号，回答、引用和错误提示均不包含资料 C 的保密内容；也不能通过引用链接打开 C。",
+                    "status": "blocked",
+                    "reason": "缺少独立业务测试模型：LLM services 显示 No LLM services configured，无法发起真实 AI 问答；同时应用内不存在资料助手 AI 员工与 A/B/C 资料，前置数据与功能也未搭建"
+                  },
+                  {
+                    "id": "B03",
+                    "criterion": "刷新页面，刚才的对话仍能恢复并继续提问。",
+                    "status": "blocked",
+                    "reason": "缺少独立业务测试模型：LLM services 显示 No LLM services configured，无法发起真实 AI 问答；同时应用内不存在资料助手 AI 员工与 A/B/C 资料，前置数据与功能也未搭建"
+                  },
+                  {
+                    "id": "B04",
+                    "criterion": "主管将资料 B 的巡检间隔改为 60 天，普通同事在新对话里重新询问，依据更新后的资料回答 60 天，而非旧的 45 天。",
+                    "status": "blocked",
+                    "reason": "缺少独立业务测试模型：LLM services 显示 No LLM services configured，无法发起真实 AI 问答；同时应用内不存在资料助手 AI 员工与 A/B/C 资料，前置数据与功能也未搭建"
+                  },
+                  {
+                    "id": "B05",
+                    "criterion": "询问资料中没有的“设备免费更换年限”，助手说明缺少依据，不编造年限。",
+                    "status": "blocked",
+                    "reason": "缺少独立业务测试模型：LLM services 显示 No LLM services configured，无法发起真实 AI 问答；同时应用内不存在资料助手 AI 员工与 A/B/C 资料，前置数据与功能也未搭建"
+                  },
+                  {
+                    "id": "B06",
+                    "criterion": "在测试环境提供的服务不可用条件下，界面显示真实不可用状态，手工资料页仍可打开；没有该测试条件时单独记录未执行。",
+                    "status": "not_run",
+                    "reason": "验收环境未提供“服务不可用”的受控故障条件，按需求“没有该测试条件时单独记录未执行”记录为未执行；另外应用内也没有资料助手与资料页可供对照检查未配置状态"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "round": 2,
+            "reports": [
+              {
+                "scope": "focused",
+                "source": "verify-2/browser-focused/report.json",
+                "passed": false,
+                "checks": [
+                  {
+                    "id": "B00",
+                    "criterion": "不依赖 AI 服务即可验收：主管维护三条资料，普通同事只能阅读 A/B，C 的页面及直接读取接口均拒绝普通同事访问；刷新后资料仍保存。未配置模型时助手显示明确未配置状态，资料页仍可用。\n\n以下 B01–B05 在独立业务测试模型配置可用后执行；缺模型时逐项记 blocked，继续完成资料、权限、助手接入和未配置状态的搭建，不用固定回复替代真实调用。",
+                    "status": "failed",
+                    "reason": ""
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "round": 4,
+            "reports": [
+              {
+                "scope": "full",
+                "source": "verify-4/browser-acceptance/report.json",
+                "passed": false,
+                "checks": [
+                  {
+                    "id": "B00",
+                    "criterion": "不依赖 AI 服务即可验收：主管维护三条资料，普通同事只能阅读 A/B，C 的页面及直接读取接口均拒绝普通同事访问；刷新后资料仍保存。未配置模型时助手显示明确未配置状态，资料页仍可用。\n\n以下 B01–B05 在独立业务测试模型配置可用后执行；缺模型时逐项记 blocked，继续完成资料、权限、助手接入和未配置状态的搭建，不用固定回复替代真实调用。",
+                    "status": "passed",
+                    "reason": ""
+                  },
+                  {
+                    "id": "B01",
+                    "criterion": "普通同事询问报修电话，回答与资料 A 一致，能从引用打开有权阅读的原资料。",
+                    "status": "blocked",
+                    "reason": "独立业务测试模型未配置：设置 LLM services 显示 No LLM services configured，助手处于未配置状态，无法进行真实模型调用，因此无法验证真实回答与引用打开。"
+                  },
+                  {
+                    "id": "B02",
+                    "criterion": "普通同事询问保密项目代号，回答、引用和错误提示均不包含资料 C 的保密内容；也不能通过引用链接打开 C。",
+                    "status": "blocked",
+                    "reason": "独立业务测试模型未配置，无法验证真实模型回答是否泄露 C。已做权限侧观察：同事询问该问题得到未覆盖提示，未出现墨竹 729，且直接读取接口被拒。"
+                  },
+                  {
+                    "id": "B03",
+                    "criterion": "刷新页面，刚才的对话仍能恢复并继续提问。",
+                    "status": "blocked",
+                    "reason": "独立业务测试模型未配置，无法验证真实 AI 会话恢复与继续提问；降级模式下刷新后对话记录可见，但不构成真实模型链路验证。"
+                  },
+                  {
+                    "id": "B04",
+                    "criterion": "主管将资料 B 的巡检间隔改为 60 天，普通同事在新对话里重新询问，依据更新后的资料回答 60 天，而非旧的 45 天。",
+                    "status": "blocked",
+                    "reason": "独立业务测试模型未配置，无法验证主管修改后同事重新提问是否依据新资料回答。本轮仅确认资料 B 的编辑表单回填原值 45 天，未提交修改。"
+                  },
+                  {
+                    "id": "B05",
+                    "criterion": "询问资料中没有的“设备免费更换年限”，助手说明缺少依据，不编造年限。",
+                    "status": "blocked",
+                    "reason": "独立业务测试模型未配置，无法验证真实模型对无依据问题的回答；未用固定回复替代真实调用。"
+                  },
+                  {
+                    "id": "B06",
+                    "criterion": "在测试环境提供的服务不可用条件下，界面显示真实不可用状态，手工资料页仍可打开；没有该测试条件时单独记录未执行。",
+                    "status": "not_run",
+                    "reason": "测试环境未提供受控的 AI 服务不可用条件（preflight 仅列出浏览器能力，无服务故障注入，应用也未配置任何 LLM 服务），按验收要求单独记录未执行。"
+                  }
+                ]
+              },
+              {
+                "scope": "focused",
+                "source": "verify-4/browser-focused/report.json",
+                "passed": true,
+                "checks": [
+                  {
+                    "id": "B00",
+                    "criterion": "不依赖 AI 服务即可验收：主管维护三条资料，普通同事只能阅读 A/B，C 的页面及直接读取接口均拒绝普通同事访问；刷新后资料仍保存。未配置模型时助手显示明确未配置状态，资料页仍可用。\n\n以下 B01–B05 在独立业务测试模型配置可用后执行；缺模型时逐项记 blocked，继续完成资料、权限、助手接入和未配置状态的搭建，不用固定回复替代真实调用。",
+                    "status": "passed",
+                    "reason": ""
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "warnings": [],
+        "scope": "仅本 Run 已归档记录；工厂修复轮次不等于 Agent 开发中全部试错次数。缺少 verify-1 时不能声称任务首轮通过。"
+      }
+    },
+    "baseline": {
+      "template": "@nocobase/app-template-default",
+      "templateVersion": "1.0.0-beta.50",
+      "creatorVersion": "0.1.0-beta.24",
+      "source": null,
+      "lockSha256": "fc4f398ef6cf510da8958ca26db0bea4c17ab81019ac0e2c464503439c7de0be",
+      "packages": [
+        {
+          "name": "@nocobase/ai-employee",
+          "version": "0.2.0-beta.8",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/ai-employee-avatars",
+          "version": "1.0.2",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/app-cli",
+          "version": "1.0.0-beta.9",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/app-client",
+          "version": "1.0.0-beta.23",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/app-plugin-ai-employee",
+          "version": "1.0.0-beta.26",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/app-plugin-ai-knowledge-base",
+          "version": "0.1.0-beta.9",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/app-plugin-api-keys",
+          "version": "0.1.0-beta.9",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/app-plugin-authentication",
+          "version": "1.0.0-beta.24",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/app-plugin-authorization",
+          "version": "0.2.0-beta.21",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/app-plugin-authz-default-access",
+          "version": "0.1.0-beta.6",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/app-plugin-authz-restriction-rules",
+          "version": "0.1.0-beta.5",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/app-plugin-authz-sharing-rules",
+          "version": "0.1.0-beta.6",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/app-plugin-database-explorer",
+          "version": "0.1.0-beta.7",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/app-plugin-file",
+          "version": "0.1.0-beta.16",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/app-plugin-i18n",
+          "version": "0.1.0-beta.10",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/app-plugin-mail",
+          "version": "0.1.0-beta.0",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/app-plugin-notification",
+          "version": "0.1.0-beta.18",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/app-plugin-notification-in-app",
+          "version": "0.2.0-beta.18",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/app-plugin-notification-providers",
+          "version": "0.2.0-beta.7",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/app-plugin-scheduler",
+          "version": "0.1.0-beta.9",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/app-plugin-template-print",
+          "version": "0.0.2-beta.0",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/app-plugin-users",
+          "version": "1.0.0-beta.12",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/app-plugin-workflow",
+          "version": "1.0.0-beta.29",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/app-server",
+          "version": "1.0.0-beta.29",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/app-skills",
+          "version": "0.1.0-beta.19",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/app-websocket",
+          "version": "0.0.1",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/authorization",
+          "version": "0.1.0-beta.10",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/caching",
+          "version": "0.1.0-beta.2",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/config",
+          "version": "0.1.0-beta.1",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/cron",
+          "version": "0.1.0",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/db",
+          "version": "1.0.0-beta.16",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/db-sqlite",
+          "version": "0.1.0-beta.3",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/dev-config",
+          "version": "0.1.0-beta.14",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/drive",
+          "version": "0.1.0-beta.4",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/hub-cli",
+          "version": "0.1.0-beta.0",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/i18n",
+          "version": "1.0.0-beta.4",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/logging",
+          "version": "0.1.0-beta.6",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/queue",
+          "version": "0.1.0-beta.7",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/repository-input",
+          "version": "0.1.0-beta.1",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/service-provider",
+          "version": "0.0.2-beta.1",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/session",
+          "version": "0.1.0-beta.2",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/snowflake",
+          "version": "1.0.0-beta.3",
+          "reason": null
+        }
+      ]
+    }
+  },
+  "pr": {
+    "number": 513,
+    "headSha": "9852e52d12f8727e891fda8fb49a4f94ac6af337"
+  },
+  "reportId": "gchust/nb3-factory:508:36787401343:1:9852e52d12f8727e891fda8fb49a4f94ac6af337:template-9:review-8c0407f0db86ce16"
+}
