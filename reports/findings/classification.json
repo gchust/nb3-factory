@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "inputHash": "98d8d3b1a559100d6d1b9d5a6eab98fd5733893eab7a34f43ca940ed9e417a63",
+  "inputHash": "d1076462f196ff93ef1096b5e2ecd59fa23c207924c721d758bfeb03909c50be",
   "sources": [
     {
       "id": "460:36434284393:1:F2",
@@ -271,6 +271,26 @@
       "id": "506:36787391890:1:F7",
       "report": "506:36787391890:1",
       "fingerprint": "886e5936131df14f4aa355086bd5f1238f8090f8040c2bdcd13a063d5dd71fad"
+    },
+    {
+      "id": "507:36787396720:1:F2",
+      "report": "507:36787396720:1",
+      "fingerprint": "43bc66b6cd4a84957bb7a0819cb51394a1722fcd652073f1f8bcae5b8966d4df"
+    },
+    {
+      "id": "507:36787396720:1:F3",
+      "report": "507:36787396720:1",
+      "fingerprint": "b0b2bcebbdd802b8f5f3126893a1ab39547b674015c7797ea83756946ff57789"
+    },
+    {
+      "id": "507:36787396720:1:F4",
+      "report": "507:36787396720:1",
+      "fingerprint": "9762f68683dbef18746f28e7b3fc668938ca4a7c4ec566bc0edb7f2bc2062142"
+    },
+    {
+      "id": "507:36787396720:1:F5",
+      "report": "507:36787396720:1",
+      "fingerprint": "8332f74a59307c5c3a00bd4917f0887d03faa7332b97480c5703f7eef5bc292a"
     }
   ],
   "groups": [
@@ -285,19 +305,21 @@
     },
     {
       "title": "Registry OOXML 预览缺少加载/渲染超时，viewer 不收敛时长期停在 Loading",
-      "reason": "跨报告合并。463:F1 的 E69/E70/E91 显示基线 OfficeOpenXmlPreview 只 await viewer.load 且未传 workerTimeoutMs，onError 覆盖不到挂起，合法 DOCX 等待超 2 分钟仍停在 Loading；476:F2 的 E10/E11 显示同一组件加载 effect 仅 abort/destroy、OFFICE_PREVIEW_TIMEOUT_MS 只覆盖 Office Online 分支；478:F4 的 E8/E9/E12 显示同一组件无独立渲染超时，第 4 轮 DOCX 约 25s 仍停在 Loading preview...。触发条件（viewer.load 不 settle）、期望（超时后明确失败回退与下载）、实际（无界 Loading）与修复组件/位置一致，故合并。",
+      "reason": "跨报告合并。463:F1 的 E69/E70/E91 显示基线 OfficeOpenXmlPreview 只 await viewer.load 且未传 workerTimeoutMs，onError 覆盖不到挂起，合法 DOCX 等待超 2 分钟仍停在 Loading；476:F2 的 E10/E11 显示同一组件加载 effect 仅 abort/destroy、OFFICE_PREVIEW_TIMEOUT_MS 只覆盖 Office Online 分支；478:F4 的 E8/E9/E12 显示同一组件无独立渲染超时，第 4 轮 DOCX 约 25s 仍停在 Loading preview...。触发条件（viewer.load 不 settle）、期望（超时后明确失败回退与下载）、实际（无界 Loading）与修复组件/位置一致，故合并。 507:F2 的 E1/E2/E5 显示同一组件 createOfficeOpenXmlViewer 未传 workerTimeoutMs、effect 仅 await viewer.load 且无超时看门狗，E52/E53 为 DOCX 长时间停在 Loading preview 的验收现场，与既有成员触发条件、期望、实际及修复方向一致，故并入。",
       "members": [
         "463:36434310207:1:F1",
         "476:36498929142:1:F2",
-        "478:36522310216:1:F4"
+        "478:36522310216:1:F4",
+        "507:36787396720:1:F2"
       ]
     },
     {
       "title": "Registry 图片预览缺少解码失败态，损坏图片只显示浏览器破图占位",
-      "reason": "跨报告合并。463:F2 的 E71 显示 file-preview-content.tsx 的 image 分支是裸 <img src alt>，无 onError/失败态，只有 default 分支才回退 DownloadFallback；476:F1 的 E9 为同一 image 分支缺少 onError 的直接证据，E38/E45 记录应用复制安装源码新增 ImagePreview 后损坏 PNG 才有失败文案与下载入口。触发条件（已入库但字节不可解码的图片）、期望（明确失败提示并可回退下载）、实际（破图占位无提示）与修复组件一致，故合并。",
+      "reason": "跨报告合并。463:F2 的 E71 显示 file-preview-content.tsx 的 image 分支是裸 <img src alt>，无 onError/失败态，只有 default 分支才回退 DownloadFallback；476:F1 的 E9 为同一 image 分支缺少 onError 的直接证据，E38/E45 记录应用复制安装源码新增 ImagePreview 后损坏 PNG 才有失败文案与下载入口。触发条件（已入库但字节不可解码的图片）、期望（明确失败提示并可回退下载）、实际（破图占位无提示）与修复组件一致，故合并。 507:F3 的 E3/E4 显示 file-preview-content.tsx 的 image 分支与 file-thumbnail.tsx 均直接渲染 <img> 且无 onError 回退，损坏 PNG 只显示浏览器破图，与既有成员同一根因与修复方向，故并入。",
       "members": [
         "463:36434310207:1:F2",
-        "476:36498929142:1:F1"
+        "476:36498929142:1:F1",
+        "507:36787396720:1:F3"
       ]
     },
     {
@@ -561,15 +583,29 @@
       "members": [
         "504:36787382191:1:F4"
       ]
+    },
+    {
+      "title": "文档宣称 OOXML 失败会显示错误与下载回退，未覆盖 Worker 静默挂起",
+      "reason": "单条保留。507:F4 的 E5 显示 Registry README 与插件 SKILL 声明 OOXML 请求或渲染失败会显示错误并提供可选下载动作，E1 显示组件仅 await viewer.load 且无超时，E11 为 SKILL 的 Registry 安装与依赖配方；合起来说明该失败契约只对抛错成立、对 Worker 静默挂起不成立。该发现与 507:F2 同报告不能合并；其根因是文档给出不完整的失败契约（属错误/误导说明），与框架缺少超时这一运行缺陷应区分，故单独保留。",
+      "members": [
+        "507:36787396720:1:F4"
+      ]
+    },
+    {
+      "title": "文件插件 Skill 未显式说明上传路由由 defineFileRepositoryApiRoutes 声明后挂载",
+      "reason": "单条保留。507:F5 的 E10 显示 SKILL 只说明“仅声明的 POST 操作才暴露”，未把“声明即配置路由”作为显式结论；E48 显示应用作者据注释“插件根本没有 HTTP 上传路由”自建上传路由并重复校验；E6 显示 defineFileRepositoryApiRoutes 实际会按声明暴露 uploadOne/uploadMany。该发现是因文档缺少正面结论而导致的误判（confidence: suspected），与包布局、种子导入、CSRF 等其他 Skill 缺口根因不同，且无同根因的其他发现，故单独保留。",
+      "members": [
+        "507:36787396720:1:F5"
+      ]
     }
   ],
   "classifier": {
     "engine": "pi",
     "model": "deepseek-v4.1-flash",
     "version": "0.86.1",
-    "runId": "36805216004",
+    "runId": "36806975383",
     "attempt": 1,
     "controlSha": "0f72d9b81f981f10501c5ac0ee0e7d786f1f4698",
-    "completedAt": "2026-10-01T02:20:16.152Z"
+    "completedAt": "2026-10-01T02:42:35.248Z"
   }
 }
