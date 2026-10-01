@@ -1,0 +1,1285 @@
+{
+  "schemaVersion": 1,
+  "type": "evaluation-report",
+  "source": {
+    "producer": "nb3-factory",
+    "instance": "gchust/nb3-factory",
+    "project": "gchust/nb3-factory",
+    "exporter": {
+      "version": 1,
+      "controlSha": "0f72d9b81f981f10501c5ac0ee0e7d786f1f4698",
+      "runId": 36805223136,
+      "attempt": 1
+    }
+  },
+  "run": {
+    "key": "gchust/nb3-factory/issues/508/initial",
+    "kind": "initial",
+    "identity": "recorded",
+    "batchKey": null,
+    "caseKey": null,
+    "sampleIndex": null,
+    "sampleKey": null,
+    "task": {
+      "repository": "gchust/nb3-factory",
+      "issue": 508,
+      "buildCommentId": null,
+      "title": "内部资料只读问答助手"
+    },
+    "case": {
+      "source": "preset",
+      "presetIssueNumber": 207,
+      "capturedAt": "2026-09-30T22:45:49Z",
+      "inputHash": "bc39583fd29fc700806a1548af59fbdc445ad4870c04ab16ec19526077364101",
+      "reviewHash": "ab174be33b381cc6426a840d619848333cb3216eb1db0133b9494cecbe07f1c1"
+    }
+  },
+  "revision": 1,
+  "createdAt": "2026-10-01T02:19:04Z",
+  "precedence": {
+    "producer": {
+      "runId": 36787401343,
+      "attempt": 1,
+      "startedAt": "2026-09-30T22:45:39Z"
+    },
+    "executionOrder": 1,
+    "knownLaterExecutions": 0,
+    "chainTerminal": true,
+    "reviewRubric": 0,
+    "reviewState": "not-reviewed",
+    "review": {
+      "kind": null,
+      "at": null,
+      "runId": null,
+      "attempt": null
+    },
+    "qaCoverage": "complete"
+  },
+  "baseline": {
+    "track": "published-template",
+    "application": {
+      "baseRef": "develop",
+      "baseSha": "0f72d9b81f981f10501c5ac0ee0e7d786f1f4698",
+      "candidate": {
+        "patchSha256": "0869439764425e49b7a6c228e85963836d9fe2cb203e8b0619bc083c0b2984e2",
+        "headSha": "9852e52d12f8727e891fda8fb49a4f94ac6af337"
+      }
+    },
+    "factory": {
+      "controlSha": "0f72d9b81f981f10501c5ac0ee0e7d786f1f4698",
+      "entrySha": "0f72d9b81f981f10501c5ac0ee0e7d786f1f4698"
+    },
+    "template": {
+      "creatorVersion": "0.1.0-beta.24",
+      "templateVersion": "1.0.0-beta.50"
+    },
+    "dependencies": {
+      "lockfileSha256": "fc4f398ef6cf510da8958ca26db0bea4c17ab81019ac0e2c464503439c7de0be",
+      "baselineFingerprint": "c86d91639ddb6c43f838e352d0075db7657aeb89aed976a3275692a54e16827b",
+      "packages": [
+        {
+          "name": "@nocobase/ai-employee",
+          "version": "0.2.0-beta.8"
+        },
+        {
+          "name": "@nocobase/ai-employee-avatars",
+          "version": "1.0.2"
+        },
+        {
+          "name": "@nocobase/app-cli",
+          "version": "1.0.0-beta.9"
+        },
+        {
+          "name": "@nocobase/app-client",
+          "version": "1.0.0-beta.23"
+        },
+        {
+          "name": "@nocobase/app-plugin-ai-employee",
+          "version": "1.0.0-beta.26"
+        },
+        {
+          "name": "@nocobase/app-plugin-ai-knowledge-base",
+          "version": "0.1.0-beta.9"
+        },
+        {
+          "name": "@nocobase/app-plugin-api-keys",
+          "version": "0.1.0-beta.9"
+        },
+        {
+          "name": "@nocobase/app-plugin-authentication",
+          "version": "1.0.0-beta.24"
+        },
+        {
+          "name": "@nocobase/app-plugin-authorization",
+          "version": "0.2.0-beta.21"
+        },
+        {
+          "name": "@nocobase/app-plugin-authz-default-access",
+          "version": "0.1.0-beta.6"
+        },
+        {
+          "name": "@nocobase/app-plugin-authz-restriction-rules",
+          "version": "0.1.0-beta.5"
+        },
+        {
+          "name": "@nocobase/app-plugin-authz-sharing-rules",
+          "version": "0.1.0-beta.6"
+        },
+        {
+          "name": "@nocobase/app-plugin-database-explorer",
+          "version": "0.1.0-beta.7"
+        },
+        {
+          "name": "@nocobase/app-plugin-file",
+          "version": "0.1.0-beta.16"
+        },
+        {
+          "name": "@nocobase/app-plugin-i18n",
+          "version": "0.1.0-beta.10"
+        },
+        {
+          "name": "@nocobase/app-plugin-mail",
+          "version": "0.1.0-beta.0"
+        },
+        {
+          "name": "@nocobase/app-plugin-notification",
+          "version": "0.1.0-beta.18"
+        },
+        {
+          "name": "@nocobase/app-plugin-notification-in-app",
+          "version": "0.2.0-beta.18"
+        },
+        {
+          "name": "@nocobase/app-plugin-notification-providers",
+          "version": "0.2.0-beta.7"
+        },
+        {
+          "name": "@nocobase/app-plugin-scheduler",
+          "version": "0.1.0-beta.9"
+        },
+        {
+          "name": "@nocobase/app-plugin-template-print",
+          "version": "0.0.2-beta.0"
+        },
+        {
+          "name": "@nocobase/app-plugin-users",
+          "version": "1.0.0-beta.12"
+        },
+        {
+          "name": "@nocobase/app-plugin-workflow",
+          "version": "1.0.0-beta.29"
+        },
+        {
+          "name": "@nocobase/app-server",
+          "version": "1.0.0-beta.29"
+        },
+        {
+          "name": "@nocobase/app-skills",
+          "version": "0.1.0-beta.19"
+        },
+        {
+          "name": "@nocobase/app-websocket",
+          "version": "0.0.1"
+        },
+        {
+          "name": "@nocobase/authorization",
+          "version": "0.1.0-beta.10"
+        },
+        {
+          "name": "@nocobase/caching",
+          "version": "0.1.0-beta.2"
+        },
+        {
+          "name": "@nocobase/config",
+          "version": "0.1.0-beta.1"
+        },
+        {
+          "name": "@nocobase/cron",
+          "version": "0.1.0"
+        },
+        {
+          "name": "@nocobase/db",
+          "version": "1.0.0-beta.16"
+        },
+        {
+          "name": "@nocobase/db-sqlite",
+          "version": "0.1.0-beta.3"
+        },
+        {
+          "name": "@nocobase/dev-config",
+          "version": "0.1.0-beta.14"
+        },
+        {
+          "name": "@nocobase/drive",
+          "version": "0.1.0-beta.4"
+        },
+        {
+          "name": "@nocobase/hub-cli",
+          "version": "0.1.0-beta.0"
+        },
+        {
+          "name": "@nocobase/i18n",
+          "version": "1.0.0-beta.4"
+        },
+        {
+          "name": "@nocobase/logging",
+          "version": "0.1.0-beta.6"
+        },
+        {
+          "name": "@nocobase/queue",
+          "version": "0.1.0-beta.7"
+        },
+        {
+          "name": "@nocobase/repository-input",
+          "version": "0.1.0-beta.1"
+        },
+        {
+          "name": "@nocobase/service-provider",
+          "version": "0.0.2-beta.1"
+        },
+        {
+          "name": "@nocobase/session",
+          "version": "0.1.0-beta.2"
+        },
+        {
+          "name": "@nocobase/snowflake",
+          "version": "1.0.0-beta.3"
+        }
+      ]
+    },
+    "skills": {
+      "fingerprint": "5ea384f4e3cd9e5c4d50775634deb133f94e64e0dc1060248e42480bd40a8a33",
+      "files": 120
+    },
+    "sourceSnapshot": null,
+    "inputs": {
+      "taskInputHash": "bc39583fd29fc700806a1548af59fbdc445ad4870c04ab16ec19526077364101",
+      "pipelineInputHash": "70ec33ec64bed8ee3efbc856a7ffabf9efe787270d9795ac31a8a64970ff856b",
+      "reviewHash": "ab174be33b381cc6426a840d619848333cb3216eb1db0133b9494cecbe07f1c1",
+      "reviewCriteriaHash": "ab174be33b381cc6426a840d619848333cb3216eb1db0133b9494cecbe07f1c1",
+      "prompts": [
+        {
+          "phase": "implementation",
+          "path": "agent-implement.jsonl.invocation.json",
+          "sha256": "27a6120ae39f3b1767a9b94ad4e104717811a324b9c1e928a7bb80fc3d3b9911"
+        },
+        {
+          "phase": "repair",
+          "path": "agent-repair-1.jsonl.invocation.json",
+          "sha256": "6a749b6aaad6edc98bd216850f935e01db95e0632ecd4f4986832b7c7682c3f8"
+        },
+        {
+          "phase": "repair",
+          "path": "agent-repair-2.jsonl.invocation.json",
+          "sha256": "bd0de3f3b43c9f8d7dcad02560f743f14de510b0c2f4056102ead31da6f79d3d"
+        },
+        {
+          "phase": "repair",
+          "path": "agent-repair-3.jsonl.invocation.json",
+          "sha256": "c3e379c475c44bd3f64ea9175c76b07782dbc356902f8c7428d36586c43b1d4e"
+        },
+        {
+          "phase": "review",
+          "path": "agent-review.jsonl.invocation.json",
+          "sha256": "aabc35672ebc9a02174d3d16be62211859fcfe422912f150aa0180db4260700f"
+        },
+        {
+          "phase": "qa",
+          "path": "verify-1/browser-acceptance/agent-browser-acceptance.jsonl.invocation.json",
+          "sha256": "bb45b3a89195fa2102c337fa32c3e5ff8be5a2e49a49ab708022ffb98781a49b"
+        },
+        {
+          "phase": "qa-focused",
+          "path": "verify-2/browser-focused/agent-browser-acceptance.jsonl.invocation.json",
+          "sha256": "561d81615b3d0390cb9e7ff27c70255d642d0883e96b5cc083d3a2a1019143a3"
+        },
+        {
+          "phase": "qa",
+          "path": "verify-4/browser-acceptance/agent-browser-acceptance.jsonl.invocation.json",
+          "sha256": "bb45b3a89195fa2102c337fa32c3e5ff8be5a2e49a49ab708022ffb98781a49b"
+        },
+        {
+          "phase": "qa-focused",
+          "path": "verify-4/browser-focused/agent-browser-acceptance.jsonl.invocation.json",
+          "sha256": "561d81615b3d0390cb9e7ff27c70255d642d0883e96b5cc083d3a2a1019143a3"
+        }
+      ]
+    },
+    "rubric": {
+      "id": "nb3-framework",
+      "version": 2
+    },
+    "agent": {
+      "engine": "pi",
+      "model": "deepseek-v4.1-flash",
+      "version": "0.86.1",
+      "buildReviewMode": null,
+      "configuration": {
+        "fingerprints": [
+          "2f5401c2837d7dae1f1f014540b983521db478e49b3e29c61dbb26be0a75e3bf"
+        ],
+        "complete": false
+      }
+    },
+    "environment": {
+      "browserFixturesSha256": "3b527d18aa2f6d58fdfea5cdd916631ea1ee3425abeba09bb1f961f2128c554b",
+      "browserPreflight": "passed"
+    }
+  },
+  "executions": [
+    {
+      "key": "run/36787401343/attempt/1",
+      "kind": "implementation",
+      "order": 1,
+      "workflow": "code-agent-task",
+      "runId": 36787401343,
+      "attempt": 1,
+      "event": "workflow_dispatch",
+      "previousRunId": null,
+      "conclusion": "failed",
+      "startedAt": "2026-09-30T22:45:39Z",
+      "endedAt": "2026-10-01T02:16:27Z",
+      "jobSeconds": 12641,
+      "controlSha": "0f72d9b81f981f10501c5ac0ee0e7d786f1f4698",
+      "patchSha256": "0869439764425e49b7a6c228e85963836d9fe2cb203e8b0619bc083c0b2984e2",
+      "source": "usage-receipt"
+    }
+  ],
+  "outcome": {
+    "execution": "blocked",
+    "acceptance": "blocked",
+    "delivery": "published",
+    "pullRequest": {
+      "number": 513,
+      "headSha": "9852e52d12f8727e891fda8fb49a4f94ac6af337"
+    },
+    "detail": "执行因环境或前置条件受阻，不视为业务缺陷。"
+  },
+  "qa": {
+    "coverage": "complete",
+    "rounds": [
+      {
+        "round": 1,
+        "executionKey": "run/36787401343/attempt/1",
+        "scope": "full",
+        "passed": false,
+        "source": "verify-1/browser-acceptance/report.json",
+        "checks": [
+          {
+            "id": "B00",
+            "criterion": "不依赖 AI 服务即可验收：主管维护三条资料，普通同事只能阅读 A/B，C 的页面及直接读取接口均拒绝普通同事访问；刷新后资料仍保存。未配置模型时助手显示明确未配置状态，资料页仍可用。\n\n以下 B01–B05 在独立业务测试模型配置可用后执行；缺模型时逐项记 blocked，继续完成资料、权限、助手接入和未配置状态的搭建，不用固定回复替代真实调用。",
+            "status": "failed",
+            "evidence": [
+              "qa/1/b00-main-home.png",
+              "qa/1/b00-nav-home.png",
+              "qa/1/b00-ai-employees.png",
+              "qa/1/b00-users.png",
+              "qa/1/b00-roles.png",
+              "qa/1/b00-collections.png",
+              "qa/1/b00-llm-none.png",
+              "qa/1/b00-knowledge-base.png"
+            ]
+          },
+          {
+            "id": "B01",
+            "criterion": "普通同事询问报修电话，回答与资料 A 一致，能从引用打开有权阅读的原资料。",
+            "status": "blocked",
+            "evidence": [
+              "qa/1/b00-llm-none.png",
+              "qa/1/b00-ai-employees.png"
+            ]
+          },
+          {
+            "id": "B02",
+            "criterion": "普通同事询问保密项目代号，回答、引用和错误提示均不包含资料 C 的保密内容；也不能通过引用链接打开 C。",
+            "status": "blocked",
+            "evidence": [
+              "qa/1/b00-llm-none.png",
+              "qa/1/b00-ai-employees.png"
+            ]
+          },
+          {
+            "id": "B03",
+            "criterion": "刷新页面，刚才的对话仍能恢复并继续提问。",
+            "status": "blocked",
+            "evidence": [
+              "qa/1/b00-llm-none.png",
+              "qa/1/b00-ai-employees.png"
+            ]
+          },
+          {
+            "id": "B04",
+            "criterion": "主管将资料 B 的巡检间隔改为 60 天，普通同事在新对话里重新询问，依据更新后的资料回答 60 天，而非旧的 45 天。",
+            "status": "blocked",
+            "evidence": [
+              "qa/1/b00-llm-none.png",
+              "qa/1/b00-ai-employees.png"
+            ]
+          },
+          {
+            "id": "B05",
+            "criterion": "询问资料中没有的“设备免费更换年限”，助手说明缺少依据，不编造年限。",
+            "status": "blocked",
+            "evidence": [
+              "qa/1/b00-llm-none.png",
+              "qa/1/b00-ai-employees.png"
+            ]
+          },
+          {
+            "id": "B06",
+            "criterion": "在测试环境提供的服务不可用条件下，界面显示真实不可用状态，手工资料页仍可打开；没有该测试条件时单独记录未执行。",
+            "status": "not-run",
+            "evidence": [
+              "qa/1/b00-llm-none.png"
+            ]
+          }
+        ]
+      },
+      {
+        "round": 2,
+        "executionKey": "run/36787401343/attempt/1",
+        "scope": "focused",
+        "passed": false,
+        "source": "verify-2/browser-focused/report.json",
+        "checks": [
+          {
+            "id": "B00",
+            "criterion": "不依赖 AI 服务即可验收：主管维护三条资料，普通同事只能阅读 A/B，C 的页面及直接读取接口均拒绝普通同事访问；刷新后资料仍保存。未配置模型时助手显示明确未配置状态，资料页仍可用。\n\n以下 B01–B05 在独立业务测试模型配置可用后执行；缺模型时逐项记 blocked，继续完成资料、权限、助手接入和未配置状态的搭建，不用固定回复替代真实调用。",
+            "status": "failed",
+            "evidence": []
+          }
+        ]
+      },
+      {
+        "round": 4,
+        "executionKey": "run/36787401343/attempt/1",
+        "scope": "full",
+        "passed": false,
+        "source": "verify-4/browser-acceptance/report.json",
+        "checks": [
+          {
+            "id": "B00",
+            "criterion": "不依赖 AI 服务即可验收：主管维护三条资料，普通同事只能阅读 A/B，C 的页面及直接读取接口均拒绝普通同事访问；刷新后资料仍保存。未配置模型时助手显示明确未配置状态，资料页仍可用。\n\n以下 B01–B05 在独立业务测试模型配置可用后执行；缺模型时逐项记 blocked，继续完成资料、权限、助手接入和未配置状态的搭建，不用固定回复替代真实调用。",
+            "status": "passed",
+            "evidence": [
+              "qa/4/admin-materials-list.png",
+              "qa/4/admin-material-a-edit-prefill.png",
+              "qa/4/admin-material-a-edited-saved.png",
+              "qa/4/llm-services-none.png",
+              "qa/4/assistant-unconfigured.png",
+              "qa/4/colleague-materials-list-ab-only.png",
+              "qa/4/colleague-material-c-unavailable.png",
+              "qa/4/supervisor-materials-all-three.png",
+              "qa/4/supervisor-material-c-edit-prefill.png",
+              "qa/4/supervisor-material-c-edited-persisted.png"
+            ]
+          },
+          {
+            "id": "B01",
+            "criterion": "普通同事询问报修电话，回答与资料 A 一致，能从引用打开有权阅读的原资料。",
+            "status": "blocked",
+            "evidence": [
+              "qa/4/colleague-assistant-unconfigured.png",
+              "qa/4/llm-services-none.png"
+            ]
+          },
+          {
+            "id": "B02",
+            "criterion": "普通同事询问保密项目代号，回答、引用和错误提示均不包含资料 C 的保密内容；也不能通过引用链接打开 C。",
+            "status": "blocked",
+            "evidence": [
+              "qa/4/colleague-assistant-c-question.png",
+              "qa/4/colleague-material-c-unavailable.png"
+            ]
+          },
+          {
+            "id": "B03",
+            "criterion": "刷新页面，刚才的对话仍能恢复并继续提问。",
+            "status": "blocked",
+            "evidence": [
+              "qa/4/colleague-assistant-refresh-restored.png"
+            ]
+          },
+          {
+            "id": "B04",
+            "criterion": "主管将资料 B 的巡检间隔改为 60 天，普通同事在新对话里重新询问，依据更新后的资料回答 60 天，而非旧的 45 天。",
+            "status": "blocked",
+            "evidence": [
+              "qa/4/supervisor-material-b-edit-prefill-45.png"
+            ]
+          },
+          {
+            "id": "B05",
+            "criterion": "询问资料中没有的“设备免费更换年限”，助手说明缺少依据，不编造年限。",
+            "status": "blocked",
+            "evidence": [
+              "qa/4/assistant-unconfigured.png",
+              "qa/4/llm-services-none.png"
+            ]
+          },
+          {
+            "id": "B06",
+            "criterion": "在测试环境提供的服务不可用条件下，界面显示真实不可用状态，手工资料页仍可打开；没有该测试条件时单独记录未执行。",
+            "status": "not-run",
+            "evidence": []
+          }
+        ]
+      },
+      {
+        "round": 4,
+        "executionKey": "run/36787401343/attempt/1",
+        "scope": "focused",
+        "passed": true,
+        "source": "verify-4/browser-focused/report.json",
+        "checks": [
+          {
+            "id": "B00",
+            "criterion": "不依赖 AI 服务即可验收：主管维护三条资料，普通同事只能阅读 A/B，C 的页面及直接读取接口均拒绝普通同事访问；刷新后资料仍保存。未配置模型时助手显示明确未配置状态，资料页仍可用。\n\n以下 B01–B05 在独立业务测试模型配置可用后执行；缺模型时逐项记 blocked，继续完成资料、权限、助手接入和未配置状态的搭建，不用固定回复替代真实调用。",
+            "status": "passed",
+            "evidence": []
+          }
+        ]
+      }
+    ],
+    "firstFull": {
+      "status": "failed",
+      "round": 1,
+      "executionKey": "run/36787401343/attempt/1",
+      "basis": "本产物包含第 1 轮起的全部验证，取第一次实际全量 QA。"
+    },
+    "finalFull": {
+      "status": "blocked",
+      "round": 4,
+      "executionKey": "run/36787401343/attempt/1",
+      "basis": "最后一次实际全量 QA。"
+    },
+    "criteria": [
+      {
+        "id": "B00",
+        "text": "不依赖 AI 服务即可验收：主管维护三条资料，普通同事只能阅读 A/B，C 的页面及直接读取接口均拒绝普通同事访问；刷新后资料仍保存。未配置模型时助手显示明确未配置状态，资料页仍可用。\n\n以下 B01–B05 在独立业务测试模型配置可用后执行；缺模型时逐项记 blocked，继续完成资料、权限、助手接入和未配置状态的搭建，不用固定回复替代真实调用。",
+        "optional": false,
+        "firstFull": "failed",
+        "finalFull": "passed"
+      },
+      {
+        "id": "B01",
+        "text": "普通同事询问报修电话，回答与资料 A 一致，能从引用打开有权阅读的原资料。",
+        "optional": false,
+        "firstFull": "blocked",
+        "finalFull": "blocked"
+      },
+      {
+        "id": "B02",
+        "text": "普通同事询问保密项目代号，回答、引用和错误提示均不包含资料 C 的保密内容；也不能通过引用链接打开 C。",
+        "optional": false,
+        "firstFull": "blocked",
+        "finalFull": "blocked"
+      },
+      {
+        "id": "B03",
+        "text": "刷新页面，刚才的对话仍能恢复并继续提问。",
+        "optional": false,
+        "firstFull": "blocked",
+        "finalFull": "blocked"
+      },
+      {
+        "id": "B04",
+        "text": "主管将资料 B 的巡检间隔改为 60 天，普通同事在新对话里重新询问，依据更新后的资料回答 60 天，而非旧的 45 天。",
+        "optional": false,
+        "firstFull": "blocked",
+        "finalFull": "blocked"
+      },
+      {
+        "id": "B05",
+        "text": "询问资料中没有的“设备免费更换年限”，助手说明缺少依据，不编造年限。",
+        "optional": false,
+        "firstFull": "blocked",
+        "finalFull": "blocked"
+      },
+      {
+        "id": "B06",
+        "text": "在测试环境提供的服务不可用条件下，界面显示真实不可用状态，手工资料页仍可打开；没有该测试条件时单独记录未执行。",
+        "optional": false,
+        "firstFull": "not-run",
+        "finalFull": "not-run"
+      }
+    ],
+    "firstPassWithoutRepair": "no",
+    "counts": {
+      "execution": {
+        "verificationAttempts": 4,
+        "repairAttempts": 3,
+        "source": "repair-summary.json（仅本执行）"
+      },
+      "chain": {
+        "verificationAttempts": 4,
+        "repairAttempts": 3,
+        "source": "pipeline-state.json（跨 Handoff 累计检查点，不再相加）"
+      }
+    },
+    "note": "工厂修复次数不等于 Agent 开发中的全部自测和修正；未记录 Agent 内部试错，不宣称开发全程无错误。"
+  },
+  "reviews": [
+    {
+      "key": "review/36787401343.1/v2-649735ed8dd9",
+      "role": "original",
+      "selected": true,
+      "state": "not-reviewed",
+      "reason": "独立评审尚未完成；没有评分。",
+      "rubric": {
+        "id": "nb3-framework",
+        "version": 2,
+        "scale": {
+          "min": 0,
+          "max": 100
+        },
+        "businessUiIncluded": false,
+        "dimensions": [
+          {
+            "key": "requirementFit",
+            "label": "需求满足度"
+          },
+          {
+            "key": "usability",
+            "label": "使用便利度"
+          },
+          {
+            "key": "agentFriendliness",
+            "label": "Agent 友好度"
+          },
+          {
+            "key": "design",
+            "label": "设计合理性"
+          },
+          {
+            "key": "reliability",
+            "label": "实现完整性与可靠性"
+          }
+        ]
+      },
+      "reviewer": null,
+      "producer": {
+        "runId": 36787401343,
+        "attempt": 1
+      },
+      "basis": {
+        "inputHash": null,
+        "patchSha256": null,
+        "baseSha": null,
+        "lockfileSha256": null,
+        "reviewCriteriaHash": null,
+        "artifactHash": null
+      },
+      "buildReviewMode": null,
+      "summary": null,
+      "progress": null,
+      "modules": [],
+      "findings": [],
+      "ui": null,
+      "limitations": [],
+      "usageSource": null
+    }
+  ],
+  "health": {
+    "status": "incomplete",
+    "qa": "blocked",
+    "requiredChecks": {
+      "status": "passed",
+      "results": []
+    },
+    "review": "not-reviewed"
+  },
+  "processNotes": {
+    "state": "present",
+    "source": "retro.json",
+    "author": "implementer",
+    "independent": false,
+    "summary": "Browser criterion B00 failed because the requested business feature was never implemented: the application shipped as the untouched default template (placeholder home, no material collection, one built-in admin account, only Atlas in AI Employees). Implemented the read-only 资料助手 end to end: materials + assistantMessages migrations; server-enforced record visibility through the Authorization composite model; a grounded, citation-carrying assistant service that works with or without an AI model service; Hono routes; 资料库 and 资料助手 pages with navigation, a business landing page and bilingual copy; and seeded three fictional materials, two permission sets and two isolated test accounts, all idempotently. Verified against a real SQLite database, including the confidentiality boundary (a colleague cannot read the supervisor-only material on the page or through the assistant), transcript persistence across refresh, and the supervisor-edit/colleague-re-ask flow. Two runtime defects found by the smoke test were fixed before finishing. A later repair round fixed three failing app-server tests caused by the materials provider and the seed-data import.",
+    "blockers": [],
+    "improvements": [
+      {
+        "id": "notes/run/36787401343/attempt/1/I1",
+        "category": null,
+        "title": "Business feature never implemented (Browser criterion B00)",
+        "detail": null,
+        "suggestedChange": null,
+        "mechanizable": false
+      },
+      {
+        "id": "notes/run/36787401343/attempt/1/I2",
+        "category": null,
+        "title": "Authorization policy filter collection mismatch (HTTP 500 on every restricted read)",
+        "detail": null,
+        "suggestedChange": null,
+        "mechanizable": false
+      },
+      {
+        "id": "notes/run/36787401343/attempt/1/I3",
+        "category": null,
+        "title": "Supervisor edit returned HTTP 500 (updatedAt missing from the update grant)",
+        "detail": null,
+        "suggestedChange": null,
+        "mechanizable": false
+      },
+      {
+        "id": "notes/run/36787401343/attempt/1/I4",
+        "category": null,
+        "title": "Assistant cited loosely related materials for a specific question",
+        "detail": null,
+        "suggestedChange": null,
+        "mechanizable": false
+      },
+      {
+        "id": "notes/run/36787401343/attempt/1/I5",
+        "category": null,
+        "title": "MaterialsProvider resolved authorizationToken in register()",
+        "detail": null,
+        "suggestedChange": null,
+        "mechanizable": false
+      },
+      {
+        "id": "notes/run/36787401343/attempt/1/I6",
+        "category": null,
+        "title": "Seed-data module not loadable when seeds run from source",
+        "detail": null,
+        "suggestedChange": null,
+        "mechanizable": false
+      }
+    ],
+    "note": "实现者自述，未经独立核验；不是框架评审结论。"
+  },
+  "metrics": {
+    "usage": {
+      "sources": [
+        {
+          "key": "agent-job:110132101103",
+          "executionKey": "run/36787401343/attempt/1",
+          "scope": "一次 Agent 作业内的实现、修复、QA 与同轮评审调用",
+          "phases": {
+            "implementation": {
+              "input": 1724227,
+              "output": 164669,
+              "cacheRead": 36551040,
+              "cacheWrite": 0,
+              "total": 38439936
+            },
+            "repair": {
+              "input": 2467741,
+              "output": 397656,
+              "cacheRead": 59922688,
+              "cacheWrite": 0,
+              "total": 62788085
+            },
+            "qa": {
+              "input": 315612,
+              "output": 95276,
+              "cacheRead": 9422080,
+              "cacheWrite": 0,
+              "total": 9832968
+            },
+            "qaFocused": {
+              "input": 242984,
+              "output": 57256,
+              "cacheRead": 5838848,
+              "cacheWrite": 0,
+              "total": 6139088
+            },
+            "qaReport": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0,
+              "total": 0
+            },
+            "review": {
+              "input": 948109,
+              "output": 92736,
+              "cacheRead": 10196224,
+              "cacheWrite": 0,
+              "total": 11237069
+            },
+            "compaction": {
+              "input": 1177850,
+              "output": 227582,
+              "cacheRead": 71680,
+              "cacheWrite": 0,
+              "total": 1477112
+            }
+          },
+          "records": 1863,
+          "missing": 4,
+          "incomplete": 0,
+          "complete": false
+        }
+      ],
+      "totals": {
+        "input": 6876523,
+        "output": 1035175,
+        "cacheRead": 122002560,
+        "cacheWrite": 0,
+        "total": 129914258,
+        "complete": false
+      },
+      "definition": "沿用 task-usage 口径：按唯一来源键（Agent 作业 / 后补评审 Run）去重，不相加已含这些调用的汇总，不把思考 Token 再加到输出；缺失为 null，不等同供应商账单。"
+    },
+    "time": {
+      "executionSeconds": 12641,
+      "missingJobTimes": 0,
+      "endToEndSeconds": 12648,
+      "jobs": [
+        {
+          "id": 110132001530,
+          "name": "prepare",
+          "executionKey": "run/36787401343/attempt/1",
+          "seconds": 17
+        },
+        {
+          "id": 110132101103,
+          "name": "agent",
+          "executionKey": "run/36787401343/attempt/1",
+          "seconds": 12624
+        }
+      ],
+      "definition": "executionSeconds 为 prepare / agent / verify-final / publish 唯一作业时长之和，不含排队；endToEndSeconds 含排队及续跑间隔。"
+    },
+    "counts": {
+      "businessBuilds": 1,
+      "executions": 1,
+      "reviewExecutions": 0
+    }
+  },
+  "evidence": [
+    {
+      "id": "qa/1/b00-main-home.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/1",
+        "localId": "b00-main-home.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-1/browser-acceptance/evidence/b00-main-home.png",
+      "lines": null,
+      "sha256": "cf24997f8a6c114f0efe9584585e92d9bd63ca9d29321da3e7db8af278c620a7",
+      "observation": "验收项 B00 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-1/browser-acceptance/b00-main-home.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/1/b00-nav-home.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/1",
+        "localId": "b00-nav-home.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-1/browser-acceptance/evidence/b00-nav-home.png",
+      "lines": null,
+      "sha256": "cf24997f8a6c114f0efe9584585e92d9bd63ca9d29321da3e7db8af278c620a7",
+      "observation": "验收项 B00 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-1/browser-acceptance/b00-nav-home.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/1/b00-ai-employees.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/1",
+        "localId": "b00-ai-employees.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-1/browser-acceptance/evidence/b00-ai-employees.png",
+      "lines": null,
+      "sha256": "0788fedc5c6b2ec18bc32c2eca33c7ff93be62ccd11109a41c8d83dfa746d085",
+      "observation": "验收项 B00 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-1/browser-acceptance/b00-ai-employees.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/1/b00-users.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/1",
+        "localId": "b00-users.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-1/browser-acceptance/evidence/b00-users.png",
+      "lines": null,
+      "sha256": "7d03518653ac663a6e9f17758bd7f8b1d4e634fde5a840120f369185a3a53cfa",
+      "observation": "验收项 B00 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-1/browser-acceptance/b00-users.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/1/b00-roles.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/1",
+        "localId": "b00-roles.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-1/browser-acceptance/evidence/b00-roles.png",
+      "lines": null,
+      "sha256": "5f1dc2ac74832a743d8e80170b9a75d9f5e9bd5448d67070967168bf99f4c857",
+      "observation": "验收项 B00 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-1/browser-acceptance/b00-roles.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/1/b00-collections.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/1",
+        "localId": "b00-collections.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-1/browser-acceptance/evidence/b00-collections.png",
+      "lines": null,
+      "sha256": "25d6ef535dcff433e8756996f28f684194130c94d0ecce832cd966d5c25a83ba",
+      "observation": "验收项 B00 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-1/browser-acceptance/b00-collections.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/1/b00-llm-none.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/1",
+        "localId": "b00-llm-none.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-1/browser-acceptance/evidence/b00-llm-none.png",
+      "lines": null,
+      "sha256": "6a4c25407545ba61f08478ffc2ca9e3033ca72b414f387ef2d2f0af096afc39b",
+      "observation": "验收项 B00 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-1/browser-acceptance/b00-llm-none.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/1/b00-knowledge-base.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/1",
+        "localId": "b00-knowledge-base.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-1/browser-acceptance/evidence/b00-knowledge-base.png",
+      "lines": null,
+      "sha256": "6b3fbe3639a7866669c412ac7ff1745ba242fd278151ce27c923f3e74c9584be",
+      "observation": "验收项 B00 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-1/browser-acceptance/b00-knowledge-base.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/4/admin-materials-list.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/4",
+        "localId": "admin-materials-list.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-4/browser-acceptance/evidence/admin-materials-list.png",
+      "lines": null,
+      "sha256": "8d153714e091b1984a5aab5a9fbd8bc07a7ccbb607bb494cd623cd680f5b5a02",
+      "observation": "验收项 B00 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-4/browser-acceptance/admin-materials-list.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/4/admin-material-a-edit-prefill.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/4",
+        "localId": "admin-material-a-edit-prefill.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-4/browser-acceptance/evidence/admin-material-a-edit-prefill.png",
+      "lines": null,
+      "sha256": "59ebfa190a06b530de138946efaddedfab2a4b6a240bbc31eda75ba3cb5a89b3",
+      "observation": "验收项 B00 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-4/browser-acceptance/admin-material-a-edit-prefill.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/4/admin-material-a-edited-saved.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/4",
+        "localId": "admin-material-a-edited-saved.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-4/browser-acceptance/evidence/admin-material-a-edited-saved.png",
+      "lines": null,
+      "sha256": "50476ccd357b399fe1983568f15c1fb267186cc3254523918a09a0274680a5a2",
+      "observation": "验收项 B00 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-4/browser-acceptance/admin-material-a-edited-saved.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/4/llm-services-none.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/4",
+        "localId": "llm-services-none.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-4/browser-acceptance/evidence/llm-services-none.png",
+      "lines": null,
+      "sha256": "4428230c56a9e36a73a882fe4485eb877bcb6d0115c947050679b278f73e2940",
+      "observation": "验收项 B00 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-4/browser-acceptance/llm-services-none.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/4/assistant-unconfigured.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/4",
+        "localId": "assistant-unconfigured.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-4/browser-acceptance/evidence/assistant-unconfigured.png",
+      "lines": null,
+      "sha256": "6114de219874bf8f47c6440eb6f55190037cc2179a179a03aa42293019c0db9e",
+      "observation": "验收项 B00 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-4/browser-acceptance/assistant-unconfigured.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/4/colleague-materials-list-ab-only.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/4",
+        "localId": "colleague-materials-list-ab-only.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-4/browser-acceptance/evidence/colleague-materials-list-ab-only.png",
+      "lines": null,
+      "sha256": "692f16da0c5f5b67dcef99b08fe6fc71b0df8409778e08e3edafd110747dde0d",
+      "observation": "验收项 B00 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-4/browser-acceptance/colleague-materials-list-ab-only.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/4/colleague-material-c-unavailable.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/4",
+        "localId": "colleague-material-c-unavailable.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-4/browser-acceptance/evidence/colleague-material-c-unavailable.png",
+      "lines": null,
+      "sha256": "470326ef8b44bd8f77e3dd259231807ebd1826697a7b80129e8a18af9a0e5d6d",
+      "observation": "验收项 B00 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-4/browser-acceptance/colleague-material-c-unavailable.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/4/supervisor-materials-all-three.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/4",
+        "localId": "supervisor-materials-all-three.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-4/browser-acceptance/evidence/supervisor-materials-all-three.png",
+      "lines": null,
+      "sha256": "9eca86c1451d600a01003396344f0a4319a14eebfa5aa4e74db61f3cc68c8001",
+      "observation": "验收项 B00 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-4/browser-acceptance/supervisor-materials-all-three.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/4/supervisor-material-c-edit-prefill.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/4",
+        "localId": "supervisor-material-c-edit-prefill.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-4/browser-acceptance/evidence/supervisor-material-c-edit-prefill.png",
+      "lines": null,
+      "sha256": "34a6e649dec532bb0422cd3556d1a20b0e64ceb45c9d9cac0d5f45ff3a317468",
+      "observation": "验收项 B00 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-4/browser-acceptance/supervisor-material-c-edit-prefill.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/4/supervisor-material-c-edited-persisted.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/4",
+        "localId": "supervisor-material-c-edited-persisted.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-4/browser-acceptance/evidence/supervisor-material-c-edited-persisted.png",
+      "lines": null,
+      "sha256": "e71d9badcdb394b09e8c66df7e045ab643882991371a6ba2227db6446c1e5dcd",
+      "observation": "验收项 B00 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-4/browser-acceptance/supervisor-material-c-edited-persisted.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/4/colleague-assistant-unconfigured.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/4",
+        "localId": "colleague-assistant-unconfigured.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-4/browser-acceptance/evidence/colleague-assistant-unconfigured.png",
+      "lines": null,
+      "sha256": "92c8ee785b08206a8cae376d8979402327375a474516222d7824694388440e0c",
+      "observation": "验收项 B01 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-4/browser-acceptance/colleague-assistant-unconfigured.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/4/colleague-assistant-c-question.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/4",
+        "localId": "colleague-assistant-c-question.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-4/browser-acceptance/evidence/colleague-assistant-c-question.png",
+      "lines": null,
+      "sha256": "98122d97287069e96bb3428e75a2e9a651f97dfad84d7641f10c49982723de41",
+      "observation": "验收项 B02 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-4/browser-acceptance/colleague-assistant-c-question.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/4/colleague-assistant-refresh-restored.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/4",
+        "localId": "colleague-assistant-refresh-restored.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-4/browser-acceptance/evidence/colleague-assistant-refresh-restored.png",
+      "lines": null,
+      "sha256": "17d22cc2a126c35264969360560ad5bf94b3dc19b538873c75f3bcf62302a43f",
+      "observation": "验收项 B03 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-4/browser-acceptance/colleague-assistant-refresh-restored.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/4/supervisor-material-b-edit-prefill-45.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/4",
+        "localId": "supervisor-material-b-edit-prefill-45.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-4/browser-acceptance/evidence/supervisor-material-b-edit-prefill-45.png",
+      "lines": null,
+      "sha256": "6406aa4e2c2e9a06de71b17acbe665a8055c2fdd917b1fc262f9119a08ed05ef",
+      "observation": "验收项 B04 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-4/browser-acceptance/supervisor-material-b-edit-prefill-45.png",
+      "availability": "attached",
+      "note": null
+    }
+  ],
+  "links": [
+    {
+      "rel": "task-issue",
+      "label": "Issue #508",
+      "url": "https://github.com/gchust/nb3-factory/issues/508",
+      "path": null
+    },
+    {
+      "rel": "run",
+      "label": "Run 36787401343 / attempt 1",
+      "url": "https://github.com/gchust/nb3-factory/actions/runs/36787401343/attempts/1",
+      "path": null
+    },
+    {
+      "rel": "pull-request",
+      "label": "PR #513",
+      "url": "https://github.com/gchust/nb3-factory/pull/513",
+      "path": null
+    },
+    {
+      "rel": "report-archive",
+      "label": "固定版本 HTML 报告（gh-pages 归档路径）",
+      "url": null,
+      "path": "reports/issues/508/runs/36787401343/attempt-1/index.html"
+    }
+  ],
+  "limitations": [
+    {
+      "code": "review-not-run",
+      "detail": "本执行没有独立框架评审；未评估不代表通过，也不按零分处理。"
+    },
+    {
+      "code": "usage-incomplete",
+      "detail": "部分用量未取得或不完整；缺失值为 null，不按零处理。"
+    }
+  ]
+}
