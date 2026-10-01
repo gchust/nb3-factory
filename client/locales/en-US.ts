@@ -95,6 +95,60 @@ const enUS = {
     description:
       'Describe what you need to your AI Agent, then build pages, data models, and business workflows.',
   },
+  materials: {
+    title: 'Project materials',
+    description: 'Keep each project’s photos and documents in one place.',
+    new: 'New material',
+    createTitle: 'New material',
+    createDescription:
+      'Give the material a title, then attach its photos and documents.',
+    detailTitle: 'Material details',
+    detailDescription: 'View, download or remove this material’s attachments.',
+    titleLabel: 'Title',
+    titlePlaceholder: 'e.g. Product launch materials',
+    attachments: 'Attachments',
+    attachmentsHint: 'PNG photos and DOCX documents, up to 5 MB each.',
+    addAttachments: 'Add attachments',
+    chooseFiles: 'Choose files',
+    noAttachments: 'No attachments yet.',
+    unsavedChanges: 'You have unsaved changes.',
+    save: 'Save changes',
+    saving: 'Saving…',
+    create: 'Create',
+    creating: 'Creating…',
+    open: 'Open',
+    remove: 'Remove',
+    preview: 'Preview',
+    download: 'Download',
+    delete: 'Delete',
+    deleteTitle: 'Delete this material?',
+    deleteDescription:
+      'The material is removed and its attachments are detached. This cannot be undone.',
+    deleteConfirm: 'Delete',
+    columns: {
+      title: 'Title',
+      attachments: 'Attachments',
+      updated: 'Updated',
+      actions: 'Actions',
+    },
+    emptyTitle: 'No materials yet',
+    emptyDescription: 'Create a material and attach its photos and documents.',
+    fileCount: '{{count}} file(s)',
+    errors: {
+      titleRequired: 'Enter a title before saving.',
+      corruptImage: 'This image file is damaged and cannot be displayed.',
+      uploadRejected: 'Upload failed',
+      loadFailed: 'Unable to load materials.',
+      saveFailed: 'Unable to save the material.',
+      deleteFailed: 'Unable to delete the material.',
+      notFound: 'This material no longer exists.',
+    },
+    notices: {
+      created: 'Material created',
+      saved: 'Material saved',
+      deleted: 'Material deleted',
+    },
+  },
 
   appearance: {
     title: 'Appearance',
@@ -130,6 +184,7 @@ const enUS = {
   },
   navigation: {
     home: 'Home',
+    materials: 'Materials',
     open: 'Open navigation',
     close: 'Close navigation',
     expand: 'Expand navigation',
@@ -155,6 +210,12 @@ const enUS = {
   datePicker: {
     placeholder: 'Pick a date',
     rangePlaceholder: 'Pick a date range',
+  },
+  overrides: {
+    '@nocobase/app-plugin-file': {
+      'files.ooxmlTextFallback':
+        'Showing the document text. The rich preview could not be loaded.',
+    },
   },
 };
 

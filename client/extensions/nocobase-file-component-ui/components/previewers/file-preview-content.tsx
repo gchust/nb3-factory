@@ -70,13 +70,7 @@ export function FilePreviewContent(
     );
   switch (kind) {
     case 'image':
-      return (
-        <img
-          src={url}
-          alt={file.filename}
-          className='max-h-[70vh] max-w-full object-contain'
-        />
-      );
+      return <ImagePreview file={file} url={url} onDownload={onDownload} />;
     case 'pdf':
       return (
         <iframe title={file.filename} src={url} className='h-[70vh] w-full' />
@@ -97,6 +91,43 @@ export function FilePreviewContent(
     default:
       return <DownloadFallback file={file} onDownload={onDownload} />;
   }
+}
+
+function ImagePreview(inputProps: {
+  readonly file: FileRecord;
+  readonly url?: string;
+  readonly onDownload?: () => void;
+}): ReactElement {
+  const { t } = useTranslation('@nocobase/app-plugin-file');
+  const { file, url, onDownload } = inputProps;
+  const [failed, setFailed] = useState(false);
+
+  if (!url)
+    return (
+      <div role='status'>
+        {t('files.loadingPreview', { defaultValue: 'Loading preview...' })}
+      </div>
+    );
+  if (failed)
+    // A damaged image decodes to nothing, and an `img` that fails silently would leave the filename looking like a
+    // successful preview. Say so and offer the file itself instead.
+    return (
+      <DownloadFallback
+        file={file}
+        message={t('files.previewFailed', {
+          defaultValue: 'Unable to load the file preview.',
+        })}
+        onDownload={onDownload}
+      />
+    );
+  return (
+    <img
+      src={url}
+      alt={file.filename}
+      className='max-h-[70vh] max-w-full object-contain'
+      onError={() => setFailed(true)}
+    />
+  );
 }
 
 function MarkdownPreview(inputProps: { readonly text?: string }): ReactElement {
