@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "inputHash": "98d8d3b1a559100d6d1b9d5a6eab98fd5733893eab7a34f43ca940ed9e417a63",
+  "inputHash": "d1076462f196ff93ef1096b5e2ecd59fa23c207924c721d758bfeb03909c50be",
   "findings": [
     {
       "id": "460:36434284393:1:F2",
@@ -4989,6 +4989,340 @@
         }
       ],
       "fingerprint": "886e5936131df14f4aa355086bd5f1238f8090f8040c2bdcd13a063d5dd71fad"
+    },
+    {
+      "id": "507:36787396720:1:F2",
+      "report": "507:36787396720:1",
+      "issue": 507,
+      "taskTitle": "项目资料与私有附件",
+      "appVersion": "1.0.0-beta.50",
+      "appTemplate": "@nocobase/app-template-default",
+      "finding": {
+        "id": "F2",
+        "kind": "issue",
+        "owner": "plugin",
+        "confidence": "confirmed",
+        "severity": "major",
+        "status": "open",
+        "title": "注册表 OOXML 预览无超时/看门狗，解析 Worker 静默挂起时永久停留 Loading preview",
+        "detail": "office-open-xml-preview.tsx 在 effect 中直接 `await viewer.load(data)` 后再 setLoaded；createOfficeOpenXmlViewer 只传 mode/useGoogleFonts/onError，没有 workerTimeoutMs 等看门狗。@silurus/ooxml 默认在 Worker 中解析，若 Worker 静默死亡，load() 的 promise 不 settle，onError 也不会触发，于是预览既无正文也无失败提示。第一轮验收 B02 因此长期停留 Loading preview（内容与渲染资源均 200、无 loadingFailed），种子与上传样例均复现。",
+        "impact": "内部资料 DOCX 预览在常见失败形态下表现为“永远加载中”，用户得不到任何解释，直接不满足“失败要说明情况”的要求；应用只能自行在安装副本打补丁。",
+        "suggestedChange": "在 createOfficeOpenXmlViewer 传入 workerTimeoutMs，或在组件侧为每次 load 增加有限超时并在超时/Worker 失联时销毁 viewer、走既有错误+下载回退（可选重建 Worker 重试一次）。",
+        "diagnosis": {
+          "category": "runtime-defect",
+          "trigger": "打开 DOCX 预览且解析 Worker 静默死亡或长时间无响应（第一轮验收及第二轮长会话录像中均出现 Loading preview 后转为渲染失败）。",
+          "expected": "在有限时间内渲染正文；若不能，则在超时内显示本地化失败提示并给出可选下载动作，而不是永久停留在加载中。",
+          "actual": "await viewer.load() 无界且未配置 worker 看门狗，Worker 挂起时 promise 永不 settle，onError 不触发，对话框永久显示 Loading preview。",
+          "workaround": "应用在安装副本中为每次 load 增加超时边界，失败后销毁并重建 viewer/Worker 重试一次，随后 B02 通过。",
+          "acceptance": "用一个被 stub 为永不返回的解析 Worker 验证：预览必须在约定超时内显示失败提示并提供下载动作，且不得停留在加载中；正常与失败文件切换后不得出现陈旧状态。"
+        },
+        "evidence": [
+          "E1",
+          "E2",
+          "E5",
+          "E52",
+          "E53"
+        ]
+      },
+      "targets": [
+        "@nocobase/app-plugin-file"
+      ],
+      "paths": [
+        "packages/@nocobase/app-plugin-file/registry/component-ui/README.md",
+        "packages/@nocobase/app-plugin-file/registry/component-ui/components/previewers/office-open-xml-preview.tsx"
+      ],
+      "evidence": [
+        {
+          "id": "E1",
+          "kind": "code",
+          "path": "packages/@nocobase/app-plugin-file/registry/component-ui/components/previewers/office-open-xml-preview.tsx",
+          "observation": "注册表 OOXML 预览在 effect 中 `await viewer.load(data)` 后才 setLoaded(true)；全程没有超时/看门狗边界，viewer 静默挂起时既无 onError 也无完成。",
+          "lines": [
+            56,
+            71
+          ],
+          "excerpt": "    void (async () => {\n      const data = await fetchOfficeOpenXml(url, controller.signal, t);\n      if (!active) return;\n      const createdViewer = await createOfficeOpenXmlViewer(\n        format,\n        host,\n        reportViewerError,\n      );\n      if (!active) {\n        createdViewer.destroy();\n        return;\n      }\n      viewer = createdViewer;\n      await viewer.load(data);\n      if (active) setLoaded(true);\n    })().catch(reportViewerError);",
+          "sha256": "b32b48615f0400191ba28d427f9070fa69c74282829aba2087746563350d28c8"
+        },
+        {
+          "id": "E2",
+          "kind": "code",
+          "path": "packages/@nocobase/app-plugin-file/registry/component-ui/components/previewers/office-open-xml-preview.tsx",
+          "observation": "createOfficeOpenXmlViewer 只传入 mode/useGoogleFonts/onError，没有向 @silurus/ooxml viewer 传入 workerTimeoutMs 等 worker 解析看门狗选项。",
+          "lines": [
+            143,
+            180
+          ],
+          "excerpt": "async function createOfficeOpenXmlViewer(\n  format: OfficeOpenXmlFormat,\n  host: HTMLElement,\n  onError: (error: Error) => void,\n): Promise<OfficeOpenXmlViewer> {\n  const commonOptions = {\n    mode: 'main' as const,\n    useGoogleFonts: false,\n    onError,\n  };\n  switch (format) {\n    case 'docx': {\n      const { DocxScrollViewer } = await import('@silurus/ooxml/docx');\n      return new DocxScrollViewer(host, {\n        ...commonOptions,\n        enableTextSelection: true,\n        gap: 16,\n        progressiveLayout: true,\n      });\n    }\n    case 'pptx': {\n      const { PptxScrollViewer } = await import('@silurus/ooxml/pptx');\n      return new PptxScrollViewer(host, {\n        ...commonOptions,\n        enableTextSelection: true,\n        gap: 16,\n        progressiveLayout: true,\n      });\n    }\n    case 'xlsx': {\n      const { XlsxViewer } = await import('@silurus/ooxml/xlsx');\n      return new XlsxViewer(host, {\n        ...commonOptions,\n        showZoomSlider: true,\n      });\n    }\n  }\n}",
+          "sha256": "b32b48615f0400191ba28d427f9070fa69c74282829aba2087746563350d28c8"
+        },
+        {
+          "id": "E5",
+          "kind": "package",
+          "path": "packages/@nocobase/app-plugin-file/registry/component-ui/README.md",
+          "observation": "README 声称 OOXML 失败会显示错误与可选下载动作，且同源内容请求使用会话 cookie；但未提示 worker 挂起这类不会触发 onError 的失败形态。",
+          "lines": [
+            9,
+            11
+          ],
+          "excerpt": "Preview handles safe raster images, PDF through a fetched local blob, audio/video and text/Markdown. DOCX/XLSX/PPTX render locally with lazily loaded `@silurus/ooxml`; legacy Office and OpenDocument formats retain Office Online, which requires an internet-accessible absolute URL and cannot use the App session. Active HTML/SVG/XML and unsafe URL schemes are rejected. Markdown does not execute raw HTML.\n\nFollow the plugin Skill's Registry installation and preview sections for the exact viewer dependency, Vite dependency-prebundling exclusion, authentication adapter boundaries and acceptance checks. Same-origin content fetches use session cookies; external fetches omit credentials and require CORS. Bearer-only access requires changes to the App-owned source; setting `contentUrl` to an arbitrary blob URL is not supported. OOXML failures show an error and an optional download action; `download={false}` suppresses that action.",
+          "sha256": "e6ebfa016604d85be44a4f1799de390048d4bcc0d8f5649b5044acea6a9ce1d4"
+        },
+        {
+          "id": "E52",
+          "kind": "qa",
+          "path": "artifacts/verify-1/browser-acceptance/report.json",
+          "observation": "第一轮验收 B02 失败：DOCX 预览弹窗 15 秒以上停留在 Loading preview，内容请求与 docx 渲染资源均 200、无 loadingFailed，容器为空；样例与种子文档均复现，判定为系统性缺陷。",
+          "lines": [
+            29,
+            42
+          ],
+          "excerpt": "      \"id\": \"B02\",\n      \"criterion\": \"甲上传 DOCX 并保存，刷新后在应用内看到文档正文，而非只有文件名或下载按钮。\",\n      \"status\": \"failed\",\n      \"actions\": [\n        \"以资料员甲登录，新建资料并上传固定样例 sample.docx（975 字节，合法 DOCX），填写标题“B02 Word 文档验收”后保存\",\n        \"刷新后打开资料详情并点击预览；对示例数据中已有 DOCX 的“1号楼基础施工照片与说明”复现同样操作\",\n        \"在预览打开期间监听网络请求与失败\"\n      ],\n      \"evidence\": [\n        \"DOCX 预览弹窗长时间停留在“Loading preview...”，等待 15 秒以上仍未出现任何文档正文，容器内容为空\",\n        \"样例 DOCX 内容请求返回 200（application/vnd.openxmlformats-officedocument.wordprocessingml.document），渲染用的 docx-*.js 资源返回 200，无 loadingFailed，但正文始终不渲染\",\n        \"新建资料中的 sample.docx 与示例数据中的 site-document.docx 均复现同样问题，属系统性缺陷；未达到“应用内看到文档正文”的要求\"\n      ],\n      \"screenshots\": [",
+          "sha256": "284ef503899bc25deb10ed78a9fedf9190c0e4af4ce02c805f35fac2c515ccf8"
+        },
+        {
+          "id": "E53",
+          "kind": "qa",
+          "path": "artifacts/verify-2/browser-acceptance/report.json",
+          "observation": "第二轮验收 B02 通过，并诚实记录：在长时间运行且屏幕录像的会话中同一 DOCX 曾出现 Loading preview 转为 'Unable to render this Office Open XML file.' 的偶发失败；干净会话反复验证为正文渲染。",
+          "lines": [
+            30,
+            52
+          ],
+          "excerpt": "    {\n      \"id\": \"B02\",\n      \"criterion\": \"甲上传 DOCX 并保存，刷新后在应用内看到文档正文，而非只有文件名或下载按钮。\",\n      \"status\": \"passed\",\n      \"actions\": [\n        \"以资料员甲（ziliao_jia / jia@example.com）在干净会话登录 http://127.0.0.1:13000/main/materials，点击 New material 新建资料\",\n        \"通过文件输入上传固定样例 sample.docx（975 字节，清单 sha256 06408d7e3a01fd82bc32240dbd035d6366ac701f50c1a90f12eb49f47288cd6e，ZIP 签名 504b0304），观察到上传状态显示 sample.docx 已选中\",\n        \"填写标题“B02 Word 文档验收”后点击 Save，列表出现该资料（1 attachment）\",\n        \"重新加载 /main/materials 刷新页面，再打开该资料详情并点击 Preview: sample.docx，等待预览渲染\",\n        \"为排除偶发，刷新页面后再次打开同一资料并重复 Preview；另在干净会话中打开种子资料“1号楼基础施工照片与说明”内的 site-document.docx 交叉验证\"\n      ],\n      \"evidence\": [\n        \"刷新后详情弹窗点击 Preview 后，应用内直接显示文档正文，DOM 中出现文本节点 “Factory ”/“DOCX ”/“sample”，即样例文档正文内容，而非仅文件名或下载按钮\",\n        \"渲染载体为 <canvas>，尺寸 width=823、height=1065，页面可见内联文本命中 “Factory”，证明正文在应用内被真实排版渲染\",\n        \"刷新后重复 Preview 与重开资料 Preview 均稳定复现正文渲染（6s 内完成，连续观察 18s 保持 RENDERED）\",\n        \"附件内容 URL /main/api/project-material-files/d8b6c091-54dd-495f-8959-8d721c52a20e.docx 在甲会话返回 200，内容类型为 docx，长度 975 字节，浏览器计算 sha256 与清单一致，排除文件损坏或后端取数问题\",\n        \"诚实备注：在先前一个长时间运行且同时开启屏幕录像的浏览器会话中，同一 DOCX 曾出现 “Loading preview...” 后转为 “Unable to render this Office Open XML file.” 的偶发失败（见 b02-seeded-preview.png 的历史现象记录）；在干净会话中反复验证均为正文渲染，判定为录像/长会话下的偶发现象，功能结论为通过\"\n      ],\n      \"screenshots\": [\n        \"b02-list-after-refresh.png\",\n        \"b02-detail.png\",\n        \"b02-preview-after-refresh.png\",\n        \"b02-preview-retry.png\",",
+          "sha256": "7c3d05fb11d650af27d8ab261432b7cfa551fadb4d4d85882744a989425ccc32"
+        }
+      ],
+      "fingerprint": "43bc66b6cd4a84957bb7a0819cb51394a1722fcd652073f1f8bcae5b8966d4df"
+    },
+    {
+      "id": "507:36787396720:1:F3",
+      "report": "507:36787396720:1",
+      "issue": 507,
+      "taskTitle": "项目资料与私有附件",
+      "appVersion": "1.0.0-beta.50",
+      "appTemplate": "@nocobase/app-template-default",
+      "finding": {
+        "id": "F3",
+        "kind": "issue",
+        "owner": "plugin",
+        "confidence": "confirmed",
+        "severity": "minor",
+        "status": "open",
+        "title": "注册表图片预览与缩略图缺少 onError，损坏图片只显示破图而无说明",
+        "detail": "file-preview-content.tsx 的 image 分支与 file-thumbnail.tsx 都直接渲染 <img>，没有 onError 回退。损坏 PNG 时浏览器显示破图，既无失败文案也无降级占位。应用在安装副本中补了 onError 后才通过 B06。",
+        "impact": "与“文件损坏要说明情况、不能把只显示文件名当成预览成功”的要求存在直接落差，在框架原生组件上需要应用兜底。",
+        "suggestedChange": "为图片预览与缩略图增加 onError 状态，降级为 FileThumbnail 图标/失败文案并可保留下载动作。",
+        "diagnosis": {
+          "category": "usability-improvement",
+          "trigger": "上传/预览损坏的 PNG。",
+          "expected": "显示明确的预览失败说明或降级占位，而不是浏览器破图。",
+          "actual": "原生 <img> 无 onError，损坏图片仅呈现破图，不提供说明。",
+          "workaround": "应用在安装副本的图片分支增加 onError 回退后通过 B06。",
+          "acceptance": "用损坏 PNG 预览时出现本地化失败提示/占位，且不出现破图或误判为预览成功。"
+        },
+        "evidence": [
+          "E3",
+          "E4"
+        ]
+      },
+      "targets": [
+        "@nocobase/app-plugin-file"
+      ],
+      "paths": [
+        "packages/@nocobase/app-plugin-file/registry/component-ui/components/file-thumbnail.tsx",
+        "packages/@nocobase/app-plugin-file/registry/component-ui/components/previewers/file-preview-content.tsx"
+      ],
+      "evidence": [
+        {
+          "id": "E3",
+          "kind": "code",
+          "path": "packages/@nocobase/app-plugin-file/registry/component-ui/components/previewers/file-preview-content.tsx",
+          "observation": "图片预览分支直接渲染 <img src={url}>，没有 onError 处理；损坏 PNG 只会得到浏览器破图，而不是可读的失败说明。",
+          "lines": [
+            71,
+            79
+          ],
+          "excerpt": "  switch (kind) {\n    case 'image':\n      return (\n        <img\n          src={url}\n          alt={file.filename}\n          className='max-h-[70vh] max-w-full object-contain'\n        />\n      );",
+          "sha256": "f30abbadc57a0f0ed28cdb68d4ced7bba9a6e3a4c3d59d3b6fc49f89d9497144"
+        },
+        {
+          "id": "E4",
+          "kind": "code",
+          "path": "packages/@nocobase/app-plugin-file/registry/component-ui/components/file-thumbnail.tsx",
+          "observation": "FileThumbnail 对可用图片 URL 直接渲染 <img>，同样没有 onError 回退，破图不会降级为占位图标或说明。",
+          "lines": [
+            43,
+            66
+          ],
+          "excerpt": "export function FileThumbnail({\n  file,\n  url,\n  alt = file.filename,\n}: FileThumbnailProps): ReactElement {\n  const imageUrl = resolveSafeFileUrl(\n    url ?? (isSafeImagePreview(file) ? (file.contentUrl ?? '') : ''),\n  );\n  return imageUrl ? (\n    <img\n      data-slot='file-thumbnail'\n      src={imageUrl}\n      alt={alt}\n      className='h-full w-full object-cover'\n    />\n  ) : (\n    <span\n      data-slot='file-thumbnail'\n      aria-label={file.filename}\n      className='flex h-full w-full items-center justify-center rounded-md bg-muted/50 p-3 text-muted-foreground'\n    >\n      {icon(file)}\n    </span>\n  );",
+          "sha256": "1fe474070e897ac53aaf4031837244cb138d7754db2911eadb6987b2a5a48aaa"
+        }
+      ],
+      "fingerprint": "b0b2bcebbdd802b8f5f3126893a1ab39547b674015c7797ea83756946ff57789"
+    },
+    {
+      "id": "507:36787396720:1:F4",
+      "report": "507:36787396720:1",
+      "issue": 507,
+      "taskTitle": "项目资料与私有附件",
+      "appVersion": "1.0.0-beta.50",
+      "appTemplate": "@nocobase/app-template-default",
+      "finding": {
+        "id": "F4",
+        "kind": "misleading",
+        "owner": "documentation",
+        "confidence": "confirmed",
+        "severity": "minor",
+        "status": "open",
+        "title": "文档称 OOXML 失败会显示错误，但 Worker 静默挂起不触发该回退",
+        "detail": "注册表 README 与插件 SKILL 都声明“OOXML 请求或渲染失败会显示错误并提供下载动作”。该契约对拒绝/抛错成立，但对 Worker 静默挂起这类“既不成功也不报错”的失败不成立——组件无超时，onError 也不会被调用。",
+        "claimed": "OOXML 请求或渲染失败时显示错误和可选下载动作。",
+        "observed": "解析 Worker 静默挂起时预览永久停留 Loading preview，既无错误也无下载回退；第一轮 B02 即为此现象。",
+        "impact": "读者会据此认为失败一定可见，从而忽略超时/看门狗这一必要加固，导致故障表现为无提示的挂起。",
+        "suggestedChange": "在 README/SKILL 中补充：worker 驱动的查看器需要超时或 worker 看门狗，并说明挂起不属于 onError 覆盖的失败形态。",
+        "diagnosis": {
+          "category": "guidance-gap",
+          "trigger": "阅读“OOXML 失败显示错误”的文档并在私有环境集成 DOCX 预览。",
+          "expected": "文档能提示需要为 worker 解析设置超时/看门狗，否则挂起无提示。",
+          "actual": "文档只描述抛错型失败，未覆盖静默挂起，实际组件也没有超时。",
+          "workaround": "应用在安装副本为 load 增加超时与重试。",
+          "acceptance": "文档明确超时/看门狗要求，且提供的默认实现满足该要求。"
+        },
+        "evidence": [
+          "E5",
+          "E1",
+          "E11"
+        ]
+      },
+      "targets": [
+        "@nocobase/app-plugin-file",
+        "app/.agents/skills/nocobase-app-plugin-file/SKILL.md"
+      ],
+      "paths": [
+        ".agents/skills/nocobase-app-plugin-file/SKILL.md",
+        "packages/@nocobase/app-plugin-file/registry/component-ui/README.md",
+        "packages/@nocobase/app-plugin-file/registry/component-ui/components/previewers/office-open-xml-preview.tsx"
+      ],
+      "evidence": [
+        {
+          "id": "E5",
+          "kind": "package",
+          "path": "packages/@nocobase/app-plugin-file/registry/component-ui/README.md",
+          "observation": "README 声称 OOXML 失败会显示错误与可选下载动作，且同源内容请求使用会话 cookie；但未提示 worker 挂起这类不会触发 onError 的失败形态。",
+          "lines": [
+            9,
+            11
+          ],
+          "excerpt": "Preview handles safe raster images, PDF through a fetched local blob, audio/video and text/Markdown. DOCX/XLSX/PPTX render locally with lazily loaded `@silurus/ooxml`; legacy Office and OpenDocument formats retain Office Online, which requires an internet-accessible absolute URL and cannot use the App session. Active HTML/SVG/XML and unsafe URL schemes are rejected. Markdown does not execute raw HTML.\n\nFollow the plugin Skill's Registry installation and preview sections for the exact viewer dependency, Vite dependency-prebundling exclusion, authentication adapter boundaries and acceptance checks. Same-origin content fetches use session cookies; external fetches omit credentials and require CORS. Bearer-only access requires changes to the App-owned source; setting `contentUrl` to an arbitrary blob URL is not supported. OOXML failures show an error and an optional download action; `download={false}` suppresses that action.",
+          "sha256": "e6ebfa016604d85be44a4f1799de390048d4bcc0d8f5649b5044acea6a9ce1d4"
+        },
+        {
+          "id": "E1",
+          "kind": "code",
+          "path": "packages/@nocobase/app-plugin-file/registry/component-ui/components/previewers/office-open-xml-preview.tsx",
+          "observation": "注册表 OOXML 预览在 effect 中 `await viewer.load(data)` 后才 setLoaded(true)；全程没有超时/看门狗边界，viewer 静默挂起时既无 onError 也无完成。",
+          "lines": [
+            56,
+            71
+          ],
+          "excerpt": "    void (async () => {\n      const data = await fetchOfficeOpenXml(url, controller.signal, t);\n      if (!active) return;\n      const createdViewer = await createOfficeOpenXmlViewer(\n        format,\n        host,\n        reportViewerError,\n      );\n      if (!active) {\n        createdViewer.destroy();\n        return;\n      }\n      viewer = createdViewer;\n      await viewer.load(data);\n      if (active) setLoaded(true);\n    })().catch(reportViewerError);",
+          "sha256": "b32b48615f0400191ba28d427f9070fa69c74282829aba2087746563350d28c8"
+        },
+        {
+          "id": "E11",
+          "kind": "skill",
+          "path": "app/.agents/skills/nocobase-app-plugin-file/SKILL.md",
+          "observation": "Registry 组件章节给出 materialize 安装、@silurus/ooxml 版本与 Vite optimizeDeps.exclude 配方，并提示在开发与生产构建中核验解析器 WASM 请求。",
+          "lines": [
+            161,
+            189
+          ],
+          "excerpt": "## Registry components\n\nThe registered Client plugin supplies English and Chinese UI resources. Registry components bind the `@nocobase/app-plugin-file` namespace explicitly; retain the Client registration and `@nocobase/i18n` dependency when installing them. Existing label overrides still take precedence.\n\nReuse the preinstalled directory when present. For an application without it, materialize `component-ui` from a NocoBase source workspace into the target application:\n\n```bash\npnpm registry materialize --package @nocobase/app-plugin-file --item component-ui --output-root /absolute/path/to/app\n```\n\nMaterialize copies source only and refuses an existing target directory. Run it from the NocoBase source repository, not from a generated application. For an upgrade, materialize into a separate temporary directory and three-way merge the previous Registry source, new source and application copy; preserve application customizations. The App must provide React/React DOM, lucide-react, react-markdown, remark-gfm and shadcn button/dialog primitives. It adds no route or permissions. A hosted Registry JSON can instead be installed with shadcn add, which reads the item's declared dependencies; npm publication alone supplies no Registry URL.\n\nDefault already declares the viewer. For an application installing the source or upgrading an older copy, add the OOXML viewer from the target App directory if missing:\n\n```bash\npnpm add -D --save-exact @silurus/ooxml@0.85.1\n```\n\nThe viewer belongs in the App's `devDependencies`: Vite compiles this application-owned client source. Registry `dependencies` describes the installation recipe, while a plugin's published runtime Client imports belong in that plugin's `peerDependencies`. Do not move this viewer into server `dependencies` or add it as a plugin peer solely for copied Registry source. Retain the registered file Client plugin for its locale resources. Merge Registry upgrades with App customizations instead of overwriting installed source.\n\nUse a version of `@nocobase/dev-config` whose `createAppViteConfig` excludes `@silurus/ooxml` from dependency prebundling. For an older shared preset or custom Vite configuration, merge this entry into the existing configuration and preserve other exclusions:\n\n```ts\noptimizeDeps: {\n  exclude: ['@silurus/ooxml'],\n},\n```\n\nRestart the development server after changing the configuration. This exclusion preserves the viewer's `import.meta.url`-relative WASM paths during development; verify the parser WASM requests in both development and the served production build.",
+          "sha256": "06b464d71554a3ae12819918f98a84f44c65c2b70e7fbfcffd17e992e57aed22"
+        }
+      ],
+      "fingerprint": "9762f68683dbef18746f28e7b3fc668938ca4a7c4ec566bc0edb7f2bc2062142"
+    },
+    {
+      "id": "507:36787396720:1:F5",
+      "report": "507:36787396720:1",
+      "issue": 507,
+      "taskTitle": "项目资料与私有附件",
+      "appVersion": "1.0.0-beta.50",
+      "appTemplate": "@nocobase/app-template-default",
+      "finding": {
+        "id": "F5",
+        "kind": "improvement",
+        "owner": "documentation",
+        "confidence": "suspected",
+        "severity": "minor",
+        "status": "open",
+        "title": "技能可强化“上传路由由 defineFileRepositoryApiRoutes 暴露”的正面表述以避免误判",
+        "detail": "应用作者在 project-material-files.ts 注释中写下“插件根本没有 HTTP 上传路由”，于是自建上传路由并重复了 multipart/上限/错误码逻辑。插件实际通过 defineFileRepositoryApiRoutes 暴露 POST /<name>:uploadOne|uploadMany；SKILL 第 118 行虽说明“只有声明的操作才暴露”，但未把“声明即配置路由”作为一句显式结论。",
+        "impact": "可能的误读会让应用重复实现上传校验与鉴权，增加维护面并偏离框架契约；本轮应用的重复实现未造成验收失败。",
+        "suggestedChange": "在 SKILL 的 API routes 章节前置一句显式说明：上传路由不是缺失，而是需通过 defineFileRepositoryApiRoutes 声明后由插件挂载，并给一个最小声明示例。",
+        "diagnosis": {
+          "category": "guidance-gap",
+          "trigger": "实现业务上传端点时查找插件是否提供上传 HTTP 路由。",
+          "expected": "明确知道上传路由由 defineFileRepositoryApiRoutes 声明式挂载。",
+          "actual": "作者判断插件没有上传路由并自建路由，重复了校验逻辑。",
+          "workaround": "自建应用上传路由，客户端仍复用 ClientFileRepositoryManager 契约。",
+          "acceptance": "读者在不查看 dist 的情况下即可从 SKILL 得出上传路由的声明方式。"
+        },
+        "evidence": [
+          "E10",
+          "E48",
+          "E6"
+        ]
+      },
+      "targets": [
+        "@nocobase/app-plugin-file",
+        "app/.agents/skills/nocobase-app-plugin-file/SKILL.md"
+      ],
+      "paths": [
+        ".agents/skills/nocobase-app-plugin-file/SKILL.md",
+        "packages/@nocobase/app-plugin-file/dist/server/routes.js"
+      ],
+      "evidence": [
+        {
+          "id": "E10",
+          "kind": "skill",
+          "path": "app/.agents/skills/nocobase-app-plugin-file/SKILL.md",
+          "observation": "SKILL 说明 accessPath、policy/principal、上传继承 create.defaults，并明确内容路由是 public、Policy 不及它；要求为受限文件在归属路径注册应用自有认证，且“仅缺内置鉴权不能成为替换这些路由的理由”。",
+          "lines": [
+            116,
+            127
+          ],
+          "excerpt": "`name` is the Client resource; `collection` defaults to name, `connection` to the database default, and `accessPath` to `/uploads/<name>`. Disk is required. Content paths contain static alphanumeric, underscore or hyphen segments, start with `/`, and have no trailing slash.\n\nOnly declared POST `/api/<name>:<action>` operations are exposed. Ordinary actions are `findMany/findOne/count/exists/aggregate/groupBy/createOne/updateOne/deleteOne`. There are no createMany/updateMany/deleteMany HTTP actions.\n\n`policy` is required and governs every action of the exposure, uploads included. It is a Repository Policy: `read`, `create`, `update` and `delete`, each `true`, `false`, or a rule node. A node that is `false` refuses that operation; a node with no `fields` accepts no caller-supplied field, which is what a metadata `createOne` needs before it will accept anything. Pass a function of the principal — `policy: (principal) => ({ ... })` — together with a `principal(context)` resolver to scope rows to the caller; without a principal the request is refused with 403.\n\nAn upload supplies no caller fields, so it binds a Policy derived from this one: the `create` scope and defaults are inherited and the field allowlist is replaced by the file columns. `create: false` therefore forbids uploading as well as creating metadata, and a `create.defaults` of `{ ownerId }` is stamped onto uploaded rows — which is what keeps an uploaded file inside the same scope `findMany` reads. The content route under `accessPath` is the exception: it is public and this Policy does not reach it.\n\nContent is GET `<accessPath>/<uuid>.<ext>` outside `/api`, omitting the dot when extensionless. Stream returns full bytes as an attachment; redirect returns a public storage URL or a five-minute signed URL. A disk without URL support requires stream mode; there is no automatic fallback.\n\nThese are public routes. For restricted files, register App-owned authentication and authorization on the paths each contribution owns before mounting it — `/<name>:<action>` per exposed API action, `<accessPath>/*` for content. Never `router.use('*', ...)` in a contribution router: contributions share the mounted router, so it also guards the SPA and every contribution mounted after yours. Check the operation and record/parent-record access; a login page, private disk, Client filter or Policy field allowlist is not authentication. Add scoped middleware and principal-based Policy to the generated routes first. If an existing contract needs an adapter, extend that module using the public Server manager and retain its authorization checks; missing built-in authentication alone is not a reason to replace the routes. Never trust browser-supplied ownership.\n",
+          "sha256": "06b464d71554a3ae12819918f98a84f44c65c2b70e7fbfcffd17e992e57aed22"
+        },
+        {
+          "id": "E48",
+          "kind": "code",
+          "path": "app/server/routes/project-material-files.ts",
+          "observation": "应用层注释断言“插件根本没有 HTTP 上传路由”，因此自行实现 POST /projectMaterialFiles:uploadOne；该说法与 defineFileRepositoryApiRoutes 暴露的上传路由不一致。",
+          "lines": [
+            94,
+            113
+          ],
+          "excerpt": "/**\n * Two application-owned surfaces the file plugin does not provide:\n *\n * - `POST /projectMaterialFiles:uploadOne` matches the plugin client manager's contract exactly, so\n *   the stock `clientFileRepositoryManagerToken` uploads without a custom adapter. It is registered\n *   here, in the application, because the plugin exposes no HTTP route for uploads at all.\n * - `GET /project-material-files/:file` streams an attachment to its owner. The file plugin's own\n *   byte route is public by design, which would let anybody with the URL read a private document.\n *\n * Both authenticate the session, and both scope by the session's user id.\n */\nexport const projectMaterialFilesRoutes: AppApiRouteContribution<Application> =\n  defineApiRoutes<Application>((app) => {\n    const router = new Hono<AuthEnv>();\n    const auth = app.container.resolve(authenticationToken);\n    const service = app.container.resolve(projectMaterialServiceToken);\n    const files = app.container.resolve(serverFileRepositoryManagerToken);\n    const required = auth.required();\n\n    router.post(",
+          "sha256": "517270dc33a2b140a42ab003e01452976aa130764bbf1238a9f0d8a173a0f04d"
+        },
+        {
+          "id": "E6",
+          "kind": "code",
+          "path": "packages/@nocobase/app-plugin-file/dist/server/routes.js",
+          "observation": "defineFileRepositoryApiRoutes 以 policy+principal 声明上传/CRUD：无 principal 时 403，upload 从 create 作用域继承 defaults；content 路由被注释明确标为 public、鉴权归应用所有。",
+          "lines": [
+            20,
+            73
+          ],
+          "excerpt": "const unwritablePolicy = {\n    read: false,\n    create: false,\n    update: false,\n    delete: false,\n};\n/** Public first-version routes. Authentication and authorization are application-owned. */\nexport function defineFileRepositoryApiRoutes(options) {\n    const paths = [];\n    const entries = options.repositories.map((entry) => {\n        const accessPath = normalizeAccessPath(entry.accessPath ?? `/uploads/${entry.name}`);\n        if (paths.some((path) => path === accessPath ||\n            path.startsWith(`${accessPath}/`) ||\n            accessPath.startsWith(`${path}/`)))\n            throw new Error(`Conflicting file accessPath: ${accessPath}`);\n        paths.push(accessPath);\n        if (!entry.disk)\n            throw new Error('File repository disk is required.');\n        if (entry.accessMode !== undefined &&\n            !['stream', 'redirect'].includes(entry.accessMode))\n            throw new Error('Invalid file accessMode.');\n        const { uploadOne, uploadMany, ...actions } = entry.actions;\n        for (const upload of [uploadOne, uploadMany]) {\n            if (upload === undefined)\n                continue;\n            if (!upload ||\n                typeof upload !== 'object' ||\n                Object.keys(upload).some((key) => key !== 'maxSize'))\n                throw new Error('Invalid upload action configuration.');\n            if (upload.maxSize !== undefined &&\n                (!Number.isSafeInteger(upload.maxSize) || upload.maxSize <= 0))\n                throw new Error('maxSize must be a positive safe integer.');\n        }\n        return { ...entry, accessPath, actions, uploadOne, uploadMany };\n    });\n    const crud = defineRepositoryApiRoutes({\n        principal: options.principal,\n        repositories: entries.map(({ name, collection, connection, policy, actions }) => ({\n            name,\n            collection,\n            connection,\n            policy,\n            actions,\n        })),\n    });\n    const resolve = (app, entry, policy) => app.container\n        .resolve(serverFileRepositoryManagerToken)\n        .repository(entry.collection ?? entry.name, {\n        connection: entry.connection,\n        disk: entry.disk,\n        accessPath: entry.accessPath,\n        policy,\n    });\n    const urlFor = (app, files) => (record) => `${(app.publicBasePath ?? '').replace(/\\/$/, '')}${files.getUrl(record)}`;",
+          "sha256": "6982c2d56153fe60426c48783c0653f4224691075e1c95a3d6e39f7405a46025"
+        }
+      ],
+      "fingerprint": "8332f74a59307c5c3a00bd4917f0887d03faa7332b97480c5703f7eef5bc292a"
     }
   ]
 }
