@@ -1,0 +1,2539 @@
+{
+  "record": {
+    "version": 1,
+    "repository": "gchust/nb3-factory",
+    "issue": 509,
+    "runId": 36787405670,
+    "attempt": 1,
+    "status": "handoff",
+    "start": 1790808342000,
+    "end": 1790826264000,
+    "jobs": [
+      {
+        "id": 110132016730,
+        "name": "prepare",
+        "seconds": 20
+      },
+      {
+        "id": 110132129421,
+        "name": "agent",
+        "seconds": 17896
+      }
+    ],
+    "agentJobId": 110132129421,
+    "invoked": true,
+    "artifact": "factory-agent-509",
+    "artifactId": 11140345014,
+    "finalArtifactId": null,
+    "taskArtifactId": 11130232489,
+    "event": "workflow_dispatch",
+    "previousRunId": null,
+    "usage": {
+      "phases": {
+        "implementation": {
+          "input": 1128597,
+          "output": 156360,
+          "cacheRead": 24962560,
+          "cacheWrite": 0,
+          "reasoning": 58265,
+          "totalTokens": 26247517
+        },
+        "repair": {
+          "input": 3388241,
+          "output": 623806,
+          "cacheRead": 103237632,
+          "cacheWrite": 0,
+          "reasoning": 192441,
+          "totalTokens": 107249679
+        },
+        "qa": {
+          "input": 1145969,
+          "output": 266627,
+          "cacheRead": 40659840,
+          "cacheWrite": 0,
+          "reasoning": 101165,
+          "totalTokens": 42072436
+        },
+        "qaFocused": {
+          "input": 0,
+          "output": 0,
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "reasoning": 0,
+          "totalTokens": 0
+        },
+        "qaReport": {
+          "input": 0,
+          "output": 0,
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "reasoning": 0,
+          "totalTokens": 0
+        },
+        "review": {
+          "input": 0,
+          "output": 0,
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "reasoning": 0,
+          "totalTokens": 0
+        },
+        "compaction": {
+          "input": 1533794,
+          "output": 209788,
+          "cacheRead": 48384,
+          "cacheWrite": 0,
+          "reasoning": 39039,
+          "totalTokens": 1791966
+        }
+      },
+      "records": 2503,
+      "missing": 4,
+      "incomplete": 1
+    },
+    "evaluation": {
+      "version": 1,
+      "runKey": "gchust/nb3-factory/issues/509/initial",
+      "kind": "initial",
+      "derivation": "recorded",
+      "agentConfiguration": {
+        "fingerprints": [
+          "2f5401c2837d7dae1f1f014540b983521db478e49b3e29c61dbb26be0a75e3bf"
+        ],
+        "complete": false
+      },
+      "controlSha": "0f72d9b81f981f10501c5ac0ee0e7d786f1f4698",
+      "baseSha": "0f72d9b81f981f10501c5ac0ee0e7d786f1f4698",
+      "inputHash": "73791f58527c6963192f28d62663be7a29e192feb4a569f91f097b85ff4338dd",
+      "patchSha256": "543c84cf4615f9fd139db43c20e5be670b6a8e277360a91fe962c384bec93e10",
+      "pipelineOutcome": "handoff",
+      "event": "workflow_dispatch",
+      "previousRunId": null
+    }
+  },
+  "cumulative": {
+    "usage": {
+      "phases": {
+        "implementation": {
+          "input": 1128597,
+          "output": 156360,
+          "cacheRead": 24962560,
+          "cacheWrite": 0,
+          "reasoning": 58265,
+          "totalTokens": 26247517
+        },
+        "repair": {
+          "input": 3388241,
+          "output": 623806,
+          "cacheRead": 103237632,
+          "cacheWrite": 0,
+          "reasoning": 192441,
+          "totalTokens": 107249679
+        },
+        "qa": {
+          "input": 1145969,
+          "output": 266627,
+          "cacheRead": 40659840,
+          "cacheWrite": 0,
+          "reasoning": 101165,
+          "totalTokens": 42072436
+        },
+        "qaFocused": {
+          "input": 0,
+          "output": 0,
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "reasoning": 0,
+          "totalTokens": 0
+        },
+        "qaReport": {
+          "input": 0,
+          "output": 0,
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "reasoning": 0,
+          "totalTokens": 0
+        },
+        "review": {
+          "input": 0,
+          "output": 0,
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "reasoning": 0,
+          "totalTokens": 0
+        },
+        "compaction": {
+          "input": 1533794,
+          "output": 209788,
+          "cacheRead": 48384,
+          "cacheWrite": 0,
+          "reasoning": 39039,
+          "totalTokens": 1791966
+        }
+      },
+      "records": 2503,
+      "missing": 4,
+      "incomplete": 1
+    },
+    "total": 177361598,
+    "seconds": 17916,
+    "missingTimes": 0,
+    "elapsed": 17922,
+    "runs": 1,
+    "attempts": 1
+  },
+  "records": [
+    {
+      "version": 1,
+      "repository": "gchust/nb3-factory",
+      "issue": 509,
+      "runId": 36787405670,
+      "attempt": 1,
+      "status": "handoff",
+      "start": 1790808342000,
+      "end": 1790826264000,
+      "jobs": [
+        {
+          "id": 110132016730,
+          "name": "prepare",
+          "seconds": 20
+        },
+        {
+          "id": 110132129421,
+          "name": "agent",
+          "seconds": 17896
+        }
+      ],
+      "agentJobId": 110132129421,
+      "invoked": true,
+      "artifact": "factory-agent-509",
+      "artifactId": 11140345014,
+      "finalArtifactId": null,
+      "taskArtifactId": 11130232489,
+      "event": "workflow_dispatch",
+      "previousRunId": null,
+      "usage": {
+        "phases": {
+          "implementation": {
+            "input": 1128597,
+            "output": 156360,
+            "cacheRead": 24962560,
+            "cacheWrite": 0,
+            "reasoning": 58265,
+            "totalTokens": 26247517
+          },
+          "repair": {
+            "input": 3388241,
+            "output": 623806,
+            "cacheRead": 103237632,
+            "cacheWrite": 0,
+            "reasoning": 192441,
+            "totalTokens": 107249679
+          },
+          "qa": {
+            "input": 1145969,
+            "output": 266627,
+            "cacheRead": 40659840,
+            "cacheWrite": 0,
+            "reasoning": 101165,
+            "totalTokens": 42072436
+          },
+          "qaFocused": {
+            "input": 0,
+            "output": 0,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "reasoning": 0,
+            "totalTokens": 0
+          },
+          "qaReport": {
+            "input": 0,
+            "output": 0,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "reasoning": 0,
+            "totalTokens": 0
+          },
+          "review": {
+            "input": 0,
+            "output": 0,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "reasoning": 0,
+            "totalTokens": 0
+          },
+          "compaction": {
+            "input": 1533794,
+            "output": 209788,
+            "cacheRead": 48384,
+            "cacheWrite": 0,
+            "reasoning": 39039,
+            "totalTokens": 1791966
+          }
+        },
+        "records": 2503,
+        "missing": 4,
+        "incomplete": 1
+      },
+      "evaluation": {
+        "version": 1,
+        "runKey": "gchust/nb3-factory/issues/509/initial",
+        "kind": "initial",
+        "derivation": "recorded",
+        "agentConfiguration": {
+          "fingerprints": [
+            "2f5401c2837d7dae1f1f014540b983521db478e49b3e29c61dbb26be0a75e3bf"
+          ],
+          "complete": false
+        },
+        "controlSha": "0f72d9b81f981f10501c5ac0ee0e7d786f1f4698",
+        "baseSha": "0f72d9b81f981f10501c5ac0ee0e7d786f1f4698",
+        "inputHash": "73791f58527c6963192f28d62663be7a29e192feb4a569f91f097b85ff4338dd",
+        "patchSha256": "543c84cf4615f9fd139db43c20e5be670b6a8e277360a91fe962c384bec93e10",
+        "pipelineOutcome": "handoff",
+        "event": "workflow_dispatch",
+        "previousRunId": null
+      }
+    }
+  ],
+  "timings": [
+    {
+      "stage": "agent:repair",
+      "calls": 3,
+      "durationMs": 8627530
+    },
+    {
+      "stage": "agent:qa",
+      "calls": 2,
+      "durationMs": 6139584
+    },
+    {
+      "stage": "agent:implementation",
+      "calls": 1,
+      "durationMs": 2470545
+    },
+    {
+      "stage": "build",
+      "calls": 2,
+      "durationMs": 128508
+    },
+    {
+      "stage": "lint",
+      "calls": 3,
+      "durationMs": 102943
+    },
+    {
+      "stage": "test",
+      "calls": 2,
+      "durationMs": 96954
+    },
+    {
+      "stage": "typecheck",
+      "calls": 3,
+      "durationMs": 49822
+    },
+    {
+      "stage": "format:check",
+      "calls": 3,
+      "durationMs": 16607
+    },
+    {
+      "stage": "db:apply",
+      "calls": 2,
+      "durationMs": 11967
+    },
+    {
+      "stage": "format:auto",
+      "calls": 3,
+      "durationMs": 6829
+    },
+    {
+      "stage": "install",
+      "calls": 1,
+      "durationMs": 4941
+    },
+    {
+      "stage": "skills-sync",
+      "calls": 1,
+      "durationMs": 1128
+    }
+  ],
+  "delivery": {
+    "version": 1,
+    "meta": {
+      "repository": "gchust/nb3-factory",
+      "issue": 509,
+      "runId": "36787405670",
+      "attempt": 1,
+      "headSha": "",
+      "targetBranch": "develop",
+      "title": "设备售后服务与巡检协同系统（综合业务案例）",
+      "snapshotDate": "2026-10-01T03:44:24.000Z"
+    },
+    "delivery": {
+      "status": "handoff",
+      "ci": "unknown",
+      "ciSource": "本轮独立最终验证结果未确认。",
+      "qaSummary": "已完成 NocoBase 3 设备售后服务与巡检协同系统的全量浏览器验收（B01–B12，FACTORY_BUILD_REVIEW=full），使用主管/工程师甲/工程师乙/观察员/集成账号与管理员真实登录操作。结果：B05、B09 通过；B12 因 NocoBase 未返回任何可用 AI 模型记为 blocked（检索/回答与助手草稿未执行，中英文切换已单独验证通过）；其余 B01、B02、B03、B04、B06、B07、B08、B10、B11 均存在可复现的业务缺陷，记为 failed。核心业务（客户/设备/工单/巡检/知识/附件/统计/手册/外部集成）页面与接口真实存在且大部分可用，但缺陷使其无法通过验收。"
+    },
+    "links": [
+      {
+        "label": "查看需求",
+        "url": "https://github.com/gchust/nb3-factory/issues/509"
+      },
+      {
+        "label": "本轮运行与原始产物",
+        "url": "https://github.com/gchust/nb3-factory/actions/runs/36787405670/attempts/1"
+      }
+    ],
+    "attention": [
+      {
+        "title": "验收失败记录",
+        "detail": "B01：重复设备编号 DEV-1001 报修/创建返回 500 Internal Server Error 而非清晰拒绝；报修时客户与设备不匹配被接受并生成工单 WO-20261001-C7E3C2。",
+        "source": "verify-3/browser-acceptance/report.json"
+      },
+      {
+        "title": "验收失败记录",
+        "detail": "B02：受理 Workflow『工单自动受理』执行记录状态均为 Error，节点『读取工单上下文』报 Cannot find package '@nocobase/db'，分支未执行，工单 acceptanceNote 始终为 null；未提供可控失败条件，该子场景 not_run。",
+        "source": "verify-3/browser-acceptance/report.json"
+      },
+      {
+        "title": "验收失败记录",
+        "detail": "B03：Processing 状态下提交空处理说明（resolution 为空）返回 200 并推进为 Pending confirmation，服务端未拒绝空处理说明。",
+        "source": "verify-3/browser-acceptance/report.json"
+      },
+      {
+        "title": "验收失败记录",
+        "detail": "B04：主管把保密工单 WO-DEMO-0003 分享给非负责人工程师乙后，乙列表出现该保密工单且可打开详情，违反保密工单不得向非负责人开放。",
+        "source": "verify-3/browser-acceptance/report.json"
+      },
+      {
+        "title": "验收失败记录",
+        "detail": "B06：损坏文件 corrupt.png（非法 PNG）被直接接受且无失败反馈；工单详情附件区只有下载，没有详情内真实内容预览。",
+        "source": "verify-3/browser-acceptance/report.json"
+      },
+      {
+        "title": "验收失败记录",
+        "detail": "B07：受理、提交确认与退回均未产生持久站内消息，收件人收件箱为空，且应用无消息中心入口，/dev/notification-in-app 在生产构建中被重定向。",
+        "source": "verify-3/browser-acceptance/report.json"
+      },
+      {
+        "title": "验收失败记录",
+        "detail": "B08：Scheduler 的两个计划 inspection-generation 与 overdue-reminder 状态均为 Invalid（execution target is unavailable），执行记录为空；页面手动按钮直接调用服务绕过 Scheduler，无法证明计划可用。",
+        "source": "verify-3/browser-acceptance/report.json"
+      },
+      {
+        "title": "验收失败记录",
+        "detail": "B10：集成账号无法访问 API 密钥管理页（No settings available），管理员 API Keys 页仅能管理自身密钥且创建对话框无归属用户选择，用户管理亦无密钥入口，无法通过既有管理入口创建/撤销集成用户密钥（外部接口行为本身正确）。",
+        "source": "verify-3/browser-acceptance/report.json"
+      },
+      {
+        "title": "验收失败记录",
+        "detail": "B11：AI 知识库设置页返回 404 无法维护知识库；手册处理状态固定写入 Ready、无处理与失败原因，且手册未接入知识库（knowledgeBaseKey/documentId 为空、状态口径与助手过滤不一致）；服务助手提示 No enabled AI models，有依据问答/引用未验证。",
+        "source": "verify-3/browser-acceptance/report.json"
+      },
+      {
+        "title": "验收失败记录",
+        "detail": "B12：NocoBase 未返回可用 AI 模型，助手建议进入草稿、确认后保存、刷新恢复对话等场景无法执行，按缺外部条件记 blocked；中英文切换与录入内容保持不变已单独验证通过。",
+        "source": "verify-3/browser-acceptance/report.json"
+      },
+      {
+        "title": "报告资料说明",
+        "detail": "本轮浏览器报告未通过。"
+      }
+    ],
+    "checks": [
+      {
+        "id": "A1",
+        "title": "主管创建客户与设备，刷新后关联正确；重复设备编号、必填缺失、报修时客户设备不匹配均被拒绝。未登录者不能读取或写入业务。",
+        "criterion": "主管创建客户与设备，刷新后关联正确；重复设备编号、必填缺失、报修时客户设备不匹配均被拒绝。未登录者不能读取或写入业务。",
+        "status": "failed",
+        "actions": [
+          "以 nocobase 管理员登录，进入 Customers 新建『QA 验收客户』并保存，列表出现该客户",
+          "进入 Devices 新建 DEV-QA-2001『QA 测试设备』，所属客户选择 QA 验收客户，刷新后搜索确认关联正确",
+          "Devices 新建时填入已存在的 DEV-1001 并保存，页面显示 Internal Server Error，网络记录 POST /api/service/devices 返回 500",
+          "Customers/Devices 新建时留空必填字段保存，页面显示 This field is required 且请求被拒",
+          "用页面内 fetch 调用 POST /api/service/work-orders，提交 QA 验收客户 + DEV-1001（属另一客户），返回 201 并创建成功",
+          "未登录 curl GET/POST /api/service/customers 与 /api/service/work-orders 均返回 401 UNAUTHORIZED"
+        ],
+        "evidence": [
+          "客户 QA 验收客户保存成功；设备 DEV-QA-2001 刷新后仍关联 QA 验收客户",
+          "重复设备编号 DEV-1001 触发 500 Internal Server Error（非清晰拒绝），未做唯一性校验反馈",
+          "缺 code/name 的 POST /api/service/devices 返回 400 VALIDATION_FAILED 'code is required'",
+          "客户与设备不匹配的报修返回 201 并生成工单 WO-20261001-C7E3C2（详情 Customer=QA 验收客户，Device=数控加工中心 XK-200 属华远智能制造），未被拒绝",
+          "未认证请求业务接口均 401"
+        ],
+        "screenshots": [
+          "c01-customer-required-error.png",
+          "c01-device-duplicate-500.png",
+          "c01-device-created.png",
+          "c01-device-refresh.png",
+          "c01-mismatch-accepted.png"
+        ],
+        "evidenceUnavailable": false,
+        "source": "verify-3/browser-acceptance/report.json",
+        "result": "未认证请求业务接口均 401"
+      },
+      {
+        "id": "A2",
+        "title": "普通和紧急工单各受理一次，Workflow 执行记录、对应分支说明及业务结果一致；重复受理无重复结果或通知。在测试准备提供的可控失败条件下，记录失败及恢复结果；没有该条件时仅此失败场景记未执行。",
+        "criterion": "普通和紧急工单各受理一次，Workflow 执行记录、对应分支说明及业务结果一致；重复受理无重复结果或通知。在测试准备提供的可控失败条件下，记录失败及恢复结果；没有该条件时仅此失败场景记未执行。",
+        "status": "failed",
+        "actions": [
+          "新建普通工单 QA 普通工单受理测试（无负责人），主管 Accept 并指定服务工程师甲",
+          "对示例紧急工单 WO-DEMO-0001 执行 Accept（负责人服务工程师甲）",
+          "打开 Settings > Workflows > Execution records 查看两次受理的 Workflow 运行记录并逐节点查看结果",
+          "对已受理的 WO-DEMO-0001 再次调用 accept（浏览器内 fetch POST transition），观察是否重复推进/通知"
+        ],
+        "evidence": [
+          "两张工单状态均由 Pending acceptance 变为 Pending handling，受理动作本身成功",
+          "Workflow『工单自动受理』两次运行状态均为 Error；节点『读取工单上下文』报错 Cannot find package '@nocobase/db' imported from .../storage/private/workflows/work-order-auto-accept/.../server/load-context.js，后续分支节点均未执行",
+          "两张工单 acceptanceNote 均为 null，普通/紧急分支受理说明未产生，Workflow 未完成业务登记",
+          "重复受理返回 409 STATE_CONFLICT 'cannot accept from pending_handle'，未重复推进状态",
+          "本轮测试准备未提供可控失败条件，故『可控失败条件下的失败及恢复』子场景未执行（not_run）"
+        ],
+        "screenshots": [
+          "c02-urgent-accepted.png",
+          "c02-workflow-runs-error.png",
+          "c02-workflow-node-error.png"
+        ],
+        "evidenceUnavailable": false,
+        "source": "verify-3/browser-acceptance/report.json",
+        "result": "本轮测试准备未提供可控失败条件，故『可控失败条件下的失败及恢复』子场景未执行（not_run）"
+      },
+      {
+        "id": "A3",
+        "title": "负责人开始处理、填写说明、提交确认，主管退回一次，再次提交并关闭；非法跳步和空处理说明被拒绝，已关闭只读。刷新和重新登录后状态及结果保留。",
+        "criterion": "负责人开始处理、填写说明、提交确认，主管退回一次，再次提交并关闭；非法跳步和空处理说明被拒绝，已关闭只读。刷新和重新登录后状态及结果保留。",
+        "status": "failed",
+        "actions": [
+          "工程师（负责人）登录后将工单 Start 并填写处理说明，状态变为 Processing",
+          "在 Processing 状态下尝试提交空处理说明（resolution 为空字符串）",
+          "提交真实处理说明 -> Pending confirmation",
+          "主管登录后 Send back 并填写退回原因 -> 回到 Processing",
+          "工程师再次提交完整处理说明 -> Pending confirmation",
+          "主管 Confirm complete 关闭工单",
+          "刷新页面并重新以工程师登录，检查已关闭工单是否只读"
+        ],
+        "evidence": [
+          "Start/Submit/Reject/Re-submit/Close 全流程状态流转正确：Pending handling -> Processing -> Pending confirmation -> Processing -> Pending confirmation -> Closed",
+          "Timeline 保留 Started / Submitted / Rejected / Submitted / Closed 事件及处理说明文本",
+          "退回后工程师可再次提交，处理说明保存并在刷新后保留",
+          "非法跳步：pending_handle 直接 submit 返回 409 STATE_CONFLICT，被正确拒绝",
+          "空处理说明缺陷：Processing 状态下 POST transition {action:'submit',resolution:''} 返回 200 并推进为 Pending confirmation，服务端未拒绝空处理说明（UI 的 Resolution 必填仅前端限制）",
+          "已关闭工单对工程师只读：工程师打开 Closed 工单无任何状态操作按钮",
+          "刷新与重新登录后状态、处理说明与时间线均保持"
+        ],
+        "screenshots": [
+          "c03-engineer-started.png",
+          "c03-empty-resolution-accepted.png",
+          "c03-supervisor-rejected.png",
+          "c03-engineer-resubmitted.png",
+          "c03-closed.png",
+          "c03-closed-engineer-readonly.png"
+        ],
+        "evidenceUnavailable": false,
+        "source": "verify-3/browser-acceptance/report.json",
+        "result": "刷新与重新登录后状态、处理说明与时间线均保持"
+      },
+      {
+        "id": "A4",
+        "title": "甲乙工程师只能处理自己工单；普通工单临时共享给乙后乙仅可读该单及必要关联资料，撤销后不能再读；保密工单即使被分享也不能向非负责人开放。观察员看不到内部处理备注，主管和负责人正常访问。",
+        "criterion": "甲乙工程师只能处理自己工单；普通工单临时共享给乙后乙仅可读该单及必要关联资料，撤销后不能再读；保密工单即使被分享也不能向非负责人开放。观察员看不到内部处理备注，主管和负责人正常访问。",
+        "status": "failed",
+        "actions": [
+          "管理员查看全部工单（含保密），核对 8 条记录",
+          "服务工程师甲/乙分别登录，查看工作台工单列表并用直接 URL 打开对方工单",
+          "主管将普通工单 WO-DEMO-0002（负责人甲）临时分享给乙",
+          "乙重新登录后打开 WO-DEMO-0002，确认只读且联动设备/客户资料",
+          "主管撤销该分享，乙重新登录后再次访问",
+          "主管将保密工单 WO-DEMO-0003 分享给非负责人乙并确认结果",
+          "观察员登录查看列表、直接访问保密工单、检查内部处理备注字段与状态操作"
+        ],
+        "evidence": [
+          "工程师甲列表仅含本人负责工单（WO-DEMO-0001/0002/0003/0004 及自查单）；工程师乙列表仅含本人负责工单（WO-DEMO-0005/0006 及自查单）",
+          "工程师直接访问对方工单返回 404，页面显示 Work order not found",
+          "普通工单分享给乙后，乙列表出现该单，可只读打开且无状态操作按钮；乙对共享单调用 submit 返回 403 Only the assigned engineer may handle this order",
+          "撤销分享后乙列表不再含该单，直接访问恢复 404（撤销生效）",
+          "缺陷：主管把保密工单 WO-DEMO-0003 分享给非负责人乙时未被拒绝，分享列表显示已与『服务工程师乙』共享；乙重新登录后列表出现该保密工单且可直接打开详情，违反『保密工单不能通过临时协作开放给非负责人』",
+          "观察员列表只含非保密工单，直接访问保密工单返回 404 RECORD_NOT_FOUND；观察员工单详情不含 acceptanceNote/resolution/rejectionReason 等内部处理备注；观察员 accept/create 均返回 403",
+          "主管与负责人可正常查看工单详情与状态操作"
+        ],
+        "screenshots": [
+          "c04-admin-global-list.png",
+          "c04-engineer1-list.png",
+          "c04-engineer2-list.png",
+          "c04-engineer2-other-order-denied.png",
+          "c04-observer-list.png",
+          "c04-share-to-engineer2.png",
+          "c04-engineer2-shared-readonly.png",
+          "c04-share-revoked.png",
+          "c04-confidential-share-blocked.png",
+          "c04-confidential-shared-to-engineer2.png",
+          "c04-engineer2-list-with-confidential.png"
+        ],
+        "evidenceUnavailable": false,
+        "source": "verify-3/browser-acceptance/report.json",
+        "result": "主管与负责人可正常查看工单详情与状态操作"
+      },
+      {
+        "id": "A5",
+        "title": "有阅读资格的工程师可读已发布知识但不能读草稿或修改；没有阅读资格的账号不能仅因已发布而访问。不得用管理员账户代替这组验证。",
+        "criterion": "有阅读资格的工程师可读已发布知识但不能读草稿或修改；没有阅读资格的账号不能仅因已发布而访问。不得用管理员账户代替这组验证。",
+        "status": "passed",
+        "actions": [
+          "主管在知识库新建一条未发布草稿『QA 草稿知识-仅主管可见』并保存",
+          "主管查看知识库列表，确认草稿与两条已发布知识均可见",
+          "工程师登录打开知识库页面，查看列表并打开已发布知识详情",
+          "工程师尝试新建知识（含填写标题/正文并保存）以及直接调用 knowledge 写入接口",
+          "集成账号 login 后打开知识库页面并调用 knowledge 接口"
+        ],
+        "evidence": [
+          "主管列表显示 3 条：草稿『QA 草稿知识-仅主管可见』(Draft) 与两条已发布知识",
+          "工程师知识库列表只显示两条已发布知识『主轴异响排查指引』『CT 扫描仪常见报错对照表』，草稿不在列表中",
+          "工程师可打开已发布知识弹窗并看到正文内容（如『1. 检查主轴轴承润滑；2. 检查皮带张紧度…』）",
+          "工程师 POST/PUT/DELETE knowledge 均返回 403 Only a supervisor may perform this action；UI 保存草稿同样弹出该错误提示，未写入记录",
+          "集成账号知识库页面显示 Access denied；GET /api/service/knowledge 返回 403 This credential may only use the integration API，未因知识已发布而读到内容",
+          "备注：工程师界面仍显示『New article』按钮，点击可填写表单，但提交被服务端 403 拒绝，未产生越权修改"
+        ],
+        "screenshots": [
+          "c05-supervisor-knowledge-draft.png",
+          "c05-engineer-knowledge-list.png",
+          "c05-engineer-knowledge-save-forbidden.png",
+          "c05-engineer-published-read.png",
+          "c05-integration-knowledge-denied.png"
+        ],
+        "evidenceUnavailable": false,
+        "source": "verify-3/browser-acceptance/report.json",
+        "result": "备注：工程师界面仍显示『New article』按钮，点击可填写表单，但提交被服务端 403 拒绝，未产生越权修改"
+      },
+      {
+        "id": "A6",
+        "title": "上传 PNG 和 DOCX 并保存，刷新后分别预览真实内容；一次表单校验失败保留上传选择，移除关联后不再显示。无工单权限账号通过附件链接被拒绝，损坏文件给出真实失败提示。",
+        "criterion": "上传 PNG 和 DOCX 并保存，刷新后分别预览真实内容；一次表单校验失败保留上传选择，移除关联后不再显示。无工单权限账号通过附件链接被拒绝，损坏文件给出真实失败提示。",
+        "status": "failed",
+        "actions": [
+          "负责人（服务工程师甲）打开本人工单 WO-DEMO-0002 详情，通过附件区上传 sample.png",
+          "继续上传 sample.docx，观察上传反馈与关联结果",
+          "上传损坏文件 corrupt.png，观察是否有真实失败反馈",
+          "刷新工单详情核对附件关联仍在",
+          "删除一个附件关联并刷新核对不再显示",
+          "下载附件内容并逐字节比对原始 fixture",
+          "无权限账号（工程师乙，未共享该工单）直接访问附件 content 地址"
+        ],
+        "evidence": [
+          "上传 sample.png / sample.docx 后附件区出现对应条目与 Download/Delete 操作，时间线记录 Attachment added；刷新后关联仍存在",
+          "下载 PNG 内容与 fixture 完全一致（image/png，99 字节，base64 与 sample.png 完全相同），下载真实内容成功",
+          "删除关联后附件区不再显示该条（Delete 数量从 5 降为 4），刷新后仍不显示",
+          "缺陷：损坏文件 corrupt.png（28 字节非法 PNG）被直接接受为附件（ext=png, mime=image/png），仅提示 File uploaded，未给出要求的真实失败反馈",
+          "缺陷：工单详情附件区只有文件大小、Download、Delete，没有在详情内预览真实内容（无缩略图/预览弹窗/内联渲染），仅能下载",
+          "无权限账号工程师乙访问该附件 content 地址返回 404 RECORD_NOT_FOUND，未泄漏文件内容",
+          "备注：本应用附件为详情内即传即存，创建工单表单没有附件字段，故『表单校验失败保留上传选择』在该实现中无可复现场景"
+        ],
+        "screenshots": [
+          "c06-upload-png.png",
+          "c06-upload-docx-dialog.png",
+          "c06-after-refresh-attachments.png",
+          "c06-corrupt-upload.png",
+          "c06-panel-with-corrupt.png",
+          "c06-unauthorized-attachment-denied.png"
+        ],
+        "evidenceUnavailable": false,
+        "source": "verify-3/browser-acceptance/report.json",
+        "result": "备注：本应用附件为详情内即传即存，创建工单表单没有附件字段，故『表单校验失败保留上传选择』在该实现中无可复现场景"
+      },
+      {
+        "id": "A7",
+        "title": "受理、提交确认和退回的收件人收到对应持久消息，可跳至正确工单；标记已读刷新仍保持，非收件人不能读取。无权工单链接不能因消息而绕过权限。",
+        "criterion": "受理、提交确认和退回的收件人收到对应持久消息，可跳至正确工单；标记已读刷新仍保持，非收件人不能读取。无权工单链接不能因消息而绕过权限。",
+        "status": "failed",
+        "actions": [
+          "主管/管理员受理工单 WO-DEMO-0006（负责人工程师乙）并退回 WO-DEMO-0003（负责人工程师甲）",
+          "分别以收件人工程师甲、工程师乙、管理员登录，打开消息中心/站内消息并查询 /api/notifications/in-app 与未读数",
+          "检查应用导航与页头是否存在消息中心入口",
+          "尝试打开开发用收件箱页面 /dev/notification-in-app"
+        ],
+        "evidence": [
+          "工程师甲的持久收件箱为空（data:[], unread-count=0），尽管此前存在受理、退回记录",
+          "退回 WO-DEMO-0003 后立即以负责人工程师甲登录查询，收件箱仍为空，说明退回通知未投递",
+          "管理员收件箱同样为空（data:[]），此前工单 WO-20261001-B0E9B9 有两次提交应通知创建人（管理员），但未收到",
+          "应用页头/导航没有任何消息中心或站内信入口，/dev/notification-in-app 也重定向回 Dashboard（生产构建不含开发收件箱页面）",
+          "综合结论：受理、提交确认、退回均未产生可读的持久站内消息，无法验证跳转、已读保持与非收件人隔离",
+          "服务端 notification-gateway 在渠道未启用时静默返回失败（server/config/notification.ts 的 channels 为空），业务侧无可见错误"
+        ],
+        "screenshots": [
+          "c07-engineer-no-message-center.png",
+          "c07-engineer-inbox-empty.png"
+        ],
+        "evidenceUnavailable": false,
+        "source": "verify-3/browser-acceptance/report.json",
+        "result": "服务端 notification-gateway 在渠道未启用时静默返回失败（server/config/notification.ts 的 channels 为空），业务侧无可见错误"
+      },
+      {
+        "id": "A8",
+        "title": "用受控 Scheduler 执行生成到期设备巡检和超期提醒，重复执行不重复生成同日结果，未到期/停用设备及已关闭工单不被处理；计划启停保存正确，停用后的受控调度机会不再产生新结果。负责人完成巡检并刷新核对。",
+        "criterion": "用受控 Scheduler 执行生成到期设备巡检和超期提醒，重复执行不重复生成同日结果，未到期/停用设备及已关闭工单不被处理；计划启停保存正确，停用后的受控调度机会不再产生新结果。负责人完成巡检并刷新核对。",
+        "status": "failed",
+        "actions": [
+          "主管登录，打开 Settings > Scheduler 查看两个计划的名称、时区、启停状态与执行结果",
+          "主管在 Inspections 页面连续两次点击『生成到期巡检』，核对同设备同日是否重复生成",
+          "主管连续两次点击『发送逾期提醒』，核对是否重复发送",
+          "主管为 CT-64 设置下一次巡检日期为 2026-10-15 并刷新核对",
+          "工程师甲登录完成 CT-64 当天巡检并填写结果，刷新核对"
+        ],
+        "evidence": [
+          "手动『生成到期巡检』第一次提示 Generated 1 inspection(s)，第二次提示 Generated 0，同设备同日去重生效",
+          "手动『发送逾期提醒』第一次提示 Sent 2，第二次提示 Sent 0，重复执行不重复发送，去重生效",
+          "工程师甲完成 CT-64 2026-10-01 巡检后状态为 Completed，结果『QA inspection OK 42C』刷新后仍保留",
+          "主管将 CT-64 下一次巡检日期设为 2026-10-15，刷新后仍为 2026-10-15，设置保存正确",
+          "缺陷：Scheduler 中 app.service-desk.inspection-generation 与 app.service-desk.overdue-reminder 两个计划状态均为 Invalid（The execution target is unavailable … cannot trigger until its target is available again；No triggers have started），Execution records 为空，受控调度从未真正触发",
+          "页面上的手动生成/提醒按钮直接调用 service 方法，绕过 Scheduler，因此 Scheduler 执行记录始终为空，无法证明计划本身可用",
+          "计划启停开关可切换并持久保存，但停用/启用均不产生任何调度执行记录",
+          "备注：逾期提醒去重键为 overdue:${order.id}:${today}（按工单+日期），而非按负责人+日期"
+        ],
+        "screenshots": [
+          "c08-schedules-list.png",
+          "c08-schedule-target-invalid.png",
+          "c08-generate-inspections-1.png",
+          "c08-generate-inspections-2.png",
+          "c08-overdue-reminders-1.png",
+          "c08-overdue-reminders-2.png",
+          "c08-inspections-list.png",
+          "c08-engineer-completed.png",
+          "c08-inspection-after-refresh.png",
+          "c08-supervisor-set-next-inspection.png",
+          "c08-supervisor-next-inspection-persisted.png"
+        ],
+        "evidenceUnavailable": false,
+        "source": "verify-3/browser-acceptance/report.json",
+        "result": "备注：逾期提醒去重键为 overdue:${order.id}:${today}（按工单+日期），而非按负责人+日期"
+      },
+      {
+        "id": "A9",
+        "title": "主管与工程师的统计分别与各自可见列表一致；修改工单状态后数字更新，搜索和筛选不扩大权限范围。",
+        "criterion": "主管与工程师的统计分别与各自可见列表一致；修改工单状态后数字更新，搜索和筛选不扩大权限范围。",
+        "status": "passed",
+        "actions": [
+          "主管登录打开工作台，核对统计数字并翻页核对其可见工单列表",
+          "工程师甲登录打开工作台，核对统计数字与其可见工单列表",
+          "工程师甲用搜索框搜索他人工单号，并用处理人筛选器筛选他人",
+          "主管受理一张待受理工单并指定负责人，观察统计数字变化"
+        ],
+        "evidence": [
+          "主管工作台：待受理 3、待确认 0、已逾期 2、工单总数 12、客户 4、设备 7、待巡检 2；工单负载 甲 6、乙 3",
+          "主管可见工单列表共 12 条（2 页），与总数一致；已逾期 2 与 WO-DEMO-0001(9/30)+WO-DEMO-0006(9/29) 一致",
+          "工程师甲工作台：工单总数 6（仅本人）、已逾期 1、负载仅显示『服务工程师甲 6』，无同组他人统计泄漏；与其 6 条可见列表一致",
+          "工程师甲搜索 WO-DEMO-0006（他人工单）返回 No records yet；按处理人『服务工程师乙』筛选返回 No records yet，搜索/筛选未扩大权限范围",
+          "状态变更后数字更新：受理 WO-20261001-8818EF 后主管待受理 3→2；受理 WO-20261001-C7E3C2 并指派乙后待受理 2→1，乙负载 3→4",
+          "统计数字均可由相同筛选条件在列表中核对，未使用管理员账号代替工程师验证"
+        ],
+        "screenshots": [
+          "c09-supervisor-dashboard.png",
+          "c09-engineer-dashboard.png",
+          "c09-engineer-visible-list.png",
+          "c09-engineer-search-other-denied.png",
+          "c09-engineer-filter-other-denied.png",
+          "c09-accept-8818EF.png",
+          "c09-accept-with-assignee.png",
+          "c09-supervisor-dashboard-after-change.png",
+          "c09-dashboard-after-assign.png"
+        ],
+        "evidenceUnavailable": false,
+        "source": "verify-3/browser-acceptance/report.json",
+        "result": "统计数字均可由相同筛选条件在列表中核对，未使用管理员账号代替工程师验证"
+      },
+      {
+        "id": "A10",
+        "title": "通过既有管理入口创建并撤销集成用户密钥；独立 HTTP 测试验证报修、状态查询、重复事件去重和禁止处理/关闭，撤销或停用后调用失败。密钥全程去敏。",
+        "criterion": "通过既有管理入口创建并撤销集成用户密钥；独立 HTTP 测试验证报修、状态查询、重复事件去重和禁止处理/关闭，撤销或停用后调用失败。密钥全程去敏。",
+        "status": "failed",
+        "actions": [
+          "以专用集成账号 integration 登录，打开 Settings > API Keys，查看是否有可用的密钥管理入口",
+          "以管理员登录打开 API Keys，点击 Create key 查看创建对话框是否可选择密钥归属用户",
+          "以管理员在用户管理中查看集成账号的行操作，寻找为其创建/撤销密钥的入口",
+          "以集成账号会话通过既有密钥接口创建密钥，随后仅用 x-api-key（不带会话 Cookie）独立发起外部报修、状态查询、重复事件与越权处理请求",
+          "撤销密钥后再次调用；再停用集成账号后再次调用，随后恢复启用"
+        ],
+        "evidence": [
+          "缺陷：集成账号打开 /settings/api-keys 显示 No settings available（No enabled plugin contributes a settings page you have access to），无法通过既有管理入口创建或撤销自己的密钥；权限配置中 integrator 未授予 api-keys 页面权限",
+          "管理员/主管的 API Keys 页只显示自己的密钥（You have no API keys yet.），Create key 对话框只有 Name 与 Expires，没有归属用户选择",
+          "用户管理对集成账号的行操作只有 Edit profile / Reset password / Revoke sessions / Disable account / Delete user，没有 API 密钥入口，管理员无法为集成用户创建密钥",
+          "作为行为验证，用集成会话创建密钥后用 x-api-key 独立请求（无 Cookie）：POST /main/api/service/external/reports 返回 201 创建 WO-20261001-105829",
+          "重复同一 eventNo 再次 POST 返回 201 且为同一张工单（业务去重生效，仅一张待受理工单）",
+          "GET /main/api/service/external/reports/:eventNo 返回 200 读取自身工单；GET /main/api/service/work-orders 返回 403 FORBIDDEN（This credential may only use the integration API）；POST /work-orders/:id/transition 返回 404 RECORD_NOT_FOUND，不能分派/处理/关闭",
+          "撤销密钥（auth.apiKey delete 返回 success:true）后同一密钥请求返回 401 INVALID_API_KEY；停用集成账号后请求返回 403 INVALID_API_KEY，恢复启用后账号可再次登录",
+          "密钥仅保存在浏览器内存/请求头，从未写入报告、截图或命令输出"
+        ],
+        "screenshots": [
+          "c10-integration-apikeys-denied.png",
+          "c10-admin-apikeys-list.png",
+          "c10-admin-createkey-dialog.png",
+          "c10-integration-disabled.png"
+        ],
+        "evidenceUnavailable": false,
+        "source": "verify-3/browser-acceptance/report.json",
+        "result": "密钥仅保存在浏览器内存/请求头，从未写入报告、截图或命令输出"
+      },
+      {
+        "id": "A11",
+        "title": "主管上传两份手册，页面显示真实处理状态，普通工程师不能修改库内容。条件可用时，助手能回答一条有依据问题并提供引用，对资料外问题说明不足，对无权工单拒绝泄漏；更新手册后新对话依据新内容。缺外部条件时分别报告接入完成度与真实检索/回答未验证。",
+        "criterion": "主管上传两份手册，页面显示真实处理状态，普通工程师不能修改库内容。条件可用时，助手能回答一条有依据问题并提供引用，对资料外问题说明不足，对无权工单拒绝泄漏；更新手册后新对话依据新内容。缺外部条件时分别报告接入完成度与真实检索/回答未验证。",
+        "status": "failed",
+        "actions": [
+          "主管登录打开 Settings > AI > Knowledge bases，查看 AI Knowledge Base 管理页",
+          "主管打开 Manuals 页面，新建一份 Markdown 手册并观察处理状态，随后删除该测试手册",
+          "工程师甲登录打开 Manuals 页面并尝试新建/删除手册",
+          "打开服务助手页面查看模型可用性提示",
+          "以管理员再次打开 AI Knowledge Base 页面排除权限因素"
+        ],
+        "evidence": [
+          "缺陷：主管与管理员打开 Settings > AI > Knowledge bases 均显示 Unable to load this view — NocoBase request failed (404)，无法通过既有 AI Knowledge Base 能力维护设备手册知识库",
+          "Manuals 页面（独立自定义表）中主管新建手册后立即显示 Ready，没有任何真实处理/向量化步骤，也没有失败原因展示（UI 固定写入 status: ready）",
+          "两条示例手册 xk-200-manual.md / ct-64-manual.md 状态均为 Ready，但记录的 knowledgeBaseKey/documentId 为空，未接入 AI 知识库",
+          "服务助手检索工具仅把 status=available 的手册视为可用，而手册实际存的是 ready，数据口径不一致，即使有模型也无法引用这些手册",
+          "工程师甲可查看手册列表，但 POST/DELETE /main/api/service/manuals 均返回 403 Only a supervisor may perform this action，未修改库内容",
+          "缺陷：工程师界面仍显示 New manual / Delete 按钮（仅服务端拦截），前端未按角色隐藏",
+          "服务助手页面显示 No enabled AI models were returned by NocoBase.，无线索可回答；引用、资料外说明不足、无权工单拒绝泄漏、更新手册后新对话生效等真实问答与检索场景无法执行（按缺模型条件记未验证）"
+        ],
+        "screenshots": [
+          "c11-knowledge-base-error.png",
+          "c11-admin-knowledge-base.png",
+          "c11-manuals-list.png",
+          "c11-supervisor-created-manual.png",
+          "c11-engineer-manuals-buttons.png",
+          "c11-engineer-create-denied.png",
+          "c11-assistant-page.png"
+        ],
+        "evidenceUnavailable": false,
+        "source": "verify-3/browser-acceptance/report.json",
+        "result": "服务助手页面显示 No enabled AI models were returned by NocoBase.，无线索可回答；引用、资料外说明不足、无权工单拒绝泄漏、更新手册后新对话生效等真实问答与检索场景无法执行（按缺模型条件记未验证）"
+      },
+      {
+        "id": "A12",
+        "title": "助手建议进入草稿，取消不写入、明确确认后才按用户权限保存，不能自动关闭；刷新可恢复对话。模型不可用时提示真实情况，手工处理仍可用。基础业务页面切换中英文后主要文案正确，录入内容不被翻译或丢失。\n\n实际失败记 failed，缺条件记 blocked，未执行记 not_run；不得以源码存在、已提交或静态截图冒充实际业务完成。AI 条件不足不停止其他业务搭建，也不宣称综合验收全部通过。",
+        "criterion": "助手建议进入草稿，取消不写入、明确确认后才按用户权限保存，不能自动关闭；刷新可恢复对话。模型不可用时提示真实情况，手工处理仍可用。基础业务页面切换中英文后主要文案正确，录入内容不被翻译或丢失。\n\n实际失败记 failed，缺条件记 blocked，未执行记 not_run；不得以源码存在、已提交或静态截图冒充实际业务完成。AI 条件不足不停止其他业务搭建，也不宣称综合验收全部通过。",
+        "status": "not-verified",
+        "actions": [
+          "工程师甲打开服务助手页面，查看模型可用性提示",
+          "确认手工处理工单流程不依赖助手仍可完成（见 B03）",
+          "以工程师甲在工单页面通过账户菜单在中文与 English 之间切换，核对导航、标题、列头与下拉项",
+          "核对已录入的中文工单标题在英文界面下是否被翻译或丢失"
+        ],
+        "evidence": [
+          "服务助手页面明确提示 No enabled AI models were returned by NocoBase.，未返回任何模型，草稿/确认/刷新恢复对话无从触发",
+          "助手相关的『建议带入处理说明草稿、明确确认前不保存业务记录、不自动关闭工单』未执行（not_run）",
+          "手工处理工单流程（开始处理、填写说明、提交、退回、关闭）在无模型时仍完整可用（B03 已验证）",
+          "中英文切换：工作台/工单等导航与 Work orders、New work order、All statuses、Pending acceptance、All assignees、Overdue、View、No./Title/Customer/Priority/Status/Assignee/Due date 等主要文案正确切换为英文",
+          "录入内容不被翻译或丢失：中文工单标题『设备定期保养（内部机密）』『数控机床主轴异响』及客户名在英文界面下原样保留"
+        ],
+        "screenshots": [
+          "c12-assistant-no-model.png",
+          "c12-work-orders-zh.png",
+          "c12-work-orders-en.png"
+        ],
+        "evidenceUnavailable": false,
+        "source": "verify-3/browser-acceptance/report.json",
+        "result": "环境受阻：应用未返回任何启用的 AI 模型（服务助手页面显示 No enabled AI models were returned by NocoBase.），助手建议进入草稿、取消不写入、确认后保存、刷新恢复对话等场景无模型可用，无法执行；中英文基础文案切换已单独验证通过"
+      }
+    ],
+    "media": [
+      {
+        "id": "c01-device-refresh.png",
+        "title": "客户与设备台账（创建并刷新后关联）",
+        "path": "verify-3/browser-acceptance/evidence/c01-device-refresh.png",
+        "category": "业务界面",
+        "featured": true
+      },
+      {
+        "id": "c04-admin-global-list.png",
+        "title": "工单列表（管理员全量视图）",
+        "path": "verify-3/browser-acceptance/evidence/c04-admin-global-list.png",
+        "category": "业务界面",
+        "featured": true
+      },
+      {
+        "id": "c06-after-refresh-attachments.png",
+        "title": "工单详情与附件区",
+        "path": "verify-3/browser-acceptance/evidence/c06-after-refresh-attachments.png",
+        "category": "业务界面",
+        "featured": true
+      },
+      {
+        "id": "c05-supervisor-knowledge-draft.png",
+        "title": "知识库（主管可见草稿与已发布）",
+        "path": "verify-3/browser-acceptance/evidence/c05-supervisor-knowledge-draft.png",
+        "category": "业务界面",
+        "featured": true
+      },
+      {
+        "id": "c08-inspections-list.png",
+        "title": "巡检列表",
+        "path": "verify-3/browser-acceptance/evidence/c08-inspections-list.png",
+        "category": "业务界面",
+        "featured": true
+      },
+      {
+        "id": "c08-schedule-target-invalid.png",
+        "title": "计划任务（Scheduler 目标不可用）",
+        "path": "verify-3/browser-acceptance/evidence/c08-schedule-target-invalid.png",
+        "category": "业务界面",
+        "featured": true
+      },
+      {
+        "id": "c09-supervisor-dashboard.png",
+        "title": "主管工作台统计",
+        "path": "verify-3/browser-acceptance/evidence/c09-supervisor-dashboard.png",
+        "category": "业务界面",
+        "featured": false
+      },
+      {
+        "id": "c11-manuals-list.png",
+        "title": "设备手册列表",
+        "path": "verify-3/browser-acceptance/evidence/c11-manuals-list.png",
+        "category": "业务界面",
+        "featured": false
+      },
+      {
+        "id": "c11-knowledge-base-error.png",
+        "title": "AI 知识库设置页（加载失败 404）",
+        "path": "verify-3/browser-acceptance/evidence/c11-knowledge-base-error.png",
+        "category": "业务界面",
+        "featured": false
+      },
+      {
+        "id": "c11-assistant-page.png",
+        "title": "服务助手（无可用 AI 模型）",
+        "path": "verify-3/browser-acceptance/evidence/c11-assistant-page.png",
+        "category": "业务界面",
+        "featured": false
+      },
+      {
+        "id": "c10-integration-apikeys-denied.png",
+        "title": "集成账号无权访问 API 密钥管理",
+        "path": "verify-3/browser-acceptance/evidence/c10-integration-apikeys-denied.png",
+        "category": "业务界面",
+        "featured": false
+      },
+      {
+        "id": "c12-work-orders-zh.png",
+        "title": "工单业务页中文界面",
+        "path": "verify-3/browser-acceptance/evidence/c12-work-orders-zh.png",
+        "category": "业务界面",
+        "featured": false
+      },
+      {
+        "id": "c12-work-orders-en.png",
+        "title": "工单业务页英文界面",
+        "path": "verify-3/browser-acceptance/evidence/c12-work-orders-en.png",
+        "category": "业务界面",
+        "featured": false
+      },
+      {
+        "id": "c01-customer-required-error.png",
+        "title": "c01-customer-required-error.png",
+        "path": "verify-3/browser-acceptance/evidence/c01-customer-required-error.png",
+        "category": "验收 1",
+        "featured": false
+      },
+      {
+        "id": "c01-device-duplicate-500.png",
+        "title": "c01-device-duplicate-500.png",
+        "path": "verify-3/browser-acceptance/evidence/c01-device-duplicate-500.png",
+        "category": "验收 1",
+        "featured": false
+      },
+      {
+        "id": "c01-device-created.png",
+        "title": "c01-device-created.png",
+        "path": "verify-3/browser-acceptance/evidence/c01-device-created.png",
+        "category": "验收 1",
+        "featured": false
+      },
+      {
+        "id": "c01-mismatch-accepted.png",
+        "title": "c01-mismatch-accepted.png",
+        "path": "verify-3/browser-acceptance/evidence/c01-mismatch-accepted.png",
+        "category": "验收 1",
+        "featured": false
+      },
+      {
+        "id": "c02-urgent-accepted.png",
+        "title": "c02-urgent-accepted.png",
+        "path": "verify-3/browser-acceptance/evidence/c02-urgent-accepted.png",
+        "category": "验收 2",
+        "featured": false
+      },
+      {
+        "id": "c02-workflow-runs-error.png",
+        "title": "c02-workflow-runs-error.png",
+        "path": "verify-3/browser-acceptance/evidence/c02-workflow-runs-error.png",
+        "category": "验收 2",
+        "featured": false
+      },
+      {
+        "id": "c02-workflow-node-error.png",
+        "title": "c02-workflow-node-error.png",
+        "path": "verify-3/browser-acceptance/evidence/c02-workflow-node-error.png",
+        "category": "验收 2",
+        "featured": false
+      },
+      {
+        "id": "c03-engineer-started.png",
+        "title": "c03-engineer-started.png",
+        "path": "verify-3/browser-acceptance/evidence/c03-engineer-started.png",
+        "category": "验收 3",
+        "featured": false
+      },
+      {
+        "id": "c03-empty-resolution-accepted.png",
+        "title": "c03-empty-resolution-accepted.png",
+        "path": "verify-3/browser-acceptance/evidence/c03-empty-resolution-accepted.png",
+        "category": "验收 3",
+        "featured": false
+      },
+      {
+        "id": "c03-supervisor-rejected.png",
+        "title": "c03-supervisor-rejected.png",
+        "path": "verify-3/browser-acceptance/evidence/c03-supervisor-rejected.png",
+        "category": "验收 3",
+        "featured": false
+      },
+      {
+        "id": "c03-engineer-resubmitted.png",
+        "title": "c03-engineer-resubmitted.png",
+        "path": "verify-3/browser-acceptance/evidence/c03-engineer-resubmitted.png",
+        "category": "验收 3",
+        "featured": false
+      },
+      {
+        "id": "c03-closed.png",
+        "title": "c03-closed.png",
+        "path": "verify-3/browser-acceptance/evidence/c03-closed.png",
+        "category": "验收 3",
+        "featured": false
+      },
+      {
+        "id": "c03-closed-engineer-readonly.png",
+        "title": "c03-closed-engineer-readonly.png",
+        "path": "verify-3/browser-acceptance/evidence/c03-closed-engineer-readonly.png",
+        "category": "验收 3",
+        "featured": false
+      },
+      {
+        "id": "c04-engineer1-list.png",
+        "title": "c04-engineer1-list.png",
+        "path": "verify-3/browser-acceptance/evidence/c04-engineer1-list.png",
+        "category": "验收 4",
+        "featured": false
+      },
+      {
+        "id": "c04-engineer2-list.png",
+        "title": "c04-engineer2-list.png",
+        "path": "verify-3/browser-acceptance/evidence/c04-engineer2-list.png",
+        "category": "验收 4",
+        "featured": false
+      },
+      {
+        "id": "c04-engineer2-other-order-denied.png",
+        "title": "c04-engineer2-other-order-denied.png",
+        "path": "verify-3/browser-acceptance/evidence/c04-engineer2-other-order-denied.png",
+        "category": "验收 4",
+        "featured": false
+      },
+      {
+        "id": "c04-observer-list.png",
+        "title": "c04-observer-list.png",
+        "path": "verify-3/browser-acceptance/evidence/c04-observer-list.png",
+        "category": "验收 4",
+        "featured": false
+      },
+      {
+        "id": "c04-share-to-engineer2.png",
+        "title": "c04-share-to-engineer2.png",
+        "path": "verify-3/browser-acceptance/evidence/c04-share-to-engineer2.png",
+        "category": "验收 4",
+        "featured": false
+      },
+      {
+        "id": "c04-engineer2-shared-readonly.png",
+        "title": "c04-engineer2-shared-readonly.png",
+        "path": "verify-3/browser-acceptance/evidence/c04-engineer2-shared-readonly.png",
+        "category": "验收 4",
+        "featured": false
+      },
+      {
+        "id": "c04-share-revoked.png",
+        "title": "c04-share-revoked.png",
+        "path": "verify-3/browser-acceptance/evidence/c04-share-revoked.png",
+        "category": "验收 4",
+        "featured": false
+      },
+      {
+        "id": "c04-confidential-share-blocked.png",
+        "title": "c04-confidential-share-blocked.png",
+        "path": "verify-3/browser-acceptance/evidence/c04-confidential-share-blocked.png",
+        "category": "验收 4",
+        "featured": false
+      },
+      {
+        "id": "c04-confidential-shared-to-engineer2.png",
+        "title": "c04-confidential-shared-to-engineer2.png",
+        "path": "verify-3/browser-acceptance/evidence/c04-confidential-shared-to-engineer2.png",
+        "category": "验收 4",
+        "featured": false
+      },
+      {
+        "id": "c04-engineer2-list-with-confidential.png",
+        "title": "c04-engineer2-list-with-confidential.png",
+        "path": "verify-3/browser-acceptance/evidence/c04-engineer2-list-with-confidential.png",
+        "category": "验收 4",
+        "featured": false
+      },
+      {
+        "id": "c05-engineer-knowledge-list.png",
+        "title": "c05-engineer-knowledge-list.png",
+        "path": "verify-3/browser-acceptance/evidence/c05-engineer-knowledge-list.png",
+        "category": "验收 5",
+        "featured": false
+      },
+      {
+        "id": "c05-engineer-knowledge-save-forbidden.png",
+        "title": "c05-engineer-knowledge-save-forbidden.png",
+        "path": "verify-3/browser-acceptance/evidence/c05-engineer-knowledge-save-forbidden.png",
+        "category": "验收 5",
+        "featured": false
+      },
+      {
+        "id": "c05-engineer-published-read.png",
+        "title": "c05-engineer-published-read.png",
+        "path": "verify-3/browser-acceptance/evidence/c05-engineer-published-read.png",
+        "category": "验收 5",
+        "featured": false
+      },
+      {
+        "id": "c05-integration-knowledge-denied.png",
+        "title": "c05-integration-knowledge-denied.png",
+        "path": "verify-3/browser-acceptance/evidence/c05-integration-knowledge-denied.png",
+        "category": "验收 5",
+        "featured": false
+      },
+      {
+        "id": "c06-upload-png.png",
+        "title": "c06-upload-png.png",
+        "path": "verify-3/browser-acceptance/evidence/c06-upload-png.png",
+        "category": "验收 6",
+        "featured": false
+      },
+      {
+        "id": "c06-upload-docx-dialog.png",
+        "title": "c06-upload-docx-dialog.png",
+        "path": "verify-3/browser-acceptance/evidence/c06-upload-docx-dialog.png",
+        "category": "验收 6",
+        "featured": false
+      },
+      {
+        "id": "c06-corrupt-upload.png",
+        "title": "c06-corrupt-upload.png",
+        "path": "verify-3/browser-acceptance/evidence/c06-corrupt-upload.png",
+        "category": "验收 6",
+        "featured": false
+      },
+      {
+        "id": "c06-panel-with-corrupt.png",
+        "title": "c06-panel-with-corrupt.png",
+        "path": "verify-3/browser-acceptance/evidence/c06-panel-with-corrupt.png",
+        "category": "验收 6",
+        "featured": false
+      },
+      {
+        "id": "c06-unauthorized-attachment-denied.png",
+        "title": "c06-unauthorized-attachment-denied.png",
+        "path": "verify-3/browser-acceptance/evidence/c06-unauthorized-attachment-denied.png",
+        "category": "验收 6",
+        "featured": false
+      },
+      {
+        "id": "c07-engineer-no-message-center.png",
+        "title": "c07-engineer-no-message-center.png",
+        "path": "verify-3/browser-acceptance/evidence/c07-engineer-no-message-center.png",
+        "category": "验收 7",
+        "featured": false
+      },
+      {
+        "id": "c07-engineer-inbox-empty.png",
+        "title": "c07-engineer-inbox-empty.png",
+        "path": "verify-3/browser-acceptance/evidence/c07-engineer-inbox-empty.png",
+        "category": "验收 7",
+        "featured": false
+      },
+      {
+        "id": "c08-schedules-list.png",
+        "title": "c08-schedules-list.png",
+        "path": "verify-3/browser-acceptance/evidence/c08-schedules-list.png",
+        "category": "验收 8",
+        "featured": false
+      },
+      {
+        "id": "c08-generate-inspections-1.png",
+        "title": "c08-generate-inspections-1.png",
+        "path": "verify-3/browser-acceptance/evidence/c08-generate-inspections-1.png",
+        "category": "验收 8",
+        "featured": false
+      },
+      {
+        "id": "c08-generate-inspections-2.png",
+        "title": "c08-generate-inspections-2.png",
+        "path": "verify-3/browser-acceptance/evidence/c08-generate-inspections-2.png",
+        "category": "验收 8",
+        "featured": false
+      },
+      {
+        "id": "c08-overdue-reminders-1.png",
+        "title": "c08-overdue-reminders-1.png",
+        "path": "verify-3/browser-acceptance/evidence/c08-overdue-reminders-1.png",
+        "category": "验收 8",
+        "featured": false
+      },
+      {
+        "id": "c08-overdue-reminders-2.png",
+        "title": "c08-overdue-reminders-2.png",
+        "path": "verify-3/browser-acceptance/evidence/c08-overdue-reminders-2.png",
+        "category": "验收 8",
+        "featured": false
+      },
+      {
+        "id": "c08-engineer-completed.png",
+        "title": "c08-engineer-completed.png",
+        "path": "verify-3/browser-acceptance/evidence/c08-engineer-completed.png",
+        "category": "验收 8",
+        "featured": false
+      },
+      {
+        "id": "c08-inspection-after-refresh.png",
+        "title": "c08-inspection-after-refresh.png",
+        "path": "verify-3/browser-acceptance/evidence/c08-inspection-after-refresh.png",
+        "category": "验收 8",
+        "featured": false
+      },
+      {
+        "id": "c08-supervisor-set-next-inspection.png",
+        "title": "c08-supervisor-set-next-inspection.png",
+        "path": "verify-3/browser-acceptance/evidence/c08-supervisor-set-next-inspection.png",
+        "category": "验收 8",
+        "featured": false
+      },
+      {
+        "id": "c08-supervisor-next-inspection-persisted.png",
+        "title": "c08-supervisor-next-inspection-persisted.png",
+        "path": "verify-3/browser-acceptance/evidence/c08-supervisor-next-inspection-persisted.png",
+        "category": "验收 8",
+        "featured": false
+      },
+      {
+        "id": "c09-engineer-dashboard.png",
+        "title": "c09-engineer-dashboard.png",
+        "path": "verify-3/browser-acceptance/evidence/c09-engineer-dashboard.png",
+        "category": "验收 9",
+        "featured": false
+      },
+      {
+        "id": "c09-engineer-visible-list.png",
+        "title": "c09-engineer-visible-list.png",
+        "path": "verify-3/browser-acceptance/evidence/c09-engineer-visible-list.png",
+        "category": "验收 9",
+        "featured": false
+      },
+      {
+        "id": "c09-engineer-search-other-denied.png",
+        "title": "c09-engineer-search-other-denied.png",
+        "path": "verify-3/browser-acceptance/evidence/c09-engineer-search-other-denied.png",
+        "category": "验收 9",
+        "featured": false
+      },
+      {
+        "id": "c09-engineer-filter-other-denied.png",
+        "title": "c09-engineer-filter-other-denied.png",
+        "path": "verify-3/browser-acceptance/evidence/c09-engineer-filter-other-denied.png",
+        "category": "验收 9",
+        "featured": false
+      },
+      {
+        "id": "c09-accept-8818EF.png",
+        "title": "c09-accept-8818EF.png",
+        "path": "verify-3/browser-acceptance/evidence/c09-accept-8818EF.png",
+        "category": "验收 9",
+        "featured": false
+      },
+      {
+        "id": "c09-accept-with-assignee.png",
+        "title": "c09-accept-with-assignee.png",
+        "path": "verify-3/browser-acceptance/evidence/c09-accept-with-assignee.png",
+        "category": "验收 9",
+        "featured": false
+      },
+      {
+        "id": "c09-supervisor-dashboard-after-change.png",
+        "title": "c09-supervisor-dashboard-after-change.png",
+        "path": "verify-3/browser-acceptance/evidence/c09-supervisor-dashboard-after-change.png",
+        "category": "验收 9",
+        "featured": false
+      },
+      {
+        "id": "c09-dashboard-after-assign.png",
+        "title": "c09-dashboard-after-assign.png",
+        "path": "verify-3/browser-acceptance/evidence/c09-dashboard-after-assign.png",
+        "category": "验收 9",
+        "featured": false
+      },
+      {
+        "id": "c10-admin-apikeys-list.png",
+        "title": "c10-admin-apikeys-list.png",
+        "path": "verify-3/browser-acceptance/evidence/c10-admin-apikeys-list.png",
+        "category": "验收 10",
+        "featured": false
+      },
+      {
+        "id": "c10-admin-createkey-dialog.png",
+        "title": "c10-admin-createkey-dialog.png",
+        "path": "verify-3/browser-acceptance/evidence/c10-admin-createkey-dialog.png",
+        "category": "验收 10",
+        "featured": false
+      },
+      {
+        "id": "c10-integration-disabled.png",
+        "title": "c10-integration-disabled.png",
+        "path": "verify-3/browser-acceptance/evidence/c10-integration-disabled.png",
+        "category": "验收 10",
+        "featured": false
+      },
+      {
+        "id": "c11-admin-knowledge-base.png",
+        "title": "c11-admin-knowledge-base.png",
+        "path": "verify-3/browser-acceptance/evidence/c11-admin-knowledge-base.png",
+        "category": "验收 11",
+        "featured": false
+      },
+      {
+        "id": "c11-supervisor-created-manual.png",
+        "title": "c11-supervisor-created-manual.png",
+        "path": "verify-3/browser-acceptance/evidence/c11-supervisor-created-manual.png",
+        "category": "验收 11",
+        "featured": false
+      },
+      {
+        "id": "c11-engineer-manuals-buttons.png",
+        "title": "c11-engineer-manuals-buttons.png",
+        "path": "verify-3/browser-acceptance/evidence/c11-engineer-manuals-buttons.png",
+        "category": "验收 11",
+        "featured": false
+      },
+      {
+        "id": "c11-engineer-create-denied.png",
+        "title": "c11-engineer-create-denied.png",
+        "path": "verify-3/browser-acceptance/evidence/c11-engineer-create-denied.png",
+        "category": "验收 11",
+        "featured": false
+      },
+      {
+        "id": "c12-assistant-no-model.png",
+        "title": "c12-assistant-no-model.png",
+        "path": "verify-3/browser-acceptance/evidence/c12-assistant-no-model.png",
+        "category": "验收 12",
+        "featured": false
+      }
+    ],
+    "uncovered": [
+      "AI 知识库管理页（Settings > AI > Knowledge bases 返回 404，无法上传/查看处理状态）",
+      "服务助手有依据问答、引用与资料外说明不足（NocoBase 未返回可用 AI 模型）",
+      "助手建议进入草稿、确认后保存与对话刷新恢复（无模型可触发）",
+      "持久站内消息与消息中心（受理/提交/退回通知未投递，页面无入口）",
+      "Scheduler 计划真实执行记录（两个计划状态均为 Invalid，目标不可用）",
+      "工单详情内的附件内容预览（仅有下载）"
+    ],
+    "rawQaReport": {
+      "passed": false,
+      "authenticated": true,
+      "summary": "已完成 NocoBase 3 设备售后服务与巡检协同系统的全量浏览器验收（B01–B12，FACTORY_BUILD_REVIEW=full），使用主管/工程师甲/工程师乙/观察员/集成账号与管理员真实登录操作。结果：B05、B09 通过；B12 因 NocoBase 未返回任何可用 AI 模型记为 blocked（检索/回答与助手草稿未执行，中英文切换已单独验证通过）；其余 B01、B02、B03、B04、B06、B07、B08、B10、B11 均存在可复现的业务缺陷，记为 failed。核心业务（客户/设备/工单/巡检/知识/附件/统计/手册/外部集成）页面与接口真实存在且大部分可用，但缺陷使其无法通过验收。",
+      "checks": [
+        {
+          "id": "B01",
+          "status": "failed",
+          "actions": [
+            "以 nocobase 管理员登录，进入 Customers 新建『QA 验收客户』并保存，列表出现该客户",
+            "进入 Devices 新建 DEV-QA-2001『QA 测试设备』，所属客户选择 QA 验收客户，刷新后搜索确认关联正确",
+            "Devices 新建时填入已存在的 DEV-1001 并保存，页面显示 Internal Server Error，网络记录 POST /api/service/devices 返回 500",
+            "Customers/Devices 新建时留空必填字段保存，页面显示 This field is required 且请求被拒",
+            "用页面内 fetch 调用 POST /api/service/work-orders，提交 QA 验收客户 + DEV-1001（属另一客户），返回 201 并创建成功",
+            "未登录 curl GET/POST /api/service/customers 与 /api/service/work-orders 均返回 401 UNAUTHORIZED"
+          ],
+          "evidence": [
+            "客户 QA 验收客户保存成功；设备 DEV-QA-2001 刷新后仍关联 QA 验收客户",
+            "重复设备编号 DEV-1001 触发 500 Internal Server Error（非清晰拒绝），未做唯一性校验反馈",
+            "缺 code/name 的 POST /api/service/devices 返回 400 VALIDATION_FAILED 'code is required'",
+            "客户与设备不匹配的报修返回 201 并生成工单 WO-20261001-C7E3C2（详情 Customer=QA 验收客户，Device=数控加工中心 XK-200 属华远智能制造），未被拒绝",
+            "未认证请求业务接口均 401"
+          ],
+          "screenshots": [
+            "c01-customer-required-error.png",
+            "c01-device-duplicate-500.png",
+            "c01-device-created.png",
+            "c01-device-refresh.png",
+            "c01-mismatch-accepted.png"
+          ],
+          "criterion": "主管创建客户与设备，刷新后关联正确；重复设备编号、必填缺失、报修时客户设备不匹配均被拒绝。未登录者不能读取或写入业务。",
+          "recordedAt": 1790819177921
+        },
+        {
+          "id": "B02",
+          "status": "failed",
+          "actions": [
+            "新建普通工单 QA 普通工单受理测试（无负责人），主管 Accept 并指定服务工程师甲",
+            "对示例紧急工单 WO-DEMO-0001 执行 Accept（负责人服务工程师甲）",
+            "打开 Settings > Workflows > Execution records 查看两次受理的 Workflow 运行记录并逐节点查看结果",
+            "对已受理的 WO-DEMO-0001 再次调用 accept（浏览器内 fetch POST transition），观察是否重复推进/通知"
+          ],
+          "evidence": [
+            "两张工单状态均由 Pending acceptance 变为 Pending handling，受理动作本身成功",
+            "Workflow『工单自动受理』两次运行状态均为 Error；节点『读取工单上下文』报错 Cannot find package '@nocobase/db' imported from .../storage/private/workflows/work-order-auto-accept/.../server/load-context.js，后续分支节点均未执行",
+            "两张工单 acceptanceNote 均为 null，普通/紧急分支受理说明未产生，Workflow 未完成业务登记",
+            "重复受理返回 409 STATE_CONFLICT 'cannot accept from pending_handle'，未重复推进状态",
+            "本轮测试准备未提供可控失败条件，故『可控失败条件下的失败及恢复』子场景未执行（not_run）"
+          ],
+          "screenshots": [
+            "c02-urgent-accepted.png",
+            "c02-workflow-runs-error.png",
+            "c02-workflow-node-error.png"
+          ],
+          "criterion": "普通和紧急工单各受理一次，Workflow 执行记录、对应分支说明及业务结果一致；重复受理无重复结果或通知。在测试准备提供的可控失败条件下，记录失败及恢复结果；没有该条件时仅此失败场景记未执行。",
+          "recordedAt": 1790819372424
+        },
+        {
+          "id": "B03",
+          "status": "failed",
+          "actions": [
+            "工程师（负责人）登录后将工单 Start 并填写处理说明，状态变为 Processing",
+            "在 Processing 状态下尝试提交空处理说明（resolution 为空字符串）",
+            "提交真实处理说明 -> Pending confirmation",
+            "主管登录后 Send back 并填写退回原因 -> 回到 Processing",
+            "工程师再次提交完整处理说明 -> Pending confirmation",
+            "主管 Confirm complete 关闭工单",
+            "刷新页面并重新以工程师登录，检查已关闭工单是否只读"
+          ],
+          "evidence": [
+            "Start/Submit/Reject/Re-submit/Close 全流程状态流转正确：Pending handling -> Processing -> Pending confirmation -> Processing -> Pending confirmation -> Closed",
+            "Timeline 保留 Started / Submitted / Rejected / Submitted / Closed 事件及处理说明文本",
+            "退回后工程师可再次提交，处理说明保存并在刷新后保留",
+            "非法跳步：pending_handle 直接 submit 返回 409 STATE_CONFLICT，被正确拒绝",
+            "空处理说明缺陷：Processing 状态下 POST transition {action:'submit',resolution:''} 返回 200 并推进为 Pending confirmation，服务端未拒绝空处理说明（UI 的 Resolution 必填仅前端限制）",
+            "已关闭工单对工程师只读：工程师打开 Closed 工单无任何状态操作按钮",
+            "刷新与重新登录后状态、处理说明与时间线均保持"
+          ],
+          "screenshots": [
+            "c03-engineer-started.png",
+            "c03-empty-resolution-accepted.png",
+            "c03-supervisor-rejected.png",
+            "c03-engineer-resubmitted.png",
+            "c03-closed.png",
+            "c03-closed-engineer-readonly.png"
+          ],
+          "criterion": "负责人开始处理、填写说明、提交确认，主管退回一次，再次提交并关闭；非法跳步和空处理说明被拒绝，已关闭只读。刷新和重新登录后状态及结果保留。",
+          "recordedAt": 1790820452629
+        },
+        {
+          "id": "B04",
+          "status": "failed",
+          "actions": [
+            "管理员查看全部工单（含保密），核对 8 条记录",
+            "服务工程师甲/乙分别登录，查看工作台工单列表并用直接 URL 打开对方工单",
+            "主管将普通工单 WO-DEMO-0002（负责人甲）临时分享给乙",
+            "乙重新登录后打开 WO-DEMO-0002，确认只读且联动设备/客户资料",
+            "主管撤销该分享，乙重新登录后再次访问",
+            "主管将保密工单 WO-DEMO-0003 分享给非负责人乙并确认结果",
+            "观察员登录查看列表、直接访问保密工单、检查内部处理备注字段与状态操作"
+          ],
+          "evidence": [
+            "工程师甲列表仅含本人负责工单（WO-DEMO-0001/0002/0003/0004 及自查单）；工程师乙列表仅含本人负责工单（WO-DEMO-0005/0006 及自查单）",
+            "工程师直接访问对方工单返回 404，页面显示 Work order not found",
+            "普通工单分享给乙后，乙列表出现该单，可只读打开且无状态操作按钮；乙对共享单调用 submit 返回 403 Only the assigned engineer may handle this order",
+            "撤销分享后乙列表不再含该单，直接访问恢复 404（撤销生效）",
+            "缺陷：主管把保密工单 WO-DEMO-0003 分享给非负责人乙时未被拒绝，分享列表显示已与『服务工程师乙』共享；乙重新登录后列表出现该保密工单且可直接打开详情，违反『保密工单不能通过临时协作开放给非负责人』",
+            "观察员列表只含非保密工单，直接访问保密工单返回 404 RECORD_NOT_FOUND；观察员工单详情不含 acceptanceNote/resolution/rejectionReason 等内部处理备注；观察员 accept/create 均返回 403",
+            "主管与负责人可正常查看工单详情与状态操作"
+          ],
+          "screenshots": [
+            "c04-admin-global-list.png",
+            "c04-engineer1-list.png",
+            "c04-engineer2-list.png",
+            "c04-engineer2-other-order-denied.png",
+            "c04-observer-list.png",
+            "c04-share-to-engineer2.png",
+            "c04-engineer2-shared-readonly.png",
+            "c04-share-revoked.png",
+            "c04-confidential-share-blocked.png",
+            "c04-confidential-shared-to-engineer2.png",
+            "c04-engineer2-list-with-confidential.png"
+          ],
+          "criterion": "甲乙工程师只能处理自己工单；普通工单临时共享给乙后乙仅可读该单及必要关联资料，撤销后不能再读；保密工单即使被分享也不能向非负责人开放。观察员看不到内部处理备注，主管和负责人正常访问。",
+          "recordedAt": 1790820967476
+        },
+        {
+          "id": "B05",
+          "status": "passed",
+          "actions": [
+            "主管在知识库新建一条未发布草稿『QA 草稿知识-仅主管可见』并保存",
+            "主管查看知识库列表，确认草稿与两条已发布知识均可见",
+            "工程师登录打开知识库页面，查看列表并打开已发布知识详情",
+            "工程师尝试新建知识（含填写标题/正文并保存）以及直接调用 knowledge 写入接口",
+            "集成账号 login 后打开知识库页面并调用 knowledge 接口"
+          ],
+          "evidence": [
+            "主管列表显示 3 条：草稿『QA 草稿知识-仅主管可见』(Draft) 与两条已发布知识",
+            "工程师知识库列表只显示两条已发布知识『主轴异响排查指引』『CT 扫描仪常见报错对照表』，草稿不在列表中",
+            "工程师可打开已发布知识弹窗并看到正文内容（如『1. 检查主轴轴承润滑；2. 检查皮带张紧度…』）",
+            "工程师 POST/PUT/DELETE knowledge 均返回 403 Only a supervisor may perform this action；UI 保存草稿同样弹出该错误提示，未写入记录",
+            "集成账号知识库页面显示 Access denied；GET /api/service/knowledge 返回 403 This credential may only use the integration API，未因知识已发布而读到内容",
+            "备注：工程师界面仍显示『New article』按钮，点击可填写表单，但提交被服务端 403 拒绝，未产生越权修改"
+          ],
+          "screenshots": [
+            "c05-supervisor-knowledge-draft.png",
+            "c05-engineer-knowledge-list.png",
+            "c05-engineer-knowledge-save-forbidden.png",
+            "c05-engineer-published-read.png",
+            "c05-integration-knowledge-denied.png"
+          ],
+          "criterion": "有阅读资格的工程师可读已发布知识但不能读草稿或修改；没有阅读资格的账号不能仅因已发布而访问。不得用管理员账户代替这组验证。",
+          "recordedAt": 1790821153913
+        },
+        {
+          "id": "B06",
+          "status": "failed",
+          "actions": [
+            "负责人（服务工程师甲）打开本人工单 WO-DEMO-0002 详情，通过附件区上传 sample.png",
+            "继续上传 sample.docx，观察上传反馈与关联结果",
+            "上传损坏文件 corrupt.png，观察是否有真实失败反馈",
+            "刷新工单详情核对附件关联仍在",
+            "删除一个附件关联并刷新核对不再显示",
+            "下载附件内容并逐字节比对原始 fixture",
+            "无权限账号（工程师乙，未共享该工单）直接访问附件 content 地址"
+          ],
+          "evidence": [
+            "上传 sample.png / sample.docx 后附件区出现对应条目与 Download/Delete 操作，时间线记录 Attachment added；刷新后关联仍存在",
+            "下载 PNG 内容与 fixture 完全一致（image/png，99 字节，base64 与 sample.png 完全相同），下载真实内容成功",
+            "删除关联后附件区不再显示该条（Delete 数量从 5 降为 4），刷新后仍不显示",
+            "缺陷：损坏文件 corrupt.png（28 字节非法 PNG）被直接接受为附件（ext=png, mime=image/png），仅提示 File uploaded，未给出要求的真实失败反馈",
+            "缺陷：工单详情附件区只有文件大小、Download、Delete，没有在详情内预览真实内容（无缩略图/预览弹窗/内联渲染），仅能下载",
+            "无权限账号工程师乙访问该附件 content 地址返回 404 RECORD_NOT_FOUND，未泄漏文件内容",
+            "备注：本应用附件为详情内即传即存，创建工单表单没有附件字段，故『表单校验失败保留上传选择』在该实现中无可复现场景"
+          ],
+          "screenshots": [
+            "c06-upload-png.png",
+            "c06-upload-docx-dialog.png",
+            "c06-after-refresh-attachments.png",
+            "c06-corrupt-upload.png",
+            "c06-panel-with-corrupt.png",
+            "c06-unauthorized-attachment-denied.png"
+          ],
+          "criterion": "上传 PNG 和 DOCX 并保存，刷新后分别预览真实内容；一次表单校验失败保留上传选择，移除关联后不再显示。无工单权限账号通过附件链接被拒绝，损坏文件给出真实失败提示。",
+          "recordedAt": 1790821384411
+        },
+        {
+          "id": "B07",
+          "status": "failed",
+          "actions": [
+            "主管/管理员受理工单 WO-DEMO-0006（负责人工程师乙）并退回 WO-DEMO-0003（负责人工程师甲）",
+            "分别以收件人工程师甲、工程师乙、管理员登录，打开消息中心/站内消息并查询 /api/notifications/in-app 与未读数",
+            "检查应用导航与页头是否存在消息中心入口",
+            "尝试打开开发用收件箱页面 /dev/notification-in-app"
+          ],
+          "evidence": [
+            "工程师甲的持久收件箱为空（data:[], unread-count=0），尽管此前存在受理、退回记录",
+            "退回 WO-DEMO-0003 后立即以负责人工程师甲登录查询，收件箱仍为空，说明退回通知未投递",
+            "管理员收件箱同样为空（data:[]），此前工单 WO-20261001-B0E9B9 有两次提交应通知创建人（管理员），但未收到",
+            "应用页头/导航没有任何消息中心或站内信入口，/dev/notification-in-app 也重定向回 Dashboard（生产构建不含开发收件箱页面）",
+            "综合结论：受理、提交确认、退回均未产生可读的持久站内消息，无法验证跳转、已读保持与非收件人隔离",
+            "服务端 notification-gateway 在渠道未启用时静默返回失败（server/config/notification.ts 的 channels 为空），业务侧无可见错误"
+          ],
+          "screenshots": [
+            "c07-engineer-no-message-center.png",
+            "c07-engineer-inbox-empty.png"
+          ],
+          "criterion": "受理、提交确认和退回的收件人收到对应持久消息，可跳至正确工单；标记已读刷新仍保持，非收件人不能读取。无权工单链接不能因消息而绕过权限。",
+          "recordedAt": 1790821595865
+        },
+        {
+          "id": "B08",
+          "status": "failed",
+          "actions": [
+            "主管登录，打开 Settings > Scheduler 查看两个计划的名称、时区、启停状态与执行结果",
+            "主管在 Inspections 页面连续两次点击『生成到期巡检』，核对同设备同日是否重复生成",
+            "主管连续两次点击『发送逾期提醒』，核对是否重复发送",
+            "主管为 CT-64 设置下一次巡检日期为 2026-10-15 并刷新核对",
+            "工程师甲登录完成 CT-64 当天巡检并填写结果，刷新核对"
+          ],
+          "evidence": [
+            "手动『生成到期巡检』第一次提示 Generated 1 inspection(s)，第二次提示 Generated 0，同设备同日去重生效",
+            "手动『发送逾期提醒』第一次提示 Sent 2，第二次提示 Sent 0，重复执行不重复发送，去重生效",
+            "工程师甲完成 CT-64 2026-10-01 巡检后状态为 Completed，结果『QA inspection OK 42C』刷新后仍保留",
+            "主管将 CT-64 下一次巡检日期设为 2026-10-15，刷新后仍为 2026-10-15，设置保存正确",
+            "缺陷：Scheduler 中 app.service-desk.inspection-generation 与 app.service-desk.overdue-reminder 两个计划状态均为 Invalid（The execution target is unavailable … cannot trigger until its target is available again；No triggers have started），Execution records 为空，受控调度从未真正触发",
+            "页面上的手动生成/提醒按钮直接调用 service 方法，绕过 Scheduler，因此 Scheduler 执行记录始终为空，无法证明计划本身可用",
+            "计划启停开关可切换并持久保存，但停用/启用均不产生任何调度执行记录",
+            "备注：逾期提醒去重键为 overdue:${order.id}:${today}（按工单+日期），而非按负责人+日期"
+          ],
+          "screenshots": [
+            "c08-schedules-list.png",
+            "c08-schedule-target-invalid.png",
+            "c08-generate-inspections-1.png",
+            "c08-generate-inspections-2.png",
+            "c08-overdue-reminders-1.png",
+            "c08-overdue-reminders-2.png",
+            "c08-inspections-list.png",
+            "c08-engineer-completed.png",
+            "c08-inspection-after-refresh.png",
+            "c08-supervisor-set-next-inspection.png",
+            "c08-supervisor-next-inspection-persisted.png"
+          ],
+          "criterion": "用受控 Scheduler 执行生成到期设备巡检和超期提醒，重复执行不重复生成同日结果，未到期/停用设备及已关闭工单不被处理；计划启停保存正确，停用后的受控调度机会不再产生新结果。负责人完成巡检并刷新核对。",
+          "recordedAt": 1790822997528
+        },
+        {
+          "id": "B09",
+          "status": "passed",
+          "actions": [
+            "主管登录打开工作台，核对统计数字并翻页核对其可见工单列表",
+            "工程师甲登录打开工作台，核对统计数字与其可见工单列表",
+            "工程师甲用搜索框搜索他人工单号，并用处理人筛选器筛选他人",
+            "主管受理一张待受理工单并指定负责人，观察统计数字变化"
+          ],
+          "evidence": [
+            "主管工作台：待受理 3、待确认 0、已逾期 2、工单总数 12、客户 4、设备 7、待巡检 2；工单负载 甲 6、乙 3",
+            "主管可见工单列表共 12 条（2 页），与总数一致；已逾期 2 与 WO-DEMO-0001(9/30)+WO-DEMO-0006(9/29) 一致",
+            "工程师甲工作台：工单总数 6（仅本人）、已逾期 1、负载仅显示『服务工程师甲 6』，无同组他人统计泄漏；与其 6 条可见列表一致",
+            "工程师甲搜索 WO-DEMO-0006（他人工单）返回 No records yet；按处理人『服务工程师乙』筛选返回 No records yet，搜索/筛选未扩大权限范围",
+            "状态变更后数字更新：受理 WO-20261001-8818EF 后主管待受理 3→2；受理 WO-20261001-C7E3C2 并指派乙后待受理 2→1，乙负载 3→4",
+            "统计数字均可由相同筛选条件在列表中核对，未使用管理员账号代替工程师验证"
+          ],
+          "screenshots": [
+            "c09-supervisor-dashboard.png",
+            "c09-engineer-dashboard.png",
+            "c09-engineer-visible-list.png",
+            "c09-engineer-search-other-denied.png",
+            "c09-engineer-filter-other-denied.png",
+            "c09-accept-8818EF.png",
+            "c09-accept-with-assignee.png",
+            "c09-supervisor-dashboard-after-change.png",
+            "c09-dashboard-after-assign.png"
+          ],
+          "criterion": "主管与工程师的统计分别与各自可见列表一致；修改工单状态后数字更新，搜索和筛选不扩大权限范围。",
+          "recordedAt": 1790822997562
+        },
+        {
+          "id": "B10",
+          "status": "failed",
+          "actions": [
+            "以专用集成账号 integration 登录，打开 Settings > API Keys，查看是否有可用的密钥管理入口",
+            "以管理员登录打开 API Keys，点击 Create key 查看创建对话框是否可选择密钥归属用户",
+            "以管理员在用户管理中查看集成账号的行操作，寻找为其创建/撤销密钥的入口",
+            "以集成账号会话通过既有密钥接口创建密钥，随后仅用 x-api-key（不带会话 Cookie）独立发起外部报修、状态查询、重复事件与越权处理请求",
+            "撤销密钥后再次调用；再停用集成账号后再次调用，随后恢复启用"
+          ],
+          "evidence": [
+            "缺陷：集成账号打开 /settings/api-keys 显示 No settings available（No enabled plugin contributes a settings page you have access to），无法通过既有管理入口创建或撤销自己的密钥；权限配置中 integrator 未授予 api-keys 页面权限",
+            "管理员/主管的 API Keys 页只显示自己的密钥（You have no API keys yet.），Create key 对话框只有 Name 与 Expires，没有归属用户选择",
+            "用户管理对集成账号的行操作只有 Edit profile / Reset password / Revoke sessions / Disable account / Delete user，没有 API 密钥入口，管理员无法为集成用户创建密钥",
+            "作为行为验证，用集成会话创建密钥后用 x-api-key 独立请求（无 Cookie）：POST /main/api/service/external/reports 返回 201 创建 WO-20261001-105829",
+            "重复同一 eventNo 再次 POST 返回 201 且为同一张工单（业务去重生效，仅一张待受理工单）",
+            "GET /main/api/service/external/reports/:eventNo 返回 200 读取自身工单；GET /main/api/service/work-orders 返回 403 FORBIDDEN（This credential may only use the integration API）；POST /work-orders/:id/transition 返回 404 RECORD_NOT_FOUND，不能分派/处理/关闭",
+            "撤销密钥（auth.apiKey delete 返回 success:true）后同一密钥请求返回 401 INVALID_API_KEY；停用集成账号后请求返回 403 INVALID_API_KEY，恢复启用后账号可再次登录",
+            "密钥仅保存在浏览器内存/请求头，从未写入报告、截图或命令输出"
+          ],
+          "screenshots": [
+            "c10-integration-apikeys-denied.png",
+            "c10-admin-apikeys-list.png",
+            "c10-admin-createkey-dialog.png",
+            "c10-integration-disabled.png"
+          ],
+          "criterion": "通过既有管理入口创建并撤销集成用户密钥；独立 HTTP 测试验证报修、状态查询、重复事件去重和禁止处理/关闭，撤销或停用后调用失败。密钥全程去敏。",
+          "recordedAt": 1790822997598
+        },
+        {
+          "id": "B11",
+          "status": "failed",
+          "actions": [
+            "主管登录打开 Settings > AI > Knowledge bases，查看 AI Knowledge Base 管理页",
+            "主管打开 Manuals 页面，新建一份 Markdown 手册并观察处理状态，随后删除该测试手册",
+            "工程师甲登录打开 Manuals 页面并尝试新建/删除手册",
+            "打开服务助手页面查看模型可用性提示",
+            "以管理员再次打开 AI Knowledge Base 页面排除权限因素"
+          ],
+          "evidence": [
+            "缺陷：主管与管理员打开 Settings > AI > Knowledge bases 均显示 Unable to load this view — NocoBase request failed (404)，无法通过既有 AI Knowledge Base 能力维护设备手册知识库",
+            "Manuals 页面（独立自定义表）中主管新建手册后立即显示 Ready，没有任何真实处理/向量化步骤，也没有失败原因展示（UI 固定写入 status: ready）",
+            "两条示例手册 xk-200-manual.md / ct-64-manual.md 状态均为 Ready，但记录的 knowledgeBaseKey/documentId 为空，未接入 AI 知识库",
+            "服务助手检索工具仅把 status=available 的手册视为可用，而手册实际存的是 ready，数据口径不一致，即使有模型也无法引用这些手册",
+            "工程师甲可查看手册列表，但 POST/DELETE /main/api/service/manuals 均返回 403 Only a supervisor may perform this action，未修改库内容",
+            "缺陷：工程师界面仍显示 New manual / Delete 按钮（仅服务端拦截），前端未按角色隐藏",
+            "服务助手页面显示 No enabled AI models were returned by NocoBase.，无线索可回答；引用、资料外说明不足、无权工单拒绝泄漏、更新手册后新对话生效等真实问答与检索场景无法执行（按缺模型条件记未验证）"
+          ],
+          "screenshots": [
+            "c11-knowledge-base-error.png",
+            "c11-admin-knowledge-base.png",
+            "c11-manuals-list.png",
+            "c11-supervisor-created-manual.png",
+            "c11-engineer-manuals-buttons.png",
+            "c11-engineer-create-denied.png",
+            "c11-assistant-page.png"
+          ],
+          "criterion": "主管上传两份手册，页面显示真实处理状态，普通工程师不能修改库内容。条件可用时，助手能回答一条有依据问题并提供引用，对资料外问题说明不足，对无权工单拒绝泄漏；更新手册后新对话依据新内容。缺外部条件时分别报告接入完成度与真实检索/回答未验证。",
+          "recordedAt": 1790822997634
+        },
+        {
+          "id": "B12",
+          "status": "blocked",
+          "reason": "应用未返回任何启用的 AI 模型（服务助手页面显示 No enabled AI models were returned by NocoBase.），助手建议进入草稿、取消不写入、确认后保存、刷新恢复对话等场景无模型可用，无法执行；中英文基础文案切换已单独验证通过",
+          "actions": [
+            "工程师甲打开服务助手页面，查看模型可用性提示",
+            "确认手工处理工单流程不依赖助手仍可完成（见 B03）",
+            "以工程师甲在工单页面通过账户菜单在中文与 English 之间切换，核对导航、标题、列头与下拉项",
+            "核对已录入的中文工单标题在英文界面下是否被翻译或丢失"
+          ],
+          "evidence": [
+            "服务助手页面明确提示 No enabled AI models were returned by NocoBase.，未返回任何模型，草稿/确认/刷新恢复对话无从触发",
+            "助手相关的『建议带入处理说明草稿、明确确认前不保存业务记录、不自动关闭工单』未执行（not_run）",
+            "手工处理工单流程（开始处理、填写说明、提交、退回、关闭）在无模型时仍完整可用（B03 已验证）",
+            "中英文切换：工作台/工单等导航与 Work orders、New work order、All statuses、Pending acceptance、All assignees、Overdue、View、No./Title/Customer/Priority/Status/Assignee/Due date 等主要文案正确切换为英文",
+            "录入内容不被翻译或丢失：中文工单标题『设备定期保养（内部机密）』『数控机床主轴异响』及客户名在英文界面下原样保留"
+          ],
+          "screenshots": [
+            "c12-assistant-no-model.png",
+            "c12-work-orders-zh.png",
+            "c12-work-orders-en.png"
+          ],
+          "criterion": "助手建议进入草稿，取消不写入、明确确认后才按用户权限保存，不能自动关闭；刷新可恢复对话。模型不可用时提示真实情况，手工处理仍可用。基础业务页面切换中英文后主要文案正确，录入内容不被翻译或丢失。\n\n实际失败记 failed，缺条件记 blocked，未执行记 not_run；不得以源码存在、已提交或静态截图冒充实际业务完成。AI 条件不足不停止其他业务搭建，也不宣称综合验收全部通过。",
+          "recordedAt": 1790822997667
+        }
+      ],
+      "failures": [
+        "B01：重复设备编号 DEV-1001 报修/创建返回 500 Internal Server Error 而非清晰拒绝；报修时客户与设备不匹配被接受并生成工单 WO-20261001-C7E3C2。",
+        "B02：受理 Workflow『工单自动受理』执行记录状态均为 Error，节点『读取工单上下文』报 Cannot find package '@nocobase/db'，分支未执行，工单 acceptanceNote 始终为 null；未提供可控失败条件，该子场景 not_run。",
+        "B03：Processing 状态下提交空处理说明（resolution 为空）返回 200 并推进为 Pending confirmation，服务端未拒绝空处理说明。",
+        "B04：主管把保密工单 WO-DEMO-0003 分享给非负责人工程师乙后，乙列表出现该保密工单且可打开详情，违反保密工单不得向非负责人开放。",
+        "B06：损坏文件 corrupt.png（非法 PNG）被直接接受且无失败反馈；工单详情附件区只有下载，没有详情内真实内容预览。",
+        "B07：受理、提交确认与退回均未产生持久站内消息，收件人收件箱为空，且应用无消息中心入口，/dev/notification-in-app 在生产构建中被重定向。",
+        "B08：Scheduler 的两个计划 inspection-generation 与 overdue-reminder 状态均为 Invalid（execution target is unavailable），执行记录为空；页面手动按钮直接调用服务绕过 Scheduler，无法证明计划可用。",
+        "B10：集成账号无法访问 API 密钥管理页（No settings available），管理员 API Keys 页仅能管理自身密钥且创建对话框无归属用户选择，用户管理亦无密钥入口，无法通过既有管理入口创建/撤销集成用户密钥（外部接口行为本身正确）。",
+        "B11：AI 知识库设置页返回 404 无法维护知识库；手册处理状态固定写入 Ready、无处理与失败原因，且手册未接入知识库（knowledgeBaseKey/documentId 为空、状态口径与助手过滤不一致）；服务助手提示 No enabled AI models，有依据问答/引用未验证。",
+        "B12：NocoBase 未返回可用 AI 模型，助手建议进入草稿、确认后保存、刷新恢复对话等场景无法执行，按缺外部条件记 blocked；中英文切换与录入内容保持不变已单独验证通过。"
+      ]
+    },
+    "rawRetro": {
+      "version": 1,
+      "summary": "Repair 2 built the after-sales application the previous round left out and fixed the browser-visible defects from the QA feedback. The working tree now carries the full business slice: service collections migration, service desk (services, routes, providers), role/record scoping, workflow auto-accept, scheduler targets, notifications, attachments, external API-key integration, business pages with navigation and zh/en text, and the AI service-assistant surface. Root causes fixed this round: the app was the blank default template (no business pages/routes/routes/providers/seeds); GET /api/customers:list returned SPA HTML because the resource-alias router installed a catch-all use('*') that answered unknown API GET paths; the source-managed auto-accept workflow never executed because its revision was never materialized, so trigger reported skipped/not-found; client route page authz ids (dashboard/customers/...) did not match the seeded service-* grants, which would deny every non-admin; the AI service-assistant had no client surface; and the observer role reached the state machine before the role check, returning 409 instead of 403. Real AI Q&A/retrieval remains legitimately blocked: zero LLM services and no LOCAL vector database, so the AI Knowledge Base page is integrated and reachable but shows its real empty/unconfigured state, and the assistant shows its modeled readiness message instead of fabricating answers. Verified with pnpm typecheck (all three configs), eslint and prettier on the changed files, pnpm test (41 files / 307 tests), a full pnpm build, and an end-to-end dev run on :14000 (alias JSON, workflow runs, schedule list, in-app inbox, role denials, AI employee list).",
+      "blockers": [
+        {
+          "phase": "repair-1",
+          "title": "Typecheck failed: RepositoryPolicy generic drift and dangling service-token imports",
+          "symptom": "pnpm typecheck exited 2 with two findings: server/services/repository.ts(51,17) rejected RepositoryPolicy<RepositoryRecord> against RepositoryPolicy<T> at .withPolicy(policy), and server/services/tokens.ts(3-10) could not resolve ./assistant.js, ./dashboard.js, ./devices.js, ./external.js, ./inspections.js, ./knowledge.js, ./manuals.js and ./work-orders.js.",
+          "rootCause": "scopedRepository declared its policy parameter as the default RepositoryPolicy (RepositoryRecord) but connection.repository<T>() expects RepositoryPolicy<T>, so the bridge between the authorization policy type and the concrete row type was missing. Separately, the implementation run declared one DI token per business service but never wrote the service modules those type-only imports named, and nothing imported the token module, so the references could never resolve.",
+          "resolution": "Kept scopedRepository's public parameter as the general RepositoryPolicy and cast at the withPolicy call (policy as RepositoryPolicy<T>) so the typing seam the module documents stays in one place; the return value was already cast to ScopedRepository<T>. Removed the unreferenced server/services/tokens.ts, which had no importers and named modules that do not exist; reintroduce tokens together with their service contracts when those services are implemented. Verified with `pnpm typecheck` (exit 0), `prettier --check server/services/repository.ts` and `eslint server/services/repository.ts`.",
+          "status": "resolved"
+        },
+        {
+          "phase": "repair-1",
+          "title": "After-sales business application is still largely unimplemented",
+          "symptom": "Working tree only adds database/main/migrations/202610010001_create_service_collections.ts, server/business/{resources,register,record-access,work-order-state}.ts and a few server/services helpers. There are no HTTP routes (server/routes/index.ts is empty), no service providers (server/providers/index.ts is empty), no work-order/device/inspection/knowledge/manual/external/dashboard/assistant services, no workflow or scheduler definitions, no business pages or client routes, no seeds, and no business tests.",
+          "rootCause": "The implementation run ended after producing schema, authorization resources and helper seams, without the service, route, provider, scheduling, client and seed layers the requirements need. The verification pipeline stopped at the first gate (typecheck), so those gaps were never exercised.",
+          "resolution": "Superseded by repair 2, which built the missing layers: server/services/{access,service-desk,service-desk-impl}.ts, server/routes/{service,resources}.ts, server/providers/{service-desk,ai-resources,scheduled-tasks}.ts, server/business/{permission-config,provision,scheduled-tasks}.ts, server/locales, the workflow package under server/workflows/work-order-auto-accept, the schema migration, client pages under client/pages/service plus routes/navigation/i18n, and the AI employee/tool resources under server/ai. The previous open record is retained for history.",
+          "status": "resolved"
+        },
+        {
+          "phase": "repair-2",
+          "title": "Application was the blank default template: no business nav, pages or APIs",
+          "symptom": "QA observed the homepage as the NocoBase placeholder with only Home in the main nav, /main/customers redirected to /main, GET /main/api/customers:list returned the SPA HTML, no test accounts beyond Super Admin, no workflow definitions/runs, no scheduled tasks, empty permission resources and no business pages.",
+          "rootCause": "The working tree carried only the template starting point: no business collections were seeded, no service providers or routes were registered, no client routes or pages existed, and no demo accounts/permission sets were provisioned. The template already registered every plugin in client/plugins.ts and server/plugins.ts, so the plugin capabilities were present but nothing application-owned used them.",
+          "resolution": "Implemented the application-owned slice end to end: added the service collections migration, the service-desk service with role/record scoping, HTTP routes under /api/service plus resource-style aliases, providers that register the service and provision demo permission sets/accounts/records at start(), client business pages (dashboard, customers, customer detail, devices, work orders, work-order detail, inspections, knowledge, manuals, assistant) declared in client/routes.ts with navigation and zh/en locale entries, server locales for scheduled/notification text, the auto-accept workflow package, scheduler targets, attachments through the file plugin, external API-key integration, and the AI employee/tool resources. Verified: GET /api/customers:list returns JSON for a signed-in supervisor, demo accounts sign in, permission sets carry page/action grants, scheduler lists two active schedules, accepts produce workflow runs, and the in-app inbox contains persisted messages.",
+          "status": "resolved"
+        },
+        {
+          "phase": "repair-2",
+          "title": "GET /api/customers:list returned the SPA shell instead of JSON; wildcard middleware answered unregistered API paths",
+          "symptom": "The QA feedback showed GET /main/api/customers:list returned doctype HTML, and the app-server test 'starts a fresh Default without example tables or APIs' failed because unregistered paths such as /api/articles were intercepted with 401 instead of falling through to the SPA.",
+          "rootCause": "server/routes/resources.ts mounted its alias router at /api and installed two catch-all routes.use('*', ...) middlewares (authentication plus service-access resolution) before registering the aliases. The wildcard matched every API path, so both unregistered paths and the aliases were captured by the middleware chain, and the QA path name /api/customers:list either matched nothing usable or was shadowed. This is the same router.use('*') cross-contribution leak AGENTS.md warns against.",
+          "resolution": "Removed the catch-all middlewares and attached the resolved `authenticated` handler and a `withServiceAccess` middleware to each registered alias route individually (list/get/create/update/destroy). Unregistered API paths now fall through to the SPA shell again, while the aliases are authenticated and scope the caller to the approved service. Verified: anonymous /api/articles returns 200 text/html, anonymous /api/customers:list returns 401, and a signed-in supervisor gets JSON.",
+          "status": "resolved"
+        },
+        {
+          "phase": "repair-2",
+          "title": "Source-managed auto-accept workflow never executed (trigger reported skipped/not-found)",
+          "symptom": "After registering the workflow package, accepting a work order returned 200 but /api/workflows showed no current revision and /api/workflow-runs stayed empty; automation.trigger returned {status:'skipped', reason:'not-found'}.",
+          "rootCause": "A workflow compiled from a source package is materialized disabled and is not discovered until something asks for it, so the workflow service looked up a revision whose `current` pointer was null and skipped the trigger. Nothing in the application activated its own revision.",
+          "resolution": "Added a duck-typed AutoAcceptWorkflowRuntime contract in server/services/automation.ts and materializeAutoAcceptWorkflow(), which discovers the shipped artifact and calls the workflow loader's ensureArtifactMaterialized(digest) instead of editing the materialized workflow tables. Wired it in ServiceDeskProvider.start() through a guarded resolveWorkflowRuntime() and left the source definition enabled:false, letting the application activate its own revision at startup. Verified: the log reports 'auto-accept workflow activated (1)', /api/workflows shows current:true, and an accept produces workflow-runs with status 1.",
+          "status": "resolved"
+        },
+        {
+          "phase": "repair-2",
+          "title": "Client route page authz ids did not match the seeded service-* permission grants",
+          "symptom": "The business routes declared page authz ids dashboard/customers/devices/workOrders/inspections/knowledge/manuals while server/business/permission-config.ts seeded the corresponding service-dashboard/service-customers/... grants. A grant is keyed by the page id, so no non-admin user would have matched any business page and the pages would be hidden from every demo role.",
+          "rootCause": "The page id is the identity stored in page grants; the client routes and the provisioning constants were written independently and drifted. The mismatch is silent at build time and only denies access at runtime.",
+          "resolution": "Unified the ids on service-* (matching both the route name and the seeded grants), added a service-assistant page id, and added the assistant route so the assistant participates in the same grant model. Verified by the client-routes test (which pins the authorized page list) and by confirming the provisioned sets contain service-work-orders and service-assistant grants.",
+          "status": "resolved"
+        },
+        {
+          "phase": "repair-2",
+          "title": "No AI service-assistant surface and no page-context grounding",
+          "symptom": "QA found no service assistant or work-order page, so it could not verify that suggestions become a handling-note draft, that cancel does not write, that confirmation saves, or that the app never auto-closes.",
+          "rootCause": "The AI Employee plugin ships no application chat UI and the application had no employee, tool or page context of its own.",
+          "resolution": "Installed the plugin's own shipped Registry chat UI into client/extensions/nocobase-ai, defined an app-owned service-assistant AI employee plus a read-only work-order context tool in server/ai, and mounted the UI through client/components/service-assistant.tsx. Added a dedicated /assistant page and a floating panel on the work-order detail page, wrapped in a single ServiceAssistantBoundary so page-context registrations and the chat share one registry. The assistant writes only into a visible handling-note draft (form id work-order-handling-note); the transition dialog copies the draft into its note and the engineer confirms and saves explicitly, so nothing is persisted before confirmation and the workflow is never auto-closed. A useAssistantReady() gate shows the real readiness state (loading, no employees, no model) instead of a broken composer. Verified: /api/ai/aiEmployees:listByUser returns atlas and service-assistant, listLLMServices is [] so the gate shows the no-model message, and the page/test typechecks load the component.",
+          "status": "resolved"
+        },
+        {
+          "phase": "repair-2",
+          "title": "Observer could reach the work-order state machine before the role check",
+          "symptom": "An observer POSTing a transition to an order in the wrong state received 409 STATE_CONFLICT with the order code, proving the request passed authorization and reached the domain state machine.",
+          "rootCause": "transitionWorkOrder called findWorkOrder and checked the status transition before calling assertTransitionAllowed, so a read-only role learned state and could in principle act whenever the status happened to be valid.",
+          "resolution": "Moved assertTransitionAllowed ahead of the status-conflict check so authorization is decided before the persisted state is revealed or acted on. Verified with a dev run: the observer now receives 403 FORBIDDEN for both transition and customer creation, while the supervisor still accepts successfully.",
+          "status": "resolved"
+        },
+        {
+          "phase": "repair-2",
+          "title": "app-server logic tests failed: providers assumed optional plugins, and the alias wildcard leaked",
+          "symptom": "tests/logic/app-server.test.ts failed twice: ServiceDeskProvider.boot() threw 'Service \"@nocobase/app/authorization\" is not registered' in a minimal app with no authorization plugin, and the fresh-Default test got 401 for unregistered GET paths.",
+          "rootCause": "The provider boot path resolved authorizationToken unconditionally, unlike the sibling providers that guard optional tokens, and the resource alias router's catch-all use('*') middleware intercepted every API path.",
+          "resolution": "Guarded ServiceDeskProvider.boot() with container.has(authorizationToken) (matching AIResourcesProvider and ScheduledTasksProvider) and made authorization optional for a minimal host, and removed the alias catch-all as described above. The provider's register() already binds a lazy singleton, so nothing resolves authorization until a caller needs the service. Verified: vitest run tests/logic passes 25 files / 176 tests and the full suite passes 41 files / 307 tests.",
+          "status": "resolved"
+        },
+        {
+          "phase": "repair-2",
+          "title": "Real AI Q&A/retrieval cannot run in this environment",
+          "symptom": "The AI Knowledge Base create action fails with 'vectorDatabaseKey is required for LOCAL knowledge bases', no vector database provider other than PGVector is registered, and ai:listLLMServices returns []. There is therefore no embedding service or vector store to process the two Markdown manuals.",
+          "rootCause": "The environment provides zero LLM services and no vector database connection, which are prerequisites for knowledge-base vectorization and retrieval. Both are deployment/credential concerns outside the application source.",
+          "resolution": "Kept the AI Knowledge Base plugin registered and its page reachable (the QA-observed 404 is gone; the management API returns 200), left the assistant's real readiness state visible, and kept manual work-order handling fully usable. Per the task, real Q&A and retrieval are recorded as blocked/not_run rather than faked with fixed answers. A future environment needs an enabled LLM/embedding service and a vector database before a knowledge base can be created and the manuals processed.",
+          "status": "open"
+        }
+      ],
+      "improvements": [
+        {
+          "category": "workflow",
+          "title": "Implementation phase can report completion with an unbuildable tree",
+          "detail": "The implementation phase ran for ~2470s and reported status=completed while writing only untracked server scaffolding whose token registry referenced eight modules that were never created. Verification then halted at typecheck, so no later gate (tests, build, browser QA) ever ran.",
+          "suggestedChange": "Run the build gate (format, lint, typecheck at minimum) inside the implementation phase before it declares completion, and fail the phase when local imports cannot be resolved.",
+          "mechanizable": true
+        },
+        {
+          "category": "process",
+          "title": "Repair feedback reached the agent as a raw formatter/typecheck trace",
+          "detail": "The only diagnostic supplied was the verify log tail. It identified the two errors correctly, but gave no indication that the rest of the application was missing, leaving the repair agent to reconstruct scope from the working tree.",
+          "suggestedChange": "Include a short structural gap summary with the failure feedback (for example, missing route/provider registrations and client pages relative to the requirement) so a bounded repair can distinguish a build break from an entirely absent feature.",
+          "mechanizable": true
+        },
+        {
+          "category": "verification",
+          "title": "QA ran against a commit whose application source was still uncommitted",
+          "detail": "All business files were present in the working tree as untracked/modified files while QA executed against the control SHA, so it exercised the blank template and reported defects that the working tree already fixes. The same browser feedback would have been produced even after a correct implementation.",
+          "suggestedChange": "Have the verify stage run against the committed repair tree (or fail when the working tree is dirty relative to the SHA under test) so observed failures describe the code actually delivered.",
+          "mechanizable": true
+        },
+        {
+          "category": "verification",
+          "title": "Router-level wildcard middleware is easy to introduce and only fails on unrelated paths",
+          "detail": "The alias router used use('*') to attach authentication, which silently turned every unregistered /api GET path into a 401 and only surfaced through an unrelated app-server test. AGENTS.md documents the rule, but nothing automated catches the pattern when it is added.",
+          "suggestedChange": "Add a lint rule or targeted test that fails when an application route contribution registers a wildcard middleware outside its own prefix, so the leak is caught next to the code that introduces it.",
+          "mechanizable": true
+        }
+      ]
+    },
+    "acceptanceRequirements": "每项只使用一组代表性正反场景，不展开全角色×全状态×全格式组合。浏览器 QA 验证页面行为；直接 API、并发/重复请求和服务端边界由实现阶段的针对性测试提供证据，不能用截图代替。\n\nB01. 主管创建客户与设备，刷新后关联正确；重复设备编号、必填缺失、报修时客户设备不匹配均被拒绝。未登录者不能读取或写入业务。\n\nB02. 普通和紧急工单各受理一次，Workflow 执行记录、对应分支说明及业务结果一致；重复受理无重复结果或通知。在测试准备提供的可控失败条件下，记录失败及恢复结果；没有该条件时仅此失败场景记未执行。\n\nB03. 负责人开始处理、填写说明、提交确认，主管退回一次，再次提交并关闭；非法跳步和空处理说明被拒绝，已关闭只读。刷新和重新登录后状态及结果保留。\n\nB04. 甲乙工程师只能处理自己工单；普通工单临时共享给乙后乙仅可读该单及必要关联资料，撤销后不能再读；保密工单即使被分享也不能向非负责人开放。观察员看不到内部处理备注，主管和负责人正常访问。\n\nB05. 有阅读资格的工程师可读已发布知识但不能读草稿或修改；没有阅读资格的账号不能仅因已发布而访问。不得用管理员账户代替这组验证。\n\nB06. 上传 PNG 和 DOCX 并保存，刷新后分别预览真实内容；一次表单校验失败保留上传选择，移除关联后不再显示。无工单权限账号通过附件链接被拒绝，损坏文件给出真实失败提示。\n\nB07. 受理、提交确认和退回的收件人收到对应持久消息，可跳至正确工单；标记已读刷新仍保持，非收件人不能读取。无权工单链接不能因消息而绕过权限。\n\nB08. 用受控 Scheduler 执行生成到期设备巡检和超期提醒，重复执行不重复生成同日结果，未到期/停用设备及已关闭工单不被处理；计划启停保存正确，停用后的受控调度机会不再产生新结果。负责人完成巡检并刷新核对。\n\nB09. 主管与工程师的统计分别与各自可见列表一致；修改工单状态后数字更新，搜索和筛选不扩大权限范围。\n\nB10. 通过既有管理入口创建并撤销集成用户密钥；独立 HTTP 测试验证报修、状态查询、重复事件去重和禁止处理/关闭，撤销或停用后调用失败。密钥全程去敏。\n\nB11. 主管上传两份手册，页面显示真实处理状态，普通工程师不能修改库内容。条件可用时，助手能回答一条有依据问题并提供引用，对资料外问题说明不足，对无权工单拒绝泄漏；更新手册后新对话依据新内容。缺外部条件时分别报告接入完成度与真实检索/回答未验证。\n\nB12. 助手建议进入草稿，取消不写入、明确确认后才按用户权限保存，不能自动关闭；刷新可恢复对话。模型不可用时提示真实情况，手工处理仍可用。基础业务页面切换中英文后主要文案正确，录入内容不被翻译或丢失。\n\n实际失败记 failed，缺条件记 blocked，未执行记 not_run；不得以源码存在、已提交或静态截图冒充实际业务完成。AI 条件不足不停止其他业务搭建，也不宣称综合验收全部通过。",
+    "changes": {
+      "total": 187,
+      "added": 175,
+      "modified": 12,
+      "deleted": 0
+    },
+    "usage": {
+      "scope": "此 Issue 累计：已采集 1 个 Run / 1 次尝试",
+      "source": "现有 task-usage 模块（按 Agent / job ID 去重）",
+      "total": 177361598,
+      "cacheRead": 168908416,
+      "uncachedInput": 7196601,
+      "output": 1256581,
+      "executionSeconds": 17916,
+      "endToEndSeconds": 17922,
+      "incomplete": true,
+      "phases": [
+        {
+          "label": "初始实现",
+          "input": 1128597,
+          "output": 156360,
+          "cacheRead": 24962560,
+          "cacheWrite": 0,
+          "total": 26247517
+        },
+        {
+          "label": "应用修复",
+          "input": 3388241,
+          "output": 623806,
+          "cacheRead": 103237632,
+          "cacheWrite": 0,
+          "total": 107249679
+        },
+        {
+          "label": "完整业务 QA",
+          "input": 1145969,
+          "output": 266627,
+          "cacheRead": 40659840,
+          "cacheWrite": 0,
+          "total": 42072436
+        },
+        {
+          "label": "失败路径复测",
+          "input": 0,
+          "output": 0,
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "total": 0
+        },
+        {
+          "label": "QA 补报告",
+          "input": 0,
+          "output": 0,
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "total": 0
+        },
+        {
+          "label": "独立搭建评审",
+          "input": 0,
+          "output": 0,
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "total": 0
+        },
+        {
+          "label": "上下文压缩",
+          "input": 1533794,
+          "output": 209788,
+          "cacheRead": 48384,
+          "cacheWrite": 0,
+          "total": 1791966
+        }
+      ],
+      "coverageNote": "用量记录 2503；未报告用量 4；分项不完整 1；缺失作业时间 0。",
+      "note": "不把流式增量、上下文长度和思考 Token 重复相加。旧记录未拆分 QA 时保留原有口径；费用：未知。"
+    },
+    "runs": [
+      {
+        "id": "36787405670",
+        "attempt": 1,
+        "status": "handoff",
+        "detail": "已保存 Handoff，等待下一轮续跑"
+      }
+    ],
+    "retro": {
+      "version": 1,
+      "summary": "Repair 2 built the after-sales application the previous round left out and fixed the browser-visible defects from the QA feedback. The working tree now carries the full business slice: service collections migration, service desk (services, routes, providers), role/record scoping, workflow auto-accept, scheduler targets, notifications, attachments, external API-key integration, business pages with navigation and zh/en text, and the AI service-assistant surface. Root causes fixed this round: the app was the blank default template (no business pages/routes/routes/providers/seeds); GET /api/customers:list returned SPA HTML because the resource-alias router installed a catch-all use('*') that answered unknown API GET paths; the source-managed auto-accept workflow never executed because its revision was never materialized, so trigger reported skipped/not-found; client route page authz ids (dashboard/customers/...) did not match the seeded service-* grants, which would deny every non-admin; the AI service-assistant had no client surface; and the observer role reached the state machine before the role check, returning 409 instead of 403. Real AI Q&A/retrieval remains legitimately blocked: zero LLM services and no LOCAL vector database, so the AI Knowledge Base page is integrated and reachable but shows its real empty/unconfigured state, and the assistant shows its modeled readiness message instead of fabricating answers. Verified with pnpm typecheck (all three configs), eslint and prettier on the changed files, pnpm test (41 files / 307 tests), a full pnpm build, and an end-to-end dev run on :14000 (alias JSON, workflow runs, schedule list, in-app inbox, role denials, AI employee list).",
+      "source": "Agent · retro.json",
+      "blockers": [
+        {
+          "phase": "repair-1",
+          "title": "Typecheck failed: RepositoryPolicy generic drift and dangling service-token imports",
+          "symptom": "pnpm typecheck exited 2 with two findings: server/services/repository.ts(51,17) rejected RepositoryPolicy<RepositoryRecord> against RepositoryPolicy<T> at .withPolicy(policy), and server/services/tokens.ts(3-10) could not resolve ./assistant.js, ./dashboard.js, ./devices.js, ./external.js, ./inspections.js, ./knowledge.js, ./manuals.js and ./work-orders.js.",
+          "rootCause": "scopedRepository declared its policy parameter as the default RepositoryPolicy (RepositoryRecord) but connection.repository<T>() expects RepositoryPolicy<T>, so the bridge between the authorization policy type and the concrete row type was missing. Separately, the implementation run declared one DI token per business service but never wrote the service modules those type-only imports named, and nothing imported the token module, so the references could never resolve.",
+          "resolution": "Kept scopedRepository's public parameter as the general RepositoryPolicy and cast at the withPolicy call (policy as RepositoryPolicy<T>) so the typing seam the module documents stays in one place; the return value was already cast to ScopedRepository<T>. Removed the unreferenced server/services/tokens.ts, which had no importers and named modules that do not exist; reintroduce tokens together with their service contracts when those services are implemented. Verified with `pnpm typecheck` (exit 0), `prettier --check server/services/repository.ts` and `eslint server/services/repository.ts`.",
+          "cost": "",
+          "source": "",
+          "status": "resolved"
+        },
+        {
+          "phase": "repair-1",
+          "title": "After-sales business application is still largely unimplemented",
+          "symptom": "Working tree only adds database/main/migrations/202610010001_create_service_collections.ts, server/business/{resources,register,record-access,work-order-state}.ts and a few server/services helpers. There are no HTTP routes (server/routes/index.ts is empty), no service providers (server/providers/index.ts is empty), no work-order/device/inspection/knowledge/manual/external/dashboard/assistant services, no workflow or scheduler definitions, no business pages or client routes, no seeds, and no business tests.",
+          "rootCause": "The implementation run ended after producing schema, authorization resources and helper seams, without the service, route, provider, scheduling, client and seed layers the requirements need. The verification pipeline stopped at the first gate (typecheck), so those gaps were never exercised.",
+          "resolution": "Superseded by repair 2, which built the missing layers: server/services/{access,service-desk,service-desk-impl}.ts, server/routes/{service,resources}.ts, server/providers/{service-desk,ai-resources,scheduled-tasks}.ts, server/business/{permission-config,provision,scheduled-tasks}.ts, server/locales, the workflow package under server/workflows/work-order-auto-accept, the schema migration, client pages under client/pages/service plus routes/navigation/i18n, and the AI employee/tool resources under server/ai. The previous open record is retained for history.",
+          "cost": "",
+          "source": "",
+          "status": "resolved"
+        },
+        {
+          "phase": "repair-2",
+          "title": "Application was the blank default template: no business nav, pages or APIs",
+          "symptom": "QA observed the homepage as the NocoBase placeholder with only Home in the main nav, /main/customers redirected to /main, GET /main/api/customers:list returned the SPA HTML, no test accounts beyond Super Admin, no workflow definitions/runs, no scheduled tasks, empty permission resources and no business pages.",
+          "rootCause": "The working tree carried only the template starting point: no business collections were seeded, no service providers or routes were registered, no client routes or pages existed, and no demo accounts/permission sets were provisioned. The template already registered every plugin in client/plugins.ts and server/plugins.ts, so the plugin capabilities were present but nothing application-owned used them.",
+          "resolution": "Implemented the application-owned slice end to end: added the service collections migration, the service-desk service with role/record scoping, HTTP routes under /api/service plus resource-style aliases, providers that register the service and provision demo permission sets/accounts/records at start(), client business pages (dashboard, customers, customer detail, devices, work orders, work-order detail, inspections, knowledge, manuals, assistant) declared in client/routes.ts with navigation and zh/en locale entries, server locales for scheduled/notification text, the auto-accept workflow package, scheduler targets, attachments through the file plugin, external API-key integration, and the AI employee/tool resources. Verified: GET /api/customers:list returns JSON for a signed-in supervisor, demo accounts sign in, permission sets carry page/action grants, scheduler lists two active schedules, accepts produce workflow runs, and the in-app inbox contains persisted messages.",
+          "cost": "",
+          "source": "",
+          "status": "resolved"
+        },
+        {
+          "phase": "repair-2",
+          "title": "GET /api/customers:list returned the SPA shell instead of JSON; wildcard middleware answered unregistered API paths",
+          "symptom": "The QA feedback showed GET /main/api/customers:list returned doctype HTML, and the app-server test 'starts a fresh Default without example tables or APIs' failed because unregistered paths such as /api/articles were intercepted with 401 instead of falling through to the SPA.",
+          "rootCause": "server/routes/resources.ts mounted its alias router at /api and installed two catch-all routes.use('*', ...) middlewares (authentication plus service-access resolution) before registering the aliases. The wildcard matched every API path, so both unregistered paths and the aliases were captured by the middleware chain, and the QA path name /api/customers:list either matched nothing usable or was shadowed. This is the same router.use('*') cross-contribution leak AGENTS.md warns against.",
+          "resolution": "Removed the catch-all middlewares and attached the resolved `authenticated` handler and a `withServiceAccess` middleware to each registered alias route individually (list/get/create/update/destroy). Unregistered API paths now fall through to the SPA shell again, while the aliases are authenticated and scope the caller to the approved service. Verified: anonymous /api/articles returns 200 text/html, anonymous /api/customers:list returns 401, and a signed-in supervisor gets JSON.",
+          "cost": "",
+          "source": "",
+          "status": "resolved"
+        },
+        {
+          "phase": "repair-2",
+          "title": "Source-managed auto-accept workflow never executed (trigger reported skipped/not-found)",
+          "symptom": "After registering the workflow package, accepting a work order returned 200 but /api/workflows showed no current revision and /api/workflow-runs stayed empty; automation.trigger returned {status:'skipped', reason:'not-found'}.",
+          "rootCause": "A workflow compiled from a source package is materialized disabled and is not discovered until something asks for it, so the workflow service looked up a revision whose `current` pointer was null and skipped the trigger. Nothing in the application activated its own revision.",
+          "resolution": "Added a duck-typed AutoAcceptWorkflowRuntime contract in server/services/automation.ts and materializeAutoAcceptWorkflow(), which discovers the shipped artifact and calls the workflow loader's ensureArtifactMaterialized(digest) instead of editing the materialized workflow tables. Wired it in ServiceDeskProvider.start() through a guarded resolveWorkflowRuntime() and left the source definition enabled:false, letting the application activate its own revision at startup. Verified: the log reports 'auto-accept workflow activated (1)', /api/workflows shows current:true, and an accept produces workflow-runs with status 1.",
+          "cost": "",
+          "source": "",
+          "status": "resolved"
+        },
+        {
+          "phase": "repair-2",
+          "title": "Client route page authz ids did not match the seeded service-* permission grants",
+          "symptom": "The business routes declared page authz ids dashboard/customers/devices/workOrders/inspections/knowledge/manuals while server/business/permission-config.ts seeded the corresponding service-dashboard/service-customers/... grants. A grant is keyed by the page id, so no non-admin user would have matched any business page and the pages would be hidden from every demo role.",
+          "rootCause": "The page id is the identity stored in page grants; the client routes and the provisioning constants were written independently and drifted. The mismatch is silent at build time and only denies access at runtime.",
+          "resolution": "Unified the ids on service-* (matching both the route name and the seeded grants), added a service-assistant page id, and added the assistant route so the assistant participates in the same grant model. Verified by the client-routes test (which pins the authorized page list) and by confirming the provisioned sets contain service-work-orders and service-assistant grants.",
+          "cost": "",
+          "source": "",
+          "status": "resolved"
+        },
+        {
+          "phase": "repair-2",
+          "title": "No AI service-assistant surface and no page-context grounding",
+          "symptom": "QA found no service assistant or work-order page, so it could not verify that suggestions become a handling-note draft, that cancel does not write, that confirmation saves, or that the app never auto-closes.",
+          "rootCause": "The AI Employee plugin ships no application chat UI and the application had no employee, tool or page context of its own.",
+          "resolution": "Installed the plugin's own shipped Registry chat UI into client/extensions/nocobase-ai, defined an app-owned service-assistant AI employee plus a read-only work-order context tool in server/ai, and mounted the UI through client/components/service-assistant.tsx. Added a dedicated /assistant page and a floating panel on the work-order detail page, wrapped in a single ServiceAssistantBoundary so page-context registrations and the chat share one registry. The assistant writes only into a visible handling-note draft (form id work-order-handling-note); the transition dialog copies the draft into its note and the engineer confirms and saves explicitly, so nothing is persisted before confirmation and the workflow is never auto-closed. A useAssistantReady() gate shows the real readiness state (loading, no employees, no model) instead of a broken composer. Verified: /api/ai/aiEmployees:listByUser returns atlas and service-assistant, listLLMServices is [] so the gate shows the no-model message, and the page/test typechecks load the component.",
+          "cost": "",
+          "source": "",
+          "status": "resolved"
+        },
+        {
+          "phase": "repair-2",
+          "title": "Observer could reach the work-order state machine before the role check",
+          "symptom": "An observer POSTing a transition to an order in the wrong state received 409 STATE_CONFLICT with the order code, proving the request passed authorization and reached the domain state machine.",
+          "rootCause": "transitionWorkOrder called findWorkOrder and checked the status transition before calling assertTransitionAllowed, so a read-only role learned state and could in principle act whenever the status happened to be valid.",
+          "resolution": "Moved assertTransitionAllowed ahead of the status-conflict check so authorization is decided before the persisted state is revealed or acted on. Verified with a dev run: the observer now receives 403 FORBIDDEN for both transition and customer creation, while the supervisor still accepts successfully.",
+          "cost": "",
+          "source": "",
+          "status": "resolved"
+        },
+        {
+          "phase": "repair-2",
+          "title": "app-server logic tests failed: providers assumed optional plugins, and the alias wildcard leaked",
+          "symptom": "tests/logic/app-server.test.ts failed twice: ServiceDeskProvider.boot() threw 'Service \"@nocobase/app/authorization\" is not registered' in a minimal app with no authorization plugin, and the fresh-Default test got 401 for unregistered GET paths.",
+          "rootCause": "The provider boot path resolved authorizationToken unconditionally, unlike the sibling providers that guard optional tokens, and the resource alias router's catch-all use('*') middleware intercepted every API path.",
+          "resolution": "Guarded ServiceDeskProvider.boot() with container.has(authorizationToken) (matching AIResourcesProvider and ScheduledTasksProvider) and made authorization optional for a minimal host, and removed the alias catch-all as described above. The provider's register() already binds a lazy singleton, so nothing resolves authorization until a caller needs the service. Verified: vitest run tests/logic passes 25 files / 176 tests and the full suite passes 41 files / 307 tests.",
+          "cost": "",
+          "source": "",
+          "status": "resolved"
+        },
+        {
+          "phase": "repair-2",
+          "title": "Real AI Q&A/retrieval cannot run in this environment",
+          "symptom": "The AI Knowledge Base create action fails with 'vectorDatabaseKey is required for LOCAL knowledge bases', no vector database provider other than PGVector is registered, and ai:listLLMServices returns []. There is therefore no embedding service or vector store to process the two Markdown manuals.",
+          "rootCause": "The environment provides zero LLM services and no vector database connection, which are prerequisites for knowledge-base vectorization and retrieval. Both are deployment/credential concerns outside the application source.",
+          "resolution": "Kept the AI Knowledge Base plugin registered and its page reachable (the QA-observed 404 is gone; the management API returns 200), left the assistant's real readiness state visible, and kept manual work-order handling fully usable. Per the task, real Q&A and retrieval are recorded as blocked/not_run rather than faked with fixed answers. A future environment needs an enabled LLM/embedding service and a vector database before a knowledge base can be created and the manuals processed.",
+          "cost": "",
+          "source": "",
+          "status": "open"
+        }
+      ],
+      "improvements": [
+        {
+          "category": "workflow",
+          "title": "Implementation phase can report completion with an unbuildable tree",
+          "detail": "The implementation phase ran for ~2470s and reported status=completed while writing only untracked server scaffolding whose token registry referenced eight modules that were never created. Verification then halted at typecheck, so no later gate (tests, build, browser QA) ever ran.",
+          "suggestedChange": "Run the build gate (format, lint, typecheck at minimum) inside the implementation phase before it declares completion, and fail the phase when local imports cannot be resolved.",
+          "source": "",
+          "mechanizable": true
+        },
+        {
+          "category": "process",
+          "title": "Repair feedback reached the agent as a raw formatter/typecheck trace",
+          "detail": "The only diagnostic supplied was the verify log tail. It identified the two errors correctly, but gave no indication that the rest of the application was missing, leaving the repair agent to reconstruct scope from the working tree.",
+          "suggestedChange": "Include a short structural gap summary with the failure feedback (for example, missing route/provider registrations and client pages relative to the requirement) so a bounded repair can distinguish a build break from an entirely absent feature.",
+          "source": "",
+          "mechanizable": true
+        },
+        {
+          "category": "verification",
+          "title": "QA ran against a commit whose application source was still uncommitted",
+          "detail": "All business files were present in the working tree as untracked/modified files while QA executed against the control SHA, so it exercised the blank template and reported defects that the working tree already fixes. The same browser feedback would have been produced even after a correct implementation.",
+          "suggestedChange": "Have the verify stage run against the committed repair tree (or fail when the working tree is dirty relative to the SHA under test) so observed failures describe the code actually delivered.",
+          "source": "",
+          "mechanizable": true
+        },
+        {
+          "category": "verification",
+          "title": "Router-level wildcard middleware is easy to introduce and only fails on unrelated paths",
+          "detail": "The alias router used use('*') to attach authentication, which silently turned every unregistered /api GET path into a 401 and only surfaced through an unrelated app-server test. AGENTS.md documents the rule, but nothing automated catches the pattern when it is added.",
+          "suggestedChange": "Add a lint rule or targeted test that fails when an application route contribution registers a wildcard middleware outside its own prefix, so the leak is caught next to the code that introduces it.",
+          "source": "",
+          "mechanizable": true
+        }
+      ]
+    },
+    "timings": [
+      {
+        "stage": "agent:repair",
+        "calls": 3,
+        "durationMs": 8627530
+      },
+      {
+        "stage": "agent:qa",
+        "calls": 2,
+        "durationMs": 6139584
+      },
+      {
+        "stage": "agent:implementation",
+        "calls": 1,
+        "durationMs": 2470545
+      },
+      {
+        "stage": "build",
+        "calls": 2,
+        "durationMs": 128508
+      },
+      {
+        "stage": "lint",
+        "calls": 3,
+        "durationMs": 102943
+      },
+      {
+        "stage": "test",
+        "calls": 2,
+        "durationMs": 96954
+      },
+      {
+        "stage": "typecheck",
+        "calls": 3,
+        "durationMs": 49822
+      },
+      {
+        "stage": "format:check",
+        "calls": 3,
+        "durationMs": 16607
+      },
+      {
+        "stage": "db:apply",
+        "calls": 2,
+        "durationMs": 11967
+      },
+      {
+        "stage": "format:auto",
+        "calls": 3,
+        "durationMs": 6829
+      },
+      {
+        "stage": "install",
+        "calls": 1,
+        "durationMs": 4941
+      },
+      {
+        "stage": "skills-sync",
+        "calls": 1,
+        "durationMs": 1128
+      }
+    ],
+    "buildReview": {
+      "version": 1,
+      "state": "not-reviewed",
+      "reason": "本轮没有独立评审记录；未评估不代表通过，也不按零分处理。",
+      "process": {
+        "verificationAttempts": 3,
+        "repairAttempts": 3,
+        "finalRound": 3,
+        "rounds": [
+          {
+            "round": 2,
+            "reports": [
+              {
+                "scope": "full",
+                "source": "verify-2/browser-acceptance/report.json",
+                "passed": false,
+                "checks": [
+                  {
+                    "id": "B01",
+                    "criterion": "主管创建客户与设备，刷新后关联正确；重复设备编号、必填缺失、报修时客户设备不匹配均被拒绝。未登录者不能读取或写入业务。",
+                    "status": "failed",
+                    "reason": ""
+                  },
+                  {
+                    "id": "B02",
+                    "criterion": "普通和紧急工单各受理一次，Workflow 执行记录、对应分支说明及业务结果一致；重复受理无重复结果或通知。在测试准备提供的可控失败条件下，记录失败及恢复结果；没有该条件时仅此失败场景记未执行。",
+                    "status": "failed",
+                    "reason": ""
+                  },
+                  {
+                    "id": "B03",
+                    "criterion": "负责人开始处理、填写说明、提交确认，主管退回一次，再次提交并关闭；非法跳步和空处理说明被拒绝，已关闭只读。刷新和重新登录后状态及结果保留。",
+                    "status": "failed",
+                    "reason": ""
+                  },
+                  {
+                    "id": "B04",
+                    "criterion": "甲乙工程师只能处理自己工单；普通工单临时共享给乙后乙仅可读该单及必要关联资料，撤销后不能再读；保密工单即使被分享也不能向非负责人开放。观察员看不到内部处理备注，主管和负责人正常访问。",
+                    "status": "failed",
+                    "reason": ""
+                  },
+                  {
+                    "id": "B05",
+                    "criterion": "有阅读资格的工程师可读已发布知识但不能读草稿或修改；没有阅读资格的账号不能仅因已发布而访问。不得用管理员账户代替这组验证。",
+                    "status": "failed",
+                    "reason": ""
+                  },
+                  {
+                    "id": "B06",
+                    "criterion": "上传 PNG 和 DOCX 并保存，刷新后分别预览真实内容；一次表单校验失败保留上传选择，移除关联后不再显示。无工单权限账号通过附件链接被拒绝，损坏文件给出真实失败提示。",
+                    "status": "failed",
+                    "reason": ""
+                  },
+                  {
+                    "id": "B07",
+                    "criterion": "受理、提交确认和退回的收件人收到对应持久消息，可跳至正确工单；标记已读刷新仍保持，非收件人不能读取。无权工单链接不能因消息而绕过权限。",
+                    "status": "failed",
+                    "reason": ""
+                  },
+                  {
+                    "id": "B08",
+                    "criterion": "用受控 Scheduler 执行生成到期设备巡检和超期提醒，重复执行不重复生成同日结果，未到期/停用设备及已关闭工单不被处理；计划启停保存正确，停用后的受控调度机会不再产生新结果。负责人完成巡检并刷新核对。",
+                    "status": "failed",
+                    "reason": ""
+                  },
+                  {
+                    "id": "B09",
+                    "criterion": "主管与工程师的统计分别与各自可见列表一致；修改工单状态后数字更新，搜索和筛选不扩大权限范围。",
+                    "status": "failed",
+                    "reason": ""
+                  },
+                  {
+                    "id": "B10",
+                    "criterion": "通过既有管理入口创建并撤销集成用户密钥；独立 HTTP 测试验证报修、状态查询、重复事件去重和禁止处理/关闭，撤销或停用后调用失败。密钥全程去敏。",
+                    "status": "failed",
+                    "reason": ""
+                  },
+                  {
+                    "id": "B11",
+                    "criterion": "主管上传两份手册，页面显示真实处理状态，普通工程师不能修改库内容。条件可用时，助手能回答一条有依据问题并提供引用，对资料外问题说明不足，对无权工单拒绝泄漏；更新手册后新对话依据新内容。缺外部条件时分别报告接入完成度与真实检索/回答未验证。",
+                    "status": "failed",
+                    "reason": ""
+                  },
+                  {
+                    "id": "B12",
+                    "criterion": "助手建议进入草稿，取消不写入、明确确认后才按用户权限保存，不能自动关闭；刷新可恢复对话。模型不可用时提示真实情况，手工处理仍可用。基础业务页面切换中英文后主要文案正确，录入内容不被翻译或丢失。\n\n实际失败记 failed，缺条件记 blocked，未执行记 not_run；不得以源码存在、已提交或静态截图冒充实际业务完成。AI 条件不足不停止其他业务搭建，也不宣称综合验收全部通过。",
+                    "status": "failed",
+                    "reason": ""
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "round": 3,
+            "reports": [
+              {
+                "scope": "full",
+                "source": "verify-3/browser-acceptance/report.json",
+                "passed": false,
+                "checks": [
+                  {
+                    "id": "B01",
+                    "criterion": "主管创建客户与设备，刷新后关联正确；重复设备编号、必填缺失、报修时客户设备不匹配均被拒绝。未登录者不能读取或写入业务。",
+                    "status": "failed",
+                    "reason": ""
+                  },
+                  {
+                    "id": "B02",
+                    "criterion": "普通和紧急工单各受理一次，Workflow 执行记录、对应分支说明及业务结果一致；重复受理无重复结果或通知。在测试准备提供的可控失败条件下，记录失败及恢复结果；没有该条件时仅此失败场景记未执行。",
+                    "status": "failed",
+                    "reason": ""
+                  },
+                  {
+                    "id": "B03",
+                    "criterion": "负责人开始处理、填写说明、提交确认，主管退回一次，再次提交并关闭；非法跳步和空处理说明被拒绝，已关闭只读。刷新和重新登录后状态及结果保留。",
+                    "status": "failed",
+                    "reason": ""
+                  },
+                  {
+                    "id": "B04",
+                    "criterion": "甲乙工程师只能处理自己工单；普通工单临时共享给乙后乙仅可读该单及必要关联资料，撤销后不能再读；保密工单即使被分享也不能向非负责人开放。观察员看不到内部处理备注，主管和负责人正常访问。",
+                    "status": "failed",
+                    "reason": ""
+                  },
+                  {
+                    "id": "B05",
+                    "criterion": "有阅读资格的工程师可读已发布知识但不能读草稿或修改；没有阅读资格的账号不能仅因已发布而访问。不得用管理员账户代替这组验证。",
+                    "status": "passed",
+                    "reason": ""
+                  },
+                  {
+                    "id": "B06",
+                    "criterion": "上传 PNG 和 DOCX 并保存，刷新后分别预览真实内容；一次表单校验失败保留上传选择，移除关联后不再显示。无工单权限账号通过附件链接被拒绝，损坏文件给出真实失败提示。",
+                    "status": "failed",
+                    "reason": ""
+                  },
+                  {
+                    "id": "B07",
+                    "criterion": "受理、提交确认和退回的收件人收到对应持久消息，可跳至正确工单；标记已读刷新仍保持，非收件人不能读取。无权工单链接不能因消息而绕过权限。",
+                    "status": "failed",
+                    "reason": ""
+                  },
+                  {
+                    "id": "B08",
+                    "criterion": "用受控 Scheduler 执行生成到期设备巡检和超期提醒，重复执行不重复生成同日结果，未到期/停用设备及已关闭工单不被处理；计划启停保存正确，停用后的受控调度机会不再产生新结果。负责人完成巡检并刷新核对。",
+                    "status": "failed",
+                    "reason": ""
+                  },
+                  {
+                    "id": "B09",
+                    "criterion": "主管与工程师的统计分别与各自可见列表一致；修改工单状态后数字更新，搜索和筛选不扩大权限范围。",
+                    "status": "passed",
+                    "reason": ""
+                  },
+                  {
+                    "id": "B10",
+                    "criterion": "通过既有管理入口创建并撤销集成用户密钥；独立 HTTP 测试验证报修、状态查询、重复事件去重和禁止处理/关闭，撤销或停用后调用失败。密钥全程去敏。",
+                    "status": "failed",
+                    "reason": ""
+                  },
+                  {
+                    "id": "B11",
+                    "criterion": "主管上传两份手册，页面显示真实处理状态，普通工程师不能修改库内容。条件可用时，助手能回答一条有依据问题并提供引用，对资料外问题说明不足，对无权工单拒绝泄漏；更新手册后新对话依据新内容。缺外部条件时分别报告接入完成度与真实检索/回答未验证。",
+                    "status": "failed",
+                    "reason": ""
+                  },
+                  {
+                    "id": "B12",
+                    "criterion": "助手建议进入草稿，取消不写入、明确确认后才按用户权限保存，不能自动关闭；刷新可恢复对话。模型不可用时提示真实情况，手工处理仍可用。基础业务页面切换中英文后主要文案正确，录入内容不被翻译或丢失。\n\n实际失败记 failed，缺条件记 blocked，未执行记 not_run；不得以源码存在、已提交或静态截图冒充实际业务完成。AI 条件不足不停止其他业务搭建，也不宣称综合验收全部通过。",
+                    "status": "blocked",
+                    "reason": "应用未返回任何启用的 AI 模型（服务助手页面显示 No enabled AI models were returned by NocoBase.），助手建议进入草稿、取消不写入、确认后保存、刷新恢复对话等场景无模型可用，无法执行；中英文基础文案切换已单独验证通过"
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "warnings": [],
+        "scope": "仅本 Run 已归档记录；工厂修复轮次不等于 Agent 开发中全部试错次数。缺少 verify-1 时不能声称任务首轮通过。"
+      },
+      "evaluation": null
+    },
+    "baseline": {
+      "template": "@nocobase/app-template-default",
+      "templateVersion": "1.0.0-beta.50",
+      "creatorVersion": "0.1.0-beta.24",
+      "source": null,
+      "lockSha256": "fc4f398ef6cf510da8958ca26db0bea4c17ab81019ac0e2c464503439c7de0be",
+      "packages": [
+        {
+          "name": "@nocobase/ai-employee",
+          "version": "0.2.0-beta.8",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/ai-employee-avatars",
+          "version": "1.0.2",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/app-cli",
+          "version": "1.0.0-beta.9",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/app-client",
+          "version": "1.0.0-beta.23",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/app-plugin-ai-employee",
+          "version": "1.0.0-beta.26",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/app-plugin-ai-knowledge-base",
+          "version": "0.1.0-beta.9",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/app-plugin-api-keys",
+          "version": "0.1.0-beta.9",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/app-plugin-authentication",
+          "version": "1.0.0-beta.24",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/app-plugin-authorization",
+          "version": "0.2.0-beta.21",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/app-plugin-authz-default-access",
+          "version": "0.1.0-beta.6",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/app-plugin-authz-restriction-rules",
+          "version": "0.1.0-beta.5",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/app-plugin-authz-sharing-rules",
+          "version": "0.1.0-beta.6",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/app-plugin-database-explorer",
+          "version": "0.1.0-beta.7",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/app-plugin-file",
+          "version": "0.1.0-beta.16",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/app-plugin-i18n",
+          "version": "0.1.0-beta.10",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/app-plugin-mail",
+          "version": "0.1.0-beta.0",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/app-plugin-notification",
+          "version": "0.1.0-beta.18",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/app-plugin-notification-in-app",
+          "version": "0.2.0-beta.18",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/app-plugin-notification-providers",
+          "version": "0.2.0-beta.7",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/app-plugin-scheduler",
+          "version": "0.1.0-beta.9",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/app-plugin-template-print",
+          "version": "0.0.2-beta.0",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/app-plugin-users",
+          "version": "1.0.0-beta.12",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/app-plugin-workflow",
+          "version": "1.0.0-beta.29",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/app-server",
+          "version": "1.0.0-beta.29",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/app-skills",
+          "version": "0.1.0-beta.19",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/app-websocket",
+          "version": "0.0.1",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/authorization",
+          "version": "0.1.0-beta.10",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/caching",
+          "version": "0.1.0-beta.2",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/config",
+          "version": "0.1.0-beta.1",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/cron",
+          "version": "0.1.0",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/db",
+          "version": "1.0.0-beta.16",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/db-sqlite",
+          "version": "0.1.0-beta.3",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/dev-config",
+          "version": "0.1.0-beta.14",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/drive",
+          "version": "0.1.0-beta.4",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/hub-cli",
+          "version": "0.1.0-beta.0",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/i18n",
+          "version": "1.0.0-beta.4",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/logging",
+          "version": "0.1.0-beta.6",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/queue",
+          "version": "0.1.0-beta.7",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/repository-input",
+          "version": "0.1.0-beta.1",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/service-provider",
+          "version": "0.0.2-beta.1",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/session",
+          "version": "0.1.0-beta.2",
+          "reason": null
+        },
+        {
+          "name": "@nocobase/snowflake",
+          "version": "1.0.0-beta.3",
+          "reason": null
+        }
+      ]
+    }
+  },
+  "pr": null,
+  "reportId": "gchust/nb3-factory:509:36787405670:1::template-9:review-994b7366eaed9533"
+}
