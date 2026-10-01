@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "inputHash": "54e14fe85b0829f84f0e8f7521cac39830411934e0bc74f2e97d7e1d4018cb30",
+  "inputHash": "98d8d3b1a559100d6d1b9d5a6eab98fd5733893eab7a34f43ca940ed9e417a63",
   "findings": [
     {
       "id": "460:36434284393:1:F2",
@@ -4909,6 +4909,86 @@
         }
       ],
       "fingerprint": "020fa147aeba6cbc38f5641df9f8530bdc5d965638667f483bd4e7ce82e123f4"
+    },
+    {
+      "id": "506:36787391890:1:F7",
+      "report": "506:36787391890:1",
+      "issue": 506,
+      "taskTitle": "内部资料阅读与临时共享",
+      "appVersion": "1.0.0-beta.50",
+      "appTemplate": "@nocobase/app-template-default",
+      "finding": {
+        "id": "F7",
+        "kind": "improvement",
+        "owner": "documentation",
+        "confidence": "confirmed",
+        "severity": "minor",
+        "status": "open",
+        "title": "包内 dist 目录与导出子路径不镜像，Skill 未给出目标文件定位方法",
+        "detail": "`@nocobase/authorization` 的导出子路径（如 `./sharing-rules`）对应 `dist/plugins/sharing-rules/`，而 `./core` 对应 `dist/core/`；agent 在探索时多次按子路径猜目录，产生大量无效 cat/find（历史错误信号中占比很高）。",
+        "impact": "增加只读探索成本，甚至可能让 agent 误以为能力缺失；错误信号数量会干扰对真实缺陷的判断。",
+        "suggestedChange": "在包的 README/Skill 中列出 dist 布局与子路径映射，或让目录结构与导出子路径镜像。",
+        "evidence": [
+          "E5",
+          "E24",
+          "E47"
+        ],
+        "diagnosis": {
+          "category": "usability-improvement",
+          "trigger": "agent 依据导出子路径猜测包内 dist 目录布局",
+          "expected": "可从 README/Skill 直接得知子路径到文件的映射，或目录与子路径一致",
+          "actual": "`dist/plugins/<name>` 与子路径 `/<name>` 不一致，产生多次无效 cat/find",
+          "workaround": "先读 package.json exports 或包 README 再定位文件",
+          "acceptance": "Skill/README 明确 dist 布局，或目录结构与导出子路径镜像"
+        }
+      },
+      "targets": [
+        "@nocobase/authorization",
+        "app/.agents/skills/nocobase-app-plugin-authz-sharing-rules/SKILL.md"
+      ],
+      "paths": [
+        ".agents/skills/nocobase-app-plugin-authz-sharing-rules/SKILL.md",
+        "packages/@nocobase/authorization/dist/plugins/sharing-rules/plugin.js"
+      ],
+      "evidence": [
+        {
+          "id": "E5",
+          "kind": "package",
+          "path": "packages/@nocobase/authorization/dist/plugins/sharing-rules/plugin.js",
+          "observation": "sharingRulesPlugin 用 effect `expand` 声明共享规则：只对已持有动作的主体补充所选记录，不授予动作。",
+          "lines": [
+            1,
+            14
+          ],
+          "excerpt": "import { RuleService } from '../internal/rules.js';\nimport { requireStore } from '../internal/store.js';\nexport function sharingRulesPlugin(options) {\n    const service = new RuleService({ id: 'sharing-rules', effect: 'expand', bySubject: true, allowAll: false }, requireStore(options.store, 'Sharing Rules'));\n    return {\n        id: 'sharing-rules',\n        authorizationApi: {\n            sharingRules: service,\n        },\n        setup(authz) {\n            authz.constraints.add(service);\n        },\n    };\n}",
+          "sha256": "f5424de16e9a7b6e2f19b8713f213168bca4950da7e9c9116d7db1ce77254d27"
+        },
+        {
+          "id": "E24",
+          "kind": "skill",
+          "path": "app/.agents/skills/nocobase-app-plugin-authz-sharing-rules/SKILL.md",
+          "observation": "共享 Skill 明确：共享为已持有动作的主体增加所选记录，不授予动作/字段/页面；先经权限集授予动作再保存规则；撤销后下一个请求只失去该来源；共享不能激活缺失的操作。",
+          "lines": [
+            8,
+            23
+          ],
+          "excerpt": "A sharing rule adds selected records, or a record access selection, for the subjects it lists, provided they already hold the action. Sharing does not grant the operation, fields, page access or related records, and it cannot select all records. Grants, default access and sharing combine first; restriction rules then narrow the result.\n\nRead the installed `nocobase-app-plugin-authorization` Skill first for composite resources, data scopes, fields, server policy enforcement and inherited subjects. The package README at `node_modules/@nocobase/app-plugin-authz-sharing-rules/README.md` is the complete reference for the service, the HTTP routes and the exports; this Skill covers how to use them.\n\nFor sharing between departments, read the application development Skill's `references/organization/permission-design.md` first. A rule whose recipient is a department shares specific records with it; a viewer-relative department scope such as 本部门及下属部门 is computed for the viewer and cannot select another department's records. The guide's optional sharing section covers this plugin, and its core section says what remains with permission sets alone.\n\n## Development workflow\n\n1. Identify the real collaboration exception: who receives which records, for which actions, and why. Use explicit records for one handover; use a record access selection for a maintained region or team rule.\n2. Grant the recipients the business action through a permission set first. Register inherited subjects and their active membership resolver through the main authorization Skill.\n3. Inspect every data scope the operation requires. Quote submission needs the selected quote and its actual parent project. Add each action and data scope deliberately; view, edit and submit are different permissions.\n4. Save a complete rule through the settings page or the service. Keep record ids tied to their data scope's collection and preserve the other entries on update.\n5. Verify the handover works, an unshared parent still blocks the workflow, restrictions still exclude confidential records, and sharing alone cannot activate a missing operation.\n6. Revoke the recipient or the team's permission set and verify the next request loses only that source. Independent direct-user sharing and direct assignments must survive.\n\nFor example, a quote handover shares quote edit and submit plus the parent project's submit scope with a delegated engineer. Use the real record ids, never sample ones.",
+          "sha256": "146d83ac7e11420ccd357c143d9bded9e33b57dd629a218ebe8e59b999bf09b0"
+        },
+        {
+          "id": "E47",
+          "kind": "log",
+          "path": "artifacts/agent-history/agent-implement.jsonl/part-0009.txt",
+          "observation": "原始调用 agent-implement.jsonl 的事件片段；该片段包含 2 个被标记的错误信号，用于逐条指派处置。",
+          "lines": [
+            430,
+            436
+          ],
+          "excerpt": "{\"type\":\"tool_execution_update\",\"toolCallId\":\"call_00_mRxfe560MPGOxdmz4Hte6049\",\"toolName\":\"bash\",\"args\":{\"command\":\"cd /home/runner/work/nb3-factory/nb3-factory/workspace && node -e \\\"const p=require('./node_modules/@nocobase/authorization/package.json'); console.log(JSON.stringify(p.exports,null,1))\\\" && echo \\\"=== dist listing ===\\\" && ls node_modules/@nocobase/authorization/dist && echo \\\"=== sharing d.ts ===\\\" && find node_modules/@nocobase/authorization -name \\\"*.d.ts\\\" | grep -i shar\",\"timeout\":60},\"partialResult\":{\"content\":[{\"type\":\"text\",\"text\":\"{\\n \\\".\\\": {\\n  \\\"types\\\": \\\"./dist/index.d.ts\\\",\\n  \\\"import\\\": \\\"./dist/index.js\\\"\\n },\\n \\\"./core\\\": {\\n  \\\"types\\\": \\\"./dist/core/index.d.ts\\\",\\n  \\\"import\\\": \\\"./dist/core/index.js\\\"\\n },\\n \\\"./permission-sets\\\": {\\n  \\\"types\\\": \\\"./dist/plugins/permission-sets/index.d.ts\\\",\\n  \\\"import\\\": \\\"./dist/plugins/permission-sets/index.js\\\"\\n },\\n \\\"./default-access\\\": {\\n  \\\"types\\\": \\\"./dist/plugins/default-access/index.d.ts\\\",\\n  \\\"import\\\": \\\"./dist/plugins/default-access/index.js\\\"\\n },\\n \\\"./sharing-rules\\\": {\\n  \\\"types\\\": \\\"./dist/plugins/sharing-rules/index.d.ts\\\",\\n  \\\"import\\\": \\\"./dist/plugins/sharing-rules/index.js\\\"\\n },\\n \\\"./restriction-rules\\\": {\\n  \\\"types\\\": \\\"./dist/plugins/restriction-rules/index.d.ts\\\",\\n  \\\"import\\\": \\\"./dist/plugins/restriction-rules/index.js\\\"\\n }\\n}\\n\"}],\"details\":{}}}\n{\"type\":\"tool_execution_update\",\"toolCallId\":\"call_00_mRxfe560MPGOxdmz4Hte6049\",\"toolName\":\"bash\",\"args\":{\"command\":\"cd /home/runner/work/nb3-factory/nb3-factory/workspace && node -e \\\"const p=require('./node_modules/@nocobase/authorization/package.json'); console.log(JSON.stringify(p.exports,null,1))\\\" && echo \\\"=== dist listing ===\\\" && ls node_modules/@nocobase/authorization/dist && echo \\\"=== sharing d.ts ===\\\" && find node_modules/@nocobase/authorization -name \\\"*.d.ts\\\" | grep -i shar\",\"timeout\":60},\"partialResult\":{\"content\":[{\"type\":\"text\",\"text\":\"{\\n \\\".\\\": {\\n  \\\"types\\\": \\\"./dist/index.d.ts\\\",\\n  \\\"import\\\": \\\"./dist/index.js\\\"\\n },\\n \\\"./core\\\": {\\n  \\\"types\\\": \\\"./dist/core/index.d.ts\\\",\\n  \\\"import\\\": \\\"./dist/core/index.js\\\"\\n },\\n \\\"./permission-sets\\\": {\\n  \\\"types\\\": \\\"./dist/plugins/permission-sets/index.d.ts\\\",\\n  \\\"import\\\": \\\"./dist/plugins/permission-sets/index.js\\\"\\n },\\n \\\"./default-access\\\": {\\n  \\\"types\\\": \\\"./dist/plugins/default-access/index.d.ts\\\",\\n  \\\"import\\\": \\\"./dist/plugins/default-access/index.js\\\"\\n },\\n \\\"./sharing-rules\\\": {\\n  \\\"types\\\": \\\"./dist/plugins/sharing-rules/index.d.ts\\\",\\n  \\\"import\\\": \\\"./dist/plugins/sharing-rules/index.js\\\"\\n },\\n \\\"./restriction-rules\\\": {\\n  \\\"types\\\": \\\"./dist/plugins/restriction-rules/index.d.ts\\\",\\n  \\\"import\\\": \\\"./dist/plugins/restriction-rules/index.js\\\"\\n }\\n}\\n=== dist listing ===\\ncore\\nindex.d.ts\\nindex.d.ts.map\\nindex.js\\nindex.js.map\\nplugins\\n=== sharing d.ts ===\\n\"}],\"details\":{}}}\n{\"type\":\"tool_execution_end\",\"toolCallId\":\"call_00_mRxfe560MPGOxdmz4Hte6049\",\"toolName\":\"bash\",\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"{\\n \\\".\\\": {\\n  \\\"types\\\": \\\"./dist/index.d.ts\\\",\\n  \\\"import\\\": \\\"./dist/index.js\\\"\\n },\\n \\\"./core\\\": {\\n  \\\"types\\\": \\\"./dist/core/index.d.ts\\\",\\n  \\\"import\\\": \\\"./dist/core/index.js\\\"\\n },\\n \\\"./permission-sets\\\": {\\n  \\\"types\\\": \\\"./dist/plugins/permission-sets/index.d.ts\\\",\\n  \\\"import\\\": \\\"./dist/plugins/permission-sets/index.js\\\"\\n },\\n \\\"./default-access\\\": {\\n  \\\"types\\\": \\\"./dist/plugins/default-access/index.d.ts\\\",\\n  \\\"import\\\": \\\"./dist/plugins/default-access/index.js\\\"\\n },\\n \\\"./sharing-rules\\\": {\\n  \\\"types\\\": \\\"./dist/plugins/sharing-rules/index.d.ts\\\",\\n  \\\"import\\\": \\\"./dist/plugins/sharing-rules/index.js\\\"\\n },\\n \\\"./restriction-rules\\\": {\\n  \\\"types\\\": \\\"./dist/plugins/restriction-rules/index.d.ts\\\",\\n  \\\"import\\\": \\\"./dist/plugins/restriction-rules/index.js\\\"\\n }\\n}\\n=== dist listing ===\\ncore\\nindex.d.ts\\nindex.d.ts.map\\nindex.js\\nindex.js.map\\nplugins\\n=== sharing d.ts ===\\n\\n\\nCommand exited with code 1\"}],\"details\":{}},\"isError\":true}\n{\"type\":\"message_start\",\"message\":{\"role\":\"toolResult\",\"toolCallId\":\"call_00_mRxfe560MPGOxdmz4Hte6049\",\"toolName\":\"bash\",\"content\":[{\"type\":\"text\",\"text\":\"{\\n \\\".\\\": {\\n  \\\"types\\\": \\\"./dist/index.d.ts\\\",\\n  \\\"import\\\": \\\"./dist/index.js\\\"\\n },\\n \\\"./core\\\": {\\n  \\\"types\\\": \\\"./dist/core/index.d.ts\\\",\\n  \\\"import\\\": \\\"./dist/core/index.js\\\"\\n },\\n \\\"./permission-sets\\\": {\\n  \\\"types\\\": \\\"./dist/plugins/permission-sets/index.d.ts\\\",\\n  \\\"import\\\": \\\"./dist/plugins/permission-sets/index.js\\\"\\n },\\n \\\"./default-access\\\": {\\n  \\\"types\\\": \\\"./dist/plugins/default-access/index.d.ts\\\",\\n  \\\"import\\\": \\\"./dist/plugins/default-access/index.js\\\"\\n },\\n \\\"./sharing-rules\\\": {\\n  \\\"types\\\": \\\"./dist/plugins/sharing-rules/index.d.ts\\\",\\n  \\\"import\\\": \\\"./dist/plugins/sharing-rules/index.js\\\"\\n },\\n \\\"./restriction-rules\\\": {\\n  \\\"types\\\": \\\"./dist/plugins/restriction-rules/index.d.ts\\\",\\n  \\\"import\\\": \\\"./dist/plugins/restriction-rules/index.js\\\"\\n }\\n}\\n=== dist listing ===\\ncore\\nindex.d.ts\\nindex.d.ts.map\\nindex.js\\nindex.js.map\\nplugins\\n=== sharing d.ts ===\\n\\n\\nCommand exited with code 1\"}],\"details\":{},\"isError\":true,\"timestamp\":1790808719477}}\n{\"type\":\"message_end\",\"message\":{\"role\":\"toolResult\",\"toolCallId\":\"call_00_mRxfe560MPGOxdmz4Hte6049\",\"toolName\":\"bash\",\"content\":[{\"type\":\"text\",\"text\":\"{\\n \\\".\\\": {\\n  \\\"types\\\": \\\"./dist/index.d.ts\\\",\\n  \\\"import\\\": \\\"./dist/index.js\\\"\\n },\\n \\\"./core\\\": {\\n  \\\"types\\\": \\\"./dist/core/index.d.ts\\\",\\n  \\\"import\\\": \\\"./dist/core/index.js\\\"\\n },\\n \\\"./permission-sets\\\": {\\n  \\\"types\\\": \\\"./dist/plugins/permission-sets/index.d.ts\\\",\\n  \\\"import\\\": \\\"./dist/plugins/permission-sets/index.js\\\"\\n },\\n \\\"./default-access\\\": {\\n  \\\"types\\\": \\\"./dist/plugins/default-access/index.d.ts\\\",\\n  \\\"import\\\": \\\"./dist/plugins/default-access/index.js\\\"\\n },\\n \\\"./sharing-rules\\\": {\\n  \\\"types\\\": \\\"./dist/plugins/sharing-rules/index.d.ts\\\",\\n  \\\"import\\\": \\\"./dist/plugins/sharing-rules/index.js\\\"\\n },\\n \\\"./restriction-rules\\\": {\\n  \\\"types\\\": \\\"./dist/plugins/restriction-rules/index.d.ts\\\",\\n  \\\"import\\\": \\\"./dist/plugins/restriction-rules/index.js\\\"\\n }\\n}\\n=== dist listing ===\\ncore\\nindex.d.ts\\nindex.d.ts.map\\nindex.js\\nindex.js.map\\nplugins\\n=== sharing d.ts ===\\n\\n\\nCommand exited with code 1\"}],\"details\":{},\"isError\":true,\"timestamp\":1790808719477}}\n{\"type\":\"turn_end\",\"message\":{\"role\":\"assistant\",\"content\":[{\"type\":\"thinking\",\"thinking\":\"The `@nocobase/authorization` package has subpath exports pointing elsewhere. Let me check `node_modules/@nocobase/authorization/package.json` exports and find the sharing-rules d.ts.\",\"thinkingSignature\":\"[{\\\"format\\\":\\\"unknown\\\",\\\"index\\\":0,\\\"text\\\":\\\"The `@nocobase/authorization` package has subpath exports pointing elsewhere. Let me check `node_modules/@nocobase/authorization/package.json` exports and find the sharing-rules d.ts.\\\",\\\"type\\\":\\\"reasoning.text\\\"}]\"},{\"type\":\"toolCall\",\"id\":\"call_00_mRxfe560MPGOxdmz4Hte6049\",\"name\":\"bash\",\"arguments\":{\"command\":\"cd /home/runner/work/nb3-factory/nb3-factory/workspace && node -e \\\"const p=require('./node_modules/@nocobase/authorization/package.json'); console.log(JSON.stringify(p.exports,null,1))\\\" && echo \\\"=== dist listing ===\\\" && ls node_modules/@nocobase/authorization/dist && echo \\\"=== sharing d.ts ===\\\" && find node_modules/@nocobase/authorization -name \\\"*.d.ts\\\" | grep -i shar\",\"timeout\":60}}],\"api\":\"openai-completions\",\"provider\":\"nb3-factory\",\"model\":\"deepseek-v4.1-flash\",\"usage\":{\"input\":1305,\"output\":204,\"cacheRead\":50816,\"cacheWrite\":0,\"reasoning\":45,\"totalTokens\":52325,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"stopReason\":\"toolUse\",\"timestamp\":1790808715836,\"responseId\":\"gen_01M3T88YDAWQD29VEE0ZZTM1T9\",\"rawStopReason\":\"tool_calls\"},\"toolResults\":[{\"role\":\"toolResult\",\"toolCallId\":\"call_00_mRxfe560MPGOxdmz4Hte6049\",\"toolName\":\"bash\",\"content\":[{\"type\":\"text\",\"text\":\"{\\n \\\".\\\": {\\n  \\\"types\\\": \\\"./dist/index.d.ts\\\",\\n  \\\"import\\\": \\\"./dist/index.js\\\"\\n },\\n \\\"./core\\\": {\\n  \\\"types\\\": \\\"./dist/core/index.d.ts\\\",\\n  \\\"import\\\": \\\"./dist/core/index.js\\\"\\n },\\n \\\"./permission-sets\\\": {\\n  \\\"types\\\": \\\"./dist/plugins/permission-sets/index.d.ts\\\",\\n  \\\"import\\\": \\\"./dist/plugins/permission-sets/index.js\\\"\\n },\\n \\\"./default-access\\\": {\\n  \\\"types\\\": \\\"./dist/plugins/default-access/index.d.ts\\\",\\n  \\\"import\\\": \\\"./dist/plugins/default-access/index.js\\\"\\n },\\n \\\"./sharing-rules\\\": {\\n  \\\"types\\\": \\\"./dist/plugins/sharing-rules/index.d.ts\\\",\\n  \\\"import\\\": \\\"./dist/plugins/sharing-rules/index.js\\\"\\n },\\n \\\"./restriction-rules\\\": {\\n  \\\"types\\\": \\\"./dist/plugins/restriction-rules/index.d.ts\\\",\\n  \\\"import\\\": \\\"./dist/plugins/restriction-rules/index.js\\\"\\n }\\n}\\n=== dist listing ===\\ncore\\nindex.d.ts\\nindex.d.ts.map\\nindex.js\\nindex.js.map\\nplugins\\n=== sharing d.ts ===\\n\\n\\nCommand exited with code 1\"}],\"details\":{},\"isError\":true,\"timestamp\":1790808719477}]}\n{\"type\":\"turn_start\"}",
+          "sha256": "e28ea2d3bb4cb254e369e4a4c187b1d7e7c022e4ea871f8fd7e0d5499bf231af"
+        }
+      ],
+      "fingerprint": "886e5936131df14f4aa355086bd5f1238f8090f8040c2bdcd13a063d5dd71fad"
     }
   ]
 }
