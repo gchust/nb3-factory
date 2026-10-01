@@ -1,4 +1,4 @@
-import { Home } from 'lucide-react';
+import { BookOpenText, Home, MessageCircleQuestion } from 'lucide-react';
 import {
   defineAppRoutes,
   defineSettingsRoutes,
@@ -15,6 +15,25 @@ const appRoutes: AppClientRouteContribution = defineAppRoutes([
     name: 'home',
     navigation: { title: 'navigation.home', icon: Home },
     path: '/',
+  },
+  {
+    // The material library and the assistant are open to every signed-in user. Access is decided per material on the
+    // server, not per page: a colleague is answered from the public materials alone, so the page itself needs no
+    // authorization rule and the user's permission set is what keeps a restricted material out of reach.
+    auth: 'required',
+    authz: 'skip',
+    componentLoader: () => import('./pages/materials/index.js'),
+    name: 'materials',
+    navigation: { title: 'navigation.materials', icon: BookOpenText },
+    path: '/materials',
+  },
+  {
+    auth: 'required',
+    authz: 'skip',
+    componentLoader: () => import('./pages/assistant/index.js'),
+    name: 'assistant',
+    navigation: { title: 'navigation.assistant', icon: MessageCircleQuestion },
+    path: '/assistant',
   },
   {
     auth: 'guest',
