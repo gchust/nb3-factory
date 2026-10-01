@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "inputHash": "54e14fe85b0829f84f0e8f7521cac39830411934e0bc74f2e97d7e1d4018cb30",
+  "inputHash": "98d8d3b1a559100d6d1b9d5a6eab98fd5733893eab7a34f43ca940ed9e417a63",
   "sources": [
     {
       "id": "460:36434284393:1:F2",
@@ -266,15 +266,21 @@
       "id": "504:36787382191:1:F4",
       "report": "504:36787382191:1",
       "fingerprint": "020fa147aeba6cbc38f5641df9f8530bdc5d965638667f483bd4e7ce82e123f4"
+    },
+    {
+      "id": "506:36787391890:1:F7",
+      "report": "506:36787391890:1",
+      "fingerprint": "886e5936131df14f4aa355086bd5f1238f8090f8040c2bdcd13a063d5dd71fad"
     }
   ],
   "groups": [
     {
       "title": "@nocobase/* 包的公开入口与物理布局未在指引中说明，agent 探测内部路径失败",
-      "reason": "跨报告合并。461:F4 的 E45/E49/E62/E65 记录按 database/record-access.d.ts、@nocobase/authorization/dist/permission-sets/index.d.ts、service-provider 源码等路径探测失败（包只发布 dist）；473:F5 记录 nocobase-db SKILL 的 Where the code lives 只列应用目录，未给包的类型入口（如 @nocobase/db 声明在 dist/src 而非 dist/index.d.ts），E43/E45 的 sed/head 对不存在 dist 路径失败。两者触发条件（需定位包内实现/类型）、期望（指引给出实际 dist 路径与公开入口）、实际（探测 src 或错误 dist 路径失败）与修复方向一致，owner 同为 documentation，故合并。",
+      "reason": "跨报告合并。461:F4 的 E45/E49/E62/E65 记录按 database/record-access.d.ts、@nocobase/authorization/dist/permission-sets/index.d.ts、service-provider 源码等路径探测失败（包只发布 dist）；473:F5 记录 nocobase-db SKILL 的 Where the code lives 只列应用目录，未给包的类型入口（如 @nocobase/db 声明在 dist/src 而非 dist/index.d.ts），E43/E45 的 sed/head 对不存在 dist 路径失败；506:F7 的 E47 显示 agent 依据导出子路径猜目录（./sharing-rules）产生无效 cat/find，E5 显示实际文件在 dist/plugins/sharing-rules/plugin.js，E24 为共享 Skill 未给子路径映射。三者触发条件（需定位已安装包内的实现/类型）、期望（指引给出实际 dist 布局、公开入口与子路径映射）、实际（按 src 或猜测的 dist 子路径探测失败）与修复方向一致，owner 同为 documentation，故合并。",
       "members": [
         "461:36434293992:1:F4",
-        "473:36498916248:1:F5"
+        "473:36498916248:1:F5",
+        "506:36787391890:1:F7"
       ]
     },
     {
@@ -561,9 +567,9 @@
     "engine": "pi",
     "model": "deepseek-v4.1-flash",
     "version": "0.86.1",
-    "runId": "36794478147",
+    "runId": "36805216004",
     "attempt": 1,
     "controlSha": "0f72d9b81f981f10501c5ac0ee0e7d786f1f4698",
-    "completedAt": "2026-10-01T00:08:43.570Z"
+    "completedAt": "2026-10-01T02:20:16.152Z"
   }
 }
