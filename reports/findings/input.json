@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "inputHash": "d1076462f196ff93ef1096b5e2ecd59fa23c207924c721d758bfeb03909c50be",
+  "inputHash": "1fd4bd6c78dda44417002f86443aa4fdd2d0116c0af0126976b334469b132e13",
   "findings": [
     {
       "id": "460:36434284393:1:F2",
@@ -5323,6 +5323,191 @@
         }
       ],
       "fingerprint": "8332f74a59307c5c3a00bd4917f0887d03faa7332b97480c5703f7eef5bc292a"
+    },
+    {
+      "id": "509:36811890057:1:F1",
+      "report": "509:36811890057:1",
+      "issue": 509,
+      "taskTitle": "设备售后服务与巡检协同系统（综合业务案例）",
+      "appVersion": "1.0.0-beta.50",
+      "appTemplate": "@nocobase/app-template-default",
+      "finding": {
+        "id": "F1",
+        "kind": "issue",
+        "owner": "plugin",
+        "confidence": "confirmed",
+        "severity": "major",
+        "status": "open",
+        "title": "Scheduler 缺少尊重启停的受控立即执行入口",
+        "detail": "Scheduler 只提供 list/occurrences/enable/disable 与 defineSchedule/registerTarget，没有公共 run-now；operations 文档只建议用短周期 cron 观察执行，并声明启停仅影响未来调度。应用为实现 B08 的“受控立即执行”，在 maintenance-scheduler.ts 中直接读取队列 schedules 并 new Schedule(...).trigger()，未检查 enabled/scheduleStatus，导致停用计划仍产生新结果。",
+        "impact": "任何需要“暂停后不再产生结果”的受控验证/运维场景都缺少官方支持路径，应用只能绕过插件语义，容易造成业务副作用。",
+        "suggestedChange": "插件提供受控立即执行 API（或 CLI/HTTP 测试入口），由插件统一校验 enabled/scheduleStatus、走同一 target 与 occurrence，并在指引中说明暂停下如何验证；或明确禁止绕过并给出等价的暂停验证方式。",
+        "evidence": [
+          "E1",
+          "E2",
+          "E4",
+          "E23",
+          "E24",
+          "E25"
+        ],
+        "diagnosis": {
+          "category": "capability-gap",
+          "trigger": "计划停用（enabled=false、scheduleStatus=paused）后执行受控立即执行。",
+          "expected": "同一 Scheduler 目标收到请求后，因计划暂停而不执行、不写新的 succeeded occurrence，也不产生新业务结果。",
+          "actual": "应用绕过 enabled 直接 trigger 队列 schedule，写出一条 succeeded occurrence（resultSummary.created=2, 2026-10-01T05:49:19Z），停用计划仍产生新结果（B08 failed）。",
+          "workaround": "应用自建 maintenanceTrigger 并经 in-process sync 队列触发；这本身即绕过了启停语义。",
+          "acceptance": "存在公共受控执行入口，停用后在相同入口下不产生新 occurrence/业务结果；启用后正常执行并写记录。"
+        }
+      },
+      "targets": [
+        "@nocobase/app-plugin-scheduler",
+        "app/.agents/skills/nocobase-app-plugin-scheduler"
+      ],
+      "paths": [
+        ".agents/skills/nocobase-app-plugin-scheduler/references/operations.md",
+        "packages/@nocobase/app-plugin-scheduler/dist/server/routes/index.js",
+        "packages/@nocobase/app-plugin-scheduler/dist/server/services/scheduler.js"
+      ],
+      "evidence": [
+        {
+          "id": "E1",
+          "kind": "package",
+          "path": "packages/@nocobase/app-plugin-scheduler/dist/server/routes/index.js",
+          "observation": "Scheduler HTTP 路由仅暴露 list / occurrences / enable / disable，没有任何 run-now 或受控立即执行入口。",
+          "lines": [
+            23,
+            32
+          ],
+          "excerpt": "    schedules.get('/', async (context) => context.json({ data: await scheduler.list() }));\n    schedules.get('/:id/occurrences', async (context) => context.json({\n        data: await scheduler.listOccurrences(context.req.param('id')),\n    }));\n    schedules.post('/:id/enable', async (context) => context.json({\n        data: await scheduler.setEnabled(context.req.param('id'), true),\n    }));\n    schedules.post('/:id/disable', async (context) => context.json({\n        data: await scheduler.setEnabled(context.req.param('id'), false),\n    }));",
+          "sha256": "5923dd0ae2631da0ece7477ddd9ddf2d598010fcc69e2322c70d35e99f0efd2b"
+        },
+        {
+          "id": "E2",
+          "kind": "package",
+          "path": "packages/@nocobase/app-plugin-scheduler/dist/server/services/scheduler.js",
+          "observation": "公共 schedulerServiceToken 只暴露 defineSchedule/registerTarget/list/listOccurrences/sync/setEnabled，没有立即执行方法。",
+          "lines": [
+            72,
+            88
+          ],
+          "excerpt": "    async setEnabled(id, enabled) {\n        await this.store.setEnabled(id, enabled);\n        const item = (await this.list()).find((entry) => entry.id === id);\n        if (!item)\n            throw new Error('Schedule not found.');\n        return item;\n    }\n    /** Observes occurrences whose target completed without notifying us. */\n    reconcileOccurrences() {\n        return this.occurrences.reconcile(this.targets);\n    }\n}\n// The token is declared against the concrete service so that the code inside\n// this plugin — the provider, the HTTP routes and the CLI — reaches the\n// administration methods above. `server/tokens.ts` republishes this same\n// object narrowed to `SchedulerService`, which is all another plugin sees.\nexport const schedulerServiceToken=[REDACTED]'@nocobase/app-plugin-scheduler/service');",
+          "sha256": "4fba6168c5c732acb45e9716e2a818a9bde3fcbe5584a91d79033eb4a2227b10"
+        },
+        {
+          "id": "E4",
+          "kind": "skill",
+          "path": "app/.agents/skills/nocobase-app-plugin-scheduler/references/operations.md",
+          "observation": "管理入口表与说明：启停只影响未来调度、不取消已派发任务；文档未给出受控立即执行方式。",
+          "lines": [
+            11,
+            22
+          ],
+          "excerpt": "The list page is `/settings/schedules`; details are at `/settings/schedules/:scheduleId`. Definitions are maintained in source. The UI supports viewing and enabling/disabling tasks, with no API for creating or editing Cron definitions.\n\nAll routes below require authentication and authorization for `{ resource: { type: 'page', id: 'scheduler.schedules' }, action: 'access' }`. Enabling/disabling currently uses the same permission, not a separate update action.\n\n| Method and path                      | Response / effect                                                                                             |\n| ------------------------------------ | ------------------------------------------------------------------------------------------------------------- |\n| `GET /api/schedules`                 | `{ data: ScheduleListItem[] }`                                                                                |\n| `GET /api/schedules/:id/occurrences` | `{ data: ScheduleOccurrenceView[] }`; currently at most the latest 100 records, with no pagination parameters |\n| `POST /api/schedules/:id/enable`     | `{ data: ScheduleListItem }`; enables the task, no request body                                               |\n| `POST /api/schedules/:id/disable`    | `{ data: ScheduleListItem }`; pauses the task, no request body                                                |\n\nUse the id returned by list for `:id`, not the definition key or workflowKey. Enabling/disabling affects future scheduling; it does not cancel already dispatched Queue Jobs or workflows.",
+          "sha256": "a5cb7a6042ea3d28e21d66c078180d3885f467a8762a2872bcfadf9e3fb98f26"
+        },
+        {
+          "id": "E23",
+          "kind": "code",
+          "path": "app/server/services/maintenance-scheduler.ts",
+          "observation": "应用注释明确 “Scheduler 包未暴露 run-now 入口”，因而自建受控立即执行 seam。",
+          "lines": [
+            40,
+            47
+          ],
+          "excerpt": "/**\n * How a route reaches controlled immediate execution. The Scheduler package\n * exposes no run-now entry point, so this application-owned seam triggers the\n * real Scheduler plan and reports the outcome the target itself produced.\n */\nexport const maintenanceTriggerToken=[REDACTED] =\n  createServiceToken<MaintenanceTrigger>('app/maintenance-trigger');\n",
+          "sha256": "65810db193c194c65001f98cc804a944002c780ea521f3eecef19b2ced260170"
+        },
+        {
+          "id": "E24",
+          "kind": "code",
+          "path": "app/server/services/maintenance-scheduler.ts",
+          "observation": "应用立即执行直接列举 queue schedules 并 new Schedule(...).trigger()，未检查计划 enabled/status。",
+          "lines": [
+            99,
+            118
+          ],
+          "excerpt": "    async runImmediately(targetType: string): Promise<MaintenanceRunOutcome> {\n      const manager = options.queue();\n      const schedules = await manager.schedules('schedule').list();\n      const data = schedules.find(\n        (entry) => readTargetType(entry.payload) === targetType,\n      );\n      if (!data) {\n        throw new ServiceError(\n          'SCHEDULE_NOT_FOUND',\n          503,\n          `No Scheduler plan targets ${targetType}.`,\n        );\n      }\n\n      const runToken=[REDACTED]      const payload = withRunToken(data.payload, targetType, runToken);\n      const adapter = manager.use('sync') as ScheduleAdapter;\n      try {\n        await new Schedule(data, adapter).trigger(payload);\n      } catch (error) {",
+          "sha256": "65810db193c194c65001f98cc804a944002c780ea521f3eecef19b2ced260170"
+        },
+        {
+          "id": "E25",
+          "kind": "qa",
+          "path": "artifacts/verify-5/browser-focused/report.json",
+          "observation": "B08 failed：停用计划（enabled=false, paused）后受控执行仍成功新建提醒（created=2）。",
+          "lines": [
+            178,
+            180
+          ],
+          "excerpt": "      \"id\": \"B08\",\n      \"criterion\": \"用受控 Scheduler 执行生成到期设备巡检和超期提醒，重复执行不重复生成同日结果，未到期/停用设备及已关闭工单不被处理；计划启停保存正确，停用后的受控调度机会不再产生新结果。负责人完成巡检并刷新核对。\",\n      \"status\": \"failed\",",
+          "sha256": "5b15dbc9b5c118ecf19c7d1c534dd7255a416cd9d813994d104de8fba5bbbe8f"
+        }
+      ],
+      "fingerprint": "d6e25a91dcd5e65892a03e8b5635646373113fb754813db65c4dae25231e47cd"
+    },
+    {
+      "id": "509:36811890057:1:F2",
+      "report": "509:36811890057:1",
+      "issue": 509,
+      "taskTitle": "设备售后服务与巡检协同系统（综合业务案例）",
+      "appVersion": "1.0.0-beta.50",
+      "appTemplate": "@nocobase/app-template-default",
+      "finding": {
+        "id": "F2",
+        "kind": "issue",
+        "owner": "plugin",
+        "confidence": "confirmed",
+        "severity": "major",
+        "status": "open",
+        "title": "AI Knowledge Base 兼容路由不内建服务端授权",
+        "detail": "security.md 明确说明当前兼容路由只要求已认证会话，不强制角色、归属、资源 ACL 或管理权限，文档响应对所有认证用户投影 accessAbility: \"readWrite\" 且仅是 UI 提示。应用必须自行加授权代理才能满足“工程师只读、主管可维护”。",
+        "impact": "若应用直接暴露兼容路由，任何已认证用户都可能读写知识库，造成越权；每个应用都要重复实现同一授权边界。",
+        "suggestedChange": "为知识库管理/文档路由提供可配置的服务端授权策略（角色/资源 ACL/写策略），或在指引中把“必须自建授权代理”提升为强制步骤并给出最小实现。",
+        "evidence": [
+          "E17",
+          "E26"
+        ],
+        "diagnosis": {
+          "category": "capability-gap",
+          "trigger": "已认证但无管理权限的账号访问知识库兼容路由。",
+          "expected": "服务端按角色/资源策略拒绝读写，而不依赖前端按钮或 accessAbility 提示。",
+          "actual": "兼容路由本身无角色/ACL 校验；本轮 403 由应用侧代理实现（B11 备注：API 返回 403 来自应用策略）。",
+          "workaround": "应用在兼容路由前加自有授权代理，仅向主管开放维护。",
+          "acceptance": "未授权账号直接命中兼容路由即被服务端拒绝，且指引给出该最小实现。"
+        }
+      },
+      "targets": [
+        "app/.agents/skills/nocobase-app-plugin-ai-knowledge-base"
+      ],
+      "paths": [
+        ".agents/skills/nocobase-app-plugin-ai-knowledge-base/references/security.md"
+      ],
+      "evidence": [
+        {
+          "id": "E17",
+          "kind": "skill",
+          "path": "app/.agents/skills/nocobase-app-plugin-ai-knowledge-base/references/security.md",
+          "observation": "文档明确兼容路由只要求已认证会话，不强制角色/归属/ACL，需应用侧代理与授权；accessAbility 只是 UI 提示。",
+          "lines": [
+            9,
+            15
+          ],
+          "excerpt": "\n## Authorization\n\nEvery compatibility route requires an authenticated session with a user ID and returns 401 otherwise. Current routes do not enforce role, ownership, resource ACL, LOCAL-write policy, or administrative permission. Document responses currently project `accessAbility: \"readWrite\"` for every authenticated caller. This is a UI hint, not authorization.\n\nUntil a server-side policy layer is added, expose these actions only to trusted authenticated users or put an application-owned authorized proxy in front of them. Never rely on a hidden button, React gate, route visibility, `accessAbility`, or a TypeScript DTO.\n",
+          "sha256": "5701a80e9f8b9ee7895ad7adf0fb1f089af2a03b201621de9a0f4cd2e280d0fc"
+        },
+        {
+          "id": "E26",
+          "kind": "qa",
+          "path": "artifacts/verify-5/browser-focused/report.json",
+          "observation": "B11 blocked：知识库真实 Failed 状态与工程师 403 已验证，但缺 LLM/向量库条件，真实问答未验证。",
+          "lines": [
+            250,
+            252
+          ],
+          "excerpt": "      \"id\": \"B11\",\n      \"criterion\": \"主管上传两份手册，页面显示真实处理状态，普通工程师不能修改库内容。条件可用时，助手能回答一条有依据问题并提供引用，对资料外问题说明不足，对无权工单拒绝泄漏；更新手册后新对话依据新内容。缺外部条件时分别报告接入完成度与真实检索/回答未验证。\",\n      \"status\": \"blocked\",",
+          "sha256": "5b15dbc9b5c118ecf19c7d1c534dd7255a416cd9d813994d104de8fba5bbbe8f"
+        }
+      ],
+      "fingerprint": "9de33292462dda766bda24f215609bfa21dc419ac76af0473ba65f624bfeabfe"
     }
   ]
 }
