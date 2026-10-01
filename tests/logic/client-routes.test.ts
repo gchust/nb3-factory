@@ -91,9 +91,29 @@ describe('app client routes', () => {
     // that requires sign-in adds an entry here, because that is a new grant somebody has to be given.
     const resolved = resolveRoutes();
 
-    // The landing page opted out of page authorization, so it is reachable by every signed-in user.
+    // Every service-desk page is protected: its `authz` names the page resource the seeded service permission sets
+    // carry, and the two detail pages reuse their list page's resource so one grant opens both.
     expect(pageAuthorizations(resolved.routes)).toEqual([
-      { name: 'home', authorizedAs: null },
+      { name: 'service-dashboard', authorizedAs: 'service-dashboard' },
+      { name: 'service-customers', authorizedAs: 'service-customers' },
+      {
+        name: 'service-customer-detail',
+        authorizedAs: 'service-customers',
+      },
+      { name: 'service-devices', authorizedAs: 'service-devices' },
+      { name: 'service-work-orders', authorizedAs: 'service-work-orders' },
+      {
+        name: 'service-work-order-detail',
+        authorizedAs: 'service-work-orders',
+      },
+      { name: 'service-inspections', authorizedAs: 'service-inspections' },
+      { name: 'service-knowledge', authorizedAs: 'service-knowledge' },
+      { name: 'service-manuals', authorizedAs: 'service-manuals' },
+      { name: 'service-assistant', authorizedAs: 'service-assistant' },
+      {
+        name: 'service-notifications',
+        authorizedAs: 'service-notifications',
+      },
     ]);
   });
 });
