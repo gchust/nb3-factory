@@ -95,6 +95,66 @@ const enUS = {
     description:
       'Describe what you need to your AI Agent, then build pages, data models, and business workflows.',
   },
+  library: {
+    navigation: 'Material library',
+    title: 'Material library',
+    pageDescription:
+      'Maintain your materials and read the published, non-confidential ones shared with you.',
+    new: 'New material',
+    createTitle: 'New material',
+    editTitle: 'Edit material',
+    content: 'Content',
+    noContent: 'This material has no content yet.',
+    empty: 'No materials to show.',
+    published: 'Published',
+    draft: 'Draft',
+    confidential: 'Confidential',
+    publishedHint:
+      'Published materials are visible to readers with viewing permission.',
+    confidentialHint: 'Confidential materials stay private even when shared.',
+    deleteTitle: 'Delete material',
+    deleteDescription: 'Delete “{{title}}”? This cannot be undone.',
+    column: {
+      title: 'Title',
+      owner: 'Owner',
+      published: 'State',
+      confidential: 'Confidential',
+      createdAt: 'Created',
+      updatedAt: 'Updated',
+      actions: 'Actions',
+    },
+    action: {
+      view: 'View',
+      create: 'Create',
+      edit: 'Edit',
+      delete: 'Delete',
+    },
+    error: {
+      loadFailed: 'Unable to load materials.',
+      titleRequired: 'A title is required.',
+      saveFailed: 'Unable to save the material.',
+      deleteFailed: 'Unable to delete the material.',
+    },
+    toast: {
+      created: 'Material created.',
+      updated: 'Material updated.',
+      deleted: 'Material deleted.',
+    },
+    materials: 'Materials',
+    materialsDescription:
+      'A publishable, optionally confidential material in the library.',
+    recordAccess: {
+      published: 'Published, non-confidential',
+      nonConfidential: 'Non-confidential',
+    },
+    role: {
+      librarian: 'Librarian',
+      reader: 'Reader',
+    },
+    restriction: {
+      confidential: 'Non-confidential materials only',
+    },
+  },
 
   appearance: {
     title: 'Appearance',
@@ -111,6 +171,7 @@ const enUS = {
   actions: {
     close: 'Close',
     save: 'Save',
+    saving: 'Saving…',
     cancel: 'Cancel',
     confirm: 'Confirm',
     language: 'Language',
