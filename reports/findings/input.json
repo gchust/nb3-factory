@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "inputHash": "d71d5ff280d2bffb208b01c875d4821f5a5b32d17f6cf54dfbe76e249634e2e8",
+  "inputHash": "54e14fe85b0829f84f0e8f7521cac39830411934e0bc74f2e97d7e1d4018cb30",
   "findings": [
     {
       "id": "460:36434284393:1:F2",
@@ -4816,6 +4816,99 @@
         }
       ],
       "fingerprint": "d0d00a2f84ae402c3afdf30cdadf55544be0442f505efccac7663160ee75b102"
+    },
+    {
+      "id": "504:36787382191:1:F4",
+      "report": "504:36787382191:1",
+      "issue": 504,
+      "taskTitle": "客户、联系人与商机管理",
+      "appVersion": "1.0.0-beta.50",
+      "appTemplate": "@nocobase/app-template-default",
+      "finding": {
+        "id": "F4",
+        "kind": "improvement",
+        "owner": "documentation",
+        "severity": "info",
+        "confidence": "confirmed",
+        "status": "open",
+        "title": "nocobase-db Skill 的 Builder 示例只演示 integer+foreignKey，未演示 belongsTo，导致关系元数据缺失",
+        "detail": "SKILL 第 3 节的 createCollection 示例用 collection.integer('orderId') + collection.foreignKey 建外键，随后虽以一句列出 belongsTo/hasOne/hasMany，却没有在示例里同时声明 belongsTo。本次应用迁移照此只建了物理外键，Collection 没有关系元数据，service.ts 不能通过关系读取客户名，只能额外查询 customers 表并手工拼接 customerName（见 E32）。同节第 4 部分其实警告过不要“把关系读取重写成手写 join”，因此这是示例完整度问题而非能力缺失。",
+        "impact": "照示例写作的 Agent 会得到“能用但缺少关系元数据”的 Collection，失去 Repository 的关系读取/嵌套写能力，需在应用层重复查询与拼接，增加维护与出错面。",
+        "suggestedChange": "在 SKILL 第 3 节的 createCollection 示例中补一行 collection.belongsTo('order', { target:'orders', foreignKey:'orderId' })，或加一句说明：foreignKey 只建约束，需要关系读取/嵌套写时必须另外声明 belongsTo。",
+        "evidence": [
+          "E4",
+          "E17",
+          "E18",
+          "E32"
+        ],
+        "diagnosis": {
+          "category": "guidance-gap",
+          "trigger": "按 nocobase-db SKILL 第 3 节示例，在迁移中用 collection.integer + collection.foreignKey 建外键后未再声明 belongsTo",
+          "expected": "示例或关系小节说明：foreignKey 仅建立数据库约束，若要用 Repository 读取关系或做嵌套写，必须同时声明 belongsTo/hasOne 等关系",
+          "actual": "示例只演示 foreignKey；应用的 Collection 无 relation 元数据，服务层用 customerNames() 二次查询手工拼接 customerName",
+          "workaround": "应用层查询 customers 建 Map 再为联系人/商机补 customerName，功能可用但重复且易漏",
+          "acceptance": "按改进后的示例声明 belongsTo 后，Repository 可用 fields/appends 读取关联名称而无需手工 join，且不改变既有外键约束与 B01–B05 结果"
+        }
+      },
+      "targets": [
+        "@nocobase/db",
+        "app/.agents/skills/nocobase-db/SKILL.md"
+      ],
+      "paths": [
+        ".agents/skills/nocobase-db/SKILL.md",
+        "packages/@nocobase/db/dist/src/collection/fluent/index.js"
+      ],
+      "evidence": [
+        {
+          "id": "E4",
+          "kind": "code",
+          "path": "packages/@nocobase/db/dist/src/collection/fluent/index.js",
+          "observation": "关系构建器 belongsTo/hasOne/hasMany/belongsToMany，以及 foreignKey/index 约束方法。",
+          "lines": [
+            111,
+            150
+          ],
+          "excerpt": "    belongsTo(name, target, options = {}) {\n        return this.relation({ name, target, type: 'belongsTo', ...options });\n    }\n    hasOne(name, target, options = {}) {\n        return this.relation({ name, target, type: 'hasOne', ...options });\n    }\n    hasMany(name, target, options = {}) {\n        return this.relation({ name, target, type: 'hasMany', ...options });\n    }\n    belongsToMany(name, target, options = {}) {\n        return this.relation({ name, target, type: 'belongsToMany', ...options });\n    }\n    primary(fields, options = {}) {\n        this.definition.constraints?.push({\n            type: 'primary',\n            fields: array(fields),\n            ...options,\n        });\n        return this;\n    }\n    unique(fields, options = {}) {\n        this.definition.constraints?.push({\n            type: 'unique',\n            fields: array(fields),\n            ...options,\n        });\n        return this;\n    }\n    foreignKey(fields, options) {\n        this.definition.constraints?.push({\n            type: 'foreignKey',\n            fields: array(fields),\n            ...options,\n        });\n        return this;\n    }\n    index(fields, options = {}) {\n        this.definition.indexes?.push({ fields: array(fields), ...options });\n        return this;\n    }",
+          "sha256": "1736d3fbe360adc70d70bc2d493e2671e705431f1278fa75d8f2df3fabf4af17"
+        },
+        {
+          "id": "E17",
+          "kind": "skill",
+          "path": "app/.agents/skills/nocobase-db/SKILL.md",
+          "observation": "builder 示例：createCollection 内 increments/integer/foreignKey/index；随后列出 belongsTo 等关系类型。",
+          "lines": [
+            147,
+            164
+          ],
+          "excerpt": "`createCollection(name, callback)` takes a callback, not a field array:\n\n```ts\nawait builder.createCollection('orderItems', (collection) => {\n  collection.increments('id');\n  collection.integer('orderId', { nullable: false });\n  collection.integer('quantity', { nullable: false, defaultValue: 1 });\n  collection.foreignKey('orderId', {\n    references: { collection: 'orders', fields: ['id'] },\n    name: 'fk_order_items_order',\n  });\n  collection.index(['orderId', 'quantity']);\n});\n```\n\nField builders are `increments`, `integer`, `bigInt`, `string`, `char`, `text`, `boolean`, `decimal`, `float`, `double`, `date`, `time`, `datetime`, `datetimeTz`, `json`, `blob`, `uuid`, and `native` for a dialect-specific type. Options include `nullable`, `length`, `defaultValue`, `precision` and `scale`; the equivalent chained form (`.notNull()`, `.defaultTo()`, `.unique()`) is also available — pick one style and keep the file consistent.\n\nRelations are `belongsTo`, `hasOne`, `hasMany` and `belongsToMany`. Constraints and indexes are `primary`, `unique`, `foreignKey` and `index`, each taking one field name or an array.",
+          "sha256": "f97c07a45a9d49c1d933ddbceeabcc9afe267b1356a2ded1a3da0dd56b54011c"
+        },
+        {
+          "id": "E18",
+          "kind": "skill",
+          "path": "app/.agents/skills/nocobase-db/SKILL.md",
+          "observation": "迁移/种子的默认工具表，以及“读取关系或嵌套写用 Repository”的选择准则。",
+          "lines": [
+            176,
+            207
+          ],
+          "excerpt": "**Where does the code run?** Runtime code under `server/` reaches both through the manager. A migration and a seed reach both through their own context — as `context.repository(name)`, a method on the context rather than on the minimal task `connection` — but with opposite defaults, and those defaults are the rule rather than a hint:\n\n| Context   | Tools                            | Default for data |\n| --------- | -------------------------------- | ---------------- |\n| Migration | `builder`, `query`, `repository` | `query`          |\n| Seed      | `repository`, `query`            | `repository`     |\n\nA migration changes structure, so `builder` and `query` are its tools and `repository` is reserved for the writes `query` would get wrong: cross-dialect field encoding and decoding, Collection-level naming overrides, and relation writes including the junction rows behind a `belongsToMany`. **Anything `query` expresses correctly stays on `query`.** A seed changes no structure and writes installation data in Collection terms, so `repository` is its normal tool and `query` covers what that cannot express, such as reading a physical table backing no Collection.\n\nThis does not loosen the self-contained rule. `repository(name)` resolves the Collection from the database itself — the metadata a previous `builder` operation wrote — which is why it is available at all; importing or iterating the application's own collection definitions from a migration stays forbidden. But a migration using it is betting on a shape it did not declare in its own body, so three constraints follow:\n\n- Say in a comment why `query` was not enough. Nothing static can check this, and the comment is what separates a considered use from a reflex.\n- Do not use it in `down`. By the time a rollback runs, the Collection has moved past what `up` left behind, possibly several migrations past.\n- Do not use it to walk a table. Selecting every row and updating each one through a Repository is the shape to avoid; a set-based `query` statement is both correct and bounded.\n\nBoth tasks take their Repository from the connection the task runs on, which inside a transaction is that transaction's connection, so a failed task discards its writes. That is also why `context.container` is not the application container. Its type is `ServiceResolver`, but at runtime it is a frozen allow list holding one token — `idGeneratorToken` from `@nocobase/app-server/id-generator`, for a task that has to generate an identifier. Every other `resolve` throws, `databaseManagerToken` included: a service taken from there would hold the application's connection rather than the task's, and inside a transaction would write outside it and survive a failure that should have discarded it.\n\n**Is the unit of work a Collection's records, or a result set?** Records of one Collection and the things related to them are Repository's job. A shape that is not any Collection's records — a report joining unrelated tables, a set aggregated then paginated — is Query's.\n\n| The task needs                                       | Use        |\n| ---------------------------------------------------- | ---------- |\n| Reading a relation, or a nested create/update/delete | Repository |\n| Optimistic locking through a `version` field         | Repository |\n| A row scope or write allow list (`withPolicy`)       | Repository |\n| Cursor pagination over a stable sort                 | Repository |\n| Collection-level naming overrides to be honored      | Repository |\n| Dialect-correct JSON and temporal encoding on write  | Repository |\n| A join between tables with no relation between them  | Query      |\n| A subquery, or conditions composed programmatically  | Query      |\n| Paging or limiting a grouped result                  | Query      |\n\nThe costly mistake is rebuilding a relation read as a hand-written join because the join is familiar. That loses the naming mapping, the relation metadata and the write path that goes with it, and it has to be maintained against a schema the Collection definition already describes. If the records belong to a Collection, start from Repository and only drop to Query for the part Repository genuinely cannot express.",
+          "sha256": "f97c07a45a9d49c1d933ddbceeabcc9afe267b1356a2ded1a3da0dd56b54011c"
+        },
+        {
+          "id": "E32",
+          "kind": "code",
+          "path": "app/server/providers/crm/service.ts",
+          "observation": "assertCustomer 用 exists 校验关联，customerNames 二次查询客户表并在内存拼接 customerName。",
+          "lines": [
+            332,
+            343
+          ],
+          "excerpt": "  private async assertCustomer(id: number): Promise<void> {\n    const exists = await this.customers().exists({ filter: { id } });\n\n    if (!exists) {\n      throw new CrmNotFoundError(`Customer ${id} was not found.`);\n    }\n  }\n\n  private async customerNames(): Promise<Map<number, string>> {\n    const rows = await this.customers().findMany();\n    return new Map(rows.map((row) => [row.id, row.name]));\n  }",
+          "sha256": "677eb283ef6017eacb7fe7e11b9d4c625bb3a9ebbff47b5ad743c7c70f963d53"
+        }
+      ],
+      "fingerprint": "020fa147aeba6cbc38f5641df9f8530bdc5d965638667f483bd4e7ce82e123f4"
     }
   ]
 }
