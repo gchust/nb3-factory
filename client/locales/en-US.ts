@@ -91,9 +91,72 @@ const enUS = {
       'No enabled plugin contributes a dev page you have access to.',
   },
   home: {
-    title: 'Start building your application',
+    title: 'Service team materials',
     description:
-      'Describe what you need to your AI Agent, then build pages, data models, and business workflows.',
+      'Read the reference materials you are permitted to see, or ask the assistant a question and check the material it cites.',
+    materialsTitle: 'Materials',
+    materialsDescription:
+      'Every material the team keeps, with the ones outside your scope hidden.',
+    openMaterials: 'Open the materials',
+    assistantTitle: 'Material assistant',
+    assistantDescription:
+      'Answer from the materials you may read, always citing the material used.',
+    openAssistant: 'Ask the assistant',
+  },
+
+  materials: {
+    title: 'Material library',
+    description:
+      'Reference materials for the service team. You see the materials you are permitted to read.',
+    open: 'Open',
+    detailTitle: 'Material',
+    detailDescription: 'Read the full text. A supervisor can edit it.',
+    notFoundTitle: 'Material unavailable',
+    notFound: 'This material is not available to you.',
+    empty: 'No materials are available to you.',
+    loadFailedTitle: 'Unable to load materials',
+    loadFailed: 'The materials could not be loaded. Please try again.',
+    supervisorOnly: 'Supervisor only',
+    fieldTitle: 'Title',
+    fieldBody: 'Content',
+    fieldVisibility: 'Visibility',
+    edit: 'Edit',
+    saved: 'Material saved',
+    saveFailed: 'Unable to save the material',
+    saving: 'Saving…',
+  },
+  assistant: {
+    title: 'Material assistant',
+    description:
+      'Ask about the service team materials. Every answer cites the material it came from, and you can open it to check.',
+    threadLabel: 'Assistant conversation',
+    clear: 'Clear conversation',
+    cleared: 'Conversation cleared',
+    clearFailed: 'Unable to clear the conversation',
+    clearConfirmTitle: 'Clear this conversation?',
+    clearConfirmDescription:
+      'The saved question and answer history for your account will be deleted. This cannot be undone.',
+    noticeTitle: 'Answering straight from the materials',
+    noticeNotConfigured:
+      'No model service is configured, so the assistant is answering directly from the materials. You can always read them on the Materials page.',
+    noticeUnavailable:
+      'The model service is unavailable, so answers come straight from the materials. Reading the materials on the Materials page still works.',
+    emptyTitle: 'Ask your first question',
+    emptyDescription:
+      'For example: what is the repair phone number for the equipment?',
+    citations: 'Source',
+    insufficient:
+      'The materials do not cover that. Please read the materials on the Materials page, or ask a supervisor.',
+    denied:
+      'You do not have access to any materials, so the assistant cannot answer.',
+    thinking: 'Searching the materials…',
+    composerLabel: 'Your question',
+    composerPlaceholder: 'Ask a question about the materials…',
+    ask: 'Ask',
+    asking: 'Asking…',
+    askFailed: 'Unable to get an answer. Please try again.',
+    loadFailed: 'Unable to load the conversation.',
+    scrollToLatest: 'Scroll to latest',
   },
 
   appearance: {
@@ -130,6 +193,8 @@ const enUS = {
   },
   navigation: {
     home: 'Home',
+    materials: 'Materials',
+    assistant: 'Material assistant',
     open: 'Open navigation',
     close: 'Close navigation',
     expand: 'Expand navigation',
