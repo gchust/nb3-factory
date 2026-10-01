@@ -1,0 +1,281 @@
+{
+  "version": 1,
+  "date": "2026-10-01",
+  "timeZone": "Asia/Shanghai",
+  "entries": [
+    {
+      "key": "ef972aa54e1faa8d3c7f547d",
+      "id": "504:36787382191:1:F4",
+      "issue": 504,
+      "runId": 36787382191,
+      "attempt": 1,
+      "findingId": "F4",
+      "runDay": "2026-10-01",
+      "archivedAt": "2026-10-01T23:52:28.637Z",
+      "title": "nocobase-db Skill 的 Builder 示例只演示 integer+foreignKey，未演示 belongsTo，导致关系元数据缺失",
+      "summary": "SKILL 第 3 节的 createCollection 示例用 collection.integer('orderId') + collection.foreignKey 建外键，随后虽以一句列出 belongsTo/hasOne/hasMany，却没有在示例里同时声明 belongsTo。本次应用迁移照此只建了物理外键，Collection 没有关系元数据，service.ts 不能通过关系读取客户名，只能额外查询 customers 表并手工拼接 customerName（见 E32）。同节第 4 部分其实警告过不要“把关系读取重写成手写 join”，因此这是示例完整度问题而非能力缺失。",
+      "severity": "info",
+      "type": "guidance-gap",
+      "owner": "documentation",
+      "targets": [
+        "@nocobase/db",
+        "app/.agents/skills/nocobase-db/SKILL.md"
+      ],
+      "subjectKeys": [
+        "pkg:@nocobase/db",
+        "skill:nocobase-db"
+      ],
+      "featurePoint": "应用搭建/数据库",
+      "candidates": [
+        "应用搭建/数据库"
+      ],
+      "taskTitle": "客户、联系人与商机管理",
+      "appVersion": "1.0.0-beta.50",
+      "group": {
+        "title": "nocobase-db Skill 的 Builder 示例只演示 integer+foreignKey，未演示 belongsTo，导致关系元数据缺失",
+        "issues": 1,
+        "first": "2026-10-01"
+      },
+      "report": "reports/issues/504/runs/36787382191/attempt-1/index.html#review-finding-F4"
+    },
+    {
+      "key": "5594087eb53311308789efca",
+      "id": "506:36787391890:1:F7",
+      "issue": 506,
+      "runId": 36787391890,
+      "attempt": 1,
+      "findingId": "F7",
+      "runDay": "2026-10-01",
+      "archivedAt": "2026-10-01T23:52:28.637Z",
+      "title": "包内 dist 目录与导出子路径不镜像，Skill 未给出目标文件定位方法",
+      "summary": "`@nocobase/authorization` 的导出子路径（如 `./sharing-rules`）对应 `dist/plugins/sharing-rules/`，而 `./core` 对应 `dist/core/`；agent 在探索时多次按子路径猜目录，产生大量无效 cat/find（历史错误信号中占比很高）。",
+      "severity": "minor",
+      "type": "usability",
+      "owner": "documentation",
+      "targets": [
+        "@nocobase/authorization",
+        "app/.agents/skills/nocobase-app-plugin-authz-sharing-rules/SKILL.md"
+      ],
+      "subjectKeys": [
+        "pkg:@nocobase/authorization",
+        "skill:nocobase-app-plugin-authz-sharing-rules"
+      ],
+      "featurePoint": "应用搭建/授权",
+      "candidates": [
+        "应用搭建/授权"
+      ],
+      "taskTitle": "内部资料阅读与临时共享",
+      "appVersion": "1.0.0-beta.50",
+      "group": {
+        "title": "@nocobase/* 包的公开入口与物理布局未在指引中说明，agent 探测内部路径失败",
+        "issues": 3,
+        "first": "2026-09-29"
+      },
+      "report": "reports/issues/506/runs/36787391890/attempt-1/index.html#review-finding-F7"
+    },
+    {
+      "key": "e067f0e19506f08fd312d2e6",
+      "id": "507:36787396720:1:F2",
+      "issue": 507,
+      "runId": 36787396720,
+      "attempt": 1,
+      "findingId": "F2",
+      "runDay": "2026-10-01",
+      "archivedAt": "2026-10-01T23:52:28.637Z",
+      "title": "注册表 OOXML 预览无超时/看门狗，解析 Worker 静默挂起时永久停留 Loading preview",
+      "summary": "office-open-xml-preview.tsx 在 effect 中直接 `await viewer.load(data)` 后再 setLoaded；createOfficeOpenXmlViewer 只传 mode/useGoogleFonts/onError，没有 workerTimeoutMs 等看门狗。@silurus/ooxml 默认在 Worker 中解析，若 Worker 静默死亡，load() 的 promise 不 settle，onError 也不会触发，于是预览既无正文也无失败提示。第一轮验收 B02 因此长期停留 Loading preview（内容与渲染资源均 200、无 loadingFailed），种子与上传样例均复现。",
+      "severity": "major",
+      "type": "runtime-defect",
+      "owner": "plugin",
+      "targets": [
+        "@nocobase/app-plugin-file"
+      ],
+      "subjectKeys": [
+        "pkg:@nocobase/app-plugin-file"
+      ],
+      "featurePoint": "应用搭建/文件",
+      "candidates": [
+        "应用搭建/文件"
+      ],
+      "taskTitle": "项目资料与私有附件",
+      "appVersion": "1.0.0-beta.50",
+      "group": {
+        "title": "Registry OOXML 预览缺少加载/渲染超时，viewer 不收敛时长期停在 Loading",
+        "issues": 4,
+        "first": "2026-09-29"
+      },
+      "report": "reports/issues/507/runs/36787396720/attempt-1/index.html#review-finding-F2"
+    },
+    {
+      "key": "b978f4ddd2e929661ce9f6f0",
+      "id": "507:36787396720:1:F3",
+      "issue": 507,
+      "runId": 36787396720,
+      "attempt": 1,
+      "findingId": "F3",
+      "runDay": "2026-10-01",
+      "archivedAt": "2026-10-01T23:52:28.637Z",
+      "title": "注册表图片预览与缩略图缺少 onError，损坏图片只显示破图而无说明",
+      "summary": "file-preview-content.tsx 的 image 分支与 file-thumbnail.tsx 都直接渲染 <img>，没有 onError 回退。损坏 PNG 时浏览器显示破图，既无失败文案也无降级占位。应用在安装副本中补了 onError 后才通过 B06。",
+      "severity": "minor",
+      "type": "usability",
+      "owner": "plugin",
+      "targets": [
+        "@nocobase/app-plugin-file"
+      ],
+      "subjectKeys": [
+        "pkg:@nocobase/app-plugin-file"
+      ],
+      "featurePoint": "应用搭建/文件",
+      "candidates": [
+        "应用搭建/文件"
+      ],
+      "taskTitle": "项目资料与私有附件",
+      "appVersion": "1.0.0-beta.50",
+      "group": {
+        "title": "Registry 图片预览缺少解码失败态，损坏图片只显示浏览器破图占位",
+        "issues": 3,
+        "first": "2026-09-29"
+      },
+      "report": "reports/issues/507/runs/36787396720/attempt-1/index.html#review-finding-F3"
+    },
+    {
+      "key": "d2b27943e969488dde96e6d7",
+      "id": "507:36787396720:1:F4",
+      "issue": 507,
+      "runId": 36787396720,
+      "attempt": 1,
+      "findingId": "F4",
+      "runDay": "2026-10-01",
+      "archivedAt": "2026-10-01T23:52:28.637Z",
+      "title": "文档称 OOXML 失败会显示错误，但 Worker 静默挂起不触发该回退",
+      "summary": "注册表 README 与插件 SKILL 都声明“OOXML 请求或渲染失败会显示错误并提供下载动作”。该契约对拒绝/抛错成立，但对 Worker 静默挂起这类“既不成功也不报错”的失败不成立——组件无超时，onError 也不会被调用。",
+      "severity": "minor",
+      "type": "guidance-error",
+      "owner": "documentation",
+      "targets": [
+        "app/.agents/skills/nocobase-app-plugin-file/SKILL.md",
+        "@nocobase/app-plugin-file"
+      ],
+      "subjectKeys": [
+        "pkg:@nocobase/app-plugin-file",
+        "skill:nocobase-app-plugin-file"
+      ],
+      "featurePoint": "应用搭建/文件",
+      "candidates": [
+        "应用搭建/文件"
+      ],
+      "taskTitle": "项目资料与私有附件",
+      "appVersion": "1.0.0-beta.50",
+      "group": {
+        "title": "文档称 OOXML 失败会显示错误，但 Worker 静默挂起不触发该回退",
+        "issues": 1,
+        "first": "2026-10-01"
+      },
+      "report": "reports/issues/507/runs/36787396720/attempt-1/index.html#review-finding-F4"
+    },
+    {
+      "key": "e8533017d73f4b52d5a3b539",
+      "id": "507:36787396720:1:F5",
+      "issue": 507,
+      "runId": 36787396720,
+      "attempt": 1,
+      "findingId": "F5",
+      "runDay": "2026-10-01",
+      "archivedAt": "2026-10-01T23:52:28.637Z",
+      "title": "技能可强化“上传路由由 defineFileRepositoryApiRoutes 暴露”的正面表述以避免误判",
+      "summary": "应用作者在 project-material-files.ts 注释中写下“插件根本没有 HTTP 上传路由”，于是自建上传路由并重复了 multipart/上限/错误码逻辑。插件实际通过 defineFileRepositoryApiRoutes 暴露 POST /<name>:uploadOne|uploadMany；SKILL 第 118 行虽说明“只有声明的操作才暴露”，但未把“声明即配置路由”作为一句显式结论。",
+      "severity": "minor",
+      "type": "guidance-gap",
+      "owner": "documentation",
+      "targets": [
+        "@nocobase/app-plugin-file",
+        "app/.agents/skills/nocobase-app-plugin-file/SKILL.md"
+      ],
+      "subjectKeys": [
+        "pkg:@nocobase/app-plugin-file",
+        "skill:nocobase-app-plugin-file"
+      ],
+      "featurePoint": "应用搭建/文件",
+      "candidates": [
+        "应用搭建/文件"
+      ],
+      "taskTitle": "项目资料与私有附件",
+      "appVersion": "1.0.0-beta.50",
+      "group": {
+        "title": "技能可强化“上传路由由 defineFileRepositoryApiRoutes 暴露”的正面表述以避免误判",
+        "issues": 1,
+        "first": "2026-10-01"
+      },
+      "report": "reports/issues/507/runs/36787396720/attempt-1/index.html#review-finding-F5"
+    },
+    {
+      "key": "d3c63c8e5aef7b26f2892888",
+      "id": "509:36811890057:1:F1",
+      "issue": 509,
+      "runId": 36811890057,
+      "attempt": 1,
+      "findingId": "F1",
+      "runDay": "2026-10-01",
+      "archivedAt": "2026-10-01T23:52:28.637Z",
+      "title": "Scheduler 缺少尊重启停的受控立即执行入口",
+      "summary": "Scheduler 只提供 list/occurrences/enable/disable 与 defineSchedule/registerTarget，没有公共 run-now；operations 文档只建议用短周期 cron 观察执行，并声明启停仅影响未来调度。应用为实现 B08 的“受控立即执行”，在 maintenance-scheduler.ts 中直接读取队列 schedules 并 new Schedule(...).trigger()，未检查 enabled/scheduleStatus，导致停用计划仍产生新结果。",
+      "severity": "major",
+      "type": "capability-gap",
+      "owner": "plugin",
+      "targets": [
+        "@nocobase/app-plugin-scheduler",
+        "app/.agents/skills/nocobase-app-plugin-scheduler"
+      ],
+      "subjectKeys": [
+        "pkg:@nocobase/app-plugin-scheduler",
+        "skill:nocobase-app-plugin-scheduler"
+      ],
+      "featurePoint": "应用搭建/定时任务",
+      "candidates": [
+        "应用搭建/定时任务"
+      ],
+      "taskTitle": "设备售后服务与巡检协同系统（综合业务案例）",
+      "appVersion": "1.0.0-beta.50",
+      "group": {
+        "title": "Scheduler 没有公开的受控立即执行入口，应用被迫直接操作 Queue 计划投影",
+        "issues": 3,
+        "first": "2026-09-29"
+      },
+      "report": "reports/issues/509/runs/36811890057/attempt-1/index.html#review-finding-F1"
+    },
+    {
+      "key": "71b36826c3b2a6bb4a902e23",
+      "id": "509:36811890057:1:F2",
+      "issue": 509,
+      "runId": 36811890057,
+      "attempt": 1,
+      "findingId": "F2",
+      "runDay": "2026-10-01",
+      "archivedAt": "2026-10-01T23:52:28.637Z",
+      "title": "AI Knowledge Base 兼容路由不内建服务端授权",
+      "summary": "security.md 明确说明当前兼容路由只要求已认证会话，不强制角色、归属、资源 ACL 或管理权限，文档响应对所有认证用户投影 accessAbility: \"readWrite\" 且仅是 UI 提示。应用必须自行加授权代理才能满足“工程师只读、主管可维护”。",
+      "severity": "major",
+      "type": "capability-gap",
+      "owner": "plugin",
+      "targets": [
+        "app/.agents/skills/nocobase-app-plugin-ai-knowledge-base"
+      ],
+      "subjectKeys": [
+        "skill:nocobase-app-plugin-ai-knowledge-base"
+      ],
+      "featurePoint": "应用搭建/知识库",
+      "candidates": [
+        "应用搭建/知识库"
+      ],
+      "taskTitle": "设备售后服务与巡检协同系统（综合业务案例）",
+      "appVersion": "1.0.0-beta.50",
+      "group": {
+        "title": "AI Knowledge Base 兼容路由不内建服务端授权",
+        "issues": 1,
+        "first": "2026-10-01"
+      },
+      "report": "reports/issues/509/runs/36811890057/attempt-1/index.html#review-finding-F2"
+    }
+  ]
+}
