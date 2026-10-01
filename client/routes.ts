@@ -1,4 +1,4 @@
-import { Home } from 'lucide-react';
+import { Building2, Home } from 'lucide-react';
 import {
   defineAppRoutes,
   defineSettingsRoutes,
@@ -43,6 +43,90 @@ const appRoutes: AppClientRouteContribution = defineAppRoutes([
     componentLoader: () => import('./pages/auth/reset-password.js'),
     name: 'reset-password',
     path: '/reset-password',
+  },
+  {
+    // A navigation group only groups pages; the pages inside it declare full paths and the group renders their Outlet.
+    name: 'sales',
+    navigation: { title: 'navigation.sales', icon: Building2 },
+    children: [
+      {
+        name: 'customers',
+        path: '/customers',
+        auth: 'required',
+        authz: 'skip',
+        navigation: { title: 'navigation.customers' },
+        componentLoader: () => import('./pages/sales/customers/index.js'),
+        children: [
+          {
+            name: 'customer-new',
+            path: 'new',
+            authz: 'skip',
+            componentLoader: () => import('./pages/sales/customers/new.js'),
+          },
+          {
+            name: 'customer-detail',
+            path: ':customerId',
+            authz: 'skip',
+            componentLoader: () =>
+              import('./pages/sales/customers/detail/index.js'),
+            children: [
+              {
+                name: 'customer-detail-edit',
+                path: 'edit',
+                authz: 'skip',
+                componentLoader: () =>
+                  import('./pages/sales/customers/detail/edit.js'),
+              },
+            ],
+          },
+        ],
+      },
+      {
+        name: 'contacts',
+        path: '/contacts',
+        auth: 'required',
+        authz: 'skip',
+        navigation: { title: 'navigation.contacts' },
+        componentLoader: () => import('./pages/sales/contacts/index.js'),
+        children: [
+          {
+            name: 'contact-new',
+            path: 'new',
+            authz: 'skip',
+            componentLoader: () => import('./pages/sales/contacts/new.js'),
+          },
+          {
+            name: 'contact-edit',
+            path: ':contactId/edit',
+            authz: 'skip',
+            componentLoader: () => import('./pages/sales/contacts/edit.js'),
+          },
+        ],
+      },
+      {
+        name: 'opportunities',
+        path: '/opportunities',
+        auth: 'required',
+        authz: 'skip',
+        navigation: { title: 'navigation.opportunities' },
+        componentLoader: () => import('./pages/sales/opportunities/index.js'),
+        children: [
+          {
+            name: 'opportunity-new',
+            path: 'new',
+            authz: 'skip',
+            componentLoader: () => import('./pages/sales/opportunities/new.js'),
+          },
+          {
+            name: 'opportunity-edit',
+            path: ':opportunityId/edit',
+            authz: 'skip',
+            componentLoader: () =>
+              import('./pages/sales/opportunities/edit.js'),
+          },
+        ],
+      },
+    ],
   },
 ]);
 
