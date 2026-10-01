@@ -6,7 +6,7 @@ import {
   FileText,
   FileVideo,
 } from 'lucide-react';
-import type { ReactElement } from 'react';
+import { useState, type ReactElement } from 'react';
 
 import { isSafeImagePreview } from '../lib/file-preview';
 import type { FileThumbnailProps } from '../types';
@@ -48,12 +48,17 @@ export function FileThumbnail({
   const imageUrl = resolveSafeFileUrl(
     url ?? (isSafeImagePreview(file) ? (file.contentUrl ?? '') : ''),
   );
-  return imageUrl ? (
+  // A corrupted or unreachable image must not render as an empty or broken box. Falling back to the type icon keeps
+  // the attachment recognizable; the preview dialog explains why it cannot be shown. Remembering which URL failed —
+  // rather than clearing a flag in an effect — retries automatically when the thumbnail points somewhere else.
+  const [failedUrl, setFailedUrl] = useState<string>();
+  return imageUrl && failedUrl !== imageUrl ? (
     <img
       data-slot='file-thumbnail'
       src={imageUrl}
       alt={alt}
       className='h-full w-full object-cover'
+      onError={() => setFailedUrl(imageUrl)}
     />
   ) : (
     <span

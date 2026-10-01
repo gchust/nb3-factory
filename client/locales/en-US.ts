@@ -95,6 +95,65 @@ const enUS = {
     description:
       'Describe what you need to your AI Agent, then build pages, data models, and business workflows.',
   },
+  materials: {
+    title: 'Project materials',
+    description:
+      'Keep your own site photos and documents. Every material and its attachments stay private to you.',
+    create: {
+      action: 'New material',
+      title: 'New material',
+      description:
+        'Give the material a title and attach the photos or documents that belong to it.',
+      submitting: 'Saving…',
+    },
+    field: {
+      title: 'Title',
+      titlePlaceholder: 'For example: Building 1 foundation photos',
+      attachments: 'Attachments',
+    },
+    fileTypesHint: 'Only PNG images and DOCX documents, up to 20 MB each.',
+    uploadingHint: 'Waiting for the uploads to finish.',
+    titleRequired: 'A title is required.',
+    created: 'Material created.',
+    saved: 'Changes saved.',
+    deleted: 'Material deleted.',
+    open: 'Open',
+    deleteLabel: 'Delete',
+    retry: 'Retry',
+    attachmentCount: '{{count}} attachment(s)',
+    updatedAt: 'Updated {{date}}',
+    empty: {
+      title: 'No materials yet',
+      description:
+        'Create your first material and attach its photos or documents.',
+    },
+    detail: {
+      title: 'Material details',
+      description:
+        'Preview, download, add or remove attachments, then save your changes.',
+      attachments: 'Attachments',
+      noAttachments: 'No attachments.',
+      removeHint:
+        'Removing an attachment takes it out of this material when you save.',
+      addAttachments: 'Add attachments',
+      save: 'Save changes',
+      saving: 'Saving…',
+    },
+    delete: {
+      title: 'Delete this material?',
+      description:
+        '“{{title}}” will be deleted. Its attachments are kept in your files but are no longer part of the material.',
+      confirm: 'Delete',
+    },
+    error: {
+      loadFailed: 'Unable to load your materials.',
+      deleteFailed: 'Unable to delete the material.',
+      notFound: 'This material no longer exists.',
+      validation:
+        'The material could not be saved. Check the title and attachments.',
+      generic: 'Something went wrong. Please try again.',
+    },
+  },
 
   appearance: {
     title: 'Appearance',
@@ -130,6 +189,7 @@ const enUS = {
   },
   navigation: {
     home: 'Home',
+    materials: 'Project materials',
     open: 'Open navigation',
     close: 'Close navigation',
     expand: 'Expand navigation',
@@ -166,4 +226,15 @@ const enUS = {
  */
 export type AppResource = LocaleResource<typeof enUS>;
 
-export default enUS;
+// The application rewords two strings the file plugin renders: a corrupted image must say so instead of showing a
+// broken image, and its thumbnail falls back to a type icon. Overrides are added to the default export rather than to
+// `enUS` so they are not folded into the shape every other locale is checked against.
+export default {
+  ...enUS,
+  overrides: {
+    '@nocobase/app-plugin-file': {
+      'files.imageLoadFailed':
+        'This image could not be displayed. It may be corrupted or temporarily unavailable.',
+    },
+  },
+};

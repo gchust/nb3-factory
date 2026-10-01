@@ -1,4 +1,10 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from '@testing-library/react';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 
 import {
@@ -47,7 +53,10 @@ beforeEach(() => {
   viewer.load.mockReset().mockResolvedValue(undefined);
   viewer.destroy.mockReset();
 });
-afterEach(() => vi.unstubAllGlobals());
+afterEach(() => {
+  vi.useRealTimers();
+  vi.unstubAllGlobals();
+});
 
 it.each(['docx', 'xlsx', 'pptx'])(
   'preinstalled preview fetches private %s content for the local viewer',
@@ -79,6 +88,21 @@ it.each(['docx', 'xlsx', 'pptx'])(
   },
 );
 
+it('explains an image that cannot be displayed instead of showing the filename alone', async () => {
+  render(
+    <FilePreviewDialog
+      files={[{ ...file('png'), mimeType: 'image/png' }]}
+      open
+      onOpenChange={vi.fn()}
+    />,
+  );
+  const image = screen.getByAltText('attachment.png');
+  fireEvent.error(image);
+  expect(await screen.findByRole('alert')).toHaveTextContent(
+    /could not be displayed/i,
+  );
+});
+
 it('shows the denied content response without trying a third-party viewer', async () => {
   vi.stubGlobal(
     'fetch',
@@ -98,4 +122,53 @@ it('shows the denied content response without trying a third-party viewer', asyn
   expect(viewer.load).not.toHaveBeenCalled();
   expect(document.querySelector('iframe')).toBeNull();
   expect(screen.queryByRole('button', { name: /Download/ })).toBeNull();
+});
+
+// A parser Worker that dies silently leaves `viewer.load()` pending. With `workerTimeoutMs` the library rejects it as
+// "no layout progress", but the preinstalled dialog used to await it forever and never call `onError`, so it sat on
+// "Loading preview...". The fix retries once with a fresh viewer before falling back to an explanation.
+it('retries an Office Open XML preview whose parser worker went silent', async () => {
+  vi.stubGlobal(
+    'fetch',
+    vi
+      .fn<typeof fetch>()
+      .mockResolvedValue(new Response(new Uint8Array([1, 2, 3]))),
+  );
+  viewer.load
+    .mockRejectedValueOnce(
+      new Error('worker layout produced no progress for 10000ms'),
+    )
+    .mockResolvedValueOnce(undefined);
+  render(
+    <FilePreviewDialog files={[file('docx')]} open onOpenChange={vi.fn()} />,
+  );
+  await waitFor(() => expect(viewer.load).toHaveBeenCalledTimes(2));
+  // The stalled viewer is torn down so its parser Worker cannot keep running behind the retry.
+  expect(viewer.destroy).toHaveBeenCalledTimes(1);
+  expect(screen.queryByRole('alert')).toBeNull();
+});
+
+// Even a viewer that never settles at all — no rejection, no watchdog — must not leave the dialog spinning forever.
+it('explains an Office Open XML preview that stays stuck after a retry', async () => {
+  vi.useFakeTimers();
+  vi.stubGlobal(
+    'fetch',
+    vi
+      .fn<typeof fetch>()
+      .mockResolvedValue(new Response(new Uint8Array([1, 2, 3]))),
+  );
+  viewer.load.mockImplementation(() => new Promise<void>(() => {}));
+  render(
+    <FilePreviewDialog files={[file('docx')]} open onOpenChange={vi.fn()} />,
+  );
+  await act(async () => {
+    // Past the last-resort bound on each of the two attempts.
+    await vi.advanceTimersByTimeAsync(60_000);
+    await vi.advanceTimersByTimeAsync(60_000);
+  });
+  expect(viewer.load).toHaveBeenCalledTimes(2);
+  expect(screen.getByRole('alert')).toHaveTextContent(
+    /Unable to render this Office Open XML file/i,
+  );
+  expect(screen.queryByRole('status')).toBeNull();
 });

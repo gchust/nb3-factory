@@ -12,6 +12,15 @@ interface OfficeOpenXmlViewer {
   destroy(): void;
 }
 
+// An Office Open XML viewer can stop making progress without ever rejecting `load()`: its parser runs in a Worker, and a
+// terminated or killed Worker never reports again. The library re-arms its watchdog on every progress message, so it can
+// be told to fail a load that has been silent for too long without capping how long a large document may take. A stall is
+// retried with a fresh Worker, and a second stall is reported honestly, before the dialog commits to the explanation.
+const OFFICE_OPEN_XML_SILENCE_TIMEOUT_MS = 10_000;
+// A last-resort bound in case a viewer never settles at all: no preview may sit on "Loading preview..." forever.
+const OFFICE_OPEN_XML_LOAD_TIMEOUT_MS = 60_000;
+const OFFICE_OPEN_XML_ATTEMPTS = 2;
+
 export interface OfficeOpenXmlPreviewProps {
   readonly file: FileRecord;
   readonly format: OfficeOpenXmlFormat;
@@ -31,6 +40,12 @@ export function OfficeOpenXmlPreview({
   const hostRef = useRef<HTMLDivElement>(null);
   const [loaded, setLoaded] = useState(false);
   const [viewerError, setViewerError] = useState<string>();
+  // `t` is not always a stable reference. Keeping it out of the effect dependencies means a re-render cannot tear down a
+  // viewer that is still loading, which would otherwise restart the fetch and the parser worker for no reason.
+  const tRef = useRef(t);
+  useEffect(() => {
+    tRef.current = t;
+  }, [t]);
 
   useEffect(() => {
     const host = hostRef.current;
@@ -38,36 +53,71 @@ export function OfficeOpenXmlPreview({
 
     let active = true;
     let viewer: OfficeOpenXmlViewer | undefined;
+    let currentAttempt: object | undefined;
     const controller = new AbortController();
     const reportViewerError = (cause: unknown): void => {
-      if (!active || isAbortError(cause)) return;
+      if (!active) return;
       const failedViewer = viewer;
       viewer = undefined;
+      currentAttempt = undefined;
       failedViewer?.destroy();
       setViewerError(
         cause instanceof OfficeOpenXmlRequestError
           ? cause.message
-          : t('files.ooxmlLoadFailed', {
+          : tRef.current('files.ooxmlLoadFailed', {
               defaultValue: 'Unable to render this Office Open XML file.',
             }),
       );
     };
+    // A late error from a viewer this effect has already replaced must not condemn the replacement.
+    const viewerErrorHandler =
+      (owner: object) =>
+      (cause: unknown): void => {
+        if (active && owner === currentAttempt && !isAbortError(cause)) {
+          reportViewerError(cause);
+        }
+      };
 
     void (async () => {
-      const data = await fetchOfficeOpenXml(url, controller.signal, t);
-      if (!active) return;
-      const createdViewer = await createOfficeOpenXmlViewer(
-        format,
-        host,
-        reportViewerError,
+      const data = await fetchOfficeOpenXml(
+        url,
+        controller.signal,
+        tRef.current,
       );
-      if (!active) {
-        createdViewer.destroy();
-        return;
+      if (!active) return;
+      let lastError: unknown;
+      for (let attempt = 0; attempt < OFFICE_OPEN_XML_ATTEMPTS; attempt += 1) {
+        const attemptToken = {};
+        currentAttempt = attemptToken;
+        try {
+          const createdViewer = await createOfficeOpenXmlViewer(
+            format,
+            host,
+            viewerErrorHandler(attemptToken),
+          );
+          if (!active) {
+            createdViewer.destroy();
+            return;
+          }
+          viewer = createdViewer;
+          // `load()` transfers the buffer it is handed, so each attempt needs its own copy.
+          await withTimeout(
+            createdViewer.load(data.slice(0)),
+            OFFICE_OPEN_XML_LOAD_TIMEOUT_MS,
+          );
+          if (active) setLoaded(true);
+          return;
+        } catch (cause) {
+          if (!active || isAbortError(cause)) return;
+          lastError = cause;
+          const failedViewer = viewer;
+          viewer = undefined;
+          currentAttempt = undefined;
+          failedViewer?.destroy();
+          host.replaceChildren();
+        }
       }
-      viewer = createdViewer;
-      await viewer.load(data);
-      if (active) setLoaded(true);
+      if (active) reportViewerError(lastError);
     })().catch(reportViewerError);
 
     return () => {
@@ -75,7 +125,7 @@ export function OfficeOpenXmlPreview({
       controller.abort();
       viewer?.destroy();
     };
-  }, [error, format, t, url]);
+  }, [error, format, url]);
 
   const resolvedError = error ?? viewerError;
   if (resolvedError) {
@@ -140,6 +190,30 @@ function isAbortError(cause: unknown): boolean {
   return cause instanceof Error && cause.name === 'AbortError';
 }
 
+// Resolves like `promise`, but rejects once `timeoutMs` has passed without it settling. A viewer whose parser Worker
+// stopped reporting never rejects on its own, so the caller must be able to give up on it.
+async function withTimeout<T>(
+  promise: Promise<T>,
+  timeoutMs: number,
+): Promise<T> {
+  return await new Promise<T>((resolve, reject) => {
+    const timer = window.setTimeout(
+      () => reject(new Error('Office Open XML preview timed out.')),
+      timeoutMs,
+    );
+    promise.then(
+      (value) => {
+        window.clearTimeout(timer);
+        resolve(value);
+      },
+      (cause: unknown) => {
+        window.clearTimeout(timer);
+        reject(cause instanceof Error ? cause : new Error(String(cause)));
+      },
+    );
+  });
+}
+
 async function createOfficeOpenXmlViewer(
   format: OfficeOpenXmlFormat,
   host: HTMLElement,
@@ -148,6 +222,9 @@ async function createOfficeOpenXmlViewer(
   const commonOptions = {
     mode: 'main' as const,
     useGoogleFonts: false,
+    // The library only arms its "no layout progress" watchdog when it is given a bound. Without one a silent parser
+    // worker leaves `load()` pending forever and never calls `onError`.
+    workerTimeoutMs: OFFICE_OPEN_XML_SILENCE_TIMEOUT_MS,
     onError,
   };
   switch (format) {
