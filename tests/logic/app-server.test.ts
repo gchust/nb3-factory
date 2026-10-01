@@ -1004,6 +1004,178 @@ describe('app server', () => {
       error: 'Not found',
     });
   });
+  it('runs the IT repair request flow through its permission sets', async () => {
+    const app = trackCloseable(
+      await createInstalledStandaloneServer({
+        viteDevUrl: false,
+        env: { APP_PUBLIC_ORIGIN: 'http://localhost' },
+      }),
+    );
+    const baseUrl = `http://localhost${app.application.publicBasePath}`;
+    const writeOrigin = new URL(baseUrl).origin;
+
+    const anonymous = await requestApp(app, `${baseUrl}/api/it-tickets`);
+    expect(anonymous.status).toBe(401);
+
+    const employeeCookie = await signIn(app, baseUrl, 'employee1');
+    const technicianCookie = await signIn(app, baseUrl, 'technician');
+
+    const employeeList = await listTickets(app, baseUrl, employeeCookie);
+    // The seeded employee owns two tickets and sees nobody else's.
+    expect(employeeList.data).toHaveLength(2);
+    expect(
+      employeeList.data.every((ticket) => ticket.submitterName === 'Chen Ming'),
+    ).toBe(true);
+    expect(employeeList.capabilities).toEqual({
+      create: true,
+      start: false,
+      complete: false,
+    });
+
+    // A newly created ticket is submitted under the signed-in identity.
+    const created = await requestApp(app, `${baseUrl}/api/it-tickets`, {
+      method: 'POST',
+      headers: {
+        cookie: employeeCookie,
+        origin: writeOrigin,
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        title: 'Printer will not print',
+        category: 'other',
+        description: 'Nothing comes out.',
+      }),
+    });
+    expect(created.status).toBe(201);
+    const newTicket = ((await created.json()) as { data: ItTicketPayload })
+      .data;
+    expect(newTicket).toMatchObject({
+      title: 'Printer will not print',
+      category: 'other',
+      status: 'pending',
+      submitterName: 'Chen Ming',
+      handlerId: null,
+    });
+
+    // An employee cannot process a ticket, not even their own.
+    const employeeStart = await requestApp(
+      app,
+      `${baseUrl}/api/it-tickets/${newTicket.id}/start`,
+      {
+        method: 'POST',
+        headers: { cookie: employeeCookie, origin: writeOrigin },
+      },
+    );
+    expect(employeeStart.status).toBe(403);
+
+    // The processor sees every ticket and may start and complete them.
+    const technicianList = await listTickets(app, baseUrl, technicianCookie);
+    expect(technicianList.data.length).toBeGreaterThanOrEqual(3);
+    expect(technicianList.capabilities).toEqual({
+      create: false,
+      start: true,
+      complete: true,
+    });
+    const someoneElsesTicket = technicianList.data.find(
+      (ticket) => ticket.submitterName !== 'Chen Ming',
+    );
+    expect(someoneElsesTicket).toBeDefined();
+
+    // An employee given somebody else's link must not see that person's content.
+    const foreign = await requestApp(
+      app,
+      `${baseUrl}/api/it-tickets/${someoneElsesTicket!.id}`,
+      { headers: { cookie: employeeCookie } },
+    );
+    expect(foreign.status).toBe(404);
+
+    // Starting records the actual handler and moves the ticket to processing.
+    const started = await requestApp(
+      app,
+      `${baseUrl}/api/it-tickets/${newTicket.id}/start`,
+      {
+        method: 'POST',
+        headers: { cookie: technicianCookie, origin: writeOrigin },
+      },
+    );
+    expect(started.status).toBe(200);
+    const processing = ((await started.json()) as { data: ItTicketPayload })
+      .data;
+    expect(processing).toMatchObject({
+      status: 'processing',
+      handlerName: 'Wang Qiang',
+    });
+    expect(processing.handlerId).toBeTruthy();
+
+    // Completing needs a processing note.
+    const missingNote = await requestApp(
+      app,
+      `${baseUrl}/api/it-tickets/${newTicket.id}/complete`,
+      {
+        method: 'POST',
+        headers: {
+          cookie: technicianCookie,
+          origin: writeOrigin,
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({ resolution: '   ' }),
+      },
+    );
+    expect(missingNote.status).toBe(400);
+
+    const completed = await requestApp(
+      app,
+      `${baseUrl}/api/it-tickets/${newTicket.id}/complete`,
+      {
+        method: 'POST',
+        headers: {
+          cookie: technicianCookie,
+          origin: writeOrigin,
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({ resolution: 'Reinstalled the print spooler.' }),
+      },
+    );
+    expect(completed.status).toBe(200);
+    const done = ((await completed.json()) as { data: ItTicketPayload }).data;
+    expect(done).toMatchObject({
+      status: 'completed',
+      resolution: 'Reinstalled the print spooler.',
+    });
+    expect(done.completedAt).toBeTruthy();
+
+    // A completed ticket keeps its result and cannot be completed again.
+    const recomplete = await requestApp(
+      app,
+      `${baseUrl}/api/it-tickets/${newTicket.id}/complete`,
+      {
+        method: 'POST',
+        headers: {
+          cookie: technicianCookie,
+          origin: writeOrigin,
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({ resolution: 'Tried again.' }),
+      },
+    );
+    expect(recomplete.status).toBe(409);
+
+    // Progress survives a new request: status filter and stored result are read back from the database.
+    const completedList = await listTickets(
+      app,
+      baseUrl,
+      employeeCookie,
+      'completed',
+    );
+    const readBack = completedList.data.find(
+      (ticket) => ticket.id === newTicket.id,
+    );
+    expect(readBack).toMatchObject({
+      status: 'completed',
+      resolution: 'Reinstalled the print spooler.',
+      handlerName: 'Wang Qiang',
+    });
+  });
 });
 
 async function startStandaloneTestServer(
@@ -1427,6 +1599,78 @@ function createEmbeddedPluginFixture(rootDir: string): void {
 function trackCloseable<T extends CloseableResource>(resource: T): T {
   apps.push(resource);
   return resource;
+}
+
+interface ItTicketPayload {
+  readonly id: number;
+  readonly title: string;
+  readonly category: string;
+  readonly description: string | null;
+  readonly status: string;
+  readonly submitterId: string;
+  readonly submitterName: string | null;
+  readonly handlerId: string | null;
+  readonly handlerName: string | null;
+  readonly resolution: string | null;
+  readonly startedAt: string | null;
+  readonly completedAt: string | null;
+  readonly createdAt: string | null;
+  readonly updatedAt: string | null;
+}
+
+interface ItTicketCapabilities {
+  readonly create: boolean;
+  readonly start: boolean;
+  readonly complete: boolean;
+}
+
+interface ItTicketListPayload {
+  readonly data: ItTicketPayload[];
+  readonly total: number;
+  readonly capabilities: ItTicketCapabilities;
+}
+
+/** Signs in a seeded demo account and returns the `Cookie` header its session needs. */
+async function signIn(
+  app: FetchableResource,
+  baseUrl: string,
+  username: string,
+): Promise<string> {
+  const response = await requestApp(
+    app,
+    `${baseUrl}/api/auth/sign-in/username`,
+    {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ username, password: 'Nocobase@123' }),
+    },
+  );
+  if (response.status !== 200) {
+    throw new Error(
+      `Signing in as ${username} failed with ${String(response.status)}.`,
+    );
+  }
+  return response.headers
+    .getSetCookie()
+    .map((header) => header.split(';')[0])
+    .join('; ');
+}
+
+/** Reads the ticket list, optionally filtered by status. */
+async function listTickets(
+  app: FetchableResource,
+  baseUrl: string,
+  cookie: string,
+  status?: string,
+): Promise<ItTicketListPayload> {
+  const query = status ? `?status=${status}` : '';
+  const response = await requestApp(app, `${baseUrl}/api/it-tickets${query}`, {
+    headers: { cookie },
+  });
+  if (response.status !== 200) {
+    throw new Error(`Listing tickets failed with ${String(response.status)}.`);
+  }
+  return (await response.json()) as ItTicketListPayload;
 }
 
 function createMockDatabase(

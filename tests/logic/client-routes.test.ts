@@ -92,8 +92,14 @@ describe('app client routes', () => {
     const resolved = resolveRoutes();
 
     // The landing page opted out of page authorization, so it is reachable by every signed-in user.
+    // The IT support page declares its own `it.tickets` grant; its overlay children declare `authz: 'skip'`,
+    // so the parent's check is what guards them and they carry no separate grant.
     expect(pageAuthorizations(resolved.routes)).toEqual([
       { name: 'home', authorizedAs: null },
+      { name: 'it-support', authorizedAs: 'it.tickets' },
+      { name: 'it-support-create', authorizedAs: null },
+      { name: 'it-support-detail', authorizedAs: null },
+      { name: 'it-support-complete', authorizedAs: null },
     ]);
   });
 });

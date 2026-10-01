@@ -130,6 +130,7 @@ const enUS = {
   },
   navigation: {
     home: 'Home',
+    itSupport: 'IT repair requests',
     open: 'Open navigation',
     close: 'Close navigation',
     expand: 'Expand navigation',
@@ -155,6 +156,103 @@ const enUS = {
   datePicker: {
     placeholder: 'Pick a date',
     rangePlaceholder: 'Pick a date range',
+  },
+  itSupport: {
+    title: 'IT repair requests',
+    description: 'Submit a repair request and follow how it is processed.',
+    section: 'IT support',
+    collection: {
+      tickets: 'Repair requests',
+      ticketsDescription: 'Repair requests and their processing status.',
+    },
+    recordAccess: {
+      ownTickets: 'My own requests',
+      ownTicketsDescription: 'Only the requests you submitted yourself.',
+    },
+    permission: {
+      ticketView: 'View repair requests',
+      ticketCreate: 'Submit repair requests',
+      ticketStart: 'Start processing',
+      ticketComplete: 'Complete repair requests',
+    },
+    resource: { tickets: 'Repair requests' },
+    action: {
+      view: 'View',
+      create: 'Submit',
+      start: 'Start processing',
+      complete: 'Complete',
+    },
+    permissionSet: {
+      employee: 'IT employee',
+      processor: 'IT processor',
+    },
+    filter: { all: 'All' },
+    status: {
+      pending: 'Pending',
+      processing: 'Processing',
+      completed: 'Completed',
+    },
+    category: {
+      computer: 'Computer',
+      account: 'Account',
+      other: 'Other',
+    },
+    column: {
+      title: 'Title',
+      category: 'Category',
+      status: 'Status',
+      submitter: 'Submitted by',
+      handler: 'Handled by',
+      createdAt: 'Submitted at',
+    },
+    field: {
+      description: 'Problem description',
+      resolution: 'Processing note',
+      startedAt: 'Started at',
+      completedAt: 'Completed at',
+    },
+    empty: {
+      all: 'No repair requests yet.',
+      pending: 'No pending repair requests.',
+      processing: 'No repair requests in progress.',
+      completed: 'No completed repair requests.',
+    },
+    create: {
+      action: 'New request',
+      title: 'New repair request',
+      description: 'Describe the problem so an IT processor can help.',
+      titleRequired: 'Enter a title.',
+      categoryRequired: 'Choose a category.',
+      categoryPlaceholder: 'Choose a category',
+      descriptionPlaceholder: 'What went wrong, and what you already tried.',
+      submit: 'Submit',
+      submitting: 'Submitting…',
+      success: 'Your repair request was submitted.',
+    },
+    start: {
+      action: 'Start processing',
+      success: 'You are now handling this request.',
+    },
+    complete: {
+      action: 'Complete',
+      title: 'Complete the repair request',
+      description: 'Record what was done before marking it complete.',
+      resolutionRequired: 'Enter a processing note.',
+      resolutionPlaceholder: 'What was wrong and how it was fixed.',
+      submit: 'Mark complete',
+      submitting: 'Completing…',
+      success: 'The repair request is complete.',
+    },
+    detail: { title: 'Repair request' },
+    error: {
+      listFailed: 'Unable to load repair requests.',
+      requestFailed: 'The request failed. Please try again.',
+      notFound:
+        'This repair request does not exist, or you do not have access to it.',
+      forbidden: 'You do not have permission to do that.',
+      invalidState:
+        'This repair request was already handled by someone else; the view has been refreshed.',
+    },
   },
 };
 
