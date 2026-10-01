@@ -106,6 +106,9 @@ const zhCN: AppResource = {
     save: '保存',
     cancel: '取消',
     confirm: '确认',
+    create: '新建',
+    creating: '正在创建…',
+    saving: '正在保存…',
     language: '语言',
   },
   notices: {
@@ -121,6 +124,9 @@ const zhCN: AppResource = {
   },
   navigation: {
     home: '首页',
+    customers: '客户',
+    contacts: '联系人',
+    opportunities: '商机',
     open: '打开导航',
     close: '关闭导航',
     expand: '展开导航',
@@ -146,6 +152,180 @@ const zhCN: AppResource = {
   datePicker: {
     placeholder: '选择日期',
     rangePlaceholder: '选择日期范围',
+  },
+  crm: {
+    error: {
+      title: '出错了',
+      forbidden: '你没有权限查看这些数据。',
+      requestFailed: '请求失败，请重试。',
+    },
+    filters: {
+      clear: '清除筛选',
+    },
+    form: {
+      customersFailed: '客户列表加载失败，请刷新页面后重试。',
+    },
+    stage: {
+      follow_up: '跟进中',
+      won: '赢单',
+      lost: '输单',
+    },
+    customer: {
+      title: '客户',
+      description: '你销售的客户公司及其信息。',
+      fields: {
+        name: '名称',
+        industry: '行业',
+        updatedAt: '最后更新',
+      },
+      form: {
+        description: '名称为必填项，行业为选填项。',
+        nameRequired: '请输入客户名称。',
+        nameTooLong: '名称不得超过 100 个字符。',
+        industryTooLong: '行业不得超过 100 个字符。',
+      },
+      create: {
+        action: '新建客户',
+        title: '新建客户',
+        success: '客户已创建。',
+      },
+      edit: {
+        title: '编辑客户',
+        success: '客户已更新。',
+      },
+      detail: {
+        title: '客户详情',
+        totalExpectedAmount: '预计总金额',
+        contactsTab: '联系人（{{count}}）',
+        opportunitiesTab: '商机（{{count}}）',
+        noContacts: '该客户暂无联系人。',
+        noOpportunities: '该客户暂无商机。',
+      },
+      empty: {
+        title: '暂无客户',
+        description: '创建第一个客户，开始跟踪销售。',
+        noResults: '没有符合搜索条件的客户。',
+      },
+      error: {
+        notFound: '该客户已不存在。',
+        requestFailed: '客户列表加载失败。',
+      },
+      actions: {
+        label: '客户操作',
+        more: '{{name}} 的操作',
+        edit: '编辑客户',
+      },
+      search: {
+        placeholder: '按客户名称或行业搜索',
+        label: '搜索客户',
+      },
+    },
+    contact: {
+      title: '联系人',
+      description: '客户公司中的联系人。',
+      fields: {
+        name: '姓名',
+        customer: '客户',
+        phone: '电话',
+        email: '邮箱',
+        createdAt: '创建时间',
+        updatedAt: '最后更新',
+      },
+      form: {
+        description: '姓名和客户为必填项。',
+        nameRequired: '请输入联系人姓名。',
+        nameTooLong: '姓名不得超过 100 个字符。',
+        customerRequired: '请选择客户。',
+        phoneTooLong: '电话号码不得超过 50 个字符。',
+        emailTooLong: '邮箱不得超过 100 个字符。',
+      },
+      create: {
+        action: '新建联系人',
+        title: '新建联系人',
+        success: '联系人已创建。',
+      },
+      edit: {
+        title: '编辑联系人',
+        success: '联系人已更新。',
+      },
+      detail: {
+        title: '联系人详情',
+      },
+      empty: {
+        title: '暂无联系人',
+        description: '为你跟踪的客户公司添加联系人。',
+        noResults: '没有符合搜索条件的联系人。',
+      },
+      error: {
+        notFound: '该联系人已不存在。',
+        requestFailed: '联系人列表加载失败。',
+      },
+      actions: {
+        label: '联系人操作',
+        more: '{{name}} 的操作',
+        edit: '编辑联系人',
+      },
+      search: {
+        placeholder: '按联系人姓名、电话或邮箱搜索',
+        label: '搜索联系人',
+      },
+    },
+    opportunity: {
+      title: '商机',
+      description: '销售管道中的商机及其阶段。',
+      fields: {
+        name: '名称',
+        customer: '客户',
+        amount: '预计金额',
+        stage: '阶段',
+        createdAt: '创建时间',
+        updatedAt: '最后更新',
+      },
+      form: {
+        description: '名称、客户和阶段为必填项。',
+        nameRequired: '请输入商机名称。',
+        nameTooLong: '名称不得超过 120 个字符。',
+        customerRequired: '请选择客户。',
+        amountRequired: '请输入预计金额。',
+        amountInvalid: '请输入有效的非负金额。',
+        amountTooLarge: '预计金额需小于 1,000,000,000,000。',
+        stageInvalid: '请选择有效的阶段。',
+      },
+      create: {
+        action: '新建商机',
+        title: '新建商机',
+        success: '商机已创建。',
+      },
+      edit: {
+        title: '编辑商机',
+        success: '商机已更新。',
+      },
+      detail: {
+        title: '商机详情',
+      },
+      empty: {
+        title: '暂无商机',
+        description: '创建商机，开始跟踪销售机会。',
+        noResults: '没有符合筛选条件的商机。',
+      },
+      error: {
+        notFound: '该商机已不存在。',
+        requestFailed: '商机列表加载失败。',
+      },
+      actions: {
+        label: '商机操作',
+        more: '{{name}} 的操作',
+        edit: '编辑商机',
+      },
+      search: {
+        placeholder: '按商机名称或客户搜索',
+        label: '搜索商机',
+      },
+      filters: {
+        stage: '按阶段筛选',
+        allStages: '全部阶段',
+      },
+    },
   },
 };
 

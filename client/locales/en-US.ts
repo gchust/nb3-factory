@@ -113,6 +113,9 @@ const enUS = {
     save: 'Save',
     cancel: 'Cancel',
     confirm: 'Confirm',
+    create: 'Create',
+    creating: 'Creating…',
+    saving: 'Saving…',
     language: 'Language',
   },
   notices: {
@@ -130,6 +133,9 @@ const enUS = {
   },
   navigation: {
     home: 'Home',
+    customers: 'Customers',
+    contacts: 'Contacts',
+    opportunities: 'Opportunities',
     open: 'Open navigation',
     close: 'Close navigation',
     expand: 'Expand navigation',
@@ -155,6 +161,181 @@ const enUS = {
   datePicker: {
     placeholder: 'Pick a date',
     rangePlaceholder: 'Pick a date range',
+  },
+  crm: {
+    error: {
+      title: 'Something went wrong',
+      forbidden: 'You do not have permission to view this data.',
+      requestFailed: 'The request failed. Please try again.',
+    },
+    filters: {
+      clear: 'Clear filters',
+    },
+    form: {
+      customersFailed:
+        'The customer list could not be loaded. Reload the page and try again.',
+    },
+    stage: {
+      follow_up: 'In progress',
+      won: 'Won',
+      lost: 'Lost',
+    },
+    customer: {
+      title: 'Customers',
+      description: 'Companies you sell to and their details.',
+      fields: {
+        name: 'Name',
+        industry: 'Industry',
+        updatedAt: 'Last updated',
+      },
+      form: {
+        description: 'Name is required; industry is optional.',
+        nameRequired: 'Enter a customer name.',
+        nameTooLong: 'Keep the name at 100 characters or fewer.',
+        industryTooLong: 'Keep the industry at 100 characters or fewer.',
+      },
+      create: {
+        action: 'New customer',
+        title: 'New customer',
+        success: 'Customer created.',
+      },
+      edit: {
+        title: 'Edit customer',
+        success: 'Customer updated.',
+      },
+      detail: {
+        title: 'Customer details',
+        totalExpectedAmount: 'Total expected amount',
+        contactsTab: 'Contacts ({{count}})',
+        opportunitiesTab: 'Opportunities ({{count}})',
+        noContacts: 'This customer has no contacts yet.',
+        noOpportunities: 'This customer has no opportunities yet.',
+      },
+      empty: {
+        title: 'No customers yet',
+        description: 'Create your first customer to start tracking sales.',
+        noResults: 'No customers match your search.',
+      },
+      error: {
+        notFound: 'This customer no longer exists.',
+        requestFailed: 'The customer list could not be loaded.',
+      },
+      actions: {
+        label: 'Customer actions',
+        more: 'Actions for {{name}}',
+        edit: 'Edit customer',
+      },
+      search: {
+        placeholder: 'Search by customer name or industry',
+        label: 'Search customers',
+      },
+    },
+    contact: {
+      title: 'Contacts',
+      description: 'People at your customer companies.',
+      fields: {
+        name: 'Name',
+        customer: 'Customer',
+        phone: 'Phone',
+        email: 'Email',
+        createdAt: 'Created',
+        updatedAt: 'Last updated',
+      },
+      form: {
+        description: 'Name and customer are required.',
+        nameRequired: 'Enter a contact name.',
+        nameTooLong: 'Keep the name at 100 characters or fewer.',
+        customerRequired: 'Select a customer.',
+        phoneTooLong: 'Keep the phone number at 50 characters or fewer.',
+        emailTooLong: 'Keep the email at 100 characters or fewer.',
+      },
+      create: {
+        action: 'New contact',
+        title: 'New contact',
+        success: 'Contact created.',
+      },
+      edit: {
+        title: 'Edit contact',
+        success: 'Contact updated.',
+      },
+      detail: {
+        title: 'Contact details',
+      },
+      empty: {
+        title: 'No contacts yet',
+        description: 'Add a contact to the customer companies you track.',
+        noResults: 'No contacts match your search.',
+      },
+      error: {
+        notFound: 'This contact no longer exists.',
+        requestFailed: 'The contact list could not be loaded.',
+      },
+      actions: {
+        label: 'Contact actions',
+        more: 'Actions for {{name}}',
+        edit: 'Edit contact',
+      },
+      search: {
+        placeholder: 'Search by contact name, phone or email',
+        label: 'Search contacts',
+      },
+    },
+    opportunity: {
+      title: 'Opportunities',
+      description: 'Deals in your pipeline and where they stand.',
+      fields: {
+        name: 'Name',
+        customer: 'Customer',
+        amount: 'Expected amount',
+        stage: 'Stage',
+        createdAt: 'Created',
+        updatedAt: 'Last updated',
+      },
+      form: {
+        description: 'Name, customer and stage are required.',
+        nameRequired: 'Enter an opportunity name.',
+        nameTooLong: 'Keep the name at 120 characters or fewer.',
+        customerRequired: 'Select a customer.',
+        amountRequired: 'Enter an expected amount.',
+        amountInvalid: 'Enter a valid non-negative amount.',
+        amountTooLarge: 'Keep the expected amount below 1,000,000,000,000.',
+        stageInvalid: 'Select a valid stage.',
+      },
+      create: {
+        action: 'New opportunity',
+        title: 'New opportunity',
+        success: 'Opportunity created.',
+      },
+      edit: {
+        title: 'Edit opportunity',
+        success: 'Opportunity updated.',
+      },
+      detail: {
+        title: 'Opportunity details',
+      },
+      empty: {
+        title: 'No opportunities yet',
+        description: 'Create an opportunity to start tracking a deal.',
+        noResults: 'No opportunities match your filters.',
+      },
+      error: {
+        notFound: 'This opportunity no longer exists.',
+        requestFailed: 'The opportunity list could not be loaded.',
+      },
+      actions: {
+        label: 'Opportunity actions',
+        more: 'Actions for {{name}}',
+        edit: 'Edit opportunity',
+      },
+      search: {
+        placeholder: 'Search by opportunity name or customer',
+        label: 'Search opportunities',
+      },
+      filters: {
+        stage: 'Filter by stage',
+        allStages: 'All stages',
+      },
+    },
   },
 };
 
