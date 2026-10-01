@@ -1,4 +1,4 @@
-import { Home } from 'lucide-react';
+import { BookOpenIcon, Home } from 'lucide-react';
 import {
   defineAppRoutes,
   defineSettingsRoutes,
@@ -15,6 +15,16 @@ const appRoutes: AppClientRouteContribution = defineAppRoutes([
     name: 'home',
     navigation: { title: 'navigation.home', icon: Home },
     path: '/',
+  },
+  {
+    // The document library. Entry is a page grant; the business action grants that decide which rows and controls a
+    // visitor gets come from the permission sets, and the server enforces them on every endpoint.
+    auth: 'required',
+    authz: { action: 'access', resource: { id: 'materials', type: 'page' } },
+    componentLoader: () => import('./pages/materials.js'),
+    name: 'materials',
+    navigation: { icon: BookOpenIcon, title: 'library.navigation' },
+    path: '/materials',
   },
   {
     auth: 'guest',

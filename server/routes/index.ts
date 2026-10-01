@@ -1,6 +1,7 @@
 import type { Application } from '@nocobase/app-server/application';
 import type { AppRouteContribution } from '@nocobase/app-server/router';
+import { materialRoutes } from './materials.js';
 
-const routes: readonly AppRouteContribution<Application>[] = [];
+const routes: readonly AppRouteContribution<Application>[] = [materialRoutes];
 
 export default routes;
