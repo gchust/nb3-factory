@@ -1,4 +1,4 @@
-import { Home } from 'lucide-react';
+import { Home, Wrench } from 'lucide-react';
 import {
   defineAppRoutes,
   defineSettingsRoutes,
@@ -15,6 +15,17 @@ const appRoutes: AppClientRouteContribution = defineAppRoutes([
     name: 'home',
     navigation: { title: 'navigation.home', icon: Home },
     path: '/',
+  },
+  {
+    // IT repair requests: employees submit and track their own tickets, handlers process every ticket. Access follows
+    // the `it.tickets` page grant the `it-reporter` and `it-handler` permission sets carry.
+    auth: 'required',
+    authz: { action: 'access', resource: { type: 'page', id: 'it.tickets' } },
+    componentLoader: () => import('./pages/it-repair/index.js'),
+    name: 'it-repair',
+    breadcrumb: { title: 'navigation.itRepair' },
+    navigation: { title: 'navigation.itRepair', icon: Wrench },
+    path: '/it-repair',
   },
   {
     auth: 'guest',
