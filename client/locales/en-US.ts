@@ -96,6 +96,125 @@ const enUS = {
       'Describe what you need to your AI Agent, then build pages, data models, and business workflows.',
   },
 
+  crm: {
+    actions: {
+      actions: 'Actions',
+      forRecord: 'Actions for {{name}}',
+      create: 'Create',
+      save: 'Save',
+      cancel: 'Cancel',
+      close: 'Close',
+      edit: 'Edit',
+      retry: 'Retry',
+      saving: 'Saving…',
+    },
+    status: {
+      loading: 'Loading records',
+      refreshing: 'Refreshing…',
+    },
+    error: {
+      forbidden: 'You do not have permission to do that.',
+      requestFailed: 'Something went wrong. Please try again.',
+      validation: 'The value was rejected. Please check it.',
+      optionsFailed: 'Unable to load customers for the customer field.',
+    },
+    form: {
+      nameRequired: 'Name is required.',
+      nameTooLong: 'Name must be at most {{max}} characters.',
+      industryTooLong: 'Industry must be at most {{max}} characters.',
+      contactTooLong: 'Contact information must be at most {{max}} characters.',
+      customerRequired: 'Choose the customer this record belongs to.',
+      amountRequired: 'Enter an expected amount.',
+      amountInvalid: 'Enter a number.',
+      amountNegative: 'The expected amount cannot be negative.',
+    },
+    stage: {
+      following: 'Following',
+      won: 'Won',
+      lost: 'Lost',
+    },
+    customer: {
+      title: 'Customers',
+      description: 'Companies you sell to.',
+      detail: { title: 'Customer details' },
+      fields: {
+        name: 'Customer name',
+        industry: 'Industry',
+        single: 'Owning customer',
+        amountTotal: 'Expected amount total',
+      },
+      create: { action: 'Add customer', title: 'Add customer' },
+      edit: { action: 'Edit customer', title: 'Edit customer' },
+      form: {
+        description: 'A customer needs a name; the industry is optional.',
+      },
+      createSuccess: 'Customer "{{name}}" created.',
+      editSuccess: 'Customer "{{name}}" saved.',
+      error: { notFound: 'This customer no longer exists.' },
+      empty: {
+        title: 'No customers yet',
+        description:
+          'Add the first customer to start tracking contacts and opportunities.',
+      },
+      contacts: {
+        title: 'Contacts',
+        empty: 'This customer has no contacts yet.',
+      },
+      opportunities: {
+        title: 'Opportunities',
+        empty: 'This customer has no opportunities yet.',
+      },
+    },
+    contact: {
+      title: 'Contacts',
+      description: 'People at your customers.',
+      fields: {
+        name: 'Contact name',
+        contact: 'Contact information',
+        contactHint: 'Phone, email, or another way to reach this person.',
+        customer: 'Customer',
+      },
+      create: { action: 'Add contact', title: 'Add contact' },
+      edit: { title: 'Edit contact' },
+      form: { description: 'A contact needs a name and an owning customer.' },
+      createSuccess: 'Contact "{{name}}" created.',
+      editSuccess: 'Contact "{{name}}" saved.',
+      error: { notFound: 'This contact no longer exists.' },
+      empty: {
+        title: 'No contacts yet',
+        description: 'Add a contact for one of your customers.',
+      },
+    },
+    opportunity: {
+      title: 'Opportunities',
+      description: 'Deals you are working on.',
+      fields: {
+        name: 'Opportunity name',
+        customer: 'Customer',
+        amount: 'Expected amount',
+        amountHint:
+          'A number that is zero or greater, in the application currency.',
+        stage: 'Stage',
+      },
+      create: { action: 'Add opportunity', title: 'Add opportunity' },
+      edit: { title: 'Edit opportunity' },
+      form: {
+        description:
+          'An opportunity needs a name, a customer, an amount and a stage.',
+      },
+      createSuccess: 'Opportunity "{{name}}" created.',
+      editSuccess: 'Opportunity "{{name}}" saved.',
+      error: { notFound: 'This opportunity no longer exists.' },
+      filter: { allStages: 'All stages', stageAria: 'Filter by stage' },
+      empty: {
+        title: 'No opportunities yet',
+        description: 'Add the first opportunity for one of your customers.',
+        filteredTitle: 'No opportunities in this stage',
+        filteredDescription: 'Choose another stage or show all stages.',
+      },
+    },
+  },
+
   appearance: {
     title: 'Appearance',
     mode: 'Color mode',
@@ -130,6 +249,9 @@ const enUS = {
   },
   navigation: {
     home: 'Home',
+    customers: 'Customers',
+    contacts: 'Contacts',
+    opportunities: 'Opportunities',
     open: 'Open navigation',
     close: 'Close navigation',
     expand: 'Expand navigation',
