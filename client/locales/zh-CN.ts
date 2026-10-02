@@ -89,6 +89,75 @@ const zhCN: AppResource = {
     description: '向 AI 助手描述你的需求，逐步构建页面、数据模型和业务流程。',
   },
 
+  materials: {
+    list: {
+      title: '项目资料',
+      description:
+        '每份资料仅对其创建者可见。可上传 PNG 照片与 DOCX 文档，打开资料即可预览或下载。',
+      new: '新建资料',
+      loading: '正在加载资料',
+      retry: '重试',
+      emptyTitle: '暂无资料',
+      emptyDescription: '创建第一份项目资料，并上传其照片与文档。',
+      createdAt: '创建于 {{date}}',
+      fileCount: '{{count}} 个附件',
+    },
+    new: {
+      title: '新建项目资料',
+      description: '填写资料标题并上传附件。选择文件后会立即开始上传。',
+      back: '返回资料列表',
+      submit: '创建资料',
+      saving: '正在创建…',
+      savedTitle: '资料已创建',
+      savedDescription: '资料及其附件已保存。',
+    },
+    detail: {
+      title: '资料详情',
+      loading: '正在加载资料',
+      back: '返回资料列表',
+      createdAt: '创建于 {{date}}',
+      edit: '编辑',
+      save: '保存修改',
+      saving: '正在保存…',
+      savedTitle: '修改已保存',
+      savedDescription: '资料已更新。',
+      delete: '删除',
+      deleteTitle: '删除此资料？',
+      deleteDescription:
+        '“{{title}}”将被删除。其附件会被解除关联，但文件本身不会被销毁。',
+      deleteConfirm: '删除资料',
+      deleting: '正在删除…',
+      deletedTitle: '资料已删除',
+      deletedDescription: '该资料已被移除。',
+      deleteFailed: '无法删除资料',
+      attachmentsTitle: '附件',
+      attachmentsDescription: '打开文件即可预览，或将其下载到本地。',
+      noAttachments: '此资料暂无附件。',
+      previewFailed: '无法打开该附件',
+    },
+    form: {
+      title: '资料信息',
+      description: '标题为必填项，附件可选。',
+      titleLabel: '标题',
+      titlePlaceholder: '例如：滨江地块现场勘察',
+      filesLabel: '附件',
+      filesHint: '支持的文件：PNG 照片与 DOCX 文档。',
+      uploading: '正在上传…请等待文件上传完成后再保存。',
+    },
+    errors: {
+      titleRequired: '保存前请填写标题。',
+      titleTooLong: '标题不得超过 255 个字符。',
+      invalidFiles: '所选附件中有一个无效。',
+      invalidBody: '无法读取请求内容，请重试。',
+      notFound: '该资料不存在，或你无权访问。',
+      forbidden: '你无权访问该资料。',
+      fileNotFound: '找不到该附件。',
+      fileForbidden: '你无权访问该附件。',
+      unauthenticated: '请先登录再查看该资料。',
+      unknown: '出现错误，请重试。',
+    },
+  },
+
   appearance: {
     title: '外观',
     mode: '颜色模式',
@@ -121,6 +190,7 @@ const zhCN: AppResource = {
   },
   navigation: {
     home: '首页',
+    materials: '项目资料',
     open: '打开导航',
     close: '关闭导航',
     expand: '展开导航',
@@ -146,6 +216,14 @@ const zhCN: AppResource = {
   datePicker: {
     placeholder: '选择日期',
     rangePlaceholder: '选择日期范围',
+  },
+  // Reword strings the file plugin owns. The English wording is supplied by the component's `defaultValue`
+  // (see `client/extensions/nocobase-file-component-ui`), so it is only translated here.
+  overrides: {
+    '@nocobase/app-plugin-file': {
+      'files.imagePreviewFailed':
+        '无法显示该图片：文件已损坏或不是可读取的图片。',
+    },
   },
 };
 

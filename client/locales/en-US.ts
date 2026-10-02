@@ -96,6 +96,78 @@ const enUS = {
       'Describe what you need to your AI Agent, then build pages, data models, and business workflows.',
   },
 
+  materials: {
+    list: {
+      title: 'Project materials',
+      description:
+        'Each material is private to its owner. Attach PNG photos and DOCX documents, then open a material to preview or download them.',
+      new: 'New material',
+      loading: 'Loading materials',
+      retry: 'Try again',
+      emptyTitle: 'No materials yet',
+      emptyDescription:
+        'Create your first project material and attach its photos and documents.',
+      createdAt: 'Created {{date}}',
+      fileCount: '{{count}} attachment(s)',
+    },
+    new: {
+      title: 'New project material',
+      description:
+        'Give the material a title and attach its files. Files upload as soon as you choose them.',
+      back: 'Back to materials',
+      submit: 'Create material',
+      saving: 'Creating…',
+      savedTitle: 'Material created',
+      savedDescription: 'The material and its attachments were saved.',
+    },
+    detail: {
+      title: 'Material',
+      loading: 'Loading material',
+      back: 'Back to materials',
+      createdAt: 'Created {{date}}',
+      edit: 'Edit',
+      save: 'Save changes',
+      saving: 'Saving…',
+      savedTitle: 'Changes saved',
+      savedDescription: 'The material was updated.',
+      delete: 'Delete',
+      deleteTitle: 'Delete this material?',
+      deleteDescription:
+        '“{{title}}” will be deleted. Its attachments are detached but the files themselves are not destroyed.',
+      deleteConfirm: 'Delete material',
+      deleting: 'Deleting…',
+      deletedTitle: 'Material deleted',
+      deletedDescription: 'The material was removed.',
+      deleteFailed: 'Unable to delete the material',
+      attachmentsTitle: 'Attachments',
+      attachmentsDescription:
+        'Open a file to preview it, or download it to your device.',
+      noAttachments: 'This material has no attachments.',
+      previewFailed: 'Unable to open the attachment',
+    },
+    form: {
+      title: 'Material details',
+      description: 'A title is required. Attachments are optional.',
+      titleLabel: 'Title',
+      titlePlaceholder: 'e.g. Riverside site survey',
+      filesLabel: 'Attachments',
+      filesHint: 'Accepted files: PNG photos and DOCX documents.',
+      uploading: 'Uploading… wait for the files to finish before saving.',
+    },
+    errors: {
+      titleRequired: 'Enter a title before saving.',
+      titleTooLong: 'The title must be 255 characters or fewer.',
+      invalidFiles: 'One of the selected attachments is not valid.',
+      invalidBody: 'The request could not be read. Please try again.',
+      notFound: 'This material does not exist or you do not have access to it.',
+      forbidden: 'You do not have access to this material.',
+      fileNotFound: 'The attachment could not be found.',
+      fileForbidden: 'You do not have access to this attachment.',
+      unauthenticated: 'Sign in to view this material.',
+      unknown: 'Something went wrong. Please try again.',
+    },
+  },
+
   appearance: {
     title: 'Appearance',
     mode: 'Color mode',
@@ -130,6 +202,7 @@ const enUS = {
   },
   navigation: {
     home: 'Home',
+    materials: 'Project materials',
     open: 'Open navigation',
     close: 'Close navigation',
     expand: 'Expand navigation',

@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 
 import {
@@ -78,6 +78,26 @@ it.each(['docx', 'xlsx', 'pptx'])(
     expect(viewer.destroy).toHaveBeenCalledOnce();
   },
 );
+
+it('explains a corrupted image instead of silently showing its filename', async () => {
+  // A decodable URL is what makes the image branch run; the browser failing to draw the bytes is the corruption this
+  // test reproduces, since jsdom never decodes an image on its own.
+  const corrupted: FileRecord = {
+    ...file('png'),
+    mimeType: 'image/png',
+    contentUrl: 'https://files.example.test/attachment.png',
+  };
+  render(
+    <FilePreviewDialog files={[corrupted]} open onOpenChange={vi.fn()} />,
+  );
+
+  const image = await screen.findByRole('img', { name: 'attachment.png' });
+  fireEvent.error(image);
+
+  expect(await screen.findByRole('alert')).toHaveTextContent(
+    'Unable to display this image. The file is corrupted or not a readable image.',
+  );
+});
 
 it('shows the denied content response without trying a third-party viewer', async () => {
   vi.stubGlobal(
