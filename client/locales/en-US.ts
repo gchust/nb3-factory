@@ -130,12 +130,63 @@ const enUS = {
   },
   navigation: {
     home: 'Home',
+    materials: 'Document library',
+    assistant: 'Document assistant',
     open: 'Open navigation',
     close: 'Close navigation',
     expand: 'Expand navigation',
     collapse: 'Collapse navigation',
     label: 'Application navigation',
     breadcrumb: 'Breadcrumb',
+  },
+  materials: {
+    title: 'Document library',
+    description:
+      'Documents you are allowed to read. The assistant answers only from these.',
+    create: 'New document',
+    edit: 'Edit',
+    delete: 'Delete',
+    columnTitle: 'Title',
+    columnContent: 'Content',
+    columnActions: 'Actions',
+    createTitle: 'New document',
+    editTitle: 'Edit document',
+    formDescription:
+      'The title identifies this document in the assistant’s citations.',
+    fieldTitle: 'Title',
+    fieldContent: 'Content',
+    titleRequired: 'Enter a title.',
+    contentRequired: 'Enter the document content.',
+    emptyTitle: 'No documents yet',
+    emptyDescription: 'Documents you are allowed to read appear here.',
+    loadFailed: 'Unable to load documents',
+    retry: 'Retry',
+    operationFailed: 'The operation could not be completed',
+    created: 'Document created',
+    updated: 'Document saved',
+    deleted: 'Document deleted',
+    deleteTitle: 'Delete this document?',
+    deleteDescription:
+      '“{{title}}” will be permanently removed and can no longer be cited.',
+  },
+  assistant: {
+    title: 'Document assistant',
+    description:
+      'Ask about the documents you may read. Answers cite the document they come from.',
+    placeholder: 'Ask about the documents…',
+    disclaimer:
+      'The assistant answers only from documents you may read, and says when it has no evidence.',
+    loadingTitle: 'Preparing the assistant',
+    loadingDescription: 'Checking the available AI service…',
+    reasonLoadFailed: 'The AI service could not be reached.',
+    reasonNoEmployee: 'The document assistant is not registered.',
+    reasonNoModel: 'No AI model is enabled.',
+    unavailableTitle: 'The assistant is unavailable',
+    unavailableDescription:
+      'The AI service is not configured, so the assistant cannot answer yet.',
+    manualFallback:
+      'You can still read the documents yourself in the document library.',
+    openMaterials: 'Open the document library',
   },
   dataTable: {
     noResults: 'No results.',

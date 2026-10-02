@@ -1,4 +1,4 @@
-import { Home } from 'lucide-react';
+import { Bot, FileText, Home } from 'lucide-react';
 import {
   defineAppRoutes,
   defineSettingsRoutes,
@@ -15,6 +15,26 @@ const appRoutes: AppClientRouteContribution = defineAppRoutes([
     name: 'home',
     navigation: { title: 'navigation.home', icon: Home },
     path: '/',
+  },
+  {
+    // The document library every signed-in user reads from. The page id is the
+    // key the "资料主管/资料同事" permission sets grant, so renaming it would
+    // orphan those grants; see database/main/seeds/202610010002_documents_seed.ts.
+    auth: 'required',
+    authz: { resource: { type: 'page', id: 'materials' }, action: 'access' },
+    componentLoader: () => import('./pages/materials/index.js'),
+    name: 'materials',
+    navigation: { title: 'navigation.materials', icon: FileText },
+    path: '/materials',
+  },
+  {
+    // The read-only assistant. It shares the page-grant key with the seed too.
+    auth: 'required',
+    authz: { resource: { type: 'page', id: 'assistant' }, action: 'access' },
+    componentLoader: () => import('./pages/assistant/index.js'),
+    name: 'assistant',
+    navigation: { title: 'navigation.assistant', icon: Bot },
+    path: '/assistant',
   },
   {
     auth: 'guest',
