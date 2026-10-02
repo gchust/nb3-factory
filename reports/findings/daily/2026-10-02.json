@@ -1,0 +1,227 @@
+{
+  "version": 1,
+  "date": "2026-10-02",
+  "timeZone": "Asia/Shanghai",
+  "entries": [
+    {
+      "key": "5623b3aa294df2225f36330f",
+      "id": "518:36938133650:1:F1",
+      "issue": 518,
+      "runId": 36938133650,
+      "attempt": 1,
+      "findingId": "F1",
+      "runDay": "2026-10-02",
+      "archivedAt": "2026-10-02T23:45:38.061Z",
+      "title": "selection.records 仅接受字符串 id，与指引和框架自身推荐的整数自增主键不兼容",
+      "summary": "`@nocobase/authorization` 的 parseRecordSelection 要求 records 的每个 id 都是非空字符串（selection.js 15-18）；authorizer.compileConstraints 把 records 选择直接展开为对主键的 `$eq` 字符串条件（authorizer.js 257-259），scope.idsScope 用原始 id 构造 condition（scope.js 45-47）。而 nocobase-db Skill 示例（SKILL.md 91）和框架自身的迁移历史表（history.js 8）都用 collection.increments('id')，@nocobase/db 的过滤校验对 increments/integer 只接受安全整数（repository.js 1140-1143）。于是按记录 id 的 records 选择在整数主键集合上无法工作。",
+      "severity": "minor",
+      "type": "capability-gap",
+      "owner": "framework",
+      "targets": [
+        "@nocobase/authorization",
+        "@nocobase/app-plugin-authorization",
+        "@nocobase/db",
+        "app/.agents/skills/nocobase-db"
+      ],
+      "subjectKeys": [
+        "pkg:@nocobase/app-plugin-authorization",
+        "pkg:@nocobase/authorization",
+        "pkg:@nocobase/db",
+        "skill:nocobase-db"
+      ],
+      "featurePoint": null,
+      "candidates": [
+        "应用搭建/授权",
+        "应用搭建/数据库"
+      ],
+      "taskTitle": "内部资料阅读与临时共享",
+      "appVersion": "1.0.0-beta.50",
+      "group": {
+        "title": "selection.records 只接受字符串 id，整数自增主键无法按记录授权（定向共享 500）",
+        "issues": 3,
+        "first": "2026-09-29"
+      },
+      "report": "reports/issues/518/runs/36938133650/attempt-1/index.html#review-finding-F1"
+    },
+    {
+      "key": "ecb8f70ebd9863adfa1e4eaa",
+      "id": "518:36938133650:1:F2",
+      "issue": 518,
+      "runId": 36938133650,
+      "attempt": 1,
+      "findingId": "F2",
+      "runDay": "2026-10-02",
+      "archivedAt": "2026-10-02T23:45:38.061Z",
+      "title": "数据范围组合辅助 anyScope/allScopes 未公开导出，应用被迫重复实现",
+      "summary": "scope.js 提供 condition/anyScope/allScopes 等范围构造与组合（scope.js 24-47），但包的 exports 只暴露 core、default-access、sharing-rules、restriction-rules 等入口，未导出这些辅助。App 在 app/server/library/scope.ts 46-60 重写了 allScopes 的 AND 折叠，并在注释中说明该 helper 不是包公开面。",
+      "severity": "minor",
+      "type": "usability",
+      "owner": "framework",
+      "targets": [
+        "@nocobase/authorization",
+        "@nocobase/app-plugin-authorization"
+      ],
+      "subjectKeys": [
+        "pkg:@nocobase/app-plugin-authorization",
+        "pkg:@nocobase/authorization"
+      ],
+      "featurePoint": "应用搭建/授权",
+      "candidates": [
+        "应用搭建/授权"
+      ],
+      "taskTitle": "内部资料阅读与临时共享",
+      "appVersion": "1.0.0-beta.50",
+      "group": {
+        "title": "记录访问 AND 组合子 allScopes/idsScope 已在包内实现但未从公开入口导出",
+        "issues": 3,
+        "first": "2026-09-29"
+      },
+      "report": "reports/issues/518/runs/36938133650/attempt-1/index.html#review-finding-F2"
+    },
+    {
+      "key": "b24222c96e3dbfb57a93f682",
+      "id": "518:36938133650:1:F5",
+      "issue": 518,
+      "runId": 36938133650,
+      "attempt": 1,
+      "findingId": "F5",
+      "runDay": "2026-10-02",
+      "archivedAt": "2026-10-02T23:45:38.061Z",
+      "title": "指引未提示 records 选择仅支持字符串 id 与整数主键的关系",
+      "summary": "core-api.md 指导用 record selection/recordAccess 表达数据范围（18-25），business-module.md 说明内置 record access（105-113），nocobase-db Skill 又推荐 collection.increments('id')（SKILL.md 91），但没有任何一处说明 records 只接受字符串 id、与整数主键组合会失败。",
+      "severity": "minor",
+      "type": "guidance-gap",
+      "owner": "documentation",
+      "targets": [
+        "@nocobase/authorization",
+        "app/.agents/skills/nocobase-app-plugin-authorization",
+        "app/.agents/skills/nocobase-db"
+      ],
+      "subjectKeys": [
+        "pkg:@nocobase/authorization",
+        "skill:nocobase-app-plugin-authorization",
+        "skill:nocobase-db"
+      ],
+      "featurePoint": null,
+      "candidates": [
+        "应用搭建/授权",
+        "应用搭建/数据库"
+      ],
+      "taskTitle": "内部资料阅读与临时共享",
+      "appVersion": "1.0.0-beta.50",
+      "group": {
+        "title": "授权/数据库指引推荐 records selection 却未提示仅支持字符串 id 与整数主键限制",
+        "issues": 2,
+        "first": "2026-09-30"
+      },
+      "report": "reports/issues/518/runs/36938133650/attempt-1/index.html#review-finding-F5"
+    },
+    {
+      "key": "50698b6ed2960fb08dd45935",
+      "id": "519:36938138067:1:F3",
+      "issue": 519,
+      "runId": 36938138067,
+      "attempt": 1,
+      "findingId": "F3",
+      "runDay": "2026-10-02",
+      "archivedAt": "2026-10-02T23:45:38.061Z",
+      "title": "受限内容鉴权指引互相冲突：「挂载前注册守卫」与「不得依赖贡献顺序」",
+      "summary": "同一批框架 Skill 对同名内容前缀给出两条不能同时严格满足的指令，且都未点明「file 插件不贡献路由」这一让当前 app 侥幸成立的前提。",
+      "severity": "minor",
+      "type": "guidance-error",
+      "owner": "documentation",
+      "targets": [
+        "packages/@nocobase/app-plugin-file/skills/nocobase-app-plugin-file/SKILL.md",
+        "@nocobase/app-server",
+        "app/.agents/skills/nocobase-app-development/references/server-routes.md"
+      ],
+      "subjectKeys": [
+        "guide:@nocobase/app-plugin-file/skills/nocobase-app-plugin-file",
+        "pkg:@nocobase/app-server",
+        "skill:nocobase-app-development"
+      ],
+      "featurePoint": "应用搭建/文件",
+      "candidates": [
+        "应用搭建/文件"
+      ],
+      "taskTitle": "项目资料与私有附件",
+      "appVersion": "1.0.0-beta.50",
+      "group": {
+        "title": "受限内容鉴权指引互相冲突：「挂载前注册守卫」与「不得依赖贡献顺序」",
+        "issues": 1,
+        "first": "2026-10-02"
+      },
+      "report": "reports/issues/519/runs/36938138067/attempt-1/index.html#review-finding-F3"
+    },
+    {
+      "key": "348c57d882da6c5f913709e3",
+      "id": "519:36938138067:1:F4",
+      "issue": 519,
+      "runId": 36938138067,
+      "attempt": 1,
+      "findingId": "F4",
+      "runDay": "2026-10-02",
+      "archivedAt": "2026-10-02T23:45:38.061Z",
+      "title": "defineFileRepositoryApiRoutes 没有一等的受限内容入口，受保护字节只能靠顺序敏感的自定义守卫",
+      "summary": "defineFileRepositoryApiRoutes 生成的内容路由固定绑定 unwritablePolicy，并注释 Public first-version routes. Authentication and authorization are application-owned（E5/E7）。应用要保护它只能在贡献列表前置一个根守卫；框架已有顺序无关的 defineHttpMiddleware/addHttpMiddleware，registerRoutes 在所有贡献之前执行它们（E19/E20），但没有针对内容前缀的推荐接入，也没有为上传动作提供「认证失败返回 401 而非插件缺 principal 的 403」的内建守卫（E7/E24）。",
+      "severity": "minor",
+      "type": "capability-gap",
+      "owner": "plugin",
+      "targets": [
+        "@nocobase/app-plugin-file",
+        "@nocobase/app-server"
+      ],
+      "subjectKeys": [
+        "pkg:@nocobase/app-plugin-file",
+        "pkg:@nocobase/app-server"
+      ],
+      "featurePoint": "应用搭建/文件",
+      "candidates": [
+        "应用搭建/文件"
+      ],
+      "taskTitle": "项目资料与私有附件",
+      "appVersion": "1.0.0-beta.50",
+      "group": {
+        "title": "defineFileRepositoryApiRoutes 没有一等的受限内容入口，受保护字节只能靠顺序敏感的自定义守卫",
+        "issues": 1,
+        "first": "2026-10-02"
+      },
+      "report": "reports/issues/519/runs/36938138067/attempt-1/index.html#review-finding-F4"
+    },
+    {
+      "key": "8791c7227f74a25fdd0b2f9e",
+      "id": "519:36938138067:1:F5",
+      "issue": 519,
+      "runId": 36938138067,
+      "attempt": 1,
+      "findingId": "F5",
+      "runDay": "2026-10-02",
+      "archivedAt": "2026-10-02T23:45:38.061Z",
+      "title": "Registry 默认图片预览没有解码失败态，损坏图片静默显示破图",
+      "summary": "registry/component-ui/components/previewers/file-preview-content.tsx 的 image 分支只返回 <img src={url}>，没有 onError 或失败提示（E28）；而同目录 OfficeOpenXmlPreview 实现了请求错误捕获、下载回退与销毁（E29/E30）。SKILL 允许应用按需调整自有副本（E32），本任务因此在 app 的 file-preview-content.tsx 新增 ImagePreview（useEffect 重置、failed 状态、role=alert 与 files.imagePreviewFailed 文案）（E34）。",
+      "severity": "info",
+      "type": "usability",
+      "owner": "plugin",
+      "targets": [
+        "@nocobase/app-plugin-file",
+        "packages/@nocobase/app-plugin-file/skills/nocobase-app-plugin-file/SKILL.md"
+      ],
+      "subjectKeys": [
+        "guide:@nocobase/app-plugin-file/skills/nocobase-app-plugin-file",
+        "pkg:@nocobase/app-plugin-file"
+      ],
+      "featurePoint": "应用搭建/文件",
+      "candidates": [
+        "应用搭建/文件"
+      ],
+      "taskTitle": "项目资料与私有附件",
+      "appVersion": "1.0.0-beta.50",
+      "group": {
+        "title": "Registry 图片预览缺少解码失败态，损坏图片只显示浏览器破图占位",
+        "issues": 4,
+        "first": "2026-09-29"
+      },
+      "report": "reports/issues/519/runs/36938138067/attempt-1/index.html#review-finding-F5"
+    }
+  ]
+}
