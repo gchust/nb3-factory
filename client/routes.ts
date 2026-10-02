@@ -1,4 +1,4 @@
-import { Home } from 'lucide-react';
+import { Home, Wrench } from 'lucide-react';
 import {
   defineAppRoutes,
   defineSettingsRoutes,
@@ -43,6 +43,28 @@ const appRoutes: AppClientRouteContribution = defineAppRoutes([
     componentLoader: () => import('./pages/auth/reset-password.js'),
     name: 'reset-password',
     path: '/reset-password',
+  },
+  {
+    name: 'tickets',
+    path: '/tickets',
+    auth: 'required',
+    authz: { resource: { type: 'page', id: 'tickets' }, action: 'access' },
+    navigation: { title: 'navigation.tickets', icon: Wrench },
+    componentLoader: () => import('./pages/tickets/index.js'),
+    children: [
+      {
+        name: 'ticket-new',
+        path: 'new',
+        authz: 'skip',
+        componentLoader: () => import('./pages/tickets/new.js'),
+      },
+      {
+        name: 'ticket-detail',
+        path: ':ticketId',
+        authz: 'skip',
+        componentLoader: () => import('./pages/tickets/detail/index.js'),
+      },
+    ],
   },
 ]);
 

@@ -95,6 +95,101 @@ const enUS = {
     description:
       'Describe what you need to your AI Agent, then build pages, data models, and business workflows.',
   },
+  tickets: {
+    title: 'IT repair tickets',
+    description: 'Report an IT problem and follow how it is handled.',
+    loading: 'Loading tickets…',
+    empty: 'No tickets yet.',
+    error: {
+      title: 'Tickets could not be loaded',
+      reload: 'Refresh the page to try again.',
+    },
+    filter: {
+      label: 'Filter by status',
+      all: 'All statuses',
+    },
+    create: {
+      action: 'New ticket',
+      title: 'Report an IT problem',
+      description: 'Describe the problem so an IT handler can pick it up.',
+      submit: 'Submit ticket',
+      submitting: 'Submitting…',
+      titleRequired: 'Enter a title for the ticket.',
+      created: 'Ticket submitted.',
+      failed: 'The ticket could not be submitted. Please try again.',
+      field: {
+        title: 'Title',
+        titlePlaceholder: 'What is the problem?',
+        category: 'Category',
+        description: 'Description',
+        descriptionPlaceholder:
+          'Add any detail that helps the handler (optional).',
+      },
+    },
+    columns: {
+      title: 'Title',
+      category: 'Category',
+      status: 'Status',
+      submitter: 'Submitter',
+      handler: 'Handler',
+      createdAt: 'Submitted',
+    },
+    category: {
+      computer: 'Computer',
+      account: 'Account',
+      other: 'Other',
+    },
+    status: {
+      pending: 'Pending',
+      in_progress: 'In progress',
+      completed: 'Completed',
+    },
+    detail: {
+      overview: 'Overview',
+      overviewDescription: 'Who raised the ticket and how it has progressed.',
+      submittedAt: 'Submitted at',
+      startedAt: 'Started at',
+      completedAt: 'Completed at',
+      description: 'Description',
+      noDescription: 'No description was provided.',
+      resolution: 'Resolution',
+      resolutionDescription: 'What the IT handler did to resolve the ticket.',
+      notFoundTitle: 'Ticket unavailable',
+      notFound: 'This ticket does not exist or you do not have access to it.',
+      start: 'Start handling',
+      started: 'Handling started.',
+      startFailed: 'The ticket could not be started. Please try again.',
+      complete: 'Complete',
+      completed: 'Ticket completed.',
+      completeFailed: 'The ticket could not be completed. Please try again.',
+      inProgressTitle: 'Being handled',
+      inProgress: 'An IT handler is working on this ticket.',
+    },
+    complete: {
+      title: 'Complete ticket',
+      description: 'Record what was done before closing the ticket.',
+      field: 'Resolution',
+      submit: 'Complete ticket',
+      required: 'Enter a resolution before completing the ticket.',
+    },
+  },
+  resource: 'IT repair ticket',
+  resourceDescription:
+    'Employee IT repair tickets and their handling workflow.',
+  recordAccess: {
+    own: 'Own tickets',
+    ownDescription: 'Only the tickets the person submitted.',
+  },
+  scopes: {
+    tickets: 'Tickets',
+  },
+  sections: {
+    support: 'IT support',
+  },
+  permissionSets: {
+    employee: 'IT employee',
+    handler: 'IT handler',
+  },
 
   appearance: {
     title: 'Appearance',
@@ -114,6 +209,10 @@ const enUS = {
     cancel: 'Cancel',
     confirm: 'Confirm',
     language: 'Language',
+    view: 'View tickets',
+    create: 'Submit tickets',
+    start: 'Start handling',
+    complete: 'Complete handling',
   },
   notices: {
     serverLocaleFallback:
@@ -130,6 +229,7 @@ const enUS = {
   },
   navigation: {
     home: 'Home',
+    tickets: 'IT tickets',
     open: 'Open navigation',
     close: 'Close navigation',
     expand: 'Expand navigation',
