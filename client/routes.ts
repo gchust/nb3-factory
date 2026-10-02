@@ -1,4 +1,4 @@
-import { Home } from 'lucide-react';
+import { Building2, Home, Target, Users } from 'lucide-react';
 import {
   defineAppRoutes,
   defineSettingsRoutes,
@@ -15,6 +15,89 @@ const appRoutes: AppClientRouteContribution = defineAppRoutes([
     name: 'home',
     navigation: { title: 'navigation.home', icon: Home },
     path: '/',
+  },
+  {
+    // A single sales group works on all three record types, so every signed-in user reaches these pages. The server
+    // routes still require an authenticated session; `auth: 'required'` only governs browser navigation.
+    auth: 'required',
+    authz: 'skip',
+    componentLoader: () => import('./pages/customers/index.js'),
+    name: 'customers',
+    navigation: { title: 'navigation.customers', icon: Building2, order: 10 },
+    path: '/customers',
+    children: [
+      {
+        auth: 'required',
+        authz: 'skip',
+        componentLoader: () => import('./pages/customers/new.js'),
+        name: 'customers-new',
+        path: 'new',
+      },
+      {
+        auth: 'required',
+        authz: 'skip',
+        componentLoader: () => import('./pages/customers/detail/index.js'),
+        name: 'customers-detail',
+        path: ':customerId',
+        children: [
+          {
+            auth: 'required',
+            authz: 'skip',
+            componentLoader: () => import('./pages/customers/detail/edit.js'),
+            name: 'customers-detail-edit',
+            path: 'edit',
+          },
+        ],
+      },
+    ],
+  },
+  {
+    auth: 'required',
+    authz: 'skip',
+    componentLoader: () => import('./pages/contacts/index.js'),
+    name: 'contacts',
+    navigation: { title: 'navigation.contacts', icon: Users, order: 20 },
+    path: '/contacts',
+    children: [
+      {
+        auth: 'required',
+        authz: 'skip',
+        componentLoader: () => import('./pages/contacts/new.js'),
+        name: 'contacts-new',
+        path: 'new',
+      },
+      {
+        auth: 'required',
+        authz: 'skip',
+        componentLoader: () => import('./pages/contacts/edit.js'),
+        name: 'contacts-edit',
+        path: ':contactId/edit',
+      },
+    ],
+  },
+  {
+    auth: 'required',
+    authz: 'skip',
+    componentLoader: () => import('./pages/opportunities/index.js'),
+    name: 'opportunities',
+    navigation: { title: 'navigation.opportunities', icon: Target, order: 30 },
+    path: '/opportunities',
+    children: [
+      {
+        auth: 'required',
+        authz: 'skip',
+        componentLoader: () => import('./pages/opportunities/new.js'),
+        name: 'opportunities-new',
+        path: 'new',
+      },
+      {
+        auth: 'required',
+        authz: 'skip',
+        componentLoader: () => import('./pages/opportunities/edit.js'),
+        name: 'opportunities-edit',
+        path: ':opportunityId/edit',
+      },
+    ],
   },
   {
     auth: 'guest',

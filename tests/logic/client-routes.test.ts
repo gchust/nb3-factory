@@ -91,9 +91,21 @@ describe('app client routes', () => {
     // that requires sign-in adds an entry here, because that is a new grant somebody has to be given.
     const resolved = resolveRoutes();
 
-    // The landing page opted out of page authorization, so it is reachable by every signed-in user.
+    // Every page opted out of page authorization, so all of them are reachable by every signed-in user. This is a
+    // single sales group: the application does not distinguish roles. Grants are not stored against any of these
+    // names, which is why none of them is a page id; keep the list in the order the routes are declared.
     expect(pageAuthorizations(resolved.routes)).toEqual([
       { name: 'home', authorizedAs: null },
+      { name: 'customers', authorizedAs: null },
+      { name: 'customers-new', authorizedAs: null },
+      { name: 'customers-detail', authorizedAs: null },
+      { name: 'customers-detail-edit', authorizedAs: null },
+      { name: 'contacts', authorizedAs: null },
+      { name: 'contacts-new', authorizedAs: null },
+      { name: 'contacts-edit', authorizedAs: null },
+      { name: 'opportunities', authorizedAs: null },
+      { name: 'opportunities-new', authorizedAs: null },
+      { name: 'opportunities-edit', authorizedAs: null },
     ]);
   });
 });
