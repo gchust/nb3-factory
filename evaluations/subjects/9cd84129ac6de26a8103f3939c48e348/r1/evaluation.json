@@ -1,0 +1,2604 @@
+{
+  "schemaVersion": 1,
+  "type": "evaluation-report",
+  "source": {
+    "producer": "nb3-factory",
+    "instance": "gchust/nb3-factory",
+    "project": "gchust/nb3-factory",
+    "exporter": {
+      "version": 1,
+      "controlSha": "0f72d9b81f981f10501c5ac0ee0e7d786f1f4698",
+      "runId": 36950221609,
+      "attempt": 1
+    }
+  },
+  "run": {
+    "key": "gchust/nb3-factory/issues/519/initial",
+    "kind": "initial",
+    "identity": "recorded",
+    "batchKey": null,
+    "caseKey": null,
+    "sampleIndex": null,
+    "sampleKey": null,
+    "task": {
+      "repository": "gchust/nb3-factory",
+      "issue": 519,
+      "buildCommentId": null,
+      "title": "项目资料与私有附件"
+    },
+    "case": {
+      "source": "preset",
+      "presetIssueNumber": 203,
+      "capturedAt": "2026-10-01T22:58:04Z",
+      "inputHash": "282223cc2b66dcfa84d2cc273bcf2816fa9416d31046092a23880e7ff24f5867",
+      "reviewHash": "39fda15a6dbb3856e4765204db0ed61a904ec20dfce06daf915a3df1fe67ea5f"
+    }
+  },
+  "revision": 1,
+  "createdAt": "2026-10-02T01:18:07Z",
+  "precedence": {
+    "producer": {
+      "runId": 36938138067,
+      "attempt": 1,
+      "startedAt": "2026-10-01T22:57:52Z"
+    },
+    "executionOrder": 1,
+    "knownLaterExecutions": 0,
+    "chainTerminal": true,
+    "reviewRubric": 2,
+    "reviewState": "completed",
+    "review": {
+      "kind": "build",
+      "at": "2026-10-01T22:57:52Z",
+      "runId": 36938138067,
+      "attempt": 1
+    },
+    "qaCoverage": "none"
+  },
+  "baseline": {
+    "track": "published-template",
+    "application": {
+      "baseRef": "develop",
+      "baseSha": "0f72d9b81f981f10501c5ac0ee0e7d786f1f4698",
+      "candidate": {
+        "patchSha256": "084efa696c8fb05b9ab19957f2c58ca2b772b21df81584cd4ad2d4e72ad45ae1",
+        "headSha": "a6393357cda5d7555402aa002cd1792105788894"
+      }
+    },
+    "factory": {
+      "controlSha": "0f72d9b81f981f10501c5ac0ee0e7d786f1f4698",
+      "entrySha": "0f72d9b81f981f10501c5ac0ee0e7d786f1f4698"
+    },
+    "template": {
+      "creatorVersion": "0.1.0-beta.24",
+      "templateVersion": "1.0.0-beta.50"
+    },
+    "dependencies": {
+      "lockfileSha256": "fc4f398ef6cf510da8958ca26db0bea4c17ab81019ac0e2c464503439c7de0be",
+      "baselineFingerprint": "c86d91639ddb6c43f838e352d0075db7657aeb89aed976a3275692a54e16827b",
+      "packages": [
+        {
+          "name": "@nocobase/ai-employee",
+          "version": "0.2.0-beta.8"
+        },
+        {
+          "name": "@nocobase/ai-employee-avatars",
+          "version": "1.0.2"
+        },
+        {
+          "name": "@nocobase/app-cli",
+          "version": "1.0.0-beta.9"
+        },
+        {
+          "name": "@nocobase/app-client",
+          "version": "1.0.0-beta.23"
+        },
+        {
+          "name": "@nocobase/app-plugin-ai-employee",
+          "version": "1.0.0-beta.26"
+        },
+        {
+          "name": "@nocobase/app-plugin-ai-knowledge-base",
+          "version": "0.1.0-beta.9"
+        },
+        {
+          "name": "@nocobase/app-plugin-api-keys",
+          "version": "0.1.0-beta.9"
+        },
+        {
+          "name": "@nocobase/app-plugin-authentication",
+          "version": "1.0.0-beta.24"
+        },
+        {
+          "name": "@nocobase/app-plugin-authorization",
+          "version": "0.2.0-beta.21"
+        },
+        {
+          "name": "@nocobase/app-plugin-authz-default-access",
+          "version": "0.1.0-beta.6"
+        },
+        {
+          "name": "@nocobase/app-plugin-authz-restriction-rules",
+          "version": "0.1.0-beta.5"
+        },
+        {
+          "name": "@nocobase/app-plugin-authz-sharing-rules",
+          "version": "0.1.0-beta.6"
+        },
+        {
+          "name": "@nocobase/app-plugin-database-explorer",
+          "version": "0.1.0-beta.7"
+        },
+        {
+          "name": "@nocobase/app-plugin-file",
+          "version": "0.1.0-beta.16"
+        },
+        {
+          "name": "@nocobase/app-plugin-i18n",
+          "version": "0.1.0-beta.10"
+        },
+        {
+          "name": "@nocobase/app-plugin-mail",
+          "version": "0.1.0-beta.0"
+        },
+        {
+          "name": "@nocobase/app-plugin-notification",
+          "version": "0.1.0-beta.18"
+        },
+        {
+          "name": "@nocobase/app-plugin-notification-in-app",
+          "version": "0.2.0-beta.18"
+        },
+        {
+          "name": "@nocobase/app-plugin-notification-providers",
+          "version": "0.2.0-beta.7"
+        },
+        {
+          "name": "@nocobase/app-plugin-scheduler",
+          "version": "0.1.0-beta.9"
+        },
+        {
+          "name": "@nocobase/app-plugin-template-print",
+          "version": "0.0.2-beta.0"
+        },
+        {
+          "name": "@nocobase/app-plugin-users",
+          "version": "1.0.0-beta.12"
+        },
+        {
+          "name": "@nocobase/app-plugin-workflow",
+          "version": "1.0.0-beta.29"
+        },
+        {
+          "name": "@nocobase/app-server",
+          "version": "1.0.0-beta.29"
+        },
+        {
+          "name": "@nocobase/app-skills",
+          "version": "0.1.0-beta.19"
+        },
+        {
+          "name": "@nocobase/app-websocket",
+          "version": "0.0.1"
+        },
+        {
+          "name": "@nocobase/authorization",
+          "version": "0.1.0-beta.10"
+        },
+        {
+          "name": "@nocobase/caching",
+          "version": "0.1.0-beta.2"
+        },
+        {
+          "name": "@nocobase/config",
+          "version": "0.1.0-beta.1"
+        },
+        {
+          "name": "@nocobase/cron",
+          "version": "0.1.0"
+        },
+        {
+          "name": "@nocobase/db",
+          "version": "1.0.0-beta.16"
+        },
+        {
+          "name": "@nocobase/db-sqlite",
+          "version": "0.1.0-beta.3"
+        },
+        {
+          "name": "@nocobase/dev-config",
+          "version": "0.1.0-beta.14"
+        },
+        {
+          "name": "@nocobase/drive",
+          "version": "0.1.0-beta.4"
+        },
+        {
+          "name": "@nocobase/hub-cli",
+          "version": "0.1.0-beta.0"
+        },
+        {
+          "name": "@nocobase/i18n",
+          "version": "1.0.0-beta.4"
+        },
+        {
+          "name": "@nocobase/logging",
+          "version": "0.1.0-beta.6"
+        },
+        {
+          "name": "@nocobase/queue",
+          "version": "0.1.0-beta.7"
+        },
+        {
+          "name": "@nocobase/repository-input",
+          "version": "0.1.0-beta.1"
+        },
+        {
+          "name": "@nocobase/service-provider",
+          "version": "0.0.2-beta.1"
+        },
+        {
+          "name": "@nocobase/session",
+          "version": "0.1.0-beta.2"
+        },
+        {
+          "name": "@nocobase/snowflake",
+          "version": "1.0.0-beta.3"
+        }
+      ]
+    },
+    "skills": {
+      "fingerprint": "5ea384f4e3cd9e5c4d50775634deb133f94e64e0dc1060248e42480bd40a8a33",
+      "files": 120
+    },
+    "sourceSnapshot": null,
+    "inputs": {
+      "taskInputHash": "282223cc2b66dcfa84d2cc273bcf2816fa9416d31046092a23880e7ff24f5867",
+      "pipelineInputHash": "90967da230f5a3c9a2e7dcb4a74a82adb719f9b603c886cf3049bfdd0ba8ef10",
+      "reviewHash": "39fda15a6dbb3856e4765204db0ed61a904ec20dfce06daf915a3df1fe67ea5f",
+      "reviewCriteriaHash": "39fda15a6dbb3856e4765204db0ed61a904ec20dfce06daf915a3df1fe67ea5f",
+      "prompts": [
+        {
+          "phase": "implementation",
+          "path": "agent-implement.jsonl.invocation.json",
+          "sha256": "42b0c5e37def779ce304ab765f3f7de691913d3f9d788094593207a5f26712da"
+        },
+        {
+          "phase": "review",
+          "path": "agent-review.jsonl.invocation.json",
+          "sha256": "1ec73a192eaf3e9e64652ee8fcd878764963b1ad665de6e6fb86822db7f14ebf"
+        }
+      ]
+    },
+    "rubric": {
+      "id": "nb3-framework",
+      "version": 2
+    },
+    "agent": {
+      "engine": "pi",
+      "model": "deepseek-v4.1-flash",
+      "version": "0.86.1",
+      "buildReviewMode": "full",
+      "configuration": {
+        "fingerprints": [
+          "2f5401c2837d7dae1f1f014540b983521db478e49b3e29c61dbb26be0a75e3bf"
+        ],
+        "complete": false
+      }
+    },
+    "environment": {
+      "browserFixturesSha256": "3b527d18aa2f6d58fdfea5cdd916631ea1ee3425abeba09bb1f961f2128c554b",
+      "browserPreflight": "passed"
+    }
+  },
+  "executions": [
+    {
+      "key": "run/36938138067/attempt/1",
+      "kind": "implementation",
+      "order": 1,
+      "workflow": "code-agent-task",
+      "runId": 36938138067,
+      "attempt": 1,
+      "event": "workflow_dispatch",
+      "previousRunId": null,
+      "conclusion": "failed",
+      "startedAt": "2026-10-01T22:57:52Z",
+      "endedAt": "2026-10-02T01:14:50Z",
+      "jobSeconds": 8211,
+      "controlSha": "0f72d9b81f981f10501c5ac0ee0e7d786f1f4698",
+      "patchSha256": "084efa696c8fb05b9ab19957f2c58ca2b772b21df81584cd4ad2d4e72ad45ae1",
+      "source": "usage-receipt"
+    }
+  ],
+  "outcome": {
+    "execution": "completed",
+    "acceptance": "not-run",
+    "delivery": "published",
+    "pullRequest": {
+      "number": 522,
+      "headSha": "a6393357cda5d7555402aa002cd1792105788894"
+    },
+    "detail": "执行链已终结；业务验收与代码交付分别见 acceptance / delivery。"
+  },
+  "qa": {
+    "coverage": "none",
+    "rounds": [],
+    "firstFull": {
+      "status": "not-run",
+      "round": null,
+      "executionKey": null,
+      "basis": "执行链尚未进入验证。"
+    },
+    "finalFull": {
+      "status": "not-run",
+      "round": null,
+      "executionKey": null,
+      "basis": "执行链尚未进入验证。"
+    },
+    "criteria": [
+      {
+        "id": "B01",
+        "text": "甲上传 PNG 并保存资料，刷新后能看到真实图片，并能下载打开。",
+        "optional": false,
+        "firstFull": "not-run",
+        "finalFull": "not-run"
+      },
+      {
+        "id": "B02",
+        "text": "甲上传 DOCX 并保存，刷新后在应用内看到文档正文，而非只有文件名或下载按钮。",
+        "optional": false,
+        "firstFull": "not-run",
+        "finalFull": "not-run"
+      },
+      {
+        "id": "B03",
+        "text": "先上传文件但留空标题，保存应失败且已选附件仍保留；补上标题后能直接保存。",
+        "optional": false,
+        "firstFull": "not-run",
+        "finalFull": "not-run"
+      },
+      {
+        "id": "B04",
+        "text": "移除一个附件并保存，刷新后这份资料不再显示该附件。",
+        "optional": false,
+        "firstFull": "not-run",
+        "finalFull": "not-run"
+      },
+      {
+        "id": "B05",
+        "text": "乙和未登录访问者分别打开甲的资料或附件链接，均不能看到内容；甲仍可正常查看。",
+        "optional": false,
+        "firstFull": "not-run",
+        "finalFull": "not-run"
+      },
+      {
+        "id": "B06",
+        "text": "使用损坏 PNG，上传或预览实际发现问题时给出明确失败提示；上传已拒绝时不必继续预览。",
+        "optional": false,
+        "firstFull": "not-run",
+        "finalFull": "not-run"
+      }
+    ],
+    "firstPassWithoutRepair": "no",
+    "counts": {
+      "execution": {
+        "verificationAttempts": null,
+        "repairAttempts": null,
+        "source": "repair-summary.json（仅本执行）"
+      },
+      "chain": {
+        "verificationAttempts": 0,
+        "repairAttempts": 0,
+        "source": "pipeline-state.json（跨 Handoff 累计检查点，不再相加）"
+      }
+    },
+    "note": "工厂修复次数不等于 Agent 开发中的全部自测和修正；未记录 Agent 内部试错，不宣称开发全程无错误。"
+  },
+  "reviews": [
+    {
+      "key": "review/36938138067.1/v2-d42ed396f95c",
+      "role": "original",
+      "selected": true,
+      "state": "completed",
+      "reason": "独立 Agent 评审完成；评分是基于本次证据的意见，不替代业务 QA 或人工评审。",
+      "rubric": {
+        "id": "nb3-framework",
+        "version": 2,
+        "scale": {
+          "min": 0,
+          "max": 100
+        },
+        "businessUiIncluded": false,
+        "dimensions": [
+          {
+            "key": "requirementFit",
+            "label": "需求满足度"
+          },
+          {
+            "key": "usability",
+            "label": "使用便利度"
+          },
+          {
+            "key": "agentFriendliness",
+            "label": "Agent 友好度"
+          },
+          {
+            "key": "design",
+            "label": "设计合理性"
+          },
+          {
+            "key": "reliability",
+            "label": "实现完整性与可靠性"
+          }
+        ]
+      },
+      "reviewer": {
+        "engine": "pi",
+        "model": "deepseek-v4.1-flash",
+        "version": "0.86.1",
+        "runId": 36938138067,
+        "attempt": 1,
+        "controlSha": "0f72d9b81f981f10501c5ac0ee0e7d786f1f4698",
+        "replay": false
+      },
+      "producer": {
+        "runId": 36938138067,
+        "attempt": 1
+      },
+      "basis": {
+        "inputHash": "d42ed396f95c88a458612b5fdae6bf718fcb5a608ef767dab5f02e20aab5bba4",
+        "patchSha256": "084efa696c8fb05b9ab19957f2c58ca2b772b21df81584cd4ad2d4e72ad45ae1",
+        "baseSha": "0f72d9b81f981f10501c5ac0ee0e7d786f1f4698",
+        "lockfileSha256": "fc4f398ef6cf510da8958ca26db0bea4c17ab81019ac0e2c464503439c7de0be",
+        "reviewCriteriaHash": "39fda15a6dbb3856e4765204db0ed61a904ec20dfce06daf915a3df1fe67ea5f",
+        "artifactHash": "0737c0df82450f5576ab6c05c5d3632d93b90873ef1e7a9d6d0a355b613a7fdd"
+      },
+      "buildReviewMode": "full",
+      "summary": "NocoBase3 的文件插件、认证插件、@nocobase/db 与预览 Registry 在本场景中基本可用：文件表契约、上传与字节内容路由、迁移 DSL、Repository 写策略/事务，以及同源 cookie 会话鉴权都有落地实现，应用只需组合与声明。主要缺口是受限内容鉴权指引互相冲突且缺少一等入口——唯一被文件插件 Skill 推荐的写法是「在内容路由贡献之前注册守卫」，与 app-development Skill 的「不得依赖贡献顺序」相矛盾，私有字节边界隐式依赖 routes 数组顺序；此外 Registry 默认图片预览没有损坏图片失败态，需应用扩展自有副本。本次运行以 agent_failure（Stream error occurred）中断、无工厂 QA 轮次与截图，业务 B01–B06 与所有界面维度均未被独立验证，结论基于冻结源码与原始日志。",
+      "progress": {
+        "complete": true,
+        "pendingModules": []
+      },
+      "modules": [
+        {
+          "key": "review/36938138067.1/v2-d42ed396f95c/M1",
+          "name": "文件仓库：上传、元数据与字节内容路由",
+          "subjectKeys": [
+            "pkg:@nocobase/app-plugin-file",
+            "pkg:@nocobase/drive",
+            "guide:@nocobase/app-plugin-file/skills/nocobase-app-plugin-file",
+            "guide:@nocobase/app-plugin-file/docs/README.md"
+          ],
+          "mapping": "resolved",
+          "targets": [
+            {
+              "kind": "library",
+              "name": "@nocobase/app-plugin-file",
+              "subjectKey": "pkg:@nocobase/app-plugin-file",
+              "entrypoints": [
+                "defineFileRepositoryApiRoutes",
+                "serverFileRepositoryManagerToken",
+                "FILE_COLUMNS",
+                "uploadPolicy",
+                "FileRepositoryError"
+              ],
+              "evidence": [
+                "review/36938138067.1/v2-d42ed396f95c/E1",
+                "review/36938138067.1/v2-d42ed396f95c/E2",
+                "review/36938138067.1/v2-d42ed396f95c/E3",
+                "review/36938138067.1/v2-d42ed396f95c/E4",
+                "review/36938138067.1/v2-d42ed396f95c/E5",
+                "review/36938138067.1/v2-d42ed396f95c/E6",
+                "review/36938138067.1/v2-d42ed396f95c/E7",
+                "review/36938138067.1/v2-d42ed396f95c/E8"
+              ]
+            },
+            {
+              "kind": "library",
+              "name": "@nocobase/drive",
+              "subjectKey": "pkg:@nocobase/drive",
+              "entrypoints": [
+                "createDriveManager",
+                "createFsDriver",
+                "createS3Driver",
+                "assertDefaultDisk"
+              ],
+              "evidence": [
+                "review/36938138067.1/v2-d42ed396f95c/E14"
+              ]
+            },
+            {
+              "kind": "guidance",
+              "name": "packages/@nocobase/app-plugin-file/skills/nocobase-app-plugin-file/SKILL.md",
+              "subjectKey": "guide:@nocobase/app-plugin-file/skills/nocobase-app-plugin-file",
+              "entrypoints": [
+                "policy 与上传派生说明",
+                "Client FileRepository 用法",
+                "contentUrl 与返回字段"
+              ],
+              "evidence": [
+                "review/36938138067.1/v2-d42ed396f95c/E9",
+                "review/36938138067.1/v2-d42ed396f95c/E10"
+              ]
+            },
+            {
+              "kind": "guidance",
+              "name": "packages/@nocobase/app-plugin-file/docs/README.md",
+              "subjectKey": "guide:@nocobase/app-plugin-file/docs/README.md",
+              "entrypoints": [
+                "Collection 固定字段表",
+                "内容路由与 stream/redirect 说明",
+                "内容路由是有意例外"
+              ],
+              "evidence": [
+                "review/36938138067.1/v2-d42ed396f95c/E11",
+                "review/36938138067.1/v2-d42ed396f95c/E12",
+                "review/36938138067.1/v2-d42ed396f95c/E13"
+              ]
+            }
+          ],
+          "scope": "文件 Collection 的固定列契约、上传动作与 Policy 派生、内容字节路由（stream/redirect）、contentUrl 派生，以及磁盘抽象；业务集合、归属规则与保存时机属应用职责。",
+          "limitations": "未运行应用或端到端上传/下载；上传与内容路由的运行时行为仅由冻结源码与日志推断。",
+          "criteria": [],
+          "qa": {
+            "firstFull": "unknown",
+            "finalFull": "unknown"
+          },
+          "requirements": [
+            {
+              "need": "上传 PNG/DOCX 得到元数据记录（文件名、MIME、大小、时间）与可用的 contentUrl",
+              "responsibility": "框架提供文件集合列契约、上传动作与元数据合成；应用声明集合与暴露策略。",
+              "support": "direct",
+              "recommendedUsage": "用 defineFileRepositoryApiRoutes 声明 materialFiles 暴露与 policy，客户端用 clientFileRepositoryManagerToken 的 repository 调用 uploadOne/uploadMany，按 docs/README 建必备列。",
+              "actualUsage": "app/server/routes/materials.ts 用 defineFileRepositoryApiRoutes 暴露 uploadOne/uploadMany；app/client/pages/materials/editor.tsx 用 FileUploadField 与 clientFileRepositoryManagerToken 上传，未自写文件存储。",
+              "gapOwner": "none",
+              "evidence": [
+                "review/36938138067.1/v2-d42ed396f95c/E1",
+                "review/36938138067.1/v2-d42ed396f95c/E4",
+                "review/36938138067.1/v2-d42ed396f95c/E6",
+                "review/36938138067.1/v2-d42ed396f95c/E9",
+                "review/36938138067.1/v2-d42ed396f95c/E10",
+                "review/36938138067.1/v2-d42ed396f95c/E11"
+              ]
+            },
+            {
+              "need": "按 UUID 获取字节内容（可下载、本地盘 stream、支持 /main 前缀）且返回内容一致",
+              "responsibility": "框架负责内容路由、UUID+ext 匹配、响应头与磁盘读取；应用负责记录级归属。",
+              "support": "direct",
+              "recommendedUsage": "直接用记录返回的 contentUrl；内容入口为 GET <accessPath>/<uuid>.<ext>（无扩展名省略点），stream 模式返回完整字节。",
+              "actualUsage": "app 的 detail/编辑/预览均使用 contentUrl；未自行拼装字节接口。",
+              "gapOwner": "none",
+              "evidence": [
+                "review/36938138067.1/v2-d42ed396f95c/E7",
+                "review/36938138067.1/v2-d42ed396f95c/E8",
+                "review/36938138067.1/v2-d42ed396f95c/E13"
+              ]
+            },
+            {
+              "need": "文件表写盘前就暴露表结构错误，失败上传不留下不可对账的对象",
+              "responsibility": "框架负责列校验、写盘与失败补偿；应用负责业务事务。",
+              "support": "direct",
+              "recommendedUsage": "按 docs/README 建九列并可加业务列；缺列/类型不符抛 INVALID_FILE_COLLECTION，uploadMany 越界或提交失败时回滚并清理对象。",
+              "actualUsage": "app/database/main/migrations/202610010002_create_material_files.ts 严格镜像九列并附加 createdById/materialId。",
+              "gapOwner": "none",
+              "evidence": [
+                "review/36938138067.1/v2-d42ed396f95c/E1",
+                "review/36938138067.1/v2-d42ed396f95c/E3",
+                "review/36938138067.1/v2-d42ed396f95c/E4",
+                "review/36938138067.1/v2-d42ed396f95c/E11"
+              ]
+            }
+          ],
+          "scores": {
+            "requirementFit": {
+              "score": 85,
+              "reason": "插件同时提供九列契约（E1）、写盘前校验（E3）、上传动作与 Policy 派生（E2/E6）、内容字节路由（E7）与 contentUrl 派生（E8），文档也把内容路由是公开例外讲清（E12），本次上传/元数据/下载职责被直接覆盖；仅运行时未验证。",
+              "evidence": [
+                "review/36938138067.1/v2-d42ed396f95c/E1",
+                "review/36938138067.1/v2-d42ed396f95c/E4",
+                "review/36938138067.1/v2-d42ed396f95c/E6",
+                "review/36938138067.1/v2-d42ed396f95c/E7",
+                "review/36938138067.1/v2-d42ed396f95c/E9",
+                "review/36938138067.1/v2-d42ed396f95c/E11"
+              ]
+            },
+            "usability": {
+              "score": 82,
+              "reason": "一次 defineFileRepositoryApiRoutes 声明即得到上传动作、派生 contentUrl 与 Client manager 入口（E9/E10），docs 给出字段表与 basePath 说明（E11/E13）；代价是必须手写迁移并自行表达归属。",
+              "evidence": [
+                "review/36938138067.1/v2-d42ed396f95c/E9",
+                "review/36938138067.1/v2-d42ed396f95c/E10",
+                "review/36938138067.1/v2-d42ed396f95c/E11",
+                "review/36938138067.1/v2-d42ed396f95c/E13"
+              ]
+            },
+            "agentFriendliness": {
+              "score": 78,
+              "reason": "SKILL 覆盖 policy、上传、Client 用法与返回字段（E9/E10），docs 逐列给出兼容类型与 INVALID_FILE_COLLECTION 语义（E11/E13），可据错误码定位；但内容路由的鉴权与顺序前提未在同一处讲透，日志显示 Agent 需额外试探。",
+              "evidence": [
+                "review/36938138067.1/v2-d42ed396f95c/E9",
+                "review/36938138067.1/v2-d42ed396f95c/E11",
+                "review/36938138067.1/v2-d42ed396f95c/E13"
+              ]
+            },
+            "design": {
+              "score": 84,
+              "reason": "FILE_COLUMNS 与 uploadPolicy 把文件表契约和暴露策略解耦并显式标注 read 恒为全列（E1/E2），路由层与 Repository/Drive 分离、stream/redirect 与缓存头收口在内容路由（E5/E7）。",
+              "evidence": [
+                "review/36938138067.1/v2-d42ed396f95c/E1",
+                "review/36938138067.1/v2-d42ed396f95c/E2",
+                "review/36938138067.1/v2-d42ed396f95c/E5",
+                "review/36938138067.1/v2-d42ed396f95c/E7"
+              ]
+            },
+            "reliability": {
+              "score": 85,
+              "reason": "validateCollection 在写盘前校验列与唯一主键（E3），store 合成服务端值并核对 contentLength（E4），内容路由对记录/对象缺失返回 404 并加 private/no-store、nosniff 与 sandbox CSP（E7），实现与文档一致。",
+              "evidence": [
+                "review/36938138067.1/v2-d42ed396f95c/E1",
+                "review/36938138067.1/v2-d42ed396f95c/E3",
+                "review/36938138067.1/v2-d42ed396f95c/E4",
+                "review/36938138067.1/v2-d42ed396f95c/E7"
+              ]
+            }
+          }
+        },
+        {
+          "key": "review/36938138067.1/v2-d42ed396f95c/M2",
+          "name": "私有内容授权边界与路由装配",
+          "subjectKeys": [
+            "pkg:@nocobase/app-plugin-authentication",
+            "pkg:@nocobase/app-server",
+            "guide:@nocobase/app-plugin-file/skills/nocobase-app-plugin-file",
+            "skill:nocobase-app-development"
+          ],
+          "mapping": "resolved",
+          "targets": [
+            {
+              "kind": "library",
+              "name": "@nocobase/app-plugin-authentication",
+              "subjectKey": "pkg:@nocobase/app-plugin-authentication",
+              "entrypoints": [
+                "authenticationToken",
+                "auth.required",
+                "auth.optional",
+                "defaultCookieAttributes.path"
+              ],
+              "evidence": [
+                "review/36938138067.1/v2-d42ed396f95c/E17",
+                "review/36938138067.1/v2-d42ed396f95c/E18"
+              ]
+            },
+            {
+              "kind": "library",
+              "name": "@nocobase/app-server",
+              "subjectKey": "pkg:@nocobase/app-server",
+              "entrypoints": [
+                "defineHttpMiddleware",
+                "defineApiRoutes",
+                "defineRootRoutes",
+                "Application.addHttpMiddleware",
+                "Application.registerRoutes"
+              ],
+              "evidence": [
+                "review/36938138067.1/v2-d42ed396f95c/E19",
+                "review/36938138067.1/v2-d42ed396f95c/E20"
+              ]
+            },
+            {
+              "kind": "guidance",
+              "name": "packages/@nocobase/app-plugin-file/skills/nocobase-app-plugin-file/SKILL.md",
+              "subjectKey": "guide:@nocobase/app-plugin-file/skills/nocobase-app-plugin-file",
+              "entrypoints": [
+                "公开路由与 App 守卫说明",
+                "同源 cookie 受限预览"
+              ],
+              "evidence": [
+                "review/36938138067.1/v2-d42ed396f95c/E9"
+              ]
+            },
+            {
+              "kind": "guidance",
+              "name": "app/.agents/skills/nocobase-app-development/references/server-routes.md",
+              "subjectKey": "skill:nocobase-app-development",
+              "entrypoints": [
+                "Every route owns its own security",
+                "不得依赖贡献注册顺序",
+                "auth.required 401 语义"
+              ],
+              "evidence": [
+                "review/36938138067.1/v2-d42ed396f95c/E22"
+              ]
+            }
+          ],
+          "scope": "会话认证中间件与 cookie 作用域、路由贡献的装配顺序、以及应用如何在公开字节路由前建立受限内容边界。",
+          "limitations": "未运行应用，内容守卫与插件字节路由的实际匹配顺序、addHttpMiddleware 方案均未端到端验证；无匿名/他人/允许用户三类运行时测试。",
+          "criteria": [],
+          "qa": {
+            "firstFull": "unknown",
+            "finalFull": "unknown"
+          },
+          "requirements": [
+            {
+              "need": "受限附件只对拥有者开放：匿名 401、他人 403，且不能靠猜测 UUID 绕过",
+              "responsibility": "框架提供会话认证与同源 cookie 语义；应用把文件映射到归属记录并做记录级检查。",
+              "support": "composition",
+              "recommendedUsage": "在 <accessPath>/* 上注册 App 自有认证与授权并检查记录访问；同源会话 cookie 保护的内容路由可服务受限预览。",
+              "actualUsage": "app/server/routes/materials.ts 的 materialContentGuard 组合 auth.required() 与 checkFileAccess，返回 401/404/403；app/server/routes/index.ts 把它排在文件路由之前。",
+              "gapOwner": "none",
+              "evidence": [
+                "review/36938138067.1/v2-d42ed396f95c/E9",
+                "review/36938138067.1/v2-d42ed396f95c/E17",
+                "review/36938138067.1/v2-d42ed396f95c/E18",
+                "review/36938138067.1/v2-d42ed396f95c/E23",
+                "review/36938138067.1/v2-d42ed396f95c/E15"
+              ]
+            },
+            {
+              "need": "受限内容的边界不能因插件/贡献加入而静默失效",
+              "responsibility": "框架应提供（或明确指引）不依赖注册顺序的前缀守卫入口；应用选择正确入口。",
+              "support": "workaround",
+              "recommendedUsage": "session/logging/i18n 已用 defineHttpMiddleware + Application.addHttpMiddleware 在所有路由贡献之前注册；但文件插件 SKILL 只描述「在挂载内容路由之前注册守卫」。",
+              "actualUsage": "app 只能把 materialContentGuard 放在自身 routes 数组首位，并在 app/server/routes/index.ts 注释 Order is the security boundary；当前 file 插件不贡献路由，故该顺序恰好生效。",
+              "gapOwner": "plugin",
+              "evidence": [
+                "review/36938138067.1/v2-d42ed396f95c/E9",
+                "review/36938138067.1/v2-d42ed396f95c/E19",
+                "review/36938138067.1/v2-d42ed396f95c/E20",
+                "review/36938138067.1/v2-d42ed396f95c/E22",
+                "review/36938138067.1/v2-d42ed396f95c/E16"
+              ]
+            },
+            {
+              "need": "上传动作对匿名请求返回 401，而不是插件在缺 principal 时的 403",
+              "responsibility": "框架提供认证中间件与 principal/policy；应用为上传动作声明守卫。",
+              "support": "composition",
+              "recommendedUsage": "只暴露 uploadOne/uploadMany，并用 policy.create.defaults 落归属，同时在动作路径上 auth.required()。",
+              "actualUsage": "app 的 materialUploadGuard 对 /materialFiles:uploadOne|uploadMany 加 auth.required()，policy.create.defaults.createdById 落归属。",
+              "gapOwner": "none",
+              "evidence": [
+                "review/36938138067.1/v2-d42ed396f95c/E9",
+                "review/36938138067.1/v2-d42ed396f95c/E17",
+                "review/36938138067.1/v2-d42ed396f95c/E24"
+              ]
+            }
+          ],
+          "scores": {
+            "requirementFit": {
+              "score": 68,
+              "reason": "认证插件对无会话稳定返回 401 且 cookie 作用域覆盖根内容路径（E17/E18），SKILL 也说明内容路由需 App 守卫（E9），因此鉴权本身可组合实现；但边界的位置只能靠贡献顺序，属绕行而非一等能力（E22）。",
+              "evidence": [
+                "review/36938138067.1/v2-d42ed396f95c/E9",
+                "review/36938138067.1/v2-d42ed396f95c/E17",
+                "review/36938138067.1/v2-d42ed396f95c/E18",
+                "review/36938138067.1/v2-d42ed396f95c/E22"
+              ]
+            },
+            "usability": {
+              "score": 66,
+              "reason": "框架存在顺序无关的 defineHttpMiddleware/addHttpMiddleware 入口（E19/E20），但没有把内容保护做成 defineFileRepositoryApiRoutes 的一等选项，接入者必须理解挂载顺序并自行复刻守卫（E22）。",
+              "evidence": [
+                "review/36938138067.1/v2-d42ed396f95c/E17",
+                "review/36938138067.1/v2-d42ed396f95c/E19",
+                "review/36938138067.1/v2-d42ed396f95c/E20",
+                "review/36938138067.1/v2-d42ed396f95c/E22"
+              ]
+            },
+            "agentFriendliness": {
+              "score": 64,
+              "reason": "两份 Skill 分别要求「挂载前注册守卫」与「不要依赖贡献顺序」，未给出消解方式（E9/E22）；日志显示 Agent 需多次用临时 Hono 脚本试探中间件匹配，且该方案未被任一 Skill 指向。",
+              "evidence": [
+                "review/36938138067.1/v2-d42ed396f95c/E9",
+                "review/36938138067.1/v2-d42ed396f95c/E20",
+                "review/36938138067.1/v2-d42ed396f95c/E22"
+              ]
+            },
+            "design": {
+              "score": 70,
+              "reason": "公开内容路由 + App 自有鉴权是有意设计，且同源 cookie 路径与 auth.required 的语义自洽（E17/E18/E19）；但缺少一等的 authorize/content 接入点，边界分散在应用贡献顺序中。",
+              "evidence": [
+                "review/36938138067.1/v2-d42ed396f95c/E17",
+                "review/36938138067.1/v2-d42ed396f95c/E19",
+                "review/36938138067.1/v2-d42ed396f95c/E20"
+              ]
+            },
+            "reliability": {
+              "score": 80,
+              "reason": "auth.required() 只读请求头、与路径无关，未命中会话即 401（E17），cookie path 取 publicBasePath 或 / 因而会随根内容请求发送（E18），registerRoutes 对 httpMiddleware 先于贡献执行（E19），守卫机制本身可靠。",
+              "evidence": [
+                "review/36938138067.1/v2-d42ed396f95c/E17",
+                "review/36938138067.1/v2-d42ed396f95c/E18",
+                "review/36938138067.1/v2-d42ed396f95c/E19"
+              ]
+            }
+          }
+        },
+        {
+          "key": "review/36938138067.1/v2-d42ed396f95c/M3",
+          "name": "文件预览组件（图片 / OOXML / 损坏文件）",
+          "subjectKeys": [
+            "pkg:@nocobase/app-plugin-file",
+            "guide:@nocobase/app-plugin-file/skills/nocobase-app-plugin-file"
+          ],
+          "mapping": "resolved",
+          "targets": [
+            {
+              "kind": "library",
+              "name": "@nocobase/app-plugin-file",
+              "subjectKey": "pkg:@nocobase/app-plugin-file",
+              "entrypoints": [
+                "resolveFilePreviewKind",
+                "isSafeImagePreview",
+                "resolveOfficeOpenXmlFormat",
+                "resolveSafeFileUrl",
+                "fileUrlCredentials",
+                "FilePreviewContent",
+                "FileUploadField"
+              ],
+              "evidence": [
+                "review/36938138067.1/v2-d42ed396f95c/E26",
+                "review/36938138067.1/v2-d42ed396f95c/E27",
+                "review/36938138067.1/v2-d42ed396f95c/E28",
+                "review/36938138067.1/v2-d42ed396f95c/E29",
+                "review/36938138067.1/v2-d42ed396f95c/E30",
+                "review/36938138067.1/v2-d42ed396f95c/E31"
+              ]
+            },
+            {
+              "kind": "guidance",
+              "name": "packages/@nocobase/app-plugin-file/skills/nocobase-app-plugin-file/SKILL.md",
+              "subjectKey": "guide:@nocobase/app-plugin-file/skills/nocobase-app-plugin-file",
+              "entrypoints": [
+                "Registry 组件与 FileUploadField",
+                "Preview and content access",
+                "same-origin credentials"
+              ],
+              "evidence": [
+                "review/36938138067.1/v2-d42ed396f95c/E32",
+                "review/36938138067.1/v2-d42ed396f95c/E33"
+              ]
+            }
+          ],
+          "scope": "Registry 预览组件的能力范围（安全图片、OOXML 本地渲染、PDF/文本/音视频、失败回退）、受保护内容的同源凭据，以及上传字段的受控状态。业务页面组装属应用。",
+          "limitations": "未查看任何运行时截图或浏览器预览；损坏图片与 OOXML 的实际渲染表现未经端到端验证。",
+          "criteria": [],
+          "qa": {
+            "firstFull": "unknown",
+            "finalFull": "unknown"
+          },
+          "requirements": [
+            {
+              "need": "PNG 图片、DOCX（OOXML）在应用内预览，DOCX 不上传第三方服务",
+              "responsibility": "框架负责避开主动内容的安全图片判断、OOXML 识别与本地渲染/失败回退；应用负责页面与数据组装。",
+              "support": "direct",
+              "recommendedUsage": "使用 Registry 的 FilePreviewContent；图片经 isSafeImagePreview（排除 svg/active），OOXML 经 resolveOfficeOpenXmlFormat 并本地渲染。",
+              "actualUsage": "app 复用 Registry 组件（并在自有副本中扩展），detail/编辑/预览均传入 contentUrl。",
+              "gapOwner": "none",
+              "evidence": [
+                "review/36938138067.1/v2-d42ed396f95c/E26",
+                "review/36938138067.1/v2-d42ed396f95c/E27",
+                "review/36938138067.1/v2-d42ed396f95c/E28",
+                "review/36938138067.1/v2-d42ed396f95c/E30",
+                "review/36938138067.1/v2-d42ed396f95c/E32"
+              ]
+            },
+            {
+              "need": "受权限保护的内容也能预览（同源带会话）",
+              "responsibility": "框架负责安全 URL 判断与请求凭据策略；应用负责内容地址。",
+              "support": "direct",
+              "recommendedUsage": "OOXML/PDF/文本 fetch 使用同源凭据；跨域省略凭据；不把 Bearer token 放进 contentUrl。",
+              "actualUsage": "app 预览组件与 OOXML fetch 使用 fileUrlCredentials/resolveSafeFileUrl，同源用 same-origin。",
+              "gapOwner": "none",
+              "evidence": [
+                "review/36938138067.1/v2-d42ed396f95c/E31",
+                "review/36938138067.1/v2-d42ed396f95c/E32"
+              ]
+            },
+            {
+              "need": "损坏/不可读图片给出清晰失败提示，而不是静默破图",
+              "responsibility": "默认预览组件应提供图片解码失败态；应用若扩展自有副本需保持等价失败处理。",
+              "support": "missing",
+              "recommendedUsage": "SKILL 允许按需调整 App 自有 Registry 源码（E32），但未要求默认图片分支提供 onError 或列出该扩展点。",
+              "actualUsage": "Registry 的 image 分支只渲染 <img>（无 onError），应用在自有 file-preview-content.tsx 中新增 ImagePreview（failed 状态 + files.imagePreviewFailed 文案）以满足 B06。",
+              "gapOwner": "plugin",
+              "evidence": [
+                "review/36938138067.1/v2-d42ed396f95c/E28",
+                "review/36938138067.1/v2-d42ed396f95c/E32",
+                "review/36938138067.1/v2-d42ed396f95c/E34"
+              ]
+            },
+            {
+              "need": "保存被拒时已上传附件保留，移除附件后状态持久",
+              "responsibility": "框架提供受控上传字段与删除语义；应用负责把这些 id 与业务记录关联。",
+              "support": "composition",
+              "recommendedUsage": "FileUploadField 受控 value/onChange 与 onStatusChange；removeOnDelete 调 deleteOne，否则仅解除关联。",
+              "actualUsage": "app/client/pages/materials/editor.tsx 把上传记录放在组件自身 state，保存被拒（缺标题）时不重传；删除走应用 API。",
+              "gapOwner": "none",
+              "evidence": [
+                "review/36938138067.1/v2-d42ed396f95c/E33",
+                "review/36938138067.1/v2-d42ed396f95c/E34"
+              ]
+            }
+          ],
+          "scores": {
+            "requirementFit": {
+              "score": 78,
+              "reason": "图片/OOXML/PDF/文本/音视频预览与安全判断都有实现（E26/E27/E28/E30），同源凭据满足受限预览（E31/E32）；损坏图片失败态在默认组件缺失，需应用扩展（E34）。",
+              "evidence": [
+                "review/36938138067.1/v2-d42ed396f95c/E26",
+                "review/36938138067.1/v2-d42ed396f95c/E27",
+                "review/36938138067.1/v2-d42ed396f95c/E28",
+                "review/36938138067.1/v2-d42ed396f95c/E30",
+                "review/36938138067.1/v2-d42ed396f95c/E32"
+              ]
+            },
+            "usability": {
+              "score": 76,
+              "reason": "预览分类、安全 URL 与同源凭据工具现成（E26/E28/E31），SKILL 说明各格式与受限预览方式（E32）；但默认图片失败态缺失，接入者需自行补并维护自有副本。",
+              "evidence": [
+                "review/36938138067.1/v2-d42ed396f95c/E26",
+                "review/36938138067.1/v2-d42ed396f95c/E28",
+                "review/36938138067.1/v2-d42ed396f95c/E31",
+                "review/36938138067.1/v2-d42ed396f95c/E32"
+              ]
+            },
+            "agentFriendliness": {
+              "score": 74,
+              "reason": "SKILL 对预览格式、凭据与失败回退有明确说明（E32），OOXML 失败回退可直接复用（E30）；图片成功态与失败态的差异无指引，Agent 需自行发现并实现（E28/E34）。",
+              "evidence": [
+                "review/36938138067.1/v2-d42ed396f95c/E28",
+                "review/36938138067.1/v2-d42ed396f95c/E30",
+                "review/36938138067.1/v2-d42ed396f95c/E32"
+              ]
+            },
+            "design": {
+              "score": 78,
+              "reason": "预览分类与安全判断集中在 lib（E26/E27），凭据策略独立于组件（E31），组件按 kind 分派且有失败回退；但 image/office 分支缺少与 OOXML 对齐的失败态抽象。",
+              "evidence": [
+                "review/36938138067.1/v2-d42ed396f95c/E26",
+                "review/36938138067.1/v2-d42ed396f95c/E27",
+                "review/36938138067.1/v2-d42ed396f95c/E31"
+              ]
+            },
+            "reliability": {
+              "score": 80,
+              "reason": "OOXML 预览具备 abort、错误回退与销毁，fetch 用同源凭据（E29/E30/E31），主动内容与不安全 URL 被拒绝（E27）；图片分支缺少解码失败处理（E28）。",
+              "evidence": [
+                "review/36938138067.1/v2-d42ed396f95c/E27",
+                "review/36938138067.1/v2-d42ed396f95c/E29",
+                "review/36938138067.1/v2-d42ed396f95c/E30",
+                "review/36938138067.1/v2-d42ed396f95c/E31"
+              ]
+            }
+          }
+        },
+        {
+          "key": "review/36938138067.1/v2-d42ed396f95c/M4",
+          "name": "集合建模、迁移与文件元数据持久化",
+          "subjectKeys": [
+            "pkg:@nocobase/db",
+            "pkg:@nocobase/app-plugin-file",
+            "guide:@nocobase/app-plugin-file/docs/README.md"
+          ],
+          "mapping": "resolved",
+          "targets": [
+            {
+              "kind": "library",
+              "name": "@nocobase/db",
+              "subjectKey": "pkg:@nocobase/db",
+              "entrypoints": [
+                "defineMigration",
+                "createCollectionBuilder / CollectionBuilder",
+                "fluent 字段 DSL（uuid/string/text/bigInt/datetime/primary/notNull/index）",
+                "DatabaseManager.transaction",
+                "DefaultRepository.createOne/updateOne/deleteOne"
+              ],
+              "evidence": [
+                "review/36938138067.1/v2-d42ed396f95c/E35",
+                "review/36938138067.1/v2-d42ed396f95c/E36",
+                "review/36938138067.1/v2-d42ed396f95c/E37",
+                "review/36938138067.1/v2-d42ed396f95c/E38",
+                "review/36938138067.1/v2-d42ed396f95c/E39",
+                "review/36938138067.1/v2-d42ed396f95c/E40",
+                "review/36938138067.1/v2-d42ed396f95c/E41"
+              ]
+            },
+            {
+              "kind": "library",
+              "name": "@nocobase/app-plugin-file",
+              "subjectKey": "pkg:@nocobase/app-plugin-file",
+              "entrypoints": [
+                "FILE_COLUMNS 文件表契约"
+              ],
+              "evidence": [
+                "review/36938138067.1/v2-d42ed396f95c/E1"
+              ]
+            },
+            {
+              "kind": "guidance",
+              "name": "packages/@nocobase/app-plugin-file/docs/README.md",
+              "subjectKey": "guide:@nocobase/app-plugin-file/docs/README.md",
+              "entrypoints": [
+                "Collection 固定字段表"
+              ],
+              "evidence": [
+                "review/36938138067.1/v2-d42ed396f95c/E11"
+              ]
+            }
+          ],
+          "scope": "业务集合与文件集合的迁移建模、文件表九列契约的落地，以及 Repository 写策略/事务在保存与关联文件时的行为。",
+          "limitations": "未运行迁移或数据库；SQLite 物理类型、生成列与事务回滚仅由源码与迁移文件推断。",
+          "criteria": [],
+          "qa": {
+            "firstFull": "unknown",
+            "finalFull": "unknown"
+          },
+          "requirements": [
+            {
+              "need": "为 projectMaterials 与 materialFiles 建立可迁移的集合与字段",
+              "responsibility": "框架提供迁移定义与集合/字段 DSL；应用负责具体业务列与命名。",
+              "support": "direct",
+              "recommendedUsage": "用 defineMigration + builder.createCollection 与 fluent 字段方法（uuid/string/text/bigInt/datetime/primary/index/notNull），文件集合必须严格包含插件九列。",
+              "actualUsage": "app/database/main/migrations 分别建 project_materials 与 material_files，后者镜像九列并附加 createdById/materialId 与索引。",
+              "gapOwner": "none",
+              "evidence": [
+                "review/36938138067.1/v2-d42ed396f95c/E35",
+                "review/36938138067.1/v2-d42ed396f95c/E37",
+                "review/36938138067.1/v2-d42ed396f95c/E11",
+                "review/36938138067.1/v2-d42ed396f95c/E44"
+              ]
+            },
+            {
+              "need": "保存/更新业务记录并维护文件归属，失败要回滚",
+              "responsibility": "框架提供事务与 Repository 写策略；应用负责业务不变量。",
+              "support": "direct",
+              "recommendedUsage": "DatabaseManager.transaction + Repository.createOne/updateOne/deleteOne；写操作先过 Policy 再读 payload。",
+              "actualUsage": "app/server/providers/materials.ts 在 database.transaction 内先断言文件归属，再 createOne/updateOne 业务记录与文件行。",
+              "gapOwner": "none",
+              "evidence": [
+                "review/36938138067.1/v2-d42ed396f95c/E38",
+                "review/36938138067.1/v2-d42ed396f95c/E40",
+                "review/36938138067.1/v2-d42ed396f95c/E41",
+                "review/36938138067.1/v2-d42ed396f95c/E44",
+                "review/36938138067.1/v2-d42ed396f95c/E25"
+              ]
+            },
+            {
+              "need": "上传元数据与暴露策略一致（归属列随上传落库）",
+              "responsibility": "框架负责上传 Policy 派生与默认值；应用负责归属字段与 allowlist。",
+              "support": "direct",
+              "recommendedUsage": "policy.create.defaults 落 createdById；uploadPolicy 保留 create.scope/defaults 并把字段白名单换成文件九列。",
+              "actualUsage": "app 暴露 materialFiles 仅 uploadOne/uploadMany，policy.create.defaults.createdById = principal.userId。",
+              "gapOwner": "none",
+              "evidence": [
+                "review/36938138067.1/v2-d42ed396f95c/E1",
+                "review/36938138067.1/v2-d42ed396f95c/E2"
+              ]
+            }
+          ],
+          "scores": {
+            "requirementFit": {
+              "score": 85,
+              "reason": "迁移 DSL（E35/E36/E37）与 Repository 写策略、事务（E38/E40/E41）直接支撑建表、保存与文件关联，文件表契约由插件 FILE_COLUMNS 与 docs 保证（E1/E11）。",
+              "evidence": [
+                "review/36938138067.1/v2-d42ed396f95c/E35",
+                "review/36938138067.1/v2-d42ed396f95c/E37",
+                "review/36938138067.1/v2-d42ed396f95c/E40",
+                "review/36938138067.1/v2-d42ed396f95c/E11"
+              ]
+            },
+            "usability": {
+              "score": 82,
+              "reason": "defineMigration 与 fluent 字段方法表达力足，createCollection 支持约束与索引（E35/E36/E37），事务与 Repository 入口清晰（E38）；文件表仍需手写迁移并严格对齐九列（E11）。",
+              "evidence": [
+                "review/36938138067.1/v2-d42ed396f95c/E35",
+                "review/36938138067.1/v2-d42ed396f95c/E36",
+                "review/36938138067.1/v2-d42ed396f95c/E38",
+                "review/36938138067.1/v2-d42ed396f95c/E11"
+              ]
+            },
+            "agentFriendliness": {
+              "score": 76,
+              "reason": "类型与 DSL 明确（E35/E37），docs 逐列给出兼容类型与失败码（E11）；但 Agent 需翻阅 node_modules 的 dist/src 结构定位类型，日志显示多处路径试探。",
+              "evidence": [
+                "review/36938138067.1/v2-d42ed396f95c/E35",
+                "review/36938138067.1/v2-d42ed396f95c/E37",
+                "review/36938138067.1/v2-d42ed396f95c/E11"
+              ]
+            },
+            "design": {
+              "score": 84,
+              "reason": "集合/字段/迁移与 Repository 策略分层清晰（E35/E40/E41），Policy 在读取 payload 前生效，写策略与 adapter 分离。",
+              "evidence": [
+                "review/36938138067.1/v2-d42ed396f95c/E35",
+                "review/36938138067.1/v2-d42ed396f95c/E40",
+                "review/36938138067.1/v2-d42ed396f95c/E41"
+              ]
+            },
+            "reliability": {
+              "score": 84,
+              "reason": "createOne/updateOne 在写前强制 Policy 与字段校验并返回稳定错误（E40/E41），DatabaseManager 提供 transaction（E38），实现与公开约定一致。",
+              "evidence": [
+                "review/36938138067.1/v2-d42ed396f95c/E40",
+                "review/36938138067.1/v2-d42ed396f95c/E41",
+                "review/36938138067.1/v2-d42ed396f95c/E38"
+              ]
+            }
+          }
+        }
+      ],
+      "findings": [
+        {
+          "id": "review/36938138067.1/v2-d42ed396f95c/F1",
+          "localId": "F1",
+          "kind": "strength",
+          "owner": "plugin",
+          "severity": "info",
+          "confidence": "confirmed",
+          "confirmedBy": "reviewer",
+          "reviewerStatus": "open",
+          "title": "文件插件把文件表契约、上传 Policy 派生与字节路由做成一致的库能力",
+          "detail": "packages/@nocobase/app-plugin-file 用 FILE_COLUMNS 固定九列并在写盘前 validateCollection（E1/E3），uploadPolicy 明确 read 恒为全列、create 从暴露 policy 派生且 false 保持 false（E2），内容路由按 UUID+ext 匹配、对缺失返回 404 并使用 private/no-store 与 nosniff/CSP（E7），上传路径派生 contentUrl（E8）。",
+          "impact": "企业文件上传、元数据与字节下载的主要职责由插件承担，应用集中在记录级归属与业务集合。",
+          "suggestedChange": "保持；可在类型层面标注 uploadPolicy 对 read 的覆盖，避免读者误以为 policy.read=false 能保护内容。",
+          "claimed": null,
+          "observed": null,
+          "evidence": [
+            "review/36938138067.1/v2-d42ed396f95c/E1",
+            "review/36938138067.1/v2-d42ed396f95c/E2",
+            "review/36938138067.1/v2-d42ed396f95c/E3",
+            "review/36938138067.1/v2-d42ed396f95c/E4",
+            "review/36938138067.1/v2-d42ed396f95c/E7"
+          ],
+          "moduleKeys": [
+            "review/36938138067.1/v2-d42ed396f95c/M1",
+            "review/36938138067.1/v2-d42ed396f95c/M4"
+          ],
+          "subjectKeys": [
+            "pkg:@nocobase/app-plugin-file",
+            "pkg:@nocobase/drive",
+            "guide:@nocobase/app-plugin-file/skills/nocobase-app-plugin-file",
+            "guide:@nocobase/app-plugin-file/docs/README.md",
+            "pkg:@nocobase/db"
+          ]
+        },
+        {
+          "id": "review/36938138067.1/v2-d42ed396f95c/F2",
+          "localId": "F2",
+          "kind": "strength",
+          "owner": "framework",
+          "severity": "info",
+          "confidence": "confirmed",
+          "confirmedBy": "reviewer",
+          "reviewerStatus": "open",
+          "title": "同源会话 cookie 覆盖根路径，使受保护内容路由可用 auth.required() 鉴权",
+          "detail": "认证 provider 把 defaultCookieAttributes.path 设为 app.publicBasePath || /（E18），浏览器对根路径内容 URL 的请求因此携带会话；auth.required() 只读请求头、与路径无关，未命中会话即 401（E17）；SKILL 明确同源 cookie 保护的内容路由可服务受限预览，前提是检查记录访问（E9）。",
+          "impact": "应用无需为受限附件引入额外 token 或签名机制即可在同源预览与下载中鉴权。",
+          "suggestedChange": "在文件插件 SKILL 中给出可直接照做的 defineHttpMiddleware/addHttpMiddleware 前缀守卫示例，并与该 cookie 前提放在一起。",
+          "claimed": null,
+          "observed": null,
+          "evidence": [
+            "review/36938138067.1/v2-d42ed396f95c/E17",
+            "review/36938138067.1/v2-d42ed396f95c/E18",
+            "review/36938138067.1/v2-d42ed396f95c/E9"
+          ],
+          "moduleKeys": [
+            "review/36938138067.1/v2-d42ed396f95c/M1",
+            "review/36938138067.1/v2-d42ed396f95c/M2"
+          ],
+          "subjectKeys": [
+            "pkg:@nocobase/app-plugin-file",
+            "pkg:@nocobase/drive",
+            "guide:@nocobase/app-plugin-file/skills/nocobase-app-plugin-file",
+            "guide:@nocobase/app-plugin-file/docs/README.md",
+            "pkg:@nocobase/app-plugin-authentication",
+            "pkg:@nocobase/app-server",
+            "skill:nocobase-app-development"
+          ]
+        },
+        {
+          "id": "review/36938138067.1/v2-d42ed396f95c/F3",
+          "localId": "F3",
+          "kind": "misleading",
+          "owner": "documentation",
+          "severity": "minor",
+          "confidence": "confirmed",
+          "confirmedBy": "reviewer",
+          "reviewerStatus": "open",
+          "title": "受限内容鉴权指引互相冲突：「挂载前注册守卫」与「不得依赖贡献顺序」",
+          "detail": "同一批框架 Skill 对同名内容前缀给出两条不能同时严格满足的指令，且都未点明「file 插件不贡献路由」这一让当前 app 侥幸成立的前提。",
+          "impact": "照文件插件 SKILL 实现受限附件时，安全边界隐式依赖贡献顺序；一旦其他插件先于守卫挂载同前缀路由，私有字节可能静默变为公开（server-routes.md 所述的失效模式）。当前冻结版本恰好可用，但依赖未文档化的前提。",
+          "suggestedChange": "统一表述：在文件插件 SKILL 中明确推荐 defineHttpMiddleware/addHttpMiddleware 在所有路由贡献之前注册 <accessPath>/* 守卫，或为 defineFileRepositoryApiRoutes 增加一等内容鉴权选项；并在 server-routes.md 补充该场景说明。",
+          "claimed": "文件插件 SKILL 第 126 行要求 App 在 <accessPath>/* 上 register App-owned authentication and authorization ... before mounting it；而 app-development 的 server-routes.md 第 43、47 行规定 Every route owns its own security、Never depend on middleware installed by another route, or on the order contributions happen to be registered in ... silently becomes public。",
+          "observed": "冻结实现里唯一可行的受限内容写法是顺序敏感的：file 插件不贡献任何路由，内容路由由应用用 defineFileRepositoryApiRoutes 生成的贡献提供；Application.registerRoutes 先执行 httpMiddleware 再按注册数组顺序挂载贡献（E19），所以应用必须把守卫贡献排在文件路由贡献之前才覆盖 /uploads/materials/*，app/server/routes/index.ts 直接注释 Order is the security boundary（E16）。顺序无关的 defineHttpMiddleware/addHttpMiddleware 公开入口存在（E20），但两份 Skill 都未把该用法写清。",
+          "evidence": [
+            "review/36938138067.1/v2-d42ed396f95c/E9",
+            "review/36938138067.1/v2-d42ed396f95c/E22",
+            "review/36938138067.1/v2-d42ed396f95c/E19",
+            "review/36938138067.1/v2-d42ed396f95c/E20",
+            "review/36938138067.1/v2-d42ed396f95c/E16"
+          ],
+          "moduleKeys": [
+            "review/36938138067.1/v2-d42ed396f95c/M1",
+            "review/36938138067.1/v2-d42ed396f95c/M2"
+          ],
+          "subjectKeys": [
+            "pkg:@nocobase/app-plugin-file",
+            "pkg:@nocobase/drive",
+            "guide:@nocobase/app-plugin-file/skills/nocobase-app-plugin-file",
+            "guide:@nocobase/app-plugin-file/docs/README.md",
+            "pkg:@nocobase/app-plugin-authentication",
+            "pkg:@nocobase/app-server",
+            "skill:nocobase-app-development"
+          ]
+        },
+        {
+          "id": "review/36938138067.1/v2-d42ed396f95c/F4",
+          "localId": "F4",
+          "kind": "improvement",
+          "owner": "plugin",
+          "severity": "minor",
+          "confidence": "confirmed",
+          "confirmedBy": "reviewer",
+          "reviewerStatus": "open",
+          "title": "defineFileRepositoryApiRoutes 没有一等的受限内容入口，受保护字节只能靠顺序敏感的自定义守卫",
+          "detail": "defineFileRepositoryApiRoutes 生成的内容路由固定绑定 unwritablePolicy，并注释 Public first-version routes. Authentication and authorization are application-owned（E5/E7）。应用要保护它只能在贡献列表前置一个根守卫；框架已有顺序无关的 defineHttpMiddleware/addHttpMiddleware，registerRoutes 在所有贡献之前执行它们（E19/E20），但没有针对内容前缀的推荐接入，也没有为上传动作提供「认证失败返回 401 而非插件缺 principal 的 403」的内建守卫（E7/E24）。",
+          "impact": "私有附件这一企业常见需求需要应用自行复刻守卫与顺序约束；接入者容易只守内容路由而漏掉上传动作，得到 403 而非承诺的 401。",
+          "suggestedChange": "为 defineFileRepositoryApiRoutes 增加可选的 authorize/principal 内容与上传鉴权回调（内部用 httpMiddleware 或在装配时同装），或在 SKILL 中给出显式的前缀守卫注册示例与失败状态约定。",
+          "claimed": null,
+          "observed": null,
+          "evidence": [
+            "review/36938138067.1/v2-d42ed396f95c/E5",
+            "review/36938138067.1/v2-d42ed396f95c/E7",
+            "review/36938138067.1/v2-d42ed396f95c/E19",
+            "review/36938138067.1/v2-d42ed396f95c/E20",
+            "review/36938138067.1/v2-d42ed396f95c/E24"
+          ],
+          "moduleKeys": [
+            "review/36938138067.1/v2-d42ed396f95c/M1",
+            "review/36938138067.1/v2-d42ed396f95c/M2"
+          ],
+          "subjectKeys": [
+            "pkg:@nocobase/app-plugin-file",
+            "pkg:@nocobase/drive",
+            "guide:@nocobase/app-plugin-file/skills/nocobase-app-plugin-file",
+            "guide:@nocobase/app-plugin-file/docs/README.md",
+            "pkg:@nocobase/app-plugin-authentication",
+            "pkg:@nocobase/app-server",
+            "skill:nocobase-app-development"
+          ]
+        },
+        {
+          "id": "review/36938138067.1/v2-d42ed396f95c/F5",
+          "localId": "F5",
+          "kind": "improvement",
+          "owner": "plugin",
+          "severity": "info",
+          "confidence": "confirmed",
+          "confirmedBy": "reviewer",
+          "reviewerStatus": "open",
+          "title": "Registry 默认图片预览没有解码失败态，损坏图片静默显示破图",
+          "detail": "registry/component-ui/components/previewers/file-preview-content.tsx 的 image 分支只返回 <img src={url}>，没有 onError 或失败提示（E28）；而同目录 OfficeOpenXmlPreview 实现了请求错误捕获、下载回退与销毁（E29/E30）。SKILL 允许应用按需调整自有副本（E32），本任务因此在 app 的 file-preview-content.tsx 新增 ImagePreview（useEffect 重置、failed 状态、role=alert 与 files.imagePreviewFailed 文案）（E34）。",
+          "impact": "B06 要求的损坏 PNG 清晰提示无法由默认组件满足，每个应用都要自行复刻；未调整源码的应用只看到破图。",
+          "suggestedChange": "在 Registry 的 image 分支加入与 OOXML 一致的失败态（onError → 本地化消息 + FileThumbnail），或在 SKILL 中显式列出该扩展点。",
+          "claimed": null,
+          "observed": null,
+          "evidence": [
+            "review/36938138067.1/v2-d42ed396f95c/E28",
+            "review/36938138067.1/v2-d42ed396f95c/E32",
+            "review/36938138067.1/v2-d42ed396f95c/E34"
+          ],
+          "moduleKeys": [
+            "review/36938138067.1/v2-d42ed396f95c/M3"
+          ],
+          "subjectKeys": [
+            "pkg:@nocobase/app-plugin-file",
+            "guide:@nocobase/app-plugin-file/skills/nocobase-app-plugin-file"
+          ]
+        }
+      ],
+      "ui": {
+        "status": "not-reviewed",
+        "score": null,
+        "reason": "本次运行没有工厂验证轮次，也没有任何浏览器验收截图（process.rounds 为空），无法按至少两个页面/状态比较样式一致性；界面评审未进行。",
+        "evidence": [],
+        "framework": false
+      },
+      "limitations": [
+        "无工厂验证轮次与截图（process.rounds 为空，verificationAttempts/repairAttempts 为 null），ui 及一切需要运行时确认的维度保持 not-reviewed/null。",
+        "运行以 agent_failure（Stream error occurred）终止，无 artifacts/task-diagnostic.json，业务 B01–B06 未被独立验收；本评审不据此判定框架缺陷。",
+        "history 索引的 events-0001.jsonl 无 source 映射，仅可作导航，不能作为 log 证据；过程引用均为 part-*.txt 原始分块。",
+        "未运行构建、类型检查或应用；内容守卫的中间件匹配顺序等行为为静态源码推断，未端到端验证。",
+        "快照可能省略的超预算/非普通文件未核对，不据其确认实现。"
+      ],
+      "usageSource": null
+    }
+  ],
+  "health": {
+    "status": "incomplete",
+    "qa": "not-run",
+    "requiredChecks": {
+      "status": "passed",
+      "results": []
+    },
+    "review": "completed"
+  },
+  "processNotes": {
+    "state": "absent",
+    "source": null,
+    "author": "implementer",
+    "independent": false,
+    "summary": null,
+    "blockers": [],
+    "improvements": [],
+    "note": "过程笔记可选；缺失不代表没有问题、没有评审或没有改进。"
+  },
+  "metrics": {
+    "usage": {
+      "sources": [
+        {
+          "key": "agent-job:110623239614",
+          "executionKey": "run/36938138067/attempt/1",
+          "scope": "一次 Agent 作业内的实现、修复、QA 与同轮评审调用",
+          "phases": {
+            "implementation": {
+              "input": 4427016,
+              "output": 201619,
+              "cacheRead": 30447118,
+              "cacheWrite": 0,
+              "total": 35075753
+            },
+            "repair": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0,
+              "total": 0
+            },
+            "qa": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0,
+              "total": 0
+            },
+            "qaFocused": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0,
+              "total": 0
+            },
+            "qaReport": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0,
+              "total": 0
+            },
+            "review": {
+              "input": 2330081,
+              "output": 101276,
+              "cacheRead": 8767492,
+              "cacheWrite": 0,
+              "total": 11198849
+            },
+            "compaction": {
+              "input": 536659,
+              "output": 104258,
+              "cacheRead": 0,
+              "cacheWrite": 0,
+              "total": 640917
+            }
+          },
+          "records": 659,
+          "missing": 4,
+          "incomplete": 1,
+          "complete": false
+        }
+      ],
+      "totals": {
+        "input": 7293756,
+        "output": 407153,
+        "cacheRead": 39214610,
+        "cacheWrite": 0,
+        "total": 46915519,
+        "complete": false
+      },
+      "definition": "沿用 task-usage 口径：按唯一来源键（Agent 作业 / 后补评审 Run）去重，不相加已含这些调用的汇总，不把思考 Token 再加到输出；缺失为 null，不等同供应商账单。"
+    },
+    "time": {
+      "executionSeconds": 8211,
+      "missingJobTimes": 0,
+      "endToEndSeconds": 8218,
+      "jobs": [
+        {
+          "id": 110623140159,
+          "name": "prepare",
+          "executionKey": "run/36938138067/attempt/1",
+          "seconds": 18
+        },
+        {
+          "id": 110623239614,
+          "name": "agent",
+          "executionKey": "run/36938138067/attempt/1",
+          "seconds": 8193
+        }
+      ],
+      "definition": "executionSeconds 为 prepare / agent / verify-final / publish 唯一作业时长之和，不含排队；endToEndSeconds 含排队及续跑间隔。"
+    },
+    "counts": {
+      "businessBuilds": 1,
+      "executions": 1,
+      "reviewExecutions": 1
+    }
+  },
+  "evidence": [
+    {
+      "id": "review/36938138067.1/v2-d42ed396f95c/E1",
+      "origin": {
+        "kind": "review",
+        "key": "review/36938138067.1/v2-d42ed396f95c",
+        "localId": "E1"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/app-plugin-file/dist/server/repository.js",
+      "lines": [
+        3,
+        17
+      ],
+      "sha256": "3e3a1d1f33208ae8e7038c8afa89149195897db3679edbad860a379e80ce8fb1",
+      "observation": "FILE_COLUMNS 固定文件 Collection 必须提供的九列（id/disk/key/filename/ext/mimeType/size/createdAt/updatedAt），注释说明 store() 为每次上传合成这些列。",
+      "excerpt": "/**\n * The columns a file Collection must provide, which are also the columns\n * `store()` composes for every upload.\n */\nexport const FILE_COLUMNS = [\n    'id',\n    'disk',\n    'key',\n    'filename',\n    'ext',\n    'mimeType',\n    'size',\n    'createdAt',\n    'updatedAt',\n];",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36938138067.1/v2-d42ed396f95c/E2",
+      "origin": {
+        "kind": "review",
+        "key": "review/36938138067.1/v2-d42ed396f95c",
+        "localId": "E2"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/app-plugin-file/dist/server/repository.js",
+      "lines": [
+        18,
+        49
+      ],
+      "sha256": "3e3a1d1f33208ae8e7038c8afa89149195897db3679edbad860a379e80ce8fb1",
+      "observation": "uploadPolicy 注释与实现：create 从暴露 policy 派生（create:false 保持 false，保留 scope/defaults、白名单换成文件列），read 恒为 { scope:true, fields: FILE_COLUMNS }，注释说明 read 同时服务该路径返回记录与公开字节路由。",
+      "excerpt": "/**\n * The Policy the upload path binds, derived from the exposure's own.\n *\n * It is derived rather than used as it stands because an upload supplies no\n * caller fields at all — `store()` composes every value — so a field allowlist\n * has nothing to constrain here and the plugin substitutes its own columns.\n * What is inherited is exactly the two dimensions that do not describe caller\n * input: which rows this principal may produce (`scope`), and what the server\n * stamps onto them (`defaults`). A `create` that is `false` stays `false`, so\n * an exposure that forbids creating rows forbids uploading them too.\n *\n * This is the only place a Policy is widened, and the reason is specific to\n * this path. It licenses nothing elsewhere.\n */\nexport function uploadPolicy(base) {\n    const create = base.create === true || base.create === false\n        ? base.create\n        : {\n            scope: base.create.scope,\n            defaults: base.create.defaults,\n            fields: FILE_COLUMNS,\n            relations: {},\n        };\n    // `read` serves this path's own returning record and the public byte route,\n    // both of which need every column. `update` and `delete` never run here.\n    return {\n        create,\n        read: { scope: true, fields: FILE_COLUMNS, relations: {} },\n        update: false,\n        delete: false,\n    };\n}",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36938138067.1/v2-d42ed396f95c/E3",
+      "origin": {
+        "kind": "review",
+        "key": "review/36938138067.1/v2-d42ed396f95c",
+        "localId": "E3"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/app-plugin-file/dist/server/repository.js",
+      "lines": [
+        82,
+        121
+      ],
+      "sha256": "3e3a1d1f33208ae8e7038c8afa89149195897db3679edbad860a379e80ce8fb1",
+      "observation": "validateCollection 对九列逐一校验兼容类型，检查 id 非自增且长度至少 36，并要求 id 是唯一主键；不满足时抛 FileRepositoryError INVALID_FILE_COLLECTION 并指出字段。",
+      "excerpt": "        const validateCollection = async () => {\n            const definition = await this.database\n                .connection(options.connection)\n                .collections.get(collection);\n            const fail = (field, reason) => {\n                throw new FileRepositoryError('INVALID_FILE_COLLECTION', `Collection \"${collection}\", field \"${field}\": ${reason}.`);\n            };\n            if (!definition)\n                fail('*', 'collection does not exist');\n            const fields = definition?.fields ?? [];\n            const columnTypes = {\n                id: ['uuid', 'string', 'char', 'text'],\n                disk: ['string', 'char', 'text'],\n                key: ['string', 'char', 'text'],\n                filename: ['string', 'char', 'text'],\n                ext: ['string', 'char', 'text'],\n                mimeType: ['string', 'char', 'text'],\n                size: ['integer', 'bigInt'],\n                createdAt: ['datetime', 'datetimeTz'],\n                updatedAt: ['datetime', 'datetimeTz'],\n            };\n            for (const [name, types] of Object.entries(columnTypes)) {\n                const field = fields.find((item) => item.name === name);\n                if (!field || !types.includes(field.type))\n                    fail(name, `requires ${types.join(' or ')}`);\n                if (name === 'id' && field?.autoIncrement)\n                    fail(name, 'must accept a server-generated UUID');\n                if (name === 'id' && field?.length !== undefined && field.length < 36)\n                    fail(name, 'must hold a UUID');\n            }\n            const primary = definition?.constraints\n                ?.filter((item) => item.type === 'primary')\n                .flatMap((item) => item.fields) ?? [];\n            const keys = new Set([\n                ...primary,\n                ...fields.filter((item) => item.primaryKey).map((item) => item.name),\n            ]);\n            if (keys.size !== 1 || !keys.has('id'))\n                fail('id', 'must be the sole primary key');\n        };",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36938138067.1/v2-d42ed396f95c/E4",
+      "origin": {
+        "kind": "review",
+        "key": "review/36938138067.1/v2-d42ed396f95c",
+        "localId": "E4"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/app-plugin-file/dist/server/repository.js",
+      "lines": [
+        123,
+        164
+      ],
+      "sha256": "3e3a1d1f33208ae8e7038c8afa89149195897db3679edbad860a379e80ce8fb1",
+      "observation": "store() 服务端生成 UUID 与 objects/<uuid>.<ext> key，清洗文件名/扩展名并规范化 MIME，putStream 后读取 metadata 并校验 contentLength 与上传大小一致，组成完整元数据行。",
+      "excerpt": "        const store = async (file, owned) => {\n            const disk = this.drive.use(options.disk);\n            const id = randomUUID();\n            // Strip client paths, controls and malformed Unicode before generating any headers.\n            const filename = (Buffer.from(file.name).toString('utf8').split(/[\\\\/]/).pop() ?? '')\n                .normalize('NFC')\n                // eslint-disable-next-line no-control-regex -- Strip controls from an untrusted filename.\n                .replace(/[\\u0000-\\u001f\\u007f]/g, '')\n                .trim() || 'file';\n            const suffix = filename.lastIndexOf('.') > 0\n                ? filename.slice(filename.lastIndexOf('.') + 1).toLowerCase()\n                : '';\n            const ext = /^[a-z0-9]{1,32}$/.test(suffix) ? suffix : '';\n            const key = `objects/${id}${ext ? `.${ext}` : ''}`;\n            const mimeType = validMime(file.type);\n            owned.push(key); // A failed put may have left a partial object.\n            await disk.putStream(key, Readable.fromWeb(file.stream()), { contentType: mimeType, contentLength: file.size });\n            const metadata = await disk.getMetaData(key);\n            if (!Number.isSafeInteger(metadata.contentLength) ||\n                metadata.contentLength < 0 ||\n                metadata.contentLength !== file.size)\n                throw new FileRepositoryError('INVALID_FILE_METADATA', 'Stored file size does not match the uploaded file.');\n            const now = new Date().toISOString();\n            const definition = await this.database\n                .connection(options.connection)\n                .collections.get(collection);\n            const timestamp = (name) => definition?.fields?.find((field) => field.name === name)?.type ===\n                'datetime'\n                ? now.slice(0, -1)\n                : now;\n            return {\n                id,\n                disk: options.disk,\n                key,\n                filename,\n                ext,\n                mimeType: validMime(metadata.contentType ?? mimeType),\n                size: metadata.contentLength,\n                createdAt: timestamp('createdAt'),\n                updatedAt: timestamp('updatedAt'),\n            };\n        };",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36938138067.1/v2-d42ed396f95c/E5",
+      "origin": {
+        "kind": "review",
+        "key": "review/36938138067.1/v2-d42ed396f95c",
+        "localId": "E5"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/app-plugin-file/dist/server/routes.js",
+      "lines": [
+        26,
+        54
+      ],
+      "sha256": "6982c2d56153fe60426c48783c0653f4224691075e1c95a3d6e39f7405a46025",
+      "observation": "defineFileRepositoryApiRoutes 注释 Public first-version routes. Authentication and authorization are application-owned；实现校验 accessPath 冲突、disk/accessMode 与上传动作配置。",
+      "excerpt": "/** Public first-version routes. Authentication and authorization are application-owned. */\nexport function defineFileRepositoryApiRoutes(options) {\n    const paths = [];\n    const entries = options.repositories.map((entry) => {\n        const accessPath = normalizeAccessPath(entry.accessPath ?? `/uploads/${entry.name}`);\n        if (paths.some((path) => path === accessPath ||\n            path.startsWith(`${accessPath}/`) ||\n            accessPath.startsWith(`${path}/`)))\n            throw new Error(`Conflicting file accessPath: ${accessPath}`);\n        paths.push(accessPath);\n        if (!entry.disk)\n            throw new Error('File repository disk is required.');\n        if (entry.accessMode !== undefined &&\n            !['stream', 'redirect'].includes(entry.accessMode))\n            throw new Error('Invalid file accessMode.');\n        const { uploadOne, uploadMany, ...actions } = entry.actions;\n        for (const upload of [uploadOne, uploadMany]) {\n            if (upload === undefined)\n                continue;\n            if (!upload ||\n                typeof upload !== 'object' ||\n                Object.keys(upload).some((key) => key !== 'maxSize'))\n                throw new Error('Invalid upload action configuration.');\n            if (upload.maxSize !== undefined &&\n                (!Number.isSafeInteger(upload.maxSize) || upload.maxSize <= 0))\n                throw new Error('maxSize must be a positive safe integer.');\n        }\n        return { ...entry, accessPath, actions, uploadOne, uploadMany };\n    });",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36938138067.1/v2-d42ed396f95c/E6",
+      "origin": {
+        "kind": "review",
+        "key": "review/36938138067.1/v2-d42ed396f95c",
+        "localId": "E6"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/app-plugin-file/dist/server/routes.js",
+      "lines": [
+        111,
+        182
+      ],
+      "sha256": "6982c2d56153fe60426c48783c0653f4224691075e1c95a3d6e39f7405a46025",
+      "observation": "上传路由：bodyLimit（默认单 5MiB/批 20MiB）、按 principal 解析 Policy、缺 principal 返回 403 PRINCIPAL_REQUIRED、非 multipart 返回 415、uploadOne/uploadMany 参数校验与错误码。",
+      "excerpt": "                for (const action of ['uploadOne', 'uploadMany']) {\n                    const config = entry[action];\n                    if (config === undefined)\n                        continue;\n                    router.post(`/${encodeURIComponent(entry.name)}:${action}`, bodyLimit({\n                        maxSize: config.maxSize ??\n                            (action === 'uploadOne' ? 5 : 20) * 1024 * 1024,\n                        onError: (c) => c.json({\n                            code: 'BODY_TOO_LARGE',\n                            message: 'Upload request body is too large.',\n                        }, 413),\n                    }), async (c) => {\n                        // The exposure's own Policy governs an upload, so a Policy that\n                        // reads the principal has to be built here rather than when the\n                        // router was.\n                        let writable;\n                        if (typeof entry.policy === 'function') {\n                            const principal = await options.principal?.(c);\n                            if (principal === undefined || principal === null)\n                                return c.json({\n                                    code: 'PRINCIPAL_REQUIRED',\n                                    message: 'This endpoint requires a principal and none was resolved.',\n                                }, 403);\n                            writable = resolve(app, entry, entry.policy(principal));\n                        }\n                        else {\n                            writable = resolve(app, entry, entry.policy);\n                        }\n                        if (!c.req\n                            .header('content-type')\n                            ?.toLowerCase()\n                            .startsWith('multipart/form-data;'))\n                            return c.json({\n                                code: 'UNSUPPORTED_MEDIA_TYPE',\n                                message: 'Expected multipart/form-data.',\n                            }, 415);\n                        let body;\n                        try {\n                            body = await c.req.parseBody({ all: true });\n                        }\n                        catch {\n                            return c.json({\n                                code: 'INVALID_MULTIPART',\n                                message: 'Invalid multipart body.',\n                            }, 400);\n                        }\n                        const value = body.file;\n                        if (action === 'uploadOne') {\n                            if (!(value instanceof File))\n                                return c.json({\n                                    code: 'INVALID_FILE',\n                                    message: 'Exactly one File is required.',\n                                }, 400);\n                            return c.json({\n                                data: decorate(await writable.uploadOne({ file: value }), getUrl, true),\n                            });\n                        }\n                        const uploads = Array.isArray(value)\n                            ? value\n                            : value === undefined\n                                ? []\n                                : [value];\n                        if (!uploads.length ||\n                            !uploads.every((file) => file instanceof File))\n                            return c.json({\n                                code: 'INVALID_FILES',\n                                message: 'At least one File is required.',\n                            }, 400);\n                        return c.json({\n                            data: decorate(await writable.uploadMany({ files: uploads }), getUrl, true),\n                        });\n                    });",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36938138067.1/v2-d42ed396f95c/E7",
+      "origin": {
+        "kind": "review",
+        "key": "review/36938138067.1/v2-d42ed396f95c",
+        "localId": "E7"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/app-plugin-file/dist/server/routes.js",
+      "lines": [
+        188,
+        221
+      ],
+      "sha256": "6982c2d56153fe60426c48783c0653f4224691075e1c95a3d6e39f7405a46025",
+      "observation": "内容路由：UUID+可选小写扩展名正则、以 unwritablePolicy 解析记录、记录或对象缺失返回 404、Cache-Control private/no-store，stream 模式设置 Content-Type/Content-Length/nosniff/sandbox CSP 与 Content-Disposition。",
+      "excerpt": "        defineRootRoutes((app) => {\n            const router = fileRouter();\n            for (const entry of entries) {\n                const files = resolve(app, entry, unwritablePolicy);\n                router.get(`${entry.accessPath}/:file`, async (c) => {\n                    const match = /^([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})(?:\\.([a-z0-9]{1,32}))?$/.exec(c.req.param('file'));\n                    if (!match)\n                        return c.notFound();\n                    const record = await files.findOne({ filter: { id: match[1] } });\n                    if (!record || record.ext !== (match[2] ?? ''))\n                        return c.notFound();\n                    const disk = app.container\n                        .resolve(driveManagerToken)\n                        .use(record.disk);\n                    if (!(await disk.exists(record.key)))\n                        return c.notFound();\n                    c.header('Cache-Control', 'private, no-store');\n                    if (entry.accessMode === 'redirect') {\n                        const url = await files.getStorageUrl(record);\n                        const publicBasePath = app.publicBasePath ?? '';\n                        // Check the final target after the host rewrites root-relative redirects.\n                        const location = new URL(addBasePathToLocation(url, publicBasePath), c.req.url);\n                        if (location.origin === new URL(c.req.url).origin &&\n                            entries.some((item) => location.pathname.startsWith(`${joinBasePath(publicBasePath, item.accessPath)}/`)))\n                            throw new FileRepositoryError('STORAGE_URL_UNAVAILABLE', 'Storage URL points back to a file access route.');\n                        return c.redirect(url, 302);\n                    }\n                    c.header('Content-Type', validMime(record.mimeType));\n                    c.header('Content-Length', String(record.size));\n                    c.header('X-Content-Type-Options', 'nosniff');\n                    c.header('Content-Security-Policy', \"sandbox; default-src 'none'\");\n                    c.header('Content-Disposition', `attachment; filename*=UTF-8''${encodeURIComponent(Buffer.from(record.filename).toString('utf8')).replace(/['()*]/g, (char) => `%${char.charCodeAt(0).toString(16).toUpperCase()}`)}`);\n                    return c.body(Readable.toWeb(await disk.getStream(record.key)));\n                });",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36938138067.1/v2-d42ed396f95c/E8",
+      "origin": {
+        "kind": "review",
+        "key": "review/36938138067.1/v2-d42ed396f95c",
+        "localId": "E8"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/app-plugin-file/dist/server/routes.js",
+      "lines": [
+        238,
+        255
+      ],
+      "sha256": "6982c2d56153fe60426c48783c0653f4224691075e1c95a3d6e39f7405a46025",
+      "observation": "decorate() 对有 id 与 ext 的文件记录派生 contentUrl = <accessPath>/<uuid>[.<ext>]，即响应中的可下载地址。",
+      "excerpt": "function decorate(value, getUrl, mutationResult = false) {\n    if (Array.isArray(value))\n        return value.map((record) => decorate(record, getUrl));\n    if (!value || typeof value !== 'object')\n        return value;\n    // Only mutation responses wrap records; collections may use these field names.\n    if (mutationResult && 'record' in value)\n        return { ...value, record: decorate(value.record, getUrl) };\n    if (mutationResult && 'records' in value)\n        return { ...value, records: decorate(value.records, getUrl) };\n    const record = normalizeFileRecord(value);\n    if (typeof record.id === 'string' && typeof record.ext === 'string')\n        return {\n            ...record,\n            contentUrl: getUrl({ id: record.id, ext: record.ext }),\n        };\n    return record;\n}",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36938138067.1/v2-d42ed396f95c/E9",
+      "origin": {
+        "kind": "review",
+        "key": "review/36938138067.1/v2-d42ed396f95c",
+        "localId": "E9"
+      },
+      "kind": "skill",
+      "path": "packages/@nocobase/app-plugin-file/skills/nocobase-app-plugin-file/SKILL.md",
+      "lines": [
+        116,
+        126
+      ],
+      "sha256": "06b464d71554a3ae12819918f98a84f44c65c2b70e7fbfcffd17e992e57aed22",
+      "observation": "第 120-122 行：policy 必填并管所有 action，上传绑定派生 Policy，内容路由是例外、公开且 Policy 不覆盖它；第 126 行：These are public routes. For restricted files, register App-owned authentication and authorization on the paths each contribution owns before mounting it — ... <accessPath>/* for content。",
+      "excerpt": "`name` is the Client resource; `collection` defaults to name, `connection` to the database default, and `accessPath` to `/uploads/<name>`. Disk is required. Content paths contain static alphanumeric, underscore or hyphen segments, start with `/`, and have no trailing slash.\n\nOnly declared POST `/api/<name>:<action>` operations are exposed. Ordinary actions are `findMany/findOne/count/exists/aggregate/groupBy/createOne/updateOne/deleteOne`. There are no createMany/updateMany/deleteMany HTTP actions.\n\n`policy` is required and governs every action of the exposure, uploads included. It is a Repository Policy: `read`, `create`, `update` and `delete`, each `true`, `false`, or a rule node. A node that is `false` refuses that operation; a node with no `fields` accepts no caller-supplied field, which is what a metadata `createOne` needs before it will accept anything. Pass a function of the principal — `policy: (principal) => ({ ... })` — together with a `principal(context)` resolver to scope rows to the caller; without a principal the request is refused with 403.\n\nAn upload supplies no caller fields, so it binds a Policy derived from this one: the `create` scope and defaults are inherited and the field allowlist is replaced by the file columns. `create: false` therefore forbids uploading as well as creating metadata, and a `create.defaults` of `{ ownerId }` is stamped onto uploaded rows — which is what keeps an uploaded file inside the same scope `findMany` reads. The content route under `accessPath` is the exception: it is public and this Policy does not reach it.\n\nContent is GET `<accessPath>/<uuid>.<ext>` outside `/api`, omitting the dot when extensionless. Stream returns full bytes as an attachment; redirect returns a public storage URL or a five-minute signed URL. A disk without URL support requires stream mode; there is no automatic fallback.\n\nThese are public routes. For restricted files, register App-owned authentication and authorization on the paths each contribution owns before mounting it — `/<name>:<action>` per exposed API action, `<accessPath>/*` for content. Never `router.use('*', ...)` in a contribution router: contributions share the mounted router, so it also guards the SPA and every contribution mounted after yours. Check the operation and record/parent-record access; a login page, private disk, Client filter or Policy field allowlist is not authentication. Add scoped middleware and principal-based Policy to the generated routes first. If an existing contract needs an adapter, extend that module using the public Server manager and retain its authorization checks; missing built-in authentication alone is not a reason to replace the routes. Never trust browser-supplied ownership.",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36938138067.1/v2-d42ed396f95c/E10",
+      "origin": {
+        "kind": "review",
+        "key": "review/36938138067.1/v2-d42ed396f95c",
+        "localId": "E10"
+      },
+      "kind": "skill",
+      "path": "packages/@nocobase/app-plugin-file/skills/nocobase-app-plugin-file/SKILL.md",
+      "lines": [
+        150,
+        159
+      ],
+      "sha256": "06b464d71554a3ae12819918f98a84f44c65c2b70e7fbfcffd17e992e57aed22",
+      "observation": "Client 端解析 clientFileRepositoryManagerToken 并调用 manager.repository(name) 上传；uploadOne 返回 { record }，上传已创建元数据，并说明 contentUrl、id/ext 派生与 read/select 需保留的列。",
+      "excerpt": "Client code resolves `clientFileRepositoryManagerToken` and calls `manager.repository('invoiceAttachments')` with the resource name. It reuses apiClientToken, session and base URL; do not pass disk/connection/accessPath.\n\n```ts\nconst { record } = await files.uploadOne({ file });\nconst batch = await files.uploadMany({ files: Array.from(input.files ?? []) });\nconst rows = await files.findMany({ limit: 20 });\nawait files.deleteOne({ filter: { id: record.id } });\n```\n\nInputs are a native File or a nonempty File array. Results are `{ record, createdTargets, version? }` and `{ createdCount, records }`. Upload already creates metadata. Client uploads accept an optional second `{ signal }` argument; abort does not undo a server commit. Use returned contentUrl directly: HTTP already adds the host prefix, such as `/main`. Both the read Policy and custom selects must retain `id`, `ext`, `filename`, `mimeType`, `size`, `createdAt` and `updatedAt` when their results feed Registry UI. `id` and `ext` derive `contentUrl`; the remaining fields support thumbnails, preview selection and component refresh. Verify queried records, not only the immediate upload response. Storage `disk` and `key` need not be exposed to read-only UI.",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36938138067.1/v2-d42ed396f95c/E11",
+      "origin": {
+        "kind": "review",
+        "key": "review/36938138067.1/v2-d42ed396f95c",
+        "localId": "E11"
+      },
+      "kind": "skill",
+      "path": "packages/@nocobase/app-plugin-file/docs/README.md",
+      "lines": [
+        15,
+        32
+      ],
+      "sha256": "cc324c91ca67d7a09d5de5cf60cb9561ab5ad7ebc853b1f13f58f185f6214520",
+      "observation": "Collection 固定字段表列出九列的来源与兼容类型，说明不支持映射也不会自动建表；缺表/缺列或类型不符报 INVALID_FILE_COLLECTION 且上传在写盘前校验；contentUrl 是派生字段不需建列。",
+      "excerpt": "### Collection 固定字段\n\nCollection 名可自定义，以下字段必须存在，不支持映射，也不会自动建表。可参考示例插件的[迁移](../../../examples/app-plugin-file-example/database/migrations/202609070001_create_attachments.ts)，在自己的迁移中明确声明字段。\n\n| 字段                     | 上传时的内容及来源                                                     | 兼容类型                                  |\n| ------------------------ | ---------------------------------------------------------------------- | ----------------------------------------- |\n| `id`                     | 服务端生成 UUID，必须是唯一主键字段                                    | uuid，或能容纳 36 字符的 string/char/text |\n| `disk`                   | Server Repository 配置的上传磁盘                                       | string/char/text                          |\n| `key`                    | 服务端生成 `objects/<uuid>.<ext>`，无扩展名省略点号                    | string/char/text                          |\n| `filename`               | 上传原名，移除路径和控制字符、规范化 Unicode                           | string/char/text                          |\n| `ext`                    | 小写扩展名，不含点号；仅 1–32 位字母数字，其他情况为空字符串           | string/char/text                          |\n| `mimeType`               | 规范化上传声明和存储 metadata，非法值回退为 `application/octet-stream` | string/char/text                          |\n| `size`                   | `disk.getMetaData(key).contentLength`，校验与上传大小一致              | integer/bigInt                            |\n| `createdAt`、`updatedAt` | 服务端写入 UTC 时间                                                    | datetime/datetimeTz                       |\n\n缺表、缺字段或类型、主键不兼容时，操作报 `INVALID_FILE_COLLECTION` 并指出字段；上传在写 Disk 前校验。可增加业务字段，但上传接口不接收额外 `values`，因此业务必填字段需要默认值。\n\n`contentUrl` 是响应派生字段，不需要建列。",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36938138067.1/v2-d42ed396f95c/E12",
+      "origin": {
+        "kind": "review",
+        "key": "review/36938138067.1/v2-d42ed396f95c",
+        "localId": "E12"
+      },
+      "kind": "skill",
+      "path": "packages/@nocobase/app-plugin-file/docs/README.md",
+      "lines": [
+        75,
+        82
+      ],
+      "sha256": "cc324c91ca67d7a09d5de5cf60cb9561ab5ad7ebc853b1f13f58f185f6214520",
+      "observation": "actions 决定开放端点、policy 决定能做什么并同样管上传；上传绑定派生 Policy（继承 create.scope/defaults、白名单换成文件九列、create:false 连上传一起拒绝）；第 81 行明确 accessPath 下的内容路由是有意的例外：在 /api 之外、没有认证，Policy 不覆盖它。",
+      "excerpt": "```\n\n这是全部 action 的配置示例，实际使用只保留需要的操作。`actions` 只决定开哪些端点，能做什么由必填的 `policy` 决定，它同样管上传。\n\n上传不接受调用方的任何字段（`store()` 自己合成全部值），所以上传路径绑定的是从这份 Policy 派生出来的一份：继承 `create.scope` 和 `create.defaults`，字段白名单换成文件表自己的九列。由此有三条：`create: false` 会连上传一起拒绝；`create.defaults` 里的 `{ ownerId }` 会写进上传出来的记录；`create.scope` 同样对上传生效，越界的写入回滚并清理已上传对象。要允许上传但不允许调用方自己造文件记录，就写一个不含 `fields` 的 `create` 节点，像上例那样。\n\n`accessPath` 下的内容路由是有意的例外：它在 `/api` 之外、没有认证，Policy 不覆盖它。普通 action 复用 `defineRepositoryApiRoutes()` 的协议。\n",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36938138067.1/v2-d42ed396f95c/E13",
+      "origin": {
+        "kind": "review",
+        "key": "review/36938138067.1/v2-d42ed396f95c",
+        "localId": "E13"
+      },
+      "kind": "skill",
+      "path": "packages/@nocobase/app-plugin-file/docs/README.md",
+      "lines": [
+        122,
+        139
+      ],
+      "sha256": "cc324c91ca67d7a09d5de5cf60cb9561ab5ad7ebc853b1f13f58f185f6214520",
+      "observation": "路由表含 GET /uploads/<name>/<uuid>.<ext>；无 createMany/updateMany/deleteMany；内容入口按 UUID 查记录并核对扩展名；stream 返回完整文件带类型/大小/下载名，redirect 302 到公开 URL 或 5 分钟签名 URL；两种响应均 private/no-store，宿主在 /main 时前缀已包含。",
+      "excerpt": "| POST | `/api/attachments:groupBy`          | 分组聚合                                           |\n| POST | `/api/attachments:createOne`        | 创建元数据，不上传文件；受 Policy 的 `create` 限制 |\n| POST | `/api/attachments:updateOne`        | 修改元数据，不替换文件；受 Policy 的 `update` 限制 |\n| POST | `/api/attachments:deleteOne`        | 删除元数据，不删除物理文件                         |\n| POST | `/api/attachments:uploadOne`        | 上传单个文件并创建记录                             |\n| POST | `/api/attachments:uploadMany`       | 上传多个文件并批量创建记录                         |\n| GET  | `/uploads/attachments/<uuid>.<ext>` | 获取文件内容，无扩展名省略点号                     |\n\n没有额外的 REST 路由，也没有 `createMany`、`updateMany`、`deleteMany` HTTP action。`uploadMany` 在服务端内部调用 `createMany`。\n\n### 统一地址与访问方式\n\n内容入口通过 UUID 查询记录、核对扩展名，再使用记录的 `disk` 和 `key` 获取文件。更换上传默认盘不会改变旧文件的存储位置。\n\n- `stream`：服务端返回完整文件流，带类型、大小和下载文件名，使用 `Content-Disposition: attachment`。适合本地盘或不能生成存储 URL 的盘。\n- `redirect`：302 跳转到存储 URL。公开文件使用 Disk 的 `getUrl()`，私有文件使用有效期 5 分钟的签名 URL；磁盘不支持时报告 `STORAGE_URL_UNAVAILABLE`。\n\n两种响应均使用 `Cache-Control: private, no-store`；记录或对象不存在返回 404。宿主挂载在 `/main` 时，实际入口是 `/main/api/attachments:uploadOne` 和 `/main/uploads/attachments/...`，HTTP 返回的 `contentUrl` 已包含该前缀。",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36938138067.1/v2-d42ed396f95c/E14",
+      "origin": {
+        "kind": "review",
+        "key": "review/36938138067.1/v2-d42ed396f95c",
+        "localId": "E14"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/drive/dist/flydrive.js",
+      "lines": [
+        1,
+        60
+      ],
+      "sha256": "ab6a0c4edb2c0479d4ee8d361c08aef9c42bdab0b26fb212624fccc05c5f97cf",
+      "observation": "createDriveManager/assertDefaultDisk 与 createFsDriver/createS3Driver 实现磁盘抽象，供上传存储与内容路由按记录 disk 取流。",
+      "excerpt": "import { DriveManager } from 'flydrive';\nimport { FSDriver } from 'flydrive/drivers/fs';\nimport { S3Driver } from 'flydrive/drivers/s3';\nimport { joinDriveUrl } from './url.js';\nexport function createDriveManager(config, options = {}) {\n    assertDefaultDisk(config);\n    return new DriveManager({\n        default: config.default,\n        fakes: options.fakes,\n        services: Object.fromEntries(Object.entries(config.disks).map(([name, disk]) => [\n            name,\n            () => createDriver(disk),\n        ])),\n    });\n}\nexport function assertDefaultDisk(config) {\n    if (!config.disks[config.default]) {\n        throw new Error(`Default drive disk \"${config.default}\" is not configured.`);\n    }\n}\nfunction createDriver(disk) {\n    if (disk.driver === 'fs') {\n        return createFsDriver(disk);\n    }\n    return createS3Driver(disk);\n}\nfunction createFsDriver(disk) {\n    return new FSDriver(compactObject({\n        location: disk.location,\n        visibility: disk.visibility,\n        urlBuilder: disk.url\n            ? {\n                generateURL: async (key) => joinDriveUrl(disk.url, key),\n            }\n            : undefined,\n    }));\n}\nfunction createS3Driver(disk) {\n    const options = compactObject({\n        bucket: disk.bucket,\n        region: disk.region,\n        endpoint: disk.endpoint,\n        cdnUrl: disk.cdnUrl,\n        forcePathStyle: disk.forcePathStyle,\n        supportsACL: disk.supportsACL,\n        encryption: disk.encryption,\n        credentials: createS3Credentials(disk),\n        visibility: disk.visibility,\n    });\n    return new S3Driver(options);\n}\nfunction createS3Credentials(disk) {\n    const { accessKeyId, secretAccessKey } = disk.credentials;\n    if (!accessKeyId || !secretAccessKey) {\n        return undefined;\n    }\n    return {\n        accessKeyId,\n        secretAccessKey,\n    };",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36938138067.1/v2-d42ed396f95c/E15",
+      "origin": {
+        "kind": "review",
+        "key": "review/36938138067.1/v2-d42ed396f95c",
+        "localId": "E15"
+      },
+      "kind": "code",
+      "path": "app/server/routes/materials.ts",
+      "lines": [
+        238,
+        270
+      ],
+      "sha256": "998917d36f92d640e3dda52d5a0e5e497f0846a23676c9d9006ebd990648abf8",
+      "observation": "应用只暴露 materialFiles 的 uploadOne/uploadMany，policy.read:false/create.defaults.createdById、update/delete false，并用 principal 解析当前用户。",
+      "excerpt": "/**\n * The file plugin exposures this application publishes.\n *\n * Only `uploadOne`/`uploadMany` are listed, so the plugin generates no\n * Collection read/create/update/delete endpoints for `material_files`. Uploads\n * are stamped with the caller through the Policy's `create.defaults`, and the\n * byte route stays the plugin's own (deliberately public) one, guarded above.\n */\nexport const materialFileRoutes: readonly AppRouteContribution<Application>[] =\n  defineFileRepositoryApiRoutes<MaterialUploadPrincipal | null>({\n    repositories: [\n      {\n        name: MATERIAL_FILE_COLLECTION,\n        collection: MATERIAL_FILE_COLLECTION,\n        disk: 'local',\n        accessPath: MATERIAL_ACCESS_PATH,\n        actions: { uploadOne: {}, uploadMany: {} },\n        policy: (principal): RepositoryPolicy => ({\n          read: false,\n          create: {\n            scope: true,\n            defaults: { createdById: principal?.userId ?? '' },\n          },\n          update: false,\n          delete: false,\n        }),\n      },\n    ],\n    principal: (context) => {\n      const id = currentUserId(context);\n      return id ? { userId: id } : null;\n    },\n  });",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36938138067.1/v2-d42ed396f95c/E16",
+      "origin": {
+        "kind": "review",
+        "key": "review/36938138067.1/v2-d42ed396f95c",
+        "localId": "E16"
+      },
+      "kind": "code",
+      "path": "app/server/routes/index.ts",
+      "lines": [
+        16,
+        31
+      ],
+      "sha256": "496f8d29ece20737a2076df1150077f21f2c9663ac347806251dc3141762676f",
+      "observation": "应用注释 Order is the security boundary，并把 materialContentGuard、materialUploadGuard 排在 materialFileRoutes 之前。",
+      "excerpt": "// Order is the security boundary. The two guards are mounted before the file\n// plugin's routes they decide, and the CRUD sub-router is independent of both.\nconst materialApiRoutes: AppApiRouteContribution<Application> = defineApiRoutes(\n  (app) => {\n    const router = new Hono();\n    router.route('/materials', createMaterialApiRouter(app));\n    return router;\n  },\n);\n\nconst routes: readonly AppRouteContribution<Application>[] = [\n  materialContentGuard,\n  materialUploadGuard,\n  ...materialFileRoutes,\n  materialApiRoutes,\n];",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36938138067.1/v2-d42ed396f95c/E17",
+      "origin": {
+        "kind": "review",
+        "key": "review/36938138067.1/v2-d42ed396f95c",
+        "localId": "E17"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/app-plugin-authentication/dist/server/auth.js",
+      "lines": [
+        205,
+        228
+      ],
+      "sha256": "39be057de8227c5aef3eb57a2a15b04bfa0aa8922c60be23e8618d31659c9c48",
+      "observation": "auth.required() 中间件：处理 skip 后调用 getSession(context.req.raw.headers) 读取会话，拒绝凭据按 Better Auth APIError 返回，无会话返回 401 { code: UNAUTHORIZED }，否则 context.set(auth) 后 next。",
+      "excerpt": "                return originFailure;\n            if (options.skip?.(context)) {\n                await next();\n                return;\n            }\n            let auth;\n            try {\n                auth = await this.getSession(context.req.raw.headers);\n                // A refused credential is Better Auth's APIError; answer with its own status and body.\n            }\n            catch (error) {\n                if (error instanceof APIError) {\n                    return context.json(error.body ?? { code: error.status, message: error.message }, error.statusCode);\n                }\n                throw error;\n            }\n            if (!auth) {\n                return context.json({\n                    code: 'UNAUTHORIZED',\n                    message: 'Authentication required',\n                }, 401);\n            }\n            context.set('auth', auth);\n            await next();",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36938138067.1/v2-d42ed396f95c/E18",
+      "origin": {
+        "kind": "review",
+        "key": "review/36938138067.1/v2-d42ed396f95c",
+        "localId": "E18"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/app-plugin-authentication/dist/server/providers/authentication.js",
+      "lines": [
+        101,
+        104
+      ],
+      "sha256": "a03958db41ace1625eec4c61c3cd779700b3366b1504dde293f60aca51f8c104",
+      "observation": "Better Auth 配置 defaultCookieAttributes.path = app.publicBasePath || '/'，因此会话 cookie 会随根路径（如 /uploads/...）的内容请求发送。",
+      "excerpt": "                defaultCookieAttributes: {\n                    path: app.publicBasePath || '/',\n                    ...authConfig.advanced?.defaultCookieAttributes,\n                },",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36938138067.1/v2-d42ed396f95c/E19",
+      "origin": {
+        "kind": "review",
+        "key": "review/36938138067.1/v2-d42ed396f95c",
+        "localId": "E19"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/app-server/dist/application/index.js",
+      "lines": [
+        194,
+        206
+      ],
+      "sha256": "98e0a7f93ab7107addcf1c4516d1fd8234c51f6f8078b2bccc905e006153130a",
+      "observation": "Application.registerRoutes 先对每个 httpMiddleware 执行 register(router, this)，再按 this.routes 数组顺序 createRouter 并挂载到 /api 或 /，说明 httpMiddleware 在所有路由贡献之前运行。",
+      "excerpt": "    async registerRoutes() {\n        if (this.routesRegistered) {\n            return;\n        }\n        for (const middleware of this.httpMiddleware) {\n            await middleware.register(this.router, this);\n        }\n        for (const routes of this.routes) {\n            const router = await routes.createRouter(this);\n            this.router.route(routes.scope === 'api' ? '/api' : '/', router);\n        }\n        this.routesRegistered = true;\n    }",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36938138067.1/v2-d42ed396f95c/E20",
+      "origin": {
+        "kind": "review",
+        "key": "review/36938138067.1/v2-d42ed396f95c",
+        "localId": "E20"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/app-server/dist/router/routes.js",
+      "lines": [
+        1,
+        18
+      ],
+      "sha256": "4a5a2d50c819c2cb33a51a1a65681e16c31ced82001d689f239da855035ec617",
+      "observation": "公开的 defineHttpMiddleware/defineApiRoutes/defineRootRoutes 三个装配入口，其中 httpMiddleware 带 name 与 register，路由贡献只带 scope 与 createRouter。",
+      "excerpt": "export function defineHttpMiddleware(options) {\n    return Object.freeze({\n        name: options.name,\n        register: options.register,\n    });\n}\nexport function defineApiRoutes(createRouter) {\n    return Object.freeze({\n        scope: 'api',\n        createRouter,\n    });\n}\nexport function defineRootRoutes(createRouter) {\n    return Object.freeze({\n        scope: 'root',\n        createRouter,\n    });\n}",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36938138067.1/v2-d42ed396f95c/E22",
+      "origin": {
+        "kind": "review",
+        "key": "review/36938138067.1/v2-d42ed396f95c",
+        "localId": "E22"
+      },
+      "kind": "skill",
+      "path": "app/.agents/skills/nocobase-app-development/references/server-routes.md",
+      "lines": [
+        43,
+        49
+      ],
+      "sha256": "cbf30ba33ca0af760a34442e92ac668c0ec8a312423da0690a98f3dfd0099b25",
+      "observation": "第 43-45 行 Every route owns its own security、/api 只是位置、无 auth.required 就公开；第 47 行 Never depend on middleware installed by another route, or on the order contributions happen to be registered in，并说明路由只被他人中间件保护会静默变公开；第 49 行 auth.required() 对匿名返回 401。",
+      "excerpt": "## Every route owns its own security\n\n**Mounting under `/api` does not authenticate anything.** `/api` is a location. A route with no `auth.required()` is public regardless of where it mounts.\n\nNever depend on middleware installed by another route, or on the order contributions happen to be registered in. Contribution order changes when a plugin is added, and a route protected only by someone else's middleware silently becomes public.\n\n`auth.required()` rejects anonymous requests with `401`. `auth.optional()` attaches the session when present without rejecting.",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36938138067.1/v2-d42ed396f95c/E23",
+      "origin": {
+        "kind": "review",
+        "key": "review/36938138067.1/v2-d42ed396f95c",
+        "localId": "E23"
+      },
+      "kind": "code",
+      "path": "app/server/routes/materials.ts",
+      "lines": [
+        165,
+        213
+      ],
+      "sha256": "998917d36f92d640e3dda52d5a0e5e497f0846a23676c9d9006ebd990648abf8",
+      "observation": "materialContentGuard 是 defineRootRoutes 贡献：path 取最后一段解析 fileId，先 auth.required()，再按 checkFileAccess 返回 missing→404、denied→403，否则 next。",
+      "excerpt": "/**\n * Root guard for the file plugin's public attachment byte route.\n *\n * The byte route is deliberately unauthenticated in the plugin, so this runs\n * first in the application's own route list and decides before it. The last\n * path segment carries `<uuid>[.<ext>]`; a wildcard route has no named param,\n * so it is read from the path rather than from `context.req.param`.\n */\nexport const materialContentGuard: AppRootRouteContribution<Application> =\n  defineRootRoutes((app) => {\n    const router = new Hono();\n    const auth = app.container.resolve(authenticationToken);\n    const materials = app.container.resolve(materialServiceToken);\n\n    router.use(`${MATERIAL_ACCESS_PATH}/*`, auth.required(), async (context, next) => {\n      const path = context.req.path;\n      const token=[REDACTED]'/') + 1);\n      const fileId = parseMaterialFileToken(token);\n      if (!fileId) {\n        return context.json(\n          { code: 'MATERIAL_FILE_NOT_FOUND', message: 'File not found.' },\n          404,\n        );\n      }\n      const userId = currentUserId(context);\n      if (!userId) {\n        return context.json({ code: 'UNAUTHORIZED' }, 401);\n      }\n      const access = await materials.checkFileAccess(userId, fileId);\n      if (access === 'missing') {\n        return context.json(\n          { code: 'MATERIAL_FILE_NOT_FOUND', message: 'File not found.' },\n          404,\n        );\n      }\n      if (access === 'denied') {\n        return context.json(\n          {\n            code: 'MATERIAL_FILE_FORBIDDEN',\n            message: 'This file belongs to another user.',\n          },\n          403,\n        );\n      }\n      await next();\n    });\n\n    return router;\n  });",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36938138067.1/v2-d42ed396f95c/E24",
+      "origin": {
+        "kind": "review",
+        "key": "review/36938138067.1/v2-d42ed396f95c",
+        "localId": "E24"
+      },
+      "kind": "code",
+      "path": "app/server/routes/materials.ts",
+      "lines": [
+        215,
+        232
+      ],
+      "sha256": "998917d36f92d640e3dda52d5a0e5e497f0846a23676c9d9006ebd990648abf8",
+      "observation": "materialUploadGuard 对 /materialFiles:uploadOne 与 uploadMany 应用 auth.required()，注释称这两个 action 是该 Collection 唯一暴露的操作。",
+      "excerpt": "/**\n * API guard for the file plugin's upload actions.\n *\n * `/materialFiles:uploadOne` and `/materialFiles:uploadMany` are the only\n * actions exposed for this Collection, so nothing else needs covering.\n */\nexport const materialUploadGuard: AppApiRouteContribution<Application> =\n  defineApiRoutes((app) => {\n    const router = new Hono();\n    const auth = app.container.resolve(authenticationToken);\n    for (const action of ['uploadOne', 'uploadMany']) {\n      router.use(\n        `/${encodeURIComponent(MATERIAL_FILE_COLLECTION)}:${action}`,\n        auth.required(),\n      );\n    }\n    return router;\n  });",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36938138067.1/v2-d42ed396f95c/E25",
+      "origin": {
+        "kind": "review",
+        "key": "review/36938138067.1/v2-d42ed396f95c",
+        "localId": "E25"
+      },
+      "kind": "code",
+      "path": "app/server/providers/materials.ts",
+      "lines": [
+        387,
+        420
+      ],
+      "sha256": "64856aad77def842c0fd03890f218d717e2cb423ca31be034892a834a4df152d",
+      "observation": "应用的 create 在 database.transaction 内先 assertFileIdsOwned，再 materialRepository.createOne 并逐条 updateOne 文件的 materialId，说明业务事务与文件关联的用法。",
+      "excerpt": "    async create(ownerId, input) {\n      const title = normalizeTitle(input.title);\n      const fileIds = normalizeFileIds(input.fileIds);\n      const now = new Date();\n      const id = randomUUID();\n      let created: ProjectMaterialRow | undefined;\n      await database.transaction(async (connection) => {\n        await assertFileIdsOwned(connection, ownerId, fileIds);\n        created = (\n          await materialRepository(connection).createOne({\n            values: {\n              id,\n              title,\n              createdById: ownerId,\n              createdAt: now,\n              updatedAt: now,\n            },\n          })\n        ).record;\n        for (const fileId of fileIds) {\n          await fileRepository(connection).updateOne({\n            filter: { id: fileId },\n            values: { materialId: id, updatedAt: now },\n          });\n        }\n      });\n      if (!created) {\n        throw new MaterialError('MATERIAL_NOT_FOUND', 'Material not found.');\n      }\n      const files = await loadFiles(id, ownerId);\n      return serializeMaterial(created, files, basePath());\n    },\n\n    async update(ownerId, id, input) {",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36938138067.1/v2-d42ed396f95c/E26",
+      "origin": {
+        "kind": "review",
+        "key": "review/36938138067.1/v2-d42ed396f95c",
+        "localId": "E26"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/app-plugin-file/registry/component-ui/lib/file-preview.ts",
+      "lines": [
+        111,
+        138
+      ],
+      "sha256": "4bb84baf6dfc6a5dc344db66adbc20960ab76b010898ff30f060c2c817809ed0",
+      "observation": "resolveFilePreviewKind 先拒绝主动内容（svg/html/xml 及 +xml），再依次识别 markdown、OOXML、legacy office、安全图片、pdf、音视频、文本，否则 unsupported。",
+      "excerpt": "export function resolveFilePreviewKind(file: FileRecord): FilePreviewKind {\n  const mimeType = file.mimeType.split(';', 1)[0]?.trim().toLowerCase() ?? '';\n  const extension = fileExtension(file.filename);\n  if (\n    ACTIVE_MIME_TYPES.has(mimeType) ||\n    mimeType.endsWith('+xml') ||\n    ACTIVE_EXTENSIONS.has(extension)\n  ) {\n    return 'unsupported';\n  }\n  if (mimeType === 'text/markdown' || extension === '.md') return 'markdown';\n  if (resolveOfficeOpenXmlFormat(file)) return 'ooxml';\n  if (OFFICE_MIME_TYPES.has(mimeType) || OFFICE_EXTENSIONS.has(extension)) {\n    return 'office';\n  }\n  if (isSafeImagePreview(file)) return 'image';\n  if (mimeType === 'application/pdf' || extension === '.pdf') return 'pdf';\n  if (mimeType.startsWith('audio/')) return 'audio';\n  if (mimeType.startsWith('video/')) return 'video';\n  if (\n    mimeType.startsWith('text/') ||\n    mimeType === 'application/json' ||\n    extension === '.json'\n  ) {\n    return 'text';\n  }\n  return 'unsupported';\n}",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36938138067.1/v2-d42ed396f95c/E27",
+      "origin": {
+        "kind": "review",
+        "key": "review/36938138067.1/v2-d42ed396f95c",
+        "localId": "E27"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/app-plugin-file/registry/component-ui/lib/file-preview.ts",
+      "lines": [
+        83,
+        109
+      ],
+      "sha256": "4bb84baf6dfc6a5dc344db66adbc20960ab76b010898ff30f060c2c817809ed0",
+      "observation": "isSafeImagePreview 只接受 image/* 且非 svg/active 扩展；resolveOfficeOpenXmlFormat 对 active/legacy office 返回 undefined，只把 docx/xlsx/pptx 按扩展名或 MIME 识别为 OOXML。",
+      "excerpt": "export function isSafeImagePreview(file: FileRecord): boolean {\n  const mimeType = file.mimeType.split(';', 1)[0]?.trim().toLowerCase() ?? '';\n  return (\n    mimeType.startsWith('image/') &&\n    mimeType !== 'image/svg+xml' &&\n    !ACTIVE_EXTENSIONS.has(fileExtension(file.filename))\n  );\n}\n\nexport function resolveOfficeOpenXmlFormat(\n  file: FileRecord,\n): OfficeOpenXmlFormat | undefined {\n  const mimeType = file.mimeType.split(';', 1)[0]?.trim().toLowerCase() ?? '';\n  const extension = fileExtension(file.filename);\n  if (\n    ACTIVE_MIME_TYPES.has(mimeType) ||\n    mimeType.endsWith('+xml') ||\n    ACTIVE_EXTENSIONS.has(extension) ||\n    OFFICE_EXTENSIONS.has(extension)\n  ) {\n    return undefined;\n  }\n\n  const extensionFormat = OFFICE_OPEN_XML_EXTENSIONS[extension];\n  if (extensionFormat) return extensionFormat;\n  return OFFICE_OPEN_XML_MIME_TYPES[mimeType];\n}",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36938138067.1/v2-d42ed396f95c/E28",
+      "origin": {
+        "kind": "review",
+        "key": "review/36938138067.1/v2-d42ed396f95c",
+        "localId": "E28"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/app-plugin-file/registry/component-ui/components/previewers/file-preview-content.tsx",
+      "lines": [
+        61,
+        99
+      ],
+      "sha256": "f30abbadc57a0f0ed28cdb68d4ced7bba9a6e3a4c3d59d3b6fc49f89d9497144",
+      "observation": "FilePreviewContent 按 kind 分派：OOXML/office 走专用组件，有 error 时渲染 role=alert；image 分支只返回 <img src={url} alt={file.filename}>，没有 onError 或失败态；pdf/audio/video/text/markdown 各有分支。",
+      "excerpt": "  if (error)\n    return (\n      <div role='alert'>{t(messageKey(error), { defaultValue: error })}</div>\n    );\n  if (!url && kind !== 'unsupported')\n    return (\n      <div role='status'>\n        {t('files.loadingPreview', { defaultValue: 'Loading preview...' })}\n      </div>\n    );\n  switch (kind) {\n    case 'image':\n      return (\n        <img\n          src={url}\n          alt={file.filename}\n          className='max-h-[70vh] max-w-full object-contain'\n        />\n      );\n    case 'pdf':\n      return (\n        <iframe title={file.filename} src={url} className='h-[70vh] w-full' />\n      );\n    case 'audio':\n      return <audio controls src={url} className='w-full' />;\n    case 'video':\n      return <video controls src={url} className='max-h-[70vh] max-w-full' />;\n    case 'markdown':\n      return <MarkdownPreview text={text} />;\n    case 'text':\n      return (\n        <pre className='max-h-[70vh] overflow-auto whitespace-pre-wrap rounded-md bg-muted p-3 text-sm'>\n          {text ??\n            t('files.loadingPreview', { defaultValue: 'Loading preview...' })}\n        </pre>\n      );\n    default:\n      return <DownloadFallback file={file} onDownload={onDownload} />;\n  }",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36938138067.1/v2-d42ed396f95c/E29",
+      "origin": {
+        "kind": "review",
+        "key": "review/36938138067.1/v2-d42ed396f95c",
+        "localId": "E29"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/app-plugin-file/registry/component-ui/components/previewers/office-open-xml-preview.tsx",
+      "lines": [
+        35,
+        78
+      ],
+      "sha256": "b32b48615f0400191ba28d427f9070fa69c74282829aba2087746563350d28c8",
+      "observation": "OfficeOpenXmlPreview 的 useEffect 用 AbortController 加载并渲染，reportViewerError 销毁 viewer 并设置错误，清理时 abort 并 destroy，实现加载与失败生命周期。",
+      "excerpt": "  useEffect(() => {\n    const host = hostRef.current;\n    if (!host || !url || error) return undefined;\n\n    let active = true;\n    let viewer: OfficeOpenXmlViewer | undefined;\n    const controller = new AbortController();\n    const reportViewerError = (cause: unknown): void => {\n      if (!active || isAbortError(cause)) return;\n      const failedViewer = viewer;\n      viewer = undefined;\n      failedViewer?.destroy();\n      setViewerError(\n        cause instanceof OfficeOpenXmlRequestError\n          ? cause.message\n          : t('files.ooxmlLoadFailed', {\n              defaultValue: 'Unable to render this Office Open XML file.',\n            }),\n      );\n    };\n\n    void (async () => {\n      const data = await fetchOfficeOpenXml(url, controller.signal, t);\n      if (!active) return;\n      const createdViewer = await createOfficeOpenXmlViewer(\n        format,\n        host,\n        reportViewerError,\n      );\n      if (!active) {\n        createdViewer.destroy();\n        return;\n      }\n      viewer = createdViewer;\n      await viewer.load(data);\n      if (active) setLoaded(true);\n    })().catch(reportViewerError);\n\n    return () => {\n      active = false;\n      controller.abort();\n      viewer?.destroy();\n    };\n  }, [error, format, t, url]);",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36938138067.1/v2-d42ed396f95c/E30",
+      "origin": {
+        "kind": "review",
+        "key": "review/36938138067.1/v2-d42ed396f95c",
+        "localId": "E30"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/app-plugin-file/registry/component-ui/components/previewers/office-open-xml-preview.tsx",
+      "lines": [
+        119,
+        137
+      ],
+      "sha256": "b32b48615f0400191ba28d427f9070fa69c74282829aba2087746563350d28c8",
+      "observation": "fetchOfficeOpenXml 用 credentials: fileUrlCredentials(url) 拉取内容，非 ok 抛 OfficeOpenXmlRequestError 并带状态码文案，体现同源凭据与失败回退。",
+      "excerpt": "async function fetchOfficeOpenXml(\n  url: string,\n  signal: AbortSignal,\n  t: ReturnType<typeof useTranslation>['t'],\n): Promise<ArrayBuffer> {\n  const response = await fetch(url, {\n    credentials: fileUrlCredentials(url),\n    signal,\n  });\n  if (!response.ok) {\n    throw new OfficeOpenXmlRequestError(\n      t('files.previewRequestFailed', {\n        defaultValue: `Preview request failed (${response.status}).`,\n        status: response.status,\n      }),\n    );\n  }\n  return await response.arrayBuffer();\n}",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36938138067.1/v2-d42ed396f95c/E31",
+      "origin": {
+        "kind": "review",
+        "key": "review/36938138067.1/v2-d42ed396f95c",
+        "localId": "E31"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/app-plugin-file/registry/component-ui/lib/file-url.ts",
+      "lines": [
+        1,
+        23
+      ],
+      "sha256": "bfd07ecb6224de20bac98c98897657d8b39fe3552772e54d63a4fcfb9c820cac",
+      "observation": "resolveSafeFileUrl 只接受 http/https 或受信 blob URL；fileUrlCredentials 同源返回 same-origin，否则 omit。",
+      "excerpt": "export function resolveSafeFileUrl(\n  value: string,\n  trustedBlobUrls: ReadonlySet<string> = new Set(),\n): string | undefined {\n  const url = value.trim();\n  if (!url) return undefined;\n  if (trustedBlobUrls.has(url) && url.startsWith('blob:')) return url;\n  try {\n    const resolved = new URL(url, window.location.href);\n    return resolved.protocol === 'http:' || resolved.protocol === 'https:'\n      ? url\n      : undefined;\n  } catch {\n    return undefined;\n  }\n}\n\nexport function fileUrlCredentials(url: string): RequestCredentials {\n  return new URL(url, window.location.href).origin === window.location.origin\n    ? 'same-origin'\n    : 'omit';\n}\n",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36938138067.1/v2-d42ed396f95c/E32",
+      "origin": {
+        "kind": "review",
+        "key": "review/36938138067.1/v2-d42ed396f95c",
+        "localId": "E32"
+      },
+      "kind": "skill",
+      "path": "packages/@nocobase/app-plugin-file/skills/nocobase-app-plugin-file/SKILL.md",
+      "lines": [
+        231,
+        239
+      ],
+      "sha256": "06b464d71554a3ae12819918f98a84f44c65c2b70e7fbfcffd17e992e57aed22",
+      "observation": "Preview and content access：支持安全栅格图片、PDF blob、文本/Markdown、音视频，拒 HTML/SVG/XML；DOCX/XLSX/PPTX 用 @silurus/ooxml 本地渲染不上传第三方；OOXML/PDF/文本 fetch 用同源凭据，App 自有内容路由可用同源 session cookie 服务受限预览但须检查记录访问；失败显示错误并提供下载回退。",
+      "excerpt": "### Preview and content access\n\nPreview supports safe raster images, PDF via a fetched blob, text/Markdown and audio/video. HTML/SVG/XML previews and unsafe URL schemes are rejected. DOCX, XLSX and PPTX use lazily loaded `@silurus/ooxml` viewers to render locally from `FileRecord.contentUrl`; their content is not sent to a third-party preview service. Legacy DOC/XLS/PPT and OpenDocument formats use Office Online, which requires an internet-accessible absolute URL and cannot use the App session.\n\nOOXML, PDF and text fetches use same-origin credentials. An App-owned content route protected by same-origin session cookies can therefore serve restricted previews, provided it checks the caller's record access. Cross-origin fetches omit credentials and require CORS; an external cookie-protected URL is not supported by this default path. The Repository API client's Bearer token is not automatically attached to content fetches.\n\nFor Bearer-only content authorization, adapt the installed Registry source in the App. Add an authenticated content loader to the OOXML fetch path and `PreviewBody`'s PDF/text fetches, and adapt download and media/image paths as needed. Resolve authentication through the App's supported client/session services and send credentials only to the trusted content endpoint. Do not put tokens in `contentUrl`. If the adapter creates blob URLs, keep an App-owned trusted URL set, pass it to the relevant `resolveSafeFileUrl` calls, and revoke URLs when replaced or unmounted. Merely assigning a `blob:` URL to `FileRecord.contentUrl` is insufficient: the default components reject untrusted blob URLs.\n\nOOXML request or rendering failure displays an error and, when downloads are enabled, a download action. `download={false}` removes that action. This is not a second preview service or a guarantee that downloading the same inaccessible URL will succeed.",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36938138067.1/v2-d42ed396f95c/E33",
+      "origin": {
+        "kind": "review",
+        "key": "review/36938138067.1/v2-d42ed396f95c",
+        "localId": "E33"
+      },
+      "kind": "skill",
+      "path": "packages/@nocobase/app-plugin-file/skills/nocobase-app-plugin-file/SKILL.md",
+      "lines": [
+        220,
+        229
+      ],
+      "sha256": "06b464d71554a3ae12819918f98a84f44c65c2b70e7fbfcffd17e992e57aed22",
+      "observation": "FileUploadField 接受 repository 与受控 value/onChange，onStatusChange 报告 idle/uploading/error 使表单可阻止不完整提交；removeOnDelete 调 deleteOne 只删元数据，否则仅解除关联；只读组件使用 contentUrl，Supply translated labels and adapt App-owned source as needed。",
+      "excerpt": "        onError={(cause) => setError(cause.message)}\n      />\n      <FileList files={value} onError={(cause) => setError(cause.message)} />\n      {error && <p role='alert'>{error}</p>}\n    </>\n  );\n}\n```\n\nFileUploadField takes a repository and controlled value/onChange; onStatusChange reports idle/uploading/error so forms can prevent incomplete submissions. Accept/maxSize/maxFiles are UI checks. removeOnDelete calls deleteOne, deleting metadata only; otherwise removal unlinks the selection. Read-only FileList, FileThumbnail, FilePreviewField and FilePreviewDialog use contentUrl without a repository prop. Import UI types from the installed recipe. Supply translated labels and adapt App-owned source as needed.",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36938138067.1/v2-d42ed396f95c/E34",
+      "origin": {
+        "kind": "review",
+        "key": "review/36938138067.1/v2-d42ed396f95c",
+        "localId": "E34"
+      },
+      "kind": "code",
+      "path": "app/client/extensions/nocobase-file-component-ui/components/previewers/file-preview-content.tsx",
+      "lines": [
+        96,
+        137
+      ],
+      "sha256": "5726f452969b893dec9b6bf9d98af7b8014f4a37962b77c6f39dd514c337a07b",
+      "observation": "应用自有副本新增 ImagePreview：useEffect 在 url 变化时重置 failed，failed 时渲染 role=alert + FileThumbnail + files.imagePreviewFailed 文案，否则 <img onError={() => setFailed(true)}>。",
+      "excerpt": "function ImagePreview(inputProps: {\n  readonly file: FileRecord;\n  readonly url?: string;\n}): ReactElement {\n  const { t } = useTranslation('@nocobase/app-plugin-file');\n  const { file, url } = inputProps;\n  const [failed, setFailed] = useState(false);\n\n  // A new URL deserves a fresh attempt: the corrupt-file message must not stick\n  // to the next image a user opens.\n  useEffect(() => {\n    setFailed(false);\n  }, [url]);\n\n  if (!url)\n    return (\n      <div role='status'>\n        {t('files.loadingPreview', { defaultValue: 'Loading preview...' })}\n      </div>\n    );\n  if (failed)\n    return (\n      <div role='alert' className='flex flex-col items-center gap-3 py-8'>\n        <div className='h-24 w-24'>\n          <FileThumbnail file={file} />\n        </div>\n        <p>\n          {t('files.imagePreviewFailed', {\n            defaultValue: 'Unable to display this image. The file is corrupted or not a readable image.',\n          })}\n        </p>\n      </div>\n    );\n  return (\n    <img\n      src={url}\n      alt={file.filename}\n      className='max-h-[70vh] max-w-full object-contain'\n      onError={() => setFailed(true)}\n    />\n  );\n}",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36938138067.1/v2-d42ed396f95c/E35",
+      "origin": {
+        "kind": "review",
+        "key": "review/36938138067.1/v2-d42ed396f95c",
+        "localId": "E35"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/db/dist/src/collection/fluent/index.js",
+      "lines": [
+        44,
+        99
+      ],
+      "sha256": "1736d3fbe360adc70d70bc2d493e2671e705431f1278fa75d8f2df3fabf4af17",
+      "observation": "fluent 字段 DSL：integer/bigInt/string/char/text/boolean/decimal/datetime/datetimeTz/json/blob/uuid/native 等，返回 this.field({ name, type, ...options })。",
+      "excerpt": "    integer(name, options = {}) {\n        return this.field({ name, type: 'integer', ...options });\n    }\n    bigInt(name, options = {}) {\n        return this.field({ name, type: 'bigInt', ...options });\n    }\n    string(name, options = {}) {\n        return this.field({ name, type: 'string', ...options });\n    }\n    char(name, options) {\n        return this.field({ ...options, name, type: 'char' });\n    }\n    enum(name, options) {\n        return this.field({\n            ...options,\n            name,\n            type: 'enum',\n            values: [...options.values],\n        });\n    }\n    text(name, options = {}) {\n        return this.field({ name, type: 'text', ...options });\n    }\n    boolean(name, options = {}) {\n        return this.field({ name, type: 'boolean', ...options });\n    }\n    decimal(name, options = {}) {\n        return this.field({ name, type: 'decimal', ...options });\n    }\n    datetime(name, options = {}) {\n        return this.field({ name, type: 'datetime', ...options });\n    }\n    float(name, options = {}) {\n        return this.field({ ...options, name, type: 'float' });\n    }\n    double(name, options = {}) {\n        return this.field({ ...options, name, type: 'double' });\n    }\n    date(name, options = {}) {\n        return this.field({ ...options, name, type: 'date' });\n    }\n    time(name, options = {}) {\n        return this.field({ ...options, name, type: 'time' });\n    }\n    datetimeTz(name, options = {}) {\n        return this.field({ ...options, name, type: 'datetimeTz' });\n    }\n    json(name, options = {}) {\n        return this.field({ name, type: 'json', ...options });\n    }\n    blob(name, options = {}) {\n        return this.field({ name, type: 'blob', ...options });\n    }\n    uuid(name, options = {}) {\n        return this.field({ name, type: 'uuid', ...options });\n    }",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36938138067.1/v2-d42ed396f95c/E36",
+      "origin": {
+        "kind": "review",
+        "key": "review/36938138067.1/v2-d42ed396f95c",
+        "localId": "E36"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/db/dist/src/collection/fluent/index.js",
+      "lines": [
+        296,
+        330
+      ],
+      "sha256": "1736d3fbe360adc70d70bc2d493e2671e705431f1278fa75d8f2df3fabf4af17",
+      "observation": "字段级 primary/autoIncrement/notNull/nullable/defaultTo/unique/index 设置，primary 与 index 会同时写入集合约束/索引。",
+      "excerpt": "    constructor(collection, definition) {\n        this.collection = collection;\n        this.definition = definition;\n    }\n    primary(options = {}) {\n        this.definition.primaryKey = true;\n        this.collection.primary(this.definition.name, options);\n        return this;\n    }\n    autoIncrement() {\n        this.definition.autoIncrement = true;\n        return this;\n    }\n    notNull() {\n        this.definition.nullable = false;\n        return this;\n    }\n    nullable() {\n        this.definition.nullable = true;\n        return this;\n    }\n    defaultTo(value) {\n        this.definition.defaultValue = value;\n        return this;\n    }\n    unique(options = {}) {\n        this.definition.unique = true;\n        this.collection.unique(this.definition.name, options);\n        return this;\n    }\n    index(options = {}) {\n        this.definition.index = true;\n        this.collection.index(this.definition.name, options);\n        return this;\n    }",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36938138067.1/v2-d42ed396f95c/E37",
+      "origin": {
+        "kind": "review",
+        "key": "review/36938138067.1/v2-d42ed396f95c",
+        "localId": "E37"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/db/dist/src/migration/define.js",
+      "lines": [
+        1,
+        6
+      ],
+      "sha256": "eba0dce586442525677889388044224f67d2dbf5da1e88e5846a0b9fa34e5059",
+      "observation": "defineMigration 标记并返回迁移定义，供迁移加载器发现。",
+      "excerpt": "import { markMigrationDefinition } from './internal/marker.js';\n/** Marks and returns a migration definition for discovery by the migration loader. */\nexport function defineMigration(definition) {\n    return markMigrationDefinition(definition);\n}\n",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36938138067.1/v2-d42ed396f95c/E38",
+      "origin": {
+        "kind": "review",
+        "key": "review/36938138067.1/v2-d42ed396f95c",
+        "localId": "E38"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/db/dist/src/database/manager.js",
+      "lines": [
+        70,
+        78
+      ],
+      "sha256": "1c3d1685ed0a9f5659203e5155291f64720607b400c5aa853e7775c726417594",
+      "observation": "DatabaseManager 提供 createSeeder、connect 与 transaction(fn, name)（转发到 connection.transaction），供业务在单事务内做多写。",
+      "excerpt": "    createSeeder(options) {\n        return createSeeder({ ...options, database: this });\n    }\n    async connect(name) {\n        return this.connection(name).connect();\n    }\n    async transaction(fn, name) {\n        return this.connection(name).transaction(fn);\n    }",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36938138067.1/v2-d42ed396f95c/E39",
+      "origin": {
+        "kind": "review",
+        "key": "review/36938138067.1/v2-d42ed396f95c",
+        "localId": "E39"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/db/dist/src/repository/repository.js",
+      "lines": [
+        96,
+        120
+      ],
+      "sha256": "31b67e0dcdfd222b6981571d563d9879525a3bf61312ea92a05a269d99c1f311",
+      "observation": "DefaultRepository.findOne 走 normalize filter/select 与 read policy 上下文后调用 adapter 查询，返回选取字段。",
+      "excerpt": "    }\n    async findOne(options) {\n        const collection = await this.collection();\n        const policy = this.readContext(collection);\n        const selection = await this.validateSelect(collection, options.select, options.context, policy);\n        const callerFilter = await this.normalizeFilterWithoutPolicy(collection, options.filter, options.context);\n        if (!callerFilter && options.sort === undefined) {\n            invalid('INVALID_FILTER', 'findOne() requires filter or non-empty sort.', {\n                collection: collection.name,\n            });\n        }\n        const filter = await this.applyReadPolicy(collection, callerFilter, policy);\n        const sort = await this.validateSort(collection, options.sort, !callerFilter, policy);\n        return (await this.options.adapter.findOne({\n            collection,\n            fields: selection.fields,\n            select: selection.select,\n            filter,\n            sort,\n            limit: 1,\n        }));\n    }\n    async count(options = {}) {\n        const collection = await this.collection();\n        return this.options.adapter.count({",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36938138067.1/v2-d42ed396f95c/E40",
+      "origin": {
+        "kind": "review",
+        "key": "review/36938138067.1/v2-d42ed396f95c",
+        "localId": "E40"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/db/dist/src/repository/repository.js",
+      "lines": [
+        266,
+        300
+      ],
+      "sha256": "31b67e0dcdfd222b6981571d563d9879525a3bf61312ea92a05a269d99c1f311",
+      "observation": "createOne 先 assertWriteEnabled Policy、再解析写入形状并校验 Policy 元数据，然后规范化 mutation 与默认值后调用 adapter。",
+      "excerpt": "    async createOne(options) {\n        const policyInput = options.writePolicy === undefined ? true : options.writePolicy;\n        assertWriteEnabled(policyInput);\n        const writePolicy = policyInput === true ? true : normalizeWritePolicy(policyInput, 'create');\n        const collection = await this.collection();\n        assertWritableCollection(collection);\n        // Before the payload is looked at: a Policy that forbids this operation\n        // refuses the call outright, so an empty or malformed body is reported as\n        // forbidden rather than as invalid input. The caller learns nothing about\n        // the shape of a write they may not perform.\n        resolveWriteShapeNode(this.options.policy, 'create', collection);\n        await validateWritePolicyMetadata(this.options.collections, collection, writePolicy);\n        const createValues = applyCreateDefaults(this.options.policy, evaluateValues(options.values));\n        const mutation = await normalizeModelMutation(this.options.collections, collection, createValues.values, 'createOne', 1, { nodes: 0, clientKeys: new Set(), context: options.context });\n        this.assertPolicyMutationFields(collection, mutation, 'create', ['values'], createValues.protectedFields);\n        assertMutationWritePolicy(mutation, writePolicy, ['values'], [], 'create', collection.name);\n        const selection = await this.validateSelect(collection, options.select, options.context, this.readContext(collection));\n        const requestedFields = selection.fields;\n        const executionFields = includeExecutionFields(collection, requestedFields);\n        const result = await this.options.adapter.createOne({\n            collection,\n            fields: executionFields,\n            values: mutation.values,\n            relations: mutation.relations,\n            select: selection.select,\n            scopeCheck: await this.scopeCheck(collection, 'create'),\n            relationScopes: await this.writeRelationScopes(collection, 'create'),\n        });\n        return {\n            record: pickSelection(result.record, requestedFields, selection.select),\n            createdTargets: result.createdTargets,\n            version: result.version,\n        };\n    }\n    async createMany(options) {",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36938138067.1/v2-d42ed396f95c/E41",
+      "origin": {
+        "kind": "review",
+        "key": "review/36938138067.1/v2-d42ed396f95c",
+        "localId": "E41"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/db/dist/src/repository/repository.js",
+      "lines": [
+        351,
+        392
+      ],
+      "sha256": "31b67e0dcdfd222b6981571d563d9879525a3bf61312ea92a05a269d99c1f311",
+      "observation": "updateOne 注释与实现：在读取 payload 之前先由 Policy 判定是否允许（禁止则先报 forbidden），再校验写入 Policy 元数据、规范化 mutation，最后 adapter.updateOne 并把 conflict/missing 映射为稳定错误。",
+      "excerpt": "    async updateOne(options) {\n        const policyInput = options.writePolicy === undefined ? true : options.writePolicy;\n        assertWriteEnabled(policyInput);\n        const writePolicy = policyInput === true ? true : normalizeWritePolicy(policyInput, 'update');\n        const collection = await this.collection();\n        assertWritableCollection(collection);\n        // Before the payload is looked at: a Policy that forbids this operation\n        // refuses the call outright, so an empty or malformed body is reported as\n        // forbidden rather than as invalid input. The caller learns nothing about\n        // the shape of a write they may not perform.\n        resolveWriteShapeNode(this.options.policy, 'update', collection);\n        await validateWritePolicyMetadata(this.options.collections, collection, writePolicy);\n        const mutation = await normalizeModelMutation(this.options.collections, collection, evaluateValues(options.values), 'updateOne', 1, { nodes: 0, clientKeys: new Set(), context: options.context });\n        this.assertPolicyMutationFields(collection, mutation, 'update', ['values']);\n        assertMutationWritePolicy(mutation, writePolicy, ['values'], [], 'update', collection.name);\n        const filter = await this.normalizeSingleMutationFilter(collection, options.filter, options.context, 'update');\n        validateIfVersion(collection, options.ifVersion);\n        const selection = await this.validateSelect(collection, options.select, options.context, this.readContext(collection));\n        const requestedFields = selection.fields;\n        const result = await this.options.adapter.updateOne({\n            collection,\n            fields: includeExecutionFields(collection, requestedFields),\n            filter,\n            values: mutation.values,\n            ifVersion: options.ifVersion,\n            relations: mutation.relations,\n            select: selection.select,\n            scopeCheck: await this.scopeCheck(collection, 'update'),\n            relationScopes: await this.writeRelationScopes(collection, 'update'),\n        });\n        if (result === 'multiple')\n            multipleRecordsMatched(collection);\n        if (result === 'conflict')\n            versionConflict(collection);\n        if (result === 'missing')\n            recordNotFound(collection);\n        return {\n            record: pickSelection(result.record, requestedFields, selection.select),\n            createdTargets: result.createdTargets,\n            version: result.version,\n        };\n    }",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36938138067.1/v2-d42ed396f95c/E44",
+      "origin": {
+        "kind": "review",
+        "key": "review/36938138067.1/v2-d42ed396f95c",
+        "localId": "E44"
+      },
+      "kind": "code",
+      "path": "app/database/main/migrations/202610010002_create_material_files.ts",
+      "lines": [
+        14,
+        42
+      ],
+      "sha256": "03806b1ebf9ae6386670be0f6307182fb68fda56e3f58c7acbfcebb9db45ddd0",
+      "observation": "应用迁移用 defineMigration + builder.createCollection 建 materialFiles，镜像插件九列并加 nullable createdById/materialId 与主键/索引，注释说明 nullable materialId 使保存失败时上传可保留。",
+      "excerpt": "const migration: MigrationDefinition = defineMigration({\n  name: '202610010002_create_material_files',\n  async up({ builder }) {\n    await builder.createCollection('materialFiles', (collection) => {\n      collection.uuid('id').notNull();\n      collection.string('disk', { length: 64 }).notNull();\n      collection.text('key').notNull();\n      collection.text('filename').notNull();\n      collection.string('ext', { length: 32 }).notNull();\n      collection.string('mimeType', { length: 255 }).notNull();\n      collection.bigInt('size').notNull();\n      collection.datetime('createdAt').notNull();\n      collection.datetime('updatedAt').notNull();\n      collection.string('createdById', { length: 64 }).nullable();\n      collection\n        .string('materialId', { length: 36 })\n        .nullable()\n        .index({ name: 'idx_material_files_material' });\n      collection.primary('id', { name: 'pk_material_files' });\n      collection.index('createdById', {\n        name: 'idx_material_files_created_by',\n      });\n      collection.index('key', { name: 'idx_material_files_key' });\n    });\n  },\n  async down({ builder }) {\n    await builder.dropCollection('materialFiles');\n  },\n});",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36938138067.1/v2-d42ed396f95c/E45",
+      "origin": {
+        "kind": "review",
+        "key": "review/36938138067.1/v2-d42ed396f95c",
+        "localId": "E45"
+      },
+      "kind": "log",
+      "path": "artifacts/agent-history/agent-implement.jsonl/part-0003.txt",
+      "lines": [
+        272,
+        276
+      ],
+      "sha256": "7492bda8c426e8f89e9a4fed51e735269b23c6dba9cf7db906ad653139d07c45",
+      "observation": "tool_execution_end/message_end 对 call_1f2618e4...：命令链中 find tests e2e 因目录缺失退出 1，但同一返回已含 server/routes/index.ts 与 providers 内容（isError:true, Command exited with code 1）。",
+      "excerpt": "{\"type\":\"tool_execution_end\",\"toolCallId\":\"call_1f2618e4cc6c454e8b3c5853\",\"toolName\":\"bash\",\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"import type { Application } from '@nocobase/app-server/application';\\nimport type { AppRouteContribution } from '@nocobase/app-server/router';\\n\\nconst routes: readonly AppRouteContribution<Application>[] = [];\\n\\nexport default routes;\\n=====PROVIDERS=====\\nimport type { ApplicationServiceProviderConstructor } from '@nocobase/app-server/application';\\n\\nconst serviceProviders: readonly ApplicationServiceProviderConstructor[] = [];\\n\\nexport default serviceProviders;\\n=====SERVICE PROVIDER=====\\nimport { ClientApplication, toasterToken } from '@nocobase/app-client';\\nimport type { ClientServiceProviderConstructor } from '@nocobase/app-client/plugins';\\nimport { ServiceProvider } from '@nocobase/service-provider';\\n\\nimport { createToaster } from './lib/toaster.js';\\n\\nexport class DefaultClientServiceProvider extends ServiceProvider<ClientApplication> {\\n  public readonly name: string = 'nb3-factory/client';\\n  private previousDocumentTitle: string | undefined;\\n\\n  public override register(): void {\\n    // What plugins and pages report through useToaster() reaches the Toaster in client/react-providers.ts from here.\\n    this.app.container.instance(toasterToken, createToaster());\\n  }\\n\\n  public override boot(): Promise<void> {\\n    const configuredTitle = this.app.config.get<unknown>('app.title');\\n    const title =\\n      typeof configuredTitle === 'string' && configuredTitle.trim()\\n        ? configuredTitle.trim()\\n        : 'NocoBase';\\n    this.app.refine.setOptions({ title: { text: title } });\\n    this.previousDocumentTitle = document.title;\\n    document.title = title;\\n    return Promise.resolve();\\n  }\\n\\n  public override shutdown(): Promise<void> {\\n    if (this.previousDocumentTitle !== undefined) {\\n      document.title = this.previousDocumentTitle;\\n    }\\n    return Promise.resolve();\\n  }\\n}\\n\\nconst serviceProviders: readonly ClientServiceProviderConstructor[] = [\\n  DefaultClientServiceProvider,\\n];\\n\\nexport default serviceProviders;\\n=====TESTS=====\\ntests/components/layout-containers.test.tsx\\ntests/components/reference-pages.test.tsx\\ntests/components/sidebar-preference.test.tsx\\ntests/components/header-hover.test.tsx\\ntests/components/typography.test.tsx\\ntests/components/navigation-tree.test.tsx\\ntests/components/app-title.test.tsx\\ntests/components/auth-i18n.test.tsx\\ntests/components/layout-i18n.test.tsx\\ntests/components/reference-shared.test.tsx\\ntests/components/data-table.test.tsx\\ntests/components/language-switcher.test.tsx\\ntests/components/file-preview.test.tsx\\ntests/components/app-layout-routes.test.tsx\\ntests/components/date-picker.test.tsx\\ntests/components/loading.test.tsx\\ntests/fixtures/theme-tokens.html\\ntests/fixtures/theme-tokens.tsx\\ntests/setup/client-config.ts\\ntests/logic/client-theme.test.tsx\\ntests/logic/theme-preferences.test.ts\\ntests/logic/client-shell.test.tsx\\ntests/logic/client-routes.test.ts\\ntests/logic/client-settings.test.tsx\\ntests/logic/toaster.test.tsx\\ntests/logic/app-server.test.ts\\ntests/logic/dev-client-watch.test.ts\\ntests/logic/lifecycle.test.ts\\ntests/logic/route-navigation.test.ts\\ntests/logic/plugin-commands.test.ts\\ntests/logic/client-runtime.test.ts\\ntests/logic/locale-coverage.test.ts\\ntests/logic/client-route-recovery.test.tsx\\ntests/logic/user-menu-sign-out.test.tsx\\ntests/logic/plugin-page-authz.test.ts\\ntests/logic/client-auth.test.tsx\\ntests/logic/dev-routes-production-build.test.ts\\ntests/logic/config.test.ts\\ntests/logic/account-permissions.test.tsx\\ntests/logic/route-overlay.test.tsx\\ntests/logic/template-package-name.test.ts\\ntests/logic/client-plugin-registry.test.ts\\ntests/logic/tailwind-sources.test.ts\\ntests/logic/theme-tokens.test.ts\\n\\n\\nCommand exited with code 1\"}],\"details\":{}},\"isError\":true}\n{\"type\":\"tool_execution_update\",\"toolCallId\":\"call_16e1c1c2f86041888df5d61e\",\"toolName\":\"bash\",\"args\":{\"command\":\"cd /home/runner/work/nb3-factory/nb3-factory/workspace && grep -n \\\"app-plugin-file\\\\|app-plugin-mail\\\\|silurus\\\\|react-markdown\\\\|remark-gfm\\\\|@nocobase/i18n\\\" package.json && echo \\\"=== ui attachment ===\\\" && cat client/components/ui/attachment.tsx | head -60\",\"timeout\":30},\"partialResult\":{\"content\":[{\"type\":\"text\",\"text\":\"39:    \\\"@silurus/ooxml\\\": \\\"0.85.1\\\",\\n85:    \\\"react-markdown\\\": \\\"^10.1.0\\\",\\n89:    \\\"remark-gfm\\\": \\\"^4.0.1\\\",\\n153:    \\\"@nocobase/app-plugin-file\\\": \\\"^0.1.0-beta.16\\\",\\n155:    \\\"@nocobase/app-plugin-mail\\\": \\\"0.1.0-beta.0\\\",\\n168:    \\\"@nocobase/i18n\\\": \\\"^1.0.0-beta.4\\\",\\n=== ui attachment ===\\nimport * as React from 'react';\\nimport { mergeProps } from '@base-ui/react/merge-props';\\nimport { useRender } from '@base-ui/react/use-render';\\nimport { cva, type VariantProps } from 'class-variance-authority';\\nimport { cn } from '@/lib/utils';\\n\\nimport { Button } from '@/components/ui/button';\\n\\nconst attachmentVariants = cva(\\n  'group/attachment relative flex w-fit max-w-full min-w-0 shrink-0 flex-wrap rounded-xl border bg-card text-card-foreground transition-colors focus-within:ring-1 focus-within:ring-ring/50 has-[>a,>button]:hover:bg-muted/50 data-[state=error]:border-destructive/30 data-[state=idle]:border-dashed',\\n  {\\n    variants: {\\n      size: {\\n        default:\\n          'gap-2 text-sm has-data-[slot=attachment-content]:px-2.5 has-data-[slot=attachment-content]:py-2 has-data-[slot=attachment-media]:p-2',\\n        sm: 'gap-2.5 text-xs has-data-[slot=attachment-content]:px-2 has-data-[slot=attachment-content]:py-1.5 has-data-[slot=attachment-media]:p-1.5',\\n        xs: 'gap-1.5 rounded-lg text-xs has-data-[slot=attachment-content]:px-1.5 has-data-[slot=attachment-content]:py-1 has-data-[slot=attachment-media]:p-1',\\n      },\\n      orientation: {\\n        horizontal: 'min-w-40 items-center',\\n        vertical: 'w-24 flex-col has-data-[slot=attachment-content]:w-30',\\n      },\\n    },\\n  },\\n);\\n\\nfunction Attachment({\\n  className,\\n  state = 'done',\\n  size = 'default',\\n  orientation = 'horizontal',\\n  ...props\\n}: React.ComponentProps<'div'> &\\n  VariantProps<typeof attachmentVariants> & {\\n    state?: 'idle' | 'uploading' | 'processing' | 'error' | 'done';\\n  }) {\\n  return (\\n    <div\\n      data-slot='attachment'\\n      data-state={state}\\n      data-size={size}\\n      data-orientation={orientation}\\n      className={cn(attachmentVariants({ size, orientation }), className)}\\n      {...props}\\n    />\\n  );\\n}\\n\\nconst attachmentMediaVariants = cva(\\n  \\\"relative flex aspect-square w-10 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-muted text-foreground group-data-[orientation=vertical]/attachment:w-full group-data-[size=sm]/attachment:w-8 group-data-[size=xs]/attachment:w-7 group-data-[size=xs]/attachment:rounded-md group-data-[state=error]/attachment:bg-destructive/10 group-data-[state=error]/attachment:text-destructive group-data-[orientation=vertical]/attachment:*:data-[slot=spinner]:size-6! [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 group-data-[orientation=vertical]/attachment:[&_svg:not([class*='size-'])]:size-6 group-data-[size=xs]/attachment:[&_svg:not([class*='size-'])]:size-3.5\\\",\\n  {\\n    variants: {\\n      variant: {\\n        icon: '',\\n        image:\\n          'opacity-60 group-data-[state=done]/attachment:opacity-100 group-data-[state=idle]/attachment:opacity-100 *:[img]:aspect-square *:[img]:w-full *:[img]:object-cover',\\n      },\\n    },\\n    defaultVariants: {\\n      variant: 'icon',\\n\"}],\"details\":{}}}\n{\"type\":\"tool_execution_end\",\"toolCallId\":\"call_16e1c1c2f86041888df5d61e\",\"toolName\":\"bash\",\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"39:    \\\"@silurus/ooxml\\\": \\\"0.85.1\\\",\\n85:    \\\"react-markdown\\\": \\\"^10.1.0\\\",\\n89:    \\\"remark-gfm\\\": \\\"^4.0.1\\\",\\n153:    \\\"@nocobase/app-plugin-file\\\": \\\"^0.1.0-beta.16\\\",\\n155:    \\\"@nocobase/app-plugin-mail\\\": \\\"0.1.0-beta.0\\\",\\n168:    \\\"@nocobase/i18n\\\": \\\"^1.0.0-beta.4\\\",\\n=== ui attachment ===\\nimport * as React from 'react';\\nimport { mergeProps } from '@base-ui/react/merge-props';\\nimport { useRender } from '@base-ui/react/use-render';\\nimport { cva, type VariantProps } from 'class-variance-authority';\\nimport { cn } from '@/lib/utils';\\n\\nimport { Button } from '@/components/ui/button';\\n\\nconst attachmentVariants = cva(\\n  'group/attachment relative flex w-fit max-w-full min-w-0 shrink-0 flex-wrap rounded-xl border bg-card text-card-foreground transition-colors focus-within:ring-1 focus-within:ring-ring/50 has-[>a,>button]:hover:bg-muted/50 data-[state=error]:border-destructive/30 data-[state=idle]:border-dashed',\\n  {\\n    variants: {\\n      size: {\\n        default:\\n          'gap-2 text-sm has-data-[slot=attachment-content]:px-2.5 has-data-[slot=attachment-content]:py-2 has-data-[slot=attachment-media]:p-2',\\n        sm: 'gap-2.5 text-xs has-data-[slot=attachment-content]:px-2 has-data-[slot=attachment-content]:py-1.5 has-data-[slot=attachment-media]:p-1.5',\\n        xs: 'gap-1.5 rounded-lg text-xs has-data-[slot=attachment-content]:px-1.5 has-data-[slot=attachment-content]:py-1 has-data-[slot=attachment-media]:p-1',\\n      },\\n      orientation: {\\n        horizontal: 'min-w-40 items-center',\\n        vertical: 'w-24 flex-col has-data-[slot=attachment-content]:w-30',\\n      },\\n    },\\n  },\\n);\\n\\nfunction Attachment({\\n  className,\\n  state = 'done',\\n  size = 'default',\\n  orientation = 'horizontal',\\n  ...props\\n}: React.ComponentProps<'div'> &\\n  VariantProps<typeof attachmentVariants> & {\\n    state?: 'idle' | 'uploading' | 'processing' | 'error' | 'done';\\n  }) {\\n  return (\\n    <div\\n      data-slot='attachment'\\n      data-state={state}\\n      data-size={size}\\n      data-orientation={orientation}\\n      className={cn(attachmentVariants({ size, orientation }), className)}\\n      {...props}\\n    />\\n  );\\n}\\n\\nconst attachmentMediaVariants = cva(\\n  \\\"relative flex aspect-square w-10 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-muted text-foreground group-data-[orientation=vertical]/attachment:w-full group-data-[size=sm]/attachment:w-8 group-data-[size=xs]/attachment:w-7 group-data-[size=xs]/attachment:rounded-md group-data-[state=error]/attachment:bg-destructive/10 group-data-[state=error]/attachment:text-destructive group-data-[orientation=vertical]/attachment:*:data-[slot=spinner]:size-6! [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 group-data-[orientation=vertical]/attachment:[&_svg:not([class*='size-'])]:size-6 group-data-[size=xs]/attachment:[&_svg:not([class*='size-'])]:size-3.5\\\",\\n  {\\n    variants: {\\n      variant: {\\n        icon: '',\\n        image:\\n          'opacity-60 group-data-[state=done]/attachment:opacity-100 group-data-[state=idle]/attachment:opacity-100 *:[img]:aspect-square *:[img]:w-full *:[img]:object-cover',\\n      },\\n    },\\n    defaultVariants: {\\n      variant: 'icon',\\n\"}]},\"isError\":false}\n{\"type\":\"message_start\",\"message\":{\"role\":\"toolResult\",\"toolCallId\":\"call_1f2618e4cc6c454e8b3c5853\",\"toolName\":\"bash\",\"content\":[{\"type\":\"text\",\"text\":\"import type { Application } from '@nocobase/app-server/application';\\nimport type { AppRouteContribution } from '@nocobase/app-server/router';\\n\\nconst routes: readonly AppRouteContribution<Application>[] = [];\\n\\nexport default routes;\\n=====PROVIDERS=====\\nimport type { ApplicationServiceProviderConstructor } from '@nocobase/app-server/application';\\n\\nconst serviceProviders: readonly ApplicationServiceProviderConstructor[] = [];\\n\\nexport default serviceProviders;\\n=====SERVICE PROVIDER=====\\nimport { ClientApplication, toasterToken } from '@nocobase/app-client';\\nimport type { ClientServiceProviderConstructor } from '@nocobase/app-client/plugins';\\nimport { ServiceProvider } from '@nocobase/service-provider';\\n\\nimport { createToaster } from './lib/toaster.js';\\n\\nexport class DefaultClientServiceProvider extends ServiceProvider<ClientApplication> {\\n  public read",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36938138067.1/v2-d42ed396f95c/E46",
+      "origin": {
+        "kind": "review",
+        "key": "review/36938138067.1/v2-d42ed396f95c",
+        "localId": "E46"
+      },
+      "kind": "log",
+      "path": "artifacts/agent-history/agent-implement.jsonl/part-0016.txt",
+      "lines": [
+        5,
+        7
+      ],
+      "sha256": "d93b2d60c879cfd61f23775325219d18160826d2a642a0e9fe7eaa0a186b6110",
+      "observation": "tool_execution_end/message_end：在 /tmp 运行 Hono 探针报 ERR_MODULE_NOT_FOUND Cannot find package hono（探针在 workspace 外），isError:true。",
+      "excerpt": "{\"type\":\"tool_execution_end\",\"toolCallId\":\"call_bdb7ca4cb39f4cf99d02e224\",\"toolName\":\"bash\",\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"node:internal/modules/package_json_reader:331\\n  throw new ERR_MODULE_NOT_FOUND(packageName, fileURLToPath(base), null);\\n        ^\\n\\nError [ERR_MODULE_NOT_FOUND]: Cannot find package 'hono' imported from /tmp/hono-probe.mjs\\n    at Object.getPackageJSONURL (node:internal/modules/package_json_reader:331:9)\\n    at packageResolve (node:internal/modules/esm/resolve:784:25)\\n    at moduleResolve (node:internal/modules/esm/resolve:873:18)\\n    at defaultResolve (node:internal/modules/esm/resolve:1006:11)\\n    at #cachedDefaultResolve (node:internal/modules/esm/loader:705:20)\\n    at #resolveAndMaybeBlockOnLoaderThread (node:internal/modules/esm/loader:725:38)\\n    at ModuleLoader.resolveSync (node:internal/modules/esm/loader:763:56)\\n    at #resolve (node:internal/modules/esm/loader:687:17)\\n    at ModuleLoader.getOrCreateModuleJob (node:internal/modules/esm/loader:607:35)\\n    at ModuleJob.syncLink (node:internal/modules/esm/module_job:276:33) {\\n  code: 'ERR_MODULE_NOT_FOUND'\\n}\\n\\nNode.js v24.21.0\\n\\n\\nCommand exited with code 1\"}],\"details\":{}},\"isError\":true}\n{\"type\":\"message_start\",\"message\":{\"role\":\"toolResult\",\"toolCallId\":\"call_bdb7ca4cb39f4cf99d02e224\",\"toolName\":\"bash\",\"content\":[{\"type\":\"text\",\"text\":\"node:internal/modules/package_json_reader:331\\n  throw new ERR_MODULE_NOT_FOUND(packageName, fileURLToPath(base), null);\\n        ^\\n\\nError [ERR_MODULE_NOT_FOUND]: Cannot find package 'hono' imported from /tmp/hono-probe.mjs\\n    at Object.getPackageJSONURL (node:internal/modules/package_json_reader:331:9)\\n    at packageResolve (node:internal/modules/esm/resolve:784:25)\\n    at moduleResolve (node:internal/modules/esm/resolve:873:18)\\n    at defaultResolve (node:internal/modules/esm/resolve:1006:11)\\n    at #cachedDefaultResolve (node:internal/modules/esm/loader:705:20)\\n    at #resolveAndMaybeBlockOnLoaderThread (node:internal/modules/esm/loader:725:38)\\n    at ModuleLoader.resolveSync (node:internal/modules/esm/loader:763:56)\\n    at #resolve (node:internal/modules/esm/loader:687:17)\\n    at ModuleLoader.getOrCreateModuleJob (node:internal/modules/esm/loader:607:35)\\n    at ModuleJob.syncLink (node:internal/modules/esm/module_job:276:33) {\\n  code: 'ERR_MODULE_NOT_FOUND'\\n}\\n\\nNode.js v24.21.0\\n\\n\\nCommand exited with code 1\"}],\"details\":{},\"isError\":true,\"timestamp\":1790897328486}}\n{\"type\":\"message_end\",\"message\":{\"role\":\"toolResult\",\"toolCallId\":\"call_bdb7ca4cb39f4cf99d02e224\",\"toolName\":\"bash\",\"content\":[{\"type\":\"text\",\"text\":\"node:internal/modules/package_json_reader:331\\n  throw new ERR_MODULE_NOT_FOUND(packageName, fileURLToPath(base), null);\\n        ^\\n\\nError [ERR_MODULE_NOT_FOUND]: Cannot find package 'hono' imported from /tmp/hono-probe.mjs\\n    at Object.getPackageJSONURL (node:internal/modules/package_json_reader:331:9)\\n    at packageResolve (node:internal/modules/esm/resolve:784:25)\\n    at moduleResolve (node:internal/modules/esm/resolve:873:18)\\n    at defaultResolve (node:internal/modules/esm/resolve:1006:11)\\n    at #cachedDefaultResolve (node:internal/modules/esm/loader:705:20)\\n    at #resolveAndMaybeBlockOnLoaderThread (node:internal/modules/esm/loader:725:38)\\n    at ModuleLoader.resolveSync (node:internal/modules/esm/loader:763:56)\\n    at #resolve (node:internal/modules/esm/loader:687:17)\\n    at ModuleLoader.getOrCreateModuleJob (node:internal/modules/esm/loader:607:35)\\n    at ModuleJob.syncLink (node:internal/modules/esm/module_job:276:33) {\\n  code: 'ERR_MODULE_NOT_FOUND'\\n}\\n\\nNode.js v24.21.0\\n\\n\\nCommand exited with code 1\"}],\"details\":{},\"isError\":true,\"timestamp\":1790897328486}}",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36938138067.1/v2-d42ed396f95c/E47",
+      "origin": {
+        "kind": "review",
+        "key": "review/36938138067.1/v2-d42ed396f95c",
+        "localId": "E47"
+      },
+      "kind": "log",
+      "path": "artifacts/agent-history/agent-implement.jsonl/part-0016.txt",
+      "lines": [
+        1037,
+        1039
+      ],
+      "sha256": "d93b2d60c879cfd61f23775325219d18160826d2a642a0e9fe7eaa0a186b6110",
+      "observation": "tool_execution_end/message_end：cat client/extensions/nocobase-file-component-ui/previewers/file-preview-content.tsx 报 No such file or directory 并退出 1（正确路径在 components/previewers 下）。",
+      "excerpt": "{\"type\":\"tool_execution_end\",\"toolCallId\":\"call_e164d95fb12c41de8a1f66dc\",\"toolName\":\"bash\",\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"cat: client/extensions/nocobase-file-component-ui/previewers/file-preview-content.tsx: No such file or directory\\n\\n\\nCommand exited with code 1\"}],\"details\":{}},\"isError\":true}\n{\"type\":\"message_start\",\"message\":{\"role\":\"toolResult\",\"toolCallId\":\"call_e164d95fb12c41de8a1f66dc\",\"toolName\":\"bash\",\"content\":[{\"type\":\"text\",\"text\":\"cat: client/extensions/nocobase-file-component-ui/previewers/file-preview-content.tsx: No such file or directory\\n\\n\\nCommand exited with code 1\"}],\"details\":{},\"isError\":true,\"timestamp\":1790897402921}}\n{\"type\":\"message_end\",\"message\":{\"role\":\"toolResult\",\"toolCallId\":\"call_e164d95fb12c41de8a1f66dc\",\"toolName\":\"bash\",\"content\":[{\"type\":\"text\",\"text\":\"cat: client/extensions/nocobase-file-component-ui/previewers/file-preview-content.tsx: No such file or directory\\n\\n\\nCommand exited with code 1\"}],\"details\":{},\"isError\":true,\"timestamp\":1790897402921}}",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36938138067.1/v2-d42ed396f95c/E48",
+      "origin": {
+        "kind": "review",
+        "key": "review/36938138067.1/v2-d42ed396f95c",
+        "localId": "E48"
+      },
+      "kind": "log",
+      "path": "artifacts/agent-history/agent-implement.jsonl/part-0019.txt",
+      "lines": [
+        50,
+        52
+      ],
+      "sha256": "01210b3392aa544df21b1b75fabafc1a92e88e53ef037657397d7139eb5af192",
+      "observation": "tool_execution_end/message_end：第二个 /tmp 探针（guard.use /uploads/materials/*）同样报 ERR_MODULE_NOT_FOUND hono 并退出 1。",
+      "excerpt": "{\"type\":\"tool_execution_end\",\"toolCallId\":\"call_adbecb70b59a4187bc9c699f\",\"toolName\":\"bash\",\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"node:internal/modules/package_json_reader:331\\n  throw new ERR_MODULE_NOT_FOUND(packageName, fileURLToPath(base), null);\\n        ^\\n\\nError [ERR_MODULE_NOT_FOUND]: Cannot find package 'hono' imported from /tmp/probe.mjs\\n    at Object.getPackageJSONURL (node:internal/modules/package_json_reader:331:9)\\n    at packageResolve (node:internal/modules/esm/resolve:784:25)\\n    at moduleResolve (node:internal/modules/esm/resolve:873:18)\\n    at defaultResolve (node:internal/modules/esm/resolve:1006:11)\\n    at #cachedDefaultResolve (node:internal/modules/esm/loader:705:20)\\n    at #resolveAndMaybeBlockOnLoaderThread (node:internal/modules/esm/loader:725:38)\\n    at ModuleLoader.resolveSync (node:internal/modules/esm/loader:763:56)\\n    at #resolve (node:internal/modules/esm/loader:687:17)\\n    at ModuleLoader.getOrCreateModuleJob (node:internal/modules/esm/loader:607:35)\\n    at ModuleJob.syncLink (node:internal/modules/esm/module_job:276:33) {\\n  code: 'ERR_MODULE_NOT_FOUND'\\n}\\n\\nNode.js v24.21.0\\n\\n\\nCommand exited with code 1\"}],\"details\":{}},\"isError\":true}\n{\"type\":\"message_start\",\"message\":{\"role\":\"toolResult\",\"toolCallId\":\"call_adbecb70b59a4187bc9c699f\",\"toolName\":\"bash\",\"content\":[{\"type\":\"text\",\"text\":\"node:internal/modules/package_json_reader:331\\n  throw new ERR_MODULE_NOT_FOUND(packageName, fileURLToPath(base), null);\\n        ^\\n\\nError [ERR_MODULE_NOT_FOUND]: Cannot find package 'hono' imported from /tmp/probe.mjs\\n    at Object.getPackageJSONURL (node:internal/modules/package_json_reader:331:9)\\n    at packageResolve (node:internal/modules/esm/resolve:784:25)\\n    at moduleResolve (node:internal/modules/esm/resolve:873:18)\\n    at defaultResolve (node:internal/modules/esm/resolve:1006:11)\\n    at #cachedDefaultResolve (node:internal/modules/esm/loader:705:20)\\n    at #resolveAndMaybeBlockOnLoaderThread (node:internal/modules/esm/loader:725:38)\\n    at ModuleLoader.resolveSync (node:internal/modules/esm/loader:763:56)\\n    at #resolve (node:internal/modules/esm/loader:687:17)\\n    at ModuleLoader.getOrCreateModuleJob (node:internal/modules/esm/loader:607:35)\\n    at ModuleJob.syncLink (node:internal/modules/esm/module_job:276:33) {\\n  code: 'ERR_MODULE_NOT_FOUND'\\n}\\n\\nNode.js v24.21.0\\n\\n\\nCommand exited with code 1\"}],\"details\":{},\"isError\":true,\"timestamp\":1790897813450}}\n{\"type\":\"message_end\",\"message\":{\"role\":\"toolResult\",\"toolCallId\":\"call_adbecb70b59a4187bc9c699f\",\"toolName\":\"bash\",\"content\":[{\"type\":\"text\",\"text\":\"node:internal/modules/package_json_reader:331\\n  throw new ERR_MODULE_NOT_FOUND(packageName, fileURLToPath(base), null);\\n        ^\\n\\nError [ERR_MODULE_NOT_FOUND]: Cannot find package 'hono' imported from /tmp/probe.mjs\\n    at Object.getPackageJSONURL (node:internal/modules/package_json_reader:331:9)\\n    at packageResolve (node:internal/modules/esm/resolve:784:25)\\n    at moduleResolve (node:internal/modules/esm/resolve:873:18)\\n    at defaultResolve (node:internal/modules/esm/resolve:1006:11)\\n    at #cachedDefaultResolve (node:internal/modules/esm/loader:705:20)\\n    at #resolveAndMaybeBlockOnLoaderThread (node:internal/modules/esm/loader:725:38)\\n    at ModuleLoader.resolveSync (node:internal/modules/esm/loader:763:56)\\n    at #resolve (node:internal/modules/esm/loader:687:17)\\n    at ModuleLoader.getOrCreateModuleJob (node:internal/modules/esm/loader:607:35)\\n    at ModuleJob.syncLink (node:internal/modules/esm/module_job:276:33) {\\n  code: 'ERR_MODULE_NOT_FOUND'\\n}\\n\\nNode.js v24.21.0\\n\\n\\nCommand exited with code 1\"}],\"details\":{},\"isError\":true,\"timestamp\":1790897813450}}",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36938138067.1/v2-d42ed396f95c/E49",
+      "origin": {
+        "kind": "review",
+        "key": "review/36938138067.1/v2-d42ed396f95c",
+        "localId": "E49"
+      },
+      "kind": "log",
+      "path": "artifacts/agent-history/agent-implement.jsonl/part-0021.txt",
+      "lines": [
+        132,
+        134
+      ],
+      "sha256": "afca951bbe5a1ef89afff0ec438bf74a0b9f64c7129912e41ba8a3c8cb813450",
+      "observation": "tool_execution_end/message_end：复合 cat 命令退出 2，但返回内容已包含 client 类型声明（source-extensions.ts 与 @nocobase/app-plugin-file/dist/client）。",
+      "excerpt": "{\"type\":\"tool_execution_end\",\"toolCallId\":\"call_3c8db2c9339c4a81b408c51a\",\"toolName\":\"bash\",\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"import type { AppClientSourceExtension } from '@nocobase/app-client/plugins';\\n\\ninterface AppClientSourceExtensionModule {\\n  readonly default: AppClientSourceExtension;\\n}\\n\\nconst extensionModules = import.meta.glob<AppClientSourceExtensionModule>(\\n  './extensions/*/extension.ts',\\n  { eager: true },\\n);\\n\\nexport const sourceExtensions: readonly AppClientSourceExtension[] =\\n  Object.freeze(\\n    Object.entries(extensionModules)\\n      .sort(([left], [right]) => left.localeCompare(right))\\n      .map(([, module]) => module.default),\\n  );\\n\\nexport default sourceExtensions;\\n=== file plugin client index ===\\nexport { default } from './plugin.js';\\nexport { ClientFileRepositoryManager } from './manager.js';\\nexport type { ClientFileRepository, ClientUploadOptions } from './manager.js';\\nexport { clientFileRepositoryManagerToken } from './token.js';\\nexport type * from '../shared/types.js';\\n//# sourceMappingURL=index.d.ts.map=== clientFileRepositoryManager ===\\n\\n\\nCommand exited with code 2\"}],\"details\":{}},\"isError\":true}\n{\"type\":\"message_start\",\"message\":{\"role\":\"toolResult\",\"toolCallId\":\"call_3c8db2c9339c4a81b408c51a\",\"toolName\":\"bash\",\"content\":[{\"type\":\"text\",\"text\":\"import type { AppClientSourceExtension } from '@nocobase/app-client/plugins';\\n\\ninterface AppClientSourceExtensionModule {\\n  readonly default: AppClientSourceExtension;\\n}\\n\\nconst extensionModules = import.meta.glob<AppClientSourceExtensionModule>(\\n  './extensions/*/extension.ts',\\n  { eager: true },\\n);\\n\\nexport const sourceExtensions: readonly AppClientSourceExtension[] =\\n  Object.freeze(\\n    Object.entries(extensionModules)\\n      .sort(([left], [right]) => left.localeCompare(right))\\n      .map(([, module]) => module.default),\\n  );\\n\\nexport default sourceExtensions;\\n=== file plugin client index ===\\nexport { default } from './plugin.js';\\nexport { ClientFileRepositoryManager } from './manager.js';\\nexport type { ClientFileRepository, ClientUploadOptions } from './manager.js';\\nexport { clientFileRepositoryManagerToken } from './token.js';\\nexport type * from '../shared/types.js';\\n//# sourceMappingURL=index.d.ts.map=== clientFileRepositoryManager ===\\n\\n\\nCommand exited with code 2\"}],\"details\":{},\"isError\":true,\"timestamp\":1790898178465}}\n{\"type\":\"message_end\",\"message\":{\"role\":\"toolResult\",\"toolCallId\":\"call_3c8db2c9339c4a81b408c51a\",\"toolName\":\"bash\",\"content\":[{\"type\":\"text\",\"text\":\"import type { AppClientSourceExtension } from '@nocobase/app-client/plugins';\\n\\ninterface AppClientSourceExtensionModule {\\n  readonly default: AppClientSourceExtension;\\n}\\n\\nconst extensionModules = import.meta.glob<AppClientSourceExtensionModule>(\\n  './extensions/*/extension.ts',\\n  { eager: true },\\n);\\n\\nexport const sourceExtensions: readonly AppClientSourceExtension[] =\\n  Object.freeze(\\n    Object.entries(extensionModules)\\n      .sort(([left], [right]) => left.localeCompare(right))\\n      .map(([, module]) => module.default),\\n  );\\n\\nexport default sourceExtensions;\\n=== file plugin client index ===\\nexport { default } from './plugin.js';\\nexport { ClientFileRepositoryManager } from './manager.js';\\nexport type { ClientFileRepository, ClientUploadOptions } from './manager.js';\\nexport { clientFileRepositoryManagerToken } from './token.js';\\nexport type * from '../shared/types.js';\\n//# sourceMappingURL=index.d.ts.map=== clientFileRepositoryManager ===\\n\\n\\nCommand exited with code 2\"}],\"details\":{},\"isError\":true,\"timestamp\":1790898178465}}",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36938138067.1/v2-d42ed396f95c/E50",
+      "origin": {
+        "kind": "review",
+        "key": "review/36938138067.1/v2-d42ed396f95c",
+        "localId": "E50"
+      },
+      "kind": "log",
+      "path": "artifacts/agent-history/agent-implement.jsonl/part-0021.txt",
+      "lines": [
+        197,
+        199
+      ],
+      "sha256": "afca951bbe5a1ef89afff0ec438bf74a0b9f64c7129912e41ba8a3c8cb813450",
+      "observation": "tool_execution_end/message_end：find client/extensions 与 grep nocobase-file-component-ui/clientFileRepositoryManagerToken 组合退出 1，Agent 随后据返回的目录列表继续定位。",
+      "excerpt": "{\"type\":\"tool_execution_end\",\"toolCallId\":\"call_5fd942ba06764820bc003f4c\",\"toolName\":\"bash\",\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"client/extensions/nocobase-auth-ui/README.md\\nclient/extensions/nocobase-auth-ui/components/auth-brand.tsx\\nclient/extensions/nocobase-auth-ui/components/auth-form-tabs.tsx\\nclient/extensions/nocobase-auth-ui/components/auth-layout.tsx\\nclient/extensions/nocobase-auth-ui/components/auth-marketing-panel.tsx\\nclient/extensions/nocobase-auth-ui/components/auth-sso-buttons.tsx\\nclient/extensions/nocobase-auth-ui/components/form-status.tsx\\nclient/extensions/nocobase-auth-ui/forms/password-login-form.tsx\\nclient/extensions/nocobase-auth-ui/forms/password-registration-form.tsx\\nclient/extensions/nocobase-auth-ui/forms/password-reset-form.tsx\\nclient/extensions/nocobase-auth-ui/forms/password-reset-request-form.tsx\\nclient/extensions/nocobase-file-component-ui/README.md\\nclient/extensions/nocobase-file-component-ui/components/file-list.tsx\\nclient/extensions/nocobase-file-component-ui/components/file-preview-dialog.tsx\\nclient/extensions/nocobase-file-component-ui/components/file-preview-field.tsx\\nclient/extensions/nocobase-file-component-ui/components/file-thumbnail.tsx\\nclient/extensions/nocobase-file-component-ui/components/file-upload-field.tsx\\nclient/extensions/nocobase-file-component-ui/components/previewers/file-preview-content.tsx\\nclient/extensions/nocobase-file-component-ui/components/previewers/office-open-xml-preview.tsx\\nclient/extensions/nocobase-file-component-ui/index.ts\\nclient/extensions/nocobase-file-component-ui/lib/file-preview.ts\\nclient/extensions/nocobase-file-component-ui/lib/file-url.ts\\nclient/extensions/nocobase-file-component-ui/lib/message-key.ts\\nclient/extensions/nocobase-file-component-ui/types.ts\\n=== check FileRecord usage in app ===\\n\\n\\nCommand exited with code 1\"}],\"details\":{}},\"isError\":true}\n{\"type\":\"message_start\",\"message\":{\"role\":\"toolResult\",\"toolCallId\":\"call_5fd942ba06764820bc003f4c\",\"toolName\":\"bash\",\"content\":[{\"type\":\"text\",\"text\":\"client/extensions/nocobase-auth-ui/README.md\\nclient/extensions/nocobase-auth-ui/components/auth-brand.tsx\\nclient/extensions/nocobase-auth-ui/components/auth-form-tabs.tsx\\nclient/extensions/nocobase-auth-ui/components/auth-layout.tsx\\nclient/extensions/nocobase-auth-ui/components/auth-marketing-panel.tsx\\nclient/extensions/nocobase-auth-ui/components/auth-sso-buttons.tsx\\nclient/extensions/nocobase-auth-ui/components/form-status.tsx\\nclient/extensions/nocobase-auth-ui/forms/password-login-form.tsx\\nclient/extensions/nocobase-auth-ui/forms/password-registration-form.tsx\\nclient/extensions/nocobase-auth-ui/forms/password-reset-form.tsx\\nclient/extensions/nocobase-auth-ui/forms/password-reset-request-form.tsx\\nclient/extensions/nocobase-file-component-ui/README.md\\nclient/extensions/nocobase-file-component-ui/components/file-list.tsx\\nclient/extensions/nocobase-file-component-ui/components/file-preview-dialog.tsx\\nclient/extensions/nocobase-file-component-ui/components/file-preview-field.tsx\\nclient/extensions/nocobase-file-component-ui/components/file-thumbnail.tsx\\nclient/extensions/nocobase-file-component-ui/components/file-upload-field.tsx\\nclient/extensions/nocobase-file-component-ui/components/previewers/file-preview-content.tsx\\nclient/extensions/nocobase-file-component-ui/components/previewers/office-open-xml-preview.tsx\\nclient/extensions/nocobase-file-component-ui/index.ts\\nclient/extensions/nocobase-file-component-ui/lib/file-preview.ts\\nclient/extensions/nocobase-file-component-ui/lib/file-url.ts\\nclient/extensions/nocobase-file-component-ui/lib/message-key.ts\\nclient/extensions/nocobase-file-component-ui/types.ts\\n=== check FileRecord usage in app ===\\n\\n\\nCommand exited with code 1\"}],\"details\":{},\"isError\":true,\"timestamp\":1790898188380}}\n{\"type\":\"message_end\",\"message\":{\"role\":\"toolResult\",\"toolCallId\":\"call_5fd942ba06764820bc003f4c\",\"toolName\":\"bash\",\"content\":[{\"type\":\"text\",\"text\":\"client/extensions/nocobase-auth-ui/README.md\\nclient/extensions/nocobase-auth-ui/components/auth-brand.tsx\\nclient/extensions/nocobase-auth-ui/components/auth-form-tabs.tsx\\nclient/extensions/nocobase-auth-ui/components/auth-layout.tsx\\nclient/extensions/nocobase-auth-ui/components/auth-marketing-panel.tsx\\nclient/extensions/nocobase-auth-ui/components/auth-sso-buttons.tsx\\nclient/extensions/nocobase-auth-ui/components/form-status.tsx\\nclient/extensions/nocobase-auth-ui/forms/password-login-form.tsx\\nclient/extensions/nocobase-auth-ui/forms/password-registration-form.tsx\\nclient/extensions/nocobase-auth-ui/forms/password-reset-form.tsx\\nclient/extensions/nocobase-auth-ui/forms/password-reset-request-form.tsx\\nclient/extensions/nocobase-file-component-ui/README.md\\nclient/extensions/nocobase-file-component-ui/components/file-list.tsx\\nclient/extensions/nocobase-file-component-ui/components/file-preview-dialog.tsx\\nclient/extensions/nocobase-file-component-ui/components/file-preview-field.tsx\\nclient/extensions/nocobase-file-component-ui/components/file-thumbnail.tsx\\nclient/extensions/nocobase-file-component-ui/components/file-upload-field.tsx\\nclient/extensions/nocobase-file-component-ui/components/previewers/file-preview-content.tsx\\nclient/extensions/nocobase-file-component-ui/components/previewers/office-open-xml-preview.tsx\\nclient/extensions/nocobase-file-component-ui/index.ts\\nclient/extensions/nocobase-file-component-ui/lib/file-preview.ts\\nclient/extensions/nocobase-file-component-ui/lib/file-url.ts\\nclient/extensions/nocobase-file-component-ui/lib/message-key.ts\\nclient/extensions/nocobase-file-component-ui/types.ts\\n=== check FileRecord usage in app ===\\n\\n\\nCommand exited with code 1\"}],\"details\":{},\"isError\":true,\"timestamp\":1790898188380}}",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36938138067.1/v2-d42ed396f95c/E51",
+      "origin": {
+        "kind": "review",
+        "key": "review/36938138067.1/v2-d42ed396f95c",
+        "localId": "E51"
+      },
+      "kind": "log",
+      "path": "artifacts/agent-history/agent-implement.jsonl/part-0021.txt",
+      "lines": [
+        534,
+        536
+      ],
+      "sha256": "afca951bbe5a1ef89afff0ec438bf74a0b9f64c7129912e41ba8a3c8cb813450",
+      "observation": "tool_execution_end/message_end：cat node_modules/@nocobase/db/dist/index.d.ts 报 No such file，返回显示该包 dist 下只有 src（退出 1）。",
+      "excerpt": "{\"type\":\"tool_execution_end\",\"toolCallId\":\"call_28ab93a3692740d888153864\",\"toolName\":\"bash\",\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"src\\n=== index.d.ts ===\\ncat: node_modules/@nocobase/db/dist/index.d.ts: No such file or directory\\n\\n\\nCommand exited with code 1\"}],\"details\":{}},\"isError\":true}\n{\"type\":\"message_start\",\"message\":{\"role\":\"toolResult\",\"toolCallId\":\"call_28ab93a3692740d888153864\",\"toolName\":\"bash\",\"content\":[{\"type\":\"text\",\"text\":\"src\\n=== index.d.ts ===\\ncat: node_modules/@nocobase/db/dist/index.d.ts: No such file or directory\\n\\n\\nCommand exited with code 1\"}],\"details\":{},\"isError\":true,\"timestamp\":1790898208216}}\n{\"type\":\"message_end\",\"message\":{\"role\":\"toolResult\",\"toolCallId\":\"call_28ab93a3692740d888153864\",\"toolName\":\"bash\",\"content\":[{\"type\":\"text\",\"text\":\"src\\n=== index.d.ts ===\\ncat: node_modules/@nocobase/db/dist/index.d.ts: No such file or directory\\n\\n\\nCommand exited with code 1\"}],\"details\":{},\"isError\":true,\"timestamp\":1790898208216}}",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36938138067.1/v2-d42ed396f95c/E52",
+      "origin": {
+        "kind": "review",
+        "key": "review/36938138067.1/v2-d42ed396f95c",
+        "localId": "E52"
+      },
+      "kind": "log",
+      "path": "artifacts/agent-history/agent-implement.jsonl/part-0025.txt",
+      "lines": [
+        919,
+        921
+      ],
+      "sha256": "d4da99bf00ee85e0b681dc93bd27df87bcda789d9749985d03957aaf1e225ae7",
+      "observation": "tool_execution_end/message_end：sed node_modules/@nocobase/app-server/dist/application/application.js 报 No such file 并退出 2（实际文件是 dist/application/index.js）。",
+      "excerpt": "{\"type\":\"tool_execution_end\",\"toolCallId\":\"call_b9b45f509b684d038093089b\",\"toolName\":\"bash\",\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"sed: can't read node_modules/@nocobase/app-server/dist/application/application.js: No such file or directory\\n\\n\\nCommand exited with code 2\"}],\"details\":{}},\"isError\":true}\n{\"type\":\"message_start\",\"message\":{\"role\":\"toolResult\",\"toolCallId\":\"call_b9b45f509b684d038093089b\",\"toolName\":\"bash\",\"content\":[{\"type\":\"text\",\"text\":\"sed: can't read node_modules/@nocobase/app-server/dist/application/application.js: No such file or directory\\n\\n\\nCommand exited with code 2\"}],\"details\":{},\"isError\":true,\"timestamp\":1790899137435}}\n{\"type\":\"message_end\",\"message\":{\"role\":\"toolResult\",\"toolCallId\":\"call_b9b45f509b684d038093089b\",\"toolName\":\"bash\",\"content\":[{\"type\":\"text\",\"text\":\"sed: can't read node_modules/@nocobase/app-server/dist/application/application.js: No such file or directory\\n\\n\\nCommand exited with code 2\"}],\"details\":{},\"isError\":true,\"timestamp\":1790899137435}}",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36938138067.1/v2-d42ed396f95c/E53",
+      "origin": {
+        "kind": "review",
+        "key": "review/36938138067.1/v2-d42ed396f95c",
+        "localId": "E53"
+      },
+      "kind": "log",
+      "path": "artifacts/agent-history/agent-implement.jsonl/part-0027.txt",
+      "lines": [
+        1622,
+        1624
+      ],
+      "sha256": "008a7e32f7ae733c05503a26c64e6629c3c33186e23fa4d33f7b62d13f23a344",
+      "observation": "tool_execution_end/message_end：edit 工具返回 Could not find edits[1] in ... server/routes/materials.ts，提示 oldText 需精确匹配；Agent 随后重读并重试。",
+      "excerpt": "{\"type\":\"tool_execution_end\",\"toolCallId\":\"call_lv4b4oix\",\"toolName\":\"edit\",\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"Could not find edits[1] in /home/runner/work/nb3-factory/nb3-factory/workspace/server/routes/materials.ts. The oldText must match exactly including all whitespace and newlines.\"}],\"details\":{}},\"isError\":true}\n{\"type\":\"message_start\",\"message\":{\"role\":\"toolResult\",\"toolCallId\":\"call_lv4b4oix\",\"toolName\":\"edit\",\"content\":[{\"type\":\"text\",\"text\":\"Could not find edits[1] in /home/runner/work/nb3-factory/nb3-factory/workspace/server/routes/materials.ts. The oldText must match exactly including all whitespace and newlines.\"}],\"details\":{},\"isError\":true,\"timestamp\":1790899561377}}\n{\"type\":\"message_end\",\"message\":{\"role\":\"toolResult\",\"toolCallId\":\"call_lv4b4oix\",\"toolName\":\"edit\",\"content\":[{\"type\":\"text\",\"text\":\"Could not find edits[1] in /home/runner/work/nb3-factory/nb3-factory/workspace/server/routes/materials.ts. The oldText must match exactly including all whitespace and newlines.\"}],\"details\":{},\"isError\":true,\"timestamp\":1790899561377}}",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36938138067.1/v2-d42ed396f95c/E54",
+      "origin": {
+        "kind": "review",
+        "key": "review/36938138067.1/v2-d42ed396f95c",
+        "localId": "E54"
+      },
+      "kind": "log",
+      "path": "artifacts/agent-history/agent-implement.jsonl/part-0029.txt",
+      "lines": [
+        2378,
+        2380
+      ],
+      "sha256": "9cfca41ef8c075c5c2b4390b58af9e65257776f0de8b17c50c1ad8385af4394e",
+      "observation": "tool_execution_end/message_end：grep navigation.home 在 en-US.ts/zh-CN.ts 无输出并退出 1。",
+      "excerpt": "{\"type\":\"tool_execution_end\",\"toolCallId\":\"chatcmpl-tool-affff7fb6db078ed\",\"toolName\":\"bash\",\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"(no output)\\n\\nCommand exited with code 1\"}],\"details\":{}},\"isError\":true}\n{\"type\":\"message_start\",\"message\":{\"role\":\"toolResult\",\"toolCallId\":\"chatcmpl-tool-affff7fb6db078ed\",\"toolName\":\"bash\",\"content\":[{\"type\":\"text\",\"text\":\"(no output)\\n\\nCommand exited with code 1\"}],\"details\":{},\"isError\":true,\"timestamp\":1790900470447}}\n{\"type\":\"message_end\",\"message\":{\"role\":\"toolResult\",\"toolCallId\":\"chatcmpl-tool-affff7fb6db078ed\",\"toolName\":\"bash\",\"content\":[{\"type\":\"text\",\"text\":\"(no output)\\n\\nCommand exited with code 1\"}],\"details\":{},\"isError\":true,\"timestamp\":1790900470447}}",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36938138067.1/v2-d42ed396f95c/E55",
+      "origin": {
+        "kind": "review",
+        "key": "review/36938138067.1/v2-d42ed396f95c",
+        "localId": "E55"
+      },
+      "kind": "log",
+      "path": "artifacts/agent-history/agent-implement.jsonl/part-0030.txt",
+      "lines": [
+        982,
+        984
+      ],
+      "sha256": "5af8ef9f067d0c408df67d3f07c1c08281b2c8f815c5bd5f993efa9c75997416",
+      "observation": "tool_execution_end/message_end：对 client/components/ui/field.tsx 按 ^export function/^export const grep 无匹配并退出 1，同一返回仍列出 ui 组件目录。",
+      "excerpt": "{\"type\":\"tool_execution_end\",\"toolCallId\":\"call_54cec0d12f4941dfb1830ca8\",\"toolName\":\"bash\",\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"accordion.tsx\\nalert-dialog.tsx\\nalert.tsx\\naspect-ratio.tsx\\nattachment.tsx\\navatar.tsx\\nbadge.tsx\\nbreadcrumb.tsx\\nbubble.tsx\\nbutton-group.tsx\\nbutton.tsx\\ncalendar.tsx\\ncard.tsx\\ncarousel.tsx\\nchart.tsx\\ncheckbox.tsx\\ncollapsible.tsx\\ncombobox.tsx\\ncommand.tsx\\ncontext-menu.tsx\\ndialog.tsx\\ndirection.tsx\\ndrawer.tsx\\ndropdown-menu.tsx\\nempty.tsx\\nfield.tsx\\nhover-card.tsx\\ninput-group.tsx\\ninput-otp.tsx\\ninput.tsx\\nitem.tsx\\nkbd.tsx\\nlabel.tsx\\nmarker.tsx\\nmenubar.tsx\\nmessage-scroller.tsx\\nmessage.tsx\\nnative-select.tsx\\nnavigation-menu.tsx\\npagination.tsx\\npopover.tsx\\nprogress.tsx\\nquestionnaire.tsx\\nradio-group.tsx\\nresizable.tsx\\nscroll-area.tsx\\nselect.tsx\\nseparator.tsx\\nsheet.tsx\\nsidebar.tsx\\nskeleton.tsx\\nslider.tsx\\nspinner.tsx\\nswitch.tsx\\ntable.tsx\\ntabs.tsx\\ntextarea.tsx\\ntoast.tsx\\ntoggle-group.tsx\\ntoggle.tsx\\ntooltip.tsx\\n=== field exports ===\\n=== card ===\\n=== alert ===\\n=== skeleton ===\\n=== empty ===\\n\\n\\nCommand exited with code 1\"}],\"details\":{}},\"isError\":true}\n{\"type\":\"message_start\",\"message\":{\"role\":\"toolResult\",\"toolCallId\":\"call_54cec0d12f4941dfb1830ca8\",\"toolName\":\"bash\",\"content\":[{\"type\":\"text\",\"text\":\"accordion.tsx\\nalert-dialog.tsx\\nalert.tsx\\naspect-ratio.tsx\\nattachment.tsx\\navatar.tsx\\nbadge.tsx\\nbreadcrumb.tsx\\nbubble.tsx\\nbutton-group.tsx\\nbutton.tsx\\ncalendar.tsx\\ncard.tsx\\ncarousel.tsx\\nchart.tsx\\ncheckbox.tsx\\ncollapsible.tsx\\ncombobox.tsx\\ncommand.tsx\\ncontext-menu.tsx\\ndialog.tsx\\ndirection.tsx\\ndrawer.tsx\\ndropdown-menu.tsx\\nempty.tsx\\nfield.tsx\\nhover-card.tsx\\ninput-group.tsx\\ninput-otp.tsx\\ninput.tsx\\nitem.tsx\\nkbd.tsx\\nlabel.tsx\\nmarker.tsx\\nmenubar.tsx\\nmessage-scroller.tsx\\nmessage.tsx\\nnative-select.tsx\\nnavigation-menu.tsx\\npagination.tsx\\npopover.tsx\\nprogress.tsx\\nquestionnaire.tsx\\nradio-group.tsx\\nresizable.tsx\\nscroll-area.tsx\\nselect.tsx\\nseparator.tsx\\nsheet.tsx\\nsidebar.tsx\\nskeleton.tsx\\nslider.tsx\\nspinner.tsx\\nswitch.tsx\\ntable.tsx\\ntabs.tsx\\ntextarea.tsx\\ntoast.tsx\\ntoggle-group.tsx\\ntoggle.tsx\\ntooltip.tsx\\n=== field exports ===\\n=== card ===\\n=== alert ===\\n=== skeleton ===\\n=== empty ===\\n\\n\\nCommand exited with code 1\"}],\"details\":{},\"isError\":true,\"timestamp\":1790900526077}}\n{\"type\":\"message_end\",\"message\":{\"role\":\"toolResult\",\"toolCallId\":\"call_54cec0d12f4941dfb1830ca8\",\"toolName\":\"bash\",\"content\":[{\"type\":\"text\",\"text\":\"accordion.tsx\\nalert-dialog.tsx\\nalert.tsx\\naspect-ratio.tsx\\nattachment.tsx\\navatar.tsx\\nbadge.tsx\\nbreadcrumb.tsx\\nbubble.tsx\\nbutton-group.tsx\\nbutton.tsx\\ncalendar.tsx\\ncard.tsx\\ncarousel.tsx\\nchart.tsx\\ncheckbox.tsx\\ncollapsible.tsx\\ncombobox.tsx\\ncommand.tsx\\ncontext-menu.tsx\\ndialog.tsx\\ndirection.tsx\\ndrawer.tsx\\ndropdown-menu.tsx\\nempty.tsx\\nfield.tsx\\nhover-card.tsx\\ninput-group.tsx\\ninput-otp.tsx\\ninput.tsx\\nitem.tsx\\nkbd.tsx\\nlabel.tsx\\nmarker.tsx\\nmenubar.tsx\\nmessage-scroller.tsx\\nmessage.tsx\\nnative-select.tsx\\nnavigation-menu.tsx\\npagination.tsx\\npopover.tsx\\nprogress.tsx\\nquestionnaire.tsx\\nradio-group.tsx\\nresizable.tsx\\nscroll-area.tsx\\nselect.tsx\\nseparator.tsx\\nsheet.tsx\\nsidebar.tsx\\nskeleton.tsx\\nslider.tsx\\nspinner.tsx\\nswitch.tsx\\ntable.tsx\\ntabs.tsx\\ntextarea.tsx\\ntoast.tsx\\ntoggle-group.tsx\\ntoggle.tsx\\ntooltip.tsx\\n=== field exports ===\\n=== card ===\\n=== alert ===\\n=== skeleton ===\\n=== empty ===\\n\\n\\nCommand exited with code 1\"}],\"details\":{},\"isError\":true,\"timestamp\":1790900526077}}",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36938138067.1/v2-d42ed396f95c/E56",
+      "origin": {
+        "kind": "review",
+        "key": "review/36938138067.1/v2-d42ed396f95c",
+        "localId": "E56"
+      },
+      "kind": "log",
+      "path": "artifacts/agent-history/agent-implement.jsonl/part-0030.txt",
+      "lines": [
+        1369,
+        1371
+      ],
+      "sha256": "5af8ef9f067d0c408df67d3f07c1c08281b2c8f815c5bd5f993efa9c75997416",
+      "observation": "tool_execution_end/message_end：cat client/components/index.ts 无该文件（命令以 ls 加 2>/dev/null cat 组合，退出 1），返回列出实际组件。",
+      "excerpt": "{\"type\":\"tool_execution_end\",\"toolCallId\":\"call_93zwljdn\",\"toolName\":\"bash\",\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"breadcrumbs.tsx\\ndata-table-column-header.tsx\\ndata-table-pagination.tsx\\ndata-table-view-options.tsx\\ndata-table.tsx\\ndate-picker.tsx\\nloading.tsx\\npage-container.tsx\\npage-header.tsx\\nroute-child-page.tsx\\nroute-dialog.tsx\\nroute-drawer.tsx\\nroute-overlay.tsx\\ntypography.tsx\\nui\\nuse-route-overlay.ts\\n=== index ===\\n\\n\\nCommand exited with code 1\"}],\"details\":{}},\"isError\":true}\n{\"type\":\"message_start\",\"message\":{\"role\":\"toolResult\",\"toolCallId\":\"call_93zwljdn\",\"toolName\":\"bash\",\"content\":[{\"type\":\"text\",\"text\":\"breadcrumbs.tsx\\ndata-table-column-header.tsx\\ndata-table-pagination.tsx\\ndata-table-view-options.tsx\\ndata-table.tsx\\ndate-picker.tsx\\nloading.tsx\\npage-container.tsx\\npage-header.tsx\\nroute-child-page.tsx\\nroute-dialog.tsx\\nroute-drawer.tsx\\nroute-overlay.tsx\\ntypography.tsx\\nui\\nuse-route-overlay.ts\\n=== index ===\\n\\n\\nCommand exited with code 1\"}],\"details\":{},\"isError\":true,\"timestamp\":1790900566515}}\n{\"type\":\"message_end\",\"message\":{\"role\":\"toolResult\",\"toolCallId\":\"call_93zwljdn\",\"toolName\":\"bash\",\"content\":[{\"type\":\"text\",\"text\":\"breadcrumbs.tsx\\ndata-table-column-header.tsx\\ndata-table-pagination.tsx\\ndata-table-view-options.tsx\\ndata-table.tsx\\ndate-picker.tsx\\nloading.tsx\\npage-container.tsx\\npage-header.tsx\\nroute-child-page.tsx\\nroute-dialog.tsx\\nroute-drawer.tsx\\nroute-overlay.tsx\\ntypography.tsx\\nui\\nuse-route-overlay.ts\\n=== index ===\\n\\n\\nCommand exited with code 1\"}],\"details\":{},\"isError\":true,\"timestamp\":1790900566515}}",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/36938138067.1/v2-d42ed396f95c/E57",
+      "origin": {
+        "kind": "review",
+        "key": "review/36938138067.1/v2-d42ed396f95c",
+        "localId": "E57"
+      },
+      "kind": "log",
+      "path": "artifacts/agent-history/agent-implement.jsonl/part-0001.txt",
+      "lines": [
+        1,
+        3
+      ],
+      "sha256": "7628e99ad3218d993fce033cab32e9b1fbaf5c84dd697f667a980855c05900cc",
+      "observation": "该实现调用原始 JSONL 的起始事件：session（cwd /home/runner/work/nb3-factory/nb3-factory/workspace）与 agent_start、turn_start，确认为 agent-implement.jsonl 的真实原始流。",
+      "excerpt": "{\"type\":\"session\",\"version\":3,\"id\":\"01a0f9b1-df73-77b1-adf7-38f111d72ce8\",\"timestamp\":\"2026-10-01T22:59:38.996Z\",\"cwd\":\"/home/runner/work/nb3-factory/nb3-factory/workspace\"}\n{\"type\":\"agent_start\"}\n{\"type\":\"turn_start\"}",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    }
+  ],
+  "links": [
+    {
+      "rel": "task-issue",
+      "label": "Issue #519",
+      "url": "https://github.com/gchust/nb3-factory/issues/519",
+      "path": null
+    },
+    {
+      "rel": "run",
+      "label": "Run 36938138067 / attempt 1",
+      "url": "https://github.com/gchust/nb3-factory/actions/runs/36938138067/attempts/1",
+      "path": null
+    },
+    {
+      "rel": "pull-request",
+      "label": "PR #522",
+      "url": "https://github.com/gchust/nb3-factory/pull/522",
+      "path": null
+    },
+    {
+      "rel": "report-archive",
+      "label": "固定版本 HTML 报告（gh-pages 归档路径）",
+      "url": null,
+      "path": "reports/issues/519/runs/36938138067/attempt-1/index.html"
+    }
+  ],
+  "limitations": [
+    {
+      "code": "usage-incomplete",
+      "detail": "部分用量未取得或不完整；缺失值为 null，不按零处理。"
+    }
+  ]
+}
