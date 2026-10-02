@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "inputHash": "1fd4bd6c78dda44417002f86443aa4fdd2d0116c0af0126976b334469b132e13",
+  "inputHash": "8cedec633468cf9b5801500ab94c312ebc21eaebf0eb1e9b079506e29c4fc7a5",
   "findings": [
     {
       "id": "460:36434284393:1:F2",
@@ -5508,6 +5508,304 @@
         }
       ],
       "fingerprint": "9de33292462dda766bda24f215609bfa21dc419ac76af0473ba65f624bfeabfe"
+    },
+    {
+      "id": "519:36938138067:1:F3",
+      "report": "519:36938138067:1",
+      "issue": 519,
+      "taskTitle": "项目资料与私有附件",
+      "appVersion": "1.0.0-beta.50",
+      "appTemplate": "@nocobase/app-template-default",
+      "finding": {
+        "id": "F3",
+        "kind": "misleading",
+        "owner": "documentation",
+        "severity": "minor",
+        "confidence": "confirmed",
+        "status": "open",
+        "title": "受限内容鉴权指引互相冲突：「挂载前注册守卫」与「不得依赖贡献顺序」",
+        "claimed": "文件插件 SKILL 第 126 行要求 App 在 <accessPath>/* 上 register App-owned authentication and authorization ... before mounting it；而 app-development 的 server-routes.md 第 43、47 行规定 Every route owns its own security、Never depend on middleware installed by another route, or on the order contributions happen to be registered in ... silently becomes public。",
+        "observed": "冻结实现里唯一可行的受限内容写法是顺序敏感的：file 插件不贡献任何路由，内容路由由应用用 defineFileRepositoryApiRoutes 生成的贡献提供；Application.registerRoutes 先执行 httpMiddleware 再按注册数组顺序挂载贡献（E19），所以应用必须把守卫贡献排在文件路由贡献之前才覆盖 /uploads/materials/*，app/server/routes/index.ts 直接注释 Order is the security boundary（E16）。顺序无关的 defineHttpMiddleware/addHttpMiddleware 公开入口存在（E20），但两份 Skill 都未把该用法写清。",
+        "detail": "同一批框架 Skill 对同名内容前缀给出两条不能同时严格满足的指令，且都未点明「file 插件不贡献路由」这一让当前 app 侥幸成立的前提。",
+        "impact": "照文件插件 SKILL 实现受限附件时，安全边界隐式依赖贡献顺序；一旦其他插件先于守卫挂载同前缀路由，私有字节可能静默变为公开（server-routes.md 所述的失效模式）。当前冻结版本恰好可用，但依赖未文档化的前提。",
+        "suggestedChange": "统一表述：在文件插件 SKILL 中明确推荐 defineHttpMiddleware/addHttpMiddleware 在所有路由贡献之前注册 <accessPath>/* 守卫，或为 defineFileRepositoryApiRoutes 增加一等内容鉴权选项；并在 server-routes.md 补充该场景说明。",
+        "evidence": [
+          "E9",
+          "E22",
+          "E19",
+          "E20",
+          "E16"
+        ],
+        "diagnosis": {
+          "category": "guidance-gap",
+          "trigger": "按文件插件 SKILL 为 <accessPath>/* 注册守卫，且存在其他路由贡献先于该守卫注册或挂载",
+          "expected": "框架提供或指引明确一种不依赖贡献注册顺序的受保护内容入口",
+          "actual": "唯一被推荐的写法是「在挂载内容路由之前注册守卫」；内容路由本身公开、policy 不覆盖它，顺序无关的 addHttpMiddleware 未在该 SKILL 中说明",
+          "workaround": "app 把 materialContentGuard 放在自身 routes 数组首位并注释 Order is the security boundary；当前 file 插件不贡献路由所以生效，代价是隐式顺序依赖",
+          "acceptance": "在守卫贡献之前插入一个自定义内容路由贡献时，匿名或他人请求受保护 accessPath 仍返回 401/403；或框架提供内容鉴权选项后，未授权访问受保护 accessPath 必须返回 401/403 而非 200"
+        }
+      },
+      "targets": [
+        "@nocobase/app-server",
+        "app/.agents/skills/nocobase-app-development/references/server-routes.md",
+        "packages/@nocobase/app-plugin-file/skills/nocobase-app-plugin-file/SKILL.md"
+      ],
+      "paths": [
+        ".agents/skills/nocobase-app-development/references/server-routes.md",
+        ".agents/skills/nocobase-app-plugin-file/SKILL.md",
+        "packages/@nocobase/app-server/dist/application/index.js",
+        "packages/@nocobase/app-server/dist/router/routes.js"
+      ],
+      "evidence": [
+        {
+          "id": "E9",
+          "kind": "skill",
+          "path": "packages/@nocobase/app-plugin-file/skills/nocobase-app-plugin-file/SKILL.md",
+          "observation": "第 120-122 行：policy 必填并管所有 action，上传绑定派生 Policy，内容路由是例外、公开且 Policy 不覆盖它；第 126 行：These are public routes. For restricted files, register App-owned authentication and authorization on the paths each contribution owns before mounting it — ... <accessPath>/* for content。",
+          "lines": [
+            116,
+            126
+          ],
+          "excerpt": "`name` is the Client resource; `collection` defaults to name, `connection` to the database default, and `accessPath` to `/uploads/<name>`. Disk is required. Content paths contain static alphanumeric, underscore or hyphen segments, start with `/`, and have no trailing slash.\n\nOnly declared POST `/api/<name>:<action>` operations are exposed. Ordinary actions are `findMany/findOne/count/exists/aggregate/groupBy/createOne/updateOne/deleteOne`. There are no createMany/updateMany/deleteMany HTTP actions.\n\n`policy` is required and governs every action of the exposure, uploads included. It is a Repository Policy: `read`, `create`, `update` and `delete`, each `true`, `false`, or a rule node. A node that is `false` refuses that operation; a node with no `fields` accepts no caller-supplied field, which is what a metadata `createOne` needs before it will accept anything. Pass a function of the principal — `policy: (principal) => ({ ... })` — together with a `principal(context)` resolver to scope rows to the caller; without a principal the request is refused with 403.\n\nAn upload supplies no caller fields, so it binds a Policy derived from this one: the `create` scope and defaults are inherited and the field allowlist is replaced by the file columns. `create: false` therefore forbids uploading as well as creating metadata, and a `create.defaults` of `{ ownerId }` is stamped onto uploaded rows — which is what keeps an uploaded file inside the same scope `findMany` reads. The content route under `accessPath` is the exception: it is public and this Policy does not reach it.\n\nContent is GET `<accessPath>/<uuid>.<ext>` outside `/api`, omitting the dot when extensionless. Stream returns full bytes as an attachment; redirect returns a public storage URL or a five-minute signed URL. A disk without URL support requires stream mode; there is no automatic fallback.\n\nThese are public routes. For restricted files, register App-owned authentication and authorization on the paths each contribution owns before mounting it — `/<name>:<action>` per exposed API action, `<accessPath>/*` for content. Never `router.use('*', ...)` in a contribution router: contributions share the mounted router, so it also guards the SPA and every contribution mounted after yours. Check the operation and record/parent-record access; a login page, private disk, Client filter or Policy field allowlist is not authentication. Add scoped middleware and principal-based Policy to the generated routes first. If an existing contract needs an adapter, extend that module using the public Server manager and retain its authorization checks; missing built-in authentication alone is not a reason to replace the routes. Never trust browser-supplied ownership.",
+          "sha256": "06b464d71554a3ae12819918f98a84f44c65c2b70e7fbfcffd17e992e57aed22"
+        },
+        {
+          "id": "E22",
+          "kind": "skill",
+          "path": "app/.agents/skills/nocobase-app-development/references/server-routes.md",
+          "observation": "第 43-45 行 Every route owns its own security、/api 只是位置、无 auth.required 就公开；第 47 行 Never depend on middleware installed by another route, or on the order contributions happen to be registered in，并说明路由只被他人中间件保护会静默变公开；第 49 行 auth.required() 对匿名返回 401。",
+          "lines": [
+            43,
+            49
+          ],
+          "excerpt": "## Every route owns its own security\n\n**Mounting under `/api` does not authenticate anything.** `/api` is a location. A route with no `auth.required()` is public regardless of where it mounts.\n\nNever depend on middleware installed by another route, or on the order contributions happen to be registered in. Contribution order changes when a plugin is added, and a route protected only by someone else's middleware silently becomes public.\n\n`auth.required()` rejects anonymous requests with `401`. `auth.optional()` attaches the session when present without rejecting.",
+          "sha256": "cbf30ba33ca0af760a34442e92ac668c0ec8a312423da0690a98f3dfd0099b25"
+        },
+        {
+          "id": "E19",
+          "kind": "code",
+          "path": "packages/@nocobase/app-server/dist/application/index.js",
+          "observation": "Application.registerRoutes 先对每个 httpMiddleware 执行 register(router, this)，再按 this.routes 数组顺序 createRouter 并挂载到 /api 或 /，说明 httpMiddleware 在所有路由贡献之前运行。",
+          "lines": [
+            194,
+            206
+          ],
+          "excerpt": "    async registerRoutes() {\n        if (this.routesRegistered) {\n            return;\n        }\n        for (const middleware of this.httpMiddleware) {\n            await middleware.register(this.router, this);\n        }\n        for (const routes of this.routes) {\n            const router = await routes.createRouter(this);\n            this.router.route(routes.scope === 'api' ? '/api' : '/', router);\n        }\n        this.routesRegistered = true;\n    }",
+          "sha256": "98e0a7f93ab7107addcf1c4516d1fd8234c51f6f8078b2bccc905e006153130a"
+        },
+        {
+          "id": "E20",
+          "kind": "code",
+          "path": "packages/@nocobase/app-server/dist/router/routes.js",
+          "observation": "公开的 defineHttpMiddleware/defineApiRoutes/defineRootRoutes 三个装配入口，其中 httpMiddleware 带 name 与 register，路由贡献只带 scope 与 createRouter。",
+          "lines": [
+            1,
+            18
+          ],
+          "excerpt": "export function defineHttpMiddleware(options) {\n    return Object.freeze({\n        name: options.name,\n        register: options.register,\n    });\n}\nexport function defineApiRoutes(createRouter) {\n    return Object.freeze({\n        scope: 'api',\n        createRouter,\n    });\n}\nexport function defineRootRoutes(createRouter) {\n    return Object.freeze({\n        scope: 'root',\n        createRouter,\n    });\n}",
+          "sha256": "4a5a2d50c819c2cb33a51a1a65681e16c31ced82001d689f239da855035ec617"
+        },
+        {
+          "id": "E16",
+          "kind": "code",
+          "path": "app/server/routes/index.ts",
+          "observation": "应用注释 Order is the security boundary，并把 materialContentGuard、materialUploadGuard 排在 materialFileRoutes 之前。",
+          "lines": [
+            16,
+            31
+          ],
+          "excerpt": "// Order is the security boundary. The two guards are mounted before the file\n// plugin's routes they decide, and the CRUD sub-router is independent of both.\nconst materialApiRoutes: AppApiRouteContribution<Application> = defineApiRoutes(\n  (app) => {\n    const router = new Hono();\n    router.route('/materials', createMaterialApiRouter(app));\n    return router;\n  },\n);\n\nconst routes: readonly AppRouteContribution<Application>[] = [\n  materialContentGuard,\n  materialUploadGuard,\n  ...materialFileRoutes,\n  materialApiRoutes,\n];",
+          "sha256": "496f8d29ece20737a2076df1150077f21f2c9663ac347806251dc3141762676f"
+        }
+      ],
+      "fingerprint": "2158a87b4fdab883a7eebb66f890d5cd47d6a1ed98cf60fbe0d57fa5aeaa864d"
+    },
+    {
+      "id": "519:36938138067:1:F4",
+      "report": "519:36938138067:1",
+      "issue": 519,
+      "taskTitle": "项目资料与私有附件",
+      "appVersion": "1.0.0-beta.50",
+      "appTemplate": "@nocobase/app-template-default",
+      "finding": {
+        "id": "F4",
+        "kind": "improvement",
+        "owner": "plugin",
+        "severity": "minor",
+        "confidence": "confirmed",
+        "status": "open",
+        "title": "defineFileRepositoryApiRoutes 没有一等的受限内容入口，受保护字节只能靠顺序敏感的自定义守卫",
+        "detail": "defineFileRepositoryApiRoutes 生成的内容路由固定绑定 unwritablePolicy，并注释 Public first-version routes. Authentication and authorization are application-owned（E5/E7）。应用要保护它只能在贡献列表前置一个根守卫；框架已有顺序无关的 defineHttpMiddleware/addHttpMiddleware，registerRoutes 在所有贡献之前执行它们（E19/E20），但没有针对内容前缀的推荐接入，也没有为上传动作提供「认证失败返回 401 而非插件缺 principal 的 403」的内建守卫（E7/E24）。",
+        "impact": "私有附件这一企业常见需求需要应用自行复刻守卫与顺序约束；接入者容易只守内容路由而漏掉上传动作，得到 403 而非承诺的 401。",
+        "suggestedChange": "为 defineFileRepositoryApiRoutes 增加可选的 authorize/principal 内容与上传鉴权回调（内部用 httpMiddleware 或在装配时同装），或在 SKILL 中给出显式的前缀守卫注册示例与失败状态约定。",
+        "evidence": [
+          "E5",
+          "E7",
+          "E19",
+          "E20",
+          "E24"
+        ],
+        "diagnosis": {
+          "category": "capability-gap",
+          "trigger": "需要让 <accessPath>/<uuid>.<ext> 与上传动作只对合法会话开放",
+          "expected": "库提供声明式的内容与上传鉴权入口，或指引明确顺序无关的推荐接入",
+          "actual": "内容路由固定公开；上传动作默认只在缺 principal 时返回 403；受限访问需自定义根守卫并依赖贡献注册顺序",
+          "workaround": "app 自写 materialContentGuard 与 materialUploadGuard 并置于 routes 数组前部（app/server/routes/index.ts），当前版本可用但没有框架保证",
+          "acceptance": "使用框架提供的内容鉴权选项后，匿名访问受保护 accessPath 返回 401、他人返回 403，且不依赖贡献注册顺序"
+        }
+      },
+      "targets": [
+        "@nocobase/app-plugin-file",
+        "@nocobase/app-server"
+      ],
+      "paths": [
+        "packages/@nocobase/app-plugin-file/dist/server/routes.js",
+        "packages/@nocobase/app-server/dist/application/index.js",
+        "packages/@nocobase/app-server/dist/router/routes.js"
+      ],
+      "evidence": [
+        {
+          "id": "E5",
+          "kind": "code",
+          "path": "packages/@nocobase/app-plugin-file/dist/server/routes.js",
+          "observation": "defineFileRepositoryApiRoutes 注释 Public first-version routes. Authentication and authorization are application-owned；实现校验 accessPath 冲突、disk/accessMode 与上传动作配置。",
+          "lines": [
+            26,
+            54
+          ],
+          "excerpt": "/** Public first-version routes. Authentication and authorization are application-owned. */\nexport function defineFileRepositoryApiRoutes(options) {\n    const paths = [];\n    const entries = options.repositories.map((entry) => {\n        const accessPath = normalizeAccessPath(entry.accessPath ?? `/uploads/${entry.name}`);\n        if (paths.some((path) => path === accessPath ||\n            path.startsWith(`${accessPath}/`) ||\n            accessPath.startsWith(`${path}/`)))\n            throw new Error(`Conflicting file accessPath: ${accessPath}`);\n        paths.push(accessPath);\n        if (!entry.disk)\n            throw new Error('File repository disk is required.');\n        if (entry.accessMode !== undefined &&\n            !['stream', 'redirect'].includes(entry.accessMode))\n            throw new Error('Invalid file accessMode.');\n        const { uploadOne, uploadMany, ...actions } = entry.actions;\n        for (const upload of [uploadOne, uploadMany]) {\n            if (upload === undefined)\n                continue;\n            if (!upload ||\n                typeof upload !== 'object' ||\n                Object.keys(upload).some((key) => key !== 'maxSize'))\n                throw new Error('Invalid upload action configuration.');\n            if (upload.maxSize !== undefined &&\n                (!Number.isSafeInteger(upload.maxSize) || upload.maxSize <= 0))\n                throw new Error('maxSize must be a positive safe integer.');\n        }\n        return { ...entry, accessPath, actions, uploadOne, uploadMany };\n    });",
+          "sha256": "6982c2d56153fe60426c48783c0653f4224691075e1c95a3d6e39f7405a46025"
+        },
+        {
+          "id": "E7",
+          "kind": "code",
+          "path": "packages/@nocobase/app-plugin-file/dist/server/routes.js",
+          "observation": "内容路由：UUID+可选小写扩展名正则、以 unwritablePolicy 解析记录、记录或对象缺失返回 404、Cache-Control private/no-store，stream 模式设置 Content-Type/Content-Length/nosniff/sandbox CSP 与 Content-Disposition。",
+          "lines": [
+            188,
+            221
+          ],
+          "excerpt": "        defineRootRoutes((app) => {\n            const router = fileRouter();\n            for (const entry of entries) {\n                const files = resolve(app, entry, unwritablePolicy);\n                router.get(`${entry.accessPath}/:file`, async (c) => {\n                    const match = /^([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})(?:\\.([a-z0-9]{1,32}))?$/.exec(c.req.param('file'));\n                    if (!match)\n                        return c.notFound();\n                    const record = await files.findOne({ filter: { id: match[1] } });\n                    if (!record || record.ext !== (match[2] ?? ''))\n                        return c.notFound();\n                    const disk = app.container\n                        .resolve(driveManagerToken)\n                        .use(record.disk);\n                    if (!(await disk.exists(record.key)))\n                        return c.notFound();\n                    c.header('Cache-Control', 'private, no-store');\n                    if (entry.accessMode === 'redirect') {\n                        const url = await files.getStorageUrl(record);\n                        const publicBasePath = app.publicBasePath ?? '';\n                        // Check the final target after the host rewrites root-relative redirects.\n                        const location = new URL(addBasePathToLocation(url, publicBasePath), c.req.url);\n                        if (location.origin === new URL(c.req.url).origin &&\n                            entries.some((item) => location.pathname.startsWith(`${joinBasePath(publicBasePath, item.accessPath)}/`)))\n                            throw new FileRepositoryError('STORAGE_URL_UNAVAILABLE', 'Storage URL points back to a file access route.');\n                        return c.redirect(url, 302);\n                    }\n                    c.header('Content-Type', validMime(record.mimeType));\n                    c.header('Content-Length', String(record.size));\n                    c.header('X-Content-Type-Options', 'nosniff');\n                    c.header('Content-Security-Policy', \"sandbox; default-src 'none'\");\n                    c.header('Content-Disposition', `attachment; filename*=UTF-8''${encodeURIComponent(Buffer.from(record.filename).toString('utf8')).replace(/['()*]/g, (char) => `%${char.charCodeAt(0).toString(16).toUpperCase()}`)}`);\n                    return c.body(Readable.toWeb(await disk.getStream(record.key)));\n                });",
+          "sha256": "6982c2d56153fe60426c48783c0653f4224691075e1c95a3d6e39f7405a46025"
+        },
+        {
+          "id": "E19",
+          "kind": "code",
+          "path": "packages/@nocobase/app-server/dist/application/index.js",
+          "observation": "Application.registerRoutes 先对每个 httpMiddleware 执行 register(router, this)，再按 this.routes 数组顺序 createRouter 并挂载到 /api 或 /，说明 httpMiddleware 在所有路由贡献之前运行。",
+          "lines": [
+            194,
+            206
+          ],
+          "excerpt": "    async registerRoutes() {\n        if (this.routesRegistered) {\n            return;\n        }\n        for (const middleware of this.httpMiddleware) {\n            await middleware.register(this.router, this);\n        }\n        for (const routes of this.routes) {\n            const router = await routes.createRouter(this);\n            this.router.route(routes.scope === 'api' ? '/api' : '/', router);\n        }\n        this.routesRegistered = true;\n    }",
+          "sha256": "98e0a7f93ab7107addcf1c4516d1fd8234c51f6f8078b2bccc905e006153130a"
+        },
+        {
+          "id": "E20",
+          "kind": "code",
+          "path": "packages/@nocobase/app-server/dist/router/routes.js",
+          "observation": "公开的 defineHttpMiddleware/defineApiRoutes/defineRootRoutes 三个装配入口，其中 httpMiddleware 带 name 与 register，路由贡献只带 scope 与 createRouter。",
+          "lines": [
+            1,
+            18
+          ],
+          "excerpt": "export function defineHttpMiddleware(options) {\n    return Object.freeze({\n        name: options.name,\n        register: options.register,\n    });\n}\nexport function defineApiRoutes(createRouter) {\n    return Object.freeze({\n        scope: 'api',\n        createRouter,\n    });\n}\nexport function defineRootRoutes(createRouter) {\n    return Object.freeze({\n        scope: 'root',\n        createRouter,\n    });\n}",
+          "sha256": "4a5a2d50c819c2cb33a51a1a65681e16c31ced82001d689f239da855035ec617"
+        },
+        {
+          "id": "E24",
+          "kind": "code",
+          "path": "app/server/routes/materials.ts",
+          "observation": "materialUploadGuard 对 /materialFiles:uploadOne 与 uploadMany 应用 auth.required()，注释称这两个 action 是该 Collection 唯一暴露的操作。",
+          "lines": [
+            215,
+            232
+          ],
+          "excerpt": "/**\n * API guard for the file plugin's upload actions.\n *\n * `/materialFiles:uploadOne` and `/materialFiles:uploadMany` are the only\n * actions exposed for this Collection, so nothing else needs covering.\n */\nexport const materialUploadGuard: AppApiRouteContribution<Application> =\n  defineApiRoutes((app) => {\n    const router = new Hono();\n    const auth = app.container.resolve(authenticationToken);\n    for (const action of ['uploadOne', 'uploadMany']) {\n      router.use(\n        `/${encodeURIComponent(MATERIAL_FILE_COLLECTION)}:${action}`,\n        auth.required(),\n      );\n    }\n    return router;\n  });",
+          "sha256": "998917d36f92d640e3dda52d5a0e5e497f0846a23676c9d9006ebd990648abf8"
+        }
+      ],
+      "fingerprint": "7aee03af264b9823e5b9aaa3261707938b0a1f041ae3aa48e32c343849967622"
+    },
+    {
+      "id": "519:36938138067:1:F5",
+      "report": "519:36938138067:1",
+      "issue": 519,
+      "taskTitle": "项目资料与私有附件",
+      "appVersion": "1.0.0-beta.50",
+      "appTemplate": "@nocobase/app-template-default",
+      "finding": {
+        "id": "F5",
+        "kind": "improvement",
+        "owner": "plugin",
+        "severity": "info",
+        "confidence": "confirmed",
+        "status": "open",
+        "title": "Registry 默认图片预览没有解码失败态，损坏图片静默显示破图",
+        "detail": "registry/component-ui/components/previewers/file-preview-content.tsx 的 image 分支只返回 <img src={url}>，没有 onError 或失败提示（E28）；而同目录 OfficeOpenXmlPreview 实现了请求错误捕获、下载回退与销毁（E29/E30）。SKILL 允许应用按需调整自有副本（E32），本任务因此在 app 的 file-preview-content.tsx 新增 ImagePreview（useEffect 重置、failed 状态、role=alert 与 files.imagePreviewFailed 文案）（E34）。",
+        "impact": "B06 要求的损坏 PNG 清晰提示无法由默认组件满足，每个应用都要自行复刻；未调整源码的应用只看到破图。",
+        "suggestedChange": "在 Registry 的 image 分支加入与 OOXML 一致的失败态（onError → 本地化消息 + FileThumbnail），或在 SKILL 中显式列出该扩展点。",
+        "evidence": [
+          "E28",
+          "E32",
+          "E34"
+        ],
+        "diagnosis": {
+          "category": "usability-improvement",
+          "trigger": "扩展名或 MIME 为图片但字节损坏的附件进入预览",
+          "expected": "默认图片预览显示清晰的失败提示，而不是无提示的破图",
+          "actual": "registry 的 image 分支仅渲染 <img>，无 onError；失败态需应用在自有副本中自行补",
+          "workaround": "app 的 file-preview-content.tsx 新增 ImagePreview，用 failed 状态与 files.imagePreviewFailed 文案；切换 URL 时 useEffect 重置失败态",
+          "acceptance": "向 Registry 默认图片预览喂入损坏 PNG 时渲染失败提示（role=alert 或本地化文案），且切换 URL 后提示不复用"
+        }
+      },
+      "targets": [
+        "@nocobase/app-plugin-file",
+        "packages/@nocobase/app-plugin-file/skills/nocobase-app-plugin-file/SKILL.md"
+      ],
+      "paths": [
+        ".agents/skills/nocobase-app-plugin-file/SKILL.md",
+        "packages/@nocobase/app-plugin-file/registry/component-ui/components/previewers/file-preview-content.tsx"
+      ],
+      "evidence": [
+        {
+          "id": "E28",
+          "kind": "code",
+          "path": "packages/@nocobase/app-plugin-file/registry/component-ui/components/previewers/file-preview-content.tsx",
+          "observation": "FilePreviewContent 按 kind 分派：OOXML/office 走专用组件，有 error 时渲染 role=alert；image 分支只返回 <img src={url} alt={file.filename}>，没有 onError 或失败态；pdf/audio/video/text/markdown 各有分支。",
+          "lines": [
+            61,
+            99
+          ],
+          "excerpt": "  if (error)\n    return (\n      <div role='alert'>{t(messageKey(error), { defaultValue: error })}</div>\n    );\n  if (!url && kind !== 'unsupported')\n    return (\n      <div role='status'>\n        {t('files.loadingPreview', { defaultValue: 'Loading preview...' })}\n      </div>\n    );\n  switch (kind) {\n    case 'image':\n      return (\n        <img\n          src={url}\n          alt={file.filename}\n          className='max-h-[70vh] max-w-full object-contain'\n        />\n      );\n    case 'pdf':\n      return (\n        <iframe title={file.filename} src={url} className='h-[70vh] w-full' />\n      );\n    case 'audio':\n      return <audio controls src={url} className='w-full' />;\n    case 'video':\n      return <video controls src={url} className='max-h-[70vh] max-w-full' />;\n    case 'markdown':\n      return <MarkdownPreview text={text} />;\n    case 'text':\n      return (\n        <pre className='max-h-[70vh] overflow-auto whitespace-pre-wrap rounded-md bg-muted p-3 text-sm'>\n          {text ??\n            t('files.loadingPreview', { defaultValue: 'Loading preview...' })}\n        </pre>\n      );\n    default:\n      return <DownloadFallback file={file} onDownload={onDownload} />;\n  }",
+          "sha256": "f30abbadc57a0f0ed28cdb68d4ced7bba9a6e3a4c3d59d3b6fc49f89d9497144"
+        },
+        {
+          "id": "E32",
+          "kind": "skill",
+          "path": "packages/@nocobase/app-plugin-file/skills/nocobase-app-plugin-file/SKILL.md",
+          "observation": "Preview and content access：支持安全栅格图片、PDF blob、文本/Markdown、音视频，拒 HTML/SVG/XML；DOCX/XLSX/PPTX 用 @silurus/ooxml 本地渲染不上传第三方；OOXML/PDF/文本 fetch 用同源凭据，App 自有内容路由可用同源 session cookie 服务受限预览但须检查记录访问；失败显示错误并提供下载回退。",
+          "lines": [
+            231,
+            239
+          ],
+          "excerpt": "### Preview and content access\n\nPreview supports safe raster images, PDF via a fetched blob, text/Markdown and audio/video. HTML/SVG/XML previews and unsafe URL schemes are rejected. DOCX, XLSX and PPTX use lazily loaded `@silurus/ooxml` viewers to render locally from `FileRecord.contentUrl`; their content is not sent to a third-party preview service. Legacy DOC/XLS/PPT and OpenDocument formats use Office Online, which requires an internet-accessible absolute URL and cannot use the App session.\n\nOOXML, PDF and text fetches use same-origin credentials. An App-owned content route protected by same-origin session cookies can therefore serve restricted previews, provided it checks the caller's record access. Cross-origin fetches omit credentials and require CORS; an external cookie-protected URL is not supported by this default path. The Repository API client's Bearer token is not automatically attached to content fetches.\n\nFor Bearer-only content authorization, adapt the installed Registry source in the App. Add an authenticated content loader to the OOXML fetch path and `PreviewBody`'s PDF/text fetches, and adapt download and media/image paths as needed. Resolve authentication through the App's supported client/session services and send credentials only to the trusted content endpoint. Do not put tokens in `contentUrl`. If the adapter creates blob URLs, keep an App-owned trusted URL set, pass it to the relevant `resolveSafeFileUrl` calls, and revoke URLs when replaced or unmounted. Merely assigning a `blob:` URL to `FileRecord.contentUrl` is insufficient: the default components reject untrusted blob URLs.\n\nOOXML request or rendering failure displays an error and, when downloads are enabled, a download action. `download={false}` removes that action. This is not a second preview service or a guarantee that downloading the same inaccessible URL will succeed.",
+          "sha256": "06b464d71554a3ae12819918f98a84f44c65c2b70e7fbfcffd17e992e57aed22"
+        },
+        {
+          "id": "E34",
+          "kind": "code",
+          "path": "app/client/extensions/nocobase-file-component-ui/components/previewers/file-preview-content.tsx",
+          "observation": "应用自有副本新增 ImagePreview：useEffect 在 url 变化时重置 failed，failed 时渲染 role=alert + FileThumbnail + files.imagePreviewFailed 文案，否则 <img onError={() => setFailed(true)}>。",
+          "lines": [
+            96,
+            137
+          ],
+          "excerpt": "function ImagePreview(inputProps: {\n  readonly file: FileRecord;\n  readonly url?: string;\n}): ReactElement {\n  const { t } = useTranslation('@nocobase/app-plugin-file');\n  const { file, url } = inputProps;\n  const [failed, setFailed] = useState(false);\n\n  // A new URL deserves a fresh attempt: the corrupt-file message must not stick\n  // to the next image a user opens.\n  useEffect(() => {\n    setFailed(false);\n  }, [url]);\n\n  if (!url)\n    return (\n      <div role='status'>\n        {t('files.loadingPreview', { defaultValue: 'Loading preview...' })}\n      </div>\n    );\n  if (failed)\n    return (\n      <div role='alert' className='flex flex-col items-center gap-3 py-8'>\n        <div className='h-24 w-24'>\n          <FileThumbnail file={file} />\n        </div>\n        <p>\n          {t('files.imagePreviewFailed', {\n            defaultValue: 'Unable to display this image. The file is corrupted or not a readable image.',\n          })}\n        </p>\n      </div>\n    );\n  return (\n    <img\n      src={url}\n      alt={file.filename}\n      className='max-h-[70vh] max-w-full object-contain'\n      onError={() => setFailed(true)}\n    />\n  );\n}",
+          "sha256": "5726f452969b893dec9b6bf9d98af7b8014f4a37962b77c6f39dd514c337a07b"
+        }
+      ],
+      "fingerprint": "13e6d4fb8180ad70c49886a4804e90fda2277bdf438e77788f39cd9ee3e65741"
     }
   ]
 }
