@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "inputHash": "8cedec633468cf9b5801500ab94c312ebc21eaebf0eb1e9b079506e29c4fc7a5",
+  "inputHash": "81a03e1dc26fd0f9b48f4605602dba41192853141d15d9acaf49791dffdfc28c",
   "findings": [
     {
       "id": "460:36434284393:1:F2",
@@ -5508,6 +5508,306 @@
         }
       ],
       "fingerprint": "9de33292462dda766bda24f215609bfa21dc419ac76af0473ba65f624bfeabfe"
+    },
+    {
+      "id": "518:36938133650:1:F1",
+      "report": "518:36938133650:1",
+      "issue": 518,
+      "taskTitle": "内部资料阅读与临时共享",
+      "appVersion": "1.0.0-beta.50",
+      "appTemplate": "@nocobase/app-template-default",
+      "finding": {
+        "id": "F1",
+        "kind": "issue",
+        "owner": "framework",
+        "confidence": "confirmed",
+        "severity": "minor",
+        "status": "open",
+        "title": "selection.records 仅接受字符串 id，与指引和框架自身推荐的整数自增主键不兼容",
+        "detail": "`@nocobase/authorization` 的 parseRecordSelection 要求 records 的每个 id 都是非空字符串（selection.js 15-18）；authorizer.compileConstraints 把 records 选择直接展开为对主键的 `$eq` 字符串条件（authorizer.js 257-259），scope.idsScope 用原始 id 构造 condition（scope.js 45-47）。而 nocobase-db Skill 示例（SKILL.md 91）和框架自身的迁移历史表（history.js 8）都用 collection.increments('id')，@nocobase/db 的过滤校验对 increments/integer 只接受安全整数（repository.js 1140-1143）。于是按记录 id 的 records 选择在整数主键集合上无法工作。",
+        "impact": "应用无法用文档化的 records API 做单条记录共享/授权：字符串 id 会被 repository 判为 INVALID_FILTER，只能在应用侧另建 record access 并返回数值条件（app/server/library/scope.ts 33-37），增加实现与排查成本，且类型错误要到查询期才暴露。",
+        "suggestedChange": "让 records 选择接受 number|string，并按目标集合主键类型在工作流早期归一化或给出类型明确的配置期错误；或在文档中明确整数主键应改用 recordAccess。",
+        "evidence": [
+          "E1",
+          "E9",
+          "E10",
+          "E14",
+          "E16",
+          "E27"
+        ],
+        "diagnosis": {
+          "category": "capability-gap",
+          "trigger": "对使用 increments('id') 的集合提交 selection:{type:'records',ids:[...]}（或按 Skill 示例先建整数主键再想按 id 共享）。",
+          "expected": "配置期接受数值 id 或给出类型明确的错误，查询可正常执行。",
+          "actual": "只接受字符串 id；字符串条件与整数主键的过滤校验冲突，直到 repository 查询期才以 INVALID_FILTER 失败。",
+          "workaround": "在应用内定义 recordAccess，让 resolver 返回对主键的数值 $eq 条件（app/server/library/scope.ts 33-37）。",
+          "acceptance": "records 选择能覆盖整数主键集合，或在配置期给出可诊断的类型错误并指引改用 recordAccess。"
+        }
+      },
+      "targets": [
+        "@nocobase/app-plugin-authorization",
+        "@nocobase/authorization",
+        "@nocobase/db",
+        "app/.agents/skills/nocobase-db"
+      ],
+      "paths": [
+        ".agents/skills/nocobase-db/SKILL.md",
+        "packages/@nocobase/app-plugin-authorization/dist/server/database/authorizer.js",
+        "packages/@nocobase/app-plugin-authorization/dist/server/database/scope.js",
+        "packages/@nocobase/authorization/dist/core/selection.js",
+        "packages/@nocobase/db/dist/src/repository/repository.js"
+      ],
+      "evidence": [
+        {
+          "id": "E1",
+          "kind": "code",
+          "path": "packages/@nocobase/authorization/dist/core/selection.js",
+          "observation": "selection.records 生成 ids 数组；parseRecordSelection 要求 type==='records' 时 ids 为非空数组且每项 typeof id==='string' && id!==''，否则抛 TypeError；recordAccess 支持 params。",
+          "lines": [
+            1,
+            22
+          ],
+          "excerpt": "export const selection = {\n    all: () => ({ type: 'all' }),\n    records: (ids) => ({ type: 'records', ids: [...ids] }),\n    recordAccess: (key, params) => params === undefined\n        ? { type: 'recordAccess', key }\n        : { type: 'recordAccess', key, params: structuredClone(params) },\n};\n/** Validates an untrusted value, returning it as a detached selection. */\nexport function parseRecordSelection(value) {\n    if (typeof value === 'object' && value !== null && !Array.isArray(value)) {\n        const type = Reflect.get(value, 'type');\n        if (type === 'all')\n            return selection.all();\n        const ids = Reflect.get(value, 'ids');\n        if (type === 'records' &&\n            Array.isArray(ids) &&\n            ids.every((id) => typeof id === 'string' && id !== ''))\n            return selection.records(ids);\n        const key = Reflect.get(value, 'key');\n        if (type === 'recordAccess' && typeof key === 'string' && key)\n            return selection.recordAccess(key, Reflect.get(value, 'params'));\n    }",
+          "sha256": "1a4f0b0f5a61e724c856f23703dadb6fa2cb8d245c2669d4f3f36f1cc4e66088"
+        },
+        {
+          "id": "E9",
+          "kind": "code",
+          "path": "packages/@nocobase/app-plugin-authorization/dist/server/database/authorizer.js",
+          "observation": "resolveEffectiveScope 对每个授权分支把正向范围（recordAccess 与 expand 约束）求并，再与本分支 restrict 约束求交；最终 scope = allScopes([...required, ...restrictions])；compileConstraints 把 type:'records' 交给 idsScope(resource.primaryKey, selection.ids)。",
+          "lines": [
+            206,
+            265
+          ],
+          "excerpt": "    async resolveEffectiveScope(principal, resource, action, configs, constraints, requestedFields) {\n        // Each grant keeps its own fields and role filters through scope evaluation.\n        const branches = await Promise.all(configs.map(async (config) => {\n            const positive = await this.compileScopes(principal, resource, action, config.recordAccess ?? []);\n            positive.push(...(await this.compileConstraints([...constraints, ...(config.branchConstraints ?? [])].filter((item) => item.effect === 'expand'), principal, resource, action)));\n            const branchRestrictions = await this.compileConstraints((config.branchConstraints ?? []).filter((item) => item.effect === 'restrict'), principal, resource, action);\n            return {\n                config,\n                configured: positive.length > 0,\n                scope: allScopes([anyScope(positive), ...branchRestrictions]),\n            };\n        }));\n        const restrictions = await this.compileConstraints(constraints.filter((item) => item.effect === 'restrict'), principal, resource, action);\n        const fields = resolveDatabaseFields(configs, action);\n        const requested = {\n            ...requestedFields,\n            ...(action === 'read'\n                ? { output: resolveActionFields(action, fields, resource) }\n                : { input: resolveActionFields(action, fields, resource) }),\n        };\n        const required = [\n            anyScope(branches.map((branch) => branch.scope)),\n        ];\n        for (const direction of [\n            'input',\n            'output',\n            'filter',\n            'sort',\n            'group',\n        ]) {\n            for (const field of requested[direction] ?? []) {\n                if (branches.every((branch) => databaseFieldsAllowed({ [direction]: [field] }, resolveDatabaseFields([branch.config], action))))\n                    continue;\n                required.push(anyScope(branches\n                    .filter((branch) => databaseFieldsAllowed({ [direction]: [field] }, resolveDatabaseFields([branch.config], action)))\n                    .map((branch) => branch.scope)));\n            }\n        }\n        return {\n            scope: allScopes([...required, ...restrictions]),\n            configured: branches.some((branch) => branch.configured),\n        };\n    }\n    async compileConstraints(constraints, principal, resource, action) {\n        const scopes = [];\n        for (const constraint of constraints) {\n            const selection = constraint.selection;\n            if (selection.type === 'all') {\n                scopes.push(true);\n                continue;\n            }\n            if (selection.type === 'records') {\n                scopes.push(idsScope(resource.primaryKey, selection.ids));\n                continue;\n            }\n            scopes.push(...(await this.compileScopes(principal, resource, action, [\n                selection.params === undefined\n                    ? selection.key\n                    : { key: selection.key, params: selection.params },\n            ])));",
+          "sha256": "b0de936d696378936a0ad88984858caf031f670f624b542daf0d0a3f69f06fbb"
+        },
+        {
+          "id": "E10",
+          "kind": "code",
+          "path": "packages/@nocobase/app-plugin-authorization/dist/server/database/scope.js",
+          "observation": "注释说明成员集合展开为逐个 $eq（FilterOperator 无 $in），idsScope(field, ids) = anyScope(ids.map(id => condition(field,'$eq',id)))，直接使用传入 id。",
+          "lines": [
+            40,
+            47
+          ],
+          "excerpt": "/**\n * Membership expands to one `$eq` per identifier because `FilterOperator` has\n * no `$in` — `$includes` is a substring test. A negated list would expand the\n * same way, as an `and` of `$ne`. Both collapse once db grows the operator.\n */\nexport function idsScope(field, ids) {\n    return anyScope(ids.map((id) => condition(field, '$eq', id)));\n}",
+          "sha256": "990edf1b0422f4e8e2c869546a4d4be9710b5e652bcf7170105a436f80ea2b34"
+        },
+        {
+          "id": "E14",
+          "kind": "code",
+          "path": "packages/@nocobase/db/dist/src/repository/repository.js",
+          "observation": "validateResolvedConditionValue 按字段类型校验过滤值：uuid/text/time 接受字符串；increments/integer 只接受 Number.isSafeInteger 的数值（或 null 且 $eq/$ne）；字符串值不被接受，导致 INVALID_FILTER。",
+          "lines": [
+            1126,
+            1155
+          ],
+          "excerpt": "            case 'uuid':\n            case 'text':\n            case 'time':\n                return (typeof value === 'string' ||\n                    (value === null && ['$eq', '$ne'].includes(operator)));\n            case 'bigInt':\n                return ((typeof value === 'number' && Number.isSafeInteger(value)) ||\n                    (typeof value === 'string' && /^[+-]?\\d+$/.test(value)) ||\n                    (value === null && ['$eq', '$ne'].includes(operator)));\n            case 'decimal':\n                return ((typeof value === 'number' && Number.isFinite(value)) ||\n                    (typeof value === 'string' &&\n                        /^[+-]?(?:\\d+(?:\\.\\d*)?|\\.\\d+)(?:[eE][+-]?\\d+)?$/.test(value)) ||\n                    (value === null && ['$eq', '$ne'].includes(operator)));\n            case 'increments':\n            case 'integer':\n                return ((typeof value === 'number' && Number.isSafeInteger(value)) ||\n                    (value === null && ['$eq', '$ne'].includes(operator)));\n            case 'float':\n            case 'double':\n                return ((typeof value === 'number' && Number.isFinite(value)) ||\n                    (value === null && ['$eq', '$ne'].includes(operator)));\n            case 'date':\n            case 'datetime':\n            case 'datetimeTz':\n                return ((value === null && ['$eq', '$ne'].includes(operator)) ||\n                    validDateLiteral(field.type, value));\n            default:\n                return false;\n        }",
+          "sha256": "31b67e0dcdfd222b6981571d563d9879525a3bf61312ea92a05a269d99c1f311"
+        },
+        {
+          "id": "E16",
+          "kind": "skill",
+          "path": "app/.agents/skills/nocobase-db/SKILL.md",
+          "observation": "nocobase-db Skill 的迁移示例以 collection.increments('id') 定义主键，并展示 string/unique 等列定义，即指引推荐的业务表主键写法。",
+          "lines": [
+            86,
+            95
+          ],
+          "excerpt": "const migration: MigrationDefinition = defineMigration({\n  name: '202609020001_create_orders',\n\n  async up({ builder }) {\n    await builder.createCollection('orders', (collection) => {\n      collection.increments('id');\n      collection.string('orderNo', { length: 64, nullable: false });\n      collection.string('status', { length: 32, nullable: false });\n      collection.datetime('createdAt', { nullable: false });\n      collection.unique('orderNo');",
+          "sha256": "f97c07a45a9d49c1d933ddbceeabcc9afe267b1356a2ded1a3da0dd56b54011c"
+        },
+        {
+          "id": "E27",
+          "kind": "code",
+          "path": "app/server/library/scope.ts",
+          "observation": "App 记录 sharedDocument 范围的注释明确写出：records 选择只携带字符串 id，而 documents 主键是整数，会被 repository 过滤校验拒绝，故名 id 的 record access 才能返回真实数值；同时说明 allScopes 是包内部实现未被公开，故在应用内重复 AND 折叠。",
+          "lines": [
+            29,
+            60
+          ],
+          "excerpt": "  visible: 'library.visible',\n  /**\n   * The one record a temporary share points at.\n   *\n   * The authorization package's `records` selection carries string ids only,\n   * and this table's primary key is an integer, so a `records` selection would\n   * be rejected by the repository's filter validation. Naming the id in a\n   * record access lets the resolver hand back a real number instead.\n   */\n  sharedDocument: 'library.sharedDocument',\n} as const;\n\n/** The params the `sharedDocument` record access reads. */\nexport interface SharedDocumentParams {\n  readonly documentId?: unknown;\n}\n\n/**\n * The AND fold of the authorization package's internal `allScopes`.\n *\n * That helper is not part of the package's public surface, so the fold is\n * repeated here rather than reaching through a private subpath. `true` drops\n * out, `false` wins, and a single node collapses to itself.\n */\nexport function allScopes(scopes: readonly DatabaseScope[]): DatabaseScope {\n  if (scopes.includes(false)) return false;\n  const items = scopes.filter(\n    (scope): scope is FilterNode => scope !== true && scope !== false,\n  );\n  if (items.length === 0) return true;\n  return items.length === 1 ? items[0] : group('and', items);\n}",
+          "sha256": "ad055b622685b41a731e1942a4dae7924d08e3d7e09954577084d331af18d990"
+        }
+      ],
+      "fingerprint": "7a1cef8c619ce2ae48a736802db43b04fcdfe760312c6bf7c292ee0cfb382073"
+    },
+    {
+      "id": "518:36938133650:1:F2",
+      "report": "518:36938133650:1",
+      "issue": 518,
+      "taskTitle": "内部资料阅读与临时共享",
+      "appVersion": "1.0.0-beta.50",
+      "appTemplate": "@nocobase/app-template-default",
+      "finding": {
+        "id": "F2",
+        "kind": "issue",
+        "owner": "framework",
+        "confidence": "confirmed",
+        "severity": "minor",
+        "status": "open",
+        "title": "数据范围组合辅助 anyScope/allScopes 未公开导出，应用被迫重复实现",
+        "detail": "scope.js 提供 condition/anyScope/allScopes 等范围构造与组合（scope.js 24-47），但包的 exports 只暴露 core、default-access、sharing-rules、restriction-rules 等入口，未导出这些辅助。App 在 app/server/library/scope.ts 46-60 重写了 allScopes 的 AND 折叠，并在注释中说明该 helper 不是包公开面。",
+        "impact": "自定义 record access/resolver 需要组合多个 DatabaseScope 时，应用只能复制框架内部语义，存在与上游演进漂移的风险，也让“失败即拒绝”等约定无法复用。",
+        "suggestedChange": "将范围构造与组合辅助（至少 anyScope/allScopes/condition）作为公开子路径导出，或在文档中给出等价的公开 API。",
+        "evidence": [
+          "E3",
+          "E10",
+          "E27"
+        ],
+        "diagnosis": {
+          "category": "usability-improvement",
+          "trigger": "自定义 record access resolver 需要 AND/OR 组合多个 DatabaseScope。",
+          "expected": "从框架公开入口复用范围组合辅助。",
+          "actual": "辅助函数不在公开导出中，应用自行复制实现（app/server/library/scope.ts 46-60）。",
+          "workaround": "在应用内重写等价的 allScopes 折叠。",
+          "acceptance": "公开导出范围组合辅助或提供替代 API，应用无需重复实现框架语义。"
+        }
+      },
+      "targets": [
+        "@nocobase/app-plugin-authorization",
+        "@nocobase/authorization"
+      ],
+      "paths": [
+        "packages/@nocobase/app-plugin-authorization/dist/server/database/scope.js",
+        "packages/@nocobase/authorization/dist/core/composite.js"
+      ],
+      "evidence": [
+        {
+          "id": "E3",
+          "kind": "code",
+          "path": "packages/@nocobase/authorization/dist/core/composite.js",
+          "observation": "composedGrants 展开组合授权：对每个 scopeKey 分支调用 constraints.resolve 合并 branch constraints，并把组合授权展开为具体资源/动作的授权；for(identity) 生成按身份裁剪的 provider。",
+          "lines": [
+            419,
+            463
+          ],
+          "excerpt": "/** Wraps a Grant Provider so composite grants resolve with what they compose. */\nexport function composedGrants(provider, registry, constraints) {\n    const expand = (grants, input) => Promise.all(grants\n        .flatMap((grant) => registry.expandOrSkip(grant))\n        .map(async (grant) => {\n        if (grant.origin?.scopeKey === undefined)\n            return grant;\n        const branch = await constraints.resolve({\n            ...input,\n            resource: grant.origin.resource,\n            action: grant.origin.action,\n            scopeKey: grant.origin.scopeKey,\n        });\n        return { ...grant, origin: { ...grant.origin, constraints: branch } };\n    }));\n    return {\n        resolveAll: async (input) => expand(await provider.resolveAll(input), input),\n        resolve: async (input) => {\n            const direct = await provider.resolve(input);\n            if (input.resource.type === COMPOSITE_RESOURCE_TYPE) {\n                // The composite handler denies a grant that no longer expands.\n                for (const grant of direct) {\n                    const reason = registry.validateGrant(grant);\n                    if (reason !== undefined)\n                        registry.report(grant, reason);\n                }\n                return direct;\n            }\n            if (!registry.size)\n                return direct;\n            const composites = (await provider.resolveAll(input)).filter((grant) => grant.resource.type === COMPOSITE_RESOURCE_TYPE);\n            const composed = (await expand(composites, input)).filter((grant) => grant.resource.type === input.resource.type &&\n                (grant.resource.id === '*' ||\n                    grant.resource.id === input.resource.id) &&\n                grant.action === input.action);\n            return [...direct, ...composed];\n        },\n        ...(provider.unrestricted\n            ? { unrestricted: provider.unrestricted.bind(provider) }\n            : {}),\n        ...(provider.onChange\n            ? { onChange: provider.onChange.bind(provider) }\n            : {}),\n        for: (identity) => composedGrants(provider.for?.(identity) ?? provider, registry, constraints),\n    };",
+          "sha256": "dd79a9736febf0fb08562360d1dd62581d8c01bd6687265f096e4c2981e0da13"
+        },
+        {
+          "id": "E10",
+          "kind": "code",
+          "path": "packages/@nocobase/app-plugin-authorization/dist/server/database/scope.js",
+          "observation": "注释说明成员集合展开为逐个 $eq（FilterOperator 无 $in），idsScope(field, ids) = anyScope(ids.map(id => condition(field,'$eq',id)))，直接使用传入 id。",
+          "lines": [
+            40,
+            47
+          ],
+          "excerpt": "/**\n * Membership expands to one `$eq` per identifier because `FilterOperator` has\n * no `$in` — `$includes` is a substring test. A negated list would expand the\n * same way, as an `and` of `$ne`. Both collapse once db grows the operator.\n */\nexport function idsScope(field, ids) {\n    return anyScope(ids.map((id) => condition(field, '$eq', id)));\n}",
+          "sha256": "990edf1b0422f4e8e2c869546a4d4be9710b5e652bcf7170105a436f80ea2b34"
+        },
+        {
+          "id": "E27",
+          "kind": "code",
+          "path": "app/server/library/scope.ts",
+          "observation": "App 记录 sharedDocument 范围的注释明确写出：records 选择只携带字符串 id，而 documents 主键是整数，会被 repository 过滤校验拒绝，故名 id 的 record access 才能返回真实数值；同时说明 allScopes 是包内部实现未被公开，故在应用内重复 AND 折叠。",
+          "lines": [
+            29,
+            60
+          ],
+          "excerpt": "  visible: 'library.visible',\n  /**\n   * The one record a temporary share points at.\n   *\n   * The authorization package's `records` selection carries string ids only,\n   * and this table's primary key is an integer, so a `records` selection would\n   * be rejected by the repository's filter validation. Naming the id in a\n   * record access lets the resolver hand back a real number instead.\n   */\n  sharedDocument: 'library.sharedDocument',\n} as const;\n\n/** The params the `sharedDocument` record access reads. */\nexport interface SharedDocumentParams {\n  readonly documentId?: unknown;\n}\n\n/**\n * The AND fold of the authorization package's internal `allScopes`.\n *\n * That helper is not part of the package's public surface, so the fold is\n * repeated here rather than reaching through a private subpath. `true` drops\n * out, `false` wins, and a single node collapses to itself.\n */\nexport function allScopes(scopes: readonly DatabaseScope[]): DatabaseScope {\n  if (scopes.includes(false)) return false;\n  const items = scopes.filter(\n    (scope): scope is FilterNode => scope !== true && scope !== false,\n  );\n  if (items.length === 0) return true;\n  return items.length === 1 ? items[0] : group('and', items);\n}",
+          "sha256": "ad055b622685b41a731e1942a4dae7924d08e3d7e09954577084d331af18d990"
+        }
+      ],
+      "fingerprint": "878cf9799c82540904a0afc04f7611ba91ee95d9f67bce39725cb156b0f28e89"
+    },
+    {
+      "id": "518:36938133650:1:F5",
+      "report": "518:36938133650:1",
+      "issue": 518,
+      "taskTitle": "内部资料阅读与临时共享",
+      "appVersion": "1.0.0-beta.50",
+      "appTemplate": "@nocobase/app-template-default",
+      "finding": {
+        "id": "F5",
+        "kind": "improvement",
+        "owner": "documentation",
+        "confidence": "confirmed",
+        "severity": "minor",
+        "status": "open",
+        "title": "指引未提示 records 选择仅支持字符串 id 与整数主键的关系",
+        "detail": "core-api.md 指导用 record selection/recordAccess 表达数据范围（18-25），business-module.md 说明内置 record access（105-113），nocobase-db Skill 又推荐 collection.increments('id')（SKILL.md 91），但没有任何一处说明 records 只接受字符串 id、与整数主键组合会失败。",
+        "impact": "遵循指引的 Agent 会先写 records 选择，再在 repository 查询期踩 INVALID_FILTER，浪费轮次并误判框架能力。",
+        "suggestedChange": "在 authorization Skill 的 record scope 段落与 db Skill 的主键示例处互相交叉说明，明确 records 的 id 类型限制并给出整数主键用 recordAccess 的写法。",
+        "evidence": [
+          "E1",
+          "E16",
+          "E23",
+          "E24"
+        ],
+        "diagnosis": {
+          "category": "guidance-gap",
+          "trigger": "按文档混合使用 records 选择与 increments('id') 主键。",
+          "expected": "文档提示 records 的 id 类型限制，或直接给出整数主键的可行写法。",
+          "actual": "文档未提示，示例分别使用整数主键与 record selection，组合使用会在查询期失败。",
+          "workaround": "应用改用 recordAccess 返回数值条件（app/server/library/scope.ts）。",
+          "acceptance": "文档明确 records 的 id 类型限制与整数主键的替代写法，照做即可通过。"
+        }
+      },
+      "targets": [
+        "@nocobase/authorization",
+        "app/.agents/skills/nocobase-app-plugin-authorization",
+        "app/.agents/skills/nocobase-db"
+      ],
+      "paths": [
+        ".agents/skills/nocobase-app-plugin-authorization/references/business-module.md",
+        ".agents/skills/nocobase-app-plugin-authorization/references/core-api.md",
+        ".agents/skills/nocobase-db/SKILL.md",
+        "packages/@nocobase/authorization/dist/core/selection.js"
+      ],
+      "evidence": [
+        {
+          "id": "E1",
+          "kind": "code",
+          "path": "packages/@nocobase/authorization/dist/core/selection.js",
+          "observation": "selection.records 生成 ids 数组；parseRecordSelection 要求 type==='records' 时 ids 为非空数组且每项 typeof id==='string' && id!==''，否则抛 TypeError；recordAccess 支持 params。",
+          "lines": [
+            1,
+            22
+          ],
+          "excerpt": "export const selection = {\n    all: () => ({ type: 'all' }),\n    records: (ids) => ({ type: 'records', ids: [...ids] }),\n    recordAccess: (key, params) => params === undefined\n        ? { type: 'recordAccess', key }\n        : { type: 'recordAccess', key, params: structuredClone(params) },\n};\n/** Validates an untrusted value, returning it as a detached selection. */\nexport function parseRecordSelection(value) {\n    if (typeof value === 'object' && value !== null && !Array.isArray(value)) {\n        const type = Reflect.get(value, 'type');\n        if (type === 'all')\n            return selection.all();\n        const ids = Reflect.get(value, 'ids');\n        if (type === 'records' &&\n            Array.isArray(ids) &&\n            ids.every((id) => typeof id === 'string' && id !== ''))\n            return selection.records(ids);\n        const key = Reflect.get(value, 'key');\n        if (type === 'recordAccess' && typeof key === 'string' && key)\n            return selection.recordAccess(key, Reflect.get(value, 'params'));\n    }",
+          "sha256": "1a4f0b0f5a61e724c856f23703dadb6fa2cb8d245c2669d4f3f36f1cc4e66088"
+        },
+        {
+          "id": "E16",
+          "kind": "skill",
+          "path": "app/.agents/skills/nocobase-db/SKILL.md",
+          "observation": "nocobase-db Skill 的迁移示例以 collection.increments('id') 定义主键，并展示 string/unique 等列定义，即指引推荐的业务表主键写法。",
+          "lines": [
+            86,
+            95
+          ],
+          "excerpt": "const migration: MigrationDefinition = defineMigration({\n  name: '202609020001_create_orders',\n\n  async up({ builder }) {\n    await builder.createCollection('orders', (collection) => {\n      collection.increments('id');\n      collection.string('orderNo', { length: 64, nullable: false });\n      collection.string('status', { length: 32, nullable: false });\n      collection.datetime('createdAt', { nullable: false });\n      collection.unique('orderNo');",
+          "sha256": "f97c07a45a9d49c1d933ddbceeabcc9afe267b1356a2ded1a3da0dd56b54011c"
+        },
+        {
+          "id": "E23",
+          "kind": "skill",
+          "path": "app/.agents/skills/nocobase-app-plugin-authorization/references/business-module.md",
+          "observation": "指引说明 resolver 的可信查询语义，并明确复用内置 recordAccess.recordsIOwn/recordsICreated/customFilter/allRecords，及其所需列与 params.field。",
+          "lines": [
+            105,
+            113
+          ],
+          "excerpt": "```\n\nThis is a resolver's trusted lookup, not a public list endpoint. The model needs `projects.confidential`. When one record access applies to several collections, pass each to `.collections(...)` and branch on `collection` to map the right parent, instead of treating every collection's id as a project id. For large datasets, implement a database-backed parent lookup and measure it; a list of ids is not a universal scaling design.\n\nReuse the built-in `recordAccess.recordsIOwn` and `recordAccess.recordsICreated` when the collection has the corresponding column (default `ownerId` and `createdById`, configurable with `params.field`), `recordAccess.customFilter` for a fixed filter and `recordAccess.allRecords` for everything. Use custom record access when ownership follows a parent. Do not assume an id from a team subject is a user id; user-dependent resolvers must check the principal type.\n\n## 4. Enforce at the endpoint\n\nUse an App-owned `defineApiRoutes` factory that creates a Hono router, resolves services, and installs authentication, authorization and input limits. Business code accepts the resolved policy rather than unrestricted repositories.",
+          "sha256": "a53ec8e8f7f656d4c4d053e918ac035fed0377dc7d33f87ba8724b6fc7c680bf"
+        },
+        {
+          "id": "E24",
+          "kind": "skill",
+          "path": "app/.agents/skills/nocobase-app-plugin-authorization/references/core-api.md",
+          "observation": "core-api 指引定义 definePermissionSet 的 grant 结构，说明组合授权策略为 {type:'composite',scopes}，值可为 record access key 或 record selection，并列出 permissionSets 服务契约。",
+          "lines": [
+            18,
+            25
+          ],
+          "excerpt": "## Permission sets\n\n`definePermissionSet(key).title(title).grant(...grants).build()` from `@nocobase/authorization/permission-sets` returns `{ key, title?, grants }`. Each grant is `{ resource: { type, id }, actions: [{ action, policy? }] }`; build them with `authz.pages.grant(id)`, `authz.settings.grant(id, actions)` and a composite reference's `grant(...)` rather than by hand. A composite grant stores `policy: { type: 'composite', scopes }`, one value per data scope: a record access key such as `'recordsIOwn'`, or a record selection. An empty value `''` selects nothing. Titles accept strings or `{ key, ns }`.\n\n| `authz.permissionSets`                                                                     | Contract                                                                |\n| ------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------- |\n| `create(input)`, `update(key, input)`                                                      | A complete `{ key, title?, grants }` definition, not a partial patch    |\n| `get(key)`, `list()`, `delete(key)`                                                        | Read and remove definitions                                             |",
+          "sha256": "86fee910525cfe21b80aff567c54c74ca03be00684d4024310fc3cc9256878c1"
+        }
+      ],
+      "fingerprint": "fe1ddb0f2e0c41842bdad09756bae8ceb22394d90ecbdf136623eacf38c3ddf4"
     },
     {
       "id": "519:36938138067:1:F3",
