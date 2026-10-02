@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "inputHash": "1fd4bd6c78dda44417002f86443aa4fdd2d0116c0af0126976b334469b132e13",
+  "inputHash": "8cedec633468cf9b5801500ab94c312ebc21eaebf0eb1e9b079506e29c4fc7a5",
   "sources": [
     {
       "id": "460:36434284393:1:F2",
@@ -301,6 +301,21 @@
       "id": "509:36811890057:1:F2",
       "report": "509:36811890057:1",
       "fingerprint": "9de33292462dda766bda24f215609bfa21dc419ac76af0473ba65f624bfeabfe"
+    },
+    {
+      "id": "519:36938138067:1:F3",
+      "report": "519:36938138067:1",
+      "fingerprint": "2158a87b4fdab883a7eebb66f890d5cd47d6a1ed98cf60fbe0d57fa5aeaa864d"
+    },
+    {
+      "id": "519:36938138067:1:F4",
+      "report": "519:36938138067:1",
+      "fingerprint": "7aee03af264b9823e5b9aaa3261707938b0a1f041ae3aa48e32c343849967622"
+    },
+    {
+      "id": "519:36938138067:1:F5",
+      "report": "519:36938138067:1",
+      "fingerprint": "13e6d4fb8180ad70c49886a4804e90fda2277bdf438e77788f39cd9ee3e65741"
     }
   ],
   "groups": [
@@ -325,11 +340,12 @@
     },
     {
       "title": "Registry 图片预览缺少解码失败态，损坏图片只显示浏览器破图占位",
-      "reason": "跨报告合并。463:F2 的 E71 显示 file-preview-content.tsx 的 image 分支是裸 <img src alt>，无 onError/失败态，只有 default 分支才回退 DownloadFallback；476:F1 的 E9/E38/E45 为同一 image 分支缺少 onError 的直接证据，应用复制安装源码新增 ImagePreview 后损坏 PNG 才有失败文案与下载入口；507:F3 的 E3/E4 显示同一 image 分支与 file-thumbnail.tsx 均直接渲染 <img> 且无 onError 回退，损坏 PNG 只显示浏览器破图。同一根因与修复方向一致。",
+      "reason": "跨报告合并。463:F2 的 E71 显示 file-preview-content.tsx 的 image 分支是裸 <img src alt>，无 onError/失败态，只有 default 分支才回退 DownloadFallback；476:F1 的 E9/E38/E45 为同一 image 分支缺少 onError 的直接证据，应用复制安装源码新增 ImagePreview 后损坏 PNG 才有失败文案与下载入口；507:F3 的 E3/E4 显示同一 image 分支与 file-thumbnail.tsx 均直接渲染 <img> 且无 onError 回退，损坏 PNG 只显示浏览器破图；519:F5 的 E28 再次显示同一 image 分支只返回 <img src={url} alt={file.filename}>，无 onError 或失败态，应用需在自有副本新增 ImagePreview。同一根因与修复方向一致。",
       "members": [
         "463:36434310207:1:F2",
         "476:36498929142:1:F1",
-        "507:36787396720:1:F3"
+        "507:36787396720:1:F3",
+        "519:36938138067:1:F5"
       ]
     },
     {
@@ -615,15 +631,29 @@
       "members": [
         "509:36811890057:1:F2"
       ]
+    },
+    {
+      "title": "受限内容鉴权指引互相冲突：「挂载前注册守卫」与「不得依赖贡献顺序」",
+      "reason": "仅 519:F3 报告同一批框架 Skill 对 <accessPath>/* 给出两条不能同时严格满足的指令：E9 显示文件插件 SKILL 要求 restricted files 必须在挂载内容路由之前注册 App-owned 守卫，E22 则显示 app-development 的 server-routes.md 明令 Never depend on middleware installed by another route, or on the order contributions happen to be registered in；E19/E20 显示 Application.registerRoutes 先跑 httpMiddleware 且存在顺序无关的 defineHttpMiddleware 公开入口，但该 SKILL 与 server-routes.md 都未把该用法写清，E16 显示应用只能以「Order is the security boundary」注释并依赖贡献顺序。触发条件（为受限内容注册前缀守卫）、期望（顺序无关的受保护内容入口）与实际（唯一推荐写法顺序敏感）一致，属同一指引冲突根因。与本报告内 F4（缺少一等受限内容入口）根因不同，不可合并，单独保留。",
+      "members": [
+        "519:36938138067:1:F3"
+      ]
+    },
+    {
+      "title": "defineFileRepositoryApiRoutes 没有一等的受限内容入口，受保护字节只能靠顺序敏感的自定义守卫",
+      "reason": "仅 519:F4 报告能力缺口：E5/E7 显示 defineFileRepositoryApiRoutes 生成的内容路由固定绑定公开的 unwritablePolicy 且注释 Authentication and authorization are application-owned，E19/E20 显示框架已有顺序无关的 defineHttpMiddleware 且 registerRoutes 在所有贡献之前执行它们，但没有面向内容前缀的推荐接入，E24 显示上传动作也没有「认证失败返回 401」的内建守卫，应用只能自写 materialContentGuard/materialUploadGuard 并置于 routes 数组前部。触发条件（需要限制 <accessPath> 与上传动作）、期望（声明式内容与上传鉴权入口或顺序无关的推荐接入）与实际（自定义顺序敏感守卫）一致。与本报告内 F3（指引互相冲突）根因不同，不可合并，单独保留。",
+      "members": [
+        "519:36938138067:1:F4"
+      ]
     }
   ],
   "classifier": {
     "engine": "pi",
     "model": "deepseek-v4.1-flash",
     "version": "0.86.1",
-    "runId": "36823631155",
+    "runId": "36950375500",
     "attempt": 1,
     "controlSha": "0f72d9b81f981f10501c5ac0ee0e7d786f1f4698",
-    "completedAt": "2026-10-01T06:15:04.797Z"
+    "completedAt": "2026-10-02T01:21:39.425Z"
   }
 }
