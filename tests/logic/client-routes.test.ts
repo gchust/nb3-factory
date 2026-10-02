@@ -91,9 +91,13 @@ describe('app client routes', () => {
     // that requires sign-in adds an entry here, because that is a new grant somebody has to be given.
     const resolved = resolveRoutes();
 
-    // The landing page opted out of page authorization, so it is reachable by every signed-in user.
+    // The landing page and the three project-material pages opted out of page authorization, so they are reachable
+    // by every signed-in user; ownership is enforced by the material API and its content route instead.
     expect(pageAuthorizations(resolved.routes)).toEqual([
       { name: 'home', authorizedAs: null },
+      { name: 'materials', authorizedAs: null },
+      { name: 'materialsNew', authorizedAs: null },
+      { name: 'materialsDetail', authorizedAs: null },
     ]);
   });
 });

@@ -70,13 +70,7 @@ export function FilePreviewContent(
     );
   switch (kind) {
     case 'image':
-      return (
-        <img
-          src={url}
-          alt={file.filename}
-          className='max-h-[70vh] max-w-full object-contain'
-        />
-      );
+      return <ImagePreview file={file} url={url} />;
     case 'pdf':
       return (
         <iframe title={file.filename} src={url} className='h-[70vh] w-full' />
@@ -97,6 +91,49 @@ export function FilePreviewContent(
     default:
       return <DownloadFallback file={file} onDownload={onDownload} />;
   }
+}
+
+function ImagePreview(inputProps: {
+  readonly file: FileRecord;
+  readonly url?: string;
+}): ReactElement {
+  const { t } = useTranslation('@nocobase/app-plugin-file');
+  const { file, url } = inputProps;
+  const [failed, setFailed] = useState(false);
+
+  // A new URL deserves a fresh attempt: the corrupt-file message must not stick
+  // to the next image a user opens.
+  useEffect(() => {
+    setFailed(false);
+  }, [url]);
+
+  if (!url)
+    return (
+      <div role='status'>
+        {t('files.loadingPreview', { defaultValue: 'Loading preview...' })}
+      </div>
+    );
+  if (failed)
+    return (
+      <div role='alert' className='flex flex-col items-center gap-3 py-8'>
+        <div className='h-24 w-24'>
+          <FileThumbnail file={file} />
+        </div>
+        <p>
+          {t('files.imagePreviewFailed', {
+            defaultValue: 'Unable to display this image. The file is corrupted or not a readable image.',
+          })}
+        </p>
+      </div>
+    );
+  return (
+    <img
+      src={url}
+      alt={file.filename}
+      className='max-h-[70vh] max-w-full object-contain'
+      onError={() => setFailed(true)}
+    />
+  );
 }
 
 function MarkdownPreview(inputProps: { readonly text?: string }): ReactElement {

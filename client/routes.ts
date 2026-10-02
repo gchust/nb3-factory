@@ -1,4 +1,4 @@
-import { Home } from 'lucide-react';
+import { FolderOpen, Home } from 'lucide-react';
 import {
   defineAppRoutes,
   defineSettingsRoutes,
@@ -15,6 +15,31 @@ const appRoutes: AppClientRouteContribution = defineAppRoutes([
     name: 'home',
     navigation: { title: 'navigation.home', icon: Home },
     path: '/',
+  },
+  {
+    // Project materials are private to the 资料员 who owns them: the server scopes every read and write by
+    // `createdById`, so page authorization is skipped and ownership is enforced by the API.
+    auth: 'required',
+    authz: 'skip',
+    componentLoader: () => import('./pages/materials/index.js'),
+    name: 'materials',
+    navigation: { title: 'navigation.materials', icon: FolderOpen },
+    path: '/materials',
+  },
+  {
+    auth: 'required',
+    authz: 'skip',
+    // Declared before `/materials/:id` so the literal segment is not swallowed by the id route.
+    componentLoader: () => import('./pages/materials/new.js'),
+    name: 'materialsNew',
+    path: '/materials/new',
+  },
+  {
+    auth: 'required',
+    authz: 'skip',
+    componentLoader: () => import('./pages/materials/detail.js'),
+    name: 'materialsDetail',
+    path: '/materials/:id',
   },
   {
     auth: 'guest',
