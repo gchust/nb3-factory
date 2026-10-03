@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "inputHash": "25d8df19acd494bc64946d426412feeb10b796264111bc168080be38db504aa7",
+  "inputHash": "9c9c34694ba015c84fc64aa900647e66ffdb0d8d2ccbb73d274fc44c0e4a0d5c",
   "sources": [
     {
       "id": "460:36434284393:1:F2",
@@ -376,6 +376,26 @@
       "id": "532:37074018017:1:F3",
       "report": "532:37074018017:1",
       "fingerprint": "6daa9d2c34e36e8e95978cb95152833223ae1ab59208e52f9974d81b9e994d99"
+    },
+    {
+      "id": "533:37094050741:1:F2",
+      "report": "533:37094050741:1",
+      "fingerprint": "cf6daf2b2009c661cf32db325cca7e14635ef7c782628937bf7b15ac1dd0a201"
+    },
+    {
+      "id": "533:37094050741:1:F3",
+      "report": "533:37094050741:1",
+      "fingerprint": "25efaf1e505308bef25ec37ae4a90b7c9a55ae9e57f1adfd2dc787b0c7f60b84"
+    },
+    {
+      "id": "533:37094050741:1:F4",
+      "report": "533:37094050741:1",
+      "fingerprint": "898bd8bd29a9ebe7e14f3becf4771910a0838263cf756a1c163762bc270d3fe2"
+    },
+    {
+      "id": "533:37094050741:1:F5",
+      "report": "533:37094050741:1",
+      "fingerprint": "ae2a16b7b67631391e53e99840c1c3b4575ea06b92040d0b0efe7d80d0052311"
     }
   ],
   "groups": [
@@ -419,11 +439,12 @@
     },
     {
       "title": "Scheduler 没有公开的受控立即执行入口，应用被迫直接操作 Queue 计划投影",
-      "reason": "跨报告合并。466:F3（E10/E11/E14/E2）、478:F3（E13/E14/E15/E16）、509:F1（E1/E2/E4/E23/E24）都显示 Scheduler 的公开服务与 HTTP 路由只有 list/occurrences/enable/disable 及 defineSchedule/registerTarget，无 run-now，应用只能绕过公开面调用 @nocobase/queue 的 Schedule.trigger()；509:F1 进一步证明该绕行不校验启停。能力缺口与修复方向一致。",
+      "reason": "跨报告合并。466:F3（E10/E11/E14/E2）、478:F3（E13/E14/E15/E16/E17）、509:F1（E1/E2/E4/E23/E24/E25）、533:F4（E5/E16）都显示 Scheduler 公开服务与 HTTP 路由只有 list/occurrences/enable/disable 及 defineSchedule/registerTarget，没有受支持的 run-now/立即执行入口；应用只能绕过公开面调用 @nocobase/queue 的 Schedule.trigger()（509 进一步证明停用计划仍被执行，533 以 /schedules/run 404、Trigger 恒为 0 佐证）。共同缺口与修复方向一致：提供受控单次执行入口（校验启停、写同一 occurrence）。",
       "members": [
         "466:36473812582:1:F3",
         "478:36522310216:1:F3",
-        "509:36811890057:1:F1"
+        "509:36811890057:1:F1",
+        "533:37094050741:1:F4"
       ]
     },
     {
@@ -694,10 +715,11 @@
       ]
     },
     {
-      "title": "AI Knowledge Base 兼容路由不内建服务端授权",
-      "reason": "单条保留：509:F2 的 E17/E26 显示兼容路由只要求认证会话、无角色/ACL，属独立能力缺口。",
+      "title": "AI 知识库兼容路由仅要求认证并缺少角色/资源 ACL 授权",
+      "reason": "跨报告合并。509:F2（E17/E26）显示 security.md 明确兼容路由只要求已认证会话，不强制角色、归属、资源 ACL 或管理权限，需应用自建授权代理；533:F3（E9/E10）进一步给出代码证据：router.js 仅挂 requireAuthentication，security.md 同样承认不强制角色/所有权/资源 ACL。两者触发条件（已认证但无管理权限的账号访问知识库路由）、期望（服务端按角色/资源策略拒绝）与实际（只要登录即可读写）一致，修复方向同为提供可组合的服务端授权策略或把授权代理列为必做。",
       "members": [
-        "509:36811890057:1:F2"
+        "509:36811890057:1:F2",
+        "533:37094050741:1:F3"
       ]
     },
     {
@@ -741,15 +763,29 @@
       "members": [
         "532:37074018017:1:F2"
       ]
+    },
+    {
+      "title": "SQLite 将 JS Date 绑定为 epoch 毫秒，与 datetime 文本比较静默失配",
+      "reason": "单条保留：533:F2（E6/E16）显示 db-sqlite 精确整数客户端把 Date 绑定为 value.valueOf() 的 epoch 毫秒，与库中以 ISO 文本存储的 datetime 列比较时条件恒不成立且不报错，导致超期提醒静默失效；这是 SQLite 绑定层时间归一化的独立运行时缺陷，与 decimal 类型、createdAt 未自动填充、权限/路由/预览等其它缺口无共同根因，单独保留。",
+      "members": [
+        "533:37094050741:1:F2"
+      ]
+    },
+    {
+      "title": "AI 员工聊天界面安装步骤未内联，应用未安装聊天扩展",
+      "reason": "单条保留：533:F5（E11/E12）显示聊天前端由 registry 项 nocobase-ai 提供、安装步骤只写在 references/chat-surfaces.md，而 SKILL.md 未内联这一必做步骤，Agent 只读 SKILL.md 便漏装，最终只有状态页；属独立指引缺口，与 AI 员工 .env 占位符/数据工具（464:F4/F5）、可选依赖守卫（532:F3）根因不同，单独保留。",
+      "members": [
+        "533:37094050741:1:F5"
+      ]
     }
   ],
   "classifier": {
     "engine": "pi",
     "model": "deepseek-v4.1-flash",
     "version": "0.86.1",
-    "runId": "37088680363",
+    "runId": "37111241822",
     "attempt": 1,
     "controlSha": "0f72d9b81f981f10501c5ac0ee0e7d786f1f4698",
-    "completedAt": "2026-10-03T02:10:20.035Z"
+    "completedAt": "2026-10-03T08:58:14.243Z"
   }
 }
