@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "inputHash": "25d8df19acd494bc64946d426412feeb10b796264111bc168080be38db504aa7",
+  "inputHash": "9c9c34694ba015c84fc64aa900647e66ffdb0d8d2ccbb73d274fc44c0e4a0d5c",
   "findings": [
     {
       "id": "460:36434284393:1:F2",
@@ -6819,6 +6819,270 @@
         }
       ],
       "fingerprint": "6daa9d2c34e36e8e95978cb95152833223ae1ab59208e52f9974d81b9e994d99"
+    },
+    {
+      "id": "533:37094050741:1:F2",
+      "report": "533:37094050741:1",
+      "issue": 533,
+      "taskTitle": "设备售后服务与巡检协同系统（综合业务案例）",
+      "appVersion": "1.0.0-beta.50",
+      "appTemplate": "@nocobase/app-template-default",
+      "finding": {
+        "id": "F2",
+        "kind": "issue",
+        "owner": "framework",
+        "confidence": "confirmed",
+        "severity": "major",
+        "status": "open",
+        "title": "SQLite 将 JS Date 绑定为 epoch 毫秒，与 datetime 文本比较静默失配",
+        "detail": "packages/@nocobase/db-sqlite/dist/src/precise-integers.js 把 Date 绑定转换为 value.valueOf()（epoch 毫秒）。当查询构建器拿它与以 ISO/datetime 文本存储的列比较时，条件永远不成立，且不报错。",
+        "impact": "超期提醒等基于时间的业务静默失效（reminders 恒为 0），问题很难从 UI 察觉。",
+        "suggestedChange": "在绑定层对 datetime 列做与仓储 temporal 归一化一致的转换，或在检测到 Date 对 datetime 文本比较时给出显式错误/警告。",
+        "evidence": [
+          "E6",
+          "E16"
+        ],
+        "diagnosis": {
+          "category": "runtime-defect",
+          "trigger": "查询构建器用 JS Date 与 datetime 文本列比较时",
+          "expected": "与存储格式一致的时间比较，或显式报错",
+          "actual": "绑定为 epoch 毫秒，条件静默不匹配",
+          "workaround": "改用 Repository/ORM 归一化时间或传字符串值",
+          "acceptance": "超期工单在受控生成中产生提醒并计数"
+        }
+      },
+      "targets": [
+        "@nocobase/db-sqlite"
+      ],
+      "paths": [
+        "packages/@nocobase/db-sqlite/dist/src/precise-integers.js"
+      ],
+      "evidence": [
+        {
+          "id": "E6",
+          "kind": "code",
+          "path": "packages/@nocobase/db-sqlite/dist/src/precise-integers.js",
+          "observation": "SQLite 精确整数客户端把 Date 绑定转换为 value.valueOf()（epoch 毫秒），与库中以 ISO 文本存储的 datetime 值不可比较。",
+          "lines": [
+            19,
+            27
+          ],
+          "excerpt": "    prototype._query = async (connection, query) => {\n        if (!query.sql)\n            throw new Error('The query is empty');\n        const statement = connection.prepare(query.sql).safeIntegers(true);\n        const bindings = (query.bindings ?? []).map((value) => value instanceof Date\n            ? value.valueOf()\n            : typeof value === 'boolean'\n                ? Number(value)\n                : value);",
+          "sha256": "accada30fbfa1c380056123976a733b6d35a787c0c6808334c1f3c2b56d6e569"
+        },
+        {
+          "id": "E16",
+          "kind": "qa",
+          "path": "artifacts/verify-3/browser-acceptance/report.json",
+          "observation": "B08 证据：巡检生成幂等、停用设备被排除，但 reminders 恒为 0、受控执行入口 404、计划 Triggered 恒为 0。",
+          "lines": [
+            180,
+            186
+          ],
+          "excerpt": "      \"evidence\": [\n        \"调度计划：工单超期提醒（target service-order-overdue-reminders，09:00 Asia/Shanghai）、服务设备巡检计划（target service-inspection-plans，08:00 Asia/Shanghai）均显示正常\",\n        \"受控生成：首次 POST 返回 created:4, skipped:0, reminders:0；再次返回 created:0, skipped:0, reminders:0，巡检生成具备幂等\",\n        \"超期提醒缺失：受控生成返回的 reminders 始终为 0，超期工单 WO-2026-0001（已超期）未产生任何提醒消息；尝试 /reminders/generate、/schedules/run、/schedules/trigger 等受控入口均 404，两个计划的 Triggered 计数始终为 0，无受控方式执行超期提醒\",\n        \"停用设备 D-3002 被正确排除；但生成记录包含下次巡检日期为 2027-01-01 的设备，与「到期」口径不符，到期判定存在疑问\",\n        \"工程师完成巡检：eng01 对 D-1001 填写结果「巡检完成：油位正常，滤芯已更换，压力稳定。」，状态变为 Completed 并保留\"\n      ],",
+          "sha256": "c4f2ec470d5b4c29aa5f63ea9761a9c75bc61b969e793c0b291039fe75bf5bd6"
+        }
+      ],
+      "fingerprint": "cf6daf2b2009c661cf32db325cca7e14635ef7c782628937bf7b15ac1dd0a201"
+    },
+    {
+      "id": "533:37094050741:1:F3",
+      "report": "533:37094050741:1",
+      "issue": 533,
+      "taskTitle": "设备售后服务与巡检协同系统（综合业务案例）",
+      "appVersion": "1.0.0-beta.50",
+      "appTemplate": "@nocobase/app-template-default",
+      "finding": {
+        "id": "F3",
+        "kind": "issue",
+        "owner": "plugin",
+        "confidence": "confirmed",
+        "severity": "major",
+        "status": "open",
+        "title": "AI 知识库写路由仅 requireAuthentication，缺少角色/资源 ACL",
+        "detail": "router.js 只挂 requireAuthentication；security.md 承认路由不强制角色、所有权或资源 ACL，建议由应用自建授权代理。",
+        "impact": "直接把该插件暴露给业务用户会导致普通工程师也能写入知识库，B11 要求的“工程师不能修改库内容”缺少默认保障。",
+        "suggestedChange": "提供可组合的写策略/资源 ACL 钩子，或在 Skill 中把授权代理作为必做前置并给出示例。",
+        "evidence": [
+          "E9",
+          "E10"
+        ],
+        "diagnosis": {
+          "category": "capability-gap",
+          "trigger": "业务用户直接调用 AI 知识库写接口时",
+          "expected": "按角色/所有权拒绝非授权写入",
+          "actual": "只要登录即可写，无 ACL",
+          "workaround": "应用自建有授权的代理层",
+          "acceptance": "普通工程师写库请求被拒且不泄漏内容"
+        }
+      },
+      "targets": [
+        "@nocobase/app-plugin-ai-knowledge-base",
+        "app/.agents/skills/nocobase-app-plugin-ai-knowledge-base/references/security.md"
+      ],
+      "paths": [
+        ".agents/skills/nocobase-app-plugin-ai-knowledge-base/references/security.md",
+        "packages/@nocobase/app-plugin-ai-knowledge-base/dist/server/routes/router.js"
+      ],
+      "evidence": [
+        {
+          "id": "E9",
+          "kind": "code",
+          "path": "packages/@nocobase/app-plugin-ai-knowledge-base/dist/server/routes/router.js",
+          "observation": "AI 知识库路由仅挂 requireAuthentication，没有角色、所有权或资源级 ACL 校验。",
+          "lines": [
+            6,
+            19
+          ],
+          "excerpt": "export function createKnowledgeBaseRouter(options) {\n    const router = new Hono();\n    const routes = new Hono();\n    const requireAuthentication = options.authentication.required();\n    routes.use('*', (context, next) => /\\/(?:aiKnowledgeBase(?:Docs|DocSegments)?|aiVectorDatabases):/.test(context.req.path)\n        ? requireAuthentication(context, next)\n        : next());\n    routes.route('/', createKnowledgeBaseRoutes({ service: options.services.knowledgeBases }));\n    routes.route('/', createDocumentRoutes({ service: options.services.documents }));\n    routes.route('/', createSegmentRoutes({ service: options.services.segments }));\n    routes.route('/', createVectorDatabaseRoutes({ service: options.services.vectorDatabases }));\n    router.route('/', routes);\n    return router;\n}",
+          "sha256": "2a72cd0f80bea7d4eb1d652e12592b54703148f05d511f89fa955835eb9bfccc"
+        },
+        {
+          "id": "E10",
+          "kind": "skill",
+          "path": "app/.agents/skills/nocobase-app-plugin-ai-knowledge-base/references/security.md",
+          "observation": "安全文档承认路由不强制角色/所有权/资源 ACL，并建议由应用提供带授权的代理层。",
+          "lines": [
+            8,
+            16
+          ],
+          "excerpt": "- [Destructive operations](#destructive-operations)\n\n## Authorization\n\nEvery compatibility route requires an authenticated session with a user ID and returns 401 otherwise. Current routes do not enforce role, ownership, resource ACL, LOCAL-write policy, or administrative permission. Document responses currently project `accessAbility: \"readWrite\"` for every authenticated caller. This is a UI hint, not authorization.\n\nUntil a server-side policy layer is added, expose these actions only to trusted authenticated users or put an application-owned authorized proxy in front of them. Never rely on a hidden button, React gate, route visibility, `accessAbility`, or a TypeScript DTO.\n\n## Credentials and network",
+          "sha256": "5701a80e9f8b9ee7895ad7adf0fb1f089af2a03b201621de9a0f4cd2e280d0fc"
+        }
+      ],
+      "fingerprint": "25efaf1e505308bef25ec37ae4a90b7c9a55ae9e57f1adfd2dc787b0c7f60b84"
+    },
+    {
+      "id": "533:37094050741:1:F4",
+      "report": "533:37094050741:1",
+      "issue": 533,
+      "taskTitle": "设备售后服务与巡检协同系统（综合业务案例）",
+      "appVersion": "1.0.0-beta.50",
+      "appTemplate": "@nocobase/app-template-default",
+      "finding": {
+        "id": "F4",
+        "kind": "improvement",
+        "owner": "plugin",
+        "confidence": "confirmed",
+        "severity": "minor",
+        "status": "open",
+        "title": "Scheduler 管理 API 缺少手动立即执行入口",
+        "detail": "管理 API 只能启停计划，Cron 无创建/编辑接口，也没有单次执行入口；受控验证需改用短周期 Cron 或 CLI scheduler sync。",
+        "impact": "运维与验收难以在受控条件下立即触发某次计划，容易出现 /schedules/run 404 的误判。",
+        "suggestedChange": "提供一次性 run/trigger 管理端点（可受权限控制），或在 Skill 中把 sync/短 Cron 的受控执行写成首选步骤。",
+        "evidence": [
+          "E5",
+          "E16"
+        ],
+        "diagnosis": {
+          "category": "usability-improvement",
+          "trigger": "需要在受控条件下立即执行某个计划任务时",
+          "expected": "存在可审计的单次执行入口",
+          "actual": "仅能靠短周期 Cron 或 CLI sync 间接触发",
+          "workaround": "使用短周期 Cron 或 `nocobase scheduler sync`",
+          "acceptance": "计划触发计数与提醒结果可被受控复现"
+        }
+      },
+      "targets": [
+        "app/.agents/skills/nocobase-app-plugin-scheduler/references/operations.md"
+      ],
+      "paths": [
+        ".agents/skills/nocobase-app-plugin-scheduler/references/operations.md"
+      ],
+      "evidence": [
+        {
+          "id": "E5",
+          "kind": "skill",
+          "path": "app/.agents/skills/nocobase-app-plugin-scheduler/references/operations.md",
+          "observation": "Skill 说明管理 API 只能启停计划，Cron 无创建/编辑接口，且没有立即执行入口，受控执行需用短周期 Cron 或 CLI scheduler sync。",
+          "lines": [
+            11,
+            24
+          ],
+          "excerpt": "The list page is `/settings/schedules`; details are at `/settings/schedules/:scheduleId`. Definitions are maintained in source. The UI supports viewing and enabling/disabling tasks, with no API for creating or editing Cron definitions.\n\nAll routes below require authentication and authorization for `{ resource: { type: 'page', id: 'scheduler.schedules' }, action: 'access' }`. Enabling/disabling currently uses the same permission, not a separate update action.\n\n| Method and path                      | Response / effect                                                                                             |\n| ------------------------------------ | ------------------------------------------------------------------------------------------------------------- |\n| `GET /api/schedules`                 | `{ data: ScheduleListItem[] }`                                                                                |\n| `GET /api/schedules/:id/occurrences` | `{ data: ScheduleOccurrenceView[] }`; currently at most the latest 100 records, with no pagination parameters |\n| `POST /api/schedules/:id/enable`     | `{ data: ScheduleListItem }`; enables the task, no request body                                               |\n| `POST /api/schedules/:id/disable`    | `{ data: ScheduleListItem }`; pauses the task, no request body                                                |\n\nUse the id returned by list for `:id`, not the definition key or workflowKey. Enabling/disabling affects future scheduling; it does not cancel already dispatched Queue Jobs or workflows.\n\n`schedulerServiceToken` from `@nocobase/app-plugin-scheduler/server/tokens` is the plugin's one public service, and it is a contribution surface rather than an administration one:",
+          "sha256": "a5cb7a6042ea3d28e21d66c078180d3885f467a8762a2872bcfadf9e3fb98f26"
+        },
+        {
+          "id": "E16",
+          "kind": "qa",
+          "path": "artifacts/verify-3/browser-acceptance/report.json",
+          "observation": "B08 证据：巡检生成幂等、停用设备被排除，但 reminders 恒为 0、受控执行入口 404、计划 Triggered 恒为 0。",
+          "lines": [
+            180,
+            186
+          ],
+          "excerpt": "      \"evidence\": [\n        \"调度计划：工单超期提醒（target service-order-overdue-reminders，09:00 Asia/Shanghai）、服务设备巡检计划（target service-inspection-plans，08:00 Asia/Shanghai）均显示正常\",\n        \"受控生成：首次 POST 返回 created:4, skipped:0, reminders:0；再次返回 created:0, skipped:0, reminders:0，巡检生成具备幂等\",\n        \"超期提醒缺失：受控生成返回的 reminders 始终为 0，超期工单 WO-2026-0001（已超期）未产生任何提醒消息；尝试 /reminders/generate、/schedules/run、/schedules/trigger 等受控入口均 404，两个计划的 Triggered 计数始终为 0，无受控方式执行超期提醒\",\n        \"停用设备 D-3002 被正确排除；但生成记录包含下次巡检日期为 2027-01-01 的设备，与「到期」口径不符，到期判定存在疑问\",\n        \"工程师完成巡检：eng01 对 D-1001 填写结果「巡检完成：油位正常，滤芯已更换，压力稳定。」，状态变为 Completed 并保留\"\n      ],",
+          "sha256": "c4f2ec470d5b4c29aa5f63ea9761a9c75bc61b969e793c0b291039fe75bf5bd6"
+        }
+      ],
+      "fingerprint": "898bd8bd29a9ebe7e14f3becf4771910a0838263cf756a1c163762bc270d3fe2"
+    },
+    {
+      "id": "533:37094050741:1:F5",
+      "report": "533:37094050741:1",
+      "issue": 533,
+      "taskTitle": "设备售后服务与巡检协同系统（综合业务案例）",
+      "appVersion": "1.0.0-beta.50",
+      "appTemplate": "@nocobase/app-template-default",
+      "finding": {
+        "id": "F5",
+        "kind": "improvement",
+        "owner": "documentation",
+        "confidence": "confirmed",
+        "severity": "info",
+        "status": "open",
+        "title": "AI 员工聊天界面安装步骤未内联，应用未安装聊天扩展",
+        "detail": "聊天界面安装写在 references/chat-surfaces.md 的 Option 1（从插件 node_modules 复制到 client/extensions/nocobase-ai），SKILL.md 未内联该关键步骤，应用最终只展示 AI 员工状态页。",
+        "impact": "Agent 容易只读 SKILL.md 而漏掉聊天面安装，导致 B12 无对话/草稿界面。",
+        "suggestedChange": "在 SKILL.md 内联“安装聊天面”为必做步骤，并提供可执行的安装命令。",
+        "evidence": [
+          "E11",
+          "E12"
+        ],
+        "diagnosis": {
+          "category": "guidance-gap",
+          "trigger": "Agent 按 SKILL.md 落地 AI 员工时",
+          "expected": "SKILL.md 直接给出安装聊天面的可执行步骤",
+          "actual": "关键步骤只在引用文档中，未被采纳",
+          "workaround": "手工阅读 chat-surfaces.md 并安装 registry 项",
+          "acceptance": "安装后出现对话/草稿确认界面"
+        }
+      },
+      "targets": [
+        "@nocobase/app-plugin-ai-employee",
+        "app/.agents/skills/nocobase-app-plugin-ai-employee/references/chat-surfaces.md"
+      ],
+      "paths": [
+        ".agents/skills/nocobase-app-plugin-ai-employee/references/chat-surfaces.md",
+        "packages/@nocobase/app-plugin-ai-employee/registry.config.json"
+      ],
+      "evidence": [
+        {
+          "id": "E11",
+          "kind": "package",
+          "path": "packages/@nocobase/app-plugin-ai-employee/registry.config.json",
+          "observation": "AI 员工插件通过 registry 项 nocobase-ai 提供自包含的聊天前端，目标目录 client/extensions/nocobase-ai，需按注册表安装。",
+          "lines": [
+            30,
+            47
+          ],
+          "excerpt": "        \"tailwind-merge@^3.2.0\"\n      ],\n      \"registryDependencies\": [],\n      \"docs\": \"Requires @nocobase/app-plugin-ai-employee and its authenticated /api/ai routes. Import the installed library through index.ts and compose NocoBaseAIRootProvider, AIChatProvider, and a chat surface. The source is application-owned; review upgrades with a three-way merge instead of overwriting local edits.\",\n      \"meta\": {\n        \"ownership\": \"application\",\n        \"upgradePolicy\": \"three-way-merge\",\n        \"nocobase\": {\n          \"requiresPlugins\": {\n            \"@nocobase/app-plugin-ai-employee\": \">=0.1.0-beta.0 <1.0.0\"\n          }\n        }\n      },\n      \"source\": {\n        \"root\": \"registry/nocobase-ai\",\n        \"target\": \"client/extensions/nocobase-ai\",\n        \"include\": [\".\"]\n      }",
+          "sha256": "a93fd4896a3ce6eef24e0217aa367011099d473cdc2954a113d028dd1b124864"
+        },
+        {
+          "id": "E12",
+          "kind": "skill",
+          "path": "app/.agents/skills/nocobase-app-plugin-ai-employee/references/chat-surfaces.md",
+          "observation": "Skill 给出从插件 node_modules 复制/写入到 client/extensions/nocobase-ai 的 Option 1 安装步骤，用于启用聊天界面。",
+          "lines": [
+            20,
+            56
+          ],
+          "excerpt": "- [First-send acceptance checks](#first-send-acceptance-checks)\n\n## Install the extension\n\nThe React UI is a shadcn Registry item named `nocobase-ai`, owned by `@nocobase/app-plugin-ai-employee` and installed as App source at `client/extensions/nocobase-ai`. It is App-owned once installed: edit and commit it like any other App file. The plugin package exports no chat UI, so a missing extension is never a reason to import React components from `@nocobase/ai-employee`, to patch the plugin, or to rebuild chat under `client/`.\n\nCheck for `client/extensions/nocobase-ai/index.ts` first. If it exists, reuse it. If not, use the first option below that applies.\n\n### Option 1 — from the App's own installed plugin (preferred)\n\nThe published plugin ships its canonical source and a self-contained Registry JSON, so a generated App can install from the copy already resolved in its own `node_modules`. The installed UI then matches the plugin version the App actually runs, with no network access and no NocoBase source checkout. Run from the App root:\n\n```bash\nnode --input-type=module -e '\nimport fs from \"node:fs\";\nimport path from \"node:path\";\nimport { createRequire } from \"node:module\";\n\nconst require = createRequire(path.join(process.cwd(), \"package.json\"));\nconst manifest = require.resolve(\"@nocobase/app-plugin-ai-employee/package.json\");\nconst item = JSON.parse(\n  fs.readFileSync(path.join(path.dirname(manifest), \"public/r/nocobase-ai.json\"), \"utf8\"),\n);\nfor (const file of item.files) {\n  const target = path.resolve(process.cwd(), file.target);\n  if (!target.startsWith(process.cwd() + path.sep)) {\n    throw new Error(`Unsafe Registry target: ${file.target}`);\n  }\n  if (fs.existsSync(target)) {\n    throw new Error(`Refusing to overwrite: ${file.target}`);\n  }\n  fs.mkdirSync(path.dirname(target), { recursive: true });\n  fs.writeFileSync(target, file.content);\n}\nconsole.log(`Installed ${item.files.length} files into client/extensions/nocobase-ai.`);\n'\n```",
+          "sha256": "64786b547cf7ab13c34007c5e89a356b5eced451738a4a776dfc36977ce9c9cf"
+        }
+      ],
+      "fingerprint": "ae2a16b7b67631391e53e99840c1c3b4575ea06b92040d0b0efe7d80d0052311"
     }
   ]
 }
