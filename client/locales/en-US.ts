@@ -130,6 +130,10 @@ const enUS = {
   },
   navigation: {
     home: 'Home',
+    sales: 'Sales',
+    customers: 'Customers',
+    contacts: 'Contacts',
+    opportunities: 'Opportunities',
     open: 'Open navigation',
     close: 'Close navigation',
     expand: 'Expand navigation',
@@ -155,6 +159,135 @@ const enUS = {
   datePicker: {
     placeholder: 'Pick a date',
     rangePlaceholder: 'Pick a date range',
+  },
+  crm: {
+    column: { actions: 'Actions' },
+    action: {
+      create: 'Create',
+      edit: 'Edit',
+      view: 'View',
+      saving: 'Saving…',
+      retry: 'Try again',
+    },
+    fields: {
+      name: 'Name',
+      industry: 'Industry',
+      phone: 'Phone',
+      email: 'Email',
+      customer: 'Customer',
+      amount: 'Expected amount',
+      stage: 'Stage',
+    },
+    stage: {
+      follow_up: 'Follow-up',
+      won: 'Won',
+      lost: 'Lost',
+    },
+    form: {
+      nameRequired: 'Enter a name.',
+      nameTooLong: 'Use at most {{max}} characters.',
+      industryTooLong: 'Use at most {{max}} characters.',
+      phoneTooLong: 'Use at most {{max}} characters.',
+      emailTooLong: 'Use at most {{max}} characters.',
+      customerRequired: 'Select a customer.',
+      amountRequired: 'Enter an expected amount.',
+      amountInvalid: 'Enter an amount of zero or more.',
+      stageInvalid: 'Select a valid stage.',
+      noCustomers:
+        'Create a customer first, then this record can be linked to one.',
+    },
+    error: {
+      forbidden: 'You do not have permission to do that.',
+      requestFailed: 'The request failed. Please try again.',
+      loadFailed: 'Unable to load this page',
+      loadFailedDescription:
+        'The data could not be loaded. Check your connection and try again.',
+      customerNotFound: 'This customer no longer exists.',
+      contactNotFound: 'This contact no longer exists.',
+      opportunityNotFound: 'This opportunity no longer exists.',
+    },
+    customers: {
+      title: 'Customers',
+      description: 'The companies this sales team works with.',
+      new: 'New customer',
+      search: 'Search customers',
+      empty: 'No customers yet.',
+      column: {
+        name: 'Name',
+        industry: 'Industry',
+      },
+      create: {
+        title: 'New customer',
+        success: 'Customer “{{name}}” was created.',
+      },
+      edit: {
+        title: 'Edit customer',
+        success: 'Customer “{{name}}” was updated.',
+      },
+      form: {
+        description: 'A customer needs a name; the industry is optional.',
+      },
+      detail: {
+        title: 'Customer',
+        total: 'Expected amount',
+        totalHint: 'The sum of this customer’s opportunities only.',
+        contacts: 'Contacts ({{count}})',
+        opportunities: 'Opportunities ({{count}})',
+        emptyContacts: 'No contacts for this customer yet.',
+        emptyOpportunities: 'No opportunities for this customer yet.',
+      },
+    },
+    contacts: {
+      title: 'Contacts',
+      description: 'The people at each customer this team deals with.',
+      new: 'New contact',
+      search: 'Search contacts',
+      empty: 'No contacts yet.',
+      column: {
+        name: 'Name',
+        customer: 'Customer',
+        phone: 'Phone',
+        email: 'Email',
+      },
+      create: {
+        title: 'New contact',
+        success: 'Contact “{{name}}” was created.',
+      },
+      edit: {
+        title: 'Edit contact',
+        success: 'Contact “{{name}}” was updated.',
+      },
+      form: {
+        description: 'A contact needs a name and the customer it belongs to.',
+      },
+    },
+    opportunities: {
+      title: 'Opportunities',
+      description: 'The deals this team is pursuing, by stage.',
+      new: 'New opportunity',
+      search: 'Search opportunities',
+      empty: 'No opportunities yet.',
+      allStages: 'All stages',
+      filterStage: 'Filter by stage',
+      column: {
+        name: 'Name',
+        customer: 'Customer',
+        amount: 'Expected amount',
+        stage: 'Stage',
+      },
+      create: {
+        title: 'New opportunity',
+        success: 'Opportunity “{{name}}” was created.',
+      },
+      edit: {
+        title: 'Edit opportunity',
+        success: 'Opportunity “{{name}}” was updated.',
+      },
+      form: {
+        description:
+          'An opportunity needs a name, a customer, an expected amount and a stage.',
+      },
+    },
   },
 };
 

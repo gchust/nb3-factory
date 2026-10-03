@@ -662,6 +662,29 @@ describe('app server', () => {
       .where({ type: 'table' })
       .pluck('name');
     expect(tables.some((name: string) => name.includes('example'))).toBe(false);
+
+    // The application's own schema arrives by migration and its sample data by seed during this startup.
+    for (const table of ['customers', 'contacts', 'opportunities']) {
+      expect(await client.schema.hasTable(table)).toBe(true);
+    }
+    const rows = async (table: string): Promise<number> =>
+      Number(
+        (
+          (await client(table).count({ count: '*' }).first()) as {
+            count: number | string;
+          }
+        ).count,
+      );
+    expect(await rows('customers')).toBe(2);
+    expect(await rows('contacts')).toBe(3);
+    expect(await rows('opportunities')).toBe(3);
+
+    // And its API answers through the real authentication plugin rather than falling through to the SPA.
+    const anonymousCrm = await requestApp(
+      app,
+      `http://localhost${app.application.publicBasePath}/api/customers`,
+    );
+    expect(anonymousCrm.status).toBe(401);
     const baseUrl = `http://localhost${app.application.publicBasePath}`;
     for (const endpoint of ['articles', 'example', 'routes-example']) {
       const response = await requestApp(app, `${baseUrl}/api/${endpoint}`);
@@ -698,6 +721,39 @@ describe('app server', () => {
       headers: { cookie },
     });
     expect(users.status).toBe(200);
+
+    // The sales API is reached through the same session: the seeded customers come back, and one customer's detail
+    // counts only that customer's own contacts and opportunities.
+    const customers = await requestApp(app, `${baseUrl}/api/customers`, {
+      headers: { cookie },
+    });
+    expect(customers.status).toBe(200);
+    const customerList = (await customers.json()) as {
+      data: { id: number; name: string }[];
+    };
+    expect(customerList.data.map((row) => row.name)).toEqual(
+      expect.arrayContaining(['Acme Manufacturing', 'Globex Technology']),
+    );
+    const acme = customerList.data.find(
+      (row) => row.name === 'Acme Manufacturing',
+    );
+    expect(acme).toBeDefined();
+    const acmeDetail = await requestApp(
+      app,
+      `${baseUrl}/api/customers/${acme?.id}`,
+      { headers: { cookie } },
+    );
+    expect(acmeDetail.status).toBe(200);
+    const detail = (await acmeDetail.json()) as {
+      data: {
+        contacts: unknown[];
+        opportunities: unknown[];
+        opportunityTotal: number;
+      };
+    };
+    expect(detail.data.contacts).toHaveLength(2);
+    expect(detail.data.opportunities).toHaveLength(2);
+    expect(detail.data.opportunityTotal).toBe(17000);
     const created = await requestApp(
       app,
       `${baseUrl}/api/auth/api-key/create`,
