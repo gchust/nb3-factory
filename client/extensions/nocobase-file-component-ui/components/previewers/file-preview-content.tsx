@@ -71,10 +71,11 @@ export function FilePreviewContent(
   switch (kind) {
     case 'image':
       return (
-        <img
-          src={url}
-          alt={file.filename}
-          className='max-h-[70vh] max-w-full object-contain'
+        <ImagePreview
+          file={file}
+          url={url}
+          error={error}
+          onDownload={onDownload}
         />
       );
     case 'pdf':
@@ -97,6 +98,51 @@ export function FilePreviewContent(
     default:
       return <DownloadFallback file={file} onDownload={onDownload} />;
   }
+}
+
+function ImagePreview(inputProps: {
+  readonly file: FileRecord;
+  readonly url?: string;
+  readonly error?: string;
+  readonly onDownload?: () => void;
+}): ReactElement {
+  const { t } = useTranslation('@nocobase/app-plugin-file');
+  const { file, url, error, onDownload } = inputProps;
+  // Track which URL failed rather than a boolean, so a different file clears
+  // the failure without an effect that would render the old message first.
+  const [failedUrl, setFailedUrl] = useState<string>();
+  const failed = url !== undefined && failedUrl === url;
+
+  if (error || failed) {
+    return (
+      <div className='flex flex-col items-center gap-3 py-8' role='alert'>
+        <div className='h-24 w-24'>
+          <FileThumbnail file={file} />
+        </div>
+        <p>
+          {error
+            ? t(messageKey(error), { defaultValue: error })
+            : t('files.imagePreviewFailed', {
+                defaultValue:
+                  'This image could not be displayed. The file may be damaged or in an unsupported format.',
+              })}
+        </p>
+        {onDownload ? (
+          <Button type='button' onClick={onDownload}>
+            {t('files.downloadFile', { defaultValue: 'Download file' })}
+          </Button>
+        ) : null}
+      </div>
+    );
+  }
+  return (
+    <img
+      src={url}
+      alt={file.filename}
+      className='max-h-[70vh] max-w-full object-contain'
+      onError={() => setFailedUrl(url)}
+    />
+  );
 }
 
 function MarkdownPreview(inputProps: { readonly text?: string }): ReactElement {

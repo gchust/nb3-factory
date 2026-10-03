@@ -3,6 +3,8 @@ export { FilePreviewDialog } from './components/file-preview-dialog';
 export { FilePreviewField } from './components/file-preview-field';
 export { FileThumbnail } from './components/file-thumbnail';
 export { FileUploadField } from './components/file-upload-field';
+export { FilePreviewContent } from './components/previewers/file-preview-content';
+export type { FilePreviewContentProps } from './components/previewers/file-preview-content';
 export type * from './types';
 export { clientFileRepositoryManagerToken } from '@nocobase/app-plugin-file/client';
 export type { ClientFileRepository } from '@nocobase/app-plugin-file/client';
