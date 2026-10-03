@@ -121,6 +121,10 @@ const zhCN: AppResource = {
   },
   navigation: {
     home: '首页',
+    sales: '销售',
+    customers: '客户',
+    contacts: '联系人',
+    opportunities: '商机',
     open: '打开导航',
     close: '关闭导航',
     expand: '展开导航',
@@ -146,6 +150,132 @@ const zhCN: AppResource = {
   datePicker: {
     placeholder: '选择日期',
     rangePlaceholder: '选择日期范围',
+  },
+  crm: {
+    column: { actions: '操作' },
+    action: {
+      create: '创建',
+      edit: '编辑',
+      view: '查看',
+      saving: '正在保存…',
+      retry: '重试',
+    },
+    fields: {
+      name: '名称',
+      industry: '行业',
+      phone: '电话',
+      email: '邮箱',
+      customer: '客户',
+      amount: '预期金额',
+      stage: '阶段',
+    },
+    stage: {
+      follow_up: '跟进中',
+      won: '赢单',
+      lost: '输单',
+    },
+    form: {
+      nameRequired: '请输入名称。',
+      nameTooLong: '最多使用 {{max}} 个字符。',
+      industryTooLong: '最多使用 {{max}} 个字符。',
+      phoneTooLong: '最多使用 {{max}} 个字符。',
+      emailTooLong: '最多使用 {{max}} 个字符。',
+      customerRequired: '请选择客户。',
+      amountRequired: '请输入预期金额。',
+      amountInvalid: '请输入大于或等于零的金额。',
+      stageInvalid: '请选择有效的阶段。',
+      noCustomers: '请先创建客户，之后才能关联到客户。',
+    },
+    error: {
+      forbidden: '你没有执行该操作的权限。',
+      requestFailed: '请求失败，请重试。',
+      loadFailed: '无法加载此页面',
+      loadFailedDescription: '数据加载失败，请检查网络后重试。',
+      customerNotFound: '该客户已不存在。',
+      contactNotFound: '该联系人已不存在。',
+      opportunityNotFound: '该商机已不存在。',
+    },
+    customers: {
+      title: '客户',
+      description: '本销售团队服务的公司。',
+      new: '新建客户',
+      search: '搜索客户',
+      empty: '暂无客户。',
+      column: {
+        name: '名称',
+        industry: '行业',
+      },
+      create: {
+        title: '新建客户',
+        success: '客户“{{name}}”已创建。',
+      },
+      edit: {
+        title: '编辑客户',
+        success: '客户“{{name}}”已更新。',
+      },
+      form: {
+        description: '客户必须有名称，行业为选填。',
+      },
+      detail: {
+        title: '客户',
+        total: '预期金额',
+        totalHint: '仅统计该客户自己的商机。',
+        contacts: '联系人（{{count}}）',
+        opportunities: '商机（{{count}}）',
+        emptyContacts: '该客户暂无联系人。',
+        emptyOpportunities: '该客户暂无商机。',
+      },
+    },
+    contacts: {
+      title: '联系人',
+      description: '团队对接的每个客户中的人员。',
+      new: '新建联系人',
+      search: '搜索联系人',
+      empty: '暂无联系人。',
+      column: {
+        name: '名称',
+        customer: '客户',
+        phone: '电话',
+        email: '邮箱',
+      },
+      create: {
+        title: '新建联系人',
+        success: '联系人“{{name}}”已创建。',
+      },
+      edit: {
+        title: '编辑联系人',
+        success: '联系人“{{name}}”已更新。',
+      },
+      form: {
+        description: '联系人必须有名称和所属客户。',
+      },
+    },
+    opportunities: {
+      title: '商机',
+      description: '团队正在推进的交易，按阶段查看。',
+      new: '新建商机',
+      search: '搜索商机',
+      empty: '暂无商机。',
+      allStages: '全部阶段',
+      filterStage: '按阶段筛选',
+      column: {
+        name: '名称',
+        customer: '客户',
+        amount: '预期金额',
+        stage: '阶段',
+      },
+      create: {
+        title: '新建商机',
+        success: '商机“{{name}}”已创建。',
+      },
+      edit: {
+        title: '编辑商机',
+        success: '商机“{{name}}”已更新。',
+      },
+      form: {
+        description: '商机必须有名称、客户、预期金额和阶段。',
+      },
+    },
   },
 };
 
