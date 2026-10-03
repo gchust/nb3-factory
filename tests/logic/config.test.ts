@@ -67,6 +67,19 @@ describe('application config', () => {
       visibility: 'private',
     });
     expect(drive.disks.public).toBeUndefined();
+    // Workflow run modules must load from inside the compiled root so their
+    // bare imports resolve against the deployment's node_modules.
+    expect(drive.disks.workflowArtifacts).toEqual({
+      driver: 'fs',
+      location: fileURLToPath(
+        new URL('../../storage/workflows', import.meta.url),
+      ),
+      visibility: 'private',
+    });
+    expect(runtime.config.get('workflow.artifactDisk')).toBe(
+      'workflowArtifacts',
+    );
+    expect(runtime.config.get('service.demoData')).toBe(true);
     expect(
       runtime.config.get<AppLoggingConfig>('logging')!.default,
     ).toBeUndefined();

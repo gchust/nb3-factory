@@ -1,3 +1,6 @@
+// Must evaluate before the application runtime and any plugin client module so
+// the deprecated Portal SDK's window globals carry the deployment base path.
+import './portal-runtime.js';
 import { createApp } from './app.js';
 import {
   AppClientRoot,
