@@ -11,7 +11,10 @@ const workflow: AppConfigFactory<WorkflowRuntimeConfig> = defineAppConfig(
       {
         sourceRoot: paths.server('workflows'),
         distRoot: paths.server('workflows'),
-        artifactDisk: 'local',
+        // Resolve run modules from a disk inside the compiled application root
+        // so their bare imports find the deployment's node_modules; the
+        // private `local` storage disk sits outside that root.
+        artifactDisk: 'workflowArtifacts',
         production: env.NODE_ENV === 'production',
       },
       {
