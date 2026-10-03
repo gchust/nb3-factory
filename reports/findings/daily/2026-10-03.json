@@ -1,0 +1,444 @@
+{
+  "version": 1,
+  "date": "2026-10-03",
+  "timeZone": "Asia/Shanghai",
+  "entries": [
+    {
+      "key": "9bc1a673273b0c58b09dd620",
+      "id": "528:37073999569:1:F5",
+      "issue": 528,
+      "runId": 37073999569,
+      "attempt": 1,
+      "findingId": "F5",
+      "runDay": "2026-10-03",
+      "archivedAt": "2026-10-03T23:01:40.428Z",
+      "title": "指引可显式说明运行时 schema 探查应走框架 API 而非原始 SQL 驱动",
+      "summary": "nocobase-db SKILL.md 已说明逻辑名与物理名的映射（第168、270行，E6），但 Agent 仍用 better-sqlite3 直接查表并以逻辑列名 customerId 查询，得到 no such column；随后才通过 pragma 与 Query 层理解物理列名（E44）。这是应用侧探测方式的选择，指引本身没有错误。",
+      "severity": "info",
+      "type": "usability",
+      "owner": "documentation",
+      "targets": [
+        "app/.agents/skills/nocobase-db/SKILL.md"
+      ],
+      "subjectKeys": [
+        "skill:nocobase-db"
+      ],
+      "featurePoint": "应用搭建/数据库",
+      "candidates": [
+        "应用搭建/数据库"
+      ],
+      "taskTitle": "客户、联系人与商机管理",
+      "appVersion": "1.0.0-beta.50",
+      "group": {
+        "title": "指引可显式说明运行时 schema 探查应走框架 API 而非原始 SQL 驱动",
+        "issues": 1,
+        "first": "2026-10-03"
+      },
+      "report": "reports/issues/528/runs/37073999569/attempt-1/index.html#review-finding-F5"
+    },
+    {
+      "key": "79e3d2c98a0c17dbfb5d1cea",
+      "id": "530:37074009060:1:F1",
+      "issue": 530,
+      "runId": 37074009060,
+      "attempt": 1,
+      "findingId": "F1",
+      "runDay": "2026-10-03",
+      "archivedAt": "2026-10-03T23:01:40.428Z",
+      "title": "records 记录选择只接受字符串 id，整型主键集合无法直接使用",
+      "summary": "parseRecordSelection 要求 type:'records' 的每个 id 都是非空字符串，否则抛 TypeError；而应用用 migration 的 increments('id') 建整型主键，无法把单条记录 id 传给公开的 selection.records，只能自定义 record access 绕行。",
+      "severity": "minor",
+      "type": "capability-gap",
+      "owner": "framework",
+      "targets": [
+        "@nocobase/authorization"
+      ],
+      "subjectKeys": [
+        "pkg:@nocobase/authorization"
+      ],
+      "featurePoint": "应用搭建/授权",
+      "candidates": [
+        "应用搭建/授权"
+      ],
+      "taskTitle": "内部资料阅读与临时共享",
+      "appVersion": "1.0.0-beta.50",
+      "group": {
+        "title": "selection.records 只接受字符串 id，与框架自身推荐的整数自增主键不兼容",
+        "issues": 4,
+        "first": "2026-09-29"
+      },
+      "report": "reports/issues/530/runs/37074009060/attempt-1/index.html#review-finding-F1"
+    },
+    {
+      "key": "506e13b6053e37b08f9953b0",
+      "id": "530:37074009060:1:F2",
+      "issue": 530,
+      "runId": 37074009060,
+      "attempt": 1,
+      "findingId": "F2",
+      "runDay": "2026-10-03",
+      "archivedAt": "2026-10-03T23:01:40.428Z",
+      "title": "allScopes 未随 anyScope/condition 一并公开导出",
+      "summary": "@nocobase/app-plugin-authorization/server 的导出列表包含 anyScope、condition、scopeAst，但同一 scope.js 中定义的 allScopes 仅供包内使用，下游若要把多个 scope 做 AND 折叠必须自实现。",
+      "severity": "minor",
+      "type": "usability",
+      "owner": "framework",
+      "targets": [
+        "@nocobase/app-plugin-authorization"
+      ],
+      "subjectKeys": [
+        "pkg:@nocobase/app-plugin-authorization"
+      ],
+      "featurePoint": "应用搭建/授权",
+      "candidates": [
+        "应用搭建/授权"
+      ],
+      "taskTitle": "内部资料阅读与临时共享",
+      "appVersion": "1.0.0-beta.50",
+      "group": {
+        "title": "allScopes/idsScope 等数据范围组合子已在包内实现但未从公开入口导出",
+        "issues": 4,
+        "first": "2026-09-29"
+      },
+      "report": "reports/issues/530/runs/37074009060/attempt-1/index.html#review-finding-F2"
+    },
+    {
+      "key": "4a57d51ab46f91bc2c7b15c2",
+      "id": "530:37074009060:1:F3",
+      "issue": 530,
+      "runId": 37074009060,
+      "attempt": 1,
+      "findingId": "F3",
+      "runDay": "2026-10-03",
+      "archivedAt": "2026-10-03T23:01:40.428Z",
+      "title": "共享/限制 Skill 的 records 示例未说明 id 必须是字符串",
+      "summary": "共享与限制 Skill 都用 selection.records(['quote-7']) 作示例，但从未说明该选择器只接受非空字符串 id，也未提示数值主键集合应改用 recordAccess。核心 authorization/selection 的公开说明同样缺失该约束。",
+      "severity": "minor",
+      "type": "guidance-gap",
+      "owner": "documentation",
+      "targets": [
+        "@nocobase/authorization",
+        "app/.agents/skills/nocobase-app-plugin-authz-sharing-rules"
+      ],
+      "subjectKeys": [
+        "pkg:@nocobase/authorization",
+        "skill:nocobase-app-plugin-authz-sharing-rules"
+      ],
+      "featurePoint": "应用搭建/授权",
+      "candidates": [
+        "应用搭建/授权"
+      ],
+      "taskTitle": "内部资料阅读与临时共享",
+      "appVersion": "1.0.0-beta.50",
+      "group": {
+        "title": "records 选择指引未说明仅支持字符串 id，也未给出整数主键的替代写法",
+        "issues": 3,
+        "first": "2026-09-30"
+      },
+      "report": "reports/issues/530/runs/37074009060/attempt-1/index.html#review-finding-F3"
+    },
+    {
+      "key": "e242261746b35f3870e1c99b",
+      "id": "531:37074013613:1:F2",
+      "issue": 531,
+      "runId": 37074013613,
+      "attempt": 1,
+      "findingId": "F2",
+      "runDay": "2026-10-03",
+      "archivedAt": "2026-10-03T23:01:40.428Z",
+      "title": "Registry 图片/PDF 预览分支缺少解码失败处理，损坏文件退化为破图",
+      "summary": "file-preview-content.tsx 的 image 分支只渲染 <img src>，pdf 分支只渲染 <iframe>，均无 onError；同一文件的 Office 分支却有 failed 状态与 15s 超时回退，行为不一致。B06 明确要求损坏 PNG 给出可读失败提示，R02 要求按实际检出阶段记录。",
+      "severity": "minor",
+      "type": "capability-gap",
+      "owner": "plugin",
+      "targets": [
+        "@nocobase/app-plugin-file"
+      ],
+      "subjectKeys": [
+        "pkg:@nocobase/app-plugin-file"
+      ],
+      "featurePoint": "应用搭建/文件",
+      "candidates": [
+        "应用搭建/文件"
+      ],
+      "taskTitle": "项目资料与私有附件",
+      "appVersion": "1.0.0-beta.50",
+      "group": {
+        "title": "Registry 图片/PDF 预览分支缺少解码失败态，损坏文件只显示破图",
+        "issues": 5,
+        "first": "2026-09-29"
+      },
+      "report": "reports/issues/531/runs/37074013613/attempt-1/index.html#review-finding-F2"
+    },
+    {
+      "key": "623151e79dc502d2fc21a021",
+      "id": "531:37074013613:1:F3",
+      "issue": 531,
+      "runId": 37074013613,
+      "attempt": 1,
+      "findingId": "F3",
+      "runDay": "2026-10-03",
+      "archivedAt": "2026-10-03T23:01:40.428Z",
+      "title": "文件 Skill 要求保护 <accessPath>/* 内容路径，却未给出可执行的机制与示例",
+      "summary": "Skill 与手册已明确内容路由是公开例外，并要求“在挂载前于 <accessPath>/* 注册应用自有认证授权”。但所有 Skill/参考文档都没有提到 @nocobase/app-server 的 defineHttpMiddleware/addHttpMiddleware，也没有给包裹生成 root contribution 的示例；实现 Agent 只能通过阅读 routes.d.ts 反推出机制。",
+      "severity": "minor",
+      "type": "guidance-gap",
+      "owner": "documentation",
+      "targets": [
+        "packages/@nocobase/app-plugin-file/skills/nocobase-app-plugin-file/SKILL.md",
+        "@nocobase/app-server"
+      ],
+      "subjectKeys": [
+        "guide:@nocobase/app-plugin-file/skills/nocobase-app-plugin-file",
+        "pkg:@nocobase/app-server"
+      ],
+      "featurePoint": "应用搭建/文件",
+      "candidates": [
+        "应用搭建/文件"
+      ],
+      "taskTitle": "项目资料与私有附件",
+      "appVersion": "1.0.0-beta.50",
+      "group": {
+        "title": "文件 Skill 要求保护 <accessPath>/* 内容路径，却未给出可执行机制与示例",
+        "issues": 1,
+        "first": "2026-10-03"
+      },
+      "report": "reports/issues/531/runs/37074013613/attempt-1/index.html#review-finding-F3"
+    },
+    {
+      "key": "2d3b140d66eeda8a8474de92",
+      "id": "532:37074018017:1:F1",
+      "issue": 532,
+      "runId": 37074018017,
+      "attempt": 1,
+      "findingId": "F1",
+      "runDay": "2026-10-03",
+      "archivedAt": "2026-10-03T23:01:40.428Z",
+      "title": "权限集标题解码对非 JSON 字符串无保护，可令应用启动崩溃",
+      "summary": "decodeAuthorizationTitle 对任何字符串先执行 JSON.parse；permissionSetFromRow 直接调用它，AuthorizationProvider.start 又通过 storedGrantProblems 无条件遍历，开发期 reportStoredGrants 抛错。裸标题（例如历史数据、手工 SQL 或未按文档写入的行）会以 SyntaxError 中止整个启动。",
+      "severity": "major",
+      "type": "runtime-defect",
+      "owner": "framework",
+      "targets": [
+        "@nocobase/authorization",
+        "@nocobase/app-plugin-authorization"
+      ],
+      "subjectKeys": [
+        "pkg:@nocobase/app-plugin-authorization",
+        "pkg:@nocobase/authorization"
+      ],
+      "featurePoint": "应用搭建/授权",
+      "candidates": [
+        "应用搭建/授权"
+      ],
+      "taskTitle": "内部资料只读问答助手",
+      "appVersion": "1.0.0-beta.50",
+      "group": {
+        "title": "权限集标题解码对非 JSON 字符串无保护，可令应用启动崩溃",
+        "issues": 1,
+        "first": "2026-10-03"
+      },
+      "report": "reports/issues/532/runs/37074018017/attempt-1/index.html#review-finding-F1"
+    },
+    {
+      "key": "ee5ce9a6b9ff04dfc480bde5",
+      "id": "532:37074018017:1:F2",
+      "issue": 532,
+      "runId": 37074018017,
+      "attempt": 1,
+      "findingId": "F2",
+      "runDay": "2026-10-03",
+      "archivedAt": "2026-10-03T23:01:40.428Z",
+      "title": "server-routes 指引的 use(path) 鉴权示例会漏掉参数化子路径",
+      "summary": "指引在“An authenticated endpoint”给出 router.use('/orders', auth.required())，并把该资源视为受保护；但同一 router 上的 /documents/:id 未被这条 use 覆盖。应用照此编写后，主管请求保密资料也得到 401，只有把 authenticate 挂到每个路由才修复。",
+      "severity": "major",
+      "type": "guidance-error",
+      "owner": "documentation",
+      "targets": [
+        "app/.agents/skills/nocobase-app-development"
+      ],
+      "subjectKeys": [
+        "skill:nocobase-app-development"
+      ],
+      "featurePoint": null,
+      "candidates": [],
+      "taskTitle": "内部资料只读问答助手",
+      "appVersion": "1.0.0-beta.50",
+      "group": {
+        "title": "server-routes 的 use(path) 鉴权示例未说明只覆盖精确路径，参数化/兄弟子路径漏保护",
+        "issues": 1,
+        "first": "2026-10-03"
+      },
+      "report": "reports/issues/532/runs/37074018017/attempt-1/index.html#review-finding-F2"
+    },
+    {
+      "key": "e8dfdfbe4be38194fec22bda",
+      "id": "532:37074018017:1:F3",
+      "issue": 532,
+      "runId": 37074018017,
+      "attempt": 1,
+      "findingId": "F3",
+      "runDay": "2026-10-03",
+      "archivedAt": "2026-10-03T23:01:40.428Z",
+      "title": "AI 员工注册指引的 boot 示例缺少可选依赖守卫",
+      "summary": "server-runs.md 的 Register App resources 示例直接 container.resolve(aiManagerToken)。当宿主组合未注册 AI 员工插件时该 token 未绑定，boot 抛错使应用无法启动；repair-2 才加入 container.has(aiManagerToken) 守卫，而调度器与工作流 Skill 已示范了该守卫。",
+      "severity": "minor",
+      "type": "guidance-error",
+      "owner": "documentation",
+      "targets": [
+        "app/.agents/skills/nocobase-app-plugin-ai-employee"
+      ],
+      "subjectKeys": [
+        "skill:nocobase-app-plugin-ai-employee"
+      ],
+      "featurePoint": "应用搭建/AI 员工",
+      "candidates": [
+        "应用搭建/AI 员工"
+      ],
+      "taskTitle": "内部资料只读问答助手",
+      "appVersion": "1.0.0-beta.50",
+      "group": {
+        "title": "应用 provider/boot 示例未用 container.has() 守卫可选插件 token，最小运行时启动崩溃",
+        "issues": 2,
+        "first": "2026-09-29"
+      },
+      "report": "reports/issues/532/runs/37074018017/attempt-1/index.html#review-finding-F3"
+    },
+    {
+      "key": "34ad4efc4c9338abacc73a3b",
+      "id": "533:37094050741:1:F2",
+      "issue": 533,
+      "runId": 37094050741,
+      "attempt": 1,
+      "findingId": "F2",
+      "runDay": "2026-10-03",
+      "archivedAt": "2026-10-03T23:01:40.428Z",
+      "title": "SQLite 将 JS Date 绑定为 epoch 毫秒，与 datetime 文本比较静默失配",
+      "summary": "packages/@nocobase/db-sqlite/dist/src/precise-integers.js 把 Date 绑定转换为 value.valueOf()（epoch 毫秒）。当查询构建器拿它与以 ISO/datetime 文本存储的列比较时，条件永远不成立，且不报错。",
+      "severity": "major",
+      "type": "runtime-defect",
+      "owner": "framework",
+      "targets": [
+        "@nocobase/db-sqlite"
+      ],
+      "subjectKeys": [
+        "pkg:@nocobase/db-sqlite"
+      ],
+      "featurePoint": "应用搭建/数据库",
+      "candidates": [
+        "应用搭建/数据库"
+      ],
+      "taskTitle": "设备售后服务与巡检协同系统（综合业务案例）",
+      "appVersion": "1.0.0-beta.50",
+      "group": {
+        "title": "SQLite 将 JS Date 绑定为 epoch 毫秒，与 datetime 文本比较静默失配",
+        "issues": 1,
+        "first": "2026-10-03"
+      },
+      "report": "reports/issues/533/runs/37094050741/attempt-1/index.html#review-finding-F2"
+    },
+    {
+      "key": "2b501a7e6c94cb587d817ab5",
+      "id": "533:37094050741:1:F3",
+      "issue": 533,
+      "runId": 37094050741,
+      "attempt": 1,
+      "findingId": "F3",
+      "runDay": "2026-10-03",
+      "archivedAt": "2026-10-03T23:01:40.428Z",
+      "title": "AI 知识库写路由仅 requireAuthentication，缺少角色/资源 ACL",
+      "summary": "router.js 只挂 requireAuthentication；security.md 承认路由不强制角色、所有权或资源 ACL，建议由应用自建授权代理。",
+      "severity": "major",
+      "type": "capability-gap",
+      "owner": "plugin",
+      "targets": [
+        "@nocobase/app-plugin-ai-knowledge-base",
+        "app/.agents/skills/nocobase-app-plugin-ai-knowledge-base/references/security.md"
+      ],
+      "subjectKeys": [
+        "pkg:@nocobase/app-plugin-ai-knowledge-base",
+        "skill:nocobase-app-plugin-ai-knowledge-base"
+      ],
+      "featurePoint": "应用搭建/知识库",
+      "candidates": [
+        "应用搭建/知识库"
+      ],
+      "taskTitle": "设备售后服务与巡检协同系统（综合业务案例）",
+      "appVersion": "1.0.0-beta.50",
+      "group": {
+        "title": "AI 知识库兼容路由仅要求认证并缺少角色/资源 ACL 授权",
+        "issues": 2,
+        "first": "2026-10-01"
+      },
+      "report": "reports/issues/533/runs/37094050741/attempt-1/index.html#review-finding-F3"
+    },
+    {
+      "key": "5783eeb871870fdf1315fe6b",
+      "id": "533:37094050741:1:F4",
+      "issue": 533,
+      "runId": 37094050741,
+      "attempt": 1,
+      "findingId": "F4",
+      "runDay": "2026-10-03",
+      "archivedAt": "2026-10-03T23:01:40.428Z",
+      "title": "Scheduler 管理 API 缺少手动立即执行入口",
+      "summary": "管理 API 只能启停计划，Cron 无创建/编辑接口，也没有单次执行入口；受控验证需改用短周期 Cron 或 CLI scheduler sync。",
+      "severity": "minor",
+      "type": "usability",
+      "owner": "plugin",
+      "targets": [
+        "app/.agents/skills/nocobase-app-plugin-scheduler/references/operations.md"
+      ],
+      "subjectKeys": [
+        "skill:nocobase-app-plugin-scheduler"
+      ],
+      "featurePoint": "应用搭建/定时任务",
+      "candidates": [
+        "应用搭建/定时任务"
+      ],
+      "taskTitle": "设备售后服务与巡检协同系统（综合业务案例）",
+      "appVersion": "1.0.0-beta.50",
+      "group": {
+        "title": "Scheduler 没有公开的受控立即执行入口，应用被迫直接操作 Queue 计划投影",
+        "issues": 4,
+        "first": "2026-09-29"
+      },
+      "report": "reports/issues/533/runs/37094050741/attempt-1/index.html#review-finding-F4"
+    },
+    {
+      "key": "4767874146d8e14277fdaa38",
+      "id": "533:37094050741:1:F5",
+      "issue": 533,
+      "runId": 37094050741,
+      "attempt": 1,
+      "findingId": "F5",
+      "runDay": "2026-10-03",
+      "archivedAt": "2026-10-03T23:01:40.428Z",
+      "title": "AI 员工聊天界面安装步骤未内联，应用未安装聊天扩展",
+      "summary": "聊天界面安装写在 references/chat-surfaces.md 的 Option 1（从插件 node_modules 复制到 client/extensions/nocobase-ai），SKILL.md 未内联该关键步骤，应用最终只展示 AI 员工状态页。",
+      "severity": "info",
+      "type": "guidance-gap",
+      "owner": "documentation",
+      "targets": [
+        "@nocobase/app-plugin-ai-employee",
+        "app/.agents/skills/nocobase-app-plugin-ai-employee/references/chat-surfaces.md"
+      ],
+      "subjectKeys": [
+        "pkg:@nocobase/app-plugin-ai-employee",
+        "skill:nocobase-app-plugin-ai-employee"
+      ],
+      "featurePoint": "应用搭建/AI 员工",
+      "candidates": [
+        "应用搭建/AI 员工"
+      ],
+      "taskTitle": "设备售后服务与巡检协同系统（综合业务案例）",
+      "appVersion": "1.0.0-beta.50",
+      "group": {
+        "title": "AI 员工聊天界面安装步骤未内联，应用未安装聊天扩展",
+        "issues": 1,
+        "first": "2026-10-03"
+      },
+      "report": "reports/issues/533/runs/37094050741/attempt-1/index.html#review-finding-F5"
+    }
+  ]
+}
