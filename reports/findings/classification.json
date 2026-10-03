@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "inputHash": "39d4d151d41133af20e067db79d525e4dc99ab510d9bbff88ea62bcb6862e677",
+  "inputHash": "25d8df19acd494bc64946d426412feeb10b796264111bc168080be38db504aa7",
   "sources": [
     {
       "id": "460:36434284393:1:F2",
@@ -361,6 +361,21 @@
       "id": "531:37074013613:1:F3",
       "report": "531:37074013613:1",
       "fingerprint": "6bab2257674fd15b0a01185243522d18d6bc0c49a0f3959671065a2f3a86ec61"
+    },
+    {
+      "id": "532:37074018017:1:F1",
+      "report": "532:37074018017:1",
+      "fingerprint": "adc895e2f4b3311a56814eadae123795d66dbd0d61047f97d52686bebb50aff3"
+    },
+    {
+      "id": "532:37074018017:1:F2",
+      "report": "532:37074018017:1",
+      "fingerprint": "7a71c93c371ff4ef788eb4d4eb06e8067261ccf45bb6c04aedc6ad1a7024bf95"
+    },
+    {
+      "id": "532:37074018017:1:F3",
+      "report": "532:37074018017:1",
+      "fingerprint": "6daa9d2c34e36e8e95978cb95152833223ae1ab59208e52f9974d81b9e994d99"
     }
   ],
   "groups": [
@@ -566,10 +581,11 @@
       ]
     },
     {
-      "title": "应用 provider 未守卫可选插件 token，最小运行时启动崩溃",
-      "reason": "单条保留：475:F4 的 E26/E28/E29 显示 provider 未用 container.has() 守卫可选 token，属独立指引缺口。",
+      "title": "应用 provider/boot 示例未用 container.has() 守卫可选插件 token，最小运行时启动崩溃",
+      "reason": "跨报告合并。475:F4（E26/E28/E29/E17）显示 services-and-jobs 示例在 provider 的 register/boot 中直接 resolve 由插件提供的可选 token（authorizationToken），未装配插件时 ServiceContainer.resolve 抛 “is not registered”，app-server 逻辑测试在 LibraryProvider.boot 失败；532:F3（E10/E11/E22/E44/E54）显示 AI 员工 Skill 的 server-runs.md 在 boot() 直接 container.resolve(aiManagerToken)，宿主未注册该插件时 token 未绑定，boot 抛错使应用无法启动。两者同为“示例未用 container.has() 守卫可选插件 token”的指引缺口，期望（缺失时跳过注册）与修复方向（先 has 再 resolve）一致。",
       "members": [
-        "475:36498925234:1:F4"
+        "475:36498925234:1:F4",
+        "532:37074018017:1:F3"
       ]
     },
     {
@@ -711,15 +727,29 @@
       "members": [
         "531:37074013613:1:F3"
       ]
+    },
+    {
+      "title": "权限集标题解码对非 JSON 字符串无保护，可令应用启动崩溃",
+      "reason": "单条保留：532:F1（E1/E2/E3/E4/E49）显示 decodeAuthorizationTitle 对任意字符串先 JSON.parse，permissionSetFromRow 直接调用，AuthorizationProvider.start 经 storedGrantProblems 无条件遍历，裸 title 行会以 SyntaxError 中止整个启动；这是权限集标题解码的运行时缺陷，与其它文档/CSRF/路由指引缺口无共同根因，单独保留。",
+      "members": [
+        "532:37074018017:1:F1"
+      ]
+    },
+    {
+      "title": "server-routes 的 use(path) 鉴权示例未说明只覆盖精确路径，参数化/兄弟子路径漏保护",
+      "reason": "单条保留：532:F2（E14/E15/E23/E51/E52）显示 server-routes.md 的 “An authenticated endpoint” 示例以 router.use('/orders', auth.required()) 表达资源受保护，但 Hono use(path) 只匹配精确路径，/documents/:id 未被覆盖，应用须改为逐路由挂中间件；这是示例对 use(path) 作用域说明不足的独立缺口，与 496:F2 的顶层 use('*') 越界泄漏、CSRF 指引缺失等虽同涉路由鉴权但根因与症状不同，单独保留。",
+      "members": [
+        "532:37074018017:1:F2"
+      ]
     }
   ],
   "classifier": {
     "engine": "pi",
     "model": "deepseek-v4.1-flash",
     "version": "0.86.1",
-    "runId": "37087775496",
+    "runId": "37088680363",
     "attempt": 1,
     "controlSha": "0f72d9b81f981f10501c5ac0ee0e7d786f1f4698",
-    "completedAt": "2026-10-03T01:57:13.634Z"
+    "completedAt": "2026-10-03T02:10:20.035Z"
   }
 }
