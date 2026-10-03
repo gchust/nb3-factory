@@ -1,4 +1,4 @@
-import { Home } from 'lucide-react';
+import { FolderOpen, Home } from 'lucide-react';
 import {
   defineAppRoutes,
   defineSettingsRoutes,
@@ -43,6 +43,31 @@ const appRoutes: AppClientRouteContribution = defineAppRoutes([
     componentLoader: () => import('./pages/auth/reset-password.js'),
     name: 'reset-password',
     path: '/reset-password',
+  },
+  {
+    // Project materials are private to the signed-in user. The page itself is reachable by every authenticated user
+    // (`authz: 'skip'`, UI gating only); the server enforces ownership on every materials and attachment request, so a
+    // colleague opening a shared link still cannot read the content.
+    auth: 'required',
+    authz: 'skip',
+    componentLoader: () => import('./pages/materials/index.js'),
+    name: 'materials',
+    navigation: { title: 'navigation.materials', icon: FolderOpen },
+    path: '/materials',
+  },
+  {
+    auth: 'required',
+    authz: 'skip',
+    componentLoader: () => import('./pages/materials/new.js'),
+    name: 'material-new',
+    path: '/materials/new',
+  },
+  {
+    auth: 'required',
+    authz: 'skip',
+    componentLoader: () => import('./pages/materials/detail.js'),
+    name: 'material-detail',
+    path: '/materials/:id',
   },
 ]);
 

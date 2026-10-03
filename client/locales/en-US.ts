@@ -130,6 +130,7 @@ const enUS = {
   },
   navigation: {
     home: 'Home',
+    materials: 'Materials',
     open: 'Open navigation',
     close: 'Close navigation',
     expand: 'Expand navigation',
@@ -155,6 +156,55 @@ const enUS = {
   datePicker: {
     placeholder: 'Pick a date',
     rangePlaceholder: 'Pick a date range',
+  },
+  materials: {
+    title: 'Project materials',
+    description:
+      'Keep each project material and its attachments together. A title is required.',
+    new: 'New material',
+    newTitle: 'New material',
+    newDescription:
+      'Give the material a title and add its attachments. You can upload before the title is filled in.',
+    detailTitle: 'Material',
+    detailDescription:
+      'View the attachments, download them, or remove one and save.',
+    empty: 'No materials yet',
+    emptyDescription:
+      'Create the first material to store a title together with its files.',
+    titleLabel: 'Title',
+    titlePlaceholder: 'e.g. Site survey photos',
+    titleRequired: 'Enter a title before saving.',
+    titleTooLong: 'The title is too long (255 characters at most).',
+    attachmentNotFound: 'That attachment no longer exists.',
+    attachmentInvalid: 'One of the selected attachments is not available.',
+    uploadTooLarge: 'The file is too large to upload (10 MB at most).',
+    attachments: 'Attachments',
+    attachmentsHint:
+      'Only PNG and DOCX are required for the first version. A file removed and saved no longer belongs to this material.',
+    noAttachments: 'No attachments on this material.',
+    chooseFiles: 'Choose files',
+    uploadStatus: 'Upload status',
+    statusIdle: 'No file selected',
+    statusUploading: 'Uploading…',
+    statusUploaded: 'Uploaded',
+    statusError: 'Upload failed',
+    uploadFailed: 'The upload failed. Please try again.',
+    preview: 'Preview',
+    download: 'Download',
+    remove: 'Remove',
+    removePending: 'Will be removed when you save.',
+    undo: 'Undo',
+    save: 'Save',
+    saving: 'Saving…',
+    saveFailed: 'The material could not be saved.',
+    saved: 'Material saved.',
+    backToList: 'Back to materials',
+    open: 'Open',
+    attachmentCount: '{{count}} attachment(s)',
+    notFound: 'The material was not found.',
+    loadFailed: 'The material could not be loaded.',
+    createdAt: 'Created',
+    updatedAt: 'Updated',
   },
 };
 
