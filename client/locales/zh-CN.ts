@@ -89,6 +89,49 @@ const zhCN: AppResource = {
     description: '向 AI 助手描述你的需求，逐步构建页面、数据模型和业务流程。',
   },
 
+  documents: {
+    title: '内部资料',
+    description:
+      '你有权查看的内部资料。可以直接在这里阅读，也可以向资料助手提问。',
+    readOnly: '你可以阅读这些资料，内容由主管维护。',
+    empty: '暂无资料。',
+    new: '新建资料',
+    edit: '编辑',
+    open: '查看',
+    saving: '正在保存…',
+    saved: '资料已保存。',
+    updatedAt: '更新于 {{date}}',
+    formDescription: '资料包含标题和内容。仅你和助手允许的读者可以看到它。',
+    field: {
+      title: '标题',
+      content: '内容',
+      accessLevel: '谁可以阅读',
+      accessLevelHint:
+        '选择“所有人”表示所有已登录用户，选择“仅主管”则仅主管可读。',
+    },
+    accessLevel: {
+      public: '所有人',
+      supervisor: '仅主管',
+    },
+    error: {
+      load: '无法加载资料。',
+      save: '无法保存资料。',
+      required: '标题和内容不能为空。',
+    },
+  },
+
+  assistant: {
+    title: '资料助手',
+    description:
+      '向它提问，它会依据你有权查看的内部资料回答，并注明出处和打开链接。',
+    checking: '正在检查 AI 服务…',
+    notConfigured: {
+      title: '未配置 AI 模型',
+      description:
+        '当前没有可用的 AI 模型，助手暂时无法回答问题。你仍然可以在“内部资料”页面阅读你有权查看的所有资料。',
+    },
+  },
+
   appearance: {
     title: '外观',
     mode: '颜色模式',
@@ -121,6 +164,8 @@ const zhCN: AppResource = {
   },
   navigation: {
     home: '首页',
+    assistant: '资料助手',
+    documents: '内部资料',
     open: '打开导航',
     close: '关闭导航',
     expand: '展开导航',

@@ -96,6 +96,51 @@ const enUS = {
       'Describe what you need to your AI Agent, then build pages, data models, and business workflows.',
   },
 
+  documents: {
+    title: 'Documents',
+    description:
+      'The internal documents you are allowed to read. Ask the document assistant about them, or read them here directly.',
+    readOnly:
+      'You can read these documents. A supervisor maintains their content.',
+    empty: 'No documents are available yet.',
+    new: 'New document',
+    edit: 'Edit',
+    open: 'Open',
+    saving: 'Saving…',
+    saved: 'Document saved.',
+    updatedAt: 'Updated {{date}}',
+    formDescription:
+      'A document has a title and its content. Only the assistant and readers you allow can see it.',
+    field: {
+      title: 'Title',
+      content: 'Content',
+      accessLevel: 'Who may read it',
+      accessLevelHint:
+        'Choose “Everyone” for every signed-in user, or “Supervisors only” to keep it restricted.',
+    },
+    accessLevel: {
+      public: 'Everyone',
+      supervisor: 'Supervisors only',
+    },
+    error: {
+      load: 'Unable to load the documents.',
+      save: 'Unable to save the document.',
+      required: 'A title and content are required.',
+    },
+  },
+
+  assistant: {
+    title: 'Document assistant',
+    description:
+      'Ask a question and get an answer grounded in the documents you are allowed to read, with a citation and a link for each answer.',
+    checking: 'Checking the AI service…',
+    notConfigured: {
+      title: 'AI model not configured',
+      description:
+        'No enabled AI model is available, so the assistant cannot answer questions yet. You can still read every document you are allowed to see on the Documents page.',
+    },
+  },
+
   appearance: {
     title: 'Appearance',
     mode: 'Color mode',
@@ -130,6 +175,8 @@ const enUS = {
   },
   navigation: {
     home: 'Home',
+    assistant: 'Document assistant',
+    documents: 'Documents',
     open: 'Open navigation',
     close: 'Close navigation',
     expand: 'Expand navigation',
