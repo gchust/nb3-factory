@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "inputHash": "81a03e1dc26fd0f9b48f4605602dba41192853141d15d9acaf49791dffdfc28c",
+  "inputHash": "62987a3737a42b92131f2dec45174a7c4da6404d0edd1cede2c939dc49cac8ff",
   "sources": [
     {
       "id": "460:36434284393:1:F2",
@@ -331,6 +331,11 @@
       "id": "519:36938138067:1:F5",
       "report": "519:36938138067:1",
       "fingerprint": "13e6d4fb8180ad70c49886a4804e90fda2277bdf438e77788f39cd9ee3e65741"
+    },
+    {
+      "id": "528:37073999569:1:F5",
+      "report": "528:37073999569:1",
+      "fingerprint": "9c018d1bfc5f80f07060664460fa3a10a9daa8d0141e4f11fdc9d547eb2cf3b4"
     }
   ],
   "groups": [
@@ -663,15 +668,22 @@
       "members": [
         "519:36938138067:1:F4"
       ]
+    },
+    {
+      "title": "指引未明确运行时 schema 探查应走框架 API，而非原始 SQL 驱动",
+      "reason": "仅 528:F5 报告该指引缺口：E6 显示 nocobase-db SKILL 的 Builder 段只说明逻辑名到物理名由 underscored/tablePrefix 决定，E44 显示 Agent 绕过框架直接用 better-sqlite3 对已迁移 SQLite 执行 select 并沿用逻辑列名 customerId，报 SqliteError: no such column，随后才用 pragma 核对物理列名。触发条件（运行时用原始方言驱动探查 schema）、期望（指引明确推荐框架 introspection/Query 并提示仓库层负责逻辑名到物理列的转换）与修复方向（在 SKILL §3/§4 增补提示）均独立，与其他包入口/dist 布局或 filter 示例等缺口根因不同，单独保留。",
+      "members": [
+        "528:37073999569:1:F5"
+      ]
     }
   ],
   "classifier": {
     "engine": "pi",
     "model": "deepseek-v4.1-flash",
     "version": "0.86.1",
-    "runId": "36959186356",
+    "runId": "37081446871",
     "attempt": 1,
     "controlSha": "0f72d9b81f981f10501c5ac0ee0e7d786f1f4698",
-    "completedAt": "2026-10-02T03:15:08.101Z"
+    "completedAt": "2026-10-03T00:18:56.905Z"
   }
 }
