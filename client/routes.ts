@@ -1,4 +1,4 @@
-import { Home } from 'lucide-react';
+import { FileText, Home, Sparkles } from 'lucide-react';
 import {
   defineAppRoutes,
   defineSettingsRoutes,
@@ -15,6 +15,24 @@ const appRoutes: AppClientRouteContribution = defineAppRoutes([
     name: 'home',
     navigation: { title: 'navigation.home', icon: Home },
     path: '/',
+  },
+  {
+    // The document assistant and the document library are open to every signed-in user; what each user may read is
+    // decided per document on the server, not by page authorization.
+    auth: 'required',
+    authz: 'skip',
+    componentLoader: () => import('./pages/assistant/index.js'),
+    name: 'assistant',
+    navigation: { title: 'navigation.assistant', icon: Sparkles },
+    path: '/assistant',
+  },
+  {
+    auth: 'required',
+    authz: 'skip',
+    componentLoader: () => import('./pages/documents/index.js'),
+    name: 'documents',
+    navigation: { title: 'navigation.documents', icon: FileText },
+    path: '/documents',
   },
   {
     auth: 'guest',
