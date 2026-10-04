@@ -91,9 +91,20 @@ describe('app client routes', () => {
     // that requires sign-in adds an entry here, because that is a new grant somebody has to be given.
     const resolved = resolveRoutes();
 
-    // The landing page opted out of page authorization, so it is reachable by every signed-in user.
+    // The landing page opted out of page authorization, so it is reachable by every signed-in user. The sales
+    // pages carry `authz: 'skip'` too, which is why they are listed with `authorizedAs: null`.
     expect(pageAuthorizations(resolved.routes)).toEqual([
       { name: 'home', authorizedAs: null },
+      { name: 'sales-customers', authorizedAs: null },
+      { name: 'sales-customer-new', authorizedAs: null },
+      { name: 'sales-customer-detail', authorizedAs: null },
+      { name: 'sales-customer-edit', authorizedAs: null },
+      { name: 'sales-contacts', authorizedAs: null },
+      { name: 'sales-contact-new', authorizedAs: null },
+      { name: 'sales-contact-edit', authorizedAs: null },
+      { name: 'sales-opportunities', authorizedAs: null },
+      { name: 'sales-opportunity-new', authorizedAs: null },
+      { name: 'sales-opportunity-edit', authorizedAs: null },
     ]);
   });
 });

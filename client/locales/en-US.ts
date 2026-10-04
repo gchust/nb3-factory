@@ -130,6 +130,10 @@ const enUS = {
   },
   navigation: {
     home: 'Home',
+    sales: 'Sales',
+    salesCustomers: 'Customers',
+    salesContacts: 'Contacts',
+    salesOpportunities: 'Opportunities',
     open: 'Open navigation',
     close: 'Close navigation',
     expand: 'Expand navigation',
@@ -155,6 +159,146 @@ const enUS = {
   datePicker: {
     placeholder: 'Pick a date',
     rangePlaceholder: 'Pick a date range',
+  },
+  sales: {
+    loading: 'Loading…',
+    error: {
+      title: 'Something went wrong',
+      requestFailed: 'The request could not be completed. Please try again.',
+      forbidden: 'You do not have permission to do this.',
+      retry: 'Retry',
+    },
+    actions: {
+      create: 'Create',
+      save: 'Save',
+      saving: 'Saving…',
+      cancel: 'Cancel',
+      close: 'Close',
+    },
+    customers: {
+      title: 'Customers',
+      description:
+        'The companies this team sells to, with their industry and contacts.',
+      new: 'New customer',
+      empty: {
+        title: 'No customers yet',
+        description: 'Add the first customer to start recording sales.',
+      },
+      columns: {
+        name: 'Name',
+        industry: 'Industry',
+        createdAt: 'Created',
+      },
+      create: {
+        title: 'New customer',
+        success: 'Customer "{{name}}" created.',
+      },
+      edit: {
+        title: 'Edit customer',
+        success: 'Customer "{{name}}" saved.',
+      },
+      detail: {
+        title: 'Customer details',
+        edit: 'Edit',
+        total: 'Total opportunity amount',
+        contacts: 'Contacts',
+        opportunities: 'Opportunities',
+        noContacts: 'No contacts for this customer yet.',
+        noOpportunities: 'No opportunities for this customer yet.',
+        notFound: 'This customer no longer exists.',
+      },
+      form: {
+        name: 'Name',
+        nameRequired: 'Enter a name.',
+        nameTooLong: 'Use at most 128 characters.',
+        industry: 'Industry',
+        industryTooLong: 'Use at most 64 characters.',
+      },
+    },
+    contacts: {
+      title: 'Contacts',
+      description: 'The people you work with at each customer.',
+      new: 'New contact',
+      empty: {
+        title: 'No contacts yet',
+        description: 'Add a contact and choose the customer they belong to.',
+      },
+      columns: {
+        name: 'Name',
+        customer: 'Customer',
+        phone: 'Phone',
+        email: 'Email',
+      },
+      create: {
+        title: 'New contact',
+        success: 'Contact "{{name}}" created.',
+      },
+      edit: {
+        title: 'Edit contact',
+        success: 'Contact "{{name}}" saved.',
+        notFound: 'This contact no longer exists.',
+      },
+      form: {
+        name: 'Name',
+        nameRequired: 'Enter a name.',
+        nameTooLong: 'Use at most 128 characters.',
+        customer: 'Customer',
+        customerRequired: 'Choose a customer.',
+        phone: 'Phone',
+        phoneTooLong: 'Use at most 32 characters.',
+        email: 'Email',
+        emailTooLong: 'Use at most 128 characters.',
+        noCustomers: 'Add a customer first: every contact belongs to one.',
+      },
+    },
+    opportunities: {
+      title: 'Opportunities',
+      description:
+        'Deals in progress, their expected amount and the stage they reached.',
+      new: 'New opportunity',
+      empty: {
+        title: 'No opportunities yet',
+        description: 'Add the first deal to start tracking its amount.',
+        filtered: 'No opportunities match this stage.',
+      },
+      columns: {
+        name: 'Name',
+        customer: 'Customer',
+        amount: 'Expected amount',
+        stage: 'Stage',
+      },
+      create: {
+        title: 'New opportunity',
+        success: 'Opportunity "{{name}}" created.',
+      },
+      edit: {
+        title: 'Edit opportunity',
+        success: 'Opportunity "{{name}}" saved.',
+        notFound: 'This opportunity no longer exists.',
+      },
+      filter: {
+        all: 'All stages',
+        label: 'Filter by stage',
+      },
+      stage: {
+        following: 'In progress',
+        won: 'Won',
+        lost: 'Lost',
+      },
+      form: {
+        name: 'Name',
+        nameRequired: 'Enter a name.',
+        nameTooLong: 'Use at most 128 characters.',
+        customer: 'Customer',
+        customerRequired: 'Choose a customer.',
+        amount: 'Expected amount',
+        amountRequired: 'Enter an amount.',
+        amountInvalid: 'Enter a number.',
+        amountNegative: 'The amount cannot be negative.',
+        stage: 'Stage',
+        noCustomers: 'Add a customer first: every opportunity belongs to one.',
+      },
+    },
   },
 };
 
