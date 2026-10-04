@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "inputHash": "eed9f46fc5e91e3cf59d79dd16c82b9f4971a19a5e3280ac217a1035fd43cc62",
+  "inputHash": "07f36a6a7f57dc79cc2118e326314bdf8c31112d14fe747609d133c0397a8042",
   "findings": [
     {
       "id": "460:36434284393:1:F2",
@@ -7904,6 +7904,167 @@
         }
       ],
       "fingerprint": "5b6f6e2fd7986c2bbc1ed707fdea1d9565f865b16c38e6a4816ed212a1f9c4fb"
+    },
+    {
+      "id": "545:37172547326:1:F2",
+      "report": "545:37172547326:1",
+      "issue": 545,
+      "taskTitle": "设备售后服务与巡检协同系统（综合业务案例）",
+      "appVersion": "1.0.0-beta.50",
+      "appTemplate": "@nocobase/app-template-default",
+      "finding": {
+        "id": "F2",
+        "kind": "improvement",
+        "owner": "documentation",
+        "confidence": "confirmed",
+        "severity": "minor",
+        "status": "open",
+        "title": "nocobase-db Skill 未说明 datetime 字段拒绝 date-only 字符串输入",
+        "detail": "实现中 normalizeTemporalValue 对 datetime 字段的裸 YYYY-MM-DD 会抛 RepositoryError(INVALID_MUTATION)（要求 V1 时间值、至多毫秒精度），函数虽已公开导出，但 SKILL.md 未提示该边界。应用因此自写 normalizeTemporal 做归一。",
+        "impact": "Agent 直接用表单日期字符串写 datetime 字段会得到较难定位的 INVALID_MUTATION。",
+        "suggestedChange": "在 nocobase-db Skill 的时间字段章节补充：datetime 需完整时间值（Date/ISO），纯日期应使用 date 类型或先归一；并示例 normalizeTemporalValue 的公开用法。",
+        "evidence": [
+          "E8",
+          "E10",
+          "E11"
+        ],
+        "diagnosis": {
+          "category": "guidance-gap",
+          "trigger": "以裸 YYYY-MM-DD 字符串写入 datetime 字段",
+          "expected": "Skill 应提示 datetime 的值格式边界或推荐 date 类型/normalizeTemporalValue",
+          "actual": "实现抛 RepositoryError(INVALID_MUTATION)，Skill 未说明，应用自写归一化",
+          "workaround": "应用自写 normalizeTemporal 将日期转为时间戳",
+          "acceptance": "在 Skill 中补充 datetime 值格式说明与公开归一化示例"
+        }
+      },
+      "targets": [
+        "@nocobase/db",
+        "app/.agents/skills/nocobase-db"
+      ],
+      "paths": [
+        ".agents/skills/nocobase-db/SKILL.md",
+        "packages/@nocobase/db/dist/src/repository/temporal.js"
+      ],
+      "evidence": [
+        {
+          "id": "E8",
+          "kind": "code",
+          "path": "packages/@nocobase/db/dist/src/repository/temporal.js",
+          "observation": "normalizeTemporalValue 对非法时间值抛 RepositoryError(INVALID_MUTATION)，要求 V1 时间值且至多毫秒精度。",
+          "lines": [
+            37,
+            39
+          ],
+          "excerpt": "export function normalizeTemporalValue(field, input, code = 'INVALID_MUTATION', path = ['values', field.name]) {\n    const fail = () => {\n        throw new RepositoryError(code, `Invalid ${field.type} value for Field \"${field.name}\". Expected a valid V1 temporal value with at most millisecond precision.`, { field: field.name, path });",
+          "sha256": "e68ea624afbae1538d8a0fecc4af0fb5ee1e8ca2fa4af0594fea6b024febb66e"
+        },
+        {
+          "id": "E10",
+          "kind": "skill",
+          "path": "app/.agents/skills/nocobase-db/SKILL.md",
+          "observation": "nocobase-db Skill 列出 Repository 方法、空 scope/嵌套写入边界与 writePolicy 默认值。",
+          "lines": [
+            240,
+            248
+          ],
+          "excerpt": "The methods are `findOne`, `findMany`, `count`, `exists`, `aggregate`, `groupBy`, `createOne`, `createMany`, `updateOne`, `updateMany`, `upsertOne`, `deleteOne` and `deleteMany`; `describeMutation` and `validateMutation` report capabilities and pre-validate input, and `withPolicy` returns a scoped Repository.\n\nBoundaries that are easy to get wrong:\n\n- `findOne` takes the first match; `updateOne` and `deleteOne` require exactly one; `upsertOne` requires a unique equality condition.\n- `updateMany` and `deleteMany` refuse an empty scope. Pass `all: true` only when the task explicitly calls for every row — never to make an error go away.\n- `createMany` and `updateMany` do not accept nested relation writes. `createOne` accepts `create` and `connect` on a relation, not the full set.\n- `disconnect` detaches; `delete` removes the target record. A relation target update or delete stays inside the current parent record's scope.\n- Repository does not apply the application's permissions. A route handler decides what the caller may see and change _before_ anything reaches `filter`, `values` or `select`. `writePolicy` defaults to `true` for an internal Repository and `false` for one reached from an API route, so a route-facing Repository needs an explicit allow list.",
+          "sha256": "f97c07a45a9d49c1d933ddbceeabcc9afe267b1356a2ded1a3da0dd56b54011c"
+        },
+        {
+          "id": "E11",
+          "kind": "code",
+          "path": "app/server/service/catalog-service.ts",
+          "observation": "应用自写 normalizeTemporal 把日期输入归一为时间戳供时间字段使用。",
+          "lines": [
+            133,
+            141
+          ],
+          "excerpt": " * `datetime`. Normalizing here keeps both the browser form and a direct API\n * call working instead of failing the repository's temporal validation. A\n * date-only value is anchored at UTC midnight so it round-trips unchanged\n * through the date inputs that read it back.\n */\nfunction normalizeTemporal(value: unknown): string | null {\n  if (value === undefined || value === null || value === '') return null;\n  if (typeof value !== 'string') return null;\n  const trimmed = value.trim();",
+          "sha256": "08baf4cdd882765ee0ed1a8b6ddc28263dad6a9a3e7ffc02205fd96059f01477"
+        }
+      ],
+      "fingerprint": "4f8639bd85cd4298693d4d0754a9ff7f80edcd8780f28ca37dad4fc7bca07497"
+    },
+    {
+      "id": "545:37172547326:1:F4",
+      "report": "545:37172547326:1",
+      "issue": 545,
+      "taskTitle": "设备售后服务与巡检协同系统（综合业务案例）",
+      "appVersion": "1.0.0-beta.50",
+      "appTemplate": "@nocobase/app-template-default",
+      "finding": {
+        "id": "F4",
+        "kind": "improvement",
+        "owner": "plugin",
+        "confidence": "confirmed",
+        "severity": "minor",
+        "status": "open",
+        "title": "文件内容字节路由默认公开，可由应用遗漏鉴权",
+        "detail": "app-plugin-file 的 routes.js 自带注释说明内容路由是“公开的初版路由，认证授权由应用拥有”，File Skill 也要求应用逐路径补认证。应用确实在 /uploads/ticket-files/* 上叠加了 auth+authorization，但该安全边界依赖每一步都记得补挂。",
+        "impact": "若应用漏挂中间件，附件字节将可被无权用户直接读取。",
+        "suggestedChange": "在保留公开路由的同时，提供显式的“默认需要认证、可选 public 开启”注册选项，或在注册时对未覆盖的 accessPath 发出警告。",
+        "evidence": [
+          "E28",
+          "E30",
+          "E32"
+        ],
+        "diagnosis": {
+          "category": "usability-improvement",
+          "trigger": "注册文件内容路由后未显式加认证授权",
+          "expected": "默认安全或注册期告警，降低遗漏概率",
+          "actual": "默认公开，完全依赖应用在每个 accessPath 补挂中间件",
+          "workaround": "应用在 API 与 accessPath 上分别挂 auth+authorization 并按可见范围校验",
+          "acceptance": "提供默认需认证的注册选项或未覆盖 accessPath 的注册期告警"
+        }
+      },
+      "targets": [
+        "@nocobase/app-plugin-file",
+        "app/.agents/skills/nocobase-app-plugin-file"
+      ],
+      "paths": [
+        ".agents/skills/nocobase-app-plugin-file/SKILL.md",
+        "packages/@nocobase/app-plugin-file/dist/server/repository.js",
+        "packages/@nocobase/app-plugin-file/dist/server/routes.js"
+      ],
+      "evidence": [
+        {
+          "id": "E28",
+          "kind": "code",
+          "path": "packages/@nocobase/app-plugin-file/dist/server/routes.js",
+          "observation": "文件插件明确内容字节路由为“公开的初版路由，认证授权由应用拥有”，并给出 unwritablePolicy。",
+          "lines": [
+            10,
+            30
+          ],
+          "excerpt": "/**\n * The base Policy for the paths that neither write nor scope what they read:\n * the public byte route, and the middleware that decorates a CRUD response\n * with a content URL.\n *\n * `uploadPolicy` reads every file column whatever base it is handed, and none\n * of these paths writes, so granting nothing is the honest base. It also keeps\n * the application's principal resolver from running a second time on a request\n * the CRUD routes have already resolved it for.\n */\nconst unwritablePolicy = {\n    read: false,\n    create: false,\n    update: false,\n    delete: false,\n};\n/** Public first-version routes. Authentication and authorization are application-owned. */\nexport function defineFileRepositoryApiRoutes(options) {\n    const paths = [];\n    const entries = options.repositories.map((entry) => {\n        const accessPath = normalizeAccessPath(entry.accessPath ?? `/uploads/${entry.name}`);",
+          "sha256": "6982c2d56153fe60426c48783c0653f4224691075e1c95a3d6e39f7405a46025"
+        },
+        {
+          "id": "E30",
+          "kind": "code",
+          "path": "packages/@nocobase/app-plugin-file/dist/server/repository.js",
+          "observation": "uploadPolicy/normalizeAccessPath 定义上传字段与读范围，Repository 默认拒绝写。",
+          "lines": [
+            32,
+            45
+          ],
+          "excerpt": "export function uploadPolicy(base) {\n    const create = base.create === true || base.create === false\n        ? base.create\n        : {\n            scope: base.create.scope,\n            defaults: base.create.defaults,\n            fields: FILE_COLUMNS,\n            relations: {},\n        };\n    // `read` serves this path's own returning record and the public byte route,\n    // both of which need every column. `update` and `delete` never run here.\n    return {\n        create,\n        read: { scope: true, fields: FILE_COLUMNS, relations: {} },",
+          "sha256": "3e3a1d1f33208ae8e7038c8afa89149195897db3679edbad860a379e80ce8fb1"
+        },
+        {
+          "id": "E32",
+          "kind": "skill",
+          "path": "app/.agents/skills/nocobase-app-plugin-file/SKILL.md",
+          "observation": "File Skill 要求应用在受限路径上自行注册认证/授权，逐路径覆盖，禁止 router.use(\"*\")，不得用登录页/私有磁盘代替鉴权。",
+          "lines": [
+            126,
+            126
+          ],
+          "excerpt": "These are public routes. For restricted files, register App-owned authentication and authorization on the paths each contribution owns before mounting it — `/<name>:<action>` per exposed API action, `<accessPath>/*` for content. Never `router.use('*', ...)` in a contribution router: contributions share the mounted router, so it also guards the SPA and every contribution mounted after yours. Check the operation and record/parent-record access; a login page, private disk, Client filter or Policy field allowlist is not authentication. Add scoped middleware and principal-based Policy to the generated routes first. If an existing contract needs an adapter, extend that module using the public Server manager and retain its authorization checks; missing built-in authentication alone is not a reason to replace the routes. Never trust browser-supplied ownership.",
+          "sha256": "06b464d71554a3ae12819918f98a84f44c65c2b70e7fbfcffd17e992e57aed22"
+        }
+      ],
+      "fingerprint": "53df0a15fc9cf8a9fd03b613d4d54b672b1b153892d1fdcc969508f209c78235"
     }
   ]
 }
