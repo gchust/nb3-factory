@@ -1,4 +1,4 @@
-import { Home } from 'lucide-react';
+import { Home, Wrench } from 'lucide-react';
 import {
   defineAppRoutes,
   defineSettingsRoutes,
@@ -15,6 +15,25 @@ const appRoutes: AppClientRouteContribution = defineAppRoutes([
     name: 'home',
     navigation: { title: 'navigation.home', icon: Home },
     path: '/',
+  },
+  {
+    // The IT repair workspace. Every signed-in user reaches the landing page, but this one is a page grant: an
+    // administrator gives a colleague `tickets-employee` or `tickets-handler` before the menu entry appears.
+    auth: 'required',
+    authz: { resource: { type: 'page', id: 'tickets' }, action: 'access' },
+    componentLoader: () => import('./pages/tickets/index.js'),
+    name: 'tickets',
+    navigation: { title: 'navigation.tickets', icon: Wrench },
+    path: '/tickets',
+  },
+  {
+    // The direct address of one ticket. It is a page of its own rather than a child of the list so that opening a
+    // link — including one an employee must not read — resolves here, where the server decides what to return.
+    auth: 'required',
+    authz: { resource: { type: 'page', id: 'tickets' }, action: 'access' },
+    componentLoader: () => import('./pages/tickets/detail.js'),
+    name: 'ticket-detail',
+    path: '/tickets/:ticketId',
   },
   {
     auth: 'guest',
