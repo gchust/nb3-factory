@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "inputHash": "eed9f46fc5e91e3cf59d79dd16c82b9f4971a19a5e3280ac217a1035fd43cc62",
+  "inputHash": "07f36a6a7f57dc79cc2118e326314bdf8c31112d14fe747609d133c0397a8042",
   "sources": [
     {
       "id": "460:36434284393:1:F2",
@@ -441,6 +441,16 @@
       "id": "544:37156757587:1:F5",
       "report": "544:37156757587:1",
       "fingerprint": "5b6f6e2fd7986c2bbc1ed707fdea1d9565f865b16c38e6a4816ed212a1f9c4fb"
+    },
+    {
+      "id": "545:37172547326:1:F2",
+      "report": "545:37172547326:1",
+      "fingerprint": "4f8639bd85cd4298693d4d0754a9ff7f80edcd8780f28ca37dad4fc7bca07497"
+    },
+    {
+      "id": "545:37172547326:1:F4",
+      "report": "545:37172547326:1",
+      "fingerprint": "53df0a15fc9cf8a9fd03b613d4d54b672b1b153892d1fdcc969508f209c78235"
     }
   ],
   "groups": [
@@ -849,15 +859,29 @@
       "members": [
         "544:37156757587:1:F5"
       ]
+    },
+    {
+      "title": "nocobase-db Skill 未说明 datetime 字段拒绝 date-only 字符串输入",
+      "reason": "单条保留：545:F2（E8/E10/E11）显示 normalizeTemporalValue 对 datetime 字段的裸 YYYY-MM-DD 抛 RepositoryError(INVALID_MUTATION)，要求 V1 时间值且至多毫秒精度，而 nocobase-db SKILL.md 未提示该输入边界，应用只能自写 normalizeTemporal 做归一。该缺口属时间字段值格式的独立文档问题，与 decimal 方言返回类型未文档化（473:F2）、SQLite 将 Date 绑定为 epoch 毫秒（533:F2）、uuid 主键需调用方提供 id（543:F5）等根因不同，无可合并成员，故单独保留。",
+      "members": [
+        "545:37172547326:1:F2"
+      ]
+    },
+    {
+      "title": "文件内容字节路由默认公开，应用须逐路径补挂鉴权，易遗漏",
+      "reason": "单条保留：545:F4（E28/E30/E32）显示 app-plugin-file 的 routes.js 把内容字节路由定义为公开的初版路由、认证授权由应用拥有，安全边界完全依赖应用在每个 accessPath 补挂中间件；其期望与修复方向是更安全的默认或注册期告警。这与 519:F4/543:F2 的“缺少一等鉴权/主体读取入口、应用被迫重写受保护字节路由”能力缺口不同，也与 531:F3 的机制/示例缺失、519:F3 的指引冲突不同，根因与修复方向均不一致，故单独保留。",
+      "members": [
+        "545:37172547326:1:F4"
+      ]
     }
   ],
   "classifier": {
     "engine": "pi",
     "model": "deepseek-v4.1-flash",
     "version": "0.86.1",
-    "runId": "37169639340",
+    "runId": "37175046116",
     "attempt": 1,
     "controlSha": "0f72d9b81f981f10501c5ac0ee0e7d786f1f4698",
-    "completedAt": "2026-10-04T02:00:36.396Z"
+    "completedAt": "2026-10-04T03:52:13.725Z"
   }
 }
