@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "inputHash": "9c9c34694ba015c84fc64aa900647e66ffdb0d8d2ccbb73d274fc44c0e4a0d5c",
+  "inputHash": "24351d38847d5133e377f6ec89f1421a316212ea9bdab3df03a9a5355a137979",
   "sources": [
     {
       "id": "460:36434284393:1:F2",
@@ -396,28 +396,50 @@
       "id": "533:37094050741:1:F5",
       "report": "533:37094050741:1",
       "fingerprint": "ae2a16b7b67631391e53e99840c1c3b4575ea06b92040d0b0efe7d80d0052311"
+    },
+    {
+      "id": "543:37156754926:1:F2",
+      "report": "543:37156754926:1",
+      "fingerprint": "6dcf4db482c45284a1b29471a30a09d58f7218c2a922c516ed7e8bcc8f4b090b"
+    },
+    {
+      "id": "543:37156754926:1:F3",
+      "report": "543:37156754926:1",
+      "fingerprint": "b859774c11be9239229adf3b7baefd1277b3be5bdfbee931e31fa7e677cca453"
+    },
+    {
+      "id": "543:37156754926:1:F4",
+      "report": "543:37156754926:1",
+      "fingerprint": "44b03a5c1d5c666f9aeeaf3aaaa063142c5c179ceafe144aba5ca6b188aee407"
+    },
+    {
+      "id": "543:37156754926:1:F5",
+      "report": "543:37156754926:1",
+      "fingerprint": "3a762796c7997470589232fadb2c9d6d91eb9cce08ff27da67481af1ffbf8729"
     }
   ],
   "groups": [
     {
       "title": "Registry OOXML 预览缺少加载/渲染超时与看门狗，viewer 不收敛时永久停在 Loading",
-      "reason": "跨报告合并。463:F1（E69/E70/E91）、476:F2（E10/E11）、478:F4（E8/E9/E12）、507:F2（E1/E2/E52）均指向 registry/component-ui 的 OfficeOpenXmlPreview：只 await viewer.load、未向 createOfficeOpenXmlViewer 传 workerTimeoutMs，effect 也无超时，worker 静默挂起时 onError 不触发，界面长期停在 Loading；触发条件、期望（超时后失败回退+下载）与修复位置一致。",
+      "reason": "跨报告合并。463:F1（E69/E70/E91）、476:F2（E10/E11）、478:F4（E8/E9/E12）、507:F2（E1/E2/E52）、543:F4（E5/E6）均指向 registry/component-ui 的 OfficeOpenXmlPreview：只 await viewer.load、未向 createOfficeOpenXmlViewer 传 workerTimeoutMs，effect 也无超时，worker 静默挂起时 onError 不触发，界面长期停在 Loading；543:F4 进一步比对该分支与旧 Office iframe 的 OFFICE_PREVIEW_TIMEOUT_MS，确认 ooxml 分支没有加载超时。触发条件、期望（超时后失败回退+下载）与修复位置一致。",
       "members": [
         "463:36434310207:1:F1",
         "476:36498929142:1:F2",
         "478:36522310216:1:F4",
-        "507:36787396720:1:F2"
+        "507:36787396720:1:F2",
+        "543:37156754926:1:F4"
       ]
     },
     {
       "title": "Registry 图片/PDF 预览分支缺少解码失败态，损坏文件只显示破图",
-      "reason": "跨报告合并。463:F2（E71/E86）、476:F1（E9/E38）、507:F3（E3/E4）、519:F5（E28/E34）、531:F2（E39/E56）均记录 file-preview-content.tsx 的 image（531 还含 pdf）分支直接渲染裸 <img>/<iframe>，无 onError 与失败文案，损坏 PNG 只得到浏览器破图；与同文件 Office 分支的失败/回退模型不一致，修复方向相同。",
+      "reason": "跨报告合并。463:F2（E71/E86）、476:F1（E9/E38）、507:F3（E3/E4）、519:F5（E28/E34）、531:F2（E39/E56）、543:F3（E5/E25）均记录 file-preview-content.tsx 的 image（531 还含 pdf/audio/video）分支直接渲染裸 <img>，无 onError 与失败文案，损坏 PNG 只得到浏览器破图；与同文件 Office 分支的失败/回退模型不一致，修复方向相同（内建 onError + 本地化失败提示 + 下载回退）。",
       "members": [
         "463:36434310207:1:F2",
         "476:36498929142:1:F1",
         "507:36787396720:1:F3",
         "519:36938138067:1:F5",
-        "531:37074013613:1:F2"
+        "531:37074013613:1:F2",
+        "543:37156754926:1:F3"
       ]
     },
     {
@@ -730,13 +752,6 @@
       ]
     },
     {
-      "title": "defineFileRepositoryApiRoutes 没有一等的受限内容入口，受保护字节只能靠顺序敏感的自定义守卫",
-      "reason": "单条保留：519:F4 的 E5/E7/E19/E20/E24 显示内容路由固定公开、无声明式鉴权入口，属独立能力缺口。",
-      "members": [
-        "519:36938138067:1:F4"
-      ]
-    },
-    {
       "title": "指引可显式说明运行时 schema 探查应走框架 API 而非原始 SQL 驱动",
       "reason": "单条保留：528:F5 的 E6/E44 显示 Agent 用原始驱动探查导致 no such column，属独立操作指引缺口。",
       "members": [
@@ -777,15 +792,30 @@
       "members": [
         "533:37094050741:1:F5"
       ]
+    },
+    {
+      "title": "defineFileRepositoryApiRoutes/ServerFileRepository 缺少一等的主体感知内容读取与鉴权入口，应用被迫重写受保护字节路由",
+      "reason": "跨报告合并。519:F4（E5/E7/E19/E20/E24）显示内容路由固定绑定公开的 unwritablePolicy、注释声明 authentication/authorization application-owned，上传动作默认只在缺 principal 时返回 403，受保护字节只能靠顺序敏感的自定义根守卫；543:F2（E3/E4/E16/E22）显示 FileOperations 仅暴露 validateCollection/uploadOne/uploadMany/getUrl/getStorageUrl，没有按主体读取内容的方法，应用只能自建 material-content 根路由并逐行复制 UUID 校验、ownerId 过滤、404 语义与 nosniff/CSP/Content-Disposition。两者同为“受保护内容没有可注入主体过滤的一等入口”，修复方向一致：在 defineFileRepositoryApiRoutes 或 ServerFileRepositoryManager/FileOperations 上提供可注入的认证/授权与主体读取钩子。",
+      "members": [
+        "519:36938138067:1:F4",
+        "543:37156754926:1:F2"
+      ]
+    },
+    {
+      "title": "nocobase-db Skill 未说明 uuid 主键无数据库默认值时须由调用方提供 id",
+      "reason": "单条保留：543:F5（E10/E18/E20/E24）显示 collection.uuid(\"id\").primary() 未声明数据库默认值时，createdRecordSelector 只为 autoIncrement/increments 回填生成的 id，createOne 省略 id 会抛 INVALID_UNIQUE_SELECTOR，应用只能每次显式 randomUUID()；Skill 的边界清单仅提醒不要假设 id 存在，属独立指引缺口，与 createdAt 未自动填充、用户名长度、decimal 类型等其它文档问题根因不同，单独保留。",
+      "members": [
+        "543:37156754926:1:F5"
+      ]
     }
   ],
   "classifier": {
     "engine": "pi",
     "model": "deepseek-v4.1-flash",
     "version": "0.86.1",
-    "runId": "37111241822",
+    "runId": "37167941037",
     "attempt": 1,
     "controlSha": "0f72d9b81f981f10501c5ac0ee0e7d786f1f4698",
-    "completedAt": "2026-10-03T08:58:14.243Z"
+    "completedAt": "2026-10-04T01:28:30.363Z"
   }
 }
