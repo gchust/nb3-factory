@@ -20,6 +20,8 @@ import {
 } from '@nocobase/app-server/runtime';
 import { spaRootRoutes } from '@nocobase/app-server/spa';
 
+import { ticketFileGuard } from './routes/files.js';
+
 export function createApp(runtime: AppRuntimeContext): Application {
   const app = createAppFromRuntime(runtime);
 
@@ -35,6 +37,9 @@ export function createApp(runtime: AppRuntimeContext): Application {
   app.addHttpMiddleware(sessionHttpMiddleware);
   app.addHttpMiddleware(i18nHttpMiddleware);
   app.addRoutes(healthCheckApiRoutes);
+  // The file plugin leaves authentication to the application, so the App owns
+  // the guard for ticket attachments (added before any route contribution).
+  app.addHttpMiddleware(ticketFileGuard);
   app.addRuntimeContributions(runtime);
   app.addRoutes(spaRootRoutes);
 

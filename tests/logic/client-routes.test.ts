@@ -91,9 +91,18 @@ describe('app client routes', () => {
     // that requires sign-in adds an entry here, because that is a new grant somebody has to be given.
     const resolved = resolveRoutes();
 
-    // The landing page opted out of page authorization, so it is reachable by every signed-in user.
+    // The landing page opted out of page authorization, so it is reachable by every signed-in user. The service
+    // module grants its own pages; the ticket detail inherits the tickets page guard from its parent.
     expect(pageAuthorizations(resolved.routes)).toEqual([
       { name: 'home', authorizedAs: null },
+      { name: 'service-dashboard', authorizedAs: 'service-dashboard' },
+      { name: 'service-customers', authorizedAs: 'service-customers' },
+      { name: 'service-devices', authorizedAs: 'service-devices' },
+      { name: 'service-tickets', authorizedAs: 'service-tickets' },
+      { name: 'service-ticket-detail', authorizedAs: 'service-tickets' },
+      { name: 'service-inspections', authorizedAs: 'service-inspections' },
+      { name: 'service-knowledge', authorizedAs: 'service-knowledge' },
+      { name: 'service-assistant', authorizedAs: 'service-assistant' },
     ]);
   });
 });
