@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "inputHash": "07f36a6a7f57dc79cc2118e326314bdf8c31112d14fe747609d133c0397a8042",
+  "inputHash": "09cccef7cb8deb98814540beaac977374051cbc64613635139fed661bad59f6d",
   "sources": [
     {
       "id": "460:36434284393:1:F2",
@@ -451,6 +451,16 @@
       "id": "545:37172547326:1:F4",
       "report": "545:37172547326:1",
       "fingerprint": "53df0a15fc9cf8a9fd03b613d4d54b672b1b153892d1fdcc969508f209c78235"
+    },
+    {
+      "id": "552:37238845336:1:F2",
+      "report": "552:37238845336:1",
+      "fingerprint": "39875c47f6b79a2ddcdee5c47926a6b977bf469829131d27d19784492b7f963d"
+    },
+    {
+      "id": "552:37238845336:1:F4",
+      "report": "552:37238845336:1",
+      "fingerprint": "b7620ab7cef68bd075aa560d6b034eb4c81b23fbc4da274c19e110e60c0dca4f"
     }
   ],
   "groups": [
@@ -489,10 +499,11 @@
     },
     {
       "title": "nocobase-db Skill 声明种子不是示例数据，却未说明演示数据落点与非唯一键幂等写法",
-      "reason": "跨报告合并。460:F2（E30/E31/E72）与 490:F5（E17/E27）都显示 SKILL 明确 seed 不是样例/演示内容并以唯一约束+upsertOne 为唯一幂等范式，但都未给出演示数据位置，也无非唯一键幂等写法，Agent 分别用 ensure(findOne/createOne) 与 count()>0 守卫往正式 seeds 写样例数据；同一缺口与同一修复方向。",
+      "reason": "跨报告合并。460:F2（E30/E31/E72）与 490:F5（E17/E27）都显示 SKILL 明确 seed 不是样例/演示内容，并以唯一约束+upsertOne 为唯一幂等范式，但都未给出演示数据位置，也无非唯一键幂等写法：Agent 分别用 ensure(findOne/createOne) 与 count()>0 守卫往正式 seeds 写样例数据。552:F2（E20/E21/E22/E30/E33/E34）在 nocobase-db/SKILL.md、migrations.md 与 code-and-seeds.md 三处同样只禁止 seed 承载样例/演示内容而未给第一方落点，Agent 只能把 2 客户/3 联系人/3 商机写进 202610050004_seed_sales_sample_data.ts 且未按唯一约束保证幂等。三者同一缺口、同一修复方向。",
       "members": [
         "460:36434284393:1:F2",
-        "490:36575632059:1:F5"
+        "490:36575632059:1:F5",
+        "552:37238845336:1:F2"
       ]
     },
     {
@@ -873,15 +884,22 @@
       "members": [
         "545:37172547326:1:F4"
       ]
+    },
+    {
+      "title": "无权限模型应用的最小授权做法在指引中缺失且口径不一致",
+      "reason": "单独保留。552:F4（E28/E29/E35/E38）显示 authorization.md 把首个页面的 authz 取值之一 skip 列为可选，而 app-plugin-authorization 的 client-development.md 又要求业务页 never skip；对“明确不使用授权插件、无多级权限区分”的应用，两份指引缺少一致的最小端点/页面声明口径。其余发现均不涉及 authz 的 skip 取值或最小授权接入，证据不足以并入任何既有组，故单独保留。",
+      "members": [
+        "552:37238845336:1:F4"
+      ]
     }
   ],
   "classifier": {
     "engine": "pi",
     "model": "deepseek-v4.1-flash",
     "version": "0.86.1",
-    "runId": "37175046116",
+    "runId": "37244535133",
     "attempt": 1,
     "controlSha": "0f72d9b81f981f10501c5ac0ee0e7d786f1f4698",
-    "completedAt": "2026-10-04T03:52:13.725Z"
+    "completedAt": "2026-10-04T23:42:58.664Z"
   }
 }
