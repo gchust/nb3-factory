@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 
 import {
@@ -43,6 +43,13 @@ function file(ext: string): FileRecord {
   };
 }
 
+function imageFile(): FileRecord {
+  return {
+    ...file('png'),
+    mimeType: 'image/png',
+  };
+}
+
 beforeEach(() => {
   viewer.load.mockReset().mockResolvedValue(undefined);
   viewer.destroy.mockReset();
@@ -78,6 +85,23 @@ it.each(['docx', 'xlsx', 'pptx'])(
     expect(viewer.destroy).toHaveBeenCalledOnce();
   },
 );
+
+it('explains a corrupt image instead of presenting the filename as a preview', async () => {
+  const image = imageFile();
+  render(<FilePreviewDialog files={[image]} open onOpenChange={vi.fn()} />);
+
+  const element = await screen.findByRole('img');
+  fireEvent.error(element);
+
+  // The failure is reported in place: the alert says the content is damaged, and it is not merely the filename the
+  // browser could not decode standing in for a successful preview.
+  const alert = await screen.findByRole('alert');
+  expect(alert).not.toHaveTextContent(image.filename);
+  expect(alert).toHaveTextContent(/damaged|not a readable/u);
+  expect(
+    screen.getAllByRole('button', { name: /Download/u }).length,
+  ).toBeGreaterThan(0);
+});
 
 it('shows the denied content response without trying a third-party viewer', async () => {
   vi.stubGlobal(

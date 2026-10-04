@@ -104,6 +104,7 @@ const zhCN: AppResource = {
   actions: {
     close: '关闭',
     save: '保存',
+    saving: '保存中…',
     cancel: '取消',
     confirm: '确认',
     language: '语言',
@@ -121,12 +122,52 @@ const zhCN: AppResource = {
   },
   navigation: {
     home: '首页',
+    materials: '项目资料',
     open: '打开导航',
     close: '关闭导航',
     expand: '展开导航',
     collapse: '收起导航',
     label: '应用导航',
     breadcrumb: '面包屑',
+  },
+  materials: {
+    title: '项目资料',
+    description: '上传并保存本项目的照片和文档，只有你本人可以看到。',
+    newAction: '新建资料',
+    createTitle: '新建资料',
+    editTitle: '编辑资料',
+    formDescription: '先填写资料标题，再添加 PNG 照片或 DOCX 文档。',
+    titleLabel: '标题',
+    titlePlaceholder: '例如：现场勘察照片',
+    titleRequired: '标题不能为空。',
+    attachmentsLabel: '附件（PNG 或 DOCX）',
+    saveFailed: '资料保存失败。',
+    uploadFailed: '附件上传失败。',
+    waitForUpload: '请等待上传完成后再保存。',
+    created: '资料已创建。',
+    updated: '资料已更新。',
+    deleted: '资料已删除。',
+    deleteFailed: '资料删除失败。',
+    deleting: '正在删除…',
+    loadFailedTitle: '资料加载失败',
+    loadFailedDescription: '请检查网络后重试，你已保存的内容不会被删除。',
+    retry: '重试',
+    emptyTitle: '暂无资料',
+    emptyDescription: '上传一张 PNG 照片或一份 DOCX 文档，并填写标题。',
+    attachmentCount: '附件：{{count}} 个',
+    viewAction: '查看',
+    editAction: '编辑',
+    deleteAction: '删除',
+    deleteTitle: '删除这条资料？',
+    deleteDescription:
+      '将删除“{{title}}”及其附件关联，已上传的文件本身保留在文件库中。',
+    savedAt: '保存于 {{date}}',
+    noAttachments: '这条资料还没有附件。',
+    preview: '预览',
+    download: '下载',
+    attachmentBrokenTitle: '该图片无法显示',
+    attachmentBrokenDescription:
+      '文件已保存，但内容已损坏或不是可读取的 PNG，无法预览。可下载后自行查看。',
   },
   dataTable: {
     noResults: '暂无数据。',
@@ -146,6 +187,13 @@ const zhCN: AppResource = {
   datePicker: {
     placeholder: '选择日期',
     rangePlaceholder: '选择日期范围',
+  },
+  overrides: {
+    '@nocobase/app-plugin-file': {
+      'files.imageFailed': '该图片无法显示',
+      'files.imageFailedDescription':
+        '文件已保存，但已损坏或不是可读取的图片，无法预览。可下载后自行查看。',
+    },
   },
 };
 

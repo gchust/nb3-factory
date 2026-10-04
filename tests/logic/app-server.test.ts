@@ -134,6 +134,23 @@ function requestApp(
   return app.fetch(request);
 }
 
+/** A minimal valid PNG, enough for the byte route to serve and an `<img>` to decode. */
+const PNG_BYTES = Buffer.from(
+  'iVBORw0KGgoAAAANSUhEUgAAAEAAAAAwCAIAAAAuKetIAAAAQ0lEQVR42u3PQQkAAAgEsCtjMuNbwgp+hcEKLNXzWgQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQErhasnmUAumnCFwAAAABJRU5ErkJggg==',
+  'base64',
+);
+
+/** One multipart upload body, with the `file` field the File Repository's `uploadOne` action expects. */
+function uploadBody(
+  filename: string,
+  mimeType: string,
+  bytes: Uint8Array,
+): FormData {
+  const form = new FormData();
+  form.append('file', new Blob([bytes], { type: mimeType }), filename);
+  return form;
+}
+
 afterEach(async () => {
   vi.unstubAllEnvs();
   await Promise.all(apps.splice(0).map((app) => app.close()));
@@ -727,6 +744,230 @@ describe('app server', () => {
       headers: { 'x-api-key': key.key },
     });
     expect(rejected.status).toBe(401);
+  });
+
+  it('keeps seeded materials and their attachments private to their owner', async () => {
+    const app = trackCloseable(
+      await createInstalledStandaloneServer({
+        viteDevUrl: false,
+        // The write endpoints check the request Origin against the application's own origin, so the test has to
+        // declare one; without a configured URL Better Auth has nothing to compare a browser write against.
+        env: { APP_PUBLIC_ORIGIN: 'http://localhost' },
+      }),
+    );
+    const baseUrl = `http://localhost${app.application.publicBasePath}`;
+    const origin = new URL(baseUrl).origin;
+
+    const signIn = async (username: string): Promise<string> => {
+      const response = await requestApp(
+        app,
+        `${baseUrl}/api/auth/sign-in/username`,
+        {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ username, password: 'Materials123!' }),
+        },
+      );
+      expect(response.status).toBe(200);
+      return response.headers
+        .getSetCookie()
+        .map((header) => header.split(';')[0])
+        .join('; ');
+    };
+
+    const anonymous = await requestApp(app, `${baseUrl}/api/materials`);
+    expect(anonymous.status).toBe(401);
+
+    const clerk = await signIn('clerk.jia');
+    const list = await requestApp(app, `${baseUrl}/api/materials`, {
+      headers: { cookie: clerk },
+    });
+    expect(list.status).toBe(200);
+    const materials = (await list.json()) as {
+      data: {
+        id: string;
+        title: string;
+        attachments: { id: string; filename: string; contentUrl: string }[];
+      }[];
+    };
+    expect(materials.data.map((material) => material.title).sort()).toEqual([
+      'Site acceptance notes',
+      'Site acceptance photos',
+    ]);
+    const photos = materials.data.find(
+      (material) => material.title === 'Site acceptance photos',
+    )!;
+    expect(photos.attachments).toHaveLength(1);
+    const photo = photos.attachments[0]!;
+    expect(photo.filename).toBe('site-photo.png');
+    expect(photo.contentUrl).toBe(
+      `${app.application.publicBasePath}/uploads/materials/${photo.id}.png`,
+    );
+
+    // The read alias a NocoBase 2 probe looks for answers with the same owner-scoped resource.
+    const alias = await requestApp(app, `${baseUrl}/api/materials:list`, {
+      headers: { cookie: clerk },
+    });
+    expect(alias.status).toBe(200);
+
+    // The bytes are served only through the application's authenticated route, with the record's real type.
+    const content = await requestApp(
+      app,
+      `http://localhost${photo.contentUrl}`,
+      {
+        headers: { cookie: clerk },
+      },
+    );
+    expect(content.status).toBe(200);
+    expect(content.headers.get('content-type')).toBe('image/png');
+    const bytes = new Uint8Array(await content.arrayBuffer());
+    expect([...bytes.slice(0, 8)]).toEqual([
+      0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a,
+    ]);
+
+    // The demo set also seeds a file named `.png` that is really text. The server serves those bytes unchanged —
+    // it is the browser that has to notice the image is unreadable, which is why the fixture must stay corrupt.
+    const notes = materials.data.find(
+      (material) => material.title === 'Site acceptance notes',
+    )!;
+    expect(
+      notes.attachments.map((attachment) => attachment.filename).sort(),
+    ).toEqual(['damaged-site-photo.png', 'site-notes.docx']);
+    const damaged = notes.attachments.find(
+      (attachment) => attachment.filename === 'damaged-site-photo.png',
+    )!;
+    const damagedContent = await requestApp(
+      app,
+      `http://localhost${damaged.contentUrl}`,
+      { headers: { cookie: clerk } },
+    );
+    expect(damagedContent.status).toBe(200);
+    expect(damagedContent.headers.get('content-type')).toBe('image/png');
+    await expect(damagedContent.text()).resolves.toContain(
+      'This is not a valid PNG image',
+    );
+
+    // The colleague's account reads nothing: an empty list, a direct record link is a 404, and so are the bytes.
+    const colleague = await signIn('colleague.yi');
+    const colleagueList = await requestApp(app, `${baseUrl}/api/materials`, {
+      headers: { cookie: colleague },
+    });
+    await expect(colleagueList.json()).resolves.toEqual({ data: [] });
+    const colleagueRead = await requestApp(
+      app,
+      `${baseUrl}/api/materials/${photos.id}`,
+      { headers: { cookie: colleague } },
+    );
+    expect(colleagueRead.status).toBe(404);
+    const colleagueBytes = await requestApp(
+      app,
+      `http://localhost${photo.contentUrl}`,
+      { headers: { cookie: colleague } },
+    );
+    expect(colleagueBytes.status).toBe(404);
+    const anonymousBytes = await requestApp(
+      app,
+      `http://localhost${photo.contentUrl}`,
+    );
+    expect(anonymousBytes.status).toBe(401);
+
+    // The title rule is the API's, so a form that lets a blank title through still cannot save one.
+    const missingTitle = await requestApp(app, `${baseUrl}/api/materials`, {
+      method: 'POST',
+      headers: {
+        cookie: clerk,
+        'content-type': 'application/json',
+        origin,
+      },
+      body: JSON.stringify({ title: '   ', attachmentIds: [] }),
+    });
+    expect(missingTitle.status).toBe(400);
+    await expect(missingTitle.json()).resolves.toMatchObject({
+      code: 'TITLE_REQUIRED',
+    });
+
+    const created = await requestApp(app, `${baseUrl}/api/materials`, {
+      method: 'POST',
+      headers: {
+        cookie: clerk,
+        'content-type': 'application/json',
+        origin,
+      },
+      body: JSON.stringify({ title: 'Roof survey', attachmentIds: [] }),
+    });
+    expect(created.status).toBe(201);
+
+    // The upload endpoint is the File Repository's own action, wrapped so only a signed-in user reaches it. Its
+    // `create` policy stamps the owner, and the returned record can then be linked to a material and read back
+    // through the application's authenticated byte route.
+    const upload = await requestApp(
+      app,
+      `${baseUrl}/api/materialFiles:uploadOne`,
+      {
+        method: 'POST',
+        headers: { cookie: clerk, origin },
+        body: uploadBody('roof.png', 'image/png', PNG_BYTES),
+      },
+    );
+    expect(upload.status).toBe(200);
+    const uploaded = (await upload.json()) as {
+      data: {
+        record: { id: string; filename: string; ownerId: string };
+      };
+    };
+    // `ownerId` is the Policy's own default and is not part of the readable projection; that the colleague below
+    // cannot link this upload is what proves the owner was stamped from the session rather than the body.
+    expect(uploaded.data.record.filename).toBe('roof.png');
+    expect(uploaded.data.record.id).toEqual(expect.any(String));
+
+    const anonymousUpload = await requestApp(
+      app,
+      `${baseUrl}/api/materialFiles:uploadOne`,
+      {
+        method: 'POST',
+        headers: { origin },
+        body: uploadBody('roof.png', 'image/png', PNG_BYTES),
+      },
+    );
+    expect(anonymousUpload.status).toBe(401);
+
+    const linked = await requestApp(app, `${baseUrl}/api/materials`, {
+      method: 'POST',
+      headers: {
+        cookie: clerk,
+        'content-type': 'application/json',
+        origin,
+      },
+      body: JSON.stringify({
+        title: 'Roof survey photos',
+        attachmentIds: [uploaded.data.record.id],
+      }),
+    });
+    expect(linked.status).toBe(201);
+    const linkedMaterial = (await linked.json()) as {
+      data: { attachments: { id: string; contentUrl: string }[] };
+    };
+    expect(linkedMaterial.data.attachments).toEqual([
+      expect.objectContaining({ id: uploaded.data.record.id }),
+    ]);
+
+    // The colleague may not link someone else's upload, even with its id in hand.
+    const colleagueLink = await requestApp(app, `${baseUrl}/api/materials`, {
+      method: 'POST',
+      headers: {
+        cookie: colleague,
+        'content-type': 'application/json',
+        origin,
+      },
+      body: JSON.stringify({
+        title: 'Not mine',
+        attachmentIds: [uploaded.data.record.id],
+      }),
+    });
+    expect(colleagueLink.status).toBe(400);
+    await expect(colleagueLink.json()).resolves.toMatchObject({
+      code: 'ATTACHMENT_NOT_FOUND',
+    });
   });
 
   it('mounts standalone app-local routes behind the public base path', async () => {
