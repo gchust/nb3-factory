@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "inputHash": "07f36a6a7f57dc79cc2118e326314bdf8c31112d14fe747609d133c0397a8042",
+  "inputHash": "09cccef7cb8deb98814540beaac977374051cbc64613635139fed661bad59f6d",
   "findings": [
     {
       "id": "460:36434284393:1:F2",
@@ -8065,6 +8065,220 @@
         }
       ],
       "fingerprint": "53df0a15fc9cf8a9fd03b613d4d54b672b1b153892d1fdcc969508f209c78235"
+    },
+    {
+      "id": "552:37238845336:1:F2",
+      "report": "552:37238845336:1",
+      "issue": 552,
+      "taskTitle": "客户、联系人与商机管理",
+      "appVersion": "1.0.0-beta.50",
+      "appTemplate": "@nocobase/app-template-default",
+      "finding": {
+        "id": "F2",
+        "kind": "issue",
+        "owner": "documentation",
+        "severity": "minor",
+        "confidence": "confirmed",
+        "status": "open",
+        "title": "缺少承载“任务所需样例业务数据”的受认可位置",
+        "detail": "nocobase-db/SKILL.md 与 migrations.md 规定迁移只建结构、seed 只插应用运行所需记录且绝不含样例/演示内容；code-and-seeds.md 承认演示账号与记录同生产权限配置分离，但三处都没有说明演示/验收数据应放在哪里。本构建任务要求预置 2 客户/3 联系人/3 商机，Agent 只能写进 202610050004_seed_sales_sample_data.ts 并自述为 sample data，同时未按 SKILL 的幂等要求加唯一约束。",
+        "impact": "照指引行事无法创建任务必需的样例记录；不同 Agent 会各自选择位置（生产 seed、迁移、手工脚本或应用初始化），使“框架支持不足”与“应用偏离指引”难以区分，也让可复现的验收预置缺少标准做法。",
+        "suggestedChange": "在 nocobase-db 与应用开发指引中新增一节，明确样例/演示业务数据的第一方位置（例如专用 demo seed 或工厂提供的初始化步骤）、它与生产 seed 的边界、以及重复执行的幂等要求；并交叉引用 code-and-seeds.md 的演示记录与生产配置分离原则。",
+        "evidence": [
+          "E20",
+          "E21",
+          "E22",
+          "E30",
+          "E33",
+          "E34"
+        ],
+        "diagnosis": {
+          "category": "guidance-gap",
+          "trigger": "构建任务要求预置可供验收的样例业务记录（本次为 2 客户 / 3 联系人 / 3 商机）",
+          "expected": "指引给出样例/演示数据的第一方存放位置与幂等写入方式",
+          "actual": "指引只禁止 seed 承载样例/演示内容，未给替代位置；Agent 将样例写入以 sample 命名的 seed",
+          "workaround": "把样例记录写入 202610050004_seed_sales_sample_data.ts，用 findOne+createOne 避免重复",
+          "acceptance": "指引包含样例/演示数据处理章节，且按该章节实现的预置在重复执行后仍是 no-op，不污染生产 seed"
+        }
+      },
+      "targets": [
+        "app/.agents/skills/nocobase-app-development/references/migrations.md",
+        "app/.agents/skills/nocobase-app-plugin-authorization/references/code-and-seeds.md",
+        "app/.agents/skills/nocobase-db/SKILL.md"
+      ],
+      "paths": [
+        ".agents/skills/nocobase-app-development/references/migrations.md",
+        ".agents/skills/nocobase-app-plugin-authorization/references/code-and-seeds.md",
+        ".agents/skills/nocobase-db/SKILL.md"
+      ],
+      "evidence": [
+        {
+          "id": "E20",
+          "kind": "skill",
+          "path": "app/.agents/skills/nocobase-db/SKILL.md",
+          "observation": "种子规则：幂等、以稳定业务值加唯一约束为键，upsertOne 是直接方式；上下文工具分工是硬性规定。",
+          "lines": [
+            125,
+            141
+          ],
+          "excerpt": "Apply both with `pnpm nocobase db apply`, adding `--connection <name>` for a non-default connection or `--all` for every managed one.\n\nEach context carries its own tools, and which one to use is not a free choice — see [Repository and Query](#4-repository-and-query). In short: a migration works through `builder` and `query`, and a seed writes through `repository`.\n\nThe rules are absolute, because these files are history that has already run on other machines:\n\n- **Self-contained.** Spell out every table, field, index, constraint and metadata operation in the file. Never import a Collection definition, model, registry or shared constant that keeps evolving — that silently changes both the behavior and the checksum of something already applied.\n- **Immutable once merged.** Check with `git log -- <file>` if unsure. Before the branch is merged you may correct the file in place; after it, every change is a new, later file. Never hard-code a previous checksum to make an edited migration look untouched. Correcting it in place changes nothing on its own — it is recorded as executed, so a plain apply skips it and the database keeps the schema the old file produced. `pnpm nocobase db redo` rolls the latest batch back and applies it again.\n- **The file name body matches `name`**, and the name is unique across every source in the application.\n- **Declare `irreversible: true`** when there is no real reverse operation, instead of writing a `down()` that quietly does nothing.\n- **A seed is idempotent**, keyed on a stable business value backed by a unique constraint, so a repeated run is a no-op — `upsertOne` is the direct way to express that. A seed context has no `builder` at all, and a seed has no rollback or truncate behavior.\n\nA backfill belongs in the migration that makes it necessary, using `query` from the same context — not in a seed.\n\nBoth run inside a transaction by default. `transaction: false` opts out, and a failure then leaves partial work behind with no history record, so take it only when the operation genuinely cannot run in one.\n\nA task's `connection` is not the runtime connection either. It carries `dialect`, `capabilities` and `client()` — enough to branch on the database, and deliberately not a way back to the manager. Anything conditional on the dialect reads it from there.",
+          "sha256": "f97c07a45a9d49c1d933ddbceeabcc9afe267b1356a2ded1a3da0dd56b54011c"
+        },
+        {
+          "id": "E21",
+          "kind": "skill",
+          "path": "app/.agents/skills/nocobase-db/SKILL.md",
+          "observation": "第 2 节：迁移建结构、seed 插应用运行所需记录，且 seed 绝不承载样例或演示内容。",
+          "lines": [
+            78,
+            81
+          ],
+          "excerpt": "## 2. Migrations and seeds\n\nA migration creates structure. A seed inserts the records the application needs in order to run. Neither does the other's job, and a seed is never sample or demonstration content.\n",
+          "sha256": "f97c07a45a9d49c1d933ddbceeabcc9afe267b1356a2ded1a3da0dd56b54011c"
+        },
+        {
+          "id": "E22",
+          "kind": "skill",
+          "path": "app/.agents/skills/nocobase-app-development/references/migrations.md",
+          "observation": "应用侧说明：迁移建结构、seed 不建结构；种子需固定可复现且不覆盖用户已改数据。",
+          "lines": [
+            7,
+            19
+          ],
+          "excerpt": "Migrations under `database/main/migrations/` are the application's schema history. Seeds under `database/main/seeds/` insert records the application requires to run. Migrations create structure. Seeds never do.\n\n`database/tsconfig.json` extends the server configuration so editor tooling and ESLint recognize migrations and seeds as Node source. Keep it in place when adding connection directories.\n\n## Running\n\n```bash\npnpm nocobase db apply\n```\n\nThis applies pending migrations and then pending seeds for `database.default`, including registered plugins, ordered by name across all sources. Both halves run only what is pending, so on an already-migrated database it applies seeds alone. The template defaults to `main`. Plugin migrations, seeds and runtime default reads/writes always use this same connection; changing `database.default` changes the application system database.\n\nSeeds are the second half of that run, so the structure a seed writes into must already exist from an earlier migration. Keep seed data fixed and reproducible — no current timestamps or random values in identifying fields — and never let a repeat run silently overwrite data a user has edited.",
+          "sha256": "327c8870ee555dc8496892821a6fe7ec05762c8a2a7b71213f8d339757f695c6"
+        },
+        {
+          "id": "E30",
+          "kind": "skill",
+          "path": "app/.agents/skills/nocobase-app-plugin-authorization/references/code-and-seeds.md",
+          "observation": "code 定义权限模型、seed 初始化业务配置；演示账号与记录同生产权限配置分离。",
+          "lines": [
+            3,
+            13
+          ],
+          "excerpt": "Use the sales domain of [the business module workflow](business-module.md) as the model: job permission sets, three business collections, separate page access, a two-scope quote submission, a delegated quote handover and delivery relations. For a job inherited through an organisation, build it with the application development Skill's `references/organization.md`. Code defines the business permission model; seeds provide initial business permission configuration that administrators can continue editing in the backend. Demonstration accounts and records are separate from the production permission configuration.\n\n## Permission model versus editable configuration\n\nCode defines composite resources, page routes, actions, readable and writable fields, relation capabilities, settings items and the available record access. These declarations describe what the business supports and how its server enforces access. For example, code defines that submitting a quote updates its status and checks its parent project; backend configuration cannot redefine that operation to write arbitrary fields.\n\nSeeds help the user configure that model initially: create business permission sets, choose page and action grants and data scopes, initialize default/sharing/restriction rules, and assign them to intended users or teams where identities are known. These are ordinary persisted configurations, editable through the authorization backend after installation. Being declared in a seed does not make a permission set or rule code-owned, protected or resettable on startup. Preserve subsequent administrator changes.\n\nApplication feature development registers and configures its own composites. Leave platform/system permission configuration to the owning system plugins: do not modify root/member sets, their protection rules, authorization management capabilities or other system settings merely to make an App feature accessible. A business configuration page can live under Settings without becoming platform configuration; declare and configure only the business capability it owns. System-plugin development is a separate, explicitly scoped task.\n\nFor example, code declares Quote View, Edit and Submit and the preparer and region record access. A seed creates the initial Sales engineer set and selects its pages, actions and scopes. An administrator can later change those grants, scopes and assignments in the backend without editing the seed. Changing what Submit does or which fields it may write requires a code change.",
+          "sha256": "6815f18c10d1043383aac7d605c8195aed12a7ee34729aade698746f92eebe1c"
+        },
+        {
+          "id": "E33",
+          "kind": "code",
+          "path": "app/database/main/seeds/202610050004_seed_sales_sample_data.ts",
+          "observation": "seed 文件自述为 Sample data for the sales feature，并用固定时间戳。",
+          "lines": [
+            1,
+            12
+          ],
+          "excerpt": "import { defineSeed, type Repository } from '@nocobase/db';\n\n/**\n * Sample data for the sales feature: two customers, three contacts and three\n * opportunities.\n *\n * Every record is looked up by its identifying fields before it is created, so\n * running this seed again — after a reset, or by hand — adds nothing and never\n * overwrites an edited record. Timestamps are fixed rather than taken from the\n * clock so two runs against two databases produce the same rows.\n */\nconst SEEDED_AT = '2026-01-05T00:00:00.000Z';",
+          "sha256": "2ceee4929b58b3d8a6d0a1fe952a95552c23e08d56c1187dfd59cfbb3538090f"
+        },
+        {
+          "id": "E34",
+          "kind": "code",
+          "path": "app/database/main/seeds/202610050004_seed_sales_sample_data.ts",
+          "observation": "seed 用 context.repository('customers') 与 findOne+createOne 写样例客户，无唯一约束。",
+          "lines": [
+            90,
+            110
+          ],
+          "excerpt": "const seed = defineSeed({\n  name: '202610050004_seed_sales_sample_data',\n  async run(context) {\n    const customers = context.repository<CustomerRecord>('customers');\n    const contacts = context.repository<ContactRecord>('contacts');\n    const opportunities =\n      context.repository<OpportunityRecord>('opportunities');\n\n    const starlight = await ensureCustomer(customers, {\n      name: '星辰科技',\n      industry: '软件服务',\n    });\n    const mountain = await ensureCustomer(customers, {\n      name: '远山贸易',\n      industry: '进出口贸易',\n    });\n\n    await ensureContact(contacts, {\n      name: '张伟',\n      phone: '13800000001',\n      email: 'zhangwei@starlight.example.com',",
+          "sha256": "2ceee4929b58b3d8a6d0a1fe952a95552c23e08d56c1187dfd59cfbb3538090f"
+        }
+      ],
+      "fingerprint": "39875c47f6b79a2ddcdee5c47926a6b977bf469829131d27d19784492b7f963d"
+    },
+    {
+      "id": "552:37238845336:1:F4",
+      "report": "552:37238845336:1",
+      "issue": 552,
+      "taskTitle": "客户、联系人与商机管理",
+      "appVersion": "1.0.0-beta.50",
+      "appTemplate": "@nocobase/app-template-default",
+      "finding": {
+        "id": "F4",
+        "kind": "improvement",
+        "owner": "documentation",
+        "severity": "minor",
+        "confidence": "confirmed",
+        "status": "open",
+        "title": "无权限模型应用的最小授权做法在指引中缺失且口径不一致",
+        "detail": "authorization.md 要求每个 server/routes 端点安装认证与授权，并在首个页面 authz 取值列表里给出 'skip'；app-plugin-authorization 的 client-development.md 则称只有需要登录的概览页可声明 authz:'skip'、业务页 never do。本任务明确单团队、无多级权限区分，Agent 对端点只用 auth.required()、对三个业务页统一 authz:'skip'，两份指引无法回答这是否合规、以及不引入授权插件时的最小授权接入是什么。",
+        "impact": "读者在无权限区分场景下要么被迫声明无人使用的 page 资源、要么与插件 Skill 冲突；框架指引的一致性影响构建方的判断成本与产出一致性。",
+        "suggestedChange": "在两份指引中互相引用并补充：应用明确不使用授权插件/不需要权限区分时，server/routes 与 client/routes 的最小声明清单，以及 'skip' 的适用页面类型与禁用页面类型。",
+        "evidence": [
+          "E28",
+          "E29",
+          "E35",
+          "E38"
+        ],
+        "diagnosis": {
+          "category": "guidance-gap",
+          "trigger": "应用明确不需要多级权限区分，却仍需按指引接入 server/routes 与 client/routes",
+          "expected": "指引说明此类应用的最小鉴权/授权接入与 authz 取值",
+          "actual": "authorization.md 将 'skip' 列为可选，client-development.md 称业务页 never 'skip'，缺少例外条件",
+          "workaround": "端点仅 auth.required()，三个业务页面统一 authz:'skip'",
+          "acceptance": "按修订后的指引在不引入授权插件时能得到明确的端点与页面声明清单，且不再出现业务页 'skip' 的口径冲突"
+        }
+      },
+      "targets": [
+        "app/.agents/skills/nocobase-app-development/references/authorization.md",
+        "app/.agents/skills/nocobase-app-plugin-authorization/references/client-development.md"
+      ],
+      "paths": [
+        ".agents/skills/nocobase-app-development/references/authorization.md",
+        ".agents/skills/nocobase-app-plugin-authorization/references/client-development.md"
+      ],
+      "evidence": [
+        {
+          "id": "E28",
+          "kind": "skill",
+          "path": "app/.agents/skills/nocobase-app-plugin-authorization/references/client-development.md",
+          "observation": "每个入口页声明 authz；需要登录的概览页可 skip，业务页面 never do；给出 page 资源声明示例。",
+          "lines": [
+            3,
+            25
+          ],
+          "excerpt": "The sales workflow has three independent pages: Projects, Quotes and Orders. Delivery specialists enter Orders without gaining entry to Projects or Quotes. Declare `authz` on every entry page; nothing is inferred from the route name. A page that needs only sign-in, such as an overview, declares `authz: 'skip'`; business pages never do.\n\n## Register the runtime first\n\nRegister the main authorization client factory and server plugin alongside authentication. The authorization React provider depends on the authentication provider; retain their normal composition order. A package dependency alone does not activate either side. Optional rule screens require their owning installed Skills; follow [capability discovery](optional-capabilities.md) before using them. See [runtime setup](runtime-api.md).\n\nApplication-owned pages belong in the App's `client/routes.ts` and page modules. A reusable plugin contributes routes through its client declaration. Use stable page ids that match the permission-set page grant:\n\n```ts\nimport { defineAppRoutes } from '@nocobase/app-client/plugins';\n\nexport default defineAppRoutes([\n  {\n    name: 'sales-quotes',\n    path: '/sales/quotes',\n    auth: 'required',\n    navigation: { title: 'sales.quotes' },\n    authz: { resource: { type: 'page', id: 'sales.quotes' }, action: 'access' },\n    componentLoader: () => import('./pages/quotes-page.js'),\n  },\n]);\n```\n",
+          "sha256": "a2fae11e1db1f52010cd5d4e2588a533108262efdc5b52a11c2208f280083378"
+        },
+        {
+          "id": "E29",
+          "kind": "skill",
+          "path": "app/.agents/skills/nocobase-app-development/references/authorization.md",
+          "observation": "每个 server/routes 端点安装认证与授权；首个页面 authz 取值列表包含 page 资源、settings、unrestricted 与 skip。",
+          "lines": [
+            21,
+            25
+          ],
+          "excerpt": "Declare reusable collection permissions and business operations, defined as composite resources, in a feature module. In `server/providers/`, resolve `authorizationToken`, then register collections (`authz.database.collections.add`), composites (`authz.compositeResources.define`), record access (`authz.recordAccess.define`), settings items (`authz.settings.add`) and, when the feature owns a team or department model, inherited subjects (`authz.subjects.add`, built as [an organisation dimension](organization.md)); add workspace subsections with `authz.ui.sections.add` and list each composite or settings item in one with `authz.ui.place`. Pages are not registered on the server; the client routes list them. Read the authorization Skill’s bundled `references/code-and-seeds.md` before choosing initialization: code declares capabilities, provider boot registers them, and seeds initialize the agreed business configuration for fresh installations. Use authorized services or controlled data changes for existing installations. Seeded permission sets, selected scopes, rules and assignments remain editable in the backend; seeds do not make them code-owned or protected. App features own composite declarations and initial business configuration, not root/member protection or other platform permission configuration. Never rewrite administrator configuration at boot. Normal seeds have a restricted database context, not the running authorization service. Keep schema changes in migrations and initial assignments in idempotent seeds or controlled provisioning. Do not create a plugin package for an application-owned feature.\n\nEvery `server/routes/` endpoint installs authentication and authorization. A business operation checks `{ resource: { type: 'composite', id }, action }` with the request context's `authorize` once and binds each returned `conditions.database` policy through `repository.withPolicy`. Do not replace it with collection-level authorization or an in-memory filter. Use `authz.database.policyFor` for collection CRUD and `authz.database.authorizeRepository` for simple business Repository routes, mapping each method to its composite action. The authorization Skill documents these choices and their contracts.\n\nDeclare `authz` on the first page of every path in `client/routes.ts`: `{ resource: { type: 'page', id }, action: 'access' }` for a business page, the page's `settings` item for a settings page, `'unrestricted'` for a root-only page, or `'skip'` explicitly; nothing is inferred from the route name. Nested pages inherit it; an omitted value on a first page defaults to `'unrestricted'` for protected App and settings pages and `'skip'` otherwise, with a development warning. Use `useCan({ resource, action })` for button visibility and server-computed eligibility for record-sensitive actions. Keep pending/failed checks closed and refresh after permission changes. Client visibility does not enforce the API. The authorization Skill’s `references/client-development.md` includes the component, relation controls and settings lifecycle; all required APIs are bundled in that Skill rather than external package documentation.",
+          "sha256": "679bc55a250a456e0fa531f798d8e8423c8736dcdc032ac3f11a0d3deb298ee9"
+        },
+        {
+          "id": "E35",
+          "kind": "code",
+          "path": "app/server/routes/sales.ts",
+          "observation": "defineApiRoutes 工厂解析 authenticationToken 与 salesServiceToken，routes.use('*', auth.required())。",
+          "lines": [
+            91,
+            114
+          ],
+          "excerpt": "export const salesApiRoutes: AppApiRouteContribution<Application> =\n  defineApiRoutes((app) => {\n    const router = new Hono();\n    const routes = new Hono();\n    const auth = app.container.resolve(authenticationToken);\n    const sales = () => app.container.resolve(salesServiceToken);\n\n    routes.use('*', auth.required());\n\n    // Customers\n\n    routes.get('/customers', (context) =>\n      respond(context, () => sales().listCustomers()),\n    );\n\n    routes.get('/customers/:id', (context) =>\n      respond(context, async () => {\n        const id = parseId(context);\n        if (id === undefined) throw new SalesValidationError('Invalid id.');\n        const detail = await sales().getCustomerDetail(id);\n        if (!detail) throw new SalesNotFoundError('customer');\n        return detail;\n      }),\n    );",
+          "sha256": "afceb6c1ed9b67add46f86e3f9578784158d649abcd46cbef927087c218a48b7"
+        },
+        {
+          "id": "E38",
+          "kind": "code",
+          "path": "app/client/routes.ts",
+          "observation": "defineAppRoutes 声明 home/login 等页面并统一 authz: 'skip'。",
+          "lines": [
+            8,
+            25
+          ],
+          "excerpt": "const appRoutes: AppClientRouteContribution = defineAppRoutes([\n  {\n    // Every signed-in user reaches the landing page. `authz: 'skip'` takes it out of page authorization entirely, so\n    // no permission change can leave a user signed in with nowhere to land.\n    authz: 'skip',\n    auth: 'required',\n    componentLoader: () => import('./pages/home.js'),\n    name: 'home',\n    navigation: { title: 'navigation.home', icon: Home },\n    path: '/',\n  },\n  {\n    auth: 'guest',\n    authz: 'skip',\n    componentLoader: () => import('./pages/auth/login.js'),\n    name: 'login',\n    path: '/login',\n  },",
+          "sha256": "e774ab351d02ede8880bcc7e1dad9d529fdceb906b53a97a22f72b45eea53bf4"
+        }
+      ],
+      "fingerprint": "b7620ab7cef68bd075aa560d6b034eb4c81b23fbc4da274c19e110e60c0dca4f"
     }
   ]
 }
