@@ -1,4 +1,4 @@
-import { Home } from 'lucide-react';
+import { Contact, Handshake, Home, TrendingUp, Users } from 'lucide-react';
 import {
   defineAppRoutes,
   defineSettingsRoutes,
@@ -15,6 +15,129 @@ const appRoutes: AppClientRouteContribution = defineAppRoutes([
     name: 'home',
     navigation: { title: 'navigation.home', icon: Home },
     path: '/',
+  },
+  {
+    // A navigation group names no page and owns no path; the pages inside it use full paths.
+    name: 'sales',
+    navigation: { title: 'navigation.sales', icon: Handshake },
+    children: [
+      {
+        auth: 'required',
+        authz: 'skip',
+        breadcrumb: { title: 'navigation.salesCustomers' },
+        componentLoader: () => import('./pages/sales/customers/index.js'),
+        name: 'sales-customers',
+        navigation: { title: 'navigation.salesCustomers', icon: Users },
+        path: '/sales/customers',
+        children: [
+          {
+            authz: 'skip',
+            componentLoader: () => import('./pages/sales/customers/new.js'),
+            name: 'sales-customers-new',
+            path: 'new',
+          },
+          {
+            authz: 'skip',
+            // A covering child page is a destination, so it names itself in the trail.
+            breadcrumb: { title: 'sales.customer.detailBreadcrumb' },
+            componentLoader: () =>
+              import('./pages/sales/customers/detail/index.js'),
+            name: 'sales-customer-detail',
+            path: ':customerId',
+            children: [
+              {
+                authz: 'skip',
+                componentLoader: () =>
+                  import('./pages/sales/customers/detail/edit.js'),
+                name: 'sales-customer-edit',
+                path: 'edit',
+              },
+              {
+                authz: 'skip',
+                componentLoader: () =>
+                  import('./pages/sales/customers/detail/contact-new.js'),
+                name: 'sales-customer-contact-new',
+                path: 'contacts/new',
+              },
+              {
+                authz: 'skip',
+                componentLoader: () =>
+                  import('./pages/sales/customers/detail/opportunity-new.js'),
+                name: 'sales-customer-opportunity-new',
+                path: 'opportunities/new',
+              },
+            ],
+          },
+        ],
+      },
+      {
+        auth: 'required',
+        authz: 'skip',
+        componentLoader: () => import('./pages/sales/contacts/index.js'),
+        name: 'sales-contacts',
+        navigation: { title: 'navigation.salesContacts', icon: Contact },
+        path: '/sales/contacts',
+        children: [
+          {
+            authz: 'skip',
+            componentLoader: () => import('./pages/sales/contacts/new.js'),
+            name: 'sales-contacts-new',
+            path: 'new',
+          },
+          {
+            authz: 'skip',
+            componentLoader: () =>
+              import('./pages/sales/contacts/detail/index.js'),
+            name: 'sales-contact-detail',
+            path: ':contactId',
+            children: [
+              {
+                authz: 'skip',
+                componentLoader: () =>
+                  import('./pages/sales/contacts/detail/edit.js'),
+                name: 'sales-contact-edit',
+                path: 'edit',
+              },
+            ],
+          },
+        ],
+      },
+      {
+        auth: 'required',
+        authz: 'skip',
+        componentLoader: () => import('./pages/sales/opportunities/index.js'),
+        name: 'sales-opportunities',
+        navigation: {
+          title: 'navigation.salesOpportunities',
+          icon: TrendingUp,
+        },
+        path: '/sales/opportunities',
+        children: [
+          {
+            authz: 'skip',
+            componentLoader: () => import('./pages/sales/opportunities/new.js'),
+            name: 'sales-opportunities-new',
+            path: 'new',
+          },
+          {
+            authz: 'skip',
+            componentLoader: () =>
+              import('./pages/sales/opportunities/detail/index.js'),
+            name: 'sales-opportunity-detail',
+            path: ':opportunityId',
+            children: [
+              {
+                authz: 'skip',
+                componentLoader: () =>
+                  import('./pages/sales/opportunities/detail/edit.js'),
+                name: 'sales-opportunity-edit',
+                path: 'edit',
+              },
+            ],
+          },
+        ],
+      },
+    ],
   },
   {
     auth: 'guest',

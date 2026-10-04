@@ -94,6 +94,22 @@ describe('app client routes', () => {
     // The landing page opted out of page authorization, so it is reachable by every signed-in user.
     expect(pageAuthorizations(resolved.routes)).toEqual([
       { name: 'home', authorizedAs: null },
+      // The sales pages are signed-in pages that opted out of page authorization, so every signed-in user reaches
+      // them. Their names are the identifiers stored page grants record.
+      { name: 'sales-customers', authorizedAs: null },
+      { name: 'sales-customers-new', authorizedAs: null },
+      { name: 'sales-customer-detail', authorizedAs: null },
+      { name: 'sales-customer-edit', authorizedAs: null },
+      { name: 'sales-customer-contact-new', authorizedAs: null },
+      { name: 'sales-customer-opportunity-new', authorizedAs: null },
+      { name: 'sales-contacts', authorizedAs: null },
+      { name: 'sales-contacts-new', authorizedAs: null },
+      { name: 'sales-contact-detail', authorizedAs: null },
+      { name: 'sales-contact-edit', authorizedAs: null },
+      { name: 'sales-opportunities', authorizedAs: null },
+      { name: 'sales-opportunities-new', authorizedAs: null },
+      { name: 'sales-opportunity-detail', authorizedAs: null },
+      { name: 'sales-opportunity-edit', authorizedAs: null },
     ]);
   });
 });
