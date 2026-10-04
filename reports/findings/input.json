@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "inputHash": "24351d38847d5133e377f6ec89f1421a316212ea9bdab3df03a9a5355a137979",
+  "inputHash": "e51044c3899e80c5fc7ee56d3a58221cdb6bf5de3ad980833c1962dc789418d4",
   "findings": [
     {
       "id": "460:36434284393:1:F2",
@@ -7083,6 +7083,293 @@
         }
       ],
       "fingerprint": "ae2a16b7b67631391e53e99840c1c3b4575ea06b92040d0b0efe7d80d0052311"
+    },
+    {
+      "id": "541:37156749449:1:F1",
+      "report": "541:37156749449:1",
+      "issue": 541,
+      "taskTitle": "员工 IT 报修与处理",
+      "appVersion": "1.0.0-beta.50",
+      "appTemplate": "@nocobase/app-template-default",
+      "finding": {
+        "id": "F1",
+        "kind": "misleading",
+        "owner": "documentation",
+        "confidence": "confirmed",
+        "severity": "major",
+        "status": "open",
+        "title": "QueryAdapter 条件方法返回新对象，但 nocobase-db Skill 未说明这一不可变语义",
+        "detail": "@nocobase/db 的 QueryAdapter 中 where()/whereRef() 等方法 return this.clone(...)，是不可变 API；丢弃返回值会静默丢失条件。nocobase-db SKILL.md 第 4 节用链式示例演示 where，并专门列出与 Knex 的差异（无两参数 where、无 orWhere），却没有提到\"条件方法返回新对象\"这一最关键的差异。",
+        "impact": "按 Knex 直觉把 query.where(...) 当作就地修改语句会悄悄丢掉过滤条件。本任务中它曾导致员工列表返回全部工单、状态筛选失效——一处安全相关的数据范围旁路，代价 medium（见构建回顾）。",
+        "suggestedChange": "在 SKILL.md 第 4 节（Repository 与 Query）开头显著说明不可变语义，并给出正反例：反例 query.where(...) 结果被丢弃；正例 query = query.where(...)。也可在 database-and-data 参考的记录级范围指引旁加一段 before/after。",
+        "evidence": [
+          "E1",
+          "E2",
+          "E6",
+          "E41"
+        ],
+        "claimed": "Skill 引导读者对照 Knex 理解 Query API，并逐条列出与 Knex 的差异，读者会推断其余行为与 Knex 一致。",
+        "observed": "adapter.js 显示 where()/whereRef() 均为 return this.clone(...)，是不可变 API；Skill 全文检索无 immutab/不可变相关说明。",
+        "diagnosis": {
+          "category": "guidance-gap",
+          "trigger": "Agent 按 Knex 习惯调用 query.where(\"submitterId\", \"=\", id) 作为语句而不接收返回值",
+          "expected": "Skill 明确 QueryAdapter 条件方法返回新对象，必须重新赋值，并给出示例",
+          "actual": "Skill 只说明 where 是三元签名及缺少 orWhere，未提不可变性，Agent 需回读 dist 源码才发现",
+          "workaround": "阅读 adapter.js 的 clone 实现后改为 query = query.where(...) 链式赋值，并在测试中复验隔离与筛选",
+          "acceptance": "nocobase-db SKILL.md 第 4 节包含不可变语义说明与正反例，且该说明可从 Repository/Query 选择处直接看到"
+        }
+      },
+      "targets": [
+        "@nocobase/db",
+        "app/.agents/skills/nocobase-db/SKILL.md"
+      ],
+      "paths": [
+        ".agents/skills/nocobase-db/SKILL.md",
+        "packages/@nocobase/db/dist/src/query/internal/knex/adapter.js"
+      ],
+      "evidence": [
+        {
+          "id": "E1",
+          "kind": "code",
+          "path": "packages/@nocobase/db/dist/src/query/internal/knex/adapter.js",
+          "observation": "KnexSelectQuery.where()/whereRef() 等条件方法均 return this.clone(...)，确认 QueryAdapter 是不可变 API：条件方法不会就地修改当前查询对象。",
+          "lines": [
+            75,
+            92
+          ],
+          "excerpt": "    distinct() {\n        return this.clone({ distinct: true });\n    }\n    where(lhsOrExpression, op, rhs) {\n        return this.clone({\n            where: [\n                ...this.state.where,\n                resolveConditionArguments(arguments, lhsOrExpression, op, rhs, this.createExpressionBuilder()),\n            ],\n        });\n    }\n    whereRef(lhs, op, rhs) {\n        return this.clone({\n            where: [\n                ...this.state.where,\n                binaryExpressionNode(lhs, op, createExpression({ type: 'ref', reference: rhs })),\n            ],\n        });",
+          "sha256": "931e510ac7074b4e4be997c8704543a2e94afbeebcee39b1a967959bcfdc89cf"
+        },
+        {
+          "id": "E2",
+          "kind": "code",
+          "path": "packages/@nocobase/db/dist/src/query/internal/knex/adapter.js",
+          "observation": "clone(patch) 构造并返回一个新的 KnexSelectQuery，印证丢弃 where()/set() 返回值会静默丢失条件。",
+          "lines": [
+            236,
+            252
+          ],
+          "excerpt": "            joins: [...this.state.joins, { type, table, conditions }],\n        });\n    }\n    clone(patch) {\n        return new KnexSelectQuery(this.getClient, this.naming, this.tableName, {\n            selections: patch.selections ?? this.state.selections,\n            distinct: patch.distinct ?? this.state.distinct,\n            joins: patch.joins ?? this.state.joins,\n            where: patch.where ?? this.state.where,\n            groupBy: patch.groupBy ?? this.state.groupBy,\n            having: patch.having ?? this.state.having,\n            orderBy: patch.orderBy ?? this.state.orderBy,\n            limit: Object.prototype.hasOwnProperty.call(patch, 'limit')\n                ? patch.limit\n                : this.state.limit,\n            offset: Object.prototype.hasOwnProperty.call(patch, 'offset')\n                ? patch.offset",
+          "sha256": "931e510ac7074b4e4be997c8704543a2e94afbeebcee39b1a967959bcfdc89cf"
+        },
+        {
+          "id": "E6",
+          "kind": "skill",
+          "path": "app/.agents/skills/nocobase-db/SKILL.md",
+          "observation": "Skill 第 4 节用 QueryAdapter 链式示例演示 where/selectFrom，并明确列出与 Knex 的差异（无两参数 where、无 orWhere），却未说明条件方法返回新对象。",
+          "lines": [
+            251,
+            268
+          ],
+          "excerpt": "**Query** knows tables and columns, not Collections: it does not read Collection metadata, does not honor Collection-level naming overrides, applies no policy or optimistic locking, and performs no relation-aware CRUD.\n\n```ts\nconst rows = await db\n  .query()\n  .selectFrom('orders')\n  .select(['id', 'orderNo', 'createdAt'])\n  .where('status', '=', 'paid')\n  .orderBy('createdAt', 'desc')\n  .limit(20)\n  .execute();\n```\n\nTerminating methods are `execute()`, `executeTakeFirst()` and `executeTakeFirstOrThrow()`, plus the shorthands `value(column)`, `pluck(column)` and `exists()`.\n\nConditions are three-argument — `where(lhs, operator, rhs)` — or a callback taking the expression builder for anything composite. There is no two-argument `where(field, value)`, and none of Knex's `orWhere()`, `whereIn()`, `whereNull()`, `orOn()` or `orOnRef()` exist here. Values are parameterized; never build SQL by string concatenation.\n\n`updateTable` and `deleteFrom` refuse to run without a `where`. Affecting every row requires an explicit `allowAllRows()`, because an omitted `where` is unrecoverable in production.",
+          "sha256": "f97c07a45a9d49c1d933ddbceeabcc9afe267b1356a2ded1a3da0dd56b54011c"
+        },
+        {
+          "id": "E41",
+          "kind": "qa",
+          "path": "artifacts/retro.json",
+          "observation": "构建回顾记录两处已解决问题：QueryAdapter 不可变导致员工列表越权/状态筛选失效（安全相关），以及进程内集成测试因 APP_PUBLIC_ORIGIN 未设置触发 INVALID_CSRF_ORIGIN。",
+          "lines": [
+            3,
+            58
+          ],
+          "excerpt": "  \"summary\": \"Built the employee IT repair/ticket system (Issue #541) from the baseline template: tickets Collection migration, idempotent seeds for two requester roles plus 2 employee / 1 handler demo accounts and 3 sample tickets, a TicketService with role- and status-enforcing domain logic, ticket HTTP routes, and English/Chinese list + detail pages. Verified server-side record scoping, role checks, required resolution, completed-ticket immutability, status filtering, and permission-set based roles end to end.\",\n  \"issues\": [\n    {\n      \"phase\": \"implement\",\n      \"title\": \"Employee list exposed every ticket and the status filter did nothing\",\n      \"symptom\": \"An employee request to GET /api/tickets returned other employees' tickets, and ?status= filtering was ignored, despite the scoping code being present.\",\n      \"rootCause\": \"The QueryAdapter is immutable: where()/set()/orderBy() return a new query object. TicketService.list() called query.where(...) for the submitter scope and the status filter but discarded the return values, so neither condition reached the generated SQL.\",\n      \"resolution\": \"Reassign/chained every builder call (query = query.where(...); query = query.where(...).orderBy(...)) so the predicates are retained. Re-verified with a live server that an employee sees only their own rows and that status filters narrow the result.\",\n      \"status\": \"resolved\",\n      \"cost\": \"medium\"\n    },\n    {\n      \"phase\": \"test\",\n      \"title\": \"Integration test POSTs rejected with INVALID_CSRF_ORIGIN\",\n      \"symptom\": \"tests/logic/tickets.test.ts create/start/complete requests returned 403 {code:'INVALID_CSRF_ORIGIN'} even though the Origin header was set to the request origin.\",\n      \"rootCause\": \"The standalone runtime derives app.publicOrigin from APP_PUBLIC_ORIGIN, which was unset in the in-process test. Better Auth therefore trusted its default origin (http://localhost:3000) rather than the origin the tests used, so its cookie-write CSRF check rejected the writes.\",\n      \"resolution\": \"Set APP_PUBLIC_ORIGIN=http://localhost in the test server env so the trusted origin matches the base URL the test requests use.\",\n      \"status\": \"resolved\",\n      \"cost\": \"small\"\n    },\n    {\n      \"phase\": \"test\",\n      \"title\": \"Newly registered test user could not obtain a session\",\n      \"symptom\": \"After sign-up/email returned 200, sign-in/username returned 401, so the no-role 403 assertion could not run.\",\n      \"rootCause\": \"emailAndPassword.autoSignIn is false, so registration does not establish a session, and the registered account had no username for the username sign-in endpoint to match.\",\n      \"resolution\": \"Register, then sign in through sign-in/email for that account, and assert the authenticated no-role request is refused with 403.\",\n      \"status\": \"resolved\",\n      \"cost\": \"small\"\n    },\n    {\n      \"phase\": \"lint\",\n      \"title\": \"Ticket pages failed eslint after the first pass\",\n      \"symptom\": \"react-hooks/set-state-in-effect on the detail loader, @typescript-eslint/no-misused-promises on a navigate onClick, and @typescript-eslint/no-base-to-string on a String(unknown) helper.\",\n      \"rootCause\": \"The detail loader set loading/error synchronously in the effect body; an onClick arrow returned navigate()'s promise; and text() fell back to String(value) for arbitrary unknown values.\",\n      \"resolution\": \"Moved the detail loader to the keyed-state pattern already used by the list hook (loading derived from a key mismatch, no synchronous setState), wrapped navigate in a block with void, and restricted text() to string/number/boolean/bigint/Date with an empty fallback for anything else.\",\n      \"status\": \"resolved\",\n      \"cost\": \"small\"\n    }\n  ],\n  \"blockers\": [],\n  \"improvements\": [\n    {\n      \"category\": \"documentation\",\n      \"title\": \"QueryAdapter immutability is easy to miss\",\n      \"detail\": \"where()/set()/orderBy() return clones, so a discarded return silently drops a security-relevant predicate. The pattern reads like Knex, where the same calls mutate.\",\n      \"suggestedChange\": \"Call out the immutability prominently in the database-and-data reference with a short before/after example, ideally beside the record-scoping guidance.\",\n      \"mechanizable\": false\n    },\n    {\n      \"category\": \"testing\",\n      \"title\": \"No documented origin setup for in-process server tests\",\n      \"detail\": \"Booting the standalone server inside a test and issuing cookie-authenticated writes fails the CSRF check unless APP_PUBLIC_ORIGIN matches the request origin; the failure code is generic enough to mislead.\",\n      \"suggestedChange\": \"Add an in-process request-testing recipe to the testing reference that sets APP_PUBLIC_ORIGIN beside the base URL and notes the origin requirement for non-GET requests.\",\n      \"mechanizable\": true\n    }\n  ]",
+          "sha256": "362a08a37cca92bb027ecb1ec043290d315487a35e8074832e04c0cfabb26c04"
+        }
+      ],
+      "fingerprint": "f10f0b43906b4a67581699892aa97cdb2c3b5837a7cd587abf9eec95a253010b"
+    },
+    {
+      "id": "541:37156749449:1:F2",
+      "report": "541:37156749449:1",
+      "issue": 541,
+      "taskTitle": "员工 IT 报修与处理",
+      "appVersion": "1.0.0-beta.50",
+      "appTemplate": "@nocobase/app-template-default",
+      "finding": {
+        "id": "F2",
+        "kind": "issue",
+        "owner": "documentation",
+        "confidence": "confirmed",
+        "severity": "minor",
+        "status": "open",
+        "title": "进程内服务端测试的 CSRF/Origin 前置条件未写入测试指引",
+        "detail": "认证实现 checkCookieWriteOrigin() 对带 cookie 的写请求校验 Origin/Referer，来源缺失或不被信任时以 403 INVALID_CSRF_ORIGIN 失败关闭；部署参考已说明需设置 app.publicOrigin/auth.trustedOrigins。但 testing.md 的 \"Testing a route\" 只给出容器替身 + createRouter + 真实请求（含 401 断言），未提及写请求需要匹配的 origin，也未提 APP_PUBLIC_ORIGIN。",
+        "impact": "用真实路由做带 cookie 的集成测试会以通用错误码 403 失败，排障需回读实现与部署文档；构建回顾记录该问题消耗 small 成本并被视为易误导。",
+        "suggestedChange": "在 testing.md \"Testing a route\" 增加进程内请求测试配方：说明非 GET 写请求需要匹配的 Origin，示例中在启动测试服务时设置 APP_PUBLIC_ORIGIN（或显式 trustedOrigins）。",
+        "evidence": [
+          "E15",
+          "E18",
+          "E37",
+          "E41"
+        ],
+        "diagnosis": {
+          "category": "guidance-gap",
+          "trigger": "在进程内启动真实路由并发起带 cookie 的 POST（创建/开始/完成）",
+          "expected": "测试指引说明写请求的 origin/CSRF 前置条件与设置方法",
+          "actual": "testing.md 未提及 origin/CSRF；相关说明只在认证部署参考中，Agent 需从 403 错误码反查实现",
+          "workaround": "设置 APP_PUBLIC_ORIGIN=http://localhost，使可信来源与测试请求 base URL 一致",
+          "acceptance": "testing.md 含进程内请求测试的 origin 设置示例，且明确非 GET 请求的 CSRF 要求"
+        }
+      },
+      "targets": [
+        "@nocobase/app-plugin-authentication",
+        "app/.agents/skills/nocobase-app-development/references/testing.md",
+        "app/.agents/skills/nocobase-app-plugin-authentication/references/user-lifecycle-and-deployment.md"
+      ],
+      "paths": [
+        ".agents/skills/nocobase-app-development/references/testing.md",
+        ".agents/skills/nocobase-app-plugin-authentication/references/user-lifecycle-and-deployment.md",
+        "packages/@nocobase/app-plugin-authentication/dist/server/auth.js"
+      ],
+      "evidence": [
+        {
+          "id": "E15",
+          "kind": "code",
+          "path": "packages/@nocobase/app-plugin-authentication/dist/server/auth.js",
+          "observation": "checkCookieWriteOrigin() 忽略 GET/HEAD/OPTIONS 与无 cookie 请求；带 cookie 的写请求若 Origin/Referer 缺失或不被信任则返回 403 INVALID_CSRF_ORIGIN。",
+          "lines": [
+            115,
+            150
+          ],
+          "excerpt": "            .where('id', '=', session.user.id)\n            .executeTakeFirst();\n        if (!user || user.disabledAt != null)\n            return null;\n        return session;\n    }\n    /** Protect writes authenticated by a browser cookie, including routes that skip normal session lookup. */\n    async checkCookieWriteOrigin(context) {\n        if (['GET', 'HEAD', 'OPTIONS'].includes(context.req.method))\n            return;\n        // A credential header is not proof that it was used: an invalid API key may fall back to a valid cookie.\n        // Cookie-free API key requests have no ambient browser credential to forge.\n        if (!context.req.header('cookie'))\n            return;\n        const authContext = await this.auth.$context;\n        const origin = context.req.header('origin');\n        const inferredBaseURL = origin === 'null' &&\n            context.req.header('sec-fetch-site') === 'same-origin'\n            ? getBaseURL(undefined, authContext.options.basePath, context.req.raw, false, authContext.options.advanced?.trustedProxyHeaders)\n            : undefined;\n        const source = (inferredBaseURL ? getOrigin(inferredBaseURL) : undefined) ??\n            origin ??\n            context.req.header('referer');\n        if (!source || source === 'null') {\n            return context.json({ code: 'INVALID_CSRF_ORIGIN' }, 403);\n        }\n        // Better Auth also accepts per-request trusted origins. Its static context contains the\n        // configured base URL, static origins, plugin origins, and BETTER_AUTH_TRUSTED_ORIGINS.\n        const configuredOrigins = authContext.options.trustedOrigins;\n        const mergedOrigins = typeof configuredOrigins === 'function'\n            ? await configuredOrigins(context.req.raw)\n            : (configuredOrigins ?? []);\n        const requestAuthContext = Object.create(authContext);\n        requestAuthContext.trustedOrigins = [\n            ...authContext.trustedOrigins,\n            ...mergedOrigins.filter((origin) => typeof origin === 'string' && Boolean(origin)),",
+          "sha256": "39be057de8227c5aef3eb57a2a15b04bfa0aa8922c60be23e8618d31659c9c48"
+        },
+        {
+          "id": "E18",
+          "kind": "skill",
+          "path": "app/.agents/skills/nocobase-app-development/references/testing.md",
+          "observation": "测试指引给出\"用测试替身构造容器、调用真实 createRouter() 并发起真实请求\"的路径（含 401 断言），但未提及带 cookie 写请求需要 Origin/publicOrigin。",
+          "lines": [
+            29,
+            50
+          ],
+          "excerpt": "## Testing a route\n\nCall the real contribution's `createRouter()` with a container holding test doubles, then issue real requests. This exercises the production factory, including its dependency resolution and middleware:\n\n```ts\nconst container = new ServiceContainer();\ncontainer.instance(authenticationToken, testAuth);\n\nconst router = await apiRoutes.createRouter({\n  appName: 'main',\n  publicBasePath: '/main',\n  config: { app: { name: 'main', publicBasePath: '/main' } },\n  paths: createAppPaths({ rootDir: '/missing' }),\n  router: new Hono(),\n  container,\n});\n\nconst response = await router.request('/orders');\nexpect(response.status).toBe(401);\n```\n\nDo not add a `registerRoutes(router, ...)` helper just to make a route testable. It moves the security boundary out of the thing you are testing.",
+          "sha256": "d9aea149c4312615d3fa509be8da689121c40456c82c1bba93b212807d199dea"
+        },
+        {
+          "id": "E37",
+          "kind": "skill",
+          "path": "app/.agents/skills/nocobase-app-plugin-authentication/references/user-lifecycle-and-deployment.md",
+          "observation": "认证部署参考明确要求为部署设置 app.publicOrigin / auth.trustedOrigins，否则带 cookie 的写请求以 INVALID_CSRF_ORIGIN 失败关闭——但该说明只在部署文档、未进入测试指引。",
+          "lines": [
+            109,
+            116
+          ],
+          "excerpt": "**Public origin.** Set `app.publicOrigin` to the HTTPS address the browser\nsees. Better Auth derives its base URL and callback URLs from it and from the\napplication's public base path; a container-internal address breaks OAuth\ncallbacks and cookie attributes. The reverse proxy must forward host,\nprotocol, and cookies.\n\n**Business request CSRF.** `Auth.required()` and `Auth.optional()` reject cookie-bearing writes unless `Origin` (or, when absent, `Referer`) matches Better Auth's configured base origin or a trusted origin. Configure `app.publicOrigin` for deployed applications and add separate frontend origins through `auth.trustedOrigins`; without a trusted origin, browser writes fail closed with `INVALID_CSRF_ORIGIN`. Cookie-free API key requests can proceed after authentication. A credential header does not exempt a request carrying cookies, including routes that skip session lookup.\n",
+          "sha256": "f8b0c5cdd615fcb6ac7ffb9bfc8f4b42f5fd3422c6e8613d517f87ee60e91fbe"
+        },
+        {
+          "id": "E41",
+          "kind": "qa",
+          "path": "artifacts/retro.json",
+          "observation": "构建回顾记录两处已解决问题：QueryAdapter 不可变导致员工列表越权/状态筛选失效（安全相关），以及进程内集成测试因 APP_PUBLIC_ORIGIN 未设置触发 INVALID_CSRF_ORIGIN。",
+          "lines": [
+            3,
+            58
+          ],
+          "excerpt": "  \"summary\": \"Built the employee IT repair/ticket system (Issue #541) from the baseline template: tickets Collection migration, idempotent seeds for two requester roles plus 2 employee / 1 handler demo accounts and 3 sample tickets, a TicketService with role- and status-enforcing domain logic, ticket HTTP routes, and English/Chinese list + detail pages. Verified server-side record scoping, role checks, required resolution, completed-ticket immutability, status filtering, and permission-set based roles end to end.\",\n  \"issues\": [\n    {\n      \"phase\": \"implement\",\n      \"title\": \"Employee list exposed every ticket and the status filter did nothing\",\n      \"symptom\": \"An employee request to GET /api/tickets returned other employees' tickets, and ?status= filtering was ignored, despite the scoping code being present.\",\n      \"rootCause\": \"The QueryAdapter is immutable: where()/set()/orderBy() return a new query object. TicketService.list() called query.where(...) for the submitter scope and the status filter but discarded the return values, so neither condition reached the generated SQL.\",\n      \"resolution\": \"Reassign/chained every builder call (query = query.where(...); query = query.where(...).orderBy(...)) so the predicates are retained. Re-verified with a live server that an employee sees only their own rows and that status filters narrow the result.\",\n      \"status\": \"resolved\",\n      \"cost\": \"medium\"\n    },\n    {\n      \"phase\": \"test\",\n      \"title\": \"Integration test POSTs rejected with INVALID_CSRF_ORIGIN\",\n      \"symptom\": \"tests/logic/tickets.test.ts create/start/complete requests returned 403 {code:'INVALID_CSRF_ORIGIN'} even though the Origin header was set to the request origin.\",\n      \"rootCause\": \"The standalone runtime derives app.publicOrigin from APP_PUBLIC_ORIGIN, which was unset in the in-process test. Better Auth therefore trusted its default origin (http://localhost:3000) rather than the origin the tests used, so its cookie-write CSRF check rejected the writes.\",\n      \"resolution\": \"Set APP_PUBLIC_ORIGIN=http://localhost in the test server env so the trusted origin matches the base URL the test requests use.\",\n      \"status\": \"resolved\",\n      \"cost\": \"small\"\n    },\n    {\n      \"phase\": \"test\",\n      \"title\": \"Newly registered test user could not obtain a session\",\n      \"symptom\": \"After sign-up/email returned 200, sign-in/username returned 401, so the no-role 403 assertion could not run.\",\n      \"rootCause\": \"emailAndPassword.autoSignIn is false, so registration does not establish a session, and the registered account had no username for the username sign-in endpoint to match.\",\n      \"resolution\": \"Register, then sign in through sign-in/email for that account, and assert the authenticated no-role request is refused with 403.\",\n      \"status\": \"resolved\",\n      \"cost\": \"small\"\n    },\n    {\n      \"phase\": \"lint\",\n      \"title\": \"Ticket pages failed eslint after the first pass\",\n      \"symptom\": \"react-hooks/set-state-in-effect on the detail loader, @typescript-eslint/no-misused-promises on a navigate onClick, and @typescript-eslint/no-base-to-string on a String(unknown) helper.\",\n      \"rootCause\": \"The detail loader set loading/error synchronously in the effect body; an onClick arrow returned navigate()'s promise; and text() fell back to String(value) for arbitrary unknown values.\",\n      \"resolution\": \"Moved the detail loader to the keyed-state pattern already used by the list hook (loading derived from a key mismatch, no synchronous setState), wrapped navigate in a block with void, and restricted text() to string/number/boolean/bigint/Date with an empty fallback for anything else.\",\n      \"status\": \"resolved\",\n      \"cost\": \"small\"\n    }\n  ],\n  \"blockers\": [],\n  \"improvements\": [\n    {\n      \"category\": \"documentation\",\n      \"title\": \"QueryAdapter immutability is easy to miss\",\n      \"detail\": \"where()/set()/orderBy() return clones, so a discarded return silently drops a security-relevant predicate. The pattern reads like Knex, where the same calls mutate.\",\n      \"suggestedChange\": \"Call out the immutability prominently in the database-and-data reference with a short before/after example, ideally beside the record-scoping guidance.\",\n      \"mechanizable\": false\n    },\n    {\n      \"category\": \"testing\",\n      \"title\": \"No documented origin setup for in-process server tests\",\n      \"detail\": \"Booting the standalone server inside a test and issuing cookie-authenticated writes fails the CSRF check unless APP_PUBLIC_ORIGIN matches the request origin; the failure code is generic enough to mislead.\",\n      \"suggestedChange\": \"Add an in-process request-testing recipe to the testing reference that sets APP_PUBLIC_ORIGIN beside the base URL and notes the origin requirement for non-GET requests.\",\n      \"mechanizable\": true\n    }\n  ]",
+          "sha256": "362a08a37cca92bb027ecb1ec043290d315487a35e8074832e04c0cfabb26c04"
+        }
+      ],
+      "fingerprint": "e1da062e06ef6b8a4d405050b7fb1b646e42bb4a212d4295481b47f7c5d6262c"
+    },
+    {
+      "id": "541:37156749449:1:F5",
+      "report": "541:37156749449:1",
+      "issue": 541,
+      "taskTitle": "员工 IT 报修与处理",
+      "appVersion": "1.0.0-beta.50",
+      "appTemplate": "@nocobase/app-template-default",
+      "finding": {
+        "id": "F5",
+        "kind": "improvement",
+        "owner": "documentation",
+        "confidence": "confirmed",
+        "severity": "minor",
+        "status": "open",
+        "title": "技能/参考分层较深且互相委派，缺少面向需求的统一入口",
+        "detail": "app-development 的 database-and-data 与 migrations 把细节委派给 nocobase-db SKILL，前端工作流又指向约 7000 行的前端参考集；对\"IT 报修\"这类中等需求，Agent 需要跨多份文档来回定位，容易在探索阶段耗尽预算。",
+        "impact": "提高首次任务的理解成本，间接放大了上文\"零产出\"的风险。",
+        "suggestedChange": "在每个主题参考顶部提供一条端到端最小路径（数据→路由→授权→页面→收尾命令）的跳转索引，并标注每步必读章节。",
+        "evidence": [
+          "E8",
+          "E9",
+          "E29",
+          "E34"
+        ],
+        "diagnosis": {
+          "category": "guidance-gap",
+          "trigger": "Agent 需实现一个跨数据库/服务端/授权/前端的完整业务功能",
+          "expected": "有按需求顺序组织的入口，快速确定每步必读章节",
+          "actual": "指引按库/插件/主题分层并互相委派，Agent 需自行拼接阅读路径",
+          "workaround": "Agent 通过大量目录探查与 grep 自行建立索引（消耗大量预算）",
+          "acceptance": "各主题参考含端到端最小路径索引，可据此定位每步所需章节"
+        }
+      },
+      "targets": [
+        "@nocobase/app-skills",
+        "app/.agents/skills/nocobase-app-development/references/database-and-data.md",
+        "app/.agents/skills/nocobase-app-development/references/frontend/ui-workflow.md",
+        "app/.agents/skills/nocobase-app-development/references/migrations.md"
+      ],
+      "paths": [
+        ".agents/skills/nocobase-app-development/references/cli.md",
+        ".agents/skills/nocobase-app-development/references/database-and-data.md",
+        ".agents/skills/nocobase-app-development/references/frontend/ui-workflow.md",
+        ".agents/skills/nocobase-app-development/references/migrations.md"
+      ],
+      "evidence": [
+        {
+          "id": "E8",
+          "kind": "skill",
+          "path": "app/.agents/skills/nocobase-app-development/references/migrations.md",
+          "observation": "迁移指引把迁移/种子文件形态与 builder/query/repository 选择委派给 nocobase-db Skill 第 2、3 节，并声明\"迁移创建结构、种子从不创建结构\"。",
+          "lines": [
+            1,
+            20
+          ],
+          "excerpt": "# Migrations and seeds\n\nThis page is the application side: where the directories live, how `pnpm nocobase db apply` runs them, how additional connections configure their tasks, and what to do about checksum drift and compiled manifests.\n\nHow to write the files themselves — the migration and seed shape, the immutability and self-containment rules, the Collection Builder, and which of `builder`, `query` and `repository` a task context should reach for — belongs to the package that owns them. Read `.agents/skills/nocobase-db/SKILL.md` sections 2 and 3 before writing one, and run `pnpm nocobase skills sync` if that file is missing.\n\nMigrations under `database/main/migrations/` are the application's schema history. Seeds under `database/main/seeds/` insert records the application requires to run. Migrations create structure. Seeds never do.\n\n`database/tsconfig.json` extends the server configuration so editor tooling and ESLint recognize migrations and seeds as Node source. Keep it in place when adding connection directories.\n\n## Running\n\n```bash\npnpm nocobase db apply\n```\n\nThis applies pending migrations and then pending seeds for `database.default`, including registered plugins, ordered by name across all sources. Both halves run only what is pending, so on an already-migrated database it applies seeds alone. The template defaults to `main`. Plugin migrations, seeds and runtime default reads/writes always use this same connection; changing `database.default` changes the application system database.\n\nSeeds are the second half of that run, so the structure a seed writes into must already exist from an earlier migration. Keep seed data fixed and reproducible — no current timestamps or random values in identifying fields — and never let a repeat run silently overwrite data a user has edited.\n",
+          "sha256": "327c8870ee555dc8496892821a6fe7ec05762c8a2a7b71213f8d339757f695c6"
+        },
+        {
+          "id": "E9",
+          "kind": "skill",
+          "path": "app/.agents/skills/nocobase-app-development/references/database-and-data.md",
+          "observation": "数据与数据库指引把 Query/Repository API 委派给 nocobase-db Skill，并说明 database.repository(collection) 是集合记录的默认入口，database.query() 用于非集合记录的结果集。",
+          "lines": [
+            1,
+            39
+          ],
+          "excerpt": "# Database and data access\n\nThis page is how an application reaches the database and where that code belongs. The API itself — Repository, QueryAdapter, transactions, naming, and the criterion for choosing between the two layers — belongs to the package that owns it: read `.agents/skills/nocobase-db/SKILL.md` sections 4 and 5, and run `pnpm nocobase skills sync` if that file is missing. Schema changes are migrations; see [migrations and seeds](migrations.md).\n\n## Resolving the database\n\nResolve `databaseManagerToken` from the container:\n\n```ts\nimport { databaseManagerToken } from '@nocobase/db';\n\nconst database = app.container.resolve(databaseManagerToken);\n```\n\nIn a route factory, resolve it once in the factory rather than inside each handler. In a service, take it as a constructor dependency — see [services and jobs](services-and-jobs.md).\n\nFrom there, `database.repository(collection)` is the default for a collection's records and their relations, `database.query()` is for a result set that is not any collection's records, and `database.transaction(fn)` groups writes that must succeed or fail together. Each takes an optional connection name and uses the default connection when omitted.\n\nKeep `@nocobase/db` in `dependencies`, not `devDependencies`. The deployed server resolves it at runtime, and TypeScript also reads that declaration to infer the database configuration through the public package name; declaring it only as a development dependency can cause TS2883 in an installed application even while a source workspace builds successfully.\n\n## Where data access belongs\n\nPut queries in a service and call the service from the route, once more than one handler needs the same data or the logic is worth testing on its own. A route that only reads and returns a list may query directly.\n\nNever expose a raw row shape as an API response without deciding what belongs in it. Internal columns leak through a select-everything query.\n\nNeither Repository nor Query applies the application's permissions. The route decides what the caller may see and change before any of it reaches a filter, a values object, or a field selection — see [application permission development](authorization.md).\n\n## Generated IDs\n\n`IdGeneratorProvider` supplies Snowflake IDs when a table needs a sortable identifier not tied to auto-increment. `increments('id')` is fine for ordinary tables.\n\n## Verify\n\n- Queries return what you expect against a real database, not only in a mocked test.\n- Updates and deletes are scoped, and an unscoped one is deliberate rather than accidental.\n- Multi-write operations roll back as a unit on failure.\n- Responses expose intended fields only.\n",
+          "sha256": "acbef0993c0165b8d1b280648fa18da9261df9c6eade73adf043edfc78667321"
+        },
+        {
+          "id": "E29",
+          "kind": "skill",
+          "path": "app/.agents/skills/nocobase-app-development/references/frontend/ui-workflow.md",
+          "observation": "前端工作流指引把前端工作分为完整流程与快速修改，并要求在回复中一句话声明所选流程与理由。",
+          "lines": [
+            1,
+            16
+          ],
+          "excerpt": "# Frontend development workflow\n\nThis is the entry point for the application's frontend work: read it before writing or changing anything under `client/` — pages, components, styles or copy. It covers only which workflow to follow, what to do at each step, and what counts as done. It says which changes take the full workflow (write a design file and review it once, then run one independent acceptance review after development), which can be a quick change (edit directly and run static checks only), and which parts of `ui-guidelines.md` and `frontend-dev.md` to read at each step. What the interface should look like is in `ui-guidelines.md`; how to write the code is in `frontend-dev.md`. Paths in this document are relative to its own directory: `ui-guidelines.md` and `frontend-dev.md` sit beside it, the topic references are under `references/`, and the record templates are under `templates/`.\n\n## Choosing a workflow\n\nDecide before you start, and say in one sentence in your reply which workflow you are following and why.\n\n| Workflow      | When it applies                                                                                                                                                                                                                                               |\n| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |\n| Full workflow | Any one of: a new page; a new complete interaction (a create/edit flow, a detail drawer, a multi-step operation); a change to the page structure or main interactions; one change that touches the UI of several pages; the user asks to see the design first |\n| Quick change  | None of the above applies. For example: changing copy; adjusting styling details; adding a button, a column, a form field or a filter to an existing page; fixing a UI bug; a refactor that changes neither appearance nor behavior                           |\n\nWhen unsure, explain the difference in one sentence (the full workflow adds a design, a design review and an independent acceptance review) and let the user choose.\n\n## Quick change",
+          "sha256": "d40a33ce81291f751d7ec9f28aa4bf9f0565442b5a4a40f7a9848db1ea33c3e0"
+        },
+        {
+          "id": "E34",
+          "kind": "skill",
+          "path": "packages/@nocobase/app-skills/skills/nocobase-app-development/references/cli.md",
+          "observation": "@nocobase/app-skills 内镜像的 CLI 指引，说明应用命令面（db apply、build、skills 等）与使用顺序。",
+          "lines": [
+            1,
+            40
+          ],
+          "excerpt": "# The application command line\n\nThis page is how to use the application's CLI: which command a task needs, and the rules its `--help` does not state. For a command's flags and arguments, run `pnpm nocobase <topic> <command> --help` rather than guessing; for the whole tree, `pnpm nocobase commands --json`, which lists every command registered here — built-in, the application's and each plugin's — with its source, arguments, flags, examples, and whether it takes `--json`, `--dry-run` and `--force`.\n\n## How to invoke it\n\n`pnpm nocobase <topic> <command>` runs the `nocobase` bin of `@nocobase/app-cli`, which this application depends on. It finds the application from the nearest `package.json` and loads `cli/plugins.ts` and `cli/commands/` itself.\n\nOnly `pnpm dev`, `pnpm build`, `pnpm start` and the quality scripts (`pnpm test`, `pnpm lint`, `pnpm typecheck`, `pnpm check`, …) are scripts. Every other command is reached through `pnpm nocobase`; there is no `pnpm db:apply` or `pnpm config:init`. Older documentation that names a script alias, or an id under the `app` topic such as `nocobase app db apply`, is describing a removed layout.\n\nWrite `pnpm nocobase`, not a bare `nocobase`: a machine may have an unrelated global `nocobase` on its `PATH`, while `pnpm` resolves this application's own bin first.\n\n## Find the command by task\n\n| Task                                                                | Command                                                                                                      |\n| ------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |\n| Create `config.yml` for a new checkout                              | `pnpm nocobase config init` (`--dialect <name>` when several drivers are installed)                          |\n| Change a configuration value, or read a secret from the environment | `pnpm nocobase config set key=value`, `--from-env` for secrets                                               |\n| Confirm the configuration before starting                           | `pnpm nocobase config check`                                                                                 |\n| See which environment variables the application reads               | `pnpm nocobase config env`                                                                                   |\n| Apply new migrations and seeds                                      | `pnpm nocobase db apply`                                                                                     |\n| Undo or rerun the latest migration batch while its branch is open   | `pnpm nocobase db rollback`, `pnpm nocobase db redo`                                                         |\n| Start the schema over from empty                                    | `pnpm nocobase db reset` — destructive, see below                                                            |\n| Clear a checksum warning after a deliberate, schema-neutral edit    | `pnpm nocobase db repair --dry-run`, then without `--dry-run`                                                |\n| Release a migration lock a killed run left behind                   | `pnpm nocobase db unlock`                                                                                    |\n| Read the current data model                                         | the files under `database/<connection>/collections/`, see below                                              |\n| Find Collection metadata that disagrees with its table              | `pnpm nocobase collections doctor`                                                                           |\n| Check that client and server declare the same languages             | `pnpm nocobase locales check`                                                                                |\n| Add, remove or update a plugin                                      | `pnpm nocobase plugin register`, `plugin unregister`, `plugin update`                                        |\n| Check a plugin's registration without changing anything             | `pnpm nocobase plugin inspect <name> --json`                                                                 |\n| Remove a direct NocoBase package that is not a plugin               | `pnpm nocobase package remove <package>`                                                                     |\n| Refresh `.agents/skills/` after an install or upgrade               | `pnpm nocobase skills sync`                                                                                  |\n| Build for another platform, or re-check an existing `dist/`         | `pnpm build --target <platform>`; `pnpm nocobase dist retarget`, `dist check`                                |\n| Deploy to a Hub                                                     | `pnpm nocobase hub deploy`, `hub upload`, from `@nocobase/hub-cli` — read its `nocobase-hub-cli` Skill first |\n\nEvery command listed takes `--connection <name>` or `--all` where connections apply; without either it acts on the default connection.\n\n## Conventions an agent relies on\n\n- **`--json`** prints one JSON document on stdout, success or failure, the same shape for every command: `{ schemaVersion, ok, command, status, result | error, warnings }`. `status` is `success`, `success-noop` (nothing needed changing: a dry run, or a run that found nothing to do), `partial-success` or `failure`. Read `result` on success; on failure read `error.code`, `error.suggestions` — each a `message` and, where the next step is a command, a `run` with its `command` and `args`, which names `node <dist>/cli/index.js` rather than `pnpm nocobase` in a built `dist/` — and `error.details`. Read `warnings` too, and check the exit code rather than parsing text. `NOCOBASE_CONTENT_TYPE=json` turns `--json` on for every command in a session. What the application logs while a command runs, and a command's progress, go to stderr, also under `--json`. When a command fails for a reason its message does not explain, rerun it with `NOCOBASE_CLI_DEBUG=1` to print the error behind it, redacted, on stderr; do not paste that output anywhere public without reading it.",
+          "sha256": "c3811d2bd97f558f217fd8f0b7bac471a8f1d3da520b892bddfeead67b22da0d"
+        }
+      ],
+      "fingerprint": "49011377c2ad37db4e58d2b0f6a2ea020a557342621a2e619288e5da2f6ee929"
     },
     {
       "id": "543:37156754926:1:F2",
