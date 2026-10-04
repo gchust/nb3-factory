@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "inputHash": "9c9c34694ba015c84fc64aa900647e66ffdb0d8d2ccbb73d274fc44c0e4a0d5c",
+  "inputHash": "24351d38847d5133e377f6ec89f1421a316212ea9bdab3df03a9a5355a137979",
   "findings": [
     {
       "id": "460:36434284393:1:F2",
@@ -7083,6 +7083,351 @@
         }
       ],
       "fingerprint": "ae2a16b7b67631391e53e99840c1c3b4575ea06b92040d0b0efe7d80d0052311"
+    },
+    {
+      "id": "543:37156754926:1:F2",
+      "report": "543:37156754926:1",
+      "issue": 543,
+      "taskTitle": "项目资料与私有附件",
+      "appVersion": "1.0.0-beta.50",
+      "appTemplate": "@nocobase/app-template-default",
+      "finding": {
+        "id": "F2",
+        "kind": "improvement",
+        "owner": "plugin",
+        "confidence": "confirmed",
+        "severity": "minor",
+        "status": "open",
+        "title": "ServerFileRepository 缺少带主体过滤的内容读取 API，应用只能重写整套字节路由",
+        "detail": "FileOperations 只提供 validateCollection/uploadOne/uploadMany/getUrl/getStorageUrl，公开字节路由又是无认证的例外。要满足“附件仅本人可读”，应用别无选择：解析 driveManagerToken 与 databaseManagerToken，在 material-content.ts 里自己写 UUID 正则、ownerId 过滤、disk.exists、404 语义、Cache-Control/nosniff/CSP/Content-Disposition，再用 Readable.toWeb(getStream) 返回字节——与插件 routes.js 中公开路由的实现几乎逐行重复。Skill 要求应用“先加 scoped middleware 和 principal-based Policy”，但公开 ServerFileRepositoryManager 并未暴露可承载这层 Policy 的读取入口。",
+        "impact": "每个需要私有附件的应用都要复制一遍易错的安全头、404 等价性与流式实现；不同实现的细微差异（例如漏掉 nosniff 或把越权记录当成 200）难以被框架约束。",
+        "suggestedChange": "在 ServerFileRepositoryManager/FileOperations 上提供可选主体上下文的读取/流式方法（或在 defineFileRepositoryApiRoutes 内建应用可注入的认证与授权钩子），让应用复用同一套安全头与记录判定。",
+        "evidence": [
+          "E3",
+          "E4",
+          "E16",
+          "E22"
+        ],
+        "diagnosis": {
+          "category": "capability-gap",
+          "trigger": "需要把附件限制为仅上传者/本人可读，且希望复用框架的字节路由语义。",
+          "expected": "框架提供带 principal/Policy 的内容读取能力，应用只需注入认证与过滤规则。",
+          "actual": "框架只提供公开、无认证的字节路由与不含读取操作的 Repository 接口，应用必须自建根路由并重复安全头/流逻辑。",
+          "workaround": "material-content.ts 解析 driveManagerToken+databaseManagerToken，按 ownerId 过滤并自行设置 nosniff/CSP/Content-Disposition 与流式响应。",
+          "acceptance": "应用在不复制流/头逻辑的前提下注册受保护字节路由，且匿名/越权仍为 401/404。"
+        }
+      },
+      "targets": [
+        "@nocobase/app-plugin-file",
+        "packages/@nocobase/app-plugin-file/skills/nocobase-app-plugin-file/SKILL.md"
+      ],
+      "paths": [
+        ".agents/skills/nocobase-app-plugin-file/SKILL.md",
+        "packages/@nocobase/app-plugin-file/dist/server/repository.d.ts",
+        "packages/@nocobase/app-plugin-file/dist/server/repository.js"
+      ],
+      "evidence": [
+        {
+          "id": "E3",
+          "kind": "code",
+          "path": "packages/@nocobase/app-plugin-file/dist/server/repository.d.ts",
+          "observation": "FileOperations 仅暴露 validateCollection/uploadOne/uploadMany/getUrl/getStorageUrl，没有按主体读取内容的流式 API；FILE_COLUMNS 固定九列；uploadPolicy 说明上传路径如何从 exposure 的 Policy 派生。",
+          "lines": [
+            16,
+            43
+          ],
+          "excerpt": "export interface FileOperations {\n    validateCollection(): Promise<void>;\n    uploadOne(input: UploadOneInput): Promise<UploadOneResult>;\n    uploadMany(input: UploadManyInput): Promise<UploadManyResult>;\n    getUrl(record: Pick<FileRecord, 'id' | 'ext'>): string;\n    getStorageUrl(record: Pick<FileRecord, 'disk' | 'key'>): Promise<string>;\n}\nexport type ServerFileRepository = Repository<FileRecord> & FileOperations;\n/**\n * The columns a file Collection must provide, which are also the columns\n * `store()` composes for every upload.\n */\nexport declare const FILE_COLUMNS: readonly [\"id\", \"disk\", \"key\", \"filename\", \"ext\", \"mimeType\", \"size\", \"createdAt\", \"updatedAt\"];\n/**\n * The Policy the upload path binds, derived from the exposure's own.\n *\n * It is derived rather than used as it stands because an upload supplies no\n * caller fields at all — `store()` composes every value — so a field allowlist\n * has nothing to constrain here and the plugin substitutes its own columns.\n * What is inherited is exactly the two dimensions that do not describe caller\n * input: which rows this principal may produce (`scope`), and what the server\n * stamps onto them (`defaults`). A `create` that is `false` stays `false`, so\n * an exposure that forbids creating rows forbids uploading them too.\n *\n * This is the only place a Policy is widened, and the reason is specific to\n * this path. It licenses nothing elsewhere.\n */\nexport declare function uploadPolicy(base: RepositoryPolicy): RepositoryPolicy;",
+          "sha256": "3fa0ed9700f15350fc283c374bad94ac2ea4e8a1ffabeb4e4ff87d4b8ad37d4c"
+        },
+        {
+          "id": "E4",
+          "kind": "code",
+          "path": "packages/@nocobase/app-plugin-file/dist/server/repository.js",
+          "observation": "store() 用 randomUUID() 铸 id、清洗文件名、合成 objects/<id>.<ext> key、disk.putStream、比对 contentLength 并抛 INVALID_FILE_METADATA；是上传字节与元数据由框架负责的可执行证据。",
+          "lines": [
+            122,
+            162
+          ],
+          "excerpt": "        const getUrl = (record) => `${accessPath}/${encodeURIComponent(record.id)}${record.ext ? `.${encodeURIComponent(record.ext)}` : ''}`;\n        const store = async (file, owned) => {\n            const disk = this.drive.use(options.disk);\n            const id = randomUUID();\n            // Strip client paths, controls and malformed Unicode before generating any headers.\n            const filename = (Buffer.from(file.name).toString('utf8').split(/[\\\\/]/).pop() ?? '')\n                .normalize('NFC')\n                // eslint-disable-next-line no-control-regex -- Strip controls from an untrusted filename.\n                .replace(/[\\u0000-\\u001f\\u007f]/g, '')\n                .trim() || 'file';\n            const suffix = filename.lastIndexOf('.') > 0\n                ? filename.slice(filename.lastIndexOf('.') + 1).toLowerCase()\n                : '';\n            const ext = /^[a-z0-9]{1,32}$/.test(suffix) ? suffix : '';\n            const key = `objects/${id}${ext ? `.${ext}` : ''}`;\n            const mimeType = validMime(file.type);\n            owned.push(key); // A failed put may have left a partial object.\n            await disk.putStream(key, Readable.fromWeb(file.stream()), { contentType: mimeType, contentLength: file.size });\n            const metadata = await disk.getMetaData(key);\n            if (!Number.isSafeInteger(metadata.contentLength) ||\n                metadata.contentLength < 0 ||\n                metadata.contentLength !== file.size)\n                throw new FileRepositoryError('INVALID_FILE_METADATA', 'Stored file size does not match the uploaded file.');\n            const now = new Date().toISOString();\n            const definition = await this.database\n                .connection(options.connection)\n                .collections.get(collection);\n            const timestamp = (name) => definition?.fields?.find((field) => field.name === name)?.type ===\n                'datetime'\n                ? now.slice(0, -1)\n                : now;\n            return {\n                id,\n                disk: options.disk,\n                key,\n                filename,\n                ext,\n                mimeType: validMime(metadata.contentType ?? mimeType),\n                size: metadata.contentLength,\n                createdAt: timestamp('createdAt'),\n                updatedAt: timestamp('updatedAt'),",
+          "sha256": "3e3a1d1f33208ae8e7038c8afa89149195897db3679edbad860a379e80ce8fb1"
+        },
+        {
+          "id": "E16",
+          "kind": "skill",
+          "path": "packages/@nocobase/app-plugin-file/skills/nocobase-app-plugin-file/SKILL.md",
+          "observation": "Skill 明确：action 由 policy 管，accessPath 下的内容路由是公开例外；“For restricted files, register App-owned authentication … before mounting it”；“missing built-in authentication alone is not a reason to replace the routes”。",
+          "lines": [
+            118,
+            126
+          ],
+          "excerpt": "Only declared POST `/api/<name>:<action>` operations are exposed. Ordinary actions are `findMany/findOne/count/exists/aggregate/groupBy/createOne/updateOne/deleteOne`. There are no createMany/updateMany/deleteMany HTTP actions.\n\n`policy` is required and governs every action of the exposure, uploads included. It is a Repository Policy: `read`, `create`, `update` and `delete`, each `true`, `false`, or a rule node. A node that is `false` refuses that operation; a node with no `fields` accepts no caller-supplied field, which is what a metadata `createOne` needs before it will accept anything. Pass a function of the principal — `policy: (principal) => ({ ... })` — together with a `principal(context)` resolver to scope rows to the caller; without a principal the request is refused with 403.\n\nAn upload supplies no caller fields, so it binds a Policy derived from this one: the `create` scope and defaults are inherited and the field allowlist is replaced by the file columns. `create: false` therefore forbids uploading as well as creating metadata, and a `create.defaults` of `{ ownerId }` is stamped onto uploaded rows — which is what keeps an uploaded file inside the same scope `findMany` reads. The content route under `accessPath` is the exception: it is public and this Policy does not reach it.\n\nContent is GET `<accessPath>/<uuid>.<ext>` outside `/api`, omitting the dot when extensionless. Stream returns full bytes as an attachment; redirect returns a public storage URL or a five-minute signed URL. A disk without URL support requires stream mode; there is no automatic fallback.\n\nThese are public routes. For restricted files, register App-owned authentication and authorization on the paths each contribution owns before mounting it — `/<name>:<action>` per exposed API action, `<accessPath>/*` for content. Never `router.use('*', ...)` in a contribution router: contributions share the mounted router, so it also guards the SPA and every contribution mounted after yours. Check the operation and record/parent-record access; a login page, private disk, Client filter or Policy field allowlist is not authentication. Add scoped middleware and principal-based Policy to the generated routes first. If an existing contract needs an adapter, extend that module using the public Server manager and retain its authorization checks; missing built-in authentication alone is not a reason to replace the routes. Never trust browser-supplied ownership.",
+          "sha256": "06b464d71554a3ae12819918f98a84f44c65c2b70e7fbfcffd17e992e57aed22"
+        },
+        {
+          "id": "E22",
+          "kind": "code",
+          "path": "app/server/routes/material-content.ts",
+          "observation": "应用自建 defineRootRoutes 认证字节路由：复制 UUID 正则、ownerId 过滤、disk.exists、Cache-Control/nsniff/CSP/Content-Disposition 与 getStream，说明框架未提供可直接复用的带策略内容读取。",
+          "lines": [
+            14,
+            72
+          ],
+          "excerpt": "/**\n * The authenticated byte route for material attachments.\n *\n * The File Repository's own byte route is deliberately public — it serves anyone holding the UUID and is not\n * reached by a Policy. The product requires the opposite: an attachment belongs to the user who uploaded it, and\n * neither a colleague with the link nor a signed-out visitor may read it. So this application serves the bytes\n * itself, from the same `local` disk the upload wrote to, and looks the record up with the caller's id in the\n * filter. A missing record, another user's record and a non-`png`/`docx` record are indistinguishable: all 404.\n */\n\nconst UUID =\n  /^([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})(?:\\.([a-z0-9]{1,32}))?$/;\n\nconst MIME_TYPES: Readonly<Record<string, string>> = {\n  png: 'image/png',\n  docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',\n};\n\nexport default defineRootRoutes((app: Application) => {\n  const router = new Hono<AuthEnv>();\n  const auth = app.container.resolve(authenticationToken);\n\n  router.get('/uploads/materials/:file', auth.required(), async (context) => {\n    const session = context.get('auth');\n    if (!session) return context.json({ code: 'UNAUTHORIZED' }, 401);\n\n    const match = UUID.exec(context.req.param('file'));\n    if (!match) return context.notFound();\n\n    const [, id, extension = ''] = match;\n    if (!(extension in MIME_TYPES)) return context.notFound();\n\n    const database = app.container.resolve(databaseManagerToken);\n    const record = await database\n      .repository<MaterialAttachmentRecord>('material_files')\n      .findOne({ filter: { id, ownerId: session.user.id } });\n    if (!record || record.ext !== extension) return context.notFound();\n\n    const disk = app.container.resolve(driveManagerToken).use(record.disk);\n    if (!(await disk.exists(record.key))) return context.notFound();\n\n    const filename = encodeURIComponent(\n      Buffer.from(record.filename).toString('utf8'),\n    ).replace(\n      /['()*]/g,\n      (char) => `%${char.charCodeAt(0).toString(16).toUpperCase()}`,\n    );\n\n    context.header('Cache-Control', 'private, no-store');\n    context.header('Content-Type', MIME_TYPES[extension]);\n    context.header('Content-Length', String(record.size));\n    context.header('X-Content-Type-Options', 'nosniff');\n    context.header('Content-Security-Policy', \"sandbox; default-src 'none'\");\n    context.header(\n      'Content-Disposition',\n      `attachment; filename*=UTF-8''${filename}`,\n    );\n    return context.body(Readable.toWeb(await disk.getStream(record.key)));\n  });",
+          "sha256": "6102038e98984d05c6583f3cd3f8695f9dc89889ff6e3e71afb59269c88c757d"
+        }
+      ],
+      "fingerprint": "6dcf4db482c45284a1b29471a30a09d58f7218c2a922c516ed7e8bcc8f4b090b"
+    },
+    {
+      "id": "543:37156754926:1:F3",
+      "report": "543:37156754926:1",
+      "issue": 543,
+      "taskTitle": "项目资料与私有附件",
+      "appVersion": "1.0.0-beta.50",
+      "appTemplate": "@nocobase/app-template-default",
+      "finding": {
+        "id": "F3",
+        "kind": "improvement",
+        "owner": "plugin",
+        "confidence": "confirmed",
+        "severity": "minor",
+        "status": "open",
+        "title": "注册表图片预览器缺少失败态，损坏 PNG 会被静默当作成功预览",
+        "detail": "file-preview-content.tsx 的 image 分支直接渲染裸 <img src={url}>，没有 onError，也没有围绕加载失败的状态或下载回退（外部 error prop 只覆盖调用方已知错误）。相较之下 Office/OOXML 分支都有 error → 下载卡片的回退。于是损坏 PNG 会保留浏览器坏图标，而周围 UI 仍显示文件名，看起来像“预览成功”。应用为了满足 B06，只能在 app-owned 的注册表副本里新增 ImagePreview（onError + role=alert + 下载按钮）。",
+        "impact": "开发者若直接复用框架组件，损坏图片不会进入任何失败路径，验收“损坏文件要有明确失败提示”的用例会失败，且不同应用会各自造一套不一致的失败 UI。",
+        "suggestedChange": "在框架的 image 分支内建 onError 失败态与下载回退（可复用现有 office 回退组件），使所有复用者默认获得一致行为。",
+        "evidence": [
+          "E5",
+          "E6",
+          "E25",
+          "E33"
+        ],
+        "diagnosis": {
+          "category": "usability-improvement",
+          "trigger": "上传内容损坏或不可解码的图片（或磁盘文件与元数据不一致）。",
+          "expected": "预览器捕获 onError，给出明确的“无法显示/文件已保存”提示并保留下载入口。",
+          "actual": "默认 image 分支无 onError，损坏图片被当作已渲染，无任何失败提示。",
+          "workaround": "应用在 app-owned 注册表副本中新增 ImagePreview，捕获 onError 后渲染 alert 与下载按钮。",
+          "acceptance": "框架默认组件直接复用即可通过 B06，无需应用改写注册表组件。"
+        }
+      },
+      "targets": [
+        "@nocobase/app-plugin-file"
+      ],
+      "paths": [
+        "packages/@nocobase/app-plugin-file/registry/component-ui/components/previewers/file-preview-content.tsx",
+        "packages/@nocobase/app-plugin-file/registry/component-ui/components/previewers/office-open-xml-preview.tsx"
+      ],
+      "evidence": [
+        {
+          "id": "E5",
+          "kind": "code",
+          "path": "packages/@nocobase/app-plugin-file/registry/component-ui/components/previewers/file-preview-content.tsx",
+          "observation": "kind===\"image\" 直接返回裸 <img src={url}>，没有 onError/失败态；error 只在 switch 之前被处理（外部传入）。对比 office/ooxml 分支均有错误回退。",
+          "lines": [
+            61,
+            99
+          ],
+          "excerpt": "  if (error)\n    return (\n      <div role='alert'>{t(messageKey(error), { defaultValue: error })}</div>\n    );\n  if (!url && kind !== 'unsupported')\n    return (\n      <div role='status'>\n        {t('files.loadingPreview', { defaultValue: 'Loading preview...' })}\n      </div>\n    );\n  switch (kind) {\n    case 'image':\n      return (\n        <img\n          src={url}\n          alt={file.filename}\n          className='max-h-[70vh] max-w-full object-contain'\n        />\n      );\n    case 'pdf':\n      return (\n        <iframe title={file.filename} src={url} className='h-[70vh] w-full' />\n      );\n    case 'audio':\n      return <audio controls src={url} className='w-full' />;\n    case 'video':\n      return <video controls src={url} className='max-h-[70vh] max-w-full' />;\n    case 'markdown':\n      return <MarkdownPreview text={text} />;\n    case 'text':\n      return (\n        <pre className='max-h-[70vh] overflow-auto whitespace-pre-wrap rounded-md bg-muted p-3 text-sm'>\n          {text ??\n            t('files.loadingPreview', { defaultValue: 'Loading preview...' })}\n        </pre>\n      );\n    default:\n      return <DownloadFallback file={file} onDownload={onDownload} />;\n  }",
+          "sha256": "f30abbadc57a0f0ed28cdb68d4ced7bba9a6e3a4c3d59d3b6fc49f89d9497144"
+        },
+        {
+          "id": "E6",
+          "kind": "code",
+          "path": "packages/@nocobase/app-plugin-file/registry/component-ui/components/previewers/office-open-xml-preview.tsx",
+          "observation": "OOXML 预览有 viewerError/AbortController/onError 回退到下载卡片，但只在 !loaded 时无限显示 “Loading preview...”，没有像旧 Office iframe 那样的 15s 加载超时。",
+          "lines": [
+            80,
+            113
+          ],
+          "excerpt": "  const resolvedError = error ?? viewerError;\n  if (resolvedError) {\n    return (\n      <OfficeOpenXmlDownloadFallback\n        file={file}\n        message={resolvedError}\n        onDownload={onDownload}\n      />\n    );\n  }\n  if (!url) {\n    return (\n      <div role='status'>\n        {t('files.loadingPreview', { defaultValue: 'Loading preview...' })}\n      </div>\n    );\n  }\n\n  return (\n    <div className='relative h-[70vh] min-h-0 w-full overflow-hidden bg-muted/30'>\n      {!loaded ? (\n        <div\n          role='status'\n          className='absolute inset-0 z-10 flex items-center justify-center bg-background'\n        >\n          {t('files.loadingPreview', { defaultValue: 'Loading preview...' })}\n        </div>\n      ) : null}\n      <div\n        ref={hostRef}\n        className='h-full min-h-0 w-full overflow-hidden'\n        data-office-open-xml-format={format}\n      />\n    </div>",
+          "sha256": "b32b48615f0400191ba28d427f9070fa69c74282829aba2087746563350d28c8"
+        },
+        {
+          "id": "E25",
+          "kind": "code",
+          "path": "app/client/extensions/nocobase-file-component-ui/components/previewers/file-preview-content.tsx",
+          "observation": "应用在 app-owned 注册表副本中新增 ImagePreview：捕获 onError 并给出 role=alert 的损坏提示与下载按钮——因为框架默认图片预览没有失败态。",
+          "lines": [
+            104,
+            159
+          ],
+          "excerpt": "/**\n * An image preview that admits when it cannot decode the bytes.\n *\n * The `<img>` this replaces had no failure state: a damaged PNG kept the browser's broken-image icon (or, in some\n * browsers, nothing) and the surrounding chrome still showed the filename as though the preview had succeeded. A\n * corrupt upload has to be reported as a failed preview, so this tracks the load error and replaces the image with an\n * alert that says the content is damaged, keeping the download action available so the user can still inspect it.\n */\nfunction ImagePreview(inputProps: {\n  readonly file: FileRecord;\n  readonly url?: string;\n  readonly onDownload?: () => void;\n}): ReactElement {\n  const { t } = useTranslation('@nocobase/app-plugin-file');\n  const { file, url, onDownload } = inputProps;\n  const [failed, setFailed] = useState(false);\n\n  if (failed) {\n    return (\n      <div\n        role='alert'\n        className='flex flex-col items-center gap-3 py-8 text-center'\n      >\n        <ImageOff\n          aria-hidden='true'\n          className='size-10 text-muted-foreground'\n        />\n        <p className='font-medium'>\n          {t('files.imageFailed', {\n            defaultValue: 'This image cannot be displayed',\n          })}\n        </p>\n        <p className='max-w-md text-sm text-muted-foreground'>\n          {t('files.imageFailedDescription', {\n            defaultValue:\n              'The file is saved, but it is damaged or not a readable image, so it cannot be previewed. Download it to inspect it.',\n          })}\n        </p>\n        {onDownload ? (\n          <Button type='button' onClick={onDownload}>\n            {t('files.downloadFile', { defaultValue: 'Download file' })}\n          </Button>\n        ) : null}\n      </div>\n    );\n  }\n\n  return (\n    <img\n      src={url}\n      alt={file.filename}\n      className='max-h-[70vh] max-w-full object-contain'\n      onError={() => setFailed(true)}\n    />\n  );\n}",
+          "sha256": "2f67d0e8364f374c604e5724934563e53e79eec34da00feb91403462ebc9246e"
+        },
+        {
+          "id": "E33",
+          "kind": "qa",
+          "path": "artifacts/verify-3/browser-acceptance/report.json",
+          "observation": "verify-3 report：passed=false, authenticated=true；B01/B03/B04/B05/B06 passed，B02 blocked（agent-browser 包装 window.Worker 导致 module blob worker 收不到首批消息，原生 Worker 可渲染）。",
+          "lines": [
+            1,
+            25
+          ],
+          "excerpt": "{\n  \"passed\": false,\n  \"authenticated\": true,\n  \"summary\": \"以真实浏览器完成 B01–B06：B01 PNG 上传保存、刷新后显示真实图片并可下载（哈希与样例一致）、B03 空标题保存失败且保留已选附件、补标题直接保存、B04 移除附件保存并刷新生效、B05 乙与匿名均无法读取甲的资料/附件内容而甲仍可读、B06 损坏 PNG 在详情与预览均给出明确失败提示，均通过。B02 DOCX 应用内正文预览被本轮 agent-browser 对全局 Worker 的包装阻塞（该包装丢弃 module blob worker 就绪前立即 postMessage 的首批消息，预览一直 Loading；原生 Worker 下同一链路渲染正常），按环境阻塞记为 blocked，未通过。\",\n  \"checks\": [\n    {\n      \"id\": \"B01\",\n      \"criterion\": \"甲上传 PNG 并保存资料，刷新后能看到真实图片，并能下载打开。\",\n      \"status\": \"passed\",\n      \"actions\": [\n        \"以资料员甲 clerk.jia 登录 $FACTORY_BROWSER_URL，进入 Materials 页面，点击 New material\",\n        \"在新建资料弹窗通过文件输入上传 fixtures/sample.png，标题填 'B01 Site photo'，点击 Save\",\n        \"页面提示 'Material created.'，列表出现该资料；随后完整刷新 /main/materials，点击该资料 View 打开详情\",\n        \"在详情弹窗确认图片渲染，并检查 img.naturalWidth/naturalHeight 与内容 URL；点击 Download 触发下载\"\n      ],\n      \"evidence\": [\n        \"上传后新建弹窗显示已选文件 sample.png 与 Remove 按钮，保存返回 'Material created.'，列表出现 'B01 Site photo'（Attachments: 1）\",\n        \"刷新后资料仍存在；详情弹窗内 img src=/main/uploads/materials/3290f5d9-8de4-41c2-be26-07f3d0dc4b2a.png，naturalWidth=32 naturalHeight=32，visible=true，说明是真实图片而非占位\",\n        \"点击 Download 通过 agent-browser download 保存成功，得到 99 字节文件；sha256=eafcdecc1468f7b18a15a7d22c494ab7e14a435f0560798ad463efc5e14f3490，与 fixtures/sample.png 完全一致，file 识别为 PNG image data, 32 x 32\",\n        \"内容 URL 响应 200，Content-Type image/png，Content-Disposition attachment; filename*=UTF-8''sample.png\"\n      ],\n      \"screenshots\": [\n        \"B01-01-materials-list.png\",\n        \"B01-02-new-png-filled.png\",\n        \"B01-03-detail-image.png\",",
+          "sha256": "c5845d4667bc0ad1df8a1cc9bc7fdfe5dc8cbb2cd86822f2d3b43e424191515d"
+        }
+      ],
+      "fingerprint": "b859774c11be9239229adf3b7baefd1277b3be5bdfbee931e31fa7e677cca453"
+    },
+    {
+      "id": "543:37156754926:1:F4",
+      "report": "543:37156754926:1",
+      "issue": 543,
+      "taskTitle": "项目资料与私有附件",
+      "appVersion": "1.0.0-beta.50",
+      "appTemplate": "@nocobase/app-template-default",
+      "finding": {
+        "id": "F4",
+        "kind": "improvement",
+        "owner": "plugin",
+        "confidence": "confirmed",
+        "severity": "minor",
+        "status": "open",
+        "title": "OfficeOpenXmlPreview 没有加载超时，viewer 卡住时会永久停在 Loading preview…",
+        "detail": "OOXML 预览只在 !loaded 时显示 “Loading preview…”，viewer 若既没有 onError 也不完成 load（例如 worker 被运行环境包装后丢消息），界面会无限等待且没有失败回退。旧版 Office iframe 路径则定义了 OFFICE_PREVIEW_TIMEOUT_MS = 15_000。file-preview-content.tsx 只对 office（iframe）分支有超时，ooxml 分支没有。",
+        "impact": "预览链路的任何挂起都会表现为“永远加载”，用户与自动化都拿不到成功或失败的确定结果，问题也难以归因。",
+        "suggestedChange": "为 OOXML 预览加入与旧 Office 一致的加载超时（例如复用 OFFICE_PREVIEW_TIMEOUT_MS），超时后走 viewerError → 下载回退。",
+        "evidence": [
+          "E5",
+          "E6"
+        ],
+        "diagnosis": {
+          "category": "usability-improvement",
+          "trigger": "OOXML viewer 未触发 onError 但也未完成 load（包括运行环境包装 Worker 导致消息丢失）。",
+          "expected": "超过加载阈值后进入显式失败态并提供下载回退。",
+          "actual": "只有 onError 才失败；否则永久显示 Loading preview…，没有任何超时。",
+          "workaround": "无框架级绕行；本次由 QA 用原生 Worker 实验证明实现可渲染，并把该现象记为环境阻塞。",
+          "acceptance": "在 viewer 不响应时，15s（或配置阈值）内出现失败提示与下载入口。"
+        }
+      },
+      "targets": [
+        "@nocobase/app-plugin-file"
+      ],
+      "paths": [
+        "packages/@nocobase/app-plugin-file/registry/component-ui/components/previewers/file-preview-content.tsx",
+        "packages/@nocobase/app-plugin-file/registry/component-ui/components/previewers/office-open-xml-preview.tsx"
+      ],
+      "evidence": [
+        {
+          "id": "E5",
+          "kind": "code",
+          "path": "packages/@nocobase/app-plugin-file/registry/component-ui/components/previewers/file-preview-content.tsx",
+          "observation": "kind===\"image\" 直接返回裸 <img src={url}>，没有 onError/失败态；error 只在 switch 之前被处理（外部传入）。对比 office/ooxml 分支均有错误回退。",
+          "lines": [
+            61,
+            99
+          ],
+          "excerpt": "  if (error)\n    return (\n      <div role='alert'>{t(messageKey(error), { defaultValue: error })}</div>\n    );\n  if (!url && kind !== 'unsupported')\n    return (\n      <div role='status'>\n        {t('files.loadingPreview', { defaultValue: 'Loading preview...' })}\n      </div>\n    );\n  switch (kind) {\n    case 'image':\n      return (\n        <img\n          src={url}\n          alt={file.filename}\n          className='max-h-[70vh] max-w-full object-contain'\n        />\n      );\n    case 'pdf':\n      return (\n        <iframe title={file.filename} src={url} className='h-[70vh] w-full' />\n      );\n    case 'audio':\n      return <audio controls src={url} className='w-full' />;\n    case 'video':\n      return <video controls src={url} className='max-h-[70vh] max-w-full' />;\n    case 'markdown':\n      return <MarkdownPreview text={text} />;\n    case 'text':\n      return (\n        <pre className='max-h-[70vh] overflow-auto whitespace-pre-wrap rounded-md bg-muted p-3 text-sm'>\n          {text ??\n            t('files.loadingPreview', { defaultValue: 'Loading preview...' })}\n        </pre>\n      );\n    default:\n      return <DownloadFallback file={file} onDownload={onDownload} />;\n  }",
+          "sha256": "f30abbadc57a0f0ed28cdb68d4ced7bba9a6e3a4c3d59d3b6fc49f89d9497144"
+        },
+        {
+          "id": "E6",
+          "kind": "code",
+          "path": "packages/@nocobase/app-plugin-file/registry/component-ui/components/previewers/office-open-xml-preview.tsx",
+          "observation": "OOXML 预览有 viewerError/AbortController/onError 回退到下载卡片，但只在 !loaded 时无限显示 “Loading preview...”，没有像旧 Office iframe 那样的 15s 加载超时。",
+          "lines": [
+            80,
+            113
+          ],
+          "excerpt": "  const resolvedError = error ?? viewerError;\n  if (resolvedError) {\n    return (\n      <OfficeOpenXmlDownloadFallback\n        file={file}\n        message={resolvedError}\n        onDownload={onDownload}\n      />\n    );\n  }\n  if (!url) {\n    return (\n      <div role='status'>\n        {t('files.loadingPreview', { defaultValue: 'Loading preview...' })}\n      </div>\n    );\n  }\n\n  return (\n    <div className='relative h-[70vh] min-h-0 w-full overflow-hidden bg-muted/30'>\n      {!loaded ? (\n        <div\n          role='status'\n          className='absolute inset-0 z-10 flex items-center justify-center bg-background'\n        >\n          {t('files.loadingPreview', { defaultValue: 'Loading preview...' })}\n        </div>\n      ) : null}\n      <div\n        ref={hostRef}\n        className='h-full min-h-0 w-full overflow-hidden'\n        data-office-open-xml-format={format}\n      />\n    </div>",
+          "sha256": "b32b48615f0400191ba28d427f9070fa69c74282829aba2087746563350d28c8"
+        }
+      ],
+      "fingerprint": "44b03a5c1d5c666f9aeeaf3aaaa063142c5c179ceafe144aba5ca6b188aee407"
+    },
+    {
+      "id": "543:37156754926:1:F5",
+      "report": "543:37156754926:1",
+      "issue": 543,
+      "taskTitle": "项目资料与私有附件",
+      "appVersion": "1.0.0-beta.50",
+      "appTemplate": "@nocobase/app-template-default",
+      "finding": {
+        "id": "F5",
+        "kind": "improvement",
+        "owner": "documentation",
+        "confidence": "confirmed",
+        "severity": "minor",
+        "status": "open",
+        "title": "db Skill 未说明 uuid 主键无数据库默认值时需由调用方提供 id",
+        "detail": "nocobase-db SKILL 的边界清单写了 “Do not assume an `id` exists…”，方向正确但没有覆盖最常见的正向场景：用 collection.uuid(\"id\").primary() 声明的主键没有数据库默认值，Repository 的 createdRecordSelector 只回填 autoIncrement/increments，因此 createOne 省略 id 时会由 recordSelector 抛 INVALID_UNIQUE_SELECTOR。应用为此在 provider 里显式 id: randomUUID()。迁移模板与 Skill 都没有把这一职责写清楚。",
+        "impact": "使用 uuid 主键的开发者会先撞上运行时的 INVALID_UNIQUE_SELECTOR，再自行推断出“需要自己铸 id 或加数据库默认”，增加试错成本并容易在不同表间写出不一致的身份策略。",
+        "suggestedChange": "在 nocobase-db Skill（及迁移示例）中补一段：uuid primary 无默认值时，createOne/upsertOne 必须显式提供 id（或声明数据库默认/服务端默认），并给出 randomUUID 示例。",
+        "evidence": [
+          "E10",
+          "E18",
+          "E20",
+          "E24"
+        ],
+        "diagnosis": {
+          "category": "guidance-gap",
+          "trigger": "声明 collection.uuid(\"id\").primary() 后在 createOne 中省略 id。",
+          "expected": "文档明确 uuid 主键的身份生成职责与写法，或库有默认生成。",
+          "actual": "Skill 仅提醒不要假设 id 存在，未说明 uuid 需调用方提供；运行时才以 INVALID_UNIQUE_SELECTOR 暴露。",
+          "workaround": "应用在每次 createOne 时用 node:crypto randomUUID() 显式提供 id。",
+          "acceptance": "Skill 或迁移示例给出 uuid 主键的 id 提供方式，开发者不再需要靠报错误推。"
+        }
+      },
+      "targets": [
+        "@nocobase/db",
+        "packages/@nocobase/db/skills/nocobase-db/SKILL.md"
+      ],
+      "paths": [
+        ".agents/skills/nocobase-db/SKILL.md",
+        "packages/@nocobase/db/dist/src/repository/internal/identity.js"
+      ],
+      "evidence": [
+        {
+          "id": "E10",
+          "kind": "code",
+          "path": "packages/@nocobase/db/dist/src/repository/internal/identity.js",
+          "observation": "recordSelector 在找不到“完整且非空”的主键/唯一约束时抛 RepositoryError(\"INVALID_UNIQUE_SELECTOR\",…)；createdRecordSelector 只为 autoIncrement/increments 回填生成的 id，不覆盖 uuid。",
+          "lines": [
+            9,
+            34
+          ],
+          "excerpt": "export function recordSelector(collection, record) {\n    const constraint = identityConstraints(collection).find((candidate) => candidate.fields.every((field) => record[field] !== undefined && record[field] !== null));\n    if (!constraint) {\n        throw new RepositoryError('INVALID_UNIQUE_SELECTOR', 'Repository record requires a complete, non-null primary or unconditional unique selector.', { collection: collection.name });\n    }\n    return {\n        kind: 'unique',\n        fields: [...constraint.fields],\n        values: Object.fromEntries(constraint.fields.map((field) => [field, record[field]])),\n    };\n}\nexport function createdRecordSelector(collection, values, returned) {\n    const record = { ...values };\n    const generated = (collection.fields ?? []).filter((field) => !('target' in field) &&\n        (field.autoIncrement || field.type === 'increments'));\n    const insertId = Array.isArray(returned) ? returned[0] : undefined;\n    // Drivers without RETURNING may supply one generated numeric identity, not a value for every primary field.\n    if (generated.length === 1 &&\n        (typeof insertId === 'number' ||\n            typeof insertId === 'string' ||\n            typeof insertId === 'bigint')) {\n        const field = generated[0].name;\n        if (record[field] === undefined)\n            record[field] = insertId;\n    }\n    return recordSelector(collection, record);",
+          "sha256": "cd169bf0922a87c69d0793269195e9b32ef326a62b2b7ff9c0869e8c50a69bbf"
+        },
+        {
+          "id": "E18",
+          "kind": "skill",
+          "path": "packages/@nocobase/db/skills/nocobase-db/SKILL.md",
+          "observation": "db Skill 的边界清单：包含 “Do not assume an `id` exists…”；但没有说明 uuid 主键在未声明数据库默认值时必须由调用方提供 id。",
+          "lines": [
+            242,
+            249
+          ],
+          "excerpt": "Boundaries that are easy to get wrong:\n\n- `findOne` takes the first match; `updateOne` and `deleteOne` require exactly one; `upsertOne` requires a unique equality condition.\n- `updateMany` and `deleteMany` refuse an empty scope. Pass `all: true` only when the task explicitly calls for every row — never to make an error go away.\n- `createMany` and `updateMany` do not accept nested relation writes. `createOne` accepts `create` and `connect` on a relation, not the full set.\n- `disconnect` detaches; `delete` removes the target record. A relation target update or delete stays inside the current parent record's scope.\n- Repository does not apply the application's permissions. A route handler decides what the caller may see and change _before_ anything reaches `filter`, `values` or `select`. `writePolicy` defaults to `true` for an internal Repository and `false` for one reached from an API route, so a route-facing Repository needs an explicit allow list.\n- Do not assume an `id` exists, and do not infer a field's type, primary key or auto-increment from its name.",
+          "sha256": "f97c07a45a9d49c1d933ddbceeabcc9afe267b1356a2ded1a3da0dd56b54011c"
+        },
+        {
+          "id": "E20",
+          "kind": "code",
+          "path": "app/server/providers/materials.ts",
+          "observation": "应用 service 在 createOne 时显式 id: randomUUID()，并注释“Collection declares a uuid primary key but no database default, so the row identity is application-owned”。",
+          "lines": [
+            152,
+            185
+          ],
+          "excerpt": "  public async createOwned(\n    ownerId: string,\n    input: MaterialInput,\n  ): Promise<MaterialWithAttachments> {\n    const title = this.normalizeTitle(input.title);\n    const attachmentIds = await this.resolveAttachmentIds(\n      ownerId,\n      input.attachmentIds,\n    );\n    const now = new Date().toISOString();\n\n    const created = await this.materials.createOne({\n      values: {\n        // The Collection declares a uuid primary key but no database default, so the row's identity is\n        // application-owned — the same way the File Repository's upload path mints its own file ids.\n        id: randomUUID(),\n        title,\n        ownerId,\n        createdAt: now,\n        updatedAt: now,\n      },\n    });\n    const id = created.record.id;\n    await this.syncAttachments(ownerId, id, attachmentIds, now);\n\n    const material = await this.getOwned(ownerId, id);\n    if (!material) {\n      throw new MaterialsError(\n        'ATTACHMENT_NOT_FOUND',\n        'The material could not be read back after it was created.',\n      );\n    }\n    return material;\n  }",
+          "sha256": "58d8fc0a80d482c426b79de1d1868f2385d991b910ab421005152c3a848b204f"
+        },
+        {
+          "id": "E24",
+          "kind": "code",
+          "path": "app/database/main/migrations/202609010001_create_materials.ts",
+          "observation": "迁移用 collection.uuid(\"id\").primary() 但未设数据库默认值；同时定义 material_files 的文件列与 ownerId/materialId 两个应用列。",
+          "lines": [
+            16,
+            56
+          ],
+          "excerpt": "export default defineMigration({\n  name: '202609010001_create_materials',\n  async up({ builder }) {\n    await builder.createCollection('materials', (collection) => {\n      collection.uuid('id').primary();\n      collection.string('title', { length: 255, nullable: false });\n      collection.string('ownerId', { length: 64, nullable: false });\n      collection.datetime('createdAt', { nullable: false });\n      collection.datetime('updatedAt', { nullable: false });\n      collection.index('ownerId', { name: 'materials_owner_idx' });\n    });\n\n    await builder.createCollection('material_files', (collection) => {\n      // The fixed columns the file plugin's upload path composes.\n      collection.uuid('id').primary();\n      collection.string('disk', { length: 32, nullable: false });\n      collection.string('key', { length: 512, nullable: false });\n      collection.string('filename', { length: 255, nullable: false });\n      collection.string('ext', {\n        length: 32,\n        nullable: false,\n        defaultValue: '',\n      });\n      collection.string('mimeType', { length: 255, nullable: false });\n      collection.bigInt('size', { nullable: false });\n      collection.datetime('createdAt', { nullable: false });\n      collection.datetime('updatedAt', { nullable: false });\n      // The two application-owned columns.\n      collection.string('ownerId', { length: 64, nullable: false });\n      collection.string('materialId', { length: 36, nullable: true });\n      collection.index('ownerId', { name: 'material_files_owner_idx' });\n      collection.index('materialId', { name: 'material_files_material_idx' });\n      collection.index(['key', 'disk'], {\n        name: 'material_files_key_disk_idx',\n      });\n    });\n  },\n  async down({ builder }) {\n    await builder.dropCollection('material_files');\n    await builder.dropCollection('materials');\n  },",
+          "sha256": "975936646bb8e62a6b0379d21e4a20ee82df415e38ee7f6aaa92a9d1801afa69"
+        }
+      ],
+      "fingerprint": "3a762796c7997470589232fadb2c9d6d91eb9cce08ff27da67481af1ffbf8729"
     }
   ]
 }
