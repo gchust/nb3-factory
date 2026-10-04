@@ -3,7 +3,7 @@
   "type": "evaluation-report",
   "key": "gchust/nb3-factory/issues/542/initial",
   "sourceInstance": "gchust/nb3-factory",
-  "current": 1,
+  "current": 2,
   "revisions": [
     {
       "revision": 1,
@@ -48,6 +48,59 @@
         "acceptance": "failed",
         "delivery": "not-published",
         "reviewState": "not-reviewed",
+        "reviewRubric": 0,
+        "agentConfiguration": {
+          "fingerprints": [
+            "2f5401c2837d7dae1f1f014540b983521db478e49b3e29c61dbb26be0a75e3bf"
+          ],
+          "complete": false
+        },
+        "evaluationHealth": "incomplete"
+      }
+    },
+    {
+      "revision": 2,
+      "fingerprint": "6d055f13b94ba205570bfc87b5d912aabe346623e3a7e26bc40ccaadeec4a249",
+      "createdAt": "2026-10-04T04:00:13Z",
+      "evaluationSha256": "814496817dfb8afce7602cd9ac165ccdb016d9687e4003a010e904a2ffd10271",
+      "manifestSha256": "71d8bbd991ce4cc0493954e9d0a1a70fac616a8d4a4595feb6a2da83fdadcd8a",
+      "bundle": {
+        "sha256": "80ef5b881ddcde847879b1be4b0029c45ac4859491927164e0917e9a9c5dcf94",
+        "size": 567299,
+        "locations": [
+          {
+            "runId": 37175666325,
+            "attempt": 1,
+            "artifactName": "factory-evaluation-run-459eda207c459ebae07b-r2",
+            "artifactId": 11293456064,
+            "at": "2026-10-04T04:00:15.915Z"
+          }
+        ]
+      },
+      "precedence": {
+        "producer": {
+          "runId": 37172338729,
+          "attempt": 1,
+          "startedAt": "2026-10-04T02:51:44Z"
+        },
+        "executionOrder": 2,
+        "knownLaterExecutions": 0,
+        "chainTerminal": true,
+        "reviewRubric": 0,
+        "reviewState": "failed",
+        "review": {
+          "kind": "build",
+          "at": "2026-10-04T02:51:44Z",
+          "runId": 37172338729,
+          "attempt": 1
+        },
+        "qaCoverage": "partial"
+      },
+      "summary": {
+        "execution": "budget-exhausted",
+        "acceptance": "failed",
+        "delivery": "published",
+        "reviewState": "failed",
         "reviewRubric": 0,
         "agentConfiguration": {
           "fingerprints": [
