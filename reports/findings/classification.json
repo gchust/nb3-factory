@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "inputHash": "e5df48e4baddaec0efa13f1cf48e15b28e555c0e1be76b354ce525780ff1543f",
+  "inputHash": "7727ed1d28b9b7ab90be0642732d0a74fd854feeb72fc981ba0026a793f9424b",
   "sources": [
     {
       "id": "460:36434284393:1:F2",
@@ -486,6 +486,21 @@
       "id": "556:37238854983:1:F4",
       "report": "556:37238854983:1",
       "fingerprint": "0b17acb5b1d338a667f56ac81449b25bb43b157033a9a4e6857fe33e487b85f6"
+    },
+    {
+      "id": "570:37332578227:1:F1",
+      "report": "570:37332578227:1",
+      "fingerprint": "23d09422843257e55cd77ce2ba2e1a6489f3583f09d72e7045e5f99cad39cc8d"
+    },
+    {
+      "id": "570:37332578227:1:F2",
+      "report": "570:37332578227:1",
+      "fingerprint": "ec0e03cdd959239ba42cfc406b6f79b23224840c46c039520e0f571efd060a5d"
+    },
+    {
+      "id": "570:37332578227:1:F3",
+      "report": "570:37332578227:1",
+      "fingerprint": "6328b7ed14a27c50b46bea3a1f37c7db0efffa9e3a00780898562be648cef1ff"
     }
   ],
   "groups": [
@@ -524,12 +539,13 @@
       ]
     },
     {
-      "title": "nocobase-db Skill 声明种子不是示例数据，却未说明演示数据落点与非唯一键幂等写法",
-      "reason": "跨报告合并。460:F2（E30/E31/E72）与 490:F5（E17/E27）都显示 SKILL 明确 seed 不是样例/演示内容，并以唯一约束+upsertOne 为唯一幂等范式，但都未给出演示数据位置，也无非唯一键幂等写法：Agent 分别用 ensure(findOne/createOne) 与 count()>0 守卫往正式 seeds 写样例数据。552:F2（E20/E21/E22/E30/E33/E34）在 nocobase-db/SKILL.md、migrations.md 与 code-and-seeds.md 三处同样只禁止 seed 承载样例/演示内容而未给第一方落点，Agent 只能把 2 客户/3 联系人/3 商机写进 202610050004_seed_sales_sample_data.ts 且未按唯一约束保证幂等。三者同一缺口、同一修复方向。",
+      "title": "nocobase-db Skill 以绝对表述禁止种子承载示例/演示数据，却未给出演示数据落点与幂等写法，并与组织指引冲突",
+      "reason": "跨报告合并。460:F2（E30/E31/E72）与 490:F5（E17/E27）都显示 SKILL 明确 seed 不是样例/演示内容，并以唯一约束+upsertOne 为唯一幂等范式，但都未给出演示数据位置，也无非唯一键幂等写法：Agent 分别用 ensure(findOne/createOne) 与 count()>0 守卫往正式 seeds 写样例数据。552:F2（E20/E21/E22/E30/E33/E34）在 nocobase-db/SKILL.md、migrations.md 与 code-and-seeds.md 三处同样只禁止 seed 承载样例/演示内容而未给第一方落点，Agent 只能把 2 客户/3 联系人/3 商机写进 202610050004_seed_sales_sample_data.ts 且未按唯一约束保证幂等。三者同一缺口、同一修复方向。 570:F1（E11/E30/E14/E38）进一步显示同一条绝对句“a seed is never sample or demonstration content”与 organization/subjects.md 明确要求“演示需要账号时用 seed 的 query 写 user/account”直接矛盾，应用在同一 seed 中既要初始化权限集又要写演示账号与示例工单，代理只能自行裁决。三者与 570:F1 是同一句未加限定的种子规则、同一触发条件（任务要求经 seed 写入演示/样例数据）与同一修复方向（限定为生产/安装种子并给出演示数据的第一方落点/幂等写法及交叉引用）。",
       "members": [
         "460:36434284393:1:F2",
         "490:36575632059:1:F5",
-        "552:37238845336:1:F2"
+        "552:37238845336:1:F2",
+        "570:37332578227:1:F1"
       ]
     },
     {
@@ -701,11 +717,12 @@
       ]
     },
     {
-      "title": "应用 provider/boot 示例未用 container.has() 守卫可选插件 token，最小运行时启动崩溃",
-      "reason": "跨报告合并。475:F4（E26/E28/E29/E17）显示 services-and-jobs 示例在 provider 的 register/boot 中直接 resolve 由插件提供的可选 token（authorizationToken），未装配插件时 ServiceContainer.resolve 抛 “is not registered”，app-server 逻辑测试在 LibraryProvider.boot 失败；532:F3（E10/E11/E22/E44/E54）显示 AI 员工 Skill 的 server-runs.md 在 boot() 直接 container.resolve(aiManagerToken)，宿主未注册该插件时 token 未绑定，boot 抛错使应用无法启动。两者同为“示例未用 container.has() 守卫可选插件 token”的指引缺口，期望（缺失时跳过注册）与修复方向（先 has 再 resolve）一致。",
+      "title": "应用 provider/boot 与主开发指引未用 container.has() 守卫可选插件 token，最小运行时启动崩溃",
+      "reason": "跨报告合并。475:F4（E26/E28/E29/E17）显示 services-and-jobs 示例在 provider 的 register/boot 中直接 resolve 由插件提供的可选 token（authorizationToken），未装配插件时 ServiceContainer.resolve 抛 “is not registered”，app-server 逻辑测试在 LibraryProvider.boot 失败；532:F3（E10/E11/E22/E44/E54）显示 AI 员工 Skill 的 server-runs.md 在 boot() 直接 container.resolve(aiManagerToken)，宿主未注册该插件时 token 未绑定，boot 抛错使应用无法启动。两者同为“示例未用 container.has() 守卫可选插件 token”的指引缺口，期望（缺失时跳过注册）与修复方向（先 has 再 resolve）一致。 570:F2（E17/E18/E6）显示主开发指引 server-routes.md/services-and-jobs.md 未提及守卫，应用在 routes 与 provider 直接 resolve(authorizationToken) 时在未注册插件的嵌入式组合下抛 “Service ... is not registered”，只能自行加 container.has 守卫才通过；与前述成员同一指引缺口、同一触发条件（未装配可选插件）和同一修复方向（先 has 再 resolve，缺失时跳过或降级）。",
       "members": [
         "475:36498925234:1:F4",
-        "532:37074018017:1:F3"
+        "532:37074018017:1:F3",
+        "570:37332578227:1:F2"
       ]
     },
     {
@@ -933,15 +950,22 @@
       "members": [
         "556:37238854983:1:F4"
       ]
+    },
+    {
+      "title": "withPolicy 绑定运行时 policyFor 结果时丢失记录字段类型，应用被迫双重断言",
+      "reason": "570:F3（E4/E10/E19）显示 authz.database.policyFor 返回通用 RepositoryPolicy，repository.withPolicy 经 PolicyRecord<TRecord,TPolicy> 无法保留集合字面量字段类型，应用只能在 bindPolicy 中用 as unknown as RepositoryOperations<TicketRow> 恢复类型。触发条件（把运行时策略交给 withPolicy）、期望（绑定后仍保留记录字段类型）与实际（字段退化为可选/通用类型）均与既有分组不同，属独立的框架类型可用性缺口，故单独保留。",
+      "members": [
+        "570:37332578227:1:F3"
+      ]
     }
   ],
   "classifier": {
     "engine": "pi",
     "model": "deepseek-v4.1-flash",
     "version": "0.86.1",
-    "runId": "37262713064",
+    "runId": "37338903549",
     "attempt": 1,
-    "controlSha": "0f72d9b81f981f10501c5ac0ee0e7d786f1f4698",
-    "completedAt": "2026-10-05T04:20:36.170Z"
+    "controlSha": "2235c2782b36b360b6b0303456a7df729df265f9",
+    "completedAt": "2026-10-05T16:16:15.626Z"
   }
 }
