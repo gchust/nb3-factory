@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "inputHash": "e5df48e4baddaec0efa13f1cf48e15b28e555c0e1be76b354ce525780ff1543f",
+  "inputHash": "7727ed1d28b9b7ab90be0642732d0a74fd854feeb72fc981ba0026a793f9424b",
   "findings": [
     {
       "id": "460:36434284393:1:F2",
@@ -8723,6 +8723,261 @@
         }
       ],
       "fingerprint": "0b17acb5b1d338a667f56ac81449b25bb43b157033a9a4e6857fe33e487b85f6"
+    },
+    {
+      "id": "570:37332578227:1:F1",
+      "report": "570:37332578227:1",
+      "issue": 570,
+      "taskTitle": "员工 IT 报修与处理",
+      "appVersion": "1.0.0-beta.50",
+      "appTemplate": "@nocobase/app-template-default",
+      "finding": {
+        "id": "F1",
+        "kind": "misleading",
+        "owner": "documentation",
+        "confidence": "confirmed",
+        "severity": "minor",
+        "status": "open",
+        "title": "数据库 Skill 的绝对表述与演示数据种子指引相互矛盾",
+        "claimed": "seed 绝不承载示例或演示内容（packages/@nocobase/db/skills/nocobase-db/SKILL.md 第 2 节）。",
+        "observed": "组织指引要求“演示需要账号时用 seed 的 query 写 user 与 credential account”，本任务也明确要求 seed 虚构员工账号与示例工单。",
+        "detail": "SKILL.md 第 80 行以绝对句断言 “a seed is never sample or demonstration content”，而 app/.agents/skills/nocobase-app-development/references/organization/subjects.md 第 133 行明确指示用 seed 的 query 写入演示 user/account，code-and-seeds.md 也要求演示账号与生产权限配置分离。应用在同一个 seed 中既要初始化权限集，又要写演示账号与示例工单，代理必须在两条指引间自行取舍。",
+        "impact": "代理在数据放置上产生歧义和额外试探，可能漏写演示数据或把权限配置放错位置，增加返工。",
+        "suggestedChange": "把该句限定为“生产/安装种子不得仅含示例或演示内容”，并在同处链接 organization/subjects.md 的演示种子约定。",
+        "evidence": [
+          "E11",
+          "E30",
+          "E14",
+          "E38"
+        ],
+        "diagnosis": {
+          "category": "guidance-gap",
+          "trigger": "任务要求用 seed 写入演示账号与示例工单，同时初始化权限集。",
+          "expected": "指引给出一条无歧义路径，并说明演示数据与生产权限配置的关系。",
+          "actual": "仓库 Skill 与组织指引互相矛盾，代理需自行裁决。",
+          "workaround": "代理按 subjects.md 写演示 seed 并在注释中说明，未按仓库 Skill 的绝对表述执行。",
+          "acceptance": "db Skill 第 80 行不再使用绝对否定，且与 subjects.md/code-and-seeds.md 的演示种子约定一致。"
+        }
+      },
+      "targets": [
+        "app/.agents/skills/nocobase-app-development/references/organization/subjects.md",
+        "packages/@nocobase/db/skills/nocobase-db/SKILL.md"
+      ],
+      "paths": [
+        ".agents/skills/nocobase-app-development/references/organization/subjects.md",
+        ".agents/skills/nocobase-db/SKILL.md"
+      ],
+      "evidence": [
+        {
+          "id": "E11",
+          "kind": "skill",
+          "path": "packages/@nocobase/db/skills/nocobase-db/SKILL.md",
+          "observation": "Skill 第 2 节称“迁移创建结构，seed 写入应用运行所需的记录……seed 绝不做对方的工作，seed 绝不是示例或演示内容”，句式绝对。",
+          "lines": [
+            74,
+            90
+          ],
+          "excerpt": "The mechanics belong to the application rather than to this package: how `pnpm nocobase config init` configures one, the per-dialect connection fields and defaults, driver installation and native binaries, and the typing of `defineAppDatabaseConfig` are in `.agents/skills/nocobase-app-development/references/database-connections.md`.\n\nKeep `@nocobase/db` itself in `dependencies`, not `devDependencies`: the deployed server resolves it at runtime, and TypeScript reads that declaration to infer the database configuration.\n\n## 2. Migrations and seeds\n\nA migration creates structure. A seed inserts the records the application needs in order to run. Neither does the other's job, and a seed is never sample or demonstration content.\n\n```ts\n// database/main/migrations/202609020001_create_orders.ts\nimport { defineMigration, type MigrationDefinition } from '@nocobase/db';\n\nconst migration: MigrationDefinition = defineMigration({\n  name: '202609020001_create_orders',\n\n  async up({ builder }) {\n    await builder.createCollection('orders', (collection) => {",
+          "sha256": "f97c07a45a9d49c1d933ddbceeabcc9afe267b1356a2ded1a3da0dd56b54011c"
+        },
+        {
+          "id": "E30",
+          "kind": "skill",
+          "path": "app/.agents/skills/nocobase-app-development/references/organization/subjects.md",
+          "observation": "组织指引明确：演示需要账号时用 seed 的 query 写 user 行和 account 行，密码来自 better-auth/crypto 的 hashPassword，且无同邮箱用户时才写。",
+          "lines": [
+            130,
+            145
+          ],
+          "excerpt": "\nAssign existing permission sets to departments for the access everyone there shares, and grant job roles, such as an engineer set that a department's assistant must not hold, to the people directly. Seed the business attributes the sync maintains in the same step as the memberships that imply them.\n\nSeed only real users you know; memberships of demonstration accounts belong to demonstration data, not to production initialization. When a demonstration needs accounts, seed them with the seed's `query`: a `user` row and a `credential` `account` row whose `accountId` is the user id and whose `password` comes from `hashPassword` in `better-auth/crypto`, declared in `dependencies`. Write an account only when no user has its email, and write its memberships, direct assignments and business attributes in the same step, so a replay never re-adds what an administrator removed.\n\n```ts\nimport { randomUUID } from 'node:crypto';\n\nimport { encodeAuthorizationTitle } from '@nocobase/authorization/core';\nimport { defineSeed, type SeedDefinition } from '@nocobase/db';\nimport { hashPassword } from 'better-auth/crypto';\n\nconst ns = 'my-app';\nconst DEPARTMENTS = [\n  { id: 'sales', parentId: null, region: null, sortOrder: 0 },\n  { id: 'sales-east', parentId: 'sales', region: 'east', sortOrder: 0 },",
+          "sha256": "cd8a14734d0c03265cc9f33f76dcec81913f6ff57b2c0bec6b99781722486cc6"
+        },
+        {
+          "id": "E14",
+          "kind": "code",
+          "path": "app/database/main/seeds/202610010002_it_tickets_demo.ts",
+          "observation": "defineSeed 开事务，hashPassword 生成演示密码，存在性检查后写入权限集并把 it-employee 授予 authenticated 主体。",
+          "lines": [
+            244,
+            275
+          ],
+          "excerpt": "      .execute();\n  }\n}\n\nexport default defineSeed({\n  name: '202610010002_it_tickets_demo',\n  transaction: true,\n  async run({ query }) {\n    const now = new Date();\n    const passwordHash = await hashPassword(DEMO_PASSWORD);\n\n    for (const user of [...EMPLOYEES, HANDLER]) {\n      await ensureUser(query, user, passwordHash, now);\n    }\n\n    await ensurePermissionSet(query, employeePermissionSet, now);\n    await ensurePermissionSet(query, handlerPermissionSet, now);\n\n    for (const user of EMPLOYEES) {\n      await ensureAssignment(\n        query,\n        IT_EMPLOYEE_SET,\n        { type: 'user', id: user.id },\n        now,\n      );\n    }\n    // Every signed-in colleague is an employee: filing and reading one's own\n    // tickets must work for an account an administrator just created.\n    await ensureAssignment(\n      query,\n      IT_EMPLOYEE_SET,\n      { type: 'authenticated', id: '*' },",
+          "sha256": "d64f21bcb550e73e592ec56a630d7298cc35078c0acb010d37d3220d63e50c1d"
+        },
+        {
+          "id": "E38",
+          "kind": "code",
+          "path": "app/database/seed-data/permission-sets.ts",
+          "observation": "员工/处理人权限集用页面授权与复合范围 grant 表达，员工集将被授予 authenticated 主体。",
+          "lines": [
+            40,
+            73
+          ],
+          "excerpt": "    actions: Object.entries(actions).map(([action, scope]) => ({\n      action,\n      policy: { type: 'composite', scopes: { tickets: scope } },\n    })),\n  };\n}\n\nexport const employeePermissionSet = definePermissionSet(IT_EMPLOYEE_SET)\n  .title({ key: 'it.permissionSets.employee', ns: 'nb3-factory' })\n  .grant(pageGrant)\n  .grant(\n    ticketGrant({\n      view: 'recordsICreated',\n      create: 'recordsICreated',\n    }),\n  )\n  .build();\n\nexport const handlerPermissionSet = definePermissionSet(IT_HANDLER_SET)\n  .title({ key: 'it.permissionSets.handler', ns: 'nb3-factory' })\n  .grant(pageGrant)\n  .grant(\n    ticketGrant({\n      view: 'allRecords',\n      start: 'allRecords',\n      complete: 'allRecords',\n    }),\n  )\n  .build();\n\nexport const itTicketsPermissionSets = [\n  employeePermissionSet,\n  handlerPermissionSet,\n] as const;",
+          "sha256": "f25c53b04dd1020755f51df02292e998c844c5e64e17504179e426cd3c752d32"
+        }
+      ],
+      "fingerprint": "23d09422843257e55cd77ce2ba2e1a6489f3583f09d72e7045e5f99cad39cc8d"
+    },
+    {
+      "id": "570:37332578227:1:F2",
+      "report": "570:37332578227:1",
+      "issue": 570,
+      "taskTitle": "员工 IT 报修与处理",
+      "appVersion": "1.0.0-beta.50",
+      "appTemplate": "@nocobase/app-template-default",
+      "finding": {
+        "id": "F2",
+        "kind": "issue",
+        "owner": "documentation",
+        "confidence": "confirmed",
+        "severity": "minor",
+        "status": "open",
+        "title": "主开发指引未说明“可选插件 token 需先 container.has 守卫”",
+        "detail": "最小组件组合（例如模板自带的 app-server 测试）不会注册 authorization 等插件；provider boot 直接 resolve(authorizationToken) 会抛 “Service ... is not registered”。应用在 app/server/routes/it-tickets.ts 与 app/server/providers/it-tickets.ts 都加了 container.has 守卫才通过。但 app/.agents/skills/nocobase-app-development/references/server-routes.md 与 services-and-jobs.md 未提及该守卫，只有 scheduler/workflow 的 Skill 记录了该模式。",
+        "impact": "按主指引实现的 provider 在最小/嵌入式组合下直接崩溃，代理只能从失败中自行发现守卫模式。",
+        "suggestedChange": "在 server-routes.md 的“Authorization, when identity is not enough”以及 services-and-jobs.md 的 provider 章节补充：解析可选集成 token 前先 container.has 守卫，缺失时跳过或降级。",
+        "evidence": [
+          "E17",
+          "E18",
+          "E6"
+        ],
+        "diagnosis": {
+          "category": "guidance-gap",
+          "trigger": "provider/route 在未注册授权插件的组合中启动（如嵌入式测试）。",
+          "expected": "主指引说明可选依赖需 container.has 守卫后再 resolve。",
+          "actual": "直接 resolve 抛 “Service ... is not registered”，主指引未覆盖该情形。",
+          "workaround": "应用自行在 routes 与 provider 加 container.has 守卫。",
+          "acceptance": "主指引显式记录守卫模式，或框架在缺少插件时返回可捕获且带修复建议的明确错误。"
+        }
+      },
+      "targets": [
+        "app/.agents/skills/nocobase-app-development/references/server-routes.md",
+        "packages/@nocobase/app-plugin-authorization/skills/nocobase-app-plugin-authorization/SKILL.md"
+      ],
+      "paths": [
+        ".agents/skills/nocobase-app-development/references/server-routes.md",
+        ".agents/skills/nocobase-app-plugin-authorization/SKILL.md"
+      ],
+      "evidence": [
+        {
+          "id": "E17",
+          "kind": "skill",
+          "path": "app/.agents/skills/nocobase-app-development/references/server-routes.md",
+          "observation": "server-routes 指引要求业务操作调用一次请求上下文 authorize，拒绝被拒/缺失策略，绑定每表 policy，并禁止先取全量再在浏览器过滤。",
+          "lines": [
+            86,
+            106
+          ],
+          "excerpt": "Use a stable `resource`/`action` pair per operation — `read` and `create` are distinct decisions. The pair must be registered: `settings`, `composite` and `database.collection` deny an item or action nobody added, so this route's owner calls `authz.settings.add({ id: 'orders-admin', title, actions: [{ name: 'read' }] })` in its provider's `boot` and may list it in an administration subsection with `authz.ui.place({ type: 'settings', id: 'orders-admin' }, { section })`; an unplaced item is listed under Administration's \"Other\". `can` is true only for an unconditional permit; a check that depends on records, such as a `database.collection` grant with record access, is conditional and needs the policy flow below.\n\n### Enforce record, field and relation policies\n\nRead [application permission development](authorization.md) and the installed `nocobase-app-plugin-authorization` Skill before building data access. Register each governed collection explicitly in the owning provider with `authz.database.collections.add({ name, title, actions? })`; the database supplies field/relation metadata. Unregistered collections are denied even to unrestricted users.\n\nFor ordinary collection CRUD, resolve and bind the policy:\n\n```ts\nconst policy = await authz.database.policyFor(\n  'customers',\n  context.get('authz'),\n);\nif (policy.read === false) return context.json({ code: 'FORBIDDEN' }, 403);\nconst customers = database.repository('customers').withPolicy(policy);\nreturn context.json({ data: await customers.findMany() });\n```\n\nFor a business operation, call the request context's `authorize({ resource: { type: 'composite', id }, action })` once, reject denied or missing policies, and bind each table's `decision.conditions.database[collection]` policy. Do not replace it with aggregate collection authorization: grants from another business operation could widen the result. `require` rejects conditional decisions; `can` reports feature visibility rather than access to a specific record.\n\nBound repositories enforce rows, fields and relations together. Keep multi-table writes transactional and business-state predicates in the update. Map out-of-scope `RECORD_NOT_FOUND` errors consistently without exposing hidden records. Never fetch unrestricted rows and filter them in the browser.",
+          "sha256": "cbf30ba33ca0af760a34442e92ac668c0ec8a312423da0690a98f3dfd0099b25"
+        },
+        {
+          "id": "E18",
+          "kind": "code",
+          "path": "app/server/routes/it-tickets.ts",
+          "observation": "应用路由用 container.has 守卫可选鉴权服务，再 use(\"*\", authentication.required(), authorization.middleware()) 保护全部工单接口。",
+          "lines": [
+            30,
+            62
+          ],
+          "excerpt": " * identity may actually see or change.\n */\nexport const apiRoutes: AppApiRouteContribution<Application> = defineApiRoutes(\n  (app) => {\n    const { container } = app;\n    // The ticket API is authorization-scoped, so it is mounted only when both\n    // plugins are present. An application assembled without them (the embedded\n    // app tests) gets no ticket endpoints rather than unauthenticated ones.\n    if (\n      !container.has(authenticationToken) ||\n      !container.has(authorizationToken)\n    ) {\n      // A blank router of the same type the mounted router has below.\n      return new Hono();\n    }\n    const authentication = container.resolve(authenticationToken);\n    const authorization = container.resolve(authorizationToken);\n    const service = container.resolve(itTicketsServiceToken);\n\n    const tickets = new Hono<AuthEnv & AuthorizationEnv>();\n    tickets.use('*', authentication.required(), authorization.middleware());\n\n    // The domain error carries a reason, not an HTTP status; translating it is\n    // the route's job.\n    tickets.onError((error, context) => {\n      if (error instanceof ItTicketError) {\n        return context.json(\n          { code: error.code, message: error.message },\n          statusForReason(error.reason),\n        );\n      }\n      if (error instanceof RepositoryError) {\n        if (",
+          "sha256": "ed7a823817e903dc9832f9632ab5492cfdb1bce5894d8a945f285a2a9cb825e0"
+        },
+        {
+          "id": "E6",
+          "kind": "skill",
+          "path": "packages/@nocobase/app-plugin-authorization/skills/nocobase-app-plugin-authorization/SKILL.md",
+          "observation": "Skill 规定在 provider boot 登记集合/复合资源、每条服务端路由都必须鉴权、policyFor 折叠集合授权；未登记集合默认拒绝。",
+          "lines": [
+            59,
+            71
+          ],
+          "excerpt": "3. In the owning provider's `boot`, opt collections in with `authz.database.collections.add`, register composites with `authz.compositeResources.define`, record access with `authz.recordAccess.define` and settings items with `authz.settings.add`. Then add a workspace subsection with `authz.ui.sections.add({ name, title, parent })` and list each composite or settings item in it with `authz.ui.place(reference, { section, group? })` (the permission workspace lists sections and subsections on the left and the selected subsection's resources, under optional `authz.ui.groups`, on the right; an unplaced composite or settings item goes under its default section's Other with a startup warning, and a misplaced one fails a development start). Pages are not registered on the server: the client route tree lists them. Release subject registrations at shutdown.\n4. Protect every server route with authentication. For a simple single-scope Repository operation, keep `defineRepositoryApiRoutes` and add `authz.database.authorizeRepository` to map methods to composite actions; it reuses or initializes the request's authorization context. For workflows, persisted-state checks, multiple data scopes or custom responses, install `authz.middleware()`, call `c.get('authz').authorize()` once and bind every returned collection policy with `repository.withPolicy()`. Follow [Repository route integration](references/repository-routes.md).\n5. Declare `authz` on every entry client route (nested pages inherit it; an omitted one defaults to root-only or `'skip'` with a development warning), add `useCan` for action visibility and obtain per-record eligibility from the server when needed. Handle pending and error states without displaying stale access.\n6. Complete the accompanying permission configuration from the responsibility matrix: sets, page and action grants, selected data scopes, supported rules and intended assignments. Use seeds for fresh installations and authorized provisioning for existing installations; editing a seed does not update a running App. Resolve optional capabilities through their installed Skills and preserve unrelated administrator edits.\n7. Verify denied as well as allowed requests through the production route factory and actual database policies. Then verify the UI with ordinary users and inherited memberships.\n\n## Enforcement rules\n\n- Register collections explicitly with `authz.database.collections.add({ name, title, actions? })`. Metadata comes from the database; registration grants nothing. Unregistered collections are denied even to unrestricted users.\n- `settings`, `composite` and `database.collection` are catalog types: a check on an unregistered item or action is denied with `RESOURCE_ACTION_NOT_SUPPORTED`. `page`, `user`, `notification` and Hub types are record types that declare actions only; their grants use `id: '*'` for every record.\n- A composite action composes exactly the grants it lists, never another composite. A data scope targets the one collection its grant actions name, whose type must declare `recordAccess` (`database.collection` does). Grant page access separately; a page grant never authorizes a server endpoint.\n- `can` is for feature visibility. `require` needs an unconditional permit and rejects conditional decisions. Business endpoints use `authorize`, reject denial or missing policies, and consume `conditions.database` without resolving collection grants again.\n- For simple business CRUD, keep the Repository route definition and bind each method to its composite action with `authz.database.authorizeRepository`. Multi-scope actions and workflow transitions need custom handlers. `authz.database.policyFor` folds collection grants; without its third argument it does not respect a business-action boundary.",
+          "sha256": "0ae2663fd2f0a5522fd2dd952eea86cf51f1f89024423e5c3efa207a436b7e69"
+        }
+      ],
+      "fingerprint": "ec0e03cdd959239ba42cfc406b6f79b23224840c46c039520e0f571efd060a5d"
+    },
+    {
+      "id": "570:37332578227:1:F3",
+      "report": "570:37332578227:1",
+      "issue": 570,
+      "taskTitle": "员工 IT 报修与处理",
+      "appVersion": "1.0.0-beta.50",
+      "appTemplate": "@nocobase/app-template-default",
+      "finding": {
+        "id": "F3",
+        "kind": "improvement",
+        "owner": "framework",
+        "confidence": "confirmed",
+        "severity": "info",
+        "status": "open",
+        "title": "withPolicy 对运行时策略丢失记录类型，迫使应用强制断言",
+        "detail": "Repository.withPolicy<const TPolicy> 通过 PolicyRecord<TRecord,TPolicy> 收窄返回类型；但策略常来自运行时 authz.database.policyFor（返回通用 RepositoryPolicy），字面量字段无法保留，应用只能在 bindPolicy 中用 as unknown as RepositoryOperations<TicketRow> 恢复类型（app/server/providers/it-tickets.ts:91-120）。",
+        "impact": "授权边界处的类型安全被削弱，代理需要写双重断言并承担类型漂移风险。",
+        "suggestedChange": "为 policyFor 提供泛型返回，或为 withPolicy 增加“接受预加宽策略但仍保留 TRecord 字段”的重载/辅助类型。",
+        "evidence": [
+          "E4",
+          "E10",
+          "E19"
+        ],
+        "diagnosis": {
+          "category": "usability-improvement",
+          "trigger": "把运行时 policyFor 的结果交给 repository.withPolicy。",
+          "expected": "绑定后仍保留集合记录的字段类型。",
+          "actual": "字段退化为可选/通用类型，应用需双重断言恢复。",
+          "workaround": "app 在 bindPolicy 中使用 as unknown as RepositoryOperations<TicketRow>。",
+          "acceptance": "授权绑定路径在不使用断言的情况下仍保留记录字段类型。"
+        }
+      },
+      "targets": [
+        "@nocobase/app-plugin-authorization",
+        "@nocobase/db"
+      ],
+      "paths": [
+        "packages/@nocobase/app-plugin-authorization/dist/server/database/api.js",
+        "packages/@nocobase/db/dist/src/repository/repository.js"
+      ],
+      "evidence": [
+        {
+          "id": "E4",
+          "kind": "code",
+          "path": "packages/@nocobase/app-plugin-authorization/dist/server/database/api.js",
+          "observation": "DatabaseAuthorizationService.policyFor 并行折叠 read/create/update/delete 决策，composeDatabasePolicies 在数据库适配边界做结构转换。",
+          "lines": [
+            20,
+            36
+          ],
+          "excerpt": "    async policyFor(collection, context, operation) {\n        const resource = { type: 'database.collection', id: collection };\n        const decide = async (action) => foldDecision(action, await context.authorize({\n            resource,\n            action,\n            params: operation ? { operation } : {},\n        }));\n        const [read, create, update, remove] = await Promise.all([\n            decide('read'),\n            decide('create'),\n            decide('update'),\n            decide('delete'),\n        ]);\n        return { read, create, update, delete: remove };\n    }\n}\n/** Translate resolved checks only; this never runs authorization again. */",
+          "sha256": "5daa2fd75ef07e2e0b91361977447e274e8fdb64acb55ff933382ed8cd9e689f"
+        },
+        {
+          "id": "E10",
+          "kind": "code",
+          "path": "packages/@nocobase/db/dist/src/repository/repository.js",
+          "observation": "DefaultRepository.withPolicy(policy, principal) 返回绑定策略与主体后的 repository，并导入 enforce/narrow/write-policy 实现范围收窄。",
+          "lines": [
+            23,
+            45
+          ],
+          "excerpt": "export class DefaultRepository {\n    options;\n    /**\n     * Normalized scopes, resolved once per instance. A bound Policy is frozen,\n     * so its scope cannot change while this Repository lives, and normalizing\n     * it on every call meant walking the Collection metadata on every write.\n     */\n    scopeChecks = new Map();\n    constructor(options) {\n        this.options = options;\n    }\n    withPolicy(policy, principal) {\n        // A Repository handed out by a policy-bound Connection is still a\n        // DefaultRepository, and the Connection types it as `Repository`, so this\n        // method stays reachable. Replacing the binding there would hand back an\n        // unrestricted Repository and undo the Connection's authorization, so\n        // rebinding is refused rather than allowed to widen. Tightening further\n        // is what `narrow` is for.\n        if (this.options.policy) {\n            invalid('INVALID_POLICY', 'This Repository already has a bound Policy. Use narrow() to tighten it; a Policy cannot be replaced.', { collection: this.options.collection });\n        }\n        const input = typeof policy === 'function' ? policy(principal) : policy;\n        return new DefaultRepository({",
+          "sha256": "31b67e0dcdfd222b6981571d563d9879525a3bf61312ea92a05a269d99c1f311"
+        },
+        {
+          "id": "E19",
+          "kind": "code",
+          "path": "app/server/providers/it-tickets.ts",
+          "observation": "bindPolicy 把运行时 policyFor 结果交给 repository.withPolicy，并以 as unknown as RepositoryOperations<TicketRow> 恢复记录类型。",
+          "lines": [
+            91,
+            120
+          ],
+          "excerpt": "function bindPolicy(\n  repository: ReturnType<DatabaseManager['repository']>,\n  policy: RepositoryPolicy,\n): RepositoryOperations<TicketRow> {\n  return repository.withPolicy(\n    policy,\n  ) as unknown as RepositoryOperations<TicketRow>;\n}\n\nfunction now(): Date {\n  return new Date();\n}\n\nexport function createItTicketsService(\n  database: DatabaseManager,\n  policyFor: (\n    action: string,\n    context: AuthorizationContext,\n  ) => Promise<RepositoryPolicy>,\n): ItTicketsService {\n  const repository = database.repository<TicketRow>(TICKETS_COLLECTION);\n  const scoped = async (action: string, context: AuthorizationContext) =>\n    bindPolicy(repository, await policyFor(action, context));\n\n  return {\n    async list(context, input) {\n      const view = await scoped('view', context);\n      const tickets = await view.findMany({\n        ...(input.status === undefined\n          ? {}",
+          "sha256": "053fdc1a96fd03643203eacd81f1992a1d6f5f11fb4001637babf8bf9981e4cf"
+        }
+      ],
+      "fingerprint": "6328b7ed14a27c50b46bea3a1f37c7db0efffa9e3a00780898562be648cef1ff"
     }
   ]
 }
