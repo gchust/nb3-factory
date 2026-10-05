@@ -460,32 +460,69 @@ test('the Agent CLI check runs whenever a module the adapters load changes', () 
     );
 });
 
+// The .github/scripts files a workflow runs, directly or through verify.sh and
+// its helpers, with the modules they load. Generated sources (the overlay's
+// eslint.config.js) name factory scripts as .github/scripts/... paths.
+function scriptsRunBy(name) {
+  const read = (file) =>
+    readFileSync(path.resolve(import.meta.dirname, '..', file), 'utf8');
+  const source = readFileSync(
+    new URL(`../../workflows/${name}`, import.meta.url),
+    'utf8',
+  );
+  const named = (text, pattern) =>
+    [...text.matchAll(pattern)].map(([, file]) => file);
+  const run = new Set(named(source, /\.github\/scripts\/([\w-]+\.(?:mjs|sh))/g));
+  for (const shell of [...run].filter((file) => file.endsWith('.sh')))
+    for (const file of named(read(shell), /\$script_dir\/([\w-]+\.(?:mjs|sh))/g))
+      run.add(file);
+  const modules = importClosure(...[...run].filter((file) => file.endsWith('.mjs')));
+  for (const file of modules)
+    for (const generated of named(
+      readFileSync(path.resolve(import.meta.dirname, '..', '..', '..', file), 'utf8'),
+      /['"]\.\/\.github\/scripts\/([\w-]+\.mjs)['"]/g,
+    ))
+      modules.push(...importClosure(generated));
+  return [
+    ...new Set([
+      ...modules,
+      ...[...run]
+        .filter((file) => file.endsWith('.sh'))
+        .map((file) => `.github/scripts/${file}`),
+    ]),
+  ];
+}
+
 test('the source baseline check runs whenever a script it runs changes', () => {
   const filters = pullRequestPaths('source-baseline.yml');
-  const source = readFileSync(
-    new URL('../../workflows/source-baseline.yml', import.meta.url),
-    'utf8',
-  );
-  const run = [
-    ...new Set(
-      [...source.matchAll(/\.github\/scripts\/([\w-]+\.(?:mjs|sh))/g)].map(
-        ([, file]) => file,
-      ),
-    ),
-  ];
-  assert.ok(run.includes('verify.sh'));
-  const verify = readFileSync(
-    path.resolve(import.meta.dirname, '../verify.sh'),
-    'utf8',
-  );
-  const viaVerify = [
-    ...verify.matchAll(/\$script_dir\/([\w-]+\.(?:mjs|sh))/g),
-  ].map(([, file]) => file);
-  const shell = [...run, ...viaVerify].filter((file) => file.endsWith('.sh'));
-  for (const file of [
-    ...importClosure(...[...run, ...viaVerify].filter((file) => file.endsWith('.mjs'))),
-    ...shell.map((file) => `.github/scripts/${file}`),
+  const files = scriptsRunBy('source-baseline.yml');
+  assert.ok(files.includes('.github/scripts/verify.sh'));
+  for (const file of files)
+    assert.ok(
+      filters.some((filter) => filter.test(file)),
+      file,
+    );
+});
+
+test('the template refresh check runs whenever a script or overlay input it uses changes', () => {
+  const filters = pullRequestPaths('refresh-template.yml');
+  const files = scriptsRunBy('refresh-template.yml');
+  for (const expected of [
+    '.github/scripts/verify.sh',
+    '.github/scripts/overlay-factory.mjs',
+    '.github/scripts/assert-current-template.mjs',
+    '.github/scripts/factory-eslint.mjs',
+    '.github/scripts/timed-command.mjs',
   ])
+    assert.ok(files.includes(expected), expected);
+  // overlay-factory.mjs copies these from the control checkout.
+  const overlay = readFileSync(
+    path.resolve(import.meta.dirname, '../overlay-factory.mjs'),
+    'utf8',
+  );
+  assert.match(overlay, /path\.join\(control, '\.npmrc'\)/);
+  assert.match(overlay, /section\('README\.MD', 'readme'\)/);
+  for (const file of [...files, '.npmrc', 'README.MD'])
     assert.ok(
       filters.some((filter) => filter.test(file)),
       file,

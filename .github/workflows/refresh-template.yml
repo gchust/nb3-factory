@@ -7,7 +7,25 @@ on:
       - '.github/workflows/refresh-template.yml'
       - '.github/scripts/template-*.mjs'
       - '.github/scripts/overlay-factory.mjs'
+      - '.github/scripts/publish-template.sh'
+      # Run by the job below, directly, through the overlay or through verify.sh;
+      # workflow-policy.test.mjs derives this list from the imports.
+      - '.github/scripts/assert-current-template.mjs'
+      - '.github/scripts/factory-eslint.mjs'
+      - '.github/scripts/create-runtime-config.mjs'
+      - '.github/scripts/install-browser-fonts.sh'
       - '.github/scripts/verify.sh'
+      - '.github/scripts/apply-database.sh'
+      - '.github/scripts/browser-smoke.mjs'
+      - '.github/scripts/format-changes.mjs'
+      - '.github/scripts/integration-checks.mjs'
+      - '.github/scripts/required-checks.mjs'
+      - '.github/scripts/stop-stale-app.sh'
+      - '.github/scripts/timed-command.mjs'
+      - '.github/scripts/timing.mjs'
+      # Copied into the application by the overlay.
+      - '.npmrc'
+      - 'README.MD'
   workflow_dispatch:
     inputs:
       dry_run:
