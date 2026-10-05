@@ -126,7 +126,7 @@ jobs:
       # repository_dispatch loads the entry workflow from the default branch.
       # Only this small handoff protocol follows that revision; task code is pinned.
       - name: Check out handoff bootstrap
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ github.sha }}
           path: bootstrap
@@ -145,7 +145,7 @@ jobs:
 
       - name: Download source task control pin
         if: (github.event_name == 'repository_dispatch' && github.event.action == 'code-agent-continue') || inputs.recovery_run_id != ''
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: factory-task-${{ inputs.recovery_run_id != '' && inputs.issue_number || github.event.client_payload.issue_number }}
           path: previous-task
@@ -157,7 +157,7 @@ jobs:
       # This one-time fallback adopts pre-pin tasks.
       - name: Download legacy handoff control metadata
         if: github.event_name == 'repository_dispatch' && github.event.action == 'code-agent-continue' && !github.event.client_payload.control_sha
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: factory-handoff-${{ github.event.client_payload.issue_number }}
           path: legacy-handoff
@@ -166,7 +166,7 @@ jobs:
 
       - name: Download failed-run checkpoint
         if: inputs.recovery_run_id != ''
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: factory-handoff-${{ inputs.issue_number }}
           path: recovery
@@ -207,7 +207,7 @@ jobs:
             --output "$GITHUB_OUTPUT"
 
       - name: Check out factory control plane
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ steps.baseline.outputs.sha }}
           path: control
@@ -242,7 +242,7 @@ jobs:
 
       - name: Save normalized recovery checkpoint
         if: inputs.recovery_run_id != '' && steps.prepare.outputs.status == 'ready'
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: factory-recovery-${{ steps.prepare.outputs.issue_number }}
           path: recovery
@@ -262,7 +262,7 @@ jobs:
 
       - name: Save normalized task metadata
         if: steps.prepare.outputs.status == 'ready'
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: factory-task-${{ steps.prepare.outputs.issue_number }}
           path: ${{ runner.temp }}/task-metadata.json
@@ -307,7 +307,7 @@ jobs:
       patch_available: ${{ steps.patch.outcome == 'success' }}
     steps:
       - name: Check out factory control plane
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ needs.prepare.outputs.control_sha }}
           path: control
@@ -316,7 +316,7 @@ jobs:
       # Keep the handoff protocol available even when the pinned task scripts
       # predate control_sha propagation. Never use this checkout for task code.
       - name: Check out handoff bootstrap
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ github.sha }}
           path: bootstrap
@@ -342,7 +342,7 @@ jobs:
       # template and earlier task rounds changed a file. Later jobs apply the
       # sealed patch to the base tree and check out a single commit.
       - name: Check out application base
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ needs.prepare.outputs.base_sha }}
           path: workspace
@@ -351,7 +351,7 @@ jobs:
 
       - name: Download handoff checkpoint
         if: github.event_name == 'repository_dispatch' && github.event.action == 'code-agent-continue'
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: factory-handoff-${{ needs.prepare.outputs.issue_number }}
           path: handoff
@@ -360,7 +360,7 @@ jobs:
 
       - name: Download normalized recovery checkpoint
         if: inputs.recovery_run_id != ''
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: factory-recovery-${{ needs.prepare.outputs.issue_number }}
           path: handoff
@@ -385,7 +385,7 @@ jobs:
           fi
 
       - name: Download normalized task
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: factory-task-${{ needs.prepare.outputs.issue_number }}
           path: task
@@ -439,13 +439,13 @@ jobs:
           fi
 
       - name: Set up pnpm
-        uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4.3.0
+        uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
         with:
           version: 11.7.0
           run_install: false
 
       - name: Set up Node.js
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 24.x
           # Source tarballs use an isolated local store, not the shared registry cache.
@@ -732,7 +732,7 @@ jobs:
 
       - name: Upload Code Agent patch and diagnostics
         if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: factory-agent-${{ needs.prepare.outputs.issue_number }}
           path: ${{ runner.temp }}/agent-artifacts
@@ -759,7 +759,7 @@ jobs:
 
       - name: Upload the patch for downstream jobs
         if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: factory-patch-${{ needs.prepare.outputs.issue_number }}
           path: ${{ runner.temp }}/patch-artifacts
@@ -771,7 +771,7 @@ jobs:
         # Preserve a recovery checkpoint on failure, without treating it as
         # successful verification or automatically retrying a broken runner.
         if: always() && steps.patch.outcome == 'success' && (steps.handoff.outcome == 'success' || failure())
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: factory-handoff-${{ needs.prepare.outputs.issue_number }}
           path: ${{ runner.temp }}/agent-artifacts
@@ -832,7 +832,7 @@ jobs:
         run: echo "FACTORY_TIMINGS_FILE=$RUNNER_TEMP/final-artifacts/timings.jsonl" >> "$GITHUB_ENV"
 
       - name: Check out factory control plane
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ needs.prepare.outputs.control_sha }}
           path: control
@@ -841,20 +841,20 @@ jobs:
       # The patch carries full blob ids against this commit, so applying it
       # needs the base tree only, not the repository history.
       - name: Check out fresh application base
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ needs.prepare.outputs.base_sha }}
           path: workspace
           persist-credentials: false
 
       - name: Download Code Agent patch
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: factory-patch-${{ needs.prepare.outputs.issue_number }}
           path: agent-artifacts
 
       - name: Download trusted final verification task
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: factory-task-${{ needs.prepare.outputs.issue_number }}
           path: final-task
@@ -867,13 +867,13 @@ jobs:
             --branch "${{ needs.prepare.outputs.work_branch }}"
 
       - name: Set up pnpm
-        uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4.3.0
+        uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
         with:
           version: 11.7.0
           run_install: false
 
       - name: Set up Node.js
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 24.x
           # Source tarballs use an isolated local store, not the shared registry cache.
@@ -936,7 +936,7 @@ jobs:
           cp agent-artifacts/task-metadata.json "$RUNNER_TEMP/deployable/task-metadata.json"
 
       - name: Upload the deployable build
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: factory-dist-${{ needs.prepare.outputs.issue_number }}
           path: ${{ runner.temp }}/deployable
@@ -957,7 +957,7 @@ jobs:
 
       - name: Upload final verification diagnostics
         if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: factory-final-${{ needs.prepare.outputs.issue_number }}
           path: ${{ runner.temp }}/final-artifacts
@@ -977,7 +977,7 @@ jobs:
       FACTORY_DELIVERY_STATUS: success
     steps: &publication-steps
       - name: Check out factory control plane
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ needs.prepare.outputs.control_sha }}
           path: control
@@ -987,13 +987,13 @@ jobs:
       # pushing its child needs no local history, and the lease below names the
       # expected remote value explicitly instead of reading a tracking ref.
       - name: Check out fresh application base
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ needs.prepare.outputs.base_sha }}
           path: workspace
 
       - name: Download preserved Code Agent patch and metadata
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: factory-patch-${{ needs.prepare.outputs.issue_number }}
           path: agent-artifacts
@@ -1071,7 +1071,7 @@ jobs:
         run: echo "FACTORY_TIMINGS_FILE=$RUNNER_TEMP/final-artifacts/timings.jsonl" >> "$GITHUB_ENV"
 
       - name: Check out factory control plane
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ needs.prepare.outputs.control_sha }}
           path: control
@@ -1080,14 +1080,14 @@ jobs:
       # The patch carries full blob ids against this commit, so applying it
       # needs the base tree only, not the repository history.
       - name: Check out fresh application base
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ needs.prepare.outputs.base_sha }}
           path: workspace
           persist-credentials: false
 
       - name: Download Code Agent patch
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: factory-patch-${{ needs.prepare.outputs.issue_number }}
           path: agent-artifacts
@@ -1100,13 +1100,13 @@ jobs:
             --branch "${{ needs.prepare.outputs.work_branch }}"
 
       - name: Set up pnpm
-        uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4.3.0
+        uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
         with:
           version: 11.7.0
           run_install: false
 
       - name: Set up Node.js
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 24.x
           # Source tarballs use an isolated local store, not the shared registry cache.
@@ -1161,7 +1161,7 @@ jobs:
           cp agent-artifacts/task-metadata.json "$RUNNER_TEMP/deployable/task-metadata.json"
 
       - name: Upload the deployable build
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: factory-dist-${{ needs.prepare.outputs.issue_number }}
           overwrite: true
@@ -1183,7 +1183,7 @@ jobs:
 
       - name: Upload failed preview packaging diagnostics
         if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: factory-preview-build-${{ needs.prepare.outputs.issue_number }}
           path: ${{ runner.temp }}/final-artifacts
@@ -1216,14 +1216,14 @@ jobs:
       issues: write
     steps:
       - name: Check out factory control plane
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ needs.prepare.outputs.control_sha }}
           path: control
           persist-credentials: false
 
       - name: Download failure diagnostics
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         continue-on-error: true
         with:
           name: factory-patch-${{ needs.prepare.outputs.issue_number }}
@@ -1264,7 +1264,7 @@ jobs:
       actions: write
     steps:
       # Isolated from application execution and from all model/media secrets.
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ needs.prepare.outputs.control_sha }}
           path: control
@@ -1292,20 +1292,20 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ needs.prepare.outputs.control_sha }}
           path: control
           persist-credentials: false
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ (needs.publish.result == 'success' || needs.publish-failed.result == 'success') && needs.prepare.outputs.work_branch || needs.prepare.outputs.base_sha }}
           path: workspace
           persist-credentials: false
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 24.x
-      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: factory-task-${{ needs.prepare.outputs.issue_number }}
           path: task
@@ -1331,7 +1331,7 @@ jobs:
 
       - name: Save reply for trusted publisher
         if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: factory-comment-reply-${{ needs.prepare.outputs.build_comment_id }}
           path: ${{ runner.temp }}/comment-artifacts
@@ -1347,18 +1347,18 @@ jobs:
       contents: read
       issues: write
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ needs.prepare.outputs.control_sha }}
           persist-credentials: false
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 24.x
-      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: factory-task-${{ needs.prepare.outputs.issue_number }}
           path: task
-      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: factory-comment-reply-${{ needs.prepare.outputs.build_comment_id }}
           path: reply

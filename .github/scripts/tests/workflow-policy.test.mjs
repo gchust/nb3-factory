@@ -330,6 +330,20 @@ test('every remote action is pinned to a full commit SHA with its version noted'
   }
 });
 
+test('each remote action uses one pinned release across all workflows', () => {
+  // A step added beside an upgrade merges without conflict and can keep the old pin.
+  const directory = new URL('../../workflows/', import.meta.url);
+  const pins = new Map();
+  for (const name of readdirSync(directory).filter((file) => file.endsWith('.yml'))) {
+    const source = readFileSync(new URL(name, directory), 'utf8');
+    for (const [, action, pin] of source.matchAll(/^\s*(?:-\s+)?uses:\s+([\w.-]+\/[\w.-]+)[\w./-]*@(\S+ # \S+)$/gm)) {
+      const seen = pins.get(action);
+      if (seen) assert.equal(pin, seen.pin, `${name}: ${action} differs from ${seen.name}`);
+      else pins.set(action, { pin, name });
+    }
+  }
+});
+
 test('a prepare failure after ready clears agent:running for any build, not only recoveries', () => {
   const prepare = workflow.split('\n  prepare:')[1].split('\n  agent:')[0];
   const cleanup = prepare.split('- name: Report a failure after task preparation')[1];

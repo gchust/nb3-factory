@@ -287,7 +287,7 @@ test('Agent execution stays outside trusted publication and only the short deplo
     /secrets\.|install-agent|classify-findings.mjs run/,
   );
   assert.match(publish, /steps.archive.outputs.commit_sha/);
-  assert.match(publish, /actions\/deploy-pages@[0-9a-f]{40} # v4\./);
+  assert.match(publish, /actions\/deploy-pages@[0-9a-f]{40} # v5\./);
   const reporter = readFileSync(
     new URL('../../workflows/report-task-usage.yml', import.meta.url),
     'utf8',

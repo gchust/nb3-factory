@@ -491,6 +491,6 @@ test('the findings reset runs only from the default branch with an explicit conf
   assert.match(workflow, /group: factory-task-usage/);
   assert.match(workflow, /report-pages\.mjs reset-findings/);
   assert.match(workflow, /ref: \$\{\{ steps\.reset\.outputs\.commit_sha \}\}/);
-  assert.match(workflow, /actions\/deploy-pages@[0-9a-f]{40} # v4\./);
+  assert.match(workflow, /actions\/deploy-pages@[0-9a-f]{40} # v5\./);
   assert.doesNotMatch(workflow, /secrets\.|install-agent/);
 });

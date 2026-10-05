@@ -35,7 +35,7 @@ jobs:
       PREVIEW_RELEASE: factory-previews
       PREVIEW_ENABLED: ${{ secrets.FACTORY_PREVIEW_SSH_KEY != '' && secrets.FACTORY_TAILSCALE_OAUTH_CLIENT_ID != '' }}
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ github.event.repository.default_branch }}
           path: control
@@ -48,7 +48,7 @@ jobs:
 
       - name: Join the tailnet
         if: env.PREVIEW_ENABLED == 'true'
-        uses: tailscale/github-action@6cae46e2d796f265265cfcf628b72a32b4d7cade # v3.3.0
+        uses: tailscale/github-action@d1b6cd204f8dceda5b3eaad7f1f767be390056cd # v4.2.0
         with:
           oauth-client-id: ${{ secrets.FACTORY_TAILSCALE_OAUTH_CLIENT_ID }}
           oauth-secret: ${{ secrets.FACTORY_TAILSCALE_OAUTH_CLIENT_SECRET }}
