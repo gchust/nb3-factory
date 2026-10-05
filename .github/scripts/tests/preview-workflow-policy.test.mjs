@@ -242,8 +242,12 @@ test('the temporary payloads are deleted when the pull request closes or its pre
   // An eviction already removed the preview; a failed asset deletion warns.
   assert.match(
     deploy,
-    /delete-preview-payloads\.sh "\$victim" \|\|\n\s+echo "::warning::/,
+    /delete-preview-payloads\.sh "\$victim" <\/dev\/null \|\|\n\s+echo "::warning::/,
   );
+  // Nothing in the eviction loop may read the rest of the list from stdin.
+  const loop = deploy.split('while read -r victim reason; do')[1].split('done < ')[0];
+  assert.match(loop, /ssh -n /);
+  assert.match(loop, /--pr "\$victim" --reason "\$reason" <\/dev\/null \|\|/);
 });
 
 test('deleting payloads removes only this pull request\'s assets', () => {
@@ -256,23 +260,32 @@ test('deleting payloads removes only this pull request\'s assets', () => {
       path.join(bin, 'gh'),
       `#!/usr/bin/env bash
 echo "$*" >> ${JSON.stringify(log)}
-if [[ "$1 $2" == 'release view' && "$*" == *--json* ]]; then
+# Whatever a gh call reads from stdin would be lost from the eviction list.
+cat >> ${JSON.stringify(path.join(root, 'stdin.log'))}
+if [[ "$1 $2" == 'release view' ]]; then
+  case "\${GH_RELEASE:-}" in
+    missing) echo 'release not found' >&2; exit 1 ;;
+    down) echo 'HTTP 502: Bad Gateway' >&2; exit 1 ;;
+  esac
   printf '%s\\n' preview-pr-7.tar.gz preview-pr-7-0123456789abcdef.tar.gz preview-pr-70-0123456789abcdef.tar.gz preview-pr-17.tar.gz
 fi
 `,
       { mode: 0o755 },
     );
-    const run = (pr) =>
+    const run = (pr, release = '') =>
       spawnSync(
         'bash',
         [path.resolve(import.meta.dirname, '..', 'delete-preview-payloads.sh'), pr],
         {
           encoding: 'utf8',
+          // As in the eviction loop, whose remaining entries are on stdin.
+          input: '4 failed\n5 closed\n',
           env: {
             ...process.env,
             PATH: `${bin}:${process.env.PATH}`,
             GITHUB_REPOSITORY: 'o/r',
             PREVIEW_RELEASE: 'factory-previews',
+            GH_RELEASE: release,
           },
         },
       );
@@ -286,7 +299,15 @@ fi
       'preview-pr-7.tar.gz',
       'preview-pr-7-0123456789abcdef.tar.gz',
     ]);
+    assert.equal(readFileSync(path.join(root, 'stdin.log'), 'utf8'), '');
     assert.equal(run('7; rm -rf /').status, 2);
+    // Only a missing release is nothing to delete; any other gh failure fails.
+    const missing = run('7', 'missing');
+    assert.equal(missing.status, 0, missing.stderr);
+    assert.match(missing.stdout, /no preview release; nothing to delete/);
+    const down = run('7', 'down');
+    assert.equal(down.status, 1);
+    assert.match(down.stderr, /::error::Could not list the factory-previews assets of PR #7: HTTP 502/);
   } finally {
     rmSync(root, { recursive: true, force: true });
   }
