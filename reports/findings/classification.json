@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "inputHash": "09cccef7cb8deb98814540beaac977374051cbc64613635139fed661bad59f6d",
+  "inputHash": "f798c9d482fa85380d9befa358ba0b9de7fe1cc41bb1b3702fef86d0740a97f8",
   "sources": [
     {
       "id": "460:36434284393:1:F2",
@@ -461,6 +461,16 @@
       "id": "552:37238845336:1:F4",
       "report": "552:37238845336:1",
       "fingerprint": "b7620ab7cef68bd075aa560d6b034eb4c81b23fbc4da274c19e110e60c0dca4f"
+    },
+    {
+      "id": "555:37238852759:1:F1",
+      "report": "555:37238852759:1",
+      "fingerprint": "cfefc2fb27138c44a4ea7f00e0a0f27fbca89dfd4da8b672143e049b83c82cd7"
+    },
+    {
+      "id": "555:37238852759:1:F2",
+      "report": "555:37238852759:1",
+      "fingerprint": "cd8faaea563b0e16755c0b116772cafc26e0963f284078ce666e1473819946dc"
     }
   ],
   "groups": [
@@ -477,14 +487,15 @@
     },
     {
       "title": "Registry 图片/PDF 预览分支缺少解码失败态，损坏文件只显示破图",
-      "reason": "跨报告合并。463:F2（E71/E86）、476:F1（E9/E38）、507:F3（E3/E4）、519:F5（E28/E34）、531:F2（E39/E56）、543:F3（E5/E25）均记录 file-preview-content.tsx 的 image（531 还含 pdf/audio/video）分支直接渲染裸 <img>，无 onError 与失败文案，损坏 PNG 只得到浏览器破图；与同文件 Office 分支的失败/回退模型不一致，修复方向相同（内建 onError + 本地化失败提示 + 下载回退）。",
+      "reason": "跨报告合并。463:F2（E71/E86）、476:F1（E9/E38）、507:F3（E3/E4）、519:F5（E28/E34）、531:F2（E39/E56）、543:F3（E5/E25）均记录 file-preview-content.tsx 的 image（531 还含 pdf/audio/video）分支直接渲染裸 <img>，无 onError 与失败文案，损坏 PNG 只得到浏览器破图；与同文件 Office 分支的失败/回退模型不一致，修复方向相同（内建 onError + 本地化失败提示 + 下载回退）。 555:F2（E19/E29）同样记录 file-preview-content.tsx 的 image 分支只渲染裸 <img>、损坏图片无 onError/失败回退，应用副本新增 ImagePreview(onError) 后才给出失败提示，与上述成员同一公开缺口与修复方向。",
       "members": [
         "463:36434310207:1:F2",
         "476:36498929142:1:F1",
         "507:36787396720:1:F3",
         "519:36938138067:1:F5",
         "531:37074013613:1:F2",
-        "543:37156754926:1:F3"
+        "543:37156754926:1:F3",
+        "555:37238852759:1:F2"
       ]
     },
     {
@@ -891,15 +902,22 @@
       "members": [
         "552:37238845336:1:F4"
       ]
+    },
+    {
+      "title": "DatabaseManager 与 DatabaseConnection 的 repository 签名不一致，正常装配触发类型冲突",
+      "reason": "单条保留：555:F1（E13/E14/E61）显示 @nocobase/db 的 DatabaseManager.repository(collection, connection?) 与 DatabaseConnection.repository(collection) 同名不同参，Manager 还缺少 name/driver/dialect 等属性，把 Manager 传给期望 Connection 的 helper 在 verify-2 触发 TS2345；这是类型签名不一致的独立可用性缺口，与 AppRouterFactory 未参数化 Hono（495:F2）、dist 布局/入口等其它类型或指引问题根因不同，证据不足以并入任何既有组，故单独保留。",
+      "members": [
+        "555:37238852759:1:F1"
+      ]
     }
   ],
   "classifier": {
     "engine": "pi",
     "model": "deepseek-v4.1-flash",
     "version": "0.86.1",
-    "runId": "37244535133",
+    "runId": "37249874844",
     "attempt": 1,
     "controlSha": "0f72d9b81f981f10501c5ac0ee0e7d786f1f4698",
-    "completedAt": "2026-10-04T23:42:58.664Z"
+    "completedAt": "2026-10-05T01:05:27.280Z"
   }
 }
