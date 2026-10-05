@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { readdirSync, readFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import test from 'node:test';
 import { taskOutcome } from '../task-outcome.mjs';
@@ -355,6 +355,118 @@ test('every history publisher creates the shared release when it is missing', ()
     );
   }
   assert.ok(checked >= 3);
+});
+
+// The relative modules a script loads, transitively, as .github/... paths.
+function importClosure(...entries) {
+  const scripts = path.resolve(import.meta.dirname, '..');
+  const seen = new Set();
+  const pending = entries.map((entry) => path.join(scripts, entry));
+  while (pending.length) {
+    const file = pending.pop();
+    // Import text inside generated sources (the overlay's eslint.config.js)
+    // is relative to the application, not to the script.
+    if (seen.has(file) || !existsSync(file)) continue;
+    seen.add(file);
+    const source = readFileSync(file, 'utf8');
+    for (const [, specifier] of source.matchAll(
+      /(?:\bfrom|\bimport\s*\(?)\s*['"](\.{1,2}\/[^'"]+)['"]/g,
+    ))
+      pending.push(path.resolve(path.dirname(file), specifier));
+  }
+  return [...seen].map((file) =>
+    path.relative(path.resolve(scripts, '..', '..'), file),
+  );
+}
+
+function pullRequestPaths(name) {
+  const source = readFileSync(
+    new URL(`../../workflows/${name}`, import.meta.url),
+    'utf8',
+  );
+  const block = source.split('  pull_request:\n')[1].split(/\n {2}\w/)[0];
+  return [...block.matchAll(/^ {6}- '([^']+)'$/gm)].map(([, glob]) => {
+    const pattern = glob
+      .replace(/[.+?^${}()|[\]\\]/g, '\\$&')
+      .replace(/\*\*/g, '\0')
+      .replace(/\*/g, '[^/]*')
+      .replace(/\0/g, '.*');
+    return new RegExp(`^${pattern}$`);
+  });
+}
+
+test('the Agent CLI check runs whenever a module the adapters load changes', () => {
+  const filters = pullRequestPaths('agent-adapters.yml');
+  for (const file of importClosure(
+    'install-agent.mjs',
+    'run-agent.mjs',
+    'agent-cli-smoke.mjs',
+    'tests/codex-agent.integration.mjs',
+  ))
+    assert.ok(
+      filters.some((filter) => filter.test(file)),
+      file,
+    );
+});
+
+test('the source baseline check runs whenever a script it runs changes', () => {
+  const filters = pullRequestPaths('source-baseline.yml');
+  const source = readFileSync(
+    new URL('../../workflows/source-baseline.yml', import.meta.url),
+    'utf8',
+  );
+  const run = [
+    ...new Set(
+      [...source.matchAll(/\.github\/scripts\/([\w-]+\.(?:mjs|sh))/g)].map(
+        ([, file]) => file,
+      ),
+    ),
+  ];
+  assert.ok(run.includes('verify.sh'));
+  const verify = readFileSync(
+    path.resolve(import.meta.dirname, '../verify.sh'),
+    'utf8',
+  );
+  const viaVerify = [
+    ...verify.matchAll(/\$script_dir\/([\w-]+\.(?:mjs|sh))/g),
+  ].map(([, file]) => file);
+  const shell = [...run, ...viaVerify].filter((file) => file.endsWith('.sh'));
+  for (const file of [
+    ...importClosure(...[...run, ...viaVerify].filter((file) => file.endsWith('.mjs'))),
+    ...shell.map((file) => `.github/scripts/${file}`),
+  ])
+    assert.ok(
+      filters.some((filter) => filter.test(file)),
+      file,
+    );
+});
+
+test('CI installs the Agent Browser and Agent CLIs build tasks would install', async () => {
+  const { normalizeAgentEnv } = await import('../agent-configuration.mjs');
+  const fallback = normalizeAgentEnv({}).AGENT_BROWSER_VERSION;
+  const browser = `AGENT_BROWSER_VERSION: \${{ vars.AGENT_BROWSER_VERSION || '${fallback}' }}`;
+  const tests = readFileSync(
+    new URL('../../workflows/factory-tests.yml', import.meta.url),
+    'utf8',
+  );
+  assert.ok(workflow.includes(browser));
+  assert.ok(tests.includes(browser));
+  assert.doesNotMatch(tests, /agent-browser@\d/);
+  const adapters = readFileSync(
+    new URL('../../workflows/agent-adapters.yml', import.meta.url),
+    'utf8',
+  );
+  for (const name of [
+    'CODE_AGENT_VERSION',
+    'PI_VERSION',
+    'CODEBUDDY_VERSION',
+    'CLAUDE_CODE_VERSION',
+    'CODEX_VERSION',
+    'OPENCODE_VERSION',
+  ]) {
+    assert.ok(workflow.includes(`${name}: \${{ vars.${name} }}`), name);
+    assert.ok(adapters.includes(`${name}: \${{ vars.${name} }}`), name);
+  }
 });
 
 test('regression checks cancel superseded PR runs but never a pending push or dispatch', () => {

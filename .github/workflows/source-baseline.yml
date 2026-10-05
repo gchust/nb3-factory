@@ -8,6 +8,22 @@ on:
       - '.github/scripts/restore-source-dist.mjs'
       - '.github/scripts/baseline-record.mjs'
       - '.github/scripts/publish-source-baseline.sh'
+      # Run by the jobs below, directly or through verify.sh.
+      - '.github/scripts/assert-current-template.mjs'
+      - '.github/scripts/overlay-factory.mjs'
+      - '.github/scripts/template-guidance.mjs'
+      - '.github/scripts/create-runtime-config.mjs'
+      - '.github/scripts/install-browser-fonts.sh'
+      - '.github/scripts/verify.sh'
+      - '.github/scripts/apply-database.sh'
+      - '.github/scripts/browser-smoke.mjs'
+      - '.github/scripts/factory-eslint.mjs'
+      - '.github/scripts/format-changes.mjs'
+      - '.github/scripts/integration-checks.mjs'
+      - '.github/scripts/required-checks.mjs'
+      - '.github/scripts/stop-stale-app.sh'
+      - '.github/scripts/timed-command.mjs'
+      - '.github/scripts/timing.mjs'
   workflow_dispatch:
     inputs:
       source_sha:

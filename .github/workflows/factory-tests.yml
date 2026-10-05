@@ -120,8 +120,13 @@ jobs:
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 24.x
+      # The same version, override included, that build tasks install.
       - name: Install the pinned QA browser tool
-        run: npm install --global agent-browser@0.36.0
+        env:
+          AGENT_BROWSER_VERSION: ${{ vars.AGENT_BROWSER_VERSION || '0.36.0' }}
+        run: |
+          npm install --global "agent-browser@${AGENT_BROWSER_VERSION}"
+          agent-browser --version
       - name: Exercise the real guarded browser without an application or model
         run: |
           export AGENT_BROWSER_EXECUTABLE_PATH="$(command -v google-chrome || command -v chromium)"
