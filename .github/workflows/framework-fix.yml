@@ -106,11 +106,40 @@ jobs:
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 24.x
+      # The pnpm store is keyed on the monorepo lockfile and the pnpm version
+      # the checkout declares. The Agent runs later in this job, so the store is
+      # saved explicitly right after install instead of by a post step that
+      # would also keep whatever the Agent added to it.
+      - name: Locate the pnpm store
+        id: pnpm-store
+        working-directory: workspace
+        run: |
+          echo "path=$(pnpm store path --silent)" >> "$GITHUB_OUTPUT"
+          echo "version=$(pnpm --version)" >> "$GITHUB_OUTPUT"
+      - name: Restore the nocobase3 pnpm store
+        id: pnpm-cache
+        uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: ${{ steps.pnpm-store.outputs.path }}
+          key: nocobase3-pnpm-store-${{ runner.os }}-pnpm${{ steps.pnpm-store.outputs.version }}-${{ hashFiles('workspace/pnpm-lock.yaml') }}
+          restore-keys: nocobase3-pnpm-store-${{ runner.os }}-pnpm${{ steps.pnpm-store.outputs.version }}-
       - name: Install nocobase3 dependencies
         id: dependencies
         continue-on-error: true
         working-directory: workspace
         run: pnpm install --frozen-lockfile
+      - name: Drop store entries the current lockfile no longer uses
+        if: steps.dependencies.outcome == 'success' && steps.pnpm-cache.outputs.cache-hit != 'true'
+        continue-on-error: true
+        working-directory: workspace
+        run: pnpm store prune
+      - name: Save the nocobase3 pnpm store before the Agent starts
+        if: steps.dependencies.outcome == 'success' && steps.pnpm-cache.outputs.cache-hit != 'true'
+        continue-on-error: true
+        uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: ${{ steps.pnpm-store.outputs.path }}
+          key: ${{ steps.pnpm-cache.outputs.cache-primary-key }}
       - name: Write the review prompt
         env:
           DEPENDENCIES: ${{ steps.dependencies.outcome }}

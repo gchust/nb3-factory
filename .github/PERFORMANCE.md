@@ -10,6 +10,14 @@
 
 QA 使用 `$FACTORY_BROWSER_REPORT_TOOL` 的 check 子命令逐项验证字段与 PNG 并保存观察；finish 运行原有完整校验器。即时校验与最终校验共享同一检查项验证函数，不自动生成成功结论，也不省略最终独立校验。
 
+## Runner 时间
+
+只有 Agent Job 完整检出应用历史（`fetch-depth: 0`），供 Agent 用 `git log` 查看模板与先前轮次的变化。终验、发布（含失败发布）和失败预览打包只检出 `base_sha` 一个提交：补丁带完整 blob id，`apply-patch.mjs` 只需要基线树；发布推送的父提交远端已有，`--force-with-lease` 明确写出期望的远端值，不依赖跟踪分支。
+
+Agent Job 照常上传完整的 `factory-agent-N`（报告、复盘、用量、历史和诊断读取它），以及交接/失败时的 `factory-handoff-N` 检查点。另外上传小的 `factory-patch-N`：`agent.patch`、`change-summary.json`、`task-metadata.json`、`pipeline-state.json` 和各次调用的 `agent*.jsonl.result.json`。verify-final、publish / publish-failed、preview-build-failed 和 report-failure 只下载它，不再下载完整日志、截图和录屏。
+
+`framework-fix.yml` 与 `source-baseline.yml` 安装整个 nocobase3 monorepo 时，用 `actions/cache/restore` 按锁文件哈希和 pnpm 版本恢复 pnpm store，安装成功后先 `pnpm store prune` 再用 `actions/cache/save` 立即保存：框架修复保存发生在 Agent 启动前，源码基线保存发生在本地 registry 和冒烟应用写入 store 之前。应用任务的安装仍按上文由 setup-node 缓存，源码基线任务的应用安装不进共享缓存。
+
 测量优化效果时固定同一依赖基线与任务，比较实际构建耗时、实现与 QA 修复次数和首次通过率；不要仅凭日志估算提速。
 
 ## Prompt 与输出

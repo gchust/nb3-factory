@@ -338,6 +338,9 @@ jobs:
           echo "FACTORY_RUN_DEADLINE_EPOCH_SECONDS=$(($(date +%s) + 18000 - 120))" >> "$GITHUB_ENV"
           echo "FACTORY_TIMINGS_FILE=$RUNNER_TEMP/agent-artifacts/timings.jsonl" >> "$GITHUB_ENV"
 
+      # Only the Agent sees full history: it may read `git log` to locate how the
+      # template and earlier task rounds changed a file. Later jobs apply the
+      # sealed patch to the base tree and check out a single commit.
       - name: Check out application base
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
@@ -736,6 +739,33 @@ jobs:
           if-no-files-found: warn
           retention-days: 14
 
+      # Final verification, publication, failed preview packaging and the
+      # failure notice read only these files. They download this small copy;
+      # factory-agent-N stays the complete record for reports and diagnosis.
+      - name: Stage the patch for downstream jobs
+        if: always()
+        run: |
+          mkdir -p "$RUNNER_TEMP/patch-artifacts"
+          [[ -d "$RUNNER_TEMP/agent-artifacts" ]] || exit 0
+          cd "$RUNNER_TEMP/agent-artifacts"
+          for file in agent.patch change-summary.json task-metadata.json pipeline-state.json; do
+            if [[ -f "$file" && ! -L "$file" ]]; then
+              cp "$file" "$RUNNER_TEMP/patch-artifacts/$file"
+            fi
+          done
+          # mark-failure.mjs explains a stop from the invocation results.
+          find . -type f -name 'agent*.jsonl.result.json' \
+            -exec cp --parents {} "$RUNNER_TEMP/patch-artifacts" \;
+
+      - name: Upload the patch for downstream jobs
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: factory-patch-${{ needs.prepare.outputs.issue_number }}
+          path: ${{ runner.temp }}/patch-artifacts
+          if-no-files-found: warn
+          retention-days: 14
+
       - name: Upload handoff checkpoint
         id: checkpoint
         # Preserve a recovery checkpoint on failure, without treating it as
@@ -808,18 +838,19 @@ jobs:
           path: control
           persist-credentials: false
 
+      # The patch carries full blob ids against this commit, so applying it
+      # needs the base tree only, not the repository history.
       - name: Check out fresh application base
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           ref: ${{ needs.prepare.outputs.base_sha }}
           path: workspace
-          fetch-depth: 0
           persist-credentials: false
 
-      - name: Download Code Agent patch and diagnostics
+      - name: Download Code Agent patch
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
-          name: factory-agent-${{ needs.prepare.outputs.issue_number }}
+          name: factory-patch-${{ needs.prepare.outputs.issue_number }}
           path: agent-artifacts
 
       - name: Download trusted final verification task
@@ -952,17 +983,19 @@ jobs:
           path: control
           persist-credentials: false
 
+      # One commit is enough to publish: the remote already has base_sha, so
+      # pushing its child needs no local history, and the lease below names the
+      # expected remote value explicitly instead of reading a tracking ref.
       - name: Check out fresh application base
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           ref: ${{ needs.prepare.outputs.base_sha }}
           path: workspace
-          fetch-depth: 0
 
       - name: Download preserved Code Agent patch and metadata
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
-          name: factory-agent-${{ needs.prepare.outputs.issue_number }}
+          name: factory-patch-${{ needs.prepare.outputs.issue_number }}
           path: agent-artifacts
 
       - name: Apply preserved patch to the task branch
@@ -1044,18 +1077,19 @@ jobs:
           path: control
           persist-credentials: false
 
+      # The patch carries full blob ids against this commit, so applying it
+      # needs the base tree only, not the repository history.
       - name: Check out fresh application base
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           ref: ${{ needs.prepare.outputs.base_sha }}
           path: workspace
-          fetch-depth: 0
           persist-credentials: false
 
-      - name: Download Code Agent patch and diagnostics
+      - name: Download Code Agent patch
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
-          name: factory-agent-${{ needs.prepare.outputs.issue_number }}
+          name: factory-patch-${{ needs.prepare.outputs.issue_number }}
           path: agent-artifacts
 
       - name: Apply patch to the task branch
@@ -1192,7 +1226,7 @@ jobs:
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         continue-on-error: true
         with:
-          name: factory-agent-${{ needs.prepare.outputs.issue_number }}
+          name: factory-patch-${{ needs.prepare.outputs.issue_number }}
           path: failure-artifacts
 
       - name: Mark Issue as failed

@@ -96,6 +96,22 @@ jobs:
         with:
           version: 11.7.0
           run_install: false
+      # Only the monorepo install from the public registry is cached. The store
+      # is saved right after it, before the loopback registry and the smoke
+      # application can add locally built package bytes to it.
+      - name: Locate the pnpm store
+        id: pnpm-store
+        working-directory: source
+        run: |
+          echo "path=$(pnpm store path --silent)" >> "$GITHUB_OUTPUT"
+          echo "version=$(pnpm --version)" >> "$GITHUB_OUTPUT"
+      - name: Restore the nocobase3 pnpm store
+        id: pnpm-cache
+        uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: ${{ steps.pnpm-store.outputs.path }}
+          key: nocobase3-pnpm-store-${{ runner.os }}-pnpm${{ steps.pnpm-store.outputs.version }}-${{ hashFiles('source/pnpm-lock.yaml') }}
+          restore-keys: nocobase3-pnpm-store-${{ runner.os }}-pnpm${{ steps.pnpm-store.outputs.version }}-
       - name: Verify checkout identity and install source dependencies
         working-directory: source
         run: |
@@ -103,6 +119,18 @@ jobs:
           node ../control/.github/scripts/assert-current-template.mjs packages/templates/app-template-default
           pnpm install --frozen-lockfile
           echo "FACTORY_CREATOR_VERSION=$(node -p 'JSON.parse(require("node:fs").readFileSync("packages/tools/create-app/package.json", "utf8")).version')" >> "$GITHUB_ENV"
+      - name: Drop store entries the current lockfile no longer uses
+        if: steps.pnpm-cache.outputs.cache-hit != 'true'
+        continue-on-error: true
+        working-directory: source
+        run: pnpm store prune
+      - name: Save the nocobase3 pnpm store before the loopback registry starts
+        if: steps.pnpm-cache.outputs.cache-hit != 'true'
+        continue-on-error: true
+        uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: ${{ steps.pnpm-store.outputs.path }}
+          key: ${{ steps.pnpm-cache.outputs.cache-primary-key }}
       - name: Build and publish only to an isolated loopback registry
         working-directory: source
         run: pnpm unreleased:prepare
