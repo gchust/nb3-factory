@@ -20,7 +20,7 @@
 只读数据发布 Job → 不可变 Release 资产 + 独立 factory-baseline/source-* 分支
 ```
 
-快照只包含公开包与必要解析元数据，不包含原 registry 认证、运行配置、数据库、node_modules 或部署状态。每个包验证来源 integrity 并记录 SHA-256；整体包归档也固定摘要。只读本地 registry 对缺失的 NocoBase 包返回错误，不回退到已发布的同名版本。第三方依赖按锁文件完整性从公共 registry 获取。
+快照只包含公开包与必要解析元数据，不包含原 registry 认证、运行配置、数据库、node_modules 或部署状态。每个包验证来源 integrity 并记录 SHA-256；整体包归档也固定摘要。只读本地 registry 对缺失的 NocoBase 包返回错误，不回退到已发布的同名版本。第三方依赖按锁文件完整性从公共 registry 获取。源码 monorepo 的 pnpm store 按其锁文件和 pnpm 版本缓存，并在安装完成后、启动本地 registry 之前保存，因此缓存里只有公共 registry 的包，不含本地构建的 NocoBase 包。
 
 生成的 `factory-source.json` 绑定本仓库、上游 SHA、生产 run/attempt、Release URL 和归档摘要。发布只创建 `factory-baseline/source-<sha12>-<run>-<attempt>`，不修改 develop；同名资产或分支已有不同内容时拒绝覆盖。
 

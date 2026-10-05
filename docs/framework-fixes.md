@@ -19,6 +19,8 @@ Each job holds only the credential it needs:
 | `review`  | `CLAUDE_CODE_OAUTH_TOKEN`                | Checks out `nocobase/nocobase3` at that commit, installs its dependencies, and runs the pinned Claude Code once through the factory harness. It then turns the working tree into a patch (edits under `.github/` are dropped) and decides what may be published. |
 | `publish` | `NOCOBASE3_PR_TOKEN`, `EVALUATION_TOKEN` | Applies the patch to a clean checkout, commits as the token's account, pushes `fix/testmanage-problem-<id>-<run>`, and opens a draft PR. Then posts the result through `POST /problem-fixes/factory/runs/<run>/result`. Never runs Agent or repository code.     |
 
+`review` restores the nocobase3 pnpm store from a cache keyed on the monorepo lockfile and pnpm version, and saves it right after the install, before the Agent starts, so nothing the Agent adds to the store is cached.
+
 The Agent never holds the PR token or the TestManage key, and it cannot push, open a PR or write to TestManage. Its only output is files plus a structured verdict file. A PR is opened only when all three hold:
 
 - The verdict is `confirmed`.
