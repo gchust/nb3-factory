@@ -42,6 +42,8 @@ jobs:
   dispatch-gate:
     if: github.event_name == 'workflow_run'
     uses: ./.github/workflows/report-dispatch-gate.yml
+    with:
+      workflow: report-task-usage.yml
     permissions:
       actions: read
 

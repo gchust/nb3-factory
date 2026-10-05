@@ -146,6 +146,7 @@ function dispatch(
     failWorkflow = '',
     failCount = '99',
     runId = '123',
+    workflows = [],
   } = {},
 ) {
   const root = mkdtempSync(path.join(os.tmpdir(), 'factory-dispatch-'));
@@ -174,7 +175,7 @@ process.exit((args[2] === process.env.TEST_FAIL_WORKFLOW || process.env.TEST_FAI
   chmodSync(sleep, 0o755);
   const result = spawnSync(
     'bash',
-    [path.resolve(import.meta.dirname, '../dispatch-task-reports.sh')],
+    [path.resolve(import.meta.dirname, '../dispatch-task-reports.sh'), ...workflows],
     {
       env: {
         ...process.env,
@@ -297,6 +298,22 @@ test('permanent failures are bounded independently for every reporter', (t) => {
   assert.match(f.summary, /publish-agent-history/);
 });
 
+test('a named report is requested on its own, and media only for published work', (t) => {
+  const usage = dispatch(t, { workflows: ['report-task-usage.yml'] });
+  assert.equal(usage.result.status, 0, usage.result.stderr);
+  assert.deepEqual(usage.calls.map((args) => args[2]), ['report-task-usage.yml']);
+  const preview = dispatch(t, { delivered: 'false', workflows: ['deploy-preview.yml'] });
+  assert.equal(preview.result.status, 0, preview.result.stderr);
+  assert.deepEqual(preview.calls, []);
+  assert.match(preview.result.stdout, /Not requesting deploy-preview\.yml/);
+  const failed = dispatch(t, { workflows: ['publish-retro.yml'], failWorkflow: 'publish-retro.yml' });
+  assert.equal(failed.result.status, 1);
+  assert.equal(failed.calls.length, 3);
+  const unknown = dispatch(t, { workflows: ['code-agent-task.yml'] });
+  assert.equal(unknown.result.status, 2);
+  assert.deepEqual(unknown.calls, []);
+});
+
 test('dispatcher rejects malformed IDs rather than passing them to GitHub', (t) => {
   const f = dispatch(t, { runId: 'abc' });
   assert.equal(f.result.status, 2);
@@ -369,28 +386,44 @@ test('report dispatch is an isolated terminal job, not another Agent invocation'
   }
 });
 
+const reportWorkflows = [
+  ['deploy-preview.yml', 'deploy-preview'],
+  ['publish-agent-history.yml', 'publish'],
+  ['publish-visual-report.yml', 'publish-media'],
+  ['publish-retro.yml', 'publish-retro'],
+  ['report-task-progress.yml', 'report'],
+  ['report-task-usage.yml', 'report'],
+];
+const readWorkflow = (name) =>
+  readFileSync(path.resolve(import.meta.dirname, '../../workflows', name), 'utf8');
+
+test('the task requests each report in its own step, which runs after an earlier one failed', () => {
+  const task = readWorkflow('code-agent-task.yml');
+  const job = task.split('\n  dispatch-reports:\n')[1].split(/\n {2}[a-z][a-z-]*:\n/)[0];
+  assert.match(job, /continue-on-error: true/);
+  const steps = [...job.matchAll(/- name: Request ([\w-]+\.yml)\n\s+id: request-([\w-]+)\n\s+if: \$\{\{ !cancelled\(\) \}\}\n[\s\S]*?run: bash control\/\.github\/scripts\/dispatch-task-reports\.sh ([\w-]+\.yml)\n/g)];
+  assert.deepEqual(
+    steps.map(([, name]) => name).sort(),
+    reportWorkflows.map(([name]) => name).sort(),
+  );
+  for (const [, name, id, argument] of steps) {
+    assert.equal(argument, name);
+    assert.equal(`${id}.yml`, name);
+  }
+  assert.match(job, /FACTORY_TASK_PUBLISHED: \$\{\{ needs\.publish\.result == 'success' \|\| needs\.publish-failed\.result == 'success' \}\}/);
+  assert.equal((job.match(/env: \*report-dispatch-env/g) ?? []).length, reportWorkflows.length - 1);
+});
+
 test('workflow_run copies of dispatched reports skip once the task requested them', () => {
-  const read = (name) =>
-    readFileSync(path.resolve(import.meta.dirname, '../../workflows', name), 'utf8');
-  const gate = read('report-dispatch-gate.yml');
-  const task = read('code-agent-task.yml');
-  // The gate recognizes the task's dispatch step by name.
-  const step = /select\(\.name == "([^"]+)" and \.conclusion == "success"\)/.exec(gate)[1];
-  assert.match(task, new RegExp(`\\n  dispatch-reports:\\n[\\s\\S]*?- name: ${step.replace(/[()]/g, '\\$&')}\\n`));
+  const gate = readWorkflow('report-dispatch-gate.yml');
   assert.match(gate, /select\(\.name == "dispatch-reports"\)/);
   assert.match(gate, /actions: read/);
-  for (const [name, job] of [
-    ['deploy-preview.yml', 'deploy-preview'],
-    ['publish-agent-history.yml', 'publish'],
-    ['publish-visual-report.yml', 'publish-media'],
-    ['publish-retro.yml', 'publish-retro'],
-    ['report-task-progress.yml', 'report'],
-    ['report-task-usage.yml', 'report'],
-  ]) {
-    const workflow = read(name);
+  assert.match(gate, /inputs:\n\s+workflow:\n[\s\S]*?required: true/);
+  for (const [name, job] of reportWorkflows) {
+    const workflow = readWorkflow(name);
     assert.match(
       workflow,
-      /\n  dispatch-gate:\n    if: github.event_name == 'workflow_run'\n    uses: \.\/\.github\/workflows\/report-dispatch-gate\.yml\n/,
+      new RegExp(`\\n  dispatch-gate:\\n    if: github.event_name == 'workflow_run'\\n    uses: \\./\\.github/workflows/report-dispatch-gate\\.yml\\n    with:\\n      workflow: ${name.replace('.', '\\.')}\\n`),
       name,
     );
     const body = workflow.split(`\n  ${job}:\n`)[1].split(/\n {2}[a-z][a-z-]*:\n/)[0];
@@ -398,6 +431,51 @@ test('workflow_run copies of dispatched reports skip once the task requested the
     // Fails open: a skipped or failed gate never suppresses the report.
     assert.match(body, /if: >-\n\s+!cancelled\(\) && needs\.dispatch-gate\.outputs\.covered != 'true'/, name);
   }
+});
+
+// The gate's own script against a recorded jobs listing.
+function gate(t, steps, { workflow, fail = false, runId = '123' } = {}) {
+  const source = readWorkflow('report-dispatch-gate.yml');
+  const script = source.split('        run: |\n')[1].replace(/^ {10}/gm, '');
+  const root = mkdtempSync(path.join(os.tmpdir(), 'factory-gate-'));
+  t.after(() => rmSync(root, { recursive: true, force: true }));
+  const bin = path.join(root, 'bin');
+  mkdirSync(bin);
+  const jobs = path.join(root, 'jobs.json');
+  writeFileSync(jobs, JSON.stringify({ jobs: [{ name: 'agent', steps: [{ name: `Request ${workflow}`, conclusion: 'success' }] }, { name: 'dispatch-reports', steps }] }));
+  // gh api ... --jq <filter>: apply the filter to the recorded listing.
+  writeFileSync(path.join(bin, 'gh'), `#!/usr/bin/env bash
+${fail ? 'exit 1' : ''}
+while [[ $# -gt 0 && "$1" != --jq ]]; do shift; done
+jq -r "$2" ${JSON.stringify(jobs)}
+`, { mode: 0o755 });
+  const output = path.join(root, 'output');
+  writeFileSync(output, '');
+  const result = spawnSync('bash', ['-c', `set -euo pipefail\n${script}`], {
+    encoding: 'utf8',
+    env: { ...process.env, PATH: `${bin}:${process.env.PATH}`, GITHUB_REPOSITORY: 'o/r', GITHUB_OUTPUT: output,
+      GH_TOKEN: 'x', RUN_ID: runId, ATTEMPT: '1', WORKFLOW: workflow },
+  });
+  assert.equal(result.status, 0, result.stderr);
+  return readFileSync(output, 'utf8').trim();
+}
+
+test('the gate reads only its own workflow\'s request step and fails open', (t) => {
+  const steps = [
+    { name: 'Request report-task-usage.yml', conclusion: 'failure' },
+    { name: 'Request deploy-preview.yml', conclusion: 'success' },
+    { name: 'Request publish-retro.yml', conclusion: 'skipped' },
+  ];
+  assert.equal(gate(t, steps, { workflow: 'deploy-preview.yml' }), 'covered=true');
+  assert.equal(gate(t, steps, { workflow: 'report-task-usage.yml' }), 'covered=false');
+  assert.equal(gate(t, steps, { workflow: 'publish-retro.yml' }), 'covered=false');
+  assert.equal(gate(t, steps, { workflow: 'publish-agent-history.yml' }), 'covered=false');
+  // A run from before the split has one combined step for every report.
+  const legacy = [{ name: 'Explicitly request task reports (including continuations)', conclusion: 'success' }];
+  assert.equal(gate(t, legacy, { workflow: 'publish-retro.yml' }), 'covered=true');
+  assert.equal(gate(t, steps, { workflow: 'deploy-preview.yml', fail: true }), 'covered=false');
+  assert.equal(gate(t, steps, { workflow: 'deploy-preview.yml', runId: 'x' }), 'covered=false');
+  assert.equal(gate(t, steps, { workflow: 'deploy-preview.yml"); evil' }), 'covered=false');
 });
 
 test('live progress updates queue per source run, not globally', () => {

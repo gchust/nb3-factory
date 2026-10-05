@@ -1271,14 +1271,45 @@ jobs:
           ref: ${{ needs.prepare.outputs.control_sha }}
           path: control
           persist-credentials: false
-      - name: Explicitly request task reports (including continuations)
-        env:
+      # One step per report (including continuations): report-dispatch-gate.yml
+      # reads each step by name, so a failed request makes only that report's
+      # workflow_run copy do the work, not all six. Each step runs even after an
+      # earlier one failed; the job's continue-on-error keeps the task result.
+      - name: Request report-task-progress.yml
+        id: request-report-task-progress
+        if: ${{ !cancelled() }}
+        env: &report-dispatch-env
           GH_TOKEN: ${{ github.token }}
           SOURCE_RUN_ID: ${{ github.run_id }}
           SOURCE_ATTEMPT: ${{ github.run_attempt }}
           FACTORY_REPORT_REF: ${{ github.event.repository.default_branch }}
           FACTORY_TASK_PUBLISHED: ${{ needs.publish.result == 'success' || needs.publish-failed.result == 'success' }}
-        run: bash control/.github/scripts/dispatch-task-reports.sh
+        run: bash control/.github/scripts/dispatch-task-reports.sh report-task-progress.yml
+      - name: Request report-task-usage.yml
+        id: request-report-task-usage
+        if: ${{ !cancelled() }}
+        env: *report-dispatch-env
+        run: bash control/.github/scripts/dispatch-task-reports.sh report-task-usage.yml
+      - name: Request publish-agent-history.yml
+        id: request-publish-agent-history
+        if: ${{ !cancelled() }}
+        env: *report-dispatch-env
+        run: bash control/.github/scripts/dispatch-task-reports.sh publish-agent-history.yml
+      - name: Request publish-retro.yml
+        id: request-publish-retro
+        if: ${{ !cancelled() }}
+        env: *report-dispatch-env
+        run: bash control/.github/scripts/dispatch-task-reports.sh publish-retro.yml
+      - name: Request publish-visual-report.yml
+        id: request-publish-visual-report
+        if: ${{ !cancelled() }}
+        env: *report-dispatch-env
+        run: bash control/.github/scripts/dispatch-task-reports.sh publish-visual-report.yml
+      - name: Request deploy-preview.yml
+        id: request-deploy-preview
+        if: ${{ !cancelled() }}
+        env: *report-dispatch-env
+        run: bash control/.github/scripts/dispatch-task-reports.sh deploy-preview.yml
 
   reply:
     env:
