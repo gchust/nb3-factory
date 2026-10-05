@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "inputHash": "cea4cdb54c9f2306c834d5c8099c5522d8b273f17491c4e7778c534e7f4bcab4",
+  "inputHash": "e5df48e4baddaec0efa13f1cf48e15b28e555c0e1be76b354ce525780ff1543f",
   "sources": [
     {
       "id": "460:36434284393:1:F2",
@@ -463,6 +463,16 @@
       "fingerprint": "b7620ab7cef68bd075aa560d6b034eb4c81b23fbc4da274c19e110e60c0dca4f"
     },
     {
+      "id": "554:37258077945:1:F1",
+      "report": "554:37258077945:1",
+      "fingerprint": "68acd14606cae2fe299431deda378f4043099a59c02e4ca7a6ac3e10baf0b0d8"
+    },
+    {
+      "id": "554:37258077945:1:F2",
+      "report": "554:37258077945:1",
+      "fingerprint": "a23b26f4bd5a4ccf1323d45d30e38d9449a781eefe14d974779814a2c9988474"
+    },
+    {
       "id": "555:37238852759:1:F1",
       "report": "555:37238852759:1",
       "fingerprint": "cfefc2fb27138c44a4ea7f00e0a0f27fbca89dfd4da8b672143e049b83c82cd7"
@@ -534,12 +544,13 @@
     },
     {
       "title": "allScopes/idsScope 等数据范围组合子已在包内实现但未从公开入口导出",
-      "reason": "跨报告合并。462:F2（E2/E3/E31）、494:F3（E3/E6/E29）、518:F2（E3/E10/E27）、530:F2（E5/E6）都显示 app-plugin-authorization 的 scope.js 实现 allScopes/idsScope/noRowsScope，但 server 入口只导出 anyScope/condition/scopeAst，应用被迫自写 everyScope/allScopes 折叠；同一公开导出缺口。",
+      "reason": "跨报告合并。462:F2（E2/E3/E31）、494:F3（E3/E6/E29）、518:F2（E33/E34/E35/E40）、530:F2（E12/E13/E14）都指向同一个公开缺口：@nocobase/app-plugin-authorization 的 scope.js 同时实现 anyScope 与 AND 组合 allScopes（及 idsScope/noRowsScope），authorizer 内部也用它折叠正选择与 restriction，但 server 入口只导出 anyScope/condition/scopeAst，应用只能各自复制 AND 折叠实现（462 的 everyScope、518 的重复实现、530 的复制、554 的 13 行副本）。修复方向一致：从 server 入口公开 allScopes（或提供 scope.and / 明确 buildFilter 的等价写法）。554:F2（E6/E7/E27/E41）同样确认 scope.js 实现 anyScope 与 allScopes，而 server 入口（index.js L12）仅导出 anyScope/condition/scopeAst，应用在 scope.ts 复制 AND 折叠逻辑，属同一缺口与同一修复方向。",
       "members": [
         "462:36434301919:1:F2",
         "494:36641592184:1:F3",
         "518:36938133650:1:F2",
-        "530:37074009060:1:F2"
+        "530:37074009060:1:F2",
+        "554:37258077945:1:F2"
       ]
     },
     {
@@ -554,11 +565,12 @@
     },
     {
       "title": "records 选择指引未说明仅支持字符串 id，也未给出整数主键的替代写法",
-      "reason": "跨报告合并。494:F2（E13/E14/E1/E7）、518:F5（E1/E16/E23/E24）、530:F3（E11/E1）都显示共享/限制/默认访问及 authorization/db Skill 把 records(ids) 列为可用选择并只给字符串主键示例，未提示 id 类型约束与整数主键应改用 recordAccess；同一文档缺口。",
+      "reason": "跨报告合并。494:F2（E13/E14/E1/E7/E49）、518:F5（E24/E25/E40/E52）、530:F3（E2/E11/E18）都记录共享/限制/默认访问类 Skill 与 authorization 文档把 selection.records(ids) 当作单条记录交接的推荐写法，示例全为字符串主键，却未提示 records 仅接受非空字符串 id、整数自增主键集合会失败，也未给出 recordAccess 的等价写法；同一错误指引、同一修复方向（注明字符串约束并给整数主键对照示例）。554:F1（E1/E5/E15/E41/E43）显示共享 SKILL 与 authorization README 以 records(['quote-7']) 推荐单条记录共享，而 db SKILL 默认 collection.increments('id') 生成整数主键，parseRecordSelection 要求每个 id 为非空字符串，照做会抛 TypeError: Invalid record selection，指引同样未提示，故归入本组。",
       "members": [
         "494:36641592184:1:F2",
         "518:36938133650:1:F5",
-        "530:37074009060:1:F3"
+        "530:37074009060:1:F3",
+        "554:37258077945:1:F1"
       ]
     },
     {
@@ -927,9 +939,9 @@
     "engine": "pi",
     "model": "deepseek-v4.1-flash",
     "version": "0.86.1",
-    "runId": "37255606384",
+    "runId": "37262713064",
     "attempt": 1,
     "controlSha": "0f72d9b81f981f10501c5ac0ee0e7d786f1f4698",
-    "completedAt": "2026-10-05T02:31:19.900Z"
+    "completedAt": "2026-10-05T04:20:36.170Z"
   }
 }
