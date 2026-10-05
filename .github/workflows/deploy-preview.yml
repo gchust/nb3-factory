@@ -170,6 +170,7 @@ jobs:
         env:
           PR: ${{ steps.prepare.outputs.pr }}
           GITHUB_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
           ssh_opts=(-i ~/.ssh/preview_key -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o ConnectTimeout=20)
@@ -185,6 +186,9 @@ jobs:
             [[ "$victim" =~ ^[1-9][0-9]*$ ]] || { echo "::error::unexpected eviction entry"; exit 1; }
             # -n: without it ssh reads the rest of the eviction list as its stdin.
             ssh -n "${ssh_opts[@]}" "$remote" "bash /srv/nb3-preview/scripts/preview-destroy.sh '$victim'"
+            # Its public payload assets go with it, as they would at teardown.
+            bash control/.github/scripts/delete-preview-payloads.sh "$victim" ||
+              echo "::warning::Could not delete the payload assets of evicted PR #$victim."
             # The notice is a courtesy; the eviction it describes already happened.
             node control/.github/scripts/deploy-preview.mjs evicted \
               --run-id "$SOURCE_RUN_ID" --output "$RUNNER_TEMP/preview" \
