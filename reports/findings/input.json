@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "inputHash": "09cccef7cb8deb98814540beaac977374051cbc64613635139fed661bad59f6d",
+  "inputHash": "f798c9d482fa85380d9befa358ba0b9de7fe1cc41bb1b3702fef86d0740a97f8",
   "findings": [
     {
       "id": "460:36434284393:1:F2",
@@ -8279,6 +8279,165 @@
         }
       ],
       "fingerprint": "b7620ab7cef68bd075aa560d6b034eb4c81b23fbc4da274c19e110e60c0dca4f"
+    },
+    {
+      "id": "555:37238852759:1:F1",
+      "report": "555:37238852759:1",
+      "issue": 555,
+      "taskTitle": "项目资料与私有附件",
+      "appVersion": "1.0.0-beta.50",
+      "appTemplate": "@nocobase/app-template-default",
+      "finding": {
+        "id": "F1",
+        "kind": "improvement",
+        "owner": "framework",
+        "severity": "minor",
+        "confidence": "confirmed",
+        "status": "open",
+        "title": "DatabaseManager 与 DatabaseConnection 的 repository 签名不一致，正常装配触发类型冲突",
+        "detail": "@nocobase/db 的 DatabaseConnection.repository(collection) 与 DatabaseManager.repository(collection, connection?) 同名但参数不同；把 databaseManagerToken 解析出的 Manager 传给期望 Connection 的 helper 时，verify-2 日志第 271/275/292/419 行均报 TS2345（Manager 缺少 name/driver/dialect 等 8+ 属性）。",
+        "impact": "按“数据库对象.repository()”直觉装配的 Agent 需回退到 connection.repository() 或自定义 Pick<DatabaseManager,\"repository\">，增加排查与改造成本，并阻塞 typecheck 门禁；运行时行为本身未被证明错误。",
+        "suggestedChange": "为两者抽出共享 RepositoryAccessor 接口，或在 Manager 上提供显式 connectionRepository(name) 并从类型上区分；同时在 nocobase-db SKILL 说明 Manager 与 Connection 的 repository 差异。",
+        "evidence": [
+          "E13",
+          "E14",
+          "E61"
+        ],
+        "diagnosis": {
+          "category": "usability-improvement",
+          "trigger": "在 server/providers/materials.ts 把 DatabaseManager 直接传给期望 DatabaseConnection 的 repository 访问器",
+          "expected": "Manager 与 Connection 的 repository 访问在类型上可互换，或差异被显式标注并可被类型/报错定位",
+          "actual": "verify-2.log 报 TS2345：DatabaseManager 不能赋给 DatabaseConnection（缺 name/driver/dialect/schemaManagement 等 8+ 属性）",
+          "workaround": "应用改用 Pick<DatabaseManager,\"repository\"> 并显式取 connection（retro 记录），未修改框架",
+          "acceptance": "同一 helper 同时接受 Manager 与 Connection 并通过 tsc --noEmit，且 SKILL 有对应说明。"
+        }
+      },
+      "targets": [
+        "@nocobase/db"
+      ],
+      "paths": [
+        "packages/@nocobase/db/dist/src/database/connection.d.ts",
+        "packages/@nocobase/db/dist/src/database/manager.d.ts"
+      ],
+      "evidence": [
+        {
+          "id": "E13",
+          "kind": "code",
+          "path": "packages/@nocobase/db/dist/src/database/connection.d.ts",
+          "observation": "DatabaseConnection 界面声明 repository<T>(collection: string)（单参）、withPolicies/transaction、builder/collections/query 等；repository 只按 collection 取。",
+          "lines": [
+            11,
+            49
+          ],
+          "excerpt": "export interface DatabaseConnection {\n    name: string;\n    driver: DatabaseDriver;\n    /** Dialect identifier supplied by the registered driver package. */\n    dialect: string;\n    schemaManagement: SchemaManagementMode;\n    capabilities: DatabaseCapabilities;\n    /** Runtime strategies supplied by the registered dialect package. */\n    runtime: DatabaseDriverRuntime;\n    /** Collection schema and metadata builder. Uses Collection and Field logical names. */\n    builder: CollectionBuilder;\n    /** Resolved physical Schema plus supplemental Collection metadata. */\n    collections: ConnectionCollections;\n    /** Supplemental Collection metadata read and update service. */\n    collectionMetadata: CollectionMetadataService;\n    /** Database-layer query builder. Uses Connection naming but not Collection-level overrides. */\n    query: QueryAdapter;\n    repository<TRecord extends object = RepositoryRecord, TCreate extends object = Partial<TRecord>, TUpdate extends object = Partial<TRecord>>(collection: string): Repository<TRecord, TCreate, TUpdate>;\n    /**\n     * Bind a Policy per Collection for one principal.\n     *\n     * Binding lives here rather than on each Repository because a request\n     * usually touches several Collections and takes fresh Repositories inside a\n     * transaction; one place to bind is also one place to see what this request\n     * was authorized to touch.\n     */\n    withPolicies<P>(policies: Readonly<Record<string, RepositoryPolicy | ((principal: P) => RepositoryPolicy)>>, principal: P): ScopedDatabaseConnection;\n    schema: SchemaAdapter;\n    /** Read-only physical database schema introspection. Uses physical names. */\n    schemaInspector: SchemaInspector;\n    /** Escape hatch for the underlying adapter client. Prefer builder/query for portable code. */\n    client<T = unknown>(): Promise<T>;\n    connect(): Promise<this>;\n    disconnect(): Promise<void>;\n    reconnect(): Promise<this>;\n    /** Destructively clears the objects owned by this managed connection. */\n    resetManagedSchema(): Promise<void>;\n    transaction<T>(fn: (connection: DatabaseConnection) => Promise<T>): Promise<T>;\n}",
+          "sha256": "eea57db7d05235957afaa2a9e5b18ab3170aa586ffe2995d4a5f376f9e3c4ebe"
+        },
+        {
+          "id": "E14",
+          "kind": "code",
+          "path": "packages/@nocobase/db/dist/src/database/manager.d.ts",
+          "observation": "DatabaseManager 同时声明 repository<T>(collection: string, connection?: string)（双参，第二参为连接名）以及 connection(name)、builder(name)、collections(name) 等，与 DatabaseConnection 的同名 repository 签名不同。",
+          "lines": [
+            23,
+            44
+          ],
+          "excerpt": "export interface DatabaseManager {\n    connection(name?: string): DatabaseConnection;\n    /** Collection schema and metadata builder. Uses Collection and Field logical names. */\n    builder(name?: string): CollectionBuilder;\n    /** Database-layer query builder. Does not read Collection metadata or collection table prefixes. */\n    query(name?: string): QueryAdapter;\n    /**\n     * Resolved Collections of one connection, by logical name. Same object as\n     * `connection(name).collections`, so its cache is shared with every Builder,\n     * Repository and Migration on that connection: `invalidate()` and\n     * `refresh()` affect all of them.\n     */\n    collections(name?: string): ConnectionCollections;\n    repository<TRecord extends object = RepositoryRecord, TCreate extends object = Partial<TRecord>, TUpdate extends object = Partial<TRecord>>(collection: string, connection?: string): Repository<TRecord, TCreate, TUpdate>;\n    createMigrator(options: DatabaseMigratorOptions): Migrator;\n    createSeeder(options: DatabaseSeederOptions): Seeder;\n    connect(name?: string): Promise<DatabaseConnection>;\n    transaction<T>(fn: (connection: DatabaseConnection) => Promise<T>, name?: string): Promise<T>;\n    disconnect(name?: string): Promise<void>;\n    reconnect(name?: string): Promise<DatabaseConnection>;\n    destroy(): Promise<void>;\n}",
+          "sha256": "adca84680d15ec41bd646d7f3e4b04bb4e27afb8ff529c3625e6106191aa58f4"
+        },
+        {
+          "id": "E61",
+          "kind": "log",
+          "path": "artifacts/verify-2.log",
+          "observation": "工厂 typecheck 日志：server/providers/materials.ts(271,39)/(275,33)/(292,38)/(419,20) 均报 TS2345，DatabaseManager 不能赋给 DatabaseConnection（缺 name/driver/dialect/schemaManagement 等 8+ 属性），最终 exit 2。",
+          "lines": [
+            12,
+            19
+          ],
+          "excerpt": "server/providers/materials.ts(271,39): error TS2345: Argument of type 'DatabaseManager' is not assignable to parameter of type 'DatabaseConnection'.\n  Type 'DatabaseManager' is missing the following properties from type 'DatabaseConnection': name, driver, dialect, schemaManagement, and 8 more.\nserver/providers/materials.ts(275,33): error TS2345: Argument of type 'DatabaseManager' is not assignable to parameter of type 'DatabaseConnection'.\n  Type 'DatabaseManager' is missing the following properties from type 'DatabaseConnection': name, driver, dialect, schemaManagement, and 8 more.\nserver/providers/materials.ts(292,38): error TS2345: Argument of type 'DatabaseManager' is not assignable to parameter of type 'DatabaseConnection'.\n  Type 'DatabaseManager' is missing the following properties from type 'DatabaseConnection': name, driver, dialect, schemaManagement, and 8 more.\nserver/providers/materials.ts(419,20): error TS2345: Argument of type 'DatabaseManager' is not assignable to parameter of type 'DatabaseConnection'.\n  Type 'DatabaseManager' is missing the following properties from type 'DatabaseConnection': name, driver, dialect, schemaManagement, and 8 more.",
+          "sha256": "49e8b106cbaaec8a07b95018da2fcf735db9c66803597cbbd77bb8f7eab4b87e"
+        }
+      ],
+      "fingerprint": "cfefc2fb27138c44a4ea7f00e0a0f27fbca89dfd4da8b672143e049b83c82cd7"
+    },
+    {
+      "id": "555:37238852759:1:F2",
+      "report": "555:37238852759:1",
+      "issue": 555,
+      "taskTitle": "项目资料与私有附件",
+      "appVersion": "1.0.0-beta.50",
+      "appTemplate": "@nocobase/app-template-default",
+      "finding": {
+        "id": "F2",
+        "kind": "issue",
+        "owner": "plugin",
+        "severity": "minor",
+        "confidence": "confirmed",
+        "status": "open",
+        "title": "Registry 图片预览不报告解码失败，损坏图片只显示破图",
+        "detail": "registry/component-ui/components/previewers/file-preview-content.tsx 的 image 分支直接渲染 <img>，无 onError/失败回退；仅 OOXML 路径有 viewerError 与 DownloadFallback。应用副本新增 ImagePreview(onError) 后 B06 才有明确失败反馈。",
+        "impact": "按基线安装预览组件时，MIME 为 image 但字节损坏的文件只会显示破图，与“损坏时要说明情况”的验收不一致；Agent 需改 Registry 源码或写应用扩展。",
+        "suggestedChange": "在基线 image 分支加入 onError → DownloadFallback（与 OOXML 一致），或在 lib 层提供可覆盖的失败渲染。",
+        "evidence": [
+          "E19",
+          "E29",
+          "E24"
+        ],
+        "diagnosis": {
+          "category": "capability-gap",
+          "trigger": "预览 MIME/扩展名为 image 但字节损坏的文件（B06 场景）",
+          "expected": "预览组件在图片解码失败时显示明确失败信息并可选下载",
+          "actual": "registry 基线 image 分支无 onError，破损内容静默显示为破图",
+          "workaround": "应用在 client/extensions 副本中新增 ImagePreview(onError)+DownloadFallback",
+          "acceptance": "用基线组件预览损坏 PNG 时显示失败提示并可选下载，可用截图或 DOM 判定。"
+        }
+      },
+      "targets": [
+        "@nocobase/app-plugin-file",
+        "packages/@nocobase/app-plugin-file/skills/nocobase-app-plugin-file/SKILL.md"
+      ],
+      "paths": [
+        ".agents/skills/nocobase-app-plugin-file/SKILL.md",
+        "packages/@nocobase/app-plugin-file/registry/component-ui/components/previewers/file-preview-content.tsx"
+      ],
+      "evidence": [
+        {
+          "id": "E19",
+          "kind": "code",
+          "path": "packages/@nocobase/app-plugin-file/registry/component-ui/components/previewers/file-preview-content.tsx",
+          "observation": "resolveFilePreviewKind 的 image 分支直接返回裸 <img src alt className>，没有 onError 或失败回退；损坏图片只会显示破图。",
+          "lines": [
+            71,
+            79
+          ],
+          "excerpt": "  switch (kind) {\n    case 'image':\n      return (\n        <img\n          src={url}\n          alt={file.filename}\n          className='max-h-[70vh] max-w-full object-contain'\n        />\n      );",
+          "sha256": "f30abbadc57a0f0ed28cdb68d4ced7bba9a6e3a4c3d59d3b6fc49f89d9497144"
+        },
+        {
+          "id": "E29",
+          "kind": "code",
+          "path": "app/client/extensions/nocobase-file-component-ui/components/previewers/file-preview-content.tsx",
+          "observation": "应用扩展副本新增 ImagePreview：useState(failed)+<img onError={()=>setFailed(true)}>，失败时渲染 DownloadFallback 并给出 previewFailed 文案，弥补注册表基线图片分支缺少解码失败反馈。",
+          "lines": [
+            96,
+            131
+          ],
+          "excerpt": "/**\n * An image preview that reports a decode failure instead of leaving a broken\n * image behind. A file can be stored with an image MIME type and valid PNG\n * header while its bytes are corrupt, so `onError` is the only signal that the\n * content cannot be shown; it turns that into the same explicit message and\n * download fallback the other unrenderable kinds already use.\n */\nfunction ImagePreview(inputProps: {\n  readonly file: FileRecord;\n  readonly url?: string;\n  readonly onDownload?: () => void;\n}): ReactElement {\n  const { t } = useTranslation('@nocobase/app-plugin-file');\n  const { file, url, onDownload } = inputProps;\n  const [failed, setFailed] = useState(false);\n\n  if (failed || !url) {\n    return (\n      <DownloadFallback\n        file={file}\n        message={t('previewFailed', {\n          defaultValue: 'Unable to load the file preview.',\n        })}\n        onDownload={onDownload}\n      />\n    );\n  }\n  return (\n    <img\n      src={url}\n      alt={file.filename}\n      className='max-h-[70vh] max-w-full object-contain'\n      onError={() => setFailed(true)}\n    />\n  );\n}",
+          "sha256": "27ac51f8dbc842d97230572abd2d135301feba9f305ffc5382536a0f5243c24e"
+        },
+        {
+          "id": "E24",
+          "kind": "skill",
+          "path": "packages/@nocobase/app-plugin-file/skills/nocobase-app-plugin-file/SKILL.md",
+          "observation": "SKILL 列出错误码恢复（BODY_TOO_LARGE/INVALID_FILE/INVALID_FILE_COLLECTION/STORAGE_URL_UNAVAILABLE 等），并声明没有内建路由认证、行级 ACL、Range/206、ETag、条件下载、断点续传、物理清理、内容嗅探或病毒扫描，需业务自行实现。",
+          "lines": [
+            248,
+            253
+          ],
+          "excerpt": "- BODY_TOO_LARGE (413): reduce request size or adjust route limits. INVALID_FILE/INVALID_FILES (400): send native File values and a nonempty batch.\n- INVALID_FILE_COLLECTION: first compare the migration name, route collection and Server repository argument; then await collections.get(logicalName) and check the active connection and generated metadata. SQLite physical text does not imply a broken datetime definition. Fix the specific lookup, metadata or schema problem and retry the same upload; do not bypass File Repository. Use a new migration for corrections to already-merged history.\n- STORAGE_URL_UNAVAILABLE: configure a capable disk or stream mode.\n- FILE_COMMIT_UNCERTAIN / FILE_CLEANUP_FAILED: reconcile database records and stored objects before retrying; uploads have no idempotency key.\n\nThere is no built-in route authentication, row ACL, Range/206, ETag, conditional download, resumable upload, physical cleanup, content sniffing or malware scan. Metadata deletion retains objects; cancelled forms may leave unlinked files. Implement the policies required by the business, including referenced-file deletion and orphan cleanup.",
+          "sha256": "06b464d71554a3ae12819918f98a84f44c65c2b70e7fbfcffd17e992e57aed22"
+        }
+      ],
+      "fingerprint": "cd8faaea563b0e16755c0b116772cafc26e0963f284078ce666e1473819946dc"
     }
   ]
 }
