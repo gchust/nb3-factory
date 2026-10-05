@@ -193,7 +193,7 @@ for (const [file, job, lockfile, install, next] of [
     const restore = stepOf(source, 'Restore the nocobase3 pnpm store');
     assert.match(
       restore,
-      /uses: actions\/cache\/restore@[0-9a-f]{40} # v4\.\d+\.\d+/,
+      /uses: actions\/cache\/restore@[0-9a-f]{40} # v6\.\d+\.\d+/,
     );
     assert.ok(
       restore.includes(
