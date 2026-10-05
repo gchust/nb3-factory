@@ -8,10 +8,31 @@ import { controlSha } from './handoff-control.mjs';
 const DISPATCH_RETRY_DELAYS_MS = [1000, 3000, 8000];
 const DISPATCH_TIMEOUT_MS = 30_000;
 
-// Losing this one request reports up to five hours of work as a failed run.
-// /dispatches is not idempotent, so only a 429, a 5xx, a network error or a
-// timeout, which GitHub most likely never acted on, is retried; any other
-// refusal fails at once.
+// Connection failures raised before any byte of the request left the runner.
+// undici reports them as `fetch failed` with the system error as its cause, or
+// an AggregateError of them when every resolved address was refused.
+const NOT_SENT_CODES = new Set([
+  'ECONNREFUSED',
+  'ENOTFOUND',
+  'EAI_AGAIN',
+  'ENETUNREACH',
+  'EHOSTUNREACH',
+  'UND_ERR_CONNECT_TIMEOUT',
+]);
+function notSent(error) {
+  const cause = error?.cause;
+  const codes = Array.isArray(cause?.errors)
+    ? cause.errors.map((item) => item?.code)
+    : [cause?.code];
+  return codes.length > 0 && codes.every((code) => NOT_SENT_CODES.has(code));
+}
+
+// Losing this one request reports up to five hours of work as a failed run,
+// but /dispatches is not idempotent and a duplicate continuation costs another
+// five. So only a failure GitHub certainly did not act on is retried: a 429 or
+// 5xx answer, or a connection that was never made. A timeout, a reset or any
+// other error after the request may have arrived fails at once, and so does
+// every other refusal.
 export async function dispatchContinuation(
   url,
   {
@@ -24,9 +45,9 @@ export async function dispatchContinuation(
   },
 ) {
   for (let attempt = 0; ; attempt++) {
-    let failure;
+    let response;
     try {
-      const response = await fetcher(url, {
+      response = await fetcher(url, {
         method: 'POST',
         headers: {
           Accept: 'application/vnd.github+json',
@@ -36,19 +57,38 @@ export async function dispatchContinuation(
         body: JSON.stringify(body),
         signal: AbortSignal.timeout(timeoutMs),
       });
-      if (response.ok) return;
-      failure = new Error(
-        `Failed to dispatch continuation: ${response.status} ${await response.text().catch(() => '')}`,
-      );
-      if (response.status !== 429 && response.status < 500) throw failure;
     } catch (error) {
-      if (error === failure) throw error;
-      failure ??= new Error(
-        `Failed to dispatch continuation: ${error?.name === 'TimeoutError' ? `no response in ${timeoutMs} ms` : error?.message}`,
-        { cause: error },
+      const reason =
+        error?.name === 'TimeoutError'
+          ? `no response in ${timeoutMs} ms`
+          : [error?.message, error?.cause?.code ?? error?.cause?.message]
+              .filter(Boolean)
+              .join(': ');
+      if (!notSent(error))
+        throw new Error(
+          `Failed to dispatch continuation (${reason}). GitHub may or may not have received it: check the Actions runs for a code-agent-continue run of this Issue before dispatching it manually.`,
+          { cause: error },
+        );
+      if (attempt >= delays.length)
+        throw new Error(
+          `Failed to dispatch continuation: ${reason}; the request was never sent.`,
+          { cause: error },
+        );
+      console.error(
+        `Could not connect to dispatch the continuation (${reason}); retrying in ${delays[attempt]} ms.`,
       );
+      await pause(delays[attempt]);
+      continue;
     }
-    if (attempt >= delays.length) throw failure;
+    if (response.ok) return;
+    const failure = new Error(
+      `Failed to dispatch continuation: ${response.status} ${await response.text().catch(() => '')}`,
+    );
+    if (
+      (response.status !== 429 && response.status < 500) ||
+      attempt >= delays.length
+    )
+      throw failure;
     console.error(`${failure.message}; retrying in ${delays[attempt]} ms.`);
     await pause(delays[attempt]);
   }

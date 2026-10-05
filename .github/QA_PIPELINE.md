@@ -62,7 +62,7 @@ blocked/not_run 必须给出原因；无法启动浏览器时不要求伪造截�
 
 没有 `control_sha` 的旧续跑会额外下载一次来源检查点，使用其中实际记录的工厂 SHA（优先兼容旧 `pipeline-state.json`），不是最早 Run 的 SHA，也不是当前 develop。下一轮即使用新的传递协议，不再在 prepare 重复下载大型检查点。缺少来源 SHA、字段冲突或提交不可取得时明确失败，不回退到最新工厂、不自动重做 QA。需要使用新版工厂时启动新搭建；本 PR 不提供隐式升级/降级或热修改运行中任务。
 
-`repository_dispatch` 的入口 YAML 仍由 GitHub 从默认分支加载，因此 Run 页的 `head_sha` **不是任务脚本实际版本**。只有两个轻量 Handoff 协议脚本从该入口版本的 `bootstrap/` 执行；prepare、Agent、QA、终验及 PR 发布使用 `control/` 的固定 SHA。bootstrap 负责旧协议兼容与下一轮派发，不执行任务逻辑；下一轮派发每次请求限时 30 秒，遇到 429、5xx、网络错误或超时按 1/3/8 秒退避最多重试 3 次，其他拒绝立即失败。独立报告器仍使用当前默认分支。本机制不冻结入口 YAML 的 Job 定义、仓库变量、Secrets、Runner 镜像或外部服务；修改入口时必须保持与固定版本任务脚本的调用协议兼容。
+`repository_dispatch` 的入口 YAML 仍由 GitHub 从默认分支加载，因此 Run 页的 `head_sha` **不是任务脚本实际版本**。只有两个轻量 Handoff 协议脚本从该入口版本的 `bootstrap/` 执行；prepare、Agent、QA、终验及 PR 发布使用 `control/` 的固定 SHA。bootstrap 负责旧协议兼容与下一轮派发，不执行任务逻辑；下一轮派发每次请求限时 30 秒，只在 GitHub 肯定没有受理时按 1/3/8 秒退避最多重试 3 次：429、5xx 响应，或请求发出前的连接失败（`ECONNREFUSED`、`ENOTFOUND`、`EAI_AGAIN` 等）。重复的续跑要再花 5 小时，所以超时、连接重置（`ECONNRESET`、`UND_ERR_SOCKET`）和其他未知错误不重试，立即失败并提示续跑可能已经派发，手动补发前先在 Actions 里核对；其他拒绝同样立即失败。独立报告器仍使用当前默认分支。本机制不冻结入口 YAML 的 Job 定义、仓库变量、Secrets、Runner 镜像或外部服务；修改入口时必须保持与固定版本任务脚本的调用协议兼容。
 
 ## 实时进度评论
 
