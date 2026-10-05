@@ -150,6 +150,10 @@ jobs:
           if [[ -f config.yml ]]; then
             format_paths+=(config.yml)
           fi
+          # Newer templates ship pnpm-workspace.yaml that fails prettier --check.
+          if [[ -f pnpm-workspace.yaml ]]; then
+            format_paths+=(pnpm-workspace.yaml)
+          fi
           pnpm exec prettier --write "${format_paths[@]}"
 
       - name: Install Chinese browser fonts
