@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "inputHash": "f798c9d482fa85380d9befa358ba0b9de7fe1cc41bb1b3702fef86d0740a97f8",
+  "inputHash": "cea4cdb54c9f2306c834d5c8099c5522d8b273f17491c4e7778c534e7f4bcab4",
   "findings": [
     {
       "id": "460:36434284393:1:F2",
@@ -8438,6 +8438,88 @@
         }
       ],
       "fingerprint": "cd8faaea563b0e16755c0b116772cafc26e0963f284078ce666e1473819946dc"
+    },
+    {
+      "id": "556:37238854983:1:F4",
+      "report": "556:37238854983:1",
+      "issue": 556,
+      "taskTitle": "内部资料只读问答助手",
+      "appVersion": "1.0.0-beta.50",
+      "appTemplate": "@nocobase/app-template-default",
+      "finding": {
+        "id": "F4",
+        "kind": "improvement",
+        "owner": "documentation",
+        "confidence": "confirmed",
+        "severity": "minor",
+        "status": "open",
+        "title": "知识库检索不是权限边界，需应用自建授权代理（已记录但缺可抄实现）",
+        "detail": "security.md 明确兼容路由只要求认证、文档对认证者一律投影 readWrite，检索实现也只按 knowledgeBaseKeys/enabled 过滤；capabilities.md 与知识库 Skill 均强调不得把客户端 affordance 当授权。文档已如实披露，但没有给出可直接复用的检索前授权代理示例。",
+        "impact": "若实现者误把检索当 ACL 使用，普通同事可能检索到资料 C；本任务因未实现而未实际发生。",
+        "suggestedChange": "在两个 Skill 中各加一个最小“检索前按记录范围过滤/加代理”的代码片段，并把“非 ACL 边界”做成显著警示。",
+        "evidence": [
+          "E56",
+          "E42",
+          "E54"
+        ],
+        "diagnosis": {
+          "category": "guidance-gap",
+          "trigger": "需求要求按角色隔离资料，而检索层不做 ACL。",
+          "expected": "文档给出把授权代理接在检索前的具体做法。",
+          "actual": "文档说明边界与方向，但无可直接采用的实现示例。",
+          "workaround": "由应用自行在检索前加记录范围过滤。",
+          "acceptance": "Skill 提供一个经评审的检索前授权代理示例，能阻止越权文档进入检索结果。"
+        }
+      },
+      "targets": [
+        "@nocobase/app-plugin-ai-knowledge-base",
+        "app/.agents/skills/nocobase-app-plugin-ai-employee/references/capabilities.md",
+        "app/.agents/skills/nocobase-app-plugin-ai-knowledge-base/references/security.md"
+      ],
+      "paths": [
+        ".agents/skills/nocobase-app-plugin-ai-employee/references/capabilities.md",
+        ".agents/skills/nocobase-app-plugin-ai-knowledge-base/references/security.md",
+        "packages/@nocobase/app-plugin-ai-knowledge-base/dist/server/features/knowledge-base-feature.js"
+      ],
+      "evidence": [
+        {
+          "id": "E56",
+          "kind": "skill",
+          "path": "app/.agents/skills/nocobase-app-plugin-ai-knowledge-base/references/security.md",
+          "observation": "安全文档明确：兼容路由只要求已认证会话；当前不强制角色/归属/资源 ACL，文档响应对所有认证者投影 accessAbility:\"readWrite\"，这是 UI 提示而非授权；要求加应用自有授权代理或仅暴露给可信用户。",
+          "lines": [
+            10,
+            14
+          ],
+          "excerpt": "## Authorization\n\nEvery compatibility route requires an authenticated session with a user ID and returns 401 otherwise. Current routes do not enforce role, ownership, resource ACL, LOCAL-write policy, or administrative permission. Document responses currently project `accessAbility: \"readWrite\"` for every authenticated caller. This is a UI hint, not authorization.\n\nUntil a server-side policy layer is added, expose these actions only to trusted authenticated users or put an application-owned authorized proxy in front of them. Never rely on a hidden button, React gate, route visibility, `accessAbility`, or a TypeScript DTO.",
+          "sha256": "5701a80e9f8b9ee7895ad7adf0fb1f089af2a03b201621de9a0f4cd2e280d0fc"
+        },
+        {
+          "id": "E42",
+          "kind": "code",
+          "path": "packages/@nocobase/app-plugin-ai-knowledge-base/dist/server/features/knowledge-base-feature.js",
+          "observation": "KnowledgeBaseFeatureImpl.search 仅按 knowledgeBaseKeys + enabled 过滤，并合并 LOCAL/EXTERNAL 结果按 score 排序；检索本身不接收也不校验调用者身份或记录 ACL。",
+          "lines": [
+            20,
+            64
+          ],
+          "excerpt": "    async search(options) {\n        if (!options.knowledgeBaseKeys.length)\n            return [];\n        const rows = await this.bases.find({\n            filter: {\n                key: { $in: options.knowledgeBaseKeys },\n                enabled: true,\n            },\n        });\n        const output = [];\n        const localGroups = new Map();\n        for (const base of rows) {\n            if (base.knowledgeBaseType === 'LOCAL') {\n                const groupKey = JSON.stringify([\n                    base.knowledgeBaseType,\n                    base.vectorStoreProvider,\n                    base.vectorDatabaseKey,\n                    base.llmService,\n                    base.embeddingModel,\n                ]);\n                const group = localGroups.get(groupKey) ?? [];\n                group.push(base);\n                localGroups.set(groupKey, group);\n                continue;\n            }\n            const result = await this.searchBase(base, options);\n            output.push(...result);\n        }\n        for (const bases of localGroups.values()) {\n            const first = bases[0];\n            if (!first)\n                continue;\n            const service = await this.ai.features.vectorStoreProvider.createVectorStoreService(first.vectorStoreProvider, [{ key: 'knowledgeBaseKey', value: first.key }]);\n            const result = await service.search(options.query, {\n                topK: options.topK,\n                score: options.score,\n                filter: {\n                    knowledgeBaseOuterId: {\n                        in: bases.map((base) => base.knowledgeBaseOuterId),\n                    },\n                },\n            });\n            output.push(...(await this.segments.mergeLocalSearchResults(result)));\n        }\n        return output.sort((left, right) => right.score - left.score);",
+          "sha256": "5d1f730187699960d2657cf00beb088ebf9bc195a1b45936e1223b5dba7c72b6"
+        },
+        {
+          "id": "E54",
+          "kind": "skill",
+          "path": "app/.agents/skills/nocobase-app-plugin-ai-employee/references/capabilities.md",
+          "observation": "capabilities：ctx.actor 是授权身份，模型参数永远不可当作授权；写数据的工具必须对 ctx.actor 授权，并给出用 actor 构建与中间件相同 subjects 的做法。",
+          "lines": [
+            182,
+            192
+          ],
+          "excerpt": "`ctx.actor` is the authorization identity. A model can put anything in its arguments, including a user id; never treat an argument as authorization.\n\n## Writing business data from a tool\n\nA tool that writes owns three things the runtime will not do for it.\n\n**Authorize.** The check belongs in the tool, against `ctx.actor`, not in the prompt and not in the schema, and not as `ctx.actor.roles.includes('admin')`. Prefer declaring an App service token that already enforces the App's rules over declaring a raw database handle: the built-in data tools do exactly this, resolving an actor-bound service and passing `ctx.actor` into it, so no read reaches a collection unauthorized.\n\nAn App service usually authorizes through the request scope the authorization middleware installs, and a tool call has no request. The service the tool declares builds the same scope from the actor instead, with the same subjects the middleware would add — `authenticated:*`, and every membership the authorization service resolves for the user:\n\n```ts",
+          "sha256": "08cac59daba34f8aa8db2a68def3ec15f7bf2cc665d546b7607a169e75254ad3"
+        }
+      ],
+      "fingerprint": "0b17acb5b1d338a667f56ac81449b25bb43b157033a9a4e6857fe33e487b85f6"
     }
   ]
 }
