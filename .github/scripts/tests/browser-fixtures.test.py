@@ -1,5 +1,6 @@
 import hashlib
 import importlib.util
+import sys
 import json
 from pathlib import Path
 import tempfile
@@ -8,6 +9,9 @@ import xml.etree.ElementTree as ET
 import zipfile
 
 SCRIPT = Path(__file__).resolve().parent.parent / 'prepare-browser-fixtures.py'
+# Loading the script must not leave a __pycache__ beside it: everything under
+# .github/ is copied into each refreshed baseline.
+sys.dont_write_bytecode = True
 spec = importlib.util.spec_from_file_location('fixtures', SCRIPT)
 fixtures = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(fixtures)

@@ -170,6 +170,10 @@ rm -f ./preview_key ./preview_key.pub
 ## 回收
 
 PR 关闭或合并后，**Reclaim Task Preview** 会删掉对应容器、实例目录和该 PR 的 payload 资产。
+删除实例的 SSH 连接最多尝试 3 次（间隔 15、30 秒）；即使三次都失败，payload 资产也照样删除，
+但作业仍然失败，提示预览还在运行。名额满时被回收的预览同样会删掉它的 payload 资产。
+只有 release 不存在才算“没有可删的”；列资产时遇到认证、网络或限流等其他错误会报错失败（回收时让作业变红，
+名额回收时记 Warning），不会再当成无事可做。
 依赖集缓存保留，因为它是按依赖集而不是按 PR 共享的；`preview-gc.sh` 负责回收不再被任何预览引用的缓存、
 实例目录已丢失但容器还在的孤儿，以及**已经没有预览的备份**：
 
@@ -240,7 +244,7 @@ ssh 252 'bash /srv/nb3-preview/scripts/preview-gc.sh --prune-backups'    # 只�
 - **临时 payload 资产也是公开的。** 仓库是 public，`factory-previews` 下的
   `preview-pr-<号>-<摘要>.tar.gz` 无需凭据即可下载（这正是预览机不必持有 GitHub 凭据的原因）。
   它装的是这次验收过的构建，内容与公开分支里的源码同源；每次部署一个、名字带内容摘要，
-  一个 PR 可能留下多个，PR 关闭时由 **Reclaim Task Preview** 全部删除。想让它更严，就得换成
+  一个 PR 可能留下多个，PR 关闭时由 **Reclaim Task Preview** 全部删除，预览因名额被回收时也一并删除。想让它更严，就得换成
   252 上的上传端点并自建鉴权，那时取件方向也会变成推。
 - **CI 的 SSH 用户等价于 root**（它必须能调 Docker，而 Docker 组就是 root）。这个凭据泄露
   等于预览机失守，而预览机上还有 Gitea、四个 PostgreSQL、NocoBase alpha 和 MinIO。
@@ -254,6 +258,7 @@ ssh 252 'bash /srv/nb3-preview/scripts/preview-gc.sh --prune-backups'    # 只�
 | ---------------------------------------------------- | --------------------------------------------------------- |
 | `.github/workflows/deploy-preview.yml`               | 部署工作流                                                |
 | `.github/workflows/preview-teardown.yml`             | PR 关闭时回收                                             |
+| `.github/scripts/delete-preview-payloads.sh`         | 删除一个 PR 的全部 payload 资产（关闭与回收共用）         |
 | `.github/scripts/deploy-preview.mjs`                 | `select` / `prepare` / `capacity` / `evicted` / `publish` |
 | `.github/scripts/preview-host.mjs`                   | 纯函数：依赖集标识、命名、瘦包清单、回收顺序、评论渲染    |
 | `.github/scripts/preview/preview-deploy.sh`          | 预览机上的部署                                            |

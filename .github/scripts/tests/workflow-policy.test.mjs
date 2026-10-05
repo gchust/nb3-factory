@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { execFileSync } from 'node:child_process';
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import test from 'node:test';
@@ -344,6 +345,106 @@ test('each remote action uses one pinned release across all workflows', () => {
   }
 });
 
+test('every job runs on a pinned runner image, never a moving label', () => {
+  // ubuntu-latest moves to a new release on GitHub's schedule; the browser,
+  // fonts, ffmpeg and prebuilt binaries the jobs use depend on the image.
+  const directory = new URL('../../workflows/', import.meta.url);
+  let checked = 0;
+  for (const name of readdirSync(directory).filter((file) => file.endsWith('.yml'))) {
+    const source = readFileSync(new URL(name, directory), 'utf8');
+    assert.doesNotMatch(source, /-latest\b/, name);
+    for (const [, runner] of source.matchAll(/^\s*runs-on:\s*(.+)$/gm)) {
+      checked++;
+      assert.match(runner, /^ubuntu-\d{2}\.\d{2}$/, `${name}: ${runner}`);
+    }
+  }
+  assert.ok(checked >= 50);
+});
+
+test('browser font installs retry apt and are bounded by a step timeout', () => {
+  const script = readFileSync(
+    path.resolve(import.meta.dirname, '../install-browser-fonts.sh'),
+    'utf8',
+  );
+  assert.match(script, /Acquire::Retries=3/);
+  assert.match(script, /Acquire::http::Timeout=30/);
+  assert.match(script, /for attempt in 1 2 3/);
+  const directory = new URL('../../workflows/', import.meta.url);
+  let checked = 0;
+  for (const name of readdirSync(directory).filter((file) => file.endsWith('.yml'))) {
+    const source = readFileSync(new URL(name, directory), 'utf8');
+    for (const step of source.split(/\n\s+- (?=name:|uses:|run:)/)) {
+      if (!/run:[^\n]*\n?[^\n]*install-browser-fonts\.sh/.test(step)) continue;
+      checked++;
+      assert.match(step, /timeout-minutes: [1-9]\b/, `${name}: ${step.split('\n')[0]}`);
+    }
+  }
+  assert.ok(checked >= 5);
+});
+
+test('network installs in long jobs are bounded by a step timeout', () => {
+  // A hung registry or download otherwise holds the runner until the job
+  // limit, six hours for the agent job.
+  const steps = {
+    'code-agent-task.yml': [
+      ['Install application dependencies', 3],
+      ['Install pinned Code Agent', 2],
+      ['Install pinned Agent Browser', 1],
+    ],
+    'framework-fix.yml': [
+      ['Install nocobase3 dependencies', 1],
+      ['Install pinned Claude Code', 1],
+    ],
+    'replay-build-review.yml': [
+      ['Reconstruct sealed candidate without rebuilding', 1],
+      ['Install selected pinned reviewer', 1],
+    ],
+    'classify-findings.yml': [['Install selected pinned classifier', 1]],
+    'source-baseline.yml': [
+      ['Verify checkout identity and install source dependencies', 1],
+      ['Lock the factory overlay against only the frozen source packages', 1],
+    ],
+    'refresh-template.yml': [
+      ['Install and lock the new application dependencies', 1],
+    ],
+  };
+  for (const [name, expected] of Object.entries(steps)) {
+    const source = readFileSync(
+      new URL(`../../workflows/${name}`, import.meta.url),
+      'utf8',
+    );
+    for (const [step, count] of expected) {
+      const bodies = source
+        .split(`- name: ${step}\n`)
+        .slice(1)
+        .map((rest) => rest.split(/\n\s+- (?=name:|uses:)/)[0]);
+      assert.equal(bodies.length, count, `${name}: ${step}`);
+      for (const body of bodies)
+        assert.match(body, /timeout-minutes: (?:10|15)\n/, `${name}: ${step}`);
+    }
+  }
+});
+
+test('no Python bytecode is committed or left by the factory tests', () => {
+  // Everything under .github/ is copied into each refreshed baseline.
+  const root = path.resolve(import.meta.dirname, '..', '..', '..');
+  const tracked = execFileSync('git', ['-C', root, 'ls-files', '.github'], { encoding: 'utf8' })
+    .split('\n')
+    .filter((file) => /(^|\/)__pycache__\/|\.py[co]$/.test(file));
+  assert.deepEqual(tracked, []);
+  for (const file of ['browser-fixtures.test.py', 'preview-dns-sync.test.py'])
+    assert.match(
+      readFileSync(path.join(import.meta.dirname, file), 'utf8'),
+      /^sys\.dont_write_bytecode = True\n(?:.*\n)*?spec = importlib/m,
+      file,
+    );
+  assert.match(readFileSync(path.join(root, '.gitignore'), 'utf8'), /^__pycache__\/$/m);
+  assert.match(
+    readFileSync(path.join(root, '.github/scripts/overlay-factory.mjs'), 'utf8'),
+    /\\n__pycache__\/\\n`/,
+  );
+});
+
 test('a prepare failure after ready clears agent:running for any build, not only recoveries', () => {
   const prepare = workflow.split('\n  prepare:')[1].split('\n  agent:')[0];
   const cleanup = prepare.split('- name: Report a failure after task preparation')[1];
@@ -423,32 +524,69 @@ test('the Agent CLI check runs whenever a module the adapters load changes', () 
     );
 });
 
+// The .github/scripts files a workflow runs, directly or through verify.sh and
+// its helpers, with the modules they load. Generated sources (the overlay's
+// eslint.config.js) name factory scripts as .github/scripts/... paths.
+function scriptsRunBy(name) {
+  const read = (file) =>
+    readFileSync(path.resolve(import.meta.dirname, '..', file), 'utf8');
+  const source = readFileSync(
+    new URL(`../../workflows/${name}`, import.meta.url),
+    'utf8',
+  );
+  const named = (text, pattern) =>
+    [...text.matchAll(pattern)].map(([, file]) => file);
+  const run = new Set(named(source, /\.github\/scripts\/([\w-]+\.(?:mjs|sh))/g));
+  for (const shell of [...run].filter((file) => file.endsWith('.sh')))
+    for (const file of named(read(shell), /\$script_dir\/([\w-]+\.(?:mjs|sh))/g))
+      run.add(file);
+  const modules = importClosure(...[...run].filter((file) => file.endsWith('.mjs')));
+  for (const file of modules)
+    for (const generated of named(
+      readFileSync(path.resolve(import.meta.dirname, '..', '..', '..', file), 'utf8'),
+      /['"]\.\/\.github\/scripts\/([\w-]+\.mjs)['"]/g,
+    ))
+      modules.push(...importClosure(generated));
+  return [
+    ...new Set([
+      ...modules,
+      ...[...run]
+        .filter((file) => file.endsWith('.sh'))
+        .map((file) => `.github/scripts/${file}`),
+    ]),
+  ];
+}
+
 test('the source baseline check runs whenever a script it runs changes', () => {
   const filters = pullRequestPaths('source-baseline.yml');
-  const source = readFileSync(
-    new URL('../../workflows/source-baseline.yml', import.meta.url),
-    'utf8',
-  );
-  const run = [
-    ...new Set(
-      [...source.matchAll(/\.github\/scripts\/([\w-]+\.(?:mjs|sh))/g)].map(
-        ([, file]) => file,
-      ),
-    ),
-  ];
-  assert.ok(run.includes('verify.sh'));
-  const verify = readFileSync(
-    path.resolve(import.meta.dirname, '../verify.sh'),
-    'utf8',
-  );
-  const viaVerify = [
-    ...verify.matchAll(/\$script_dir\/([\w-]+\.(?:mjs|sh))/g),
-  ].map(([, file]) => file);
-  const shell = [...run, ...viaVerify].filter((file) => file.endsWith('.sh'));
-  for (const file of [
-    ...importClosure(...[...run, ...viaVerify].filter((file) => file.endsWith('.mjs'))),
-    ...shell.map((file) => `.github/scripts/${file}`),
+  const files = scriptsRunBy('source-baseline.yml');
+  assert.ok(files.includes('.github/scripts/verify.sh'));
+  for (const file of files)
+    assert.ok(
+      filters.some((filter) => filter.test(file)),
+      file,
+    );
+});
+
+test('the template refresh check runs whenever a script or overlay input it uses changes', () => {
+  const filters = pullRequestPaths('refresh-template.yml');
+  const files = scriptsRunBy('refresh-template.yml');
+  for (const expected of [
+    '.github/scripts/verify.sh',
+    '.github/scripts/overlay-factory.mjs',
+    '.github/scripts/assert-current-template.mjs',
+    '.github/scripts/factory-eslint.mjs',
+    '.github/scripts/timed-command.mjs',
   ])
+    assert.ok(files.includes(expected), expected);
+  // overlay-factory.mjs copies these from the control checkout.
+  const overlay = readFileSync(
+    path.resolve(import.meta.dirname, '../overlay-factory.mjs'),
+    'utf8',
+  );
+  assert.match(overlay, /path\.join\(control, '\.npmrc'\)/);
+  assert.match(overlay, /section\('README\.MD', 'readme'\)/);
+  for (const file of [...files, '.npmrc', 'README.MD'])
     assert.ok(
       filters.some((filter) => filter.test(file)),
       file,

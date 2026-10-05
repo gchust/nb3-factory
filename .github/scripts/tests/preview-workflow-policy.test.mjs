@@ -206,23 +206,133 @@ test('the steps that call gh are given a token', () => {
   const deleteStep = teardown.slice(
     teardown.indexOf('Delete the temporary payloads'),
   );
-  assert.match(deleteStep, /gh release delete-asset/);
+  assert.match(deleteStep, /delete-preview-payloads\.sh "\$PR"/);
   assert.match(deleteStep, /GH_TOKEN: \$\{\{ github\.token \}\}/);
+  const capacityStep = deploy.slice(
+    deploy.indexOf('Make room on the preview host'),
+    deploy.indexOf('Publish the payload for the host to fetch'),
+  );
+  assert.match(capacityStep, /delete-preview-payloads\.sh "\$victim"/);
+  assert.match(capacityStep, /GH_TOKEN: \$\{\{ github\.token \}\}/);
 });
 
-test('the temporary payloads are deleted when the pull request closes', () => {
+const deletePayloads = readFileSync(
+  path.resolve(import.meta.dirname, '..', 'delete-preview-payloads.sh'),
+  'utf8',
+);
+
+test('the temporary payloads are deleted when the pull request closes or its preview is evicted', () => {
   // They are public while they exist, so they must not outlive the preview. A
   // pull request that was deployed more than once left more than one of them.
-  assert.match(teardown, /mapfile -t assets < </);
-  assert.ok(teardown.includes("--json assets --jq '.assets[].name'"));
+  assert.match(deletePayloads, /mapfile -t assets < </);
+  assert.ok(deletePayloads.includes("--json assets --jq '.assets[].name'"));
   assert.ok(
-    teardown.includes('grep -E "^preview-pr-$PR(-[0-9a-f]{16})?\\.tar\\.gz$"'),
+    deletePayloads.includes(
+      'grep -E "^preview-pr-$pr(-[0-9a-f]{16})?\\.tar\\.gz$"',
+    ),
   );
   assert.ok(
-    teardown.includes('gh release delete-asset "$PREVIEW_RELEASE" "$asset"'),
+    deletePayloads.includes(
+      'gh release delete-asset "$PREVIEW_RELEASE" "$asset"',
+    ),
   );
   assert.match(teardown, /PREVIEW_RELEASE: factory-previews/);
+  assert.match(deploy, /PREVIEW_RELEASE: factory-previews/);
   assert.match(teardown, /contents: write/);
+  // An eviction already removed the preview; a failed asset deletion warns.
+  assert.match(
+    deploy,
+    /delete-preview-payloads\.sh "\$victim" <\/dev\/null \|\|\n\s+echo "::warning::/,
+  );
+  // Nothing in the eviction loop may read the rest of the list from stdin.
+  const loop = deploy.split('while read -r victim reason; do')[1].split('done < ')[0];
+  assert.match(loop, /ssh -n /);
+  assert.match(loop, /--pr "\$victim" --reason "\$reason" <\/dev\/null \|\|/);
+});
+
+test('deleting payloads removes only this pull request\'s assets', () => {
+  const root = mkdtempSync(path.join(os.tmpdir(), 'preview-payloads-'));
+  try {
+    const bin = path.join(root, 'bin');
+    mkdirSync(bin);
+    const log = path.join(root, 'gh.log');
+    writeFileSync(
+      path.join(bin, 'gh'),
+      `#!/usr/bin/env bash
+echo "$*" >> ${JSON.stringify(log)}
+# Whatever a gh call reads from stdin would be lost from the eviction list.
+cat >> ${JSON.stringify(path.join(root, 'stdin.log'))}
+if [[ "$1 $2" == 'release view' ]]; then
+  case "\${GH_RELEASE:-}" in
+    missing) echo 'release not found' >&2; exit 1 ;;
+    down) echo 'HTTP 502: Bad Gateway' >&2; exit 1 ;;
+  esac
+  printf '%s\\n' preview-pr-7.tar.gz preview-pr-7-0123456789abcdef.tar.gz preview-pr-70-0123456789abcdef.tar.gz preview-pr-17.tar.gz
+fi
+`,
+      { mode: 0o755 },
+    );
+    const run = (pr, release = '') =>
+      spawnSync(
+        'bash',
+        [path.resolve(import.meta.dirname, '..', 'delete-preview-payloads.sh'), pr],
+        {
+          encoding: 'utf8',
+          // As in the eviction loop, whose remaining entries are on stdin.
+          input: '4 failed\n5 closed\n',
+          env: {
+            ...process.env,
+            PATH: `${bin}:${process.env.PATH}`,
+            GITHUB_REPOSITORY: 'o/r',
+            PREVIEW_RELEASE: 'factory-previews',
+            GH_RELEASE: release,
+          },
+        },
+      );
+    const result = run('7');
+    assert.equal(result.status, 0, result.stderr);
+    const deleted = readFileSync(log, 'utf8')
+      .split('\n')
+      .filter((line) => line.startsWith('release delete-asset'))
+      .map((line) => line.split(' ')[3]);
+    assert.deepEqual(deleted, [
+      'preview-pr-7.tar.gz',
+      'preview-pr-7-0123456789abcdef.tar.gz',
+    ]);
+    assert.equal(readFileSync(path.join(root, 'stdin.log'), 'utf8'), '');
+    assert.equal(run('7; rm -rf /').status, 2);
+    // Only a missing release is nothing to delete; any other gh failure fails.
+    const missing = run('7', 'missing');
+    assert.equal(missing.status, 0, missing.stderr);
+    assert.match(missing.stdout, /no preview release; nothing to delete/);
+    const down = run('7', 'down');
+    assert.equal(down.status, 1);
+    assert.match(down.stderr, /::error::Could not list the factory-previews assets of PR #7: HTTP 502/);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('teardown retries removing the preview and deletes the payloads even when that fails', () => {
+  const remove = teardown.slice(
+    teardown.indexOf('- name: Remove the preview'),
+    teardown.indexOf('- name: Delete the temporary payloads'),
+  );
+  assert.match(remove, /for attempt in 1 2 3; do/);
+  assert.match(remove, /ssh -n /);
+  assert.match(remove, /sleep \$\(\( attempt \* 15 \)\)/);
+  // The job still fails, so a preview left running is visible.
+  assert.match(remove, /::error::Could not remove the preview[^\n]*\n\s+exit 1/);
+  assert.doesNotMatch(remove, /continue-on-error/);
+  assert.match(
+    teardown,
+    /- name: Delete the temporary payloads\n\s+if: \$\{\{ !cancelled\(\) \}\}/,
+  );
+  // The job guard still decides whether any of this runs.
+  assert.match(
+    teardown,
+    /startsWith\(github\.event\.pull_request\.head\.ref, 'agent\/issue-'\)/,
+  );
 });
 
 test('the deployable artifact carries the task metadata the preview reads from it', () => {

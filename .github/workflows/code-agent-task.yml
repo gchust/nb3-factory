@@ -103,7 +103,7 @@ jobs:
       github.event_name != 'issues' ||
       (!contains(github.event.issue.labels.*.name, 'factory:external') &&
        contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.issue.author_association))
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
     permissions:
       actions: read
@@ -291,7 +291,7 @@ jobs:
       FACTORY_BUILD_REVIEW_IDLE_TIMEOUT_SECONDS: ${{ vars.FACTORY_BUILD_REVIEW_IDLE_TIMEOUT_SECONDS || '600' }}
       CODE_AGENT_ENGINE: ${{ vars.CODE_AGENT_ENGINE }}
     if: needs.prepare.outputs.status == 'ready' && needs.prepare.outputs.comment_kind != 'reply'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     # GitHub-hosted runners allow at most six hours per job. The factory uses
     # five hours as a soft runner budget, then checkpoints and continues in a
     # new run at most once. Task-wide repair/failure counters survive Handoff.
@@ -460,6 +460,7 @@ jobs:
         run: cat control/.npmrc >> ~/.npmrc
 
       - name: Install Chinese browser fonts
+        timeout-minutes: 5
         run: bash control/.github/scripts/install-browser-fonts.sh
 
       - name: Restore the selected source baseline packages
@@ -472,6 +473,7 @@ jobs:
           fi
 
       - name: Install application dependencies
+        timeout-minutes: 15
         working-directory: workspace
         run: |
           node ../control/.github/scripts/assert-current-template.mjs .
@@ -499,6 +501,7 @@ jobs:
         run: node bootstrap/.github/scripts/handoff-recovery.mjs context --checkpoint handoff --prompt "$RUNNER_TEMP/implement.md"
 
       - name: Install pinned Code Agent
+        timeout-minutes: 10
         if: inputs.failure_smoke != true
         env: &agent-install-env
           CODE_AGENT_ENGINE: ${{ vars.CODE_AGENT_ENGINE }}
@@ -512,6 +515,7 @@ jobs:
         run: node control/.github/scripts/install-agent.mjs
 
       - name: Install pinned Agent Browser
+        timeout-minutes: 10
         if: inputs.failure_smoke != true
         env:
           AGENT_BROWSER_VERSION: ${{ vars.AGENT_BROWSER_VERSION || '0.36.0' }}
@@ -817,7 +821,7 @@ jobs:
   verify-final:
     needs: [prepare, agent]
     if: needs.agent.result == 'success' && needs.agent.outputs.handoff != 'true'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 90
     env:
       FACTORY_BUILD_TARGET: linux-x64
@@ -888,6 +892,7 @@ jobs:
         run: cat control/.npmrc >> ~/.npmrc
 
       - name: Install Chinese browser fonts
+        timeout-minutes: 5
         run: bash control/.github/scripts/install-browser-fonts.sh
 
       - name: Restore the selected source baseline packages
@@ -900,6 +905,7 @@ jobs:
           fi
 
       - name: Install application dependencies
+        timeout-minutes: 15
         working-directory: workspace
         run: node ../control/.github/scripts/timed-command.mjs install pnpm install --frozen-lockfile
 
@@ -967,7 +973,7 @@ jobs:
   publish:
     needs: [prepare, agent, verify-final]
     if: needs.verify-final.result == 'success'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
     permissions:
       contents: write
@@ -1049,7 +1055,7 @@ jobs:
       needs.agent.outputs.handoff != 'true' &&
       needs.agent.outputs.patch_available == 'true' &&
       (needs.agent.result != 'success' || needs.verify-final.result != 'success')
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
     permissions:
       contents: write
@@ -1062,7 +1068,7 @@ jobs:
   preview-build-failed:
     needs: [prepare, agent, publish-failed]
     if: always() && !cancelled() && needs.publish-failed.result == 'success'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     permissions:
       contents: read
@@ -1130,6 +1136,7 @@ jobs:
           fi
 
       - name: Install application dependencies
+        timeout-minutes: 15
         working-directory: workspace
         run: node ../control/.github/scripts/timed-command.mjs install pnpm install --frozen-lockfile
 
@@ -1209,7 +1216,7 @@ jobs:
       (needs.agent.result != 'success' ||
        needs.verify-final.result != 'success' ||
        needs.publish.result != 'success')
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
     permissions:
       contents: read
@@ -1256,7 +1263,7 @@ jobs:
         publish-reply,
       ]
     if: always() && needs.prepare.outputs.status == 'ready' && needs.prepare.outputs.comment_kind != 'reply'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 5
     continue-on-error: true
     permissions:
@@ -1264,19 +1271,59 @@ jobs:
       actions: write
     steps:
       # Isolated from application execution and from all model/media secrets.
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      # The dispatcher comes from this workflow file's own revision, not the
+      # task's pinned control SHA: continuations, recoveries and evaluation
+      # samples pin an older control plane whose dispatcher ignores its
+      # arguments, and each step below would then request every report. It
+      # carries no task logic, and the steps below are its only callers.
+      - name: Check out the report dispatcher
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: ${{ needs.prepare.outputs.control_sha }}
-          path: control
+          ref: ${{ github.workflow_sha }}
+          path: dispatcher
           persist-credentials: false
-      - name: Explicitly request task reports (including continuations)
-        env:
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /.github/scripts/dispatch-task-reports.sh
+      # One step per report (including continuations): report-dispatch-gate.yml
+      # reads each step by name, so a failed request makes only that report's
+      # workflow_run copy do the work, not all six. Each step runs even after an
+      # earlier one failed; the job's continue-on-error keeps the task result.
+      - name: Request report-task-progress.yml
+        id: request-report-task-progress
+        if: ${{ !cancelled() }}
+        env: &report-dispatch-env
           GH_TOKEN: ${{ github.token }}
           SOURCE_RUN_ID: ${{ github.run_id }}
           SOURCE_ATTEMPT: ${{ github.run_attempt }}
           FACTORY_REPORT_REF: ${{ github.event.repository.default_branch }}
           FACTORY_TASK_PUBLISHED: ${{ needs.publish.result == 'success' || needs.publish-failed.result == 'success' }}
-        run: bash control/.github/scripts/dispatch-task-reports.sh
+        run: bash dispatcher/.github/scripts/dispatch-task-reports.sh report-task-progress.yml
+      - name: Request report-task-usage.yml
+        id: request-report-task-usage
+        if: ${{ !cancelled() }}
+        env: *report-dispatch-env
+        run: bash dispatcher/.github/scripts/dispatch-task-reports.sh report-task-usage.yml
+      - name: Request publish-agent-history.yml
+        id: request-publish-agent-history
+        if: ${{ !cancelled() }}
+        env: *report-dispatch-env
+        run: bash dispatcher/.github/scripts/dispatch-task-reports.sh publish-agent-history.yml
+      - name: Request publish-retro.yml
+        id: request-publish-retro
+        if: ${{ !cancelled() }}
+        env: *report-dispatch-env
+        run: bash dispatcher/.github/scripts/dispatch-task-reports.sh publish-retro.yml
+      - name: Request publish-visual-report.yml
+        id: request-publish-visual-report
+        if: ${{ !cancelled() }}
+        env: *report-dispatch-env
+        run: bash dispatcher/.github/scripts/dispatch-task-reports.sh publish-visual-report.yml
+      - name: Request deploy-preview.yml
+        id: request-deploy-preview
+        if: ${{ !cancelled() }}
+        env: *report-dispatch-env
+        run: bash dispatcher/.github/scripts/dispatch-task-reports.sh deploy-preview.yml
 
   reply:
     env:
@@ -1287,7 +1334,7 @@ jobs:
       needs.prepare.outputs.status == 'ready' &&
       needs.prepare.outputs.build_comment_id != '' &&
       needs.agent.outputs.handoff != 'true'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 25
     permissions:
       contents: read
@@ -1314,6 +1361,7 @@ jobs:
           BUILD_RESULT: ${{ needs.publish-failed.result == 'success' && 'failure' || needs.publish.result }}
         run: node control/.github/scripts/comment-reply.mjs prompt task/task-metadata.json "$RUNNER_TEMP"
       - name: Install pinned Code Agent
+        timeout-minutes: 10
         env: *agent-install-env
         run: node control/.github/scripts/install-agent.mjs
       - name: Answer source comment from current code
@@ -1341,7 +1389,7 @@ jobs:
   publish-reply:
     needs: [prepare, reply]
     if: always() && needs.reply.result == 'success'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 5
     permissions:
       contents: read
@@ -1372,7 +1420,7 @@ jobs:
   dispatch-reply-history:
     needs: [prepare, reply, publish-reply]
     if: always() && needs.prepare.outputs.status == 'ready' && needs.prepare.outputs.build_comment_id != '' && needs.prepare.outputs.comment_kind == 'reply'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 5
     permissions:
       actions: write

@@ -26,6 +26,8 @@ jobs:
   dispatch-gate:
     if: github.event_name == 'workflow_run'
     uses: ./.github/workflows/report-dispatch-gate.yml
+    with:
+      workflow: publish-visual-report.yml
     permissions:
       actions: read
 
@@ -34,7 +36,7 @@ jobs:
     if: >-
       !cancelled() && needs.dispatch-gate.outputs.covered != 'true' &&
       (github.event_name == 'workflow_dispatch' || contains(fromJSON('["success","failure","timed_out"]'), github.event.workflow_run.conclusion))
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
     permissions:
       actions: read

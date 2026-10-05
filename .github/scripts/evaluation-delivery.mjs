@@ -21,8 +21,11 @@ export { deliveryConfig, DeliveryConfigError, targetIdOf } from './evaluation-ta
 const RETRY = { attempts: 3, timeoutMs: 180_000, maxRetryAfterSeconds: 60, maxTotalAttempts: 24, bundleRetentionDays: 90 };
 // A rejected record is resent once by a later scan, at least an hour after the
 // rejection, in case the receiver was briefly wrong; then it waits for retry-rejected.
-// retry-limit already spent its automatic attempts and is not resent.
-export const AUTO_RETRY = { maxRetries: 1, minDelayMs: 60 * 60_000, skipReasons: ['retry-limit'] };
+// Only reasons a receiver has been seen to reverse are resent: 400, a 202 still being
+// stored, and a 5xx outside the retryable set. Authentication, path, size, data
+// (422), redirect and receipt refusals, and retry-limit, need a fix first.
+export const AUTO_RETRY = { maxRetries: 1, minDelayMs: 60 * 60_000,
+  transientReason: reason => reason === 'bad-request' || reason === 'accepted-not-stored' || /^http-5\d\d$/.test(reason ?? '') };
 // The repository and its logs are public: of a refusal body only a short,
 // printable error code or message is kept, never the body itself.
 const ERROR_BODY_BYTES = 4096;
@@ -239,7 +242,7 @@ export async function planDeliveries(client, { mode, type, key, revision, artifa
   else if (mode === 'scan') {
     // Pending records first; the automatic retry of a rejection is recorded, so it happens at most maxRetries times.
     const retryable = ours.filter(item => item.state === 'rejected' && (item.autoRetries ?? 0) < AUTO_RETRY.maxRetries &&
-      !AUTO_RETRY.skipReasons.includes(item.reason) && now.getTime() - Date.parse(item.updatedAt) >= AUTO_RETRY.minDelayMs);
+      AUTO_RETRY.transientReason(item.reason) && now.getTime() - Date.parse(item.updatedAt) >= AUTO_RETRY.minDelayMs);
     const selected = [...ours.filter(item => item.state === 'pending').map(entry => [entry, false]), ...retryable.map(entry => [entry, true])];
     for (const [entry, autoRetry] of selected.slice(0, limit)) await pick(entry.type, entry.key, entry.revision, null, autoRetry);
   } else if (mode === 'retry-rejected') {

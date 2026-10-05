@@ -32,6 +32,8 @@ jobs:
   dispatch-gate:
     if: github.event_name == 'workflow_run'
     uses: ./.github/workflows/report-dispatch-gate.yml
+    with:
+      workflow: report-task-progress.yml
     permissions:
       actions: read
 
@@ -39,7 +41,7 @@ jobs:
     needs: dispatch-gate
     if: >-
       !cancelled() && needs.dispatch-gate.outputs.covered != 'true'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 3
     permissions:
       actions: read

@@ -10,7 +10,7 @@ The factory owns these application-root files: `docs/`, which the overlay carrie
 
 ## Who can start a model run
 
-The repository and its Actions logs are public. An Issue starts a build, and a comment starts a build or question round, only when its author's `author_association` is `OWNER`, `MEMBER` or `COLLABORATOR` (`isTrustedAuthor` in `.github/scripts/factory-lib.mjs`, and the `prepare` and queue job conditions). Other authors' Issues and comments are ignored, never queued, and never replayed into a later prompt as history. Maintainers can still run any Issue through `workflow_dispatch`. Workflows pass Agent settings as the allowlisted `FACTORY_AGENT_CONFIG_JSON` built from `AGENT_SETTING_NAMES`, never the whole `vars` context, and pin every action to a commit SHA.
+The repository and its Actions logs are public. An Issue starts a build, and a comment starts a build or question round, only when its author's `author_association` is `OWNER`, `MEMBER` or `COLLABORATOR` (`isTrustedAuthor` in `.github/scripts/factory-lib.mjs`, and the `prepare` and queue job conditions). Other authors' Issues and comments are ignored, never queued, and never replayed into a later prompt as history. Maintainers can still run any Issue through `workflow_dispatch`. Workflows pass Agent settings as the allowlisted `FACTORY_AGENT_CONFIG_JSON` built from `AGENT_SETTING_NAMES`, never the whole `vars` context, pin every action to a commit SHA, and run every job on a pinned runner image (`ubuntu-24.04`), never `ubuntu-latest`, so an image migration is a deliberate change.
 
 ## Factory review history
 

@@ -22,7 +22,7 @@ jobs:
     if: >-
       github.event.pull_request.head.repo.full_name == github.repository &&
       startsWith(github.event.pull_request.head.ref, 'agent/issue-')
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
     # No continue-on-error: a failed teardown leaves a public preview running,
     # and a green run would hide that nothing reclaims it.
@@ -70,34 +70,30 @@ jobs:
         run: |
           set -euo pipefail
           [[ "$PR" =~ ^[1-9][0-9]*$ ]] || { echo "::error::unexpected pull request number"; exit 1; }
-          ssh -i ~/.ssh/preview_key -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o ConnectTimeout=20 \
-            "$PREVIEW_USER@$PREVIEW_HOST" \
-            "bash /srv/nb3-preview/scripts/preview-destroy.sh '$PR'"
+          # A dropped connection (`kex_exchange_identification: Connection
+          # reset by peer`, PR #426) left the preview running. preview-destroy.sh
+          # is idempotent, so a retry after a partial run is safe.
+          for attempt in 1 2 3; do
+            if ssh -n -i ~/.ssh/preview_key -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o ConnectTimeout=20 \
+              "$PREVIEW_USER@$PREVIEW_HOST" \
+              "bash /srv/nb3-preview/scripts/preview-destroy.sh '$PR'"; then
+              exit 0
+            fi
+            (( attempt < 3 )) || break
+            echo "::warning::Removing the preview failed (attempt $attempt); retrying in $(( attempt * 15 )) s."
+            sleep $(( attempt * 15 ))
+          done
+          echo "::error::Could not remove the preview for PR #$PR after 3 attempts; it is still running."
+          exit 1
 
       # The payload assets are the one thing a closed preview leaves behind on
       # GitHub, and they are public: the build is not something to keep lying
-      # around once nothing is serving it. There is one per deployed payload, not
-      # one per pull request, so every asset this pull request published goes.
+      # around once nothing is serving it. They go even when removing the
+      # preview failed; that failure still fails the job.
       - name: Delete the temporary payloads
+        if: ${{ !cancelled() }}
         env:
           PR: ${{ github.event.pull_request.number }}
           GH_TOKEN: ${{ github.token }}
         run: |
-          set -euo pipefail
-          if ! gh release view "$PREVIEW_RELEASE" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
-            echo "no preview release; nothing to delete"
-            exit 0
-          fi
-          # `preview-pr-7.tar.gz` is the name the first version of this workflow
-          # used; a payload published before the digest naming may still be here.
-          mapfile -t assets < <(gh release view "$PREVIEW_RELEASE" \
-            --repo "$GITHUB_REPOSITORY" --json assets --jq '.assets[].name' \
-            | grep -E "^preview-pr-$PR(-[0-9a-f]{16})?\.tar\.gz$" || true)
-          if (( ${#assets[@]} == 0 )); then
-            echo "no payload asset for PR #$PR; nothing to delete"
-            exit 0
-          fi
-          for asset in "${assets[@]}"; do
-            gh release delete-asset "$PREVIEW_RELEASE" "$asset" \
-              --repo "$GITHUB_REPOSITORY" --yes
-          done
+          bash control/.github/scripts/delete-preview-payloads.sh "$PR"

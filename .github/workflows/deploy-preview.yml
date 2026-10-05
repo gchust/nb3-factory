@@ -31,6 +31,8 @@ jobs:
   dispatch-gate:
     if: github.event_name == 'workflow_run'
     uses: ./.github/workflows/report-dispatch-gate.yml
+    with:
+      workflow: deploy-preview.yml
     permissions:
       actions: read
 
@@ -39,7 +41,7 @@ jobs:
     if: >-
       !cancelled() && needs.dispatch-gate.outputs.covered != 'true' &&
       (github.event_name == 'workflow_dispatch' || contains(fromJSON('["success","failure","timed_out"]'), github.event.workflow_run.conclusion))
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 45
     permissions:
       actions: read
@@ -170,6 +172,7 @@ jobs:
         env:
           PR: ${{ steps.prepare.outputs.pr }}
           GITHUB_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
           ssh_opts=(-i ~/.ssh/preview_key -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o ConnectTimeout=20)
@@ -185,10 +188,14 @@ jobs:
             [[ "$victim" =~ ^[1-9][0-9]*$ ]] || { echo "::error::unexpected eviction entry"; exit 1; }
             # -n: without it ssh reads the rest of the eviction list as its stdin.
             ssh -n "${ssh_opts[@]}" "$remote" "bash /srv/nb3-preview/scripts/preview-destroy.sh '$victim'"
+            # Its public payload assets go with it, as they would at teardown.
+            # </dev/null: like ssh -n, so nothing it runs can read the eviction list.
+            bash control/.github/scripts/delete-preview-payloads.sh "$victim" </dev/null ||
+              echo "::warning::Could not delete the payload assets of evicted PR #$victim."
             # The notice is a courtesy; the eviction it describes already happened.
             node control/.github/scripts/deploy-preview.mjs evicted \
               --run-id "$SOURCE_RUN_ID" --output "$RUNNER_TEMP/preview" \
-              --pr "$victim" --reason "$reason" ||
+              --pr "$victim" --reason "$reason" </dev/null ||
               echo "::warning::Could not tell PR #$victim that its preview was evicted."
           done < "$RUNNER_TEMP/preview/evict.txt"
 

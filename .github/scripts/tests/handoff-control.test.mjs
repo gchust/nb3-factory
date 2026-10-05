@@ -1,12 +1,13 @@
 import assert from 'node:assert/strict';
 import { execFileSync, spawn } from 'node:child_process';
 import { once } from 'node:events';
-import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
+import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { createServer } from 'node:http';
 import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
 import { resolveControlSha, verifyControlSha } from '../handoff-control.mjs';
+import { dispatchContinuation } from '../handoff.mjs';
 
 const scripts = path.resolve(import.meta.dirname, '..');
 const A = 'a'.repeat(40);
@@ -156,6 +157,166 @@ test('dispatch carries the pinned SHA, source run, continuation and build commen
       issue_number: 165, control_sha: A, build_comment_id: 56789, previous_run_id: 23456, continuation: 1,
     },
   } });
+});
+
+// What undici's fetch rejects with when the connection itself failed.
+const connectFailure = (code) =>
+  Object.assign(new TypeError('fetch failed'), { cause: Object.assign(new Error(`connect ${code}`), { code }) });
+
+test('dispatch retries a 429 or a connection never made, with bounded backoff', async () => {
+  const responses = [
+    () => new Response('slow down', { status: 429 }),
+    () => { throw connectFailure('ECONNREFUSED'); },
+    () => { throw connectFailure('EAI_AGAIN'); },
+    () => new Response(null, { status: 204 }),
+  ];
+  const calls = []; const pauses = [];
+  await dispatchContinuation('https://api.test/repos/o/r/dispatches', {
+    token: 't', body: { event_type: 'code-agent-continue' },
+    fetcher: async (url, options) => { calls.push(options); return responses[calls.length - 1](); },
+    pause: async (ms) => { pauses.push(ms); },
+  });
+  assert.equal(calls.length, 4);
+  assert.deepEqual(pauses, [1000, 3000, 8000]);
+  for (const options of calls) {
+    assert.equal(options.body, JSON.stringify({ event_type: 'code-agent-continue' }));
+    assert.ok(options.signal instanceof AbortSignal, 'every attempt is bounded by a timeout');
+  }
+  // Every address of a dual-stack host refused.
+  let attempts = 0;
+  await dispatchContinuation('https://api.test/d', {
+    token: 't', body: {}, pause: async () => {},
+    fetcher: async () => {
+      if (++attempts > 1) return new Response(null, { status: 204 });
+      throw Object.assign(new TypeError('fetch failed'), { cause: new AggregateError([connectFailure('ECONNREFUSED').cause, connectFailure('ENETUNREACH').cause]) });
+    },
+  });
+  assert.equal(attempts, 2);
+});
+
+test('dispatch gives up after its retries and never retries another refusal', async () => {
+  let calls = 0;
+  await assert.rejects(dispatchContinuation('https://api.test/d', {
+    token: 't', body: {}, pause: async () => {},
+    fetcher: async () => { calls++; return new Response('rate limited', { status: 429 }); },
+  }), /Failed to dispatch continuation: 429 rate limited$/);
+  assert.equal(calls, 4);
+  calls = 0;
+  await assert.rejects(dispatchContinuation('https://api.test/d', {
+    token: 't', body: {}, pause: async () => {},
+    fetcher: async () => { calls++; throw connectFailure('ENOTFOUND'); },
+  }), /ENOTFOUND; the request was never sent/);
+  assert.equal(calls, 4);
+  for (const status of [401, 403, 404, 422]) {
+    calls = 0;
+    await assert.rejects(dispatchContinuation('https://api.test/d', {
+      token: 't', body: {}, pause: async () => { throw new Error('must not wait'); },
+      fetcher: async () => { calls++; return new Response('refused', { status }); },
+    }), new RegExp(`Failed to dispatch continuation: ${status} refused`));
+    assert.equal(calls, 1, String(status));
+  }
+});
+
+test('a 5xx may follow an accepted dispatch, so it is never retried', async () => {
+  for (const status of [500, 502, 503, 504]) {
+    let calls = 0;
+    await assert.rejects(dispatchContinuation('https://api.test/d', {
+      token: 't', body: {}, pause: async () => { throw new Error('must not wait'); },
+      fetcher: async () => { calls++; return new Response('Server Error', { status }); },
+    }), (error) => {
+      assert.match(error.message, new RegExp(`HTTP ${status} Server Error\\)\\. GitHub may or may not have received it`));
+      assert.match(error.message, /before dispatching it manually/);
+      return true;
+    });
+    assert.equal(calls, 1, String(status));
+  }
+});
+
+test('a 429 waits as long as Retry-After asks, within a cap', async () => {
+  const at = Date.parse('2026-10-05T12:00:00Z');
+  const responses = [
+    new Response(null, { status: 429, headers: { 'retry-after': '7' } }),
+    new Response(null, { status: 429, headers: { 'retry-after': new Date(at + 12_000).toUTCString() } }),
+    new Response(null, { status: 429, headers: { 'retry-after': 'soon' } }),
+    new Response(null, { status: 204 }),
+  ];
+  const pauses = [];
+  await dispatchContinuation('https://api.test/d', {
+    token: 't', body: {}, now: () => at,
+    fetcher: async () => responses.shift(),
+    pause: async (ms) => { pauses.push(ms); },
+  });
+  // An unreadable header falls back to the backoff for that attempt.
+  assert.deepEqual(pauses, [7000, 12000, 8000]);
+  let calls = 0;
+  await assert.rejects(dispatchContinuation('https://api.test/d', {
+    token: 't', body: {}, pause: async () => { throw new Error('must not wait'); },
+    fetcher: async () => { calls++; return new Response('slow down', { status: 429, headers: { 'retry-after': '3600' } }); },
+  }), /Retry-After asks for 3600 s, more than the 30 s this step waits\. The request was rejected/);
+  assert.equal(calls, 1);
+});
+
+test('a dispatch that may have reached GitHub is never retried', async () => {
+  const mayHaveArrived = [
+    ['a reset', () => { throw connectFailure('ECONNRESET'); }, /ECONNRESET/],
+    ['a closed socket', () => { throw Object.assign(new TypeError('fetch failed'), { cause: Object.assign(new Error('other side closed'), { code: 'UND_ERR_SOCKET' }) }); }, /UND_ERR_SOCKET/],
+    ['an unknown error', () => { throw new Error('something else'); }, /something else/],
+    ['a mix of refused and reset addresses', () => { throw Object.assign(new TypeError('fetch failed'), { cause: new AggregateError([connectFailure('ECONNREFUSED').cause, connectFailure('ECONNRESET').cause]) }); }, /fetch failed/],
+  ];
+  for (const [name, failure, message] of mayHaveArrived) {
+    let calls = 0;
+    await assert.rejects(dispatchContinuation('https://api.test/d', {
+      token: 't', body: {}, pause: async () => { throw new Error('must not wait'); },
+      fetcher: async () => { calls++; return failure(); },
+    }), (error) => {
+      assert.match(error.message, message, name);
+      assert.match(error.message, /may or may not have received it/, name);
+      assert.match(error.message, /before dispatching it manually/, name);
+      return true;
+    });
+    assert.equal(calls, 1, name);
+  }
+});
+
+test('a dispatch with no response is aborted by its timeout and not retried', async () => {
+  let calls = 0;
+  await assert.rejects(dispatchContinuation('https://api.test/d', {
+    token: 't', body: {}, timeoutMs: 20, pause: async () => { throw new Error('must not wait'); },
+    fetcher: (url, { signal }) => {
+      calls++;
+      return new Promise((resolve, reject) => signal.addEventListener('abort', () => reject(signal.reason)));
+    },
+  }), /no response in 20 ms\)\. GitHub may or may not have received it/);
+  assert.equal(calls, 1);
+});
+
+test('a real refused connection is retried and a real hung request is not', async (t) => {
+  // Against sockets, not stubs: the error shapes are undici's own.
+  const closed = createServer(); closed.listen(0, '127.0.0.1'); await once(closed, 'listening');
+  const { port } = closed.address(); closed.close(); await once(closed, 'close');
+  let pauses = 0;
+  await assert.rejects(dispatchContinuation(`http://127.0.0.1:${port}/d`, {
+    token: 't', body: {}, pause: async () => { pauses++; },
+  }), /ECONNREFUSED; the request was never sent/);
+  assert.equal(pauses, 3);
+  let received = 0;
+  const hung = createServer(() => { received++; }); hung.listen(0, '127.0.0.1'); await once(hung, 'listening');
+  t.after(() => { hung.closeAllConnections(); hung.close(); });
+  await assert.rejects(dispatchContinuation(`http://127.0.0.1:${hung.address().port}/d`, {
+    token: 't', body: {}, timeoutMs: 200, pause: async () => { throw new Error('must not wait'); },
+  }), /no response in 200 ms/);
+  assert.equal(received, 1);
+});
+
+test('handoff.mjs run through a symlink still runs its command, never a silent no-op', (t) => {
+  const root = directory(t);
+  const link = path.join(root, 'handoff.mjs');
+  symlinkSync(path.join(scripts, 'handoff.mjs'), link);
+  const output = path.join(root, 'handoff.json');
+  execFileSync(process.execPath, [link, 'prepare', '--issue', '165', '--run-id', '23456', '--output', output], {
+    env: { ...process.env, FACTORY_CONTROL_SHA: A }, stdio: 'pipe',
+  });
+  assert.equal(JSON.parse(readFileSync(output, 'utf8')).previousRunId, 23456);
 });
 
 test('real Git A -> B -> C preserves the pinned evaluator but refuses another continuation', (t) => {

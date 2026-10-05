@@ -32,20 +32,46 @@ dispatch() {
   return 1
 }
 
-failed=0
-dispatch report-task-progress.yml || failed=1
-dispatch report-task-usage.yml || failed=1
-# The interaction history is worth keeping for failures and handoffs too, not only deliveries.
-dispatch publish-agent-history.yml || failed=1
-# Same reason: a failed run explains the next baseline fix better than a clean one.
-dispatch publish-retro.yml || failed=1
+published="${FACTORY_TASK_PUBLISHED:-${FACTORY_TASK_DELIVERED:-false}}"
 # Published failed work has evidence and deserves a preview attempt too.
 # Keep the legacy variable for workflows pinned before failed publication.
-if [[ "${FACTORY_TASK_PUBLISHED:-${FACTORY_TASK_DELIVERED:-false}}" == 'true' ]]; then
-  dispatch publish-visual-report.yml || failed=1
-  # Requested explicitly for the same reason as the media report: a preview is
-  # expected to appear after a delivery, and the workflow_run event is not
-  # guaranteed for a bot-triggered continuation.
-  dispatch deploy-preview.yml || failed=1
+request() {
+  local workflow="$1"
+  case "$workflow" in
+    publish-visual-report.yml | deploy-preview.yml)
+      # Requested explicitly for the same reason as the media report: a preview
+      # is expected to appear after a delivery, and the workflow_run event is not
+      # guaranteed for a bot-triggered continuation.
+      if [[ "$published" != 'true' ]]; then
+        echo "Not requesting $workflow: the task published no work."
+        return 0
+      fi
+      ;;
+  esac
+  dispatch "$workflow"
+}
+
+# With workflow names, request only those: the task requests each report in a
+# step of its own, so report-dispatch-gate.yml can tell which ones went out.
+# Without, request every report.
+if (( $# == 0 )); then
+  set -- \
+    report-task-progress.yml \
+    report-task-usage.yml \
+    publish-agent-history.yml \
+    publish-retro.yml \
+    publish-visual-report.yml \
+    deploy-preview.yml
 fi
+# The interaction history and retro are worth keeping for failures and
+# handoffs too, not only deliveries.
+failed=0
+for workflow in "$@"; do
+  case "$workflow" in
+    report-task-progress.yml | report-task-usage.yml | publish-agent-history.yml | \
+      publish-retro.yml | publish-visual-report.yml | deploy-preview.yml) ;;
+    *) echo "Unknown report workflow: $workflow" >&2; exit 2 ;;
+  esac
+  request "$workflow" || failed=1
+done
 exit "$failed"

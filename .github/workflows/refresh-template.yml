@@ -7,7 +7,25 @@ on:
       - '.github/workflows/refresh-template.yml'
       - '.github/scripts/template-*.mjs'
       - '.github/scripts/overlay-factory.mjs'
+      - '.github/scripts/publish-template.sh'
+      # Run by the job below, directly, through the overlay or through verify.sh;
+      # workflow-policy.test.mjs derives this list from the imports.
+      - '.github/scripts/assert-current-template.mjs'
+      - '.github/scripts/factory-eslint.mjs'
+      - '.github/scripts/create-runtime-config.mjs'
+      - '.github/scripts/install-browser-fonts.sh'
       - '.github/scripts/verify.sh'
+      - '.github/scripts/apply-database.sh'
+      - '.github/scripts/browser-smoke.mjs'
+      - '.github/scripts/format-changes.mjs'
+      - '.github/scripts/integration-checks.mjs'
+      - '.github/scripts/required-checks.mjs'
+      - '.github/scripts/stop-stale-app.sh'
+      - '.github/scripts/timed-command.mjs'
+      - '.github/scripts/timing.mjs'
+      # Copied into the application by the overlay.
+      - '.npmrc'
+      - 'README.MD'
   workflow_dispatch:
     inputs:
       dry_run:
@@ -35,7 +53,7 @@ jobs:
     if: >-
       (github.event_name == 'workflow_dispatch' && github.actor == github.repository_owner) ||
       github.event_name == 'pull_request'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 120
     permissions:
       contents: read
@@ -104,6 +122,7 @@ jobs:
           node control/.github/scripts/template-creator.mjs record "$RUNNER_TEMP/template-generation/nb3-factory/factory-template.json"
 
       - name: Install and lock the new application dependencies
+        timeout-minutes: 15
         run: |
           cd "$RUNNER_TEMP/template-generation/nb3-factory"
           pnpm add @nocobase/db-sqlite@latest
@@ -134,6 +153,7 @@ jobs:
           pnpm exec prettier --write "${format_paths[@]}"
 
       - name: Install Chinese browser fonts
+        timeout-minutes: 5
         run: bash control/.github/scripts/install-browser-fonts.sh
 
       - name: Verify factory, application, clean database, and browser login
@@ -193,7 +213,7 @@ jobs:
   publish:
     needs: generate
     if: ${{ github.event_name == 'workflow_dispatch' && !inputs.dry_run }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
     permissions:
       contents: write

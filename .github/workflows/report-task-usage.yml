@@ -42,6 +42,8 @@ jobs:
   dispatch-gate:
     if: github.event_name == 'workflow_run'
     uses: ./.github/workflows/report-dispatch-gate.yml
+    with:
+      workflow: report-task-usage.yml
     permissions:
       actions: read
 
@@ -54,7 +56,7 @@ jobs:
       html_ready: ${{ steps.totals.outputs.html_ready }}
       report_artifact: ${{ steps.archive.outputs.artifact-id }}
       evaluation_export: ${{ steps.evaluation-export.outputs.artifact-id }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
     permissions:
       actions: read
@@ -185,7 +187,7 @@ jobs:
     if: >-
       !cancelled() && needs.report.result == 'success' &&
       needs.report.outputs.evaluation_export != ''
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
     permissions:
       actions: write
@@ -255,7 +257,7 @@ jobs:
     if: >-
       !cancelled() && needs.report.result == 'success' &&
       needs.report.outputs.html_ready == 'true' && needs.report.outputs.report_artifact != ''
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
     permissions:
       actions: read
@@ -327,7 +329,7 @@ jobs:
   findings:
     needs: pages
     if: always() && needs.pages.outputs.findings_pending == 'true'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 2
     permissions:
       actions: write

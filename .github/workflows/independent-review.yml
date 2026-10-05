@@ -81,7 +81,7 @@ concurrency:
 jobs:
   prepare:
     if: github.actor == github.repository_owner
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
     permissions:
       contents: read
@@ -154,7 +154,7 @@ jobs:
   review:
     needs: prepare
     if: needs.prepare.outputs.ready == 'true'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 25
     permissions:
       contents: read
@@ -244,7 +244,7 @@ jobs:
   publish:
     needs: [prepare, review]
     if: always() && needs.prepare.outputs.ready == 'true'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
     permissions:
       contents: write
