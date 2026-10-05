@@ -41,10 +41,12 @@ on:
 permissions:
   contents: read
 
-# A new push to a pull request supersedes its earlier checks; develop pushes and
-# manual runs always finish.
+# A new push to a pull request supersedes its earlier checks. Develop pushes and
+# manual runs always finish: a shared group without a queue would let a third
+# push replace a pending second one, and queue: max cannot be combined with
+# cancel-in-progress, so each of them gets a group of its own.
 concurrency:
-  group: factory-tests-${{ github.event.pull_request.number || github.ref }}
+  group: factory-tests-${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || format('run-{0}', github.run_id) }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
@@ -118,8 +120,13 @@ jobs:
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 24.x
+      # The same version, override included, that build tasks install.
       - name: Install the pinned QA browser tool
-        run: npm install --global agent-browser@0.36.0
+        env:
+          AGENT_BROWSER_VERSION: ${{ vars.AGENT_BROWSER_VERSION || '0.36.0' }}
+        run: |
+          npm install --global "agent-browser@${AGENT_BROWSER_VERSION}"
+          agent-browser --version
       - name: Exercise the real guarded browser without an application or model
         run: |
           export AGENT_BROWSER_EXECUTABLE_PATH="$(command -v google-chrome || command -v chromium)"

@@ -29,11 +29,12 @@ concurrency:
 
 jobs:
   generate:
-    # Publishing is owner-only. A same-repository PR check holds no secrets and
-    # only read permission, and must not be skipped (a skipped check passes).
+    # Publishing is owner-only. A PR check, from this repository or a fork,
+    # holds no secrets and only read permission, and must not be skipped (a
+    # skipped check passes).
     if: >-
       (github.event_name == 'workflow_dispatch' && github.actor == github.repository_owner) ||
-      (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository)
+      github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     timeout-minutes: 120
     permissions:

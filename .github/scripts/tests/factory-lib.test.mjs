@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import {
+  GitHubClient,
   TaskInputError,
   assertSafeChangedPaths,
   extractIssueSections,
@@ -128,4 +129,66 @@ test('factory control files cannot be published from a Code Agent patch', () => 
   ]) {
     assert.throws(() => assertSafeChangedPaths([file]), TaskInputError);
   }
+});
+
+function replyWith(t, replies) {
+  const calls = [];
+  t.mock.method(globalThis, 'fetch', async (url, options) => {
+    calls.push(options.method);
+    const reply = replies.shift();
+    if (reply instanceof Error) throw reply;
+    return new Response(JSON.stringify(reply.body ?? {}), {
+      status: reply.status,
+    });
+  });
+  t.mock.method(console, 'warn', () => {});
+  return calls;
+}
+
+const retryingClient = () =>
+  new GitHubClient({
+    token: 'test-only',
+    repository: 'owner/factory',
+    retryDelays: [0, 0],
+  });
+
+test('GitHub reads retry a short outage or dropped connection', async (t) => {
+  const calls = replyWith(t, [
+    { status: 503 },
+    new TypeError('fetch failed'),
+    { status: 200, body: [{ number: 7 }] },
+  ]);
+  assert.deepEqual(await retryingClient().request('GET', '/issues'), [
+    { number: 7 },
+  ]);
+  assert.deepEqual(calls, ['GET', 'GET', 'GET']);
+});
+
+test('GitHub retries are bounded and keep the final status', async (t) => {
+  const calls = replyWith(t, [
+    { status: 502 },
+    { status: 504 },
+    { status: 503, body: { message: 'unavailable' } },
+  ]);
+  await assert.rejects(
+    retryingClient().request('PATCH', '/issues/7', { body: { body: 'x' } }),
+    /GitHub API PATCH \/issues\/7 failed \(503\): .*unavailable/,
+  );
+  assert.equal(calls.length, 3);
+});
+
+test('GitHub writes that create something and ordinary errors are not retried', async (t) => {
+  const calls = replyWith(t, [
+    { status: 503 },
+    new TypeError('fetch failed'),
+    { status: 500 },
+    { status: 422 },
+  ]);
+  const client = retryingClient();
+  const comment = { body: { body: 'x' } };
+  await assert.rejects(client.request('POST', '/issues/7/comments', comment), /\(503\)/);
+  await assert.rejects(client.request('POST', '/issues/7/comments', comment), /fetch failed/);
+  await assert.rejects(client.request('GET', '/issues'), /\(500\)/);
+  await assert.rejects(client.request('PUT', '/contents/x'), /\(422\)/);
+  assert.deepEqual(calls, ['POST', 'POST', 'GET', 'PUT']);
 });

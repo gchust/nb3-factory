@@ -118,6 +118,9 @@ test('workflows pass only the allowlisted Agent settings, never every repository
     const value = /^  FACTORY_AGENT_CONFIG_JSON: >-\n((?:    .*\n)+)/m.exec(source)?.[1];
     if (!value) {
       assert.doesNotMatch(source, /FACTORY_AGENT_CONFIG_JSON/, name);
+      // A workflow that runs the configured Agent must hand it every setting,
+      // not a hand-picked subset that silently drops newer ones.
+      assert.doesNotMatch(source, /vars\.CODE_AGENT_ENGINE/, name);
       continue;
     }
     checked++;
@@ -125,5 +128,5 @@ test('workflows pass only the allowlisted Agent settings, never every repository
     const rendered = value.replace(/\$\{\{ toJSON\(vars\.([A-Z0-9_]+)\) \}\}/g, '""');
     assert.deepEqual(Object.keys(JSON.parse(rendered)), AGENT_SETTING_NAMES, name);
   }
-  assert.ok(checked >= 2);
+  assert.ok(checked >= 5);
 });

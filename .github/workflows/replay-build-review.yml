@@ -79,7 +79,12 @@ concurrency:
 
 jobs:
   prepare:
-    if: github.actor == github.repository_owner
+    # The evaluator and the reused report-task-usage.yml both come from the
+    # dispatched commit, so a run from another branch would publish with that
+    # branch's control code. Only the default branch may reassess.
+    if: >-
+      github.actor == github.repository_owner &&
+      github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:

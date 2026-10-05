@@ -26,9 +26,9 @@ test('PR template verification is read-only, tests the merge commit, and cannot 
     });
   for (const [event, actor, sameRepo, dryRun, generate, publish] of [
     ['pull_request', 'owner', true, false, true, false],
-    // A same-repository PR check runs for any author (a skipped check passes).
+    // A PR check runs for any author and fork (a skipped check passes).
     ['pull_request', 'other', true, false, true, false],
-    ['pull_request', 'owner', false, false, false, false],
+    ['pull_request', 'other', false, false, true, false],
     ['workflow_dispatch', 'owner', true, false, true, true],
     ['workflow_dispatch', 'owner', true, true, true, false],
     ['workflow_dispatch', 'other', true, false, false, false],

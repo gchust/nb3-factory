@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { readdirSync, readFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import test from 'node:test';
 import { taskOutcome } from '../task-outcome.mjs';
@@ -327,5 +327,159 @@ test('every remote action is pinned to a full commit SHA with its version noted'
       if (reference.startsWith('./')) continue;
       assert.match(reference, /^[\w.-]+\/[\w./-]+@[0-9a-f]{40} # v\d+\.\d+\.\d+$/, `${name}: ${reference}`);
     }
+  }
+});
+
+test('a prepare failure after ready clears agent:running for any build, not only recoveries', () => {
+  const prepare = workflow.split('\n  prepare:')[1].split('\n  agent:')[0];
+  const cleanup = prepare.split('- name: Report a failure after task preparation')[1];
+  assert.ok(cleanup, 'prepare must report its own late failure');
+  const condition = /if: ([^\n]+)/.exec(cleanup)[1];
+  assert.match(condition, /failure\(\) && steps\.prepare\.outputs\.status == 'ready'/);
+  assert.match(condition, /steps\.prepare\.outputs\.comment_kind != 'reply'/);
+  assert.doesNotMatch(condition, /recovery_run_id/);
+  assert.match(cleanup, /mark-failure\.mjs/);
+});
+
+test('every history publisher creates the shared release when it is missing', () => {
+  const directory = new URL('../../workflows/', import.meta.url);
+  let checked = 0;
+  for (const name of readdirSync(directory).filter((file) => file.endsWith('.yml'))) {
+    const source = readFileSync(new URL(name, directory), 'utf8');
+    if (!source.includes('gh release upload factory-history')) continue;
+    checked++;
+    assert.match(
+      source,
+      /if ! gh release view factory-history --repo "\$GITHUB_REPOSITORY" >\/dev\/null 2>&1; then\n\s+gh release create factory-history /,
+      name,
+    );
+  }
+  assert.ok(checked >= 3);
+});
+
+// The relative modules a script loads, transitively, as .github/... paths.
+function importClosure(...entries) {
+  const scripts = path.resolve(import.meta.dirname, '..');
+  const seen = new Set();
+  const pending = entries.map((entry) => path.join(scripts, entry));
+  while (pending.length) {
+    const file = pending.pop();
+    // Import text inside generated sources (the overlay's eslint.config.js)
+    // is relative to the application, not to the script.
+    if (seen.has(file) || !existsSync(file)) continue;
+    seen.add(file);
+    const source = readFileSync(file, 'utf8');
+    for (const [, specifier] of source.matchAll(
+      /(?:\bfrom|\bimport\s*\(?)\s*['"](\.{1,2}\/[^'"]+)['"]/g,
+    ))
+      pending.push(path.resolve(path.dirname(file), specifier));
+  }
+  return [...seen].map((file) =>
+    path.relative(path.resolve(scripts, '..', '..'), file),
+  );
+}
+
+function pullRequestPaths(name) {
+  const source = readFileSync(
+    new URL(`../../workflows/${name}`, import.meta.url),
+    'utf8',
+  );
+  const block = source.split('  pull_request:\n')[1].split(/\n {2}\w/)[0];
+  return [...block.matchAll(/^ {6}- '([^']+)'$/gm)].map(([, glob]) => {
+    const pattern = glob
+      .replace(/[.+?^${}()|[\]\\]/g, '\\$&')
+      .replace(/\*\*/g, '\0')
+      .replace(/\*/g, '[^/]*')
+      .replace(/\0/g, '.*');
+    return new RegExp(`^${pattern}$`);
+  });
+}
+
+test('the Agent CLI check runs whenever a module the adapters load changes', () => {
+  const filters = pullRequestPaths('agent-adapters.yml');
+  for (const file of importClosure(
+    'install-agent.mjs',
+    'run-agent.mjs',
+    'agent-cli-smoke.mjs',
+    'tests/codex-agent.integration.mjs',
+  ))
+    assert.ok(
+      filters.some((filter) => filter.test(file)),
+      file,
+    );
+});
+
+test('the source baseline check runs whenever a script it runs changes', () => {
+  const filters = pullRequestPaths('source-baseline.yml');
+  const source = readFileSync(
+    new URL('../../workflows/source-baseline.yml', import.meta.url),
+    'utf8',
+  );
+  const run = [
+    ...new Set(
+      [...source.matchAll(/\.github\/scripts\/([\w-]+\.(?:mjs|sh))/g)].map(
+        ([, file]) => file,
+      ),
+    ),
+  ];
+  assert.ok(run.includes('verify.sh'));
+  const verify = readFileSync(
+    path.resolve(import.meta.dirname, '../verify.sh'),
+    'utf8',
+  );
+  const viaVerify = [
+    ...verify.matchAll(/\$script_dir\/([\w-]+\.(?:mjs|sh))/g),
+  ].map(([, file]) => file);
+  const shell = [...run, ...viaVerify].filter((file) => file.endsWith('.sh'));
+  for (const file of [
+    ...importClosure(...[...run, ...viaVerify].filter((file) => file.endsWith('.mjs'))),
+    ...shell.map((file) => `.github/scripts/${file}`),
+  ])
+    assert.ok(
+      filters.some((filter) => filter.test(file)),
+      file,
+    );
+});
+
+test('CI installs the Agent Browser and Agent CLIs build tasks would install', async () => {
+  const { normalizeAgentEnv } = await import('../agent-configuration.mjs');
+  const fallback = normalizeAgentEnv({}).AGENT_BROWSER_VERSION;
+  const browser = `AGENT_BROWSER_VERSION: \${{ vars.AGENT_BROWSER_VERSION || '${fallback}' }}`;
+  const tests = readFileSync(
+    new URL('../../workflows/factory-tests.yml', import.meta.url),
+    'utf8',
+  );
+  assert.ok(workflow.includes(browser));
+  assert.ok(tests.includes(browser));
+  assert.doesNotMatch(tests, /agent-browser@\d/);
+  const adapters = readFileSync(
+    new URL('../../workflows/agent-adapters.yml', import.meta.url),
+    'utf8',
+  );
+  for (const name of [
+    'CODE_AGENT_VERSION',
+    'PI_VERSION',
+    'CODEBUDDY_VERSION',
+    'CLAUDE_CODE_VERSION',
+    'CODEX_VERSION',
+    'OPENCODE_VERSION',
+  ]) {
+    assert.ok(workflow.includes(`${name}: \${{ vars.${name} }}`), name);
+    assert.ok(adapters.includes(`${name}: \${{ vars.${name} }}`), name);
+  }
+});
+
+test('regression checks cancel superseded PR runs but never a pending push or dispatch', () => {
+  const directory = new URL('../../workflows/', import.meta.url);
+  for (const name of ['factory-tests.yml', 'agent-adapters.yml']) {
+    const source = readFileSync(new URL(name, directory), 'utf8');
+    const block = /^concurrency:\n((?: {2}.*\n)+)/m.exec(source)[1];
+    // A shared push group without a queue replaces a pending run with a newer one.
+    assert.match(
+      block,
+      /group: [\w-]+-\$\{\{ github\.event_name == 'pull_request' && format\('pr-\{0\}', github\.event\.pull_request\.number\) \|\| format\('run-\{0\}', github\.run_id\) \}\}/,
+      name,
+    );
+    assert.match(block, /cancel-in-progress: \$\{\{ github\.event_name == 'pull_request' \}\}/, name);
   }
 });

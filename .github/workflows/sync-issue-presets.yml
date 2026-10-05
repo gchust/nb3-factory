@@ -14,12 +14,6 @@ on:
 
 permissions: {}
 
-# Shares the template refresh queue: this commits to develop, and a refresh
-# refuses to publish when develop moved while it was generating.
-concurrency:
-  group: template-refresh-global
-  queue: max
-
 jobs:
   sync:
     if: >-
@@ -28,6 +22,13 @@ jobs:
        contains(github.event.issue.labels.*.name, 'factory:preset')) &&
       (github.event_name != 'label' || github.event.label.name == 'factory:preset' ||
        github.event.changes.name.from == 'factory:preset')
+    # Shares the template refresh queue: this commits to develop, and a refresh
+    # refuses to publish when develop moved while it was generating. Job-level,
+    # so the many unrelated issues events skip at once instead of waiting
+    # behind a refresh of up to two hours.
+    concurrency:
+      group: template-refresh-global
+      queue: max
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
