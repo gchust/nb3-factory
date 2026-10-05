@@ -329,3 +329,29 @@ test('every remote action is pinned to a full commit SHA with its version noted'
     }
   }
 });
+
+test('a prepare failure after ready clears agent:running for any build, not only recoveries', () => {
+  const prepare = workflow.split('\n  prepare:')[1].split('\n  agent:')[0];
+  const cleanup = prepare.split('- name: Report a failure after task preparation')[1];
+  assert.ok(cleanup, 'prepare must report its own late failure');
+  const condition = /if: ([^\n]+)/.exec(cleanup)[1];
+  assert.match(condition, /failure\(\) && steps\.prepare\.outputs\.status == 'ready'/);
+  assert.match(condition, /steps\.prepare\.outputs\.comment_kind != 'reply'/);
+  assert.doesNotMatch(condition, /recovery_run_id/);
+  assert.match(cleanup, /mark-failure\.mjs/);
+});
+
+test('regression checks cancel superseded PR runs but never a pending push or dispatch', () => {
+  const directory = new URL('../../workflows/', import.meta.url);
+  for (const name of ['factory-tests.yml', 'agent-adapters.yml']) {
+    const source = readFileSync(new URL(name, directory), 'utf8');
+    const block = /^concurrency:\n((?: {2}.*\n)+)/m.exec(source)[1];
+    // A shared push group without a queue replaces a pending run with a newer one.
+    assert.match(
+      block,
+      /group: [\w-]+-\$\{\{ github\.event_name == 'pull_request' && format\('pr-\{0\}', github\.event\.pull_request\.number\) \|\| format\('run-\{0\}', github\.run_id\) \}\}/,
+      name,
+    );
+    assert.match(block, /cancel-in-progress: \$\{\{ github\.event_name == 'pull_request' \}\}/, name);
+  }
+});

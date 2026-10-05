@@ -577,6 +577,9 @@ test('refresh workflow has its own queue and isolates generated code from write 
     'utf8',
   );
   assert.match(sync, /group: template-refresh-global\n\s+queue: max/);
+  // Job-level, so issues events the job skips never wait for a refresh.
+  assert.doesNotMatch(sync, /^concurrency:/m);
+  assert.match(sync, /^    concurrency:\n      group: template-refresh-global\n/m);
   // Pull request checks are never skipped for non-owners; publishing still is.
   assert.match(workflow, /\(github\.event_name == 'workflow_dispatch' && github\.actor == github\.repository_owner\) \|\|/);
   const publisher = workflow.split('\n  publish:')[1];
