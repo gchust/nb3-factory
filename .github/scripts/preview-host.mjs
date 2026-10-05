@@ -244,15 +244,160 @@ export function planFrom({ metadata, pr, source, domain }) {
   };
 }
 
-export function renderPreviewComment(plan, note = '') {
+const BUILD_STATUSES = new Set(['success', 'failed', 'unknown']);
+
+/**
+ * Reads what `preview-capacity.sh` printed about the host.
+ *
+ * Strict on purpose: the answer decides which previews are destroyed, so a line
+ * that does not have the expected shape — a banner from the login shell, a
+ * truncated connection — fails the step instead of being read as "no instances".
+ */
+export function parseCapacityListing(text) {
+  let limit;
+  let self;
+  const instances = [];
+  for (const line of String(text).split('\n')) {
+    const fields = line.trim().split(/\s+/).filter(Boolean);
+    if (fields.length === 0) continue;
+    const [kind, ...rest] = fields;
+    if (kind === 'limit' && rest.length === 1 && /^[1-9]\d*$/.test(rest[0]))
+      limit = Number(rest[0]);
+    else if (
+      kind === 'self' &&
+      rest.length === 1 &&
+      ['present', 'absent'].includes(rest[0])
+    )
+      self = rest[0] === 'present';
+    else if (
+      kind === 'instance' &&
+      rest.length === 3 &&
+      /^[1-9]\d*$/.test(rest[0]) &&
+      /^(-|[0-9T:Z-]+)$/.test(rest[1]) &&
+      BUILD_STATUSES.has(rest[2])
+    )
+      instances.push({
+        pr: Number(rest[0]),
+        deployedAt: rest[1] === '-' ? '' : rest[1],
+        buildStatus: rest[2],
+      });
+    else throw new Error(`Unexpected preview capacity line: ${line}`);
+  }
+  if (limit === undefined || self === undefined)
+    throw new Error('Incomplete preview capacity listing');
+  return { limit, self, instances };
+}
+
+/** Whether a deploy for this pull request needs a slot the host does not have. */
+export function needsRoom(listing) {
+  return !listing.self && listing.instances.length >= listing.limit;
+}
+
+/** The delivery status `publish-pr.mjs` records in a build pull request's body. */
+export function buildStatusFromBody(body) {
+  return (
+    /<!-- factory-build-status: (success|failed) -->/.exec(body ?? '')?.[1] ??
+    'unknown'
+  );
+}
+
+/**
+ * Decides which previews to destroy so this pull request's deploy fits.
+ *
+ * `pulls` maps a preview's pull request number to `{ state, body }`, or to
+ * `null` when GitHub has no such pull request. Only a full host evicts
+ * anything, in this order:
+ *
+ *   1. every preview whose pull request is closed, merged or gone. Teardown
+ *      should already have removed it, and nothing else ever will.
+ *   2. previews of failed builds, oldest deployment first. A failed build's
+ *      preview is optional (see `.github/AGENTS.md`), so it gives way to a new
+ *      deploy rather than the new deploy being refused.
+ *   3. previews whose build status nobody recorded — deployed before the host
+ *      recorded it, for a pull request whose body carries no status either —
+ *      oldest deployment first.
+ *
+ * The build status the host recorded wins over the pull request body, because
+ * it describes the build the preview actually serves. A preview of a
+ * successful build for an open pull request is never evicted. Failed and
+ * unknown previews are evicted only when that makes room; when it cannot, the
+ * deploy is skipped and they stay up.
+ */
+export function planCapacity({ listing, pr, pulls = new Map() }) {
+  const count = listing.instances.length;
+  const result = (room, evict) => ({
+    room,
+    evict,
+    count,
+    limit: listing.limit,
+  });
+  if (!needsRoom(listing)) return result(true, []);
+
+  const others = listing.instances.filter((instance) => instance.pr !== pr);
+  const closed = others
+    .filter((instance) => {
+      const pull = pulls.get(instance.pr);
+      return pull === null || (pull !== undefined && pull.state !== 'open');
+    })
+    .map((instance) => ({ ...instance, reason: 'closed' }));
+  const open = others.filter(
+    (instance) => pulls.get(instance.pr)?.state === 'open',
+  );
+  const statusOf = (instance) =>
+    instance.buildStatus !== 'unknown'
+      ? instance.buildStatus
+      : buildStatusFromBody(pulls.get(instance.pr)?.body);
+  // An instance without a recorded deployment time sorts as the oldest.
+  const oldestFirst = (a, b) =>
+    a.deployedAt.localeCompare(b.deployedAt) || a.pr - b.pr;
+  const optional = ['failed', 'unknown'].flatMap((reason) =>
+    open
+      .filter((instance) => statusOf(instance) === reason)
+      .sort(oldestFirst)
+      .map((instance) => ({ ...instance, reason })),
+  );
+
+  const needed = count - listing.limit + 1 - closed.length;
+  if (needed <= 0) return result(true, closed);
+  if (optional.length < needed) return result(false, closed);
+  return result(true, [...closed, ...optional.slice(0, needed)]);
+}
+
+/** The pull request notice for a deploy skipped because the host is full. */
+export function capacitySkipNote(capacity, runUrl) {
+  return [
+    `预览机名额已满（${capacity.count}/${capacity.limit}），且没有可以回收的预览：已关闭 PR 的预览和失败构建的预览都已让出名额，其余都是开放 PR 的成功构建，不会被挤掉。`,
+    `释放名额：关闭或合并不再需要的 PR（Reclaim Task Preview 会自动回收），或在预览机上运行 \`preview-destroy.sh <PR 号>\`；然后在 Actions → Deploy Task Preview → Run workflow 填入[本次搭建运行](${runUrl})的 run ID 补发。这不改变搭建报告和 PR 中记录的验收状态。`,
+  ].join('\n> ');
+}
+
+export const PREVIEW_EVICTED_MARKER = '<!-- factory-preview-evicted -->';
+
+/** The notice left on an open pull request whose preview was evicted. */
+export function renderEvictionComment({ reason, forPr }) {
+  const why =
+    reason === 'failed' ? '这是失败构建的预览' : '这个预览没有记录搭建状态';
+  return [
+    PREVIEW_EVICTED_MARKER,
+    '## 预览环境已回收',
+    '',
+    `预览机名额已满，为部署 #${forPr} 的预览回收了本 PR 的预览：${why}，按部署时间最早优先让出名额。开放 PR 的成功构建预览不会被这样回收。`,
+    '',
+    '需要时可在 Actions → Deploy Task Preview → Run workflow 填入本 PR 的搭建运行 ID 重新部署；名额仍满时会跳过并在 PR 上说明。',
+  ].join('\n');
+}
+
+export function renderPreviewComment(
+  plan,
+  note = '',
+  headline = '**预览部署或公网访问检查失败，暂无已确认可用的地址。**',
+) {
   const lines = [
     `${PREVIEW_COMMENT_PREFIX}${plan.runId}:${plan.runAttempt} -->`,
     ...(note ? [] : [PREVIEW_VERIFIED_MARKER]),
     '## 预览环境',
     '',
-    ...(note
-      ? ['**预览部署或公网访问检查失败，暂无已确认可用的地址。**']
-      : [`**预览地址：${plan.url}**`]),
+    ...(note ? [headline] : [`**预览地址：${plan.url}**`]),
     '',
     ...(note
       ? []

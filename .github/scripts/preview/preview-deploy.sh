@@ -29,13 +29,15 @@ payload=""
 payload_url=""
 payload_sha256=""
 fetch_proxy="${PREVIEW_FETCH_PROXY:-}"
+build_status=""
 redeploy=false
 
 usage() {
   cat >&2 <<'USAGE'
 Usage: preview-deploy.sh --pr <number> --sha <commit> --deps-key <key> \
          --payload <dist.tar.gz> [--payload-url <url> --payload-sha256 <digest>] \
-         [--fetch-proxy <url>] [--domain <preview domain>] [--redeploy]
+         [--fetch-proxy <url>] [--domain <preview domain>] \
+         [--build-status success|failed] [--redeploy]
 
 With --payload-url the payload is fetched from that URL when it is missing or
 fails its digest, so a failed transfer is retried by running this again rather
@@ -47,6 +49,10 @@ alone: one build can be requested twice — the task workflow dispatches this
 deploy explicitly and GitHub also raises `workflow_run` for the same completed
 run — and the second request would otherwise replace a preview someone may
 already be using. --redeploy replaces it anyway.
+
+--build-status records whether the task that produced this build was accepted.
+A full host evicts previews of failed builds first (see preview-capacity.sh), so
+an instance deployed without it is treated as unknown.
 USAGE
   exit 2
 }
@@ -60,6 +66,7 @@ while [[ $# -gt 0 ]]; do
     --payload-url) payload_url="${2:-}"; shift 2 ;;
     --payload-sha256) payload_sha256="${2:-}"; shift 2 ;;
     --fetch-proxy) fetch_proxy="${2:-}"; shift 2 ;;
+    --build-status) build_status="${2:-}"; shift 2 ;;
     --redeploy) redeploy=true; shift ;;
     --domain) PREVIEW_DOMAIN="${2:-}"; shift 2 ;;
     -h|--help) usage ;;
@@ -69,6 +76,8 @@ done
 
 [[ -n "$pr" && -n "$sha" && -n "$deps_key" && -n "$payload" ]] || usage
 require_positive_integer "$pr"
+[[ -z "$build_status" || "$build_status" == success || "$build_status" == failed ]] ||
+  die "--build-status must be success or failed, got: $build_status"
 [[ -z "$payload_url" || -n "$payload_sha256" ]] ||
   die "--payload-url requires --payload-sha256; a fetched payload is never deployed unverified"
 [[ -n "$payload_url" || -f "$payload" ]] || die "payload not found: $payload"
@@ -112,7 +121,9 @@ fi
 
 existing_count="$(list_instances | wc -l | tr -d ' ')"
 if [[ ! -d "$dir" && "$existing_count" -ge "$PREVIEW_MAX_INSTANCES" ]]; then
-  die "already $existing_count previews (limit $PREVIEW_MAX_INSTANCES); run preview-gc.sh or preview-destroy.sh <pr> first"
+  # CI checks this with preview-capacity.sh and makes room before it uploads a
+  # payload, so reaching it means something else filled the host in between.
+  die "already $existing_count previews (limit $PREVIEW_MAX_INSTANCES); run preview-destroy.sh <pr> for a preview nobody needs first"
 fi
 
 log "deploying PR #$pr ($sha) as $url"
@@ -295,6 +306,7 @@ deployedAt=$deployed_at
 host=$host
 url=$url
 container=$name
+buildStatus=${build_status:-unknown}
 ENV
 
 if ! wait_for_preview "$host" 90; then
