@@ -103,7 +103,7 @@ jobs:
       github.event_name != 'issues' ||
       (!contains(github.event.issue.labels.*.name, 'factory:external') &&
        contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.issue.author_association))
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
     permissions:
       actions: read
@@ -291,7 +291,7 @@ jobs:
       FACTORY_BUILD_REVIEW_IDLE_TIMEOUT_SECONDS: ${{ vars.FACTORY_BUILD_REVIEW_IDLE_TIMEOUT_SECONDS || '600' }}
       CODE_AGENT_ENGINE: ${{ vars.CODE_AGENT_ENGINE }}
     if: needs.prepare.outputs.status == 'ready' && needs.prepare.outputs.comment_kind != 'reply'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     # GitHub-hosted runners allow at most six hours per job. The factory uses
     # five hours as a soft runner budget, then checkpoints and continues in a
     # new run at most once. Task-wide repair/failure counters survive Handoff.
@@ -817,7 +817,7 @@ jobs:
   verify-final:
     needs: [prepare, agent]
     if: needs.agent.result == 'success' && needs.agent.outputs.handoff != 'true'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 90
     env:
       FACTORY_BUILD_TARGET: linux-x64
@@ -967,7 +967,7 @@ jobs:
   publish:
     needs: [prepare, agent, verify-final]
     if: needs.verify-final.result == 'success'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
     permissions:
       contents: write
@@ -1049,7 +1049,7 @@ jobs:
       needs.agent.outputs.handoff != 'true' &&
       needs.agent.outputs.patch_available == 'true' &&
       (needs.agent.result != 'success' || needs.verify-final.result != 'success')
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
     permissions:
       contents: write
@@ -1062,7 +1062,7 @@ jobs:
   preview-build-failed:
     needs: [prepare, agent, publish-failed]
     if: always() && !cancelled() && needs.publish-failed.result == 'success'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     permissions:
       contents: read
@@ -1209,7 +1209,7 @@ jobs:
       (needs.agent.result != 'success' ||
        needs.verify-final.result != 'success' ||
        needs.publish.result != 'success')
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
     permissions:
       contents: read
@@ -1256,7 +1256,7 @@ jobs:
         publish-reply,
       ]
     if: always() && needs.prepare.outputs.status == 'ready' && needs.prepare.outputs.comment_kind != 'reply'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 5
     continue-on-error: true
     permissions:
@@ -1287,7 +1287,7 @@ jobs:
       needs.prepare.outputs.status == 'ready' &&
       needs.prepare.outputs.build_comment_id != '' &&
       needs.agent.outputs.handoff != 'true'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 25
     permissions:
       contents: read
@@ -1341,7 +1341,7 @@ jobs:
   publish-reply:
     needs: [prepare, reply]
     if: always() && needs.reply.result == 'success'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 5
     permissions:
       contents: read
@@ -1372,7 +1372,7 @@ jobs:
   dispatch-reply-history:
     needs: [prepare, reply, publish-reply]
     if: always() && needs.prepare.outputs.status == 'ready' && needs.prepare.outputs.build_comment_id != '' && needs.prepare.outputs.comment_kind == 'reply'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 5
     permissions:
       actions: write

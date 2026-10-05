@@ -344,6 +344,22 @@ test('each remote action uses one pinned release across all workflows', () => {
   }
 });
 
+test('every job runs on a pinned runner image, never a moving label', () => {
+  // ubuntu-latest moves to a new release on GitHub's schedule; the browser,
+  // fonts, ffmpeg and prebuilt binaries the jobs use depend on the image.
+  const directory = new URL('../../workflows/', import.meta.url);
+  let checked = 0;
+  for (const name of readdirSync(directory).filter((file) => file.endsWith('.yml'))) {
+    const source = readFileSync(new URL(name, directory), 'utf8');
+    assert.doesNotMatch(source, /-latest\b/, name);
+    for (const [, runner] of source.matchAll(/^\s*runs-on:\s*(.+)$/gm)) {
+      checked++;
+      assert.match(runner, /^ubuntu-\d{2}\.\d{2}$/, `${name}: ${runner}`);
+    }
+  }
+  assert.ok(checked >= 50);
+});
+
 test('a prepare failure after ready clears agent:running for any build, not only recoveries', () => {
   const prepare = workflow.split('\n  prepare:')[1].split('\n  agent:')[0];
   const cleanup = prepare.split('- name: Report a failure after task preparation')[1];

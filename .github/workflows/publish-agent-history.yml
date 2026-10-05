@@ -33,7 +33,7 @@ jobs:
     needs: dispatch-gate
     if: >-
       !cancelled() && needs.dispatch-gate.outputs.covered != 'true'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
     permissions:
       actions: read
