@@ -7,6 +7,7 @@ import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
 import { resolveControlSha, verifyControlSha } from '../handoff-control.mjs';
+import { dispatchContinuation } from '../handoff.mjs';
 
 const scripts = path.resolve(import.meta.dirname, '..');
 const A = 'a'.repeat(40);
@@ -156,6 +157,53 @@ test('dispatch carries the pinned SHA, source run, continuation and build commen
       issue_number: 165, control_sha: A, build_comment_id: 56789, previous_run_id: 23456, continuation: 1,
     },
   } });
+});
+
+test('dispatch retries a 429, a 5xx, a network error or a timeout with bounded backoff', async () => {
+  const responses = [
+    () => new Response('slow down', { status: 429 }),
+    () => { throw new TypeError('fetch failed'); },
+    () => { throw Object.assign(new Error('timed out'), { name: 'TimeoutError' }); },
+    () => new Response(null, { status: 204 }),
+  ];
+  const calls = []; const pauses = [];
+  await dispatchContinuation('https://api.test/repos/o/r/dispatches', {
+    token: 't', body: { event_type: 'code-agent-continue' },
+    fetcher: async (url, options) => { calls.push(options); return responses[calls.length - 1](); },
+    pause: async (ms) => { pauses.push(ms); },
+  });
+  assert.equal(calls.length, 4);
+  assert.deepEqual(pauses, [1000, 3000, 8000]);
+  for (const options of calls) {
+    assert.equal(options.body, JSON.stringify({ event_type: 'code-agent-continue' }));
+    assert.ok(options.signal instanceof AbortSignal, 'every attempt is bounded by a timeout');
+  }
+});
+
+test('dispatch gives up after its retries and never retries another refusal', async () => {
+  let calls = 0;
+  await assert.rejects(dispatchContinuation('https://api.test/d', {
+    token: 't', body: {}, pause: async () => {},
+    fetcher: async () => { calls++; return new Response('unavailable', { status: 503 }); },
+  }), /Failed to dispatch continuation: 503 unavailable/);
+  assert.equal(calls, 4);
+  calls = 0;
+  await assert.rejects(dispatchContinuation('https://api.test/d', {
+    token: 't', body: {}, pause: async () => { throw new Error('must not wait'); },
+    fetcher: async () => { calls++; return new Response('Bad credentials', { status: 401 }); },
+  }), /Failed to dispatch continuation: 401 Bad credentials/);
+  assert.equal(calls, 1);
+});
+
+test('a dispatch with no response is aborted by its timeout and retried', async () => {
+  let calls = 0;
+  await dispatchContinuation('https://api.test/d', {
+    token: 't', body: {}, timeoutMs: 20, pause: async () => {},
+    fetcher: (url, { signal }) => (++calls === 1
+      ? new Promise((resolve, reject) => signal.addEventListener('abort', () => reject(signal.reason)))
+      : Promise.resolve(new Response(null, { status: 204 }))),
+  });
+  assert.equal(calls, 2);
 });
 
 test('real Git A -> B -> C preserves the pinned evaluator but refuses another continuation', (t) => {
