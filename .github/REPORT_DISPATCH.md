@@ -35,4 +35,6 @@ Actions → **Publish Task Visual Report**、**Publish Agent History** 或
 
 `Report Task Usage` 现在同时生成固定 v2 模板的交付报告；其下游 Pages 作业归档、显式部署并核对报告后回贴 Issue / PR 链接。每种已接单的结束状态均可生成，不只成功交付。沿用当前调度，不新增模型调用。
 
+核对报告时每次请求带唯一查询参数绕过 CDN 缓存，仍要求页面里的报告标识与本轮一致；Pages CDN 常在部署后数分钟才换上新页面，因此按 5、10、15、20、30、40、60 秒逐步拉长间隔重试，共约 3 分钟后才判定失败。
+
 首次配置、固定/最新入口、复盘和逐条验收展示以及补发说明见 [reports/README.md](reports/README.md)。Pages 发布失败不改变来源任务结果，原有用量回执与下载 Artifact 保留。

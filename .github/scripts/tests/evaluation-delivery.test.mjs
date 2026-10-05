@@ -135,6 +135,93 @@ test('400/401/403/404/409/413/422 fail fast with a category and no retry loop', 
   }
 });
 
+test('a refusal keeps a short sanitized error code and message from at most a few KB of its body', async t => {
+  const { zip, subject } = await registered(t);
+  const huge = `${'x'.repeat(300)}${'y'.repeat(100_000)}`;
+  const cases = [
+    [{ error: { code: 'INVALID_FEATURE_POINT', message: 'feature\npoint\u0007 missing for receiver-token' } }, 'INVALID_FEATURE_POINT: feature point missing for [redacted]'],
+    [{ code: 'E_SCHEMA', message: 'bad field' }, 'E_SCHEMA: bad field'],
+    [{ errors: [{ message: 'first problem' }, { message: 'second' }] }, 'first problem'],
+    [{ error: 'injected' }, 'injected'],
+    ['plain reason\r\nsecond line', 'plain reason second line'],
+    ['<html><body>502 proxy page</body></html>', null],
+    [{ ok: false }, null],
+  ];
+  for (const [body, detail] of cases) {
+    const receiver = await startReceiver(t, { faults: [{ status: 400, body }] });
+    const result = await deliverBundle({ zip, subject, config: configFor(receiver), pause: noPause });
+    assert.equal(result.state, 'rejected');
+    assert.equal(result.reason, 'bad-request', 'the status category is unchanged');
+    assert.equal(result.detail, detail, JSON.stringify(body));
+    assert.equal(result.attempts[0].detail, detail);
+  }
+  const receiver = await startReceiver(t, { faults: [{ status: 422, body: { error: { code: 'E', message: huge } } }, { status: 422, body: huge }] });
+  for (let n = 0; n < 2; n++) {
+    const result = await deliverBundle({ zip, subject, config: configFor(receiver), pause: noPause });
+    assert.equal(result.reason, 'unprocessable');
+    if (n === 0) assert.equal(result.detail, null, 'a JSON body cut off at the read limit is not parsed');
+    else {
+      assert.equal(result.detail.length, 200);
+      assert.match(result.detail, /^x+$/);
+    }
+  }
+});
+
+test('the scheduled scan resends a rejection once after an hour, records it, then leaves it for retry-rejected', async t => {
+  const receiver = await startReceiver(t, { faults: [{ status: 400, body: { error: { code: 'BAD', message: 'briefly wrong' } } }, { status: 400 }] });
+  // Planning requires https; the placeholder endpoint is routed to the loopback receiver.
+  const env = { EVALUATION_ENDPOINT: 'https://r.example/i' };
+  const sendEnv = { ...env, EVALUATION_TOKEN: receiver.token };
+  const route = (url, options) => (url === env.EVALUATION_ENDPOINT ? fetch(receiver.url, options) : fetcherFor(client)(url, options));
+  const { client } = await registered(t, { env: { FACTORY_EVALUATION_DELIVERY: 'true', ...env } });
+  const at = hours => new Date(Date.parse('2026-10-01T00:00:00Z') + hours * 3600_000);
+  const scan = hours => planDeliveries(client, { mode: 'scan', env, now: at(hours), fetcher: fetcherFor(client) });
+  const send = async (plan, hours) => {
+    const sent = await sendDeliveries(plan, { env: sendEnv, fetcher: route, pause: noPause });
+    await recordDeliveries(client, sent.results, at(hours));
+    return sent.results;
+  };
+  let plan = await scan(0);
+  assert.equal(plan.items[0].autoRetry, undefined, 'a pending record is not an automatic retry');
+  let [result] = await send(plan, 0);
+  assert.equal(result.state, 'rejected');
+  let [entry] = (await readOutbox(client)).outbox.entries;
+  assert.equal(entry.detail, 'BAD: briefly wrong', 'the sanitized receiver error is recorded');
+  assert.equal(entry.autoRetries ?? 0, 0);
+  assert.equal((await scan(0.5)).items.length, 0, 'not resent within the minimum delay');
+  plan = await scan(1);
+  assert.equal(plan.items.length, 1);
+  assert.equal(plan.items[0].autoRetry, true);
+  [result] = await send(plan, 1);
+  assert.equal(result.state, 'rejected');
+  [entry] = (await readOutbox(client)).outbox.entries;
+  assert.equal(entry.autoRetries, 1);
+  assert.equal(entry.lastAutoRetryAt, at(1).toISOString());
+  assert.equal(entry.detail, 'injected');
+  assert.equal((await scan(48)).items.length, 0, 'the automatic retry is bounded');
+  // A manual retry is unbounded and not counted; once stored, nothing resends it.
+  plan = await planDeliveries(client, { mode: 'retry-rejected', env, now: at(49), fetcher: fetcherFor(client) });
+  assert.equal(plan.items[0].autoRetry, undefined);
+  [result] = await send(plan, 49);
+  assert.equal(result.state, 'stored');
+  [entry] = (await readOutbox(client)).outbox.entries;
+  assert.equal(entry.autoRetries, 1);
+  assert.equal(entry.detail, null);
+  assert.equal((await scan(100)).items.length, 0);
+  assert.equal(receiver.requests.length, 3);
+});
+
+test('a scan never automatically resends a record that already used its retry limit', async t => {
+  const { client } = await registered(t, { env: { FACTORY_EVALUATION_DELIVERY: 'true', EVALUATION_ENDPOINT: 'https://r.example/i' } });
+  const env = { EVALUATION_ENDPOINT: 'https://r.example/i' };
+  const [queued] = (await readOutbox(client)).outbox.entries;
+  const { id, targetId, type, key, revision, bundleSha256 } = queued;
+  await recordDeliveries(client, [{ id, targetId, type, key, revision, bundleSha256, state: 'rejected', reason: 'retry-limit', receipt: null,
+    attempts: [{ at: '2026-10-01T00:00:00.000Z', httpStatus: 503, outcome: 'retryable', error: 'http-503', detail: null, durationMs: 1 }] }], new Date('2026-10-01T00:00:00Z'));
+  assert.equal((await planDeliveries(client, { mode: 'scan', env, now: new Date('2026-10-03T00:00:00Z'), fetcher: fetcherFor(client) })).items.length, 0);
+  assert.equal((await planDeliveries(client, { mode: 'retry-rejected', env, now: new Date('2026-10-03T00:00:00Z'), fetcher: fetcherFor(client) })).items.length, 1);
+});
+
 test('redirects are refused, so credentials are never forwarded to another origin', async t => {
   const thief = await startReceiver(t);
   const receiver = await startReceiver(t, { faults: [{ status: 307, headers: { location: thief.url } }] });

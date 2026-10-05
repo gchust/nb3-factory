@@ -366,14 +366,19 @@ export function pagesUrl(base,relative) {
     throw new Error('Invalid Pages URL');
   return new URL(relative,`${u.href.replace(/\/$/,'')}/`).href;
 }
-export async function verifyPage(url,id,{fetcher=fetch,pause=sleep,attempts=6}={}) {
-  for(let n=0;n<attempts;n++) {
+// The Pages CDN often serves the previous copy for minutes after a deploy:
+// growing waits total three minutes before giving up.
+export const VERIFY_DELAYS_MS=[5000,10000,15000,20000,30000,40000,60000];
+export async function verifyPage(url,id,{fetcher=fetch,pause=sleep,delays=VERIFY_DELAYS_MS}={}) {
+  for(let n=0;n<=delays.length;n++) {
+    // A unique query string bypasses cached copies; the identity stamp is still required.
+    const probe=new URL(url);probe.searchParams.set('factory-verify',`${Date.now().toString(36)}-${n}`);
     try {
       // No repository credentials are ever sent to the public site.
-      const response=await fetcher(url,{signal:AbortSignal.timeout(15000),cache:'no-store'});
+      const response=await fetcher(probe.href,{signal:AbortSignal.timeout(15000),cache:'no-store'});
       if(response.ok && (await response.text()).includes(`name="factory-report-id" content="${escape(id)}"`)) return;
     } catch { /* Retry an unavailable Pages response. */ }
-    if(n+1<attempts) await pause(5000);
+    if(n<delays.length) await pause(delays[n]);
   }
   throw new Error('Pages report is not accessible with the expected source identity yet');
 }

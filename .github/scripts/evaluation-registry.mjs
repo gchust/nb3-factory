@@ -215,6 +215,13 @@ export async function recordDeliveries(client, results, now = new Date()) {
       entry.history = [...entry.history, ...result.attempts].slice(-10);
       entry.receipt = result.receipt ?? entry.receipt;
       entry.reason = result.reason ?? null;
+      // Short sanitized receiver error (code / message); never the response body.
+      entry.detail = result.detail ?? null;
+      // A scan's automatic resend of a rejection counts once, whatever its outcome.
+      if (result.autoRetry) {
+        entry.autoRetries = (entry.autoRetries ?? 0) + 1;
+        entry.lastAutoRetryAt = now.toISOString();
+      }
       entry.updatedAt = now.toISOString();
       changed = true;
     }

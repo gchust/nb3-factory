@@ -12,7 +12,7 @@ on:
   workflow_dispatch:
     inputs:
       mode:
-        description: replay one registered revision / scan pending / retry-rejected after fixing config / backfill a newly deployed receiver
+        description: replay one registered revision / scan pending (and retry each rejection once) / retry-rejected after fixing config / backfill a newly deployed receiver
         required: true
         type: choice
         options: [replay, scan, retry-rejected, backfill]
@@ -37,6 +37,7 @@ on:
         type: string
   schedule:
     # Small compensation scan of queued records only; it does nothing unless delivery is enabled.
+    # It also resends each rejected record once, an hour or more after the rejection.
     - cron: '41 */6 * * *'
 
 permissions: {}
