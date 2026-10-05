@@ -186,14 +186,27 @@ export function assertSafeChangedPaths(paths) {
   }
 }
 
+// GitHub answers 502/503/504 and drops connections during short outages.
+// Only requests that leave the same state when repeated are retried: a POST
+// that creates a comment, ref or Issue could otherwise create it twice.
+const RETRYABLE_METHODS = new Set(['GET', 'HEAD', 'PUT', 'PATCH']);
+const RETRYABLE_STATUSES = new Set([502, 503, 504]);
+export const GITHUB_RETRY_DELAYS_MS = [1000, 3000, 8000];
+
 export class GitHubClient {
-  constructor({ token, repository, apiUrl = 'https://api.github.com' }) {
+  constructor({
+    token,
+    repository,
+    apiUrl = 'https://api.github.com',
+    retryDelays = GITHUB_RETRY_DELAYS_MS,
+  }) {
     if (!token) throw new Error('GITHUB_TOKEN is required.');
     if (!repository?.includes('/'))
       throw new Error('GITHUB_REPOSITORY is invalid.');
     this.token = token;
     this.repository = repository;
     this.apiUrl = apiUrl.replace(/\/$/, '');
+    this.retryDelays = retryDelays;
   }
 
   async request(method, route, { body, query, allow404 = false } = {}) {
@@ -202,26 +215,48 @@ export class GitHubClient {
       if (value != null) url.searchParams.set(key, String(value));
     }
 
-    const response = await fetch(url, {
-      method,
-      headers: {
-        Accept: 'application/vnd.github+json',
-        Authorization: `Bearer ${this.token}`,
-        'User-Agent': 'gchust-nb3-factory',
-        'X-GitHub-Api-Version': '2022-11-28',
-      },
-      body: body == null ? undefined : JSON.stringify(body),
-    });
+    const delays = RETRYABLE_METHODS.has(method) ? this.retryDelays : [];
+    for (let attempt = 0; ; attempt++) {
+      const retry = attempt < delays.length;
+      let response;
+      try {
+        response = await fetch(url, {
+          method,
+          headers: {
+            Accept: 'application/vnd.github+json',
+            Authorization: `Bearer ${this.token}`,
+            'User-Agent': 'gchust-nb3-factory',
+            'X-GitHub-Api-Version': '2022-11-28',
+          },
+          body: body == null ? undefined : JSON.stringify(body),
+        });
+      } catch (error) {
+        if (!retry) throw error;
+        console.warn(
+          `GitHub API ${method} ${route} unreachable (${error.cause?.code || error.name}); retrying.`,
+        );
+        await new Promise((resolve) => setTimeout(resolve, delays[attempt]));
+        continue;
+      }
 
-    if (allow404 && response.status === 404) return null;
-    if (!response.ok) {
-      const detail = await response.text();
-      throw new Error(
-        `GitHub API ${method} ${route} failed (${response.status}): ${detail.slice(0, 1000)}`,
-      );
+      if (allow404 && response.status === 404) return null;
+      if (retry && RETRYABLE_STATUSES.has(response.status)) {
+        await response.body?.cancel();
+        console.warn(
+          `GitHub API ${method} ${route} failed (${response.status}); retrying.`,
+        );
+        await new Promise((resolve) => setTimeout(resolve, delays[attempt]));
+        continue;
+      }
+      if (!response.ok) {
+        const detail = await response.text();
+        throw new Error(
+          `GitHub API ${method} ${route} failed (${response.status}): ${detail.slice(0, 1000)}`,
+        );
+      }
+      if (response.status === 204) return null;
+      return response.json();
     }
-    if (response.status === 204) return null;
-    return response.json();
   }
 
   getRepository() {
