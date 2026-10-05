@@ -1,0 +1,885 @@
+{
+  "schemaVersion": 1,
+  "type": "evaluation-report",
+  "source": {
+    "producer": "nb3-factory",
+    "instance": "gchust/nb3-factory",
+    "project": "gchust/nb3-factory",
+    "exporter": {
+      "version": 1,
+      "controlSha": "2235c2782b36b360b6b0303456a7df729df265f9",
+      "runId": 37332600202,
+      "attempt": 1
+    }
+  },
+  "run": {
+    "key": "gchust/nb3-factory/issues/570/initial",
+    "kind": "initial",
+    "identity": "recorded",
+    "batchKey": null,
+    "caseKey": null,
+    "sampleIndex": null,
+    "sampleKey": null,
+    "task": {
+      "repository": "gchust/nb3-factory",
+      "issue": 570,
+      "buildCommentId": null,
+      "title": "员工 IT 报修与处理"
+    },
+    "case": {
+      "source": "preset",
+      "presetIssueNumber": 201,
+      "capturedAt": "2026-10-05T10:47:21Z",
+      "inputHash": "1498b1912f4cfb97962645218e44abda1cfe0572c631c983bd028c3abe39019e",
+      "reviewHash": "8aa993ba566c2a57c052c029c7c3fd09f112da3eda31ab8883e716bf0dc78c05"
+    }
+  },
+  "revision": 1,
+  "createdAt": "2026-10-05T15:25:15Z",
+  "precedence": {
+    "producer": {
+      "runId": 37298786425,
+      "attempt": 1,
+      "startedAt": "2026-10-05T10:47:12Z"
+    },
+    "executionOrder": 1,
+    "knownLaterExecutions": 0,
+    "chainTerminal": false,
+    "reviewRubric": 0,
+    "reviewState": "not-reviewed",
+    "review": {
+      "kind": null,
+      "at": null,
+      "runId": null,
+      "attempt": null
+    },
+    "qaCoverage": "complete"
+  },
+  "baseline": {
+    "track": "published-template",
+    "application": {
+      "baseRef": "develop",
+      "baseSha": "2a5f7706f89d5282c7af6e0e83856ba984ca01e2",
+      "candidate": {
+        "patchSha256": "3b5a6cfe872e811ceabdd59599d94e362424904527600f1364453b48b2987d68",
+        "headSha": null
+      }
+    },
+    "factory": {
+      "controlSha": "2a5f7706f89d5282c7af6e0e83856ba984ca01e2",
+      "entrySha": "2a5f7706f89d5282c7af6e0e83856ba984ca01e2"
+    },
+    "template": {
+      "creatorVersion": "0.1.0-beta.24",
+      "templateVersion": "1.0.0-beta.50"
+    },
+    "dependencies": {
+      "lockfileSha256": "fc4f398ef6cf510da8958ca26db0bea4c17ab81019ac0e2c464503439c7de0be",
+      "baselineFingerprint": "8195a432e0287f6b7c9c7d552720f7aaa45b2c29ede1f6fb64e317d13b0bbef2",
+      "packages": [
+        {
+          "name": "@nocobase/ai-employee",
+          "version": "0.2.0-beta.8"
+        },
+        {
+          "name": "@nocobase/ai-employee-avatars",
+          "version": "1.0.2"
+        },
+        {
+          "name": "@nocobase/app-cli",
+          "version": "1.0.0-beta.9"
+        },
+        {
+          "name": "@nocobase/app-client",
+          "version": "1.0.0-beta.23"
+        },
+        {
+          "name": "@nocobase/app-plugin-ai-employee",
+          "version": "1.0.0-beta.26"
+        },
+        {
+          "name": "@nocobase/app-plugin-ai-knowledge-base",
+          "version": "0.1.0-beta.9"
+        },
+        {
+          "name": "@nocobase/app-plugin-api-keys",
+          "version": "0.1.0-beta.9"
+        },
+        {
+          "name": "@nocobase/app-plugin-authentication",
+          "version": "1.0.0-beta.24"
+        },
+        {
+          "name": "@nocobase/app-plugin-authorization",
+          "version": "0.2.0-beta.21"
+        },
+        {
+          "name": "@nocobase/app-plugin-authz-default-access",
+          "version": "0.1.0-beta.6"
+        },
+        {
+          "name": "@nocobase/app-plugin-authz-restriction-rules",
+          "version": "0.1.0-beta.5"
+        },
+        {
+          "name": "@nocobase/app-plugin-authz-sharing-rules",
+          "version": "0.1.0-beta.6"
+        },
+        {
+          "name": "@nocobase/app-plugin-database-explorer",
+          "version": "0.1.0-beta.7"
+        },
+        {
+          "name": "@nocobase/app-plugin-file",
+          "version": "0.1.0-beta.16"
+        },
+        {
+          "name": "@nocobase/app-plugin-i18n",
+          "version": "0.1.0-beta.10"
+        },
+        {
+          "name": "@nocobase/app-plugin-mail",
+          "version": "0.1.0-beta.0"
+        },
+        {
+          "name": "@nocobase/app-plugin-notification",
+          "version": "0.1.0-beta.18"
+        },
+        {
+          "name": "@nocobase/app-plugin-notification-in-app",
+          "version": "0.2.0-beta.18"
+        },
+        {
+          "name": "@nocobase/app-plugin-notification-providers",
+          "version": "0.2.0-beta.7"
+        },
+        {
+          "name": "@nocobase/app-plugin-scheduler",
+          "version": "0.1.0-beta.9"
+        },
+        {
+          "name": "@nocobase/app-plugin-template-print",
+          "version": "0.0.2-beta.0"
+        },
+        {
+          "name": "@nocobase/app-plugin-users",
+          "version": "1.0.0-beta.12"
+        },
+        {
+          "name": "@nocobase/app-plugin-workflow",
+          "version": "1.0.0-beta.29"
+        },
+        {
+          "name": "@nocobase/app-server",
+          "version": "1.0.0-beta.29"
+        },
+        {
+          "name": "@nocobase/app-skills",
+          "version": "0.1.0-beta.19"
+        },
+        {
+          "name": "@nocobase/app-websocket",
+          "version": "0.0.1"
+        },
+        {
+          "name": "@nocobase/authorization",
+          "version": "0.1.0-beta.10"
+        },
+        {
+          "name": "@nocobase/caching",
+          "version": "0.1.0-beta.2"
+        },
+        {
+          "name": "@nocobase/config",
+          "version": "0.1.0-beta.1"
+        },
+        {
+          "name": "@nocobase/cron",
+          "version": "0.1.0"
+        },
+        {
+          "name": "@nocobase/db",
+          "version": "1.0.0-beta.16"
+        },
+        {
+          "name": "@nocobase/db-sqlite",
+          "version": "0.1.0-beta.3"
+        },
+        {
+          "name": "@nocobase/dev-config",
+          "version": "0.1.0-beta.14"
+        },
+        {
+          "name": "@nocobase/drive",
+          "version": "0.1.0-beta.4"
+        },
+        {
+          "name": "@nocobase/hub-cli",
+          "version": "0.1.0-beta.0"
+        },
+        {
+          "name": "@nocobase/i18n",
+          "version": "1.0.0-beta.4"
+        },
+        {
+          "name": "@nocobase/logging",
+          "version": "0.1.0-beta.6"
+        },
+        {
+          "name": "@nocobase/queue",
+          "version": "0.1.0-beta.7"
+        },
+        {
+          "name": "@nocobase/repository-input",
+          "version": "0.1.0-beta.1"
+        },
+        {
+          "name": "@nocobase/service-provider",
+          "version": "0.0.2-beta.1"
+        },
+        {
+          "name": "@nocobase/session",
+          "version": "0.1.0-beta.2"
+        },
+        {
+          "name": "@nocobase/snowflake",
+          "version": "1.0.0-beta.3"
+        }
+      ]
+    },
+    "skills": {
+      "fingerprint": "5ea384f4e3cd9e5c4d50775634deb133f94e64e0dc1060248e42480bd40a8a33",
+      "files": 120
+    },
+    "sourceSnapshot": null,
+    "inputs": {
+      "taskInputHash": "1498b1912f4cfb97962645218e44abda1cfe0572c631c983bd028c3abe39019e",
+      "pipelineInputHash": "e3403cfaa3a2725088a56baa671a3bd09f0e0e9521dc85baa347a99e02b4cedb",
+      "reviewHash": "8aa993ba566c2a57c052c029c7c3fd09f112da3eda31ab8883e716bf0dc78c05",
+      "reviewCriteriaHash": "8aa993ba566c2a57c052c029c7c3fd09f112da3eda31ab8883e716bf0dc78c05",
+      "prompts": [
+        {
+          "phase": "implementation",
+          "path": "agent-implement.jsonl.invocation.json",
+          "sha256": "92567d0f490e849a89902a702c3926190545bf9de7ae9dfccaa5d0aaf2c20e87"
+        },
+        {
+          "phase": "repair",
+          "path": "agent-repair-1.jsonl.invocation.json",
+          "sha256": "599c9e9fb1c76d636632ec3ec6b0be893d732f939ea3ead0bfdf08828d950178"
+        },
+        {
+          "phase": "repair",
+          "path": "agent-repair-2.jsonl.invocation.json",
+          "sha256": "1ec2f5a98e181dcd23a1ec54a15c596f9c17316c85f86c766606f6394c063857"
+        },
+        {
+          "phase": "repair",
+          "path": "agent-repair-3.jsonl.invocation.json",
+          "sha256": "1aa11af6e71f523cc5eef701930fcff6cb82729f642659cc0e28bc936384d9bc"
+        },
+        {
+          "phase": "qa",
+          "path": "verify-1/browser-acceptance/agent-browser-acceptance.jsonl.invocation.json",
+          "sha256": "f965d93a639ad184dc99d6a3247806e28ce0175635f3fa2eb2a9873527b5bda2"
+        },
+        {
+          "phase": "qa",
+          "path": "verify-3/browser-acceptance/agent-browser-acceptance.jsonl.invocation.json",
+          "sha256": "f965d93a639ad184dc99d6a3247806e28ce0175635f3fa2eb2a9873527b5bda2"
+        }
+      ]
+    },
+    "rubric": null,
+    "agent": {
+      "engine": "pi",
+      "model": "deepseek-v4.1-flash",
+      "version": "0.86.1",
+      "buildReviewMode": null,
+      "configuration": {
+        "fingerprints": [
+          "2f5401c2837d7dae1f1f014540b983521db478e49b3e29c61dbb26be0a75e3bf"
+        ],
+        "complete": false
+      }
+    },
+    "environment": {
+      "browserFixturesSha256": "3b527d18aa2f6d58fdfea5cdd916631ea1ee3425abeba09bb1f961f2128c554b",
+      "browserPreflight": "passed"
+    }
+  },
+  "executions": [
+    {
+      "key": "run/37298786425/attempt/1",
+      "kind": "implementation",
+      "order": 1,
+      "workflow": "code-agent-task",
+      "runId": 37298786425,
+      "attempt": 1,
+      "event": "issues",
+      "previousRunId": null,
+      "conclusion": "handoff",
+      "startedAt": "2026-10-05T10:47:12Z",
+      "endedAt": "2026-10-05T15:24:30Z",
+      "jobSeconds": 16597,
+      "controlSha": "2a5f7706f89d5282c7af6e0e83856ba984ca01e2",
+      "patchSha256": "3b5a6cfe872e811ceabdd59599d94e362424904527600f1364453b48b2987d68",
+      "source": "usage-receipt"
+    }
+  ],
+  "outcome": {
+    "execution": "running",
+    "acceptance": "failed",
+    "delivery": "not-published",
+    "pullRequest": null,
+    "detail": "已保存 Handoff，执行链仍在继续；不是终态。"
+  },
+  "qa": {
+    "coverage": "complete",
+    "rounds": [
+      {
+        "round": 1,
+        "executionKey": "run/37298786425/attempt/1",
+        "scope": "full",
+        "passed": false,
+        "source": "verify-1/browser-acceptance/report.json",
+        "checks": [
+          {
+            "id": "B01",
+            "criterion": "员工甲提交一张工单，刷新后仍可从自己的列表打开。",
+            "status": "failed",
+            "evidence": [
+              "qa/1/b01-business-home.png"
+            ]
+          },
+          {
+            "id": "B02",
+            "criterion": "员工乙登录后，列表中没有甲的工单；直接打开甲的工单链接也看不到内容，且不能进行处理人员的操作。",
+            "status": "failed",
+            "evidence": [
+              "qa/1/b02-users-list.png",
+              "qa/1/b03-collections.png"
+            ]
+          },
+          {
+            "id": "B03",
+            "criterion": "处理人员找到该单并开始处理，刷新后状态为“处理中”，处理人正确。",
+            "status": "failed",
+            "evidence": [
+              "qa/1/b03-collections.png"
+            ]
+          },
+          {
+            "id": "B04",
+            "criterion": "未填写处理说明不能完成；填写后完成，刷新确认状态和说明正确，不能再修改或重复完成。",
+            "status": "failed",
+            "evidence": [
+              "qa/1/b01-business-home.png",
+              "qa/1/b03-collections.png"
+            ]
+          },
+          {
+            "id": "B05",
+            "criterion": "切回员工甲，可看到完成结果；按不同状态筛选，结果与工单真实状态一致。",
+            "status": "failed",
+            "evidence": [
+              "qa/1/b02-users-list.png",
+              "qa/1/b03-collections.png"
+            ]
+          }
+        ]
+      },
+      {
+        "round": 3,
+        "executionKey": "run/37298786425/attempt/1",
+        "scope": "full",
+        "passed": false,
+        "source": "verify-3/browser-acceptance/report.json",
+        "checks": [
+          {
+            "id": "B01",
+            "criterion": "员工甲提交一张工单，刷新后仍可从自己的列表打开。",
+            "status": "failed",
+            "evidence": [
+              "qa/3/employee-home-no-ticket-ui.png",
+              "qa/3/explore-app.png"
+            ]
+          },
+          {
+            "id": "B02",
+            "criterion": "员工乙登录后，列表中没有甲的工单；直接打开甲的工单链接也看不到内容，且不能进行处理人员的操作。",
+            "status": "failed",
+            "evidence": [
+              "qa/3/employee-home-no-ticket-ui.png",
+              "qa/3/admin-page-permissions-empty.png"
+            ]
+          },
+          {
+            "id": "B03",
+            "criterion": "处理人员找到该单并开始处理，刷新后状态为“处理中”，处理人正确。",
+            "status": "failed",
+            "evidence": [
+              "qa/3/explore-app.png",
+              "qa/3/employee-home-no-ticket-ui.png"
+            ]
+          },
+          {
+            "id": "B04",
+            "criterion": "未填写处理说明不能完成；填写后完成，刷新确认状态和说明正确，不能再修改或重复完成。",
+            "status": "failed",
+            "evidence": [
+              "qa/3/explore-app.png"
+            ]
+          },
+          {
+            "id": "B05",
+            "criterion": "切回员工甲，可看到完成结果；按不同状态筛选，结果与工单真实状态一致。",
+            "status": "failed",
+            "evidence": [
+              "qa/3/employee-home-no-ticket-ui.png"
+            ]
+          }
+        ]
+      }
+    ],
+    "firstFull": {
+      "status": "failed",
+      "round": 1,
+      "executionKey": "run/37298786425/attempt/1",
+      "basis": "本产物包含第 1 轮起的全部验证，取第一次实际全量 QA。"
+    },
+    "finalFull": {
+      "status": "failed",
+      "round": 3,
+      "executionKey": "run/37298786425/attempt/1",
+      "basis": "最后一次实际全量 QA。"
+    },
+    "criteria": [
+      {
+        "id": "B01",
+        "text": "员工甲提交一张工单，刷新后仍可从自己的列表打开。",
+        "optional": false,
+        "firstFull": "failed",
+        "finalFull": "failed"
+      },
+      {
+        "id": "B02",
+        "text": "员工乙登录后，列表中没有甲的工单；直接打开甲的工单链接也看不到内容，且不能进行处理人员的操作。",
+        "optional": false,
+        "firstFull": "failed",
+        "finalFull": "failed"
+      },
+      {
+        "id": "B03",
+        "text": "处理人员找到该单并开始处理，刷新后状态为“处理中”，处理人正确。",
+        "optional": false,
+        "firstFull": "failed",
+        "finalFull": "failed"
+      },
+      {
+        "id": "B04",
+        "text": "未填写处理说明不能完成；填写后完成，刷新确认状态和说明正确，不能再修改或重复完成。",
+        "optional": false,
+        "firstFull": "failed",
+        "finalFull": "failed"
+      },
+      {
+        "id": "B05",
+        "text": "切回员工甲，可看到完成结果；按不同状态筛选，结果与工单真实状态一致。",
+        "optional": false,
+        "firstFull": "failed",
+        "finalFull": "failed"
+      }
+    ],
+    "firstPassWithoutRepair": "no",
+    "counts": {
+      "execution": {
+        "verificationAttempts": 4,
+        "repairAttempts": 3,
+        "source": "repair-summary.json（仅本执行）"
+      },
+      "chain": {
+        "verificationAttempts": 4,
+        "repairAttempts": 3,
+        "source": "pipeline-state.json（跨 Handoff 累计检查点，不再相加）"
+      }
+    },
+    "note": "工厂修复次数不等于 Agent 开发中的全部自测和修正；未记录 Agent 内部试错，不宣称开发全程无错误。"
+  },
+  "reviews": [
+    {
+      "key": "review/37298786425.1/v0-3ccc4bb18823",
+      "role": "original",
+      "selected": true,
+      "state": "not-reviewed",
+      "reason": "本轮没有独立评审记录；未评估不代表通过，也不按零分处理。",
+      "rubric": null,
+      "reviewer": null,
+      "producer": {
+        "runId": null,
+        "attempt": null
+      },
+      "basis": {
+        "inputHash": null,
+        "patchSha256": null,
+        "baseSha": null,
+        "lockfileSha256": null,
+        "reviewCriteriaHash": null,
+        "artifactHash": null
+      },
+      "buildReviewMode": null,
+      "summary": null,
+      "progress": null,
+      "modules": [],
+      "findings": [],
+      "ui": null,
+      "limitations": [],
+      "usageSource": null
+    }
+  ],
+  "health": {
+    "status": "incomplete",
+    "qa": "failed",
+    "requiredChecks": {
+      "status": "passed",
+      "results": []
+    },
+    "review": "not-reviewed"
+  },
+  "processNotes": {
+    "state": "present",
+    "source": "retro.json",
+    "author": "implementer",
+    "independent": false,
+    "summary": "实现 IT 服务台工单此前完全缺失的浏览器端功能：client/routes.ts 的工单路由与导航、client/pages/tickets 的列表/创建/详情（开始、完成、状态筛选）、client/locales 文案，以及 database/main/seeds 的 2 名员工 + 1 名处理人演示账号、3 张示例工单、it-employee/it-handler 权限集与分配，使提交、自助可见性、直接链接越权拒绝、开始/完成、状态筛选与刷新/重登持久化全部可用。实现过程中另发现并修复两个真实缺陷：员工 create 因写策略不含处理人字段而 500，以及种子相对导入在 vitest 应用启动路径（原生 Node import）下无法解析。",
+    "blockers": [
+      {
+        "id": "notes/run/37298786425/attempt/1/B1",
+        "phase": "verify",
+        "title": "it-tickets 服务与路由的 17 个 @typescript-eslint/no-unsafe-* 报错",
+        "symptom": "verify-2 的 lint 阶段退出 1：server/providers/it-tickets.ts 117/121/123/127/131/136 行与 server/routes/it-tickets.ts 36/40 行报 unsafe assignment/call/return/member-access/argument。",
+        "rootCause": "scoped 是 async 辅助函数，返回 Promise<RepositoryOperations<...>>，但代码直接在其上链式调用 findMany/findOne/createOne/updateOne，TS 把接收者解析为类型错误（any/error type）；createOne/updateOne 返回 SingleMutationResult<T>（含 .record），却按 Promise<T> 返回；authorizationToken 误从 @nocobase/app-plugin-authentication/server 导入而非 @nocobase/app-plugin-authorization/server；ItTicketsProvider.boot 声明为 void 而接口要求 Promise<void>。",
+        "resolution": "把 const view = await scoped(...) / const tickets = await scoped(...) 拆开后再调用；createOne/updateOne 解构 { record } 并 return record；authorizationToken 改从 authorization 包导入（authenticationToken/AuthEnv 仍来自 authentication 包）；boot 改为 async boot(): Promise<void>。",
+        "cost": "修改 server/providers/it-tickets.ts 与 server/routes/it-tickets.ts 两个文件。",
+        "status": "resolved"
+      },
+      {
+        "id": "notes/run/37298786425/attempt/1/B2",
+        "phase": "verify",
+        "title": "空插件组合下 ItTicketsProvider.boot 解析 authorizationToken 失败，app-server 测试挂掉",
+        "symptom": "lint 修好后首次运行 pnpm test，tests/logic/app-server.test.ts 报 \"Service \\\"@nocobase/app/authorization\\\" is not registered.\"，307 个测试中 1 个失败。verify-2 在 lint 处已中止，所以该失败此前从未暴露。",
+        "rootCause": "tests/logic/app-server.test.ts 用 defineServerPlugins([]) + appRuntime.serviceProviders 组装内嵌应用，不加载 Authorization 插件；新增的 ItTicketsProvider.boot/路由工厂无条件 container.resolve(authorizationToken)，在缺少该插件的组合下抛错。",
+        "resolution": "沿用 app-plugin-users 的既有模式：provider boot 先 container.has(authorizationToken)，不存在则直接 return；路由工厂在 authenticationToken 或 authorizationToken 任一缺失时返回一个未挂载任何路由的空白 Hono，避免把工单端点以未鉴权形式挂出。生产组合两插件始终存在。",
+        "cost": "server/providers/it-tickets.ts 与 server/routes/it-tickets.ts 各加一处可用性守卫。",
+        "status": "resolved"
+      },
+      {
+        "id": "notes/run/37298786425/attempt/1/B3",
+        "phase": "verify",
+        "title": "生产 build 的 server 编译在 it-tickets 路由工厂报 TS2345（两种 Hono Env 的联合）",
+        "symptom": "lint 修好后运行 pnpm build：client 构建成功，server 编译报 server/routes/it-tickets.ts(33,3) TS2345，'(app) => Hono<BlankEnv> | Hono<AuthEnv & AuthorizationEnv>' 不能赋给 AppRouterFactory；而 pnpm typecheck（tsc -p tsconfig.server.json --noEmit）此前显示通过。",
+        "rootCause": "为修测试而加的守卫分支 return new Hono<AuthEnv & AuthorizationEnv>()，而工厂末尾 return router 是 new Hono()（Hono<BlankEnv>）；build 的 server 编译对 defineApiRoutes 回调返回类型比 tsconfig.server.json 更严格，明确要求两个返回分支 Env 一致。",
+        "resolution": "守卫分支改为 return new Hono()，与末尾返回的空白 router 同型，回调返回类型统一为 Hono<BlankEnv>。build 与 typecheck 均恢复通过。",
+        "cost": "server/routes/it-tickets.ts 一行类型修正。",
+        "status": "resolved"
+      },
+      {
+        "id": "notes/run/37298786425/attempt/1/B4",
+        "phase": "qa",
+        "title": "浏览器验收 B01–B05 所需的工单客户端界面与示例数据/账号仍缺失，本轮未处理",
+        "symptom": "应用源码中只有服务端工单实现（迁移、服务、路由、composite 资源）；client/routes.ts 只有 home/login/register/forgot/reset，没有工单页面与导航，database/main/seeds 没有员工/处理人员账号、权限集分配或示例工单，因此员工提交、列表隔离、开始/完成、状态筛选等浏览器流程无法执行。",
+        "rootCause": "repair-1 只完成了服务端一半（migration + service + routes + composite），客户端页面、locale、种子账号/示例数据与权限分配尚未实现；本轮（repair-2）的观察失败只有 lint，未据此继续实现浏览器功能。",
+        "resolution": "已解决。新增 client/routes.ts 的 tickets（/tickets，navigation.tickets）与 ticket-detail（/tickets/:ticketId）两条路由，均 auth:'required' 且 authz:{resource:{type:'page',id:'it.tickets'},action:'access'}；新增 client/pages/tickets/ 下的 api.ts、ticket-status.tsx、format.ts、create-ticket-dialog.tsx、index.tsx、complete-ticket-dialog.tsx、detail.tsx；在 client/locales/{en-US,zh-CN}.ts 补齐 tickets、it.permissionSets.*、navigation.tickets、status.retry 文案；database/main/seeds/202610010002_it_tickets_demo.ts 幂等创建 linxiaoyu/zhaowen（员工）、chenkai（处理人，密码 ItDesk#2026）与 3 张覆盖 pending/processing/done 的示例工单，并写入 it-employee（员工：页面访问 + view/create recordsICreated，另分配给 authenticated:* 使新账号自动可用）与 it-handler（处理人：页面访问 + view/start/complete allRecords）。已通过 curl 端到端验证员工仅见自己工单、跨用户详情 404、start/complete 403、处理人开始/完成与状态校验、状态筛选、匿名 401、未授权页面不可达。",
+        "cost": null,
+        "status": "resolved"
+      },
+      {
+        "id": "notes/run/37298786425/attempt/1/B5",
+        "phase": "repair-3",
+        "title": "员工创建工单返回 500：RepositoryError: Writing field \"assigneeId\" is not allowed",
+        "symptom": "重启开发服务器后以员工 linxiaoyu 调用 POST /main/api/tickets 返回 500，响应 code=TICKET_FAILED，服务端日志为 RepositoryError: Writing field \"assigneeId\" is not allowed （server/providers/it-tickets.ts 的 create 分支）。",
+        "rootCause": "create 的 values 里显式写入了 assigneeId/assigneeName/resolution/startedAt/completedAt 六个处理人所有的字段并置为 null，而 it-employee 的 create 授权只覆盖 title/category/description/status/createdById/createdByName/createdAt/updatedAt；写入策略对未授权字段直接拒绝，即使值为 null。",
+        "resolution": "从 create 的 values 中删除这六个字段，改为依赖 nullable 列自身默认 NULL；处理人字段仍在 start/complete 各自授权下写入。为保持最小授权，未扩大 create 的写策略。",
+        "cost": "server/providers/it-tickets.ts create 分支的 values 收敛为提交字段 + 状态 + 报修人 + 时间戳。",
+        "status": "resolved"
+      },
+      {
+        "id": "notes/run/37298786425/attempt/1/B6",
+        "phase": "repair-3",
+        "title": "种子相对导入使 tests/logic/app-server.test.ts 启动应用失败（ERR_MODULE_NOT_FOUND）",
+        "symptom": "补齐客户端与种子后运行 pnpm exec vitest run tests/logic，27 个文件中 app-server.test.ts 两个用例失败：AppDatabaseTaskError: Database seeds failed ... Cannot find module '.../server/it-tickets.js' imported from .../database/main/seeds/202610010002_it_tickets_demo.ts；把该导入去掉后错误改为找不到 .../database/seed-data/permission-sets.js。pnpm nocobase db apply 用同一批导入却正常。",
+        "rootCause": "应用启动与 vitest 的 app-server 测试通过 @nocobase/db 的 importTaskDefinition 以原生 import() 加载 任务文件，Node 只做类型剥离并按字面 specifier 解析相对导入；'.js' 指向不存在的编译产物。而 CLI 的 db apply 用了另一套重映射加载器，所以只有测试路径暴露。",
+        "resolution": "把种子对 permission-sets 的相对导入写成 '.ts'：Node 24 原生类型剥离能解析，tsconfig.server.json 的 allowImportingTsExtensions + rewriteRelativeImportExtensions 让 pnpm build 产出 '.js' 导入，二者兼得；同时把 permission-sets.ts 内的授权字面量写成自包含（不再导入 server 的 composite 资源声明），既满足种子的自包含要求，又由 tests/logic/it-tickets-permissions.test.ts 与 server 声明对齐。",
+        "cost": "database/main/seeds/202610010002_it_tickets_demo.ts 一行导入后缀，database/seed-data/permission-sets.ts 改为字面量声明。",
+        "status": "resolved"
+      }
+    ],
+    "improvements": [
+      {
+        "id": "notes/run/37298786425/attempt/1/I1",
+        "category": "verification",
+        "title": "pnpm typecheck 与生产 build 的 server 类型检查不一致，漏报 TS2345",
+        "detail": "server/routes/it-tickets.ts 在 pnpm typecheck（tsc -p tsconfig.server.json --noEmit）下通过，但 pnpm build 的 server 编译因 defineApiRoutes 回调返回类型要求更严格而报 TS2345。修复一个 lint 失败后，下一个失败在 build 才出现，多消耗一轮修复。",
+        "suggestedChange": "让 tsconfig.server.json 使用与生产 build 相同的 server 编译设置（或把 build 前的 server 类型检查纳入 typecheck 阶段），使 typecheck 能在提交前报出同类错误。",
+        "mechanizable": true
+      },
+      {
+        "id": "notes/run/37298786425/attempt/1/I2",
+        "category": "skills-docs",
+        "title": "应用自有 ServiceProvider 依赖插件 token 时应先用 container.has 探测",
+        "detail": "内嵌 app-server 测试用空插件组合启动应用，任何在 boot/路由工厂里无条件 container.resolve(插件 token) 的 provider 都会让其失败。app-plugin-users 已采用 container.has 模式，但应用开发 Skill 未明确要求应用侧 provider 也这样做。",
+        "suggestedChange": "在 nocobase-app-development 的 server-routes/services 参考中补充：应用 provider/路由在 resolve 插件 token 前先 container.has，并说明缺失时应跳过挂载而不是以未鉴权形式暴露端点。",
+        "mechanizable": false
+      },
+      {
+        "id": "notes/run/37298786425/attempt/1/I3",
+        "category": "skills-docs",
+        "title": "数据库任务相对导入在原生 Node 加载路径下必须带 .ts 后缀",
+        "detail": "migration/seed 由 @nocobase/db 以原生 import() 加载（vitest app-server 测试、生产 dist），Node 类型剥离不重映射 '.js'→'.ts'，所以任务内引用其它应用源码时 '.js' 会 ERR_MODULE_NOT_FOUND；只有 CLI 的 db apply 用了重映射加载器所以本地看起来正常。",
+        "suggestedChange": "在 nocobase-db 的 migrations/seeds 参考里写明：任务文件内部引用其它 .ts 源码时用 '.ts' 后缀，并说明 allowImportingTsExtensions + rewriteRelativeImportExtensions 会在构建时改写为 '.js'；更推荐任务保持自包含、不导入会演进的共享常量。",
+        "mechanizable": false
+      }
+    ],
+    "note": "实现者自述，未经独立核验；不是框架评审结论。"
+  },
+  "metrics": {
+    "usage": {
+      "sources": [
+        {
+          "key": "agent-job:111726364057",
+          "executionKey": "run/37298786425/attempt/1",
+          "scope": "一次 Agent 作业内的实现、修复、QA 与同轮评审调用",
+          "phases": {
+            "implementation": {
+              "input": 1242719,
+              "output": 105294,
+              "cacheRead": 22160248,
+              "cacheWrite": 0,
+              "total": 23508261
+            },
+            "repair": {
+              "input": 2295230,
+              "output": 350016,
+              "cacheRead": 60792730,
+              "cacheWrite": 0,
+              "total": 63437976
+            },
+            "qa": {
+              "input": 256647,
+              "output": 85737,
+              "cacheRead": 8679810,
+              "cacheWrite": 0,
+              "total": 9022194
+            },
+            "qaFocused": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0,
+              "total": 0
+            },
+            "qaReport": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0,
+              "total": 0
+            },
+            "review": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0,
+              "total": 0
+            },
+            "compaction": {
+              "input": 638416,
+              "output": 145759,
+              "cacheRead": 118016,
+              "cacheWrite": 0,
+              "total": 902191
+            }
+          },
+          "records": 1352,
+          "missing": 4,
+          "incomplete": 0,
+          "complete": false
+        }
+      ],
+      "totals": {
+        "input": 4433012,
+        "output": 686806,
+        "cacheRead": 91750804,
+        "cacheWrite": 0,
+        "total": 96870622,
+        "complete": false
+      },
+      "definition": "沿用 task-usage 口径：按唯一来源键（Agent 作业 / 后补评审 Run）去重，不相加已含这些调用的汇总，不把思考 Token 再加到输出；缺失为 null，不等同供应商账单。"
+    },
+    "time": {
+      "executionSeconds": 16597,
+      "missingJobTimes": 0,
+      "endToEndSeconds": 16638,
+      "jobs": [
+        {
+          "id": 111726277597,
+          "name": "prepare",
+          "executionKey": "run/37298786425/attempt/1",
+          "seconds": 14
+        },
+        {
+          "id": 111726364057,
+          "name": "agent",
+          "executionKey": "run/37298786425/attempt/1",
+          "seconds": 16583
+        }
+      ],
+      "definition": "executionSeconds 为 prepare / agent / verify-final / publish 唯一作业时长之和，不含排队；endToEndSeconds 含排队及续跑间隔。"
+    },
+    "counts": {
+      "businessBuilds": 1,
+      "executions": 1,
+      "reviewExecutions": 0
+    }
+  },
+  "evidence": [
+    {
+      "id": "qa/1/b01-business-home.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/1",
+        "localId": "b01-business-home.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-1/browser-acceptance/evidence/b01-business-home.png",
+      "lines": null,
+      "sha256": "cf24997f8a6c114f0efe9584585e92d9bd63ca9d29321da3e7db8af278c620a7",
+      "observation": "验收项 B01 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-1/browser-acceptance/b01-business-home.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/1/b02-users-list.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/1",
+        "localId": "b02-users-list.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-1/browser-acceptance/evidence/b02-users-list.png",
+      "lines": null,
+      "sha256": "7d03518653ac663a6e9f17758bd7f8b1d4e634fde5a840120f369185a3a53cfa",
+      "observation": "验收项 B02 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-1/browser-acceptance/b02-users-list.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/1/b03-collections.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/1",
+        "localId": "b03-collections.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-1/browser-acceptance/evidence/b03-collections.png",
+      "lines": null,
+      "sha256": "55fd8ac813d7967fc4ac8c4ba8125beb193cf3307c1e2b1e04f9d73bc74260fd",
+      "observation": "验收项 B02 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-1/browser-acceptance/b03-collections.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/3/employee-home-no-ticket-ui.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/3",
+        "localId": "employee-home-no-ticket-ui.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-3/browser-acceptance/evidence/employee-home-no-ticket-ui.png",
+      "lines": null,
+      "sha256": "d593fcb87ec8ee6cdbccf5b840ccfe85a803cc256a2ddf8471a518446d4e3d18",
+      "observation": "验收项 B01 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-3/browser-acceptance/employee-home-no-ticket-ui.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/3/explore-app.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/3",
+        "localId": "explore-app.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-3/browser-acceptance/evidence/explore-app.png",
+      "lines": null,
+      "sha256": "cf24997f8a6c114f0efe9584585e92d9bd63ca9d29321da3e7db8af278c620a7",
+      "observation": "验收项 B01 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-3/browser-acceptance/explore-app.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/3/admin-page-permissions-empty.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/3",
+        "localId": "admin-page-permissions-empty.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-3/browser-acceptance/evidence/admin-page-permissions-empty.png",
+      "lines": null,
+      "sha256": "bb40dcbfc54498e92ff77a35a611b5dec50c6181262ca3bcb22845db6f5fd9ea",
+      "observation": "验收项 B02 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-3/browser-acceptance/admin-page-permissions-empty.png",
+      "availability": "attached",
+      "note": null
+    }
+  ],
+  "links": [
+    {
+      "rel": "task-issue",
+      "label": "Issue #570",
+      "url": "https://github.com/gchust/nb3-factory/issues/570",
+      "path": null
+    },
+    {
+      "rel": "run",
+      "label": "Run 37298786425 / attempt 1",
+      "url": "https://github.com/gchust/nb3-factory/actions/runs/37298786425/attempts/1",
+      "path": null
+    },
+    {
+      "rel": "report-archive",
+      "label": "固定版本 HTML 报告（gh-pages 归档路径）",
+      "url": null,
+      "path": "reports/issues/570/runs/37298786425/attempt-1/index.html"
+    }
+  ],
+  "limitations": [
+    {
+      "code": "review-not-run",
+      "detail": "本执行没有独立框架评审；未评估不代表通过，也不按零分处理。"
+    },
+    {
+      "code": "usage-incomplete",
+      "detail": "部分用量未取得或不完整；缺失值为 null，不按零处理。"
+    }
+  ]
+}
