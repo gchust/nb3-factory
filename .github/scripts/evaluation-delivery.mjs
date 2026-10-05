@@ -19,6 +19,14 @@ import { classificationsByItem, duplicatesByItem, reportLinkSubmission } from '.
 export { deliveryConfig, DeliveryConfigError, targetIdOf } from './evaluation-target.mjs';
 
 const RETRY = { attempts: 3, timeoutMs: 180_000, maxRetryAfterSeconds: 60, maxTotalAttempts: 24, bundleRetentionDays: 90 };
+// A rejected record is resent once by a later scan, at least an hour after the
+// rejection, in case the receiver was briefly wrong; then it waits for retry-rejected.
+// retry-limit already spent its automatic attempts and is not resent.
+export const AUTO_RETRY = { maxRetries: 1, minDelayMs: 60 * 60_000, skipReasons: ['retry-limit'] };
+// The repository and its logs are public: of a refusal body only a short,
+// printable error code or message is kept, never the body itself.
+const ERROR_BODY_BYTES = 4096;
+const ERROR_DETAIL_CHARS = 200;
 export const SCAN_LIMIT = 10;
 // The send job has 30 minutes; stop taking bundles well before, leaving time to save results.
 export const SEND_BUDGET_MS = 20 * 60_000;
@@ -40,6 +48,39 @@ function classifyStatus(status) {
   if (status === 202) return { outcome: 'rejected', error: 'accepted-not-stored' };
   const category = { 400: 'bad-request', 401: 'unauthorized', 403: 'forbidden', 404: 'endpoint-not-found', 413: 'payload-too-large', 422: 'unprocessable' }[status];
   return { outcome: 'rejected', error: category ?? `http-${status}` };
+}
+
+// Reads at most ERROR_BODY_BYTES of a refusal and keeps its error code and message.
+async function refusalDetail(response, token) {
+  let text = '';
+  try {
+    const reader = response.body?.getReader();
+    if (reader) {
+      const chunks = [];
+      let size = 0;
+      while (size < ERROR_BODY_BYTES) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        chunks.push(value);
+        size += value.length;
+      }
+      await reader.cancel().catch(() => {});
+      text = Buffer.concat(chunks).subarray(0, ERROR_BODY_BYTES).toString('utf8');
+    }
+  } catch { return null; }
+  let parts;
+  try {
+    const value = JSON.parse(text);
+    const error = value?.errors?.[0] ?? value?.error ?? value;
+    parts = typeof error === 'string' ? [error] : [error?.code ?? value?.code, error?.message ?? value?.message];
+  } catch {
+    // A plain-text reason is kept; an HTML error page or a JSON body cut off at the limit is not.
+    parts = /^\s*[<{[]/.test(text) ? [] : [text];
+  }
+  const detail = parts.filter(part => typeof part === 'string' || typeof part === 'number').map(String).join(': ')
+    .split(token || '\0').join('[redacted]')
+    .replace(/[\p{C}\p{Zl}\p{Zp}]+/gu, ' ').replace(/\s+/g, ' ').trim();
+  return detail ? detail.slice(0, ERROR_DETAIL_CHARS) : null;
 }
 
 function validateReceipt(value, expected) {
@@ -89,7 +130,7 @@ export async function deliverBundle({ zip, subject, config, classification = {},
       response = await fetcher(config.endpoint, { method: 'POST', headers, body, redirect: 'manual', signal: AbortSignal.timeout(timeoutMs) });
       status = response.status;
     } catch (failure) { error = failure?.name === 'TimeoutError' || failure?.name === 'AbortError' ? 'timeout' : 'network'; }
-    const record = { at: new Date(started).toISOString(), httpStatus: status, outcome: 'retryable', error, durationMs: Math.max(0, now() - started) };
+    const record = { at: new Date(started).toISOString(), httpStatus: status, outcome: 'retryable', error, detail: null, durationMs: Math.max(0, now() - started) };
     history.push(record);
     if (status !== null) {
       const verdict = classifyStatus(status);
@@ -106,13 +147,13 @@ export async function deliverBundle({ zip, subject, config, classification = {},
             return { state: 'stored', attempts: history, receipt: { ...receipt, httpStatus: status }, reason: null, bundleSha256 };
           } catch { Object.assign(record, { outcome: 'rejected', error: 'invalid-receipt' }); }
         }
-      } else { try { await response.body?.cancel(); } catch { /* Only the status is kept. */ } }
-      if (record.outcome === 'conflict') return { state: 'conflict', attempts: history, receipt: null, reason: 'same idempotency key already holds different content', bundleSha256 };
-      if (record.outcome === 'rejected') return { state: 'rejected', attempts: history, receipt: null, reason: record.error, bundleSha256 };
+      } else record.detail = await refusalDetail(response, config.token);
+      if (record.outcome === 'conflict') return { state: 'conflict', attempts: history, receipt: null, reason: 'same idempotency key already holds different content', detail: record.detail, bundleSha256 };
+      if (record.outcome === 'rejected') return { state: 'rejected', attempts: history, receipt: null, reason: record.error, detail: record.detail, bundleSha256 };
     }
     if (attempt < attempts) await pause(retryAfterMs(response?.headers?.get('retry-after'), now()) ?? 2000 * 4 ** (attempt - 1));
   }
-  return { state: 'pending', attempts: history, receipt: null, reason: history.at(-1).error, bundleSha256 };
+  return { state: 'pending', attempts: history, receipt: null, reason: history.at(-1).error, detail: history.at(-1).detail, bundleSha256 };
 }
 
 class SourceUnavailable extends Error {}
@@ -178,7 +219,7 @@ export async function planDeliveries(client, { mode, type, key, revision, artifa
   const config = deliveryConfig(env, { requireToken: false });
   const items = [];
   const { outbox } = await readOutbox(client);
-  const pick = async (itemType, itemKey, itemRevision, preferred) => {
+  const pick = async (itemType, itemKey, itemRevision, preferred, autoRetry = false) => {
     const index = await readSubject(client, itemType, itemKey, 'gh-pages');
     const entry = index?.revisions.find(item => item.revision === itemRevision);
     if (!entry) throw new Error(`No registered ${itemType} revision ${itemRevision} for ${itemKey}`);
@@ -191,13 +232,18 @@ export async function planDeliveries(client, { mode, type, key, revision, artifa
       : await fetchBundle(client, entry, { preferredArtifactId: preferred, fetcher });
     items.push({ id, targetId: config.targetId, type: itemType, key: itemKey, revision: itemRevision, sourceInstance: index.sourceInstance,
       bundleSha256: entry.bundle.sha256, zip: found.zip, source: found.status, reason: found.reason ?? null,
-      previousAttempts: queued?.attempts ?? 0 });
+      previousAttempts: queued?.attempts ?? 0, ...(autoRetry ? { autoRetry: true } : {}) });
   };
+  const ours = outbox.entries.filter(item => item.targetId === config.targetId);
   if (mode === 'replay') await pick(type, key, Number(revision), Number(artifactId) || null);
-  else if (mode === 'scan' || mode === 'retry-rejected') {
-    const wanted = mode === 'scan' ? ['pending'] : ['rejected'];
-    for (const entry of outbox.entries.filter(item => item.targetId === config.targetId && wanted.includes(item.state)).slice(0, limit))
-      await pick(entry.type, entry.key, entry.revision, null);
+  else if (mode === 'scan') {
+    // Pending records first; the automatic retry of a rejection is recorded, so it happens at most maxRetries times.
+    const retryable = ours.filter(item => item.state === 'rejected' && (item.autoRetries ?? 0) < AUTO_RETRY.maxRetries &&
+      !AUTO_RETRY.skipReasons.includes(item.reason) && now.getTime() - Date.parse(item.updatedAt) >= AUTO_RETRY.minDelayMs);
+    const selected = [...ours.filter(item => item.state === 'pending').map(entry => [entry, false]), ...retryable.map(entry => [entry, true])];
+    for (const [entry, autoRetry] of selected.slice(0, limit)) await pick(entry.type, entry.key, entry.revision, null, autoRetry);
+  } else if (mode === 'retry-rejected') {
+    for (const entry of ours.filter(item => item.state === 'rejected').slice(0, limit)) await pick(entry.type, entry.key, entry.revision, null);
   } else throw new Error('Delivery mode must be replay, scan or retry-rejected');
   return { targetId: config.targetId, items };
 }
@@ -262,7 +308,8 @@ async function enqueueBackfill(client, env, { limit = 500, now = new Date() } = 
 }
 
 function summary(results, configError) {
-  const rows = results.map(r => `| ${r.type} | \`${keyDigest(r.key).slice(0, 12)}\` r${r.revision} | ${r.state} | ${r.attempts.length} | ${r.reason ?? r.receipt?.receiptId ?? ''} |`);
+  const note = r => [r.reason, r.detail].filter(Boolean).join(': ').replace(/[|`\\]/g, ' ') || r.receipt?.receiptId || '';
+  const rows = results.map(r => `| ${r.type} | \`${keyDigest(r.key).slice(0, 12)}\` r${r.revision} | ${r.state}${r.autoRetry ? '（自动重试）' : ''} | ${r.attempts.length} | ${note(r)} |`);
   return ['## 评测结果投递', '', configError ? `**投递配置不完整：${configError}**。业务结果与报告归档不受影响。` : '投递状态单独记录，不改变业务验收或 PR 状态。', '',
     '| 类型 | 主体 | 状态 | 本次尝试 | 说明 / 回执 |', '| --- | --- | --- | ---: | --- |', ...rows, ''].join('\n');
 }
@@ -313,7 +360,7 @@ async function main() {
       onResult: (_result, all) => save(all), classifications, duplicates });
     if (deferred) console.log(`${deferred} bundle(s) left pending for the next scan to stay within the job budget.`);
     if (process.env.GITHUB_STEP_SUMMARY) appendFileSync(process.env.GITHUB_STEP_SUMMARY, summary(results, configError));
-    for (const result of results) console.log(`${result.type} ${keyDigest(result.key).slice(0, 12)} r${result.revision}: ${result.state} (${result.reason ?? 'ok'})`);
+    for (const result of results) console.log(`${result.type} ${keyDigest(result.key).slice(0, 12)} r${result.revision}: ${result.state} (${result.reason ?? 'ok'}${result.detail ? `: ${result.detail}` : ''})${result.autoRetry ? ' [automatic retry]' : ''}`);
     if (configError) { console.error(`::error::Evaluation delivery is enabled but not configured: ${configError}`); process.exitCode = 1; }
     else if (results.some(r => r.state !== 'stored')) process.exitCode = 1;
   } else if (mode === 'record') {

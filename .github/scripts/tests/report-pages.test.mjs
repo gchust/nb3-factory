@@ -7,7 +7,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { finalizeClassification } from '../../reports/findings-classification.mjs';
 import { prepareClassification } from '../classify-findings.mjs';
-import { archiveFindingsClassification, readFindingsSnapshot, archiveReport, compareReports, notifyReport, pagesUrl, reportManifest, resetFindingsIndex, verifyPage } from '../report-pages.mjs';
+import { archiveFindingsClassification, readFindingsSnapshot, archiveReport, compareReports, notifyReport, pagesUrl, reportManifest, resetFindingsIndex, VERIFY_DELAYS_MS, verifyPage } from '../report-pages.mjs';
 const repository='owner/factory';
 const digest=value=>createHash('sha1').update(JSON.stringify(value)).digest('hex');
 function input({issue=146,runId=100,attempt=1,start=1000,qa=true,media=1}={}) {
@@ -97,9 +97,31 @@ test('wrong HTML does not write a branch',async()=>{
 });
 test('verification requires the specific HTML stamp, not a generic HTTP 200',async()=>{
  let calls=0;const pause=async()=>{};
- await verifyPage('https://example.org/report','correct',{attempts:2,pause,fetcher:async(url,options)=>{assert.equal(options.headers,undefined);calls++;return {ok:true,text:async()=>calls===1?'old':'<meta name="factory-report-id" content="correct">'};}});
+ await verifyPage('https://example.org/report','correct',{delays:[1],pause,fetcher:async(url,options)=>{assert.equal(options.headers,undefined);calls++;return {ok:true,text:async()=>calls===1?'old':'<meta name="factory-report-id" content="correct">'};}});
  assert.equal(calls,2);
- await assert.rejects(verifyPage('https://example.org/report','correct',{attempts:1,pause,fetcher:async()=>({ok:true,text:async()=>'<html>not found</html>'})}),/not accessible/);
+ await assert.rejects(verifyPage('https://example.org/report','correct',{delays:[],pause,fetcher:async()=>({ok:true,text:async()=>'<html>not found</html>'})}),/not accessible/);
+});
+test('verification waits about three minutes with growing intervals and bypasses cached copies',async()=>{
+ const waits=[],urls=[];
+ await assert.rejects(verifyPage('https://example.org/reports/runs/1/attempt-1/index.html','correct',{pause:async ms=>{waits.push(ms);},
+   fetcher:async url=>{urls.push(url);return {ok:true,text:async()=>'<meta name="factory-report-id" content="stale">'};}}),/not accessible/);
+ assert.deepEqual(waits,VERIFY_DELAYS_MS);
+ assert.ok(waits.every((ms,i)=>i===0||ms>=waits[i-1]),'intervals never shrink');
+ const total=waits.reduce((a,b)=>a+b,0);
+ assert.ok(total>=170000&&total<=200000,`about three minutes, got ${total}`);
+ assert.equal(urls.length,waits.length+1);
+ assert.equal(new Set(urls).size,urls.length,'every probe has its own query string');
+ for(const url of urls) {
+   const u=new URL(url);
+   assert.equal(u.origin+u.pathname,'https://example.org/reports/runs/1/attempt-1/index.html');
+   assert.deepEqual([...u.searchParams.keys()],['factory-verify']);
+ }
+ // A late CDN copy is still accepted on a later attempt.
+ let calls=0;
+ await verifyPage('https://example.org/r','correct',{pause:async()=>{},fetcher:async()=>{calls++;
+   if(calls<5) throw new TypeError('fetch failed');
+   return {ok:true,text:async()=>'<meta name="factory-report-id" content="correct">'};}});
+ assert.equal(calls,5);
 });
 test('comments are updated only after verified deployment; Issue and current PR get one entry each',async()=>{
  const c=fakeClient(),r=input();const p=await archiveReport(c,r,htmlOf(r));let verified=0;
