@@ -401,7 +401,7 @@ test('the task requests each report in its own step, which runs after an earlier
   const task = readWorkflow('code-agent-task.yml');
   const job = task.split('\n  dispatch-reports:\n')[1].split(/\n {2}[a-z][a-z-]*:\n/)[0];
   assert.match(job, /continue-on-error: true/);
-  const steps = [...job.matchAll(/- name: Request ([\w-]+\.yml)\n\s+id: request-([\w-]+)\n\s+if: \$\{\{ !cancelled\(\) \}\}\n[\s\S]*?run: bash control\/\.github\/scripts\/dispatch-task-reports\.sh ([\w-]+\.yml)\n/g)];
+  const steps = [...job.matchAll(/- name: Request ([\w-]+\.yml)\n\s+id: request-([\w-]+)\n\s+if: \$\{\{ !cancelled\(\) \}\}\n[\s\S]*?run: bash dispatcher\/\.github\/scripts\/dispatch-task-reports\.sh ([\w-]+\.yml)\n/g)];
   assert.deepEqual(
     steps.map(([, name]) => name).sort(),
     reportWorkflows.map(([name]) => name).sort(),
@@ -412,6 +412,28 @@ test('the task requests each report in its own step, which runs after an earlier
   }
   assert.match(job, /FACTORY_TASK_PUBLISHED: \$\{\{ needs\.publish\.result == 'success' \|\| needs\.publish-failed\.result == 'success' \}\}/);
   assert.equal((job.match(/env: \*report-dispatch-env/g) ?? []).length, reportWorkflows.length - 1);
+});
+
+test('the per-report steps never run the dispatcher from the task\'s pinned control plane', () => {
+  // Continuations, recoveries and evaluation samples pin an older control SHA
+  // whose dispatcher ignores its arguments; six steps would then each request
+  // every report. The dispatcher follows this workflow file's revision instead.
+  const task = readWorkflow('code-agent-task.yml');
+  const job = task.split('\n  dispatch-reports:\n')[1].split(/\n {2}[a-z][a-z-]*:\n/)[0];
+  assert.doesNotMatch(job, /control_sha|control\/\.github/);
+  const checkout = /- name: Check out the report dispatcher\n\s+uses: actions\/checkout@\S+ # v[\d.]+\n\s+with:\n((?: {10}.*\n)+)/.exec(job);
+  assert.ok(checkout, 'the dispatcher is checked out on its own');
+  assert.match(checkout[1], /ref: \$\{\{ github\.workflow_sha \}\}/);
+  assert.match(checkout[1], /path: dispatcher/);
+  assert.match(checkout[1], /persist-credentials: false/);
+  assert.match(checkout[1], /sparse-checkout: \|\n\s+\/\.github\/scripts\/dispatch-task-reports\.sh\n/);
+  const runs = [...job.matchAll(/run: (.+)/g)].map(([, command]) => command);
+  assert.equal(runs.length, reportWorkflows.length);
+  for (const command of runs)
+    assert.match(command, /^bash dispatcher\/\.github\/scripts\/dispatch-task-reports\.sh [\w-]+\.yml$/);
+  // The dispatcher it runs honours its argument: one request per step.
+  const script = readFileSync(path.resolve(import.meta.dirname, '../dispatch-task-reports.sh'), 'utf8');
+  assert.match(script, /for workflow in "\$@"; do/);
 });
 
 test('workflow_run copies of dispatched reports skip once the task requested them', () => {
