@@ -1,4 +1,4 @@
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { mkdirSync, realpathSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { controlSha } from './handoff-control.mjs';
@@ -7,6 +7,8 @@ import { controlSha } from './handoff-control.mjs';
 // factory-lib.mjs is not available here; the dispatch retries inline.
 const DISPATCH_RETRY_DELAYS_MS = [1000, 3000, 8000];
 const DISPATCH_TIMEOUT_MS = 30_000;
+// A 429's Retry-After is honoured up to this long; a longer wait fails instead.
+const DISPATCH_MAX_RETRY_AFTER_MS = 30_000;
 
 // Connection failures raised before any byte of the request left the runner.
 // undici reports them as `fetch failed` with the system error as its cause, or
@@ -29,10 +31,11 @@ function notSent(error) {
 
 // Losing this one request reports up to five hours of work as a failed run,
 // but /dispatches is not idempotent and a duplicate continuation costs another
-// five. So only a failure GitHub certainly did not act on is retried: a 429 or
-// 5xx answer, or a connection that was never made. A timeout, a reset or any
-// other error after the request may have arrived fails at once, and so does
-// every other refusal.
+// five. So only a failure GitHub certainly did not act on is retried: a 429,
+// which rejects the request before it is processed, or a connection that was
+// never made. A 5xx can come from the front end after the backend accepted the
+// event, so it fails at once like a timeout, a reset or any unknown error,
+// and so does every other refusal.
 export async function dispatchContinuation(
   url,
   {
@@ -42,8 +45,15 @@ export async function dispatchContinuation(
     pause = (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
     delays = DISPATCH_RETRY_DELAYS_MS,
     timeoutMs = DISPATCH_TIMEOUT_MS,
+    maxRetryAfterMs = DISPATCH_MAX_RETRY_AFTER_MS,
+    now = () => Date.now(),
   },
 ) {
+  const unknown = (reason, cause) =>
+    new Error(
+      `Failed to dispatch continuation (${reason}). GitHub may or may not have received it: check the Actions runs for a code-agent-continue run of this Issue before dispatching it manually.`,
+      { cause },
+    );
   for (let attempt = 0; ; attempt++) {
     let response;
     try {
@@ -64,11 +74,7 @@ export async function dispatchContinuation(
           : [error?.message, error?.cause?.code ?? error?.cause?.message]
               .filter(Boolean)
               .join(': ');
-      if (!notSent(error))
-        throw new Error(
-          `Failed to dispatch continuation (${reason}). GitHub may or may not have received it: check the Actions runs for a code-agent-continue run of this Issue before dispatching it manually.`,
-          { cause: error },
-        );
+      if (!notSent(error)) throw unknown(reason, error);
       if (attempt >= delays.length)
         throw new Error(
           `Failed to dispatch continuation: ${reason}; the request was never sent.`,
@@ -81,22 +87,39 @@ export async function dispatchContinuation(
       continue;
     }
     if (response.ok) return;
+    const text = await response.text().catch(() => '');
+    if (response.status >= 500)
+      throw unknown(`HTTP ${response.status} ${text}`.trim());
     const failure = new Error(
-      `Failed to dispatch continuation: ${response.status} ${await response.text().catch(() => '')}`,
+      `Failed to dispatch continuation: ${response.status} ${text}`,
     );
-    if (
-      (response.status !== 429 && response.status < 500) ||
-      attempt >= delays.length
-    )
-      throw failure;
-    console.error(`${failure.message}; retrying in ${delays[attempt]} ms.`);
-    await pause(delays[attempt]);
+    if (response.status !== 429 || attempt >= delays.length) throw failure;
+    const wait =
+      retryAfterMs(response.headers.get('retry-after'), now()) ??
+      delays[attempt];
+    if (wait > maxRetryAfterMs)
+      throw new Error(
+        `${failure.message}; Retry-After asks for ${Math.ceil(wait / 1000)} s, more than the ${maxRetryAfterMs / 1000} s this step waits. The request was rejected, so it can be dispatched again manually.`,
+      );
+    console.error(`${failure.message}; retrying in ${wait} ms.`);
+    await pause(wait);
   }
 }
 
+// Retry-After is either delay-seconds or an HTTP date.
+function retryAfterMs(value, current) {
+  if (!value) return null;
+  const ms = /^\d+$/.test(value.trim())
+    ? Number(value) * 1000
+    : Date.parse(value) - current;
+  return Number.isFinite(ms) ? Math.max(0, ms) : null;
+}
+
+// realpathSync: the module URL has symlinks resolved and argv[1] does not, and
+// a mismatch would silently skip the dispatch and exit 0.
 if (
   process.argv[1] &&
-  path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)
+  realpathSync(path.resolve(process.argv[1])) === fileURLToPath(import.meta.url)
 )
   await main(process.argv.slice(2));
 

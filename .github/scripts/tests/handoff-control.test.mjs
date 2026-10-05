@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { execFileSync, spawn } from 'node:child_process';
 import { once } from 'node:events';
-import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
+import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { createServer } from 'node:http';
 import os from 'node:os';
 import path from 'node:path';
@@ -163,7 +163,7 @@ test('dispatch carries the pinned SHA, source run, continuation and build commen
 const connectFailure = (code) =>
   Object.assign(new TypeError('fetch failed'), { cause: Object.assign(new Error(`connect ${code}`), { code }) });
 
-test('dispatch retries a 429, a 5xx or a connection never made, with bounded backoff', async () => {
+test('dispatch retries a 429 or a connection never made, with bounded backoff', async () => {
   const responses = [
     () => new Response('slow down', { status: 429 }),
     () => { throw connectFailure('ECONNREFUSED'); },
@@ -198,8 +198,8 @@ test('dispatch gives up after its retries and never retries another refusal', as
   let calls = 0;
   await assert.rejects(dispatchContinuation('https://api.test/d', {
     token: 't', body: {}, pause: async () => {},
-    fetcher: async () => { calls++; return new Response('unavailable', { status: 503 }); },
-  }), /Failed to dispatch continuation: 503 unavailable/);
+    fetcher: async () => { calls++; return new Response('rate limited', { status: 429 }); },
+  }), /Failed to dispatch continuation: 429 rate limited$/);
   assert.equal(calls, 4);
   calls = 0;
   await assert.rejects(dispatchContinuation('https://api.test/d', {
@@ -207,11 +207,52 @@ test('dispatch gives up after its retries and never retries another refusal', as
     fetcher: async () => { calls++; throw connectFailure('ENOTFOUND'); },
   }), /ENOTFOUND; the request was never sent/);
   assert.equal(calls, 4);
-  calls = 0;
+  for (const status of [401, 403, 404, 422]) {
+    calls = 0;
+    await assert.rejects(dispatchContinuation('https://api.test/d', {
+      token: 't', body: {}, pause: async () => { throw new Error('must not wait'); },
+      fetcher: async () => { calls++; return new Response('refused', { status }); },
+    }), new RegExp(`Failed to dispatch continuation: ${status} refused`));
+    assert.equal(calls, 1, String(status));
+  }
+});
+
+test('a 5xx may follow an accepted dispatch, so it is never retried', async () => {
+  for (const status of [500, 502, 503, 504]) {
+    let calls = 0;
+    await assert.rejects(dispatchContinuation('https://api.test/d', {
+      token: 't', body: {}, pause: async () => { throw new Error('must not wait'); },
+      fetcher: async () => { calls++; return new Response('Server Error', { status }); },
+    }), (error) => {
+      assert.match(error.message, new RegExp(`HTTP ${status} Server Error\\)\\. GitHub may or may not have received it`));
+      assert.match(error.message, /before dispatching it manually/);
+      return true;
+    });
+    assert.equal(calls, 1, String(status));
+  }
+});
+
+test('a 429 waits as long as Retry-After asks, within a cap', async () => {
+  const at = Date.parse('2026-10-05T12:00:00Z');
+  const responses = [
+    new Response(null, { status: 429, headers: { 'retry-after': '7' } }),
+    new Response(null, { status: 429, headers: { 'retry-after': new Date(at + 12_000).toUTCString() } }),
+    new Response(null, { status: 429, headers: { 'retry-after': 'soon' } }),
+    new Response(null, { status: 204 }),
+  ];
+  const pauses = [];
+  await dispatchContinuation('https://api.test/d', {
+    token: 't', body: {}, now: () => at,
+    fetcher: async () => responses.shift(),
+    pause: async (ms) => { pauses.push(ms); },
+  });
+  // An unreadable header falls back to the backoff for that attempt.
+  assert.deepEqual(pauses, [7000, 12000, 8000]);
+  let calls = 0;
   await assert.rejects(dispatchContinuation('https://api.test/d', {
     token: 't', body: {}, pause: async () => { throw new Error('must not wait'); },
-    fetcher: async () => { calls++; return new Response('Bad credentials', { status: 401 }); },
-  }), /Failed to dispatch continuation: 401 Bad credentials/);
+    fetcher: async () => { calls++; return new Response('slow down', { status: 429, headers: { 'retry-after': '3600' } }); },
+  }), /Retry-After asks for 3600 s, more than the 30 s this step waits\. The request was rejected/);
   assert.equal(calls, 1);
 });
 
@@ -265,6 +306,17 @@ test('a real refused connection is retried and a real hung request is not', asyn
     token: 't', body: {}, timeoutMs: 200, pause: async () => { throw new Error('must not wait'); },
   }), /no response in 200 ms/);
   assert.equal(received, 1);
+});
+
+test('handoff.mjs run through a symlink still runs its command, never a silent no-op', (t) => {
+  const root = directory(t);
+  const link = path.join(root, 'handoff.mjs');
+  symlinkSync(path.join(scripts, 'handoff.mjs'), link);
+  const output = path.join(root, 'handoff.json');
+  execFileSync(process.execPath, [link, 'prepare', '--issue', '165', '--run-id', '23456', '--output', output], {
+    env: { ...process.env, FACTORY_CONTROL_SHA: A }, stdio: 'pipe',
+  });
+  assert.equal(JSON.parse(readFileSync(output, 'utf8')).previousRunId, 23456);
 });
 
 test('real Git A -> B -> C preserves the pinned evaluator but refuses another continuation', (t) => {
