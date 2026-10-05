@@ -51,6 +51,8 @@ test('503 auth_unavailable is a provider outage, not a caller API-key error', ()
   assert.equal(classifyAgentFailure('429 too many requests').category, 'rate_limited');
   assert.equal(classifyAgentFailure('ECONNRESET').category, 'network_error');
   assert.deepEqual(classifyAgentFailure('upstream stream closed before [DONE]'), { category: 'network_error', retryable: true });
+  // Pi reports truncated OpenAI-compatible streams with these messages.
+  for (const value of ['Upstream stream ended before terminal chunk', 'Stream error occurred']) assert.deepEqual(classifyAgentFailure(value), { category: 'network_error', retryable: true });
   assert.equal(classifyAgentFailure('TypeScript failed at file.ts:503').category, 'agent_failure');
 });
 

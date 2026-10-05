@@ -23,7 +23,7 @@ export function classifyAgentFailure(error) {
   else if ([500, 502, 503, 504, 529].includes(status) || /auth_unavailable|overloaded_error|service unavailable/i.test(text)) category = 'provider_unavailable';
   else if ([401, 403].includes(status) || /invalid[_ ]api[_ ]key|authentication_error|permission_denied/i.test(text)) category = 'auth_configuration';
   else if (status === 429 || /rate[_ ]limit/i.test(text)) category = 'rate_limited';
-  else if (/ECONNRESET|ECONNREFUSED|ETIMEDOUT|EAI_AGAIN|fetch failed|connection error|request timed out|stream (?:was )?closed|before \[DONE\]|premature close/i.test(text)) category = 'network_error';
+  else if (/ECONNRESET|ECONNREFUSED|ETIMEDOUT|EAI_AGAIN|fetch failed|connection error|request timed out|stream (?:was )?closed|stream ended before|stream error occurred|before \[DONE\]|premature close/i.test(text)) category = 'network_error';
   return { category, retryable: categories[category][1] };
 }
 
