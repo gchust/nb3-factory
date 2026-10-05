@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "inputHash": "f798c9d482fa85380d9befa358ba0b9de7fe1cc41bb1b3702fef86d0740a97f8",
+  "inputHash": "cea4cdb54c9f2306c834d5c8099c5522d8b273f17491c4e7778c534e7f4bcab4",
   "sources": [
     {
       "id": "460:36434284393:1:F2",
@@ -471,6 +471,11 @@
       "id": "555:37238852759:1:F2",
       "report": "555:37238852759:1",
       "fingerprint": "cd8faaea563b0e16755c0b116772cafc26e0963f284078ce666e1473819946dc"
+    },
+    {
+      "id": "556:37238854983:1:F4",
+      "report": "556:37238854983:1",
+      "fingerprint": "0b17acb5b1d338a667f56ac81449b25bb43b157033a9a4e6857fe33e487b85f6"
     }
   ],
   "groups": [
@@ -909,15 +914,22 @@
       "members": [
         "555:37238852759:1:F1"
       ]
+    },
+    {
+      "title": "知识库检索不是权限边界，需应用自建授权代理但缺少可直接复用的实现示例",
+      "reason": "单条保留：556:F4（E56/E42/E54）显示 AI 知识库 security.md 已如实披露兼容路由只要求认证、不强制角色/所有权/资源 ACL，且检索实现（knowledge-base-feature.js 的 search）仅按 knowledgeBaseKeys+enabled 过滤、不接收调用者身份，capabilities.md 也强调模型参数与 UI affordance 都不是授权；文档已说明边界并要求应用自建授权代理，但未给出可直接复用的“检索前按记录范围过滤/加代理”示例。这属缺实现示例的指引缺口，与既有能力缺口组（509:F2+533:F3，要求插件内建服务端授权/ACL 与写策略）在期望（补一份可抄的检索前代理示例 vs 服务端强制拒绝）与修复方向（补文档示例 vs 加运行时策略钩子）上不同，且与同报告其它发现无关，故单独保留。",
+      "members": [
+        "556:37238854983:1:F4"
+      ]
     }
   ],
   "classifier": {
     "engine": "pi",
     "model": "deepseek-v4.1-flash",
     "version": "0.86.1",
-    "runId": "37249874844",
+    "runId": "37255606384",
     "attempt": 1,
     "controlSha": "0f72d9b81f981f10501c5ac0ee0e7d786f1f4698",
-    "completedAt": "2026-10-05T01:05:27.280Z"
+    "completedAt": "2026-10-05T02:31:19.900Z"
   }
 }
