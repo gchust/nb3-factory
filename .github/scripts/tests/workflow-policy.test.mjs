@@ -360,6 +360,27 @@ test('every job runs on a pinned runner image, never a moving label', () => {
   assert.ok(checked >= 50);
 });
 
+test('browser font installs retry apt and are bounded by a step timeout', () => {
+  const script = readFileSync(
+    path.resolve(import.meta.dirname, '../install-browser-fonts.sh'),
+    'utf8',
+  );
+  assert.match(script, /Acquire::Retries=3/);
+  assert.match(script, /Acquire::http::Timeout=30/);
+  assert.match(script, /for attempt in 1 2 3/);
+  const directory = new URL('../../workflows/', import.meta.url);
+  let checked = 0;
+  for (const name of readdirSync(directory).filter((file) => file.endsWith('.yml'))) {
+    const source = readFileSync(new URL(name, directory), 'utf8');
+    for (const step of source.split(/\n\s+- (?=name:|uses:|run:)/)) {
+      if (!/run:[^\n]*\n?[^\n]*install-browser-fonts\.sh/.test(step)) continue;
+      checked++;
+      assert.match(step, /timeout-minutes: [1-9]\b/, `${name}: ${step.split('\n')[0]}`);
+    }
+  }
+  assert.ok(checked >= 5);
+});
+
 test('a prepare failure after ready clears agent:running for any build, not only recoveries', () => {
   const prepare = workflow.split('\n  prepare:')[1].split('\n  agent:')[0];
   const cleanup = prepare.split('- name: Report a failure after task preparation')[1];

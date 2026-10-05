@@ -134,6 +134,7 @@ jobs:
           pnpm exec prettier --write "${format_paths[@]}"
 
       - name: Install Chinese browser fonts
+        timeout-minutes: 5
         run: bash control/.github/scripts/install-browser-fonts.sh
 
       - name: Verify factory, application, clean database, and browser login
