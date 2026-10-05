@@ -211,15 +211,27 @@ test('the scheduled scan resends a rejection once after an hour, records it, the
   assert.equal(receiver.requests.length, 3);
 });
 
-test('a scan never automatically resends a record that already used its retry limit', async t => {
-  const { client } = await registered(t, { env: { FACTORY_EVALUATION_DELIVERY: 'true', EVALUATION_ENDPOINT: 'https://r.example/i' } });
+test('a scan automatically resends only transient rejections, never permanent ones or retry-limit', async t => {
   const env = { EVALUATION_ENDPOINT: 'https://r.example/i' };
+  const { client } = await registered(t, { env: { FACTORY_EVALUATION_DELIVERY: 'true', ...env } });
   const [queued] = (await readOutbox(client)).outbox.entries;
   const { id, targetId, type, key, revision, bundleSha256 } = queued;
-  await recordDeliveries(client, [{ id, targetId, type, key, revision, bundleSha256, state: 'rejected', reason: 'retry-limit', receipt: null,
-    attempts: [{ at: '2026-10-01T00:00:00.000Z', httpStatus: 503, outcome: 'retryable', error: 'http-503', detail: null, durationMs: 1 }] }], new Date('2026-10-01T00:00:00Z'));
-  assert.equal((await planDeliveries(client, { mode: 'scan', env, now: new Date('2026-10-03T00:00:00Z'), fetcher: fetcherFor(client) })).items.length, 0);
-  assert.equal((await planDeliveries(client, { mode: 'retry-rejected', env, now: new Date('2026-10-03T00:00:00Z'), fetcher: fetcherFor(client) })).items.length, 1);
+  const at = new Date('2026-10-03T00:00:00Z');
+  const reject = (reason, status) => recordDeliveries(client, [{ id, targetId, type, key, revision, bundleSha256, state: 'rejected', reason, receipt: null,
+    attempts: [{ at: '2026-10-01T00:00:00.000Z', httpStatus: status, outcome: reason === 'retry-limit' ? 'retryable' : 'rejected', error: reason, detail: null, durationMs: 1 }] }], new Date('2026-10-01T00:00:00Z'));
+  const scanned = async () => (await planDeliveries(client, { mode: 'scan', env, now: at, fetcher: fetcherFor(client) })).items.length;
+  // Records rejected before automatic retries existed carry no autoRetries field.
+  for (const [reason, status] of [['unprocessable', 422], ['payload-too-large', 413], ['unauthorized', 401], ['forbidden', 403],
+    ['endpoint-not-found', 404], ['redirect-refused', 307], ['invalid-receipt', 201], ['http-410', 410], ['retry-limit', 503]]) {
+    await reject(reason, status);
+    assert.equal((await readOutbox(client)).outbox.entries[0].autoRetries, undefined);
+    assert.equal(await scanned(), 0, reason);
+    assert.equal((await planDeliveries(client, { mode: 'retry-rejected', env, now: at, fetcher: fetcherFor(client) })).items.length, 1, reason);
+  }
+  for (const [reason, status] of [['bad-request', 400], ['accepted-not-stored', 202], ['http-520', 520]]) {
+    await reject(reason, status);
+    assert.equal(await scanned(), 1, reason);
+  }
 });
 
 test('redirects are refused, so credentials are never forwarded to another origin', async t => {

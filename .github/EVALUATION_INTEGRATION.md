@@ -214,8 +214,10 @@ X-Evaluation-Bundle-SHA256: <ZIP 的 SHA-256>
 | 201 | 首次保存 | 校验回执后记为 `stored` |
 | 200 | 相同幂等键、相同包已存在 | 同上，返回原回执 |
 | 409 | 相同幂等键、不同包 | 记为 `conflict`，停止自动重试 |
-| 202 | v1 不视为已入库 | 记为 `rejected`（`accepted-not-stored`） |
-| 400 / 401 / 403 / 404 / 413 / 422 | 请求、认证、路径、大小或数据问题 | 记为 `rejected` 与具体类别，等待修正，不循环；定时扫描至少 1 小时后自动重发一次（见下文） |
+| 202 | v1 不视为已入库 | 记为 `rejected`（`accepted-not-stored`）；定时扫描至少 1 小时后自动重发一次 |
+| 400 | 请求问题，接收端可能稍后接受同一个包 | 记为 `rejected`（`bad-request`）；定时扫描至少 1 小时后自动重发一次（见下文） |
+| 401 / 403 / 404 / 413 / 422 | 认证、路径、大小或数据问题 | 记为 `rejected` 与具体类别，等待修正后手动 `retry-rejected`，不自动重发 |
+| 其他 5xx（如 501、520） | 接收端故障 | 记为 `rejected`（`http-<状态>`）；定时扫描至少 1 小时后自动重发一次 |
 | 3xx | 不跟随重定向，避免转发凭据 | `rejected`（`redirect-refused`） |
 | 408 / 429 / 500 / 502 / 503 / 504、超时、断连 | 可重试 | 最多 3 次、单次 30 秒；遵守 `Retry-After`，上限 60 秒 |
 | 200 / 201 但回执正文未收完（断连或超时） | 传输故障，接收端可能已入库 | 以同一幂等键重试确认；只有完整收到的回执格式或身份不符才是 `invalid-receipt` |
@@ -280,8 +282,8 @@ GitHub 限流、5xx、网络或超时等临时故障保持 `pending`，不计为
 `send` 作业有 20 分钟发送预算（作业上限 30 分钟）：按单个包的最坏耗时（3 次 × 30 秒超时 + 2 次最长 60 秒 `Retry-After`）判断，
 来不及发完的包不开始、保持 `pending`；每发完一个包就写入结果文件，作业中断也不丢失已发生的尝试。
 超过 24 次可重试失败的记录转为 `rejected`（`retry-limit`）。
-接收端偶尔会先拒绝、稍后又接受同一个包（例如 400 `bad-request` 之后同字节返回 201），因此 `scan` 会自动重发 `rejected` 记录**一次**：
-距上次记录至少 1 小时，且 `autoRetries` 小于 1；`retry-limit` 已用完自动重试，不在其列。重发使用登记的原始字节和同一幂等键，
+接收端偶尔会先拒绝、稍后又接受同一个包（例如 400 `bad-request` 之后同字节返回 201），因此 `scan` 会自动重发暂时性的 `rejected` 记录**一次**：
+原因是 `bad-request`、`accepted-not-stored` 或 `http-5xx`，距上次记录至少 1 小时，且 `autoRetries` 小于 1（缺省视为 0）。`unauthorized`、`forbidden`、`endpoint-not-found`、`payload-too-large`、`unprocessable`、`redirect-refused`、`invalid-receipt`、其他 `http-<状态>` 需要先修正，`retry-limit` 已用完自动重试，都不自动重发，只能手动 `retry-rejected`。重发使用登记的原始字节和同一幂等键，
 `stored` 记录从不被扫描重发。`record` 作业把这次重发计入 `autoRetries` 并写 `lastAutoRetryAt`，无论结果如何；
 仍被拒绝时保持 `rejected`，等待修正后手动 `retry-rejected`。发送作业未及写回时计数不变，下一次扫描可能再发一次，接收端幂等返回同一结果。GitHub Artifact 有保留期限，删除关联 Run 也可能删除它，
 因此不承诺历史包永久可重放；`evaluation.json` 与清单的原始字节长期保留在 `gh-pages`。
