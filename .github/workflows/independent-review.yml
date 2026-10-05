@@ -89,7 +89,6 @@ jobs:
     outputs:
       ready: ${{ steps.bind.outcome == 'success' }}
       sha: ${{ steps.bind.outputs.sha }}
-      issue: ${{ steps.bind.outputs.issue }}
       control_sha: ${{ steps.pin.outputs.sha }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
@@ -294,7 +293,12 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           ASSET: ${{ steps.archive.outputs.asset }}
         run: |
-          gh release view factory-history --repo "$GITHUB_REPOSITORY" >/dev/null
+          set -euo pipefail
+          # The first history publisher creates the shared release, whichever it is.
+          if ! gh release view factory-history --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release create factory-history --repo "$GITHUB_REPOSITORY" --prerelease \
+              --title "工厂运行历史" --notes "已脱敏的工厂可观察交互记录。"
+          fi
           gh release upload factory-history "$RUNNER_TEMP/review-archive/$ASSET" --repo "$GITHUB_REPOSITORY" --clobber
           echo "url=https://github.com/$GITHUB_REPOSITORY/releases/download/factory-history/$ASSET" >> "$GITHUB_OUTPUT"
       - name: Publish results without altering the business verdict

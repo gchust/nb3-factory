@@ -341,6 +341,22 @@ test('a prepare failure after ready clears agent:running for any build, not only
   assert.match(cleanup, /mark-failure\.mjs/);
 });
 
+test('every history publisher creates the shared release when it is missing', () => {
+  const directory = new URL('../../workflows/', import.meta.url);
+  let checked = 0;
+  for (const name of readdirSync(directory).filter((file) => file.endsWith('.yml'))) {
+    const source = readFileSync(new URL(name, directory), 'utf8');
+    if (!source.includes('gh release upload factory-history')) continue;
+    checked++;
+    assert.match(
+      source,
+      /if ! gh release view factory-history --repo "\$GITHUB_REPOSITORY" >\/dev\/null 2>&1; then\n\s+gh release create factory-history /,
+      name,
+    );
+  }
+  assert.ok(checked >= 3);
+});
+
 test('regression checks cancel superseded PR runs but never a pending push or dispatch', () => {
   const directory = new URL('../../workflows/', import.meta.url);
   for (const name of ['factory-tests.yml', 'agent-adapters.yml']) {

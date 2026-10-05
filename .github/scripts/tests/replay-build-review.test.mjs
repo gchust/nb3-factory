@@ -82,4 +82,9 @@ test('review-only workflow reconstructs a sealed candidate and delegates publica
   assert.doesNotMatch(workflow, /pnpm (?:build|migrate|seed)|verify-and-repair|publish-pr\.mjs/);
   assert.match(workflow, /uses: \.\/\.github\/workflows\/report-task-usage.yml/);
   assert.match(workflow, /merge-multiple: true/);
+  // Its evaluator and reused reporter run from the dispatched commit.
+  assert.match(
+    workflow,
+    /github\.ref == format\('refs\/heads\/\{0\}', github\.event\.repository\.default_branch\)/,
+  );
 });
