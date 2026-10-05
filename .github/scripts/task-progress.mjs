@@ -101,11 +101,16 @@ export function validateSnapshot(value, now = Date.now()) {
     activityAt: value.activityAt, qa };
 }
 
+// Every dispatch starts a reporter run that rewrites the comment, so changes
+// are coalesced and an unchanged long phase only refreshes the timestamp
+// rarely. The final flush on stop bypasses both limits.
+export const CHANGE_INTERVAL_MS = 120_000;
+export const HEARTBEAT_INTERVAL_MS = 1_200_000;
 export function shouldSend(previous, next, lastAttempt, now) {
-  if (lastAttempt && now - lastAttempt < 60_000) return false;
+  if (lastAttempt && now - lastAttempt < CHANGE_INTERVAL_MS) return false;
   const changes = (s) => s && JSON.stringify([s.phase, s.outcome, s.verificationAttempts,
     s.repairAttempts, s.pendingCriteria, s.qa && [s.qa.recorded, ...statuses.map((v) => s.qa[v])]]);
-  return !previous || changes(previous) !== changes(next) || now - lastAttempt >= 300_000;
+  return !previous || changes(previous) !== changes(next) || now - lastAttempt >= HEARTBEAT_INTERVAL_MS;
 }
 
 function githubApi(repository, token) {
@@ -164,7 +169,7 @@ export function renderProgress(record, repository) {
   return `${marker}\n${dataMarker}${JSON.stringify(record)} -->\n## 搭建实时进度\n\n` +
     `[Run ${record.runId} / attempt ${record.attempt}](https://github.com/${repository}/actions/runs/${record.runId}/attempts/${record.attempt})\n\n` +
     `| 指标 | 最近观察 |\n| --- | --- |\n${rows.map(([a, b]) => `| ${a} | ${b} |`).join('\n')}\n\n` +
-    '> 快照约每五分钟更新，阶段变化节流合并。日志有输出不等于验收有进展；QA 行是已记录结果，不是最终验收结论。时间停止更新表示快照已过时，不能仅凭此认定搭建卡死。\n';
+    '> 阶段或验收计数变化时最多每两分钟更新一次；无变化时约每二十分钟刷新快照时间。日志有输出不等于验收有进展；QA 行是已记录结果，不是最终验收结论。时间停止更新表示快照已过时，不能仅凭此认定搭建卡死。\n';
 }
 
 export async function publishProgress(api, repository, { runId, attempt, live }, now = Date.now()) {

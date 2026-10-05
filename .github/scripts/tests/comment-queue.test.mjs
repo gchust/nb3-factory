@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import test from 'node:test';
 import { coordinate as reconcile, main, sweepIssues, SWEEP_WINDOW_MS } from '../dispatch-comment-builds.mjs';
 import {
@@ -641,4 +642,16 @@ test('the scheduled sweep reads open and recently updated Issues, not the whole 
     queries.find((query) => query.state === 'closed').since,
     new Date(now - SWEEP_WINDOW_MS).toISOString(),
   );
+});
+
+test('the safety-net sweep runs hourly on a scripts-only checkout', () => {
+  const workflow = readFileSync(
+    new URL('../../workflows/comment-build-queue.yml', import.meta.url),
+    'utf8',
+  );
+  // Comment-dispatched builds emit no workflow_run, so the sweep must stay.
+  assert.match(workflow, /schedule:\n\s+- cron: '7 \* \* \* \*'\n/);
+  assert.match(workflow, /workflow_run:/);
+  assert.match(workflow, /sparse-checkout: \.github\/scripts\n/);
+  assert.ok(SWEEP_WINDOW_MS > 60 * 60 * 1000);
 });

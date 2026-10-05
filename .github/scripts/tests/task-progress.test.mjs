@@ -90,12 +90,15 @@ test('snapshot allowlist rejects invalid IDs/counts/time and strips arbitrary pa
     assert.throws(() => validateSnapshot({ ...live, ...patch }, now), /Invalid/);
 });
 
-test('stage changes are coalesced at one minute; activity-only ticks at five minutes', () => {
+test('stage changes are coalesced at two minutes; activity-only ticks at twenty minutes', () => {
   assert.equal(shouldSend(null, live, 0, now), true);
-  assert.equal(shouldSend(live, { ...live, phase: 'repair' }, now - 30_000, now), false);
-  assert.equal(shouldSend(live, { ...live, phase: 'repair' }, now - 60_000, now), true);
-  assert.equal(shouldSend(live, { ...live, activityAt: now }, now - 120_000, now), false);
-  assert.equal(shouldSend(live, { ...live, sampledAt: now }, now - 300_000, now), true);
+  assert.equal(shouldSend(live, { ...live, phase: 'repair' }, now - 60_000, now), false);
+  assert.equal(shouldSend(live, { ...live, phase: 'repair' }, now - 119_999, now), false);
+  assert.equal(shouldSend(live, { ...live, phase: 'repair' }, now - 120_000, now), true);
+  assert.equal(shouldSend(live, { ...live, qa: null, outcome: 'failed' }, now - 120_000, now), true);
+  assert.equal(shouldSend(live, { ...live, activityAt: now }, now - 300_000, now), false);
+  assert.equal(shouldSend(live, { ...live, sampledAt: now }, now - 1_199_999, now), false);
+  assert.equal(shouldSend(live, { ...live, sampledAt: now }, now - 1_200_000, now), true);
 });
 
 test('phase start survives seals/outcome updates but resets on the next round', (t) => {
@@ -179,6 +182,7 @@ test('failed publishing is visible, and rendered snapshots are explicitly not ac
   const text = renderProgress({ runId: 123, attempt: 1, sampledAt: now, startedAt: now - 60_000, snapshot: live, label: '运行中' }, repository);
   assert.match(text, /日志有输出不等于验收有进展/);
   assert.match(text, /不是最终验收结论/);
+  assert.match(text, /最多每两分钟更新一次；无变化时约每二十分钟刷新/);
 });
 
 test('observer dispatches allowlisted snapshots and flushes on stop without a model', async (t) => {
@@ -216,6 +220,9 @@ test('workflow isolates the writer, pins control code and always stops the obser
   assert.match(reporter, /workflow_run:/);
   assert.match(reporter, /workflow_dispatch:/);
   assert.doesNotMatch(reporter, /secrets\.|run-agent|pnpm|download-artifact/);
+  // Each snapshot starts a reporter run: keep it to the scripts and bundled Node.
+  assert.match(reporter, /sparse-checkout: \.github\/scripts\n/);
+  assert.doesNotMatch(reporter, /actions\/setup-node/);
 });
 
 test('terminal publication does not wait for an unrelated reply job to end', async () => {
