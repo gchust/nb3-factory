@@ -10,10 +10,8 @@ import {
 } from '@/components/ui/tooltip';
 
 import { ThemeSettings } from '../../theme/index.js';
+import { ACTION_LINK_CLASS, MessageBell } from './message-bell.js';
 import { UserMenu } from './user-menu.js';
-
-const ACTION_LINK_CLASS =
-  'inline-flex size-10 items-center justify-center rounded-xl border border-border/70 bg-background/60 text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50';
 
 /** Keep header entries visible on their destination pages so navigation stays consistent across surfaces. */
 export function HeaderActions({
@@ -61,6 +59,8 @@ export function HeaderActions({
           </Tooltip>
         ) : null}
         <ThemeSettings />
+        {/* The message center is a signed-in surface, so the bell lives with the other account entries. */}
+        <MessageBell />
         <UserMenu />
       </div>
     </TooltipProvider>

@@ -92,8 +92,24 @@ describe('app client routes', () => {
     const resolved = resolveRoutes();
 
     // The landing page opted out of page authorization, so it is reachable by every signed-in user.
+    // The after-sales service pages each declare their own page resource, which is what a stored page grant names;
+    // the work-order detail page inherits its list page's resource because both are the same grant.
     expect(pageAuthorizations(resolved.routes)).toEqual([
       { name: 'home', authorizedAs: null },
+      { name: 'service-dashboard', authorizedAs: 'service-dashboard' },
+      { name: 'service-work-orders', authorizedAs: 'service-work-orders' },
+      {
+        name: 'service-work-order-detail',
+        authorizedAs: 'service-work-orders',
+      },
+      { name: 'service-equipment', authorizedAs: 'service-equipment' },
+      { name: 'service-customers', authorizedAs: 'service-customers' },
+      { name: 'service-inspections', authorizedAs: 'service-inspections' },
+      { name: 'service-knowledge', authorizedAs: 'service-knowledge' },
+      { name: 'service-manuals', authorizedAs: 'service-manuals' },
+      { name: 'service-assistant', authorizedAs: 'service-assistant' },
+      { name: 'service-messages', authorizedAs: 'service-messages' },
+      { name: 'service-integration', authorizedAs: 'service-integration' },
     ]);
   });
 });

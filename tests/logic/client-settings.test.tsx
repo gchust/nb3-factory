@@ -5,8 +5,10 @@ import type {
   AppClientSettingIcon,
 } from '@nocobase/app-client/plugins';
 import {
+  apiClientToken,
   ClientApplicationContext,
   type ClientApplication,
+  realtimeClientToken,
 } from '@nocobase/app-client';
 import {
   AuthenticationProvider,
@@ -710,6 +712,17 @@ function renderWithAuthentication(
   const registered = new Map<unknown, unknown>([
     [authenticationClientToken, authClient],
     [authorizationClientToken, authorizationClient],
+    // The app router mounts the in-app notification provider, which reads the
+    // API client and subscribes to the realtime client. Both exist in the real
+    // runtime; the harness has to register them so a layout can render.
+    [apiClientToken, { request: vi.fn().mockResolvedValue({ count: 0 }) }],
+    [
+      realtimeClientToken,
+      {
+        onOpen: vi.fn(() => () => undefined),
+        subscribe: vi.fn(() => () => undefined),
+      },
+    ],
   ]);
   const app = {
     runtime: { settingsRouteTree },

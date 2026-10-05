@@ -10,9 +10,14 @@ export function SidebarFooter({
   readonly collapsed: boolean;
 }): ReactElement {
   const { t } = useTranslation();
-  // Published by the server from the application's package.json.
+  // Published by the server from the application's package.json. A build that does not carry a
+  // displayName (the packaged `dist/package.json`) falls back to this application's own name rather
+  // than the template scaffold it was generated from.
   const publicConfig = useClientApplication().config.public;
-  const templateName = publicConfig.get('app.displayName', 'Default Template');
+  const templateName = publicConfig.get(
+    'app.displayName',
+    t('shell.appName', { defaultValue: 'Equipment after-sales service' }),
+  );
   const templateVersion = publicConfig.get('app.version', '0.0.0');
   const templateLabel = `${templateName} v${templateVersion}`;
   const brandLink = (

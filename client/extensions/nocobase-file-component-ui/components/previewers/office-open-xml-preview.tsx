@@ -12,6 +12,18 @@ interface OfficeOpenXmlViewer {
   destroy(): void;
 }
 
+/**
+ * How long a single step of the preview may take.
+ *
+ * The viewer has its own internal timeouts, but a renderer can also stall with
+ * nothing pending to time out — a worker that never reports back, or a layout
+ * that produces no output. Without a bound the overlay stays at "Loading
+ * preview..." forever and the reader is told nothing. The request and the render
+ * are timed separately so the message names which one failed.
+ */
+const OOXML_REQUEST_TIMEOUT_MS = 15_000;
+const OOXML_RENDER_TIMEOUT_MS = 20_000;
+
 export interface OfficeOpenXmlPreviewProps {
   readonly file: FileRecord;
   readonly format: OfficeOpenXmlFormat;
@@ -54,7 +66,15 @@ export function OfficeOpenXmlPreview({
     };
 
     void (async () => {
-      const data = await fetchOfficeOpenXml(url, controller.signal, t);
+      const data = await withTimeout(
+        fetchOfficeOpenXml(url, controller.signal, t),
+        OOXML_REQUEST_TIMEOUT_MS,
+        () =>
+          t('files.previewTimedOut', {
+            defaultValue:
+              'The preview took too long to load. Try downloading the file.',
+          }),
+      );
       if (!active) return;
       const createdViewer = await createOfficeOpenXmlViewer(
         format,
@@ -66,7 +86,12 @@ export function OfficeOpenXmlPreview({
         return;
       }
       viewer = createdViewer;
-      await viewer.load(data);
+      await withTimeout(viewer.load(data), OOXML_RENDER_TIMEOUT_MS, () =>
+        t('files.previewTimedOut', {
+          defaultValue:
+            'The preview took too long to load. Try downloading the file.',
+        }),
+      );
       if (active) setLoaded(true);
     })().catch(reportViewerError);
 
@@ -115,6 +140,28 @@ export function OfficeOpenXmlPreview({
 }
 
 class OfficeOpenXmlRequestError extends Error {}
+
+/** Reject with a named error when `work` does not settle in time. */
+async function withTimeout<T>(
+  work: Promise<T>,
+  ms: number,
+  message: () => string,
+): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  try {
+    return await Promise.race([
+      work,
+      new Promise<never>((_, reject) => {
+        timer = setTimeout(
+          () => reject(new OfficeOpenXmlRequestError(message())),
+          ms,
+        );
+      }),
+    ]);
+  } finally {
+    if (timer !== undefined) clearTimeout(timer);
+  }
+}
 
 async function fetchOfficeOpenXml(
   url: string,

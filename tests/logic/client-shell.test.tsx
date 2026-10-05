@@ -3,6 +3,7 @@ import {
   ClientApplicationContext,
   type ClientApplication,
   createAppClientConfig,
+  realtimeClientToken,
 } from '@nocobase/app-client';
 import type { AppClientRegisteredRoute } from '@nocobase/app-client/plugins';
 import {
@@ -73,7 +74,9 @@ describe('application shell', () => {
       'href',
       'https://www.nocobase.com',
     );
-    expect(screen.getByText('Default Template v0.0.0')).toBeVisible();
+    expect(
+      screen.getByText('Equipment after-sales service v0.0.0'),
+    ).toBeVisible();
     expect(
       await screen.findByRole('heading', { name: 'App client is ready' }),
     ).toBeVisible();
@@ -268,6 +271,11 @@ function renderApplication(
     [apiClientToken, apiClient],
     [authenticationClientToken, authClient],
     [authorizationClientToken, authorizationClient],
+    // The shell mounts the in-app notification provider, which subscribes to the
+    // realtime client and the focus event. The real runtime registers this
+    // service; the harness has to as well, or the provider throws and no layout
+    // renders.
+    [realtimeClientToken, createTestRealtimeClient()],
   ]);
   const app = {
     config: createAppClientConfig({ rawConfig: {} }),
@@ -295,6 +303,20 @@ function renderApplication(
       </AuthenticationProvider>
     </ClientApplicationContext.Provider>,
   );
+}
+
+/**
+ * The subset of the realtime client the notification provider uses.
+ *
+ * `subscribeToInboxInvalidations` registers an `onOpen` handler and one topic
+ * subscription, so a client that answers both with an unsubscribe is enough
+ * for the shell to mount.
+ */
+function createTestRealtimeClient() {
+  return {
+    onOpen: vi.fn(() => () => undefined),
+    subscribe: vi.fn(() => () => undefined),
+  };
 }
 
 function createTestAuthClient(authenticated: boolean) {

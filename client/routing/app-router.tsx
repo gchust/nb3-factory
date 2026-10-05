@@ -3,6 +3,7 @@ import {
   GuestAuthentication,
   RequiredAuthentication,
 } from '@nocobase/app-plugin-authentication/client';
+import { NotificationInAppProvider } from '@nocobase/app-plugin-notification-in-app/client';
 import type { AppClientRegisteredRoute } from '@nocobase/app-client/plugins';
 import { lazy, Suspense, useMemo, type ReactElement } from 'react';
 import { Navigate, Outlet, Route, Routes } from 'react-router';
@@ -76,7 +77,11 @@ export function AppRouter(inputProps: AppRouterProps): ReactElement {
       <Route
         element={
           <RequiredAuthentication>
-            <Outlet />
+            {/* One inbox runtime for the whole signed-in shell: the header bell and the
+              message-center page read the same unread count and refresh through it. */}
+            <NotificationInAppProvider>
+              <Outlet />
+            </NotificationInAppProvider>
           </RequiredAuthentication>
         }
       >

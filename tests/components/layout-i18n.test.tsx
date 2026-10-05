@@ -79,14 +79,16 @@ async function setup(children: ReactNode, path = '/') {
 describe('shell translations', () => {
   it('updates header, footer, tooltips and accessible labels without remounting', async () => {
     const runtime = await setup(<AppLayout routes={[]} />);
-    expect(screen.getByText('AI application workspace')).toBeVisible();
-    expect(screen.getByText('AI builds freely.')).toBeVisible();
+    expect(screen.getByText('Equipment after-sales service')).toBeVisible();
+    expect(
+      screen.getByText('Equipment work orders, inspections and knowledge'),
+    ).toBeVisible();
     await act(() => runtime.changeLanguage('zh-CN'));
-    expect(screen.getByText('AI 应用工作区')).toBeVisible();
-    expect(screen.getByText('AI 自由构建。')).toBeVisible();
+    expect(screen.getByText('设备售后服务')).toBeVisible();
+    expect(screen.getByText('工单、巡检与知识协同')).toBeVisible();
     expect(
       screen.getByRole('link', { name: 'NocoBase' }).parentElement,
-    ).toHaveTextContent('NocoBase 保障可靠。');
+    ).toHaveTextContent('NocoBase 驱动。');
     expect(screen.getByRole('link', { name: 'NocoBase' })).toHaveAttribute(
       'href',
       'https://www.nocobase.com',
@@ -116,7 +118,7 @@ describe('shell translations', () => {
         selector: '[data-slot=tooltip-content]',
       }),
     ).toBeVisible();
-    expect(screen.getByText('AI application workspace')).toBeVisible();
+    expect(screen.getByText('Equipment after-sales service')).toBeVisible();
     await user.unhover(examples);
     act(() => settings.focus());
     expect(

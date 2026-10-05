@@ -1,3 +1,7 @@
+// Imported first on purpose: it publishes the runtime API base as the legacy
+// global the AI knowledge-base plugin's portal client reads, before that
+// module is evaluated.
+import './portal-api-url.js';
 import { createApp } from './app.js';
 import {
   AppClientRoot,

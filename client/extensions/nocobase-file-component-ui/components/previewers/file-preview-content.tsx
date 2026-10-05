@@ -70,13 +70,7 @@ export function FilePreviewContent(
     );
   switch (kind) {
     case 'image':
-      return (
-        <img
-          src={url}
-          alt={file.filename}
-          className='max-h-[70vh] max-w-full object-contain'
-        />
-      );
+      return <ImagePreview file={file} url={url} onDownload={onDownload} />;
     case 'pdf':
       return (
         <iframe title={file.filename} src={url} className='h-[70vh] w-full' />
@@ -125,6 +119,55 @@ function MarkdownPreview(inputProps: { readonly text?: string }): ReactElement {
         {text}
       </ReactMarkdown>
     </article>
+  );
+}
+
+/**
+ * A decoded image, or an honest failure.
+ *
+ * A file whose bytes are not a readable image still renders as an `<img>` element
+ * with no visible content: the browser fires `load` (or neither `load` nor
+ * `error`), and without checking `naturalWidth` a corrupt upload looks like an
+ * intentionally blank picture. A zero-width load is treated as a decode failure
+ * so the dialog says so instead of showing an empty frame.
+ */
+function ImagePreview(inputProps: {
+  readonly file: FileRecord;
+  readonly url?: string;
+  readonly onDownload?: () => void;
+}): ReactElement {
+  const { t } = useTranslation('@nocobase/app-plugin-file');
+  const { file, url, onDownload } = inputProps;
+  const [failed, setFailed] = useState(false);
+
+  if (!url && !failed)
+    return (
+      <div role='status'>
+        {t('files.loadingPreview', { defaultValue: 'Loading preview...' })}
+      </div>
+    );
+  if (failed) {
+    return (
+      <DownloadFallback
+        file={file}
+        message={t('files.imageFailed', {
+          defaultValue:
+            'This image could not be decoded. The file may be corrupt.',
+        })}
+        onDownload={onDownload}
+      />
+    );
+  }
+  return (
+    <img
+      src={url}
+      alt={file.filename}
+      className='max-h-[70vh] max-w-full object-contain'
+      onError={() => setFailed(true)}
+      onLoad={(event) => {
+        if (event.currentTarget.naturalWidth === 0) setFailed(true);
+      }}
+    />
   );
 }
 
