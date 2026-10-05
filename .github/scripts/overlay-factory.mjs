@@ -89,7 +89,7 @@ const ignorePath = path.join(workspace, '.gitignore');
 const ignore = read(workspace, '.gitignore');
 writeFileSync(
   ignorePath,
-  `${ignore.trimEnd()}\n\n# Keep agent guidance and generated configuration in refreshed baselines.\n!/.agents/\n!/.agents/**\n!/config.yml\n`,
+  `${ignore.trimEnd()}\n\n# Keep agent guidance and generated configuration in refreshed baselines.\n!/.agents/\n!/.agents/**\n!/config.yml\n\n# Python bytecode from running the factory's own test scripts.\n__pycache__/\n`,
 );
 app.scripts = {
   ...app.scripts,

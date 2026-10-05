@@ -1,7 +1,11 @@
 import importlib.util
+import sys
 from pathlib import Path
 import unittest
 
+# Loading the script must not leave a __pycache__ beside it: everything under
+# .github/ is copied into each refreshed baseline.
+sys.dont_write_bytecode = True
 spec = importlib.util.spec_from_file_location("sync", Path(__file__).parents[1] / "preview/cloudflare-sync.py")
 sync = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(sync)

@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { execFileSync } from 'node:child_process';
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import test from 'node:test';
@@ -422,6 +423,26 @@ test('network installs in long jobs are bounded by a step timeout', () => {
         assert.match(body, /timeout-minutes: (?:10|15)\n/, `${name}: ${step}`);
     }
   }
+});
+
+test('no Python bytecode is committed or left by the factory tests', () => {
+  // Everything under .github/ is copied into each refreshed baseline.
+  const root = path.resolve(import.meta.dirname, '..', '..', '..');
+  const tracked = execFileSync('git', ['-C', root, 'ls-files', '.github'], { encoding: 'utf8' })
+    .split('\n')
+    .filter((file) => /(^|\/)__pycache__\/|\.py[co]$/.test(file));
+  assert.deepEqual(tracked, []);
+  for (const file of ['browser-fixtures.test.py', 'preview-dns-sync.test.py'])
+    assert.match(
+      readFileSync(path.join(import.meta.dirname, file), 'utf8'),
+      /^sys\.dont_write_bytecode = True\n(?:.*\n)*?spec = importlib/m,
+      file,
+    );
+  assert.match(readFileSync(path.join(root, '.gitignore'), 'utf8'), /^__pycache__\/$/m);
+  assert.match(
+    readFileSync(path.join(root, '.github/scripts/overlay-factory.mjs'), 'utf8'),
+    /\\n__pycache__\/\\n`/,
+  );
 });
 
 test('a prepare failure after ready clears agent:running for any build, not only recoveries', () => {
