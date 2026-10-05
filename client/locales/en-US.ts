@@ -96,6 +96,61 @@ const enUS = {
       'Describe what you need to your AI Agent, then build pages, data models, and business workflows.',
   },
 
+  materials: {
+    title: 'Project materials',
+    description:
+      'Keep each material with the private attachments that belong to it.',
+    newTitle: 'New material',
+    newDescription:
+      'Give the material a title, then attach PNG photos or DOCX documents.',
+    titleLabel: 'Title',
+    titlePlaceholder: 'e.g. Foundation acceptance records',
+    titleDescription: 'The title is required before the material can be saved.',
+    attachmentsLabel: 'Attachments',
+    attachmentsDescription:
+      'PNG images and DOCX documents only, up to 10 MB each and 20 files per material.',
+    addAttachmentsLabel: 'Add attachments',
+    create: 'Create material',
+    creating: 'Creating…',
+    created: 'Material created.',
+    listTitle: 'Materials',
+    empty: 'No materials yet. Create the first one above.',
+    attachments: 'Attachments',
+    attachmentCount: '{{count}} attachment(s)',
+    createdAt: 'Created',
+    actions: 'Actions',
+    open: 'Open',
+    detailDescription: 'View, download or remove this material’s attachments.',
+    detailsTitle: 'Details',
+    removeNote:
+      'Removing an attachment and saving detaches it from this material.',
+    emptyAttachments: 'No attachments yet.',
+    notFound: 'This material does not exist or is not yours.',
+    backToList: 'Back to materials',
+    save: 'Save changes',
+    saving: 'Saving…',
+    saved: 'Material saved.',
+    delete: 'Delete material',
+    deleting: 'Deleting…',
+    deleteTitle: 'Delete this material?',
+    deleteDescription:
+      'The material is removed. Its attachments are detached, not destroyed.',
+    deleted: 'Material deleted.',
+    errors: {
+      titleRequired: 'Enter a title before saving.',
+      titleTooLong: 'The title is too long.',
+      invalidFileIds: 'An attachment could not be read. Please try again.',
+      tooManyFiles: 'Too many attachments for one material.',
+      fileNotAvailable:
+        'An attachment is missing or belongs to another material.',
+      unsupportedFileType: 'Only PNG images and DOCX documents are accepted.',
+      uploadFailed: 'The file could not be uploaded.',
+      downloadFailed: 'The file could not be downloaded.',
+      loadFailed: 'Unable to load materials. Please try again.',
+      saveFailed: 'Unable to save the material. Please try again.',
+    },
+  },
+
   appearance: {
     title: 'Appearance',
     mode: 'Color mode',
@@ -130,6 +185,7 @@ const enUS = {
   },
   navigation: {
     home: 'Home',
+    materials: 'Project materials',
     open: 'Open navigation',
     close: 'Close navigation',
     expand: 'Expand navigation',

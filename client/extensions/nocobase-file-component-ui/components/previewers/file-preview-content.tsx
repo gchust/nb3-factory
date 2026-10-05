@@ -70,13 +70,7 @@ export function FilePreviewContent(
     );
   switch (kind) {
     case 'image':
-      return (
-        <img
-          src={url}
-          alt={file.filename}
-          className='max-h-[70vh] max-w-full object-contain'
-        />
-      );
+      return <ImagePreview file={file} url={url} onDownload={onDownload} />;
     case 'pdf':
       return (
         <iframe title={file.filename} src={url} className='h-[70vh] w-full' />
@@ -97,6 +91,43 @@ export function FilePreviewContent(
     default:
       return <DownloadFallback file={file} onDownload={onDownload} />;
   }
+}
+
+/**
+ * An image preview that reports a decode failure instead of leaving a broken
+ * image behind. A file can be stored with an image MIME type and valid PNG
+ * header while its bytes are corrupt, so `onError` is the only signal that the
+ * content cannot be shown; it turns that into the same explicit message and
+ * download fallback the other unrenderable kinds already use.
+ */
+function ImagePreview(inputProps: {
+  readonly file: FileRecord;
+  readonly url?: string;
+  readonly onDownload?: () => void;
+}): ReactElement {
+  const { t } = useTranslation('@nocobase/app-plugin-file');
+  const { file, url, onDownload } = inputProps;
+  const [failed, setFailed] = useState(false);
+
+  if (failed || !url) {
+    return (
+      <DownloadFallback
+        file={file}
+        message={t('previewFailed', {
+          defaultValue: 'Unable to load the file preview.',
+        })}
+        onDownload={onDownload}
+      />
+    );
+  }
+  return (
+    <img
+      src={url}
+      alt={file.filename}
+      className='max-h-[70vh] max-w-full object-contain'
+      onError={() => setFailed(true)}
+    />
+  );
 }
 
 function MarkdownPreview(inputProps: { readonly text?: string }): ReactElement {

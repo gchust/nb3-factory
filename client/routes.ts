@@ -1,4 +1,4 @@
-import { Home } from 'lucide-react';
+import { FolderOpen, Home } from 'lucide-react';
 import {
   defineAppRoutes,
   defineSettingsRoutes,
@@ -15,6 +15,27 @@ const appRoutes: AppClientRouteContribution = defineAppRoutes([
     name: 'home',
     navigation: { title: 'navigation.home', icon: Home },
     path: '/',
+  },
+  {
+    // Every signed-in user reaches the materials workspace, which is the
+    // "internal only" boundary the feature needs. Who may read which material
+    // is not a page grant: the server scopes every record and every attachment
+    // to the account that owns it, so a colleague who opens the page sees only
+    // their own (empty) list and cannot open a shared link to somebody else's.
+    authz: 'skip',
+    auth: 'required',
+    componentLoader: () => import('./pages/materials/index.js'),
+    name: 'materials',
+    navigation: { title: 'navigation.materials', icon: FolderOpen },
+    path: '/materials',
+  },
+  {
+    // The detail page is the same section and repeats the same boundary.
+    authz: 'skip',
+    auth: 'required',
+    componentLoader: () => import('./pages/materials/detail.js'),
+    name: 'materials-detail',
+    path: '/materials/:id',
   },
   {
     auth: 'guest',
