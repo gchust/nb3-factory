@@ -13,10 +13,15 @@ import {
   PREVIEW_COMMENT_PREFIX,
   PREVIEW_THEME,
   PREVIEW_VERIFIED_MARKER,
+  capacitySkipNote,
   depsKeyFromEntries,
   depsProbeCommand,
+  needsRoom,
+  parseCapacityListing,
+  planCapacity,
   planFrom,
   readDepsEntries,
+  renderEvictionComment,
   renderPreviewComment,
   requireDepsKey,
   requireDomain,
@@ -161,7 +166,9 @@ if (mode === 'select') {
   // Teardown only runs when a PR closes. A preview deployed after that (a
   // queued deploy, or a replay of an old run) would never be reclaimed.
   if (pr.state !== 'open') {
-    console.log(`PR #${pr.number} is ${pr.state}; not deploying a preview nothing would reclaim.`);
+    console.log(
+      `PR #${pr.number} is ${pr.state}; not deploying a preview nothing would reclaim.`,
+    );
     process.exit(0);
   }
 
@@ -182,7 +189,77 @@ if (mode === 'select') {
   output('host', plan.host);
   output('deps_key', key);
   output('probe', depsProbeCommand(key));
+  output(
+    'build_status',
+    plan.deliveryStatus === 'failed' ? 'failed' : 'success',
+  );
   output('ready', 'true');
+} else if (mode === 'capacity') {
+  // Runs before the payload is packaged and uploaded: a deploy the host would
+  // refuse for the instance limit must not cost a public release asset first.
+  // `room` is written only once the answer is known: a step that fails before
+  // then must read as a failed deploy, never as a skip.
+  const plan = readJson(args.output, 'deploy.json');
+  if (
+    plan.repository !== repository ||
+    plan.runId !== runId ||
+    !Number.isSafeInteger(plan.prNumber)
+  )
+    throw new Error('Deployment plan mismatch');
+  const listing = parseCapacityListing(readFileSync(args.listing, 'utf8'));
+
+  // Only a full host needs to know which pull requests are still open, and
+  // only GitHub can say: the host never learns that a pull request closed.
+  const pulls = new Map();
+  if (needsRoom(listing))
+    for (const { pr } of listing.instances) {
+      if (pr === plan.prNumber) continue;
+      try {
+        pulls.set(pr, await api('GET', `/pulls/${pr}`));
+      } catch (error) {
+        if (!/\(404\)$/.test(error.message)) throw error;
+        pulls.set(pr, null);
+      }
+    }
+  const capacity = planCapacity({ listing, pr: plan.prNumber, pulls });
+  writeFileSync(
+    path.join(args.output, 'capacity.json'),
+    JSON.stringify(capacity),
+  );
+  writeFileSync(
+    path.join(args.output, 'evict.txt'),
+    capacity.evict.map(({ pr, reason }) => `${pr} ${reason}\n`).join(''),
+  );
+  for (const { pr, reason, deployedAt } of capacity.evict)
+    console.log(
+      `Evicting the preview for PR #${pr} (${reason}, deployed ${deployedAt || 'at an unknown time'}).`,
+    );
+  if (capacity.room)
+    console.log(
+      `Preview host has room for PR #${plan.prNumber} (${capacity.count}/${capacity.limit} before eviction).`,
+    );
+  else
+    console.log(
+      `::notice::PREVIEW SKIPPED: the preview host is full (${capacity.count}/${capacity.limit}) and every remaining preview is a successful build of an open PR.`,
+    );
+  output('room', String(capacity.room));
+} else if (mode === 'evicted') {
+  // Tells an open pull request that its preview gave way, so a dead address in
+  // an earlier comment is not mistaken for a broken deploy. A closed pull
+  // request needs no notice.
+  const plan = readJson(args.output, 'deploy.json');
+  if (plan.repository !== repository || plan.runId !== runId)
+    throw new Error('Deployment plan mismatch');
+  const victim = Number(args.pr);
+  if (!Number.isSafeInteger(victim) || victim < 1)
+    throw new Error('Invalid evicted PR number');
+  if (args.reason === 'closed') process.exit(0);
+  await api('POST', `/issues/${victim}/comments`, {
+    body: renderEvictionComment({
+      reason: args.reason,
+      forPr: plan.prNumber,
+    }),
+  });
 } else if (mode === 'publish') {
   const plan = readJson(args.output, 'deploy.json');
   if (
@@ -192,14 +269,18 @@ if (mode === 'select') {
   )
     throw new Error('Deployment plan mismatch');
 
-  const status = args.status === 'success' ? 'success' : 'failed';
+  const status = ['success', 'skipped'].includes(args.status)
+    ? args.status
+    : 'failed';
   const deployRunUrl = process.env.GITHUB_RUN_ID
     ? `https://github.com/${repository}/actions/runs/${process.env.GITHUB_RUN_ID}`
     : plan.runUrl;
 
   const pr = await api('GET', `/pulls/${plan.prNumber}`);
   if (pr.state !== 'open') {
-    console.log(`PR #${plan.prNumber} closed during deployment; teardown owns it now.`);
+    console.log(
+      `PR #${plan.prNumber} closed during deployment; teardown owns it now.`,
+    );
     process.exit(0);
   }
   if (
@@ -213,7 +294,9 @@ if (mode === 'select') {
   const note =
     status === 'success'
       ? ''
-      : `本次预览部署或公网访问检查失败，尚未确认地址可用。请查看[部署日志](${deployRunUrl})；这不改变搭建报告和 PR 中记录的验收状态。`;
+      : status === 'skipped'
+        ? capacitySkipNote(readJson(args.output, 'capacity.json'), runUrl)
+        : `本次预览部署或公网访问检查失败，尚未确认地址可用。请查看[部署日志](${deployRunUrl})；这不改变搭建报告和 PR 中记录的验收状态。`;
   const marker = `${PREVIEW_COMMENT_PREFIX}${runId}:${plan.runAttempt} -->`;
   const existing = (await list(`/issues/${plan.prNumber}/comments`)).find(
     (c) => c.body?.includes(marker) && c.user?.login === 'github-actions[bot]',
@@ -225,12 +308,21 @@ if (mode === 'select') {
   // withdraw an address another attempt already verified — that is how a live
   // preview came to be reported as "暂无已确认可用的地址" (PR #159, 2026-09-21).
   // The failure is still stated; it just does not overwrite the address.
+  //
+  // A skip is not such a failure: it happens only when this pull request has no
+  // preview at all, so an address published earlier no longer answers.
   const afterVerified = Boolean(
-    status !== 'success' && existing?.body?.includes(PREVIEW_VERIFIED_MARKER),
+    status === 'failed' && existing?.body?.includes(PREVIEW_VERIFIED_MARKER),
   );
   const body = afterVerified
     ? `${renderPreviewComment(plan)}\n\n> 本次触发没有通过部署或公网检查，因此没有替换已经在跑的预览；上文的地址来自本次构建已经确认过的部署，仍以它为准。请查看[部署日志](${deployRunUrl})。`
-    : renderPreviewComment(plan, note);
+    : status === 'skipped'
+      ? renderPreviewComment(
+          plan,
+          note,
+          '**预览已跳过：预览机名额已满，本次没有部署。**',
+        )
+      : renderPreviewComment(plan, note);
   await api(
     existing ? 'PATCH' : 'POST',
     existing
@@ -244,9 +336,13 @@ if (mode === 'select') {
     console.warn(
       '::warning::This attempt failed after the address was verified; the published preview is unchanged.',
     );
+  else if (status === 'skipped')
+    console.log(
+      `::notice::Preview skipped for capacity; reported on PR #${plan.prNumber}.`,
+    );
   else
     console.warn('::warning::Preview deployment failed; reported on the PR.');
 } else
   throw new Error(
-    'Usage: deploy-preview.mjs <select|prepare|publish> --run-id N ...',
+    'Usage: deploy-preview.mjs <select|prepare|capacity|evicted|publish> --run-id N ...',
   );

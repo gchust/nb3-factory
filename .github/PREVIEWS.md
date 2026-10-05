@@ -27,6 +27,7 @@ Code Agent NocoBase Task
 Deploy Task Preview（由 workflow_run 触发，搭建流程也会显式请求一次）
   select  ──► 只挑同时通过 verify-final 和 publish 的运行
   prepare ──► 认领 PR、算出依赖集标识、生成地址
+  名额    ──► 先问预览机还有没有名额；满了就回收已关闭 PR 和失败构建的预览，仍满则跳过
   发布    ──► 把 payload 上传成临时 release 资产（factory-previews），名字带内容摘要
   取件    ──► ssh 只递过去 URL 与 sha256 → 252 自己走出口拉取、校验
   部署    ──► 252 上 preview-deploy.sh（迁移、起容器；同一次构建已经在跑则原样保留）
@@ -192,22 +193,39 @@ ssh 252 'bash /srv/nb3-preview/scripts/preview-gc.sh --prune-backups'    # 只�
 ## 资源与并发
 
 预览机只有 1 个 vCPU，且和 Gitea、act_runner、NocoBase alpha、四个 PostgreSQL 共用，
-所以每个预览限 0.5 CPU / 768MB，并发上限默认 6 个。超限时新预览会被拒绝并提示先回收，
-而不是悄悄挤掉别人正在看的预览。
+所以每个预览限 0.5 CPU / 768MB，实例上限默认 30 个（`PREVIEW_MAX_INSTANCES`）。
+
+**名额满了怎么办。** 打包和上传 payload 之前，工作流先用 `preview-capacity.sh` 问预览机
+还有没有名额（这个 PR 已经有实例时是替换，不占新名额）。以前这一步在上传之后才由
+`preview-deploy.sh` 检查：2026-10-05 有 49 个开放的搭建 PR 争 30 个名额，约 82% 的部署
+上传了最多 ~744MB 的公开 release 资产之后才被拒绝。现在名额满时按这个顺序腾位置：
+
+1. PR 已关闭、已合并或不存在的预览，全部回收——本该由回收流程删掉，别处也不会再删；
+2. 失败构建的预览，部署时间最早的先让（失败构建的预览本来就是可选的）；
+3. 既没有记录搭建状态的预览（主机上没有 `buildStatus`，PR 正文里也没有
+   `factory-build-status` 标记），同样部署时间最早的先让。
+
+搭建状态由 `preview-deploy.sh --build-status` 写进实例的 `preview.env`；在它之前部署的实例
+从 PR 正文的 `factory-build-status` 标记补读。**开放 PR 的成功构建预览永远不会被挤掉。**
+失败和未知状态的预览只在回收后确实能腾出名额时才回收；腾不出来就一个都不动，这次部署
+记为**跳过**而不是失败：工作流保持绿色，PR 上的预览评论说明名额已满以及怎么释放（关闭不再
+需要的 PR，或在预览机上运行 `preview-destroy.sh <PR 号>`，再按“手动补发”重跑）。被回收的
+开放 PR 会收到一条“预览环境已回收”的评论。迁移、启动、公网检查等真正的部署错误仍然记为失败。
 
 ## 排查
 
-| 现象                        | 可能原因                                                                                                                                                                                                                   |
-| --------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| PR 上只有"部署失败"的评论   | 看该工作流的日志；`preview-deploy.sh` 的输出里有迁移和启动的完整记录                                                                                                                                                       |
-| 地址打不开                  | 通配路由是否配好；`ssh 252 'docker logs nb3-preview-traefik'`                                                                                                                                                              |
-| 应用启动报 `.node` 相关错误 | `dist/package.json` 的 `nocobase.buildTarget` 与运行时镜像不匹配，用 `PREVIEW_NODE_IMAGE` 指定合适的镜像重跑 `provision.sh`                                                                                                |
-| 一直卡在 apt-get            | 预览机没有直接出网，构建时要传 `PREVIEW_BUILD_PROXY`                                                                                                                                                                       |
-| 取件失败或摘要不匹配        | `preview-deploy.sh` 会打印 `could not fetch the payload` 或 `payload digest mismatch`；先确认预览机能不能解析并连上 github.com（`ssh 252 'curl -sI https://github.com'`），需要代理时由 `FACTORY_PREVIEW_FETCH_PROXY` 指定 |
-| 评论显示失败但地址能打开     | 那个地址来自同一次构建更早一次成功的部署：重复请求失败时不会撤掉已确认的地址（见“评论不会被后来的失败撤掉”），失败尝试的日志在评论里给出 |
-| 部署成功但地址没变（没重新部署） | 同一次构建已经在跑时 `preview-deploy.sh` 不做任何替换；需要重新初始化示例数据时勾上 `force` 再补发 |
-| 磁盘告警                    | `ssh 252 'bash /srv/nb3-preview/scripts/preview-gc.sh'`；先用 `du -sh /srv/nb3-preview/{backups,deps,instances,tmp}` 看是谁占的。备份与依赖缓存是主要占用（各约 340MB/份），两者都已由 `nb3-preview-gc.timer` 每小时自动回收                                                                                            |
-| 怀疑 DNS 记录没回收          | 别用本机解析器判断：它会缓存已删除的记录，预览机的记录删掉后本机仍可能解析到 Cloudflare 地址。用 `dig @1.1.1.1 nb3-<号>.nfvd.net`——返回 zone 通配地址（如 `52.184.25.30`）才说明记录已删；权威依据是在预览机上用 `cloudflare/api-token` 查 `/zones/<zone>/dns_records`                                                                                            |
+| 现象                             | 可能原因                                                                                                                                                                                                                                                               |
+| -------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| PR 上显示“预览已跳过”            | 名额已满且剩下的都是开放 PR 的成功构建；关闭不再需要的 PR 或运行 `preview-destroy.sh <PR 号>` 后手动补发                                                                                                                                                               |
+| PR 上只有"部署失败"的评论        | 看该工作流的日志；`preview-deploy.sh` 的输出里有迁移和启动的完整记录                                                                                                                                                                                                   |
+| 地址打不开                       | 通配路由是否配好；`ssh 252 'docker logs nb3-preview-traefik'`                                                                                                                                                                                                          |
+| 应用启动报 `.node` 相关错误      | `dist/package.json` 的 `nocobase.buildTarget` 与运行时镜像不匹配，用 `PREVIEW_NODE_IMAGE` 指定合适的镜像重跑 `provision.sh`                                                                                                                                            |
+| 一直卡在 apt-get                 | 预览机没有直接出网，构建时要传 `PREVIEW_BUILD_PROXY`                                                                                                                                                                                                                   |
+| 取件失败或摘要不匹配             | `preview-deploy.sh` 会打印 `could not fetch the payload` 或 `payload digest mismatch`；先确认预览机能不能解析并连上 github.com（`ssh 252 'curl -sI https://github.com'`），需要代理时由 `FACTORY_PREVIEW_FETCH_PROXY` 指定                                             |
+| 评论显示失败但地址能打开         | 那个地址来自同一次构建更早一次成功的部署：重复请求失败时不会撤掉已确认的地址（见“评论不会被后来的失败撤掉”），失败尝试的日志在评论里给出                                                                                                                               |
+| 部署成功但地址没变（没重新部署） | 同一次构建已经在跑时 `preview-deploy.sh` 不做任何替换；需要重新初始化示例数据时勾上 `force` 再补发                                                                                                                                                                     |
+| 磁盘告警                         | `ssh 252 'bash /srv/nb3-preview/scripts/preview-gc.sh'`；先用 `du -sh /srv/nb3-preview/{backups,deps,instances,tmp}` 看是谁占的。备份与依赖缓存是主要占用（各约 340MB/份），两者都已由 `nb3-preview-gc.timer` 每小时自动回收                                           |
+| 怀疑 DNS 记录没回收              | 别用本机解析器判断：它会缓存已删除的记录，预览机的记录删掉后本机仍可能解析到 Cloudflare 地址。用 `dig @1.1.1.1 nb3-<号>.nfvd.net`——返回 zone 通配地址（如 `52.184.25.30`）才说明记录已删；权威依据是在预览机上用 `cloudflare/api-token` 查 `/zones/<zone>/dns_records` |
 
 预览机上的构建日志在 `/srv/nb3-preview/logs/pr-<号>-{migrate,seed}.log`。取件的半截文件是
 `/srv/nb3-preview/tmp/payload-pr-<号>.tar.gz.part`，它永远不会被部署，可以随时删。
@@ -232,18 +250,19 @@ ssh 252 'bash /srv/nb3-preview/scripts/preview-gc.sh --prune-backups'    # 只�
 
 ## 相关文件
 
-| 文件                                                 | 作用                                         |
-| ---------------------------------------------------- | -------------------------------------------- |
-| `.github/workflows/deploy-preview.yml`               | 部署工作流                                   |
-| `.github/workflows/preview-teardown.yml`             | PR 关闭时回收                                |
-| `.github/scripts/deploy-preview.mjs`                 | `select` / `prepare` / `publish`             |
-| `.github/scripts/preview-host.mjs`                   | 纯函数：依赖集标识、命名、瘦包清单、评论渲染 |
-| `.github/scripts/preview/preview-deploy.sh`          | 预览机上的部署                               |
-| `.github/scripts/preview/preview-destroy.sh`         | 回收单个预览                                 |
-| `.github/scripts/preview/preview-gc.sh`              | 回收无引用的缓存与孤儿容器                   |
-| `.github/scripts/preview/provision.sh`               | 预览机一次性配置                             |
-| `.github/scripts/preview/cloudflare-sync.py`         | 自动 DNS 创建/延迟清理及新域名别名路由       |
-| `.github/scripts/preview/nb3-preview-dns-sync.timer` | 每分钟自动同步                               |
+| 文件                                                 | 作用                                                      |
+| ---------------------------------------------------- | --------------------------------------------------------- |
+| `.github/workflows/deploy-preview.yml`               | 部署工作流                                                |
+| `.github/workflows/preview-teardown.yml`             | PR 关闭时回收                                             |
+| `.github/scripts/deploy-preview.mjs`                 | `select` / `prepare` / `capacity` / `evicted` / `publish` |
+| `.github/scripts/preview-host.mjs`                   | 纯函数：依赖集标识、命名、瘦包清单、回收顺序、评论渲染    |
+| `.github/scripts/preview/preview-deploy.sh`          | 预览机上的部署                                            |
+| `.github/scripts/preview/preview-capacity.sh`        | 上传前报告名额、实例与搭建状态                            |
+| `.github/scripts/preview/preview-destroy.sh`         | 回收单个预览                                              |
+| `.github/scripts/preview/preview-gc.sh`              | 回收无引用的缓存与孤儿容器                                |
+| `.github/scripts/preview/provision.sh`               | 预览机一次性配置                                          |
+| `.github/scripts/preview/cloudflare-sync.py`         | 自动 DNS 创建/延迟清理及新域名别名路由                    |
+| `.github/scripts/preview/nb3-preview-dns-sync.timer` | 每分钟自动同步                                            |
 
 ## 连接和可用性检查
 
@@ -257,4 +276,4 @@ Tailscale 加入网络后，用允许中继的有限时 ping 输出诊断，不�
 
 预览是一次性验收环境，每次部署重新初始化示例数据，避免未合并分支的种子变更与上次数据库校验冲突。旧数据库、上传文件和应用目录保存在 `/srv/nb3-preview/backups/`，不会直接删除。新部署本机健康检查失败时恢复旧实例；失败的新目录也保留供诊断，且不占预览名额。备份需要管理员按磁盘使用情况清理。
 
-默认最多 30 个实例，每个仍限制 768 MB 内存、0.5 CPU。预览部署在 GitHub 统一排队，避免共享脚本与产物的并发写入。
+默认最多 30 个实例，每个仍限制 768 MB 内存、0.5 CPU；名额满时的回收顺序见“资源与并发”。预览部署在 GitHub 统一排队，避免共享脚本与产物的并发写入。

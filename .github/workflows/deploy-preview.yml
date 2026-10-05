@@ -139,13 +139,9 @@ jobs:
         run: |
           bash control/.github/scripts/preview-connect.sh
 
-      - name: Publish the payload for the host to fetch
-        id: publish
+      - name: Send the host scripts
+        id: scripts
         if: steps.prepare.outputs.ready == 'true' && env.PREVIEW_ENABLED == 'true'
-        env:
-          PR: ${{ steps.prepare.outputs.pr }}
-          DEPS_KEY: ${{ steps.prepare.outputs.deps_key }}
-          GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
           ssh_opts=(-i ~/.ssh/preview_key -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o ConnectTimeout=20)
@@ -160,6 +156,53 @@ jobs:
             "$RUNNER_TEMP/preview-scripts.tar.gz" "$remote:/srv/nb3-preview/tmp/scripts.tar.gz"
           ssh "${ssh_opts[@]}" "$remote" \
             'tar -xzf /srv/nb3-preview/tmp/scripts.tar.gz -C /srv/nb3-preview/scripts && chmod +x /srv/nb3-preview/scripts/*.sh'
+
+      # Before anything is packaged or uploaded. The host refuses a new preview
+      # beyond its instance limit, and finding that out only after a ~744 MB
+      # payload was published as a public release asset is how most deploys
+      # failed once open build PRs outnumbered the slots. A full host first gives
+      # up previews of closed PRs, then of failed builds, oldest first; when only
+      # successful builds of open PRs remain, this deploy is skipped and the PR
+      # is told why, rather than the run failing.
+      - name: Make room on the preview host
+        id: capacity
+        if: steps.scripts.outcome == 'success'
+        env:
+          PR: ${{ steps.prepare.outputs.pr }}
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          ssh_opts=(-i ~/.ssh/preview_key -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o ConnectTimeout=20)
+          remote="$PREVIEW_USER@$PREVIEW_HOST"
+          ssh "${ssh_opts[@]}" "$remote" \
+            "bash /srv/nb3-preview/scripts/preview-capacity.sh --pr '$PR'" \
+            > "$RUNNER_TEMP/preview/capacity.txt"
+          node control/.github/scripts/deploy-preview.mjs capacity \
+            --run-id "$SOURCE_RUN_ID" \
+            --listing "$RUNNER_TEMP/preview/capacity.txt" \
+            --output "$RUNNER_TEMP/preview"
+          while read -r victim reason; do
+            [[ "$victim" =~ ^[1-9][0-9]*$ ]] || { echo "::error::unexpected eviction entry"; exit 1; }
+            # -n: without it ssh reads the rest of the eviction list as its stdin.
+            ssh -n "${ssh_opts[@]}" "$remote" "bash /srv/nb3-preview/scripts/preview-destroy.sh '$victim'"
+            # The notice is a courtesy; the eviction it describes already happened.
+            node control/.github/scripts/deploy-preview.mjs evicted \
+              --run-id "$SOURCE_RUN_ID" --output "$RUNNER_TEMP/preview" \
+              --pr "$victim" --reason "$reason" ||
+              echo "::warning::Could not tell PR #$victim that its preview was evicted."
+          done < "$RUNNER_TEMP/preview/evict.txt"
+
+      - name: Publish the payload for the host to fetch
+        id: publish
+        if: steps.capacity.outputs.room == 'true'
+        env:
+          PR: ${{ steps.prepare.outputs.pr }}
+          DEPS_KEY: ${{ steps.prepare.outputs.deps_key }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          ssh_opts=(-i ~/.ssh/preview_key -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o ConnectTimeout=20)
+          remote="$PREVIEW_USER@$PREVIEW_HOST"
 
           # The dependency tree is ~740 MB of a ~744 MB build and changes only
           # with the dependency set, so ask the host before shipping it.
@@ -209,6 +252,9 @@ jobs:
           PR: ${{ steps.prepare.outputs.pr }}
           SHA: ${{ steps.prepare.outputs.sha }}
           DEPS_KEY: ${{ steps.prepare.outputs.deps_key }}
+          # Recorded on the host, so a full host can tell a failed build's
+          # preview, which may give way, from a successful one, which never does.
+          BUILD_STATUS: ${{ steps.prepare.outputs.build_status }}
         run: |
           set -euo pipefail
           # Built from the asset name this run published, so the URL the host
@@ -227,6 +273,7 @@ jobs:
                --payload-url '$asset_url' \
                --payload-sha256 '${{ steps.publish.outputs.payload_sha256 }}' \
                --fetch-proxy '$PREVIEW_FETCH_PROXY' \
+               --build-status '$BUILD_STATUS' \
                $redeploy"
 
       - name: Verify the public preview URL
@@ -247,4 +294,4 @@ jobs:
           node control/.github/scripts/deploy-preview.mjs publish \
             --run-id "$SOURCE_RUN_ID" \
             --output "$RUNNER_TEMP/preview" \
-            --status "${{ steps.public.outcome == 'success' && 'success' || 'failed' }}"
+            --status "${{ steps.public.outcome == 'success' && 'success' || steps.capacity.outcome == 'success' && steps.capacity.outputs.room == 'false' && 'skipped' || 'failed' }}"
