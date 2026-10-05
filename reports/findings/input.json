@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "inputHash": "cea4cdb54c9f2306c834d5c8099c5522d8b273f17491c4e7778c534e7f4bcab4",
+  "inputHash": "e5df48e4baddaec0efa13f1cf48e15b28e555c0e1be76b354ce525780ff1543f",
   "findings": [
     {
       "id": "460:36434284393:1:F2",
@@ -8279,6 +8279,209 @@
         }
       ],
       "fingerprint": "b7620ab7cef68bd075aa560d6b034eb4c81b23fbc4da274c19e110e60c0dca4f"
+    },
+    {
+      "id": "554:37258077945:1:F1",
+      "report": "554:37258077945:1",
+      "issue": 554,
+      "taskTitle": "内部资料阅读与临时共享",
+      "appVersion": "1.0.0-beta.50",
+      "appTemplate": "@nocobase/app-template-default",
+      "finding": {
+        "id": "F1",
+        "kind": "misleading",
+        "owner": "documentation",
+        "severity": "minor",
+        "confidence": "confirmed",
+        "status": "open",
+        "title": "selection.records 只接受非空字符串，与框架默认整数自增主键不匹配，指引未说明",
+        "detail": "共享/限制指引与 authorization README 用 selection.records(['quote-7']) 作为“为单条记录建立共享”的推荐写法，而 db SKILL 的默认示例使用 collection.increments('id') 生成整数主键。parseRecordSelection 要求 records 的每个 id 为非空字符串（并在 appendRuleAction 构建规则时被调用），因此整数主键集合无法用 records 精确选择单条记录，指引未提示这一冲突。",
+        "impact": "按指引在框架默认的整数主键集合上使用 records 会在构建/校验阶段抛 TypeError，或与整数列比较时被过滤校验拒绝，迫使使用方改用未预期的参数化 recordAccess。",
+        "claimed": "指引以 selection.records(['quote-7']) 展示如何共享显式记录，未说明 ids 必须是非空字符串。",
+        "observed": "parseRecordSelection 对非字符串/空串 id 抛 'Invalid record selection'；应用注释明确记录整数主键无法用 records、改用 record access 传真实数字 id。",
+        "suggestedChange": "在共享与 record access 指引（及 README）注明 records 的字符串约束，并为整数主键给出 selection.recordAccess(key, params) 的等价示例；或让框架接受数字 id 并在仓储层按列类型比较。",
+        "evidence": [
+          "E1",
+          "E5",
+          "E15",
+          "E41",
+          "E43"
+        ],
+        "diagnosis": {
+          "category": "guidance-gap",
+          "trigger": "在整数自增主键集合上按指引用 selection.records([row.id]) 创建共享规则。",
+          "expected": "指引说明 records 的字符串约束并给出整数主键的等价写法，或 records 接受数字 id 后正常工作。",
+          "actual": "构建/校验阶段抛 TypeError: Invalid record selection；应用最终改用参数化 recordAccess。",
+          "workaround": "用 selection.recordAccess('library.sharedDocument', { documentId }) 输出按整数主键 $eq 的条件；应用 scope.ts/service.ts 即为此。",
+          "acceptance": "按指引在整数主键集合上创建单条记录共享可成功并通过 B02/B03，或文档明确给出 recordAccess 方案。"
+        }
+      },
+      "targets": [
+        "@nocobase/authorization",
+        "app/.agents/skills/nocobase-app-plugin-authz-sharing-rules"
+      ],
+      "paths": [
+        ".agents/skills/nocobase-app-plugin-authz-sharing-rules/SKILL.md",
+        "packages/@nocobase/authorization/README.md",
+        "packages/@nocobase/authorization/dist/core/selection.js"
+      ],
+      "evidence": [
+        {
+          "id": "E1",
+          "kind": "code",
+          "path": "packages/@nocobase/authorization/dist/core/selection.js",
+          "observation": "selection.all()/records(ids)/recordAccess(key,params) 构造 RecordSelection；parseRecordSelection 要求 records 的每个 id 为非空字符串，否则抛 TypeError('Invalid record selection')。",
+          "lines": [
+            1,
+            23
+          ],
+          "excerpt": "export const selection = {\n    all: () => ({ type: 'all' }),\n    records: (ids) => ({ type: 'records', ids: [...ids] }),\n    recordAccess: (key, params) => params === undefined\n        ? { type: 'recordAccess', key }\n        : { type: 'recordAccess', key, params: structuredClone(params) },\n};\n/** Validates an untrusted value, returning it as a detached selection. */\nexport function parseRecordSelection(value) {\n    if (typeof value === 'object' && value !== null && !Array.isArray(value)) {\n        const type = Reflect.get(value, 'type');\n        if (type === 'all')\n            return selection.all();\n        const ids = Reflect.get(value, 'ids');\n        if (type === 'records' &&\n            Array.isArray(ids) &&\n            ids.every((id) => typeof id === 'string' && id !== ''))\n            return selection.records(ids);\n        const key = Reflect.get(value, 'key');\n        if (type === 'recordAccess' && typeof key === 'string' && key)\n            return selection.recordAccess(key, Reflect.get(value, 'params'));\n    }\n    throw new TypeError('Invalid record selection');",
+          "sha256": "1a4f0b0f5a61e724c856f23703dadb6fa2cb8d245c2669d4f3f36f1cc4e66088"
+        },
+        {
+          "id": "E5",
+          "kind": "code",
+          "path": "packages/@nocobase/authorization/README.md",
+          "observation": "README 端到端示例用 selection.records(['quote-7']) 创建 sharing 规则，未说明 ids 的字符串约束。",
+          "lines": [
+            258,
+            284
+          ],
+          "excerpt": "\n```ts\nimport { selection } from '@nocobase/authorization/core';\nimport { defineDefaultAccessRule } from '@nocobase/authorization/default-access';\nimport { defineSharingRule } from '@nocobase/authorization/sharing-rules';\nimport { defineRestrictionRule } from '@nocobase/authorization/restriction-rules';\n\nconst target = quotes.reference();\nawait authz.defaultAccess.create(\n  defineDefaultAccessRule('quotes-baseline', target)\n    .scope('submit', 'quotes', selection.recordAccess('sales.prepared'))\n    .build(),\n);\nawait authz.sharingRules.create(\n  defineSharingRule('handover', target)\n    .title('Handover')\n    .subjects({ type: 'user', id: 'alice' })\n    .scope('submit', 'quotes', selection.records(['quote-7']))\n    .reason('Covering for Bob')\n    .build(),\n);\nawait authz.restrictionRules.create(\n  defineRestrictionRule('own-only', target)\n    .subjects({ type: 'team', id: 'interns' })\n    .scope('submit', 'quotes', selection.recordAccess('recordsIOwn'))\n    .build(),\n);",
+          "sha256": "38751ed97f79caa0e21273f8f4982868b6cf98a5b157daefde49d03f7ba68009"
+        },
+        {
+          "id": "E15",
+          "kind": "skill",
+          "path": "app/.agents/skills/nocobase-app-plugin-authz-sharing-rules/SKILL.md",
+          "observation": "共享 SKILL：服务 API、selection.records/recordAccess、拒绝 all、create/update/delete/get/list。",
+          "lines": [
+            44,
+            77
+          ],
+          "excerpt": "\n## Service API\n\nResolve `authorizationToken` from `@nocobase/app-plugin-authorization/server` in the owning provider or route factory. The rule API exists only when the factory is configured, so narrow the service before using it. `quotes` is the application's own composite and `org.team` its own subject type, both defined as the main Skill describes.\n\n```ts\nimport { selection } from '@nocobase/authorization/core';\nimport {\n  defineSharingRule,\n  type SharingRulesAuthorizationApi,\n} from '@nocobase/authorization/sharing-rules';\nimport type { DatabaseConnection } from '@nocobase/db';\n\nif (!('sharingRules' in authz))\n  throw new Error('Sharing rules is not configured');\nconst rules = (\n  authz as typeof authz & SharingRulesAuthorizationApi<DatabaseConnection>\n).sharingRules;\n\nawait rules.create(\n  defineSharingRule('proposal-handover', quotes.reference())\n    .title('Proposal handover')\n    .subjects({ type: 'org.team', id: 'proposal' })\n    .scope('edit', 'quotes', selection.records(['quote-7']))\n    .scope('submit', 'quotes', selection.records(['quote-7']))\n    .scope('submit', 'projects', selection.records(['project-3']))\n    .reason('Delegate this proposal to the team')\n    .build(),\n);\n```\n\nA rule is `{ key, resource, actions, title?, subjects, reason? }` and each action is `{ action, scopeKey?, selection }`, where `selection` is `selection.records(ids)` or `selection.recordAccess(key, params?)`; `all` is refused. `create`, `update(key, rule)`, `delete(key)`, `get(key)`, `list()` and `withTransaction(connection)` validate before writing. A rule on a composite names the data scope in `scopeKey` and affects only that composite action's branch; a rule on a `database.collection` omits `scopeKey` and applies across every branch that reaches the collection. Neither form shares related records implicitly or replaces field and relation capabilities, and unrestricted identities skip every rule.\n\nThe service is a trusted provisioning API. A custom HTTP caller must check the settings item with `requireSettings(authorization, 'authorization.sharing-rules', action)` and validate the rule with `validateDataScopeRule`, both from `@nocobase/app-plugin-authorization/server/extension`, as this plugin's own handler does.",
+          "sha256": "146d83ac7e11420ccd357c143d9bded9e33b57dd629a218ebe8e59b999bf09b0"
+        },
+        {
+          "id": "E41",
+          "kind": "code",
+          "path": "app/server/library/scope.ts",
+          "observation": "应用注释记录 records 仅字符串且整数主键会被过滤校验拒绝，并自实现 allScopes（未公开 helper）。",
+          "lines": [
+            30,
+            70
+          ],
+          "excerpt": "  /**\n   * The one record a temporary share points at.\n   *\n   * The authorization package's `records` selection carries string ids only,\n   * and this table's primary key is an integer, so a `records` selection would\n   * be rejected by the repository's filter validation. Naming the id in a\n   * record access lets the resolver hand back a real number instead.\n   */\n  sharedDocument: 'library.sharedDocument',\n} as const;\n\n/** The params the `sharedDocument` record access reads. */\nexport interface SharedDocumentParams {\n  readonly documentId?: unknown;\n}\n\n/**\n * The AND fold of the authorization package's internal `allScopes`.\n *\n * That helper is not part of the package's public surface, so the fold is\n * repeated here rather than reaching through a private subpath. `true` drops\n * out, `false` wins, and a single node collapses to itself.\n */\nexport function allScopes(scopes: readonly DatabaseScope[]): DatabaseScope {\n  if (scopes.includes(false)) return false;\n  const items = scopes.filter(\n    (scope): scope is FilterNode => scope !== true && scope !== false,\n  );\n  if (items.length === 0) return true;\n  return items.length === 1 ? items[0] : group('and', items);\n}\n\nfunction group(logic: 'and' | 'or', items: readonly FilterNode[]): FilterNode {\n  return { kind: 'group', logic, items };\n}\n\n/** Published and not confidential. */\nexport function readableScope(): DatabaseScope {\n  return allScopes([\n    condition('published', '$isTruly'),\n    condition('confidential', '$isFalsy'),",
+          "sha256": "ad055b622685b41a731e1942a4dae7924d08e3d7e09954577084d331af18d990"
+        },
+        {
+          "id": "E43",
+          "kind": "code",
+          "path": "app/database/main/migrations/202609200001_create_documents.ts",
+          "observation": "documents 迁移使用 collection.increments('id')（整数主键）及 ownerId/published/confidential 等字段。",
+          "lines": [
+            1,
+            31
+          ],
+          "excerpt": "import { defineMigration } from '@nocobase/db';\n\n/**\n * The internal document library's only table.\n *\n * `ownerId` is the Authentication user id and carries `recordsIOwn`, so it is a\n * plain string column rather than a relation: the authorization model reads\n * direct fields only, and a relation would put the owner behind traversal.\n */\nconst migration = defineMigration({\n  name: '202609200001_create_documents',\n  async up({ builder }) {\n    await builder.createCollection('documents', (collection) => {\n      collection.increments('id');\n      collection.string('title', { length: 200 }).notNull();\n      collection.text('content').nullable();\n      collection.string('ownerId', { length: 64 }).notNull();\n      collection.boolean('published').notNull().defaultTo(false);\n      collection.boolean('confidential').notNull().defaultTo(false);\n      collection.datetime('createdAt').notNull();\n      collection.datetime('updatedAt').notNull();\n      collection.primary('id', { name: 'pk_documents' });\n      collection.index('ownerId', { name: 'idx_documents_owner' });\n    });\n  },\n  async down({ builder }) {\n    await builder.dropCollection('documents');\n  },\n});\n\nexport default migration;",
+          "sha256": "f7cb7a03087b52cc9d311d2387ca292a0ec6603544001eabcbd0fced168a7e72"
+        }
+      ],
+      "fingerprint": "68acd14606cae2fe299431deda378f4043099a59c02e4ca7a6ac3e10baf0b0d8"
+    },
+    {
+      "id": "554:37258077945:1:F2",
+      "report": "554:37258077945:1",
+      "issue": 554,
+      "taskTitle": "内部资料阅读与临时共享",
+      "appVersion": "1.0.0-beta.50",
+      "appTemplate": "@nocobase/app-template-default",
+      "finding": {
+        "id": "F2",
+        "kind": "improvement",
+        "owner": "plugin",
+        "severity": "minor",
+        "confidence": "confirmed",
+        "status": "open",
+        "title": "作用域 AND 组合的 allScopes 未随 anyScope 一并公开",
+        "detail": "app-plugin-authorization 的 scope.js 同时实现 anyScope 与 allScopes，authorizer 内部用 allScopes 折叠正选择与 restriction；但 server 入口只导出 anyScope/condition/scopeAst，README/SKILL 也只记录 anyScope。应用只能在 app/server/library/scope.ts 复制 AND 折叠逻辑。",
+        "impact": "组合多个 condition() 作用域时缺少同包内对称的公开 helper，容易重复实现或误用私有子路径（Agent 日志中多次出现对私有物理路径的探测）。",
+        "suggestedChange": "从 server 入口导出 allScopes（或提供 scope.and(...) helper）并在 README/SKILL 记录；或在作用域指引明确推荐 @nocobase/repository-input 的 buildFilter((f)=>f.and([...]))。",
+        "evidence": [
+          "E6",
+          "E7",
+          "E27",
+          "E41"
+        ],
+        "diagnosis": {
+          "category": "usability-improvement",
+          "trigger": "需要把多个 DatabaseScope 求交时。",
+          "expected": "公开且文档化的 AND 组合 helper。",
+          "actual": "仅 anyScope 公开，allScopes 为内部实现；应用复制 13 行逻辑。",
+          "workaround": "自实现 AND 折叠，或用 buildFilter((f)=>f.and([...])) 物化条件。",
+          "acceptance": "公开入口包含 AND 组合 helper 且 SKILL 有示例，或在作用域指引明确 buildFilter 方案。"
+        }
+      },
+      "targets": [
+        "@nocobase/app-plugin-authorization",
+        "@nocobase/repository-input"
+      ],
+      "paths": [
+        "packages/@nocobase/app-plugin-authorization/dist/server/database/scope.js",
+        "packages/@nocobase/app-plugin-authorization/dist/server/index.js",
+        "packages/@nocobase/repository-input/dist/build-query.js"
+      ],
+      "evidence": [
+        {
+          "id": "E6",
+          "kind": "code",
+          "path": "packages/@nocobase/app-plugin-authorization/dist/server/database/scope.js",
+          "observation": "scope.js 同时实现 anyScope（OR 合并）与 allScopes（AND 折叠）以及 idsScope/scopeAst。",
+          "lines": [
+            24,
+            56
+          ],
+          "excerpt": "export function anyScope(scopes) {\n    if (scopes.includes(true))\n        return true;\n    const items = scopes.filter((scope) => scope !== false);\n    if (items.length === 0)\n        return false;\n    return items.length === 1 ? items[0] : group('or', items);\n}\nexport function allScopes(scopes) {\n    if (scopes.includes(false))\n        return false;\n    const items = scopes.filter((scope) => scope !== true);\n    if (items.length === 0)\n        return true;\n    return items.length === 1 ? items[0] : group('and', items);\n}\n/**\n * Membership expands to one `$eq` per identifier because `FilterOperator` has\n * no `$in` — `$includes` is a substring test. A negated list would expand the\n * same way, as an `and` of `$ne`. Both collapse once db grows the operator.\n */\nexport function idsScope(field, ids) {\n    return anyScope(ids.map((id) => condition(field, '$eq', id)));\n}\n/** Attach a scope to its Collection. `true` and `false` are decided by the caller. */\nexport function scopeAst(collection, scope) {\n    return {\n        kind: 'filter',\n        version: 1,\n        collection,\n        root: scope.kind === 'group' ? scope : group('and', [scope]),\n    };\n}",
+          "sha256": "990edf1b0422f4e8e2c869546a4d4be9710b5e652bcf7170105a436f80ea2b34"
+        },
+        {
+          "id": "E7",
+          "kind": "code",
+          "path": "packages/@nocobase/app-plugin-authorization/dist/server/index.js",
+          "observation": "server 入口仅导出 anyScope/condition/scopeAst（L12），未导出 allScopes。",
+          "lines": [
+            1,
+            16
+          ],
+          "excerpt": "export { default } from './plugin.js';\nexport { createAppAuthorization, } from './authorization.js';\nexport { authorizationToken } from './tokens.js';\nexport { AuthorizationProvider } from './providers/authorization.js';\nexport { databasePlugin } from './database/plugin.js';\nexport { pagesPlugin, } from './pages-authorization.js';\nexport { settingsPlugin, } from './settings.js';\nexport { AUTHORIZATION_SETTINGS_SECTION, reportAuthorizationUi, uiPlugin, } from './ui.js';\nexport { DatabasePermissionBuilder, DatabasePermissionDefinitionBuilder, defineDatabasePermission, } from './database/builders.js';\nexport { PermissionFieldsBuilder, PermissionUpsertBuilder, ReadPermissionBuilder, RelationPermissionBuilder, ThroughPermissionBuilder, WritePermissionBuilder, } from './database/permission-builders.js';\nexport { recordAccess, } from './database/record-access.js';\nexport { anyScope, condition, scopeAst, } from './database/scope.js';\nexport { AUTHORIZATION_NAMESPACE } from '../shared.js';\n// Re-exported so a plugin can register and check without depending on the library.\nexport { grantBacked } from '@nocobase/authorization/core';\n//# sourceMappingURL=index.js.map",
+          "sha256": "2fdcdbfe59f26a583efd3c70723a0785a8049498b8c132cf45e3093ec73663ef"
+        },
+        {
+          "id": "E27",
+          "kind": "code",
+          "path": "packages/@nocobase/repository-input/dist/build-query.js",
+          "observation": "buildFilter 接受回调并物化 FilterAst，回调可调用 builder 的 and/or。",
+          "lines": [
+            1,
+            30
+          ],
+          "excerpt": "import { DefaultFilterBuilder } from './filter-builder.js';\nimport { DefaultSelectBuilder, } from './select-builder.js';\nimport { DefaultSortBuilder, sortExpressionToNode } from './sort-builder.js';\nimport { DefaultAggregateBuilder, aggregateExpressionToNode, } from './aggregate-builder.js';\nimport { inputError, isRecord, snapshotJson } from './json.js';\n/** Materialize a filter callback, shorthand, or AST without a database schema. */\nexport function buildFilter(input) {\n    let ast;\n    if (typeof input === 'function') {\n        const node = input(new DefaultFilterBuilder());\n        if (!isRecord(node) ||\n            !['condition', 'group', 'relation'].includes(node.kind))\n            inputError(['filter'], 'Callbacks must return a Filter node.');\n        ast = {\n            kind: 'filter',\n            version: 1,\n            root: node.kind === 'group'\n                ? node\n                : { kind: 'group', logic: 'and', items: [node] },\n        };\n    }\n    else {\n        if (!isRecord(input))\n            inputError(['filter'], 'Expected a filter object.');\n        if (input.kind === 'filter' &&\n            input.version === 1)\n            ast = input;\n        else\n            ast = {\n                kind: 'filter',",
+          "sha256": "2dbc5bfa172f07efba62669da29b4d9cc9d4f90baa70bd88730d604f4661a57a"
+        },
+        {
+          "id": "E41",
+          "kind": "code",
+          "path": "app/server/library/scope.ts",
+          "observation": "应用注释记录 records 仅字符串且整数主键会被过滤校验拒绝，并自实现 allScopes（未公开 helper）。",
+          "lines": [
+            30,
+            70
+          ],
+          "excerpt": "  /**\n   * The one record a temporary share points at.\n   *\n   * The authorization package's `records` selection carries string ids only,\n   * and this table's primary key is an integer, so a `records` selection would\n   * be rejected by the repository's filter validation. Naming the id in a\n   * record access lets the resolver hand back a real number instead.\n   */\n  sharedDocument: 'library.sharedDocument',\n} as const;\n\n/** The params the `sharedDocument` record access reads. */\nexport interface SharedDocumentParams {\n  readonly documentId?: unknown;\n}\n\n/**\n * The AND fold of the authorization package's internal `allScopes`.\n *\n * That helper is not part of the package's public surface, so the fold is\n * repeated here rather than reaching through a private subpath. `true` drops\n * out, `false` wins, and a single node collapses to itself.\n */\nexport function allScopes(scopes: readonly DatabaseScope[]): DatabaseScope {\n  if (scopes.includes(false)) return false;\n  const items = scopes.filter(\n    (scope): scope is FilterNode => scope !== true && scope !== false,\n  );\n  if (items.length === 0) return true;\n  return items.length === 1 ? items[0] : group('and', items);\n}\n\nfunction group(logic: 'and' | 'or', items: readonly FilterNode[]): FilterNode {\n  return { kind: 'group', logic, items };\n}\n\n/** Published and not confidential. */\nexport function readableScope(): DatabaseScope {\n  return allScopes([\n    condition('published', '$isTruly'),\n    condition('confidential', '$isFalsy'),",
+          "sha256": "ad055b622685b41a731e1942a4dae7924d08e3d7e09954577084d331af18d990"
+        }
+      ],
+      "fingerprint": "a23b26f4bd5a4ccf1323d45d30e38d9449a781eefe14d974779814a2c9988474"
     },
     {
       "id": "555:37238852759:1:F1",
