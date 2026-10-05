@@ -185,12 +185,14 @@ jobs:
         # Separate step: source-snapshot exports isolated registry/store paths via GITHUB_ENV.
         run: node control/.github/scripts/source-snapshot.mjs restore workspace input/agent/task-metadata.json
       - name: Reconstruct sealed candidate without rebuilding
+        timeout-minutes: 15
         run: |
           cd workspace
           node ../control/.github/scripts/assert-current-template.mjs .
           pnpm install --frozen-lockfile --ignore-scripts
           pnpm exec nocobase skills sync
       - name: Install selected pinned reviewer
+        timeout-minutes: 10
         env:
           CODE_AGENT_ENGINE: ${{ vars.CODE_AGENT_ENGINE }}
           CODE_AGENT_VERSION: ${{ vars.CODE_AGENT_VERSION }}

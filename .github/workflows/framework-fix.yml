@@ -124,6 +124,7 @@ jobs:
           key: nocobase3-pnpm-store-${{ runner.os }}-pnpm${{ steps.pnpm-store.outputs.version }}-${{ hashFiles('workspace/pnpm-lock.yaml') }}
           restore-keys: nocobase3-pnpm-store-${{ runner.os }}-pnpm${{ steps.pnpm-store.outputs.version }}-
       - name: Install nocobase3 dependencies
+        timeout-minutes: 15
         id: dependencies
         continue-on-error: true
         working-directory: workspace
@@ -151,6 +152,7 @@ jobs:
             --dependencies "$DEPENDENCIES" \
             --output "$RUNNER_TEMP/fix-output/prompt.md"
       - name: Install pinned Claude Code
+        timeout-minutes: 10
         env:
           CODE_AGENT_ENGINE: claude-code
           CLAUDE_CODE_VERSION: ${{ vars.CLAUDE_CODE_VERSION }}

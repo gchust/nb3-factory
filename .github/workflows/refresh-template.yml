@@ -122,6 +122,7 @@ jobs:
           node control/.github/scripts/template-creator.mjs record "$RUNNER_TEMP/template-generation/nb3-factory/factory-template.json"
 
       - name: Install and lock the new application dependencies
+        timeout-minutes: 15
         run: |
           cd "$RUNNER_TEMP/template-generation/nb3-factory"
           pnpm add @nocobase/db-sqlite@latest

@@ -101,6 +101,7 @@ jobs:
           node control/.github/scripts/classify-findings.mjs prepare \
             --output "$RUNNER_TEMP/findings-input" --force "$FORCE_CLASSIFY"
       - name: Install selected pinned classifier
+        timeout-minutes: 10
         if: steps.prepare.outputs.ready == 'true'
         env:
           CODE_AGENT_ENGINE: ${{ vars.CODE_AGENT_ENGINE }}

@@ -473,6 +473,7 @@ jobs:
           fi
 
       - name: Install application dependencies
+        timeout-minutes: 15
         working-directory: workspace
         run: |
           node ../control/.github/scripts/assert-current-template.mjs .
@@ -500,6 +501,7 @@ jobs:
         run: node bootstrap/.github/scripts/handoff-recovery.mjs context --checkpoint handoff --prompt "$RUNNER_TEMP/implement.md"
 
       - name: Install pinned Code Agent
+        timeout-minutes: 10
         if: inputs.failure_smoke != true
         env: &agent-install-env
           CODE_AGENT_ENGINE: ${{ vars.CODE_AGENT_ENGINE }}
@@ -513,6 +515,7 @@ jobs:
         run: node control/.github/scripts/install-agent.mjs
 
       - name: Install pinned Agent Browser
+        timeout-minutes: 10
         if: inputs.failure_smoke != true
         env:
           AGENT_BROWSER_VERSION: ${{ vars.AGENT_BROWSER_VERSION || '0.36.0' }}
@@ -902,6 +905,7 @@ jobs:
           fi
 
       - name: Install application dependencies
+        timeout-minutes: 15
         working-directory: workspace
         run: node ../control/.github/scripts/timed-command.mjs install pnpm install --frozen-lockfile
 
@@ -1132,6 +1136,7 @@ jobs:
           fi
 
       - name: Install application dependencies
+        timeout-minutes: 15
         working-directory: workspace
         run: node ../control/.github/scripts/timed-command.mjs install pnpm install --frozen-lockfile
 
@@ -1347,6 +1352,7 @@ jobs:
           BUILD_RESULT: ${{ needs.publish-failed.result == 'success' && 'failure' || needs.publish.result }}
         run: node control/.github/scripts/comment-reply.mjs prompt task/task-metadata.json "$RUNNER_TEMP"
       - name: Install pinned Code Agent
+        timeout-minutes: 10
         env: *agent-install-env
         run: node control/.github/scripts/install-agent.mjs
       - name: Answer source comment from current code

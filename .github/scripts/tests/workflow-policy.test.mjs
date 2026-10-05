@@ -381,6 +381,49 @@ test('browser font installs retry apt and are bounded by a step timeout', () => 
   assert.ok(checked >= 5);
 });
 
+test('network installs in long jobs are bounded by a step timeout', () => {
+  // A hung registry or download otherwise holds the runner until the job
+  // limit, six hours for the agent job.
+  const steps = {
+    'code-agent-task.yml': [
+      ['Install application dependencies', 3],
+      ['Install pinned Code Agent', 2],
+      ['Install pinned Agent Browser', 1],
+    ],
+    'framework-fix.yml': [
+      ['Install nocobase3 dependencies', 1],
+      ['Install pinned Claude Code', 1],
+    ],
+    'replay-build-review.yml': [
+      ['Reconstruct sealed candidate without rebuilding', 1],
+      ['Install selected pinned reviewer', 1],
+    ],
+    'classify-findings.yml': [['Install selected pinned classifier', 1]],
+    'source-baseline.yml': [
+      ['Verify checkout identity and install source dependencies', 1],
+      ['Lock the factory overlay against only the frozen source packages', 1],
+    ],
+    'refresh-template.yml': [
+      ['Install and lock the new application dependencies', 1],
+    ],
+  };
+  for (const [name, expected] of Object.entries(steps)) {
+    const source = readFileSync(
+      new URL(`../../workflows/${name}`, import.meta.url),
+      'utf8',
+    );
+    for (const [step, count] of expected) {
+      const bodies = source
+        .split(`- name: ${step}\n`)
+        .slice(1)
+        .map((rest) => rest.split(/\n\s+- (?=name:|uses:)/)[0]);
+      assert.equal(bodies.length, count, `${name}: ${step}`);
+      for (const body of bodies)
+        assert.match(body, /timeout-minutes: (?:10|15)\n/, `${name}: ${step}`);
+    }
+  }
+});
+
 test('a prepare failure after ready clears agent:running for any build, not only recoveries', () => {
   const prepare = workflow.split('\n  prepare:')[1].split('\n  agent:')[0];
   const cleanup = prepare.split('- name: Report a failure after task preparation')[1];
