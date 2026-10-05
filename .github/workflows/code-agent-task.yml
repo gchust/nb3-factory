@@ -269,8 +269,12 @@ jobs:
           if-no-files-found: error
           retention-days: 14
 
-      - name: Report a rejected recovery after task preparation
-        if: failure() && inputs.recovery_run_id != '' && steps.prepare.outputs.status == 'ready'
+      # prepare-task.mjs has already set agent:running once status is ready,
+      # and report-failure is skipped when this job fails, so any later
+      # failure here (a rejected recovery, a failed artifact upload) must
+      # clear the label itself. Replies never set it.
+      - name: Report a failure after task preparation
+        if: failure() && steps.prepare.outputs.status == 'ready' && steps.prepare.outputs.comment_kind != 'reply'
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: node control/.github/scripts/mark-failure.mjs "${{ steps.prepare.outputs.issue_number }}"
