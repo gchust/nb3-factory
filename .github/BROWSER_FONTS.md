@@ -3,11 +3,14 @@
 中文变成方框通常是无头浏览器所在 Runner 缺少中文字形，而非 UTF-8 编码错误。
 PR #22 的截图出现方框，但同一轮浏览器 snapshot 能正确读取“会议室D”“行政部”。
 
-工厂在 agent、verify-final、模板刷新三个独立 Runner 中、启动浏览器前运行
+工厂在 agent、verify-final、模板刷新，以及源码基线检查的两个 Runner（共五处）中、启动浏览器前运行
 `install-browser-fonts.sh`：安装 `fontconfig` / `fonts-noto-cjk`，刷新字体缓存并检查
-`Noto Sans CJK SC` 存在。apt 每次下载重试 3 次、单次超时 30 秒，更新与安装整体最多尝试 3 次，
-每轮的更新限时 60 秒、安装限时 90 秒，三轮加退避最坏约 8.5 分钟，运行它的步骤限时 10 分钟，
-保证三轮重试都能完整执行。仍然失败时直接指出环境错误，不让缺字截图继续冒充正常证据。
+`Noto Sans CJK SC` 存在。先走一轮 apt：索引更新限时 60 秒、安装限时 120 秒，apt 每个连接无数据 15 秒即放弃并重试两次，
+所以卡住的镜像会在限时内失败，而不是被外层超时整轮杀掉。apt 失败后不再重试 apt，而是依次从
+`archive.ubuntu.com` 和 `mirrors.edge.kernel.org` 直接下载固定版本 `1:20230817+repack1-3` 的 `.deb`：
+低于 1 MB/s 持续 20 秒视为卡住，单个来源最多 100 秒；文件必须与 noble `Packages` 索引中的 SHA-256 一致才用 `dpkg -i` 安装。
+最坏约 520 秒，运行它的步骤限时 10 分钟。仍然失败时直接指出环境错误，不让缺字截图继续冒充正常证据。
+`tests/browser-fonts-install.test.mjs` 用桩命令覆盖这几条路径，不需要 sudo 或网络。
 修改语言变量或 `<meta charset>` 不会安装字体；字体修复也不会把应用英文 UI 自动翻译成中文。
 
 `tests/browser-fonts-smoke.mjs` 使用真实 Chrome 和 CDP 查询实际渲染中文字形的字体，

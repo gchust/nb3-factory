@@ -6,14 +6,6 @@ on:
 
 permissions: {}
 
-# The deploy workflow's group and queue, so deploys and teardowns run in the
-# order they were queued. A deploy for this PR queued before the close finishes
-# first and is then removed here; one queued after it sees the closed PR and
-# skips. With a group of its own, a late deploy could outlive its teardown.
-concurrency:
-  group: factory-preview-deploy
-  queue: max
-
 jobs:
   teardown-preview:
     # pull_request_target, not pull_request: this needs the preview credentials,
@@ -25,6 +17,15 @@ jobs:
       startsWith(github.event.pull_request.head.ref, 'agent/issue-')
     runs-on: ubuntu-24.04
     timeout-minutes: 15
+    # The deploy job's group and queue, so deploys and teardowns run in the
+    # order they reach it. A deploy for this PR that holds the group first
+    # finishes and is then removed here; one that gets it later sees the closed
+    # PR (deploy-preview.mjs checks inside the group) and skips. With a group of
+    # its own, a late deploy could outlive its teardown. At job level, so the
+    # run of every other closed PR skips without queuing behind a deploy.
+    concurrency:
+      group: factory-preview-deploy
+      queue: max
     # No continue-on-error: a failed teardown leaves a public preview running,
     # and a green run would hide that nothing reclaims it.
     permissions:
@@ -75,7 +76,7 @@ jobs:
           # reset by peer`, PR #426) left the preview running. preview-destroy.sh
           # is idempotent, so a retry after a partial run is safe.
           for attempt in 1 2 3; do
-            if ssh -n -i ~/.ssh/preview_key -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o ConnectTimeout=20 \
+            if ssh -n -i ~/.ssh/preview_key -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o ConnectTimeout=20 -o ServerAliveInterval=15 -o ServerAliveCountMax=4 \
               "$PREVIEW_USER@$PREVIEW_HOST" \
               "bash /srv/nb3-preview/scripts/preview-destroy.sh '$PR'"; then
               exit 0

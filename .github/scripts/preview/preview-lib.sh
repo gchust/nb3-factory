@@ -100,7 +100,9 @@ fetch_payload() {
     die "fetching a payload requires its digest; refusing to deploy unverified bytes"
   partial="$payload.part"
   rm -f "$partial"
-  local -a curl_opts=(-fL --retry 3 --retry-delay 5 --connect-timeout 20)
+  # A transfer slower than 50 KB/s for two minutes counts as stalled and is
+  # retried, rather than holding the deploy until the workflow's step limit.
+  local -a curl_opts=(-fL --retry 3 --retry-delay 5 --connect-timeout 20 --speed-limit 51200 --speed-time 120)
   [[ -z "$proxy" ]] || curl_opts+=(-x "$proxy")
   log "fetching the payload from $url"
   curl "${curl_opts[@]}" -o "$partial" "$url" ||

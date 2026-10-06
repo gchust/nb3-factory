@@ -468,10 +468,15 @@ test('preview connection is checked and public HTTPS gates the success report', 
 });
 
 test('teardown shares the deploy queue and never hides its own failure', () => {
-  // A deploy queued before the close must finish before teardown removes it.
-  const group = (workflow) => /^concurrency:\n\s+group: (\S+)/m.exec(workflow)?.[1];
-  assert.equal(group(teardown), 'factory-preview-deploy');
-  assert.equal(group(teardown), group(deploy));
+  // A deploy that holds the group before the close must finish before teardown
+  // removes it. The group sits on the jobs, not the workflows, so a gated or
+  // skipped run never queues behind a 45-minute deploy.
+  const job = (workflow, name) =>
+    workflow.split(`\n  ${name}:\n`)[1].split(/\n {2}[a-z][a-z-]*:\n/)[0];
+  const group = (body) => /^ {4}concurrency:\n {6}group: (\S+)\n {6}queue: max$/m.exec(body)?.[1];
+  for (const workflow of [teardown, deploy]) assert.doesNotMatch(workflow, /^concurrency:/m);
+  assert.equal(group(job(teardown, 'teardown-preview')), 'factory-preview-deploy');
+  assert.equal(group(job(deploy, 'deploy-preview')), 'factory-preview-deploy');
   assert.doesNotMatch(teardown.split('steps:')[0], /^\s{4}continue-on-error: true/m);
   // A deploy that starts after the close must not bring the preview back.
   const script = readFileSync(
