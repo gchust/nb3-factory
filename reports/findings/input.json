@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "inputHash": "fd25e03e14f6fb382e9e3c8f1f20d6f726e3814870f0e58e949855e5ec7e6081",
+  "inputHash": "eb2395571f224af72ce847185f55b5508c05227a16e7ee8d25f4d418e503de5f",
   "findings": [
     {
       "id": "460:36434284393:1:F2",
@@ -10521,6 +10521,175 @@
         }
       ],
       "fingerprint": "5923379e1ddc896a43eaec9c887dad5224665fa1f3d0934e0f95368e6f6e5603"
+    },
+    {
+      "id": "597:37453035816:1:F2",
+      "report": "597:37453035816:1",
+      "issue": 597,
+      "taskTitle": "员工 IT 报修与处理",
+      "appVersion": "1.0.0-beta.55",
+      "appTemplate": "@nocobase/app-template-default",
+      "finding": {
+        "id": "F2",
+        "kind": "improvement",
+        "owner": "documentation",
+        "confidence": "confirmed",
+        "severity": "minor",
+        "status": "open",
+        "title": "自定义 handler 文档未把「写动作读回需要 read 权限」写成规则",
+        "detail": "runtime-api.md 说明组合决策的每个集合策略仅由该动作的授权构建；repository-routes.md 的快捷路由示例用 projectData.update 隐式演示了 read 加 update 同权限。但对自定义 handler，文档只要求绑定返回的 conditions.database 策略，没有明说写后读回会在 read:false 时抛 READ_FORBIDDEN。本轮应用因此对 start/complete 只声明 update，最终以自定义 ticketWritePolicy 手工合并 view 的 read 与动作的 write。",
+        "impact": "按自定义 handler 文档照做的实现者容易漏掉写动作的 read 声明，错误只在运行期以 403 READ_FORBIDDEN 暴露，增加排障成本。",
+        "suggestedChange": "在 repository-routes.md 与 runtime-api.md 的自定义 handler 章节补一条规则：写动作若在写后读回返回行，必须在同一复合动作/权限上声明 read 字段；并并列展示正确与错误写法。",
+        "evidence": [
+          "E21",
+          "E22"
+        ],
+        "diagnosis": {
+          "category": "guidance-gap",
+          "trigger": "自定义 handler 对只有 update 的组合动作绑定 conditions.database 并调用 Repository 写入",
+          "expected": "文档显式说明写后读回需要同一动作声明 read，并给出正/反示例",
+          "actual": "仅由 repository-routes.md 的快捷路由示例隐式演示，自定义 handler 路径无文字规则",
+          "workaround": "应用以 ticketWritePolicy 手工合并 view 的 read 节点与动作的 write 节点",
+          "acceptance": "文档加入 read-back 规则与示例后，按文档声明 update 加 read 的动作不再触发 READ_FORBIDDEN"
+        }
+      },
+      "targets": [
+        "app/.agents/skills/nocobase-app-plugin-authorization/references/repository-routes.md"
+      ],
+      "paths": [
+        ".agents/skills/nocobase-app-plugin-authorization/references/repository-routes.md"
+      ],
+      "evidence": [
+        {
+          "id": "E21",
+          "kind": "skill",
+          "path": "app/.agents/skills/nocobase-app-plugin-authorization/references/repository-routes.md",
+          "observation": "authorizeRepository 快捷路由说明：把 Repository 方法映射到组合动作，中间件按请求约束与静态 policy 求交，不补授任一策略缺失的字段；自定义端点则须绑定返回的每个 conditions.database 策略。",
+          "lines": [
+            3,
+            21
+          ],
+          "excerpt": "Use `authz.database.authorizeRepository({ repository, resource, actions })` for simple single-collection business operations. Keep `defineRepositoryApiRoutes({ repositories })`, its static `policy`, and its enabled `actions` unchanged. The authorization middleware adds a request constraint; the router intersects it with the static policy or principal-derived policy before executing. It does not grant fields missing from either policy.\n\n`repository` is the exposure name, `resource` is a typed composite reference, and `actions` maps Repository methods to declared composite action names. No additional collection CRUD grant is required. Register the collections and composite in the provider first, then configure business grants and scopes through seed/backend. The middleware itself registers and assigns nothing. A method with no mapping, or a decision without exactly that collection's policy, answers `403 PERMISSION_DENIED` in the standard error body, reason `AUTHORIZATION_DENIED`, domain `authorization`.\n\n## Choose the route boundary\n\nUse the shortcut when one generated Repository operation completes the business action, the action has exactly one data scope on the default connection, and the standard Repository input/output fits the client. Independent input validation such as allowed keys, types and lengths can remain middleware. A single table alone is not enough: an operation that checks persisted workflow state, coordinates records or performs side effects needs a custom business handler.\n\n| Business requirement                                                            | Integration                                                           | Reason                                                                                              |\n| ------------------------------------------------------------------------------- | --------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |\n| Read project records or edit project title/notes                                | `defineRepositoryApiRoutes` with `authz.database.authorizeRepository` | One project scope, standard query/update, independent input validation                              |\n| Show project/quote/order lists with navigation and per-record operation reasons | Custom read handler                                                   | Compose authorized data and business presentation; a raw query endpoint may coexist                 |\n| Edit a draft quote                                                              | Custom business handler                                               | Validate persisted draft state and include expected state in the write predicate                    |\n| Submit a quote                                                                  | Custom business handler                                               | Authorize the quote and its actual parent project, validate amount/state, then conditionally update |\n| Arrange order relations or confirm delivery                                     | Custom business handler                                               | Enforce relation capabilities, eligible targets and order state or delivery-reference rules         |\n\nBoth paths use the same code-defined composites and administrator-editable grants/scopes initialized through seeds when needed. Choosing generated CRUD does not introduce another permission model or require separate collection CRUD grants. Choose per action: one resource can expose simple actions through Repository routes and complex actions through custom endpoints.\n\nFor custom endpoints, install authentication and `authz.middleware()`, call `c.var.authz.authorize({ resource, action })` once, reject denial or missing table policies, and bind every returned `conditions.database` policy with `repository.withPolicy()`. Read the actual related records through those policies, validate business rules and keep coordinated writes transactional with expected-state predicates. Follow the complete [business module workflow](business-module.md). Do not select one policy from a multi-scope decision or split an atomic business action into independent CRUD requests merely to fit the shortcut.",
+          "sha256": "fe5e2fe7ea10860eff30f80d3bbd892d28c1dfc1109dd997eb5a611a3b532377"
+        },
+        {
+          "id": "E22",
+          "kind": "skill",
+          "path": "app/.agents/skills/nocobase-app-plugin-authorization/references/repository-routes.md",
+          "observation": "文档示例把 edit 动作声明为 projectData.update([...])，即同一 projects 数据范围上 read 加 update——说明写动作读回所需 read 应在同一复合动作/权限内声明。",
+          "lines": [
+            30,
+            48
+          ],
+          "excerpt": "\nconst projectData = defineDatabasePermission((p) =>\n  p\n    .collection('projects')\n    .read(['id', 'title', 'region', 'ownerId', 'confidential', 'notes']),\n);\n\nexport const projectResource = defineCompositeResource(\n  'sales.projects',\n  (resource) =>\n    resource\n      .title('Projects')\n      .action('view', (action) => action.grant('projects', projectData))\n      .action('edit', (action) =>\n        action.grant('projects', projectData.update(['title', 'notes'])),\n      ),\n);\n```\n",
+          "sha256": "fe5e2fe7ea10860eff30f80d3bbd892d28c1dfc1109dd997eb5a611a3b532377"
+        }
+      ],
+      "fingerprint": "bf4c4e0c090ce050461d092ca469af23cf6df977b2c370dd2b83598218746b1f"
+    },
+    {
+      "id": "597:37453035816:1:F3",
+      "report": "597:37453035816:1",
+      "issue": 597,
+      "taskTitle": "员工 IT 报修与处理",
+      "appVersion": "1.0.0-beta.55",
+      "appTemplate": "@nocobase/app-template-default",
+      "finding": {
+        "id": "F3",
+        "kind": "issue",
+        "owner": "framework",
+        "confidence": "confirmed",
+        "severity": "minor",
+        "status": "open",
+        "title": "任务加载器的相对扩展名重写对 file:// URL 永不生效",
+        "detail": "importTaskDefinition 调用 __rewriteRelativeImportExtension(url.href)，而该函数只在参数以 ./ 或 ../ 开头时重写 .ts/.tsx 扩展名；pathToFileURL(filePath).href 是 file:// 绝对 URL，正则永不匹配，函数恒返回原值，成为死代码。DEFAULT_TASK_EXTENSIONS 含 .ts，因此加载 TS 任务源时扩展名解析实际交给 Node，而非该函数。",
+        "impact": "对编译后的 .js 任务无可见影响；当任务源为 .ts 或依赖扩展名重写时，行为与代码意图不符，属潜在缺陷与误导性死代码。",
+        "suggestedChange": "对 file:// 形式也做相对扩展名替换（或改为对文件名/相对 specifier 调用重写），并补一个 file:// 输入的单元测试。",
+        "evidence": [
+          "E1"
+        ],
+        "diagnosis": {
+          "category": "runtime-defect",
+          "trigger": "importTaskDefinition 以 file:// URL 加载迁移/种子任务",
+          "expected": "相对/TS 扩展名被重写为运行时可解析的形式",
+          "actual": "正则仅匹配 ./ 与 ../，对 file:// 绝对 URL 不匹配，函数恒等返回",
+          "workaround": "实际依赖 Node 对 .js 的解析；使用 .ts 任务源时自行规避扩展名问题",
+          "acceptance": "__rewriteRelativeImportExtension(file:///.../task.ts) 返回 file:///.../task.js，且有对应测试"
+        }
+      },
+      "targets": [
+        "@nocobase/db"
+      ],
+      "paths": [
+        "packages/@nocobase/db/dist/src/migration/internal/task-loader.js"
+      ],
+      "evidence": [
+        {
+          "id": "E1",
+          "kind": "code",
+          "path": "packages/@nocobase/db/dist/src/migration/internal/task-loader.js",
+          "observation": "迁移/种子任务加载器：__rewriteRelativeImportExtension 只在路径以 ./ 或 ../ 开头时重写 TS 扩展名，而 importTaskDefinition 传入的是 pathToFileURL(filePath).href（file:// 绝对 URL），因此重写永远不触发，是失效分支。",
+          "lines": [
+            1,
+            14
+          ],
+          "excerpt": "var __rewriteRelativeImportExtension = (this && this.__rewriteRelativeImportExtension) || function (path, preserveJsx) {\n    if (typeof path === \"string\" && /^\\.\\.?\\//.test(path)) {\n        return path.replace(/\\.(tsx)$|((?:\\.d)?)((?:\\.[^./]+?)?)\\.([cm]?)ts$/i, function (m, tsx, d, ext, cm) {\n            return tsx ? preserveJsx ? \".jsx\" : \".js\" : d && (!ext || !cm) ? m : (d + ext + \".\" + cm.toLowerCase() + \"js\");\n        });\n    }\n    return path;\n};\nimport { readdir } from 'node:fs/promises';\nimport { basename, extname } from 'node:path';\nimport { pathToFileURL } from 'node:url';\nexport const DEFAULT_TASK_EXTENSIONS = ['.js', '.mjs', '.cjs', '.ts'];\nexport const DEFAULT_TASK_PACKAGE_NAME = 'app';\n/** A directory and a source array are two ways to say the same thing. */",
+          "sha256": "4f27b0ccdcd61d466752932a2fac4068ec33efe948aa40a22187fdadc5b438a3"
+        }
+      ],
+      "fingerprint": "de39f43122630c7ad281f7a29e3e01ee860963aef6e766eca0990ddab5ff6843"
+    },
+    {
+      "id": "597:37453035816:1:F4",
+      "report": "597:37453035816:1",
+      "issue": 597,
+      "taskTitle": "员工 IT 报修与处理",
+      "appVersion": "1.0.0-beta.55",
+      "appTemplate": "@nocobase/app-template-default",
+      "finding": {
+        "id": "F4",
+        "kind": "improvement",
+        "owner": "framework",
+        "confidence": "confirmed",
+        "severity": "minor",
+        "status": "open",
+        "title": "@nocobase/app-testing 的 request 未处理 cookie 写所需的 Origin",
+        "detail": "createTestApp 暴露的 request(target, init) 只是 fetch(new Request(...))，不附加 Origin/Referer；而认证中间件的 checkCookieWriteOrigin 要求携带 cookie 的写请求有可信来源，否则返回 INVALID_CSRF_ORIGIN。测试作者必须自行补 Origin 并配置可信来源。",
+        "impact": "认证写请求的集成测试默认会被 CSRF 拦截，作者需反复试错才能调通，降低测试脚手架的易用性与 Agent 一次成功率。",
+        "suggestedChange": "为 createTestApp 提供一个默认注入 Origin（可关闭）的请求助手，或在 request 首次遇到 INVALID_CSRF_ORIGIN 时给出可操作提示；同时在 testing 参考中提示 cookie 写测试需带 Origin。",
+        "evidence": [
+          "E17"
+        ],
+        "diagnosis": {
+          "category": "usability-improvement",
+          "trigger": "用 createTestApp 的 request 对 cookie 会话发起写请求",
+          "expected": "请求助手自动带上与 apiRoot 同源的 Origin，或给出明确提示",
+          "actual": "request 不附加 Origin，认证中间件以 INVALID_CSRF_ORIGIN 拒绝",
+          "workaround": "测试中手写 Origin 头并在认证配置加入可信来源",
+          "acceptance": "默认 request 的 cookie 写请求可完成，且可通过选项关闭该行为"
+        }
+      },
+      "targets": [
+        "@nocobase/app-testing"
+      ],
+      "paths": [
+        "packages/@nocobase/app-testing/dist/src/server/app.js"
+      ],
+      "evidence": [
+        {
+          "id": "E17",
+          "kind": "code",
+          "path": "packages/@nocobase/app-testing/dist/src/server/app.js",
+          "observation": "createTestApp 用 createTestAppConfig 起一个与 pnpm start 相同的 standalone server，apiRoot 指向 localhost 的 /api，request(target, init) 直接 fetch(new Request(...))，不附加 Origin 或任何 CSRF 头。",
+          "lines": [
+            9,
+            42
+          ],
+          "excerpt": "export async function createTestApp(options) {\n    const { createServer, server: serverOptions = {}, ...configOptions } = options;\n    const config = await createTestAppConfig(configOptions);\n    let server;\n    try {\n        server = await createServer({\n            viteDevUrl: false,\n            ...serverOptions,\n            configPath: config.path,\n            env: {\n                APP_STORAGE_DIR: path.join(config.directory, 'storage'),\n                ...serverOptions.env,\n            },\n        });\n    }\n    catch (error) {\n        await config.dispose();\n        throw error;\n    }\n    const { application } = server;\n    const database = application.container.resolve(databaseManagerToken);\n    const apiRoot = `http://localhost${trimTrailingSlash(application.publicBasePath)}/api`;\n    const fetch = (request) => server.fetch(request);\n    return {\n        server,\n        application,\n        publicBasePath: application.publicBasePath,\n        fetch,\n        database,\n        connection: database.connection(),\n        config,\n        request: async (target, init) => fetch(new Request(target.startsWith('/') ? `${apiRoot}${target}` : target, init)),\n        close: async () => {\n            try {",
+          "sha256": "e23ef4e4041692cb11bed9b42ad845fcaabdebc798bb3dd9a81d6489abf2005e"
+        }
+      ],
+      "fingerprint": "9da954929a90936e49ef5a288aba3261a6f7ea80a0a81de9f535183a226a199f"
     }
   ]
 }
