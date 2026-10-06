@@ -421,9 +421,24 @@ test('browser font installs fail over from apt and are bounded by a step timeout
     value('BACKOFF') +
     value('DOWNLOAD_LIMIT') +
     value('DOWNLOAD_KILL_AFTER') +
+    value('HASH_LIMIT') +
+    value('HASH_KILL_AFTER') +
     value('DPKG_LIMIT') +
     value('DPKG_KILL_AFTER');
-  const budget = aptRound + hosts.length * hostRound;
+  // Every fontconfig call is bounded too: fc-cache once, and each query
+  // through font_families or fc-match.
+  assert.match(script, /timeout --kill-after="\$\{FC_KILL_AFTER\}s" "\$\{FC_CACHE_LIMIT\}s" fc-cache -f/);
+  const commands = script.replace(/^\s*#.*$/gm, '').replace(/\\\n\s*/g, ' ');
+  assert.doesNotMatch(commands, /^(?!.*timeout).*\bfc-(?:cache|list|match)\b(?![\w-])/m);
+  const queries =
+    (script.match(/\$\(font_families\b/g) ?? []).length +
+    (script.match(/"\$\{FC_QUERY_LIMIT\}s" \\\n\s+fc-match/g) ?? []).length;
+  assert.equal(queries, 3);
+  const fontconfig =
+    value('FC_CACHE_LIMIT') +
+    value('FC_KILL_AFTER') +
+    queries * (value('FC_QUERY_LIMIT') + value('FC_KILL_AFTER'));
+  const budget = aptRound + hosts.length * hostRound + fontconfig;
   // The documented worst case is the computed one.
   assert.match(script, new RegExp(`total\\s+= ${budget} s`));
   const directory = new URL('../../workflows/', import.meta.url);
@@ -435,8 +450,9 @@ test('browser font installs fail over from apt and are bounded by a step timeout
       checked++;
       const minutes = Number(/timeout-minutes: (\d+)\b/.exec(step)?.[1]);
       assert.ok(minutes > 0, `${name}: ${step.split('\n')[0]}`);
-      // Leave a minute for fc-cache and the checks after the install.
-      assert.ok(budget <= (minutes - 1) * 60, `${name}: ${budget}s vs ${minutes} min`);
+      // Every waiting command is in the budget; 30 s covers bash, mktemp and
+      // the like.
+      assert.ok(budget + 30 <= minutes * 60, `${name}: ${budget}s vs ${minutes} min`);
     }
   }
   assert.ok(checked >= 5);

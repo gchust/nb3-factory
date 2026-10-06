@@ -12,28 +12,42 @@ FONT_DEB_PATH="pool/main/f/fonts-noto-cjk/$FONT_DEB"
 FONT_DEB_HOSTS=(http://archive.ubuntu.com/ubuntu http://mirrors.edge.kernel.org/ubuntu)
 
 # verify-final runs this after the agent succeeded, with no checkpoint left to
-# recover from, so a stalled mirror must not fail the build. The whole script
-# fits the 10-minute step timeout of each caller; workflow-policy.test.mjs
-# recomputes the worst case from these limits:
-#   apt round: update 60 s + install 120 s, plus 10 s to kill each   = 200 s
-#   each host: 5 s backoff + download 100 s + 5 s kill + dpkg 45 s + 5 s = 160 s
-#   two hosts                                                        = 320 s
-#   total                                                            = 520 s
-APT_UPDATE_LIMIT=60
-APT_INSTALL_LIMIT=120
+# recover from, so a stalled mirror must not fail the build. Every command that
+# can wait is bounded, so the whole script fits the 10-minute step timeout of
+# each caller; workflow-policy.test.mjs recomputes the worst case from these
+# limits and requires it to leave 30 s for bash, mktemp and the like:
+#   apt round: update 45 s + install 100 s, plus 10 s to kill each   = 165 s
+#   each host: 5 s backoff + download 90 s + 5 s kill
+#              + hash 15 s + 5 s kill + dpkg 30 s + 5 s kill          = 155 s
+#   two hosts                                                        = 310 s
+#   fc-cache 30 s + 5 s kill                                         =  35 s
+#   three font queries (fc-list twice, fc-match) of 10 s + 5 s kill  =  45 s
+#   total                                                            = 555 s
+APT_UPDATE_LIMIT=45
+APT_INSTALL_LIMIT=100
 APT_KILL_AFTER=10
-DOWNLOAD_LIMIT=100
+DOWNLOAD_LIMIT=90
 DOWNLOAD_KILL_AFTER=5
-DPKG_LIMIT=45
+HASH_LIMIT=15
+HASH_KILL_AFTER=5
+DPKG_LIMIT=30
 DPKG_KILL_AFTER=5
 BACKOFF=5
+FC_CACHE_LIMIT=30
+FC_QUERY_LIMIT=10
+FC_KILL_AFTER=5
 # apt aborts a stalled connection after 15 s and retries twice, so a stuck
 # mirror fails within the install limit instead of using all of it.
 apt_options=(-o Acquire::Retries=2 -o Acquire::http::Timeout=15 -o Acquire::https::Timeout=15)
 
+# The fontconfig queries: one before the install and two after it.
+font_families() {
+  timeout --kill-after="${FC_KILL_AFTER}s" "${FC_QUERY_LIMIT}s" fc-list ':lang=zh' -f '%{family}\n'
+}
+
 have_fonts() {
   local families
-  families="$(fc-list ':lang=zh' -f '%{family}\n' 2>/dev/null || true)"
+  families="$(font_families 2>/dev/null || true)"
   [[ "$families" == *'Noto Sans CJK SC'* ]]
 }
 
@@ -50,7 +64,8 @@ install_from() {
   timeout --kill-after="${DOWNLOAD_KILL_AFTER}s" "${DOWNLOAD_LIMIT}s" \
     curl -fsSL --connect-timeout 15 --speed-limit 1000000 --speed-time 20 \
     --max-time "$DOWNLOAD_LIMIT" -o "$file" "$host/$FONT_DEB_PATH" || return 1
-  if ! echo "$FONT_DEB_SHA256  $file" | sha256sum --check --status; then
+  if ! echo "$FONT_DEB_SHA256  $file" |
+    timeout --kill-after="${HASH_KILL_AFTER}s" "${HASH_LIMIT}s" sha256sum --check --status; then
     echo "Downloaded $FONT_DEB from $host does not match its pinned SHA-256." >&2
     return 1
   fi
@@ -77,10 +92,11 @@ if ! have_fonts; then
     fi
   fi
 fi
-fc-cache -f
-families="$(fc-list ':lang=zh' -f '%{family}\n')"
+timeout --kill-after="${FC_KILL_AFTER}s" "${FC_CACHE_LIMIT}s" fc-cache -f
+families="$(font_families)"
 if [[ "$families" != *'Noto Sans CJK SC'* ]]; then
   echo 'Chinese browser fonts are unavailable; refusing to capture tofu screenshots.' >&2
   exit 1
 fi
-fc-match -f 'Chinese font fallback: %{family}\n' 'sans-serif:lang=zh-cn'
+timeout --kill-after="${FC_KILL_AFTER}s" "${FC_QUERY_LIMIT}s" \
+  fc-match -f 'Chinese font fallback: %{family}\n' 'sans-serif:lang=zh-cn'

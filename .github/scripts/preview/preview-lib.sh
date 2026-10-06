@@ -99,14 +99,28 @@ fetch_payload() {
   [[ -n "$expected" ]] ||
     die "fetching a payload requires its digest; refusing to deploy unverified bytes"
   partial="$payload.part"
+  # Every fetch starts empty: a .part left by an earlier deploy may hold other bytes.
   rm -f "$partial"
-  # A transfer slower than 50 KB/s for two minutes counts as stalled and is
-  # retried, rather than holding the deploy until the workflow's step limit.
-  local -a curl_opts=(-fL --retry 3 --retry-delay 5 --connect-timeout 20 --speed-limit 51200 --speed-time 120)
+  # A transfer slower than 50 KB/s for two minutes counts as stalled, rather
+  # than holding the deploy until the workflow's step limit. Each try is a new
+  # curl with -C -, so it resumes the .part file from its current size instead
+  # of starting the ~744 MB payload again; curl's own --retry discards what it
+  # fetched on older versions. The digest check below covers the whole file.
+  local -a curl_opts=(-fL -C - --connect-timeout 20 --speed-limit 51200 --speed-time 120)
   [[ -z "$proxy" ]] || curl_opts+=(-x "$proxy")
   log "fetching the payload from $url"
-  curl "${curl_opts[@]}" -o "$partial" "$url" ||
-    die "could not fetch the payload; set PREVIEW_FETCH_PROXY if this host needs a proxy for egress"
+  local try status
+  for try in 1 2 3 4; do
+    status=0
+    curl "${curl_opts[@]}" -o "$partial" "$url" || status=$?
+    (( status == 0 )) && break
+    # 33: the server refused the byte range, so the next try starts over.
+    (( status == 33 )) && rm -f "$partial"
+    (( try == 4 )) &&
+      die "could not fetch the payload (curl exit $status); set PREVIEW_FETCH_PROXY if this host needs a proxy for egress"
+    log "payload fetch try $try failed (curl exit $status); resuming in 5 s"
+    sleep 5
+  done
   actual="$(sha256sum "$partial" | cut -d' ' -f1)"
   if [[ "$actual" != "$expected" ]]; then
     rm -f "$partial"
