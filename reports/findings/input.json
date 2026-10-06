@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "inputHash": "771f6a8ebfc2ab1848bfd3b9582f30cb7c138873f1afd940eb0b58252943c76e",
+  "inputHash": "b2ab297bdb3ae24f6a0fca09f189c22f7167e44d4c464bf39185e7f309dd29c9",
   "findings": [
     {
       "id": "460:36434284393:1:F2",
@@ -9364,6 +9364,403 @@
         }
       ],
       "fingerprint": "667e3322b132ac78afc7aa6433a979cde8c0ee494d0a06386687c3ce56818a18"
+    },
+    {
+      "id": "577:37394452688:1:F1",
+      "report": "577:37394452688:1",
+      "issue": 577,
+      "taskTitle": "内部资料阅读与临时共享",
+      "appVersion": "1.0.0-beta.50",
+      "appTemplate": "@nocobase/app-template-default",
+      "finding": {
+        "id": "F1",
+        "kind": "issue",
+        "owner": "plugin",
+        "confidence": "confirmed",
+        "severity": "major",
+        "status": "open",
+        "title": "selection.records 仅接受非空字符串 id，整数主键集合无法直接按单条记录共享",
+        "detail": "authorization 的 parseRecordSelection 要求 records 的每个 id 都满足 typeof === 'string' 且非空，否则抛 TypeError('Invalid record selection')。因此整数自增主键的集合无法用 selection.records([id]) 表达\"共享某一条\"，只能用 recordAccess 自定义 resolver 绕行。授权 Skill 的共享示例 selection.records(['quote-7']) 使用的是字符串 id，没有暴露这一约束。",
+        "impact": "任何使用整数主键的集合（NocoBase 默认 increments('id') 的常见形态）在实现\"临时共享单条记录\"时都会撞上该限制，必须额外开发 recordAccess 及其 params，抬高接入成本并增加实现分歧。",
+        "suggestedChange": "在 parseRecordSelection 中接受数字 id（与主键类型对齐或在编译期按 collection 主键类型校验），或在选择模型层统一 id 的序列化形态；同时在 Skill 示例旁明确记录当前仅支持非空字符串 id。",
+        "evidence": [
+          "E27",
+          "E28",
+          "E65",
+          "E66"
+        ],
+        "diagnosis": {
+          "category": "capability-gap",
+          "trigger": "对整数主键集合调用 selection.records([1]) 构造按记录选择。",
+          "expected": "records 选择能定位到该整数主键记录，并可用于共享/限制规则。",
+          "actual": "parseRecordSelection 因 id 非字符串抛 TypeError('Invalid record selection')，records 选择不可用。",
+          "workaround": "定义自定义 recordAccess（如 library.sharedDocument，params.documentId）返回等值条件，规则改用 selection.recordAccess。",
+          "acceptance": "在整数主键集合上以 selection.records([id]) 建共享规则，目标用户可读该记录、撤销后 404，且非目标用户不可见。"
+        }
+      },
+      "targets": [
+        "@nocobase/authorization"
+      ],
+      "paths": [
+        "packages/@nocobase/authorization/dist/core/selection.d.ts",
+        "packages/@nocobase/authorization/dist/core/selection.js"
+      ],
+      "evidence": [
+        {
+          "id": "E27",
+          "kind": "code",
+          "path": "packages/@nocobase/authorization/dist/core/selection.js",
+          "observation": "parseRecordSelection 仅当 records 的每个 id 都是非空字符串时才接受，否则抛 TypeError('Invalid record selection')。",
+          "lines": [
+            1,
+            24
+          ],
+          "excerpt": "export const selection = {\n    all: () => ({ type: 'all' }),\n    records: (ids) => ({ type: 'records', ids: [...ids] }),\n    recordAccess: (key, params) => params === undefined\n        ? { type: 'recordAccess', key }\n        : { type: 'recordAccess', key, params: structuredClone(params) },\n};\n/** Validates an untrusted value, returning it as a detached selection. */\nexport function parseRecordSelection(value) {\n    if (typeof value === 'object' && value !== null && !Array.isArray(value)) {\n        const type = Reflect.get(value, 'type');\n        if (type === 'all')\n            return selection.all();\n        const ids = Reflect.get(value, 'ids');\n        if (type === 'records' &&\n            Array.isArray(ids) &&\n            ids.every((id) => typeof id === 'string' && id !== ''))\n            return selection.records(ids);\n        const key = Reflect.get(value, 'key');\n        if (type === 'recordAccess' && typeof key === 'string' && key)\n            return selection.recordAccess(key, Reflect.get(value, 'params'));\n    }\n    throw new TypeError('Invalid record selection');\n}",
+          "sha256": "1a4f0b0f5a61e724c856f23703dadb6fa2cb8d245c2669d4f3f36f1cc4e66088"
+        },
+        {
+          "id": "E28",
+          "kind": "code",
+          "path": "packages/@nocobase/authorization/dist/core/selection.d.ts",
+          "observation": "selection 的公开形态 all/records/recordAccess 及 parseRecordSelection 类型声明。",
+          "lines": [
+            1,
+            19
+          ],
+          "excerpt": "/** Which records of a collection an action reaches. */\nexport type RecordSelection = {\n    readonly type: 'all';\n} | {\n    readonly type: 'records';\n    readonly ids: readonly string[];\n} | {\n    readonly type: 'recordAccess';\n    readonly key: string;\n    readonly params?: unknown;\n};\nexport interface RecordSelectionHelpers {\n    all(): RecordSelection;\n    records(ids: readonly string[]): RecordSelection;\n    recordAccess(key: string, params?: unknown): RecordSelection;\n}\nexport declare const selection: RecordSelectionHelpers;\n/** Validates an untrusted value, returning it as a detached selection. */\nexport declare function parseRecordSelection(value: unknown): RecordSelection;",
+          "sha256": "49a2c5cb7602aa4e022cecb39609412acceab3443b0b3a1d91ed31b1c5728b6f"
+        },
+        {
+          "id": "E65",
+          "kind": "code",
+          "path": "app/server/library/scope.ts",
+          "observation": "应用注释明确记录 records 仅接受非空字符串、整数主键需经自定义 recordAccess，并在本地重写了 allScopes 的 and 折叠。",
+          "lines": [
+            19,
+            60
+          ],
+          "excerpt": "/**\n * Record access keys, named once so the grants, the restriction rule and the\n * tests all spell them the same way.\n */\nexport const LIBRARY_RECORD_ACCESS = {\n  /** Published and not confidential: every reader may open these. */\n  readable: 'library.readable',\n  /** Not confidential, whatever its published state. */\n  nonConfidential: 'library.nonConfidential',\n  /** The owner's own rows plus every readable row. */\n  visible: 'library.visible',\n  /**\n   * The one record a temporary share points at.\n   *\n   * The authorization package's `records` selection carries string ids only,\n   * and this table's primary key is an integer, so a `records` selection would\n   * be rejected by the repository's filter validation. Naming the id in a\n   * record access lets the resolver hand back a real number instead.\n   */\n  sharedDocument: 'library.sharedDocument',\n} as const;\n\n/** The params the `sharedDocument` record access reads. */\nexport interface SharedDocumentParams {\n  readonly documentId?: unknown;\n}\n\n/**\n * The AND fold of the authorization package's internal `allScopes`.\n *\n * That helper is not part of the package's public surface, so the fold is\n * repeated here rather than reaching through a private subpath. `true` drops\n * out, `false` wins, and a single node collapses to itself.\n */\nexport function allScopes(scopes: readonly DatabaseScope[]): DatabaseScope {\n  if (scopes.includes(false)) return false;\n  const items = scopes.filter(\n    (scope): scope is FilterNode => scope !== true && scope !== false,\n  );\n  if (items.length === 0) return true;\n  return items.length === 1 ? items[0] : group('and', items);\n}",
+          "sha256": "ad055b622685b41a731e1942a4dae7924d08e3d7e09954577084d331af18d990"
+        },
+        {
+          "id": "E66",
+          "kind": "code",
+          "path": "app/server/library/scope.ts",
+          "observation": "sharedDocument recordAccess 接收 documentId 参数并返回等值条件，作为整数主键单条共享的绕行实现。",
+          "lines": [
+            84,
+            96
+          ],
+          "excerpt": "/**\n * Exactly the one row a temporary share named.\n *\n * A missing, malformed or fractional id resolves to `false` rather than to a\n * filter the repository would refuse, so a broken share denies instead of\n * failing the request.\n */\nexport function sharedDocumentScope(documentId: unknown): DatabaseScope {\n  const parsed =\n    typeof documentId === 'number' ? documentId : Number(documentId);\n  if (!Number.isSafeInteger(parsed)) return false;\n  return condition('id', '$eq', parsed);\n}",
+          "sha256": "ad055b622685b41a731e1942a4dae7924d08e3d7e09954577084d331af18d990"
+        }
+      ],
+      "fingerprint": "90a4b1fcb1dc67b4180d4879ff7eec7d2511b3ef43a9d273d3911bc1401fe11b"
+    },
+    {
+      "id": "577:37394452688:1:F2",
+      "report": "577:37394452688:1",
+      "issue": 577,
+      "taskTitle": "内部资料阅读与临时共享",
+      "appVersion": "1.0.0-beta.50",
+      "appTemplate": "@nocobase/app-template-default",
+      "finding": {
+        "id": "F2",
+        "kind": "issue",
+        "owner": "plugin",
+        "confidence": "confirmed",
+        "severity": "minor",
+        "status": "open",
+        "title": "allScopes 已实现但未从 app-plugin-authorization/server 导出",
+        "detail": "scope.js/scope.d.ts 提供了 allScopes（AND 折叠，遇 false 即 false），但 app-plugin-authorization/dist/server/index.d.ts 的再导出只包含 anyScope/condition/scopeAst，未包含 allScopes。应用在 scope.ts 中为组合\"可读 且 非保密\"自行重写了 and 折叠逻辑。",
+        "impact": "范围组合这类基础原语被逼到应用侧重写，容易与框架内部语义漂移，也增加了代理实现负担与代码量。",
+        "suggestedChange": "从 app-plugin-authorization/server 公开导出 allScopes（并补充类型与文档），或在 Skill/README 中明确其替代用法。",
+        "evidence": [
+          "E30",
+          "E31",
+          "E34",
+          "E65"
+        ],
+        "diagnosis": {
+          "category": "usability-improvement",
+          "trigger": "应用需要把多个 scope 以 AND 组合为单一授权范围。",
+          "expected": "直接导入框架提供的 allScopes 完成组合。",
+          "actual": "包入口未导出 allScopes，只能复制其折叠逻辑或手工构造 group('and', ...)。",
+          "workaround": "在应用 scope.ts 内自行实现等价的 and 折叠。",
+          "acceptance": "从 @nocobase/app-plugin-authorization/server 导入 allScopes 即可完成组合，且与内部 authorizer 使用同一实现。"
+        }
+      },
+      "targets": [
+        "@nocobase/app-plugin-authorization"
+      ],
+      "paths": [
+        "packages/@nocobase/app-plugin-authorization/dist/server/database/scope.d.ts",
+        "packages/@nocobase/app-plugin-authorization/dist/server/database/scope.js",
+        "packages/@nocobase/app-plugin-authorization/dist/server/index.d.ts"
+      ],
+      "evidence": [
+        {
+          "id": "E30",
+          "kind": "code",
+          "path": "packages/@nocobase/app-plugin-authorization/dist/server/database/scope.js",
+          "observation": "anyScope/allScopes/idsScope 的组合实现：allScopes 遇 false 即 false，否则 AND 折叠；idsScope 展开为多个 $eq。",
+          "lines": [
+            24,
+            47
+          ],
+          "excerpt": "export function anyScope(scopes) {\n    if (scopes.includes(true))\n        return true;\n    const items = scopes.filter((scope) => scope !== false);\n    if (items.length === 0)\n        return false;\n    return items.length === 1 ? items[0] : group('or', items);\n}\nexport function allScopes(scopes) {\n    if (scopes.includes(false))\n        return false;\n    const items = scopes.filter((scope) => scope !== true);\n    if (items.length === 0)\n        return true;\n    return items.length === 1 ? items[0] : group('and', items);\n}\n/**\n * Membership expands to one `$eq` per identifier because `FilterOperator` has\n * no `$in` — `$includes` is a substring test. A negated list would expand the\n * same way, as an `and` of `$ne`. Both collapse once db grows the operator.\n */\nexport function idsScope(field, ids) {\n    return anyScope(ids.map((id) => condition(field, '$eq', id)));\n}",
+          "sha256": "990edf1b0422f4e8e2c869546a4d4be9710b5e652bcf7170105a436f80ea2b34"
+        },
+        {
+          "id": "E31",
+          "kind": "code",
+          "path": "packages/@nocobase/app-plugin-authorization/dist/server/database/scope.d.ts",
+          "observation": "scope 模块导出 condition/noRowsScope/anyScope/allScopes/idsScope（allScopes 在第 24 行声明）。",
+          "lines": [
+            11,
+            32
+          ],
+          "excerpt": "export type DatabaseScope = boolean | FilterNode;\n/**\n * Conditions are built literally rather than through `FilterBuilder`, which\n * picks `string()` or `number()` from a field's type. The Collection registry\n * records field names only.\n */\nexport declare function condition(field: string, operator: FilterOperator, value?: FilterLiteral): FilterNode;\n/**\n * A scope that matches no row, for a permitted action whose scope resolved to\n * `false`. A value cannot be both empty and not empty, in any dialect.\n */\nexport declare function noRowsScope(primaryKey: string): FilterNode;\nexport declare function anyScope(scopes: readonly DatabaseScope[]): DatabaseScope;\nexport declare function allScopes(scopes: readonly DatabaseScope[]): DatabaseScope;\n/**\n * Membership expands to one `$eq` per identifier because `FilterOperator` has\n * no `$in` — `$includes` is a substring test. A negated list would expand the\n * same way, as an `and` of `$ne`. Both collapse once db grows the operator.\n */\nexport declare function idsScope(field: string, ids: readonly string[]): DatabaseScope;\n/** Attach a scope to its Collection. `true` and `false` are decided by the caller. */\nexport declare function scopeAst(collection: string, scope: FilterNode): FilterAst;",
+          "sha256": "18ed73fc9a722badeae687284be1a99407f0b454e8e0dfba6e46d943c4048881"
+        },
+        {
+          "id": "E34",
+          "kind": "code",
+          "path": "packages/@nocobase/app-plugin-authorization/dist/server/index.d.ts",
+          "observation": "server 入口的再导出仅含 anyScope/condition/scopeAst，未导出 allScopes。",
+          "lines": [
+            12,
+            16
+          ],
+          "excerpt": "export { DatabasePermissionBuilder, DatabasePermissionDefinitionBuilder, defineDatabasePermission, } from './database/builders.js';\nexport { PermissionFieldsBuilder, PermissionUpsertBuilder, ReadPermissionBuilder, RelationPermissionBuilder, ThroughPermissionBuilder, WritePermissionBuilder, } from './database/permission-builders.js';\nexport { recordAccess, type CustomFilterParams, type RecordOwnerParams, } from './database/record-access.js';\nexport { anyScope, condition, scopeAst, type DatabaseScope, } from './database/scope.js';\nexport type { AuthorizationCollection, DatabaseAuthorizationConditions, DatabaseAuthorizationParams, } from './database/model.js';",
+          "sha256": "b5abb679265052d760021b2a2c9143a50b887568a56df6ab5957d0a595b1eb9b"
+        },
+        {
+          "id": "E65",
+          "kind": "code",
+          "path": "app/server/library/scope.ts",
+          "observation": "应用注释明确记录 records 仅接受非空字符串、整数主键需经自定义 recordAccess，并在本地重写了 allScopes 的 and 折叠。",
+          "lines": [
+            19,
+            60
+          ],
+          "excerpt": "/**\n * Record access keys, named once so the grants, the restriction rule and the\n * tests all spell them the same way.\n */\nexport const LIBRARY_RECORD_ACCESS = {\n  /** Published and not confidential: every reader may open these. */\n  readable: 'library.readable',\n  /** Not confidential, whatever its published state. */\n  nonConfidential: 'library.nonConfidential',\n  /** The owner's own rows plus every readable row. */\n  visible: 'library.visible',\n  /**\n   * The one record a temporary share points at.\n   *\n   * The authorization package's `records` selection carries string ids only,\n   * and this table's primary key is an integer, so a `records` selection would\n   * be rejected by the repository's filter validation. Naming the id in a\n   * record access lets the resolver hand back a real number instead.\n   */\n  sharedDocument: 'library.sharedDocument',\n} as const;\n\n/** The params the `sharedDocument` record access reads. */\nexport interface SharedDocumentParams {\n  readonly documentId?: unknown;\n}\n\n/**\n * The AND fold of the authorization package's internal `allScopes`.\n *\n * That helper is not part of the package's public surface, so the fold is\n * repeated here rather than reaching through a private subpath. `true` drops\n * out, `false` wins, and a single node collapses to itself.\n */\nexport function allScopes(scopes: readonly DatabaseScope[]): DatabaseScope {\n  if (scopes.includes(false)) return false;\n  const items = scopes.filter(\n    (scope): scope is FilterNode => scope !== true && scope !== false,\n  );\n  if (items.length === 0) return true;\n  return items.length === 1 ? items[0] : group('and', items);\n}",
+          "sha256": "ad055b622685b41a731e1942a4dae7924d08e3d7e09954577084d331af18d990"
+        }
+      ],
+      "fingerprint": "39d9710826de3ee175d6c2a9baddcecad79622917e5ca9d3a96a184f0fbcea0b"
+    },
+    {
+      "id": "577:37394452688:1:F3",
+      "report": "577:37394452688:1",
+      "issue": 577,
+      "taskTitle": "内部资料阅读与临时共享",
+      "appVersion": "1.0.0-beta.50",
+      "appTemplate": "@nocobase/app-template-default",
+      "finding": {
+        "id": "F3",
+        "kind": "misleading",
+        "owner": "documentation",
+        "confidence": "confirmed",
+        "severity": "minor",
+        "status": "open",
+        "title": "共享规则 Skill 示例以字符串 id 演示 records，未提示 id 类型限制",
+        "detail": "nocobase-app-plugin-authz-sharing-rules 的 SKILL.md 用 selection.records(['quote-7']) 作为\"为一次交付显式挑选记录\"的示例，但底层 parseRecordSelection 只接受非空字符串 id。示例全程以字符串 id 呈现，读者会认为任意主键都可用。",
+        "impact": "使用整数主键（框架默认 increments）的开发者/代理照抄示例会在运行/写入期失败，需回溯到框架源码才能定位，增加了试错与上下文消耗。",
+        "suggestedChange": "在示例旁明确\"records 仅接受非空字符串 id；整数主键请使用 recordAccess（或框架后续支持的写法）\"，并补一个整数主键的对照示例。",
+        "evidence": [
+          "E45",
+          "E27"
+        ],
+        "claimed": "共享规则的 selection 可用 selection.records([id]) 选出单条记录，示例 selection.records(['quote-7']) 即表达该能力。",
+        "observed": "parseRecordSelection 对 records 的每个 id 要求 typeof id === 'string' 且非空，整数主键（如 documents.id）会抛 TypeError('Invalid record selection')，示例形态不能直接用于默认整数主键集合。"
+      },
+      "targets": [
+        "@nocobase/authorization",
+        "app/.agents/skills/nocobase-app-plugin-authz-sharing-rules"
+      ],
+      "paths": [
+        ".agents/skills/nocobase-app-plugin-authz-sharing-rules/SKILL.md",
+        "packages/@nocobase/authorization/dist/core/selection.js"
+      ],
+      "evidence": [
+        {
+          "id": "E45",
+          "kind": "skill",
+          "path": "app/.agents/skills/nocobase-app-plugin-authz-sharing-rules/SKILL.md",
+          "observation": "共享规则 Skill 的服务 API 与种子表：以 selection.records(['quote-7']) 演示单条记录选择，并列出 authorizationSharingRules/Assignments 两表字段。",
+          "lines": [
+            45,
+            75
+          ],
+          "excerpt": "## Service API\n\nResolve `authorizationToken` from `@nocobase/app-plugin-authorization/server` in the owning provider or route factory. The rule API exists only when the factory is configured, so narrow the service before using it. `quotes` is the application's own composite and `org.team` its own subject type, both defined as the main Skill describes.\n\n```ts\nimport { selection } from '@nocobase/authorization/core';\nimport {\n  defineSharingRule,\n  type SharingRulesAuthorizationApi,\n} from '@nocobase/authorization/sharing-rules';\nimport type { DatabaseConnection } from '@nocobase/db';\n\nif (!('sharingRules' in authz))\n  throw new Error('Sharing rules is not configured');\nconst rules = (\n  authz as typeof authz & SharingRulesAuthorizationApi<DatabaseConnection>\n).sharingRules;\n\nawait rules.create(\n  defineSharingRule('proposal-handover', quotes.reference())\n    .title('Proposal handover')\n    .subjects({ type: 'org.team', id: 'proposal' })\n    .scope('edit', 'quotes', selection.records(['quote-7']))\n    .scope('submit', 'quotes', selection.records(['quote-7']))\n    .scope('submit', 'projects', selection.records(['project-3']))\n    .reason('Delegate this proposal to the team')\n    .build(),\n);\n```\n\nA rule is `{ key, resource, actions, title?, subjects, reason? }` and each action is `{ action, scopeKey?, selection }`, where `selection` is `selection.records(ids)` or `selection.recordAccess(key, params?)`; `all` is refused. `create`, `update(key, rule)`, `delete(key)`, `get(key)`, `list()` and `withTransaction(connection)` validate before writing. A rule on a composite names the data scope in `scopeKey` and affects only that composite action's branch; a rule on a `database.collection` omits `scopeKey` and applies across every branch that reaches the collection. Neither form shares related records implicitly or replaces field and relation capabilities, and unrestricted identities skip every rule.",
+          "sha256": "146d83ac7e11420ccd357c143d9bded9e33b57dd629a218ebe8e59b999bf09b0"
+        },
+        {
+          "id": "E27",
+          "kind": "code",
+          "path": "packages/@nocobase/authorization/dist/core/selection.js",
+          "observation": "parseRecordSelection 仅当 records 的每个 id 都是非空字符串时才接受，否则抛 TypeError('Invalid record selection')。",
+          "lines": [
+            1,
+            24
+          ],
+          "excerpt": "export const selection = {\n    all: () => ({ type: 'all' }),\n    records: (ids) => ({ type: 'records', ids: [...ids] }),\n    recordAccess: (key, params) => params === undefined\n        ? { type: 'recordAccess', key }\n        : { type: 'recordAccess', key, params: structuredClone(params) },\n};\n/** Validates an untrusted value, returning it as a detached selection. */\nexport function parseRecordSelection(value) {\n    if (typeof value === 'object' && value !== null && !Array.isArray(value)) {\n        const type = Reflect.get(value, 'type');\n        if (type === 'all')\n            return selection.all();\n        const ids = Reflect.get(value, 'ids');\n        if (type === 'records' &&\n            Array.isArray(ids) &&\n            ids.every((id) => typeof id === 'string' && id !== ''))\n            return selection.records(ids);\n        const key = Reflect.get(value, 'key');\n        if (type === 'recordAccess' && typeof key === 'string' && key)\n            return selection.recordAccess(key, Reflect.get(value, 'params'));\n    }\n    throw new TypeError('Invalid record selection');\n}",
+          "sha256": "1a4f0b0f5a61e724c856f23703dadb6fa2cb8d245c2669d4f3f36f1cc4e66088"
+        }
+      ],
+      "fingerprint": "7d49e0a3535e53b8065759e58841e67be8674bca5d0110e118983034d2f173bd"
+    },
+    {
+      "id": "577:37394452688:1:F4",
+      "report": "577:37394452688:1",
+      "issue": 577,
+      "taskTitle": "内部资料阅读与临时共享",
+      "appVersion": "1.0.0-beta.50",
+      "appTemplate": "@nocobase/app-template-default",
+      "finding": {
+        "id": "F4",
+        "kind": "improvement",
+        "owner": "plugin",
+        "confidence": "confirmed",
+        "severity": "minor",
+        "status": "open",
+        "title": "DatabaseSharingRuleStore.list() 无过滤/分页参数，应用须全量拉取后自行筛选",
+        "detail": "sharing-rules store 的 list() 不接收任何过滤条件（也无分页），应用 service.ts 的 listShares 只能先 list() 全量规则，再按 SHARE_KEY_PREFIX 前缀在内存中过滤。随着共享数量增长，这一路径缺乏下推能力。",
+        "impact": "共享/撤销等管理操作随记录数线性变差，且需要应用维护 key 约定来做筛选，属于可避免的易用性负担。",
+        "suggestedChange": "为 store.list 增加可选过滤参数（按 key/资源/主题）或提供按资源查询的接口，并在 Skill 中记录。",
+        "evidence": [
+          "E43",
+          "E44",
+          "E68"
+        ],
+        "diagnosis": {
+          "category": "usability-improvement",
+          "trigger": "应用需要列出与某个资源/前缀相关的共享规则。",
+          "expected": "store 支持按条件查询，只返回相关规则。",
+          "actual": "list() 无参数，只能取回全部规则后在前缀过滤。",
+          "workaround": "list() 全量 + SHARE_KEY_PREFIX 前缀过滤（应用 service.ts 已实现）。",
+          "acceptance": "store 支持按 key/资源过滤后，列表接口只返回相关规则且结果与全量过滤一致。"
+        }
+      },
+      "targets": [
+        "@nocobase/app-plugin-authz-sharing-rules"
+      ],
+      "paths": [
+        "packages/@nocobase/app-plugin-authz-sharing-rules/dist/server/stores/sharing-rules.d.ts",
+        "packages/@nocobase/app-plugin-authz-sharing-rules/dist/server/stores/sharing-rules.js"
+      ],
+      "evidence": [
+        {
+          "id": "E43",
+          "kind": "code",
+          "path": "packages/@nocobase/app-plugin-authz-sharing-rules/dist/server/stores/sharing-rules.d.ts",
+          "observation": "DatabaseSharingRuleStore 暴露 withTransaction/create/update/delete/get/list，list() 不带过滤参数。",
+          "lines": [
+            1,
+            19
+          ],
+          "excerpt": "import type { DatabaseConnection } from '@nocobase/db';\nimport type { DatabaseConnectionSource } from '@nocobase/app-plugin-authorization/server/extension';\nimport type { SharingRule } from '@nocobase/authorization/sharing-rules';\nimport type { SharingRuleStore } from '@nocobase/authorization/sharing-rules';\nexport declare class DatabaseSharingRuleStore implements SharingRuleStore<DatabaseConnection> {\n    private readonly connection;\n    constructor(connection: DatabaseConnectionSource);\n    withTransaction(connection: DatabaseConnection): SharingRuleStore<DatabaseConnection>;\n    create(rule: SharingRule): Promise<SharingRule>;\n    update(key: string, rule: SharingRule): Promise<SharingRule>;\n    delete(key: string): Promise<void>;\n    get(key: string): Promise<SharingRule | undefined>;\n    list(): Promise<readonly SharingRule[]>;\n    private replaceAssignments;\n    private loadAssignments;\n    private toValues;\n    private toUpdateValues;\n    private fromRow;\n}",
+          "sha256": "8a3456f1dba088b8512be912b85e3ddf63c601ac8366962e0a176adf2968a3cb"
+        },
+        {
+          "id": "E44",
+          "kind": "code",
+          "path": "packages/@nocobase/app-plugin-authz-sharing-rules/dist/server/stores/sharing-rules.js",
+          "observation": "store.list() 直接返回全部共享规则（无查询参数），应用需在内存中筛选。",
+          "lines": [
+            83,
+            99
+          ],
+          "excerpt": "    async list() {\n        const rows = await this.connection()\n            .query.selectFrom(RULES)\n            .select([\n            'id',\n            'key',\n            'title',\n            'resourceType',\n            'resourceId',\n            'actions',\n            'reason',\n        ])\n            .orderBy('key', 'asc')\n            .execute();\n        const assignments = await this.loadAssignments(rows.map((row) => String(row.id)));\n        return rows.map((row) => this.fromRow(row, assignments));\n    }",
+          "sha256": "468f5c5dba12318099a6d3d326b8ec559d6f7c9d2af5de9c614a376a78911cff"
+        },
+        {
+          "id": "E68",
+          "kind": "code",
+          "path": "app/server/library/service.ts",
+          "observation": "sharingRules() 返回 authorization.sharingRules，listShares 全量 list() 后按 SHARE_KEY_PREFIX 前缀过滤，体现 store 无过滤参数的绕行。",
+          "lines": [
+            375,
+            408
+          ],
+          "excerpt": "  private sharingRules(): SharingRulesApi<DatabaseConnection> {\n    return this.authorization.sharingRules;\n  }\n\n  async listShares(actor: LibraryActor): Promise<LibraryShare[]> {\n    void actor;\n    const rules = await this.sharingRules().list();\n    const owned = rules.filter((rule) => rule.key.startsWith(SHARE_KEY_PREFIX));\n    const documents = await this.documentTitles(\n      owned\n        .map((rule) => this.sharedDocumentId(rule))\n        .filter((id): id is number => id !== undefined),\n    );\n    const recipients = await this.ownerNames(\n      owned.flatMap((rule) => rule.subjects.map((subject) => subject.id)),\n    );\n    return owned\n      .map((rule) => {\n        const documentId = this.sharedDocumentId(rule);\n        return {\n          key: rule.key,\n          documentId: documentId ?? 0,\n          documentTitle:\n            documentId === undefined\n              ? null\n              : (documents.get(documentId) ?? null),\n          recipientId: rule.subjects[0]?.id ?? '',\n          recipientName: recipients.get(rule.subjects[0]?.id ?? '') ?? null,\n          createdAt: null,\n        };\n      })\n      .filter((share) => share.documentId !== 0)\n      .sort((left, right) => right.documentId - left.documentId);\n  }",
+          "sha256": "94351ce341c0ac2b98a9fa2cfb2d1eed03f142960fe83eb6ea8a567bd2898797"
+        }
+      ],
+      "fingerprint": "af9b1ff2a82fead5773bcbdf82ac062eff458d6422ad41b81a81c83d414bd7f4"
+    },
+    {
+      "id": "577:37394452688:1:F8",
+      "report": "577:37394452688:1",
+      "issue": 577,
+      "taskTitle": "内部资料阅读与临时共享",
+      "appVersion": "1.0.0-beta.50",
+      "appTemplate": "@nocobase/app-template-default",
+      "finding": {
+        "id": "F8",
+        "kind": "improvement",
+        "owner": "documentation",
+        "confidence": "suspected",
+        "severity": "minor",
+        "status": "open",
+        "title": "授权 Skill 缺少紧凑的公开 API 速查，代理易陷入 dist 源码探查",
+        "detail": "授权链路细节（selection 形态、policyFor/withPolicy、recordAccess 注册、composite action 与 field/relation 能力）分散在 SKILL.md 与多份 references 中，缺少一页式\"任务→公开入口\"索引。实现轨迹显示代理为确认声明形状反复 cat node_modules 下的 dist 文件，并伴随一次上下文溢出。",
+        "impact": "拉长代理到达可用 API 的路径、增加上下文消耗与出错概率，间接影响实现完整度与耗时。",
+        "suggestedChange": "在授权 Skill 增加一页 API 速查表（公开入口、参数、返回值、最小示例），并优先给出应用侧文件的接入骨架，减少对 dist 源码的探查。",
+        "evidence": [
+          "E36",
+          "E37",
+          "E38"
+        ]
+      },
+      "targets": [
+        "app/.agents/skills/nocobase-app-plugin-authorization"
+      ],
+      "paths": [
+        ".agents/skills/nocobase-app-plugin-authorization/SKILL.md",
+        ".agents/skills/nocobase-app-plugin-authorization/references/code-and-seeds.md",
+        ".agents/skills/nocobase-app-plugin-authorization/references/fluent-registration.md"
+      ],
+      "evidence": [
+        {
+          "id": "E36",
+          "kind": "skill",
+          "path": "app/.agents/skills/nocobase-app-plugin-authorization/SKILL.md",
+          "observation": "授权 Skill 的\"实现顺序\"：先迁移建表，再 defineDatabasePermission/defineCompositeResource，boot 中注册 collections/recordAccess/composite/settings，路由用 authorizeRepository 或 middleware+withPolicy，客户端声明 authz。",
+          "lines": [
+            55,
+            62
+          ],
+          "excerpt": "## Implement in this order\n\n1. Declare schema and relationships through self-contained migrations. Choose stable composite, page and data scope names. Keep authorization decisions out of migration code.\n2. Declare reusable collection permissions with `defineDatabasePermission`; compose user-facing business operations as composite resources with `defineCompositeResource` from `@nocobase/authorization/core`. Explicitly name fields, relation capabilities and every collection a workflow touches.\n3. In the owning provider's `boot`, opt collections in with `authz.database.collections.add`, register composites with `authz.compositeResources.define`, record access with `authz.recordAccess.define` and settings items with `authz.settings.add`. Then add a workspace subsection with `authz.ui.sections.add({ name, title, parent })` and list each composite or settings item in it with `authz.ui.place(reference, { section, group? })` (the permission workspace lists sections and subsections on the left and the selected subsection's resources, under optional `authz.ui.groups`, on the right; an unplaced composite or settings item goes under its default section's Other with a startup warning, and a misplaced one fails a development start). Pages are not registered on the server: the client route tree lists them. Release subject registrations at shutdown.\n4. Protect every server route with authentication. For a simple single-scope Repository operation, keep `defineRepositoryApiRoutes` and add `authz.database.authorizeRepository` to map methods to composite actions; it reuses or initializes the request's authorization context. For workflows, persisted-state checks, multiple data scopes or custom responses, install `authz.middleware()`, call `c.get('authz').authorize()` once and bind every returned collection policy with `repository.withPolicy()`. Follow [Repository route integration](references/repository-routes.md).\n5. Declare `authz` on every entry client route (nested pages inherit it; an omitted one defaults to root-only or `'skip'` with a development warning), add `useCan` for action visibility and obtain per-record eligibility from the server when needed. Handle pending and error states without displaying stale access.\n6. Complete the accompanying permission configuration from the responsibility matrix: sets, page and action grants, selected data scopes, supported rules and intended assignments. Use seeds for fresh installations and authorized provisioning for existing installations; editing a seed does not update a running App. Resolve optional capabilities through their installed Skills and preserve unrelated administrator edits.",
+          "sha256": "0ae2663fd2f0a5522fd2dd952eea86cf51f1f89024423e5c3efa207a436b7e69"
+        },
+        {
+          "id": "E37",
+          "kind": "skill",
+          "path": "app/.agents/skills/nocobase-app-plugin-authorization/references/fluent-registration.md",
+          "observation": "fluent 声明参考：defineCompositeResource/defineDatabasePermission/defineRecordAccess 的语义，字段与关系能力，以及 recordAccess 返回 true/false/condition/FilterAst。",
+          "lines": [
+            3,
+            13
+          ],
+          "excerpt": "Opt collections in with `authz.database.collections.add(...)`; pages need no server registration because the client route tree lists them. Define composite resources with `defineCompositeResource(name, configure)` from `@nocobase/authorization/core` and reusable collection permissions with `defineDatabasePermission(configure)` from `@nocobase/app-plugin-authorization/server`. Both callbacks execute synchronously and return immutable builders; neither registers anything, queries a database or assigns permissions. Register a built resource with `authz.compositeResources.define(resource)`, which returns its `CompositeResourceReference`, and list it in the workspace with `authz.ui.place(reference, { section })`; `resource.reference()` returns the same reference without registering.\n\nUse the complete [quote resource declaration](runtime-api.md#declare-a-business-operation) as the starting point and the [permission-set declaration](code-and-seeds.md#share-declarations-not-runtime-instances) to select its data scopes. This reference adds builder semantics and relation capabilities. A composite can also be written as a plain object, `{ name, title, actions: [{ name, title, dataScopes, grants }] }`, where each data scope is `{ key, title, options?, defaultValue? }` and targets the one resource its grants name; the package README shows both forms.\n\nThe row type passed to `.collection<Row>(name)` supplies compile-time field checks, not another runtime schema. DB metadata remains authoritative. Collection registration defines which operations participate in authorization; the permission builder describes requested capabilities independently. The registered Collection action catalogue is enforced when authorizing requests.\n\n`grant(key, permission, { title? })` binds a reusable permission to one data scope of the action. The key is stored as `scopeKey` and names the data scope a grant or rule fills with a record selection. The title defaults to the permission's explicit title, or the collection name; override it when one action uses the same collection twice. Different keys allow independent multi-collection configuration. Repeated keys and operations are rejected. A business action composes only `database.collection` grants.\n\n`read` describes output fields, while `create` and `update` describe input fields. `delete()` takes no fields. Use `'*'` or `.allFields()` explicitly for all fields. `.options(...recordAccessReferences)` limits the record access a grant may choose and keeps the option names typed on the resource reference; `.default(reference)` sets the value used when a grant chooses nothing. The references must apply to the selected collection. Omitting options offers every registered record access that applies.\n\nDefine record access with `defineRecordAccess(key, configure)` from `@nocobase/authorization/core`, then register it with `authz.recordAccess.define(access)`. Use `.collections(...names)` for applicability (`'*'` for every collection), `.params<P>(schema)` for typed parameters and `.resolver(fn)` for evaluation. The resolver receives `{ principal, collection, action, params }` and no database objects; it returns `true`, `false`, a filter built with `condition(...)` from `@nocobase/app-plugin-authorization/server`, or a `FilterAst` built with `buildFilter` from `@nocobase/repository-input`, which the database adapter validates and compiles. Grants and rules never store resolver functions: `.options(...)`, `.default(...)`, relation `.recordAccess(...)` and `selection.recordAccess(key, params?)` store keys. Use stable keys because grants and rules persist them.",
+          "sha256": "92c9dba991f9a5039b401949ae01d8eb801f428f17e0e6441ec473886569ba8c"
+        },
+        {
+          "id": "E38",
+          "kind": "skill",
+          "path": "app/.agents/skills/nocobase-app-plugin-authorization/references/code-and-seeds.md",
+          "observation": "code-and-seeds 参考记录 defineSeed 的受限上下文、encodeAuthorizationTitle、授权持久化行形状与 withTransaction 用法。",
+          "lines": [
+            60,
+            97
+          ],
+          "excerpt": "## A normal App seed has a database context\n\n`defineSeed` from `@nocobase/db` receives `{ query, connection }`. `connection` is a restricted `SeedConnection`, not a complete runtime `DatabaseConnection`; the seed has no application container. Do not cast it to construct an App authorization service or assume `authorizationToken` can be resolved there.\n\nFor initial installation, a seed may write the documented persistence rows below after the owning plugins' migrations. Keep this adapter confined to installation data, use fluent values as its input, and test against the installed schema. Runtime routes must use the services instead. Keep one seed-data module per table.\n\n```ts\nimport { defineSeed } from '@nocobase/db';\nimport { encodeAuthorizationTitle } from '@nocobase/authorization/core';\nimport { engineer } from '../../seed-data/permission-sets.js';\n\nexport default defineSeed({\n  name: '202609190001_sales_jobs',\n  transaction: true,\n  async run({ query }) {\n    const existing = await query\n      .selectFrom('authorizationPermissionSets')\n      .select('id')\n      .where('key', '=', engineer.key)\n      .executeTakeFirst();\n    if (existing) return; // Preserve an administrator's existing definition.\n    const now = new Date();\n    await query\n      .insertInto('authorizationPermissionSets')\n      .values({\n        id: engineer.key,\n        key: engineer.key,\n        title: encodeAuthorizationTitle(engineer.title),\n        grants: JSON.stringify(engineer.grants),\n        createdAt: now,\n        updatedAt: now,\n      })\n      .execute();\n  },\n});\n```\n\nThis seed lives in `database/main/seeds/202609190001_sales_jobs.ts` and imports `database/seed-data/permission-sets.ts`. Adapt the path to the App's configured seed directory; the seed name matches the filename. Ensure schema migrations for authorization and business collections have run, and explicitly order prerequisite installation data. Use the App's existing migration/seed commands. Do not run this code in a migration: migrations must describe fixed schema history and cannot import live business declarations.",
+          "sha256": "6815f18c10d1043383aac7d605c8195aed12a7ee34729aade698746f92eebe1c"
+        }
+      ],
+      "fingerprint": "53645e9668ae008ed1447cd6d5fbc67dfa22327d5bc40d5c6f5c1affa2b75615"
     },
     {
       "id": "578:37394457519:1:F1",
