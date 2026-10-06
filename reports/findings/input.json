@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "inputHash": "eb2395571f224af72ce847185f55b5508c05227a16e7ee8d25f4d418e503de5f",
+  "inputHash": "f7c3f6c400976c78f6b95483dc2999bd7f09971e83bf16c986e2919ab58bbd02",
   "findings": [
     {
       "id": "460:36434284393:1:F2",
@@ -10521,6 +10521,194 @@
         }
       ],
       "fingerprint": "5923379e1ddc896a43eaec9c887dad5224665fa1f3d0934e0f95368e6f6e5603"
+    },
+    {
+      "id": "596:37453030096:1:F2",
+      "report": "596:37453030096:1",
+      "issue": 596,
+      "taskTitle": "客户、联系人与商机管理",
+      "appVersion": "1.0.0-beta.55",
+      "appTemplate": "@nocobase/app-template-default",
+      "finding": {
+        "id": "F2",
+        "kind": "improvement",
+        "owner": "documentation",
+        "confidence": "confirmed",
+        "severity": "minor",
+        "status": "open",
+        "title": "nocobase-db Skill 只列方法名，缺少 aggregate + sum 的最小示例",
+        "detail": "nocobase-db Skill 以名称清单列出 Repository 方法（含 aggregate、groupBy，E13），但没有给出聚合表达式的最小代码。B02/B04 的客户维度金额合计必须写 aggregate: a => a.sum('amount')，其写法只在 @nocobase/repository-input 的实现/类型中可见（E2）；实现轮因此额外探测 repository-input 与 db 的 dist/.d.ts（历史 part-0033，E44）。",
+        "impact": "对「金额合计/分组统计」这类高频需求，发现与装配成本偏高，并带来读取内部实现/类型的额外 token 消耗。",
+        "suggestedChange": "在 Skill 的 Repository/Query 章节加入可直接复制的示例：repository.aggregate({ filter, aggregate: a => a.sum('amount') }) 与 groupBy 计数，并说明 exact decimal 的返回形态与方言适配。",
+        "evidence": [
+          "E2",
+          "E13",
+          "E44"
+        ],
+        "diagnosis": {
+          "category": "guidance-gap",
+          "trigger": "需要为客户详情/看板实现金额合计或分组统计。",
+          "expected": "Skill 直接给出 aggregate + sum/avg（含过滤）的可复制示例。",
+          "actual": "Skill 只列方法名，示例缺失，需要阅读 @nocobase/repository-input / @nocobase/db 的 .d.ts 自行推断。",
+          "workaround": "阅读 repository-input 的 aggregate-builder 与 db 的 repository 类型后拼装聚合表达式。",
+          "acceptance": "按 Skill 示例即可完成按客户的金额合计，并通过 B02/B04。"
+        }
+      },
+      "targets": [
+        "@nocobase/repository-input",
+        "packages/@nocobase/db/skills/nocobase-db/SKILL.md"
+      ],
+      "paths": [
+        ".agents/skills/nocobase-db/SKILL.md",
+        "packages/@nocobase/repository-input/dist/aggregate-builder.js"
+      ],
+      "evidence": [
+        {
+          "id": "E2",
+          "kind": "code",
+          "path": "packages/@nocobase/repository-input/dist/aggregate-builder.js",
+          "observation": "DefaultAggregateBuilder 暴露 count/sum/avg/min/max 并返回聚合表达式节点；应用可写 a => a.sum('amount')。框架只在源码注释/类型里暴露这一用法，Skill 未给示例。",
+          "lines": [
+            1,
+            17
+          ],
+          "excerpt": "export class DefaultAggregateBuilder {\n    count(field) {\n        return new DefaultAggregateExpression('count', field);\n    }\n    sum(field) {\n        return new DefaultAggregateExpression('sum', field);\n    }\n    avg(field) {\n        return new DefaultAggregateExpression('avg', field);\n    }\n    min(field) {\n        return new DefaultAggregateExpression('min', field);\n    }\n    max(field) {\n        return new DefaultAggregateExpression('max', field);\n    }\n}",
+          "sha256": "e92422dc849ccb3d70acae1a160c8e998315d564a2bbdeb5bf40623e35a3dc7e"
+        },
+        {
+          "id": "E13",
+          "kind": "skill",
+          "path": "packages/@nocobase/db/skills/nocobase-db/SKILL.md",
+          "observation": "Repository 方法以名称清单形式给出（含 aggregate、groupBy），但没有 sum/avg 聚合表达式的最小代码示例——B02/B04 的金额合计只能靠读类型/实现推断。",
+          "lines": [
+            236,
+            240
+          ],
+          "excerpt": "Resolve the manager once — in a route factory, or as a constructor dependency of a service — not inside every handler. `db.repository()`, `db.query()`, `db.builder()`, `db.collections()` and `db.transaction()` take the connection name as their last argument and use the default connection when it is omitted, so single-connection code never names one.\n\n`filter`, `values`, `select` and `sort` each accept a builder callback or the equivalent serializable JSON AST, and mean the same thing either way. They do not accept a shorthand string array such as `['id', 'name']` or `['-createdAt']`. Field names are Collection logical names, never column names. A write returns a result object — the record is `result.record`, alongside `result.version` and the created relation targets — rather than the record itself. `findMany` is awaited for an array or iterated asynchronously to consume a large result incrementally.\n\nThe methods are `findOne`, `findMany`, `count`, `exists`, `aggregate`, `groupBy`, `createOne`, `createMany`, `updateOne`, `updateMany`, `upsertOne`, `deleteOne` and `deleteMany`; `describeMutation` and `validateMutation` report capabilities and pre-validate input, and `withPolicy` returns a scoped Repository.",
+          "sha256": "d33a58740d6a2921689e56f964c081354574ed857389118e319719bde6936991"
+        },
+        {
+          "id": "E44",
+          "kind": "log",
+          "path": "artifacts/agent-history/agent-implement.jsonl/part-0033.txt",
+          "observation": "在 .pnpm 下 cat repository-input/dist/internal/select-builder.d.ts 等错误路径（实际在 dist/ 下），三个 cat 全失败 exit 1；属路径猜测，非包缺陷。",
+          "lines": [
+            1665,
+            1667
+          ],
+          "excerpt": "{\"type\":\"tool_execution_end\",\"toolCallId\":\"call_hs1hmkti\",\"toolName\":\"bash\",\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"cat: node_modules/.pnpm/@nocobase+repository-input@0.1.0-beta.2/node_modules/@nocobase/repository-input/dist/internal/select-builder.d.ts: No such file or directory\\n=== sort ===\\ncat: node_modules/.pnpm/@nocobase+repository-input@0.1.0-beta.2/node_modules/@nocobase/repository-input/dist/internal/sort-builder.d.ts: No such file or directory\\n=== agg ===\\ncat: node_modules/.pnpm/@nocobase+repository-input@0.1.0-beta.2/node_modules/@nocobase/repository-input/dist/internal/aggregate-builder.d.ts: No such file or directory\\n\\n\\nCommand exited with code 1\"}],\"details\":{}},\"isError\":true}\n{\"type\":\"message_start\",\"message\":{\"role\":\"toolResult\",\"toolCallId\":\"call_hs1hmkti\",\"toolName\":\"bash\",\"content\":[{\"type\":\"text\",\"text\":\"cat: node_modules/.pnpm/@nocobase+repository-input@0.1.0-beta.2/node_modules/@nocobase/repository-input/dist/internal/select-builder.d.ts: No such file or directory\\n=== sort ===\\ncat: node_modules/.pnpm/@nocobase+repository-input@0.1.0-beta.2/node_modules/@nocobase/repository-input/dist/internal/sort-builder.d.ts: No such file or directory\\n=== agg ===\\ncat: node_modules/.pnpm/@nocobase+repository-input@0.1.0-beta.2/node_modules/@nocobase/repository-input/dist/internal/aggregate-builder.d.ts: No such file or directory\\n\\n\\nCommand exited with code 1\"}],\"details\":{},\"isError\":true,\"timestamp\":1791285717300}}\n{\"type\":\"message_end\",\"message\":{\"role\":\"toolResult\",\"toolCallId\":\"call_hs1hmkti\",\"toolName\":\"bash\",\"content\":[{\"type\":\"text\",\"text\":\"cat: node_modules/.pnpm/@nocobase+repository-input@0.1.0-beta.2/node_modules/@nocobase/repository-input/dist/internal/select-builder.d.ts: No such file or directory\\n=== sort ===\\ncat: node_modules/.pnpm/@nocobase+repository-input@0.1.0-beta.2/node_modules/@nocobase/repository-input/dist/internal/sort-builder.d.ts: No such file or directory\\n=== agg ===\\ncat: node_modules/.pnpm/@nocobase+repository-input@0.1.0-beta.2/node_modules/@nocobase/repository-input/dist/internal/aggregate-builder.d.ts: No such file or directory\\n\\n\\nCommand exited with code 1\"}],\"details\":{},\"isError\":true,\"timestamp\":1791285717300}}",
+          "sha256": "bca7bdffaeb737a05f004bd42153721d775dbf5cd3b18d0575c94033f869d901"
+        }
+      ],
+      "fingerprint": "86354bab0361fd4be9297cb67470f284b71090c865f7f334e2003b0eb80bc0fe"
+    },
+    {
+      "id": "596:37453030096:1:F3",
+      "report": "596:37453030096:1",
+      "issue": 596,
+      "taskTitle": "客户、联系人与商机管理",
+      "appVersion": "1.0.0-beta.55",
+      "appTemplate": "@nocobase/app-template-default",
+      "finding": {
+        "id": "F3",
+        "kind": "improvement",
+        "owner": "documentation",
+        "confidence": "suspected",
+        "severity": "minor",
+        "status": "open",
+        "title": "前端 UI 指引体量大且入口分散，缺少按任务的最小阅读集",
+        "detail": "应用开发 Skill 的前端 references 合计约 4672 行（修复轮实测，E35），且列表/表单/浮层/路由/组件获取分别落在 table.md、form.md、overlay.md、child-routes.md、shadcn.md 等多份文档。实现轮在读完大量指引后出现上下文溢出（E31），说明按现状很难控制单轮加载预算。指引内容本身质量高、与模板事实一致（本评审可核实），问题只在加载边界。",
+        "impact": "Agent 容易一次性吞入过多内容，放大 token 与溢出风险；组合一处 UI 需要交叉阅读多份文档，装配成本偏高。",
+        "suggestedChange": "在 SKILL.md 或 ui-workflow.md 顶部给出「按任务类型的最小阅读集」（列一个列表页/表单/浮层各 1 份入口 + 1 个完整示例），或提供 ui-workflow 级别的单一入口聚合，减少交叉阅读。",
+        "evidence": [
+          "E35",
+          "E22",
+          "E24",
+          "E26",
+          "E31"
+        ],
+        "diagnosis": {
+          "category": "usability-improvement",
+          "trigger": "按指引实现一个包含列表页、表单与浮层的 CRM 前端。",
+          "expected": "指引给出规模可控的最小阅读路径，能在有限上下文内读完并正确组合。",
+          "actual": "references 合计约 4672 行、入口分散，实现轮一次性加载后发生上下文溢出。",
+          "workaround": "只读 ui-workflow.md 与对应单份 reference 及示例，按需加载。",
+          "acceptance": "遵循最小阅读路径后不再出现溢出，且能一次完成列表/表单/浮层组合。"
+        }
+      },
+      "targets": [
+        "app/.agents/skills/nocobase-app-development/references/frontend/references/child-routes.md",
+        "app/.agents/skills/nocobase-app-development/references/frontend/references/form.md",
+        "app/.agents/skills/nocobase-app-development/references/frontend/references/table.md"
+      ],
+      "paths": [
+        ".agents/skills/nocobase-app-development/references/frontend/references/child-routes.md",
+        ".agents/skills/nocobase-app-development/references/frontend/references/form.md",
+        ".agents/skills/nocobase-app-development/references/frontend/references/table.md"
+      ],
+      "evidence": [
+        {
+          "id": "E35",
+          "kind": "log",
+          "path": "artifacts/agent-history/agent-repair-1.jsonl/part-0002.txt",
+          "observation": "修复轮读取前端指引体量：references 合计 4672 行（table.md 242、page.md 544、child-routes.md 647、api.md 478 等）——用于评估指引的加载成本。",
+          "lines": [
+            575,
+            577
+          ],
+          "excerpt": "{\"type\":\"tool_execution_end\",\"toolCallId\":\"call_00_LVcIMK02dUEOjD575N9a0450\",\"toolName\":\"bash\",\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"   114 frontend-dev.md\\n   202 ui-guidelines.md\\n   156 ui-workflow.md\\n   478 references/api.md\\n   647 references/child-routes.md\\n    27 references/example.md\\n   381 references/form.md\\n   372 references/i18n.md\\n   388 references/overlay.md\\n   544 references/page.md\\n    91 references/shadcn.md\\n    96 references/shell.md\\n   363 references/styling.md\\n   242 references/table.md\\n   125 references/testing.md\\n   446 references/theme.md\\n  4672 total\\n\\n\\nCommand exited with code 1\"}],\"details\":{}},\"isError\":true}\n{\"type\":\"message_start\",\"message\":{\"role\":\"toolResult\",\"toolCallId\":\"call_00_LVcIMK02dUEOjD575N9a0450\",\"toolName\":\"bash\",\"content\":[{\"type\":\"text\",\"text\":\"   114 frontend-dev.md\\n   202 ui-guidelines.md\\n   156 ui-workflow.md\\n   478 references/api.md\\n   647 references/child-routes.md\\n    27 references/example.md\\n   381 references/form.md\\n   372 references/i18n.md\\n   388 references/overlay.md\\n   544 references/page.md\\n    91 references/shadcn.md\\n    96 references/shell.md\\n   363 references/styling.md\\n   242 references/table.md\\n   125 references/testing.md\\n   446 references/theme.md\\n  4672 total\\n\\n\\nCommand exited with code 1\"}],\"details\":{},\"isError\":true,\"timestamp\":1791287947366}}\n{\"type\":\"message_end\",\"message\":{\"role\":\"toolResult\",\"toolCallId\":\"call_00_LVcIMK02dUEOjD575N9a0450\",\"toolName\":\"bash\",\"content\":[{\"type\":\"text\",\"text\":\"   114 frontend-dev.md\\n   202 ui-guidelines.md\\n   156 ui-workflow.md\\n   478 references/api.md\\n   647 references/child-routes.md\\n    27 references/example.md\\n   381 references/form.md\\n   372 references/i18n.md\\n   388 references/overlay.md\\n   544 references/page.md\\n    91 references/shadcn.md\\n    96 references/shell.md\\n   363 references/styling.md\\n   242 references/table.md\\n   125 references/testing.md\\n   446 references/theme.md\\n  4672 total\\n\\n\\nCommand exited with code 1\"}],\"details\":{},\"isError\":true,\"timestamp\":1791287947366}}",
+          "sha256": "71fd8d7750328aa37670b2711d2c3c1f31562f994ae7b01bdee5bc88a62ad4be"
+        },
+        {
+          "id": "E22",
+          "kind": "skill",
+          "path": "app/.agents/skills/nocobase-app-development/references/frontend/references/table.md",
+          "observation": "列表页指南：统一用 @/components/data-table 的 DataTable（TanStack Table），搜索/过滤交给后端并放进 URL，服务端分页时 page/pageSize 与 q/status 同源，四态规则保持。",
+          "lines": [
+            3,
+            24
+          ],
+          "excerpt": "A list page is for browsing, finding and managing one kind of record. Its structure, top to bottom (guideline T1): `PageHeader` (primary button \"New X\") → toolbar (search, filters, clear filters) → table → pagination. Create, detail and edit are child-route overlays, rendered in the `<Outlet />` at the end of the list page (see [`overlay.md`](overlay.md)).\n\nThis document uses `client/pages/projects/index.tsx` as its example; the complete code is in [section 10](#10-complete-code). For the route declaration see [`page.md`](page.md); for the file layout of child routes see [`child-routes.md`](child-routes.md).\n\n## 1. Choosing a table component\n\nBuild every list with `DataTable` (`@/components/data-table`, built on TanStack Table) and its companions in `client/components/data-table/`: `DataTableColumnHeader` (a sortable column header), `DataTablePagination` (the pagination bar) and `DataTableViewOptions` (the \"Toggle columns\" menu). They come from the NocoBase UI Library: add them with `yes n | pnpm exec shadcn add @nocobase/data-table` before the first list, as [section 1 of `shadcn.md`](shadcn.md#1-what-the-template-ships-and-how-to-add-the-rest) describes, and they belong to the application from then on. Do not write a list from scratch with `Table`. The one exception is server-side pagination below. A short list of records inside a card, such as a dashboard's, is a `DataTable` too, with plain headers and `pagination={false}` (guideline T5.3); in an ordinary `CardContent` it lines up with the card's title by itself (\"Table in a card\" in [\"Common layouts\" of `styling.md`](styling.md#common-layouts); [`example/project-dashboard.md`](example/project-dashboard.md)).\n\n| Scenario                                                                                                | What to use                                                                                                                      |\n| ------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |\n| A list that fits in one page of the endpoint (at most 100 records), sorted and paginated in the browser | `DataTable`, with the cap notice when `meta.total` exceeds the rows returned (guideline T1.10, [section 6](#6-loading-the-list)) |\n| Larger data sets that the endpoint paginates, returning the total                                       | `ProjectsServerTable` ([`example/server-table.md`](example/server-table.md)), described below                                    |\n\n- Leave search and filtering to the backend: pass the filters as endpoint parameters; `DataTable` only displays, sorts and paginates.\n- The complete list page, [`example/list-page.md`](example/list-page.md), shows column definitions, the toolbar outside `DataTable`, a row actions menu and the four states working together.\n\nServer-side pagination, when the endpoint takes `page` and `pageSize` and returns the total. `DataTable` paginates in the browser only, so the page renders `ProjectsServerTable` instead: the same markup as `DataTable`, a TanStack table with `manualPagination` and `rowCount`, and `DataTablePagination` below it. [`example/server-table.md`](example/server-table.md) has both the component and the complete list page that uses it:\n\n- Keep `page` and `pageSize` in the URL beside `q` and `status`, written through the same `updateParams` ([section 5](#5-writing-search-and-filters-to-the-url)), and reset `page` when a filter changes. Include both in the request key and in `query`.\n- Pass the component the current page's rows, the returned total, `{ pageIndex: page - 1, pageSize }` read from the URL, and an `onPaginationChange` that writes the new values back to the URL; the request follows the URL.\n- Sort on the server, never one page in the browser: the sort lives in the URL as `orderBy` (`updatedAt desc`, the default, or `name`), goes to the endpoint with the page, and `ProjectsServerTable` hands it to the table with `manualSorting`, so the header shows its direction ([`example/server-table.md`](example/server-table.md)). A new sort starts on the first page.\n- The four states in [section 7](#7-the-four-list-states) and the loading rules in [section 6](#6-loading-the-list) stay the same; while a page loads, keep the previous page's rows on screen. Decide \"empty\" by the endpoint's `total`, not by an empty page: a page past the end is empty while records exist.",
+          "sha256": "a2124790ab4241949b17646672ff5331f8b5f8d294df138724836a79146060a1"
+        },
+        {
+          "id": "E24",
+          "kind": "skill",
+          "path": "app/.agents/skills/nocobase-app-development/references/frontend/references/form.md",
+          "observation": "表单指南：react-hook-form + zod4 + @hookform/resolvers/zod + @/components/ui/field，一个表单组件同时服务创建与编辑，标题/按钮/开闭归容器，路由 dialog 承载。",
+          "lines": [
+            3,
+            11
+          ],
+          "excerpt": "Forms use react-hook-form, zod 4 and `@hookform/resolvers/zod`, the `Field` family from `@/components/ui/field` for structure, and the input components in `@/components/ui/` for controls. The template ships `input`, `label` and `select`; add `field` and every other control before using it (`yes n | pnpm exec shadcn add field textarea checkbox`, then format the created files, as [section 1 of `shadcn.md`](shadcn.md#1-what-the-template-ships-and-how-to-add-the-rest) describes). The layout rules for these components are in the skill's [`rules/forms.md`](../shadcn/rules/forms.md); this document covers binding them to react-hook-form and zod.\n\n- A form component handles only fields, validation and submission; the title, the button area, and opening and closing belong to the container (`RouteDialog`, a page, a settings card). Creating and editing share one form component.\n- Put the form component in the feature folder (`client/pages/<feature>/<feature>-form.tsx`); move it to `client/components/` only when several features use it.\n- `client/components/ui/` does not have shadcn's old `form` component (`FormField`, `FormItem`, `FormMessage`). Do not add it; use the `Field` family throughout.\n\n## Complete example: one form for creating and editing\n\n`client/pages/projects/project-form.tsx` is the form create and edit share: name (required), owner (optional) and status (a Select). Passing `project` means editing (`PATCH`); omitting it means creating (`POST`). It renders no buttons: the container puts the submit button outside the `<form>` and links it through `formId`. Its complete code and props table are [`example/project-form.md`](example/project-form.md); the key points below explain what it does and why.",
+          "sha256": "2e86df8e78c3bce3a4e707437f417af5d4a236b974165b714168163d94a91add"
+        },
+        {
+          "id": "E26",
+          "kind": "skill",
+          "path": "app/.agents/skills/nocobase-app-development/references/frontend/references/child-routes.md",
+          "observation": "子路由指南：子路由放父路由 children（写在 client/routes.ts），父页必须自己放 <Outlet/>，独立页面返回 RouteChildPage，子路由继承父路由 auth/authz，相对链接保持 query。",
+          "lines": [
+            7,
+            17
+          ],
+          "excerpt": "## 1. Basic rules\n\n- **Child routes go in the parent route's `children`**, declared in `client/routes.ts`, not in page component files.\n- A child route's `path` is relative to its parent and is appended to the parent's path. A leading `/` is stripped before joining, so `new` and `/new` behave the same; this handbook writes the form without `/`.\n- **The parent page must place `<Outlet />` itself**, where the child content should appear. Pages do not insert an Outlet automatically, and neither do `RouteChildPage`, `RouteDialog` or `RouteDrawer`; only a plain navigation group gets its Outlet from the route renderer.\n- **A child route that is a page of its own returns `RouteChildPage`.** Only tab content renders inline. A child route with a `PageContainer` of its own — a record's page, a form too long for a dialog, an import page — wraps it in `RouteChildPage` ([section 5](#5-covering-child-pages-routechildpage)). Returned bare, it renders at the parent's `Outlet`, below everything the parent shows, and the user has to scroll past the parent page to find it. A page that returns a bare `PageContainer` belongs on a top-level route instead.\n- Child routes inherit the entry route's `auth` and cannot change it, and follow the `authz` inheritance rules in [section 4 of `page.md`](page.md#4-authz-page-authorization): a child page renders only after the parent page's check passes.\n- Link to a child route with a relative path and keep the query string ([section 2.2 of `overlay.md`](overlay.md#22-place-the-outlet-in-the-parent-page)). A relative path resolves against the route that renders the link, not the URL on screen ([section 2 of `page.md`](page.md#2-the-page-component)).\n- Route declarations have no `index` field. Do not invent an index route, and do not register a child route at the parent's own path; when \"opening the parent URL shows a particular child page\" is needed, use the redirect in [section 4](#4-page-tabs).\n- Do not change the shell, the route renderer or the ServiceProvider to add a menu entry; menu entries come only from `navigation` on routes ([section 6 of `page.md`](page.md#6-menus)).\n- Design paths around business needs; there is no fixed naming format. Do not write the deployment base path `/main`.",
+          "sha256": "0303c12d523ba5b44b2a9f3cf6153de593a4c5e3a91a2858c08a26fe05e48d65"
+        },
+        {
+          "id": "E31",
+          "kind": "log",
+          "path": "artifacts/agent-history/agent-implement.jsonl/part-0057.txt",
+          "observation": "实现轮日志末尾（无后续 part-0058）：compaction_start reason=overflow，紧接着 compaction_end reason=overflow 且 errorMessage=『Context overflow recovery failed: Summarization failed…』，随后 agent_settled——上下文溢出未被判失败。",
+          "lines": [
+            1,
+            3
+          ],
+          "excerpt": "{\"type\":\"compaction_start\",\"reason\":\"overflow\"}\n{\"type\":\"compaction_end\",\"reason\":\"overflow\",\"aborted\":false,\"willRetry\":false,\"errorMessage\":\"Context overflow recovery failed: Summarization failed: generation hit the token cap and the summary is incomplete\"}\n{\"type\":\"agent_settled\"}",
+          "sha256": "718bce066a4c464eb6cc7888bdcfec8d7662d16d38961698100d4492c1400356"
+        }
+      ],
+      "fingerprint": "ff5c08371b7bfb60ed2552af279e9dc1bf867315b551a6d121421909da49a4fc"
     },
     {
       "id": "597:37453035816:1:F2",
