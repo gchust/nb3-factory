@@ -99,6 +99,10 @@ jobs:
       # Only the monorepo install from the public registry is cached. The store
       # is saved right after it, before the loopback registry and the smoke
       # application can add locally built package bytes to it.
+      # A cache saved by a pull_request run is scoped to that PR's merge ref and
+      # no other PR can restore it, so only develop runs (workflow_dispatch,
+      # which this workflow requires to run from develop) save. framework-fix.yml
+      # saves the same key prefix on develop as well; PRs restore either.
       - name: Locate the pnpm store
         id: pnpm-store
         working-directory: source
@@ -121,12 +125,12 @@ jobs:
           pnpm install --frozen-lockfile
           echo "FACTORY_CREATOR_VERSION=$(node -p 'JSON.parse(require("node:fs").readFileSync("packages/tools/create-app/package.json", "utf8")).version')" >> "$GITHUB_ENV"
       - name: Drop store entries the current lockfile no longer uses
-        if: steps.pnpm-cache.outputs.cache-hit != 'true'
+        if: github.event_name != 'pull_request' && steps.pnpm-cache.outputs.cache-hit != 'true'
         continue-on-error: true
         working-directory: source
         run: pnpm store prune
       - name: Save the nocobase3 pnpm store before the loopback registry starts
-        if: steps.pnpm-cache.outputs.cache-hit != 'true'
+        if: github.event_name != 'pull_request' && steps.pnpm-cache.outputs.cache-hit != 'true'
         continue-on-error: true
         uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:

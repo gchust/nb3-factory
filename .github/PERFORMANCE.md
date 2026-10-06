@@ -16,7 +16,7 @@ QA 使用 `$FACTORY_BROWSER_REPORT_TOOL` 的 check 子命令逐项验证字段�
 
 Agent Job 照常上传完整的 `factory-agent-N`（报告、复盘、用量、历史和诊断读取它），以及交接/失败时的 `factory-handoff-N` 检查点。另外上传小的 `factory-patch-N`：`agent.patch`、`change-summary.json`、`task-metadata.json`、`pipeline-state.json` 和各次调用的 `agent*.jsonl.result.json`。verify-final、publish / publish-failed、preview-build-failed 和 report-failure 只下载它，不再下载完整日志、截图和录屏。这两个暂存/上传步骤带 `continue-on-error`：小副本上传失败（artifact 服务临时错误）既不让 Agent Job 失败，也不阻断续跑派发；下游各 Job 下载失败时改为下载 `factory-agent-N`（含相同文件），只在这种情况下才读取完整产物。续跑派发的条件显式写 `!cancelled()`，并依赖交接元数据和检查点上传都成功，前面任一 `always()` 上传失败不会再让它被隐式的 `success()` 静默跳过。
 
-`framework-fix.yml` 与 `source-baseline.yml` 安装整个 nocobase3 monorepo 时，用 `actions/cache/restore` 按锁文件哈希和 pnpm 版本恢复 pnpm store，安装成功后先 `pnpm store prune` 再用 `actions/cache/save` 立即保存：框架修复保存发生在 Agent 启动前，源码基线保存发生在本地 registry 和冒烟应用写入 store 之前。应用任务的安装仍按上文由 setup-node 缓存，源码基线任务的应用安装不进共享缓存。
+`framework-fix.yml` 与 `source-baseline.yml` 安装整个 nocobase3 monorepo 时，用 `actions/cache/restore` 按锁文件哈希和 pnpm 版本恢复 pnpm store，安装成功后先 `pnpm store prune` 再用 `actions/cache/save` 立即保存：框架修复保存发生在 Agent 启动前，源码基线保存发生在本地 registry 和冒烟应用写入 store 之前。只有 develop 上的运行保存缓存：`pull_request` 运行保存的缓存只属于该 PR 的 `refs/pull/N/merge`，别的 PR 恢复不到，还白占配额，所以 source-baseline 在 PR 上只恢复不保存。develop 作用域的缓存来自 framework-fix（只能从 develop 派发）和 source-baseline 的 `workflow_dispatch`（也只能从 develop 运行）；锁文件变化后要预热，在 develop 上以 `publish=false` 派发一次 source-baseline 即可，之后的 PR 按完整 key 或 `restore-keys` 前缀命中。不额外增加定时或 push 作业。应用任务的安装仍按上文由 setup-node 缓存，源码基线任务的应用安装不进共享缓存。
 
 测量优化效果时固定同一依赖基线与任务，比较实际构建耗时、实现与 QA 修复次数和首次通过率；不要仅凭日志估算提速。
 

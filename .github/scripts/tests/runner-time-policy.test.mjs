@@ -289,6 +289,28 @@ for (const [file, job, lockfile, install, next] of [
   });
 }
 
+test('source-baseline saves the store only outside pull requests', () => {
+  // A pull_request cache lives in refs/pull/N/merge and no other PR sees it.
+  const source = jobOf(read('source-baseline.yml'), 'source-baseline');
+  for (const step of [
+    'Drop store entries the current lockfile no longer uses',
+    'Save the nocobase3 pnpm store before the loopback registry starts',
+  ]) {
+    assert.match(
+      stepOf(source, step),
+      /if: github\.event_name != 'pull_request' && steps\.pnpm-cache\.outputs\.cache-hit != 'true'\n/,
+      step,
+    );
+  }
+  // framework-fix only runs from develop, so its saves already land there.
+  const workflow = read('framework-fix.yml');
+  assert.match(workflow, /^on:\n {2}workflow_dispatch:\n/m);
+  assert.doesNotMatch(
+    workflow,
+    /^ {2}(pull_request|pull_request_target|push):/m,
+  );
+});
+
 test('framework-fix saves the store only after a successful install', () => {
   const review = jobOf(read('framework-fix.yml'), 'review');
   const save = stepOf(
