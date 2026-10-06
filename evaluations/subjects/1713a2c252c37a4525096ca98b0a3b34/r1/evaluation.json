@@ -1,0 +1,871 @@
+{
+  "schemaVersion": 1,
+  "type": "evaluation-report",
+  "source": {
+    "producer": "nb3-factory",
+    "instance": "gchust/nb3-factory",
+    "project": "gchust/nb3-factory",
+    "exporter": {
+      "version": 1,
+      "controlSha": "a08396b41b4c8088b5ece1502cd3faef462c1e91",
+      "runId": 37490163895,
+      "attempt": 1
+    }
+  },
+  "run": {
+    "key": "gchust/nb3-factory/issues/599/initial",
+    "kind": "initial",
+    "identity": "recorded",
+    "batchKey": null,
+    "caseKey": null,
+    "sampleIndex": null,
+    "sampleKey": null,
+    "task": {
+      "repository": "gchust/nb3-factory",
+      "issue": 599,
+      "buildCommentId": null,
+      "title": "项目资料与私有附件"
+    },
+    "case": {
+      "source": "preset",
+      "presetIssueNumber": 203,
+      "capturedAt": "2026-10-06T10:56:09Z",
+      "inputHash": "282223cc2b66dcfa84d2cc273bcf2816fa9416d31046092a23880e7ff24f5867",
+      "reviewHash": "39fda15a6dbb3856e4765204db0ed61a904ec20dfce06daf915a3df1fe67ea5f"
+    }
+  },
+  "revision": 1,
+  "createdAt": "2026-10-06T15:46:04Z",
+  "precedence": {
+    "producer": {
+      "runId": 37453047768,
+      "attempt": 1,
+      "startedAt": "2026-10-06T10:55:59Z"
+    },
+    "executionOrder": 1,
+    "knownLaterExecutions": 0,
+    "chainTerminal": false,
+    "reviewRubric": 0,
+    "reviewState": "not-reviewed",
+    "review": {
+      "kind": null,
+      "at": null,
+      "runId": null,
+      "attempt": null
+    },
+    "qaCoverage": "partial"
+  },
+  "baseline": {
+    "track": "published-template",
+    "application": {
+      "baseRef": "develop",
+      "baseSha": "bcb0d06aaf9f2a0bfeb574110bee8904b815e6b6",
+      "candidate": {
+        "patchSha256": "e8404f247009e1a6aa159759099e42f1b9e51a775e613cb2bdfdd16005ee5400",
+        "headSha": null
+      }
+    },
+    "factory": {
+      "controlSha": "bcb0d06aaf9f2a0bfeb574110bee8904b815e6b6",
+      "entrySha": "bcb0d06aaf9f2a0bfeb574110bee8904b815e6b6"
+    },
+    "template": {
+      "creatorVersion": "0.1.0-beta.27",
+      "templateVersion": "1.0.0-beta.55"
+    },
+    "dependencies": {
+      "lockfileSha256": "9724e9311413448b8e6ffe8cf2d54fdba84b211ff24ddeaaaa1232b0463500f7",
+      "baselineFingerprint": "3353112cd6a6ac6c660faca15131af30674cf3ae3de8351cd38f8d2d63a3a89a",
+      "packages": [
+        {
+          "name": "@nocobase/ai-employee",
+          "version": "0.2.0-beta.8"
+        },
+        {
+          "name": "@nocobase/ai-employee-avatars",
+          "version": "1.0.2"
+        },
+        {
+          "name": "@nocobase/app-cli",
+          "version": "1.0.0-beta.13"
+        },
+        {
+          "name": "@nocobase/app-client",
+          "version": "2.0.0-beta.0"
+        },
+        {
+          "name": "@nocobase/app-plugin-ai-employee",
+          "version": "2.0.0-beta.0"
+        },
+        {
+          "name": "@nocobase/app-plugin-ai-knowledge-base",
+          "version": "1.0.0-beta.14"
+        },
+        {
+          "name": "@nocobase/app-plugin-api-keys",
+          "version": "1.0.0-beta.12"
+        },
+        {
+          "name": "@nocobase/app-plugin-authentication",
+          "version": "2.0.0-beta.0"
+        },
+        {
+          "name": "@nocobase/app-plugin-authorization",
+          "version": "1.0.0-beta.24"
+        },
+        {
+          "name": "@nocobase/app-plugin-authz-default-access",
+          "version": "1.0.0-beta.9"
+        },
+        {
+          "name": "@nocobase/app-plugin-authz-restriction-rules",
+          "version": "1.0.0-beta.8"
+        },
+        {
+          "name": "@nocobase/app-plugin-authz-sharing-rules",
+          "version": "1.0.0-beta.9"
+        },
+        {
+          "name": "@nocobase/app-plugin-database-explorer",
+          "version": "1.0.0-beta.10"
+        },
+        {
+          "name": "@nocobase/app-plugin-file",
+          "version": "1.0.0-beta.18"
+        },
+        {
+          "name": "@nocobase/app-plugin-i18n",
+          "version": "1.0.0-beta.13"
+        },
+        {
+          "name": "@nocobase/app-plugin-mail",
+          "version": "1.0.0-beta.7"
+        },
+        {
+          "name": "@nocobase/app-plugin-notification",
+          "version": "1.0.0-beta.22"
+        },
+        {
+          "name": "@nocobase/app-plugin-notification-in-app",
+          "version": "1.0.0-beta.21"
+        },
+        {
+          "name": "@nocobase/app-plugin-notification-providers",
+          "version": "0.2.0-beta.10"
+        },
+        {
+          "name": "@nocobase/app-plugin-scheduler",
+          "version": "1.0.0-beta.13"
+        },
+        {
+          "name": "@nocobase/app-plugin-template-print",
+          "version": "0.0.2-beta.0"
+        },
+        {
+          "name": "@nocobase/app-plugin-users",
+          "version": "2.0.0-beta.0"
+        },
+        {
+          "name": "@nocobase/app-plugin-workflow",
+          "version": "2.0.0-beta.0"
+        },
+        {
+          "name": "@nocobase/app-server",
+          "version": "2.0.0-beta.0"
+        },
+        {
+          "name": "@nocobase/app-skills",
+          "version": "0.1.0-beta.23"
+        },
+        {
+          "name": "@nocobase/app-testing",
+          "version": "0.1.0-beta.1"
+        },
+        {
+          "name": "@nocobase/app-websocket",
+          "version": "0.0.1"
+        },
+        {
+          "name": "@nocobase/authorization",
+          "version": "1.0.0-beta.11"
+        },
+        {
+          "name": "@nocobase/caching",
+          "version": "0.1.0-beta.2"
+        },
+        {
+          "name": "@nocobase/config",
+          "version": "0.1.0-beta.1"
+        },
+        {
+          "name": "@nocobase/db",
+          "version": "1.0.0-beta.17"
+        },
+        {
+          "name": "@nocobase/db-sqlite",
+          "version": "0.1.0-beta.4"
+        },
+        {
+          "name": "@nocobase/dev-config",
+          "version": "0.1.0-beta.17"
+        },
+        {
+          "name": "@nocobase/drive",
+          "version": "0.1.0-beta.4"
+        },
+        {
+          "name": "@nocobase/hub-cli",
+          "version": "1.0.0-beta.1"
+        },
+        {
+          "name": "@nocobase/i18n",
+          "version": "1.0.0-beta.5"
+        },
+        {
+          "name": "@nocobase/jobs",
+          "version": "0.1.0-beta.2"
+        },
+        {
+          "name": "@nocobase/logging",
+          "version": "0.1.0-beta.6"
+        },
+        {
+          "name": "@nocobase/queue",
+          "version": "0.1.0-beta.8"
+        },
+        {
+          "name": "@nocobase/repository-input",
+          "version": "0.1.0-beta.2"
+        },
+        {
+          "name": "@nocobase/service-provider",
+          "version": "0.0.2-beta.1"
+        },
+        {
+          "name": "@nocobase/session",
+          "version": "0.1.0-beta.2"
+        },
+        {
+          "name": "@nocobase/snowflake",
+          "version": "1.0.0-beta.3"
+        }
+      ]
+    },
+    "skills": {
+      "fingerprint": "b6ddd79d7f44d5536184230af9d834f7763a44efae354160b18342036cf30fee",
+      "files": 161
+    },
+    "sourceSnapshot": null,
+    "inputs": {
+      "taskInputHash": "282223cc2b66dcfa84d2cc273bcf2816fa9416d31046092a23880e7ff24f5867",
+      "pipelineInputHash": "b53447138198fa8a9e31b6b6d5573fb250f628004b803458d5df8c5c05942cee",
+      "reviewHash": "39fda15a6dbb3856e4765204db0ed61a904ec20dfce06daf915a3df1fe67ea5f",
+      "reviewCriteriaHash": "39fda15a6dbb3856e4765204db0ed61a904ec20dfce06daf915a3df1fe67ea5f",
+      "prompts": [
+        {
+          "phase": "implementation",
+          "path": "agent-implement.jsonl.invocation.json",
+          "sha256": "66169161a6560b17ac54c676e7e8e7c548d606686417a228a2e9a5ea1bfe9788"
+        },
+        {
+          "phase": "repair",
+          "path": "agent-repair-1.jsonl.invocation.json",
+          "sha256": "9e56a5cee6346970cee233e2d85660ade970bfde28c38065d93cc78254685cfe"
+        },
+        {
+          "phase": "repair",
+          "path": "agent-repair-2.jsonl.invocation.json",
+          "sha256": "17b54ed8deda36918ed8d7c4f1be3009d9d98865a326957d3143fd318fcb6043"
+        },
+        {
+          "phase": "repair",
+          "path": "agent-repair-3.jsonl.invocation.json",
+          "sha256": "79410c2f1902148103aeebdef51e5e00eca285a9ec98fd745ea6076653061cfb"
+        },
+        {
+          "phase": "repair",
+          "path": "agent-repair-4.jsonl.invocation.json",
+          "sha256": "7111157f3015671dacce9398a61abe904eaf17a375ad6d4f05fd797639b91524"
+        },
+        {
+          "phase": "repair",
+          "path": "agent-repair-5.jsonl.invocation.json",
+          "sha256": "5bac31d27f15e134288c97b579c9fa2a50d441620673a3d40533e225054a00a0"
+        },
+        {
+          "phase": "qa",
+          "path": "verify-2/browser-acceptance/agent-browser-acceptance.jsonl.invocation.json",
+          "sha256": "f17d66b6c409bb1812cef959f0244cb6d090285958440e15a92fc817c4168be5"
+        },
+        {
+          "phase": "qa",
+          "path": "verify-3/browser-acceptance/agent-browser-acceptance.jsonl.invocation.json",
+          "sha256": "f17d66b6c409bb1812cef959f0244cb6d090285958440e15a92fc817c4168be5"
+        },
+        {
+          "phase": "qa",
+          "path": "verify-4/browser-acceptance/agent-browser-acceptance.jsonl.invocation.json",
+          "sha256": "f17d66b6c409bb1812cef959f0244cb6d090285958440e15a92fc817c4168be5"
+        },
+        {
+          "phase": "qa",
+          "path": "verify-5/browser-acceptance/agent-browser-acceptance.jsonl.invocation.json",
+          "sha256": "f17d66b6c409bb1812cef959f0244cb6d090285958440e15a92fc817c4168be5"
+        }
+      ]
+    },
+    "rubric": null,
+    "agent": {
+      "engine": "pi",
+      "model": "deepseek-v4.1-flash",
+      "version": "0.86.1",
+      "buildReviewMode": null,
+      "configuration": {
+        "fingerprints": [
+          "2f5401c2837d7dae1f1f014540b983521db478e49b3e29c61dbb26be0a75e3bf"
+        ],
+        "complete": false
+      }
+    },
+    "environment": {
+      "browserFixturesSha256": "3b527d18aa2f6d58fdfea5cdd916631ea1ee3425abeba09bb1f961f2128c554b",
+      "browserPreflight": "passed"
+    }
+  },
+  "executions": [
+    {
+      "key": "run/37453047768/attempt/1",
+      "kind": "implementation",
+      "order": 1,
+      "workflow": "code-agent-task",
+      "runId": 37453047768,
+      "attempt": 1,
+      "event": "workflow_dispatch",
+      "previousRunId": null,
+      "conclusion": "handoff",
+      "startedAt": "2026-10-06T10:55:59Z",
+      "endedAt": "2026-10-06T15:45:11Z",
+      "jobSeconds": 17345,
+      "controlSha": "bcb0d06aaf9f2a0bfeb574110bee8904b815e6b6",
+      "patchSha256": "e8404f247009e1a6aa159759099e42f1b9e51a775e613cb2bdfdd16005ee5400",
+      "source": "usage-receipt"
+    }
+  ],
+  "outcome": {
+    "execution": "running",
+    "acceptance": "failed",
+    "delivery": "not-published",
+    "pullRequest": null,
+    "detail": "已保存 Handoff，执行链仍在继续；不是终态。"
+  },
+  "qa": {
+    "coverage": "partial",
+    "rounds": [
+      {
+        "round": 2,
+        "executionKey": "run/37453047768/attempt/1",
+        "scope": "full",
+        "passed": false,
+        "source": "verify-2/browser-acceptance/report.json",
+        "checks": [
+          {
+            "id": "B01",
+            "criterion": "甲上传 PNG 并保存资料，刷新后能看到真实图片，并能下载打开。",
+            "status": "failed",
+            "evidence": []
+          },
+          {
+            "id": "B02",
+            "criterion": "甲上传 DOCX 并保存，刷新后在应用内看到文档正文，而非只有文件名或下载按钮。",
+            "status": "failed",
+            "evidence": []
+          },
+          {
+            "id": "B03",
+            "criterion": "先上传文件但留空标题，保存应失败且已选附件仍保留；补上标题后能直接保存。",
+            "status": "failed",
+            "evidence": []
+          },
+          {
+            "id": "B04",
+            "criterion": "移除一个附件并保存，刷新后这份资料不再显示该附件。",
+            "status": "failed",
+            "evidence": []
+          },
+          {
+            "id": "B05",
+            "criterion": "乙和未登录访问者分别打开甲的资料或附件链接，均不能看到内容；甲仍可正常查看。",
+            "status": "failed",
+            "evidence": []
+          },
+          {
+            "id": "B06",
+            "criterion": "使用损坏 PNG，上传或预览实际发现问题时给出明确失败提示；上传已拒绝时不必继续预览。",
+            "status": "failed",
+            "evidence": []
+          }
+        ]
+      },
+      {
+        "round": 3,
+        "executionKey": "run/37453047768/attempt/1",
+        "scope": "full",
+        "passed": false,
+        "source": "verify-3/browser-acceptance/report.json",
+        "checks": [
+          {
+            "id": "B01",
+            "criterion": "甲上传 PNG 并保存资料，刷新后能看到真实图片，并能下载打开。",
+            "status": "failed",
+            "evidence": []
+          },
+          {
+            "id": "B02",
+            "criterion": "甲上传 DOCX 并保存，刷新后在应用内看到文档正文，而非只有文件名或下载按钮。",
+            "status": "failed",
+            "evidence": []
+          },
+          {
+            "id": "B03",
+            "criterion": "先上传文件但留空标题，保存应失败且已选附件仍保留；补上标题后能直接保存。",
+            "status": "failed",
+            "evidence": []
+          },
+          {
+            "id": "B04",
+            "criterion": "移除一个附件并保存，刷新后这份资料不再显示该附件。",
+            "status": "failed",
+            "evidence": []
+          },
+          {
+            "id": "B05",
+            "criterion": "乙和未登录访问者分别打开甲的资料或附件链接，均不能看到内容；甲仍可正常查看。",
+            "status": "failed",
+            "evidence": []
+          },
+          {
+            "id": "B06",
+            "criterion": "使用损坏 PNG，上传或预览实际发现问题时给出明确失败提示；上传已拒绝时不必继续预览。",
+            "status": "failed",
+            "evidence": []
+          }
+        ]
+      },
+      {
+        "round": 4,
+        "executionKey": "run/37453047768/attempt/1",
+        "scope": "full",
+        "passed": false,
+        "source": "verify-4/browser-acceptance/report.json",
+        "checks": [
+          {
+            "id": "B01",
+            "criterion": "甲上传 PNG 并保存资料，刷新后能看到真实图片，并能下载打开。",
+            "status": "failed",
+            "evidence": []
+          },
+          {
+            "id": "B02",
+            "criterion": "甲上传 DOCX 并保存，刷新后在应用内看到文档正文，而非只有文件名或下载按钮。",
+            "status": "failed",
+            "evidence": []
+          },
+          {
+            "id": "B03",
+            "criterion": "先上传文件但留空标题，保存应失败且已选附件仍保留；补上标题后能直接保存。",
+            "status": "failed",
+            "evidence": []
+          },
+          {
+            "id": "B04",
+            "criterion": "移除一个附件并保存，刷新后这份资料不再显示该附件。",
+            "status": "failed",
+            "evidence": []
+          },
+          {
+            "id": "B05",
+            "criterion": "乙和未登录访问者分别打开甲的资料或附件链接，均不能看到内容；甲仍可正常查看。",
+            "status": "failed",
+            "evidence": []
+          },
+          {
+            "id": "B06",
+            "criterion": "使用损坏 PNG，上传或预览实际发现问题时给出明确失败提示；上传已拒绝时不必继续预览。",
+            "status": "failed",
+            "evidence": []
+          }
+        ]
+      },
+      {
+        "round": 5,
+        "executionKey": "run/37453047768/attempt/1",
+        "scope": "full",
+        "passed": false,
+        "source": "verify-5/browser-acceptance/report.json",
+        "checks": [
+          {
+            "id": "B01",
+            "criterion": "甲上传 PNG 并保存资料，刷新后能看到真实图片，并能下载打开。",
+            "status": "failed",
+            "evidence": [
+              "qa/5/main-home-no-feature.png"
+            ]
+          },
+          {
+            "id": "B02",
+            "criterion": "甲上传 DOCX 并保存，刷新后在应用内看到文档正文，而非只有文件名或下载按钮。",
+            "status": "failed",
+            "evidence": [
+              "qa/5/main-home-no-feature.png"
+            ]
+          },
+          {
+            "id": "B03",
+            "criterion": "先上传文件但留空标题，保存应失败且已选附件仍保留；补上标题后能直接保存。",
+            "status": "failed",
+            "evidence": [
+              "qa/5/main-home-no-feature.png"
+            ]
+          },
+          {
+            "id": "B04",
+            "criterion": "移除一个附件并保存，刷新后这份资料不再显示该附件。",
+            "status": "failed",
+            "evidence": [
+              "qa/5/main-home-no-feature.png"
+            ]
+          },
+          {
+            "id": "B05",
+            "criterion": "乙和未登录访问者分别打开甲的资料或附件链接，均不能看到内容；甲仍可正常查看。",
+            "status": "failed",
+            "evidence": [
+              "qa/5/main-home-no-feature.png",
+              "qa/5/settings-users-only-admin.png"
+            ]
+          },
+          {
+            "id": "B06",
+            "criterion": "使用损坏 PNG，上传或预览实际发现问题时给出明确失败提示；上传已拒绝时不必继续预览。",
+            "status": "failed",
+            "evidence": [
+              "qa/5/main-home-no-feature.png"
+            ]
+          }
+        ]
+      }
+    ],
+    "firstFull": {
+      "status": "unknown",
+      "round": null,
+      "executionKey": null,
+      "basis": "第一轮验证位于更早的执行，本产物未包含，不能推断首轮结果。"
+    },
+    "finalFull": {
+      "status": "failed",
+      "round": 5,
+      "executionKey": "run/37453047768/attempt/1",
+      "basis": "本产物中最后一次实际全量 QA。"
+    },
+    "criteria": [
+      {
+        "id": "B01",
+        "text": "甲上传 PNG 并保存资料，刷新后能看到真实图片，并能下载打开。",
+        "optional": false,
+        "firstFull": "unknown",
+        "finalFull": "failed"
+      },
+      {
+        "id": "B02",
+        "text": "甲上传 DOCX 并保存，刷新后在应用内看到文档正文，而非只有文件名或下载按钮。",
+        "optional": false,
+        "firstFull": "unknown",
+        "finalFull": "failed"
+      },
+      {
+        "id": "B03",
+        "text": "先上传文件但留空标题，保存应失败且已选附件仍保留；补上标题后能直接保存。",
+        "optional": false,
+        "firstFull": "unknown",
+        "finalFull": "failed"
+      },
+      {
+        "id": "B04",
+        "text": "移除一个附件并保存，刷新后这份资料不再显示该附件。",
+        "optional": false,
+        "firstFull": "unknown",
+        "finalFull": "failed"
+      },
+      {
+        "id": "B05",
+        "text": "乙和未登录访问者分别打开甲的资料或附件链接，均不能看到内容；甲仍可正常查看。",
+        "optional": false,
+        "firstFull": "unknown",
+        "finalFull": "failed"
+      },
+      {
+        "id": "B06",
+        "text": "使用损坏 PNG，上传或预览实际发现问题时给出明确失败提示；上传已拒绝时不必继续预览。",
+        "optional": false,
+        "firstFull": "unknown",
+        "finalFull": "failed"
+      }
+    ],
+    "firstPassWithoutRepair": "unknown",
+    "counts": {
+      "execution": {
+        "verificationAttempts": 6,
+        "repairAttempts": 5,
+        "source": "repair-summary.json（仅本执行）"
+      },
+      "chain": {
+        "verificationAttempts": 6,
+        "repairAttempts": 5,
+        "source": "pipeline-state.json（跨 Handoff 累计检查点，不再相加）"
+      }
+    },
+    "note": "工厂修复次数不等于 Agent 开发中的全部自测和修正；未记录 Agent 内部试错，不宣称开发全程无错误。"
+  },
+  "reviews": [
+    {
+      "key": "review/37453047768.1/v0-3ccc4bb18823",
+      "role": "original",
+      "selected": true,
+      "state": "not-reviewed",
+      "reason": "本轮没有独立评审记录；未评估不代表通过，也不按零分处理。",
+      "rubric": null,
+      "reviewer": null,
+      "producer": {
+        "runId": null,
+        "attempt": null
+      },
+      "basis": {
+        "inputHash": null,
+        "patchSha256": null,
+        "baseSha": null,
+        "lockfileSha256": null,
+        "reviewCriteriaHash": null,
+        "artifactHash": null
+      },
+      "buildReviewMode": null,
+      "summary": null,
+      "progress": null,
+      "modules": [],
+      "findings": [],
+      "ui": null,
+      "limitations": [],
+      "usageSource": null
+    }
+  ],
+  "health": {
+    "status": "incomplete",
+    "qa": "failed",
+    "requiredChecks": {
+      "status": "passed",
+      "results": []
+    },
+    "review": "not-reviewed"
+  },
+  "processNotes": {
+    "state": "present",
+    "source": "retro.json",
+    "author": "implementer",
+    "independent": false,
+    "summary": "本轮修复唯一已观察到的失败：Migration 中集合构建器把索引选项对象误当作字段参数传给 index()。",
+    "blockers": [
+      {
+        "id": "notes/run/37453047768/attempt/1/B1",
+        "phase": "repair",
+        "title": "create_project_materials 迁移类型检查失败 (TS2353)",
+        "symptom": "tsconfig.server.json 下 tsc 报 database/main/migrations/202609200001_create_project_materials.ts(38,18): error TS2353: Object literal may only specify known properties, and 'name' does not exist in type 'string[]'。",
+        "rootCause": "在项目资料集合上写成 collection.foreignKey('ownerId', {...}).index({ name: 'idx_project_materials_owner' })。foreignKey 返回的是 CollectionDefinitionBuilder，其 index 签名为 index(fields: string | string[], options?)，因此以选项对象作为第一个实参会被当作 fields: string[] 校验，对象字面量因只有未知属性 name 而报 TS2353。",
+        "resolution": "拆成两个独立调用：collection.foreignKey('ownerId', {...}) 定义外键，collection.index('ownerId', { name: 'idx_project_materials_owner' }) 单独声明命名索引，符合 Builder 的 index(fields, options) 契约。",
+        "cost": null,
+        "status": "resolved"
+      }
+    ],
+    "improvements": [
+      {
+        "id": "notes/run/37453047768/attempt/1/I1",
+        "category": "skills-docs",
+        "title": "Builder 链式调用的字段/选项区分",
+        "detail": "nocobase-db Skill 的 Builder 章节给出 collection.index(['orderId','quantity']) 与 foreignKey 的示例，但未提示 foreignKey() 的返回值仍是 CollectionDefinitionBuilder、索引需要单独调用；链式写法容易把 { name } 误当 fields。",
+        "suggestedChange": "在 .agents/skills/nocobase-db/SKILL.md 的 Builder 小节补一句：约束方法返回集合构建器而非字段构建器，命名索引须写 collection.index(fields, { name })，不可链式传选项对象。",
+        "mechanizable": false
+      }
+    ],
+    "note": "实现者自述，未经独立核验；不是框架评审结论。"
+  },
+  "metrics": {
+    "usage": {
+      "sources": [
+        {
+          "key": "agent-job:112234030825",
+          "executionKey": "run/37453047768/attempt/1",
+          "scope": "一次 Agent 作业内的实现、修复、QA 与同轮评审调用",
+          "phases": {
+            "implementation": {
+              "input": 2743136,
+              "output": 221001,
+              "cacheRead": 43147602,
+              "cacheWrite": 0,
+              "total": 46111739
+            },
+            "repair": {
+              "input": 4824857,
+              "output": 522552,
+              "cacheRead": 91008938,
+              "cacheWrite": 0,
+              "total": 96356347
+            },
+            "qa": {
+              "input": 757714,
+              "output": 205635,
+              "cacheRead": 16110172,
+              "cacheWrite": 0,
+              "total": 17073521
+            },
+            "qaFocused": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0,
+              "total": 0
+            },
+            "qaReport": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0,
+              "total": 0
+            },
+            "review": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0,
+              "total": 0
+            },
+            "compaction": {
+              "input": 1122631,
+              "output": 321338,
+              "cacheRead": 396146,
+              "cacheWrite": 0,
+              "total": 1840115
+            }
+          },
+          "records": 2245,
+          "missing": 10,
+          "incomplete": 0,
+          "complete": false
+        }
+      ],
+      "totals": {
+        "input": 9448338,
+        "output": 1270526,
+        "cacheRead": 150662858,
+        "cacheWrite": 0,
+        "total": 161381722,
+        "complete": false
+      },
+      "definition": "沿用 task-usage 口径：按唯一来源键（Agent 作业 / 后补评审 Run）去重，不相加已含这些调用的汇总，不把思考 Token 再加到输出；缺失为 null，不等同供应商账单。"
+    },
+    "time": {
+      "executionSeconds": 17345,
+      "missingJobTimes": 0,
+      "endToEndSeconds": 17352,
+      "jobs": [
+        {
+          "id": 112233921042,
+          "name": "prepare",
+          "executionKey": "run/37453047768/attempt/1",
+          "seconds": 16
+        },
+        {
+          "id": 112234030825,
+          "name": "agent",
+          "executionKey": "run/37453047768/attempt/1",
+          "seconds": 17329
+        }
+      ],
+      "definition": "executionSeconds 为 prepare / agent / verify-final / publish 唯一作业时长之和，不含排队；endToEndSeconds 含排队及续跑间隔。"
+    },
+    "counts": {
+      "businessBuilds": 1,
+      "executions": 1,
+      "reviewExecutions": 0
+    }
+  },
+  "evidence": [
+    {
+      "id": "qa/5/main-home-no-feature.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/5",
+        "localId": "main-home-no-feature.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-5/browser-acceptance/evidence/main-home-no-feature.png",
+      "lines": null,
+      "sha256": "830d2214c2d7ecf3d8d4235fb8457d0e0936777a2b5d194e2fbceacd0a212fc3",
+      "observation": "验收项 B01 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-5/browser-acceptance/main-home-no-feature.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/5/settings-users-only-admin.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/5",
+        "localId": "settings-users-only-admin.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-5/browser-acceptance/evidence/settings-users-only-admin.png",
+      "lines": null,
+      "sha256": "9ff1bc263b9ba9490ad3cdad084a3bb18e02189155c702559cdfd7f7aa79fa38",
+      "observation": "验收项 B05 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-5/browser-acceptance/settings-users-only-admin.png",
+      "availability": "attached",
+      "note": null
+    }
+  ],
+  "links": [
+    {
+      "rel": "task-issue",
+      "label": "Issue #599",
+      "url": "https://github.com/gchust/nb3-factory/issues/599",
+      "path": null
+    },
+    {
+      "rel": "run",
+      "label": "Run 37453047768 / attempt 1",
+      "url": "https://github.com/gchust/nb3-factory/actions/runs/37453047768/attempts/1",
+      "path": null
+    },
+    {
+      "rel": "report-archive",
+      "label": "固定版本 HTML 报告（gh-pages 归档路径）",
+      "url": null,
+      "path": "reports/issues/599/runs/37453047768/attempt-1/index.html"
+    }
+  ],
+  "limitations": [
+    {
+      "code": "first-round-unavailable",
+      "detail": "只取得本执行的验证记录；首轮 QA 标为未知，不冒充整个任务首轮通过。"
+    },
+    {
+      "code": "review-not-run",
+      "detail": "本执行没有独立框架评审；未评估不代表通过，也不按零分处理。"
+    },
+    {
+      "code": "usage-incomplete",
+      "detail": "部分用量未取得或不完整；缺失值为 null，不按零处理。"
+    }
+  ]
+}
