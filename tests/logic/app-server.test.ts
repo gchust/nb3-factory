@@ -50,6 +50,8 @@ import {
 } from '@nocobase/app-server/realtime';
 import {
   defineApiRoutes,
+  findApiDocumentSchemaProblems,
+  findUndeclaredApiRoutes,
   healthCheckApiRoutes,
 } from '@nocobase/app-server/router';
 import {
@@ -743,6 +745,303 @@ describe('app server', () => {
       headers: { 'x-api-key': key.key },
     });
     expect(rejected.status).toBe(401);
+  });
+
+  it('serves the application customer, contact and opportunity data', async () => {
+    const app = trackCloseable(
+      await createInstalledStandaloneServer({
+        viteDevUrl: false,
+        // A cookie-authenticated write is refused unless its origin is the application's own; a deployment says which
+        // that is, and a browser sends it on every write.
+        env: { APP_PUBLIC_ORIGIN: 'http://localhost' },
+      }),
+    );
+    const baseUrl = `http://localhost${app.application.publicBasePath}`;
+    const call = async (
+      method: string,
+      apiPath: string,
+      body?: unknown,
+      headers: Record<string, string> = {},
+    ): Promise<Response> => {
+      const response = await requestApp(app, `${baseUrl}${apiPath}`, {
+        method,
+        headers: {
+          ...headers,
+          // A cookie-authenticated write is refused without a trusted origin, as a browser sends it.
+          ...(method === 'GET' ? {} : { origin: 'http://localhost' }),
+          ...(body === undefined ? {} : { 'content-type': 'application/json' }),
+        },
+        ...(body === undefined ? {} : { body: JSON.stringify(body) }),
+      });
+      return response;
+    };
+
+    // Every endpoint is behind the session, and says so.
+    for (const apiPath of [
+      '/api/customers',
+      '/api/contacts',
+      '/api/opportunities',
+    ]) {
+      const response = await call('GET', apiPath);
+      expect(response.status).toBe(401);
+      await expect(response.json()).resolves.toMatchObject({
+        error: { status: 'UNAUTHENTICATED' },
+      });
+    }
+
+    const signIn = await call('POST', '/api/auth/sign-in/username', {
+      username: 'nocobase',
+      password: 'admin123',
+    });
+    expect(signIn.status).toBe(200);
+    const cookie = signIn.headers
+      .getSetCookie()
+      .map((header) => header.split(';')[0])
+      .join('; ');
+
+    interface Listed<TItem> {
+      readonly data: TItem[];
+      readonly meta: { total: number; page: number; pageSize: number };
+    }
+    interface CustomerRecord {
+      readonly id: string;
+      readonly name: string;
+      readonly industry: string | null;
+    }
+    interface ContactRecord {
+      readonly id: string;
+      readonly name: string;
+      readonly contact: string | null;
+      readonly customerId: string;
+      readonly customerName: string | null;
+    }
+    interface OpportunityRecord {
+      readonly id: string;
+      readonly name: string;
+      readonly customerId: string;
+      readonly amount: number;
+      readonly stage: string;
+    }
+    const list = async <TItem>(apiPath: string): Promise<Listed<TItem>> =>
+      (await (
+        await call('GET', apiPath, undefined, { cookie })
+      ).json()) as Listed<TItem>;
+
+    const customers = await list<CustomerRecord>('/api/customers');
+    expect(customers.meta).toEqual({ total: 2, page: 1, pageSize: 20 });
+    const starhine = customers.data.find((item) => item.name === '星海科技');
+    const distant = customers.data.find((item) => item.name === '远山贸易');
+    expect(starhine).toMatchObject({ industry: '软件与信息服务' });
+    expect(distant).toBeDefined();
+
+    const contacts = await list<ContactRecord>('/api/contacts');
+    expect(contacts.meta.total).toBe(3);
+    expect(contacts.data.map((item) => item.customerName)).toEqual(
+      expect.arrayContaining(['星海科技', '远山贸易']),
+    );
+    // The search covers the contact method as well as the name.
+    const searched = await list<ContactRecord>('/api/contacts?q=zhang');
+    expect(searched.meta.total).toBe(0);
+    const byCustomer = await list<ContactRecord>(
+      `/api/contacts?customerId=${starhine!.id}`,
+    );
+    expect(byCustomer.meta.total).toBe(2);
+    expect(byCustomer.data.map((item) => item.name)).toEqual(
+      expect.arrayContaining(['张伟', '李娜']),
+    );
+    expect(byCustomer.data[0].customerName).toBe('星海科技');
+
+    // The detail carries the customer's own rows and the sum of its amounts.
+    const detailResponse = await call(
+      'GET',
+      `/api/customers/${starhine!.id}`,
+      undefined,
+      { cookie },
+    );
+    expect(detailResponse.status).toBe(200);
+    const detail = (await detailResponse.json()) as {
+      data: CustomerRecord & {
+        contacts: ContactRecord[];
+        opportunities: OpportunityRecord[];
+        opportunityAmountTotal: number;
+      };
+    };
+    expect(detail.data.opportunities).toHaveLength(2);
+    expect(detail.data.contacts).toHaveLength(2);
+    expect(detail.data.opportunityAmountTotal).toBe(150000);
+
+    const won = await list<OpportunityRecord>('/api/opportunities?stage=won');
+    expect(won.meta.total).toBe(1);
+    expect(won.data[0]).toMatchObject({
+      name: '星海科技 数据中台二期',
+      amount: 30000,
+    });
+    const following = await list<OpportunityRecord>(
+      '/api/opportunities?stage=following',
+    );
+    expect(following.meta.total).toBe(2);
+
+    // Creating through the API answers 201 with the created record.
+    const createdCustomer = await call(
+      'POST',
+      '/api/customers',
+      { name: '新公司', industry: '制造业' },
+      { cookie },
+    );
+    expect(createdCustomer.status).toBe(201);
+    const newCustomer = (
+      (await createdCustomer.json()) as {
+        data: CustomerRecord;
+      }
+    ).data;
+    expect(newCustomer).toMatchObject({ name: '新公司', industry: '制造业' });
+
+    // The invalid input zod rejects before the handler runs.
+    const blankName = await call(
+      'POST',
+      '/api/customers',
+      { name: '  ' },
+      { cookie },
+    );
+    expect(blankName.status).toBe(400);
+    await expect(blankName.json()).resolves.toMatchObject({
+      error: { status: 'INVALID_ARGUMENT', reason: 'INVALID_INPUT' },
+    });
+    const unknownField = await call(
+      'POST',
+      '/api/customers',
+      { name: '多余字段', extra: true },
+      { cookie },
+    );
+    expect(unknownField.status).toBe(400);
+    const hugePage = await call(
+      'GET',
+      '/api/customers?pageSize=1000',
+      undefined,
+      {
+        cookie,
+      },
+    );
+    expect(hugePage.status).toBe(400);
+
+    // A body that names a customer that is not there is a 400 with a field violation.
+    const strayContact = await call(
+      'POST',
+      '/api/contacts',
+      { name: '无主联系人', customerId: 'does-not-exist' },
+      { cookie },
+    );
+    expect(strayContact.status).toBe(400);
+    await expect(strayContact.json()).resolves.toMatchObject({
+      error: {
+        status: 'INVALID_ARGUMENT',
+        reason: 'INVALID_CUSTOMER_REFERENCE',
+        domain: 'crm',
+        fieldViolations: [{ field: 'customerId' }],
+      },
+    });
+
+    const newContact = (
+      (await (
+        await call(
+          'POST',
+          '/api/contacts',
+          {
+            name: '赵敏',
+            contact: 'zhao@example.com',
+            customerId: newCustomer.id,
+          },
+          { cookie },
+        )
+      ).json()) as { data: ContactRecord }
+    ).data;
+    expect(newContact).toMatchObject({
+      customerName: '新公司',
+      contact: 'zhao@example.com',
+    });
+
+    const newOpportunity = (
+      (await (
+        await call(
+          'POST',
+          '/api/opportunities',
+          {
+            name: '新机会',
+            customerId: newCustomer.id,
+            amount: 1000,
+            stage: 'following',
+          },
+          { cookie },
+        )
+      ).json()) as { data: OpportunityRecord }
+    ).data;
+    expect(newOpportunity).toMatchObject({ amount: 1000, stage: 'following' });
+
+    // Changing the amount moves that customer's total and no other customer's.
+    const updated = await call(
+      'PATCH',
+      `/api/opportunities/${newOpportunity.id}`,
+      { amount: 2500.5, stage: 'won' },
+      { cookie },
+    );
+    expect(updated.status).toBe(200);
+    await expect(updated.json()).resolves.toMatchObject({
+      data: { id: newOpportunity.id, amount: 2500.5, stage: 'won' },
+    });
+    const newDetail = (await (
+      await call('GET', `/api/customers/${newCustomer.id}`, undefined, {
+        cookie,
+      })
+    ).json()) as { data: { opportunityAmountTotal: number } };
+    expect(newDetail.data.opportunityAmountTotal).toBe(2500.5);
+    const unchangedDetail = (await (
+      await call('GET', `/api/customers/${starhine!.id}`, undefined, { cookie })
+    ).json()) as { data: { opportunityAmountTotal: number } };
+    expect(unchangedDetail.data.opportunityAmountTotal).toBe(150000);
+
+    // Every endpoint this application serves is declared, and every schema it names resolves.
+    expect(findUndeclaredApiRoutes(app.application)).toEqual([]);
+    const documentResponse = await call('GET', '/api/swagger', undefined, {
+      cookie,
+    });
+    expect(documentResponse.status).toBe(200);
+    const document = await documentResponse.json();
+    expect(Object.keys(document.paths)).toEqual(
+      expect.arrayContaining([
+        '/api/customers',
+        '/api/customers/{customerId}',
+        '/api/contacts',
+        '/api/contacts/{contactId}',
+        '/api/opportunities',
+        '/api/opportunities/{opportunityId}',
+      ]),
+    );
+    expect(findApiDocumentSchemaProblems(document)).toEqual([]);
+
+    // A record that is not there is a 404, with the reason that says which.
+    const missing = await call('GET', '/api/opportunities/missing', undefined, {
+      cookie,
+    });
+    expect(missing.status).toBe(404);
+    await expect(missing.json()).resolves.toMatchObject({
+      error: {
+        status: 'NOT_FOUND',
+        reason: 'OPPORTUNITY_NOT_FOUND',
+        domain: 'crm',
+      },
+    });
+
+    // Renaming is a partial update: the fields the body leaves out stay.
+    const renamed = await call(
+      'PATCH',
+      `/api/customers/${newCustomer.id}`,
+      { name: '新公司（改名）' },
+      { cookie },
+    );
+    expect(renamed.status).toBe(200);
+    await expect(renamed.json()).resolves.toMatchObject({
+      data: { id: newCustomer.id, name: '新公司（改名）', industry: '制造业' },
+    });
   });
 
   it('mounts standalone app-local routes behind the public base path', async () => {

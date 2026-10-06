@@ -56,6 +56,7 @@ const zhCN: AppResource = {
   'status.loadingDev': '正在加载开发工具',
   'status.denied': '无权访问',
   'status.pageFailed': '无法加载页面',
+  'status.sessionExpired': '登录状态已失效，请重新登录后继续。',
   'status.retry': '重试',
   'navigation.brandHome': 'NocoBase 首页',
   'navigation.brandApps': 'NocoBase 应用',
@@ -107,6 +108,11 @@ const zhCN: AppResource = {
     save: '保存',
     cancel: '取消',
     confirm: '确认',
+    create: '创建',
+    saving: '保存中…',
+    edit: '编辑',
+    openMenu: '打开菜单',
+    signInAgain: '重新登录',
     language: '语言',
   },
   notices: {
@@ -122,6 +128,9 @@ const zhCN: AppResource = {
   },
   navigation: {
     home: '首页',
+    customers: '客户',
+    contacts: '联系人',
+    opportunities: '商机',
     open: '打开导航',
     close: '关闭导航',
     expand: '展开导航',
@@ -150,6 +159,151 @@ const zhCN: AppResource = {
   datePicker: {
     placeholder: '选择日期',
     rangePlaceholder: '选择日期范围',
+  },
+  crm: {
+    customer: {
+      placeholder: '选择客户',
+      loadFailed: '客户列表加载失败。',
+      forbidden: '你没有查看客户列表的权限。',
+    },
+    form: {
+      customerRequired: '请选择客户',
+      customerMissing: '该客户已不存在。',
+    },
+    error: {
+      forbidden: '你没有执行此操作的权限。',
+      requestFailed: '请求失败，请重试。',
+    },
+  },
+  customers: {
+    title: '客户',
+    description: '你的团队销售所面向的公司。',
+    fields: {
+      name: '名称',
+      industry: '行业',
+      createdAt: '创建时间',
+      updatedAt: '更新时间',
+    },
+    search: {
+      label: '搜索客户',
+      placeholder: '按名称或行业搜索',
+    },
+    filters: { clear: '清除筛选' },
+    create: {
+      action: '新建客户',
+      title: '新建客户',
+      success: '已创建客户“{{name}}”',
+    },
+    edit: { title: '编辑客户', success: '已保存客户“{{name}}”' },
+    detail: {
+      total: '预计金额合计',
+      contacts: '联系人',
+      opportunities: '商机',
+      emptyContacts: '暂无联系人',
+      emptyOpportunities: '暂无商机',
+    },
+    empty: {
+      title: '暂无客户',
+      description: '创建第一个客户以开始使用。',
+      noResults: '没有符合条件的客户',
+    },
+    error: {
+      title: '客户加载失败',
+      notFound: '该客户不存在或已被删除。',
+      requestFailed: '请求失败，请重试。',
+    },
+    form: {
+      description: '填写客户名称并记录所属行业。',
+      nameRequired: '请输入客户名称',
+      nameTooLong: '最多 {{max}} 个字符',
+      industryTooLong: '最多 {{max}} 个字符',
+    },
+  },
+  contacts: {
+    title: '联系人',
+    description: '你在各客户处对接的人员。',
+    fields: {
+      name: '姓名',
+      contact: '联系方式',
+      customer: '所属客户',
+      createdAt: '创建时间',
+      updatedAt: '更新时间',
+    },
+    search: {
+      label: '搜索联系人',
+      placeholder: '按姓名或联系方式搜索',
+    },
+    filters: { clear: '清除筛选' },
+    create: {
+      action: '新建联系人',
+      title: '新建联系人',
+      success: '已创建联系人“{{name}}”',
+    },
+    edit: { title: '编辑联系人', success: '已保存联系人“{{name}}”' },
+    empty: {
+      title: '暂无联系人',
+      description: '添加你在客户处对接的人员。',
+      noResults: '没有符合条件的联系人',
+    },
+    error: {
+      title: '联系人加载失败',
+      notFound: '该联系人不存在或已被删除。',
+      requestFailed: '请求失败，请重试。',
+    },
+    form: {
+      description: '填写联系人姓名并选择所属客户。',
+      nameRequired: '请输入联系人姓名',
+      nameTooLong: '最多 {{max}} 个字符',
+      contactTooLong: '最多 {{max}} 个字符',
+    },
+  },
+  opportunities: {
+    title: '商机',
+    description: '你的团队正在推进的交易。',
+    fields: {
+      name: '名称',
+      customer: '所属客户',
+      amount: '金额',
+      stage: '阶段',
+      createdAt: '创建时间',
+      updatedAt: '更新时间',
+    },
+    stage: { following: '跟进中', won: '赢单', lost: '输单' },
+    search: {
+      label: '搜索商机',
+      placeholder: '按名称搜索',
+    },
+    filters: {
+      stage: '按阶段筛选',
+      allStages: '全部阶段',
+      clear: '清除筛选',
+    },
+    create: {
+      action: '新建商机',
+      title: '新建商机',
+      success: '已创建商机“{{name}}”',
+    },
+    edit: {
+      title: '编辑商机',
+      success: '已保存商机“{{name}}”',
+    },
+    empty: {
+      title: '暂无商机',
+      description: '跟进你的团队正在推进的交易。',
+      noResults: '没有符合条件的商机',
+    },
+    error: {
+      title: '商机加载失败',
+      notFound: '该商机不存在或已被删除。',
+      requestFailed: '请求失败，请重试。',
+    },
+    form: {
+      description: '填写商机名称，并记录金额与阶段。',
+      nameRequired: '请输入商机名称',
+      nameTooLong: '最多 {{max}} 个字符',
+      amountRequired: '请输入金额',
+      amountInvalid: '请输入大于或等于 0 的金额',
+    },
   },
 };
 
