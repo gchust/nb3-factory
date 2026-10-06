@@ -230,8 +230,24 @@ test('a failed agent preserves a checkpoint and can publish failed work without 
   const dispatch = workflow
     .split('- name: Dispatch continuation run')[1]
     .split('- name: Record agent outcome')[0];
-  assert.match(dispatch, /if: steps\.handoff\.outcome == 'success'/);
+  // An explicit status function, so a failed always() upload before it does
+  // not imply success() and skip the continuation.
+  assert.match(
+    dispatch,
+    /if: \$\{\{ !cancelled\(\) && steps\.handoff\.outcome == 'success' && steps\.checkpoint\.outcome == 'success' \}\}/,
+  );
   assert.match(dispatch, /id: dispatch/);
+  // Every always() step between the handoff and the dispatch either cannot
+  // fail the job or is the checkpoint the dispatch already depends on.
+  const afterHandoff = workflow
+    .split('- name: Prepare runner handoff metadata')[1]
+    .split('- name: Dispatch continuation run')[0]
+    .split('\n      - name: ')
+    .slice(1);
+  for (const step of afterHandoff) {
+    if (!/\n {8}if: always\(\)/.test(step) || /\n {8}continue-on-error: true/.test(step)) continue;
+    assert.match(step, /^(Upload Code Agent patch and diagnostics|Upload handoff checkpoint)\n/);
+  }
   // A lost checkpoint or dispatch is a failed run, not a silent handoff.
   const outcome = workflow
     .split('- name: Record agent outcome')[1]
@@ -369,6 +385,13 @@ test('browser font installs retry apt and are bounded by a step timeout', () => 
   assert.match(script, /Acquire::Retries=3/);
   assert.match(script, /Acquire::http::Timeout=30/);
   assert.match(script, /for attempt in 1 2 3/);
+  // Every round is bounded, and all three rounds fit the step timeout.
+  const limits = [...script.matchAll(/sudo timeout --kill-after=(\d+)s (\d+)s apt-get/g)];
+  assert.equal(limits.length, 2);
+  const round = limits.reduce((sum, [, kill, limit]) => sum + Number(kill) + Number(limit), 0);
+  const backoff = 10 + 20;
+  assert.match(script, /sleep \$\(\( attempt \* 10 \)\)/);
+  const budget = 3 * round + backoff;
   const directory = new URL('../../workflows/', import.meta.url);
   let checked = 0;
   for (const name of readdirSync(directory).filter((file) => file.endsWith('.yml'))) {
@@ -376,7 +399,10 @@ test('browser font installs retry apt and are bounded by a step timeout', () => 
     for (const step of source.split(/\n\s+- (?=name:|uses:|run:)/)) {
       if (!/run:[^\n]*\n?[^\n]*install-browser-fonts\.sh/.test(step)) continue;
       checked++;
-      assert.match(step, /timeout-minutes: [1-9]\b/, `${name}: ${step.split('\n')[0]}`);
+      const minutes = Number(/timeout-minutes: (\d+)\b/.exec(step)?.[1]);
+      assert.ok(minutes > 0, `${name}: ${step.split('\n')[0]}`);
+      // Leave a minute for fc-cache and the checks after the install.
+      assert.ok(budget <= (minutes - 1) * 60, `${name}: ${budget}s vs ${minutes} min`);
     }
   }
   assert.ok(checked >= 5);

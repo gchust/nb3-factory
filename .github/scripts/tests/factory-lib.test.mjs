@@ -192,3 +192,65 @@ test('GitHub writes that create something and ordinary errors are not retried', 
   await assert.rejects(client.request('PUT', '/contents/x'), /\(422\)/);
   assert.deepEqual(calls, ['POST', 'POST', 'GET', 'PUT']);
 });
+
+// Answers like a half-open connection: nothing until the caller's signal fires.
+function hangThenReply(t, replies) {
+  const calls = [];
+  t.mock.method(globalThis, 'fetch', async (url, options) => {
+    calls.push(options.method);
+    assert.ok(options.signal instanceof AbortSignal);
+    const reply = replies.shift();
+    if (reply !== 'hang') return new Response(JSON.stringify(reply.body ?? {}), { status: reply.status });
+    return new Promise((resolve, reject) => {
+      options.signal.addEventListener('abort', () => reject(options.signal.reason), { once: true });
+    });
+  });
+  t.mock.method(console, 'warn', () => {});
+  return calls;
+}
+
+const timingClient = (timeoutMs) =>
+  new GitHubClient({ token: 'test-only', repository: 'owner/factory', retryDelays: [0, 0], timeoutMs });
+
+test('every GitHub attempt has a deadline and a timed-out read is retried', async (t) => {
+  const calls = hangThenReply(t, ['hang', 'hang', { status: 200, body: { number: 7 } }]);
+  const started = Date.now();
+  assert.deepEqual(await timingClient(20).request('GET', '/issues/7'), { number: 7 });
+  assert.deepEqual(calls, ['GET', 'GET', 'GET']);
+  assert.ok(Date.now() - started < 5000);
+});
+
+test('a timed-out POST or DELETE is not repeated', async (t) => {
+  const calls = hangThenReply(t, ['hang', 'hang']);
+  const client = timingClient(20);
+  await assert.rejects(client.request('POST', '/issues/7/comments', { body: { body: 'x' } }), { name: 'TimeoutError' });
+  await assert.rejects(client.request('DELETE', '/git/refs/heads/x'), { name: 'TimeoutError' });
+  assert.deepEqual(calls, ['POST', 'DELETE']);
+});
+
+test('callers can override the attempt deadline per client or per request', async (t) => {
+  assert.equal(retryingClient().timeoutMs, 30_000);
+  const calls = hangThenReply(t, ['hang', 'hang', 'hang']);
+  await assert.rejects(timingClient(60_000).request('GET', '/issues', { timeoutMs: 10 }), { name: 'TimeoutError' });
+  assert.deepEqual(calls, ['GET', 'GET', 'GET']);
+});
+
+test('a response body that stalls past the deadline is retried for reads', async (t) => {
+  const calls = [];
+  const replies = ['stall', { number: 8 }];
+  t.mock.method(globalThis, 'fetch', async (url, options) => {
+    calls.push(options.method);
+    const reply = replies.shift();
+    if (reply !== 'stall') return new Response(JSON.stringify(reply), { status: 200 });
+    const stream = new ReadableStream({
+      start(controller) {
+        controller.enqueue(new TextEncoder().encode('{"number":'));
+        options.signal.addEventListener('abort', () => controller.error(options.signal.reason), { once: true });
+      },
+    });
+    return new Response(stream, { status: 200 });
+  });
+  t.mock.method(console, 'warn', () => {});
+  assert.deepEqual(await timingClient(20).request('GET', '/issues/8'), { number: 8 });
+  assert.deepEqual(calls, ['GET', 'GET']);
+});

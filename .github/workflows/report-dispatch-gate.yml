@@ -51,10 +51,19 @@ jobs:
           set -euo pipefail
           covered=false
           if [[ "$RUN_ID" =~ ^[1-9][0-9]*$ && "$ATTEMPT" =~ ^[1-9][0-9]*$ && "$WORKFLOW" =~ ^[a-z-]+\.yml$ ]]; then
-            # The step names are the contract with code-agent-task.yml.
-            if found="$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$RUN_ID/attempts/$ATTEMPT/jobs?per_page=100" \
-              --jq '[.jobs[] | select(.name == "dispatch-reports") | .steps[]? |
-                select((.name == "Request '"$WORKFLOW"'" or .name == "Explicitly request task reports (including continuations)") and .conclusion == "success")] | length')"; then
+            # The step names are the contract with code-agent-task.yml. Three
+            # attempts ride out a transient API error; at most about 70 s.
+            found=''
+            for attempt in 1 2 3; do
+              if found="$(timeout --kill-after=5s 20s gh api "repos/$GITHUB_REPOSITORY/actions/runs/$RUN_ID/attempts/$ATTEMPT/jobs?per_page=100" \
+                --jq '[.jobs[] | select(.name == "dispatch-reports") | .steps[]? |
+                  select((.name == "Request '"$WORKFLOW"'" or .name == "Explicitly request task reports (including continuations)") and .conclusion == "success")] | length')"; then
+                break
+              fi
+              found=''
+              if [[ "$attempt" -lt 3 ]]; then sleep $((attempt * 3)); fi
+            done
+            if [[ -n "$found" ]]; then
               [[ "$found" =~ ^[1-9] ]] && covered=true
             else
               echo "::warning::Could not read the source run's jobs; doing the work here."

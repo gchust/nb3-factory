@@ -100,21 +100,53 @@ test('downstream jobs download only the small patch artifact', () => {
     ['report-failure', 'failure-artifacts'],
   ]) {
     const source = jobOf(task, job);
-    assert.ok(
-      source.includes(`name: factory-patch-${name}\n          path: ${target}`),
+    const copy = source
+      .split('\n      - name: ')
+      .find((step) => step.includes(`name: factory-patch-${name}\n`));
+    assert.ok(copy?.includes(`path: ${target}`), job);
+    assert.match(copy, /id: patch_copy\n {8}continue-on-error: true\n/, job);
+    // The complete record is read only when the small copy is missing.
+    const fallback = stepOf(
+      source,
+      'Fall back to the complete Code Agent artifact',
+    );
+    assert.match(
+      fallback,
+      /if: steps\.patch_copy\.outcome == 'failure'\n/,
       job,
     );
-    assert.doesNotMatch(source, /name: factory-agent-/, job);
+    assert.ok(
+      fallback.includes(
+        `name: factory-agent-${name}\n          path: ${target}`,
+      ),
+      job,
+    );
   }
-  // The complete diagnostics are still uploaded once, for reports and recovery.
+  // The complete diagnostics are still uploaded once, for reports and
+  // recovery, and downloaded only by the four fallbacks above.
   const agent = jobOf(task, 'agent');
-  assert.equal([...task.matchAll(/name: factory-agent-\$/g)].length, 1);
+  assert.equal([...task.matchAll(/name: factory-agent-\$/g)].length, 5);
+  assert.equal(
+    [
+      ...task.matchAll(
+        /- name: Fall back to the complete Code Agent artifact\n/g,
+      ),
+    ].length,
+    4,
+  );
   assert.ok(
     agent.indexOf('- name: Upload Code Agent patch and diagnostics') <
       agent.indexOf('- name: Upload the patch for downstream jobs'),
   );
   const upload = stepOf(agent, 'Upload the patch for downstream jobs');
   assert.match(upload, /if: always\(\)/);
+  // Downstream jobs fall back to factory-agent-N; a failed copy must not fail
+  // the agent job or block the continuation dispatch.
+  assert.match(upload, /continue-on-error: true/);
+  assert.match(
+    stepOf(agent, 'Stage the patch for downstream jobs'),
+    /continue-on-error: true/,
+  );
   assert.ok(upload.includes(`name: factory-patch-${name}`));
   assert.ok(upload.includes('path: ${{ runner.temp }}/patch-artifacts'));
 });
@@ -256,6 +288,28 @@ for (const [file, job, lockfile, install, next] of [
     assert.match(saveStep, /continue-on-error: true/);
   });
 }
+
+test('source-baseline saves the store only outside pull requests', () => {
+  // A pull_request cache lives in refs/pull/N/merge and no other PR sees it.
+  const source = jobOf(read('source-baseline.yml'), 'source-baseline');
+  for (const step of [
+    'Drop store entries the current lockfile no longer uses',
+    'Save the nocobase3 pnpm store before the loopback registry starts',
+  ]) {
+    assert.match(
+      stepOf(source, step),
+      /if: github\.event_name != 'pull_request' && steps\.pnpm-cache\.outputs\.cache-hit != 'true'\n/,
+      step,
+    );
+  }
+  // framework-fix only runs from develop, so its saves already land there.
+  const workflow = read('framework-fix.yml');
+  assert.match(workflow, /^on:\n {2}workflow_dispatch:\n/m);
+  assert.doesNotMatch(
+    workflow,
+    /^ {2}(pull_request|pull_request_target|push):/m,
+  );
+});
 
 test('framework-fix saves the store only after a successful install', () => {
   const review = jobOf(read('framework-fix.yml'), 'review');

@@ -192,6 +192,10 @@ export function assertSafeChangedPaths(paths) {
 const RETRYABLE_METHODS = new Set(['GET', 'HEAD', 'PUT', 'PATCH']);
 const RETRYABLE_STATUSES = new Set([502, 503, 504]);
 export const GITHUB_RETRY_DELAYS_MS = [1000, 3000, 8000];
+// A half-open connection otherwise waits for undici's ~300 s timeout on every
+// attempt, which four attempts stretch past most job timeouts. A timeout is a
+// dropped connection: retried for the methods above, never for POST/DELETE.
+export const GITHUB_REQUEST_TIMEOUT_MS = 30_000;
 
 export class GitHubClient {
   constructor({
@@ -199,6 +203,7 @@ export class GitHubClient {
     repository,
     apiUrl = 'https://api.github.com',
     retryDelays = GITHUB_RETRY_DELAYS_MS,
+    timeoutMs = GITHUB_REQUEST_TIMEOUT_MS,
   }) {
     if (!token) throw new Error('GITHUB_TOKEN is required.');
     if (!repository?.includes('/'))
@@ -207,9 +212,14 @@ export class GitHubClient {
     this.repository = repository;
     this.apiUrl = apiUrl.replace(/\/$/, '');
     this.retryDelays = retryDelays;
+    this.timeoutMs = timeoutMs;
   }
 
-  async request(method, route, { body, query, allow404 = false } = {}) {
+  async request(
+    method,
+    route,
+    { body, query, allow404 = false, timeoutMs = this.timeoutMs } = {},
+  ) {
     const url = new URL(`${this.apiUrl}/repos/${this.repository}${route}`);
     for (const [key, value] of Object.entries(query ?? {})) {
       if (value != null) url.searchParams.set(key, String(value));
@@ -218,10 +228,13 @@ export class GitHubClient {
     const delays = RETRYABLE_METHODS.has(method) ? this.retryDelays : [];
     for (let attempt = 0; ; attempt++) {
       const retry = attempt < delays.length;
+      // One deadline for the whole attempt, reading the body included.
+      const signal = AbortSignal.timeout(timeoutMs);
       let response;
       try {
         response = await fetch(url, {
           method,
+          signal,
           headers: {
             Accept: 'application/vnd.github+json',
             Authorization: `Bearer ${this.token}`,
@@ -255,7 +268,15 @@ export class GitHubClient {
         );
       }
       if (response.status === 204) return null;
-      return response.json();
+      try {
+        return await response.json();
+      } catch (error) {
+        if (!retry || error.name !== 'TimeoutError') throw error;
+        console.warn(
+          `GitHub API ${method} ${route} timed out reading the response; retrying.`,
+        );
+        await new Promise((resolve) => setTimeout(resolve, delays[attempt]));
+      }
     }
   }
 

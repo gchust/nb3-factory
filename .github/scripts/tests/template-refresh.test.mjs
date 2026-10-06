@@ -617,6 +617,51 @@ test('every building job exposes the factory registry to nested dist installs', 
   }
 });
 
+test('refresh keeps the template\'s own SQLite driver declaration', () => {
+  const refresh = readFileSync(
+    path.resolve(scripts, '..', 'workflows', 'refresh-template.yml'),
+    'utf8',
+  );
+  const step = refresh
+    .split('- name: Install and lock the new application dependencies\n')[1]
+    .split('\n      - name: ')[0];
+  // An unconditional `pnpm add …@latest` downgraded the declared driver.
+  const guard = step.indexOf('dependencies?.["@nocobase/db-sqlite"]');
+  assert.ok(guard > 0);
+  const add = step.indexOf('pnpm add @nocobase/db-sqlite@latest');
+  assert.ok(add > guard);
+  assert.match(step.slice(guard, add), /then\n\s+$/);
+  assert.equal(step.match(/^\s+pnpm add /gm).length, 1);
+});
+
+test('refresh runs the factory suite like factory-tests, and only when it may publish', () => {
+  const read = (file) =>
+    readFileSync(path.resolve(scripts, '..', 'workflows', file), 'utf8');
+  const refresh = read('refresh-template.yml');
+  const command = (workflow) =>
+    workflow
+      .split('\n')
+      .filter((line) => line.includes('scripts/tests/*.test.mjs'))
+      .map((line) => line.trim());
+  const [step] = refresh
+    .split('- name: Run factory regression tests before publication\n')
+    .slice(1);
+  assert.ok(step, 'missing factory test step');
+  const body = step.split('\n      - name: ')[0];
+  // PR checks already run the same suite in factory-tests.yml.
+  assert.match(body, /if: github\.event_name != 'pull_request'\n/);
+  assert.deepEqual(command(refresh), [
+    'run: env -u GITHUB_RUN_ID -u GITHUB_RUN_ATTEMPT node --test --test-concurrency=1 control/.github/scripts/tests/*.test.mjs',
+  ]);
+  assert.deepEqual(command(read('factory-tests.yml')), [
+    'run: env -u GITHUB_RUN_ID -u GITHUB_RUN_ATTEMPT node --test --test-concurrency=1 .github/scripts/tests/*.test.mjs',
+  ]);
+  assert.ok(
+    refresh.indexOf('- name: Run factory regression tests before publication') <
+      refresh.indexOf('- name: Package only the verified baseline'),
+  );
+});
+
 test('task and replay reject old baselines before installing application dependencies', () => {
   for (const file of ['code-agent-task.yml', 'replay-build-review.yml']) {
     const workflow = readFileSync(

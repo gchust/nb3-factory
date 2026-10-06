@@ -6,7 +6,8 @@ PR #22 的截图出现方框，但同一轮浏览器 snapshot 能正确读取“
 工厂在 agent、verify-final、模板刷新三个独立 Runner 中、启动浏览器前运行
 `install-browser-fonts.sh`：安装 `fontconfig` / `fonts-noto-cjk`，刷新字体缓存并检查
 `Noto Sans CJK SC` 存在。apt 每次下载重试 3 次、单次超时 30 秒，更新与安装整体最多尝试 3 次，
-运行它的步骤限时 5 分钟。仍然失败时直接指出环境错误，不让缺字截图继续冒充正常证据。
+每轮的更新限时 60 秒、安装限时 90 秒，三轮加退避最坏约 8.5 分钟，运行它的步骤限时 10 分钟，
+保证三轮重试都能完整执行。仍然失败时直接指出环境错误，不让缺字截图继续冒充正常证据。
 修改语言变量或 `<meta charset>` 不会安装字体；字体修复也不会把应用英文 UI 自动翻译成中文。
 
 `tests/browser-fonts-smoke.mjs` 使用真实 Chrome 和 CDP 查询实际渲染中文字形的字体，
