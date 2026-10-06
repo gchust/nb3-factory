@@ -1,0 +1,257 @@
+{
+  "version": 1,
+  "date": "2026-10-05",
+  "timeZone": "Asia/Shanghai",
+  "entries": [
+    {
+      "key": "c9f3f74ad237c5e894f541ba",
+      "id": "552:37238845336:1:F2",
+      "issue": 552,
+      "runId": 37238845336,
+      "attempt": 1,
+      "findingId": "F2",
+      "runDay": "2026-10-05",
+      "archivedAt": "2026-10-06T01:17:39.564Z",
+      "title": "缺少承载“任务所需样例业务数据”的受认可位置",
+      "summary": "nocobase-db/SKILL.md 与 migrations.md 规定迁移只建结构、seed 只插应用运行所需记录且绝不含样例/演示内容；code-and-seeds.md 承认演示账号与记录同生产权限配置分离，但三处都没有说明演示/验收数据应放在哪里。本构建任务要求预置 2 客户/3 联系人/3 商机，Agent 只能写进 202610050004_seed_sales_sample_data.ts 并自述为 sample data，同时未按 SKILL 的幂等要求加唯一约束。",
+      "severity": "minor",
+      "type": "guidance-gap",
+      "owner": "documentation",
+      "targets": [
+        "app/.agents/skills/nocobase-db/SKILL.md",
+        "app/.agents/skills/nocobase-app-development/references/migrations.md",
+        "app/.agents/skills/nocobase-app-plugin-authorization/references/code-and-seeds.md"
+      ],
+      "subjectKeys": [
+        "skill:nocobase-app-development",
+        "skill:nocobase-app-plugin-authorization",
+        "skill:nocobase-db"
+      ],
+      "featurePoint": null,
+      "candidates": [
+        "应用搭建/授权",
+        "应用搭建/数据库"
+      ],
+      "taskTitle": "客户、联系人与商机管理",
+      "appVersion": "1.0.0-beta.50",
+      "group": {
+        "title": "nocobase-db Skill 以绝对表述禁止种子承载示例/演示数据，却未给出演示数据落点与幂等写法，并与组织指引冲突",
+        "issues": 4,
+        "first": "2026-09-28"
+      },
+      "report": "reports/issues/552/runs/37238845336/attempt-1/index.html#review-finding-F2"
+    },
+    {
+      "key": "c13745e39228ae5f8023307a",
+      "id": "552:37238845336:1:F4",
+      "issue": 552,
+      "runId": 37238845336,
+      "attempt": 1,
+      "findingId": "F4",
+      "runDay": "2026-10-05",
+      "archivedAt": "2026-10-06T01:17:39.564Z",
+      "title": "无权限模型应用的最小授权做法在指引中缺失且口径不一致",
+      "summary": "authorization.md 要求每个 server/routes 端点安装认证与授权，并在首个页面 authz 取值列表里给出 'skip'；app-plugin-authorization 的 client-development.md 则称只有需要登录的概览页可声明 authz:'skip'、业务页 never do。本任务明确单团队、无多级权限区分，Agent 对端点只用 auth.required()、对三个业务页统一 authz:'skip'，两份指引无法回答这是否合规、以及不引入授权插件时的最小授权接入是什么。",
+      "severity": "minor",
+      "type": "guidance-gap",
+      "owner": "documentation",
+      "targets": [
+        "app/.agents/skills/nocobase-app-development/references/authorization.md",
+        "app/.agents/skills/nocobase-app-plugin-authorization/references/client-development.md"
+      ],
+      "subjectKeys": [
+        "skill:nocobase-app-development",
+        "skill:nocobase-app-plugin-authorization"
+      ],
+      "featurePoint": "应用搭建/授权",
+      "candidates": [
+        "应用搭建/授权"
+      ],
+      "taskTitle": "客户、联系人与商机管理",
+      "appVersion": "1.0.0-beta.50",
+      "group": {
+        "title": "无权限模型应用的最小授权做法在指引中缺失且口径不一致",
+        "issues": 1,
+        "first": "2026-10-05"
+      },
+      "report": "reports/issues/552/runs/37238845336/attempt-1/index.html#review-finding-F4"
+    },
+    {
+      "key": "e39e2c556203c606f907060d",
+      "id": "554:37258077945:1:F1",
+      "issue": 554,
+      "runId": 37258077945,
+      "attempt": 1,
+      "findingId": "F1",
+      "runDay": "2026-10-05",
+      "archivedAt": "2026-10-06T01:17:39.564Z",
+      "title": "selection.records 只接受非空字符串，与框架默认整数自增主键不匹配，指引未说明",
+      "summary": "共享/限制指引与 authorization README 用 selection.records(['quote-7']) 作为“为单条记录建立共享”的推荐写法，而 db SKILL 的默认示例使用 collection.increments('id') 生成整数主键。parseRecordSelection 要求 records 的每个 id 为非空字符串（并在 appendRuleAction 构建规则时被调用），因此整数主键集合无法用 records 精确选择单条记录，指引未提示这一冲突。",
+      "severity": "minor",
+      "type": "guidance-error",
+      "owner": "documentation",
+      "targets": [
+        "@nocobase/authorization",
+        "app/.agents/skills/nocobase-app-plugin-authz-sharing-rules"
+      ],
+      "subjectKeys": [
+        "pkg:@nocobase/authorization",
+        "skill:nocobase-app-plugin-authz-sharing-rules"
+      ],
+      "featurePoint": "应用搭建/授权",
+      "candidates": [
+        "应用搭建/授权"
+      ],
+      "taskTitle": "内部资料阅读与临时共享",
+      "appVersion": "1.0.0-beta.50",
+      "group": {
+        "title": "records 选择指引未说明仅支持字符串 id，也未给出整数主键的替代写法",
+        "issues": 4,
+        "first": "2026-09-30"
+      },
+      "report": "reports/issues/554/runs/37258077945/attempt-1/index.html#review-finding-F1"
+    },
+    {
+      "key": "f5f8dc31533a4e9460273f9d",
+      "id": "554:37258077945:1:F2",
+      "issue": 554,
+      "runId": 37258077945,
+      "attempt": 1,
+      "findingId": "F2",
+      "runDay": "2026-10-05",
+      "archivedAt": "2026-10-06T01:17:39.564Z",
+      "title": "作用域 AND 组合的 allScopes 未随 anyScope 一并公开",
+      "summary": "app-plugin-authorization 的 scope.js 同时实现 anyScope 与 allScopes，authorizer 内部用 allScopes 折叠正选择与 restriction；但 server 入口只导出 anyScope/condition/scopeAst，README/SKILL 也只记录 anyScope。应用只能在 app/server/library/scope.ts 复制 AND 折叠逻辑。",
+      "severity": "minor",
+      "type": "usability",
+      "owner": "plugin",
+      "targets": [
+        "@nocobase/app-plugin-authorization",
+        "@nocobase/repository-input"
+      ],
+      "subjectKeys": [
+        "pkg:@nocobase/app-plugin-authorization",
+        "pkg:@nocobase/repository-input"
+      ],
+      "featurePoint": null,
+      "candidates": [
+        "应用搭建/授权",
+        "应用搭建/数据库"
+      ],
+      "taskTitle": "内部资料阅读与临时共享",
+      "appVersion": "1.0.0-beta.50",
+      "group": {
+        "title": "allScopes/idsScope 等数据范围组合子已在包内实现但未从公开入口导出",
+        "issues": 5,
+        "first": "2026-09-29"
+      },
+      "report": "reports/issues/554/runs/37258077945/attempt-1/index.html#review-finding-F2"
+    },
+    {
+      "key": "e1cf4a70dcd3f89bd6091f7b",
+      "id": "555:37238852759:1:F1",
+      "issue": 555,
+      "runId": 37238852759,
+      "attempt": 1,
+      "findingId": "F1",
+      "runDay": "2026-10-05",
+      "archivedAt": "2026-10-06T01:17:39.564Z",
+      "title": "DatabaseManager 与 DatabaseConnection 的 repository 签名不一致，正常装配触发类型冲突",
+      "summary": "@nocobase/db 的 DatabaseConnection.repository(collection) 与 DatabaseManager.repository(collection, connection?) 同名但参数不同；把 databaseManagerToken 解析出的 Manager 传给期望 Connection 的 helper 时，verify-2 日志第 271/275/292/419 行均报 TS2345（Manager 缺少 name/driver/dialect 等 8+ 属性）。",
+      "severity": "minor",
+      "type": "usability",
+      "owner": "framework",
+      "targets": [
+        "@nocobase/db"
+      ],
+      "subjectKeys": [
+        "pkg:@nocobase/db"
+      ],
+      "featurePoint": "应用搭建/数据库",
+      "candidates": [
+        "应用搭建/数据库"
+      ],
+      "taskTitle": "项目资料与私有附件",
+      "appVersion": "1.0.0-beta.50",
+      "group": {
+        "title": "DatabaseManager 与 DatabaseConnection 的 repository 签名不一致，正常装配触发类型冲突",
+        "issues": 1,
+        "first": "2026-10-05"
+      },
+      "report": "reports/issues/555/runs/37238852759/attempt-1/index.html#review-finding-F1"
+    },
+    {
+      "key": "78b6a3bf36fc02cb65a8a9cc",
+      "id": "555:37238852759:1:F2",
+      "issue": 555,
+      "runId": 37238852759,
+      "attempt": 1,
+      "findingId": "F2",
+      "runDay": "2026-10-05",
+      "archivedAt": "2026-10-06T01:17:39.564Z",
+      "title": "Registry 图片预览不报告解码失败，损坏图片只显示破图",
+      "summary": "registry/component-ui/components/previewers/file-preview-content.tsx 的 image 分支直接渲染 <img>，无 onError/失败回退；仅 OOXML 路径有 viewerError 与 DownloadFallback。应用副本新增 ImagePreview(onError) 后 B06 才有明确失败反馈。",
+      "severity": "minor",
+      "type": "capability-gap",
+      "owner": "plugin",
+      "targets": [
+        "@nocobase/app-plugin-file",
+        "packages/@nocobase/app-plugin-file/skills/nocobase-app-plugin-file/SKILL.md"
+      ],
+      "subjectKeys": [
+        "guide:@nocobase/app-plugin-file/skills/nocobase-app-plugin-file",
+        "pkg:@nocobase/app-plugin-file"
+      ],
+      "featurePoint": "应用搭建/文件",
+      "candidates": [
+        "应用搭建/文件"
+      ],
+      "taskTitle": "项目资料与私有附件",
+      "appVersion": "1.0.0-beta.50",
+      "group": {
+        "title": "Registry 图片/PDF 预览分支缺少解码失败态，损坏文件只显示破图",
+        "issues": 7,
+        "first": "2026-09-29"
+      },
+      "report": "reports/issues/555/runs/37238852759/attempt-1/index.html#review-finding-F2"
+    },
+    {
+      "key": "ccb30f7f15f043791d7e2b29",
+      "id": "556:37238854983:1:F4",
+      "issue": 556,
+      "runId": 37238854983,
+      "attempt": 1,
+      "findingId": "F4",
+      "runDay": "2026-10-05",
+      "archivedAt": "2026-10-06T01:17:39.564Z",
+      "title": "知识库检索不是权限边界，需应用自建授权代理（已记录但缺可抄实现）",
+      "summary": "security.md 明确兼容路由只要求认证、文档对认证者一律投影 readWrite，检索实现也只按 knowledgeBaseKeys/enabled 过滤；capabilities.md 与知识库 Skill 均强调不得把客户端 affordance 当授权。文档已如实披露，但没有给出可直接复用的检索前授权代理示例。",
+      "severity": "minor",
+      "type": "guidance-gap",
+      "owner": "documentation",
+      "targets": [
+        "app/.agents/skills/nocobase-app-plugin-ai-employee/references/capabilities.md",
+        "@nocobase/app-plugin-ai-knowledge-base",
+        "app/.agents/skills/nocobase-app-plugin-ai-knowledge-base/references/security.md"
+      ],
+      "subjectKeys": [
+        "pkg:@nocobase/app-plugin-ai-knowledge-base",
+        "skill:nocobase-app-plugin-ai-employee",
+        "skill:nocobase-app-plugin-ai-knowledge-base"
+      ],
+      "featurePoint": null,
+      "candidates": [
+        "应用搭建/AI 员工",
+        "应用搭建/知识库"
+      ],
+      "taskTitle": "内部资料只读问答助手",
+      "appVersion": "1.0.0-beta.50",
+      "group": {
+        "title": "知识库检索不是权限边界，需应用自建授权代理但缺少可直接复用的实现示例",
+        "issues": 1,
+        "first": "2026-10-05"
+      },
+      "report": "reports/issues/556/runs/37238854983/attempt-1/index.html#review-finding-F4"
+    }
+  ]
+}
