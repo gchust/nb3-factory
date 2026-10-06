@@ -12,7 +12,13 @@ import {
 import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
-import { templatePlugins, validateInspection } from '../template-plugins.mjs';
+import {
+  checkCorePeers,
+  compareVersions,
+  selectPluginVersion,
+  templatePlugins,
+  validateInspection,
+} from '../template-plugins.mjs';
 
 const script = path.resolve(import.meta.dirname, '../template-plugins.mjs');
 const packageName = templatePlugins[0];
@@ -214,7 +220,12 @@ function fixture(t, overrides = {}) {
   };
   writeJson(path.join(app, 'factory-template.json'), metadata);
   writeJson(path.join(app, 'package.json'), {
-    dependencies: { existing: '^1.0.0', '@nocobase/app-cli': '^1.0.0-beta.6' },
+    dependencies: {
+      existing: '^1.0.0',
+      '@nocobase/app-cli': '^1.0.0-beta.6',
+      '@nocobase/app-server': '^2.0.0-beta.0',
+    },
+    devDependencies: { '@nocobase/app-client': '^2.0.0-beta.0' },
     scripts: { build: 'nocobase build' },
   });
   writeJson(path.join(bin, 'package.json'), { type: 'module' });
@@ -224,7 +235,16 @@ function fixture(t, overrides = {}) {
       templatePlugins.map((name) => [name, inspection(name)]),
     ),
     registerStatus: 'success',
-    version: '1.2.3-beta.4',
+    distTags: Object.fromEntries(
+      templatePlugins.map((name) => [
+        name,
+        { latest: '0.1.0-beta.9', beta: '1.2.3-beta.4' },
+      ]),
+    ),
+    peers: {
+      '@nocobase/app-server': '^2.0.0-beta.0',
+      '@nocobase/app-client': '^2.0.0-beta.0',
+    },
     ...overrides,
   };
   writeJson(path.join(root, 'state.json'), state);
@@ -241,16 +261,21 @@ const modern = commandArgs[0] === 'exec' && commandArgs[1] === 'nocobase';
 const command = modern ? commandArgs.slice(2, 4).join(' ') : commandArgs[0];
 const name = commandArgs[modern ? 4 : 1];
 appendFileSync(process.env.FAKE_LOG, JSON.stringify({ args, cwd: process.cwd() }) + '\\n');
-if (command !== 'add' && !modern) { console.error('wrong template command style'); process.exit(9); }
+if (command !== 'add' && command !== 'view' && !modern) { console.error('wrong template command style'); process.exit(9); }
 if (state.fail === command) { console.error('fixture command failed'); process.exit(7); }
 if (state.malformed === command) { console.log('not-json'); process.exit(0); }
-if (command === 'add') {
+if (command === 'view') {
+  console.log(JSON.stringify(state.distTags[name]));
+} else if (command === 'add') {
   const app = JSON.parse(readFileSync('package.json', 'utf8'));
-  for (const name of state.plugins) {
-    app.dependencies[name] = '^' + state.version;
+  for (const spec of commandArgs.slice(1)) {
+    const at = spec.lastIndexOf('@');
+    const name = spec.slice(0, at);
+    const version = state.version ?? spec.slice(at + 1);
+    app.dependencies[name] = version;
     const target = path.join('node_modules', name);
     mkdirSync(target, { recursive: true });
-    writeFileSync(path.join(target, 'package.json'), JSON.stringify({ name, version: state.version }));
+    writeFileSync(path.join(target, 'package.json'), JSON.stringify({ name, version, peerDependencies: state.peers }));
   }
   writeFileSync('package.json', JSON.stringify(app));
 } else if (command === 'plugin register') {
@@ -299,18 +324,35 @@ if (command === 'add') {
   return { root, app, diagnostics, summary, run, calls, metadata };
 }
 
-test('refresh batches latest installs, registers, syncs, inspects, and records installed versions', (t) => {
+test('refresh installs the newest channel release, registers, syncs, inspects, and records installed versions', (t) => {
   const f = fixture(t);
   const result = f.run();
   assert.equal(result.status, 0, result.stderr);
   const calls = f.calls();
-  assert.equal(calls.length, 8);
-  assert.deepEqual(calls[0].args, [
-    'add',
-    ...templatePlugins.map((name) => `${name}@latest`),
-  ]);
+  assert.equal(calls.length, 11);
   for (const [index, name] of templatePlugins.entries()) {
-    assert.deepEqual(calls[index + 1].args, [
+    assert.deepEqual(calls[index].args, [
+      '--silent',
+      'view',
+      name,
+      'dist-tags',
+      '--json',
+    ]);
+  }
+  assert.deepEqual(calls[3].args, [
+    'add',
+    ...templatePlugins.map((name) => `${name}@1.2.3-beta.4`),
+  ]);
+  assert.deepEqual(
+    json(path.join(f.diagnostics, 'template-plugins/selected-versions.json')),
+    templatePlugins.map((packageName) => ({
+      packageName,
+      tag: 'beta',
+      version: '1.2.3-beta.4',
+    })),
+  );
+  for (const [index, name] of templatePlugins.entries()) {
+    assert.deepEqual(calls[index + 4].args, [
       '--silent',
       'exec',
       'nocobase',
@@ -321,7 +363,7 @@ test('refresh batches latest installs, registers, syncs, inspects, and records i
       '--no-skills',
       '--json',
     ]);
-    assert.deepEqual(calls[index + 5].args, [
+    assert.deepEqual(calls[index + 8].args, [
       '--silent',
       'exec',
       'nocobase',
@@ -331,7 +373,7 @@ test('refresh batches latest installs, registers, syncs, inspects, and records i
       '--json',
     ]);
   }
-  assert.deepEqual(calls[4].args, ['exec', 'nocobase', 'skills', 'sync']);
+  assert.deepEqual(calls[7].args, ['exec', 'nocobase', 'skills', 'sync']);
   assert.ok(calls.every(({ cwd }) => cwd === f.app));
   const metadata = json(path.join(f.app, 'factory-template.json'));
   assert.deepEqual(
@@ -365,7 +407,7 @@ test('already-registered plugins still get a final Skills sync and inspection', 
   const f = fixture(t, { registerStatus: 'success-noop' });
   const result = f.run();
   assert.equal(result.status, 0, result.stderr);
-  assert.equal(f.calls().length, 8);
+  assert.equal(f.calls().length, 11);
 });
 
 test('inspection rejects a wrong command and legacy operation envelopes', () => {
@@ -379,18 +421,20 @@ test('inspection rejects a wrong command and legacy operation envelopes', () => 
 });
 
 for (const [name, overrides, count] of [
-  ['installation failure', { fail: 'add' }, 1],
-  ['registration failure', { fail: 'plugin register' }, 2],
+  ['dist-tag lookup failure', { fail: 'view' }, 1],
+  ['malformed dist-tag JSON', { malformed: 'view' }, 1],
+  ['installation failure', { fail: 'add' }, 4],
+  ['registration failure', { fail: 'plugin register' }, 5],
   [
     'partial registration with exit zero',
     { registerStatus: 'partial-success' },
-    2,
+    5,
   ],
-  ['malformed registration JSON', { malformed: 'plugin register' }, 2],
-  ['Skills sync failure', { fail: 'skills sync' }, 5],
-  ['inspection failure', { fail: 'plugin inspect' }, 6],
-  ['malformed inspection JSON', { malformed: 'plugin inspect' }, 6],
-  ['unusable installed version', { version: 'latest' }, 6],
+  ['malformed registration JSON', { malformed: 'plugin register' }, 5],
+  ['Skills sync failure', { fail: 'skills sync' }, 8],
+  ['inspection failure', { fail: 'plugin inspect' }, 9],
+  ['malformed inspection JSON', { malformed: 'plugin inspect' }, 9],
+  ['unusable installed version', { version: 'latest' }, 9],
 ]) {
   test(`${name} stops before stamping a successful inventory`, (t) => {
     const f = fixture(t, overrides);
@@ -407,7 +451,10 @@ for (const [name, overrides, count] of [
     );
     assert.equal(existsSync(f.summary), false);
     if (overrides.malformed) {
-      const suffix = overrides.malformed.split(' ')[1];
+      const suffix =
+        overrides.malformed === 'view'
+          ? 'dist-tags'
+          : overrides.malformed.split(' ')[1];
       assert.equal(
         readFileSync(
           path.join(
@@ -429,7 +476,7 @@ test('exit-zero inspection with a missing registration blocks inventory publicat
   const result = f.run();
   assert.notEqual(result.status, 0);
   assert.match(result.stderr, /server is not registered/);
-  assert.equal(f.calls().length, 6);
+  assert.equal(f.calls().length, 9);
   assert.deepEqual(json(path.join(f.app, 'factory-template.json')), f.metadata);
 });
 
@@ -457,4 +504,112 @@ test('workflow retains default-template generation and gates verification on plu
     workflow,
     /client\/plugins\.ts server\/plugins\.ts cli\/plugins\.ts/,
   );
+});
+
+test('versions compare by semver precedence, prereleases included', () => {
+  for (const [a, b] of [
+    ['0.1.0-beta.9', '1.0.0-beta.14'],
+    ['1.0.0-beta.9', '1.0.0-beta.10'],
+    ['1.0.0-alpha.5', '1.0.0-beta.0'],
+    ['1.0.0-beta', '1.0.0-beta.0'],
+    ['1.0.0-beta.0', '1.0.0'],
+    ['0.11.1-alpha.5', '2.0.0-beta.0'],
+  ]) {
+    assert.equal(compareVersions(a, b), -1, `${a} < ${b}`);
+    assert.equal(compareVersions(b, a), 1, `${b} > ${a}`);
+  }
+  assert.equal(compareVersions('2.0.0-beta.0', '2.0.0-beta.0+build'), 0);
+  assert.throws(() => compareVersions('latest', '1.0.0'), /Unusable version/);
+});
+
+test('version selection takes the newer of latest and beta', () => {
+  // The dist-tags NocoBase published when @latest broke the refresh.
+  assert.deepEqual(
+    selectPluginVersion(
+      { latest: '0.1.0-beta.0', beta: '1.0.0-beta.7' },
+      '@nocobase/app-plugin-mail',
+    ),
+    { tag: 'beta', version: '1.0.0-beta.7' },
+  );
+  assert.deepEqual(
+    selectPluginVersion({ latest: '2.0.0', beta: '2.0.0-beta.3' }, 'p'),
+    { tag: 'latest', version: '2.0.0' },
+  );
+  assert.deepEqual(
+    selectPluginVersion({ latest: '2.0.0-beta.0', beta: '2.0.0-beta.0' }, 'p'),
+    { tag: 'latest', version: '2.0.0-beta.0' },
+  );
+  assert.deepEqual(
+    selectPluginVersion({ latest: '1.0.0', next: '9.0.0' }, 'p'),
+    { tag: 'latest', version: '1.0.0' },
+  );
+  assert.throws(
+    () => selectPluginVersion({ next: '9.0.0' }, 'p'),
+    /none of the latest\/beta dist-tags/,
+  );
+});
+
+test('core peer check compares release lines with the template', () => {
+  const app = {
+    dependencies: { '@nocobase/app-server': '^2.0.0-beta.0' },
+    devDependencies: { '@nocobase/app-client': '^2.0.0-beta.0' },
+  };
+  const plugin = (peerDependencies) => ({
+    name: '@nocobase/app-plugin-mail',
+    version: '0.1.0-beta.0',
+    peerDependencies,
+  });
+  checkCorePeers(
+    app,
+    plugin({
+      '@nocobase/app-server': '^2.0.0-beta.0',
+      '@nocobase/app-client': '>=2.1.0 <3',
+    }),
+  );
+  checkCorePeers(app, plugin({ react: '^19.0.0' }));
+  assert.throws(
+    () =>
+      checkCorePeers(
+        app,
+        plugin({
+          '@nocobase/app-server': '^1.0.0-beta.22',
+          '@nocobase/app-client': '^1.0.0-beta.19',
+        }),
+      ),
+    (error) =>
+      /app-plugin-mail@0\.1\.0-beta\.0 is built for a different NocoBase core/.test(
+        error.message,
+      ) &&
+      /app-server \^1\.0\.0-beta\.22, but the template declares \^2\.0\.0-beta\.0/.test(
+        error.message,
+      ) &&
+      /app-client/.test(error.message),
+  );
+  assert.throws(
+    () =>
+      checkCorePeers(
+        { dependencies: { '@nocobase/app-server': '^0.11.0' } },
+        plugin({ '@nocobase/app-server': '^0.12.0' }),
+      ),
+    /different NocoBase core/,
+  );
+  assert.throws(
+    () =>
+      checkCorePeers(
+        { dependencies: {} },
+        plugin({ '@nocobase/app-server': '^2.0.0' }),
+      ),
+    /which the template does not declare/,
+  );
+});
+
+test('a plugin built for another core stops the refresh before registration', (t) => {
+  const f = fixture(t, {
+    peers: { '@nocobase/app-server': '^1.0.0-beta.22' },
+  });
+  const result = f.run();
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /built for a different NocoBase core/);
+  assert.equal(f.calls().length, 4);
+  assert.deepEqual(json(path.join(f.app, 'factory-template.json')), f.metadata);
 });

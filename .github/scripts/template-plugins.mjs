@@ -17,6 +17,103 @@ export const templatePlugins = [
   '@nocobase/app-plugin-mail',
 ];
 
+// Release channels a plugin may be installed from. NocoBase does not move
+// `latest` with every prerelease: Mail and Knowledge Base kept `latest` on a
+// 0.x line built for the previous core while their current releases went to
+// `beta`, so `@latest` installed a plugin the template could not load.
+export const pluginDistTags = ['latest', 'beta'];
+
+// Core packages whose major line must match between the template and a plugin.
+export const corePeerPackages = [
+  '@nocobase/app-server',
+  '@nocobase/app-client',
+];
+
+const versionPattern =
+  /^(\d+)\.(\d+)\.(\d+)(?:-([0-9A-Za-z.-]+))?(?:\+[0-9A-Za-z.-]+)?$/u;
+
+function parseVersion(version) {
+  const match = versionPattern.exec(String(version));
+  assert.ok(match, `Unusable version: ${JSON.stringify(version)}`);
+  return {
+    core: match.slice(1, 4).map(Number),
+    pre: match[4] === undefined ? [] : match[4].split('.'),
+  };
+}
+
+// Semver precedence (build metadata ignored).
+export function compareVersions(a, b) {
+  const left = parseVersion(a);
+  const right = parseVersion(b);
+  for (let index = 0; index < 3; index += 1) {
+    if (left.core[index] !== right.core[index])
+      return left.core[index] < right.core[index] ? -1 : 1;
+  }
+  if (!left.pre.length || !right.pre.length)
+    return Math.sign(right.pre.length - left.pre.length);
+  for (let index = 0; ; index += 1) {
+    if (index === left.pre.length || index === right.pre.length)
+      return Math.sign(left.pre.length - right.pre.length);
+    const [x, y] = [left.pre[index], right.pre[index]];
+    if (x === y) continue;
+    const [nx, ny] = [/^\d+$/u.test(x), /^\d+$/u.test(y)];
+    if (nx && ny) return Number(x) < Number(y) ? -1 : 1;
+    if (nx !== ny) return nx ? -1 : 1;
+    return x < y ? -1 : 1;
+  }
+}
+
+// The highest published release across the supported channels.
+export function selectPluginVersion(distTags, packageName) {
+  const candidates = pluginDistTags
+    .filter((tag) => typeof distTags?.[tag] === 'string')
+    .map((tag) => ({ tag, version: distTags[tag] }));
+  assert.ok(
+    candidates.length > 0,
+    `${packageName}: none of the ${pluginDistTags.join('/')} dist-tags is published`,
+  );
+  return candidates.reduce((best, candidate) =>
+    compareVersions(candidate.version, best.version) > 0 ? candidate : best,
+  );
+}
+
+// The release line a range admits, the way a caret range reads it: the major
+// version, or the minor version within 0.x.
+function releaseLine(range) {
+  const match = /(\d+)\.(\d+)/u.exec(String(range));
+  if (!match) return undefined;
+  return match[1] === '0' ? `0.${match[2]}` : match[1];
+}
+
+export function checkCorePeers(appManifest, pluginManifest) {
+  const declared = {
+    ...appManifest.devDependencies,
+    ...appManifest.dependencies,
+  };
+  const problems = [];
+  for (const core of corePeerPackages) {
+    const peer = pluginManifest.peerDependencies?.[core];
+    if (peer === undefined) continue;
+    const own = declared[core];
+    if (own === undefined) {
+      problems.push(
+        `requires ${core} ${peer}, which the template does not declare`,
+      );
+      continue;
+    }
+    const [pluginLine, templateLine] = [releaseLine(peer), releaseLine(own)];
+    if (!pluginLine || pluginLine !== templateLine)
+      problems.push(
+        `requires ${core} ${peer}, but the template declares ${own}`,
+      );
+  }
+  assert.ok(
+    problems.length === 0,
+    `${pluginManifest.name}@${pluginManifest.version} is built for a different NocoBase core: ${problems.join('; ')}. ` +
+      `Check its ${pluginDistTags.join('/')} dist-tags; a compatible release must be published before the template can be refreshed.`,
+  );
+}
+
 function commandResult(response, operation, statuses) {
   assert.ok(
     response?.schemaVersion === 1 &&
@@ -121,9 +218,43 @@ function runTemplatePlugins(mode, appDirectory, diagnosticsDirectory) {
   };
 
   if (mode === 'install') {
+    const selected = templatePlugins.map((packageName) => ({
+      packageName,
+      ...selectPluginVersion(
+        run(
+          ['--silent', 'view', packageName, 'dist-tags', '--json'],
+          `${packageName.split('/')[1]}.dist-tags.json`,
+        ),
+        packageName,
+      ),
+    }));
+    writeFileSync(
+      path.join(diagnostics, 'selected-versions.json'),
+      `${JSON.stringify(selected, null, 2)}\n`,
+    );
     // One dependency resolution instead of an install for every registration.
     // --no-install below still performs the official Client/Server/CLI wiring.
-    run(['add', ...templatePlugins.map((name) => `${name}@latest`)]);
+    run([
+      'add',
+      ...selected.map(
+        ({ packageName, version }) => `${packageName}@${version}`,
+      ),
+    ]);
+    // Fail on a core mismatch here rather than as an import error at build time.
+    const appManifest = JSON.parse(
+      readFileSync(path.join(appRoot, 'package.json'), 'utf8'),
+    );
+    for (const { packageName } of selected) {
+      checkCorePeers(
+        appManifest,
+        JSON.parse(
+          readFileSync(
+            path.join(appRoot, 'node_modules', packageName, 'package.json'),
+            'utf8',
+          ),
+        ),
+      );
+    }
     for (const packageName of templatePlugins) {
       const response = run(
         [
