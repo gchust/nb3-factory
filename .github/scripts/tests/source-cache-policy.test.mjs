@@ -9,7 +9,12 @@ for (const [name, next] of [['agent', 'verify-final'], ['verify-final', 'publish
   test(`${name}: local source packages never enter setup-node shared cache`, () => {
     const job = workflow.split(`  ${name}:\n`)[1].split(`  ${next}:\n`)[0];
     const setup = job.indexOf('uses: actions/setup-node@');
-    assert.ok(setup > job.indexOf('path: workspace'), 'Source descriptor is checked out first');
+    // The agent job checks the workspace out itself; the later jobs do it
+    // through the apply-task-patch composite action.
+    const checkout = job.indexOf(
+      name === 'agent' ? 'path: workspace' : 'uses: ./factory-actions/.github/actions/apply-task-patch',
+    );
+    assert.ok(checkout >= 0 && setup > checkout, 'Source descriptor is checked out first');
     const block = job.slice(setup, job.indexOf('\n      - name:', setup));
     assert.ok(block.includes(`cache: ${cacheInput}`));
     assert.match(block, /node-version: 24.x/);

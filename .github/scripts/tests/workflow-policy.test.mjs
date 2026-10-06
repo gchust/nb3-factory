@@ -336,10 +336,26 @@ test('runner-local timing paths are initialized in steps, not job-level env', ()
   assert.doesNotMatch(workflow, /FACTORY_DEPENDENCY_CACHE/);
 });
 
+// The workflows plus the composite actions under .github/actions, which pin
+// their own `uses:` the same way.
+const actionSources = () => {
+  const workflows = new URL('../../workflows/', import.meta.url);
+  const actions = new URL('../../actions/', import.meta.url);
+  return [
+    ...readdirSync(workflows)
+      .filter((file) => file.endsWith('.yml'))
+      .map((name) => [name, readFileSync(new URL(name, workflows), 'utf8')]),
+    ...(existsSync(actions)
+      ? readdirSync(actions).map((name) => [
+          `actions/${name}/action.yml`,
+          readFileSync(new URL(`${name}/action.yml`, actions), 'utf8'),
+        ])
+      : []),
+  ];
+};
+
 test('every remote action is pinned to a full commit SHA with its version noted', () => {
-  const directory = new URL('../../workflows/', import.meta.url);
-  for (const name of readdirSync(directory).filter((file) => file.endsWith('.yml'))) {
-    const source = readFileSync(new URL(name, directory), 'utf8');
+  for (const [name, source] of actionSources()) {
     for (const [, reference] of source.matchAll(/^\s*(?:-\s+)?uses:\s+(\S+.*)$/gm)) {
       if (reference.startsWith('./')) continue;
       assert.match(reference, /^[\w.-]+\/[\w./-]+@[0-9a-f]{40} # v\d+\.\d+\.\d+$/, `${name}: ${reference}`);
@@ -349,10 +365,8 @@ test('every remote action is pinned to a full commit SHA with its version noted'
 
 test('each remote action uses one pinned release across all workflows', () => {
   // A step added beside an upgrade merges without conflict and can keep the old pin.
-  const directory = new URL('../../workflows/', import.meta.url);
   const pins = new Map();
-  for (const name of readdirSync(directory).filter((file) => file.endsWith('.yml'))) {
-    const source = readFileSync(new URL(name, directory), 'utf8');
+  for (const [name, source] of actionSources()) {
     for (const [, action, pin] of source.matchAll(/^\s*(?:-\s+)?uses:\s+([\w.-]+\/[\w.-]+)[\w./-]*@(\S+ # \S+)$/gm)) {
       const seen = pins.get(action);
       if (seen) assert.equal(pin, seen.pin, `${name}: ${action} differs from ${seen.name}`);
