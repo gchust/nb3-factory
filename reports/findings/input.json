@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "inputHash": "b78e70a25fe9d1cb20cd60014a7e703e62b9d23a5790174ad381f58baeb0f7e2",
+  "inputHash": "771f6a8ebfc2ab1848bfd3b9582f30cb7c138873f1afd940eb0b58252943c76e",
   "findings": [
     {
       "id": "460:36434284393:1:F2",
@@ -8978,6 +8978,269 @@
         }
       ],
       "fingerprint": "6328b7ed14a27c50b46bea3a1f37c7db0efffa9e3a00780898562be648cef1ff"
+    },
+    {
+      "id": "575:37394443207:1:F1",
+      "report": "575:37394443207:1",
+      "issue": 575,
+      "taskTitle": "客户、联系人与商机管理",
+      "appVersion": "1.0.0-beta.50",
+      "appTemplate": "@nocobase/app-template-default",
+      "finding": {
+        "id": "F1",
+        "kind": "issue",
+        "owner": "framework",
+        "severity": "major",
+        "confidence": "confirmed",
+        "status": "open",
+        "title": "@nocobase/db 的 check 约束在 knex/sqlite 上被静默忽略",
+        "detail": "公共类型把 CheckConstraintDefinition 并入 ConstraintDefinition，CollectionDefinition.constraints 与 addConstraint 均接受 type=check；但 knex 适配器 buildConstraint 的 switch 只处理 primary/unique/foreignKey，check 分支留注释后直接 break，既不生成 DDL 也不抛错。dropConstraint 反而能 dropChecks，能力不对称。应用迁移作者不得不在注释里记录该限制，把金额非负退回 service 与表单兜底。",
+        "impact": "照 nocobase-db Skill 写全约束的要求声明检查约束时，会以为数据库已强制完整性，实际约束不存在且无任何反馈，属于静默的数据完整性缺口。",
+        "suggestedChange": "在 knex 及其它支持 CHECK 的方言实现表达式编译并生成 CHECK DDL；暂不支持的方言在 apply 时以明确错误或告警提示而非静默丢弃；并在 nocobase-db Skill 的不存在 API 与 Verify 处点名该限制。",
+        "diagnosis": {
+          "category": "runtime-defect",
+          "trigger": "在 Collection 定义或 addConstraint 中声明 type=check 的约束后执行迁移。",
+          "expected": "数据库生成对应 CHECK 约束；若方言不支持，应报错或明确告警。",
+          "actual": "适配器 check 分支直接 break，DDL 不含该约束且无提示；而类型系统仍接受该声明。",
+          "workaround": "应用放弃 CHECK，改由 CrmService 校验 amount>=0 并在表单做同样校验（迁移注释明示）。",
+          "acceptance": "对声明了 check 的 Collection 迁移后 schemaInspector 能查到该约束；不支持的方言执行时返回明确错误或告警；Skill 不再暗示任意约束都会被创建。"
+        },
+        "evidence": [
+          "E1",
+          "E2",
+          "E3",
+          "E19",
+          "E29"
+        ]
+      },
+      "targets": [
+        "@nocobase/db",
+        "app/.agents/skills/nocobase-db/SKILL.md"
+      ],
+      "paths": [
+        ".agents/skills/nocobase-db/SKILL.md",
+        "packages/@nocobase/db/dist/src/collection/types.d.ts",
+        "packages/@nocobase/db/dist/src/schema/internal/knex/adapter.js"
+      ],
+      "evidence": [
+        {
+          "id": "E1",
+          "kind": "code",
+          "path": "packages/@nocobase/db/dist/src/schema/internal/knex/adapter.js",
+          "observation": "knex 适配器 buildConstraint 的 switch 覆盖 primary/unique/foreignKey，但 case 'check' 只留注释后 break，不产生任何 DDL。",
+          "lines": [
+            287,
+            330
+          ],
+          "excerpt": "    buildConstraint(table, constraint) {\n        switch (constraint.type) {\n            case 'primary':\n                addPrimaryConstraint(table, constraint.columns, constraintOptions({\n                    constraintName: constraint.name,\n                    deferrable: normalizeDeferrable(constraint.deferrable),\n                }));\n                break;\n            case 'unique':\n                addUniqueConstraint(table, constraint.columns, indexOptions({\n                    indexName: constraint.name,\n                    deferrable: normalizeDeferrable(constraint.deferrable),\n                    storageEngineIndexType: constraint.indexType,\n                    useConstraint: constraint.mode === 'constraint' ? true : undefined,\n                    predicate: constraint.predicate\n                        ? this.buildPredicate(constraint.predicate)\n                        : undefined,\n                }));\n                break;\n            case 'foreignKey': {\n                const foreign = table\n                    .foreign(constraint.columns, constraint.name)\n                    .references(constraint.references.columns)\n                    .inTable(constraint.references.table);\n                const customForeignKey = this.runtime?.schema?.configureForeignKey;\n                if (customForeignKey)\n                    customForeignKey({ foreign, constraint });\n                else {\n                    if (constraint.onDelete)\n                        foreign.onDelete(constraint.onDelete.toUpperCase());\n                    if (constraint.onUpdate)\n                        foreign.onUpdate(constraint.onUpdate.toUpperCase());\n                }\n                const deferrable = normalizeDeferrable(constraint.deferrable);\n                if (deferrable && 'deferrable' in foreign) {\n                    foreign.deferrable(deferrable);\n                }\n                break;\n            }\n            case 'check':\n                // Knex has check helpers, but expression compilation belongs in a later pass.\n                break;\n            default:\n                assertNever(constraint);",
+          "sha256": "2d55408fd7aae20528a175557d300f07766a6c2e8cafbbce89643b35a97d5277"
+        },
+        {
+          "id": "E2",
+          "kind": "code",
+          "path": "packages/@nocobase/db/dist/src/schema/internal/knex/adapter.js",
+          "observation": "同一文件 dropConstraint 却能对 'check' 调 table.dropChecks，新增与删除检查约束的能力不对称。",
+          "lines": [
+            139,
+            149
+          ],
+          "excerpt": "            case 'dropConstraint':\n                switch (operation.constraintType) {\n                    case 'primary':\n                        table.dropPrimary(operation.name);\n                        break;\n                    case 'unique':\n                        table.dropUnique([], operation.name);\n                        break;\n                    case 'check':\n                        table.dropChecks(operation.name);\n                        break;",
+          "sha256": "2d55408fd7aae20528a175557d300f07766a6c2e8cafbbce89643b35a97d5277"
+        },
+        {
+          "id": "E3",
+          "kind": "code",
+          "path": "packages/@nocobase/db/dist/src/collection/types.d.ts",
+          "observation": "公共类型把 CheckConstraintDefinition 并入 ConstraintDefinition，CollectionDefinition.constraints / addConstraints 均接受它，等于对外承诺可声明检查约束。",
+          "lines": [
+            95,
+            158
+          ],
+          "excerpt": "export interface CheckConstraintDefinition {\n    type: 'check';\n    name?: string;\n    expression: FilterExpression | string;\n    db?: DialectOptions;\n}\nexport type ConstraintDefinition = PrimaryConstraintDefinition | UniqueConstraintDefinition | ForeignKeyConstraintDefinition | CheckConstraintDefinition;\nexport interface IndexDefinition {\n    fields?: string[];\n    expressions?: unknown[];\n    name?: string;\n    type?: string;\n    predicate?: FilterExpression;\n    order?: Record<string, 'asc' | 'desc'>;\n    db?: DialectOptions;\n}\nexport interface QueryViewDefinition {\n    from: string;\n    select: string[];\n    filter?: FilterExpression;\n}\nexport interface RawViewDefinition {\n    sql: string;\n    bindings?: unknown[];\n}\nexport interface ViewOptions {\n    as?: QueryViewDefinition;\n    asRaw?: RawViewDefinition;\n    refresh?: {\n        strategy?: 'manual' | 'scheduled';\n    };\n}\nexport interface OptimisticLockDefinition {\n    field: string;\n    strategy: 'increment';\n}\nexport interface CollectionDefinition {\n    kind?: CollectionKind;\n    name?: string;\n    naming?: NamingOptions;\n    title?: string;\n    description?: string;\n    db?: DbOptions;\n    fields?: AnyFieldDefinition[];\n    constraints?: ConstraintDefinition[];\n    indexes?: IndexDefinition[];\n    view?: ViewOptions;\n    optimisticLock?: OptimisticLockDefinition;\n}\nexport type FieldAlterInput = Partial<Omit<FieldDefinition, 'name'>>;\nexport interface CollectionAlterDefinition {\n    optimisticLock?: OptimisticLockDefinition | null;\n    addFields?: AnyFieldDefinition[];\n    alterFields?: Array<{\n        name: string;\n        changes: FieldAlterInput;\n    }>;\n    dropFields?: string[];\n    addIndexes?: IndexDefinition[];\n    dropIndexes?: string[];\n    addConstraints?: ConstraintDefinition[];\n    dropConstraints?: string[];\n}\nexport type CollectionDefinitionInput = CollectionDefinition | ((collection: CollectionDefinitionBuilder) => void);",
+          "sha256": "10e28ee4845c4300ddc190b925a57d8be3d1be9c23e43a2c032f9997aabfc19e"
+        },
+        {
+          "id": "E19",
+          "kind": "skill",
+          "path": "app/.agents/skills/nocobase-db/SKILL.md",
+          "observation": "Skill 要求迁移自包含：写全每张表、字段、索引与约束，并规定 seed 用 upsertOne 保持幂等。",
+          "lines": [
+            129,
+            139
+          ],
+          "excerpt": "The rules are absolute, because these files are history that has already run on other machines:\n\n- **Self-contained.** Spell out every table, field, index, constraint and metadata operation in the file. Never import a Collection definition, model, registry or shared constant that keeps evolving — that silently changes both the behavior and the checksum of something already applied.\n- **Immutable once merged.** Check with `git log -- <file>` if unsure. Before the branch is merged you may correct the file in place; after it, every change is a new, later file. Never hard-code a previous checksum to make an edited migration look untouched. Correcting it in place changes nothing on its own — it is recorded as executed, so a plain apply skips it and the database keeps the schema the old file produced. `pnpm nocobase db redo` rolls the latest batch back and applies it again.\n- **The file name body matches `name`**, and the name is unique across every source in the application.\n- **Declare `irreversible: true`** when there is no real reverse operation, instead of writing a `down()` that quietly does nothing.\n- **A seed is idempotent**, keyed on a stable business value backed by a unique constraint, so a repeated run is a no-op — `upsertOne` is the direct way to express that. A seed context has no `builder` at all, and a seed has no rollback or truncate behavior.\n\nA backfill belongs in the migration that makes it necessary, using `query` from the same context — not in a seed.\n\nBoth run inside a transaction by default. `transaction: false` opts out, and a failure then leaves partial work behind with no history record, so take it only when the operation genuinely cannot run in one.",
+          "sha256": "f97c07a45a9d49c1d933ddbceeabcc9afe267b1356a2ded1a3da0dd56b54011c"
+        },
+        {
+          "id": "E29",
+          "kind": "code",
+          "path": "app/database/main/migrations/20260201120000_create_crm_tables.ts",
+          "observation": "应用迁移注释明确写明“knex schema adapter 会跳过 check 约束，因此 amount>=0 改由 service 与表单执行”。",
+          "lines": [
+            3,
+            28
+          ],
+          "excerpt": "/**\n * Customer, contact and opportunity tables for the sales team.\n *\n * Self-contained by design: every column, index and constraint is spelled out\n * here instead of importing a Collection definition that keeps evolving, so an\n * already-applied migration always means the same thing.\n *\n * `customers.name`, `contacts.name+customerId` and `opportunities.name+customerId`\n * carry unique constraints so the sample-data seed can rely on `upsertOne`\n * idempotency against a stable business key.\n *\n * There is deliberately no CHECK constraint on `opportunities.amount`: the\n * knex schema adapter skips check constraints, so \"amount is never negative\" is\n * enforced by the service layer and the form.\n */\nconst migration: MigrationDefinition = defineMigration({\n  name: '20260201120000_create_crm_tables',\n  async up({ builder }) {\n    await builder.createCollection('customers', (collection) => {\n      collection.increments('id');\n      collection.string('name', { length: 128, nullable: false });\n      collection.string('industry', { length: 128 });\n      collection.datetime('createdAt', { nullable: false });\n      collection.datetime('updatedAt', { nullable: false });\n      collection.unique('name', { name: 'crm_customers_name_unique' });\n      collection.index('industry', { name: 'crm_customers_industry_idx' });",
+          "sha256": "8ce81dc9fe44449079cd26156eb210135d61fe8d795fc8af85f988f09e543dc3"
+        }
+      ],
+      "fingerprint": "b97a56167e92962e561479cc7345719d25f9208a1148cf368d1f76fead235e57"
+    },
+    {
+      "id": "575:37394443207:1:F2",
+      "report": "575:37394443207:1",
+      "issue": 575,
+      "taskTitle": "客户、联系人与商机管理",
+      "appVersion": "1.0.0-beta.50",
+      "appTemplate": "@nocobase/app-template-default",
+      "finding": {
+        "id": "F2",
+        "kind": "improvement",
+        "owner": "template",
+        "severity": "minor",
+        "confidence": "confirmed",
+        "status": "open",
+        "title": "模板 DataTable 未透传 DataTablePagination 的 showSelectedCount",
+        "detail": "模板的 DataTablePagination 已提供 showSelectedCount（默认 true），但模板的 DataTable 渲染它时只传 table 与 pageSizeOptions，未把该属性透出。没有行选择的列表页因此固定显示 0 of N row(s) selected.。表格指引已把该行为列入已知行为，要求应用自行给 DataTable 增加透传。",
+        "impact": "CRM 三个列表都没有行选择，却都会显示无意义的选中计数，需要每个应用重复绕行或容忍一处视觉噪声。",
+        "suggestedChange": "在模板的 DataTable 上增加可选 showSelectedCount 并透传给 DataTablePagination，默认行为不变；表格指引同步说明无需各应用再改。",
+        "diagnosis": {
+          "category": "usability-improvement",
+          "trigger": "使用模板 DataTable 渲染一个没有行选择的列表页。",
+          "expected": "无行选择时不显示选中计数，或 DataTable 至少能透出 showSelectedCount 由页面关闭。",
+          "actual": "DataTablePagination 已支持关闭，但 DataTable 不传该属性，页面无法关闭，只能改模板组件。",
+          "workaround": "按表格指引给 DataTable 增加可选 showSelectedCount 透传（或改 DataTablePagination 默认值）。",
+          "acceptance": "DataTable 接受并透传 showSelectedCount；无行选择列表默认不出现选中计数摘要。"
+        },
+        "evidence": [
+          "E26",
+          "E36",
+          "E37"
+        ]
+      },
+      "targets": [
+        "app/.agents/skills/nocobase-app-development/references/frontend/references/table.md"
+      ],
+      "paths": [
+        ".agents/skills/nocobase-app-development/references/frontend/references/table.md"
+      ],
+      "evidence": [
+        {
+          "id": "E26",
+          "kind": "skill",
+          "path": "app/.agents/skills/nocobase-app-development/references/frontend/references/table.md",
+          "observation": "表格指引记录模板 DataTable 的已知行为：选中计数总显示，需给 DataTable 增补 showSelectedCount 透传。",
+          "lines": [
+            34,
+            46
+          ],
+          "excerpt": "## 3. Known DataTable behavior\n\nThe following has been checked against the template's `client/components/data-table.tsx` and `data-table-pagination.tsx`. Know these points before you use it, and handle them as needed in the design and the implementation:\n\n| Behavior                                             | Impact                                                                                               | What to do                                                                                                                                                                                                                                                                                             |\n| ---------------------------------------------------- | ---------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |\n| The pagination bar always shows \"N row(s) selected\"  | A table without row selection still shows \"0 of N row(s) selected.\"                                  | `DataTablePagination` already has a `showSelectedCount` prop, but `DataTable` does not pass it through. Add an optional `showSelectedCount` prop (default `true`) to `DataTable` that passes it through, and have the list page pass `false`. First check whether the application has already added it |\n| The header menu of a sortable column includes \"Hide\" | If the page has no \"Toggle columns\" entry, a hidden column cannot be brought back                    | Write `enableHiding: false` in the column definition, or put `DataTableViewOptions` in `toolbar`                                                                                                                                                                                                       |\n| No initial sorting state                             | The default order can only be the order the endpoint returns, and the header shows no sort direction | Have the endpoint return the default order (guideline T1.8: most recently updated first) and state this in the design; if needed, add an optional `initialSorting` prop to `DataTable`                                                                                                                 |\n| Returns to page 1 when the data changes              | Search, filtering, refreshing and deleting all return to page 1                                      | Usually what you want. To stay on the current page, change `DataTable` (for example, add an `autoResetPageIndex` prop passed through to `useReactTable`) and handle the current page exceeding the page count after a delete                                                                           |\n| Browser-side sorting compares character codes        | Chinese is not sorted by pinyin                                                                      | Offer no sorting on Chinese columns, or write a `sortingFn` in the column definition that compares with `Intl.Collator(locale)` (the example's name column does this)                                                                                                                                  |\n| The page-number text has a fixed width, `w-[100px]`  | The Chinese \"第 1 页，共 100 页\" (\"Page 1 of 100\") wraps onto two lines                              | Change this part of `DataTablePagination` to `min-w-[100px] whitespace-nowrap`. First check whether the application has already changed it                                                                                                                                                             |\n| The built-in `toolbar` container does not wrap       | With several controls in it, it overflows on narrow screens                                          | Put the page's own search and filters outside `DataTable`, using `flex flex-wrap` (as the example does)                                                                                                                                                                                                |",
+          "sha256": "5134b9f555a14826cbce6c36c995a5e73fe9393b329240aa6ecec64f2b0699f9"
+        },
+        {
+          "id": "E36",
+          "kind": "code",
+          "path": "app/client/components/data-table.tsx",
+          "observation": "模板 DataTable 渲染 DataTablePagination 时只传 table 与 pageSizeOptions，未透传 showSelectedCount。",
+          "lines": [
+            158,
+            161
+          ],
+          "excerpt": "      </div>\n      {pagination ? (\n        <DataTablePagination table={table} pageSizeOptions={pageSizeOptions} />\n      ) : null}",
+          "sha256": "4193782ba9aa0c5c588ef59a2b46c9f7c5ca75f8de04717a1878058aaf7faca3"
+        },
+        {
+          "id": "E37",
+          "kind": "code",
+          "path": "app/client/components/data-table-pagination.tsx",
+          "observation": "DataTablePagination 本已有 showSelectedCount 可选属性且默认 true，但 DataTable 未使用它。",
+          "lines": [
+            24,
+            40
+          ],
+          "excerpt": "  readonly table: TableInstance<TData>;\n  readonly pageSizeOptions?: readonly number[];\n  /** Hide the \"n of m selected\" summary for tables without row selection. */\n  readonly showSelectedCount?: boolean;\n}\n\nconst DEFAULT_PAGE_SIZE_OPTIONS: readonly number[] = [10, 20, 30, 40, 50];\n\n/**\n * Pagination controls for a TanStack table: selected-row summary, page size,\n * current page, and first/previous/next/last buttons. `DataTable` renders it\n * for you; use it directly when composing a table by hand.\n */\nexport function DataTablePagination<TData>({\n  table,\n  pageSizeOptions = DEFAULT_PAGE_SIZE_OPTIONS,\n  showSelectedCount = true,",
+          "sha256": "c93c975dee0e60ff96618857cc8d80e98ebae19accbd0687b7f92f401a340c98"
+        }
+      ],
+      "fingerprint": "1bd8a4591fd1b4be6c3b902af3018cbb4953dda9d9bcc5a22faf7fbcfef49324"
+    },
+    {
+      "id": "575:37394443207:1:F3",
+      "report": "575:37394443207:1",
+      "issue": 575,
+      "taskTitle": "客户、联系人与商机管理",
+      "appVersion": "1.0.0-beta.50",
+      "appTemplate": "@nocobase/app-template-default",
+      "finding": {
+        "id": "F3",
+        "kind": "improvement",
+        "owner": "documentation",
+        "severity": "minor",
+        "confidence": "confirmed",
+        "status": "open",
+        "title": "测试指引未说明 Cookie 写入请求需要匹配 Origin 或 APP_PUBLIC_ORIGIN",
+        "detail": "根指引说明了开发代理的 Origin 适配与生产使用 APP_PUBLIC_ORIGIN、保持后端 origin 校验开启，但 testing.md 的路由测试示例只演示 GET，没有说明带 Cookie 的 POST/PATCH 在缺 Origin 时会被 Better Auth 以 403 INVALID_CSRF_ORIGIN 拒绝。实现日志显示 agent 为此写了临时 probe 并多轮翻查 node_modules，最终在应用测试 harness 里设置 APP_PUBLIC_ORIGIN 才通过。",
+        "impact": "agent 编写集成测试或脚本验证写入路径时会遇到看似无解的 403，浪费探索成本，甚至可能误判为框架缺陷或去关闭安全检查。",
+        "suggestedChange": "在 testing.md 增加说明：验证带 Cookie 的写请求时，测试 harness 需设置 APP_PUBLIC_ORIGIN 或在请求上带匹配 Origin；并说明不要为此关闭 origin 校验。",
+        "diagnosis": {
+          "category": "guidance-gap",
+          "trigger": "在未设置 APP_PUBLIC_ORIGIN 的测试环境中对写端点发 POST/PATCH。",
+          "expected": "指引说明该前提，使测试可一次通过。",
+          "actual": "示例只有 GET；缺 Origin 的写请求被 403 拒绝，日志中 agent 通过临时 probe 才发现。",
+          "workaround": "应用测试 harness 设 APP_PUBLIC_ORIGIN=http://localhost，浏览器路径不受影响。",
+          "acceptance": "testing.md 写明该前提或提供带 Origin 的写请求测试示例；应用按该指引可直接通过写路径测试。"
+        },
+        "evidence": [
+          "E28",
+          "E38",
+          "E51"
+        ]
+      },
+      "targets": [
+        "app/AGENTS.md"
+      ],
+      "paths": [
+        "AGENTS.md"
+      ],
+      "evidence": [
+        {
+          "id": "E28",
+          "kind": "skill",
+          "path": "app/AGENTS.md",
+          "observation": "根指引说明开发代理只适配同源 Origin，生产用 APP_PUBLIC_ORIGIN，后端校验保持开启。",
+          "lines": [
+            228,
+            233
+          ],
+          "excerpt": "Do not hard-code `/main` from the examples below. It is only the fallback for an unset `APP_BASE_PATH`. Local development resolves that variable from the command-line environment, then `.env.local`, then `.env`. The remote mount path is independently supplied in `PROXY_TARGET_URL`: inspect the target application's actual public URL instead of assuming it matches the local path. For example, `APP_BASE_PATH=/local PROXY_TARGET_URL=http://127.0.0.1:13000/crm pnpm dev` forwards local `/local/api` and `/local/ws` to remote `/crm/api` and `/crm/ws`.\n\nUse `PROXY_TARGET_URL=https://backend.example.com/main pnpm dev` to run only the local Vite client against another application's API and WebSocket service. The URL is the remote application base, including its mount path, without `/api`. Open the printed Local URL. The local server and server watchers are skipped; `beforeDev` hooks still run. Requests, including writes, affect the target backend. See README.MD for path mapping and authentication requirements. Leave the variable unset for normal full-stack development.\n\nThe development proxy adapts same-origin HTTP and WebSocket Origin headers to the target origin, and maps same-origin Referer paths to the target app base. Other origins remain unchanged and missing Origin headers are not added. Keep backend origin checks enabled; this adaptation belongs only to Vite development, not production deployment. Production uses `APP_PUBLIC_ORIGIN` and a reverse proxy that preserves the public Host and protocol.\n",
+          "sha256": "251700f48228b69edc272eaba24673b1a6307652d07e13ec296b7f9ac92d3512"
+        },
+        {
+          "id": "E38",
+          "kind": "code",
+          "path": "app/tests/support/standalone-app.ts",
+          "observation": "应用测试 harness 设置 APP_PUBLIC_ORIGIN=http://localhost，注释说明是为了通过 Better Auth 的 origin 校验。",
+          "lines": [
+            55,
+            57
+          ],
+          "excerpt": "      // Pins the Better Auth base URL so cookie-bearing writes pass the origin\n      // check the same way they do in a browser.\n      APP_PUBLIC_ORIGIN: 'http://localhost',",
+          "sha256": "be00c72dcce914e8d9e43ac27ae921793336d64284d995c6f1acdcc0b47eecec"
+        },
+        {
+          "id": "E51",
+          "kind": "log",
+          "path": "artifacts/agent-history/agent-implement.jsonl/part-0033.txt",
+          "observation": "实现日志：临时 probe 测试无 Origin 触发 403 INVALID_CSRF_ORIGIN，促使 agent 排查 origin 校验。",
+          "lines": [
+            402,
+            404
+          ],
+          "excerpt": "{\"type\":\"tool_execution_update\",\"toolCallId\":\"call_00_ET_a2dtJRF7kVSNPHXaeABo9318\",\"toolName\":\"bash\",\"args\":{\"command\":\"cd /home/runner/work/nb3-factory/nb3-factory/workspace && pnpm exec vitest run tests/tmp/probe.test.ts 2>&1 | grep -A 30 \\\"probe\\\" | head -50\",\"timeout\":400},\"partialResult\":{\"content\":[{\"type\":\"text\",\"text\":\" ❯ tests/tmp/probe.test.ts (1 test | 1 failed) 1473ms\\n   × probe 9ms\\n\\n⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯\\n\\n FAIL  tests/tmp/probe.test.ts > probe\\nAssertionError: expected { status: 403, …(1) } to deeply equal { status: +0, body: '' }\\n\\n- Expected\\n+ Received\\n\\n  {\\n-   \\\"body\\\": \\\"\\\",\\n-   \\\"status\\\": 0,\\n+   \\\"body\\\": \\\"{\\\\\\\"code\\\\\\\":\\\\\\\"INVALID_CSRF_ORIGIN\\\\\\\"}\\\",\\n+   \\\"status\\\": 403,\\n  }\\n\\n ❯ tests/tmp/probe.test.ts:37:40\\n     35|   );\\n     36|   const body = await res.text();\\n     37|   expect({ status: res.status, body }).toEqual({ status: 0, body: '' }…\\n       |                                        ^\\n     38| });\\n     39|\\n\\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\\n\\n\\n Test Files  1 failed (1)\\n      Tests  1 failed (1)\\n   Start at  01:03:56\\n   Duration  3.73s (transform 206ms, setup 146ms, import 1.98s, tests 1.47s, environment 0ms)\\n\\n\\n::error file=/home/runner/work/nb3-factory/nb3-factory/workspace/tests/tmp/probe.test.ts,title=tests/tmp/probe.test.ts > probe,line=37,column=40::AssertionError: expected { status: 403, …(1) } to deeply equal { status: +0, body: '' }%0A%0A- Expected%0A+ Received%0A%0A  {%0A-   \\\"body\\\": \\\"\\\",%0A-   \\\"status\\\": 0,%0A+   \\\"body\\\": \\\"{\\\\\\\"code\\\\\\\":\\\\\\\"INVALID_CSRF_ORIGIN\\\\\\\"}\\\",%0A+   \\\"status\\\": 403,%0A  }%0A%0A ❯ tests/tmp/probe.test.ts:37:40%0A%0A\\n\"}],\"details\":{}}}\n{\"type\":\"tool_execution_end\",\"toolCallId\":\"call_00_ET_a2dtJRF7kVSNPHXaeABo9318\",\"toolName\":\"bash\",\"result\":{\"content\":[{\"type\":\"text\",\"text\":\" ❯ tests/tmp/probe.test.ts (1 test | 1 failed) 1473ms\\n   × probe 9ms\\n\\n⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯\\n\\n FAIL  tests/tmp/probe.test.ts > probe\\nAssertionError: expected { status: 403, …(1) } to deeply equal { status: +0, body: '' }\\n\\n- Expected\\n+ Received\\n\\n  {\\n-   \\\"body\\\": \\\"\\\",\\n-   \\\"status\\\": 0,\\n+   \\\"body\\\": \\\"{\\\\\\\"code\\\\\\\":\\\\\\\"INVALID_CSRF_ORIGIN\\\\\\\"}\\\",\\n+   \\\"status\\\": 403,\\n  }\\n\\n ❯ tests/tmp/probe.test.ts:37:40\\n     35|   );\\n     36|   const body = await res.text();\\n     37|   expect({ status: res.status, body }).toEqual({ status: 0, body: '' }…\\n       |                                        ^\\n     38| });\\n     39|\\n\\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\\n\\n\\n Test Files  1 failed (1)\\n      Tests  1 failed (1)\\n   Start at  01:03:56\\n   Duration  3.73s (transform 206ms, setup 146ms, import 1.98s, tests 1.47s, environment 0ms)\\n\\n\\n::error file=/home/runner/work/nb3-factory/nb3-factory/workspace/tests/tmp/probe.test.ts,title=tests/tmp/probe.test.ts > probe,line=37,column=40::AssertionError: expected { status: 403, …(1) } to deeply equal { status: +0, body: '' }%0A%0A- Expected%0A+ Received%0A%0A  {%0A-   \\\"body\\\": \\\"\\\",%0A-   \\\"status\\\": 0,%0A+   \\\"body\\\": \\\"{\\\\\\\"code\\\\\\\":\\\\\\\"INVALID_CSRF_ORIGIN\\\\\\\"}\\\",%0A+   \\\"status\\\": 403,%0A  }%0A%0A ❯ tests/tmp/probe.test.ts:37:40%0A%0A\\n\"}]},\"isError\":false}\n{\"type\":\"message_start\",\"message\":{\"role\":\"toolResult\",\"toolCallId\":\"call_00_ET_a2dtJRF7kVSNPHXaeABo9318\",\"toolName\":\"bash\",\"content\":[{\"type\":\"text\",\"text\":\" ❯ tests/tmp/probe.test.ts (1 test | 1 failed) 1473ms\\n   × probe 9ms\\n\\n⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯\\n\\n FAIL  tests/tmp/probe.test.ts > probe\\nAssertionError: expected { status: 403, …(1) } to deeply equal { status: +0, body: '' }\\n\\n- Expected\\n+ Received\\n\\n  {\\n-   \\\"body\\\": \\\"\\\",\\n-   \\\"status\\\": 0,\\n+   \\\"body\\\": \\\"{\\\\\\\"code\\\\\\\":\\\\\\\"INVALID_CSRF_ORIGIN\\\\\\\"}\\\",\\n+   \\\"status\\\": 403,\\n  }\\n\\n ❯ tests/tmp/probe.test.ts:37:40\\n     35|   );\\n     36|   const body = await res.text();\\n     37|   expect({ status: res.status, body }).toEqual({ status: 0, body: '' }…\\n       |                                        ^\\n     38| });\\n     39|\\n\\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯\\n\\n\\n Test Files  1 failed (1)\\n      Tests  1 failed (1)\\n   Start at  01:03:56\\n   Duration  3.73s (transform 206ms, setup 146ms, import 1.98s, tests 1.47s, environment 0ms)\\n\\n\\n::error file=/home/runner/work/nb3-factory/nb3-factory/workspace/tests/tmp/probe.test.ts,title=tests/tmp/probe.test.ts > probe,line=37,column=40::AssertionError: expected { status: 403, …(1) } to deeply equal { status: +0, body: '' }%0A%0A- Expected%0A+ Received%0A%0A  {%0A-   \\\"body\\\": \\\"\\\",%0A-   \\\"status\\\": 0,%0A+   \\\"body\\\": \\\"{\\\\\\\"code\\\\\\\":\\\\\\\"INVALID_CSRF_ORIGIN\\\\\\\"}\\\",%0A+   \\\"status\\\": 403,%0A  }%0A%0A ❯ tests/tmp/probe.test.ts:37:40%0A%0A\\n\"}],\"isError\":false,\"timestamp\":1791248640454}}",
+          "sha256": "7af88654d012975647c3c8eebac3adc177400480cdb5d1909641b31396a80a72"
+        }
+      ],
+      "fingerprint": "ddbcd54856a2180bfee143de40352c04ebed59866893e290ce9f744d93e29ca5"
     },
     {
       "id": "576:37394448063:1:F2",
