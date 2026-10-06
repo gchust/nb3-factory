@@ -284,7 +284,7 @@ GitHub 限流、5xx、网络或超时等临时故障保持 `pending`，不计为
 超过 24 次可重试失败的记录转为 `rejected`（`retry-limit`）。
 接收端偶尔会先拒绝、稍后又接受同一个包（例如 400 `bad-request` 之后同字节返回 201），因此 `scan` 会自动重发暂时性的 `rejected` 记录**一次**：
 原因是 `bad-request`、`accepted-not-stored` 或 `http-5xx`，距上次记录至少 1 小时，且 `autoRetries` 小于 1（缺省视为 0）。`unauthorized`、`forbidden`、`endpoint-not-found`、`payload-too-large`、`unprocessable`、`redirect-refused`、`invalid-receipt`、其他 `http-<状态>` 需要先修正，`retry-limit` 已用完自动重试，都不自动重发，只能手动 `retry-rejected`。重发使用登记的原始字节和同一幂等键，
-`stored` 记录从不被扫描重发。`record` 作业把这次重发计入 `autoRetries` 并写 `lastAutoRetryAt`，无论结果如何；
+`stored` 记录从不被扫描重发。`record` 作业把这次重发计入 `autoRetries` 并写 `lastAutoRetryAt`，无论结果如何；但请求根本没发出（结果包暂时读不到 `source-unavailable`、投递配置缺失 `config-error`）时与超出发送预算的包一样不写结果：记录保持 `rejected`、原因不被覆盖、不计入 `autoRetries`，下一次扫描再试；
 仍被拒绝时保持 `rejected`，等待修正后手动 `retry-rejected`。发送作业未及写回时计数不变，下一次扫描可能再发一次，接收端幂等返回同一结果。GitHub Artifact 有保留期限，删除关联 Run 也可能删除它，
 因此不承诺历史包永久可重放；`evaluation.json` 与清单的原始字节长期保留在 `gh-pages`。
 

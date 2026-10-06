@@ -211,14 +211,16 @@ export async function recordDeliveries(client, results, now = new Date()) {
       if (entry.state === 'stored' && result.state !== 'stored') continue; // A stored receipt is final.
       entry.state = result.state;
       // Configuration errors and expired sources are not receiver attempts.
-      entry.attempts += result.attempts.filter(item => !['config-error', 'source-expired', 'source-unavailable'].includes(item.outcome)).length;
+      const sent = result.attempts.filter(item => !['config-error', 'source-expired', 'source-unavailable'].includes(item.outcome)).length;
+      entry.attempts += sent;
       entry.history = [...entry.history, ...result.attempts].slice(-10);
       entry.receipt = result.receipt ?? entry.receipt;
       entry.reason = result.reason ?? null;
       // Short sanitized receiver error (code / message); never the response body.
       entry.detail = result.detail ?? null;
-      // A scan's automatic resend of a rejection counts once, whatever its outcome.
-      if (result.autoRetry) {
+      // A scan's automatic resend of a rejection counts once, whatever its
+      // outcome, but only once a request actually went out.
+      if (result.autoRetry && sent > 0) {
         entry.autoRetries = (entry.autoRetries ?? 0) + 1;
         entry.lastAutoRetryAt = now.toISOString();
       }

@@ -264,14 +264,17 @@ export async function sendDeliveries(plan, { env, fetcher, pause, allowInsecureL
   try { config = deliveryConfig(env, { allowInsecureLoopback }); }
   catch (error) {
     if (!(error instanceof DeliveryConfigError)) throw error;
-    for (const item of plan.items) record({ ...strip(item), state: 'pending', reason: 'config-error',
+    // Like a deferred bundle, an automatic resend that was never sent leaves its
+    // rejection, reason and unused retry as they were.
+    for (const item of plan.items) if (!item.autoRetry) record({ ...strip(item), state: 'pending', reason: 'config-error',
       attempts: [{ at: at(), httpStatus: null, outcome: 'config-error', error: 'config', durationMs: 0 }], receipt: null });
-    return { configError: error.message, results, deferred: 0 };
+    return { configError: error.message, results, deferred: 0, unsent: plan.items.filter(item => item.autoRetry).length };
   }
   if (config.targetId !== plan.targetId) throw new Error('Delivery target changed between planning and sending');
-  let deferred = 0;
+  let deferred = 0, unsent = 0;
   for (const item of plan.items) {
     if (item.source === 'unavailable') {
+      if (item.autoRetry) { unsent++; continue; } // Not sent: keep the rejection and the retry for a later scan.
       record({ ...strip(item), state: 'pending', attempts: [{ at: at(), httpStatus: null, outcome: 'source-unavailable', error: 'source-unavailable', durationMs: 0 }],
         receipt: null, reason: item.reason });
       continue;
@@ -289,7 +292,7 @@ export async function sendDeliveries(plan, { env, fetcher, pause, allowInsecureL
     const exhausted = outcome.state === 'pending' && item.previousAttempts + outcome.attempts.length >= RETRY.maxTotalAttempts;
     record({ ...strip(item), ...outcome, ...(exhausted ? { state: 'rejected', reason: 'retry-limit' } : {}) });
   }
-  return { configError: null, results, deferred };
+  return { configError: null, results, deferred, unsent };
 }
 const strip = ({ zip, source, previousAttempts, sourceInstance, ...item }) => item;
 
@@ -359,9 +362,10 @@ async function main() {
       if (file) try { duplicates = duplicatesByItem(file); }
       catch (error) { console.log(`::warning::Problem duplicate judgements ignored: ${error.message}`); }
     }
-    const { configError, results, deferred } = await sendDeliveries(plan, { env: process.env, deadline: Date.now() + SEND_BUDGET_MS,
+    const { configError, results, deferred, unsent } = await sendDeliveries(plan, { env: process.env, deadline: Date.now() + SEND_BUDGET_MS,
       onResult: (_result, all) => save(all), classifications, duplicates });
     if (deferred) console.log(`${deferred} bundle(s) left pending for the next scan to stay within the job budget.`);
+    if (unsent) console.log(`${unsent} automatic resend(s) not sent; their rejections and unused retries are kept for the next scan.`);
     if (process.env.GITHUB_STEP_SUMMARY) appendFileSync(process.env.GITHUB_STEP_SUMMARY, summary(results, configError));
     for (const result of results) console.log(`${result.type} ${keyDigest(result.key).slice(0, 12)} r${result.revision}: ${result.state} (${result.reason ?? 'ok'}${result.detail ? `: ${result.detail}` : ''})${result.autoRetry ? ' [automatic retry]' : ''}`);
     if (configError) { console.error(`::error::Evaluation delivery is enabled but not configured: ${configError}`); process.exitCode = 1; }

@@ -396,3 +396,55 @@ test('custom timeout is included in the pre-delivery budget check', async t => {
   assert.equal(sent.deferred, 1);
   assert.deepEqual(sent.results, []);
 });
+
+test('an automatic resend that never went out keeps its rejection, reason and unused retry', async t => {
+  const env = { EVALUATION_ENDPOINT: 'https://r.example/i' };
+  const { client } = await registered(t, { env: { FACTORY_EVALUATION_DELIVERY: 'true', ...env } });
+  const [queued] = (await readOutbox(client)).outbox.entries;
+  const { id, targetId, type, key, revision, bundleSha256 } = queued;
+  await recordDeliveries(client, [{ id, targetId, type, key, revision, bundleSha256, state: 'rejected', reason: 'bad-request', receipt: null,
+    attempts: [{ at: '2026-10-01T00:00:00.000Z', httpStatus: 400, outcome: 'rejected', error: 'bad-request', detail: null, durationMs: 1 }] }], new Date('2026-10-01T00:00:00Z'));
+  const before = (await readOutbox(client)).outbox.entries[0];
+  const at = new Date('2026-10-01T02:00:00Z');
+  const resend = async (now = at) => {
+    const plan = await planDeliveries(client, { mode: 'scan', env, now, fetcher: fetcherFor(client) });
+    assert.equal(plan.items.length, 1);
+    assert.equal(plan.items[0].autoRetry, true);
+    return plan;
+  };
+  const unchanged = async label => {
+    const entry = (await readOutbox(client)).outbox.entries[0];
+    assert.equal(entry.state, 'rejected', label);
+    assert.equal(entry.reason, 'bad-request', label);
+    assert.equal(entry.autoRetries ?? 0, 0, label);
+    assert.equal(entry.attempts, before.attempts, label);
+    assert.equal(entry.updatedAt, before.updatedAt, label);
+  };
+  let fetched = false;
+  const noReceiver = async () => { fetched = true; throw new Error('must not be sent'); };
+
+  // The bundle could not be read this time.
+  let plan = await resend();
+  plan.items[0] = { ...plan.items[0], zip: null, source: 'unavailable', reason: 'temporarily unavailable' };
+  let sent = await sendDeliveries(plan, { env: { ...env, EVALUATION_TOKEN: 'test-only' }, fetcher: noReceiver, pause: noPause });
+  assert.deepEqual(sent.results, []);
+  assert.equal(sent.unsent, 1);
+  await recordDeliveries(client, sent.results, at);
+  await unchanged('source unavailable');
+
+  // Delivery settings were missing when the send job ran.
+  plan = await resend();
+  sent = await sendDeliveries(plan, { env: {}, fetcher: noReceiver, pause: noPause });
+  assert.ok(sent.configError);
+  assert.deepEqual(sent.results, []);
+  assert.equal(sent.unsent, 1);
+  await unchanged('config error');
+  assert.equal(fetched, false);
+
+  // Results written by an older sender still never spend the retry unsent.
+  await recordDeliveries(client, [{ id, targetId, type, key, revision, bundleSha256, state: 'rejected', reason: 'bad-request', receipt: null, autoRetry: true,
+    attempts: [{ at: at.toISOString(), httpStatus: null, outcome: 'source-unavailable', error: 'source-unavailable', durationMs: 0 }] }], at);
+  assert.equal((await readOutbox(client)).outbox.entries[0].autoRetries ?? 0, 0);
+  // The retry is still available once the minimum delay has passed again.
+  await resend(new Date('2026-10-01T03:00:00Z'));
+});
