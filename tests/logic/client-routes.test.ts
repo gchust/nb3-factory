@@ -91,9 +91,20 @@ describe('app client routes', () => {
     // that requires sign-in adds an entry here, because that is a new grant somebody has to be given.
     const resolved = resolveRoutes();
 
-    // The landing page opted out of page authorization, so it is reachable by every signed-in user.
+    // The landing page and every CRM page opted out of page authorization, so all of them are reachable by every
+    // signed-in user. The names are pinned because a page grant records a route by name.
     expect(pageAuthorizations(resolved.routes)).toEqual([
       { name: 'home', authorizedAs: null },
+      { name: 'crm-customers', authorizedAs: null },
+      { name: 'crm-customer-new', authorizedAs: null },
+      { name: 'crm-customer-detail', authorizedAs: null },
+      { name: 'crm-customer-edit', authorizedAs: null },
+      { name: 'crm-contacts', authorizedAs: null },
+      { name: 'crm-contact-new', authorizedAs: null },
+      { name: 'crm-contact-edit', authorizedAs: null },
+      { name: 'crm-opportunities', authorizedAs: null },
+      { name: 'crm-opportunity-new', authorizedAs: null },
+      { name: 'crm-opportunity-edit', authorizedAs: null },
     ]);
   });
 });

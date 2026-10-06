@@ -106,6 +106,9 @@ const zhCN: AppResource = {
     save: '保存',
     cancel: '取消',
     confirm: '确认',
+    create: '创建',
+    saving: '正在保存…',
+    edit: '编辑',
     language: '语言',
   },
   notices: {
@@ -121,6 +124,11 @@ const zhCN: AppResource = {
   },
   navigation: {
     home: '首页',
+    crm: '销售管理',
+    customers: '客户',
+    customerDetail: '客户详情',
+    contacts: '联系人',
+    opportunities: '商机',
     open: '打开导航',
     close: '关闭导航',
     expand: '展开导航',
@@ -146,6 +154,173 @@ const zhCN: AppResource = {
   datePicker: {
     placeholder: '选择日期',
     rangePlaceholder: '选择日期范围',
+  },
+  crm: {
+    error: {
+      title: '出错了',
+      requestFailed: '请求未能完成，请重试。',
+      forbidden: '你没有执行此操作的权限。',
+    },
+    filters: {
+      clear: '清除筛选',
+      allCustomers: '全部客户',
+      allStages: '全部阶段',
+    },
+    actions: {
+      edit: '编辑',
+    },
+    record: {
+      notFound: {
+        title: '记录不存在',
+        description: '该记录已不存在，可能已被他人删除。',
+      },
+    },
+    stage: {
+      following: '跟进中',
+      won: '赢单',
+      lost: '输单',
+    },
+    customers: {
+      title: '客户',
+      description: '团队正在跟进的客户公司。',
+      create: { action: '新建客户' },
+      search: {
+        placeholder: '按名称或行业搜索',
+        label: '搜索客户',
+      },
+      actions: {
+        label: '操作',
+        more: '{{name}} 的操作',
+      },
+      empty: {
+        title: '暂无客户',
+        description: '添加第一个客户，开始管理联系人与商机。',
+        noResults: '没有符合筛选条件的客户。',
+      },
+    },
+    customer: {
+      fields: {
+        name: '客户名称',
+        industry: '所属行业',
+        updatedAt: '更新时间',
+      },
+      create: {
+        title: '新建客户',
+        success: '客户“{{name}}”已创建。',
+      },
+      edit: {
+        title: '编辑客户',
+        success: '客户“{{name}}”已保存。',
+      },
+      form: {
+        description: '客户名称为必填项，行业为选填。',
+        nameRequired: '请输入客户名称。',
+        nameTooLong: '客户名称不能超过 128 个字符。',
+        nameTaken: '已存在同名客户。',
+        industryTooLong: '行业不能超过 128 个字符。',
+      },
+      detail: {
+        info: '客户信息',
+        totalAmount: '预计金额合计',
+        contacts: '联系人',
+        opportunities: '商机',
+        noContacts: '该客户暂无联系人。',
+        noOpportunities: '该客户暂无商机。',
+      },
+    },
+    contacts: {
+      title: '联系人',
+      description: '客户的对接人员。',
+      create: { action: '新建联系人' },
+      search: {
+        placeholder: '按姓名、电话或邮箱搜索',
+        label: '搜索联系人',
+      },
+      filters: { customer: '按客户筛选' },
+      actions: {
+        label: '操作',
+        more: '{{name}} 的操作',
+      },
+      empty: {
+        title: '暂无联系人',
+        description: '添加联系人，记录你的沟通对象。',
+        noResults: '没有符合筛选条件的联系人。',
+      },
+    },
+    contact: {
+      fields: {
+        name: '联系人姓名',
+        customer: '所属客户',
+        customerPlaceholder: '请选择客户',
+        phone: '电话',
+        email: '邮箱',
+        updatedAt: '更新时间',
+      },
+      create: {
+        title: '新建联系人',
+        success: '联系人“{{name}}”已创建。',
+      },
+      edit: {
+        title: '编辑联系人',
+        success: '联系人“{{name}}”已保存。',
+      },
+      form: {
+        description: '姓名与所属客户为必填项。',
+        nameRequired: '请输入联系人姓名。',
+        nameTooLong: '姓名不能超过 128 个字符。',
+        nameTaken: '该客户下已存在同名联系人。',
+        customerRequired: '请选择所属客户。',
+        phoneTooLong: '电话不能超过 64 个字符。',
+        emailTooLong: '邮箱不能超过 256 个字符。',
+        emailInvalid: '请输入有效的邮箱地址。',
+      },
+    },
+    opportunities: {
+      title: '商机',
+      description: '与客户正在进行的交易。',
+      create: { action: '新建商机' },
+      search: {
+        placeholder: '按商机或客户搜索',
+        label: '搜索商机',
+      },
+      filters: { stage: '按阶段筛选' },
+      actions: {
+        label: '操作',
+        more: '{{name}} 的操作',
+      },
+      empty: {
+        title: '暂无商机',
+        description: '创建商机，开始跟进你的第一笔交易。',
+        noResults: '没有符合筛选条件的商机。',
+      },
+    },
+    opportunity: {
+      fields: {
+        name: '商机名称',
+        customer: '所属客户',
+        amount: '预计金额',
+        stage: '阶段',
+        updatedAt: '更新时间',
+      },
+      create: {
+        title: '新建商机',
+        success: '商机“{{name}}”已创建。',
+      },
+      edit: {
+        title: '编辑商机',
+        success: '商机“{{name}}”已保存。',
+      },
+      form: {
+        description: '名称、客户、金额与阶段描述该笔交易。',
+        nameRequired: '请输入商机名称。',
+        nameTooLong: '商机名称不能超过 128 个字符。',
+        nameTaken: '该客户下已存在同名商机。',
+        customerRequired: '请选择所属客户。',
+        amountRequired: '请输入预计金额。',
+        amountInvalid: '请输入大于或等于 0 的金额。',
+        stageRequired: '请选择有效的阶段。',
+      },
+    },
   },
 };
 
