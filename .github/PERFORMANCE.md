@@ -12,7 +12,7 @@ QA 使用 `$FACTORY_BROWSER_REPORT_TOOL` 的 check 子命令逐项验证字段�
 
 ## Runner 时间
 
-只有 Agent Job 完整检出应用历史（`fetch-depth: 0`），供 Agent 用 `git log` 查看模板与先前轮次的变化。终验、发布（含失败发布）和失败预览打包只检出 `base_sha` 一个提交：补丁带完整 blob id，`apply-patch.mjs` 只需要基线树；发布推送的父提交远端已有，`--force-with-lease` 明确写出期望的远端值，不依赖跟踪分支。
+只有 Agent Job 完整检出应用历史（`fetch-depth: 0`），供 Agent 用 `git log` 查看模板与先前轮次的变化。终验、发布（含失败发布）和失败预览打包只检出 `base_sha` 一个提交：补丁带完整 blob id，`apply-patch.mjs` 只需要基线树；`--force-with-lease` 明确写出期望的远端值，不依赖跟踪分支。新建工作分支时，`publication-base.mjs` 再浅抓取目标分支 head：只有工厂文件漂移时改基到该 head，否则把目标分支历史抓到能看到 `base_sha` 为止，避免浅克隆把基线提交本身再推送一次（见 `QA_PIPELINE.md` 的“发布基线”）。已有工作分支不额外抓取。
 
 Agent Job 照常上传完整的 `factory-agent-N`（报告、复盘、用量、历史和诊断读取它），以及交接/失败时的 `factory-handoff-N` 检查点。另外上传小的 `factory-patch-N`：`agent.patch`、`change-summary.json`、`task-metadata.json`、`pipeline-state.json` 和各次调用的 `agent*.jsonl.result.json`。verify-final、publish / publish-failed、preview-build-failed 和 report-failure 只下载它，不再下载完整日志、截图和录屏。
 

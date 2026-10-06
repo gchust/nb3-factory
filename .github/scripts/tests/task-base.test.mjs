@@ -165,11 +165,14 @@ async function integration(t, { branch = '', existingWork = false, legacy = fals
       await run('prepare-task.mjs', ['--event', event, '--metadata', metadata, '--output', output]);
       return { metadata: existsSync(metadata) ? JSON.parse(readFileSync(metadata, 'utf8')) : null, output: readFileSync(output, 'utf8') };
     },
-    async publish(status = 'success') {
+    async publish(status = 'success', publicationRecord) {
       c.refs.set('agent/issue-20', work);
       const summary = path.join(root, 'summary.json');
       writeFileSync(summary, JSON.stringify({ counts: { files: 1, added: 1, modified: 0, deleted: 0, renamed: 0 } }));
-      await run('publish-pr.mjs', ['--metadata', metadata, '--summary', summary, '--status', status]);
+      const publication = path.join(root, 'publication-base.json');
+      rmSync(publication, { force: true });
+      if (publicationRecord) writeFileSync(publication, JSON.stringify(publicationRecord));
+      await run('publish-pr.mjs', ['--metadata', metadata, '--summary', summary, '--status', status, '--publication', publication]);
     },
   };
 }
@@ -189,15 +192,26 @@ for (const branch of ['', 'develop']) {
     assert.match(retry.output, new RegExp(`base_sha=${initial}`));
     assert.deepEqual(retry.metadata.evaluation, first.metadata.evaluation);
     assert.equal(f.calls.filter((call) => call.route === '/git/refs').length, 0);
-    await f.publish();
+    // develop moved only on factory files, so the publisher restacked.
+    await f.publish('success', {
+      version: 1, restacked: true, reason: 'factory-drift', head: advanced, drift: 3,
+      verifiedBase: { ref: 'develop', sha: initial }, publishedBase: { ref: 'develop', sha: advanced },
+    });
     const published = f.calls.find((call) => call.route === '/pulls' && call.method === 'POST');
+    assert.match(published.body.body, new RegExp(`agent-verified-base-sha: ${initial}`));
+    assert.match(published.body.body, /已在 `develop @ aaaaaaaaaaaa` 上验证；发布时改基到 `develop @ bbbbbbbbbbbb`/);
     assert.equal(published.body.base, 'develop');
     assert.equal(published.body.head, 'agent/issue-20');
     assert.match(published.body.body, /agent-target-branch: develop/);
     const resumed = await f.prepare();
     assert.match(resumed.output, new RegExp(`base_ref=agent/issue-20\\nbase_sha=${work}`));
     assert.equal(resumed.metadata.existingPullRequest.number, 120);
-    await f.publish();
+    await f.publish('success', {
+      version: 1, restacked: false, reason: 'existing-work-branch',
+      verifiedBase: { ref: 'agent/issue-20', sha: work }, publishedBase: { ref: 'agent/issue-20', sha: work },
+    });
+    const resumedBody = f.calls.filter((call) => call.route === '/pulls/120' && call.method === 'PATCH').at(-1).body.body;
+    assert.match(resumedBody, /代码起点：`agent\/issue-20 @ cccccccccccc`（已在此基线上验证）/);
     assert.equal(f.calls.filter((call) => call.route === '/pulls' && call.method === 'POST').length, 1);
     assert.equal(f.calls.filter((call) => call.route === '/pulls/120' && call.method === 'PATCH').length, 1);
   });

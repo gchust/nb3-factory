@@ -76,6 +76,20 @@ Agent 阶段结束时通过 `always()` 停止观察进程并发送末次快照�
 
 新观察进程只对采用本版工厂的新 Run 生效，不热修改已经启动的任务。
 
+## 发布基线
+
+终验和发布都在任务固定的 `base_sha` 上应用同一个补丁。任务运行期间默认分支可能继续前进；新建 `agent/issue-N` 时，GitHub 会拒绝 workflow 文件与仓库现有内容不一致的推送（`refusing to allow a GitHub App to create or update workflow ... without workflows permission`），而任务 token 没有 `workflows` 权限，也不应为此增加。
+
+`publication-base.mjs` 在应用补丁之后、提交之前决定发布基线：
+
+- 已有工作分支（评论构建、后续轮次，`base_ref` 即工作分支）：不移动、不抓取，按原逻辑以 `base_sha` 为 lease 快进推送。
+- 新工作分支且目标分支 head 与 `base_sha` 不同：比较两者之间变化的路径。若全部属于工厂自有文件，且都不在补丁修改范围内，就把补丁应用到最新 head 上，并确认补丁触及的每个应用文件的 mode 与 blob 和已验证的索引完全一致，然后以最新 head 为父提交发布。应用失败或不一致时回到 `base_sha`。
+- 其他情况（漂移含应用文件，或与补丁重叠）保留 `base_sha`，但先把目标分支历史抓取到能看到 `base_sha` 为止（50、500 层后再完整历史）。浅克隆不知道远端已有 `base_sha`，否则会把基线提交本身连同其 workflow 修改再推送一次。若推送仍因 workflow 权限被拒，提交步骤输出 `::error::` 说明原因与人工补救：在最新目标分支上 `git apply --3way` `factory-patch-N` 中的补丁，用有 workflow 权限的凭据推送工作分支，再手动开 PR。
+
+这里的工厂自有文件只认 `.github/**`（不含被 `eslint.config.js` 导入、会改变应用 lint 规则的 `.github/scripts/factory-eslint.mjs`）、`docs/**`，以及只追加且不含 `!` 反选规则的 `.gitignore`。终验的 lint 与格式检查都排除 `.github/**`；`docs/**` 由工厂测试保持 Prettier 干净；追加的忽略规则只会让检查少看未跟踪文件，不会改变已跟踪文件。`.npmrc`、`README.MD`、`package.json`、`eslint.config.js`、`factory-template.json` 和锁文件会影响安装或检查，或只有部分属于工厂，一律按应用文件处理。因此改基后的发布树与终验的树只在这些工厂文件上不同，终验结论仍然适用。
+
+`agent-artifacts/publication-base.json` 记录 `verifiedBase`、`publishedBase`、是否改基和原因，并写入 Step Summary。PR 正文保留 `agent-verified-base-sha` 标记和一行说明；搭建报告与构建复盘仍以任务元数据中的原 `base_sha` 为准，因为验证是在那里完成的。
+
 ## 验证
 
 ```sh
