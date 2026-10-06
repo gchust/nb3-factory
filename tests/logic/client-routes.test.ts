@@ -91,9 +91,17 @@ describe('app client routes', () => {
     // that requires sign-in adds an entry here, because that is a new grant somebody has to be given.
     const resolved = resolveRoutes();
 
-    // The landing page opted out of page authorization, so it is reachable by every signed-in user.
+    // The landing page opted out of page authorization, so it is reachable by every signed-in user. The two
+    // knowledge pages each name the page grant they are stored under; the detail page is the same surface as the
+    // list it opens from and names the same grant on purpose.
     expect(pageAuthorizations(resolved.routes)).toEqual([
       { name: 'home', authorizedAs: null },
+      { name: 'knowledge-materials', authorizedAs: 'knowledge.materials' },
+      {
+        name: 'knowledge-material-detail',
+        authorizedAs: 'knowledge.materials',
+      },
+      { name: 'knowledge-assistant', authorizedAs: 'knowledge.assistant' },
     ]);
   });
 });

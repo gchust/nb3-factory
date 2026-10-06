@@ -88,6 +88,61 @@ const zhCN: AppResource = {
     title: '开始构建你的应用',
     description: '向 AI 助手描述你的需求，逐步构建页面、数据模型和业务流程。',
   },
+  knowledge: {
+    materials: {
+      title: '资料',
+      description: '你可以查看的资料。助手只根据这些资料作答。',
+      columns: { title: '标题', content: '正文' },
+      empty: '目前没有你可以查看的资料。',
+      loadFailed: '无法加载资料。',
+      newMaterial: '新建资料',
+      newMaterialDescription: '填写标题和正文，保存后助手即可据此作答。',
+      fieldTitle: '标题',
+      fieldContent: '正文',
+      created: '资料已创建。',
+      createFailed: '无法创建资料。',
+      detail: {
+        breadcrumb: '资料详情',
+        edit: '编辑',
+        saved: '资料已更新。',
+        saveFailed: '无法更新资料。',
+        loadFailed: '无法加载该资料。',
+        notFoundTitle: '资料不可用',
+        notFoundDescription: '该资料不存在，或你没有查看它的权限。',
+      },
+    },
+    assistant: {
+      title: '资料助手',
+      description:
+        '提出问题，助手会根据你可以查看的资料作答，并注明答案来自哪一份资料。',
+      loading: '正在加载助手…',
+      errorTitle: '无法加载助手',
+      errorDescription: '未能加载助手配置，请检查 AI 设置后重新打开本页。',
+      noEmployeeTitle: '助手当前不可用',
+      noEmployeeDescription:
+        '没有你可使用的 AI 员工，请检查 AI 设置后重新打开本页。',
+      modelErrorTitle: 'AI 模型当前不可用',
+      modelErrorDescription:
+        '未能加载已配置的 AI 模型，请在 AI 设置中检查并启用模型后重新打开本页。',
+      unconfiguredTitle: '尚未配置 AI 服务',
+      unconfiguredDescription:
+        '当前没有配置 AI 模型，助手无法作答。你仍然可以自己查看资料。',
+      openMaterials: '查看资料',
+      placeholder: '询问某份资料…',
+    },
+    collection: { materials: '资料' },
+    section: { title: '资料' },
+    resource: { title: '资料' },
+    action: { view: '查看资料', edit: '编辑资料' },
+    scope: { materials: '可查看的资料' },
+    permissionSets: {
+      supervisor: '资料主管',
+      colleague: '资料同事',
+    },
+  },
+  'Read knowledge materials': '查看资料',
+  'List the materials this person may read, or one of them by identifier.':
+    '列出此人可以查看的资料，或按标识返回其中一份。',
 
   appearance: {
     title: '外观',
@@ -105,6 +160,7 @@ const zhCN: AppResource = {
     close: '关闭',
     save: '保存',
     cancel: '取消',
+    create: '创建',
     confirm: '确认',
     language: '语言',
   },
@@ -121,6 +177,8 @@ const zhCN: AppResource = {
   },
   navigation: {
     home: '首页',
+    knowledgeMaterials: '资料',
+    knowledgeAssistant: '资料助手',
     open: '打开导航',
     close: '关闭导航',
     expand: '展开导航',

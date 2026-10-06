@@ -95,6 +95,68 @@ const enUS = {
     description:
       'Describe what you need to your AI Agent, then build pages, data models, and business workflows.',
   },
+  knowledge: {
+    materials: {
+      title: 'Materials',
+      description:
+        'The materials you may read. The assistant answers only from these.',
+      columns: { title: 'Title', content: 'Content' },
+      empty: 'No material is available to you yet.',
+      loadFailed: 'Unable to load the materials.',
+      newMaterial: 'New material',
+      newMaterialDescription:
+        'Add a title and its content. The assistant can answer from it as soon as it is saved.',
+      fieldTitle: 'Title',
+      fieldContent: 'Content',
+      created: 'Material created.',
+      createFailed: 'Unable to create the material.',
+      detail: {
+        breadcrumb: 'Material detail',
+        edit: 'Edit',
+        saved: 'Material updated.',
+        saveFailed: 'Unable to update the material.',
+        loadFailed: 'Unable to load this material.',
+        notFoundTitle: 'Material not available',
+        notFoundDescription:
+          'This material does not exist, or you do not have permission to read it.',
+      },
+    },
+    assistant: {
+      title: 'Data assistant',
+      description:
+        'Ask a question and get an answer built from the materials you may read. Every answer names the material it comes from.',
+      loading: 'Loading the assistant…',
+      errorTitle: 'Unable to load the assistant',
+      errorDescription:
+        'The assistant configuration could not be loaded. Check the AI settings, then reload this page.',
+      noEmployeeTitle: 'The assistant is unavailable',
+      noEmployeeDescription:
+        'No AI employee is available to you. Check the AI settings, then reload this page.',
+      modelErrorTitle: 'The AI model is unavailable',
+      modelErrorDescription:
+        'The configured AI model could not be loaded. Check and enable a model in AI settings, then reload this page.',
+      unconfiguredTitle: 'The AI service is not configured',
+      unconfiguredDescription:
+        'No AI model is configured, so the assistant cannot answer. You can still read the materials yourself.',
+      openMaterials: 'Browse the materials',
+      placeholder: 'Ask about a material…',
+    },
+    // Titles the authorization layer shows for this feature's stored resources. They are registered under the
+    // application's namespace, so they belong beside the rest of the application wording rather than in a plugin.
+    collection: { materials: 'Materials' },
+    section: { title: 'Knowledge' },
+    resource: { title: 'Materials' },
+    action: { view: 'Read materials', edit: 'Edit materials' },
+    scope: { materials: 'Readable materials' },
+    permissionSets: {
+      supervisor: 'Knowledge supervisor',
+      colleague: 'Knowledge colleague',
+    },
+  },
+  // Tool and employee display metadata is translated by its English source text, which is what these keys are.
+  'Read knowledge materials': 'Read knowledge materials',
+  'List the materials this person may read, or one of them by identifier.':
+    'List the materials this person may read, or one of them by identifier.',
 
   appearance: {
     title: 'Appearance',
@@ -112,6 +174,7 @@ const enUS = {
     close: 'Close',
     save: 'Save',
     cancel: 'Cancel',
+    create: 'Create',
     confirm: 'Confirm',
     language: 'Language',
   },
@@ -130,6 +193,8 @@ const enUS = {
   },
   navigation: {
     home: 'Home',
+    knowledgeMaterials: 'Materials',
+    knowledgeAssistant: 'Data assistant',
     open: 'Open navigation',
     close: 'Close navigation',
     expand: 'Expand navigation',
