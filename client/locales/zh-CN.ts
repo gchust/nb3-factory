@@ -88,6 +88,62 @@ const zhCN: AppResource = {
     title: '开始构建你的应用',
     description: '向 AI 助手描述你的需求，逐步构建页面、数据模型和业务流程。',
   },
+  projectMaterials: {
+    title: '项目资料',
+    description: '属于你自己的资料记录及其私有附件，仅你本人可见。',
+    new: '新建资料',
+    fields: {
+      title: '标题',
+      titlePlaceholder: '例如：现场勘察照片',
+      attachments: '附件',
+      attachmentsHint: 'PNG 图片或 Word 文档，单个文件最大 {{max}} MB。',
+      updatedAt: '更新时间',
+    },
+    list: {
+      attachmentCount: '{{count}} 个附件',
+      empty: {
+        title: '暂无资料',
+        description: '新建一份资料并上传照片或文档，即可开始。',
+      },
+    },
+    form: {
+      titleRequired: '请输入标题。',
+      titleTooLong: '最多 {{max}} 个字符。',
+      requestFailed: '请求失败，请重试。',
+      created: '资料已创建。',
+      updated: '资料已更新。',
+    },
+    create: {
+      title: '新建资料',
+      description: '填写标题并上传附件。全部上传完成后方可保存。',
+      submit: '创建',
+    },
+    edit: {
+      title: '编辑资料',
+      description: '修改此资料的标题或附件。',
+      submit: '保存',
+    },
+    detail: {
+      title: '资料',
+      updatedAt: '更新于 {{date}}',
+      edit: '编辑',
+      attachmentsHint: '可打开附件预览或下载。确认移除后立即生效。',
+      noAttachments: '此资料暂无附件。',
+      preview: '预览',
+      download: '下载',
+      remove: '移除',
+      removeConfirmTitle: '移除此附件？',
+      removeConfirmDescription:
+        '“{{filename}}” 将不再属于此资料，文件不会保留在其他位置。',
+      removed: '附件已移除。',
+      removeFailed: '无法移除附件，请重试。',
+    },
+    error: {
+      notFound: '此资料不存在，或你没有访问权限。',
+      forbidden: '你没有查看此资料的权限。',
+      requestFailed: '请求失败，请重试。',
+    },
+  },
 
   appearance: {
     title: '外观',
@@ -121,6 +177,7 @@ const zhCN: AppResource = {
   },
   navigation: {
     home: '首页',
+    projectMaterials: '项目资料',
     open: '打开导航',
     close: '关闭导航',
     expand: '展开导航',

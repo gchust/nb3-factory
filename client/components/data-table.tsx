@@ -40,6 +40,8 @@ export interface DataTableProps<TData, TValue = unknown> {
   readonly emptyMessage?: ReactNode;
   /** Set to `false` to render every row and hide the pagination footer. */
   readonly pagination?: boolean;
+  /** Passed to the pagination bar; set to `false` on a table without row selection. */
+  readonly showSelectedCount?: boolean;
   readonly pageSize?: number;
   readonly pageSizeOptions?: readonly number[];
   readonly getRowId?: (
@@ -67,6 +69,7 @@ export function DataTable<TData, TValue = unknown>({
   toolbar,
   emptyMessage,
   pagination = true,
+  showSelectedCount,
   pageSize = 10,
   pageSizeOptions,
   getRowId,
@@ -157,7 +160,11 @@ export function DataTable<TData, TValue = unknown>({
         </Table>
       </div>
       {pagination ? (
-        <DataTablePagination table={table} pageSizeOptions={pageSizeOptions} />
+        <DataTablePagination
+          table={table}
+          pageSizeOptions={pageSizeOptions}
+          showSelectedCount={showSelectedCount}
+        />
       ) : null}
     </div>
   );

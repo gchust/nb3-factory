@@ -95,6 +95,66 @@ const enUS = {
     description:
       'Describe what you need to your AI Agent, then build pages, data models, and business workflows.',
   },
+  projectMaterials: {
+    title: 'Project materials',
+    description:
+      'Your own material records and their private attachments. Only you can see them.',
+    new: 'New material',
+    fields: {
+      title: 'Title',
+      titlePlaceholder: 'For example: Site survey photos',
+      attachments: 'Attachments',
+      attachmentsHint: 'PNG photos or Word documents, up to {{max}} MB each.',
+      updatedAt: 'Updated',
+    },
+    list: {
+      attachmentCount: '{{count}} attachment(s)',
+      empty: {
+        title: 'No materials yet',
+        description:
+          'Create a material and upload its photos or documents to get started.',
+      },
+    },
+    form: {
+      titleRequired: 'Enter a title.',
+      titleTooLong: 'Use at most {{max}} characters.',
+      requestFailed: 'The request failed. Please try again.',
+      created: 'Material created.',
+      updated: 'Material updated.',
+    },
+    create: {
+      title: 'New material',
+      description:
+        'Give the material a title and upload its attachments. You can save after all uploads finish.',
+      submit: 'Create',
+    },
+    edit: {
+      title: 'Edit material',
+      description: 'Change the title or the attachments of this material.',
+      submit: 'Save',
+    },
+    detail: {
+      title: 'Material',
+      updatedAt: 'Updated {{date}}',
+      edit: 'Edit',
+      attachmentsHint:
+        'Open an attachment to preview it, or download it. Removing one takes effect as soon as you confirm.',
+      noAttachments: 'This material has no attachments yet.',
+      preview: 'Preview',
+      download: 'Download',
+      remove: 'Remove',
+      removeConfirmTitle: 'Remove this attachment?',
+      removeConfirmDescription:
+        '“{{filename}}” will no longer belong to this material. The file is not kept anywhere else.',
+      removed: 'Attachment removed.',
+      removeFailed: 'Unable to remove the attachment. Please try again.',
+    },
+    error: {
+      notFound: 'This material does not exist or is not available to you.',
+      forbidden: 'You do not have permission to view this material.',
+      requestFailed: 'The request failed. Please try again.',
+    },
+  },
 
   appearance: {
     title: 'Appearance',
@@ -130,6 +190,7 @@ const enUS = {
   },
   navigation: {
     home: 'Home',
+    projectMaterials: 'Project materials',
     open: 'Open navigation',
     close: 'Close navigation',
     expand: 'Expand navigation',

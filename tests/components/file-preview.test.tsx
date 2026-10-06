@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 
 import {
@@ -43,6 +43,19 @@ function file(ext: string): FileRecord {
   };
 }
 
+function imageFile(): FileRecord {
+  return {
+    id: 'photo',
+    filename: 'photo.png',
+    ext: 'png',
+    mimeType: 'image/png',
+    size: 3,
+    createdAt: '2026-09-20T00:00:00.000Z',
+    updatedAt: '2026-09-20T00:00:00.000Z',
+    contentUrl: '/main/project-material-files/photo/content',
+  };
+}
+
 beforeEach(() => {
   viewer.load.mockReset().mockResolvedValue(undefined);
   viewer.destroy.mockReset();
@@ -78,6 +91,24 @@ it.each(['docx', 'xlsx', 'pptx'])(
     expect(viewer.destroy).toHaveBeenCalledOnce();
   },
 );
+
+it('explains a broken image instead of showing a blank preview', () => {
+  render(
+    <FilePreviewDialog
+      files={[imageFile()]}
+      open
+      onOpenChange={vi.fn()}
+      download={false}
+    />,
+  );
+  const image = screen.getByRole('img', { name: 'photo.png' });
+  fireEvent.error(image);
+  expect(
+    screen.getByText('Unable to load the file preview.'),
+  ).toBeInTheDocument();
+  // The preview image itself is gone, not merely hidden behind an error icon.
+  expect(document.querySelector('img.object-contain')).toBeNull();
+});
 
 it('shows the denied content response without trying a third-party viewer', async () => {
   vi.stubGlobal(

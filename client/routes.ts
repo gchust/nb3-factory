@@ -1,4 +1,4 @@
-import { Home } from 'lucide-react';
+import { FolderKanban, Home } from 'lucide-react';
 import {
   defineAppRoutes,
   defineSettingsRoutes,
@@ -43,6 +43,45 @@ const appRoutes: AppClientRouteContribution = defineAppRoutes([
     componentLoader: () => import('./pages/auth/reset-password.js'),
     name: 'reset-password',
     path: '/reset-password',
+  },
+  {
+    // Project materials: each signed-in user keeps their own records and their
+    // private attachments. Page authorization is skipped because ownership is
+    // not a page grant — the endpoints filter every row by the caller. See
+    // `server/routes/project-materials.ts`.
+    auth: 'required',
+    authz: 'skip',
+    componentLoader: () => import('./pages/project-materials/index.js'),
+    name: 'project-materials',
+    navigation: {
+      title: 'navigation.projectMaterials',
+      icon: FolderKanban,
+    },
+    path: '/project-materials',
+    children: [
+      {
+        name: 'project-material-new',
+        path: 'new',
+        authz: 'skip',
+        componentLoader: () => import('./pages/project-materials/new.js'),
+      },
+      {
+        name: 'project-material-detail',
+        path: ':materialId',
+        authz: 'skip',
+        componentLoader: () =>
+          import('./pages/project-materials/detail/index.js'),
+        children: [
+          {
+            name: 'project-material-edit',
+            path: 'edit',
+            authz: 'skip',
+            componentLoader: () =>
+              import('./pages/project-materials/detail/edit.js'),
+          },
+        ],
+      },
+    ],
   },
 ]);
 
