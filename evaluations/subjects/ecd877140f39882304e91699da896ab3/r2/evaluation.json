@@ -1,0 +1,578 @@
+{
+  "schemaVersion": 1,
+  "type": "evaluation-report",
+  "source": {
+    "producer": "nb3-factory",
+    "instance": "gchust/nb3-factory",
+    "project": "gchust/nb3-factory",
+    "exporter": {
+      "version": 1,
+      "controlSha": "a08396b41b4c8088b5ece1502cd3faef462c1e91",
+      "runId": 37491856030,
+      "attempt": 1
+    }
+  },
+  "run": {
+    "key": "gchust/nb3-factory/issues/601/initial",
+    "kind": "initial",
+    "identity": "recorded",
+    "batchKey": null,
+    "caseKey": null,
+    "sampleIndex": null,
+    "sampleKey": null,
+    "task": {
+      "repository": "gchust/nb3-factory",
+      "issue": 601,
+      "buildCommentId": null,
+      "title": "设备售后服务与巡检协同系统（综合业务案例）"
+    },
+    "case": {
+      "source": "preset",
+      "presetIssueNumber": 465,
+      "capturedAt": "2026-10-06T10:56:17Z",
+      "inputHash": "5928d6bba9a0bb141e4dabf9bb2aedfd2030f16bbf33973cb0084559a5080d7b",
+      "reviewHash": "bd00a77e61c8de307bdb159dddfd3aaad15f4add20fcf155e1af7f7db247c545"
+    }
+  },
+  "revision": 2,
+  "createdAt": "2026-10-06T15:58:21Z",
+  "precedence": {
+    "producer": {
+      "runId": 37491465827,
+      "attempt": 1,
+      "startedAt": "2026-10-06T15:54:49Z"
+    },
+    "executionOrder": 2,
+    "knownLaterExecutions": 0,
+    "chainTerminal": true,
+    "reviewRubric": 0,
+    "reviewState": "not-reviewed",
+    "review": {
+      "kind": null,
+      "at": null,
+      "runId": null,
+      "attempt": null
+    },
+    "qaCoverage": "none"
+  },
+  "baseline": {
+    "track": "published-template",
+    "application": {
+      "baseRef": "develop",
+      "baseSha": "bcb0d06aaf9f2a0bfeb574110bee8904b815e6b6",
+      "candidate": {
+        "patchSha256": "2a17f759dbff3d44f7dc16dd4dc7c72fcdc48e77d946407768481e39c1e63ed5",
+        "headSha": null
+      }
+    },
+    "factory": {
+      "controlSha": "bcb0d06aaf9f2a0bfeb574110bee8904b815e6b6",
+      "entrySha": "a08396b41b4c8088b5ece1502cd3faef462c1e91"
+    },
+    "template": {
+      "creatorVersion": null,
+      "templateVersion": null
+    },
+    "dependencies": {
+      "lockfileSha256": null,
+      "baselineFingerprint": null,
+      "packages": []
+    },
+    "skills": {
+      "fingerprint": null,
+      "files": 0
+    },
+    "sourceSnapshot": null,
+    "inputs": {
+      "taskInputHash": "5928d6bba9a0bb141e4dabf9bb2aedfd2030f16bbf33973cb0084559a5080d7b",
+      "pipelineInputHash": "bc01d011ccd00ac8a7183ed62de4b617104e1262b9d5d3b665eadf77d5fc7291",
+      "reviewHash": "bd00a77e61c8de307bdb159dddfd3aaad15f4add20fcf155e1af7f7db247c545",
+      "reviewCriteriaHash": "bd00a77e61c8de307bdb159dddfd3aaad15f4add20fcf155e1af7f7db247c545",
+      "prompts": []
+    },
+    "rubric": null,
+    "agent": {
+      "engine": null,
+      "model": null,
+      "version": null,
+      "buildReviewMode": null,
+      "configuration": {
+        "fingerprints": [
+          "2f5401c2837d7dae1f1f014540b983521db478e49b3e29c61dbb26be0a75e3bf"
+        ],
+        "complete": false
+      }
+    },
+    "environment": {
+      "browserFixturesSha256": null,
+      "browserPreflight": null
+    }
+  },
+  "executions": [
+    {
+      "key": "run/37453059911/attempt/1",
+      "kind": "implementation",
+      "order": 1,
+      "workflow": "code-agent-task",
+      "runId": 37453059911,
+      "attempt": 1,
+      "event": "workflow_dispatch",
+      "previousRunId": null,
+      "conclusion": "handoff",
+      "startedAt": "2026-10-06T10:56:06Z",
+      "endedAt": "2026-10-06T15:54:54Z",
+      "jobSeconds": 17922,
+      "controlSha": "bcb0d06aaf9f2a0bfeb574110bee8904b815e6b6",
+      "patchSha256": "2a17f759dbff3d44f7dc16dd4dc7c72fcdc48e77d946407768481e39c1e63ed5",
+      "source": "usage-receipt"
+    },
+    {
+      "key": "run/37491465827/attempt/1",
+      "kind": "continuation",
+      "order": 2,
+      "workflow": "code-agent-task",
+      "runId": 37491465827,
+      "attempt": 1,
+      "event": "repository_dispatch",
+      "previousRunId": 37453059911,
+      "conclusion": "failed",
+      "startedAt": "2026-10-06T15:54:49Z",
+      "endedAt": "2026-10-06T15:57:17Z",
+      "jobSeconds": 122,
+      "controlSha": "bcb0d06aaf9f2a0bfeb574110bee8904b815e6b6",
+      "patchSha256": "2a17f759dbff3d44f7dc16dd4dc7c72fcdc48e77d946407768481e39c1e63ed5",
+      "source": "usage-receipt"
+    }
+  ],
+  "outcome": {
+    "execution": "completed",
+    "acceptance": "unknown",
+    "delivery": "not-published",
+    "pullRequest": null,
+    "detail": "执行链已终结；业务验收与代码交付分别见 acceptance / delivery。"
+  },
+  "qa": {
+    "coverage": "none",
+    "rounds": [],
+    "firstFull": {
+      "status": "unknown",
+      "round": null,
+      "executionKey": null,
+      "basis": "第一轮验证位于更早的执行，本产物未包含，不能推断首轮结果。"
+    },
+    "finalFull": {
+      "status": "unknown",
+      "round": null,
+      "executionKey": null,
+      "basis": "本产物没有全量 QA，更早执行的结果未取得。"
+    },
+    "criteria": [
+      {
+        "id": "B01",
+        "text": "主管创建客户与设备，刷新后关联正确；重复设备编号、必填缺失、报修时客户设备不匹配均被拒绝。未登录者不能读取或写入业务。",
+        "optional": false,
+        "firstFull": "unknown",
+        "finalFull": "unknown"
+      },
+      {
+        "id": "B02",
+        "text": "普通和紧急工单各受理一次，Workflow 执行记录、对应分支说明及业务结果一致；重复受理无重复结果或通知。在测试准备提供的可控失败条件下，记录失败及恢复结果；没有该条件时仅此失败场景记未执行。",
+        "optional": false,
+        "firstFull": "unknown",
+        "finalFull": "unknown"
+      },
+      {
+        "id": "B03",
+        "text": "负责人开始处理、填写说明、提交确认，主管退回一次，再次提交并关闭；非法跳步和空处理说明被拒绝，已关闭只读。刷新和重新登录后状态及结果保留。",
+        "optional": false,
+        "firstFull": "unknown",
+        "finalFull": "unknown"
+      },
+      {
+        "id": "B04",
+        "text": "甲乙工程师只能处理自己工单；普通工单临时共享给乙后乙仅可读该单及必要关联资料，撤销后不能再读；保密工单即使被分享也不能向非负责人开放。观察员看不到内部处理备注，主管和负责人正常访问。",
+        "optional": false,
+        "firstFull": "unknown",
+        "finalFull": "unknown"
+      },
+      {
+        "id": "B05",
+        "text": "有阅读资格的工程师可读已发布知识但不能读草稿或修改；没有阅读资格的账号不能仅因已发布而访问。不得用管理员账户代替这组验证。",
+        "optional": false,
+        "firstFull": "unknown",
+        "finalFull": "unknown"
+      },
+      {
+        "id": "B06",
+        "text": "上传 PNG 和 DOCX 并保存，刷新后分别预览真实内容；一次表单校验失败保留上传选择，移除关联后不再显示。无工单权限账号通过附件链接被拒绝，损坏文件给出真实失败提示。",
+        "optional": false,
+        "firstFull": "unknown",
+        "finalFull": "unknown"
+      },
+      {
+        "id": "B07",
+        "text": "受理、提交确认和退回的收件人收到对应持久消息，可跳至正确工单；标记已读刷新仍保持，非收件人不能读取。无权工单链接不能因消息而绕过权限。",
+        "optional": false,
+        "firstFull": "unknown",
+        "finalFull": "unknown"
+      },
+      {
+        "id": "B08",
+        "text": "用受控 Scheduler 执行生成到期设备巡检和超期提醒，重复执行不重复生成同日结果，未到期/停用设备及已关闭工单不被处理；计划启停保存正确，停用后的受控调度机会不再产生新结果。负责人完成巡检并刷新核对。",
+        "optional": false,
+        "firstFull": "unknown",
+        "finalFull": "unknown"
+      },
+      {
+        "id": "B09",
+        "text": "主管与工程师的统计分别与各自可见列表一致；修改工单状态后数字更新，搜索和筛选不扩大权限范围。",
+        "optional": false,
+        "firstFull": "unknown",
+        "finalFull": "unknown"
+      },
+      {
+        "id": "B10",
+        "text": "通过既有管理入口创建并撤销集成用户密钥；独立 HTTP 测试验证报修、状态查询、重复事件去重和禁止处理/关闭，撤销或停用后调用失败。密钥全程去敏。",
+        "optional": false,
+        "firstFull": "unknown",
+        "finalFull": "unknown"
+      },
+      {
+        "id": "B11",
+        "text": "主管上传两份手册，页面显示真实处理状态，普通工程师不能修改库内容。条件可用时，助手能回答一条有依据问题并提供引用，对资料外问题说明不足，对无权工单拒绝泄漏；更新手册后新对话依据新内容。缺外部条件时分别报告接入完成度与真实检索/回答未验证。",
+        "optional": false,
+        "firstFull": "unknown",
+        "finalFull": "unknown"
+      },
+      {
+        "id": "B12",
+        "text": "助手建议进入草稿，取消不写入、明确确认后才按用户权限保存，不能自动关闭；刷新可恢复对话。模型不可用时提示真实情况，手工处理仍可用。基础业务页面切换中英文后主要文案正确，录入内容不被翻译或丢失。\n\n实际失败记 failed，缺条件记 blocked，未执行记 not_run；不得以源码存在、已提交或静态截图冒充实际业务完成。AI 条件不足不停止其他业务搭建，也不宣称综合验收全部通过。\n\n同时验证案例人工输入中的产品要求：\n\n## 案例人工评论 #6008919420（gchust）\n\nClosed in bulk cleanup of factory build issues.",
+        "optional": false,
+        "firstFull": "unknown",
+        "finalFull": "unknown"
+      }
+    ],
+    "firstPassWithoutRepair": "unknown",
+    "counts": {
+      "execution": {
+        "verificationAttempts": null,
+        "repairAttempts": null,
+        "source": "repair-summary.json（仅本执行）"
+      },
+      "chain": {
+        "verificationAttempts": 5,
+        "repairAttempts": 5,
+        "source": "pipeline-state.json（跨 Handoff 累计检查点，不再相加）"
+      }
+    },
+    "note": "工厂修复次数不等于 Agent 开发中的全部自测和修正；未记录 Agent 内部试错，不宣称开发全程无错误。"
+  },
+  "reviews": [
+    {
+      "key": "review/37491465827.1/v0-3ccc4bb18823",
+      "role": "original",
+      "selected": true,
+      "state": "not-reviewed",
+      "reason": "本轮没有独立评审记录；未评估不代表通过，也不按零分处理。",
+      "rubric": null,
+      "reviewer": null,
+      "producer": {
+        "runId": null,
+        "attempt": null
+      },
+      "basis": {
+        "inputHash": null,
+        "patchSha256": null,
+        "baseSha": null,
+        "lockfileSha256": null,
+        "reviewCriteriaHash": null,
+        "artifactHash": null
+      },
+      "buildReviewMode": null,
+      "summary": null,
+      "progress": null,
+      "modules": [],
+      "findings": [],
+      "ui": null,
+      "limitations": [],
+      "usageSource": null
+    }
+  ],
+  "health": {
+    "status": "incomplete",
+    "qa": "unknown",
+    "requiredChecks": {
+      "status": "passed",
+      "results": []
+    },
+    "review": "not-reviewed"
+  },
+  "processNotes": {
+    "state": "present",
+    "source": "retro.json",
+    "author": "implementer",
+    "independent": false,
+    "summary": "Repair 4. Fixed the 10 ESLint errors that failed the factory lint stage in server/providers/service-domain.ts and server/providers/service-support.ts, then removed the build blockers the same in-progress feature had left behind: the service-ticket-acceptance Workflow DSL imported three run/condition modules that did not exist and called finalize() on the node-less builder, so the server typecheck and the workflow checker failed. Implemented the missing handlers (is-urgent, register-normal-acceptance, register-urgent-acceptance plus a shared acceptance helper that moves the ticket to pending_process, records the branch note and notifies the assignee idempotently) and finalized the tree that actually holds the node. Also restored the .ts specifiers the source-loaded seed and seed-data require, which had reverted to .js and made tests/logic/app-server.test.ts fail at seed load. Verified: full ESLint clean, pnpm typecheck clean, pnpm nocobase workflow check (3 nodes), all 245 tests, pnpm build (1 workflow artifact) and pnpm nocobase db apply all pass. The business feature layer itself (server routes, client pages, ServiceDomain registration, Scheduler/AI wiring) is still absent and remains the open acceptance gap.",
+    "blockers": [],
+    "improvements": [
+      {
+        "id": "notes/run/37491465827/attempt/1/I1",
+        "category": "code-quality",
+        "title": "`as never` casts hid an inference mismatch instead of a type error",
+        "detail": "server/authorization/resources.ts used `as never` in six record-access resolvers and on the composite registration call. The lint rule proved the resolver assertions unnecessary and removing one of them exposed that `define(resource)` could not accept the union of builder types. The runtime intent was already `build()`-based, so the casts were masking an avoidable generic-inference problem.",
+        "suggestedChange": "Prefer passing the concrete built value (`resource.build()`) or annotating the collection with the framework's accepted parameter type instead of `as never`.",
+        "mechanizable": true
+      },
+      {
+        "id": "notes/run/37491465827/attempt/1/I2",
+        "category": "tooling",
+        "title": "No guard against .js relative imports from source-loaded seeds and migrations",
+        "detail": "server/** may import .js because it runs from compiled dist, but database/** seeds and migrations are dynamically imported from TypeScript source by the app-server task loader, where Node's native type stripping resolves only .ts specifiers. A .js specifier pointing at a .ts file compiles and only fails at application startup with ERR_MODULE_NOT_FOUND.",
+        "suggestedChange": "Add a lint or check for relative imports under database/** that requires the .ts extension (or teach the seed/migration loader to resolve .js to .ts) so the mistake fails at author time rather than at runtime.",
+        "mechanizable": true
+      },
+      {
+        "id": "notes/run/37491465827/attempt/1/I3",
+        "category": "code-quality",
+        "title": "A startup registration function existed but had no call site",
+        "detail": "server/authorization/resources.ts exported registerServiceAuthorization(), but nothing invoked it. The omission was invisible until seeded grants were validated in AuthorizationProvider.start(), which then failed on every composite action. The declarations were correct; only the lifecycle hook was missing.",
+        "suggestedChange": "When a module exports a register*/define* function meant to run at startup, wire it to a named ServiceProvider in the same change, or export the provider instead of a bare function.",
+        "mechanizable": false
+      },
+      {
+        "id": "notes/run/37491465827/attempt/1/I4",
+        "category": "i18n",
+        "title": "A key used by a component but absent from en-US is caught only by a test",
+        "detail": "en-US is the source-of-truth locale shape, so zh-CN is typed against AppResource and a missing key there is a compile error. A key present in neither locale, however, compiles and is only caught by tests/logic/app-locale-coverage.test.ts.",
+        "suggestedChange": "Optionally type component translation keys against AppResource or add a check that every t() key exists in en-US, so a missing key fails at build time.",
+        "mechanizable": true
+      },
+      {
+        "id": "notes/run/37491465827/attempt/1/I5",
+        "category": "tooling",
+        "title": "Source-loaded database tasks must use .ts specifiers, and the fix regressed",
+        "detail": "Repair 2 had fixed database/main/seeds/..._create_service_permission_sets.ts and database/seed-data/permission-sets.ts to import .ts, because seeds and migrations are dynamically imported from TypeScript source (Node type stripping) where a .js specifier pointing at a .ts file throws ERR_MODULE_NOT_FOUND. Repair 3 rewrote both back to .js, so the seed-load failure returned in tests/logic/app-server.test.ts. The tsconfigs already allow importing .ts and rewrite it on emit, so the guard below would have caught it.",
+        "suggestedChange": "Add a lint/check that relative imports under database/** must use the .ts extension (and the opposite, .js, under server/**), so this recurring mistake fails at author time.",
+        "mechanizable": true
+      }
+    ],
+    "note": "实现者自述，未经独立核验；不是框架评审结论。"
+  },
+  "metrics": {
+    "usage": {
+      "sources": [
+        {
+          "key": "agent-job:112234099159",
+          "executionKey": "run/37453059911/attempt/1",
+          "scope": "一次 Agent 作业内的实现、修复、QA 与同轮评审调用",
+          "phases": {
+            "implementation": {
+              "input": 877443,
+              "output": 77718,
+              "cacheRead": 13099562,
+              "cacheWrite": 0,
+              "total": 14054723
+            },
+            "repair": {
+              "input": 5780290,
+              "output": 818845,
+              "cacheRead": 129071742,
+              "cacheWrite": 0,
+              "total": 135670877
+            },
+            "qa": {
+              "input": 727746,
+              "output": 122358,
+              "cacheRead": 12769172,
+              "cacheWrite": 0,
+              "total": 13619276
+            },
+            "qaFocused": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0,
+              "total": 0
+            },
+            "qaReport": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0,
+              "total": 0
+            },
+            "review": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0,
+              "total": 0
+            },
+            "compaction": {
+              "input": 1403797,
+              "output": 296677,
+              "cacheRead": 244512,
+              "cacheWrite": 0,
+              "total": 1944986
+            }
+          },
+          "records": 2254,
+          "missing": 5,
+          "incomplete": 1,
+          "complete": false
+        },
+        {
+          "key": "agent-job:112365291654",
+          "executionKey": "run/37491465827/attempt/1",
+          "scope": "一次 Agent 作业内的实现、修复、QA 与同轮评审调用",
+          "phases": {
+            "implementation": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0,
+              "total": 0
+            },
+            "repair": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0,
+              "total": 0
+            },
+            "qa": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0,
+              "total": 0
+            },
+            "qaFocused": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0,
+              "total": 0
+            },
+            "qaReport": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0,
+              "total": 0
+            },
+            "review": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0,
+              "total": 0
+            },
+            "compaction": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0,
+              "total": 0
+            }
+          },
+          "records": 0,
+          "missing": 0,
+          "incomplete": 0,
+          "complete": true
+        }
+      ],
+      "totals": {
+        "input": 8789276,
+        "output": 1315598,
+        "cacheRead": 155184988,
+        "cacheWrite": 0,
+        "total": 165289862,
+        "complete": false
+      },
+      "definition": "沿用 task-usage 口径：按唯一来源键（Agent 作业 / 后补评审 Run）去重，不相加已含这些调用的汇总，不把思考 Token 再加到输出；缺失为 null，不等同供应商账单。"
+    },
+    "time": {
+      "executionSeconds": 18044,
+      "missingJobTimes": 0,
+      "endToEndSeconds": 18071,
+      "jobs": [
+        {
+          "id": 112233961678,
+          "name": "prepare",
+          "executionKey": "run/37453059911/attempt/1",
+          "seconds": 21
+        },
+        {
+          "id": 112234099159,
+          "name": "agent",
+          "executionKey": "run/37453059911/attempt/1",
+          "seconds": 17901
+        },
+        {
+          "id": 112365160756,
+          "name": "prepare",
+          "executionKey": "run/37491465827/attempt/1",
+          "seconds": 14
+        },
+        {
+          "id": 112365291654,
+          "name": "agent",
+          "executionKey": "run/37491465827/attempt/1",
+          "seconds": 108
+        }
+      ],
+      "definition": "executionSeconds 为 prepare / agent / verify-final / publish 唯一作业时长之和，不含排队；endToEndSeconds 含排队及续跑间隔。"
+    },
+    "counts": {
+      "businessBuilds": 1,
+      "executions": 2,
+      "reviewExecutions": 0
+    }
+  },
+  "evidence": [],
+  "links": [
+    {
+      "rel": "task-issue",
+      "label": "Issue #601",
+      "url": "https://github.com/gchust/nb3-factory/issues/601",
+      "path": null
+    },
+    {
+      "rel": "run",
+      "label": "Run 37453059911 / attempt 1",
+      "url": "https://github.com/gchust/nb3-factory/actions/runs/37453059911/attempts/1",
+      "path": null
+    },
+    {
+      "rel": "run",
+      "label": "Run 37491465827 / attempt 1",
+      "url": "https://github.com/gchust/nb3-factory/actions/runs/37491465827/attempts/1",
+      "path": null
+    },
+    {
+      "rel": "report-archive",
+      "label": "固定版本 HTML 报告（gh-pages 归档路径）",
+      "url": null,
+      "path": "reports/issues/601/runs/37491465827/attempt-1/index.html"
+    }
+  ],
+  "limitations": [
+    {
+      "code": "first-round-unavailable",
+      "detail": "只取得本执行的验证记录；首轮 QA 标为未知，不冒充整个任务首轮通过。"
+    },
+    {
+      "code": "review-not-run",
+      "detail": "本执行没有独立框架评审；未评估不代表通过，也不按零分处理。"
+    },
+    {
+      "code": "usage-incomplete",
+      "detail": "部分用量未取得或不完整；缺失值为 null，不按零处理。"
+    },
+    {
+      "code": "baseline-unknown",
+      "detail": "未取得：模板版本、锁文件、提示词指纹；保持 null，不回填猜测值。"
+    }
+  ]
+}
