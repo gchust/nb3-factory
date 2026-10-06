@@ -96,6 +96,33 @@ const enUS = {
     description:
       'Describe what you need to your AI Agent, then build pages, data models, and business workflows.',
   },
+  library: {
+    title: 'Internal document library',
+    description:
+      'Documents you may read. A reader sees published, non-confidential documents; a document manager also creates and edits their own.',
+    create: 'New document',
+    createTitle: 'New document',
+    viewTitle: 'Document',
+    editTitle: 'Edit document',
+    edit: 'Edit',
+    empty: 'No documents to show.',
+    loadFailed: 'Unable to load the document library',
+    saveFailed: 'Unable to save the document',
+    saved: 'Saved',
+    saving: 'Saving…',
+    denied: 'You do not have permission to do that.',
+    error: 'Something went wrong. Please try again.',
+    actions: 'Actions',
+    yes: 'Yes',
+    no: 'No',
+    field: {
+      title: 'Title',
+      body: 'Body',
+      owner: 'Owner',
+      published: 'Published',
+      confidential: 'Confidential',
+    },
+  },
 
   appearance: {
     title: 'Appearance',

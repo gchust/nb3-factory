@@ -547,6 +547,23 @@ Rebuild with a matching `--target` and `--node-version`. ABI 115 is Node 20, 127
 
 **`no prebuilt binary for <target>` during the build.** The package publishes no build for that combination. Check whether the version you depend on supports the target, and whether a musl build exists if you asked for one — musl coverage is thinner than glibc.
 
+## Document library
+
+`/library` is this application's internal document library (内部资料库). A document has a title (标题), a body (正文), an owner (负责人), a published flag (是否发布) and a confidential flag (是否保密). A document manager maintains their own documents; a reader may only read, which is what the page's data scopes and the permission sets below express.
+
+The application provisions its accounts and example documents on every start, so an installation needs no separate seed step beyond applying its migrations:
+
+| Role                  | Username    | Password      | Permission set       | Sees                                              |
+| --------------------- | ----------- | ------------- | -------------------- | ------------------------------------------------- |
+| Document manager (甲) | `jia`       | `Jia12345678` | `library.maintainer` | Their own documents, and may create and edit them |
+| Reader (乙)           | `yi.reader` | `Yi12345678`  | `library.reader`     | Published, non-confidential documents, read-only  |
+
+Three documents are created once: a published handbook, an unpublished draft owned by 甲, and a confidential compensation plan. Both permission sets are ordinary Authorization Permission Sets, so an administrator adjusts either side from the Users or Permission Sets page, and disabling 乙 from the Users page ends the sessions they already hold.
+
+**Temporarily opening one draft to a reader.** Settings → Authorization → Sharing Rules, a new rule on the Internal document library, subject 乙, data scope _Specific records_ with the draft selected, action _View_. The rule adds records to what the reader may read; deleting it takes them away again, and the reader's next load of `/library` no longer lists them. A confidential document is the case that stays closed: readers never reach one, so a rule that shares it by mistake changes nothing for them and never restricts its owner.
+
+The library's HTTP surface is `GET /api/documents`, `POST /api/documents` and `PATCH /api/documents/:id`, listed with the rest at `<origin><APP_BASE_PATH>/api/swagger/docs`.
+
 ## Configuration
 
 `server/config/` and `client/config/` contain editable TypeScript defaults. `config.yml` holds environment-specific overrides, written by `pnpm nocobase config init` and yours to edit from there. It is gitignored because it carries your `auth.secret`; deploy it through your secret management rather than committing it. It is generated from `config.example.yml`, which is kept beside it as the reference for every option.
