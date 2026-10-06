@@ -156,6 +156,7 @@ rm -f ./preview_key ./preview_key.pub
 | `FACTORY_PREVIEW_USER`        | `root`                      | SSH 用户                                                    |
 | `FACTORY_PREVIEW_DOMAIN`      | `nfvd.net`                  | 根域名，生成 `nb3-<PR>.nfvd.net`，不要填 `preview.nfvd.net` |
 | `FACTORY_PREVIEW_FETCH_PROXY` | `http://192.168.2.250:7890` | 预览机拉取 payload 时的出口代理；能直连时可设为空字符串     |
+| `FACTORY_PREVIEW_ENABLED`     | 未设置（开启）              | 设为 `false` 时，失败任务不再打包预览，省掉一次完整构建     |
 
 `FACTORY_PREVIEW_SSH_KEY`、`FACTORY_TAILSCALE_OAUTH_CLIENT_ID`、`FACTORY_TAILSCALE_OAUTH_CLIENT_SECRET`
 三个 Secret 缺任意一个，部署和回收工作流都会直接跳过并留一条 `::warning::`，不会失败。

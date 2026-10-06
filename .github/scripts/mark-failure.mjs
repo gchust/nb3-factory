@@ -39,8 +39,9 @@ const recoverable =
   state.phase !== 'done';
 const exhausted = state?.outcome === 'budget-exhausted';
 // A cancelled run still leaves agent:running, so it is marked here too, but
-// it must not read like a build failure. GitHub reports a job that hit its
-// timeout-minutes as cancelled as well; the agent job tells the two apart.
+// it must not read like a build failure. FACTORY_RUN_CANCELLED is set only
+// when the run itself was cancelled; the agent job reports its own six-hour
+// timeout, which GitHub also shows as cancelled.
 const timedOut = process.env.FACTORY_RUN_TIMED_OUT === 'true';
 const cancelled = process.env.FACTORY_RUN_CANCELLED === 'true' && !timedOut;
 const body = [
@@ -66,7 +67,10 @@ const body = [
           : '本次搭建未完成，请根据失败步骤检查运行日志。',
   '',
   `[查看本次运行日志](${runUrl})。`,
-  ...(process.env.FACTORY_PREVIEW_BUILD_RESULT === 'failure'
+  // GitHub reports a packaging job that hit its timeout as cancelled.
+  ...(['failure', 'cancelled'].includes(
+    process.env.FACTORY_PREVIEW_BUILD_RESULT,
+  )
     ? [
         '',
         '已尝试为失败实现打包预览，但未生成可用部署包；失败报告与搭建 PR 仍保留，详情见 preview-build-failed 作业日志。',

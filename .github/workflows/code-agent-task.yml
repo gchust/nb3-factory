@@ -558,7 +558,7 @@ jobs:
         run: |
           if ! command -v ffmpeg >/dev/null 2>&1; then
             sudo apt-get update -o Acquire::Retries=2 -o Acquire::http::Timeout=30
-            sudo apt-get install --yes --no-install-recommends ffmpeg
+            sudo apt-get install -o Acquire::Retries=2 -o Acquire::http::Timeout=30 --yes --no-install-recommends ffmpeg
           fi
 
       - name: Prepare and validate browser environment
@@ -880,8 +880,10 @@ jobs:
           fi
           echo "timed_out=$timed_out" >> "$GITHUB_OUTPUT"
 
+      # A summary is diagnostics only; it must never fail the task.
       - name: Summarize implementation and repair timings
         if: always()
+        continue-on-error: true
         run: node control/.github/scripts/timing-summary.mjs
 
   verify-final:
@@ -941,14 +943,33 @@ jobs:
           version: 11.7.0
           run_install: false
 
+      # Restore only. setup-node's own cache would save a second store whenever
+      # the task changed the lockfile, and only the agent job saves one. Same key
+      # format and store path as setup-node (node-cache-Linux-x64-pnpm-<hash of
+      # the lockfile>, `pnpm store path --silent` run in workspace/), so the
+      # agent job's store is restored here, exactly or by prefix after a
+      # dependency change. Source tarballs use an isolated local store, not the
+      # shared registry cache.
       - name: Set up Node.js
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 24.x
-          # Source tarballs use an isolated local store, not the shared registry cache.
-          # Check the already checked-out descriptor before setup-node arms its post step.
-          cache: ${{ hashFiles('workspace/factory-source.json') == '' && 'pnpm' || '' }}
-          cache-dependency-path: workspace/pnpm-lock.yaml
+          package-manager-cache: false
+
+      - name: Locate the pnpm store
+        id: pnpm_store
+        if: hashFiles('workspace/factory-source.json') == ''
+        working-directory: workspace
+        run: echo "path=$(pnpm store path --silent)" >> "$GITHUB_OUTPUT"
+
+      - name: Restore the agent job's pnpm store
+        if: steps.pnpm_store.outputs.path != ''
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ steps.pnpm_store.outputs.path }}
+          key: node-cache-Linux-x64-pnpm-${{ hashFiles('workspace/pnpm-lock.yaml') }}
+          restore-keys: |
+            node-cache-Linux-x64-pnpm-
 
       # The official CLI installs dist/ as its own pnpm root, which never reads the
       # application's .npmrc, and pnpm 11 ignores scoped registries passed in
@@ -1022,12 +1043,17 @@ jobs:
             node control/.github/scripts/source-snapshot.mjs stop
           fi
 
+      # Diagnostics only: publish requires this job to succeed, so a malformed
+      # timing row or a transient artifact error here must not turn a passed
+      # verification into a failed delivery.
       - name: Summarize final timings
         if: always()
+        continue-on-error: true
         run: node control/.github/scripts/timing-summary.mjs
 
       - name: Upload final verification diagnostics
         if: always()
+        continue-on-error: true
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: factory-final-${{ needs.prepare.outputs.issue_number }}
@@ -1120,8 +1146,31 @@ jobs:
             else
               lease="refs/heads/${WORK_BRANCH}:"
             fi
-            if ! git push --force-with-lease="$lease" origin "HEAD:refs/heads/${WORK_BRANCH}" 2> "$RUNNER_TEMP/push.log"; then
+            # A transient network or server error is retried; a rejection is
+            # final: a refused workflow change, a lease that no longer matches or
+            # a non-fast-forward. A push whose response was lost may have landed,
+            # so a retry first checks whether the remote already has this commit.
+            pushed=false
+            for attempt in 1 2 3; do
+              if (( attempt > 1 )) && [[ "$(git ls-remote origin "refs/heads/${WORK_BRANCH}" | cut -f1)" == "$(git rev-parse HEAD)" ]]; then
+                echo "The previous push attempt reached ${WORK_BRANCH}."
+                pushed=true
+                break
+              fi
+              if git push --force-with-lease="$lease" origin "HEAD:refs/heads/${WORK_BRANCH}" 2> "$RUNNER_TEMP/push.log"; then
+                pushed=true
+                break
+              fi
               cat "$RUNNER_TEMP/push.log" >&2
+              if grep -qE 'without `workflows` permission|stale info|\[rejected\]|\[remote rejected\]|non-fast-forward|Permission to .* denied' "$RUNNER_TEMP/push.log"; then
+                break
+              fi
+              if (( attempt < 3 )); then
+                echo "::warning::Push attempt $attempt failed; retrying."
+                sleep $((attempt * 10))
+              fi
+            done
+            if [[ "$pushed" != true ]]; then
               if grep -q 'without `workflows` permission' "$RUNNER_TEMP/push.log"; then
                 echo "::error::GitHub refused ${WORK_BRANCH} because the pushed commits would change workflow files, which the task token may not do. The task was verified on ${BASE_SHA}; the target branch moved since with changes the publisher could not restack onto (see Choose the publication base). The verified patch is in the factory-patch-${ISSUE_NUMBER} artifact: apply it with git apply --3way on the current target branch, push ${WORK_BRANCH} with credentials allowed to change workflows, and open the PR by hand."
               fi
@@ -1159,9 +1208,12 @@ jobs:
       FACTORY_DELIVERY_STATUS: failed
     steps: *publication-steps
 
+  # FACTORY_PREVIEW_ENABLED=false skips packaging when no preview host is
+  # configured: deploy-preview would discard the package anyway. A job
+  # condition cannot read secrets, hence the variable; unset keeps it on.
   preview-build-failed:
     needs: [prepare, agent, publish-failed]
-    if: always() && !cancelled() && needs.publish-failed.result == 'success'
+    if: always() && !cancelled() && needs.publish-failed.result == 'success' && vars.FACTORY_PREVIEW_ENABLED != 'false'
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     permissions:
@@ -1204,14 +1256,33 @@ jobs:
           version: 11.7.0
           run_install: false
 
+      # Restore only. setup-node's own cache would save a second store whenever
+      # the task changed the lockfile, and only the agent job saves one. Same key
+      # format and store path as setup-node (node-cache-Linux-x64-pnpm-<hash of
+      # the lockfile>, `pnpm store path --silent` run in workspace/), so the
+      # agent job's store is restored here, exactly or by prefix after a
+      # dependency change. Source tarballs use an isolated local store, not the
+      # shared registry cache.
       - name: Set up Node.js
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 24.x
-          # Source tarballs use an isolated local store, not the shared registry cache.
-          # Check the already checked-out descriptor before setup-node arms its post step.
-          cache: ${{ hashFiles('workspace/factory-source.json') == '' && 'pnpm' || '' }}
-          cache-dependency-path: workspace/pnpm-lock.yaml
+          package-manager-cache: false
+
+      - name: Locate the pnpm store
+        id: pnpm_store
+        if: hashFiles('workspace/factory-source.json') == ''
+        working-directory: workspace
+        run: echo "path=$(pnpm store path --silent)" >> "$GITHUB_OUTPUT"
+
+      - name: Restore the agent job's pnpm store
+        if: steps.pnpm_store.outputs.path != ''
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ steps.pnpm_store.outputs.path }}
+          key: node-cache-Linux-x64-pnpm-${{ hashFiles('workspace/pnpm-lock.yaml') }}
+          restore-keys: |
+            node-cache-Linux-x64-pnpm-
 
       # The official CLI installs dist/ as its own pnpm root, which never reads the
       # application's .npmrc, and pnpm 11 ignores scoped registries passed in
@@ -1340,15 +1411,22 @@ jobs:
           name: factory-agent-${{ needs.prepare.outputs.issue_number }}
           path: failure-artifacts
 
+      # This job deliberately runs on cancellation (always()) so the Issue
+      # leaves agent:running; the notice says it was cancelled. Only a real
+      # cancellation of the run counts: GitHub also reports a job that hit its
+      # timeout-minutes as cancelled, which is a failure to report as one.
+      # cancelled() is not available in env, so a step condition records it.
+      - name: Record whether the run was cancelled
+        id: run_state
+        if: cancelled()
+        run: echo "cancelled=true" >> "$GITHUB_OUTPUT"
+
       - name: Mark Issue as failed
         env:
           GITHUB_TOKEN: ${{ github.token }}
           FACTORY_CHECKPOINT_AVAILABLE: ${{ needs.agent.outputs.checkpoint_available }}
           FACTORY_PREVIEW_BUILD_RESULT: ${{ needs.preview-build-failed.result }}
-          # This job deliberately runs on cancellation (always()) so the Issue
-          # leaves agent:running; the notice says it was cancelled. cancelled()
-          # is not available in env, and a cancelled run cancels its jobs.
-          FACTORY_RUN_CANCELLED: ${{ contains(needs.*.result, 'cancelled') }}
+          FACTORY_RUN_CANCELLED: ${{ steps.run_state.outputs.cancelled == 'true' }}
           FACTORY_RUN_TIMED_OUT: ${{ needs.agent.outputs.timed_out }}
         run: node control/.github/scripts/mark-failure.mjs "${{ needs.prepare.outputs.issue_number }}" failure-artifacts
 
@@ -1371,7 +1449,7 @@ jobs:
     # has no factory-task-N for the reports to read.
     if: always() && needs.prepare.result == 'success' && needs.prepare.outputs.status == 'ready' && needs.prepare.outputs.comment_kind != 'reply'
     runs-on: ubuntu-24.04
-    # Six requests at up to 70 s each (dispatch-task-reports.sh) plus checkout.
+    # Up to seven requests at 70 s each (dispatch-task-reports.sh) plus checkout.
     # Continuations have no workflow_run fallback, so the last reports must fit.
     timeout-minutes: 10
     continue-on-error: true
@@ -1433,6 +1511,20 @@ jobs:
         if: ${{ !cancelled() }}
         env: *report-dispatch-env
         run: bash dispatcher/.github/scripts/dispatch-task-reports.sh deploy-preview.yml
+      # A comment round was started with GITHUB_TOKEN, so its completion emits
+      # no workflow_run for the comment queue; request the queue directly so the
+      # next instruction starts now instead of at a late hourly sweep. The queue
+      # waits for this run to complete before it reconciles.
+      - name: Request comment-build-queue.yml
+        id: request-comment-build-queue
+        if: ${{ !cancelled() && needs.prepare.outputs.build_comment_id != '' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SOURCE_RUN_ID: ${{ github.run_id }}
+          SOURCE_ATTEMPT: ${{ github.run_attempt }}
+          FACTORY_REPORT_REF: ${{ github.event.repository.default_branch }}
+          ISSUE_NUMBER: ${{ needs.prepare.outputs.issue_number }}
+        run: bash dispatcher/.github/scripts/dispatch-task-reports.sh comment-build-queue.yml
 
   reply:
     env:
@@ -1445,7 +1537,8 @@ jobs:
       needs.prepare.outputs.build_comment_id != '' &&
       needs.agent.outputs.handoff != 'true'
     runs-on: ubuntu-24.04
-    timeout-minutes: 25
+    # 10 install + 15 reply budget, plus checkouts, setup and the upload.
+    timeout-minutes: 30
     permissions:
       contents: read
     steps:
@@ -1498,7 +1591,7 @@ jobs:
 
   publish-reply:
     needs: [prepare, reply]
-    if: always() && needs.reply.result == 'success'
+    if: ${{ !cancelled() && needs.reply.result == 'success' }}
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     permissions:
@@ -1556,3 +1649,13 @@ jobs:
           SOURCE_ATTEMPT: ${{ github.run_attempt }}
           FACTORY_REPORT_REF: ${{ github.event.repository.default_branch }}
         run: bash dispatcher/.github/scripts/dispatch-task-reports.sh publish-agent-history.yml
+      # As in dispatch-reports: start the Issue's next queued instruction now.
+      - name: Request comment-build-queue.yml
+        if: ${{ !cancelled() }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SOURCE_RUN_ID: ${{ github.run_id }}
+          SOURCE_ATTEMPT: ${{ github.run_attempt }}
+          FACTORY_REPORT_REF: ${{ github.event.repository.default_branch }}
+          ISSUE_NUMBER: ${{ needs.prepare.outputs.issue_number }}
+        run: bash dispatcher/.github/scripts/dispatch-task-reports.sh comment-build-queue.yml
