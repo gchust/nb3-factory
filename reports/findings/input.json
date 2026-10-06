@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "inputHash": "59e7d371cffe056c2fdd71e440b5591404ed4502ec1974b1ae3a7c1a66c6e012",
+  "inputHash": "387584a044b211e41290c47586d8e6562906359d4d9c854296007c5199080726",
   "findings": [
     {
       "id": "460:36434284393:1:F2",
@@ -8978,6 +8978,129 @@
         }
       ],
       "fingerprint": "6328b7ed14a27c50b46bea3a1f37c7db0efffa9e3a00780898562be648cef1ff"
+    },
+    {
+      "id": "576:37394448063:1:F2",
+      "report": "576:37394448063:1",
+      "issue": 576,
+      "taskTitle": "员工 IT 报修与处理",
+      "appVersion": "1.0.0-beta.50",
+      "appTemplate": "@nocobase/app-template-default",
+      "finding": {
+        "id": "F2",
+        "kind": "issue",
+        "owner": "documentation",
+        "severity": "minor",
+        "confidence": "confirmed",
+        "status": "open",
+        "title": "演示/夹具数据无受支持的种子期创建路径，指引又禁止其进入生产初始化",
+        "detail": "nocobase-db SKILL 第80行称“seed 从不是样例或演示内容”，code-and-seeds 第114行要求把演示凭据与固定夹具排除在生产初始化之外；authentication Skill 把账号变更指向运行时的 userAdministrationServiceToken（需要应用容器），种子执行的 SeedContext 不提供容器，指引未给出种子期创建普通账号或承载演示夹具的受支持入口。应用为满足可登录演示需求，在安装种子中直接写 user/account 并调用 better-auth/crypto 的 hashPassword，即复制框架认证插件自带 seed 的内部模式。",
+        "impact": "Agent 面对“需要演示账号”的场景只能违反显式规则或复制内部实现；不同实现者会各自猜测，可能把演示凭据带入生产初始化，且升级时易被内部表结构变化破坏。",
+        "suggestedChange": "在 db/authorization/authentication 指引中补充受支持的种子期账号或夹具入口（如 seed 可用的凭据 helper 或正式的 dev/fixture seed 位置），或明确区分“运行所需安装数据”和“演示数据”的目录与开关，并给出验证方式。",
+        "diagnosis": {
+          "category": "guidance-gap",
+          "trigger": "安装种子需要在无应用容器的 SeedContext 中创建可登录的演示账号与样例工单。",
+          "expected": "文档提供受支持的种子期账号/夹具创建方式，或明确演示数据的正式归属（不违反“seed 从不是演示内容”）。",
+          "actual": "nocobase-db SKILL:80 与 code-and-seeds:114 禁止演示内容进入种子，authentication Skill 只指向运行时 userAdministrationServiceToken；应用只能直接写 user/account 并 hashPassword。",
+          "workaround": "复制框架认证插件自带 seed 的裸表 + hashPassword 模式；种子期无应用容器可用。",
+          "acceptance": "按文档在干净数据库执行一次安装：能用演示账号登录并看到夹具，同时该流程不违反指引对生产初始化的约束；若提供 dev/fixture 开关，关闭时不得写入演示数据。"
+        },
+        "evidence": [
+          "E6",
+          "E17",
+          "E36",
+          "E37",
+          "E40",
+          "E50"
+        ]
+      },
+      "targets": [
+        "app/.agents/skills/nocobase-app-plugin-authentication",
+        "app/.agents/skills/nocobase-app-plugin-authorization",
+        "app/.agents/skills/nocobase-db/SKILL.md"
+      ],
+      "paths": [
+        ".agents/skills/nocobase-app-plugin-authentication/SKILL.md",
+        ".agents/skills/nocobase-app-plugin-authentication/references/user-lifecycle-and-deployment.md",
+        ".agents/skills/nocobase-app-plugin-authorization/references/code-and-seeds.md",
+        ".agents/skills/nocobase-db/SKILL.md",
+        "packages/@nocobase/app-plugin-authentication/dist/database/seeds/202608220003_authentication_create_default_admin_user.js"
+      ],
+      "evidence": [
+        {
+          "id": "E6",
+          "kind": "skill",
+          "path": "app/.agents/skills/nocobase-db/SKILL.md",
+          "observation": "db Skill 第2节明确迁移建结构、种子写运行所需记录，并写明 seed 从不是演示内容（第80行）。",
+          "lines": [
+            78,
+            100
+          ],
+          "excerpt": "## 2. Migrations and seeds\n\nA migration creates structure. A seed inserts the records the application needs in order to run. Neither does the other's job, and a seed is never sample or demonstration content.\n\n```ts\n// database/main/migrations/202609020001_create_orders.ts\nimport { defineMigration, type MigrationDefinition } from '@nocobase/db';\n\nconst migration: MigrationDefinition = defineMigration({\n  name: '202609020001_create_orders',\n\n  async up({ builder }) {\n    await builder.createCollection('orders', (collection) => {\n      collection.increments('id');\n      collection.string('orderNo', { length: 64, nullable: false });\n      collection.string('status', { length: 32, nullable: false });\n      collection.datetime('createdAt', { nullable: false });\n      collection.unique('orderNo');\n      collection.index('status');\n    });\n  },\n\n  async down({ builder }) {",
+          "sha256": "f97c07a45a9d49c1d933ddbceeabcc9afe267b1356a2ded1a3da0dd56b54011c"
+        },
+        {
+          "id": "E17",
+          "kind": "skill",
+          "path": "app/.agents/skills/nocobase-app-plugin-authorization/references/code-and-seeds.md",
+          "observation": "指引说明种子写权限集/分配的表结构、encodeAuthorizationTitle 与 JSON grants，并声明演示凭据与固定夹具不得进入生产初始化（第114行）。",
+          "lines": [
+            99,
+            114
+          ],
+          "excerpt": "### Persist initial permission-set assignments\n\nUse the actual existing user/team IDs. Check logical uniqueness before inserting missing rows; a random row ID alone does not make reruns idempotent. Do not re-add an administrator-removed assignment during every startup. A one-time seed's execution history handles when it runs; a provisioning routine that may be retried needs its own explicit completion/idempotency boundary.\n\nA seed writes composite grants in the stored shape the definition accepts: the action names and data-scope keys its composite declares, as `{ type: 'composite', scopes }`. The Permission Set HTTP routes reject anything else, but a seed bypasses that check. Such a grant is skipped at runtime — it permits nothing while the person's other grants keep working, and a warning names it — and the startup scan of stored Permission Sets throws in development, naming the set, resource, action and problem. Fix the seed or migrate the stored grant; do not widen the composite to accept it.\n\n| Table                                   | Row shape in addition to `id`                                            |\n| --------------------------------------- | ------------------------------------------------------------------------ |\n| `authorizationPermissionSets`           | `key`, encoded `title`, JSON `grants`, `createdAt`, `updatedAt`          |\n| `authorizationPermissionSetAssignments` | `permissionSetKey`, `subjectType`, `subjectId`, `createdAt`, `updatedAt` |\n\nUse `encodeAuthorizationTitle` for permission-set titles, `JSON.stringify` for grants, and one transaction for dependent rows. Insert actual principals/teams before memberships and assignments. Verify foreign keys and idempotency against a real database.\n\nOptional rule initialization belongs to the owning plugin Skill, including its tables, serialization and assignment format. Follow [capability discovery](optional-capabilities.md) first; if the matching Skill is absent, the App does not support that capability and implementing it requires separate development. Do not create optional-plugin tables or write speculative seed rows from this guide.\n\nKeep demonstration credentials, fixed fixture records and practice-reset routes out of production initialization.",
+          "sha256": "6815f18c10d1043383aac7d605c8195aed12a7ee34729aade698746f92eebe1c"
+        },
+        {
+          "id": "E36",
+          "kind": "skill",
+          "path": "app/.agents/skills/nocobase-app-plugin-authentication/references/user-lifecycle-and-deployment.md",
+          "observation": "user-lifecycle 指引以 userAdministrationServiceToken/UserAdministrationError 作为运行时创建与变更账号的公开入口。",
+          "lines": [
+            1,
+            45
+          ],
+          "excerpt": "# User lifecycle and deployment\n\n## Account state from server code\n\n`userAdministrationServiceToken` is the plugin's administration contract. The\nUsers plugin builds its page and API on it; application code that needs the\nsame operations, such as an onboarding job or a compliance workflow, resolves\nit too.\n\n```ts\nimport {\n  userAdministrationServiceToken,\n  UserAdministrationError,\n} from '@nocobase/app-plugin-authentication';\n\nconst users = app.container.resolve(userAdministrationServiceToken);\nawait users.disable(userId);\n```\n\n| Method                                              | Effect                                                                                                 |\n| --------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |\n| `list({ page, pageSize, search, status, userIds })` | Paged users; `pageSize` caps at 100; `status` is `'enabled'` or `'disabled'`                           |\n| `get(userId)`                                       | One user or `undefined`                                                                                |\n| `create({ name, email, username?, password })`      | Creates the user and a credential account; email and username are normalized to lower case             |\n| `update(userId, { name?, email?, username? })`      | `username: null` clears it                                                                             |\n| `disable(userId)`                                   | Sets `disabledAt`, deletes every session, disconnects realtime; sign-in returns `403 ACCOUNT_DISABLED` |\n| `enable(userId)`                                    | Clears `disabledAt`; the user signs in again, old sessions stay gone                                   |\n| `resetPassword(userId, password)`                   | Rehashes and revokes sessions                                                                          |\n| `revokeSessions(userId)`                            | Deletes sessions and disconnects realtime without changing state                                       |\n| `withConnection(connection)`                        | Binds every operation to a caller-owned transaction                                                    |\n\nErrors are `UserAdministrationError` with a `code` of `USER_NOT_FOUND`,\n`USER_EMAIL_CONFLICT`, `USER_USERNAME_CONFLICT`, `USER_IDENTITY_CONFLICT`,\n`PASSWORD_TOO_SHORT`, or `PASSWORD_TOO_LONG`. Map them to stable HTTP\nresponses; do not surface database errors.\n\nUse `withConnection` when a user change must commit with other rows, for\nexample creating a user together with its role assignment. The Users plugin's\nrole scope registry is the place to hook application roles into that flow;\nread `nocobase-app-plugin-users` for it. There is no user deletion.\n\nThe service does not delete a user and does not send email. Compose a\nnotification yourself after `resetPassword` when the flow needs one.\n\n## Extending the user record",
+          "sha256": "f8b0c5cdd615fcb6ac7ffb9bfc8f4b42f5fd3422c6e8613d517f87ee60e91fbe"
+        },
+        {
+          "id": "E37",
+          "kind": "skill",
+          "path": "app/.agents/skills/nocobase-app-plugin-authentication/SKILL.md",
+          "observation": "authentication Skill 说明初始管理员由配置与种子建立，并要求后续账号变更用用户管理服务、不可编辑历史种子或另加管理员种子。",
+          "lines": [
+            136,
+            141
+          ],
+          "excerpt": "`Auth.pluginApi<TPlugin>(pluginId)` returns only the registered plugin’s API methods through Better Auth’s normal dispatch, including before and after hooks. It does not expose the full authentication context and does not authenticate a caller. `Auth.forConnection(connection)` binds those operations to a caller-owned transaction. Consumers still enforce authorization; HTTP-specific hooks must explicitly check for `request` or `headers` instead of accidentally denying trusted server calls.\n\n## Initial administrator\n\nBefore the first seed run, set `users.initialAdmin.username`, `users.initialAdmin.email` and `users.initialAdmin.password` in application configuration to customize the bootstrap account. Omitting the entire node preserves `nocobase` / `admin@nocobase.com` / `admin123`; an explicit node requires a nonempty password and defaults the username to `nocobase` and the email to `admin@nocobase.com`. Usernames contain 3–30 letters, digits, underscores or dots, emails must be valid addresses, and both are stored lowercase. Initialization only runs when the user table is empty, hashes the password and grants the newly created account root permission through the authorization plugin. After initialization, configuration changes do not reset accounts or rerun the recorded seeds. The root permission seed selects the administrator by the same configured username. Use the user administration service for subsequent account changes. Do not edit historical seeds or add a competing administrator seed.\n",
+          "sha256": "a6f9b77f7992abe85dab3da3938e47061f68ee14b2b88c5412535c1fc66204a3"
+        },
+        {
+          "id": "E40",
+          "kind": "code",
+          "path": "app/database/main/seeds/202609290003_repair_tickets_demo_data.ts",
+          "observation": "应用演示种子直接用 query 写 user/account 并用 better-auth/crypto 的 hashPassword 建 3 个演示账号，再幂等写分配。",
+          "lines": [
+            48,
+            103
+          ],
+          "excerpt": "  const now = new Date();\n  const userId = crypto.randomUUID();\n  await query\n    .insertInto('user')\n    .values({\n      id: userId,\n      name: user.name,\n      username: user.username,\n      email: user.email,\n      emailVerified: true,\n      createdAt: now,\n      updatedAt: now,\n    })\n    .execute();\n  await query\n    .insertInto('account')\n    .values({\n      id: crypto.randomUUID(),\n      accountId: userId,\n      providerId: 'credential',\n      userId,\n      password=[REDACTED] hashPassword(DEMO_PASSWORD),\n      createdAt: now,\n      updatedAt: now,\n    })\n    .execute();\n  return userId;\n}\n\nasync function ensureAssignment(\n  query: QueryAdapter,\n  userId: string,\n  permissionSetKey: string,\n): Promise<void> {\n  const id = `user:${userId}:${permissionSetKey}`;\n  const existing = await query\n    .selectFrom('authorizationPermissionSetAssignments')\n    .select('id')\n    .where('id', '=', id)\n    .executeTakeFirst();\n  if (existing) {\n    return;\n  }\n  const now = new Date();\n  await query\n    .insertInto('authorizationPermissionSetAssignments')\n    .values({\n      id,\n      subjectType: 'user',\n      subjectId: userId,\n      permissionSetKey,\n      createdAt: now,\n      updatedAt: now,\n    })\n    .execute();\n}",
+          "sha256": "934850fc1e2d35914d9921fb6a2ebca6cee1426ce4b5145fe4f85bd04478c776"
+        },
+        {
+          "id": "E50",
+          "kind": "code",
+          "path": "packages/@nocobase/app-plugin-authentication/dist/database/seeds/202608220003_authentication_create_default_admin_user.js",
+          "observation": "框架自身认证插件种子也直接向 user/account 写行并以 better-auth/crypto 的 hashPassword 生成凭据。",
+          "lines": [
+            38,
+            64
+          ],
+          "excerpt": "        const now = new Date();\n        const userId = crypto.randomUUID();\n        const passwordHash = await hashPassword(password);\n        await query\n            .insertInto('user')\n            .values({\n            id: userId,\n            name: 'Super Admin',\n            username: username.toLowerCase(),\n            email: email.toLowerCase(),\n            emailVerified: true,\n            createdAt: now,\n            updatedAt: now,\n        })\n            .execute();\n        await query\n            .insertInto('account')\n            .values({\n            id: crypto.randomUUID(),\n            accountId: userId,\n            providerId: 'credential',\n            userId,\n            password=[REDACTED],\n            createdAt: now,\n            updatedAt: now,\n        })\n            .execute();",
+          "sha256": "c146599fb0061b15897932b24482bf516cea4be14b80a815491c031098f41fd8"
+        }
+      ],
+      "fingerprint": "667e3322b132ac78afc7aa6433a979cde8c0ee494d0a06386687c3ce56818a18"
     },
     {
       "id": "578:37394457519:1:F1",
