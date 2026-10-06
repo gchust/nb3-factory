@@ -130,7 +130,7 @@ test('a runner timeout is reported as a timeout, not as a manual cancel', async 
   assert.doesNotMatch(notice, /本次搭建未完成/);
 });
 
-test('a later job that timed out is reported as a failure, with its preview packaging', async (t) => {
+async function failedRunNotice(t, env) {
   const root = mkdtempSync(path.join(os.tmpdir(), 'factory-stop-notice-'));
   t.after(() => rmSync(root, { recursive: true, force: true }));
   writeFileSync(
@@ -171,18 +171,38 @@ test('a later job that timed out is reported as a failure, with its preview pack
         GITHUB_RUN_ID: '100',
         GITHUB_SERVER_URL: 'https://github.com',
         GITHUB_API_URL: 'http://127.0.0.1:' + server.address().port,
-        // The run itself was not cancelled; the packaging job hit its timeout,
-        // which GitHub reports as cancelled.
-        FACTORY_RUN_CANCELLED: 'false',
         FACTORY_RUN_TIMED_OUT: 'false',
-        FACTORY_PREVIEW_BUILD_RESULT: 'cancelled',
+        ...env,
       },
     },
   );
-  const notice = mutations.find((item) => item.url.endsWith('/comments')).body
-    .body;
+  return mutations.find((item) => item.url.endsWith('/comments')).body.body;
+}
+
+test('a later job that timed out is reported as a failure, with its preview packaging', async (t) => {
+  // The run itself was not cancelled; the packaging job hit its timeout,
+  // which GitHub reports as cancelled.
+  const notice = await failedRunNotice(t, {
+    FACTORY_RUN_CANCELLED: 'false',
+    FACTORY_PREVIEW_BUILD_RESULT: 'cancelled',
+  });
   assert.doesNotMatch(notice, /本次运行已取消/);
   assert.match(notice, /已尝试为失败实现打包预览，但未生成可用部署包/);
+});
+
+test('a cancelled run does not also report its cancelled packaging as failed', async (t) => {
+  const notice = await failedRunNotice(t, {
+    FACTORY_RUN_CANCELLED: 'true',
+    FACTORY_PREVIEW_BUILD_RESULT: 'cancelled',
+  });
+  assert.match(notice, /本次运行已取消/);
+  assert.doesNotMatch(notice, /打包预览/);
+  // A packaging job that failed on its own is still reported.
+  const failed = await failedRunNotice(t, {
+    FACTORY_RUN_CANCELLED: 'true',
+    FACTORY_PREVIEW_BUILD_RESULT: 'failure',
+  });
+  assert.match(failed, /已尝试为失败实现打包预览，但未生成可用部署包/);
 });
 
 test('only a real cancellation of the run makes the notice say cancelled', () => {
@@ -190,17 +210,37 @@ test('only a real cancellation of the run makes the notice say cancelled', () =>
     path.resolve(import.meta.dirname, '../../workflows/code-agent-task.yml'),
     'utf8',
   );
-  const job = workflow
-    .split('\n  report-failure:\n')[1]
-    .split(/\n {2}[a-z][a-z-]*:\n/)[0];
-  // A timed-out verify-final or packaging job is 'cancelled' in needs.* too.
-  assert.doesNotMatch(job, /contains\(needs\.\*\.result, 'cancelled'\)/);
+  const jobOf = (name) =>
+    workflow.split(`\n  ${name}:\n`)[1].split(/\n {2}[a-z][a-z-]*:\n/)[0];
+  const report = jobOf('report-failure');
+  // A timed-out verify-final or packaging job is 'cancelled' in needs.* too,
+  // and a step-level cancelled() in an always() job is always false.
+  assert.doesNotMatch(report, /contains\(needs\.\*\.result, 'cancelled'\)/);
+  assert.doesNotMatch(report, /^\s+if: cancelled\(\)$/m);
   assert.match(
-    job,
-    /- name: Record whether the run was cancelled\n\s+id: run_state\n\s+if: cancelled\(\)\n\s+run: echo "cancelled=true" >> "\$GITHUB_OUTPUT"/,
+    report,
+    /FACTORY_RUN_CANCELLED: \$\{\{ needs\.run-cancelled\.result == 'success' \}\}/,
   );
-  assert.match(
-    job,
-    /FACTORY_RUN_CANCELLED: \$\{\{ steps\.run_state\.outputs\.cancelled == 'true' \}\}/,
-  );
+  const needsOf = (job) =>
+    /needs:\s*\[([^\]]+)\]/
+      .exec(job)[1]
+      .split(',')
+      .map((value) => value.trim())
+      .filter(Boolean);
+  // report-failure waits for it, and its always() keeps a skipped one harmless.
+  assert.deepEqual(needsOf(report), [
+    'prepare',
+    'agent',
+    'verify-final',
+    'publish',
+    'publish-failed',
+    'preview-build-failed',
+    'run-cancelled',
+  ]);
+  assert.match(report, /^ {4}if: >-\n {6}always\(\) &&/m);
+  const cancelledJob = jobOf('run-cancelled');
+  assert.match(cancelledJob, /^ {4}if: cancelled\(\)$/m);
+  assert.deepEqual(needsOf(cancelledJob), needsOf(report).slice(0, -1));
+  assert.match(cancelledJob, /^ {4}permissions: \{\}$/m);
+  assert.match(cancelledJob, /^ {4}timeout-minutes: 2$/m);
 });

@@ -1361,6 +1361,28 @@ jobs:
           if-no-files-found: warn
           retention-days: 14
 
+  # Runs only when the run itself was cancelled. A job that hit its
+  # timeout-minutes is also 'cancelled' in needs.*, so report-failure cannot
+  # tell the two apart from its needs, and a step-level cancelled() there is
+  # always false: an always() job is not cancelled with the run.
+  run-cancelled:
+    needs:
+      [
+        prepare,
+        agent,
+        verify-final,
+        publish,
+        publish-failed,
+        preview-build-failed,
+      ]
+    if: cancelled()
+    runs-on: ubuntu-24.04
+    timeout-minutes: 2
+    permissions: {}
+    steps:
+      - name: Record that the run was cancelled
+        run: 'true'
+
   report-failure:
     needs:
       [
@@ -1370,6 +1392,7 @@ jobs:
         publish,
         publish-failed,
         preview-build-failed,
+        run-cancelled,
       ]
     if: >-
       always() &&
@@ -1413,20 +1436,14 @@ jobs:
 
       # This job deliberately runs on cancellation (always()) so the Issue
       # leaves agent:running; the notice says it was cancelled. Only a real
-      # cancellation of the run counts: GitHub also reports a job that hit its
-      # timeout-minutes as cancelled, which is a failure to report as one.
-      # cancelled() is not available in env, so a step condition records it.
-      - name: Record whether the run was cancelled
-        id: run_state
-        if: cancelled()
-        run: echo "cancelled=true" >> "$GITHUB_OUTPUT"
-
+      # cancellation of the run counts (run-cancelled): GitHub also reports a
+      # job that hit its timeout-minutes as cancelled, which is a failure.
       - name: Mark Issue as failed
         env:
           GITHUB_TOKEN: ${{ github.token }}
           FACTORY_CHECKPOINT_AVAILABLE: ${{ needs.agent.outputs.checkpoint_available }}
           FACTORY_PREVIEW_BUILD_RESULT: ${{ needs.preview-build-failed.result }}
-          FACTORY_RUN_CANCELLED: ${{ steps.run_state.outputs.cancelled == 'true' }}
+          FACTORY_RUN_CANCELLED: ${{ needs.run-cancelled.result == 'success' }}
           FACTORY_RUN_TIMED_OUT: ${{ needs.agent.outputs.timed_out }}
         run: node control/.github/scripts/mark-failure.mjs "${{ needs.prepare.outputs.issue_number }}" failure-artifacts
 

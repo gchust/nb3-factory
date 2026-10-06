@@ -67,10 +67,11 @@ const body = [
           : '本次搭建未完成，请根据失败步骤检查运行日志。',
   '',
   `[查看本次运行日志](${runUrl})。`,
-  // GitHub reports a packaging job that hit its timeout as cancelled.
-  ...(['failure', 'cancelled'].includes(
-    process.env.FACTORY_PREVIEW_BUILD_RESULT,
-  )
+  // GitHub reports a packaging job that hit its timeout as cancelled; a
+  // cancelled run cancels that job too, which is not a packaging failure.
+  ...(process.env.FACTORY_PREVIEW_BUILD_RESULT === 'failure' ||
+  (process.env.FACTORY_PREVIEW_BUILD_RESULT === 'cancelled' &&
+    process.env.FACTORY_RUN_CANCELLED !== 'true')
     ? [
         '',
         '已尝试为失败实现打包预览，但未生成可用部署包；失败报告与搭建 PR 仍保留，详情见 preview-build-failed 作业日志。',
