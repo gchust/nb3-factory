@@ -160,12 +160,20 @@ jobs:
         timeout-minutes: 5
         run: bash control/.github/scripts/install-browser-fonts.sh
 
+      # Factory regression tests already run on every PR that changes these
+      # scripts (factory-tests.yml); a refresh that may publish runs them here.
+      # Like factory-tests, unset the run identity: handoff, recovery and budget
+      # fixtures read GITHUB_RUN_ID/GITHUB_RUN_ATTEMPT, and a Re-run (attempt 2)
+      # would otherwise fail them.
+      - name: Run factory regression tests before publication
+        if: github.event_name != 'pull_request'
+        run: env -u GITHUB_RUN_ID -u GITHUB_RUN_ATTEMPT node --test --test-concurrency=1 control/.github/scripts/tests/*.test.mjs
+
       - name: Verify factory, application, clean database, and browser login
         run: |
           set -o pipefail
           # The published AGENTS.md and CLAUDE.md are exactly what the template generated.
           node control/.github/scripts/template-guidance.mjs check "$RUNNER_TEMP/template-generation/nb3-factory"
-          node --test --test-concurrency=1 control/.github/scripts/tests/*.test.mjs
           node control/.github/scripts/create-runtime-config.mjs \
             --output "$RUNNER_TEMP/template-verification.yml" \
             --database "$RUNNER_TEMP/template-verification/database.sqlite"
