@@ -99,8 +99,19 @@ export function selectArtifact(run, jobs, artifacts, repository) {
   ) {
     return null; // In particular, a successful five-hour handoff is not a delivery.
   }
+  // The run's artifact list spans every attempt, and a re-run agent job uploads
+  // a second factory-agent-N. Only the one this attempt's agent job uploaded
+  // describes it; without that job's window nothing identifies it.
+  const agent = jobs.find((job) => job.name === 'agent');
+  const start = Date.parse(agent?.started_at);
+  const end = Date.parse(agent?.completed_at);
+  if (Number.isNaN(start) || Number.isNaN(end)) return null;
   const candidates = artifacts.filter(
-    (a) => /^factory-agent-[1-9]\d*$/.test(a.name) && !a.expired,
+    (a) =>
+      /^factory-agent-[1-9]\d*$/.test(a.name) &&
+      !a.expired &&
+      Date.parse(a.created_at) >= start &&
+      Date.parse(a.created_at) <= end,
   );
   if (candidates.length !== 1)
     throw new Error('Expected one unexpired task artifact');

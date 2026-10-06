@@ -1,3 +1,4 @@
+import { repositoryApi } from './factory-lib.mjs';
 import { selectSupplement, adoptSupplement } from './replay-build-review.mjs';
 import { executionFacts } from './evaluation-report.mjs';
 import { makeDeliveryReport } from './delivery-report.mjs';
@@ -39,23 +40,10 @@ const output = (key, value) =>
   process.env.GITHUB_OUTPUT &&
   appendFileSync(process.env.GITHUB_OUTPUT, `${key}=${value}\n`);
 
-async function api(method, route, body) {
-  const response = await fetch(
-    `${process.env.GITHUB_API_URL || 'https://api.github.com'}/repos/${repository}${route}`,
-    {
-      method,
-      headers: {
-        Authorization: `Bearer ${process.env.GITHUB_TOKEN}`,
-        Accept: 'application/vnd.github+json',
-        'Content-Type': 'application/json',
-      },
-      body: body === undefined ? undefined : JSON.stringify(body),
-      signal: globalThis.AbortSignal.timeout(30_000),
-    },
-  );
-  if (!response.ok)
-    throw new Error(`GitHub ${method} failed (${response.status})`);
-  return response.status === 204 ? null : response.json();
+// Retries transient failures of idempotent requests; see repositoryApi.
+const github = repositoryApi();
+function api(method, route, body) {
+  return github(method, route, body);
 }
 async function list(route, key) {
   const items = [];

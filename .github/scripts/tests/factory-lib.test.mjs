@@ -8,6 +8,7 @@ import {
   extractIssueSections,
   issueNumberFromEvent,
   parseIssueTask,
+  repositoryApi,
   validateTargetBranch,
 } from '../factory-lib.mjs';
 
@@ -253,4 +254,35 @@ test('a response body that stalls past the deadline is retried for reads', async
   t.mock.method(console, 'warn', () => {});
   assert.deepEqual(await timingClient(20).request('GET', '/issues/8'), { number: 8 });
   assert.deepEqual(calls, ['GET', 'GET']);
+});
+
+test('report scripts share a lazily built client that retries reads but never a POST', async (t) => {
+  const calls = [];
+  const replies = [502, 503, 200, 502];
+  t.mock.method(globalThis, 'fetch', async (url, options) => {
+    calls.push([options.method, String(url), options.body]);
+    const status = replies.shift();
+    return new Response(status === 200 ? JSON.stringify({ ok: true }) : 'busy', { status });
+  });
+  t.mock.method(console, 'warn', () => {});
+  // Building the helper needs no token: scripts import it for pure helpers too.
+  const api = repositoryApi({
+    repository: 'owner/factory',
+    token: 'test-only',
+    apiUrl: 'https://api.example.test',
+    retryDelays: [0, 0, 0],
+  });
+  assert.deepEqual(await api('GET', '/issues/7'), { ok: true });
+  await assert.rejects(api('POST', '/issues/7/comments', { body: 'x' }), /\(502\)/);
+  assert.deepEqual(
+    calls.map(([method, url]) => `${method} ${url}`),
+    [
+      'GET https://api.example.test/repos/owner/factory/issues/7',
+      'GET https://api.example.test/repos/owner/factory/issues/7',
+      'GET https://api.example.test/repos/owner/factory/issues/7',
+      'POST https://api.example.test/repos/owner/factory/issues/7/comments',
+    ],
+  );
+  assert.equal(calls.at(-1)[2], JSON.stringify({ body: 'x' }));
+  await assert.rejects(repositoryApi({ repository: 'owner/factory', token: '' })('GET', ''), /GITHUB_TOKEN is required/);
 });

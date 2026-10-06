@@ -762,7 +762,7 @@ test('a failed visual report publication fails its run and names the replay', ()
     '- name: Keep publication failures visible without rebuilding the application\n',
   )[1];
   assert.ok(visible, 'the failure step is missing');
-  assert.match(visible, /^ {8}if: always\(\) && steps\.publish\.outcome == 'failure'\n/m);
+  assert.match(visible, /^ {8}if: \$\{\{ !cancelled\(\) && steps\.publish\.outcome == 'failure' \}\}\n/m);
   assert.match(
     visible,
     /::error::[^\n]*Publish Task Visual Report[^\n]*run_id=\$SOURCE_RUN_ID[^\n]*attempt=\$SOURCE_ATTEMPT[^\n]*REPORT_DISPATCH\.md/,
@@ -771,7 +771,7 @@ test('a failed visual report publication fails its run and names the replay', ()
   // The same shape the history publisher uses.
   assert.match(
     readFileSync(path.resolve(import.meta.dirname, '../../workflows/publish-agent-history.yml'), 'utf8'),
-    /- name: Keep publication failures visible without rebuilding the application\n\s+if: always\(\) && \(steps\.pack\.outcome == 'failure'/,
+    /- name: Keep publication failures visible without rebuilding the application\n\s+if: \$\{\{ !cancelled\(\) && \(steps\.pack\.outcome == 'failure'/,
   );
 });
 

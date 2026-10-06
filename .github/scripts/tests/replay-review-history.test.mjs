@@ -41,7 +41,7 @@ test('publisher does not install/invoke a model and reports upload failure witho
   assert.doesNotMatch(text,/secrets\.|run-agent|install-agent|pnpm install|runBuildReview/);
   assert.match(text,/ref: \$\{\{ github.event.repository.default_branch \}\}/);
   assert.match(text,/artifact-ids:[\s\S]*merge-multiple: true/);
-  assert.match(text,/if: always\(\) && steps.pack.outputs.issue != ''/);
+  assert.match(text,/if: \$\{\{ !cancelled\(\) && steps.pack.outputs.issue != '' \}\}/);
   assert.match(text,/group: factory-agent-history/);
   const replay=readFileSync(new URL('../replay-build-review.mjs',import.meta.url),'utf8');
   assert.match(replay,/agent-review\.jsonl\.invocation\.json/);

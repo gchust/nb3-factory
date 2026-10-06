@@ -1,3 +1,4 @@
+import { repositoryApi } from './factory-lib.mjs';
 import { readResult } from './agent-result.mjs';
 import { collectAgentMetrics, metricsReceipt, readMetricsReceipts, renderAgentMetrics } from './agent-metrics.mjs';
 import { scrubHistoryFile } from './history-redaction.mjs';
@@ -288,24 +289,10 @@ function parseArgs(argv) {
   );
 }
 
-async function api(method, route, body) {
-  const repository = process.env.GITHUB_REPOSITORY;
-  const response = await fetch(
-    `${process.env.GITHUB_API_URL || 'https://api.github.com'}/repos/${repository}${route}`,
-    {
-      method,
-      headers: {
-        Authorization: `Bearer ${process.env.GITHUB_TOKEN}`,
-        Accept: 'application/vnd.github+json',
-        'Content-Type': 'application/json',
-      },
-      body: body === undefined ? undefined : JSON.stringify(body),
-      signal: globalThis.AbortSignal.timeout(30_000),
-    },
-  );
-  if (!response.ok)
-    throw new Error(`GitHub ${method} failed (${response.status})`);
-  return response.status === 204 ? null : response.json();
+// Retries transient failures of idempotent requests; see repositoryApi.
+const github = repositoryApi();
+function api(method, route, body) {
+  return github(method, route, body);
 }
 
 async function list(route, key) {
