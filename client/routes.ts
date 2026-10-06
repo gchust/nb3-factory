@@ -1,4 +1,4 @@
-import { Home } from 'lucide-react';
+import { FlaskConical, Home } from 'lucide-react';
 import {
   defineAppRoutes,
   defineSettingsRoutes,
@@ -43,6 +43,16 @@ const appRoutes: AppClientRouteContribution = defineAppRoutes([
     componentLoader: () => import('./pages/auth/reset-password.js'),
     name: 'reset-password',
     path: '/reset-password',
+  },
+  {
+    // Smoke-test page for the build pipeline. Every signed-in user may open it, and it holds no business data, so it
+    // skips page authorization like the landing page does.
+    auth: 'required',
+    authz: 'skip',
+    componentLoader: () => import('./pages/pipeline-smoke/index.js'),
+    name: 'pipeline-smoke',
+    navigation: { title: 'navigation.pipelineSmoke', icon: FlaskConical },
+    path: '/pipeline-smoke',
   },
 ]);
 
