@@ -1,4 +1,4 @@
-import { Home } from 'lucide-react';
+import { Home, Wrench } from 'lucide-react';
 import {
   defineAppRoutes,
   defineSettingsRoutes,
@@ -15,6 +15,28 @@ const appRoutes: AppClientRouteContribution = defineAppRoutes([
     name: 'home',
     navigation: { title: 'navigation.home', icon: Home },
     path: '/',
+  },
+  {
+    // Employees and handlers both open this page; the record scope their grant carries decides which tickets they see.
+    auth: 'required',
+    authz: {
+      resource: { type: 'page', id: 'repair-tickets' },
+      action: 'access',
+    },
+    componentLoader: () => import('./pages/tickets/index.js'),
+    name: 'tickets',
+    navigation: { title: 'navigation.tickets', icon: Wrench },
+    path: '/tickets',
+    children: [
+      {
+        // The detail drawer. It inherits the page's check (`skip` means it adds none of its own); the server still
+        // decides record visibility, so a direct link to somebody else's ticket answers not-found.
+        authz: 'skip',
+        componentLoader: () => import('./pages/tickets/detail.js'),
+        name: 'ticket-detail',
+        path: ':ticketId',
+      },
+    ],
   },
   {
     auth: 'guest',

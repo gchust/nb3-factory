@@ -91,9 +91,13 @@ describe('app client routes', () => {
     // that requires sign-in adds an entry here, because that is a new grant somebody has to be given.
     const resolved = resolveRoutes();
 
-    // The landing page opted out of page authorization, so it is reachable by every signed-in user.
+    // The landing page opted out of page authorization, so it is reachable by every signed-in user. The ticket detail
+    // drawer inherits the ticket page's check and adds none of its own, so it stores no separate grant; the server
+    // still decides which tickets each grant can see.
     expect(pageAuthorizations(resolved.routes)).toEqual([
       { name: 'home', authorizedAs: null },
+      { name: 'tickets', authorizedAs: 'repair-tickets' },
+      { name: 'ticket-detail', authorizedAs: null },
     ]);
   });
 });

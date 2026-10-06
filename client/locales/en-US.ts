@@ -95,7 +95,98 @@ const enUS = {
     description:
       'Describe what you need to your AI Agent, then build pages, data models, and business workflows.',
   },
-
+  tickets: {
+    title: 'IT repair tickets',
+    description: 'Submit a repair request and follow how it is being handled.',
+    newTicket: 'New repair ticket',
+    newTicketDescription: 'Describe the issue you need help with.',
+    empty: 'No repair tickets yet.',
+    loadFailed: 'Unable to load repair tickets.',
+    detailTitle: 'Ticket details',
+    detailDescription: 'Submitted by {{name}}',
+    notFoundTitle: 'Ticket not found',
+    notFoundDescription:
+      'This ticket does not exist, or you do not have access to it.',
+    unassigned: 'Unassigned',
+    field: {
+      title: 'Title',
+      category: 'Category',
+      description: 'Description',
+      status: 'Status',
+      submitter: 'Requester',
+      handler: 'Handler',
+      createdAt: 'Submitted at',
+      startedAt: 'Started at',
+      completedAt: 'Completed at',
+      resolution: 'Resolution note',
+    },
+    filter: {
+      status: 'Status',
+      all: 'All statuses',
+    },
+    status: {
+      pending: 'Pending',
+      processing: 'In progress',
+      completed: 'Completed',
+    },
+    category: {
+      computer: 'Computer',
+      account: 'Account',
+      other: 'Other',
+    },
+    action: {
+      submit: 'Submit ticket',
+      view: 'View',
+      start: 'Start handling',
+      complete: 'Complete handling',
+      confirmComplete: 'Confirm completion',
+      cancel: 'Cancel',
+    },
+    resolutionPlaceholder: 'Describe what was done to resolve the issue.',
+    resolutionRequired:
+      'A resolution note is required before completing the ticket.',
+    created: 'Ticket submitted',
+    started: 'Ticket started',
+    completed: 'Ticket completed',
+    actionFailed: 'The action failed. Please try again.',
+    errors: {
+      INVALID_TITLE: 'Enter a title.',
+      INVALID_CATEGORY: 'Choose a category.',
+      INVALID_DESCRIPTION: 'The description is too long.',
+      INVALID_RESOLUTION: 'Enter a resolution note.',
+      INVALID_STATUS: 'Unknown status.',
+      FORBIDDEN: 'You are not allowed to perform this action.',
+      TICKET_NOT_FOUND: 'Ticket not found.',
+      TICKET_NOT_PENDING: 'This ticket can no longer be started.',
+      TICKET_NOT_PROCESSING:
+        'The ticket must be started before it can be completed.',
+      TICKET_HANDLED_BY_OTHER:
+        'Only the handler who started the ticket can complete it.',
+      TICKET_COMPLETED: 'A completed ticket is read-only.',
+      TICKET_STATE_CHANGED: 'The ticket changed while it was being updated.',
+      unknown: 'Something went wrong. Please try again.',
+    },
+    authz: {
+      section: 'IT support',
+      resource: 'IT repair tickets',
+      collection: 'Repair tickets',
+      collectionDescription:
+        'Employee-submitted IT repair requests and how they were handled.',
+      action: {
+        view: 'View tickets',
+        create: 'Submit tickets',
+        start: 'Start handling',
+        complete: 'Complete handling',
+      },
+      access: {
+        submittedByMe: 'Only tickets I submitted',
+      },
+    },
+    role: {
+      employee: 'IT employee',
+      handler: 'IT handler',
+    },
+  },
   appearance: {
     title: 'Appearance',
     mode: 'Color mode',
@@ -130,6 +221,7 @@ const enUS = {
   },
   navigation: {
     home: 'Home',
+    tickets: 'IT repair tickets',
     open: 'Open navigation',
     close: 'Close navigation',
     expand: 'Expand navigation',
