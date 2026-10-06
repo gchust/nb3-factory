@@ -675,6 +675,27 @@ test('CI installs the Agent Browser and Agent CLIs build tasks would install', a
   }
 });
 
+test('a failed changed-file listing runs the browser preflight instead of skipping it', () => {
+  const tests = readFileSync(
+    new URL('../../workflows/factory-tests.yml', import.meta.url),
+    'utf8',
+  );
+  const job = tests.split('\n  browser-preflight:\n')[1].split(/\n {2}[a-z][a-z-]*:\n/)[0];
+  // A skipped job satisfies a required check, so only a successful listing
+  // that shows no factory change may skip it.
+  assert.match(
+    job,
+    /needs\.changes\.result != 'success' \|\| needs\.changes\.outputs\.browser == 'true'/,
+  );
+  assert.match(job, /!cancelled\(\)/);
+  for (const name of ['factory-tests', 'application-format'])
+    assert.doesNotMatch(
+      tests.split(`\n  ${name}:\n`)[1].split(/\n {2}[a-z][a-z-]*:\n/)[0],
+      /needs: changes/,
+      name,
+    );
+});
+
 test('regression checks cancel superseded PR runs but never a pending push or dispatch', () => {
   const directory = new URL('../../workflows/', import.meta.url);
   for (const name of ['factory-tests.yml', 'agent-adapters.yml']) {

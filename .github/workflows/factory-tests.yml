@@ -107,13 +107,14 @@ jobs:
   browser-preflight:
     # Build task PRs change the application, including its guidance, and are
     # verified by the task itself; they never land on develop. Other pull
-    # requests run it only when the factory or its root manifests changed; a
-    # skipped job still satisfies a required check. Pushes and dispatches always run it.
+    # requests skip it only when the file listing succeeded and shows no change
+    # to the factory or its root manifests: a skipped job satisfies a required
+    # check, so a failed listing runs it. Pushes and dispatches always run it.
     needs: changes
     if: >-
       !cancelled() &&
       (github.event_name != 'pull_request' ||
-      (!startsWith(github.head_ref, 'agent/issue-') && needs.changes.result == 'success' && needs.changes.outputs.browser == 'true'))
+      (!startsWith(github.head_ref, 'agent/issue-') && (needs.changes.result != 'success' || needs.changes.outputs.browser == 'true')))
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:

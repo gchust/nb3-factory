@@ -332,15 +332,14 @@ export function selectRetroArtifact(
   )
     throw new Error('Not a same-repository Code Agent task run');
   if (run.status !== 'completed') return null;
-  const agent = jobs.find((job) => job.name === 'agent' && job.started_at);
+  // Without the attempt's agent job window nothing ties an artifact to this
+  // attempt, and an earlier attempt's would describe the wrong run.
+  const agent = jobs.find((job) => job.name === 'agent');
   const start = Date.parse(agent?.started_at);
   const end = Date.parse(agent?.completed_at);
+  if (Number.isNaN(start) || Number.isNaN(end)) return null;
   const inAttempt = (item) =>
-    !agent ||
-    Number.isNaN(start) ||
-    Number.isNaN(end) ||
-    (Date.parse(item.created_at) >= start &&
-      Date.parse(item.created_at) <= end);
+    Date.parse(item.created_at) >= start && Date.parse(item.created_at) <= end;
   const artifact = artifacts.find(
     (item) =>
       /^factory-agent-\d+$/.test(item?.name ?? '') &&
