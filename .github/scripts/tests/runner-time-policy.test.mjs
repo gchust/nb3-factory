@@ -100,21 +100,53 @@ test('downstream jobs download only the small patch artifact', () => {
     ['report-failure', 'failure-artifacts'],
   ]) {
     const source = jobOf(task, job);
-    assert.ok(
-      source.includes(`name: factory-patch-${name}\n          path: ${target}`),
+    const copy = source
+      .split('\n      - name: ')
+      .find((step) => step.includes(`name: factory-patch-${name}\n`));
+    assert.ok(copy?.includes(`path: ${target}`), job);
+    assert.match(copy, /id: patch_copy\n {8}continue-on-error: true\n/, job);
+    // The complete record is read only when the small copy is missing.
+    const fallback = stepOf(
+      source,
+      'Fall back to the complete Code Agent artifact',
+    );
+    assert.match(
+      fallback,
+      /if: steps\.patch_copy\.outcome == 'failure'\n/,
       job,
     );
-    assert.doesNotMatch(source, /name: factory-agent-/, job);
+    assert.ok(
+      fallback.includes(
+        `name: factory-agent-${name}\n          path: ${target}`,
+      ),
+      job,
+    );
   }
-  // The complete diagnostics are still uploaded once, for reports and recovery.
+  // The complete diagnostics are still uploaded once, for reports and
+  // recovery, and downloaded only by the four fallbacks above.
   const agent = jobOf(task, 'agent');
-  assert.equal([...task.matchAll(/name: factory-agent-\$/g)].length, 1);
+  assert.equal([...task.matchAll(/name: factory-agent-\$/g)].length, 5);
+  assert.equal(
+    [
+      ...task.matchAll(
+        /- name: Fall back to the complete Code Agent artifact\n/g,
+      ),
+    ].length,
+    4,
+  );
   assert.ok(
     agent.indexOf('- name: Upload Code Agent patch and diagnostics') <
       agent.indexOf('- name: Upload the patch for downstream jobs'),
   );
   const upload = stepOf(agent, 'Upload the patch for downstream jobs');
   assert.match(upload, /if: always\(\)/);
+  // Downstream jobs fall back to factory-agent-N; a failed copy must not fail
+  // the agent job or block the continuation dispatch.
+  assert.match(upload, /continue-on-error: true/);
+  assert.match(
+    stepOf(agent, 'Stage the patch for downstream jobs'),
+    /continue-on-error: true/,
+  );
   assert.ok(upload.includes(`name: factory-patch-${name}`));
   assert.ok(upload.includes('path: ${{ runner.temp }}/patch-artifacts'));
 });
