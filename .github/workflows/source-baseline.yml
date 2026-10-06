@@ -143,7 +143,7 @@ jobs:
         working-directory: source
         run: pnpm unreleased:smoke --template default --dialect sqlite --workdir "$RUNNER_TEMP/source-smoke"
       - name: Install browser fonts
-        timeout-minutes: 5
+        timeout-minutes: 10
         run: bash control/.github/scripts/install-browser-fonts.sh
       - name: Verify first configuration, idempotence and real browser login
         run: node control/.github/scripts/source-config-check.mjs "$RUNNER_TEMP/source-smoke/crm" "$RUNNER_TEMP/source-evidence" "$SOURCE_SHA"
@@ -236,7 +236,7 @@ jobs:
           pnpm exec prettier --write package.json factory-template.json factory-source.json eslint.config.js README.MD
           node "$GITHUB_WORKSPACE/control/.github/scripts/template-guidance.mjs" check .
       - name: Install browser fonts
-        timeout-minutes: 5
+        timeout-minutes: 10
         run: bash control/.github/scripts/install-browser-fonts.sh
       - name: Verify the restored source as a normal factory application
         run: |

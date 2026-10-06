@@ -7,10 +7,14 @@ if [[ "$families" != *'Noto Sans CJK SC'* ]]; then
   # verify-final runs this after the agent succeeded, with no checkpoint left
   # to recover from, so a mirror blip must not fail the build. apt retries each
   # download; the loop retries a failed index or install as a whole.
+  # Each round is bounded so all three fit the 10-minute step timeout:
+  # 3 x (60 s + 90 s, plus 10 s to kill each) + 30 s of backoff = 510 s.
   apt_options=(-o Acquire::Retries=3 -o Acquire::http::Timeout=30 -o Acquire::https::Timeout=30)
   for attempt in 1 2 3; do
-    if sudo apt-get "${apt_options[@]}" update -qq &&
-      sudo apt-get "${apt_options[@]}" install -y --no-install-recommends fontconfig fonts-noto-cjk; then
+    # A round cut short by its timeout can leave dpkg half-configured.
+    if (( attempt > 1 )); then sudo dpkg --configure -a || true; fi
+    if sudo timeout --kill-after=10s 60s apt-get "${apt_options[@]}" update -qq &&
+      sudo timeout --kill-after=10s 90s apt-get "${apt_options[@]}" install -y --no-install-recommends fontconfig fonts-noto-cjk; then
       break
     fi
     if (( attempt == 3 )); then

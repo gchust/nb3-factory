@@ -385,6 +385,13 @@ test('browser font installs retry apt and are bounded by a step timeout', () => 
   assert.match(script, /Acquire::Retries=3/);
   assert.match(script, /Acquire::http::Timeout=30/);
   assert.match(script, /for attempt in 1 2 3/);
+  // Every round is bounded, and all three rounds fit the step timeout.
+  const limits = [...script.matchAll(/sudo timeout --kill-after=(\d+)s (\d+)s apt-get/g)];
+  assert.equal(limits.length, 2);
+  const round = limits.reduce((sum, [, kill, limit]) => sum + Number(kill) + Number(limit), 0);
+  const backoff = 10 + 20;
+  assert.match(script, /sleep \$\(\( attempt \* 10 \)\)/);
+  const budget = 3 * round + backoff;
   const directory = new URL('../../workflows/', import.meta.url);
   let checked = 0;
   for (const name of readdirSync(directory).filter((file) => file.endsWith('.yml'))) {
@@ -392,7 +399,10 @@ test('browser font installs retry apt and are bounded by a step timeout', () => 
     for (const step of source.split(/\n\s+- (?=name:|uses:|run:)/)) {
       if (!/run:[^\n]*\n?[^\n]*install-browser-fonts\.sh/.test(step)) continue;
       checked++;
-      assert.match(step, /timeout-minutes: [1-9]\b/, `${name}: ${step.split('\n')[0]}`);
+      const minutes = Number(/timeout-minutes: (\d+)\b/.exec(step)?.[1]);
+      assert.ok(minutes > 0, `${name}: ${step.split('\n')[0]}`);
+      // Leave a minute for fc-cache and the checks after the install.
+      assert.ok(budget <= (minutes - 1) * 60, `${name}: ${budget}s vs ${minutes} min`);
     }
   }
   assert.ok(checked >= 5);

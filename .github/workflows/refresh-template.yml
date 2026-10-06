@@ -157,7 +157,7 @@ jobs:
           pnpm exec prettier --write "${format_paths[@]}"
 
       - name: Install Chinese browser fonts
-        timeout-minutes: 5
+        timeout-minutes: 10
         run: bash control/.github/scripts/install-browser-fonts.sh
 
       # Factory regression tests already run on every PR that changes these
