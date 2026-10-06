@@ -617,6 +617,23 @@ test('every building job exposes the factory registry to nested dist installs', 
   }
 });
 
+test('refresh keeps the template\'s own SQLite driver declaration', () => {
+  const refresh = readFileSync(
+    path.resolve(scripts, '..', 'workflows', 'refresh-template.yml'),
+    'utf8',
+  );
+  const step = refresh
+    .split('- name: Install and lock the new application dependencies\n')[1]
+    .split('\n      - name: ')[0];
+  // An unconditional `pnpm add …@latest` downgraded the declared driver.
+  const guard = step.indexOf('dependencies?.["@nocobase/db-sqlite"]');
+  assert.ok(guard > 0);
+  const add = step.indexOf('pnpm add @nocobase/db-sqlite@latest');
+  assert.ok(add > guard);
+  assert.match(step.slice(guard, add), /then\n\s+$/);
+  assert.equal(step.match(/^\s+pnpm add /gm).length, 1);
+});
+
 test('refresh runs the factory suite like factory-tests, and only when it may publish', () => {
   const read = (file) =>
     readFileSync(path.resolve(scripts, '..', 'workflows', file), 'utf8');

@@ -125,7 +125,13 @@ jobs:
         timeout-minutes: 15
         run: |
           cd "$RUNNER_TEMP/template-generation/nb3-factory"
-          pnpm add @nocobase/db-sqlite@latest
+          # Verification runs on SQLite. Keep the template's own declaration when
+          # it has one: `pnpm add …@latest` resolves under pnpm's
+          # minimumReleaseAge and rewrote ^0.1.0-beta.4 to an exact, older
+          # 0.1.0-beta.3 without the ./testing export the template's tests use.
+          if ! node -e 'process.exit(require("./package.json").dependencies?.["@nocobase/db-sqlite"] ? 0 : 1)'; then
+            pnpm add @nocobase/db-sqlite@latest
+          fi
           pnpm install --no-frozen-lockfile
 
       - name: Install, register, and inspect the required Pro plugin baseline
