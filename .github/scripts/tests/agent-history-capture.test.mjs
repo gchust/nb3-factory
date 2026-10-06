@@ -218,6 +218,7 @@ test('workflow preserves failed replies, separates artifact roles and always rep
   assert.match(workflow, /dispatch-reply-history:/);
   const history = readFileSync(path.resolve(import.meta.dirname, '../../workflows/publish-agent-history.yml'), 'utf8');
   assert.equal((history.match(/artifact-ids:/g) || []).length, 4);
-  assert.match(history, /Report published or missing history on the task Issue\n\s+if: always\(\)/);
+  // After a failed earlier step, not after a manual cancel.
+  assert.match(history, /Report published or missing history on the task Issue\n\s+if: \$\{\{ !cancelled\(\)/);
   assert.doesNotMatch(history, /CODE_AGENT_API_KEY|run-agent.mjs|pnpm/);
 });

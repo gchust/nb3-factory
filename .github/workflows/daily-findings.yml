@@ -8,8 +8,9 @@ name: Daily framework findings
 # never runs application code or calls a model.
 on:
   schedule:
-    # 04:17 Asia/Shanghai closes the previous day. Off the hour, when GitHub
-    # delays or drops the fewest scheduled runs.
+    # Planned for 04:17 Asia/Shanghai, closing the previous day. GitHub starts
+    # scheduled runs here hours late (2.7 to five hours observed), which only
+    # delays the archive and digest; dispatch by hand when the time matters.
     - cron: '17 20 * * *'
   workflow_dispatch:
     inputs:

@@ -43,7 +43,9 @@ jobs:
       !cancelled() && needs.dispatch-gate.outputs.covered != 'true' &&
       (github.event_name == 'workflow_dispatch' || contains(fromJSON('["success","failure","timed_out","cancelled"]'), github.event.workflow_run.conclusion))
     runs-on: ubuntu-24.04
-    timeout-minutes: 10
+    # Up to 11 minutes waiting for the source run (wait-for-task-run.mjs) plus
+    # the download and comment.
+    timeout-minutes: 20
     permissions:
       actions: read
       contents: read
@@ -76,6 +78,9 @@ jobs:
         with:
           # By ID: the name is shared by every attempt of the run.
           artifact-ids: ${{ steps.source.outputs.artifact_id }}
+          # Explicit, as in the factory's other downloads by ID: the files stay at
+          # the path itself, where publish reads them.
+          merge-multiple: true
           run-id: ${{ env.SOURCE_RUN_ID }}
           github-token: ${{ github.token }}
           path: ${{ runner.temp }}/retro-evidence

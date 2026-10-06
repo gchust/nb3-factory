@@ -531,7 +531,12 @@ test('workflow_run copies of dispatched reports skip once the task requested the
       new RegExp(`\\n  dispatch-gate:\\n    if: github.event_name == 'workflow_run' && github.event.workflow_run.conclusion != 'skipped'\\n    uses: \\./\\.github/workflows/report-dispatch-gate\\.yml\\n    with:\\n      workflow: ${name.replace('.', '\\.')}\\n`),
       name,
     );
-    const body = workflow.split(`\n  ${job}:\n`)[1].split(/\n {2}[a-z][a-z-]*:\n/)[0];
+    const jobBody = (id) => workflow.split(`\n  ${id}:\n`)[1]?.split(/\n {2}[a-z][a-z-]*:\n/)[0];
+    // A reporter that serializes waits for the source run in a lock-free job
+    // first; that job carries the gate condition, and the locked job needs it.
+    const waiting = jobBody('wait-for-source');
+    const body = waiting ?? jobBody(job);
+    if (waiting) assert.match(jobBody(job), /needs: \[dispatch-gate, wait-for-source\]/, name);
     assert.match(body, /needs: dispatch-gate/, name);
     // Fails open: a skipped or failed gate never suppresses the report.
     assert.match(body, /if: >-\n\s+!cancelled\(\) && needs\.dispatch-gate\.outputs\.covered != 'true'/, name);

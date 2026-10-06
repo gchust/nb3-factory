@@ -42,7 +42,9 @@ jobs:
       !cancelled() && needs.dispatch-gate.outputs.covered != 'true' &&
       (github.event_name == 'workflow_dispatch' || contains(fromJSON('["success","failure","timed_out","cancelled"]'), github.event.workflow_run.conclusion))
     runs-on: ubuntu-24.04
-    timeout-minutes: 15
+    # Up to 11 minutes waiting for the source run (wait-for-task-run.mjs) plus
+    # the media download and upload.
+    timeout-minutes: 25
     permissions:
       actions: read
       contents: read
@@ -73,7 +75,11 @@ jobs:
         if: steps.source.outputs.ready == 'true'
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
-          name: ${{ steps.source.outputs.artifact }}
+          # By ID: every attempt of the run uploads factory-agent-N under the
+          # same name. merge-multiple, as in the factory's other downloads by ID,
+          # keeps the files at the path itself, where prepare reads them.
+          artifact-ids: ${{ steps.source.outputs.artifact_id }}
+          merge-multiple: true
           run-id: ${{ env.SOURCE_RUN_ID }}
           github-token: ${{ github.token }}
           path: ${{ runner.temp }}/task-evidence
@@ -134,7 +140,7 @@ jobs:
       # keeps the failure visible in the run instead of a green check. The
       # business PR is untouched, and the report is replayed, not rebuilt.
       - name: Keep publication failures visible without rebuilding the application
-        if: always() && steps.publish.outcome == 'failure'
+        if: ${{ !cancelled() && steps.publish.outcome == 'failure' }}
         run: |
           echo "::error::Publishing the visual report failed; the business PR is untouched. Replay it from Actions > Publish Task Visual Report with run_id=$SOURCE_RUN_ID and attempt=$SOURCE_ATTEMPT (see .github/REPORT_DISPATCH.md)."
           exit 1

@@ -1,6 +1,6 @@
 # Daily framework findings and the Feishu digest
 
-`daily-findings.yml` runs every day at 04:17 Asia/Shanghai. It closes the previous day into an archive of NocoBase3 framework findings under `reports/findings/daily/` on GitHub Pages. Once the Feishu digest is switched on, it also sends that day's findings to a Feishu group bot, mentioning the people responsible for each feature point, so the archived page and the digest cover the same findings. The digest is off by default. Nothing in it calls a model or runs application code.
+`daily-findings.yml` is scheduled every day for 04:17 Asia/Shanghai; GitHub starts scheduled runs late, often by several hours, so run it from Actions with `workflow_dispatch` when the time matters. It closes the previous day into an archive of NocoBase3 framework findings under `reports/findings/daily/` on GitHub Pages. Once the Feishu digest is switched on, it also sends that day's findings to a Feishu group bot, mentioning the people responsible for each feature point, so the archived page and the digest cover the same findings. The digest is off by default. Nothing in it calls a model or runs application code.
 
 ## What a day contains
 

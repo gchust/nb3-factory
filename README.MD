@@ -173,7 +173,7 @@ Action 在全新目录生成应用、安装并锁定依赖，运行工厂测试�
 
 ## 每日框架问题与飞书日报
 
-`daily-findings.yml` 每天 04:17（Asia/Shanghai）把前一天新出现的框架、插件、模板和文档发现归档到 Pages 的 `reports/findings/daily/`，每天一页，按 TestManage3 功能点分组；问题汇总页顶部有“按日期归档”入口。飞书日报默认关闭：配置仓库 Secrets `FEISHU_WEBHOOK_URL`、`FEISHU_WEBHOOK_SECRET`、`FEISHU_PROBLEM_OWNERS`（功能点到 Open ID 的映射，单行 JSON），并把变量 `FACTORY_FEISHU_DIGEST` 设为 `true` 后，归档完成时会把当天的清单发到飞书群机器人，并 @ 各功能点的负责人，页面与飞书消息是同一批问题。开启前只归档、不发送。仓库和 Actions 日志是公开的，而 Actions 日志会原样打印变量、只遮蔽 Secret，所以负责人映射存为 Secret，不写入页面或日志。细节见 [docs/daily-findings.md](docs/daily-findings.md)。
+`daily-findings.yml` 每天计划于 04:17（Asia/Shanghai，GitHub 定时任务实际常晚数小时启动；需要准时可在 Actions 手动运行）把前一天新出现的框架、插件、模板和文档发现归档到 Pages 的 `reports/findings/daily/`，每天一页，按 TestManage3 功能点分组；问题汇总页顶部有“按日期归档”入口。飞书日报默认关闭：配置仓库 Secrets `FEISHU_WEBHOOK_URL`、`FEISHU_WEBHOOK_SECRET`、`FEISHU_PROBLEM_OWNERS`（功能点到 Open ID 的映射，单行 JSON），并把变量 `FACTORY_FEISHU_DIGEST` 设为 `true` 后，归档完成时会把当天的清单发到飞书群机器人，并 @ 各功能点的负责人，页面与飞书消息是同一批问题。开启前只归档、不发送。仓库和 Actions 日志是公开的，而 Actions 日志会原样打印变量、只遮蔽 Secret，所以负责人映射存为 Secret，不写入页面或日志。细节见 [docs/daily-findings.md](docs/daily-findings.md)。
 
 ## 框架问题复核修复
 

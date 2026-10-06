@@ -29,7 +29,12 @@ const repository = 'gchust/nb3-factory';
 const runId = 123;
 const runUrl = `https://github.com/${repository}/actions/runs/${runId}`;
 const headSha = 'a'.repeat(40);
-const artifact = { name: 'factory-agent-18', id: 55, expired: false };
+const artifact = {
+  name: 'factory-agent-18',
+  id: 55,
+  expired: false,
+  created_at: '2026-10-06T02:30:00Z',
+};
 const run = {
   id: runId,
   path: '.github/workflows/code-agent-task.yml',
@@ -40,10 +45,18 @@ const run = {
   conclusion: 'success',
   run_attempt: 1,
 };
-const jobs = ['verify-final', 'publish'].map((name) => ({
-  name,
-  conclusion: 'success',
-}));
+const jobs = [
+  {
+    name: 'agent',
+    conclusion: 'success',
+    started_at: '2026-10-06T02:00:00Z',
+    completed_at: '2026-10-06T03:00:00Z',
+  },
+  ...['verify-final', 'publish'].map((name) => ({
+    name,
+    conclusion: 'success',
+  })),
+];
 const metadata = {
   repository,
   issue: { number: 18 },
@@ -81,7 +94,7 @@ const webm = Buffer.concat([
 const prefix = 'verify-2/browser-acceptance';
 test('failed publication selects evidence without treating it as a successful delivery', () => {
   const failedJobs = [
-    { name: 'agent', conclusion: 'failure' },
+    { ...jobs[0], conclusion: 'failure' },
     { name: 'publish-failed', conclusion: 'success' },
   ];
   assert.equal(
@@ -207,6 +220,23 @@ test('only a successfully published same-repository task can publish media', () 
     () =>
       selectArtifact(run, jobs, [{ ...artifact, expired: true }], repository),
     /unexpired/,
+  );
+});
+
+test('a re-run agent job leaves the attempt its own artifact, and no window selects none', () => {
+  // The run's artifact list spans every attempt; a re-run of the agent job
+  // uploads a second factory-agent-N under the same name.
+  const earlier = { ...artifact, id: 54, created_at: '2026-10-06T01:30:00Z' };
+  assert.equal(
+    selectArtifact(run, jobs, [earlier, artifact], repository),
+    artifact,
+  );
+  const withoutWindow = jobs.map((job) =>
+    job.name === 'agent' ? { name: 'agent', conclusion: 'success' } : job,
+  );
+  assert.equal(
+    selectArtifact(run, withoutWindow, [artifact], repository),
+    null,
   );
 });
 
@@ -459,7 +489,7 @@ async function publisherFixture(
       result = {
         jobs: failed
           ? [
-              { name: 'agent', conclusion: 'failure' },
+              { ...jobs[0], conclusion: 'failure' },
               { name: 'publish-failed', conclusion: 'success' },
             ]
           : jobs,

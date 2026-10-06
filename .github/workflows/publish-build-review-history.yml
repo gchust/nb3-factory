@@ -81,7 +81,7 @@ jobs:
           gh release upload factory-history "$RUNNER_TEMP/review-history/archive/$ASSET" --repo "$GITHUB_REPOSITORY" --clobber
           echo "asset_url=https://github.com/$GITHUB_REPOSITORY/releases/download/factory-history/$ASSET" >> "$GITHUB_OUTPUT"
       - name: Update task history without changing its business verdict
-        if: always() && steps.pack.outputs.issue != ''
+        if: ${{ !cancelled() && steps.pack.outputs.issue != '' }}
         env:
           GITHUB_TOKEN: ${{ github.token }}
           ISSUE: ${{ steps.pack.outputs.issue }}
