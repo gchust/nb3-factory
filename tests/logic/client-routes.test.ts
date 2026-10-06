@@ -94,6 +94,11 @@ describe('app client routes', () => {
     // The landing page opted out of page authorization, so it is reachable by every signed-in user.
     expect(pageAuthorizations(resolved.routes)).toEqual([
       { name: 'home', authorizedAs: null },
+      { name: 'library', authorizedAs: 'library.documents' },
+      // The detail drawer declares no check of its own; the list route's
+      // `library.documents` guard still applies as its parent, and the read
+      // endpoint enforces record access independently.
+      { name: 'library-document', authorizedAs: null },
     ]);
   });
 });

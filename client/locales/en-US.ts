@@ -96,6 +96,115 @@ const enUS = {
       'Describe what you need to your AI Agent, then build pages, data models, and business workflows.',
   },
 
+  library: {
+    title: 'Internal document library',
+    description:
+      'Maintain your own documents, publish what colleagues may read, and open a single draft temporarily when needed.',
+    collection: { title: 'Document' },
+    recordAccess: {
+      readable: 'Published and not confidential',
+      nonConfidential: 'Not confidential',
+      visible: 'My documents and readable documents',
+      sharedDocument: 'A single temporarily shared document',
+    },
+    permissionSets: {
+      editor: 'Library editor',
+      reader: 'Library reader',
+    },
+    restrictionRules: {
+      readerConfidential: 'Confidential documents stay closed to readers',
+    },
+    sharingRules: {
+      temporary: 'Temporary document access',
+    },
+    status: {
+      published: 'Published',
+      draft: 'Draft',
+      confidential: 'Confidential',
+    },
+    columns: {
+      title: 'Title',
+      owner: 'Owner',
+      status: 'Status',
+      updatedAt: 'Updated',
+      actions: 'Actions',
+      actionsFor: 'Actions for {{title}}',
+    },
+    actions: {
+      new: 'New document',
+      edit: 'Edit',
+      delete: 'Delete',
+      share: 'Temporary access',
+      cancel: 'Cancel',
+      save: 'Save',
+      saving: 'Saving…',
+    },
+    loadFailed: 'Unable to load documents',
+    loadFailedDescription: 'Please refresh the page and try again.',
+    actionFailed: 'Unable to complete that action',
+    forbidden: 'You do not have permission to do that',
+    notFound: 'That document no longer exists',
+    titleRequired: 'A title is required',
+    noReadAccess: 'No documents to read',
+    noReadAccessDescription: 'This account is not allowed to read the library.',
+    empty: {
+      title: 'No documents yet',
+      description: 'Documents you can read will appear here.',
+    },
+    view: {
+      title: 'Document',
+      description: 'The full body of this document and who may see it.',
+      readOnly: 'Read-only',
+      created: 'Created',
+      updated: 'Updated',
+      body: 'Body',
+      emptyBody: 'This document has no body yet.',
+    },
+    form: {
+      createTitle: 'New document',
+      editTitle: 'Edit document',
+      description:
+        'Published, non-confidential documents are open to readers; keep a draft private until it is ready.',
+      title: 'Title',
+      titlePlaceholder: 'Document title',
+      content: 'Body',
+      contentPlaceholder: 'Write the document…',
+      published: 'Published',
+      publishedHint:
+        'Readers may open a published document unless it is confidential.',
+      confidential: 'Confidential',
+      confidentialHint: 'Confidential documents stay closed to readers.',
+    },
+    detail: {
+      unavailableTitle: 'No longer available',
+      unavailableDescription:
+        'This document is not readable with your account, or the temporary access was withdrawn.',
+    },
+    delete: {
+      title: 'Delete this document?',
+      description: '“{{title}}” will be removed permanently.',
+      confirm: 'Delete',
+      done: 'Document deleted',
+    },
+    share: {
+      title: 'Temporary access',
+      description:
+        'Open one document to one colleague. Revoking removes access the next time the document is loaded.',
+      document: 'Document',
+      recipient: 'Colleague',
+      chooseRecipient: 'Choose a colleague',
+      chooseBoth: 'Choose a document and a colleague first',
+      grant: 'Open temporarily',
+      granted: 'Document opened temporarily',
+      revoked: 'Access revoked',
+      current: 'Currently open',
+      empty: 'Nothing is open temporarily.',
+      revoke: 'Revoke',
+      invalidRecipient: 'That colleague is not available',
+      invalidDocument: 'Choose a valid document',
+    },
+  },
+
   appearance: {
     title: 'Appearance',
     mode: 'Color mode',
