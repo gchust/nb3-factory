@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "inputHash": "7727ed1d28b9b7ab90be0642732d0a74fd854feeb72fc981ba0026a793f9424b",
+  "inputHash": "59e7d371cffe056c2fdd71e440b5591404ed4502ec1974b1ae3a7c1a66c6e012",
   "findings": [
     {
       "id": "460:36434284393:1:F2",
@@ -8978,6 +8978,273 @@
         }
       ],
       "fingerprint": "6328b7ed14a27c50b46bea3a1f37c7db0efffa9e3a00780898562be648cef1ff"
+    },
+    {
+      "id": "578:37394457519:1:F1",
+      "report": "578:37394457519:1",
+      "issue": 578,
+      "taskTitle": "项目资料与私有附件",
+      "appVersion": "1.0.0-beta.50",
+      "appTemplate": "@nocobase/app-template-default",
+      "finding": {
+        "id": "F1",
+        "kind": "issue",
+        "owner": "documentation",
+        "severity": "minor",
+        "confidence": "confirmed",
+        "status": "open",
+        "title": "受保护路由的集成测试配方未提示 cookie 写入需要 Origin，照做得到 INVALID_CSRF_ORIGIN",
+        "detail": "protecting-routes.md 的“Testing a protected route”告诉实现者用 POST /api/auth/sign-up/email 的 set-cookie 在后续请求中复用。auth.required()/optional() 会先执行 checkCookieWriteOrigin：对带 cookie 的非 GET/HEAD/OPTIONS 请求，Origin（或 Referer）必须匹配配置的 base origin 或可信 origin，否则返回 403 INVALID_CSRF_ORIGIN。该前提只写在另一个参考文件 user-lifecycle-and-deployment.md 的“Business request CSRF”段，测试配方正文没有提。",
+        "impact": "实现者按配方编写真实集成测试时会先得到 403，容易误判为业务路由或鉴权写错，或干脆删掉断言；本场景 Agent 因此多排查一轮并只能修改测试助手。",
+        "suggestedChange": "在 protecting-routes.md 的集成测试段补一句：带 cookie 的非 GET 请求需设置 Origin（或 Referer）为应用 base origin，并交叉引用 Business request CSRF 段。",
+        "diagnosis": {
+          "category": "guidance-gap",
+          "trigger": "按 protecting-routes.md 配方用 sign-up 返回的 set-cookie 对受保护 POST 路由发请求。",
+          "expected": "配方包含 cookie 写入需 Origin/可信原点的前提，或直接指向 CSRF 说明。",
+          "actual": "配方只写复用 set-cookie；checkCookieWriteOrigin 对缺少可信 Origin 的 cookie 写请求返回 403 INVALID_CSRF_ORIGIN。",
+          "workaround": "Agent 在测试 request() 助手中补 headers.set('origin', new URL(url).origin)，使后续 POST 通过。",
+          "acceptance": "按更新后的配方在测试中对受保护 POST 发送 cookie，得到业务预期响应而非 INVALID_CSRF_ORIGIN。"
+        },
+        "evidence": [
+          "E16",
+          "E17",
+          "E18",
+          "E19"
+        ]
+      },
+      "targets": [
+        "app/.agents/skills/nocobase-app-plugin-authentication/references/protecting-routes.md",
+        "app/.agents/skills/nocobase-app-plugin-authentication/references/user-lifecycle-and-deployment.md"
+      ],
+      "paths": [
+        ".agents/skills/nocobase-app-plugin-authentication/references/protecting-routes.md",
+        ".agents/skills/nocobase-app-plugin-authentication/references/user-lifecycle-and-deployment.md"
+      ],
+      "evidence": [
+        {
+          "id": "E16",
+          "kind": "skill",
+          "path": "app/.agents/skills/nocobase-app-plugin-authentication/references/protecting-routes.md",
+          "observation": "测试受保护路由章节给出 stub auth 与真实 sign-up+set-cookie 复用配方；配方未提 cookie 写入需要 Origin，正文也未见交叉引用。",
+          "lines": [
+            109,
+            131
+          ],
+          "excerpt": "a user's sessions also disconnects that user's realtime connections.\n\n## Testing a protected route\n\nRoute tests should not sign in through Better Auth. Register a stub under\n`authenticationToken` whose `required()` and `optional()` set the session you\nwant, then assert both the anonymous and the authenticated response:\n\n```ts\nconst container = new ServiceContainer();\ncontainer.instance(authenticationToken, testAuth);\n\nconst router = await apiRoutes.createRouter({ /* ... */ container });\n\nexpect((await router.request('/orders')).status).toBe(401);\n```\n\nThe application Skill's testing reference shows the full `createRouter` call\nand a `testAuth` shape. For an integration test that exercises the real\nplugin, build an `Auth` with `createAuthentication({ connection, secret })`\nagainst a test database, sign up through `auth.handler()` with a\n`POST /api/auth/sign-up/email` request, and reuse the returned `set-cookie`\nheader on later requests. The plugin's own integration tests do exactly this.",
+          "sha256": "835bdc520d0b737b037e1fa657c04453194bcda96700d013ff1e249c4ab31bbd"
+        },
+        {
+          "id": "E17",
+          "kind": "skill",
+          "path": "app/.agents/skills/nocobase-app-plugin-authentication/references/user-lifecycle-and-deployment.md",
+          "observation": "Business request CSRF 段说明 Auth.required()/optional() 对带 cookie 的写请求要求 Origin/Referer 匹配 base origin 或可信 origin，否则以 INVALID_CSRF_ORIGIN fail closed。",
+          "lines": [
+            115,
+            115
+          ],
+          "excerpt": "**Business request CSRF.** `Auth.required()` and `Auth.optional()` reject cookie-bearing writes unless `Origin` (or, when absent, `Referer`) matches Better Auth's configured base origin or a trusted origin. Configure `app.publicOrigin` for deployed applications and add separate frontend origins through `auth.trustedOrigins`; without a trusted origin, browser writes fail closed with `INVALID_CSRF_ORIGIN`. Cookie-free API key requests can proceed after authentication. A credential header does not exempt a request carrying cookies, including routes that skip session lookup.",
+          "sha256": "f8b0c5cdd615fcb6ac7ffb9bfc8f4b42f5fd3422c6e8613d517f87ee60e91fbe"
+        },
+        {
+          "id": "E18",
+          "kind": "log",
+          "path": "artifacts/agent-history/agent-implement.jsonl/part-0051.txt",
+          "observation": "运行 project-materials-api 测试时 POST /api/projectMaterialAttachments/upload 返回 403，断言 code 为 INVALID_CSRF_ORIGIN，期望 200 实际 403。",
+          "lines": [
+            1617,
+            1621
+          ],
+          "excerpt": "{\"type\":\"tool_execution_update\",\"toolCallId\":\"call_00_ET_HBO62NaUDrGQaWRZfLNm6378\",\"toolName\":\"bash\",\"args\":{\"command\":\"cd /home/runner/work/nb3-factory/nb3-factory/workspace && pnpm exec vitest run tests/logic/project-materials-api.test.ts 2>&1 | tail -80\",\"timeout\":600},\"partialResult\":{\"content\":[{\"type\":\"text\",\"text\":\"01:14:50.792 WARN [main/request] POST /api/projectMaterialAttachments/upload 403 completed 0ms requestId=\\\"3664332e-5225-41f7-9a9e-a5cea19f1c65\\\" req={\\\"method\\\":\\\"POST\\\",\\\"path\\\":\\\"/api/projectMaterialAttachments/upload\\\",\\\"route\\\":\\\"/api/projectMaterialAttachments/*\\\",\\\"params\\\":{},\\\"query\\\":{},\\\"headers\\\":{}} res={\\\"status\\\":403}\\n ❯ tests/logic/project-materials-api.test.ts (5 tests | 3 failed) 1775ms\\n     × keeps a material and its files private to their owner 8ms\\n     × lets a draft upload survive a failed save without re-uploading 2ms\\n     × unlinks a removed attachment without destroying the file 2ms\\n\\n⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯\\n\\n FAIL  tests/logic/project-materials-api.test.ts > project materials API > keeps a material and its files private to their owner\\nAssertionError: {\\\"code\\\":\\\"INVALID_CSRF_ORIGIN\\\"}: expected 403 to be 200 // Object.is equality\\n\\n- Expected\\n+ Received\\n\\n- 200\\n+ 403\\n\\n ❯ upload tests/logic/project-materials-api.test.ts:142:58\\n    140|     body: form,\\n    141|   });\\n    142|   expect(response.status, await response.clone().text()).toBe(200);\\n       |                                                          ^\\n    143|   const body = (await response.json()) as {\\n    144|     data: { record: TestAttachment };\\n ❯ tests/logic/project-materials-api.test.ts:216:24\\n\\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯\\n\\n FAIL  tests/logic/project-materials-api.test.ts > project materials API > lets a draft upload survive a failed save without re-uploading\\nAssertionError: {\\\"code\\\":\\\"INVALID_CSRF_ORIGIN\\\"}: expected 403 to be 200 // Object.is equality\\n\\n- Expected\\n+ Received\\n\\n- 200\\n+ 403\\n\\n ❯ upload tests/logic/project-materials-api.test.ts:142:58\\n    140|     body: form,\\n    141|   });\\n    142|   expect(response.status, await response.clone().text()).toBe(200);\\n       |                                                          ^\\n    143|   const body = (await response.json()) as {\\n    144|     data: { record: TestAttachment };\\n ❯ tests/logic/project-materials-api.test.ts:295:24\\n\\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯\\n\\n FAIL  tests/logic/project-materials-api.test.ts > project materials API > unlinks a removed attachment without destroying the file\\nAssertionError: {\\\"code\\\":\\\"INVALID_CSRF_ORIGIN\\\"}: expected 403 to be 200 // Object.is equality\\n\\n- Expected\\n+ Received\\n\\n- 200\\n+ 403\\n\\n ❯ upload tests/logic/project-materials-api.test.ts:142:58\\n    140|     body: form,\\n    141|   });\\n    142|   expect(response.status, await response.clone().text()).toBe(200);\\n       |                                                          ^\\n    143|   const body = (await response.json()) as {\\n    144|     data: { record: TestAttachment };\\n ❯ tests/logic/project-materials-api.test.ts:325:24\\n\\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯\\n\\n\\n Test Files  1 failed (1)\\n      Tests  3 failed | 2 passed (5)\\n   Start at  01:14:46\\n   Duration  4.44s (transform 176ms, setup 167ms, import 2.36s, tests 1.78s, environment 0ms)\\n\\n\\n::error file=/home/runner/work/nb3-factory/nb3-factory/workspace/tests/logic/project-materials-api.test.ts,title=tests/logic/project-materials-api.test.ts > project materials API > keeps a material and its files private to their owner,line=142,column=58::AssertionError: {\\\"code\\\":\\\"INVALID_CSRF_ORIGIN\\\"}: expected 403 to be 200 // Object.is equality%0A%0A- Expected%0A+ Received%0A%0A- 200%0A+ 403%0A%0A ❯ upload tests/logic/project-materials-api.test.ts:142:58%0A ❯ tests/logic/project-materials-api.test.ts:216:24%0A%0A\\n\\n::error file=/home/runner/work/nb3-factory/nb3-factory/workspace/tests/logic/project-materials-api.test.ts,title=tests/logic/project-materials-api.test.ts > project materials API > lets a draft upload survive a failed save without re-uploading,line=142,column=58::AssertionError: {\\\"code\\\":\\\"INVALID_CSRF_ORIGIN\\\"}: expected 403 to be 200 // Object.is equality%0A%0A- Expected%0A+ Received%0A%0A- 200%0A+ 403%0A%0A ❯ upload tests/logic/project-materials-api.test.ts:142:58%0A ❯ tests/logic/project-materials-api.test.ts:295:24%0A%0A\\n\\n::error file=/home/runner/work/nb3-factory/nb3-factory/workspace/tests/logic/project-materials-api.test.ts,title=tests/logic/project-materials-api.test.ts > project materials API > unlinks a removed attachment without destroying the file,line=142,column=58::AssertionError: {\\\"code\\\":\\\"INVALID_CSRF_ORIGIN\\\"}: expected 403 to be 200 // Object.is equality%0A%0A- Expected%0A+ Received%0A%0A- 200%0A+ 403%0A%0A ❯ upload tests/logic/project-materials-api.test.ts:142:58%0A ❯ tests/logic/project-materials-api.test.ts:325:24%0A%0A\\n\"}],\"details\":{}}}\n{\"type\":\"tool_execution_end\",\"toolCallId\":\"call_00_ET_HBO62NaUDrGQaWRZfLNm6378\",\"toolName\":\"bash\",\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"01:14:50.792 WARN [main/request] POST /api/projectMaterialAttachments/upload 403 completed 0ms requestId=\\\"3664332e-5225-41f7-9a9e-a5cea19f1c65\\\" req={\\\"method\\\":\\\"POST\\\",\\\"path\\\":\\\"/api/projectMaterialAttachments/upload\\\",\\\"route\\\":\\\"/api/projectMaterialAttachments/*\\\",\\\"params\\\":{},\\\"query\\\":{},\\\"headers\\\":{}} res={\\\"status\\\":403}\\n ❯ tests/logic/project-materials-api.test.ts (5 tests | 3 failed) 1775ms\\n     × keeps a material and its files private to their owner 8ms\\n     × lets a draft upload survive a failed save without re-uploading 2ms\\n     × unlinks a removed attachment without destroying the file 2ms\\n\\n⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯\\n\\n FAIL  tests/logic/project-materials-api.test.ts > project materials API > keeps a material and its files private to their owner\\nAssertionError: {\\\"code\\\":\\\"INVALID_CSRF_ORIGIN\\\"}: expected 403 to be 200 // Object.is equality\\n\\n- Expected\\n+ Received\\n\\n- 200\\n+ 403\\n\\n ❯ upload tests/logic/project-materials-api.test.ts:142:58\\n    140|     body: form,\\n    141|   });\\n    142|   expect(response.status, await response.clone().text()).toBe(200);\\n       |                                                          ^\\n    143|   const body = (await response.json()) as {\\n    144|     data: { record: TestAttachment };\\n ❯ tests/logic/project-materials-api.test.ts:216:24\\n\\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯\\n\\n FAIL  tests/logic/project-materials-api.test.ts > project materials API > lets a draft upload survive a failed save without re-uploading\\nAssertionError: {\\\"code\\\":\\\"INVALID_CSRF_ORIGIN\\\"}: expected 403 to be 200 // Object.is equality\\n\\n- Expected\\n+ Received\\n\\n- 200\\n+ 403\\n\\n ❯ upload tests/logic/project-materials-api.test.ts:142:58\\n    140|     body: form,\\n    141|   });\\n    142|   expect(response.status, await response.clone().text()).toBe(200);\\n       |                                                          ^\\n    143|   const body = (await response.json()) as {\\n    144|     data: { record: TestAttachment };\\n ❯ tests/logic/project-materials-api.test.ts:295:24\\n\\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯\\n\\n FAIL  tests/logic/project-materials-api.test.ts > project materials API > unlinks a removed attachment without destroying the file\\nAssertionError: {\\\"code\\\":\\\"INVALID_CSRF_ORIGIN\\\"}: expected 403 to be 200 // Object.is equality\\n\\n- Expected\\n+ Received\\n\\n- 200\\n+ 403\\n\\n ❯ upload tests/logic/project-materials-api.test.ts:142:58\\n    140|     body: form,\\n    141|   });\\n    142|   expect(response.status, await response.clone().text()).toBe(200);\\n       |                                                          ^\\n    143|   const body = (await response.json()) as {\\n    144|     data: { record: TestAttachment };\\n ❯ tests/logic/project-materials-api.test.ts:325:24\\n\\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯\\n\\n\\n Test Files  1 failed (1)\\n      Tests  3 failed | 2 passed (5)\\n   Start at  01:14:46\\n   Duration  4.44s (transform 176ms, setup 167ms, import 2.36s, tests 1.78s, environment 0ms)\\n\\n\\n::error file=/home/runner/work/nb3-factory/nb3-factory/workspace/tests/logic/project-materials-api.test.ts,title=tests/logic/project-materials-api.test.ts > project materials API > keeps a material and its files private to their owner,line=142,column=58::AssertionError: {\\\"code\\\":\\\"INVALID_CSRF_ORIGIN\\\"}: expected 403 to be 200 // Object.is equality%0A%0A- Expected%0A+ Received%0A%0A- 200%0A+ 403%0A%0A ❯ upload tests/logic/project-materials-api.test.ts:142:58%0A ❯ tests/logic/project-materials-api.test.ts:216:24%0A%0A\\n\\n::error file=/home/runner/work/nb3-factory/nb3-factory/workspace/tests/logic/project-materials-api.test.ts,title=tests/logic/project-materials-api.test.ts > project materials API > lets a draft upload survive a failed save without re-uploading,line=142,column=58::AssertionError: {\\\"code\\\":\\\"INVALID_CSRF_ORIGIN\\\"}: expected 403 to be 200 // Object.is equality%0A%0A- Expected%0A+ Received%0A%0A- 200%0A+ 403%0A%0A ❯ upload tests/logic/project-materials-api.test.ts:142:58%0A ❯ tests/logic/project-materials-api.test.ts:295:24%0A%0A\\n\\n::error file=/home/runner/work/nb3-factory/nb3-factory/workspace/tests/logic/project-materials-api.test.ts,title=tests/logic/project-materials-api.test.ts > project materials API > unlinks a removed attachment without destroying the file,line=142,column=58::AssertionError: {\\\"code\\\":\\\"INVALID_CSRF_ORIGIN\\\"}: expected 403 to be 200 // Object.is equality%0A%0A- Expected%0A+ Received%0A%0A- 200%0A+ 403%0A%0A ❯ upload tests/logic/project-materials-api.test.ts:142:58%0A ❯ tests/logic/project-materials-api.test.ts:325:24%0A%0A\\n\"}]},\"isError\":false}\n{\"type\":\"message_start\",\"message\":{\"role\":\"toolResult\",\"toolCallId\":\"call_00_ET_HBO62NaUDrGQaWRZfLNm6378\",\"toolName\":\"bash\",\"content\":[{\"type\":\"text\",\"text\":\"01:14:50.792 WARN [main/request] POST /api/projectMaterialAttachments/upload 403 completed 0ms requestId=\\\"3664332e-5225-41f7-9a9e-a5cea19f1c65\\\" req={\\\"method\\\":\\\"POST\\\",\\\"path\\\":\\\"/api/projectMaterialAttachments/upload\\\",\\\"route\\\":\\\"/api/projectMaterialAttachments/*\\\",\\\"params\\\":{},\\\"query\\\":{},\\\"headers\\\":{}} res={\\\"status\\\":403}\\n ❯ tests/logic/project-materials-api.test.ts (5 tests | 3 failed) 1775ms\\n     × keeps a material and its files private to their owner 8ms\\n     × lets a draft upload survive a failed save without re-uploading 2ms\\n     × unlinks a removed attachment without destroying the file 2ms\\n\\n⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯\\n\\n FAIL  tests/logic/project-materials-api.test.ts > project materials API > keeps a material and its files private to their owner\\nAssertionError: {\\\"code\\\":\\\"INVALID_CSRF_ORIGIN\\\"}: expected 403 to be 200 // Object.is equality\\n\\n- Expected\\n+ Received\\n\\n- 200\\n+ 403\\n\\n ❯ upload tests/logic/project-materials-api.test.ts:142:58\\n    140|     body: form,\\n    141|   });\\n    142|   expect(response.status, await response.clone().text()).toBe(200);\\n       |                                                          ^\\n    143|   const body = (await response.json()) as {\\n    144|     data: { record: TestAttachment };\\n ❯ tests/logic/project-materials-api.test.ts:216:24\\n\\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯\\n\\n FAIL  tests/logic/project-materials-api.test.ts > project materials API > lets a draft upload survive a failed save without re-uploading\\nAssertionError: {\\\"code\\\":\\\"INVALID_CSRF_ORIGIN\\\"}: expected 403 to be 200 // Object.is equality\\n\\n- Expected\\n+ Received\\n\\n- 200\\n+ 403\\n\\n ❯ upload tests/logic/project-materials-api.test.ts:142:58\\n    140|     body: form,\\n    141|   });\\n    142|   expect(response.status, await response.clone().text()).toBe(200);\\n       |                                                          ^\\n    143|   const body = (await response.json()) as {\\n    144|     data: { record: TestAttachment };\\n ❯ tests/logic/project-materials-api.test.ts:295:24\\n\\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯\\n\\n FAIL  tests/logic/project-materials-api.test.ts > project materials API > unl",
+          "sha256": "dea79493b8415bf94704bd6b23184fc31c282ae8f2b607385e0abaa7a5f9fc98"
+        },
+        {
+          "id": "E19",
+          "kind": "log",
+          "path": "artifacts/agent-history/agent-implement.jsonl/part-0052.txt",
+          "observation": "测试 request() 助手被补丁：若无 origin 头则 headers.set('origin', new URL(url).origin)，注释说明 better-auth 的 cookie 写守卫需要它。",
+          "lines": [
+            520,
+            524
+          ],
+          "excerpt": "{\"type\":\"message_update\",\"usage\":{\"input\":474,\"output\":679,\"cacheRead\":93440,\"cacheWrite\":0,\"reasoning\":248,\"totalTokens\":94593,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"assistantMessageEvent\":{\"type\":\"toolcall_end\",\"contentIndex\":1,\"toolCall\":{\"type\":\"toolCall\",\"id\":\"call_00_k98T0RCrlOBKqLHJ9G8j0275\",\"name\":\"edit\",\"arguments\":{\"edits\":[{\"newText\":\"function request(\\n  path: string,\\n  init: RequestInit = {},\\n): Response | Promise<Response> {\\n  const url = `${baseUrl}${path}`;\\n  const headers = new Headers(init.headers);\\n  // A browser sends Origin on every same-origin non-GET; better-auth's cookie\\n  // write guard rejects the request without it.\\n  if (!headers.has('origin')) headers.set('origin', new URL(url).origin);\\n  return server.fetch(new Request(url, { ...init, headers }));\\n}\",\"oldText\":\"function request(\\n  input: string | Request,\\n  init?: RequestInit,\\n): Response | Promise<Response> {\\n  const url = typeof input === 'string' ? `${baseUrl}${input}` : input;\\n  return server.fetch(new Request(url, init));\\n}\"},{\"newText\":\"  const response = await request('/api/projectMaterialAttachments/upload', {\\n    method: 'POST',\\n    headers: cookie ? { cookie } : undefined,\\n    body: form,\\n  });\",\"oldText\":\"  const response = await request('/api/projectMaterialAttachments/upload', {\\n    method: 'POST',\\n    headers: {\\n      // A browser sends Origin on the multipart POST; better-auth's CSRF check\\n      // rejects the request without it.\\n      ...(cookie ? { cookie } : {}),\\n      origin: baseUrl,\\n    },\\n    body: form,\\n  });\"}],\"path\":\"/home/runner/work/nb3-factory/nb3-factory/workspace/tests/logic/project-materials-api.test.ts\"}}}}\n{\"type\":\"message_end\",\"message\":{\"role\":\"assistant\",\"content\":[{\"type\":\"thinking\",\"thinking\":\"Let me add a module-level `let origin: string;` and set it. Then update upload/createMaterial/updateMaterial.\\n\\nActually simpler: in the `request` helper, always add `origin` from the URL's origin for non-GET/HEAD. But then sign-up/sign-in would also send origin — harmless. Let me do that centrally:\\n\\n```ts\\nfunction request(input, init) {\\n  const url = typeof input === 'string' ? `${baseUrl}${input}` : input;\\n  const headers = new Headers(init?.headers);\\n  if (!headers.has('origin')) headers.set('origin', new URL(url).origin);\\n  return server.fetch(new Request(url, { ...init, headers }));\\n}\\n```\\n\\nBut if `input` is a Request with its own headers, we lose them. We only pass strings currently. Keep it simple: strings only. Let me rewrite `request` to accept string | URL and always set origin.\\n\\nWait, `baseUrl` computed after server start; `request` is called in `createAccount` after. Good.\\n\\nThen remove the explicit origin in upload (now redundant but fine). Actually keep it out for simplicity — central. Let me rewrite.\",\"thinkingSignature\":\"[{\\\"format\\\":\\\"unknown\\\",\\\"index\\\":0,\\\"text\\\":\\\"Let me add a module-level `let origin: string;` and set it. Then update upload/createMaterial/updateMaterial.\\\\n\\\\nActually simpler: in the `request` helper, always add `origin` from the URL's origin for non-GET/HEAD. But then sign-up/sign-in would also send origin — harmless. Let me do that centrally:\\\\n\\\\n```ts\\\\nfunction request(input, init) {\\\\n  const url = typeof input === 'string' ? `${baseUrl}${input}` : input;\\\\n  const headers = new Headers(init?.headers);\\\\n  if (!headers.has('origin')) headers.set('origin', new URL(url).origin);\\\\n  return server.fetch(new Request(url, { ...init, headers }));\\\\n}\\\\n```\\\\n\\\\nBut if `input` is a Request with its own headers, we lose them. We only pass strings currently. Keep it simple: strings only. Let me rewrite `request` to accept string | URL and always set origin.\\\\n\\\\nWait, `baseUrl` computed after server start; `request` is called in `createAccount` after. Good.\\\\n\\\\nThen remove the explicit origin in upload (now redundant but fine). Actually keep it out for simplicity — central. Let me rewrite.\\\",\\\"type\\\":\\\"reasoning.text\\\"}]\"},{\"type\":\"toolCall\",\"id\":\"call_00_k98T0RCrlOBKqLHJ9G8j0275\",\"name\":\"edit\",\"arguments\":{\"edits\":[{\"newText\":\"function request(\\n  path: string,\\n  init: RequestInit = {},\\n): Response | Promise<Response> {\\n  const url = `${baseUrl}${path}`;\\n  const headers = new Headers(init.headers);\\n  // A browser sends Origin on every same-origin non-GET; better-auth's cookie\\n  // write guard rejects the request without it.\\n  if (!headers.has('origin')) headers.set('origin', new URL(url).origin);\\n  return server.fetch(new Request(url, { ...init, headers }));\\n}\",\"oldText\":\"function request(\\n  input: string | Request,\\n  init?: RequestInit,\\n): Response | Promise<Response> {\\n  const url = typeof input === 'string' ? `${baseUrl}${input}` : input;\\n  return server.fetch(new Request(url, init));\\n}\"},{\"newText\":\"  const response = await request('/api/projectMaterialAttachments/upload', {\\n    method: 'POST',\\n    headers: cookie ? { cookie } : undefined,\\n    body: form,\\n  });\",\"oldText\":\"  const response = await request('/api/projectMaterialAttachments/upload', {\\n    method: 'POST',\\n    headers: {\\n      // A browser sends Origin on the multipart POST; better-auth's CSRF check\\n      // rejects the request without it.\\n      ...(cookie ? { cookie } : {}),\\n      origin: baseUrl,\\n    },\\n    body: form,\\n  });\"}],\"path\":\"/home/runner/work/nb3-factory/nb3-factory/workspace/tests/logic/project-materials-api.test.ts\"}}],\"api\":\"openai-completions\",\"provider\":\"nb3-factory\",\"model\":\"deepseek-v4.1-flash\",\"usage\":{\"input\":474,\"output\":679,\"cacheRead\":93440,\"cacheWrite\":0,\"reasoning\":248,\"totalTokens\":94593,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"stopReason\":\"toolUse\",\"timestamp\":1791249319783,\"responseId\":\"gen_01M47CF426AXC4C5QHYRHJDXM9\",\"rawStopReason\":\"tool_calls\"}}\n{\"type\":\"tool_execution_start\",\"toolCallId\":\"call_00_k98T0RCrlOBKqLHJ9G8j0275\",\"toolName\":\"edit\",\"args\":{\"edits\":[{\"newText\":\"function request(\\n  path: string,\\n  init: RequestInit = {},\\n): Response | Promise<Response> {\\n  const url = `${baseUrl}${path}`;\\n  const headers = new Headers(init.headers);\\n  // A browser sends Origin on every same-origin non-GET; better-auth's cookie\\n  // write guard rejects the request without it.\\n  if (!headers.has('origin')) headers.set('origin', new URL(url).origin);\\n  return server.fetch(new Request(url, { ...init, headers }));\\n}\",\"oldText\":\"function request(\\n  input: string | Request,\\n  init?: RequestInit,\\n): Response | Promise<Response> {\\n  const url = typeof input === 'string' ? `${baseUrl}${input}` : input;\\n  return server.fetch(new Request(url, init));\\n}\"},{\"newText\":\"  const response = await request('/api/projectMaterialAttachments/upload', {\\n    method: 'POST',\\n    headers: cookie ? { cookie } : undefined,\\n    body: form,\\n  });\",\"oldText\":\"  const response = await request('/api/projectMaterialAttachments/upload', {\\n    method: 'POST',\\n    headers: {\\n      // A browser sends Origin on the multipart POST; better-auth's CSRF check\\n      // rejects the request without it.\\n      ...(cookie ? { cookie } : {}),\\n      origin: baseUrl,\\n    },\\n    body: form,\\n  });\"}],\"path\":\"/home/runner/work/nb3-factory/nb3-factory/workspace/tests/logic/project-materials-api.test.ts\"}}\n{\"type\":\"tool_execution_end\",\"toolCallId\":\"call_00_k98T0RCrlOBKqLHJ9G8j0275\",\"toolName\":\"edit\",\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"Successfully replaced 2 block(s) in /home/runner/work/nb3-factory/nb3-factory/workspace/tests/logic/project-materials-api.test.ts.\"}],\"details\":{\"diff\":\"     ...\\n  89   if (tempDir) rmSync(tempDir, { recursive: true, force: true });\\n  90 });\\n  91 \\n  92 function request(\\n- 93   input: string | Request,\\n- 94   init?: RequestInit,\\n+ 93   path: string,\\n+ 94   init: RequestInit = {},\\n  95 ): Response | Promise<Response> {\\n- 96   const url = typeof input === 'string' ? `${baseUrl}${input}` : input;\\n- 97   return server.fetch(new Request(url, init));\\n+ 96   const url = `${baseUrl}${path}`;\\n+ 97   const headers = new Headers(init.headers);\\n+ 98   // A browser sends Origin on every same-origin non-GET; better-auth's cookie\\n+ 99   // write guard rejects the request without it.\\n+100   if (!headers.has('origin')) headers.set('origin', new URL(url).origin);\\n+101   return server.fetch(new Request(url, { ...init, headers }));\\n  98 }\\n  99 \\n 100 async function createAccount(username: string, name: string): Promise<string> {\\n 101   const password=[REDACTED]';\\n     ...\\n 135     }),\\n 136   );\\n 137   const response = await request('/api/projectMaterialAttachments/upload', {\\n 138     method: 'POST',\\n-139     headers: {\\n-140       // A browser sends Origin on the multipart POST; better-auth's CSRF check\\n-141       // rejects the request without it.\\n-142       ...(cookie ? { cookie } : {}),\\n-143       origin: baseUrl,\\n-144     },\\n+143     headers: cookie ? { cookie } : undefined,\\n 145     body: form,\\n 146   });\\n 147   expect(response.status, await response.clone().text()).toBe(200);\\n 148   const body = (await response.json()) as {\\n     ...\",\"patch\":\"--- /home/runner/work/nb3-factory/nb3-factory/workspace/tests/logic/project-materials-api.test.ts\\n+++ /home/runner/work/nb3-factory/nb3-factory/workspace/tests/logic/project-materials-api.test.ts\\n@@ -89,13 +89,17 @@\\n   if (tempDir) rmSync(tempDir, { recursive: true, force: true });\\n });\\n \\n function request(\\n-  input: string | Request,\\n-  init?: RequestInit,\\n+  path: string,\\n+  init: RequestInit = {},\\n ): Response | Promise<Response> {\\n-  const url = typeof input === 'string' ? `${baseUrl}${input}` : input;\\n-  return server.fetch(new Request(url, init));\\n+  const url = `${baseUrl}${path}`;\\n+  const headers = new Headers(init.headers);\\n+  // A browser sends Origin on every same-origin non-GET; better-auth's cookie\\n+  // write guard rejects the request without it.\\n+  if (!headers.has('origin')) headers.set('origin', new URL(url).origin);\\n+  return server.fetch(new Request(url, { ...init, headers }));\\n }\\n \\n async function createAccount(username: string, name: string): Promise<string> {\\n   const password=[REDACTED]';\\n@@ -135,14 +139,9 @@\\n     }),\\n   );\\n   const response = await request('/api/projectMaterialAttachments/upload', {\\n     method: 'POST',\\n-    headers: {\\n-      // A browser sends Origin on the multipart POST; better-auth's CSRF check\\n-      // rejects the request without it.\\n-      ...(cookie ? { cookie } : {}),\\n-      origin: baseUrl,\\n-    },\\n+    headers: cookie ? { cookie } : undefined,\\n     body: form,\\n   });\\n   expect(response.status, await response.clone().text()).toBe(200);\\n   const body = (await response.json()) as {\\n\",\"firstChangedLine\":93}},\"isError\":false}\n{\"type\":\"message_start\",\"message\":{\"role\":\"toolResult\",\"toolCallId\":\"call_00_k98T0RCrlOBKqLHJ9G8j0275\",\"toolName\":\"edit\",\"content\":[{\"type\":\"text\",\"text\":\"Successfully replaced 2 block(s) in /home/runner/work/nb3-factory/nb3-factory/workspace/tests/logic/project-materials-api.test.ts.\"}],\"details\":{\"diff\":\"     ...\\n  89   if (tempDir) rmSync(tempDir, { recursive: true, force: true });\\n  90 });\\n  91 \\n  92 function request(\\n- 93   input: string | Request,\\n- 94   init?: RequestInit,\\n+ 93   path: string,\\n+ 94   init: RequestInit = {},\\n  95 ): Response | Promise<Response> {\\n- 96   const url = typeof input === 'string' ? `${baseUrl}${input}` : input;\\n- 97   return server.fetch(new Request(url, init));\\n+ 96   const url = `${baseUrl}${path}`;\\n+ 97   const headers = new Headers(init.headers);\\n+ 98   // A browser sends Origin on every same-origin non-GET; better-auth's cookie\\n+ 99   // write guard rejects the request without it.\\n+100   if (!headers.has('origin')) headers.set('origin', new URL(url).origin);\\n+101   return server.fetch(new Request(url, { ...init, headers }));\\n  98 }\\n  99 \\n 100 async function createAccount(username: string, name: string): Promise<string> {\\n 101   const password=[REDACTED]';\\n     ...\\n 135   ",
+          "sha256": "3079a2ea400510fc33f5f2dd2efb9cd6c6730064b2cf64f1c8cb6575ed668310"
+        }
+      ],
+      "fingerprint": "f36a6c4758530ff4991fd299d440e052f120d5699b0017c62fd782e29533bc8c"
+    },
+    {
+      "id": "578:37394457519:1:F2",
+      "report": "578:37394457519:1",
+      "issue": 578,
+      "taskTitle": "项目资料与私有附件",
+      "appVersion": "1.0.0-beta.50",
+      "appTemplate": "@nocobase/app-template-default",
+      "finding": {
+        "id": "F2",
+        "kind": "improvement",
+        "owner": "plugin",
+        "severity": "minor",
+        "confidence": "confirmed",
+        "status": "open",
+        "title": "文件预览注册表的图片分支缺少加载失败处理",
+        "detail": "注册表 file-preview-content.tsx 的 image 分支直接渲染 <img src=... alt=... />，没有 onError 或失败回退；同一文件的 OOXML/Office 预览则处理了请求失败与超时。SKILL 的验证清单要求检查失败请求与无效文档，但图片分支不会进入错误态，损坏/不可解码的 PNG 只会显示浏览器破图提示。",
+        "impact": "使用默认注册表组件的应用无法对损坏图片给出明确失败提示；本场景 B06 只有把注册表组件复制到应用并加 onError→DownloadFallback 后才通过，产生重复接入代码。",
+        "suggestedChange": "在注册表 image 分支加入 onError 状态并回退到 DownloadFallback（或暴露 onError 回调），与 OOXML 分支的错误处理保持一致。",
+        "diagnosis": {
+          "category": "capability-gap",
+          "trigger": "上传一个扩展名为 .png 但内容无法解码的文件并打开预览。",
+          "expected": "图片预览在解码失败时给出明确错误/下载回退，而不是只显示破图图标。",
+          "actual": "image 分支为无 onError 的裸 img，组件不感知解码失败。",
+          "workaround": "应用复制注册表 file-preview-content.tsx，改用 ImagePreview 并在 failed 状态渲染 DownloadFallback。",
+          "acceptance": "注册表图片分支对不可解码 PNG 显示错误或下载回退，且不再出现浏览器破图提示。"
+        },
+        "evidence": [
+          "E7",
+          "E10",
+          "E11"
+        ]
+      },
+      "targets": [
+        "@nocobase/app-plugin-file",
+        "app/.agents/skills/nocobase-app-plugin-file/SKILL.md"
+      ],
+      "paths": [
+        ".agents/skills/nocobase-app-plugin-file/SKILL.md",
+        "packages/@nocobase/app-plugin-file/registry/component-ui/components/previewers/file-preview-content.tsx"
+      ],
+      "evidence": [
+        {
+          "id": "E7",
+          "kind": "code",
+          "path": "packages/@nocobase/app-plugin-file/registry/component-ui/components/previewers/file-preview-content.tsx",
+          "observation": "预览的 image 分支是无 onError 的裸 <img>，与同文件处理失败的 OOXML 分支不同，无法感知图片解码失败。",
+          "lines": [
+            71,
+            79
+          ],
+          "excerpt": "  switch (kind) {\n    case 'image':\n      return (\n        <img\n          src={url}\n          alt={file.filename}\n          className='max-h-[70vh] max-w-full object-contain'\n        />\n      );",
+          "sha256": "f30abbadc57a0f0ed28cdb68d4ced7bba9a6e3a4c3d59d3b6fc49f89d9497144"
+        },
+        {
+          "id": "E10",
+          "kind": "skill",
+          "path": "app/.agents/skills/nocobase-app-plugin-file/SKILL.md",
+          "observation": "Skill 的验证要求包含上传→查询→内容→字节一致，以及失败请求与无效文档；并区分受限文件与预览集成各自的验收项。",
+          "lines": [
+            241,
+            246
+          ],
+          "excerpt": "## Verify and handle failures\n\nVerify upload → query → contentUrl → identical downloaded bytes, including batch upload, resource aliases and host prefixes. After materialization run the consuming App's typecheck/build and exercise upload, cancel/retry, remove, download and preview. Restricted files need anonymous, forbidden-user and permitted-user tests against both API and content routes. Inspectors check registration only.\n\nFor preview integration or changes, verify each of DOCX/XLSX/PPTX with real files in development and a served production build. Check relative same-origin URLs, an authorized and unauthorized session, cross-origin CORS success/failure, failed requests and invalid documents, and `download={false}`. Close or switch files while loading and after a failure: pending requests must abort, viewers must be destroyed, and the next file must render without stale state. Unit mocks and a successful build do not establish document rendering fidelity.\n",
+          "sha256": "06b464d71554a3ae12819918f98a84f44c65c2b70e7fbfcffd17e992e57aed22"
+        },
+        {
+          "id": "E11",
+          "kind": "code",
+          "path": "app/client/extensions/nocobase-file-component-ui/components/previewers/file-preview-content.tsx",
+          "observation": "应用复制的预览组件新增 ImagePreview，用 failed 状态在图片加载失败时回退到 DownloadFallback，注释说明否则只会显示浏览器破图提示。",
+          "lines": [
+            96,
+            113
+          ],
+          "excerpt": "function ImagePreview(inputProps: {\n  readonly file: FileRecord;\n  readonly url?: string;\n  readonly onDownload?: () => void;\n}): ReactElement {\n  const { t } = useTranslation('@nocobase/app-plugin-file');\n  const { file, url, onDownload } = inputProps;\n  // A broken or unreadable image fires `error`; without this the browser would\n  // show its own broken-image hint and the dialog would look like a success.\n  const [failed, setFailed] = useState(false);\n\n  if (failed)\n    return (\n      <DownloadFallback\n        file={file}\n        message={t('files.previewFailed', {\n          defaultValue: 'Unable to load the file preview.',\n        })}",
+          "sha256": "e29309d8b32c249210c3c4f104b9d96b936b44dad2655bd2e2067d93eac07b46"
+        }
+      ],
+      "fingerprint": "267f495bb785ba1e3051ffa8ee267a169c2d419107837cff4365bb9b9fbd3c41"
+    },
+    {
+      "id": "578:37394457519:1:F3",
+      "report": "578:37394457519:1",
+      "issue": 578,
+      "taskTitle": "项目资料与私有附件",
+      "appVersion": "1.0.0-beta.50",
+      "appTemplate": "@nocobase/app-template-default",
+      "finding": {
+        "id": "F3",
+        "kind": "improvement",
+        "owner": "plugin",
+        "severity": "info",
+        "confidence": "confirmed",
+        "status": "open",
+        "title": "FileUploadField 要求完整 ClientFileRepository，但组件只调用 uploadOne/deleteOne",
+        "detail": "registry/component-ui/types.ts 的 FileUploadFieldProps.repository 类型是完整的 ClientFileRepository（RemoteRepository<FileRecord> & {uploadOne, uploadMany}），而 file-upload-field.tsx 实际只调用 repository.uploadOne，removeOnDelete 时才调用 deleteOne。SKILL 允许应用为 FileUploadField 提供自有上传端点，此时应用只能以部分对象做 as unknown as 断言。",
+        "impact": "类型断言掩盖了缺失方法，运行时才发现不匹配；对接自有端点的应用需要额外的类型绕行，也削弱了类型提示的价值。",
+        "suggestedChange": "把 repository prop 收窄为组件实际需要的能力（例如 Pick<ClientFileRepository,'uploadOne'|'deleteOne'>），或提供并文档化一个最小结构类型。",
+        "diagnosis": {
+          "category": "usability-improvement",
+          "trigger": "为 FileUploadField 传入只实现 uploadOne（及可选 deleteOne）的应用自有仓库。",
+          "expected": "组件 props 只要求其实际调用的方法，部分实现可通过类型检查。",
+          "actual": "props 要求完整 ClientFileRepository，应用需 as unknown as 断言。",
+          "workaround": "app/client/pages/project-materials/api.ts 返回部分对象并断言为 ClientFileRepository。",
+          "acceptance": "仅实现 uploadOne/deleteOne 的仓库对象无需断言即可赋给 repository prop，且组件行为不变。"
+        },
+        "evidence": [
+          "E4",
+          "E5",
+          "E6",
+          "E9"
+        ]
+      },
+      "targets": [
+        "@nocobase/app-plugin-file",
+        "app/.agents/skills/nocobase-app-plugin-file/SKILL.md"
+      ],
+      "paths": [
+        ".agents/skills/nocobase-app-plugin-file/SKILL.md",
+        "packages/@nocobase/app-plugin-file/registry/component-ui/components/file-upload-field.tsx",
+        "packages/@nocobase/app-plugin-file/registry/component-ui/types.ts"
+      ],
+      "evidence": [
+        {
+          "id": "E4",
+          "kind": "code",
+          "path": "packages/@nocobase/app-plugin-file/registry/component-ui/components/file-upload-field.tsx",
+          "observation": "FileUploadField 上传路径只调用 repository.uploadOne，取回 record 后交给外层受控 value/onChange。",
+          "lines": [
+            128,
+            135
+          ],
+          "excerpt": "    );\n    try {\n      const { record } = await repository.uploadOne(\n        { file: item.file },\n        { signal: controller.signal },\n      );\n      controllersRef.current.delete(item.key);\n      if (!mountedRef.current || controller.signal.aborted) return;",
+          "sha256": "a2a7cbdf9b7e0cd6fd5ff3314c61b8008be40afb7cc21a51687c1868d37dcdd5"
+        },
+        {
+          "id": "E5",
+          "kind": "code",
+          "path": "packages/@nocobase/app-plugin-file/registry/component-ui/components/file-upload-field.tsx",
+          "observation": "仅在 removeOnDelete 时调用 repository.deleteOne；否则只从选择中移除，不删除记录。",
+          "lines": [
+            210,
+            216
+          ],
+          "excerpt": "\n  const removeRecord = async (record: FileRecord): Promise<void> => {\n    if (removeOnDelete) {\n      try {\n        await repository.deleteOne({ filter: { id: record.id } });\n      } catch (error) {\n        onError?.(",
+          "sha256": "a2a7cbdf9b7e0cd6fd5ff3314c61b8008be40afb7cc21a51687c1868d37dcdd5"
+        },
+        {
+          "id": "E6",
+          "kind": "code",
+          "path": "packages/@nocobase/app-plugin-file/registry/component-ui/types.ts",
+          "observation": "FileUploadFieldProps.repository 的类型是完整 ClientFileRepository，另有 value/onChange、removeOnDelete 与 labels 等受控属性。",
+          "lines": [
+            19,
+            33
+          ],
+          "excerpt": "export interface FileUploadFieldProps {\n  readonly repository: ClientFileRepository;\n  readonly value: readonly FileRecord[];\n  readonly onChange: (value: readonly FileRecord[]) => void;\n  readonly onError?: (error: Error) => void;\n  readonly onStatusChange?: (status: FileUploadStatus) => void;\n  readonly multiple?: boolean;\n  readonly accept?: readonly string[];\n  readonly maxSize?: number;\n  readonly maxFiles?: number;\n  readonly disabled?: boolean;\n  /** Deletes metadata only; false removes the selection without deleting a record. */\n  readonly removeOnDelete?: boolean;\n  readonly labels?: FileUiLabels;\n}",
+          "sha256": "6c7da02e65cdc64c87d94b16d0f5a0a58363f4747157bf97a22fa325086001c2"
+        },
+        {
+          "id": "E9",
+          "kind": "skill",
+          "path": "app/.agents/skills/nocobase-app-plugin-file/SKILL.md",
+          "observation": "Skill 说明 FileUploadField 只调用 uploadOne（removeOnDelete 才 deleteOne）、OOXML 本地渲染与失败回退，并允许在 App 内适配 Registry 源码做 Bearer-only 内容授权。",
+          "lines": [
+            229,
+            239
+          ],
+          "excerpt": "FileUploadField takes a repository and controlled value/onChange; onStatusChange reports idle/uploading/error so forms can prevent incomplete submissions. Accept/maxSize/maxFiles are UI checks. removeOnDelete calls deleteOne, deleting metadata only; otherwise removal unlinks the selection. Read-only FileList, FileThumbnail, FilePreviewField and FilePreviewDialog use contentUrl without a repository prop. Import UI types from the installed recipe. Supply translated labels and adapt App-owned source as needed.\n\n### Preview and content access\n\nPreview supports safe raster images, PDF via a fetched blob, text/Markdown and audio/video. HTML/SVG/XML previews and unsafe URL schemes are rejected. DOCX, XLSX and PPTX use lazily loaded `@silurus/ooxml` viewers to render locally from `FileRecord.contentUrl`; their content is not sent to a third-party preview service. Legacy DOC/XLS/PPT and OpenDocument formats use Office Online, which requires an internet-accessible absolute URL and cannot use the App session.\n\nOOXML, PDF and text fetches use same-origin credentials. An App-owned content route protected by same-origin session cookies can therefore serve restricted previews, provided it checks the caller's record access. Cross-origin fetches omit credentials and require CORS; an external cookie-protected URL is not supported by this default path. The Repository API client's Bearer token is not automatically attached to content fetches.\n\nFor Bearer-only content authorization, adapt the installed Registry source in the App. Add an authenticated content loader to the OOXML fetch path and `PreviewBody`'s PDF/text fetches, and adapt download and media/image paths as needed. Resolve authentication through the App's supported client/session services and send credentials only to the trusted content endpoint. Do not put tokens in `contentUrl`. If the adapter creates blob URLs, keep an App-owned trusted URL set, pass it to the relevant `resolveSafeFileUrl` calls, and revoke URLs when replaced or unmounted. Merely assigning a `blob:` URL to `FileRecord.contentUrl` is insufficient: the default components reject untrusted blob URLs.\n\nOOXML request or rendering failure displays an error and, when downloads are enabled, a download action. `download={false}` removes that action. This is not a second preview service or a guarantee that downloading the same inaccessible URL will succeed.",
+          "sha256": "06b464d71554a3ae12819918f98a84f44c65c2b70e7fbfcffd17e992e57aed22"
+        }
+      ],
+      "fingerprint": "de678dad72318df202d634ad886706667108db17e4e8295f753b9fb9574fb191"
     }
   ]
 }
