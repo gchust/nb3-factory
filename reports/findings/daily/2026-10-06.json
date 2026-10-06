@@ -1,0 +1,1062 @@
+{
+  "version": 1,
+  "date": "2026-10-06",
+  "timeZone": "Asia/Shanghai",
+  "entries": [
+    {
+      "key": "ffcbb7d26c82039815a6e491",
+      "id": "570:37332578227:1:F1",
+      "issue": 570,
+      "runId": 37332578227,
+      "attempt": 1,
+      "findingId": "F1",
+      "runDay": "2026-10-06",
+      "archivedAt": "2026-10-06T23:47:19.382Z",
+      "title": "数据库 Skill 的绝对表述与演示数据种子指引相互矛盾",
+      "summary": "SKILL.md 第 80 行以绝对句断言 “a seed is never sample or demonstration content”，而 app/.agents/skills/nocobase-app-development/references/organization/subjects.md 第 133 行明确指示用 seed 的 query 写入演示 user/account，code-and-seeds.md 也要求演示账号与生产权限配置分离。应用在同一个 seed 中既要初始化权限集，又要写演示账号与示例工单，代理必须在两条指引间自行取舍。",
+      "severity": "minor",
+      "type": "guidance-error",
+      "owner": "documentation",
+      "targets": [
+        "packages/@nocobase/db/skills/nocobase-db/SKILL.md",
+        "app/.agents/skills/nocobase-app-development/references/organization/subjects.md"
+      ],
+      "subjectKeys": [
+        "guide:@nocobase/db/skills/nocobase-db",
+        "skill:nocobase-app-development"
+      ],
+      "featurePoint": "应用搭建/数据库",
+      "candidates": [
+        "应用搭建/数据库"
+      ],
+      "taskTitle": "员工 IT 报修与处理",
+      "appVersion": "1.0.0-beta.50",
+      "group": {
+        "title": "nocobase-db Skill 以绝对表述禁止种子承载示例/演示数据，却未给出演示数据落点与幂等写法，并与组织指引冲突",
+        "issues": 5,
+        "first": "2026-09-28"
+      },
+      "report": "reports/issues/570/runs/37332578227/attempt-1/index.html#review-finding-F1"
+    },
+    {
+      "key": "c80d967490cc2a60379c5ac3",
+      "id": "570:37332578227:1:F2",
+      "issue": 570,
+      "runId": 37332578227,
+      "attempt": 1,
+      "findingId": "F2",
+      "runDay": "2026-10-06",
+      "archivedAt": "2026-10-06T23:47:19.382Z",
+      "title": "主开发指引未说明“可选插件 token 需先 container.has 守卫”",
+      "summary": "最小组件组合（例如模板自带的 app-server 测试）不会注册 authorization 等插件；provider boot 直接 resolve(authorizationToken) 会抛 “Service ... is not registered”。应用在 app/server/routes/it-tickets.ts 与 app/server/providers/it-tickets.ts 都加了 container.has 守卫才通过。但 app/.agents/skills/nocobase-app-development/references/server-routes.md 与 services-and-jobs.md 未提及该守卫，只有 scheduler/workflow 的 Skill 记录了该模式。",
+      "severity": "minor",
+      "type": "guidance-gap",
+      "owner": "documentation",
+      "targets": [
+        "packages/@nocobase/app-plugin-authorization/skills/nocobase-app-plugin-authorization/SKILL.md",
+        "app/.agents/skills/nocobase-app-development/references/server-routes.md"
+      ],
+      "subjectKeys": [
+        "guide:@nocobase/app-plugin-authorization/skills/nocobase-app-plugin-authorization",
+        "skill:nocobase-app-development"
+      ],
+      "featurePoint": "应用搭建/授权",
+      "candidates": [
+        "应用搭建/授权"
+      ],
+      "taskTitle": "员工 IT 报修与处理",
+      "appVersion": "1.0.0-beta.50",
+      "group": {
+        "title": "应用 provider/boot 与主开发指引未用 container.has() 守卫可选插件 token，最小运行时启动崩溃",
+        "issues": 3,
+        "first": "2026-09-29"
+      },
+      "report": "reports/issues/570/runs/37332578227/attempt-1/index.html#review-finding-F2"
+    },
+    {
+      "key": "a40ee10bd25f4b2d7f6a2f28",
+      "id": "570:37332578227:1:F3",
+      "issue": 570,
+      "runId": 37332578227,
+      "attempt": 1,
+      "findingId": "F3",
+      "runDay": "2026-10-06",
+      "archivedAt": "2026-10-06T23:47:19.382Z",
+      "title": "withPolicy 对运行时策略丢失记录类型，迫使应用强制断言",
+      "summary": "Repository.withPolicy<const TPolicy> 通过 PolicyRecord<TRecord,TPolicy> 收窄返回类型；但策略常来自运行时 authz.database.policyFor（返回通用 RepositoryPolicy），字面量字段无法保留，应用只能在 bindPolicy 中用 as unknown as RepositoryOperations<TicketRow> 恢复类型（app/server/providers/it-tickets.ts:91-120）。",
+      "severity": "info",
+      "type": "usability",
+      "owner": "framework",
+      "targets": [
+        "@nocobase/app-plugin-authorization",
+        "@nocobase/db"
+      ],
+      "subjectKeys": [
+        "pkg:@nocobase/app-plugin-authorization",
+        "pkg:@nocobase/db"
+      ],
+      "featurePoint": null,
+      "candidates": [
+        "应用搭建/授权",
+        "应用搭建/数据库"
+      ],
+      "taskTitle": "员工 IT 报修与处理",
+      "appVersion": "1.0.0-beta.50",
+      "group": {
+        "title": "withPolicy 绑定运行时 policyFor 结果时丢失记录字段类型，应用被迫双重断言",
+        "issues": 1,
+        "first": "2026-10-06"
+      },
+      "report": "reports/issues/570/runs/37332578227/attempt-1/index.html#review-finding-F3"
+    },
+    {
+      "key": "ac542a010c36ae55f815a934",
+      "id": "575:37394443207:1:F1",
+      "issue": 575,
+      "runId": 37394443207,
+      "attempt": 1,
+      "findingId": "F1",
+      "runDay": "2026-10-06",
+      "archivedAt": "2026-10-06T23:47:19.382Z",
+      "title": "@nocobase/db 的 check 约束在 knex/sqlite 上被静默忽略",
+      "summary": "公共类型把 CheckConstraintDefinition 并入 ConstraintDefinition，CollectionDefinition.constraints 与 addConstraint 均接受 type=check；但 knex 适配器 buildConstraint 的 switch 只处理 primary/unique/foreignKey，check 分支留注释后直接 break，既不生成 DDL 也不抛错。dropConstraint 反而能 dropChecks，能力不对称。应用迁移作者不得不在注释里记录该限制，把金额非负退回 service 与表单兜底。",
+      "severity": "major",
+      "type": "runtime-defect",
+      "owner": "framework",
+      "targets": [
+        "@nocobase/db",
+        "app/.agents/skills/nocobase-db/SKILL.md"
+      ],
+      "subjectKeys": [
+        "pkg:@nocobase/db",
+        "skill:nocobase-db"
+      ],
+      "featurePoint": "应用搭建/数据库",
+      "candidates": [
+        "应用搭建/数据库"
+      ],
+      "taskTitle": "客户、联系人与商机管理",
+      "appVersion": "1.0.0-beta.50",
+      "group": {
+        "title": "@nocobase/db 的 check 约束在 knex/sqlite 上被静默忽略，声明成功却无 DDL",
+        "issues": 1,
+        "first": "2026-10-06"
+      },
+      "report": "reports/issues/575/runs/37394443207/attempt-1/index.html#review-finding-F1"
+    },
+    {
+      "key": "27ac2707b4e06ffbf589f708",
+      "id": "575:37394443207:1:F2",
+      "issue": 575,
+      "runId": 37394443207,
+      "attempt": 1,
+      "findingId": "F2",
+      "runDay": "2026-10-06",
+      "archivedAt": "2026-10-06T23:47:19.382Z",
+      "title": "模板 DataTable 未透传 DataTablePagination 的 showSelectedCount",
+      "summary": "模板的 DataTablePagination 已提供 showSelectedCount（默认 true），但模板的 DataTable 渲染它时只传 table 与 pageSizeOptions，未把该属性透出。没有行选择的列表页因此固定显示 0 of N row(s) selected.。表格指引已把该行为列入已知行为，要求应用自行给 DataTable 增加透传。",
+      "severity": "minor",
+      "type": "usability",
+      "owner": "template",
+      "targets": [
+        "app/.agents/skills/nocobase-app-development/references/frontend/references/table.md"
+      ],
+      "subjectKeys": [
+        "skill:nocobase-app-development"
+      ],
+      "featurePoint": null,
+      "candidates": [],
+      "taskTitle": "客户、联系人与商机管理",
+      "appVersion": "1.0.0-beta.50",
+      "group": {
+        "title": "模板 DataTable 未透传 DataTablePagination 的 showSelectedCount，无行选择列表固定显示选中计数",
+        "issues": 1,
+        "first": "2026-10-06"
+      },
+      "report": "reports/issues/575/runs/37394443207/attempt-1/index.html#review-finding-F2"
+    },
+    {
+      "key": "fd1288cea335026642083118",
+      "id": "575:37394443207:1:F3",
+      "issue": 575,
+      "runId": 37394443207,
+      "attempt": 1,
+      "findingId": "F3",
+      "runDay": "2026-10-06",
+      "archivedAt": "2026-10-06T23:47:19.382Z",
+      "title": "测试指引未说明 Cookie 写入请求需要匹配 Origin 或 APP_PUBLIC_ORIGIN",
+      "summary": "根指引说明了开发代理的 Origin 适配与生产使用 APP_PUBLIC_ORIGIN、保持后端 origin 校验开启，但 testing.md 的路由测试示例只演示 GET，没有说明带 Cookie 的 POST/PATCH 在缺 Origin 时会被 Better Auth 以 403 INVALID_CSRF_ORIGIN 拒绝。实现日志显示 agent 为此写了临时 probe 并多轮翻查 node_modules，最终在应用测试 harness 里设置 APP_PUBLIC_ORIGIN 才通过。",
+      "severity": "minor",
+      "type": "guidance-gap",
+      "owner": "documentation",
+      "targets": [
+        "app/AGENTS.md"
+      ],
+      "subjectKeys": [
+        "guide:app/AGENTS.md"
+      ],
+      "featurePoint": null,
+      "candidates": [],
+      "taskTitle": "客户、联系人与商机管理",
+      "appVersion": "1.0.0-beta.50",
+      "group": {
+        "title": "受保护路由指引/测试指引未提示 cookie 写请求的 Origin/CSRF 校验",
+        "issues": 7,
+        "first": "2026-09-28"
+      },
+      "report": "reports/issues/575/runs/37394443207/attempt-1/index.html#review-finding-F3"
+    },
+    {
+      "key": "aa1eaec63c770cbfe1c6cebc",
+      "id": "576:37394448063:1:F2",
+      "issue": 576,
+      "runId": 37394448063,
+      "attempt": 1,
+      "findingId": "F2",
+      "runDay": "2026-10-06",
+      "archivedAt": "2026-10-06T23:47:19.382Z",
+      "title": "演示/夹具数据无受支持的种子期创建路径，指引又禁止其进入生产初始化",
+      "summary": "nocobase-db SKILL 第80行称“seed 从不是样例或演示内容”，code-and-seeds 第114行要求把演示凭据与固定夹具排除在生产初始化之外；authentication Skill 把账号变更指向运行时的 userAdministrationServiceToken（需要应用容器），种子执行的 SeedContext 不提供容器，指引未给出种子期创建普通账号或承载演示夹具的受支持入口。应用为满足可登录演示需求，在安装种子中直接写 user/account 并调用 better-auth/crypto 的 hashPassword，即复制框架认证插件自带 seed 的内部模式。",
+      "severity": "minor",
+      "type": "guidance-gap",
+      "owner": "documentation",
+      "targets": [
+        "app/.agents/skills/nocobase-db/SKILL.md",
+        "app/.agents/skills/nocobase-app-plugin-authorization",
+        "app/.agents/skills/nocobase-app-plugin-authentication"
+      ],
+      "subjectKeys": [
+        "skill:nocobase-app-plugin-authentication",
+        "skill:nocobase-app-plugin-authorization",
+        "skill:nocobase-db"
+      ],
+      "featurePoint": null,
+      "candidates": [
+        "应用搭建/授权",
+        "应用搭建/数据库",
+        "应用搭建/认证"
+      ],
+      "taskTitle": "员工 IT 报修与处理",
+      "appVersion": "1.0.0-beta.50",
+      "group": {
+        "title": "nocobase-db Skill 以绝对表述禁止种子承载示例/演示数据，却未给出演示数据落点与幂等写法，并与组织指引冲突",
+        "issues": 5,
+        "first": "2026-09-28"
+      },
+      "report": "reports/issues/576/runs/37394448063/attempt-1/index.html#review-finding-F2"
+    },
+    {
+      "key": "1db99a437a8cb6c751728fee",
+      "id": "577:37394452688:1:F1",
+      "issue": 577,
+      "runId": 37394452688,
+      "attempt": 1,
+      "findingId": "F1",
+      "runDay": "2026-10-06",
+      "archivedAt": "2026-10-06T23:47:19.382Z",
+      "title": "selection.records 仅接受非空字符串 id，整数主键集合无法直接按单条记录共享",
+      "summary": "authorization 的 parseRecordSelection 要求 records 的每个 id 都满足 typeof === 'string' 且非空，否则抛 TypeError('Invalid record selection')。因此整数自增主键的集合无法用 selection.records([id]) 表达\"共享某一条\"，只能用 recordAccess 自定义 resolver 绕行。授权 Skill 的共享示例 selection.records(['quote-7']) 使用的是字符串 id，没有暴露这一约束。",
+      "severity": "major",
+      "type": "capability-gap",
+      "owner": "plugin",
+      "targets": [
+        "@nocobase/authorization"
+      ],
+      "subjectKeys": [
+        "pkg:@nocobase/authorization"
+      ],
+      "featurePoint": "应用搭建/授权",
+      "candidates": [
+        "应用搭建/授权"
+      ],
+      "taskTitle": "内部资料阅读与临时共享",
+      "appVersion": "1.0.0-beta.50",
+      "group": {
+        "title": "selection.records 只接受字符串 id，与框架自身推荐的整数自增主键不兼容",
+        "issues": 6,
+        "first": "2026-09-29"
+      },
+      "report": "reports/issues/577/runs/37394452688/attempt-1/index.html#review-finding-F1"
+    },
+    {
+      "key": "8fd16a6ec0b5d456dc1aa850",
+      "id": "577:37394452688:1:F2",
+      "issue": 577,
+      "runId": 37394452688,
+      "attempt": 1,
+      "findingId": "F2",
+      "runDay": "2026-10-06",
+      "archivedAt": "2026-10-06T23:47:19.382Z",
+      "title": "allScopes 已实现但未从 app-plugin-authorization/server 导出",
+      "summary": "scope.js/scope.d.ts 提供了 allScopes（AND 折叠，遇 false 即 false），但 app-plugin-authorization/dist/server/index.d.ts 的再导出只包含 anyScope/condition/scopeAst，未包含 allScopes。应用在 scope.ts 中为组合\"可读 且 非保密\"自行重写了 and 折叠逻辑。",
+      "severity": "minor",
+      "type": "usability",
+      "owner": "plugin",
+      "targets": [
+        "@nocobase/app-plugin-authorization"
+      ],
+      "subjectKeys": [
+        "pkg:@nocobase/app-plugin-authorization"
+      ],
+      "featurePoint": "应用搭建/授权",
+      "candidates": [
+        "应用搭建/授权"
+      ],
+      "taskTitle": "内部资料阅读与临时共享",
+      "appVersion": "1.0.0-beta.50",
+      "group": {
+        "title": "allScopes/idsScope 等数据范围组合子已在包内实现但未从公开入口导出",
+        "issues": 6,
+        "first": "2026-09-29"
+      },
+      "report": "reports/issues/577/runs/37394452688/attempt-1/index.html#review-finding-F2"
+    },
+    {
+      "key": "a15f79e3a19892b4afa936bf",
+      "id": "577:37394452688:1:F3",
+      "issue": 577,
+      "runId": 37394452688,
+      "attempt": 1,
+      "findingId": "F3",
+      "runDay": "2026-10-06",
+      "archivedAt": "2026-10-06T23:47:19.382Z",
+      "title": "共享规则 Skill 示例以字符串 id 演示 records，未提示 id 类型限制",
+      "summary": "nocobase-app-plugin-authz-sharing-rules 的 SKILL.md 用 selection.records(['quote-7']) 作为\"为一次交付显式挑选记录\"的示例，但底层 parseRecordSelection 只接受非空字符串 id。示例全程以字符串 id 呈现，读者会认为任意主键都可用。",
+      "severity": "minor",
+      "type": "guidance-error",
+      "owner": "documentation",
+      "targets": [
+        "@nocobase/authorization",
+        "app/.agents/skills/nocobase-app-plugin-authz-sharing-rules"
+      ],
+      "subjectKeys": [
+        "pkg:@nocobase/authorization",
+        "skill:nocobase-app-plugin-authz-sharing-rules"
+      ],
+      "featurePoint": "应用搭建/授权",
+      "candidates": [
+        "应用搭建/授权"
+      ],
+      "taskTitle": "内部资料阅读与临时共享",
+      "appVersion": "1.0.0-beta.50",
+      "group": {
+        "title": "records 选择指引未说明仅支持字符串 id，也未给出整数主键的替代写法",
+        "issues": 6,
+        "first": "2026-09-30"
+      },
+      "report": "reports/issues/577/runs/37394452688/attempt-1/index.html#review-finding-F3"
+    },
+    {
+      "key": "b33db404deded691cc2fafe7",
+      "id": "577:37394452688:1:F4",
+      "issue": 577,
+      "runId": 37394452688,
+      "attempt": 1,
+      "findingId": "F4",
+      "runDay": "2026-10-06",
+      "archivedAt": "2026-10-06T23:47:19.382Z",
+      "title": "DatabaseSharingRuleStore.list() 无过滤/分页参数，应用须全量拉取后自行筛选",
+      "summary": "sharing-rules store 的 list() 不接收任何过滤条件（也无分页），应用 service.ts 的 listShares 只能先 list() 全量规则，再按 SHARE_KEY_PREFIX 前缀在内存中过滤。随着共享数量增长，这一路径缺乏下推能力。",
+      "severity": "minor",
+      "type": "usability",
+      "owner": "plugin",
+      "targets": [
+        "@nocobase/app-plugin-authz-sharing-rules"
+      ],
+      "subjectKeys": [
+        "pkg:@nocobase/app-plugin-authz-sharing-rules"
+      ],
+      "featurePoint": "应用搭建/授权",
+      "candidates": [
+        "应用搭建/授权"
+      ],
+      "taskTitle": "内部资料阅读与临时共享",
+      "appVersion": "1.0.0-beta.50",
+      "group": {
+        "title": "DatabaseSharingRuleStore.list() 无过滤/分页参数，应用须全量拉取后自行筛选",
+        "issues": 1,
+        "first": "2026-10-06"
+      },
+      "report": "reports/issues/577/runs/37394452688/attempt-1/index.html#review-finding-F4"
+    },
+    {
+      "key": "9e8288be32818c0938520a48",
+      "id": "577:37394452688:1:F8",
+      "issue": 577,
+      "runId": 37394452688,
+      "attempt": 1,
+      "findingId": "F8",
+      "runDay": "2026-10-06",
+      "archivedAt": "2026-10-06T23:47:19.382Z",
+      "title": "授权 Skill 缺少紧凑的公开 API 速查，代理易陷入 dist 源码探查",
+      "summary": "授权链路细节（selection 形态、policyFor/withPolicy、recordAccess 注册、composite action 与 field/relation 能力）分散在 SKILL.md 与多份 references 中，缺少一页式\"任务→公开入口\"索引。实现轨迹显示代理为确认声明形状反复 cat node_modules 下的 dist 文件，并伴随一次上下文溢出。",
+      "severity": "minor",
+      "type": "usability",
+      "owner": "documentation",
+      "targets": [
+        "app/.agents/skills/nocobase-app-plugin-authorization"
+      ],
+      "subjectKeys": [
+        "skill:nocobase-app-plugin-authorization"
+      ],
+      "featurePoint": "应用搭建/授权",
+      "candidates": [
+        "应用搭建/授权"
+      ],
+      "taskTitle": "内部资料阅读与临时共享",
+      "appVersion": "1.0.0-beta.50",
+      "group": {
+        "title": "授权 Skill 缺少紧凑的公开 API 速查，代理易陷入 dist 源码探查",
+        "issues": 1,
+        "first": "2026-10-06"
+      },
+      "report": "reports/issues/577/runs/37394452688/attempt-1/index.html#review-finding-F8"
+    },
+    {
+      "key": "e8d814f6182d9f7966d1c977",
+      "id": "578:37394457519:1:F1",
+      "issue": 578,
+      "runId": 37394457519,
+      "attempt": 1,
+      "findingId": "F1",
+      "runDay": "2026-10-06",
+      "archivedAt": "2026-10-06T23:47:19.382Z",
+      "title": "受保护路由的集成测试配方未提示 cookie 写入需要 Origin，照做得到 INVALID_CSRF_ORIGIN",
+      "summary": "protecting-routes.md 的“Testing a protected route”告诉实现者用 POST /api/auth/sign-up/email 的 set-cookie 在后续请求中复用。auth.required()/optional() 会先执行 checkCookieWriteOrigin：对带 cookie 的非 GET/HEAD/OPTIONS 请求，Origin（或 Referer）必须匹配配置的 base origin 或可信 origin，否则返回 403 INVALID_CSRF_ORIGIN。该前提只写在另一个参考文件 user-lifecycle-and-deployment.md 的“Business request CSRF”段，测试配方正文没有提。",
+      "severity": "minor",
+      "type": "guidance-gap",
+      "owner": "documentation",
+      "targets": [
+        "app/.agents/skills/nocobase-app-plugin-authentication/references/protecting-routes.md",
+        "app/.agents/skills/nocobase-app-plugin-authentication/references/user-lifecycle-and-deployment.md"
+      ],
+      "subjectKeys": [
+        "skill:nocobase-app-plugin-authentication"
+      ],
+      "featurePoint": "应用搭建/认证",
+      "candidates": [
+        "应用搭建/认证"
+      ],
+      "taskTitle": "项目资料与私有附件",
+      "appVersion": "1.0.0-beta.50",
+      "group": {
+        "title": "受保护路由指引/测试指引未提示 cookie 写请求的 Origin/CSRF 校验",
+        "issues": 7,
+        "first": "2026-09-28"
+      },
+      "report": "reports/issues/578/runs/37394457519/attempt-1/index.html#review-finding-F1"
+    },
+    {
+      "key": "0a9bccefae259671c1a3297a",
+      "id": "578:37394457519:1:F2",
+      "issue": 578,
+      "runId": 37394457519,
+      "attempt": 1,
+      "findingId": "F2",
+      "runDay": "2026-10-06",
+      "archivedAt": "2026-10-06T23:47:19.382Z",
+      "title": "文件预览注册表的图片分支缺少加载失败处理",
+      "summary": "注册表 file-preview-content.tsx 的 image 分支直接渲染 <img src=... alt=... />，没有 onError 或失败回退；同一文件的 OOXML/Office 预览则处理了请求失败与超时。SKILL 的验证清单要求检查失败请求与无效文档，但图片分支不会进入错误态，损坏/不可解码的 PNG 只会显示浏览器破图提示。",
+      "severity": "minor",
+      "type": "capability-gap",
+      "owner": "plugin",
+      "targets": [
+        "@nocobase/app-plugin-file",
+        "app/.agents/skills/nocobase-app-plugin-file/SKILL.md"
+      ],
+      "subjectKeys": [
+        "pkg:@nocobase/app-plugin-file",
+        "skill:nocobase-app-plugin-file"
+      ],
+      "featurePoint": "应用搭建/文件",
+      "candidates": [
+        "应用搭建/文件"
+      ],
+      "taskTitle": "项目资料与私有附件",
+      "appVersion": "1.0.0-beta.50",
+      "group": {
+        "title": "Registry 图片/PDF 预览分支缺少解码失败态，损坏文件只显示破图",
+        "issues": 8,
+        "first": "2026-09-29"
+      },
+      "report": "reports/issues/578/runs/37394457519/attempt-1/index.html#review-finding-F2"
+    },
+    {
+      "key": "a395822ff656beca00555a52",
+      "id": "578:37394457519:1:F3",
+      "issue": 578,
+      "runId": 37394457519,
+      "attempt": 1,
+      "findingId": "F3",
+      "runDay": "2026-10-06",
+      "archivedAt": "2026-10-06T23:47:19.382Z",
+      "title": "FileUploadField 要求完整 ClientFileRepository，但组件只调用 uploadOne/deleteOne",
+      "summary": "registry/component-ui/types.ts 的 FileUploadFieldProps.repository 类型是完整的 ClientFileRepository（RemoteRepository<FileRecord> & {uploadOne, uploadMany}），而 file-upload-field.tsx 实际只调用 repository.uploadOne，removeOnDelete 时才调用 deleteOne。SKILL 允许应用为 FileUploadField 提供自有上传端点，此时应用只能以部分对象做 as unknown as 断言。",
+      "severity": "info",
+      "type": "usability",
+      "owner": "plugin",
+      "targets": [
+        "@nocobase/app-plugin-file",
+        "app/.agents/skills/nocobase-app-plugin-file/SKILL.md"
+      ],
+      "subjectKeys": [
+        "pkg:@nocobase/app-plugin-file",
+        "skill:nocobase-app-plugin-file"
+      ],
+      "featurePoint": "应用搭建/文件",
+      "candidates": [
+        "应用搭建/文件"
+      ],
+      "taskTitle": "项目资料与私有附件",
+      "appVersion": "1.0.0-beta.50",
+      "group": {
+        "title": "FileUploadField 的 repository prop 要求完整 ClientFileRepository，组件实际只调用 uploadOne/deleteOne",
+        "issues": 1,
+        "first": "2026-10-06"
+      },
+      "report": "reports/issues/578/runs/37394457519/attempt-1/index.html#review-finding-F3"
+    },
+    {
+      "key": "a00849f751e2a8ad43800f4e",
+      "id": "579:37394462061:1:F1",
+      "issue": 579,
+      "runId": 37394462061,
+      "attempt": 1,
+      "findingId": "F1",
+      "runDay": "2026-10-06",
+      "archivedAt": "2026-10-06T23:47:19.382Z",
+      "title": "Repository 路由的关键调用契约分散在多个 Skill",
+      "summary": "生成端点的 filter/values 输入写在 authorization Skill 的 repository-routes.md，cookie 写请求的 CSRF/Origin 规则写在 authentication Skill 的 user-lifecycle-and-deployment.md，而 app-development 的 server-routes 参考未汇总二者。",
+      "severity": "minor",
+      "type": "guidance-gap",
+      "owner": "documentation",
+      "targets": [
+        "app/.agents/skills/nocobase-app-plugin-authorization",
+        "@nocobase/app-server",
+        "app/.agents/skills/nocobase-app-development",
+        "app/.agents/skills/nocobase-app-plugin-authentication"
+      ],
+      "subjectKeys": [
+        "pkg:@nocobase/app-server",
+        "skill:nocobase-app-development",
+        "skill:nocobase-app-plugin-authentication",
+        "skill:nocobase-app-plugin-authorization"
+      ],
+      "featurePoint": null,
+      "candidates": [
+        "应用搭建/授权",
+        "应用搭建/认证"
+      ],
+      "taskTitle": "内部资料只读问答助手",
+      "appVersion": "1.0.0-beta.50",
+      "group": {
+        "title": "跨包/跨主题端到端路径与示例缺失，接入链条分散",
+        "issues": 3,
+        "first": "2026-09-29"
+      },
+      "report": "reports/issues/579/runs/37394462061/attempt-1/index.html#review-finding-F1"
+    },
+    {
+      "key": "93aa8c8680e38816bb387838",
+      "id": "579:37394462061:1:F6",
+      "issue": 579,
+      "runId": 37394462061,
+      "attempt": 1,
+      "findingId": "F6",
+      "runDay": "2026-10-06",
+      "archivedAt": "2026-10-06T23:47:19.382Z",
+      "title": "开发服务器启动前置条件缺少快速默认值",
+      "summary": "retro 记录直接 pnpm dev 因无 config.yml 或 AUTH_SECRET 而退出；数据库迁移/种子却可在无配置下运行。",
+      "severity": "info",
+      "type": "usability",
+      "owner": "documentation",
+      "targets": [],
+      "subjectKeys": [],
+      "featurePoint": null,
+      "candidates": [],
+      "taskTitle": "内部资料只读问答助手",
+      "appVersion": "1.0.0-beta.50",
+      "group": {
+        "title": "开发服务器启动前置条件缺少快速默认值",
+        "issues": 1,
+        "first": "2026-10-06"
+      },
+      "report": "reports/issues/579/runs/37394462061/attempt-1/index.html#review-finding-F6"
+    },
+    {
+      "key": "f6546b38072b5a798fbd63ed",
+      "id": "594:37432779834:1:F1",
+      "issue": 594,
+      "runId": 37432779834,
+      "attempt": 1,
+      "findingId": "F1",
+      "runDay": "2026-10-06",
+      "archivedAt": "2026-10-06T23:47:19.382Z",
+      "title": "模板首页示例违反自身 L1 页面结构规则，却又是新页面被要求模仿的范本",
+      "summary": "ui-guidelines.md L1 把 PageContainer + PageHeader 定为页面 [Must]；page.md §2 还明确禁止手写带页面内边距的 section。但模板自带的 client/pages/home.tsx 恰好是手写 <section> + <h1> 的 hero，而 ui-workflow.md 的 Quick change 第 2 步又要求“Follow how the page is already written”；本轮需求本身还写明“沿用本轮模板、原有登录、主页、设置和翻译机制”，进一步鼓励照抄主页。实现 Agent 照抄 home.tsx，产出的 pipeline-smoke.tsx 同样没有 PageContainer/PageHeader。",
+      "severity": "minor",
+      "type": "guidance-error",
+      "owner": "template",
+      "targets": [
+        "app/.agents/skills/nocobase-app-development/references/frontend/references/page.md",
+        "app/.agents/skills/nocobase-app-development/references/frontend"
+      ],
+      "subjectKeys": [
+        "skill:nocobase-app-development"
+      ],
+      "featurePoint": null,
+      "candidates": [],
+      "taskTitle": "流程冒烟：单页计数器",
+      "appVersion": "1.0.0-beta.55",
+      "group": {
+        "title": "模板首页示例违反自身 L1 页面结构规则，却被工作流要求作为新页面范本",
+        "issues": 1,
+        "first": "2026-10-06"
+      },
+      "report": "reports/issues/594/runs/37432779834/attempt-1/index.html#review-finding-F1"
+    },
+    {
+      "key": "b4c14d0e01bdd9d4de839f13",
+      "id": "594:37432779834:1:F2",
+      "issue": 594,
+      "runId": 37432779834,
+      "attempt": 1,
+      "findingId": "F2",
+      "runDay": "2026-10-06",
+      "archivedAt": "2026-10-06T23:47:19.382Z",
+      "title": "工作流分流未覆盖“无数据的新静态页面”，Quick change 未把新页面强制导向 page.md",
+      "summary": "ui-workflow.md 的 full workflow 触发条件写作“a new page that loads data or has forms or overlays”，quick change 的示例则全是在既有页面上增改。一个全新、无数据/表单/浮层的静态页面落在两者之间，按“None of the above applies”会被判为 quick change。本轮需求“按需阅读附近源码和相关 Skill”也不会纠正它。此时唯一把“新建页面”映射到 page.md §1/§2/§6 的入口是 frontend-dev.md 的“Look up by task”表，而 Quick change 第 1 步只笼统要求读 frontend-dev.md 与相关 references。实现 Agent 在实现 JSONL 第 268 行判定“This is a quick change... no data loading/forms/overlays”，整轮只读了 ui-workflow.md，随后直接照抄 home.tsx。",
+      "severity": "minor",
+      "type": "guidance-gap",
+      "owner": "documentation",
+      "targets": [
+        "app/.agents/skills/nocobase-app-development/references/frontend"
+      ],
+      "subjectKeys": [
+        "skill:nocobase-app-development"
+      ],
+      "featurePoint": null,
+      "candidates": [],
+      "taskTitle": "流程冒烟：单页计数器",
+      "appVersion": "1.0.0-beta.55",
+      "group": {
+        "title": "工作流分流未覆盖“无数据的新静态页面”，Quick change 未把新页面导向 page.md",
+        "issues": 1,
+        "first": "2026-10-06"
+      },
+      "report": "reports/issues/594/runs/37432779834/attempt-1/index.html#review-finding-F2"
+    },
+    {
+      "key": "1e9bd0ddca7989aeb09a55ee",
+      "id": "594:37432779834:1:F4",
+      "issue": 594,
+      "runId": 37432779834,
+      "attempt": 1,
+      "findingId": "F4",
+      "runDay": "2026-10-06",
+      "archivedAt": "2026-10-06T23:47:19.382Z",
+      "title": "页面测试何时使用 @nocobase/app-testing 的 renderWithApp 缺少明确指引",
+      "summary": "@nocobase/app-testing/client 提供 renderWithApp，可在 MemoryRouter 中挂载真实 app runtime、locales、providers 与 toaster；frontend/references/testing.md 只说“For a page, copy tests/components/page-harness.test.tsx”。本次页面测试选择只用 @nocobase/i18n/testing 的 Provider 挂载裸组件（实现 Agent 确实读过 page-harness.test.tsx 却未采用），于是 app 级 providers 与路由未进入 CI。",
+      "severity": "info",
+      "type": "usability",
+      "owner": "documentation",
+      "targets": [
+        "@nocobase/app-testing",
+        "app/.agents/skills/nocobase-app-development/references/testing.md",
+        "app/.agents/skills/nocobase-app-development/references/frontend/references/testing.md"
+      ],
+      "subjectKeys": [
+        "pkg:@nocobase/app-testing",
+        "skill:nocobase-app-development"
+      ],
+      "featurePoint": null,
+      "candidates": [],
+      "taskTitle": "流程冒烟：单页计数器",
+      "appVersion": "1.0.0-beta.55",
+      "group": {
+        "title": "页面测试何时使用 @nocobase/app-testing 的 renderWithApp 缺少判定指引",
+        "issues": 1,
+        "first": "2026-10-06"
+      },
+      "report": "reports/issues/594/runs/37432779834/attempt-1/index.html#review-finding-F4"
+    },
+    {
+      "key": "a2786b2cf1434f0c0930f1a7",
+      "id": "596:37453030096:1:F2",
+      "issue": 596,
+      "runId": 37453030096,
+      "attempt": 1,
+      "findingId": "F2",
+      "runDay": "2026-10-06",
+      "archivedAt": "2026-10-06T23:47:19.382Z",
+      "title": "nocobase-db Skill 只列方法名，缺少 aggregate + sum 的最小示例",
+      "summary": "nocobase-db Skill 以名称清单列出 Repository 方法（含 aggregate、groupBy，E13），但没有给出聚合表达式的最小代码。B02/B04 的客户维度金额合计必须写 aggregate: a => a.sum('amount')，其写法只在 @nocobase/repository-input 的实现/类型中可见（E2）；实现轮因此额外探测 repository-input 与 db 的 dist/.d.ts（历史 part-0033，E44）。",
+      "severity": "minor",
+      "type": "guidance-gap",
+      "owner": "documentation",
+      "targets": [
+        "@nocobase/repository-input",
+        "packages/@nocobase/db/skills/nocobase-db/SKILL.md"
+      ],
+      "subjectKeys": [
+        "guide:@nocobase/db/skills/nocobase-db",
+        "pkg:@nocobase/repository-input"
+      ],
+      "featurePoint": "应用搭建/数据库",
+      "candidates": [
+        "应用搭建/数据库"
+      ],
+      "taskTitle": "客户、联系人与商机管理",
+      "appVersion": "1.0.0-beta.55",
+      "group": {
+        "title": "nocobase-db Skill 提供 aggregate/groupBy 却缺少按外键合计的最小示例，应用改用 JS reduce 或探查 dist",
+        "issues": 2,
+        "first": "2026-09-28"
+      },
+      "report": "reports/issues/596/runs/37453030096/attempt-1/index.html#review-finding-F2"
+    },
+    {
+      "key": "3ba7c4995f2a24bf9a96b4b0",
+      "id": "596:37453030096:1:F3",
+      "issue": 596,
+      "runId": 37453030096,
+      "attempt": 1,
+      "findingId": "F3",
+      "runDay": "2026-10-06",
+      "archivedAt": "2026-10-06T23:47:19.382Z",
+      "title": "前端 UI 指引体量大且入口分散，缺少按任务的最小阅读集",
+      "summary": "应用开发 Skill 的前端 references 合计约 4672 行（修复轮实测，E35），且列表/表单/浮层/路由/组件获取分别落在 table.md、form.md、overlay.md、child-routes.md、shadcn.md 等多份文档。实现轮在读完大量指引后出现上下文溢出（E31），说明按现状很难控制单轮加载预算。指引内容本身质量高、与模板事实一致（本评审可核实），问题只在加载边界。",
+      "severity": "minor",
+      "type": "usability",
+      "owner": "documentation",
+      "targets": [
+        "app/.agents/skills/nocobase-app-development/references/frontend/references/table.md",
+        "app/.agents/skills/nocobase-app-development/references/frontend/references/form.md",
+        "app/.agents/skills/nocobase-app-development/references/frontend/references/child-routes.md"
+      ],
+      "subjectKeys": [
+        "skill:nocobase-app-development"
+      ],
+      "featurePoint": null,
+      "candidates": [],
+      "taskTitle": "客户、联系人与商机管理",
+      "appVersion": "1.0.0-beta.55",
+      "group": {
+        "title": "前端 UI 指引体量过大且入口分散，缺少按任务的最小阅读集",
+        "issues": 1,
+        "first": "2026-10-06"
+      },
+      "report": "reports/issues/596/runs/37453030096/attempt-1/index.html#review-finding-F3"
+    },
+    {
+      "key": "5fd5845667d7845eb43e4bcf",
+      "id": "597:37453035816:1:F2",
+      "issue": 597,
+      "runId": 37453035816,
+      "attempt": 1,
+      "findingId": "F2",
+      "runDay": "2026-10-06",
+      "archivedAt": "2026-10-06T23:47:19.382Z",
+      "title": "自定义 handler 文档未把「写动作读回需要 read 权限」写成规则",
+      "summary": "runtime-api.md 说明组合决策的每个集合策略仅由该动作的授权构建；repository-routes.md 的快捷路由示例用 projectData.update 隐式演示了 read 加 update 同权限。但对自定义 handler，文档只要求绑定返回的 conditions.database 策略，没有明说写后读回会在 read:false 时抛 READ_FORBIDDEN。本轮应用因此对 start/complete 只声明 update，最终以自定义 ticketWritePolicy 手工合并 view 的 read 与动作的 write。",
+      "severity": "minor",
+      "type": "guidance-gap",
+      "owner": "documentation",
+      "targets": [
+        "app/.agents/skills/nocobase-app-plugin-authorization/references/repository-routes.md"
+      ],
+      "subjectKeys": [
+        "skill:nocobase-app-plugin-authorization"
+      ],
+      "featurePoint": "应用搭建/授权",
+      "candidates": [
+        "应用搭建/授权"
+      ],
+      "taskTitle": "员工 IT 报修与处理",
+      "appVersion": "1.0.0-beta.55",
+      "group": {
+        "title": "写动作（create/update 及自定义 handler）回读需在同一权限声明 read，授权指引未说明",
+        "issues": 3,
+        "first": "2026-09-30"
+      },
+      "report": "reports/issues/597/runs/37453035816/attempt-1/index.html#review-finding-F2"
+    },
+    {
+      "key": "157959c0f5e8fac6a43c963a",
+      "id": "597:37453035816:1:F3",
+      "issue": 597,
+      "runId": 37453035816,
+      "attempt": 1,
+      "findingId": "F3",
+      "runDay": "2026-10-06",
+      "archivedAt": "2026-10-06T23:47:19.382Z",
+      "title": "任务加载器的相对扩展名重写对 file:// URL 永不生效",
+      "summary": "importTaskDefinition 调用 __rewriteRelativeImportExtension(url.href)，而该函数只在参数以 ./ 或 ../ 开头时重写 .ts/.tsx 扩展名；pathToFileURL(filePath).href 是 file:// 绝对 URL，正则永不匹配，函数恒返回原值，成为死代码。DEFAULT_TASK_EXTENSIONS 含 .ts，因此加载 TS 任务源时扩展名解析实际交给 Node，而非该函数。",
+      "severity": "minor",
+      "type": "runtime-defect",
+      "owner": "framework",
+      "targets": [
+        "@nocobase/db"
+      ],
+      "subjectKeys": [
+        "pkg:@nocobase/db"
+      ],
+      "featurePoint": "应用搭建/数据库",
+      "candidates": [
+        "应用搭建/数据库"
+      ],
+      "taskTitle": "员工 IT 报修与处理",
+      "appVersion": "1.0.0-beta.55",
+      "group": {
+        "title": "任务加载器的相对扩展名重写对 file:// 失效，源码态不解析 .js→.ts 且错误不可操作",
+        "issues": 2,
+        "first": "2026-10-04"
+      },
+      "report": "reports/issues/597/runs/37453035816/attempt-1/index.html#review-finding-F3"
+    },
+    {
+      "key": "2d157f0ac62b26882fe76f97",
+      "id": "597:37453035816:1:F4",
+      "issue": 597,
+      "runId": 37453035816,
+      "attempt": 1,
+      "findingId": "F4",
+      "runDay": "2026-10-06",
+      "archivedAt": "2026-10-06T23:47:19.382Z",
+      "title": "@nocobase/app-testing 的 request 未处理 cookie 写所需的 Origin",
+      "summary": "createTestApp 暴露的 request(target, init) 只是 fetch(new Request(...))，不附加 Origin/Referer；而认证中间件的 checkCookieWriteOrigin 要求携带 cookie 的写请求有可信来源，否则返回 INVALID_CSRF_ORIGIN。测试作者必须自行补 Origin 并配置可信来源。",
+      "severity": "minor",
+      "type": "usability",
+      "owner": "framework",
+      "targets": [
+        "@nocobase/app-testing"
+      ],
+      "subjectKeys": [
+        "pkg:@nocobase/app-testing"
+      ],
+      "featurePoint": null,
+      "candidates": [],
+      "taskTitle": "员工 IT 报修与处理",
+      "appVersion": "1.0.0-beta.55",
+      "group": {
+        "title": "@nocobase/app-testing 的 request 不注入 Origin，cookie 写测试默认被 CSRF 拒绝",
+        "issues": 1,
+        "first": "2026-10-06"
+      },
+      "report": "reports/issues/597/runs/37453035816/attempt-1/index.html#review-finding-F4"
+    },
+    {
+      "key": "171b58eee3cb82c111ac6335",
+      "id": "598:37453041764:1:F2",
+      "issue": 598,
+      "runId": 37453041764,
+      "attempt": 1,
+      "findingId": "F2",
+      "runDay": "2026-10-06",
+      "archivedAt": "2026-10-06T23:47:19.382Z",
+      "title": "记录级\"指定记录\"选择无法直接用于 integer/increments 主键",
+      "summary": "selection.records(ids) 只接受非空字符串（core/selection.js parseRecordSelection），授权层把 ids 原样编译成 id $eq '<string>'（app-plugin-authorization/database/scope.js idsScope，经 authorizer.js compileConstraints），而 @nocobase/db 的 Repository 过滤值校验对 integer/increments 只接受 number，字符串会抛 INVALID_FILTER。rule-validation.js 的 validateDataScopeRule 只对 recordAccess 选择做校验，无法在规则创建时发现该不匹配。",
+      "severity": "major",
+      "type": "runtime-defect",
+      "owner": "plugin",
+      "targets": [
+        "@nocobase/authorization",
+        "@nocobase/app-plugin-authorization",
+        "@nocobase/db"
+      ],
+      "subjectKeys": [
+        "pkg:@nocobase/app-plugin-authorization",
+        "pkg:@nocobase/authorization",
+        "pkg:@nocobase/db"
+      ],
+      "featurePoint": null,
+      "candidates": [
+        "应用搭建/授权",
+        "应用搭建/数据库"
+      ],
+      "taskTitle": "内部资料阅读与临时共享",
+      "appVersion": "1.0.0-beta.55",
+      "group": {
+        "title": "selection.records 只接受字符串 id，与框架自身推荐的整数自增主键不兼容",
+        "issues": 6,
+        "first": "2026-09-29"
+      },
+      "report": "reports/issues/598/runs/37453041764/attempt-1/index.html#review-finding-F2"
+    },
+    {
+      "key": "f732023b7f03ec6281ac398f",
+      "id": "598:37453041764:1:F3",
+      "issue": 598,
+      "runId": 37453041764,
+      "attempt": 1,
+      "findingId": "F3",
+      "runDay": "2026-10-06",
+      "archivedAt": "2026-10-06T23:47:19.382Z",
+      "title": "数据建模与授权 Skill 未提示\"指定记录\"选择要求字符串友好主键",
+      "summary": "nocobase-db SKILL 的迁移示例两次使用 collection.increments('id')，database-and-data.md 亦称 increments('id') is fine for ordinary tables；而 sharing-rules/restriction-rules Skill 与 @nocobase/authorization README 只用 selection.records(['quote-7']) 之类字符串 id 演示，未说明目标主键必须是 uuid/char 等字符串友好类型。",
+      "severity": "major",
+      "type": "guidance-gap",
+      "owner": "documentation",
+      "targets": [
+        "app/.agents/skills/nocobase-db/SKILL.md",
+        "app/.agents/skills/nocobase-app-plugin-authz-sharing-rules/SKILL.md",
+        "app/.agents/skills/nocobase-app-plugin-authz-restriction-rules/SKILL.md",
+        "app/.agents/skills/nocobase-app-development/references/database-and-data.md"
+      ],
+      "subjectKeys": [
+        "skill:nocobase-app-development",
+        "skill:nocobase-app-plugin-authz-restriction-rules",
+        "skill:nocobase-app-plugin-authz-sharing-rules",
+        "skill:nocobase-db"
+      ],
+      "featurePoint": null,
+      "candidates": [
+        "应用搭建/授权",
+        "应用搭建/数据库"
+      ],
+      "taskTitle": "内部资料阅读与临时共享",
+      "appVersion": "1.0.0-beta.55",
+      "group": {
+        "title": "records 选择指引未说明仅支持字符串 id，也未给出整数主键的替代写法",
+        "issues": 6,
+        "first": "2026-09-30"
+      },
+      "report": "reports/issues/598/runs/37453041764/attempt-1/index.html#review-finding-F3"
+    },
+    {
+      "key": "f43ac2ab45a45af22b660c30",
+      "id": "598:37453041764:1:F4",
+      "issue": 598,
+      "runId": 37453041764,
+      "attempt": 1,
+      "findingId": "F4",
+      "runDay": "2026-10-06",
+      "archivedAt": "2026-10-06T23:47:19.382Z",
+      "title": "集成测试指引未交叉引用 cookie 写请求的 Origin/CSRF 前提",
+      "summary": "protecting-routes.md 已记录带 cookie 的写请求在 Origin/Referer 不可信时返回 403 INVALID_CSRF_ORIGIN，但 testing.md 在\"测试整机/路由权限边界\"处未提及该前提，也未交叉引用；retro 亦将 INVALID_CSRF_ORIGIN 列为阻塞。",
+      "severity": "minor",
+      "type": "usability",
+      "owner": "documentation",
+      "targets": [
+        "app/.agents/skills/nocobase-app-development/references/testing.md",
+        "app/.agents/skills/nocobase-app-plugin-authentication/references/protecting-routes.md"
+      ],
+      "subjectKeys": [
+        "skill:nocobase-app-development",
+        "skill:nocobase-app-plugin-authentication"
+      ],
+      "featurePoint": "应用搭建/认证",
+      "candidates": [
+        "应用搭建/认证"
+      ],
+      "taskTitle": "内部资料阅读与临时共享",
+      "appVersion": "1.0.0-beta.55",
+      "group": {
+        "title": "受保护路由指引/测试指引未提示 cookie 写请求的 Origin/CSRF 校验",
+        "issues": 7,
+        "first": "2026-09-28"
+      },
+      "report": "reports/issues/598/runs/37453041764/attempt-1/index.html#review-finding-F4"
+    },
+    {
+      "key": "2ee406603c1ec1c1e5eaf7bc",
+      "id": "600:37453053696:1:F2",
+      "issue": 600,
+      "runId": 37453053696,
+      "attempt": 1,
+      "findingId": "F2",
+      "runDay": "2026-10-06",
+      "archivedAt": "2026-10-06T23:47:19.382Z",
+      "title": "child-routes.md 对子路由 path 的说明会让“绝对子路径”被误用，且未提示父段会被前置",
+      "summary": "指引第 10 行称子路由 path 追加到父路径、前导 '/' 会被剥离，“new 与 /new 行为相同”；但解析器（plugins.js resolveRouteTree）对任何子路由都做 '/' + rawPath.replace(/^\\/+/, '') 再前置 parentPath，因此把完整路径 '/documents/:id' 写在 /documents 之下会注册成 '/documents/documents/:id'，而 '/documents/:id' 无人匹配并落到通配重定向。指引没有给出这一失败形态的示例或反例。",
+      "severity": "major",
+      "type": "guidance-error",
+      "owner": "documentation",
+      "targets": [
+        "@nocobase/app-client",
+        "app/.agents/skills/nocobase-app-development/references/frontend/references/child-routes.md"
+      ],
+      "subjectKeys": [
+        "pkg:@nocobase/app-client",
+        "skill:nocobase-app-development"
+      ],
+      "featurePoint": null,
+      "candidates": [],
+      "taskTitle": "内部资料只读问答助手",
+      "appVersion": "1.0.0-beta.55",
+      "group": {
+        "title": "child-routes.md 对子路由 path 的说明会让绝对子路径被误用，未提示父段会被前置",
+        "issues": 1,
+        "first": "2026-10-06"
+      },
+      "report": "reports/issues/600/runs/37453053696/attempt-1/index.html#review-finding-F2"
+    },
+    {
+      "key": "944098dcbb904238cdcdf432",
+      "id": "600:37453053696:1:F3",
+      "issue": 600,
+      "runId": 37453053696,
+      "attempt": 1,
+      "findingId": "F3",
+      "runDay": "2026-10-06",
+      "archivedAt": "2026-10-06T23:47:19.382Z",
+      "title": "app-client 对以父段开头的子路由 path 静默拼接，不校验也不告警",
+      "summary": "resolveRouteTree 只剥离前导斜杠再前置 parentPath，即使结果包含重复父段也照常注册；错误直到运行时被通配路由重定向才暴露。同文件对缺失 path、非函数 componentLoader、重复子 id 都抛错，说明有校验位置，但 path 语义未校验。",
+      "severity": "minor",
+      "type": "usability",
+      "owner": "framework",
+      "targets": [
+        "@nocobase/app-client"
+      ],
+      "subjectKeys": [
+        "pkg:@nocobase/app-client"
+      ],
+      "featurePoint": null,
+      "candidates": [],
+      "taskTitle": "内部资料只读问答助手",
+      "appVersion": "1.0.0-beta.55",
+      "group": {
+        "title": "app-client 的 resolveRouteTree 对以父段开头的子路由 path 静默拼接，不校验也不告警",
+        "issues": 1,
+        "first": "2026-10-06"
+      },
+      "report": "reports/issues/600/runs/37453053696/attempt-1/index.html#review-finding-F3"
+    },
+    {
+      "key": "66a424e351e24a6317727c32",
+      "id": "600:37453053696:1:F6",
+      "issue": 600,
+      "runId": 37453053696,
+      "attempt": 1,
+      "findingId": "F6",
+      "runDay": "2026-10-06",
+      "archivedAt": "2026-10-06T23:47:19.382Z",
+      "title": "包内文档/类型引用未明确 dist 子路径，Agent 多次猜错文件位置",
+      "summary": "实现与修复日志显示 Agent 多次按错误的 dist 子路径或错误的 skill 相对路径读取文件（如 @nocobase/db/dist/index.d.ts、authorization/dist/permission-sets/*.js、.agents/skills/<pkg>/chat-surfaces.md）。这些路径不是公开入口，但也未被指引明确排除。",
+      "severity": "minor",
+      "type": "usability",
+      "owner": "documentation",
+      "targets": [
+        "packages/@nocobase/app-plugin-ai-employee/skills/nocobase-app-plugin-ai-employee/SKILL.md",
+        "packages/@nocobase/app-plugin-authorization/skills/nocobase-app-plugin-authorization/SKILL.md"
+      ],
+      "subjectKeys": [
+        "guide:@nocobase/app-plugin-ai-employee/skills/nocobase-app-plugin-ai-employee",
+        "guide:@nocobase/app-plugin-authorization/skills/nocobase-app-plugin-authorization"
+      ],
+      "featurePoint": null,
+      "candidates": [
+        "应用搭建/AI 员工",
+        "应用搭建/授权"
+      ],
+      "taskTitle": "内部资料只读问答助手",
+      "appVersion": "1.0.0-beta.55",
+      "group": {
+        "title": "指引未说明 @nocobase/* 包的公开入口与已发布 dist 布局，agent 反复探测内部路径失败",
+        "issues": 4,
+        "first": "2026-09-29"
+      },
+      "report": "reports/issues/600/runs/37453053696/attempt-1/index.html#review-finding-F6"
+    }
+  ]
+}
