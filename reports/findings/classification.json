@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "inputHash": "f7c3f6c400976c78f6b95483dc2999bd7f09971e83bf16c986e2919ab58bbd02",
+  "inputHash": "55eac33225aa7818eeb55de6694790fc36c7300b2796b9e614b175f34477c833",
   "sources": [
     {
       "id": "460:36434284393:1:F2",
@@ -611,6 +611,21 @@
       "id": "597:37453035816:1:F4",
       "report": "597:37453035816:1",
       "fingerprint": "9da954929a90936e49ef5a288aba3261a6f7ea80a0a81de9f535183a226a199f"
+    },
+    {
+      "id": "600:37453053696:1:F2",
+      "report": "600:37453053696:1",
+      "fingerprint": "70fad3df591814883c2175f02f640a14e6056505700beb3055892843825d8a98"
+    },
+    {
+      "id": "600:37453053696:1:F3",
+      "report": "600:37453053696:1",
+      "fingerprint": "f8ff60b70beafac66b4656f8baa900262ee4dfc34a68515c5aeeabdd6479509e"
+    },
+    {
+      "id": "600:37453053696:1:F6",
+      "report": "600:37453053696:1",
+      "fingerprint": "e68652458c602435d5cc635fabd3e0af31870e0e510e597c9bc6d8f4ba51c596"
     }
   ],
   "groups": [
@@ -706,11 +721,12 @@
     },
     {
       "title": "指引未说明 @nocobase/* 包的公开入口与已发布 dist 布局，agent 反复探测内部路径失败",
-      "reason": "跨报告合并。461:F4（E45/E49/E62/E65）、473:F5（E43/E45/E9/E10）、506:F7（E5/E24/E47）都显示 Skill/文档按 src 或猜测子目录给路径，而包只发布 dist 且导出子路径与目录不镜像，agent 多次 cat/find/sed 不存在的路径失败；同一指引缺口与同一修复方向（给出公开入口与 dist 映射）。",
+      "reason": "跨报告合并。461:F4（E45/E49/E62/E65）、473:F5（E43/E45/E9/E10）、506:F7（E5/E24/E47）都显示 Skill/文档按 src 或猜测子目录给路径，而包只发布 dist 且导出子路径与目录不镜像，agent 多次 cat/find/sed 不存在的路径失败；同一指引缺口与同一修复方向（给出公开入口与 dist 映射）。 600:F6（E5/E12/E35/E37/E39）记录 Agent 按 @nocobase/db/dist/index.d.ts、authorization/dist/permission-sets/*.js、.agents/skills/<pkg>/chat-surfaces.md 等错误位置探测，Skill 未明确列出受支持公开子路径并排除 dist 内部布局，与上述成员同一“公开入口/物理布局未文档化”缺口，修复方向一致。",
       "members": [
         "461:36434293992:1:F4",
         "473:36498916248:1:F5",
-        "506:36787391890:1:F7"
+        "506:36787391890:1:F7",
+        "600:37453053696:1:F6"
       ]
     },
     {
@@ -1155,15 +1171,29 @@
       "members": [
         "596:37453030096:1:F3"
       ]
+    },
+    {
+      "title": "child-routes.md 对子路由 path 的说明会让绝对子路径被误用，未提示父段会被前置",
+      "reason": "单条保留。child-routes.md 用“new 与 /new 行为相同”弱化相对语义，未说明父段会被前置，应用据指引把 /documents/:id 写在 /documents 下被解析为 /documents/documents/:id，属该指引特有的文档误导。与 532:F2（server-routes 的 use(path) 鉴权覆盖）分属前端子路由 path 拼接与后端鉴权覆盖两个根因；同报告 600:F3 记录框架侧静默拼接，按“同报告不得合并”须分开保留。",
+      "members": [
+        "600:37453053696:1:F2"
+      ]
+    },
+    {
+      "title": "app-client 的 resolveRouteTree 对以父段开头的子路由 path 静默拼接，不校验也不告警",
+      "reason": "单条保留。resolveRouteTree 仅剥离前导斜杠再前置 parentPath，对会重复父段的路径照常注册且不抛错/告警，而同文件对缺失 path、非法 componentLoader、重复子 id 均有校验，属框架解析期缺少 path 语义校验。与同报告 600:F2（文档误导）同因不同侧，按“同报告不得合并”单独保留。",
+      "members": [
+        "600:37453053696:1:F3"
+      ]
     }
   ],
   "classifier": {
     "engine": "pi",
     "model": "deepseek-v4.1-flash",
     "version": "0.86.1",
-    "runId": "37472363951",
+    "runId": "37476796939",
     "attempt": 1,
-    "controlSha": "bcb0d06aaf9f2a0bfeb574110bee8904b815e6b6",
-    "completedAt": "2026-10-06T13:41:43.921Z"
+    "controlSha": "220d0fba8b6f25e3f4980c2cf70f370c420f3457",
+    "completedAt": "2026-10-06T14:13:54.004Z"
   }
 }
