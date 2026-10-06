@@ -138,6 +138,16 @@ test('failure and cancellation can still produce usage; successful handoffs cann
   }
 });
 
+// The task names each report in a step of its own.
+const ALL_REPORTS = [
+  'report-task-progress.yml',
+  'report-task-usage.yml',
+  'publish-agent-history.yml',
+  'publish-retro.yml',
+  'publish-visual-report.yml',
+  'deploy-preview.yml',
+];
+
 function dispatch(
   t,
   {
@@ -146,7 +156,8 @@ function dispatch(
     failWorkflow = '',
     failCount = '99',
     runId = '123',
-    workflows = [],
+    issueNumber = '',
+    workflows = ALL_REPORTS,
   } = {},
 ) {
   const root = mkdtempSync(path.join(os.tmpdir(), 'factory-dispatch-'));
@@ -184,10 +195,8 @@ process.exit((args[2] === process.env.TEST_FAIL_WORKFLOW || process.env.TEST_FAI
         SOURCE_RUN_ID: runId,
         SOURCE_ATTEMPT: '2',
         FACTORY_REPORT_REF: 'develop',
-        FACTORY_TASK_DELIVERED: delivered,
-        ...(published === undefined
-          ? {}
-          : { FACTORY_TASK_PUBLISHED: published }),
+        FACTORY_TASK_PUBLISHED: published ?? delivered,
+        ...(issueNumber ? { ISSUE_NUMBER: issueNumber } : {}),
         GH_TOKEN: 'fixture-token',
         GITHUB_STEP_SUMMARY: summary,
         TEST_CALL_LOG: log,
@@ -314,6 +323,46 @@ test('a named report is requested on its own, and media only for published work'
   assert.deepEqual(unknown.calls, []);
 });
 
+test('the dispatcher requests nothing unless its caller names the workflows', (t) => {
+  const f = dispatch(t, { workflows: [] });
+  assert.equal(f.result.status, 2);
+  assert.deepEqual(f.calls, []);
+  assert.match(f.result.stderr, /Name the report workflows to request/);
+});
+
+test('a finished comment round asks the queue to reconcile its Issue after this run', (t) => {
+  const queue = dispatch(t, { workflows: ['comment-build-queue.yml'], issueNumber: '42' });
+  assert.equal(queue.result.status, 0, queue.result.stderr);
+  assert.deepEqual(queue.calls, [
+    [
+      'workflow',
+      'run',
+      'comment-build-queue.yml',
+      '--repo',
+      repository,
+      '--ref',
+      'develop',
+      '--field',
+      'issue_number=42',
+      '--field',
+      'run_id=123',
+    ],
+  ]);
+  // Retried like the reports.
+  const flaky = dispatch(t, {
+    workflows: ['comment-build-queue.yml'],
+    issueNumber: '42',
+    failWorkflow: 'comment-build-queue.yml',
+    failCount: '1',
+  });
+  assert.equal(flaky.result.status, 0);
+  assert.equal(flaky.calls.length, 2);
+  // Without an Issue there is nothing to reconcile.
+  const missing = dispatch(t, { workflows: ['comment-build-queue.yml'] });
+  assert.equal(missing.result.status, 2);
+  assert.deepEqual(missing.calls, []);
+});
+
 test('dispatcher rejects malformed IDs rather than passing them to GitHub', (t) => {
   const f = dispatch(t, { runId: 'abc' });
   assert.equal(f.result.status, 2);
@@ -428,7 +477,8 @@ test('the per-report steps never run the dispatcher from the task\'s pinned cont
   assert.match(checkout[1], /persist-credentials: false/);
   assert.match(checkout[1], /sparse-checkout: \|\n\s+\/\.github\/scripts\/dispatch-task-reports\.sh\n/);
   const runs = [...job.matchAll(/run: (.+)/g)].map(([, command]) => command);
-  assert.equal(runs.length, reportWorkflows.length);
+  // Six reports, and the comment queue for a comment round.
+  assert.equal(runs.length, reportWorkflows.length + 1);
   for (const command of runs)
     assert.match(command, /^bash dispatcher\/\.github\/scripts\/dispatch-task-reports\.sh [\w-]+\.yml$/);
   // The dispatcher it runs honours its argument: one request per step.
@@ -444,9 +494,26 @@ test('a question round requests its history like the build reports, and not afte
   // The gate reads this step name, and the dispatcher retries each request.
   assert.match(
     job,
-    /- name: Request publish-agent-history\.yml\n[\s\S]*?run: bash dispatcher\/\.github\/scripts\/dispatch-task-reports\.sh publish-agent-history\.yml\n?$/,
+    /- name: Request publish-agent-history\.yml\n[\s\S]*?run: bash dispatcher\/\.github\/scripts\/dispatch-task-reports\.sh publish-agent-history\.yml\n/,
   );
   assert.doesNotMatch(job, /gh workflow run/);
+  // The round's queue starts its next instruction now, not at a late sweep.
+  assert.match(
+    job,
+    /- name: Request comment-build-queue\.yml\n\s+if: \$\{\{ !cancelled\(\) \}\}\n[\s\S]*?ISSUE_NUMBER: \$\{\{ needs\.prepare\.outputs\.issue_number \}\}\n\s+run: bash dispatcher\/\.github\/scripts\/dispatch-task-reports\.sh comment-build-queue\.yml\n?$/,
+  );
+});
+
+test('a comment build round requests its queue from dispatch-reports', () => {
+  const task = readWorkflow('code-agent-task.yml');
+  const job = task.split('\n  dispatch-reports:\n')[1].split(/\n {2}[a-z][a-z-]*:\n/)[0];
+  const step = job.split('- name: Request comment-build-queue.yml\n')[1];
+  assert.ok(step, 'the queue request step is missing');
+  assert.match(step, /if: \$\{\{ !cancelled\(\) && needs\.prepare\.outputs\.build_comment_id != '' \}\}/);
+  assert.match(step, /ISSUE_NUMBER: \$\{\{ needs\.prepare\.outputs\.issue_number \}\}/);
+  assert.match(step, /SOURCE_RUN_ID: \$\{\{ github\.run_id \}\}/);
+  // The budget comment covers the extra request: seven at 70 s fit 10 minutes.
+  assert.match(job, /timeout-minutes: 10\n/);
 });
 
 test('workflow_run copies of dispatched reports skip once the task requested them', () => {

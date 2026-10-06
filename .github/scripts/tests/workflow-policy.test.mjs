@@ -738,7 +738,15 @@ test('a skipped task run starts no report, sweep or preview from its completion 
     listeners++;
     const jobs = [...source.split(/^jobs:\n/m)[1].matchAll(/^ {2}([a-z][a-z-]*):\n((?: {4}.*\n|\s*\n)*)/gm)];
     const [, first, body] = jobs[0];
-    assert.ok(skipsSkipped(condition(body)), `${name}: ${first}`);
+    // A first job that only runs on workflow_dispatch never sees the event;
+    // the job after it then filters it (comment-build-queue's wait job).
+    const dispatchOnly = /^github\.event_name == 'workflow_dispatch' && /.test(condition(body));
+    assert.ok(dispatchOnly || skipsSkipped(condition(body)), `${name}: ${first}`);
+    if (dispatchOnly) {
+      const [, second, next] = jobs[1];
+      assert.match(next, new RegExp(`^ {4}needs: ${first}$`, 'm'), `${name}: ${second}`);
+      assert.ok(skipsSkipped(condition(next)), `${name}: ${second}`);
+    }
     for (const [, id, consumer] of jobs.filter(([, , text]) => /^ {4}needs: dispatch-gate$/m.test(text))) {
       consumers++;
       assert.ok(skipsSkipped(condition(consumer)), `${name}: ${id}`);
