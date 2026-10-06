@@ -96,6 +96,10 @@ jobs:
       task: ${{ steps.select.outputs.task }}
       agent: ${{ steps.select.outputs.agent }}
       final: ${{ steps.select.outputs.final }}
+      # This job's own upload, by ID: after "Re-run failed jobs" a skipped
+      # prepare keeps its first attempt's artifact, while github.run_attempt
+      # names the new attempt, so a name built from it would not be found.
+      input_artifact: ${{ steps.input.outputs.artifact-id }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -137,6 +141,7 @@ jobs:
       # agent and final evidence stays in the source run's artifacts, which the
       # later jobs download by exact ID, so this job never fetches them.
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        id: input
         if: always() && steps.select.outputs.ready == 'true'
         with:
           name: factory-review-input-${{ github.run_id }}-${{ github.run_attempt }}
@@ -156,6 +161,9 @@ jobs:
       contents: read
       # To download the source run's artifacts by ID.
       actions: read
+    outputs:
+      # By ID, so publish finds it after "Re-run failed jobs" too.
+      review_artifact: ${{ steps.review-upload.outputs.artifact-id }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -195,7 +203,8 @@ jobs:
           path: input/final
       - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
-          name: factory-review-input-${{ github.run_id }}-${{ github.run_attempt }}
+          artifact-ids: ${{ needs.prepare.outputs.input_artifact }}
+          merge-multiple: true
           path: input
       - name: Prepare separate review input
         run: node control/.github/scripts/independent-review.mjs prompt --input input --workspace workspace --output "$RUNNER_TEMP/review"
@@ -257,6 +266,7 @@ jobs:
           node control/.github/scripts/run-agent.mjs --workspace workspace --prompt "$RUNNER_TEMP/review/review-prompt.md" --log "$RUNNER_TEMP/review/agent-review.jsonl" --agentDir "$RUNNER_TEMP/reviewer"
           test -z "$(git -C workspace status --porcelain --untracked-files=all)"
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        id: review-upload
         if: always()
         with:
           name: factory-independent-review-${{ github.run_id }}-${{ github.run_attempt }}
@@ -268,7 +278,8 @@ jobs:
     needs: [prepare, review]
     # After a failed review too, so the Issue says the review did not complete;
     # not after a manual cancel, which has nothing to publish.
-    if: ${{ !cancelled() && needs.prepare.outputs.ready == 'true' }}
+    # An empty artifact-ids input would download every artifact of the run.
+    if: ${{ !cancelled() && needs.prepare.outputs.ready == 'true' && needs.prepare.outputs.input_artifact != '' }}
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     permissions:
@@ -317,12 +328,16 @@ jobs:
           path: input/final
       - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
-          name: factory-review-input-${{ github.run_id }}-${{ github.run_attempt }}
+          artifact-ids: ${{ needs.prepare.outputs.input_artifact }}
+          merge-multiple: true
           path: input
+      # An empty artifact-ids would download every artifact of the run.
       - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        if: needs.review.outputs.review_artifact != ''
         continue-on-error: true
         with:
-          name: factory-independent-review-${{ github.run_id }}-${{ github.run_attempt }}
+          artifact-ids: ${{ needs.review.outputs.review_artifact }}
+          merge-multiple: true
           path: review
       - name: Independently validate review identity and references
         id: validation

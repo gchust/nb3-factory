@@ -57,11 +57,11 @@ test('optional delivery keeps the receiver token in read-only steps and never bu
   const all = jobs(workflow);
   assert.equal((workflow.match(/secrets\.EVALUATION_TOKEN/g) ?? []).length, 2);
   assert.match(all.send, /secrets\.EVALUATION_TOKEN/);
-  assert.match(all.send, /permissions:\n {6}contents: read\n {4}steps:/);
+  assert.match(all.send, /permissions:\n {6}contents: read\n {4}(?:outputs:\n(?: {6}.*\n)+ {4})?steps:/);
   for (const name of ['plan', 'record', 'backfill']) assert.doesNotMatch(all[name], /EVALUATION_TOKEN|secrets\./, name);
   // Classification reads the receiver's feature points with the token, then lets the
   // Agent see model credentials only in a later step; neither step can write the repository.
-  assert.match(all.classify, /permissions:\n {6}contents: read\n {4}steps:/);
+  assert.match(all.classify, /permissions:\n {6}contents: read\n {4}(?:outputs:\n(?: {6}.*\n)+ {4})?steps:/);
   assert.doesNotMatch(all.classify, /contents: write|actions: write/);
   const steps = all.classify.split(/\n {6}- /);
   const taxonomy = steps.find(step => step.includes('problem-classification.mjs taxonomy'));
@@ -73,8 +73,11 @@ test('optional delivery keeps the receiver token in read-only steps and never bu
   for (const engine of ['codebuddy', 'claude-code', 'codex', 'opencode']) assert.ok(agent.includes(`vars.CODE_AGENT_ENGINE == '${engine}'`), engine);
   assert.match(all.classify, /vars\.EVALUATION_DELIVERY_FORMAT == 'testmanage3-links-v1'/);
   assert.match(all.send, /needs: \[plan, classify\]/);
-  assert.match(all.send, /if: always\(\) && !cancelled\(\) && needs\.plan\.result == 'success'/);
-  assert.match(all.send, /continue-on-error: true\n {8}with:\n {10}name: factory-problem-classification-/);
+  // Classify may be skipped, so a status function overrides the implied success().
+  assert.match(all.send, /if: \$\{\{ !cancelled\(\) && needs\.plan\.result == 'success'/);
+  // By ID, guarded: an empty artifact-ids downloads every artifact of the run.
+  assert.match(all.send, /needs\.classify\.outputs\.classification_artifact != ''\n {8}continue-on-error: true\n {8}with:\n {10}artifact-ids: \$\{\{ needs\.classify\.outputs\.classification_artifact \}\}/);
+  assert.doesNotMatch(workflow, /always\(\) && !cancelled\(\)/);
   assert.match(all.record, /contents: write/);
   assert.doesNotMatch(workflow, /pnpm install|agent-browser|run-agent|run-build-review|code-agent-task\.yml|replay-build-review/);
   assert.match(workflow, /group: factory-evaluation-delivery\n {2}queue: max/);

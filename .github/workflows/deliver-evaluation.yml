@@ -136,6 +136,10 @@ jobs:
       contents: read
     outputs:
       count: ${{ steps.plan.outputs.count }}
+      # Jobs pass artifacts by ID: after "Re-run failed jobs" a job that is not
+      # re-run keeps its first attempt's artifact, while github.run_attempt
+      # names the new attempt, so a name built from it would not be found.
+      plan_artifact: ${{ steps.plan-upload.outputs.artifact-id }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -162,6 +166,7 @@ jobs:
             --type "$SUBJECT_TYPE" --key "$SUBJECT_KEY" --revision "$SUBJECT_REVISION" \
             --artifact-id "$ARTIFACT_ID" --output "$RUNNER_TEMP/delivery-plan"
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        id: plan-upload
         if: steps.plan.outputs.count != '0'
         with:
           name: factory-evaluation-delivery-plan-${{ github.run_id }}-${{ github.run_attempt }}
@@ -172,12 +177,14 @@ jobs:
   # Assigns feature points before sending; delivery never waits on its success.
   classify:
     needs: plan
-    if: always() && !cancelled() && needs.plan.result == 'success' && needs.plan.outputs.count != '0' && vars.EVALUATION_DELIVERY_FORMAT == 'testmanage3-links-v1'
+    if: ${{ !cancelled() && needs.plan.result == 'success' && needs.plan.outputs.count != '0' && vars.EVALUATION_DELIVERY_FORMAT == 'testmanage3-links-v1' }}
     runs-on: ubuntu-24.04
     # 10 install + up to 30 classification (the variable allows 1800 s) + setup.
     timeout-minutes: 45
     permissions:
       contents: read
+    outputs:
+      classification_artifact: ${{ steps.classification-upload.outputs.artifact-id }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -189,7 +196,8 @@ jobs:
           node-version: 24.x
       - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
-          name: factory-evaluation-delivery-plan-${{ github.run_id }}-${{ github.run_attempt }}
+          artifact-ids: ${{ needs.plan.outputs.plan_artifact }}
+          merge-multiple: true
           path: ${{ runner.temp }}/delivery-plan
       # Read-only request; the token is not present in any later step.
       - name: Read the receiver's feature points
@@ -277,6 +285,7 @@ jobs:
           echo "::warning::Agent classification failed; the problems it was asked to place are delivered unclassified. See the step above."
           echo 'Agent 问题分类失败：未能归类的问题按未分类交付，不影响发送。' >> "$GITHUB_STEP_SUMMARY"
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        id: classification-upload
         if: always() && steps.rules.outcome == 'success'
         with:
           name: factory-problem-classification-${{ github.run_id }}-${{ github.run_attempt }}
@@ -287,11 +296,13 @@ jobs:
   send:
     needs: [plan, classify]
     # Replay/scan skip backfill; explicitly override inherited skipped-job status.
-    if: always() && !cancelled() && needs.plan.result == 'success' && needs.plan.outputs.count != '0'
+    if: ${{ !cancelled() && needs.plan.result == 'success' && needs.plan.outputs.count != '0' }}
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     permissions:
       contents: read
+    outputs:
+      results_artifact: ${{ steps.results-upload.outputs.artifact-id }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -303,14 +314,17 @@ jobs:
           node-version: 24.x
       - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
-          name: factory-evaluation-delivery-plan-${{ github.run_id }}-${{ github.run_attempt }}
+          artifact-ids: ${{ needs.plan.outputs.plan_artifact }}
+          merge-multiple: true
           path: ${{ runner.temp }}/delivery-plan
       # Missing or invalid decisions only mean problems arrive unclassified.
+      # An empty artifact-ids would download every artifact of the run.
       - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
-        if: needs.classify.result == 'success' || needs.classify.result == 'failure'
+        if: (needs.classify.result == 'success' || needs.classify.result == 'failure') && needs.classify.outputs.classification_artifact != ''
         continue-on-error: true
         with:
-          name: factory-problem-classification-${{ github.run_id }}-${{ github.run_attempt }}
+          artifact-ids: ${{ needs.classify.outputs.classification_artifact }}
+          merge-multiple: true
           path: ${{ runner.temp }}/problem-classification
       # The only step that sends to the receiver. It has no repository write access.
       - name: Submit factory problems and complete reports with bounded retries
@@ -325,6 +339,7 @@ jobs:
             --plan "$RUNNER_TEMP/delivery-plan" --output "$RUNNER_TEMP/delivery-results/results.json" \
             --classification "$RUNNER_TEMP/problem-classification/classification.json"
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        id: results-upload
         if: always()
         with:
           name: factory-evaluation-delivery-results-${{ github.run_id }}-${{ github.run_attempt }}
@@ -351,9 +366,11 @@ jobs:
           node-version: 24.x
       - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         id: results
+        if: needs.send.outputs.results_artifact != ''
         continue-on-error: true
         with:
-          name: factory-evaluation-delivery-results-${{ github.run_id }}-${{ github.run_attempt }}
+          artifact-ids: ${{ needs.send.outputs.results_artifact }}
+          merge-multiple: true
           path: ${{ runner.temp }}/delivery-results
       - name: Record sanitized receipts (never a business verdict)
         if: steps.results.outcome == 'success'

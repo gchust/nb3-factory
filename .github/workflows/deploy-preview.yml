@@ -22,10 +22,6 @@ on:
 
 permissions: {}
 
-concurrency:
-  group: factory-preview-deploy
-  queue: max
-
 jobs:
   # The task usually requested this run itself; see report-dispatch-gate.yml.
   # A skipped task run (an Issue from someone without repository access) ran
@@ -48,6 +44,11 @@ jobs:
       (github.event_name == 'workflow_dispatch' || contains(fromJSON('["success","failure","timed_out","cancelled"]'), github.event.workflow_run.conclusion))
     runs-on: ubuntu-24.04
     timeout-minutes: 45
+    # Serialized with teardown-preview in preview-teardown.yml. At job level, so
+    # a copy the dispatch gate covers or skips never queues behind a deploy.
+    concurrency:
+      group: factory-preview-deploy
+      queue: max
     permissions:
       actions: read
       # Write, for one thing only: the temporary release asset the host fetches
@@ -153,7 +154,7 @@ jobs:
         if: steps.prepare.outputs.ready == 'true' && env.PREVIEW_ENABLED == 'true'
         run: |
           set -euo pipefail
-          ssh_opts=(-i ~/.ssh/preview_key -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o ConnectTimeout=20)
+          ssh_opts=(-i ~/.ssh/preview_key -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o ConnectTimeout=20 -o ServerAliveInterval=15 -o ServerAliveCountMax=4)
           remote="$PREVIEW_USER@$PREVIEW_HOST"
 
           # The host always runs the scripts from this repository, so a fix is
@@ -162,6 +163,7 @@ jobs:
           tar -czf "$RUNNER_TEMP/preview-scripts.tar.gz" -C control/.github/scripts/preview .
           ssh "${ssh_opts[@]}" "$remote" 'mkdir -p /srv/nb3-preview/scripts /srv/nb3-preview/tmp'
           scp -q -i ~/.ssh/preview_key -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes \
+            -o ConnectTimeout=20 -o ServerAliveInterval=15 -o ServerAliveCountMax=4 \
             "$RUNNER_TEMP/preview-scripts.tar.gz" "$remote:/srv/nb3-preview/tmp/scripts.tar.gz"
           ssh "${ssh_opts[@]}" "$remote" \
             'tar -xzf /srv/nb3-preview/tmp/scripts.tar.gz -C /srv/nb3-preview/scripts && chmod +x /srv/nb3-preview/scripts/*.sh'
@@ -182,7 +184,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          ssh_opts=(-i ~/.ssh/preview_key -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o ConnectTimeout=20)
+          ssh_opts=(-i ~/.ssh/preview_key -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o ConnectTimeout=20 -o ServerAliveInterval=15 -o ServerAliveCountMax=4)
           remote="$PREVIEW_USER@$PREVIEW_HOST"
           ssh "${ssh_opts[@]}" "$remote" \
             "bash /srv/nb3-preview/scripts/preview-capacity.sh --pr '$PR'" \
@@ -206,16 +208,21 @@ jobs:
               echo "::warning::Could not tell PR #$victim that its preview was evicted."
           done < "$RUNNER_TEMP/preview/evict.txt"
 
+      # Step limits, well inside the job's 45 minutes: a stalled transfer fails
+      # this step, so the report below still tells the PR, instead of the job
+      # being cancelled at its limit with no notice. ServerAliveInterval drops
+      # an ssh session whose Tailscale path went silent within a minute.
       - name: Publish the payload for the host to fetch
         id: publish
         if: steps.capacity.outputs.room == 'true'
+        timeout-minutes: 10
         env:
           PR: ${{ steps.prepare.outputs.pr }}
           DEPS_KEY: ${{ steps.prepare.outputs.deps_key }}
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          ssh_opts=(-i ~/.ssh/preview_key -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o ConnectTimeout=20)
+          ssh_opts=(-i ~/.ssh/preview_key -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o ConnectTimeout=20 -o ServerAliveInterval=15 -o ServerAliveCountMax=4)
           remote="$PREVIEW_USER@$PREVIEW_HOST"
 
           # The dependency tree is ~740 MB of a ~744 MB build and changes only
@@ -262,6 +269,9 @@ jobs:
       - name: Deploy the preview
         id: deploy
         if: steps.publish.outcome == 'success'
+        # The host fetches up to ~744 MB at about 815 KB/s (some 15 minutes)
+        # and gives up on a transfer slower than 50 KB/s for two minutes.
+        timeout-minutes: 30
         env:
           PR: ${{ steps.prepare.outputs.pr }}
           SHA: ${{ steps.prepare.outputs.sha }}
@@ -276,7 +286,7 @@ jobs:
           asset_url="https://github.com/$GITHUB_REPOSITORY/releases/download/$PREVIEW_RELEASE/${{ steps.publish.outputs.payload_asset }}"
           redeploy=""
           if [[ "${PREVIEW_FORCE:-false}" == 'true' ]]; then redeploy="--redeploy"; fi
-          ssh -i ~/.ssh/preview_key -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o ConnectTimeout=20 \
+          ssh -i ~/.ssh/preview_key -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o ConnectTimeout=20 -o ServerAliveInterval=15 -o ServerAliveCountMax=4 \
             "$PREVIEW_USER@$PREVIEW_HOST" \
             "bash /srv/nb3-preview/scripts/preview-deploy.sh \
                --pr '$PR' \

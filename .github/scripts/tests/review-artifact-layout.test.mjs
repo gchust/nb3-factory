@@ -17,7 +17,8 @@ test('every job downloads each exact-ID review input flat within its own role di
   };
   for (const [name, [source, roles]] of Object.entries(sources)) {
     const downloads = job(name).split('      - uses: actions/download-artifact@').slice(1);
-    const byId = downloads.filter(block => block.split('      - ')[0].includes('artifact-ids:'));
+    // The source run's evidence; prepare's own upload comes from this run.
+    const byId = downloads.filter(block => block.split('      - ')[0].includes('run-id:'));
     assert.equal(byId.length, roles.length, name);
     for (const role of roles) {
       const step = byId.find(block => block.includes(`artifact-ids: \${{ ${source}.${role} }}`))?.split('      - ')[0];
@@ -39,8 +40,13 @@ test('prepare hands on only the files it generated, beside the evidence the read
   assert.match(upload, /name: factory-review-input-/);
   assert.match(upload, /path: \|\n\s+input\/source\.json\n\s+input\/binding\.json\n/);
   assert.doesNotMatch(upload, /path: input\n/);
+  // By the ID prepare exported: after "Re-run failed jobs" a skipped prepare
+  // keeps its first attempt's artifact, which a name built from
+  // github.run_attempt would not find.
+  assert.match(job('prepare'), /^      input_artifact: \$\{\{ steps\.input\.outputs\.artifact-id \}\}$/m);
+  assert.match(job('prepare'), /- uses: actions\/upload-artifact@\S+ # v[\d.]+\n\s+id: input\n/);
   for (const name of ['review', 'publish'])
-    assert.match(job(name), /name: factory-review-input-\$\{\{ github\.run_id \}\}-\$\{\{ github\.run_attempt \}\}\n\s+path: input\n/, name);
+    assert.match(job(name), /artifact-ids: \$\{\{ needs\.prepare\.outputs\.input_artifact \}\}\n\s+merge-multiple: true\n\s+path: input\n/, name);
 });
 
 test('failed input binding preserves the selection without invoking a reviewer', () => {
@@ -48,5 +54,5 @@ test('failed input binding preserves the selection without invoking a reviewer',
   assert.match(workflow, /ready: \$\{\{ steps.bind.outcome == 'success' \}\}/);
   assert.match(workflow, /review:[\s\S]*?if: needs.prepare.outputs.ready == 'true'/);
   // Published after a failed review, so the Issue says so; not after a cancel.
-  assert.match(job('publish'), /if: \$\{\{ !cancelled\(\) && needs\.prepare\.outputs\.ready == 'true' \}\}/);
+  assert.match(job('publish'), /if: \$\{\{ !cancelled\(\) && needs\.prepare\.outputs\.ready == 'true' && needs\.prepare\.outputs\.input_artifact != '' \}\}/);
 });

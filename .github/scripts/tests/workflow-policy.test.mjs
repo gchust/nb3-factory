@@ -395,21 +395,52 @@ test('every job runs on a pinned runner image, never a moving label', () => {
   assert.ok(checked >= 50);
 });
 
-test('browser font installs retry apt and are bounded by a step timeout', () => {
+test('browser font installs fail over from apt and are bounded by a step timeout', () => {
   const script = readFileSync(
     path.resolve(import.meta.dirname, '../install-browser-fonts.sh'),
     'utf8',
   );
-  assert.match(script, /Acquire::Retries=3/);
-  assert.match(script, /Acquire::http::Timeout=30/);
-  assert.match(script, /for attempt in 1 2 3/);
-  // Every round is bounded, and all three rounds fit the step timeout.
-  const limits = [...script.matchAll(/sudo timeout --kill-after=(\d+)s (\d+)s apt-get/g)];
-  assert.equal(limits.length, 2);
-  const round = limits.reduce((sum, [, kill, limit]) => sum + Number(kill) + Number(limit), 0);
-  const backoff = 10 + 20;
-  assert.match(script, /sleep \$\(\( attempt \* 10 \)\)/);
-  const budget = 3 * round + backoff;
+  // apt drops a stalled connection well inside its own install limit, so it can
+  // retry or fail over instead of being killed mid-transfer.
+  assert.match(script, /Acquire::Retries=2/);
+  assert.match(script, /Acquire::http::Timeout=15/);
+  const value = (name) => {
+    const match = new RegExp(`^${name}=(\\d+)$`, 'm').exec(script);
+    assert.ok(match, name);
+    return Number(match[1]);
+  };
+  assert.ok(value('APT_INSTALL_LIMIT') > 3 * 15, 'apt must get past a stalled try');
+  const hosts = /^FONT_DEB_HOSTS=\(([^)]*)\)$/m.exec(script)[1].trim().split(/\s+/);
+  assert.ok(hosts.length >= 2);
+  for (const host of hosts) assert.doesNotMatch(host, /azure/);
+  assert.match(script, /--speed-limit \d+ --speed-time \d+/);
+  assert.match(script, /^FONT_DEB_SHA256=[0-9a-f]{64}$/m);
+  const aptRound =
+    value('APT_UPDATE_LIMIT') + value('APT_INSTALL_LIMIT') + 2 * value('APT_KILL_AFTER');
+  const hostRound =
+    value('BACKOFF') +
+    value('DOWNLOAD_LIMIT') +
+    value('DOWNLOAD_KILL_AFTER') +
+    value('HASH_LIMIT') +
+    value('HASH_KILL_AFTER') +
+    value('DPKG_LIMIT') +
+    value('DPKG_KILL_AFTER');
+  // Every fontconfig call is bounded too: fc-cache once, and each query
+  // through font_families or fc-match.
+  assert.match(script, /timeout --kill-after="\$\{FC_KILL_AFTER\}s" "\$\{FC_CACHE_LIMIT\}s" fc-cache -f/);
+  const commands = script.replace(/^\s*#.*$/gm, '').replace(/\\\n\s*/g, ' ');
+  assert.doesNotMatch(commands, /^(?!.*timeout).*\bfc-(?:cache|list|match)\b(?![\w-])/m);
+  const queries =
+    (script.match(/\$\(font_families\b/g) ?? []).length +
+    (script.match(/"\$\{FC_QUERY_LIMIT\}s" \\\n\s+fc-match/g) ?? []).length;
+  assert.equal(queries, 3);
+  const fontconfig =
+    value('FC_CACHE_LIMIT') +
+    value('FC_KILL_AFTER') +
+    queries * (value('FC_QUERY_LIMIT') + value('FC_KILL_AFTER'));
+  const budget = aptRound + hosts.length * hostRound + fontconfig;
+  // The documented worst case is the computed one.
+  assert.match(script, new RegExp(`total\\s+= ${budget} s`));
   const directory = new URL('../../workflows/', import.meta.url);
   let checked = 0;
   for (const name of readdirSync(directory).filter((file) => file.endsWith('.yml'))) {
@@ -419,8 +450,9 @@ test('browser font installs retry apt and are bounded by a step timeout', () => 
       checked++;
       const minutes = Number(/timeout-minutes: (\d+)\b/.exec(step)?.[1]);
       assert.ok(minutes > 0, `${name}: ${step.split('\n')[0]}`);
-      // Leave a minute for fc-cache and the checks after the install.
-      assert.ok(budget <= (minutes - 1) * 60, `${name}: ${budget}s vs ${minutes} min`);
+      // Every waiting command is in the budget; 30 s covers bash, mktemp and
+      // the like.
+      assert.ok(budget + 30 <= minutes * 60, `${name}: ${budget}s vs ${minutes} min`);
     }
   }
   assert.ok(checked >= 5);
