@@ -456,7 +456,7 @@ test('workflow_run copies of dispatched reports skip once the task requested the
 });
 
 // The gate's own script against a recorded jobs listing.
-function gate(t, steps, { workflow, fail = false, runId = '123' } = {}) {
+function gate(t, steps, { workflow, fail = false, failTimes = 0, runId = '123', calls } = {}) {
   const source = readWorkflow('report-dispatch-gate.yml');
   const script = source.split('        run: |\n')[1].replace(/^ {10}/gm, '');
   const root = mkdtempSync(path.join(os.tmpdir(), 'factory-gate-'));
@@ -466,11 +466,15 @@ function gate(t, steps, { workflow, fail = false, runId = '123' } = {}) {
   const jobs = path.join(root, 'jobs.json');
   writeFileSync(jobs, JSON.stringify({ jobs: [{ name: 'agent', steps: [{ name: `Request ${workflow}`, conclusion: 'success' }] }, { name: 'dispatch-reports', steps }] }));
   // gh api ... --jq <filter>: apply the filter to the recorded listing.
+  const count = path.join(root, 'gh-calls');
   writeFileSync(path.join(bin, 'gh'), `#!/usr/bin/env bash
+echo x >> ${JSON.stringify(count)}
 ${fail ? 'exit 1' : ''}
+if (( $(wc -l < ${JSON.stringify(count)}) <= ${failTimes} )); then exit 1; fi
 while [[ $# -gt 0 && "$1" != --jq ]]; do shift; done
 jq -r "$2" ${JSON.stringify(jobs)}
 `, { mode: 0o755 });
+  writeFileSync(path.join(bin, 'sleep'), '#!/usr/bin/env bash\nexit 0\n', { mode: 0o755 });
   const output = path.join(root, 'output');
   writeFileSync(output, '');
   const result = spawnSync('bash', ['-c', `set -euo pipefail\n${script}`], {
@@ -479,6 +483,7 @@ jq -r "$2" ${JSON.stringify(jobs)}
       GH_TOKEN: 'x', RUN_ID: runId, ATTEMPT: '1', WORKFLOW: workflow },
   });
   assert.equal(result.status, 0, result.stderr);
+  if (calls) calls.push(existsSync(count) ? readFileSync(count, 'utf8').trim().split('\n').length : 0);
   return readFileSync(output, 'utf8').trim();
 }
 
@@ -495,7 +500,12 @@ test('the gate reads only its own workflow\'s request step and fails open', (t) 
   // A run from before the split has one combined step for every report.
   const legacy = [{ name: 'Explicitly request task reports (including continuations)', conclusion: 'success' }];
   assert.equal(gate(t, legacy, { workflow: 'publish-retro.yml' }), 'covered=true');
-  assert.equal(gate(t, steps, { workflow: 'deploy-preview.yml', fail: true }), 'covered=false');
+  const calls = [];
+  assert.equal(gate(t, steps, { workflow: 'deploy-preview.yml', fail: true, calls }), 'covered=false');
+  // A transient API error is retried; three failures still fail open.
+  assert.equal(gate(t, steps, { workflow: 'deploy-preview.yml', failTimes: 2, calls }), 'covered=true');
+  assert.equal(gate(t, steps, { workflow: 'report-task-usage.yml', failTimes: 1, calls }), 'covered=false');
+  assert.deepEqual(calls, [3, 3, 2]);
   assert.equal(gate(t, steps, { workflow: 'deploy-preview.yml', runId: 'x' }), 'covered=false');
   assert.equal(gate(t, steps, { workflow: 'deploy-preview.yml"); evil' }), 'covered=false');
 });
@@ -539,4 +549,24 @@ test('jobs downstream of the dispatch gate never inherit its skip', () => {
     }
   }
   assert.ok(checked >= 9);
+});
+
+test('the dispatch budget fits six worst-case requests inside the job timeout', () => {
+  const script = readFileSync(path.resolve(import.meta.dirname, '../dispatch-task-reports.sh'), 'utf8');
+  const seconds = (name) => Number(new RegExp(`^${name}=(\\d+)s$`, 'm').exec(script)?.[1]);
+  const attempt = seconds('DISPATCH_ATTEMPT_TIMEOUT') + seconds('DISPATCH_KILL_AFTER');
+  const backoff = /^DISPATCH_BACKOFF=\(([\d ]+)\)$/m.exec(script)[1].split(' ').map(Number);
+  assert.equal(backoff.length, 2);
+  assert.match(script, /for attempt in 1 2 3; do/);
+  assert.match(script, /sleep "\$\{DISPATCH_BACKOFF\[attempt - 1\]\}"/);
+  const perReport = 3 * attempt + backoff.reduce((sum, value) => sum + value, 0);
+  const job = readWorkflow('code-agent-task.yml').split('\n  dispatch-reports:\n')[1].split(/\n {2}[a-z][a-z-]*:\n/)[0];
+  const minutes = Number(/^ {4}timeout-minutes: (\d+)$/m.exec(job)[1]);
+  // Two minutes for the runner, checkout and step overhead.
+  assert.ok(reportWorkflows.length * perReport <= (minutes - 2) * 60, `${reportWorkflows.length} x ${perReport}s vs ${minutes} min`);
+  // The gate retries, fails open, and still fits its own job.
+  const gate = readWorkflow('report-dispatch-gate.yml');
+  assert.match(gate, /for attempt in 1 2 3; do/);
+  assert.match(gate, /timeout --kill-after=5s 20s gh api/);
+  assert.ok(3 * 25 + 3 + 6 <= Number(/timeout-minutes: (\d+)/.exec(gate)[1]) * 60 - 60);
 });

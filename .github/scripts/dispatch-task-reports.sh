@@ -13,16 +13,23 @@ fi
 
 # GITHUB_TOKEN can explicitly dispatch workflows even when a bot-triggered
 # continuation does not produce the downstream workflow_run event.
+# A request normally returns in a second or two. Worst case per report: three
+# 15 s attempts (plus 5 s to kill each) and the 2 s and 8 s backoffs, 70 s; six
+# reports take 420 s, inside the 10-minute dispatch-reports job in
+# code-agent-task.yml. task-report-dispatch.test.mjs checks that budget.
+DISPATCH_ATTEMPT_TIMEOUT=15s
+DISPATCH_KILL_AFTER=5s
+DISPATCH_BACKOFF=(2 8)
 dispatch() {
   local workflow="$1"
   for attempt in 1 2 3; do
-    if timeout --kill-after=5s 30s gh workflow run "$workflow" \
+    if timeout --kill-after="$DISPATCH_KILL_AFTER" "$DISPATCH_ATTEMPT_TIMEOUT" gh workflow run "$workflow" \
       --repo "$GITHUB_REPOSITORY" --ref "$FACTORY_REPORT_REF" \
       --field "run_id=$SOURCE_RUN_ID" --field "attempt=$SOURCE_ATTEMPT"; then
       echo "Requested $workflow for run $SOURCE_RUN_ID, attempt $SOURCE_ATTEMPT."
       return 0
     fi
-    if [[ "$attempt" -lt 3 ]]; then sleep 2; fi
+    if [[ "$attempt" -lt 3 ]]; then sleep "${DISPATCH_BACKOFF[attempt - 1]}"; fi
   done
   echo "::warning::Could not dispatch $workflow; replay it with run_id=$SOURCE_RUN_ID and attempt=$SOURCE_ATTEMPT."
   if [[ -n "${GITHUB_STEP_SUMMARY:-}" ]]; then
