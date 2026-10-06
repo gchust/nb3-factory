@@ -159,7 +159,8 @@ jobs:
         if: github.event_name == 'repository_dispatch' && github.event.action == 'code-agent-continue' && !github.event.client_payload.control_sha
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
-          name: factory-handoff-${{ github.event.client_payload.issue_number }}
+          # The checkpoint; older runs uploaded the same files as factory-handoff-N too.
+          name: factory-agent-${{ github.event.client_payload.issue_number }}
           path: legacy-handoff
           run-id: ${{ github.event.client_payload.previous_run_id }}
           github-token: ${{ github.token }}
@@ -168,7 +169,8 @@ jobs:
         if: inputs.recovery_run_id != ''
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
-          name: factory-handoff-${{ inputs.issue_number }}
+          # The checkpoint; older runs uploaded the same files as factory-handoff-N too.
+          name: factory-agent-${{ inputs.issue_number }}
           path: recovery
           run-id: ${{ inputs.recovery_run_id }}
           github-token: ${{ github.token }}
@@ -283,7 +285,9 @@ jobs:
     needs: prepare
     env:
       FACTORY_CONTROL_SHA: ${{ needs.prepare.outputs.control_sha }}
-      FACTORY_TASK_CONTINUATION: ${{ github.event.client_payload.continuation || '0' }}
+      # An explicit recovery is continuation 1, as the handoff step counts it
+      # below; pipeline-state takes this only as a floor, so it never adds twice.
+      FACTORY_TASK_CONTINUATION: ${{ inputs.recovery_run_id != '' && '1' || github.event.client_payload.continuation || '0' }}
       FACTORY_QA_THINKING: ${{ vars.FACTORY_QA_THINKING }}
       FACTORY_BUILD_REVIEW: ${{ vars.FACTORY_BUILD_REVIEW || 'full' }}
       FACTORY_REVIEW_THINKING: ${{ vars.FACTORY_REVIEW_THINKING || 'medium' }}
@@ -354,7 +358,8 @@ jobs:
         if: github.event_name == 'repository_dispatch' && github.event.action == 'code-agent-continue'
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
-          name: factory-handoff-${{ needs.prepare.outputs.issue_number }}
+          # The checkpoint; older runs uploaded the same files as factory-handoff-N too.
+          name: factory-agent-${{ needs.prepare.outputs.issue_number }}
           path: handoff
           run-id: ${{ github.event.client_payload.previous_run_id }}
           github-token: ${{ github.token }}
@@ -517,19 +522,23 @@ jobs:
 
       # The npm cache is restored and saved again here, before any model call,
       # so what the model does to the runner never reaches a later run's cache.
+      # It is a directory of its own: ~/.npm also receives the Code Agent CLI
+      # installed above, which a key naming only the browser version would keep
+      # forever while never serving it.
       - name: Restore the Agent Browser npm cache
         id: browser_cache
         if: inputs.failure_smoke != true
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
-          path: ~/.npm
-          key: agent-browser-npm-${{ runner.os }}-${{ vars.AGENT_BROWSER_VERSION || '0.36.0' }}
+          path: ${{ runner.temp }}/agent-browser-npm
+          key: agent-browser-npm-v2-${{ runner.os }}-${{ vars.AGENT_BROWSER_VERSION || '0.36.0' }}
 
       - name: Install pinned Agent Browser
         timeout-minutes: 10
         if: inputs.failure_smoke != true
         env:
           AGENT_BROWSER_VERSION: ${{ vars.AGENT_BROWSER_VERSION || '0.36.0' }}
+          npm_config_cache: ${{ runner.temp }}/agent-browser-npm
         run: |
           npm install --global --prefer-offline "agent-browser@${AGENT_BROWSER_VERSION}"
           agent-browser --version
@@ -539,7 +548,7 @@ jobs:
         continue-on-error: true
         uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
-          path: ~/.npm
+          path: ${{ runner.temp }}/agent-browser-npm
           key: ${{ steps.browser_cache.outputs.cache-primary-key }}
 
       - name: Install optional video encoder
@@ -757,7 +766,9 @@ jobs:
         timeout-minutes: 1
         run: node control/.github/scripts/task-progress.mjs stop "$RUNNER_TEMP/agent-artifacts"
 
+      # Also the handoff and recovery checkpoint: see Confirm the handoff checkpoint.
       - name: Upload Code Agent patch and diagnostics
+        id: agent-upload
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
@@ -798,17 +809,30 @@ jobs:
           if-no-files-found: warn
           retention-days: 14
 
-      - name: Upload handoff checkpoint
+      # The checkpoint is factory-agent-N itself: it already holds this exact
+      # directory, so a second upload of it only doubled the time and storage of
+      # every failed or handed-off run. Continuations and explicit recoveries
+      # download factory-agent-N. This step keeps the contract the dispatch and
+      # the failure notice rely on: a checkpoint exists only when that upload
+      # succeeded and carries what a continuation restores.
+      - name: Confirm the handoff checkpoint
         id: checkpoint
         # Preserve a recovery checkpoint on failure, without treating it as
         # successful verification or automatically retrying a broken runner.
         if: always() && steps.patch.outcome == 'success' && (steps.handoff.outcome == 'success' || failure() || cancelled())
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-        with:
-          name: factory-handoff-${{ needs.prepare.outputs.issue_number }}
-          path: ${{ runner.temp }}/agent-artifacts
-          if-no-files-found: error
-          retention-days: 14
+        env:
+          AGENT_UPLOAD_OUTCOME: ${{ steps.agent-upload.outcome }}
+        run: |
+          if [[ "$AGENT_UPLOAD_OUTCOME" != 'success' ]]; then
+            echo "::error::factory-agent-${{ needs.prepare.outputs.issue_number }} was not uploaded ($AGENT_UPLOAD_OUTCOME); no checkpoint was saved."
+            exit 1
+          fi
+          for file in agent.patch pipeline-state.json task-metadata.json; do
+            if [[ ! -f "$RUNNER_TEMP/agent-artifacts/$file" ]]; then
+              echo "::error::The checkpoint lacks $file."
+              exit 1
+            fi
+          done
 
       - name: Dispatch continuation run
         id: dispatch
@@ -1503,20 +1527,32 @@ jobs:
 
   # Question rounds skip dispatch-reports, so they request their history here.
   # A /build round's history is already requested by dispatch-reports.
+  # Uses the same retrying dispatcher and step name as dispatch-reports, and
+  # report-dispatch-gate.yml reads this job too, so the workflow_run copy of
+  # publish-agent-history does not publish the round a second time.
   dispatch-reply-history:
     needs: [prepare, reply, publish-reply]
-    if: always() && needs.prepare.result == 'success' && needs.prepare.outputs.status == 'ready' && needs.prepare.outputs.build_comment_id != '' && needs.prepare.outputs.comment_kind == 'reply'
+    if: ${{ !cancelled() && needs.prepare.result == 'success' && needs.prepare.outputs.status == 'ready' && needs.prepare.outputs.build_comment_id != '' && needs.prepare.outputs.comment_kind == 'reply' }}
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     permissions:
+      contents: read
       actions: write
     steps:
-      - name: Request comment interaction history
+      # From this workflow file's revision, as in dispatch-reports.
+      - name: Check out the report dispatcher
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.workflow_sha }}
+          path: dispatcher
+          persist-credentials: false
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /.github/scripts/dispatch-task-reports.sh
+      - name: Request publish-agent-history.yml
         env:
           GH_TOKEN: ${{ github.token }}
           SOURCE_RUN_ID: ${{ github.run_id }}
           SOURCE_ATTEMPT: ${{ github.run_attempt }}
-          REPORT_REF: ${{ github.event.repository.default_branch }}
-        run: |
-          gh workflow run publish-agent-history.yml --repo "$GITHUB_REPOSITORY" --ref "$REPORT_REF" \
-            --field "run_id=$SOURCE_RUN_ID" --field "attempt=$SOURCE_ATTEMPT"
+          FACTORY_REPORT_REF: ${{ github.event.repository.default_branch }}
+        run: bash dispatcher/.github/scripts/dispatch-task-reports.sh publish-agent-history.yml

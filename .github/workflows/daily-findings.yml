@@ -68,8 +68,11 @@ jobs:
       # Read-only, so it runs on every day: the send step needs the Pages base
       # URL also when nothing changed and a digest that failed earlier is
       # re-sent, and deploy-pages only runs when something changed.
+      # A transient failure here must not hold back the digest: notify falls
+      # back to the repository's default Pages URL when the base is empty.
       - uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0
         id: pages
+        continue-on-error: true
       - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
         if: steps.archive.outputs.changed == 'true'
         with:
@@ -78,7 +81,12 @@ jobs:
         if: steps.archive.outputs.changed == 'true'
         id: deployment
       - name: Send pending digests to Feishu
-        if: vars.FACTORY_FEISHU_DIGEST == 'true' && steps.archive.outputs.pending != '0' && (github.event_name == 'schedule' || inputs.notify)
+        # Links must resolve: when the archive changed, only after it deployed.
+        if: >-
+          !cancelled() && steps.archive.outcome == 'success' &&
+          (steps.archive.outputs.changed != 'true' || steps.deployment.outcome == 'success') &&
+          vars.FACTORY_FEISHU_DIGEST == 'true' && steps.archive.outputs.pending != '0' &&
+          (github.event_name == 'schedule' || inputs.notify)
         env:
           GITHUB_TOKEN: ${{ github.token }}
           REPORT_BASE_URL: ${{ steps.pages.outputs.base_url }}

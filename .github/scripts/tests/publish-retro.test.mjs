@@ -112,13 +112,24 @@ test('selects the agent artifact for failed runs too', () => {
     status: 'completed',
     conclusion: 'failure',
   };
-  const artifacts = [{ name: 'other' }, { name: 'factory-agent-42' }];
-  assert.deepEqual(selectRetroArtifact(run, artifacts, 'owner/repo'), {
-    artifact: { name: 'factory-agent-42' },
+  const jobs = [
+    {
+      name: 'agent',
+      started_at: '2026-10-06T02:00:00Z',
+      completed_at: '2026-10-06T03:00:00Z',
+    },
+  ];
+  const created_at = '2026-10-06T02:30:00Z';
+  const artifacts = [
+    { name: 'other', created_at },
+    { name: 'factory-agent-42', created_at },
+  ];
+  assert.deepEqual(selectRetroArtifact(run, artifacts, 'owner/repo', jobs), {
+    artifact: { name: 'factory-agent-42', created_at },
     issue: 42,
   });
   assert.equal(
-    selectRetroArtifact(run, [{ name: 'other' }], 'owner/repo'),
+    selectRetroArtifact(run, [{ name: 'other', created_at }], 'owner/repo', jobs),
     null,
   );
   assert.equal(
@@ -126,6 +137,54 @@ test('selects the agent artifact for failed runs too', () => {
       { ...run, status: 'in_progress' },
       artifacts,
       'owner/repo',
+      jobs,
+    ),
+    null,
+  );
+  // An attempt whose agent job never ran has no window, so no artifact.
+  assert.equal(selectRetroArtifact(run, artifacts, 'owner/repo'), null);
+  assert.equal(
+    selectRetroArtifact(run, artifacts, 'owner/repo', [
+      { name: 'agent', started_at: null, completed_at: null },
+    ]),
+    null,
+  );
+});
+
+test('selects only an unexpired agent artifact from the selected attempt', () => {
+  const run = {
+    path: '.github/workflows/code-agent-task.yml',
+    head_repository: { full_name: 'owner/repo' },
+    event: 'issues',
+    status: 'completed',
+  };
+  const jobs = [
+    {
+      name: 'agent',
+      started_at: '2026-10-06T02:00:00Z',
+      completed_at: '2026-10-06T03:00:00Z',
+    },
+  ];
+  const first = {
+    id: 1,
+    name: 'factory-agent-42',
+    created_at: '2026-10-06T01:30:00Z',
+  };
+  const second = {
+    id: 2,
+    name: 'factory-agent-42',
+    created_at: '2026-10-06T02:30:00Z',
+  };
+  assert.equal(
+    selectRetroArtifact(run, [first, second], 'owner/repo', jobs).artifact.id,
+    2,
+  );
+  assert.equal(
+    selectRetroArtifact(
+      run,
+      [first, { ...second, expired: true }],
+      'owner/repo',
+      jobs,
     ),
     null,
   );

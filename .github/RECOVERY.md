@@ -52,7 +52,7 @@ Pi 适配器显式配置原生请求级重试：最多 6 次，退避等待为 5
 | `recovery_run_id` | 需要恢复的已失败任务 Run ID；留空沿用普通搭建行为 |
 | `recovery_base_sha` | 仅旧版 checkpoint 需要：原应用工作区的完整基线 SHA |
 
-恢复前先排除服务/配置问题。仅支持仍存在 `factory-task-N` 与 `factory-handoff-N` 产物、并保存失败/阻塞阶段的任务。Artifact 的默认保留期为 14 天。取消、成功交付、已经进入 done 的终验/发布失败不走此恢复入口。旧版且未记录运行身份的多 attempt 产物不猜测归属。
+恢复前先排除服务/配置问题。仅支持仍存在 `factory-task-N` 与 `factory-agent-N` 产物（检查点即 `factory-agent-N`；更早的 Run 还另存了内容相同的 `factory-handoff-N`）、并保存失败/阻塞阶段的任务。Artifact 的默认保留期为 14 天。取消、成功交付、已经进入 done 的终验/发布失败不走此恢复入口。旧版且未记录运行身份的多 attempt 产物不猜测归属。
 
 ```text
 手动指定失败 Run

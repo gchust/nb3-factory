@@ -174,7 +174,8 @@ jobs:
     needs: plan
     if: always() && !cancelled() && needs.plan.result == 'success' && needs.plan.outputs.count != '0' && vars.EVALUATION_DELIVERY_FORMAT == 'testmanage3-links-v1'
     runs-on: ubuntu-24.04
-    timeout-minutes: 20
+    # 10 install + up to 30 classification (the variable allows 1800 s) + setup.
+    timeout-minutes: 45
     permissions:
       contents: read
     steps:
@@ -271,7 +272,7 @@ jobs:
         run: node control/.github/scripts/problem-classification.mjs run --input "$RUNNER_TEMP/problem-classification"
       # Visible in the run and its summary, since the job itself stays green.
       - name: Report problems left unclassified
-        if: always() && steps.agent.outcome == 'failure'
+        if: always() && (steps.install.outcome == 'failure' || steps.agent.outcome == 'failure')
         run: |
           echo "::warning::Agent classification failed; the problems it was asked to place are delivered unclassified. See the step above."
           echo 'Agent 问题分类失败：未能归类的问题按未分类交付，不影响发送。' >> "$GITHUB_STEP_SUMMARY"

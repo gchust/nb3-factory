@@ -17,10 +17,6 @@ on:
         type: string
 
 permissions: {}
-# Serialize with the normal history publisher so its shared Issue index is not lost.
-concurrency:
-  group: factory-agent-history
-  queue: max
 
 jobs:
   publish:
@@ -30,6 +26,11 @@ jobs:
       (github.event_name != 'workflow_run' && github.actor == github.repository_owner)
     runs-on: ubuntu-24.04
     timeout-minutes: 15
+    # Serialize with the normal history publisher so its shared Issue index is not lost.
+    # At job level, so an event the job condition drops never waits in this queue.
+    concurrency:
+      group: factory-agent-history
+      queue: max
     permissions:
       contents: write
       actions: read

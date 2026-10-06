@@ -56,7 +56,7 @@ jobs:
             found=''
             for attempt in 1 2 3; do
               if found="$(timeout --kill-after=5s 20s gh api "repos/$GITHUB_REPOSITORY/actions/runs/$RUN_ID/attempts/$ATTEMPT/jobs?per_page=100" \
-                --jq '[.jobs[] | select(.name == "dispatch-reports") | .steps[]? |
+                --jq '[.jobs[] | select(.name == "dispatch-reports" or .name == "dispatch-reply-history") | .steps[]? |
                   select((.name == "Request '"$WORKFLOW"'" or .name == "Explicitly request task reports (including continuations)") and .conclusion == "success")] | length')"; then
                 break
               fi

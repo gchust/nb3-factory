@@ -182,10 +182,12 @@ test('implementation and repair default to unlimited invocations and max thinkin
 test('runner budget checkpoints and continues instead of failing at six hours', () => {
   assert.match(workflow, /code-agent-continue/);
   assert.match(workflow, /FACTORY_RUN_DEADLINE_EPOCH_SECONDS=.*18000/);
+  // The checkpoint is factory-agent-N itself, uploaded once.
   assert.match(
     workflow,
-    /factory-handoff-\$\{\{ needs\.prepare\.outputs\.issue_number \}\}/,
+    /name: factory-agent-\$\{\{ needs\.prepare\.outputs\.issue_number \}\}\n {10}path: handoff/,
   );
+  assert.doesNotMatch(workflow, /name: factory-handoff-/);
   assert.match(
     workflow,
     /run-id: \$\{\{ github\.event\.client_payload\.previous_run_id \}\}/,
@@ -220,9 +222,11 @@ test('a failed agent preserves a checkpoint and can publish failed work without 
   // Status check functions only work in if, not step env expressions.
   assert.doesNotMatch(allowEmpty, /(?:always|cancelled|failure|success)\(\)/);
   const checkpoint = workflow
-    .split('- name: Upload handoff checkpoint')[1]
+    .split('- name: Confirm the handoff checkpoint')[1]
     .split('- name: Dispatch continuation run')[0];
   assert.match(checkpoint, /always\(\) && steps\.patch\.outcome == 'success'/);
+  assert.match(checkpoint, /AGENT_UPLOAD_OUTCOME: \$\{\{ steps\.agent-upload\.outcome \}\}/);
+  assert.match(checkpoint, /for file in agent\.patch pipeline-state\.json task-metadata\.json/);
   assert.match(
     checkpoint,
     /steps\.handoff\.outcome == 'success' \|\| failure\(\)/,
@@ -246,7 +250,7 @@ test('a failed agent preserves a checkpoint and can publish failed work without 
     .slice(1);
   for (const step of afterHandoff) {
     if (!/\n {8}if: always\(\)/.test(step) || /\n {8}continue-on-error: true/.test(step)) continue;
-    assert.match(step, /^(Upload Code Agent patch and diagnostics|Upload handoff checkpoint)\n/);
+    assert.match(step, /^(Upload Code Agent patch and diagnostics|Confirm the handoff checkpoint)\n/);
   }
   // A lost checkpoint or dispatch is a failed run, not a silent handoff.
   const outcome = workflow
@@ -600,11 +604,17 @@ function scriptsRunBy(name) {
   ];
 }
 
+// Files overlay-factory.mjs reads from the control checkout besides scripts:
+// the .npmrc it copies, the README.MD factory section and package.json's
+// factory scripts and devDependencies.
+const OVERLAY_CONTROL_INPUTS = ['.npmrc', 'README.MD', 'package.json'];
+
 test('the source baseline check runs whenever a script it runs changes', () => {
   const filters = pullRequestPaths('source-baseline.yml');
   const files = scriptsRunBy('source-baseline.yml');
   assert.ok(files.includes('.github/scripts/verify.sh'));
-  for (const file of files)
+  assert.ok(files.includes('.github/scripts/overlay-factory.mjs'));
+  for (const file of [...files, ...OVERLAY_CONTROL_INPUTS])
     assert.ok(
       filters.some((filter) => filter.test(file)),
       file,
@@ -629,7 +639,8 @@ test('the template refresh check runs whenever a script or overlay input it uses
   );
   assert.match(overlay, /path\.join\(control, '\.npmrc'\)/);
   assert.match(overlay, /section\('README\.MD', 'readme'\)/);
-  for (const file of [...files, '.npmrc', 'README.MD'])
+  assert.match(overlay, /read\(control, 'package\.json'\)/);
+  for (const file of [...files, ...OVERLAY_CONTROL_INPUTS])
     assert.ok(
       filters.some((filter) => filter.test(file)),
       file,
@@ -662,6 +673,29 @@ test('CI installs the Agent Browser and Agent CLIs build tasks would install', a
     assert.ok(workflow.includes(`${name}: \${{ vars.${name} }}`), name);
     assert.ok(adapters.includes(`${name}: \${{ vars.${name} }}`), name);
   }
+});
+
+test('a failed changed-file listing runs the browser preflight instead of skipping it', () => {
+  const tests = readFileSync(
+    new URL('../../workflows/factory-tests.yml', import.meta.url),
+    'utf8',
+  );
+  const job = tests.split('\n  browser-preflight:\n')[1].split(/\n {2}[a-z][a-z-]*:\n/)[0];
+  // A skipped job satisfies a required check, so only a successful listing
+  // that shows no factory change may skip it.
+  assert.match(
+    job,
+    /needs\.changes\.result != 'success' \|\| needs\.changes\.outputs\.browser == 'true'/,
+  );
+  assert.match(job, /!cancelled\(\)/);
+  // A file renamed out of .github/ still counts through its old path.
+  assert.match(tests, /--jq '\.\[\] \| \.filename, \(\.previous_filename \/\/ empty\)'/);
+  for (const name of ['factory-tests', 'application-format'])
+    assert.doesNotMatch(
+      tests.split(`\n  ${name}:\n`)[1].split(/\n {2}[a-z][a-z-]*:\n/)[0],
+      /needs: changes/,
+      name,
+    );
 });
 
 test('regression checks cancel superseded PR runs but never a pending push or dispatch', () => {
@@ -748,9 +782,19 @@ test('the replayed usage report serializes with the other page writers and inher
   );
   const report = source.split('\n  report:\n')[1].split(/\n {2}[a-z][a-z-]*:\n/)[0];
   assert.match(report, /uses: \.\/\.github\/workflows\/report-task-usage\.yml/);
-  // A called workflow's own concurrency applies to its top-level runs, not to
-  // a job that calls it; the caller job names the shared group itself.
-  assert.match(report, /^ {4}concurrency:\n {6}group: factory-task-usage\n {6}queue: max\n/m);
+  // The called reporter's writing jobs hold the shared group at job level,
+  // which applies inside a called workflow too. The caller must not hold it
+  // as well: a call waiting on its caller's own group is cancelled as a deadlock.
+  assert.doesNotMatch(report, /concurrency:/);
+  const usage = readFileSync(
+    path.resolve(import.meta.dirname, '../../workflows/report-task-usage.yml'),
+    'utf8',
+  );
+  assert.doesNotMatch(usage, /^concurrency:/m);
+  for (const job of ['report', 'evaluation', 'pages']) {
+    const body = usage.split(`\n  ${job}:\n`)[1].split(/\n {2}[a-z][a-z-]*:\n/)[0];
+    assert.match(body, /^ {4}concurrency:\n {6}group: factory-task-usage\n {6}queue: max\n/m, job);
+  }
   assert.doesNotMatch(report, /secrets: inherit/);
   // There is nothing to inherit: the reporter reads github.token only.
   assert.doesNotMatch(

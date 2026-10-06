@@ -109,7 +109,13 @@ test('Agent classification failure is a warning, and nothing in delivery runs af
   assert.match(agent, /continue-on-error: true/);
   const notice = steps.find(step => step.startsWith('name: Report problems left unclassified'));
   assert.ok(notice, 'the unclassified notice step is missing');
-  assert.match(notice, /if: always\(\) && steps\.agent\.outcome == 'failure'/);
+  // The script fails the step on a model error, and an install failure skips
+  // it, so both reach the notice.
+  assert.match(notice, /if: always\(\) && \(steps\.install\.outcome == 'failure' \|\| steps\.agent\.outcome == 'failure'\)/);
+  assert.match(
+    readFileSync(path.join(workflows, '..', 'scripts', 'problem-classification.mjs'), 'utf8'),
+    /Agent classification failed; only rule decisions are sent[^\n]*\n[^\n]*\n\s+process\.exitCode = 1;/,
+  );
   assert.match(notice, /::warning::/);
   assert.match(notice, /GITHUB_STEP_SUMMARY/);
   // The header comment and the send job agree: delivery proceeds either way.

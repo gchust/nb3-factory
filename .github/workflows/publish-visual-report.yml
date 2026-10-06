@@ -33,11 +33,14 @@ jobs:
     permissions:
       actions: read
 
+  # A task that hit the agent job's six-hour limit is reported as cancelled yet
+  # still publishes a failed PR; select publishes only for a build PR, so a
+  # manual cancel produces nothing.
   publish-media:
     needs: dispatch-gate
     if: >-
       !cancelled() && needs.dispatch-gate.outputs.covered != 'true' &&
-      (github.event_name == 'workflow_dispatch' || contains(fromJSON('["success","failure","timed_out"]'), github.event.workflow_run.conclusion))
+      (github.event_name == 'workflow_dispatch' || contains(fromJSON('["success","failure","timed_out","cancelled"]'), github.event.workflow_run.conclusion))
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     permissions:
