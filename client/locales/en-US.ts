@@ -60,6 +60,7 @@ const enUS = {
   'status.loadingDev': 'Loading dev tools',
   'status.denied': 'Access denied',
   'status.pageFailed': 'Unable to load page',
+  'status.sessionExpired': 'Your session has ended. Sign in again to continue.',
   'status.retry': 'Retry',
   'navigation.brandHome': 'NocoBase home',
   'navigation.brandApps': 'NocoBase applications',
@@ -114,6 +115,11 @@ const enUS = {
     save: 'Save',
     cancel: 'Cancel',
     confirm: 'Confirm',
+    create: 'Create',
+    saving: 'Saving…',
+    edit: 'Edit',
+    openMenu: 'Open menu',
+    signInAgain: 'Sign in again',
     language: 'Language',
   },
   notices: {
@@ -131,6 +137,9 @@ const enUS = {
   },
   navigation: {
     home: 'Home',
+    customers: 'Customers',
+    contacts: 'Contacts',
+    opportunities: 'Opportunities',
     open: 'Open navigation',
     close: 'Close navigation',
     expand: 'Expand navigation',
@@ -159,6 +168,151 @@ const enUS = {
   datePicker: {
     placeholder: 'Pick a date',
     rangePlaceholder: 'Pick a date range',
+  },
+  crm: {
+    customer: {
+      placeholder: 'Choose a customer',
+      loadFailed: 'Customers could not be loaded.',
+      forbidden: 'You do not have permission to list customers.',
+    },
+    form: {
+      customerRequired: 'Choose a customer',
+      customerMissing: 'This customer no longer exists.',
+    },
+    error: {
+      forbidden: 'You do not have permission to do this.',
+      requestFailed: 'The request failed. Please try again.',
+    },
+  },
+  customers: {
+    title: 'Customers',
+    description: 'The companies your team sells to.',
+    fields: {
+      name: 'Name',
+      industry: 'Industry',
+      createdAt: 'Created',
+      updatedAt: 'Updated',
+    },
+    search: {
+      label: 'Search customers',
+      placeholder: 'Search by name or industry',
+    },
+    filters: { clear: 'Clear filters' },
+    create: {
+      action: 'New customer',
+      title: 'New customer',
+      success: 'Created customer "{{name}}"',
+    },
+    edit: { title: 'Edit customer', success: 'Saved customer "{{name}}"' },
+    detail: {
+      total: 'Total opportunity amount',
+      contacts: 'Contacts',
+      opportunities: 'Opportunities',
+      emptyContacts: 'No contacts yet',
+      emptyOpportunities: 'No opportunities yet',
+    },
+    empty: {
+      title: 'No customers yet',
+      description: 'Create your first customer to get started.',
+      noResults: 'No customers match your search',
+    },
+    error: {
+      title: 'Customers could not be loaded',
+      notFound: 'This customer does not exist or has been deleted.',
+      requestFailed: 'The request failed. Please try again.',
+    },
+    form: {
+      description: 'Name the customer and record its industry.',
+      nameRequired: 'Enter a customer name',
+      nameTooLong: 'Use at most {{max}} characters',
+      industryTooLong: 'Use at most {{max}} characters',
+    },
+  },
+  contacts: {
+    title: 'Contacts',
+    description: 'The people you work with at each customer.',
+    fields: {
+      name: 'Name',
+      contact: 'Contact',
+      customer: 'Customer',
+      createdAt: 'Created',
+      updatedAt: 'Updated',
+    },
+    search: {
+      label: 'Search contacts',
+      placeholder: 'Search by name or contact',
+    },
+    filters: { clear: 'Clear filters' },
+    create: {
+      action: 'New contact',
+      title: 'New contact',
+      success: 'Created contact "{{name}}"',
+    },
+    edit: { title: 'Edit contact', success: 'Saved contact "{{name}}"' },
+    empty: {
+      title: 'No contacts yet',
+      description: 'Add the people you work with at your customers.',
+      noResults: 'No contacts match your search',
+    },
+    error: {
+      title: 'Contacts could not be loaded',
+      notFound: 'This contact does not exist or has been deleted.',
+      requestFailed: 'The request failed. Please try again.',
+    },
+    form: {
+      description: 'Name the contact and choose the customer it belongs to.',
+      nameRequired: 'Enter a contact name',
+      nameTooLong: 'Use at most {{max}} characters',
+      contactTooLong: 'Use at most {{max}} characters',
+    },
+  },
+  opportunities: {
+    title: 'Opportunities',
+    description: 'The deals your team is working on.',
+    fields: {
+      name: 'Name',
+      customer: 'Customer',
+      amount: 'Amount',
+      stage: 'Stage',
+      createdAt: 'Created',
+      updatedAt: 'Updated',
+    },
+    stage: { following: 'Following up', won: 'Won', lost: 'Lost' },
+    search: {
+      label: 'Search opportunities',
+      placeholder: 'Search by name',
+    },
+    filters: {
+      stage: 'Filter by stage',
+      allStages: 'All stages',
+      clear: 'Clear filters',
+    },
+    create: {
+      action: 'New opportunity',
+      title: 'New opportunity',
+      success: 'Created opportunity "{{name}}"',
+    },
+    edit: {
+      title: 'Edit opportunity',
+      success: 'Saved opportunity "{{name}}"',
+    },
+    empty: {
+      title: 'No opportunities yet',
+      description: 'Track the deals your team is working on.',
+      noResults: 'No opportunities match your filters',
+    },
+    error: {
+      title: 'Opportunities could not be loaded',
+      notFound: 'This opportunity does not exist or has been deleted.',
+      requestFailed: 'The request failed. Please try again.',
+    },
+    form: {
+      description: 'Name the opportunity and record its amount and stage.',
+      nameRequired: 'Enter an opportunity name',
+      nameTooLong: 'Use at most {{max}} characters',
+      amountRequired: 'Enter an amount',
+      amountInvalid: 'Enter an amount of 0 or more',
+    },
   },
 };
 

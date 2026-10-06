@@ -200,16 +200,21 @@ describe('application shell', () => {
   it('collapses and expands the desktop navigation', async () => {
     renderApplication('/', true);
 
-    const sidebar = await screen.findByRole('complementary', {
+    await screen.findByRole('complementary', {
       name: 'Application navigation',
     });
 
     fireEvent.click(
       screen.getByRole('button', { name: 'Collapse navigation' }),
     );
-    expect(sidebar.closest('[data-state]')).toHaveAttribute(
-      'data-state',
-      'collapsed',
+    // Re-query after the toggle: the shell can re-mount as the asynchronous authentication and authorization settle,
+    // so the element found before the click may no longer be the live one.
+    await waitFor(() =>
+      expect(
+        screen
+          .getByRole('complementary', { name: 'Application navigation' })
+          .closest('[data-state]'),
+      ).toHaveAttribute('data-state', 'collapsed'),
     );
     expect(
       screen.getByRole('button', { name: 'Expand navigation' }),
@@ -229,9 +234,12 @@ describe('application shell', () => {
     fireEvent.click(
       screen.getByRole('button', { name: 'Expand or collapse navigation' }),
     );
-    expect(sidebar.closest('[data-state]')).toHaveAttribute(
-      'data-state',
-      'expanded',
+    await waitFor(() =>
+      expect(
+        screen
+          .getByRole('complementary', { name: 'Application navigation' })
+          .closest('[data-state]'),
+      ).toHaveAttribute('data-state', 'expanded'),
     );
     expect(
       screen.queryByRole('img', { name: /Default Template/ }),
