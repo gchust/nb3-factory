@@ -1,206 +1,94 @@
-# HTTP API Reference
+# HTTP API
+
+Read this only when a script or App code calls the routes directly. The settings pages and the exported client service already cover every normal case; App code that needs them belongs in one adapter, not scattered across pages.
 
 ## Contents
 
 - [Common contract](#common-contract)
-- [Knowledge-base actions](#knowledge-base-actions)
-- [Document actions](#document-actions)
-- [Segment actions](#segment-actions)
-- [Vector-database actions](#vector-database-actions)
+- [Knowledge bases](#knowledge-bases)
+- [Documents](#documents)
+- [Segments](#segments)
+- [Vector databases](#vector-databases)
+- [Related AI Employee routes](#related-ai-employee-routes)
 
 ## Common contract
 
-Base path: `/v2/api`. Route action URLs use `/<resource>:<action>`. All actions require authentication headers/cookies accepted by the App Authentication service. Missing user ID returns 401:
+Every path is relative to `<App base URL>/api`. Knowledge bases live under `/api/aiKnowledgeBases`, addressed by their public `key`; every other resource of the plugin — documents, segments, vector databases and the editor catalogs — lives under `/api/aiKnowledgeBase`.
 
-```json
-{ "errors": [{ "message": "Authentication required" }] }
-```
+**Machine-readable reference.** The running App serves an OpenAPI 3.1 document of every route here, with request and response schemas, at `GET /api/swagger` (JSON) and as Swagger UI at `/api/swagger/docs`, to a signed-in user or an API key. The operations carry the tag `AiKnowledgeBase` and operation ids starting with `aiKnowledgeBases`. Prefer it over this page for exact field shapes; this page explains the behaviour the schemas cannot.
 
-Success envelopes are `{"data": value}`. List helpers return:
+**Authentication and authorization.** Every route requires a signed-in session or an API key (`401 UNAUTHENTICATED` otherwise) and the grant that opens AI settings — resource `page:ai.settings`, action `access` (`403 PERMISSION_DENIED`, reason `AI_SETTINGS_ACCESS_REQUIRED`, otherwise). Both are checked before the input is validated and before anything is looked up, so a caller without access cannot learn whether a record exists. There is no finer-grained permission: whoever may open AI settings may manage every knowledge base and vector database. App code that exposes any of this to other users must put its own authorization in front and call the plugin from the server.
 
-```json
-{ "data": { "data": [], "meta": { "count": 0, "page": 1, "pageSize": 20 } } }
-```
+**Calling from a script.** Use an API key: a user with AI settings access creates one on the App's API keys settings page (the `@nocobase/app-plugin-api-keys` plugin, registered in the default template), the user stores it as `NOCOBASE_API_KEY` following [secrets.md](secrets.md), and every request sends it as `x-api-key: $NOCOBASE_API_KEY`. The key acts as its owner, so the owner's roles decide the `403`. It is not a Bearer token; `Authorization: Bearer` is not accepted, and neither is the token a sign-in response returns. A request that carries the session cookie instead, such as one made after `POST /api/auth/sign-in/email`, must also send an `Origin` header equal to the App's origin on every `POST`, `PATCH` and `DELETE`, or it is refused with `INVALID_CSRF_ORIGIN`.
 
-Errors use `{"errors":[{"message":"..."}]}`. A thrown `status` is used; otherwise a message containing “not found” maps to 404 and other failures map to 500.
+**Responses.** Success is `{ "data": <value> }`; a list is `{ "data": [...], "meta": { "page", "pageSize", "total" } }`, and an editor catalog (`storageDisks`, `vectorStoreProviders`, `vectorDatabaseProviders`) is answered whole as `{ "data": [...], "meta": { "total" } }`. Create answers `201`, delete `204` with no body, and the asynchronous custom methods `vectorizeDocuments` and `regenerateSegments` `202`. Every id — of a knowledge base record, document, segment or vector database, and the document and shard ids a segment refers to — is a string in responses, on every database, and is sent back as a string: a path parameter, `documentIds`, or a question `id`. `enabled` is always a boolean.
 
-Pagination query: `page` default 1/min 1; `pageSize` default 20/min 1/max 200; `paginate=false` disables limit/offset. Lists are sorted by `-createdAt`; caller `sort` is ignored. ID readers accept `name`, `name[]`, repeated values, and comma-separated values.
+**Errors.** Every failure is `{ "error": { "code", "status", "reason", "domain", "message", "requestId" } }`, with `fieldViolations` naming the invalid fields of a `400`. Branch on `reason`, never on `message`. The plugin's own reasons have domain `aiKnowledgeBases`; an input the schema rejects is `400 INVALID_ARGUMENT` with reason `INVALID_INPUT` and domain `app`. A JSON body is strict: an unknown field is rejected, so send only the fields you change. A JSON body over 1 MiB, or an upload request over 101 MiB, is `413 INVALID_ARGUMENT BODY_TOO_LARGE`, checked after access and before the body is read. A knowledge base, document, segment or vector database named in the path that does not exist is `404` (`KNOWLEDGE_BASE_NOT_FOUND`, `DOCUMENT_NOT_FOUND`, `SEGMENT_NOT_FOUND`, `VECTOR_DATABASE_NOT_FOUND`); one named in the body or query is `400 INVALID_ARGUMENT` with the same reason and a field violation. An unexpected failure is an opaque `500 INTERNAL`.
 
-Use an authenticated action client when possible:
+**Paging and search.** Lists take `page` (default 1) and `pageSize` (default 20, at most 100) and sort newest first. `q` searches knowledge base names, document titles and segment previews.
 
-```ts
-await nocobaseClient.action('aiKnowledgeBase', 'list', {
-  method: 'GET',
-  query: { page: 1, pageSize: 20 },
-  unwrap: 'none',
-});
-```
+## Knowledge bases
 
-## Knowledge-base actions
+| Route                                                   | Input                                                                                                                                                                                        | Result / notes                                                                                                                                                                                                                                                                                                                                      |
+| ------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `GET /aiKnowledgeBases`                                 | `page`, `pageSize`, `q`, `vectorDatabaseKey`                                                                                                                                                 | knowledge bases with `key`, `knowledgeBaseType`, `disk`, `vectorDatabaseKey`, `llmService`, `embeddingModel`, `segmentOptions`, counts. `vectorDatabaseKey` lists those that use it                                                                                                                                                                 |
+| `POST /aiKnowledgeBases`                                | JSON: `name`, `key`, `knowledgeBaseType`, `disk`, `vectorDatabaseKey`, `llmService`, `embeddingModel`, `segmentOptions`, `description`, `enabled`, `vectorStoreProvider`, `vectorStoreProps` | `201` and the record. LOCAL/READONLY require the three vector fields (`400 VECTOR_CONFIG_REQUIRED`); `disk` defaults to the first allowlisted disk (`400 STORAGE_DISK_NOT_ALLOWED` otherwise); `key` defaults to a random id; a taken key is `409 KNOWLEDGE_BASE_ALREADY_EXISTS`; an unknown `vectorDatabaseKey` is `400 VECTOR_DATABASE_NOT_FOUND` |
+| `GET /aiKnowledgeBases/{key}`                           | —                                                                                                                                                                                            | one knowledge base                                                                                                                                                                                                                                                                                                                                  |
+| `PATCH /aiKnowledgeBases/{key}`                         | JSON: the fields to change; `key` cannot change                                                                                                                                              | the record. Changing `knowledgeBaseType` → `400 KNOWLEDGE_BASE_TYPE_IMMUTABLE`. Changing a vector field does not rebuild vectors                                                                                                                                                                                                                    |
+| `DELETE /aiKnowledgeBases/{key}`                        | —                                                                                                                                                                                            | `204`; deletes documents, files, segments, and vectors (best-effort)                                                                                                                                                                                                                                                                                |
+| `POST /aiKnowledgeBases/{key}/search`                   | JSON: `query`, optional `topK` (1–100), `score`                                                                                                                                              | `[{ id, content, score, title, filename, matchedQuestions, metadata }]`, best first                                                                                                                                                                                                                                                                 |
+| `POST /aiKnowledgeBases/{key}/vectorizeDocuments`       | JSON: optional `documentIds`; every document of the knowledge base without it                                                                                                                | `202 { data: { queued: <count> } }`. Non-LOCAL → `400 FAILED_PRECONDITION LOCAL_KNOWLEDGE_BASE_REQUIRED`                                                                                                                                                                                                                                            |
+| `GET /aiKnowledgeBases/{key}/uploadConstraints`         | —                                                                                                                                                                                            | `{ acceptedExtensions, maxFileSizeBytes }` for client-side validation; never a disk or URL                                                                                                                                                                                                                                                          |
+| `GET /aiKnowledgeBases/{key}/vectorStoreStatus`         | —                                                                                                                                                                                            | `{ changed, vectorStoreChanged, vectorDatabaseChanged, ... }` — whether vector settings changed since last confirmed                                                                                                                                                                                                                                |
+| `POST /aiKnowledgeBases/{key}/confirmVectorStoreChange` | —                                                                                                                                                                                            | acknowledges the change and answers the new status; does not re-vectorize                                                                                                                                                                                                                                                                           |
+| `GET /aiKnowledgeBase/storageDisks`                     | —                                                                                                                                                                                            | the allowlist as `[{ value, label }]`                                                                                                                                                                                                                                                                                                               |
+| `GET /aiKnowledgeBase/vectorStoreProviders`             | —                                                                                                                                                                                            | provider names other plugins registered for EXTERNAL; empty by default                                                                                                                                                                                                                                                                              |
 
-### `GET /aiKnowledgeBase:list`
+## Documents
 
-Query: pagination fields. Returns knowledge-base records with inline `vectorDatabaseKey`, `llmService`, and `embeddingModel`. Current route ignores name/key filters even though the default client sends them.
+| Route                                                  | Input                                                                      | Result / notes                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| ------------------------------------------------------ | -------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `GET /aiKnowledgeBase/documents`                       | `knowledgeBaseKey`, `page`, `pageSize`, `q`                                | documents with `indexStatus`, `segmentStatus`, `errorMessage`, `segmentErrorMessage`, `segmentCount`                                                                                                                                                                                                                                                                                                                           |
+| `POST /aiKnowledgeBase/documents`                      | `multipart/form-data` with exactly one field `file` and `knowledgeBaseKey` | `201` and the stored document, `PENDING`; returns once vectorization is queued, before parsing. `415 UNSUPPORTED_UPLOAD_CONTENT_TYPE` not multipart, `400 UNSUPPORTED_FILE_TYPE` an extension not in `uploadConstraints`, `413 UPLOAD_TOO_LARGE` a file over 100 MiB (`413 BODY_TOO_LARGE` a request over 101 MiB), `400 KNOWLEDGE_BASE_NOT_FOUND` unknown key, `400 LOCAL_KNOWLEDGE_BASE_REQUIRED`, `503 STORAGE_UNAVAILABLE` |
+| `GET /aiKnowledgeBase/documents/{documentId}`          | —                                                                          | one document                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| `GET /aiKnowledgeBase/documents/{documentId}/download` | —                                                                          | the stored file as an attachment                                                                                                                                                                                                                                                                                                                                                                                               |
+| `DELETE /aiKnowledgeBase/documents/{documentId}`       | —                                                                          | `204`; removes vectors, segments, shards and the file                                                                                                                                                                                                                                                                                                                                                                          |
+| `POST /aiKnowledgeBase/documents/batchDelete`          | JSON: `documentIds` (1–100)                                                | `204`; nothing is deleted when one of them does not exist (`400 DOCUMENT_NOT_FOUND` naming each, even for a single id; the path `DELETE` answers `404`)                                                                                                                                                                                                                                                                        |
 
-### `POST /aiKnowledgeBase:create`
+If vectorization cannot be dispatched after an upload, the request still succeeds: the document comes back with `indexStatus: ERROR` and a message, and is retried with `vectorizeDocuments`, not by uploading again.
 
-JSON body is `KnowledgeBaseMutation`. Server default type is LOCAL when omitted, but application code should always send it. Type must be `LOCAL`, `READONLY`, or `EXTERNAL`. Generates 32-character `key` and `knowledgeBaseOuterId` when omitted; returns the created record.
+## Segments
 
-LOCAL and READONLY require non-empty `vectorDatabaseKey`, `llmService`, and `embeddingModel`. Their provider defaults to `NocobaseLocalVectorStore` and `NocobaseReadOnlyVectorStore`, respectively. The three fields are normalized and stored directly on the knowledge-base record; creation computes `vectorStoreConfigHash` and initializes `vectorStoreUpdatedAt` and `confirmVectorStoreChanged` to the same time. EXTERNAL uses `vectorStoreProvider` or `externalProvider`.
+A segment is addressed by its document and its `segmentUid`. Every change is LOCAL-only, queues a re-embedding of the document, and returns before it finishes.
 
-### `POST /aiKnowledgeBase:update?filterByTk=<id>`
+| Route                                                                  | Input                                                                                                                                                 | Notes                                                                                                                                         |
+| ---------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| `GET /aiKnowledgeBase/documents/{documentId}/segments`                 | `page`, `pageSize`, `q`, `enabled`                                                                                                                    | segment metadata without content                                                                                                              |
+| `GET /aiKnowledgeBase/documents/{documentId}/segments/{segmentUid}`    | —                                                                                                                                                     | metadata plus `title`, `content`, `questions`                                                                                                 |
+| `PATCH /aiKnowledgeBase/documents/{documentId}/segments/{segmentUid}`  | JSON: `title`, `content`, `questions: [{ id, content, enabled, hash }]`, `enabled`, and `contentHash` (current) whenever the text or questions change | stale hash → `409 ABORTED SEGMENT_CONTENT_CHANGED`; keep the returned `id`/`hash` of existing questions; disabled segments are not vectorized |
+| `DELETE /aiKnowledgeBase/documents/{documentId}/segments/{segmentUid}` | —                                                                                                                                                     | `204`                                                                                                                                         |
+| `POST /aiKnowledgeBase/documents/{documentId}/regenerateSegments`      | JSON: optional `segmentOptions: { enabled, chunkSize, chunkOverlap }`                                                                                 | `202`; re-segments the document; saves the options on it; discards manual edits                                                               |
 
-JSON body: partial mutation; body `id` is fallback. Missing ID returns 400. The server validates the existing record merged with supplied LOCAL/READONLY vector fields. When one of `vectorDatabaseKey`, `llmService`, or `embeddingModel` materially changes, it recomputes `vectorStoreConfigHash` and refreshes `vectorStoreUpdatedAt`; ordinary field updates preserve both values. Supplied segment options are normalized. Returns a record or JSON `null` if ID does not exist.
+## Vector databases
 
-### `POST /aiKnowledgeBase:destroy?filterByTk[]=<id>`
+| Route                                                       | Input                                                                                                        | Result / notes                                                                                                                                                              |
+| ----------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `GET /aiKnowledgeBase/vectorDatabases`                      | `page`, `pageSize`, `enabled`                                                                                | records with `key`, `name`, `provider`, `enabled`, `managedBy`; `connectProps` always `{}`                                                                                  |
+| `POST /aiKnowledgeBase/vectorDatabases`                     | JSON: `name`, `connectProps`, optional `key`, `provider`, `databaseSpec`, `enabled`, `skipTableExistedCheck` | `201` and the record. Existing table → `409 ALREADY_EXISTS TABLE_ALREADY_EXISTS` unless `skipTableExistedCheck: true`; invalid `connectProps` → `400 INVALID_CONNECT_PROPS` |
+| `GET /aiKnowledgeBase/vectorDatabases/{id}`                 | —                                                                                                            | one record, redacted                                                                                                                                                        |
+| `PATCH /aiKnowledgeBase/vectorDatabases/{id}`               | JSON: the fields to change; `connectProps` is merged into the stored connection, `null` keeps it             | config-managed → `400 FAILED_PRECONDITION VECTOR_DATABASE_CONFIG_MANAGED`                                                                                                   |
+| `DELETE /aiKnowledgeBase/vectorDatabases/{id}`              | —                                                                                                            | `204`; referenced → `400 VECTOR_DATABASE_IN_USE`; config-managed → `400 VECTOR_DATABASE_CONFIG_MANAGED`                                                                     |
+| `POST /aiKnowledgeBase/vectorDatabases/{id}/testConnection` | —                                                                                                            | tests the stored connection: `{ success, error? }`, HTTP 200 either way                                                                                                     |
+| `POST /aiKnowledgeBase/vectorDatabases/testConnection`      | JSON: `provider`, `connectProps`                                                                             | tests an unsaved connection                                                                                                                                                 |
+| `GET /aiKnowledgeBase/vectorDatabaseProviders`              | —                                                                                                            | `[{ name: "NocobaseDefaultPGVectorProvider", spec: "PGVector" }]`                                                                                                           |
 
-One or more IDs required. Accepts comma-separated/repeated variants. For LOCAL bases, attempts vector deletion by `knowledgeBaseOuterId`; cleanup failures are logged and do not block deletion. Deletes documents/files/segments/shards, then bases. Returns `{"data":{"success":true}}`.
+To find the knowledge bases that use a vector database, list them with `GET /aiKnowledgeBases?vectorDatabaseKey=<key>`. `connectProps` for PGVector is `{ host, port, user, password?, database, tableName }` — see [vector-databases.md](vector-databases.md).
 
-### `POST /aiKnowledgeBase:runHitTest`
+## Related AI Employee routes
 
-JSON body: required `knowledgeBaseKey` and non-empty/truthy `query`; optional `topK`, `score`. Missing fields return 400. `topK` is converted with `Number(value) || undefined`; `score` with `Number(value)`. Returns an array of `{id,content,score,title?,filename?,matchedQuestions,metadata}`. Validate numeric ranges application-side.
+Owned by the AI Employee plugin and documented in its Skill; listed here because a knowledge-base setup uses them.
 
-### `POST /aiKnowledgeBase:confirmVectorStoreChanged?key=<key>`
-
-Key may be in query or JSON body. Required; sets `confirmVectorStoreChanged` to current time and returns success. No not-found check.
-
-### `GET /aiKnowledgeBase:checkVectorStoreChanged?key=<key>`
-
-Required key. Returns `null` if absent. Otherwise compares the knowledge base's inline `vectorStoreUpdatedAt` and its vector database's `updatedAt` against `confirmVectorStoreChanged` (falling back to base creation time), and returns `{key,changed,confirmVectorStoreChanged,vectorStoreChanged,vectorDatabaseChanged,vectorStoreUpdatedAt,vectorDatabaseUpdatedAt}`. Comparisons are strict; equal timestamps are unchanged.
-
-### `GET /aiKnowledgeBase:listExternalVectorStoreProviders`
-
-Returns AI Manager provider names excluding the two built-ins. This package provides no public registration API for new names.
-
-## Document actions
-
-### `GET /aiKnowledgeBaseDocs:list`
-
-Pagination plus optional `filter[knowledgeBaseKey]`. Returns documents with `accessAbility:"readWrite"`. Current route ignores title search and other caller filters.
-
-### `GET /aiKnowledgeBaseDocs:get?filterByTk=<id>`
-
-ID required. Returns document plus `accessAbility:"readWrite"`; 404 if absent.
-
-### `POST /aiKnowledgeBaseDocs:upload?knowledgeBaseKey=<key>`
-
-Request content type must be `multipart/form-data`. Send exactly one `file` field. `knowledgeBaseKey` is required and may be supplied in the query or as one text form field; using the query is recommended. The caller sends no file-metadata fields and no storage disk.
-
-```bash
-curl -X POST "$NOCOBASE_URL/v2/api/aiKnowledgeBaseDocs:upload?knowledgeBaseKey=$KNOWLEDGE_BASE_KEY" \
-  -H "Authorization: Bearer $NOCOBASE_TOKEN" \
-  -F 'file=@./manual.pdf'
-```
-
-The server resolves the knowledge base and rejects uploads unless it is LOCAL. It accepts exactly these case-normalized filename extensions: `.pdf`, `.pptx`, `.doc`, `.docx`, `.xls`, `.xlsx`, `.xlsm`, `.txt`, `.md`, `.json`, and `.csv`. The maximum file size is 104857600 bytes (100 MiB). MIME type is recorded but does not replace the extension check.
-
-The server selects the storage disk from the knowledge-base record, writes the uploaded bytes there, creates one document with pending processing statuses, and attempts to dispatch vectorization to the `default` queue. Success returns that single document in the normal `{"data":{...}}` envelope. Queue dispatch is not vectorization completion.
-
-Reject malformed multipart bodies, multiple or missing file fields, a missing key, a missing/non-LOCAL knowledge base, an unsupported extension, an oversized file, a missing or disallowed configured disk, or storage failure. If metadata persistence fails after the object is written, the server attempts to delete that object and preserves the original error; cleanup failure is logged with disk and path. If queue dispatch fails after document creation, the upload still returns that document with `indexStatus:"ERROR"` and a retryable `errorMessage`, so callers must not upload the file again. Retry through the vectorization action. After a successful response, later parsing or vectorization failures are reported asynchronously by the document's `indexStatus`, `segmentStatus`, `errorMessage`, and `segmentErrorMessage`.
-
-### `POST /aiKnowledgeBaseDocs:destroy?filterByTk[]=<id>`
-
-IDs required. Deletes segment/shard/source records/files, deletes documents, refreshes statistics for affected keys, returns success.
-
-### `POST /aiKnowledgeBaseDocs:vectorization`
-
-Query: optional `knowledgeBaseKey`; optional IDs as `id`, `id[]`, repeated, or comma-separated. Matching documents are dispatched. If neither is provided, all documents are selected—treat this as destructive/high-impact. Returns `{queued:<count>}`; this is queue dispatch count, not completed count.
-
-### `GET /aiKnowledgeBaseDocs:getUploadStorage?knowledgeBaseKey=<key>`
-
-Required existing key. This is a safe upload-capability lookup, despite the legacy action name. It returns the fixed values needed for client-side validation:
-
-```json
-{
-  "data": {
-    "acceptedExtensions": [
-      ".pdf",
-      ".pptx",
-      ".doc",
-      ".docx",
-      ".xls",
-      ".xlsx",
-      ".xlsm",
-      ".txt",
-      ".md",
-      ".json",
-      ".csv"
-    ],
-    "maxFileSizeBytes": 104857600
-  }
-}
-```
-
-The response must not expose provider credentials, upload URLs, or let the caller select or override the knowledge base's storage disk. A missing knowledge base returns 404.
-
-## Segment actions
-
-### `GET /aiKnowledgeBaseDocSegments:list?knowledgeBaseDocsId=<id>`
-
-Document ID required; pagination supported. Returns segment metadata, not shard content. Current route ignores `knowledgeBaseKey`, keyword, and enabled filters sent by the default client.
-
-### `GET /aiKnowledgeBaseDocSegments:getSegment?knowledgeBaseDocsId=<id>&segmentUid=<uid>`
-
-Both required. Returns segment metadata merged with shard-held `{title,content,questions}`; 404 if segment or shard cannot be resolved.
-
-### `POST /aiKnowledgeBaseDocSegments:updateSegment`
-
-JSON: `knowledgeBaseDocsId`, `segmentUid`, optional `title`, required application-side `content`, and current `contentHash`. The route itself does not prevalidate required fields. A stale hash returns 409 `Segment content has changed`. Rewrites shard metadata/segment metadata and dispatches rebuild-only vectorization.
-
-### `POST /aiKnowledgeBaseDocSegments:updateQuestions`
-
-JSON: `knowledgeBaseDocsId`, `segmentUid`, `questions` array (defaults empty), and current `contentHash`. Each question shape is `{id,content,enabled,hash}`; application DTO fields other than content are optional. Rewrites segment metadata and dispatches rebuild-only vectorization. The server does not regenerate IDs/hashes for edited caller-supplied questions.
-
-### `POST /aiKnowledgeBaseDocSegments:setEnabled`
-
-JSON: `knowledgeBaseDocsId`, `segmentUid`, `enabled`. Missing segment returns 404. Enabled is true unless exactly false. Dispatches rebuild-only job and returns the merged segment.
-
-### `POST /aiKnowledgeBaseDocSegments:deleteSegment`
-
-JSON: `knowledgeBaseDocsId`, `segmentUid`. Missing segment returns 404. Deletes only the segment row, dispatches rebuild-only job, and returns success. The containing shard metadata still retains the old content entry; treat that as retained internal data until a full regeneration removes the shard.
-
-### `POST /aiKnowledgeBaseDocSegments:regenerate`
-
-JSON: `knowledgeBaseDocsId`, optional `segmentOptions`. When supplied, options are normalized and saved on the document. Dispatches a full job and returns success.
-
-## Vector-database actions
-
-### `GET /aiVectorDatabases:list`
-
-Pagination fields; returns all records sorted newest first. Every record returns `connectProps: {}` and omits the internal `connectPropsHash`, for both manual and config-managed connections. Saved credentials remain on the server.
-
-### `GET /aiVectorDatabases:get?filterByTk=<id>`
-
-ID required; 404 if absent. Returns the same redacted connection shape as the list action.
-
-### `POST /aiVectorDatabases:create`
-
-JSON: `name`, optional `key`, optional `provider` default `NocobaseDefaultPGVectorProvider`, optional `databaseSpec` default `PGVector`, required provider-valid `connectProps`, optional `enabled` default true, optional `skipTableExistedCheck` default false. Before create checks the target table; existing table returns 409 with `Table "..." already exists` unless skip is true. Generates 32-character key and SHA-256 `connectPropsHash`.
-
-These are HTTP mutation fields, not application configuration fields. `ai.aiKnowledgeBase.vectorDatabases` in `config.yml` requires `key` and `connection`, while `name` is optional and defaults to `key`. Configuration `connection` corresponds to HTTP/client `connectProps`. See the [configuration and mutation examples](vector-databases.md#configuration-ownership); use one management path for a given key, not both.
-
-### `POST /aiVectorDatabases:update?filterByTk=<id>`
-
-ID query or body `id`; required. 404 if absent. Provider defaults to the existing value. Omitted or null `connectProps` preserves the saved connection; a supplied object merges into it, preserving omitted fields and replacing explicitly supplied values. Validates connection fields but does not run the create-time existing-table check. Recomputes the internal hash and returns a redacted record with `connectProps: {}` and no `connectPropsHash`, as does create. Config-managed records cannot be updated through this action.
-
-### `POST /aiVectorDatabases:destroy?filterByTk[]=<id>`
-
-IDs required. Returns 409 `Vector database is used by a knowledge base` when a relation is found; otherwise deletes and returns success. Back up and verify relation consistency first.
-
-### `GET /aiVectorDatabases:listProviders`
-
-Returns `{name,spec}` only. Current built-in is `{name:"NocobaseDefaultPGVectorProvider",spec:"PGVector"}`; field definitions are not currently returned by this route.
-
-### `GET /aiVectorDatabases:listEnabled`
-
-Returns enabled vector-database records sorted by name, with `connectProps: {}` and no `connectPropsHash`.
-
-### `POST /aiVectorDatabases:testConnection`
-
-JSON: optional provider default built-in, `connectProps`. Returns `{success:true}` or `{success:false,error}` and normally remains HTTP 200. Built-in test validates fields and executes `SELECT 1`.
-
-For a saved connection, send `filterByTk=<id>` with no connection body. The server reads its saved credentials and tests them without returning them to the client. This also supports config-managed records.
-
-### `GET /aiVectorDatabases:findRelatedKnowledgeBase?vectorDatabaseKey=<key>`
-
-`key` is an alias. Missing key returns an empty array. Relationships are resolved directly from knowledge-base records whose inline `vectorDatabaseKey` matches the supplied key.
+| Route                                   | Use                                                                                                                                                                                  |
+| --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `GET /aiEmployee/models?type=EMBEDDING` | the enabled services whose provider embeds, each with its suggested embedding ids in `enabledModels` (a static list, not the account's models) — what the knowledge-base form offers |
+| `PATCH /aiEmployees/{username}`         | bind knowledge bases — see [knowledge-bases-and-retrieval.md](knowledge-bases-and-retrieval.md#bind-a-knowledge-base-to-an-ai-employee)                                              |

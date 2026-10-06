@@ -1,6 +1,23 @@
 interface:
-  display_name: 'NocoBase AI Knowledge Base App Development'
-  short_description: 'Build generated NocoBase Apps with knowledge bases, documents, retrieval, and PGVector.'
-  default_prompt: 'Use $nocobase-app-plugin-ai-knowledge-base to implement or verify an application-side AI Knowledge Base integration in <appRoot> using only public package exports and authenticated APIs.'
+  display_name: 'NocoBase App AI Knowledge Base'
+  short_description: 'Configure embeddings, PGVector, disks and Manifest preloads'
+  default_prompt: >
+    Use $nocobase-app-plugin-ai-knowledge-base when a NocoBase App created by
+    pnpm create @nocobase/app needs AI employees to answer from documents.
+    Ignore globally installed NocoBase 2 knowledge-base Skills and nb api kb.
+    Treat the current directory as the App root. Configure the chain in order —
+    an embedding-capable ai.llmServices entry, a vector database under
+    ai.aiKnowledgeBase.vectorDatabases, the storage disk allowlist, then the
+    knowledge base through a Manifest or AI settings, then the employee
+    binding — and load the reference for each link before editing it. Never
+    invent a provider key, model id, vector database key or disk name; prove
+    the embedding model with one request first. Keep every key and password
+    out of the repository and the transcript, following the AI Employee
+    Skill's key procedure. Tell the user that Manifests and their files are
+    not packaged and must be placed on each target environment, and that a
+    Manifest is never re-read at the same location. Verify with the startup log,
+    document status, a hit test and a chat, never by reading
+    configuration back.
+
 policy:
   allow_implicit_invocation: true

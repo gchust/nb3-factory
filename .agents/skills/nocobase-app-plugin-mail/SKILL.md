@@ -4,14 +4,26 @@ description: Use when integrating the NocoBase 3 Mail plugin into an application
 argument-hint: "[action: inspect|configure|integrate|send|diagnose] [target]"
 allowed-tools: Read, Grep, Glob, Bash
 owner: mail-plugin-team
-version: 1.1.0
-last-reviewed: 2026-09-21
+version: 1.1.2
+last-reviewed: 2026-09-26
 risk-level: medium
 ---
 
 # Goal
 
 Provide a safe, contract-first workflow for integrating the installed `@nocobase/app-plugin-mail` package into a NocoBase 3 application and validating the requested behavior.
+
+## Contents
+
+- [Scope](#scope)
+- [Input Contract](#input-contract)
+- [Mandatory Clarification Gate](#mandatory-clarification-gate)
+- [Workflow](#workflow)
+- [Reference Loading Map](#reference-loading-map)
+- [Safety Gate](#safety-gate)
+- [Rollback Guidance](#rollback-guidance)
+- [Verification Checklist](#verification-checklist)
+- [References](#references)
 
 # Scope
 
@@ -41,7 +53,7 @@ When the user says “you decide”, use `provider=auto`, `scope=local`, and `va
 
 1. Inspect the installed package version, public exports and types, application `client/plugins.ts`, `server/plugins.ts`, and relevant configuration before editing.
 2. Select the smallest matching reference from the loading map. Read additional references only when the task crosses their boundary.
-3. Check ownership and permissions. The application owns registration, provider configuration, role grants, business associations, and page composition; Mail owns accounts, authorization, submissions, sync runs, cursors, and queue/outbox orchestration.
+3. Check ownership and permissions. The application owns registration, provider configuration, role grants, business associations, and page composition; Mail owns accounts, authorization, submissions, sync runs, cursors, and background job and outbox orchestration.
 4. Implement through public components, service tokens, and HTTP APIs. Resolve `mailServiceToken` or `mailClientToken` instead of constructing internal stores or runtimes.
 5. Before live account or mailbox operations, restate the target provider, account or mailbox, operation, and authorized scope. Proceed only when the input contract and gate are satisfied.
 6. Validate the result with the checklist below and the relevant reference. Separate static checks, mocked provider checks, and live provider results.
@@ -52,10 +64,10 @@ When the user says “you decide”, use `provider=auto`, `scope=local`, and `va
 
 | Task                                                                                                                   | Read                                                                             |
 | ---------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
-| Register Mail, configure a provider, connect an account, configure OAuth/push, or replace credential storage           | [Configuration and accounts](references/configuration-and-accounts.md)           |
+| Register Mail, configure provider quotas, connect an account, configure OAuth/push, or replace credential storage      | [Configuration and accounts](references/configuration-and-accounts.md)           |
 | Embed a production workspace, connect business records, customize reading/composition, or add management and log pages | [Client integration](references/client-integration.md)                           |
 | Send from business code, manage drafts or attachments, schedule or bulk-send, or handle uncertain delivery             | [Sending and drafts](references/sending-and-drafts.md)                           |
-| Start or recover synchronization, handle incomplete content, or diagnose stalled tasks and logs                        | [Synchronization and diagnostics](references/synchronization-and-diagnostics.md) |
+| Set an initial sync boundary, handle Gmail quota errors, recover synchronization, or diagnose stalled tasks and logs   | [Synchronization and diagnostics](references/synchronization-and-diagnostics.md) |
 
 # Safety Gate
 
@@ -92,7 +104,7 @@ For a wrong configuration write, stop dependent work, restore the previous value
 - [ ] Every write has an immediate read-back or operation-status check.
 - [ ] An allowed case and a denied or missing-input case were verified.
 - [ ] Credentials and access tokens are absent from captured output.
-- [ ] External authorization, delivery, queue processing, and production availability are reported separately from local evidence.
+- [ ] External authorization, delivery, background job processing, and production availability are reported separately from local evidence.
 
 Minimum scenarios: a normal local inspection; a normal configured or integrated path; missing required input; invalid provider or permission; and an authorized live operation or an explicit record that live validation is unavailable.
 
@@ -100,5 +112,7 @@ Minimum scenarios: a normal local inspection; a normal configured or integrated 
 
 - [Configuration and accounts](references/configuration-and-accounts.md)
 - [Client integration](references/client-integration.md)
+- [Public API inventory](references/public-api.md)
+- [HTTP API](references/http-api.md)
 - [Sending and drafts](references/sending-and-drafts.md)
 - [Synchronization and diagnostics](references/synchronization-and-diagnostics.md)
