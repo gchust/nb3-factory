@@ -17,6 +17,21 @@ import { collectAgentFailure } from '../agent-failure.mjs';
 const workflows = path.resolve(import.meta.dirname, '..', '..', 'workflows');
 const read = (name) => readFileSync(path.join(workflows, name), 'utf8');
 const task = read('code-agent-task.yml');
+// verify-final, publish, publish-failed and preview-build-failed apply the
+// patch through this composite action instead of repeating its steps.
+const applyPatch = readFileSync(
+  path.resolve(
+    import.meta.dirname,
+    '..',
+    '..',
+    'actions',
+    'apply-task-patch',
+    'action.yml',
+  ),
+  'utf8',
+);
+const applyStep = (job) =>
+  stepOf(job, 'Apply the verified patch to a fresh application base');
 const jobOf = (source, name) => {
   const start = source.indexOf(`\n  ${name}:\n`);
   assert.ok(start >= 0, `missing job ${name}`);
@@ -38,16 +53,15 @@ test('only the Agent job checks out full application history', () => {
     stepOf(jobOf(task, 'agent'), 'Check out application base'),
     /fetch-depth: 0/,
   );
+  const checkout = stepOf(applyPatch, 'Check out fresh application base');
+  assert.match(checkout, /ref: \$\{\{ inputs\.base-sha \}\}/);
+  assert.doesNotMatch(checkout, /fetch-depth/);
   for (const name of ['verify-final', 'publish', 'preview-build-failed']) {
-    const checkout = stepOf(
-      jobOf(task, name),
-      'Check out fresh application base',
-    );
     assert.match(
-      checkout,
-      /ref: \$\{\{ needs\.prepare\.outputs\.base_sha \}\}/,
+      applyStep(jobOf(task, name)),
+      /base-sha: \$\{\{ needs\.prepare\.outputs\.base_sha \}\}/,
+      name,
     );
-    assert.doesNotMatch(checkout, /fetch-depth/, name);
   }
 });
 
@@ -68,7 +82,7 @@ test('publication chooses its base after the verified patch is applied', () => {
   }
   const publish = jobOf(task, 'publish');
   const order = [
-    'Apply preserved patch to the task branch',
+    'Apply the verified patch to a fresh application base',
     'Choose the publication base',
     'Commit and push task branch',
     'Create or update Pull Request',
@@ -93,22 +107,19 @@ test('publication chooses its base after the verified patch is applied', () => {
 
 test('downstream jobs download only the small patch artifact', () => {
   const name = '${{ needs.prepare.outputs.issue_number }}';
-  for (const [job, target] of [
-    ['verify-final', 'agent-artifacts'],
-    ['publish', 'agent-artifacts'],
-    ['preview-build-failed', 'agent-artifacts'],
-    ['report-failure', 'failure-artifacts'],
+  // The composite action's steps are indented two levels less than a job's.
+  for (const [job, source, target, issue, indent] of [
+    ['apply-task-patch', applyPatch, 'agent-artifacts', '${{ inputs.issue-number }}', ' '.repeat(8)],
+    ['report-failure', jobOf(task, 'report-failure'), 'failure-artifacts', name, ' '.repeat(10)],
   ]) {
-    const source = jobOf(task, job);
     const copy = source
-      .split('\n      - name: ')
-      .find((step) => step.includes(`name: factory-patch-${name}\n`));
+      .split(/\n {4,6}- name: /)
+      .find((step) => step.includes(`name: factory-patch-${issue}\n`));
     assert.ok(copy?.includes(`path: ${target}`), job);
-    assert.match(copy, /id: patch_copy\n {8}continue-on-error: true\n/, job);
+    assert.match(copy, /id: patch_copy\n\s+continue-on-error: true\n/, job);
     // The complete record is read only when the small copy is missing.
-    const fallback = stepOf(
-      source,
-      'Fall back to the complete Code Agent artifact',
+    const fallback = source.slice(
+      source.indexOf('- name: Fall back to the complete Code Agent artifact\n'),
     );
     assert.match(
       fallback,
@@ -116,23 +127,30 @@ test('downstream jobs download only the small patch artifact', () => {
       job,
     );
     assert.ok(
-      fallback.includes(
-        `name: factory-agent-${name}\n          path: ${target}`,
-      ),
+      fallback.includes(`name: factory-agent-${issue}\n${indent}path: ${target}`),
+      job,
+    );
+  }
+  for (const job of ['verify-final', 'publish', 'preview-build-failed']) {
+    assert.match(
+      applyStep(jobOf(task, job)),
+      /issue-number: \$\{\{ needs\.prepare\.outputs\.issue_number \}\}/,
       job,
     );
   }
   // The complete diagnostics are still uploaded once, for reports and
-  // recovery, and downloaded only by the four fallbacks above.
+  // recovery, and downloaded only by the composite action's fallback and the
+  // failure notice's.
   const agent = jobOf(task, 'agent');
-  assert.equal([...task.matchAll(/name: factory-agent-\$/g)].length, 5);
+  assert.equal([...task.matchAll(/name: factory-agent-\$/g)].length, 2);
+  assert.equal([...applyPatch.matchAll(/name: factory-agent-\$/g)].length, 1);
   assert.equal(
     [
       ...task.matchAll(
         /- name: Fall back to the complete Code Agent artifact\n/g,
       ),
     ].length,
-    4,
+    1,
   );
   assert.ok(
     agent.indexOf('- name: Upload Code Agent patch and diagnostics') <
