@@ -1,4 +1,4 @@
-import { Home } from 'lucide-react';
+import { FileText, Home, MessageSquareText } from 'lucide-react';
 import {
   defineAppRoutes,
   defineSettingsRoutes,
@@ -15,6 +15,38 @@ const appRoutes: AppClientRouteContribution = defineAppRoutes([
     name: 'home',
     navigation: { title: 'navigation.home', icon: Home },
     path: '/',
+  },
+  {
+    // Both new pages declare their own `authz` rather than leaning on a default: the page id is what the seeded
+    // page grant references, so the documents and assistant pages stay grantable and narrowable from the
+    // authorization workspace. `home` above is the only page that opts out.
+    auth: 'required',
+    authz: { resource: { type: 'page', id: 'documents' }, action: 'access' },
+    componentLoader: () => import('./pages/documents/index.js'),
+    name: 'documents',
+    navigation: { title: 'navigation.documents', icon: FileText },
+    path: '/documents',
+    children: [
+      {
+        // The record page is a child so its path is addressable and it covers the list, and the
+        // assistant can link a cited document straight to it. It inherits `documents`'s access check.
+        // The path is relative to the parent: a child's path is appended to the parent's, so
+        // `:id` resolves to `/documents/:id`. Writing `/documents/:id` here would register
+        // `/documents/documents/:id` and leave `/documents/:id` to the wildcard redirect.
+        auth: 'required',
+        componentLoader: () => import('./pages/documents/detail.js'),
+        name: 'document-detail',
+        path: ':id',
+      },
+    ],
+  },
+  {
+    auth: 'required',
+    authz: { resource: { type: 'page', id: 'assistant' }, action: 'access' },
+    componentLoader: () => import('./pages/assistant/index.js'),
+    name: 'assistant',
+    navigation: { title: 'navigation.assistant', icon: MessageSquareText },
+    path: '/assistant',
   },
   {
     auth: 'guest',
