@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "inputHash": "55eac33225aa7818eeb55de6694790fc36c7300b2796b9e614b175f34477c833",
+  "inputHash": "bad410ea9821fa88164d846913db412c709040b59975b715d033ead8ccb4ecb6",
   "findings": [
     {
       "id": "460:36434284393:1:F2",
@@ -10878,6 +10878,358 @@
         }
       ],
       "fingerprint": "9da954929a90936e49ef5a288aba3261a6f7ea80a0a81de9f535183a226a199f"
+    },
+    {
+      "id": "598:37453041764:1:F2",
+      "report": "598:37453041764:1",
+      "issue": 598,
+      "taskTitle": "内部资料阅读与临时共享",
+      "appVersion": "1.0.0-beta.55",
+      "appTemplate": "@nocobase/app-template-default",
+      "finding": {
+        "id": "F2",
+        "kind": "issue",
+        "owner": "plugin",
+        "confidence": "confirmed",
+        "severity": "major",
+        "status": "resolved",
+        "title": "记录级\"指定记录\"选择无法直接用于 integer/increments 主键",
+        "detail": "selection.records(ids) 只接受非空字符串（core/selection.js parseRecordSelection），授权层把 ids 原样编译成 id $eq '<string>'（app-plugin-authorization/database/scope.js idsScope，经 authorizer.js compileConstraints），而 @nocobase/db 的 Repository 过滤值校验对 integer/increments 只接受 number，字符串会抛 INVALID_FILTER。rule-validation.js 的 validateDataScopeRule 只对 recordAccess 选择做校验，无法在规则创建时发现该不匹配。",
+        "impact": "使用默认自增主键的业务集合无法使用\"指定记录\"共享/限制；错误在读取阶段才以 400 INVALID_FILTER 暴露，诊断成本高（本案例因此连续失败 3 轮验收）。",
+        "suggestedChange": "在 idsScope 编译 records 选择时按主键类型强制转换（或增长 FilterOperator 支持 $in），或在规则/选择写入时校验 id 与主键类型并给出可操作错误。",
+        "evidence": [
+          "E1",
+          "E3",
+          "E2",
+          "E4",
+          "E5",
+          "E6",
+          "E7",
+          "E35"
+        ],
+        "diagnosis": {
+          "category": "runtime-defect",
+          "trigger": "应用按默认 increments('id') 建模，管理员对某条记录创建共享/限制规则（selection.records([stringId])）后，阅读者访问该记录。",
+          "expected": "共享/限制规则按选择命中记录，阅读者读取被允许的记录；不匹配在规则创建时就应被拒绝。",
+          "actual": "授权层生成 id $eq '<numeric string>'，Repository 对 integer 拒绝该值并抛 INVALID_FILTER，记录始终打不开。",
+          "workaround": "把集合主键改为 uuid（或 bigInt/decimal），并在 create grant 写字段加入 id、由服务端生成 randomUUID。",
+          "acceptance": "对 string 友好主键集合按记录共享可命中、撤销即失效；且创建规则时若 id 与主键类型不匹配就立即报错。"
+        }
+      },
+      "targets": [
+        "@nocobase/app-plugin-authorization",
+        "@nocobase/authorization",
+        "@nocobase/db"
+      ],
+      "paths": [
+        "packages/@nocobase/app-plugin-authorization/dist/server/database/authorizer.js",
+        "packages/@nocobase/app-plugin-authorization/dist/server/database/scope.js",
+        "packages/@nocobase/app-plugin-authorization/dist/server/extension/rule-validation.js",
+        "packages/@nocobase/authorization/dist/core/selection.js",
+        "packages/@nocobase/db/dist/src/repository/repository.js"
+      ],
+      "evidence": [
+        {
+          "id": "E1",
+          "kind": "code",
+          "path": "packages/@nocobase/app-plugin-authorization/dist/server/database/scope.js",
+          "observation": "Authorization 数据库作用域刻意用字面 condition 构造、而不经 FilterBuilder：文件头注释说明 Collection 注册表只记录字段名、不记录字段类型，因此无法按类型选择 string()/number()。",
+          "lines": [
+            1,
+            5
+          ],
+          "excerpt": "/**\n * Conditions are built literally rather than through `FilterBuilder`, which\n * picks `string()` or `number()` from a field's type. The Collection registry\n * records field names only.\n */",
+          "sha256": "990edf1b0422f4e8e2c869546a4d4be9710b5e652bcf7170105a436f80ea2b34"
+        },
+        {
+          "id": "E3",
+          "kind": "code",
+          "path": "packages/@nocobase/authorization/dist/core/selection.js",
+          "observation": "parseRecordSelection 只接受非空字符串 id（typeof id === \"string\" && id !== \"\"），否则抛 TypeError(\"Invalid record selection\")；因此 selection.records([...]) 无法用数字主键。",
+          "lines": [
+            9,
+            23
+          ],
+          "excerpt": "export function parseRecordSelection(value) {\n    if (typeof value === 'object' && value !== null && !Array.isArray(value)) {\n        const type = Reflect.get(value, 'type');\n        if (type === 'all')\n            return selection.all();\n        const ids = Reflect.get(value, 'ids');\n        if (type === 'records' &&\n            Array.isArray(ids) &&\n            ids.every((id) => typeof id === 'string' && id !== ''))\n            return selection.records(ids);\n        const key = Reflect.get(value, 'key');\n        if (type === 'recordAccess' && typeof key === 'string' && key)\n            return selection.recordAccess(key, Reflect.get(value, 'params'));\n    }\n    throw new TypeError('Invalid record selection');",
+          "sha256": "1a4f0b0f5a61e724c856f23703dadb6fa2cb8d245c2669d4f3f36f1cc4e66088"
+        },
+        {
+          "id": "E2",
+          "kind": "code",
+          "path": "packages/@nocobase/app-plugin-authorization/dist/server/database/scope.js",
+          "observation": "idsScope：记录级选择被展开成每个 id 一个 $eq condition（FilterOperator 无 $in）；value 原样透传，不做主键类型转换。",
+          "lines": [
+            41,
+            47
+          ],
+          "excerpt": " * Membership expands to one `$eq` per identifier because `FilterOperator` has\n * no `$in` — `$includes` is a substring test. A negated list would expand the\n * same way, as an `and` of `$ne`. Both collapse once db grows the operator.\n */\nexport function idsScope(field, ids) {\n    return anyScope(ids.map((id) => condition(field, '$eq', id)));\n}",
+          "sha256": "990edf1b0422f4e8e2c869546a4d4be9710b5e652bcf7170105a436f80ea2b34"
+        },
+        {
+          "id": "E4",
+          "kind": "code",
+          "path": "packages/@nocobase/app-plugin-authorization/dist/server/database/authorizer.js",
+          "observation": "compileConstraints 对 selection.type===\"records\" 直接调用 idsScope(resource.primaryKey, selection.ids)，把字符串 id 编译进作用域，编译期不校验 primaryKey 的实际类型。",
+          "lines": [
+            249,
+            259
+          ],
+          "excerpt": "    async compileConstraints(constraints, principal, resource, action) {\n        const scopes = [];\n        for (const constraint of constraints) {\n            const selection = constraint.selection;\n            if (selection.type === 'all') {\n                scopes.push(true);\n                continue;\n            }\n            if (selection.type === 'records') {\n                scopes.push(idsScope(resource.primaryKey, selection.ids));\n                continue;",
+          "sha256": "b0de936d696378936a0ad88984858caf031f670f624b542daf0d0a3f69f06fbb"
+        },
+        {
+          "id": "E5",
+          "kind": "code",
+          "path": "packages/@nocobase/app-plugin-authorization/dist/server/extension/rule-validation.js",
+          "observation": "validateDataScopeRule 只对 recordAccess 选择校验已知 key 与集合匹配；对 records 选择不做任何主键类型校验，规则可在创建时通过、读取时才失败。",
+          "lines": [
+            51,
+            60
+          ],
+          "excerpt": "        if (entry.selection.type !== 'recordAccess')\n            continue;\n        const definition = authz.recordAccess.get(entry.selection.key);\n        if (!definition)\n            throw new AuthorizationInputError('Unknown record access', `${field}.selection.key`);\n        const target = scopeTarget?.id ?? rule.resource.id;\n        if (!definition.collections.some((name) => name === '*' || name === target) ||\n            (scope?.options && !scope.options.includes(definition.key)))\n            throw new AuthorizationInputError('Record access does not apply to this data scope', `${field}.selection.key`);\n    }",
+          "sha256": "135cb0eb81d7ffa8a1d49faa0455d7c783808e7d48cdf1fd6ffa1e2322d3bd8b"
+        },
+        {
+          "id": "E6",
+          "kind": "code",
+          "path": "packages/@nocobase/db/dist/src/repository/repository.js",
+          "observation": "Repository 过滤值校验：integer/increments 只接受 number（Number.isSafeInteger），字符串一律 invalid(\"INVALID_FILTER\", Filter value is invalid for Field ... of type \"integer\")。",
+          "lines": [
+            1166,
+            1185
+          ],
+          "excerpt": "                    (value === null && ['$eq', '$ne'].includes(operator)));\n            case 'increments':\n            case 'integer':\n                return ((typeof value === 'number' && Number.isSafeInteger(value)) ||\n                    (value === null && ['$eq', '$ne'].includes(operator)));\n            case 'float':\n            case 'double':\n                return ((typeof value === 'number' && Number.isFinite(value)) ||\n                    (value === null && ['$eq', '$ne'].includes(operator)));\n            case 'date':\n            case 'datetime':\n            case 'datetimeTz':\n                return ((value === null && ['$eq', '$ne'].includes(operator)) ||\n                    validDateLiteral(field.type, value));\n            default:\n                return false;\n        }\n    })();\n    if (!valid) {\n        invalid('INVALID_FILTER', `Filter value is invalid for Field \"${field.name}\" of type \"${field.type}\".`, { field: field.name, path: [...path, 'value'] });",
+          "sha256": "da33aad308dac8efb239475a8ab0b9f194eb591a841794799680bb6fedda7847"
+        },
+        {
+          "id": "E7",
+          "kind": "code",
+          "path": "app/database/main/migrations/20260101000001_create_documents.ts",
+          "observation": "实现最终迁移：documents 主键为 uuid（length 36），并在注释里明确写\"记录按 id 共享时该 id 是字符串，正是授权层存储/校验的形式\"，是 PK 类型绕行的直接落点。",
+          "lines": [
+            3,
+            22
+          ],
+          "excerpt": "/**\n * Internal document library storage.\n *\n * Every field, index and constraint is spelled out here on purpose: a migration\n * is immutable history and must stay self-contained. The primary key is a uuid\n * so a record an administrator shares by id (Sharing Rules' \"specific records\")\n * names a string, which is what the authorization layer stores and validates.\n */\nexport default defineMigration({\n  name: '20260101000001_create_documents',\n  async up({ builder }) {\n    await builder.createCollection('documents', (collection) => {\n      collection.uuid('id', { length: 36 }).primary();\n      collection.string('title', { length: 200 }).notNull();\n      collection.text('body').notNull().defaultTo('');\n      collection.string('ownerId', { length: 64 }).notNull();\n      collection.boolean('published').notNull().defaultTo(false);\n      collection.boolean('confidential').notNull().defaultTo(false);\n      collection.index('ownerId');\n    });",
+          "sha256": "5d96e0678edcfccd029e8cc101e075777c0f0b025bc7197d1af69e1d4c1f4835"
+        },
+        {
+          "id": "E35",
+          "kind": "log",
+          "path": "artifacts/retro.json",
+          "observation": "retro blockers 记录：records 选择无法命中 integer/increments 主键，numeric string 被过滤器拒绝，且创建规则时不报错——作为线索，仍需源码佐证。",
+          "lines": [
+            4,
+            7
+          ],
+          "excerpt": "  \"blockers\": [\n    \"A sharing/restriction rule's \\\"specific records\\\" selection cannot target an integer or increments primary key: selection.records() accepts only strings and the repository filter validator rejects a numeric string for an integer column (`Filter value is invalid for Field \\\"id\\\" of type \\\"integer\\\"`), while passing a number is refused by parseRecordSelection. Business collections an administrator must be able to share per record need a uuid (or bigInt/decimal) primary key.\",\n    \"Cookie-authenticated writes (POST/PATCH/DELETE) are rejected with 403 INVALID_CSRF_ORIGIN unless the request carries a trusted Origin; a test that drives the real HTTP surface must send one, and it has to match the application's public origin (APP_PUBLIC_ORIGIN, which is also Better Auth's baseURL).\",\n    \"Better Auth's username plugin refuses a username shorter than 3 characters, so the seed account named `yi` had to become `yi.reader`; the credentials are documented in README.MD because a reviewer has to know them to sign in.\"",
+          "sha256": "9ce7882eb1cd18a4d81213524744a9e0d500366b873679b18fcf5c3039923436"
+        }
+      ],
+      "fingerprint": "0ec8c0cfb54f011698e384588cfa4f5a18e4a03651e69fb361197ee773ac84c7"
+    },
+    {
+      "id": "598:37453041764:1:F3",
+      "report": "598:37453041764:1",
+      "issue": 598,
+      "taskTitle": "内部资料阅读与临时共享",
+      "appVersion": "1.0.0-beta.55",
+      "appTemplate": "@nocobase/app-template-default",
+      "finding": {
+        "id": "F3",
+        "kind": "issue",
+        "owner": "documentation",
+        "confidence": "confirmed",
+        "severity": "major",
+        "status": "open",
+        "title": "数据建模与授权 Skill 未提示\"指定记录\"选择要求字符串友好主键",
+        "detail": "nocobase-db SKILL 的迁移示例两次使用 collection.increments('id')，database-and-data.md 亦称 increments('id') is fine for ordinary tables；而 sharing-rules/restriction-rules Skill 与 @nocobase/authorization README 只用 selection.records(['quote-7']) 之类字符串 id 演示，未说明目标主键必须是 uuid/char 等字符串友好类型。",
+        "impact": "Agent 按默认指引生成自增主键后，记录级共享在运行时失败（见 F2），把可提前规避的模型选择错误留到 QA 阶段。",
+        "suggestedChange": "在 nocobase-db、authz sharing/restriction Skill 与 authorization README 中显式说明：需要按记录共享/限制的集合应使用 uuid（或 bigInt/decimal），并给出 uuid 示例与反例提示。",
+        "evidence": [
+          "E25",
+          "E26",
+          "E27",
+          "E28",
+          "E29",
+          "E35"
+        ],
+        "diagnosis": {
+          "category": "guidance-gap",
+          "trigger": "Agent 依据 nocobase-db Skill 的示例为业务表选择 increments('id') 主键，再按 authz Skill 配置记录级共享。",
+          "expected": "Skill 明确记录级授权对主键类型的要求，Agent 在建模阶段即选择 uuid。",
+          "actual": "默认示例为 increments 主键，授权 Skill 未提主键类型，Agent 无法预知约束。",
+          "workaround": "Agent 从运行期 INVALID_FILTER 反推并改写迁移为 uuid（本案例的做法）。",
+          "acceptance": "Skill 与 README 含主键类型约束说明与 uuid 示例，Agent 无需运行即可选对主键。"
+        }
+      },
+      "targets": [
+        "app/.agents/skills/nocobase-app-development/references/database-and-data.md",
+        "app/.agents/skills/nocobase-app-plugin-authz-restriction-rules/SKILL.md",
+        "app/.agents/skills/nocobase-app-plugin-authz-sharing-rules/SKILL.md",
+        "app/.agents/skills/nocobase-db/SKILL.md"
+      ],
+      "paths": [
+        ".agents/skills/nocobase-app-development/references/database-and-data.md",
+        ".agents/skills/nocobase-app-plugin-authz-restriction-rules/SKILL.md",
+        ".agents/skills/nocobase-app-plugin-authz-sharing-rules/SKILL.md",
+        ".agents/skills/nocobase-db/SKILL.md"
+      ],
+      "evidence": [
+        {
+          "id": "E25",
+          "kind": "skill",
+          "path": "app/.agents/skills/nocobase-db/SKILL.md",
+          "observation": "nocobase-db Skill 的迁移示例默认使用 collection.increments(\"id\")，未提示自动递增主键与记录级共享选择的不兼容。",
+          "lines": [
+            86,
+            95
+          ],
+          "excerpt": "const migration: MigrationDefinition = defineMigration({\n  name: '202609020001_create_orders',\n\n  async up({ builder }) {\n    await builder.createCollection('orders', (collection) => {\n      collection.increments('id');\n      collection.string('orderNo', { length: 64, nullable: false });\n      collection.string('status', { length: 32, nullable: false });\n      collection.datetime('createdAt', { nullable: false });\n      collection.unique('orderNo');",
+          "sha256": "d33a58740d6a2921689e56f964c081354574ed857389118e319719bde6936991"
+        },
+        {
+          "id": "E26",
+          "kind": "skill",
+          "path": "app/.agents/skills/nocobase-db/SKILL.md",
+          "observation": "Skill 第二处建表示例同样以 increments(\"id\") 作为主键默认写法。",
+          "lines": [
+            147,
+            153
+          ],
+          "excerpt": "`createCollection(name, callback)` takes a callback, not a field array:\n\n```ts\nawait builder.createCollection('orderItems', (collection) => {\n  collection.increments('id');\n  collection.integer('orderId', { nullable: false });\n  collection.integer('quantity', { nullable: false, defaultValue: 1 });",
+          "sha256": "d33a58740d6a2921689e56f964c081354574ed857389118e319719bde6936991"
+        },
+        {
+          "id": "E27",
+          "kind": "skill",
+          "path": "app/.agents/skills/nocobase-app-plugin-authz-sharing-rules/SKILL.md",
+          "observation": "共享规则 Skill 示例用 selection.records([\"quote-7\"]) 字符串 id，并说明 selection 只能是 records/recordAccess，但未说明目标主键必须是字符串友好类型。",
+          "lines": [
+            63,
+            75
+          ],
+          "excerpt": "await rules.create(\n  defineSharingRule('proposal-handover', quotes.reference())\n    .title('Proposal handover')\n    .subjects({ type: 'org.team', id: 'proposal' })\n    .scope('edit', 'quotes', selection.records(['quote-7']))\n    .scope('submit', 'quotes', selection.records(['quote-7']))\n    .scope('submit', 'projects', selection.records(['project-3']))\n    .reason('Delegate this proposal to the team')\n    .build(),\n);\n```\n\nA rule is `{ key, resource, actions, title?, subjects, reason? }` and each action is `{ action, scopeKey?, selection }`, where `selection` is `selection.records(ids)` or `selection.recordAccess(key, params?)`; `all` is refused. `create`, `update(key, rule)`, `delete(key)`, `get(key)`, `list()` and `withTransaction(connection)` validate before writing. A rule on a composite names the data scope in `scopeKey` and affects only that composite action's branch; a rule on a `database.collection` omits `scopeKey` and applies across every branch that reaches the collection. Neither form shares related records implicitly or replaces field and relation capabilities, and unrestricted identities skip every rule.",
+          "sha256": "7ef72078b29b536ef4ab5a4a129c12139d7be1a877d45dda5820864570d1f668"
+        },
+        {
+          "id": "E28",
+          "kind": "skill",
+          "path": "app/.agents/skills/nocobase-app-plugin-authz-restriction-rules/SKILL.md",
+          "observation": "限制规则 Skill 同样只以 selection.records(ids)/recordAccess 说明记录选择，未提示主键类型约束。",
+          "lines": [
+            64,
+            72
+          ],
+          "excerpt": "    .title('Exclude confidential proposals')\n    .subjects({ type: 'org.team', id: 'proposal' })\n    .scope('submit', 'quotes', selection.recordAccess('sales.public'))\n    .reason('Proposal collaboration excludes confidential work')\n    .build(),\n);\n```\n\nA rule is `{ key, resource, actions, title?, subjects, reason? }` and each action is `{ action, scopeKey?, selection }`, where `selection` is `selection.all()`, `selection.records(ids)` or `selection.recordAccess(key, params?)`. `create`, `update(key, rule)`, `delete(key)`, `get(key)`, `list()` and `withTransaction(connection)` validate before writing. A rule on a composite names the data scope in `scopeKey` and narrows only that composite action's branch; a rule on a `database.collection` omits `scopeKey` and narrows every branch that reaches the collection.",
+          "sha256": "554d70709565bcc570e6d39f47f33c77e36a98ef7ec1459623d6c2f99b0ada21"
+        },
+        {
+          "id": "E29",
+          "kind": "skill",
+          "path": "app/.agents/skills/nocobase-app-development/references/database-and-data.md",
+          "observation": "database-and-data 参考说明 \"increments('id') is fine for ordinary tables\"，未区分需要被记录级授权共享的表。",
+          "lines": [
+            29,
+            31
+          ],
+          "excerpt": "## Generated IDs\n\n`IdGeneratorProvider` supplies Snowflake IDs when a table needs a sortable identifier not tied to auto-increment. `increments('id')` is fine for ordinary tables.",
+          "sha256": "acbef0993c0165b8d1b280648fa18da9261df9c6eade73adf043edfc78667321"
+        },
+        {
+          "id": "E35",
+          "kind": "log",
+          "path": "artifacts/retro.json",
+          "observation": "retro blockers 记录：records 选择无法命中 integer/increments 主键，numeric string 被过滤器拒绝，且创建规则时不报错——作为线索，仍需源码佐证。",
+          "lines": [
+            4,
+            7
+          ],
+          "excerpt": "  \"blockers\": [\n    \"A sharing/restriction rule's \\\"specific records\\\" selection cannot target an integer or increments primary key: selection.records() accepts only strings and the repository filter validator rejects a numeric string for an integer column (`Filter value is invalid for Field \\\"id\\\" of type \\\"integer\\\"`), while passing a number is refused by parseRecordSelection. Business collections an administrator must be able to share per record need a uuid (or bigInt/decimal) primary key.\",\n    \"Cookie-authenticated writes (POST/PATCH/DELETE) are rejected with 403 INVALID_CSRF_ORIGIN unless the request carries a trusted Origin; a test that drives the real HTTP surface must send one, and it has to match the application's public origin (APP_PUBLIC_ORIGIN, which is also Better Auth's baseURL).\",\n    \"Better Auth's username plugin refuses a username shorter than 3 characters, so the seed account named `yi` had to become `yi.reader`; the credentials are documented in README.MD because a reviewer has to know them to sign in.\"",
+          "sha256": "9ce7882eb1cd18a4d81213524744a9e0d500366b873679b18fcf5c3039923436"
+        }
+      ],
+      "fingerprint": "ca0e813417fffb5bbe233e54627feba1915a6b815b3fea9fa2aa483221665fbe"
+    },
+    {
+      "id": "598:37453041764:1:F4",
+      "report": "598:37453041764:1",
+      "issue": 598,
+      "taskTitle": "内部资料阅读与临时共享",
+      "appVersion": "1.0.0-beta.55",
+      "appTemplate": "@nocobase/app-template-default",
+      "finding": {
+        "id": "F4",
+        "kind": "improvement",
+        "owner": "documentation",
+        "confidence": "suspected",
+        "severity": "minor",
+        "status": "open",
+        "title": "集成测试指引未交叉引用 cookie 写请求的 Origin/CSRF 前提",
+        "detail": "protecting-routes.md 已记录带 cookie 的写请求在 Origin/Referer 不可信时返回 403 INVALID_CSRF_ORIGIN，但 testing.md 在\"测试整机/路由权限边界\"处未提及该前提，也未交叉引用；retro 亦将 INVALID_CSRF_ORIGIN 列为阻塞。",
+        "impact": "Agent 编写真实 HTTP 集成测试时会反复遭遇 403，需自行定位到 Origin 配置，增加试错。",
+        "suggestedChange": "在 testing.md 的整机测试小节加入一句：cookie 认证的写请求需携带与 APP_PUBLIC_ORIGIN 一致的可信 Origin，并链接 protecting-routes.md；同时建议断言 UI 页面实际调用的 settings API。",
+        "evidence": [
+          "E31",
+          "E30",
+          "E35"
+        ],
+        "diagnosis": {
+          "category": "usability-improvement",
+          "trigger": "Agent 为受保护写接口编写集成测试并直接发请求。",
+          "expected": "测试指引提示需要可信 Origin 并给出做法。",
+          "actual": "testing.md 未提及，Agent 遭 403 后才从错误或其它文档反查。",
+          "workaround": "手工补 Origin 头，使其匹配应用公开源。",
+          "acceptance": "testing.md 明确 Origin 前提并交叉引用 protecting-routes.md。"
+        }
+      },
+      "targets": [
+        "app/.agents/skills/nocobase-app-development/references/testing.md",
+        "app/.agents/skills/nocobase-app-plugin-authentication/references/protecting-routes.md"
+      ],
+      "paths": [
+        ".agents/skills/nocobase-app-development/references/testing.md",
+        ".agents/skills/nocobase-app-plugin-authentication/references/protecting-routes.md"
+      ],
+      "evidence": [
+        {
+          "id": "E31",
+          "kind": "skill",
+          "path": "app/.agents/skills/nocobase-app-plugin-authentication/references/protecting-routes.md",
+          "observation": "protecting-routes 参考记录两个中间件对带 cookie 的写请求校验 Origin/Referer，不匹配则 403 INVALID_CSRF_ORIGIN——CSRF 行为有文档。",
+          "lines": [
+            43,
+            47
+          ],
+          "excerpt": "- `auth.required()` rejects an anonymous request with `401 UNAUTHENTICATED` in the standard error body, reason `AUTHENTICATION_REQUIRED`, domain `authentication`. On success `context.get('auth')` is `{ user, session }`.\n- Both middlewares reject a cookie-bearing write whose `Origin` (or `Referer`) is not trusted with `403 PERMISSION_DENIED`, reason `INVALID_CSRF_ORIGIN`, domain `authentication`.\n- `auth.optional()` sets `context.get('auth')` to the session or `null` and\n  never rejects. Use it for a route whose response differs for a signed-in\n  caller but is still public.",
+          "sha256": "9a0f6f43e50640d229c848602e0a13cb3d7bd072ac0697f80c8fa885732c39b4"
+        },
+        {
+          "id": "E30",
+          "kind": "skill",
+          "path": "app/.agents/skills/nocobase-app-development/references/testing.md",
+          "observation": "testing 参考按变更类型列出应测内容与真实路由测试做法，但未提到 cookie 写请求的 Origin/CSRF 前提，也未与该前提交叉引用。",
+          "lines": [
+            19,
+            31
+          ],
+          "excerpt": "| You changed      | Test at least                                                                                                                     |\n| ---------------- | --------------------------------------------------------------------------------------------------------------------------------- |\n| A server route   | Anonymous → `401`, authenticated but unpermitted → `403`, permitted → expected payload; the route is declared in the API document |\n| A public webhook | Missing signature, invalid signature, valid signature, duplicate delivery                                                         |\n| A migration      | `up` produces the expected schema; `down` reverses it; against a real database                                                    |\n| A seed           | First run, run against existing data, repeat run                                                                                  |\n| A service        | Its domain behavior, with its dependencies supplied directly                                                                      |\n| A job            | `execute()` with a realistic payload; a second run is harmless; failures behave as intended                                       |\n| Frontend code    | See [frontend tests](frontend/references/testing.md): pages, components, route declarations, copy                                 |\n\n## Testing a route\n\nCall the real contribution's `createRouter()` with a container holding test doubles, then issue real requests. This exercises the production factory, including its dependency resolution and middleware:",
+          "sha256": "a47c8cdcc9bc066f5cf30dc2de7e5682ce3cd7fd83064a8c56c4c781e7c101a4"
+        },
+        {
+          "id": "E35",
+          "kind": "log",
+          "path": "artifacts/retro.json",
+          "observation": "retro blockers 记录：records 选择无法命中 integer/increments 主键，numeric string 被过滤器拒绝，且创建规则时不报错——作为线索，仍需源码佐证。",
+          "lines": [
+            4,
+            7
+          ],
+          "excerpt": "  \"blockers\": [\n    \"A sharing/restriction rule's \\\"specific records\\\" selection cannot target an integer or increments primary key: selection.records() accepts only strings and the repository filter validator rejects a numeric string for an integer column (`Filter value is invalid for Field \\\"id\\\" of type \\\"integer\\\"`), while passing a number is refused by parseRecordSelection. Business collections an administrator must be able to share per record need a uuid (or bigInt/decimal) primary key.\",\n    \"Cookie-authenticated writes (POST/PATCH/DELETE) are rejected with 403 INVALID_CSRF_ORIGIN unless the request carries a trusted Origin; a test that drives the real HTTP surface must send one, and it has to match the application's public origin (APP_PUBLIC_ORIGIN, which is also Better Auth's baseURL).\",\n    \"Better Auth's username plugin refuses a username shorter than 3 characters, so the seed account named `yi` had to become `yi.reader`; the credentials are documented in README.MD because a reviewer has to know them to sign in.\"",
+          "sha256": "9ce7882eb1cd18a4d81213524744a9e0d500366b873679b18fcf5c3039923436"
+        }
+      ],
+      "fingerprint": "5dea3bc1200a6dcad9f7eeb5495ea725829f1f928c335367b5c503805d423c43"
     },
     {
       "id": "600:37453053696:1:F2",
