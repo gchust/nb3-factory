@@ -4,6 +4,16 @@ This is a NocoBase 3 application. Do not apply globally installed NocoBase 2 Ski
 
 Do not create a plugin to add a feature. Plugins are separately published packages for capabilities shared across several applications; building one for this application's own feature adds a package boundary, a version, and a release process to work that belongs in `client/` and `server/`. Create one only when the user explicitly asks for a reusable published package.
 
+## Application-specific: 资料助手 (document assistant)
+
+This application is an internal, read-only document assistant. A `documents` collection holds a title and a body plus an `accessLevel` (`staff` | `supervisor`) that decides who may read the row; a supervisor may edit a document, a colleague may only read the two `staff` rows. The `search-documents` AI tool answers from exactly the rows the asker may read and cites them, and the assistant page renders each citation as a link to `/documents/<id>`. There is no write, task, message, file-upload or web-search capability.
+
+- Business code: `database/main/migrations/202610060001_create_documents.ts`, `database/main/seeds/202610060002_documents.ts`, `database/main/seeds/202610060003_documents_permission_sets.ts`; `server/documents-resources.ts`, `server/documents-service.ts`, `server/routes/documents.ts`; `server/ai/**`; `client/pages/documents/**`, `client/pages/assistant/**`.
+- Access is framework-native: the `documents.records` composite resource with a `staff` record scope and an `all` record scope, granted through the `documents-staff` and `documents-supervisor` permission sets. An out-of-scope record is reported as absent (404), never as forbidden.
+- Demo identities, provisioned best-effort at startup by `server/providers/documents.ts` and useful for manual verification: `supervisor` / `supervisor123` (all documents, may edit) and `colleague` / `colleague123` (staff documents only). They are seeded only when missing; do not change their names.
+- The assistant needs an LLM service to answer. With none configured it shows an unconfigured state and manual reading at `/documents` still works; it never falls back to canned answers. Configure services under the AI employee settings.
+- Tests: `tests/logic/documents-access.test.ts` (routes, authentication, isolation, edit propagation) and `tests/logic/documents-migration.test.ts` (migration up/down, seed idempotency). A cookie-authenticated write must carry a trusted `Origin`; the tests set `app.publicOrigin` for that.
+
 ## Default template scope
 
 Default is the clean application starting point. It registers product capabilities but no `app-plugin-*-example` plugins, example pages, application sample services, or sample APIs. Keep runnable demonstrations in `app-template-examples`. Application-owned server routes start empty; the only built-in application provider exposes Authorization Permission Sets as direct roles in the Users page. The only application page is a localized homepage.

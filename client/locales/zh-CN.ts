@@ -1,6 +1,9 @@
+import aiEmployeeZhCN from '../extensions/nocobase-ai/locales/zh-CN.js';
+
 import type { AppResource } from './en-US.js';
 
 const zhCN: AppResource = {
+  ...aiEmployeeZhCN,
   'auth.welcome': '欢迎回来',
   'auth.loginDescription': '使用用户名或邮箱和密码登录。',
   'auth.registerTitle': '创建账户',
@@ -59,6 +62,13 @@ const zhCN: AppResource = {
   'status.retry': '重试',
   'navigation.brandHome': 'NocoBase 首页',
   'navigation.brandApps': 'NocoBase 应用',
+  // 资料助手工具目录使用 `keySeparator: false` 读取（见 AI 插件的 catalog display），因此这里必须是带点的扁平键，
+  // 写成嵌套对象时只有字面键才能解析。
+  'tool.search-documents.title': '检索资料',
+  'tool.search-documents.about': '读取当前用户有权查看的内部资料。',
+  'tool.search-documents.searching': '正在检索资料…',
+  'tool.search-documents.sources': '参考来源',
+  'tool.search-documents.empty': '没有找到相关命中。',
   'routeOverlay.close': '关闭',
   'status.deniedDescription': '你没有访问 {{label}} 的权限。',
   'status.routeFailedDescription':
@@ -88,6 +98,43 @@ const zhCN: AppResource = {
   home: {
     title: '开始构建你的应用',
     description: '向 AI 助手描述你的需求，逐步构建页面、数据模型和业务流程。',
+  },
+  documents: {
+    title: '资料',
+    description: '你可以查阅的内部资料；资料助手只依据这些资料作答。',
+    searchLabel: '搜索资料',
+    searchPlaceholder: '搜索标题或正文',
+    loadError: '资料加载失败，请重试。',
+    empty: '暂无可用资料。',
+    noResults: '没有匹配的资料。',
+    updatedAt: '更新于 {{date}}',
+    back: '返回资料列表',
+    notFound: '该资料不存在，或你无权查阅。',
+    readError: '该资料加载失败，请重试。',
+    edit: '编辑',
+    editTitle: '标题',
+    editBody: '正文',
+    saving: '正在保存…',
+    saved: '资料已保存。',
+    saveError: '资料保存失败，请重试。',
+    validationError: '标题和正文都不能为空。',
+  },
+  assistant: {
+    title: '资料助手',
+    description: '就可以查阅的内部资料提问，回答会标注引用来源。',
+    placeholder: '就公司资料提问…',
+    loading: '正在加载资料助手…',
+    unavailableTitle: '资料助手暂不可用',
+    unavailableHint:
+      '需要管理员先配置 AI 模型，资料助手才能作答。在此之前你仍可手动查阅资料。',
+    openDocuments: '去查阅资料',
+    configError: '资料助手配置加载失败。',
+    noEmployees: '本应用未注册资料助手。',
+    noModels: '尚未配置 AI 模型，资料助手暂时无法作答。',
+  },
+  permissionSets: {
+    documentsSupervisor: '资料管理员',
+    documentsStaff: '资料查阅人',
   },
 
   appearance: {
@@ -122,6 +169,8 @@ const zhCN: AppResource = {
   },
   navigation: {
     home: '首页',
+    documents: '资料',
+    assistant: '资料助手',
     open: '打开导航',
     close: '关闭导航',
     expand: '展开导航',

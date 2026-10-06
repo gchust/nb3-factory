@@ -45,6 +45,16 @@ describe('app client routes', () => {
     }
   });
 
+  it('registers the document record page at /documents/:id', () => {
+    // A child route's path is relative to its parent and is appended to it. A child written with
+    // the parent's segment repeated (`/documents/:id`) registers `/documents/documents/:id` and
+    // leaves the linkable `/documents/:id` to the wildcard redirect, so this pins the resolved
+    // path rather than the literal declaration.
+    const paths = pagePaths(resolveRoutes().routes);
+    expect(paths).toContain('/documents/:id');
+    expect(paths).not.toContain('/documents/documents/:id');
+  });
+
   it('pins the page authorization of every signed-in page', () => {
     // A stored page grant records the page's `authz` resource id (`authorizedAs`), not its route `name`: changing an
     // id is a data change that has to migrate the grants that reference it, not a refactor — so changing this list
@@ -52,9 +62,14 @@ describe('app client routes', () => {
     // access is a new grant somebody has to be given.
     const resolved = resolveRoutes();
 
-    // The landing page opted out of page authorization, so it is reachable by every signed-in user.
+    // The landing page opted out of page authorization, so it is reachable by every signed-in user; the documents
+    // and assistant pages, and the record page they own under `documents`, each check their page grant.
     expect(pageAuthorizations(resolved.routes)).toEqual([
       { name: 'home', authorizedAs: null },
+      { name: 'documents', authorizedAs: 'documents' },
+      // The record page declares no `authz` of its own, so it inherits the `documents` check.
+      { name: 'document-detail', authorizedAs: 'documents' },
+      { name: 'assistant', authorizedAs: 'assistant' },
     ]);
   });
 });

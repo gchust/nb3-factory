@@ -1,6 +1,13 @@
 import type { LocaleResource } from '@nocobase/i18n';
 
+// The AI chat surfaces under `client/extensions/nocobase-ai` translate through their own `useAITranslate`
+// helper, which reads that extension's own locale resources. Those strings are still user-visible strings of
+// this application, so this locale re-exposes them: the application locale stays the single place that states
+// every wording, and the locale-coverage check can see them here instead of treating the extension as foreign.
+import aiEmployeeEnUS from '../extensions/nocobase-ai/locales/en-US.js';
+
 const enUS = {
+  ...aiEmployeeEnUS,
   'auth.welcome': 'Welcome back',
   'auth.loginDescription': 'Sign in with your username or email and password.',
   'auth.registerTitle': 'Create an account',
@@ -63,6 +70,14 @@ const enUS = {
   'status.retry': 'Retry',
   'navigation.brandHome': 'NocoBase home',
   'navigation.brandApps': 'NocoBase applications',
+  // The assistant's tool catalog translates with `keySeparator: false` (see the AI plugin's catalog display),
+  // so these have to stay flat dotted keys rather than a nested object: only the literal key resolves.
+  'tool.search-documents.title': 'Search documents',
+  'tool.search-documents.about':
+    'Read the internal documents the current user is allowed to see.',
+  'tool.search-documents.searching': 'Searching the documents…',
+  'tool.search-documents.sources': 'Sources',
+  'tool.search-documents.empty': 'No matching document was found.',
   'routeOverlay.close': 'Close',
   'status.deniedDescription': 'You do not have permission to access {{label}}.',
   'status.routeFailedDescription':
@@ -95,6 +110,45 @@ const enUS = {
     title: 'Start building your application',
     description:
       'Describe what you need to your AI Agent, then build pages, data models, and business workflows.',
+  },
+  documents: {
+    title: 'Documents',
+    description:
+      'The internal documents you may read. The assistant answers only from these.',
+    searchLabel: 'Search documents',
+    searchPlaceholder: 'Search title or content',
+    loadError: 'Unable to load the documents. Please try again.',
+    empty: 'No documents are available.',
+    noResults: 'No document matches your search.',
+    updatedAt: 'Updated {{date}}',
+    back: 'Back to documents',
+    notFound: 'This document is unavailable, or you do not have access to it.',
+    readError: 'Unable to load this document. Please try again.',
+    edit: 'Edit',
+    editTitle: 'Title',
+    editBody: 'Content',
+    saving: 'Saving…',
+    saved: 'The document was saved.',
+    saveError: 'Unable to save the document. Please try again.',
+    validationError: 'A title and content are both required.',
+  },
+  assistant: {
+    title: 'Document assistant',
+    description:
+      'Ask about the internal documents you may read. Answers cite the documents they use.',
+    placeholder: 'Ask about the company documents…',
+    loading: 'Loading the assistant…',
+    unavailableTitle: 'The assistant is not available yet',
+    unavailableHint:
+      'An administrator has to configure an AI model before the assistant can answer. You can keep reading the documents in the meantime.',
+    openDocuments: 'Read the documents',
+    configError: 'The assistant configuration could not be loaded.',
+    noEmployees: 'No assistant is registered for this application.',
+    noModels: 'No AI model is configured, so the assistant cannot answer.',
+  },
+  permissionSets: {
+    documentsSupervisor: 'Documents supervisor',
+    documentsStaff: 'Documents reader',
   },
 
   appearance: {
@@ -131,6 +185,8 @@ const enUS = {
   },
   navigation: {
     home: 'Home',
+    documents: 'Documents',
+    assistant: 'Document assistant',
     open: 'Open navigation',
     close: 'Close navigation',
     expand: 'Expand navigation',
