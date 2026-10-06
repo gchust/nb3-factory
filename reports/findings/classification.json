@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "inputHash": "b2ab297bdb3ae24f6a0fca09f189c22f7167e44d4c464bf39185e7f309dd29c9",
+  "inputHash": "fd25e03e14f6fb382e9e3c8f1f20d6f726e3814870f0e58e949855e5ec7e6081",
   "sources": [
     {
       "id": "460:36434284393:1:F2",
@@ -571,6 +571,21 @@
       "id": "579:37394462061:1:F6",
       "report": "579:37394462061:1",
       "fingerprint": "f3ecccb2d7a844790e746f54d6b12668e166a37abc58210dcd3798641d83b640"
+    },
+    {
+      "id": "594:37432779834:1:F1",
+      "report": "594:37432779834:1",
+      "fingerprint": "2bd110e79fac08251c621734d80e13b457594a8fe1624d73b8cef720113f76e9"
+    },
+    {
+      "id": "594:37432779834:1:F2",
+      "report": "594:37432779834:1",
+      "fingerprint": "86e8f77f7adee93eed00834ed3d71ab3985aaa9893e60376fed7258a71a0706b"
+    },
+    {
+      "id": "594:37432779834:1:F4",
+      "report": "594:37432779834:1",
+      "fingerprint": "5923379e1ddc896a43eaec9c887dad5224665fa1f3d0934e0f95368e6f6e5603"
     }
   ],
   "groups": [
@@ -1077,15 +1092,36 @@
       "members": [
         "577:37394452688:1:F8"
       ]
+    },
+    {
+      "title": "模板首页示例违反自身 L1 页面结构规则，却被工作流要求作为新页面范本",
+      "reason": "单条保留：594:F1 的 E16/E7 显示 ui-guidelines L1 [Must] 与 page.md §2 要求业务页面使用 PageContainer+PageHeader，E15/E14 显示模板 home.tsx 与照抄它的 pipeline-smoke.tsx 都是手写 section+h1，E19 又要求 Quick change 照抄既有页面。属模板示例与自身指引冲突的独立错误指引缺口，与同报告 594:F2 的分流缺口、其他页面/测试指引缺口根因均不同，故单独保留。",
+      "members": [
+        "594:37432779834:1:F1"
+      ]
+    },
+    {
+      "title": "工作流分流未覆盖“无数据的新静态页面”，Quick change 未把新页面导向 page.md",
+      "reason": "单条保留：594:F2 的 E18/E19 显示 ui-workflow.md 的 full workflow 只覆盖加载数据/含表单/含浮层的 new page，E17/E35 显示唯一把“新建页面”映射到 page.md §1/§2/§6 的入口在 frontend-dev.md，E29/E36 显示 Agent 只读 ui-workflow.md 便判为 quick change；属分流决策表的独立指引缺口。与同报告 594:F1 的模板示例冲突按“同一报告不得合并”规则分开，与跨包端到端缺口根因不同，故单独保留。",
+      "members": [
+        "594:37432779834:1:F2"
+      ]
+    },
+    {
+      "title": "页面测试何时使用 @nocobase/app-testing 的 renderWithApp 缺少判定指引",
+      "reason": "单条保留：594:F4 的 E32 显示 frontend/references/testing.md 只建议复制 page-harness.test.tsx，E22 显示 renderWithApp 在 MemoryRouter 中挂载真实 app runtime/providers，E20 显示应用改用 @nocobase/i18n/testing 轻量 Provider，E24 未给出两类 harness 的适用场景；属测试 harness 选择指引的独立缺口，与既有 Origin/CSRF 测试指引缺口、跨包端到端路径缺失根因不同，故单独保留。",
+      "members": [
+        "594:37432779834:1:F4"
+      ]
     }
   ],
   "classifier": {
     "engine": "pi",
     "model": "deepseek-v4.1-flash",
     "version": "0.86.1",
-    "runId": "37419230834",
+    "runId": "37436294387",
     "attempt": 1,
-    "controlSha": "9842b67161dff8b3ce27d91017495e9a6bfe741f",
-    "completedAt": "2026-10-06T05:37:08.100Z"
+    "controlSha": "dab43cf0cb92c04770aa18d7addb677afd3b767e",
+    "completedAt": "2026-10-06T08:30:02.586Z"
   }
 }
