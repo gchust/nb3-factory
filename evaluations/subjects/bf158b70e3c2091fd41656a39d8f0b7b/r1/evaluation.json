@@ -1,0 +1,2106 @@
+{
+  "schemaVersion": 1,
+  "type": "evaluation-report",
+  "source": {
+    "producer": "nb3-factory",
+    "instance": "gchust/nb3-factory",
+    "project": "gchust/nb3-factory",
+    "exporter": {
+      "version": 1,
+      "controlSha": "dab43cf0cb92c04770aa18d7addb677afd3b767e",
+      "runId": 37436088632,
+      "attempt": 1
+    }
+  },
+  "run": {
+    "key": "gchust/nb3-factory/issues/594/initial",
+    "kind": "initial",
+    "identity": "recorded",
+    "batchKey": null,
+    "caseKey": null,
+    "sampleIndex": null,
+    "sampleKey": null,
+    "task": {
+      "repository": "gchust/nb3-factory",
+      "issue": 594,
+      "buildCommentId": null,
+      "title": "流程冒烟：单页计数器"
+    },
+    "case": {
+      "source": "preset",
+      "presetIssueNumber": 176,
+      "capturedAt": "2026-10-06T07:56:15Z",
+      "inputHash": "c674060d15d675452b5787c3ddbe7fe85f940685059dd612e5162f64beebcaee",
+      "reviewHash": "d866fc5a2d2f405000ec2420518fc455eac71e05b4b4afbbf12aa446b70dd188"
+    }
+  },
+  "revision": 1,
+  "createdAt": "2026-10-06T08:26:46Z",
+  "precedence": {
+    "producer": {
+      "runId": 37432779834,
+      "attempt": 1,
+      "startedAt": "2026-10-06T07:56:04Z"
+    },
+    "executionOrder": 1,
+    "knownLaterExecutions": 0,
+    "chainTerminal": true,
+    "reviewRubric": 2,
+    "reviewState": "completed",
+    "review": {
+      "kind": "build",
+      "at": "2026-10-06T07:56:04Z",
+      "runId": 37432779834,
+      "attempt": 1
+    },
+    "qaCoverage": "complete"
+  },
+  "baseline": {
+    "track": "published-template",
+    "application": {
+      "baseRef": "develop",
+      "baseSha": "dab43cf0cb92c04770aa18d7addb677afd3b767e",
+      "candidate": {
+        "patchSha256": "34517a736cde848a932c52ccdde40deb495d7767a508f5337a60aee43a736d44",
+        "headSha": "0b2a15222a4c361726e0f6a62f46c0f5407ea125"
+      }
+    },
+    "factory": {
+      "controlSha": "dab43cf0cb92c04770aa18d7addb677afd3b767e",
+      "entrySha": "dab43cf0cb92c04770aa18d7addb677afd3b767e"
+    },
+    "template": {
+      "creatorVersion": "0.1.0-beta.27",
+      "templateVersion": "1.0.0-beta.55"
+    },
+    "dependencies": {
+      "lockfileSha256": "d2d7ca43e893351037640482480728acb8d255a1a478b6e3d3acfc26b91697d7",
+      "baselineFingerprint": "e043177d01c5f3a8f3faf53d79e027a108ab066d6d920e66bf048345668d1c7d",
+      "packages": [
+        {
+          "name": "@nocobase/ai-employee",
+          "version": "0.2.0-beta.8"
+        },
+        {
+          "name": "@nocobase/ai-employee-avatars",
+          "version": "1.0.2"
+        },
+        {
+          "name": "@nocobase/app-cli",
+          "version": "1.0.0-beta.13"
+        },
+        {
+          "name": "@nocobase/app-client",
+          "version": "2.0.0-beta.0"
+        },
+        {
+          "name": "@nocobase/app-plugin-ai-employee",
+          "version": "2.0.0-beta.0"
+        },
+        {
+          "name": "@nocobase/app-plugin-ai-knowledge-base",
+          "version": "1.0.0-beta.14"
+        },
+        {
+          "name": "@nocobase/app-plugin-api-keys",
+          "version": "1.0.0-beta.12"
+        },
+        {
+          "name": "@nocobase/app-plugin-authentication",
+          "version": "2.0.0-beta.0"
+        },
+        {
+          "name": "@nocobase/app-plugin-authorization",
+          "version": "1.0.0-beta.24"
+        },
+        {
+          "name": "@nocobase/app-plugin-authz-default-access",
+          "version": "1.0.0-beta.9"
+        },
+        {
+          "name": "@nocobase/app-plugin-authz-restriction-rules",
+          "version": "1.0.0-beta.8"
+        },
+        {
+          "name": "@nocobase/app-plugin-authz-sharing-rules",
+          "version": "1.0.0-beta.9"
+        },
+        {
+          "name": "@nocobase/app-plugin-database-explorer",
+          "version": "1.0.0-beta.10"
+        },
+        {
+          "name": "@nocobase/app-plugin-file",
+          "version": "1.0.0-beta.18"
+        },
+        {
+          "name": "@nocobase/app-plugin-i18n",
+          "version": "1.0.0-beta.13"
+        },
+        {
+          "name": "@nocobase/app-plugin-mail",
+          "version": "1.0.0-beta.7"
+        },
+        {
+          "name": "@nocobase/app-plugin-notification",
+          "version": "1.0.0-beta.22"
+        },
+        {
+          "name": "@nocobase/app-plugin-notification-in-app",
+          "version": "1.0.0-beta.21"
+        },
+        {
+          "name": "@nocobase/app-plugin-notification-providers",
+          "version": "0.2.0-beta.10"
+        },
+        {
+          "name": "@nocobase/app-plugin-scheduler",
+          "version": "1.0.0-beta.13"
+        },
+        {
+          "name": "@nocobase/app-plugin-template-print",
+          "version": "0.0.2-beta.0"
+        },
+        {
+          "name": "@nocobase/app-plugin-users",
+          "version": "2.0.0-beta.0"
+        },
+        {
+          "name": "@nocobase/app-plugin-workflow",
+          "version": "2.0.0-beta.0"
+        },
+        {
+          "name": "@nocobase/app-server",
+          "version": "2.0.0-beta.0"
+        },
+        {
+          "name": "@nocobase/app-skills",
+          "version": "0.1.0-beta.23"
+        },
+        {
+          "name": "@nocobase/app-testing",
+          "version": "0.1.0-beta.1"
+        },
+        {
+          "name": "@nocobase/app-websocket",
+          "version": "0.0.1"
+        },
+        {
+          "name": "@nocobase/authorization",
+          "version": "1.0.0-beta.11"
+        },
+        {
+          "name": "@nocobase/caching",
+          "version": "0.1.0-beta.2"
+        },
+        {
+          "name": "@nocobase/config",
+          "version": "0.1.0-beta.1"
+        },
+        {
+          "name": "@nocobase/db",
+          "version": "1.0.0-beta.17"
+        },
+        {
+          "name": "@nocobase/db-sqlite",
+          "version": "0.1.0-beta.4"
+        },
+        {
+          "name": "@nocobase/dev-config",
+          "version": "0.1.0-beta.17"
+        },
+        {
+          "name": "@nocobase/drive",
+          "version": "0.1.0-beta.4"
+        },
+        {
+          "name": "@nocobase/hub-cli",
+          "version": "1.0.0-beta.1"
+        },
+        {
+          "name": "@nocobase/i18n",
+          "version": "1.0.0-beta.5"
+        },
+        {
+          "name": "@nocobase/jobs",
+          "version": "0.1.0-beta.2"
+        },
+        {
+          "name": "@nocobase/logging",
+          "version": "0.1.0-beta.6"
+        },
+        {
+          "name": "@nocobase/queue",
+          "version": "0.1.0-beta.8"
+        },
+        {
+          "name": "@nocobase/repository-input",
+          "version": "0.1.0-beta.2"
+        },
+        {
+          "name": "@nocobase/service-provider",
+          "version": "0.0.2-beta.1"
+        },
+        {
+          "name": "@nocobase/session",
+          "version": "0.1.0-beta.2"
+        },
+        {
+          "name": "@nocobase/snowflake",
+          "version": "1.0.0-beta.3"
+        }
+      ]
+    },
+    "skills": {
+      "fingerprint": "b6ddd79d7f44d5536184230af9d834f7763a44efae354160b18342036cf30fee",
+      "files": 161
+    },
+    "sourceSnapshot": null,
+    "inputs": {
+      "taskInputHash": "c674060d15d675452b5787c3ddbe7fe85f940685059dd612e5162f64beebcaee",
+      "pipelineInputHash": "3def036b24462db82d2c8d20ba398a75d733ec00c8361db3d455d01c817a6b4d",
+      "reviewHash": "d866fc5a2d2f405000ec2420518fc455eac71e05b4b4afbbf12aa446b70dd188",
+      "reviewCriteriaHash": "d866fc5a2d2f405000ec2420518fc455eac71e05b4b4afbbf12aa446b70dd188",
+      "prompts": [
+        {
+          "phase": "implementation",
+          "path": "agent-implement.jsonl.invocation.json",
+          "sha256": "cdd25cebb36a20a630f7e2e901ca0c28e8fe92c78a751acadb2fc0e5271e9aac"
+        },
+        {
+          "phase": "review",
+          "path": "agent-review.jsonl.invocation.json",
+          "sha256": "7374939d52518bf74570df9a40eea4e582de8817d91eadc4107cf6f85119fba2"
+        },
+        {
+          "phase": "qa",
+          "path": "verify-1/browser-acceptance/agent-browser-acceptance.jsonl.invocation.json",
+          "sha256": "9a687e982a001600947ea4d8258aa0c13145c22374444197a2b38a43fd6fe418"
+        }
+      ]
+    },
+    "rubric": {
+      "id": "nb3-framework",
+      "version": 2
+    },
+    "agent": {
+      "engine": "pi",
+      "model": "deepseek-v4.1-flash",
+      "version": "0.86.1",
+      "buildReviewMode": "full",
+      "configuration": {
+        "fingerprints": [
+          "2f5401c2837d7dae1f1f014540b983521db478e49b3e29c61dbb26be0a75e3bf"
+        ],
+        "complete": false
+      }
+    },
+    "environment": {
+      "browserFixturesSha256": "3b527d18aa2f6d58fdfea5cdd916631ea1ee3425abeba09bb1f961f2128c554b",
+      "browserPreflight": "passed"
+    }
+  },
+  "executions": [
+    {
+      "key": "run/37432779834/attempt/1",
+      "kind": "implementation",
+      "order": 1,
+      "workflow": "code-agent-task",
+      "runId": 37432779834,
+      "attempt": 1,
+      "event": "issues",
+      "previousRunId": null,
+      "conclusion": "delivered",
+      "startedAt": "2026-10-06T07:56:04Z",
+      "endedAt": "2026-10-06T08:26:00Z",
+      "jobSeconds": 1786,
+      "controlSha": "dab43cf0cb92c04770aa18d7addb677afd3b767e",
+      "patchSha256": "34517a736cde848a932c52ccdde40deb495d7767a508f5337a60aee43a736d44",
+      "source": "usage-receipt"
+    }
+  ],
+  "outcome": {
+    "execution": "completed",
+    "acceptance": "passed",
+    "delivery": "published",
+    "pullRequest": {
+      "number": 595,
+      "headSha": "0b2a15222a4c361726e0f6a62f46c0f5407ea125"
+    },
+    "detail": "执行链已终结；业务验收与代码交付分别见 acceptance / delivery。"
+  },
+  "qa": {
+    "coverage": "complete",
+    "rounds": [
+      {
+        "round": 1,
+        "executionKey": "run/37432779834/attempt/1",
+        "scope": "full",
+        "passed": true,
+        "source": "verify-1/browser-acceptance/report.json",
+        "checks": [
+          {
+            "id": "B01",
+            "criterion": "使用已有测试账号登录，从导航打开页面，确认标题、说明、初始值 0；点击“+1”后变为 1，保存一张点击后的截图。\n\n无法实际完成时如实记录 failed、blocked 或 not_run，不以静态源码检查代替浏览器通过。\n\n同时验证案例人工输入中的产品要求：\n\n## 本次补充要求\n\n本次搭建用于验证工厂流程改动（PR #592、#593：composite action 应用补丁、超时与报告链路调整）合入后，Issue → Agent → 验证 → PR / 报告 / 预览的完整链路是否正常。需求以案例正文为准，不扩展功能，不修改工厂控制文件。",
+            "status": "passed",
+            "evidence": [
+              "qa/1/b01-initial.png",
+              "qa/1/b01-after-click.png"
+            ]
+          }
+        ]
+      }
+    ],
+    "firstFull": {
+      "status": "passed",
+      "round": 1,
+      "executionKey": "run/37432779834/attempt/1",
+      "basis": "本产物包含第 1 轮起的全部验证，取第一次实际全量 QA。"
+    },
+    "finalFull": {
+      "status": "passed",
+      "round": 1,
+      "executionKey": "run/37432779834/attempt/1",
+      "basis": "最后一次实际全量 QA。"
+    },
+    "criteria": [
+      {
+        "id": "B01",
+        "text": "使用已有测试账号登录，从导航打开页面，确认标题、说明、初始值 0；点击“+1”后变为 1，保存一张点击后的截图。\n\n无法实际完成时如实记录 failed、blocked 或 not_run，不以静态源码检查代替浏览器通过。\n\n同时验证案例人工输入中的产品要求：\n\n## 本次补充要求\n\n本次搭建用于验证工厂流程改动（PR #592、#593：composite action 应用补丁、超时与报告链路调整）合入后，Issue → Agent → 验证 → PR / 报告 / 预览的完整链路是否正常。需求以案例正文为准，不扩展功能，不修改工厂控制文件。",
+        "optional": false,
+        "firstFull": "passed",
+        "finalFull": "passed"
+      }
+    ],
+    "firstPassWithoutRepair": "yes",
+    "counts": {
+      "execution": {
+        "verificationAttempts": 1,
+        "repairAttempts": 0,
+        "source": "repair-summary.json（仅本执行）"
+      },
+      "chain": {
+        "verificationAttempts": 1,
+        "repairAttempts": 0,
+        "source": "pipeline-state.json（跨 Handoff 累计检查点，不再相加）"
+      }
+    },
+    "note": "工厂修复次数不等于 Agent 开发中的全部自测和修正；未记录 Agent 内部试错，不宣称开发全程无错误。"
+  },
+  "reviews": [
+    {
+      "key": "review/37432779834.1/v2-6dda53627948",
+      "role": "original",
+      "selected": true,
+      "state": "completed",
+      "reason": "独立 Agent 评审完成；评分是基于本次证据的意见，不替代业务 QA 或人工评审。",
+      "rubric": {
+        "id": "nb3-framework",
+        "version": 2,
+        "scale": {
+          "min": 0,
+          "max": 100
+        },
+        "businessUiIncluded": false,
+        "dimensions": [
+          {
+            "key": "requirementFit",
+            "label": "需求满足度"
+          },
+          {
+            "key": "usability",
+            "label": "使用便利度"
+          },
+          {
+            "key": "agentFriendliness",
+            "label": "Agent 友好度"
+          },
+          {
+            "key": "design",
+            "label": "设计合理性"
+          },
+          {
+            "key": "reliability",
+            "label": "实现完整性与可靠性"
+          }
+        ]
+      },
+      "reviewer": {
+        "engine": "pi",
+        "model": "deepseek-v4.1-flash",
+        "version": "0.86.1",
+        "runId": 37432779834,
+        "attempt": 1,
+        "controlSha": "dab43cf0cb92c04770aa18d7addb677afd3b767e",
+        "replay": false
+      },
+      "producer": {
+        "runId": 37432779834,
+        "attempt": 1
+      },
+      "basis": {
+        "inputHash": "6dda53627948fd2bd235a8852c8905ab08d3c2c1c6783042cb85ed33d6e0204c",
+        "patchSha256": "34517a736cde848a932c52ccdde40deb495d7767a508f5337a60aee43a736d44",
+        "baseSha": "dab43cf0cb92c04770aa18d7addb677afd3b767e",
+        "lockfileSha256": "d2d7ca43e893351037640482480728acb8d255a1a478b6e3d3acfc26b91697d7",
+        "reviewCriteriaHash": "d866fc5a2d2f405000ec2420518fc455eac71e05b4b4afbbf12aa446b70dd188",
+        "artifactHash": "07f69b723085028fd3e25bf5f49182375823465b98ec6ca2c51204dc786d9d4d"
+      },
+      "buildReviewMode": "full",
+      "summary": "本轮以“新增 Pipeline Smoke 页面”为测试场景，独立评审 NocoBase3 基座中被实际触达的能力单元：@nocobase/app-client 的路由/导航/页面授权、@nocobase/i18n 的运行时与文案接线、前端 UI 组合与工作流指引、以及 @nocobase/dev-config 与 @nocobase/app-testing 的测试工具链。路由、导航、授权与 i18n 机制表现良好，一条声明式改动即通过 B01 与 247 个用例；主要摩擦集中在指引层——ui-workflow.md 的工作流分流未覆盖“无数据的新静态页面”，Quick change 又要求照抄页面，而模板首页 home.tsx 本身违反 ui-guidelines L1 的 PageContainer/PageHeader [Must]，导致新页面同样缺少标准页面框。UI 图像评审因本模型无法读取图片而不做评分。",
+      "progress": {
+        "complete": true,
+        "pendingModules": []
+      },
+      "modules": [
+        {
+          "key": "review/37432779834.1/v2-6dda53627948/M1",
+          "name": "应用路由、导航与页面授权（@nocobase/app-client）",
+          "subjectKeys": [
+            "pkg:@nocobase/app-client",
+            "skill:nocobase-app-development"
+          ],
+          "mapping": "resolved",
+          "targets": [
+            {
+              "kind": "library",
+              "name": "@nocobase/app-client",
+              "subjectKey": "pkg:@nocobase/app-client",
+              "entrypoints": [
+                "@nocobase/app-client/plugins → defineAppRoutes、defineSettingsRoutes、resolveAppClientContributions",
+                "@nocobase/app-client/runtime → 客户端运行时装配"
+              ],
+              "evidence": [
+                "review/37432779834.1/v2-6dda53627948/E1",
+                "review/37432779834.1/v2-6dda53627948/E2",
+                "review/37432779834.1/v2-6dda53627948/E3",
+                "review/37432779834.1/v2-6dda53627948/E4"
+              ]
+            },
+            {
+              "kind": "guidance",
+              "name": "app/.agents/skills/nocobase-app-development/references/frontend/references/page.md",
+              "subjectKey": "skill:nocobase-app-development",
+              "entrypoints": [
+                "§1 Declare the route",
+                "§2 The page component",
+                "§6 Menus",
+                "§12 Update the route test"
+              ],
+              "evidence": [
+                "review/37432779834.1/v2-6dda53627948/E7"
+              ]
+            }
+          ],
+          "scope": "在既有 app-template-default 应用中声明一条受登录保护的新页面路由，并让它自动出现在侧边导航、参与页面授权契约与路由测试。",
+          "limitations": "仅评估客户端路由/导航/授权的公开 API 与文档；未验证设置页、分组导航、子路由与权限授予流程。",
+          "criteria": [
+            "B01"
+          ],
+          "qa": {
+            "firstFull": "passed",
+            "finalFull": "passed"
+          },
+          "requirements": [
+            {
+              "need": "新增一个登录后可访问的页面，并自动获得侧边导航入口，无需改动 shell。",
+              "responsibility": "defineAppRoutes 冻结页面声明，projectNavigation 依据 navigation.title/icon 生成菜单项，path 由路由层挂载。",
+              "support": "direct",
+              "recommendedUsage": "在 client/routes.ts 的 defineAppRoutes 中追加 { path, name, auth, authz, componentLoader, navigation:{title,icon} }。",
+              "actualUsage": "app/client/routes.ts 追加 pipelineSmoke 定义（auth:'required'、authz:'skip'、懒加载 componentLoader、navigation.title 'navigation.pipelineSmoke'、图标 FlaskConical），未改 shell；B01 从导航点开 /main/pipeline-smoke 成功。",
+              "gapOwner": "none",
+              "evidence": [
+                "review/37432779834.1/v2-6dda53627948/E1",
+                "review/37432779834.1/v2-6dda53627948/E3",
+                "review/37432779834.1/v2-6dda53627948/E4",
+                "review/37432779834.1/v2-6dda53627948/E5",
+                "review/37432779834.1/v2-6dda53627948/E7",
+                "review/37432779834.1/v2-6dda53627948/E27"
+              ]
+            },
+            {
+              "need": "新页面必须显式声明页面授权，且可被逻辑测试固定，避免误升级为受限页面。",
+              "responsibility": "normalizeRouteAuthz 拒绝已移除的 access、要求显式 authz，resolveAppClientContributions 暴露解析后的 authz 供测试。",
+              "support": "direct",
+              "recommendedUsage": "对无需页面授权的页面声明 authz:'skip'，并在 tests/logic/client-routes.test.ts 固定其 authorizedAs。",
+              "actualUsage": "routes.ts 声明 authz:'skip'；client-routes.test.ts 的 pageAuthorizations 期望新增 { name:'pipelineSmoke', authorizedAs:null } 并随全套 247 个测试通过。",
+              "gapOwner": "none",
+              "evidence": [
+                "review/37432779834.1/v2-6dda53627948/E2",
+                "review/37432779834.1/v2-6dda53627948/E4",
+                "review/37432779834.1/v2-6dda53627948/E5",
+                "review/37432779834.1/v2-6dda53627948/E6",
+                "review/37432779834.1/v2-6dda53627948/E26"
+              ]
+            }
+          ],
+          "scores": {
+            "requirementFit": {
+              "score": 95,
+              "reason": "路由声明同时覆盖路径、登录态、页面授权与导航入口，新页面仅 1 处声明即完成，B01 端到端通过。",
+              "evidence": [
+                "review/37432779834.1/v2-6dda53627948/E1",
+                "review/37432779834.1/v2-6dda53627948/E3",
+                "review/37432779834.1/v2-6dda53627948/E5",
+                "review/37432779834.1/v2-6dda53627948/E7",
+                "review/37432779834.1/v2-6dda53627948/E27"
+              ]
+            },
+            "usability": {
+              "score": 90,
+              "reason": "公开 API 以声明式对象为主，类型定义完整；authz 省略时的推断会告警，减少隐式行为。",
+              "evidence": [
+                "review/37432779834.1/v2-6dda53627948/E1",
+                "review/37432779834.1/v2-6dda53627948/E2",
+                "review/37432779834.1/v2-6dda53627948/E4",
+                "review/37432779834.1/v2-6dda53627948/E5"
+              ]
+            },
+            "agentFriendliness": {
+              "score": 88,
+              "reason": "page.md §1/§6/§12 对新增页面给出直接可照抄的步骤；路由测试对授权变化有明确报错信息。",
+              "evidence": [
+                "review/37432779834.1/v2-6dda53627948/E2",
+                "review/37432779834.1/v2-6dda53627948/E4",
+                "review/37432779834.1/v2-6dda53627948/E6",
+                "review/37432779834.1/v2-6dda53627948/E7"
+              ]
+            },
+            "design": {
+              "score": 90,
+              "reason": "contribution 冻结 + 注册顺序稳定排序 + 独立的 authz 归一化，职责边界清晰。",
+              "evidence": [
+                "review/37432779834.1/v2-6dda53627948/E1",
+                "review/37432779834.1/v2-6dda53627948/E2",
+                "review/37432779834.1/v2-6dda53627948/E3",
+                "review/37432779834.1/v2-6dda53627948/E4"
+              ]
+            },
+            "reliability": {
+              "score": 90,
+              "reason": "authz 非法值抛错而非静默降级；route 测试固定解析结果；B01 与全套 247 测试通过。",
+              "evidence": [
+                "review/37432779834.1/v2-6dda53627948/E1",
+                "review/37432779834.1/v2-6dda53627948/E2",
+                "review/37432779834.1/v2-6dda53627948/E3",
+                "review/37432779834.1/v2-6dda53627948/E6",
+                "review/37432779834.1/v2-6dda53627948/E26"
+              ]
+            }
+          }
+        },
+        {
+          "key": "review/37432779834.1/v2-6dda53627948/M2",
+          "name": "国际化运行时与文案接线（@nocobase/i18n）",
+          "subjectKeys": [
+            "pkg:@nocobase/i18n",
+            "skill:nocobase-app-development"
+          ],
+          "mapping": "resolved",
+          "targets": [
+            {
+              "kind": "library",
+              "name": "@nocobase/i18n",
+              "subjectKey": "pkg:@nocobase/i18n",
+              "entrypoints": [
+                "@nocobase/i18n → LocaleResource/LocaleLoaders/resolveLocalesContribution",
+                "@nocobase/i18n/client → useTranslation、I18nProvider",
+                "@nocobase/i18n/testing → createTestI18nRuntime、TestI18nProvider、MissingTranslationError"
+              ],
+              "evidence": [
+                "review/37432779834.1/v2-6dda53627948/E8",
+                "review/37432779834.1/v2-6dda53627948/E9",
+                "review/37432779834.1/v2-6dda53627948/E10"
+              ]
+            },
+            {
+              "kind": "guidance",
+              "name": "app/.agents/skills/nocobase-app-development/references/frontend/references/i18n.md",
+              "subjectKey": "skill:nocobase-app-development",
+              "entrypoints": [
+                "Where copy lives",
+                "Checks"
+              ],
+              "evidence": [
+                "review/37432779834.1/v2-6dda53627948/E13"
+              ]
+            }
+          ],
+          "scope": "为新页面与导航项添加中英文文案，通过 useTranslation 渲染，并由严格测试运行时与 locale 覆盖测试保证无缺键。",
+          "limitations": "仅评估客户端 i18n 运行时、客户端入口与测试运行时；未评估服务端 locale、语言切换持久化与第三方 namespace 组合。",
+          "criteria": [
+            "B01"
+          ],
+          "qa": {
+            "firstFull": "passed",
+            "finalFull": "passed"
+          },
+          "requirements": [
+            {
+              "need": "页面标题、说明、按钮与导航项在英/中两种语言下都显示真实文案。",
+              "responsibility": "I18nRuntime 按 namespace 装载应用 locale 资源，fallbackLng 链保证 fallback，useTranslation 解析键。",
+              "support": "direct",
+              "recommendedUsage": "在 client/locales/en-US.ts 与 zh-CN.ts 添加键，页面统一用 t('...')，用 app-locale-coverage.test.ts 兜底字面量键与路由 title。",
+              "actualUsage": "两语言各新增 pipelineSmoke.{title,description,increment} 与 navigation.pipelineSmoke；页面与导航均经 useTranslation 渲染；B01 在英文环境核对标题与说明。",
+              "gapOwner": "none",
+              "evidence": [
+                "review/37432779834.1/v2-6dda53627948/E8",
+                "review/37432779834.1/v2-6dda53627948/E9",
+                "review/37432779834.1/v2-6dda53627948/E11",
+                "review/37432779834.1/v2-6dda53627948/E12",
+                "review/37432779834.1/v2-6dda53627948/E13",
+                "review/37432779834.1/v2-6dda53627948/E27"
+              ]
+            },
+            {
+              "need": "缺翻译时应让测试失败，而不是静默渲染键名。",
+              "responsibility": "createTestI18nRuntime 默认注册 missingKeyHandler 抛 MissingTranslationError，并复用真实查找（嵌套键、插值、fallback）。",
+              "support": "direct",
+              "recommendedUsage": "用 createTestI18nRuntime 建严格运行时并以 TestI18nProvider 挂载，断言用户可见文案。",
+              "actualUsage": "pipeline-smoke.test.tsx 建立 en/zh 两个运行时并断言标题、说明与计数按钮文案。",
+              "gapOwner": "none",
+              "evidence": [
+                "review/37432779834.1/v2-6dda53627948/E10",
+                "review/37432779834.1/v2-6dda53627948/E20"
+              ]
+            }
+          ],
+          "scores": {
+            "requirementFit": {
+              "score": 92,
+              "reason": "两语言键齐备，页面与菜单全部走 t()，B01 与 locale 覆盖测试通过。",
+              "evidence": [
+                "review/37432779834.1/v2-6dda53627948/E8",
+                "review/37432779834.1/v2-6dda53627948/E9",
+                "review/37432779834.1/v2-6dda53627948/E11",
+                "review/37432779834.1/v2-6dda53627948/E12",
+                "review/37432779834.1/v2-6dda53627948/E13"
+              ]
+            },
+            "usability": {
+              "score": 88,
+              "reason": "useTranslation 入口与 locale 文件位置明确；resolveLocalesContribution 让插件文案可复用应用命名空间。",
+              "evidence": [
+                "review/37432779834.1/v2-6dda53627948/E8",
+                "review/37432779834.1/v2-6dda53627948/E9",
+                "review/37432779834.1/v2-6dda53627948/E13"
+              ]
+            },
+            "agentFriendliness": {
+              "score": 85,
+              "reason": "严格测试运行时把缺键变成带键名的显式错误；i18n.md Checks 给出可执行命令。",
+              "evidence": [
+                "review/37432779834.1/v2-6dda53627948/E10",
+                "review/37432779834.1/v2-6dda53627948/E13",
+                "review/37432779834.1/v2-6dda53627948/E20"
+              ]
+            },
+            "design": {
+              "score": 88,
+              "reason": "单一 i18n 实例 + namespace 分区 + fallback 链，使语言切换能同时触达所有订阅者。",
+              "evidence": [
+                "review/37432779834.1/v2-6dda53627948/E8",
+                "review/37432779834.1/v2-6dda53627948/E9",
+                "review/37432779834.1/v2-6dda53627948/E10"
+              ]
+            },
+            "reliability": {
+              "score": 90,
+              "reason": "缺键抛 MissingTranslationError，locale 覆盖测试与 tsc 双重检查；verify-1 全绿。",
+              "evidence": [
+                "review/37432779834.1/v2-6dda53627948/E8",
+                "review/37432779834.1/v2-6dda53627948/E10",
+                "review/37432779834.1/v2-6dda53627948/E13",
+                "review/37432779834.1/v2-6dda53627948/E26"
+              ]
+            }
+          }
+        },
+        {
+          "key": "review/37432779834.1/v2-6dda53627948/M3",
+          "name": "前端 UI 组合与工作流指引（Skill 指引）",
+          "subjectKeys": [
+            "skill:nocobase-app-development"
+          ],
+          "mapping": "resolved",
+          "targets": [
+            {
+              "kind": "guidance",
+              "name": "app/.agents/skills/nocobase-app-development/references/frontend",
+              "subjectKey": "skill:nocobase-app-development",
+              "entrypoints": [
+                "ui-workflow.md → Choosing a workflow / Quick change",
+                "ui-guidelines.md → L1 Page structure",
+                "frontend-dev.md → Conventions / Look up by task",
+                "references/page.md → §2 The page component"
+              ],
+              "evidence": [
+                "review/37432779834.1/v2-6dda53627948/E7",
+                "review/37432779834.1/v2-6dda53627948/E16",
+                "review/37432779834.1/v2-6dda53627948/E17",
+                "review/37432779834.1/v2-6dda53627948/E18",
+                "review/37432779834.1/v2-6dda53627948/E19",
+                "review/37432779834.1/v2-6dda53627948/E35"
+              ]
+            },
+            {
+              "kind": "guidance",
+              "name": "app/.agents/skills/nocobase-app-development/SKILL.md",
+              "subjectKey": "skill:nocobase-app-development",
+              "entrypoints": [
+                "Hard rules → PageContainer / route navigation"
+              ],
+              "evidence": [
+                "review/37432779834.1/v2-6dda53627948/E34"
+              ]
+            }
+          ],
+          "scope": "评估 ui-workflow.md 的工作流分流、ui-guidelines.md 的页面结构规则、frontend-dev.md 的约定与任务索引，以及新页面是否据此采用模板的 PageContainer/PageHeader 结构。",
+          "limitations": "本模块为纯指引评估，无对应库源码可靠性证据；未评估主题、shadcn、浮层等未触达的指引分支。",
+          "criteria": [
+            "B01"
+          ],
+          "qa": {
+            "firstFull": "passed",
+            "finalFull": "passed"
+          },
+          "requirements": [
+            {
+              "need": "新业务页面采用模板统一的页面骨架（PageContainer + PageHeader：标题必填、说明建议）。",
+              "responsibility": "ui-guidelines.md L1 [Must] 与 page.md §2 定义骨架并禁止手写带内边距的 section；frontend-dev.md 第 30 行把 PageContainer 归属到页面组件。",
+              "support": "workaround",
+              "recommendedUsage": "按 frontend-dev.md“Look up by task”的“新建页面”行读取 page.md §1/§2/§6，页面用 PageContainer 包裹、用 PageHeader 渲染标题与说明。",
+              "actualUsage": "实现 Agent 在实现 JSONL 第 268 行判定“This is a quick change: a new simple static page, no data loading/forms/overlays”，思考里称要读“the page reference”，但整轮只读了 ui-workflow.md 与既有 routes/home/locales，从未打开 frontend-dev.md、ui-guidelines.md 或 page.md，最终照抄 home.tsx 手写 <section> + <h1>。",
+              "gapOwner": "documentation",
+              "evidence": [
+                "review/37432779834.1/v2-6dda53627948/E7",
+                "review/37432779834.1/v2-6dda53627948/E14",
+                "review/37432779834.1/v2-6dda53627948/E16",
+                "review/37432779834.1/v2-6dda53627948/E17",
+                "review/37432779834.1/v2-6dda53627948/E29",
+                "review/37432779834.1/v2-6dda53627948/E36"
+              ]
+            },
+            {
+              "need": "“照抄既有页面”这一快捷路径所参照的模板页面本身应符合 [Must] 规则。",
+              "responsibility": "ui-workflow.md Quick change 第 2 步要求“Follow how the page is already written”，模板自带页因此成为直接范本。",
+              "support": "workaround",
+              "recommendedUsage": "模板首页本身应使用 PageContainer/PageHeader，使照抄得到合规结构。",
+              "actualUsage": "client/pages/home.tsx 是手写 <section> + <h1> 的 hero，违反 ui-guidelines L1；照抄后新页面同样缺 PageContainer/PageHeader。",
+              "gapOwner": "template",
+              "evidence": [
+                "review/37432779834.1/v2-6dda53627948/E15",
+                "review/37432779834.1/v2-6dda53627948/E16",
+                "review/37432779834.1/v2-6dda53627948/E18",
+                "review/37432779834.1/v2-6dda53627948/E19",
+                "review/37432779834.1/v2-6dda53627948/E33"
+              ]
+            }
+          ],
+          "scores": {
+            "requirementFit": {
+              "score": 70,
+              "reason": "L1 与 page.md §2 写清了 [Must] 结构，但工作流分流与模板示例让该要求在实际新页面任务中被绕过。",
+              "evidence": [
+                "review/37432779834.1/v2-6dda53627948/E16",
+                "review/37432779834.1/v2-6dda53627948/E7",
+                "review/37432779834.1/v2-6dda53627948/E18",
+                "review/37432779834.1/v2-6dda53627948/E19"
+              ]
+            },
+            "usability": {
+              "score": 62,
+              "reason": "指引文件交叉引用多，关键的新建页面映射只存在于 frontend-dev.md 的任务表；Quick change 的“照抄页面”与 ui-guidelines 的强制结构直接冲突。",
+              "evidence": [
+                "review/37432779834.1/v2-6dda53627948/E17",
+                "review/37432779834.1/v2-6dda53627948/E18",
+                "review/37432779834.1/v2-6dda53627948/E19",
+                "review/37432779834.1/v2-6dda53627948/E35"
+              ]
+            },
+            "agentFriendliness": {
+              "score": 58,
+              "reason": "以 ui-workflow.md 为唯一入口的 Agent 容易把它判为 quick change 并停在照抄现有页面，缺少把新页面强制导向 page.md 的门槛。",
+              "evidence": [
+                "review/37432779834.1/v2-6dda53627948/E18",
+                "review/37432779834.1/v2-6dda53627948/E19",
+                "review/37432779834.1/v2-6dda53627948/E17"
+              ]
+            },
+            "design": {
+              "score": 74,
+              "reason": "指引体系本身分层清晰（工作流/规范/手册/专题），但三份文件对同一结构给出不一致的默认行为。",
+              "evidence": [
+                "review/37432779834.1/v2-6dda53627948/E7",
+                "review/37432779834.1/v2-6dda53627948/E16",
+                "review/37432779834.1/v2-6dda53627948/E17",
+                "review/37432779834.1/v2-6dda53627948/E18"
+              ]
+            },
+            "reliability": {
+              "score": 66,
+              "reason": "规则文本明确，但在真实任务中未能阻止 [Must] 违规，且单靠 B01 无法发现结构缺失。",
+              "evidence": [
+                "review/37432779834.1/v2-6dda53627948/E16",
+                "review/37432779834.1/v2-6dda53627948/E18",
+                "review/37432779834.1/v2-6dda53627948/E19",
+                "review/37432779834.1/v2-6dda53627948/E7"
+              ]
+            }
+          }
+        },
+        {
+          "key": "review/37432779834.1/v2-6dda53627948/M4",
+          "name": "测试与验证工具链（@nocobase/dev-config、@nocobase/app-testing）",
+          "subjectKeys": [
+            "pkg:@nocobase/dev-config",
+            "pkg:@nocobase/app-testing",
+            "skill:nocobase-app-development"
+          ],
+          "mapping": "resolved",
+          "targets": [
+            {
+              "kind": "library",
+              "name": "@nocobase/dev-config",
+              "subjectKey": "pkg:@nocobase/dev-config",
+              "entrypoints": [
+                "@nocobase/dev-config/vitest/react → createReactVitestConfig",
+                "@nocobase/dev-config/eslint",
+                "@nocobase/dev-config/prettier"
+              ],
+              "evidence": [
+                "review/37432779834.1/v2-6dda53627948/E21"
+              ]
+            },
+            {
+              "kind": "library",
+              "name": "@nocobase/app-testing",
+              "subjectKey": "pkg:@nocobase/app-testing",
+              "entrypoints": [
+                "@nocobase/app-testing/client → renderWithApp"
+              ],
+              "evidence": [
+                "review/37432779834.1/v2-6dda53627948/E22"
+              ]
+            },
+            {
+              "kind": "guidance",
+              "name": "app/.agents/skills/nocobase-app-development/references/testing.md",
+              "subjectKey": "skill:nocobase-app-development",
+              "entrypoints": [
+                "Where tests go",
+                "What to test, by change"
+              ],
+              "evidence": [
+                "review/37432779834.1/v2-6dda53627948/E24"
+              ]
+            },
+            {
+              "kind": "guidance",
+              "name": "app/.agents/skills/nocobase-app-development/references/frontend/references/testing.md",
+              "subjectKey": "skill:nocobase-app-development",
+              "entrypoints": [
+                "Where tests go",
+                "Building the test harness",
+                "What to test"
+              ],
+              "evidence": [
+                "review/37432779834.1/v2-6dda53627948/E32"
+              ]
+            }
+          ],
+          "scope": "评估共享 vitest/react 配置、app-testing 页面渲染 harness，以及测试分层与验证指引能否支撑本次新增页面与其路由改动。",
+          "limitations": "未评估 Playwright/e2e、构建、服务端测试与覆盖率阈值；app-testing 的 renderWithApp 本次未被应用采用。",
+          "criteria": [],
+          "qa": {
+            "firstFull": "unknown",
+            "finalFull": "unknown"
+          },
+          "requirements": [
+            {
+              "need": "新增页面与其路由测试应在共享配置下运行，避免环境漂移。",
+              "responsibility": "createReactVitestConfig 提供 jsdom、react 插件、共享超时与 setupFiles；应用配置在此基础上合并别名与 include。",
+              "support": "direct",
+              "recommendedUsage": "vitest.config.ts 调用 createReactVitestConfig，测试置于 tests/components 与 tests/logic。",
+              "actualUsage": "app/vitest.config.ts 使用 createReactVitestConfig；新增组件测试与路由测试均落在 tests/ 下；verify-1.log 显示 prettier/eslint/tsc exit 0、42 个测试文件 247 个用例全过。",
+              "gapOwner": "none",
+              "evidence": [
+                "review/37432779834.1/v2-6dda53627948/E21",
+                "review/37432779834.1/v2-6dda53627948/E23",
+                "review/37432779834.1/v2-6dda53627948/E24",
+                "review/37432779834.1/v2-6dda53627948/E25",
+                "review/37432779834.1/v2-6dda53627948/E26"
+              ]
+            },
+            {
+              "need": "页面测试应能在真实 app providers（i18n、router、toaster）中渲染，而不仅是裸组件。",
+              "responsibility": "@nocobase/app-testing/client 的 renderWithApp 在 MemoryRouter 中装配真实运行时与 providers；frontend/references/testing.md 建议页面测试复制 page-harness.test.tsx。",
+              "support": "composition",
+              "recommendedUsage": "页面级测试优先使用 renderWithApp 或复制 page-harness.test.tsx，以获得路由与 provider 覆盖。",
+              "actualUsage": "pipeline-smoke.test.tsx 仅用 @nocobase/i18n/testing 的 Provider 挂载裸组件，未使用 renderWithApp，也未复制 page-harness；应用层 providers/路由未进入 CI。",
+              "gapOwner": "documentation",
+              "evidence": [
+                "review/37432779834.1/v2-6dda53627948/E20",
+                "review/37432779834.1/v2-6dda53627948/E22",
+                "review/37432779834.1/v2-6dda53627948/E24",
+                "review/37432779834.1/v2-6dda53627948/E32"
+              ]
+            }
+          ],
+          "scores": {
+            "requirementFit": {
+              "score": 88,
+              "reason": "共享 vitest 配置与 app-testing harness 覆盖了本次组件/逻辑测试需求，静态检查与 247 用例全过。",
+              "evidence": [
+                "review/37432779834.1/v2-6dda53627948/E21",
+                "review/37432779834.1/v2-6dda53627948/E22",
+                "review/37432779834.1/v2-6dda53627948/E23",
+                "review/37432779834.1/v2-6dda53627948/E24",
+                "review/37432779834.1/v2-6dda53627948/E25"
+              ]
+            },
+            "usability": {
+              "score": 85,
+              "reason": "一条 createReactVitestConfig 即完成环境搭建；测试分层指引清楚。",
+              "evidence": [
+                "review/37432779834.1/v2-6dda53627948/E21",
+                "review/37432779834.1/v2-6dda53627948/E23",
+                "review/37432779834.1/v2-6dda53627948/E24",
+                "review/37432779834.1/v2-6dda53627948/E32"
+              ]
+            },
+            "agentFriendliness": {
+              "score": 80,
+              "reason": "已有 page-harness 可复制，但“页面测试何时该用 renderWithApp”未明确，Agent 选择了更轻的本地 harness。",
+              "evidence": [
+                "review/37432779834.1/v2-6dda53627948/E22",
+                "review/37432779834.1/v2-6dda53627948/E24",
+                "review/37432779834.1/v2-6dda53627948/E32",
+                "review/37432779834.1/v2-6dda53627948/E20"
+              ]
+            },
+            "design": {
+              "score": 88,
+              "reason": "配置、setup、harness 分层合理，且把 Refine/react-router 的重复实例问题内联解决。",
+              "evidence": [
+                "review/37432779834.1/v2-6dda53627948/E21",
+                "review/37432779834.1/v2-6dda53627948/E22",
+                "review/37432779834.1/v2-6dda53627948/E23"
+              ]
+            },
+            "reliability": {
+              "score": 90,
+              "reason": "prettier/eslint/tsc/vitest 四道检查均 exit 0，且 42 文件 247 用例通过。",
+              "evidence": [
+                "review/37432779834.1/v2-6dda53627948/E21",
+                "review/37432779834.1/v2-6dda53627948/E23",
+                "review/37432779834.1/v2-6dda53627948/E25",
+                "review/37432779834.1/v2-6dda53627948/E26"
+              ]
+            }
+          }
+        }
+      ],
+      "findings": [
+        {
+          "id": "review/37432779834.1/v2-6dda53627948/F1",
+          "localId": "F1",
+          "kind": "misleading",
+          "owner": "template",
+          "severity": "minor",
+          "confidence": "confirmed",
+          "confirmedBy": "reviewer",
+          "reviewerStatus": "open",
+          "title": "模板首页示例违反自身 L1 页面结构规则，却又是新页面被要求模仿的范本",
+          "detail": "ui-guidelines.md L1 把 PageContainer + PageHeader 定为页面 [Must]；page.md §2 还明确禁止手写带页面内边距的 section。但模板自带的 client/pages/home.tsx 恰好是手写 <section> + <h1> 的 hero，而 ui-workflow.md 的 Quick change 第 2 步又要求“Follow how the page is already written”；本轮需求本身还写明“沿用本轮模板、原有登录、主页、设置和翻译机制”，进一步鼓励照抄主页。实现 Agent 照抄 home.tsx，产出的 pipeline-smoke.tsx 同样没有 PageContainer/PageHeader。",
+          "impact": "纯静态新页面按模板示例生成时系统性缺少标准页面框，属 [Must] 违规；需求“沿用模板/主页”的措辞会放大这一误导，且因不改变可达性与功能而不会被 B01 这类行为验收发现。",
+          "suggestedChange": "让模板首页也使用 PageContainer + PageHeader（hero 作为 PageContainer 内的一节），或在 ui-workflow.md/frontend-dev.md 显式标注 home 是营销式例外、新业务页面必须走 page.md §2 骨架。",
+          "claimed": "UI 指引要求业务页面包在 PageContainer 中并带 PageHeader（L1 [Must]；page.md §2 禁止手写内边距 section）。",
+          "observed": "模板首页 home.tsx 与照抄它的 pipeline-smoke.tsx 都是手写 <section> + <h1>，无 PageContainer/PageHeader。",
+          "evidence": [
+            "review/37432779834.1/v2-6dda53627948/E16",
+            "review/37432779834.1/v2-6dda53627948/E7",
+            "review/37432779834.1/v2-6dda53627948/E15",
+            "review/37432779834.1/v2-6dda53627948/E19",
+            "review/37432779834.1/v2-6dda53627948/E14",
+            "review/37432779834.1/v2-6dda53627948/E33"
+          ],
+          "moduleKeys": [
+            "review/37432779834.1/v2-6dda53627948/M1",
+            "review/37432779834.1/v2-6dda53627948/M3"
+          ],
+          "subjectKeys": [
+            "pkg:@nocobase/app-client",
+            "skill:nocobase-app-development"
+          ]
+        },
+        {
+          "id": "review/37432779834.1/v2-6dda53627948/F2",
+          "localId": "F2",
+          "kind": "issue",
+          "owner": "documentation",
+          "severity": "minor",
+          "confidence": "confirmed",
+          "confirmedBy": "reviewer",
+          "reviewerStatus": "open",
+          "title": "工作流分流未覆盖“无数据的新静态页面”，Quick change 未把新页面强制导向 page.md",
+          "detail": "ui-workflow.md 的 full workflow 触发条件写作“a new page that loads data or has forms or overlays”，quick change 的示例则全是在既有页面上增改。一个全新、无数据/表单/浮层的静态页面落在两者之间，按“None of the above applies”会被判为 quick change。本轮需求“按需阅读附近源码和相关 Skill”也不会纠正它。此时唯一把“新建页面”映射到 page.md §1/§2/§6 的入口是 frontend-dev.md 的“Look up by task”表，而 Quick change 第 1 步只笼统要求读 frontend-dev.md 与相关 references。实现 Agent 在实现 JSONL 第 268 行判定“This is a quick change... no data loading/forms/overlays”，整轮只读了 ui-workflow.md，随后直接照抄 home.tsx。",
+          "impact": "新页面任务可在不打开 page.md/frontend-dev.md/ui-guidelines.md 的情况下完成并通过 B01，导致 L1 [Must] 结构缺失长期不被流程捕获。",
+          "suggestedChange": "在“Choosing a workflow”中为“new page”单列一行指向 page.md §1/§2/§6（无论是否加载数据）；或在 Quick change 第 1 步点名“新增页面必读 page.md §2”。",
+          "claimed": null,
+          "observed": null,
+          "evidence": [
+            "review/37432779834.1/v2-6dda53627948/E18",
+            "review/37432779834.1/v2-6dda53627948/E19",
+            "review/37432779834.1/v2-6dda53627948/E17",
+            "review/37432779834.1/v2-6dda53627948/E35",
+            "review/37432779834.1/v2-6dda53627948/E14",
+            "review/37432779834.1/v2-6dda53627948/E29",
+            "review/37432779834.1/v2-6dda53627948/E36"
+          ],
+          "moduleKeys": [
+            "review/37432779834.1/v2-6dda53627948/M3"
+          ],
+          "subjectKeys": [
+            "skill:nocobase-app-development"
+          ]
+        },
+        {
+          "id": "review/37432779834.1/v2-6dda53627948/F3",
+          "localId": "F3",
+          "kind": "strength",
+          "owner": "framework",
+          "severity": "info",
+          "confidence": "confirmed",
+          "confirmedBy": "reviewer",
+          "reviewerStatus": "not-applicable",
+          "title": "路由/导航/授权与 i18n 机制让新增页面只需声明式小改动",
+          "detail": "一条 defineAppRoutes 声明即同时得到路由、侧边导航、页面授权与类型契约（projectNavigation 自动投影 navigation.title/icon，normalizeRouteAuthz 强制显式 authz）；文案侧 useTranslation + 严格测试运行时 + locale 覆盖测试把缺键变成显式失败。构建完成后的验证为 prettier/eslint/tsc 全 exit 0、42 个测试文件 247 用例通过、B01 端到端通过。",
+          "impact": "新页面接入成本低、契约可测试，且授权与文案回归有自动防线。",
+          "suggestedChange": "保持并把 page.md §1/§2/§6 的“新建页面”索引前置到 ui-workflow 的分流处（见 F2）。",
+          "claimed": null,
+          "observed": null,
+          "evidence": [
+            "review/37432779834.1/v2-6dda53627948/E1",
+            "review/37432779834.1/v2-6dda53627948/E2",
+            "review/37432779834.1/v2-6dda53627948/E3",
+            "review/37432779834.1/v2-6dda53627948/E5",
+            "review/37432779834.1/v2-6dda53627948/E8",
+            "review/37432779834.1/v2-6dda53627948/E11",
+            "review/37432779834.1/v2-6dda53627948/E25",
+            "review/37432779834.1/v2-6dda53627948/E26",
+            "review/37432779834.1/v2-6dda53627948/E27"
+          ],
+          "moduleKeys": [
+            "review/37432779834.1/v2-6dda53627948/M1",
+            "review/37432779834.1/v2-6dda53627948/M2"
+          ],
+          "subjectKeys": [
+            "pkg:@nocobase/app-client",
+            "skill:nocobase-app-development",
+            "pkg:@nocobase/i18n"
+          ]
+        },
+        {
+          "id": "review/37432779834.1/v2-6dda53627948/F4",
+          "localId": "F4",
+          "kind": "improvement",
+          "owner": "documentation",
+          "severity": "info",
+          "confidence": "suspected",
+          "confirmedBy": null,
+          "reviewerStatus": "open",
+          "title": "页面测试何时使用 @nocobase/app-testing 的 renderWithApp 缺少明确指引",
+          "detail": "@nocobase/app-testing/client 提供 renderWithApp，可在 MemoryRouter 中挂载真实 app runtime、locales、providers 与 toaster；frontend/references/testing.md 只说“For a page, copy tests/components/page-harness.test.tsx”。本次页面测试选择只用 @nocobase/i18n/testing 的 Provider 挂载裸组件（实现 Agent 确实读过 page-harness.test.tsx 却未采用），于是 app 级 providers 与路由未进入 CI。",
+          "impact": "页面测试与真实运行环境存在缺口，路由/provider 级回归不会被组件测试捕获；但也不强制每个组件测试都升级为全 app 渲染。",
+          "suggestedChange": "在 testing.md 增加一句判定标准：需要路由、真实 providers、跨组件 i18n/导航时用 renderWithApp/page-harness，仅验证渲染与交互时可用轻量 Provider；并给出各自示例。",
+          "claimed": null,
+          "observed": null,
+          "evidence": [
+            "review/37432779834.1/v2-6dda53627948/E32",
+            "review/37432779834.1/v2-6dda53627948/E22",
+            "review/37432779834.1/v2-6dda53627948/E20",
+            "review/37432779834.1/v2-6dda53627948/E24"
+          ],
+          "moduleKeys": [
+            "review/37432779834.1/v2-6dda53627948/M4"
+          ],
+          "subjectKeys": [
+            "pkg:@nocobase/dev-config",
+            "pkg:@nocobase/app-testing",
+            "skill:nocobase-app-development"
+          ]
+        }
+      ],
+      "ui": {
+        "status": "not-reviewed",
+        "score": null,
+        "reason": "仅有同一页面两个状态（b01-initial.png、b01-after-click.png）的截图，且评审模型无法渲染/查看图像，无法满足“跨页面/状态图像评审”的证据要求，因此不评 UI 分。",
+        "evidence": [],
+        "framework": false
+      },
+      "limitations": [
+        "只读快照评审：未安装依赖、未构建、未运行应用，运行结论来自 verify-1.log 与 QA report.json。",
+        "本 Run 只有一个浏览器验收准则 B01，未覆盖页面结构、权限变体、多语言切换与主题；模块 criteria 只引用 B01。",
+        "UI 图像评审未执行：模型无法查看 PNG，且两张截图同页不同状态，不足以做跨页面视觉评分。",
+        "M3 为纯 Skill 指引模块，其可靠性分基于指引的一致性与实际产出，不含库实现证据。",
+        "本次验证仅 1 个 verify 轮次、0 次修复，无法据此推断工厂修复轮次表现。",
+        "历史覆盖：实现轮 4 个分块与 QA 轮 2 个分块；只引用实际读到的原始 JSONL 事件，不证明已通读每一字节。",
+        "快照未包含 1 个超出预算、非普通文件或不可读取的文件；未据此确认其实现。"
+      ],
+      "usageSource": null
+    }
+  ],
+  "health": {
+    "status": "complete",
+    "qa": "passed",
+    "requiredChecks": {
+      "status": "passed",
+      "results": []
+    },
+    "review": "completed"
+  },
+  "processNotes": {
+    "state": "absent",
+    "source": null,
+    "author": "implementer",
+    "independent": false,
+    "summary": null,
+    "blockers": [],
+    "improvements": [],
+    "note": "过程笔记可选；缺失不代表没有问题、没有评审或没有改进。"
+  },
+  "metrics": {
+    "usage": {
+      "sources": [
+        {
+          "key": "agent-job:112167411852",
+          "executionKey": "run/37432779834/attempt/1",
+          "scope": "一次 Agent 作业内的实现、修复、QA 与同轮评审调用",
+          "phases": {
+            "implementation": {
+              "input": 84123,
+              "output": 12591,
+              "cacheRead": 952448,
+              "cacheWrite": 0,
+              "total": 1049162
+            },
+            "repair": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0,
+              "total": 0
+            },
+            "qa": {
+              "input": 27131,
+              "output": 5575,
+              "cacheRead": 253056,
+              "cacheWrite": 0,
+              "total": 285762
+            },
+            "qaFocused": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0,
+              "total": 0
+            },
+            "qaReport": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0,
+              "total": 0
+            },
+            "review": {
+              "input": 871916,
+              "output": 102910,
+              "cacheRead": 8990848,
+              "cacheWrite": 0,
+              "total": 9965674
+            },
+            "compaction": {
+              "input": 158581,
+              "output": 25748,
+              "cacheRead": 0,
+              "cacheWrite": 0,
+              "total": 184329
+            }
+          },
+          "records": 209,
+          "missing": 0,
+          "incomplete": 0,
+          "complete": true
+        }
+      ],
+      "totals": {
+        "input": 1141751,
+        "output": 146824,
+        "cacheRead": 10196352,
+        "cacheWrite": 0,
+        "total": 11484927,
+        "complete": true
+      },
+      "definition": "沿用 task-usage 口径：按唯一来源键（Agent 作业 / 后补评审 Run）去重，不相加已含这些调用的汇总，不把思考 Token 再加到输出；缺失为 null，不等同供应商账单。"
+    },
+    "time": {
+      "executionSeconds": 1786,
+      "missingJobTimes": 0,
+      "endToEndSeconds": 1796,
+      "jobs": [
+        {
+          "id": 112167309954,
+          "name": "prepare",
+          "executionKey": "run/37432779834/attempt/1",
+          "seconds": 15
+        },
+        {
+          "id": 112167411852,
+          "name": "agent",
+          "executionKey": "run/37432779834/attempt/1",
+          "seconds": 1468
+        },
+        {
+          "id": 112176170642,
+          "name": "verify-final",
+          "executionKey": "run/37432779834/attempt/1",
+          "seconds": 284
+        },
+        {
+          "id": 112177911352,
+          "name": "publish",
+          "executionKey": "run/37432779834/attempt/1",
+          "seconds": 19
+        }
+      ],
+      "definition": "executionSeconds 为 prepare / agent / verify-final / publish 唯一作业时长之和，不含排队；endToEndSeconds 含排队及续跑间隔。"
+    },
+    "counts": {
+      "businessBuilds": 1,
+      "executions": 1,
+      "reviewExecutions": 1
+    }
+  },
+  "evidence": [
+    {
+      "id": "review/37432779834.1/v2-6dda53627948/E1",
+      "origin": {
+        "kind": "review",
+        "key": "review/37432779834.1/v2-6dda53627948",
+        "localId": "E1"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/app-client/dist/plugins.js",
+      "lines": [
+        80,
+        100
+      ],
+      "sha256": "75f0f45db675008b5ed9dc35a1996325cb7b11031a0e113f7c19e22ce2090d5a",
+      "observation": "defineAppRoutes() 与 defineSettingsRoutes() 把页面/设置路由声明冻结为 contribution，路由的 auth/authz/navigation 字段在此进入运行时。",
+      "excerpt": "export function defineAppRoutes(routes) {\n    return Object.freeze({\n        parent: 'app',\n        routes: freezeNavigationRoutes(routes),\n    });\n}\nfunction freezeNavigationRoutes(routes) {\n    return Object.freeze(routes.map((route) => Object.freeze({\n        ...route,\n        ...(route.navigation\n            ? { navigation: Object.freeze({ ...route.navigation }) }\n            : {}),\n        ...(route.children\n            ? { children: freezeNavigationRoutes(route.children) }\n            : {}),\n    })));\n}\nexport function defineSettingsRoutes(routes) {\n    return Object.freeze({\n        parent: 'settings',\n        routes: freezeNavigationRoutes(routes),",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/37432779834.1/v2-6dda53627948/E2",
+      "origin": {
+        "kind": "review",
+        "key": "review/37432779834.1/v2-6dda53627948",
+        "localId": "E2"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/app-client/dist/plugins.js",
+      "lines": [
+        562,
+        600
+      ],
+      "sha256": "75f0f45db675008b5ed9dc35a1996325cb7b11031a0e113f7c19e22ce2090d5a",
+      "observation": "normalizeRouteAuthz() 拒绝已移除的 access 字段，要求 authz 为 'skip'、'unrestricted' 或 { resource:{type,id}, action }，非法值直接抛错；省略时按祖先/页面类型推断并告警。",
+      "excerpt": "function normalizeRouteAuthz(route, id, path, isPage, auth, context) {\n    if ('access' in route) {\n        throw new Error(`Client route \"${id}\" uses removed access; declare authz instead.`);\n    }\n    const value = 'authz' in route ? route.authz : undefined;\n    if (value !== undefined) {\n        if (!isPage)\n            throw new Error(`Client route group \"${id}\" cannot declare authz.`);\n        if (value === 'skip' || value === 'unrestricted')\n            return value;\n        if (!value ||\n            typeof value !== 'object' ||\n            !('resource' in value) ||\n            !value.resource ||\n            typeof value.resource !== 'object' ||\n            typeof value.resource.type !== 'string' ||\n            !value.resource.type.trim() ||\n            typeof value.resource.id !== 'string' ||\n            !value.resource.id.trim() ||\n            typeof value.action !== 'string' ||\n            !value.action.trim())\n            throw new Error(`Client route \"${id}\" must use authz \"skip\", \"unrestricted\" or { resource: { type, id }, action }.`);\n        return Object.freeze({\n            resource: Object.freeze({ ...value.resource }),\n            action: value.action,\n        });\n    }\n    if (!isPage)\n        return 'skip';\n    if (context.ancestorAuthz !== undefined)\n        return context.ancestorAuthz;\n    // An omission never stops the application: a protected page stays closed to all but unrestricted identities.\n    const fallback = context.surface === 'dev' ||\n        (context.surface === 'app' && auth !== 'required')\n        ? 'skip'\n        : 'unrestricted';\n    if (isDevelopment())\n        console.warn(`Client route \"${id}\" at \"${path}\" does not declare authz; using \"${fallback}\". Declare authz on this page: { resource: { type, id }, action } or \"skip\".`);\n    return fallback;",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/37432779834.1/v2-6dda53627948/E3",
+      "origin": {
+        "kind": "review",
+        "key": "review/37432779834.1/v2-6dda53627948",
+        "localId": "E3"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/app-client/dist/plugins.js",
+      "lines": [
+        310,
+        335
+      ],
+      "sha256": "75f0f45db675008b5ed9dc35a1996325cb7b11031a0e113f7c19e22ce2090d5a",
+      "observation": "projectNavigation() 按 componentLoader 区分页面与分组，并把 navigation.title/icon 投影为侧边菜单项。",
+      "excerpt": "        for (const node of nodes)\n            if (node.children)\n                sort(node.children);\n    };\n    sort(roots);\n    return roots;\n}\nfunction projectNavigation(surface, nodes, groupId) {\n    const pages = [];\n    const groups = [];\n    for (const node of nodes) {\n        const children = projectNavigation(surface, node.children ?? [], node.componentLoader ? groupId : node.id);\n        if (!node.componentLoader) {\n            groups.push(...children.groups, Object.freeze({\n                id: node.id,\n                title: node.navigation.title,\n                surface,\n                ...(node.navigation?.icon ? { icon: node.navigation.icon } : {}),\n                packageName: node.packageName,\n                source: node.source,\n                settings: Object.freeze(children.pages),\n            }));\n        }\n        else {\n            pages.push(Object.freeze({\n                id: node.id,",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/37432779834.1/v2-6dda53627948/E4",
+      "origin": {
+        "kind": "review",
+        "key": "review/37432779834.1/v2-6dda53627948",
+        "localId": "E4"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/app-client/dist/plugins.d.ts",
+      "lines": [
+        28,
+        52
+      ],
+      "sha256": "4cfd093b866409d6afb1ea748ccccbbc8d2c46ba905fc9b9696644fd78b157d4",
+      "observation": "AppClientRoutePageDefinition 声明 auth、authz、navigation、children 等的公开类型契约。",
+      "excerpt": "export interface AppClientRoutePageDefinition {\n    /** Group name in this package, or packageName:name for another package; contribution roots only. */\n    readonly parent?: string;\n    readonly name: string;\n    readonly path: string;\n    readonly auth?: AppClientRouteAuth;\n    /** Omitted: inherited from the nearest ancestor page, else a surface default. Declare it on the first page. */\n    readonly authz?: AppClientRouteAuthz;\n    readonly breadcrumb?: AppClientRouteBreadcrumb;\n    readonly navigation?: AppClientSettingsRouteNavigation;\n    readonly componentLoader: AppClientRouteComponentLoader;\n    readonly children?: readonly AppClientRouteDefinition[];\n}\nexport interface AppClientRouteGroupDefinition {\n    /** Group name in this package, or packageName:name for another package; contribution roots only. */\n    readonly parent?: string;\n    readonly name: string;\n    readonly path?: string;\n    readonly auth?: AppClientRouteAuth;\n    readonly breadcrumb?: AppClientRouteBreadcrumb;\n    readonly navigation: AppClientSettingsRouteNavigation;\n    readonly children: readonly AppClientRouteDefinition[];\n    readonly componentLoader?: never;\n}\nexport type AppClientRouteDefinition = AppClientRoutePageDefinition | AppClientRouteGroupDefinition;",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/37432779834.1/v2-6dda53627948/E5",
+      "origin": {
+        "kind": "review",
+        "key": "review/37432779834.1/v2-6dda53627948",
+        "localId": "E5"
+      },
+      "kind": "code",
+      "path": "app/client/routes.ts",
+      "lines": [
+        8,
+        28
+      ],
+      "sha256": "7d9fc6bbef34f436d26d6f887b3d753227db92270681f64c9069a8dfeff5a222",
+      "observation": "应用在 defineAppRoutes 中追加 pipelineSmoke：auth:'required'、authz:'skip'、懒加载 componentLoader、navigation.title/icon 与 path /pipeline-smoke。",
+      "excerpt": "const appRoutes: AppClientRouteContribution = defineAppRoutes([\n  {\n    // Every signed-in user reaches the landing page. `authz: 'skip'` takes it out of page authorization entirely, so\n    // no permission change can leave a user signed in with nowhere to land.\n    authz: 'skip',\n    auth: 'required',\n    componentLoader: () => import('./pages/home.js'),\n    name: 'home',\n    navigation: { title: 'navigation.home', icon: Home },\n    path: '/',\n  },\n  {\n    // A no-data smoke page: reachable by every signed-in user, so it opts out of page authorization like the\n    // landing page instead of introducing a grant somebody would have to be given.\n    authz: 'skip',\n    auth: 'required',\n    componentLoader: () => import('./pages/pipeline-smoke.js'),\n    name: 'pipelineSmoke',\n    navigation: { title: 'navigation.pipelineSmoke', icon: FlaskConical },\n    path: '/pipeline-smoke',\n  },",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/37432779834.1/v2-6dda53627948/E6",
+      "origin": {
+        "kind": "review",
+        "key": "review/37432779834.1/v2-6dda53627948",
+        "localId": "E6"
+      },
+      "kind": "code",
+      "path": "app/tests/logic/client-routes.test.ts",
+      "lines": [
+        48,
+        61
+      ],
+      "sha256": "0b0dd54924a743e89ae72df1d003874c0ffbd3f48e5ca91463405a88d9c41be5",
+      "observation": "route 测试断言每个需登录页面的解析后 authz；pipelineSmoke 被固定为 authorizedAs:null。",
+      "excerpt": "  it('pins the page authorization of every signed-in page', () => {\n    // A stored page grant records the page's `authz` resource id (`authorizedAs`), not its route `name`: changing an\n    // id is a data change that has to migrate the grants that reference it, not a refactor — so changing this list\n    // deliberately is the point. A new page that requires sign-in adds an entry here, because a page that checks\n    // access is a new grant somebody has to be given.\n    const resolved = resolveRoutes();\n\n    // The landing page and the smoke page opted out of page authorization, so both are reachable by every signed-in\n    // user.\n    expect(pageAuthorizations(resolved.routes)).toEqual([\n      { name: 'home', authorizedAs: null },\n      { name: 'pipelineSmoke', authorizedAs: null },\n    ]);\n  });",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/37432779834.1/v2-6dda53627948/E7",
+      "origin": {
+        "kind": "review",
+        "key": "review/37432779834.1/v2-6dda53627948",
+        "localId": "E7"
+      },
+      "kind": "skill",
+      "path": "app/.agents/skills/nocobase-app-development/references/frontend/references/page.md",
+      "lines": [
+        98,
+        143
+      ],
+      "sha256": "ea85c8b01f79c9e42ed9a4c58d220782063c36d4a8edfff339dddf37edb7a712",
+      "observation": "page.md §2 规定页面骨架使用 PageContainer + PageHeader，并明确禁止手写带页面内边距的 div/main/section。",
+      "excerpt": "Put the page in `client/pages/<feature>/index.tsx`, default-export the component, and build its skeleton with `PageContainer` and `PageHeader`:\n\n```tsx\nimport { useTranslation } from '@nocobase/i18n/client';\nimport { PlusIcon } from 'lucide-react';\nimport type { ReactElement } from 'react';\nimport { Link, Outlet, useLocation } from 'react-router';\n\nimport { PageContainer } from '@/components/page-container';\nimport { PageHeader } from '@/components/page-header';\nimport { Button } from '@/components/ui/button';\n\nexport default function ProjectsPage(): ReactElement {\n  const { t } = useTranslation();\n  const location = useLocation();\n\n  return (\n    <PageContainer>\n      <PageHeader\n        title={t('projects.title')}\n        description={t('projects.description')}\n        actions={\n          // Create is the child route /projects/new; keep the query parameters so the filters survive closing the dialog.\n          <Button\n            nativeButton={false}\n            render={<Link to={{ pathname: 'new', search: location.search }} />}\n          >\n            <PlusIcon data-icon='inline-start' />\n            {t('projects.create.action')}\n          </Button>\n        }\n      />\n      {/* Toolbar, table… */}\n      {/* Child routes (create dialog, detail drawer) render here */}\n      <Outlet />\n    </PageContainer>\n  );\n}\n```\n\n- **`PageContainer`** (`@/components/page-container`) renders a `section` that owns the full width, the spacing between blocks and the responsive padding (`w-full space-y-6 p-6 md:p-8`); the back button, the title, actions, content and the loading, empty and error states all go inside it. Do not hand-write an outer `div`, `main` or `section` with page padding, and do not change its spacing on one page (to change it everywhere, change the component).\n- **`PageContainer` is provided by the component that owns the page, one per page**:\n  - An inline child page (including tab content) renders inside the parent page's `PageContainer`; do not add another one.\n  - A covering child page uses its own `PageContainer` inside `RouteChildPage` (see [`child-routes.md`](child-routes.md)). A child route that returns a bare `PageContainer` is neither: it renders at the parent's `Outlet`, below the parent's content.\n  - Dialog and drawer content uses the overlay's own container; do not add `PageContainer`.\n- **`PageHeader`** (`@/components/page-header`) props: `title` (required), `description`, `actions` (on the right, for page-level actions). The title matches the menu name (guidelines L1, L3 and L5).",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/37432779834.1/v2-6dda53627948/E8",
+      "origin": {
+        "kind": "review",
+        "key": "review/37432779834.1/v2-6dda53627948",
+        "localId": "E8"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/i18n/dist/core/runtime.js",
+      "lines": [
+        133,
+        147
+      ],
+      "sha256": "c0c01a640d42896dcd87bbd8362649ee1307b9d3e072649a09d021fe98e32469",
+      "observation": "I18nRuntime.init() 设置 fallbackLng 链 [defaultLocale, en-US]、defaultNS、keySeparator '.'、nsSeparator false、initAsync false。",
+      "excerpt": "        await this.i18n.init({\n            lng: resolved,\n            // A chain, not one language: the application's default first, then English. A plugin that has not translated\n            // the language in use falls back to the application's default, and to English when it lacks that one too — which\n            // is what an application defaulting to Chinese and adding Spanish leaves a plugin facing.\n            fallbackLng: [...new Set([this.defaultLocale, BASE_LOCALE])],\n            defaultNS: this.registry.getApplicationNamespace() ?? BASE_NAMESPACE,\n            // Keys nest, so `trigger.types.schedule` addresses a tree. Namespaces never travel inside the key: they are\n            // passed through options, which keeps a colon in a key from being read as a namespace separator.\n            keySeparator: '.',\n            nsSeparator: false,\n            // Resources are added by `ensureLocaleLoaded` rather than by a backend plugin, so there is nothing to defer and\n            // `t()` is usable the moment `init` resolves.\n            initAsync: false,\n            interpolation: { escapeValue: false },",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/37432779834.1/v2-6dda53627948/E9",
+      "origin": {
+        "kind": "review",
+        "key": "review/37432779834.1/v2-6dda53627948",
+        "localId": "E9"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/i18n/dist/client/index.js",
+      "lines": [
+        1,
+        4
+      ],
+      "sha256": "f4d1d820af96b071b3e42aa943d425c11af8d468feed7124c8aadcf140b4d89b",
+      "observation": "@nocobase/i18n/client 公开 useTranslation、I18nProvider、useLocale 等客户端入口。",
+      "excerpt": "export { I18nProvider, NamespaceScope, useI18nRuntime, useOptionalI18nRuntime, useNamespace, useTranslation, withNamespace, } from './context.js';\nexport { applyDocumentLocale, useLocale, } from './locale.js';\nexport { createRefineI18nProvider, } from './refine.js';\nexport { APP_NS, BASE_NAMESPACE, I18nRuntime } from '../core/index.js';",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/37432779834.1/v2-6dda53627948/E10",
+      "origin": {
+        "kind": "review",
+        "key": "review/37432779834.1/v2-6dda53627948",
+        "localId": "E10"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/i18n/dist/testing/runtime.js",
+      "lines": [
+        7,
+        18
+      ],
+      "sha256": "e95ab40694ad6b791d605be4faeb84ebc9a7afa4db481797b4c2d88bdf4273fa",
+      "observation": "MissingTranslationError 在严格测试运行时携带 key/namespace/locales 并给出可操作提示。",
+      "excerpt": "export class MissingTranslationError extends Error {\n    key;\n    namespace;\n    locales;\n    constructor(key, namespace, locales) {\n        super(`Missing translation \"${key}\" in namespace \"${namespace}\" (${locales.join(', ')}). ` +\n            'Add it to the locale file, fix the key, or bind the component to the namespace that owns it.');\n        this.name = 'MissingTranslationError';\n        this.key = key;\n        this.namespace = namespace;\n        this.locales = locales;\n    }",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/37432779834.1/v2-6dda53627948/E11",
+      "origin": {
+        "kind": "review",
+        "key": "review/37432779834.1/v2-6dda53627948",
+        "localId": "E11"
+      },
+      "kind": "code",
+      "path": "app/client/locales/en-US.ts",
+      "lines": [
+        99,
+        103
+      ],
+      "sha256": "fba06ec71b11a5406f2cb011c0982df7acdb97cbd4eae1b4d11e3861e22e4cee",
+      "observation": "en-US 新增 pipelineSmoke.{title,description,increment}。",
+      "excerpt": "  pipelineSmoke: {\n    title: 'Pipeline Smoke',\n    description: 'Used to verify the automated setup pipeline.',\n    increment: '+1',\n  },",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/37432779834.1/v2-6dda53627948/E12",
+      "origin": {
+        "kind": "review",
+        "key": "review/37432779834.1/v2-6dda53627948",
+        "localId": "E12"
+      },
+      "kind": "code",
+      "path": "app/client/locales/zh-CN.ts",
+      "lines": [
+        92,
+        96
+      ],
+      "sha256": "02f7aef618128b3d71895f406a34655e895ffa1bcb6aca5774a0e67bbc6eb804",
+      "observation": "zh-CN 同步新增 pipelineSmoke 命名空间文案。",
+      "excerpt": "  pipelineSmoke: {\n    title: '流程冒烟',\n    description: '用于验证自动搭建流程',\n    increment: '+1',\n  },",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/37432779834.1/v2-6dda53627948/E13",
+      "origin": {
+        "kind": "review",
+        "key": "review/37432779834.1/v2-6dda53627948",
+        "localId": "E13"
+      },
+      "kind": "skill",
+      "path": "app/.agents/skills/nocobase-app-development/references/frontend/references/i18n.md",
+      "lines": [
+        362,
+        373
+      ],
+      "sha256": "c09dd53a80cd609b25b3cf0d4cae6a7cf0e8260bba277f70642aa36b73461584",
+      "observation": "i18n.md 的 Checks 列出 tsc、app-locale-coverage 测试、浏览器双语核对与“无硬编码文案”要求。",
+      "excerpt": "## Checks\n\nLimit these to the changed files and the parts they affect:\n\n- `pnpm exec tsc -p tsconfig.json --noEmit`: reports keys missing from or extra in the Chinese locale. It does not check whether the keys used in `t()` exist.\n- `pnpm exec vitest run tests/logic/app-locale-coverage.test.ts`: reports every literal key the code uses (`t('…')` calls, including ones Prettier wrapped, and route `title`s) that either locale lacks, and every dynamic family (``t(`…${x}`)`` or `t('….' + x)`) with no key under its prefix. It does not check each value of a family: a missing `projects.status.done` passes while `projects.status.active` exists, so write one entry per value and look at each in the browser. It skips files that translate in a plugin's namespace (`useTranslation('@nocobase/…')`); a key held in data and passed as `t(item.key)` is not seen, so check those in the browser.\n- After adding or removing a language: `pnpm nocobase locales check` (see \"Adding a language\").\n- Look at the page in the browser in each language: no leftover English or Chinese, no key names; also check `aria-label`, placeholders, toasts and validation messages.\n- Switch the language without reloading and check that the page follows: column headers, options, validation messages and date formats all update.\n- No hard-coded user-visible text in components.\n- Tests that cover copy render with the real locale files and assert real text in both languages, not keys (see [`testing.md`](testing.md)).\n",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/37432779834.1/v2-6dda53627948/E14",
+      "origin": {
+        "kind": "review",
+        "key": "review/37432779834.1/v2-6dda53627948",
+        "localId": "E14"
+      },
+      "kind": "code",
+      "path": "app/client/pages/pipeline-smoke.tsx",
+      "lines": [
+        16,
+        37
+      ],
+      "sha256": "09a6e4ffcf7703af40be704a4491ecd929d2c8edf573b299fbe38a6c5c647b94",
+      "observation": "新页面直接手写 <section> + <h1>，没有 PageContainer/PageHeader。",
+      "excerpt": "  return (\n    <section className='mx-auto grid min-h-[calc(100svh-4rem)] w-full max-w-5xl place-items-center px-6 py-10'>\n      <div className='max-w-xl space-y-6 text-center'>\n        <h1 className='font-heading text-3xl font-semibold tracking-tight'>\n          {t('pipelineSmoke.title')}\n        </h1>\n        <p className='text-muted-foreground'>\n          {t('pipelineSmoke.description')}\n        </p>\n        <div className='flex items-center justify-center gap-4'>\n          <output\n            aria-live='polite'\n            className='text-2xl font-semibold tabular-nums'\n          >\n            {count}\n          </output>\n          <Button onClick={() => setCount((value) => value + 1)}>\n            {t('pipelineSmoke.increment')}\n          </Button>\n        </div>\n      </div>\n    </section>",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/37432779834.1/v2-6dda53627948/E15",
+      "origin": {
+        "kind": "review",
+        "key": "review/37432779834.1/v2-6dda53627948",
+        "localId": "E15"
+      },
+      "kind": "code",
+      "path": "app/client/pages/home.tsx",
+      "lines": [
+        6,
+        14
+      ],
+      "sha256": "3d419b9074351fb0ebf9a46bddf775cb93ff78b474254440d01423578e8cf112",
+      "observation": "模板自带的首页同样是手写 <section> + <h1> 的营销式 hero，没有 PageContainer/PageHeader。",
+      "excerpt": "  return (\n    <section className='mx-auto grid min-h-[calc(100svh-4rem)] w-full max-w-5xl place-items-center px-6 py-10'>\n      <div className='max-w-xl space-y-6 text-center'>\n        <h1 className='font-heading text-3xl font-semibold tracking-tight'>\n          {t('home.title')}\n        </h1>\n        <p className='text-muted-foreground'>{t('home.description')}</p>\n      </div>\n    </section>",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/37432779834.1/v2-6dda53627948/E16",
+      "origin": {
+        "kind": "review",
+        "key": "review/37432779834.1/v2-6dda53627948",
+        "localId": "E16"
+      },
+      "kind": "skill",
+      "path": "app/.agents/skills/nocobase-app-development/references/frontend/ui-guidelines.md",
+      "lines": [
+        29,
+        40
+      ],
+      "sha256": "62ad4bec4397a3b199305b0010596e9fc0c16a83e1503d581ee450df70f7f091",
+      "observation": "L1 [Must]：业务页面必须包在 PageContainer 中并带 PageHeader（title 必填、description 建议、actions 在右）。",
+      "excerpt": "## L Page structure\n\n**L1 [Must]** A business page is wrapped in PageContainer, with a PageHeader at the top: a title (required), a one-sentence description (recommended) and page-level actions (on the right).\n\n**L2 [Must]** A view (page, dialog, drawer) has at most one primary button (the default style); other buttons use outline, ghost or destructive, or go into a menu. Each Card of a settings page saves on its own (T4.2) and counts as its own view, so each Card's Save may be primary.\n\n**L3 [Should]** The page title matches the navigation menu name and is a noun (\"Customers\"), not a verb phrase.\n\n**L4 [Should]** List and table pages use the full width; pages mainly for forms or reading limit the content width (`max-w-2xl` to `max-w-4xl`) so inputs do not get too long.\n\n**L5 [Must]** Page-level actions go on the right of the PageHeader; actions on a single record go in that record's row or detail view; bulk actions appear only after records are selected.\n",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/37432779834.1/v2-6dda53627948/E17",
+      "origin": {
+        "kind": "review",
+        "key": "review/37432779834.1/v2-6dda53627948",
+        "localId": "E17"
+      },
+      "kind": "skill",
+      "path": "app/.agents/skills/nocobase-app-development/references/frontend/frontend-dev.md",
+      "lines": [
+        26,
+        35
+      ],
+      "sha256": "14ca25e8b9c259486c53e5990a170930acea0c2a03f70e2b084569255885769b",
+      "observation": "frontend-dev.md 的页面通用约定第 30 行要求 PageContainer 由拥有该页面的组件提供；第 35 行要求所有可见文案走翻译键。",
+      "excerpt": "Conventions every page follows, each explained in its home:\n\n- Primitives: the template ships only the ones its shell uses; add any other with `yes n | pnpm exec shadcn add <name>` before a file imports it, format the files it creates, translate the English they carry, and otherwise keep them as the CLI writes them. A list's `DataTable` and a date field's `DatePicker` are NocoBase UI Library items, `@nocobase/data-table` and `@nocobase/date-picker`, added the same way. Their rules come from the shadcn skill, read through [`references/shadcn.md`](references/shadcn.md), which also lists where this application departs from it.\n- Base UI composition: `render` instead of `asChild`, `nativeButton={false}` for a Button rendered as a link, `items` on `Select`, every item and label inside its group, `data-icon` on an icon in a button (the skill's rules, and [section 2 of `references/styling.md`](references/styling.md#2-components-are-built-on-base-ui-not-radix) for what they leave out).\n- `PageContainer` from the page that owns it ([section 2 of `references/page.md`](references/page.md#2-the-page-component)).\n- Create, edit and detail as child-route overlays; of the overlays, only a confirmation (`AlertDialog`) and a temporary panel (`Sheet`) use component state ([`references/overlay.md`](references/overlay.md)). A record, and every overlay, opens over the view the user is on: every page that opens a record declares its drawer ([section 2.1 of `references/overlay.md`](references/overlay.md#21-declare-the-child-routes)), and on a page with tabs every tab declares what the header opens ([\"Overlays opened from the header of a page with tabs\" in `references/child-routes.md`](references/child-routes.md#overlays-opened-from-the-header-of-a-page-with-tabs)).\n- `BackButton` above the title of a page below another one; breadcrumbs only when the user asks for them ([section 7 of `references/page.md`](references/page.md#7-back-button-and-breadcrumbs)).\n- Icons from `lucide-react` ([section 10 of `references/styling.md`](references/styling.md#10-icons)).\n- Toasts with `useToaster()` from `@nocobase/app-client`, never a second `Toaster` ([\"Toasts\" in `references/api.md`](references/api.md#toasts)).\n- Every user-visible string through a translation key ([`references/i18n.md`](references/i18n.md)).",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/37432779834.1/v2-6dda53627948/E18",
+      "origin": {
+        "kind": "review",
+        "key": "review/37432779834.1/v2-6dda53627948",
+        "localId": "E18"
+      },
+      "kind": "skill",
+      "path": "app/.agents/skills/nocobase-app-development/references/frontend/ui-workflow.md",
+      "lines": [
+        11,
+        19
+      ],
+      "sha256": "a7b37b1a9ec2851b2173ccdd83e8cf685f7a98b88a7a612f954e527b867f7aad",
+      "observation": "“Choosing a workflow”表：full workflow 触发条件是“加载数据/含表单/含浮层的 new page”，quick change 示例仅列举在既有页面上加按钮、列、字段、过滤器等。",
+      "excerpt": "## Choosing a workflow\n\nDecide before you start, and say in one sentence in your reply which workflow you are following and why.\n\n| Workflow      | When it applies                                                                                                                                                                                                                                                                                                            |\n| ------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |\n| Full workflow | Any one of: a new page that loads data or has forms or overlays; a new complete interaction (a create/edit flow, a detail drawer, a multi-step operation); a change to the page structure or main interactions; one change that touches the layout or interactions of several pages; the user asks to see the design first |\n| Theme change  | The change is to theme tokens or presets: the primary color, fonts, density, radius or shadows of the whole application, or adding, changing or removing a preset. Follow [\"Theme change\"](#theme-change) below. No design file unless the user asks                                                                       |\n| Quick change  | None of the above applies. For example: changing copy; adjusting styling details on one page; adding a button, a column, a form field or a filter to an existing page; fixing a UI bug; a refactor that changes neither appearance nor behavior                                                                            |",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/37432779834.1/v2-6dda53627948/E19",
+      "origin": {
+        "kind": "review",
+        "key": "review/37432779834.1/v2-6dda53627948",
+        "localId": "E19"
+      },
+      "kind": "skill",
+      "path": "app/.agents/skills/nocobase-app-development/references/frontend/ui-workflow.md",
+      "lines": [
+        30,
+        37
+      ],
+      "sha256": "a7b37b1a9ec2851b2173ccdd83e8cf685f7a98b88a7a612f954e527b867f7aad",
+      "observation": "Quick change 第 1 步要求读 frontend-dev.md 与相关 references、必要时读 ui-guidelines.md；第 2 步要求“Follow how the page is already written”。",
+      "excerpt": "## Quick change\n\n1. Read [`frontend-dev.md`](frontend-dev.md) and the references under `references/` related to the change; when the change adds or uses a primitive the page has not used before, also [`references/shadcn.md`](references/shadcn.md). When the change affects how the interface looks or behaves, also read the relevant guidelines in [`ui-guidelines.md`](ui-guidelines.md), and at minimum check the relevant items of the \"Review checklist\" at its end.\n2. Follow how the page is already written: keep components, spacing and copy style consistent with what surrounds the change.\n3. Run the checks in [\"Self-check before finishing\" in `frontend-dev.md`](frontend-dev.md#self-check-before-finishing): type checking, lint and formatting of the changed files, and the existing tests that cover them.\n4. A change that adds or alters behavior (a column, filter, button or field) extends the component test of that page, or adds one when there is none; a bug fix a component test can reproduce adds that test; a copy-only or styling-only change needs none (see [`references/testing.md`](references/testing.md)).\n5. When the change is visible at runtime — copy, styling, a new column, filter or button, a UI bug fix — start or reuse the application and sign in as item 1 of [step 4.1](#41-run-check-main-agent) describes (the printed `Local:` URL, the same host, no password entered by you), open the page once and look at the changed element: copy in both languages, styling in light and dark, at 375px and, when spacing, type, radius or shadow changed, in both presets (in the browser, or with two or three shots of the screenshot tool, [`scripts/capture.md`](scripts/capture.md)), a bug fix by reproducing the original steps. If no browser or sign-in session is available, say so in the report instead of claiming it works.\n6. Report what you changed, which checks and tests you ran with their results, and what you looked at in the browser. If you saved a sign-in session for the check, delete `storage/ui-workflow/auth.json` (and `auth-limited.json`) first: they hold live sign-in cookies.",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/37432779834.1/v2-6dda53627948/E20",
+      "origin": {
+        "kind": "review",
+        "key": "review/37432779834.1/v2-6dda53627948",
+        "localId": "E20"
+      },
+      "kind": "code",
+      "path": "app/tests/components/pipeline-smoke.test.tsx",
+      "lines": [
+        14,
+        56
+      ],
+      "sha256": "f2d020b64f7bdc239741fdab1bbd1bd5683dc15d7893a26de4e965829f9f23bb",
+      "observation": "页面组件测试用 @nocobase/i18n/testing 的 createTestI18nRuntime 建英/中两个严格运行时，断言计数 0→1→2 与中英文标题说明。",
+      "excerpt": "const enRuntime = await createTestI18nRuntime({\n  application: { namespace: '@nocobase/app-template-default', resources: enUS },\n});\nconst zhRuntime = await createTestI18nRuntime({\n  application: { namespace: '@nocobase/app-template-default', resources: zhCN },\n});\n\nfunction English({ children }: { readonly children: ReactNode }): ReactElement {\n  return <TestI18nProvider runtime={enRuntime}>{children}</TestI18nProvider>;\n}\n\nfunction Chinese({ children }: { readonly children: ReactNode }): ReactElement {\n  return <TestI18nProvider runtime={zhRuntime}>{children}</TestI18nProvider>;\n}\n\ndescribe('PipelineSmokePage', () => {\n  it('starts at zero and gains one per click', async () => {\n    const user = userEvent.setup();\n    render(<PipelineSmokePage />, { wrapper: English });\n\n    expect(screen.getByRole('status')).toHaveTextContent('0');\n\n    await user.click(\n      screen.getByRole('button', { name: enUS.pipelineSmoke.increment }),\n    );\n    expect(screen.getByRole('status')).toHaveTextContent('1');\n\n    await user.click(\n      screen.getByRole('button', { name: enUS.pipelineSmoke.increment }),\n    );\n    expect(screen.getByRole('status')).toHaveTextContent('2');\n  });\n\n  it('renders its title and description in the active language', () => {\n    render(<PipelineSmokePage />, { wrapper: Chinese });\n\n    expect(\n      screen.getByRole('heading', { name: zhCN.pipelineSmoke.title }),\n    ).toBeInTheDocument();\n    expect(\n      screen.getByText(zhCN.pipelineSmoke.description),\n    ).toBeInTheDocument();\n  });",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/37432779834.1/v2-6dda53627948/E21",
+      "origin": {
+        "kind": "review",
+        "key": "review/37432779834.1/v2-6dda53627948",
+        "localId": "E21"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/dev-config/dist/vitest/react.js",
+      "lines": [
+        6,
+        24
+      ],
+      "sha256": "2c51beccc263cdcaf8c8e4fdf0bdd932eb7c69126f873f43d44d321afabe2b22",
+      "observation": "@nocobase/dev-config/vitest/react 的 createReactVitestConfig 提供 jsdom、react 插件、共享超时与 setupFiles，并内联 Refine react-router。",
+      "excerpt": "const reactConfig = {\n    plugins: [react()],\n    test: {\n        environment: 'jsdom',\n        exclude: ['**/node_modules/**', '**/dist/**', '**/build/**'],\n        setupFiles: [reactSetupFile],\n        testTimeout: sharedTestTimeout,\n        hookTimeout: sharedHookTimeout,\n        server: {\n            deps: {\n                // Refine's React Router bindings are loaded by Node unless inlined, and Node hands them a different copy of\n                // react-router than the one a test and the application import, so `useLocation()` inside Refine finds no\n                // router under a test's `MemoryRouter`. Inlined, they resolve react-router the way the rest of the test does.\n                inline: [/@refinedev\\/react-router/u],\n            },\n        },\n    },\n};\nexport const createReactVitestConfig = (localConfig = {}) => mergeConfig(reactConfig, localConfig);",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/37432779834.1/v2-6dda53627948/E22",
+      "origin": {
+        "kind": "review",
+        "key": "review/37432779834.1/v2-6dda53627948",
+        "localId": "E22"
+      },
+      "kind": "code",
+      "path": "packages/@nocobase/app-testing/dist/src/client/render.js",
+      "lines": [
+        23,
+        50
+      ],
+      "sha256": "6fdb64523f3b3c5ff23a472490220dbd45f9e54dbd6800a1a8470a572360b41d",
+      "observation": "@nocobase/app-testing/client 的 renderWithApp 在 MemoryRouter 中挂载真实 app runtime、locales、providers 与 toaster。",
+      "excerpt": "export async function renderWithApp(ui, options = {}) {\n    const plugins = options.plugins ?? [];\n    const toaster = new TestToaster();\n    const basePath = options.server\n        ? trimTrailingSlash(options.server.publicBasePath)\n        : '';\n    const apiRoot = `${TEST_ORIGIN}${basePath}/api`;\n    const rawConfig = mergeSections({ app: { basePath: basePath || '/' }, api: { baseURL: apiRoot } }, options.config ?? {});\n    // The page reads the mount path the server rendered into it, as `resolveAppUrl()` does, so the block the server\n    // renders is written into the document for the test.\n    const removeConfigBlock = writeRuntimeConfigBlock(rawConfig);\n    class TestServiceProvider extends ServiceProvider {\n        name = '@nocobase/app-testing/client';\n        register() {\n            options.services?.(this.app);\n            if (!this.app.container.has(toasterToken)) {\n                this.app.container.instance(toasterToken, toaster);\n            }\n        }\n    }\n    // A plugin's locales may be a function importing its locale module; the test runtime takes the module itself.\n    const pluginLocales = await Promise.all(plugins.flatMap((plugin) => plugin.locales\n        ? [\n            resolveLocalesContribution(plugin.locales).then((locales) => [\n                plugin.packageName,\n                locales,\n            ]),\n        ]",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/37432779834.1/v2-6dda53627948/E23",
+      "origin": {
+        "kind": "review",
+        "key": "review/37432779834.1/v2-6dda53627948",
+        "localId": "E23"
+      },
+      "kind": "code",
+      "path": "app/vitest.config.ts",
+      "lines": [
+        1,
+        33
+      ],
+      "sha256": "f74b8c54d095e3e11f6604c37dbaaa75ca87da43cf27fa643993a6e0068b6eac",
+      "observation": "应用 vitest.config.ts 调用 createReactVitestConfig，配置 @ 别名、include tests/**、setupFiles 与 coverage。",
+      "excerpt": "import { fileURLToPath } from 'node:url';\n\nimport { createReactVitestConfig } from '@nocobase/dev-config/vitest/react';\n\nconst root = fileURLToPath(new URL('.', import.meta.url));\n\nexport default createReactVitestConfig({\n  resolve: {\n    alias: [\n      {\n        find: '@',\n        replacement: fileURLToPath(new URL('./client', import.meta.url)),\n      },\n    ],\n  },\n  test: {\n    root,\n    server: {\n      deps: {\n        // Transform the public Client surfaces so vi.mock applies, without duplicating the Server packages' identity tokens.\n        inline: [\n          /@nocobase\\/app-plugin-authorization\\/(?:dist\\/)?client\\//u,\n          /@nocobase\\/app-plugin-notification-in-app\\/(?:dist\\/)?client\\//u,\n        ],\n      },\n    },\n    // A glob rather than a list of filenames. The list had to be edited by hand for every test added or removed and\n    // silently drifted: it named a file that no longer existed while several real test files were absent from it, so\n    // those tests were never run at all.\n    include: ['tests/**/*.test.{ts,tsx}'],\n    setupFiles: ['./tests/setup/client-config.ts'],\n    // Keep the command usable if an application intentionally removes all scaffold tests before adding its own.\n    passWithNoTests: true,",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/37432779834.1/v2-6dda53627948/E24",
+      "origin": {
+        "kind": "review",
+        "key": "review/37432779834.1/v2-6dda53627948",
+        "localId": "E24"
+      },
+      "kind": "skill",
+      "path": "app/.agents/skills/nocobase-app-development/references/testing.md",
+      "lines": [
+        3,
+        27
+      ],
+      "sha256": "a47c8cdcc9bc066f5cf30dc2de7e5682ce3cd7fd83064a8c56c4c781e7c101a4",
+      "observation": "testing.md 规定测试放在 tests/logic、tests/components、e2e，绝不放源码旁；并给出按改动类型应写的测试表。",
+      "excerpt": "## Where tests go\n\n```text\ntests/logic/        Logic and integration tests\ntests/components/   Component tests\ne2e/                Tests needing a real server, real auth, or a real database\n```\n\n**Never put a test beside the source it covers.** Name files `*.test.ts` or `*.test.tsx`.\n\n`vitest.config.ts` discovers `tests/**/*.test.{ts,tsx}` automatically. Theme token tests compile the real CSS; browser checks still need to verify computed styles, typography, spacing and focus.\n\nTemplates ship their tests into generated applications. Keep them runnable from the application root after scaffolding: read application identity from `package.json`, resolve application paths relative to the test file, and import dependencies through their published package exports. Do not depend on a monorepo checkout, a fixed template directory name, or a particular pnpm store layout. Run the affected test files in the generated application as well as in the template when changing these contracts.\n\n## What to test, by change\n\n| You changed      | Test at least                                                                                                                     |\n| ---------------- | --------------------------------------------------------------------------------------------------------------------------------- |\n| A server route   | Anonymous → `401`, authenticated but unpermitted → `403`, permitted → expected payload; the route is declared in the API document |\n| A public webhook | Missing signature, invalid signature, valid signature, duplicate delivery                                                         |\n| A migration      | `up` produces the expected schema; `down` reverses it; against a real database                                                    |\n| A seed           | First run, run against existing data, repeat run                                                                                  |\n| A service        | Its domain behavior, with its dependencies supplied directly                                                                      |\n| A job            | `execute()` with a realistic payload; a second run is harmless; failures behave as intended                                       |\n| Frontend code    | See [frontend tests](frontend/references/testing.md): pages, components, route declarations, copy                                 |",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/37432779834.1/v2-6dda53627948/E25",
+      "origin": {
+        "kind": "review",
+        "key": "review/37432779834.1/v2-6dda53627948",
+        "localId": "E25"
+      },
+      "kind": "log",
+      "path": "artifacts/verify-1.log",
+      "lines": [
+        7,
+        16
+      ],
+      "sha256": "fce9b36cd487144d3a67504527cf3686a7b41b88fa084f848d58921969b25756",
+      "observation": "验证日志显示 format:auto、format:check、lint、typecheck 均 exit 0，随后执行 vitest run。",
+      "excerpt": "[timing] format:auto: 0.79s (exit 0)\n$ prettier . --check '!.github/**'\nChecking formatting...\nAll matched files use Prettier code style!\n[timing] format:check: 3.29s (exit 0)\n$ eslint . --max-warnings 0 --ignore-pattern '.github/**'\n[timing] lint: 15.60s (exit 0)\n$ tsc --noEmit && tsc -p tsconfig.node.json --noEmit && tsc -p tsconfig.server.json --noEmit\n[timing] typecheck: 9.68s (exit 0)\n$ vitest run",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/37432779834.1/v2-6dda53627948/E26",
+      "origin": {
+        "kind": "review",
+        "key": "review/37432779834.1/v2-6dda53627948",
+        "localId": "E26"
+      },
+      "kind": "log",
+      "path": "artifacts/verify-1.log",
+      "lines": [
+        297,
+        300
+      ],
+      "sha256": "fce9b36cd487144d3a67504527cf3686a7b41b88fa084f848d58921969b25756",
+      "observation": "vitest 汇总：Test Files 42 passed、Tests 247 passed。",
+      "excerpt": "\u001b[2m Test Files \u001b[22m \u001b[1m\u001b[32m42 passed\u001b[39m\u001b[22m\u001b[90m (42)\u001b[39m\n\u001b[2m      Tests \u001b[22m \u001b[1m\u001b[32m247 passed\u001b[39m\u001b[22m\u001b[90m (247)\u001b[39m\n\u001b[2m   Start at \u001b[22m 08:01:09\n\u001b[2m   Duration \u001b[22m 47.04s\u001b[2m (transform 2.39s, setup 9.15s, import 43.09s, tests 53.09s, environment 25.94s)\u001b[22m",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/37432779834.1/v2-6dda53627948/E27",
+      "origin": {
+        "kind": "review",
+        "key": "review/37432779834.1/v2-6dda53627948",
+        "localId": "E27"
+      },
+      "kind": "qa",
+      "path": "artifacts/verify-1/browser-acceptance/report.json",
+      "lines": [
+        1,
+        32
+      ],
+      "sha256": "e329f77132cd83c822a5bc99d8e465dc57f9dcc61b0b250b6d78617d4ae9f8b8",
+      "observation": "QA report.json：passed true、authenticated true，B01 通过（标题/说明/初始 0→1→2、无控制台错误），保存 2 张截图。",
+      "excerpt": "{\n  \"passed\": true,\n  \"authenticated\": true,\n  \"summary\": \"使用管理员测试账号登录成功，从导航打开 “Pipeline Smoke” 页面，确认标题、说明 “用于验证自动搭建流程” 与初始计数 0；点击 “+1” 后计数变为 1（再次点击为 2），无控制台错误，已保存点击后截图。B01 通过。\",\n  \"checks\": [\n    {\n      \"id\": \"B01\",\n      \"criterion\": \"使用已有测试账号登录，从导航打开页面，确认标题、说明、初始值 0；点击“+1”后变为 1，保存一张点击后的截图。\\n\\n无法实际完成时如实记录 failed、blocked 或 not_run，不以静态源码检查代替浏览器通过。\\n\\n同时验证案例人工输入中的产品要求：\\n\\n## 本次补充要求\\n\\n本次搭建用于验证工厂流程改动（PR #592、#593：composite action 应用补丁、超时与报告链路调整）合入后，Issue → Agent → 验证 → PR / 报告 / 预览的完整链路是否正常。需求以案例正文为准，不扩展功能，不修改工厂控制文件。\",\n      \"status\": \"passed\",\n      \"actions\": [\n        \"用管理员测试账号在 /main/login 登录，成功进入 /main\",\n        \"从左侧应用导航点击 “Pipeline Smoke” 链接，进入 /main/pipeline-smoke\",\n        \"读取页面 main 区域文本，确认标题、说明和初始计数\",\n        \"点击 “+1” 按钮并重新读取计数，保存点击后截图\",\n        \"再次点击一次确认每次 +1，并检查浏览器 console\"\n      ],\n      \"evidence\": [\n        \"登录后 URL 为 http://127.0.0.1:13000/main，离开登录页\",\n        \"导航存在 “Pipeline Smoke” 入口，点击后 URL 为 http://127.0.0.1:13000/main/pipeline-smoke，页面标题 heading 为 “Pipeline Smoke”\",\n        \"页面说明为 “Used to verify the automated setup pipeline.”（用于验证自动搭建流程）\",\n        \"初始计数显示为 0；点击 “+1” 后显示为 1，再次点击后显示为 2，未出现 Something went wrong、空白页或异常\",\n        \"浏览器 console 无错误输出\"\n      ],\n      \"screenshots\": [\n        \"b01-initial.png\",\n        \"b01-after-click.png\"\n      ],\n      \"recordedAt\": 1791273855427\n    }\n  ],\n  \"failures\": []\n}",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/37432779834.1/v2-6dda53627948/E28",
+      "origin": {
+        "kind": "review",
+        "key": "review/37432779834.1/v2-6dda53627948",
+        "localId": "E28"
+      },
+      "kind": "code",
+      "path": "app/client/components/page-container.tsx",
+      "lines": [
+        7,
+        23
+      ],
+      "sha256": "4579a5226648e594dac8be66b258c1df96702bc64f858a067743c94c62c6ffa6",
+      "observation": "PageContainer 组件注释说明其拥有页面框架（全宽、响应式内边距、块间距），一个页面渲染一个。",
+      "excerpt": "/**\n * The frame of a page: the full width, the responsive padding, and the spacing between its sections.\n *\n * A page renders one. Content that renders inside another page — an inline child route, a tab panel — already sits in\n * that page's container and adds none of its own, while a covering `RouteChildPage` is a surface of its own and\n * places one inside it.\n */\nexport function PageContainer({\n  className,\n  ...props\n}: PageContainerProps): ReactElement {\n  return (\n    <section\n      className={cn('w-full space-y-6 p-6 md:p-8', className)}\n      {...props}\n    />\n  );",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/37432779834.1/v2-6dda53627948/E29",
+      "origin": {
+        "kind": "review",
+        "key": "review/37432779834.1/v2-6dda53627948",
+        "localId": "E29"
+      },
+      "kind": "log",
+      "path": "artifacts/agent-history/agent-implement.jsonl/part-0001.txt",
+      "lines": [
+        42,
+        42
+      ],
+      "sha256": "c6c8de6552a348d7d823417db535938b186dd8e461132d90fcdf62a1b8cdfc2b",
+      "observation": "实现轮首个工具调用：读取 .agents/skills/nocobase-app-development/references/frontend/ui-workflow.md 并同时 ls 工作区；这是整轮唯一读取的 Skill 指引文件。",
+      "excerpt": "{\"type\":\"message_end\",\"message\":{\"role\":\"assistant\",\"content\":[{\"type\":\"thinking\",\"thinking\":\"Let me start by exploring the workspace to understand the structure.\\n\\nThe task is simple: add a \\\"Pipeline Smoke / 流程冒烟\\\" page accessible after login, with navigation entry, title, description line, counter starting at 0, and \\\"+1\\\" button. Counter is in-memory only.\\n\\nLet me first check the AGENTS.md and relevant skill. Actually AGENTS.md is already provided. Let me read the frontend ui-workflow reference and look at existing routes/pages.\\n\\nLet me explore.\",\"thinkingSignature\":\"reasoning\"},{\"type\":\"toolCall\",\"id\":\"call_ymu13l16\",\"name\":\"bash\",\"arguments\":{\"command\":\"cd /home/runner/work/nb3-factory/nb3-factory/workspace && ls && echo \\\"---CLIENT---\\\" && ls client && echo \\\"---PAGES---\\\" && find client/pages -maxdepth 2 | head -50\",\"timeout\":30}},{\"type\":\"toolCall\",\"id\":\"call_g1xvhpno\",\"name\":\"read\",\"arguments\":{\"path\":\"/home/runner/work/nb3-factory/nb3-factory/workspace/.agents/skills/nocobase-app-development/references/frontend/ui-workflow.md\",\"offset\":0,\"limit\":200}}],\"api\":\"openai-completions\",\"provider\":\"nb3-factory\",\"model\":\"deepseek-v4.1-flash\",\"usage\":{\"input\":18127,\"output\":307,\"cacheRead\":0,\"cacheWrite\":0,\"reasoning\":0,\"totalTokens\":18434,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"stopReason\":\"toolUse\",\"timestamp\":1791273472139,\"responseId\":\"chatcmpl-646\",\"rawStopReason\":\"tool_calls\"}}",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/37432779834.1/v2-6dda53627948/E30",
+      "origin": {
+        "kind": "review",
+        "key": "review/37432779834.1/v2-6dda53627948",
+        "localId": "E30"
+      },
+      "kind": "log",
+      "path": "artifacts/agent-history/agent-implement.jsonl/part-0002.txt",
+      "lines": [
+        2185,
+        2214
+      ],
+      "sha256": "41cc101dbd663894e0c19463885d3d611fddbb19788ca62aebd5bb2afad4d3a6",
+      "observation": "edit 调用因 oldText 非唯一而失败（Found 4 occurrences…），随后同轮用更长的唯一上下文重试成功替换 client/routes.ts。",
+      "excerpt": "{\"type\":\"message_end\",\"message\":{\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"Now the route:\"},{\"type\":\"toolCall\",\"id\":\"call_00_ET_lQXaCzKDSDpXc80aDSJ20241\",\"name\":\"edit\",\"arguments\":{\"edits\":[{\"newText\":\"import { FlaskConical, Home } from 'lucide-react';\",\"oldText\":\"import { Home } from 'lucide-react';\"},{\"newText\":\"  {\\n    // A no-data smoke page: reachable by every signed-in user, so it opts out of page authorization like the\\n    // landing page instead of introducing a grant somebody would have to be given.\\n    authz: 'skip',\\n    auth: 'required',\\n    componentLoader: () => import('./pages/pipeline-smoke.js'),\\n    name: 'pipelineSmoke',\\n    navigation: { title: 'navigation.pipelineSmoke', icon: FlaskConical },\\n    path: '/pipeline-smoke',\\n  },\\n  {\\n    auth: 'guest',\",\"oldText\":\"  {\\n    auth: 'guest',\"}],\"path\":\"/home/runner/work/nb3-factory/nb3-factory/workspace/client/routes.ts\"}}],\"api\":\"openai-completions\",\"provider\":\"nb3-factory\",\"model\":\"deepseek-v4.1-flash\",\"usage\":{\"input\":254,\"output\":274,\"cacheRead\":41728,\"cacheWrite\":0,\"reasoning\":0,\"totalTokens\":42256,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"stopReason\":\"toolUse\",\"timestamp\":1791273541089,\"responseId\":\"gen_01M483JAS2CJXGF879XH3518F4\",\"rawStopReason\":\"tool_calls\"}}\n{\"type\":\"tool_execution_start\",\"toolCallId\":\"call_00_ET_lQXaCzKDSDpXc80aDSJ20241\",\"toolName\":\"edit\",\"args\":{\"edits\":[{\"newText\":\"import { FlaskConical, Home } from 'lucide-react';\",\"oldText\":\"import { Home } from 'lucide-react';\"},{\"newText\":\"  {\\n    // A no-data smoke page: reachable by every signed-in user, so it opts out of page authorization like the\\n    // landing page instead of introducing a grant somebody would have to be given.\\n    authz: 'skip',\\n    auth: 'required',\\n    componentLoader: () => import('./pages/pipeline-smoke.js'),\\n    name: 'pipelineSmoke',\\n    navigation: { title: 'navigation.pipelineSmoke', icon: FlaskConical },\\n    path: '/pipeline-smoke',\\n  },\\n  {\\n    auth: 'guest',\",\"oldText\":\"  {\\n    auth: 'guest',\"}],\"path\":\"/home/runner/work/nb3-factory/nb3-factory/workspace/client/routes.ts\"}}\n{\"type\":\"tool_execution_end\",\"toolCallId\":\"call_00_ET_lQXaCzKDSDpXc80aDSJ20241\",\"toolName\":\"edit\",\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"Found 4 occurrences of edits[1] in /home/runner/work/nb3-factory/nb3-factory/workspace/client/routes.ts. Each oldText must be unique. Please provide more context to make it unique.\"}],\"details\":{}},\"isError\":true}\n{\"type\":\"message_start\",\"message\":{\"role\":\"toolResult\",\"toolCallId\":\"call_00_ET_lQXaCzKDSDpXc80aDSJ20241\",\"toolName\":\"edit\",\"content\":[{\"type\":\"text\",\"text\":\"Found 4 occurrences of edits[1] in /home/runner/work/nb3-factory/nb3-factory/workspace/client/routes.ts. Each oldText must be unique. Please provide more context to make it unique.\"}],\"details\":{},\"isError\":true,\"timestamp\":1791273546937}}\n{\"type\":\"message_end\",\"message\":{\"role\":\"toolResult\",\"toolCallId\":\"call_00_ET_lQXaCzKDSDpXc80aDSJ20241\",\"toolName\":\"edit\",\"content\":[{\"type\":\"text\",\"text\":\"Found 4 occurrences of edits[1] in /home/runner/work/nb3-factory/nb3-factory/workspace/client/routes.ts. Each oldText must be unique. Please provide more context to make it unique.\"}],\"details\":{},\"isError\":true,\"timestamp\":1791273546937}}\n{\"type\":\"turn_end\",\"message\":{\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"Now the route:\"},{\"type\":\"toolCall\",\"id\":\"call_00_ET_lQXaCzKDSDpXc80aDSJ20241\",\"name\":\"edit\",\"arguments\":{\"edits\":[{\"newText\":\"import { FlaskConical, Home } from 'lucide-react';\",\"oldText\":\"import { Home } from 'lucide-react';\"},{\"newText\":\"  {\\n    // A no-data smoke page: reachable by every signed-in user, so it opts out of page authorization like the\\n    // landing page instead of introducing a grant somebody would have to be given.\\n    authz: 'skip',\\n    auth: 'required',\\n    componentLoader: () => import('./pages/pipeline-smoke.js'),\\n    name: 'pipelineSmoke',\\n    navigation: { title: 'navigation.pipelineSmoke', icon: FlaskConical },\\n    path: '/pipeline-smoke',\\n  },\\n  {\\n    auth: 'guest',\",\"oldText\":\"  {\\n    auth: 'guest',\"}],\"path\":\"/home/runner/work/nb3-factory/nb3-factory/workspace/client/routes.ts\"}}],\"api\":\"openai-completions\",\"provider\":\"nb3-factory\",\"model\":\"deepseek-v4.1-flash\",\"usage\":{\"input\":254,\"output\":274,\"cacheRead\":41728,\"cacheWrite\":0,\"reasoning\":0,\"totalTokens\":42256,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"stopReason\":\"toolUse\",\"timestamp\":1791273541089,\"responseId\":\"gen_01M483JAS2CJXGF879XH3518F4\",\"rawStopReason\":\"tool_calls\"},\"toolResults\":[{\"role\":\"toolResult\",\"toolCallId\":\"call_00_ET_lQXaCzKDSDpXc80aDSJ20241\",\"toolName\":\"edit\",\"content\":[{\"type\":\"text\",\"text\":\"Found 4 occurrences of edits[1] in /home/runner/work/nb3-factory/nb3-factory/workspace/client/routes.ts. Each oldText must be unique. Please provide more context to make it unique.\"}],\"details\":{},\"isError\":true,\"timestamp\":1791273546937}]}\n{\"type\":\"turn_start\"}\n{\"type\":\"message_start\",\"message\":{\"role\":\"assistant\",\"content\":[{\"type\":\"thinking\",\"thinking\":\"The\",\"thinkingSignature\":\"reasoning\"}],\"api\":\"openai-completions\",\"provider\":\"nb3-factory\",\"model\":\"deepseek-v4.1-flash\",\"usage\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":0,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"stopReason\":\"pending\",\"timestamp\":1791273546938,\"responseId\":\"chatcmpl-104\"}}\n{\"type\":\"message_update\",\"usage\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":0,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"assistantMessageEvent\":{\"type\":\"thinking_start\",\"contentIndex\":0}}\n{\"type\":\"message_update\",\"usage\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":0,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"assistantMessageEvent\":{\"type\":\"thinking_delta\",\"contentIndex\":0,\"delta\":\"The\"}}\n{\"type\":\"message_update\",\"usage\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":0,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"assistantMessageEvent\":{\"type\":\"thinking_delta\",\"contentIndex\":0,\"delta\":\" second\"}}\n{\"type\":\"message_update\",\"usage\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":0,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"assistantMessageEvent\":{\"type\":\"thinking_delta\",\"contentIndex\":0,\"delta\":\" edit's old\"}}\n{\"type\":\"message_update\",\"usage\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":0,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"assistantMessageEvent\":{\"type\":\"thinking_delta\",\"contentIndex\":0,\"delta\":\"Text appears\"}}\n{\"type\":\"message_update\",\"usage\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":0,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"assistantMessageEvent\":{\"type\":\"thinking_delta\",\"contentIndex\":0,\"delta\":\" 4 times. Let me use\"}}\n{\"type\":\"message_update\",\"usage\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":0,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"assistantMessageEvent\":{\"type\":\"thinking_delta\",\"contentIndex\":0,\"delta\":\" unique\"}}\n{\"type\":\"message_update\",\"usage\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":0,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"assistantMessageEvent\":{\"type\":\"thinking_delta\",\"contentIndex\":0,\"delta\":\" context - insert\"}}\n{\"type\":\"message_update\",\"usage\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":0,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"assistantMessageEvent\":{\"type\":\"thinking_delta\",\"contentIndex\":0,\"delta\":\" after the home\"}}\n{\"type\":\"message_update\",\"usage\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":0,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"assistantMessageEvent\":{\"type\":\"thinking_delta\",\"contentIndex\":0,\"delta\":\" route block. Let me include\"}}\n{\"type\":\"message_update\",\"usage\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":0,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"assistantMessageEvent\":{\"type\":\"thinking_delta\",\"contentIndex\":0,\"delta\":\" the end\"}}\n{\"type\":\"message_update\",\"usage\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":0,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"assistantMessageEvent\":{\"type\":\"thinking_delta\",\"contentIndex\":0,\"delta\":\"of home route.\"}}\n{\"type\":\"message_update\",\"usage\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":0,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"assistantMessageEvent\":{\"type\":\"toolcall_start\",\"contentIndex\":1,\"id\":\"call_z3lxlnr2\",\"toolName\":\"edit\"}}\n{\"type\":\"message_update\",\"usage\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"totalTokens\":0,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"assistantMessageEvent\":{\"type\":\"toolcall_delta\",\"contentIndex\":1,\"delta\":\"{\\\"edits\\\":[{\\\"newText\\\":\\\"import { FlaskConical, Home } from 'lucide-react';\\\",\\\"oldText\\\":\\\"import { Home } from 'lucide-react';\\\"},{\\\"newText\\\":\\\"    navigation: { title: 'navigation.home', icon: Home },\\\\n    path: '/',\\\\n  },\\\\n  {\\\\n    // A no-data smoke page: reachable by every signed-in user, so it opts out of page authorization like the\\\\n    // landing page instead of introducing a grant somebody would have to be given.\\\\n    authz: 'skip',\\\\n    auth: 'required',\\\\n    componentLoader: () =\\\\u003e import('./pages/pipeline-smoke.js'),\\\\n    name: 'pipelineSmoke',\\\\n    navigation: { title: 'navigation.pipelineSmoke', icon: FlaskConical },\\\\n    path: '/pipeline-smoke',\\\\n  },\\\",\\\"oldText\\\":\\\"    navigation: { title: 'navigation.home', icon: Home },\\\\n    path: '/',\\\\n  },\\\"}],\\\"path\\\":\\\"/home/runner/work/nb3-factory/nb3-factory/workspace/client/routes.ts\\\"}\"}}\n{\"type\":\"message_update\",\"usage\":{\"input\":1712,\"output\":337,\"cacheRead\":38400,\"cacheWrite\":0,\"reasoning\":0,\"totalTokens\":40449,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"assistantMessageEvent\":{\"type\":\"thinking_end\",\"contentIndex\":0,\"content\":\"The second edit's oldText appears 4 times. Let me use unique context - insert after the home route block. Let me include the endof home route.\"}}\n{\"type\":\"message_update\",\"usage\":{\"input\":1712,\"output\":337,\"cacheRead\":38400,\"cacheWrite\":0,\"reasoning\":0,\"totalTokens\":40449,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"assistantMessageEvent\":{\"type\":\"toolcall_end\",\"contentIndex\":1,\"toolCall\":{\"type\":\"toolCall\",\"id\":\"call_z3lxlnr2\",\"name\":\"edit\",\"arguments\":{\"edits\":[{\"newText\":\"import { FlaskConical, Home } from 'lucide-react';\",\"oldText\":\"import { Home } from 'lucide-react';\"},{\"newText\":\"    navigation: { title: 'navigation.home', icon: Home },\\n    path: '/',\\n  },\\n  {\\n    // A no-data smoke page: reachable by every signed-in user, so it opts out of page authorization like the\\n    // landing page instead of introducing a grant somebody would have to be given.\\n    authz: 'skip',\\n    auth: 'required',\\n    componentLoader: () => import('./pages/pipeline-smoke.js'),\\n    name: 'pipelineSmoke',\\n    navigation: { title: 'navigation.pipelineSmoke', icon: FlaskConical },\\n    path: '/pipeline-smoke',\\n  },\",\"oldText\":\"    navigation: { title: 'navigation.home', icon: Home },\\n    path: '/',\\n  },\"}],\"path\":\"/home/runner/work/nb3-factory/nb3-factory/workspace/client/routes.ts\"}}}}\n{\"type\":\"message_end\",\"message\":{\"role\":\"assistant\",\"content\":[{\"type\":\"thinking\",\"thinking\":\"The second edit's oldText appears 4 times. Let me use unique context - insert after the home route block. Let me include the endof home route.\",\"thinkingSignature\":\"reasoning\"},{\"type\":\"toolCall\",\"id\":\"call_z3lxlnr2\",\"name\":\"edit\",\"arguments\":{\"edits\":[{\"newText\":\"import { FlaskConical, Home } from 'lucide-react';\",\"oldText\":\"import { Home } from 'lucide-reac",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/37432779834.1/v2-6dda53627948/E31",
+      "origin": {
+        "kind": "review",
+        "key": "review/37432779834.1/v2-6dda53627948",
+        "localId": "E31"
+      },
+      "kind": "log",
+      "path": "artifacts/agent-history/verify-1/browser-acceptance/agent-browser-acceptance.jsonl/part-0001.txt",
+      "lines": [
+        409,
+        416
+      ],
+      "sha256": "95b4a9399bae1d94ce64cce46a2b2a4f7dad8b01ab41b350e3a61a075c7ca432",
+      "observation": "QA 探测环境变量：cat $FACTORY_BROWSER_RECORDING_STATE 返回 No such file（录制状态文件不存在），QA 继续登录并完成 B01。",
+      "excerpt": "{\"type\":\"tool_execution_end\",\"toolCallId\":\"call_00_yHU1nO1LvN2sOvHsh7UA1381\",\"toolName\":\"bash\",\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"{\\n  \\\"version\\\": 1,\\n  \\\"basic\\\": true,\\n  \\\"capabilities\\\": {\\n    \\\"classicWorker\\\": true,\\n    \\\"moduleWorker\\\": true,\\n    \\\"moduleBlobWorker\\\": true,\\n    \\\"moduleWorkerRequest\\\": true,\\n    \\\"moduleBlobWorkerRequest\\\": true,\\n    \\\"pdfViewerEnabled\\\": true,\\n    \\\"workerNetworkLeak\\\": false\\n  },\\n  \\\"errors\\\": [],\\n  \\\"commands\\\": [\\n    {\\n      \\\"stage\\\": \\\"version\\\",\\n      \\\"command\\\": \\\"agent-browser\\\",\\n      \\\"args\\\": [\\n        \\\"--version\\\"\\n      ],\\n      \\\"timeoutMs\\\": 20000,\\n      \\\"code\\\": 0,\\n      \\\"durationMs\\\": 6\\n    },\\n    {\\n      \\\"stage\\\": \\\"chrome-version\\\",\\n      \\\"command\\\": \\\"/usr/bin/google-chrome\\\",\\n      \\\"args\\\": [\\n        \\\"--version\\\"\\n      ],\\n      \\\"timeoutMs\\\": 20000,\\n      \\\"code\\\": 0,\\n      \\\"durationMs\\\": 2759\\n    },\\n    {\\n      \\\"stage\\\": \\\"startup\\\",\\n      \\\"command\\\": \\\"agent-browser\\\",\\n      \\\"args\\\": [\\n        \\\"open\\\"\\n      ],\\n      \\\"timeoutMs\\\": 105000,\\n      \\\"code\\\": 0,\\n      \\\"durationMs\\\": 7673\\n    },\\n    {\\n      \\\"stage\\\": \\\"ready\\\",\\n      \\\"command\\\": \\\"agent-browser\\\",\\n      \\\"args\\\": [\\n        \\\"get\\\",\\n        \\\"url\\\"\\n      ],\\n      \\\"timeoutMs\\\": 20000,\\n      \\\"code\\\": 0,\\n      \\\"durationMs\\\": 11\\n    },\\n    {\\n      \\\"stage\\\": \\\"navigation\\\",\\n      \\\"command\\\": \\\"agent-browser\\\",\\n      \\\"args\\\": [\\n        \\\"open\\\",\\n        \\\"http://127.0.0.1:42717/\\\"\\n      ],\\n      \\\"timeoutMs\\\": 20000,\\n      \\\"code\\\": 0,\\n      \\\"durationMs\\\": 332\\n    },\\n    {\\n      \\\"stage\\\": \\\"snapshot\\\",\\n      \\\"command\\\": \\\"agent-browser\\\",\\n      \\\"args\\\": [\\n        \\\"snapshot\\\",\\n        \\\"-i\\\"\\n      ],\\n      \\\"timeoutMs\\\": 20000,\\n      \\\"code\\\": 0,\\n      \\\"durationMs\\\": 157\\n    },\\n    {\\n      \\\"stage\\\": \\\"upload\\\",\\n      \\\"command\\\": \\\"agent-browser\\\",\\n      \\\"args\\\": [\\n        \\\"upload\\\",\\n        \\\"#file\\\",\\n        \\\"/home/runner/work/_temp/agent-artifacts/browser-environment/preflight-input.txt\\\"\\n      ],\\n      \\\"timeoutMs\\\": 20000,\\n      \\\"code\\\": 0,\\n      \\\"durationMs\\\": 54\\n    },\\n    {\\n      \\\"stage\\\": \\\"interaction\\\",\\n      \\\"command\\\": \\\"agent-browser\\\",\\n      \\\"args\\\": [\\n        \\\"click\\\",\\n        \\\"#action\\\"\\n      ],\\n      \\\"timeoutMs\\\": 20000,\\n      \\\"code\\\": 0,\\n      \\\"durationMs\\\": 72\\n    },\\n    {\\n      \\\"stage\\\": \\\"download\\\",\\n      \\\"command\\\": \\\"agent-browser\\\",\\n      \\\"args\\\": [\\n        \\\"download\\\",\\n        \\\"#download\\\",\\n        \\\"/home/runner/work/_temp/agent-artifacts/browser-environment/preflight-download.txt\\\"\\n      ],\\n      \\\"timeoutMs\\\": 20000,\\n      \\\"code\\\": 0,\\n      \\\"durationMs\\\": 49\\n    },\\n    {\\n      \\\"stage\\\": \\\"cleanup\\\",\\n      \\\"command\\\": \\\"agent-browser\\\",\\n      \\\"args\\\": [\\n        \\\"close\\\"\\n      ],\\n      \\\"timeoutMs\\\": 5000,\\n      \\\"code\\\": 0,\\n      \\\"durationMs\\\": 219\\n    }\\n  ],\\n  \\\"browserVersion\\\": \\\"agent-browser 0.36.0\\\",\\n  \\\"chromeVersion\\\": \\\"Google Chrome 154.0.8037.57\\\",\\n  \\\"download\\\": true,\\n  \\\"durationMs\\\": 11542\\n}\\n---MANIFEST---\\n{\\n  \\\"version\\\": 1,\\n  \\\"files\\\": [\\n    {\\n      \\\"name\\\": \\\"sample.png\\\",\\n      \\\"sha256\\\": \\\"eafcdecc1468f7b18a15a7d22c494ab7e14a435f0560798ad463efc5e14f3490\\\",\\n      \\\"bytes\\\": 99,\\n      \\\"expected\\\": \\\"A solid blue square\\\",\\n      \\\"valid\\\": true\\n    },\\n    {\\n      \\\"name\\\": \\\"sample.pdf\\\",\\n      \\\"sha256\\\": \\\"6cb99aa93ea5607509fc676bf82e835728a7c44aa9f584a0974600765c0f8fc3\\\",\\n      \\\"bytes\\\": 593,\\n      \\\"expected\\\": \\\"Factory PDF sample\\\",\\n      \\\"valid\\\": true\\n    },\\n    {\\n      \\\"name\\\": \\\"sample.docx\\\",\\n      \\\"sha256\\\": \\\"06408d7e3a01fd82bc32240dbd035d6366ac701f50c1a90f12eb49f47288cd6e\\\",\\n      \\\"bytes\\\": 975,\\n      \\\"expected\\\": \\\"Factory DOCX sample\\\",\\n      \\\"valid\\\": true\\n    },\\n    {\\n      \\\"name\\\": \\\"sample.xlsx\\\",\\n      \\\"sha256\\\": \\\"aebb2e45d35551150c56edd7bf7e09e46cc1423a6a99e3545c593c946f179b4e\\\",\\n      \\\"bytes\\\": 1584,\\n      \\\"expected\\\": \\\"Factory XLSX sample; A2 = 42\\\",\\n      \\\"valid\\\": true\\n    },\\n    {\\n      \\\"name\\\": \\\"sample.pptx\\\",\\n      \\\"sha256\\\": \\\"304a16d1c38e3b7fde3accdaff511811be3200227e314c6996c7e741fe8d71cc\\\",\\n      \\\"bytes\\\": 4596,\\n      \\\"expected\\\": \\\"Factory PPTX sample\\\",\\n      \\\"valid\\\": true\\n    },\\n    {\\n      \\\"name\\\": \\\"corrupt.png\\\",\\n      \\\"sha256\\\": \\\"c0a8f73507b5744996bd972ead0802596faf1056aae7621513202dd2bafca349\\\",\\n      \\\"bytes\\\": 28,\\n      \\\"expected\\\": \\\"Explicit failure feedback\\\",\\n      \\\"valid\\\": false\\n    },\\n    {\\n      \\\"name\\\": \\\"unsupported.exe\\\",\\n      \\\"sha256\\\": \\\"4d9361da79887a53afa6bd342b1dc062b1d4e60c67c9371a22c2cb805a739f97\\\",\\n      \\\"bytes\\\": 43,\\n      \\\"expected\\\": \\\"Explicit unsupported-format feedback\\\",\\n      \\\"valid\\\": false\\n    }\\n  ]\\n}\\n---META---\\n{\\n  \\\"schemaVersion\\\": 1,\\n  \\\"preset\\\": {\\n    \\\"sourceIssueNumber\\\": 176,\\n    \\\"sourceIssueUrl\\\": \\\"https://github.com/gchust/nb3-factory/issues/176\\\",\\n    \\\"capturedAt\\\": \\\"2026-10-06T07:56:15.168Z\\\",\\n    \\\"inputHash\\\": \\\"c674060d15d675452b5787c3ddbe7fe85f940685059dd612e5162f64beebcaee\\\",\\n    \\\"humanCommentCount\\\": 1,\\n    \\\"reviewHash\\\": \\\"d866fc5a2d2f405000ec2420518fc455eac71e05b4b4afbbf12aa446b70dd188\\\",\\n    \\\"reviewCommentCount\\\": 1\\n  },\\n  \\\"repository\\\": \\\"gchust/nb3-factory\\\",\\n  \\\"owner\\\": \\\"gchust\\\",\\n  \\\"defaultBranch\\\": \\\"develop\\\",\\n  \\\"issue\\\": {\\n    \\\"number\\\": 594,\\n    \\\"title\\\": \\\"流程冒烟：单页计数器\\\",\\n    \\\"url\\\": \\\"https://github.com/gchust/nb3-factory/issues/594\\\",\\n    \\\"author\\\": \\\"gchust\\\"\\n  },\\n  \\\"task\\\": {\\n    \\\"targetBranch\\\": \\\"develop\\\",\\n    \\\"taskType\\\": \\\"创建新系统\\\",\\n    \\\"requirements\\\": \\\"在默认应用中新增一个登录后可访问的“流程冒烟 / Pipeline Smoke”页面，并在现有导航增加入口。页面只有标题、一行“用于验证自动搭建流程”的说明、初始为 0 的计数值和“+1”按钮；每点击一次增加 1。计数仅保存在当前页面内存，刷新后允许归零。\\\\n\\\\n必须真实修改页面、导航和按钮逻辑，产生有效应用代码 diff。不要新增业务表、Migration、Seed、API、权限角色、插件或依赖；不做 CRUD、附件、通知、工作流或看板。\\\\n\\\\n这是快速验证 Issue → Agent 实际修改 → 验证 → PR / 报告 / 归档链路的小型测试，不是生产系统。只实现明确需求，不做样式精修或架构重构。沿用本轮模板、原有登录、主页、设置和翻译机制；按需阅读附近源码和相关 Skill，不通读所有插件文档。\\\\n\\\\n工厂强制检查照常执行，不自行重复运行整套流水线，不额外做全角色、全页面、全格式或跨浏览器矩阵。不修改工厂控制文件、跳过检查或伪造通过。运行统计、日志归档、标准报告和 PR 由工厂生成，不另建报告应用，不自动合并 PR。\\\\n\\\\n## 本次补充要求\\\\n\\\\n本次搭建用于验证工厂流程改动（PR #592、#593：composite action 应用补丁、超时与报告链路调整）合入后，Issue → Agent → 验证 → PR / 报告 / 预览的完整链路是否正常。需求以案例正文为准，不扩展功能，不修改工厂控制文件。\\\",\\n    \\\"acceptanceCriteria\\\": \\\"B01. 使用已有测试账号登录，从导航打开页面，确认标题、说明、初始值 0；点击“+1”后变为 1，保存一张点击后的截图。\\\\n\\\\n无法实际完成时如实记录 failed、blocked 或 not_run，不以静态源码检查代替浏览器通过。\\\\n\\\\n同时验证案例人工输入中的产品要求：\\\\n\\\\n## 本次补充要求\\\\n\\\\n本次搭建用于验证工厂流程改动（PR #592、#593：composite action 应用补丁、超时与报告链路调整）合入后，Issue → Agent → 验证 → PR / 报告 / 预览的完整链路是否正常。需求以案例正文为准，不扩展功能，不修改工厂控制文件。\\\",\\n    \\\"sampleData\\\": \\\"否\\\",\\n    \\\"buildReviewMode\\\": \\\"full\\\",\\n    \\\"reviewCriteria\\\": \\\"## 案例评审评论 #5796451962（gchust）\\\\n\\\\n## F00 · 最小交付检查\\\\n\\\\n仅供维护者在流水线收尾后检查，不进入搭建 Prompt 或浏览器 QA，也不要求额外启动付费评审 Agent。\\\\n\\\\nR01. 本轮确实调用配置的 Agent，PR 含页面、导航和按钮逻辑的真实应用 diff，不是空提交或仅报告改动。\\\\nR02. 起始应用 SHA、工作分支、执行 Issue 和 PR 关联一致；浏览器 B01 与独立终验使用本轮真实产物。\\\\nR03. 报告、媒体、交互历史链接可用；记录完整性与业务通过分别判断。#199 合并后的真实链路验收见 #209。\\\\n\\\\nF00 只验证最小流程，不要求业务模块矩阵。缺文件或未执行如实标注；不要为修复报告发布失败重新搭建应用。\\\"\\n  },\\n  \\\"evaluation\\\": {\\n    \\\"requiredChecks\\\": [],\\n    \\\"version\\\": 1,\\n    \\\"runKey\\\": \\\"gchust/nb3-factory/issues/594/initial\\\",\\n    \\\"kind\\\": \\\"initial\\\"\\n  },\\n  \\\"workBranch\\\": \\\"agent/issue-594\\\",\\n  \\\"targetCreated\\\": false,\\n  \\\"existingPullRequest\\\": null,\\n  \\\"controlSha\\\": \\\"dab43cf0cb92c04770aa18d7addb677afd3b767e\\\",\\n  \\\"entrySha\\\": \\\"dab43cf0cb92c04770aa18d7addb677afd3b767e\\\",\\n  \\\"run\\\": {\\n    \\\"id\\\": 37432779834,\\n    \\\"attempt\\\": 1\\n  },\\n  \\\"applicationBase\\\": {\\n    \\\"ref\\\": \\\"develop\\\",\\n    \\\"sha\\\": \\\"dab43cf0cb92c04770aa18d7addb677afd3b767e\\\"\\n  }\\n}\\n\"}]},\"isError\":false}\n{\"type\":\"tool_execution_update\",\"toolCallId\":\"call_01_U6AUSLnnfYFdZ48ZTzCF5770\",\"toolName\":\"bash\",\"args\":{\"command\":\"echo \\\"Evidence dir:\\\"; ls -la \\\"$FACTORY_BROWSER_EVIDENCE_DIR\\\" 2>&1; echo \\\"---showcase dir---\\\"; dirname \\\"$FACTORY_BROWSER_SHOWCASE\\\"; echo \\\"---record state---\\\"; cat \\\"$FACTORY_BROWSER_RECORDING_STATE\\\" 2>&1\",\"timeout\":30},\"partialResult\":{\"content\":[{\"type\":\"text\",\"text\":\"Evidence dir:\\ntotal 8\\ndrwxr-xr-x 2 runner runner 4096 Oct  6 08:03 .\\ndrwxr-xr-x 3 runner runner 4096 Oct  6 08:03 ..\\n---showcase dir---\\n/home/runner/work/_temp/agent-artifacts/verify-1/browser-acceptance\\n---record state---\\ncat: /home/runner/work/_temp/repair-state/verify-1/browser-acceptance/recording-active: No such file or directory\\n\"}],\"details\":{}}}\n{\"type\":\"tool_execution_end\",\"toolCallId\":\"call_01_U6AUSLnnfYFdZ48ZTzCF5770\",\"toolName\":\"bash\",\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"Evidence dir:\\ntotal 8\\ndrwxr-xr-x 2 runner runner 4096 Oct  6 08:03 .\\ndrwxr-xr-x 3 runner runner 4096 Oct  6 08:03 ..\\n---showcase dir---\\n/home/runner/work/_temp/agent-artifacts/verify-1/browser-acceptance\\n---record state---\\ncat: /home/runner/work/_temp/repair-state/verify-1/browser-acceptance/recording-active: No such file or directory\\n\\n\\nCommand exited with code 1\"}],\"details\":{}},\"isError\":true}\n{\"type\":\"message_start\",\"message\":{\"role\":\"toolResult\",\"toolCallId\":\"call_00_yHU1nO1LvN2sOvHsh7UA1381\",\"toolName\":\"bash\",\"content\":[{\"type\":\"text\",\"text\":\"{\\n  \\\"version\\\": 1,\\n  \\\"basic\\\": true,\\n  \\\"capabilities\\\": {\\n    \\\"classicWorker\\\": true,\\n    \\\"moduleWorker\\\": true,\\n    \\\"moduleBlobWorker\\\": true,\\n    \\\"moduleWorkerRequest\\\": true,\\n    \\\"moduleBlobWorkerRequest\\\": true,\\n    \\\"pdfViewerEnabled\\\": true,\\n    \\\"workerNetworkLeak\\\": false\\n  },\\n  \\\"errors\\\": [],\\n  \\\"commands\\\": [\\n    {\\n      \\\"stage\\\": \\\"version\\\",\\n      \\\"command\\\": \\\"agent-browser\\\",\\n      \\\"args\\\": [\\n        \\\"--version\\\"\\n      ],\\n      \\\"timeoutMs\\\": 20000,\\n      \\\"code\\\": 0,\\n      \\\"durationMs\\\": 6\\n    },\\n    {\\n      \\\"stage\\\": \\\"chrome-version\\\",\\n      \\\"command\\\": \\\"/usr/bin/google-chrome\\\",\\n      \\\"args\\\": [\\n        \\\"--version\\\"\\n      ],\\n      \\\"timeoutMs\\\": 20000,\\n      \\\"code\\\": 0,\\n      \\\"durationMs\\\": 2759\\n    },\\n    {\\n      \\\"stage\\\": \\\"startup\\\",\\n      \\\"command\\\": \\\"agent-browser\\\",\\n      \\\"args\\\": [\\n        \\\"open\\\"\\n      ],\\n      \\\"timeoutMs\\\": 105000,\\n      \\\"code\\\": 0,\\n      \\\"durationMs\\\": 7673\\n    },\\n    {\\n      \\\"stage\\\": \\\"ready\\\",\\n      \\\"command\\\": \\\"agent-browser\\\",\\n      \\\"args\\\": [\\n        \\\"get\\\",\\n        \\\"url\\\"\\n      ],\\n      \\\"timeoutMs\\\": 20000,\\n      \\\"code\\\": 0,\\n      \\\"durationMs\\\": 11\\n    },\\n    {\\n      \\\"stage\\\": \\\"navigation\\\",\\n      \\\"command\\\": \\\"agent-browser\\\",\\n      \\\"args\\\": [\\n        \\\"open\\\",\\n        \\\"http://127.0.0.1:42717/\\\"\\n      ],\\n      \\\"timeoutMs\\\": 20000,\\n      \\\"code\\\": 0,\\n      \\\"durationMs\\\": 332\\n    },\\n    {\\n      \\\"stage\\\": \\\"snapshot\\\",\\n      \\\"command\\\": \\\"agent-browser\\\",\\n      \\\"args\\\": [\\n        \\\"snapshot\\\",\\n        \\\"-i\\\"\\n      ],\\n      \\\"timeoutMs\\\": 20000,\\n      \\\"code\\\": 0,\\n      \\\"durationMs\\\": 157\\n    },\\n    {\\n      \\\"stage\\\": \\\"upload\\\",\\n      \\\"command\\\": \\\"agent-browser\\\",\\n      \\\"args\\\": [\\n        \\\"upload\\\",\\n        \\\"#file\\\",\\n        \\\"/home/runner/work/_temp/agent-artifacts/browser-environment/preflight-input.txt\\\"\\n      ],\\n      \\\"timeoutMs\\\": 20000,\\n      \\\"code\\\": 0,\\n      \\\"durationMs\\\": 54\\n    },\\n    {\\n      \\\"stage\\\": \\\"interaction\\\",\\n      \\\"command\\\": \\\"agent-browser\\\",\\n      \\\"args\\\": [\\n        \\\"click\\\",\\n        \\\"#action\\\"\\n      ],\\n      \\\"timeoutMs\\\": 20000,\\n      \\\"code\\\": 0,\\n      \\\"durationMs\\\": 72\\n    },\\n    {\\n      \\\"stage\\\": \\\"download\\\",\\n      \\\"command\\\": \\\"agent-browser\\\",\\n      \\\"args\\\": [\\n        \\\"download\\\",\\n        \\\"#download\\\",\\n        \\\"/home/runner/work/_temp/agent-artifacts/browser-environment/preflight-download.txt\\\"\\n      ],\\n      \\\"timeoutMs\\\": 20000,\\n      \\\"code\\\": 0,\\n      \\\"durationMs\\\": 49\\n    },\\n    {\\n      \\\"stage\\\": \\\"cleanup\\\",\\n      \\\"command\\\": \\\"agent-browser\\\",\\n      \\\"args\\\": [\\n        \\\"close\\\"\\n      ],\\n      \\\"timeoutMs\\\": 5000,\\n      \\\"code\\\": 0,\\n      \\\"durationMs\\\": 219\\n    }\\n  ],\\n  \\\"browserVersion\\\": \\\"agent-browser 0.36.0\\\",\\n  \\\"chromeVersio",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/37432779834.1/v2-6dda53627948/E32",
+      "origin": {
+        "kind": "review",
+        "key": "review/37432779834.1/v2-6dda53627948",
+        "localId": "E32"
+      },
+      "kind": "skill",
+      "path": "app/.agents/skills/nocobase-app-development/references/frontend/references/testing.md",
+      "lines": [
+        24,
+        40
+      ],
+      "sha256": "e0e28bffa77826eb85a6f2832d4e87dc0abc70aa460ae5ab60ca07cb4e925bb3",
+      "observation": "frontend/references/testing.md 的 “Building the test harness” 要求页面测试复制 tests/components/page-harness.test.tsx，并列出二级语言、浮层、UI Library 等场景。",
+      "excerpt": "## Building the test harness\n\n**For a page, copy `tests/components/page-harness.test.tsx`.** It renders a small list page with a child-route `RouteDialog` in a memory router inside the real, strict i18n runtime (next section), and mocks only what the page reaches outside itself for: `useApiClient` (keeping the real `ApiClientError`), `useCan` and `useToaster`, all created with `vi.hoisted`. Its tests are the shapes to repeat: the request the page sends, a 403 without \"Retry\", a 401 that offers \"Sign in again\", an action shown with permission and hidden without it, and a child route opened from its URL and closed back to the list. It also mocks `useAuthentication` for the 401 case. Replace its inline page with your page and its child routes, drop the `copy` the harness defines for its inline page, since your page's keys are in `client/locales/`, keep the setup, and put the file in `tests/components/` (the template's own overlay test happens to sit in `tests/logic/`).\n\nFor anything else, start from the test that already sets it up:\n\n- **A second language**: pass the `client/locales/index.ts` loader map and switch with `changeLanguage` inside `act`, as the next section shows; `tests/components/primitive-labels.test.tsx` renders in Chinese from the start with `locale: 'zh-CN'`.\n- **Overlay behavior in depth** (`beforeClose`, nested layers, focus): `tests/logic/route-overlay.test.tsx`.\n- **A UI Library item**: it passes its English as `defaultValue`, but the strict runtime still fails on a key `client/locales/` lacks, so add the keys the item's README lists before testing a page that renders it.\n\n- Assert what the user can see: text, roles and accessible names, the result of a click (`@testing-library/react`, `@testing-library/user-event` and the jest-dom assertions are set up). Do not assert internal state.\n- To assert a toast, mock `useToaster` as the harness does, returning one shared `{ show: vi.fn(), close: vi.fn() }`, and assert what `show` was called with: its `type`, `title` and `description`, not how Base UI renders them. A component rendered without a registered toaster still renders; its toasts are logged to the console instead of shown.\n- When a button contains a `Spinner`, the spinner's \"Loading\" label becomes part of the button's name, so use a regular expression when you query by name.\n- An open `RouteDialog` or `RouteDrawer` hides the page behind it from the accessibility tree, so a role query for something behind it, such as the selected tab, passes `hidden: true`: `getByRole('link', { name: 'Orders', hidden: true })`.\n- A `Button` rendered as a `Link` (`nativeButton={false}`) has the `button` role, not `link`; query \"New project\" with `getByRole('button', …)`. Test an absence together with the presence case, as the harness does, so the assertion can fail.\n- jsdom does not lay out the page or run an input method. Leave layout, narrow screens and IME input to the browser check (the screenshot tool, [`../scripts/capture.md`](../scripts/capture.md)), and do not simulate pointer geometry for hover menus (see [section 2 of `shell.md`](shell.md#2-header-icon-buttons)).\n- A Vite server that a test starts itself (including one started by a helper) must use its own temporary `cacheDir`, deleted afterward. Do not delete or rebuild the dependency cache of a running development server; lazily loaded pages then stop working until the server is restarted.",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/37432779834.1/v2-6dda53627948/E33",
+      "origin": {
+        "kind": "review",
+        "key": "review/37432779834.1/v2-6dda53627948",
+        "localId": "E33"
+      },
+      "kind": "code",
+      "path": "app/client/components/page-header.tsx",
+      "lines": [
+        3,
+        32
+      ],
+      "sha256": "0ecf24198bab1240ce6b5cd5ca4622c8607e7ab50dda8102637284db19c10145",
+      "observation": "PageHeader 提供 title（必填）/description/actions，并渲染页面唯一的 h1。",
+      "excerpt": "export interface PageHeaderProps {\n  readonly title: ReactNode;\n  readonly description?: ReactNode;\n  /** Page-level actions, aligned to the right of the title from the `sm` breakpoint up. */\n  readonly actions?: ReactNode;\n}\n\n/** The heading of a page: its only `h1`, an optional description, and the actions that apply to the whole page. */\nexport function PageHeader({\n  actions,\n  description,\n  title,\n}: PageHeaderProps): ReactElement {\n  return (\n    <header className='flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between'>\n      <div className='min-w-0'>\n        <h1 className='font-heading text-3xl font-semibold tracking-[-0.035em]'>\n          {title}\n        </h1>\n        {description ? (\n          <p className='mt-2 max-w-2xl text-sm leading-6 text-muted-foreground'>\n            {description}\n          </p>\n        ) : null}\n      </div>\n      {actions ? (\n        <div className='flex shrink-0 items-center gap-2'>{actions}</div>\n      ) : null}\n    </header>\n  );",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/37432779834.1/v2-6dda53627948/E34",
+      "origin": {
+        "kind": "review",
+        "key": "review/37432779834.1/v2-6dda53627948",
+        "localId": "E34"
+      },
+      "kind": "skill",
+      "path": "app/.agents/skills/nocobase-app-development/SKILL.md",
+      "lines": [
+        174,
+        181
+      ],
+      "sha256": "bf55224a07a8c618a1064788fa3cff1bc4cb71e9d46ecef9384d9b4eb903a568",
+      "observation": "SKILL.md 的硬规则包含“Let the owning page supply PageContainer”与“Route navigation creates sidebar entries”。",
+      "excerpt": "- **Every `/api` route follows [HTTP API design](references/http-api.md).** camelCase paths, `{ data }` on success, `ApiError` on failure, input validated through `apiValidator()`, and a `describeRoute()` declaration for the API document. Never hand-write an error body.\n- **A migration is immutable history and self-contained.** Never import an evolving definition into one. Never edit one whose branch is merged.\n- **Every user-visible string goes through a translation key**, the English built into shadcn/ui primitives included.\n- **Let the owning page supply `PageContainer`.** One per page; inline child pages and tabs use the parent's, covering child pages add their own, overlays use their own container. See [section 2 of pages and routes](references/frontend/references/page.md#2-the-page-component).\n- **Visual consistency is application-wide.** Restyling only your part is a defect. Change the design tokens if a change is needed.\n- **Route paths never include the deployment base path.** The runtime restores it.\n- **Route navigation creates sidebar entries.** Declare `navigation` in `client/routes.ts`. Refine resources create no menu entries and, with no data provider registered, load nothing; pages load data with `useApiClient` (see [calling the API](references/frontend/references/api.md)).\n- **Reach for the built-in mechanism first.** Changing framework structure is allowed when nothing else fits — comment it and update the docs.",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/37432779834.1/v2-6dda53627948/E35",
+      "origin": {
+        "kind": "review",
+        "key": "review/37432779834.1/v2-6dda53627948",
+        "localId": "E35"
+      },
+      "kind": "skill",
+      "path": "app/.agents/skills/nocobase-app-development/references/frontend/frontend-dev.md",
+      "lines": [
+        37,
+        46
+      ],
+      "sha256": "14ca25e8b9c259486c53e5990a170930acea0c2a03f70e2b084569255885769b",
+      "observation": "frontend-dev.md “Look up by task”表把“新建页面及其路由与菜单”映射到 page.md §1/§2/§6。",
+      "excerpt": "## Look up by task\n\n| Task                                                                                     | Read                                                                                                                                                                                                                                                                                           |\n| ---------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |\n| A new page, its route and menu entry                                                     | [`page.md`](references/page.md) [§1](references/page.md#1-declare-the-route), [§2](references/page.md#2-the-page-component), [§6](references/page.md#6-menus)                                                                                                                                  |\n| Page permissions, settings pages, the back button and breadcrumbs                        | [`page.md`](references/page.md) [§4](references/page.md#4-authz-page-authorization), [Settings pages](references/page.md#settings-pages), [§7](references/page.md#7-back-button-and-breadcrumbs)                                                                                               |\n| Disabling or hiding a feature                                                            | [`page.md` §9](references/page.md#9-disable-a-feature-keep-the-page)                                                                                                                                                                                                                           |\n| Showing actions by permission (`useCan`)                                                 | [`page.md` §8](references/page.md#8-show-actions-by-permission-usecan)                                                                                                                                                                                                                         |\n| A plugin's page; customizing the shell, its header buttons                               | [`page.md` §10](references/page.md#10-customize-a-plugins-pages), [`shell.md`](references/shell.md)                                                                                                                                                                                            |\n| Child pages, tabs, covering child pages, navigation groups                               | [`child-routes.md`](references/child-routes.md) [§3](references/child-routes.md#3-four-ways-to-present-a-child-route)–[§6](references/child-routes.md#6-navigation-groups-and-clickable-parents)                                                                                               |",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "review/37432779834.1/v2-6dda53627948/E36",
+      "origin": {
+        "kind": "review",
+        "key": "review/37432779834.1/v2-6dda53627948",
+        "localId": "E36"
+      },
+      "kind": "log",
+      "path": "artifacts/agent-history/agent-implement.jsonl/part-0001.txt",
+      "lines": [
+        263,
+        268
+      ],
+      "sha256": "c6c8de6552a348d7d823417db535938b186dd8e461132d90fcdf62a1b8cdfc2b",
+      "observation": "实现轮第 268 行：Agent 明确判定“This is a **quick change**: a new simple static page, no data loading/forms/overlays”，思考里写“Let me read routes.ts, home.tsx, locales, and the page reference”，但实际只读 routes.ts、home.tsx 与 locales，未读它自称要读的 page reference。",
+      "excerpt": "{\"type\":\"message_update\",\"usage\":{\"input\":22369,\"output\":311,\"cacheRead\":1024,\"cacheWrite\":0,\"reasoning\":23,\"totalTokens\":23704,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"assistantMessageEvent\":{\"type\":\"thinking_end\",\"contentIndex\":0,\"content\":\"This is a quick change. Let me read routes.ts, home.tsx, locales, and the page reference.\"}}\n{\"type\":\"message_update\",\"usage\":{\"input\":22369,\"output\":311,\"cacheRead\":1024,\"cacheWrite\":0,\"reasoning\":23,\"totalTokens\":23704,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"assistantMessageEvent\":{\"type\":\"text_end\",\"contentIndex\":1,\"content\":\"This is a **quick change**: a new simple static page, no data loading/forms/overlays. Let me read the relevant sources.\"}}\n{\"type\":\"message_update\",\"usage\":{\"input\":22369,\"output\":311,\"cacheRead\":1024,\"cacheWrite\":0,\"reasoning\":23,\"totalTokens\":23704,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"assistantMessageEvent\":{\"type\":\"toolcall_end\",\"contentIndex\":2,\"toolCall\":{\"type\":\"toolCall\",\"id\":\"call_00_qFSbNabltkAEszupWySU4733\",\"name\":\"read\",\"arguments\":{\"path\":\"/home/runner/work/nb3-factory/nb3-factory/workspace/client/routes.ts\",\"offset\":0,\"limit\":200}}}}\n{\"type\":\"message_update\",\"usage\":{\"input\":22369,\"output\":311,\"cacheRead\":1024,\"cacheWrite\":0,\"reasoning\":23,\"totalTokens\":23704,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"assistantMessageEvent\":{\"type\":\"toolcall_end\",\"contentIndex\":3,\"toolCall\":{\"type\":\"toolCall\",\"id\":\"call_01_KhqJPfJXG3t0EtpXaGfM8529\",\"name\":\"read\",\"arguments\":{\"path\":\"/home/runner/work/nb3-factory/nb3-factory/workspace/client/pages/home.tsx\",\"offset\":0,\"limit\":200}}}}\n{\"type\":\"message_update\",\"usage\":{\"input\":22369,\"output\":311,\"cacheRead\":1024,\"cacheWrite\":0,\"reasoning\":23,\"totalTokens\":23704,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"assistantMessageEvent\":{\"type\":\"toolcall_end\",\"contentIndex\":4,\"toolCall\":{\"type\":\"toolCall\",\"id\":\"call_02_9XYi6K7xhdHXhV8I7l5K4726\",\"name\":\"bash\",\"arguments\":{\"command\":\"cd /home/runner/work/nb3-factory/nb3-factory/workspace && ls client/locales && echo \\\"---\\\" && find tests -maxdepth 2 -type f | head -40\",\"timeout\":30}}}}\n{\"type\":\"message_end\",\"message\":{\"role\":\"assistant\",\"content\":[{\"type\":\"thinking\",\"thinking\":\"This is a quick change. Let me read routes.ts, home.tsx, locales, and the page reference.\",\"thinkingSignature\":\"[{\\\"format\\\":\\\"unknown\\\",\\\"index\\\":0,\\\"text\\\":\\\"This is a quick change. Let me read routes.ts, home.tsx, locales, and the page reference.\\\",\\\"type\\\":\\\"reasoning.text\\\"}]\"},{\"type\":\"text\",\"text\":\"This is a **quick change**: a new simple static page, no data loading/forms/overlays. Let me read the relevant sources.\"},{\"type\":\"toolCall\",\"id\":\"call_00_qFSbNabltkAEszupWySU4733\",\"name\":\"read\",\"arguments\":{\"path\":\"/home/runner/work/nb3-factory/nb3-factory/workspace/client/routes.ts\",\"offset\":0,\"limit\":200}},{\"type\":\"toolCall\",\"id\":\"call_01_KhqJPfJXG3t0EtpXaGfM8529\",\"name\":\"read\",\"arguments\":{\"path\":\"/home/runner/work/nb3-factory/nb3-factory/workspace/client/pages/home.tsx\",\"offset\":0,\"limit\":200}},{\"type\":\"toolCall\",\"id\":\"call_02_9XYi6K7xhdHXhV8I7l5K4726\",\"name\":\"bash\",\"arguments\":{\"command\":\"cd /home/runner/work/nb3-factory/nb3-factory/workspace && ls client/locales && echo \\\"---\\\" && find tests -maxdepth 2 -type f | head -40\",\"timeout\":30}}],\"api\":\"openai-completions\",\"provider\":\"nb3-factory\",\"model\":\"deepseek-v4.1-flash\",\"usage\":{\"input\":22369,\"output\":311,\"cacheRead\":1024,\"cacheWrite\":0,\"reasoning\":23,\"totalTokens\":23704,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"stopReason\":\"toolUse\",\"timestamp\":1791273475265,\"responseId\":\"gen_01M483G8R92B9FFNQ8P78PAEEE\",\"rawStopReason\":\"tool_calls\"}}",
+      "excerptRedacted": false,
+      "attachment": null,
+      "availability": "excerpt",
+      "note": null
+    },
+    {
+      "id": "qa/1/b01-initial.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/1",
+        "localId": "b01-initial.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-1/browser-acceptance/evidence/b01-initial.png",
+      "lines": null,
+      "sha256": "063b1b623a12c20ca4e67ec99eef26b782540445e52873fac9976e16a7f17dd3",
+      "observation": "验收项 B01 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-1/browser-acceptance/b01-initial.png",
+      "availability": "attached",
+      "note": null
+    },
+    {
+      "id": "qa/1/b01-after-click.png",
+      "origin": {
+        "kind": "qa",
+        "key": "qa/1",
+        "localId": "b01-after-click.png"
+      },
+      "kind": "screenshot",
+      "path": "artifacts/verify-1/browser-acceptance/evidence/b01-after-click.png",
+      "lines": null,
+      "sha256": "d7b27f74259dc59ea34aed8cb97ba68d93edd3a11503e59e23895f50b23e7a9e",
+      "observation": "验收项 B01 的截图",
+      "excerpt": null,
+      "excerptRedacted": false,
+      "attachment": "evidence/verify-1/browser-acceptance/b01-after-click.png",
+      "availability": "attached",
+      "note": null
+    }
+  ],
+  "links": [
+    {
+      "rel": "task-issue",
+      "label": "Issue #594",
+      "url": "https://github.com/gchust/nb3-factory/issues/594",
+      "path": null
+    },
+    {
+      "rel": "run",
+      "label": "Run 37432779834 / attempt 1",
+      "url": "https://github.com/gchust/nb3-factory/actions/runs/37432779834/attempts/1",
+      "path": null
+    },
+    {
+      "rel": "pull-request",
+      "label": "PR #595",
+      "url": "https://github.com/gchust/nb3-factory/pull/595",
+      "path": null
+    },
+    {
+      "rel": "report-archive",
+      "label": "固定版本 HTML 报告（gh-pages 归档路径）",
+      "url": null,
+      "path": "reports/issues/594/runs/37432779834/attempt-1/index.html"
+    }
+  ],
+  "limitations": []
+}
