@@ -44,7 +44,9 @@ jobs:
           PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
           set -euo pipefail
-          files="$(gh api --paginate "repos/$GITHUB_REPOSITORY/pulls/$PR_NUMBER/files?per_page=100" --jq '.[].filename')"
+          # A rename lists its old path as previous_filename: a file moved out of
+          # .github/ is a factory change too.
+          files="$(gh api --paginate "repos/$GITHUB_REPOSITORY/pulls/$PR_NUMBER/files?per_page=100" --jq '.[] | .filename, (.previous_filename // empty)')"
           # The listing stops at 3000 files; a change that large runs everything.
           count="$(grep -c . <<<"$files" || true)"
           browser=false

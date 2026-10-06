@@ -688,6 +688,8 @@ test('a failed changed-file listing runs the browser preflight instead of skippi
     /needs\.changes\.result != 'success' \|\| needs\.changes\.outputs\.browser == 'true'/,
   );
   assert.match(job, /!cancelled\(\)/);
+  // A file renamed out of .github/ still counts through its old path.
+  assert.match(tests, /--jq '\.\[\] \| \.filename, \(\.previous_filename \/\/ empty\)'/);
   for (const name of ['factory-tests', 'application-format'])
     assert.doesNotMatch(
       tests.split(`\n  ${name}:\n`)[1].split(/\n {2}[a-z][a-z-]*:\n/)[0],
