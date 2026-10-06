@@ -989,9 +989,9 @@ jobs:
           path: control
           persist-credentials: false
 
-      # One commit is enough to publish: the remote already has base_sha, so
-      # pushing its child needs no local history, and the lease below names the
-      # expected remote value explicitly instead of reading a tracking ref.
+      # One commit is enough to apply the patch. The lease below names the
+      # expected remote value explicitly instead of reading a tracking ref;
+      # publication-base.mjs fetches whatever a new branch's push needs.
       - name: Check out fresh application base
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -1010,6 +1010,23 @@ jobs:
             --workspace workspace \
             --patch agent-artifacts/agent.patch \
             --branch "${{ needs.prepare.outputs.work_branch }}"
+
+      # A new work branch whose base fell behind only on factory files is
+      # published on the current branch head, so its workflow files match the
+      # repository's; otherwise the verified base stays. See QA_PIPELINE.md.
+      - name: Choose the publication base
+        env:
+          BASE_REF: ${{ needs.prepare.outputs.base_ref }}
+          BASE_SHA: ${{ needs.prepare.outputs.base_sha }}
+          WORK_BRANCH: ${{ needs.prepare.outputs.work_branch }}
+        run: |
+          node control/.github/scripts/publication-base.mjs \
+            --workspace workspace \
+            --patch agent-artifacts/agent.patch \
+            --branch "$WORK_BRANCH" \
+            --base-ref "$BASE_REF" \
+            --base-sha "$BASE_SHA" \
+            --record agent-artifacts/publication-base.json
 
       - name: Commit and push task branch
         working-directory: workspace
@@ -1034,7 +1051,14 @@ jobs:
             else
               lease="refs/heads/${WORK_BRANCH}:"
             fi
-            git push --force-with-lease="$lease" origin "HEAD:refs/heads/${WORK_BRANCH}"
+            if ! git push --force-with-lease="$lease" origin "HEAD:refs/heads/${WORK_BRANCH}" 2> "$RUNNER_TEMP/push.log"; then
+              cat "$RUNNER_TEMP/push.log" >&2
+              if grep -q 'without `workflows` permission' "$RUNNER_TEMP/push.log"; then
+                echo "::error::GitHub refused ${WORK_BRANCH} because the pushed commits would change workflow files, which the task token may not do. The task was verified on ${BASE_SHA}; the target branch moved since with changes the publisher could not restack onto (see Choose the publication base). The verified patch is in the factory-patch-${ISSUE_NUMBER} artifact: apply it with git apply --3way on the current target branch, push ${WORK_BRANCH} with credentials allowed to change workflows, and open the PR by hand."
+              fi
+              exit 1
+            fi
+            cat "$RUNNER_TEMP/push.log" >&2
           fi
 
       - name: Create or update Pull Request
@@ -1043,7 +1067,8 @@ jobs:
         run: |
           node control/.github/scripts/publish-pr.mjs \
             --metadata agent-artifacts/task-metadata.json \
-            --summary agent-artifacts/change-summary.json --status "$FACTORY_DELIVERY_STATUS"
+            --summary agent-artifacts/change-summary.json --status "$FACTORY_DELIVERY_STATUS" \
+            --publication agent-artifacts/publication-base.json
 
   # Preserve failed work without treating publication as successful acceptance.
   publish-failed:

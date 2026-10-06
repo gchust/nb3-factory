@@ -1,6 +1,7 @@
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 
 import { GitHubClient } from './factory-lib.mjs';
+import { describePublication } from './publication-base.mjs';
 import { stripTaskTitle } from './task-compat.mjs';
 
 const args = parseArgs(process.argv.slice(2));
@@ -10,6 +11,10 @@ if (!['success', 'failed'].includes(status))
 const failed = status === 'failed';
 const metadata = JSON.parse(readFileSync(args.metadata, 'utf8'));
 const summary = JSON.parse(readFileSync(args.summary, 'utf8'));
+const publication =
+  args.publication && existsSync(args.publication)
+    ? JSON.parse(readFileSync(args.publication, 'utf8'))
+    : null;
 const client = new GitHubClient({
   token: process.env.GITHUB_TOKEN,
   repository: process.env.GITHUB_REPOSITORY,
@@ -38,6 +43,9 @@ const body = [
   `<!-- agent-issue: ${metadata.issue.number} -->`,
   `<!-- agent-target-branch: ${metadata.task.targetBranch} -->`,
   `<!-- agent-head-sha: ${workRef.object.sha} -->`,
+  ...(publication
+    ? [`<!-- agent-verified-base-sha: ${publication.verifiedBase.sha} -->`]
+    : []),
   '',
   '## 任务',
   '',
@@ -63,6 +71,7 @@ const body = [
         '- 独立 Job 登录后生产启动检查：通过',
       ]),
   changeSummary,
+  ...(publication ? [`- ${describePublication(publication)}`] : []),
   `- [搭建报告](https://${owner}.github.io/${metadata.repository.split('/')[1]}/reports/issues/${metadata.issue.number}/runs/${process.env.GITHUB_RUN_ID}/attempt-${process.env.GITHUB_RUN_ATTEMPT || '1'}/index.html)（报告工作流发布后可用）`,
   `- [GitHub Actions 运行记录](${runUrl})`,
   '',

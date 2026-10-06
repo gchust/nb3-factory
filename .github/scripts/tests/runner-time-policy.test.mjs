@@ -61,6 +61,36 @@ test('publication keeps an explicit lease that needs no tracking refs', () => {
   assert.match(publish, /git push --force-with-lease="\$lease"/);
 });
 
+test('publication chooses its base after the verified patch is applied', () => {
+  for (const name of ['publish', 'publish-failed']) {
+    const job = jobOf(task, name);
+    assert.match(job, /steps: (?:&|\*)publication-steps/, name);
+  }
+  const publish = jobOf(task, 'publish');
+  const order = [
+    'Apply preserved patch to the task branch',
+    'Choose the publication base',
+    'Commit and push task branch',
+    'Create or update Pull Request',
+  ].map((step) => publish.indexOf(`- name: ${step}\n`));
+  assert.ok(
+    order.every((index, i) => index > (order[i - 1] ?? -1)),
+    String(order),
+  );
+  const choose = stepOf(publish, 'Choose the publication base');
+  assert.match(choose, /publication-base\.mjs/);
+  assert.match(choose, /--base-sha "\$BASE_SHA"/);
+  assert.match(choose, /--record agent-artifacts\/publication-base\.json/);
+  assert.doesNotMatch(choose, /\$\{\{[^}]*\}\}" \\/);
+  const push = stepOf(publish, 'Commit and push task branch');
+  assert.match(push, /without `workflows` permission/);
+  assert.match(push, /::error::GitHub refused/);
+  assert.match(
+    stepOf(publish, 'Create or update Pull Request'),
+    /--publication agent-artifacts\/publication-base\.json/,
+  );
+});
+
 test('downstream jobs download only the small patch artifact', () => {
   const name = '${{ needs.prepare.outputs.issue_number }}';
   for (const [job, target] of [
