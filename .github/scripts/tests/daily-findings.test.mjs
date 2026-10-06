@@ -800,6 +800,26 @@ test('the workflow gives Feishu credentials only to the send step', () => {
   const [before, send] = workflow.split(
     '- name: Send pending digests to Feishu',
   );
+  // The Pages base URL comes from the read-only configure-pages step, which
+  // runs even when nothing changed, so a re-sent digest links to the site
+  // rather than to the guessed default; the deploy stays conditional.
+  assert.match(
+    before,
+    /- uses: actions\/configure-pages@[0-9a-f]{40} # v\d[^\n]*\n {8}id: pages\n {6}- uses: actions\/upload-pages-artifact/,
+  );
+  for (const action of ['upload-pages-artifact', 'deploy-pages'])
+    assert.match(
+      before,
+      new RegExp(
+        `- uses: actions/${action}@[0-9a-f]{40} # v\\d[^\\n]*\\n {8}if: steps\\.archive\\.outputs\\.changed == 'true'`,
+      ),
+      action,
+    );
+  assert.match(
+    send,
+    /REPORT_BASE_URL: \$\{\{ steps\.pages\.outputs\.base_url \}\}/,
+  );
+  assert.doesNotMatch(send, /steps\.deployment\.outputs\.page_url/);
   assert.doesNotMatch(before, /FEISHU_WEBHOOK_SECRET|FEISHU_PROBLEM_OWNERS/);
   // The archive step only learns whether a webhook exists.
   assert.deepEqual(before.match(/secrets\.[A-Z_]+[^\n]*/g), [

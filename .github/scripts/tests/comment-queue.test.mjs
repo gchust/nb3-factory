@@ -1,7 +1,14 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
-import { coordinate as reconcile, main, sweepIssues, SWEEP_WINDOW_MS } from '../dispatch-comment-builds.mjs';
+import {
+  coordinate as reconcile,
+  listRecentRuns,
+  main,
+  RUN_WINDOW_MS,
+  sweepIssues,
+  SWEEP_WINDOW_MS,
+} from '../dispatch-comment-builds.mjs';
 import {
   parseBuild,
   readReceipt,
@@ -654,4 +661,82 @@ test('the safety-net sweep runs hourly on a scripts-only checkout', () => {
   assert.match(workflow, /workflow_run:/);
   assert.match(workflow, /sparse-checkout: \.github\/scripts\n/);
   assert.ok(SWEEP_WINDOW_MS > 60 * 60 * 1000);
+});
+
+test('listing workflow runs stops after the page that leaves the run window with a run of this Issue', async () => {
+  const now = Date.parse('2026-10-06T12:00:00Z');
+  const inside = new Date(now - RUN_WINDOW_MS / 2).toISOString();
+  const outside = new Date(now - RUN_WINDOW_MS - 60000).toISOString();
+  const page = (count, issue, created) =>
+    Array.from({ length: count }, (_, index) => ({
+      id: count - index,
+      display_title: `Factory issue #${issue} build 0`,
+      created_at: created,
+    }));
+  const paged = (pages) => {
+    const queries = [];
+    const client = {
+      async request(method, route, { query }) {
+        assert.equal(method, 'GET');
+        assert.equal(route, '/actions/workflows/code-agent-task.yml/runs');
+        assert.equal(query.per_page, 100);
+        queries.push(query.page);
+        return { workflow_runs: pages[query.page - 1] ?? [] };
+      },
+    };
+    return { client, queries };
+  };
+  assert.ok(RUN_WINDOW_MS > SWEEP_WINDOW_MS);
+
+  // The first page already reaches past the window and holds this Issue's run.
+  let fixture = paged([page(100, 2, outside), page(100, 2, outside), []]);
+  let runs = await listRecentRuns(fixture.client, 2, now);
+  assert.deepEqual(fixture.queries, [1]);
+  assert.equal(runs.length, 100);
+
+  // Runs inside the window are always read completely, whoever they belong to.
+  fixture = paged([
+    page(100, 2, inside),
+    page(100, 3, outside),
+    page(5, 3, outside),
+  ]);
+  runs = await listRecentRuns(fixture.client, 2, now);
+  assert.deepEqual(fixture.queries, [1, 2]);
+  assert.equal(runs.length, 200);
+
+  // An Issue with no run on the recent pages is read to the end: without any
+  // run and without a PR it would otherwise count as never built.
+  fixture = paged([
+    page(100, 3, outside),
+    page(100, 3, outside),
+    page(5, 3, outside),
+  ]);
+  runs = await listRecentRuns(fixture.client, 2, now);
+  assert.deepEqual(fixture.queries, [1, 2, 3]);
+  assert.equal(runs.length, 205);
+  fixture = paged([
+    page(100, 3, outside),
+    page(100, 2, outside),
+    page(5, 3, outside),
+  ]);
+  runs = await listRecentRuns(fixture.client, 2, now);
+  assert.deepEqual(fixture.queries, [1, 2]);
+  assert.ok(
+    runs.some((run) => run.display_title === 'Factory issue #2 build 0'),
+  );
+});
+
+test('coordination reads the bounded run listing once per Issue', async () => {
+  const f = fixture({
+    comments: [command(21)],
+    runs: [run(1), run(2, 21, 'in_progress', null)],
+  });
+  await coordinate(f.client, 2);
+  const listings = f.calls.filter(
+    (call) => call.route === '/actions/workflows/code-agent-task.yml/runs',
+  );
+  assert.deepEqual(
+    listings.map((call) => call.query),
+    [{ per_page: 100, page: 1 }],
+  );
 });

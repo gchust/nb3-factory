@@ -12,6 +12,7 @@ import {
 import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
+import { SOURCE_BASELINE_DEFAULT } from '../source-baseline-ref.mjs';
 
 const scripts = path.resolve(import.meta.dirname, '..');
 const { guidanceDrift, guidanceHashes } = await import(
@@ -598,6 +599,115 @@ test('refresh workflow has its own queue and isolates generated code from write 
   assert.match(publisher, /!inputs.dry_run/);
 });
 
+test('a superseded PR refresh run stops before generation and skips every later step', () => {
+  const workflow = readFileSync(
+    path.resolve(scripts, '..', 'workflows/refresh-template.yml'),
+    'utf8',
+  );
+  const generate = workflow.split('\n  publish:')[0];
+  // queue: max cannot be combined with cancel-in-progress.
+  const concurrency = /^concurrency:\n((?: {2}.*\n)+)/m.exec(workflow)[1];
+  assert.match(concurrency, /queue: max/);
+  assert.doesNotMatch(concurrency, /cancel-in-progress/);
+  assert.match(generate, /^      pull-requests: read$/m);
+  const steps = generate
+    .split(/\n {6}- (?=name:|uses:)/)
+    .slice(1)
+    .map((step) => step.split('\n').map((line) => line.trim()));
+  const index = steps.findIndex(
+    ([first]) =>
+      first === 'name: Stop when a newer push superseded this pull request run',
+  );
+  assert.ok(index >= 0);
+  const supersede = steps[index];
+  assert.ok(supersede.includes("if: github.event_name == 'pull_request'"));
+  assert.ok(supersede.includes('id: supersede'));
+  assert.ok(supersede.includes('GH_TOKEN: ${{ github.token }}'));
+  assert.ok(supersede.includes('RUN_HEAD_SHA: ${{ github.event.pull_request.head.sha }}'));
+  assert.ok(
+    supersede.some((line) =>
+      line.includes('gh api "repos/$GITHUB_REPOSITORY/pulls/$PR_NUMBER" --jq .head.sha'),
+    ),
+  );
+  assert.ok(supersede.some((line) => line.startsWith('echo "::notice::')));
+  assert.ok(supersede.includes('echo "superseded=true" >> "$GITHUB_OUTPUT"'));
+  // Only the develop check runs before it, and no earlier step needs a checkout.
+  assert.deepEqual(
+    steps.slice(0, index).map(([first]) => first),
+    ['name: Require develop as the selected workflow branch'],
+  );
+  const skip = "steps.supersede.outputs.superseded != 'true'";
+  for (const step of steps.slice(index + 1)) {
+    const condition = step.find((line) => line.startsWith('if: '));
+    assert.ok(condition, step[0]);
+    // Dispatch-only steps never run on a superseded PR run anyway.
+    assert.ok(
+      condition.includes(skip) || condition.includes("github.event_name == 'workflow_dispatch'") ||
+        condition.includes("github.event_name != 'pull_request'"),
+      `${step[0]}: ${condition}`,
+    );
+  }
+  assert.match(
+    generate,
+    /- name: Save verification logs and browser screenshot\n {8}if: always\(\) && steps\.supersede\.outputs\.superseded != 'true'\n/,
+  );
+});
+
+test('refresh caches the generated application pnpm store and saves it only from develop', () => {
+  const workflow = readFileSync(
+    path.resolve(scripts, '..', 'workflows/refresh-template.yml'),
+    'utf8',
+  );
+  const generate = workflow.split('\n  publish:')[0];
+  const stepOf = (name) =>
+    generate.split(`- name: ${name}\n`)[1].split(/\n {6}- (?=name:|uses:)/)[0];
+  const order = [
+    'Restore factory controls without changing template guidance',
+    'Locate the pnpm store',
+    'Restore the template pnpm store',
+    'Install and lock the new application dependencies',
+    'Install, register, and inspect the required Pro plugin baseline',
+    'Drop store entries the generated lockfile no longer uses',
+    'Save the template pnpm store before verification',
+    'Format the generated application and plugin registrations',
+  ];
+  for (let i = 1; i < order.length; i++)
+    assert.ok(
+      generate.indexOf(`- name: ${order[i - 1]}\n`) < generate.indexOf(`- name: ${order[i]}\n`),
+      order[i],
+    );
+  // The lockfile is generated outside the workspace, so the key is computed
+  // by the step from the template version and the files it hashes.
+  const locate = stepOf('Locate the pnpm store');
+  assert.match(locate, /factory-template\.json/);
+  assert.match(locate, /templateVersion/);
+  assert.match(locate, /\['package\.json', 'pnpm-lock\.yaml'\]/);
+  assert.match(locate, /prefix = `template-pnpm-store-\$\{process\.env\.RUNNER_OS\}-pnpm\$\{pnpm\}-`/);
+  const restore = stepOf('Restore the template pnpm store');
+  assert.match(restore, /uses: actions\/cache\/restore@[0-9a-f]{40} # v6\.\d+\.\d+/);
+  assert.match(restore, /key: \$\{\{ steps\.pnpm-store\.outputs\.key \}\}/);
+  assert.match(restore, /restore-keys: \$\{\{ steps\.pnpm-store\.outputs\.prefix \}\}/);
+  assert.match(restore, /path: \$\{\{ steps\.pnpm-store\.outputs\.path \}\}/);
+  // A post-step cache would also save what verification adds to the store.
+  assert.doesNotMatch(generate, /uses: actions\/cache@/);
+  // A pull_request cache lives in refs/pull/N/merge and no other PR sees it.
+  for (const name of [
+    'Drop store entries the generated lockfile no longer uses',
+    'Save the template pnpm store before verification',
+  ]) {
+    const step = stepOf(name);
+    assert.match(
+      step,
+      /if: github\.event_name == 'workflow_dispatch' && steps\.pnpm-cache\.outputs\.cache-hit != 'true'\n/,
+      name,
+    );
+    assert.match(step, /continue-on-error: true/, name);
+  }
+  const save = stepOf('Save the template pnpm store before verification');
+  assert.match(save, /uses: actions\/cache\/save@[0-9a-f]{40} # v6\.\d+\.\d+/);
+  assert.match(save, /key: \$\{\{ steps\.pnpm-cache\.outputs\.cache-primary-key \}\}/);
+});
+
 test('every building job exposes the factory registry to nested dist installs', () => {
   const read = (file) =>
     readFileSync(path.resolve(scripts, '..', 'workflows', file), 'utf8');
@@ -687,13 +797,12 @@ test('source verification rejects retired templates before building source packa
   assert.ok(
     guard >= 0 && guard < workflow.indexOf('pnpm install --frozen-lockfile'),
   );
-  const pins = [
-    ...workflow.matchAll(
-      /(?:default: |REQUESTED_SHA:.*?'|\|\| ')([a-f0-9]{40})/g,
-    ),
-  ].map((match) => match[1]);
-  assert.equal(pins.length, 2);
-  assert.equal(pins[0], pins[1]);
+  // The input default is the only literal pin; the PR fallback imports it.
+  // Action pins are @<sha>; the source pin is the only bare one.
+  const pins = [...workflow.matchAll(/(?<!@)\b([a-f0-9]{40})\b/g)].map((match) => match[1]);
+  assert.deepEqual(pins, [SOURCE_BASELINE_DEFAULT]);
+  assert.match(workflow, /REQUESTED_SHA: \$\{\{ inputs\.source_sha \}\}\n/);
+  assert.match(workflow, /process\.env\.REQUESTED_SHA\|\|SOURCE_BASELINE_DEFAULT/);
 });
 
 test('factory workflows use only the current package CLI for Skills sync', () => {

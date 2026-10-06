@@ -6,9 +6,10 @@ on:
 
 permissions: {}
 
-# Shares the deploy workflow's queue. A deploy for this PR queued before the
-# close finishes first and is then removed here; one queued after it sees the
-# closed PR and skips. Separate groups let a late deploy outlive its teardown.
+# The deploy workflow's group and queue, so deploys and teardowns run in the
+# order they were queued. A deploy for this PR queued before the close finishes
+# first and is then removed here; one queued after it sees the closed PR and
+# skips. With a group of its own, a late deploy could outlive its teardown.
 concurrency:
   group: factory-preview-deploy
   queue: max
@@ -33,7 +34,7 @@ jobs:
       PREVIEW_HOST: ${{ vars.FACTORY_PREVIEW_HOST || '100.120.77.102' }}
       PREVIEW_USER: ${{ vars.FACTORY_PREVIEW_USER || 'root' }}
       PREVIEW_RELEASE: factory-previews
-      PREVIEW_ENABLED: ${{ secrets.FACTORY_PREVIEW_SSH_KEY != '' && secrets.FACTORY_TAILSCALE_OAUTH_CLIENT_ID != '' }}
+      PREVIEW_ENABLED: ${{ secrets.FACTORY_PREVIEW_SSH_KEY != '' && secrets.FACTORY_TAILSCALE_OAUTH_CLIENT_ID != '' && secrets.FACTORY_TAILSCALE_OAUTH_CLIENT_SECRET != '' }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:

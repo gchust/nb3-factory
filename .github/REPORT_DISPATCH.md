@@ -23,6 +23,8 @@
 用量继续按 Agent/job ID 去重，短统计工作流串行回写，业务搭建仍可并发。
 如果人工强制取消导致收尾 Job 无法执行，可以使用独立报告的手动入口补发。
 
+来源 Run 被整体跳过（非仓库成员的 Issue，结论为 `skipped`）时什么都没搭建：六个报告工作流和评论队列的 `workflow_run` 副本在第一个 Job 就按该结论跳过，不排队、不等待、不下载；`workflow_dispatch` 与 `repository_dispatch` 入口不受影响。
+
 ## 补发已有产物，不重新搭建
 
 Actions → **Publish Task Visual Report**、**Publish Agent History** 或
@@ -32,7 +34,8 @@ Actions → **Publish Task Visual Report**、**Publish Agent History** 或
 加上 `--field run_id=... --field attempt=...`。
 
 补发只读取已有 Artifact 和作业时间，不调用模型。媒体上传继续使用已配置的
-`FACTORY_MEDIA_TOKEN`，无需新 Secret。媒体、历史和用量的详细约束分别见
+`FACTORY_MEDIA_TOKEN`，无需新 Secret。视觉报告或交互历史发布失败时，该运行以
+`::error::` 失败并给出上述补发参数；业务 PR 不受影响，不重新搭建。媒体、历史和用量的详细约束分别见
 [VISUAL_REPORTS.md](VISUAL_REPORTS.md)、[AGENT_HISTORY.md](AGENT_HISTORY.md) 和
 [TASK_USAGE.md](TASK_USAGE.md)。
 

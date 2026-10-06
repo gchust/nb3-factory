@@ -77,21 +77,15 @@ test('the factory format check runs what build verification runs, with the pinne
     workflow,
     /node \.github\/scripts\/check-application-format\.mjs/,
   );
-  // The guarded files outside .github must trigger the checks that guard them.
-  for (const file of [
-    'AGENTS.md',
-    'CLAUDE.md',
-    'docs/**',
-    'README.MD',
-    'factory-template.json',
-    '.npmrc',
-    '.gitignore',
-    '.prettierignore',
-    'eslint.config.js',
-    'package.json',
-    'pnpm-lock.yaml',
-  ])
-    assert.ok(workflow.includes(`'${file}'`), file);
+  // The format check covers the whole application root, so no path filter
+  // may exclude a pull request from it: one touching only client/ or server/
+  // would otherwise reach a build task with a formatting defect.
+  const triggers = workflow.split('\non:\n')[1].split('\npermissions:')[0];
+  assert.doesNotMatch(triggers, /paths(?:-ignore)?:/);
+  assert.match(
+    triggers,
+    /^  pull_request:\n  push:\n    branches: \[develop\]\n/m,
+  );
 });
 
 test('lockedVersion reads the root importer and drops peer suffixes', () => {

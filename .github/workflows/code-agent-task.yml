@@ -303,6 +303,7 @@ jobs:
       issues: read
     outputs:
       handoff: ${{ steps.outcome.outputs.handoff }}
+      timed_out: ${{ steps.outcome.outputs.timed_out }}
       checkpoint_available: ${{ steps.checkpoint.outcome == 'success' }}
       patch_available: ${{ steps.patch.outcome == 'success' }}
     steps:
@@ -514,14 +515,32 @@ jobs:
           FACTORY_AGENT_INSTALL_RECORD: ${{ runner.temp }}/agent-install.json
         run: node control/.github/scripts/install-agent.mjs
 
+      # The npm cache is restored and saved again here, before any model call,
+      # so what the model does to the runner never reaches a later run's cache.
+      - name: Restore the Agent Browser npm cache
+        id: browser_cache
+        if: inputs.failure_smoke != true
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.npm
+          key: agent-browser-npm-${{ runner.os }}-${{ vars.AGENT_BROWSER_VERSION || '0.36.0' }}
+
       - name: Install pinned Agent Browser
         timeout-minutes: 10
         if: inputs.failure_smoke != true
         env:
           AGENT_BROWSER_VERSION: ${{ vars.AGENT_BROWSER_VERSION || '0.36.0' }}
         run: |
-          npm install --global "agent-browser@${AGENT_BROWSER_VERSION}"
+          npm install --global --prefer-offline "agent-browser@${AGENT_BROWSER_VERSION}"
           agent-browser --version
+
+      - name: Save the Agent Browser npm cache
+        if: inputs.failure_smoke != true && steps.browser_cache.outputs.cache-hit != 'true'
+        continue-on-error: true
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.npm
+          key: ${{ steps.browser_cache.outputs.cache-primary-key }}
 
       - name: Install optional video encoder
         if: inputs.failure_smoke != true
@@ -662,15 +681,19 @@ jobs:
         if: inputs.failure_smoke == true
         run: node control/.github/scripts/failure-smoke.mjs inject workspace "$RUNNER_TEMP/agent-artifacts" "${{ needs.prepare.outputs.work_branch }}"
 
+      # A job timeout is a cancellation: success() and failure() are both false
+      # then, so without the cancelled() clause hours of work left no patch and
+      # no checkpoint. Only work that actually started is sealed.
       - name: Create deterministic patch
         id: patch
         if: >-
           success() ||
           failure() && (steps.implementation.outcome == 'failure' || steps.verify.outcome == 'failure' || steps.failure_smoke.outcome == 'failure') ||
+          cancelled() && (steps.implementation.outcome != 'skipped' || steps.verify.outcome != 'skipped' || steps.failure_smoke.outcome != 'skipped') ||
           steps.implementation.outputs.handoff == 'true' ||
           steps.verify.outputs.handoff == 'true'
         env:
-          ALLOW_EMPTY_PATCH: ${{ steps.implementation.outcome == 'failure' || steps.verify.outcome == 'failure' || needs.prepare.outputs.base_ref == needs.prepare.outputs.work_branch || steps.implementation.outputs.handoff == 'true' || steps.verify.outputs.handoff == 'true' }}
+          ALLOW_EMPTY_PATCH: ${{ steps.implementation.outcome == 'failure' || steps.verify.outcome == 'failure' || steps.implementation.outcome == 'cancelled' || steps.verify.outcome == 'cancelled' || needs.prepare.outputs.base_ref == needs.prepare.outputs.work_branch || steps.implementation.outputs.handoff == 'true' || steps.verify.outputs.handoff == 'true' }}
         run: |
           node control/.github/scripts/create-patch.mjs \
             --workspace workspace \
@@ -779,7 +802,7 @@ jobs:
         id: checkpoint
         # Preserve a recovery checkpoint on failure, without treating it as
         # successful verification or automatically retrying a broken runner.
-        if: always() && steps.patch.outcome == 'success' && (steps.handoff.outcome == 'success' || failure())
+        if: always() && steps.patch.outcome == 'success' && (steps.handoff.outcome == 'success' || failure() || cancelled())
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: factory-handoff-${{ needs.prepare.outputs.issue_number }}
@@ -811,6 +834,8 @@ jobs:
           HANDOFF_OUTCOME: ${{ steps.handoff.outcome }}
           CHECKPOINT_OUTCOME: ${{ steps.checkpoint.outcome }}
           DISPATCH_OUTCOME: ${{ steps.dispatch.outcome }}
+          # Keep in step with this job's timeout-minutes.
+          JOB_TIMEOUT_SECONDS: '21600'
         run: |
           if [[ "$HANDOFF_OUTCOME" == "success" && "$CHECKPOINT_OUTCOME" == "success" && "$DISPATCH_OUTCOME" == "success" ]]; then
             echo "handoff=true" >> "$GITHUB_OUTPUT"
@@ -820,6 +845,16 @@ jobs:
             fi
             echo "handoff=false" >> "$GITHUB_OUTPUT"
           fi
+          # GitHub reports a job that hit timeout-minutes as cancelled, the same
+          # as a manual cancel. Elapsed time tells them apart for the notice;
+          # five minutes of slack covers the cancellation itself.
+          timed_out=false
+          if [[ "${FACTORY_JOB_STARTED_EPOCH_SECONDS:-}" =~ ^[0-9]+$ ]] && \
+            (( $(date +%s) - FACTORY_JOB_STARTED_EPOCH_SECONDS >= JOB_TIMEOUT_SECONDS - 300 )); then
+            timed_out=true
+            echo "::error::The agent job reached its ${JOB_TIMEOUT_SECONDS}s runner limit before finishing."
+          fi
+          echo "timed_out=$timed_out" >> "$GITHUB_OUTPUT"
 
       - name: Summarize implementation and repair timings
         if: always()
@@ -1321,6 +1356,7 @@ jobs:
           # leaves agent:running; the notice says it was cancelled. cancelled()
           # is not available in env, and a cancelled run cancels its jobs.
           FACTORY_RUN_CANCELLED: ${{ contains(needs.*.result, 'cancelled') }}
+          FACTORY_RUN_TIMED_OUT: ${{ needs.agent.outputs.timed_out }}
         run: node control/.github/scripts/mark-failure.mjs "${{ needs.prepare.outputs.issue_number }}" failure-artifacts
 
   dispatch-reports:
@@ -1338,7 +1374,9 @@ jobs:
         reply,
         publish-reply,
       ]
-    if: always() && needs.prepare.outputs.status == 'ready' && needs.prepare.outputs.comment_kind != 'reply'
+    # prepare exposes status=ready before its artifact upload; a failed prepare
+    # has no factory-task-N for the reports to read.
+    if: always() && needs.prepare.result == 'success' && needs.prepare.outputs.status == 'ready' && needs.prepare.outputs.comment_kind != 'reply'
     runs-on: ubuntu-24.04
     # Six requests at up to 70 s each (dispatch-task-reports.sh) plus checkout.
     # Continuations have no workflow_run fallback, so the last reports must fit.
@@ -1409,6 +1447,7 @@ jobs:
     needs: [prepare, agent, verify-final, publish, publish-failed]
     if: >-
       always() && !cancelled() &&
+      needs.prepare.result == 'success' &&
       needs.prepare.outputs.status == 'ready' &&
       needs.prepare.outputs.build_comment_id != '' &&
       needs.agent.outputs.handoff != 'true'
@@ -1497,7 +1536,7 @@ jobs:
   # A /build round's history is already requested by dispatch-reports.
   dispatch-reply-history:
     needs: [prepare, reply, publish-reply]
-    if: always() && needs.prepare.outputs.status == 'ready' && needs.prepare.outputs.build_comment_id != '' && needs.prepare.outputs.comment_kind == 'reply'
+    if: always() && needs.prepare.result == 'success' && needs.prepare.outputs.status == 'ready' && needs.prepare.outputs.build_comment_id != '' && needs.prepare.outputs.comment_kind == 'reply'
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     permissions:

@@ -28,8 +28,10 @@ concurrency:
 
 jobs:
   # The task usually requested this run itself; see report-dispatch-gate.yml.
+  # A skipped task run (an Issue from someone without repository access) ran
+  # nothing to report on, so it does not start this chain either.
   dispatch-gate:
-    if: github.event_name == 'workflow_run'
+    if: github.event_name == 'workflow_run' && github.event.workflow_run.conclusion != 'skipped'
     uses: ./.github/workflows/report-dispatch-gate.yml
     with:
       workflow: deploy-preview.yml
@@ -66,7 +68,7 @@ jobs:
       PREVIEW_FORCE: ${{ inputs.force || 'false' }}
       # A preview is optional infrastructure. When its credentials are absent
       # this workflow stays a no-op rather than failing the task's run record.
-      PREVIEW_ENABLED: ${{ secrets.FACTORY_PREVIEW_SSH_KEY != '' && secrets.FACTORY_TAILSCALE_OAUTH_CLIENT_ID != '' }}
+      PREVIEW_ENABLED: ${{ secrets.FACTORY_PREVIEW_SSH_KEY != '' && secrets.FACTORY_TAILSCALE_OAUTH_CLIENT_ID != '' && secrets.FACTORY_TAILSCALE_OAUTH_CLIENT_SECRET != '' }}
     steps:
       # Trusted control code only. The build artifact is data here: it is
       # published unchanged and never executed on the runner.
@@ -122,7 +124,7 @@ jobs:
       - name: Skip without preview credentials
         if: steps.prepare.outputs.ready == 'true' && env.PREVIEW_ENABLED != 'true'
         run: |
-          echo "::warning::PREVIEW SKIPPED: set FACTORY_PREVIEW_SSH_KEY and FACTORY_TAILSCALE_OAUTH_CLIENT_ID to deploy previews."
+          echo "::warning::PREVIEW SKIPPED: set FACTORY_PREVIEW_SSH_KEY, FACTORY_TAILSCALE_OAUTH_CLIENT_ID and FACTORY_TAILSCALE_OAUTH_CLIENT_SECRET to deploy previews."
 
       - name: Join the tailnet
         if: steps.prepare.outputs.ready == 'true' && env.PREVIEW_ENABLED == 'true'
@@ -292,8 +294,10 @@ jobs:
           node control/.github/scripts/preview-public-check.mjs
           test -s "$RUNNER_TEMP/preview-public.html"
 
+      # After a failed deploy, not after a manual cancel: a cancelled run has no
+      # outcome worth telling the pull request about.
       - name: Report the preview on the pull request
-        if: always() && steps.prepare.outputs.ready == 'true' && env.PREVIEW_ENABLED == 'true'
+        if: ${{ !cancelled() && steps.prepare.outputs.ready == 'true' && env.PREVIEW_ENABLED == 'true' }}
         continue-on-error: true
         env:
           GITHUB_TOKEN: ${{ github.token }}

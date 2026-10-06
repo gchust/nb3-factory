@@ -272,10 +272,18 @@ jobs:
       pull-requests: write
       pages: write
       id-token: write
+    # Whether a called workflow's own concurrency group covers the job that
+    # calls it is not documented; holding the group here makes sure the publish
+    # never runs beside daily-findings and classify-findings, which write the
+    # same pages.
+    concurrency:
+      group: factory-task-usage
+      queue: max
     uses: ./.github/workflows/report-task-usage.yml
     with:
       run_id: ${{ needs.prepare.outputs.run_id }}
       attempt: ${{ needs.prepare.outputs.attempt }}
       review_run_id: ${{ format('{0}', github.run_id) }}
       review_artifact_id: ${{ needs.review.outputs.artifact_id }}
-    secrets: inherit
+    # No secrets: the reporter uses only github.token, and inheriting would
+    # hand every repository secret to a workflow that never reads one.

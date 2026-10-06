@@ -6,7 +6,8 @@ name: Deliver Evaluation Results
 # the classify job reads the receiver's feature points (the only other step
 # with the receiver token) and may ask the selected Agent, with no repository
 # write access and no receiver token, to place problems the subject rules
-# cannot. Its failure only leaves problems unclassified. It is only dispatched
+# cannot. That step is continue-on-error: its failure is a warning in the run
+# and leaves those problems unclassified, nothing more. It is only dispatched
 # or scheduled, never called, so no other workflow waits on it.
 on:
   workflow_dispatch:
@@ -125,7 +126,9 @@ jobs:
 
   plan:
     needs: backfill
-    if: always() && vars.FACTORY_EVALUATION_DELIVERY == 'true' && needs.backfill.result != 'failure' && needs.backfill.result != 'cancelled'
+    # Replay and scan skip backfill, so a status function is needed; a manual
+    # cancel of the run stops here rather than planning a delivery nobody sends.
+    if: ${{ !cancelled() && vars.FACTORY_EVALUATION_DELIVERY == 'true' && needs.backfill.result != 'failure' && needs.backfill.result != 'cancelled' }}
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     permissions:
@@ -210,6 +213,8 @@ jobs:
         id: install
         if: steps.rules.outputs.needs_model == 'true'
         continue-on-error: true
+        # A hung registry otherwise holds the runner until the job limit.
+        timeout-minutes: 10
         env:
           CODE_AGENT_ENGINE: ${{ vars.CODE_AGENT_ENGINE }}
           CODE_AGENT_VERSION: ${{ vars.CODE_AGENT_VERSION }}
@@ -221,7 +226,10 @@ jobs:
           FACTORY_AGENT_INSTALL_RECORD: ${{ runner.temp }}/agent-install.json
         run: node control/.github/scripts/install-agent.mjs
       - name: Classify remaining problems with the selected Agent
+        id: agent
         if: steps.install.outcome == 'success'
+        # Delivery never waits on this; see the header comment.
+        continue-on-error: true
         env:
           CODE_AGENT_ENGINE: ${{ vars.CODE_AGENT_ENGINE }}
           FACTORY_AGENT_INSTALL_RECORD: ${{ runner.temp }}/agent-install.json
@@ -261,6 +269,12 @@ jobs:
           FACTORY_AGENT_ROLE: review
           FACTORY_REVIEW_THINKING: ${{ vars.FACTORY_REVIEW_THINKING || 'medium' }}
         run: node control/.github/scripts/problem-classification.mjs run --input "$RUNNER_TEMP/problem-classification"
+      # Visible in the run and its summary, since the job itself stays green.
+      - name: Report problems left unclassified
+        if: always() && steps.agent.outcome == 'failure'
+        run: |
+          echo "::warning::Agent classification failed; the problems it was asked to place are delivered unclassified. See the step above."
+          echo 'Agent 问题分类失败：未能归类的问题按未分类交付，不影响发送。' >> "$GITHUB_STEP_SUMMARY"
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         if: always() && steps.rules.outcome == 'success'
         with:
@@ -319,7 +333,8 @@ jobs:
 
   record:
     needs: [plan, send]
-    if: always() && needs.plan.result == 'success' && needs.plan.outputs.count != '0'
+    # Receipts of a failed send are still recorded; a cancelled run sent nothing.
+    if: ${{ !cancelled() && needs.plan.result == 'success' && needs.plan.outputs.count != '0' }}
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     permissions:

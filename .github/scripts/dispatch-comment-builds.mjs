@@ -51,17 +51,10 @@ export async function coordinate(client, issueNumber, admissionId = Infinity) {
   }
   if (!receipts.some((item) => item.status !== 'done')) return;
 
-  // Reading all runs for this workflow also handles lost completion events and
+  // Reading the runs of this workflow also handles lost completion events and
   // failed scheduler runs. An active receipt is never released merely by age.
-  const runs = await listAll(
-    client,
-    '/actions/workflows/code-agent-task.yml/runs',
-    {},
-    'workflow_runs',
-  );
-  const ownRuns = runs.filter(
-    (run) => Number(runTitle.exec(run.display_title)?.[1]) === issueNumber,
-  );
+  const runs = await listRecentRuns(client, issueNumber);
+  const ownRuns = runs.filter((run) => isOwnRun(run, issueNumber));
   for (const run of runs.filter(
     (item) => !runTitle.test(item.display_title) && item.status !== 'completed',
   )) {
@@ -205,7 +198,7 @@ export async function coordinate(client, issueNumber, admissionId = Infinity) {
     pulls.some(
       (pull) =>
         pull.head?.repo?.full_name === client.repository &&
-        new RegExp(`^(agent|pi)/issue-${issueNumber}$`).test(pull.head.ref) &&
+        pull.head.ref === `agent/issue-${issueNumber}` &&
         pull.state === 'closed',
     )
   ) {
@@ -224,8 +217,8 @@ export async function coordinate(client, issueNumber, admissionId = Infinity) {
         pull.base?.ref === task.targetBranch &&
         pull.state === 'open' &&
         pull.head?.repo?.full_name === client.repository &&
-        /^(agent|pi)\/issue-\d+$/.test(pull.head.ref) &&
-        !new RegExp(`^(agent|pi)/issue-${issueNumber}$`).test(pull.head.ref),
+        /^agent\/issue-\d+$/.test(pull.head.ref) &&
+        pull.head.ref !== `agent/issue-${issueNumber}`,
     )
   )
     return;
@@ -234,7 +227,7 @@ export async function coordinate(client, issueNumber, admissionId = Infinity) {
     !pulls.some(
       (pull) =>
         pull.head?.repo?.full_name === client.repository &&
-        new RegExp(`^(agent|pi)/issue-${issueNumber}$`).test(pull.head.ref),
+        pull.head.ref === `agent/issue-${issueNumber}`,
     )
   )
     return;
@@ -250,6 +243,37 @@ export async function coordinate(client, issueNumber, admissionId = Infinity) {
 // A task may run for up to about ten hours across one handoff; three days
 // leaves room for a sweep outage without scanning the whole history.
 export const SWEEP_WINDOW_MS = 3 * 24 * 60 * 60 * 1000;
+// A run is created when its round is dispatched and finishes up to about a day
+// later: ten hours of work, one five-hour handoff and queue waits. Runs older
+// than that on top of the sweep window can only matter as proof that the Issue
+// was built at all.
+export const RUN_WINDOW_MS = SWEEP_WINDOW_MS + 24 * 60 * 60 * 1000;
+const isOwnRun = (run, issueNumber) =>
+  Number(runTitle.exec(run.display_title)?.[1]) === issueNumber;
+// The Actions API lists runs newest first, so one page normally holds every
+// run the queue can still act on: unfinished runs, the dispatched round's run
+// and the Issue's latest run. Older pages are read only until the first run of
+// this Issue appears, because an Issue without any run and without a PR has not
+// been built yet and must not start a comment round; an Issue that never ran
+// is still read to the end rather than mistaken for one that did.
+export async function listRecentRuns(client, issueNumber, now = Date.now()) {
+  const since = now - RUN_WINDOW_MS;
+  const runs = [];
+  for (let page = 1; ; page++) {
+    const { workflow_runs: items } = await client.request(
+      'GET',
+      '/actions/workflows/code-agent-task.yml/runs',
+      { query: { per_page: 100, page } },
+    );
+    runs.push(...items);
+    if (items.length < 100) return runs;
+    if (
+      Date.parse(items[items.length - 1].created_at) < since &&
+      runs.some((run) => isOwnRun(run, issueNumber))
+    )
+      return runs;
+  }
+}
 export async function sweepIssues(client, now = Date.now()) {
   const since = new Date(now - SWEEP_WINDOW_MS).toISOString();
   const [open, recent] = await Promise.all([

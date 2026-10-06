@@ -29,11 +29,14 @@ concurrency:
 
 jobs:
   reconcile:
+    # A skipped task run (an Issue from someone without repository access)
+    # finished no build, so its completion event is not a reason to sweep.
     if: >-
-      github.event_name != 'issue_comment' ||
+      (github.event_name != 'workflow_run' || github.event.workflow_run.conclusion != 'skipped') &&
+      (github.event_name != 'issue_comment' ||
       (!github.event.issue.pull_request &&
        github.event.comment.user.type != 'Bot' &&
-       contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.comment.author_association))
+       contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.comment.author_association)))
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     permissions:

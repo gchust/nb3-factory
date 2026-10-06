@@ -29,8 +29,10 @@ concurrency:
 
 jobs:
   # The task usually requested this run itself; see report-dispatch-gate.yml.
+  # A skipped task run (an Issue from someone without repository access) ran
+  # nothing to report on, so it does not start this chain either.
   dispatch-gate:
-    if: github.event_name == 'workflow_run'
+    if: github.event_name == 'workflow_run' && github.event.workflow_run.conclusion != 'skipped'
     uses: ./.github/workflows/report-dispatch-gate.yml
     with:
       workflow: report-task-progress.yml
@@ -40,7 +42,8 @@ jobs:
   report:
     needs: dispatch-gate
     if: >-
-      !cancelled() && needs.dispatch-gate.outputs.covered != 'true'
+      !cancelled() && needs.dispatch-gate.outputs.covered != 'true' &&
+      (github.event_name != 'workflow_run' || github.event.workflow_run.conclusion != 'skipped')
     runs-on: ubuntu-24.04
     timeout-minutes: 3
     permissions:

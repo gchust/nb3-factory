@@ -15,6 +15,10 @@
   → Issue 逐项结论 + Release 长期交互归档 + Actions 诊断
 ```
 
+prepare 只解析精确 Artifact ID 并上传自己生成的 `source.json` 与 `binding.json`；评审 Job
+和发布 Job 各自按这些 ID 从来源 Run 直接下载 task / agent / final 原始产物，目录布局与
+prepare 绑定时一致，不再经由 prepare 重传一份几百 MB 的副本。
+
 业务要求、浏览器验收和 review-only 仍分流。评审者不得修改应用、安装依赖、执行应用
 脚本、启动服务、重搭业务或用新版本 Skill 替换原输入。检查到工作区变化或未完成调用
 会失败。该限制不是 OS 沙箱：发布 Job 仍以原始输入与新的可信 checkout 校验数据，

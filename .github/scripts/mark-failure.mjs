@@ -39,27 +39,31 @@ const recoverable =
   state.phase !== 'done';
 const exhausted = state?.outcome === 'budget-exhausted';
 // A cancelled run still leaves agent:running, so it is marked here too, but
-// it must not read like a build failure.
-const cancelled = process.env.FACTORY_RUN_CANCELLED === 'true';
+// it must not read like a build failure. GitHub reports a job that hit its
+// timeout-minutes as cancelled as well; the agent job tells the two apart.
+const timedOut = process.env.FACTORY_RUN_TIMED_OUT === 'true';
+const cancelled = process.env.FACTORY_RUN_CANCELLED === 'true' && !timedOut;
 const body = [
-  cancelled
-    ? '**本次运行已取消**，未完成搭建；这不是搭建失败结论。需要继续时请重新发起任务。'
-    : exhausted
-    ? '**已停止自动修复，待诊断**。' +
-      (state.stopReason?.reason || '已达到任务或评测计划预算。') +
-      '\n\n已保存补丁、验收记录、修复日志与用量，不再自动修复或续跑；仍发布失败报告，并在有安全代码差异时创建或更新标记 failed 的搭建 PR，尝试预览打包与部署。' +
-      '\n\n累计验证 ' +
-      state.verificationAttempts +
-      ' 轮、修复 ' +
-      state.repairAttempts +
-      ' 轮。' +
-      '\n\n下载本 Run 的 factory-agent-' +
-      issueNumber +
-      ' Artifact，查看 task-diagnostic.md / task-diagnostic.json 中的失败轮次和证据位置；独立只读归因见 build-review.json。' +
-      '\n\n重复失败不能直接证明 NocoBase3 有缺陷；需要区分框架、Skill、模板、应用、工厂和环境，证据不足标记 unknown。诊断后修正原因，再显式发起新任务。'
-    : failure
-      ? `**${failure.title}**。${failure.detail}`
-      : '本次搭建未完成，请根据失败步骤检查运行日志。',
+  timedOut
+    ? '**本次运行超过 GitHub runner 的 6 小时上限被终止**，未完成搭建；这不是搭建失败结论。已尽量保存补丁与检查点，需要继续时请重新发起任务。'
+    : cancelled
+      ? '**本次运行已取消**，未完成搭建；这不是搭建失败结论。需要继续时请重新发起任务。'
+      : exhausted
+        ? '**已停止自动修复，待诊断**。' +
+          (state.stopReason?.reason || '已达到任务或评测计划预算。') +
+          '\n\n已保存补丁、验收记录、修复日志与用量，不再自动修复或续跑；仍发布失败报告，并在有安全代码差异时创建或更新标记 failed 的搭建 PR，尝试预览打包与部署。' +
+          '\n\n累计验证 ' +
+          state.verificationAttempts +
+          ' 轮、修复 ' +
+          state.repairAttempts +
+          ' 轮。' +
+          '\n\n下载本 Run 的 factory-agent-' +
+          issueNumber +
+          ' Artifact，查看 task-diagnostic.md / task-diagnostic.json 中的失败轮次和证据位置；独立只读归因见 build-review.json。' +
+          '\n\n重复失败不能直接证明 NocoBase3 有缺陷；需要区分框架、Skill、模板、应用、工厂和环境，证据不足标记 unknown。诊断后修正原因，再显式发起新任务。'
+        : failure
+          ? `**${failure.title}**。${failure.detail}`
+          : '本次搭建未完成，请根据失败步骤检查运行日志。',
   '',
   `[查看本次运行日志](${runUrl})。`,
   ...(process.env.FACTORY_PREVIEW_BUILD_RESULT === 'failure'

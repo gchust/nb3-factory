@@ -19,7 +19,7 @@ const workflow = readFileSync(
 );
 // Execute the actual workflow step, not a second copy of its shell logic.
 const formatStep = workflow.match(
-  /^ {6}- name: Format the generated application and plugin registrations\n {8}run: \|\n((?: {10}.*\n|\n)+)/m,
+  /^ {6}- name: Format the generated application and plugin registrations\n(?: {8}if: .*\n)? {8}run: \|\n((?: {10}.*\n|\n)+)/m,
 )?.[1];
 assert.ok(formatStep, 'Missing refresh formatting step');
 const command = formatStep.replace(/^ {10}/gm, '');
