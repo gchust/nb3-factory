@@ -58,6 +58,8 @@ jobs:
     if: >-
       !cancelled() && needs.dispatch-gate.outputs.covered != 'true' &&
       (github.event_name != 'workflow_run' || github.event.workflow_run.conclusion != 'skipped')
+    outputs:
+      attempt: ${{ steps.wait.outputs.attempt }}
     runs-on: ubuntu-24.04
     # wait-for-task-run.mjs gives up after 11 minutes.
     timeout-minutes: 15
@@ -75,6 +77,7 @@ jobs:
         with:
           node-version: 24.x
       - name: Wait for the source task run to complete
+        id: wait
         env:
           GITHUB_TOKEN: ${{ github.token }}
           SOURCE_RUN_ID: ${{ inputs.run_id || github.event.workflow_run.id }}
@@ -108,7 +111,9 @@ jobs:
       SOURCE_RUN_ID: ${{ inputs.run_id || github.event.workflow_run.id }}
       REVIEW_RUN_ID: ${{ inputs.review_run_id }}
       REVIEW_ARTIFACT_ID: ${{ inputs.review_artifact_id }}
-      SOURCE_ATTEMPT: ${{ inputs.attempt || github.event.workflow_run.run_attempt }}
+      # The attempt wait-for-source settled on, so a re-run started meanwhile
+      # cannot make this job, holding its group, wait for a newer attempt.
+      SOURCE_ATTEMPT: ${{ needs.wait-for-source.outputs.attempt || inputs.attempt || github.event.workflow_run.run_attempt }}
     steps:
       # Run only trusted control code, never application code from an artifact.
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1

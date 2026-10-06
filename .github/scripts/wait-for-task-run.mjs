@@ -1,3 +1,4 @@
+import { appendFileSync } from 'node:fs';
 import { setTimeout as sleep } from 'node:timers/promises';
 import { pathToFileURL } from 'node:url';
 
@@ -102,4 +103,9 @@ if (
   console.log(
     `Task run ${run.id}, attempt ${run.run_attempt} is completed (${run.conclusion}).`,
   );
+  // The attempt this wait settled on: with no attempt given it is the latest,
+  // and a re-run started after this job must not change which one the locked
+  // report job reads (and then waits for while holding its group).
+  if (process.env.GITHUB_OUTPUT)
+    appendFileSync(process.env.GITHUB_OUTPUT, `attempt=${run.run_attempt}\n`);
 }
