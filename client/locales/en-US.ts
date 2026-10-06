@@ -61,6 +61,7 @@ const enUS = {
   'status.denied': 'Access denied',
   'status.pageFailed': 'Unable to load page',
   'status.retry': 'Retry',
+  'status.sessionExpired': 'Your session has expired.',
   'navigation.brandHome': 'NocoBase home',
   'navigation.brandApps': 'NocoBase applications',
   'routeOverlay.close': 'Close',
@@ -96,6 +97,83 @@ const enUS = {
     description:
       'Describe what you need to your AI Agent, then build pages, data models, and business workflows.',
   },
+  tickets: {
+    title: 'Tickets',
+    description: 'Report an IT problem and follow it until it is resolved.',
+    capNotice:
+      'Showing the first {{count}} matching tickets. Narrow the filter to see the rest.',
+    fields: {
+      title: 'Title',
+      category: 'Category',
+      status: 'Status',
+      submitter: 'Submitted by',
+      handler: 'Handled by',
+      description: 'Description',
+      resolution: 'Resolution',
+      createdAt: 'Submitted',
+      startedAt: 'Started',
+      completedAt: 'Completed',
+    },
+    status: {
+      pending: 'Pending',
+      in_progress: 'In progress',
+      completed: 'Completed',
+    },
+    category: {
+      computer: 'Computer',
+      account: 'Account',
+      other: 'Other',
+    },
+    filters: {
+      status: 'Filter by status',
+      allStatuses: 'All statuses',
+      clear: 'Clear filter',
+    },
+    empty: {
+      title: 'No tickets yet',
+      description:
+        'When you report an IT problem, it appears here and you can follow its progress.',
+      noResults: 'No tickets match this filter.',
+    },
+    actions: {
+      start: 'Start handling',
+      complete: 'Complete',
+    },
+    create: {
+      action: 'New ticket',
+      title: 'Report a problem',
+      description:
+        'Describe what went wrong. Your own account is recorded as the submitter.',
+      success: 'Ticket “{{title}}” was created.',
+    },
+    detail: {
+      title: 'Ticket',
+    },
+    start: {
+      success: 'Ticket “{{title}}” is now yours to handle.',
+      alreadyStarted: 'Someone else already started handling this ticket.',
+    },
+    complete: {
+      title: 'Complete the ticket',
+      description:
+        'Record how the problem was resolved. A completed ticket can no longer be changed.',
+      resolutionHint: 'What did you do to resolve it?',
+      notInProgress: 'This ticket is no longer in progress.',
+    },
+    form: {
+      titleRequired: 'Enter a title.',
+      titleTooLong: 'The title must be at most {{max}} characters.',
+      descriptionTooLong: 'The description must be at most {{max}} characters.',
+      resolutionRequired: 'Enter the resolution.',
+      resolutionTooLong: 'The resolution must be at most {{max}} characters.',
+    },
+    error: {
+      title: 'Unable to load tickets',
+      forbidden: 'You do not have permission to do that.',
+      notFound: 'This ticket does not exist or is not yours.',
+      requestFailed: 'Something went wrong. Please try again.',
+    },
+  },
 
   appearance: {
     title: 'Appearance',
@@ -114,6 +192,9 @@ const enUS = {
     save: 'Save',
     cancel: 'Cancel',
     confirm: 'Confirm',
+    create: 'Create',
+    saving: 'Saving…',
+    signInAgain: 'Sign in again',
     language: 'Language',
   },
   notices: {
@@ -131,6 +212,7 @@ const enUS = {
   },
   navigation: {
     home: 'Home',
+    tickets: 'Tickets',
     open: 'Open navigation',
     close: 'Close navigation',
     expand: 'Expand navigation',

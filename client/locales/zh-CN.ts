@@ -57,6 +57,7 @@ const zhCN: AppResource = {
   'status.denied': '无权访问',
   'status.pageFailed': '无法加载页面',
   'status.retry': '重试',
+  'status.sessionExpired': '登录状态已过期。',
   'navigation.brandHome': 'NocoBase 首页',
   'navigation.brandApps': 'NocoBase 应用',
   'routeOverlay.close': '关闭',
@@ -89,6 +90,79 @@ const zhCN: AppResource = {
     title: '开始构建你的应用',
     description: '向 AI 助手描述你的需求，逐步构建页面、数据模型和业务流程。',
   },
+  tickets: {
+    title: '工单',
+    description: '提交 IT 报修，并跟进处理进度。',
+    capNotice: '仅显示前 {{count}} 条匹配工单，请缩小筛选范围以查看其余工单。',
+    fields: {
+      title: '标题',
+      category: '分类',
+      status: '状态',
+      submitter: '提交人',
+      handler: '处理人',
+      description: '问题描述',
+      resolution: '处理说明',
+      createdAt: '提交时间',
+      startedAt: '开始处理',
+      completedAt: '完成时间',
+    },
+    status: {
+      pending: '待处理',
+      in_progress: '处理中',
+      completed: '已完成',
+    },
+    category: {
+      computer: '电脑',
+      account: '账号',
+      other: '其他',
+    },
+    filters: {
+      status: '按状态筛选',
+      allStatuses: '全部状态',
+      clear: '清除筛选',
+    },
+    empty: {
+      title: '暂无工单',
+      description: '当你提交 IT 报修后，工单会出现在这里，你可以随时查看进度。',
+      noResults: '没有符合当前筛选的工单。',
+    },
+    actions: {
+      start: '开始处理',
+      complete: '完成工单',
+    },
+    create: {
+      action: '提交报修',
+      title: '提交报修',
+      description: '描述遇到的问题。提交人将记录为你当前登录的账号，无需填写。',
+      success: '工单“{{title}}”已提交。',
+    },
+    detail: {
+      title: '工单',
+    },
+    start: {
+      success: '工单“{{title}}”将由你负责处理。',
+      alreadyStarted: '该工单已被其他人开始处理。',
+    },
+    complete: {
+      title: '完成工单',
+      description: '填写处理说明。工单完成后将不能再修改。',
+      resolutionHint: '你是如何解决这个问题的？',
+      notInProgress: '该工单已不处于处理中状态。',
+    },
+    form: {
+      titleRequired: '请填写标题。',
+      titleTooLong: '标题最多 {{max}} 个字符。',
+      descriptionTooLong: '问题描述最多 {{max}} 个字符。',
+      resolutionRequired: '请填写处理说明。',
+      resolutionTooLong: '处理说明最多 {{max}} 个字符。',
+    },
+    error: {
+      title: '无法加载工单',
+      forbidden: '你没有执行该操作的权限。',
+      notFound: '该工单不存在，或不属于你。',
+      requestFailed: '操作失败，请重试。',
+    },
+  },
 
   appearance: {
     title: '外观',
@@ -107,6 +181,9 @@ const zhCN: AppResource = {
     save: '保存',
     cancel: '取消',
     confirm: '确认',
+    create: '创建',
+    saving: '正在保存…',
+    signInAgain: '重新登录',
     language: '语言',
   },
   notices: {
@@ -122,6 +199,7 @@ const zhCN: AppResource = {
   },
   navigation: {
     home: '首页',
+    tickets: '工单',
     open: '打开导航',
     close: '关闭导航',
     expand: '展开导航',
