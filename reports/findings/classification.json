@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "inputHash": "eb2395571f224af72ce847185f55b5508c05227a16e7ee8d25f4d418e503de5f",
+  "inputHash": "f7c3f6c400976c78f6b95483dc2999bd7f09971e83bf16c986e2919ab58bbd02",
   "sources": [
     {
       "id": "460:36434284393:1:F2",
@@ -588,6 +588,16 @@
       "fingerprint": "5923379e1ddc896a43eaec9c887dad5224665fa1f3d0934e0f95368e6f6e5603"
     },
     {
+      "id": "596:37453030096:1:F2",
+      "report": "596:37453030096:1",
+      "fingerprint": "86354bab0361fd4be9297cb67470f284b71090c865f7f334e2003b0eb80bc0fe"
+    },
+    {
+      "id": "596:37453030096:1:F3",
+      "report": "596:37453030096:1",
+      "fingerprint": "ff5c08371b7bfb60ed2552af279e9dc1bf867315b551a6d121421909da49a4fc"
+    },
+    {
       "id": "597:37453035816:1:F2",
       "report": "597:37453035816:1",
       "fingerprint": "bf4c4e0c090ce050461d092ca469af23cf6df977b2c370dd2b83598218746b1f"
@@ -740,10 +750,11 @@
       ]
     },
     {
-      "title": "Repository 提供数据库侧聚合，示例未突出 aggregate/groupBy",
-      "reason": "单条保留：460:F6 的 E27/E33/E75 显示示例未在合计场景演示 aggregate/groupBy，属独立示例缺口，不与其他 filter 文档问题同因。",
+      "title": "nocobase-db Skill 提供 aggregate/groupBy 却缺少按外键合计的最小示例，应用改用 JS reduce 或探查 dist",
+      "reason": "跨报告合并。460:F6（E27/E33/E75）显示 Repository.aggregate/groupBy 已实现且 Skill 方法清单列出，但示例未在“按父记录求金额合计”场景演示，应用只好用 findMany + JS reduce 求和；596:F2（E2/E13/E44）在 1.0.0-beta.55 复现同一缺口：Skill 只列方法名，缺少 aggregate: a => a.sum('amount') 的可复制示例，代理只能读 @nocobase/repository-input / @nocobase/db 的 .d.ts，并因猜错路径 cat 失败。两者触发条件（客户维度金额合计/分组统计）、期望（Skill 直接给出聚合最小示例）、实际（示例缺失需自行推断）与修复方向（在 Repository/Query 章节补充 aggregate+sum/groupBy 示例）一致，属同一指引缺口，故合并。跨版本仅表明同一缺口在两版均存在，不据此认定新版仍有缺陷或旧问题已修复。",
       "members": [
-        "460:36434284393:1:F6"
+        "460:36434284393:1:F6",
+        "596:37453030096:1:F2"
       ]
     },
     {
@@ -1137,15 +1148,22 @@
       "members": [
         "597:37453035816:1:F4"
       ]
+    },
+    {
+      "title": "前端 UI 指引体量过大且入口分散，缺少按任务的最小阅读集",
+      "reason": "单条保留。596:F3（E35/E22/E24/E26/E31）显示 app-development 前端 references 合计约 4672 行，列表/表单/子路由/组件获取分别落在 table.md、form.md、child-routes.md、shadcn.md 等，实现轮一次性加载后发生上下文溢出；期望按任务类型给出规模可控的最小阅读路径。其根因是前端文档体量与单轮加载预算（volume），与既有“技能分层深、互相委派、缺统一入口”（541:F5）的导航结构根因、以及“授权 Skill 缺紧凑公开 API 速查”（577:F8）的入口索引缺口均不同，修复方向也不同，故单独保留。",
+      "members": [
+        "596:37453030096:1:F3"
+      ]
     }
   ],
   "classifier": {
     "engine": "pi",
     "model": "deepseek-v4.1-flash",
     "version": "0.86.1",
-    "runId": "37468904485",
+    "runId": "37472363951",
     "attempt": 1,
     "controlSha": "bcb0d06aaf9f2a0bfeb574110bee8904b815e6b6",
-    "completedAt": "2026-10-06T13:14:21.429Z"
+    "completedAt": "2026-10-06T13:41:43.921Z"
   }
 }
