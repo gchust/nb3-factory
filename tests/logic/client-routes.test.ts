@@ -52,9 +52,11 @@ describe('app client routes', () => {
     // access is a new grant somebody has to be given.
     const resolved = resolveRoutes();
 
-    // The landing page opted out of page authorization, so it is reachable by every signed-in user.
+    // The landing page and the smoke page opted out of page authorization, so both are reachable by every signed-in
+    // user.
     expect(pageAuthorizations(resolved.routes)).toEqual([
       { name: 'home', authorizedAs: null },
+      { name: 'pipelineSmoke', authorizedAs: null },
     ]);
   });
 });
