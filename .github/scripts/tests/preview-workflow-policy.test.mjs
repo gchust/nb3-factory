@@ -66,6 +66,24 @@ test('the preview deploy stays inert without credentials', () => {
   assert.match(deploy, /PREVIEW_ENABLED:/);
   assert.match(deploy, /secrets\.FACTORY_PREVIEW_SSH_KEY != ''/);
   assert.match(deploy, /PREVIEW SKIPPED/);
+  // All three credentials the tailnet join and the SSH session need. Checking
+  // only two of them let a deploy start, join the tailnet without a secret and
+  // fail there instead of skipping.
+  const enabled =
+    "PREVIEW_ENABLED: ${{ secrets.FACTORY_PREVIEW_SSH_KEY != '' && secrets.FACTORY_TAILSCALE_OAUTH_CLIENT_ID != '' && secrets.FACTORY_TAILSCALE_OAUTH_CLIENT_SECRET != '' }}";
+  assert.ok(deploy.includes(enabled), 'deploy-preview.yml');
+  assert.ok(teardown.includes(enabled), 'preview-teardown.yml');
+  assert.match(
+    deploy,
+    /PREVIEW SKIPPED: set FACTORY_PREVIEW_SSH_KEY, FACTORY_TAILSCALE_OAUTH_CLIENT_ID and FACTORY_TAILSCALE_OAUTH_CLIENT_SECRET/,
+  );
+});
+
+test('the preview is reported after a failed deploy, not after a manual cancel', () => {
+  assert.match(
+    deploy,
+    /- name: Report the preview on the pull request\n\s+if: \$\{\{ !cancelled\(\) && steps\.prepare\.outputs\.ready == 'true' && env\.PREVIEW_ENABLED == 'true' \}\}/,
+  );
 });
 
 test('preview teardown runs on pull_request_target, not pull_request', () => {

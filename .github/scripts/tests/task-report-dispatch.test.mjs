@@ -349,7 +349,7 @@ test('report dispatch is an isolated terminal job, not another Agent invocation'
   );
   assert.match(
     dispatcher,
-    /if: always\(\) && needs.prepare.outputs.status == 'ready'/,
+    /if: always\(\) && needs.prepare.result == 'success' && needs.prepare.outputs.status == 'ready'/,
   );
   assert.match(dispatcher, /actions: write/);
   assert.match(dispatcher, /continue-on-error: true/);
@@ -443,9 +443,11 @@ test('workflow_run copies of dispatched reports skip once the task requested the
   assert.match(gate, /inputs:\n\s+workflow:\n[\s\S]*?required: true/);
   for (const [name, job] of reportWorkflows) {
     const workflow = readWorkflow(name);
+    // A skipped task run (an untrusted author's Issue) started no work, so its
+    // completion event starts no report either.
     assert.match(
       workflow,
-      new RegExp(`\\n  dispatch-gate:\\n    if: github.event_name == 'workflow_run'\\n    uses: \\./\\.github/workflows/report-dispatch-gate\\.yml\\n    with:\\n      workflow: ${name.replace('.', '\\.')}\\n`),
+      new RegExp(`\\n  dispatch-gate:\\n    if: github.event_name == 'workflow_run' && github.event.workflow_run.conclusion != 'skipped'\\n    uses: \\./\\.github/workflows/report-dispatch-gate\\.yml\\n    with:\\n      workflow: ${name.replace('.', '\\.')}\\n`),
       name,
     );
     const body = workflow.split(`\n  ${job}:\n`)[1].split(/\n {2}[a-z][a-z-]*:\n/)[0];

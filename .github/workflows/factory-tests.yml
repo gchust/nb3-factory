@@ -2,40 +2,13 @@ name: Factory regression tests
 
 # The factory also guards what it owns at the application root, and the
 # template-owned guidance there that it must never edit (.github/AGENTS.md).
+# No path filter: application-format checks the whole application root with
+# Prettier, so a pull request touching only client/, server/, database/ or a
+# root config file must run it too. The jobs take one to ten minutes.
 on:
   pull_request:
-    paths:
-      [
-        '.github/**',
-        'AGENTS.md',
-        'CLAUDE.md',
-        'docs/**',
-        'README.MD',
-        'factory-template.json',
-        '.npmrc',
-        '.gitignore',
-        '.prettierignore',
-        'eslint.config.js',
-        'package.json',
-        'pnpm-lock.yaml',
-      ]
   push:
     branches: [develop]
-    paths:
-      [
-        '.github/**',
-        'AGENTS.md',
-        'CLAUDE.md',
-        'docs/**',
-        'README.MD',
-        'factory-template.json',
-        '.npmrc',
-        '.gitignore',
-        '.prettierignore',
-        'eslint.config.js',
-        'package.json',
-        'pnpm-lock.yaml',
-      ]
   workflow_dispatch:
 
 permissions:

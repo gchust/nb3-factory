@@ -97,5 +97,28 @@ test('retired batch workflow has no task completion dispatch', () => {
   const task = read('code-agent-task.yml');
   assert.doesNotMatch(task, /advance-evaluation-batch|gh workflow run evaluation-batches/);
   assert.match(read('scheduled-preset-tests.yml'), /workflow_dispatch:/);
-  assert.match(read('scheduled-preset-tests.yml'), /cron: '0 19 \* \* \*'/);
+  assert.match(read('scheduled-preset-tests.yml'), /cron: '23 18 \* \* \*'/);
+});
+
+test('Agent classification failure is a warning, and nothing in delivery runs after a manual cancel', () => {
+  const workflow = read('deliver-evaluation.yml');
+  const all = jobs(workflow);
+  const steps = all.classify.split(/\n {6}- /);
+  const agent = steps.find(step => step.includes('problem-classification.mjs run'));
+  assert.match(agent, /^name: Classify remaining problems with the selected Agent\n {8}id: agent\n/);
+  assert.match(agent, /continue-on-error: true/);
+  const notice = steps.find(step => step.startsWith('name: Report problems left unclassified'));
+  assert.ok(notice, 'the unclassified notice step is missing');
+  assert.match(notice, /if: always\(\) && steps\.agent\.outcome == 'failure'/);
+  assert.match(notice, /::warning::/);
+  assert.match(notice, /GITHUB_STEP_SUMMARY/);
+  // The header comment and the send job agree: delivery proceeds either way.
+  assert.match(workflow, /That step is continue-on-error/);
+  assert.match(all.send, /needs\.classify\.result == 'success' \|\| needs\.classify\.result == 'failure'/);
+  assert.match(steps.find(step => step.includes('install-agent.mjs')), /timeout-minutes: 10\n/);
+  // After a failed job, not after a cancelled run.
+  assert.match(all.plan, /^ {4}if: \$\{\{ !cancelled\(\) && vars\.FACTORY_EVALUATION_DELIVERY == 'true'/m);
+  assert.match(all.record, /^ {4}if: \$\{\{ !cancelled\(\) && needs\.plan\.result == 'success'/m);
+  assert.doesNotMatch(all.plan, /always\(\)/);
+  assert.doesNotMatch(all.record, /always\(\)/);
 });

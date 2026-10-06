@@ -1,15 +1,18 @@
 // Read-only compatibility for tasks created before the Code Agent rename.
 // New tasks, labels, titles, PR markers and dispatches use neutral names only.
+// Work branches have one form; the former pi/issue-N branches are gone.
 export function taskIssueNumber(branch) {
-  const match = branch?.match(/^(?:agent|pi)\/issue-(\d+)$/);
+  const match = branch?.match(/^agent\/issue-(\d+)$/);
   const number = Number(match?.[1]);
   return Number.isSafeInteger(number) && number > 0 ? number : null;
 }
 
-export function taskBranchCandidates(number) {
-  return [`agent/issue-${number}`, `pi/issue-${number}`];
+export function taskBranch(number) {
+  return `agent/issue-${number}`;
 }
 
+// The client is unused since the branch name became fixed; callers still pass
+// it, so the signature stays.
 export async function resolveTaskBranch(
   client,
   number,
@@ -26,11 +29,7 @@ export async function resolveTaskBranch(
       `Issue #${number} has multiple open task PRs; resolve them before retrying.`,
     );
   }
-  if (ownPulls[0]) return ownPulls[0].head.ref;
-  for (const branch of taskBranchCandidates(number)) {
-    if (await client.getRef(branch, true)) return branch;
-  }
-  return taskBranchCandidates(number)[0];
+  return ownPulls[0]?.head.ref ?? taskBranch(number);
 }
 
 export function isTaskStatus(name) {

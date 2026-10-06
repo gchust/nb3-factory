@@ -426,12 +426,15 @@ test('network installs in long jobs are bounded by a step timeout', () => {
       ['Install selected pinned reviewer', 1],
     ],
     'classify-findings.yml': [['Install selected pinned classifier', 1]],
+    'deliver-evaluation.yml': [['Install selected pinned classifier', 1]],
+    'independent-review.yml': [['Install selected pinned reviewer', 1]],
     'source-baseline.yml': [
       ['Verify checkout identity and install source dependencies', 1],
       ['Lock the factory overlay against only the frozen source packages', 1],
     ],
     'refresh-template.yml': [
       ['Install and lock the new application dependencies', 1],
+      ['Install, register, and inspect the required Pro plugin baseline', 1],
     ],
   };
   for (const [name, expected] of Object.entries(steps)) {
@@ -660,4 +663,84 @@ test('regression checks cancel superseded PR runs but never a pending push or di
     );
     assert.match(block, /cancel-in-progress: \$\{\{ github\.event_name == 'pull_request' \}\}/, name);
   }
+});
+
+test('a skipped task run starts no report, sweep or preview from its completion event', () => {
+  // The task workflow skips every job for an Issue from someone without
+  // repository access, and GitHub still raises workflow_run for it with the
+  // conclusion 'skipped'. Each listener filters that at its first job, in a
+  // form that leaves workflow_dispatch and repository_dispatch untouched, and
+  // again at the job behind the dispatch gate: a skipped gate leaves `covered`
+  // empty, which a `!cancelled()` consumer reads as "do the work".
+  const directory = path.resolve(import.meta.dirname, '..', '..', 'workflows');
+  const condition = (body) =>
+    /^ {4}if: (?:>-\n((?: {6}.*\n)+)|(.*))/m.exec(body)?.slice(1).join('') ?? '';
+  const skipsSkipped = (expression) => {
+    const list = /contains\(fromJSON\('(\[[^\]]*\])'\), github\.event\.workflow_run\.conclusion\)/.exec(expression);
+    if (list) return !JSON.parse(list[1]).includes('skipped');
+    return /github\.event_name == 'workflow_run' && github\.event\.workflow_run\.conclusion != 'skipped'|\(github\.event_name != 'workflow_run' \|\| github\.event\.workflow_run\.conclusion != 'skipped'\)/.test(expression);
+  };
+  let listeners = 0;
+  let consumers = 0;
+  for (const name of readdirSync(directory).filter((file) => file.endsWith('.yml'))) {
+    const source = readFileSync(path.join(directory, name), 'utf8');
+    // Every workflow_run listener, whichever workflow it follows: a reassessment
+    // skipped by its own guards raises the same event.
+    if (!/^  workflow_run:\n    workflows: \[/m.test(source)) continue;
+    listeners++;
+    const jobs = [...source.split(/^jobs:\n/m)[1].matchAll(/^ {2}([a-z][a-z-]*):\n((?: {4}.*\n|\s*\n)*)/gm)];
+    const [, first, body] = jobs[0];
+    assert.ok(skipsSkipped(condition(body)), `${name}: ${first}`);
+    for (const [, id, consumer] of jobs.filter(([, , text]) => /^ {4}needs: dispatch-gate$/m.test(text))) {
+      consumers++;
+      assert.ok(skipsSkipped(condition(consumer)), `${name}: ${id}`);
+    }
+  }
+  assert.equal(listeners, 8);
+  assert.equal(consumers, 6);
+});
+
+test('a failed visual report publication fails its run and names the replay', () => {
+  const source = readFileSync(
+    path.resolve(import.meta.dirname, '../../workflows/publish-visual-report.yml'),
+    'utf8',
+  );
+  const publish = source
+    .split('- name: Publish PR screenshots and recordings (artifact fallback)\n')[1]
+    .split('\n      - name: ')[0];
+  assert.match(publish, /^ {8}id: publish\n/m);
+  assert.match(publish, /continue-on-error: true/);
+  const visible = source.split(
+    '- name: Keep publication failures visible without rebuilding the application\n',
+  )[1];
+  assert.ok(visible, 'the failure step is missing');
+  assert.match(visible, /^ {8}if: always\(\) && steps\.publish\.outcome == 'failure'\n/m);
+  assert.match(
+    visible,
+    /::error::[^\n]*Publish Task Visual Report[^\n]*run_id=\$SOURCE_RUN_ID[^\n]*attempt=\$SOURCE_ATTEMPT[^\n]*REPORT_DISPATCH\.md/,
+  );
+  assert.match(visible, /\n\s+exit 1\n/);
+  // The same shape the history publisher uses.
+  assert.match(
+    readFileSync(path.resolve(import.meta.dirname, '../../workflows/publish-agent-history.yml'), 'utf8'),
+    /- name: Keep publication failures visible without rebuilding the application\n\s+if: always\(\) && \(steps\.pack\.outcome == 'failure'/,
+  );
+});
+
+test('the replayed usage report serializes with the other page writers and inherits no secrets', () => {
+  const source = readFileSync(
+    path.resolve(import.meta.dirname, '../../workflows/replay-build-review.yml'),
+    'utf8',
+  );
+  const report = source.split('\n  report:\n')[1].split(/\n {2}[a-z][a-z-]*:\n/)[0];
+  assert.match(report, /uses: \.\/\.github\/workflows\/report-task-usage\.yml/);
+  // A called workflow's own concurrency applies to its top-level runs, not to
+  // a job that calls it; the caller job names the shared group itself.
+  assert.match(report, /^ {4}concurrency:\n {6}group: factory-task-usage\n {6}queue: max\n/m);
+  assert.doesNotMatch(report, /secrets: inherit/);
+  // There is nothing to inherit: the reporter reads github.token only.
+  assert.doesNotMatch(
+    readFileSync(path.resolve(import.meta.dirname, '../../workflows/report-task-usage.yml'), 'utf8'),
+    /secrets\./,
+  );
 });

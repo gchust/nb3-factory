@@ -40,7 +40,8 @@ permissions: {}
 # (sync-issue-presets.yml, which commits to develop) share this queue. Pull
 # request checks never publish and get a queue per PR, so a stack of PR pushes
 # cannot hold a publish back. (queue: max cannot be combined with
-# cancel-in-progress, so superseded PR runs still finish.)
+# cancel-in-progress, so a superseded PR run still starts; its first step
+# notices the newer head and the remaining steps skip.)
 concurrency:
   group: ${{ github.event_name == 'pull_request' && format('template-refresh-pr-{0}', github.event.pull_request.number) || 'template-refresh-global' }}
   queue: max
@@ -57,6 +58,8 @@ jobs:
     timeout-minutes: 120
     permissions:
       contents: read
+      # The supersede check reads the pull request's live head.
+      pull-requests: read
     outputs:
       base_sha: ${{ steps.base.outputs.sha }}
     steps:
@@ -70,7 +73,29 @@ jobs:
             exit 1
           fi
 
+      # queue: max cannot be combined with cancel-in-progress, so a PR run
+      # that a newer push already superseded still reaches a runner. Stop it
+      # here, before the hour of generation and verification, instead of
+      # spending it on a commit that is no longer the pull request's head.
+      # The newer run reports on that head. An API failure fails open.
+      - name: Stop when a newer push superseded this pull request run
+        id: supersede
+        if: github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          RUN_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          live_head="$(gh api "repos/$GITHUB_REPOSITORY/pulls/$PR_NUMBER" --jq .head.sha || true)"
+          if [[ -n "$live_head" && "$live_head" != "$RUN_HEAD_SHA" ]]; then
+            echo "::notice::Pull request #$PR_NUMBER moved from $RUN_HEAD_SHA to $live_head; the run for that head verifies it. Skipping the rest of this run."
+            echo "superseded=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "superseded=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Check out current factory control plane
+        if: steps.supersede.outputs.superseded != 'true'
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           # PRs verify their merge commit; manual publication still checks out develop.
@@ -80,15 +105,18 @@ jobs:
 
       - name: Record the exact develop commit
         id: base
+        if: steps.supersede.outputs.superseded != 'true'
         working-directory: control
         run: echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
 
       - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+        if: steps.supersede.outputs.superseded != 'true'
         with:
           version: 11.7.0
           run_install: false
 
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        if: steps.supersede.outputs.superseded != 'true'
         with:
           node-version: 24.x
 
@@ -96,12 +124,15 @@ jobs:
       # application's .npmrc, and pnpm 11 ignores scoped registries passed in
       # the environment. Only the user-level file reaches that nested install.
       - name: Expose the factory registry to nested pnpm roots
+        if: steps.supersede.outputs.superseded != 'true'
         run: cat control/.npmrc >> ~/.npmrc
 
       - name: Pin the actual published application generator
+        if: steps.supersede.outputs.superseded != 'true'
         run: node control/.github/scripts/template-creator.mjs pin control
 
       - name: Create a fresh application from the latest published template
+        if: steps.supersede.outputs.superseded != 'true'
         env:
           CI: true
         run: |
@@ -114,6 +145,7 @@ jobs:
             --no-install --template=default --template-tag=latest
 
       - name: Restore factory controls without changing template guidance
+        if: steps.supersede.outputs.superseded != 'true'
         env:
           BASE_SHA: ${{ steps.base.outputs.sha }}
         run: |
@@ -121,8 +153,45 @@ jobs:
             control "$RUNNER_TEMP/template-generation/nb3-factory" "$BASE_SHA"
           node control/.github/scripts/template-creator.mjs record "$RUNNER_TEMP/template-generation/nb3-factory/factory-template.json"
 
+      # The store is keyed on the template version and the generated lockfile,
+      # with the store of any earlier template under the prefix as a fallback,
+      # so a new template release downloads only what changed. hashFiles()
+      # reads the workspace only and the application is generated in
+      # RUNNER_TEMP, so the key is computed here.
+      # A cache saved by a pull_request run is scoped to that PR's merge ref and
+      # no other PR can restore it, so only workflow_dispatch runs, which run
+      # from develop, save (as source-baseline.yml does).
+      - name: Locate the pnpm store
+        id: pnpm-store
+        if: steps.supersede.outputs.superseded != 'true'
+        working-directory: ${{ runner.temp }}/template-generation/nb3-factory
+        run: |
+          echo "path=$(pnpm store path --silent)" >> "$GITHUB_OUTPUT"
+          node --input-type=module <<'KEY' >> "$GITHUB_OUTPUT"
+          import { createHash } from 'node:crypto';
+          import { existsSync, readFileSync } from 'node:fs';
+          import { execFileSync } from 'node:child_process';
+          const pnpm = execFileSync('pnpm', ['--version'], { encoding: 'utf8' }).trim();
+          const { templateVersion } = JSON.parse(readFileSync('factory-template.json', 'utf8'));
+          const hash = createHash('sha256');
+          for (const file of ['package.json', 'pnpm-lock.yaml']) if (existsSync(file)) hash.update(readFileSync(file));
+          const prefix = `template-pnpm-store-${process.env.RUNNER_OS}-pnpm${pnpm}-`;
+          console.log(`prefix=${prefix}`);
+          console.log(`key=${prefix}${templateVersion}-${hash.digest('hex').slice(0, 16)}`);
+          KEY
+
+      - name: Restore the template pnpm store
+        id: pnpm-cache
+        if: steps.supersede.outputs.superseded != 'true'
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ steps.pnpm-store.outputs.path }}
+          key: ${{ steps.pnpm-store.outputs.key }}
+          restore-keys: ${{ steps.pnpm-store.outputs.prefix }}
+
       - name: Install and lock the new application dependencies
         timeout-minutes: 15
+        if: steps.supersede.outputs.superseded != 'true'
         run: |
           cd "$RUNNER_TEMP/template-generation/nb3-factory"
           # Verification runs on SQLite. Keep the template's own declaration when
@@ -135,6 +204,8 @@ jobs:
           pnpm install --no-frozen-lockfile
 
       - name: Install, register, and inspect the required Pro plugin baseline
+        timeout-minutes: 15
+        if: steps.supersede.outputs.superseded != 'true'
         env:
           CI: true
         run: |
@@ -147,7 +218,24 @@ jobs:
           node control/.github/scripts/template-plugins.mjs inspect \
             "$APP_ROOT" "$RUNNER_TEMP/template-diagnostics"
 
+      # Saved after the plugin install so the store holds the Pro plugins too,
+      # and before verification builds anything into it.
+      - name: Drop store entries the generated lockfile no longer uses
+        if: github.event_name == 'workflow_dispatch' && steps.pnpm-cache.outputs.cache-hit != 'true'
+        continue-on-error: true
+        working-directory: ${{ runner.temp }}/template-generation/nb3-factory
+        run: pnpm store prune
+
+      - name: Save the template pnpm store before verification
+        if: github.event_name == 'workflow_dispatch' && steps.pnpm-cache.outputs.cache-hit != 'true'
+        continue-on-error: true
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ steps.pnpm-store.outputs.path }}
+          key: ${{ steps.pnpm-cache.outputs.cache-primary-key }}
+
       - name: Format the generated application and plugin registrations
+        if: steps.supersede.outputs.superseded != 'true'
         run: |
           cd "$RUNNER_TEMP/template-generation/nb3-factory"
           format_paths=(package.json README.MD eslint.config.js factory-template.json client/plugins.ts server/plugins.ts cli/plugins.ts server/config/index.ts server/config/mail.ts tests/logic vitest.config.ts)
@@ -164,6 +252,7 @@ jobs:
 
       - name: Install Chinese browser fonts
         timeout-minutes: 10
+        if: steps.supersede.outputs.superseded != 'true'
         run: bash control/.github/scripts/install-browser-fonts.sh
 
       # Factory regression tests already run on every PR that changes these
@@ -176,6 +265,7 @@ jobs:
         run: env -u GITHUB_RUN_ID -u GITHUB_RUN_ATTEMPT node --test --test-concurrency=1 control/.github/scripts/tests/*.test.mjs
 
       - name: Verify factory, application, clean database, and browser login
+        if: steps.supersede.outputs.superseded != 'true'
         run: |
           set -o pipefail
           # The published AGENTS.md and CLAUDE.md are exactly what the template generated.
@@ -190,6 +280,7 @@ jobs:
             2>&1 | tee "$RUNNER_TEMP/template-diagnostics/verify.log"
 
       - name: Package only the verified baseline as one new root commit
+        if: steps.supersede.outputs.superseded != 'true'
         run: |
           cd "$RUNNER_TEMP/template-generation/nb3-factory"
           git init --initial-branch=template
@@ -212,6 +303,7 @@ jobs:
           echo "Fresh template verified. Dry run: ${{ github.event_name == 'pull_request' || inputs.dry_run }}" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Save the verified baseline
+        if: steps.supersede.outputs.superseded != 'true'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: verified-template
@@ -220,7 +312,7 @@ jobs:
           retention-days: 14
 
       - name: Save verification logs and browser screenshot
-        if: always()
+        if: always() && steps.supersede.outputs.superseded != 'true'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: template-diagnostics

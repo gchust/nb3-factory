@@ -112,18 +112,18 @@ function baseHandler(call) {
   return null;
 }
 
-test('prepare reuses the existing legacy PR without creating a new branch', async () => {
+test('prepare reuses the existing task PR without creating a new branch', async () => {
   const result = await runFixture(
     'prepare-task.mjs',
     { issue: { number: 2 } },
     (call) => {
-      if (call.route === '/pulls') return [pull(3, 'pi/issue-2')];
-      if (call.route === '/git/ref/heads/pi/issue-2')
+      if (call.route === '/pulls') return [pull(3, 'agent/issue-2')];
+      if (call.route === '/git/ref/heads/agent/issue-2')
         return { object: { sha: 'existing-work-sha' } };
       return baseHandler(call);
     },
   );
-  assert.equal(result.metadata.workBranch, 'pi/issue-2');
+  assert.equal(result.metadata.workBranch, 'agent/issue-2');
   assert.match(result.output, /base_sha=existing-work-sha/);
   assert.equal(result.metadata.existingPullRequest.number, 3);
   assert.equal(
@@ -132,12 +132,12 @@ test('prepare reuses the existing legacy PR without creating a new branch', asyn
   );
 });
 
-test('a legacy PR still blocks a newly named task on the same application branch', async () => {
+test('another task PR blocks a new task on the same application branch', async () => {
   const result = await runFixture(
     'prepare-task.mjs',
     { issue: { number: 2 } },
     (call) => {
-      if (call.route === '/pulls') return [pull(9, 'pi/issue-8')];
+      if (call.route === '/pulls') return [pull(9, 'agent/issue-8')];
       return baseHandler(call);
     },
   );
@@ -150,47 +150,56 @@ test('a legacy PR still blocks a newly named task on the same application branch
   );
 });
 
-for (const prefix of ['pi', 'agent']) {
-  test(`completion of ${prefix} branch wakes the oldest task across both label generations`, async () => {
+test('completion wakes the oldest task across both label generations', async () => {
+  const result = await runFixture(
+    'complete-pr.mjs',
+    { pull_request: pull(3, 'agent/issue-2') },
+    (call) => {
+      if (call.route === '/issues/2' && call.method === 'GET')
+        return {
+          ...issue(2, 'agent:review'),
+          user: { login: 'external-user' },
+        };
+      if (call.route === '/issues' && call.method === 'GET') {
+        return call.query.get('labels') === 'pi:waiting'
+          ? [{ ...issue(4, 'pi:waiting'), user: { login: 'another-user' } }]
+          : [issue(5, 'agent:waiting')];
+      }
+      return baseHandler(call);
+    },
+  );
+  const dispatches = result.requests.filter(
+    (call) => call.route === '/dispatches',
+  );
+  assert.equal(dispatches.length, 1);
+  assert.deepEqual(dispatches[0].body, {
+    event_type: 'code-agent-task',
+    client_payload: { issue_number: 4 },
+  });
+  assert.ok(
+    result.requests.some(
+      (call) => call.route === '/issues/2' && call.body?.state === 'closed',
+    ),
+  );
+  assert.ok(
+    result.requests.some(
+      (call) =>
+        call.route === '/issues/4' &&
+        call.body?.labels?.includes('agent:queued'),
+    ),
+  );
+});
+
+test('a PR from a branch that is not a task branch completes nothing', async () => {
+  for (const ref of ['pi/issue-2', 'feature/issue-2']) {
     const result = await runFixture(
       'complete-pr.mjs',
-      { pull_request: pull(3, `${prefix}/issue-2`) },
-      (call) => {
-        if (call.route === '/issues/2' && call.method === 'GET')
-          return {
-            ...issue(2, 'agent:review'),
-            user: { login: 'external-user' },
-          };
-        if (call.route === '/issues' && call.method === 'GET') {
-          return call.query.get('labels') === 'pi:waiting'
-            ? [{ ...issue(4, 'pi:waiting'), user: { login: 'another-user' } }]
-            : [issue(5, 'agent:waiting')];
-        }
-        return baseHandler(call);
-      },
+      { pull_request: pull(3, ref) },
+      baseHandler,
     );
-    const dispatches = result.requests.filter(
-      (call) => call.route === '/dispatches',
-    );
-    assert.equal(dispatches.length, 1);
-    assert.deepEqual(dispatches[0].body, {
-      event_type: 'code-agent-task',
-      client_payload: { issue_number: 4 },
-    });
-    assert.ok(
-      result.requests.some(
-        (call) => call.route === '/issues/2' && call.body?.state === 'closed',
-      ),
-    );
-    assert.ok(
-      result.requests.some(
-        (call) =>
-          call.route === '/issues/4' &&
-          call.body?.labels?.includes('agent:queued'),
-      ),
-    );
-  });
-}
+    assert.deepEqual(result.requests, []);
+  }
+});
 
 test('old application-branch completion workflow cannot dispatch a duplicate task', async () => {
   const result = await exec(

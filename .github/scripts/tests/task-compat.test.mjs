@@ -11,19 +11,16 @@ import {
 
 const repository = 'owner/factory';
 const pull = (ref) => ({ head: { ref, repo: { full_name: repository } } });
+const fork = (ref) => ({ head: { ref, repo: { full_name: 'fork/factory' } } });
 const client = (branches = []) => ({
   getRef: async (branch) =>
     branches.includes(branch) ? { object: { sha: 'sha' } } : null,
 });
 
-test('new tasks use neutral branches, retries preserve existing work', async () => {
+test('tasks use one work branch; an open task PR names the branch to retry on', async () => {
   assert.equal(
     await resolveTaskBranch(client(), 2, [], repository),
     'agent/issue-2',
-  );
-  assert.equal(
-    await resolveTaskBranch(client(['pi/issue-2']), 2, [], repository),
-    'pi/issue-2',
   );
   assert.equal(
     await resolveTaskBranch(client(['agent/issue-2']), 2, [], repository),
@@ -31,33 +28,34 @@ test('new tasks use neutral branches, retries preserve existing work', async () 
   );
   assert.equal(
     await resolveTaskBranch(
-      client(['agent/issue-2']),
+      client(),
       2,
-      [pull('pi/issue-2')],
+      [pull('agent/issue-2'), pull('agent/issue-3'), fork('agent/issue-2')],
       repository,
     ),
-    'pi/issue-2',
+    'agent/issue-2',
   );
 });
 
-test('duplicate migration PRs are rejected instead of silently choosing one', async () => {
+test('duplicate task PRs are rejected instead of silently choosing one', async () => {
   await assert.rejects(
     resolveTaskBranch(
       client(),
       2,
-      [pull('pi/issue-2'), pull('agent/issue-2')],
+      [pull('agent/issue-2'), pull('agent/issue-2')],
       repository,
     ),
     /multiple open/,
   );
 });
 
-test('task branch and source marker parsing support both generations', () => {
+test('only agent branches are task branches; source markers support both generations', () => {
+  assert.equal(taskIssueNumber('agent/issue-2'), 2);
   for (const prefix of ['agent', 'pi']) {
-    assert.equal(taskIssueNumber(`${prefix}/issue-2`), 2);
     assert.equal(taskMarkerNumber(`<!-- ${prefix}-issue: 2 -->`), 2);
   }
   for (const branch of [
+    'pi/issue-2',
     'feature/issue-2',
     'agent/issue-0',
     'agent/issue-2-extra',

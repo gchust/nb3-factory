@@ -499,7 +499,22 @@ test('workflow retains default-template generation and gates verification on plu
         'Verify factory, application, clean database, and browser login',
       ),
   );
-  assert.doesNotMatch(workflow, /app-template-pro-default|continue-on-error/);
+  assert.doesNotMatch(workflow, /app-template-pro-default/);
+  // A failed plugin install fails the refresh; only the store cache saves,
+  // which verification never depends on, may continue on error.
+  const plugins = workflow
+    .split(
+      '- name: Install, register, and inspect the required Pro plugin baseline\n',
+    )[1]
+    .split(/\n {6}- (?=name:|uses:)/)[0];
+  assert.doesNotMatch(plugins, /continue-on-error/);
+  for (const step of workflow.split(/\n {6}- (?=name:|uses:)/))
+    if (/continue-on-error: true/.test(step))
+      assert.match(
+        step,
+        /pnpm store prune|actions\/cache\/save@/,
+        step.split('\n')[0],
+      );
   assert.match(
     workflow,
     /client\/plugins\.ts server\/plugins\.ts cli\/plugins\.ts/,

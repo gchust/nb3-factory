@@ -6,13 +6,15 @@ on:
     paths:
       - '.github/workflows/scheduled-preset-tests.yml'
       - '.github/scripts/scheduled-preset-tests.mjs'
-  # GitHub cron uses UTC: 19:00 is 03:00 the next day in UTC+8.
+  # GitHub cron uses UTC: 18:23 is 02:23 the next day in UTC+8. Minute 0 is
+  # GitHub's most congested slot, and 19:00 runs started three to five hours
+  # late; an off-hour minute is dispatched much closer to its time.
   schedule:
-    - cron: '0 19 * * *'
+    - cron: '23 18 * * *'
   workflow_dispatch:
     inputs:
       dry_run:
-        description: '仅预览（可选）；默认立即搭建 factory:daily 标签案例；每日 UTC+8 03:00 自动搭建'
+        description: '仅预览（可选）；默认立即搭建 factory:daily 标签案例；每日 UTC+8 02:23 自动搭建'
         required: true
         default: false
         type: boolean

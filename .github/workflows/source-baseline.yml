@@ -29,7 +29,8 @@ on:
       source_sha:
         description: Exact nocobase/nocobase3 source SHA (not a moving branch)
         required: true
-        # Published @nocobase/app-template-default@1.0.0-beta.47 release commit.
+        # SOURCE_BASELINE_DEFAULT in .github/scripts/source-baseline-ref.mjs;
+        # an input default cannot read it, so a test keeps the two equal.
         default: 28c7522b3ddb384b05745715e94f7f985d09a67e
         type: string
       publish:
@@ -73,13 +74,15 @@ jobs:
       - name: Validate the explicit source pin
         id: pin
         env:
-          REQUESTED_SHA: ${{ inputs.source_sha || '28c7522b3ddb384b05745715e94f7f985d09a67e' }}
+          REQUESTED_SHA: ${{ inputs.source_sha }}
         run: |
+          # A pull request has no input; it verifies the shared default.
           node --input-type=module <<'NODE'
           import assert from 'node:assert/strict';
           import {appendFileSync} from 'node:fs';
           import {execFileSync} from 'node:child_process';
-          const sha=process.env.REQUESTED_SHA;
+          import {SOURCE_BASELINE_DEFAULT} from './control/.github/scripts/source-baseline-ref.mjs';
+          const sha=process.env.REQUESTED_SHA||SOURCE_BASELINE_DEFAULT;
           assert.match(sha,/^[a-f0-9]{40}$/u);
           const control=execFileSync('git',['-C','control','rev-parse','HEAD'],{encoding:'utf8'}).trim();
           appendFileSync(process.env.GITHUB_ENV,`SOURCE_SHA=${sha}\nFACTORY_CONTROL_SHA=${control}\n`);

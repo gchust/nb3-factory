@@ -20,7 +20,7 @@
 ## 每日调度迁移
 
 `Evaluation batches` 已退役。每日预置搭建统一使用 `Preset build tests`，
-UTC 19:00（新加坡/中国时间次日 03:00）运行，仍支持手动触发和只读预览。
+UTC 18:23（新加坡/中国时间次日 02:23，避开整点的排队高峰）运行，仍支持手动触发和只读预览。
 案例按 `factory:preset` 与 `factory:daily` 标签共同选择，不再读取旧批次计划。
 具体选择、幂等与在途跳过规则见 [每日预置搭建](SCHEDULED_PRESET_TESTS.md)。
 

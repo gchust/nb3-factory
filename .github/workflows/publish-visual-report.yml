@@ -23,8 +23,10 @@ concurrency:
 
 jobs:
   # The task usually requested this run itself; see report-dispatch-gate.yml.
+  # A skipped task run (an Issue from someone without repository access) ran
+  # nothing to report on, so it does not start this chain either.
   dispatch-gate:
-    if: github.event_name == 'workflow_run'
+    if: github.event_name == 'workflow_run' && github.event.workflow_run.conclusion != 'skipped'
     uses: ./.github/workflows/report-dispatch-gate.yml
     with:
       workflow: publish-visual-report.yml
@@ -114,6 +116,7 @@ jobs:
           echo "FACTORY_GH_PATH=$RUNNER_TEMP/media-gh/gh_${version}_linux_amd64/bin/gh" >> "$GITHUB_ENV"
 
       - name: Publish PR screenshots and recordings (artifact fallback)
+        id: publish
         if: steps.media.outputs.ready == 'true'
         continue-on-error: true
         env:
@@ -123,3 +126,12 @@ jobs:
         run: |
           node control/.github/scripts/publish-visual-report.mjs publish \
             --run-id "$SOURCE_RUN_ID" --output "$RUNNER_TEMP/visual-report"
+
+      # continue-on-error above keeps the media package uploaded; this step
+      # keeps the failure visible in the run instead of a green check. The
+      # business PR is untouched, and the report is replayed, not rebuilt.
+      - name: Keep publication failures visible without rebuilding the application
+        if: always() && steps.publish.outcome == 'failure'
+        run: |
+          echo "::error::Publishing the visual report failed; the business PR is untouched. Replay it from Actions > Publish Task Visual Report with run_id=$SOURCE_RUN_ID and attempt=$SOURCE_ATTEMPT (see .github/REPORT_DISPATCH.md)."
+          exit 1

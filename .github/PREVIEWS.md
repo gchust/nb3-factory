@@ -157,7 +157,8 @@ rm -f ./preview_key ./preview_key.pub
 | `FACTORY_PREVIEW_DOMAIN`      | `nfvd.net`                  | 根域名，生成 `nb3-<PR>.nfvd.net`，不要填 `preview.nfvd.net` |
 | `FACTORY_PREVIEW_FETCH_PROXY` | `http://192.168.2.250:7890` | 预览机拉取 payload 时的出口代理；能直连时可设为空字符串     |
 
-四个凭据缺任意一个，工作流会直接跳过并留一条 `::warning::`，不会失败。
+`FACTORY_PREVIEW_SSH_KEY`、`FACTORY_TAILSCALE_OAUTH_CLIENT_ID`、`FACTORY_TAILSCALE_OAUTH_CLIENT_SECRET`
+三个 Secret 缺任意一个，部署和回收工作流都会直接跳过并留一条 `::warning::`，不会失败。
 `FACTORY_PREVIEW_FETCH_PROXY` 不是凭据：它只决定预览机从哪个出口去取 payload。
 
 ## 手动补发

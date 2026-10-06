@@ -117,9 +117,7 @@ if (mode === 'select') {
     !Number.isSafeInteger(issue) ||
     issue < 1 ||
     source.artifact.name !== `factory-agent-${issue}` ||
-    ![`agent/issue-${issue}`, `pi/issue-${issue}`].includes(
-      metadata.workBranch,
-    ) ||
+    metadata.workBranch !== `agent/issue-${issue}` ||
     !isValidTargetBranch(metadata.task?.targetBranch)
   )
     throw new Error('Task metadata mismatch');

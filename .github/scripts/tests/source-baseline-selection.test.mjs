@@ -4,7 +4,7 @@ import { mkdtempSync, readFileSync, writeFileSync, rmSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { preparePresetIssue } from '../issue-presets.mjs';
-import { isSourceBaselineRef, isSharedTaskBase } from '../source-baseline-ref.mjs';
+import { SOURCE_BASELINE_DEFAULT, isSourceBaselineRef, isSharedTaskBase } from '../source-baseline-ref.mjs';
 import { pinInitialBase } from '../task-base.mjs';
 import { assertSafeChangedPaths } from '../factory-lib.mjs';
 import { captureBaseline } from '../baseline-record.mjs';
@@ -82,4 +82,20 @@ test('all three clean runners restore the selected snapshot before installing an
   assert.doesNotMatch(workflow, /scripts\/utils\/pack-dist.mjs/);
   const history = readFileSync(new URL('../agent-history.mjs', import.meta.url), 'utf8');
   assert.match(history, /baseline/);
+});
+
+test('the source baseline workflow verifies SOURCE_BASELINE_DEFAULT when no SHA is requested', () => {
+  const workflow = readFileSync(new URL('../../workflows/source-baseline.yml', import.meta.url), 'utf8');
+  assert.match(SOURCE_BASELINE_DEFAULT, /^[a-f0-9]{40}$/u);
+  // A workflow_dispatch input default cannot read a file, so it repeats the constant.
+  const input = workflow.split('      source_sha:\n')[1].split(/\n {6}\w/)[0];
+  assert.match(input, new RegExp(`^ {8}default: ${SOURCE_BASELINE_DEFAULT}$`, 'm'));
+  assert.match(input, /source-baseline-ref\.mjs/);
+  // The pull request fallback imports it instead of repeating it.
+  const pin = workflow.split('- name: Validate the explicit source pin\n')[1].split(/\n {6}- (?=name:|uses:)/)[0];
+  assert.match(pin, /REQUESTED_SHA: \$\{\{ inputs\.source_sha \}\}\n/);
+  assert.match(pin, /import \{SOURCE_BASELINE_DEFAULT\} from '\.\/control\/\.github\/scripts\/source-baseline-ref\.mjs';/);
+  assert.match(pin, /const sha=process\.env\.REQUESTED_SHA\|\|SOURCE_BASELINE_DEFAULT;/);
+  // Action pins are @<sha>; the input default is the only bare 40-hex value.
+  assert.deepEqual(workflow.match(/(?<!@)\b[a-f0-9]{40}\b/g), [SOURCE_BASELINE_DEFAULT]);
 });

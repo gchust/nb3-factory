@@ -276,6 +276,18 @@ test('Agent execution stays outside trusted publication and only the short deplo
   const [classify, publish] = workflow.split('\n  publish:');
   assert.match(classify, /contents: read/);
   assert.doesNotMatch(classify, /contents: write|group: factory-task-usage/);
+  // The job outlives its install budget plus the longest classification
+  // runClassification accepts (1800 s), with room for prepare and archive.
+  const jobMinutes = Number(/^    timeout-minutes: (\d+)$/m.exec(classify)[1]);
+  const installMinutes = Number(
+    /- name: Install selected pinned classifier\n {8}timeout-minutes: (\d+)\n/.exec(
+      classify,
+    )[1],
+  );
+  assert.ok(
+    jobMinutes >= installMinutes + 1800 / 60 + 5,
+    `${jobMinutes} minutes`,
+  );
   for (const engine of ['codebuddy', 'claude-code', 'codex', 'opencode'])
     assert.ok(classify.includes(`vars.CODE_AGENT_ENGINE == '${engine}'`));
   assert.match(classify, /classify-findings.mjs prepare/);

@@ -65,8 +65,11 @@ jobs:
           ref: ${{ steps.archive.outputs.commit_sha }}
           path: report-site
           persist-credentials: false
+      # Read-only, so it runs on every day: the send step needs the Pages base
+      # URL also when nothing changed and a digest that failed earlier is
+      # re-sent, and deploy-pages only runs when something changed.
       - uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0
-        if: steps.archive.outputs.changed == 'true'
+        id: pages
       - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
         if: steps.archive.outputs.changed == 'true'
         with:
@@ -78,7 +81,7 @@ jobs:
         if: vars.FACTORY_FEISHU_DIGEST == 'true' && steps.archive.outputs.pending != '0' && (github.event_name == 'schedule' || inputs.notify)
         env:
           GITHUB_TOKEN: ${{ github.token }}
-          REPORT_BASE_URL: ${{ steps.deployment.outputs.page_url }}
+          REPORT_BASE_URL: ${{ steps.pages.outputs.base_url }}
           FEISHU_WEBHOOK_URL: ${{ secrets.FEISHU_WEBHOOK_URL }}
           FEISHU_WEBHOOK_SECRET: ${{ secrets.FEISHU_WEBHOOK_SECRET }}
           # A secret, not a variable: the runner prints each step's env in the
