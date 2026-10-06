@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "inputHash": "b2ab297bdb3ae24f6a0fca09f189c22f7167e44d4c464bf39185e7f309dd29c9",
+  "inputHash": "fd25e03e14f6fb382e9e3c8f1f20d6f726e3814870f0e58e949855e5ec7e6081",
   "findings": [
     {
       "id": "460:36434284393:1:F2",
@@ -10173,6 +10173,354 @@
         }
       ],
       "fingerprint": "f3ecccb2d7a844790e746f54d6b12668e166a37abc58210dcd3798641d83b640"
+    },
+    {
+      "id": "594:37432779834:1:F1",
+      "report": "594:37432779834:1",
+      "issue": 594,
+      "taskTitle": "流程冒烟：单页计数器",
+      "appVersion": "1.0.0-beta.55",
+      "appTemplate": "@nocobase/app-template-default",
+      "finding": {
+        "id": "F1",
+        "kind": "misleading",
+        "owner": "template",
+        "confidence": "confirmed",
+        "severity": "minor",
+        "status": "open",
+        "title": "模板首页示例违反自身 L1 页面结构规则，却又是新页面被要求模仿的范本",
+        "detail": "ui-guidelines.md L1 把 PageContainer + PageHeader 定为页面 [Must]；page.md §2 还明确禁止手写带页面内边距的 section。但模板自带的 client/pages/home.tsx 恰好是手写 <section> + <h1> 的 hero，而 ui-workflow.md 的 Quick change 第 2 步又要求“Follow how the page is already written”；本轮需求本身还写明“沿用本轮模板、原有登录、主页、设置和翻译机制”，进一步鼓励照抄主页。实现 Agent 照抄 home.tsx，产出的 pipeline-smoke.tsx 同样没有 PageContainer/PageHeader。",
+        "impact": "纯静态新页面按模板示例生成时系统性缺少标准页面框，属 [Must] 违规；需求“沿用模板/主页”的措辞会放大这一误导，且因不改变可达性与功能而不会被 B01 这类行为验收发现。",
+        "suggestedChange": "让模板首页也使用 PageContainer + PageHeader（hero 作为 PageContainer 内的一节），或在 ui-workflow.md/frontend-dev.md 显式标注 home 是营销式例外、新业务页面必须走 page.md §2 骨架。",
+        "claimed": "UI 指引要求业务页面包在 PageContainer 中并带 PageHeader（L1 [Must]；page.md §2 禁止手写内边距 section）。",
+        "observed": "模板首页 home.tsx 与照抄它的 pipeline-smoke.tsx 都是手写 <section> + <h1>，无 PageContainer/PageHeader。",
+        "diagnosis": {
+          "category": "guidance-gap",
+          "trigger": "Agent 按 ui-workflow.md 的 Quick change 路径“照抄既有页面”而只阅读 home.tsx。",
+          "expected": "新页面采用 PageContainer + PageHeader 的模板骨架。",
+          "actual": "新页面与 home.tsx 一样是裸 section，违反 L1 [Must]。",
+          "workaround": "Agent 需自行读到 page.md §2 并放弃照抄 home.tsx 的样式。",
+          "acceptance": "新增静态页面后，源码包含 PageContainer 与 PageHeader，且页面仍通过 B01 行为验收。"
+        },
+        "evidence": [
+          "E16",
+          "E7",
+          "E15",
+          "E19",
+          "E14",
+          "E33"
+        ]
+      },
+      "targets": [
+        "app/.agents/skills/nocobase-app-development/references/frontend",
+        "app/.agents/skills/nocobase-app-development/references/frontend/references/page.md"
+      ],
+      "paths": [
+        ".agents/skills/nocobase-app-development/references/frontend/references/page.md",
+        ".agents/skills/nocobase-app-development/references/frontend/ui-guidelines.md",
+        ".agents/skills/nocobase-app-development/references/frontend/ui-workflow.md"
+      ],
+      "evidence": [
+        {
+          "id": "E16",
+          "kind": "skill",
+          "path": "app/.agents/skills/nocobase-app-development/references/frontend/ui-guidelines.md",
+          "observation": "L1 [Must]：业务页面必须包在 PageContainer 中并带 PageHeader（title 必填、description 建议、actions 在右）。",
+          "lines": [
+            29,
+            40
+          ],
+          "excerpt": "## L Page structure\n\n**L1 [Must]** A business page is wrapped in PageContainer, with a PageHeader at the top: a title (required), a one-sentence description (recommended) and page-level actions (on the right).\n\n**L2 [Must]** A view (page, dialog, drawer) has at most one primary button (the default style); other buttons use outline, ghost or destructive, or go into a menu. Each Card of a settings page saves on its own (T4.2) and counts as its own view, so each Card's Save may be primary.\n\n**L3 [Should]** The page title matches the navigation menu name and is a noun (\"Customers\"), not a verb phrase.\n\n**L4 [Should]** List and table pages use the full width; pages mainly for forms or reading limit the content width (`max-w-2xl` to `max-w-4xl`) so inputs do not get too long.\n\n**L5 [Must]** Page-level actions go on the right of the PageHeader; actions on a single record go in that record's row or detail view; bulk actions appear only after records are selected.\n",
+          "sha256": "62ad4bec4397a3b199305b0010596e9fc0c16a83e1503d581ee450df70f7f091"
+        },
+        {
+          "id": "E7",
+          "kind": "skill",
+          "path": "app/.agents/skills/nocobase-app-development/references/frontend/references/page.md",
+          "observation": "page.md §2 规定页面骨架使用 PageContainer + PageHeader，并明确禁止手写带页面内边距的 div/main/section。",
+          "lines": [
+            98,
+            143
+          ],
+          "excerpt": "Put the page in `client/pages/<feature>/index.tsx`, default-export the component, and build its skeleton with `PageContainer` and `PageHeader`:\n\n```tsx\nimport { useTranslation } from '@nocobase/i18n/client';\nimport { PlusIcon } from 'lucide-react';\nimport type { ReactElement } from 'react';\nimport { Link, Outlet, useLocation } from 'react-router';\n\nimport { PageContainer } from '@/components/page-container';\nimport { PageHeader } from '@/components/page-header';\nimport { Button } from '@/components/ui/button';\n\nexport default function ProjectsPage(): ReactElement {\n  const { t } = useTranslation();\n  const location = useLocation();\n\n  return (\n    <PageContainer>\n      <PageHeader\n        title={t('projects.title')}\n        description={t('projects.description')}\n        actions={\n          // Create is the child route /projects/new; keep the query parameters so the filters survive closing the dialog.\n          <Button\n            nativeButton={false}\n            render={<Link to={{ pathname: 'new', search: location.search }} />}\n          >\n            <PlusIcon data-icon='inline-start' />\n            {t('projects.create.action')}\n          </Button>\n        }\n      />\n      {/* Toolbar, table… */}\n      {/* Child routes (create dialog, detail drawer) render here */}\n      <Outlet />\n    </PageContainer>\n  );\n}\n```\n\n- **`PageContainer`** (`@/components/page-container`) renders a `section` that owns the full width, the spacing between blocks and the responsive padding (`w-full space-y-6 p-6 md:p-8`); the back button, the title, actions, content and the loading, empty and error states all go inside it. Do not hand-write an outer `div`, `main` or `section` with page padding, and do not change its spacing on one page (to change it everywhere, change the component).\n- **`PageContainer` is provided by the component that owns the page, one per page**:\n  - An inline child page (including tab content) renders inside the parent page's `PageContainer`; do not add another one.\n  - A covering child page uses its own `PageContainer` inside `RouteChildPage` (see [`child-routes.md`](child-routes.md)). A child route that returns a bare `PageContainer` is neither: it renders at the parent's `Outlet`, below the parent's content.\n  - Dialog and drawer content uses the overlay's own container; do not add `PageContainer`.\n- **`PageHeader`** (`@/components/page-header`) props: `title` (required), `description`, `actions` (on the right, for page-level actions). The title matches the menu name (guidelines L1, L3 and L5).",
+          "sha256": "ea85c8b01f79c9e42ed9a4c58d220782063c36d4a8edfff339dddf37edb7a712"
+        },
+        {
+          "id": "E15",
+          "kind": "code",
+          "path": "app/client/pages/home.tsx",
+          "observation": "模板自带的首页同样是手写 <section> + <h1> 的营销式 hero，没有 PageContainer/PageHeader。",
+          "lines": [
+            6,
+            14
+          ],
+          "excerpt": "  return (\n    <section className='mx-auto grid min-h-[calc(100svh-4rem)] w-full max-w-5xl place-items-center px-6 py-10'>\n      <div className='max-w-xl space-y-6 text-center'>\n        <h1 className='font-heading text-3xl font-semibold tracking-tight'>\n          {t('home.title')}\n        </h1>\n        <p className='text-muted-foreground'>{t('home.description')}</p>\n      </div>\n    </section>",
+          "sha256": "3d419b9074351fb0ebf9a46bddf775cb93ff78b474254440d01423578e8cf112"
+        },
+        {
+          "id": "E19",
+          "kind": "skill",
+          "path": "app/.agents/skills/nocobase-app-development/references/frontend/ui-workflow.md",
+          "observation": "Quick change 第 1 步要求读 frontend-dev.md 与相关 references、必要时读 ui-guidelines.md；第 2 步要求“Follow how the page is already written”。",
+          "lines": [
+            30,
+            37
+          ],
+          "excerpt": "## Quick change\n\n1. Read [`frontend-dev.md`](frontend-dev.md) and the references under `references/` related to the change; when the change adds or uses a primitive the page has not used before, also [`references/shadcn.md`](references/shadcn.md). When the change affects how the interface looks or behaves, also read the relevant guidelines in [`ui-guidelines.md`](ui-guidelines.md), and at minimum check the relevant items of the \"Review checklist\" at its end.\n2. Follow how the page is already written: keep components, spacing and copy style consistent with what surrounds the change.\n3. Run the checks in [\"Self-check before finishing\" in `frontend-dev.md`](frontend-dev.md#self-check-before-finishing): type checking, lint and formatting of the changed files, and the existing tests that cover them.\n4. A change that adds or alters behavior (a column, filter, button or field) extends the component test of that page, or adds one when there is none; a bug fix a component test can reproduce adds that test; a copy-only or styling-only change needs none (see [`references/testing.md`](references/testing.md)).\n5. When the change is visible at runtime — copy, styling, a new column, filter or button, a UI bug fix — start or reuse the application and sign in as item 1 of [step 4.1](#41-run-check-main-agent) describes (the printed `Local:` URL, the same host, no password entered by you), open the page once and look at the changed element: copy in both languages, styling in light and dark, at 375px and, when spacing, type, radius or shadow changed, in both presets (in the browser, or with two or three shots of the screenshot tool, [`scripts/capture.md`](scripts/capture.md)), a bug fix by reproducing the original steps. If no browser or sign-in session is available, say so in the report instead of claiming it works.\n6. Report what you changed, which checks and tests you ran with their results, and what you looked at in the browser. If you saved a sign-in session for the check, delete `storage/ui-workflow/auth.json` (and `auth-limited.json`) first: they hold live sign-in cookies.",
+          "sha256": "a7b37b1a9ec2851b2173ccdd83e8cf685f7a98b88a7a612f954e527b867f7aad"
+        },
+        {
+          "id": "E14",
+          "kind": "code",
+          "path": "app/client/pages/pipeline-smoke.tsx",
+          "observation": "新页面直接手写 <section> + <h1>，没有 PageContainer/PageHeader。",
+          "lines": [
+            16,
+            37
+          ],
+          "excerpt": "  return (\n    <section className='mx-auto grid min-h-[calc(100svh-4rem)] w-full max-w-5xl place-items-center px-6 py-10'>\n      <div className='max-w-xl space-y-6 text-center'>\n        <h1 className='font-heading text-3xl font-semibold tracking-tight'>\n          {t('pipelineSmoke.title')}\n        </h1>\n        <p className='text-muted-foreground'>\n          {t('pipelineSmoke.description')}\n        </p>\n        <div className='flex items-center justify-center gap-4'>\n          <output\n            aria-live='polite'\n            className='text-2xl font-semibold tabular-nums'\n          >\n            {count}\n          </output>\n          <Button onClick={() => setCount((value) => value + 1)}>\n            {t('pipelineSmoke.increment')}\n          </Button>\n        </div>\n      </div>\n    </section>",
+          "sha256": "09a6e4ffcf7703af40be704a4491ecd929d2c8edf573b299fbe38a6c5c647b94"
+        },
+        {
+          "id": "E33",
+          "kind": "code",
+          "path": "app/client/components/page-header.tsx",
+          "observation": "PageHeader 提供 title（必填）/description/actions，并渲染页面唯一的 h1。",
+          "lines": [
+            3,
+            32
+          ],
+          "excerpt": "export interface PageHeaderProps {\n  readonly title: ReactNode;\n  readonly description?: ReactNode;\n  /** Page-level actions, aligned to the right of the title from the `sm` breakpoint up. */\n  readonly actions?: ReactNode;\n}\n\n/** The heading of a page: its only `h1`, an optional description, and the actions that apply to the whole page. */\nexport function PageHeader({\n  actions,\n  description,\n  title,\n}: PageHeaderProps): ReactElement {\n  return (\n    <header className='flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between'>\n      <div className='min-w-0'>\n        <h1 className='font-heading text-3xl font-semibold tracking-[-0.035em]'>\n          {title}\n        </h1>\n        {description ? (\n          <p className='mt-2 max-w-2xl text-sm leading-6 text-muted-foreground'>\n            {description}\n          </p>\n        ) : null}\n      </div>\n      {actions ? (\n        <div className='flex shrink-0 items-center gap-2'>{actions}</div>\n      ) : null}\n    </header>\n  );",
+          "sha256": "0ecf24198bab1240ce6b5cd5ca4622c8607e7ab50dda8102637284db19c10145"
+        }
+      ],
+      "fingerprint": "2bd110e79fac08251c621734d80e13b457594a8fe1624d73b8cef720113f76e9"
+    },
+    {
+      "id": "594:37432779834:1:F2",
+      "report": "594:37432779834:1",
+      "issue": 594,
+      "taskTitle": "流程冒烟：单页计数器",
+      "appVersion": "1.0.0-beta.55",
+      "appTemplate": "@nocobase/app-template-default",
+      "finding": {
+        "id": "F2",
+        "kind": "issue",
+        "owner": "documentation",
+        "confidence": "confirmed",
+        "severity": "minor",
+        "status": "open",
+        "title": "工作流分流未覆盖“无数据的新静态页面”，Quick change 未把新页面强制导向 page.md",
+        "detail": "ui-workflow.md 的 full workflow 触发条件写作“a new page that loads data or has forms or overlays”，quick change 的示例则全是在既有页面上增改。一个全新、无数据/表单/浮层的静态页面落在两者之间，按“None of the above applies”会被判为 quick change。本轮需求“按需阅读附近源码和相关 Skill”也不会纠正它。此时唯一把“新建页面”映射到 page.md §1/§2/§6 的入口是 frontend-dev.md 的“Look up by task”表，而 Quick change 第 1 步只笼统要求读 frontend-dev.md 与相关 references。实现 Agent 在实现 JSONL 第 268 行判定“This is a quick change... no data loading/forms/overlays”，整轮只读了 ui-workflow.md，随后直接照抄 home.tsx。",
+        "impact": "新页面任务可在不打开 page.md/frontend-dev.md/ui-guidelines.md 的情况下完成并通过 B01，导致 L1 [Must] 结构缺失长期不被流程捕获。",
+        "suggestedChange": "在“Choosing a workflow”中为“new page”单列一行指向 page.md §1/§2/§6（无论是否加载数据）；或在 Quick change 第 1 步点名“新增页面必读 page.md §2”。",
+        "diagnosis": {
+          "category": "guidance-gap",
+          "trigger": "用户要求新增一个仅含标题、说明与本地交互的静态页面。",
+          "expected": "分流明确要求新页面读取 page.md §1/§2/§6 并采用标准页面骨架。",
+          "actual": "分流未命中，Agent 停在 ui-workflow.md 与既有页面，跳过 page.md 与 frontend-dev.md。",
+          "workaround": "维护者需口头或额外提示 Agent 去读 page.md。",
+          "acceptance": "仅凭 ui-workflow.md 即可判定新静态页面为需读 page.md 的任务，并据此生成合规骨架。"
+        },
+        "evidence": [
+          "E18",
+          "E19",
+          "E17",
+          "E35",
+          "E14",
+          "E29",
+          "E36"
+        ]
+      },
+      "targets": [
+        "app/.agents/skills/nocobase-app-development/references/frontend"
+      ],
+      "paths": [
+        ".agents/skills/nocobase-app-development/references/frontend/frontend-dev.md",
+        ".agents/skills/nocobase-app-development/references/frontend/ui-workflow.md"
+      ],
+      "evidence": [
+        {
+          "id": "E18",
+          "kind": "skill",
+          "path": "app/.agents/skills/nocobase-app-development/references/frontend/ui-workflow.md",
+          "observation": "“Choosing a workflow”表：full workflow 触发条件是“加载数据/含表单/含浮层的 new page”，quick change 示例仅列举在既有页面上加按钮、列、字段、过滤器等。",
+          "lines": [
+            11,
+            19
+          ],
+          "excerpt": "## Choosing a workflow\n\nDecide before you start, and say in one sentence in your reply which workflow you are following and why.\n\n| Workflow      | When it applies                                                                                                                                                                                                                                                                                                            |\n| ------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |\n| Full workflow | Any one of: a new page that loads data or has forms or overlays; a new complete interaction (a create/edit flow, a detail drawer, a multi-step operation); a change to the page structure or main interactions; one change that touches the layout or interactions of several pages; the user asks to see the design first |\n| Theme change  | The change is to theme tokens or presets: the primary color, fonts, density, radius or shadows of the whole application, or adding, changing or removing a preset. Follow [\"Theme change\"](#theme-change) below. No design file unless the user asks                                                                       |\n| Quick change  | None of the above applies. For example: changing copy; adjusting styling details on one page; adding a button, a column, a form field or a filter to an existing page; fixing a UI bug; a refactor that changes neither appearance nor behavior                                                                            |",
+          "sha256": "a7b37b1a9ec2851b2173ccdd83e8cf685f7a98b88a7a612f954e527b867f7aad"
+        },
+        {
+          "id": "E19",
+          "kind": "skill",
+          "path": "app/.agents/skills/nocobase-app-development/references/frontend/ui-workflow.md",
+          "observation": "Quick change 第 1 步要求读 frontend-dev.md 与相关 references、必要时读 ui-guidelines.md；第 2 步要求“Follow how the page is already written”。",
+          "lines": [
+            30,
+            37
+          ],
+          "excerpt": "## Quick change\n\n1. Read [`frontend-dev.md`](frontend-dev.md) and the references under `references/` related to the change; when the change adds or uses a primitive the page has not used before, also [`references/shadcn.md`](references/shadcn.md). When the change affects how the interface looks or behaves, also read the relevant guidelines in [`ui-guidelines.md`](ui-guidelines.md), and at minimum check the relevant items of the \"Review checklist\" at its end.\n2. Follow how the page is already written: keep components, spacing and copy style consistent with what surrounds the change.\n3. Run the checks in [\"Self-check before finishing\" in `frontend-dev.md`](frontend-dev.md#self-check-before-finishing): type checking, lint and formatting of the changed files, and the existing tests that cover them.\n4. A change that adds or alters behavior (a column, filter, button or field) extends the component test of that page, or adds one when there is none; a bug fix a component test can reproduce adds that test; a copy-only or styling-only change needs none (see [`references/testing.md`](references/testing.md)).\n5. When the change is visible at runtime — copy, styling, a new column, filter or button, a UI bug fix — start or reuse the application and sign in as item 1 of [step 4.1](#41-run-check-main-agent) describes (the printed `Local:` URL, the same host, no password entered by you), open the page once and look at the changed element: copy in both languages, styling in light and dark, at 375px and, when spacing, type, radius or shadow changed, in both presets (in the browser, or with two or three shots of the screenshot tool, [`scripts/capture.md`](scripts/capture.md)), a bug fix by reproducing the original steps. If no browser or sign-in session is available, say so in the report instead of claiming it works.\n6. Report what you changed, which checks and tests you ran with their results, and what you looked at in the browser. If you saved a sign-in session for the check, delete `storage/ui-workflow/auth.json` (and `auth-limited.json`) first: they hold live sign-in cookies.",
+          "sha256": "a7b37b1a9ec2851b2173ccdd83e8cf685f7a98b88a7a612f954e527b867f7aad"
+        },
+        {
+          "id": "E17",
+          "kind": "skill",
+          "path": "app/.agents/skills/nocobase-app-development/references/frontend/frontend-dev.md",
+          "observation": "frontend-dev.md 的页面通用约定第 30 行要求 PageContainer 由拥有该页面的组件提供；第 35 行要求所有可见文案走翻译键。",
+          "lines": [
+            26,
+            35
+          ],
+          "excerpt": "Conventions every page follows, each explained in its home:\n\n- Primitives: the template ships only the ones its shell uses; add any other with `yes n | pnpm exec shadcn add <name>` before a file imports it, format the files it creates, translate the English they carry, and otherwise keep them as the CLI writes them. A list's `DataTable` and a date field's `DatePicker` are NocoBase UI Library items, `@nocobase/data-table` and `@nocobase/date-picker`, added the same way. Their rules come from the shadcn skill, read through [`references/shadcn.md`](references/shadcn.md), which also lists where this application departs from it.\n- Base UI composition: `render` instead of `asChild`, `nativeButton={false}` for a Button rendered as a link, `items` on `Select`, every item and label inside its group, `data-icon` on an icon in a button (the skill's rules, and [section 2 of `references/styling.md`](references/styling.md#2-components-are-built-on-base-ui-not-radix) for what they leave out).\n- `PageContainer` from the page that owns it ([section 2 of `references/page.md`](references/page.md#2-the-page-component)).\n- Create, edit and detail as child-route overlays; of the overlays, only a confirmation (`AlertDialog`) and a temporary panel (`Sheet`) use component state ([`references/overlay.md`](references/overlay.md)). A record, and every overlay, opens over the view the user is on: every page that opens a record declares its drawer ([section 2.1 of `references/overlay.md`](references/overlay.md#21-declare-the-child-routes)), and on a page with tabs every tab declares what the header opens ([\"Overlays opened from the header of a page with tabs\" in `references/child-routes.md`](references/child-routes.md#overlays-opened-from-the-header-of-a-page-with-tabs)).\n- `BackButton` above the title of a page below another one; breadcrumbs only when the user asks for them ([section 7 of `references/page.md`](references/page.md#7-back-button-and-breadcrumbs)).\n- Icons from `lucide-react` ([section 10 of `references/styling.md`](references/styling.md#10-icons)).\n- Toasts with `useToaster()` from `@nocobase/app-client`, never a second `Toaster` ([\"Toasts\" in `references/api.md`](references/api.md#toasts)).\n- Every user-visible string through a translation key ([`references/i18n.md`](references/i18n.md)).",
+          "sha256": "14ca25e8b9c259486c53e5990a170930acea0c2a03f70e2b084569255885769b"
+        },
+        {
+          "id": "E35",
+          "kind": "skill",
+          "path": "app/.agents/skills/nocobase-app-development/references/frontend/frontend-dev.md",
+          "observation": "frontend-dev.md “Look up by task”表把“新建页面及其路由与菜单”映射到 page.md §1/§2/§6。",
+          "lines": [
+            37,
+            46
+          ],
+          "excerpt": "## Look up by task\n\n| Task                                                                                     | Read                                                                                                                                                                                                                                                                                           |\n| ---------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |\n| A new page, its route and menu entry                                                     | [`page.md`](references/page.md) [§1](references/page.md#1-declare-the-route), [§2](references/page.md#2-the-page-component), [§6](references/page.md#6-menus)                                                                                                                                  |\n| Page permissions, settings pages, the back button and breadcrumbs                        | [`page.md`](references/page.md) [§4](references/page.md#4-authz-page-authorization), [Settings pages](references/page.md#settings-pages), [§7](references/page.md#7-back-button-and-breadcrumbs)                                                                                               |\n| Disabling or hiding a feature                                                            | [`page.md` §9](references/page.md#9-disable-a-feature-keep-the-page)                                                                                                                                                                                                                           |\n| Showing actions by permission (`useCan`)                                                 | [`page.md` §8](references/page.md#8-show-actions-by-permission-usecan)                                                                                                                                                                                                                         |\n| A plugin's page; customizing the shell, its header buttons                               | [`page.md` §10](references/page.md#10-customize-a-plugins-pages), [`shell.md`](references/shell.md)                                                                                                                                                                                            |\n| Child pages, tabs, covering child pages, navigation groups                               | [`child-routes.md`](references/child-routes.md) [§3](references/child-routes.md#3-four-ways-to-present-a-child-route)–[§6](references/child-routes.md#6-navigation-groups-and-clickable-parents)                                                                                               |",
+          "sha256": "14ca25e8b9c259486c53e5990a170930acea0c2a03f70e2b084569255885769b"
+        },
+        {
+          "id": "E14",
+          "kind": "code",
+          "path": "app/client/pages/pipeline-smoke.tsx",
+          "observation": "新页面直接手写 <section> + <h1>，没有 PageContainer/PageHeader。",
+          "lines": [
+            16,
+            37
+          ],
+          "excerpt": "  return (\n    <section className='mx-auto grid min-h-[calc(100svh-4rem)] w-full max-w-5xl place-items-center px-6 py-10'>\n      <div className='max-w-xl space-y-6 text-center'>\n        <h1 className='font-heading text-3xl font-semibold tracking-tight'>\n          {t('pipelineSmoke.title')}\n        </h1>\n        <p className='text-muted-foreground'>\n          {t('pipelineSmoke.description')}\n        </p>\n        <div className='flex items-center justify-center gap-4'>\n          <output\n            aria-live='polite'\n            className='text-2xl font-semibold tabular-nums'\n          >\n            {count}\n          </output>\n          <Button onClick={() => setCount((value) => value + 1)}>\n            {t('pipelineSmoke.increment')}\n          </Button>\n        </div>\n      </div>\n    </section>",
+          "sha256": "09a6e4ffcf7703af40be704a4491ecd929d2c8edf573b299fbe38a6c5c647b94"
+        },
+        {
+          "id": "E29",
+          "kind": "log",
+          "path": "artifacts/agent-history/agent-implement.jsonl/part-0001.txt",
+          "observation": "实现轮首个工具调用：读取 .agents/skills/nocobase-app-development/references/frontend/ui-workflow.md 并同时 ls 工作区；这是整轮唯一读取的 Skill 指引文件。",
+          "lines": [
+            42,
+            42
+          ],
+          "excerpt": "{\"type\":\"message_end\",\"message\":{\"role\":\"assistant\",\"content\":[{\"type\":\"thinking\",\"thinking\":\"Let me start by exploring the workspace to understand the structure.\\n\\nThe task is simple: add a \\\"Pipeline Smoke / 流程冒烟\\\" page accessible after login, with navigation entry, title, description line, counter starting at 0, and \\\"+1\\\" button. Counter is in-memory only.\\n\\nLet me first check the AGENTS.md and relevant skill. Actually AGENTS.md is already provided. Let me read the frontend ui-workflow reference and look at existing routes/pages.\\n\\nLet me explore.\",\"thinkingSignature\":\"reasoning\"},{\"type\":\"toolCall\",\"id\":\"call_ymu13l16\",\"name\":\"bash\",\"arguments\":{\"command\":\"cd /home/runner/work/nb3-factory/nb3-factory/workspace && ls && echo \\\"---CLIENT---\\\" && ls client && echo \\\"---PAGES---\\\" && find client/pages -maxdepth 2 | head -50\",\"timeout\":30}},{\"type\":\"toolCall\",\"id\":\"call_g1xvhpno\",\"name\":\"read\",\"arguments\":{\"path\":\"/home/runner/work/nb3-factory/nb3-factory/workspace/.agents/skills/nocobase-app-development/references/frontend/ui-workflow.md\",\"offset\":0,\"limit\":200}}],\"api\":\"openai-completions\",\"provider\":\"nb3-factory\",\"model\":\"deepseek-v4.1-flash\",\"usage\":{\"input\":18127,\"output\":307,\"cacheRead\":0,\"cacheWrite\":0,\"reasoning\":0,\"totalTokens\":18434,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"stopReason\":\"toolUse\",\"timestamp\":1791273472139,\"responseId\":\"chatcmpl-646\",\"rawStopReason\":\"tool_calls\"}}",
+          "sha256": "c6c8de6552a348d7d823417db535938b186dd8e461132d90fcdf62a1b8cdfc2b"
+        },
+        {
+          "id": "E36",
+          "kind": "log",
+          "path": "artifacts/agent-history/agent-implement.jsonl/part-0001.txt",
+          "observation": "实现轮第 268 行：Agent 明确判定“This is a **quick change**: a new simple static page, no data loading/forms/overlays”，思考里写“Let me read routes.ts, home.tsx, locales, and the page reference”，但实际只读 routes.ts、home.tsx 与 locales，未读它自称要读的 page reference。",
+          "lines": [
+            263,
+            268
+          ],
+          "excerpt": "{\"type\":\"message_update\",\"usage\":{\"input\":22369,\"output\":311,\"cacheRead\":1024,\"cacheWrite\":0,\"reasoning\":23,\"totalTokens\":23704,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"assistantMessageEvent\":{\"type\":\"thinking_end\",\"contentIndex\":0,\"content\":\"This is a quick change. Let me read routes.ts, home.tsx, locales, and the page reference.\"}}\n{\"type\":\"message_update\",\"usage\":{\"input\":22369,\"output\":311,\"cacheRead\":1024,\"cacheWrite\":0,\"reasoning\":23,\"totalTokens\":23704,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"assistantMessageEvent\":{\"type\":\"text_end\",\"contentIndex\":1,\"content\":\"This is a **quick change**: a new simple static page, no data loading/forms/overlays. Let me read the relevant sources.\"}}\n{\"type\":\"message_update\",\"usage\":{\"input\":22369,\"output\":311,\"cacheRead\":1024,\"cacheWrite\":0,\"reasoning\":23,\"totalTokens\":23704,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"assistantMessageEvent\":{\"type\":\"toolcall_end\",\"contentIndex\":2,\"toolCall\":{\"type\":\"toolCall\",\"id\":\"call_00_qFSbNabltkAEszupWySU4733\",\"name\":\"read\",\"arguments\":{\"path\":\"/home/runner/work/nb3-factory/nb3-factory/workspace/client/routes.ts\",\"offset\":0,\"limit\":200}}}}\n{\"type\":\"message_update\",\"usage\":{\"input\":22369,\"output\":311,\"cacheRead\":1024,\"cacheWrite\":0,\"reasoning\":23,\"totalTokens\":23704,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"assistantMessageEvent\":{\"type\":\"toolcall_end\",\"contentIndex\":3,\"toolCall\":{\"type\":\"toolCall\",\"id\":\"call_01_KhqJPfJXG3t0EtpXaGfM8529\",\"name\":\"read\",\"arguments\":{\"path\":\"/home/runner/work/nb3-factory/nb3-factory/workspace/client/pages/home.tsx\",\"offset\":0,\"limit\":200}}}}\n{\"type\":\"message_update\",\"usage\":{\"input\":22369,\"output\":311,\"cacheRead\":1024,\"cacheWrite\":0,\"reasoning\":23,\"totalTokens\":23704,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"assistantMessageEvent\":{\"type\":\"toolcall_end\",\"contentIndex\":4,\"toolCall\":{\"type\":\"toolCall\",\"id\":\"call_02_9XYi6K7xhdHXhV8I7l5K4726\",\"name\":\"bash\",\"arguments\":{\"command\":\"cd /home/runner/work/nb3-factory/nb3-factory/workspace && ls client/locales && echo \\\"---\\\" && find tests -maxdepth 2 -type f | head -40\",\"timeout\":30}}}}\n{\"type\":\"message_end\",\"message\":{\"role\":\"assistant\",\"content\":[{\"type\":\"thinking\",\"thinking\":\"This is a quick change. Let me read routes.ts, home.tsx, locales, and the page reference.\",\"thinkingSignature\":\"[{\\\"format\\\":\\\"unknown\\\",\\\"index\\\":0,\\\"text\\\":\\\"This is a quick change. Let me read routes.ts, home.tsx, locales, and the page reference.\\\",\\\"type\\\":\\\"reasoning.text\\\"}]\"},{\"type\":\"text\",\"text\":\"This is a **quick change**: a new simple static page, no data loading/forms/overlays. Let me read the relevant sources.\"},{\"type\":\"toolCall\",\"id\":\"call_00_qFSbNabltkAEszupWySU4733\",\"name\":\"read\",\"arguments\":{\"path\":\"/home/runner/work/nb3-factory/nb3-factory/workspace/client/routes.ts\",\"offset\":0,\"limit\":200}},{\"type\":\"toolCall\",\"id\":\"call_01_KhqJPfJXG3t0EtpXaGfM8529\",\"name\":\"read\",\"arguments\":{\"path\":\"/home/runner/work/nb3-factory/nb3-factory/workspace/client/pages/home.tsx\",\"offset\":0,\"limit\":200}},{\"type\":\"toolCall\",\"id\":\"call_02_9XYi6K7xhdHXhV8I7l5K4726\",\"name\":\"bash\",\"arguments\":{\"command\":\"cd /home/runner/work/nb3-factory/nb3-factory/workspace && ls client/locales && echo \\\"---\\\" && find tests -maxdepth 2 -type f | head -40\",\"timeout\":30}}],\"api\":\"openai-completions\",\"provider\":\"nb3-factory\",\"model\":\"deepseek-v4.1-flash\",\"usage\":{\"input\":22369,\"output\":311,\"cacheRead\":1024,\"cacheWrite\":0,\"reasoning\":23,\"totalTokens\":23704,\"cost\":{\"input\":0,\"output\":0,\"cacheRead\":0,\"cacheWrite\":0,\"total\":0}},\"stopReason\":\"toolUse\",\"timestamp\":1791273475265,\"responseId\":\"gen_01M483G8R92B9FFNQ8P78PAEEE\",\"rawStopReason\":\"tool_calls\"}}",
+          "sha256": "c6c8de6552a348d7d823417db535938b186dd8e461132d90fcdf62a1b8cdfc2b"
+        }
+      ],
+      "fingerprint": "86e8f77f7adee93eed00834ed3d71ab3985aaa9893e60376fed7258a71a0706b"
+    },
+    {
+      "id": "594:37432779834:1:F4",
+      "report": "594:37432779834:1",
+      "issue": 594,
+      "taskTitle": "流程冒烟：单页计数器",
+      "appVersion": "1.0.0-beta.55",
+      "appTemplate": "@nocobase/app-template-default",
+      "finding": {
+        "id": "F4",
+        "kind": "improvement",
+        "owner": "documentation",
+        "confidence": "suspected",
+        "severity": "info",
+        "status": "open",
+        "title": "页面测试何时使用 @nocobase/app-testing 的 renderWithApp 缺少明确指引",
+        "detail": "@nocobase/app-testing/client 提供 renderWithApp，可在 MemoryRouter 中挂载真实 app runtime、locales、providers 与 toaster；frontend/references/testing.md 只说“For a page, copy tests/components/page-harness.test.tsx”。本次页面测试选择只用 @nocobase/i18n/testing 的 Provider 挂载裸组件（实现 Agent 确实读过 page-harness.test.tsx 却未采用），于是 app 级 providers 与路由未进入 CI。",
+        "impact": "页面测试与真实运行环境存在缺口，路由/provider 级回归不会被组件测试捕获；但也不强制每个组件测试都升级为全 app 渲染。",
+        "suggestedChange": "在 testing.md 增加一句判定标准：需要路由、真实 providers、跨组件 i18n/导航时用 renderWithApp/page-harness，仅验证渲染与交互时可用轻量 Provider；并给出各自示例。",
+        "evidence": [
+          "E32",
+          "E22",
+          "E20",
+          "E24"
+        ],
+        "diagnosis": {
+          "category": "usability-improvement",
+          "trigger": "实现 Agent 为新增页面编写组件测试，需要在“轻量 i18n Provider”与“真实 app providers”之间选择。",
+          "expected": "指引给出明确判定：测试涉及路由、真实 providers 或跨组件导航时使用 renderWithApp / page-harness。",
+          "actual": "指引只推荐复制 tests/components/page-harness.test.tsx，未说明 renderWithApp 的适用边界；Agent 选择仅挂 @nocobase/i18n/testing Provider 的轻量 harness。",
+          "workaround": "评审者或维护者需额外说明，或 Agent 自行比对 @nocobase/app-testing 源码。",
+          "acceptance": "testing.md 写清两类 harness 的适用场景与示例，后续页面测试能按场景选择并覆盖 app providers。"
+        }
+      },
+      "targets": [
+        "@nocobase/app-testing",
+        "app/.agents/skills/nocobase-app-development/references/frontend/references/testing.md",
+        "app/.agents/skills/nocobase-app-development/references/testing.md"
+      ],
+      "paths": [
+        ".agents/skills/nocobase-app-development/references/frontend/references/testing.md",
+        ".agents/skills/nocobase-app-development/references/testing.md",
+        "packages/@nocobase/app-testing/dist/src/client/render.js"
+      ],
+      "evidence": [
+        {
+          "id": "E32",
+          "kind": "skill",
+          "path": "app/.agents/skills/nocobase-app-development/references/frontend/references/testing.md",
+          "observation": "frontend/references/testing.md 的 “Building the test harness” 要求页面测试复制 tests/components/page-harness.test.tsx，并列出二级语言、浮层、UI Library 等场景。",
+          "lines": [
+            24,
+            40
+          ],
+          "excerpt": "## Building the test harness\n\n**For a page, copy `tests/components/page-harness.test.tsx`.** It renders a small list page with a child-route `RouteDialog` in a memory router inside the real, strict i18n runtime (next section), and mocks only what the page reaches outside itself for: `useApiClient` (keeping the real `ApiClientError`), `useCan` and `useToaster`, all created with `vi.hoisted`. Its tests are the shapes to repeat: the request the page sends, a 403 without \"Retry\", a 401 that offers \"Sign in again\", an action shown with permission and hidden without it, and a child route opened from its URL and closed back to the list. It also mocks `useAuthentication` for the 401 case. Replace its inline page with your page and its child routes, drop the `copy` the harness defines for its inline page, since your page's keys are in `client/locales/`, keep the setup, and put the file in `tests/components/` (the template's own overlay test happens to sit in `tests/logic/`).\n\nFor anything else, start from the test that already sets it up:\n\n- **A second language**: pass the `client/locales/index.ts` loader map and switch with `changeLanguage` inside `act`, as the next section shows; `tests/components/primitive-labels.test.tsx` renders in Chinese from the start with `locale: 'zh-CN'`.\n- **Overlay behavior in depth** (`beforeClose`, nested layers, focus): `tests/logic/route-overlay.test.tsx`.\n- **A UI Library item**: it passes its English as `defaultValue`, but the strict runtime still fails on a key `client/locales/` lacks, so add the keys the item's README lists before testing a page that renders it.\n\n- Assert what the user can see: text, roles and accessible names, the result of a click (`@testing-library/react`, `@testing-library/user-event` and the jest-dom assertions are set up). Do not assert internal state.\n- To assert a toast, mock `useToaster` as the harness does, returning one shared `{ show: vi.fn(), close: vi.fn() }`, and assert what `show` was called with: its `type`, `title` and `description`, not how Base UI renders them. A component rendered without a registered toaster still renders; its toasts are logged to the console instead of shown.\n- When a button contains a `Spinner`, the spinner's \"Loading\" label becomes part of the button's name, so use a regular expression when you query by name.\n- An open `RouteDialog` or `RouteDrawer` hides the page behind it from the accessibility tree, so a role query for something behind it, such as the selected tab, passes `hidden: true`: `getByRole('link', { name: 'Orders', hidden: true })`.\n- A `Button` rendered as a `Link` (`nativeButton={false}`) has the `button` role, not `link`; query \"New project\" with `getByRole('button', …)`. Test an absence together with the presence case, as the harness does, so the assertion can fail.\n- jsdom does not lay out the page or run an input method. Leave layout, narrow screens and IME input to the browser check (the screenshot tool, [`../scripts/capture.md`](../scripts/capture.md)), and do not simulate pointer geometry for hover menus (see [section 2 of `shell.md`](shell.md#2-header-icon-buttons)).\n- A Vite server that a test starts itself (including one started by a helper) must use its own temporary `cacheDir`, deleted afterward. Do not delete or rebuild the dependency cache of a running development server; lazily loaded pages then stop working until the server is restarted.",
+          "sha256": "e0e28bffa77826eb85a6f2832d4e87dc0abc70aa460ae5ab60ca07cb4e925bb3"
+        },
+        {
+          "id": "E22",
+          "kind": "code",
+          "path": "packages/@nocobase/app-testing/dist/src/client/render.js",
+          "observation": "@nocobase/app-testing/client 的 renderWithApp 在 MemoryRouter 中挂载真实 app runtime、locales、providers 与 toaster。",
+          "lines": [
+            23,
+            50
+          ],
+          "excerpt": "export async function renderWithApp(ui, options = {}) {\n    const plugins = options.plugins ?? [];\n    const toaster = new TestToaster();\n    const basePath = options.server\n        ? trimTrailingSlash(options.server.publicBasePath)\n        : '';\n    const apiRoot = `${TEST_ORIGIN}${basePath}/api`;\n    const rawConfig = mergeSections({ app: { basePath: basePath || '/' }, api: { baseURL: apiRoot } }, options.config ?? {});\n    // The page reads the mount path the server rendered into it, as `resolveAppUrl()` does, so the block the server\n    // renders is written into the document for the test.\n    const removeConfigBlock = writeRuntimeConfigBlock(rawConfig);\n    class TestServiceProvider extends ServiceProvider {\n        name = '@nocobase/app-testing/client';\n        register() {\n            options.services?.(this.app);\n            if (!this.app.container.has(toasterToken)) {\n                this.app.container.instance(toasterToken, toaster);\n            }\n        }\n    }\n    // A plugin's locales may be a function importing its locale module; the test runtime takes the module itself.\n    const pluginLocales = await Promise.all(plugins.flatMap((plugin) => plugin.locales\n        ? [\n            resolveLocalesContribution(plugin.locales).then((locales) => [\n                plugin.packageName,\n                locales,\n            ]),\n        ]",
+          "sha256": "6fdb64523f3b3c5ff23a472490220dbd45f9e54dbd6800a1a8470a572360b41d"
+        },
+        {
+          "id": "E20",
+          "kind": "code",
+          "path": "app/tests/components/pipeline-smoke.test.tsx",
+          "observation": "页面组件测试用 @nocobase/i18n/testing 的 createTestI18nRuntime 建英/中两个严格运行时，断言计数 0→1→2 与中英文标题说明。",
+          "lines": [
+            14,
+            56
+          ],
+          "excerpt": "const enRuntime = await createTestI18nRuntime({\n  application: { namespace: '@nocobase/app-template-default', resources: enUS },\n});\nconst zhRuntime = await createTestI18nRuntime({\n  application: { namespace: '@nocobase/app-template-default', resources: zhCN },\n});\n\nfunction English({ children }: { readonly children: ReactNode }): ReactElement {\n  return <TestI18nProvider runtime={enRuntime}>{children}</TestI18nProvider>;\n}\n\nfunction Chinese({ children }: { readonly children: ReactNode }): ReactElement {\n  return <TestI18nProvider runtime={zhRuntime}>{children}</TestI18nProvider>;\n}\n\ndescribe('PipelineSmokePage', () => {\n  it('starts at zero and gains one per click', async () => {\n    const user = userEvent.setup();\n    render(<PipelineSmokePage />, { wrapper: English });\n\n    expect(screen.getByRole('status')).toHaveTextContent('0');\n\n    await user.click(\n      screen.getByRole('button', { name: enUS.pipelineSmoke.increment }),\n    );\n    expect(screen.getByRole('status')).toHaveTextContent('1');\n\n    await user.click(\n      screen.getByRole('button', { name: enUS.pipelineSmoke.increment }),\n    );\n    expect(screen.getByRole('status')).toHaveTextContent('2');\n  });\n\n  it('renders its title and description in the active language', () => {\n    render(<PipelineSmokePage />, { wrapper: Chinese });\n\n    expect(\n      screen.getByRole('heading', { name: zhCN.pipelineSmoke.title }),\n    ).toBeInTheDocument();\n    expect(\n      screen.getByText(zhCN.pipelineSmoke.description),\n    ).toBeInTheDocument();\n  });",
+          "sha256": "f2d020b64f7bdc239741fdab1bbd1bd5683dc15d7893a26de4e965829f9f23bb"
+        },
+        {
+          "id": "E24",
+          "kind": "skill",
+          "path": "app/.agents/skills/nocobase-app-development/references/testing.md",
+          "observation": "testing.md 规定测试放在 tests/logic、tests/components、e2e，绝不放源码旁；并给出按改动类型应写的测试表。",
+          "lines": [
+            3,
+            27
+          ],
+          "excerpt": "## Where tests go\n\n```text\ntests/logic/        Logic and integration tests\ntests/components/   Component tests\ne2e/                Tests needing a real server, real auth, or a real database\n```\n\n**Never put a test beside the source it covers.** Name files `*.test.ts` or `*.test.tsx`.\n\n`vitest.config.ts` discovers `tests/**/*.test.{ts,tsx}` automatically. Theme token tests compile the real CSS; browser checks still need to verify computed styles, typography, spacing and focus.\n\nTemplates ship their tests into generated applications. Keep them runnable from the application root after scaffolding: read application identity from `package.json`, resolve application paths relative to the test file, and import dependencies through their published package exports. Do not depend on a monorepo checkout, a fixed template directory name, or a particular pnpm store layout. Run the affected test files in the generated application as well as in the template when changing these contracts.\n\n## What to test, by change\n\n| You changed      | Test at least                                                                                                                     |\n| ---------------- | --------------------------------------------------------------------------------------------------------------------------------- |\n| A server route   | Anonymous → `401`, authenticated but unpermitted → `403`, permitted → expected payload; the route is declared in the API document |\n| A public webhook | Missing signature, invalid signature, valid signature, duplicate delivery                                                         |\n| A migration      | `up` produces the expected schema; `down` reverses it; against a real database                                                    |\n| A seed           | First run, run against existing data, repeat run                                                                                  |\n| A service        | Its domain behavior, with its dependencies supplied directly                                                                      |\n| A job            | `execute()` with a realistic payload; a second run is harmless; failures behave as intended                                       |\n| Frontend code    | See [frontend tests](frontend/references/testing.md): pages, components, route declarations, copy                                 |",
+          "sha256": "a47c8cdcc9bc066f5cf30dc2de7e5682ce3cd7fd83064a8c56c4c781e7c101a4"
+        }
+      ],
+      "fingerprint": "5923379e1ddc896a43eaec9c887dad5224665fa1f3d0934e0f95368e6f6e5603"
     }
   ]
 }
