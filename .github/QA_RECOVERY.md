@@ -31,23 +31,30 @@ and `open` in the existing isolated session, then authenticate and snapshot
 again. This guard prevents accidental commands; it is not an OS sandbox for
 arbitrary code.
 
-After an implementation or verification failure, the factory still packages
-the application diff into `factory-agent-<issue>`, which is also the
-checkpoint, and confirms it as one provided patch creation succeeds. Runs made
-before this change also uploaded the same files as `factory-handoff-<issue>`. Protected paths are removed using the same patch policy.
-The failed job stays failed and neither final verification nor PR publication
-can run. Failed checkpoints do not automatically dispatch another run.
+After an implementation or verification failure, the factory still seals the
+application diff, with protected paths removed by the same patch policy, and
+uploads it in `factory-agent-<issue>`. That artifact is also the recovery
+checkpoint: it counts as one only when patch creation succeeded and the upload
+carries the patch, pipeline state and task metadata. Runs made before this was
+introduced also uploaded the same files as `factory-handoff-<issue>`. The failed
+job stays failed, so final verification does not run, but the task still
+publishes its reports and creates or updates a build PR marked failed when a
+safe code diff exists. A failed checkpoint never dispatches another run by
+itself.
 
-To recover, fix the control plane first and dispatch `code-agent-continue` with
-the Issue number and the run containing the saved checkpoint, through
-`handoff.mjs dispatch --issue <issue> --previous-run-id <run> --continuation <n>`.
-The helper requires `GITHUB_TOKEN` and `GITHUB_REPOSITORY`. Artifacts expire after
-14 days. Ordinary `workflow_dispatch` does not restore a checkpoint. A re-run of
+To recover, fix the cause first, then run the Code Agent NocoBase Task workflow
+through `workflow_dispatch` with `issue_number` and `recovery_run_id` set to the
+failed run; the failure notice on the Issue gives both values. The new run
+restores the checkpoint, keeps the task's counters and pinned control plane,
+and continues the saved phase. [RECOVERY.md](RECOVERY.md) lists which failures
+are recoverable and what the recovery checks. Artifacts expire after 14 days. A
+GitHub Re-run of an implementation or repair attempt is rejected; a re-run of
 an existing continuation restores that event's original source checkpoint.
 
-Regression checks: `pnpm factory:test`. The Issue-driven integration test must
-start after the fix is on the default branch, since factory jobs deliberately
-check out their control plane from that branch.
+Regression checks: `pnpm factory:test`. A task keeps the control plane it
+recorded as `control_sha` for its continuations and recoveries, so an
+Issue-driven integration test of a fix must start a new task after the fix is
+on the default branch.
 
 Claude Code/Codex load `pre-tool-use-qa-guard.mjs` as a PreToolUse hook (stderr +
 exit 2); OpenCode loads `opencode-qa-guard.mjs` as a tool.execute.before plugin.

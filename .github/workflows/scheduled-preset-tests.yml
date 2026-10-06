@@ -6,9 +6,10 @@ on:
     paths:
       - '.github/workflows/scheduled-preset-tests.yml'
       - '.github/scripts/scheduled-preset-tests.mjs'
-  # GitHub cron uses UTC: 18:23 is 02:23 the next day in UTC+8. Minute 0 is
-  # GitHub's most congested slot, and 19:00 runs started three to five hours
-  # late; an off-hour minute is dispatched much closer to its time.
+  # GitHub cron uses UTC: 18:23 is 02:23 the next day in UTC+8. That is only
+  # the planned time: scheduled runs here start hours late (19:00 ran three to
+  # five hours late, and daily-findings' off-hour 20:17 still runs 2.7 to five
+  # hours late). Dispatch the workflow by hand when the time matters.
   schedule:
     - cron: '23 18 * * *'
   workflow_dispatch:

@@ -197,6 +197,31 @@ export const GITHUB_RETRY_DELAYS_MS = [1000, 3000, 8000];
 // dropped connection: retried for the methods above, never for POST/DELETE.
 export const GITHUB_REQUEST_TIMEOUT_MS = 30_000;
 
+// The (method, route, body) shape the report scripts call, backed by
+// GitHubClient so their reads and updates ride out 502/503/504 and dropped
+// connections the same way: GET/HEAD/PUT/PATCH retry, POST/DELETE never do.
+// The client is built on first use, so importing a script for its pure helpers
+// needs no token.
+export function repositoryApi({
+  repository = () => process.env.GITHUB_REPOSITORY,
+  token = () => process.env.GITHUB_TOKEN,
+  apiUrl = () => process.env.GITHUB_API_URL || 'https://api.github.com',
+  timeoutMs = GITHUB_REQUEST_TIMEOUT_MS,
+  retryDelays = GITHUB_RETRY_DELAYS_MS,
+} = {}) {
+  let client;
+  return async (method, route, body) => {
+    client ??= new GitHubClient({
+      token: typeof token === 'function' ? token() : token,
+      repository: typeof repository === 'function' ? repository() : repository,
+      apiUrl: typeof apiUrl === 'function' ? apiUrl() : apiUrl,
+      timeoutMs,
+      retryDelays,
+    });
+    return client.request(method, route, { body });
+  };
+}
+
 export class GitHubClient {
   constructor({
     token,

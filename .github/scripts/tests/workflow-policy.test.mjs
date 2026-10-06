@@ -770,7 +770,15 @@ test('a skipped task run starts no report, sweep or preview from its completion 
     listeners++;
     const jobs = [...source.split(/^jobs:\n/m)[1].matchAll(/^ {2}([a-z][a-z-]*):\n((?: {4}.*\n|\s*\n)*)/gm)];
     const [, first, body] = jobs[0];
-    assert.ok(skipsSkipped(condition(body)), `${name}: ${first}`);
+    // A first job that only runs on workflow_dispatch never sees the event;
+    // the job after it then filters it (comment-build-queue's wait job).
+    const dispatchOnly = /^github\.event_name == 'workflow_dispatch' && /.test(condition(body));
+    assert.ok(dispatchOnly || skipsSkipped(condition(body)), `${name}: ${first}`);
+    if (dispatchOnly) {
+      const [, second, next] = jobs[1];
+      assert.match(next, new RegExp(`^ {4}needs: ${first}$`, 'm'), `${name}: ${second}`);
+      assert.ok(skipsSkipped(condition(next)), `${name}: ${second}`);
+    }
     for (const [, id, consumer] of jobs.filter(([, , text]) => /^ {4}needs: dispatch-gate$/m.test(text))) {
       consumers++;
       assert.ok(skipsSkipped(condition(consumer)), `${name}: ${id}`);
@@ -794,7 +802,7 @@ test('a failed visual report publication fails its run and names the replay', ()
     '- name: Keep publication failures visible without rebuilding the application\n',
   )[1];
   assert.ok(visible, 'the failure step is missing');
-  assert.match(visible, /^ {8}if: always\(\) && steps\.publish\.outcome == 'failure'\n/m);
+  assert.match(visible, /^ {8}if: \$\{\{ !cancelled\(\) && steps\.publish\.outcome == 'failure' \}\}\n/m);
   assert.match(
     visible,
     /::error::[^\n]*Publish Task Visual Report[^\n]*run_id=\$SOURCE_RUN_ID[^\n]*attempt=\$SOURCE_ATTEMPT[^\n]*REPORT_DISPATCH\.md/,
@@ -803,7 +811,7 @@ test('a failed visual report publication fails its run and names the replay', ()
   // The same shape the history publisher uses.
   assert.match(
     readFileSync(path.resolve(import.meta.dirname, '../../workflows/publish-agent-history.yml'), 'utf8'),
-    /- name: Keep publication failures visible without rebuilding the application\n\s+if: always\(\) && \(steps\.pack\.outcome == 'failure'/,
+    /- name: Keep publication failures visible without rebuilding the application\n\s+if: \$\{\{ !cancelled\(\) && \(steps\.pack\.outcome == 'failure'/,
   );
 });
 

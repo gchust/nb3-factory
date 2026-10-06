@@ -15,17 +15,22 @@ fi
 # continuation does not produce the downstream workflow_run event.
 # A request normally returns in a second or two. Worst case per report: three
 # 15 s attempts (plus 5 s to kill each) and the 2 s and 8 s backoffs, 70 s; six
-# reports take 420 s, inside the 10-minute dispatch-reports job in
-# code-agent-task.yml. task-report-dispatch.test.mjs checks that budget.
+# reports and a comment round's queue request take 490 s, inside the 10-minute
+# dispatch-reports job in code-agent-task.yml. task-report-dispatch.test.mjs
+# checks that budget.
 DISPATCH_ATTEMPT_TIMEOUT=15s
 DISPATCH_KILL_AFTER=5s
 DISPATCH_BACKOFF=(2 8)
 dispatch() {
   local workflow="$1"
+  local fields=(--field "run_id=$SOURCE_RUN_ID" --field "attempt=$SOURCE_ATTEMPT")
+  # The comment queue reconciles one Issue once this run has completed.
+  if [[ "$workflow" == comment-build-queue.yml ]]; then
+    fields=(--field "issue_number=$ISSUE_NUMBER" --field "run_id=$SOURCE_RUN_ID")
+  fi
   for attempt in 1 2 3; do
     if timeout --kill-after="$DISPATCH_KILL_AFTER" "$DISPATCH_ATTEMPT_TIMEOUT" gh workflow run "$workflow" \
-      --repo "$GITHUB_REPOSITORY" --ref "$FACTORY_REPORT_REF" \
-      --field "run_id=$SOURCE_RUN_ID" --field "attempt=$SOURCE_ATTEMPT"; then
+      --repo "$GITHUB_REPOSITORY" --ref "$FACTORY_REPORT_REF" "${fields[@]}"; then
       echo "Requested $workflow for run $SOURCE_RUN_ID, attempt $SOURCE_ATTEMPT."
       return 0
     fi
@@ -39,9 +44,8 @@ dispatch() {
   return 1
 }
 
-published="${FACTORY_TASK_PUBLISHED:-${FACTORY_TASK_DELIVERED:-false}}"
 # Published failed work has evidence and deserves a preview attempt too.
-# Keep the legacy variable for workflows pinned before failed publication.
+published="${FACTORY_TASK_PUBLISHED:-false}"
 request() {
   local workflow="$1"
   case "$workflow" in
@@ -58,17 +62,13 @@ request() {
   dispatch "$workflow"
 }
 
-# With workflow names, request only those: the task requests each report in a
-# step of its own, so report-dispatch-gate.yml can tell which ones went out.
-# Without, request every report.
+# The task requests each report in a step of its own, so
+# report-dispatch-gate.yml can tell which ones went out. The dispatcher is
+# checked out at the calling workflow's own commit, so every caller names its
+# workflows.
 if (( $# == 0 )); then
-  set -- \
-    report-task-progress.yml \
-    report-task-usage.yml \
-    publish-agent-history.yml \
-    publish-retro.yml \
-    publish-visual-report.yml \
-    deploy-preview.yml
+  echo "Name the report workflows to request." >&2
+  exit 2
 fi
 # The interaction history and retro are worth keeping for failures and
 # handoffs too, not only deliveries.
@@ -77,6 +77,12 @@ for workflow in "$@"; do
   case "$workflow" in
     report-task-progress.yml | report-task-usage.yml | publish-agent-history.yml | \
       publish-retro.yml | publish-visual-report.yml | deploy-preview.yml) ;;
+    comment-build-queue.yml)
+      if [[ ! "${ISSUE_NUMBER:-}" =~ ^[1-9][0-9]*$ ]]; then
+        echo "comment-build-queue.yml needs ISSUE_NUMBER." >&2
+        exit 2
+      fi
+      ;;
     *) echo "Unknown report workflow: $workflow" >&2; exit 2 ;;
   esac
   request "$workflow" || failed=1

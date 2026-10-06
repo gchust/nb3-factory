@@ -29,10 +29,48 @@ jobs:
     permissions:
       actions: read
 
-  publish:
+  # Waits for the source run in a job that holds no concurrency group, so the
+  # locked job below never holds it while the task's own dispatch-reports job
+  # is still finishing (up to ten minutes); its select then reads a completed
+  # run at once. Same condition as the job it feeds.
+  wait-for-source:
     needs: dispatch-gate
     if: >-
       !cancelled() && needs.dispatch-gate.outputs.covered != 'true' &&
+      (github.event_name != 'workflow_run' || github.event.workflow_run.conclusion != 'skipped')
+    outputs:
+      attempt: ${{ steps.wait.outputs.attempt }}
+    runs-on: ubuntu-24.04
+    # wait-for-task-run.mjs gives up after 11 minutes.
+    timeout-minutes: 15
+    permissions:
+      actions: read
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          path: control
+          persist-credentials: false
+          sparse-checkout: .github/scripts
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24.x
+      - name: Wait for the source task run to complete
+        id: wait
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          SOURCE_RUN_ID: ${{ inputs.run_id || github.event.workflow_run.id }}
+          SOURCE_ATTEMPT: ${{ inputs.attempt || github.event.workflow_run.run_attempt }}
+        run: |
+          node control/.github/scripts/wait-for-task-run.mjs \
+            --run-id "$SOURCE_RUN_ID" --attempt "$SOURCE_ATTEMPT"
+
+  publish:
+    needs: [dispatch-gate, wait-for-source]
+    if: >-
+      !cancelled() && needs.wait-for-source.result == 'success' &&
+      needs.dispatch-gate.outputs.covered != 'true' &&
       (github.event_name != 'workflow_run' || github.event.workflow_run.conclusion != 'skipped')
     runs-on: ubuntu-24.04
     timeout-minutes: 15
@@ -46,7 +84,9 @@ jobs:
       issues: write
     env:
       SOURCE_RUN_ID: ${{ inputs.run_id || github.event.workflow_run.id }}
-      SOURCE_ATTEMPT: ${{ inputs.attempt || github.event.workflow_run.run_attempt }}
+      # The attempt wait-for-source settled on, so a re-run started meanwhile
+      # cannot make this job, holding its group, wait for a newer attempt.
+      SOURCE_ATTEMPT: ${{ needs.wait-for-source.outputs.attempt || inputs.attempt || github.event.workflow_run.run_attempt }}
     steps:
       # Artifact content is data, never application code to execute.
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -145,7 +185,7 @@ jobs:
           echo "asset_url=https://github.com/$GITHUB_REPOSITORY/releases/download/factory-history/$ASSET" >> "$GITHUB_OUTPUT"
 
       - name: Report published or missing history on the task Issue
-        if: always() && steps.source.outputs.ready == 'true'
+        if: ${{ !cancelled() && steps.source.outputs.ready == 'true' }}
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: |
@@ -156,5 +196,5 @@ jobs:
             --fallback-url "https://github.com/$GITHUB_REPOSITORY/actions/runs/$SOURCE_RUN_ID"
 
       - name: Keep publication failures visible without rebuilding the application
-        if: always() && (steps.pack.outcome == 'failure' || steps.release.outcome == 'failure' || steps.task.outcome == 'failure' || steps.agent.outcome == 'failure' || steps.final.outcome == 'failure' || steps.reply.outcome == 'failure')
+        if: ${{ !cancelled() && (steps.pack.outcome == 'failure' || steps.release.outcome == 'failure' || steps.task.outcome == 'failure' || steps.agent.outcome == 'failure' || steps.final.outcome == 'failure' || steps.reply.outcome == 'failure') }}
         run: exit 1

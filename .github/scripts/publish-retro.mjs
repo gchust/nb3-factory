@@ -1,9 +1,8 @@
 import { taskOutcome, outcomeLabels } from './task-outcome.mjs';
-import { isValidTargetBranch } from './factory-lib.mjs';
+import { isValidTargetBranch, repositoryApi } from './factory-lib.mjs';
 import { appendFileSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { setTimeout as sleep } from 'node:timers/promises';
 
 import { scrubSecrets } from './agent-history.mjs';
 import { readJson } from './visual-report.mjs';
@@ -45,32 +44,10 @@ const output = (name, value) =>
   process.env.GITHUB_OUTPUT &&
   appendFileSync(process.env.GITHUB_OUTPUT, `${name}=${value}\n`);
 
-async function api(method, route, body, attempts = 3) {
-  let lastError;
-  for (let attempt = 1; attempt <= attempts; attempt++) {
-    try {
-      const response = await fetch(
-        `${process.env.GITHUB_API_URL || 'https://api.github.com'}/repos/${repository}${route}`,
-        {
-          method,
-          headers: {
-            Authorization: `Bearer ${process.env.GITHUB_TOKEN}`,
-            Accept: 'application/vnd.github+json',
-            'Content-Type': 'application/json',
-          },
-          body: body === undefined ? undefined : JSON.stringify(body),
-          signal: globalThis.AbortSignal.timeout(30_000),
-        },
-      );
-      if (!response.ok)
-        throw new Error(`GitHub ${method} failed (${response.status})`);
-      return response.status === 204 ? null : response.json();
-    } catch (error) {
-      lastError = error;
-      if (attempt < attempts) await sleep(1_000 * attempt);
-    }
-  }
-  throw lastError;
+// Retries transient failures of idempotent requests; see repositoryApi.
+const github = repositoryApi();
+function api(method, route, body) {
+  return github(method, route, body);
 }
 
 async function list(route, key) {

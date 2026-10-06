@@ -1,3 +1,4 @@
+import { repositoryApi } from './factory-lib.mjs';
 // Progress is observational only: no raw logs, prompts, screenshots or model calls.
 // The sender has the existing contents permission; only the isolated publisher
 // can write comments. A failed notification never changes the build result.
@@ -113,16 +114,11 @@ export function shouldSend(previous, next, lastAttempt, now) {
   return !previous || changes(previous) !== changes(next) || now - lastAttempt >= HEARTBEAT_INTERVAL_MS;
 }
 
+// Retries transient failures of idempotent requests; a POST (a comment or a
+// progress dispatch) is never repeated. See repositoryApi.
 function githubApi(repository, token) {
   if (!/^[\w.-]+\/[\w.-]+$/u.test(repository ?? '') || !token) throw new Error('Missing progress API configuration');
-  return async (method, route, body) => {
-    const response = await fetch(`${process.env.GITHUB_API_URL || 'https://api.github.com'}/repos/${repository}${route}`, {
-      method, headers: { Authorization: `Bearer ${token}`, Accept: 'application/vnd.github+json', 'Content-Type': 'application/json' },
-      body: body === undefined ? undefined : JSON.stringify(body), signal: AbortSignal.timeout(10_000),
-    });
-    if (!response.ok) throw new Error(`Progress API ${method}: HTTP ${response.status}`);
-    return response.status === 204 ? null : response.json();
-  };
+  return repositoryApi({ repository, token, timeoutMs: 10_000 });
 }
 async function list(api, route, key) {
   const items = [];

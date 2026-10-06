@@ -334,7 +334,48 @@ export async function main(event, client) {
   }
   if (errors.length) throw new Error(errors.join('\n'));
 }
+// A finished comment round requests a reconcile from its own last job, while
+// its run is still in progress; the queue only releases a receipt once the run
+// has completed. This wait runs outside the queue's lock. A run that is not a
+// task run, or one that stays in progress past the deadline, is left to the
+// reconcile itself, which treats an unfinished run as still active.
+export async function waitForSourceRun(
+  client,
+  runId,
+  {
+    timeoutMs = 20 * 60_000,
+    intervalMs = 15_000,
+    now = Date.now,
+    sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
+  } = {},
+) {
+  if (!/^[1-9]\d*$/.test(String(runId))) throw new Error('Invalid source run id.');
+  const deadline = now() + timeoutMs;
+  for (;;) {
+    const run = await client.request('GET', `/actions/runs/${runId}`);
+    if (run.path !== '.github/workflows/code-agent-task.yml')
+      return 'not-a-task-run';
+    if (run.status === 'completed') return 'completed';
+    if (now() + intervalMs > deadline) return 'timed-out';
+    await sleep(intervalMs);
+  }
+}
+
 if (
+  process.argv[1] &&
+  import.meta.url === pathToFileURL(process.argv[1]).href &&
+  process.argv[2] === '--wait-run'
+) {
+  const result = await waitForSourceRun(
+    new GitHubClient({
+      token: process.env.GITHUB_TOKEN,
+      repository: process.env.GITHUB_REPOSITORY,
+      apiUrl: process.env.GITHUB_API_URL,
+    }),
+    process.argv[3],
+  );
+  console.log(`Source run ${process.argv[3]}: ${result}`);
+} else if (
   process.argv[1] &&
   import.meta.url === pathToFileURL(process.argv[1]).href
 ) {
