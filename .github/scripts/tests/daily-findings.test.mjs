@@ -802,10 +802,16 @@ test('the workflow gives Feishu credentials only to the send step', () => {
   );
   // The Pages base URL comes from the read-only configure-pages step, which
   // runs even when nothing changed, so a re-sent digest links to the site
-  // rather than to the guessed default; the deploy stays conditional.
+  // rather than to the guessed default; the deploy stays conditional. A
+  // transient failure of it falls back to the default instead of skipping
+  // the digest, which still waits for a deployment when the archive changed.
   assert.match(
     before,
-    /- uses: actions\/configure-pages@[0-9a-f]{40} # v\d[^\n]*\n {8}id: pages\n {6}- uses: actions\/upload-pages-artifact/,
+    /- uses: actions\/configure-pages@[0-9a-f]{40} # v\d[^\n]*\n {8}id: pages\n {8}continue-on-error: true\n {6}- uses: actions\/upload-pages-artifact/,
+  );
+  assert.match(
+    send,
+    /!cancelled\(\) && steps\.archive\.outcome == 'success' &&\n\s+\(steps\.archive\.outputs\.changed != 'true' \|\| steps\.deployment\.outcome == 'success'\)/,
   );
   for (const action of ['upload-pages-artifact', 'deploy-pages'])
     assert.match(
@@ -834,7 +840,10 @@ test('the workflow gives Feishu credentials only to the send step', () => {
     before,
     /DAILY_NOTIFY: \$\{\{ vars\.FACTORY_FEISHU_DIGEST == 'true' && /,
   );
-  assert.match(send, /^\s+if: vars\.FACTORY_FEISHU_DIGEST == 'true' && /);
+  assert.match(
+    send,
+    /^\s+if: >-\n(?:\s+[^\n]*&&\n)*\s+vars\.FACTORY_FEISHU_DIGEST == 'true' && /,
+  );
   assert.match(
     send,
     /FEISHU_WEBHOOK_SECRET: \$\{\{ secrets\.FEISHU_WEBHOOK_SECRET \}\}/,

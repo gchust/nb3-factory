@@ -131,6 +131,45 @@ test('selects the agent artifact for failed runs too', () => {
   );
 });
 
+test('selects only an unexpired agent artifact from the selected attempt', () => {
+  const run = {
+    path: '.github/workflows/code-agent-task.yml',
+    head_repository: { full_name: 'owner/repo' },
+    event: 'issues',
+    status: 'completed',
+  };
+  const jobs = [
+    {
+      name: 'agent',
+      started_at: '2026-10-06T02:00:00Z',
+      completed_at: '2026-10-06T03:00:00Z',
+    },
+  ];
+  const first = {
+    id: 1,
+    name: 'factory-agent-42',
+    created_at: '2026-10-06T01:30:00Z',
+  };
+  const second = {
+    id: 2,
+    name: 'factory-agent-42',
+    created_at: '2026-10-06T02:30:00Z',
+  };
+  assert.equal(
+    selectRetroArtifact(run, [first, second], 'owner/repo', jobs).artifact.id,
+    2,
+  );
+  assert.equal(
+    selectRetroArtifact(
+      run,
+      [first, { ...second, expired: true }],
+      'owner/repo',
+      jobs,
+    ),
+    null,
+  );
+});
+
 test('publishes an updatable retro comment and appends to the ledger', async (t) => {
   const root = mkdtempSync(path.join(os.tmpdir(), 'nb3-retro-'));
   const artifacts = path.join(root, 'artifacts');

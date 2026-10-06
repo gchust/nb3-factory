@@ -782,6 +782,8 @@ if (
       `${decided} problem(s) classified by rules; ${pending.problems.length} left for the Agent; ${pending.duplicates.length} to check against their task's problems.`,
     );
   } else if (mode === 'run') {
+    // Fail the step so the workflow's continue-on-error and its summary
+    // warning carry the signal; the job and the delivery still go on.
     try {
       await runModelClassification(args.input);
       console.log('Remaining problems classified by the Agent');
@@ -789,6 +791,7 @@ if (
       console.log(
         `::warning::Agent classification failed; only rule decisions are sent: ${error.message}`,
       );
+      process.exitCode = 1;
     }
   } else throw new Error('Expected taxonomy, prepare or run');
 }

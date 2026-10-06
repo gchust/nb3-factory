@@ -80,7 +80,9 @@ jobs:
   review:
     needs: claim
     runs-on: ubuntu-24.04
-    timeout-minutes: 150
+    # 15 install + 10 Claude install + 120 agent budget, plus checkouts,
+    # the store restore and patch creation, so the agent's own timeout fires first.
+    timeout-minutes: 175
     permissions:
       contents: read
     steps:

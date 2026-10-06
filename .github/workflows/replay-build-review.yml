@@ -263,7 +263,7 @@ jobs:
 
   report:
     needs: [prepare, review]
-    if: always() && needs.prepare.outputs.ready == 'true' && needs.review.outputs.artifact_id != ''
+    if: ${{ !cancelled() && needs.prepare.outputs.ready == 'true' && needs.review.outputs.artifact_id != '' }}
     # actions: write lets the reused reporter request evaluation delivery without waiting on it.
     permissions:
       contents: write
@@ -272,13 +272,9 @@ jobs:
       pull-requests: write
       pages: write
       id-token: write
-    # Whether a called workflow's own concurrency group covers the job that
-    # calls it is not documented; holding the group here makes sure the publish
-    # never runs beside daily-findings and classify-findings, which write the
-    # same pages.
-    concurrency:
-      group: factory-task-usage
-      queue: max
+    # The called reporter's writing jobs hold factory-task-usage themselves, so
+    # the publish never runs beside daily-findings and classify-findings. Holding
+    # the group here too would deadlock: GitHub cancels the call.
     uses: ./.github/workflows/report-task-usage.yml
     with:
       run_id: ${{ needs.prepare.outputs.run_id }}

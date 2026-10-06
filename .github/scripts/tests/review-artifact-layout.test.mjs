@@ -9,12 +9,17 @@ test('every job downloads each exact-ID review input flat within its own role di
   // prepare resolves the IDs; review and publish download the same originals
   // from the source run rather than a copy prepare re-uploaded, so the ~744 MB
   // of evidence crosses the artifact store once per reader instead of twice.
-  const sources = { prepare: 'steps.select.outputs', review: 'needs.prepare.outputs', publish: 'needs.prepare.outputs' };
-  for (const [name, source] of Object.entries(sources)) {
+  // prepare binds the rubric from the task evidence alone, so it fetches only that.
+  const sources = {
+    prepare: ['steps.select.outputs', ['task']],
+    review: ['needs.prepare.outputs', ['task', 'agent', 'final']],
+    publish: ['needs.prepare.outputs', ['task', 'agent', 'final']],
+  };
+  for (const [name, [source, roles]] of Object.entries(sources)) {
     const downloads = job(name).split('      - uses: actions/download-artifact@').slice(1);
     const byId = downloads.filter(block => block.split('      - ')[0].includes('artifact-ids:'));
-    assert.equal(byId.length, 3, name);
-    for (const role of ['task', 'agent', 'final']) {
+    assert.equal(byId.length, roles.length, name);
+    for (const role of roles) {
       const step = byId.find(block => block.includes(`artifact-ids: \${{ ${source}.${role} }}`))?.split('      - ')[0];
       assert.ok(step, `${name}: ${role}`);
       assert.match(step, /merge-multiple: true/);

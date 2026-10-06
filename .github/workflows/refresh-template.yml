@@ -24,8 +24,10 @@ on:
       - '.github/scripts/timed-command.mjs'
       - '.github/scripts/timing.mjs'
       # Copied into the application by the overlay.
+      # overlay-factory.mjs reads these from the control checkout.
       - '.npmrc'
       - 'README.MD'
+      - 'package.json'
   workflow_dispatch:
     inputs:
       dry_run:

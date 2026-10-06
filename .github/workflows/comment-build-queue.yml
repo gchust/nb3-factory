@@ -21,12 +21,6 @@ on:
 
 permissions: {}
 
-# Only this workflow writes queue receipts. Keep admission and completion
-# atomic relative to other queue events, including events for the same Issue.
-concurrency:
-  group: factory-comment-build-queue
-  queue: max
-
 jobs:
   reconcile:
     # A skipped task run (an Issue from someone without repository access)
@@ -39,6 +33,12 @@ jobs:
        contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.comment.author_association)))
     runs-on: ubuntu-24.04
     timeout-minutes: 10
+    # Only this workflow writes queue receipts. Keep admission and completion
+    # atomic relative to other queue events, including events for the same Issue.
+    # At job level, so an event the job condition drops never waits in this queue.
+    concurrency:
+      group: factory-comment-build-queue
+      queue: max
     permissions:
       actions: read
       contents: write

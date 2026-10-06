@@ -127,31 +127,15 @@ jobs:
           run-id: ${{ steps.select.outputs.source_run }}
           github-token: ${{ github.token }}
           path: input/task
-      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
-        if: steps.select.outputs.ready == 'true'
-        with:
-          artifact-ids: ${{ steps.select.outputs.agent }}
-          merge-multiple: true
-          run-id: ${{ steps.select.outputs.source_run }}
-          github-token: ${{ github.token }}
-          path: input/agent
-      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
-        if: steps.select.outputs.ready == 'true'
-        with:
-          artifact-ids: ${{ steps.select.outputs.final }}
-          merge-multiple: true
-          run-id: ${{ steps.select.outputs.source_run }}
-          github-token: ${{ github.token }}
-          path: input/final
       - name: Bind the rubric to its actual delivered commit
         id: bind
         if: steps.select.outputs.ready == 'true'
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: node control/.github/scripts/independent-review.mjs bind --input input
-      # Only what this job produced. The task, agent and final evidence stays in
-      # the source run's artifacts, which the later jobs download by exact ID;
-      # re-uploading it here moved hundreds of megabytes twice for nothing.
+      # Only what this job produced. Binding reads the task evidence alone; the
+      # agent and final evidence stays in the source run's artifacts, which the
+      # later jobs download by exact ID, so this job never fetches them.
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         if: always() && steps.select.outputs.ready == 'true'
         with:
@@ -166,7 +150,8 @@ jobs:
     needs: prepare
     if: needs.prepare.outputs.ready == 'true'
     runs-on: ubuntu-24.04
-    timeout-minutes: 25
+    # 10 install + 15 review budget, plus checkouts and three evidence downloads.
+    timeout-minutes: 35
     permissions:
       contents: read
       # To download the source run's artifacts by ID.
@@ -345,14 +330,14 @@ jobs:
         run: node control/.github/scripts/independent-review.mjs validate --input input --workspace workspace --output review
       - name: Pack only review outputs for long-term retention
         id: archive
-        if: always()
+        if: ${{ !cancelled() }}
         continue-on-error: true
         env:
           VALIDATION_STATUS: ${{ steps.validation.outcome }}
         run: node control/.github/scripts/independent-review.mjs archive --input input --output review --archive "$RUNNER_TEMP/review-archive" --status "$VALIDATION_STATUS"
       - name: Upload independent review history
         id: release
-        if: always() && steps.archive.outputs.asset != ''
+        if: ${{ !cancelled() && steps.archive.outputs.asset != '' }}
         continue-on-error: true
         env:
           GH_TOKEN: ${{ github.token }}
@@ -367,19 +352,19 @@ jobs:
           gh release upload factory-history "$RUNNER_TEMP/review-archive/$ASSET" --repo "$GITHUB_REPOSITORY" --clobber
           echo "url=https://github.com/$GITHUB_REPOSITORY/releases/download/factory-history/$ASSET" >> "$GITHUB_OUTPUT"
       - name: Publish results without altering the business verdict
-        if: always()
+        if: ${{ !cancelled() }}
         env:
           GITHUB_TOKEN: ${{ github.token }}
           VALIDATION_STATUS: ${{ steps.validation.outcome }}
           REVIEW_ARCHIVE_URL: ${{ steps.release.outputs.url }}
         run: node control/.github/scripts/independent-review.mjs publish --input input --output review --status "$VALIDATION_STATUS"
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-        if: always()
+        if: ${{ !cancelled() }}
         with:
           name: factory-validated-review-${{ github.run_id }}-${{ github.run_attempt }}
           path: review/validated-review.json
           retention-days: 14
           if-no-files-found: warn
       - name: Preserve publication failure without rebuilding the application
-        if: always() && (steps.archive.outcome != 'success' || steps.release.outcome != 'success')
+        if: ${{ !cancelled() && (steps.archive.outcome != 'success' || steps.release.outcome != 'success') }}
         run: exit 1

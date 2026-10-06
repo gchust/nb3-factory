@@ -23,7 +23,7 @@ test('a job timeout still seals the patch and checkpoint of work that started', 
   assert.match(allowEmpty, /steps\.implementation\.outcome == 'cancelled'/);
   assert.match(allowEmpty, /steps\.verify\.outcome == 'cancelled'/);
   const checkpoint = between(
-    '- name: Upload handoff checkpoint',
+    '- name: Confirm the handoff checkpoint',
     '- name: Dispatch continuation run',
   );
   assert.match(

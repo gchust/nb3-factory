@@ -17,10 +17,6 @@ on:
 
 permissions: {}
 
-concurrency:
-  group: factory-agent-history
-  queue: max
-
 jobs:
   # The task usually requested this run itself; see report-dispatch-gate.yml.
   # A skipped task run (an Issue from someone without repository access) ran
@@ -40,6 +36,10 @@ jobs:
       (github.event_name != 'workflow_run' || github.event.workflow_run.conclusion != 'skipped')
     runs-on: ubuntu-24.04
     timeout-minutes: 15
+    # At job level, so an event the job condition drops never waits in this queue.
+    concurrency:
+      group: factory-agent-history
+      queue: max
     permissions:
       actions: read
       contents: write

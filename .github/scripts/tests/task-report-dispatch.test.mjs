@@ -436,9 +436,23 @@ test('the per-report steps never run the dispatcher from the task\'s pinned cont
   assert.match(script, /for workflow in "\$@"; do/);
 });
 
+test('a question round requests its history like the build reports, and not after a cancel', () => {
+  const task = readWorkflow('code-agent-task.yml');
+  const job = task.split('\n  dispatch-reply-history:\n')[1].split(/\n {2}[a-z][a-z-]*:\n/)[0];
+  assert.match(job, /^ {4}if: \$\{\{ !cancelled\(\) && /m);
+  assert.match(job, /ref: \$\{\{ github\.workflow_sha \}\}/);
+  // The gate reads this step name, and the dispatcher retries each request.
+  assert.match(
+    job,
+    /- name: Request publish-agent-history\.yml\n[\s\S]*?run: bash dispatcher\/\.github\/scripts\/dispatch-task-reports\.sh publish-agent-history\.yml\n?$/,
+  );
+  assert.doesNotMatch(job, /gh workflow run/);
+});
+
 test('workflow_run copies of dispatched reports skip once the task requested them', () => {
   const gate = readWorkflow('report-dispatch-gate.yml');
-  assert.match(gate, /select\(\.name == "dispatch-reports"\)/);
+  // A question round requests its history from dispatch-reply-history.
+  assert.match(gate, /select\(\.name == "dispatch-reports" or \.name == "dispatch-reply-history"\)/);
   assert.match(gate, /actions: read/);
   assert.match(gate, /inputs:\n\s+workflow:\n[\s\S]*?required: true/);
   for (const [name, job] of reportWorkflows) {

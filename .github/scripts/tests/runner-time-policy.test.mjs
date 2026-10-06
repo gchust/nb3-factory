@@ -139,10 +139,11 @@ test('downstream jobs download only the small patch artifact', () => {
     );
   }
   // The complete diagnostics are still uploaded once, for reports and
-  // recovery, and downloaded only by the composite action's fallback and the
-  // failure notice's.
+  // recovery, and downloaded only by the composite action's fallback, the
+  // failure notice's and, as the checkpoint, by continuations and recoveries
+  // (legacy control metadata, the failed-run checkpoint and the handoff).
   const agent = jobOf(task, 'agent');
-  assert.equal([...task.matchAll(/name: factory-agent-\$/g)].length, 2);
+  assert.equal([...task.matchAll(/name: factory-agent-\$/g)].length, 5);
   assert.equal([...applyPatch.matchAll(/name: factory-agent-\$/g)].length, 1);
   assert.equal(
     [

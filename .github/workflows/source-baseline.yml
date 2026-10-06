@@ -24,6 +24,10 @@ on:
       - '.github/scripts/stop-stale-app.sh'
       - '.github/scripts/timed-command.mjs'
       - '.github/scripts/timing.mjs'
+      # overlay-factory.mjs reads these from the control checkout.
+      - '.npmrc'
+      - 'README.MD'
+      - 'package.json'
   workflow_dispatch:
     inputs:
       source_sha:

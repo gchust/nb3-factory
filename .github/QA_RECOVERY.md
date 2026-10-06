@@ -32,8 +32,9 @@ again. This guard prevents accidental commands; it is not an OS sandbox for
 arbitrary code.
 
 After an implementation or verification failure, the factory still packages
-the application diff and uploads `factory-handoff-<issue>`, provided patch
-creation succeeds. Protected paths are removed using the same patch policy.
+the application diff into `factory-agent-<issue>`, which is also the
+checkpoint, and confirms it as one provided patch creation succeeds. Runs made
+before this change also uploaded the same files as `factory-handoff-<issue>`. Protected paths are removed using the same patch policy.
 The failed job stays failed and neither final verification nor PR publication
 can run. Failed checkpoints do not automatically dispatch another run.
 
