@@ -311,7 +311,8 @@ test('normalization CLI validates source run over HTTP and writes no QA input in
   child.stdout.resume(); let stderr = ''; child.stderr.on('data', chunk => { stderr += chunk; });
   const timer = setTimeout(() => child.kill(), 5000); t.after(() => clearTimeout(timer));
   const [code] = await once(child, 'exit'); assert.equal(code, 0, stderr);
-  assert.deepEqual(requested, [`/repos/${repository}/actions/runs/12345`, `/repos/${repository}/git/ref/heads/agent%2Fissue-182`, `/repos/${repository}/git/ref/heads/issues-182`, `/repos/${repository}/issues/182/comments?per_page=100&page=1`]);
+  // issues-182 is not a shared target, so no base receipt is read.
+  assert.deepEqual(requested, [`/repos/${repository}/actions/runs/12345`, `/repos/${repository}/git/ref/heads/agent%2Fissue-182`, `/repos/${repository}/git/ref/heads/issues-182`]);
   const prompt = write(f.root, 'implement.md', 'original requirements');
   execFileSync(process.execPath, [path.join(scripts, 'handoff-recovery.mjs'), 'context', '--checkpoint', f.root, '--prompt', prompt]);
   assert.match(readFileSync(prompt, 'utf8'), /Inspect the existing files and git diff/);

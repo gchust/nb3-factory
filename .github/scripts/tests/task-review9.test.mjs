@@ -340,11 +340,24 @@ test('prepare retries its source task and checkpoint downloads once', () => {
   }
 });
 
-function runAgentGuard(t, attempts, { failApi = false } = {}) {
+function runAgentGuard(
+  t,
+  attempts,
+  { failApi = false, pinnedHonours = true } = {},
+) {
   const guard = step('Reject a GitHub Re-run of this job', job('agent'));
   const script = guard.split('run: |\n')[1].replace(/^ {10}/gm, '');
   const root = mkdtempSync(path.join(os.tmpdir(), 'factory-review9-guard-'));
   t.after(() => rmSync(root, { recursive: true, force: true }));
+  // The pinned control plane's pipeline-state.mjs, current or older.
+  const pinned = path.join(root, 'control', '.github', 'scripts');
+  mkdirSync(pinned, { recursive: true });
+  writeFileSync(
+    path.join(pinned, 'pipeline-state.mjs'),
+    pinnedHonours
+      ? readFileSync(path.join(scripts, 'pipeline-state.mjs'), 'utf8')
+      : '// an older pipeline-state.mjs\n',
+  );
   const bin = path.join(root, 'bin');
   mkdirSync(bin);
   writeFileSync(
@@ -361,6 +374,7 @@ if (agent && agent !== 'skipped') console.log('agent');
   const env = path.join(root, 'env');
   writeFileSync(env, '');
   const result = spawnSync('bash', ['-c', script], {
+    cwd: root,
     env: {
       ...process.env,
       PATH: `${bin}:${process.env.PATH}`,
@@ -371,7 +385,11 @@ if (agent && agent !== 'skipped') console.log('agent');
     },
     encoding: 'utf8',
   });
-  return { status: result.status, env: readFileSync(env, 'utf8') };
+  return {
+    status: result.status,
+    env: readFileSync(env, 'utf8'),
+    stdout: result.stdout,
+  };
 }
 
 test('a re-run whose earlier attempts never started the agent runs as the first execution', (t) => {
@@ -384,6 +402,29 @@ test('a re-run whose earlier attempts never started the agent runs as the first 
   assert.equal(runAgentGuard(t, [null, 'cancelled']).status, 1);
   // An unreadable job list rejects.
   assert.equal(runAgentGuard(t, [null], { failApi: true }).status, 1);
+  // A task pinned to a control plane that ignores the verdict is rejected
+  // as a re-run, before anything writes agent-artifacts.
+  const older = runAgentGuard(t, [null], { pinnedHonours: false });
+  assert.equal(older.status, 1);
+  assert.equal(older.env, '');
+  assert.match(
+    older.stdout,
+    /cannot run a GitHub Re-run as its first execution/,
+  );
+  // The pinned scripts are checked out before the guard runs.
+  const agent = job('agent');
+  assert.ok(
+    agent.indexOf('- name: Check out factory control plane') <
+      agent.indexOf('- name: Reject a GitHub Re-run of this job'),
+  );
+  // ... and is the only step before the guard: nothing writes agent-artifacts.
+  const before = agent
+    .split('\n    steps:\n')[1]
+    .split('- name: Reject a GitHub Re-run of this job')[0];
+  assert.deepEqual(
+    [...before.matchAll(/- name: (.+)/g)].map(([, name]) => name),
+    ['Check out factory control plane'],
+  );
   // pipeline-state accepts attempt 2 only with that verdict.
   const saved = { ...process.env };
   t.after(() => {
@@ -418,14 +459,14 @@ test('a failed preview package no longer fails a passed verification', () => {
   assert.match(upload, /id: dist_upload\n/);
   assert.match(upload, /continue-on-error: true/);
   assert.match(upload, /if: steps\.dist_stage\.outcome == 'success'/);
+  const report = step('Report a missing deployable build', verify);
   assert.match(
-    step('Report a missing deployable build', verify),
+    report,
     /steps\.dist_stage\.outcome == 'failure' \|\| steps\.dist_upload\.outcome == 'failure'/,
   );
-  assert.match(
-    verify,
-    /dist_available: \$\{\{ steps\.dist_upload\.outcome == 'success' \}\}/,
-  );
+  // The selector keys on this step, so it must report a real conclusion.
+  assert.doesNotMatch(report, /continue-on-error/);
+  assert.doesNotMatch(verify, /dist_available/);
   // deploy-preview's selector reports the missing package instead of throwing.
   const run = {
     path: '.github/workflows/code-agent-task.yml',
@@ -433,29 +474,32 @@ test('a failed preview package no longer fails a passed verification', () => {
     event: 'issues',
     status: 'completed',
   };
-  const jobs = (uploadConclusion) => [
+  // As the jobs API reports them: a continue-on-error upload that failed
+  // concludes success, and the report step runs only when it failed.
+  const jobs = ({ missing }) => [
     {
       name: 'verify-final',
       conclusion: 'success',
       started_at: '2026-10-07T01:00:00Z',
       completed_at: '2026-10-07T02:00:00Z',
       steps: [
-        { name: 'Upload the deployable build', conclusion: uploadConclusion },
+        { name: 'Upload the deployable build', conclusion: 'success' },
+        {
+          name: 'Report a missing deployable build',
+          conclusion: missing ? 'success' : 'skipped',
+        },
       ],
     },
     { name: 'publish', conclusion: 'success' },
   ];
   assert.equal(
-    selectDistArtifact(run, jobs('failure'), [], 'owner/factory'),
+    selectDistArtifact(run, jobs({ missing: true }), [], 'owner/factory'),
     null,
   );
-  assert.equal(
-    selectDistArtifact(run, jobs('skipped'), [], 'owner/factory'),
-    null,
-  );
-  // A successful upload with no artifact is still an error.
+  // An upload that succeeded but left no artifact is still an error.
   assert.throws(
-    () => selectDistArtifact(run, jobs('success'), [], 'owner/factory'),
+    () =>
+      selectDistArtifact(run, jobs({ missing: false }), [], 'owner/factory'),
     /Expected one unexpired deployable build artifact/,
   );
 });
@@ -465,7 +509,7 @@ test('a comment round whose prepare is not ready still wakes the comment queue',
   assert.match(wake, /needs: prepare\n/);
   assert.match(
     wake,
-    /!cancelled\(\) &&\n\s+needs\.prepare\.outputs\.build_comment_id != '' &&\n\s+needs\.prepare\.outputs\.status != 'ready' &&\n\s+needs\.prepare\.outputs\.rerun_rejected != 'true'/,
+    /!cancelled\(\) &&\n\s+needs\.prepare\.outputs\.build_comment_id != '' &&\n\s+\(needs\.prepare\.outputs\.status != 'ready' \|\| needs\.prepare\.result != 'success'\) &&\n\s+needs\.prepare\.outputs\.rerun_rejected != 'true'/,
   );
   assert.match(wake, /ref: \$\{\{ github\.workflow_sha \}\}/);
   assert.match(

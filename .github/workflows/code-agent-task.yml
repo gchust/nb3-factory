@@ -128,10 +128,10 @@ jobs:
       # matching the checkpoint), relabel the Issue and post a new status. Once
       # an earlier attempt ran the build (its agent job started), stop before
       # any of that, so the run stays recoverable as the failure notice says.
-      # Only a question round (whose agent job is skipped) really re-runs this
-      # way. A build re-run whose agent never started still prepares, but the
-      # agent job rejects every attempt after the first, so it never builds:
-      # start a new run instead.
+      # A question round (whose agent job is skipped) re-runs this way, and so
+      # does a build whose earlier attempts never started the agent job (for
+      # example prepare failed on a transient error): the agent job's own guard
+      # accepts that attempt as the task's first execution.
       # rerun_rejected lets dispatch-reports mark the reports as handled, so the
       # workflow_run copies publish no empty usage or history for this attempt.
       - name: Reject a GitHub Re-run of a prepared task
@@ -171,6 +171,7 @@ jobs:
             /.github/scripts/handoff.mjs
             /.github/scripts/handoff-control.mjs
             /.github/scripts/handoff-recovery.mjs
+            /.github/scripts/source-baseline-ref.mjs
             /.github/scripts/pipeline-state.mjs
             /.github/scripts/task-policy.mjs
             /.github/scripts/acceptance-criteria.mjs
@@ -427,6 +428,15 @@ jobs:
       patch_available: ${{ steps.patch.outcome == 'success' || steps.keep_checkpoint.outcome == 'success' }}
       rerun_rejected: ${{ steps.rerun_guard.outcome == 'failure' }}
     steps:
+      # Checked out first: the re-run guard below reads the pinned scripts.
+      # Nothing here writes agent-artifacts.
+      - name: Check out factory control plane
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ needs.prepare.outputs.control_sha }}
+          path: control
+          persist-credentials: false
+
       # A GitHub Re-run starts a fresh runner without the previous attempt's
       # checkpoint, so it can never continue the task (requireFreshRunAttempt
       # rejects it too). Stop it before anything writes agent-artifacts: its
@@ -454,16 +464,16 @@ jobs:
               echo "::error::GitHub Re-run cannot preserve task repair limits. Use an explicit recovery Run (workflow_dispatch with recovery_run_id=${GITHUB_RUN_ID}) instead; this attempt uploads no checkpoint."
               exit 1
             fi
+            # A task pinned to an older control plane restores with a
+            # pipeline-state.mjs that ignores the verdict and would throw only
+            # after agent-artifacts exist: reject it here, as a re-run.
+            if ! grep -q FACTORY_FIRST_AGENT_ATTEMPT control/.github/scripts/pipeline-state.mjs; then
+              echo "::error::This task is pinned to a control plane that cannot run a GitHub Re-run as its first execution. Start a new build instead."
+              exit 1
+            fi
             echo "FACTORY_FIRST_AGENT_ATTEMPT=true" >> "$GITHUB_ENV"
             echo "::notice::No earlier attempt of this run started the agent job; attempt ${GITHUB_RUN_ATTEMPT} is the task's first execution."
           fi
-
-      - name: Check out factory control plane
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          ref: ${{ needs.prepare.outputs.control_sha }}
-          path: control
-          persist-credentials: false
 
       # Keep the handoff protocol available even when the pinned task scripts
       # predate control_sha propagation. Never use this checkout for task code.
@@ -477,6 +487,7 @@ jobs:
             /.github/scripts/handoff.mjs
             /.github/scripts/handoff-control.mjs
             /.github/scripts/handoff-recovery.mjs
+            /.github/scripts/source-baseline-ref.mjs
             /.github/scripts/pipeline-state.mjs
             /.github/scripts/task-policy.mjs
             /.github/scripts/acceptance-criteria.mjs
@@ -1176,8 +1187,6 @@ jobs:
     outputs:
       # A failed verification left its deployable build; see the upload below.
       failed_dist: ${{ steps.failed_dist_upload.outcome == 'success' }}
-      # A passed verification's preview package was uploaded.
-      dist_available: ${{ steps.dist_upload.outcome == 'success' }}
     env:
       FACTORY_BUILD_TARGET: linux-x64
       FACTORY_BUILD_NODE_VERSION: '24'
@@ -1311,7 +1320,7 @@ jobs:
       # The package only feeds the preview, which never decides acceptance:
       # a transient artifact error here must not turn a passed verification
       # into a failed delivery. deploy-preview reports the missing package
-      # (dist_available, and selectDistArtifact reads this step's outcome).
+      # (selectDistArtifact keys on "Report a missing deployable build").
       - name: Stage the deployable build and its metadata
         id: dist_stage
         continue-on-error: true
@@ -1466,10 +1475,23 @@ jobs:
             echo "::error::No application diff was saved; GitHub cannot create a build PR. The failed report and logs remain available."
             exit 1
           fi
+          push_needed=true
           if git diff --cached --quiet; then
-            echo "No new application changes; reusing the existing work branch commit."
+            # The verified tree is the base itself. Reuse the branch only when
+            # it is already at that commit: a recovery whose repair emptied the
+            # patch must still replace the failed run's published commit, or the
+            # PR would keep showing unverified content.
+            if [[ "$EXPECTED_WORK_SHA" =~ ^[a-f0-9]{40}$ ]] && \
+              [[ "$(git ls-remote origin "refs/heads/${WORK_BRANCH}" | cut -f1)" != "$(git rev-parse HEAD)" ]]; then
+              echo "The verified tree equals ${BASE_SHA}; replacing the failed run's published commit ${EXPECTED_WORK_SHA} with it."
+            else
+              echo "No new application changes; reusing the existing work branch commit."
+              push_needed=false
+            fi
           else
             git commit -m "feat: apply Code Agent task #${ISSUE_NUMBER}"
+          fi
+          if [[ "$push_needed" == true ]]; then
             if [[ "$EXPECTED_WORK_SHA" =~ ^[a-f0-9]{40}$ ]]; then
               # Only the failed run's own published commit may be replaced.
               lease="refs/heads/${WORK_BRANCH}:${EXPECTED_WORK_SHA}"
@@ -2013,7 +2035,8 @@ jobs:
         run: node .github/scripts/comment-reply.mjs publish task/task-metadata.json reply
 
   # A comment round whose prepare ended without status ready (waiting behind
-  # another PR, a rejected or duplicate instruction, or prepare failing) runs
+  # another PR, a rejected or duplicate instruction) or failed after reporting
+  # it (a refused recovery base, a failed upload) runs
   # neither dispatch-reports nor dispatch-reply-history, the only other
   # requesters of the comment queue. It was started with GITHUB_TOKEN, so its
   # completion emits no workflow_run either: request the queue here, or the
@@ -2024,7 +2047,7 @@ jobs:
     if: >-
       !cancelled() &&
       needs.prepare.outputs.build_comment_id != '' &&
-      needs.prepare.outputs.status != 'ready' &&
+      (needs.prepare.outputs.status != 'ready' || needs.prepare.result != 'success') &&
       needs.prepare.outputs.rerun_rejected != 'true'
     runs-on: ubuntu-24.04
     timeout-minutes: 5

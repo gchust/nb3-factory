@@ -280,12 +280,14 @@ test('report-failure and publish-reply check out only the scripts they run', () 
 test('a rejected Re-run stops first and uploads no checkpoint or patch copy', () => {
   const agent = job('agent');
   const steps = agent.split('\n      - name: ').slice(1);
+  // Only the control checkout, which the guard reads, comes before it.
+  assert.match(steps[0], /^Check out factory control plane\n/);
   assert.match(
-    steps[0],
+    steps[1],
     /^Reject a GitHub Re-run of this job\n {8}id: rerun_guard\n/,
   );
-  assert.match(steps[0], /\(\( \$\{GITHUB_RUN_ATTEMPT:-1\} > 1 \)\)/);
-  assert.match(steps[0], /exit 1/);
+  assert.match(steps[1], /\(\( \$\{GITHUB_RUN_ATTEMPT:-1\} > 1 \)\)/);
+  assert.match(steps[1], /exit 1/);
   for (const name of [
     'Upload Code Agent patch and diagnostics',
     'Stage the patch for downstream jobs',

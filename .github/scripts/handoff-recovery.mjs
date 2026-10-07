@@ -7,6 +7,7 @@ import { pathToFileURL } from 'node:url';
 import { isDeepStrictEqual } from 'node:util';
 import { controlSha } from './handoff-control.mjs';
 import { inputHash, readState } from './pipeline-state.mjs';
+import { isSharedTaskBase } from './source-baseline-ref.mjs';
 
 const hash = (value) => createHash('sha256').update(value).digest('hex');
 const positive = (value) => Number.isSafeInteger(Number(value)) && Number(value) > 0;
@@ -190,10 +191,14 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
     }
     data.recovery.publishedCommit = publishedWorkCommit(published, { sourceRunId: data.recovery.sourceRunId, workBranch: source.workBranch });
     const workSha = await getRef(source.workBranch);
+    // Only a shared target has a pinned receipt, exactly as prepare-task.mjs
+    // decides; any other target is compared at its live head. An event without
+    // the default branch treats the target as unshared, which can only refuse.
+    const shared = isSharedTaskBase(source.task.targetBranch, event.repository?.default_branch);
     const base = liveRecoveryBase({
       recovery: data.recovery, source, workSha,
       targetSha: workSha ? null : await getRef(source.task.targetBranch),
-      pinnedSha: workSha ? null : pinnedTaskBase(await issueComments(), {
+      pinnedSha: workSha || !shared ? null : pinnedTaskBase(await issueComments(), {
         repository, issue: source.issue.number, targetBranch: source.task.targetBranch,
       }),
     });
