@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "inputHash": "ccdecdd2b64ae5a245cf810f9620e01b4f4dfafea3db49bf393e6cad0b377b08",
+  "inputHash": "20243397e4f23480ed77a15064225badf775767d8e70b09dc5c9ffa523aa46d1",
   "sources": [
     {
       "id": "460:36434284393:1:F2",
@@ -653,6 +653,21 @@
       "fingerprint": "f531b3aef4b0347c6fd505e0204c87b659145f31628cb472b851bd209a1c36ab"
     },
     {
+      "id": "612:37542332629:1:F2",
+      "report": "612:37542332629:1",
+      "fingerprint": "6c454a803832536e3a8ce1a54f41b3f2b6ccd06ea404b60cf2bd9bc57da5c7f2"
+    },
+    {
+      "id": "612:37542332629:1:F3",
+      "report": "612:37542332629:1",
+      "fingerprint": "80a617e739c44a544a4d0c0db2c2ebe8aa2d1389d83ec0d648143fb22873f627"
+    },
+    {
+      "id": "612:37542332629:1:F4",
+      "report": "612:37542332629:1",
+      "fingerprint": "3392f3cbd9eb9a272e05b8a54a514391f4c90237886a3c58b9bd67ccf2dedf4f"
+    },
+    {
       "id": "613:37542338892:1:F3",
       "report": "613:37542338892:1",
       "fingerprint": "acb6a081b4bf13a2931c4c1f8cffea274d0caea93094c4dded8772139480422e"
@@ -1234,10 +1249,25 @@
       ]
     },
     {
-      "title": "nocobase-db Skill 未说明迁移/种子相对导入必须使用 .ts 说明符",
-      "reason": "单独保留。613:F3（E75/E76）只证明 nocobase-db Skill 的 migrations/seeds 小节缺少“相对导入必须写 .ts 说明符、构建期由 rewriteRelativeImportExtensions 改写”这一规则（dev-config 的 server.json 同时开启 allowImportingTsExtensions 与 rewriteRelativeImportExtensions），属“缺说明”。它与既有“授权 Skill 种子示例使用 .js 相对说明符”组的“错误说明”缺口不同（受影响指引位置、触发示例与修复落点均不同），也与“任务加载器的相对扩展名重写对 file:// 失效”的框架加载器缺陷不同，按缺说明与错误说明区分原则单列。",
+      "title": "nocobase-db/migrations 指引未说明迁移与种子的相对导入说明符规则（.ts 说明符与自包含约束）",
+      "reason": "跨报告合并。613:F3（E75/E76）只证明 nocobase-db Skill 的 migrations/seeds 小节缺少“相对导入必须写 .ts 说明符、构建期由 rewriteRelativeImportExtensions 改写”这一规则（dev-config 的 server.json 同时开启 allowImportingTsExtensions 与 rewriteRelativeImportExtensions）。612:F2（E60/E53/E54/E72）在同一 nocobase-db SKILL 与 migrations.md 上进一步确认 task-loader 以原生动态 import 加载任务模块、不注册 TS 传输器，因此 seed 源码内的跨文件 .js 值导入不会被重写；文档既未点明说明符规则，也未把“自包含/仅 import type”与值导入区分，测试 harness 下报 Cannot find module，代理只能改为内联数据。两者的触发条件（源码加载路径下按 ESM 习惯写 .js 相对说明符）、期望（指引给出可运行的说明符/自包含规则）与修复落点（nocobase-db SKILL 与 migrations.md）一致，属同一“缺说明”缺口；与“授权 Skill 种子示例使用 .js 相对说明符”的“错误说明”以及“任务加载器对 file:// 重写失效”的框架缺陷均不同，故合并单列。",
       "members": [
-        "613:37542338892:1:F3"
+        "613:37542338892:1:F3",
+        "612:37542332629:1:F2"
+      ]
+    },
+    {
+      "title": "非法用户名经 better-auth APIError 冒泡为 500 INTERNAL_ERROR，users 路由未映射为 INVALID_ARGUMENT",
+      "reason": "单独保留。612:F3（E65/E66/E64/E67）显示 app-plugin-authentication 的 create 只对 username 做 trim/lowercase，格式约束来自 better-auth 的 username 插件；app-plugin-users 的 /api/users 错误映射只覆盖 UserAdministrationError 与 PermissionSetLastAssignmentError，未识别的 better-auth APIError 冒泡为 500 INTERNAL_ERROR。它与既有“演示账号用户名需满足认证最小长度，创建阶段无校验提示”（475:F5，属缺文档/长度约束）的根因与修复位置不同，也与记录选择、create 回读等其他 500 缺陷不同，故独立保留。",
+      "members": [
+        "612:37542332629:1:F3"
+      ]
+    },
+    {
+      "title": "分配到 authenticated 默认受众的权限集会从直接角色选择器消失，users 技能未说明该可见后果",
+      "reason": "单独保留。612:F4（E63/E59）显示 app-plugin-users 的 permission-set-scope.js directRoleState 会先收集 subject.type='authenticated'、id='*' 的分配，再把它们从直接角色候选中过滤掉，而 users 技能虽解释 hasAuthenticatedDefaultAccess 语义却未点明这一可见后果。现有分组中没有同一根因（默认受众过滤）或同一指引位置（nocobase-app-plugin-users SKILL）的成员，与权限集标题解码、权限集公开入口等缺陷不同，故独立保留。",
+      "members": [
+        "612:37542332629:1:F4"
       ]
     }
   ],
@@ -1245,9 +1275,9 @@
     "engine": "pi",
     "model": "deepseek-v4.1-flash",
     "version": "0.86.1",
-    "runId": "37563151369",
+    "runId": "37564125821",
     "attempt": 1,
     "controlSha": "c44263e0d58bfdfb2785f3dd7550ab6bff13023d",
-    "completedAt": "2026-10-07T02:42:42.818Z"
+    "completedAt": "2026-10-07T02:55:22.022Z"
   }
 }
