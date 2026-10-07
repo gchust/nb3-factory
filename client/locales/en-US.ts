@@ -96,6 +96,32 @@ const enUS = {
     description:
       'Describe what you need to your AI Agent, then build pages, data models, and business workflows.',
   },
+  projectMaterials: {
+    title: 'Project materials',
+    description: 'Keep each material and its attachments in one place.',
+    new: 'New material',
+    empty: 'No materials yet.',
+    loadFailed: 'Unable to load the materials.',
+    retry: 'Retry',
+    fileCount: '{{count}} attachment(s)',
+    createdAt: 'Created {{date}}',
+    formTitle: 'Title',
+    formTitlePlaceholder: 'For example: Site progress photos',
+    titleRequired: 'A title is required.',
+    attachments: 'Attachments',
+    attachmentsHint: 'Upload a PNG photo or a DOCX document, up to 5 MB each.',
+    noAttachments: 'No attachments yet.',
+    uploadFailed: 'The file could not be uploaded.',
+    previewFailed:
+      'The file could not be previewed. It may be damaged or in an unsupported format.',
+    saved: 'Saved.',
+    saveFailed: 'Unable to save the material.',
+    saving: 'Saving…',
+    save: 'Save',
+    notFound: 'Material not found',
+    notFoundDescription:
+      'It does not exist or does not belong to your account.',
+  },
 
   appearance: {
     title: 'Appearance',
@@ -131,6 +157,7 @@ const enUS = {
   },
   navigation: {
     home: 'Home',
+    projectMaterials: 'Project materials',
     open: 'Open navigation',
     close: 'Close navigation',
     expand: 'Expand navigation',

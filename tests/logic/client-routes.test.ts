@@ -53,8 +53,20 @@ describe('app client routes', () => {
     const resolved = resolveRoutes();
 
     // The landing page opted out of page authorization, so it is reachable by every signed-in user.
+    // The project-materials pages do the same: every signed-in user works on their own materials, and
+    // the server owns the access boundary, so they add no page grant. Each URL alias registers its own
+    // page names, which is why the same feature appears under three prefixes.
     expect(pageAuthorizations(resolved.routes)).toEqual([
       { name: 'home', authorizedAs: null },
+      { name: 'project-materials-list', authorizedAs: null },
+      { name: 'project-materials-new', authorizedAs: null },
+      { name: 'project-materials-detail', authorizedAs: null },
+      { name: 'materials-list', authorizedAs: null },
+      { name: 'materials-new', authorizedAs: null },
+      { name: 'materials-detail', authorizedAs: null },
+      { name: 'project-materials-camel-list', authorizedAs: null },
+      { name: 'project-materials-camel-new', authorizedAs: null },
+      { name: 'project-materials-camel-detail', authorizedAs: null },
     ]);
   });
 });
