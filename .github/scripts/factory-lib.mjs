@@ -190,6 +190,15 @@ export function assertSafeChangedPaths(paths) {
 // Only requests that leave the same state when repeated are retried: a POST
 // that creates a comment, ref or Issue could otherwise create it twice.
 const RETRYABLE_METHODS = new Set(['GET', 'HEAD', 'PUT', 'PATCH']);
+// Git objects are content-addressed: creating the same blob, tree or commit
+// again only yields another unreferenced object, never a second visible change.
+// A caller opts in per request with `contentAddressed: true`; any other POST,
+// and every ref update, stays unretried.
+const CONTENT_ADDRESSED_ROUTES = new Set([
+  '/git/blobs',
+  '/git/trees',
+  '/git/commits',
+]);
 const RETRYABLE_STATUSES = new Set([502, 503, 504]);
 export const GITHUB_RETRY_DELAYS_MS = [1000, 3000, 8000];
 // A half-open connection otherwise waits for undici's ~300 s timeout on every
@@ -243,14 +252,28 @@ export class GitHubClient {
   async request(
     method,
     route,
-    { body, query, allow404 = false, timeoutMs = this.timeoutMs } = {},
+    {
+      body,
+      query,
+      allow404 = false,
+      timeoutMs = this.timeoutMs,
+      contentAddressed = false,
+    } = {},
   ) {
+    if (
+      contentAddressed &&
+      (method !== 'POST' || !CONTENT_ADDRESSED_ROUTES.has(route))
+    )
+      throw new Error(
+        `contentAddressed retries apply only to POST ${[...CONTENT_ADDRESSED_ROUTES].join(', ')}, not ${method} ${route}`,
+      );
     const url = new URL(`${this.apiUrl}/repos/${this.repository}${route}`);
     for (const [key, value] of Object.entries(query ?? {})) {
       if (value != null) url.searchParams.set(key, String(value));
     }
 
-    const delays = RETRYABLE_METHODS.has(method) ? this.retryDelays : [];
+    const delays =
+      RETRYABLE_METHODS.has(method) || contentAddressed ? this.retryDelays : [];
     for (let attempt = 0; ; attempt++) {
       const retry = attempt < delays.length;
       // One deadline for the whole attempt, reading the body included.

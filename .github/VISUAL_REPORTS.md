@@ -68,12 +68,13 @@ Artifact，并在评论中说明。媒体包保留 14 天，包含截图、录�
 ## 配置后补发，不重新搭建
 
 进入 Actions → **Publish Task Visual Report** → **Run workflow**，选择默认分支
-`develop`，填写成功搭建的 **Actions run ID**。不要填写 Issue 或 PR 编号。
+`develop`，填写已发布 PR 的搭建 **Actions run ID**（成功交付，或发布了标为失败的 PR）。不要填写 Issue 或 PR 编号。
 该流程只下载已有证据并发布评论，不调用 Code Agent，不重新运行应用。
 
 同一个 source run 的重复触发不会重复创建已成功上传的报告；缺少 Token 时的
 机器人占位评论会在原生附件发布成功后被替换，不编辑或删除人工评论。
 发布步骤失败时媒体包仍已作为 Artifact 保留，运行以 `::error::` 失败并给出
 `run_id` / `attempt` 补发参数；业务 PR 不受影响，也不重新搭建。
-如果该 run 没有成功完成业务发布、属于五小时 handoff、Artifact 已过期，或 PR
-已被后续搭建更新，则跳过或明确报告原因，而不是错贴到其他 PR。
+如果该 run 没有发布 PR（`verify-final` 与 `publish` 都成功，或 `publish-failed` 成功）、属于五小时
+handoff、Artifact 已过期，或 PR 已被后续搭建更新，则跳过或明确报告原因，而不是错贴到其他 PR。
+是否发布按这些 Job 判断，不看整次运行的结论：交付后问答回复失败不影响视觉报告。

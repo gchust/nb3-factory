@@ -5,7 +5,10 @@ on:
     types: [opened, labeled, unlabeled, edited, deleted, transferred]
   label:
     types: [edited, deleted]
+  # The job writes the default branch (develop) only; pushes elsewhere would
+  # only start skipped runs.
   push:
+    branches: [develop]
     paths:
       - '.github/workflows/sync-issue-presets.yml'
       - '.github/scripts/issue-presets.mjs'

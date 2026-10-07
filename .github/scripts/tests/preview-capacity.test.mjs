@@ -357,7 +357,8 @@ globalThis.fetch = async (url, options = {}) => {
   const pull = /^\\/pulls\\/(\\d+)$/.exec(route);
   if (pull && pulls[pull[1]]) return ok(pulls[pull[1]]);
   if (route.startsWith('/issues/')) return ok(method === 'GET' ? comments : {});
-  return { ok: false, status: 404, json: async () => ({}) };
+  // The repository API client reads an error's body for its message.
+  return { ok: false, status: 404, json: async () => ({}), text: async () => '{"message":"Not Found"}' };
 };
 `,
     );

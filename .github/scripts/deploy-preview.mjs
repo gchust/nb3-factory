@@ -1,4 +1,4 @@
-import { isValidTargetBranch } from './factory-lib.mjs';
+import { isValidTargetBranch, repositoryApi } from './factory-lib.mjs';
 import {
   appendFileSync,
   existsSync,
@@ -15,6 +15,7 @@ import {
   PREVIEW_VERIFIED_MARKER,
   capacitySkipNote,
   depsKeyFromEntries,
+  isNotFoundError,
   depsProbeCommand,
   needsRoom,
   parseCapacityListing,
@@ -47,24 +48,10 @@ const output = (name, value) =>
   process.env.GITHUB_OUTPUT &&
   appendFileSync(process.env.GITHUB_OUTPUT, `${name}=${value}\n`);
 
-async function api(method, route, body) {
-  const response = await fetch(
-    `${process.env.GITHUB_API_URL || 'https://api.github.com'}/repos/${repository}${route}`,
-    {
-      method,
-      headers: {
-        Authorization: `Bearer ${process.env.GITHUB_TOKEN}`,
-        Accept: 'application/vnd.github+json',
-        'Content-Type': 'application/json',
-      },
-      body: body === undefined ? undefined : JSON.stringify(body),
-      signal: globalThis.AbortSignal.timeout(30_000),
-    },
-  );
-  if (!response.ok)
-    throw new Error(`GitHub ${method} failed (${response.status})`);
-  return response.status === 204 ? null : response.json();
-}
+// GitHubClient underneath: reads and updates ride out 502/503/504 and dropped
+// connections, which the 11-minute source-run poll would otherwise turn into a
+// lost preview; POSTs are never repeated.
+const api = repositoryApi();
 
 async function list(route, key) {
   const result = [];
@@ -103,6 +90,7 @@ if (mode === 'select') {
   const artifact = selectDistArtifact(run, jobs, artifacts, repository);
   if (artifact) {
     output('artifact', artifact.name);
+    output('artifact_id', String(artifact.id));
     writeFileSync(
       args.source,
       JSON.stringify({
@@ -215,7 +203,7 @@ if (mode === 'select') {
       try {
         pulls.set(pr, await api('GET', `/pulls/${pr}`));
       } catch (error) {
-        if (!/\(404\)$/.test(error.message)) throw error;
+        if (!isNotFoundError(error)) throw error;
         pulls.set(pr, null);
       }
     }

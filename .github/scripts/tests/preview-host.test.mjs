@@ -48,10 +48,18 @@ const run = (overrides = {}) => ({
   ...overrides,
 });
 
+// verify-final's window; a factory-dist-N belongs to the attempt only when
+// it was uploaded inside a producing job.
+const VERIFY_WINDOW = {
+  started_at: '2026-10-06T10:00:00Z',
+  completed_at: '2026-10-06T10:30:00Z',
+};
+const IN_WINDOW = '2026-10-06T10:20:00Z';
+
 const deliveredJobs = () => [
   { name: 'prepare', conclusion: 'success' },
   { name: 'agent', conclusion: 'success' },
-  { name: 'verify-final', conclusion: 'success' },
+  { name: 'verify-final', conclusion: 'success', ...VERIFY_WINDOW },
   { name: 'publish', conclusion: 'success' },
 ];
 
@@ -59,8 +67,14 @@ test('failed published builds can deploy while a packaging failure stays non-dep
   const jobs = [
     { name: 'agent', conclusion: 'failure' },
     { name: 'publish-failed', conclusion: 'success' },
+    { name: 'preview-build-failed', conclusion: 'success', ...VERIFY_WINDOW },
   ];
-  const artifact = { name: 'factory-dist-7', expired: false, id: 22 };
+  const artifact = {
+    name: 'factory-dist-7',
+    expired: false,
+    id: 22,
+    created_at: IN_WINDOW,
+  };
   assert.equal(
     selectDistArtifact(
       run({ conclusion: 'failure' }),
@@ -204,8 +218,8 @@ test('the cache probe names the dependency directory and answers unambiguously',
 
 test('only a delivered task has a deployable build', () => {
   const artifacts = [
-    { name: 'factory-agent-7', expired: false, id: 1 },
-    { name: 'factory-dist-7', expired: false, id: 2 },
+    { name: 'factory-agent-7', expired: false, id: 1, created_at: IN_WINDOW },
+    { name: 'factory-dist-7', expired: false, id: 2, created_at: IN_WINDOW },
   ];
   const selected = selectDistArtifact(
     run(),
@@ -217,7 +231,9 @@ test('only a delivered task has a deployable build', () => {
 });
 
 test('a task that was not delivered selects nothing', () => {
-  const artifacts = [{ name: 'factory-dist-7', expired: false, id: 2 }];
+  const artifacts = [
+    { name: 'factory-dist-7', expired: false, id: 2, created_at: IN_WINDOW },
+  ];
   // A five-hour handoff completes successfully but reaches neither job.
   const handoff = [
     { name: 'prepare', conclusion: 'success' },
@@ -225,15 +241,6 @@ test('a task that was not delivered selects nothing', () => {
   ];
   assert.equal(
     selectDistArtifact(run(), handoff, artifacts, 'gchust/nb3-factory'),
-    null,
-  );
-  assert.equal(
-    selectDistArtifact(
-      run({ conclusion: 'failure' }),
-      deliveredJobs(),
-      artifacts,
-      'gchust/nb3-factory',
-    ),
     null,
   );
   const verifyFailed = deliveredJobs().map((job) =>
@@ -280,7 +287,7 @@ test('an expired or ambiguous build is refused rather than guessed', () => {
     selectDistArtifact(
       run(),
       deliveredJobs(),
-      [{ name: 'factory-dist-7', expired: true, id: 2 }],
+      [{ name: 'factory-dist-7', expired: true, id: 2, created_at: IN_WINDOW }],
       'gchust/nb3-factory',
     ),
   );
@@ -289,8 +296,18 @@ test('an expired or ambiguous build is refused rather than guessed', () => {
       run(),
       deliveredJobs(),
       [
-        { name: 'factory-dist-7', expired: false, id: 2 },
-        { name: 'factory-dist-7', expired: false, id: 3 },
+        {
+          name: 'factory-dist-7',
+          expired: false,
+          id: 2,
+          created_at: IN_WINDOW,
+        },
+        {
+          name: 'factory-dist-7',
+          expired: false,
+          id: 3,
+          created_at: IN_WINDOW,
+        },
       ],
       'gchust/nb3-factory',
     ),

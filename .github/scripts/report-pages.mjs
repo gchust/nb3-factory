@@ -182,6 +182,7 @@ export async function commitFindings(client, sha, files, message) {
         ? null
         : await client.request('POST', '/git/blobs', {
             body: { content, encoding: 'utf-8' },
+            contentAddressed: true,
           });
     tree.push({
       path: file,
@@ -192,10 +193,12 @@ export async function commitFindings(client, sha, files, message) {
   }
   const nextTree = await client.request('POST', '/git/trees', {
     body: { base_tree: commit.tree.sha, tree },
+    contentAddressed: true,
   });
   if (nextTree.sha === commit.tree.sha) return sha;
   const next = await client.request('POST', '/git/commits', {
     body: { message, tree: nextTree.sha, parents: [sha] },
+    contentAddressed: true,
   });
   await client.request('PATCH', `/git/refs/heads/${BRANCH}`, {
     body: { sha: next.sha, force: false },
@@ -343,12 +346,12 @@ export async function archiveReport(client,report,html) {
     if(!sha) files.push(['index.html',redirectPage(`./${ROOT}/`)],['.nojekyll','']);
     const tree=[...retained];
     for(const [file,content] of files) {
-      const blob=await client.request('POST','/git/blobs',{body:{content,encoding:'utf-8'}});
+      const blob=await client.request('POST','/git/blobs',{body:{content,encoding:'utf-8'},contentAddressed:true});
       tree.push({path:file,mode:'100644',type:'blob',sha:blob.sha});
     }
-    const newTree=await client.request('POST','/git/trees',{body:{...(commit?{base_tree:commit.tree.sha}:{}),tree}});
+    const newTree=await client.request('POST','/git/trees',{body:{...(commit?{base_tree:commit.tree.sha}:{}),tree},contentAddressed:true});
     if(commit?.tree.sha===newTree.sha) return {manifest,isLatest,preserved:Boolean(preserve),commitSha:sha,findingsIndex,findingsNeedsClassification};
-    const created=await client.request('POST','/git/commits',{body:{message:`report: issue ${next.issue}, run ${next.runId}, attempt ${next.attempt}`,tree:newTree.sha,parents:sha?[sha]:[]}});
+    const created=await client.request('POST','/git/commits',{body:{message:`report: issue ${next.issue}, run ${next.runId}, attempt ${next.attempt}`,tree:newTree.sha,parents:sha?[sha]:[]},contentAddressed:true});
     try {
       if(sha) await client.request('PATCH',`/git/refs/heads/${BRANCH}`,{body:{sha:created.sha,force:false}});
       else await client.createRef(BRANCH,created.sha);
