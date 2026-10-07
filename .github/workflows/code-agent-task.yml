@@ -759,12 +759,26 @@ jobs:
           steps.verify.outputs.handoff == 'true'
         env:
           ALLOW_EMPTY_PATCH: ${{ steps.implementation.outcome == 'failure' || steps.verify.outcome == 'failure' || steps.implementation.outcome == 'cancelled' || steps.verify.outcome == 'cancelled' || needs.prepare.outputs.base_ref == needs.prepare.outputs.work_branch || steps.implementation.outputs.handoff == 'true' || steps.verify.outputs.handoff == 'true' }}
+          BASE_REF: ${{ needs.prepare.outputs.base_ref }}
+          WORK_BRANCH: ${{ needs.prepare.outputs.work_branch }}
         run: |
+          # The root AGENTS.md/CLAUDE.md are reset to the template text: from
+          # this base, or on an existing work branch from the target branch, so
+          # a branch an earlier build diverged carries the template text again.
+          guidance_source=HEAD
+          if [[ "$BASE_REF" == "$WORK_BRANCH" ]]; then
+            target="$(node -e 'console.log(JSON.parse(require("fs").readFileSync(process.argv[1], "utf8")).task?.targetBranch ?? "")' task/task-metadata.json)"
+            if [[ -n "$target" ]] && git -C workspace rev-parse --verify --quiet "refs/remotes/origin/${target}^{commit}" >/dev/null; then
+              guidance_source="refs/remotes/origin/${target}"
+            fi
+          fi
           node control/.github/scripts/create-patch.mjs \
             --workspace workspace \
             --patch "$RUNNER_TEMP/agent-artifacts/agent.patch" \
             --summary "$RUNNER_TEMP/agent-artifacts/change-summary.json" \
-            --allow-empty "$ALLOW_EMPTY_PATCH"
+            --allow-empty "$ALLOW_EMPTY_PATCH" \
+            --protect-template-guidance true \
+            --guidance-source "$guidance_source"
           node control/.github/scripts/pipeline-state.mjs seal "$RUNNER_TEMP/agent-artifacts/pipeline-state.json" "$RUNNER_TEMP/agent-artifacts/agent.patch"
 
       - name: Review build quality and framework feedback

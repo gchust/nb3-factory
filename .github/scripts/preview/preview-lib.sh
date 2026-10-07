@@ -142,6 +142,29 @@ instance_dir() {
   printf '%s/pr-%s' "$PREVIEW_INSTANCES_DIR" "$1"
 }
 
+# Teardown leaves a timestamp here (nanoseconds since the epoch), under the
+# deploy lock. A deploy that started before it belongs to the closed pull
+# request and must not bring the preview back; one started after it (a reopen)
+# deploys normally and removes the mark.
+closed_mark() {
+  printf '%s/closed/pr-%s' "$PREVIEW_ROOT" "$1"
+}
+
+mark_closed() {
+  mkdir -p "$PREVIEW_ROOT/closed"
+  date +%s%N >"$(closed_mark "$1")"
+}
+
+# closed_since <pr> <start-ns>: succeeds when teardown ran at or after start.
+closed_since() {
+  local mark at
+  mark="$(closed_mark "$1")"
+  [[ -f "$mark" ]] || return 1
+  at="$(tr -dc '0-9' <"$mark")"
+  [[ -n "$at" ]] || return 1
+  (( at >= $2 ))
+}
+
 # Where one pull request's payload is staged while it is fetched and deployed.
 payload_path() {
   printf '%s/payload-pr-%s.tar.gz' "$PREVIEW_TMP_DIR" "$1"

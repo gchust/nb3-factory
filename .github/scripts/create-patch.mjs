@@ -1,6 +1,6 @@
 import { Buffer } from 'node:buffer';
 import { execFileSync } from 'node:child_process';
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 
 import { TaskInputError, assertSafeChangedPaths } from './factory-lib.mjs';
@@ -9,24 +9,33 @@ const args = parseArgs(process.argv.slice(2));
 const workspace = path.resolve(args.workspace);
 const patchPath = path.resolve(args.patch);
 const summaryPath = path.resolve(args.summary);
-// The root AGENTS.md and CLAUDE.md belong to @nocobase/app-template-default:
-// a refresh replaces them and template-guidance.test.mjs requires them to stay
-// byte-identical, so a build's edit to them is dropped here rather than merged
-// and then broken. Only the root files (top, literal pathspecs): client/AGENTS.md
-// and other nested guidance stay the application's. They are not added to
-// assertSafeChangedPaths, so patches and work branches made before this change
-// still apply.
 const protectedPaths = [
   '.github',
   '.npmrc',
   '.gitmodules',
   'config.yml',
   'factory-source.json',
-  ':(top,literal)AGENTS.md',
-  ':(top,literal)CLAUDE.md',
 ];
+// Opt-in, for build tasks only (code-agent-task.yml): an application's root
+// AGENTS.md and CLAUDE.md belong to @nocobase/app-template-default. A refresh
+// replaces them and template-guidance.test.mjs requires them byte-identical, so
+// a build's edit is reset here rather than merged and then broken. Other callers
+// (framework-fix on nocobase/nocobase3, whose root AGENTS.md is its own
+// repository rules) keep every edit. Only the root files: client/AGENTS.md and
+// other nested guidance stay the application's.
+//
+// --guidance-source names the commit whose text they are reset to (default
+// HEAD). A follow-up build on an existing work branch passes the target branch,
+// so a branch that already diverged (an earlier build edited them) carries the
+// template text again in its patch instead of keeping the divergence forever.
+// They are not added to assertSafeChangedPaths, so patches and work branches
+// made before this change still apply.
+const TEMPLATE_GUIDANCE = ['AGENTS.md', 'CLAUDE.md'];
+const protectGuidance = parseBoolean(args['protect-template-guidance']);
+const guidanceSource = args['guidance-source'] || 'HEAD';
 
 restoreProtectedPaths();
+if (protectGuidance) restoreTemplateGuidance();
 git(['add', '--intent-to-add', '--all']);
 const names = splitNull(git(['diff', '--name-only', '-z', 'HEAD']));
 if (names.length === 0) {
@@ -104,6 +113,41 @@ function restoreProtectedPaths() {
     cwd: workspace,
     stdio: 'pipe',
   });
+}
+
+function restoreTemplateGuidance() {
+  const source = git([
+    'rev-parse',
+    '--verify',
+    `${guidanceSource}^{commit}`,
+  ]).trim();
+  for (const file of TEMPLATE_GUIDANCE) {
+    const spec = `:(top,literal)${file}`;
+    let present = true;
+    try {
+      git(['cat-file', '-e', `${source}:${file}`]);
+    } catch {
+      present = false;
+    }
+    if (present) {
+      execFileSync(
+        'git',
+        ['restore', `--source=${source}`, '--staged', '--worktree', '--', spec],
+        { cwd: workspace, stdio: 'pipe' },
+      );
+    } else {
+      // Not part of the source: an agent-created copy is dropped as well.
+      execFileSync(
+        'git',
+        ['rm', '-q', '-f', '--ignore-unmatch', '--cached', '--', spec],
+        {
+          cwd: workspace,
+          stdio: 'pipe',
+        },
+      );
+      rmSync(path.join(workspace, file), { force: true });
+    }
+  }
 }
 
 function writeEmptyPatch() {

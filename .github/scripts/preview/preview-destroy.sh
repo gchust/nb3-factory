@@ -22,15 +22,17 @@ ensure_layout
 name="$(container_name "$pr")"
 dir="$(instance_dir "$pr")"
 
-# Deploys, capacity checks and gc all hold this lock. Without it a deploy whose
-# CI step was cut off keeps running on the host and can recreate, or roll back
-# to, the instance removed here, leaving a closed pull request's preview live.
+# Deploys, capacity checks and gc all hold this lock, so nothing is mid-deploy
+# while the instance is removed. A deploy whose CI step was cut off may still be
+# fetching or waiting for this lock; the mark written under it makes that
+# deploy refuse once it gets the lock, instead of bringing the preview back.
 # Bounded: a deploy can hold the lock for its whole 30-minute step, and the
 # teardown job retries this three times inside its 15-minute limit, so waiting
 # 3 minutes each time fails visibly rather than being cut off.
 require_command flock
 exec 9>"$PREVIEW_ROOT/deploy.lock"
 flock -w 180 9 || die "another preview operation still holds the deploy lock; PR #$pr's preview was not removed"
+mark_closed "$pr"
 
 # The staged payload belongs to this pull request and is fetched again on the
 # next deploy. Removed before the early exit below, because a fetch that failed

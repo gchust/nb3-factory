@@ -91,6 +91,10 @@ require_command flock
 
 ensure_layout
 
+# Taken before the fetch, which runs outside the deploy lock: a teardown that
+# happens while this deploy fetches or waits for the lock is newer than this.
+started_ns="$(date +%s%N)"
+
 fetch_payload "$payload" "$payload_url" "$payload_sha256" "$fetch_proxy"
 
 require_network
@@ -107,6 +111,13 @@ container_base="/app"
 # populate the same dependency cache and to read each other's instance state.
 exec 9>"$PREVIEW_ROOT/deploy.lock"
 flock 9
+
+# A deploy whose CI step was cut off keeps running here; if its pull request
+# was torn down meanwhile, deploying now would bring a closed preview back.
+if closed_since "$pr" "$started_ns"; then
+  rm -f "$payload" "$payload.part"
+  die "PR #$pr was torn down after this deploy started; not recreating its preview"
+fi
 
 # --- an instance that is already this build ---------------------------------
 # The lock is what makes this answer trustworthy: a deploy in flight holds it
@@ -316,6 +327,7 @@ if ! wait_for_preview "$host" 90; then
 fi
 
 preview_commit
+rm -f "$(closed_mark "$pr")"
 # The instance now holds everything it needs; the staged payload (about 84 MB
 # packed) would otherwise stay on the host for every open pull request. A failed
 # deploy keeps it for the retry, and teardown removes it either way.
