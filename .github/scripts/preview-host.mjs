@@ -168,13 +168,32 @@ export function slimEntries(rootEntries, distEntries) {
   return entries.sort();
 }
 
+// The jobs that upload factory-dist-N: verify-final for a delivery and
+// preview-build-failed for published failed work.
+const DIST_PRODUCERS = ['verify-final', 'preview-build-failed'];
+
+/**
+ * Whether an error from the repository API client is a 404. GitHubClient
+ * reports `GitHub API GET /pulls/5 failed (404): …`; the text after the status
+ * is the response body, so the status is matched where it appears.
+ */
+export function isNotFoundError(error) {
+  return /failed \(404\)/.test(String(error?.message ?? ''));
+}
+
 /**
  * Selects the deployable build for a delivered task.
  *
- * Same run gate as the visual report: both `verify-final` and `publish` must
+ * Same job gate as the visual report: both `verify-final` and `publish` must
  * have succeeded, so a five-hour handoff — which has neither — is not a
- * delivery. The artifact differs: the deployable build is produced by
- * `verify-final`, not by the agent.
+ * delivery. The run's own conclusion is not consulted: a question round's reply
+ * failing after the delivery makes the run fail without making the build less
+ * delivered. The artifact differs: the deployable build is produced by
+ * `verify-final` (or `preview-build-failed` for failed work), not by the agent.
+ *
+ * Artifacts are listed for every attempt of the run; only one uploaded inside a
+ * producing job of the selected attempt belongs to it. Without such a job
+ * window nothing ties an artifact to this attempt, so nothing is selected.
  */
 export function selectDistArtifact(run, jobs, artifacts, repository) {
   if (
@@ -190,16 +209,23 @@ export function selectDistArtifact(run, jobs, artifacts, repository) {
       jobs.some(
         (job) => job.name === 'publish-failed' && job.conclusion === 'success',
       ) ||
-      (run.conclusion === 'success' &&
-        ['verify-final', 'publish'].every((name) =>
-          jobs.some((job) => job.name === name && job.conclusion === 'success'),
-        ))
+      ['verify-final', 'publish'].every((name) =>
+        jobs.some((job) => job.name === name && job.conclusion === 'success'),
+      )
     )
   ) {
     return null;
   }
+  const windows = jobs
+    .filter((job) => DIST_PRODUCERS.includes(job.name))
+    .map((job) => [Date.parse(job.started_at), Date.parse(job.completed_at)])
+    .filter(([start, end]) => !Number.isNaN(start) && !Number.isNaN(end));
+  const inAttempt = (artifact) => {
+    const created = Date.parse(artifact.created_at);
+    return windows.some(([start, end]) => created >= start && created <= end);
+  };
   const candidates = artifacts.filter(
-    (a) => /^factory-dist-[1-9]\d*$/.test(a.name) && !a.expired,
+    (a) => /^factory-dist-[1-9]\d*$/.test(a.name) && !a.expired && inAttempt(a),
   );
   if (
     candidates.length === 0 &&

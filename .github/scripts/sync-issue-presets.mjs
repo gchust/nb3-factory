@@ -18,13 +18,23 @@ export async function syncIssuePresets(client) {
   const issues = await listAll(client, '/issues', { state: 'all', labels: PRESET_LABEL });
   const content = renderPresetForm(issues);
   const route = `/contents/${PRESET_FORM_PATH}`;
-  const existing = await client.request('GET', route, { query: { ref: branch }, allow404: true });
-  if (existing && Buffer.from(existing.content, 'base64').toString('utf8') === content) return false;
-  await client.request('PUT', route, { body: {
-    branch, message: 'chore: sync preset Issue choices',
-    content: Buffer.from(content).toString('base64'),
-    ...(existing ? { sha: existing.sha } : {}),
-  } });
+  const read = () => client.request('GET', route, { query: { ref: branch }, allow404: true });
+  const matches = (file) => file && Buffer.from(file.content, 'base64').toString('utf8') === content;
+  const existing = await read();
+  if (matches(existing)) return false;
+  try {
+    await client.request('PUT', route, { body: {
+      branch, message: 'chore: sync preset Issue choices',
+      content: Buffer.from(content).toString('base64'),
+      ...(existing ? { sha: existing.sha } : {}),
+    } });
+  } catch (error) {
+    // A PUT that committed but lost its response is retried with the old sha
+    // and answered 409. The file already holding this content is that commit
+    // (or a concurrent sync writing the same choices), not a failure.
+    if (!/failed \(409\)/.test(String(error?.message)) || !matches(await read())) throw error;
+    console.log('The preset form already holds these choices; a retried write was answered 409.');
+  }
   return true;
 }
 
