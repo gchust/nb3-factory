@@ -502,14 +502,39 @@ test('deployable staging reads the exported archive and preserves the flat artif
 });
 
 test('preview connection is checked and public HTTPS gates the success report', () => {
+  // Both connect through the shared composite, which the trusted default
+  // branch checkout carries alongside the script it runs.
+  const connect = readFileSync(
+    path.resolve(
+      import.meta.dirname,
+      '..',
+      '..',
+      'actions',
+      'preview-connect',
+      'action.yml',
+    ),
+    'utf8',
+  );
+  assert.doesNotMatch(connect, /\n\s+targets:/);
+  assert.doesNotMatch(connect, /\n\s+ping:/);
+  assert.match(connect, /args: --accept-dns=false/);
+  assert.match(connect, /bash control\/\.github\/scripts\/preview-connect.sh/);
   for (const workflow of [deploy, teardown]) {
-    assert.doesNotMatch(workflow, /\n\s+targets:/);
-    assert.doesNotMatch(workflow, /\n\s+ping:/);
-    assert.match(workflow, /args: --accept-dns=false/);
+    assert.doesNotMatch(workflow, /tailscale\/github-action/);
+    assert.doesNotMatch(
+      workflow,
+      /bash control\/\.github\/scripts\/preview-connect\.sh/,
+    );
     assert.match(
       workflow,
-      /bash control\/\.github\/scripts\/preview-connect.sh/,
+      /uses: \.\/control\/\.github\/actions\/preview-connect\n/,
     );
+    for (const input of [
+      'tailscale-oauth-client-id: ${{ secrets.FACTORY_TAILSCALE_OAUTH_CLIENT_ID }}',
+      'tailscale-oauth-secret: ${{ secrets.FACTORY_TAILSCALE_OAUTH_CLIENT_SECRET }}',
+      'ssh-key: ${{ secrets.FACTORY_PREVIEW_SSH_KEY }}',
+    ])
+      assert.ok(workflow.includes(input), input);
   }
   assert.match(
     deploy,

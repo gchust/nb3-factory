@@ -84,12 +84,31 @@ if [[ "$prune_deps" == true ]]; then
     read_instance_env "$local_dir" depsKey >>"$referenced" || true
   done
 
+  # What a GC killed in the middle of a delete left behind (see below). The
+  # glob below skips these dot-names, so nothing else would remove them.
+  for entry in "$PREVIEW_DEPS_DIR"/.pruning-*; do
+    [[ -e "$entry" ]] || continue
+    log "removing interrupted prune $(basename "$entry")"
+    rm -rf "$entry"
+  done
+
   for entry in "$PREVIEW_DEPS_DIR"/*; do
     [[ -d "$entry" ]] || continue
     key="$(basename "$entry")"
+    # A deploy's probe touches the cache it counts on (depsProbeCommand in
+    # preview-host.mjs) before it uploads and waits for this lock, so a
+    # recently touched cache may belong to a deploy no instance records yet.
+    if [[ -n "$(find "$entry" -maxdepth 0 -mmin -120)" ]]; then
+      log "keeping dependency cache $key: probed or written in the last two hours"
+      continue
+    fi
     if ! grep --quiet --line-regexp --fixed-strings "$key" "$referenced"; then
       log "pruning unreferenced dependency cache $key"
-      rm -rf "$entry"
+      # Renamed first, in one step, so a probe running during the delete
+      # finds no node_modules rather than a half-deleted tree it would count on.
+      doomed="$PREVIEW_DEPS_DIR/.pruning-$key.$$"
+      mv -T "$entry" "$doomed"
+      rm -rf "$doomed"
     fi
   done
 fi

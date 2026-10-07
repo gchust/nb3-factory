@@ -547,7 +547,8 @@ test("a successful deploy deletes the pull request's other payload assets, and t
 test('teardown sends the current host scripts before removing a preview', () => {
   const teardown = jobOf(workflow('preview-teardown.yml'), 'teardown-preview');
   const send = teardown.indexOf('- name: Send the host scripts');
-  assert.ok(send > teardown.indexOf('- name: Install the deploy key'));
+  const connect = teardown.indexOf('- name: Connect to the preview host');
+  assert.ok(connect > 0 && send > connect);
   assert.ok(send < teardown.indexOf('- name: Remove the preview'));
   const step = stepOf(teardown, 'Send the host scripts');
   assert.match(step, /continue-on-error: true/);
@@ -814,9 +815,11 @@ test('CI installs of the browser tool and agent CLIs reuse an npm cache', () => 
     adapters,
     /npm_config_cache: \$\{\{ runner\.temp \}\}\/agent-cli-npm/,
   );
+  // Scheduled and dispatched runs resolve fresh and save the week's entry;
+  // pull requests only restore (see actions-review-11-infra.test.mjs).
   assert.match(
     adapters,
-    /if: github\.event_name != 'pull_request' && steps\.cli_cache\.outputs\.cache-hit != 'true'/,
+    /- name: Save the Agent CLI npm cache\n {8}if: github\.event_name != 'pull_request'\n/,
   );
 });
 

@@ -207,7 +207,9 @@ PR 关闭或合并后，**Reclaim Task Preview** 会删掉对应容器、实例�
 只有 release 不存在才算“没有可删的”；列资产时遇到认证、网络或限流等其他错误会报错失败（回收时让作业变红，
 名额回收时记 Warning），不会再当成无事可做。
 依赖集缓存保留，因为它是按依赖集而不是按 PR 共享的；`preview-gc.sh` 负责回收不再被任何预览引用的缓存、
-实例目录已丢失但容器还在的孤儿，以及**已经没有预览的备份**：
+实例目录已丢失但容器还在的孤儿，以及**已经没有预览的备份**。部署的缓存探测命中时会 `touch` 该缓存目录，
+GC 不回收两小时内被探测或写入过的缓存：探测不持部署锁，部署要等上传和取件之后才拿锁，中间若 GC 恰好删掉
+这份尚无实例引用的缓存，只发了应用部分的 slim 载荷就会部署失败：
 
 ```bash
 ssh 252 'bash /srv/nb3-preview/scripts/preview-gc.sh'                    # 三类一起回收
@@ -314,7 +316,7 @@ ssh 252 'bash /srv/nb3-preview/scripts/preview-gc.sh --prune-backups'    # 只�
 
 ## 连接和可用性检查
 
-Tailscale 加入网络后，用允许中继的有限时 ping 输出诊断，不把 ping 失败作为部署阻断条件；随后 `preview-connect.sh` 最多尝试 6 次获取主机公钥并验证部署密钥认证，失败保留错误和网络状态。加入 tailnet 成功不代表 SSH 已就绪。
+部署和回收都通过组合 action `.github/actions/preview-connect`（取自可信的默认分支 `control/` 检出）加入 tailnet 并安装部署密钥；发送主机脚本仍是工作流步骤，因为回收要给它设 `timeout-minutes`。Tailscale 加入网络后，用允许中继的有限时 ping 输出诊断，不把 ping 失败作为部署阻断条件；随后 `preview-connect.sh` 最多尝试 6 次获取主机公钥并验证部署密钥认证，失败保留错误和网络状态。加入 tailnet 成功不代表 SSH 已就绪。
 
 部署脚本完成本机健康检查后，Runner 还会对公网 HTTPS 地址做检查：只有公网检查通过，PR 评论才显示地址与登录说明；否则显示部署或公网检查失败及日志链接。检查先向公共 DNS（DoH）问这个域名的 A 记录，再把地址用 `--resolve` 交给 curl（hostname、TLS 与路由保持原样，不禁用证书），失败就按间隔重问，预算用尽才退回 runner 自己的解析器。
 
