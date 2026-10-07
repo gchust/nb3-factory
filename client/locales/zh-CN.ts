@@ -1,6 +1,10 @@
 import type { AppResource } from './en-US.js';
 
+// Keep the AI chat extension's Chinese dictionary in step with `en-US.ts` for the same reason; see the note there.
+import nocobaseAIZhCN from '../extensions/nocobase-ai/locales/zh-CN.js';
+
 const zhCN: AppResource = {
+  ...nocobaseAIZhCN,
   'auth.welcome': '欢迎回来',
   'auth.loginDescription': '使用用户名或邮箱和密码登录。',
   'auth.registerTitle': '创建账户',
@@ -89,6 +93,66 @@ const zhCN: AppResource = {
     title: '开始构建你的应用',
     description: '向 AI 助手描述你的需求，逐步构建页面、数据模型和业务流程。',
   },
+
+  'materials.navigation': '资料库',
+  'materials.title': '资料库',
+  'materials.description': '资料助手回答问题时依据的资料。点开即可阅读原文。',
+  'materials.create': '新建资料',
+  'materials.create.title': '新建资料',
+  'materials.create.description':
+    '填写标题和正文；资料助手只会依据这里的内容回答。',
+  'materials.create.submit': '创建',
+  'materials.create.submitting': '创建中…',
+  'materials.create.success': '已创建“{{title}}”。',
+  'materials.edit': '编辑',
+  'materials.edit.title': '编辑资料',
+  'materials.edit.description':
+    '修改标题和正文；资料助手会立即依据新内容回答。',
+  'materials.edit.submit': '保存',
+  'materials.edit.submitting': '保存中…',
+  'materials.edit.success': '已保存“{{title}}”。',
+  'materials.field.title': '标题',
+  'materials.field.body': '正文',
+  'materials.field.bodyHint': '资料助手只会依据正文里写明的内容回答。',
+  'materials.form.required': '请填写标题和正文。',
+  'materials.form.invalid': '服务器未接受这份资料，请检查标题和正文后重试。',
+  'materials.form.forbidden': '你没有维护资料的权限。',
+  'materials.restricted': '受限',
+  'materials.restrictedDescription': '只有主管可以阅读这份资料。',
+  'materials.updatedAt': '最后更新',
+  'materials.empty.title': '暂无资料',
+  'materials.empty.description': '主管可以添加第一份资料。',
+  'materials.detail.title': '资料',
+  'materials.error.title': '无法加载资料',
+  'materials.error.unauthenticated': '登录状态已过期，请重新登录。',
+  'materials.error.forbidden': '你没有阅读资料的权限。',
+  'materials.error.notFound': '这份资料不存在，或者你没有阅读它的权限。',
+  'materials.error.requestFailed': '请求失败，请重试。',
+  'materials.error.retry': '重试',
+  'materials.permission.section': '资料',
+  'materials.permission.collection': '资料',
+  'materials.permission.visible': '可查看的资料',
+  'materials.permission.visibleDescription': '未被标记为受限的资料。',
+  'materials.permission.read': '阅读资料',
+  'materials.permission.write': '维护资料',
+  'materials.permission.view': '阅读',
+  'materials.permission.manage': '维护',
+  'materials.permission.supervisorSet': '资料主管',
+  'materials.permission.colleagueSet': '资料读者',
+  'assistant.navigation': '资料助手',
+  'assistant.title': '资料助手',
+  'assistant.description':
+    '就你有权查看的资料提问；每条回答都会注明答案来自哪一份资料。',
+  'assistant.openMaterials': '打开资料库',
+  'assistant.placeholder': '就资料内容提问…',
+  'assistant.disclaimer':
+    '回答只来自你有权查看的资料；如果资料里没有，助手会直接说明。',
+  'assistant.retry': '重试',
+  'assistant.unavailable.title': '资料助手暂不可用',
+  'assistant.unavailable.noModel':
+    '本应用尚未配置可用的 AI 模型，因此资料助手无法回答。',
+  'assistant.unavailable.noEmployee': '本应用未注册资料助手。',
+  'assistant.unavailable.manualHint': '你仍然可以在资料库中手动阅读资料。',
 
   appearance: {
     title: '外观',
