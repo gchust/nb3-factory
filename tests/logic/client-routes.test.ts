@@ -52,9 +52,17 @@ describe('app client routes', () => {
     // access is a new grant somebody has to be given.
     const resolved = resolveRoutes();
 
-    // The landing page opted out of page authorization, so it is reachable by every signed-in user.
+    // The landing page opted out of page authorization, so it is reachable by every signed-in user. The CRM pages
+    // are each a page grant a permission set hands out; the customer detail and import pages inherit the customers
+    // page's grant because they are children of it.
     expect(pageAuthorizations(resolved.routes)).toEqual([
       { name: 'home', authorizedAs: null },
+      { name: 'crm-dashboard', authorizedAs: 'crm.dashboard' },
+      { name: 'crm-customers', authorizedAs: 'crm.customers' },
+      { name: 'crm-customer-detail', authorizedAs: 'crm.customers' },
+      { name: 'crm-customer-import', authorizedAs: 'crm.customers' },
+      { name: 'crm-opportunities', authorizedAs: 'crm.opportunities' },
+      { name: 'crm-follow-ups', authorizedAs: 'crm.follow-ups' },
     ]);
   });
 });

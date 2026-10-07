@@ -688,6 +688,43 @@ describe('app server', () => {
     }
   });
 
+  it('serves CRM opportunity amounts as numbers, not decimal storage strings', async () => {
+    const app = trackCloseable(
+      await createInstalledStandaloneServer({ viteDevUrl: false }),
+    );
+    const baseUrl = `http://localhost${app.application.publicBasePath}`;
+    const signIn = await requestApp(
+      app,
+      `${baseUrl}/api/auth/sign-in/username`,
+      {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ username: 'nocobase', password: 'admin123' }),
+      },
+    );
+    expect(signIn.status).toBe(200);
+    const cookie = signIn.headers
+      .getSetCookie()
+      .map((header) => header.split(';')[0])
+      .join('; ');
+    const response = await requestApp(
+      app,
+      `${baseUrl}/api/crm/opportunities?pageSize=5`,
+      { headers: { cookie } },
+    );
+    expect(response.status).toBe(200);
+    const body = (await response.json()) as {
+      data: { amount: unknown }[];
+    };
+    expect(body.data.length).toBeGreaterThan(0);
+    for (const opportunity of body.data) {
+      // A decimal column is read back from the database as a string; the CRM
+      // contract promises a number, and the list/detail views format numbers.
+      expect(typeof opportunity.amount).toBe('number');
+      expect(Number.isFinite(opportunity.amount as number)).toBe(true);
+    }
+  });
+
   it('serves Users and API Keys with the application authentication and permissions', async () => {
     const app = trackCloseable(
       await createInstalledStandaloneServer({ viteDevUrl: false }),
