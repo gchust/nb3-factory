@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "inputHash": "40ad3e510c75b23dff98944a8a48b6abd1fdebd03921924b7d9e52704c73118a",
+  "inputHash": "cb1c2af39b57bc0cd1f6c2735af500b1bcce93e6294e73557c1660a76da0ad96",
   "sources": [
     {
       "id": "460:36434284393:1:F2",
@@ -651,6 +651,11 @@
       "id": "611:37542326691:1:F2",
       "report": "611:37542326691:1",
       "fingerprint": "f531b3aef4b0347c6fd505e0204c87b659145f31628cb472b851bd209a1c36ab"
+    },
+    {
+      "id": "613:37542338892:1:F3",
+      "report": "613:37542338892:1",
+      "fingerprint": "acb6a081b4bf13a2931c4c1f8cffea274d0caea93094c4dded8772139480422e"
     }
   ],
   "groups": [
@@ -1215,15 +1220,22 @@
       "members": [
         "600:37453053696:1:F3"
       ]
+    },
+    {
+      "title": "nocobase-db Skill 未说明迁移/种子相对导入必须使用 .ts 说明符",
+      "reason": "单独保留。613:F3（E75/E76）只证明 nocobase-db Skill 的 migrations/seeds 小节缺少“相对导入必须写 .ts 说明符、构建期由 rewriteRelativeImportExtensions 改写”这一规则（dev-config 的 server.json 同时开启 allowImportingTsExtensions 与 rewriteRelativeImportExtensions），属“缺说明”。它与既有“授权 Skill 种子示例使用 .js 相对说明符”组的“错误说明”缺口不同（受影响指引位置、触发示例与修复落点均不同），也与“任务加载器的相对扩展名重写对 file:// 失效”的框架加载器缺陷不同，按缺说明与错误说明区分原则单列。",
+      "members": [
+        "613:37542338892:1:F3"
+      ]
     }
   ],
   "classifier": {
     "engine": "pi",
     "model": "deepseek-v4.1-flash",
     "version": "0.86.1",
-    "runId": "37551539007",
+    "runId": "37553068885",
     "attempt": 1,
-    "controlSha": "80f0b410109ecd38da33fedb9f975e124f8ae6e5",
-    "completedAt": "2026-10-07T00:23:22.244Z"
+    "controlSha": "fd529ed056cde0cfacce5e5e3734439998861174",
+    "completedAt": "2026-10-07T00:41:15.684Z"
   }
 }
