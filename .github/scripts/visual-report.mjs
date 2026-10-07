@@ -91,10 +91,11 @@ export function selectArtifact(run, jobs, artifacts, repository) {
       jobs.some(
         (job) => job.name === 'publish-failed' && job.conclusion === 'success',
       ) ||
-      (run.conclusion === 'success' &&
-        ['verify-final', 'publish'].every((name) =>
-          jobs.some((job) => job.name === name && job.conclusion === 'success'),
-        ))
+      // The jobs decide, not the run's conclusion: a question round's reply
+      // failing after the delivery fails the run without undoing the delivery.
+      ['verify-final', 'publish'].every((name) =>
+        jobs.some((job) => job.name === name && job.conclusion === 'success'),
+      )
     )
   ) {
     return null; // In particular, a successful five-hour handoff is not a delivery.

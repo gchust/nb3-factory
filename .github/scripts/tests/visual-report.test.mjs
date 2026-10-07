@@ -197,6 +197,8 @@ test('only a successfully published same-repository task can publish media', () 
     ),
     null,
   );
+  // A delivered build stays delivered when a later job (a question round's
+  // reply) fails the run: the jobs decide, not the run's conclusion.
   assert.equal(
     selectArtifact(
       { ...run, conclusion: 'failure' },
@@ -204,7 +206,7 @@ test('only a successfully published same-repository task can publish media', () 
       [artifact],
       repository,
     ),
-    null,
+    artifact,
   );
   assert.throws(
     () =>
