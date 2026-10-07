@@ -91,12 +91,19 @@ export function verifyControlSha(event, selectedSha, checkpoint) {
 // (publication-base.mjs); otherwise the task branch stays on this base and the
 // PR shows the divergence. A changed base ref means the chain itself changed,
 // which no continuation can reconcile.
+// The work branch itself is different: publication pushes it with a lease on
+// the recorded commit, so a push to agent/issue-N during the handoff would only
+// be rejected after the whole continuation and final verification ran, too late
+// to recover. Stop at once instead; recoveries check the same in check-base.
 export function continuationBase(previous, ref, sha) {
   controlSha(sha);
   const recorded = previous?.applicationBase;
   if (!recorded) return { ref, sha, pinned: false };
   if (recorded.ref !== ref) {
     throw new Error(`Application base ref changed since the source run (${recorded.ref} -> ${ref}); start a new build instead of continuing.`);
+  }
+  if (recorded.sha !== sha && previous.workBranch && ref === previous.workBranch) {
+    throw new Error(`${ref} moved since the source run (${recorded.sha} -> ${sha}); a continuation will not overwrite newer work on its own task branch. Start a new build from the current branch instead.`);
   }
   return { ref, sha: controlSha(recorded.sha), pinned: recorded.sha !== sha };
 }

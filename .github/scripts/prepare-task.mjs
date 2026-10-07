@@ -16,7 +16,7 @@ import {
   listAll,
 } from './comment-queue.mjs';
 import { isManualIssue, isPresetIssue, preparePresetIssue } from './issue-presets.mjs';
-import { resolveTaskBranch, taskIssueNumber } from './task-compat.mjs';
+import { recordedContinuationBase, resolveTaskBranch, taskIssueNumber } from './task-compat.mjs';
 import { resolveTargetBranch, pinInitialBase } from './task-base.mjs';
 import { taskEvaluationIdentity } from './evaluation-identity.mjs';
 import { gateSample, recordTerminal, resolveSample } from './evaluation-sample.mjs';
@@ -57,8 +57,6 @@ try {
   const continuation = event.action === 'code-agent-continue';
   const batchSample = sample && !buildCommentId ? sample : null;
   const runId = Number(process.env.GITHUB_RUN_ID);
-  // The batch coordinator advances when a sample run ends (bot-started runs emit no workflow_run).
-  if (sample) appendGithubOutput(outputPath, 'evaluation_sample', 'true');
   let budgetUsed = null;
   if (sample) {
     // One gate, shared with the Agent job's admission (see gateSample for the rules).
@@ -195,9 +193,7 @@ try {
   mkdirSync(path.dirname(args.metadata), { recursive: true });
   writeFileSync(args.metadata, `${JSON.stringify(metadata, null, 2)}\n`);
 
-  appendGithubOutput(outputPath, 'target_branch', task.targetBranch);
   appendGithubOutput(outputPath, 'work_branch', workBranch);
-  appendGithubOutput(outputPath, 'default_branch', defaultBranch);
 
   if (blockingPullRequest) {
     issue = await client.setIssueStatus(
@@ -242,6 +238,11 @@ try {
   appendGithubOutput(outputPath, 'base_sha', baseSha);
   appendGithubOutput(outputPath, 'status', 'ready');
 
+  // A continuation keeps the base its source run recorded (continuationBase in
+  // handoff-control.mjs), so show that commit rather than the live head.
+  const shownBaseSha = continuation
+    ? (recordedContinuationBase(process.env.FACTORY_PREVIOUS_TASK, baseRef) ?? baseSha)
+    : baseSha;
   if (task.commentKind !== 'reply')
     await client.setIssueStatus(
       issue,
@@ -251,7 +252,7 @@ try {
         '',
         `- PR 合并目标：\`${task.targetBranch}\`${targetCreated ? '（刚从默认分支创建）' : ''}`,
         `- 工作分支：\`${workBranch}\``,
-        `- 本轮代码起点：\`${baseRef} @ ${baseSha}\``,
+        `- 本轮代码起点：\`${baseRef} @ ${shownBaseSha}\`${shownBaseSha !== baseSha ? '（续跑沿用上一轮记录的起点）' : ''}`,
         `- [查看本次运行](${process.env.GITHUB_SERVER_URL}/${repository}/actions/runs/${process.env.GITHUB_RUN_ID})`,
       ].join('\n'),
     );

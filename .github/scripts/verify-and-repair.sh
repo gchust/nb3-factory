@@ -106,12 +106,17 @@ while true; do
           node "$control_dir/.github/scripts/create-runtime-config.mjs" \
             --output "$runtime_config" --database "$state_dir/${verification_name}/full/database.sqlite"
           initialization_log="$verification_artifacts/full-initialize.log"
+          # verify.sh cleared the stage file; a failure here is the database
+          # step's, and capture files it under that stage, not under `build`.
+          printf '%s\n' database >"$artifact_dir/last-failed-stage"
           if ! (cd "$workspace" && export APP_CONFIG_FILE="$runtime_config" NODE_ENV=test &&
             "$control_dir/.github/scripts/apply-database.sh") \
             2>&1 | tee "$initialization_log" | tee -a "$verification_log"; then
             failure_kind=build
             repair_log="$initialization_log"
             browser_status=10
+          else
+            rm -f "$artifact_dir/last-failed-stage"
           fi
         fi
       fi

@@ -224,7 +224,11 @@ test('a failed agent preserves a checkpoint and can publish failed work without 
   const checkpoint = workflow
     .split('- name: Confirm the handoff checkpoint')[1]
     .split('- name: Dispatch continuation run')[0];
-  assert.match(checkpoint, /always\(\) && steps\.patch\.outcome == 'success'/);
+  // A sealed patch, or a continuation's kept handed-off checkpoint.
+  assert.match(
+    checkpoint,
+    /always\(\) && \(steps\.patch\.outcome == 'success' \|\| steps\.keep_checkpoint\.outcome == 'success'\)/,
+  );
   assert.match(checkpoint, /AGENT_UPLOAD_OUTCOME: \$\{\{ steps\.agent-upload\.outcome \}\}/);
   assert.match(checkpoint, /for file in agent\.patch pipeline-state\.json task-metadata\.json/);
   assert.match(
