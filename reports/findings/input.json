@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "inputHash": "bad410ea9821fa88164d846913db412c709040b59975b715d033ead8ccb4ecb6",
+  "inputHash": "40ad3e510c75b23dff98944a8a48b6abd1fdebd03921924b7d9e52704c73118a",
   "findings": [
     {
       "id": "460:36434284393:1:F2",
@@ -11548,6 +11548,166 @@
         }
       ],
       "fingerprint": "e68652458c602435d5cc635fabd3e0af31870e0e510e597c9bc6d8f4ba51c596"
+    },
+    {
+      "id": "611:37542326691:1:F1",
+      "report": "611:37542326691:1",
+      "issue": 611,
+      "taskTitle": "客户、联系人与商机管理",
+      "appVersion": "1.0.0-beta.55",
+      "appTemplate": "@nocobase/app-template-default",
+      "finding": {
+        "id": "F1",
+        "kind": "issue",
+        "owner": "documentation",
+        "confidence": "confirmed",
+        "severity": "minor",
+        "status": "open",
+        "title": "应用测试指引未说明 cookie 写请求需要可信 Origin，导致 403 INVALID_CSRF_ORIGIN 易被误判",
+        "detail": "app/.agents/skills/nocobase-app-development/references/testing.md 只演示 createAppTest 与 signIn(DEFAULT_ADMIN_CREDENTIALS)，没有提到 app-plugin-authentication 会对携带 cookie 的非 GET 请求校验 Origin/Referer，且测试应用默认没有可被信任的 publicOrigin。Agent 因此在集成测试中遇到 POST/PATCH 全部 403 INVALID_CSRF_ORIGIN、GET 却正常，只能从插件实现反推并自行在测试配置中加入 publicOrigin 与匹配 origin 头。该前提只写在与测试主线分离的插件 Skill（protecting-routes.md）里。",
+        "impact": "测试作者会把 403 当成授权实现缺陷并浪费调试轮次，也可能因此放弃 cookie 会话而改用绕过认证的写法，削弱断言可信度。",
+        "suggestedChange": "在 testing.md 的 signIn 示例旁补说明与代码片段：createAppTest 时设置 config.app.publicOrigin，并在所有非 GET 请求上发送匹配的 origin 头；同时从测试指引链接到 protecting-routes.md 的来源校验小节。",
+        "diagnosis": {
+          "category": "guidance-gap",
+          "trigger": "使用 signIn 得到的会话对受保护路由发起 POST/PATCH 写请求",
+          "expected": "测试指引说明可信 Origin 要求并给出配置片段，写请求一次成功",
+          "actual": "testing.md 未提及，测试返回 403 INVALID_CSRF_ORIGIN，Agent 需从插件实现反推后手工配置 publicOrigin 与 origin 头",
+          "workaround": "在 createAppTest 配置 app.publicOrigin，并在每个写请求上带匹配 origin 头",
+          "acceptance": "按 testing.md 的 signIn 示例编写写请求用例，无需查阅插件源码即可通过认证写入"
+        },
+        "evidence": [
+          "E23",
+          "E27",
+          "E24",
+          "E25"
+        ]
+      },
+      "targets": [
+        "@nocobase/app-plugin-authentication",
+        "app/.agents/skills/nocobase-app-development/references/testing.md",
+        "packages/@nocobase/app-plugin-authentication/skills/nocobase-app-plugin-authentication/references/protecting-routes.md"
+      ],
+      "paths": [
+        ".agents/skills/nocobase-app-development/references/testing.md",
+        ".agents/skills/nocobase-app-plugin-authentication/references/protecting-routes.md",
+        "packages/@nocobase/app-plugin-authentication/dist/server/auth.js"
+      ],
+      "evidence": [
+        {
+          "id": "E23",
+          "kind": "skill",
+          "path": "app/.agents/skills/nocobase-app-development/references/testing.md",
+          "observation": "演示 createAppTest 与 signIn(DEFAULT_ADMIN_CREDENTIALS) 的用例骨架、方言与临时目录配置。",
+          "lines": [
+            50,
+            100
+          ],
+          "excerpt": "Do not add a `registerRoutes(router, ...)` helper just to make a route testable. It moves the security boundary out of the thing you are testing.\n\n## Testing through the whole application\n\nTo check a route's authentication and permission boundaries as a user meets them, start the application itself on test databases with `@nocobase/app-testing/server` and sign in through its own sign-in route with `@nocobase/app-plugin-authentication/testing`:\n\n```ts\nimport {\n  DEFAULT_ADMIN_CREDENTIALS,\n  signIn,\n} from '@nocobase/app-plugin-authentication/testing';\nimport { createAppTest } from '@nocobase/app-testing/server';\nimport { createStandaloneServer } from '../../server/standalone.ts';\n\nconst test = createAppTest({ createServer: createStandaloneServer });\n\ntest('lists orders for an administrator only', async ({ testApp, request }) => {\n  expect((await request('/orders')).status).toBe(401);\n  const admin = await signIn(testApp, DEFAULT_ADMIN_CREDENTIALS);\n  expect((await admin.fetch('/orders')).status).toBe(200);\n});\n```\n\nThe application starts as `pnpm start` starts it and installs its migrations and seeds on start; one application serves the test file. A user other than the administrator is one a seed of the application created, signed in the same way.\n\n### The API document\n\nThe same started application proves that every route declares itself for the [API document](http-api.md#api-documentation):\n\n```ts\nimport {\n  apiDocsToken,\n  findApiDocumentSchemaProblems,\n  findUndeclaredApiRoutes,\n} from '@nocobase/app-server/router';\n\ntest('declares its routes in the API document', async ({ testApp }) => {\n  expect(findUndeclaredApiRoutes(testApp.application)).toEqual([]);\n  const document = await testApp.application.container\n    .resolve(apiDocsToken)\n    .getDocument();\n  expect(findApiDocumentSchemaProblems(document)).toEqual([]);\n  const cancel = document.paths?.['/api/orders/{orderId}/cancel']?.post;\n  expect(cancel?.operationId).toBe('cancelOrder');\n  // 401, 403 and 500 from apiErrorResponses, 400 from its validators and its own precondition, and its 404.\n  expect(Object.keys(cancel?.responses ?? {}).sort()).toEqual([\n    '200',\n    '400',\n    '401',\n    '403',\n    '404',",
+          "sha256": "a47c8cdcc9bc066f5cf30dc2de7e5682ce3cd7fd83064a8c56c4c781e7c101a4"
+        },
+        {
+          "id": "E27",
+          "kind": "skill",
+          "path": "packages/@nocobase/app-plugin-authentication/skills/nocobase-app-plugin-authentication/references/protecting-routes.md",
+          "observation": "说明认证/来源校验：携带 cookie 的写请求若 Origin/Referer 不可信会以 403 INVALID_CSRF_ORIGIN 拒绝。",
+          "lines": [
+            1,
+            60
+          ],
+          "excerpt": "# Protecting routes\n\nEvery server route decides its own authentication. Resolve the `Auth` instance\nfrom the container and put `auth.required()` in front of the routes that need\na signed-in caller.\n\n```ts\nimport {\n  authenticationToken,\n  type AuthEnv,\n} from '@nocobase/app-plugin-authentication';\nimport type { Application } from '@nocobase/app-server/application';\nimport {\n  defineApiRoutes,\n  type AppApiRouteContribution,\n} from '@nocobase/app-server/router';\nimport { Hono } from 'hono';\n\nexport const apiRoutes: AppApiRouteContribution<Application> = defineApiRoutes(\n  (app) => {\n    const auth = app.container.resolve(authenticationToken);\n    const routes = new Hono<AuthEnv>();\n\n    routes.use('/orders/*', auth.required());\n    routes.get('/orders', (context) => {\n      const { user, session } = context.get('auth')!;\n      return context.json({\n        data: { userId: user.id, expiresAt: session.expiresAt.toISOString() },\n      });\n    });\n\n    return routes;\n  },\n);\n```\n\nFollow the application's own route conventions for where this file lives and\nhow it is registered; the application Skill's server-routes reference covers\nthat. This reference covers what the plugin adds.\n\n## The two middlewares\n\n- `auth.required()` rejects an anonymous request with `401 UNAUTHENTICATED` in the standard error body, reason `AUTHENTICATION_REQUIRED`, domain `authentication`. On success `context.get('auth')` is `{ user, session }`.\n- Both middlewares reject a cookie-bearing write whose `Origin` (or `Referer`) is not trusted with `403 PERMISSION_DENIED`, reason `INVALID_CSRF_ORIGIN`, domain `authentication`.\n- `auth.optional()` sets `context.get('auth')` to the session or `null` and\n  never rejects. Use it for a route whose response differs for a signed-in\n  caller but is still public.\n\nBoth accept `{ skip: (context) => boolean }` to exempt specific requests, for\nexample a health probe inside an otherwise protected prefix. A skipped request\nhas no `auth` variable at all; read it only after checking.\n\n`AuthEnv` is `{ Variables: { auth: AuthSession } }`. Type the router with it so\n`context.get('auth')` compiles. `AuthSession` is `{ user, session } | null`;\n`user` carries `id`, `name`, `email`, `emailVerified`, `username`, `image`,\n`disabledAt`, `createdAt`, `updatedAt`, plus any `user.additionalFields` the\napplication configured.\n\n## What a session means\n",
+          "sha256": "9a0f6f43e50640d229c848602e0a13cb3d7bd072ac0697f80c8fa885732c39b4"
+        },
+        {
+          "id": "E24",
+          "kind": "code",
+          "path": "packages/@nocobase/app-plugin-authentication/dist/server/auth.js",
+          "observation": "认证中间件在读取会话后对携带 cookie 的写请求强制校验来源。",
+          "lines": [
+            240,
+            270
+          ],
+          "excerpt": "    forConnection(connection) {\n        return new Auth({ ...this.options, connection });\n    }\n    optional(options = {}) {\n        return async (context, next) => {\n            const originFailure = await this.checkCookieWriteOrigin(context);\n            if (originFailure)\n                return originFailure;\n            if (options.skip?.(context)) {\n                await next();\n                return;\n            }\n            try {\n                context.set('auth', await this.getSession(context.req.raw.headers));\n            }\n            catch (error) {\n                if (error instanceof APIError)\n                    return rejectedCredential(context, error);\n                throw error;\n            }\n            await next();\n        };\n    }\n    required(options = {}) {\n        return async (context, next) => {\n            const originFailure = await this.checkCookieWriteOrigin(context);\n            if (originFailure)\n                return originFailure;\n            if (options.skip?.(context)) {\n                await next();\n                return;",
+          "sha256": "25d0f0fdc16ae9685e9ab088e6454d85c47d0cd789819d22041a7808f4598c20"
+        },
+        {
+          "id": "E25",
+          "kind": "code",
+          "path": "packages/@nocobase/app-plugin-authentication/dist/server/auth.js",
+          "observation": "checkCookieWriteOrigin 对不可信 Origin/Referer 的写请求返回 403 INVALID_CSRF_ORIGIN。",
+          "lines": [
+            315,
+            330
+          ],
+          "excerpt": "        .split('/')\n        .map((part) => (part.startsWith(':') ? `{${part.slice(1)}}` : part))\n        .join('/');\n}\n/** A cookie-bearing write whose origin is neither the application's own nor a trusted one. */\nfunction invalidCsrfOrigin(context) {\n    return apiErrorHandler(new ApiError({\n        status: 'PERMISSION_DENIED',\n        reason: 'INVALID_CSRF_ORIGIN',\n        domain: 'authentication',\n        message: 'The request origin is not trusted for a cookie-authenticated write.',\n    }), context);\n}\n/** A credential Better Auth refused, answered in the standard API error body with Better Auth's code as the reason. */\nfunction rejectedCredential(context, error) {\n    return apiErrorHandler(new ApiError({",
+          "sha256": "25d0f0fdc16ae9685e9ab088e6454d85c47d0cd789819d22041a7808f4598c20"
+        }
+      ],
+      "fingerprint": "5ebae44f2c20f2dd46990597794626fa45d3ebd33bc21f4e867e871891f99d7a"
+    },
+    {
+      "id": "611:37542326691:1:F2",
+      "report": "611:37542326691:1",
+      "issue": 611,
+      "taskTitle": "客户、联系人与商机管理",
+      "appVersion": "1.0.0-beta.55",
+      "appTemplate": "@nocobase/app-template-default",
+      "finding": {
+        "id": "F2",
+        "kind": "issue",
+        "owner": "documentation",
+        "confidence": "confirmed",
+        "severity": "minor",
+        "status": "open",
+        "title": "nocobase-db Skill 的“种子绝非样例数据”表述与交付样例业务数据的需求相互冲突",
+        "detail": "packages/@nocobase/db/skills/nocobase-db/SKILL.md 明确“A migration creates structure. A seed inserts the records the application needs in order to run... a seed is never sample or demonstration content.”，但没有给出交付样例/演示业务数据的受支持机制。本任务验收要求全新安装即含 2 个客户、3 个联系人与 3 个商机，Agent 只能把这些业务样例放进 seed，并在种子注释中显式承担与 Skill 表述的冲突。",
+        "impact": "开发者与 Agent 面临规范与需求直接对立的取舍：照 Skill 则无法满足样例数据验收，照需求则违反 Skill 表述；后续难以判断 seed 中的记录是否合规。",
+        "suggestedChange": "在 nocobase-db Skill 或应用开发指引中明确样例/演示业务数据的受支持落点与命名约定（例如允许在显式标记为样例的种子中写入，或提供独立 fixture/demo-data 机制），并说明生产安装可选跳过。",
+        "diagnosis": {
+          "category": "guidance-gap",
+          "trigger": "需求要求安装后即存在业务样例记录，而唯一可用的安装期写入机制是 seed",
+          "expected": "指引给出样例业务数据的受支持落点，规则与需求一致",
+          "actual": "Skill 规定 seed 不得承载样例内容，却没有替代机制，Agent 只能违约式放入 seed",
+          "workaround": "把样例业务数据写入 seed 并加注释说明冲突",
+          "acceptance": "存在一个被文档认可的落点，可交付全新安装的样例业务数据且不违反 Skill 表述"
+        },
+        "evidence": [
+          "E4",
+          "E31"
+        ]
+      },
+      "targets": [
+        "packages/@nocobase/db/skills/nocobase-db/SKILL.md"
+      ],
+      "paths": [
+        ".agents/skills/nocobase-db/SKILL.md"
+      ],
+      "evidence": [
+        {
+          "id": "E4",
+          "kind": "skill",
+          "path": "packages/@nocobase/db/skills/nocobase-db/SKILL.md",
+          "observation": "Skill 规定迁移建结构、种子写运行所需记录，并声明种子绝非样例或演示内容。",
+          "lines": [
+            75,
+            90
+          ],
+          "excerpt": "\nKeep `@nocobase/db` itself in `dependencies`, not `devDependencies`: the deployed server resolves it at runtime, and TypeScript reads that declaration to infer the database configuration.\n\n## 2. Migrations and seeds\n\nA migration creates structure. A seed inserts the records the application needs in order to run. Neither does the other's job, and a seed is never sample or demonstration content.\n\n```ts\n// database/main/migrations/202609020001_create_orders.ts\nimport { defineMigration, type MigrationDefinition } from '@nocobase/db';\n\nconst migration: MigrationDefinition = defineMigration({\n  name: '202609020001_create_orders',\n\n  async up({ builder }) {\n    await builder.createCollection('orders', (collection) => {",
+          "sha256": "d33a58740d6a2921689e56f964c081354574ed857389118e319719bde6936991"
+        },
+        {
+          "id": "E31",
+          "kind": "code",
+          "path": "app/database/main/seeds/202601010002_sales_sample_data.ts",
+          "observation": "种子以 upsertOne 按唯一客户名幂等写入 Acme/Globex 两个客户，并对样例数据属性作了说明。",
+          "lines": [
+            1,
+            60
+          ],
+          "excerpt": "import {\n  defineSeed,\n  type CreateMutationValues,\n  type Repository,\n  type RepositoryFilter,\n} from '@nocobase/db';\n\n/**\n * The sales sample data a fresh install starts from: two customers, three contacts and three opportunities.\n *\n * Idempotent and repeated-run safe: every write is keyed on the values that identify the row, so running the seed\n * again leaves the database as it is instead of duplicating the sample. Seeding only ever writes rows — the tables\n * themselves are the migration's job.\n *\n * The record shapes are declared here rather than imported: a seed is history, and a Collection definition that keeps\n * evolving must not silently change what an already-executed seed means.\n */\ninterface CustomerRecord {\n  id: number;\n  name: string;\n  industry: string | null;\n}\n\ninterface ContactRecord {\n  id: number;\n  name: string;\n  contactInfo: string | null;\n  customerId: number;\n}\n\ninterface OpportunityRecord {\n  id: number;\n  name: string | null;\n  customerId: number;\n  amount: number | null;\n  stage: 'following' | 'won' | 'lost';\n}\n\ntype ScalarMap = Readonly<Record<string, string | number | boolean | null>>;\n\nexport default defineSeed({\n  name: '202601010002_sales_sample_data',\n\n  async run(context) {\n    // Read it off the context rather than destructuring: the method must keep its receiver.\n    const repository = context.repository.bind(context);\n    const customers = repository<CustomerRecord>('customers');\n    const contacts = repository<ContactRecord>('contacts');\n    const opportunities = repository<OpportunityRecord>('opportunities');\n\n    // A customer has a unique name, so it is upserted on it: a second run updates the row rather than adding another.\n    const acme = await customers.upsertOne({\n      filter: { name: 'Acme Corporation' },\n      create: { name: 'Acme Corporation', industry: 'Manufacturing' },\n      update: { industry: 'Manufacturing' },\n    });\n    const globex = await customers.upsertOne({\n      filter: { name: 'Globex Industries' },\n      create: { name: 'Globex Industries', industry: 'Technology' },\n      update: { industry: 'Technology' },",
+          "sha256": "949c7367b365e8db6a4f35626818c33843b21964ae53c86c6af56b75cae0d5bd"
+        }
+      ],
+      "fingerprint": "f531b3aef4b0347c6fd505e0204c87b659145f31628cb472b851bd209a1c36ab"
     }
   ]
 }
