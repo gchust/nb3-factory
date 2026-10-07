@@ -1,4 +1,11 @@
-import { Home } from 'lucide-react';
+import {
+  Building2,
+  CalendarDays,
+  ClipboardCheck,
+  Home,
+  IdCard,
+  Users,
+} from 'lucide-react';
 import {
   defineAppRoutes,
   defineSettingsRoutes,
@@ -15,6 +22,66 @@ const appRoutes: AppClientRouteContribution = defineAppRoutes([
     name: 'home',
     navigation: { title: 'navigation.home', icon: Home },
     path: '/',
+  },
+  {
+    // Navigation group only: no path, component or authz of its own; each page
+    // below carries its own path, page authorization and menu entry.
+    name: 'hr',
+    navigation: { title: 'navigation.hr', icon: Users },
+    children: [
+      {
+        auth: 'required',
+        authz: {
+          resource: { type: 'page', id: 'hr.departments' },
+          action: 'access',
+        },
+        componentLoader: () => import('./pages/hr/departments.js'),
+        name: 'hr-departments',
+        navigation: { title: 'navigation.hrDepartments', icon: Building2 },
+        path: '/hr/departments',
+      },
+      {
+        auth: 'required',
+        authz: {
+          resource: { type: 'page', id: 'hr.employees' },
+          action: 'access',
+        },
+        componentLoader: () => import('./pages/hr/employees.js'),
+        name: 'hr-employees',
+        navigation: { title: 'navigation.hrEmployees', icon: Users },
+        path: '/hr/employees',
+      },
+      {
+        auth: 'required',
+        authz: { resource: { type: 'page', id: 'hr.leave' }, action: 'access' },
+        componentLoader: () => import('./pages/hr/leave.js'),
+        name: 'hr-leave',
+        navigation: { title: 'navigation.hrLeave', icon: CalendarDays },
+        path: '/hr/leave',
+      },
+      {
+        auth: 'required',
+        authz: {
+          resource: { type: 'page', id: 'hr.approvals' },
+          action: 'access',
+        },
+        componentLoader: () => import('./pages/hr/approvals.js'),
+        name: 'hr-approvals',
+        navigation: { title: 'navigation.hrApprovals', icon: ClipboardCheck },
+        path: '/hr/approvals',
+      },
+      {
+        auth: 'required',
+        authz: {
+          resource: { type: 'page', id: 'hr.profile' },
+          action: 'access',
+        },
+        componentLoader: () => import('./pages/hr/profile.js'),
+        name: 'hr-profile',
+        navigation: { title: 'navigation.hrProfile', icon: IdCard },
+        path: '/hr/profile',
+      },
+    ],
   },
   {
     auth: 'guest',
