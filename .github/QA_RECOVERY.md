@@ -51,7 +51,29 @@ are recoverable and what the recovery checks. Artifacts expire after 14 days. A
 GitHub Re-run of the agent job is always rejected before any work, for a
 continuation too, because a fresh runner cannot preserve the task's limits.
 Such a rejected Re-run leaves the earlier attempt's checkpoint intact, and an
-explicit recovery from that run still accepts it.
+explicit recovery from that run still accepts it. It requests no report, and
+the progress reporter ignores such an attempt, so no empty progress, usage,
+history or retro replaces the Issue's real one; it answers no comment either.
+"Re-run all jobs" stops at the start of prepare once an earlier attempt ran
+the build, before it records a new attempt, uploads a
+second task artifact, relabels the Issue or posts a status; its reports are
+marked handled without being requested, so nothing is published for that
+attempt. Only a question round really re-runs that way. A build re-run always
+ends in rejection, because the agent job refuses every attempt after the
+first: recover a failed build with `recovery_run_id`, or start a new run.
+
+A continuation retries its checkpoint and task downloads once. If it still
+fails after both downloads but before restoring its progress (applying the
+patch, sample admission, the restore itself), it keeps the whole handed-off
+checkpoint as its own, marked failed, but only when the checkpoint is one it
+could have restored: the same task input, patch and control plane, not
+stopped, an unchanged budget, a repair checkpoint with its diagnostic context,
+and an evaluation sample that was not refused. A refused control-plane
+verification, or any checkpoint rejected on purpose, is not kept, published or
+offered for recovery. Recover a kept one with `recovery_run_id` set to that continuation,
+since its source run concluded successfully when it handed off. A
+continuation whose own task branch moved during the handoff stops at once
+instead of failing at the final push.
 
 Regression checks: `pnpm factory:test`. A task keeps the control plane it
 recorded as `control_sha` for its continuations and recoveries, so an
