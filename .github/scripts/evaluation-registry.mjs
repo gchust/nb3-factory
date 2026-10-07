@@ -194,6 +194,8 @@ export function enqueue(outbox, { targetId, type, key, revision, bundleSha256 },
   return true;
 }
 
+export const resultDigest = result => sha256(JSON.stringify(result));
+
 // Delivery results are applied under CAS; "sending" is never recorded as success.
 export async function recordDeliveries(client, results, now = new Date()) {
   return commitTree(client, `evaluation: delivery receipts (${results.length})`, async ref => {
@@ -208,6 +210,12 @@ export async function recordDeliveries(client, results, now = new Date()) {
         entry = outbox.entries.find(item => item.id === result.id);
       }
       if (entry.bundleSha256 !== result.bundleSha256) throw new Error('Delivery result bundle differs from the registered revision');
+      // A retry after a ref update whose response was lost rebuilds on a head
+      // that may already hold this very result: apply each result once, so its
+      // attempts and history are never counted twice. Attempts carry their own
+      // timestamps, so two genuine results never share a digest.
+      const digest = resultDigest(result);
+      if ((entry.appliedResults ?? []).includes(digest)) continue;
       if (entry.state === 'stored' && result.state !== 'stored') continue; // A stored receipt is final.
       entry.state = result.state;
       // Configuration errors and expired sources are not receiver attempts.
@@ -224,6 +232,7 @@ export async function recordDeliveries(client, results, now = new Date()) {
         entry.autoRetries = (entry.autoRetries ?? 0) + 1;
         entry.lastAutoRetryAt = now.toISOString();
       }
+      entry.appliedResults = [...(entry.appliedResults ?? []), digest].slice(-20);
       entry.updatedAt = now.toISOString();
       changed = true;
     }

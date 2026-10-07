@@ -24,7 +24,7 @@
   重评只能走现有 **Reassess Build Quality**；补发与重渲染没有模型用量。
 - 结果协议是归一化公共 DTO；接收端不需要解析 `verify-*` 目录、工厂日志、Issue 模板或 Agent 事件。
 - 工厂不输出、不调用管理端的 `featurePointId`、`problemId`、负责人或状态变更；不创建、指派或关闭管理端问题。
-- 投递失败或接收端下线不改变业务验收、PR、QA 或修复，也不阻止评测批次推进。
+- 投递失败或接收端下线不改变业务验收、PR、QA 或修复。
 - 两个仓库不共享数据库或业务源码；Schema 使用本仓库固定文件，不在运行时下载。
 
 ## 运行身份与修订
@@ -182,7 +182,7 @@ ZIP 由工厂确定性生成：路径排序、固定时间戳（1980-01-01）、
 | Variable `EVALUATION_AUTH_MODE` | `x-api-key` | 固定枚举 `x-api-key` / `bearer`；不接受自定义头名或模板 |
 | Secret `EVALUATION_TOKEN` | 未设置 | 只进入投递工作流 `send` 作业的一个步骤；不进入实现、QA、评审、导出或任何 Artifact |
 
-| Variable `FACTORY_EVALUATION_PLANS_ENABLED` | 未设置 = 启用 | `false` 暂停新每日批次；默认仅运行启用的 F00 三样本核心计划，旧标签 cron 已移除；手动启动、推进与取消不受它限制 |
+| Variable `FACTORY_EVALUATION_PLANS_ENABLED` | 已停用 | 随批次工作流一起退役，不再有任何工作流读取；每日预置搭建见 [`SCHEDULED_PRESET_TESTS.md`](SCHEDULED_PRESET_TESTS.md) |
 
 投递打开但配置不完整时，投递作业失败并列出缺失的配置项名称（不输出值），记录保持待投递；业务结果与归档不受影响。
 仓库里原有的变量没有同义开关，因此新增上述名称。
@@ -255,9 +255,9 @@ X-Evaluation-Bundle-SHA256: <ZIP 的 SHA-256>
 
 ## 投递、重试与补发
 
-`Report Task Usage`（以及批次协调器）的 `evaluation` 作业在投递开启时把新修订写入 `evaluations/outbox.json`（只含目标哈希、主体、修订、
+`Report Task Usage` 的 `evaluation` 作业在投递开启时把新修订写入 `evaluations/outbox.json`（只含目标哈希、主体、修订、
 包摘要、状态与最近 10 次尝试），然后以 `workflow_dispatch` **不等待地**请求一次 **Deliver Evaluation Results** 扫描就结束。
-投递工作流只能被派发或定时触发，不被任何工作流调用，因此慢接收端不会占住报告或批次的串行并发组；请求失败时由定时扫描补发。
+投递工作流只能被派发或定时触发，不被任何工作流调用，因此慢接收端不会占住报告的串行并发组；请求失败时由定时扫描补发。
 
 ```text
 plan（actions/contents: read）  按登记摘要找回原 Artifact，逐字节校验包 → 待发清单
@@ -288,60 +288,18 @@ GitHub 限流、5xx、网络或超时等临时故障保持 `pending`，不计为
 仍被拒绝时保持 `rejected`，等待修正后手动 `retry-rejected`。发送作业未及写回时计数不变，下一次扫描可能再发一次，接收端幂等返回同一结果。GitHub Artifact 有保留期限，删除关联 Run 也可能删除它，
 因此不承诺历史包永久可重放；`evaluation.json` 与清单的原始字节长期保留在 `gh-pages`。
 
-## 固定基线的独立重复评测（批次）
+## 固定基线的独立重复评测（批次，已停用）
 
-受信任维护者在 [`evaluations/plans.json`](evaluations/plans.json) 定义计划；Issue、评论或派发字段都不能提供计划、控制 SHA、预算、脚本或 URL。
-校验上限：每批最多 10 个案例、每案例 1–10 个样本、每批共 20 个样本；v1 只允许 `maxConcurrentSamples=1`；
-修复上限 0–10 次，单样本主动执行 600–86400 秒，自动续跑 0–10 次；`baselineRef` 可为默认分支、默认分支历史中的固定 SHA，或已发布的源码基线分支（不自动构建上游源码或刷新模板）。`reviewMode` 为 `inherit`（沿用预设的“框架评测”选择，否则 `FACTORY_BUILD_REVIEW`）、`full` 或 `off`；
-关闭评审的样本显示“未评审”，不会被当作模块通过。
+批次工作流（`evaluation-batches.yml`）及任务工作流里的 `advance-evaluation-batch` 作业已在 b2a65ef 中移除，
+每日预置搭建改由 [`SCHEDULED_PRESET_TESTS.md`](SCHEDULED_PRESET_TESTS.md) 描述的普通任务完成，不再有协调 Issue、
+串行槽位、样本预算或 `start` / `advance` / `cancel` / `status` 操作。
 
-```text
-Evaluation batches → start（手动）或每日定时（开关不为 false + enabled + schedule=daily）
-  → 分别固定控制 SHA 与应用基线 SHA（可不同），校验受信任来源、锁文件哈希、模板版本、评审模式、预算
-  → 一次性捕获每个预置案例的正文与人工评论（caseHash）
-  → factory:manual 维护 Issue 上写入分块校验的冻结清单与全部计划样本 → 状态快照
-  → 逐个创建样本 Issue：冻结快照副本、代码起点回执、样本回执 → 最后才写入可运行正文 → 显式 workflow_dispatch
-  → 现有任务 / QA / 修复 / 终验 / PR / 报告；报告自动登记修订
-  → 任务结束、每小时补偿或手动 advance 推进：终态才释放唯一的串行槽位
-  → 每次状态变化形成 evaluation-batch 快照（同一套修订登记与可选投递）
-```
-
-| 情形 | 行为 |
-| --- | --- |
-| 同一批的第 3 个样本 | 使用开批时捕获的同一份案例快照；来源预设之后的修改或新评论只影响下一批 |
-| 样本的控制代码 | prepare 在检出任务脚本前读取机器人样本回执、分块校验的批次清单与最新状态并逐项核对，再选用批次冻结的 SHA；该 SHA 必须在默认分支历史中；入口工作流版本单独记录 |
-| 样本的应用基线 | 协调器预先写入现有的 `factory-task-base-v1` 回执；prepare 另外核对与清单一致 |
-| 创建 Issue 后客户端中断 | 重试按样本标记找回同一 Issue，补齐缺失的快照 / 回执，不多建样本 |
-| 重复或乱序派发 | 首个 Run 在样本 Issue 上留下认领回执；其他 Run 以 `duplicate` 退出，不再搭建（同一 Run 的重跑尝试与续跑除外）。prepare 与 Agent 作业共用同一道样本闸门，按固定顺序判断：批次已取消 → 样本已释放 → 新派发必须使用冻结控制代码（不符则拒绝，且不占用认领）→ 认领 → 预算 |
-| Handoff（退出 75） | 不是终态，不释放槽位；新的 Run 沿用检查点中的预算，不重置 |
-| 预算                                                                                                                                                                                                                                                                                                                                                                                                                                                                      | 每次 prepare 都从 GitHub 自身的作业记录重算整条链已用的 Agent 执行次数与主动执行时间（不含排队，包括续跑、恢复与重跑尝试），超出即以 `budget-exhausted` 结束且不启动 Agent；这些数值写入任务元数据并作为检查点的下限。GitHub 的“Re-run failed jobs”会复用 prepare 的结果，                                                                                                                                                                                          |
-| 因此 Agent 作业在恢复检查点和任何模型调用之前再次核对批次是否取消、样本是否已释放，并重新计量用量；任一不满足即失败退出、不启动模型。检查点中的预算必须与 prepare 记录一致，被删改则拒绝续跑。Agent 作业内：不足以开始下一阶段时以 76 结束，长调用截止时间下调并预留 300 秒归档，达到续跑次数（`maxContinuations` 计算首次之后的全部执行）时不再派发续跑。修复次数来自与 Agent 同一 Runner 的检查点，只能作为工厂内限制，不是安全边界。补丁、检查点、验收记录与用量都保留 |
-| 取消 | `cancel` 后不再创建 / 派发样本，未开始的样本记为 `cancelled`；已排队但从未产生实际执行（例如首次派发失败）的样本也直接结束为 `cancelled`，不会为取消再派发一次真实任务；仍有未结束 Run 的样本继续等待其结束；进行中样本的下一次续跑在 prepare 被拒绝并留下终态回执；已发生的执行与用量保留，不关闭或合并任何业务 PR。开批被中断、没有完整清单的协调 Issue 也可用 `cancel` 关闭。样本 Issue 上追加的 `/build` 是普通增量任务（不计入样本预算），批次取消后同样被拒绝 |
-| 推进时机 | 样本 Run 由 `GITHUB_TOKEN` 派发，不产生 `workflow_run`；任务工作流的 `advance-evaluation-batch` 作业在样本 Run 结束时显式请求推进（协调器最多等待该 Run 完成 5 分钟），另有每小时补偿 |
-| 只在 prepare 结束的 Run | 重复派发（agent 被跳过且无终态回执）不作为样本结论；prepare 作出的取消 / 预算耗尽以机器人终态回执记录，受理失败的样本记为 `blocked` |
-| 未开始 / 受阻 / 报告缺失 | 仍列在样本全集与统计中；只有每个样本**最后一次执行自己的**报告（同一 Run 且同一 attempt）登记后批次才算完成：较早 Handoff 段或同一 Run 较早 attempt 的报告只作历史，只重跑发布的 attempt 也有它自己的报告；在 prepare 就结束的样本不需要报告；最多等待 6 小时 |
-| 样本当前报告 | 只有样本最终执行（同一 Run、同一 attempt）的报告才是它的当前报告，并进入 `samples[].report` 与验收 / 报告统计；同一执行出现更新的修订（例如补齐证据后重新导出）时，报告引用与由报告得出的样本状态一起更新；执行中的样本没有当前报告，在 prepare 或被批次结束的样本为 `not-applicable`。批次在等待期后结束不等于报告齐全：缺失的仍计入 `reports.missing`、`reports-missing`，验收计入“其他”，不沿用旧 attempt 的结论 |
-| 协调失败隔离 | 每个批次（及每个定时计划）单独协调，隔离范围包括读取该批次的清单与状态：某个批次加载、建样本或派发失败时以 Issue 编号（已知时附批次键）记录错误并继续处理其他批次；读取报告索引失败时该批次本轮不提交新快照，已确认的报告与统计保持不变。启动新批次时若无法读取某个打开的批次，仍拒绝启动；已导出的快照照常进入归档矩阵；协调步骤仍以失败结束，便于发现问题，下一次推进重试失败的批次且不重复创建样本 |
-| 完成与归档分开 | 批次完成后即不再阻止新批次，但协调 Issue 保持打开，直到与最终状态序号相同的批次快照修订登记成功才关闭；期间迟到的报告仍会修正样本并形成新快照。归档失败时每小时补偿会重新导出，不重新创建或执行样本。同一轮可能处理多个打开的批次，每个批次导出到独立目录，由矩阵作业逐个登记，一个失败不影响其他批次 |
-| 单活动批次 | 只有确认 `completed` 或 `cancelled` 的批次才释放唯一的活动名额；缺清单或缺首份状态的批次属于“开批未完成”，同样占用名额，需要重跑原开批恢复或 `cancel`。新开批次与恢复未完成的开批共用同一互斥检查（仅排除自身），无法读取某个打开批次时拒绝启动 |
-| 开批校验 | 先冻结并校验计划、案例与基线，全部通过后才创建协调 Issue；案例号无效、缺锁文件或 SHA 不在默认分支历史时不留下任何记录。推进、查看与取消只依赖已冻结的清单，不因之后修改 `plans.json` 而停摆 |
-| 身份来源 | 样本的 `run.key` 只取 prepare 作业的任务元数据（Agent 无法改写）；只有 Agent 产物副本时，批次样本身份记为 `unresolved`，不归入任何样本 |
-| 两次定时触发同一日 | 批次键 `<计划>-<UTC 日期>`，第二次复用同一批。手动批次键为 `<计划>-r<发起的 Run ID>`，不含时间：同一 Run 任意尝试、任意时刻重跑都恢复原批次、不新增样本；新的手动试验请新发起一次 Run |
-
-样本状态：`planned / queued / running / passed / failed / blocked / budget-exhausted / cancelled / unknown`；
-`stateSource` 说明来源（样本自己的报告优先，其次是最后一个 Run 的结论）。只要还有未结束的 Run，就不释放串行槽位：超过墙钟保护期
-（预算的 3 倍再加 6 小时）只标记“需要维护者检查或取消该 Run”。只有 Handoff 后长时间没有任何 Run 时，才记为 `unknown` 并释放槽位；
-此后该样本在 prepare 一律被拒绝（`released`），迟到的续跑或重跑不会与下一个样本同时执行。
-Schema：[`contracts/evaluation-batch.v1.schema.json`](contracts/evaluation-batch.v1.schema.json)，示例
-[`batch-in-progress.json`](contracts/examples/batch-in-progress.json)。批次只列同条件样本的可核实事实，不计算全局平均分，不排除失败样本；
-冻结清单记录非密钥 Agent 配置（引擎、版本、模型、思考 / effort、评审模式与超时等，不含任何密钥）及其指纹；
-协调器的派发与推进观察用于补充漂移证据，实际调用记录才是判断运行配置一致的必要依据。
-只有完整执行链的实际配置证据齐全、并且全部匹配冻结指纹时，样本才是 comparable=true；
-缺证据时为 null，发现漂移时为 false。旧版本指纹不按新算法误判漂移。批次仍按运行时仓库变量执行，
-没有强制冻结配置；不可比较的样本不能用于版本优劣归因。详见下方可靠性说明。
-
-操作：**Actions → Evaluation batches → Run workflow**：`start`（填 `plan`，可勾选 `dry_run` 只预览冻结结果）、
-`advance`、`cancel`（填 `batch`）、`status`。“一个活动批次”是全局限制；旧 `factory:daily` 入口仅保留手动启动，自动搭建已迁移到有预算的每日计划。普通 Issue 搭建不占用批次槽位。
+仍保留的部分：已经登记的 `evaluation-batch` 快照修订和样本报告原样留在 `gh-pages`，
+Schema [`contracts/evaluation-batch.v1.schema.json`](contracts/evaluation-batch.v1.schema.json) 与示例
+[`batch-in-progress.json`](contracts/examples/batch-in-progress.json) 用于读取这些历史记录。
+`evaluation-batch.mjs` 与 [`evaluations/plans.json`](evaluations/plans.json) 只剩
+[`contracts/render-examples.mjs`](contracts/render-examples.mjs) 和测试在用，没有任何工作流或生产脚本再调用它们；
+清理它们需要一并改写示例生成与相关测试，留待单独处理。
 
 ## 验证
 

@@ -22,6 +22,14 @@ on:
         description: Send the Feishu digest (only while FACTORY_FEISHU_DIGEST is true; off only archives the day)
         type: boolean
         default: true
+      resend_uncertain:
+        description: Uncertain days (YYYY-MM-DD, comma-separated) you checked are missing from the chat; they are sent once more. Keep notify on
+        required: false
+        type: string
+      forget_uncertain:
+        description: Days (YYYY-MM-DD, comma-separated) you checked are already in the chat; they are removed from the queue. Keep notify on
+        required: false
+        type: string
 
 permissions: {}
 
@@ -96,4 +104,11 @@ jobs:
           # A secret, not a variable: the runner prints each step's env in the
           # public log and masks only secrets.
           FEISHU_PROBLEM_OWNERS: ${{ secrets.FEISHU_PROBLEM_OWNERS }}
-        run: node control/.github/scripts/daily-findings.mjs notify --base-url "$REPORT_BASE_URL"
+          # A day whose send may have reached the chat is only resent, or
+          # forgotten, by date when a maintainer asks; a scheduled run never does.
+          RESEND_UNCERTAIN: ${{ github.event_name == 'workflow_dispatch' && inputs.resend_uncertain || '' }}
+          FORGET_UNCERTAIN: ${{ github.event_name == 'workflow_dispatch' && inputs.forget_uncertain || '' }}
+        run: >-
+          node control/.github/scripts/daily-findings.mjs notify
+          --base-url "$REPORT_BASE_URL"
+          --resend-uncertain "$RESEND_UNCERTAIN" --forget-uncertain "$FORGET_UNCERTAIN"

@@ -58,7 +58,7 @@ jobs:
 
   factory-tests:
     # Build task PRs change the application, including its guidance, and are
-    # verified by the task itself; they never land on develop.
+    # verified by the task itself before a maintainer merges them into develop.
     if: github.event_name != 'pull_request' || !startsWith(github.head_ref, 'agent/issue-')
     runs-on: ubuntu-24.04
     timeout-minutes: 10
@@ -90,7 +90,7 @@ jobs:
 
   application-format:
     # Build task PRs change the application, including its guidance, and are
-    # verified by the task itself; they never land on develop.
+    # verified by the task itself before a maintainer merges them into develop.
     if: github.event_name != 'pull_request' || !startsWith(github.head_ref, 'agent/issue-')
     runs-on: ubuntu-24.04
     timeout-minutes: 10
@@ -108,8 +108,8 @@ jobs:
 
   browser-preflight:
     # Build task PRs change the application, including its guidance, and are
-    # verified by the task itself; they never land on develop. Other pull
-    # requests skip it only when the file listing succeeded and shows no change
+    # verified by the task itself before a maintainer merges them into develop.
+    # Other pull requests skip it only when the file listing succeeded and shows no change
     # to the factory or its root manifests: a skipped job satisfies a required
     # check, so a failed listing runs it. Pushes and dispatches always run it.
     needs: changes

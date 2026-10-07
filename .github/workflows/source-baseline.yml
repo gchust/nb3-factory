@@ -47,8 +47,11 @@ on:
 
 permissions: {}
 
-# Publishing creates a release for the source SHA; two runs for the same SHA
-# would race between checking for it and creating it.
+# The release and the baseline branch are named per run attempt
+# (source-baseline-<sha12>-<run>-<attempt>), so runs never share them; the
+# check-then-create in publish-source-baseline.sh only matters when the same
+# descriptor is replayed. The group serializes runs of one PR or source SHA so
+# they don't build and publish side by side.
 concurrency:
   group: factory-source-baseline-${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || inputs.source_sha }}
   queue: max
@@ -58,8 +61,10 @@ jobs:
   # run that a newer push already superseded still reaches a runner. Stop it
   # before the 20 minutes of source build and verification; the run for the
   # newer head reports on it. An API failure fails open. Build task PRs
-  # (agent/issue-N) change only the application, are verified by the task
-  # itself and never land on develop, so they skip the check entirely.
+  # (agent/issue-N) change only the application and are verified by the task
+  # itself before a maintainer merges them into develop, so they skip the
+  # check entirely. Nothing enforces that: develop has no branch protection
+  # or rulesets today.
   supersede:
     if: github.event_name == 'pull_request' && !startsWith(github.head_ref, 'agent/issue-')
     runs-on: ubuntu-24.04
@@ -91,8 +96,9 @@ jobs:
     # skipped for a dispatch, hence !cancelled() instead of the implied success().
     # It fails safe: only a supersede job that ran and found a newer head skips
     # this check. A failed supersede job (lost runner, API or output error)
-    # leaves the output empty and the check runs, since a skipped required
-    # check would pass green.
+    # leaves the output empty and the check runs, since a skipped check shows
+    # as passed. develop has no required checks today, so this keeps the PR's
+    # status honest rather than enforcing a merge rule.
     if: >-
       !cancelled() && (
       (github.event_name == 'pull_request' && !startsWith(github.head_ref, 'agent/issue-') &&
@@ -186,7 +192,8 @@ jobs:
           path: ${{ steps.pnpm-store.outputs.path }}
           key: ${{ steps.pnpm-cache.outputs.cache-primary-key }}
       # Usually 5-9 and 2-4 minutes. The limits stop a hung build or registry
-      # fetch well before the 90-minute job limit holds the global queue.
+      # fetch well before the 90-minute job limit, which would otherwise hold
+      # this PR's (or this source SHA's) concurrency group that long.
       - name: Build and publish only to an isolated loopback registry
         working-directory: source
         timeout-minutes: 25

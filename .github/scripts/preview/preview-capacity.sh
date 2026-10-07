@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
 # Reports how full the preview host is, before CI packages and uploads anything.
 #
-# A payload is up to ~744 MB and is published as a public release asset before
-# the host fetches it, so a deploy that preview-deploy.sh then refuses for the
-# instance limit has already paid for the upload and left the asset behind. By
+# A payload is up to ~84 MB packed (~744 MB unpacked) and is published as a
+# public release asset before the host fetches it, so a deploy that
+# preview-deploy.sh then refuses for the instance limit has already paid for
+# the upload and left the asset behind. By
 # 2026-10-05 that was about 82% of deploys: 49 open build pull requests were
 # competing for 30 slots.
 # CI asks here first, decides what may be evicted (only it can see which pull

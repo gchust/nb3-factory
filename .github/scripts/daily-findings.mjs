@@ -262,6 +262,16 @@ export function feishuConfig(env) {
 }
 
 // Errors never include the webhook URL: Actions logs of this repository are public.
+// Connection errors raised before any request bytes were sent.
+export const NEVER_SENT = new Set([
+  'ECONNREFUSED',
+  'ENOTFOUND',
+  'EAI_AGAIN',
+  'ENETUNREACH',
+  'EHOSTUNREACH',
+  'UND_ERR_CONNECT_TIMEOUT',
+]);
+
 export async function sendFeishu(
   config,
   message,
@@ -272,7 +282,7 @@ export async function sendFeishu(
     const body = config.secret
       ? { timestamp, sign: feishuSign(config.secret, timestamp), ...message }
       : message;
-    let error, retry;
+    let error, retry, uncertain;
     try {
       const response = await fetcher(config.url, {
         method: 'POST',
@@ -284,39 +294,173 @@ export async function sendFeishu(
       const result = await response.json().catch(() => null);
       const code = result?.code ?? result?.StatusCode;
       if (response.ok && code === 0) return;
-      retry = response.status === 429 || response.status >= 500;
+      // 429 and 503 mean Feishu did not take the message. Any other 5xx (a
+      // 502 or 504 from a proxy in front of it) may follow a post that already
+      // reached the chat, so it is treated like a timeout: it is never resent
+      // automatically (see notifyPending).
+      retry = response.status === 429 || response.status === 503;
+      uncertain = response.status >= 500 && !retry;
       error = new Error(
-        `Feishu rejected the digest (HTTP ${response.status}, code ${code ?? 'none'}: ${clip(String(result?.msg ?? result?.StatusMessage ?? ''), 200)})`,
+        `Feishu rejected the digest (HTTP ${response.status}, code ${code ?? 'none'}: ${clip(String(result?.msg ?? result?.StatusMessage ?? ''), 200)})${uncertain ? '; it may have been delivered' : ''}`,
       );
     } catch (failure) {
-      retry = true;
+      // Resend only when the request can't have reached Feishu. After a
+      // timeout or a dropped connection the digest may already be in the
+      // chat, and a second copy would break the one-set rule.
+      // DOMException.code is a legacy number (23 for a timeout): use its name.
+      const code =
+        failure.cause?.code ??
+        (typeof failure.code === 'string' ? failure.code : failure.name);
+      retry = NEVER_SENT.has(code);
+      uncertain = !retry;
       error = new Error(
-        `Feishu request failed (${failure.cause?.code ?? failure.name})`,
+        `Feishu request failed (${code})${uncertain ? '; it may have been delivered' : ''}`,
       );
     }
-    if (!retry || attempt >= attempts) throw error;
+    // `uncertain` tells notifyPending the digest may be in the chat already.
+    if (!retry || attempt >= attempts)
+      throw Object.assign(error, { uncertain });
     await pause(2000 * attempt);
   }
 }
 
-// Sends one digest per pending day, oldest first, then forgets what was sent.
-// A failed day stays pending for the next run until it is PENDING_DAYS old.
+// Records one day's outcome in the ledger at once, so another day's send or a
+// crash after this record can't make the next run resend it. Retried from a
+// fresh head: gh-pages has writers outside this workflow's concurrency group.
+// If this record itself keeps failing, notifyPending names the day so a
+// maintainer can forget it before the next run resends it.
+export async function recordDay(
+  client,
+  keys,
+  update,
+  { attempts = 6, pause = sleep } = {},
+) {
+  for (let attempt = 1; ; attempt++) {
+    const head = (await client.getRef(BRANCH, true)).object.sha;
+    const current = validateLedger(await getJson(client, LEDGER, head));
+    const next = { ...current, pending: update(current.pending, keys) };
+    try {
+      await commitFindings(
+        client,
+        head,
+        [[LEDGER, JSON.stringify(next, null, 2)]],
+        'report: record daily findings digest',
+      );
+      return;
+    } catch (error) {
+      if (attempt >= attempts || !conflict(error)) throw error;
+      await pause(250 * attempt);
+    }
+  }
+}
+
+const forget = (pending, keys) => pending.filter((item) => !keys.has(item.key));
+const markUncertain = (pending, keys) =>
+  pending.map((item) =>
+    keys.has(item.key) ? { ...item, uncertain: true } : item,
+  );
+
+// Days given as a comma-separated list (YYYY-MM-DD,...); empty selects none.
+export function parseDays(value) {
+  const days = String(value ?? '')
+    .split(',')
+    .map((day) => day.trim())
+    .filter(Boolean);
+  for (const day of days) {
+    const parsed = new Date(`${day}T00:00:00Z`);
+    // The round trip rejects shapes like 2026-13-45 that the pattern accepts.
+    if (
+      !/^\d{4}-\d{2}-\d{2}$/.test(day) ||
+      Number.isNaN(parsed.getTime()) ||
+      parsed.toISOString().slice(0, 10) !== day
+    )
+      throw new Error(`Invalid day ${day}; expected a real YYYY-MM-DD date`);
+  }
+  return new Set(days);
+}
+
+// Sends one digest per pending day, oldest first, recording each day as soon
+// as its send settles. A day that definitely did not go out stays pending for
+// the next run until it is PENDING_DAYS old. A day whose send may have reached
+// the chat (a timeout, a dropped connection, a 500/502/504) is marked
+// `uncertain`, is never sent again automatically, and stops this run's sends:
+// Feishu just failed to answer, so later days stay plainly pending for the
+// next run instead of becoming uncertain too.
+//
+// A maintainer who has checked the chat settles uncertain days by date:
+// `resendDays` sends the listed uncertain days once more, `forgetDays` removes
+// listed days that are already in the chat from the ledger.
 export async function notifyPending(
   client,
   config,
-  { baseUrl, send = sendFeishu } = {},
+  {
+    baseUrl,
+    send = sendFeishu,
+    resendDays = new Set(),
+    forgetDays = new Set(),
+    pause = sleep,
+  } = {},
 ) {
   const sha = (await client.getRef(BRANCH, true))?.object?.sha;
   const ledger = sha
     ? validateLedger(await getJson(client, LEDGER, sha))
     : null;
-  const pending = ledger?.pending ?? [];
+  let pending = ledger?.pending ?? [];
+  // A listed day that matches nothing is most likely a typo: say so, since
+  // the maintainer is waiting for that day to be settled.
+  const ignored = [
+    ...[...forgetDays]
+      .filter((date) => !pending.some((item) => item.date === date))
+      .map((date) => ({
+        date,
+        input: 'forget_uncertain',
+        reason: 'is not pending',
+      })),
+    ...[...resendDays]
+      .filter(
+        (date) => !pending.some((item) => item.date === date && item.uncertain),
+      )
+      .map((date) => ({
+        date,
+        input: 'resend_uncertain',
+        reason: 'is not an uncertain pending day',
+      })),
+  ];
+  const forgotten = [];
+  const forgetKeys = new Set(
+    pending.filter((item) => forgetDays.has(item.date)).map((item) => item.key),
+  );
+  if (forgetKeys.size) {
+    await recordDay(client, forgetKeys, forget, { pause });
+    forgotten.push(
+      ...new Set(
+        pending
+          .filter((item) => forgetKeys.has(item.key))
+          .map((item) => item.date),
+      ),
+    );
+    pending = pending.filter((item) => !forgetKeys.has(item.key));
+  }
+  const isHeld = (date) =>
+    pending.some(
+      (item) => item.date === date && item.uncertain && !resendDays.has(date),
+    );
+  const dates = [...new Set(pending.map((item) => item.date))].sort();
+  const held = dates.filter(isHeld);
   if (!pending.length || !config)
-    return { sent: [], failed: [], remaining: pending.length };
-  const done = new Set();
+    return {
+      sent: [],
+      failed: [],
+      held,
+      forgotten,
+      ignored,
+      remaining: pending.length,
+    };
+  let settled = 0;
   const sent = [];
   const failed = [];
-  for (const date of [...new Set(pending.map((item) => item.date))].sort()) {
+  for (const date of dates) {
+    if (isHeld(date)) continue;
     const keys = new Set(
       pending.filter((item) => item.date === date).map((item) => item.key),
     );
@@ -339,32 +483,48 @@ export async function notifyPending(
             reportUrl: (report) => pagesUrl(baseUrl, report),
           }),
         );
-      keys.forEach((key) => done.add(key));
-      sent.push({ date, count: entries.length });
     } catch (error) {
-      failed.push({ date, error: error.message });
+      failed.push({
+        date,
+        error: error.message,
+        uncertain: Boolean(error.uncertain),
+      });
+      if (error.uncertain) {
+        try {
+          await recordDay(client, keys, markUncertain, { pause });
+        } catch (record) {
+          throw Object.assign(
+            new Error(
+              `The Feishu digest for ${date} may have been delivered but could not be marked uncertain (${record.message}); check the chat and dispatch with forget_uncertain=${date} before the next run, or it may be sent again.`,
+            ),
+            { undelivered: failed, delivered: sent },
+          );
+        }
+        break;
+      }
+      continue;
     }
-  }
-  for (let attempt = 0; done.size && attempt < 3; attempt++) {
-    const head = (await client.getRef(BRANCH, true)).object.sha;
-    const current = validateLedger(await getJson(client, LEDGER, head));
-    const next = {
-      ...current,
-      pending: current.pending.filter((item) => !done.has(item.key)),
-    };
     try {
-      await commitFindings(
-        client,
-        head,
-        [[LEDGER, JSON.stringify(next, null, 2)]],
-        'report: record sent daily findings digest',
-      );
-      break;
+      await recordDay(client, keys, forget, { pause });
     } catch (error) {
-      if (attempt === 2 || !conflict(error)) throw error;
+      throw Object.assign(
+        new Error(
+          `The Feishu digest for ${date} was delivered but not recorded (${error.message}); remove it from pending with forget_uncertain=${date}, or the next run sends it again.`,
+        ),
+        { undelivered: failed, delivered: sent },
+      );
     }
+    settled += keys.size;
+    sent.push({ date, count: entries.length });
   }
-  return { sent, failed, remaining: pending.length - done.size };
+  return {
+    sent,
+    failed,
+    held,
+    forgotten,
+    ignored,
+    remaining: pending.length - settled,
+  };
 }
 
 // The conventional project Pages base, as the TestManage3 delivery uses.
@@ -419,10 +579,32 @@ if (
     });
   } else if (mode === 'notify') {
     const config = feishuConfig(process.env);
-    const result = await notifyPending(client, config, {
-      baseUrl:
-        args['base-url'] || defaultPagesBase(process.env.GITHUB_REPOSITORY),
-    });
+    let result;
+    try {
+      result = await notifyPending(client, config, {
+        baseUrl:
+          args['base-url'] || defaultPagesBase(process.env.GITHUB_REPOSITORY),
+        resendDays: parseDays(args['resend-uncertain']),
+        forgetDays: parseDays(args['forget-uncertain']),
+      });
+    } catch (error) {
+      for (const item of error.undelivered ?? [])
+        console.log(`::error::Feishu digest for ${item.date}: ${item.error}`);
+      console.log(`::error::${error.message}`);
+      throw error;
+    }
+    for (const item of result.ignored)
+      console.log(
+        `::warning::${item.input} lists ${item.date}, which ${item.reason}; nothing was done for it.`,
+      );
+    for (const date of result.forgotten)
+      console.log(
+        `Removed ${date} from the Feishu digest queue as already delivered.`,
+      );
+    for (const date of result.held)
+      console.log(
+        `::warning::The Feishu digest for ${date} may already have been delivered, so it is not resent automatically. Check the chat: if it is there, dispatch Daily framework findings with forget_uncertain=${date}; if it is missing, with resend_uncertain=${date}.`,
+      );
     if (!config)
       console.log(
         `::warning::FEISHU_WEBHOOK_URL is not set; ${result.remaining} digest entr(ies) stay pending.`,
@@ -439,10 +621,12 @@ if (
       summary(line);
     }
     for (const item of result.failed)
-      console.log(`::error::Feishu digest for ${item.date}: ${item.error}`);
+      console.log(
+        `::error::Feishu digest for ${item.date}: ${item.error}${item.uncertain ? '. It is marked uncertain and will not be resent automatically.' : ''}`,
+      );
     if (result.failed.length) process.exitCode = 1;
   } else
     throw new Error(
-      'Usage: daily-findings.mjs <archive|notify> [--date YYYY-MM-DD] [--notify true|false] [--base-url URL]',
+      'Usage: daily-findings.mjs <archive|notify> [--date YYYY-MM-DD] [--notify true|false] [--base-url URL] [--resend-uncertain DAYS] [--forget-uncertain DAYS]',
     );
 }
