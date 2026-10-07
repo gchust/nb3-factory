@@ -262,6 +262,16 @@ export function feishuConfig(env) {
 }
 
 // Errors never include the webhook URL: Actions logs of this repository are public.
+// Connection errors raised before any request bytes were sent.
+export const NEVER_SENT = new Set([
+  'ECONNREFUSED',
+  'ENOTFOUND',
+  'EAI_AGAIN',
+  'ENETUNREACH',
+  'EHOSTUNREACH',
+  'UND_ERR_CONNECT_TIMEOUT',
+]);
+
 export async function sendFeishu(
   config,
   message,
@@ -289,9 +299,14 @@ export async function sendFeishu(
         `Feishu rejected the digest (HTTP ${response.status}, code ${code ?? 'none'}: ${clip(String(result?.msg ?? result?.StatusMessage ?? ''), 200)})`,
       );
     } catch (failure) {
-      retry = true;
+      // Resend only when the request can't have reached Feishu. After a
+      // timeout or a dropped connection the digest may already be in the
+      // chat, and a second copy would break the one-set rule: the day stays
+      // pending and the next run decides, as for any other failure.
+      const code = failure.cause?.code ?? failure.code ?? failure.name;
+      retry = NEVER_SENT.has(code);
       error = new Error(
-        `Feishu request failed (${failure.cause?.code ?? failure.name})`,
+        `Feishu request failed (${code})${retry ? '' : '; it may have been delivered, so it is not resent in this run'}`,
       );
     }
     if (!retry || attempt >= attempts) throw error;

@@ -2,7 +2,8 @@
 
 搭建任务通过 `verify-final` 和 `publish` 之后，**Deploy Task Preview** 工作流会把这一次
 验收过的构建产物部署到预览机（`ct252-nocobase`），并给业务 PR 回一条带地址的评论。
-失败任务发布了标为失败的 PR（`publish-failed`）时，`preview-build-failed` 打包的构建也会部署一次，
+失败任务发布了标为失败的 PR（`publish-failed`）时，失败的构建也会部署一次：`verify-final` 的构建已经完成、
+之后的检查才失败时，由它直接上传这次构建；否则由 `preview-build-failed` 重新打包。
 评论里标明搭建状态为 failed；打包失败时不部署，只在失败通知里说明。是否交付按这些 Job 的结果判断，
 不看整次运行的结论，所以交付之后问答回复失败不影响预览：
 
@@ -41,11 +42,12 @@ Deploy Task Preview（由 workflow_run 触发，搭建流程也会显式请求�
 
 **依赖集缓存。** 一次构建里 `dist/node_modules` 约占 740MB（`dist/server` 只有 144KB）。
 所以发布前先问预览机有没有同一个依赖集：有就只发应用代码（几 MB），没有才发整包。
-依赖集标识是 `dist/package.json` 里已解析的依赖版本加构建目标（平台、架构、libc、Node ABI）
-的哈希——构建目标是关键，同一批版本但换一个架构或 Node ABI，原生模块就不是同一棵依赖树。
+依赖集标识是 `dist/node_modules` 里每个文件和目录的路径与大小的哈希（`preview-host.mjs` 的
+`depsKeyFromEntries`），不是 `dist/package.json` 里的版本：同样的版本也可能因为构建配方不同而裁剪出
+不同的依赖树。内容不参与哈希，因为三万个文件逐个读太慢；修改时间也不参与，否则同一棵树每次构建都会变。
 
 **为什么让预览机自己拉。** 由 runner 推的话，字节要走 Tailscale：实测 GitHub runner →
-252 只有 **17 KB/s**，78MB 的整包要两个多小时，超过 job 的 45 分钟超时，而且 `scp` 不能续传，
+252 只有 **17 KB/s**，78MB 的整包要两个多小时，远超 job 的 60 分钟超时，而且 `scp` 不能续传，
 重试永远从 0 开始。改成"runner 传到 GitHub、252 走自己的出口来拉"之后，实测 **815 KB/s**，
 同一个包约 96 秒。所以 SSH 这条控制通道只承担几十字节（URL + sha256），字节走预览机本来就
 有的网络；下载落在 `payload-pr-<号>.tar.gz.part`，只有摘要校验通过才会改名成正式文件名，
@@ -70,7 +72,9 @@ GitHub 也会为同一个 run 的完成事件触发一次。两次请求带的�
 地址和登录说明保持不变；只有第一次部署就失败的构建才发布“没有可用地址”。
 
 **为什么在 `verify-final` 里构建。** 预览跑的必须是独立验收通过的那棵树，而不是 Agent
-自己声称的版本，所以由 `verify-final` 验收用的那次构建带 `--tar` 直接归档，验收通过后才暂存上传，产物随 artifact 传递。
+自己声称的版本，所以由 `verify-final` 验收用的那次构建带 `--tar` 直接归档，产物随 artifact 传递。
+验收通过时它作为交付构建上传；构建完成之后才有检查失败时，它也会上传，供失败 PR 的预览使用，
+这样 `preview-build-failed` 不必再构建一次。
 
 `verify-final` 先把 `dist.tar.gz` 和 `task-metadata.json` 拷进同一个目录再上传，因为
 `upload-artifact` 会保留路径的公共祖先之下的结构：直接把两个各在一处的文件列成 `path`

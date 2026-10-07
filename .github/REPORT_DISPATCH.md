@@ -20,8 +20,9 @@
 报告可能在来源 Run 被标记为 `completed` 之前启动，因此接收方最多等待 11 分钟
 （`wait-for-task-run.mjs`），覆盖调度 Job 最长 10 分钟的收尾；
 固定 `run_id` 和 `attempt`，不在等待中切换到更新的重跑。超时明确报错而非静默跳过。
-用量报告和交互历史各有一个不占并发组的 `wait-for-source` Job 先完成这段等待，
-持锁的发布 Job 随后立即读到已完成的 Run，不会在等待期间挡住其他 Pages 发布。
+用量报告、交互历史和预览部署各有一个不占并发组的 `wait-for-source` Job 先完成这段等待，
+并把它确定的 attempt 交给持锁的 Job；持锁的 Job 随后立即读到已完成的 Run，
+不会在等待期间挡住其他 Pages 发布或全局预览队列。
 媒体还会拒绝已被新 attempt 替代的结果；用量统计仍可补采旧 attempt。
 这只是报告等候收尾的预算，不限制 Code Agent 的正常工作时长。
 

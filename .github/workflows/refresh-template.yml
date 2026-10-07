@@ -52,10 +52,12 @@ jobs:
   generate:
     # Publishing is owner-only. A PR check, from this repository or a fork,
     # holds no secrets and only read permission, and must not be skipped (a
-    # skipped check passes). Build task PRs (agent/issue-N) are the exception:
-    # they change the application, are verified by the task itself and never
-    # land on develop, so a README or package.json change there must not start
-    # a two-hour regeneration (factory-tests.yml skips them the same way).
+    # skipped check shows as passed). Build task PRs (agent/issue-N) are the
+    # exception: they change the application and are verified by the task
+    # itself before a maintainer merges them into develop, so a README or
+    # package.json change there must not start a two-hour regeneration
+    # (factory-tests.yml skips them the same way). Nothing enforces that
+    # review: develop has no branch protection or rulesets today.
     if: >-
       (github.event_name == 'workflow_dispatch' && github.actor == github.repository_owner) ||
       (github.event_name == 'pull_request' && !startsWith(github.head_ref, 'agent/issue-'))

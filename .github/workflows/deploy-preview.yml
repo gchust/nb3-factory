@@ -258,7 +258,7 @@ jobs:
               echo "::warning::Could not tell PR #$victim that its preview was evicted."
           done < "$RUNNER_TEMP/preview/evict.txt"
 
-      # Step limits, well inside the job's 45 minutes: a stalled transfer fails
+      # Step limits, well inside the job's 60 minutes: a stalled transfer fails
       # this step, so the report below still tells the PR, instead of the job
       # being cancelled at its limit with no notice. ServerAliveInterval drops
       # an ssh session whose Tailscale path went silent within a minute.
