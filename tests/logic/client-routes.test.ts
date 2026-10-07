@@ -52,9 +52,15 @@ describe('app client routes', () => {
     // access is a new grant somebody has to be given.
     const resolved = resolveRoutes();
 
-    // The landing page opted out of page authorization, so it is reachable by every signed-in user.
+    // The landing page and the project pages opted out of page authorization, so they are reachable by every
+    // signed-in user; project access is membership, which the server checks on every request.
     expect(pageAuthorizations(resolved.routes)).toEqual([
       { name: 'home', authorizedAs: null },
+      { name: 'projects', authorizedAs: null },
+      { name: 'projects.new', authorizedAs: null },
+      { name: 'project-detail', authorizedAs: null },
+      { name: 'project-task', authorizedAs: null },
+      { name: 'notifications', authorizedAs: null },
     ]);
   });
 });
