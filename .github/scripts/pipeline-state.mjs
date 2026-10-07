@@ -144,9 +144,9 @@ function trustedUsage(budget, metadata, state, restoring = false) {
     : null;
   const advancing =
     restoring && (!executionId || executionId !== state.executionId);
-  // Only continuations raise the floor: initialize and restoreState reject any
-  // GitHub Re-run (requireFreshRunAttempt) before this runs, so the run attempt
-  // is always 1 here.
+  // Only continuations raise the floor: initialize and restoreState reject a
+  // GitHub Re-run (requireFreshRunAttempt) before this runs, except an attempt
+  // whose earlier attempts never started the agent, which executed nothing.
   const floor = count(process.env.FACTORY_TASK_CONTINUATION);
   return {
     ...(budget ? { budget } : {}),
@@ -212,10 +212,16 @@ export function saveState(file, state) {
     appendFileSync(process.env.GITHUB_STEP_SUMMARY, `${message}\n\n`);
 }
 
-function requireFreshRunAttempt() {
+export function requireFreshRunAttempt() {
   // GitHub retries use fresh runners but do not restore the previous attempt's
   // checkpoint. Explicit recovery validates and restores it in a new Run.
-  if (Number(process.env.GITHUB_RUN_ATTEMPT || 1) > 1)
+  // The agent job's re-run guard sets FACTORY_FIRST_AGENT_ATTEMPT only after
+  // reading every earlier attempt's jobs and finding none that started it:
+  // then nothing could be lost, and this attempt is the task's first.
+  if (
+    Number(process.env.GITHUB_RUN_ATTEMPT || 1) > 1 &&
+    process.env.FACTORY_FIRST_AGENT_ATTEMPT !== 'true'
+  )
     throw new Error(
       'GitHub Re-run cannot preserve task repair limits. Use an explicit recovery Run with a matching checkpoint; stopped tasks require a new build after diagnosis.',
     );

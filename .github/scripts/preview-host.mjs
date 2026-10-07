@@ -236,6 +236,24 @@ export function selectDistArtifact(run, jobs, artifacts, repository) {
     )
   )
     return null; // Failed packaging has no archive.
+  // A passed verification whose package could not be staged or uploaded (that
+  // no longer fails the delivery): select reports the missing package instead
+  // of failing. The upload is continue-on-error, so GitHub reports it as
+  // success even when it failed; the report step has no continue-on-error and
+  // runs only when the package is missing.
+  if (
+    candidates.length === 0 &&
+    jobs.some(
+      (job) =>
+        job.name === 'verify-final' &&
+        job.steps?.some(
+          (step) =>
+            step.name === 'Report a missing deployable build' &&
+            step.conclusion === 'success',
+        ),
+    )
+  )
+    return null;
   if (candidates.length !== 1)
     throw new Error('Expected one unexpired deployable build artifact');
   return candidates[0];

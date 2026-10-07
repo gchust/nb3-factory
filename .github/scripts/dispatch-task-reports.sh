@@ -18,6 +18,24 @@ fi
 # reports and a comment round's queue request take 490 s, inside the 10-minute
 # dispatch-reports job in code-agent-task.yml. task-report-dispatch.test.mjs
 # checks that budget.
+#
+# A request killed by the timeout may already have been accepted, so a retry
+# can dispatch the same report twice. That is safe by design, not by luck:
+# every target already receives duplicate requests for one source run (this
+# step and its workflow_run copy both ran before report-dispatch-gate.yml, and
+# a replay or an operator can request any of them again), so each one is
+# idempotent per source run and attempt:
+#   report-task-progress   rewrites one comment; an equal or older record is refused
+#   report-task-usage      archives and comments under the run/attempt marker
+#   publish-agent-history  uploads content-addressed archives, upserts by marker
+#   publish-retro          upserts its comment and ledger row by marker
+#   publish-visual-report  upserts its PR comment by marker
+#   deploy-preview         keeps a running instance of the same build (no force)
+#   comment-build-queue    reconciles receipts; a second pass finds nothing to do
+# Retrying only before a connection was established would trade that for lost
+# reports whenever GitHub accepts slowly, which continuations cannot recover
+# (they emit no workflow_run). task-report-dispatch.test.mjs keeps this list in
+# step with the accepted workflows.
 DISPATCH_ATTEMPT_TIMEOUT=15s
 DISPATCH_KILL_AFTER=5s
 DISPATCH_BACKOFF=(2 8)

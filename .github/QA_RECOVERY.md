@@ -55,12 +55,21 @@ explicit recovery from that run still accepts it. It requests no report, and
 the progress reporter ignores such an attempt, so no empty progress, usage,
 history or retro replaces the Issue's real one; it answers no comment either.
 "Re-run all jobs" stops at the start of prepare once an earlier attempt ran
-the build, before it records a new attempt, uploads a
-second task artifact, relabels the Issue or posts a status; its reports are
-marked handled without being requested, so nothing is published for that
-attempt. Only a question round really re-runs that way. A build re-run always
-ends in rejection, because the agent job refuses every attempt after the
-first: recover a failed build with `recovery_run_id`, or start a new run.
+the build, before it records a new attempt, uploads a second task artifact,
+relabels the Issue or posts a status; its reports are marked handled without
+being requested, so nothing is published for that attempt. Recover a failed
+build with `recovery_run_id`, or start a new run. The one exception is a run
+whose earlier attempts never started the agent job, for example because
+prepare failed on a transient error: nothing was executed or saved, so both
+guards accept the re-run as the task's first execution.
+
+A failed build usually published its patch on the work branch as a PR marked
+failed before the notice offered recovery. The publication records the commit
+it pushed (`factory-published-<issue>`), and a recovery treats a work branch
+still at exactly that commit as unmoved: it keeps the recorded base and
+replaces that commit, with a push lease on it. Any other commit on the work
+branch is newer work, and the recovery refuses. A shared target branch is
+compared with the task's pinned base receipt, not its live head.
 
 A continuation retries its checkpoint and task downloads once. If it still
 fails after both downloads but before restoring its progress (applying the
