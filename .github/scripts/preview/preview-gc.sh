@@ -10,11 +10,13 @@
 #   - containers whose instance directory is gone. A destroy that was killed
 #     between removing the directory and the container leaves one running.
 #   - backups whose preview is gone. Every deploy moves the previous instance
-#     aside — database, uploads, application — and a preview is deployed more
-#     than once, so a pull request that was live for a few days leaves several
-#     ~340 MB of them. `preview-destroy.sh` removes the instance and never the
-#     backups, because they are what a failed deploy rolls back to. Nothing
-#     else reclaims them either: on 2026-09-22 this directory held 1.5 GB, of
+#     aside — database, uploads, application — and rolls back to it if the new
+#     one fails; a successful deploy deletes it, and a failed one keeps its own
+#     tree as failed-pr-<n> (only the newest per pull request) for diagnosis.
+#     What a removed preview leaves here is that failed tree, or the snapshot
+#     of a deploy that was killed before it could roll back or commit.
+#     `preview-destroy.sh` removes the instance only. On 2026-09-22, before a
+#     successful deploy deleted its snapshot, this directory held 1.5 GB, of
 #     which all but one entry belonged to a preview that no longer existed.
 #
 # Every mode also drops teardown marks (closed/pr-N) older than a day.
@@ -56,8 +58,10 @@ exec 9>"$PREVIEW_ROOT/deploy.lock"
 flock 9
 
 # Teardown marks (see preview-destroy.sh) are tiny, but one is left per closed
-# pull request; a day is far beyond the 30-minute deploy step they guard.
+# pull request; a day is far beyond the 30-minute deploy step they guard. The
+# same goes for the deploy start marks (see mark_started in preview-lib.sh).
 prune_closed_marks 86400
+prune_marks started 86400
 
 if [[ "$reap_orphans" == true ]]; then
   while read -r name; do
@@ -92,11 +96,13 @@ fi
 
 if [[ "$prune_backups" == true ]]; then
   # A backup is a snapshot of one pull request's instance, named `pr-<n>.XXXXXX`,
-  # or `failed-pr-<n>.XXXXXX` for one whose deploy failed after it was taken.
-  # The pull request number is the whole of its identity, so the question "does
-  # this belong to a preview" is answered by the instance directory and nothing
-  # else — no age heuristic, because a preview can legitimately sit unopened for
-  # weeks and its backups are what a failed redeploy rolls back to.
+  # or `failed-pr-<n>.XXXXXX` for the tree of a deploy that failed. This runs
+  # under the deploy lock, so no deploy is mid-transaction: a `pr-<n>` snapshot
+  # here was left by a deploy that was killed before it could roll back or
+  # commit, and may be the only copy of that preview's data. The pull request
+  # number is the whole of its identity, so the question "does this belong to a
+  # preview" is answered by the instance directory and nothing else — no age
+  # heuristic, because a preview can legitimately sit unopened for weeks.
   #
   # `cloudflare-*` and anything else without that shape is left alone: this
   # script knows what it writes, and guessing at the rest is how a cleanup

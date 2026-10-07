@@ -138,7 +138,7 @@ Action 在全新目录生成应用、安装并锁定依赖，运行工厂测试�
 
 当前默认应用已合入 beta.47 模板，保留 AI Employee、Knowledge Base 和 Mail 插件。旧任务分支不自动升级，请从当前验证过的基线创建新任务。
 
-模板刷新自身串行，并且不再阻塞独立的搭建任务；推送时会原子地创建 `factory-backup/develop-<run-id>-<attempt>` 备份并更新 `develop`。如果有人在生成期间更新了 `develop`，Action 会拒绝覆盖。已有应用分支保持原样：测试新基线时可新建 Issue 并留空目标分支，或指定一个尚不存在的分支。仓库 Secrets、Variables 也不会被 Git 推送改动。
+模板刷新自身串行，并且不再阻塞独立的搭建任务；推送时会原子地创建 `factory-backup/develop-<run-id>-<attempt>` 备份并更新 `develop`。重新生成的目录树与 `develop` 只差 `factory-template.json` 里的刷新时间（`generatedAt`）和来源控制提交（`controlSha`）时，不发布：不新增提交、不建备份分支，进行中任务的基线也不会变。如果有人在生成期间更新了 `develop`，Action 会拒绝覆盖。已有应用分支保持原样：测试新基线时可新建 Issue 并留空目标分支，或指定一个尚不存在的分支。仓库 Secrets、Variables 也不会被 Git 推送改动。
 
 这个 Action 使用内置 `GITHUB_TOKEN`，无需模型 Key 或额外 Token。`develop` 的仓库规则需要允许此工作流强制推送；被规则拒绝时会报错，不会自动修改保护规则。可勾选 `dry_run` 只生成和验证，不更新远端分支。
 

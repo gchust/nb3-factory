@@ -209,9 +209,29 @@ jobs:
         with:
           version: 11.7.0
           run_install: false
+      # Restore only, from the store the task's agent job saves: same key format
+      # and store path as setup-node there (node-cache-Linux-x64-pnpm-<hash of
+      # the lockfile>, `pnpm store path --silent` run in workspace/), exactly
+      # or by prefix. Nothing is saved: a replay never adds a store of its own.
+      # Source tarballs use an isolated local store (see the restore step
+      # below), not the shared registry cache.
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 24.x
+          package-manager-cache: false
+      - name: Locate the pnpm store
+        id: pnpm_store
+        if: hashFiles('workspace/factory-source.json') == ''
+        working-directory: workspace
+        run: echo "path=$(pnpm store path --silent)" >> "$GITHUB_OUTPUT"
+      - name: Restore the task's pnpm store
+        if: steps.pnpm_store.outputs.path != ''
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ steps.pnpm_store.outputs.path }}
+          key: node-cache-Linux-x64-pnpm-${{ hashFiles('workspace/pnpm-lock.yaml') }}
+          restore-keys: |
+            node-cache-Linux-x64-pnpm-
       - name: Apply the sealed candidate
         run: |
           test -f input/agent/agent.patch

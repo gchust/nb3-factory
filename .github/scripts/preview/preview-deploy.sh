@@ -15,6 +15,19 @@
 # a 744 MB `dist/`), so it is cached per dependency set and reused by hard link.
 # CI asks whether the cache holds a set before it sends one, which is what keeps
 # an ordinary redeploy down to a few megabytes.
+#
+# Every wait is bounded. CI runs this inside its 30-minute Deploy step, and when
+# that step times out only the ssh client dies: this script would carry on, and
+# an unbounded wait would hold the deploy lock for whatever came next. The
+# budget, in seconds, with the defaults:
+#
+#   fetch    600  PREVIEW_FETCH_BUDGET (preview-lib.sh), every try included
+#   lock     180  PREVIEW_LOCK_WAIT
+#   migrate  480  PREVIEW_MIGRATE_TIMEOUT
+#   start    120  PREVIEW_START_TIMEOUT, creating the container
+#   ready     90  the readiness probe
+#   total = 1470 s, 24.5 minutes, plus a minute or two for unpacking and
+#   linking on local disk, inside the 30-minute step.
 set -euo pipefail
 
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -31,6 +44,10 @@ payload_sha256=""
 fetch_proxy="${PREVIEW_FETCH_PROXY:-}"
 build_status=""
 redeploy=false
+
+PREVIEW_LOCK_WAIT="${PREVIEW_LOCK_WAIT:-180}"
+PREVIEW_MIGRATE_TIMEOUT="${PREVIEW_MIGRATE_TIMEOUT:-480}"
+PREVIEW_START_TIMEOUT="${PREVIEW_START_TIMEOUT:-120}"
 
 usage() {
   cat >&2 <<'USAGE'
@@ -87,13 +104,25 @@ require_command tar
 require_command curl
 require_command openssl
 require_command flock
+require_command timeout
 [[ -z "$payload_sha256" ]] || require_command sha256sum
 
 ensure_layout
 
-# Taken before the fetch, which runs outside the deploy lock: a teardown that
-# happens while this deploy fetches or waits for the lock is newer than this.
+# CI gives every deploy a payload path of its own, so nothing will ever read a
+# payload this deploy fetched once it ends: it goes whatever the outcome, and a
+# failed deploy is retried by a new run that fetches its own. A payload passed
+# without a URL belongs to whoever put it there and is kept until success.
+discard_payload() {
+  [[ -z "$payload_url" ]] || rm -f "$payload" "$payload.part"
+}
+trap discard_payload EXIT
+
+# Taken before the fetch, which runs outside the deploy lock: a teardown, or a
+# newer deploy of this pull request, that starts while this deploy fetches or
+# waits for the lock is newer than this.
 started_ns="$(date +%s%N)"
+mark_started "$pr" "$started_ns"
 
 fetch_payload "$payload" "$payload_url" "$payload_sha256" "$fetch_proxy"
 
@@ -110,13 +139,20 @@ container_base="/app"
 # One deploy at a time. Two tasks finishing together would otherwise race to
 # populate the same dependency cache and to read each other's instance state.
 exec 9>"$PREVIEW_ROOT/deploy.lock"
-flock 9
+flock -w "$PREVIEW_LOCK_WAIT" 9 ||
+  die "another preview operation held the deploy lock for ${PREVIEW_LOCK_WAIT}s; PR #$pr was not deployed"
 
 # A deploy whose CI step was cut off keeps running here; if its pull request
 # was torn down meanwhile, deploying now would bring a closed preview back.
 if closed_since "$pr" "$started_ns"; then
   rm -f "$payload" "$payload.part"
   die "PR #$pr was torn down after this deploy started; not recreating its preview"
+fi
+# Nor may it replace what a newer deploy of the pull request brought up, or is
+# about to: that one serves a later build.
+if superseded_since "$pr" "$started_ns"; then
+  rm -f "$payload" "$payload.part"
+  die "a newer deploy of PR #$pr started after this one; not replacing its build with an older one"
 fi
 
 # --- an instance that is already this build ---------------------------------
@@ -141,12 +177,17 @@ fi
 log "deploying PR #$pr ($sha) as $url"
 
 staging="$(mktemp -d "$PREVIEW_TMP_DIR/pr-${pr}.XXXXXX")"
+migrate_container="${name}-migrate"
 transaction_started=false
 cleanup() {
   status=$?
   trap - EXIT
+  # A migration cut off by its timeout leaves its container behind: stopping
+  # the docker client does not stop the container it started.
+  remove_container "$migrate_container" || true
   if [[ "$transaction_started" == true ]]; then preview_rollback; fi
   rm -rf "$staging"
+  discard_payload
   exit "$status"
 }
 trap cleanup EXIT
@@ -186,48 +227,35 @@ preview_begin
 # to attempt a migration and then failed to find the migrator — and it would
 # also let a file dropped from a later build survive from the previous one.
 #
-# Previous configuration, database and uploads live in the backup. This
+# preview_begin moved the previous instance — configuration, database, uploads
+# and all — into the backup, so the instance directory starts empty here. This
 # deployment initializes a new disposable dataset against the verified sources.
 mkdir -p "$dir/dist"
-find "$dir/dist" -mindepth 1 -maxdepth 1 \
-  ! -name node_modules ! -name storage -exec rm -rf {} +
 # The dependency tree is linked in below; a cold payload already had it moved to
 # the cache, and this is the guarantee that it is not copied a second time.
 rm -rf "$staging/dist/node_modules"
 cp -a "$staging/dist/." "$dir/dist/"
 
-if [[ -f "$staging/config.example.yml" && ! -f "$dir/config.example.yml" ]]; then
+if [[ -f "$staging/config.example.yml" ]]; then
   cp -a "$staging/config.example.yml" "$dir/config.example.yml"
 fi
 
-# Relinking 740 MB of dependencies on every deploy would dominate the run, so
-# it is skipped when the instance already holds this exact dependency set.
-recorded_key="$(read_instance_env "$dir" depsKey || true)"
-if [[ "$recorded_key" == "$deps_key" && -d "$dir/dist/node_modules" ]]; then
-  log "dependency set unchanged; keeping the existing tree"
-else
-  log "linking dependency tree $deps_key into the instance"
-  rm -rf "$dir/dist/node_modules"
-  # Hard links rather than a copy: the layout stays exactly what a real
-  # deployment has, at the cost of directory entries only.
-  cp -al "$cache/node_modules" "$dir/dist/node_modules"
-  # Recorded now rather than only on success, so retrying after a later failure
-  # does not relink the tree every time.
-  cat >"$dir/preview.env" <<ENV
-pr=$pr
-sha=$sha
-depsKey=$deps_key
-ENV
-fi
+# Hard links rather than a copy: the layout stays exactly what a real
+# deployment has, at the cost of directory entries only (~30k of them). Every
+# deploy links a fresh tree, because the instance directory is new; the
+# previous one's tree went into the backup with it.
+log "linking dependency tree $deps_key into the instance"
+cp -al "$cache/node_modules" "$dir/dist/node_modules"
 
 # --- configuration ----------------------------------------------------------
-# Generated once and kept, so restarting a preview does not invalidate every
-# session. Paths are container paths because the instance is mounted at /app.
-if [[ ! -f "$dir/config.yml" ]]; then
-  log "writing config.yml"
-  secret="$(openssl rand -hex 32)"
-  mkdir -p "$dir/data/storage/private" "$dir/data/storage/public" "$dir/data/storage/links"
-  cat >"$dir/config.yml" <<YAML
+# Written on every deploy, with a new secret: the dataset is new as well, so
+# no session from the previous instance could outlive the deploy anyway, and
+# restarting the container keeps this file. Paths are container paths because
+# the instance is mounted at /app.
+log "writing config.yml"
+secret="$(openssl rand -hex 32)"
+mkdir -p "$dir/data/storage/private" "$dir/data/storage/public" "$dir/data/storage/links"
+cat >"$dir/config.yml" <<YAML
 auth:
   secret: "${secret}"
   emailAndPassword:
@@ -265,15 +293,25 @@ drive:
   links:
     "${container_base}/data/storage/links/public": "${container_base}/data/storage/public"
 YAML
-fi
 
 # --- replace the running container -----------------------------------------
 remove_container "$name"
 
 # Migration and seeding run as their own container so a failure is a deploy
-# failure in this log, rather than something the server hits at boot.
+# failure in this log, rather than something the server hits at boot. Named,
+# so a run its timeout cut off can be removed (see cleanup).
+#
+# no-new-privileges: nothing in the application needs a setuid binary to gain
+# privileges. The containers still run as root with Docker's default
+# capabilities: the instance tree is extracted as root and keeps the uid the
+# CI runner recorded in the archive, so whether a non-root user, or root
+# without CAP_DAC_OVERRIDE, could write what the application writes there has
+# not been established.
 run_app_once() {
-  docker run --rm \
+  remove_container "$migrate_container"
+  timeout --kill-after=15 "$PREVIEW_MIGRATE_TIMEOUT" docker run --rm \
+    --name "$migrate_container" \
+    --security-opt no-new-privileges \
     --cpus "$PREVIEW_CPU_LIMIT" \
     --memory "$PREVIEW_MEMORY_LIMIT" \
     --volume "$dir:$container_base" \
@@ -286,14 +324,24 @@ run_app_once() {
 
 # Apply the current CLI plan once; a failed migration must stop deployment.
 log "applying migrations and seeds"
+migrate_status=0
 run_app_once node ./dist/cli/index.js db apply >"$PREVIEW_LOG_DIR/pr-${pr}-migrate.log" 2>&1 ||
-  { tail -n 40 "$PREVIEW_LOG_DIR/pr-${pr}-migrate.log" >&2; die "migrations or seeds failed for PR #$pr"; }
+  migrate_status=$?
+if (( migrate_status != 0 )); then
+  tail -n 40 "$PREVIEW_LOG_DIR/pr-${pr}-migrate.log" >&2
+  # timeout exits 124 when it had to stop the command, 137 when it killed it.
+  if (( migrate_status == 124 || migrate_status == 137 )); then
+    die "migrations or seeds for PR #$pr did not finish within ${PREVIEW_MIGRATE_TIMEOUT}s"
+  fi
+  die "migrations or seeds failed for PR #$pr"
+fi
 
 log "starting $name"
-docker run --detach \
+timeout --kill-after=15 "$PREVIEW_START_TIMEOUT" docker run --detach \
   --name "$name" \
   --network "$PREVIEW_NETWORK" \
   --restart unless-stopped \
+  --security-opt no-new-privileges \
   --cpus "$PREVIEW_CPU_LIMIT" \
   --memory "$PREVIEW_MEMORY_LIMIT" \
   --volume "$dir:$container_base" \
@@ -329,7 +377,6 @@ fi
 preview_commit
 rm -f "$(closed_mark "$pr")"
 # The instance now holds everything it needs; the staged payload (about 84 MB
-# packed) would otherwise stay on the host for every open pull request. A failed
-# deploy keeps it for the retry, and teardown removes it either way.
+# packed) would otherwise stay on the host for every open pull request.
 rm -f "$payload"
 log "PR #$pr is live at $url"

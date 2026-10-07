@@ -1,7 +1,6 @@
 import { isValidTargetBranch, repositoryApi } from './factory-lib.mjs';
 import {
   appendFileSync,
-  existsSync,
   readdirSync,
   readFileSync,
   writeFileSync,
@@ -22,7 +21,7 @@ import {
   parseCapacityListing,
   planCapacity,
   planFrom,
-  readDepsEntries,
+  readArchiveEntries,
   renderEvictionComment,
   renderPreviewComment,
   requireDepsKey,
@@ -142,15 +141,6 @@ if (mode === 'select') {
     !isValidTargetBranch(metadata.task?.targetBranch)
   )
     throw new Error('Task metadata mismatch');
-
-  // The dependency identity comes from the tree the build actually produced,
-  // not from anything the caller passes and not from the declared versions
-  // alone: the build also decides what to install and what to prune, and a
-  // recipe change leaves the versions untouched while changing the tree.
-  const nodeModules = path.join(args.build, 'dist/node_modules');
-  if (!existsSync(nodeModules))
-    throw new Error('The deployable build carries no dependency tree');
-  const key = requireDepsKey(depsKeyFromEntries(readDepsEntries(nodeModules)));
   const domain = requireDomain(args.domain || PREVIEW_THEME);
 
   const pulls = await list(
@@ -172,16 +162,22 @@ if (mode === 'select') {
     process.exit(0);
   }
 
+  // The dependency identity comes from the tree the build actually produced,
+  // not from anything the caller passes and not from the declared versions
+  // alone: the build also decides what to install and what to prune, and a
+  // recipe change leaves the versions untouched while changing the tree. It is
+  // read from the archive itself, so nothing is unpacked before the host is
+  // known to have room.
+  const archive = await readArchiveEntries(args.archive);
+  if (!archive.hasDeps)
+    throw new Error('The deployable build carries no dependency tree');
+  for (const file of ['dist/package.json', 'dist/server/standalone.js'])
+    if (!archive.files.has(file))
+      throw new Error(`The deployable build carries no ${file}`);
+  const key = requireDepsKey(depsKeyFromEntries(archive.deps));
+
   const plan = { ...planFrom({ metadata, pr, source, domain }), depsKey: key };
   writeFileSync(path.join(args.output, 'deploy.json'), JSON.stringify(plan));
-
-  // Derived from the build itself, so a directory the build starts emitting
-  // cannot be silently left behind.
-  const entries = slimEntries(
-    readdirSync(args.build),
-    readdirSync(path.join(args.build, 'dist')),
-  );
-  writeFileSync(path.join(args.output, 'slim-entries.txt'), entries.join('\n'));
 
   output('pr', plan.prNumber);
   output('sha', plan.headSha);
@@ -189,11 +185,24 @@ if (mode === 'select') {
   output('host', plan.host);
   output('deps_key', key);
   output('probe', depsProbeCommand(key));
+  output('slim', String(!archive.linksIntoDeps));
   output(
     'build_status',
     plan.deliveryStatus === 'failed' ? 'failed' : 'success',
   );
   output('ready', 'true');
+} else if (mode === 'slim') {
+  // Lists what the slim payload carries, from the build unpacked without its
+  // dependency tree. Derived from the build itself, so a directory the build
+  // starts emitting cannot be silently left behind.
+  const plan = readJson(args.output, 'deploy.json');
+  if (plan.repository !== repository || plan.runId !== runId)
+    throw new Error('Deployment plan mismatch');
+  const entries = slimEntries(
+    readdirSync(args.build),
+    readdirSync(path.join(args.build, 'dist')),
+  );
+  writeFileSync(path.join(args.output, 'slim-entries.txt'), entries.join('\n'));
 } else if (mode === 'capacity') {
   // Runs before the payload is packaged and uploaded: a deploy the host would
   // refuse for the instance limit must not cost a public release asset first.
@@ -344,5 +353,5 @@ if (mode === 'select') {
     console.warn('::warning::Preview deployment failed; reported on the PR.');
 } else
   throw new Error(
-    'Usage: deploy-preview.mjs <select|prepare|capacity|evicted|publish> --run-id N ...',
+    'Usage: deploy-preview.mjs <select|prepare|slim|capacity|evicted|publish> --run-id N ...',
   );

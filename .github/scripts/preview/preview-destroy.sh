@@ -26,18 +26,19 @@ dir="$(instance_dir "$pr")"
 # while the instance is removed. A deploy whose CI step was cut off may still be
 # fetching or waiting for this lock; the mark written under it makes that
 # deploy refuse once it gets the lock, instead of bringing the preview back.
-# Bounded: a deploy can hold the lock for its whole 30-minute step, and the
-# teardown job retries this three times inside its 15-minute limit, so waiting
-# 3 minutes each time fails visibly rather than being cut off.
+# Bounded: a deploy holds the lock for about 13 minutes at most (migrations,
+# start and readiness; see the budget in preview-deploy.sh), and the teardown
+# job retries this three times inside its 20-minute limit, so waiting 3
+# minutes each time fails visibly rather than being cut off.
 require_command flock
 exec 9>"$PREVIEW_ROOT/deploy.lock"
 flock -w 180 9 || die "another preview operation still holds the deploy lock; PR #$pr's preview was not removed"
 mark_closed "$pr"
 
-# The staged payload belongs to this pull request and is fetched again on the
+# The staged payloads belong to this pull request and are fetched again on the
 # next deploy. Removed before the early exit below, because a fetch that failed
 # leaves a payload (or a `.part`) behind with no preview to go with it.
-rm -f "$(payload_path "$pr")" "$(payload_path "$pr").part"
+remove_payloads "$pr"
 
 if ! container_exists "$name" && [[ ! -d "$dir" ]]; then
   log "PR #$pr has no preview; nothing to do"

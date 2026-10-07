@@ -92,8 +92,9 @@ test('a deploy checks the mark against its own start, right after taking the loc
   const deploy = script('preview-deploy.sh');
   const started = deploy.indexOf('started_ns="$(date +%s%N)"');
   const fetch = deploy.indexOf('fetch_payload "$payload"');
-  const held = deploy.indexOf('flock 9');
+  const held = deploy.indexOf('flock -w "$PREVIEW_LOCK_WAIT" 9');
   const check = deploy.indexOf('if closed_since "$pr" "$started_ns"; then');
+  assert.ok(held > 0, 'the deploy lock is gone');
   const current = deploy.indexOf(
     'instance_serves "$dir" "$name" "$sha" "$deps_key"',
   );

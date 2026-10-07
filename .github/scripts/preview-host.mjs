@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
-import { readdirSync, statSync } from 'node:fs';
+import { createReadStream, readdirSync, statSync } from 'node:fs';
 import path from 'node:path';
+import { createGunzip } from 'node:zlib';
 
 // Kept identical to the base path `verify.sh` uses. A preview serving a
 // different base path would not be the thing that was verified.
@@ -111,6 +112,186 @@ export function readDepsEntries(nodeModulesDir) {
 
   walk(nodeModulesDir, '');
   return entries;
+}
+
+const TAR_BLOCK = 512;
+const padded = (size) => Math.ceil(size / TAR_BLOCK) * TAR_BLOCK;
+const cString = (buffer) => {
+  const end = buffer.indexOf(0);
+  return buffer.toString('utf8', 0, end < 0 ? buffer.length : end);
+};
+const tarNumber = (field) => {
+  // Base-256 (GNU) for values an octal field cannot hold.
+  if (field[0] & 0x80) {
+    let value = field[0] & 0x7f;
+    for (const byte of field.subarray(1)) value = value * 256 + byte;
+    return value;
+  }
+  const text = cString(field).trim();
+  return text ? Number.parseInt(text, 8) : 0;
+};
+const memberPath = (name) => name.replace(/^(\.\/)+/, '').replace(/\/+$/, '');
+const paxRecords = (data) => {
+  const records = {};
+  let offset = 0;
+  while (offset < data.length) {
+    const space = data.indexOf(0x20, offset);
+    if (space < 0) break;
+    const length = Number(data.toString('utf8', offset, space));
+    if (!Number.isSafeInteger(length) || length <= 0) break;
+    const record = data.toString('utf8', space + 1, offset + length - 1);
+    const equals = record.indexOf('=');
+    if (equals > 0) records[record.slice(0, equals)] = record.slice(equals + 1);
+    offset += length;
+  }
+  return records;
+};
+
+/**
+ * Reads a packed build (`dist.tar.gz`) without unpacking it: the entries
+ * `readDepsEntries` would produce for its `dist/node_modules` once extracted,
+ * and the paths of the regular files outside that tree.
+ *
+ * Unpacking turned ~84 MB into ~744 MB and ~30k files on the runner only to
+ * walk them for this key, and before the workflow knew whether the host had
+ * room. Reading the archive streams it once instead. The entries are the ones
+ * the extracted tree yields, so the key matches what the walk gave and what the
+ * host's caches are named after: a hard link (the `tar` package records every
+ * further name of one inode that way) is a file with its target's size, a
+ * directory the archive only implies is still a directory, and a later member
+ * replaces an earlier one with the same name, as extraction does.
+ *
+ * Handles what `tar` and GNU tar write: ustar names split into a prefix, GNU
+ * long names and links, and PAX `path`, `linkpath` and `size` records.
+ *
+ * `linksIntoDeps` says a file outside the tree is recorded as a hard link to
+ * one inside it: unpacking the build without its dependency tree, which is how
+ * the slim payload is made, would fail on that member, so the full build is
+ * sent instead.
+ */
+export async function readArchiveEntries(
+  archive,
+  prefix = 'dist/node_modules/',
+) {
+  const sizes = new Map();
+  const deps = new Map();
+  const files = new Set();
+  let hasDeps = false;
+  let linksIntoDeps = false;
+  let pending = null;
+  let skip = 0;
+  let longName;
+  let longLink;
+  let pax = {};
+  let rest = Buffer.alloc(0);
+
+  const add = (type, name, linkName, size) => {
+    const full = memberPath(name);
+    if (type === 'file') sizes.set(full, size);
+    if (`${full}/` === prefix) {
+      hasDeps = true;
+      return;
+    }
+    if (!full.startsWith(prefix)) {
+      if (type === 'file' || type === 'hardlink') files.add(full);
+      // Unpacking without the dependency tree could not create this link.
+      if (type === 'hardlink' && memberPath(linkName ?? '').startsWith(prefix))
+        linksIntoDeps = true;
+      return;
+    }
+    hasDeps = true;
+    const relative = full.slice(prefix.length);
+    if (type === 'dir') deps.set(relative, `${relative}\u0000dir`);
+    else if (type === 'symlink') deps.set(relative, `${relative}\u0000link`);
+    else {
+      const bytes =
+        type === 'file' ? size : sizes.get(memberPath(linkName ?? ''));
+      if (bytes === undefined)
+        throw new Error(`Hard link ${full} points at an unknown member`);
+      deps.set(relative, `${relative}\u0000${bytes}`);
+    }
+  };
+
+  const header = (block) => {
+    const type = String.fromCharCode(block[156] || 0x30);
+    const recorded = tarNumber(block.subarray(124, 136));
+    if (['L', 'K', 'x', 'g'].includes(type)) {
+      pending = { type, size: recorded, chunks: [], got: 0 };
+      skip = padded(recorded);
+      return;
+    }
+    const size = pax.size === undefined ? recorded : Number(pax.size);
+    let name = cString(block.subarray(0, 100));
+    const ustar = block.toString('latin1', 257, 263) === 'ustar\u0000';
+    const prefixField = ustar ? cString(block.subarray(345, 500)) : '';
+    if (prefixField) name = `${prefixField}/${name}`;
+    name = pax.path ?? longName ?? name;
+    const linkName =
+      pax.linkpath ?? longLink ?? cString(block.subarray(157, 257));
+    pax = {};
+    longName = undefined;
+    longLink = undefined;
+    const kinds = {
+      0: 'file',
+      '\u0000': 'file',
+      7: 'file',
+      1: 'hardlink',
+      2: 'symlink',
+      5: 'dir',
+    };
+    const kind = kinds[type];
+    if (kind) add(kind, name, linkName, kind === 'file' ? size : 0);
+    // Only regular files carry data; everything else has none to skip.
+    skip = kind === 'file' || !kind ? padded(size) : 0;
+  };
+
+  const finish = () => {
+    const data = Buffer.concat(pending.chunks);
+    if (pending.type === 'L') longName = cString(data);
+    else if (pending.type === 'K') longLink = cString(data);
+    else if (pending.type === 'x') pax = paxRecords(data);
+    pending = null;
+  };
+
+  for await (const chunk of createReadStream(archive).pipe(createGunzip())) {
+    const buffer = rest.length ? Buffer.concat([rest, chunk]) : chunk;
+    let offset = 0;
+    for (;;) {
+      if (skip) {
+        const take = Math.min(skip, buffer.length - offset);
+        if (pending && pending.got < pending.size) {
+          const want = Math.min(take, pending.size - pending.got);
+          pending.chunks.push(
+            Buffer.from(buffer.subarray(offset, offset + want)),
+          );
+          pending.got += want;
+        }
+        skip -= take;
+        offset += take;
+        if (skip) break;
+        if (pending) finish();
+        continue;
+      }
+      if (buffer.length - offset < TAR_BLOCK) break;
+      const block = buffer.subarray(offset, offset + TAR_BLOCK);
+      offset += TAR_BLOCK;
+      if (block.every((byte) => byte === 0)) continue;
+      header(block);
+      if (pending && skip === 0) finish();
+    }
+    // Copied: the stream may reuse the chunk the remainder points into.
+    rest = Buffer.from(buffer.subarray(offset));
+  }
+
+  // Extraction creates every parent directory, recorded or not.
+  for (const relative of [...deps.keys()]) {
+    let parent = path.posix.dirname(relative);
+    while (parent !== '.' && !deps.has(parent)) {
+      deps.set(parent, `${parent}\u0000dir`);
+      parent = path.posix.dirname(parent);
+    }
+  }
+  return { deps: [...deps.values()], files, hasDeps, linksIntoDeps };
 }
 
 export function containerName(pr) {
