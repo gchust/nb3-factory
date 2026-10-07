@@ -1,6 +1,14 @@
 import type { LocaleResource } from '@nocobase/i18n';
 
+// The AI chat extension under `client/extensions/nocobase-ai` is application-owned UI, so its wording is part of the
+// application's locale rather than a plugin namespace the app falls back to. The extension ships its own dictionaries
+// and the `useAITranslate` hook reads them, but the copy still has to exist here: the locale-coverage test scans the
+// extension's components for `t()` keys and requires each one in this resource. Import the dictionary instead of
+// copying it so the two cannot drift.
+import nocobaseAIEnUS from '../extensions/nocobase-ai/locales/en-US.js';
+
 const enUS = {
+  ...nocobaseAIEnUS,
   'auth.welcome': 'Welcome back',
   'auth.loginDescription': 'Sign in with your username or email and password.',
   'auth.registerTitle': 'Create an account',
@@ -96,6 +104,76 @@ const enUS = {
     description:
       'Describe what you need to your AI Agent, then build pages, data models, and business workflows.',
   },
+
+  'materials.navigation': 'Materials',
+  'materials.title': 'Materials',
+  'materials.description':
+    'The materials the assistant answers from. Open one to read it.',
+  'materials.create': 'New material',
+  'materials.create.title': 'New material',
+  'materials.create.description':
+    'A title and a body. The assistant answers from what you write here.',
+  'materials.create.submit': 'Create',
+  'materials.create.submitting': 'Creating…',
+  'materials.create.success': 'Created “{{title}}”.',
+  'materials.edit': 'Edit',
+  'materials.edit.title': 'Edit material',
+  'materials.edit.description':
+    'Update the title and body. The assistant answers from the new content right away.',
+  'materials.edit.submit': 'Save',
+  'materials.edit.submitting': 'Saving…',
+  'materials.edit.success': 'Saved “{{title}}”.',
+  'materials.field.title': 'Title',
+  'materials.field.body': 'Body',
+  'materials.field.bodyHint':
+    'The assistant answers only from what this body states.',
+  'materials.form.required': 'Enter both a title and a body.',
+  'materials.form.invalid':
+    'The server rejected this material. Check the title and body and try again.',
+  'materials.form.forbidden':
+    'You do not have permission to maintain materials.',
+  'materials.restricted': 'Restricted',
+  'materials.restrictedDescription':
+    'Only a supervisor can read this material.',
+  'materials.updatedAt': 'Last updated',
+  'materials.empty.title': 'No materials yet',
+  'materials.empty.description': 'A supervisor can add the first material.',
+  'materials.detail.title': 'Material',
+  'materials.error.title': 'Unable to load materials',
+  'materials.error.unauthenticated':
+    'Your session has expired. Sign in again to continue.',
+  'materials.error.forbidden': 'You do not have permission to read materials.',
+  'materials.error.notFound':
+    'This material does not exist, or you do not have permission to read it.',
+  'materials.error.requestFailed': 'Something went wrong. Please try again.',
+  'materials.error.retry': 'Retry',
+  'materials.permission.section': 'Materials',
+  'materials.permission.collection': 'Materials',
+  'materials.permission.visible': 'Visible materials',
+  'materials.permission.visibleDescription':
+    'Materials that are not restricted.',
+  'materials.permission.read': 'Read materials',
+  'materials.permission.write': 'Maintain materials',
+  'materials.permission.view': 'Read',
+  'materials.permission.manage': 'Maintain',
+  'materials.permission.supervisorSet': 'Materials supervisor',
+  'materials.permission.colleagueSet': 'Materials reader',
+  'assistant.navigation': 'Materials assistant',
+  'assistant.title': 'Materials assistant',
+  'assistant.description':
+    'Ask about the materials you can read. Every answer cites the material it came from.',
+  'assistant.openMaterials': 'Open materials',
+  'assistant.placeholder': 'Ask about the materials…',
+  'assistant.disclaimer':
+    'Answers come only from the materials you are allowed to read. If the materials do not cover it, the assistant says so.',
+  'assistant.retry': 'Retry',
+  'assistant.unavailable.title': 'The materials assistant is unavailable',
+  'assistant.unavailable.noModel':
+    'No AI model is configured for this application, so the assistant cannot answer.',
+  'assistant.unavailable.noEmployee':
+    'The materials assistant is not registered for this application.',
+  'assistant.unavailable.manualHint':
+    'You can still read the materials yourself in the materials library.',
 
   appearance: {
     title: 'Appearance',
