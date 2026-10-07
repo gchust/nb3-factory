@@ -294,7 +294,11 @@ export async function sendFeishu(
       const result = await response.json().catch(() => null);
       const code = result?.code ?? result?.StatusCode;
       if (response.ok && code === 0) return;
-      retry = response.status === 429 || response.status >= 500;
+      // 429 and 503 mean Feishu did not take the message. Any other 5xx (a
+      // 502 or 504 from a proxy in front of it) may follow a post that already
+      // reached the chat, so it is treated like a timeout: no resend in this
+      // run, and the day stays pending.
+      retry = response.status === 429 || response.status === 503;
       error = new Error(
         `Feishu rejected the digest (HTTP ${response.status}, code ${code ?? 'none'}: ${clip(String(result?.msg ?? result?.StatusMessage ?? ''), 200)})`,
       );
@@ -303,7 +307,10 @@ export async function sendFeishu(
       // timeout or a dropped connection the digest may already be in the
       // chat, and a second copy would break the one-set rule: the day stays
       // pending and the next run decides, as for any other failure.
-      const code = failure.cause?.code ?? failure.code ?? failure.name;
+      // DOMException.code is a legacy number (23 for a timeout): use its name.
+      const code =
+        failure.cause?.code ??
+        (typeof failure.code === 'string' ? failure.code : failure.name);
       retry = NEVER_SENT.has(code);
       error = new Error(
         `Feishu request failed (${code})${retry ? '' : '; it may have been delivered, so it is not resent in this run'}`,

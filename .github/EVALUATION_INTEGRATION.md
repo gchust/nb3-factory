@@ -24,7 +24,7 @@
   重评只能走现有 **Reassess Build Quality**；补发与重渲染没有模型用量。
 - 结果协议是归一化公共 DTO；接收端不需要解析 `verify-*` 目录、工厂日志、Issue 模板或 Agent 事件。
 - 工厂不输出、不调用管理端的 `featurePointId`、`problemId`、负责人或状态变更；不创建、指派或关闭管理端问题。
-- 投递失败或接收端下线不改变业务验收、PR、QA 或修复，也不阻止评测批次推进。
+- 投递失败或接收端下线不改变业务验收、PR、QA 或修复。
 - 两个仓库不共享数据库或业务源码；Schema 使用本仓库固定文件，不在运行时下载。
 
 ## 运行身份与修订
@@ -182,7 +182,7 @@ ZIP 由工厂确定性生成：路径排序、固定时间戳（1980-01-01）、
 | Variable `EVALUATION_AUTH_MODE` | `x-api-key` | 固定枚举 `x-api-key` / `bearer`；不接受自定义头名或模板 |
 | Secret `EVALUATION_TOKEN` | 未设置 | 只进入投递工作流 `send` 作业的一个步骤；不进入实现、QA、评审、导出或任何 Artifact |
 
-| Variable `FACTORY_EVALUATION_PLANS_ENABLED` | 未设置 = 启用 | `false` 暂停新每日批次；默认仅运行启用的 F00 三样本核心计划，旧标签 cron 已移除；手动启动、推进与取消不受它限制 |
+| Variable `FACTORY_EVALUATION_PLANS_ENABLED` | 已停用 | 随批次工作流一起退役，不再有任何工作流读取；每日预置搭建见 [`SCHEDULED_PRESET_TESTS.md`](SCHEDULED_PRESET_TESTS.md) |
 
 投递打开但配置不完整时，投递作业失败并列出缺失的配置项名称（不输出值），记录保持待投递；业务结果与归档不受影响。
 仓库里原有的变量没有同义开关，因此新增上述名称。
@@ -255,9 +255,9 @@ X-Evaluation-Bundle-SHA256: <ZIP 的 SHA-256>
 
 ## 投递、重试与补发
 
-`Report Task Usage`（以及批次协调器）的 `evaluation` 作业在投递开启时把新修订写入 `evaluations/outbox.json`（只含目标哈希、主体、修订、
+`Report Task Usage` 的 `evaluation` 作业在投递开启时把新修订写入 `evaluations/outbox.json`（只含目标哈希、主体、修订、
 包摘要、状态与最近 10 次尝试），然后以 `workflow_dispatch` **不等待地**请求一次 **Deliver Evaluation Results** 扫描就结束。
-投递工作流只能被派发或定时触发，不被任何工作流调用，因此慢接收端不会占住报告或批次的串行并发组；请求失败时由定时扫描补发。
+投递工作流只能被派发或定时触发，不被任何工作流调用，因此慢接收端不会占住报告的串行并发组；请求失败时由定时扫描补发。
 
 ```text
 plan（actions/contents: read）  按登记摘要找回原 Artifact，逐字节校验包 → 待发清单
@@ -297,8 +297,9 @@ GitHub 限流、5xx、网络或超时等临时故障保持 `pending`，不计为
 仍保留的部分：已经登记的 `evaluation-batch` 快照修订和样本报告原样留在 `gh-pages`，
 Schema [`contracts/evaluation-batch.v1.schema.json`](contracts/evaluation-batch.v1.schema.json) 与示例
 [`batch-in-progress.json`](contracts/examples/batch-in-progress.json) 用于读取这些历史记录。
-`evaluation-batch.mjs` 与 [`evaluations/plans.json`](evaluations/plans.json) 仍被修订登记、样本闸门和测试引用，
-因此暂不删除；没有任何工作流再调用它们。
+`evaluation-batch.mjs` 与 [`evaluations/plans.json`](evaluations/plans.json) 只剩
+[`contracts/render-examples.mjs`](contracts/render-examples.mjs) 和测试在用，没有任何工作流或生产脚本再调用它们；
+清理它们需要一并改写示例生成与相关测试，留待单独处理。
 
 ## 验证
 

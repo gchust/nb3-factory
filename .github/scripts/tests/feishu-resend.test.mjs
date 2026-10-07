@@ -50,6 +50,49 @@ test('a timeout or a dropped connection is not resent', async () => {
     assert.match(outcome.message, /may have been delivered/);
     assert.ok(!outcome.message.includes('token-in-url'));
   }
+  // DOMException.code is the legacy number 23; the message names the error.
+  const { outcome } = await send(
+    new DOMException(
+      'The operation was aborted due to timeout',
+      'TimeoutError',
+    ),
+  );
+  assert.match(outcome.message, /\(TimeoutError\)/);
+});
+
+async function respond(status) {
+  let calls = 0;
+  const outcome = await sendFeishu(
+    config,
+    { msg_type: 'post' },
+    {
+      fetcher: async () => {
+        calls += 1;
+        return calls === 1
+          ? { ok: false, status, json: async () => null }
+          : { ok: true, status: 200, json: async () => ({ code: 0 }) };
+      },
+      pause: async () => {},
+    },
+  ).then(
+    () => 'sent',
+    (error) => error,
+  );
+  return { calls, outcome };
+}
+
+// A 502 or 504 from a proxy can follow a post Feishu already accepted.
+test('only 429 and 503 responses are resent', async () => {
+  for (const status of [429, 503]) {
+    const { calls, outcome } = await respond(status);
+    assert.equal(calls, 2, String(status));
+    assert.equal(outcome, 'sent');
+  }
+  for (const status of [500, 502, 504]) {
+    const { calls, outcome } = await respond(status);
+    assert.equal(calls, 1, String(status));
+    assert.ok(outcome instanceof Error);
+  }
 });
 
 test('a connection that was never made is retried', async () => {

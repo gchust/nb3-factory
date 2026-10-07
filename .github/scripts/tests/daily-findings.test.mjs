@@ -541,7 +541,7 @@ test('messages are signed, retried on server errors and never leak the webhook U
     status,
     json: async () => body,
   });
-  const responses = [reply(502, null), reply(200, { code: 0, msg: 'success' })];
+  const responses = [reply(503, null), reply(200, { code: 0, msg: 'success' })];
   await sendFeishu(
     config,
     { msg_type: 'post', content: {} },
