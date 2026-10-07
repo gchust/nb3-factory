@@ -55,7 +55,7 @@ Artifact 只从请求的 run/attempt 对应 Job 时间范围选择，并通过�
 无法确认来源 Issue、GitHub 写入失败或 Runner 被直接销毁时，不能保证生成 Issue 提示。
 
 Issue 保留每个 run/attempt 的评论和一个最近 100 轮的索引；更多旧记录仍留在讨论中。
-索引链接已发布的用量报告（Issue 评论）和截图与录像（构建 PR 上的视觉报告评论：媒体 Token 用户发布的内嵌版本，或 `github-actions[bot]` 的 Artifact 版本；其他人带同样标记的评论不算），晚于历史索引发布的报告仍可从 Issue 查看。
+索引链接已发布的用量报告（Issue 评论）和截图与录像（构建 PR 上的视觉报告评论，也查找 Issue 自身的评论：媒体 Token 用户发布的内嵌版本，或 `github-actions[bot]` 的 Artifact 版本；其他人带同样标记的评论不算），晚于历史索引发布的报告仍可从 Issue 查看。
 
 Actions 原始产物保留 14 天。Release 副本不随 Artifact 过期；人工删除仍会移除它。
 一个 Release 最多容纳 1000 个附件，交互历史、构建评审历史和独立评审每天约新增 15 个，

@@ -283,11 +283,20 @@ const ours = (marker) => (comment) =>
   comment.user?.login === 'github-actions[bot]' &&
   comment.body?.includes(marker);
 
-// The ledger gains a comment per run and only grows. A run's own entry, if a
-// replay already wrote one, is among the newest, so its comments are read from
-// the last page back and the search stops at the entry: a publish costs a page
-// or two, not the whole ledger, and no page cap ever fails it.
-export async function findNewestFirst(issue, total, matches, read = api) {
+// The ledger gains a comment per run and only grows. A run's own entry can
+// only be newer than the run itself, so its comments are read from the last
+// page back and the search stops at the entry, or at the page where comments
+// older than the run (`since`) begin: a publish reads only the pages written
+// since its run started, usually one or two, and no page cap ever fails it.
+// Without `since` (a source file from before it was recorded) the search
+// reads back to page 1.
+export async function findNewestFirst(
+  issue,
+  total,
+  matches,
+  { since, read = api } = {},
+) {
+  const start = Date.parse(since ?? '');
   for (
     let page = Math.max(1, Math.ceil((total + 1) / 100));
     page >= 1;
@@ -300,13 +309,17 @@ export async function findNewestFirst(issue, total, matches, read = api) {
     if (!Array.isArray(batch)) throw new Error('Invalid GitHub list response');
     const found = batch.findLast(matches);
     if (found) return found;
+    // Comments are oldest first: once this page starts before the run, every
+    // earlier page does too.
+    if (Number.isFinite(start) && Date.parse(batch[0]?.created_at) < start)
+      return undefined;
   }
   return undefined;
 }
 
-async function upsert(issue, marker, body, { total } = {}) {
+async function upsert(issue, marker, body, { total, since } = {}) {
   const existing = Number.isSafeInteger(total)
-    ? await findNewestFirst(issue, total, ours(marker))
+    ? await findNewestFirst(issue, total, ours(marker), { since })
     : (await list(`/issues/${issue}/comments`)).find(ours(marker));
   if (existing?.body === body) return { comment: existing, unchanged: true };
   const created = await api(
@@ -394,6 +407,8 @@ async function select(args) {
       repository,
       runId: args.runId,
       runUrl: `https://github.com/${repository}/actions/runs/${args.runId}`,
+      // Bounds the ledger search: no entry of this run can be older.
+      runCreatedAt: run.created_at ?? null,
       runAttempt: run.run_attempt,
       artifact: selected.artifact,
       issue: selected.issue,
@@ -415,13 +430,19 @@ const LEDGER_BODY = [
   '`skills/nocobase-app-development/`。',
 ].join('\n');
 
-// The oldest open-or-closed ledger Issue, or undefined.
+// The ledger Issue: the oldest open one, or, when none is open, the oldest
+// closed one (the live ledger may have been closed and is still written to).
+// A maintainer who replaces a closed ledger with a new open one moves writes.
 async function oldestLedger(read) {
   return (
     await read(`/issues?labels=${encodeURIComponent(LEDGER_LABEL)}&state=all`)
   )
     .filter((issue) => issue.title === LEDGER_TITLE && !issue.pull_request)
-    .sort((a, b) => a.number - b.number)[0];
+    .sort(
+      (a, b) =>
+        (a.state === 'open' ? 0 : 1) - (b.state === 'open' ? 0 : 1) ||
+        a.number - b.number,
+    )[0];
 }
 
 // Runs publish under per-run concurrency groups, so two of them can find the
@@ -541,7 +562,10 @@ async function publish(args) {
     ledger.number,
     LEDGER_MARKER(args.runId, attempt),
     ledgerBody,
-    { total: Number.isSafeInteger(ledger.comments) ? ledger.comments : 0 },
+    {
+      total: Number.isSafeInteger(ledger.comments) ? ledger.comments : 0,
+      since: source.runCreatedAt,
+    },
   );
   console.log(
     ledgerUnchanged

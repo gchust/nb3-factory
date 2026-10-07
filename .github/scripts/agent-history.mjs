@@ -397,15 +397,18 @@ async function publish(args) {
       const c = comments.find(c => c.user?.login === 'github-actions[bot]' && c.body?.includes(`<!-- factory-${kind}:${run}:${attempt} -->`));
       return c ? ` · [${label}](${commentUrl(c)})` : '';
     };
-    // publish-visual-report.mjs comments on the task's build PR, not on the
-    // Issue: the inline report as the FACTORY_MEDIA_TOKEN user (a collaborator),
-    // the artifact fallback as github-actions[bot]. The inline one wins.
-    const media = await buildPrComments(source.repository, issue);
+    // publish-visual-report.mjs comments on the task's build PR: the inline
+    // report as the FACTORY_MEDIA_TOKEN user (a collaborator), the artifact
+    // fallback as github-actions[bot]. The inline one wins. Every version in
+    // the repository's history posts on the PR; the Issue's own comments are
+    // searched as well, so a round reported there by any older publisher
+    // keeps its link.
+    const media = [...await buildPrComments(source.repository, issue), ...comments];
     const visual = (run, attempt) => {
       const marked = media.filter(c => c.body?.includes(`<!-- factory-visual-report:${run}:${attempt} -->`));
       const c = marked.find(c => c.body.includes('<!-- factory-visual-mode:inline -->') && isTrustedAuthor(c)) ??
         marked.find(c => c.user?.login === 'github-actions[bot]');
-      return c?.html_url ? ` · [截图与录像](${c.html_url})` : '';
+      return c ? ` · [截图与录像](${commentUrl(c)})` : '';
     };
     const indexBody = `${indexMarker}\n## 本任务交互历史索引\n\n` + entries.slice(0, 100).map(({ comment: c, match }) =>
       `- [Run ${match[1]} · attempt ${match[2]}](${commentUrl(c)})${related('task-usage', match[1], match[2], '报告')}${visual(match[1], match[2])}`).join('\n') +

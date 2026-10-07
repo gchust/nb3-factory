@@ -246,6 +246,32 @@ test('a monthly-release archive is kept on replay and the index links the PR vis
   assert.doesNotMatch(issueComments[1].body, /issuecomment-700|issuecomment-800/);
 });
 
+test('a visual report posted on the Issue itself is still linked from the index', async t => {
+  const root = fixture(t);
+  const issueComments = [
+    { id: 1, body: '<!-- factory-agent-history:123:2 -->\n记录', user: { login: 'github-actions[bot]' } },
+    { id: 2, body: '<!-- factory-visual-report:123:2 -->\nfallback', user: { login: 'github-actions[bot]' },
+      html_url: 'https://github.com/owner/repo/issues/42#issuecomment-2' },
+  ];
+  const server = http.createServer(async (req, res) => {
+    let raw = ''; for await (const chunk of req) raw += chunk;
+    res.setHeader('content-type', 'application/json');
+    const route = new URL(req.url, 'http://fixture').pathname.replace('/repos/owner/repo', '');
+    if (req.method === 'GET' && route === '/pulls') return res.end('[]');
+    if (req.method === 'GET') return res.end(JSON.stringify(issueComments));
+    const body = JSON.parse(raw).body;
+    if (req.method === 'POST') { const c = { id: issueComments.length + 1, body, user: { login: 'github-actions[bot]' } }; issueComments.push(c); return res.end(JSON.stringify(c)); }
+    const c = issueComments.find(c => c.id === Number(route.split('/').at(-1))); c.body = body; res.end(JSON.stringify(c));
+  });
+  await new Promise(resolve => server.listen(0, '127.0.0.1', resolve)); t.after(() => server.close());
+  const env = { ...process.env, GITHUB_API_URL: `http://127.0.0.1:${server.address().port}`, GITHUB_REPOSITORY: 'owner/repo', GITHUB_TOKEN: 'test' };
+  delete env.GITHUB_STEP_SUMMARY;
+  await exec(process.execPath, [script, 'publish', '--manifest', path.join(root, 'missing.json'), '--source', put(root, 'source.json', source),
+    '--issue', '42', '--run', '123', '--attempt', '2', '--asset-url', '', '--fallback-url', 'https://github.com/owner/repo/actions/runs/123'], { env });
+  const index = issueComments.find(c => c.body.startsWith('<!-- factory-agent-history-index -->'));
+  assert.match(index.body, /\[截图与录像\]\(https:\/\/github\.com\/owner\/repo\/issues\/42#issuecomment-2\)/);
+});
+
 test('maintenance Issues cannot enter either build or comment queues', async () => {
   assert.equal(isManualIssue({ labels: ['factory:manual'] }), true);
   assert.equal(isManualIssue({ labels: [{ name: 'factory:manual' }] }), true);

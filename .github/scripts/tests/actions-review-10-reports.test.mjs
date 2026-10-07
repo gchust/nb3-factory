@@ -215,11 +215,14 @@ test('a superseded classification run stops before installing the Agent', () => 
   assert.match(findings, /\|\| echo 0/);
 });
 
-test('ledger lookups read the newest comments first and stop at the entry', async () => {
+test('ledger lookups read the newest comments first and stop at the entry or the run start', async () => {
   const pages = [];
+  // One comment a minute from 2026-10-01T00:00Z.
+  const at = (i) => new Date(Date.UTC(2026, 9, 1) + i * 60_000).toISOString();
   const comments = Array.from({ length: 250 }, (_, i) => ({
     id: i + 1,
     body: `entry ${i + 1}`,
+    created_at: at(i),
     user: { login: 'github-actions[bot]' },
   }));
   const read = async (method, route) => {
@@ -227,24 +230,63 @@ test('ledger lookups read the newest comments first and stop at the entry', asyn
     pages.push(page);
     return comments.slice((page - 1) * 100, page * 100);
   };
-  const found = await findNewestFirst(
-    99,
-    250,
-    (c) => c.body === 'entry 230',
+  const found = await findNewestFirst(99, 250, (c) => c.body === 'entry 230', {
     read,
-  );
+  });
   assert.equal(found.id, 230);
   assert.deepEqual(pages, [3]);
+  // A first publish: nothing matches, and the search stops at the first page
+  // whose comments all predate the run instead of reading back to page 1.
   pages.length = 0;
-  assert.equal(await findNewestFirst(99, 250, () => false, read), undefined);
+  assert.equal(
+    await findNewestFirst(99, 250, () => false, { read, since: at(150) }),
+    undefined,
+  );
+  assert.deepEqual(pages, [3, 2]);
+  pages.length = 0;
+  await findNewestFirst(99, 250, () => false, { read, since: at(240) });
+  assert.deepEqual(pages, [3]);
+  // Without a run start (an older source file) it still reads every page.
+  pages.length = 0;
+  assert.equal(
+    await findNewestFirst(99, 250, () => false, { read }),
+    undefined,
+  );
   assert.deepEqual(pages, [3, 2, 1]);
   // Far beyond the old 30-page cap.
-  pages.length = 0;
-  await findNewestFirst(
-    99,
-    4000,
-    () => false,
-    async () => [],
+  await findNewestFirst(99, 4000, () => false, { read: async () => [] });
+});
+
+test('the retro source records when its run started', () => {
+  const source = readFileSync(
+    path.resolve(import.meta.dirname, '../publish-retro.mjs'),
+    'utf8',
+  );
+  assert.match(source, /runCreatedAt: run\.created_at/);
+  assert.match(source, /since: source\.runCreatedAt/);
+});
+
+test('an open ledger is preferred, and a closed one is still used when none is open', async () => {
+  const request = async (method, route) => {
+    if (route.startsWith('/labels')) return {};
+    throw new Error(`Unexpected ${method} ${route}`);
+  };
+  const ledger = (issues) =>
+    ensureLedger({ request, read: async () => issues });
+  // The live repository's only ledger is closed and still written to.
+  assert.equal(
+    (await ledger([{ number: 114, state: 'closed', title: LEDGER_TITLE }]))
+      .number,
+    114,
+  );
+  assert.equal(
+    (
+      await ledger([
+        { number: 300, state: 'open', title: LEDGER_TITLE },
+        { number: 114, state: 'closed', title: LEDGER_TITLE },
+      ])
+    ).number,
+    300,
   );
 });
 
@@ -256,12 +298,16 @@ test('two runs creating the retro ledger at once settle on the oldest', async ()
     if (route.startsWith('/labels')) return {};
     if (method === 'POST' && route === '/issues') {
       // Another run's ledger landed first, between this run's lookup and create.
-      issues.push({ number: 200, title: LEDGER_TITLE });
-      const created = { number: 201, title: LEDGER_TITLE };
+      issues.push({ number: 200, state: 'open', title: LEDGER_TITLE });
+      const created = { number: 201, state: 'open', title: LEDGER_TITLE };
       issues.push(created);
       return created;
     }
-    if (method === 'PATCH') return {};
+    if (method === 'PATCH') {
+      issues.find((issue) => route === `/issues/${issue.number}`).state =
+        body.state;
+      return {};
+    }
     throw new Error(`Unexpected ${method} ${route}`);
   };
   const read = async () => [...issues].reverse();

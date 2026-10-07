@@ -54,6 +54,6 @@ Actions → **Publish Task Visual Report**、**Publish Agent History** 或
 
 核对报告时每次请求带唯一查询参数绕过 CDN 缓存，仍要求页面里的报告标识与本轮一致；Pages CDN 常在部署后数分钟才换上新页面，因此按 5、10、15、20、30、40、60 秒逐步拉长间隔重试，共约 3 分钟后才判定失败。
 
-`factory-task-usage` 并发组只包住统计回写（`report`）和 Pages 归档与部署（`pages`）。核对 CDN 并回贴链接在其后的 `notify` 作业里进行，不占该组，只在 `factory-report-notify` 组内彼此排队，避免同一 Issue 的两次回贴同时新建评论；之后的部署只会增加站点内容，不会撤下本轮报告。评测修订登记（`evaluation`）用自己的 `factory-evaluation-registry` 组：它对 `gh-pages` 的写入都经 `commitTree` 的比较并交换重试，与 `deliver-evaluation.yml` 一样不需要全局锁。`findings` 作业在分类工作流已有排队中的 Run 时不再重复请求：那次 Run 开始时读取的站点已包含本报告。
+`factory-task-usage` 并发组只包住统计回写（`report`）和 Pages 归档与部署（`pages`）。核对 CDN 并回贴链接在其后的 `notify` 作业里进行，不占该组，只在 `factory-report-notify` 组内彼此排队，避免同一 Issue 的两次回贴同时新建评论；之后的部署只会增加站点内容，不会撤下本轮报告。同一 Issue 已归档了更新的报告时，只有那份报告已能访问才让给它；它的部署失败、`notify` 不会运行时，本轮照常回贴，那份报告日后部署成功会按回执顺序替换评论。报告归档在比较并交换冲突时最多重试 5 次，间隔按 1、2、4、8 秒加随机抖动增长，已上传的 blob 不重复上传。评测修订登记（`evaluation`）用自己的 `factory-evaluation-registry` 组：它对 `gh-pages` 的写入都经 `commitTree` 的比较并交换重试，与 `deliver-evaluation.yml` 一样不需要全局锁。`findings` 作业在分类工作流已有排队中的 Run 时不再重复请求：那次 Run 开始时读取的站点已包含本报告。
 
 首次配置、固定/最新入口、复盘和逐条验收展示以及补发说明见 [reports/README.md](reports/README.md)。Pages 发布失败不改变来源任务结果，原有用量回执与下载 Artifact 保留。
