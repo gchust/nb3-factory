@@ -89,6 +89,53 @@ const zhCN: AppResource = {
     title: '开始构建你的应用',
     description: '向 AI 助手描述你的需求，逐步构建页面、数据模型和业务流程。',
   },
+  library: {
+    title: '内部资料库',
+    description:
+      '你可以阅读的资料。阅读者只能看到已发布且非保密的资料；资料员还可以创建和编辑自己负责的资料。',
+    create: '新建资料',
+    createTitle: '新建资料',
+    viewTitle: '资料详情',
+    editTitle: '编辑资料',
+    edit: '编辑',
+    empty: '暂无资料。',
+    loadFailed: '无法加载资料库',
+    saveFailed: '无法保存资料',
+    saved: '已保存',
+    saving: '正在保存…',
+    denied: '你没有执行该操作的权限。',
+    error: '出错了，请重试。',
+    actions: '操作',
+    yes: '是',
+    no: '否',
+    authorization: {
+      resource: '资料库',
+      collection: '资料',
+      permission: {
+        view: '查看资料',
+        create: '新建资料',
+        edit: '编辑资料',
+      },
+      recordAccess: {
+        published: '已发布且不保密',
+        notConfidential: '不保密',
+      },
+    },
+    field: {
+      title: '标题',
+      body: '正文',
+      owner: '负责人',
+      published: '是否发布',
+      confidential: '是否保密',
+    },
+  },
+  permissionSets: {
+    maintainer: '资料员',
+    reader: '阅读者',
+  },
+  restrictionRules: {
+    libraryConfidential: '阅读者不可查看保密资料',
+  },
 
   appearance: {
     title: '外观',
