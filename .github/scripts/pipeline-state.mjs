@@ -247,32 +247,67 @@ export function initialize(file, metadata) {
   return state;
 }
 
-// Why a handed-off checkpoint could not be restored by this run, or null when
-// it is intact. A continuation that failed before restoring keeps its checkpoint
-// only when nothing here rejects it: these are the checks restoreState and an
-// explicit recovery apply, so a checkpoint they would refuse on purpose (input
-// edited, patch or control plane changed, task stopped) is never published as
-// recoverable work.
-export function keepRefusal(state, patch, metadata, selectedControlSha) {
+// The one checkpoint validator: why a saved checkpoint cannot be resumed, or
+// null. restoreState throws its answer; keepRefusal applies the same rules, so a
+// continuation that failed before restoring never keeps a checkpoint the next
+// restore would refuse. strictControl demands the exact selected control plane
+// (as an explicit recovery does); a restore accepts a checkpoint that predates
+// recording one.
+export function checkpointRefusal(
+  state,
+  { patch, metadata, controlSha, strictControl = false, hasRepairLog },
+) {
   if (state.inputHash !== inputHash(metadata))
-    return 'the task input changed since the handoff';
+    return 'Checkpoint business input has changed.';
   if (!state.patchHash || hash(patch) !== state.patchHash)
-    return 'the patch does not match its recorded hash';
-  if (!selectedControlSha || state.controlSha !== selectedControlSha)
-    return 'the checkpoint belongs to another control plane';
-  if (state.stopReason) return 'the task stopped for diagnosis';
-  if (state.phase === 'done') return 'the checkpoint finished verification';
+    return 'Checkpoint patch hash does not match the restored code.';
+  if (
+    strictControl
+      ? !controlSha || state.controlSha !== controlSha
+      : state.controlSha && controlSha && state.controlSha !== controlSha
+  )
+    return 'Checkpoint factory SHA differs from the selected control plane; resume with its pinned SHA instead of restarting QA.';
+  if (state.stopReason)
+    return 'This task has stopped for diagnosis; recovery cannot reset its limits. Start a new task after addressing the cause.';
   try {
+    // The fresh prepare metadata is trusted; the checkpoint shared the Agent's runner.
     const expected = normalizeBudget(metadata.evaluation?.budget);
     if (
       expected &&
       JSON.stringify(normalizeBudget(state.budget ?? null)) !==
         JSON.stringify(expected)
     )
-      return 'the evaluation budget changed';
-  } catch {
-    return 'the evaluation budget is invalid';
+      return 'Checkpoint budget differs from the trusted evaluation sample budget.';
+  } catch (error) {
+    return error.message;
   }
+  if (state.phase === 'repair' && !hasRepairLog)
+    return 'Repair checkpoint is missing its diagnostic context.';
+  return null;
+}
+
+// Why a continuation that failed before restoring must not keep its handed-off
+// checkpoint, or null. Everything a restore or an explicit recovery refuses on
+// purpose (input edited, patch or control plane changed, task stopped, budget
+// changed, repair context lost) is never published as recoverable work, and a
+// checkpoint that already finished verification has nothing to resume.
+export function keepRefusal(
+  state,
+  patch,
+  metadata,
+  selectedControlSha,
+  hasRepairLog = false,
+) {
+  const refusal = checkpointRefusal(state, {
+    patch,
+    metadata,
+    controlSha: selectedControlSha,
+    strictControl: true,
+    hasRepairLog,
+  });
+  if (refusal) return refusal;
+  if (state.phase === 'done')
+    return 'Checkpoint already finished verification.';
   return null;
 }
 
@@ -298,39 +333,19 @@ export function restoreState(source, destination, metadata) {
     return state;
   }
   const state = readState(saved);
-  if (state.inputHash !== inputHash(metadata))
-    throw new Error('Checkpoint business input has changed.');
-  if (
-    !state.patchHash ||
-    hash(readFileSync(path.join(source, 'agent.patch'))) !== state.patchHash
-  )
-    throw new Error('Checkpoint patch hash does not match the restored code.');
-  if (
-    state.controlSha &&
-    process.env.FACTORY_CONTROL_SHA &&
-    state.controlSha !== process.env.FACTORY_CONTROL_SHA
-  ) {
-    throw new Error(
-      'Checkpoint factory SHA differs from the selected control plane; resume with its pinned SHA instead of restarting QA.',
-    );
-  }
+  const patchFile = path.join(source, 'agent.patch');
+  const refusal = checkpointRefusal(state, {
+    patch: existsSync(patchFile) ? readFileSync(patchFile) : Buffer.alloc(0),
+    metadata,
+    controlSha: process.env.FACTORY_CONTROL_SHA,
+    hasRepairLog: existsSync(
+      path.join(source, 'repair-context', 'verification.log'),
+    ),
+  });
+  if (refusal) throw new Error(refusal);
   state.controlSha = process.env.FACTORY_CONTROL_SHA ?? state.controlSha;
-  if (state.stopReason)
-    throw new Error(
-      'This task has stopped for diagnosis; recovery cannot reset its limits. Start a new task after addressing the cause.',
-    );
   state.outcome = 'running';
-  // The fresh prepare metadata is trusted; the checkpoint shared the Agent's runner.
   const expected = normalizeBudget(metadata.evaluation?.budget);
-  if (expected) {
-    if (
-      JSON.stringify(normalizeBudget(state.budget ?? null)) !==
-      JSON.stringify(expected)
-    )
-      throw new Error(
-        'Checkpoint budget differs from the trusted evaluation sample budget.',
-      );
-  }
   Object.assign(state, trustedUsage(expected, metadata, state, true));
   mkdirSync(destination, { recursive: true });
   const context = path.join(destination, 'repair-context');
@@ -414,6 +429,9 @@ if (
       readFileSync(args[0]),
       json(args[1]),
       process.env.FACTORY_CONTROL_SHA,
+      existsSync(
+        path.join(path.dirname(file), 'repair-context', 'verification.log'),
+      ),
     );
     if (refusal) {
       console.error(`Not keeping the handed-off checkpoint: ${refusal}.`);

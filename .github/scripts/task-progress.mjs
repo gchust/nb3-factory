@@ -197,6 +197,13 @@ export function progressOutcome(run, jobs) {
     (dispatched ? 'handoff' : null);
 }
 
+// The agent job stopped at its first step because the attempt was a GitHub
+// Re-run (code-agent-task.yml, "Reject a GitHub Re-run of this job").
+export function rejectedRerun(jobs) {
+  return jobs.some((j) => j.name === 'agent' && j.steps?.some((s) =>
+    s.name === 'Reject a GitHub Re-run of this job' && s.conclusion === 'failure'));
+}
+
 export async function publishProgress(api, repository, { runId, attempt, live }, now = Date.now()) {
   if (![runId, attempt].every(positive)) throw new Error('Invalid source run');
   if (live) live = validateSnapshot(live, now);
@@ -214,6 +221,9 @@ export async function publishProgress(api, repository, { runId, attempt, live },
   if (!jobs.some((j) => j.name === 'prepare' && j.conclusion === 'success')) return false;
   // Read-only question runs must not replace the last business build's progress.
   if (jobs.some((j) => j.name === 'agent' && j.conclusion === 'skipped')) return false;
+  // Nor may a rejected GitHub Re-run, which did no work: it would replace the
+  // real attempt's phase, counters and label with an empty failure.
+  if (rejectedRerun(jobs)) return false;
   if ((await api('GET', `/issues/${issue}`)).pull_request) throw new Error('Progress target must be an Issue');
   const core = jobs.filter((j) => ['agent', 'verify-final', 'publish'].includes(j.name));
   const outcome = progressOutcome(run, jobs);

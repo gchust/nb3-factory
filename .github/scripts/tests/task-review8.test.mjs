@@ -69,7 +69,7 @@ function dispatch(t, workflows, env) {
   return { result, calls };
 }
 
-test('a rejected Re-run requests only progress, and its skipped requests still count as handled', (t) => {
+test('a rejected Re-run requests no report, and its skipped requests still count as handled', (t) => {
   const reports = [
     'report-task-progress.yml',
     'report-task-usage.yml',
@@ -80,7 +80,7 @@ test('a rejected Re-run requests only progress, and its skipped requests still c
   ];
   const rejected = dispatch(t, reports, { FACTORY_RERUN_REJECTED: 'true' });
   assert.equal(rejected.result.status, 0, rejected.result.stderr);
-  assert.deepEqual(rejected.calls, ['report-task-progress.yml']);
+  assert.deepEqual(rejected.calls, []);
   assert.match(
     rejected.result.stdout,
     /Not requesting report-task-usage\.yml: attempt 2 was a rejected GitHub Re-run/,
@@ -185,10 +185,13 @@ test('Re-run all jobs stops before prepare records anything once an earlier atte
   for (const attempts of [['skipped'], [null], ['skipped', 'skipped']]) {
     const run = runPrepareGuard(t, attempts);
     assert.equal(run.status, 0, JSON.stringify(attempts));
-    assert.equal(run.output, '');
+    assert.equal(run.output, 'rerun_rejected=false\n');
   }
-  // An unreadable job list stops the re-run, which changes nothing.
-  assert.equal(runPrepareGuard(t, ['skipped'], { failApi: true }).status, 1);
+  // An unreadable job list stops the re-run, which changes nothing, and fails
+  // closed toward the reports too: they are still marked handled.
+  const unreadable = runPrepareGuard(t, ['skipped'], { failApi: true });
+  assert.equal(unreadable.status, 1);
+  assert.equal(unreadable.output, 'rerun_rejected=true\n');
 });
 
 test('a re-run prepare rejected still marks every report handled and requests none', (t) => {
@@ -513,27 +516,23 @@ test('only a checkpoint this run could have restored is kept', async (t) => {
         },
         C,
       ],
-      /input changed/,
+      /business input has changed/,
     ],
     [
       'patch changed',
       [state, Buffer.from('other'), metadata, C],
-      /patch does not match/,
+      /patch hash does not match/,
     ],
     [
       'no patch hash',
       [{ ...state, patchHash: undefined }, patch, metadata, C],
-      /patch does not match/,
+      /patch hash does not match/,
     ],
-    [
-      'other control plane',
-      [state, patch, metadata, B],
-      /another control plane/,
-    ],
+    ['other control plane', [state, patch, metadata, B], /factory SHA differs/],
     [
       'unknown control plane',
       [state, patch, metadata, undefined],
-      /another control plane/,
+      /factory SHA differs/,
     ],
     [
       'stopped',
@@ -543,9 +542,13 @@ test('only a checkpoint this run could have restored is kept', async (t) => {
         metadata,
         C,
       ],
-      /stopped/,
+      /stopped for diagnosis/,
     ],
-    ['finished', [{ ...state, phase: 'done' }, patch, metadata, C], /finished/],
+    [
+      'finished',
+      [{ ...state, phase: 'done' }, patch, metadata, C],
+      /already finished verification/,
+    ],
     [
       'budget changed',
       [
@@ -570,7 +573,7 @@ test('only a checkpoint this run could have restored is kept', async (t) => {
         },
         C,
       ],
-      /budget changed/,
+      /budget differs/,
     ],
     [
       'budget invalid',
@@ -589,10 +592,37 @@ test('only a checkpoint this run could have restored is kept', async (t) => {
         },
         C,
       ],
-      /budget is invalid/,
+      /Invalid evaluation sample budget/,
     ],
   ])
     assert.match(String(keepRefusal(...args)), reason, name);
+
+  // A repair checkpoint needs its diagnostic context, as restoreState demands.
+  const repair = { ...state, phase: 'repair' };
+  assert.match(
+    String(keepRefusal(repair, patch, metadata, C)),
+    /Repair checkpoint is missing its diagnostic context/,
+  );
+  assert.equal(keepRefusal(repair, patch, metadata, C, true), null);
+  // One validator: every refusal keepRefusal shares is also restoreState's.
+  const { checkpointRefusal } = await import('../pipeline-state.mjs');
+  assert.equal(
+    checkpointRefusal(repair, { patch, metadata, controlSha: C }),
+    'Repair checkpoint is missing its diagnostic context.',
+  );
+  const source = readFileSync(
+    path.resolve(import.meta.dirname, '../pipeline-state.mjs'),
+    'utf8',
+  );
+  const restore = source
+    .split('export function restoreState')[1]
+    .split('\nexport function ')[0];
+  assert.match(restore, /const refusal = checkpointRefusal\(state, \{/);
+  assert.match(restore, /if \(refusal\) throw new Error\(refusal\);/);
+  assert.doesNotMatch(
+    restore,
+    /state\.inputHash !== inputHash|state\.stopReason\)/,
+  );
 
   // The CLI exits 1 with the reason, and 0 for an intact checkpoint.
   const root = mkdtempSync(path.join(os.tmpdir(), 'factory-review8-keep-'));
@@ -630,7 +660,7 @@ test('only a checkpoint this run could have restored is kept', async (t) => {
   assert.equal(refused.status, 1);
   assert.match(
     refused.stderr,
-    /Not keeping the handed-off checkpoint: the checkpoint belongs to another control plane/,
+    /Not keeping the handed-off checkpoint: Checkpoint factory SHA differs/,
   );
 });
 
@@ -811,4 +841,60 @@ test('the Re-run comment on sample admission no longer claims a reachable re-run
     workflow,
     /"Re-run failed jobs" reuses prepare's outputs/,
   );
+});
+
+test('a rejected Re-run never replaces the real attempt progress comment', async () => {
+  const { publishProgress, rejectedRerun } =
+    await import('../task-progress.mjs');
+  const rejected = [
+    { name: 'prepare', conclusion: 'success' },
+    {
+      name: 'agent',
+      status: 'completed',
+      conclusion: 'failure',
+      steps: [
+        { name: 'Reject a GitHub Re-run of this job', conclusion: 'failure' },
+      ],
+    },
+  ];
+  assert.equal(rejectedRerun(rejected), true);
+  assert.equal(
+    rejectedRerun([
+      {
+        name: 'agent',
+        steps: [
+          { name: 'Reject a GitHub Re-run of this job', conclusion: 'success' },
+        ],
+      },
+    ]),
+    false,
+  );
+  const writes = [];
+  const api = async (method, route) => {
+    if (method !== 'GET') {
+      writes.push(route);
+      return {};
+    }
+    if (route === '') return { default_branch: 'develop' };
+    if (/\/jobs\?/u.test(route)) return { jobs: rejected };
+    if (/\/actions\/runs\/\d+$/u.test(route))
+      return {
+        id: 123,
+        run_attempt: 2,
+        run_number: 10,
+        display_title: 'Factory issue #165 build 0 from 0',
+        path: '.github/workflows/code-agent-task.yml',
+        head_branch: 'develop',
+        head_repository: { full_name: 'owner/factory' },
+        event: 'issues',
+        status: 'completed',
+        conclusion: 'failure',
+      };
+    throw new Error(`Unexpected read: ${route}`);
+  };
+  assert.equal(
+    await publishProgress(api, 'owner/factory', { runId: 123, attempt: 2 }),
+    false,
+  );
+  assert.deepEqual(writes, []);
 });

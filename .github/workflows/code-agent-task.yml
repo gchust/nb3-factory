@@ -139,17 +139,23 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          # Fails closed: an unreadable job list stops the re-run, which changes nothing.
+          # Fails closed, also toward the reports: rerun_rejected is written
+          # once, on exit, and stays true unless every earlier attempt's jobs
+          # were read and none started the build. An unreadable job list stops
+          # the re-run (which changes nothing) and still lets dispatch-reports
+          # mark its reports handled.
+          verdict=true
+          trap 'echo "rerun_rejected=$verdict" >> "$GITHUB_OUTPUT"' EXIT
           built=''
           for (( attempt = 1; attempt < GITHUB_RUN_ATTEMPT; attempt++ )); do
             built+="$(gh api --paginate "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/attempts/$attempt/jobs?per_page=100" \
               --jq '.jobs[] | select(.name == "agent" and .started_at != null and .conclusion != "skipped") | .name')"
           done
           if [[ -n "$built" ]]; then
-            echo "rerun_rejected=true" >> "$GITHUB_OUTPUT"
             echo "::error::An earlier attempt of this run already ran the build. GitHub Re-run cannot continue it; use an explicit recovery Run (workflow_dispatch with recovery_run_id=${GITHUB_RUN_ID}) or start a new build."
             exit 1
           fi
+          verdict=false
 
       # repository_dispatch loads the entry workflow from the default branch.
       # Only this small handoff protocol follows that revision; task code is pinned.
@@ -1729,7 +1735,7 @@ jobs:
           SOURCE_ATTEMPT: ${{ github.run_attempt }}
           FACTORY_REPORT_REF: ${{ github.event.repository.default_branch }}
           FACTORY_TASK_PUBLISHED: ${{ needs.publish.result == 'success' || needs.publish-failed.result == 'success' }}
-          # A rejected Re-run requests only progress; see dispatch-task-reports.sh.
+          # A rejected Re-run requests no report; see dispatch-task-reports.sh.
           # Rejected in prepare ("Re-run all jobs") it requests nothing at all.
           FACTORY_RERUN_REJECTED: ${{ needs.agent.outputs.rerun_rejected == 'true' || needs.prepare.outputs.rerun_rejected == 'true' }}
           FACTORY_PREPARE_REJECTED: ${{ needs.prepare.outputs.rerun_rejected == 'true' }}
