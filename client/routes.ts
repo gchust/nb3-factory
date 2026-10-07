@@ -1,4 +1,4 @@
-import { Home } from 'lucide-react';
+import { FileTextIcon, Home } from 'lucide-react';
 import {
   defineAppRoutes,
   defineSettingsRoutes,
@@ -15,6 +15,19 @@ const appRoutes: AppClientRouteContribution = defineAppRoutes([
     name: 'home',
     navigation: { title: 'navigation.home', icon: Home },
     path: '/',
+  },
+  {
+    // Signed-in colleagues reach the internal document library; the endpoint
+    // decides what they may read, and the permission set decides who gets in.
+    auth: 'required',
+    authz: {
+      resource: { type: 'page', id: 'library.documents' },
+      action: 'access',
+    },
+    componentLoader: () => import('./pages/library/index.js'),
+    name: 'library',
+    navigation: { title: 'library.title', icon: FileTextIcon },
+    path: '/library',
   },
   {
     auth: 'guest',
