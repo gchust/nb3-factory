@@ -15,6 +15,9 @@
   → Issue 逐项结论 + Release 长期交互归档 + Actions 诊断
 ```
 
+评审调用的时限是 6000 秒（`CODE_AGENT_INVOCATION_TIMEOUT_SECONDS`），评审 Job 的时限是
+125 分钟，留出安装与下载时间，使评审器自己的超时先触发。
+
 prepare 只解析精确 Artifact ID 并上传自己生成的 `source.json` 与 `binding.json`；评审 Job
 和发布 Job 各自按这些 ID 从来源 Run 直接下载 task / agent / final 原始产物，目录布局与
 prepare 绑定时一致，不再经由 prepare 重传一份几百 MB 的副本。

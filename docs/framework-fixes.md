@@ -29,9 +29,11 @@ The Agent never holds the PR token or the TestManage key, and it cannot push, op
 
 Every other outcome is reported without a PR, including a missing or invalid verdict and an abnormal Agent exit. Prose is never parsed for the decision.
 
+Artifacts of this public repository are downloadable by anyone signed in to GitHub. The full claim, with the problem's description and its staff comments, is uploaded only for `review` as `framework-fix-input-<run>` and kept one day; `review` keeps the prompt built from it on the runner. `publish` reads `framework-fix-claim-<run>`, which carries only the run and problem IDs, the base, the claim time and the https problem and report links.
+
 ## Results in TestManage
 
-TestManage stores the verdict on the fix run and appends one comment to the problem: the verdict, the summary, the analysis, the checks Claude Code ran, the usage, and links to the PR and the Actions run. When a PR was opened and the problem is still `pending`, TestManage moves it to `fixing`; it changes no other status. Each result is recorded once, so rerunning the publish job does not add another comment. The `publish` job runs even after a review failure or cancellation, which releases the problem's active lock.
+TestManage stores the verdict on the fix run and appends one comment to the problem: the verdict, the summary, the analysis, the checks Claude Code ran, the usage, and links to the PR and the Actions run. When a PR was opened and the problem is still `pending`, TestManage moves it to `fixing`; it changes no other status. Each result is recorded once, so rerunning the publish job does not add another comment. The `publish` job runs even after a review failure or cancellation, which releases the problem's active lock. A cancelled run reports without opening a PR.
 
 ## Usage and duration
 

@@ -368,11 +368,44 @@ export function commitMessage({ decision, problemId }) {
   return `${redact(decision.pullRequest.title)}\n\nRefs TestManage problem #${problemId}.\n\nCo-Authored-By: Claude <noreply@anthropic.com>\n`;
 }
 
+// TestManage supplies these links; only a plain https URL reaches a public PR.
+const httpsUrl = (value) => {
+  try {
+    const url = new URL(String(value ?? ''));
+    return url.protocol === 'https:' && !/\s/u.test(String(value)) ? url.href : null;
+  } catch {
+    return null;
+  }
+};
+
+/**
+ * What publish needs from a claim: identifiers and public links. The full
+ * snapshot (description, staff comments and their authors) goes only to the
+ * review job, in an artifact kept one day.
+ */
+export function publicationClaim(claim) {
+  return {
+    runId: claim.runId,
+    inputs: { problemId: claim.inputs.problemId, baseRef: claim.inputs.baseRef },
+    baseSha: claim.baseSha,
+    claimedAt: claim.claimedAt,
+    snapshot: {
+      problemUrl: httpsUrl(claim.snapshot?.problemUrl),
+      problem: {
+        id: claim.snapshot?.problem?.id,
+        factorySource: { reportUrl: httpsUrl(claim.snapshot?.problem?.factorySource?.reportUrl) },
+      },
+    },
+  };
+}
+
 export function pullRequestBody({ decision, snapshot, runUrl, baseSha }) {
   const source = snapshot.problem.factorySource;
+  const problemUrl = httpsUrl(snapshot.problemUrl);
+  const reportUrl = httpsUrl(source?.reportUrl);
   const references = [
-    `- TestManage problem: #${snapshot.problem.id}${snapshot.problemUrl ? ` (${snapshot.problemUrl})` : ''}`,
-    source?.reportUrl && `- Original factory report: ${source.reportUrl}`,
+    `- TestManage problem: #${snapshot.problem.id}${problemUrl ? ` (${problemUrl})` : ''}`,
+    reportUrl && `- Original factory report: ${reportUrl}`,
     `- Review run: ${runUrl}`,
     `- Base: \`${baseSha}\``,
     decision.usage && `- Claude Code usage: ${usageLine(cleanUsage(decision.usage))}`,
@@ -538,7 +571,9 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
     const inputs = parseInputs(env);
     const baseSha = resolveBaseSha(inputs.baseRef);
     const claim = await claimProblem({ inputs, env });
-    writeFile(path.join(args.output, 'claim.json'), `${JSON.stringify({ ...claim, inputs, baseSha, claimedAt }, null, 2)}\n`);
+    const full = { ...claim, inputs, baseSha, claimedAt };
+    writeFile(path.join(args.output, 'claim.json'), `${JSON.stringify(full, null, 2)}\n`);
+    writeFile(path.join(args.publication, 'claim.json'), `${JSON.stringify(publicationClaim(full), null, 2)}\n`);
     output('run_id', claim.runId);
     output('problem_id', inputs.problemId);
     output('base_ref', inputs.baseRef);

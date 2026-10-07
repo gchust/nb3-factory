@@ -493,10 +493,9 @@ test('a findings reset counts only later runs and keeps every archived report', 
   assert.match(files.get('reports/findings/daily/index.html'), /待归档 0 条/);
   assert.match(files.get('reports/findings/index.html'), /来自 0 份已发布报告/);
   assert.match(files.get('reports/findings/index.html'), /此前的 2 份报告/);
-  assert.deepEqual(
-    JSON.parse(files.get('reports/findings/input.json')).findings,
-    [],
-  );
+  // The classification input is rebuilt from the reports on every run, so
+  // the site no longer carries a copy nobody reads.
+  assert.equal(files.has('reports/findings/input.json'), false);
   for (const [file, content] of before)
     if (!file.startsWith('reports/findings/'))
       assert.equal(files.get(file), content, file);

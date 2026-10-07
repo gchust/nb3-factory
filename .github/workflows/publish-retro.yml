@@ -85,6 +85,19 @@ jobs:
           github-token: ${{ github.token }}
           path: ${{ runner.temp }}/retro-evidence
 
+      # prepare's normalized metadata: an Agent that stopped before copying
+      # task-metadata.json into its artifact still gets a retro.
+      - name: Download normalized task metadata when available
+        if: steps.source.outputs.ready == 'true' && steps.source.outputs.task_artifact_id != ''
+        continue-on-error: true
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          artifact-ids: ${{ steps.source.outputs.task_artifact_id }}
+          merge-multiple: true
+          run-id: ${{ env.SOURCE_RUN_ID }}
+          github-token: ${{ github.token }}
+          path: ${{ runner.temp }}/retro-task
+
       - name: Publish the retrospective
         if: steps.source.outputs.ready == 'true'
         env:
@@ -93,4 +106,5 @@ jobs:
           node control/.github/scripts/publish-retro.mjs publish \
             --run-id "$SOURCE_RUN_ID" \
             --source "$RUNNER_TEMP/retro-source.json" \
-            --artifacts "$RUNNER_TEMP/retro-evidence"
+            --artifacts "$RUNNER_TEMP/retro-evidence" \
+            --task "$RUNNER_TEMP/retro-task"

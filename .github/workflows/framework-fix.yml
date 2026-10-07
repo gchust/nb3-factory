@@ -67,11 +67,23 @@ jobs:
           EXTERNAL_RUN_ID: ${{ inputs.external_run_id }}
           BASE_REF: ${{ inputs.base_ref }}
           TESTMANAGE_TOKEN: ${{ secrets.EVALUATION_TOKEN }}
-        run: node control/.github/scripts/framework-fix.mjs claim --output "$RUNNER_TEMP/fix-input"
+        run: |
+          node control/.github/scripts/framework-fix.mjs claim \
+            --output "$RUNNER_TEMP/fix-input" --publication "$RUNNER_TEMP/fix-claim"
+      # Artifacts of this public repository are downloadable by anyone signed
+      # in. The full snapshot (description, staff comments and their authors)
+      # is only for the review and kept one day; publish gets identifiers and
+      # links, kept with the run's other outputs.
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: framework-fix-input-${{ github.run_id }}
           path: ${{ runner.temp }}/fix-input
+          retention-days: 1
+          overwrite: true
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: framework-fix-claim-${{ github.run_id }}
+          path: ${{ runner.temp }}/fix-claim
           retention-days: 14
           overwrite: true
 
@@ -202,11 +214,14 @@ jobs:
             --agent-status "${AGENT_STATUS:-1}" \
             --log "$RUNNER_TEMP/fix-output/agent-fix.jsonl" \
             --output "$RUNNER_TEMP/fix-output/decision.json"
+      # prompt.md repeats the full TestManage snapshot; it stays on the runner.
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         if: always()
         with:
           name: framework-fix-output-${{ github.run_id }}
-          path: ${{ runner.temp }}/fix-output
+          path: |
+            ${{ runner.temp }}/fix-output
+            !${{ runner.temp }}/fix-output/prompt.md
           retention-days: 14
           overwrite: true
           if-no-files-found: warn
@@ -215,10 +230,12 @@ jobs:
   # Agent or repository code: it applies the validated patch to a clean base.
   # It runs whenever the claim succeeded in TestManage, which run_id proves,
   # even if the claim job then failed (for example uploading its input): a
-  # claimed problem stays locked in TestManage until this job reports.
+  # claimed problem stays locked in TestManage until this job reports, so it
+  # also runs after a cancel. Its reporting steps say always() for that case;
+  # a cancelled run never opens a PR.
   publish:
     needs: [claim, review]
-    if: ${{ !cancelled() && needs.claim.outputs.run_id != '' }}
+    if: ${{ always() && needs.claim.outputs.run_id != '' }}
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     permissions:
@@ -228,27 +245,32 @@ jobs:
       BRANCH: ${{ needs.claim.outputs.branch }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        if: always()
         with:
           ref: ${{ needs.claim.outputs.control_sha }}
           path: control
           persist-credentials: false
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        if: always()
         with:
           node-version: 24.x
       # Missing only when the claim job failed to upload it; the review was
       # then skipped, nothing is published and the report still releases the claim.
       - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        if: always()
         continue-on-error: true
         with:
-          name: framework-fix-input-${{ github.run_id }}
+          name: framework-fix-claim-${{ github.run_id }}
           path: fix-input
       - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        if: always()
         continue-on-error: true
         with:
           name: framework-fix-output-${{ github.run_id }}
           path: fix-output
       - name: Read the decision
         id: decision
+        if: ${{ !cancelled() }}
         run: |
           publish=false
           if [[ -f fix-output/decision.json ]]; then

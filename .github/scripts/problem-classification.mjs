@@ -703,6 +703,10 @@ export async function runModelClassification(directory, options = {}) {
       ...invocation,
       log,
       parseEvent: adapter.parseEvent,
+      // The tool results quote the receiver's feature taxonomy and existing
+      // problems, which stay on the runner: the Actions log of this public
+      // repository gets event types and sizes only.
+      consoleDetail: 'summary',
       secrets: [...secrets, ...(invocation.secrets ?? [])],
       invocationTimeoutSeconds: timeout,
       idleTimeoutSeconds: Math.min(timeout, 300),

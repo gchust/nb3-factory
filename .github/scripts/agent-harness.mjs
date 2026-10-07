@@ -113,6 +113,9 @@ export function buildRedactor(secrets) {
  * usage are never overwritten. Waiting counts against the invocation timeout and
  * the run deadline: a retry that would not start before either is not made.
  * `append` continues a transcript an earlier invocation of the same caller wrote.
+ * `consoleDetail: 'summary'` prints only each event's type and size: for a
+ * caller whose inputs must not reach the public Actions log (the JSONL keeps
+ * every line on the runner either way).
  */
 export async function runAgentInvocation({
   retryDelaysSeconds = MODEL_RETRY_DELAYS_SECONDS,
@@ -141,6 +144,16 @@ export async function runAgentInvocation({
   }
 }
 
+// The type names come from the engine's own schema, never from tool results.
+export function summarizeConsoleEvent(line, event) {
+  const type =
+    event && typeof event === 'object' && typeof event.type === 'string'
+      ? event.type.replace(/[^\w.:-]/gu, '').slice(0, 64)
+      : typeof event;
+  if (/delta$/u.test(type) || type === 'stream_event') return null;
+  return `[agent event: ${type || 'unknown'}, ${Buffer.byteLength(line)} bytes]`;
+}
+
 async function runAttempt({
   append = false,
   label,
@@ -158,9 +171,12 @@ async function runAttempt({
   isCompletionEvent = () => false,
   getEventFailure = () => undefined,
   formatConsoleLine = (line) => line,
+  consoleDetail = 'full',
   parseEvent = () => ({}),
   result,
 }) {
+  if (!['full', 'summary'].includes(consoleDetail))
+    throw new Error(`Unknown consoleDetail: ${consoleDetail}`);
   const redact = buildRedactor(secrets);
   mkdirSync(path.dirname(log), { recursive: true });
   result?.restart?.();
@@ -362,10 +378,17 @@ async function runAttempt({
     try {
       event = JSON.parse(line);
     } catch {
-      process.stdout.write(`${redact(line)}\n`);
+      process.stdout.write(
+        consoleDetail === 'summary'
+          ? `[agent output: ${Buffer.byteLength(line)} bytes]\n`
+          : `${redact(line)}\n`,
+      );
       return;
     }
-    const formatted = formatConsoleLine(line, event);
+    const formatted =
+      consoleDetail === 'summary'
+        ? summarizeConsoleEvent(line, event)
+        : formatConsoleLine(line, event);
     if (formatted == null) return;
     process.stdout.write(`${redact(formatted)}\n`);
   }

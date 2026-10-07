@@ -5,6 +5,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { setTimeout as sleep } from 'node:timers/promises';
 import { GitHubClient } from './factory-lib.mjs';
+import { subjectKeyOf } from './evaluation-report.mjs';
 import { outcomeLabels } from './task-outcome.mjs';
 import { text as markdownText } from './visual-report.mjs';
 import { collectOccurrences, renderFindingsIndex } from '../reports/findings-index.mjs';
@@ -86,7 +87,6 @@ function indexPage(items) {
 
 const FINDINGS_INDEX = 'reports/findings/index.html';
 // Written compact: only programs read it, and every report rewrites it.
-const FINDINGS_INPUT = 'reports/findings/input.json';
 const FINDINGS_CLASSIFICATION = 'reports/findings/classification.json';
 const FINDINGS_BASELINE = 'reports/findings/baseline.json';
 
@@ -125,6 +125,22 @@ function findingsScope(registry, baseline) {
 export const FINDINGS_CACHE = 'reports/findings/report-cache.json';
 const SCRIPTS = path.dirname(fileURLToPath(import.meta.url));
 let extractorVersion;
+// Modules whose closure the extractor does not need: it imports one pure
+// function from each, which stands in for the module. evaluation-report pulls
+// in task-usage and the agent adapters, which change far more often than the
+// subject key the findings use, and each change would re-read every report
+// inside the report lock. Importing anything else from it hashes it whole.
+const LEAF_IMPORTS = new Map([['evaluation-report.mjs', { subjectKeyOf }]]);
+// The names a file imports from `specifier`, or null unless every mention of
+// it is a plain `import { a, b } from '<specifier>'` (no default, namespace,
+// alias or re-export), which is all the leaf hash can stand in for.
+function leafNames(text, specifier) {
+  const quoted = `'${specifier}'`;
+  const statements = [...text.matchAll(/import\s*\{([^}]*)\}\s*from\s*('[^']+')/g)].filter((m) => m[2] === quoted);
+  if (!statements.length || statements.length !== text.split(quoted).length - 1) return null;
+  const names = statements.flatMap((m) => m[1].split(',').map((name) => name.trim()).filter(Boolean));
+  return names.every((name) => /^[A-Za-z_$][\w$]*$/.test(name)) ? names : null;
+}
 // Any change to the extractor or a module it imports starts a new cache.
 export function findingsExtractorVersion() {
   if (extractorVersion) return extractorVersion;
@@ -135,8 +151,14 @@ export function findingsExtractorVersion() {
     seen.add(file);
     const text = readFileSync(file, 'utf8');
     hash.update(path.relative(SCRIPTS, file)).update('\0').update(text).update('\0');
-    for (const [, specifier] of text.matchAll(/from\s+'(\.{1,2}\/[^']+\.mjs)'/g))
-      visit(path.resolve(path.dirname(file), specifier));
+    for (const [, specifier] of text.matchAll(/from\s+'(\.{1,2}\/[^']+\.mjs)'/g)) {
+      const target = path.resolve(path.dirname(file), specifier);
+      const leaf = path.dirname(target) === SCRIPTS && LEAF_IMPORTS.get(path.basename(target));
+      const names = leaf ? leafNames(text, specifier) : null;
+      if (names?.every((name) => Object.hasOwn(leaf, name))) {
+        for (const name of names) hash.update(`${specifier}#${name}\0${leaf[name]}\0`);
+      } else visit(target);
+    }
   };
   visit(path.resolve(SCRIPTS, '../reports/findings-index.mjs'));
   return (extractorVersion = hash.digest('hex').slice(0, 16));
@@ -271,7 +293,6 @@ async function findingsIndexAssets(client, registry, sha, current) {
           baseline: scope.baseline,
         }),
       ],
-      [FINDINGS_INPUT, JSON.stringify(input)],
       cacheFile(cache),
       ...await dailyIndexAssets(client, sha, reports),
     ],
@@ -328,7 +349,6 @@ export async function archiveFindingsClassification(client, classification) {
     });
     const files = [
       [FINDINGS_INDEX, html],
-      [FINDINGS_INPUT, JSON.stringify(snapshot.input)],
       [FINDINGS_CLASSIFICATION, JSON.stringify(classification, null, 2)],
       cacheFile(snapshot.cache),
       ...await dailyIndexAssets(client, snapshot.sha, snapshot.reports),
@@ -375,7 +395,6 @@ export async function resetFindingsIndex(
         FINDINGS_INDEX,
         await renderFindingsIndex(reports, { baseline: scope.baseline }),
       ],
-      [FINDINGS_INPUT, JSON.stringify(input)],
       [FINDINGS_BASELINE, JSON.stringify(baseline, null, 2)],
       cacheFile(cache),
       ...await dailyIndexAssets(client, sha, reports),
@@ -448,6 +467,8 @@ export async function archiveReport(client,report,html,{pause=sleep}={}) {
     if(!blobs.has(key)) blobs.set(key,(await client.request('POST','/git/blobs',{body:{content,encoding},contentAddressed:true})).sha);
     return blobs.get(key);
   };
+  // The page does not change between attempts; extract its images once.
+  let externalized;
   for(let attempt=0;attempt<ARCHIVE_ATTEMPTS;attempt++) {
     if(attempt) await pause(archiveBackoffMs(attempt-1));
     const ref=await client.getRef(BRANCH,true);
@@ -483,7 +504,7 @@ export async function archiveReport(client,report,html,{pause=sleep}={}) {
     }
     const binary=[];
     if(!preserve) {
-      const page=externalizeImages(html);
+      const page=(externalized??=externalizeImages(html));
       files.push([next.path,page.html],[`${dir}report.json`,JSON.stringify(report,null,2)],
         [`${dir}manifest.json`,JSON.stringify(next)]);
       for(const [name,data] of page.media) binary.push([`${dir}media/${name}`,data]);
@@ -610,7 +631,8 @@ if(process.argv[1] && path.resolve(process.argv[1])===fileURLToPath(import.meta.
     const publication=await archiveReport(client,report,readFileSync(args.html,'utf8'));
     writeFileSync(args.output,JSON.stringify(publication));
     if(publication.findingsIndex!=='updated') console.warn(`Findings index ${publication.findingsIndex}`);
-    if(process.env.GITHUB_OUTPUT) appendFileSync(process.env.GITHUB_OUTPUT,`commit_sha=${publication.commitSha}\nfindings_pending=${publication.findingsNeedsClassification}\n`);
+    // issue keys the notify job's queue: only notifies of one Issue share comments.
+    if(process.env.GITHUB_OUTPUT) appendFileSync(process.env.GITHUB_OUTPUT,`commit_sha=${publication.commitSha}\nfindings_pending=${publication.findingsNeedsClassification}\nissue=${publication.manifest.issue}\n`);
   } else if(mode==='notify') {
     const result=await notifyReport(client,JSON.parse(readFileSync(args.publication,'utf8')),args['base-url']);
     console.log(`Report verified: ${result.url}; current comment updated: ${result.updated}`);

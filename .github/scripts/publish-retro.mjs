@@ -360,9 +360,23 @@ export function selectRetroArtifact(
       inAttempt(item),
   );
   if (!artifact) return null;
+  const issue = Number(artifact.name.slice('factory-agent-'.length));
+  // prepare's normalized metadata, as task-usage reads it: an Agent that
+  // stopped before copying task-metadata.json still has a reportable retro.
+  const prepare = jobs.find((job) => job.name === 'prepare');
+  const prepareStart = Date.parse(prepare?.started_at);
+  const prepareEnd = Date.parse(prepare?.completed_at);
+  const tasks = artifacts.filter(
+    (item) =>
+      item?.name === `factory-task-${issue}` &&
+      !item.expired &&
+      Date.parse(item.created_at) >= prepareStart &&
+      Date.parse(item.created_at) <= prepareEnd,
+  );
   return {
     artifact,
-    issue: Number(artifact.name.slice('factory-agent-'.length)),
+    issue,
+    task: tasks.length === 1 ? tasks[0] : null,
   };
 }
 
@@ -417,6 +431,7 @@ async function select(args) {
   );
   output('artifact', selected.artifact.name);
   output('artifact_id', String(selected.artifact.id));
+  output('task_artifact_id', selected.task ? String(selected.task.id) : '');
   output('issue', String(selected.issue));
   output('ready', 'true');
 }
@@ -484,12 +499,27 @@ export async function ensureLedger({ request = api, read = list } = {}) {
   return oldest;
 }
 
+// Prefer prepare's normalized copy: the Agent artifact lacks the file when the
+// Agent stopped before copying it, which is when a retro matters most.
+export function readTaskMetadata(roots) {
+  let missing;
+  for (const root of roots.filter(Boolean)) {
+    try {
+      return readJson(root, 'task-metadata.json');
+    } catch (error) {
+      if (error.code !== 'ENOENT') throw error;
+      missing = error;
+    }
+  }
+  throw missing ?? new Error('No task metadata directory');
+}
+
 async function publish(args) {
   const source = JSON.parse(readFileSync(args.source, 'utf8'));
   if (source.repository !== repository || source.runId !== args.runId)
     throw new Error('Source mismatch');
   const attempt = source.runAttempt;
-  const metadata = readJson(args.artifacts, 'task-metadata.json');
+  const metadata = readTaskMetadata([args.task, args.artifacts]);
   const issue = metadata.issue?.number;
   if (
     metadata.repository !== repository ||
@@ -590,7 +620,7 @@ function main() {
   if (mode === 'select') return select(args);
   if (mode === 'publish') return publish(args);
   throw new Error(
-    'Usage: publish-retro.mjs <select|publish> --run-id N [--source F] [--artifacts D]',
+    'Usage: publish-retro.mjs <select|publish> --run-id N [--source F] [--artifacts D] [--task D]',
   );
 }
 

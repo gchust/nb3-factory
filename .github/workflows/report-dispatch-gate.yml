@@ -14,8 +14,15 @@ name: Report dispatch gate
 # workflow_run copies redo their work. Runs from before that split have one
 # combined step, which still counts for every report.
 #
-# It fails open: an API error or an older run without either step leaves
-# `covered` false, and the caller does the work as before.
+# A run that ran no model has nothing to report: prepare decided there was
+# nothing to do (a preset or manual Issue, a duplicate event), so every
+# dispatcher job and every model job (`agent`, `reply`) was skipped. That run
+# also counts as covered, so its six workflow_run copies stop at the gate
+# instead of each waiting for the run and finding no artifact.
+#
+# It fails open: an API error, an older run without either step, or a run
+# without any dispatcher job leaves `covered` false, and the caller does the
+# work as before.
 
 on:
   workflow_call:
@@ -26,7 +33,7 @@ on:
         type: string
     outputs:
       covered:
-        description: "'true' when the source run's dispatch-reports job already requested this report"
+        description: "'true' when the source run already requested this report, or ran no model and has nothing to report"
         value: ${{ jobs.check.outputs.covered }}
 
 permissions: {}
@@ -53,18 +60,30 @@ jobs:
           if [[ "$RUN_ID" =~ ^[1-9][0-9]*$ && "$ATTEMPT" =~ ^[1-9][0-9]*$ && "$WORKFLOW" =~ ^[a-z-]+\.yml$ ]]; then
             # The step names are the contract with code-agent-task.yml. Three
             # attempts ride out a transient API error; at most about 70 s.
+            # Dispatcher jobs are the task's `dispatch-*` jobs (wake-comment-queue
+            # dispatches no report).
             found=''
             for attempt in 1 2 3; do
               if found="$(timeout --kill-after=5s 20s gh api "repos/$GITHUB_REPOSITORY/actions/runs/$RUN_ID/attempts/$ATTEMPT/jobs?per_page=100" \
-                --jq '[.jobs[] | select(.name == "dispatch-reports" or .name == "dispatch-reply-history") | .steps[]? |
-                  select((.name == "Request '"$WORKFLOW"'" or .name == "Explicitly request task reports (including continuations)") and .conclusion == "success")] | length')"; then
+                --jq '[.jobs[] | select(.name | test("^dispatch-"))] as $dispatchers |
+                  ([$dispatchers[] | .steps[]? |
+                    select((.name == "Request '"$WORKFLOW"'" or .name == "Explicitly request task reports (including continuations)") and .conclusion == "success")] | length)
+                  as $requested |
+                  (($dispatchers | length) > 0 and all($dispatchers[]; .conclusion == "skipped") and
+                    all(.jobs[] | select(.name == "agent" or .name == "reply"); .conclusion == "skipped")) as $idle |
+                  "\($requested) \($idle)"')"; then
                 break
               fi
               found=''
               if [[ "$attempt" -lt 3 ]]; then sleep $((attempt * 3)); fi
             done
-            if [[ -n "$found" ]]; then
-              [[ "$found" =~ ^[1-9] ]] && covered=true
+            if [[ "$found" =~ ^([0-9]+)\ (true|false)$ ]]; then
+              if [[ "${BASH_REMATCH[1]}" != 0 ]]; then
+                covered=true
+              elif [[ "${BASH_REMATCH[2]}" == true ]]; then
+                covered=true
+                echo "Run $RUN_ID attempt $ATTEMPT ran no model and requested no report; nothing to do."
+              fi
             else
               echo "::warning::Could not read the source run's jobs; doing the work here."
             fi

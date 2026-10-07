@@ -33,7 +33,7 @@ facts 可带 `upstreamCheck`（`version: 1`），记录对 `nocobase/nocobase3` 
 
 ### 跨报告问题汇总
 
-`findings-index.mjs` 读取各 Issue 最新一份报告的 `report.json`，只汇总有效 v2 独立评审的框架、插件、模板和文档发现。报告发布时写入 `reports/findings/index.html` 与带内容指纹的 `input.json`；不再用文字相似度阈值自动合并。
+`findings-index.mjs` 读取各 Issue 最新一份报告的 `report.json`，只汇总有效 v2 独立评审的框架、插件、模板和文档发现。报告发布时写入 `reports/findings/index.html`；分类输入（带内容指纹的 `input.json`）每次从各报告重新生成，只在分类工作流的 Runner 上使用，不再发布到站点（站点上旧的 `reports/findings/input.json` 不再更新）；不再用文字相似度阈值自动合并。
 
 报告归档后，`report-task-usage.yml` 异步触发 [Classify framework findings](../workflows/classify-findings.yml)。独立 Agent 沿用仓库配置的 `CODE_AGENT_ENGINE`、模型及对应凭据，根据[归类提示](../prompts/classify-findings.md)核对根因、触发条件、API/指引位置、行为与证据，产出分组标题、成员 ID 和归类理由。整个输入已归类且内容未变时跳过调用；否则读取当前全部发现和仍适用的旧分组。Agent 先读包含全部描述与诊断的轻量索引，再按候选组读取逐条证据；完整输入与引文始终保留，不为控制上下文而截断原始材料。Agent 归类是意见，仍可能误合并或漏合并，不等于重新评审或复核最新上游。
 

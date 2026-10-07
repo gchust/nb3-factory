@@ -27,7 +27,6 @@ import path from 'node:path';
 // Archives go to one release per UTC month, `factory-history-YYYY-MM` (see
 // upload-history-asset.sh), because a release holds at most 1000 assets.
 // Archives published before the rotation stay on `factory-history`.
-export const HISTORY_RELEASE_TAG = 'factory-history';
 export const HISTORY_ASSET_URL = /\/releases\/download\/factory-history(?:-\d{4}-\d{2})?\//u;
 export const MARKER = (runId, attempt) =>
   `<!-- factory-agent-history:${runId}:${attempt} -->`;
