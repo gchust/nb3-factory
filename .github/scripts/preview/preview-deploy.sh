@@ -116,6 +116,7 @@ if [[ "$redeploy" == true ]]; then
   log "redeploy requested; replacing the running preview even though it may already serve this build"
 elif instance_serves "$dir" "$name" "$sha" "$deps_key"; then
   log "PR #$pr already serves $sha with dependency set ${deps_key:0:12}; leaving the running preview as it is"
+  rm -f "$payload"
   exit 0
 fi
 
@@ -315,4 +316,8 @@ if ! wait_for_preview "$host" 90; then
 fi
 
 preview_commit
+# The instance now holds everything it needs; the staged payload (about 84 MB
+# packed) would otherwise stay on the host for every open pull request. A failed
+# deploy keeps it for the retry, and teardown removes it either way.
+rm -f "$payload"
 log "PR #$pr is live at $url"

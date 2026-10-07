@@ -154,7 +154,7 @@ node .github/reports/render-review-example.mjs /tmp/report.example.html
 
 Actions → **Reassess Build Quality** → Run workflow，提供执行 Issue、原搭建 Run ID、
 要更新的发布 attempt，例如 `224`、`35881009045`、`2`；原 `/factory-build-review` 评论命令
-已停用。补跑不创建新业务、不修改已有业务 PR、不运行 build/migrate/seed/浏览器验收：选择精确原 Artifact ID，校验生产作业时间，按原基础 SHA
+已停用。失败或超时的搭建同样可以补跑：只要 agent 作业实际运行过（成功、失败或被时限取消），并在作业时间内留下封存补丁的 Artifact。补跑不创建新业务、不修改已有业务 PR、不运行 build/migrate/seed/浏览器验收：选择精确原 Artifact ID，校验生产作业时间，按原基础 SHA
 和原补丁恢复应用，使用 frozen lockfile 安装依赖（忽略安装脚本），同步同版本 Skill。
 存在原评审版本记录时还须核对锁文件和安装包列表；不跟随当前 develop 或最新依赖。
 评审会话和原始评分产物分开保存，新用量也单独展示，不伪装成第二次业务搭建。

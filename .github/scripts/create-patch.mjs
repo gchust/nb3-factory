@@ -9,7 +9,22 @@ const args = parseArgs(process.argv.slice(2));
 const workspace = path.resolve(args.workspace);
 const patchPath = path.resolve(args.patch);
 const summaryPath = path.resolve(args.summary);
-const protectedPaths = ['.github', '.npmrc', '.gitmodules', 'config.yml', 'factory-source.json'];
+// The root AGENTS.md and CLAUDE.md belong to @nocobase/app-template-default:
+// a refresh replaces them and template-guidance.test.mjs requires them to stay
+// byte-identical, so a build's edit to them is dropped here rather than merged
+// and then broken. Only the root files (top, literal pathspecs): client/AGENTS.md
+// and other nested guidance stay the application's. They are not added to
+// assertSafeChangedPaths, so patches and work branches made before this change
+// still apply.
+const protectedPaths = [
+  '.github',
+  '.npmrc',
+  '.gitmodules',
+  'config.yml',
+  'factory-source.json',
+  ':(top,literal)AGENTS.md',
+  ':(top,literal)CLAUDE.md',
+];
 
 restoreProtectedPaths();
 git(['add', '--intent-to-add', '--all']);

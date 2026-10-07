@@ -40,8 +40,10 @@ jobs:
     env:
       CODE_AGENT_ENGINE: ${{ matrix.engine }}
       # Repository overrides, exactly as build tasks pass them to
-      # install-agent.mjs, so a bad override fails here first. Each engine
-      # reads only its own (Pi also reads CODE_AGENT_VERSION).
+      # install-agent.mjs. Changing a variable starts no run by itself: dispatch
+      # this workflow after changing a *_VERSION variable to check the override
+      # before a build installs it. Each engine reads only its own (Pi also
+      # reads CODE_AGENT_VERSION).
       CODE_AGENT_VERSION: ${{ vars.CODE_AGENT_VERSION }}
       PI_VERSION: ${{ vars.PI_VERSION }}
       CODEBUDDY_VERSION: ${{ vars.CODEBUDDY_VERSION }}

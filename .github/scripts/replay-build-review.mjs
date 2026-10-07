@@ -49,7 +49,10 @@ export function bindReplay(selected, metadata, original, patch, jobs) {
   assert.ok(sha(metadata.controlSha) && sha(metadata.applicationBase?.sha));
   assert.equal(metadata.controlSha, selected.controlSha);
   const created = Date.parse(selected.artifact.created_at);
-  assert.ok(jobs.some(job => job.name === 'agent' && job.conclusion === 'success' &&
+  // A failed or timed-out (cancelled) agent job still seals its patch, and its
+  // build review is the one most worth completing; the patch hash and the
+  // artifact's time window bind the evidence either way.
+  assert.ok(jobs.some(job => job.name === 'agent' && ['success', 'failure', 'cancelled'].includes(job.conclusion) &&
     created >= Date.parse(job.started_at) && created <= Date.parse(job.completed_at)), 'Artifact was not produced by the claimed source job');
   const source = { repository: selected.repository, issue: selected.issue, runId: selected.runId, attempt,
     publicationAttempt: selected.attempt, controlSha: metadata.controlSha, baseSha: metadata.applicationBase.sha,
