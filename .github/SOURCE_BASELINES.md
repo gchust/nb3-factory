@@ -10,6 +10,8 @@
 
 仓库 owner 运行 **Verify pinned NocoBase source baseline**，提供精确 `source_sha` 并明确选择 `publish`。PR 检查仅验证，不发布。
 
+PR 检查的触发条件是整个 PR 与 develop 的差异，所以一个改过这些文件的 PR 之后每次推送都会重跑约 13 分钟，哪怕这次推送没碰它们。`supersede` 作业因此用 `source-baseline-inputs.mjs` 对路径过滤列出的文件（在本次检查的合并提交上）计算指纹；同一 PR 早先已有一次运行在完全相同的指纹下通过两个作业时，跳过本次源码构建并在注释里给出那次运行。指纹由 `record` 作业在两个作业都成功后写入该 PR 自己的 Actions 缓存，其他 PR 读不到。重跑（attempt > 1）总是完整验证；任何一步查找失败都按未验证处理。
+
 ```text
 固定 NocoBase SHA → 构建包 / 临时 registry → 创建并验证默认应用
                                                ↓

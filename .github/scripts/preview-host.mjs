@@ -325,10 +325,18 @@ export function depsDir(key, root = '/srv/nb3-preview') {
  * Only the exact answer counts as a hit; the caller compares it literally, so
  * anything else — a partial line, an empty result from a failed connection —
  * is read as a miss and the full payload is sent.
+ *
+ * A hit also touches the cache directory. The probe runs without the deploy
+ * lock, and the deploy takes it only after the upload and the host's fetch
+ * (up to ten minutes and more later), so an hourly `preview-gc.sh` in between
+ * could prune a cache that no instance references yet — the last user was torn
+ * down, or evicted by this very deploy — and the slim payload would then fail
+ * the deploy. The GC leaves a cache touched within two hours alone. A failed
+ * touch answers absent, which only costs a full payload.
  */
 export function depsProbeCommand(key, root = '/srv/nb3-preview') {
   const dir = depsDir(key, root);
-  return `test -d ${dir}/node_modules && echo present || echo absent`;
+  return `test -d ${dir}/node_modules && touch ${dir} && echo present || echo absent`;
 }
 
 /**

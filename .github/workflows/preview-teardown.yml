@@ -52,22 +52,14 @@ jobs:
         run: |
           echo "::warning::PREVIEW TEARDOWN SKIPPED: no preview credentials are configured."
 
-      - name: Join the tailnet
+      # From the trusted control checkout; see deploy-preview.yml.
+      - name: Connect to the preview host
         if: env.PREVIEW_ENABLED == 'true'
-        uses: tailscale/github-action@d1b6cd204f8dceda5b3eaad7f1f767be390056cd # v4.2.0
+        uses: ./control/.github/actions/preview-connect
         with:
-          oauth-client-id: ${{ secrets.FACTORY_TAILSCALE_OAUTH_CLIENT_ID }}
-          oauth-secret: ${{ secrets.FACTORY_TAILSCALE_OAUTH_CLIENT_SECRET }}
-          tags: tag:ci
-          # Keep public DNS on the runner; the preview host is a Tailscale IP.
-          args: --accept-dns=false
-
-      - name: Install the deploy key
-        if: env.PREVIEW_ENABLED == 'true'
-        env:
-          PREVIEW_SSH_KEY: ${{ secrets.FACTORY_PREVIEW_SSH_KEY }}
-        run: |
-          bash control/.github/scripts/preview-connect.sh
+          tailscale-oauth-client-id: ${{ secrets.FACTORY_TAILSCALE_OAUTH_CLIENT_ID }}
+          tailscale-oauth-secret: ${{ secrets.FACTORY_TAILSCALE_OAUTH_CLIENT_SECRET }}
+          ssh-key: ${{ secrets.FACTORY_PREVIEW_SSH_KEY }}
 
       # As the deploy does, so a fix to preview-destroy.sh or preview-lib.sh
       # applies to this teardown rather than to the one after the next deploy.

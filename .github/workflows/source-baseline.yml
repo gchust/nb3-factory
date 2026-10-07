@@ -65,14 +65,29 @@ jobs:
   # itself before a maintainer merges them into develop, so they skip the
   # check entirely. Nothing enforces that: develop has no branch protection
   # or rulesets today.
+  #
+  # It also skips a run whose inputs an earlier run of the same pull request
+  # already verified. The path filter compares the whole pull request with
+  # develop, so every push re-runs the check, including the pushes that change
+  # none of its files: about a third of the pull request runs (18 of 50 from
+  # 2026-09-28 to 2026-10-07 had the inputs of the previous green run of their
+  # branch), ~13 minutes each. The fingerprint covers exactly
+  # the files of the path filter, at the merge commit this run checks, so a
+  # change on develop counts too; `record` below saves it once both jobs pass.
+  # A pull request's cache is visible to that pull request alone, and the key
+  # names the pull request as well. A re-run attempt always runs in full.
+  # Every step of the lookup fails open: no fingerprint, no skip.
   supersede:
     if: github.event_name == 'pull_request' && !startsWith(github.head_ref, 'agent/issue-')
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     permissions:
+      contents: read
       pull-requests: read
     outputs:
       superseded: ${{ steps.check.outputs.superseded }}
+      inputs: ${{ steps.inputs.outputs.fingerprint }}
+      verified: ${{ steps.verified.outputs.verified }}
     steps:
       - name: Stop when a newer push superseded this pull request run
         id: check
@@ -88,21 +103,63 @@ jobs:
           else
             echo "superseded=false" >> "$GITHUB_OUTPUT"
           fi
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        if: steps.check.outputs.superseded != 'true'
+        continue-on-error: true
+        with:
+          ref: ${{ github.sha }}
+          path: control
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        if: steps.check.outputs.superseded != 'true'
+        continue-on-error: true
+        with:
+          node-version: 24.x
+      - name: Fingerprint the files this check verifies
+        id: inputs
+        if: steps.check.outputs.superseded != 'true'
+        continue-on-error: true
+        run: |
+          fingerprint="$(node control/.github/scripts/source-baseline-inputs.mjs control)"
+          [[ "$fingerprint" =~ ^[0-9a-f]{64}$ ]]
+          echo "fingerprint=$fingerprint" >> "$GITHUB_OUTPUT"
+      - name: Look for an earlier run of this pull request that verified them
+        id: lookup
+        if: steps.inputs.outputs.fingerprint != '' && github.run_attempt == '1'
+        continue-on-error: true
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ runner.temp }}/source-baseline-verified
+          key: source-baseline-verified-v1-pr${{ github.event.pull_request.number }}-${{ steps.inputs.outputs.fingerprint }}
+      - name: Skip inputs an earlier run already verified
+        id: verified
+        if: steps.lookup.outputs.cache-hit == 'true'
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          run_id="$(head -n 1 "$RUNNER_TEMP/source-baseline-verified/run-id" 2>/dev/null || true)"
+          if [[ "$run_id" =~ ^[1-9][0-9]*$ ]]; then
+            earlier="run $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$run_id"
+          else
+            earlier="an earlier run"
+          fi
+          echo "::notice::$earlier of pull request #$PR_NUMBER verified these exact inputs; skipping the source build. Re-run this workflow to verify again."
+          echo "verified=true" >> "$GITHUB_OUTPUT"
 
   source-baseline:
     needs: supersede
     # A dispatch reaches the contents: write publish job, so it must run the
     # workflow file from develop, like refresh-template.yml. supersede is
     # skipped for a dispatch, hence !cancelled() instead of the implied success().
-    # It fails safe: only a supersede job that ran and found a newer head skips
-    # this check. A failed supersede job (lost runner, API or output error)
+    # It fails safe: only a supersede job that ran and found a newer head, or
+    # an earlier green run of the same inputs, skips this check. A failed supersede job (lost runner, API or output error)
     # leaves the output empty and the check runs, since a skipped check shows
     # as passed. develop has no required checks today, so this keeps the PR's
     # status honest rather than enforcing a merge rule.
     if: >-
       !cancelled() && (
       (github.event_name == 'pull_request' && !startsWith(github.head_ref, 'agent/issue-') &&
-       needs.supersede.outputs.superseded != 'true') ||
+       needs.supersede.outputs.superseded != 'true' && needs.supersede.outputs.verified != 'true') ||
       (github.event_name != 'pull_request' &&
        github.actor == github.repository_owner &&
        github.ref == format('refs/heads/{0}', github.event.repository.default_branch)))
@@ -327,6 +384,26 @@ jobs:
             ${{ runner.temp }}/portable-evidence
             ${{ runner.temp }}/portable-verify.log
           retention-days: 14
+
+  # Records that this pull request's inputs passed both jobs, for the lookup in
+  # supersede. Only after both: a failed or partial run is checked again.
+  record:
+    needs: [supersede, source-baseline, portable]
+    if: github.event_name == 'pull_request' && needs.supersede.outputs.inputs != ''
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions: {}
+    steps:
+      - name: Name the run that verified these inputs
+        run: |
+          mkdir -p "$RUNNER_TEMP/source-baseline-verified"
+          printf '%s\n' "$GITHUB_RUN_ID" > "$RUNNER_TEMP/source-baseline-verified/run-id"
+      - name: Record the verified inputs
+        continue-on-error: true
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ runner.temp }}/source-baseline-verified
+          key: source-baseline-verified-v1-pr${{ github.event.pull_request.number }}-${{ needs.supersede.outputs.inputs }}
 
   publish:
     needs: [source-baseline, portable]

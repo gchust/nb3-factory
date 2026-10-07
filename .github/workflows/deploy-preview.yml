@@ -183,22 +183,16 @@ jobs:
             --domain "$PREVIEW_DOMAIN" \
             --output "$RUNNER_TEMP/preview"
 
-      - name: Join the tailnet
+      # From the trusted control checkout, like the script it runs, rather than
+      # from a separate checkout at github.sha: control is the default branch
+      # here, and the action and preview-connect.sh then always match.
+      - name: Connect to the preview host
         if: steps.prepare.outputs.ready == 'true' && env.PREVIEW_ENABLED == 'true'
-        uses: tailscale/github-action@d1b6cd204f8dceda5b3eaad7f1f767be390056cd # v4.2.0
+        uses: ./control/.github/actions/preview-connect
         with:
-          oauth-client-id: ${{ secrets.FACTORY_TAILSCALE_OAUTH_CLIENT_ID }}
-          oauth-secret: ${{ secrets.FACTORY_TAILSCALE_OAUTH_CLIENT_SECRET }}
-          tags: tag:ci
-          # Keep public DNS on the runner; the preview host is a Tailscale IP.
-          args: --accept-dns=false
-
-      - name: Install the deploy key
-        if: steps.prepare.outputs.ready == 'true' && env.PREVIEW_ENABLED == 'true'
-        env:
-          PREVIEW_SSH_KEY: ${{ secrets.FACTORY_PREVIEW_SSH_KEY }}
-        run: |
-          bash control/.github/scripts/preview-connect.sh
+          tailscale-oauth-client-id: ${{ secrets.FACTORY_TAILSCALE_OAUTH_CLIENT_ID }}
+          tailscale-oauth-secret: ${{ secrets.FACTORY_TAILSCALE_OAUTH_CLIENT_SECRET }}
+          ssh-key: ${{ secrets.FACTORY_PREVIEW_SSH_KEY }}
 
       - name: Send the host scripts
         id: scripts

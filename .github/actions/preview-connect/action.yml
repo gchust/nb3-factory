@@ -1,0 +1,35 @@
+name: Connect to the preview host
+description: >-
+  Join the tailnet and install the deploy key, then check that SSH to the
+  preview host works. The deploy and the teardown connect the same way. The
+  trusted default-branch control checkout must be at control/: the connection
+  script runs from it. PREVIEW_HOST and PREVIEW_USER come from the job's env.
+  Sending the host scripts stays a workflow step, because the teardown bounds
+  it with timeout-minutes, which a composite step cannot take.
+inputs:
+  tailscale-oauth-client-id:
+    description: The Tailscale OAuth client ID (secrets.FACTORY_TAILSCALE_OAUTH_CLIENT_ID).
+    required: true
+  tailscale-oauth-secret:
+    description: The Tailscale OAuth client secret (secrets.FACTORY_TAILSCALE_OAUTH_CLIENT_SECRET).
+    required: true
+  ssh-key:
+    description: The preview deploy key (secrets.FACTORY_PREVIEW_SSH_KEY).
+    required: true
+runs:
+  using: composite
+  steps:
+    - name: Join the tailnet
+      uses: tailscale/github-action@d1b6cd204f8dceda5b3eaad7f1f767be390056cd # v4.2.0
+      with:
+        oauth-client-id: ${{ inputs.tailscale-oauth-client-id }}
+        oauth-secret: ${{ inputs.tailscale-oauth-secret }}
+        tags: tag:ci
+        # Keep public DNS on the runner; the preview host is a Tailscale IP.
+        args: --accept-dns=false
+
+    - name: Install the deploy key
+      shell: bash
+      env:
+        PREVIEW_SSH_KEY: ${{ inputs.ssh-key }}
+      run: bash control/.github/scripts/preview-connect.sh
