@@ -11,6 +11,7 @@ import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
 import {
+  CLOSED_EVICTIONS_PER_DEPLOY,
   PREVIEW_EVICTED_MARKER,
   PREVIEW_VERIFIED_MARKER,
   buildStatusFromBody,
@@ -75,8 +76,8 @@ test('a host with a free slot, or one this PR already holds, evicts nothing', ()
 });
 
 test('a full host gives up every preview of a closed or missing PR first', () => {
-  // Teardown should have removed these; nothing else ever will, so all of them
-  // go even when one would make room — and before any open PR's preview.
+  // Teardown should have removed these; nothing else ever will, so they go
+  // even when one would make room — and before any open PR's preview.
   const plan = planCapacity({
     listing: listing([
       instance(1, '2026-09-01T00:00:00Z', 'failed'),
@@ -92,6 +93,35 @@ test('a full host gives up every preview of a closed or missing PR first', () =>
   });
   assert.equal(plan.room, true);
   assert.deepEqual(evicted(plan), ['2:closed', '3:closed']);
+});
+
+test('a deploy removes at most three closed previews beyond the slots it needs', () => {
+  // Each removal can wait for the deploy lock, and the capacity step is
+  // budgeted for three. The rest stay first in line for the next deploy.
+  const instances = [5, 4, 3, 2, 1].map((pr) =>
+    instance(pr, `2026-09-0${pr}T00:00:00Z`, 'success'),
+  );
+  const closed = new Map(instances.map(({ pr }) => [pr, null]));
+  const plan = planCapacity({
+    listing: listing(instances, { limit: 5 }),
+    pr: 9,
+    pulls: closed,
+  });
+  assert.equal(plan.room, true);
+  assert.deepEqual(evicted(plan), ['1:closed', '2:closed', '3:closed']);
+  // A host whose limit dropped below its count still frees every slot needed.
+  const shrunk = planCapacity({
+    listing: listing(instances, { limit: 1 }),
+    pr: 9,
+    pulls: closed,
+  });
+  assert.equal(shrunk.room, true);
+  assert.equal(shrunk.evict.length, 5);
+  assert.equal(CLOSED_EVICTIONS_PER_DEPLOY, 3);
+  assert.match(
+    workflow,
+    /CLOSED_EVICTIONS_PER_DEPLOY \(3\)[\s\S]*?timeout-minutes: 28\n/,
+  );
 });
 
 test('then failed builds give way, oldest deployment first', () => {

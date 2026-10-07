@@ -83,7 +83,7 @@ jobs:
       needs.dispatch-gate.outputs.covered != 'true' &&
       (github.event_name == 'workflow_dispatch' || contains(fromJSON('["success","failure","timed_out","cancelled"]'), github.event.workflow_run.conclusion))
     runs-on: ubuntu-24.04
-    # The bounded steps alone take up to 85 minutes: making room 22, Publish
+    # The bounded steps alone take up to 91 minutes: making room 28, Publish
     # 10, Deploy 45, the public check's 5 and deleting superseded payloads 3.
     # Making room and Deploy are that long only when the host's deploy lock
     # is held, by gc or by a deploy whose CI step was cut off: each waits up
@@ -92,7 +92,7 @@ jobs:
     # top, so a shorter limit could cut a slow deploy off before its own limits
     # and skip the PR notice. The source wait runs in wait-for-source, outside
     # the lock, so this holds the lock only for deploying.
-    timeout-minutes: 100
+    timeout-minutes: 106
     # Serialized with teardown-preview in preview-teardown.yml. At job level, so
     # a copy the dispatch gate covers or skips never queues behind a deploy.
     concurrency:
@@ -210,11 +210,14 @@ jobs:
       # The host scripts bound their own waits for the deploy lock (16 minutes
       # for the listing, at least the longest a deploy holds it; 3 for an
       # eviction, which fails the step), because a step that times out kills
-      # only the ssh client.
+      # only the ssh client. planCapacity removes at most
+      # CLOSED_EVICTIONS_PER_DEPLOY (3) previews unless more slots are needed,
+      # so 16 + 3 × 3 minutes of lock waits plus the payload deletions and
+      # notices fit in 28.
       - name: Make room on the preview host
         id: capacity
         if: steps.scripts.outcome == 'success'
-        timeout-minutes: 22
+        timeout-minutes: 28
         env:
           PR: ${{ steps.prepare.outputs.pr }}
           GITHUB_TOKEN: ${{ github.token }}
@@ -245,7 +248,7 @@ jobs:
               echo "::warning::Could not tell PR #$victim that its preview was evicted."
           done < "$RUNNER_TEMP/preview/evict.txt"
 
-      # Step limits, well inside the job's 60 minutes: a stalled transfer fails
+      # Step limits, well inside the job's own limit: a stalled transfer fails
       # this step, so the report below still tells the PR, instead of the job
       # being cancelled at its limit with no notice. ServerAliveInterval drops
       # an ssh session whose Tailscale path went silent within a minute.

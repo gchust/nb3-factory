@@ -597,11 +597,26 @@ export function planCapacity({ listing, pr, pulls = new Map() }) {
       .map((instance) => ({ ...instance, reason })),
   );
 
-  const needed = count - listing.limit + 1 - closed.length;
-  if (needed <= 0) return result(true, closed);
-  if (optional.length < needed) return result(false, closed);
-  return result(true, [...closed, ...optional.slice(0, needed)]);
+  // Every slot needed comes from a closed PR first. Beyond that, at most
+  // CLOSED_EVICTIONS_PER_DEPLOY closed previews go per deploy, oldest first:
+  // each removal can wait minutes for the deploy lock, and the capacity step
+  // is budgeted for that many. The rest still go before any open PR's preview,
+  // at the next deploy that needs room.
+  const slots = count - listing.limit + 1;
+  const reclaimed = closed
+    .sort(oldestFirst)
+    .slice(0, Math.max(slots, CLOSED_EVICTIONS_PER_DEPLOY));
+  const needed = slots - reclaimed.length;
+  if (needed <= 0) return result(true, reclaimed);
+  if (optional.length < needed) return result(false, reclaimed);
+  return result(true, [...reclaimed, ...optional.slice(0, needed)]);
 }
+
+/**
+ * Closed PRs' previews a deploy removes beyond the slots it needs. The capacity
+ * step's timeout in deploy-preview.yml covers this many removals.
+ */
+export const CLOSED_EVICTIONS_PER_DEPLOY = 3;
 
 /** The pull request notice for a deploy skipped because the host is full. */
 export function capacitySkipNote(capacity, runUrl) {
