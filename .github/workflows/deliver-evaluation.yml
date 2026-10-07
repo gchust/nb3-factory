@@ -284,12 +284,19 @@ jobs:
         run: |
           echo "::warning::Problem classification failed (feature points, classifier install or Agent); unplaced problems are delivered unclassified. See the steps above."
           echo '问题分类失败（功能点读取、分类器安装或 Agent 分类）：未能归类的问题按未分类交付，不影响发送。' >> "$GITHUB_STEP_SUMMARY"
+      # Artifacts of this public repository are public. The send job reads only
+      # classification.json; failure.json says why the Agent step failed.
+      # pending.json and the Agent's transcript carry the receiver's feature
+      # taxonomy and its existing problems' titles, descriptions and states,
+      # so they stay on the runner.
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         id: classification-upload
         if: always() && steps.rules.outcome == 'success'
         with:
           name: factory-problem-classification-${{ github.run_id }}-${{ github.run_attempt }}
-          path: ${{ runner.temp }}/problem-classification
+          path: |
+            ${{ runner.temp }}/problem-classification/classification.json
+            ${{ runner.temp }}/problem-classification/failure.json
           if-no-files-found: warn
           retention-days: 14
 

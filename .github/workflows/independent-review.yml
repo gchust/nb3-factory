@@ -360,13 +360,9 @@ jobs:
           ASSET: ${{ steps.archive.outputs.asset }}
         run: |
           set -euo pipefail
-          # The first history publisher creates the shared release, whichever it is.
-          if ! gh release view factory-history --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
-            gh release create factory-history --repo "$GITHUB_REPOSITORY" --prerelease \
-              --title "工厂运行历史" --notes "已脱敏的工厂可观察交互记录。"
-          fi
-          gh release upload factory-history "$RUNNER_TEMP/review-archive/$ASSET" --repo "$GITHUB_REPOSITORY" --clobber
-          echo "url=https://github.com/$GITHUB_REPOSITORY/releases/download/factory-history/$ASSET" >> "$GITHUB_OUTPUT"
+          url="$(bash control/.github/scripts/upload-history-asset.sh \
+            "$RUNNER_TEMP/review-archive/$ASSET" "已脱敏的工厂可观察交互记录。")"
+          echo "url=$url" >> "$GITHUB_OUTPUT"
       - name: Publish results without altering the business verdict
         if: ${{ !cancelled() }}
         env:

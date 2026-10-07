@@ -36,6 +36,10 @@ permissions: {}
 # builds remain parallel. The report job's group also keeps concurrent handoff
 # reports from losing the Issue's totals. A caller must not hold this group
 # itself: GitHub cancels a job whose called workflow waits on its caller's group.
+# The lock covers only archive and deploy: the evaluation registry serializes
+# on its own group (its gh-pages writes are compare-and-swap commits, like
+# deliver-evaluation's), and the CDN wait and link comments run in notify,
+# serialized among themselves on factory-report-notify.
 
 jobs:
   # The task usually requested this run itself; see report-dispatch-gate.yml.
@@ -234,8 +238,12 @@ jobs:
       needs.report.outputs.evaluation_export != ''
     runs-on: ubuntu-24.04
     timeout-minutes: 15
+    # Not factory-task-usage: every gh-pages write here goes through
+    # commitTree's compare-and-swap retries, and commitRevision re-checks the
+    # revision under it. This group keeps registrations in order among
+    # themselves without holding report archives and deployments.
     concurrency:
-      group: factory-task-usage
+      group: factory-evaluation-registry
       queue: max
     permissions:
       actions: write
@@ -265,6 +273,10 @@ jobs:
         run: |
           node control/.github/scripts/evaluation-archive.mjs prepare \
             --input "$RUNNER_TEMP/evaluation-export" --output "$RUNNER_TEMP/evaluation-bundle"
+      # The name carries no attempt, so "Re-run failed jobs" after a failed
+      # commit uploads it again in this run: overwrite instead of a 409. The
+      # replaced copy was never registered (the commit failed), and a revision
+      # that did register is reused without a new upload for 30 days.
       - name: Keep the exact bundle bytes for replay
         id: bundle
         if: steps.prepare.outputs.upload == 'true'
@@ -274,13 +286,15 @@ jobs:
           path: ${{ runner.temp }}/evaluation-bundle/evaluation-bundle.zip
           if-no-files-found: error
           retention-days: 90
+          overwrite: true
       - name: Register the revision and queue optional delivery
         id: commit
         env:
           GITHUB_TOKEN: ${{ github.token }}
+          BUNDLE_ARTIFACT_ID: ${{ steps.bundle.outputs.artifact-id }}
         run: |
           node control/.github/scripts/evaluation-archive.mjs commit \
-            --input "$RUNNER_TEMP/evaluation-bundle" --artifact-id "${{ steps.bundle.outputs.artifact-id }}"
+            --input "$RUNNER_TEMP/evaluation-bundle" --artifact-id "$BUNDLE_ARTIFACT_ID"
       # Fire-and-forget: this workflow's concurrency group is never held by a receiver.
       - name: Request delivery without waiting
         if: steps.commit.outputs.queued == 'true'
@@ -295,6 +309,9 @@ jobs:
   pages:
     outputs:
       findings_pending: ${{ steps.archive.outputs.findings_pending }}
+      publication: ${{ steps.archive.outputs.publication }}
+      page_url: ${{ steps.deployment.outputs.page_url }}
+      deployed: ${{ steps.deployment.outcome == 'success' }}
     needs: report
     # report needs dispatch-gate, which is skipped outside workflow_run; the
     # implicit success() would then skip publication too.
@@ -311,8 +328,6 @@ jobs:
       contents: write
       pages: write
       id-token: write
-      issues: write
-      pull-requests: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
@@ -339,6 +354,7 @@ jobs:
             --report "$RUNNER_TEMP/delivery-report/report.json" \
             --html "$RUNNER_TEMP/delivery-report/report.html" \
             --output "$RUNNER_TEMP/report-publication.json"
+          echo "publication=$(base64 -w0 "$RUNNER_TEMP/report-publication.json")" >> "$GITHUB_OUTPUT"
       # Archive before configuring Pages: first-time setup failures lose no reports.
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -358,20 +374,48 @@ jobs:
         if: steps.pages.outcome == 'success'
         id: deployment
         uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1
-      - name: Verify HTML and update Issue and PR links
-        if: steps.deployment.outcome == 'success'
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
-          REPORT_BASE_URL: ${{ steps.deployment.outputs.page_url }}
-        run: |
-          node control/.github/scripts/report-pages.mjs notify \
-            --publication "$RUNNER_TEMP/report-publication.json" \
-            --base-url "$REPORT_BASE_URL"
       - name: Explain one-time Pages setup
         if: always() && steps.pages.outcome == 'failure'
         run: |
           echo '::warning::Report archived, but Pages is not ready. Set Settings > Pages > Source to GitHub Actions, then rerun the Pages job. No rebuild is needed.'
           echo 'HTML 已归档。首次请将 Settings → Pages → Source 设为 GitHub Actions，然后重跑 Pages 作业；不需要重新搭建。' >> "$GITHUB_STEP_SUMMARY"
+
+  # Waits up to three minutes for the CDN outside factory-task-usage, so the
+  # next report's archive and deploy do not queue behind it. A later deploy
+  # only adds to the site, so this report stays served. The comments it
+  # upserts are serialized here instead: notifyReport compares each receipt,
+  # and two notifies of one Issue must not both create its comment.
+  notify:
+    needs: pages
+    if: ${{ !cancelled() && needs.pages.outputs.deployed == 'true' && needs.pages.outputs.publication != '' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    concurrency:
+      group: factory-report-notify
+      queue: max
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          path: control
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24.x
+      - name: Verify HTML and update Issue and PR links
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          REPORT_BASE_URL: ${{ needs.pages.outputs.page_url }}
+          PUBLICATION: ${{ needs.pages.outputs.publication }}
+        run: |
+          printf '%s' "$PUBLICATION" | base64 -d > "$RUNNER_TEMP/report-publication.json"
+          node control/.github/scripts/report-pages.mjs notify \
+            --publication "$RUNNER_TEMP/report-publication.json" \
+            --base-url "$REPORT_BASE_URL"
 
   findings:
     needs: pages
@@ -386,6 +430,16 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           REPORT_REF: ${{ github.event.repository.default_branch }}
+        # A classification run still waiting for its group prepares from the
+        # site as it is when it starts, which already holds this report, so a
+        # second request would only queue a run that finds nothing new. Any
+        # error listing runs falls through to the request.
         run: |
+          waiting="$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/classify-findings.yml/runs?branch=$REPORT_REF&per_page=30" \
+            --jq '[.workflow_runs[] | select(.status == "queued" or .status == "pending" or .status == "waiting" or .status == "requested")] | length' 2>/dev/null || echo 0)"
+          if [[ "$waiting" =~ ^[1-9][0-9]*$ ]]; then
+            echo "A classification run is already waiting; it will include this report."
+            exit 0
+          fi
           gh workflow run classify-findings.yml --repo "$GITHUB_REPOSITORY" --ref "$REPORT_REF" \
             || echo '::warning::Classification request failed. Findings remain visible as pending; rerun Classify framework findings.'

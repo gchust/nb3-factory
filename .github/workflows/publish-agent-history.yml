@@ -160,12 +160,14 @@ jobs:
         continue-on-error: true
         env:
           DOWNLOADS: '{"task":"${{ steps.task.outcome }}","agent":"${{ steps.agent.outcome }}","final":"${{ steps.final.outcome }}","reply":"${{ steps.reply.outcome }}"}'
+          ISSUE: ${{ steps.source.outputs.issue }}
+          RUN: ${{ steps.source.outputs.run }}
+          ATTEMPT: ${{ steps.source.outputs.attempt }}
         run: |
           node control/.github/scripts/agent-history.mjs pack \
             --artifacts "$RUNNER_TEMP/history-evidence" --output "$RUNNER_TEMP/history" \
             --manifest "$RUNNER_TEMP/history/manifest.json" --source "$RUNNER_TEMP/history-source.json" \
-            --downloads "$DOWNLOADS" --issue "${{ steps.source.outputs.issue }}" \
-            --run "${{ steps.source.outputs.run }}" --attempt "${{ steps.source.outputs.attempt }}"
+            --downloads "$DOWNLOADS" --issue "$ISSUE" --run "$RUN" --attempt "$ATTEMPT"
 
       - name: Upload the archive to the history release
         id: release
@@ -176,23 +178,22 @@ jobs:
           ASSET: ${{ steps.pack.outputs.asset }}
         run: |
           set -euo pipefail
-          if ! gh release view factory-history --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
-            gh release create factory-history --repo "$GITHUB_REPOSITORY" --prerelease \
-              --title "工厂运行历史" --notes "已归档 Agent 交互与终验诊断；完整性和缺失说明见各 Issue。"
-          fi
-          gh release upload factory-history "$RUNNER_TEMP/history/$ASSET" \
-            --repo "$GITHUB_REPOSITORY" --clobber
-          echo "asset_url=https://github.com/$GITHUB_REPOSITORY/releases/download/factory-history/$ASSET" >> "$GITHUB_OUTPUT"
+          url="$(bash control/.github/scripts/upload-history-asset.sh "$RUNNER_TEMP/history/$ASSET" \
+            "已归档 Agent 交互与终验诊断；完整性和缺失说明见各 Issue。")"
+          echo "asset_url=$url" >> "$GITHUB_OUTPUT"
 
       - name: Report published or missing history on the task Issue
         if: ${{ !cancelled() && steps.source.outputs.ready == 'true' }}
         env:
           GITHUB_TOKEN: ${{ github.token }}
+          ISSUE: ${{ steps.source.outputs.issue }}
+          RUN: ${{ steps.source.outputs.run }}
+          ATTEMPT: ${{ steps.source.outputs.attempt }}
+          ASSET_URL: ${{ steps.release.outputs.asset_url }}
         run: |
           node control/.github/scripts/agent-history.mjs publish \
             --manifest "$RUNNER_TEMP/history/manifest.json" --source "$RUNNER_TEMP/history-source.json" \
-            --issue "${{ steps.source.outputs.issue }}" --run "${{ steps.source.outputs.run }}" \
-            --attempt "${{ steps.source.outputs.attempt }}" --asset-url "${{ steps.release.outputs.asset_url }}" \
+            --issue "$ISSUE" --run "$RUN" --attempt "$ATTEMPT" --asset-url "$ASSET_URL" \
             --fallback-url "https://github.com/$GITHUB_REPOSITORY/actions/runs/$SOURCE_RUN_ID"
 
       - name: Keep publication failures visible without rebuilding the application

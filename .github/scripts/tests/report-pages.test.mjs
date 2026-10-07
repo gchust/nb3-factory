@@ -2,12 +2,13 @@ import { Buffer } from 'node:buffer';
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { createHash } from 'node:crypto';
-import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { finalizeClassification } from '../../reports/findings-classification.mjs';
 import { prepareClassification } from '../classify-findings.mjs';
-import { archiveFindingsClassification, readFindingsSnapshot, archiveReport, compareReports, notifyReport, pagesUrl, reportManifest, resetFindingsIndex, VERIFY_DELAYS_MS, verifyPage } from '../report-pages.mjs';
+import { ARCHIVE_ATTEMPTS, archiveBackoffMs, archiveFindingsClassification, externalizeImages, readFindingsSnapshot, archiveReport, compareReports, notifyReport, pagesUrl, reportManifest, resetFindingsIndex, VERIFY_DELAYS_MS, verifyPage } from '../report-pages.mjs';
+import { renderHtml } from '../../reports/render-report.mjs';
 const repository='owner/factory';
 const digest=value=>createHash('sha1').update(JSON.stringify(value)).digest('hex');
 function input({issue=146,runId=100,attempt=1,start=1000,qa=true,media=1}={}) {
@@ -25,6 +26,9 @@ function fakeClient() {
    if(method==='GET'&&route.startsWith('/git/commits/'))return commits.get(route.split('/').at(-1));
    if(method==='GET'&&route.startsWith('/contents/')) {
     const commit=commits.get(query?.ref==='gh-pages'?ref:query?.ref);const tree=commit&&trees.get(commit.tree.sha); const hash=tree?.get(route.slice('/contents/'.length));
+    const prefix=`${route.slice('/contents/'.length)}/`;
+    const listing=[...(tree||[])].filter(([k])=>k.startsWith(prefix)&&!k.slice(prefix.length).includes('/')).map(([k,sha])=>({name:k.slice(prefix.length),type:'file',sha}));
+    if(!hash&&listing.length)return listing;
     return hash?{sha:hash,encoding:'base64',content:Buffer.from(blobs.get(hash)).toString('base64')}:null;
    }
    if(method==='POST'&&route==='/git/blobs'){const sha=digest(body.content);blobs.set(sha,body.content);return {sha};}
@@ -38,6 +42,7 @@ function fakeClient() {
    if(method==='PATCH'&&route==='/git/refs/heads/gh-pages'){
     assert.equal(body.force,false);
     if(client.conflictOnce){client.conflictOnce=false;throw new Error('422 concurrent ref update');}
+    if(client.conflicts>0){client.conflicts--;throw new Error('422 concurrent ref update');}
     ref=body.sha;return {};
    }
    const cm=/^\/issues\/(\d+)\/comments$/.exec(route);
@@ -89,8 +94,39 @@ test('replay after artifacts expire retains richer HTML and evidence instead of 
 });
 test('optimistic archive updates retry a concurrent ref write without force-pushing',async()=>{
  const c=fakeClient(),r=input();await archiveReport(c,r,htmlOf(r));c.conflictOnce=true;
- const next=input({runId:102,start:3000});await archiveReport(c,next,htmlOf(next));
+ const next=input({runId:102,start:3000});await archiveReport(c,next,htmlOf(next),{pause:async()=>{}});
  assert.ok(c.files().has(reportManifest(r).path));assert.match(c.files().get('reports/issues/146/index.html'),/102/);
+});
+test('archive retries writers outside its lock with growing jittered pauses and uploads each blob once',async()=>{
+ const c=fakeClient(),r=input();await archiveReport(c,r,htmlOf(r));
+ c.conflicts=ARCHIVE_ATTEMPTS-1;
+ const pauses=[];const posted=[];
+ const request=c.request;c.request=async(method,route,options)=>{if(method==='POST'&&route.endsWith('/blobs'))posted.push(options.body.content);return request(method,route,options);};
+ const next=input({runId:102,start:3000});
+ await archiveReport(c,next,imageHtmlOf(next,['retry']),{pause:async ms=>{pauses.push(ms);}});
+ assert.equal(pauses.length,ARCHIVE_ATTEMPTS-1);
+ pauses.forEach((ms,i)=>assert.ok(ms>=1000*2**i&&ms<1000*2**i+1000,String(ms)));
+ assert.equal(new Set(posted).size,posted.length,'no blob is uploaded twice');
+ assert.equal(archiveBackoffMs(2,()=>0.5),4500);
+ c.conflicts=ARCHIVE_ATTEMPTS;
+ const last=input({runId:103,start:4000});
+ await assert.rejects(archiveReport(c,last,htmlOf(last),{pause:async()=>{}}),/422/);
+});
+test('a newer report whose deploy failed does not leave the Issue without a report comment',async()=>{
+ const c=fakeClient(),r=input(),a=await archiveReport(c,r,htmlOf(r));
+ const n=input({runId:102,start:2000}),b=await archiveReport(c,n,htmlOf(n));
+ const base='https://owner.github.io/factory/';
+ // Only A is served: B's deploy failed, so B's notify never runs.
+ const servedA=async(url,id)=>{if(id!==a.manifest.reportId)throw new Error('404');};
+ const posted=await notifyReport(c,a,base,{verify:servedA});
+ assert.equal(posted.updated,true);
+ assert.match(c.comments.get(146).at(-1).body,/factory-report-source:1000:100:1/);
+ // B deploys later: its notify replaces the comment, and a late A cannot take it back.
+ await notifyReport(c,b,base,{verify:async()=>{}});
+ assert.match(c.comments.get(146).at(-1).body,/factory-report-source:2000:102:1/);
+ await notifyReport(c,a,base,{verify:servedA});
+ assert.equal(c.comments.get(146).length,1);
+ assert.match(c.comments.get(146)[0].body,/factory-report-source:2000:102:1/);
 });
 test('wrong HTML does not write a branch',async()=>{
  const c=fakeClient();await assert.rejects(archiveReport(c,input(),'<html>wrong</html>'),/mismatch/);assert.equal(c.ref(),null);
@@ -192,6 +228,75 @@ test('rubric upgrade preserves exact v1 bytes, permits v2 partial, and rejects a
  complete.reportId += ':complete';
  await archiveReport(client,complete,htmlOf(complete));
  assert.equal((await archiveReport(client,next,newHtml)).preserved,true);
+});
+// A rendered report's inline screenshots, as render-report.mjs writes them.
+const shotOf=text=>Buffer.from(text).toString('base64');
+const sha256=text=>createHash('sha256').update(text).digest('hex');
+const imageHtmlOf=(r,shots)=>`<html><meta http-equiv="Content-Security-Policy" content="default-src &#39;none&#39;; img-src data:; style-src &#39;unsafe-inline&#39;"><meta name="factory-report-id" content="${r.reportId}"><body>${shots.map(s=>`<img alt="" src="data:image/png;base64,${shotOf(s)}">`).join('')}<span>截图已经内嵌，可离线查看。</span></body></html>`;
+test('Pages copies carry screenshots as content-addressed files beside the report', async () => {
+ const client=fakeClient(), r=input();
+ await archiveReport(client,r,imageHtmlOf(r,['login','list','login']));
+ const directory=reportManifest(r).path.replace('index.html','');
+ const files=client.files(), page=files.get(directory+'index.html');
+ assert.doesNotMatch(page,/data:image/);
+ assert.match(page,new RegExp(`src="media/${sha256('login')}\\.png".*src="media/${sha256('list')}\\.png".*src="media/${sha256('login')}\\.png"`));
+ assert.match(page,/img-src data: &#39;self&#39;;/);
+ assert.match(page,/截图与报告一同发布/);
+ const media=[...files.keys()].filter(k=>k.startsWith(directory+'media/'));
+ assert.equal(media.length,2,'a repeated screenshot is stored once');
+ assert.equal(files.get(`${directory}media/${sha256('login')}.png`),shotOf('login'));
+ // A replay that drops a screenshot also drops its file; one that keeps it keeps it.
+ const richer=input({media:2});
+ await archiveReport(client,richer,imageHtmlOf(richer,['list','detail']));
+ const after=[...client.files().keys()].filter(k=>k.startsWith(directory+'media/')).sort();
+ assert.deepEqual(after,[`${directory}media/${sha256('detail')}.png`,`${directory}media/${sha256('list')}.png`].sort());
+ // A report without screenshots is published unchanged.
+ const plain=input({issue:147});
+ await archiveReport(client,plain,htmlOf(plain));
+ assert.equal(client.files().get(reportManifest(plain).path),htmlOf(plain));
+});
+test('a rendered report keeps working with its screenshots as files', async (t) => {
+ const root=mkdtempSync(path.join(os.tmpdir(),'report-media-'));t.after(()=>rmSync(root,{recursive:true,force:true}));
+ writeFileSync(path.join(root,'a.png'),'png bytes A');writeFileSync(path.join(root,'b.png'),'png bytes B');
+ const facts=JSON.parse(readFileSync(new URL('../../reports/example.facts.json',import.meta.url),'utf8'));
+ facts.media=[{id:'a',title:'列表',category:'列表',path:'a.png',featured:true},{id:'b',title:'表单',category:'表单',path:'b.png',featured:false}];
+ const {html}=await renderHtml(facts,null,root);
+ assert.match(html,/img-src data:;/);
+ const page=externalizeImages(html);
+ assert.equal(page.media.size,2);
+ assert.doesNotMatch(page.html,/data:image/);
+ for(const text of ['png bytes A','png bytes B']) {
+  const name=`${sha256(text)}.png`;
+  assert.ok(page.html.includes(`src="media/${name}"`));
+  assert.equal(Buffer.from(page.media.get(name),'base64').toString(),text);
+ }
+ const csp=/http-equiv="Content-Security-Policy" content="([^"]*)"/.exec(page.html)[1];
+ assert.match(csp,/img-src data: &#39;self&#39;;/);
+ // The fixed script is untouched, so its CSP hash still matches.
+ const script=/<script>([\s\S]*?)<\/script>/.exec(page.html)[1];
+ assert.ok(csp.includes(`sha256-${createHash('sha256').update(script).digest('base64')}`));
+ assert.equal(page.html.replace(/src="media\/[a-f0-9]{64}\.png"/g,'SRC').replace(/ &#39;self&#39;/,'').replace('截图与报告一同发布。','截图已经内嵌，可离线查看。'),
+  html.replace(/src="data:image\/png;base64,[^"]+"/g,'SRC'));
+});
+test('a report whose CSP changed keeps its screenshots inline instead of failing', () => {
+ const html=imageHtmlOf(input(),['x']).replace('img-src data:;','img-src data: blob:;');
+ const page=externalizeImages(html);
+ assert.equal(page.html,html);
+ assert.equal(page.media.size,0);
+});
+test('a rubric snapshot keeps its screenshot files beside it', async () => {
+ const client=fakeClient(), old=input(), next=input();
+ old.delivery.buildReview={state:'completed',basis:{rubricVersion:1}};
+ next.delivery.buildReview={state:'partial',basis:{rubricVersion:2}};
+ next.reportId += ':review-new-rubric';
+ await archiveReport(client,old,imageHtmlOf(old,['v1']));
+ await archiveReport(client,next,imageHtmlOf(next,['v2']));
+ const directory=reportManifest(next).path.replace('index.html','');
+ const files=client.files();
+ assert.match(files.get(directory+'rubric-1/index.html'),new RegExp(`src="media/${sha256('v1')}\\.png"`));
+ assert.equal(files.get(`${directory}rubric-1/media/${sha256('v1')}.png`),shotOf('v1'));
+ assert.equal(files.get(`${directory}media/${sha256('v2')}.png`),shotOf('v2'));
+ assert.equal(files.has(`${directory}media/${sha256('v1')}.png`),false);
 });
 test('archive writes the cross-report findings index from the latest report of each Issue', async () => {
  const c=fakeClient();const first=reviewedInput(),second=reviewedInput({issue:147,runId:101,start:2000});

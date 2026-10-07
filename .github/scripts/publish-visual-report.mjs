@@ -1,4 +1,8 @@
-import { isValidTargetBranch, repositoryApi } from './factory-lib.mjs';
+import {
+  isTrustedAuthor,
+  isValidTargetBranch,
+  repositoryApi,
+} from './factory-lib.mjs';
 import { waitForTaskRun } from './wait-for-task-run.mjs';
 import { publicationAttempt } from './publication-attempt.mjs';
 import { spawnSync } from 'node:child_process';
@@ -169,10 +173,20 @@ if (mode === 'select') {
     process.exit(0);
   }
   const marker = `<!-- factory-visual-report:${runId}:${plan.runAttempt} -->`;
-  const comments = () => list(`/issues/${plan.prNumber}/comments`);
-  let existing = (await comments()).filter((c) => c.body?.includes(marker));
   const complete = (c) =>
     c.body.includes('<!-- factory-visual-mode:inline -->');
+  // The PR is public, so anyone can post a comment carrying the marker and the
+  // inline mode. Only the factory's own count: the inline comment is posted
+  // with FACTORY_MEDIA_TOKEN, whose user must have write access to upload, so
+  // its author is an owner, member or collaborator; the fallback comes from
+  // github-actions[bot].
+  const ours = (c) =>
+    c.body?.includes(marker) &&
+    (complete(c)
+      ? isTrustedAuthor(c)
+      : c.user?.login === 'github-actions[bot]');
+  const comments = () => list(`/issues/${plan.prNumber}/comments`);
+  let existing = (await comments()).filter(ours);
   let uploaded = existing.some(complete);
   let reason =
     '未配置 FACTORY_MEDIA_TOKEN；截图和录像已保存在媒体包中，配置后可单独补发。';
@@ -218,7 +232,7 @@ if (mode === 'select') {
           },
         );
         // Even on a network timeout the server may have posted the comment.
-        existing = (await comments()).filter((c) => c.body?.includes(marker));
+        existing = (await comments()).filter(ours);
         uploaded = existing.some(complete);
         if (result.status === 0 || uploaded) {
           uploaded = true;

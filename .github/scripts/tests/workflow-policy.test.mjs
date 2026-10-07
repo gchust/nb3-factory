@@ -539,20 +539,20 @@ test('a prepare failure after ready clears agent:running for any build, not only
   assert.match(cleanup, /mark-failure\.mjs/);
 });
 
-test('every history publisher creates the shared release when it is missing', () => {
+test('every history publisher uploads through the monthly history release', () => {
   const directory = new URL('../../workflows/', import.meta.url);
-  let checked = 0;
+  const publishers = [];
   for (const name of readdirSync(directory).filter((file) => file.endsWith('.yml'))) {
     const source = readFileSync(new URL(name, directory), 'utf8');
-    if (!source.includes('gh release upload factory-history')) continue;
-    checked++;
-    assert.match(
-      source,
-      /if ! gh release view factory-history --repo "\$GITHUB_REPOSITORY" >\/dev\/null 2>&1; then\n\s+gh release create factory-history /,
-      name,
-    );
+    // A direct upload to the fixed tag would refill the release capped at 1000 assets.
+    assert.doesNotMatch(source, /gh release (?:upload|create) factory-history\b/, name);
+    if (source.includes('upload-history-asset.sh')) publishers.push(name);
   }
-  assert.ok(checked >= 3);
+  assert.deepEqual(publishers.sort(), [
+    'independent-review.yml',
+    'publish-agent-history.yml',
+    'publish-build-review-history.yml',
+  ]);
 });
 
 // The relative modules a script loads, transitively, as .github/... paths.
@@ -835,10 +835,19 @@ test('the replayed usage report serializes with the other page writers and inher
     'utf8',
   );
   assert.doesNotMatch(usage, /^concurrency:/m);
-  for (const job of ['report', 'evaluation', 'pages']) {
+  for (const [job, group] of [
+    ['report', 'factory-task-usage'],
+    ['pages', 'factory-task-usage'],
+    // Compare-and-swap gh-pages writes; off the global lock.
+    ['evaluation', 'factory-evaluation-registry'],
+    // The CDN wait and link comments run after the lock is released.
+    ['notify', 'factory-report-notify'],
+  ]) {
     const body = usage.split(`\n  ${job}:\n`)[1].split(/\n {2}[a-z][a-z-]*:\n/)[0];
-    assert.match(body, /^ {4}concurrency:\n {6}group: factory-task-usage\n {6}queue: max\n/m, job);
+    assert.match(body, new RegExp(`^ {4}concurrency:\\n {6}group: ${group}\\n {6}queue: max\\n`, 'm'), job);
   }
+  const pages = usage.split('\n  pages:\n')[1].split(/\n {2}[a-z][a-z-]*:\n/)[0];
+  assert.doesNotMatch(pages, /report-pages\.mjs notify|issues: write/);
   assert.doesNotMatch(report, /secrets: inherit/);
   // There is nothing to inherit: the reporter reads github.token only.
   assert.doesNotMatch(

@@ -206,7 +206,7 @@ test('the publishing workflow runs only trusted control code', () => {
   assert.match(workflow, /contents: write/u);
   assert.match(workflow, /issues: write/u);
   assert.match(workflow, /path: control/u);
-  assert.match(workflow, /gh release upload factory-history/u);
+  assert.match(workflow, /upload-history-asset\.sh/u);
   assert.match(workflow, /agent-history\.mjs publish/u);
   // Application code from the artifact must never be executed or installed.
   assert.doesNotMatch(workflow, /pnpm|npm install|pull_request\.head\.sha/u);
