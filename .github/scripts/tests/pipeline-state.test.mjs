@@ -184,11 +184,14 @@ test('B-coded QA follows full -> focused failure -> focused success -> fresh ful
   assert.equal(readState(result.checkpoint).phase, 'done');
 });
 
-test('a repair handoff restores failure context and repairs before another full QA', (t) => {
+// The interrupted repair counts and its edits are in the handed-off patch, so
+// the continuation verifies them first instead of starting another repair.
+test('a repair handoff verifies the interrupted repair before repairing again', (t) => {
   const h = harness(t, [10, 0, 0], [75, 0]);
   const first = h.run('one');
   assert.equal(first.status, 75, first.stderr);
-  assert.equal(readState(first.checkpoint).phase, 'repair');
+  assert.equal(readState(first.checkpoint).phase, 'verify');
+  assert.equal(readState(first.checkpoint).repairAttempts, 1);
   assert.equal(
     JSON.parse(readFileSync(path.join(first.artifacts, 'repair-summary.json')))
       .handoff,
@@ -197,20 +200,19 @@ test('a repair handoff restores failure context and repairs before another full 
   h.restore(first, 'two');
   const second = h.run('two');
   assert.equal(second.status, 0, second.stderr);
-  assert.equal(readState(second.checkpoint).repairAttempts, 2);
+  assert.equal(readState(second.checkpoint).repairAttempts, 1);
   const summary = JSON.parse(
     readFileSync(path.join(second.artifacts, 'repair-summary.json')),
   );
-  assert.equal(summary.repairAttempts, 1);
+  assert.equal(summary.repairAttempts, 0);
   assert.equal(summary.finalVerificationAttempt, 2);
   assert.deepEqual(
     h.events().filter((e) => e.includes(':')),
     ['full:', 'focused:B06', 'full:'],
   );
-  assert.deepEqual(h.events().slice(0, 5), [
+  assert.deepEqual(h.events().slice(0, 4), [
     'verify',
     'full:',
-    'repair',
     'repair',
     'verify',
   ]);
