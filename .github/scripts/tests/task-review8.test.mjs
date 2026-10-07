@@ -9,6 +9,7 @@ import {
   mkdtempSync,
   readFileSync,
   rmSync,
+  symlinkSync,
   writeFileSync,
 } from 'node:fs';
 import os from 'node:os';
@@ -463,8 +464,25 @@ test('continuation downloads are retried once, and a setup failure before restor
     keep,
     /steps\.task_download\.outcome == 'success' \|\| steps\.task_retry\.outcome == 'success'/,
   );
-  assert.match(keep, /cp handoff\/agent\.patch handoff\/pipeline-state\.json/);
+  // The whole checkpoint, regular files only, without the handoff request.
+  assert.match(
+    keep,
+    /\(cd handoff && find \. -type f ! -path \.\/handoff\.json ! -name 'live-progress\.\*' \\\n\s+-exec cp --parents \{\} "\$artifacts" \\;\)/,
+  );
   assert.match(keep, /cp task\/task-metadata\.json/);
+  // A refused control-plane verification keeps nothing.
+  assert.match(keep, /steps\.verify_control\.outcome == 'success'/);
+  // The task download (with its retry) precedes verification and the patch
+  // restore, so a failing patch restore is kept.
+  const agentJob = job('agent');
+  assert.ok(
+    agentJob.indexOf('- name: Retry the normalized task download') <
+      agentJob.indexOf('- name: Verify the pinned handoff control plane'),
+  );
+  assert.ok(
+    agentJob.indexOf('- name: Verify the pinned handoff control plane') <
+      agentJob.indexOf('- name: Restore handoff checkpoint'),
+  );
   // The source run's elapsed time is kept, never restarted from this job.
   assert.match(
     keep,
@@ -671,8 +689,16 @@ test('the keep step runs the check and skips a refused sample admission', () => 
     keep,
     /node bootstrap\/\.github\/scripts\/pipeline-state\.mjs keepable \\\n\s+handoff\/pipeline-state\.json handoff\/agent\.patch task\/task-metadata\.json/,
   );
-  // The check runs before anything is copied or marked failed.
-  assert.ok(keep.indexOf('keepable') < keep.indexOf('cp handoff/agent.patch'));
+  // The check runs before anything is copied or marked failed, and again on
+  // exactly what is published.
+  assert.ok(keep.indexOf('keepable') < keep.indexOf('cp --parents'));
+  assert.match(
+    keep,
+    /pipeline-state\.mjs keepable \\\n\s+"\$artifacts\/pipeline-state\.json" "\$artifacts\/agent\.patch" "\$artifacts\/task-metadata\.json"/,
+  );
+  assert.ok(
+    keep.lastIndexOf('keepable') < keep.indexOf('pipeline-state.mjs outcome'),
+  );
   const admit = step('Admit the evaluation sample for this execution');
   assert.match(admit, /id: admit\n/);
   assert.match(

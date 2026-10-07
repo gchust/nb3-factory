@@ -72,12 +72,14 @@ branch is newer work, and the recovery refuses. A shared target branch is
 compared with the task's pinned base receipt, not its live head.
 
 A continuation retries its checkpoint and task downloads once. If it still
-fails after downloading the checkpoint but before restoring its progress, it
-keeps the handed-off checkpoint as its own, marked failed, but only when the
-checkpoint is one it could have restored: the same task input, patch and
-control plane, not stopped, and an evaluation sample that was not refused. A
-checkpoint rejected on purpose is not kept, published or offered for
-recovery. Recover a kept one with `recovery_run_id` set to that continuation,
+fails after both downloads but before restoring its progress (applying the
+patch, sample admission, the restore itself), it keeps the whole handed-off
+checkpoint as its own, marked failed, but only when the checkpoint is one it
+could have restored: the same task input, patch and control plane, not
+stopped, an unchanged budget, a repair checkpoint with its diagnostic context,
+and an evaluation sample that was not refused. A refused control-plane
+verification, or any checkpoint rejected on purpose, is not kept, published or
+offered for recovery. Recover a kept one with `recovery_run_id` set to that continuation,
 since its source run concluded successfully when it handed off. A
 continuation whose own task branch moved during the handoff stops at once
 instead of failing at the final push.
