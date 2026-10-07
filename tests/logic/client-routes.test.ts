@@ -52,9 +52,15 @@ describe('app client routes', () => {
     // access is a new grant somebody has to be given.
     const resolved = resolveRoutes();
 
-    // The landing page opted out of page authorization, so it is reachable by every signed-in user.
+    // The landing page opted out of page authorization, so it is reachable by every signed-in user. The repair-ticket
+    // page checks the `itTickets` page grant its Permission Sets hold; its nested overlays inherit that check and do
+    // not repeat it, so they appear here as `null`.
     expect(pageAuthorizations(resolved.routes)).toEqual([
       { name: 'home', authorizedAs: null },
+      { name: 'it-tickets', authorizedAs: 'itTickets' },
+      { name: 'it-tickets-new', authorizedAs: null },
+      { name: 'it-tickets-detail', authorizedAs: null },
+      { name: 'it-tickets-detail-complete', authorizedAs: null },
     ]);
   });
 });

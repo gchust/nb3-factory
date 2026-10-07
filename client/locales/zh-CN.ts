@@ -90,6 +90,105 @@ const zhCN: AppResource = {
     description: '向 AI 助手描述你的需求，逐步构建页面、数据模型和业务流程。',
   },
 
+  // IT 报修工单功能。`authz` 与 `permissionSet` 下的文案不在页面上显示：
+  // 权限管理界面通过这些同一份语言文件渲染它们。
+  itTickets: {
+    title: 'IT 报修工单',
+    description: '提交电脑、账号或其他故障，并跟踪处理进度。',
+    capNotice:
+      '显示匹配到的 {{total}} 条工单中最新的 {{shown}} 条。请使用状态筛选缩小范围。',
+    create: {
+      action: '提交工单',
+      title: '提交报修工单',
+      success: '工单“{{title}}”已提交。',
+    },
+    form: {
+      description: '描述遇到的问题，工单会自动记录为你的提交。',
+      descriptionHint: '说明故障现象，以及你已经尝试过的方法。选填。',
+      titleRequired: '请填写标题。',
+      titleTooLong: '最多 {{max}} 个字符。',
+      descriptionTooLong: '最多 {{max}} 个字符。',
+    },
+    filters: {
+      status: '按状态筛选',
+      allStatuses: '全部状态',
+      clear: '清除筛选',
+    },
+    fields: {
+      title: '标题',
+      category: '分类',
+      status: '状态',
+      description: '问题描述',
+      submitter: '提交人',
+      handler: '处理人',
+      resolutionNote: '处理说明',
+      createdAt: '提交时间',
+      startedAt: '开始处理时间',
+      completedAt: '完成时间',
+    },
+    status: {
+      pending: '待处理',
+      processing: '处理中',
+      completed: '已完成',
+    },
+    category: {
+      computer: '电脑',
+      account: '账号',
+      other: '其他',
+    },
+    empty: {
+      title: '暂无工单',
+      description: '有需要维修的问题时，提交一张工单。',
+      noResults: '没有符合该筛选条件的工单。',
+    },
+    error: {
+      title: '无法加载工单',
+      requestFailed: '出了点问题，请稍后重试。',
+      forbidden: '你的账户无权执行此操作。',
+      notFound: '该工单不存在，或不属于你可查看的范围。',
+      sessionExpired: '登录状态已失效，请重新登录。',
+      signInAgain: '重新登录',
+    },
+    // 服务端拒绝状态变更时返回的原因。
+    state: {
+      IT_TICKET_NOT_PENDING: '该工单已不处于待处理状态。',
+      IT_TICKET_NOT_PROCESSING: '该工单不在处理中，无法标记为已完成。',
+      IT_TICKET_ALREADY_COMPLETED: '该工单已经完成。',
+      IT_TICKET_RESOLUTION_REQUIRED: '完成工单前请填写处理说明。',
+    },
+    start: {
+      action: '开始处理',
+    },
+    complete: {
+      action: '完成',
+      title: '完成工单',
+      description: '记录处理结果，提交人将看到这段处理说明。',
+      hint: '必填：处理说明。',
+      noteRequired: '请填写处理说明。',
+      noteTooLong: '最多 {{max}} 个字符。',
+      success: '工单“{{title}}”已完成。',
+    },
+    detail: { title: '工单' },
+    authz: {
+      section: { title: 'IT 报修工单' },
+      resource: { title: 'IT 报修工单' },
+      recordAccess: {
+        title: '我提交的工单',
+        description: '仅限当前账户自己提交的工单。',
+      },
+      action: {
+        view: '查看工单',
+        create: '提交工单',
+        start: '开始处理',
+        complete: '完成工单',
+      },
+    },
+    permissionSet: {
+      employee: 'IT 报修 - 员工',
+      handler: 'IT 报修 - 处理人',
+    },
+  },
+
   appearance: {
     title: '外观',
     mode: '颜色模式',
@@ -107,6 +206,8 @@ const zhCN: AppResource = {
     save: '保存',
     cancel: '取消',
     confirm: '确认',
+    create: '创建',
+    saving: '正在保存…',
     language: '语言',
   },
   notices: {
@@ -122,6 +223,7 @@ const zhCN: AppResource = {
   },
   navigation: {
     home: '首页',
+    itTickets: 'IT 报修工单',
     open: '打开导航',
     close: '关闭导航',
     expand: '展开导航',
