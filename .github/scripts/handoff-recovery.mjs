@@ -70,6 +70,57 @@ export function validateRecovery({ event, run, task, checkpointTask, state, patc
   };
 }
 
+// The per-Issue base receipt prepare-task.mjs pins for a shared target branch
+// (pinInitialBase in task-base.mjs; same marker and rules). A recovery
+// compares a shared target against it, never against the branch's live head,
+// which keeps moving after the failed run.
+export const TASK_BASE_MARKER = '<!-- factory-task-base-v1:';
+export function pinnedTaskBase(comments, { repository, issue, targetBranch }) {
+  let saved = null;
+  for (const comment of comments) {
+    if (comment.user?.login !== 'github-actions[bot]' || comment.user?.type !== 'Bot') continue;
+    if (!(comment.body ?? '').startsWith(TASK_BASE_MARKER)) continue;
+    let value;
+    try {
+      const suffix = comment.body.split(/\r?\n/, 1)[0].slice(TASK_BASE_MARKER.length);
+      if (!suffix.endsWith(' -->')) throw new Error('incomplete');
+      value = JSON.parse(suffix.slice(0, -4));
+    } catch {
+      throw new Error('The task base receipt is damaged; recovery will not guess the base.');
+    }
+    if (!value || value.repository !== repository || value.issueNumber !== issue ||
+        value.targetBranch !== targetBranch || !/^[a-f0-9]{40}$/u.test(value.sha) || (saved && saved !== value.sha)) {
+      throw new Error('The task base receipts disagree; recovery will not guess the base.');
+    }
+    saved = value.sha;
+  }
+  return saved;
+}
+
+// The commit a failed run's publication pushed to the work branch
+// (publication.json in factory-published-N), when it belongs to that run.
+export function publishedWorkCommit(published, { sourceRunId, workBranch }) {
+  if (!published || published.version !== 1 || published.sourceRunId !== sourceRunId ||
+      published.workBranch !== workBranch || !/^[a-f0-9]{40}$/u.test(published.commit ?? '')) return null;
+  return published.commit;
+}
+
+// The base a recovery compares with the recorded one. publish-failed pushes the
+// failed patch to the work branch before the failure notice offers recovery;
+// a work branch still at exactly that commit is unmoved, and the recovery keeps
+// the recorded base and replaces that commit (expectedWorkSha is its push
+// lease). Any other work-branch head is newer work. Without a work branch, a
+// shared target is read from its pinned receipt.
+export function liveRecoveryBase({ recovery, source, workSha, targetSha, pinnedSha }) {
+  if (workSha) {
+    if (recovery.publishedCommit && workSha === recovery.publishedCommit) {
+      return { ref: recovery.baseRef ?? source.workBranch, sha: recovery.baseSha, expectedWorkSha: workSha };
+    }
+    return { ref: source.workBranch, sha: workSha, expectedWorkSha: null };
+  }
+  return { ref: source.task.targetBranch, sha: pinnedSha ?? targetSha, expectedWorkSha: null };
+}
+
 export function validateRecoveryBase(recovery, source, current, baseRef, baseSha) {
   if (current.repository !== source.repository || current.issue?.number !== source.issue.number ||
       current.workBranch !== source.workBranch || current.buildCommentId !== source.buildCommentId ||
@@ -119,10 +170,34 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
       if (!response.ok) throw new Error(`Cannot validate recovery branch: HTTP ${response.status}`);
       return (await response.json()).object?.sha;
     };
+    const issueComments = async () => {
+      const all = [];
+      for (let page = 1; ; page += 1) {
+        const response = await fetch(`${process.env.GITHUB_API_URL || 'https://api.github.com'}/repos/${repository}/issues/${source.issue.number}/comments?per_page=100&page=${page}`, {
+          headers: { Accept: 'application/vnd.github+json', Authorization: `Bearer ${process.env.GITHUB_TOKEN}` },
+          signal: AbortSignal.timeout(30_000),
+        });
+        if (!response.ok) throw new Error(`Cannot read the task base receipt: HTTP ${response.status}`);
+        const batch = await response.json();
+        all.push(...batch);
+        if (batch.length < 100) return all;
+      }
+    };
+    // The publication record is absent when the failed run pushed nothing.
+    let published = null;
+    if (args.published) {
+      try { published = JSON.parse(read(args.published).toString('utf8')); } catch (error) { if (error.code !== 'ENOENT') throw error; }
+    }
+    data.recovery.publishedCommit = publishedWorkCommit(published, { sourceRunId: data.recovery.sourceRunId, workBranch: source.workBranch });
     const workSha = await getRef(source.workBranch);
-    const baseRef = workSha ? source.workBranch : source.task.targetBranch;
-    const baseSha = workSha || await getRef(baseRef);
-    validateRecoveryBase(data.recovery, source, source, baseRef, baseSha);
+    const base = liveRecoveryBase({
+      recovery: data.recovery, source, workSha,
+      targetSha: workSha ? null : await getRef(source.task.targetBranch),
+      pinnedSha: workSha ? null : pinnedTaskBase(await issueComments(), {
+        repository, issue: source.issue.number, targetBranch: source.task.targetBranch,
+      }),
+    });
+    validateRecoveryBase(data.recovery, source, source, base.ref, base.sha);
     for (const [name, value] of [['task-event.json', data.event], ['handoff.json', data.handoff], ['recovery.json', data.recovery]]) {
       // Replacing a file from an artifact must not follow a symlink.
       try { read(path.join(root, name)); } catch (error) { if (error.code !== 'ENOENT') throw error; }
@@ -132,9 +207,23 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
   } else if (command === 'check-base') {
     const recovery = json(path.join(root, 'recovery.json'));
     const current = json(args.metadata);
-    validateRecoveryBase(recovery, json(path.join(root, 'task-metadata.json')), current, args['base-ref'], args['base-sha']);
+    const source = json(path.join(root, 'task-metadata.json'));
+    // prepare-task.mjs resolved the live base: the work branch's head when it
+    // exists, otherwise the target (pinned for a shared one). A work branch at
+    // the failed run's published commit maps back to the recorded base.
+    const onWork = args['base-ref'] === source.workBranch;
+    const base = liveRecoveryBase({
+      recovery, source,
+      workSha: onWork ? args['base-sha'] : null,
+      targetSha: onWork ? null : args['base-sha'],
+      pinnedSha: null,
+    });
+    validateRecoveryBase(recovery, source, current, base.ref, base.sha);
     current.recovery = recovery;
     writeFileSync(args.metadata, `${JSON.stringify(current, null, 2)}\n`);
+    if (args.output) {
+      appendFileSync(args.output, `ref=${base.ref}\nsha=${base.sha}\nexpected_work_sha=${base.expectedWorkSha ?? ''}\n`);
+    }
   } else if (command === 'context') {
     const recovery = json(path.join(root, 'recovery.json'));
     if (!positive(recovery.sourceRunId)) throw new Error('Invalid recovery context.');

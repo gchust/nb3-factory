@@ -119,6 +119,8 @@ jobs:
       work_branch: ${{ steps.prepare.outputs.work_branch }}
       base_ref: ${{ steps.base.outputs.ref }}
       base_sha: ${{ steps.base.outputs.sha }}
+      # Set when a recovery replaces the commit its failed run published.
+      expected_work_sha: ${{ steps.base.outputs.expected_work_sha }}
       rerun_rejected: ${{ steps.rerun_guard.outputs.rerun_rejected }}
     steps:
       # "Re-run all jobs" would record attempt N as the task's run, upload a
@@ -177,8 +179,26 @@ jobs:
             /.github/scripts/evaluation-sample.mjs
           persist-credentials: false
 
+      # A continuation that fails here has no checkpoint of its own, and its
+      # source run concluded success, so one transient artifact error would
+      # discard the handed-off work: each download below is retried once.
       - name: Download source task control pin
+        id: previous_task_download
         if: (github.event_name == 'repository_dispatch' && github.event.action == 'code-agent-continue') || inputs.recovery_run_id != ''
+        continue-on-error: true
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: factory-task-${{ inputs.recovery_run_id != '' && inputs.issue_number || github.event.client_payload.issue_number }}
+          path: previous-task
+          run-id: ${{ inputs.recovery_run_id || github.event.client_payload.previous_run_id }}
+          github-token: ${{ github.token }}
+
+      - name: Wait before retrying the source task download
+        if: steps.previous_task_download.outcome == 'failure'
+        run: sleep 30
+
+      - name: Retry the source task control pin download
+        if: steps.previous_task_download.outcome == 'failure'
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: factory-task-${{ inputs.recovery_run_id != '' && inputs.issue_number || github.event.client_payload.issue_number }}
@@ -200,12 +220,40 @@ jobs:
           github-token: ${{ github.token }}
 
       - name: Download failed-run checkpoint
+        id: recovery_download
         if: inputs.recovery_run_id != ''
+        continue-on-error: true
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           # The checkpoint; older runs uploaded the same files as factory-handoff-N too.
           name: factory-agent-${{ inputs.issue_number }}
           path: recovery
+          run-id: ${{ inputs.recovery_run_id }}
+          github-token: ${{ github.token }}
+
+      - name: Wait before retrying the failed-run checkpoint download
+        if: steps.recovery_download.outcome == 'failure'
+        run: sleep 30
+
+      - name: Retry the failed-run checkpoint download
+        if: steps.recovery_download.outcome == 'failure'
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: factory-agent-${{ inputs.issue_number }}
+          path: recovery
+          run-id: ${{ inputs.recovery_run_id }}
+          github-token: ${{ github.token }}
+
+      # The commit the failed run's publication pushed to the work branch, if
+      # it pushed any. Absent, the work branch counts as moved, which refuses
+      # rather than overwrites; so a missing record can only refuse a recovery.
+      - name: Download the failed run's publication record
+        if: inputs.recovery_run_id != ''
+        continue-on-error: true
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: factory-published-${{ inputs.issue_number }}
+          path: recovery-published
           run-id: ${{ inputs.recovery_run_id }}
           github-token: ${{ github.token }}
 
@@ -217,7 +265,7 @@ jobs:
         run: |
           node bootstrap/.github/scripts/handoff-recovery.mjs normalize \
             --event "$GITHUB_EVENT_PATH" --task previous-task/task-metadata.json \
-            --checkpoint recovery --output "$GITHUB_OUTPUT"
+            --checkpoint recovery --published recovery-published/publication.json --output "$GITHUB_OUTPUT"
 
       # An evaluation-batch sample starts on its batch's frozen control plane,
       # proven by bot receipts and the checksummed batch manifest (not by any
@@ -268,25 +316,12 @@ jobs:
             --metadata "$RUNNER_TEMP/task-metadata.json" \
             --output "$GITHUB_OUTPUT"
 
-      # A continuation keeps the application base its source run recorded; see
-      # continuationBase in handoff-control.mjs. Everything else uses prepare's.
-      - name: Resolve the application base
-        id: base
-        if: steps.prepare.outputs.status == 'ready'
-        env:
-          BASE_REF: ${{ steps.prepare.outputs.base_ref }}
-          BASE_SHA: ${{ steps.prepare.outputs.base_sha }}
-          CONTINUATION: ${{ github.event_name == 'repository_dispatch' && github.event.action == 'code-agent-continue' }}
-        run: |
-          if [[ "$CONTINUATION" == true ]]; then
-            node bootstrap/.github/scripts/handoff-control.mjs base \
-              --previous-task previous-task/task-metadata.json \
-              --base-ref "$BASE_REF" --base-sha "$BASE_SHA" --output "$GITHUB_OUTPUT"
-          else
-            printf 'ref=%s\nsha=%s\n' "$BASE_REF" "$BASE_SHA" >> "$GITHUB_OUTPUT"
-          fi
-
+      # A recovery keeps the base its failed run recorded. A work branch at the
+      # commit that run's publication pushed counts as unmoved, and the recovery
+      # replaces that commit (expected_work_sha, the push lease); any other move
+      # is refused. See liveRecoveryBase in handoff-recovery.mjs.
       - name: Reject changed recovery input or application base
+        id: recovery_base
         if: inputs.recovery_run_id != '' && steps.prepare.outputs.status == 'ready'
         env:
           BASE_REF: ${{ steps.prepare.outputs.base_ref }}
@@ -294,7 +329,32 @@ jobs:
         run: |
           node bootstrap/.github/scripts/handoff-recovery.mjs check-base \
             --checkpoint recovery --metadata "$RUNNER_TEMP/task-metadata.json" \
-            --base-ref "$BASE_REF" --base-sha "$BASE_SHA"
+            --base-ref "$BASE_REF" --base-sha "$BASE_SHA" --output "$GITHUB_OUTPUT"
+
+      # A continuation keeps the application base its source run recorded; see
+      # continuationBase in handoff-control.mjs. A recovery uses the base the
+      # step above validated. Everything else uses prepare's.
+      - name: Resolve the application base
+        id: base
+        if: steps.prepare.outputs.status == 'ready'
+        env:
+          BASE_REF: ${{ steps.prepare.outputs.base_ref }}
+          BASE_SHA: ${{ steps.prepare.outputs.base_sha }}
+          CONTINUATION: ${{ github.event_name == 'repository_dispatch' && github.event.action == 'code-agent-continue' }}
+          RECOVERY: ${{ inputs.recovery_run_id != '' }}
+          RECOVERY_REF: ${{ steps.recovery_base.outputs.ref }}
+          RECOVERY_SHA: ${{ steps.recovery_base.outputs.sha }}
+          RECOVERY_EXPECTED_WORK_SHA: ${{ steps.recovery_base.outputs.expected_work_sha }}
+        run: |
+          if [[ "$CONTINUATION" == true ]]; then
+            node bootstrap/.github/scripts/handoff-control.mjs base \
+              --previous-task previous-task/task-metadata.json \
+              --base-ref "$BASE_REF" --base-sha "$BASE_SHA" --output "$GITHUB_OUTPUT"
+          elif [[ "$RECOVERY" == true ]]; then
+            printf 'ref=%s\nsha=%s\nexpected_work_sha=%s\n' "$RECOVERY_REF" "$RECOVERY_SHA" "$RECOVERY_EXPECTED_WORK_SHA" >> "$GITHUB_OUTPUT"
+          else
+            printf 'ref=%s\nsha=%s\n' "$BASE_REF" "$BASE_SHA" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Save normalized recovery checkpoint
         if: inputs.recovery_run_id != '' && steps.prepare.outputs.status == 'ready'
@@ -373,12 +433,29 @@ jobs:
       # always() uploads would otherwise publish a second, nearly empty
       # factory-agent-N, and a recovery downloading that name by run would read
       # it instead of the first attempt's checkpoint.
+      # A later attempt is accepted only when no earlier attempt started this
+      # job (for example prepare failed on a transient error, as prepare's own
+      # guard accepts): there is no checkpoint it could lose, and this attempt
+      # is the task's first execution. FACTORY_FIRST_AGENT_ATTEMPT tells
+      # pipeline-state.mjs so. An unreadable job list rejects.
       - name: Reject a GitHub Re-run of this job
         id: rerun_guard
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           if (( ${GITHUB_RUN_ATTEMPT:-1} > 1 )); then
-            echo "::error::GitHub Re-run cannot preserve task repair limits. Use an explicit recovery Run (workflow_dispatch with recovery_run_id=${GITHUB_RUN_ID}) instead; this attempt uploads no checkpoint."
-            exit 1
+            set -euo pipefail
+            started=''
+            for (( attempt = 1; attempt < GITHUB_RUN_ATTEMPT; attempt++ )); do
+              started+="$(gh api --paginate "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/attempts/$attempt/jobs?per_page=100" \
+                --jq '.jobs[] | select(.name == "agent" and .started_at != null and .conclusion != "skipped") | .name')"
+            done
+            if [[ -n "$started" ]]; then
+              echo "::error::GitHub Re-run cannot preserve task repair limits. Use an explicit recovery Run (workflow_dispatch with recovery_run_id=${GITHUB_RUN_ID}) instead; this attempt uploads no checkpoint."
+              exit 1
+            fi
+            echo "FACTORY_FIRST_AGENT_ATTEMPT=true" >> "$GITHUB_ENV"
+            echo "::notice::No earlier attempt of this run started the agent job; attempt ${GITHUB_RUN_ATTEMPT} is the task's first execution."
           fi
 
       - name: Check out factory control plane
@@ -537,6 +614,11 @@ jobs:
           else
             node control/.github/scripts/pipeline-state.mjs init "$RUNNER_TEMP/agent-artifacts/pipeline-state.json" task/task-metadata.json
           fi
+          # The checkpoint, the failed PR, retro and visual reports all read the
+          # task metadata beside the state. Copied here, not only when the
+          # prompt is built, so a failure during setup (dependency or Agent
+          # install, preflight, fonts) still leaves a complete checkpoint.
+          cp task/task-metadata.json "$RUNNER_TEMP/agent-artifacts/task-metadata.json"
           echo "phase=$(node control/.github/scripts/pipeline-state.mjs phase "$RUNNER_TEMP/agent-artifacts/pipeline-state.json")" >> "$GITHUB_OUTPUT"
 
       - name: Check independent evaluation prerequisites before model work
@@ -1084,6 +1166,8 @@ jobs:
     outputs:
       # A failed verification left its deployable build; see the upload below.
       failed_dist: ${{ steps.failed_dist_upload.outcome == 'success' }}
+      # A passed verification's preview package was uploaded.
+      dist_available: ${{ steps.dist_upload.outcome == 'success' }}
     env:
       FACTORY_BUILD_TARGET: linux-x64
       FACTORY_BUILD_NODE_VERSION: '24'
@@ -1214,19 +1298,34 @@ jobs:
       # target branch the build belongs to. They are staged into one directory
       # first because `upload-artifact` keeps the structure below the paths' common
       # ancestor, and these two live in unrelated directories of the job.
+      # The package only feeds the preview, which never decides acceptance:
+      # a transient artifact error here must not turn a passed verification
+      # into a failed delivery. deploy-preview reports the missing package
+      # (dist_available, and selectDistArtifact reads this step's outcome).
       - name: Stage the deployable build and its metadata
+        id: dist_stage
+        continue-on-error: true
         run: |
           mkdir -p "$RUNNER_TEMP/deployable"
           cp workspace/storage/exports/dist.tar.gz "$RUNNER_TEMP/deployable/dist.tar.gz"
           cp agent-artifacts/task-metadata.json "$RUNNER_TEMP/deployable/task-metadata.json"
 
       - name: Upload the deployable build
+        id: dist_upload
+        if: steps.dist_stage.outcome == 'success'
+        continue-on-error: true
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: factory-dist-${{ needs.prepare.outputs.issue_number }}
           path: ${{ runner.temp }}/deployable
           if-no-files-found: error
           retention-days: 14
+
+      - name: Report a missing deployable build
+        if: steps.dist_stage.outcome == 'failure' || steps.dist_upload.outcome == 'failure'
+        run: |
+          echo "::warning::The verified build could not be packaged for the preview; verification and delivery are unaffected, but this run has no preview."
+          echo 'The verified build could not be packaged for the preview; delivery is unaffected.' >> "$GITHUB_STEP_SUMMARY"
 
       # verify.sh builds and archives before its database, browser and required
       # checks. When one of those fails, the archive is the same linux-x64 build
@@ -1341,12 +1440,15 @@ jobs:
             --record agent-artifacts/publication-base.json
 
       - name: Commit and push task branch
+        id: push
         working-directory: workspace
         env:
           BASE_REF: ${{ needs.prepare.outputs.base_ref }}
           BASE_SHA: ${{ needs.prepare.outputs.base_sha }}
           ISSUE_NUMBER: ${{ needs.prepare.outputs.issue_number }}
           WORK_BRANCH: ${{ needs.prepare.outputs.work_branch }}
+          # A recovery replacing the commit its failed run published.
+          EXPECTED_WORK_SHA: ${{ needs.prepare.outputs.expected_work_sha }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -1358,7 +1460,10 @@ jobs:
             echo "No new application changes; reusing the existing work branch commit."
           else
             git commit -m "feat: apply Code Agent task #${ISSUE_NUMBER}"
-            if [[ "$BASE_REF" == "$WORK_BRANCH" ]]; then
+            if [[ "$EXPECTED_WORK_SHA" =~ ^[a-f0-9]{40}$ ]]; then
+              # Only the failed run's own published commit may be replaced.
+              lease="refs/heads/${WORK_BRANCH}:${EXPECTED_WORK_SHA}"
+            elif [[ "$BASE_REF" == "$WORK_BRANCH" ]]; then
               lease="refs/heads/${WORK_BRANCH}:${BASE_SHA}"
             else
               lease="refs/heads/${WORK_BRANCH}:"
@@ -1395,6 +1500,28 @@ jobs:
             fi
             cat "$RUNNER_TEMP/push.log" >&2
           fi
+          # What the work branch now holds, for a recovery from this run: a
+          # branch still at this commit is this run's own publication, not
+          # newer work (liveRecoveryBase in handoff-recovery.mjs).
+          mkdir -p "$RUNNER_TEMP/publication-record"
+          node -e '
+            const [file, issue, branch, commit, runId, attempt, status] = process.argv.slice(1);
+            require("fs").writeFileSync(file, JSON.stringify({ version: 1, issue: Number(issue), workBranch: branch,
+              commit, sourceRunId: Number(runId), attempt: Number(attempt), status }, null, 2) + "\n");
+          ' "$RUNNER_TEMP/publication-record/publication.json" "$ISSUE_NUMBER" "$WORK_BRANCH" \
+            "$(git rev-parse HEAD)" "$GITHUB_RUN_ID" "$GITHUB_RUN_ATTEMPT" "$FACTORY_DELIVERY_STATUS"
+
+      # Small and best effort: without it a recovery refuses (the branch looks
+      # moved) instead of overwriting anything.
+      - name: Upload the publication record
+        if: steps.push.outcome == 'success'
+        continue-on-error: true
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: factory-published-${{ needs.prepare.outputs.issue_number }}
+          path: ${{ runner.temp }}/publication-record/publication.json
+          if-no-files-found: warn
+          retention-days: 14
 
       - name: Create or update Pull Request
         env:
@@ -1874,6 +2001,45 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: node .github/scripts/comment-reply.mjs publish task/task-metadata.json reply
+
+  # A comment round whose prepare ended without status ready (waiting behind
+  # another PR, a rejected or duplicate instruction, or prepare failing) runs
+  # neither dispatch-reports nor dispatch-reply-history, the only other
+  # requesters of the comment queue. It was started with GITHUB_TOKEN, so its
+  # completion emits no workflow_run either: request the queue here, or the
+  # Issue's next instruction waits for the late hourly sweep. A re-run prepare
+  # rejected claimed nothing and wakes nothing.
+  wake-comment-queue:
+    needs: prepare
+    if: >-
+      !cancelled() &&
+      needs.prepare.outputs.build_comment_id != '' &&
+      needs.prepare.outputs.status != 'ready' &&
+      needs.prepare.outputs.rerun_rejected != 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      actions: write
+    steps:
+      # From this workflow file's revision, as in dispatch-reports.
+      - name: Check out the report dispatcher
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.workflow_sha }}
+          path: dispatcher
+          persist-credentials: false
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /.github/scripts/dispatch-task-reports.sh
+      - name: Request comment-build-queue.yml
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SOURCE_RUN_ID: ${{ github.run_id }}
+          SOURCE_ATTEMPT: ${{ github.run_attempt }}
+          FACTORY_REPORT_REF: ${{ github.event.repository.default_branch }}
+          ISSUE_NUMBER: ${{ needs.prepare.outputs.issue_number }}
+        run: bash dispatcher/.github/scripts/dispatch-task-reports.sh comment-build-queue.yml
 
   # Question rounds skip dispatch-reports, so they request their history here.
   # A /build round's history is already requested by dispatch-reports.
