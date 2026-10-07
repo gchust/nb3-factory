@@ -114,11 +114,16 @@ const owner = { login: 'maintainer', type: 'User' };
 const bot = { login: 'github-actions[bot]', type: 'Bot' };
 const issueBody =
   '### 目标分支\napps/demo\n### 任务类型\n创建新系统\n### 业务需求\nOUTSIDER_REQUIREMENT\n### 验收要求\nWorks';
-function queueFixture({ association = 'NONE', comments = [], runs = [] } = {}) {
+function queueFixture({
+  association = 'NONE',
+  comments = [],
+  runs = [],
+  user = { login: 'outsider', type: 'User' },
+} = {}) {
   const issue = {
     number: 2,
     state: 'open',
-    user: { login: 'outsider', type: 'User' },
+    user,
     author_association: association,
     body: issueBody,
   };
@@ -203,6 +208,44 @@ test("a maintainer's comment on an outsider's Issue is never queued or dispatche
   assert.equal(trusted.dispatches().length, 1);
 });
 
+test("a maintainer's comment on the factory's own Issue (daily preset, evaluation sample) still starts a round", async () => {
+  // Opened by this repository's workflows with GITHUB_TOKEN: the bot's
+  // association is never OWNER, MEMBER or COLLABORATOR.
+  for (const association of ['NONE', 'CONTRIBUTOR']) {
+    const f = queueFixture({
+      association,
+      user: bot,
+      comments: [maintainerComment(21)],
+      runs: built,
+    });
+    await coordinate(f.client, 2, 0);
+    assert.deepEqual(
+      f.receipts().map((receipt) => [receipt.id, receipt.status]),
+      [[21, 'dispatched']],
+    );
+    assert.equal(f.dispatches().length, 1);
+    const task = await resolveBuildTask(f.client, f.issue, 21);
+    assert.match(task.requirements, /Add orders/);
+  }
+  // Any other bot or App is not trusted, nor a user named like the factory bot.
+  for (const user of [
+    { login: 'task-manager[bot]', type: 'Bot' },
+    { login: 'github-actions[bot]', type: 'User' },
+  ]) {
+    const f = queueFixture({
+      user,
+      comments: [maintainerComment(21)],
+      runs: built,
+    });
+    await coordinate(f.client, 2, 0);
+    assert.deepEqual(f.receipts(), [], user.login);
+    await assert.rejects(
+      resolveBuildTask(f.client, f.issue, 21),
+      /Issue 作者没有仓库权限/,
+    );
+  }
+});
+
 test("an untrusted Issue's earlier receipts are closed, and a lost dispatch is not sent again", async () => {
   const f = queueFixture({
     comments: [
@@ -265,7 +308,7 @@ test('the queue workflow drops comment events on Issues from people without repo
     .split('runs-on:')[0];
   assert.match(
     condition,
-    /contains\(fromJSON\('\["OWNER","MEMBER","COLLABORATOR"\]'\), github\.event\.comment\.author_association\) &&\n\s+contains\(fromJSON\('\["OWNER","MEMBER","COLLABORATOR"\]'\), github\.event\.issue\.author_association\)/,
+    /contains\(fromJSON\('\["OWNER","MEMBER","COLLABORATOR"\]'\), github\.event\.comment\.author_association\) &&\n\s+\(contains\(fromJSON\('\["OWNER","MEMBER","COLLABORATOR"\]'\), github\.event\.issue\.author_association\) \|\|\n\s+\(github\.event\.issue\.user\.login == 'github-actions\[bot\]' && github\.event\.issue\.user\.type == 'Bot'\)\)/,
   );
 });
 
@@ -691,6 +734,18 @@ test('the failure notice offers recovery from an undispatched handoff, never fro
     FACTORY_CHECKPOINT_AVAILABLE: 'true',
   });
   assert.doesNotMatch(plain, /recovery_run_id/);
+  // Without a saved checkpoint, or after a cancel, nothing suggests recovery.
+  for (const env of [
+    { FACTORY_CHECKPOINT_AVAILABLE: 'false' },
+    { FACTORY_CHECKPOINT_AVAILABLE: 'true', FACTORY_RUN_CANCELLED: 'true' },
+  ]) {
+    const lost = await notice(t, handoff, {
+      FACTORY_HANDOFF_UNDISPATCHED: 'true',
+      ...env,
+    });
+    assert.match(lost, /检查点未保存或运行已取消，无法从本 Run 恢复/);
+    assert.doesNotMatch(lost, /recovery_run_id|恢复时会再次核对/);
+  }
   const cancelled = await notice(
     t,
     { phase: 'repair', outcome: 'failed' },
@@ -746,12 +801,27 @@ function pushFixture(t) {
   git(seed, 'remote', 'add', 'origin', remote);
   git(seed, 'push', 'origin', 'HEAD:refs/heads/develop');
   let attempt = 0;
+  // The target moves with a commit of the same tree, as a factory-only change
+  // the publisher restacks onto would leave the application tree.
+  const moveTarget = () => {
+    git(seed, 'commit', '--allow-empty', '-m', 'factory-only change');
+    git(seed, 'push', 'origin', 'HEAD:refs/heads/develop');
+    return git(seed, 'rev-parse', 'HEAD');
+  };
+  // The record an earlier attempt of this run uploaded (factory-published-N).
+  const writeRecord = (value) => {
+    mkdirSync(path.join(dir, 'previous-publication'), { recursive: true });
+    writeFileSync(
+      path.join(dir, 'previous-publication', 'publication.json'),
+      JSON.stringify(value),
+    );
+  };
   // Each attempt is a fresh runner: a new clone at the base with the change staged.
-  const push = (change, date) => {
+  const push = (change, date, onto = base) => {
     attempt += 1;
     const workspace = path.join(dir, `workspace-${attempt}`);
     git(dir, 'clone', '--quiet', remote, workspace);
-    git(workspace, 'checkout', '--quiet', base);
+    git(workspace, 'checkout', '--quiet', onto);
     writeFileSync(path.join(workspace, 'app.txt'), change);
     git(workspace, 'add', 'app.txt');
     const runnerTemp = path.join(dir, `runner-${attempt}`);
@@ -784,7 +854,7 @@ function pushFixture(t) {
     return { ...result, record };
   };
   const remoteHead = () => git(remote, 'rev-parse', `refs/heads/${branch}`);
-  return { push, remoteHead };
+  return { push, remoteHead, moveTarget, writeRecord };
 }
 
 test('a re-run publication keeps the commit its earlier attempt pushed instead of failing the lease', (t) => {
@@ -796,7 +866,7 @@ test('a re-run publication keeps the commit its earlier attempt pushed instead o
   assert.equal(again.status, 0, again.stderr);
   assert.match(
     again.stdout,
-    /already holds this verified tree on the same base/,
+    /already holds this verified tree at [a-f0-9]{40}, published by this task/,
   );
   assert.equal(f.remoteHead(), pushed);
   assert.equal(again.record().commit, pushed);
@@ -804,6 +874,36 @@ test('a re-run publication keeps the commit its earlier attempt pushed instead o
   const other = f.push('other\n', '2026-10-07T02:00:00Z');
   assert.notEqual(other.status, 0);
   assert.equal(f.remoteHead(), pushed);
+});
+
+test("after the target moved, only this run's publication record lets a re-run keep its earlier commit", (t) => {
+  const f = pushFixture(t);
+  const first = f.push('feature\n', '2026-10-07T00:00:00Z');
+  assert.equal(first.status, 0, first.stderr);
+  const pushed = f.remoteHead();
+  const moved = f.moveTarget();
+  // Same tree on a new parent, without a record: not provably this run's.
+  const unrecorded = f.push('feature\n', '2026-10-07T01:00:00Z', moved);
+  assert.notEqual(unrecorded.status, 0);
+  // A record of another run does not count either.
+  f.writeRecord({ ...first.record(), sourceRunId: 900 });
+  assert.notEqual(f.push('feature\n', '2026-10-07T02:00:00Z', moved).status, 0);
+  f.writeRecord(first.record());
+  const kept = f.push('feature\n', '2026-10-07T03:00:00Z', moved);
+  assert.equal(kept.status, 0, kept.stderr);
+  assert.match(kept.stdout, /published by this task/);
+  assert.equal(f.remoteHead(), pushed);
+  assert.equal(kept.record().commit, pushed);
+  // The record never admits different content.
+  assert.notEqual(f.push('other\n', '2026-10-07T04:00:00Z', moved).status, 0);
+  assert.equal(f.remoteHead(), pushed);
+  const download = stepOf(
+    "Download this run's publication record",
+    jobOf('publish'),
+  );
+  assert.match(download, /if: github\.run_attempt > 1/);
+  assert.match(download, /continue-on-error: true/);
+  assert.match(download, /path: previous-publication\n/);
 });
 
 function pullClient(responses) {
@@ -1064,7 +1164,7 @@ test('a failed build with an empty patch on a new branch skips publish-failed an
   const step = stepOf('Check for a publishable diff');
   assert.match(step, /continue-on-error: true/);
   const script = runOf(step);
-  const check = (baseRef, patch) => {
+  const check = (baseRef, patch, expectedWorkSha = '') => {
     const dir = temp(t);
     mkdirSync(path.join(dir, 'agent-artifacts'));
     if (patch !== null)
@@ -1080,6 +1180,7 @@ test('a failed build with an empty patch on a new branch skips publish-failed an
         GITHUB_STEP_SUMMARY: path.join(dir, 'summary'),
         BASE_REF: baseRef,
         WORK_BRANCH: branch,
+        EXPECTED_WORK_SHA: expectedWorkSha,
       },
     });
     assert.equal(result.status, 0, result.stderr);
@@ -1089,6 +1190,13 @@ test('a failed build with an empty patch on a new branch skips publish-failed an
   assert.equal(check('develop', 'diff --git a/x b/x\n'), '');
   // An existing work branch's PR is still marked failed.
   assert.equal(check(branch, ''), '');
+  // A recovery keeps the target as its base, yet the failed run's publication
+  // created the work branch: its PR is still marked failed.
+  assert.equal(check('develop', '', A), '');
+  assert.match(
+    step,
+    /EXPECTED_WORK_SHA: \$\{\{ needs\.prepare\.outputs\.expected_work_sha \}\}/,
+  );
   const failed = jobOf('publish-failed');
   assert.match(failed, /needs\.agent\.outputs\.empty_patch != 'true'/);
   assert.match(

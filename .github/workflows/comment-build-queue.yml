@@ -60,8 +60,10 @@ jobs:
     # A skipped task run (an Issue from someone without repository access)
     # finished no build, so its completion event is not a reason to sweep.
     # A comment starts a round only on an Issue whose author has repository
-    # access too: the Issue body is every round's requirements (coordinate
-    # checks the same; the sweep closes what an untrusted Issue still queues).
+    # access too, or that the factory's own workflows opened as
+    # github-actions[bot] (daily presets, evaluation samples): the Issue body is
+    # every round's requirements (isTrustedIssue in coordinate checks the same;
+    # the sweep closes what an untrusted Issue still queues).
     # !cancelled(): wait-for-source is skipped for every other event, and a
     # failed wait still reconciles (an unfinished run reads as still active).
     if: >-
@@ -71,7 +73,8 @@ jobs:
       (!github.event.issue.pull_request &&
        github.event.comment.user.type != 'Bot' &&
        contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.comment.author_association) &&
-       contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.issue.author_association)))
+       (contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.issue.author_association) ||
+        (github.event.issue.user.login == 'github-actions[bot]' && github.event.issue.user.type == 'Bot'))))
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     # Only this workflow writes queue receipts. Keep admission and completion

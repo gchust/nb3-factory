@@ -4,6 +4,7 @@ import { pathToFileURL } from 'node:url';
 import {
   GitHubClient,
   isTrustedAuthor,
+  isTrustedIssue,
   parseIssueTask,
   TaskInputError,
 } from './factory-lib.mjs';
@@ -35,7 +36,8 @@ export async function coordinate(client, issueNumber, admissionId = Infinity) {
   // comment on an Issue from someone without repository access starts
   // nothing: no comment is admitted, a queued one is closed, and a dispatched
   // one is never sent again. Maintainers can still run it with workflow_dispatch.
-  const trusted = isTrustedAuthor(issue);
+  // The factory's own Issues (daily presets, evaluation samples) are trusted.
+  const trusted = isTrustedIssue(issue);
   if (trusted) {
     // Activate on a new human comment; scheduled reconciliation must not replay
     // every historical discussion (and consume quota) when this feature ships.

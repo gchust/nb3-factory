@@ -88,7 +88,7 @@ Agent 阶段结束时通过 `always()` 停止观察进程并发送末次快照�
 
 这里的工厂自有文件只认 `.github/**`（不含被 `eslint.config.js` 导入、会改变应用 lint 规则的 `.github/scripts/factory-eslint.mjs`）、`docs/**`，以及只追加且不含 `!` 反选规则的 `.gitignore`。终验的 lint 与格式检查都排除 `.github/**`；`docs/**` 由工厂测试保持 Prettier 干净；追加的忽略规则只会让检查少看未跟踪文件，不会改变已跟踪文件。`.npmrc`、`README.MD`、`package.json`、`eslint.config.js`、`factory-template.json` 和锁文件会影响安装或检查，或只有部分属于工厂，一律按应用文件处理。因此改基后的发布树与终验的树只在这些工厂文件上不同，终验结论仍然适用。
 
-同一 Run 内发布是幂等的：推送成功而 PR 创建失败后 GitHub Re-run 发布 Job，会以新的提交 ID 再提交同一棵树，租约本会拒绝；远端工作分支已是同一棵树、同一父提交时直接沿用该提交，不再推送。PR 创建失败后先按工作分支和目标分支查找已打开的 PR，找不到且失败可能是暂时的（超时、5xx、尚未可见的“already exists”）才重试。
+同一 Run 内发布是幂等的：推送成功而 PR 创建失败后 GitHub Re-run 发布 Job，会以新的提交 ID 再提交同一棵树，租约本会拒绝；远端工作分支已是同一棵树，且父提交相同、或本 Run 先前 attempt 的发布记录（`factory-published-N`）正是这个提交（两次 attempt 之间目标分支移动、发布基线被改基）时，直接沿用该提交，不再推送；同一棵树但无法证明是本 Run 发布的提交仍按租约推送并被拒绝。PR 创建失败后先按工作分支和目标分支查找已打开的 PR，找不到且失败可能是暂时的（超时、5xx、尚未可见的“already exists”）才重试。
 
 `agent-artifacts/publication-base.json` 记录 `verifiedBase`、`publishedBase`、是否改基和原因，并写入 Step Summary。PR 正文保留 `agent-verified-base-sha` 标记和一行说明；搭建报告与构建复盘仍以任务元数据中的原 `base_sha` 为准，因为验证是在那里完成的。
 

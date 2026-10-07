@@ -40,6 +40,19 @@ export function isTrustedAuthor(entity) {
   return TRUSTED_AUTHOR_ASSOCIATIONS.includes(entity?.author_association);
 }
 
+// An Issue whose body may become a comment round's requirements. Besides
+// people with repository access, the factory's own Issues qualify: daily
+// preset runs and evaluation samples are opened by this repository's
+// workflows as github-actions[bot] (whose association is never OWNER, MEMBER
+// or COLLABORATOR), and only those workflows can author as that account.
+// Other bots and Apps, an external task manager's included, are not trusted.
+export function isFactoryBot(user) {
+  return user?.login === 'github-actions[bot]' && user?.type === 'Bot';
+}
+export function isTrustedIssue(issue) {
+  return isTrustedAuthor(issue) || isFactoryBot(issue?.user);
+}
+
 export function extractIssueSections(body = '') {
   const sections = new Map();
   const heading = /^###\s+(.+?)\s*$\r?\n([\s\S]*?)(?=^###\s+|(?![\s\S]))/gm;

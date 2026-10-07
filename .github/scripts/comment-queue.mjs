@@ -1,6 +1,6 @@
 // Queue receipts live in trusted bot comments, independently of runner/artifact
 // retention. Only the serialized queue workflow may mutate these receipts.
-import { isTrustedAuthor, parseIssueTask, TaskInputError } from './factory-lib.mjs';
+import { isTrustedAuthor, isTrustedIssue, parseIssueTask, TaskInputError } from './factory-lib.mjs';
 
 const marker = '<!-- factory-build-v1\n';
 export const runTitle = /^Factory issue #(\d+) build (\d+)(?:\s|$)/;
@@ -120,7 +120,7 @@ export const UNTRUSTED_ISSUE =
 export async function resolveBuildTask(client, issue, buildId, initialTask) {
   // The Issue body is the round's requirements: re-checked for every comment
   // round prepare starts (dispatch, continuation, recovery), like the comment.
-  if (!isTrustedAuthor(issue)) throw new TaskInputError(UNTRUSTED_ISSUE);
+  if (!isTrustedIssue(issue)) throw new TaskInputError(UNTRUSTED_ISSUE);
   const { comments, receipts } = await receiptsFor(client, issue.number);
   const current = receipts.find((item) => item.id === Number(buildId));
   if (!current || current.status !== 'dispatched')

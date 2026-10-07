@@ -1161,7 +1161,9 @@ jobs:
       # A failed build whose patch is empty on a new work branch has nothing a
       # failed PR could show, and its push would only fail: publish-failed is
       # skipped and the failure notice says so (FACTORY_EMPTY_PATCH). An empty
-      # patch on an existing work branch still marks that branch's PR failed.
+      # patch on an existing work branch still marks that branch's PR failed,
+      # and so does a recovery's (expected_work_sha): its base is the target
+      # branch, yet the failed run's publication already created the branch.
       - name: Check for a publishable diff
         id: diff
         if: always() && (steps.patch.outcome == 'success' || steps.keep_checkpoint.outcome == 'success')
@@ -1170,9 +1172,10 @@ jobs:
         env:
           BASE_REF: ${{ needs.prepare.outputs.base_ref }}
           WORK_BRANCH: ${{ needs.prepare.outputs.work_branch }}
+          EXPECTED_WORK_SHA: ${{ needs.prepare.outputs.expected_work_sha }}
         run: |
           patch="$RUNNER_TEMP/agent-artifacts/agent.patch"
-          if [[ "$BASE_REF" != "$WORK_BRANCH" && -f "$patch" && ! -L "$patch" && ! -s "$patch" ]]; then
+          if [[ "$BASE_REF" != "$WORK_BRANCH" && -z "$EXPECTED_WORK_SHA" && -f "$patch" && ! -L "$patch" && ! -s "$patch" ]]; then
             echo "empty=true" >> "$GITHUB_OUTPUT"
             echo "::notice::The saved patch is empty and ${WORK_BRANCH} does not exist yet, so no failed build PR is published."
             echo "No application diff was saved; ${WORK_BRANCH} does not exist yet, so no failed build PR is published." >> "$GITHUB_STEP_SUMMARY"
@@ -1554,6 +1557,18 @@ jobs:
             --base-sha "$BASE_SHA" \
             --record agent-artifacts/publication-base.json
 
+      # A re-run attempt reads the commit an earlier attempt of this run
+      # pushed (the record is uploaded right after the push): the push below
+      # keeps that commit when it holds the same tree, even after the target
+      # branch moved and the publication base was restacked onto a new parent.
+      - name: Download this run's publication record
+        if: github.run_attempt > 1
+        continue-on-error: true
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: factory-published-${{ needs.prepare.outputs.issue_number }}
+          path: previous-publication
+
       - name: Commit and push task branch
         id: push
         working-directory: workspace
@@ -1590,11 +1605,25 @@ jobs:
           # A GitHub Re-run of this job after its push landed (and, say, the PR
           # creation failed) commits the same tree again under a new commit id,
           # which the lease below refuses. A remote work branch that already
-          # holds exactly this commit's tree on the same parent is that
-          # publication: keep its commit rather than pushing an identical one.
+          # holds exactly this commit's tree is that publication when it sits on
+          # the same parent, or when this run's publication record names it
+          # (the target moved between attempts and the base was restacked):
+          # keep its commit rather than pushing an identical tree. Any other
+          # commit with that tree is not provably this run's and is still pushed
+          # under the lease, which refuses it.
           if [[ "$push_needed" == true ]]; then
             remote="$(git ls-remote origin "refs/heads/${WORK_BRANCH}" | cut -f1)"
             parents() { git cat-file -p "$1" | sed -n 's/^parent //p'; }
+            recorded=''
+            record=../previous-publication/publication.json
+            if [[ -f "$record" && ! -L "$record" ]]; then
+              recorded="$(node -e '
+                const [file, runId, branch] = process.argv.slice(1);
+                const value = JSON.parse(require("fs").readFileSync(file, "utf8"));
+                if (value?.version === 1 && String(value.sourceRunId) === runId && value.workBranch === branch &&
+                  /^[a-f0-9]{40}$/.test(value.commit ?? "")) console.log(value.commit);
+              ' "$record" "$GITHUB_RUN_ID" "$WORK_BRANCH" 2>/dev/null || true)"
+            fi
             if [[ "$remote" == "$(git rev-parse HEAD)" ]]; then
               echo "${WORK_BRANCH} is already at this commit."
               push_needed=false
@@ -1602,8 +1631,8 @@ jobs:
               git fetch --quiet --no-tags --depth=1 origin "refs/heads/${WORK_BRANCH}" && \
               [[ "$(git rev-parse FETCH_HEAD)" == "$remote" ]] && \
               [[ "$(git rev-parse 'FETCH_HEAD^{tree}')" == "$(git rev-parse 'HEAD^{tree}')" ]] && \
-              [[ "$(parents FETCH_HEAD)" == "$(parents HEAD)" ]]; then
-              echo "${WORK_BRANCH} already holds this verified tree on the same base at ${remote}; keeping that commit instead of pushing again."
+              { [[ "$(parents FETCH_HEAD)" == "$(parents HEAD)" ]] || [[ "$remote" == "$recorded" ]]; }; then
+              echo "${WORK_BRANCH} already holds this verified tree at ${remote}, published by this task; keeping that commit instead of pushing again."
               git reset --quiet --soft "$remote"
               push_needed=false
             fi

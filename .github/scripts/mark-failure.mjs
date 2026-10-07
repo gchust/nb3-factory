@@ -96,12 +96,19 @@ const body = [
         '本次运行没有保存任何代码差异，工作分支尚不存在，因此没有创建标记 failed 的搭建 PR。',
       ]
     : []),
-  ...(undispatched
+  // Only a checkpoint that was saved, in a run that was not cancelled, can be
+  // recovered; otherwise say plainly that this handoff is lost.
+  ...(undispatched && recoverable
     ? [
         '',
         '本次运行已在 5 小时预算处保存 Handoff 检查点，但续跑没有成功派发（若派发请求超时，GitHub 也可能已经收到）。请先在 Actions 中确认没有从本 Run 续跑的运行；恢复时会再次核对，已有续跑时拒绝恢复。',
       ]
-    : []),
+    : undispatched
+      ? [
+          '',
+          '本次运行在 5 小时预算处请求了 Handoff，但续跑没有成功派发，且检查点未保存或运行已取消，无法从本 Run 恢复；需要继续时请重新发起任务。',
+        ]
+      : []),
   ...(process.env.FACTORY_RERUN_REJECTED === 'true'
     ? [
         '',
