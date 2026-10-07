@@ -9,6 +9,7 @@ import {
   feishuConfig,
   feishuDigest,
   notifyPending,
+  parseDays,
   ownersOf,
   parseOwners,
   unknownOwnerKeys,
@@ -657,6 +658,7 @@ test('a scheduled close archives to gh-pages, sends the digest once and forgets 
     sent: [{ date: '2026-09-27', count: 2 }],
     failed: [],
     held: [],
+    forgotten: [],
     remaining: 0,
   });
   assert.equal(sent.length, 1);
@@ -677,6 +679,7 @@ test('a scheduled close archives to gh-pages, sends the digest once and forgets 
       sent: [],
       failed: [],
       held: [],
+      forgotten: [],
       remaining: 0,
     },
   );
@@ -758,11 +761,121 @@ test('a day whose send may have been delivered is held until a maintainer resend
     baseUrl: 'https://owner.github.io/factory/',
     pause: noPause,
     send: count,
-    resendUncertain: true,
+    resendDays: new Set(['2026-09-27']),
   });
   assert.deepEqual(resent.sent, [{ date: '2026-09-27', count: 1 }]);
   assert.equal(sends, 1);
   assert.deepEqual(client.json(LEDGER).pending, []);
+});
+
+const twoDays = async () => {
+  const client = pages([
+    report(101, '2026-09-26T02:00:00.000Z'),
+    report(102, '2026-09-27T02:00:00.000Z'),
+  ]);
+  await archiveDay(client, { now: new Date('2026-09-27T01:07:00Z'), rules });
+  await archiveDay(client, { now: new Date('2026-09-28T01:07:00Z'), rules });
+  return client;
+};
+const pendingDays = (client) => [
+  ...new Set(client.json(LEDGER).pending.map((item) => item.date)),
+];
+const uncertainDays = (client) => [
+  ...new Set(
+    client
+      .json(LEDGER)
+      .pending.filter((item) => item.uncertain)
+      .map((item) => item.date),
+  ),
+];
+const timeout = () =>
+  Object.assign(new Error('Feishu request failed (TimeoutError)'), {
+    uncertain: true,
+  });
+
+// Feishu just failed to answer: later days are not tried, so they stay
+// plainly pending instead of becoming uncertain too.
+test('an uncertain send stops the run before the next day', async () => {
+  const client = await twoDays();
+  let sends = 0;
+  const result = await notifyPending(client, digestConfig, {
+    baseUrl: 'https://owner.github.io/factory/',
+    pause: noPause,
+    send: async () => {
+      sends += 1;
+      throw timeout();
+    },
+  });
+  assert.equal(sends, 1);
+  assert.deepEqual(uncertainDays(client), ['2026-09-26']);
+  assert.deepEqual(pendingDays(client), ['2026-09-26', '2026-09-27']);
+  assert.equal(result.failed.length, 1);
+});
+
+test('uncertain days are settled one by one: resend some, forget others', async () => {
+  const client = await twoDays();
+  // Both days end up uncertain over two runs.
+  for (let run = 0; run < 2; run++)
+    await notifyPending(client, digestConfig, {
+      baseUrl: 'https://owner.github.io/factory/',
+      pause: noPause,
+      send: async () => {
+        throw timeout();
+      },
+    });
+  assert.deepEqual(uncertainDays(client), ['2026-09-26', '2026-09-27']);
+
+  // 09-26 is in the chat, 09-27 is not: forget one, resend the other.
+  const titles = [];
+  const result = await notifyPending(client, digestConfig, {
+    baseUrl: 'https://owner.github.io/factory/',
+    pause: noPause,
+    send: async (_config, message) => {
+      titles.push(message.content.post.zh_cn.title);
+    },
+    forgetDays: new Set(['2026-09-26']),
+    resendDays: new Set(['2026-09-27']),
+  });
+  assert.deepEqual(result.forgotten, ['2026-09-26']);
+  assert.deepEqual(
+    result.sent.map((item) => item.date),
+    ['2026-09-27'],
+  );
+  assert.deepEqual(titles, ['NocoBase3 框架问题日报 · 2026-09-27']);
+  assert.deepEqual(client.json(LEDGER).pending, []);
+});
+
+test('resending one uncertain day leaves the other held', async () => {
+  const client = await twoDays();
+  for (let run = 0; run < 2; run++)
+    await notifyPending(client, digestConfig, {
+      baseUrl: 'https://owner.github.io/factory/',
+      pause: noPause,
+      send: async () => {
+        throw timeout();
+      },
+    });
+  const result = await notifyPending(client, digestConfig, {
+    baseUrl: 'https://owner.github.io/factory/',
+    pause: noPause,
+    send: async () => {},
+    resendDays: new Set(['2026-09-27']),
+  });
+  assert.deepEqual(result.held, ['2026-09-26']);
+  assert.deepEqual(
+    result.sent.map((item) => item.date),
+    ['2026-09-27'],
+  );
+  assert.deepEqual(pendingDays(client), ['2026-09-26']);
+});
+
+test('a day list is validated', () => {
+  assert.deepEqual(
+    [...parseDays(' 2026-09-26, 2026-09-27 ,')],
+    ['2026-09-26', '2026-09-27'],
+  );
+  assert.deepEqual([...parseDays('')], []);
+  assert.throws(() => parseDays('yesterday'), /Invalid day yesterday/);
 });
 
 test('a definite rejection keeps the day pending and unmarked', async () => {
@@ -817,7 +930,12 @@ test('each sent day is recorded before the next day is sent', async () => {
         }
       },
     }),
-    /ref update failed/,
+    (error) =>
+      /The Feishu digest for 2026-09-27 was delivered but not recorded/.test(
+        error.message,
+      ) &&
+      /forget_uncertain=2026-09-27/.test(error.message) &&
+      /ref update failed/.test(error.message),
   );
   assert.equal(order.length, 2);
   client.failRef = false;

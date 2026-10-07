@@ -23,9 +23,13 @@ on:
         type: boolean
         default: true
       resend_uncertain:
-        description: Also resend days marked uncertain (a send that may already be in the chat). Check the chat first.
-        type: boolean
-        default: false
+        description: Uncertain days (YYYY-MM-DD, comma-separated) you checked are missing from the chat; they are sent once more
+        required: false
+        type: string
+      forget_uncertain:
+        description: Days (YYYY-MM-DD, comma-separated) you checked are already in the chat; they are removed from the queue
+        required: false
+        type: string
 
 permissions: {}
 
@@ -100,9 +104,11 @@ jobs:
           # A secret, not a variable: the runner prints each step's env in the
           # public log and masks only secrets.
           FEISHU_PROBLEM_OWNERS: ${{ secrets.FEISHU_PROBLEM_OWNERS }}
-          # A day whose send may have reached the chat is only resent when a
-          # maintainer asks for it; a scheduled run never does.
-          RESEND_UNCERTAIN: ${{ github.event_name == 'workflow_dispatch' && inputs.resend_uncertain }}
+          # A day whose send may have reached the chat is only resent, or
+          # forgotten, by date when a maintainer asks; a scheduled run never does.
+          RESEND_UNCERTAIN: ${{ github.event_name == 'workflow_dispatch' && inputs.resend_uncertain || '' }}
+          FORGET_UNCERTAIN: ${{ github.event_name == 'workflow_dispatch' && inputs.forget_uncertain || '' }}
         run: >-
           node control/.github/scripts/daily-findings.mjs notify
-          --base-url "$REPORT_BASE_URL" --resend-uncertain "$RESEND_UNCERTAIN"
+          --base-url "$REPORT_BASE_URL"
+          --resend-uncertain "$RESEND_UNCERTAIN" --forget-uncertain "$FORGET_UNCERTAIN"

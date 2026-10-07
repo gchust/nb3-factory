@@ -47,10 +47,11 @@ on:
 
 permissions: {}
 
-# Publishing creates the release factory-source-<package digest>, which is the
-# same for every run of one source SHA (only the baseline branch name carries
-# the run id), so two runs for the same SHA would race between checking for
-# that release and creating it.
+# The release and the baseline branch are named per run attempt
+# (source-baseline-<sha12>-<run>-<attempt>), so runs never share them; the
+# check-then-create in publish-source-baseline.sh only matters when the same
+# descriptor is replayed. The group serializes runs of one PR or source SHA so
+# they don't build and publish side by side.
 concurrency:
   group: factory-source-baseline-${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || inputs.source_sha }}
   queue: max
