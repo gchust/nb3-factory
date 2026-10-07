@@ -958,9 +958,12 @@ jobs:
           # The whole checkpoint, regular files only (find -type f neither lists
           # nor follows symlinks): repair context, review and agent history and
           # the retro survive for the recovery and the reports. Not the handoff
-          # request, and not the source runner's progress observer files, whose
-          # pid the stop step below would otherwise signal.
+          # request; not the source runner's progress observer files, whose pid
+          # the stop step below would otherwise signal; and not the source run's
+          # invocation results or timings, which mark-failure, usage and timing
+          # reports would otherwise present as this run's.
           (cd handoff && find . -type f ! -path ./handoff.json ! -name 'live-progress.*' \
+            ! -name 'agent*.jsonl.result.json' ! -name 'timings.jsonl' \
             -exec cp --parents {} "$artifacts" \;)
           cp task/task-metadata.json "$artifacts/task-metadata.json"
           # What is published must pass the same check as what was validated.

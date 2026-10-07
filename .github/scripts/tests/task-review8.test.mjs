@@ -467,7 +467,7 @@ test('continuation downloads are retried once, and a setup failure before restor
   // The whole checkpoint, regular files only, without the handoff request.
   assert.match(
     keep,
-    /\(cd handoff && find \. -type f ! -path \.\/handoff\.json ! -name 'live-progress\.\*' \\\n\s+-exec cp --parents \{\} "\$artifacts" \\;\)/,
+    /\(cd handoff && find \. -type f ! -path \.\/handoff\.json ! -name 'live-progress\.\*' \\\n\s+! -name 'agent\*\.jsonl\.result\.json' ! -name 'timings\.jsonl' \\\n\s+-exec cp --parents \{\} "\$artifacts" \\;\)/,
   );
   assert.match(keep, /cp task\/task-metadata\.json/);
   // A refused control-plane verification keeps nothing.
