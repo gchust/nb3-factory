@@ -1,9 +1,59 @@
-import { Home } from 'lucide-react';
+import { FileStack, Home } from 'lucide-react';
 import {
   defineAppRoutes,
   defineSettingsRoutes,
   type AppClientRouteContribution,
+  type AppClientRouteDefinition,
 } from '@nocobase/app-client/plugins';
+
+/**
+ * The project-materials pages under one URL alias.
+ *
+ * The canonical `/project-materials` carries the menu entry; `/materials` and `/projectMaterials`
+ * are aliases so a link written either way reaches the same pages instead of the landing page.
+ * Every alias needs unique route names, hence `namePrefix`, and only the canonical tree declares
+ * `navigation`, so the menu lists the feature once.
+ */
+function materialRoutes(
+  path: string,
+  namePrefix: string,
+  withNavigation: boolean,
+): AppClientRouteDefinition[] {
+  return [
+    {
+      name: `${namePrefix}-list`,
+      path,
+      auth: 'required',
+      // Every signed-in user manages their own materials. Ownership, enforced by the server on
+      // every read and write, is what isolates one user's materials from another's, so this page
+      // needs no page grant an administrator would have to remember to hand out.
+      authz: 'skip',
+      ...(withNavigation
+        ? {
+            navigation: {
+              title: 'navigation.projectMaterials',
+              icon: FileStack,
+            },
+          }
+        : {}),
+      componentLoader: () => import('./pages/project-materials/index.js'),
+      children: [
+        {
+          name: `${namePrefix}-new`,
+          path: 'new',
+          authz: 'skip',
+          componentLoader: () => import('./pages/project-materials/new.js'),
+        },
+        {
+          name: `${namePrefix}-detail`,
+          path: ':id',
+          authz: 'skip',
+          componentLoader: () => import('./pages/project-materials/detail.js'),
+        },
+      ],
+    },
+  ];
+}
 
 const appRoutes: AppClientRouteContribution = defineAppRoutes([
   {
@@ -16,6 +66,9 @@ const appRoutes: AppClientRouteContribution = defineAppRoutes([
     navigation: { title: 'navigation.home', icon: Home },
     path: '/',
   },
+  ...materialRoutes('/project-materials', 'project-materials', true),
+  ...materialRoutes('/materials', 'materials', false),
+  ...materialRoutes('/projectMaterials', 'project-materials-camel', false),
   {
     auth: 'guest',
     authz: 'skip',

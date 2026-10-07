@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 
 import {
@@ -98,4 +98,21 @@ it('shows the denied content response without trying a third-party viewer', asyn
   expect(viewer.load).not.toHaveBeenCalled();
   expect(document.querySelector('iframe')).toBeNull();
   expect(screen.queryByRole('button', { name: /Download/ })).toBeNull();
+});
+
+it('explains a damaged image instead of leaving a broken image in place', async () => {
+  const damaged: FileRecord = {
+    ...file('png'),
+    mimeType: 'image/png',
+    contentUrl: '/main/uploads/projectMaterialFiles/damaged.png',
+  };
+  render(<FilePreviewDialog files={[damaged]} open onOpenChange={vi.fn()} />);
+  const image = await waitFor(() => {
+    const element = document.querySelector('img');
+    expect(element).not.toBeNull();
+    return element as HTMLImageElement;
+  });
+  // jsdom never fetches the source, so the browser's own load failure is delivered by hand.
+  fireEvent.error(image);
+  expect(await screen.findByRole('alert')).toHaveTextContent(/damaged/i);
 });
