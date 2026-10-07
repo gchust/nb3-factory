@@ -275,10 +275,15 @@ jobs:
       # would otherwise fail them.
       - name: Run factory regression tests before publication
         if: github.event_name != 'pull_request'
+        # The suite takes about 3 minutes in factory-tests.yml. A hang must not
+        # hold template-refresh-global (and sync-issue-presets) for two hours.
+        timeout-minutes: 15
         run: env -u GITHUB_RUN_ID -u GITHUB_RUN_ATTEMPT node --test --test-concurrency=1 control/.github/scripts/tests/*.test.mjs
 
       - name: Verify factory, application, clean database, and browser login
         if: steps.supersede.outputs.superseded != 'true'
+        # 96-162 s in recent runs; bounded for the same reason as the tests.
+        timeout-minutes: 20
         run: |
           set -o pipefail
           # The published AGENTS.md and CLAUDE.md are exactly what the template generated.

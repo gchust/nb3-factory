@@ -93,7 +93,6 @@ jobs:
       needs.dispatch-gate.outputs.covered != 'true' &&
       (github.event_name != 'workflow_run' || github.event.workflow_run.conclusion != 'skipped')
     outputs:
-      source_ready: ${{ steps.source.outputs.ready }}
       html_ready: ${{ steps.totals.outputs.html_ready }}
       report_artifact: ${{ steps.archive.outputs.artifact-id }}
       evaluation_export: ${{ steps.evaluation-export.outputs.artifact-id }}
@@ -241,10 +240,6 @@ jobs:
     permissions:
       actions: write
       contents: write
-    outputs:
-      type: ${{ steps.commit.outputs.type }}
-      key: ${{ steps.commit.outputs.key }}
-      revision: ${{ steps.commit.outputs.revision }}
     env:
       FACTORY_EVALUATION_DELIVERY: ${{ vars.FACTORY_EVALUATION_DELIVERY }}
       EVALUATION_ENDPOINT: ${{ vars.EVALUATION_ENDPOINT }}

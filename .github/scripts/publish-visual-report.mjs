@@ -1,5 +1,6 @@
 import { isValidTargetBranch, repositoryApi } from './factory-lib.mjs';
 import { waitForTaskRun } from './wait-for-task-run.mjs';
+import { publicationAttempt } from './publication-attempt.mjs';
 import { spawnSync } from 'node:child_process';
 import { appendFileSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
@@ -55,21 +56,34 @@ async function list(route, key) {
 if (mode === 'select') {
   output('ready', 'false');
   const repo = await api('GET', '');
-  const run = await waitForTaskRun(api, {
+  let run = await waitForTaskRun(api, {
     runId,
     attempt: args.attempt,
     repository,
     defaultBranch: repo.default_branch,
   });
   const latest = await api('GET', `/actions/runs/${runId}`);
-  if (latest.run_attempt !== run.run_attempt) {
-    console.log('Source attempt was superseded; skipping stale media.');
+  // Only a later attempt that published replaces this one; an attempt that
+  // published nothing (a rejected Re-run) falls back to the newest one that did.
+  const chosen = await publicationAttempt(
+    (attempt) =>
+      list(`/actions/runs/${runId}/attempts/${attempt}/jobs`, 'jobs'),
+    run.run_attempt,
+    latest.run_attempt,
+  );
+  if (chosen.superseded) {
+    console.log(
+      `Attempt ${chosen.superseded} published after attempt ${run.run_attempt}; skipping stale media.`,
+    );
     process.exit(0);
   }
-  const jobs = await list(
-    `/actions/runs/${runId}/attempts/${run.run_attempt}/jobs`,
-    'jobs',
-  );
+  if (chosen.attempt !== run.run_attempt) {
+    console.log(
+      `Attempt ${run.run_attempt} published nothing; using attempt ${chosen.attempt}.`,
+    );
+    run = await api('GET', `/actions/runs/${runId}/attempts/${chosen.attempt}`);
+  }
+  const { jobs } = chosen;
   const artifacts = await list(`/actions/runs/${runId}/artifacts`, 'artifacts');
   const artifact = selectArtifact(run, jobs, artifacts, repository);
   if (artifact) {

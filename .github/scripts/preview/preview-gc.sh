@@ -17,6 +17,8 @@
 #     else reclaims them either: on 2026-09-22 this directory held 1.5 GB, of
 #     which all but one entry belonged to a preview that no longer existed.
 #
+# Every mode also drops teardown marks (closed/pr-N) older than a day.
+#
 # Previews for closed pull requests are not this script's business: only the
 # teardown workflow knows that a pull request was closed, and it calls
 # preview-destroy.sh directly.
@@ -52,6 +54,10 @@ ensure_layout
 
 exec 9>"$PREVIEW_ROOT/deploy.lock"
 flock 9
+
+# Teardown marks (see preview-destroy.sh) are tiny, but one is left per closed
+# pull request; a day is far beyond the 30-minute deploy step they guard.
+prune_closed_marks 86400
 
 if [[ "$reap_orphans" == true ]]; then
   while read -r name; do

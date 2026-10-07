@@ -78,3 +78,6 @@ Artifact，并在评论中说明。媒体包保留 14 天，包含截图、录�
 如果该 run 没有发布 PR（`verify-final` 与 `publish` 都成功，或 `publish-failed` 成功）、属于五小时
 handoff、Artifact 已过期，或 PR 已被后续搭建更新，则跳过或明确报告原因，而不是错贴到其他 PR。
 是否发布按这些 Job 判断，不看整次运行的结论：交付后问答回复失败不影响视觉报告。
+同一 run 有多个 attempt 时，只有后来的 attempt 自己发布了 PR 才算取代前一个；被拒绝的
+GitHub Re-run 等没有发布的 attempt 不会挡住前一个 attempt 的视觉报告和预览，补发时可以显式填写
+前一个 attempt，留空时自动回退到最近一个发布过的 attempt（`publication-attempt.mjs`）。

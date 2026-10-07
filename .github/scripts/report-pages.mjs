@@ -1,4 +1,5 @@
 import { Buffer } from 'node:buffer';
+import { createHash } from 'node:crypto';
 import { appendFileSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -62,9 +63,20 @@ function degraded(next,old) {
 export async function getJson(client,file,ref) {
   const value=await client.request('GET',`/contents/${file}`,{query:{ref},allow404:true});
   if(!value) return null;
+  // Above 1 MiB the contents API answers encoding "none" with no content; the
+  // blob API serves the same file (as evaluation-registry.mjs readBytes does).
+  if(value.encoding==='none' && /^[a-f0-9]{40}$/.test(value.sha ?? '')) return readBlobJson(client,value.sha);
   if(value.encoding!=='base64') throw new Error('Invalid Pages manifest encoding');
   return JSON.parse(Buffer.from(value.content,'base64').toString('utf8'));
 }
+export async function readBlobJson(client,blobSha) {
+  const blob=await client.request('GET',`/git/blobs/${blobSha}`);
+  if(blob?.encoding!=='base64') throw new Error('Invalid Pages blob encoding');
+  return JSON.parse(Buffer.from(blob.content,'base64').toString('utf8'));
+}
+// The SHA Git gives a file with exactly this content.
+export const gitBlobSha = content =>
+  createHash('sha1').update(`blob ${Buffer.byteLength(content)}\0`).update(content).digest('hex');
 function redirectPage(target,id='') {
   return `<!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="factory-report-id" content="${escape(id)}"><meta http-equiv="refresh" content="0;url=${escape(target)}"><title>交付报告</title><a href="${escape(target)}">打开交付报告</a></html>`;
 }
@@ -104,16 +116,109 @@ function findingsScope(registry, baseline) {
   };
 }
 
+// Per-report findings, cached by report blob. collectOccurrences is a pure
+// per-report map, so a report's own result, keyed by the report.json blob SHA
+// and the extractor's source, stands in for the whole report: a snapshot reads
+// one tree listing plus the reports that changed, instead of one request per
+// report, and the cache stays small because it holds findings, not reviews.
+export const FINDINGS_CACHE = 'reports/findings/report-cache.json';
+const SCRIPTS = path.dirname(fileURLToPath(import.meta.url));
+let extractorVersion;
+// Any change to the extractor or a module it imports starts a new cache.
+export function findingsExtractorVersion() {
+  if (extractorVersion) return extractorVersion;
+  const hash = createHash('sha256');
+  const seen = new Set();
+  const visit = (file) => {
+    if (seen.has(file)) return;
+    seen.add(file);
+    const text = readFileSync(file, 'utf8');
+    hash.update(path.relative(SCRIPTS, file)).update('\0').update(text).update('\0');
+    for (const [, specifier] of text.matchAll(/from\s+'(\.{1,2}\/[^']+\.mjs)'/g))
+      visit(path.resolve(path.dirname(file), specifier));
+  };
+  visit(path.resolve(SCRIPTS, '../reports/findings-index.mjs'));
+  return (extractorVersion = hash.digest('hex').slice(0, 16));
+}
+export function collectedEntry(blob, report) {
+  const { occurrences, skipped } = collectOccurrences([report]);
+  return { blob, collected: { occurrences, skipped } };
+}
+function validCache(value) {
+  if (value?.version !== 1 || value.extractor !== findingsExtractorVersion() || !value.reports || typeof value.reports !== 'object')
+    return {};
+  const reports = {};
+  for (const [file, entry] of Object.entries(value.reports))
+    if (/^[a-f0-9]{40}$/.test(entry?.blob ?? '') && Array.isArray(entry.collected?.occurrences) && Array.isArray(entry.collected?.skipped))
+      reports[file] = entry;
+  return reports;
+}
+async function readCache(client, sha) {
+  try { return validCache(await getJson(client, FINDINGS_CACHE, sha)); }
+  catch { return {}; } // A damaged cache only costs a full read.
+}
+// report.json blob SHAs under reports/issues from three tree reads; null when
+// the listing is unavailable or truncated, so callers read each report instead.
+async function reportBlobs(client, sha) {
+  try {
+    const commit = await client.request('GET', `/git/commits/${sha}`);
+    let tree = commit.tree.sha;
+    for (const part of ['reports', 'issues']) {
+      const listing = await client.request('GET', `/git/trees/${tree}`);
+      const entry = listing?.tree?.find((item) => item.path === part && item.type === 'tree');
+      if (!entry) return new Map();
+      tree = entry.sha;
+    }
+    const all = await client.request('GET', `/git/trees/${tree}`, { query: { recursive: '1' } });
+    if (!Array.isArray(all?.tree) || all.truncated) return null;
+    return new Map(all.tree
+      .filter((item) => item.type === 'blob' && item.path.endsWith('/report.json'))
+      .map((item) => [`${ROOT}/issues/${item.path}`, item.sha]));
+  } catch {
+    return null;
+  }
+}
+export function cacheFile(cache) {
+  return [FINDINGS_CACHE, JSON.stringify({ version: 1, extractor: findingsExtractorVersion(), reports: cache })];
+}
+
 // The cross-report findings index is derived from the latest report of every
 // Issue in the registry, so a rerun replaces rather than double counts.
+// Returns the reports (or their cached per-report results) in registry order,
+// and the cache entries a writer should store for them.
 async function findingsReports(client,manifests,sha,current) {
+  const cached = sha ? await readCache(client, sha) : {};
+  const blobs = sha ? await reportBlobs(client, sha) : new Map();
+  const cache = {};
+  const read = async (m) => {
+    const file = `${m.path.slice(0,-'index.html'.length)}report.json`;
+    if (current && m.reportId===current.reportId) {
+      // archiveReport writes exactly this text, so its blob SHA is known now.
+      cache[file] = collectedEntry(gitBlobSha(JSON.stringify(current,null,2)), current);
+      return current;
+    }
+    if (!sha) return null;
+    if (!blobs) return getJson(client, file, sha);
+    const blob = blobs.get(file);
+    if (!blob) return null;
+    if (cached[file]?.blob === blob) {
+      cache[file] = cached[file];
+      return { collected: cached[file].collected };
+    }
+    const report = await readBlobJson(client, blob);
+    cache[file] = collectedEntry(blob, report);
+    return report;
+  };
   const reports=[];
-  for(let i=0;i<manifests.length;i+=8) {
-    reports.push(...await Promise.all(manifests.slice(i,i+8).map(m=>
-      current && m.reportId===current.reportId ? current
-        : sha ? getJson(client,`${m.path.slice(0,-'index.html'.length)}report.json`,sha) : null)));
+  for(let i=0;i<manifests.length;i+=8)
+    reports.push(...await Promise.all(manifests.slice(i,i+8).map(read)));
+  // Without a tree listing nothing could be checked against the cache: keep
+  // its in-scope entries, which every later read verifies by blob SHA again.
+  for (const m of manifests) {
+    const file = `${m.path.slice(0,-'index.html'.length)}report.json`;
+    if (!cache[file] && cached[file]) cache[file] = cached[file];
   }
-  return reports.filter(Boolean);
+  return { reports: reports.filter(Boolean), cache };
 }
 
 export async function readFindingsSnapshot(client, sha) {
@@ -125,7 +230,7 @@ export async function readFindingsSnapshot(client, sha) {
     registry,
     await readFindingsBaseline(client, sha),
   );
-  const reports = await findingsReports(client, scope.manifests, sha);
+  const { reports, cache } = await findingsReports(client, scope.manifests, sha);
   const input = createClassificationInput(
     collectOccurrences(reports).occurrences,
   );
@@ -135,7 +240,7 @@ export async function readFindingsSnapshot(client, sha) {
   } catch {
     /* A damaged cache must not prevent a fresh classification. */
   }
-  return { sha, reports, input, classification, baseline: scope.baseline };
+  return { sha, reports, cache, input, classification, baseline: scope.baseline };
 }
 
 async function findingsIndexAssets(client, registry, sha, current) {
@@ -143,7 +248,7 @@ async function findingsIndexAssets(client, registry, sha, current) {
     registry,
     await readFindingsBaseline(client, sha),
   );
-  const reports = await findingsReports(client, scope.manifests, sha, current);
+  const { reports, cache } = await findingsReports(client, scope.manifests, sha, current);
   const input = createClassificationInput(
     collectOccurrences(reports).occurrences,
   );
@@ -166,6 +271,7 @@ async function findingsIndexAssets(client, registry, sha, current) {
         }),
       ],
       [FINDINGS_INPUT, JSON.stringify(input, null, 2)],
+      cacheFile(cache),
       ...await dailyIndexAssets(client, sha, reports),
     ],
   };
@@ -223,6 +329,7 @@ export async function archiveFindingsClassification(client, classification) {
       [FINDINGS_INDEX, html],
       [FINDINGS_INPUT, JSON.stringify(snapshot.input, null, 2)],
       [FINDINGS_CLASSIFICATION, JSON.stringify(classification, null, 2)],
+      cacheFile(snapshot.cache),
       ...await dailyIndexAssets(client, snapshot.sha, snapshot.reports),
     ];
     try {
@@ -258,7 +365,7 @@ export async function resetFindingsIndex(
       : null;
     if (!registry?.issues) throw new Error('No published report site to reset');
     const scope = findingsScope(registry, baseline);
-    const reports = await findingsReports(client, scope.manifests, sha);
+    const { reports, cache } = await findingsReports(client, scope.manifests, sha);
     const input = createClassificationInput(
       collectOccurrences(reports).occurrences,
     );
@@ -269,6 +376,7 @@ export async function resetFindingsIndex(
       ],
       [FINDINGS_INPUT, JSON.stringify(input, null, 2)],
       [FINDINGS_BASELINE, JSON.stringify(baseline, null, 2)],
+      cacheFile(cache),
       ...await dailyIndexAssets(client, sha, reports),
     ];
     // Earlier groups describe findings that are no longer in scope.

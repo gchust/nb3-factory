@@ -55,6 +55,13 @@ export function collectOccurrences(reports) {
   const occurrences = [];
   const skipped = [];
   for (const record of reports) {
+    // A report already reduced to its own result (report-pages.mjs caches
+    // these per report blob): the result of this loop for that report alone.
+    if (record?.collected) {
+      occurrences.push(...record.collected.occurrences);
+      skipped.push(...record.collected.skipped);
+      continue;
+    }
     const facts = record.delivery ?? record;
     const meta = facts?.meta;
     const review = facts?.buildReview;
