@@ -52,9 +52,21 @@ describe('app client routes', () => {
     // access is a new grant somebody has to be given.
     const resolved = resolveRoutes();
 
-    // The landing page opted out of page authorization, so it is reachable by every signed-in user.
+    // The landing page, the personal inbox and the assistant page opted out of
+    // page authorization, so they are reachable by every signed-in user.
     expect(pageAuthorizations(resolved.routes)).toEqual([
       { name: 'home', authorizedAs: null },
+      { name: 'dashboard', authorizedAs: 'service.overview' },
+      { name: 'customers', authorizedAs: 'service.customers' },
+      { name: 'devices', authorizedAs: 'service.devices' },
+      { name: 'work-orders', authorizedAs: 'service.workOrders' },
+      { name: 'work-order-detail', authorizedAs: 'service.workOrders' },
+      { name: 'inspections', authorizedAs: 'service.inspections' },
+      { name: 'knowledge', authorizedAs: 'service.repairNotes' },
+      { name: 'manuals', authorizedAs: 'service.manuals' },
+      { name: 'operations', authorizedAs: 'service.operations' },
+      { name: 'messages', authorizedAs: null },
+      { name: 'assistant', authorizedAs: null },
     ]);
   });
 });
