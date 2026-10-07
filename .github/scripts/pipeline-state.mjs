@@ -247,6 +247,35 @@ export function initialize(file, metadata) {
   return state;
 }
 
+// Why a handed-off checkpoint could not be restored by this run, or null when
+// it is intact. A continuation that failed before restoring keeps its checkpoint
+// only when nothing here rejects it: these are the checks restoreState and an
+// explicit recovery apply, so a checkpoint they would refuse on purpose (input
+// edited, patch or control plane changed, task stopped) is never published as
+// recoverable work.
+export function keepRefusal(state, patch, metadata, selectedControlSha) {
+  if (state.inputHash !== inputHash(metadata))
+    return 'the task input changed since the handoff';
+  if (!state.patchHash || hash(patch) !== state.patchHash)
+    return 'the patch does not match its recorded hash';
+  if (!selectedControlSha || state.controlSha !== selectedControlSha)
+    return 'the checkpoint belongs to another control plane';
+  if (state.stopReason) return 'the task stopped for diagnosis';
+  if (state.phase === 'done') return 'the checkpoint finished verification';
+  try {
+    const expected = normalizeBudget(metadata.evaluation?.budget);
+    if (
+      expected &&
+      JSON.stringify(normalizeBudget(state.budget ?? null)) !==
+        JSON.stringify(expected)
+    )
+      return 'the evaluation budget changed';
+  } catch {
+    return 'the evaluation budget is invalid';
+  }
+  return null;
+}
+
 export function restoreState(source, destination, metadata) {
   requireFreshRunAttempt();
   const restoreHistory = () => {
@@ -378,6 +407,18 @@ if (
   const [command, file, ...args] = process.argv.slice(2);
   if (command === 'restore') {
     restoreState(file, args[0], json(args[1]));
+  } else if (command === 'keepable') {
+    // keepable <checkpoint-state> <patch> <task-metadata>; exits 1 with the reason.
+    const refusal = keepRefusal(
+      readState(file),
+      readFileSync(args[0]),
+      json(args[1]),
+      process.env.FACTORY_CONTROL_SHA,
+    );
+    if (refusal) {
+      console.error(`Not keeping the handed-off checkpoint: ${refusal}.`);
+      process.exit(1);
+    }
   } else if (command === 'init') {
     initialize(file, json(args[0]));
   } else {

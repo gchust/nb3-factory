@@ -52,8 +52,15 @@ published="${FACTORY_TASK_PUBLISHED:-false}"
 # succeeds, so report-dispatch-gate.yml counts it as handled and the
 # workflow_run copy does not publish the empty report instead.
 rerun_rejected="${FACTORY_RERUN_REJECTED:-false}"
+# Rejected in prepare ("Re-run all jobs"), the attempt has not even a progress
+# line of its own: nothing is requested.
+prepare_rejected="${FACTORY_PREPARE_REJECTED:-false}"
 request() {
   local workflow="$1"
+  if [[ "$prepare_rejected" == 'true' ]]; then
+    echo "Not requesting $workflow: prepare rejected attempt $SOURCE_ATTEMPT as a GitHub Re-run."
+    return 0
+  fi
   if [[ "$rerun_rejected" == 'true' && "$workflow" != report-task-progress.yml && "$workflow" != comment-build-queue.yml ]]; then
     echo "Not requesting $workflow: attempt $SOURCE_ATTEMPT was a rejected GitHub Re-run."
     return 0

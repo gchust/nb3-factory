@@ -396,9 +396,11 @@ test('report dispatch is an isolated terminal job, not another Agent invocation'
       'publish-reply',
     ],
   );
+  // A prepared build, or a "Re-run all jobs" that prepare rejected (its
+  // requests are then marked handled without dispatching anything).
   assert.match(
     dispatcher,
-    /if: always\(\) && needs.prepare.result == 'success' && needs.prepare.outputs.status == 'ready'/,
+    /if: >-\n\s+always\(\) &&\n\s+\(\(needs\.prepare\.result == 'success' && needs\.prepare\.outputs\.status == 'ready' && needs\.prepare\.outputs\.comment_kind != 'reply'\) \|\|\n\s+needs\.prepare\.outputs\.rerun_rejected == 'true'\)/,
   );
   assert.match(dispatcher, /actions: write/);
   assert.match(dispatcher, /continue-on-error: true/);

@@ -97,7 +97,7 @@ test('a rejected Re-run requests only progress, and its skipped requests still c
   // The workflow passes the agent job's verdict to every request step.
   assert.match(
     job('dispatch-reports'),
-    /FACTORY_RERUN_REJECTED: \$\{\{ needs\.agent\.outputs\.rerun_rejected \}\}/,
+    /FACTORY_RERUN_REJECTED: \$\{\{ needs\.agent\.outputs\.rerun_rejected == 'true'/,
   );
   assert.match(job('dispatch-reports'), /env: &report-dispatch-env/);
   // The gate counts a step by its success, which a skipped request keeps.
@@ -118,19 +118,113 @@ test('a comment reply is not answered after a rejected Re-run', () => {
   );
 });
 
-test('Re-run all jobs stops before prepare records anything once the task was saved', () => {
+// Runs the prepare guard's script with a stub gh that answers each attempt's
+// agent job (`null` = no agent job started, 'skipped', 'failure', ...).
+function runPrepareGuard(t, attempts, { failApi = false } = {}) {
+  const guard = job('prepare')
+    .split('- name: Reject a GitHub Re-run of a prepared task\n')[1]
+    .split('\n      - ')[0];
+  const script = guard.split('run: |\n')[1].replace(/^ {10}/gm, '');
+  const root = mkdtempSync(path.join(os.tmpdir(), 'factory-review8-guard-'));
+  t.after(() => rmSync(root, { recursive: true, force: true }));
+  const bin = path.join(root, 'bin');
+  mkdirSync(bin);
+  // gh api ... /attempts/N/jobs --jq <filter>: print "agent" when that attempt ran it.
+  writeFileSync(
+    path.join(bin, 'gh'),
+    `#!/usr/bin/env node
+if (${failApi}) process.exit(1);
+const url = process.argv.find((a) => a.includes('/attempts/'));
+const n = Number(/attempts\\/(\\d+)\\//.exec(url)[1]);
+const agent = ${JSON.stringify(attempts)}[n - 1];
+if (agent && agent !== 'skipped') console.log('agent');
+`,
+  );
+  chmodSync(path.join(bin, 'gh'), 0o755);
+  const output = path.join(root, 'output');
+  writeFileSync(output, '');
+  const result = spawnSync('bash', ['-c', script], {
+    env: {
+      ...process.env,
+      PATH: `${bin}:${process.env.PATH}`,
+      GITHUB_REPOSITORY: 'owner/factory',
+      GITHUB_RUN_ID: '900',
+      GITHUB_RUN_ATTEMPT: String(attempts.length + 1),
+      GITHUB_OUTPUT: output,
+    },
+    encoding: 'utf8',
+  });
+  return {
+    status: result.status,
+    output: readFileSync(output, 'utf8'),
+    stdout: result.stdout,
+  };
+}
+
+test('Re-run all jobs stops before prepare records anything once an earlier attempt ran the build', (t) => {
   const prepare = job('prepare');
   const steps = prepare.split('\n      - name: ').slice(1);
   assert.match(steps[0], /^Reject a GitHub Re-run of a prepared task\n/);
+  assert.match(steps[0], /id: rerun_guard\n/);
   assert.match(steps[0], /if: github\.run_attempt > 1/);
-  assert.match(steps[0], /actions\/runs\/\$GITHUB_RUN_ID\/artifacts/);
-  assert.match(steps[0], /\^factory-task-\[0-9\]\+\$/);
-  assert.match(steps[0], /recovery_run_id=\$\{GITHUB_RUN_ID\}/);
-  assert.match(steps[0], /exit 1/);
-  // actions: read lets it list this run's artifacts.
-  assert.match(prepare, /permissions:\n {6}actions: read\n/);
   // Nothing before it labels the Issue or saves the task.
   assert.doesNotMatch(steps[0], /prepare-task|upload-artifact|mark-failure/);
+  assert.match(prepare, /permissions:\n {6}actions: read\n/);
+  assert.match(
+    prepare,
+    /rerun_rejected: \$\{\{ steps\.rerun_guard\.outputs\.rerun_rejected \}\}/,
+  );
+
+  const built = runPrepareGuard(t, ['failure']);
+  assert.equal(built.status, 1);
+  assert.equal(built.output, 'rerun_rejected=true\n');
+  assert.match(built.stdout, /recovery_run_id=900/);
+  // The build ran in an earlier attempt than the last one.
+  assert.equal(runPrepareGuard(t, ['success', null]).status, 1);
+  // A question round (agent skipped) or a build that never started re-runs.
+  for (const attempts of [['skipped'], [null], ['skipped', 'skipped']]) {
+    const run = runPrepareGuard(t, attempts);
+    assert.equal(run.status, 0, JSON.stringify(attempts));
+    assert.equal(run.output, '');
+  }
+  // An unreadable job list stops the re-run, which changes nothing.
+  assert.equal(runPrepareGuard(t, ['skipped'], { failApi: true }).status, 1);
+});
+
+test('a re-run prepare rejected still marks every report handled and requests none', (t) => {
+  const dispatchJob = job('dispatch-reports');
+  assert.match(
+    dispatchJob,
+    /needs\.prepare\.outputs\.rerun_rejected == 'true'\)/,
+  );
+  assert.match(
+    dispatchJob,
+    /FACTORY_RERUN_REJECTED: \$\{\{ needs\.agent\.outputs\.rerun_rejected == 'true' \|\| needs\.prepare\.outputs\.rerun_rejected == 'true' \}\}/,
+  );
+  assert.match(
+    dispatchJob,
+    /FACTORY_PREPARE_REJECTED: \$\{\{ needs\.prepare\.outputs\.rerun_rejected == 'true' \}\}/,
+  );
+  // The comment queue step needs a claimed comment, which a rejected prepare never has.
+  assert.match(
+    dispatchJob,
+    /Request comment-build-queue\.yml\n[^\n]*\n\s+if: \$\{\{ !cancelled\(\) && needs\.prepare\.outputs\.build_comment_id != '' \}\}/,
+  );
+  const rejected = dispatch(
+    t,
+    [
+      'report-task-progress.yml',
+      'report-task-usage.yml',
+      'publish-agent-history.yml',
+    ],
+    {
+      FACTORY_RERUN_REJECTED: 'true',
+      FACTORY_PREPARE_REJECTED: 'true',
+    },
+  );
+  assert.equal(rejected.result.status, 0, rejected.result.stderr);
+  assert.deepEqual(rejected.calls, []);
+  assert.match(rejected.result.stdout, /prepare rejected attempt 2/);
 });
 
 test('a continuation stops when its own task branch moved, and keeps the target-branch base', () => {
@@ -204,6 +298,70 @@ test('verify.sh records the build and database stages before they run', () => {
     verify.indexOf('for check in lockfile format:check lint typecheck test') <
       build,
   );
+  // A repair round reads the previous stage, then files format:auto under its own.
+  const read = verify.indexOf('previous="$(cat "$failed_stage")"');
+  const format = verify.indexOf('printf \'%s\\n\' format >"$failed_stage"');
+  const formatAuto = verify.indexOf('format:auto node');
+  const retry = verify.indexOf('run_check "$previous"');
+  assert.ok(
+    read > 0 && read < format && format < formatAuto && formatAuto < retry,
+  );
+  // The full-QA database reset writes its stage, and clears it when it passed.
+  const repair = readFileSync(
+    path.resolve(import.meta.dirname, '../verify-and-repair.sh'),
+    'utf8',
+  );
+  const stage = repair.indexOf(
+    'printf \'%s\\n\' database >"$artifact_dir/last-failed-stage"',
+  );
+  const reset = repair.indexOf(
+    '"$control_dir/.github/scripts/apply-database.sh"',
+    stage,
+  );
+  assert.ok(stage > 0 && reset > stage);
+  assert.match(
+    repair.slice(reset),
+    /else\n\s+rm -f "\$artifact_dir\/last-failed-stage"\n/,
+  );
+});
+
+test('a failing format:auto in a repair round is filed under its own stage', (t) => {
+  const root = mkdtempSync(path.join(os.tmpdir(), 'factory-review8-format-'));
+  t.after(() => rmSync(root, { recursive: true, force: true }));
+  // A copy of verify.sh beside stub helpers whose format step fails.
+  const scripts = path.join(root, 'scripts');
+  mkdirSync(scripts);
+  writeFileSync(
+    path.join(scripts, 'verify.sh'),
+    readFileSync(path.resolve(import.meta.dirname, '../verify.sh')),
+  );
+  writeFileSync(
+    path.join(scripts, 'timed-command.mjs'),
+    "import { spawnSync } from 'node:child_process';\nconst [, , , ...cmd] = process.argv;\nprocess.exit(spawnSync(cmd[0], cmd.slice(1), { stdio: 'inherit' }).status ?? 1);\n",
+  );
+  writeFileSync(path.join(scripts, 'format-changes.mjs'), 'process.exit(3);\n');
+  const workspace = path.join(root, 'workspace');
+  mkdirSync(workspace);
+  const artifacts = path.join(root, 'artifacts', 'verification-1');
+  mkdirSync(artifacts, { recursive: true });
+  const stageFile = path.join(root, 'artifacts', 'last-failed-stage');
+  writeFileSync(stageFile, 'lint\n');
+  writeFileSync(path.join(root, 'config.yml'), '');
+  const result = spawnSync(
+    'bash',
+    [
+      path.join(scripts, 'verify.sh'),
+      workspace,
+      path.join(root, 'config.yml'),
+      artifacts,
+    ],
+    {
+      encoding: 'utf8',
+      env: { ...process.env, FACTORY_RETRY_FAILED_CHECK: '1' },
+    },
+  );
+  assert.notEqual(result.status, 0);
+  assert.equal(readFileSync(stageFile, 'utf8'), 'format\n');
 });
 
 test('a failure without a stage file is never filed under an earlier round', (t) => {
@@ -321,6 +479,189 @@ test('continuation downloads are retried once, and a setup failure before restor
   assert.match(
     step('Confirm the handoff checkpoint'),
     /steps\.keep_checkpoint\.outcome == 'success'/,
+  );
+});
+
+test('only a checkpoint this run could have restored is kept', async (t) => {
+  const { createHash } = await import('node:crypto');
+  const { inputHash, keepRefusal } = await import('../pipeline-state.mjs');
+  const metadata = {
+    issue: { number: 7 },
+    task: {
+      targetBranch: 'apps/demo',
+      acceptanceCriteria: 'B02. Save customer',
+    },
+  };
+  const patch = Buffer.from('diff --git a/x b/x\n');
+  const state = {
+    inputHash: inputHash(metadata),
+    patchHash: createHash('sha256').update(patch).digest('hex'),
+    controlSha: C,
+    phase: 'qa-full',
+  };
+  // A transient failure (download, install, admission API) keeps it.
+  assert.equal(keepRefusal(state, patch, metadata, C), null);
+  for (const [name, args, reason] of [
+    [
+      'input edited',
+      [
+        state,
+        patch,
+        {
+          ...metadata,
+          task: { ...metadata.task, acceptanceCriteria: 'B02. Other' },
+        },
+        C,
+      ],
+      /input changed/,
+    ],
+    [
+      'patch changed',
+      [state, Buffer.from('other'), metadata, C],
+      /patch does not match/,
+    ],
+    [
+      'no patch hash',
+      [{ ...state, patchHash: undefined }, patch, metadata, C],
+      /patch does not match/,
+    ],
+    [
+      'other control plane',
+      [state, patch, metadata, B],
+      /another control plane/,
+    ],
+    [
+      'unknown control plane',
+      [state, patch, metadata, undefined],
+      /another control plane/,
+    ],
+    [
+      'stopped',
+      [
+        { ...state, stopReason: { code: 'repeated-failure' } },
+        patch,
+        metadata,
+        C,
+      ],
+      /stopped/,
+    ],
+    ['finished', [{ ...state, phase: 'done' }, patch, metadata, C], /finished/],
+    [
+      'budget changed',
+      [
+        {
+          ...state,
+          budget: {
+            maxRepairAttempts: 3,
+            maxActiveSeconds: 3600,
+            maxContinuations: 1,
+          },
+        },
+        patch,
+        {
+          ...metadata,
+          evaluation: {
+            budget: {
+              maxRepairAttempts: 2,
+              maxActiveSeconds: 3600,
+              maxContinuations: 1,
+            },
+          },
+        },
+        C,
+      ],
+      /budget changed/,
+    ],
+    [
+      'budget invalid',
+      [
+        { ...state, budget: { maxRepairAttempts: 99 } },
+        patch,
+        {
+          ...metadata,
+          evaluation: {
+            budget: {
+              maxRepairAttempts: 2,
+              maxActiveSeconds: 3600,
+              maxContinuations: 1,
+            },
+          },
+        },
+        C,
+      ],
+      /budget is invalid/,
+    ],
+  ])
+    assert.match(String(keepRefusal(...args)), reason, name);
+
+  // The CLI exits 1 with the reason, and 0 for an intact checkpoint.
+  const root = mkdtempSync(path.join(os.tmpdir(), 'factory-review8-keep-'));
+  t.after(() => rmSync(root, { recursive: true, force: true }));
+  const metadataFile = path.join(root, 'task-metadata.json');
+  writeFileSync(metadataFile, JSON.stringify(metadata));
+  const stateFile = path.join(root, 'pipeline-state.json');
+  initialize(stateFile, metadata);
+  const saved = readState(stateFile);
+  Object.assign(saved, {
+    patchHash: state.patchHash,
+    controlSha: C,
+    phase: 'qa-full',
+  });
+  writeFileSync(stateFile, JSON.stringify(saved));
+  const patchFile = path.join(root, 'agent.patch');
+  writeFileSync(patchFile, patch);
+  const keepable = (controlSha) =>
+    spawnSync(
+      process.execPath,
+      [
+        path.resolve(import.meta.dirname, '../pipeline-state.mjs'),
+        'keepable',
+        stateFile,
+        patchFile,
+        metadataFile,
+      ],
+      {
+        encoding: 'utf8',
+        env: { ...process.env, FACTORY_CONTROL_SHA: controlSha },
+      },
+    );
+  assert.equal(keepable(C).status, 0, keepable(C).stderr);
+  const refused = keepable(B);
+  assert.equal(refused.status, 1);
+  assert.match(
+    refused.stderr,
+    /Not keeping the handed-off checkpoint: the checkpoint belongs to another control plane/,
+  );
+});
+
+test('the keep step runs the check and skips a refused sample admission', () => {
+  const keep = step('Keep the handed-off checkpoint');
+  assert.match(keep, /steps\.admit\.outputs\.refused != 'true'/);
+  assert.match(
+    keep,
+    /node bootstrap\/\.github\/scripts\/pipeline-state\.mjs keepable \\\n\s+handoff\/pipeline-state\.json handoff\/agent\.patch task\/task-metadata\.json/,
+  );
+  // The check runs before anything is copied or marked failed.
+  assert.ok(keep.indexOf('keepable') < keep.indexOf('cp handoff/agent.patch'));
+  const admit = step('Admit the evaluation sample for this execution');
+  assert.match(admit, /id: admit\n/);
+  assert.match(
+    admit,
+    /2> "\$RUNNER_TEMP\/sample-admission\.err" \|\| status=\$\?/,
+  );
+  assert.match(
+    admit,
+    /grep -q 'Evaluation sample not admitted' "\$RUNNER_TEMP\/sample-admission\.err"/,
+  );
+  assert.match(admit, /echo "refused=true" >> "\$GITHUB_OUTPUT"/);
+  assert.match(admit, /exit "\$status"/);
+  // The refusal text is the one evaluation-sample.mjs prints.
+  assert.match(
+    readFileSync(
+      path.resolve(import.meta.dirname, '../evaluation-sample.mjs'),
+      'utf8',
+    ),
+    /::error::Evaluation sample not admitted:/,
   );
 });
 

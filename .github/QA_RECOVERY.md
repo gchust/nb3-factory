@@ -54,15 +54,22 @@ Such a rejected Re-run leaves the earlier attempt's checkpoint intact, and an
 explicit recovery from that run still accepts it. It requests only the progress
 report, so no empty usage, history or retro replaces the Issue's real one, and
 it answers no comment. "Re-run all jobs" stops at the start of prepare once an
-earlier attempt saved the task, before it records a new attempt, uploads a
-second task artifact, relabels the Issue or posts a status.
+earlier attempt ran the build, before it records a new attempt, uploads a
+second task artifact, relabels the Issue or posts a status; its reports are
+marked handled without being requested, so nothing is published for that
+attempt. A question round, or a run whose build never started, can still be
+re-run that way.
 
 A continuation retries its checkpoint and task downloads once. If it still
 fails after downloading the checkpoint but before restoring its progress, it
-keeps the handed-off checkpoint as its own, marked failed: recover it with
-`recovery_run_id` set to that continuation, since its source run concluded
-successfully when it handed off. A continuation whose own task branch moved
-during the handoff stops at once instead of failing at the final push.
+keeps the handed-off checkpoint as its own, marked failed, but only when the
+checkpoint is one it could have restored: the same task input, patch and
+control plane, not stopped, and an evaluation sample that was not refused. A
+checkpoint rejected on purpose is not kept, published or offered for
+recovery. Recover a kept one with `recovery_run_id` set to that continuation,
+since its source run concluded successfully when it handed off. A
+continuation whose own task branch moved during the handoff stops at once
+instead of failing at the final push.
 
 Regression checks: `pnpm factory:test`. A task keeps the control plane it
 recorded as `control_sha` for its continuations and recoveries, so an

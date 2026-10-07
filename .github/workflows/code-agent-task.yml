@@ -119,24 +119,33 @@ jobs:
       work_branch: ${{ steps.prepare.outputs.work_branch }}
       base_ref: ${{ steps.base.outputs.ref }}
       base_sha: ${{ steps.base.outputs.sha }}
+      rerun_rejected: ${{ steps.rerun_guard.outputs.rerun_rejected }}
     steps:
       # "Re-run all jobs" would record attempt N as the task's run, upload a
       # second factory-task-N (which a recovery downloads instead of the one
       # matching the checkpoint), relabel the Issue and post a new status. Once
-      # an earlier attempt saved the task, stop before any of that, so the run
-      # stays recoverable as the failure notice says. A re-run of a prepare that
-      # failed before saving anything still prepares normally.
+      # an earlier attempt ran the build (its agent job started), stop before
+      # any of that, so the run stays recoverable as the failure notice says.
+      # A re-run of a question round, or of a run whose agent never started,
+      # still prepares normally: recovery does not cover those.
+      # rerun_rejected lets dispatch-reports mark the reports as handled, so the
+      # workflow_run copies publish no empty usage or history for this attempt.
       - name: Reject a GitHub Re-run of a prepared task
+        id: rerun_guard
         if: github.run_attempt > 1
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          # Fails closed: an unreadable list stops the re-run, which changes nothing.
-          saved="$(gh api --paginate "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/artifacts?per_page=100" \
-            --jq '.artifacts[] | select(.name | test("^factory-task-[0-9]+$")) | .name')"
-          if [[ -n "$saved" ]]; then
-            echo "::error::An earlier attempt of this run already prepared the task. GitHub Re-run cannot continue it; use an explicit recovery Run (workflow_dispatch with recovery_run_id=${GITHUB_RUN_ID}) or start a new build."
+          # Fails closed: an unreadable job list stops the re-run, which changes nothing.
+          built=''
+          for (( attempt = 1; attempt < GITHUB_RUN_ATTEMPT; attempt++ )); do
+            built+="$(gh api --paginate "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/attempts/$attempt/jobs?per_page=100" \
+              --jq '.jobs[] | select(.name == "agent" and .started_at != null and .conclusion != "skipped") | .name')"
+          done
+          if [[ -n "$built" ]]; then
+            echo "rerun_rejected=true" >> "$GITHUB_OUTPUT"
+            echo "::error::An earlier attempt of this run already ran the build. GitHub Re-run cannot continue it; use an explicit recovery Run (workflow_dispatch with recovery_run_id=${GITHUB_RUN_ID}) or start a new build."
             exit 1
           fi
 
@@ -486,12 +495,26 @@ jobs:
 
       # A batch sample is admitted again right before model work, so a sample
       # cancelled or released since prepare, or a spent budget, starts no model.
+      # A refusal (cancelled or released sample, spent budget) is recorded as
+      # an output, so a continuation never keeps its checkpoint as recoverable
+      # work; an API error leaves it unset. Pinned older scripts print the same
+      # refusal text, so it is read from their output.
       - name: Admit the evaluation sample for this execution
+        id: admit
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: |
           if [[ -f control/.github/scripts/evaluation-sample.mjs ]]; then
-            node control/.github/scripts/evaluation-sample.mjs admit --metadata task/task-metadata.json --output "$GITHUB_ENV"
+            status=0
+            node control/.github/scripts/evaluation-sample.mjs admit --metadata task/task-metadata.json --output "$GITHUB_ENV" \
+              2> "$RUNNER_TEMP/sample-admission.err" || status=$?
+            cat "$RUNNER_TEMP/sample-admission.err" >&2
+            if (( status != 0 )); then
+              if grep -q 'Evaluation sample not admitted' "$RUNNER_TEMP/sample-admission.err"; then
+                echo "refused=true" >> "$GITHUB_OUTPUT"
+              fi
+              exit "$status"
+            fi
           fi
 
       - name: Restore pipeline progress
@@ -806,7 +829,8 @@ jobs:
           failure() && steps.rerun_guard.outcome == 'success' && steps.resume.outcome != 'success' &&
           github.event_name == 'repository_dispatch' && github.event.action == 'code-agent-continue' &&
           (steps.checkpoint_download.outcome == 'success' || steps.checkpoint_retry.outcome == 'success') &&
-          (steps.task_download.outcome == 'success' || steps.task_retry.outcome == 'success')
+          (steps.task_download.outcome == 'success' || steps.task_retry.outcome == 'success') &&
+          steps.admit.outputs.refused != 'true'
         run: |
           set -euo pipefail
           artifacts="$RUNNER_TEMP/agent-artifacts"
@@ -817,6 +841,13 @@ jobs:
               exit 1
             fi
           done
+          # Only a checkpoint this run could have restored is kept. A deliberate
+          # rejection (input edited, patch or control plane changed, task
+          # stopped, budget changed) stays a plain failure with nothing
+          # published and no recovery offered. The check comes from this
+          # workflow's own revision, like the handoff protocol.
+          node bootstrap/.github/scripts/pipeline-state.mjs keepable \
+            handoff/pipeline-state.json handoff/agent.patch task/task-metadata.json
           cp handoff/agent.patch handoff/pipeline-state.json "$artifacts/"
           # The source run's summary of the same patch, for a failed build PR.
           if [[ -f handoff/change-summary.json && ! -L handoff/change-summary.json ]]; then
@@ -1651,8 +1682,13 @@ jobs:
         publish-reply,
       ]
     # prepare exposes status=ready before its artifact upload; a failed prepare
-    # has no factory-task-N for the reports to read.
-    if: always() && needs.prepare.result == 'success' && needs.prepare.outputs.status == 'ready' && needs.prepare.outputs.comment_kind != 'reply'
+    # has no factory-task-N for the reports to read. A "Re-run all jobs" that
+    # prepare rejected still runs this job with every request marked handled
+    # and none dispatched, so the workflow_run copies skip that empty attempt.
+    if: >-
+      always() &&
+      ((needs.prepare.result == 'success' && needs.prepare.outputs.status == 'ready' && needs.prepare.outputs.comment_kind != 'reply') ||
+       needs.prepare.outputs.rerun_rejected == 'true')
     runs-on: ubuntu-24.04
     # Up to seven requests at 70 s each (dispatch-task-reports.sh) plus checkout.
     # Continuations have no workflow_run fallback, so the last reports must fit.
@@ -1691,7 +1727,9 @@ jobs:
           FACTORY_REPORT_REF: ${{ github.event.repository.default_branch }}
           FACTORY_TASK_PUBLISHED: ${{ needs.publish.result == 'success' || needs.publish-failed.result == 'success' }}
           # A rejected Re-run requests only progress; see dispatch-task-reports.sh.
-          FACTORY_RERUN_REJECTED: ${{ needs.agent.outputs.rerun_rejected }}
+          # Rejected in prepare ("Re-run all jobs") it requests nothing at all.
+          FACTORY_RERUN_REJECTED: ${{ needs.agent.outputs.rerun_rejected == 'true' || needs.prepare.outputs.rerun_rejected == 'true' }}
+          FACTORY_PREPARE_REJECTED: ${{ needs.prepare.outputs.rerun_rejected == 'true' }}
         run: bash dispatcher/.github/scripts/dispatch-task-reports.sh report-task-progress.yml
       - name: Request report-task-usage.yml
         id: request-report-task-usage
