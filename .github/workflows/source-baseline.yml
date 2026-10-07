@@ -80,14 +80,17 @@ jobs:
   # Node.js, the runner image, the registry or the overlay's unlocked
   # dependencies, which a re-run picks up again.
   #
-  # Nothing the pull request controls decides the skip on its own:
+  # What the skip trusts:
   # - the fingerprint script runs from the default branch (trusted/), reading
   #   the merge commit's files as data;
-  # - a cache entry, which any run of this pull request could have saved,
-  #   only names a run; the API must confirm that run is this workflow, on
-  #   pull_request, for this same pull request, with both source-baseline and
-  #   portable successful. A fork's pull request lists no pull request on its
-  #   runs, so it always runs in full.
+  # - a cache entry only names a run; the API must confirm that run is this
+  #   workflow, on pull_request, for this same pull request, with both
+  #   source-baseline and portable successful.
+  # A fork's pull request lists no pull request on its runs, so it can never
+  # skip. A same-repository author can: any job running their pull request's
+  # code (an intermediate push with a changed workflow, for instance) can save
+  # an entry naming an older green run of the pull request. The skip trusts
+  # same-repository writers, who can already push to develop directly.
   # A pull request's cache is visible to that pull request alone, and the key
   # names the pull request as well. A re-run attempt always runs in full.
   # Every step of the lookup fails open: no confirmed run, no skip.

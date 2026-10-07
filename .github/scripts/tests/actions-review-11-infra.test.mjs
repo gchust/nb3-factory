@@ -102,6 +102,12 @@ test('the source baseline fingerprint reads exactly the pull_request path filter
   assert.ok(matches('docs/daily-findings.md'));
   assert.ok(matches('docs/nested/page.md'));
   assert.equal(matches('docsx/page.md'), false);
+  // `/**/` matches zero or more directories, as GitHub's `**/` does.
+  const nested = pathMatcher(['a/**/b.md', '**/c.md']);
+  for (const file of ['a/b.md', 'a/x/b.md', 'a/x/y/b.md', 'c.md', 'x/y/c.md'])
+    assert.ok(nested(file), file);
+  for (const file of ['ab.md', 'a/b.mdx', 'x/a/b.md', 'xc.md'])
+    assert.equal(nested(file), false, file);
   // `*` stays inside one segment, as in GitHub's filters.
   assert.equal(matches('.github/scripts/source-x/y.mjs'), false);
   assert.equal(matches('client/package.json'), false);

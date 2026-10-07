@@ -61,7 +61,7 @@ export function pullRequestPaths(workflow) {
 }
 
 // GitHub's filter syntax, limited to what the list uses: literal paths, `*`
-// within one path segment and `**` across segments. Anything else (`?`, `[`,
+// within one path segment and `**` across segments (zero or more of them). Anything else (`?`, `[`,
 // `!` negations) is refused, so a new kind of pattern makes this fail loudly
 // instead of hashing a different set than the trigger.
 export function pathMatcher(patterns) {
@@ -72,18 +72,27 @@ export function pathMatcher(patterns) {
       /\*{3}/,
       `unsupported path filter: ${pattern}`,
     );
-    const source = pattern
-      .split('**')
-      .map((part) =>
-        part
-          .split('*')
-          .map((literal) => literal.replace(/[.]/g, '\\.'))
-          .join('[^/]*'),
+    // `/**/` also matches no directory at all (`a/**/b` matches `a/b`), as in
+    // GitHub's filters; any other `**` matches across segments. Pattern and
+    // path both get a leading slash, so a leading `**/` matches the root too.
+    const source = `/${pattern}`
+      .split('/**/')
+      .map((section) =>
+        section
+          .split('**')
+          .map((part) =>
+            part
+              .split('*')
+              .map((literal) => literal.replace(/[.]/g, '\\.'))
+              .join('[^/]*'),
+          )
+          .join('.*'),
       )
-      .join('.*');
+      .join('/(?:.*/)?');
     return new RegExp(`^${source}$`);
   });
-  return (file) => expressions.some((expression) => expression.test(file));
+  return (file) =>
+    expressions.some((expression) => expression.test(`/${file}`));
 }
 
 export function inputFingerprint(checkout) {
