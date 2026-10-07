@@ -16,6 +16,15 @@ fi
 port="$1"
 caller_pid="$PPID"
 
+# run-factory-tests.sh sets this for the suites it runs side by side. Stopping
+# processes there could kill another suite's fixtures, or a developer's own dev
+# server, so a suite that gets here without being in its serial group fails
+# instead. Builds and verification never set it.
+if [[ "${FACTORY_TESTS_CONCURRENT:-}" == 1 ]]; then
+  echo "stop-stale-app.sh: refusing to stop processes from a concurrently run factory test; add the suite to SERIAL in run-factory-tests.sh" >&2
+  exit 3
+fi
+
 # A command line matching one of these is running the application under test.
 APP_PROCESS_PATTERNS=(
   'scripts/dev/index.mjs'

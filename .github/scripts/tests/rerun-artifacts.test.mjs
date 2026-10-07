@@ -68,7 +68,11 @@ test('preview transfers fail a step on a stall instead of running into the job l
   ]) {
     const body = deploy.split(`- name: ${step}\n`)[1].split(/\n {6}- /)[0];
     const minutes = Number(/timeout-minutes: (\d+)/.exec(body)?.[1]);
-    assert.ok(minutes > 0 && minutes < 45, step);
+    // Well inside the job's own limit, so the report step still runs.
+    const job = Number(
+      /\n {2}deploy-preview:\n[\s\S]*?\n {4}timeout-minutes: (\d+)/.exec(deploy)?.[1],
+    );
+    assert.ok(minutes > 0 && minutes + 15 <= job, step);
   }
   for (const [name, source] of [
     ['deploy-preview.yml', deploy],

@@ -72,7 +72,8 @@ jobs:
       - name: Run control-plane regression tests
         # Concurrently, except the suites that touch the process table (browser
         # acceptance stops application processes, stale-app-port kills port
-        # listeners), which run alone afterwards; see the script.
+        # listeners) or assert short wall-clock timeouts, which run alone
+        # afterwards; see the script.
         run: bash .github/scripts/run-factory-tests.sh
       - name: Verify deterministic browser fixtures
         run: python3 .github/scripts/tests/browser-fixtures.test.py

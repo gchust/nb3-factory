@@ -70,7 +70,7 @@ require_positive_integer() {
 }
 
 # How long fetching a payload may take, every try and pause included. The
-# deploy runs inside the workflow's 30-minute Deploy step, and when that step
+# deploy runs inside the workflow's 45-minute Deploy step, and when that step
 # times out only the ssh client dies: this host would carry on. So every wait
 # here has its own limit, and together they stay inside the step (see the
 # budget in preview-deploy.sh). 600 s fetches the ~84 MB full payload at an
@@ -330,19 +330,21 @@ load_instance_env() {
 wait_for_preview() {
   local host="$1" timeout="${2:-90}"
   local url="http://127.0.0.1:${PREVIEW_TRAEFIK_PORT}${PREVIEW_BASE_PATH}/"
-  local spent=0 code
+  local deadline=$((SECONDS + timeout)) remaining code
 
-  while ((spent < timeout)); do
+  # Timed by the clock, not by counting tries: an application that accepts
+  # the connection and answers slowly makes each probe take up to its own
+  # limit, and counting a second per try let "90 s" run to several minutes.
+  while true; do
+    remaining=$((deadline - SECONDS))
+    ((remaining > 0)) || return 1
     code="$(curl --silent --output /dev/null --write-out '%{http_code}' \
-      --header "Host: ${host}" --max-time 5 "$url" || true)"
+      --header "Host: ${host}" --max-time "$((remaining < 5 ? remaining : 5))" "$url" || true)"
     if [[ "$code" =~ ^[23] ]]; then
       return 0
     fi
     sleep 1
-    spent=$((spent + 1))
   done
-
-  return 1
 }
 
 # Lists preview instances, newest first, by the deployedAt recorded in each

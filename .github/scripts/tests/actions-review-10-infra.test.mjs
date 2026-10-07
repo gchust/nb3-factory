@@ -101,6 +101,67 @@ test "$transaction_started" = false`,
   assert.deepEqual(result.backups, ['failed-pr-70.bbbbbb', 'pr-70.cccccc']);
 });
 
+test('a previous container that will not go away does not fail a healthy deploy or skip its cleanup', (t) => {
+  const result = host(
+    t,
+    `mkdir -p "$PREVIEW_ROOT/backups/failed-pr-7.aaaaaa"
+${deployTo(7)}
+remove_container() { [[ "$1" != *-previous ]] || return 1; rm -f "$PREVIEW_ROOT/containers/$1"; }
+log() { echo "$*" >&2; }
+preview_commit
+echo committed`,
+  );
+  assert.equal(result.status, 0, result.stderr);
+  assert.match(result.stdout, /committed/);
+  assert.match(
+    result.stderr,
+    /could not remove the previous container preview-pr-7-previous/,
+  );
+  assert.deepEqual(result.backups, []);
+});
+
+test('the readiness probe is timed by the clock, each probe capped at what is left', (t) => {
+  const root = temp(t, 'nb3-review10-ready-');
+  const bin = path.join(root, 'bin');
+  mkdirSync(bin);
+  // An application that accepts and answers slowly: every probe takes the
+  // whole time curl was given, and fails.
+  writeFileSync(
+    path.join(bin, 'curl'),
+    `#!/usr/bin/env bash
+while (( $# )); do [[ "$1" == --max-time ]] && { echo "$2" >> "${root}/calls"; /bin/sleep "$2"; }; shift; done
+printf 000
+`,
+    { mode: 0o755 },
+  );
+  writeFileSync(path.join(bin, 'sleep'), '#!/usr/bin/env bash\nexit 0\n', {
+    mode: 0o755,
+  });
+  const started = Date.now();
+  const result = spawnSync(
+    'bash',
+    [
+      '-c',
+      '. "$1"; wait_for_preview nb3-7.example 3 && echo ready || echo timeout',
+      'bash',
+      path.join(preview, 'preview-lib.sh'),
+    ],
+    {
+      encoding: 'utf8',
+      env: { ...process.env, PATH: `${bin}:${process.env.PATH}` },
+    },
+  );
+  assert.equal(result.status, 0, result.stderr);
+  assert.equal(result.stdout.trim(), 'timeout');
+  // Counting a second per try, three tries of 5 s would have taken 15 s.
+  assert.ok(Date.now() - started < 10_000, `${Date.now() - started} ms`);
+  const limits = read(path.join(root, 'calls')).trim().split('\n').map(Number);
+  assert.ok(
+    limits.every((limit) => limit >= 1 && limit <= 3),
+    limits.join(','),
+  );
+});
+
 test('a failed deploy keeps only its own tree for diagnosis and restores the previous preview', (t) => {
   const result = host(
     t,
@@ -222,14 +283,37 @@ test('every wait of a deploy is bounded, and together they fit the workflow step
       stepOf(workflow('deploy-preview.yml'), 'Deploy the preview'),
     )[1],
   );
-  // Unpacking and linking on local disk take a minute or two on top.
+  // Unpacking, linking and a rollback on local disk take up to three minutes
+  // on top.
   assert.ok(budget + 180 < step * 60, `${budget}s vs ${step} min`);
-  assert.match(deploy, /flock -w "\$PREVIEW_LOCK_WAIT" 9 \|\|\n\s+die /);
-  assert.doesNotMatch(deploy, /flock 9/);
+  // A deploy queued behind another waits out the longest hold instead of
+  // failing: migrate, start and ready, plus those three minutes.
+  const hold =
+    value(deploy, 'PREVIEW_MIGRATE_TIMEOUT') +
+    value(deploy, 'PREVIEW_START_TIMEOUT') +
+    90 +
+    180;
+  const lock = value(deploy, 'PREVIEW_LOCK_WAIT');
+  assert.ok(lock >= hold, `${lock}s vs ${hold}s`);
   assert.match(
-    read(path.join(preview, 'preview-capacity.sh')),
-    /flock -w 120 9 \|\| die /,
+    deploy,
+    /flock -w "\$PREVIEW_LOCK_WAIT" 9 \|\|\n\s+die "[^"]*Re-run Deploy Task Preview/,
   );
+  assert.doesNotMatch(deploy, /flock 9/);
+  const capacity = read(path.join(preview, 'preview-capacity.sh'));
+  const capacityWait = Number(
+    /flock -w (\d+) 9 \|\|\n\s+die "[^"]*re-run Deploy Task Preview/.exec(
+      capacity,
+    )?.[1],
+  );
+  assert.ok(capacityWait >= hold, `${capacityWait}s vs ${hold}s`);
+  const room = Number(
+    /timeout-minutes: (\d+)/.exec(
+      stepOf(workflow('deploy-preview.yml'), 'Make room on the preview host'),
+    )[1],
+  );
+  // The listing's wait, then one eviction's 3-minute wait, inside the step.
+  assert.ok(capacityWait + 180 < room * 60, `${capacityWait}s vs ${room} min`);
   assert.match(
     deploy,
     /timeout --kill-after=15 "\$PREVIEW_MIGRATE_TIMEOUT" docker run --rm \\\n\s+--name "\$migrate_container"/,
@@ -304,8 +388,20 @@ function buildTree(root) {
   return { app, deps };
 }
 
-for (const format of ['gnu', 'pax']) {
-  test(`the dependency key read from a ${format} archive is the key of the unpacked tree`, async (t) => {
+// The options the publish step unpacks the slim payload with.
+const slimOptions = () =>
+  stepOf(
+    workflow('deploy-preview.yml'),
+    'Publish the payload for the host to fetch',
+  ).match(/--anchored|--exclude=\S+/g);
+
+for (const [format, lead] of [
+  ['gnu', ''],
+  ['pax', ''],
+  // Member names can start with ./ too, depending on how the archive was made.
+  ['gnu', './'],
+]) {
+  test(`the dependency key read from a ${format} archive${lead ? ` of ${lead} names` : ''} is the key of the unpacked tree`, async (t) => {
     const root = temp(t, 'nb3-review10-archive-');
     const { app, deps } = buildTree(root);
     const archive = path.join(root, 'dist.tar.gz');
@@ -316,9 +412,14 @@ for (const format of ['gnu', 'pax']) {
       archive,
       '-C',
       app,
-      'config.example.yml',
-      'dist',
+      `${lead}config.example.yml`,
+      `${lead}dist`,
     ]);
+    if (lead)
+      assert.match(
+        execFileSync('tar', ['-tzf', archive], { encoding: 'utf8' }),
+        /^\.\/dist\/node_modules\//m,
+      );
     const scan = await readArchiveEntries(archive);
     assert.equal(scan.hasDeps, true);
     assert.equal(scan.linksIntoDeps, false);
@@ -340,14 +441,7 @@ for (const format of ['gnu', 'pax']) {
     // The slim payload unpacks everything but the dependency tree.
     const slim = path.join(root, 'slim');
     mkdirSync(slim);
-    execFileSync('tar', [
-      '-xzf',
-      archive,
-      '-C',
-      slim,
-      '--anchored',
-      '--exclude=dist/node_modules',
-    ]);
+    execFileSync('tar', ['-xzf', archive, '-C', slim, ...slimOptions()]);
     assert.deepEqual(readdirSync(path.join(slim, 'dist')).sort(), [
       'package.json',
       'server',
@@ -414,7 +508,11 @@ test('the deploy reads the build before unpacking it, and unpacks only the slim 
     /--archive "\$RUNNER_TEMP\/dist-artifact\/dist\.tar\.gz"/,
   );
   const publish = stepOf(deploy, 'Publish the payload for the host to fetch');
-  assert.match(publish, /--anchored --exclude=dist\/node_modules/);
+  assert.deepEqual(slimOptions(), [
+    '--anchored',
+    '--exclude=dist/node_modules',
+    '--exclude=./dist/node_modules',
+  ]);
   assert.match(publish, /deploy-preview\.mjs slim/);
   // The pull request is resolved before the archive is read.
   const script = read(path.join(scripts, 'deploy-preview.mjs'));
@@ -442,7 +540,7 @@ test("a successful deploy deletes the pull request's other payload assets, and t
   );
   assert.match(
     stepOf(deploy, 'Make room on the preview host'),
-    /timeout-minutes: 10\n/,
+    /timeout-minutes: 22\n/,
   );
 });
 
@@ -718,19 +816,20 @@ test('the factory suite runs concurrently, except the suites that share the proc
   const root = temp(t, 'nb3-review10-suite-');
   const tests = path.join(root, 'tests');
   mkdirSync(tests);
-  const files = [
-    'a.test.mjs',
+  const serialFiles = [
     'browser-acceptance.test.mjs',
-    'b.test.mjs',
+    'browser-preflight.test.mjs',
+    'idle-watchdog.test.mjs',
     'stale-app-port.test.mjs',
   ];
-  for (const file of files) writeFileSync(path.join(tests, file), '');
+  for (const file of ['a.test.mjs', 'b.test.mjs', ...serialFiles])
+    writeFileSync(path.join(tests, file), '');
   writeFileSync(path.join(tests, 'helper.mjs'), '');
   const bin = path.join(root, 'bin');
   mkdirSync(bin);
   writeFileSync(
     path.join(bin, 'node'),
-    `#!/usr/bin/env bash\necho "\${GITHUB_RUN_ID:-unset} $*" >> "${root}/node.log"\n[[ "$*" != *a.test.mjs* ]]\n`,
+    `#!/usr/bin/env bash\necho "\${GITHUB_RUN_ID:-unset} \${FACTORY_TESTS_CONCURRENT:-serial} $*" >> "${root}/node.log"\n[[ "$*" != *a.test.mjs* ]]\n`,
     { mode: 0o755 },
   );
   const result = spawnSync('bash', [runner, tests], {
@@ -739,6 +838,7 @@ test('the factory suite runs concurrently, except the suites that share the proc
       ...process.env,
       PATH: `${bin}:${process.env.PATH}`,
       GITHUB_RUN_ID: '99',
+      FACTORY_TESTS_CONCURRENT: '1',
     },
   });
   // A failing concurrent group still lets the serial group run, and fails.
@@ -748,11 +848,11 @@ test('the factory suite runs concurrently, except the suites that share the proc
     .split('\n');
   assert.equal(
     concurrent,
-    `unset --test ${tests}/a.test.mjs ${tests}/b.test.mjs`,
+    `unset 1 --test ${tests}/a.test.mjs ${tests}/b.test.mjs`,
   );
   assert.equal(
     serial,
-    `unset --test --test-concurrency=1 ${tests}/browser-acceptance.test.mjs ${tests}/stale-app-port.test.mjs`,
+    `unset serial --test --test-concurrency=1 ${serialFiles.map((file) => `${tests}/${file}`).join(' ')}`,
   );
   // Every real suite that runs stop-stale-app.sh is in the serial group.
   const real = path.join(scripts, 'tests');
@@ -765,6 +865,40 @@ test('the factory suite runs concurrently, except the suites that share the proc
       /stop-stale-app\.sh/.test(read(path.join(real, file)))
     )
       assert.ok(listed.includes(file), file);
+});
+
+test('stop-stale-app.sh refuses to stop anything from the concurrent test group', (t) => {
+  // The static check above sees only suites that name the script. A suite that
+  // runs a copy of verify.sh or browser-acceptance.sh far enough reaches it
+  // without naming it; under the concurrent group it fails instead.
+  const root = temp(t, 'nb3-review10-stale-');
+  const bin = path.join(root, 'bin');
+  mkdirSync(bin);
+  for (const name of ['pgrep', 'ss', 'lsof', 'kill', 'ps'])
+    writeFileSync(
+      path.join(bin, name),
+      `#!/usr/bin/env bash\necho ${name} >> "${root}/calls"\n`,
+      { mode: 0o755 },
+    );
+  const run = (concurrent) =>
+    spawnSync('bash', [path.join(scripts, 'stop-stale-app.sh'), '1'], {
+      encoding: 'utf8',
+      env: {
+        ...process.env,
+        PATH: `${bin}:${process.env.PATH}`,
+        FACTORY_TESTS_CONCURRENT: concurrent,
+      },
+    });
+  const refused = run('1');
+  assert.equal(refused.status, 3);
+  assert.match(
+    refused.stderr,
+    /add the suite to SERIAL in run-factory-tests\.sh/,
+  );
+  assert.equal(existsSync(path.join(root, 'calls')), false);
+  // Outside the group (builds, verification, the serial group) it runs.
+  run('');
+  assert.ok(existsSync(path.join(root, 'calls')));
 });
 
 test('workflow scripts in the infrastructure scope take expressions through env', () => {

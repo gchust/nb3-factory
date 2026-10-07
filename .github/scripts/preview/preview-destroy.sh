@@ -26,7 +26,7 @@ dir="$(instance_dir "$pr")"
 # while the instance is removed. A deploy whose CI step was cut off may still be
 # fetching or waiting for this lock; the mark written under it makes that
 # deploy refuse once it gets the lock, instead of bringing the preview back.
-# Bounded: a deploy holds the lock for about 13 minutes at most (migrations,
+# Bounded: a deploy holds the lock for about 14.5 minutes at most (migrations,
 # start and readiness; see the budget in preview-deploy.sh), and the teardown
 # job retries this three times inside its 20-minute limit, so waiting 3
 # minutes each time fails visibly rather than being cut off.

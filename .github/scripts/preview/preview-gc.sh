@@ -58,7 +58,7 @@ exec 9>"$PREVIEW_ROOT/deploy.lock"
 flock 9
 
 # Teardown marks (see preview-destroy.sh) are tiny, but one is left per closed
-# pull request; a day is far beyond the 30-minute deploy step they guard. The
+# pull request; a day is far beyond the 45-minute deploy step they guard. The
 # same goes for the deploy start marks (see mark_started in preview-lib.sh).
 prune_closed_marks 86400
 prune_marks started 86400

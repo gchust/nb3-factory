@@ -83,13 +83,16 @@ jobs:
       needs.dispatch-gate.outputs.covered != 'true' &&
       (github.event_name == 'workflow_dispatch' || contains(fromJSON('["success","failure","timed_out","cancelled"]'), github.event.workflow_run.conclusion))
     runs-on: ubuntu-24.04
-    # The bounded steps alone take up to 58 minutes: making room 10, Publish
-    # 10, Deploy 30, the public check's 5 and deleting superseded payloads 3.
+    # The bounded steps alone take up to 85 minutes: making room 22, Publish
+    # 10, Deploy 45, the public check's 5 and deleting superseded payloads 3.
+    # Making room and Deploy are that long only when the host's deploy lock
+    # is held, by gc or by a deploy whose CI step was cut off: each waits up
+    # to 16 minutes for it, at least the longest a deploy holds it.
     # Checkout, the ~84 MB download, the tailnet and the deploy key come on
     # top, so a shorter limit could cut a slow deploy off before its own limits
     # and skip the PR notice. The source wait runs in wait-for-source, outside
     # the lock, so this holds the lock only for deploying.
-    timeout-minutes: 75
+    timeout-minutes: 100
     # Serialized with teardown-preview in preview-teardown.yml. At job level, so
     # a copy the dispatch gate covers or skips never queues behind a deploy.
     concurrency:
@@ -210,13 +213,14 @@ jobs:
       # up previews of closed PRs, then of failed builds, oldest first; when only
       # successful builds of open PRs remain, this deploy is skipped and the PR
       # is told why, rather than the run failing.
-      # The host scripts bound their own waits for the deploy lock (2 minutes
-      # for the listing, 3 for an eviction, which fails the step), because a
-      # step that times out kills only the ssh client.
+      # The host scripts bound their own waits for the deploy lock (16 minutes
+      # for the listing, at least the longest a deploy holds it; 3 for an
+      # eviction, which fails the step), because a step that times out kills
+      # only the ssh client.
       - name: Make room on the preview host
         id: capacity
         if: steps.scripts.outcome == 'success'
-        timeout-minutes: 10
+        timeout-minutes: 22
         env:
           PR: ${{ steps.prepare.outputs.pr }}
           GITHUB_TOKEN: ${{ github.token }}
@@ -273,10 +277,12 @@ jobs:
           if [[ "$present" == present && "$SLIM" == true ]]; then
             echo "Dependency cache hit; sending the application tree only."
             # Unpacked without the dependency tree, so only the few megabytes
-            # of the application are written.
+            # of the application are written. Anchored, with and without a
+            # leading ./, the two ways an archive can name the member.
             mkdir -p "$RUNNER_TEMP/build"
             tar -xzf "$RUNNER_TEMP/dist-artifact/dist.tar.gz" -C "$RUNNER_TEMP/build" \
-              --warning=no-unknown-keyword --anchored --exclude=dist/node_modules
+              --warning=no-unknown-keyword --anchored \
+              --exclude=dist/node_modules --exclude=./dist/node_modules
             node control/.github/scripts/deploy-preview.mjs slim \
               --run-id "$SOURCE_RUN_ID" --build "$RUNNER_TEMP/build" --output "$RUNNER_TEMP/preview"
             tar -czf "$RUNNER_TEMP/payload.tar.gz" \
@@ -323,9 +329,9 @@ jobs:
         # 2026-10-06), in about two minutes at 815 KB/s. A transfer slower than
         # 50 KB/s for two minutes counts as stalled and resumes. Ending this
         # step only kills the ssh client, so preview-deploy.sh bounds each of
-        # its own waits — fetch 10 minutes, deploy lock 3, migrations 8, start
+        # its own waits — fetch 10 minutes, deploy lock 16, migrations 8, start
         # and readiness 3.5 — to finish, and release the lock, inside it.
-        timeout-minutes: 30
+        timeout-minutes: 45
         env:
           PR: ${{ steps.prepare.outputs.pr }}
           SHA: ${{ steps.prepare.outputs.sha }}

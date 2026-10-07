@@ -54,7 +54,10 @@ preview_rollback() {
 # snapshot must not roll a healthy deploy back onto a half-deleted one.
 preview_commit() {
   transaction_started=false
-  remove_container "$previous_container"
+  # The new instance is live; a container that would not go away is worth a
+  # line in the log, not a failed deploy that also skips the cleanup below.
+  remove_container "$previous_container" ||
+    log "could not remove the previous container $previous_container"
   if [[ -n "$backup" ]]; then
     rm -rf "$backup" || log "could not remove the previous preview at $backup"
   fi

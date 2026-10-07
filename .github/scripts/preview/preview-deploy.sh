@@ -16,18 +16,24 @@
 # CI asks whether the cache holds a set before it sends one, which is what keeps
 # an ordinary redeploy down to a few megabytes.
 #
-# Every wait is bounded. CI runs this inside its 30-minute Deploy step, and when
+# Every wait is bounded. CI runs this inside its 45-minute Deploy step, and when
 # that step times out only the ssh client dies: this script would carry on, and
 # an unbounded wait would hold the deploy lock for whatever came next. The
 # budget, in seconds, with the defaults:
 #
 #   fetch    600  PREVIEW_FETCH_BUDGET (preview-lib.sh), every try included
-#   lock     180  PREVIEW_LOCK_WAIT
+#   lock     960  PREVIEW_LOCK_WAIT
 #   migrate  480  PREVIEW_MIGRATE_TIMEOUT
 #   start    120  PREVIEW_START_TIMEOUT, creating the container
 #   ready     90  the readiness probe
-#   total = 1470 s, 24.5 minutes, plus a minute or two for unpacking and
-#   linking on local disk, inside the 30-minute step.
+#   total = 2250 s, 37.5 minutes, plus up to three for unpacking, linking and
+#   a rollback on local disk, inside the 45-minute step.
+#
+# The lock wait is at least the longest this script holds the lock (migrate,
+# start and ready, 690 s, plus those three minutes), so a deploy queued behind
+# another one, an orphaned one included, waits for it rather than failing.
+# That covers an older deploy of the same pull request that already held the
+# lock when this one started: it finishes, and this one then replaces it.
 set -euo pipefail
 
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -45,7 +51,7 @@ fetch_proxy="${PREVIEW_FETCH_PROXY:-}"
 build_status=""
 redeploy=false
 
-PREVIEW_LOCK_WAIT="${PREVIEW_LOCK_WAIT:-180}"
+PREVIEW_LOCK_WAIT="${PREVIEW_LOCK_WAIT:-960}"
 PREVIEW_MIGRATE_TIMEOUT="${PREVIEW_MIGRATE_TIMEOUT:-480}"
 PREVIEW_START_TIMEOUT="${PREVIEW_START_TIMEOUT:-120}"
 
@@ -140,7 +146,7 @@ container_base="/app"
 # populate the same dependency cache and to read each other's instance state.
 exec 9>"$PREVIEW_ROOT/deploy.lock"
 flock -w "$PREVIEW_LOCK_WAIT" 9 ||
-  die "another preview operation held the deploy lock for ${PREVIEW_LOCK_WAIT}s; PR #$pr was not deployed"
+  die "another preview operation held the deploy lock for ${PREVIEW_LOCK_WAIT}s; PR #$pr was not deployed. Re-run Deploy Task Preview for this task run once the host is free (see PREVIEWS.md, 手动补发)"
 
 # A deploy whose CI step was cut off keeps running here; if its pull request
 # was torn down meanwhile, deploying now would bring a closed preview back.
