@@ -763,7 +763,16 @@ test('source-baseline bounds its browser login and portable verification steps',
 });
 
 test("replays restore the task's pnpm store and never save one", () => {
-  const task = workflow('code-agent-task.yml');
+  // verify-final restores the task's store through this action.
+  const task = read(
+    path.resolve(
+      scripts,
+      '..',
+      'actions',
+      'restore-task-toolchain',
+      'action.yml',
+    ),
+  );
   const replay = jobOf(workflow('replay-build-review.yml'), 'review');
   const key =
     /key: (node-cache-Linux-x64-pnpm-\$\{\{ hashFiles\('workspace\/pnpm-lock\.yaml'\) \}\})/;
