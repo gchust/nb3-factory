@@ -5,7 +5,7 @@ name: Report dispatch gate
 # GitHub also raises workflow_run when the task completes. When the explicit
 # request for the caller's own workflow went out, the workflow_run copy would
 # only repeat the same work: wait
-# for the run, download its artifacts, and for previews upload the ~744 MB
+# for the run, download its artifacts, and for previews upload the ~84 MB
 # payload again, while holding a global queue. Callers run this only for
 # workflow_run events and skip their work when it reports `covered`.
 #

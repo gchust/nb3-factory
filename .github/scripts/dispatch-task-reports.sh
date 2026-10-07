@@ -18,6 +18,24 @@ fi
 # reports and a comment round's queue request take 490 s, inside the 10-minute
 # dispatch-reports job in code-agent-task.yml. task-report-dispatch.test.mjs
 # checks that budget.
+#
+# A request killed by the timeout may already have been accepted, so a retry
+# can dispatch the same report twice. That is safe by design, not by luck:
+# every target already receives duplicate requests for one source run (this
+# step and its workflow_run copy both ran before report-dispatch-gate.yml, and
+# a replay or an operator can request any of them again), so each one is
+# idempotent per source run and attempt:
+#   report-task-progress   rewrites one comment; an equal or older record is refused
+#   report-task-usage      archives and comments under the run/attempt marker
+#   publish-agent-history  uploads content-addressed archives, upserts by marker
+#   publish-retro          upserts its comment and ledger row by marker
+#   publish-visual-report  upserts its PR comment by marker
+#   deploy-preview         keeps a running instance of the same build (no force)
+#   comment-build-queue    reconciles receipts; a second pass finds nothing to do
+# Retrying only before a connection was established would trade that for lost
+# reports whenever GitHub accepts slowly, which continuations cannot recover
+# (they emit no workflow_run). task-report-dispatch.test.mjs keeps this list in
+# step with the accepted workflows.
 DISPATCH_ATTEMPT_TIMEOUT=15s
 DISPATCH_KILL_AFTER=5s
 DISPATCH_BACKOFF=(2 8)
@@ -46,8 +64,26 @@ dispatch() {
 
 # Published failed work has evidence and deserves a preview attempt too.
 published="${FACTORY_TASK_PUBLISHED:-false}"
+# A rejected GitHub Re-run did no work: its attempt has no progress, usage,
+# history or retro of its own, and a report for it would rank as the Issue's
+# latest and replace the real one (the progress comment included, which
+# orders attempts by number). No report is requested; only the comment queue
+# still moves on. Each step still succeeds, so report-dispatch-gate.yml counts
+# it as handled and the workflow_run copy does not publish the empty report.
+rerun_rejected="${FACTORY_RERUN_REJECTED:-false}"
+# Rejected in prepare ("Re-run all jobs"), the attempt claimed no comment
+# either: nothing at all is requested.
+prepare_rejected="${FACTORY_PREPARE_REJECTED:-false}"
 request() {
   local workflow="$1"
+  if [[ "$prepare_rejected" == 'true' ]]; then
+    echo "Not requesting $workflow: prepare rejected attempt $SOURCE_ATTEMPT as a GitHub Re-run."
+    return 0
+  fi
+  if [[ "$rerun_rejected" == 'true' && "$workflow" != comment-build-queue.yml ]]; then
+    echo "Not requesting $workflow: attempt $SOURCE_ATTEMPT was a rejected GitHub Re-run."
+    return 0
+  fi
   case "$workflow" in
     publish-visual-report.yml | deploy-preview.yml)
       # Requested explicitly for the same reason as the media report: a preview

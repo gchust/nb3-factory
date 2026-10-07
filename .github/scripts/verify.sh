@@ -45,11 +45,6 @@ timed() {
     *) node "$script_dir/timed-command.mjs" "$1" pnpm "$1" ;;
   esac
 }
-# Only repair-loop workspaces are normalized; independent final verification
-# checks accepted bytes without editing them. Refresh candidates have no Git yet.
-if [[ "${FACTORY_RETRY_FAILED_CHECK:-0}" == '1' ]]; then
-  node "$script_dir/timed-command.mjs" format:auto node "$script_dir/format-changes.mjs" "$workspace"
-fi
 failed_stage="$artifact_dir/../last-failed-stage"
 run_check() {
   if timed "$1"; then return 0; else
@@ -62,15 +57,27 @@ run_check() {
 previous=''
 if [[ "${FACTORY_RETRY_FAILED_CHECK:-0}" == '1' && -f "$failed_stage" ]]; then
   previous="$(cat "$failed_stage")"
-  case "$previous" in
-    lockfile|format:check|lint|typecheck|test) run_check "$previous" ;;
-    *) previous='' ;;
-  esac
 fi
+# Only repair-loop workspaces are normalized; independent final verification
+# checks accepted bytes without editing them. Refresh candidates have no Git yet.
+# Its own stage is written first: a failure here exits through set -e, and the
+# file would otherwise still name the check the previous round failed.
+if [[ "${FACTORY_RETRY_FAILED_CHECK:-0}" == '1' ]]; then
+  printf '%s\n' format >"$failed_stage"
+  node "$script_dir/timed-command.mjs" format:auto node "$script_dir/format-changes.mjs" "$workspace"
+fi
+case "$previous" in
+  lockfile|format:check|lint|typecheck|test) run_check "$previous" ;;
+  *) previous='' ;;
+esac
 for check in lockfile format:check lint typecheck test; do
   [[ "$check" == "$previous" ]] || run_check "$check"
 done
-rm -f "$failed_stage"
+# The build and the database step fail this script through set -e, so their
+# stage is written before they run and cleared once both passed. Without it a
+# build error kept whatever stage an earlier round failed in, its fingerprint
+# changed every round, and the three-identical-failures stop never saw it.
+printf '%s\n' build >"$failed_stage"
 build_args=()
 if [[ -n "${FACTORY_BUILD_TARGET:-}" ]]; then
   build_args+=(--target "$FACTORY_BUILD_TARGET" --node-version "${FACTORY_BUILD_NODE_VERSION:-24}")
@@ -82,7 +89,10 @@ if [[ "${FACTORY_BUILD_ARCHIVE:-0}" == '1' ]]; then
   build_args+=(--tar)
 fi
 NODE_ENV=production node "$script_dir/timed-command.mjs" build pnpm build ${build_args[@]+"${build_args[@]}"}
+printf '%s\n' database >"$failed_stage"
 "$script_dir/apply-database.sh"
+# Later failures are browser failures, which the repair loop records by kind.
+rm -f "$failed_stage"
 
 if [[ "${FACTORY_SKIP_BROWSER:-0}" == "1" ]]; then
   echo "Browser smoke skipped by FACTORY_SKIP_BROWSER=1."

@@ -9,6 +9,7 @@ import {
   feishuConfig,
   feishuDigest,
   notifyPending,
+  parseDays,
   ownersOf,
   parseOwners,
   unknownOwnerKeys,
@@ -106,6 +107,8 @@ function pages(items) {
   const client = {
     repository,
     conflictOnce: false,
+    conflicts: 0,
+    failRef: false,
     commits: 0,
     async getRef() {
       return { object: { sha: head } };
@@ -149,6 +152,11 @@ function pages(items) {
           client.conflictOnce = false;
           throw new Error('422 concurrent ref update');
         }
+        if (client.conflicts > 0) {
+          client.conflicts -= 1;
+          throw new Error('422 concurrent ref update');
+        }
+        if (client.failRef) throw new Error('500 ref update failed');
         client.commits += 1;
         head = body.sha;
         return {};
@@ -541,7 +549,7 @@ test('messages are signed, retried on server errors and never leak the webhook U
     status,
     json: async () => body,
   });
-  const responses = [reply(502, null), reply(200, { code: 0, msg: 'success' })];
+  const responses = [reply(503, null), reply(200, { code: 0, msg: 'success' })];
   await sendFeishu(
     config,
     { msg_type: 'post', content: {} },
@@ -649,6 +657,9 @@ test('a scheduled close archives to gh-pages, sends the digest once and forgets 
   assert.deepEqual(result, {
     sent: [{ date: '2026-09-27', count: 2 }],
     failed: [],
+    held: [],
+    forgotten: [],
+    ignored: [],
     remaining: 0,
   });
   assert.equal(sent.length, 1);
@@ -668,6 +679,9 @@ test('a scheduled close archives to gh-pages, sends the digest once and forgets 
     {
       sent: [],
       failed: [],
+      held: [],
+      forgotten: [],
+      ignored: [],
       remaining: 0,
     },
   );
@@ -695,6 +709,312 @@ test('a failed send keeps the day pending for the next run', async () => {
   assert.equal(failed.remaining, 1);
   assert.equal(client.json(LEDGER).pending.length, 1);
   assert.equal((await notifyPending(client, null, {})).remaining, 1);
+});
+
+const digestConfig = {
+  url: 'https://open.feishu.cn/open-apis/bot/v2/hook/x',
+  secret: null,
+  owners,
+};
+const noPause = async () => {};
+
+// A send that may have reached the chat is never repeated automatically,
+// not even by the next day's run: the day is marked uncertain instead.
+test('a day whose send may have been delivered is held until a maintainer resends it', async () => {
+  const client = pages([report(102, '2026-09-27T02:00:00.000Z')]);
+  await archiveDay(client, { now: new Date('2026-09-28T01:07:00Z'), rules });
+  const ambiguous = await notifyPending(client, digestConfig, {
+    baseUrl: 'https://owner.github.io/factory/',
+    pause: noPause,
+    send: async () => {
+      throw Object.assign(
+        new Error(
+          'Feishu request failed (TimeoutError); it may have been delivered',
+        ),
+        { uncertain: true },
+      );
+    },
+  });
+  assert.equal(ambiguous.failed.length, 1);
+  assert.equal(ambiguous.failed[0].uncertain, true);
+  assert.equal(ambiguous.remaining, 1);
+  assert.deepEqual(
+    client.json(LEDGER).pending.map((item) => item.uncertain),
+    [true],
+  );
+
+  // The next scheduled run holds the day and sends nothing.
+  let sends = 0;
+  const count = async () => {
+    sends += 1;
+  };
+  const scheduled = await notifyPending(client, digestConfig, {
+    baseUrl: 'https://owner.github.io/factory/',
+    pause: noPause,
+    send: count,
+  });
+  assert.deepEqual(scheduled.held, ['2026-09-27']);
+  assert.deepEqual(scheduled.sent, []);
+  assert.equal(sends, 0);
+  assert.equal(client.json(LEDGER).pending.length, 1);
+
+  // Only an explicit resend sends it, and then it is forgotten.
+  const resent = await notifyPending(client, digestConfig, {
+    baseUrl: 'https://owner.github.io/factory/',
+    pause: noPause,
+    send: count,
+    resendDays: new Set(['2026-09-27']),
+  });
+  assert.deepEqual(resent.sent, [{ date: '2026-09-27', count: 1 }]);
+  assert.equal(sends, 1);
+  assert.deepEqual(client.json(LEDGER).pending, []);
+});
+
+const twoDays = async () => {
+  const client = pages([
+    report(101, '2026-09-26T02:00:00.000Z'),
+    report(102, '2026-09-27T02:00:00.000Z'),
+  ]);
+  await archiveDay(client, { now: new Date('2026-09-27T01:07:00Z'), rules });
+  await archiveDay(client, { now: new Date('2026-09-28T01:07:00Z'), rules });
+  return client;
+};
+const pendingDays = (client) => [
+  ...new Set(client.json(LEDGER).pending.map((item) => item.date)),
+];
+const uncertainDays = (client) => [
+  ...new Set(
+    client
+      .json(LEDGER)
+      .pending.filter((item) => item.uncertain)
+      .map((item) => item.date),
+  ),
+];
+const timeout = () =>
+  Object.assign(new Error('Feishu request failed (TimeoutError)'), {
+    uncertain: true,
+  });
+
+// Feishu just failed to answer: later days are not tried, so they stay
+// plainly pending instead of becoming uncertain too.
+test('an uncertain send stops the run before the next day', async () => {
+  const client = await twoDays();
+  let sends = 0;
+  const result = await notifyPending(client, digestConfig, {
+    baseUrl: 'https://owner.github.io/factory/',
+    pause: noPause,
+    send: async () => {
+      sends += 1;
+      throw timeout();
+    },
+  });
+  assert.equal(sends, 1);
+  assert.deepEqual(uncertainDays(client), ['2026-09-26']);
+  assert.deepEqual(pendingDays(client), ['2026-09-26', '2026-09-27']);
+  assert.equal(result.failed.length, 1);
+});
+
+test('uncertain days are settled one by one: resend some, forget others', async () => {
+  const client = await twoDays();
+  // Both days end up uncertain over two runs.
+  for (let run = 0; run < 2; run++)
+    await notifyPending(client, digestConfig, {
+      baseUrl: 'https://owner.github.io/factory/',
+      pause: noPause,
+      send: async () => {
+        throw timeout();
+      },
+    });
+  assert.deepEqual(uncertainDays(client), ['2026-09-26', '2026-09-27']);
+
+  // 09-26 is in the chat, 09-27 is not: forget one, resend the other.
+  const titles = [];
+  const result = await notifyPending(client, digestConfig, {
+    baseUrl: 'https://owner.github.io/factory/',
+    pause: noPause,
+    send: async (_config, message) => {
+      titles.push(message.content.post.zh_cn.title);
+    },
+    forgetDays: new Set(['2026-09-26']),
+    resendDays: new Set(['2026-09-27']),
+  });
+  assert.deepEqual(result.forgotten, ['2026-09-26']);
+  assert.deepEqual(
+    result.sent.map((item) => item.date),
+    ['2026-09-27'],
+  );
+  assert.deepEqual(titles, ['NocoBase3 框架问题日报 · 2026-09-27']);
+  assert.deepEqual(client.json(LEDGER).pending, []);
+});
+
+test('resending one uncertain day leaves the other held', async () => {
+  const client = await twoDays();
+  for (let run = 0; run < 2; run++)
+    await notifyPending(client, digestConfig, {
+      baseUrl: 'https://owner.github.io/factory/',
+      pause: noPause,
+      send: async () => {
+        throw timeout();
+      },
+    });
+  const result = await notifyPending(client, digestConfig, {
+    baseUrl: 'https://owner.github.io/factory/',
+    pause: noPause,
+    send: async () => {},
+    resendDays: new Set(['2026-09-27']),
+  });
+  assert.deepEqual(result.held, ['2026-09-26']);
+  assert.deepEqual(
+    result.sent.map((item) => item.date),
+    ['2026-09-27'],
+  );
+  assert.deepEqual(pendingDays(client), ['2026-09-26']);
+});
+
+test('listed days that match nothing are reported, not silently ignored', async () => {
+  const client = await twoDays();
+  // 09-26 becomes uncertain; 09-27 stays plainly pending.
+  await notifyPending(client, digestConfig, {
+    baseUrl: 'https://owner.github.io/factory/',
+    pause: noPause,
+    send: async () => {
+      throw timeout();
+    },
+  });
+  const result = await notifyPending(client, null, {
+    baseUrl: 'https://owner.github.io/factory/',
+    pause: noPause,
+    forgetDays: new Set(['2026-09-20']),
+    resendDays: new Set(['2026-09-27', '2026-09-26']),
+  });
+  assert.deepEqual(result.ignored, [
+    { date: '2026-09-20', input: 'forget_uncertain', reason: 'is not pending' },
+    {
+      date: '2026-09-27',
+      input: 'resend_uncertain',
+      reason: 'is not an uncertain pending day',
+    },
+  ]);
+});
+
+// The duplicate this feature prevents must not come back through a failed
+// mark: the run names the day and the remedy.
+test('a day that cannot be marked uncertain is named with its remedy', async () => {
+  const client = await twoDays();
+  await assert.rejects(
+    notifyPending(client, digestConfig, {
+      baseUrl: 'https://owner.github.io/factory/',
+      pause: noPause,
+      send: async () => {
+        client.failRef = true;
+        throw timeout();
+      },
+    }),
+    (error) =>
+      /The Feishu digest for 2026-09-26 may have been delivered but could not be marked uncertain/.test(
+        error.message,
+      ) &&
+      /forget_uncertain=2026-09-26/.test(error.message) &&
+      error.undelivered.length === 1 &&
+      error.undelivered[0].date === '2026-09-26' &&
+      Array.isArray(error.delivered),
+  );
+  client.failRef = false;
+});
+
+test('a day list is validated', () => {
+  assert.deepEqual(
+    [...parseDays(' 2026-09-26, 2026-09-27 ,')],
+    ['2026-09-26', '2026-09-27'],
+  );
+  assert.deepEqual([...parseDays('')], []);
+  assert.throws(() => parseDays('yesterday'), /Invalid day yesterday/);
+  // The shape alone is not enough: the date must exist.
+  assert.throws(() => parseDays('2026-13-45'), /Invalid day 2026-13-45/);
+  assert.throws(() => parseDays('2026-02-30'), /Invalid day 2026-02-30/);
+  assert.deepEqual([...parseDays('2024-02-29')], ['2024-02-29']);
+});
+
+test('a definite rejection keeps the day pending and unmarked', async () => {
+  const client = pages([report(102, '2026-09-27T02:00:00.000Z')]);
+  await archiveDay(client, { now: new Date('2026-09-28T01:07:00Z'), rules });
+  await notifyPending(client, digestConfig, {
+    baseUrl: 'https://owner.github.io/factory/',
+    pause: noPause,
+    send: async () => {
+      throw Object.assign(
+        new Error('Feishu rejected the digest (HTTP 200, code 19021)'),
+        {
+          uncertain: false,
+        },
+      );
+    },
+  });
+  assert.deepEqual(
+    client.json(LEDGER).pending.map((item) => item.uncertain),
+    [undefined],
+  );
+});
+
+// Each day is recorded right after its send, so a later failure in the same
+// run cannot make the next run resend a day that already went out.
+test('each sent day is recorded before the next day is sent', async () => {
+  const client = pages([
+    report(101, '2026-09-26T02:00:00.000Z'),
+    report(102, '2026-09-27T02:00:00.000Z'),
+  ]);
+  await archiveDay(client, { now: new Date('2026-09-27T01:07:00Z'), rules });
+  await archiveDay(client, { now: new Date('2026-09-28T01:07:00Z'), rules });
+  assert.deepEqual(
+    [...new Set(client.json(LEDGER).pending.map((item) => item.date))],
+    ['2026-09-26', '2026-09-27'],
+  );
+  const order = [];
+  await assert.rejects(
+    notifyPending(client, digestConfig, {
+      baseUrl: 'https://owner.github.io/factory/',
+      pause: noPause,
+      send: async (_config, message) => {
+        order.push(message.content.post.zh_cn.title);
+        // The first day is already recorded when the second is sent; then
+        // recording the second fails outright.
+        if (order.length === 2) {
+          assert.deepEqual(
+            [...new Set(client.json(LEDGER).pending.map((item) => item.date))],
+            ['2026-09-27'],
+          );
+          client.failRef = true;
+        }
+      },
+    }),
+    (error) =>
+      /The Feishu digest for 2026-09-27 was delivered but not recorded/.test(
+        error.message,
+      ) &&
+      /forget_uncertain=2026-09-27/.test(error.message) &&
+      /ref update failed/.test(error.message),
+  );
+  assert.equal(order.length, 2);
+  client.failRef = false;
+  // Only the day whose record failed is still pending.
+  assert.deepEqual(
+    [...new Set(client.json(LEDGER).pending.map((item) => item.date))],
+    ['2026-09-27'],
+  );
+});
+
+test('recording a day survives several concurrent gh-pages writers', async () => {
+  const client = pages([report(102, '2026-09-27T02:00:00.000Z')]);
+  await archiveDay(client, { now: new Date('2026-09-28T01:07:00Z'), rules });
+  client.conflicts = 4;
+  const result = await notifyPending(client, digestConfig, {
+    baseUrl: 'https://owner.github.io/factory/',
+    pause: noPause,
+    send: async () => {},
+  });
+  assert.equal(result.sent.length, 1);
+  assert.equal(client.conflicts, 0);
+  assert.deepEqual(client.json(LEDGER).pending, []);
 });
 
 test('day and index pages escape finding text and link each report', async () => {

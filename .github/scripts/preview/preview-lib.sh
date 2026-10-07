@@ -104,7 +104,7 @@ fetch_payload() {
   # A transfer slower than 50 KB/s for two minutes counts as stalled, rather
   # than holding the deploy until the workflow's step limit. Each try is a new
   # curl with -C -, so it resumes the .part file from its current size instead
-  # of starting the ~744 MB payload again; curl's own --retry discards what it
+  # of starting the ~84 MB payload again; curl's own --retry discards what it
   # fetched on older versions. The digest check below covers the whole file.
   local -a curl_opts=(-fL -C - --connect-timeout 20 --speed-limit 51200 --speed-time 120)
   [[ -z "$proxy" ]] || curl_opts+=(-x "$proxy")

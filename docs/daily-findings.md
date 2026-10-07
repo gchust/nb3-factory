@@ -47,7 +47,16 @@ The mapping is a secret, not a file or a variable, because the repository and it
 
 The digest is a Feishu rich-text (`post`) message: a summary line with severity counts and a link to the day's page, then one section per feature point that mentions its owners, listing each finding with its severity, a link to its report and its task. A not-placed finding also mentions the owners of each feature point it touches. Finding text is sent only in text and link nodes, which Feishu does not parse, so a title cannot add a mention. The message is kept under 18 KB by listing fewer findings per section and pointing to the page for the rest. A day with no new findings sends nothing.
 
-A digest is queued only while `FACTORY_FEISHU_DIGEST` is `true`, `FEISHU_WEBHOOK_URL` is set and notification is on. The send step retries a network error, HTTP 429 or a 5xx response twice. When Feishu rejects a message, for example because the signature does not match, the day stays queued: the next run sends it again together with its own day, and a day still unsent after seven days is dropped. Only the send step receives the webhook, its secret and the mapping. The archive step learns only whether a webhook exists.
+A digest is queued only while `FACTORY_FEISHU_DIGEST` is `true`, `FEISHU_WEBHOOK_URL` is set and notification is on. The send step retries HTTP 429, HTTP 503, or a connection that was never established, twice. Each day is recorded in the ledger as soon as its send settles, so another day's send or a crash afterwards cannot make the next run resend it; that record is retried from a fresh `gh-pages` head when another writer moved it. If recording a delivered day keeps failing, the run fails with an error naming the day as "delivered but not recorded": forget it as below before the next run, or it is sent again.
+
+After a timeout, a dropped connection or another 5xx response such as a 502 or 504 from a proxy, the message may already be in the chat. Such a day is marked `uncertain` in the ledger and the run stops sending, so later days stay plainly queued for the next run rather than becoming uncertain too. An uncertain day is never resent automatically; scheduled runs only print a warning naming it. A maintainer checks the chat and runs **Daily framework findings** by hand with the day in one of two inputs, each a comma-separated list of `YYYY-MM-DD` dates:
+
+- `forget_uncertain`: the digest is in the chat, so the day is removed from the queue.
+- `resend_uncertain`: the digest is missing, so the day is sent once more.
+
+Keep `notify` on for such a dispatch: the send step, which reads both lists, does not run without it. A listed date that is not a real day fails the step before anything is sent; a real date that matches no queued day (or, for `resend_uncertain`, no uncertain day) is reported as a warning and ignored. If marking a day uncertain itself fails, the run ends with an error naming the day: check the chat and forget it before the next run, or it may be sent again.
+
+When Feishu answers with an explicit rejection, for example because the signature does not match, the day was not posted: it stays queued and the next run sends it again together with its own day. A day still unsent after seven days is dropped, uncertain or not. Only the send step receives the webhook, its secret and the mapping. The archive step learns only whether a webhook exists.
 
 ## Running it by hand
 

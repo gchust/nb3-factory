@@ -1,6 +1,8 @@
 // Read-only compatibility for tasks created before the Code Agent rename.
 // New tasks, labels, titles, PR markers and dispatches use neutral names only.
 // Work branches have one form; the former pi/issue-N branches are gone.
+import { readFileSync } from 'node:fs';
+
 export function taskIssueNumber(branch) {
   const match = branch?.match(/^agent\/issue-(\d+)$/);
   const number = Number(match?.[1]);
@@ -36,7 +38,19 @@ export function isTaskStatus(name) {
   return /^(?:agent|pi):/.test(name ?? '');
 }
 
-export const waitingLabels = ['agent:waiting', 'pi:waiting'];
+// The base a continuation keeps when its ref is unchanged: the commit its source
+// run recorded in factory-task-N (see continuationBase in handoff-control.mjs).
+// Null when nothing usable was recorded, so callers fall back to the live head.
+export function recordedContinuationBase(previousTaskFile, ref) {
+  if (!previousTaskFile) return null;
+  let recorded;
+  try {
+    recorded = JSON.parse(readFileSync(previousTaskFile, 'utf8'))?.applicationBase;
+  } catch {
+    return null;
+  }
+  return recorded?.ref === ref && /^[a-f0-9]{40}$/u.test(recorded.sha ?? '') ? recorded.sha : null;
+}
 
 export function taskMarkerNumber(body) {
   const match = body?.match(/<!--\s*(?:agent|pi)-issue:\s*(\d+)\s*-->/i);

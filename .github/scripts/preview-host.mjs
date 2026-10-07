@@ -168,8 +168,9 @@ export function slimEntries(rootEntries, distEntries) {
   return entries.sort();
 }
 
-// The jobs that upload factory-dist-N: verify-final for a delivery and
-// preview-build-failed for published failed work.
+// The jobs that upload factory-dist-N: verify-final, for a delivery and also
+// for failed work when its build finished before a later check failed, and
+// preview-build-failed for other published failed work.
 const DIST_PRODUCERS = ['verify-final', 'preview-build-failed'];
 
 /**
@@ -189,7 +190,8 @@ export function isNotFoundError(error) {
  * delivery. The run's own conclusion is not consulted: a question round's reply
  * failing after the delivery makes the run fail without making the build less
  * delivered. The artifact differs: the deployable build is produced by
- * `verify-final` (or `preview-build-failed` for failed work), not by the agent.
+ * `verify-final` (which also packages failed work whose build finished) or by
+ * `preview-build-failed`, not by the agent.
  *
  * Artifacts are listed for every attempt of the run; only one uploaded inside a
  * producing job of the selected attempt belongs to it. Without such an upload
@@ -236,6 +238,24 @@ export function selectDistArtifact(run, jobs, artifacts, repository) {
     )
   )
     return null; // Failed packaging has no archive.
+  // A passed verification whose package could not be staged or uploaded (that
+  // no longer fails the delivery): select reports the missing package instead
+  // of failing. The upload is continue-on-error, so GitHub reports it as
+  // success even when it failed; the report step has no continue-on-error and
+  // runs only when the package is missing.
+  if (
+    candidates.length === 0 &&
+    jobs.some(
+      (job) =>
+        job.name === 'verify-final' &&
+        job.steps?.some(
+          (step) =>
+            step.name === 'Report a missing deployable build' &&
+            step.conclusion === 'success',
+        ),
+    )
+  )
+    return null;
   if (candidates.length !== 1)
     throw new Error('Expected one unexpired deployable build artifact');
   return candidates[0];
