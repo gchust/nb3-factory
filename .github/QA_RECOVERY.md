@@ -48,8 +48,10 @@ failed run; the failure notice on the Issue gives both values. The new run
 restores the checkpoint, keeps the task's counters and pinned control plane,
 and continues the saved phase. [RECOVERY.md](RECOVERY.md) lists which failures
 are recoverable and what the recovery checks. Artifacts expire after 14 days. A
-GitHub Re-run of an implementation or repair attempt is rejected; a re-run of
-an existing continuation restores that event's original source checkpoint.
+GitHub Re-run of the agent job is always rejected before any work, for a
+continuation too, because a fresh runner cannot preserve the task's limits.
+Such a rejected Re-run leaves the earlier attempt's checkpoint intact, and an
+explicit recovery from that run still accepts it.
 
 Regression checks: `pnpm factory:test`. A task keeps the control plane it
 recorded as `control_sha` for its continuations and recoveries, so an

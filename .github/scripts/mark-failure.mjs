@@ -77,6 +77,14 @@ const body = [
         '已尝试为失败实现打包预览，但未生成可用部署包；失败报告与搭建 PR 仍保留，详情见 preview-build-failed 作业日志。',
       ]
     : []),
+  // A rejected GitHub Re-run saved no checkpoint of its own, yet the earlier
+  // attempt's checkpoint is intact and recovery accepts it.
+  ...(process.env.FACTORY_RERUN_REJECTED === 'true'
+    ? [
+        '',
+        `这是对本 Run 的 GitHub Re-run，已在开始前拒绝，本次 attempt 没有保存检查点。若此前的 attempt 保存了检查点，仍可在 Code Agent NocoBase Task 的 Run workflow 中填写 issue_number=${issueNumber}、recovery_run_id=${process.env.GITHUB_RUN_ID} 从中恢复。`,
+      ]
+    : []),
   ...(recoverable
     ? [
         '',

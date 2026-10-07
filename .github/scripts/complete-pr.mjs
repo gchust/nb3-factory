@@ -6,11 +6,7 @@ import {
   parseIssueTask,
   validateTargetBranch,
 } from './factory-lib.mjs';
-import {
-  taskIssueNumber,
-  taskMarkerNumber,
-  waitingLabels,
-} from './task-compat.mjs';
+import { taskIssueNumber, taskMarkerNumber } from './task-compat.mjs';
 
 // Older application branches may still emit the former pull_request workflow.
 // The default-branch pull_request_target workflow is now the sole publisher.
@@ -56,8 +52,10 @@ if (pull.merged) {
   );
 }
 
+// Only agent:waiting: the legacy pi:waiting label is no longer set on any open
+// Issue, so querying it cost one request per merged PR and matched nothing.
 const candidates = [];
-for (const label of waitingLabels) {
+for (const label of ['agent:waiting']) {
   for (let page = 1; ; page += 1) {
     const issues = await client.request('GET', '/issues', {
       query: {

@@ -150,7 +150,7 @@ test('another task PR blocks a new task on the same application branch', async (
   );
 });
 
-test('completion wakes the oldest task across both label generations', async () => {
+test('completion wakes the oldest agent:waiting task and no longer queries pi:waiting', async () => {
   const result = await runFixture(
     'complete-pr.mjs',
     { pull_request: pull(3, 'agent/issue-2') },
@@ -161,9 +161,12 @@ test('completion wakes the oldest task across both label generations', async () 
           user: { login: 'external-user' },
         };
       if (call.route === '/issues' && call.method === 'GET') {
-        return call.query.get('labels') === 'pi:waiting'
-          ? [{ ...issue(4, 'pi:waiting'), user: { login: 'another-user' } }]
-          : [issue(5, 'agent:waiting')];
+        return call.query.get('labels') === 'agent:waiting'
+          ? [
+              { ...issue(4, 'agent:waiting'), user: { login: 'another-user' } },
+              issue(5, 'agent:waiting'),
+            ]
+          : [];
       }
       return baseHandler(call);
     },
@@ -176,6 +179,13 @@ test('completion wakes the oldest task across both label generations', async () 
     event_type: 'code-agent-task',
     client_payload: { issue_number: 4 },
   });
+  assert.ok(
+    !result.requests.some(
+      (call) =>
+        call.route === '/issues' &&
+        call.query?.get?.('labels') === 'pi:waiting',
+    ),
+  );
   assert.ok(
     result.requests.some(
       (call) => call.route === '/issues/2' && call.body?.state === 'closed',

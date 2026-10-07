@@ -244,3 +244,14 @@ test('only a real cancellation of the run makes the notice say cancelled', () =>
   assert.match(cancelledJob, /^ {4}permissions: \{\}$/m);
   assert.match(cancelledJob, /^ {4}timeout-minutes: 2$/m);
 });
+
+test('a rejected GitHub Re-run points to recovery from the earlier attempt', async (t) => {
+  const notice = await failedRunNotice(t, {
+    FACTORY_RUN_CANCELLED: 'false',
+    FACTORY_RERUN_REJECTED: 'true',
+  });
+  assert.match(notice, /GitHub Re-run，已在开始前拒绝/);
+  assert.match(notice, /issue_number=7、recovery_run_id=100/);
+  const ordinary = await failedRunNotice(t, { FACTORY_RUN_CANCELLED: 'false' });
+  assert.doesNotMatch(ordinary, /GitHub Re-run/);
+});

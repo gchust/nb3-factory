@@ -74,7 +74,8 @@ export function observedFailures(kind, report, log, metadata, stage = 'build') {
       if (details.length) diagnostics.push(details.join(' '));
     } else if (
       !wrapper(line) &&
-      /error TS\d+|\b(?:[A-Za-z]*Error)(?:\s*\[[^\]]+\])?:\s*\S|\berror\s+\S/iu.test(
+      // pnpm prints its failures as [ERR_PNPM_*] codes, e.g. an outdated lockfile.
+      /error TS\d+|\bERR_PNPM_[A-Z_]+\b|\b(?:[A-Za-z]*Error)(?:\s*\[[^\]]+\])?:\s*\S|\berror\s+\S/iu.test(
         line,
       )
     ) {
