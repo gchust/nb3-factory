@@ -75,9 +75,9 @@ test('a host with a free slot, or one this PR already holds, evicts nothing', ()
   assert.deepEqual(redeploy.evict, []);
 });
 
-test('a full host gives up every preview of a closed or missing PR first', () => {
-  // Teardown should have removed these; nothing else ever will, so they go
-  // even when one would make room — and before any open PR's preview.
+test('a full host gives up previews of closed or missing PRs first', () => {
+  // Teardown should have removed these; nothing else ever will, so up to three
+  // go even when one would make room — and before any open PR's preview.
   const plan = planCapacity({
     listing: listing([
       instance(1, '2026-09-01T00:00:00Z', 'failed'),
@@ -95,7 +95,7 @@ test('a full host gives up every preview of a closed or missing PR first', () =>
   assert.deepEqual(evicted(plan), ['2:closed', '3:closed']);
 });
 
-test('a deploy removes at most three closed previews beyond the slots it needs', () => {
+test('a deploy removes at most three closed previews unless it needs more slots', () => {
   // Each removal can wait for the deploy lock, and the capacity step is
   // budgeted for three. The rest stay first in line for the next deploy.
   const instances = [5, 4, 3, 2, 1].map((pr) =>
@@ -122,6 +122,34 @@ test('a deploy removes at most three closed previews beyond the slots it needs',
     workflow,
     /CLOSED_EVICTIONS_PER_DEPLOY \(3\)[\s\S]*?timeout-minutes: 28\n/,
   );
+});
+
+test('closed PRs past the cap wait; an open failed preview is kept', () => {
+  // Four closed previews and a failed open one on a full host that needs one
+  // slot: the three oldest closed go, the fourth waits for the next deploy, and
+  // the failed preview is not touched because the closed ones made room.
+  const plan = planCapacity({
+    listing: listing(
+      [
+        instance(1, '2026-09-04T00:00:00Z', 'success'),
+        instance(2, '2026-09-01T00:00:00Z', 'success'),
+        instance(3, '2026-09-03T00:00:00Z', 'success'),
+        instance(4, '2026-09-02T00:00:00Z', 'success'),
+        instance(5, '2026-08-01T00:00:00Z', 'failed'),
+      ],
+      { limit: 5 },
+    ),
+    pr: 9,
+    pulls: new Map([
+      [1, { state: 'closed', body: '' }],
+      [2, { state: 'closed', body: '' }],
+      [3, { state: 'closed', body: '' }],
+      [4, { state: 'closed', body: '' }],
+      [5, open('failed')],
+    ]),
+  });
+  assert.equal(plan.room, true);
+  assert.deepEqual(evicted(plan), ['2:closed', '4:closed', '3:closed']);
 });
 
 test('then failed builds give way, oldest deployment first', () => {

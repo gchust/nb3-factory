@@ -213,7 +213,8 @@ jobs:
       # only the ssh client. planCapacity removes at most
       # CLOSED_EVICTIONS_PER_DEPLOY (3) previews unless more slots are needed,
       # so 16 + 3 × 3 minutes of lock waits plus the payload deletions and
-      # notices fit in 28.
+      # notices fit in 28. Only a limit lowered below the instance count can
+      # need more; PREVIEWS.md says to reclaim those by hand.
       - name: Make room on the preview host
         id: capacity
         if: steps.scripts.outcome == 'success'
