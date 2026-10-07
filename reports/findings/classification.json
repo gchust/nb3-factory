@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "inputHash": "20243397e4f23480ed77a15064225badf775767d8e70b09dc5c9ffa523aa46d1",
+  "inputHash": "4ba138ac5a047bf148a82c9f292f9ebbc88cdf8857f7d48ca78f0b248c767fb5",
   "sources": [
     {
       "id": "460:36434284393:1:F2",
@@ -681,6 +681,21 @@
       "id": "614:37542344302:1:F3",
       "report": "614:37542344302:1",
       "fingerprint": "cea1562dd1db2e1f32ec9801a79bfce218920b7b5898ce59e0fa0ff2a900a46c"
+    },
+    {
+      "id": "616:37567947893:1:F6",
+      "report": "616:37567947893:1",
+      "fingerprint": "a59d513fe55aa5c0f6525c2b6325fce09f10ca567e9b527f803633d43631118c"
+    },
+    {
+      "id": "616:37567947893:1:F7",
+      "report": "616:37567947893:1",
+      "fingerprint": "7d59aa91dc085f2ee9b0052687c0f8ee1c3ce2f4e1bb330c43bef87cead6de89"
+    },
+    {
+      "id": "616:37567947893:1:F8",
+      "report": "616:37567947893:1",
+      "fingerprint": "8db21731eb8153ba2d3bca064325d2f234afd243e6b946e5b7d88c4fb2baea80"
     }
   ],
   "groups": [
@@ -908,10 +923,11 @@
       ]
     },
     {
-      "title": "db 包中文 README 称 Repository/Select AST 等“当前不可调用”，与运行时不符",
-      "reason": "单条保留：474:F2 的 E23/E24 显示 README 边界过时且链接失效，属独立错误说明。",
+      "title": "db 包 README 宣称 Repository/Select AST 等“当前不可调用”，与已发布导出和 Skill 用法矛盾",
+      "reason": "跨报告合并（含本次新增 616:F6）。474:F2（E23/E24）指出 packages/@nocobase/db/README.zh-CN.md 的“当前边界”称 Repository、Select AST、Filter Builder、Filter AST、Sort AST 是未来提案、当前不可调用，并把验证指南链接到不存在的 docs/zh-CN/agent/verification.md；616:F6（E20/E21/E18）在 1.0.0-beta.55 复核同一段“当前边界”，并给出反证——@nocobase/db 包根 dist/src/index.js 已导出 buildRepositoryPolicy/normalizeRepositoryPolicy/narrowRepositoryPolicy，app-server README 也以 defineRepositoryApiRoutes/Repository 策略为推荐用法。两条触发条件（读者据 README 判断可用 API）、期望（文档与已发布导出、Skill 用法一致）与现实（README 断言不可调用且链接失效）一致，修复落点同为更新该 README 的“当前边界”并交叉链接，故并为一组。",
       "members": [
-        "474:36498921009:1:F2"
+        "474:36498921009:1:F2",
+        "616:37567947893:1:F6"
       ]
     },
     {
@@ -1269,15 +1285,29 @@
       "members": [
         "612:37542332629:1:F4"
       ]
+    },
+    {
+      "title": "Skill 内部引用路径缺少完整前缀，Agent 猜测错误路径",
+      "reason": "单条保留。616:F7（E5/E6/E43）显示应用开发 Skill 的能力映射与 authorization.md 只写“authorization Skill 的 references/code-and-seeds.md / client-development.md”而未给出从应用根开始的完整路径，实现阶段因此出现文件不存在的工具错误。证据仅涉及 Skill 之间的引用写法歧义，与“已发布 dist 布局/公开入口未文档化”组的根因（包只发布 dist、未列出公开入口）以及“跨包端到端路径缺失”组的根因（缺统一接线清单）均不同，修复方向是补全引用路径或列出自身 references 清单，故单独保留。",
+      "members": [
+        "616:37567947893:1:F7"
+      ]
+    },
+    {
+      "title": "站内通知收件箱页面仅开发期可用，生产消息中心无现成 UI",
+      "reason": "单条保留。616:F8（E15/E16）显示 @nocobase/app-plugin-notification-in-app 的 README 明确自带客户端收件箱页面仅开发期存在、生产构建不含该路由，Skill/映射表未突出“生产消息中心需应用自建”，导致 Agent 误以为启用插件即得到消息中心。该缺口是插件能力/文档未显著标注，与“AI 员工聊天界面安装步骤未内联”（533:F5，属安装步骤缺失）等其余条目根因不同，故单独保留。",
+      "members": [
+        "616:37567947893:1:F8"
+      ]
     }
   ],
   "classifier": {
     "engine": "pi",
     "model": "deepseek-v4.1-flash",
     "version": "0.86.1",
-    "runId": "37564125821",
+    "runId": "37569459952",
     "attempt": 1,
     "controlSha": "c44263e0d58bfdfb2785f3dd7550ab6bff13023d",
-    "completedAt": "2026-10-07T02:55:22.022Z"
+    "completedAt": "2026-10-07T04:03:30.635Z"
   }
 }
