@@ -462,25 +462,8 @@ jobs:
           name: factory-recovery-${{ needs.prepare.outputs.issue_number }}
           path: handoff
 
-      - name: Verify the pinned handoff control plane
-        if: (github.event_name == 'repository_dispatch' && github.event.action == 'code-agent-continue') || inputs.recovery_run_id != ''
-        run: |
-          node bootstrap/.github/scripts/handoff-control.mjs verify \
-            --event "${{ inputs.recovery_run_id != '' && 'handoff/task-event.json' || github.event_path }}" --checkpoint handoff
-
-      - name: Restore handoff checkpoint
-        if: (github.event_name == 'repository_dispatch' && github.event.action == 'code-agent-continue') || inputs.recovery_run_id != ''
-        run: |
-          node control/.github/scripts/apply-patch.mjs \
-            --workspace workspace \
-            --patch handoff/agent.patch \
-            --branch "${{ needs.prepare.outputs.work_branch }}"
-          # Restore retrospective only here; stage state is validated after task download.
-          mkdir -p "$RUNNER_TEMP/agent-artifacts"
-          if [[ -f handoff/retro.json && ! -L handoff/retro.json ]]; then
-            cp handoff/retro.json "$RUNNER_TEMP/agent-artifacts/retro.json"
-          fi
-
+      # Downloaded before the checkpoint is verified and applied, so a failing
+      # patch restore still finds the task metadata and keeps its checkpoint.
       - name: Download normalized task
         id: task_download
         continue-on-error: true
@@ -500,6 +483,26 @@ jobs:
         with:
           name: factory-task-${{ needs.prepare.outputs.issue_number }}
           path: task
+
+      - name: Verify the pinned handoff control plane
+        id: verify_control
+        if: (github.event_name == 'repository_dispatch' && github.event.action == 'code-agent-continue') || inputs.recovery_run_id != ''
+        run: |
+          node bootstrap/.github/scripts/handoff-control.mjs verify \
+            --event "${{ inputs.recovery_run_id != '' && 'handoff/task-event.json' || github.event_path }}" --checkpoint handoff
+
+      - name: Restore handoff checkpoint
+        if: (github.event_name == 'repository_dispatch' && github.event.action == 'code-agent-continue') || inputs.recovery_run_id != ''
+        run: |
+          node control/.github/scripts/apply-patch.mjs \
+            --workspace workspace \
+            --patch handoff/agent.patch \
+            --branch "${{ needs.prepare.outputs.work_branch }}"
+          # Restore retrospective only here; stage state is validated after task download.
+          mkdir -p "$RUNNER_TEMP/agent-artifacts"
+          if [[ -f handoff/retro.json && ! -L handoff/retro.json ]]; then
+            cp handoff/retro.json "$RUNNER_TEMP/agent-artifacts/retro.json"
+          fi
 
       # A batch sample is admitted again right before model work, so a sample
       # cancelled or released since prepare, or a spent budget, starts no model.
@@ -824,14 +827,15 @@ jobs:
       # verification, yet its workspace already holds the restored work. Record
       # the run as failed so the patch below seals it and the work stays
       # publishable and recoverable instead of vanishing with the runner.
-      # A continuation that failed after downloading its checkpoint but before
-      # "Restore pipeline progress" (control check, patch restore, admission,
-      # restore itself) has a workspace of uncertain state, yet the handed-off
-      # work is intact in handoff/. Save that checkpoint as this run's own,
-      # marked failed, so publish-failed and an explicit recovery from this run
-      # (recovery_run_id) keep it: the source run concluded success after its
-      # handoff, so a recovery could never start from there. The elapsed time
-      # stays the source run's (no job start), so no counter is reset.
+      # A continuation that failed after both the checkpoint and the task
+      # downloads but before "Restore pipeline progress" (patch restore,
+      # admission, the restore itself) has a workspace of uncertain state, yet
+      # the handed-off work is intact in handoff/. Save that checkpoint as this
+      # run's own, marked failed, so publish-failed and an explicit recovery from
+      # this run (recovery_run_id) keep it: the source run concluded success
+      # after its handoff, so a recovery could never start from there. A refused
+      # control-plane verification is deliberate and keeps nothing. The elapsed
+      # time stays the source run's (no job start), so no counter is reset.
       - name: Keep the handed-off checkpoint
         id: keep_checkpoint
         if: >-
@@ -839,6 +843,7 @@ jobs:
           github.event_name == 'repository_dispatch' && github.event.action == 'code-agent-continue' &&
           (steps.checkpoint_download.outcome == 'success' || steps.checkpoint_retry.outcome == 'success') &&
           (steps.task_download.outcome == 'success' || steps.task_retry.outcome == 'success') &&
+          steps.verify_control.outcome == 'success' &&
           steps.admit.outputs.refused != 'true'
         run: |
           set -euo pipefail
@@ -852,17 +857,22 @@ jobs:
           done
           # Only a checkpoint this run could have restored is kept. A deliberate
           # rejection (input edited, patch or control plane changed, task
-          # stopped, budget changed) stays a plain failure with nothing
-          # published and no recovery offered. The check comes from this
-          # workflow's own revision, like the handoff protocol.
+          # stopped, budget changed, repair context lost) stays a plain failure
+          # with nothing published and no recovery offered. The check comes from
+          # this workflow's own revision, like the handoff protocol.
           node bootstrap/.github/scripts/pipeline-state.mjs keepable \
             handoff/pipeline-state.json handoff/agent.patch task/task-metadata.json
-          cp handoff/agent.patch handoff/pipeline-state.json "$artifacts/"
-          # The source run's summary of the same patch, for a failed build PR.
-          if [[ -f handoff/change-summary.json && ! -L handoff/change-summary.json ]]; then
-            cp handoff/change-summary.json "$artifacts/"
-          fi
+          # The whole checkpoint, regular files only (find -type f neither lists
+          # nor follows symlinks): repair context, review and agent history and
+          # the retro survive for the recovery and the reports. Not the handoff
+          # request, and not the source runner's progress observer files, whose
+          # pid the stop step below would otherwise signal.
+          (cd handoff && find . -type f ! -path ./handoff.json ! -name 'live-progress.*' \
+            -exec cp --parents {} "$artifacts" \;)
           cp task/task-metadata.json "$artifacts/task-metadata.json"
+          # What is published must pass the same check as what was validated.
+          node bootstrap/.github/scripts/pipeline-state.mjs keepable \
+            "$artifacts/pipeline-state.json" "$artifacts/agent.patch" "$artifacts/task-metadata.json"
           env -u FACTORY_JOB_STARTED_EPOCH_SECONDS \
             node control/.github/scripts/pipeline-state.mjs outcome "$artifacts/pipeline-state.json" failed
           echo "::warning::This continuation failed before restoring its checkpoint. The handed-off work is saved as this run's checkpoint; recover it with recovery_run_id=${GITHUB_RUN_ID}."
