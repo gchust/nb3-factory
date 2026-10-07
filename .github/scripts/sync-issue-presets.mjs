@@ -30,10 +30,12 @@ export async function syncIssuePresets(client) {
     } });
   } catch (error) {
     // A PUT that committed but lost its response is retried with the old sha
-    // and answered 409. The file already holding this content is that commit
-    // (or a concurrent sync writing the same choices), not a failure.
-    if (!/failed \(409\)/.test(String(error?.message)) || !matches(await read())) throw error;
-    console.log('The preset form already holds these choices; a retried write was answered 409.');
+    // and answered 409, or, when the file did not exist and no sha was sent,
+    // 422 ("sha wasn't supplied"). Either way the re-read decides: the file
+    // already holding this content is that commit (or a concurrent sync
+    // writing the same choices), not a failure.
+    if (!/failed \((409|422)\)/.test(String(error?.message)) || !matches(await read())) throw error;
+    console.log('The preset form already holds these choices; a retried write was answered with a conflict.');
   }
   return true;
 }

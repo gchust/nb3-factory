@@ -49,6 +49,20 @@ test('a 409 for a write that already landed counts as written', async (t) => {
   );
 });
 
+test('a 422 for a first write that already created the file counts as written', async (t) => {
+  t.mock.method(console, 'log', () => {});
+  const content = renderPresetForm([]);
+  // The file did not exist, so the PUT carried no sha; its retry after a lost
+  // response is answered 422 ("sha wasn't supplied") rather than 409.
+  const c = client({
+    reads: [null, { sha: 'new', content: encode(content) }],
+    putError: new Error(
+      `GitHub API PUT ${ROUTE} failed (422): {"message":"Invalid request. \\"sha\\" wasn't supplied."}`,
+    ),
+  });
+  assert.equal(await syncIssuePresets(c), true);
+});
+
 test('a 409 over different content, or any other failure, still fails', async () => {
   const conflict = new Error(`GitHub API PUT ${ROUTE} failed (409): conflict`);
   await assert.rejects(
@@ -63,13 +77,30 @@ test('a 409 over different content, or any other failure, still fails', async ()
     ),
     /failed \(409\)/,
   );
+  // A 422 whose re-read shows other content is a real failure too.
   await assert.rejects(
     syncIssuePresets(
       client({
-        reads: [{ sha: 'old', content: encode('old choices') }],
+        reads: [
+          { sha: 'old', content: encode('old choices') },
+          { sha: 'old', content: encode('old choices') },
+        ],
         putError: new Error(`GitHub API PUT ${ROUTE} failed (422): bad`),
       }),
     ),
     /failed \(422\)/,
+  );
+  // Any other status is never treated as already written, even if it matches.
+  await assert.rejects(
+    syncIssuePresets(
+      client({
+        reads: [
+          { sha: 'old', content: encode('old choices') },
+          { sha: 'new', content: encode(renderPresetForm([])) },
+        ],
+        putError: new Error(`GitHub API PUT ${ROUTE} failed (403): forbidden`),
+      }),
+    ),
+    /failed \(403\)/,
   );
 });

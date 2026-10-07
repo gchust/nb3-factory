@@ -75,7 +75,7 @@ jobs:
 
   # A task that hit the agent job's six-hour limit is reported as cancelled yet
   # still publishes a failed PR; select deploys only a published build, so a
-  # manual cancel deploys nothing.
+  # cancel before publication deploys nothing.
   deploy-preview:
     needs: [dispatch-gate, wait-for-source]
     if: >-

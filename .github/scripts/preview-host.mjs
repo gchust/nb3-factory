@@ -192,8 +192,10 @@ export function isNotFoundError(error) {
  * `verify-final` (or `preview-build-failed` for failed work), not by the agent.
  *
  * Artifacts are listed for every attempt of the run; only one uploaded inside a
- * producing job of the selected attempt belongs to it. Without such a job
- * window nothing ties an artifact to this attempt, so nothing is selected.
+ * producing job of the selected attempt belongs to it. Without such an upload
+ * (no job window, or nothing inside it) a delivery fails loudly with "Expected
+ * one unexpired deployable build artifact"; only the failed-PR path, whose
+ * packaging may legitimately have failed, returns null.
  */
 export function selectDistArtifact(run, jobs, artifacts, repository) {
   if (
