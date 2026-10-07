@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "inputHash": "40ad3e510c75b23dff98944a8a48b6abd1fdebd03921924b7d9e52704c73118a",
+  "inputHash": "cb1c2af39b57bc0cd1f6c2735af500b1bcce93e6294e73557c1660a76da0ad96",
   "findings": [
     {
       "id": "460:36434284393:1:F2",
@@ -11708,6 +11708,72 @@
         }
       ],
       "fingerprint": "f531b3aef4b0347c6fd505e0204c87b659145f31628cb472b851bd209a1c36ab"
+    },
+    {
+      "id": "613:37542338892:1:F3",
+      "report": "613:37542338892:1",
+      "issue": 613,
+      "taskTitle": "内部资料阅读与临时共享",
+      "appVersion": "1.0.0-beta.55",
+      "appTemplate": "@nocobase/app-template-default",
+      "finding": {
+        "id": "F3",
+        "kind": "issue",
+        "owner": "documentation",
+        "severity": "minor",
+        "confidence": "confirmed",
+        "status": "resolved",
+        "title": "nocobase-db 指引未说明迁移/种子相对导入必须使用 .ts 说明符",
+        "detail": "框架 @nocobase/dev-config/tsconfig/server.json 同时开启 allowImportingTsExtensions 与 rewriteRelativeImportExtensions，种子/迁移源码由 Node 类型擦除直接执行时相对导入必须写 .ts，构建期再改写为 .js。nocobase-db Skill 只说明 database/**/*.ts 与 server 一起被类型检查，未提示说明符规则；retro.json 记录构建因 .js 说明符解析失败并改写了 6 个文件。",
+        "impact": "Agent 按常规 ESM 习惯写 './seed-data.js' 会在种子执行阶段失败，浪费一轮构建。",
+        "suggestedChange": "在 nocobase-db Skill 的 migrations/seeds 小节明确：相对导入使用 .ts 说明符，构建期由 rewriteRelativeImportExtensions 改写。",
+        "evidence": [
+          "E75",
+          "E76"
+        ],
+        "diagnosis": {
+          "category": "guidance-gap",
+          "trigger": "在 database/main/seeds 或 migrations 中以相对路径导入本地 .ts 模块并写 .js 说明符",
+          "expected": "指引说明迁移/种子的相对导入需使用 .ts 说明符",
+          "actual": "Skill 未提及，agent 按 ESM 习惯写 .js 导致解析失败",
+          "workaround": "改为 .ts 说明符（retro 记录改写了 6 个文件）",
+          "acceptance": "nocobase-db Skill 明确该规则后，新建种子按指引一次通过"
+        }
+      },
+      "targets": [
+        "app/.agents/skills/nocobase-db"
+      ],
+      "paths": [
+        ".agents/skills/nocobase-db/SKILL.md",
+        "packages/@nocobase/dev-config/tsconfig/server.json"
+      ],
+      "evidence": [
+        {
+          "id": "E75",
+          "kind": "skill",
+          "path": "app/.agents/skills/nocobase-db/SKILL.md",
+          "observation": "nocobase-db Skill 说明 database/ 下 migrations/seeds 的边界与执行，但未提示相对导入需使用 .ts 说明符。",
+          "lines": [
+            10,
+            38
+          ],
+          "excerpt": "Most mistakes here are made before the first line of code, by putting a task at the wrong layer: changing schema from runtime code, reading records through the schema builder, or reimplementing relation writes on top of raw queries.\n\nSix areas, in the order an application grows into them:\n\n| Area                                            | Owns                                                         |\n| ----------------------------------------------- | ------------------------------------------------------------ |\n| [Configuration](#1-configuration)               | which databases exist, and which dialect each one speaks     |\n| [Migrations and seeds](#2-migrations-and-seeds) | schema history and install data                              |\n| [Builder](#3-builder)                           | how a migration declares tables, fields and constraints      |\n| [Repository and Query](#4-repository-and-query) | runtime reads and writes                                     |\n| [Transactions](#5-transactions)                 | making several writes succeed or fail together               |\n| [Collections](#6-collections)                   | what the database actually resolves to, for code and for you |\n\nThe exact parameters and return types are always the TypeScript declarations in `@nocobase/db`. This Skill decides which API to reach for, where the code belongs, and the boundaries the types cannot express.\n\n## Where the code lives\n\n```text\nserver/config/database.ts          connections and the default connection\nconfig.yml                         per-environment overrides and credentials (gitignored)\ndatabase/<connection>/migrations   schema history for that connection\ndatabase/<connection>/seeds        install data for that connection\ndatabase/<connection>/collections  resolved Collection artifacts\nserver/routes/, server/providers   runtime reads and writes\n```\n\n`<connection>` is a connection name from `server/config/database.ts`, so the default connection's migrations are in `database/main/migrations/`. Adding a connection means adding its directory alongside and keeping `database/tsconfig.json` in place, so migrations and seeds are typechecked and linted as server source.\n\nRuntime code never changes schema, and a migration never imports runtime code. That split is what these directories encode.",
+          "sha256": "d33a58740d6a2921689e56f964c081354574ed857389118e319719bde6936991"
+        },
+        {
+          "id": "E76",
+          "kind": "package",
+          "path": "packages/@nocobase/dev-config/tsconfig/server.json",
+          "observation": "server 基线 tsconfig 同时开启 allowImportingTsExtensions 与 rewriteRelativeImportExtensions，表明迁移/种子应按 .ts 说明符书写、构建期改写。",
+          "lines": [
+            1,
+            16
+          ],
+          "excerpt": "{\n  \"$schema\": \"https://json.schemastore.org/tsconfig\",\n  \"display\": \"NocoBase Node application\",\n  \"extends\": \"./base.json\",\n  \"compilerOptions\": {\n    \"target\": \"ES2022\",\n    \"lib\": [\"ES2022\"],\n    \"types\": [\"node\"],\n    \"module\": \"NodeNext\",\n    \"moduleResolution\": \"NodeNext\",\n    \"allowImportingTsExtensions\": true,\n    \"rewriteRelativeImportExtensions\": true,\n    \"isolatedModules\": true,\n    \"sourceMap\": true,\n    \"noEmit\": false\n  }",
+          "sha256": "3d5a44523505946eed5f6fdf32c8443a37aa5422ce3eb2905eacc9c6cec5db38"
+        }
+      ],
+      "fingerprint": "acb6a081b4bf13a2931c4c1f8cffea274d0caea93094c4dded8772139480422e"
     }
   ]
 }
