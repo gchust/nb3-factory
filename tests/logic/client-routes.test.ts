@@ -52,9 +52,24 @@ describe('app client routes', () => {
     // access is a new grant somebody has to be given.
     const resolved = resolveRoutes();
 
-    // The landing page opted out of page authorization, so it is reachable by every signed-in user.
+    // The landing page opted out of page authorization, so it is reachable by every signed-in user. The sales pages
+    // do the same: viewing and changing customers, contacts and opportunities is one responsibility shared by every
+    // signed-in member of the team, so there is no page grant to hand out. A child page inherits `auth` and `authz`
+    // from its parent, so it appears here with the same decision its parent made.
     expect(pageAuthorizations(resolved.routes)).toEqual([
       { name: 'home', authorizedAs: null },
+      { name: 'customers', authorizedAs: null },
+      { name: 'customer-new', authorizedAs: null },
+      { name: 'customer-edit', authorizedAs: null },
+      { name: 'customer-detail', authorizedAs: null },
+      { name: 'customer-detail-edit', authorizedAs: null },
+      { name: 'customer-detail-opportunity-edit', authorizedAs: null },
+      { name: 'contacts', authorizedAs: null },
+      { name: 'contact-new', authorizedAs: null },
+      { name: 'contact-edit', authorizedAs: null },
+      { name: 'opportunities', authorizedAs: null },
+      { name: 'opportunity-new', authorizedAs: null },
+      { name: 'opportunity-edit', authorizedAs: null },
     ]);
   });
 });
