@@ -400,7 +400,7 @@ test('the independent review may run 6000 s inside its job budget', () => {
 
 function gate(t, jobs, workflowName = 'publish-retro.yml') {
   const source = workflow('report-dispatch-gate.yml');
-  const script = source.split('        run: |\n')[1].replace(/^ {10}/gm, '');
+  const script = source.split('        run: |\n')[1].split('\n      - name:')[0].replace(/^ {10}/gm, '');
   const root = temp(t, 'gate-idle-');
   const bin = path.join(root, 'bin');
   mkdirSync(bin);

@@ -23,21 +23,6 @@ on:
 
 permissions: {}
 
-# Serialize comment updates per Issue: a run's snapshots and its final report
-# stay in order, and a continuation's first snapshots cannot race its
-# predecessor's final report on the same comment, while other Issues' updates
-# never queue behind them. Snapshots carry their Issue and the task's report
-# dispatcher passes it; a workflow_run copy or a manual request without it
-# falls back to its source run's group (expressions cannot parse the run's
-# title). The publisher still derives the Issue from the source run and
-# rejects late snapshots from an older run/attempt or a completed run.
-concurrency:
-  group: >-
-    ${{ (github.event.client_payload.snapshot.issue || inputs.issue) &&
-    format('factory-live-progress-issue-{0}', github.event.client_payload.snapshot.issue || inputs.issue) ||
-    format('factory-live-progress-{0}', github.event.client_payload.snapshot.runId || inputs.run_id || github.event.workflow_run.id) }}
-  queue: max
-
 jobs:
   # The task usually requested this run itself; see report-dispatch-gate.yml.
   # A skipped task run (an Issue from someone without repository access) ran
@@ -57,6 +42,22 @@ jobs:
       (github.event_name != 'workflow_run' || github.event.workflow_run.conclusion != 'skipped')
     runs-on: ubuntu-24.04
     timeout-minutes: 3
+    # Serialize comment updates per Issue: a run's snapshots and its final
+    # report stay in order, and a continuation's first snapshots cannot race
+    # its predecessor's final report on the same comment, while other Issues'
+    # updates never queue behind them. Snapshots carry their Issue, the task's
+    # report dispatcher passes it, and the gate reads it from a workflow_run
+    # copy's run title, so a fallback copy queues with the dispatched one. Only
+    # a manual request without it, or a title without one, falls back to its
+    # source run's group. At job level, so the gate runs outside the queue.
+    # The publisher still derives the Issue from the source run and rejects
+    # late snapshots from an older run/attempt or a completed run.
+    concurrency:
+      group: >-
+        ${{ (github.event.client_payload.snapshot.issue || inputs.issue || needs.dispatch-gate.outputs.issue) &&
+        format('factory-live-progress-issue-{0}', github.event.client_payload.snapshot.issue || inputs.issue || needs.dispatch-gate.outputs.issue) ||
+        format('factory-live-progress-{0}', github.event.client_payload.snapshot.runId || inputs.run_id || github.event.workflow_run.id) }}
+      queue: max
     permissions:
       actions: read
       contents: read

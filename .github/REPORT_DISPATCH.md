@@ -32,7 +32,7 @@
 
 来源 Run 被整体跳过（非仓库成员的 Issue，结论为 `skipped`）时什么都没搭建：六个报告工作流和评论队列的 `workflow_run` 副本在第一个 Job 就按该结论跳过，不等待、不下载；`workflow_dispatch` 与 `repository_dispatch` 入口不受影响。
 
-并发组决定被跳过的副本是否还要排队。用量报告、两个交互历史发布、评论队列、预览部署和预览回收把并发组放在做事的 Job 上，被 gate 或条件跳过的副本不进队列。复盘和视觉报告的并发组按来源 Run 划分、放在工作流级，被跳过的副本只与同一来源 Run 的另一份排队，不与其他任务排队。进度报告的并发组同样在工作流级，但按 Issue 划分（`factory-live-progress-issue-<Issue>`）：续跑 Run 的快照与上一 Run 的最终进度改写的是同一条 Issue 评论，按来源 Run 分组时两者可能同时读改写，旧状态会短暂覆盖新状态。快照自带 Issue 号，任务的报告分发也传入 `issue`；`workflow_run` 副本和不带 `issue` 的手动补发仍退回按来源 Run 分组（表达式无法解析 Run 标题）。发布脚本照旧从来源 Run 本身确定 Issue 并拒收过期快照。
+并发组决定被跳过的副本是否还要排队。用量报告、两个交互历史发布、评论队列、预览部署和预览回收把并发组放在做事的 Job 上，被 gate 或条件跳过的副本不进队列。复盘和视觉报告的并发组按来源 Run 划分、放在工作流级，被跳过的副本只与同一来源 Run 的另一份排队，不与其他任务排队。进度报告的并发组放在 `report` Job 上，按 Issue 划分（`factory-live-progress-issue-<Issue>`）：续跑 Run 的快照与上一 Run 的最终进度改写的是同一条 Issue 评论，按来源 Run 分组时两者可能同时读改写，旧状态会短暂覆盖新状态。快照自带 Issue 号，任务的报告分发也传入 `issue`，`workflow_run` 副本的 Issue 由 gate 从来源 Run 标题读出（`report-dispatch-gate.yml` 的 `issue` 输出），所以分发请求被误判失败、两份副本都执行时也排在同一组；只有不带 `issue` 的手动补发和标题里没有 Issue 的 Run 退回按来源 Run 分组。发布脚本照旧从来源 Run 本身确定 Issue 并拒收过期快照。
 
 ## 补发已有产物，不重新搭建
 
