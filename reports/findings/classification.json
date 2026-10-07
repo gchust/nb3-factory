@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "inputHash": "cb1c2af39b57bc0cd1f6c2735af500b1bcce93e6294e73557c1660a76da0ad96",
+  "inputHash": "ccdecdd2b64ae5a245cf810f9620e01b4f4dfafea3db49bf393e6cad0b377b08",
   "sources": [
     {
       "id": "460:36434284393:1:F2",
@@ -656,18 +656,29 @@
       "id": "613:37542338892:1:F3",
       "report": "613:37542338892:1",
       "fingerprint": "acb6a081b4bf13a2931c4c1f8cffea274d0caea93094c4dded8772139480422e"
+    },
+    {
+      "id": "614:37542344302:1:F1",
+      "report": "614:37542344302:1",
+      "fingerprint": "b71d6d631538d93dfff618fed99654cdceecbc0289a6d0c01c7c76ae97b04093"
+    },
+    {
+      "id": "614:37542344302:1:F3",
+      "report": "614:37542344302:1",
+      "fingerprint": "cea1562dd1db2e1f32ec9801a79bfce218920b7b5898ce59e0fa0ff2a900a46c"
     }
   ],
   "groups": [
     {
       "title": "Registry OOXML 预览缺少加载/渲染超时与看门狗，viewer 不收敛时永久停在 Loading",
-      "reason": "跨报告合并。463:F1（E69/E70/E91）、476:F2（E10/E11）、478:F4（E8/E9/E12）、507:F2（E1/E2/E52）、543:F4（E5/E6）均指向 registry/component-ui 的 OfficeOpenXmlPreview：只 await viewer.load、未向 createOfficeOpenXmlViewer 传 workerTimeoutMs，effect 也无超时，worker 静默挂起时 onError 不触发，界面长期停在 Loading；543:F4 进一步比对该分支与旧 Office iframe 的 OFFICE_PREVIEW_TIMEOUT_MS，确认 ooxml 分支没有加载超时。触发条件、期望（超时后失败回退+下载）与修复位置一致。",
+      "reason": "跨报告合并。463:F1（E69/E70/E91）、476:F2（E10/E11）、478:F4（E8/E9/E12）、507:F2（E1/E2/E52）、543:F4（E5/E6）均指向 registry/component-ui 的 OfficeOpenXmlPreview：只 await viewer.load、未向 createOfficeOpenXmlViewer 传 workerTimeoutMs，effect 也无超时，worker 静默挂起时 onError 不触发，界面长期停在 Loading；543:F4 进一步比对该分支与旧 Office iframe 的 OFFICE_PREVIEW_TIMEOUT_MS，确认 ooxml 分支没有加载超时。触发条件、期望（超时后失败回退+下载）与修复位置一致。 614:F1（E7/E22）在 1.0.0-beta.55 复现同一缺口：office-open-xml-preview.tsx 的 useEffect 仅在 reportViewerError 抛错时回退下载，viewer.load() 既不 resolve 也不 reject 时 loaded 永为 false，verify-6 中 DOCX GET 200、渲染 chunk 已加载且 worker 实测正常，但 20 秒后仍停在 Loading preview...，B02 连续 6 轮未通过；触发条件、期望（限定时间内渲染或超时后明确失败并回退下载）与修复位置均与既有成员一致。",
       "members": [
         "463:36434310207:1:F1",
         "476:36498929142:1:F2",
         "478:36522310216:1:F4",
         "507:36787396720:1:F2",
-        "543:37156754926:1:F4"
+        "543:37156754926:1:F4",
+        "614:37542344302:1:F1"
       ]
     },
     {
@@ -754,12 +765,13 @@
     },
     {
       "title": "指引未说明 @nocobase/* 包的公开入口与已发布 dist 布局，agent 反复探测内部路径失败",
-      "reason": "跨报告合并。461:F4（E45/E49/E62/E65）、473:F5（E43/E45/E9/E10）、506:F7（E5/E24/E47）都显示 Skill/文档按 src 或猜测子目录给路径，而包只发布 dist 且导出子路径与目录不镜像，agent 多次 cat/find/sed 不存在的路径失败；同一指引缺口与同一修复方向（给出公开入口与 dist 映射）。 600:F6（E5/E12/E35/E37/E39）记录 Agent 按 @nocobase/db/dist/index.d.ts、authorization/dist/permission-sets/*.js、.agents/skills/<pkg>/chat-surfaces.md 等错误位置探测，Skill 未明确列出受支持公开子路径并排除 dist 内部布局，与上述成员同一“公开入口/物理布局未文档化”缺口，修复方向一致。",
+      "reason": "跨报告合并。461:F4（E45/E49/E62/E65）、473:F5（E43/E45/E9/E10）、506:F7（E5/E24/E47）都显示 Skill/文档按 src 或猜测子目录给路径，而包只发布 dist 且导出子路径与目录不镜像，agent 多次 cat/find/sed 不存在的路径失败；同一指引缺口与同一修复方向（给出公开入口与 dist 映射）。 600:F6（E5/E12/E35/E37/E39）记录 Agent 按 @nocobase/db/dist/index.d.ts、authorization/dist/permission-sets/*.js、.agents/skills/<pkg>/chat-surfaces.md 等错误位置探测，Skill 未明确列出受支持公开子路径并排除 dist 内部布局，与上述成员同一“公开入口/物理布局未文档化”缺口，修复方向一致。 614:F3（E34/E43/E46/E53/E55/E62）进一步显示同一可发现性缺口：Agent 反复探查不存在的 @nocobase/api-client（实际客户端包为 @nocobase/app-client，导出 apiClientToken），并对 @nocobase/db 猜测 dist/repository、dist/src/database 等深路径后失败；Skill/文档未列公共包与入口，与既有成员同一“公开入口与已发布布局未文档化”缺口及同一修复方向（补充包入口并提示勿依赖 dist 深路径）。",
       "members": [
         "461:36434293992:1:F4",
         "473:36498916248:1:F5",
         "506:36787391890:1:F7",
-        "600:37453053696:1:F6"
+        "600:37453053696:1:F6",
+        "614:37542344302:1:F3"
       ]
     },
     {
@@ -1233,9 +1245,9 @@
     "engine": "pi",
     "model": "deepseek-v4.1-flash",
     "version": "0.86.1",
-    "runId": "37553068885",
+    "runId": "37563151369",
     "attempt": 1,
-    "controlSha": "fd529ed056cde0cfacce5e5e3734439998861174",
-    "completedAt": "2026-10-07T00:41:15.684Z"
+    "controlSha": "c44263e0d58bfdfb2785f3dd7550ab6bff13023d",
+    "completedAt": "2026-10-07T02:42:42.818Z"
   }
 }
