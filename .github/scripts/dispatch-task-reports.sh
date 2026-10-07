@@ -42,6 +42,13 @@ DISPATCH_BACKOFF=(2 8)
 dispatch() {
   local workflow="$1"
   local fields=(--field "run_id=$SOURCE_RUN_ID" --field "attempt=$SOURCE_ATTEMPT")
+  # The progress reporter serializes per Issue, so a continuation's snapshots
+  # and this run's final report cannot rewrite the comment at the same time.
+  # The Issue only names the concurrency group; the publisher still derives
+  # the target from the source run itself.
+  if [[ "$workflow" == report-task-progress.yml && "${ISSUE_NUMBER:-}" =~ ^[1-9][0-9]*$ ]]; then
+    fields+=(--field "issue=$ISSUE_NUMBER")
+  fi
   # The comment queue reconciles one Issue once this run has completed.
   if [[ "$workflow" == comment-build-queue.yml ]]; then
     fields=(--field "issue_number=$ISSUE_NUMBER" --field "run_id=$SOURCE_RUN_ID")

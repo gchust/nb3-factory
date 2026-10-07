@@ -601,15 +601,18 @@ test('the gate reads only its own workflow\'s request step and fails open', (t) 
   assert.equal(gate(t, steps, { workflow: 'deploy-preview.yml"); evil' }), 'covered=false');
 });
 
-test('live progress updates queue per source run, not globally', () => {
+test('live progress updates queue per Issue, falling back to the source run, never globally', () => {
   const workflow = readFileSync(
     path.resolve(import.meta.dirname, '../../workflows/report-task-progress.yml'),
     'utf8',
   );
+  // A continuation's snapshots and its predecessor's final report rewrite one
+  // Issue comment, so they share a group; without an Issue it is the run's.
   assert.match(
     workflow,
-    /group: factory-live-progress-\$\{\{ github\.event\.client_payload\.snapshot\.runId \|\| inputs\.run_id \|\| github\.event\.workflow_run\.id \}\}\n\s+queue: max/,
+    /group: >-\n {4}\$\{\{ \(github\.event\.client_payload\.snapshot\.issue \|\| inputs\.issue\) &&\n {4}format\('factory-live-progress-issue-\{0\}', github\.event\.client_payload\.snapshot\.issue \|\| inputs\.issue\) \|\|\n {4}format\('factory-live-progress-\{0\}', github\.event\.client_payload\.snapshot\.runId \|\| inputs\.run_id \|\| github\.event\.workflow_run\.id\) \}\}\n {2}queue: max/,
   );
+  assert.match(workflow, /\n {6}issue:\n {8}description: .*\n {8}required: false\n/);
 });
 
 test('jobs downstream of the dispatch gate never inherit its skip', () => {

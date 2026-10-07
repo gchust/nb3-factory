@@ -16,15 +16,26 @@ on:
         description: Exact source run attempt
         required: true
         type: string
+      issue:
+        description: Source Issue number (optional; only selects the queue)
+        required: false
+        type: string
 
 permissions: {}
 
-# Serialize comment updates per source run: its snapshots and its final report
-# stay in order, while other tasks' updates no longer queue behind them. Every
-# trigger carries the source run ID. The publisher additionally rejects late
-# snapshots from an older run/attempt or an already completed run.
+# Serialize comment updates per Issue: a run's snapshots and its final report
+# stay in order, and a continuation's first snapshots cannot race its
+# predecessor's final report on the same comment, while other Issues' updates
+# never queue behind them. Snapshots carry their Issue and the task's report
+# dispatcher passes it; a workflow_run copy or a manual request without it
+# falls back to its source run's group (expressions cannot parse the run's
+# title). The publisher still derives the Issue from the source run and
+# rejects late snapshots from an older run/attempt or a completed run.
 concurrency:
-  group: factory-live-progress-${{ github.event.client_payload.snapshot.runId || inputs.run_id || github.event.workflow_run.id }}
+  group: >-
+    ${{ (github.event.client_payload.snapshot.issue || inputs.issue) &&
+    format('factory-live-progress-issue-{0}', github.event.client_payload.snapshot.issue || inputs.issue) ||
+    format('factory-live-progress-{0}', github.event.client_payload.snapshot.runId || inputs.run_id || github.event.workflow_run.id) }}
   queue: max
 
 jobs:

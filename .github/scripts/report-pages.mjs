@@ -336,9 +336,15 @@ export async function commitFindings(client, sha, files, message) {
 
 // A fresh publisher validates against the current reports, never the Agent's
 // copy of its input. Stale decisions cannot overwrite a newer publication.
-export async function archiveFindingsClassification(client, classification) {
+// A lost ref race backs off like archiveReport: the same other writers move gh-pages.
+export async function archiveFindingsClassification(
+  client,
+  classification,
+  { pause = sleep } = {},
+) {
   validateClassification(classification);
-  for (let attempt = 0; attempt < 3; attempt++) {
+  for (let attempt = 0; attempt < ARCHIVE_ATTEMPTS; attempt++) {
+    if (attempt) await pause(archiveBackoffMs(attempt - 1));
     const snapshot = await readFindingsSnapshot(client);
     if (!snapshot || snapshot.input.inputHash !== classification.inputHash)
       return { updated: false, reason: 'stale-input' };
@@ -362,7 +368,8 @@ export async function archiveFindingsClassification(client, classification) {
       );
       return { updated: true, commitSha };
     } catch (error) {
-      if (attempt === 2 || !/409|422/.test(error.message)) throw error;
+      if (attempt === ARCHIVE_ATTEMPTS - 1 || !/409|422/.test(error.message))
+        throw error;
     }
   }
 }
@@ -371,7 +378,7 @@ export async function archiveFindingsClassification(client, classification) {
 // their own findings sections and the site's Git history stay untouched.
 export async function resetFindingsIndex(
   client,
-  { now = Date.now(), runId = '' } = {},
+  { now = Date.now(), runId = '', pause = sleep } = {},
 ) {
   const baseline = {
     version: 1,
@@ -379,7 +386,8 @@ export async function resetFindingsIndex(
     resetAt: new Date(now).toISOString(),
     runId: String(runId),
   };
-  for (let attempt = 0; attempt < 3; attempt++) {
+  for (let attempt = 0; attempt < ARCHIVE_ATTEMPTS; attempt++) {
+    if (attempt) await pause(archiveBackoffMs(attempt - 1));
     const sha = (await client.getRef(BRANCH, true))?.object?.sha;
     const registry = sha
       ? await getJson(client, 'reports/manifest.json', sha)
@@ -415,7 +423,8 @@ export async function resetFindingsIndex(
       );
       return { commitSha, baseline, excluded: scope.baseline.excluded };
     } catch (error) {
-      if (attempt === 2 || !/409|422/.test(error.message)) throw error;
+      if (attempt === ARCHIVE_ATTEMPTS - 1 || !/409|422/.test(error.message))
+        throw error;
     }
   }
 }

@@ -16,6 +16,7 @@ import {
   sendFeishu,
 } from '../daily-findings.mjs';
 import { ruleFeaturePaths } from '../problem-classification.mjs';
+import { ARCHIVE_ATTEMPTS } from '../report-pages.mjs';
 import {
   clusterOccurrences,
   collectOccurrences,
@@ -619,7 +620,11 @@ test('a scheduled close archives to gh-pages, sends the digest once and forgets 
   ]);
   client.conflictOnce = true;
   const now = new Date('2026-09-28T01:07:00Z');
-  const archived = await archiveDay(client, { now, rules });
+  const archived = await archiveDay(client, {
+    now,
+    rules,
+    pause: async () => {},
+  });
   assert.match(
     client.file('reports/findings/daily/index.html'),
     /已归档 3 条 · 待归档 1 条/,
@@ -1024,6 +1029,37 @@ test('recording a day survives several concurrent gh-pages writers', async () =>
   assert.equal(result.sent.length, 1);
   assert.equal(client.conflicts, 0);
   assert.deepEqual(client.json(LEDGER).pending, []);
+});
+
+test('closing a day backs off like the report archive while other writers move gh-pages', async () => {
+  const client = pages([report(102, '2026-09-27T02:00:00.000Z')]);
+  client.conflicts = ARCHIVE_ATTEMPTS - 1;
+  const pauses = [];
+  const result = await archiveDay(client, {
+    now: new Date('2026-09-28T01:07:00Z'),
+    rules,
+    pause: async (ms) => {
+      pauses.push(ms);
+    },
+  });
+  assert.equal(result.added, 1);
+  assert.equal(client.conflicts, 0);
+  assert.equal(pauses.length, ARCHIVE_ATTEMPTS - 1);
+  pauses.forEach((ms, i) =>
+    assert.ok(ms >= 1000 * 2 ** i && ms < 1000 * 2 ** i + 1000, String(ms)),
+  );
+
+  const lost = pages([report(102, '2026-09-27T02:00:00.000Z')]);
+  lost.conflicts = ARCHIVE_ATTEMPTS;
+  await assert.rejects(
+    archiveDay(lost, {
+      now: new Date('2026-09-28T01:07:00Z'),
+      rules,
+      pause: noPause,
+    }),
+    /422/,
+  );
+  assert.equal(lost.commits, 0);
 });
 
 test('day and index pages escape finding text and link each report', async () => {

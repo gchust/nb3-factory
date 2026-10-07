@@ -42,7 +42,12 @@ test('reports wait longer for the source run than its dispatch job may take', ()
 
 test('the locked reporters wait for the source run outside their concurrency group', () => {
   for (const [name, locked, group] of [
-    ['report-task-usage.yml', 'report', 'factory-task-usage'],
+    // Per Issue from the waited run's title, the global lock without one.
+    [
+      'report-task-usage.yml',
+      'report',
+      String.raw`\$\{\{ needs\.wait-for-source\.outputs\.issue && format\('factory-task-usage-issue-\{0\}', needs\.wait-for-source\.outputs\.issue\) \|\| 'factory-task-usage' \}\}`,
+    ],
     ['publish-agent-history.yml', 'publish', 'factory-agent-history'],
   ]) {
     const source = read(name);
@@ -148,6 +153,7 @@ test('the wait CLI writes the attempt it settled on', async (t) => {
     event: 'workflow_dispatch',
     status: 'completed',
     conclusion: 'success',
+    display_title: 'Factory issue #42 build 0 from 0',
   };
   const routes = [];
   const server = createServer((request, response) => {
@@ -191,5 +197,6 @@ test('the wait CLI writes the attempt it settled on', async (t) => {
     '/repos/owner/factory',
     '/repos/owner/factory/actions/runs/9',
   ]);
-  assert.equal(readFileSync(output, 'utf8'), 'attempt=3\n');
+  // The Issue from the title names the report job's per-Issue group.
+  assert.equal(readFileSync(output, 'utf8'), 'attempt=3\nissue=42\n');
 });

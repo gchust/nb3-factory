@@ -1,4 +1,7 @@
 name: Deliver Evaluation Results
+# The mode in the title lets a registration see that a scan is already
+# waiting (report-task-usage.yml); a scheduled run scans.
+run-name: "Deliver Evaluation Results (${{ inputs.mode || 'scan' }})"
 
 # Optional: sends already-registered evaluation bundles to one receiver
 # configured by maintainers. It never builds, reviews, runs application code,

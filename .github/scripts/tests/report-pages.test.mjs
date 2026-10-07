@@ -460,10 +460,58 @@ test('classification ref conflicts retry against the latest complete site withou
   const classification = decisionFor((await readFindingsSnapshot(c)).input);
   c.conflictOnce = true;
   assert.equal(
-    (await archiveFindingsClassification(c, classification)).updated,
+    (await archiveFindingsClassification(c, classification, { pause: async () => {} }))
+      .updated,
     true,
   );
   assert.equal(c.files().get(reportManifest(r).path), htmlOf(r));
+});
+
+test('classification and reset back off like the report archive while other writers move gh-pages', async () => {
+  const jittered = (pauses) => {
+    assert.equal(pauses.length, ARCHIVE_ATTEMPTS - 1);
+    pauses.forEach((ms, i) =>
+      assert.ok(ms >= 1000 * 2 ** i && ms < 1000 * 2 ** i + 1000, String(ms)),
+    );
+  };
+  const c = fakeClient(),
+    r = reviewedInput();
+  await archiveReport(c, r, htmlOf(r));
+  const classification = decisionFor((await readFindingsSnapshot(c)).input);
+  let pauses = [];
+  c.conflicts = ARCHIVE_ATTEMPTS - 1;
+  assert.equal(
+    (
+      await archiveFindingsClassification(c, classification, {
+        pause: async (ms) => {
+          pauses.push(ms);
+        },
+      })
+    ).updated,
+    true,
+  );
+  jittered(pauses);
+
+  pauses = [];
+  c.conflicts = ARCHIVE_ATTEMPTS - 1;
+  const reset = await resetFindingsIndex(c, {
+    now: 2500,
+    pause: async (ms) => {
+      pauses.push(ms);
+    },
+  });
+  assert.equal(reset.commitSha, c.ref());
+  jittered(pauses);
+
+  // Every attempt lost: the last conflict is reported, the site is unchanged.
+  const sha = c.ref();
+  c.conflicts = ARCHIVE_ATTEMPTS;
+  await assert.rejects(
+    resetFindingsIndex(c, { now: 3000, pause: async () => {} }),
+    /422/,
+  );
+  assert.equal(c.ref(), sha);
+  c.conflicts = 0;
 });
 
 test('a findings reset counts only later runs and keeps every archived report', async (t) => {

@@ -15,7 +15,9 @@ import { fileURLToPath } from 'node:url';
 import { GitHubClient } from './factory-lib.mjs';
 import { loadRules, ruleFeaturePaths } from './problem-classification.mjs';
 import {
+  ARCHIVE_ATTEMPTS,
   BRANCH,
+  archiveBackoffMs,
   commitFindings,
   getJson,
   pagesUrl,
@@ -48,11 +50,20 @@ const clip = (value, max) =>
 
 export async function archiveDay(
   client,
-  { day, now = new Date(), notify = true, rules = loadRules() } = {},
+  {
+    day,
+    now = new Date(),
+    notify = true,
+    rules = loadRules(),
+    pause = sleep,
+  } = {},
 ) {
   day ||= previousDay(now);
   const featureOf = (keys) => ruleFeaturePaths(keys, rules);
-  for (let attempt = 0; attempt < 3; attempt++) {
+  // Report archives and evaluation records move gh-pages outside this lock;
+  // a lost ref race backs off like archiveReport before reading the new head.
+  for (let attempt = 0; attempt < ARCHIVE_ATTEMPTS; attempt++) {
+    if (attempt) await pause(archiveBackoffMs(attempt - 1));
     const snapshot = await readFindingsSnapshot(client);
     if (!snapshot)
       return { changed: false, commitSha: null, day, added: 0, pending: 0 };
@@ -97,7 +108,7 @@ export async function archiveDay(
         dropped: plan.dropped,
       };
     } catch (error) {
-      if (attempt === 2 || !conflict(error)) throw error;
+      if (attempt === ARCHIVE_ATTEMPTS - 1 || !conflict(error)) throw error;
     }
   }
 }

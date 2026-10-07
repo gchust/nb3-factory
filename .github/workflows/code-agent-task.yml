@@ -2051,6 +2051,8 @@ jobs:
           # Rejected in prepare ("Re-run all jobs") it requests nothing at all.
           FACTORY_RERUN_REJECTED: ${{ needs.agent.outputs.rerun_rejected == 'true' || needs.prepare.outputs.rerun_rejected == 'true' }}
           FACTORY_PREPARE_REJECTED: ${{ needs.prepare.outputs.rerun_rejected == 'true' }}
+          # Names report-task-progress.yml's per-Issue concurrency group.
+          ISSUE_NUMBER: ${{ needs.prepare.outputs.issue_number }}
         run: bash dispatcher/.github/scripts/dispatch-task-reports.sh report-task-progress.yml
       - name: Request report-task-usage.yml
         id: request-report-task-usage

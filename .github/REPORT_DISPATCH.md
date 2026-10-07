@@ -32,7 +32,7 @@
 
 来源 Run 被整体跳过（非仓库成员的 Issue，结论为 `skipped`）时什么都没搭建：六个报告工作流和评论队列的 `workflow_run` 副本在第一个 Job 就按该结论跳过，不等待、不下载；`workflow_dispatch` 与 `repository_dispatch` 入口不受影响。
 
-并发组决定被跳过的副本是否还要排队。用量报告、两个交互历史发布、评论队列、预览部署和预览回收把并发组放在做事的 Job 上，被 gate 或条件跳过的副本不进队列。复盘、视觉报告和进度报告的并发组按来源 Run 划分、放在工作流级，被跳过的副本只与同一来源 Run 的另一份排队，不与其他任务排队。
+并发组决定被跳过的副本是否还要排队。用量报告、两个交互历史发布、评论队列、预览部署和预览回收把并发组放在做事的 Job 上，被 gate 或条件跳过的副本不进队列。复盘和视觉报告的并发组按来源 Run 划分、放在工作流级，被跳过的副本只与同一来源 Run 的另一份排队，不与其他任务排队。进度报告的并发组同样在工作流级，但按 Issue 划分（`factory-live-progress-issue-<Issue>`）：续跑 Run 的快照与上一 Run 的最终进度改写的是同一条 Issue 评论，按来源 Run 分组时两者可能同时读改写，旧状态会短暂覆盖新状态。快照自带 Issue 号，任务的报告分发也传入 `issue`；`workflow_run` 副本和不带 `issue` 的手动补发仍退回按来源 Run 分组（表达式无法解析 Run 标题）。发布脚本照旧从来源 Run 本身确定 Issue 并拒收过期快照。
 
 ## 补发已有产物，不重新搭建
 
@@ -54,6 +54,6 @@ Actions → **Publish Task Visual Report**、**Publish Agent History** 或
 
 核对报告时每次请求带唯一查询参数绕过 CDN 缓存，仍要求页面里的报告标识与本轮一致；Pages CDN 常在部署后数分钟才换上新页面，因此按 5、10、15、20、30、40、60 秒逐步拉长间隔重试，共约 3 分钟后才判定失败。
 
-`factory-task-usage` 并发组只包住统计回写（`report`）和 Pages 归档与部署（`pages`）。核对 CDN 并回贴链接在其后的 `notify` 作业里进行，不占该组，只在按 Issue 区分的 `factory-report-notify-<Issue>` 组内彼此排队，避免同一 Issue 的两次回贴同时新建评论，不同 Issue 的回贴不必等彼此的 CDN 核对；之后的部署只会增加站点内容，不会撤下本轮报告。同一 Issue 已归档了更新的报告时，只有那份报告已能访问才让给它；它的部署失败、`notify` 不会运行时，本轮照常回贴，那份报告日后部署成功会按回执顺序替换评论。报告归档在比较并交换冲突时最多重试 5 次，间隔按 1、2、4、8 秒加随机抖动增长，已上传的 blob 不重复上传。评测修订登记（`evaluation`）用自己的 `factory-evaluation-registry` 组：它对 `gh-pages` 的写入都经 `commitTree` 的比较并交换重试，与 `deliver-evaluation.yml` 一样不需要全局锁。`findings` 作业在分类工作流已有排队中的 Run 时不再重复请求：那次 Run 开始时读取的站点已包含本报告。
+统计回写（`report`）只写本 Issue 的用量评论，按 Issue 排队（`factory-task-usage-issue-<Issue>`，Issue 号由 `wait-for-source` 从来源 Run 标题解析，解析不到时退回全局组），同一 Issue 的并发续跑报告不会丢累计数据，它的大产物下载和 HTML 生成也不再挡住其他 Issue 的 Pages、每日归档和分类发布。全局 `factory-task-usage` 并发组只包住 Pages 归档与部署（`pages`）。核对 CDN 并回贴链接在其后的 `notify` 作业里进行，不占该组，只在按 Issue 区分的 `factory-report-notify-<Issue>` 组内彼此排队，避免同一 Issue 的两次回贴同时新建评论，不同 Issue 的回贴不必等彼此的 CDN 核对；之后的部署只会增加站点内容，不会撤下本轮报告。同一 Issue 已归档了更新的报告时，只有那份报告已能访问才让给它；它的部署失败、`notify` 不会运行时，本轮照常回贴，那份报告日后部署成功会按回执顺序替换评论。报告归档在比较并交换冲突时最多重试 5 次，间隔按 1、2、4、8 秒加随机抖动增长，已上传的 blob 不重复上传。评测修订登记（`evaluation`）用自己的 `factory-evaluation-registry` 组：它对 `gh-pages` 的写入都经 `commitTree` 的比较并交换重试，与 `deliver-evaluation.yml` 一样不需要全局锁。`findings` 作业在分类工作流已有排队中的 Run 时不再重复请求：那次 Run 开始时读取的站点已包含本报告。评测登记请求投递时同理：已有尚未开始的 `deliver-evaluation` 扫描（Run 标题带模式，如 `(scan)`，定时运行也是扫描）就不再请求，那次扫描开始时会读到本次登记；已在运行的扫描可能已读过待发记录，不算在内，查询失败时照常请求。findings 的分类发布、重置和每日归档遇到 `gh-pages` 比较并交换冲突时，与报告归档一样最多重试 5 次并按 1、2、4、8 秒加随机抖动退避。
 
 首次配置、固定/最新入口、复盘和逐条验收展示以及补发说明见 [reports/README.md](reports/README.md)。Pages 发布失败不改变来源任务结果，原有用量回执与下载 Artifact 保留。
