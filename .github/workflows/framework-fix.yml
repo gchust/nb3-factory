@@ -306,6 +306,8 @@ jobs:
         env:
           TESTMANAGE_TOKEN: ${{ secrets.EVALUATION_TOKEN }}
           REVIEW_RESULT: ${{ needs.review.result }}
+          # A decision written before a cancel must not be reported as a result.
+          RUN_CANCELLED: ${{ cancelled() }}
           PR_URL: ${{ steps.pr.outputs.url }}
           PR_OUTCOME: ${{ steps.pr.outcome }}
           BASE_SHA: ${{ needs.claim.outputs.base_sha }}
@@ -315,6 +317,7 @@ jobs:
             --decision fix-output/decision.json \
             --claim fix-input/claim.json \
             --review-result "$REVIEW_RESULT" \
+            --cancelled "$RUN_CANCELLED" \
             --pull-request-url "$PR_URL" \
             --publish-outcome "$PR_OUTCOME" \
             --branch "$BRANCH" \

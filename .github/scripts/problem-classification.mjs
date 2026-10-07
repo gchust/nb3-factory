@@ -753,7 +753,13 @@ export async function runModelClassification(directory, options = {}) {
     write(path.join(directory, 'classification.json'), merged);
     return merged;
   } catch (error) {
-    failure = new Error(scrubSecrets(redact(error.message)));
+    // failure.json is a public artifact and the message reaches the public
+    // log: the harness already summarizes engine errors, and anything else is
+    // capped here so no thrown text can carry the receiver's data in full.
+    const message = scrubSecrets(redact(error.message));
+    failure = new Error(
+      message.length > 500 ? `${message.slice(0, 500)}… (${message.length} chars)` : message,
+    );
     // Rule decisions stay valid; the remaining problems are sent unclassified.
     write(path.join(directory, 'failure.json'), {
       version: 1,

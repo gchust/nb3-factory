@@ -316,6 +316,24 @@ const failure = (summary, analysis = '') => ({
   version: 1, verdict: 'error', publish: false, summary, analysis, verification: [], pullRequest: null, changedFiles: [],
 });
 
+/**
+ * What `report` sends. A run that was cancelled, or whose review job hit its
+ * time limit (GitHub reports both as cancelled), claims no fix and no verdict
+ * unless its PR was already opened: a decision written before the cancel
+ * would otherwise read "fixed, no PR link", and a review killed mid-Agent
+ * "exit code 1". TestManage knows no `cancelled` verdict, so this is an
+ * `error` result whose summary says what happened; the usage is kept.
+ */
+export function reportDecision({ decision, reviewResult = '', cancelled = false, pullRequestUrl = '' }) {
+  if (pullRequestUrl) return decision;
+  if (cancelled || reviewResult === 'cancelled')
+    return {
+      ...failure('运行已取消（手动取消，或复核作业达到时限），复核没有完成，未创建 PR，本次运行不能作为修复结论。'),
+      usage: decision?.usage ?? null,
+    };
+  return decision ?? failure(`复核作业没有产出结论（review 作业结果：${reviewResult || 'unknown'}），请查看 Actions 日志。`);
+}
+
 // Every outcome carries its usage: a crashed review still spent tokens.
 export function decide({ usage = null, ...inputs }) {
   return { ...judge(inputs), usage: cleanUsage(usage) };
@@ -611,9 +629,12 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
     output('url', url);
     console.log(`Draft PR: ${url}`);
   } else if (mode === 'report') {
-    const decision = existsSync(args.decision)
-      ? readJson(args.decision)
-      : failure(`复核作业没有产出结论（review 作业结果：${args['review-result'] || 'unknown'}），请查看 Actions 日志。`);
+    const decision = reportDecision({
+      decision: existsSync(args.decision) ? readJson(args.decision) : null,
+      reviewResult: args['review-result'],
+      cancelled: args.cancelled === 'true',
+      pullRequestUrl: args['pull-request-url'],
+    });
     const payload = resultPayload({
       decision, runId: env.GITHUB_RUN_ID, runUrl: runUrl(env), pullRequestUrl: args['pull-request-url'],
       branch: args.branch, baseSha: args['base-sha'], publishFailed: args['publish-outcome'] === 'failure',

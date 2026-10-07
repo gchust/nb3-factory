@@ -156,9 +156,10 @@ jobs:
     needs: prepare
     if: needs.prepare.outputs.ready == 'true'
     runs-on: ubuntu-24.04
-    # 10 install + 100 review budget (6000 s), plus checkouts and three
-    # evidence downloads, so the review's own timeout fires first.
-    timeout-minutes: 125
+    # 10 install + 100 review budget (6000 s), plus 25 minutes for the two
+    # checkouts, four evidence downloads and the always() upload, which never
+    # runs if the job itself times out: the review's own timeout fires first.
+    timeout-minutes: 135
     permissions:
       contents: read
       # To download the source run's artifacts by ID.

@@ -11,9 +11,17 @@ import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
 
-import { summarizeConsoleEvent } from '../agent-harness.mjs';
+import {
+  summarizeConsoleEvent,
+  summarizeFailureText,
+} from '../agent-harness.mjs';
 import { subjectKeyOf } from '../evaluation-report.mjs';
-import { publicationClaim, pullRequestBody } from '../framework-fix.mjs';
+import {
+  decide,
+  publicationClaim,
+  pullRequestBody,
+  reportDecision,
+} from '../framework-fix.mjs';
 import { readTaskMetadata, selectRetroArtifact } from '../publish-retro.mjs';
 import { findingsExtractorVersion } from '../report-pages.mjs';
 
@@ -363,9 +371,10 @@ test('the independent review may run 6000 s inside its job budget', () => {
       review,
     )[1],
   );
-  // The review's own timeout must fire first, with room for checkouts,
-  // downloads and the upload.
-  assert.ok(minutes * 60 >= 6000 + install * 60 + 10 * 60, `${minutes} min`);
+  // The review's own timeout must fire first, with at least 25 minutes for
+  // two checkouts, four large downloads and the always() upload, which never
+  // runs once the job itself times out.
+  assert.ok(minutes * 60 >= 6000 + install * 60 + 25 * 60, `${minutes} min`);
 });
 
 // --- 5. Report gate: runs that ran no model ----------------------------------
@@ -546,4 +555,135 @@ test('the findings cache key changes with the extractor and ignores evaluation-r
   assert.notEqual(changed, original);
   append(path.join(root, 'reports', 'findings-index.mjs'), '\n// changed\n');
   assert.notEqual(key(), changed);
+});
+
+// --- Review follow-up -----------------------------------------------------------
+
+test('a cancelled framework fix is reported as cancelled, claiming no fix', () => {
+  const usage = {
+    tokens: { input: 1, output: 2, cacheRead: 0, cacheWrite: 0, total: 3 },
+  };
+  const fixed = {
+    ...decide({
+      agentStatus: 0,
+      verdict: {
+        value: {
+          version: 1,
+          verdict: 'confirmed',
+          fixed: true,
+          summary: '已修复',
+          analysis: 'a',
+          verification: [],
+          pullRequest: { title: 'fix(x): y', body: 'b' },
+        },
+      },
+      changedFiles: ['a.ts'],
+    }),
+    usage,
+  };
+  assert.equal(fixed.publish, true);
+  for (const input of [
+    { decision: fixed, cancelled: true },
+    { decision: fixed, reviewResult: 'cancelled' },
+    // Killed mid-Agent: the decision says "exit code 1".
+    {
+      decision: decide({ agentStatus: 1, verdict: { error: 'missing' } }),
+      cancelled: true,
+    },
+    { decision: null, cancelled: true },
+  ]) {
+    const reported = reportDecision(input);
+    assert.equal(reported.verdict, 'error');
+    assert.equal(reported.publish, false);
+    assert.equal(reported.pullRequest, null);
+    assert.match(reported.summary, /运行已取消/);
+    assert.doesNotMatch(reported.summary, /退出码|已修复/);
+    assert.deepEqual(reported.usage, input.decision?.usage ?? null);
+  }
+  // A PR opened before the cancel is the real result.
+  const url = 'https://github.com/nocobase/nocobase3/pull/9';
+  assert.equal(
+    reportDecision({ decision: fixed, cancelled: true, pullRequestUrl: url }),
+    fixed,
+  );
+  assert.equal(
+    reportDecision({ decision: fixed, reviewResult: 'success' }),
+    fixed,
+  );
+  assert.match(
+    reportDecision({ decision: null, reviewResult: 'failure' }).summary,
+    /没有产出结论（review 作业结果：failure）/,
+  );
+  const publish = jobOf(workflow('framework-fix.yml'), 'publish');
+  const report = publish.split('- name: Report the result to TestManage\n')[1];
+  assert.match(report, /RUN_CANCELLED: \$\{\{ cancelled\(\) \}\}/);
+  assert.match(report, /--cancelled "\$RUN_CANCELLED"/);
+  const source = readFileSync(
+    path.resolve(import.meta.dirname, '../framework-fix.mjs'),
+    'utf8',
+  );
+  assert.match(source, /cancelled: args\.cancelled === 'true'/);
+});
+
+test('an engine error reaches the public error as category, status and a short head', () => {
+  const quoted = `Request failed with status 529: overloaded {"tool_result":"${'TESTMANAGE '.repeat(50)}"}`;
+  const summary = summarizeFailureText(quoted);
+  assert.equal(
+    summary,
+    `provider_unavailable 529: Request failed with status 529: overloaded (${quoted.length} chars on the runner)`,
+  );
+  assert.doesNotMatch(summary, /TESTMANAGE|tool_result/);
+  assert.equal(
+    summarizeFailureText('Codex turn failed'),
+    'agent_failure: Codex turn failed',
+  );
+  assert.ok(summarizeFailureText('x'.repeat(1000)).length < 260);
+  assert.match(
+    summarizeFailureText('first line\nsecond TESTMANAGE line'),
+    /^agent_failure: first line \(\d+ chars on the runner\)$/,
+  );
+});
+
+test('summary mode keeps engine errors and stderr short in public, full on the runner', (t) => {
+  const root = temp(t, 'harness-failure-');
+  const log = path.join(root, 'agent.jsonl');
+  const engine = [
+    "process.stderr.write('stderr quoting TESTMANAGE-STDERR-DATA\\n');",
+    `console.log(${JSON.stringify(JSON.stringify({ type: 'error', message: 'Request failed {"quoted":"TESTMANAGE-EVENT-DATA"}' }))});`,
+    'process.exitCode = 1;',
+  ].join('');
+  const harness = path.resolve(import.meta.dirname, '../agent-harness.mjs');
+  const run = (consoleDetail) =>
+    spawnSync(
+      process.execPath,
+      [
+        '--input-type=module',
+        '-e',
+        `import { runAgentInvocation } from ${JSON.stringify(harness)};
+try {
+  await runAgentInvocation({ label: 'fixture', command: process.execPath, args: ['-e', ${JSON.stringify(engine)}],
+    cwd: ${JSON.stringify(root)}, env: process.env, log: ${JSON.stringify(log)}, retryDelaysSeconds: [],
+    getEventFailure: (event) => event.type === 'error' ? event.message : undefined,
+    consoleDetail: ${JSON.stringify(consoleDetail)} });
+} catch (error) { console.log('THROWN ' + error.message); }`,
+      ],
+      { encoding: 'utf8', timeout: 20_000 },
+    );
+  const summary = run('summary');
+  assert.equal(summary.status, 0, summary.stderr);
+  assert.doesNotMatch(summary.stdout + summary.stderr, /TESTMANAGE-/);
+  assert.match(
+    summary.stdout,
+    /THROWN fixture model invocation failed: agent_failure: Request failed \(\d+ chars on the runner\)/,
+  );
+  assert.match(summary.stderr, /\[agent stderr: \d+ bytes\]/);
+  const transcript = readFileSync(log, 'utf8');
+  assert.match(transcript, /TESTMANAGE-EVENT-DATA/);
+  assert.match(transcript, /TESTMANAGE-STDERR-DATA/);
+  const full = run('full');
+  assert.match(
+    full.stdout,
+    /THROWN fixture model invocation failed: Request failed \{"quoted":"TESTMANAGE-EVENT-DATA"\}/,
+  );
+  assert.match(full.stderr, /TESTMANAGE-STDERR-DATA/);
 });

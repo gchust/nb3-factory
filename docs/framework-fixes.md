@@ -33,7 +33,7 @@ Artifacts of this public repository are downloadable by anyone signed in to GitH
 
 ## Results in TestManage
 
-TestManage stores the verdict on the fix run and appends one comment to the problem: the verdict, the summary, the analysis, the checks Claude Code ran, the usage, and links to the PR and the Actions run. When a PR was opened and the problem is still `pending`, TestManage moves it to `fixing`; it changes no other status. Each result is recorded once, so rerunning the publish job does not add another comment. The `publish` job runs even after a review failure or cancellation, which releases the problem's active lock. A cancelled run reports without opening a PR.
+TestManage stores the verdict on the fix run and appends one comment to the problem: the verdict, the summary, the analysis, the checks Claude Code ran, the usage, and links to the PR and the Actions run. When a PR was opened and the problem is still `pending`, TestManage moves it to `fixing`; it changes no other status. Each result is recorded once, so rerunning the publish job does not add another comment. The `publish` job runs even after a review failure or cancellation, which releases the problem's active lock. A cancelled run, including a review job that reached its time limit (GitHub reports both as cancelled), reports an `error` result saying the run was cancelled, claims no fix and opens no PR; a decision written before the cancel is not reported. TestManage has no `cancelled` verdict.
 
 ## Usage and duration
 
