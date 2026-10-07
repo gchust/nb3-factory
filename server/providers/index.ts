@@ -1,5 +1,3 @@
-import type { ApplicationServiceProviderConstructor } from '@nocobase/app-server/application';
+import { ExpenseProvider } from '../expense/provider.js';
 
-const serviceProviders: readonly ApplicationServiceProviderConstructor[] = [];
-
-export default serviceProviders;
+export default [ExpenseProvider] as const;
