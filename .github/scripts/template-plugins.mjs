@@ -203,7 +203,9 @@ function runTemplatePlugins(mode, appDirectory, diagnosticsDirectory) {
       encoding: 'utf8',
       stdio: ['ignore', reportName ? 'pipe' : 'inherit', 'inherit'],
       maxBuffer: 8 * 1024 * 1024,
-      timeout: 20 * 60 * 1000,
+      // Inside the workflow's 15-minute step: a hung call must end here, where
+      // its diagnostic is saved, not when the runner kills the step.
+      timeout: 12 * 60 * 1000,
     });
     // Save the actual CLI response even when it reports failure or malformed JSON.
     if (reportName)

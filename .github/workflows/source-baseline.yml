@@ -2,6 +2,9 @@ name: Verify pinned NocoBase source baseline
 
 on:
   pull_request:
+    # Only pull requests that can land on develop; stacked PRs are checked
+    # when they retarget it.
+    branches: [develop]
     paths:
       - '.github/workflows/source-baseline.yml'
       - '.github/scripts/source-*.mjs'
@@ -51,13 +54,48 @@ concurrency:
   queue: max
 
 jobs:
+  # queue: max cannot be combined with cancel-in-progress, so a pull request
+  # run that a newer push already superseded still reaches a runner. Stop it
+  # before the 20 minutes of source build and verification; the run for the
+  # newer head reports on it. An API failure fails open. Build task PRs
+  # (agent/issue-N) change only the application, are verified by the task
+  # itself and never land on develop, so they skip the check entirely.
+  supersede:
+    if: github.event_name == 'pull_request' && !startsWith(github.head_ref, 'agent/issue-')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      pull-requests: read
+    outputs:
+      superseded: ${{ steps.check.outputs.superseded }}
+    steps:
+      - name: Stop when a newer push superseded this pull request run
+        id: check
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          RUN_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          live_head="$(gh api "repos/$GITHUB_REPOSITORY/pulls/$PR_NUMBER" --jq .head.sha || true)"
+          if [[ -n "$live_head" && "$live_head" != "$RUN_HEAD_SHA" ]]; then
+            echo "::notice::Pull request #$PR_NUMBER moved from $RUN_HEAD_SHA to $live_head; the run for that head verifies it. Skipping the rest of this run."
+            echo "superseded=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "superseded=false" >> "$GITHUB_OUTPUT"
+          fi
+
   source-baseline:
+    needs: supersede
     # A dispatch reaches the contents: write publish job, so it must run the
-    # workflow file from develop, like refresh-template.yml.
+    # workflow file from develop, like refresh-template.yml. supersede is
+    # skipped for a dispatch, hence !cancelled() instead of the implied success().
     if: >-
-      github.event_name == 'pull_request' ||
-      (github.actor == github.repository_owner &&
-       github.ref == format('refs/heads/{0}', github.event.repository.default_branch))
+      !cancelled() && (
+      (github.event_name == 'pull_request' &&
+       needs.supersede.result == 'success' && needs.supersede.outputs.superseded != 'true') ||
+      (github.event_name != 'pull_request' &&
+       github.actor == github.repository_owner &&
+       github.ref == format('refs/heads/{0}', github.event.repository.default_branch)))
     runs-on: ubuntu-24.04
     timeout-minutes: 90
     permissions:
@@ -143,11 +181,15 @@ jobs:
         with:
           path: ${{ steps.pnpm-store.outputs.path }}
           key: ${{ steps.pnpm-cache.outputs.cache-primary-key }}
+      # Usually 5-9 and 2-4 minutes. The limits stop a hung build or registry
+      # fetch well before the 90-minute job limit holds the global queue.
       - name: Build and publish only to an isolated loopback registry
         working-directory: source
+        timeout-minutes: 25
         run: pnpm unreleased:prepare
       - name: Verify an application made from these exact source packages
         working-directory: source
+        timeout-minutes: 15
         run: pnpm unreleased:smoke --template default --dialect sqlite --workdir "$RUNNER_TEMP/source-smoke"
       - name: Install browser fonts
         timeout-minutes: 10

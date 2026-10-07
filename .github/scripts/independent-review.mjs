@@ -7,6 +7,7 @@ import { fileURLToPath } from 'node:url';
 import { selectHistorySource } from './agent-history-source.mjs';
 import { matchesTaskPR } from './visual-report.mjs';
 import { scrubHistoryFile } from './history-redaction.mjs';
+import { repositoryApi } from './factory-lib.mjs';
 
 const positive = n => Number.isSafeInteger(n) && n > 0;
 const sha = s => /^[a-f0-9]{40}$/u.test(s ?? '');
@@ -136,18 +137,16 @@ export function archiveReview(root, output, binding, runId, attempt, status) {
   const manifest = { version: 1, binding, reviewRun: { id: runId, attempt }, validation: status,
     files, missing, scope: 'Factory-visible independent review inputs, outputs and normalized usage; missing files are not reconstructed.' };
   writeFileSync(path.join(staging, 'manifest.json'), scrubHistoryFile(JSON.stringify(manifest, null, 2), 'manifest.json'));
-  const asset = `independent-review-issue-${binding.issue}-run-${runId}-attempt-${attempt}-${digest(JSON.stringify(files)).slice(0, 16)}.tar.gz`;
+  // Named by run only: a re-run of publish replaces this run's asset (the
+  // upload uses --clobber) instead of adding one per attempt. The manifest
+  // still records the attempt and every file's hash.
+  const asset = `independent-review-issue-${binding.issue}-run-${runId}.tar.gz`;
   execFileSync('tar', ['-czf', path.join(output, asset), '-C', staging, '.'], { timeout: 60000 });
   rmSync(staging, { recursive: true, force: true });
   return { asset, manifest };
 }
-async function api(method, route, body) {
-  const response = await fetch(`${process.env.GITHUB_API_URL || 'https://api.github.com'}/repos/${process.env.GITHUB_REPOSITORY}${route}`, {
-    method, headers: { Authorization: `Bearer ${process.env.GITHUB_TOKEN}`, Accept: 'application/vnd.github+json', 'Content-Type': 'application/json' },
-    ...(body ? { body: JSON.stringify(body) } : {}), signal: AbortSignal.timeout(30000) });
-  if (!response.ok) throw new Error(`GitHub ${method} ${route} failed (${response.status})`);
-  return response.json();
-}
+// Retries reads and idempotent writes on 5xx and dropped connections; POST is not retried.
+const api = repositoryApi();
 async function all(route, key) {
   const found = [];
   for (let page = 1; page <= 30; page++) {
@@ -160,6 +159,11 @@ async function all(route, key) {
 }
 const out = (name, value) => process.env.GITHUB_OUTPUT && appendFileSync(process.env.GITHUB_OUTPUT, `${name}=${value}\n`);
 const read = file => JSON.parse(readFileSync(file, 'utf8'));
+// This run's review comment, with or without the attempt older markers carried.
+export function isReviewMarker(body, runId) {
+  const match = /^<!-- factory-independent-review:(\d+)(?::\d+)? -->/u.exec(body ?? '');
+  return Boolean(match) && match[1] === String(runId);
+}
 async function main() {
   const [mode, ...argv] = process.argv.slice(2);
   const args = Object.fromEntries(Array.from({ length: argv.length / 2 }, (_, i) => [argv[i * 2].replace(/^--/u, ''), argv[i * 2 + 1]]));
@@ -206,7 +210,10 @@ async function main() {
     const binding = read(path.join(args.input, 'binding.json'));
     let report; try { report = read(path.join(args.output, 'validated-review.json')); } catch { /* Always report a failed/missing review honestly. */ }
     const valid = args.status === 'success' && report?.headSha === binding.headSha && report?.criteriaSha256 === binding.criteriaSha256;
-    const marker = `<!-- factory-independent-review:${process.env.GITHUB_RUN_ID}:${process.env.GITHUB_RUN_ATTEMPT} -->`;
+    // One comment per review run: a re-run of publish updates it. Comments from
+    // before this change carry the attempt in the marker and are updated too.
+    const runId = process.env.GITHUB_RUN_ID;
+    const marker = `<!-- factory-independent-review:${runId} -->`;
     const lines = [marker, '## 独立代码 / Skill 评审', '', `冻结交付：PR #${binding.pr} · \`${binding.headSha}\`；原搭建 run ${binding.runId} / attempt ${binding.attempt}。`, '',
       valid ? '评审产物身份、引用文件哈希和行号已校验；以下是评审者结论，不改写原业务验收。' : '评审未完成或产物未通过校验，不计为通过。',
       '', '| 检查 | 功能 | 代码 | Skill | 证据 |', '| --- | --- | --- | --- | --- |'];
@@ -216,7 +223,7 @@ async function main() {
     else lines.push('', '长期归档尚未上传成功；暂存记录见上述 Actions Artifact，保留 14 天。');
     const body = lines.join('\n');
     const comments = await all(`/issues/${binding.issue}/comments`);
-    const existing = comments.find(c => c.user?.login === 'github-actions[bot]' && c.body?.startsWith(marker));
+    const existing = comments.find(c => c.user?.login === 'github-actions[bot]' && isReviewMarker(c.body, runId));
     if (existing?.body !== body) await api(existing ? 'PATCH' : 'POST', existing ? `/issues/comments/${existing.id}` : `/issues/${binding.issue}/comments`, { body });
   } else throw new Error('Expected select/bind/prompt/validate/archive/publish');
 }

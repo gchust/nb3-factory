@@ -113,8 +113,9 @@ test('Agent classification failure is a warning, and nothing in delivery runs af
   const notice = steps.find(step => step.startsWith('name: Report problems left unclassified'));
   assert.ok(notice, 'the unclassified notice step is missing');
   // The script fails the step on a model error, and an install failure skips
-  // it, so both reach the notice.
-  assert.match(notice, /if: always\(\) && \(steps\.install\.outcome == 'failure' \|\| steps\.agent\.outcome == 'failure'\)/);
+  // it; a failed feature point read skips classification entirely. All three
+  // reach the notice.
+  assert.match(notice, /if: always\(\) && \(steps\.taxonomy\.outcome == 'failure' \|\| steps\.install\.outcome == 'failure' \|\| steps\.agent\.outcome == 'failure'\)/);
   assert.match(
     readFileSync(path.join(workflows, '..', 'scripts', 'problem-classification.mjs'), 'utf8'),
     /Agent classification failed; only rule decisions are sent[^\n]*\n[^\n]*\n\s+process\.exitCode = 1;/,

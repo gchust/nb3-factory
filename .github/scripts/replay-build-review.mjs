@@ -68,14 +68,17 @@ export async function selectSupplement(get, repository, runId, artifactId) {
   assert.equal(run.head_repository?.full_name, repository);
   const artifact = await get(`/actions/artifacts/${artifactId}`);
   assert.equal(artifact.workflow_run?.id, runId); assert.ok(!artifact.expired);
-  assert.equal(artifact.name, `factory-build-review-${runId}-${run.run_attempt}`);
-  const jobs = await get(`/actions/runs/${runId}/attempts/${run.run_attempt}/jobs?per_page=100`);
+  // The review's own attempt, from the artifact name: after "Re-run failed
+  // jobs" of the report, the run's latest attempt is newer than the review.
+  const attempt = Number(new RegExp(`^factory-build-review-${runId}-([1-9]\\d*)$`).exec(artifact.name ?? '')?.[1]);
+  assert.ok(positive(attempt) && attempt <= run.run_attempt, 'Supplement artifact does not name an attempt of this run');
+  const jobs = await get(`/actions/runs/${runId}/attempts/${attempt}/jobs?per_page=100`);
   const created = Date.parse(artifact.created_at);
   assert.ok(jobs.jobs.some(j => j.name === 'review' && j.status === 'completed' &&
     created >= Date.parse(j.started_at) && created <= Date.parse(j.completed_at)), 'Supplement not bound to a finished review job');
   // When the review produced this result, from the Actions API: orders reassessments
   // (a re-exported older review never replaces a newer one) without trusting the review.
-  return { runId, attempt: run.run_attempt, artifactId, controlSha: run.head_sha, reviewedAt: new Date(created).toISOString() };
+  return { runId, attempt, artifactId, controlSha: run.head_sha, reviewedAt: new Date(created).toISOString() };
 }
 export async function adoptSupplement(root, supplement, publication) {
   const binding = readReviewJson(supplement, 'binding.json');

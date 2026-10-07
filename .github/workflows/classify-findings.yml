@@ -77,6 +77,8 @@ jobs:
     timeout-minutes: 50
     permissions:
       contents: read
+      # The pre-model check lists this workflow's queued runs.
+      actions: read
     outputs:
       ready: ${{ steps.prepare.outputs.ready }}
       artifact: ${{ steps.archive.outputs.artifact-id }}
@@ -116,8 +118,19 @@ jobs:
           OPENCODE_VERSION: ${{ vars.OPENCODE_VERSION }}
           FACTORY_AGENT_INSTALL_RECORD: ${{ runner.temp }}/agent-install.json
         run: node control/.github/scripts/install-agent.mjs
-      - name: Classify findings with the selected Agent
+      # Right before the paid model call: a run whose input changed, or that a
+      # queued run will supersede, would be discarded as stale at publish.
+      - name: Check the prepared findings are still current
+        id: check
         if: steps.prepare.outputs.ready == 'true'
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          FORCE_CLASSIFY: ${{ inputs.force || 'false' }}
+        run: |
+          node control/.github/scripts/classify-findings.mjs check \
+            --input "$RUNNER_TEMP/findings-input" --force "$FORCE_CLASSIFY"
+      - name: Classify findings with the selected Agent
+        if: steps.prepare.outputs.ready == 'true' && steps.check.outputs.current == 'true'
         env:
           CODE_AGENT_ENGINE: ${{ vars.CODE_AGENT_ENGINE }}
           FACTORY_AGENT_INSTALL_RECORD: ${{ runner.temp }}/agent-install.json
@@ -162,7 +175,7 @@ jobs:
             --input "$RUNNER_TEMP/findings-input" --output "$RUNNER_TEMP/findings-output"
       - name: Archive classification inputs, decisions and invocation history
         id: archive
-        if: always() && steps.prepare.outputs.ready == 'true'
+        if: always() && steps.prepare.outputs.ready == 'true' && steps.check.outputs.current == 'true'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: factory-findings-${{ github.run_id }}-${{ github.run_attempt }}

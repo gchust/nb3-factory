@@ -66,6 +66,51 @@ export async function prepareClassification(
   return { ready: true, inputHash: snapshot.input.inputHash };
 }
 
+// A run waiting in this workflow's queue will classify the newest findings
+// itself, so a classification this run started now would be discarded as
+// stale at publish time: the model call is paid for nothing.
+const WAITING = new Set(['queued', 'pending', 'waiting', 'requested']);
+export function newerQueuedRun(runs, currentRunId) {
+  return (
+    runs.find(
+      (run) => Number(run.id) > Number(currentRunId) && WAITING.has(run.status),
+    ) ?? null
+  );
+}
+
+// Right before the model call: the prepared input must still be the
+// published one, and no queued run may be about to supersede it. A forced
+// run only checks the input, since a queued unforced run might skip.
+export async function checkClassification(
+  client,
+  inputDirectory,
+  { force = false, runId = process.env.GITHUB_RUN_ID } = {},
+) {
+  const prepared = validateClassificationInput(
+    readClassificationJson(path.join(inputDirectory, 'input.json')),
+  );
+  const snapshot = await readFindingsSnapshot(client);
+  if (snapshot?.input.inputHash !== prepared.inputHash)
+    return {
+      current: false,
+      reason: 'published findings changed since prepare',
+    };
+  if (!force) {
+    const { workflow_runs: runs = [] } = await client.request(
+      'GET',
+      '/actions/workflows/classify-findings.yml/runs',
+      { query: { per_page: 30 } },
+    );
+    const newer = newerQueuedRun(runs, runId);
+    if (newer)
+      return {
+        current: false,
+        reason: `run ${newer.id} is queued and will classify the newest findings`,
+      };
+  }
+  return { current: true };
+}
+
 export async function runClassification(
   inputDirectory,
   outputDirectory,
@@ -273,6 +318,16 @@ if (
       console.log(
         result.ready ? 'Classification input prepared' : result.reason,
       );
+    } else if (mode === 'check') {
+      const result = await checkClassification(client, args.input, {
+        force: args.force === 'true',
+      });
+      output('current', result.current);
+      console.log(
+        result.current
+          ? 'Prepared input is current'
+          : `Skipping the model call: ${result.reason}`,
+      );
     } else if (mode === 'publish') {
       const result = await archiveFindingsClassification(
         client,
@@ -285,6 +340,6 @@ if (
           ? 'Classification archived'
           : 'Newer reports exist; stale classification skipped',
       );
-    } else throw new Error('Expected prepare, run or publish');
+    } else throw new Error('Expected prepare, check, run or publish');
   }
 }
