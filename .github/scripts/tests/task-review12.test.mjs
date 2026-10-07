@@ -54,7 +54,15 @@ test('final verification and comment replies retry their downloads', () => {
     jobOf('verify-final'),
     /- name: Download trusted final verification task\n\s+uses: \.\/factory-actions\/\.github\/actions\/download-with-retry\n\s+with:\n\s+name: factory-task-\$\{\{ needs\.prepare\.outputs\.issue_number \}\}\n\s+path: final-task\n/,
   );
-  // publish-reply still checks out only the scripts it runs from control/.
-  assert.match(jobOf('publish-reply'), /sparse-checkout: \.github\/scripts\n/);
+  // publish-reply still checks out only the scripts it runs from control/,
+  // before the composite actions: the root checkout cleans the workspace and
+  // would delete a factory-actions/ checked out ahead of it.
+  const publishReply = jobOf('publish-reply');
+  const scripts = /sparse-checkout: \.github\/scripts\n/;
+  assert.match(publishReply, scripts);
+  assert.ok(
+    publishReply.search(scripts) < publishReply.search(checkout),
+    'publish-reply checks out its scripts before the composite actions',
+  );
   assert.match(jobOf('publish-reply'), /timeout-minutes: 7\n/);
 });
