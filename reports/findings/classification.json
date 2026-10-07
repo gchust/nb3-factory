@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "inputHash": "dd64a107cafddcf75eaafafc5d4cf6333046e5c98b8da66fca5ef8062d99ebed",
+  "inputHash": "f728a07ca0133ad9717e9c82dba35ef3788c28ed8f6a40afb6e9096f357fb50b",
   "sources": [
     {
       "id": "460:36434284393:1:F2",
@@ -746,6 +746,11 @@
       "id": "649:37621548882:1:F5",
       "report": "649:37621548882:1",
       "fingerprint": "bc408540ba11766cce0f0f986963b0adfe65a50684ec3971e6085ccffd9ea472"
+    },
+    {
+      "id": "651:37621552259:1:F2",
+      "report": "651:37621552259:1",
+      "fingerprint": "74d522b22624262e5a3a165981862b6db51a4af4fe3c96792a879e99de3ee01a"
     }
   ],
   "groups": [
@@ -1383,15 +1388,22 @@
       "members": [
         "649:37621548882:1:F4"
       ]
+    },
+    {
+      "title": "根路由不继承 /api 的应用级 onError 兜底，指引未点明需自带错误翻译",
+      "reason": "单条保留。651:37621552258:1:F2 的原始证据显示：application/index.js 只为 /api 路由安装 api.onError，随后 this.router.route(\"/\", router) 挂载根贡献，外层 router 无错误翻译；server-routes.md 仅说明根路由不在 /api 下，未提醒其不继承 /api 的 api.onError，导致未映射领域错误变成不透明 500。其触发条件（根路由抛出未识别领域错误）、期望（指引提醒自带 onError/映射 ApiError）与修复位置（server-routes.md 与应用错误装配）与其它关于 server-routes 鉴权覆盖（532:F2）、API 前缀 SPA 兜底（464:F3/490:F1）、认证 Skill 类型示例（495:F6）等发现均不同，证据不足以并入其它组，故单独保留。",
+      "members": [
+        "651:37621552259:1:F2"
+      ]
     }
   ],
   "classifier": {
     "engine": "pi",
     "model": "deepseek-v4.1-flash",
     "version": "0.86.1",
-    "runId": "37636531231",
+    "runId": "37638879933",
     "attempt": 1,
     "controlSha": "30161f69b2f4dcf22ac44c25bfc816d7c790839f",
-    "completedAt": "2026-10-07T14:28:27.882Z"
+    "completedAt": "2026-10-07T14:43:57.621Z"
   }
 }
