@@ -86,9 +86,11 @@ export function verifyControlSha(event, selectedSha, checkpoint) {
 // A continuation applies the checkpoint patch to the base its source run
 // recorded. prepare-task.mjs reads a non-shared target branch's live head, which
 // can move during the five hours before a handoff; the patch was built and
-// verified on the recorded commit, and publication restacks it onto the branch
-// head afterwards (publication-base.mjs). A changed base ref means the chain
-// itself changed, which no continuation can reconcile.
+// verified on the recorded commit, so the continuation keeps it. Publication
+// restacks onto a newer head only when the branch moved by factory-owned files
+// (publication-base.mjs); otherwise the task branch stays on this base and the
+// PR shows the divergence. A changed base ref means the chain itself changed,
+// which no continuation can reconcile.
 export function continuationBase(previous, ref, sha) {
   controlSha(sha);
   const recorded = previous?.applicationBase;

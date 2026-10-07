@@ -325,7 +325,22 @@ jobs:
       timed_out: ${{ steps.outcome.outputs.timed_out }}
       checkpoint_available: ${{ steps.checkpoint.outcome == 'success' }}
       patch_available: ${{ steps.patch.outcome == 'success' }}
+      rerun_rejected: ${{ steps.rerun_guard.outcome == 'failure' }}
     steps:
+      # A GitHub Re-run starts a fresh runner without the previous attempt's
+      # checkpoint, so it can never continue the task (requireFreshRunAttempt
+      # rejects it too). Stop it before anything writes agent-artifacts: its
+      # always() uploads would otherwise publish a second, nearly empty
+      # factory-agent-N, and a recovery downloading that name by run would read
+      # it instead of the first attempt's checkpoint.
+      - name: Reject a GitHub Re-run of this job
+        id: rerun_guard
+        run: |
+          if (( ${GITHUB_RUN_ATTEMPT:-1} > 1 )); then
+            echo "::error::GitHub Re-run cannot preserve task repair limits. Use an explicit recovery Run (workflow_dispatch with recovery_run_id=${GITHUB_RUN_ID}) instead; this attempt uploads no checkpoint."
+            exit 1
+          fi
+
       - name: Check out factory control plane
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -757,6 +772,7 @@ jobs:
         # or changes the independent final verification / publication verdict.
         if: >-
           !cancelled() && inputs.failure_smoke != true && steps.patch.outcome == 'success' &&
+          steps.setup_failure.outcome != 'success' &&
           steps.implementation.outputs.handoff != 'true' && steps.verify.outputs.handoff != 'true'
         continue-on-error: true
         # The runner accepts at most 60 minutes for the whole review, reruns and
@@ -810,7 +826,7 @@ jobs:
       # Also the handoff and recovery checkpoint: see Confirm the handoff checkpoint.
       - name: Upload Code Agent patch and diagnostics
         id: agent-upload
-        if: always()
+        if: always() && steps.rerun_guard.outcome == 'success'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: factory-agent-${{ needs.prepare.outputs.issue_number }}
@@ -825,7 +841,7 @@ jobs:
       # so a transient artifact error here must not fail the job or block the
       # handoff below.
       - name: Stage the patch for downstream jobs
-        if: always()
+        if: always() && steps.rerun_guard.outcome == 'success'
         continue-on-error: true
         run: |
           mkdir -p "$RUNNER_TEMP/patch-artifacts"
@@ -841,7 +857,7 @@ jobs:
             -exec cp --parents {} "$RUNNER_TEMP/patch-artifacts" \;
 
       - name: Upload the patch for downstream jobs
-        if: always()
+        if: always() && steps.rerun_guard.outcome == 'success'
         continue-on-error: true
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
@@ -1523,6 +1539,7 @@ jobs:
           FACTORY_PREVIEW_BUILD_RESULT: ${{ needs.preview-build-failed.result }}
           FACTORY_RUN_CANCELLED: ${{ needs.run-cancelled.result == 'success' }}
           FACTORY_RUN_TIMED_OUT: ${{ needs.agent.outputs.timed_out }}
+          FACTORY_RERUN_REJECTED: ${{ needs.agent.outputs.rerun_rejected }}
         run: node control/.github/scripts/mark-failure.mjs "${{ needs.prepare.outputs.issue_number }}" failure-artifacts
 
   dispatch-reports:

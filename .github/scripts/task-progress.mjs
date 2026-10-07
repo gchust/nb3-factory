@@ -172,7 +172,7 @@ export function renderProgress(record, repository) {
 // progress update is written while the run is still finishing, and it is never
 // replaced, so a runner timeout must not be labelled a manual cancel. A job
 // that ran to within five minutes of its own limit timed out. Keep these in
-// step with code-agent-task.yml (task-progress-timeout.test.mjs checks them).
+// step with code-agent-task.yml (task-review7.test.mjs checks them).
 export const CORE_JOB_TIMEOUT_MINUTES = { agent: 360, 'verify-final': 90, publish: 15 };
 export function jobOutcome(job) {
   if (job.conclusion !== 'cancelled') return job.conclusion;

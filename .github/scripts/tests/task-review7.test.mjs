@@ -276,3 +276,69 @@ test('report-failure and publish-reply check out only the scripts they run', () 
   for (const name of ['report-failure', 'publish-reply'])
     assert.match(job(name), /sparse-checkout: \.github\/scripts\n/, name);
 });
+
+test('a rejected Re-run stops first and uploads no checkpoint or patch copy', () => {
+  const agent = job('agent');
+  const steps = agent.split('\n      - name: ').slice(1);
+  assert.match(
+    steps[0],
+    /^Reject a GitHub Re-run of this job\n {8}id: rerun_guard\n/,
+  );
+  assert.match(steps[0], /\(\( \$\{GITHUB_RUN_ATTEMPT:-1\} > 1 \)\)/);
+  assert.match(steps[0], /exit 1/);
+  for (const name of [
+    'Upload Code Agent patch and diagnostics',
+    'Stage the patch for downstream jobs',
+    'Upload the patch for downstream jobs',
+  ])
+    assert.match(
+      step(name),
+      /if: always\(\) && steps\.rerun_guard\.outcome == 'success'\n/,
+      name,
+    );
+  // No step of the agent job uploads an artifact without the guard.
+  const uploads = agent
+    .split('\n      - ')
+    .filter((s) => s.includes('actions/upload-artifact@'));
+  assert.ok(uploads.length >= 2);
+  for (const upload of uploads)
+    assert.match(
+      upload,
+      /steps\.rerun_guard\.outcome == 'success'/,
+      upload.split('\n')[0],
+    );
+  assert.match(
+    agent,
+    /rerun_rejected: \$\{\{ steps\.rerun_guard\.outcome == 'failure' \}\}/,
+  );
+  assert.match(
+    job('report-failure'),
+    /FACTORY_RERUN_REJECTED: \$\{\{ needs\.agent\.outputs\.rerun_rejected \}\}/,
+  );
+});
+
+test('restored work that failed during setup gets no build review', () => {
+  assert.match(
+    step('Review build quality and framework feedback'),
+    /steps\.setup_failure\.outcome != 'success'/,
+  );
+});
+
+test('repeated pnpm errors such as an outdated lockfile count as one failure identity', async () => {
+  const { observedFailures } = await import('../task-policy.mjs');
+  for (const log of [
+    '[ERR_PNPM_OUTDATED_LOCKFILE] Cannot install with "frozen-lockfile" because pnpm-lock.yaml is not up to date with <ROOT>/package.json',
+    ' ERR_PNPM_OUTDATED_LOCKFILE  Cannot install with "frozen-lockfile" because pnpm-lock.yaml is not up to date',
+  ]) {
+    const [failure, ...rest] = observedFailures(
+      'build',
+      null,
+      log,
+      { task: {} },
+      'lockfile',
+    );
+    assert.equal(rest.length, 0);
+    assert.equal(failure.criterion, 'lockfile');
+    assert.match(failure.symptom, /err_pnpm_outdated_lockfile/);
+  }
+});
