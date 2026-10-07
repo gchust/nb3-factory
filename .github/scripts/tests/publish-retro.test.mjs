@@ -127,6 +127,7 @@ test('selects the agent artifact for failed runs too', () => {
   assert.deepEqual(selectRetroArtifact(run, artifacts, 'owner/repo', jobs), {
     artifact: { name: 'factory-agent-42', created_at },
     issue: 42,
+    task: null,
   });
   assert.equal(
     selectRetroArtifact(run, [{ name: 'other', created_at }], 'owner/repo', jobs),

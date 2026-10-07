@@ -113,6 +113,9 @@ export function buildRedactor(secrets) {
  * usage are never overwritten. Waiting counts against the invocation timeout and
  * the run deadline: a retry that would not start before either is not made.
  * `append` continues a transcript an earlier invocation of the same caller wrote.
+ * `consoleDetail: 'summary'` prints only each event's type and size: for a
+ * caller whose inputs must not reach the public Actions log (the JSONL keeps
+ * every line on the runner either way).
  */
 export async function runAgentInvocation({
   retryDelaysSeconds = MODEL_RETRY_DELAYS_SECONDS,
@@ -141,6 +144,33 @@ export async function runAgentInvocation({
   }
 }
 
+// The type names come from the engine's own schema, never from tool results.
+export function summarizeConsoleEvent(line, event) {
+  const type =
+    event && typeof event === 'object' && typeof event.type === 'string'
+      ? event.type.replace(/[^\w.:-]/gu, '').slice(0, 64)
+      : typeof event;
+  if (/delta$/u.test(type) || type === 'stream_event') return null;
+  return `[agent event: ${type || 'unknown'}, ${Buffer.byteLength(line)} bytes]`;
+}
+
+/**
+ * An engine error for a summary caller's public error, log and failure file:
+ * its category and HTTP status, and the first line cut before any JSON,
+ * since an error event can quote a tool result. The result file next to the
+ * transcript keeps the full text on the runner.
+ */
+export function summarizeFailureText(value, max = 160) {
+  const text = String(value ?? '');
+  const { category } = classifyAgentFailure(text);
+  const status = text.match(/\b([45]\d{2})\b/)?.[1];
+  let head = (text.split(/\r?\n/u)[0] ?? '').replace(/[[{][\s\S]*$/u, '').replace(/\s+/gu, ' ').trim();
+  if (head.length > max) head = `${head.slice(0, max)}…`;
+  const omitted = text.length - head.length;
+  return `${category}${status ? ` ${status}` : ''}${head ? `: ${head}` : ''}${
+    omitted > 0 ? ` (${text.length} chars on the runner)` : ''}`;
+}
+
 async function runAttempt({
   append = false,
   label,
@@ -158,9 +188,12 @@ async function runAttempt({
   isCompletionEvent = () => false,
   getEventFailure = () => undefined,
   formatConsoleLine = (line) => line,
+  consoleDetail = 'full',
   parseEvent = () => ({}),
   result,
 }) {
+  if (!['full', 'summary'].includes(consoleDetail))
+    throw new Error(`Unknown consoleDetail: ${consoleDetail}`);
   const redact = buildRedactor(secrets);
   mkdirSync(path.dirname(log), { recursive: true });
   result?.restart?.();
@@ -204,7 +237,12 @@ async function runAttempt({
   });
   child.stderr.on('data', (chunk) => {
     recordActivity();
-    process.stderr.write(redact(chunk.toString('utf8')));
+    // Engine stderr can quote what a tool read; a summary caller logs its size.
+    process.stderr.write(
+      consoleDetail === 'summary'
+        ? `[agent stderr: ${chunk.length} bytes]\n`
+        : redact(chunk.toString('utf8')),
+    );
     stream.write(chunk);
   });
 
@@ -288,7 +326,9 @@ async function runAttempt({
   } else if (eventFailure) {
     // Only the engine's own final model error may justify a rerun.
     return { modelFailure: eventFailure, error: new Error(
-      `${label} model invocation failed: ${redact(eventFailure)}`,
+      `${label} model invocation failed: ${redact(
+        consoleDetail === 'summary' ? summarizeFailureText(eventFailure) : eventFailure,
+      )}`,
     ) };
   } else if (!completionTermination && !stalled && exitCode !== 0) {
     return { error: new Error(`${label} exited with code ${exitCode}.`) };
@@ -362,10 +402,17 @@ async function runAttempt({
     try {
       event = JSON.parse(line);
     } catch {
-      process.stdout.write(`${redact(line)}\n`);
+      process.stdout.write(
+        consoleDetail === 'summary'
+          ? `[agent output: ${Buffer.byteLength(line)} bytes]\n`
+          : `${redact(line)}\n`,
+      );
       return;
     }
-    const formatted = formatConsoleLine(line, event);
+    const formatted =
+      consoleDetail === 'summary'
+        ? summarizeConsoleEvent(line, event)
+        : formatConsoleLine(line, event);
     if (formatted == null) return;
     process.stdout.write(`${redact(formatted)}\n`);
   }

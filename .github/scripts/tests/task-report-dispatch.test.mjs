@@ -521,7 +521,8 @@ test('a comment build round requests its queue from dispatch-reports', () => {
 test('workflow_run copies of dispatched reports skip once the task requested them', () => {
   const gate = readWorkflow('report-dispatch-gate.yml');
   // A question round requests its history from dispatch-reply-history.
-  assert.match(gate, /select\(\.name == "dispatch-reports" or \.name == "dispatch-reply-history"\)/);
+  // dispatch-reports and dispatch-reply-history; not wake-comment-queue.
+  assert.match(gate, /select\(\.name \| test\("\^dispatch-"\)\)/);
   assert.match(gate, /actions: read/);
   assert.match(gate, /inputs:\n\s+workflow:\n[\s\S]*?required: true/);
   for (const [name, job] of reportWorkflows) {

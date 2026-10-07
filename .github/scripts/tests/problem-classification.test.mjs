@@ -919,3 +919,17 @@ test('the delivered tasks\' problems are read beside the import endpoint in boun
     /Invalid task problem/,
   );
 });
+
+test('the public failure file and message are capped, and the Agent runs in summary mode', async (t) => {
+  let detail;
+  const long = `provider failed ${'TESTMANAGE-PROBLEM-TEXT '.repeat(100)}`;
+  const fixture = await modelFixture(t, ({ args }) => {
+    detail = args.consoleDetail;
+    throw new Error(long);
+  });
+  await assert.rejects(fixture.run(), (error) => error.message.length < 600);
+  assert.equal(detail, 'summary');
+  const failure = fixture.read('failure.json');
+  assert.ok(failure.error.length < 600, failure.error.length);
+  assert.match(failure.error, new RegExp(`… \\(${long.length} chars\\)$`));
+});

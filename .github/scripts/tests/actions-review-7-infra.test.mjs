@@ -30,10 +30,10 @@ test('a claimed framework problem is always reported, even if the claim job fail
   // run_id is written only once TestManage accepted the claim.
   assert.match(
     publish,
-    /if: \$\{\{ !cancelled\(\) && needs\.claim\.outputs\.run_id != '' \}\}/,
+    /if: \$\{\{ always\(\) && needs\.claim\.outputs\.run_id != '' \}\}/,
   );
   const input = publish
-    .split('name: framework-fix-input-')[0]
+    .split('name: framework-fix-claim-')[0]
     .split('- uses: actions/download-artifact@')
     .pop();
   assert.match(input, /continue-on-error: true/);
