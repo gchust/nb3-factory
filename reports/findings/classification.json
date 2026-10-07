@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "inputHash": "f728a07ca0133ad9717e9c82dba35ef3788c28ed8f6a40afb6e9096f357fb50b",
+  "inputHash": "b69e04b840956791cfc86db72fc86d8c6e663fea78d3eb18e2c11b97b093e7ab",
   "sources": [
     {
       "id": "460:36434284393:1:F2",
@@ -748,6 +748,11 @@
       "fingerprint": "bc408540ba11766cce0f0f986963b0adfe65a50684ec3971e6085ccffd9ea472"
     },
     {
+      "id": "650:37621552128:1:F7",
+      "report": "650:37621552128:1",
+      "fingerprint": "0a9a010f3284d257f3c472b64841ce73a5363b1ba3ca4f4a1cc831df5db78949"
+    },
+    {
       "id": "651:37621552259:1:F2",
       "report": "651:37621552259:1",
       "fingerprint": "74d522b22624262e5a3a165981862b6db51a4af4fe3c96792a879e99de3ee01a"
@@ -1395,15 +1400,22 @@
       "members": [
         "651:37621552259:1:F2"
       ]
+    },
+    {
+      "title": "后台重复任务的归属在两份 Skill 之间缺少交叉引用，易误选裸 setInterval",
+      "reason": "单条保留。650:F7 的证据显示，app-development 的 services-and-jobs.md 决策表把“按间隔重复、无人通过 UI 跟踪”的任务指向 ScheduleExecutor，而同一文档的 provider 生命周期又把 start() 描述为 listeners/pollers 的用途，两处未互相提示，Agent 因此直接实现裸 setInterval。其触发条件（实现周期性后台任务）、期望（明确区分进程内监听器与可调度重复任务）、实际行为（无交叉引用而误选）与修复方向（增补交叉引用）均与既有 Scheduler 能力缺口（缺立即执行入口）、Scheduler 管理员立即执行指引等发现不同，证据只支持这一条独立的文档缺口，故单独保留。",
+      "members": [
+        "650:37621552128:1:F7"
+      ]
     }
   ],
   "classifier": {
     "engine": "pi",
     "model": "deepseek-v4.1-flash",
     "version": "0.86.1",
-    "runId": "37638879933",
+    "runId": "37640971919",
     "attempt": 1,
     "controlSha": "30161f69b2f4dcf22ac44c25bfc816d7c790839f",
-    "completedAt": "2026-10-07T14:43:57.621Z"
+    "completedAt": "2026-10-07T14:59:03.622Z"
   }
 }
