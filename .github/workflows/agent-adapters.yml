@@ -57,8 +57,31 @@ jobs:
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 24.x
+      # The npm cache, per engine, in a directory of its own as the task
+      # workflow keeps the Agent Browser's (agent-browser-npm-v2-*). Keyed on
+      # the adapters, which pin the default versions, and on the overrides, so
+      # a version change starts a new entry. Saved only by dispatched runs,
+      # which run from the default branch: a pull request's cache would serve
+      # that pull request alone. No agent-browser is installed here.
+      - name: Restore the Agent CLI npm cache
+        id: cli_cache
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ runner.temp }}/agent-cli-npm
+          key: agent-cli-npm-v1-${{ runner.os }}-${{ matrix.engine }}-${{ hashFiles('.github/scripts/agents/**', '.github/scripts/agent-registry.mjs') }}-${{ vars.CODE_AGENT_VERSION }}-${{ vars.PI_VERSION }}-${{ vars.CODEBUDDY_VERSION }}-${{ vars.CLAUDE_CODE_VERSION }}-${{ vars.CODEX_VERSION }}-${{ vars.OPENCODE_VERSION }}
       - name: Install and verify the pinned CLI
+        timeout-minutes: 5
+        env:
+          npm_config_cache: ${{ runner.temp }}/agent-cli-npm
+          npm_config_prefer_offline: 'true'
         run: node .github/scripts/install-agent.mjs
+      - name: Save the Agent CLI npm cache
+        if: github.event_name != 'pull_request' && steps.cli_cache.outputs.cache-hit != 'true'
+        continue-on-error: true
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ runner.temp }}/agent-cli-npm
+          key: ${{ steps.cli_cache.outputs.cache-primary-key }}
       - name: Check headless CLI flags without calling a model
         run: node .github/scripts/agent-cli-smoke.mjs
       - name: Run real Codex in a non-Git QA workspace against a local Responses fixture

@@ -760,7 +760,9 @@ test('refresh runs the factory suite like factory-tests, and only when it may pu
   const command = (workflow) =>
     workflow
       .split('\n')
-      .filter((line) => line.includes('scripts/tests/*.test.mjs'))
+      .filter((line) =>
+        /^\s+run: .*scripts\/(tests\/\*\.test\.mjs|run-factory-tests\.sh)/.test(line),
+      )
       .map((line) => line.trim());
   const [step] = refresh
     .split('- name: Run factory regression tests before publication\n')
@@ -770,14 +772,19 @@ test('refresh runs the factory suite like factory-tests, and only when it may pu
   // PR checks already run the same suite in factory-tests.yml.
   assert.match(body, /if: github\.event_name != 'pull_request'\n/);
   assert.deepEqual(command(refresh), [
-    'run: env -u GITHUB_RUN_ID -u GITHUB_RUN_ATTEMPT node --test --test-concurrency=1 control/.github/scripts/tests/*.test.mjs',
+    'run: bash control/.github/scripts/run-factory-tests.sh control/.github/scripts/tests',
   ]);
   assert.deepEqual(command(read('factory-tests.yml')), [
-    'run: env -u GITHUB_RUN_ID -u GITHUB_RUN_ATTEMPT node --test --test-concurrency=1 .github/scripts/tests/*.test.mjs',
+    'run: bash .github/scripts/run-factory-tests.sh',
   ]);
+  // Before anything is generated: the suite needs only the control checkout,
+  // so a failure ends the run before the long generation steps.
+  const tests = refresh.indexOf(
+    '- name: Run factory regression tests before publication',
+  );
   assert.ok(
-    refresh.indexOf('- name: Run factory regression tests before publication') <
-      refresh.indexOf('- name: Package only the verified baseline'),
+    tests > refresh.indexOf('- uses: actions/setup-node@') &&
+      tests < refresh.indexOf('- name: Pin the actual published application generator'),
   );
 });
 

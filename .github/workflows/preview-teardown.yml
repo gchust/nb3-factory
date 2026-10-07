@@ -2,7 +2,7 @@ name: Reclaim Task Preview
 
 on:
   pull_request_target:
-    types: [closed]
+    types: [closed, reopened]
 
 permissions: {}
 
@@ -13,10 +13,14 @@ jobs:
     # from a fork. Nothing from the pull request is ever checked out — only the
     # default branch, whose scripts do the work.
     if: >-
+      github.event.action == 'closed' &&
       github.event.pull_request.head.repo.full_name == github.repository &&
       startsWith(github.event.pull_request.head.ref, 'agent/issue-')
     runs-on: ubuntu-24.04
-    timeout-minutes: 15
+    # Three removal attempts of up to ~3 minutes each (the host waits that
+    # long for the deploy lock), with 45 s of pauses, after the SSH check and
+    # sending the scripts.
+    timeout-minutes: 20
     # The deploy job's group and queue, so deploys and teardowns run in the
     # order they reach it. A deploy for this PR that holds the group first
     # finishes and is then removed here; one that gets it later sees the closed
@@ -65,6 +69,17 @@ jobs:
         run: |
           bash control/.github/scripts/preview-connect.sh
 
+      # As the deploy does, so a fix to preview-destroy.sh or preview-lib.sh
+      # applies to this teardown rather than to the one after the next deploy.
+      # A failure here leaves the scripts the last deploy sent, which still
+      # remove a preview; leaving it running would be worse.
+      - name: Send the host scripts
+        if: env.PREVIEW_ENABLED == 'true'
+        continue-on-error: true
+        timeout-minutes: 3
+        run: |
+          bash control/.github/scripts/preview-send-scripts.sh control/.github/scripts/preview
+
       - name: Remove the preview
         if: env.PREVIEW_ENABLED == 'true'
         env:
@@ -99,3 +114,42 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           bash control/.github/scripts/delete-preview-payloads.sh "$PR"
+
+  # A reopened build PR gets its preview back: its latest published build is
+  # deployed again through the ordinary replay path (Deploy Task Preview with
+  # that run ID), which re-checks everything itself — the run, its artifact,
+  # that the PR is open and still names that run. The teardown's closed mark
+  # does not stop it: the deploy starts after the mark was written. Holds no
+  # preview credentials and no concurrency group; the deploy queues in its own.
+  restore-preview:
+    if: >-
+      github.event.action == 'reopened' &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      startsWith(github.event.pull_request.head.ref, 'agent/issue-')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      # To dispatch deploy-preview.yml.
+      actions: write
+    steps:
+      - name: Redeploy the latest published build
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ github.event.pull_request.number }}
+          # Data only: matched against a fixed pattern, never executed.
+          PR_BODY: ${{ github.event.pull_request.body }}
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+        run: |
+          set -euo pipefail
+          # publish-pr.mjs writes this line for the task run that published the
+          # PR's current build; deploy-preview.mjs requires it to match.
+          prefix="- [GitHub Actions 运行记录](https://github.com/$GITHUB_REPOSITORY/actions/runs/"
+          run_id="$(printf '%s\n' "$PR_BODY" | grep -F -- "$prefix" | tail -n 1 \
+            | sed -nE 's#.*/actions/runs/([1-9][0-9]*)\).*#\1#p' || true)"
+          if [[ ! "$run_id" =~ ^[1-9][0-9]*$ ]]; then
+            echo "::notice::PR #$PR names no task run of this repository; no preview to restore."
+            exit 0
+          fi
+          gh workflow run deploy-preview.yml --repo "$GITHUB_REPOSITORY" --ref "$DEFAULT_BRANCH" \
+            --field "run_id=$run_id"
+          echo "Requested a preview of task run $run_id for reopened PR #$PR."

@@ -69,16 +69,26 @@ require_positive_integer() {
   [[ "$1" =~ ^[1-9][0-9]*$ ]] || die "expected a positive integer, got: $1"
 }
 
+# How long fetching a payload may take, every try and pause included. The
+# deploy runs inside the workflow's 45-minute Deploy step, and when that step
+# times out only the ssh client dies: this host would carry on. So every wait
+# here has its own limit, and together they stay inside the step (see the
+# budget in preview-deploy.sh). 600 s fetches the ~84 MB full payload at an
+# average of 140 KB/s; the host measured 815 KB/s.
+PREVIEW_FETCH_BUDGET="${PREVIEW_FETCH_BUDGET:-600}"
+
 # Puts a payload in place, fetching it when needed and checking its digest either
 # way. Usage: fetch_payload <path> <url> <sha256> <proxy>
 #
 # The bytes land in `<path>.part` and are moved into place only after the digest
 # matches, so a truncated or tampered download can never be deployed as if it
 # were complete. A failed attempt leaves that partial file behind, which is why
-# nothing else reads that name.
+# nothing else reads that name. CI gives every deploy a path of its own
+# (payload-pr-<n>-<run>-<attempt>.tar.gz), so two deploys of one pull request
+# never write the same partial file or replace each other's verified payload.
 fetch_payload() {
   local payload="$1" url="$2" expected="$3" proxy="$4"
-  local actual partial
+  local actual partial deadline remaining
   if [[ -f "$payload" ]]; then
     if [[ -z "$expected" ]]; then
       log "using the payload already on this host: $payload"
@@ -109,10 +119,14 @@ fetch_payload() {
   local -a curl_opts=(-fL -C - --connect-timeout 20 --speed-limit 51200 --speed-time 120)
   [[ -z "$proxy" ]] || curl_opts+=(-x "$proxy")
   log "fetching the payload from $url"
-  local try status
+  local try status=0
+  deadline=$(( SECONDS + PREVIEW_FETCH_BUDGET ))
   for try in 1 2 3 4; do
+    remaining=$(( deadline - SECONDS ))
+    (( remaining > 0 )) ||
+      die "could not fetch the payload within ${PREVIEW_FETCH_BUDGET}s (curl exit $status); set PREVIEW_FETCH_PROXY if this host needs a proxy for egress"
     status=0
-    curl "${curl_opts[@]}" -o "$partial" "$url" || status=$?
+    curl "${curl_opts[@]}" --max-time "$remaining" -o "$partial" "$url" || status=$?
     (( status == 0 )) && break
     # 33: the server refused the byte range, so the next try starts over.
     (( status == 33 )) && rm -f "$partial"
@@ -155,19 +169,23 @@ mark_closed() {
   date +%s%N >"$(closed_mark "$1")"
 }
 
-# prune_closed_marks <max-age-seconds>: drops marks older than that. A mark
-# only has to outlive a deploy that started before its teardown, and the deploy
-# step is limited to 30 minutes, so a day leaves a wide margin.
-prune_closed_marks() {
+# prune_marks <closed|started> <max-age-seconds>: drops marks older than that.
+# A mark only has to outlive a deploy that started before it was written, and
+# the deploy step is limited to 30 minutes, so a day leaves a wide margin.
+prune_marks() {
   local cutoff mark at
-  cutoff=$(( $(date +%s%N) - $1 * 1000000000 ))
-  for mark in "$PREVIEW_ROOT"/closed/pr-*; do
+  cutoff=$(( $(date +%s%N) - $2 * 1000000000 ))
+  for mark in "$PREVIEW_ROOT/$1"/pr-*; do
     [[ -f "$mark" ]] || continue
     at="$(tr -dc '0-9' <"$mark")"
     if [[ -z "$at" ]] || (( at < cutoff )); then
       rm -f "$mark"
     fi
   done
+}
+
+prune_closed_marks() {
+  prune_marks closed "$1"
 }
 
 # closed_since <pr> <start-ns>: succeeds when teardown ran at or after start.
@@ -180,9 +198,50 @@ closed_since() {
   (( at >= $2 ))
 }
 
-# Where one pull request's payload is staged while it is fetched and deployed.
-payload_path() {
-  printf '%s/payload-pr-%s.tar.gz' "$PREVIEW_TMP_DIR" "$1"
+# Each deploy also leaves the time it started (nanoseconds since the epoch), and
+# the newest one is kept. GitHub runs one deploy at a time, but a deploy whose
+# CI step was cut off keeps running here, and a newer deploy of the same pull
+# request can start meanwhile. Whichever of the two takes the lock second must
+# not replace a newer build with an older one, so a deploy that gets the lock
+# after a newer one started refuses, as it does after a teardown.
+started_mark() {
+  printf '%s/started/pr-%s' "$PREVIEW_ROOT" "$1"
+}
+
+# mark_started <pr> <start-ns>: records the start unless a newer one is there.
+# Written before the fetch, outside the deploy lock (which an earlier deploy
+# may hold for minutes), so the read-compare-write takes a small lock of its own.
+mark_started() {
+  local mark at=""
+  mkdir -p "$PREVIEW_ROOT/started"
+  mark="$(started_mark "$1")"
+  exec 8>"$PREVIEW_ROOT/started.lock"
+  flock -w 30 8 || die "could not record the start of this deploy for PR #$1"
+  [[ ! -f "$mark" ]] || at="$(tr -dc '0-9' <"$mark")"
+  if [[ -z "$at" ]] || (( at < $2 )); then
+    printf '%s\n' "$2" >"$mark.tmp"
+    mv -f "$mark.tmp" "$mark"
+  fi
+  exec 8>&-
+}
+
+# superseded_since <pr> <start-ns>: succeeds when another deploy started later.
+superseded_since() {
+  local mark at
+  mark="$(started_mark "$1")"
+  [[ -f "$mark" ]] || return 1
+  at="$(tr -dc '0-9' <"$mark")"
+  [[ -n "$at" ]] || return 1
+  (( at > $2 ))
+}
+
+# Removes every payload one pull request staged here, whole or partial: the
+# per-deploy names CI gives (payload-pr-<n>-<run>-<attempt>.tar.gz) and the one
+# shared name earlier versions of the workflow used (payload-pr-<n>.tar.gz).
+remove_payloads() {
+  local tmp="$PREVIEW_TMP_DIR"
+  rm -f "$tmp/payload-pr-$1.tar.gz" "$tmp/payload-pr-$1.tar.gz.part" \
+    "$tmp/payload-pr-$1-"*.tar.gz "$tmp/payload-pr-$1-"*.tar.gz.part
 }
 
 preview_host() {
@@ -271,19 +330,21 @@ load_instance_env() {
 wait_for_preview() {
   local host="$1" timeout="${2:-90}"
   local url="http://127.0.0.1:${PREVIEW_TRAEFIK_PORT}${PREVIEW_BASE_PATH}/"
-  local spent=0 code
+  local deadline=$((SECONDS + timeout)) remaining code
 
-  while ((spent < timeout)); do
+  # Timed by the clock, not by counting tries: an application that accepts
+  # the connection and answers slowly makes each probe take up to its own
+  # limit, and counting a second per try let "90 s" run to several minutes.
+  while true; do
+    remaining=$((deadline - SECONDS))
+    ((remaining > 0)) || return 1
     code="$(curl --silent --output /dev/null --write-out '%{http_code}' \
-      --header "Host: ${host}" --max-time 5 "$url" || true)"
+      --header "Host: ${host}" --max-time "$((remaining < 5 ? remaining : 5))" "$url" || true)"
     if [[ "$code" =~ ^[23] ]]; then
       return 0
     fi
     sleep 1
-    spent=$((spent + 1))
   done
-
-  return 1
 }
 
 # Lists preview instances, newest first, by the deployedAt recorded in each

@@ -205,7 +205,11 @@ jobs:
       - name: Install browser fonts
         timeout-minutes: 10
         run: bash control/.github/scripts/install-browser-fonts.sh
+      # Several CLI commands (90 s each at most in source-config-check.mjs), a
+      # startup wait and a real browser login (2 minutes at most). The limit
+      # stops a hang outside those bounds well before the 90-minute job limit.
       - name: Verify first configuration, idempotence and real browser login
+        timeout-minutes: 15
         run: node control/.github/scripts/source-config-check.mjs "$RUNNER_TEMP/source-smoke/crm" "$RUNNER_TEMP/source-evidence" "$SOURCE_SHA"
       - name: Export only verified package bytes and clean application source
         run: |
@@ -298,7 +302,10 @@ jobs:
       - name: Install browser fonts
         timeout-minutes: 10
         run: bash control/.github/scripts/install-browser-fonts.sh
+      # The factory checks, `pnpm build`, a clean database and the browser
+      # login: 96-162 s in refresh-template, bounded the same way there.
       - name: Verify the restored source as a normal factory application
+        timeout-minutes: 20
         run: |
           node control/.github/scripts/create-runtime-config.mjs --output "$RUNNER_TEMP/portable.yml" --database "$RUNNER_TEMP/portable-db/database.sqlite"
           set -o pipefail
@@ -334,11 +341,14 @@ jobs:
       FACTORY_CONTROL_SHA: ${{ needs.source-baseline.outputs.control_sha }}
       TRACKING_ISSUE: '210'
     steps:
+      # Only the control commit (the default depth of one): publishing reads
+      # its tree and makes it the parent of the baseline commit; no history is
+      # walked. The full history is ~217 MB; at worst the push sends one
+      # application tree when the control commit is no longer a branch head.
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ needs.source-baseline.outputs.control_sha }}
           path: control
-          fetch-depth: 0
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 24.x

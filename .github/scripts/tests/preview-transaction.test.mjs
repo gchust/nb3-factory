@@ -38,8 +38,9 @@ if [[ '${action}' == rollback ]]; then
   test "$(cat "$dir/data/photo.png")" = old-upload
 else
   test "$(cat "$dir/data/database.sqlite")" = new-db
-  test "$(cat "$backup/instance/data/database.sqlite")" = old-db
-  test "$(cat "$backup/instance/data/photo.png")" = old-upload
+  # The snapshot served this deploy's rollback only; keeping it leaked ~340 MB
+  # per redeploy.
+  ! test -e "$backup"
 fi
 test -f "$PREVIEW_ROOT/containers/$name"
 ! test -f "$PREVIEW_ROOT/containers/$name-previous"

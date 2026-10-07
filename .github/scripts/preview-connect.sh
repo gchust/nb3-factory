@@ -15,6 +15,24 @@ mkdir -p ~/.ssh
 chmod 700 ~/.ssh
 printf '%s\n' "$PREVIEW_SSH_KEY" > ~/.ssh/preview_key
 chmod 600 ~/.ssh/preview_key
+# One connection for the whole job. Every later ssh and scp to the host rides
+# the master that the check below opens, instead of a new TCP and key exchange
+# over Tailscale each (a deploy makes six or more). The host key is still
+# checked strictly. ServerAlive applies to the master, so a silent path still
+# drops within a minute, and the next command then opens a new master.
+cat >> ~/.ssh/config <<CONFIG
+Host $PREVIEW_HOST
+  User $PREVIEW_USER
+  IdentityFile ~/.ssh/preview_key
+  IdentitiesOnly yes
+  StrictHostKeyChecking yes
+  ServerAliveInterval 15
+  ServerAliveCountMax 4
+  ControlMaster auto
+  ControlPath ~/.ssh/cm-%C
+  ControlPersist 20m
+CONFIG
+chmod 600 ~/.ssh/config
 scan_file="$(mktemp)"
 trap 'rm -f "$scan_file"' EXIT
 for attempt in 1 2 3 4 5 6; do

@@ -33,6 +33,29 @@ for protected_path in .github .npmrc; do
   fi
 done
 
+# Every refresh writes a new `generatedAt`, and `controlSha` names the develop
+# commit it was generated from, which a factory-only commit to develop moves.
+# A candidate that differs from develop in nothing else is the baseline develop
+# already has: publishing it would add an empty refresh commit and a backup
+# branch, and move the base of every task that starts from develop meanwhile.
+if git diff --quiet "$expected_sha" "$candidate" -- . ':(exclude)factory-template.json' &&
+  node -e '
+    const { execFileSync } = require("node:child_process");
+    const read = (rev) => {
+      const { generatedAt, controlSha, ...rest } = JSON.parse(
+        execFileSync("git", ["show", `${rev}:factory-template.json`], { encoding: "utf8" }),
+      );
+      return JSON.stringify(rest);
+    };
+    process.exit(read(process.argv[1]) === read(process.argv[2]) ? 0 : 1);
+  ' "$expected_sha" "$candidate" 2>/dev/null; then
+  echo "The refreshed template matches develop apart from generatedAt and controlSha; nothing to publish."
+  if [[ -n "${GITHUB_STEP_SUMMARY:-}" ]]; then
+    echo "Template unchanged: develop \`${expected_sha}\` already carries this baseline; nothing was published." >>"$GITHUB_STEP_SUMMARY"
+  fi
+  exit 0
+fi
+
 # The bundle carries a root commit so it holds nothing but the generated tree.
 # Publish that tree as a new commit on top of the develop it was generated
 # from: replacing develop with the root commit discarded its history and left

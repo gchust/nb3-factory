@@ -83,13 +83,16 @@ jobs:
       needs.dispatch-gate.outputs.covered != 'true' &&
       (github.event_name == 'workflow_dispatch' || contains(fromJSON('["success","failure","timed_out","cancelled"]'), github.event.workflow_run.conclusion))
     runs-on: ubuntu-24.04
-    # The bounded steps alone take up to 45 minutes: Publish 10, Deploy 30 and
-    # the public check's 5. Checkout, the ~84 MB download, the tailnet,
-    # the deploy key and making room come on top, so 45 minutes could cut a
-    # slow deploy off before its own limits and skip the PR notice. The source
-    # wait runs in wait-for-source, outside the lock, so this holds the lock
-    # only for deploying.
-    timeout-minutes: 60
+    # The bounded steps alone take up to 85 minutes: making room 22, Publish
+    # 10, Deploy 45, the public check's 5 and deleting superseded payloads 3.
+    # Making room and Deploy are that long only when the host's deploy lock
+    # is held, by gc or by a deploy whose CI step was cut off: each waits up
+    # to 16 minutes for it, at least the longest a deploy holds it.
+    # Checkout, the ~84 MB download, the tailnet and the deploy key come on
+    # top, so a shorter limit could cut a slow deploy off before its own limits
+    # and skip the PR notice. The source wait runs in wait-for-source, outside
+    # the lock, so this holds the lock only for deploying.
+    timeout-minutes: 100
     # Serialized with teardown-preview in preview-teardown.yml. At job level, so
     # a copy the dispatch gate covers or skips never queues behind a deploy.
     concurrency:
@@ -142,7 +145,7 @@ jobs:
             --source "$RUNNER_TEMP/preview-source.json"
 
       # Before the download: without credentials nothing is deployed, so the
-      # build (~84 MB packed, ~744 MB unpacked) is not fetched or unpacked either.
+      # build (~84 MB packed, ~744 MB unpacked) is not fetched either.
       - name: Skip without preview credentials
         if: steps.source.outputs.ready == 'true' && env.PREVIEW_ENABLED != 'true'
         run: |
@@ -160,13 +163,11 @@ jobs:
           github-token: ${{ github.token }}
           path: ${{ runner.temp }}/dist-artifact
 
-      - name: Unpack the deployable build
-        if: steps.source.outputs.ready == 'true' && env.PREVIEW_ENABLED == 'true'
-        run: |
-          mkdir -p "$RUNNER_TEMP/build"
-          tar -xzf "$RUNNER_TEMP/dist-artifact/dist.tar.gz" -C "$RUNNER_TEMP/build"
-          test -f "$RUNNER_TEMP/build/dist/package.json"
-
+      # The artifact is downloaded first because it carries the task metadata
+      # that ties the build to its pull request. It is not unpacked: prepare
+      # reads the dependency identity from the archive itself, and the slim
+      # payload is unpacked (without the ~740 MB dependency tree) only after
+      # the pull request is known to be open and the host to have room.
       - name: Resolve the pull request and the dependency identity
         id: prepare
         if: steps.source.outputs.ready == 'true' && env.PREVIEW_ENABLED == 'true'
@@ -178,7 +179,7 @@ jobs:
             --run-id "$SOURCE_RUN_ID" \
             --source "$RUNNER_TEMP/preview-source.json" \
             --artifacts "$RUNNER_TEMP/dist-artifact" \
-            --build "$RUNNER_TEMP/build" \
+            --archive "$RUNNER_TEMP/dist-artifact/dist.tar.gz" \
             --domain "$PREVIEW_DOMAIN" \
             --output "$RUNNER_TEMP/preview"
 
@@ -203,20 +204,7 @@ jobs:
         id: scripts
         if: steps.prepare.outputs.ready == 'true' && env.PREVIEW_ENABLED == 'true'
         run: |
-          set -euo pipefail
-          ssh_opts=(-i ~/.ssh/preview_key -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o ConnectTimeout=20 -o ServerAliveInterval=15 -o ServerAliveCountMax=4)
-          remote="$PREVIEW_USER@$PREVIEW_HOST"
-
-          # The host always runs the scripts from this repository, so a fix is
-          # deployed by pushing, never by editing files on the machine. These are
-          # kilobytes; the payload is what is too big to come this way.
-          tar -czf "$RUNNER_TEMP/preview-scripts.tar.gz" -C control/.github/scripts/preview .
-          ssh "${ssh_opts[@]}" "$remote" 'mkdir -p /srv/nb3-preview/scripts /srv/nb3-preview/tmp'
-          scp -q -i ~/.ssh/preview_key -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes \
-            -o ConnectTimeout=20 -o ServerAliveInterval=15 -o ServerAliveCountMax=4 \
-            "$RUNNER_TEMP/preview-scripts.tar.gz" "$remote:/srv/nb3-preview/tmp/scripts.tar.gz"
-          ssh "${ssh_opts[@]}" "$remote" \
-            'tar -xzf /srv/nb3-preview/tmp/scripts.tar.gz -C /srv/nb3-preview/scripts && chmod +x /srv/nb3-preview/scripts/*.sh'
+          bash control/.github/scripts/preview-send-scripts.sh control/.github/scripts/preview
 
       # Before anything is packaged or uploaded. The host refuses a new preview
       # beyond its instance limit, and finding that out only after a payload
@@ -225,9 +213,14 @@ jobs:
       # up previews of closed PRs, then of failed builds, oldest first; when only
       # successful builds of open PRs remain, this deploy is skipped and the PR
       # is told why, rather than the run failing.
+      # The host scripts bound their own waits for the deploy lock (16 minutes
+      # for the listing, at least the longest a deploy holds it; 3 for an
+      # eviction, which fails the step), because a step that times out kills
+      # only the ssh client.
       - name: Make room on the preview host
         id: capacity
         if: steps.scripts.outcome == 'success'
+        timeout-minutes: 22
         env:
           PR: ${{ steps.prepare.outputs.pr }}
           GITHUB_TOKEN: ${{ github.token }}
@@ -269,6 +262,8 @@ jobs:
         env:
           PR: ${{ steps.prepare.outputs.pr }}
           DEPS_KEY: ${{ steps.prepare.outputs.deps_key }}
+          PROBE: ${{ steps.prepare.outputs.probe }}
+          SLIM: ${{ steps.prepare.outputs.slim }}
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
@@ -278,13 +273,22 @@ jobs:
           # Unpacked, the dependency tree is ~740 MB of a ~744 MB build (packed,
           # ~82 of ~84 MB) and changes only with the dependency set, so ask the
           # host before shipping it: a cache hit sends ~2 MB.
-          present="$(ssh "${ssh_opts[@]}" "$remote" "${{ steps.prepare.outputs.probe }}")"
-          if [[ "$present" == present ]]; then
+          present="$(ssh -n "${ssh_opts[@]}" "$remote" "$PROBE")"
+          if [[ "$present" == present && "$SLIM" == true ]]; then
             echo "Dependency cache hit; sending the application tree only."
+            # Unpacked without the dependency tree, so only the few megabytes
+            # of the application are written. Anchored, with and without a
+            # leading ./, the two ways an archive can name the member.
+            mkdir -p "$RUNNER_TEMP/build"
+            tar -xzf "$RUNNER_TEMP/dist-artifact/dist.tar.gz" -C "$RUNNER_TEMP/build" \
+              --warning=no-unknown-keyword --anchored \
+              --exclude=dist/node_modules --exclude=./dist/node_modules
+            node control/.github/scripts/deploy-preview.mjs slim \
+              --run-id "$SOURCE_RUN_ID" --build "$RUNNER_TEMP/build" --output "$RUNNER_TEMP/preview"
             tar -czf "$RUNNER_TEMP/payload.tar.gz" \
               -C "$RUNNER_TEMP/build" -T "$RUNNER_TEMP/preview/slim-entries.txt"
           else
-            echo "Dependency cache miss; sending the full build."
+            echo "Dependency cache miss, or a build the slim payload cannot carry; sending the full build."
             cp "$RUNNER_TEMP/dist-artifact/dist.tar.gz" "$RUNNER_TEMP/payload.tar.gz"
           fi
           ls -lh "$RUNNER_TEMP/payload.tar.gz"
@@ -323,9 +327,11 @@ jobs:
         # The host fetches the packed payload, ~84 MB with dependencies or ~2 MB
         # on a dependency cache hit (factory-dist and factory-previews assets,
         # 2026-10-06), in about two minutes at 815 KB/s. A transfer slower than
-        # 50 KB/s for two minutes counts as stalled and resumes; one that stays
-        # just above that floor could still take ~28 minutes, hence the limit.
-        timeout-minutes: 30
+        # 50 KB/s for two minutes counts as stalled and resumes. Ending this
+        # step only kills the ssh client, so preview-deploy.sh bounds each of
+        # its own waits — fetch 10 minutes, deploy lock 16, migrations 8, start
+        # and readiness 3.5 — to finish, and release the lock, inside it.
+        timeout-minutes: 45
         env:
           PR: ${{ steps.prepare.outputs.pr }}
           SHA: ${{ steps.prepare.outputs.sha }}
@@ -333,23 +339,28 @@ jobs:
           # Recorded on the host, so a full host can tell a failed build's
           # preview, which may give way, from a successful one, which never does.
           BUILD_STATUS: ${{ steps.prepare.outputs.build_status }}
+          PAYLOAD_ASSET: ${{ steps.publish.outputs.payload_asset }}
+          PAYLOAD_SHA256: ${{ steps.publish.outputs.payload_sha256 }}
         run: |
           set -euo pipefail
           # Built from the asset name this run published, so the URL the host
           # fetches and the asset that was just uploaded cannot drift apart.
-          asset_url="https://github.com/$GITHUB_REPOSITORY/releases/download/$PREVIEW_RELEASE/${{ steps.publish.outputs.payload_asset }}"
+          asset_url="https://github.com/$GITHUB_REPOSITORY/releases/download/$PREVIEW_RELEASE/$PAYLOAD_ASSET"
           redeploy=""
           if [[ "${PREVIEW_FORCE:-false}" == 'true' ]]; then redeploy="--redeploy"; fi
-          ssh -i ~/.ssh/preview_key -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o ConnectTimeout=20 -o ServerAliveInterval=15 -o ServerAliveCountMax=4 \
+          # A staging path of this deploy's own: an earlier deploy of the same
+          # pull request whose step was cut off may still be fetching on the host.
+          payload="/srv/nb3-preview/tmp/payload-pr-$PR-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT.tar.gz"
+          ssh -n -i ~/.ssh/preview_key -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o ConnectTimeout=20 -o ServerAliveInterval=15 -o ServerAliveCountMax=4 \
             "$PREVIEW_USER@$PREVIEW_HOST" \
             "bash /srv/nb3-preview/scripts/preview-deploy.sh \
                --pr '$PR' \
                --sha '$SHA' \
                --deps-key '$DEPS_KEY' \
                --domain '$PREVIEW_DOMAIN' \
-               --payload '/srv/nb3-preview/tmp/payload-pr-$PR.tar.gz' \
+               --payload '$payload' \
                --payload-url '$asset_url' \
-               --payload-sha256 '${{ steps.publish.outputs.payload_sha256 }}' \
+               --payload-sha256 '$PAYLOAD_SHA256' \
                --fetch-proxy '$PREVIEW_FETCH_PROXY' \
                --build-status '$BUILD_STATUS' \
                $redeploy"
@@ -367,6 +378,23 @@ jobs:
           node control/.github/scripts/preview-public-check.mjs
           test -s "$RUNNER_TEMP/preview-public.html"
 
+      # Once the host has committed this deploy, the pull request's earlier
+      # payloads serve nothing: the host fetched this one, and a deploy of an
+      # older payload that is somehow still running there refuses anyway (a
+      # newer deploy started after it). Deploys are serialized by the group
+      # above, so no other run of this workflow is about to fetch one. The
+      # current asset stays until the pull request closes.
+      - name: Delete this pull request's superseded payloads
+        if: ${{ !cancelled() && steps.deploy.outcome == 'success' }}
+        continue-on-error: true
+        timeout-minutes: 3
+        env:
+          PR: ${{ steps.prepare.outputs.pr }}
+          PAYLOAD_ASSET: ${{ steps.publish.outputs.payload_asset }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          bash control/.github/scripts/delete-preview-payloads.sh "$PR" --keep "$PAYLOAD_ASSET"
+
       # After a failed deploy, not after a manual cancel: a cancelled run has no
       # outcome worth telling the pull request about.
       - name: Report the preview on the pull request
@@ -374,8 +402,9 @@ jobs:
         continue-on-error: true
         env:
           GITHUB_TOKEN: ${{ github.token }}
+          STATUS: ${{ steps.public.outcome == 'success' && 'success' || steps.capacity.outcome == 'success' && steps.capacity.outputs.room == 'false' && 'skipped' || 'failed' }}
         run: |
           node control/.github/scripts/deploy-preview.mjs publish \
             --run-id "$SOURCE_RUN_ID" \
             --output "$RUNNER_TEMP/preview" \
-            --status "${{ steps.public.outcome == 'success' && 'success' || steps.capacity.outcome == 'success' && steps.capacity.outputs.room == 'false' && 'skipped' || 'failed' }}"
+            --status "$STATUS"

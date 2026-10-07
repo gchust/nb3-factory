@@ -85,6 +85,7 @@ function indexPage(items) {
 }
 
 const FINDINGS_INDEX = 'reports/findings/index.html';
+// Written compact: only programs read it, and every report rewrites it.
 const FINDINGS_INPUT = 'reports/findings/input.json';
 const FINDINGS_CLASSIFICATION = 'reports/findings/classification.json';
 const FINDINGS_BASELINE = 'reports/findings/baseline.json';
@@ -270,7 +271,7 @@ async function findingsIndexAssets(client, registry, sha, current) {
           baseline: scope.baseline,
         }),
       ],
-      [FINDINGS_INPUT, JSON.stringify(input, null, 2)],
+      [FINDINGS_INPUT, JSON.stringify(input)],
       cacheFile(cache),
       ...await dailyIndexAssets(client, sha, reports),
     ],
@@ -327,7 +328,7 @@ export async function archiveFindingsClassification(client, classification) {
     });
     const files = [
       [FINDINGS_INDEX, html],
-      [FINDINGS_INPUT, JSON.stringify(snapshot.input, null, 2)],
+      [FINDINGS_INPUT, JSON.stringify(snapshot.input)],
       [FINDINGS_CLASSIFICATION, JSON.stringify(classification, null, 2)],
       cacheFile(snapshot.cache),
       ...await dailyIndexAssets(client, snapshot.sha, snapshot.reports),
@@ -374,7 +375,7 @@ export async function resetFindingsIndex(
         FINDINGS_INDEX,
         await renderFindingsIndex(reports, { baseline: scope.baseline }),
       ],
-      [FINDINGS_INPUT, JSON.stringify(input, null, 2)],
+      [FINDINGS_INPUT, JSON.stringify(input)],
       [FINDINGS_BASELINE, JSON.stringify(baseline, null, 2)],
       cacheFile(cache),
       ...await dailyIndexAssets(client, sha, reports),
@@ -400,13 +401,55 @@ export async function resetFindingsIndex(
   }
 }
 
+// The rendered report inlines every screenshot so a downloaded copy works
+// offline, which made screenshots about four fifths of the published site. The
+// Pages copy instead carries each one as a file in media/ beside the report,
+// named by the SHA-256 of its bytes: the base64 third is gone, a screenshot
+// repeated in one report is stored once, and the report's CSP admits 'self'
+// images. Reports archived before this keep their inline bytes.
+const INLINE_IMAGE = /src="data:image\/(png|webp|jpeg);base64,([A-Za-z0-9+/]+={0,2})"/g;
+export function externalizeImages(html) {
+  const media = new Map();
+  let page = html.replace(INLINE_IMAGE, (_, type, data) => {
+    const bytes = Buffer.from(data, 'base64');
+    const name = `${createHash('sha256').update(bytes).digest('hex')}.${type === 'jpeg' ? 'jpg' : type}`;
+    media.set(name, data);
+    return `src="media/${name}"`;
+  });
+  if (media.size) {
+    const csp = /(<meta http-equiv="Content-Security-Policy" content="[^"]*?\bimg-src data:)(;)/;
+    // A template whose CSP no longer reads `img-src data:;` keeps its images
+    // inline: a larger page, never a failed archive or a page without images.
+    if (!csp.test(page)) {
+      console.warn('::warning::Report CSP has no plain img-src data: directive; screenshots stay inline on Pages.');
+      return { html, media: new Map() };
+    }
+    page = page.replace(csp, '$1 &#39;self&#39;$2')
+      .replace('截图已经内嵌，可离线查看。', '截图与报告一同发布。');
+  }
+  return { html: page, media };
+}
+
 // Keep the whole site in one dedicated branch. Optimistic ref updates preserve
 // other Issues and allow replays; only the latest source can move an Issue alias.
-export async function archiveReport(client,report,html) {
+// Other writers (the evaluation registry, deliver-evaluation, classification)
+// commit to gh-pages outside this workflow's lock, so a lost ref race is
+// retried from the new head, after a growing, jittered pause. Blobs are
+// content-addressed, so each is uploaded once across attempts.
+export const ARCHIVE_ATTEMPTS=5;
+export const archiveBackoffMs=(attempt,random=Math.random)=>1000*2**attempt+Math.floor(random()*1000);
+export async function archiveReport(client,report,html,{pause=sleep}={}) {
   const next=reportManifest(report);
   if(client.repository!==next.repository || !html.includes(`content="${escape(next.reportId)}"`))
     throw new Error('Report content/source mismatch');
-  for(let attempt=0;attempt<3;attempt++) {
+  const blobs=new Map();
+  const blob=async (content,encoding)=>{
+    const key=`${encoding}:${content}`;
+    if(!blobs.has(key)) blobs.set(key,(await client.request('POST','/git/blobs',{body:{content,encoding},contentAddressed:true})).sha);
+    return blobs.get(key);
+  };
+  for(let attempt=0;attempt<ARCHIVE_ATTEMPTS;attempt++) {
+    if(attempt) await pause(archiveBackoffMs(attempt-1));
     const ref=await client.getRef(BRANCH,true);
     const sha=ref?.object?.sha;
     const commit=sha ? await client.request('GET',`/git/commits/${sha}`) : null;
@@ -431,10 +474,23 @@ export async function archiveReport(client,report,html) {
         if (!/^[a-f0-9]{40}$/.test(file?.sha ?? '')) throw new Error('Cannot retain previous rubric snapshot');
         retained.push({path:`${dir}rubric-${reviewRubric(previous)}/${name}`,mode:'100644',type:'blob',sha:file.sha});
       }
+      // Its screenshot files move with it, so its relative media/ links still resolve.
+      const media = await client.request('GET', `/contents/${dir}media`, {query:{ref:sha},allow404:true});
+      for (const file of Array.isArray(media) ? media : []) {
+        if (file?.type !== 'file' || !/^[a-f0-9]{40}$/.test(file.sha ?? '')) throw new Error('Cannot retain previous rubric snapshot');
+        retained.push({path:`${dir}rubric-${reviewRubric(previous)}/media/${file.name}`,mode:'100644',type:'blob',sha:file.sha});
+      }
     }
+    const binary=[];
     if(!preserve) {
-      files.push([next.path,html],[`${dir}report.json`,JSON.stringify(report,null,2)],
+      const page=externalizeImages(html);
+      files.push([next.path,page.html],[`${dir}report.json`,JSON.stringify(report,null,2)],
         [`${dir}manifest.json`,JSON.stringify(next)]);
+      for(const [name,data] of page.media) binary.push([`${dir}media/${name}`,data]);
+      // A replay replaces the report: screenshots only the old copy used go with it.
+      const old = previous ? await client.request('GET', `/contents/${dir}media`, {query:{ref:sha},allow404:true}) : null;
+      for (const file of Array.isArray(old) ? old : [])
+        if (!page.media.has(file?.name)) retained.push({path:`${dir}media/${file.name}`,mode:'100644',type:'blob',sha:null});
     }
     if(isLatest) {
       registry.issues[String(next.issue)]=manifest;
@@ -453,10 +509,8 @@ export async function archiveReport(client,report,html) {
     catch(error) { findingsIndex=`skipped: ${error.message}`; }
     if(!sha) files.push(['index.html',redirectPage(`./${ROOT}/`)],['.nojekyll','']);
     const tree=[...retained];
-    for(const [file,content] of files) {
-      const blob=await client.request('POST','/git/blobs',{body:{content,encoding:'utf-8'},contentAddressed:true});
-      tree.push({path:file,mode:'100644',type:'blob',sha:blob.sha});
-    }
+    for(const [file,content] of binary) tree.push({path:file,mode:'100644',type:'blob',sha:await blob(content,'base64')});
+    for(const [file,content] of files) tree.push({path:file,mode:'100644',type:'blob',sha:await blob(content,'utf-8')});
     const newTree=await client.request('POST','/git/trees',{body:{...(commit?{base_tree:commit.tree.sha}:{}),tree},contentAddressed:true});
     if(commit?.tree.sha===newTree.sha) return {manifest,isLatest,preserved:Boolean(preserve),commitSha:sha,findingsIndex,findingsNeedsClassification};
     const created=await client.request('POST','/git/commits',{body:{message:`report: issue ${next.issue}, run ${next.runId}, attempt ${next.attempt}`,tree:newTree.sha,parents:sha?[sha]:[]},contentAddressed:true});
@@ -465,7 +519,7 @@ export async function archiveReport(client,report,html) {
       else await client.createRef(BRANCH,created.sha);
       return {manifest,isLatest,preserved:Boolean(preserve),commitSha:created.sha,findingsIndex,findingsNeedsClassification};
     } catch(error) {
-      if(attempt===2 || !/409|422/.test(error.message)) throw error;
+      if(attempt===ARCHIVE_ATTEMPTS-1 || !/409|422/.test(error.message)) throw error;
     }
   }
   throw new Error('Could not archive report');
@@ -504,7 +558,19 @@ export async function notifyReport(client,publication,base,{verify=verifyPage}={
   const url=pagesUrl(base,m.path);
   await verify(url,m.reportId);
   const registry=await getJson(client,`${ROOT}/manifest.json`,BRANCH);
-  if(registry?.issues?.[String(m.issue)]?.reportId!==m.reportId) return {url,updated:false};
+  const latest=registry?.issues?.[String(m.issue)];
+  // A newer report of this Issue is archived. It owns the comment only once it
+  // is actually served: its deploy may have failed, and then its notify never
+  // runs. So this report posts unless the newer one is already live; if that
+  // one deploys later, its own notify replaces the comment (receipts order them).
+  if(latest?.reportId!==m.reportId) {
+    let live=true;
+    if(validManifest(latest)&&latest.repository===m.repository&&compareReports(latest,m)>0) {
+      try { await verify(pagesUrl(base,latest.path),latest.reportId,{delays:[]}); }
+      catch { live=false; /* Not served: keep this report's comment current. */ }
+    }
+    if(live) return {url,updated:false};
+  }
   const link=pagesUrl(base,`${ROOT}/issues/${m.issue}/`);
   const body=[marker(m.issue),`<!-- factory-report-source:${m.start}:${m.runId}:${m.attempt} -->`,'## 搭建交付报告','',
     `**${outcomeLabels[m.status]||'未完成'}**`,markdownText(m.summary),

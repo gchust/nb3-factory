@@ -98,7 +98,7 @@ test('the duplicate is recognized while holding the deploy lock', () => {
     path.resolve(import.meta.dirname, '..', 'preview', 'preview-deploy.sh'),
     'utf8',
   );
-  const lock = script.indexOf('flock 9');
+  const lock = script.indexOf('flock -w "$PREVIEW_LOCK_WAIT" 9');
   const check = script.indexOf(
     'instance_serves "$dir" "$name" "$sha" "$deps_key"',
   );

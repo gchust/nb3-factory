@@ -70,11 +70,11 @@ jobs:
         with:
           node-version: 24.x
       - name: Run control-plane regression tests
-        # Browser acceptance invokes process cleanup that can kill the listener
-        # fixture in stale-app-port tests. These suites share the process table.
-        # Fixtures own their simulated Run identities, including Handoff and
-        # Re-run tests; the CI attempt must not become the task's attempt.
-        run: env -u GITHUB_RUN_ID -u GITHUB_RUN_ATTEMPT node --test --test-concurrency=1 .github/scripts/tests/*.test.mjs
+        # Concurrently, except the suites that touch the process table (browser
+        # acceptance stops application processes, stale-app-port kills port
+        # listeners) or assert short wall-clock timeouts, which run alone
+        # afterwards; see the script.
+        run: bash .github/scripts/run-factory-tests.sh
       - name: Verify deterministic browser fixtures
         run: python3 .github/scripts/tests/browser-fixtures.test.py
       - name: Run preview DNS regression tests
@@ -126,13 +126,31 @@ jobs:
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 24.x
+      # The build task's cache: same key and path, which the task's agent job
+      # saves from develop, so pull requests can restore it. Saved here only
+      # outside pull requests, whose caches no other branch could restore.
+      - name: Restore the Agent Browser npm cache
+        id: browser_cache
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ runner.temp }}/agent-browser-npm
+          key: agent-browser-npm-v2-${{ runner.os }}-${{ vars.AGENT_BROWSER_VERSION || '0.36.0' }}
       # The same version, override included, that build tasks install.
       - name: Install the pinned QA browser tool
+        timeout-minutes: 5
         env:
           AGENT_BROWSER_VERSION: ${{ vars.AGENT_BROWSER_VERSION || '0.36.0' }}
+          npm_config_cache: ${{ runner.temp }}/agent-browser-npm
         run: |
-          npm install --global "agent-browser@${AGENT_BROWSER_VERSION}"
+          npm install --global --prefer-offline "agent-browser@${AGENT_BROWSER_VERSION}"
           agent-browser --version
+      - name: Save the Agent Browser npm cache
+        if: github.event_name != 'pull_request' && steps.browser_cache.outputs.cache-hit != 'true'
+        continue-on-error: true
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ runner.temp }}/agent-browser-npm
+          key: ${{ steps.browser_cache.outputs.cache-primary-key }}
       - name: Exercise the real guarded browser without an application or model
         run: |
           export AGENT_BROWSER_EXECUTABLE_PATH="$(command -v google-chrome || command -v chromium)"
