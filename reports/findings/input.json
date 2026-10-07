@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "inputHash": "20243397e4f23480ed77a15064225badf775767d8e70b09dc5c9ffa523aa46d1",
+  "inputHash": "4ba138ac5a047bf148a82c9f292f9ebbc88cdf8857f7d48ca78f0b248c767fb5",
   "findings": [
     {
       "id": "460:36434284393:1:F2",
@@ -12210,6 +12210,218 @@
         }
       ],
       "fingerprint": "cea1562dd1db2e1f32ec9801a79bfce218920b7b5898ce59e0fa0ff2a900a46c"
+    },
+    {
+      "id": "616:37567947893:1:F6",
+      "report": "616:37567947893:1",
+      "issue": 616,
+      "taskTitle": "设备售后服务与巡检协同系统（综合业务案例）",
+      "appVersion": "1.0.0-beta.55",
+      "appTemplate": "@nocobase/app-template-default",
+      "finding": {
+        "id": "F6",
+        "kind": "misleading",
+        "owner": "documentation",
+        "confidence": "confirmed",
+        "severity": "major",
+        "status": "open",
+        "title": "@nocobase/db README 宣称 Repository/Filter 等不可调用，与已发布导出矛盾",
+        "detail": "db 的“当前边界”写有 Repository、Select AST、Filter Builder、Filter AST、Sort AST 是未来提案、当前不可调用；但包根 index.js 实际导出 buildRepositoryPolicy/normalizeRepositoryPolicy/narrowRepositoryPolicy，app-server 文档也以 Repository 路由与策略为推荐用法。",
+        "claimed": "Repository/Select AST/Filter Builder/Filter AST/Sort AST 是未来提案，当前不可调用。",
+        "observed": "@nocobase/db 从包根导出 Repository 策略 helpers，且 app-server 的 defineRepositoryApiRoutes 用例以 buildRepositoryPolicy 暴露集合。",
+        "impact": "Agent 若采信该声明会回避推荐的 Repository API，改用手写 SQL/动态查询，进而触发严格 lint 失败并放大返工。",
+        "suggestedChange": "更新 db 的“当前边界”，删除或改写为“已发布但需从包根导入”，并交叉链接 app-server 的 Repository 路由文档。",
+        "evidence": [
+          "E20",
+          "E21",
+          "E18"
+        ],
+        "diagnosis": {
+          "trigger": "Agent 阅读 @nocobase/db README 选择数据访问方式",
+          "expected": "文档应准确描述可用 API 并指向推荐用法",
+          "actual": "文档称 Repository 等不可调用，与实际导出与 app-server 文档冲突",
+          "workaround": "以 dist 导出或 app-server 文档为准",
+          "acceptance": "README 边界与包根导出、app-server 用法一致",
+          "category": "guidance-gap"
+        }
+      },
+      "targets": [
+        "@nocobase/app-server",
+        "@nocobase/db"
+      ],
+      "paths": [
+        "packages/@nocobase/app-server/README.md",
+        "packages/@nocobase/db/README.zh-CN.md",
+        "packages/@nocobase/db/dist/src/index.js"
+      ],
+      "evidence": [
+        {
+          "id": "E20",
+          "kind": "code",
+          "path": "packages/@nocobase/db/README.zh-CN.md",
+          "observation": "@nocobase/db 的“当前边界”写有 Repository、Select AST、Filter Builder、Filter AST、Sort AST 是未来提案、当前不可调用。",
+          "lines": [
+            98,
+            102
+          ],
+          "excerpt": "## 当前边界\n\n- Repository、Select AST、Filter Builder、Filter AST 和 Sort AST 是未来提案，当前不可调用。\n- QueryAdapter 是数据库层查询接口，不读取 Collection Metadata。\n- `connection.client()` 是底层 adapter 逃生口，不是常规数据库入口。",
+          "sha256": "adfa91efc5bb783c18cd5008b60a06aae8ab11e74db56867c7929e56d8e45668"
+        },
+        {
+          "id": "E21",
+          "kind": "code",
+          "path": "packages/@nocobase/db/dist/src/index.js",
+          "observation": "@nocobase/db 实际从包根导出 buildRepositoryPolicy/normalizeRepositoryPolicy/narrowRepositoryPolicy 等 Repository 策略 API。",
+          "lines": [
+            33,
+            40
+          ],
+          "excerpt": "export { RepositoryError, repositoryErrorStatuses, } from './repository/errors.js';\nexport { isTemporalType, normalizeTemporalValue, } from './repository/temporal.js';\nexport { buildRepositoryPolicy } from './repository/policy/build.js';\nexport { normalizeRepositoryPolicy } from './repository/policy/normalize.js';\nexport { narrowRepositoryPolicy } from './repository/policy/narrow.js';\nexport { expandPolicyRefs, ref } from './repository/policy/refs.js';\nexport { buildWritePolicy, buildUpsertWritePolicy, } from './repository/write-policy.js';\nexport { filterOperatorsForFieldType, isSortableFieldType, supportsFilterShorthand, } from './repository/repository.js';",
+          "sha256": "1845b9d61b780943473e17e80581caab30fe50d29eabab03b5e58e0e3ab3dd0d"
+        },
+        {
+          "id": "E18",
+          "kind": "code",
+          "path": "packages/@nocobase/app-server/README.md",
+          "observation": "app-server 提供 defineRepositoryApiRoutes，把明确配置的 Repository 方法暴露为带策略的 API 贡献，并安装鉴权中间件。",
+          "lines": [
+            25,
+            60
+          ],
+          "excerpt": "## Repository API routes\n\n`defineRepositoryApiRoutes()` exposes explicitly configured Collection Repository\nmethods as API route contributions. Importing or declaring a contribution does\nnot resolve services or query the database. The application resolves\n`databaseManagerToken` when it creates the router.\n\n```ts\nimport { defineRepositoryApiRoutes } from '@nocobase/app-server/router';\nimport path from 'node:path';\nimport { defineServerPlugin } from '@nocobase/app-server/plugins';\n\nconst repositoryRoutes = defineRepositoryApiRoutes({\n  repositories: [\n    {\n      name: 'orders',\n      actions: {\n        findMany: { maxLimit: 100 },\n        findOne: {},\n        count: {},\n        exists: {},\n        createOne: {},\n        updateOne: {},\n        deleteOne: {},\n        aggregate: {},\n        groupBy: {},\n      },\n      policy: {\n        read: true,\n        create: { scope: true, fields: ['id', 'status'] },\n        update: { scope: true, fields: ['status'] },\n        delete: true,\n      },\n    },\n    {\n      name: 'salesOrders',",
+          "sha256": "2878ff890da2d85c009ae5ddbe14a45965280b1bd0eb01d796158ad3c5ed49c7"
+        }
+      ],
+      "fingerprint": "a59d513fe55aa5c0f6525c2b6325fce09f10ca567e9b527f803633d43631118c"
+    },
+    {
+      "id": "616:37567947893:1:F7",
+      "report": "616:37567947893:1",
+      "issue": 616,
+      "taskTitle": "设备售后服务与巡检协同系统（综合业务案例）",
+      "appVersion": "1.0.0-beta.55",
+      "appTemplate": "@nocobase/app-template-default",
+      "finding": {
+        "id": "F7",
+        "kind": "improvement",
+        "owner": "documentation",
+        "confidence": "confirmed",
+        "severity": "minor",
+        "status": "open",
+        "title": "Skill 内部引用路径的表述歧义导致 Agent 猜测错误路径",
+        "detail": "应用开发 Skill 的能力映射与 authorization.md 指向“authorization Skill 的 references/code-and-seeds.md / client-development.md”，但未给出完整路径前缀；实现阶段出现文件不存在的工具错误（E43）。",
+        "impact": "Agent 在导航 Skill 与引用文件间反复试错，消耗预算并偏离实现。",
+        "suggestedChange": "在引用其它 Skill 的文件时使用从应用根开始的完整相对路径，或在 Skill 中列出自身 references 清单。",
+        "evidence": [
+          "E5",
+          "E6",
+          "E43"
+        ]
+      },
+      "targets": [
+        "app/.agents/skills/nocobase-app-development",
+        "app/.agents/skills/nocobase-app-plugin-authorization"
+      ],
+      "paths": [
+        ".agents/skills/nocobase-app-development/SKILL.md",
+        ".agents/skills/nocobase-app-plugin-authorization/SKILL.md"
+      ],
+      "evidence": [
+        {
+          "id": "E5",
+          "kind": "skill",
+          "path": "app/.agents/skills/nocobase-app-development/SKILL.md",
+          "observation": "应用开发 Skill 给出“需求→应读插件 Skill”的能力映射表，并提醒先安装/注册插件再自行实现。",
+          "lines": [
+            42,
+            58
+          ],
+          "excerpt": "NocoBase packages may publish Skills under `.agents/skills/`. Current application templates run `pnpm nocobase skills sync` automatically through `postinstall`; run it manually if install scripts were disabled or that directory is missing or stale. Confirm that the package is a direct `@nocobase/*` dependency or a registered plugin before relying on its Skill. The common capability mappings are:\n\n| The requirement sounds like                                                                   | Read the Skill for                    |\n| --------------------------------------------------------------------------------------------- | ------------------------------------- |\n| Approvals, multi-step processes, \"when X happens then Y\"                                      | `@nocobase/app-plugin-workflow`       |\n| An assistant in the app: chat, reading files dropped into it, acting through tools you define | `@nocobase/app-plugin-ai-employee`    |\n| Email, IM, or in-app messages                                                                 | `@nocobase/app-plugin-notification`   |\n| Roles, permissions, per-user or per-record access                                             | `@nocobase/app-plugin-authorization`  |\n| Sign-in, registration, sessions                                                               | `@nocobase/app-plugin-authentication` |\n| File upload and metadata through Repository                                                   | `@nocobase/app-plugin-file`           |\n| Translated text and language switching                                                        | `@nocobase/app-plugin-i18n`           |\n| User administration and application-owned role assignment                                     | `@nocobase/app-plugin-users`          |\n| Reading or writing data, schema changes, migrations                                           | `@nocobase/db`                        |\n\nRead the relevant Skill before writing the feature, but treat this table as a map rather than an installed-package list. Implementing a permission system, a notification sender, or a scheduler by hand when a registered plugin provides one is the most expensive mistake available here.\n\nFor notification configuration or sending, follow the notification plugin Skill: `notification.channels` maps each name to one flat Provider configuration, and `send({ idempotencyKey, messages })` supplies a complete message per Channel. Use native addresses; email and in-app arrays create independent deliveries, while Webhooks forbid `to`.",
+          "sha256": "bf55224a07a8c618a1064788fa3cff1bc4cb71e9d46ecef9384d9b4eb903a568"
+        },
+        {
+          "id": "E6",
+          "kind": "skill",
+          "path": "app/.agents/skills/nocobase-app-plugin-authorization/SKILL.md",
+          "observation": "授权 Skill 要求把职责翻译为权限集、页面/动作、记录范围与用户/团队分配，并强调不能只注册不分配。",
+          "lines": [
+            24,
+            40
+          ],
+          "excerpt": "\nChoose delivery by installation state: use seeds for fresh-install defaults and authorized runtime services or a controlled data-change workflow for an existing installation. These are ways to apply configuration, not alternatives to model development. Reuse current management pages and editors. Read the relevant references as needed, beginning with the business workflow for model changes and the service/configuration references for configuration changes.\n\n## Start from business responsibilities\n\nBefore writing grants, turn the requirement into a matrix: actor/job, page, business action, allowed records, readable/writable fields, relation operations and exceptions. Identify who administers assignments separately from who uses the business feature. Ask only about missing decisions that affect access; record concrete assumptions and continue independent modeling work.\n\nUse jobs as permission sets, such as sales engineer or delivery specialist. Ownership, region and assigned projects are record scopes, not extra role names. A person may hold a direct job plus an inherited team job. Define whether revoking one source should preserve the other. Describe each exception as a business fact: a delegated quote, a confidential project, or an active delivery team.\n\nThe sales workflow in [the business module workflow](references/business-module.md) separates quote preparation from regional submission responsibility: an engineer can edit their own out-of-region draft but cannot submit it unless the parent project is also accessible. This is a useful model for multi-table operations; copy the responsibility boundary, not its sample ids.\n\n## Choose the implementation reference\n\n| Task                                                                                                               | Read                                                                                                                                                            |\n| ------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |\n| Build a feature from model through routes, assignments and verification                                            | [Business module workflow](references/business-module.md)                                                                                                       |\n| Declare typed actions, scopes, fields and nested relations                                                         | [Fluent declarations](references/fluent-registration.md)                                                                                                        |",
+          "sha256": "0ae2663fd2f0a5522fd2dd952eea86cf51f1f89024423e5c3efa207a436b7e69"
+        },
+        {
+          "id": "E43",
+          "kind": "log",
+          "path": "artifacts/agent-history/review-history/run-37542355541-attempt-1/agent-implement.jsonl/part-0004.txt",
+          "observation": "实现阶段出现文件不存在的工具错误——Agent 猜测的 Skill/引用路径与实际发布路径不一致，属指引导航摩擦。",
+          "lines": [
+            1930,
+            1940
+          ],
+          "excerpt": "{\"type\":\"tool_execution_start\",\"toolCallId\":\"call_yt2vf60z\",\"toolName\":\"read\",\"args\":{\"limit\":300,\"offset\":0,\"path\":\"/home/runner/work/nb3-factory/nb3-factory/workspace/.agents/skills/nocobase-app-plugin-users/SKILL.md\"}}\n{\"type\":\"tool_execution_start\",\"toolCallId\":\"call_8oruznh6\",\"toolName\":\"read\",\"args\":{\"limit\":300,\"offset\":0,\"path\":\"/home/runner/work/nb3-factory/nb3-factory/workspace/.agents/skills/nocobase-app-plugin-file/SKILL.md\"}}\n{\"type\":\"tool_execution_end\",\"toolCallId\":\"call_4gcwsn54\",\"toolName\":\"read\",\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"ENOENT: no such file or directory, access '/home/runner/work/nb3-factory/nb3-factory/workspace/.agents/skills/nocobase-app-development/references/authorization/code-and-seeds.md'\"}],\"details\":{}},\"isError\":true}\n{\"type\":\"tool_execution_end\",\"toolCallId\":\"call_a8ts13wi\",\"toolName\":\"read\",\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"ENOENT: no such file or directory, access '/home/runner/work/nb3-factory/nb3-factory/workspace/.agents/skills/nocobase-app-development/references/authorization/business-module.md'\"}],\"details\":{}},\"isError\":true}\n{\"type\":\"tool_execution_end\",\"toolCallId\":\"call_yt2vf60z\",\"toolName\":\"read\",\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"---\\nname: nocobase-app-plugin-users\\ndescription: Integrate the Users plugin into a NocoBase App, configure its page placement and permissions, or add an application-owned role scope through the public Server contracts.\\nmetadata:\\n  short-description: Integrate reusable user administration\\n---\\n\\n# User Management App Plugin\\n\\nUse this Skill when an application needs a user management page or API, or when\\nanother plugin needs to expose application-specific roles in the Users page. Do\\nnot use it to modify the Users plugin source or to replace Authentication's\\nuser, account, or Session storage.\\n\\n## Public surfaces\\n\\n- Client registration factory and `UsersClientOptions`:\\n  `@nocobase/app-plugin-users/client`.\\n- Typed API client: `UsersClient` and its types from\\n  `@nocobase/app-plugin-users/client/user-client`.\\n- Server contracts: `userManagementServiceToken`,\\n  `userRoleScopeRegistryToken`, `UserRoleScope`, and related types from\\n  `@nocobase/app-plugin-users/server/tokens`.\\n- HTTP API: `GET /api/users` (`page`, `pageSize`, `q`, `status`, `roleScope`, `role`; answers `{ data, meta: { page, pageSize, total } }`), `GET /api/users/options`, `POST /api/users`, `PATCH /api/users/:userId`, `DELETE /api/users/:userId?confirm=true`, `POST /api/users/:userId/disable|enable|resetPassword|revokeSessions`, and `PUT /api/users/:userId/roleScopes/:scope`. The running application documents each one, with request and response schemas, at `/api/swagger/docs` (JSON at `/api/swagger`) under the `Users` tag. Failures use the standard error body; branch on `error.reason`, such as `USER_NOT_FOUND`, `SELF_DELETE_NOT_ALLOWED`, `LAST_ASSIGNMENT` or `USER_EMAIL_CONFLICT`.\\n\\nEvery HTTP route requires Authentication and Authorization. Routes check the `user` record type with one of `read`, `create`, `update`, `disable`, `enable`, `assign-role`, `reset-password`, `revoke-sessions` or `delete`. Account creation checks both `create` and `assign-role`. `delete` is permitted only while an application role scope can clean a deleted user up.\\n\\n## Register and place the page\\n\\n1. Register Authentication, Authorization, and then Users in the App's Client\\n   and Server plugin arrays.\\n2. Configure the Client factory. `users({ mount: 'settings', path: '/users' })`\\n   produces `/settings/users`; `mount: 'app'` makes the path App-relative and\\n   registers a primary-navigation entry protected by the same page access rule.\\n3. Grant the page, `{ resource: { type: 'page', id: 'users' }, actions: [{ action: 'access' }] }` or `authz.pages.grant('users')`, to roles that may open it.\\n4. Grant only the `user` actions those roles need, on `{ type: 'user', id: '*' }` because `user` is a record type. The plugin creates no roles and grants no access by itself.\\n5. Use `componentLoader` only to replace the page implementation. It does not\\n   change the route identity, mount, or path.\\n\\nThe page reports results through `useToaster()` from `@nocobase/app-client`, so the App needs the `@nocobase/app-client` that exports it and registers a toaster service, as the templates do: `client/lib/toaster.ts` from the template, and `this.app.container.instance(toasterToken, createToaster())` in the `register()` of `client/service-provider.ts`, with the `Toaster` component mounted in `client/react-providers.ts`. Without the registration nothing throws, but its toasts are only logged to the browser console. Update `@nocobase/app-client` together with this plugin; the `nocobase-app-upgrade` Skill's `references/edge-cases.md` (\\\"Notifications and the application toaster\\\") has the full steps.\\n\\nThe default `app` permission-set scope is supplied by Users whenever the Authorization plugin's `authorizationToken` is available. Do not copy a user-roles Provider into an application. Set `users.permissionSets: false` to replace the default with an application-owned scope; Hub uses this setting.\\n\\n## Add an application role scope\\n\\nResolve `userRoleScopeRegistryToken` in an application or business plugin\\nServiceProvider and register one `UserRoleScope` during `boot()`. The scope owns\\nits available options, current assignment lookup, role filtering, atomic\\nreplacement, and any disable guard. Unregister it during `shutdown()`.\\n\\nUse the `DatabaseConnection` passed to each scope method. This is the\\ncaller-owned transaction used to keep account creation or state changes atomic\\nwith role assignments. Do not open an unrelated transaction and do not write\\nAuthentication's internal tables.\\n\\nFor a required single-role scope, set `selection: 'single'` and\\n`requiredOnCreate: true`. Reject invalid values in the scope and enforce\\nbusiness invariants such as the last-administrator rule on the server.\\n\\nSet `assignable: false` or `removable: false` on an option when the Users page\\nmust show a protected assignment but must not add or revoke it. Enforce the\\nsame rule in `replace()` because these flags only control the Client. Set\\n`hasAuthenticatedDefaultAccess: true` when the scope lists direct assignments\\nbut all signed-in users also inherit separately configured default access; the\\npage then explains that distinction instead of treating the default as a role.\\nUse `labelI18nKey` with `labelI18nNs` on a scope or option when its owner has\\nregistered Client locale resources; keep `label` as the readable fallback.\\nImplement optional `getMany()` when assignments can be read as a batch. Users\\nuses it for list pages and falls back to `get()` for existing scopes.\\n\\n## Ownership\\n\\n- Authentication owns user identity, credentials, account state, password\\n  hashing, and Sessions.\\n- Authorization owns Permission Sets, grants, and assignments.\\n- Users owns the management API, built-in page, orchestration transaction,\\n  `user` authorization handler, and role-scope registry.\\n- The App or business plugin owns role definitions, role grants, assignments,\\n  page placement, and role-specific invariants.\\n- The plugin's `skills/` source is authoritative. `.agents/skills/` is a\\n  synchronized copy and must not be edited.\\n\\n## Permissions and constraints\\n\\n- Browser route access is only navigation control. The Server independently\\n  authenticates and authorizes every request.\\n- An App-mounted page hides its primary-navigation entry until `access` on page `users` is allowed. Direct navigation is checked separately by the Client Route.\\n- A conditional grant is not accepted as an unrestricted user-management\\n  grant; use explicit static grants for this resource.\\n- The plugin does not provide user deletion or invitations.\\n- Disabled users are rejected by Authentication and lose their existing HTTP\\n  Sessions and Realtime connections.\\n- Password hashes, Session tokens, reset tokens, and submitted passwords are\\n  never returned by the service or included in security events.\\n\\n## Verification\\n\\n- A role without `access` on page `users` cannot navigate to the page.\\n- Anonymous API requests return `401`; authenticated requests without the\\n  requested `user` action return `403`.\\n- Creating a user with a required role scope creates both records, while role\\n  assignment failure rolls back the user.\\n- Duplicate emails or usernames return a stable `409` conflict. Password reset\\n  and database Session revocation commit or roll back together.\\n- Disabling a user invalidates HTTP Sessions and Realtime connections; enabling\\n  the user requires a new login.\\n- Role changes become visible after transaction commit and do not alter\\n  assignments outside the registered scope.\\n- The target App passes its relevant tests, typecheck, and build. Skill\\n  synchronization alone proves only that the copy matches this source.\\n\\nDeletion uses `DELETE /api/users/:userId?confirm=true` and `user/delete` authorization. Obtain an explicit user deletion request before calling it. Application role scopes can guard deletion and clean dependent credentials transactionally. Hub blocks self-deletion, deleting its last active administrator, and deleting owners of Apps. Historical user identities are retained but cannot sign in or appear in management lists.\\n\"}]},\"isError\":false}\n{\"type\":\"tool_execution_end\",\"toolCallId\":\"call_8oruznh6\",\"toolName\":\"read\",\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"---\\nname: nocobase-app-plugin-file\\ndescription: Add file collections, uploads, downloads, DOCX/XLSX/PPTX previews, business attachments, and editable Registry file components to a NocoBase 3 App using the public File Repository services.\\n---\\n\\n# Add files to an App\\n\\nUse `@nocobase/app-plugin-file/server` and `@nocobase/app-plugin-file/client`. The plugin provides Repository managers, service tokens, route helpers, and the component-ui Registry recipe. The App or business plugin owns collections, migrations, Drive configuration, resource routes, permissions, and pages.\\n\\nInspect the App's existing registrations, migrations, disks, and resources first. Register the Server default export and the Client default factory before consumers, using the App's plugin lifecycle commands. The core does not create collections or routes.\\n\\n## Find and reuse the preview UI first\\n\\nInspect `client/extensions/nocobase-file-component-ui/` before writing upload or preview components. Current Default templates preinstall this application-owned Registry source and its client dependencies; older applications and other templates may not. Import from its `index.ts`, not from plugin-internal paths. Registering the plugin supplies services and translations; it does not automatically install or upgrade the copied UI.\\n\\n| Format                                               | Registry preview                  | Content access                                                                 |\\n| ---------------------------------------------------- | --------------------------------- | ------------------------------------------------------------------------------ |\\n| DOCX / XLSX / PPTX                                   | Local `@silurus/ooxml` viewer     | Same-origin session credentials; no public URL or third-party service required |\\n| Raster image / PDF / text / Markdown / audio / video | Built-in preview components       | See the content access rules below                                             |\\n| Legacy DOC / XLS / PPT and OpenDocument              | Office Online fallback            | Internet-accessible absolute URL; cannot use the App session                   |\\n| Unsupported or unsafe active content                 | Explanation and optional download | Download still requires permission                                             |\\n\\nFor custom attachment lists, uploads or business associations, reuse `FilePreviewDialog` with file records and `contentUrl`",
+          "sha256": "9e90b2f70457a04f161f8992ce0161ca965d9b2eae52830e75dc9a4ef2b70f45"
+        }
+      ],
+      "fingerprint": "7d59aa91dc085f2ee9b0052687c0f8ee1c3ce2f4e1bb330c43bef87cead6de89"
+    },
+    {
+      "id": "616:37567947893:1:F8",
+      "report": "616:37567947893:1",
+      "issue": 616,
+      "taskTitle": "设备售后服务与巡检协同系统（综合业务案例）",
+      "appVersion": "1.0.0-beta.55",
+      "appTemplate": "@nocobase/app-template-default",
+      "finding": {
+        "id": "F8",
+        "kind": "improvement",
+        "owner": "plugin",
+        "confidence": "confirmed",
+        "severity": "minor",
+        "status": "open",
+        "title": "站内通知的收件箱页面仅开发期可用，生产消息中心无现成 UI",
+        "detail": "README 明确插件自带的客户端收件箱页面仅开发期存在，生产构建不含该路由；Skill/映射表未突出“生产消息中心需应用自建”。",
+        "impact": "Agent 易以为启用插件即得到消息中心，实际交付缺失，B09 失败。",
+        "suggestedChange": "在插件 README 与 Skill 顶部显著标注“生产消息中心 UI 需应用实现”，并可提供模板级示例页面。",
+        "evidence": [
+          "E15",
+          "E16"
+        ]
+      },
+      "targets": [
+        "@nocobase/app-plugin-notification-in-app"
+      ],
+      "paths": [
+        "packages/@nocobase/app-plugin-notification-in-app/README.md"
+      ],
+      "evidence": [
+        {
+          "id": "E15",
+          "kind": "code",
+          "path": "packages/@nocobase/app-plugin-notification-in-app/README.md",
+          "observation": "站内通知注册 in-app 渠道/提供者，并提供带鉴权的收件箱接口 /api/notificationInApp/messages 与未计数。",
+          "lines": [
+            20,
+            40
+          ],
+          "excerpt": "\n- the `in-app` Channel and database Provider;\n- a test adapter requiring an explicit application user ID;\n- the `notificationInAppItems` migration;\n- authenticated inbox routes under `/api/notificationInApp`.\n\n## Inbox API\n\n| Operation                        | Route                                                         | Success                                        |\n| -------------------------------- | ------------------------------------------------------------- | ---------------------------------------------- |\n| List the current user's messages | `GET /api/notificationInApp/messages`                         | `200 { data: [...], meta: { nextPageToken } }` |\n| Count unread messages            | `GET /api/notificationInApp/messages/unreadCount`             | `200 { data: { count } }`                      |\n| Mark every message read          | `POST /api/notificationInApp/messages/markAllRead`            | `200 { data: { updated } }`                    |\n| Mark one message read            | `POST /api/notificationInApp/messages/{messageId}/markRead`   | `200 { data: message }`                        |\n| Mark one message unread          | `POST /api/notificationInApp/messages/{messageId}/markUnread` | `200 { data: message }`                        |\n| Delete one message               | `DELETE /api/notificationInApp/messages/{messageId}`          | `204`, no body                                 |\n\nThe running application's API document lists these operations under the `NotificationInApp` tag with their parameters, response schemas and errors: open `/api/swagger/docs` while signed in, or read the JSON at `/api/swagger`. Their operationIds are `notificationInAppListMessages`, `notificationInAppCountUnreadMessages`, `notificationInAppMarkAllMessagesRead`, `notificationInAppMarkMessageRead`, `notificationInAppMarkMessageUnread` and `notificationInAppDeleteMessage`.\n\nThe list accepts `pageSize` (an integer from 1 to 100, defaulting to 20), `unreadOnly=true` to restrict the result to unread messages, and `pageToken`, the `meta.nextPageToken` of the previous page; `nextPageToken` is absent on the last page. Pages follow a stable `(createdAt, id)` order. Clients must treat page tokens as opaque and must not construct or persist internal table queries.\n",
+          "sha256": "a4a3e5f2a348f1944c1ba91cd62aa0ae835d8adf6a65c7aa77cfc4844cf21c6d"
+        },
+        {
+          "id": "E16",
+          "kind": "code",
+          "path": "packages/@nocobase/app-plugin-notification-in-app/README.md",
+          "observation": "插件自带的客户端收件箱页面仅开发期可用，生产构建中该路由不存在，生产消息中心需应用自行实现。",
+          "lines": [
+            55,
+            63
+          ],
+          "excerpt": "`localizedMessage` carries the error translated into the request's locale. The normal App composition provides it; custom hosts register the exported `IN_APP_NOTIFICATION_NAMESPACE` and `inAppNotificationServerLocales` with their `I18nRuntime`, then mount the request i18n middleware before this router. Authentication middleware keeps its own error contract.\n\n## Client inbox page\n\nRegister the package's `/client` entry to add the inbox component example to\nthe built-in Dev Route. In development it is available at\n`/dev/notification-in-app` inside the App, such as\n`/main/dev/notification-in-app` when the App public base is `/main`. The route\nand its page module are absent from production builds.",
+          "sha256": "a4a3e5f2a348f1944c1ba91cd62aa0ae835d8adf6a65c7aa77cfc4844cf21c6d"
+        }
+      ],
+      "fingerprint": "8db21731eb8153ba2d3bca064325d2f234afd243e6b946e5b7d88c4fb2baea80"
     }
   ]
 }
