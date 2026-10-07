@@ -107,6 +107,16 @@ export function writeReview(root, state, identity = {}, file = 'build-review.jso
   return report;
 }
 
+// Explicit semantic support for tests that exercise formal problem delivery.
+// Default/archived review fixtures deliberately stay unverified.
+export function supportedFeedbackReview() {
+  return { status: 'supported', reason: 'Fixture: source evidence supports this guidance suggestion.',
+    checks: [
+      ['contract', 'E6'], ['behavior', 'E7'], ['application', 'E3'],
+      ['environment', 'E7'], ['factory', 'E7'], ['existing-capability', 'E5'],
+    ].map(([kind, id]) => ({ kind, reason: `Fixture: checked ${kind} against the captured source.`, evidence: [id] })) };
+}
+
 export function usageRecord({ issue = 146, runId = 100, attempt = 1, status = 'delivered', start = 1_790_000_000_000, seconds = 60,
   agentJobId = runId * 10 + attempt, records = 3, event = 'issues', previousRunId = null, facts = null } = {}) {
   const usage = emptyUsage();
@@ -333,4 +343,13 @@ export function fakeRepository() {
     samples() { return [...state.issues.values()].filter(issue => names(issue).includes(SAMPLE_LABEL)); },
   };
   return client;
+}
+
+
+export function markFeedbackReviewed(report) {
+  report.execution = { ...report.execution, feedbackReviewCalls: 1, feedbackReview: {
+    version: 1, inputHash: report.basis.inputHash, completed: true,
+    candidateIds: report.evaluation.findings.filter(f => f.feedbackReview).map(f => f.id),
+  } };
+  return report;
 }

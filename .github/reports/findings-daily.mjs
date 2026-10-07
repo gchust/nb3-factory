@@ -7,6 +7,7 @@ import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { occurrenceId } from './findings-classification.mjs';
 import {
+  feedbackReviewChip,
   findingTypes,
   severityLabels,
   severityRubric,
@@ -98,6 +99,11 @@ export function dailyEntry(
     severity: item.severity,
     type: item.type,
     owner: item.finding.owner,
+    // Snapshot only when a new entry is archived. Existing closed days and
+    // their keys are never rewritten when feedback is checked later.
+    ...(item.finding.feedbackReview
+      ? { feedbackReview: structuredClone(item.finding.feedbackReview) }
+      : {}),
     targets: [...item.targets],
     subjectKeys: [...(item.subjectKeys ?? [])],
     featurePoint: place.featurePoint ?? null,
@@ -343,17 +349,17 @@ export async function renderDailyPage(document) {
       .slice(0, 3)
       .map((name) => `<code>${escape(name)}</code>`)
       .join(' ');
-    return `<tr><td><span class="fb-chips">${sevChip(entry.severity)}${typeChip(entry.type)}</span></td><td>${escape(entry.title)}<p class="check-source">${notes.map(escape).join(' · ')}${targets ? ` · ${targets}` : ''}</p></td><td class="fd-nowrap"><a class="text-link" href="${escape(reportHref(entry))}">#${entry.issue} · ${escape(entry.findingId)}</a></td><td class="fd-note">${escape(groupNote(entry))}</td></tr>`;
+    return `<tr><td><span class="fb-chips">${sevChip(entry.severity)}${typeChip(entry.type)}${feedbackReviewChip(entry)}</span></td><td>${escape(entry.title)}<p class="check-source">${notes.map(escape).join(' · ')}${targets ? ` · ${targets}` : ''}</p>${entry.feedbackReview ? `<p class="check-source">复核理由：${escape(entry.feedbackReview.reason)}（核对过程与证据见原报告）</p>` : ''}</td><td class="fd-nowrap"><a class="text-link" href="${escape(reportHref(entry))}">#${entry.issue} · ${escape(entry.findingId)}</a></td><td class="fd-note">${escape(groupNote(entry))}</td></tr>`;
   };
   const sections = groupByFeature(document.entries)
     .map(
       (group) =>
-        `<section class="fd-section"><h2>${escape(group.name)} <span>${group.items.length} 条</span></h2><div class="card fd-body"><div class="table-wrap"><table><colgroup><col class="fd-c-sev"><col><col class="fd-c-report"><col class="fd-c-group"></colgroup><thead><tr><th>等级与类型</th><th>问题与任务</th><th>报告</th><th>跨任务</th></tr></thead><tbody>${group.items.map(row).join('')}</tbody></table></div></div></section>`,
+        `<section class="fd-section"><h2>${escape(group.name)} <span>${group.items.length} 条</span></h2><div class="card fd-body"><div class="table-wrap"><table><colgroup><col class="fd-c-sev"><col><col class="fd-c-report"><col class="fd-c-group"></colgroup><thead><tr><th>等级、类型与反馈核对</th><th>问题 / 建议与任务</th><th>报告</th><th>跨任务</th></tr></thead><tbody>${group.items.map(row).join('')}</tbody></table></div></div></section>`,
     )
     .join('');
   const body = `<main class="fd-main"><header class="fd-head"><div class="eyebrow">NocoBase3 框架反馈 · 按日期归档 · <a class="text-link" href="./">全部日期 →</a> · <a class="text-link" href="../">问题汇总 →</a></div><h1>${escape(document.date)} 新发现的框架问题</h1><p class="fb-scope">${summary.count} 条框架发现，来自 ${summary.tasks} 个任务${summary.count ? ` · ${severityLine(summary.severities)}` : ''}${summary.late ? ` · 其中 ${summary.late} 条来自更早结束的运行（补录）` : ''}</p><p class="fb-scope">收录截至本日（${TIME_ZONE}）结束、此前尚未归档的框架、插件、模板和文档发现；开启飞书日报时，当天发送的就是这一批。按评审证据引用的包归入功能点；涉及多个功能点或无法确定的列在“${NO_FEATURE}”，并注明涉及的功能点。归档后不再改动：后来的重跑或重新评审出现在它发布后的那一天。</p></header>
 ${sections || '<section class="fd-section"><p class="card report-empty">这一天没有新发现。</p></section>'}
-<footer class="report-footer">生成自已归档的 report.json；不重新评审原问题，也不代表 NocoBase3 当前最新状态。</footer></main>`;
+<footer class="report-footer">生成自已归档的 report.json；候选反馈、反证与证据支持均保留，证据支持不等于人工确认。无反馈复核记录的旧条目仍待核对。问题与建议保留各自类型，不重新评审原反馈，也不代表 NocoBase3 当前最新状态。</footer></main>`;
   return page(`${document.date} 框架问题`, body);
 }
 
@@ -376,7 +382,7 @@ export async function renderDailyIndex(ledger, { occurrences = [] } = {}) {
       const links = items
         .map(
           (item) =>
-            `<li><a class="text-link" href="../../issues/${item.issue}/runs/${item.runId}/attempt-${item.attempt}/index.html#review-finding-${escape(item.finding.id)}">${escape(item.finding.title)}</a> <span class="fd-note">#${item.issue} · ${escape(item.taskTitle)}</span></li>`,
+            `<li><a class="text-link" href="../../issues/${item.issue}/runs/${item.runId}/attempt-${item.attempt}/index.html#review-finding-${escape(item.finding.id)}">${escape(item.finding.title)}</a> ${typeChip(item.type)}${feedbackReviewChip(item.finding)} <span class="fd-note">#${item.issue} · ${escape(item.taskTitle)}</span></li>`,
         )
         .join('');
       return `<details class="card fd-body" open><summary>${escape(date)} · ${items.length} 条${late ? ' · 将补录到后续归档日' : ' · 待归档'}</summary><ul>${links}</ul></details>`;

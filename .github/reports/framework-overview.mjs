@@ -1,3 +1,4 @@
+import { feedbackEvaluation } from '../scripts/feedback-review.mjs';
 import { shortSha, upstreamEntry, upstreamStatus } from './upstream-check.mjs';
 
 const escape = (value) =>
@@ -106,11 +107,26 @@ export const typeChip = (finding, check) => {
     `原评审${findingTypes[was]}，上游复核建议${findingTypes[now]}`,
   );
 };
-// Only departures from the default (confirmed, open) earn a badge.
+// Feedback verification is independent of the original reviewer's confidence,
+// the finding's disposition, and the latest-upstream recheck. Legacy findings
+// stay visible as candidates; `confirmed` alone is not feedback verification.
+export const feedbackReviewLabels = {
+  supported: '反馈复核：证据支持',
+  contradicted: '反馈复核：存在反证',
+  insufficient: '候选反馈：证据不足',
+  unreviewed: '候选反馈：未复核',
+};
+export const feedbackReviewState = (finding) =>
+  finding.feedbackReview?.status ?? 'unreviewed';
+export const feedbackReviewChip = (finding) => {
+  const state = feedbackReviewState(finding);
+  return `<span class="tag ${state === 'supported' ? '' : 'warn'}">${escape(feedbackReviewLabels[state])}</span>`;
+};
 export const exceptionChips = (finding) =>
+  feedbackReviewChip(finding) +
   (finding.confidence === 'suspected'
-    ? '<span class="tag warn">待确认</span>'
-    : '') +
+    ? '<span class="tag warn">原评审：待确认（suspected）</span>'
+    : `<span class="tag">原评审置信度：${escape(finding.confidence)}</span>`) +
   (finding.status !== 'open'
     ? `<span class="tag">${escape(findingStatus(finding.status))}</span>`
     : '');
@@ -147,7 +163,7 @@ export function upstreamScope(check, findings) {
 // findings (plus an optional upstream recheck), not another assessment.
 export function renderFrameworkOverview(report, check = null) {
   const review = ['completed', 'partial'].includes(report?.state)
-    ? report.evaluation
+    ? feedbackEvaluation(report)
     : null;
   if (!review || review.version !== 2) {
     const state = review
@@ -163,9 +179,13 @@ export function renderFrameworkOverview(report, check = null) {
     (finding) => finding.kind !== 'strength',
   );
   const framework = findings.filter(isFrameworkFinding);
-  const suspected = framework.filter(
-    (finding) => finding.confidence === 'suspected',
-  ).length;
+  const feedbackCounts = Object.fromEntries(
+    Object.keys(feedbackReviewLabels).map((state) => [
+      state,
+      framework.filter((finding) => feedbackReviewState(finding) === state)
+        .length,
+    ]),
+  );
   const unknown = findings.filter((finding) => finding.owner === 'unknown');
   const background = findings.filter((finding) =>
     ['application', 'factory', 'environment'].includes(finding.owner),
@@ -174,17 +194,17 @@ export function renderFrameworkOverview(report, check = null) {
   if (report.state === 'partial')
     html += `<p class="report-banner">仅展示已完成部分；未覆盖项不等于无问题。${escape(report.reason || '')} 待评估：${escape(review.progress.pendingModules.join('、') || '见覆盖限制')}。</p>`;
   if (framework.length) {
-    html += `<div class="card fb-table" aria-label="NocoBase3 问题清单"><div class="fb-table-head"><h2>${framework.length} 条 NocoBase3 框架问题</h2><span>${suspected ? `其中 ${suspected} 条待确认 · ` : ''}按等级排序 · 点击查看详情与证据</span></div>`;
+    html += `<div class="card fb-table" aria-label="NocoBase3 框架问题与建议清单"><div class="fb-table-head"><h2>${framework.length} 条 NocoBase3 框架问题与建议</h2><span>证据支持 ${feedbackCounts.supported} · 存在反证 ${feedbackCounts.contradicted} · 证据不足 ${feedbackCounts.insufficient} · 未复核 ${feedbackCounts.unreviewed} · 按等级排序 · 点击查看详情与证据</span></div>`;
     for (const finding of orderFindings(framework, check)) {
       const targets = findingTargets(review, finding);
       html += `<a class="fb-item sev-${escape(effectiveSeverity(finding, check))}" href="#review-finding-${escape(finding.id)}"><span class="fb-chips">${severityChip(finding, check)}${typeChip(finding, check)}</span><span class="fb-item-main"><strong>${escape(finding.id)} · ${escape(finding.title)}</strong><span class="fb-item-impact">${escape(finding.impact)}</span><span class="fb-item-targets">${targets.length ? targets.map((name) => `<code>${escape(name)}</code>`).join('') : '尚未定位到具体框架对象'}</span></span><span class="fb-item-side">${upstreamChip(finding, check)}${exceptionChips(finding)}</span></a>`;
     }
-    html += '</div>';
+    html += '</div><p class="check-source">保留全部候选反馈与复核结果，包括高风险待确认项。证据支持不等于人工确认，也不替代最新上游复核；问题与建议按原分类展示。</p>';
   } else {
     html += `<p class="card report-empty">${report.state === 'partial' ? '已评测部分' : '本轮评测'}未提出归属于 NocoBase3 的问题或建议，不等于整个框架没有问题。</p>`;
   }
   if (unknown.length || background.length)
-    html += `<p class="check-source">另有 ${unknown.length} 条归因待确认、${background.length} 条业务 / 工厂 / 环境观察，单独保留在<a class="text-link" href="#problems">问题详情</a>，未计入框架问题数。</p>`;
+    html += `<p class="check-source">另有 ${unknown.length} 条归因待确认、${background.length} 条业务 / 工厂 / 环境观察，单独保留在<a class="text-link" href="#problems">问题详情</a>，未计入框架问题与建议总数。</p>`;
   html += `<p class="fb-scope">${upstreamScope(check, framework)} · 评审基于本任务冻结的依赖与指引（源 Run ${escape(report.basis.runId)} / attempt ${escape(report.basis.attempt)}）· 排序不代表排期优先级 · <a class="text-link" href="#review-basis">版本与指纹 →</a></p>`;
   return html;
 }

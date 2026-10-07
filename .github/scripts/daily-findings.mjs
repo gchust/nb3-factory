@@ -40,7 +40,7 @@ import {
   validateDay,
   validateLedger,
 } from '../reports/findings-daily.mjs';
-import { severityLabels } from '../reports/framework-overview.mjs';
+import { feedbackReviewLabels, feedbackReviewState, findingTypes, severityLabels } from '../reports/framework-overview.mjs';
 
 const conflict = (error) => /409|422/.test(error.message);
 const clip = (value, max) =>
@@ -191,6 +191,7 @@ export function feishuDigest({
         ),
         link('查看当日归档', pageUrl),
       ],
+      [text('含问题与改进建议；候选反馈仍待核对，证据支持不等于人工确认。')],
     ];
     for (const group of groups) {
       const leads = ownersOf(owners, group.featurePoint);
@@ -205,7 +206,7 @@ export function feishuDigest({
           ...new Set(related.flatMap((name) => ownersOf(owners, name))),
         ].filter((id) => !leads.includes(id));
         content.push([
-          text(`· ${severityLabels[entry.severity]}｜`),
+          text(`· ${severityLabels[entry.severity]}｜${findingTypes[entry.type] ?? '未分类问题'}｜${feedbackReviewLabels[feedbackReviewState(entry)]}｜`),
           link(clip(entry.title, 80), reportUrl(entry.report)),
           text(
             ` · #${entry.issue} ${clip(entry.taskTitle, 40)}${entry.group?.issues > 1 ? ` · 已在 ${entry.group.issues} 个任务出现` : ''}${related.length ? ` · 涉及 ${related.join('、')} ` : ''}`,

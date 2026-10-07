@@ -108,6 +108,16 @@ Schema：[`contracts/evaluation-report.v1.schema.json`](contracts/evaluation-rep
 - `findings[].confidence=confirmed` 只表示**评审者**认为证据充分，导出为 `confirmedBy: "reviewer"`，不是人工确认；
   `reviewerStatus` 是评审时的看法（open / resolved / unknown / not-applicable），不能直接当成管理端问题已关闭。
   发现只通过共享的已校验证据 id 关联模块与 `subjectKeys`，关联不到就留空。
+- 可选 `findings[].diagnosis` 原样保留 `category`、`trigger`、`expected`、`actual`、`workaround`、`acceptance`。
+  类别为 `runtime-defect`、`capability-gap`、`guidance-gap` 或 `usability-improvement`；缺失保持缺失，不把旧发现补成运行时缺陷。
+- 可选 `findings[].feedbackReview` 是单独的语义核验：`status=supported|contradicted|insufficient`、`reason`、
+  `checks[]`（`kind`、`reason`、带评审作用域的 `evidence`）。核验关注 `contract`、`behavior`、`application`、
+  `environment`、`factory`、`existing-capability`；缺失表示历史记录尚未核验，不能默认当作 supported。
+  它不覆盖原始 `confidence`、`owner` 或 `reviewerStatus`，也不代表人工确认。
+- TestManage3 的正式问题投影只接受上述框架责任方的 open、诊断完整、核验 supported 的发现；运行时缺陷还要求原始 confirmed。
+  有证据支持的能力、指引和易用性建议可保留 suspected，不因没有运行时复现而丢弃，也不冒充实现缺陷。
+  其余候选继续留在完整报告。接收端未验证支持专门的问题字段，因此诊断、核验、原始置信度/状态及可追踪证据保存在现有 description 中；
+  不增加问题顶层字段、不改稳定 key/fingerprint、不重置接收端人工处理状态。
 - 工厂只对同一来源去重展示；跨运行根因归并与正式问题生命周期由接收端负责。
 
 ### 首轮与计数
@@ -321,3 +331,10 @@ node --test --test-concurrency=1 .github/scripts/tests/*.test.mjs
 两个样本的相似发现保留为两条独立出现记录。
 
 详见 [有效配置、独立验收、健康状态与扩展步骤](EVALUATION_RELIABILITY.md)。实际调用配置记录是可比较性的必要证据，仅派发变量相同不再返回 `comparable=true`。
+
+
+### 反馈投影 v2 与旧修订补发
+
+`source.exporter.version=2` 将定向证据复核门槛固定到新修订，协议 `schemaVersion` 仍为 1。原 exporter-v1 修订若按旧规则有可投递问题，`testmanage3-links-v1` / `testmanage3-problems-v1` 在发请求前返回 `feedback-policy-migration`，包括过去可能已被接收但回执丢失的请求。不能在同一幂等键下将旧问题清单改为空或改写描述；本地拒绝不增加请求次数，已有 stored 回执保持原样。
+
+通过 **Report Task Usage** 重新导出既有事实形成新修订；要复核问题先使用 **Reassess Build Quality**，无需重新搭建。重复相同 v2 导出仍复用其修订。重导出本身不补造反馈核验，旧包与历史记录字节不变。旧报告原来没有可投递问题时仍可补发空清单，`bundle-v1` 不含问题投影，不受此门槛影响。

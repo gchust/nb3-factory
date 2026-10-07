@@ -36,6 +36,7 @@ function fixture(t) {
   execFileSync('git', ['add', '.'], { cwd: workspace });
   execFileSync('git', ['-c', 'user.name=Fixture', '-c', 'user.email=fixture@localhost', 'commit', '-qm', 'fixture'], { cwd: workspace });
   put(workspace, 'node_modules/@nocobase/example/package.json', { name: '@nocobase/example', version: '3.0.0-fixture' });
+  put(workspace, 'node_modules/@nocobase/example/dist/index.js', 'export const customer = undefined;\n');
   put(workspace, 'node_modules/@nocobase/example/dist/index.d.ts', 'export declare const customer: number;\n');
   const metadata = { repository: 'owner/factory', issue: { number: 21 }, run: {id:100,attempt:1}, controlSha:'b'.repeat(40), applicationBase:{sha:execFileSync('git',['rev-parse','HEAD'],{cwd:workspace,encoding:'utf8'}).trim()}, task: { requirements: 'Manage customers', reviewCriteria: 'Review used modules independently' } };
   put(artifacts, 'task-metadata.json', metadata);
@@ -70,6 +71,19 @@ const prompt = fs.readFileSync(process.argv.at(-1).slice(1), 'utf8');
 console.log(JSON.stringify({type:'mock_call',calls,retry:prompt.includes('## 重试说明'),budget:Number(/硬上限 (\\d+) 秒/.exec(prompt)?.[1]),
   validatorError:prompt.includes('Evidence lines outside captured file'),kept:prompt.includes('曾保存并通过校验')}));
 let behavior = ${JSON.stringify(behavior)};
+if (fs.existsSync('feedback-input.json')) {
+  const feedback=JSON.parse(fs.readFileSync('feedback-input.json','utf8'));
+  const kinds=['contract','behavior','application','environment','factory','existing-capability'];
+  const status=behavior==='feedback-contradicted'?'contradicted':'supported';
+  const verdict={version:1,inputHash:feedback.inputHash,findings:feedback.candidates.map(f=>({findingId:f.id,status,reason:'Compared the actual API contract with captured implementation and alternatives',checks:kinds.map(kind=>({kind,reason:'Read captured '+kind+' evidence; alternative does not explain the observed mismatch',evidence:[kind==='contract'?'E2':kind==='behavior'?'E4':'E1']}))})),evidence:[{id:'E4',kind:'package',path:'packages/@nocobase/example/dist/index.js',lines:[1,1],observation:'Actual implementation returns undefined'}]};
+  if(behavior==='feedback-invalid') verdict.evidence[0].lines=[99,99];
+  if(behavior==='feedback-input-tamper') fs.writeFileSync('feedback-input.json','{}');
+  fs.writeFileSync('feedback-assessment.json',JSON.stringify(verdict));
+  if(behavior==='feedback-crash') process.exit(17);
+  if(behavior==='feedback-stall') {setInterval(()=>{},1000);return;}
+  console.log(JSON.stringify({type:'message_end',message:{role:'assistant',stopReason:'stop',usage:{input:10,output:2,cacheRead:0,cacheWrite:0,totalTokens:12}}}));
+  console.log(JSON.stringify({type:'agent_end'})); process.exit(0);
+}
 if (behavior === 'stall-then-success') behavior = calls === 1 ? 'stall-empty' : 'success';
 if (behavior === 'stall-then-crash') behavior = calls === 1 ? 'stall' : 'crash';
 if (behavior === 'invalid-then-fixed') behavior = calls === 1 || !prompt.includes('Evidence lines outside captured file') ? 'invalid-draft' : 'success';
@@ -103,6 +117,7 @@ const history=JSON.parse(fs.readFileSync(input.history.path,'utf8'));
 const original=history.files.find(file=>file.source==='agent-implement.jsonl').chunks[0].path;
 review.evidence.push({id:'E3',kind:'log',path:original,lines:[1,1],observation:'Actual fixture tool event'});
 review.historyReview=[{log:'agent-implement.jsonl',status:'reviewed',reason:'Read original fixture event',evidence:['E3'],errors:[]}];
+if (behavior.startsWith('feedback-')) review.findings=[{id:'F1',kind:'issue',owner:'framework',confidence:'confirmed',severity:'critical',status:'open',title:'Contract mismatch',detail:'The declared value is not returned',impact:'Captured behavior violates the declared contract',suggestedChange:'Align implementation with the public contract',evidence:['E1','E2'],diagnosis:{category:'runtime-defect',trigger:'Use customer',expected:'A number',actual:'Undefined',workaround:'No workaround recorded',acceptance:'Customer returns a number'}}];
 if (behavior === 'old-rubric') review.version = 1;
 if (behavior === 'wrong-hash') review.inputHash = 'c'.repeat(64);
 if (['invalid-draft', 'modify-invalid'].includes(behavior)) review.evidence[0].lines = [1, 99];
@@ -342,7 +357,7 @@ test('compact entry is fingerprinted and excludes full catalog; replay preserves
   const input = readReviewJsonForTest(f.artifacts, 'build-review-input.json');
   assert.equal(input.files, undefined); assert.equal(input.catalog.path, 'review-files.json');
   assert.ok(input.catalog.count > 0);
-  assert.ok(input.budgetSeconds <= 3600 && input.budgetSeconds > 3500, 'the budget counts from before the snapshot');
+  assert.ok(input.budgetSeconds <= 3600 && input.budgetSeconds > 3300, 'the budget counts from before the snapshot');
   const source = { ...original.basis };
   const replay = await runBuildReview(f.workspace, f.artifacts, { ...f.env, GITHUB_RUN_ID: '200', GITHUB_RUN_ATTEMPT: '1' }, { source });
   assert.equal(replay.state, 'completed', replay.reason);
@@ -431,8 +446,8 @@ test('a stalled review is rerun on the same snapshot and completes there', async
   const events = reviewEvents(f);
   const calls = events.filter(event => event.type === 'mock_call');
   assert.deepEqual(calls.map(event => [event.calls, event.retry]), [[1, false], [2, true]]);
-  assert.ok(calls[0].budget <= 3600 && calls[0].budget > 3500);
-  assert.ok(calls[1].budget < calls[0].budget && calls[1].budget > 3500, 'the rerun gets what is left of one budget');
+  assert.ok(calls[0].budget <= 3600 && calls[0].budget > 3300);
+  assert.ok(calls[1].budget < calls[0].budget && calls[1].budget > 3300, 'the rerun gets what is left of one budget');
   const retry = events.find(event => event.type === 'factory_review_retry');
   assert.deepEqual([retry.retry, retry.of, retry.delaySeconds], [1, 2, 0]);
   assert.match(retry.reason, /stalled/);
@@ -561,4 +576,64 @@ test('reviewer can correct a draft with the supplied validator within its single
   assert.equal(report.evaluation.modules[0].targets[0].kind, 'library');
   const lines = readFileSync(path.join(f.artifacts, 'agent-review.jsonl'), 'utf8').split('\n');
   assert.equal(lines.filter(line => line.includes('"type":"message_end"')).length, 1);
+});
+
+
+test('candidate-only second session preserves findings and appends validated source evidence within one budget', async t => {
+  const f = fixture(t); installMock(f, 'feedback-supported');
+  const report = await runBuildReview(f.workspace, f.artifacts, f.env);
+  assert.equal(report.state, 'completed', report.reason);
+  assert.equal(report.execution.reviewCalls, 1);
+  assert.equal(report.execution.feedbackReviewCalls, 1);
+  const finding = report.evaluation.findings[0];
+  assert.equal(finding.feedbackReview.status, 'supported', finding.feedbackReview.reason);
+  assert.equal(finding.confidence, 'confirmed'); assert.equal(finding.status, 'open');
+  assert.equal(report.evaluation.evidence.find(e => e.id === 'E4').excerpt, 'export const customer = undefined;');
+  assert.equal((await collectUsage(f.artifacts)).phases.review.totalTokens, 137);
+  const events = reviewEvents(f);
+  const candidate = events.find(event => event.type === 'factory_feedback_review');
+  const initial = events.find(event => event.type === 'mock_call');
+  assert.ok(candidate.budgetSeconds <= 180);
+  assert.ok(initial.budget + candidate.budgetSeconds <= 3600);
+  assert.deepEqual(candidate.candidateIds, ['F1']);
+  const packed = packHistory({ artifacts: f.artifacts, output: path.join(f.root, 'history'), issue: 21, runId: 100, attempt: 1 });
+  assert.ok(packed.manifest.files.some(file => file.name === 'build-review-feedback-input.json'));
+});
+
+for (const behavior of ['feedback-invalid', 'feedback-crash', 'feedback-stall', 'feedback-input-tamper']) test(`failed candidate review stays visible and never invalidates original assessment: ${behavior}`, async t => {
+  const f = fixture(t); installMock(f, behavior);
+  f.env.FACTORY_BUILD_REVIEW_IDLE_TIMEOUT_SECONDS = '1';
+  const report = await runBuildReview(f.workspace, f.artifacts, f.env);
+  assert.equal(report.state, 'completed', report.reason);
+  const finding = report.evaluation.findings[0];
+  assert.equal(finding.feedbackReview.status, 'insufficient');
+  assert.match(finding.feedbackReview.reason, /未完成|未通过|未正常结束/);
+  assert.equal(finding.severity, 'critical'); assert.equal(finding.confidence, 'confirmed');
+  assert.equal(report.execution.feedbackReviewCalls, 1, 'No candidate retry or repair loop');
+  assert.equal(report.evaluation.evidence.some(e => e.id === 'E4'), false);
+});
+
+test('counter-evidence is retained without silently changing original attribution or lifecycle', async t => {
+  const f = fixture(t); installMock(f, 'feedback-contradicted');
+  const report = await runBuildReview(f.workspace, f.artifacts, f.env);
+  assert.equal(report.evaluation.findings[0].feedbackReview.status, 'contradicted');
+  assert.equal(report.evaluation.findings[0].owner, 'framework');
+  assert.equal(report.evaluation.findings[0].status, 'open');
+});
+
+
+test('terminal diagnosis keeps its single-call boundary and high-risk candidates visibly unverified', async t => {
+  const f = fixture(t); installMock(f, 'feedback-supported');
+  put(f.artifacts, 'task-diagnostic.json', { status: 'needs-diagnosis', code: 'repeated-failure' });
+  const report = await runBuildReview(f.workspace, f.artifacts, f.env);
+  assert.equal(report.execution.reviewCalls, 1); assert.equal(report.execution.feedbackReviewCalls, 0);
+  assert.equal(report.evaluation.findings[0].feedbackReview.status, 'insufficient');
+  assert.match(report.evaluation.findings[0].feedbackReview.reason, /停止诊断只允许单次/);
+  const reassessed = await runBuildReview(f.workspace, f.artifacts, f.env, { source: {
+    runId: report.basis.runId, attempt: report.basis.attempt, controlSha: report.basis.controlSha,
+    baseSha: report.basis.baseSha, patchHash: report.basis.patchHash,
+  } });
+  assert.equal(reassessed.execution.source, 'reassessment');
+  assert.equal(reassessed.execution.feedbackReviewCalls, 1);
+  assert.equal(reassessed.evaluation.findings[0].feedbackReview.status, 'supported');
 });

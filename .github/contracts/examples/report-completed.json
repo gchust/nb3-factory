@@ -6,7 +6,7 @@
     "instance": "owner/factory",
     "project": "owner/factory",
     "exporter": {
-      "version": 1,
+      "version": 2,
       "controlSha": "0000000000000000000000000000000000000001",
       "runId": 1000900,
       "attempt": 1
@@ -539,6 +539,14 @@
             "review/100.1/v2-aaaaaaaaaaaa/E6",
             "review/100.1/v2-aaaaaaaaaaaa/E7"
           ],
+          "diagnosis": {
+            "category": "guidance-gap",
+            "trigger": "虚构样例：Agent 按当前 Skill 在页面中调用 useDialog。",
+            "expected": "指引说明 Hook 必须位于 DialogProvider 后代，并给出完整装配示例。",
+            "actual": "示例只说明从页面调用；冻结日志记录上下文缺失错误，根因仍待确认。",
+            "workaround": "业务把调用移到 Provider 后代后通过；没有测量耗时，不说明上游指引已修复。",
+            "acceptance": "建议回归：依照修订后的最小完整示例接入，打开与关闭弹窗均无需额外猜测上下文。"
+          },
           "moduleKeys": [
             "review/100.1/v2-aaaaaaaaaaaa/M2"
           ],

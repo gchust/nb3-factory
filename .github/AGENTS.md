@@ -38,7 +38,7 @@ Presets #206, #207 and #208 are ordinary application build tasks. Do not bind th
 
 ## Problems delivered to TestManage3
 
-TestManage3 receives NocoBase3 problems only: open findings owned by `framework`, `plugin`, `template` or `documentation`, the same set the framework findings page counts. Application, factory, environment and unknown-owner findings, and failed QA criteria without a review finding, stay in the factory report. See `docs/testmanage3-problems.md`.
+TestManage3 receives evidence-supported NocoBase3 feedback only: open findings owned by `framework`, `plugin`, `template` or `documentation` with diagnosis and a supported targeted feedback review; runtime defects also require the original confirmed confidence. The framework findings pages keep unverified, contradicted and legacy candidates visible with their verification state. Suggestions retain their category and do not require runtime failure. Application, factory, environment and unknown-owner findings, and failed QA criteria without a review finding, stay in the factory report. See `docs/testmanage3-problems.md`.
 
 ## Daily findings digest
 

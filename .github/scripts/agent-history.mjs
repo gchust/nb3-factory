@@ -38,7 +38,7 @@ const ARCHIVE_TIMEOUT_MS = 300_000;
 // behind: the archive is a record of what the agents did, not a copy of the artifact.
 const FILE_RULES = [
   { phase: 'review', pattern: /^agent-review\.jsonl(?:\.result\.json|\.prompt\.md|\.invocation\.json)?$/u },
-  { phase: 'review', pattern: /^build-review(?:-input|-files)?\.json$/u },
+  { phase: 'review', pattern: /^build-review(?:-input|-files|-feedback-input)?\.json$/u },
   { phase: 'review', pattern: /^review-binding\.json$/u },
   { phase: 'reply', pattern: /^comment-agent\.jsonl(?:\.result\.json|\.prompt\.md|\.invocation\.json)?$/u },
   { phase: 'reply', pattern: /^comment-reply\.md$/u },

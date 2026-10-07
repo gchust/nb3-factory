@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { feedbackEvaluation } from '../scripts/feedback-review.mjs';
 /** Cross-report index of NocoBase3 framework findings. Reads archived report.json
  * files and validated Agent classifications; no model calls or publishing. */
 import { Buffer } from 'node:buffer';
@@ -12,6 +13,8 @@ import { subjectKeyOf } from '../scripts/evaluation-report.mjs';
 import {
   effectiveSeverity,
   effectiveType,
+  feedbackReviewChip,
+  feedbackReviewState,
   findingTargets,
   findingTypes,
   isFrameworkFinding,
@@ -85,7 +88,7 @@ export function collectOccurrences(reports) {
         check = null;
       }
     }
-    const evaluation = review.evaluation;
+    const evaluation = feedbackEvaluation(review);
     const evidence = new Map(
       evaluation.evidence.map((item) => [item.id, item]),
     );
@@ -199,10 +202,13 @@ const upChip = (upstream) =>
     : '<span class="up up-none">上游未复核</span>';
 
 function clusterRow(cluster, index) {
+  const feedbackStates = [...new Map(cluster.items.map((item) => [
+    feedbackReviewState(item.finding), item.finding,
+  ])).values()];
   const rows = cluster.items
     .map(
       (item) =>
-        `<tr><td><a class="text-link" href="${escape(reportLink(item))}#review-finding-${escape(item.finding.id)}">#${item.issue} · ${escape(item.finding.id)}</a></td><td class="mono">${escape(item.date)}</td><td class="mono" title="${escape(item.appTemplate ?? '')}">${escape(item.appVersion ?? '未记录')}</td><td><span class="fb-chips">${sevChip(item.severity)}${typeChip(item.type)}</span></td><td>${escape(item.finding.title)}<p class="check-source">${escape(item.taskTitle)}</p></td></tr>`,
+        `<tr><td><a class="text-link" href="${escape(reportLink(item))}#review-finding-${escape(item.finding.id)}">#${item.issue} · ${escape(item.finding.id)}</a></td><td class="mono">${escape(item.date)}</td><td class="mono" title="${escape(item.appTemplate ?? '')}">${escape(item.appVersion ?? '未记录')}</td><td><span class="fb-chips">${sevChip(item.severity)}${typeChip(item.type)}${feedbackReviewChip(item.finding)}</span></td><td>${escape(item.finding.title)}<p class="check-source">${escape(item.taskTitle)}</p>${item.finding.feedbackReview ? `<p class="check-source">复核理由：${escape(item.finding.feedbackReview.reason)}（核对过程与证据见原报告）</p>` : ''}</td></tr>`,
     )
     .join('');
   return `<details class="card fx-cluster sev-${cluster.severity}" id="cluster-${index + 1}"><summary class="fx-row"><span class="fb-chips">${sevChip(cluster.severity)}${typeChip(cluster.type)}</span><span class="fb-item-main"><strong>${escape(cluster.title)}</strong><span class="fb-item-targets">${cluster.targets
@@ -210,7 +216,7 @@ function clusterRow(cluster, index) {
     .map((name) => `<code>${escape(name)}</code>`)
     .join(
       '',
-    )}${cluster.targets.length > 4 ? `<span>等 ${cluster.targets.length} 个对象</span>` : ''}</span></span><span class="fb-item-side"><span class="fx-count${cluster.issues > 1 ? ' is-repeat' : ''}">${cluster.issues} 个任务</span><span class="fx-when">最近 #${cluster.latest.issue} · ${escape(cluster.latest.date)}</span>${cluster.reviewed ? upChip(cluster.upstream) : '<span class="up up-none">待 Agent 归类</span>'}</span></summary><div class="fx-body">${cluster.reason ? `<p class="fb-scope">Agent 归类依据：${escape(cluster.reason)}</p>` : ''}<div class="table-wrap"><table><thead><tr><th>报告</th><th>日期</th><th>NocoBase App 版本</th><th>当时定级</th><th>原标题与任务</th></tr></thead><tbody>${rows}</tbody></table></div></div></details>`;
+    )}${cluster.targets.length > 4 ? `<span>等 ${cluster.targets.length} 个对象</span>` : ''}</span></span><span class="fb-item-side"><span class="fx-count${cluster.issues > 1 ? ' is-repeat' : ''}">${cluster.issues} 个任务</span><span class="fx-when">最近 #${cluster.latest.issue} · ${escape(cluster.latest.date)}</span>${cluster.reviewed ? upChip(cluster.upstream) : '<span class="up up-none">待 Agent 归类</span>'}<span class="fx-when">本组包含的反馈状态</span>${feedbackStates.map(feedbackReviewChip).join('')}</span></summary><div class="fx-body">${cluster.reason ? `<p class="fb-scope">Agent 归类依据：${escape(cluster.reason)}</p>` : ''}<div class="table-wrap"><table><thead><tr><th>报告</th><th>日期</th><th>NocoBase App 版本</th><th>当时定级与反馈核对</th><th>原标题与任务</th></tr></thead><tbody>${rows}</tbody></table></div></div></details>`;
 }
 
 export async function renderFindingsIndex(
@@ -246,13 +252,13 @@ export async function renderFindingsIndex(
     ? `<p class="fb-scope">自 <b>${escape(new Date(baseline.since).toISOString().slice(0, 16).replace('T', ' '))} UTC</b> 起重新记录：只汇总此后开始的搭建；此前的 ${baseline.excluded} 份报告仍可在全部报告中查看，不计入本页。</p>`
     : '';
   const sections = clusters.length
-    ? `<section class="fx-section"><h2>反复出现 <span>${repeated.length} 个问题 · 出现在 2 个及以上任务</span></h2><div class="fx-list">${list(repeated, 0) || '<p class="card report-empty">暂无跨任务重复出现的问题。</p>'}</div></section>
-<section class="fx-section"><h2>已归类 · 只出现一次 <span>${single.length} 个问题</span></h2><div class="fx-list">${list(single, repeated.length)}</div></section>
+    ? `<section class="fx-section"><h2>反复出现 <span>${repeated.length} 个问题与建议分组 · 出现在 2 个及以上任务</span></h2><div class="fx-list">${list(repeated, 0) || '<p class="card report-empty">暂无跨任务重复出现的问题或建议。</p>'}</div></section>
+<section class="fx-section"><h2>已归类 · 只出现一次 <span>${single.length} 个问题与建议分组</span></h2><div class="fx-list">${list(single, repeated.length)}</div></section>
 <section class="fx-section"><h2>待 Agent 归类 <span>${pending.length} 条发现 · 暂不合并</span></h2><div class="fx-list">${list(pending, repeated.length + single.length) || '<p class="card report-empty">所有发现均已归类。</p>'}</div></section>`
     : `<section class="fx-section"><p class="card report-empty">${baseline ? '重新记录后尚无框架发现；新报告发布后会出现在这里。' : '暂无框架发现。'}</p></section>`;
   const body = `<main class="fx-main"><header class="fx-head"><div class="eyebrow">NocoBase3 框架反馈 · 跨报告汇总 · <a class="text-link" href="../index.html">全部报告 →</a> · <a class="text-link" href="daily/">按日期归档 →</a></div><h1>框架问题汇总</h1><p class="fb-scope">来自 ${reports.length} 份已发布报告，其中 ${reviewed} 份有可用的 v2 独立评审${skipped.length ? `（另有 ${skipped.length} 份评审数据不符合当前格式，未纳入）` : ''} · ${occurrences.length} 条框架发现展示为 <b>${clusters.length} 个分组</b>（${pending.length} 条待 Agent 归类） · 截至 ${escape(date)}</p>${restart}<p class="fb-scope">由 Agent 对照根因、触发条件、实际行为与证据归类，可能误合并或漏合并；同一份报告内的两条发现不会合并。未归类的新发现单独保留，内容未变的发现沿用已有分组。每组保留原始报告与归类依据。等级取各次中最高的一次（有上游复核时按复核建议）。版本列来自搭建报告记录的 NocoBase App 模板版本，未记录时不推测。</p></header>
 ${sections}
-<footer class="report-footer">生成自已归档的 report.json 与 Agent 归类记录；归类不重新评审原问题，也不代表 NocoBase3 当前最新状态。未复核上游的问题可能已被修复。</footer></main>`;
+<footer class="report-footer">生成自已归档的 report.json 与 Agent 归类记录；候选反馈、反证与证据支持均保留，证据支持不等于人工确认。同组各条反馈分别核对，归类和重复出现不证明问题成立，也不代表 NocoBase3 当前最新状态。未复核上游的问题可能已被修复。</footer></main>`;
   const css = `${style}
 .fx-main{max-width:1180px;margin:0 auto;padding:48px 32px 60px}.fx-head h1{font-size:clamp(24px,2.6vw,32px);letter-spacing:-.6px;margin:10px 0 6px}
 .fx-section{margin-top:34px}.fx-section>h2{font-size:18px;margin-bottom:12px}.fx-section>h2 span{font-size:12px;color:var(--muted);font-weight:500;margin-left:8px}
