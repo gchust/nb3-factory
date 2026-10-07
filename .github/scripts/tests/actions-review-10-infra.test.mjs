@@ -540,7 +540,7 @@ test("a successful deploy deletes the pull request's other payload assets, and t
   );
   assert.match(
     stepOf(deploy, 'Make room on the preview host'),
-    /timeout-minutes: 22\n/,
+    /timeout-minutes: 28\n/,
   );
 });
 

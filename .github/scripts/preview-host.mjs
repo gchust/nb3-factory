@@ -548,8 +548,11 @@ export function buildStatusFromBody(body) {
  * `null` when GitHub has no such pull request. Only a full host evicts
  * anything, in this order:
  *
- *   1. every preview whose pull request is closed, merged or gone. Teardown
- *      should already have removed it, and nothing else ever will.
+ *   1. previews whose pull request is closed, merged or gone, oldest
+ *      deployment first: at most CLOSED_EVICTIONS_PER_DEPLOY of them, or as
+ *      many as the deploy needs when that is more. Teardown should already
+ *      have removed them, and nothing else ever will; the rest go at the next
+ *      deploy that needs room.
  *   2. previews of failed builds, oldest deployment first. A failed build's
  *      preview is optional (see `.github/AGENTS.md`), so it gives way to a new
  *      deploy rather than the new deploy being refused.
@@ -597,11 +600,28 @@ export function planCapacity({ listing, pr, pulls = new Map() }) {
       .map((instance) => ({ ...instance, reason })),
   );
 
-  const needed = count - listing.limit + 1 - closed.length;
-  if (needed <= 0) return result(true, closed);
-  if (optional.length < needed) return result(false, closed);
-  return result(true, [...closed, ...optional.slice(0, needed)]);
+  // Every slot needed comes from a closed PR first. In all, at most
+  // CLOSED_EVICTIONS_PER_DEPLOY closed previews go per deploy unless more slots
+  // are needed, oldest first:
+  // each removal can wait minutes for the deploy lock, and the capacity step
+  // is budgeted for that many. The rest still go before any open PR's preview,
+  // at the next deploy that needs room.
+  const slots = count - listing.limit + 1;
+  const reclaimed = closed
+    .sort(oldestFirst)
+    .slice(0, Math.max(slots, CLOSED_EVICTIONS_PER_DEPLOY));
+  const needed = slots - reclaimed.length;
+  if (needed <= 0) return result(true, reclaimed);
+  if (optional.length < needed) return result(false, reclaimed);
+  return result(true, [...reclaimed, ...optional.slice(0, needed)]);
 }
+
+/**
+ * The most closed PRs' previews one deploy removes, unless it needs more slots
+ * than this. The capacity step's timeout in deploy-preview.yml covers this many
+ * removals.
+ */
+export const CLOSED_EVICTIONS_PER_DEPLOY = 3;
 
 /** The pull request notice for a deploy skipped because the host is full. */
 export function capacitySkipNote(capacity, runUrl) {
