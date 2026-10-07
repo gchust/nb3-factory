@@ -120,6 +120,26 @@ jobs:
       base_ref: ${{ steps.base.outputs.ref }}
       base_sha: ${{ steps.base.outputs.sha }}
     steps:
+      # "Re-run all jobs" would record attempt N as the task's run, upload a
+      # second factory-task-N (which a recovery downloads instead of the one
+      # matching the checkpoint), relabel the Issue and post a new status. Once
+      # an earlier attempt saved the task, stop before any of that, so the run
+      # stays recoverable as the failure notice says. A re-run of a prepare that
+      # failed before saving anything still prepares normally.
+      - name: Reject a GitHub Re-run of a prepared task
+        if: github.run_attempt > 1
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          # Fails closed: an unreadable list stops the re-run, which changes nothing.
+          saved="$(gh api --paginate "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/artifacts?per_page=100" \
+            --jq '.artifacts[] | select(.name | test("^factory-task-[0-9]+$")) | .name')"
+          if [[ -n "$saved" ]]; then
+            echo "::error::An earlier attempt of this run already prepared the task. GitHub Re-run cannot continue it; use an explicit recovery Run (workflow_dispatch with recovery_run_id=${GITHUB_RUN_ID}) or start a new build."
+            exit 1
+          fi
+
       # repository_dispatch loads the entry workflow from the default branch.
       # Only this small handoff protocol follows that revision; task code is pinned.
       - name: Check out handoff bootstrap
@@ -223,6 +243,8 @@ jobs:
         env:
           FACTORY_CONTROL_SHA: ${{ steps.baseline.outputs.sha }}
           GITHUB_TOKEN: ${{ github.token }}
+          # The status comment of a continuation shows the base it keeps.
+          FACTORY_PREVIOUS_TASK: ${{ github.event.action == 'code-agent-continue' && 'previous-task/task-metadata.json' || '' }}
         run: |
           node control/.github/scripts/prepare-task.mjs \
             --event "${{ steps.recovery.outputs.event_path || github.event_path }}" \
@@ -324,7 +346,8 @@ jobs:
       handoff: ${{ steps.outcome.outputs.handoff }}
       timed_out: ${{ steps.outcome.outputs.timed_out }}
       checkpoint_available: ${{ steps.checkpoint.outcome == 'success' }}
-      patch_available: ${{ steps.patch.outcome == 'success' }}
+      # A kept handed-off checkpoint (Keep the handed-off checkpoint) is a sealed patch too.
+      patch_available: ${{ steps.patch.outcome == 'success' || steps.keep_checkpoint.outcome == 'success' }}
       rerun_rejected: ${{ steps.rerun_guard.outcome == 'failure' }}
     steps:
       # A GitHub Re-run starts a fresh runner without the previous attempt's
@@ -384,11 +407,32 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
 
+      # A continuation that fails here has nothing of its own to save, and its
+      # source run concluded success, so no recovery can start from either run:
+      # one transient artifact error would discard the handed-off work. Retry
+      # each download once after a pause; see also "Keep the handed-off
+      # checkpoint" below for failures between download and restore.
       - name: Download handoff checkpoint
+        id: checkpoint_download
         if: github.event_name == 'repository_dispatch' && github.event.action == 'code-agent-continue'
+        continue-on-error: true
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           # The checkpoint; older runs uploaded the same files as factory-handoff-N too.
+          name: factory-agent-${{ needs.prepare.outputs.issue_number }}
+          path: handoff
+          run-id: ${{ github.event.client_payload.previous_run_id }}
+          github-token: ${{ github.token }}
+
+      - name: Wait before retrying the checkpoint download
+        if: steps.checkpoint_download.outcome == 'failure'
+        run: sleep 30
+
+      - name: Retry the handoff checkpoint download
+        id: checkpoint_retry
+        if: steps.checkpoint_download.outcome == 'failure'
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
           name: factory-agent-${{ needs.prepare.outputs.issue_number }}
           path: handoff
           run-id: ${{ github.event.client_payload.previous_run_id }}
@@ -421,13 +465,27 @@ jobs:
           fi
 
       - name: Download normalized task
+        id: task_download
+        continue-on-error: true
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: factory-task-${{ needs.prepare.outputs.issue_number }}
           path: task
 
-      # "Re-run failed jobs" reuses prepare's outputs, so a batch sample is admitted
-      # again here: a cancelled/released sample or a spent budget starts no model.
+      - name: Wait before retrying the task download
+        if: steps.task_download.outcome == 'failure'
+        run: sleep 30
+
+      - name: Retry the normalized task download
+        id: task_retry
+        if: steps.task_download.outcome == 'failure'
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: factory-task-${{ needs.prepare.outputs.issue_number }}
+          path: task
+
+      # A batch sample is admitted again right before model work, so a sample
+      # cancelled or released since prepare, or a spent budget, starts no model.
       - name: Admit the evaluation sample for this execution
         env:
           GITHUB_TOKEN: ${{ github.token }}
@@ -734,6 +792,41 @@ jobs:
       # verification, yet its workspace already holds the restored work. Record
       # the run as failed so the patch below seals it and the work stays
       # publishable and recoverable instead of vanishing with the runner.
+      # A continuation that failed after downloading its checkpoint but before
+      # "Restore pipeline progress" (control check, patch restore, admission,
+      # restore itself) has a workspace of uncertain state, yet the handed-off
+      # work is intact in handoff/. Save that checkpoint as this run's own,
+      # marked failed, so publish-failed and an explicit recovery from this run
+      # (recovery_run_id) keep it: the source run concluded success after its
+      # handoff, so a recovery could never start from there. The elapsed time
+      # stays the source run's (no job start), so no counter is reset.
+      - name: Keep the handed-off checkpoint
+        id: keep_checkpoint
+        if: >-
+          failure() && steps.rerun_guard.outcome == 'success' && steps.resume.outcome != 'success' &&
+          github.event_name == 'repository_dispatch' && github.event.action == 'code-agent-continue' &&
+          (steps.checkpoint_download.outcome == 'success' || steps.checkpoint_retry.outcome == 'success') &&
+          (steps.task_download.outcome == 'success' || steps.task_retry.outcome == 'success')
+        run: |
+          set -euo pipefail
+          artifacts="$RUNNER_TEMP/agent-artifacts"
+          mkdir -p "$artifacts"
+          for file in handoff/agent.patch handoff/pipeline-state.json task/task-metadata.json; do
+            if [[ ! -f "$file" || -L "$file" ]]; then
+              echo "::error::The handed-off checkpoint lacks $file; nothing to keep."
+              exit 1
+            fi
+          done
+          cp handoff/agent.patch handoff/pipeline-state.json "$artifacts/"
+          # The source run's summary of the same patch, for a failed build PR.
+          if [[ -f handoff/change-summary.json && ! -L handoff/change-summary.json ]]; then
+            cp handoff/change-summary.json "$artifacts/"
+          fi
+          cp task/task-metadata.json "$artifacts/task-metadata.json"
+          env -u FACTORY_JOB_STARTED_EPOCH_SECONDS \
+            node control/.github/scripts/pipeline-state.mjs outcome "$artifacts/pipeline-state.json" failed
+          echo "::warning::This continuation failed before restoring its checkpoint. The handed-off work is saved as this run's checkpoint; recover it with recovery_run_id=${GITHUB_RUN_ID}."
+
       - name: Mark a continuation that failed during setup
         id: setup_failure
         if: >-
@@ -876,7 +969,7 @@ jobs:
         id: checkpoint
         # Preserve a recovery checkpoint on failure, without treating it as
         # successful verification or automatically retrying a broken runner.
-        if: always() && steps.patch.outcome == 'success' && (steps.handoff.outcome == 'success' || failure() || cancelled())
+        if: always() && (steps.patch.outcome == 'success' || steps.keep_checkpoint.outcome == 'success') && (steps.handoff.outcome == 'success' || failure() || cancelled())
         env:
           AGENT_UPLOAD_OUTCOME: ${{ steps.agent-upload.outcome }}
         run: |
@@ -1597,6 +1690,8 @@ jobs:
           SOURCE_ATTEMPT: ${{ github.run_attempt }}
           FACTORY_REPORT_REF: ${{ github.event.repository.default_branch }}
           FACTORY_TASK_PUBLISHED: ${{ needs.publish.result == 'success' || needs.publish-failed.result == 'success' }}
+          # A rejected Re-run requests only progress; see dispatch-task-reports.sh.
+          FACTORY_RERUN_REJECTED: ${{ needs.agent.outputs.rerun_rejected }}
         run: bash dispatcher/.github/scripts/dispatch-task-reports.sh report-task-progress.yml
       - name: Request report-task-usage.yml
         id: request-report-task-usage
@@ -1647,7 +1742,8 @@ jobs:
       needs.prepare.result == 'success' &&
       needs.prepare.outputs.status == 'ready' &&
       needs.prepare.outputs.build_comment_id != '' &&
-      needs.agent.outputs.handoff != 'true'
+      needs.agent.outputs.handoff != 'true' &&
+      needs.agent.outputs.rerun_rejected != 'true'
     runs-on: ubuntu-24.04
     # 10 install + 15 reply budget, plus checkouts, setup and the upload.
     timeout-minutes: 30

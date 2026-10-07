@@ -181,6 +181,22 @@ export function jobOutcome(job) {
   return limit && Number.isFinite(elapsed) && elapsed >= (limit - 5) * 60_000 ? 'timed_out' : 'cancelled';
 }
 
+// The run's own conclusion arrives once it completed (the workflow_run and
+// dispatched fallbacks read it then), and GitHub concludes a run whose job hit
+// its timeout as cancelled or failed. Refine those through the core jobs so an
+// agent that ran out of time is not reported as a manual cancel.
+export function progressOutcome(run, jobs) {
+  const core = jobs.filter((j) => ['agent', 'verify-final', 'publish'].includes(j.name));
+  const conclusions = core.map(jobOutcome);
+  const dispatched = core.some((j) => j.name === 'agent' && j.status === 'completed' &&
+    j.steps?.some((s) => s.name === 'Dispatch continuation run' && s.conclusion === 'success'));
+  const outcome = taskOutcome(run, jobs);
+  if (['cancelled', 'failure'].includes(outcome) && conclusions.includes('timed_out')) return 'timed_out';
+  return outcome ||
+    conclusions.find((conclusion) => ['failure', 'cancelled', 'timed_out'].includes(conclusion)) ||
+    (dispatched ? 'handoff' : null);
+}
+
 export async function publishProgress(api, repository, { runId, attempt, live }, now = Date.now()) {
   if (![runId, attempt].every(positive)) throw new Error('Invalid source run');
   if (live) live = validateSnapshot(live, now);
@@ -200,11 +216,7 @@ export async function publishProgress(api, repository, { runId, attempt, live },
   if (jobs.some((j) => j.name === 'agent' && j.conclusion === 'skipped')) return false;
   if ((await api('GET', `/issues/${issue}`)).pull_request) throw new Error('Progress target must be an Issue');
   const core = jobs.filter((j) => ['agent', 'verify-final', 'publish'].includes(j.name));
-  const dispatched = core.some((j) => j.name === 'agent' && j.status === 'completed' &&
-    j.steps?.some((s) => s.name === 'Dispatch continuation run' && s.conclusion === 'success'));
-  const outcome = taskOutcome(run, jobs) ||
-    core.map(jobOutcome).find((conclusion) => ['failure', 'cancelled', 'timed_out'].includes(conclusion)) ||
-    (dispatched ? 'handoff' : null);
+  const outcome = progressOutcome(run, jobs);
   // A comment-reply job may still be running after delivery; do not occupy a
   // reporter runner waiting for it or confuse it with business build progress.
   const completed = Boolean(outcome);

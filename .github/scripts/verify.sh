@@ -70,7 +70,11 @@ fi
 for check in lockfile format:check lint typecheck test; do
   [[ "$check" == "$previous" ]] || run_check "$check"
 done
-rm -f "$failed_stage"
+# The build and the database step fail this script through set -e, so their
+# stage is written before they run and cleared once both passed. Without it a
+# build error kept whatever stage an earlier round failed in, its fingerprint
+# changed every round, and the three-identical-failures stop never saw it.
+printf '%s\n' build >"$failed_stage"
 build_args=()
 if [[ -n "${FACTORY_BUILD_TARGET:-}" ]]; then
   build_args+=(--target "$FACTORY_BUILD_TARGET" --node-version "${FACTORY_BUILD_NODE_VERSION:-24}")
@@ -82,7 +86,10 @@ if [[ "${FACTORY_BUILD_ARCHIVE:-0}" == '1' ]]; then
   build_args+=(--tar)
 fi
 NODE_ENV=production node "$script_dir/timed-command.mjs" build pnpm build ${build_args[@]+"${build_args[@]}"}
+printf '%s\n' database >"$failed_stage"
 "$script_dir/apply-database.sh"
+# Later failures are browser failures, which the repair loop records by kind.
+rm -f "$failed_stage"
 
 if [[ "${FACTORY_SKIP_BROWSER:-0}" == "1" ]]; then
   echo "Browser smoke skipped by FACTORY_SKIP_BROWSER=1."

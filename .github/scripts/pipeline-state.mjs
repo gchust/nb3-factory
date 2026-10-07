@@ -472,9 +472,15 @@ if (
         const text = existsSync(log) ? readFileSync(log, 'utf8') : '';
         const reportValue = report && existsSync(report) ? json(report) : null;
         const stageFile = path.join(root, 'last-failed-stage');
+        // verify.sh writes the stage before each step that can fail it and
+        // clears it after the database step, so a missing file is a failure
+        // after that point. Never fall back to an earlier round's stage: the
+        // fingerprint would change every round and hide a repeated failure.
         const stage = existsSync(stageFile)
           ? readFileSync(stageFile, 'utf8').trim()
-          : (state.failureStage ?? 'build');
+          : kind === 'browser'
+            ? 'browser'
+            : 'build';
         state.failureStage = stage;
         const repeated = recordFailures(
           state,

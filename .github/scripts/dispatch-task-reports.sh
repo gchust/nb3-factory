@@ -46,8 +46,18 @@ dispatch() {
 
 # Published failed work has evidence and deserves a preview attempt too.
 published="${FACTORY_TASK_PUBLISHED:-false}"
+# A rejected GitHub Re-run did no work: its attempt has no usage, history or
+# retro of its own, and a report for it would rank as the Issue's latest and
+# replace the real one. Only the progress line is updated. The step still
+# succeeds, so report-dispatch-gate.yml counts it as handled and the
+# workflow_run copy does not publish the empty report instead.
+rerun_rejected="${FACTORY_RERUN_REJECTED:-false}"
 request() {
   local workflow="$1"
+  if [[ "$rerun_rejected" == 'true' && "$workflow" != report-task-progress.yml && "$workflow" != comment-build-queue.yml ]]; then
+    echo "Not requesting $workflow: attempt $SOURCE_ATTEMPT was a rejected GitHub Re-run."
+    return 0
+  fi
   case "$workflow" in
     publish-visual-report.yml | deploy-preview.yml)
       # Requested explicitly for the same reason as the media report: a preview
