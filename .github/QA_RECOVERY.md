@@ -57,8 +57,9 @@ it answers no comment. "Re-run all jobs" stops at the start of prepare once an
 earlier attempt ran the build, before it records a new attempt, uploads a
 second task artifact, relabels the Issue or posts a status; its reports are
 marked handled without being requested, so nothing is published for that
-attempt. A question round, or a run whose build never started, can still be
-re-run that way.
+attempt. Only a question round really re-runs that way. A build re-run always
+ends in rejection, because the agent job refuses every attempt after the
+first: recover a failed build with `recovery_run_id`, or start a new run.
 
 A continuation retries its checkpoint and task downloads once. If it still
 fails after downloading the checkpoint but before restoring its progress, it

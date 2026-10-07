@@ -649,20 +649,60 @@ test('the keep step runs the check and skips a refused sample admission', () => 
     admit,
     /2> "\$RUNNER_TEMP\/sample-admission\.err" \|\| status=\$\?/,
   );
-  assert.match(
-    admit,
-    /grep -q 'Evaluation sample not admitted' "\$RUNNER_TEMP\/sample-admission\.err"/,
+  // Both refusal texts are the ones evaluation-sample.mjs prints or throws.
+  const sampleScript = readFileSync(
+    path.resolve(import.meta.dirname, '../evaluation-sample.mjs'),
+    'utf8',
   );
-  assert.match(admit, /echo "refused=true" >> "\$GITHUB_OUTPUT"/);
-  assert.match(admit, /exit "\$status"/);
-  // The refusal text is the one evaluation-sample.mjs prints.
+  assert.match(sampleScript, /::error::Evaluation sample not admitted:/);
   assert.match(
-    readFileSync(
-      path.resolve(import.meta.dirname, '../evaluation-sample.mjs'),
-      'utf8',
-    ),
-    /::error::Evaluation sample not admitted:/,
+    sampleScript,
+    /Batch sample receipt no longer matches the task metadata/,
   );
+});
+
+test('the admission step marks refusals, and not API errors, as refused', (t) => {
+  const admit = step('Admit the evaluation sample for this execution');
+  const script = admit.split('run: |\n')[1].replace(/^ {10}/gm, '');
+  const cases = [
+    ['::error::Evaluation sample not admitted: released.', 1, true],
+    [
+      'Error: Batch sample receipt no longer matches the task metadata',
+      1,
+      true,
+    ],
+    ['Error: GitHub API GET /issues/7 failed (503)', 1, false],
+    ['', 0, false],
+  ];
+  for (const [stderr, exitCode, refused] of cases) {
+    const root = mkdtempSync(path.join(os.tmpdir(), 'factory-review8-admit-'));
+    t.after(() => rmSync(root, { recursive: true, force: true }));
+    // A stand-in evaluation-sample.mjs that prints stderr and exits.
+    const scripts = path.join(root, 'control', '.github', 'scripts');
+    mkdirSync(scripts, { recursive: true });
+    writeFileSync(
+      path.join(scripts, 'evaluation-sample.mjs'),
+      `process.stderr.write(${JSON.stringify(stderr ? `${stderr}\n` : '')});\nprocess.exit(${exitCode});\n`,
+    );
+    const output = path.join(root, 'output');
+    writeFileSync(output, '');
+    const result = spawnSync('bash', ['-c', script], {
+      cwd: root,
+      encoding: 'utf8',
+      env: {
+        ...process.env,
+        RUNNER_TEMP: root,
+        GITHUB_OUTPUT: output,
+        GITHUB_ENV: path.join(root, 'env'),
+      },
+    });
+    assert.equal(result.status, exitCode, stderr);
+    assert.equal(
+      readFileSync(output, 'utf8'),
+      refused ? 'refused=true\n' : '',
+      stderr,
+    );
+  }
 });
 
 test('a kept checkpoint passes recovery validation from the failed continuation', async () => {

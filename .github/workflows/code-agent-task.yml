@@ -126,8 +126,10 @@ jobs:
       # matching the checkpoint), relabel the Issue and post a new status. Once
       # an earlier attempt ran the build (its agent job started), stop before
       # any of that, so the run stays recoverable as the failure notice says.
-      # A re-run of a question round, or of a run whose agent never started,
-      # still prepares normally: recovery does not cover those.
+      # Only a question round (whose agent job is skipped) really re-runs this
+      # way. A build re-run whose agent never started still prepares, but the
+      # agent job rejects every attempt after the first, so it never builds:
+      # start a new run instead.
       # rerun_rejected lets dispatch-reports mark the reports as handled, so the
       # workflow_run copies publish no empty usage or history for this attempt.
       - name: Reject a GitHub Re-run of a prepared task
@@ -495,7 +497,8 @@ jobs:
 
       # A batch sample is admitted again right before model work, so a sample
       # cancelled or released since prepare, or a spent budget, starts no model.
-      # A refusal (cancelled or released sample, spent budget) is recorded as
+      # A refusal (cancelled or released sample, spent budget, a receipt that no
+      # longer matches the task) is recorded as
       # an output, so a continuation never keeps its checkpoint as recoverable
       # work; an API error leaves it unset. Pinned older scripts print the same
       # refusal text, so it is read from their output.
@@ -510,7 +513,7 @@ jobs:
               2> "$RUNNER_TEMP/sample-admission.err" || status=$?
             cat "$RUNNER_TEMP/sample-admission.err" >&2
             if (( status != 0 )); then
-              if grep -q 'Evaluation sample not admitted' "$RUNNER_TEMP/sample-admission.err"; then
+              if grep -Eq 'Evaluation sample not admitted|Batch sample receipt no longer matches the task metadata' "$RUNNER_TEMP/sample-admission.err"; then
                 echo "refused=true" >> "$GITHUB_OUTPUT"
               fi
               exit "$status"
