@@ -309,6 +309,7 @@ jobs:
   pages:
     outputs:
       findings_pending: ${{ steps.archive.outputs.findings_pending }}
+      issue: ${{ steps.archive.outputs.issue }}
       publication: ${{ steps.archive.outputs.publication }}
       page_url: ${{ steps.deployment.outputs.page_url }}
       deployed: ${{ steps.deployment.outcome == 'success' }}
@@ -384,14 +385,16 @@ jobs:
   # next report's archive and deploy do not queue behind it. A later deploy
   # only adds to the site, so this report stays served. The comments it
   # upserts are serialized here instead: notifyReport compares each receipt,
-  # and two notifies of one Issue must not both create its comment.
+  # and two notifies of one Issue must not both create its comment. Only one
+  # Issue's notifies share comments (its own and its build PR's), so the
+  # queue is per Issue and a burst of reports does not wait on each CDN check.
   notify:
     needs: pages
     if: ${{ !cancelled() && needs.pages.outputs.deployed == 'true' && needs.pages.outputs.publication != '' }}
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     concurrency:
-      group: factory-report-notify
+      group: factory-report-notify-${{ needs.pages.outputs.issue }}
       queue: max
     permissions:
       contents: read

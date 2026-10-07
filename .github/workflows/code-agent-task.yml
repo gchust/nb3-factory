@@ -99,9 +99,14 @@ jobs:
     # Read the event's labels so a later Issue update cannot create a second run.
     # The repository is public: an Issue only starts a model run when its author
     # has repository access. Maintainers can still dispatch any Issue manually.
+    # Preset definitions and maintenance Issues (factory:preset, factory:manual)
+    # are never built from an Issue event: prepare-task only reported them as
+    # `preset`/`manual` after two checkouts, so their events start no job.
     if: >-
       github.event_name != 'issues' ||
       (!contains(github.event.issue.labels.*.name, 'factory:external') &&
+       !contains(github.event.issue.labels.*.name, 'factory:preset') &&
+       !contains(github.event.issue.labels.*.name, 'factory:manual') &&
        contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.issue.author_association))
     runs-on: ubuntu-24.04
     timeout-minutes: 10
@@ -746,12 +751,31 @@ jobs:
             exit 1
           fi
 
+      # Restored work (a continuation, a recovery, or a comment round on the
+      # published work branch) can carry a package.json its lockfile does not
+      # match: an interrupted repair or a failed task published it that way. A
+      # frozen install would then fail before any model could fix it, on every
+      # later round. Only for restored work and only for
+      # ERR_PNPM_OUTDATED_LOCKFILE, install again without freezing: the updated
+      # lockfile becomes part of the patch, and verify.sh's lockfile stage still
+      # sends any remaining mismatch to repair. A fresh task stays frozen.
       - name: Install application dependencies
         timeout-minutes: 15
         working-directory: workspace
+        env:
+          RESTORED_WORK: ${{ (github.event_name == 'repository_dispatch' && github.event.action == 'code-agent-continue') || inputs.recovery_run_id != '' || needs.prepare.outputs.base_ref == needs.prepare.outputs.work_branch }}
         run: |
+          set -o pipefail
           node ../control/.github/scripts/assert-current-template.mjs .
-          node ../control/.github/scripts/timed-command.mjs install pnpm install --frozen-lockfile
+          status=0
+          node ../control/.github/scripts/timed-command.mjs install pnpm install --frozen-lockfile 2>&1 | tee "$RUNNER_TEMP/install.log" || status=$?
+          if (( status != 0 )); then
+            if [[ "$RESTORED_WORK" != true ]] || ! grep -q ERR_PNPM_OUTDATED_LOCKFILE "$RUNNER_TEMP/install.log"; then
+              exit "$status"
+            fi
+            echo "::warning::The restored work's pnpm-lock.yaml does not match its package.json; installing without --frozen-lockfile so the task can repair it."
+            node ../control/.github/scripts/timed-command.mjs install-refresh-lockfile pnpm install --no-frozen-lockfile
+          fi
           node ../control/.github/scripts/timed-command.mjs skills-sync pnpm exec nocobase skills sync
 
       - name: Capture the actual installed package and Skill baseline
@@ -1403,6 +1427,10 @@ jobs:
           FACTORY_REQUIRED_CHECKS_PATCH: ${{ github.workspace }}/agent-artifacts/agent.patch
           FACTORY_TEST_API_KEY: ${{ secrets.FACTORY_TEST_API_KEY }}
           FACTORY_TEST_ADMIN_KEY: ${{ secrets.FACTORY_TEST_ADMIN_KEY }}
+          # One more run of a failed `test` check only (verify.sh records it in
+          # test-retried); a template test flake must not fail a build whose
+          # repair loop already passed.
+          FACTORY_RETRY_TEST_ONCE: '1'
         run: |
           set -o pipefail
           control/.github/scripts/verify.sh \
@@ -1786,10 +1814,21 @@ jobs:
         with:
           metadata: agent-artifacts/task-metadata.json
 
+      # A failed task can leave package.json and its lockfile out of step. The
+      # preview of that work then installs without freezing, but only for
+      # ERR_PNPM_OUTDATED_LOCKFILE; any other install failure still fails.
       - name: Install application dependencies
         timeout-minutes: 15
         working-directory: workspace
-        run: node ../control/.github/scripts/timed-command.mjs install pnpm install --frozen-lockfile
+        run: |
+          set -o pipefail
+          status=0
+          node ../control/.github/scripts/timed-command.mjs install pnpm install --frozen-lockfile 2>&1 | tee "$RUNNER_TEMP/install.log" || status=$?
+          if (( status != 0 )); then
+            grep -q ERR_PNPM_OUTDATED_LOCKFILE "$RUNNER_TEMP/install.log" || exit "$status"
+            echo "::warning::The failed work's pnpm-lock.yaml does not match its package.json; installing the preview without --frozen-lockfile."
+            node ../control/.github/scripts/timed-command.mjs install-refresh-lockfile pnpm install --no-frozen-lockfile
+          fi
 
       - name: Create isolated failed preview build configuration
         run: |

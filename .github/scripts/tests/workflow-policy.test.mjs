@@ -840,8 +840,9 @@ test('the replayed usage report serializes with the other page writers and inher
     ['pages', 'factory-task-usage'],
     // Compare-and-swap gh-pages writes; off the global lock.
     ['evaluation', 'factory-evaluation-registry'],
-    // The CDN wait and link comments run after the lock is released.
-    ['notify', 'factory-report-notify'],
+    // The CDN wait and link comments run after the lock is released, queued
+    // only behind notifies of the same Issue.
+    ['notify', 'factory-report-notify-\\$\\{\\{ needs\\.pages\\.outputs\\.issue \\}\\}'],
   ]) {
     const body = usage.split(`\n  ${job}:\n`)[1].split(/\n {2}[a-z][a-z-]*:\n/)[0];
     assert.match(body, new RegExp(`^ {4}concurrency:\\n {6}group: ${group}\\n {6}queue: max\\n`, 'm'), job);
